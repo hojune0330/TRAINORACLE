@@ -1,0 +1,773 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>TRAINORACLE — Sprint 2 · Records</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+<link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css" rel="stylesheet" />
+<style>
+  :root{
+    --bg:#FAFAF7;--surface:#FFFFFF;--surface-2:#F4F3EE;
+    --ink:#0E1412;--ink-2:#2B3330;--ink-3:#5F6965;--ink-4:#8F9894;
+    --line:#D9D6CE;--line-2:#BFBBB0;--hair:#E8E6DF;
+    --brand:#0D5F5A;--brand-ink:#07302E;--brand-wash:#E6F0EE;
+    --ok:#1F7A3A;--ok-wash:#E6F2E9;
+    --warn:#B4530C;--warn-wash:#FAEAD9;
+    --info:#1D4ED8;--info-wash:#E6EBF8;
+    --unc:#6B3FB0;--unc-wash:#EFE8F7;
+    --pro:#7A3FB5;--pro-wash:#EFE8F7;
+
+    --e-base-strong:#2A6396; --e-base-mid:#4A8FC7; --e-base-text:#1D4E75; --e-base-wash:#E8F0F7;
+    --e-lt-strong:  #8A7818; --e-lt-mid:  #B8A024; --e-lt-text:  #7A6A1A; --e-lt-wash:  #F4F0DB;
+    --e-vo2-strong: #9E5A14; --e-vo2-mid: #C7761C; --e-vo2-text: #8A4A1C; --e-vo2-wash: #F7E9D9;
+    --e-gly-strong: #8E2421; --e-gly-mid: #B8332E; --e-gly-text: #8A2A2A; --e-gly-wash: #F2DAD8;
+    --e-rest-mid:#7A7A70;
+
+    --sans:"Inter","Pretendard Variable",ui-sans-serif,system-ui,sans-serif;
+    --mono:"JetBrains Mono",ui-monospace,SFMono-Regular,monospace;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;background:#E4E2DA;color:var(--ink);font-family:var(--sans);font-size:14.5px;line-height:1.55;-webkit-font-smoothing:antialiased;font-feature-settings:"ss01","cv11";}
+  .mono{font-family:var(--mono);font-variant-numeric:tabular-nums;}
+
+  /* SHELL */
+  .shell{padding:32px 24px 64px;}
+  .shell-top{max-width:1440px;margin:0 auto 28px;display:flex;align-items:baseline;gap:18px;flex-wrap:wrap;padding-bottom:18px;border-bottom:1px solid var(--line-2);}
+  .shell-top h1{margin:0;font-size:26px;font-weight:500;letter-spacing:-0.025em;}
+  .shell-top h1 .em{font-style:italic;color:var(--brand);font-weight:400;}
+  .shell-top .meta{font-family:var(--mono);font-size:11px;color:var(--ink-3);letter-spacing:.04em;}
+  .shell-top .meta b{color:var(--ink);font-weight:500;}
+  .shell-top .nav{margin-left:auto;display:flex;gap:0;border:1px solid var(--line);}
+  .shell-top .nav a{padding:6px 14px;font-family:var(--mono);font-size:11px;color:var(--ink-3);text-decoration:none;letter-spacing:.06em;text-transform:uppercase;border-right:1px solid var(--line);}
+  .shell-top .nav a:last-child{border-right:0;}
+  .shell-top .nav a.on{background:var(--ink);color:var(--bg);font-weight:600;}
+  .shell-top .nav a:hover:not(.on){color:var(--ink);}
+
+  /* ============== LAYOUT ============== */
+  .scope{max-width:1440px;margin:0 auto;display:grid;grid-template-columns:380px 1fr;gap:32px;align-items:start;}
+  @media(max-width:1100px){.scope{grid-template-columns:1fr;}}
+
+  /* ============== MOBILE FRAME ============== */
+  .mf{background:#0E1412;padding:8px;align-self:start;}
+  .mfi{background:var(--bg);width:340px;height:780px;display:flex;flex-direction:column;overflow:hidden;position:relative;}
+  .stat{height:24px;display:flex;align-items:center;justify-content:space-between;padding:4px 18px 0;font-size:11.5px;font-weight:600;flex-shrink:0;}
+  .stat .r{display:flex;gap:5px;}
+
+  /* ============== DESKTOP FRAME ============== */
+  .df{background:var(--surface);border:1px solid var(--line);box-shadow:0 40px 100px -30px rgba(0,0,0,.22);min-height:780px;overflow:hidden;}
+  .df-chrome{background:var(--surface-2);border-bottom:1px solid var(--line);padding:8px 14px;display:flex;align-items:center;gap:8px;}
+  .df-chrome .dots{display:flex;gap:5px;}
+  .df-chrome .dot{width:9px;height:9px;border-radius:50%;}
+  .df-chrome .dot.r{background:#F25F5C;opacity:.85;}
+  .df-chrome .dot.y{background:#F7C548;opacity:.85;}
+  .df-chrome .dot.g{background:#4CB963;opacity:.85;}
+  .df-chrome .url{margin-left:10px;background:var(--surface);border:1px solid var(--line);padding:4px 10px;font-family:var(--mono);font-size:10px;color:var(--ink-3);}
+  .df-chrome .url b{color:var(--ink);}
+
+  .df-app{display:grid;grid-template-columns:200px 1fr 360px;min-height:880px;}
+
+  /* sidebar */
+  .ds-side{background:var(--bg);border-right:1px solid var(--line);padding:18px 0;}
+  .ds-brand{padding:4px 18px 22px;font-size:14px;font-weight:600;letter-spacing:.04em;}
+  .ds-brand .dot{display:inline-block;width:5px;height:5px;border-radius:50%;background:var(--brand);margin:0 1px;transform:translateY(-2px);}
+  .ds-lb{font-family:var(--mono);font-size:9px;color:var(--ink-4);letter-spacing:.14em;text-transform:uppercase;padding:14px 18px 6px;font-weight:600;}
+  .ds-nav{display:flex;align-items:center;gap:10px;padding:7px 18px;font-size:12.5px;color:var(--ink-2);text-decoration:none;border-left:2px solid transparent;}
+  .ds-nav:hover{background:var(--surface-2);color:var(--ink);}
+  .ds-nav.on{background:var(--surface);color:var(--ink);font-weight:500;border-left-color:var(--ink);}
+  .ds-nav .k{margin-left:auto;font-family:var(--mono);font-size:9.5px;color:var(--ink-4);}
+
+  /* === MAIN COLUMN === */
+  .ds-main{padding:0;display:flex;flex-direction:column;}
+
+  .ds-top{padding:18px 28px;border-bottom:1px solid var(--line);background:var(--bg);display:flex;align-items:baseline;gap:16px;}
+  .ds-top h1{margin:0;font-size:22px;font-weight:500;letter-spacing:-0.02em;}
+  .ds-top .ctx{font-family:var(--mono);font-size:11px;color:var(--ink-3);letter-spacing:.04em;}
+  .ds-top .ctx b{color:var(--ink);font-weight:500;}
+  .ds-top .spacer{flex:1;}
+  .ds-top button{min-height:32px;padding:0 12px;background:transparent;border:1px solid var(--line);font-family:var(--mono);font-size:10.5px;color:var(--ink-2);cursor:pointer;letter-spacing:.06em;text-transform:uppercase;font-weight:500;}
+  .ds-top button.primary{background:var(--ink);color:var(--bg);border-color:var(--ink);}
+
+  .ds-tabs{display:flex;border-bottom:1px solid var(--line);background:var(--bg);}
+  .ds-tabs button{background:transparent;border:0;padding:11px 18px;font-family:var(--mono);font-size:11px;color:var(--ink-3);cursor:pointer;letter-spacing:.06em;text-transform:uppercase;border-bottom:2px solid transparent;font-weight:500;}
+  .ds-tabs button.on{color:var(--ink);border-bottom-color:var(--ink);font-weight:600;}
+  .ds-tabs button .ct{color:var(--ink-3);font-weight:500;margin-left:6px;}
+
+  /* === HERO PB === */
+  .pb-hero{padding:32px 28px;border-bottom:1px solid var(--ink);background:var(--bg);}
+  .pb-hero .lb{font-family:var(--mono);font-size:10px;color:var(--brand);letter-spacing:.14em;text-transform:uppercase;font-weight:600;margin-bottom:6px;}
+  .pb-hero .lb::before{content:"●";margin-right:6px;}
+  .pb-hero h2{margin:0;font-size:48px;font-weight:500;letter-spacing:-0.04em;line-height:1;}
+  .pb-hero h2 .em{font-style:italic;color:var(--brand);font-weight:400;}
+  .pb-hero .narr{margin-top:12px;font-family:var(--mono);font-size:11px;color:var(--ink-3);letter-spacing:.04em;line-height:1.6;}
+  .pb-hero .narr b{color:var(--ink);font-weight:500;}
+
+  /* events grid (rows of records) */
+  .evt-grid{padding:24px 28px;border-bottom:1px solid var(--line);}
+  .evt-grid h3{margin:0 0 14px;font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3);font-weight:600;}
+  .evt-grid h3 b{color:var(--ink);}
+
+  .evt-row{display:grid;grid-template-columns:60px 1fr auto auto auto auto;gap:18px;padding:14px 0;border-bottom:1px dashed var(--hair);align-items:baseline;}
+  .evt-row:last-child{border-bottom:0;}
+  .evt-row .ev{font-family:var(--mono);font-size:13px;font-weight:600;letter-spacing:-0.01em;color:var(--ink);}
+  .evt-row .lb{font-family:var(--mono);font-size:9.5px;color:var(--ink-3);letter-spacing:.14em;text-transform:uppercase;font-weight:600;text-align:right;width:40px;}
+  .evt-row .pb-v{font-family:var(--mono);font-size:18px;font-weight:500;color:var(--ink);letter-spacing:-0.02em;text-align:right;min-width:90px;}
+  .evt-row .pb-v.pb{color:var(--brand);}
+  .evt-row .pb-v .dim{color:var(--ink-3);font-size:10.5px;font-weight:400;margin-left:3px;}
+  .evt-row .when{font-family:var(--mono);font-size:10px;color:var(--ink-3);letter-spacing:.04em;text-align:right;min-width:70px;}
+  .evt-row .gap{font-family:var(--mono);font-size:11.5px;font-weight:500;letter-spacing:-0.01em;text-align:right;min-width:60px;}
+  .evt-row .gap.behind{color:var(--warn);} .evt-row .gap.ahead{color:var(--ok);}
+  .evt-row .ar{color:var(--ink-3);font-family:var(--mono);font-size:11px;}
+
+  /* PB timeline trail */
+  .trail{padding:24px 28px;border-bottom:1px solid var(--line);}
+  .trail h3{margin:0 0 6px;font-size:14px;font-weight:500;letter-spacing:-0.005em;}
+  .trail h3 .ev{font-family:var(--mono);font-size:13px;color:var(--ink-3);font-weight:400;margin-left:8px;}
+  .trail .sub{font-family:var(--mono);font-size:11px;color:var(--ink-3);margin-bottom:18px;letter-spacing:.02em;}
+  .trail svg{width:100%;display:block;}
+  .trail-stops{display:grid;grid-template-columns:repeat(7,1fr);font-family:var(--mono);font-size:10.5px;margin-top:10px;}
+  .trail-stops .stp{padding:6px 0;border-right:1px solid var(--hair);text-align:center;}
+  .trail-stops .stp:last-child{border-right:0;}
+  .trail-stops .stp .yr{color:var(--ink-3);letter-spacing:.04em;}
+  .trail-stops .stp .v{color:var(--ink);font-weight:500;letter-spacing:-0.01em;margin-top:3px;font-size:12px;}
+  .trail-stops .stp.now{background:var(--brand-wash);}
+  .trail-stops .stp.now .yr{color:var(--brand);font-weight:600;}
+  .trail-stops .stp.now .v{color:var(--brand);font-weight:600;}
+
+  /* Pace conversion table */
+  .pace-tbl{padding:24px 28px;border-bottom:1px solid var(--line);}
+  .pace-tbl-head{display:flex;align-items:baseline;gap:14px;margin-bottom:14px;}
+  .pace-tbl-head h3{margin:0;font-size:14px;font-weight:500;letter-spacing:-0.005em;}
+  .pace-tbl-head .src{font-family:var(--mono);font-size:10px;color:var(--ink-3);letter-spacing:.04em;}
+  .pace-tbl-head .src b{color:var(--ink);font-weight:500;}
+  .pace-tbl table{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:11.5px;}
+  .pace-tbl th{text-align:left;padding:8px 4px;font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3);font-weight:600;border-bottom:1px solid var(--ink);}
+  .pace-tbl th.r{text-align:right;}
+  .pace-tbl td{padding:9px 4px;border-bottom:1px solid var(--hair);color:var(--ink);}
+  .pace-tbl td.r{text-align:right;font-weight:500;letter-spacing:-0.01em;}
+  .pace-tbl tr.hl td{background:var(--brand-wash);font-weight:600;}
+  .pace-tbl td .e{display:inline-flex;align-items:center;gap:5px;font-size:10.5px;letter-spacing:.04em;font-weight:600;}
+  .pace-tbl td .e::before{content:"";display:inline-block;width:8px;height:8px;}
+  .pace-tbl td .e.base::before{background:var(--e-base-mid);} .pace-tbl td .e.base{color:var(--e-base-text);}
+  .pace-tbl td .e.lt::before{background:var(--e-lt-mid);} .pace-tbl td .e.lt{color:var(--e-lt-text);}
+  .pace-tbl td .e.vo2::before{background:var(--e-vo2-mid);} .pace-tbl td .e.vo2{color:var(--e-vo2-text);}
+  .pace-tbl td .e.gly::before{background:var(--e-gly-mid);} .pace-tbl td .e.gly{color:var(--e-gly-text);}
+
+  /* === RIGHT PANEL === */
+  .ds-right{background:var(--bg);padding:0;border-left:1px solid var(--line);overflow-y:auto;}
+  .rp-sec{padding:20px 22px;border-bottom:1px solid var(--line);}
+  .rp-sec h4{margin:0 0 12px;font-family:var(--mono);font-size:9.5px;color:var(--ink-3);letter-spacing:.14em;text-transform:uppercase;font-weight:600;display:flex;align-items:baseline;gap:8px;}
+  .rp-sec h4 .ct{margin-left:auto;color:var(--ink);}
+  .rp-sec h4 b{color:var(--ink);font-weight:500;}
+
+  /* Target */
+  .tg{}
+  .tg .row{padding:11px 0;border-bottom:1px solid var(--hair);}
+  .tg .row:last-child{border-bottom:0;}
+  .tg .ev-line{display:flex;align-items:baseline;gap:10px;margin-bottom:5px;}
+  .tg .ev-line .ev{font-family:var(--mono);font-size:11.5px;font-weight:600;color:var(--ink);letter-spacing:-0.01em;}
+  .tg .ev-line .when{margin-left:auto;font-family:var(--mono);font-size:10px;color:var(--ink-3);letter-spacing:.04em;}
+  .tg .ev-line .when b{color:var(--ink);font-weight:500;}
+  .tg .nums{display:grid;grid-template-columns:1fr auto 1fr;gap:8px;font-family:var(--mono);align-items:baseline;}
+  .tg .nums .pb{font-size:14px;font-weight:500;color:var(--ink);}
+  .tg .nums .pb .l{display:block;font-size:9px;color:var(--ink-3);letter-spacing:.14em;text-transform:uppercase;font-weight:600;margin-bottom:2px;}
+  .tg .nums .ar{font-size:13px;color:var(--ink-3);}
+  .tg .nums .tgt{font-size:14px;font-weight:600;color:var(--brand);text-align:right;}
+  .tg .nums .tgt .l{display:block;font-size:9px;color:var(--ink-3);letter-spacing:.14em;text-transform:uppercase;font-weight:600;margin-bottom:2px;text-align:right;}
+  .tg .gap-bar{margin-top:8px;height:3px;background:var(--hair);position:relative;}
+  .tg .gap-bar .fill{height:100%;background:var(--brand);}
+  .tg .gap-meta{display:flex;justify-content:space-between;font-family:var(--mono);font-size:9.5px;color:var(--ink-3);margin-top:4px;letter-spacing:.04em;}
+  .tg .gap-meta b{color:var(--ink);font-weight:500;}
+
+  /* Reference */
+  .rf-it{display:grid;grid-template-columns:auto 1fr auto;gap:10px;padding:9px 0;border-bottom:1px solid var(--hair);align-items:center;font-family:var(--mono);}
+  .rf-it:last-child{border-bottom:0;}
+  .rf-it .av{width:24px;height:24px;background:var(--surface);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:600;color:var(--ink-2);letter-spacing:-0.02em;}
+  .rf-it .nm{font-size:11.5px;color:var(--ink);font-weight:500;letter-spacing:-0.005em;}
+  .rf-it .meta{font-size:9.5px;color:var(--ink-3);margin-top:1px;letter-spacing:.04em;}
+  .rf-it .meta .tag{font-family:var(--mono);font-size:8px;letter-spacing:.1em;text-transform:uppercase;font-weight:700;padding:1px 4px;color:#fff;background:var(--ink-3);margin-right:4px;}
+  .rf-it .meta .tag.rival{background:var(--warn);}
+  .rf-it .meta .tag.cohort{background:var(--info);}
+  .rf-it .gap{font-size:11.5px;font-weight:500;letter-spacing:-0.01em;}
+  .rf-it .gap.behind{color:var(--warn);}
+
+  /* Pro mode hint card */
+  .pro-card{margin:0 22px 0;padding:18px 16px;border:1px dashed var(--pro);background:transparent;text-align:left;position:relative;}
+  .pro-card .lb{font-family:var(--mono);font-size:9.5px;color:var(--pro);letter-spacing:.14em;text-transform:uppercase;font-weight:700;margin-bottom:6px;}
+  .pro-card .lb::before{content:"⬢";margin-right:5px;}
+  .pro-card h5{margin:0 0 6px;font-size:14px;font-weight:600;letter-spacing:-0.005em;line-height:1.3;}
+  .pro-card p{margin:0;font-size:12.5px;line-height:1.55;color:var(--ink-2);letter-spacing:-0.005em;}
+  .pro-card p b{color:var(--ink);font-weight:600;}
+  .pro-card .actions{display:flex;align-items:center;gap:8px;margin-top:10px;}
+  .pro-card .btn{padding:6px 12px;background:var(--ink);color:var(--bg);font-family:var(--mono);font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;font-weight:600;border:0;cursor:pointer;}
+  .pro-card .later{font-family:var(--mono);font-size:10px;color:var(--ink-3);letter-spacing:.04em;text-decoration:underline;text-underline-offset:3px;cursor:pointer;}
+
+  /* === MOBILE specific === */
+  .mob-top{padding:14px 18px;border-bottom:1px solid var(--line);display:flex;align-items:baseline;gap:12px;flex-shrink:0;}
+  .mob-top h1{margin:0;font-size:20px;font-weight:500;letter-spacing:-0.02em;}
+  .mob-top .add{margin-left:auto;font-family:var(--mono);font-size:10.5px;color:var(--ink-2);text-decoration:underline;text-underline-offset:3px;cursor:pointer;letter-spacing:.06em;}
+
+  .mob-tabs{display:flex;border-bottom:1px solid var(--line);background:var(--surface-2);flex-shrink:0;}
+  .mob-tabs button{flex:1;background:transparent;border:0;padding:9px 0;font-family:var(--mono);font-size:10px;color:var(--ink-3);cursor:pointer;letter-spacing:.06em;text-transform:uppercase;border-right:1px solid var(--line);font-weight:500;}
+  .mob-tabs button:last-child{border-right:0;}
+  .mob-tabs button.on{background:var(--bg);color:var(--ink);font-weight:600;}
+
+  .mob-scroll{flex:1;overflow-y:auto;}
+
+  .mob-pb-hero{padding:18px;border-bottom:1px solid var(--ink);}
+  .mob-pb-hero .lb{font-family:var(--mono);font-size:10px;color:var(--brand);letter-spacing:.14em;text-transform:uppercase;font-weight:600;margin-bottom:5px;}
+  .mob-pb-hero .lb::before{content:"●";margin-right:5px;}
+  .mob-pb-hero .ev{font-family:var(--mono);font-size:11.5px;color:var(--ink-3);letter-spacing:.04em;font-weight:600;}
+  .mob-pb-hero h2{margin:6px 0 0;font-size:36px;font-weight:500;letter-spacing:-0.035em;line-height:1;font-family:var(--mono);}
+  .mob-pb-hero h2 .em{font-style:italic;color:var(--brand);font-weight:400;}
+  .mob-pb-hero .narr{margin-top:10px;font-family:var(--mono);font-size:11px;color:var(--ink-3);letter-spacing:.04em;line-height:1.55;}
+  .mob-pb-hero .narr b{color:var(--ink);font-weight:500;}
+
+  .mob-trail{padding:18px;border-bottom:1px solid var(--line);}
+  .mob-trail h4{margin:0 0 10px;font-family:var(--mono);font-size:9.5px;color:var(--ink-3);letter-spacing:.14em;text-transform:uppercase;font-weight:600;}
+  .mob-trail h4 b{color:var(--ink);}
+  .mob-trail svg{width:100%;display:block;}
+  .mob-trail .stops{display:grid;grid-template-columns:repeat(4,1fr);font-family:var(--mono);font-size:9.5px;margin-top:6px;}
+  .mob-trail .stops .s{text-align:center;}
+  .mob-trail .stops .s .y{color:var(--ink-3);letter-spacing:.04em;}
+  .mob-trail .stops .s .v{color:var(--ink);font-weight:500;font-size:11px;margin-top:1px;}
+  .mob-trail .stops .s.now .v{color:var(--brand);font-weight:600;}
+  .mob-trail .stops .s.now .y{color:var(--brand);}
+
+  .mob-evt{padding:18px;border-bottom:1px solid var(--line);}
+  .mob-evt h4{margin:0 0 10px;font-family:var(--mono);font-size:9.5px;color:var(--ink-3);letter-spacing:.14em;text-transform:uppercase;font-weight:600;}
+  .mob-evt h4 b{color:var(--ink);}
+  .mob-evt-row{display:grid;grid-template-columns:50px 1fr auto;gap:10px;padding:10px 0;border-bottom:1px dashed var(--hair);align-items:baseline;}
+  .mob-evt-row:last-child{border-bottom:0;}
+  .mob-evt-row .ev{font-family:var(--mono);font-size:11.5px;font-weight:600;color:var(--ink);}
+  .mob-evt-row .pb{font-family:var(--mono);font-size:14px;font-weight:500;color:var(--brand);letter-spacing:-0.01em;}
+  .mob-evt-row .meta{font-family:var(--mono);font-size:9.5px;color:var(--ink-3);margin-top:1px;letter-spacing:.04em;}
+  .mob-evt-row .meta b{color:var(--ink);font-weight:500;}
+  .mob-evt-row .ar{color:var(--ink-3);font-family:var(--mono);font-size:11px;}
+
+  .mob-tg{padding:18px;border-bottom:1px solid var(--line);}
+  .mob-tg h4{margin:0 0 10px;font-family:var(--mono);font-size:9.5px;color:var(--ink-3);letter-spacing:.14em;text-transform:uppercase;font-weight:600;}
+  .mob-tg h4 b{color:var(--ink);}
+  .mob-tg-row{padding:10px 0;border-bottom:1px solid var(--hair);}
+  .mob-tg-row:last-child{border-bottom:0;}
+  .mob-tg-row .head{display:flex;align-items:baseline;gap:8px;margin-bottom:5px;}
+  .mob-tg-row .head .ev{font-family:var(--mono);font-size:11px;font-weight:600;letter-spacing:-0.01em;}
+  .mob-tg-row .head .when{margin-left:auto;font-family:var(--mono);font-size:9.5px;color:var(--ink-3);letter-spacing:.04em;}
+  .mob-tg-row .head .when b{color:var(--ink);}
+  .mob-tg-row .nums{display:grid;grid-template-columns:1fr auto 1fr;gap:8px;align-items:baseline;font-family:var(--mono);}
+  .mob-tg-row .nums .pb{font-size:13px;color:var(--ink);}
+  .mob-tg-row .nums .l{font-size:8.5px;color:var(--ink-3);letter-spacing:.14em;text-transform:uppercase;font-weight:600;}
+  .mob-tg-row .nums .ar{font-size:11px;color:var(--ink-3);}
+  .mob-tg-row .nums .tgt{text-align:right;font-size:13px;color:var(--brand);font-weight:600;}
+  .mob-tg-row .gap{margin-top:6px;height:2px;background:var(--hair);}
+  .mob-tg-row .gap .fill{height:100%;background:var(--brand);}
+  .mob-tg-row .meta{display:flex;justify-content:space-between;font-family:var(--mono);font-size:9px;color:var(--ink-3);margin-top:3px;letter-spacing:.04em;}
+  .mob-tg-row .meta b{color:var(--ink);font-weight:500;}
+
+  /* Pro hint mobile */
+  .mob-pro{margin:14px 18px 18px;padding:14px;border:1px dashed var(--pro);}
+  .mob-pro .lb{font-family:var(--mono);font-size:9.5px;color:var(--pro);letter-spacing:.14em;text-transform:uppercase;font-weight:700;margin-bottom:5px;}
+  .mob-pro .lb::before{content:"⬢";margin-right:5px;}
+  .mob-pro h5{margin:0 0 5px;font-size:13px;font-weight:600;line-height:1.3;letter-spacing:-0.005em;}
+  .mob-pro p{margin:0 0 10px;font-size:12px;line-height:1.5;color:var(--ink-2);letter-spacing:-0.005em;}
+  .mob-pro p b{color:var(--ink);font-weight:600;}
+  .mob-pro .row{display:flex;align-items:center;gap:8px;}
+  .mob-pro .btn{padding:5px 10px;background:var(--ink);color:var(--bg);font-family:var(--mono);font-size:10px;letter-spacing:.06em;text-transform:uppercase;font-weight:600;border:0;cursor:pointer;}
+  .mob-pro .later{font-family:var(--mono);font-size:9.5px;color:var(--ink-3);letter-spacing:.04em;text-decoration:underline;text-underline-offset:3px;cursor:pointer;}
+
+  /* === FOOTER === */
+  .footer{max-width:1440px;margin:60px auto 0;padding:32px 0 0;border-top:1px solid var(--line-2);}
+  .footer h2{margin:0 0 14px;font-size:18px;font-weight:500;letter-spacing:-0.015em;}
+  .footer p{font-size:13.5px;color:var(--ink-2);line-height:1.6;letter-spacing:-0.005em;margin:0 0 12px;max-width:780px;}
+  .footer p b{color:var(--ink);font-weight:600;}
+  .footer ul{margin:0;padding:0 0 0 18px;list-style:none;font-family:var(--mono);font-size:11px;color:var(--ink-3);line-height:1.7;letter-spacing:.02em;}
+  .footer ul li{padding:2px 0;position:relative;}
+  .footer ul li::before{content:"·";color:var(--ink-4);position:absolute;left:-12px;}
+  .footer ul li b{color:var(--ink);font-weight:500;}
+
+  .step-note{margin-top:14px;padding-top:12px;border-top:1px dashed var(--hair);font-family:var(--mono);font-size:10.5px;color:var(--ink-3);letter-spacing:.02em;line-height:1.6;}
+  .step-note .row{display:grid;grid-template-columns:auto 1fr;gap:8px;padding:3px 0;}
+  .step-note .tag{font-size:9px;letter-spacing:.14em;text-transform:uppercase;font-weight:600;}
+  .step-note .tag.iden{color:var(--brand);}
+  .step-note .tag.vis{color:var(--e-vo2-text);}
+  .step-note .tag.trust{color:var(--info);}
+  .step-note .tag.fb{color:var(--ok);}
+  .step-note .tag.guard{color:var(--warn);}
+  .step-note .tag.pro{color:var(--pro);}
+  .step-note b{color:var(--ink);font-weight:500;}
+</style>
+</head>
+<body>
+
+<div class="shell">
+  <div class="shell-top">
+    <h1>Sprint <span class="em">2/B</span> · Records Management</h1>
+    <span class="meta">PB · SB · Target · Reference · 페이스 환산</span>
+    <div class="nav">
+      <a href="SPRINT1_MinjisDay.html">← Sprint 1</a>
+      <a href="SPRINT2_DataImport.html">2/A Import</a>
+      <a href="#" class="on">2/B Records</a>
+      <a href="#">2/C Visuals</a>
+    </div>
+  </div>
+
+  <div class="scope">
+
+    <!-- ============== MOBILE FRAME ============== -->
+    <div>
+      <div style="font-family:var(--mono);font-size:11px;color:var(--ink-3);letter-spacing:.14em;text-transform:uppercase;font-weight:600;margin-bottom:10px;">Mobile · 360</div>
+      <div class="mf">
+        <div class="mfi">
+          <div class="stat mono">
+            <span>9:41</span>
+            <span class="r"><svg width="22" height="10" viewBox="0 0 22 10"><rect x="0" y="1" width="18" height="8" fill="none" stroke="currentColor"/><rect x="2" y="3" width="14" height="4"/></svg></span>
+          </div>
+
+          <div class="mob-top">
+            <h1>Records</h1>
+            <span class="add">+ 추가</span>
+          </div>
+
+          <div class="mob-tabs">
+            <button class="on">PB · SB</button>
+            <button>Target</button>
+            <button>Reference</button>
+          </div>
+
+          <div class="mob-scroll">
+            <!-- Hero PB -->
+            <div class="mob-pb-hero">
+              <div class="lb">Personal Best · Top</div>
+              <div class="ev">5000m · 트랙</div>
+              <h2>16:10<span class="em">.44</span></h2>
+              <div class="narr">2026.03.14 서울국제마라톤 TT · <b>3년 전 +32"</b> 단축</div>
+            </div>
+
+            <!-- PB trail mini -->
+            <div class="mob-trail">
+              <h4>5000m <b>PB Trail</b></h4>
+              <svg viewBox="0 0 280 100" preserveAspectRatio="none">
+                <line x1="0" y1="20" x2="280" y2="20" stroke="#E8E6DF"/>
+                <line x1="0" y1="60" x2="280" y2="60" stroke="#E8E6DF"/>
+                <line x1="0" y1="92" x2="280" y2="92" stroke="#0E1412"/>
+                <text x="2" y="18" font-family="JetBrains Mono" font-size="8" fill="#8F9894">17:00</text>
+                <text x="2" y="58" font-family="JetBrains Mono" font-size="8" fill="#8F9894">16:30</text>
+                <text x="2" y="90" font-family="JetBrains Mono" font-size="8" fill="#5F6965">16:00</text>
+                <polyline fill="none" stroke="#0D5F5A" stroke-width="2" points="20,28 70,40 130,52 200,68 260,84"/>
+                <circle cx="20" cy="28" r="3" fill="#0D5F5A"/>
+                <circle cx="70" cy="40" r="3" fill="#0D5F5A"/>
+                <circle cx="130" cy="52" r="3" fill="#0D5F5A"/>
+                <circle cx="200" cy="68" r="3" fill="#0D5F5A"/>
+                <circle cx="260" cy="84" r="4" fill="#0D5F5A"/>
+                <circle cx="260" cy="84" r="7" fill="none" stroke="#0D5F5A" stroke-width="1.5"/>
+              </svg>
+              <div class="stops">
+                <div class="s"><div class="y">'23</div><div class="v">17:02</div></div>
+                <div class="s"><div class="y">'24</div><div class="v">16:40</div></div>
+                <div class="s"><div class="y">'25</div><div class="v">16:24</div></div>
+                <div class="s now"><div class="y">'26</div><div class="v">16:10</div></div>
+              </div>
+            </div>
+
+            <!-- All events -->
+            <div class="mob-evt">
+              <h4>모든 종목 <b>· 5</b></h4>
+              <div class="mob-evt-row">
+                <span class="ev">800m</span>
+                <div>
+                  <div class="pb">2:08.40</div>
+                  <div class="meta">2025.05 · <b>PB</b></div>
+                </div>
+                <span class="ar">→</span>
+              </div>
+              <div class="mob-evt-row">
+                <span class="ev">1500m</span>
+                <div>
+                  <div class="pb">4:14.82</div>
+                  <div class="meta">2025.10 · <b>PB · SB</b></div>
+                </div>
+                <span class="ar">→</span>
+              </div>
+              <div class="mob-evt-row">
+                <span class="ev">3000m</span>
+                <div>
+                  <div class="pb">9:24.10</div>
+                  <div class="meta">2024.07 · <b>PB</b> · 1.6년 전</div>
+                </div>
+                <span class="ar">→</span>
+              </div>
+              <div class="mob-evt-row">
+                <span class="ev">5000m</span>
+                <div>
+                  <div class="pb">16:10.44</div>
+                  <div class="meta">2026.03 · <b>PB · SB</b></div>
+                </div>
+                <span class="ar">→</span>
+              </div>
+              <div class="mob-evt-row">
+                <span class="ev">10K</span>
+                <div>
+                  <div class="pb" style="color:var(--ink-3);">미입력</div>
+                  <div class="meta">+ 추가</div>
+                </div>
+                <span class="ar">→</span>
+              </div>
+            </div>
+
+            <!-- Targets -->
+            <div class="mob-tg">
+              <h4>다음 Target <b>· 2</b></h4>
+              <div class="mob-tg-row">
+                <div class="head">
+                  <span class="ev">1500m</span>
+                  <span class="when">5.18 일 · <b>D−26</b></span>
+                </div>
+                <div class="nums">
+                  <div class="pb"><div class="l">PB</div>4:14.82</div>
+                  <div class="ar">→</div>
+                  <div class="tgt"><div class="l">Target</div>4:12.00</div>
+                </div>
+                <div class="gap"><div class="fill" style="width:33%;"></div></div>
+                <div class="meta"><span>−2.82s 단축 필요</span><span><b>67%</b> 진척</span></div>
+              </div>
+              <div class="mob-tg-row">
+                <div class="head">
+                  <span class="ev">5000m</span>
+                  <span class="when">8.22 토 · <b>D−122</b></span>
+                </div>
+                <div class="nums">
+                  <div class="pb"><div class="l">SB</div>16:10.44</div>
+                  <div class="ar">→</div>
+                  <div class="tgt"><div class="l">Target</div>15:45.00</div>
+                </div>
+                <div class="gap"><div class="fill" style="width:18%;"></div></div>
+                <div class="meta"><span>−25s 단축 필요</span><span><b>18%</b> 진척</span></div>
+              </div>
+            </div>
+
+            <!-- Deeper analysis (free now, recorded as future-lockable) -->
+            <!-- FEATURE_FLAG: cohortMatching | CURRENT_STATE: free -->
+            <div class="mob-evt" style="border-bottom:0;">
+              <h4>§D · 더 깊은 분석</h4>
+              <div style="font-family:var(--mono);font-size:11px;color:var(--ink-3);line-height:1.7;letter-spacing:.02em;">
+                <div style="padding:6px 0;border-bottom:1px dashed var(--hair);">
+                  <b style="color:var(--ink);">cohort 매칭</b> · 동일 PB 그룹 자동 비교
+                </div>
+                <div style="padding:6px 0;border-bottom:1px dashed var(--hair);">
+                  <b style="color:var(--ink);">페이스 시뮬레이션</b> · lap별 분배 계산
+                </div>
+                <div style="padding:6px 0;">
+                  <b style="color:var(--ink);">라이벌 추적</b> · SB/PB 갱신 자동 알림
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="step-note">
+        <div class="row"><span class="tag iden">IDEN</span><span><b>"3년 전 +32" 단축"</b> — narrative가 본인 역사를 사실로 보여줌.</span></div>
+        <div class="row"><span class="tag vis">VIS</span><span>PB Trail · 4 stops로 연도별 PB 곡선. <b>현재 점만 강조</b> (큰 원).</span></div>
+        <div class="row"><span class="tag fb">FB</span><span>Target · <b>D-day 카운트다운</b> + 진척 bar. 매일 들어올 이유.</span></div>
+      </div>
+    </div>
+
+    <!-- ============== DESKTOP FRAME ============== -->
+    <div>
+      <div style="font-family:var(--mono);font-size:11px;color:var(--ink-3);letter-spacing:.14em;text-transform:uppercase;font-weight:600;margin-bottom:10px;">Desktop · 1280</div>
+      <div class="df">
+        <div class="df-chrome">
+          <div class="dots"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span></div>
+          <div class="url"><b>app.trainoracle.run</b>/records</div>
+        </div>
+
+        <div class="df-app">
+          <!-- sidebar -->
+          <aside class="ds-side">
+            <div class="ds-brand">TRAIN<span class="dot"></span>RACLE</div>
+            <div class="ds-lb">Training</div>
+            <a class="ds-nav" href="#">대시보드<span class="k">⌘1</span></a>
+            <a class="ds-nav" href="#">캘린더<span class="k">⌘2</span></a>
+            <a class="ds-nav" href="#">장호준 AI<span class="k">⌘3</span></a>
+            <a class="ds-nav" href="#">분석<span class="k">⌘4</span></a>
+            <a class="ds-nav" href="#">AI 인박스<span class="k">2</span></a>
+            <div class="ds-lb">Records</div>
+            <a class="ds-nav on" href="#">기록<span class="k">⌘5</span></a>
+            <a class="ds-nav" href="#">대회<span class="k">⌘6</span></a>
+          </aside>
+
+          <!-- main -->
+          <main class="ds-main">
+            <div class="ds-top">
+              <h1>Records</h1>
+              <span class="ctx"><b>민지</b> · 5 종목 · 마지막 갱신 <b>2026.03.14</b></span>
+              <div class="spacer"></div>
+              <button>다음 대회로</button>
+              <button class="primary">+ 새 기록</button>
+            </div>
+
+            <div class="ds-tabs">
+              <button class="on">PB · SB <span class="ct">5</span></button>
+              <button>Target <span class="ct">2</span></button>
+              <button>Reference <span class="ct">4</span></button>
+              <button>History <span class="ct">14</span></button>
+            </div>
+
+            <!-- Hero PB (most impressive) -->
+            <div class="pb-hero">
+              <div class="lb">Personal Best · Top</div>
+              <h2>5000m <span class="em">16:10</span><span style="font-style:italic;color:var(--brand);font-weight:400;font-size:32px;letter-spacing:-0.025em;">.44</span></h2>
+              <div class="narr"><b>2026.03.14</b> 서울국제마라톤 TT · 동일 PB 그룹 cohort 평균 대비 <b>+1.4σ</b> 빠름 · 3년 전 첫 기록 <b>17:02 → −52초</b> 단축</div>
+            </div>
+
+            <!-- All events -->
+            <div class="evt-grid">
+              <h3>§1 · 모든 종목 <b>· 5</b></h3>
+
+              <div class="evt-row">
+                <span class="ev">800m</span>
+                <span class="lb">PB</span>
+                <span class="pb-v pb">2:08<span class="dim">.40</span></span>
+                <span class="when">2025.05.18</span>
+                <span class="gap behind">−2.4s</span>
+                <span class="ar">→</span>
+              </div>
+              <div class="evt-row">
+                <span class="ev">1500m</span>
+                <span class="lb">PB / SB</span>
+                <span class="pb-v pb">4:14<span class="dim">.82</span></span>
+                <span class="when">2025.10.12</span>
+                <span class="gap behind">−2.8s</span>
+                <span class="ar">→</span>
+              </div>
+              <div class="evt-row">
+                <span class="ev">3000m</span>
+                <span class="lb">PB</span>
+                <span class="pb-v">9:24<span class="dim">.10</span></span>
+                <span class="when">2024.07.08</span>
+                <span class="gap" style="color:var(--ink-3);">1.6년 전</span>
+                <span class="ar">→</span>
+              </div>
+              <div class="evt-row">
+                <span class="ev">5000m</span>
+                <span class="lb">PB / SB</span>
+                <span class="pb-v pb">16:10<span class="dim">.44</span></span>
+                <span class="when">2026.03.14</span>
+                <span class="gap ahead">+0.0s</span>
+                <span class="ar">→</span>
+              </div>
+              <div class="evt-row">
+                <span class="ev">10K</span>
+                <span class="lb">—</span>
+                <span class="pb-v" style="color:var(--ink-4);">미입력</span>
+                <span class="when" style="color:var(--ink-4);">—</span>
+                <span class="gap" style="color:var(--ink-4);">+ 추가</span>
+                <span class="ar">→</span>
+              </div>
+            </div>
+
+            <!-- PB Trail (5000m) -->
+            <div class="trail">
+              <h3>5000m PB Trail<span class="ev">3 years · 5 PBs</span></h3>
+              <div class="sub"><b>17:02 → 16:10</b> · −52초 단축</div>
+              <svg viewBox="0 0 720 180" preserveAspectRatio="none">
+                <!-- grid -->
+                <line x1="40" y1="20" x2="700" y2="20" stroke="#E8E6DF"/>
+                <line x1="40" y1="60" x2="700" y2="60" stroke="#E8E6DF"/>
+                <line x1="40" y1="100" x2="700" y2="100" stroke="#E8E6DF"/>
+                <line x1="40" y1="140" x2="700" y2="140" stroke="#0E1412"/>
+                <text x="6" y="22" font-family="JetBrains Mono" font-size="9" fill="#8F9894">17:30</text>
+                <text x="6" y="62" font-family="JetBrains Mono" font-size="9" fill="#8F9894">17:00</text>
+                <text x="6" y="102" font-family="JetBrains Mono" font-size="9" fill="#8F9894">16:30</text>
+                <text x="6" y="138" font-family="JetBrains Mono" font-size="9" fill="#5F6965" font-weight="500">16:00</text>
+                <!-- target line (15:45) -->
+                <line x1="40" y1="160" x2="700" y2="160" stroke="#0D5F5A" stroke-width="1" stroke-dasharray="3,3"/>
+                <text x="700" y="156" font-family="JetBrains Mono" font-size="8" fill="#0D5F5A" text-anchor="end">target 15:45</text>
+                <!-- PB curve -->
+                <polyline fill="none" stroke="#0D5F5A" stroke-width="2.5" points="80,40 200,60 360,80 500,108 660,132"/>
+                <!-- PB stops -->
+                <circle cx="80" cy="40" r="4" fill="#FFFFFF" stroke="#0D5F5A" stroke-width="2"/>
+                <circle cx="200" cy="60" r="4" fill="#FFFFFF" stroke="#0D5F5A" stroke-width="2"/>
+                <circle cx="360" cy="80" r="4" fill="#FFFFFF" stroke="#0D5F5A" stroke-width="2"/>
+                <circle cx="500" cy="108" r="4" fill="#FFFFFF" stroke="#0D5F5A" stroke-width="2"/>
+                <circle cx="660" cy="132" r="6" fill="#0D5F5A"/>
+                <circle cx="660" cy="132" r="11" fill="none" stroke="#0D5F5A" stroke-width="1"/>
+                <!-- annotations -->
+                <text x="80" y="33" font-family="JetBrains Mono" font-size="8.5" fill="#5F6965" text-anchor="middle">17:30</text>
+                <text x="200" y="53" font-family="JetBrains Mono" font-size="8.5" fill="#5F6965" text-anchor="middle">17:02</text>
+                <text x="360" y="73" font-family="JetBrains Mono" font-size="8.5" fill="#5F6965" text-anchor="middle">16:40</text>
+                <text x="500" y="101" font-family="JetBrains Mono" font-size="8.5" fill="#5F6965" text-anchor="middle">16:24</text>
+                <text x="660" y="125" font-family="JetBrains Mono" font-size="9.5" fill="#0D5F5A" font-weight="600" text-anchor="middle">16:10</text>
+              </svg>
+              <div class="trail-stops">
+                <div class="stp"><div class="yr">2023.04</div><div class="v">17:30</div></div>
+                <div class="stp"><div class="yr">2023.10</div><div class="v">17:02</div></div>
+                <div class="stp"><div class="yr">2024.05</div><div class="v">16:40</div></div>
+                <div class="stp"><div class="yr">2024.10</div><div class="v">16:24</div></div>
+                <div class="stp"><div class="yr">2025.10</div><div class="v">16:24</div></div>
+                <div class="stp"><div class="yr">2026.01</div><div class="v">16:18</div></div>
+                <div class="stp now"><div class="yr">2026.03</div><div class="v">16:10</div></div>
+              </div>
+            </div>
+
+            <!-- Pace conversion table -->
+            <div class="pace-tbl">
+              <div class="pace-tbl-head">
+                <h3>§2 · 페이스 환산표</h3>
+                <span class="src">기준: <b>5000m PB 16:10.44</b> · Daniels 환산<sup style="font-family:var(--mono);font-size:9px;color:var(--brand);">[J1]</sup></span>
+              </div>
+              <table>
+                <thead>
+                  <tr>
+                    <th>System</th>
+                    <th>Zone</th>
+                    <th class="r">Pace /km</th>
+                    <th class="r">HR target</th>
+                    <th class="r">RPE</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr><td><span class="e base">BA</span></td><td>Z1 · easy</td><td class="r">5'30" — 6'00"</td><td class="r">128 — 145</td><td class="r">3—4</td></tr>
+                  <tr><td><span class="e base">BA</span></td><td>Z2 · base</td><td class="r">4'45" — 5'15"</td><td class="r">145 — 160</td><td class="r">5</td></tr>
+                  <tr><td><span class="e lt">LT</span></td><td>Z3 · marathon</td><td class="r">3'55" — 4'10"</td><td class="r">160 — 170</td><td class="r">6</td></tr>
+                  <tr><td><span class="e lt">LT</span></td><td>Z4 · threshold</td><td class="r">3'42" — 3'48"</td><td class="r">170 — 178</td><td class="r">7</td></tr>
+                  <tr class="hl"><td><span class="e vo2">V2</span></td><td>Z5 · VO2</td><td class="r">3'18" — 3'22"</td><td class="r">178 — 186</td><td class="r">8</td></tr>
+                  <tr><td><span class="e gly">GL</span></td><td>Z6 · 1500 race</td><td class="r">2'48" — 2'54"</td><td class="r">186 — 195</td><td class="r">9</td></tr>
+                  <tr><td><span class="e gly">GL</span></td><td>Z7 · 800 race</td><td class="r">2'40" — 2'44"</td><td class="r">max</td><td class="r">10</td></tr>
+                </tbody>
+              </table>
+            </div>
+
+          </main>
+
+          <!-- right column -->
+          <aside class="ds-right">
+            <!-- Targets -->
+            <div class="rp-sec">
+              <h4>§A · Target <b>· 2</b><span class="ct">다음 대회</span></h4>
+              <div class="tg">
+                <div class="row">
+                  <div class="ev-line">
+                    <span class="ev">1500m</span>
+                    <span class="when">5.18 일 · <b>D−26</b></span>
+                  </div>
+                  <div class="nums">
+                    <div class="pb"><span class="l">PB</span>4:14.82</div>
+                    <span class="ar">→</span>
+                    <div class="tgt"><span class="l">Target</span>4:12.00</div>
+                  </div>
+                  <div class="gap-bar"><div class="fill" style="width:33%;"></div></div>
+                  <div class="gap-meta"><span>−2.82s 단축 필요</span><span><b>33%</b> 진척</span></div>
+                </div>
+                <div class="row">
+                  <div class="ev-line">
+                    <span class="ev">5000m</span>
+                    <span class="when">8.22 토 · <b>D−122</b></span>
+                  </div>
+                  <div class="nums">
+                    <div class="pb"><span class="l">SB</span>16:10.44</div>
+                    <span class="ar">→</span>
+                    <div class="tgt"><span class="l">Target</span>15:45.00</div>
+                  </div>
+                  <div class="gap-bar"><div class="fill" style="width:18%;"></div></div>
+                  <div class="gap-meta"><span>−25s 단축 필요</span><span><b>18%</b> 진척</span></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Reference -->
+            <div class="rp-sec">
+              <h4>§B · Reference <b>· 4</b></h4>
+              <div class="rf-it">
+                <div class="av">JL</div>
+                <div>
+                  <div class="nm">정라이벌 · 1500m</div>
+                  <div class="meta"><span class="tag rival">RIVAL</span>4:09.22 · 같은 그룹</div>
+                </div>
+                <span class="gap behind">−5.6s</span>
+              </div>
+              <div class="rf-it">
+                <div class="av">SH</div>
+                <div>
+                  <div class="nm">신혜원 · 1500m</div>
+                  <div class="meta"><span class="tag">REF</span>4:11.04 · 본받기</div>
+                </div>
+                <span class="gap behind">−3.8s</span>
+              </div>
+              <div class="rf-it">
+                <div class="av">●</div>
+                <div>
+                  <div class="nm">cohort 동일그룹 평균</div>
+                  <div class="meta"><span class="tag cohort">COHORT</span>23명 · 1500m 4:18</div>
+                </div>
+                <span class="gap" style="color:var(--ok);">+3.2s</span>
+              </div>
+              <div class="rf-it">
+                <div class="av">●</div>
+                <div>
+                  <div class="nm">cohort 상위 10%</div>
+                  <div class="meta"><span class="tag cohort">COHORT</span>4:08</div>
+                </div>
+                <span class="gap behind">−6.8s</span>
+              </div>
+            </div>
+
+            <!-- Deeper analysis (currently free, recorded as future-lockable) -->
+            <!-- FEATURE_FLAG: cohortMatching, paceSimulation, rivalTracking -->
+            <!-- CURRENT_STATE: free | FUTURE_STATE: pro-lockable -->
+            <div class="rp-sec" style="border-bottom:0;">
+              <h4>§C · 더 깊은 분석</h4>
+              <div style="font-family:var(--mono);font-size:11px;color:var(--ink-3);line-height:1.7;letter-spacing:.02em;">
+                <div style="padding:6px 0;border-bottom:1px solid var(--hair);">
+                  <b style="color:var(--ink);">cohort 동일그룹 매칭</b><br/>
+                  <span style="font-size:10px;">같은 PB 그룹 23명과 자동 비교</span>
+                </div>
+                <div style="padding:6px 0;border-bottom:1px solid var(--hair);">
+                  <b style="color:var(--ink);">페이스 분배 시뮬레이션</b><br/>
+                  <span style="font-size:10px;">4'12" 달성을 위한 lap 분배 계산</span>
+                </div>
+                <div style="padding:6px 0;">
+                  <b style="color:var(--ink);">라이벌 추적</b><br/>
+                  <span style="font-size:10px;">등록한 선수 SB/PB 갱신 자동 알림</span>
+                </div>
+              </div>
+            </div>
+
+            <div style="padding:20px 22px;font-family:var(--mono);font-size:10px;color:var(--ink-3);letter-spacing:.04em;line-height:1.7;border-top:1px solid var(--line);">
+              <div style="font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3);font-weight:600;margin-bottom:8px;">§D · 입력 안내</div>
+              본인 입력 vs 디바이스 자동 추출.<br/>
+              자동 추출은 GPS/HR 검증된 활동만.<br/>
+              임시 기록(연습 시간기록 등)은 <b>별도 표기</b>.
+            </div>
+          </aside>
+        </div>
+      </div>
+
+      <div class="step-note">
+        <div class="row"><span class="tag iden">IDEN</span><span><b>PB hero</b> — 가장 자랑스러운 기록 큰 글씨로 첫 진입. "내 정체성".</span></div>
+        <div class="row"><span class="tag vis">VIS</span><span><b>PB Trail</b> — 3년 7 stops + target line. 본인 진척의 시각 narrative.</span></div>
+        <div class="row"><span class="tag trust">TR</span><span>Target에 "<b>−2.82s 단축 필요</b>" / "33% 진척" — 사실 기반. 평가 X.</span></div>
+        <div class="row"><span class="tag fb">FB</span><span>Target D-day 카운트 + 진척 bar — <b>매일 들어올 이유</b>.</span></div>
+        <div class="row"><span class="tag guard">GUARD</span><span>Reference cohort = <b>opt-in</b> 필요. 모든 기능 현재 무료 · <b>FEATURE_TIERS.md</b> 참조.</span></div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- footer summary -->
+  <div class="footer">
+    <h2>4 타입 기록의 의미</h2>
+    <p><b>PB · SB</b>는 정체성. <b>Target</b>은 매일 돌아오는 동기. <b>Reference</b>는 비교 좌표. 페이스 환산표는 <b>모든 추천의 기반</b>입니다.</p>
+    <ul>
+      <li><b>PB Trail</b> — 3년 진척 곡선 + 다음 target line. 현재가 어디에 있는지 시각으로.</li>
+      <li><b>Target gap bar</b> — 매일 들어와 진척 % 변화 확인. 동기 부여 메커니즘.</li>
+      <li><b>Reference</b> — 라이벌 입력은 사용자가, cohort는 opt-in. 무리한 비교 X.</li>
+      <li><b>페이스 환산표</b> — PB 입력 → 7개 zone 자동 계산. 모든 세션 추천의 기반.</li>
+      <li>모든 기능 <b>현재 무료</b>. cohort 매칭, 페이스 시뮬레이션, 라이벌 추적도 모두 사용 가능.</li>
+      <li>추후 Pro 분리 결정 시 변경 쉽도록 코드 구조만 준비. <b>design-system/FEATURE_TIERS.md</b> 참조.</li>
+      <li>가드레일: <b>narrative 사실만</b> ("−52초 단축"), <b>3년 데이터로 cold start 자동 해결</b>, <b>Reference cohort opt-in</b>.</li>
+    </ul>
+  </div>
+</div>
+
+</body></html>

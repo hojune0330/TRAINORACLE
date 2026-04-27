@@ -1,0 +1,686 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>TRAINORACLE — Sprint 2 · Data Import</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+<link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css" rel="stylesheet" />
+<style>
+  :root{
+    --bg:#FAFAF7;--surface:#FFFFFF;--surface-2:#F4F3EE;
+    --ink:#0E1412;--ink-2:#2B3330;--ink-3:#5F6965;--ink-4:#8F9894;
+    --line:#D9D6CE;--line-2:#BFBBB0;--hair:#E8E6DF;
+    --brand:#0D5F5A;--brand-ink:#07302E;--brand-wash:#E6F0EE;
+    --ok:#1F7A3A;--ok-wash:#E6F2E9;
+    --warn:#B4530C;--warn-wash:#FAEAD9;
+    --info:#1D4ED8;--info-wash:#E6EBF8;
+    --unc:#6B3FB0;--unc-wash:#EFE8F7;
+
+    --e-base-strong:#2A6396; --e-base-mid:#4A8FC7; --e-base-text:#1D4E75; --e-base-wash:#E8F0F7;
+    --e-lt-strong:  #8A7818; --e-lt-mid:  #B8A024; --e-lt-text:  #7A6A1A; --e-lt-wash:  #F4F0DB;
+    --e-vo2-strong: #9E5A14; --e-vo2-mid: #C7761C; --e-vo2-text: #8A4A1C; --e-vo2-wash: #F7E9D9;
+    --e-gly-strong: #8E2421; --e-gly-mid: #B8332E; --e-gly-text: #8A2A2A; --e-gly-wash: #F2DAD8;
+    --e-atp-strong: #5A2D8A; --e-atp-mid: #7A3FB5; --e-atp-text: #5A2F8A; --e-atp-wash: #EBE0F5;
+    --e-rest-strong:#4A4A45; --e-rest-mid:#7A7A70; --e-rest-text:#5A5A55; --e-rest-wash:#EFEEEA;
+
+    --sans:"Inter","Pretendard Variable",ui-sans-serif,system-ui,sans-serif;
+    --mono:"JetBrains Mono",ui-monospace,SFMono-Regular,monospace;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;background:#E4E2DA;color:var(--ink);font-family:var(--sans);font-size:14.5px;line-height:1.55;-webkit-font-smoothing:antialiased;font-feature-settings:"ss01","cv11";}
+  .mono{font-family:var(--mono);font-variant-numeric:tabular-nums;}
+
+  /* SHELL */
+  .shell{padding:32px 24px 64px;}
+  .shell-top{max-width:1440px;margin:0 auto 28px;display:flex;align-items:baseline;gap:18px;flex-wrap:wrap;padding-bottom:18px;border-bottom:1px solid var(--line-2);}
+  .shell-top h1{margin:0;font-size:26px;font-weight:500;letter-spacing:-0.025em;}
+  .shell-top h1 .em{font-style:italic;color:var(--brand);font-weight:400;}
+  .shell-top .meta{font-family:var(--mono);font-size:11px;color:var(--ink-3);letter-spacing:.04em;}
+  .shell-top .meta b{color:var(--ink);font-weight:500;}
+  .shell-top .nav{margin-left:auto;display:flex;gap:0;border:1px solid var(--line);}
+  .shell-top .nav a{padding:6px 14px;font-family:var(--mono);font-size:11px;color:var(--ink-3);text-decoration:none;letter-spacing:.06em;text-transform:uppercase;border-right:1px solid var(--line);}
+  .shell-top .nav a:last-child{border-right:0;}
+  .shell-top .nav a.on{background:var(--ink);color:var(--bg);font-weight:600;}
+  .shell-top .nav a:hover:not(.on){color:var(--ink);}
+
+  .grid{max-width:1440px;margin:0 auto;display:grid;grid-template-columns:repeat(3,1fr);gap:32px 28px;}
+  @media(max-width:1100px){.grid{grid-template-columns:1fr 1fr;}}
+  @media(max-width:760px){.grid{grid-template-columns:1fr;}}
+
+  .step{display:flex;flex-direction:column;}
+  .step-head{margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid var(--ink);}
+  .step-head .num{font-family:var(--mono);font-size:11px;color:var(--ink-3);letter-spacing:.14em;text-transform:uppercase;font-weight:600;}
+  .step-head .num b{color:var(--ink);}
+  .step-head h2{margin:4px 0 6px;font-size:18px;font-weight:500;letter-spacing:-0.015em;line-height:1.2;}
+  .step-head .ts{font-family:var(--mono);font-size:11px;color:var(--ink-3);letter-spacing:.04em;}
+
+  /* mobile frame */
+  .mf{background:#0E1412;padding:8px;align-self:center;}
+  .mfi{background:var(--bg);width:340px;height:680px;display:flex;flex-direction:column;overflow:hidden;position:relative;}
+  .stat{height:24px;display:flex;align-items:center;justify-content:space-between;padding:4px 18px 0;font-size:11.5px;font-weight:600;flex-shrink:0;}
+  .stat .r{display:flex;gap:5px;align-items:center;}
+
+  /* progress */
+  .ob-prog{padding:8px 18px;display:flex;align-items:center;gap:10px;font-family:var(--mono);font-size:10px;color:var(--ink-3);letter-spacing:.06em;text-transform:uppercase;font-weight:600;border-bottom:1px solid var(--line);flex-shrink:0;}
+  .ob-prog .bar{flex:1;height:2px;background:var(--hair);position:relative;}
+  .ob-prog .bar .fill{height:100%;background:var(--ink);}
+
+  .ob-body{flex:1;overflow-y:auto;padding:24px 22px 100px;}
+  .ob-stick{position:absolute;bottom:0;left:0;right:0;background:var(--bg);border-top:1px solid var(--ink);padding:12px 16px 14px;display:flex;gap:8px;}
+  .ob-stick .back{min-height:48px;padding:0 16px;background:transparent;border:1px solid var(--line);color:var(--ink);font-family:var(--mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;cursor:pointer;font-weight:500;}
+  .ob-stick .next{flex:1;min-height:48px;background:var(--ink);color:var(--bg);border:0;font-size:14px;font-weight:500;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;letter-spacing:.01em;}
+  .ob-stick .next.brand{background:var(--brand);}
+  .ob-stick .next.dis{background:var(--ink-4);cursor:not-allowed;}
+  .ob-stick .next .kbd{font-family:var(--mono);font-size:10px;opacity:.6;border:1px solid rgba(255,255,255,.3);padding:1px 5px;}
+
+  /* Common heads */
+  .ob-no{font-family:var(--mono);font-size:10px;color:var(--ink-3);letter-spacing:.14em;text-transform:uppercase;font-weight:600;margin-bottom:8px;}
+  .ob-no b{color:var(--ink);font-weight:500;}
+  .ob-h{font-size:24px;font-weight:500;letter-spacing:-0.025em;line-height:1.15;margin:0 0 6px;}
+  .ob-h .em{font-style:italic;color:var(--brand);font-weight:400;}
+  .ob-d{font-size:13.5px;color:var(--ink-2);line-height:1.55;margin:0 0 22px;letter-spacing:-0.005em;}
+  .ob-d b{color:var(--ink);font-weight:500;}
+
+  /* === STEP 1 — Device choice === */
+  .dev-list{display:flex;flex-direction:column;border:1px solid var(--ink);}
+  .dev-it{display:grid;grid-template-columns:36px 1fr auto;gap:12px;padding:14px 14px;border-bottom:1px solid var(--line);align-items:center;cursor:pointer;background:transparent;text-align:left;border-left:3px solid transparent;}
+  .dev-it:last-child{border-bottom:0;}
+  .dev-it:hover{background:var(--surface-2);}
+  .dev-it.on{border-left-color:var(--brand);background:var(--brand-wash);}
+  .dev-it .lg{width:36px;height:36px;background:var(--surface);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:13px;font-weight:600;letter-spacing:-0.02em;color:var(--ink);}
+  .dev-it .body .nm{font-size:14.5px;font-weight:600;letter-spacing:-0.005em;color:var(--ink);}
+  .dev-it .body .sub{font-family:var(--mono);font-size:10px;color:var(--ink-3);margin-top:2px;letter-spacing:.02em;line-height:1.5;}
+  .dev-it .body .tag{display:inline-block;font-family:var(--mono);font-size:8.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;padding:1px 5px;color:#fff;background:var(--brand);margin-top:5px;}
+  .dev-it .body .tag.sec{background:var(--ink-3);}
+  .dev-it .ar{font-family:var(--mono);font-size:11px;color:var(--ink-3);letter-spacing:.04em;}
+
+  .info-card{margin-top:16px;padding:12px 14px;border-left:2px solid var(--info);background:var(--info-wash);}
+  .info-card .lb{font-family:var(--mono);font-size:9.5px;color:var(--info);letter-spacing:.14em;text-transform:uppercase;font-weight:600;margin-bottom:4px;}
+  .info-card p{margin:0;font-size:12.5px;color:var(--ink-2);line-height:1.55;letter-spacing:-0.005em;}
+  .info-card p b{color:var(--ink);font-weight:600;}
+
+  /* === STEP 2 — Analysis === */
+  .ana-hero{padding:32px 0 22px;text-align:center;border-bottom:1px solid var(--line);margin-bottom:18px;}
+  .ana-hero .av{width:64px;height:64px;border:1px solid var(--ink);background:var(--surface);display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:18px;font-weight:600;letter-spacing:-0.02em;margin:0 auto 14px;position:relative;}
+  .ana-hero .av .pulse{position:absolute;inset:-8px;border:1px solid var(--brand);animation:pulse 2s ease-in-out infinite;}
+  @keyframes pulse{0%,100%{opacity:.2;transform:scale(1);}50%{opacity:.7;transform:scale(1.04);}}
+  .ana-hero h3{margin:0 0 4px;font-size:18px;font-weight:500;letter-spacing:-0.015em;}
+  .ana-hero h3 .em{font-style:italic;color:var(--brand);font-weight:400;}
+  .ana-hero .pct{font-family:var(--mono);font-size:42px;font-weight:500;letter-spacing:-0.04em;color:var(--ink);line-height:1;margin:14px 0 6px;}
+  .ana-hero .pct .of{font-size:18px;color:var(--ink-3);font-weight:400;}
+  .ana-hero .pbar{margin:14px 18px 0;height:3px;background:var(--hair);position:relative;}
+  .ana-hero .pbar .fill{height:100%;background:var(--ink);}
+  .ana-hero .ts{font-family:var(--mono);font-size:10.5px;color:var(--ink-3);margin-top:10px;letter-spacing:.06em;text-transform:uppercase;font-weight:600;}
+
+  .ana-stages{padding:0 18px;}
+  .stg{display:grid;grid-template-columns:24px 1fr auto;gap:10px;padding:11px 0;border-bottom:1px solid var(--hair);align-items:baseline;font-family:var(--mono);}
+  .stg:last-child{border-bottom:0;}
+  .stg .mk{font-size:11px;font-weight:600;color:var(--ink-4);}
+  .stg.done .mk{color:var(--ok);}
+  .stg.now .mk{color:var(--brand);}
+  .stg.now .mk::after{content:"...";letter-spacing:.04em;}
+  .stg .body{font-size:12.5px;color:var(--ink-3);letter-spacing:-0.005em;}
+  .stg.done .body{color:var(--ink);}
+  .stg.now .body{color:var(--ink);font-weight:500;}
+  .stg .body .det{display:block;font-size:10.5px;color:var(--ink-3);margin-top:2px;letter-spacing:.02em;font-weight:400;}
+  .stg .ts{font-size:10px;color:var(--ink-4);letter-spacing:.04em;}
+
+  .ana-found{padding:18px;background:var(--surface-2);border-top:1px solid var(--line);position:absolute;bottom:0;left:0;right:0;}
+  .ana-found .lb{font-family:var(--mono);font-size:9.5px;color:var(--ink-3);letter-spacing:.14em;text-transform:uppercase;font-weight:600;margin-bottom:8px;}
+  .ana-found .lb .dot{display:inline-block;width:5px;height:5px;background:var(--brand);margin-right:5px;animation:blink 1.5s ease-in-out infinite;}
+  @keyframes blink{0%,100%{opacity:1;}50%{opacity:.3;}}
+  .ana-found .row{display:flex;justify-content:space-between;font-family:var(--mono);font-size:11.5px;padding:3px 0;}
+  .ana-found .row .l{color:var(--ink-3);font-size:10px;letter-spacing:.06em;text-transform:uppercase;font-weight:600;}
+  .ana-found .row .v{color:var(--ink);font-weight:500;letter-spacing:-0.01em;font-size:13px;}
+
+  /* === STEP 3 — Reveal === */
+  .rev-head{padding:28px 22px 18px;border-bottom:1px solid var(--ink);}
+  .rev-head .lb{font-family:var(--mono);font-size:10px;color:var(--brand);letter-spacing:.14em;text-transform:uppercase;font-weight:600;margin-bottom:6px;}
+  .rev-head .lb::before{content:"●";margin-right:6px;}
+  .rev-head h3{margin:0;font-size:24px;font-weight:500;letter-spacing:-0.025em;line-height:1.15;}
+  .rev-head h3 .em{font-style:italic;color:var(--brand);font-weight:400;}
+  .rev-head .sub{font-family:var(--mono);font-size:11px;color:var(--ink-3);margin-top:6px;letter-spacing:.02em;}
+  .rev-head .sub b{color:var(--ink);font-weight:500;}
+
+  .rev-section{padding:18px 22px;border-bottom:1px solid var(--line);}
+  .rev-section h4{font-family:var(--mono);font-size:9.5px;color:var(--ink-3);letter-spacing:.14em;text-transform:uppercase;font-weight:600;margin:0 0 12px;}
+  .rev-section h4 b{color:var(--ink);}
+
+  /* big numbers */
+  .rev-bignum{display:grid;grid-template-columns:1fr 1fr;gap:0;}
+  .rev-bignum .n{padding:12px 0;border-right:1px solid var(--hair);border-bottom:1px solid var(--hair);padding-right:12px;}
+  .rev-bignum .n:nth-child(2n){border-right:0;padding-left:12px;padding-right:0;}
+  .rev-bignum .n:nth-last-child(-n+2){border-bottom:0;}
+  .rev-bignum .l{font-family:var(--mono);font-size:9.5px;color:var(--ink-3);letter-spacing:.14em;text-transform:uppercase;font-weight:600;margin-bottom:4px;}
+  .rev-bignum .v{font-family:var(--mono);font-size:24px;font-weight:500;letter-spacing:-0.03em;color:var(--ink);line-height:1;}
+  .rev-bignum .v .u{font-size:11px;color:var(--ink-3);font-weight:400;margin-left:2px;letter-spacing:0;}
+  .rev-bignum .vs{font-family:var(--mono);font-size:10px;color:var(--ink-3);margin-top:4px;letter-spacing:.02em;}
+
+  /* energy distribution — Tier 1 STRONG */
+  .e-dist{margin:0 0 12px;}
+  .e-dist .bar{width:100%;height:18px;display:flex;border:1px solid var(--ink);}
+  .e-dist .bar .seg{height:100%;}
+  .e-dist .bar .seg.base{background:var(--e-base-mid);}
+  .e-dist .bar .seg.lt{background:var(--e-lt-mid);border-left:1px solid var(--ink);}
+  .e-dist .bar .seg.vo2{background:var(--e-vo2-mid);border-left:1px solid var(--ink);}
+  .e-dist .bar .seg.gly{background:var(--e-gly-mid);border-left:1px solid var(--ink);}
+  .e-dist .bar .seg.rest{background:var(--e-rest-mid);border-left:1px solid var(--ink);}
+  .e-dist .lg-row{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-top:10px;font-family:var(--mono);font-size:10px;}
+  .e-dist .lg-row .it{}
+  .e-dist .lg-row .it .sw{display:inline-block;width:8px;height:8px;vertical-align:1px;margin-right:4px;}
+  .e-dist .lg-row .it .sw.base{background:var(--e-base-mid);}
+  .e-dist .lg-row .it .sw.lt{background:var(--e-lt-mid);}
+  .e-dist .lg-row .it .sw.vo2{background:var(--e-vo2-mid);}
+  .e-dist .lg-row .it .sw.gly{background:var(--e-gly-mid);}
+  .e-dist .lg-row .it .sw.rest{background:var(--e-rest-mid);}
+  .e-dist .lg-row .it .nm{font-size:9.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-3);font-weight:600;}
+  .e-dist .lg-row .it .pct{font-size:13px;font-weight:500;color:var(--ink);margin-top:2px;letter-spacing:-0.01em;}
+
+  /* yearly heatmap (3 years) */
+  .heat{margin:8px 0 4px;}
+  .heat-row{display:flex;align-items:center;gap:10px;margin-bottom:5px;}
+  .heat-row .yr{font-family:var(--mono);font-size:10px;color:var(--ink-3);width:34px;font-weight:600;letter-spacing:.04em;}
+  .heat-row .cells{flex:1;display:grid;grid-template-columns:repeat(52,1fr);gap:1px;}
+  .heat-row .cells .c{aspect-ratio:1;background:var(--hair);}
+  .heat-row .cells .c.l1{background:var(--e-base-wash);}
+  .heat-row .cells .c.l2{background:var(--e-base-mid);opacity:.55;}
+  .heat-row .cells .c.l3{background:var(--e-base-mid);}
+  .heat-row .cells .c.l4{background:var(--e-base-strong);}
+  .heat-row .cells .c.lt{background:var(--e-lt-mid);}
+  .heat-row .cells .c.v2{background:var(--e-vo2-mid);}
+  .heat-row .cells .c.gl{background:var(--e-gly-mid);}
+  .heat-row .cells .c.re{background:var(--e-rest-mid);opacity:.5;}
+  .heat-row .cells .c.empty{background:transparent;}
+  .heat-meta{display:flex;justify-content:space-between;font-family:var(--mono);font-size:9px;color:var(--ink-4);margin-top:6px;letter-spacing:.06em;text-transform:uppercase;}
+
+  /* pattern card */
+  .pcard{padding:14px 16px;border:1px solid var(--ink);margin-bottom:10px;background:var(--surface);position:relative;}
+  .pcard::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--brand);}
+  .pcard .h{font-family:var(--mono);font-size:9.5px;color:var(--brand);letter-spacing:.14em;text-transform:uppercase;font-weight:600;margin-bottom:5px;}
+  .pcard .t{font-size:14px;font-weight:500;letter-spacing:-0.005em;line-height:1.4;color:var(--ink);}
+  .pcard .t .hi{background:linear-gradient(transparent 62%, rgba(13,95,90,.18) 62%);padding:0 2px;font-weight:600;}
+  .pcard .meta{font-family:var(--mono);font-size:10.5px;color:var(--ink-3);margin-top:6px;letter-spacing:.02em;line-height:1.5;}
+
+  /* AI first words */
+  .firstai{padding:18px 22px;border-left:2px solid var(--brand);margin:0;}
+  .firstai .nm{font-family:var(--mono);font-size:10px;color:var(--brand);letter-spacing:.14em;text-transform:uppercase;font-weight:600;}
+  .firstai .nm::before{content:"●";margin-right:6px;}
+  .firstai p{margin:8px 0 0;font-size:14.5px;line-height:1.55;color:var(--ink);letter-spacing:-0.005em;}
+  .firstai p b{font-weight:600;}
+  .firstai p .k{font-family:var(--mono);font-size:13px;background:var(--surface-2);border:1px solid var(--line);padding:0 4px;}
+
+  /* notes panel */
+  .step-note{margin-top:14px;padding-top:12px;border-top:1px dashed var(--hair);font-family:var(--mono);font-size:10.5px;color:var(--ink-3);letter-spacing:.02em;line-height:1.6;}
+  .step-note b{color:var(--ink);font-weight:500;}
+  .step-note .row{display:grid;grid-template-columns:auto 1fr;gap:8px;padding:3px 0;}
+  .step-note .tag{font-size:9px;letter-spacing:.14em;text-transform:uppercase;font-weight:600;}
+  .step-note .tag.iden{color:var(--brand);}
+  .step-note .tag.vis{color:var(--e-vo2-text);}
+  .step-note .tag.trust{color:var(--info);}
+  .step-note .tag.fb{color:var(--ok);}
+  .step-note .tag.guard{color:var(--warn);}
+
+  /* footer */
+  .footer{max-width:1440px;margin:60px auto 0;padding:32px 0 0;border-top:1px solid var(--line-2);}
+  .footer h2{margin:0 0 18px;font-size:18px;font-weight:500;letter-spacing:-0.015em;}
+  .footer p{font-size:13.5px;color:var(--ink-2);line-height:1.6;letter-spacing:-0.005em;margin:0 0 12px;max-width:780px;}
+  .footer p b{color:var(--ink);font-weight:600;}
+  .footer ul{margin:0;padding:0 0 0 18px;list-style:none;font-family:var(--mono);font-size:11px;color:var(--ink-3);line-height:1.7;letter-spacing:.02em;}
+  .footer ul li{padding:2px 0;position:relative;}
+  .footer ul li::before{content:"·";color:var(--ink-4);position:absolute;left:-12px;}
+  .footer ul li b{color:var(--ink);font-weight:500;}
+</style>
+</head>
+<body>
+
+<div class="shell">
+  <div class="shell-top">
+    <h1>Sprint <span class="em">2/A</span> · Data Import</h1>
+    <span class="meta">Onboarding 핵심 · <b>Device → Analysis → Reveal</b> · 3 화면</span>
+    <div class="nav">
+      <a href="SPRINT1_MinjisDay.html">← Sprint 1</a>
+      <a href="#" class="on">2/A</a>
+      <a href="#">2/B Records</a>
+      <a href="#">2/C Visuals</a>
+    </div>
+  </div>
+
+  <div class="grid">
+
+    <!-- ============== STEP 1 ============== -->
+    <div class="step">
+      <div class="step-head">
+        <div class="num">STEP <b>1 / 3</b> · DEVICE</div>
+        <h2>Primary Device 선택</h2>
+        <div class="ts">한 가지만 선택 · 분석 base가 됩니다</div>
+      </div>
+
+      <div class="mf">
+        <div class="mfi">
+          <div class="stat mono">
+            <span>9:41</span>
+            <span class="r"><svg width="22" height="10" viewBox="0 0 22 10"><rect x="0" y="1" width="18" height="8" fill="none" stroke="currentColor"/><rect x="2" y="3" width="14" height="4"/></svg></span>
+          </div>
+
+          <div class="ob-prog">
+            <span><b>1</b> / 3</span>
+            <div class="bar"><div class="fill" style="width:33%;"></div></div>
+            <span>Device</span>
+          </div>
+
+          <div class="ob-body">
+            <div class="ob-no">§1 · Primary device</div>
+            <h1 class="ob-h">데이터를 가져올<br/><span class="em">한 가지</span>를 선택하세요.</h1>
+            <p class="ob-d">분석과 추천의 기준이 됩니다. 추후 변경 가능. <b>3년치 데이터</b>를 자동으로 가져옵니다.</p>
+
+            <div class="dev-list">
+              <button class="dev-it on">
+                <div class="lg">G</div>
+                <div class="body">
+                  <div class="nm">Garmin Connect</div>
+                  <div class="sub">HR · pace · cadence · GPS · VO2max · training load</div>
+                  <span class="tag">권장</span>
+                </div>
+                <span class="ar">✓</span>
+              </button>
+              <button class="dev-it">
+                <div class="lg">C</div>
+                <div class="body">
+                  <div class="nm">COROS</div>
+                  <div class="sub">HR · pace · running power · 회복 시간</div>
+                </div>
+                <span class="ar">→</span>
+              </button>
+              <button class="dev-it">
+                <div class="lg">P</div>
+                <div class="body">
+                  <div class="nm">Polar Flow</div>
+                  <div class="sub">HR · HRV · sleep · training load</div>
+                </div>
+                <span class="ar">→</span>
+              </button>
+              <button class="dev-it">
+                <div class="lg">A</div>
+                <div class="body">
+                  <div class="nm">Apple Health</div>
+                  <div class="sub">시계 없이 폰만 사용 시 · 페이스 정확도 ↓</div>
+                  <span class="tag sec">제한</span>
+                </div>
+                <span class="ar">→</span>
+              </button>
+              <button class="dev-it">
+                <div class="lg">S</div>
+                <div class="body">
+                  <div class="nm">Samsung Health</div>
+                  <div class="sub">갤럭시 워치 · Health 통합</div>
+                  <span class="tag sec">제한</span>
+                </div>
+                <span class="ar">→</span>
+              </button>
+              <button class="dev-it">
+                <div class="lg">—</div>
+                <div class="body">
+                  <div class="nm">디바이스 없음</div>
+                  <div class="sub">매일 직접 입력 · 14일 측정 후 분석 가능</div>
+                </div>
+                <span class="ar">→</span>
+              </button>
+            </div>
+
+            <div class="info-card">
+              <div class="lb">왜 한 가지만?</div>
+              <p>여러 source 섞으면 데이터 충돌이 생깁니다. <b>한 가지</b>를 정해두면 분석이 정확하고, 시계열이 깨지지 않습니다. Apple/Samsung Health는 보조로 표시 가능합니다.</p>
+            </div>
+          </div>
+
+          <div class="ob-stick">
+            <button class="back">취소</button>
+            <button class="next brand">Garmin 연동 <span class="kbd">↵</span></button>
+          </div>
+        </div>
+      </div>
+
+      <div class="step-note">
+        <div class="row"><span class="tag iden">IDEN</span><span><b>Primary 1개 강제</b> — 사용자에게 명확한 정체성. "내 진짜 source".</span></div>
+        <div class="row"><span class="tag guard">GUARD</span><span>가드레일 — 추후 변경 가능, 단 명시적 migration. Apple/Samsung은 secondary로만.</span></div>
+      </div>
+    </div>
+
+    <!-- ============== STEP 2 ============== -->
+    <div class="step">
+      <div class="step-head">
+        <div class="num">STEP <b>2 / 3</b> · ANALYZING</div>
+        <h2>3년치 데이터 분석</h2>
+        <div class="ts">의도적으로 천천히 · 3-5분 소요</div>
+      </div>
+
+      <div class="mf">
+        <div class="mfi">
+          <div class="stat mono">
+            <span>9:43</span>
+            <span class="r"><svg width="22" height="10" viewBox="0 0 22 10"><rect x="0" y="1" width="18" height="8" fill="none" stroke="currentColor"/><rect x="2" y="3" width="14" height="4"/></svg></span>
+          </div>
+
+          <div class="ob-prog">
+            <span><b>2</b> / 3</span>
+            <div class="bar"><div class="fill" style="width:66%;"></div></div>
+            <span>Analyzing</span>
+          </div>
+
+          <div class="ob-body" style="padding:0 0 80px;overflow:hidden;">
+            <div class="ana-hero">
+              <div class="av">
+                JH
+                <div class="pulse"></div>
+              </div>
+              <h3>장호준 AI가 <span class="em">민지님의</span><br/>3년 데이터를 분석합니다.</h3>
+              <div class="pct">62<span class="of">%</span></div>
+              <div class="pbar"><div class="fill" style="width:62%;"></div></div>
+              <div class="ts">남은 시간 약 1분 50초</div>
+            </div>
+
+            <div class="ana-stages">
+              <div class="stg done">
+                <span class="mk">✓</span>
+                <div class="body">디바이스 연결 인증
+                  <span class="det">Garmin Connect · OAuth 완료</span>
+                </div>
+                <span class="ts">02s</span>
+              </div>
+              <div class="stg done">
+                <span class="mk">✓</span>
+                <div class="body">활동 데이터 가져오기
+                  <span class="det"><b>1,247개</b> 활동 · 2023.04 ~ 2026.04</span>
+                </div>
+                <span class="ts">38s</span>
+              </div>
+              <div class="stg done">
+                <span class="mk">✓</span>
+                <div class="body">HR Zone 분석
+                  <span class="det">MHR <b>196</b>, LTHR <b>174</b> 추정</span>
+                </div>
+                <span class="ts">22s</span>
+              </div>
+              <div class="stg now">
+                <span class="mk">●</span>
+                <div class="body">에너지 시스템 분류
+                  <span class="det">BASE / LT / VO2 / GLY 별 누적 시간</span>
+                </div>
+              </div>
+              <div class="stg">
+                <span class="mk">○</span>
+                <div class="body">페이스 패턴 추출
+                  <span class="det">요일별 · 계절별 · 사이클별</span>
+                </div>
+              </div>
+              <div class="stg">
+                <span class="mk">○</span>
+                <div class="body">사이클 패턴 발견
+                  <span class="det">9.5일 사이클 정합성 검증</span>
+                </div>
+              </div>
+              <div class="stg">
+                <span class="mk">○</span>
+                <div class="body">첫 인사이트 생성
+                  <span class="det">강점 · 약점 · 다음 사이클 권장</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="ana-found">
+            <div class="lb"><span class="dot"></span>실시간 발견</div>
+            <div class="row">
+              <span class="l">활동 수</span>
+              <span class="v">1,247</span>
+            </div>
+            <div class="row">
+              <span class="l">총 거리</span>
+              <span class="v">8,432 km</span>
+            </div>
+            <div class="row">
+              <span class="l">총 시간</span>
+              <span class="v">748 h</span>
+            </div>
+            <div class="row">
+              <span class="l">활동 일자</span>
+              <span class="v">2023.04 ~ 2026.04</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="step-note">
+        <div class="row"><span class="tag iden">IDEN</span><span>"<b>민지님의</b> 3년 데이터" — 첫 분석부터 호명. AI가 일하고 있다는 시각적 신호 (●JH 펄스).</span></div>
+        <div class="row"><span class="tag fb">FB</span><span><b>의도적으로 느림</b> — 단계별 메시지로 "진짜 분석 중"이라는 신뢰감. 빠르면 의심.</span></div>
+        <div class="row"><span class="tag vis">VIS</span><span>실시간 발견 카운터 — 숫자 점점 증가 (1,200 → 1,247 같은). 본인 데이터 충격.</span></div>
+      </div>
+    </div>
+
+    <!-- ============== STEP 3 ============== -->
+    <div class="step">
+      <div class="step-head">
+        <div class="num">STEP <b>3 / 3</b> · REVEAL</div>
+        <h2>발견한 것들</h2>
+        <div class="ts">첫 인사이트 — 충격을 주는 reveal</div>
+      </div>
+
+      <div class="mf">
+        <div class="mfi">
+          <div class="stat mono">
+            <span>9:48</span>
+            <span class="r"><svg width="22" height="10" viewBox="0 0 22 10"><rect x="0" y="1" width="18" height="8" fill="none" stroke="currentColor"/><rect x="2" y="3" width="14" height="4"/></svg></span>
+          </div>
+
+          <div class="ob-prog">
+            <span><b>3</b> / 3 · 완료</span>
+            <div class="bar"><div class="fill" style="width:100%;background:var(--ok);"></div></div>
+            <span style="color:var(--ok);">✓</span>
+          </div>
+
+          <div class="ob-body" style="padding:0 0 90px;">
+            <div class="rev-head">
+              <div class="lb">분석 완료 · 1,247 활동</div>
+              <h3>민지, 당신을<br/><span class="em">알아봤어요.</span></h3>
+              <div class="sub"><b>2023.04.12</b> 첫 활동 이후 <b>3년</b>의 데이터 기반</div>
+            </div>
+
+            <!-- Big numbers -->
+            <div class="rev-section">
+              <h4>§1 · 누적</h4>
+              <div class="rev-bignum">
+                <div class="n">
+                  <div class="l">총 거리</div>
+                  <div class="v">8,432<span class="u">km</span></div>
+                  <div class="vs">지구 둘레의 <b>21%</b></div>
+                </div>
+                <div class="n">
+                  <div class="l">활동 수</div>
+                  <div class="v">1,247</div>
+                  <div class="vs">월 평균 <b>34.6</b></div>
+                </div>
+                <div class="n">
+                  <div class="l">총 시간</div>
+                  <div class="v">748<span class="u">h</span></div>
+                  <div class="vs"><b>31.2</b>일 분량</div>
+                </div>
+                <div class="n">
+                  <div class="l">5000m PB</div>
+                  <div class="v">16:10<span class="u">.44</span></div>
+                  <div class="vs">2026.03.14 · <b>SB</b></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Energy distribution — STRONG visualization -->
+            <div class="rev-section">
+              <h4>§2 · 에너지 시스템 분포 <b>· 3년 누적</b></h4>
+              <div class="e-dist">
+                <div class="bar">
+                  <div class="seg base" style="width:64%;"></div>
+                  <div class="seg lt" style="width:14%;"></div>
+                  <div class="seg vo2" style="width:11%;"></div>
+                  <div class="seg gly" style="width:4%;"></div>
+                  <div class="seg rest" style="width:7%;"></div>
+                </div>
+                <div class="lg-row">
+                  <div class="it">
+                    <span class="sw base"></span>
+                    <span class="nm">BA · Z1-Z2</span>
+                    <div class="pct">64%</div>
+                  </div>
+                  <div class="it">
+                    <span class="sw lt"></span>
+                    <span class="nm">LT · Z3-Z4</span>
+                    <div class="pct">14%</div>
+                  </div>
+                  <div class="it">
+                    <span class="sw vo2"></span>
+                    <span class="nm">V2 · Z5</span>
+                    <div class="pct">11%</div>
+                  </div>
+                  <div class="it">
+                    <span class="sw gly"></span>
+                    <span class="nm">GL · Z6</span>
+                    <div class="pct">4%</div>
+                  </div>
+                  <div class="it">
+                    <span class="sw rest"></span>
+                    <span class="nm">RE</span>
+                    <div class="pct">7%</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Heatmap 3 years × 52 weeks -->
+            <div class="rev-section">
+              <h4>§3 · 3년 훈련 일지 <b>· 색은 에너지 시스템</b></h4>
+              <div class="heat">
+                <div class="heat-row">
+                  <span class="yr">2024</span>
+                  <div class="cells">
+                    <!-- 52 cells, sparse pattern -->
+                    <div class="c l1"></div><div class="c l2"></div><div class="c l3"></div><div class="c v2"></div><div class="c l2"></div>
+                    <div class="c l1"></div><div class="c re"></div><div class="c l3"></div><div class="c lt"></div><div class="c l2"></div>
+                    <div class="c l3"></div><div class="c v2"></div><div class="c l1"></div><div class="c l2"></div><div class="c gl"></div>
+                    <div class="c l3"></div><div class="c l2"></div><div class="c lt"></div><div class="c l1"></div><div class="c v2"></div>
+                    <div class="c l2"></div><div class="c l3"></div><div class="c re"></div><div class="c lt"></div><div class="c l1"></div>
+                    <div class="c l3"></div><div class="c l2"></div><div class="c v2"></div><div class="c l1"></div><div class="c lt"></div>
+                    <div class="c l2"></div><div class="c l3"></div><div class="c gl"></div><div class="c l1"></div><div class="c v2"></div>
+                    <div class="c l3"></div><div class="c l2"></div><div class="c lt"></div><div class="c l1"></div><div class="c re"></div>
+                    <div class="c l2"></div><div class="c l3"></div><div class="c v2"></div><div class="c l1"></div><div class="c lt"></div>
+                    <div class="c l2"></div><div class="c l3"></div><div class="c v2"></div><div class="c l1"></div><div class="c gl"></div>
+                    <div class="c l3"></div><div class="c l2"></div>
+                  </div>
+                </div>
+                <div class="heat-row">
+                  <span class="yr">2025</span>
+                  <div class="cells">
+                    <div class="c l2"></div><div class="c l3"></div><div class="c v2"></div><div class="c lt"></div><div class="c l2"></div>
+                    <div class="c l3"></div><div class="c re"></div><div class="c v2"></div><div class="c l2"></div><div class="c lt"></div>
+                    <div class="c l3"></div><div class="c l2"></div><div class="c gl"></div><div class="c l3"></div><div class="c v2"></div>
+                    <div class="c l2"></div><div class="c lt"></div><div class="c l3"></div><div class="c v2"></div><div class="c l2"></div>
+                    <div class="c l3"></div><div class="c lt"></div><div class="c re"></div><div class="c v2"></div><div class="c l2"></div>
+                    <div class="c l3"></div><div class="c v2"></div><div class="c l3"></div><div class="c gl"></div><div class="c l2"></div>
+                    <div class="c lt"></div><div class="c l3"></div><div class="c v2"></div><div class="c l2"></div><div class="c l3"></div>
+                    <div class="c v2"></div><div class="c lt"></div><div class="c l3"></div><div class="c l2"></div><div class="c re"></div>
+                    <div class="c l3"></div><div class="c v2"></div><div class="c lt"></div><div class="c l3"></div><div class="c l2"></div>
+                    <div class="c v2"></div><div class="c l3"></div><div class="c gl"></div><div class="c l2"></div><div class="c lt"></div>
+                    <div class="c l3"></div><div class="c v2"></div>
+                  </div>
+                </div>
+                <div class="heat-row">
+                  <span class="yr">2026</span>
+                  <div class="cells">
+                    <div class="c l3"></div><div class="c v2"></div><div class="c lt"></div><div class="c l3"></div><div class="c l2"></div>
+                    <div class="c v2"></div><div class="c l3"></div><div class="c gl"></div><div class="c l2"></div><div class="c lt"></div>
+                    <div class="c l3"></div><div class="c v2"></div><div class="c l3"></div><div class="c lt"></div><div class="c v2"></div>
+                    <div class="c l3"></div><div class="c v2"></div>
+                    <div class="c empty"></div><div class="c empty"></div><div class="c empty"></div><div class="c empty"></div>
+                    <div class="c empty"></div><div class="c empty"></div><div class="c empty"></div><div class="c empty"></div>
+                    <div class="c empty"></div><div class="c empty"></div><div class="c empty"></div><div class="c empty"></div>
+                    <div class="c empty"></div><div class="c empty"></div><div class="c empty"></div><div class="c empty"></div>
+                    <div class="c empty"></div><div class="c empty"></div><div class="c empty"></div><div class="c empty"></div>
+                    <div class="c empty"></div><div class="c empty"></div><div class="c empty"></div><div class="c empty"></div>
+                    <div class="c empty"></div><div class="c empty"></div><div class="c empty"></div><div class="c empty"></div>
+                    <div class="c empty"></div><div class="c empty"></div><div class="c empty"></div><div class="c empty"></div>
+                    <div class="c empty"></div><div class="c empty"></div><div class="c empty"></div><div class="c empty"></div>
+                  </div>
+                </div>
+                <div class="heat-meta">
+                  <span>Jan</span><span>Mar</span><span>May</span><span>Jul</span><span>Sep</span><span>Nov</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Patterns found -->
+            <div class="rev-section">
+              <h4>§4 · 발견된 패턴 <b>· 4</b></h4>
+
+              <div class="pcard">
+                <div class="h">패턴 1 · 일관성</div>
+                <div class="t">민지는 <span class="hi">화요일에 가장 빠르고</span>, 토요일에 가장 깁니다.</div>
+                <div class="meta">3년 평균 · 화요일 V2 페이스 <b>3'24"</b> · 토요일 BA 평균 <b>14.2km</b></div>
+              </div>
+
+              <div class="pcard">
+                <div class="h">패턴 2 · 사이클</div>
+                <div class="t">현재까지 <span class="hi">9.5일 주기와 92% 일치</span>합니다. 본인이 모르고 있었어도, 몸은 알고 있었어요.</div>
+                <div class="meta">MAIN 평균 간격 <b>9.4일</b> · D-1 회복 비율 <b>93%</b></div>
+              </div>
+
+              <div class="pcard">
+                <div class="h">패턴 3 · 강점</div>
+                <div class="t">VO2max 영역에서 <span class="hi">상위 7%</span>. LT 영역은 평균.</div>
+                <div class="meta">동일 PB 그룹 cohort 비교 · VO2 페이스 환산 <b>+1.8σ</b></div>
+              </div>
+
+              <div class="pcard">
+                <div class="h">패턴 4 · 약점</div>
+                <div class="t">대회 <span class="hi">D-21 ~ D-7 구간 볼륨 부족</span>. 테이퍼가 너무 깊습니다.</div>
+                <div class="meta">최근 4 대회 평균 · 권고 -30% 대비 실제 <b>-48%</b></div>
+              </div>
+            </div>
+
+            <!-- AI first message -->
+            <div class="firstai">
+              <div class="nm">장호준 AI · 첫 메시지</div>
+              <p>민지, 처음 만나서 반갑습니다. 3년 동안 <b>1,247번</b> 달리셨고, 5000m가 <span class="k">16:42 → 16:10</span>으로 좋아졌어요. 다음 사이클 <b>+1 rep VO2 증량</b>을 검토할 만합니다. 첫 추천은 24시간 후, 첫 체크인을 받은 뒤에 만들겠습니다.</p>
+            </div>
+          </div>
+
+          <div class="ob-stick">
+            <button class="next brand" style="flex:1;">대시보드로 <span class="kbd">↵</span></button>
+          </div>
+        </div>
+      </div>
+
+      <div class="step-note">
+        <div class="row"><span class="tag iden">IDEN</span><span>"민지, 당신을 알아봤어요" — <b>충격을 주는 첫 문장</b>. 1,247이라는 숫자가 본인 데이터의 무게.</span></div>
+        <div class="row"><span class="tag vis">VIS</span><span><b>에너지 시스템 분포</b> Tier 1 strong + <b>3년 heatmap</b> — 색깔로 즉시 패턴 인식.</span></div>
+        <div class="row"><span class="tag trust">TR</span><span>4 패턴 발견 — <b>fact 기반 narrative</b>. "92% 일치", "+1.8σ" 등 측정 가능한 표현.</span></div>
+        <div class="row"><span class="tag fb">FB</span><span><b>첫 추천은 24시간 뒤</b> — 사용자에게 결정권. AI가 즉시 처방 X.</span></div>
+        <div class="row"><span class="tag guard">GUARD</span><span>SAFEGUARDS §1 — <b>fresh-import</b> 상태. 첫 인사이트 모듈 강조.</span></div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- footer -->
+  <div class="footer">
+    <h2>왜 이렇게 디자인됐는가</h2>
+    <p>대부분의 fitness 앱은 가입 직후 <b>빈 화면</b>을 보여줍니다. 사용자는 데이터를 만들어야 도구가 의미 있어집니다. <b>14일 측정 후 가치 증명</b>이라는 패턴이죠. 그 사이 90%가 떠납니다.</p>
+    <p>TRAINORACLE은 다릅니다. 가입 첫 5분 안에 <b>3년치 데이터 → 분석 → 첫 인사이트</b>까지 갑니다. 사용자는 <b>"이 도구가 나를 안다"</b>는 느낌을 첫날 받아야 떠나지 않습니다.</p>
+    <ul>
+      <li><b>분석은 일부러 천천히</b> — 빠르면 의심. 단계별 메시지로 진짜 일하고 있다는 신뢰.</li>
+      <li><b>발견된 패턴 4개</b>는 사용자가 자기에 대해 모르던 것. "당신은 화요일이 가장 빠릅니다" 같은 충격.</li>
+      <li><b>3년 heatmap</b>은 본인 역사를 한 화면에. 에너지 시스템 색깔로 분류 — Tier 1 strong 시각화.</li>
+      <li><b>AI 첫 메시지</b>는 친밀하지만 단정 X. "검토할 만합니다", "24시간 후"로 사용자 결정권 보존.</li>
+      <li><b>가드레일 통과</b> — 1(cold start: fresh-import 처리), 2(confidence: 첫 추천 24h 보류), 4(narrative: 사실 진술만), 7(citation: cohort 비교 출처 명시 가능).</li>
+    </ul>
+  </div>
+</div>
+
+</body></html>

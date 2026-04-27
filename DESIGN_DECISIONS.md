@@ -1,0 +1,223 @@
+# DESIGN DECISIONS — 디자인 의사결정 기록
+
+> **이 문서는 "왜 이렇게 디자인됐는지"를 정리합니다. CONVERSATION_LOG는 시간순 흐름, 이 문서는 결정만 압축.**
+
+---
+
+## 1. 시각 정체성
+
+### 1.1 Brand color: Deep Teal `#0D5F5A`
+- **3가지 옵션 검토**: Deep Teal #0F766E / Deep Blue #1E40AF / Deep Red #7C2D12 / Off-black only
+- **선택**: Deep Teal을 살짝 더 차갑게 조정한 #0D5F5A
+- **이유**:
+  - Blue는 너무 의료/과학적 (Lancet, Nature 톤)
+  - Red는 너무 sporty (Nike, Adidas 톤)
+  - Off-black은 무미건조
+  - Teal은 "scrubs(의료진)"과 "pitch(경기장)" 모두를 환기시키는 유일한 색
+  - 경쟁사(Strava 오렌지, TrainingPeaks 파랑) 미점유 색
+- **사용 비율**: UI 전체의 5% 이하 (accent only)
+
+### 1.2 Off-white + Charcoal
+- 순백/순흑이 아닌 **#FAFAF7** (약간 따뜻한 off-white) + **#0E1412** (티얼 기 머금은 charcoal)
+- 이유: 장시간 사용 시 눈 피로 감소, "scientific minimalism" 톤 일관성
+
+### 1.3 폰트 시스템
+- **Inter** (UI 본문)
+- **Pretendard Variable** (한국어) — 한국어 사용 빈도 높아 필수
+- **JetBrains Mono** (수치) — 페이스/HR/TSS 등 모든 숫자
+- **❌ Instrument Serif 제거** — 초기 v1에서 사용했으나 "Opus-style 티남"으로 사용자가 거부. UI에서 완전 제거.
+
+### 1.4 에너지 시스템 컬러 표기 (중요한 결정)
+- **이전 (v1, 거부됨)**: 파스텔 배경 박스 + 진한 텍스트
+- **현재 (v2, 정본)**:
+  ```
+  ● V2  VO2-Long
+       ─────       ← underline은 에너지 시스템 컬러
+  ```
+  - 7px dot (점)
+  - 2자 모노 코드 (V2, BA, LT, GL, AP, RE)
+  - 하단 1.5px underline (에너지 시스템 컬러)
+  - **배경 색 박스 절대 사용 금지**
+- 이유: 색은 정보 전달용으로 유지하되, 파스텔 카드 분위기는 제거
+
+---
+
+## 2. 디자인 철학 변화 (v1 → v2)
+
+### v1 (Opus-style — 거부됨)
+**특징:**
+- 둥근 모서리 8–12px 기본
+- 좌측 컬러 스트립 (`.wk-sess .strip { left:0; width:3px; }`)
+- 모든 정보를 카드/박스로 감쌈
+- 파스텔 에너지 시스템 컬러 배경
+- AI 인박스 = brand-wash 배경 박스
+- Instrument Serif로 "감성" 포인트
+- 둥근 IconButton (30-40px)
+- "어디서나 보던" AI 생성 디자인 느낌
+
+**문제 (사용자 피드백):**
+> "박스 만들 때 너가 만드는 특징이 약간 둥그면서 좌측에 색깔을 넣는 패턴이 많은데 그거 다 없애고 싶어. 오푸스 너가 만든게 너무 티나."
+
+### v2 (Tufte × Linear — 정본)
+**특징:**
+- `border-radius` 기본 0, 인터랙티브만 4px 이하
+- 카드 박스 → hairline + 여백 + 번호로 계층
+- 좌측 컬러 스트립 → 좌측 hairline (인박스 등에만)
+- 에너지 시스템 → 점·코드·underline
+- 인용구 → `border-left: 2px solid var(--ink)` + sans
+- `§1`, `§2` 논문식 섹션 번호
+- 강조: 굵기 + subtle highlighter (linear-gradient transparent 62%)
+- 데이터 → 카드 4개 그리드 → **테이블** 또는 가로 4분할 구분선
+
+### 적용 화면
+| 화면 | v1 | v2 |
+|---|---|---|
+| Moodboard | ✅ (참고용) | — |
+| Dashboard | ✅ (재작업 필요) | ⚠️ |
+| Calendar | ✅ (재작업 필요) | ⚠️ |
+| Session Detail | (deprecated) | ✅ 정본 |
+| AI Chat | — | ✅ |
+| Analysis | — | ✅ |
+| AI Inbox | — | ✅ |
+| Daily Check-in | — | ✅ |
+| Competitions | — | ✅ |
+| Onboarding | — | ✅ |
+| Settings | — | ✅ |
+| Philosophy | — | ✅ |
+| Landing | — | ✅ |
+
+---
+
+## 3. 정보 구조 결정
+
+### 3.1 Session Detail 정보 블록 순서
+1. Header (날짜, Day, 뒤로가기)
+2. Hero (태그, 제목, 목적, 메타 4개, 카운트다운)
+3. **Why? (철학) ← 데이터보다 먼저** ★ 차별화
+4. Protocol (3 phases)
+5. Validation (9 Rules)
+6. AI 인박스 연동
+7. Cycle context (관련 세션)
+8. Sticky action bar (Mobile) / Right column (Desktop)
+
+**Why 섹션을 데이터 위에 둔 이유**: brief의 "evidence-first, why-based" 원칙. 페이스만 보면 그냥 인터벌 트레이닝 앱.
+
+### 3.2 AI Chat 응답 구조 (가장 중요)
+모든 AI 응답은 다음 구조 따름:
+```
+[Verdict 칩] [신뢰도 %]
+└─ Lead 답변 (요약, sup태그 [1] 인용)
+└─ 데이터 테이블 (mono, hairline)
+└─ 추가 설명 (인용 추가)
+└─ 다른 관점 (alternative view) ← 반드시 포함
+└─ Sources (확장 가능)
+└─ Actions (저장 / 적용 / 코치판단입력)
+```
+
+### 3.3 AI Inbox 카테고리 (5개)
+| 코드 | 이름 | 색 | 트리거 |
+|---|---|---|---|
+| UNC | 판정 불확실 | --unc (보라) | confidence < 70% |
+| RISK | 부상 위험 | --warn (주황) | 패턴 + 통증 입력 |
+| PTRN | 패턴 감지 | --info (파랑) | 14일 추세 변화 |
+| RULE | 규칙 위반 | --warn | 9 Rules 자동 검증 fail |
+| PASS | 규칙 통과 | --ok (녹색) | 사이클 완료 시 |
+
+### 3.4 Calendar 3-View
+- **Week** — Garmin/TP 사용자가 익숙한 7×2(AM/PM) 그리드
+- **9.5-Cycle** ★ — 10-slot rail, MAIN 중심 — **차별화 포인트**
+- **Timeline** — 3개월 macro view, 코치용
+
+→ Mobile 기본은 9.5-Cycle 뷰 (제품 정체성 강조).
+
+---
+
+## 4. 컴포넌트 패턴 (재사용 가능)
+
+### 4.1 Section Header
+```html
+<div class="sec-head">
+  <span class="sec-no"><b>§3</b> · Protocol</span>
+  <span class="sec-act">편집</span>
+</div>
+```
+- `§N`: 모노 + ink-3
+- 제목: 굵기 500
+- 우측 액션: 모노 + underline
+
+### 4.2 Data table (cards 대체)
+카드 4개 그리드 → 테이블 또는 4분할 행으로 변경. 이유: scientific 톤, 정렬된 숫자가 코치에게 더 읽기 쉬움.
+
+### 4.3 Validation item (체크 표시)
+```
+✓  R-6   VO2 반복 볼륨 기준 내
+        6 × 1000m = 6 km · 권고 5–8 km
+```
+- 색 칩 박스 X
+- 마크 + 코드 + 제목 + sub
+
+### 4.4 AI message (좌측 hairline)
+```
+| 장호준 AI · 판정 불확실 · 신뢰도 72%
+| ─────────────────────────
+| 답변 본문 [1] [2]
+| ...
+```
+- 좌측 2px brand 선
+- 본문 padding-left 14px
+
+### 4.5 Sources (footnote 스타일)
+```
+[1] A_guide Rule 4 — 회복 신호 충돌
+    Coach Jang · 2023 · §4.2                         open →
+```
+- 번호 + 제목 + sub + 링크 우측
+
+---
+
+## 5. 마이크로 인터랙션 결정
+
+### 5.1 호버
+- 배경 색 변화 (`var(--surface-2)`) 또는 underline
+- 그림자 절대 사용 X
+- transform translate 절대 사용 X (튀는 느낌)
+
+### 5.2 버튼 상태
+- Primary: `var(--ink)` 배경 + bg 텍스트
+- Secondary: 투명 + line border
+- Tertiary: 투명 + 모노 텍스트 + underline
+
+### 5.3 로딩
+- AI 응답: 3개 점 bouncing dot (brand 색)
+- 페이지 전환: hairline progress bar
+- 스피너 사용 X (둥근 형태 회피)
+
+---
+
+## 6. 거부된 기능들
+
+### "신용카드 등록 없는 14일 무료" → 유지
+초기 베타라 결제 모델 미정. 단, Landing에 "신용카드 불필요" 명시.
+
+### Social feed (Strava 스타일) → ❌ 거부
+브리프 명시. "we are not a social platform."
+
+### Achievement badges → ❌ 거부
+브리프 명시. "no gamification."
+
+### AI 음성 응답 → 보류
+나중에 검토. 처음엔 텍스트만.
+
+### 다른 종목 (수영, 사이클) → 보류
+1500-10000m 우선. 검증 후 확장.
+
+---
+
+## 7. 미해결 / 추후 결정 필요
+
+- [ ] Dark mode (브리프엔 있으나 v1엔 미구현)
+- [ ] 고대비 모드 토글 (트랙용)
+- [ ] 음성 입력 (Daily check-in 시)
+- [ ] 다국어 외 다른 언어 (일본어, 중국어?)
+- [ ] 결제 모델 (월 구독? 코치당? 선수당?)
+- [ ] B2B 코치 라이선스 vs 개인 라이선스
