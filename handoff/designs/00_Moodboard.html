@@ -1,0 +1,1219 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>TRAINORACLE — Design Direction v1</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet" />
+<link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css" rel="stylesheet" />
+<style>
+  :root{
+    /* Neutrals — off-black, not pure */
+    --bg:          #FAFAF7;    /* very slight warm off-white */
+    --surface:    #FFFFFF;
+    --surface-2:  #F3F2EE;
+    --ink:        #0E1412;     /* not pure black — deep teal-tinged charcoal */
+    --ink-2:      #3A4340;
+    --ink-3:      #6B7571;
+    --ink-4:      #9AA39F;
+    --line:       #E4E2DC;
+    --line-2:     #D1CEC5;
+
+    /* Brand — Deep Teal, slightly cooler than #0F766E */
+    --brand:      #0D5F5A;
+    --brand-ink:  #07302E;
+    --brand-wash: #E8F0EE;
+
+    /* Semantic */
+    --ok:    #1F7A3A;
+    --warn:  #B4530C;
+    --err:   #A11F1F;
+    --info:  #1D4ED8;
+    --unc:   #6B3FB0;
+
+    /* Energy system (refined — desaturated from brief) */
+    --e-base:   #CFE1F2;
+    --e-lt:     #F2EFC9;
+    --e-vo2:    #F2DCC0;
+    --e-gly:    #F2C9C9;
+    --e-atp:    #DDC9F2;
+    --e-rest:   #ECEAE3;
+    --e-mixed:  #DCDAD3;
+
+    /* Type */
+    --sans: "Inter", "Pretendard Variable", ui-sans-serif, system-ui, sans-serif;
+    --mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+    --serif: "Instrument Serif", "Times New Roman", serif;
+
+    --r-sm: 4px;
+    --r-md: 8px;
+    --r-lg: 12px;
+    --r-xl: 16px;
+  }
+
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);font-family:var(--sans);-webkit-font-smoothing:antialiased;font-feature-settings:"ss01","cv11";}
+  body{font-size:15px;line-height:1.55;}
+  .mono{font-family:var(--mono);font-variant-numeric:tabular-nums;}
+  .serif{font-family:var(--serif);}
+
+  /* ============== LAYOUT ============== */
+  .page{max-width:1320px;margin:0 auto;padding:80px 48px 140px;}
+  section{margin-bottom:120px;scroll-margin-top:24px;}
+  .rule{height:1px;background:var(--line);margin:0;}
+
+  /* ============== SECTION HEADER ============== */
+  .sec-head{display:flex;align-items:baseline;gap:24px;margin-bottom:40px;padding-bottom:16px;border-bottom:1px solid var(--line);}
+  .sec-no{font-family:var(--mono);font-size:12px;color:var(--ink-4);letter-spacing:.08em;}
+  .sec-title{font-size:28px;font-weight:500;letter-spacing:-0.02em;margin:0;}
+  .sec-sub{font-size:14px;color:var(--ink-3);margin-left:auto;max-width:380px;text-align:right;}
+
+  /* ============== COVER ============== */
+  .cover{position:relative;padding:120px 0 80px;}
+  .cover-meta{display:flex;gap:48px;font-family:var(--mono);font-size:11px;color:var(--ink-3);letter-spacing:.12em;text-transform:uppercase;margin-bottom:56px;}
+  .cover-meta span b{color:var(--ink);font-weight:500;}
+  .cover h1{
+    font-family:var(--serif);
+    font-weight:400;
+    font-size:clamp(64px, 9vw, 132px);
+    line-height:.95;
+    letter-spacing:-0.035em;
+    margin:0 0 32px;
+    color:var(--ink);
+  }
+  .cover h1 em{font-style:italic;color:var(--brand);}
+  .cover-lede{font-size:20px;line-height:1.5;max-width:720px;color:var(--ink-2);font-weight:400;}
+  .cover-lede b{color:var(--ink);font-weight:500;}
+  .cover-foot{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:24px;margin-top:80px;padding-top:32px;border-top:1px solid var(--line);}
+  .cover-foot > div{font-size:13px;color:var(--ink-3);}
+  .cover-foot label{display:block;font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-4);margin-bottom:8px;}
+  .cover-foot strong{color:var(--ink);font-weight:500;font-size:14px;}
+
+  /* ============== TOC ============== */
+  .toc{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line);border:1px solid var(--line);}
+  .toc a{display:block;padding:20px;background:var(--bg);text-decoration:none;color:var(--ink);font-size:14px;transition:background .15s;}
+  .toc a:hover{background:var(--surface-2);}
+  .toc a .n{font-family:var(--mono);font-size:10px;color:var(--ink-4);letter-spacing:.12em;display:block;margin-bottom:4px;}
+
+  /* ============== LOGO EXPLORATION ============== */
+  .logo-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--line);border:1px solid var(--line);}
+  .logo-cell{background:var(--surface);padding:64px 40px;display:flex;flex-direction:column;justify-content:space-between;min-height:320px;}
+  .logo-cell.dark{background:var(--ink);color:var(--bg);}
+  .logo-cell .mark{display:flex;align-items:center;gap:10px;}
+  .logo-cell .label{font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-4);}
+  .logo-cell.dark .label{color:#6B7571;}
+  .logo-cell .desc{font-size:12px;color:var(--ink-3);max-width:260px;line-height:1.5;}
+  .logo-cell.dark .desc{color:#9AA39F;}
+
+  /* logo 1 — wordmark with oracle dot */
+  .logo-word{font-family:var(--sans);font-weight:500;font-size:22px;letter-spacing:-0.02em;display:flex;align-items:center;gap:2px;}
+  .logo-word .dot{width:6px;height:6px;background:var(--brand);border-radius:50%;margin:0 3px 0 4px;transform:translateY(-3px);}
+  .logo-cell.dark .logo-word .dot{background:#4FB8B0;}
+
+  /* logo 2 — monogram T|O */
+  .logo-mono{font-family:var(--mono);font-weight:500;font-size:20px;letter-spacing:.02em;border:1.5px solid var(--ink);padding:6px 10px;line-height:1;}
+  .logo-cell.dark .logo-mono{border-color:var(--bg);}
+
+  /* logo 3 — glyph + wordmark */
+  .logo-glyph-wrap{display:flex;align-items:center;gap:12px;}
+  .logo-glyph{width:32px;height:32px;}
+  .logo-txt{font-family:var(--sans);font-weight:600;font-size:17px;letter-spacing:0.01em;text-transform:uppercase;}
+
+  /* ============== COLOR ============== */
+  .color-block{display:grid;grid-template-columns:repeat(6,1fr);gap:1px;background:var(--line);border:1px solid var(--line);margin-bottom:32px;}
+  .swatch{background:var(--surface);padding:20px;min-height:140px;display:flex;flex-direction:column;justify-content:space-between;}
+  .swatch .chip{height:80px;border-radius:var(--r-sm);border:1px solid rgba(0,0,0,.06);margin-bottom:12px;}
+  .swatch .name{font-size:12px;font-weight:500;}
+  .swatch .hex{font-family:var(--mono);font-size:11px;color:var(--ink-3);}
+
+  .brand-stage{display:grid;grid-template-columns:1.3fr 1fr;gap:32px;margin-bottom:32px;}
+  .brand-main{background:var(--brand);color:#fff;padding:56px;border-radius:var(--r-lg);display:flex;flex-direction:column;justify-content:space-between;min-height:320px;}
+  .brand-main .big-hex{font-family:var(--mono);font-size:14px;opacity:.7;letter-spacing:.1em;}
+  .brand-main h3{font-family:var(--serif);font-weight:400;font-size:48px;line-height:1;margin:0;letter-spacing:-0.02em;}
+  .brand-main p{font-size:14px;opacity:.8;max-width:360px;margin:16px 0 0;line-height:1.55;}
+  .brand-scale{display:grid;grid-template-rows:repeat(5,1fr);gap:4px;}
+  .brand-scale div{padding:14px 18px;color:#fff;font-family:var(--mono);font-size:11px;display:flex;justify-content:space-between;align-items:center;border-radius:var(--r-sm);}
+  .brand-scale div.light{color:var(--brand-ink);}
+
+  .energy-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:8px;}
+  .energy-cell{aspect-ratio:1;border-radius:var(--r-md);padding:14px;display:flex;flex-direction:column;justify-content:space-between;border:1px solid rgba(0,0,0,.04);}
+  .energy-cell .code{font-family:var(--mono);font-size:11px;font-weight:500;color:var(--ink-2);letter-spacing:.04em;}
+  .energy-cell .full{font-size:10px;color:var(--ink-3);line-height:1.3;}
+  .energy-cell .hx{font-family:var(--mono);font-size:9px;color:var(--ink-3);}
+
+  .dark-preview{background:#0A0F0E;color:#E8EAE7;padding:48px;border-radius:var(--r-lg);margin-top:24px;}
+  .dark-preview h4{font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:#6B7571;margin:0 0 24px;}
+  .dark-preview .color-block{background:#1A201F;border-color:#1A201F;}
+  .dark-preview .swatch{background:#0F1514;color:#E8EAE7;}
+  .dark-preview .swatch .hex{color:#9AA39F;}
+
+  /* ============== TYPOGRAPHY ============== */
+  .type-specimen{padding:48px 0;border-top:1px solid var(--line);border-bottom:1px solid var(--line);margin-bottom:32px;}
+  .type-row{display:grid;grid-template-columns:140px 1fr 120px;gap:32px;align-items:baseline;padding:20px 0;border-bottom:1px solid var(--line);}
+  .type-row:last-child{border-bottom:none;}
+  .type-row .label{font-family:var(--mono);font-size:11px;color:var(--ink-4);letter-spacing:.08em;text-transform:uppercase;padding-top:8px;}
+  .type-row .meta{font-family:var(--mono);font-size:11px;color:var(--ink-3);text-align:right;padding-top:8px;}
+  .type-display{font-family:var(--serif);font-size:72px;line-height:.95;letter-spacing:-0.03em;font-weight:400;}
+  .type-h1{font-size:42px;line-height:1.1;letter-spacing:-0.02em;font-weight:500;}
+  .type-h2{font-size:28px;line-height:1.2;letter-spacing:-0.015em;font-weight:500;}
+  .type-h3{font-size:20px;line-height:1.3;font-weight:500;}
+  .type-body-lg{font-size:17px;line-height:1.6;}
+  .type-body{font-size:14px;line-height:1.55;color:var(--ink-2);}
+  .type-caption{font-size:12px;line-height:1.4;color:var(--ink-3);letter-spacing:0.01em;}
+  .type-mono-lg{font-family:var(--mono);font-size:32px;font-weight:500;letter-spacing:-0.02em;font-variant-numeric:tabular-nums;}
+  .type-mono{font-family:var(--mono);font-size:14px;font-variant-numeric:tabular-nums;color:var(--ink-2);}
+
+  .korean-specimen{display:grid;grid-template-columns:1fr 1fr;gap:32px;margin-top:32px;}
+  .korean-specimen > div{padding:32px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);}
+  .korean-specimen h5{font-family:var(--mono);font-size:10px;letter-spacing:.14em;color:var(--ink-4);margin:0 0 16px;text-transform:uppercase;}
+  .kr-h{font-family:"Pretendard Variable";font-size:28px;font-weight:600;letter-spacing:-0.02em;line-height:1.25;margin:0 0 12px;}
+  .kr-b{font-family:"Pretendard Variable";font-size:15px;font-weight:400;line-height:1.6;color:var(--ink-2);margin:0;}
+
+  /* ============== COMPONENT LAB ============== */
+  .lab-grid{display:grid;grid-template-columns:repeat(12,1fr);gap:24px;}
+  .lab-card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);padding:32px;}
+  .lab-card .cap{font-family:var(--mono);font-size:10px;letter-spacing:.14em;color:var(--ink-4);text-transform:uppercase;margin-bottom:20px;display:flex;justify-content:space-between;}
+  .lab-card .cap span:last-child{color:var(--ink-3);}
+
+  .c-span-4{grid-column:span 4;}
+  .c-span-5{grid-column:span 5;}
+  .c-span-6{grid-column:span 6;}
+  .c-span-7{grid-column:span 7;}
+  .c-span-8{grid-column:span 8;}
+  .c-span-12{grid-column:span 12;}
+
+  /* Badges */
+  .badge{display:inline-flex;align-items:center;gap:6px;font-family:var(--mono);font-size:11px;font-weight:500;padding:4px 8px;border-radius:var(--r-sm);letter-spacing:.02em;}
+  .badge .dot{width:6px;height:6px;border-radius:50%;}
+  .badge.ok{background:#E4F0E8;color:var(--ok);}
+  .badge.ok .dot{background:var(--ok);}
+  .badge.warn{background:#F7E9D9;color:var(--warn);}
+  .badge.warn .dot{background:var(--warn);}
+  .badge.err{background:#F4DCDC;color:var(--err);}
+  .badge.err .dot{background:var(--err);}
+  .badge.info{background:#DCE5F7;color:var(--info);}
+  .badge.info .dot{background:var(--info);}
+  .badge.unc{background:#E8DEF2;color:var(--unc);border:1px dashed var(--unc);padding:3px 7px;}
+  .badge.unc .dot{background:var(--unc);}
+
+  .badge-row{display:flex;flex-wrap:wrap;gap:8px;}
+
+  /* Energy tags */
+  .e-tag{display:inline-flex;align-items:center;font-family:var(--mono);font-size:11px;font-weight:500;padding:3px 8px;border-radius:var(--r-sm);color:var(--ink);border:1px solid rgba(0,0,0,.05);}
+  .e-tag.base{background:var(--e-base);}
+  .e-tag.lt{background:var(--e-lt);}
+  .e-tag.vo2{background:var(--e-vo2);}
+  .e-tag.gly{background:var(--e-gly);}
+  .e-tag.atp{background:var(--e-atp);}
+  .e-tag.rest{background:var(--e-rest);}
+
+  /* Buttons */
+  .btn{display:inline-flex;align-items:center;gap:8px;font-family:var(--sans);font-size:14px;font-weight:500;padding:10px 16px;border-radius:var(--r-md);border:1px solid transparent;cursor:pointer;transition:all .15s;text-decoration:none;}
+  .btn.primary{background:var(--ink);color:var(--bg);}
+  .btn.primary:hover{background:var(--brand-ink);}
+  .btn.secondary{background:var(--surface);color:var(--ink);border-color:var(--line-2);}
+  .btn.ghost{background:transparent;color:var(--ink-2);}
+  .btn.ghost:hover{color:var(--ink);}
+  .btn.brand{background:var(--brand);color:#fff;}
+  .btn-row{display:flex;flex-wrap:wrap;gap:12px;align-items:center;}
+
+  /* Session card */
+  .session{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-md);overflow:hidden;position:relative;}
+  .session .strip{height:4px;background:var(--e-vo2);}
+  .session.base .strip{background:var(--e-base);}
+  .session.gly .strip{background:var(--e-gly);}
+  .session.rest .strip{background:var(--e-rest);}
+  .session .body{padding:16px;}
+  .session .top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;}
+  .session .time{font-family:var(--mono);font-size:10px;color:var(--ink-3);letter-spacing:.08em;text-transform:uppercase;}
+  .session .title{font-size:15px;font-weight:500;margin:4px 0 6px;letter-spacing:-0.01em;}
+  .session .desc{font-family:var(--mono);font-size:12px;color:var(--ink-3);}
+  .session .tags{display:flex;gap:4px;margin-top:12px;}
+
+  /* Validation card */
+  .vcard{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-md);padding:16px;position:relative;overflow:hidden;}
+  .vcard.warn{border-color:#E8C2A0;background:#FDF8F2;}
+  .vcard.ok{border-color:#BEDAC7;background:#F6FBF7;}
+  .vcard .vid{font-family:var(--mono);font-size:10px;color:var(--ink-4);letter-spacing:.12em;}
+  .vcard .vtitle{font-size:13px;font-weight:500;margin:4px 0 8px;}
+  .vcard .vval{font-family:var(--mono);font-size:24px;font-weight:500;letter-spacing:-0.02em;margin-bottom:4px;font-variant-numeric:tabular-nums;}
+  .vcard .vmeta{font-family:var(--mono);font-size:10px;color:var(--ink-3);}
+
+  /* Data: 9.5 day cycle */
+  .cycle-track{position:relative;padding:40px 0 60px;}
+  .cycle-line{position:relative;height:1px;background:var(--line-2);}
+  .cycle-dot{position:absolute;top:50%;transform:translate(-50%,-50%);width:12px;height:12px;background:var(--bg);border:1.5px solid var(--ink-4);border-radius:50%;}
+  .cycle-dot.main{background:var(--brand);border-color:var(--brand);width:16px;height:16px;}
+  .cycle-dot.today{background:var(--ink);border-color:var(--ink);width:14px;height:14px;box-shadow:0 0 0 4px var(--bg), 0 0 0 5px var(--ink);}
+  .cycle-label{position:absolute;top:20px;transform:translateX(-50%);font-family:var(--mono);font-size:10px;color:var(--ink-3);letter-spacing:.08em;white-space:nowrap;}
+  .cycle-tag{position:absolute;bottom:0;transform:translateX(-50%);font-family:var(--mono);font-size:9px;color:var(--ink-4);letter-spacing:.08em;white-space:nowrap;}
+  .cycle-tag.main{color:var(--brand);font-weight:600;}
+
+  /* Donut */
+  .donut-wrap{display:flex;align-items:center;gap:32px;}
+  .donut{width:180px;height:180px;flex-shrink:0;}
+  .donut-legend{font-family:var(--mono);font-size:11px;flex:1;}
+  .donut-legend > div{display:grid;grid-template-columns:16px 1fr auto auto;gap:12px;align-items:center;padding:6px 0;border-bottom:1px solid var(--line);}
+  .donut-legend .sw{width:12px;height:12px;border-radius:2px;}
+  .donut-legend .name{color:var(--ink-2);}
+  .donut-legend .pct{font-weight:500;color:var(--ink);}
+  .donut-legend .tgt{color:var(--ink-4);font-size:10px;}
+
+  /* AI Chat sample */
+  .chat{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);padding:32px;}
+  .msg-user{margin-left:auto;max-width:70%;background:var(--ink);color:var(--bg);padding:12px 16px;border-radius:var(--r-md);font-size:14px;margin-bottom:24px;width:fit-content;}
+  .msg-ai{padding:0;}
+  .msg-ai-head{display:flex;align-items:center;gap:10px;margin-bottom:12px;}
+  .ai-avatar{width:24px;height:24px;border-radius:4px;background:var(--ink);color:var(--bg);font-family:var(--mono);font-size:10px;font-weight:600;display:flex;align-items:center;justify-content:center;letter-spacing:-0.02em;}
+  .ai-name{font-size:13px;font-weight:500;}
+  .ai-ver{font-family:var(--mono);font-size:10px;color:var(--ink-4);}
+  .msg-ai-body{font-size:14px;line-height:1.6;color:var(--ink-2);padding-left:34px;}
+  .msg-ai-body b{color:var(--ink);font-weight:500;}
+  .msg-ai-body .verify{margin:12px 0;padding:12px 14px;background:var(--surface-2);border-radius:var(--r-md);font-family:var(--mono);font-size:12px;}
+  .msg-ai-body .verify div{display:flex;gap:10px;margin:4px 0;}
+  .msg-ai-body .cite{display:inline-flex;gap:6px;margin-top:12px;padding:4px 8px;background:var(--brand-wash);color:var(--brand-ink);font-family:var(--mono);font-size:10px;border-radius:var(--r-sm);letter-spacing:.04em;}
+
+  /* ============== VOICE ============== */
+  .voice-grid{display:grid;grid-template-columns:1fr 1fr;gap:24px;}
+  .voice{padding:24px;border-radius:var(--r-md);border:1px solid var(--line);background:var(--surface);}
+  .voice.bad{background:#FBF5F5;border-color:#E8C8C8;}
+  .voice.good{background:#F4F8F6;border-color:#C2D8CC;}
+  .voice .mark{font-family:var(--mono);font-size:20px;font-weight:600;margin-bottom:8px;}
+  .voice.bad .mark{color:var(--err);}
+  .voice.good .mark{color:var(--ok);}
+  .voice .q{font-size:15px;color:var(--ink-2);font-style:italic;line-height:1.5;}
+  .voice .lb{font-family:var(--mono);font-size:10px;color:var(--ink-4);letter-spacing:.12em;text-transform:uppercase;margin-bottom:8px;}
+
+  /* ============== PRINCIPLES ============== */
+  .principles{display:grid;grid-template-columns:repeat(5,1fr);gap:1px;background:var(--line);border:1px solid var(--line);}
+  .principle{background:var(--bg);padding:28px 24px;}
+  .principle .num{font-family:var(--mono);font-size:11px;color:var(--ink-4);letter-spacing:.12em;}
+  .principle h4{font-family:var(--serif);font-weight:400;font-size:22px;font-style:italic;margin:16px 0 12px;letter-spacing:-0.01em;line-height:1.1;}
+  .principle p{font-size:12px;line-height:1.5;color:var(--ink-3);margin:0;}
+
+  /* ============== MOBILE TEASER ============== */
+  .phone-row{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;}
+  .phone{aspect-ratio:360/740;background:var(--ink);border-radius:28px;padding:10px;overflow:hidden;}
+  .phone-screen{width:100%;height:100%;background:var(--bg);border-radius:20px;overflow:hidden;position:relative;}
+  .phone .status{height:28px;display:flex;justify-content:space-between;align-items:center;padding:8px 18px;font-family:var(--mono);font-size:9px;color:var(--ink-2);}
+  .phone .hdr{padding:12px 18px 16px;border-bottom:1px solid var(--line);}
+  .phone .hdr .greet{font-size:14px;font-weight:500;letter-spacing:-0.01em;}
+  .phone .hdr .date{font-family:var(--mono);font-size:9px;color:var(--ink-3);margin-top:2px;letter-spacing:.04em;}
+  .phone .content{padding:16px;}
+  .phone .sec-lb{font-family:var(--mono);font-size:8px;color:var(--ink-4);letter-spacing:.14em;text-transform:uppercase;margin-bottom:8px;}
+  .phone .today-card{background:var(--surface);border:1px solid var(--line);border-radius:8px;overflow:hidden;margin-bottom:8px;}
+  .phone .today-card .tstrip{height:3px;background:var(--e-base);}
+  .phone .today-card.vo2 .tstrip{background:var(--e-vo2);}
+  .phone .today-card .tbody{padding:10px 12px;}
+  .phone .today-card .ttime{font-family:var(--mono);font-size:8px;color:var(--ink-3);letter-spacing:.08em;}
+  .phone .today-card .ttitle{font-size:12px;font-weight:500;margin:2px 0 4px;}
+  .phone .today-card .tdesc{font-family:var(--mono);font-size:9px;color:var(--ink-3);}
+  .phone .cyc{margin-top:16px;padding-top:12px;border-top:1px solid var(--line);}
+  .phone .cyc-bar{height:1px;background:var(--line-2);position:relative;margin:18px 4px 6px;}
+  .phone .cyc-bar .pt{position:absolute;top:50%;transform:translate(-50%,-50%);width:6px;height:6px;border-radius:50%;background:var(--ink-4);}
+  .phone .cyc-bar .pt.m{background:var(--brand);width:8px;height:8px;}
+  .phone .cyc-bar .pt.now{background:var(--ink);width:7px;height:7px;box-shadow:0 0 0 2px var(--bg),0 0 0 3px var(--ink);}
+  .phone .cyc-meta{display:flex;justify-content:space-between;font-family:var(--mono);font-size:8px;color:var(--ink-4);margin-top:4px;}
+  .phone .tabs{position:absolute;bottom:0;left:0;right:0;height:48px;border-top:1px solid var(--line);background:var(--bg);display:grid;grid-template-columns:repeat(5,1fr);padding:0 8px;}
+  .phone .tabs div{display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:8px;color:var(--ink-4);}
+  .phone .tabs div.active{color:var(--ink);font-weight:600;}
+
+  /* dark phone */
+  .phone.dark{background:#000;}
+  .phone.dark .phone-screen{background:#0A0F0E;color:#E8EAE7;}
+  .phone.dark .status{color:#9AA39F;}
+  .phone.dark .hdr{border-color:#1A201F;}
+  .phone.dark .hdr .date{color:#6B7571;}
+  .phone.dark .sec-lb{color:#5C6663;}
+  .phone.dark .today-card{background:#0F1514;border-color:#1A201F;}
+  .phone.dark .today-card .ttime,.phone.dark .today-card .tdesc{color:#9AA39F;}
+  .phone.dark .cyc{border-color:#1A201F;}
+  .phone.dark .cyc-bar{background:#2A312F;}
+  .phone.dark .cyc-bar .pt{background:#6B7571;}
+  .phone.dark .cyc-bar .pt.m{background:#4FB8B0;}
+  .phone.dark .cyc-bar .pt.now{background:#E8EAE7;box-shadow:0 0 0 2px #0A0F0E,0 0 0 3px #E8EAE7;}
+  .phone.dark .cyc-meta{color:#6B7571;}
+  .phone.dark .tabs{background:#0A0F0E;border-color:#1A201F;}
+
+  /* phone caption */
+  .phone-cap{margin-top:12px;font-family:var(--mono);font-size:10px;color:var(--ink-4);letter-spacing:.08em;text-transform:uppercase;}
+
+  /* ============== REFERENCE ============== */
+  .ref-note{background:var(--surface-2);border:1px solid var(--line);border-radius:var(--r-md);padding:20px 24px;font-size:13px;color:var(--ink-2);line-height:1.6;}
+  .ref-note b{color:var(--ink);}
+
+  /* footer */
+  .foot{margin-top:160px;padding-top:32px;border-top:1px solid var(--line);display:flex;justify-content:space-between;font-family:var(--mono);font-size:11px;color:var(--ink-4);letter-spacing:.08em;text-transform:uppercase;}
+
+  /* slight grid background on cover */
+  .cover::before{
+    content:"";position:absolute;inset:0;pointer-events:none;opacity:.35;
+    background-image:
+      linear-gradient(var(--line) 1px, transparent 1px),
+      linear-gradient(90deg, var(--line) 1px, transparent 1px);
+    background-size:80px 80px;
+    mask-image:radial-gradient(ellipse at 70% 30%, black 0%, transparent 70%);
+    -webkit-mask-image:radial-gradient(ellipse at 70% 30%, black 0%, transparent 70%);
+  }
+</style>
+</head>
+<body>
+
+<div class="page">
+
+  <!-- ============== COVER ============== -->
+  <section class="cover" id="cover">
+    <div class="cover-meta">
+      <span>Document · <b>Design Direction v1</b></span>
+      <span>Product · <b>TRAINORACLE</b></span>
+      <span>Date · <b>2026.04.22</b></span>
+      <span>Author · <b>Designer</b> → Hojune Jang</span>
+    </div>
+
+    <h1>Elite training,<br/>scientifically <em>designed.</em></h1>
+
+    <p class="cover-lede">
+      TRAINORACLE는 <b>장호준 코치의 15년 훈련 철학과 9.5일 사이클 엔진</b>을 탑재한
+      AI 코칭 플랫폼입니다. 이 문서는 하이파이 목업에 들어가기 전,
+      제품의 <b>시각 언어·목소리·질감</b>을 하나의 방향으로 확정하기 위한 무드보드입니다.
+    </p>
+
+    <div class="cover-foot">
+      <div><label>Positioning</label><strong>Scientific minimalism</strong>, not fitness</div>
+      <div><label>Accent</label><strong>Deep Teal #0D5F5A</strong> — science × motion</div>
+      <div><label>Type</label><strong>Instrument Serif · Inter · JetBrains Mono</strong></div>
+      <div><label>Tone</strong></label><strong>Quiet, precise, honest</strong></div>
+    </div>
+  </section>
+
+  <!-- ============== TOC ============== -->
+  <nav class="toc">
+    <a href="#principles"><span class="n">01</span>Design Principles</a>
+    <a href="#brand"><span class="n">02</span>Brand Mark</a>
+    <a href="#color"><span class="n">03</span>Color System</a>
+    <a href="#type"><span class="n">04</span>Typography</a>
+    <a href="#components"><span class="n">05</span>Components</a>
+    <a href="#data"><span class="n">06</span>Data Visualization</a>
+    <a href="#voice"><span class="n">07</span>Voice & Copy</a>
+    <a href="#preview"><span class="n">08</span>Screen Preview</a>
+  </nav>
+
+  <!-- ============== 01 PRINCIPLES ============== -->
+  <section id="principles">
+    <div class="sec-head">
+      <span class="sec-no">01 / 08</span>
+      <h2 class="sec-title">Five Design Principles</h2>
+      <span class="sec-sub">모든 시각적 의사결정의 근거가 되는 다섯 원칙. 브리프의 10 Rules를 시각 언어 관점에서 재정리.</span>
+    </div>
+
+    <div class="principles">
+      <div class="principle">
+        <div class="num">P-01</div>
+        <h4>Quiet over loud.</h4>
+        <p>한 번에 소리지르는 색·애니메이션·이모지 금지. 중요한 것은 "여백"으로 말한다.</p>
+      </div>
+      <div class="principle">
+        <div class="num">P-02</div>
+        <h4>Data is the hero.</h4>
+        <p>차트·숫자·태그가 시각의 중심. 장식적 일러스트레이션은 존재하지 않는다.</p>
+      </div>
+      <div class="principle">
+        <div class="num">P-03</div>
+        <h4>Honest uncertainty.</h4>
+        <p>확신과 [추정]을 시각적으로 분리한다. 점선·보라·물음표는 "모름"의 문법.</p>
+      </div>
+      <div class="principle">
+        <div class="num">P-04</div>
+        <h4>Serif for soul,<br/>Mono for proof.</h4>
+        <p>감정은 세리프로, 증거는 모노스페이스로. 산세리프는 그 사이의 중립지대.</p>
+      </div>
+      <div class="principle">
+        <div class="num">P-05</div>
+        <h4>Built for the thumb,<br/>designed for the desk.</h4>
+        <p>360px에서 시작해 1440px로 확장한다. 역방향이 아니다.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============== 02 BRAND MARK ============== -->
+  <section id="brand">
+    <div class="sec-head">
+      <span class="sec-no">02 / 08</span>
+      <h2 class="sec-title">Brand Mark — 3 Directions</h2>
+      <span class="sec-sub">3가지 방향을 탐색. 제가 가장 미는 방향은 <b>A (Wordmark · Oracle Dot)</b>. 단순하고 흔치 않으며, 파비콘·앱 아이콘·도큐먼트 헤더 어디서든 작동.</span>
+    </div>
+
+    <div class="logo-grid">
+      <!-- A: Wordmark with oracle dot -->
+      <div class="logo-cell">
+        <div>
+          <div class="mark">
+            <div class="logo-word">TRAIN<span class="dot"></span>ORACLE</div>
+          </div>
+        </div>
+        <div>
+          <div class="label">A · Wordmark + Oracle Dot</div>
+          <div class="desc">"Oracle"의 O 위치에 티얼 닷. 점 하나가 신탁(oracle)의 상징이자 데이터 포인트. <b>메인 추천.</b></div>
+        </div>
+      </div>
+      <!-- B: Monogram -->
+      <div class="logo-cell">
+        <div>
+          <div class="mark">
+            <div class="logo-mono">T│O</div>
+            <div style="font-family:var(--sans);font-weight:500;font-size:18px;letter-spacing:-0.01em;">TRAINORACLE</div>
+          </div>
+        </div>
+        <div>
+          <div class="label">B · Monogram Lockup</div>
+          <div class="desc">Train과 Oracle 사이에 수직선. 프리/포스트 훈련 분석의 "경계"를 상징. 앱 아이콘에 유리.</div>
+        </div>
+      </div>
+      <!-- C: Glyph + wordmark -->
+      <div class="logo-cell">
+        <div>
+          <div class="mark logo-glyph-wrap">
+            <svg class="logo-glyph" viewBox="0 0 32 32" fill="none">
+              <circle cx="16" cy="16" r="15" stroke="#0D5F5A" stroke-width="1.5"/>
+              <circle cx="16" cy="16" r="2.5" fill="#0D5F5A"/>
+              <path d="M16 4 V 8" stroke="#0D5F5A" stroke-width="1.5" stroke-linecap="round"/>
+              <path d="M16 24 V 28" stroke="#0D5F5A" stroke-width="1.5" stroke-linecap="round" opacity=".5"/>
+              <path d="M4 16 H 8" stroke="#0D5F5A" stroke-width="1.5" stroke-linecap="round" opacity=".5"/>
+              <path d="M24 16 H 28" stroke="#0D5F5A" stroke-width="1.5" stroke-linecap="round" opacity=".5"/>
+            </svg>
+            <div class="logo-txt">TRAINORACLE</div>
+          </div>
+        </div>
+        <div>
+          <div class="label">C · Glyph · 9.5 Cycle</div>
+          <div class="desc">원 위에 9.5일 사이클의 "메인 세션" 포인트 1개가 강조. 다소 무거움 — 가능하면 피함.</div>
+        </div>
+      </div>
+
+      <!-- Dark versions -->
+      <div class="logo-cell dark">
+        <div>
+          <div class="mark">
+            <div class="logo-word" style="color:#E8EAE7;">TRAIN<span class="dot"></span>ORACLE</div>
+          </div>
+        </div>
+        <div>
+          <div class="label">A · On dark</div>
+          <div class="desc">다크 모드에선 티얼을 살짝 더 밝게 (#4FB8B0). 명도 대비 확보.</div>
+        </div>
+      </div>
+      <div class="logo-cell dark">
+        <div>
+          <div class="mark">
+            <div class="logo-mono" style="color:#E8EAE7;border-color:#E8EAE7;">T│O</div>
+          </div>
+        </div>
+        <div>
+          <div class="label">B · Icon-only</div>
+          <div class="desc">앱 아이콘·파비콘·소셜 프로필에 사용. 32px까지 판독 가능.</div>
+        </div>
+      </div>
+      <div class="logo-cell dark">
+        <div>
+          <div class="mark" style="gap:4px;">
+            <div class="logo-word" style="color:#E8EAE7;font-size:14px;">TRAIN<span class="dot" style="background:#4FB8B0;width:4px;height:4px;"></span>ORACLE</div>
+            <div style="margin-left:12px;font-family:var(--mono);font-size:10px;color:#6B7571;letter-spacing:.1em;">v1.0 · BETA</div>
+          </div>
+        </div>
+        <div>
+          <div class="label">A · Small / with version</div>
+          <div class="desc">앱 헤더·도큐먼트 푸터에 버전 태그와 함께 배치. 엔진 버저닝이 제품의 정체성.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============== 03 COLOR ============== -->
+  <section id="color">
+    <div class="sec-head">
+      <span class="sec-no">03 / 08</span>
+      <h2 class="sec-title">Color System</h2>
+      <span class="sec-sub">뉴트럴은 <b>따뜻한 오프화이트·차콜</b> 기반 (순백·순흑 지양). 액센트는 Deep Teal 단 하나. 에너지 색은 브리프 기준에서 채도를 살짝 낮춰 가독성 확보.</span>
+    </div>
+
+    <!-- Brand hero -->
+    <div class="brand-stage">
+      <div class="brand-main">
+        <div class="big-hex">#0D5F5A · DEEP TEAL · OKLCH(0.42 0.06 185)</div>
+        <div>
+          <h3>The single brand color.<br/>Used sparingly.</h3>
+          <p>티얼은 "오늘의 메인 세션", "확정된 AI 판정", "주요 CTA"에만 사용. 어디에서 튀는지가 곧 제품의 문법.</p>
+        </div>
+      </div>
+      <div class="brand-scale">
+        <div style="background:#07302E;">50 · Deepest <span>#07302E</span></div>
+        <div style="background:#0D5F5A;">500 · Primary <span>#0D5F5A</span></div>
+        <div style="background:#1E847C;">400 <span>#1E847C</span></div>
+        <div class="light" style="background:#8DC7C1;">200 <span>#8DC7C1</span></div>
+        <div class="light" style="background:#E8F0EE;">50 · Wash <span>#E8F0EE</span></div>
+      </div>
+    </div>
+
+    <!-- Neutrals light -->
+    <div class="color-block">
+      <div class="swatch"><div class="chip" style="background:#FAFAF7;"></div><div><div class="name">Background</div><div class="hex">#FAFAF7</div></div></div>
+      <div class="swatch"><div class="chip" style="background:#FFFFFF;"></div><div><div class="name">Surface</div><div class="hex">#FFFFFF</div></div></div>
+      <div class="swatch"><div class="chip" style="background:#F3F2EE;"></div><div><div class="name">Surface-2</div><div class="hex">#F3F2EE</div></div></div>
+      <div class="swatch"><div class="chip" style="background:#E4E2DC;"></div><div><div class="name">Line</div><div class="hex">#E4E2DC</div></div></div>
+      <div class="swatch"><div class="chip" style="background:#6B7571;"></div><div><div class="name">Ink-3</div><div class="hex">#6B7571</div></div></div>
+      <div class="swatch"><div class="chip" style="background:#0E1412;"></div><div><div class="name">Ink</div><div class="hex">#0E1412</div></div></div>
+    </div>
+
+    <!-- Semantic -->
+    <div class="color-block">
+      <div class="swatch"><div class="chip" style="background:#1F7A3A;"></div><div><div class="name">Success · OK</div><div class="hex">#1F7A3A</div></div></div>
+      <div class="swatch"><div class="chip" style="background:#B4530C;"></div><div><div class="name">Warn</div><div class="hex">#B4530C</div></div></div>
+      <div class="swatch"><div class="chip" style="background:#A11F1F;"></div><div><div class="name">Error</div><div class="hex">#A11F1F</div></div></div>
+      <div class="swatch"><div class="chip" style="background:#1D4ED8;"></div><div><div class="name">Info</div><div class="hex">#1D4ED8</div></div></div>
+      <div class="swatch"><div class="chip" style="background:#6B3FB0;border:1px dashed #6B3FB0;"></div><div><div class="name">Uncertain [?]</div><div class="hex">#6B3FB0 · dashed</div></div></div>
+      <div class="swatch"><div class="chip" style="background:#0D5F5A;"></div><div><div class="name">Brand · Teal</div><div class="hex">#0D5F5A</div></div></div>
+    </div>
+
+    <!-- Energy system -->
+    <h3 style="font-family:var(--mono);font-size:11px;letter-spacing:.14em;color:var(--ink-3);text-transform:uppercase;margin:32px 0 16px;">Energy System · 7 colors (immutable — engine bound)</h3>
+    <div class="energy-grid">
+      <div class="energy-cell" style="background:var(--e-base);">
+        <div><div class="code">BASE</div><div class="full">유산소 기초 · Z2</div></div>
+        <div class="hx">#CFE1F2</div>
+      </div>
+      <div class="energy-cell" style="background:var(--e-lt);">
+        <div><div class="code">LT</div><div class="full">젖산역치</div></div>
+        <div class="hx">#F2EFC9</div>
+      </div>
+      <div class="energy-cell" style="background:var(--e-vo2);">
+        <div><div class="code">VO2</div><div class="full">최대산소섭취량</div></div>
+        <div class="hx">#F2DCC0</div>
+      </div>
+      <div class="energy-cell" style="background:var(--e-gly);">
+        <div><div class="code">GLY</div><div class="full">해당시스템</div></div>
+        <div class="hx">#F2C9C9</div>
+      </div>
+      <div class="energy-cell" style="background:var(--e-atp);">
+        <div><div class="code">ATP-PC</div><div class="full">인산시스템</div></div>
+        <div class="hx">#DDC9F2</div>
+      </div>
+      <div class="energy-cell" style="background:var(--e-mixed);">
+        <div><div class="code">MIXED</div><div class="full">복합</div></div>
+        <div class="hx">#DCDAD3</div>
+      </div>
+      <div class="energy-cell" style="background:var(--e-rest);">
+        <div><div class="code">REST</div><div class="full">휴식</div></div>
+        <div class="hx">#ECEAE3</div>
+      </div>
+    </div>
+
+    <!-- Dark mode -->
+    <div class="dark-preview">
+      <h4>Dark mode · paired neutrals</h4>
+      <div class="color-block" style="margin-bottom:0;">
+        <div class="swatch"><div class="chip" style="background:#0A0F0E;"></div><div><div class="name">BG</div><div class="hex">#0A0F0E</div></div></div>
+        <div class="swatch"><div class="chip" style="background:#0F1514;"></div><div><div class="name">Surface</div><div class="hex">#0F1514</div></div></div>
+        <div class="swatch"><div class="chip" style="background:#1A201F;"></div><div><div class="name">Surface-2</div><div class="hex">#1A201F</div></div></div>
+        <div class="swatch"><div class="chip" style="background:#2A312F;"></div><div><div class="name">Line</div><div class="hex">#2A312F</div></div></div>
+        <div class="swatch"><div class="chip" style="background:#9AA39F;"></div><div><div class="name">Ink-3</div><div class="hex">#9AA39F</div></div></div>
+        <div class="swatch"><div class="chip" style="background:#4FB8B0;"></div><div><div class="name">Brand / dark</div><div class="hex">#4FB8B0</div></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============== 04 TYPOGRAPHY ============== -->
+  <section id="type">
+    <div class="sec-head">
+      <span class="sec-no">04 / 08</span>
+      <h2 class="sec-title">Typography — 3 Families, 1 System</h2>
+      <span class="sec-sub">브리프의 Inter + JetBrains Mono + Pretendard 기본 유지. 다만 <b>랜딩·철학 페이지 한정으로 Instrument Serif</b>를 추가 — 과학 저널/긴글 뉘앙스. UI에는 세리프 안 씀.</span>
+    </div>
+
+    <div class="type-specimen">
+      <div class="type-row">
+        <div class="label">Display · Serif</div>
+        <div class="type-display">Method over color.</div>
+        <div class="meta">Instrument Serif · 72 / 68 · -0.03em</div>
+      </div>
+      <div class="type-row">
+        <div class="label">H1 · Sans</div>
+        <div class="type-h1">Your next 9.5-day cycle</div>
+        <div class="meta">Inter 500 · 42 / 46 · -0.02em</div>
+      </div>
+      <div class="type-row">
+        <div class="label">H2</div>
+        <div class="type-h2">Week of April 21 — 27</div>
+        <div class="meta">Inter 500 · 28 / 34 · -0.015em</div>
+      </div>
+      <div class="type-row">
+        <div class="label">H3</div>
+        <div class="type-h3">VO2-Long · Main Session</div>
+        <div class="meta">Inter 500 · 20 / 26</div>
+      </div>
+      <div class="type-row">
+        <div class="label">Body large</div>
+        <div class="type-body-lg">The Z1 recovery ratio is 13% over the last seven days, below the 15% target defined in <em>A_guide Rule 6</em>. Consider adding one recovery session before the next main.</div>
+        <div class="meta">Inter 400 · 17 / 27</div>
+      </div>
+      <div class="type-row">
+        <div class="label">Body</div>
+        <div class="type-body">본문은 Inter·Pretendard가 공존합니다. 영문은 Inter, 한글은 Pretendard가 자동으로 적용되며, 두 폰트의 x-height가 거의 동일해 섞여도 위화감이 없습니다. 이 덕분에 코치·선수 모두 같은 화면을 동일한 밀도로 읽을 수 있습니다.</div>
+        <div class="meta">Inter + Pretendard · 14 / 22</div>
+      </div>
+      <div class="type-row">
+        <div class="label">Caption</div>
+        <div class="type-caption">Classified by Rule C-2 · Confidence 94% · Reviewed 2 hours ago</div>
+        <div class="meta">Inter 400 · 12 / 17</div>
+      </div>
+      <div class="type-row">
+        <div class="label">Mono · Hero</div>
+        <div class="type-mono-lg">16:10.44 · 3'45"/km</div>
+        <div class="meta">JetBrains Mono 500 · 32 · tabular</div>
+      </div>
+      <div class="type-row">
+        <div class="label">Mono · Data</div>
+        <div class="type-mono">HR 168 · Pace 3'18"/km · EPOC 102 · TSS 124 · TSB -18</div>
+        <div class="meta">JetBrains Mono 400 · 14 / 20</div>
+      </div>
+    </div>
+
+    <div class="korean-specimen">
+      <div>
+        <h5>Korean · Pretendard Variable</h5>
+        <h3 class="kr-h">통계적 자유 — 고정된 주기는 없다</h3>
+        <p class="kr-b">장호준 코치의 훈련 철학은 "7일 고정 주기"를 거부합니다. 대신 평균 9.5일을 축으로 한 유동적 사이클을 제안합니다. 선수마다, 시즌마다, 컨디션마다 간격이 달라져야 합니다. 통계는 평균을 말할 뿐, 법칙을 말하지 않습니다.</p>
+      </div>
+      <div>
+        <h5>Mixed · Inter + Pretendard + Mono</h5>
+        <h3 class="kr-h">오늘의 세션: <span class="mono" style="font-weight:500;">6×1000m</span> @ <span class="mono" style="font-weight:500;">3'20"</span></h3>
+        <p class="kr-b">분류: <span class="mono">VO2-LONG</span> · 신뢰도 <span class="mono">94%</span>. 컨디션 체크 완료. 세션 시작 전 <b>RPE 6</b> 이하 유지 권장. <em>A_guide Rule 3</em> 참조.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============== 05 COMPONENTS ============== -->
+  <section id="components">
+    <div class="sec-head">
+      <span class="sec-no">05 / 08</span>
+      <h2 class="sec-title">Component Lab — Sample Set</h2>
+      <span class="sec-sub">45개 컴포넌트 중 가장 "제품의 문법"을 드러내는 7개. 여기서 통과한 규칙을 나머지에 확장.</span>
+    </div>
+
+    <div class="lab-grid">
+
+      <!-- Badges -->
+      <div class="lab-card c-span-6">
+        <div class="cap"><span>01 · Status Badges</span><span>9 Validation Rules 통용</span></div>
+        <div class="badge-row" style="margin-bottom:16px;">
+          <span class="badge ok"><span class="dot"></span>OK</span>
+          <span class="badge warn"><span class="dot"></span>WARN</span>
+          <span class="badge err"><span class="dot"></span>ERROR</span>
+          <span class="badge info"><span class="dot"></span>INFO</span>
+          <span class="badge unc"><span class="dot"></span>[?] UNCERTAIN</span>
+        </div>
+        <div class="badge-row">
+          <span class="badge ok"><span class="dot"></span>D-1 · Energy OK</span>
+          <span class="badge warn"><span class="dot"></span>D-3 · Z1 13%</span>
+          <span class="badge err"><span class="dot"></span>D-9 · Injury risk</span>
+        </div>
+      </div>
+
+      <!-- Energy tags -->
+      <div class="lab-card c-span-6">
+        <div class="cap"><span>02 · Energy System Tags</span><span>세션·파이·강도 공통</span></div>
+        <div class="badge-row" style="margin-bottom:12px;">
+          <span class="e-tag base">BASE</span>
+          <span class="e-tag lt">LT</span>
+          <span class="e-tag vo2">VO2-LONG</span>
+          <span class="e-tag gly">GLY-SHORT</span>
+          <span class="e-tag atp">ATP-PC</span>
+          <span class="e-tag rest">REST</span>
+        </div>
+        <div class="type-caption">태그는 배경색 + 이름만. 아이콘은 쓰지 않음 (밀도 방해). 한 세션에 복수 태그 가능.</div>
+      </div>
+
+      <!-- Buttons -->
+      <div class="lab-card c-span-6">
+        <div class="cap"><span>03 · Buttons</span><span>Primary는 Ink, 브랜드는 CTA 한정</span></div>
+        <div class="btn-row" style="margin-bottom:12px;">
+          <button class="btn primary">Start Session →</button>
+          <button class="btn brand">Request Beta</button>
+          <button class="btn secondary">Log Manually</button>
+          <button class="btn ghost">Skip</button>
+        </div>
+        <div class="type-caption">Primary CTA는 Ink(#0E1412). Teal은 "브랜드/랜딩 CTA"·"강한 강조"에만 사용해서 튀는 맥락을 통제.</div>
+      </div>
+
+      <!-- Session card -->
+      <div class="lab-card c-span-6">
+        <div class="cap"><span>04 · Session Card</span><span>캘린더 셀 · 기본 단위</span></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+          <div class="session">
+            <div class="strip"></div>
+            <div class="body">
+              <div class="top">
+                <div class="time">THU · PM · MAIN</div>
+                <span class="badge warn" style="padding:2px 6px;font-size:10px;"><span class="dot"></span>EPOC</span>
+              </div>
+              <div class="title">6×1000m @ 3'20"</div>
+              <div class="desc">70min · 10km · HR 168</div>
+              <div class="tags">
+                <span class="e-tag vo2">VO2-LONG</span>
+                <span class="e-tag lt">LT</span>
+              </div>
+            </div>
+          </div>
+          <div class="session base">
+            <div class="strip"></div>
+            <div class="body">
+              <div class="top">
+                <div class="time">TUE · AM</div>
+                <span class="badge ok" style="padding:2px 6px;font-size:10px;"><span class="dot"></span>OK</span>
+              </div>
+              <div class="title">Easy Jog · Z2</div>
+              <div class="desc">60min · 12km · HR 142</div>
+              <div class="tags">
+                <span class="e-tag base">BASE</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Validation cards -->
+      <div class="lab-card c-span-12">
+        <div class="cap"><span>05 · Validation Cards (9 Rules)</span><span>대시보드 하단 상시 노출</span></div>
+        <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:12px;">
+          <div class="vcard ok">
+            <div class="vid">D-1</div>
+            <div class="vtitle">Energy Balance</div>
+            <div class="vval">OK</div>
+            <div class="vmeta">BASE 45% · LT 20% · VO2 15%</div>
+          </div>
+          <div class="vcard ok">
+            <div class="vid">D-2</div>
+            <div class="vtitle">MAIN Interval</div>
+            <div class="vval">9.0 d</div>
+            <div class="vmeta">target 9.5 ± 1.5</div>
+          </div>
+          <div class="vcard warn">
+            <div class="vid">D-3</div>
+            <div class="vtitle">Z1 Recovery</div>
+            <div class="vval">13%</div>
+            <div class="vmeta">target ≥ 15% · -2pp</div>
+          </div>
+          <div class="vcard ok">
+            <div class="vid">D-4</div>
+            <div class="vtitle">EPOC Recovery</div>
+            <div class="vval">72 h</div>
+            <div class="vmeta">last spike 102 ml/kg</div>
+          </div>
+          <div class="vcard ok">
+            <div class="vid">D-6</div>
+            <div class="vtitle">CK Recovery</div>
+            <div class="vval">normal</div>
+            <div class="vmeta">last test 4 d ago</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- AI Chat sample -->
+      <div class="lab-card c-span-7" style="padding:0;">
+        <div class="chat">
+          <div class="cap" style="margin-bottom:24px;"><span>06 · AI Chat — Jang AI Response</span><span>근거 인용 필수</span></div>
+          <div class="msg-user">다음 주 훈련 계획 짜줘</div>
+          <div class="msg-ai">
+            <div class="msg-ai-head">
+              <div class="ai-avatar">OC</div>
+              <div class="ai-name">Coach Jang AI</div>
+              <div class="ai-ver">v5.1.2</div>
+            </div>
+            <div class="msg-ai-body">
+              설계에 앞서 지난 <b>9.5일 사이클</b>을 먼저 검증합니다.
+              <div class="verify">
+                <div><span class="badge ok" style="padding:1px 6px;font-size:10px;">OK</span> Energy balance · 5 systems 균형</div>
+                <div><span class="badge warn" style="padding:1px 6px;font-size:10px;">WARN</span> Z1 recovery · 13% <span style="color:var(--ink-4);">(target ≥15%)</span></div>
+                <div><span class="badge ok" style="padding:1px 6px;font-size:10px;">OK</span> MAIN interval · 9.0 d</div>
+              </div>
+              Z1 부족이 감지되어 다음 사이클은 <b>Option A · Deload</b>를 우선 추천합니다. 볼륨 20% 감축, Z1 회복 세션 +1.
+              <div>
+                <span class="cite">CITED · A_guide Rule 6 · Paper [7] Seiler &amp; Tonnessen 2010</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Inbox item -->
+      <div class="lab-card c-span-5">
+        <div class="cap"><span>07 · AI Inbox · Uncertainty</span><span>확신 없는 판정 대기</span></div>
+        <div style="border:1px dashed var(--unc);border-radius:8px;padding:16px;background:#FAF7FD;">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+            <span class="badge unc" style="padding:2px 6px;"><span class="dot"></span>[?]</span>
+            <span style="font-family:var(--mono);font-size:10px;color:var(--ink-3);letter-spacing:.08em;">APR 20 · PM SESSION</span>
+          </div>
+          <div style="font-size:14px;font-weight:500;margin-bottom:6px;">Classification uncertain</div>
+          <div style="font-size:13px;color:var(--ink-2);line-height:1.55;margin-bottom:14px;">
+            Rep time <span class="mono">72s</span> falls in the overlap zone between <span class="e-tag vo2">VO2-LONG</span> and <span class="e-tag gly">GLY-SHORT</span> (70–75s).
+          </div>
+          <div class="btn-row">
+            <button class="btn secondary" style="padding:6px 10px;font-size:12px;">VO2-LONG</button>
+            <button class="btn secondary" style="padding:6px 10px;font-size:12px;">GLY-SHORT</button>
+            <button class="btn ghost" style="padding:6px 10px;font-size:12px;">Skip</button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ============== 06 DATA ============== -->
+  <section id="data">
+    <div class="sec-head">
+      <span class="sec-no">06 / 08</span>
+      <h2 class="sec-title">Data Visualization — 9.5 Cycle + Energy Donut</h2>
+      <span class="sec-sub">제품의 가장 상징적인 두 시각화 샘플. 나머지(Line/Histogram/TSB)는 이 두 개의 톤을 확장.</span>
+    </div>
+
+    <div class="lab-grid">
+      <!-- 9.5 cycle -->
+      <div class="lab-card c-span-12">
+        <div class="cap"><span>9.5-Day Cycle Track</span><span>철학의 시각화</span></div>
+        <div style="font-family:var(--mono);font-size:11px;color:var(--ink-3);margin-bottom:4px;">Cycle 7 of 2026 · Days 60–69 of Mesocycle</div>
+        <div style="font-size:14px;color:var(--ink-2);margin-bottom:8px;">Current position · <b>Day 5 / 9.5</b></div>
+        <div class="cycle-track">
+          <div class="cycle-line">
+            <!-- 10 markers across 9.5 days (day 1 - 10) -->
+            <div class="cycle-dot main" style="left:0%;"></div>
+            <div class="cycle-label" style="left:0%;">D1</div>
+            <div class="cycle-tag main" style="left:0%;">MAIN</div>
+
+            <div class="cycle-dot" style="left:11.1%;"></div>
+            <div class="cycle-label" style="left:11.1%;">D2</div>
+            <div class="cycle-tag" style="left:11.1%;">LOW</div>
+
+            <div class="cycle-dot" style="left:22.2%;"></div>
+            <div class="cycle-label" style="left:22.2%;">D3</div>
+            <div class="cycle-tag" style="left:22.2%;">MOD</div>
+
+            <div class="cycle-dot" style="left:33.3%;"></div>
+            <div class="cycle-label" style="left:33.3%;">D4</div>
+            <div class="cycle-tag" style="left:33.3%;">LOW</div>
+
+            <div class="cycle-dot today" style="left:44.4%;"></div>
+            <div class="cycle-label" style="left:44.4%;color:var(--ink);font-weight:600;">D5 · TODAY</div>
+            <div class="cycle-tag" style="left:44.4%;">Z1 REST</div>
+
+            <div class="cycle-dot" style="left:55.5%;"></div>
+            <div class="cycle-label" style="left:55.5%;">D6</div>
+            <div class="cycle-tag" style="left:55.5%;">MOD</div>
+
+            <div class="cycle-dot" style="left:66.6%;"></div>
+            <div class="cycle-label" style="left:66.6%;">D7</div>
+            <div class="cycle-tag" style="left:66.6%;">LOW</div>
+
+            <div class="cycle-dot main" style="left:77.7%;"></div>
+            <div class="cycle-label" style="left:77.7%;">D8</div>
+            <div class="cycle-tag main" style="left:77.7%;">MAIN</div>
+
+            <div class="cycle-dot" style="left:88.8%;"></div>
+            <div class="cycle-label" style="left:88.8%;">D9</div>
+            <div class="cycle-tag" style="left:88.8%;">LOW</div>
+
+            <div class="cycle-dot" style="left:99.9%;"></div>
+            <div class="cycle-label" style="left:99.9%;">D10</div>
+            <div class="cycle-tag" style="left:99.9%;">REST</div>
+          </div>
+        </div>
+        <div style="font-family:var(--mono);font-size:10px;color:var(--ink-4);letter-spacing:.08em;border-top:1px solid var(--line);padding-top:12px;">
+          WHY 9.5? · Statistical average of main-to-main intervals across 400+ elite middle-distance athlete seasons (A_guide Principle 1).
+        </div>
+      </div>
+
+      <!-- Donut -->
+      <div class="lab-card c-span-6">
+        <div class="cap"><span>Energy System Distribution</span><span>Last 7 days</span></div>
+        <div class="donut-wrap">
+          <svg class="donut" viewBox="0 0 42 42">
+            <!-- stacked strokes forming donut -->
+            <circle cx="21" cy="21" r="15.9155" fill="transparent" stroke="#F3F2EE" stroke-width="6"/>
+            <!-- base 45 -->
+            <circle cx="21" cy="21" r="15.9155" fill="transparent" stroke="#CFE1F2" stroke-width="6" stroke-dasharray="45 55" stroke-dashoffset="25" transform="rotate(-90 21 21)"/>
+            <!-- lt 20 -->
+            <circle cx="21" cy="21" r="15.9155" fill="transparent" stroke="#F2EFC9" stroke-width="6" stroke-dasharray="20 80" stroke-dashoffset="-20" transform="rotate(-90 21 21)"/>
+            <!-- vo2 15 -->
+            <circle cx="21" cy="21" r="15.9155" fill="transparent" stroke="#F2DCC0" stroke-width="6" stroke-dasharray="15 85" stroke-dashoffset="-40" transform="rotate(-90 21 21)"/>
+            <!-- gly 12 -->
+            <circle cx="21" cy="21" r="15.9155" fill="transparent" stroke="#F2C9C9" stroke-width="6" stroke-dasharray="12 88" stroke-dashoffset="-55" transform="rotate(-90 21 21)"/>
+            <!-- rest 8 -->
+            <circle cx="21" cy="21" r="15.9155" fill="transparent" stroke="#ECEAE3" stroke-width="6" stroke-dasharray="8 92" stroke-dashoffset="-67" transform="rotate(-90 21 21)"/>
+            <text x="21" y="20" text-anchor="middle" font-family="JetBrains Mono" font-size="5" font-weight="600" fill="#0E1412">523</text>
+            <text x="21" y="25" text-anchor="middle" font-family="JetBrains Mono" font-size="2.2" fill="#6B7571">min / week</text>
+          </svg>
+          <div class="donut-legend">
+            <div><span class="sw" style="background:#CFE1F2;"></span><span class="name">BASE</span><span class="pct">45%</span><span class="tgt">tgt 50</span></div>
+            <div><span class="sw" style="background:#F2EFC9;"></span><span class="name">LT</span><span class="pct">20%</span><span class="tgt">tgt 18</span></div>
+            <div><span class="sw" style="background:#F2DCC0;"></span><span class="name">VO2</span><span class="pct">15%</span><span class="tgt">tgt 15</span></div>
+            <div><span class="sw" style="background:#F2C9C9;"></span><span class="name">GLY</span><span class="pct">12%</span><span class="tgt">tgt 10</span></div>
+            <div><span class="sw" style="background:#ECEAE3;"></span><span class="name">REST</span><span class="pct">8%</span><span class="tgt">tgt 7</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Mini line: Z1 trend -->
+      <div class="lab-card c-span-6">
+        <div class="cap"><span>Z1 Recovery Trend · 8 weeks</span><span>target 15% dashed</span></div>
+        <svg viewBox="0 0 400 140" style="width:100%;height:auto;">
+          <defs>
+            <pattern id="grid" width="50" height="28" patternUnits="userSpaceOnUse">
+              <path d="M 50 0 L 0 0 0 28" fill="none" stroke="#E4E2DC" stroke-width="0.5"/>
+            </pattern>
+          </defs>
+          <rect width="400" height="140" fill="url(#grid)"/>
+          <!-- target line -->
+          <line x1="0" y1="56" x2="400" y2="56" stroke="#6B3FB0" stroke-width="1" stroke-dasharray="3 3" opacity=".7"/>
+          <text x="395" y="52" text-anchor="end" font-family="JetBrains Mono" font-size="9" fill="#6B3FB0">target 15%</text>
+          <!-- data line -->
+          <polyline points="25,82 75,70 125,58 175,48 225,62 275,54 325,70 375,78" fill="none" stroke="#0D5F5A" stroke-width="1.5"/>
+          <!-- points -->
+          <circle cx="25" cy="82" r="2.5" fill="#0D5F5A"/>
+          <circle cx="75" cy="70" r="2.5" fill="#0D5F5A"/>
+          <circle cx="125" cy="58" r="2.5" fill="#0D5F5A"/>
+          <circle cx="175" cy="48" r="2.5" fill="#0D5F5A"/>
+          <circle cx="225" cy="62" r="2.5" fill="#0D5F5A"/>
+          <circle cx="275" cy="54" r="2.5" fill="#0D5F5A"/>
+          <circle cx="325" cy="70" r="2.5" fill="#0D5F5A"/>
+          <circle cx="375" cy="78" r="3.5" fill="#B4530C"/>
+          <!-- latest label -->
+          <text x="375" y="95" text-anchor="end" font-family="JetBrains Mono" font-size="10" font-weight="600" fill="#B4530C">13%</text>
+        </svg>
+        <div style="font-family:var(--mono);font-size:10px;color:var(--ink-4);letter-spacing:.06em;margin-top:8px;">
+          W10 · W11 · W12 · W13 · W14 · W15 · W16 · W17 ← current
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ============== 07 VOICE ============== -->
+  <section id="voice">
+    <div class="sec-head">
+      <span class="sec-no">07 / 08</span>
+      <h2 class="sec-title">Voice & Copy Samples</h2>
+      <span class="sec-sub">제품의 목소리는 <b>의사의 차트 노트</b>에 가까움. 칭찬·감탄 금지, 근거·수치·결론.</span>
+    </div>
+
+    <div class="voice-grid">
+      <div class="voice bad">
+        <div class="lb">Session logged — ❌ 피트니스 앱 톤</div>
+        <div class="mark">✗</div>
+        <div class="q">"Awesome! You crushed it today! 🔥 Another step closer to your goals!"</div>
+      </div>
+      <div class="voice good">
+        <div class="lb">Session logged — ✅ TRAINORACLE 톤</div>
+        <div class="mark">✓</div>
+        <div class="q">"Session logged. Pace 3'18"/km, HR avg 168. EPOC 102 ml/kg — above 90 threshold. Recovery recommended before next main."</div>
+      </div>
+
+      <div class="voice bad">
+        <div class="lb">Z1 warning — ❌</div>
+        <div class="mark">✗</div>
+        <div class="q">"Uh oh! You might want to rest more? Just saying!"</div>
+      </div>
+      <div class="voice good">
+        <div class="lb">Z1 warning — ✅</div>
+        <div class="mark">✓</div>
+        <div class="q">"Z1 recovery 13% · below target 15% (A_guide Rule 6). Add 1 Z1 session within 3 days."</div>
+      </div>
+
+      <div class="voice bad">
+        <div class="lb">Uncertain classification — ❌</div>
+        <div class="mark">✗</div>
+        <div class="q">"We think this was probably a VO2 session. Maybe."</div>
+      </div>
+      <div class="voice good">
+        <div class="lb">Uncertain classification — ✅</div>
+        <div class="mark">✓</div>
+        <div class="q">"[?] Rep time 72s falls in the 70–75s overlap between VO2-LONG and GLY-SHORT. User decision required."</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============== 08 PREVIEW ============== -->
+  <section id="preview">
+    <div class="sec-head">
+      <span class="sec-no">08 / 08</span>
+      <h2 class="sec-title">Screen Preview — Dashboard, Light × Dark</h2>
+      <span class="sec-sub">방향 확정용 미니 목업. <b>하이파이 전 단계</b>로, 실제 12화면 목업은 방향 승인 후 Week 4-5에 진행.</span>
+    </div>
+
+    <div class="phone-row">
+      <div>
+        <div class="phone">
+          <div class="phone-screen">
+            <div class="status"><span>9:41</span><span>●●●●●</span></div>
+            <div class="hdr">
+              <div class="greet">Good morning, 민지</div>
+              <div class="date">TUE, APR 22 · DAY 5 OF CYCLE 7</div>
+            </div>
+            <div class="content">
+              <div class="sec-lb">▶ Today</div>
+              <div class="today-card">
+                <div class="tstrip"></div>
+                <div class="tbody">
+                  <div class="ttime">AM · Z2 BASE</div>
+                  <div class="ttitle">Easy jog</div>
+                  <div class="tdesc">60min · 12km · HR 142</div>
+                </div>
+              </div>
+              <div class="today-card vo2">
+                <div class="tstrip"></div>
+                <div class="tbody">
+                  <div class="ttime">PM · MAIN · VO2</div>
+                  <div class="ttitle">6×1000m @ 3'20"</div>
+                  <div class="tdesc">70min · 10km target</div>
+                </div>
+              </div>
+              <div class="cyc">
+                <div class="sec-lb">▶ 9.5-Day Cycle</div>
+                <div class="cyc-bar">
+                  <div class="pt m" style="left:0%;"></div>
+                  <div class="pt" style="left:11%;"></div>
+                  <div class="pt" style="left:22%;"></div>
+                  <div class="pt" style="left:33%;"></div>
+                  <div class="pt now" style="left:44%;"></div>
+                  <div class="pt" style="left:55%;"></div>
+                  <div class="pt" style="left:66%;"></div>
+                  <div class="pt m" style="left:77%;"></div>
+                  <div class="pt" style="left:88%;"></div>
+                  <div class="pt" style="left:99%;"></div>
+                </div>
+                <div class="cyc-meta"><span>D1 MAIN</span><span>D5 · NOW</span><span>D10</span></div>
+              </div>
+            </div>
+            <div class="tabs">
+              <div class="active">Home</div>
+              <div>Cal</div>
+              <div>Chat</div>
+              <div>Ana</div>
+              <div>Set</div>
+            </div>
+          </div>
+        </div>
+        <div class="phone-cap">A · Light · Dashboard</div>
+      </div>
+
+      <div>
+        <div class="phone dark">
+          <div class="phone-screen">
+            <div class="status"><span>9:41</span><span>●●●●●</span></div>
+            <div class="hdr">
+              <div class="greet">Good morning, 민지</div>
+              <div class="date">TUE, APR 22 · DAY 5 OF CYCLE 7</div>
+            </div>
+            <div class="content">
+              <div class="sec-lb">▶ Today</div>
+              <div class="today-card">
+                <div class="tstrip" style="background:#1E3A5F;"></div>
+                <div class="tbody">
+                  <div class="ttime">AM · Z2 BASE</div>
+                  <div class="ttitle">Easy jog</div>
+                  <div class="tdesc">60min · 12km · HR 142</div>
+                </div>
+              </div>
+              <div class="today-card vo2">
+                <div class="tstrip" style="background:#5F3F1E;"></div>
+                <div class="tbody">
+                  <div class="ttime">PM · MAIN · VO2</div>
+                  <div class="ttitle">6×1000m @ 3'20"</div>
+                  <div class="tdesc">70min · 10km target</div>
+                </div>
+              </div>
+              <div class="cyc">
+                <div class="sec-lb">▶ 9.5-Day Cycle</div>
+                <div class="cyc-bar">
+                  <div class="pt m" style="left:0%;"></div>
+                  <div class="pt" style="left:11%;"></div>
+                  <div class="pt" style="left:22%;"></div>
+                  <div class="pt" style="left:33%;"></div>
+                  <div class="pt now" style="left:44%;"></div>
+                  <div class="pt" style="left:55%;"></div>
+                  <div class="pt" style="left:66%;"></div>
+                  <div class="pt m" style="left:77%;"></div>
+                  <div class="pt" style="left:88%;"></div>
+                  <div class="pt" style="left:99%;"></div>
+                </div>
+                <div class="cyc-meta"><span>D1 MAIN</span><span>D5 · NOW</span><span>D10</span></div>
+              </div>
+            </div>
+            <div class="tabs">
+              <div class="active" style="color:#E8EAE7;">Home</div>
+              <div>Cal</div>
+              <div>Chat</div>
+              <div>Ana</div>
+              <div>Set</div>
+            </div>
+          </div>
+        </div>
+        <div class="phone-cap">B · Dark · Dashboard</div>
+      </div>
+
+      <div>
+        <div class="phone">
+          <div class="phone-screen">
+            <div class="status"><span>9:41</span><span>●●●●●</span></div>
+            <div class="hdr" style="border:none;padding-bottom:8px;">
+              <div style="display:flex;align-items:center;gap:8px;">
+                <div class="ai-avatar" style="width:20px;height:20px;font-size:9px;">OC</div>
+                <div style="font-size:12px;font-weight:500;">Coach Jang AI</div>
+                <div style="font-family:var(--mono);font-size:8px;color:var(--ink-4);margin-left:auto;">v5.1.2</div>
+              </div>
+            </div>
+            <div class="content" style="padding-top:8px;">
+              <div style="background:var(--ink);color:var(--bg);padding:8px 10px;border-radius:6px;font-size:11px;margin:0 0 12px auto;width:fit-content;max-width:80%;">다음 주 계획 짜줘</div>
+              <div style="font-size:11px;color:var(--ink-2);line-height:1.55;margin-bottom:8px;">
+                지난 <b>9.5일 사이클</b>을 먼저 검증합니다.
+              </div>
+              <div style="background:var(--surface-2);border-radius:6px;padding:8px 10px;font-family:var(--mono);font-size:9px;margin-bottom:8px;">
+                <div style="display:flex;gap:6px;margin:2px 0;"><span class="badge ok" style="padding:0 4px;font-size:8px;"><span class="dot" style="width:4px;height:4px;"></span>OK</span>Energy balance</div>
+                <div style="display:flex;gap:6px;margin:2px 0;"><span class="badge warn" style="padding:0 4px;font-size:8px;"><span class="dot" style="width:4px;height:4px;"></span>WARN</span>Z1 · 13%</div>
+                <div style="display:flex;gap:6px;margin:2px 0;"><span class="badge ok" style="padding:0 4px;font-size:8px;"><span class="dot" style="width:4px;height:4px;"></span>OK</span>MAIN interval · 9.0 d</div>
+              </div>
+              <div style="font-size:11px;color:var(--ink-2);line-height:1.55;">
+                다음 사이클은 <b>Option A · Deload</b>를 우선 추천합니다.
+              </div>
+              <div style="margin-top:10px;padding:3px 6px;background:var(--brand-wash);color:var(--brand-ink);font-family:var(--mono);font-size:8px;border-radius:3px;display:inline-block;">CITED · Rule 6 · Paper [7]</div>
+            </div>
+            <div class="tabs">
+              <div>Home</div>
+              <div>Cal</div>
+              <div class="active">Chat</div>
+              <div>Ana</div>
+              <div>Set</div>
+            </div>
+          </div>
+        </div>
+        <div class="phone-cap">C · Light · AI Chat</div>
+      </div>
+    </div>
+
+    <div class="ref-note" style="margin-top:40px;">
+      <b>주의 — 이것은 방향 확정용 샘플입니다.</b>
+      실제 화면은 더 많은 실제 데이터, 더 정교한 인터랙션, 반응형 그리드를 포함합니다.
+      이 세 장면의 <b>여백·대비·타이포·색 사용량</b>이 "TRAINORACLE다운가?" 만 확인해주세요.
+    </div>
+  </section>
+
+  <!-- ============== FOOTER ============== -->
+  <div class="foot">
+    <div>TRAINORACLE · Design Direction v1</div>
+    <div>Prepared for Hojune Jang · 2026.04.22</div>
+    <div>Next · Component Library v1 → 12 screens</div>
+  </div>
+
+</div>
+
+</body>
+</html>

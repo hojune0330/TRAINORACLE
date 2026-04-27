@@ -1,0 +1,374 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>TRAINORACLE — Settings</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+<link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css" rel="stylesheet" />
+<style>
+  :root{--bg:#FAFAF7;--surface:#FFFFFF;--surface-2:#F4F3EE;--ink:#0E1412;--ink-2:#2B3330;--ink-3:#5F6965;--ink-4:#8F9894;--line:#D9D6CE;--line-2:#BFBBB0;--hair:#E8E6DF;--brand:#0D5F5A;--ok:#1F7A3A;--warn:#B4530C;--err:#A11F1F;--sans:"Inter","Pretendard Variable",ui-sans-serif,system-ui,sans-serif;--mono:"JetBrains Mono",ui-monospace,SFMono-Regular,monospace;}
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;background:#E4E2DA;color:var(--ink);font-family:var(--sans);font-size:14.5px;line-height:1.55;-webkit-font-smoothing:antialiased;}
+  .mono{font-family:var(--mono);font-variant-numeric:tabular-nums;}
+
+  .chrome{position:sticky;top:0;z-index:100;background:rgba(228,226,218,.92);backdrop-filter:blur(12px);border-bottom:1px solid var(--line);padding:12px 24px;display:flex;align-items:center;gap:16px;}
+  .chrome-brand{font-weight:500;font-size:15px;}
+  .chrome-brand .dot{display:inline-block;width:5px;height:5px;background:var(--brand);border-radius:50%;margin:0 1px;transform:translateY(-2px);}
+  .chrome-path{font-family:var(--mono);font-size:10.5px;color:var(--ink-3);letter-spacing:.08em;text-transform:uppercase;}
+  .tabs{margin-left:auto;display:flex;border:1px solid var(--line);background:var(--surface);}
+  .tabs button{background:transparent;border:0;padding:9px 16px;font-family:var(--mono);font-size:11px;font-weight:500;color:var(--ink-3);cursor:pointer;letter-spacing:.08em;text-transform:uppercase;min-height:38px;border-right:1px solid var(--line);}
+  .tabs button:last-child{border-right:0;} .tabs button.on{background:var(--ink);color:var(--bg);}
+  .canvas{padding:28px 24px 80px;display:flex;justify-content:center;}
+  .frame{display:none;} .frame.on{display:block;}
+  .view-label{font-family:var(--mono);font-size:11px;color:var(--ink-3);letter-spacing:.14em;text-transform:uppercase;margin-bottom:14px;display:flex;align-items:center;gap:10px;}
+  .view-label .dot{width:5px;height:5px;background:var(--brand);border-radius:50%;}
+  .view-label .dim{color:var(--ink-4);}
+
+  /* MOBILE */
+  .m-frame{width:380px;margin:0 auto;background:#0E1412;padding:10px;}
+  .m-inner{background:var(--bg);overflow:hidden;height:820px;display:flex;flex-direction:column;}
+  .m-status{height:30px;display:flex;align-items:center;justify-content:space-between;padding:6px 22px 0;font-size:13px;font-weight:600;flex-shrink:0;}
+  .m-top{padding:14px 18px;border-bottom:1px solid var(--line);display:flex;align-items:baseline;gap:14px;flex-shrink:0;}
+  .m-top h1{margin:0;font-size:20px;font-weight:500;letter-spacing:-0.02em;}
+  .m-scroll{flex:1;overflow-y:auto;}
+
+  /* settings list */
+  .st-grp{padding:18px 0;border-bottom:1px solid var(--line);}
+  .st-grp h4{margin:0 18px 8px;font-family:var(--mono);font-size:9.5px;color:var(--ink-3);letter-spacing:.14em;text-transform:uppercase;font-weight:600;}
+
+  .st-row{display:grid;grid-template-columns:1fr auto;gap:14px;padding:12px 18px;align-items:center;border-bottom:1px solid var(--hair);min-height:56px;cursor:pointer;}
+  .st-row:last-child{border-bottom:0;}
+  .st-row:hover{background:var(--surface-2);}
+  .st-row .l{font-size:14px;color:var(--ink);letter-spacing:-0.005em;font-weight:500;}
+  .st-row .desc{font-family:var(--mono);font-size:10.5px;color:var(--ink-3);margin-top:3px;letter-spacing:.02em;line-height:1.4;}
+  .st-row .v{font-family:var(--mono);font-size:12.5px;color:var(--ink-3);letter-spacing:.04em;display:flex;align-items:center;gap:6px;}
+  .st-row .v b{color:var(--ink);font-weight:500;}
+  .st-row .v .ar{color:var(--ink-4);}
+
+  /* Toggle */
+  .tog{position:relative;width:42px;height:24px;background:var(--line);cursor:pointer;border:0;flex-shrink:0;}
+  .tog::after{content:"";position:absolute;top:2px;left:2px;width:20px;height:20px;background:var(--bg);transition:transform .18s ease;}
+  .tog.on{background:var(--ink);}
+  .tog.on::after{transform:translateX(18px);}
+
+  /* Profile card */
+  .prof{padding:22px 18px;border-bottom:1px solid var(--ink);display:flex;gap:14px;align-items:center;}
+  .prof .av{width:56px;height:56px;background:var(--ink);color:var(--bg);display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:20px;font-weight:600;letter-spacing:-0.02em;flex-shrink:0;}
+  .prof .nm{font-size:18px;font-weight:600;letter-spacing:-0.01em;}
+  .prof .em{font-family:var(--mono);font-size:11.5px;color:var(--ink-3);margin-top:3px;letter-spacing:.02em;}
+  .prof .role{font-family:var(--mono);font-size:9.5px;color:var(--brand);letter-spacing:.14em;text-transform:uppercase;font-weight:600;margin-top:5px;border-bottom:1.5px solid var(--brand);padding-bottom:1px;display:inline-block;}
+  .prof .ed{margin-left:auto;font-family:var(--mono);font-size:10.5px;color:var(--ink-2);background:transparent;border:0;cursor:pointer;letter-spacing:.06em;text-transform:uppercase;font-weight:500;text-decoration:underline;text-underline-offset:3px;}
+
+  /* DESKTOP */
+  .d-frame{width:1408px;margin:0 auto;background:var(--surface);overflow:hidden;box-shadow:0 40px 100px -30px rgba(0,0,0,.22);border:1px solid var(--line);}
+  .d-chrome{background:var(--surface-2);border-bottom:1px solid var(--line);padding:10px 16px;display:flex;align-items:center;gap:10px;}
+  .d-chrome .dots{display:flex;gap:6px;}
+  .d-chrome .dot{width:11px;height:11px;border-radius:50%;}
+  .d-chrome .dot.r{background:#F25F5C;opacity:.85;} .d-chrome .dot.y{background:#F7C548;opacity:.85;} .d-chrome .dot.g{background:#4CB963;opacity:.85;}
+  .d-chrome .url{margin-left:14px;background:var(--surface);border:1px solid var(--line);padding:5px 14px;font-family:var(--mono);font-size:11px;color:var(--ink-3);flex:1;max-width:460px;}
+  .d-chrome .url b{color:var(--ink);font-weight:500;}
+
+  .d-app{display:grid;grid-template-columns:220px 280px 1fr;min-height:880px;}
+  .d-side{background:var(--bg);border-right:1px solid var(--line);padding:18px 0;display:flex;flex-direction:column;}
+  .d-side .sd-brand{padding:4px 20px 22px;font-size:15px;font-weight:600;letter-spacing:.04em;}
+  .d-side .sd-brand .dot{display:inline-block;width:5px;height:5px;border-radius:50%;background:var(--brand);margin:0 1px;transform:translateY(-2px);}
+  .d-side .sd-lb{font-family:var(--mono);font-size:9.5px;color:var(--ink-4);letter-spacing:.14em;text-transform:uppercase;padding:18px 20px 8px;font-weight:600;}
+  .d-side .sd-nav{display:flex;align-items:center;gap:11px;padding:8px 20px;font-size:13px;color:var(--ink-2);text-decoration:none;border-left:2px solid transparent;}
+  .d-side .sd-nav:hover{background:var(--surface-2);color:var(--ink);}
+  .d-side .sd-nav.on{background:var(--surface);color:var(--ink);font-weight:500;border-left-color:var(--ink);}
+  .d-side .sd-nav .sd-k{margin-left:auto;font-family:var(--mono);font-size:10px;color:var(--ink-4);letter-spacing:.04em;}
+
+  /* Settings nav (left of detail) */
+  .d-snav{background:var(--bg);border-right:1px solid var(--line);padding:24px 0;}
+  .d-snav h2{margin:0 0 18px 24px;font-size:22px;font-weight:500;letter-spacing:-0.02em;}
+  .d-snav-grp{padding-bottom:14px;border-bottom:1px solid var(--line);margin-bottom:14px;}
+  .d-snav-grp:last-child{border-bottom:0;}
+  .d-snav-grp h4{margin:0 0 6px 24px;font-family:var(--mono);font-size:9.5px;color:var(--ink-4);letter-spacing:.14em;text-transform:uppercase;font-weight:600;}
+  .d-snav-grp a{display:flex;align-items:center;padding:9px 24px;font-size:13px;color:var(--ink-2);text-decoration:none;border-left:2px solid transparent;}
+  .d-snav-grp a:hover{background:var(--surface-2);color:var(--ink);}
+  .d-snav-grp a.on{background:var(--surface);color:var(--ink);font-weight:500;border-left-color:var(--ink);}
+
+  /* Settings detail */
+  .d-detail{padding:32px 40px;overflow-y:auto;}
+  .d-detail h1{margin:0 0 6px;font-size:24px;font-weight:500;letter-spacing:-0.02em;}
+  .d-detail .sub{font-family:var(--mono);font-size:11px;color:var(--ink-3);letter-spacing:.04em;margin-bottom:24px;}
+
+  .d-sec{padding:22px 0;border-bottom:1px solid var(--line);}
+  .d-sec:last-child{border-bottom:0;}
+  .d-sec h3{margin:0 0 4px;font-size:15px;font-weight:500;letter-spacing:-0.005em;}
+  .d-sec .desc{font-family:var(--mono);font-size:11px;color:var(--ink-3);margin-bottom:16px;letter-spacing:.02em;line-height:1.6;}
+
+  .d-srow{display:grid;grid-template-columns:200px 1fr auto;gap:24px;padding:14px 0;border-bottom:1px solid var(--hair);align-items:center;}
+  .d-srow:last-child{border-bottom:0;}
+  .d-srow .l{font-size:13.5px;font-weight:500;letter-spacing:-0.005em;}
+  .d-srow .l .sub{font-family:var(--mono);font-size:11px;color:var(--ink-3);margin-top:2px;font-weight:400;letter-spacing:.02em;}
+  .d-srow .v{font-family:var(--mono);font-size:13px;color:var(--ink);font-weight:500;letter-spacing:-0.005em;}
+  .d-srow input[type=text],.d-srow input[type=email]{border:1px solid var(--line);background:var(--surface);padding:9px 12px;font-family:var(--mono);font-size:13px;outline:none;min-height:38px;width:280px;letter-spacing:-0.005em;}
+  .d-srow input:focus{border-color:var(--ink);}
+  .d-srow select{border:1px solid var(--line);background:var(--surface);padding:9px 12px;font-family:var(--mono);font-size:13px;outline:none;min-height:38px;letter-spacing:-0.005em;}
+  .d-srow .ar{color:var(--ink-3);font-family:var(--mono);font-size:11px;letter-spacing:.04em;cursor:pointer;}
+
+  .danger{margin-top:32px;padding-top:24px;border-top:1px solid var(--err);}
+  .danger h3{color:var(--err);font-size:13px;font-family:var(--mono);letter-spacing:.14em;text-transform:uppercase;font-weight:600;}
+  .danger .desc{margin-bottom:14px;}
+  .danger button{padding:10px 16px;background:transparent;border:1px solid var(--err);color:var(--err);font-family:var(--mono);font-size:11px;cursor:pointer;letter-spacing:.06em;text-transform:uppercase;font-weight:600;}
+  .danger button:hover{background:var(--err);color:var(--bg);}
+
+  @media (max-width: 1460px){.d-frame{width:calc(100vw - 60px);}}
+  @media (max-width: 900px){.canvas{padding:14px 10px 60px;}.d-frame{display:none;}}
+</style>
+</head>
+<body>
+
+<div class="chrome">
+  <div class="chrome-brand">TRAIN<span class="dot"></span>RACLE</div>
+  <div class="chrome-path">Settings · v1</div>
+  <div class="tabs" id="tabs">
+    <button data-tab="mobile" class="on">Mobile</button>
+    <button data-tab="desktop">Desktop</button>
+  </div>
+</div>
+
+<div class="canvas">
+
+<!-- MOBILE -->
+<div class="frame on" data-frame="mobile">
+  <div class="view-label"><span class="dot"></span>Mobile · 360 × 800 <span class="dim">— 설정 메인</span></div>
+  <div class="m-frame">
+    <div class="m-inner">
+      <div class="m-status"><span class="mono">9:41</span><span class="mono">100%</span></div>
+
+      <div class="m-top">
+        <h1>설정</h1>
+      </div>
+
+      <div class="m-scroll">
+
+        <div class="prof">
+          <div class="av">MJ</div>
+          <div>
+            <div class="nm">민지</div>
+            <div class="em">minji@example.kr</div>
+            <span class="role">ATHLETE</span>
+          </div>
+          <button class="ed">edit</button>
+        </div>
+
+        <div class="st-grp">
+          <h4>Profile</h4>
+          <div class="st-row"><div><div class="l">선수 정보</div><div class="desc">이름 · 생년 · 키 · 체중</div></div><span class="v"><span class="ar">→</span></span></div>
+          <div class="st-row"><div><div class="l">종목 · PB</div><div class="desc">1500m · 5000m</div></div><span class="v"><b>4:14.82</b><span class="ar">→</span></span></div>
+          <div class="st-row"><div><div class="l">HR Zones</div><div class="desc">MHR · LTHR · Z1~Z5</div></div><span class="v"><b>auto</b><span class="ar">→</span></span></div>
+        </div>
+
+        <div class="st-grp">
+          <h4>AI · Coach</h4>
+          <div class="st-row"><div><div class="l">장호준 AI 모드</div><div class="desc">reasoning v0.3.1</div></div><span class="v"><b>active</b><span class="ar">→</span></span></div>
+          <div class="st-row"><div><div class="l">최소 신뢰도 임계</div><div class="desc">아래는 인박스로 자동 이관</div></div><span class="v"><b>70%</b><span class="ar">→</span></span></div>
+          <div class="st-row"><div><div class="l">코치 연결</div><div class="desc">장호준 코치</div></div><span class="v"><b>1 명</b><span class="ar">→</span></span></div>
+        </div>
+
+        <div class="st-grp">
+          <h4>Data sync</h4>
+          <div class="st-row"><div><div class="l">Garmin Connect</div><div class="desc">last sync 02:04</div></div><span class="v" style="color:var(--ok);">✓ on<span class="ar">→</span></span></div>
+          <div class="st-row"><div><div class="l">Strava</div><div class="desc">미연결</div></div><span class="v">off<span class="ar">→</span></span></div>
+          <div class="st-row"><div><div class="l">Apple Health</div><div class="desc">미연결</div></div><span class="v">off<span class="ar">→</span></span></div>
+        </div>
+
+        <div class="st-grp">
+          <h4>Display</h4>
+          <div class="st-row">
+            <div><div class="l">다크 모드</div><div class="desc">시스템 설정 따름</div></div>
+            <button class="tog" aria-pressed="false"></button>
+          </div>
+          <div class="st-row">
+            <div><div class="l">고대비 모드</div><div class="desc">햇빛 환경 대응</div></div>
+            <button class="tog on" aria-pressed="true"></button>
+          </div>
+          <div class="st-row"><div><div class="l">언어</div><div class="desc">한국어 / English</div></div><span class="v"><b>한국어</b><span class="ar">→</span></span></div>
+          <div class="st-row"><div><div class="l">단위</div><div class="desc">거리 · 속도 · 체중</div></div><span class="v"><b>km · min/km · kg</b><span class="ar">→</span></span></div>
+        </div>
+
+        <div class="st-grp">
+          <h4>Notifications</h4>
+          <div class="st-row">
+            <div><div class="l">푸시 알림</div><div class="desc">세션 · AI 인박스</div></div>
+            <button class="tog on" aria-pressed="true"></button>
+          </div>
+          <div class="st-row">
+            <div><div class="l">아침 브리핑</div><div class="desc">매일 06:00 KST</div></div>
+            <button class="tog on" aria-pressed="true"></button>
+          </div>
+          <div class="st-row">
+            <div><div class="l">대회 D−7 알림</div><div class="desc">목표 대회 일주일 전</div></div>
+            <button class="tog on" aria-pressed="true"></button>
+          </div>
+        </div>
+
+        <div class="st-grp">
+          <h4>Account</h4>
+          <div class="st-row"><div><div class="l">이메일 변경</div><div class="desc">minji@example.kr</div></div><span class="v"><span class="ar">→</span></span></div>
+          <div class="st-row"><div><div class="l">비밀번호</div><div class="desc">마지막 변경 90일 전</div></div><span class="v"><span class="ar">→</span></span></div>
+          <div class="st-row"><div><div class="l">데이터 내보내기</div><div class="desc">CSV · JSON</div></div><span class="v"><span class="ar">→</span></span></div>
+          <div class="st-row"><div><div class="l" style="color:var(--err);">계정 삭제</div><div class="desc">모든 데이터 영구 제거</div></div><span class="v"><span class="ar">→</span></span></div>
+        </div>
+
+        <div class="st-grp" style="border-bottom:0;text-align:center;padding:22px 18px;font-family:var(--mono);font-size:10.5px;color:var(--ink-3);letter-spacing:.04em;">
+          TRAINORACLE v0.3.1<br/>
+          © 2026 · all rights reserved
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- DESKTOP -->
+<div class="frame" data-frame="desktop">
+  <div class="view-label"><span class="dot"></span>Desktop · 1440 <span class="dim">— 설정 풀 화면</span></div>
+  <div class="d-frame">
+    <div class="d-chrome">
+      <div class="dots"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span></div>
+      <div class="url"><b>app.trainoracle.run</b>/settings/profile</div>
+    </div>
+
+    <div class="d-app">
+      <aside class="d-side">
+        <div class="sd-brand">TRAIN<span class="dot"></span>RACLE</div>
+        <div class="sd-lb">Training</div>
+        <a class="sd-nav" href="#">대시보드<span class="sd-k">⌘1</span></a>
+        <a class="sd-nav" href="#">캘린더<span class="sd-k">⌘2</span></a>
+        <a class="sd-nav" href="#">장호준 AI<span class="sd-k">⌘3</span></a>
+        <a class="sd-nav" href="#">분석<span class="sd-k">⌘4</span></a>
+        <a class="sd-nav" href="#">AI 인박스<span class="sd-k">3</span></a>
+        <div class="sd-lb">Account</div>
+        <a class="sd-nav on" href="#">설정<span class="sd-k">⌘,</span></a>
+      </aside>
+
+      <aside class="d-snav">
+        <h2>설정</h2>
+        <div class="d-snav-grp">
+          <h4>Profile</h4>
+          <a class="on" href="#">프로필</a>
+          <a href="#">종목 · PB</a>
+          <a href="#">HR Zones</a>
+        </div>
+        <div class="d-snav-grp">
+          <h4>AI · Coach</h4>
+          <a href="#">장호준 AI</a>
+          <a href="#">신뢰도 임계</a>
+          <a href="#">코치 연결</a>
+        </div>
+        <div class="d-snav-grp">
+          <h4>Data</h4>
+          <a href="#">동기화 (3)</a>
+          <a href="#">알림</a>
+          <a href="#">내보내기</a>
+        </div>
+        <div class="d-snav-grp">
+          <h4>App</h4>
+          <a href="#">언어 · 단위</a>
+          <a href="#">디스플레이</a>
+        </div>
+        <div class="d-snav-grp">
+          <h4>Account</h4>
+          <a href="#">이메일 · 비밀번호</a>
+          <a href="#">결제 · 플랜</a>
+          <a href="#">개인정보</a>
+        </div>
+      </aside>
+
+      <main class="d-detail">
+        <h1>프로필</h1>
+        <div class="sub">selected · profile · §1.1</div>
+
+        <div class="d-sec">
+          <h3>기본 정보</h3>
+          <div class="desc">AI는 이 데이터를 기반으로 페이스·HR 존을 계산합니다.</div>
+
+          <div class="d-srow">
+            <div class="l">이름</div>
+            <div><input type="text" value="민지"></div>
+            <span class="ar">save</span>
+          </div>
+          <div class="d-srow">
+            <div class="l">이메일<div class="sub">로그인 ID</div></div>
+            <div><input type="email" value="minji@example.kr"></div>
+            <span class="ar">save</span>
+          </div>
+          <div class="d-srow">
+            <div class="l">생년</div>
+            <div class="v">2002</div>
+            <span class="ar">edit</span>
+          </div>
+          <div class="d-srow">
+            <div class="l">성별</div>
+            <div class="v">여</div>
+            <span class="ar">edit</span>
+          </div>
+          <div class="d-srow">
+            <div class="l">키 · 체중</div>
+            <div class="v">166 cm · 51 kg</div>
+            <span class="ar">edit</span>
+          </div>
+        </div>
+
+        <div class="d-sec">
+          <h3>역할</h3>
+          <div class="desc">선수 / 코치 / 둘 다 — 화면 구성이 달라집니다.</div>
+
+          <div class="d-srow">
+            <div class="l">현재 역할</div>
+            <div>
+              <select>
+                <option selected>엘리트 선수 (Athlete)</option>
+                <option>코치 (Coach)</option>
+                <option>선수 + 코치</option>
+              </select>
+            </div>
+            <span class="ar">change</span>
+          </div>
+          <div class="d-srow">
+            <div class="l">코치 연결<div class="sub">현재 1명 연결됨</div></div>
+            <div class="v">장호준 (jang@example.kr)</div>
+            <span class="ar">manage</span>
+          </div>
+        </div>
+
+        <div class="d-sec">
+          <h3>주 종목 · PB</h3>
+          <div class="desc">PB는 AI가 페이스를 계산할 때 가장 중요한 입력값입니다.</div>
+
+          <div class="d-srow"><div class="l">800m</div><div class="v">2:08.40</div><span class="ar">edit</span></div>
+          <div class="d-srow"><div class="l">1500m · target</div><div class="v">4:14.82</div><span class="ar">edit</span></div>
+          <div class="d-srow"><div class="l">5000m</div><div class="v">16:10.44</div><span class="ar">edit</span></div>
+          <div class="d-srow"><div class="l">10K</div><div class="v" style="color:var(--ink-3);">미입력</div><span class="ar">add</span></div>
+        </div>
+
+        <div class="danger">
+          <h3>위험 영역</h3>
+          <div class="desc">아래 작업은 되돌릴 수 없습니다.</div>
+          <button>계정 영구 삭제</button>
+        </div>
+
+      </main>
+    </div>
+  </div>
+</div>
+
+</div>
+
+<script>
+  const tabs = document.getElementById('tabs');
+  tabs.addEventListener('click', (e) => {
+    const btn = e.target.closest('button[data-tab]'); if (!btn) return;
+    tabs.querySelectorAll('button').forEach(b => b.classList.remove('on'));
+    btn.classList.add('on');
+    document.querySelectorAll('.frame').forEach(f => f.classList.toggle('on', f.dataset.frame === btn.dataset.tab));
+    try { localStorage.setItem('to_set_tab', btn.dataset.tab); } catch(e){}
+  });
+  try { const s = localStorage.getItem('to_set_tab'); if (s) tabs.querySelector(`button[data-tab="${s}"]`)?.click(); } catch(e){}
+  document.querySelectorAll('.tog').forEach(t => t.addEventListener('click', () => t.classList.toggle('on')));
+</script>
+</body></html>

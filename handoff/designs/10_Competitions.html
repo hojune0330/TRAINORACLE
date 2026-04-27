@@ -1,0 +1,476 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>TRAINORACLE — Competitions</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+<link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css" rel="stylesheet" />
+<style>
+  :root{
+    --bg:#FAFAF7;--surface:#FFFFFF;--surface-2:#F4F3EE;
+    --ink:#0E1412;--ink-2:#2B3330;--ink-3:#5F6965;--ink-4:#8F9894;
+    --line:#D9D6CE;--line-2:#BFBBB0;--hair:#E8E6DF;
+    --brand:#0D5F5A;--ok:#1F7A3A;--warn:#B4530C;--err:#A11F1F;--info:#1D4ED8;
+    --sans:"Inter","Pretendard Variable",ui-sans-serif,system-ui,sans-serif;
+    --mono:"JetBrains Mono",ui-monospace,SFMono-Regular,monospace;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;background:#E4E2DA;color:var(--ink);font-family:var(--sans);font-size:14.5px;line-height:1.55;-webkit-font-smoothing:antialiased;}
+  .mono{font-family:var(--mono);font-variant-numeric:tabular-nums;}
+
+  .chrome{position:sticky;top:0;z-index:100;background:rgba(228,226,218,.92);backdrop-filter:blur(12px);border-bottom:1px solid var(--line);padding:12px 24px;display:flex;align-items:center;gap:16px;}
+  .chrome-brand{font-weight:500;font-size:15px;}
+  .chrome-brand .dot{display:inline-block;width:5px;height:5px;background:var(--brand);border-radius:50%;margin:0 1px;transform:translateY(-2px);}
+  .chrome-path{font-family:var(--mono);font-size:10.5px;color:var(--ink-3);letter-spacing:.08em;text-transform:uppercase;}
+  .tabs{margin-left:auto;display:flex;border:1px solid var(--line);background:var(--surface);}
+  .tabs button{background:transparent;border:0;padding:9px 16px;font-family:var(--mono);font-size:11px;font-weight:500;color:var(--ink-3);cursor:pointer;letter-spacing:.08em;text-transform:uppercase;min-height:38px;border-right:1px solid var(--line);}
+  .tabs button:last-child{border-right:0;}
+  .tabs button.on{background:var(--ink);color:var(--bg);}
+  .canvas{padding:28px 24px 80px;display:flex;justify-content:center;}
+  .frame{display:none;}
+  .frame.on{display:block;}
+  .view-label{font-family:var(--mono);font-size:11px;color:var(--ink-3);letter-spacing:.14em;text-transform:uppercase;margin-bottom:14px;display:flex;align-items:center;gap:10px;}
+  .view-label .dot{width:5px;height:5px;background:var(--brand);border-radius:50%;}
+  .view-label .dim{color:var(--ink-4);}
+
+  /* MOBILE */
+  .m-frame{width:380px;margin:0 auto;background:#0E1412;padding:10px;}
+  .m-inner{background:var(--bg);overflow:hidden;height:820px;display:flex;flex-direction:column;}
+  .m-status{height:30px;display:flex;align-items:center;justify-content:space-between;padding:6px 22px 0;font-size:13px;font-weight:600;flex-shrink:0;}
+
+  .m-top{padding:14px 18px 12px;border-bottom:1px solid var(--line);display:flex;align-items:baseline;gap:14px;flex-shrink:0;}
+  .m-top h1{margin:0;font-size:20px;font-weight:500;letter-spacing:-0.02em;}
+  .m-top .add{margin-left:auto;font-family:var(--mono);font-size:10.5px;color:var(--ink-2);text-decoration:underline;text-underline-offset:3px;letter-spacing:.06em;cursor:pointer;}
+
+  .m-scroll{flex:1;overflow-y:auto;padding:0;}
+
+  /* Hero — primary upcoming race */
+  .race-hero{padding:24px 18px 22px;border-bottom:1px solid var(--ink);background:var(--bg);}
+  .race-hero .lb{font-family:var(--mono);font-size:9.5px;color:var(--ink-3);letter-spacing:.14em;text-transform:uppercase;font-weight:600;margin-bottom:6px;}
+  .race-hero .nm{font-size:26px;font-weight:500;letter-spacing:-0.025em;line-height:1.1;margin:0 0 6px;}
+  .race-hero .where{font-family:var(--mono);font-size:11px;color:var(--ink-3);letter-spacing:.04em;}
+  .race-hero .where b{color:var(--ink);font-weight:500;}
+
+  .dday{margin-top:18px;padding-top:14px;border-top:1px solid var(--ink);}
+  .dday-row{display:flex;align-items:baseline;gap:18px;}
+  .dday-big{font-family:var(--mono);font-size:48px;font-weight:500;letter-spacing:-0.04em;color:var(--ink);line-height:1;}
+  .dday-big .lbl{font-size:14px;color:var(--ink-3);letter-spacing:.1em;text-transform:uppercase;font-weight:500;margin-right:8px;}
+  .dday-meta{margin-left:auto;text-align:right;font-family:var(--mono);font-size:11px;color:var(--ink-3);letter-spacing:.04em;}
+  .dday-meta b{color:var(--ink);font-weight:500;display:block;font-size:14px;letter-spacing:-0.005em;margin-bottom:1px;}
+
+  /* Phase plan */
+  .phase-plan{margin-top:18px;}
+  .phase-plan .h{font-family:var(--mono);font-size:9.5px;color:var(--ink-3);letter-spacing:.14em;text-transform:uppercase;font-weight:600;margin-bottom:8px;}
+  .phase-plan .timeline{display:grid;grid-template-columns:repeat(4,1fr);font-family:var(--mono);font-size:10.5px;border-top:1px solid var(--line);border-bottom:1px solid var(--line);}
+  .phase-plan .ph{padding:8px 6px;border-right:1px solid var(--hair);text-align:center;}
+  .phase-plan .ph:last-child{border-right:0;}
+  .phase-plan .ph.now{background:var(--ink);color:var(--bg);}
+  .phase-plan .ph .nm{font-weight:600;letter-spacing:.04em;}
+  .phase-plan .ph .wk{font-size:9.5px;color:var(--ink-3);margin-top:2px;}
+  .phase-plan .ph.now .wk{color:rgba(255,255,255,.6);}
+
+  /* Stats grid */
+  .race-stats{padding:18px 18px;border-bottom:1px solid var(--line);}
+  .race-stats .h{font-family:var(--mono);font-size:9.5px;color:var(--ink-3);letter-spacing:.14em;text-transform:uppercase;font-weight:600;margin-bottom:12px;}
+  .race-stats .grid{display:grid;grid-template-columns:1fr 1fr;border-top:1px solid var(--hair);border-bottom:1px solid var(--hair);}
+  .race-stats .it{padding:14px 0;border-right:1px solid var(--hair);border-bottom:1px solid var(--hair);}
+  .race-stats .it:nth-child(2n){border-right:0;padding-left:14px;}
+  .race-stats .it:nth-child(2n+1){padding-right:14px;}
+  .race-stats .it:nth-last-child(-n+2){border-bottom:0;}
+  .race-stats .l{font-family:var(--mono);font-size:9.5px;color:var(--ink-3);letter-spacing:.14em;text-transform:uppercase;font-weight:500;}
+  .race-stats .v{font-family:var(--mono);font-size:18px;font-weight:500;color:var(--ink);letter-spacing:-0.02em;margin-top:5px;font-variant-numeric:tabular-nums;}
+  .race-stats .v .u{font-size:11px;color:var(--ink-3);font-weight:400;margin-left:2px;}
+  .race-stats .v.brand{color:var(--brand);}
+  .race-stats .sub{font-family:var(--mono);font-size:10px;color:var(--ink-3);margin-top:3px;letter-spacing:.02em;}
+
+  /* Race list */
+  .race-list{padding:18px 18px;}
+  .race-list .h{font-family:var(--mono);font-size:9.5px;color:var(--ink-3);letter-spacing:.14em;text-transform:uppercase;font-weight:600;margin-bottom:10px;}
+  .race-row{display:grid;grid-template-columns:62px 1fr auto;gap:12px;padding:12px 0;border-bottom:1px solid var(--hair);align-items:center;text-decoration:none;color:inherit;min-height:60px;}
+  .race-row:last-child{border-bottom:0;}
+  .race-row .d{font-family:var(--mono);text-align:center;}
+  .race-row .d .mo{font-size:10px;color:var(--ink-3);letter-spacing:.08em;text-transform:uppercase;font-weight:500;}
+  .race-row .d .day{font-size:18px;color:var(--ink);font-weight:500;letter-spacing:-0.02em;line-height:1;margin-top:1px;}
+  .race-row .d .yr{font-size:9.5px;color:var(--ink-4);margin-top:2px;letter-spacing:.04em;}
+  .race-row .m .nm{font-size:13.5px;font-weight:500;color:var(--ink);letter-spacing:-0.005em;line-height:1.3;}
+  .race-row .m .meta{font-family:var(--mono);font-size:10.5px;color:var(--ink-3);margin-top:3px;letter-spacing:.02em;}
+  .race-row .res{font-family:var(--mono);font-size:14px;font-weight:500;color:var(--ink);letter-spacing:-0.01em;text-align:right;}
+  .race-row .res.pb{color:var(--brand);}
+  .race-row .res.pb::after{content:" PB";font-size:9px;color:var(--brand);font-weight:600;letter-spacing:.08em;}
+  .race-row .res .sub{font-size:9.5px;color:var(--ink-3);font-weight:400;margin-top:2px;letter-spacing:.04em;display:block;text-transform:uppercase;}
+
+  /* DESKTOP */
+  .d-frame{width:1408px;margin:0 auto;background:var(--surface);overflow:hidden;box-shadow:0 40px 100px -30px rgba(0,0,0,.22);border:1px solid var(--line);}
+  .d-chrome{background:var(--surface-2);border-bottom:1px solid var(--line);padding:10px 16px;display:flex;align-items:center;gap:10px;}
+  .d-chrome .dots{display:flex;gap:6px;}
+  .d-chrome .dot{width:11px;height:11px;border-radius:50%;}
+  .d-chrome .dot.r{background:#F25F5C;opacity:.85;} .d-chrome .dot.y{background:#F7C548;opacity:.85;} .d-chrome .dot.g{background:#4CB963;opacity:.85;}
+  .d-chrome .url{margin-left:14px;background:var(--surface);border:1px solid var(--line);padding:5px 14px;font-family:var(--mono);font-size:11px;color:var(--ink-3);flex:1;max-width:460px;}
+  .d-chrome .url b{color:var(--ink);font-weight:500;}
+
+  .d-app{display:grid;grid-template-columns:220px 1fr;min-height:880px;}
+  .d-side{background:var(--bg);border-right:1px solid var(--line);padding:18px 0;display:flex;flex-direction:column;}
+  .d-side .sd-brand{padding:4px 20px 22px;font-size:15px;font-weight:600;letter-spacing:.04em;}
+  .d-side .sd-brand .dot{display:inline-block;width:5px;height:5px;border-radius:50%;background:var(--brand);margin:0 1px;transform:translateY(-2px);}
+  .d-side .sd-lb{font-family:var(--mono);font-size:9.5px;color:var(--ink-4);letter-spacing:.14em;text-transform:uppercase;padding:18px 20px 8px;font-weight:600;}
+  .d-side .sd-nav{display:flex;align-items:center;gap:11px;padding:8px 20px;font-size:13px;color:var(--ink-2);text-decoration:none;border-left:2px solid transparent;}
+  .d-side .sd-nav:hover{background:var(--surface-2);color:var(--ink);}
+  .d-side .sd-nav.on{background:var(--surface);color:var(--ink);font-weight:500;border-left-color:var(--ink);}
+  .d-side .sd-nav .sd-k{margin-left:auto;font-family:var(--mono);font-size:10px;color:var(--ink-4);letter-spacing:.04em;}
+  .d-side .sd-user{margin:auto 12px 12px;display:flex;align-items:center;gap:10px;padding:14px 12px 0;border-top:1px solid var(--line);}
+  .d-side .sd-user .av{width:30px;height:30px;background:var(--ink);color:var(--bg);display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:11px;font-weight:600;}
+  .d-side .sd-user .un{font-size:12.5px;font-weight:500;}
+  .d-side .sd-user .ur{font-family:var(--mono);font-size:10px;color:var(--ink-3);margin-top:1px;letter-spacing:.04em;}
+
+  .d-main{display:grid;grid-template-rows:auto auto 1fr;}
+
+  /* Top */
+  .d-top{padding:18px 32px;border-bottom:1px solid var(--line);background:var(--bg);display:flex;align-items:baseline;gap:24px;}
+  .d-top h1{margin:0;font-size:28px;font-weight:500;letter-spacing:-0.02em;}
+  .d-top .meta{font-family:var(--mono);font-size:11px;color:var(--ink-3);letter-spacing:.04em;}
+  .d-top .meta b{color:var(--ink);}
+  .d-top .spacer{flex:1;}
+  .d-top button{min-height:36px;padding:0 14px;background:transparent;border:1px solid var(--line);font-family:var(--mono);font-size:10.5px;color:var(--ink-2);cursor:pointer;letter-spacing:.08em;text-transform:uppercase;font-weight:500;}
+  .d-top button.primary{background:var(--ink);color:var(--bg);border-color:var(--ink);}
+
+  /* Hero block */
+  .d-hero{padding:32px 32px;display:grid;grid-template-columns:1fr 1fr;gap:40px;border-bottom:1px solid var(--line);}
+  .d-hero-left .lb{font-family:var(--mono);font-size:10px;color:var(--brand);letter-spacing:.14em;text-transform:uppercase;font-weight:600;margin-bottom:8px;display:flex;align-items:center;gap:8px;}
+  .d-hero-left .lb::before{content:"";width:6px;height:6px;background:var(--brand);border-radius:50%;}
+  .d-hero-left h2{margin:0;font-size:42px;font-weight:500;letter-spacing:-0.03em;line-height:1.05;}
+  .d-hero-left .where{margin-top:14px;display:flex;gap:24px;font-family:var(--mono);font-size:12.5px;color:var(--ink-3);letter-spacing:.04em;}
+  .d-hero-left .where b{color:var(--ink);font-weight:500;}
+  .d-hero-left .events{margin-top:18px;display:flex;gap:8px;flex-wrap:wrap;}
+  .d-hero-left .events .ev{font-family:var(--mono);font-size:11px;padding:5px 9px;border:1px solid var(--ink);background:transparent;color:var(--ink);letter-spacing:.04em;font-weight:500;}
+  .d-hero-left .events .ev.target{background:var(--ink);color:var(--bg);}
+
+  .d-hero-right{display:flex;flex-direction:column;justify-content:flex-end;align-items:flex-end;}
+  .d-dday{text-align:right;}
+  .d-dday .lb{font-family:var(--mono);font-size:11px;color:var(--ink-3);letter-spacing:.14em;text-transform:uppercase;margin-bottom:6px;font-weight:500;}
+  .d-dday .big{font-family:var(--mono);font-size:96px;font-weight:500;letter-spacing:-0.05em;line-height:1;color:var(--ink);}
+  .d-dday .big .pre{font-size:36px;letter-spacing:-0.02em;color:var(--ink-3);margin-right:6px;font-weight:400;}
+  .d-dday .sub{font-family:var(--mono);font-size:11px;color:var(--ink-3);margin-top:8px;letter-spacing:.04em;}
+  .d-dday .sub b{color:var(--ink);}
+
+  /* Phase timeline desktop */
+  .d-phase{padding:24px 32px;border-bottom:1px solid var(--line);}
+  .d-phase .h{font-family:var(--mono);font-size:10px;color:var(--ink-3);letter-spacing:.14em;text-transform:uppercase;font-weight:600;margin-bottom:12px;}
+  .d-phase .timeline{display:grid;grid-template-columns:2fr 2fr 2fr 1fr 1fr;border:1px solid var(--ink);}
+  .d-phase .ph{padding:14px 18px;border-right:1px solid var(--ink);}
+  .d-phase .ph:last-child{border-right:0;}
+  .d-phase .ph.done{background:var(--surface-2);}
+  .d-phase .ph.now{background:var(--ink);color:var(--bg);}
+  .d-phase .ph .nm{font-size:14px;font-weight:600;letter-spacing:-0.005em;}
+  .d-phase .ph .wk{font-family:var(--mono);font-size:11px;color:var(--ink-3);margin-top:3px;letter-spacing:.04em;}
+  .d-phase .ph.now .wk{color:rgba(255,255,255,.65);}
+  .d-phase .ph .focus{font-family:var(--mono);font-size:10px;color:var(--ink-3);margin-top:8px;line-height:1.5;letter-spacing:.02em;}
+  .d-phase .ph.now .focus{color:rgba(255,255,255,.75);}
+
+  /* Lower grid */
+  .d-lower{display:grid;grid-template-columns:1fr 1fr;}
+  .d-col{padding:28px 32px;border-right:1px solid var(--line);}
+  .d-col:last-child{border-right:0;}
+  .d-col h3{margin:0 0 4px;font-size:16px;font-weight:500;letter-spacing:-0.01em;}
+  .d-col .sub{font-family:var(--mono);font-size:11px;color:var(--ink-3);margin-bottom:18px;letter-spacing:.02em;}
+
+  /* Pace strategy */
+  .pace-table{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:12px;}
+  .pace-table th{text-align:left;font-size:10px;color:var(--ink-3);letter-spacing:.14em;text-transform:uppercase;font-weight:500;padding:8px 4px;border-bottom:1px solid var(--ink);}
+  .pace-table th.r{text-align:right;}
+  .pace-table td{padding:10px 4px;border-bottom:1px solid var(--hair);color:var(--ink);font-variant-numeric:tabular-nums;}
+  .pace-table td.r{text-align:right;font-weight:500;}
+  .pace-table td.tot{border-top:1px solid var(--ink);font-weight:600;}
+  .pace-table tr.target{background:var(--surface-2);}
+
+  /* History */
+  .race-row-d{display:grid;grid-template-columns:80px 1fr auto;gap:18px;padding:14px 0;border-bottom:1px solid var(--hair);align-items:center;text-decoration:none;color:inherit;}
+  .race-row-d:last-child{border-bottom:0;}
+  .race-row-d .d{font-family:var(--mono);text-align:center;}
+  .race-row-d .d .mo{font-size:10px;color:var(--ink-3);letter-spacing:.08em;text-transform:uppercase;font-weight:500;}
+  .race-row-d .d .day{font-size:22px;color:var(--ink);font-weight:500;letter-spacing:-0.02em;line-height:1;margin-top:1px;}
+  .race-row-d .d .yr{font-size:10px;color:var(--ink-4);margin-top:3px;letter-spacing:.04em;}
+  .race-row-d .m .nm{font-size:14px;font-weight:500;color:var(--ink);letter-spacing:-0.005em;}
+  .race-row-d .m .meta{font-family:var(--mono);font-size:11px;color:var(--ink-3);margin-top:3px;letter-spacing:.02em;}
+  .race-row-d .res{font-family:var(--mono);font-size:18px;font-weight:500;color:var(--ink);letter-spacing:-0.02em;text-align:right;}
+  .race-row-d .res.pb{color:var(--brand);}
+  .race-row-d .res.pb::after{content:" PB";font-size:10px;color:var(--brand);font-weight:600;letter-spacing:.08em;}
+  .race-row-d .res .sub{font-size:10px;color:var(--ink-3);font-weight:400;margin-top:2px;letter-spacing:.04em;display:block;text-transform:uppercase;}
+
+  @media (max-width: 1460px){.d-frame{width:calc(100vw - 60px);}}
+  @media (max-width: 900px){.canvas{padding:14px 10px 60px;}.d-frame{display:none;}}
+</style>
+</head>
+<body>
+
+<div class="chrome">
+  <div class="chrome-brand">TRAIN<span class="dot"></span>RACLE</div>
+  <div class="chrome-path">Competitions · v1</div>
+  <div class="tabs" id="tabs">
+    <button data-tab="mobile" class="on">Mobile</button>
+    <button data-tab="desktop">Desktop</button>
+  </div>
+</div>
+
+<div class="canvas">
+
+<!-- MOBILE -->
+<div class="frame on" data-frame="mobile">
+  <div class="view-label"><span class="dot"></span>Mobile · 360 × 800 · Light <span class="dim">— 대회 관리</span></div>
+  <div class="m-frame">
+    <div class="m-inner">
+      <div class="m-status"><span class="mono">9:41</span><span class="mono">100%</span></div>
+
+      <div class="m-top">
+        <h1>대회</h1>
+        <button class="add">+ 추가</button>
+      </div>
+
+      <div class="m-scroll">
+
+        <!-- Hero race -->
+        <div class="race-hero">
+          <div class="lb">다음 목표 대회</div>
+          <h2 class="nm">한국실업육상선수권<br/>(서울)</h2>
+          <div class="where"><b>5월 18일 · 일</b> · 잠실주경기장 · 1500m 결승 <b>15:40</b></div>
+
+          <div class="dday">
+            <div class="dday-row">
+              <div class="dday-big"><span class="lbl">D −</span>26</div>
+              <div class="dday-meta"><b>4 weeks</b><span>26 days · 18 sessions</span></div>
+            </div>
+          </div>
+
+          <div class="phase-plan">
+            <div class="h">Periodization</div>
+            <div class="timeline">
+              <div class="ph">Build<div class="wk">w−7~−5</div></div>
+              <div class="ph">Peak<div class="wk">w−4~−3</div></div>
+              <div class="ph now">Taper<div class="wk">w−2~−1</div></div>
+              <div class="ph">Race<div class="wk">d-day</div></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Stats -->
+        <div class="race-stats">
+          <div class="h">Target & current</div>
+          <div class="grid">
+            <div class="it"><div class="l">Target time</div><div class="v brand">4'12"00</div><div class="sub">PB −2.8s</div></div>
+            <div class="it"><div class="l">Current PB</div><div class="v">4'14"82</div><div class="sub">2025.10.12</div></div>
+            <div class="it"><div class="l">Season best</div><div class="v">4'13"55</div><div class="sub">2026.03.14</div></div>
+            <div class="it"><div class="l">Last 5km</div><div class="v">16'10"</div><div class="sub">2026.03.14</div></div>
+          </div>
+        </div>
+
+        <!-- Race list (other races) -->
+        <div class="race-list">
+          <div class="h">Upcoming · 3</div>
+          <a class="race-row" href="#">
+            <div class="d"><div class="mo">May</div><div class="day">18</div><div class="yr">2026</div></div>
+            <div class="m"><div class="nm">한국실업육상선수권 · 1500m</div><div class="meta">Target · D−26 · 잠실</div></div>
+            <div class="res">target<span class="sub">4'12"00</span></div>
+          </a>
+          <a class="race-row" href="#">
+            <div class="d"><div class="mo">Jun</div><div class="day">07</div><div class="yr">2026</div></div>
+            <div class="m"><div class="nm">전국체전 예선 · 1500m</div><div class="meta">B-race · D−46</div></div>
+            <div class="res">qualifier<span class="sub">4'14"</span></div>
+          </a>
+          <a class="race-row" href="#">
+            <div class="d"><div class="mo">Aug</div><div class="day">22</div><div class="yr">2026</div></div>
+            <div class="m"><div class="nm">아시안게임 선발전 · 1500m</div><div class="meta">A-race · D−122</div></div>
+            <div class="res">target<span class="sub">4'10"</span></div>
+          </a>
+        </div>
+
+        <!-- Past results -->
+        <div class="race-list" style="border-top:1px solid var(--line);padding-top:18px;">
+          <div class="h">Past results · 4</div>
+          <a class="race-row" href="#">
+            <div class="d"><div class="mo">Mar</div><div class="day">14</div><div class="yr">2026</div></div>
+            <div class="m"><div class="nm">서울국제마라톤 · 5000m TT</div><div class="meta">Time trial</div></div>
+            <div class="res pb">16'10"<span class="sub">SB</span></div>
+          </a>
+          <a class="race-row" href="#">
+            <div class="d"><div class="mo">Oct</div><div class="day">12</div><div class="yr">2025</div></div>
+            <div class="m"><div class="nm">전국체전 결승 · 1500m</div><div class="meta">final · 3rd</div></div>
+            <div class="res pb">4'14"82<span class="sub">PB</span></div>
+          </a>
+          <a class="race-row" href="#">
+            <div class="d"><div class="mo">Aug</div><div class="day">24</div><div class="yr">2025</div></div>
+            <div class="m"><div class="nm">전국실업육상 · 1500m</div><div class="meta">final · 5th</div></div>
+            <div class="res">4'17"21<span class="sub">5th</span></div>
+          </a>
+          <a class="race-row" href="#">
+            <div class="d"><div class="mo">May</div><div class="day">10</div><div class="yr">2025</div></div>
+            <div class="m"><div class="nm">춘계실업육상 · 800m</div><div class="meta">heat · DNF</div></div>
+            <div class="res" style="color:var(--err);">DNF<span class="sub">cramp</span></div>
+          </a>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- DESKTOP -->
+<div class="frame" data-frame="desktop">
+  <div class="view-label"><span class="dot"></span>Desktop · 1440 · Light <span class="dim">— 대회 풀 화면</span></div>
+
+  <div class="d-frame">
+    <div class="d-chrome">
+      <div class="dots"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span></div>
+      <div class="url"><b>app.trainoracle.run</b>/competitions</div>
+    </div>
+
+    <div class="d-app">
+      <aside class="d-side">
+        <div class="sd-brand">TRAIN<span class="dot"></span>RACLE</div>
+        <div class="sd-lb">Training</div>
+        <a class="sd-nav" href="#">대시보드<span class="sd-k">⌘1</span></a>
+        <a class="sd-nav" href="#">캘린더<span class="sd-k">⌘2</span></a>
+        <a class="sd-nav" href="#">장호준 AI<span class="sd-k">⌘3</span></a>
+        <a class="sd-nav" href="#">분석<span class="sd-k">⌘4</span></a>
+        <a class="sd-nav" href="#">AI 인박스<span class="sd-k">3</span></a>
+        <div class="sd-lb">Race</div>
+        <a class="sd-nav on" href="#">대회<span class="sd-k">⌘6</span></a>
+        <a class="sd-nav" href="#">기록</a>
+        <div class="sd-user">
+          <div class="av">MJ</div>
+          <div><div class="un">민지</div><div class="ur">ATHLETE · 1500M</div></div>
+        </div>
+      </aside>
+
+      <div class="d-main">
+        <div class="d-top">
+          <h1>대회</h1>
+          <span class="meta"><b>민지</b> · upcoming <b>3</b> · past <b>14</b></span>
+          <div class="spacer"></div>
+          <button>달력 동기화</button>
+          <button class="primary">+ 대회 추가</button>
+        </div>
+
+        <!-- Hero -->
+        <div class="d-hero">
+          <div class="d-hero-left">
+            <div class="lb">다음 목표 대회 · A-Race</div>
+            <h2>한국실업육상선수권 · 1500m</h2>
+            <div class="where">
+              <span><b>2026.05.18 (일)</b> 15:40 KST</span>
+              <span><b>잠실주경기장</b> · 서울</span>
+            </div>
+            <div class="events">
+              <span class="ev target">1500m</span>
+              <span class="ev">800m heat</span>
+              <span class="ev">DMR (relay)</span>
+            </div>
+          </div>
+          <div class="d-hero-right">
+            <div class="d-dday">
+              <div class="lb">D-Day</div>
+              <div class="big"><span class="pre">D −</span>26</div>
+              <div class="sub"><b>4 weeks</b> · <b>18 sessions</b> · <b>2 Z5 main</b> 남음</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Phase timeline -->
+        <div class="d-phase">
+          <div class="h">Periodization · 7 weeks plan</div>
+          <div class="timeline">
+            <div class="ph done">
+              <div class="nm">Build (1 / 2)</div>
+              <div class="wk">w −7 ~ −5 · ✓ done</div>
+              <div class="focus">VO2 ↑ · GLY 도입 · weekly TSS 480</div>
+            </div>
+            <div class="ph done">
+              <div class="nm">Build (2 / 2)</div>
+              <div class="wk">w −5 ~ −4 · ✓ done</div>
+              <div class="focus">LT 유지 · race-pace 도입</div>
+            </div>
+            <div class="ph now">
+              <div class="nm">Peak</div>
+              <div class="wk">w −4 ~ −3 · current</div>
+              <div class="focus">race-specific · GLY tolerance · 2 MAIN sessions left</div>
+            </div>
+            <div class="ph">
+              <div class="nm">Taper</div>
+              <div class="wk">w −2 ~ −1</div>
+              <div class="focus">volume −40% · intensity 유지</div>
+            </div>
+            <div class="ph">
+              <div class="nm">Race</div>
+              <div class="wk">D-Day</div>
+              <div class="focus">5.18 · 15:40</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Lower 2 columns -->
+        <div class="d-lower">
+          <!-- Pace strategy -->
+          <div class="d-col">
+            <h3>Pace strategy · target 4'12"00</h3>
+            <div class="sub">based on 5000m PB 16:10 · split table · negative split −0.5s</div>
+            <table class="pace-table">
+              <thead>
+                <tr><th>lap</th><th>distance</th><th class="r">target</th><th class="r">cum</th><th class="r">pace</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>L1</td><td>0–400m</td><td class="r">67.5</td><td class="r">1:07.5</td><td class="r">2'48"/km</td></tr>
+                <tr class="target"><td>L2</td><td>400–800m</td><td class="r">67.0</td><td class="r">2:14.5</td><td class="r">2'47"/km</td></tr>
+                <tr><td>L3</td><td>800–1200m</td><td class="r">67.5</td><td class="r">3:22.0</td><td class="r">2'48"/km</td></tr>
+                <tr class="target"><td>L4 last</td><td>1200–1500m</td><td class="r">50.0</td><td class="r" style="color:var(--brand);font-weight:600;">4:12.00</td><td class="r">2'46"/km</td></tr>
+                <tr><td colspan="2" class="tot">Total</td><td class="r tot">252.0s</td><td class="r tot" style="color:var(--brand);">4:12.00</td><td class="r tot">2'48"</td></tr>
+              </tbody>
+            </table>
+            <p style="margin:14px 0 0;font-family:var(--mono);font-size:11px;color:var(--ink-3);letter-spacing:.02em;line-height:1.55;">L4 finish kick: <b style="color:var(--ink);">last 200m @ 26"</b> (2'10" pace). 600m 지점 RPE <b style="color:var(--ink);">7 / 10</b> 유지가 핵심.</p>
+          </div>
+
+          <!-- Past results -->
+          <div class="d-col">
+            <h3>Past results · 4 selected</h3>
+            <div class="sub">filter: 1500m & 5000m · last 12 months</div>
+
+            <a class="race-row-d" href="#">
+              <div class="d"><div class="mo">Mar</div><div class="day">14</div><div class="yr">2026</div></div>
+              <div class="m"><div class="nm">서울국제마라톤 · 5000m TT</div><div class="meta">time trial · solo · cool 9°C</div></div>
+              <div class="res pb">16'10"<span class="sub">season best</span></div>
+            </a>
+            <a class="race-row-d" href="#">
+              <div class="d"><div class="mo">Oct</div><div class="day">12</div><div class="yr">2025</div></div>
+              <div class="m"><div class="nm">전국체전 결승 · 1500m</div><div class="meta">final · 3rd · pacing OK · 14°C</div></div>
+              <div class="res pb">4'14"82<span class="sub">current PB</span></div>
+            </a>
+            <a class="race-row-d" href="#">
+              <div class="d"><div class="mo">Aug</div><div class="day">24</div><div class="yr">2025</div></div>
+              <div class="m"><div class="nm">전국실업육상 · 1500m</div><div class="meta">final · 5th · L3 pace drop</div></div>
+              <div class="res">4'17"21<span class="sub">5th place</span></div>
+            </a>
+            <a class="race-row-d" href="#">
+              <div class="d"><div class="mo">May</div><div class="day">10</div><div class="yr">2025</div></div>
+              <div class="m"><div class="nm">춘계실업육상 · 800m</div><div class="meta">heat · DNF · L2 cramp · post-injury</div></div>
+              <div class="res" style="color:var(--err);">DNF<span class="sub">left calf cramp</span></div>
+            </a>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+</div>
+
+<script>
+  const tabs = document.getElementById('tabs');
+  tabs.addEventListener('click', (e) => {
+    const btn = e.target.closest('button[data-tab]'); if (!btn) return;
+    tabs.querySelectorAll('button').forEach(b => b.classList.remove('on'));
+    btn.classList.add('on');
+    document.querySelectorAll('.frame').forEach(f => f.classList.toggle('on', f.dataset.frame === btn.dataset.tab));
+    try { localStorage.setItem('to_comp_tab', btn.dataset.tab); } catch(e){}
+  });
+  try { const s = localStorage.getItem('to_comp_tab'); if (s) tabs.querySelector(`button[data-tab="${s}"]`)?.click(); } catch(e){}
+</script>
+</body></html>

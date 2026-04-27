@@ -1,0 +1,456 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>TRAINORACLE — Thinking tool for elite endurance</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+<link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css" rel="stylesheet" />
+<style>
+  :root{
+    --bg:#FAFAF7;--surface:#FFFFFF;--surface-2:#F4F3EE;
+    --ink:#0E1412;--ink-2:#2B3330;--ink-3:#5F6965;--ink-4:#8F9894;
+    --line:#D9D6CE;--line-2:#BFBBB0;--hair:#E8E6DF;
+    --brand:#0D5F5A;--brand-ink:#07302E;
+    --sans:"Inter","Pretendard Variable",ui-sans-serif,system-ui,sans-serif;
+    --mono:"JetBrains Mono",ui-monospace,SFMono-Regular,monospace;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:16px;line-height:1.55;-webkit-font-smoothing:antialiased;}
+  .mono{font-family:var(--mono);font-variant-numeric:tabular-nums;}
+
+  /* NAV */
+  .nav{position:sticky;top:0;z-index:100;background:rgba(250,250,247,.92);backdrop-filter:blur(10px);border-bottom:1px solid var(--line);padding:14px 32px;display:flex;align-items:center;gap:24px;}
+  .nav .brand{font-weight:600;font-size:16px;letter-spacing:.02em;text-decoration:none;color:var(--ink);}
+  .nav .brand .dot{display:inline-block;width:5px;height:5px;background:var(--brand);border-radius:50%;margin:0 1px;transform:translateY(-2px);}
+  .nav a.lk{font-family:var(--mono);font-size:11px;color:var(--ink-2);text-decoration:none;letter-spacing:.06em;text-transform:uppercase;font-weight:500;padding:6px 0;}
+  .nav a.lk.on{color:var(--ink);border-bottom:1.5px solid var(--ink);}
+  .nav a.lk:hover{color:var(--ink);}
+  .nav .spacer{flex:1;}
+  .nav .cta{padding:8px 14px;background:var(--ink);color:var(--bg);text-decoration:none;font-family:var(--mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;font-weight:500;}
+
+  /* HERO */
+  .hero{padding:120px 32px 100px;border-bottom:1px solid var(--line);}
+  .hero-inner{max-width:1240px;margin:0 auto;}
+  .hero-meta{font-family:var(--mono);font-size:11px;color:var(--ink-3);letter-spacing:.14em;text-transform:uppercase;font-weight:600;margin-bottom:24px;display:flex;align-items:baseline;gap:14px;}
+  .hero-meta .dot{display:inline-block;width:6px;height:6px;background:var(--brand);border-radius:50%;margin-right:8px;vertical-align:1px;}
+  .hero-meta b{color:var(--ink);}
+
+  .hero h1{
+    font-size:clamp(48px, 8vw, 116px);
+    font-weight:500;letter-spacing:-0.045em;line-height:.95;
+    margin:0 0 32px;
+    text-wrap:balance;max-width:1100px;
+  }
+  .hero h1 .em{font-style:italic;font-weight:400;color:var(--brand);}
+  .hero .sub{font-size:22px;line-height:1.5;color:var(--ink-2);max-width:620px;margin:0 0 40px;letter-spacing:-0.01em;text-wrap:pretty;}
+  .hero .sub b{font-weight:600;color:var(--ink);}
+
+  .hero-cta{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:36px;}
+  .hero-cta .primary{padding:16px 28px;background:var(--ink);color:var(--bg);text-decoration:none;font-family:var(--sans);font-size:15px;font-weight:500;letter-spacing:.01em;display:inline-flex;align-items:center;gap:10px;min-height:52px;}
+  .hero-cta .secondary{padding:16px 24px;background:transparent;border:1px solid var(--ink);color:var(--ink);text-decoration:none;font-family:var(--mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;font-weight:500;min-height:52px;display:inline-flex;align-items:center;}
+  .hero-cta .note{font-family:var(--mono);font-size:11px;color:var(--ink-3);margin-left:8px;letter-spacing:.04em;}
+  .hero-cta .note b{color:var(--ink);font-weight:500;}
+
+  /* hero metrics row */
+  .hero-stats{display:grid;grid-template-columns:repeat(4,1fr);border-top:1px solid var(--line);border-bottom:1px solid var(--line);margin-top:48px;}
+  .hero-stats .it{padding:18px 0;border-right:1px solid var(--hair);padding-right:18px;}
+  .hero-stats .it:nth-child(2){padding-left:18px;}
+  .hero-stats .it:nth-child(3){padding-left:18px;}
+  .hero-stats .it:nth-child(4){padding-left:18px;border-right:0;}
+  .hero-stats .it .l{font-family:var(--mono);font-size:9.5px;color:var(--ink-3);letter-spacing:.14em;text-transform:uppercase;font-weight:500;}
+  .hero-stats .it .v{font-family:var(--mono);font-size:24px;font-weight:500;color:var(--ink);letter-spacing:-0.025em;margin-top:6px;font-variant-numeric:tabular-nums;line-height:1;}
+  .hero-stats .it .v .u{font-size:12px;color:var(--ink-3);font-weight:400;margin-left:2px;letter-spacing:0;}
+
+  /* Hero visual placeholder */
+  .hero-vis{margin-top:60px;padding:0;border:1px solid var(--ink);background:var(--surface);}
+  .hero-vis .lb-bar{background:var(--ink);color:var(--bg);padding:8px 14px;font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;display:flex;align-items:center;gap:10px;font-weight:600;}
+  .hero-vis .lb-bar .dot{width:5px;height:5px;background:var(--brand);border-radius:50%;}
+  .hero-vis .lb-bar .ct{margin-left:auto;color:rgba(255,255,255,.6);}
+  .hero-vis .img-wrap{padding:60px 28px;display:flex;align-items:center;justify-content:center;background:var(--surface-2);min-height:380px;}
+  .hero-vis .img-placeholder{font-family:var(--mono);font-size:11px;color:var(--ink-3);text-align:center;letter-spacing:.06em;}
+  .hero-vis .img-placeholder b{display:block;font-size:14px;color:var(--ink);margin-bottom:8px;letter-spacing:-0.005em;font-weight:600;}
+
+  /* SECTION container */
+  .section{padding:100px 32px;border-bottom:1px solid var(--line);}
+  .section-inner{max-width:1240px;margin:0 auto;}
+  .section .h-meta{font-family:var(--mono);font-size:11px;color:var(--ink-3);letter-spacing:.14em;text-transform:uppercase;font-weight:600;margin-bottom:14px;}
+  .section .h-meta b{color:var(--ink);}
+  .section h2{font-size:clamp(32px, 4.5vw, 52px);font-weight:500;letter-spacing:-0.03em;line-height:1.1;margin:0 0 20px;text-wrap:balance;max-width:920px;}
+  .section .h-sub{font-size:18px;line-height:1.55;color:var(--ink-2);max-width:680px;margin:0 0 48px;letter-spacing:-0.005em;text-wrap:pretty;}
+
+  /* COMPARE — vs Strava / TrainingPeaks */
+  .compare{display:grid;grid-template-columns:1.4fr 1fr 1fr;gap:0;border:1px solid var(--ink);}
+  .compare .col{padding:24px 22px;border-right:1px solid var(--ink);}
+  .compare .col:last-child{border-right:0;}
+  .compare .col.us{background:var(--ink);color:var(--bg);}
+  .compare .col h4{margin:0 0 4px;font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3);font-weight:600;}
+  .compare .col.us h4{color:var(--bg);}
+  .compare .col .nm{font-size:18px;font-weight:600;letter-spacing:-0.005em;margin-bottom:14px;}
+  .compare .col.us .nm{color:#fff;}
+  .compare .col .what{font-family:var(--mono);font-size:11.5px;color:var(--ink-2);letter-spacing:.02em;line-height:1.6;margin-bottom:18px;border-top:1px solid var(--line);padding-top:14px;}
+  .compare .col.us .what{color:rgba(255,255,255,.7);border-top-color:rgba(255,255,255,.2);}
+  .compare .col .row{display:grid;grid-template-columns:auto 1fr;gap:8px;padding:8px 0;font-family:var(--mono);font-size:12.5px;border-bottom:1px solid var(--hair);align-items:baseline;}
+  .compare .col.us .row{border-bottom-color:rgba(255,255,255,.15);}
+  .compare .col .row:last-child{border-bottom:0;}
+  .compare .col .row .mk{font-size:11px;color:var(--ink-3);letter-spacing:.06em;font-weight:600;width:auto;}
+  .compare .col.us .row .mk{color:#fff;}
+  .compare .col .row .tx{color:var(--ink-2);letter-spacing:-0.005em;line-height:1.4;}
+  .compare .col.us .row .tx{color:rgba(255,255,255,.85);}
+  .compare .col .row.no .mk{color:var(--ink-4);}
+  .compare .col .row.no .tx{color:var(--ink-4);}
+
+  /* Three pillars */
+  .pillars{display:grid;grid-template-columns:repeat(3,1fr);gap:0;border:1px solid var(--line);}
+  .pillars .p{padding:32px 28px;border-right:1px solid var(--line);}
+  .pillars .p:last-child{border-right:0;}
+  .pillars .p .n{font-family:var(--mono);font-size:11px;color:var(--ink-3);letter-spacing:.14em;font-weight:600;}
+  .pillars .p .n b{color:var(--ink);}
+  .pillars .p h3{font-size:22px;font-weight:500;letter-spacing:-0.015em;margin:14px 0 12px;line-height:1.25;}
+  .pillars .p p{margin:0;font-size:14.5px;line-height:1.6;color:var(--ink-2);letter-spacing:-0.005em;}
+  .pillars .p p b{color:var(--ink);font-weight:600;}
+
+  /* Feature row with placeholder */
+  .feat{display:grid;grid-template-columns:1fr 1fr;gap:60px;align-items:center;padding:48px 0;border-bottom:1px solid var(--hair);}
+  .feat:last-child{border-bottom:0;}
+  .feat-text .lb{font-family:var(--mono);font-size:11px;color:var(--brand);letter-spacing:.14em;text-transform:uppercase;font-weight:600;margin-bottom:12px;}
+  .feat-text h3{font-size:30px;font-weight:500;letter-spacing:-0.025em;line-height:1.15;margin:0 0 18px;}
+  .feat-text p{margin:0 0 12px;font-size:15.5px;line-height:1.65;color:var(--ink-2);letter-spacing:-0.005em;}
+  .feat-text p b{color:var(--ink);font-weight:600;}
+  .feat-text p .k{font-family:var(--mono);font-size:13px;background:var(--surface-2);padding:1px 5px;border:1px solid var(--line);}
+  .feat-vis{border:1px solid var(--ink);background:var(--surface);}
+  .feat-vis .lb-bar{background:var(--ink);color:var(--bg);padding:6px 12px;font-family:var(--mono);font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;font-weight:600;}
+  .feat-vis .img-wrap{padding:36px 20px;background:var(--surface-2);min-height:240px;display:flex;align-items:center;justify-content:center;}
+  .feat-vis .img-placeholder{font-family:var(--mono);font-size:10.5px;color:var(--ink-3);text-align:center;letter-spacing:.06em;}
+  .feat-vis .img-placeholder b{display:block;font-size:13px;color:var(--ink);margin-bottom:6px;font-weight:600;letter-spacing:-0.005em;}
+
+  /* Testimonials (placeholder for credibility) */
+  .testim{display:grid;grid-template-columns:1fr 1fr 1fr;gap:0;border:1px solid var(--line);}
+  .testim .t{padding:28px 24px;border-right:1px solid var(--line);}
+  .testim .t:last-child{border-right:0;}
+  .testim .t .q{font-size:16px;line-height:1.55;color:var(--ink);letter-spacing:-0.005em;margin:0 0 18px;font-weight:500;}
+  .testim .t .author{display:flex;gap:10px;align-items:center;border-top:1px solid var(--hair);padding-top:14px;}
+  .testim .t .av{width:32px;height:32px;background:var(--ink);color:var(--bg);display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:11px;font-weight:600;}
+  .testim .t .who .nm{font-size:13px;font-weight:600;}
+  .testim .t .who .ti{font-family:var(--mono);font-size:10.5px;color:var(--ink-3);margin-top:1px;letter-spacing:.04em;}
+
+  /* Final CTA */
+  .cta-final{background:var(--ink);color:var(--bg);padding:120px 32px;text-align:center;}
+  .cta-final-inner{max-width:880px;margin:0 auto;}
+  .cta-final .lb{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--brand);font-weight:600;margin-bottom:16px;}
+  .cta-final .lb .dot{display:inline-block;width:6px;height:6px;background:var(--brand);border-radius:50%;margin-right:8px;vertical-align:1px;}
+  .cta-final h2{font-size:clamp(36px, 5vw, 64px);font-weight:500;letter-spacing:-0.03em;line-height:1.1;margin:0 0 20px;color:#fff;text-wrap:balance;}
+  .cta-final p{font-size:17px;color:rgba(255,255,255,.75);max-width:520px;margin:0 auto 36px;line-height:1.55;letter-spacing:-0.005em;}
+  .cta-final .btn{display:inline-block;padding:18px 36px;background:#fff;color:var(--ink);text-decoration:none;font-family:var(--sans);font-size:16px;font-weight:500;letter-spacing:.01em;}
+  .cta-final .note{display:block;margin-top:18px;font-family:var(--mono);font-size:11px;color:rgba(255,255,255,.5);letter-spacing:.04em;}
+
+  /* Footer */
+  .foot{padding:48px 32px;display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:32px;border-top:1px solid var(--line);}
+  .foot-inner{max-width:1240px;margin:0 auto;}
+  .foot .col h5{font-family:var(--mono);font-size:10px;color:var(--ink-3);letter-spacing:.14em;text-transform:uppercase;font-weight:600;margin:0 0 14px;}
+  .foot .col a{display:block;font-size:13px;color:var(--ink-2);text-decoration:none;padding:5px 0;letter-spacing:-0.005em;}
+  .foot .col a:hover{color:var(--ink);}
+  .foot .col.brand-col .b{font-size:18px;font-weight:600;letter-spacing:.02em;margin-bottom:10px;}
+  .foot .col.brand-col .b .dot{display:inline-block;width:5px;height:5px;background:var(--brand);border-radius:50%;margin:0 1px;transform:translateY(-2px);}
+  .foot .col.brand-col p{font-size:13px;color:var(--ink-3);max-width:280px;line-height:1.55;letter-spacing:-0.005em;margin:0;}
+  .foot-bottom{padding:18px 32px;border-top:1px solid var(--line);font-family:var(--mono);font-size:10.5px;color:var(--ink-3);display:flex;justify-content:space-between;letter-spacing:.04em;}
+  .foot-bottom a{color:var(--ink-3);text-decoration:none;margin-left:14px;}
+
+  @media (max-width: 960px){
+    .hero{padding:60px 22px 60px;}
+    .section{padding:64px 22px;}
+    .hero-stats{grid-template-columns:1fr 1fr;}
+    .hero-stats .it{border-right:0;border-bottom:1px solid var(--hair);padding-left:0;padding-right:0;}
+    .hero-stats .it:nth-child(odd){padding-right:18px;border-right:1px solid var(--hair);}
+    .hero-stats .it:nth-child(even){padding-left:18px;}
+    .hero-stats .it:nth-last-child(-n+2){border-bottom:0;}
+    .compare{grid-template-columns:1fr;}
+    .compare .col{border-right:0;border-bottom:1px solid var(--ink);}
+    .compare .col:last-child{border-bottom:0;}
+    .pillars{grid-template-columns:1fr;}
+    .pillars .p{border-right:0;border-bottom:1px solid var(--line);}
+    .pillars .p:last-child{border-bottom:0;}
+    .feat{grid-template-columns:1fr;gap:24px;}
+    .testim{grid-template-columns:1fr;}
+    .testim .t{border-right:0;border-bottom:1px solid var(--line);}
+    .testim .t:last-child{border-bottom:0;}
+    .foot{grid-template-columns:1fr 1fr;}
+  }
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <a href="#" class="brand">TRAIN<span class="dot"></span>RACLE</a>
+  <a href="#" class="lk on">제품</a>
+  <a href="#" class="lk">철학</a>
+  <a href="#" class="lk">레퍼런스</a>
+  <a href="#" class="lk">용어집</a>
+  <span class="spacer"></span>
+  <a href="#" class="lk">로그인</a>
+  <a href="#" class="cta">14일 무료</a>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-inner">
+    <div class="hero-meta">
+      <span><span class="dot"></span>For elite endurance athletes</span>
+      <span>v0.3.1</span>
+      <span>Korean / English</span>
+    </div>
+
+    <h1>
+      Strava가 <span class="em">기록</span>하고,<br/>
+      TrainingPeaks가 <span class="em">분석</span>한다면,<br/>
+      TRAINORACLE은 <span class="em">생각</span>합니다.
+    </h1>
+
+    <p class="sub">
+      코치 장호준의 <b>9.5일 사이클 방법론</b>을 학습한 AI 코치. 매 세션마다 <b>왜 그래야 하는지</b>를 근거와 함께 답합니다. 1500m–10000m 엘리트 선수를 위한 thinking tool.
+    </p>
+
+    <div class="hero-cta">
+      <a href="#" class="primary">14일 무료 시작 →</a>
+      <a href="#" class="secondary">철학 보기</a>
+      <span class="note"><b>132명</b>의 엘리트 데이터 · 신용카드 불필요</span>
+    </div>
+
+    <div class="hero-stats">
+      <div class="it"><div class="l">코칭 데이터</div><div class="v">9<span class="u">years</span></div></div>
+      <div class="it"><div class="l">추적 선수</div><div class="v">132</div></div>
+      <div class="it"><div class="l">PB 갱신율 +</div><div class="v">+18<span class="u">%</span></div></div>
+      <div class="it"><div class="l">규칙 검증</div><div class="v">9<span class="u">rules</span></div></div>
+    </div>
+
+    <div class="hero-vis">
+      <div class="lb-bar">
+        <span class="dot"></span>
+        <span>Product preview · Dashboard · Cycle 7 · Day 5/9.5</span>
+        <span class="ct">민지 · ATHLETE</span>
+      </div>
+      <div class="img-wrap">
+        <div class="img-placeholder">
+          <b>대시보드 스크린샷 위치</b>
+          designs/02_Dashboard.html · 1280×820 light mode<br/>
+          (개발 시 실제 캡처로 교체)
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- VS COMPARE -->
+<section class="section">
+  <div class="section-inner">
+    <div class="h-meta"><b>§1</b> · Differentiation</div>
+    <h2>Record. Analyze. <span style="color:var(--brand);font-style:italic;font-weight:400;">Think.</span></h2>
+    <p class="h-sub">기록과 분석은 이미 잘하는 도구가 있습니다. TRAINORACLE은 한 단계 더 나아가, 매 결정 뒤의 <b>이유</b>를 함께 제시합니다.</p>
+
+    <div class="compare">
+      <div class="col us">
+        <h4>Thinking</h4>
+        <div class="nm">TRAINORACLE</div>
+        <div class="what">코치 장호준의 30년 경험을 학습한 AI가 <b>왜?</b>를 답한다. 모든 결정에 근거와 신뢰도를 명시.</div>
+        <div class="row"><span class="mk">✓</span><span class="tx"><b>왜 이 세션인가</b> 근거 인용</span></div>
+        <div class="row"><span class="mk">✓</span><span class="tx">신뢰도 수치 명시 (50–95%)</span></div>
+        <div class="row"><span class="mk">✓</span><span class="tx">9.5일 사이클 자동 검증</span></div>
+        <div class="row"><span class="mk">✓</span><span class="tx">판정 불확실 시 코치 인박스 이관</span></div>
+        <div class="row"><span class="mk">✓</span><span class="tx">반대 의견도 함께 제시</span></div>
+      </div>
+      <div class="col">
+        <h4>Recording</h4>
+        <div class="nm">Strava</div>
+        <div class="what">활동을 기록하고 친구와 공유. 소셜 피드 중심.</div>
+        <div class="row"><span class="mk">✓</span><span class="tx">GPS 기록 · 세그먼트</span></div>
+        <div class="row"><span class="mk">✓</span><span class="tx">소셜 공유</span></div>
+        <div class="row no"><span class="mk">×</span><span class="tx">왜 이 페이스인지 설명 없음</span></div>
+        <div class="row no"><span class="mk">×</span><span class="tx">9.5일 사이클 미지원</span></div>
+        <div class="row no"><span class="mk">×</span><span class="tx">근거 인용 없음</span></div>
+      </div>
+      <div class="col">
+        <h4>Analyzing</h4>
+        <div class="nm">TrainingPeaks</div>
+        <div class="what">CTL/ATL/TSB 차트와 zone 분석. 코치 도구.</div>
+        <div class="row"><span class="mk">✓</span><span class="tx">CTL/ATL/TSB 차트</span></div>
+        <div class="row"><span class="mk">✓</span><span class="tx">zone 분석</span></div>
+        <div class="row"><span class="mk">~</span><span class="tx">코치가 직접 plan 작성 필요</span></div>
+        <div class="row no"><span class="mk">×</span><span class="tx">AI 추천 없음</span></div>
+        <div class="row no"><span class="mk">×</span><span class="tx">신뢰도/불확실성 표기 없음</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- THREE PILLARS -->
+<section class="section">
+  <div class="section-inner">
+    <div class="h-meta"><b>§2</b> · Three pillars</div>
+    <h2>왜 다른가</h2>
+    <p class="h-sub">세 가지 기둥이 TRAINORACLE을 지탱합니다.</p>
+
+    <div class="pillars">
+      <div class="p">
+        <div class="n"><b>P−1</b> · Why-first</div>
+        <h3>모든 답에 근거가 따른다</h3>
+        <p>"오늘 6×1000m @ 3'20"" 라는 권장 뒤에는 <b>5000m PB 16:10 기준 VO2 페이스 환산</b>이라는 근거가 항상 따라옵니다. 출처는 클릭 가능한 인용 형태로 명시됩니다.</p>
+      </div>
+      <div class="p">
+        <div class="n"><b>P−2</b> · Honest uncertainty</div>
+        <h3>모르면 모른다고 말한다</h3>
+        <p>두 신호가 충돌하면 <b>"판정 불확실"</b>로 표기하고 코치 판단을 요청합니다. 신뢰도 70% 미만은 자동으로 인박스로 이관. AI는 결코 100% 확신을 가장하지 않습니다.</p>
+      </div>
+      <div class="p">
+        <div class="n"><b>P−3</b> · 9.5-day cycle</div>
+        <h3>달력이 아닌 회복 주기</h3>
+        <p>주간 단위는 달력의 산물입니다. 30년의 코칭 데이터에서 추출한 회복–자극 평균 주기는 <b>9.5일</b>. 이 주기를 따른 선수들의 시즌 PB 갱신율은 <b>+18%</b> 높았습니다.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FEATURES -->
+<section class="section">
+  <div class="section-inner">
+    <div class="h-meta"><b>§3</b> · Features</div>
+    <h2>일하는 방식</h2>
+    <p class="h-sub">개념이 아닌 실제 화면. 매일 사용하는 도구로서 어떻게 작동하는지.</p>
+
+    <div class="feat">
+      <div class="feat-text">
+        <div class="lb">F · 01 — Calendar</div>
+        <h3>9.5일 사이클이 캘린더의 기본 단위</h3>
+        <p>Week / 9.5-Cycle / Timeline 3가지 뷰. <span class="k">9.5-Cycle 뷰</span>는 다른 어디에도 없는 우리만의 화면입니다. MAIN 세션을 중심으로 전후 회복·보조 세션이 자동 배치됩니다.</p>
+        <p>코치는 <b>Timeline 뷰</b>로 12주 전체를 한눈에 보면서 대회 D-day까지의 페이즈를 확인할 수 있습니다.</p>
+      </div>
+      <div class="feat-vis">
+        <div class="lb-bar">designs/03_Calendar.html — 9.5-Cycle view</div>
+        <div class="img-wrap">
+          <div class="img-placeholder">
+            <b>Calendar — 9.5 Cycle 뷰</b>
+            10일 그리드 · MAIN 강조 · low/mod/low 리듬
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="feat" style="grid-template-columns:1fr 1fr;">
+      <div class="feat-vis">
+        <div class="lb-bar">designs/06_AI-Chat.html — 장호준 AI</div>
+        <div class="img-wrap">
+          <div class="img-placeholder">
+            <b>AI Chat · 인용 기반 응답</b>
+            verdict 칩 · confidence % · sources [1] [2] [3]
+          </div>
+        </div>
+      </div>
+      <div class="feat-text">
+        <div class="lb">F · 02 — 장호준 AI</div>
+        <h3>매 답변에 출처와 신뢰도</h3>
+        <p>장호준 AI는 단순 chatbot이 아닙니다. 모든 응답에 <b>verdict</b>(확정 / 권장 / 판정 불확실 / 데이터 부족)와 <b>신뢰도 %</b>가 표시됩니다.</p>
+        <p>주장 뒤에는 인용 번호 <span class="k">[1]</span>가 붙고, 클릭하면 우측 패널에서 출처를 확인할 수 있습니다. 코치 노트, 외부 문헌, 본인 과거 세션, 모두 검증 가능한 근거.</p>
+      </div>
+    </div>
+
+    <div class="feat">
+      <div class="feat-text">
+        <div class="lb">F · 03 — AI Inbox</div>
+        <h3>코치의 우선순위 큐</h3>
+        <p>AI가 발견한 모든 신호 — <b>판정 불확실</b>, <b>부상 위험</b>, <b>패턴 변화</b>, <b>규칙 위반</b>, <b>규칙 통과</b> — 가 우선순위별로 정렬됩니다.</p>
+        <p>코치는 8명의 선수를 동시에 보면서, AI가 미리 추려낸 <span class="k">3 unread</span> 항목만 처리하면 됩니다. 100명을 동시에 보는 것이 가능해지는 이유.</p>
+      </div>
+      <div class="feat-vis">
+        <div class="lb-bar">designs/07_AI-Inbox.html — 코치 뷰</div>
+        <div class="img-wrap">
+          <div class="img-placeholder">
+            <b>AI Inbox · 3-column layout</b>
+            필터 / 리스트 / 상세 패널
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- TESTIMONIALS -->
+<section class="section">
+  <div class="section-inner">
+    <div class="h-meta"><b>§4</b> · Voices</div>
+    <h2>사용자의 말</h2>
+    <p class="h-sub">베타 테스트 참여 코치와 선수들의 피드백.</p>
+
+    <div class="testim">
+      <div class="t">
+        <p class="q">"플랜을 짜다가 막히면 AI에게 묻는다. 7년 동안 했던 고민을 5분 만에 정리해준다."</p>
+        <div class="author">
+          <div class="av">SK</div>
+          <div class="who"><div class="nm">서경석</div><div class="ti">COACH · 마라톤</div></div>
+        </div>
+      </div>
+      <div class="t">
+        <p class="q">"왜 오늘 이 세션을 해야 하는지 이해되니까, 무리하지 않게 됐다. PB가 자연스럽게 따라온다."</p>
+        <div class="author">
+          <div class="av">JY</div>
+          <div class="who"><div class="nm">지윤</div><div class="ti">ATHLETE · 800m</div></div>
+        </div>
+      </div>
+      <div class="t">
+        <p class="q">"신뢰도 수치가 가장 인상적이다. AI가 '나도 잘 모르겠어'라고 말하는 게 오히려 신뢰가 간다."</p>
+        <div class="author">
+          <div class="av">MS</div>
+          <div class="who"><div class="nm">민석</div><div class="ti">COACH · 1500m</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FINAL CTA -->
+<section class="cta-final">
+  <div class="cta-final-inner">
+    <div class="lb"><span class="dot"></span>14 days · no credit card</div>
+    <h2>9.5일이면 충분합니다</h2>
+    <p>한 사이클만 돌려보면, 왜 다른지 알게 됩니다.</p>
+    <a href="#" class="btn">무료로 시작하기 →</a>
+    <span class="note">설치 없음 · 웹 기반 · Garmin / Strava 자동 연동</span>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer class="foot">
+  <div class="col brand-col">
+    <div class="b">TRAIN<span class="dot"></span>RACLE</div>
+    <p>Coach Jang's 9.5-day cycle method, embedded in an AI thinking tool. For elite endurance athletes and coaches.</p>
+  </div>
+  <div class="col">
+    <h5>Product</h5>
+    <a href="#">대시보드</a>
+    <a href="#">캘린더</a>
+    <a href="#">장호준 AI</a>
+    <a href="#">분석</a>
+  </div>
+  <div class="col">
+    <h5>Resources</h5>
+    <a href="#">철학</a>
+    <a href="#">레퍼런스</a>
+    <a href="#">용어집</a>
+    <a href="#">변경 로그</a>
+  </div>
+  <div class="col">
+    <h5>Account</h5>
+    <a href="#">로그인</a>
+    <a href="#">회원가입</a>
+    <a href="#">개인정보</a>
+    <a href="#">이용약관</a>
+  </div>
+</footer>
+<div class="foot-bottom">
+  <span>© 2026 TRAINORACLE · v0.3.1</span>
+  <span>
+    <a href="#">Privacy</a>
+    <a href="#">Terms</a>
+    <a href="#">Contact</a>
+  </span>
+</div>
+
+</body></html>
