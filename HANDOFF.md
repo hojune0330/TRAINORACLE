@@ -67,7 +67,7 @@ AI Stack:
 ### Phase 1 — Foundation (1주)
 - [ ] Next.js + Tailwind 셋업
 - [ ] DESIGN_TOKENS.md 기반 `tailwind.config.ts` 작성
-- [ ] CSS variables 설정 (light mode 우선, dark mode 추후)
+- [ ] CSS variables 설정 (light mode 전용 — **dark mode 미지원 원칙**, VISUALIZATION_SYSTEM §13.4)
 - [ ] 폰트 로드 (Inter, Pretendard, JetBrains Mono)
 - [ ] 기본 컴포넌트 5개 만들기 (Button, Tag, Etag, DataTable, ValidationItem)
 - [ ] Auth 설정 (Supabase)
@@ -92,7 +92,7 @@ AI Stack:
 - [ ] **Landing Page**
 - [ ] **Philosophy Page**
 - [ ] **Settings**
-- [ ] Dark mode
+- [ ] ~~Dark mode~~ → **미지원 원칙** (VISUALIZATION_SYSTEM §13.4)
 - [ ] 성능·접근성
 
 **총 예상 기간: 6-8주** (1인 풀타임 기준)

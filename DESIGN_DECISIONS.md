@@ -270,13 +270,19 @@ PB·SB는 시각화 1급 시민. Reference는 사용자 직접 입력만 (Cohort
 
 ---
 
-## 10. 미해결 / 추후 결정 필요
+## 10. 결정 / 추후 결정 필요
 
-- [ ] Dark mode (브리프엔 있으나 미구현)
+### 결정됨 (2026-04-29)
+- **Dark mode 미지원** (원칙) — Tufte × Linear 시각 톤은 밝은 배경 전제. 다크 자동 추종도 비활성화. `<meta name="color-scheme" content="light">` 명시. (VISUALIZATION_SYSTEM §13.4)
+- **MIXED(MX) 단계적 노출** — dominant<65% 시 MIXED 처리. Heatmap=dominant 단일 색, 셀=2색 split, hero=split+dual code. (VISUALIZATION_SYSTEM §13.1)
+- **Cohort comparison 활성 트리거** — 종목당 ≥100명 / Pro 출시 / opt-in ≥80% 중 둘 이상. (VISUALIZATION_SYSTEM §13.2)
+- **Track Record** — 현재 표시 X. LLM 단계 진입 시 A+D 조합(요약 + decision log). (VISUALIZATION_SYSTEM §13.3)
+- **PB Trail 종목 토글** — chip row + 주종목 default + 종목별 독립 Y축 + 정규화 차트 옵션. (VISUALIZATION_SYSTEM §13.5)
+
+### 미해결
 - [ ] 고대비 모드 토글 (트랙용)
 - [ ] 음성 입력 (Daily check-in 시)
 - [ ] 다국어 외 다른 언어 (일본어, 중국어?)
 - [ ] 결제 모델 (월 구독? 분리 결제? B2B?)
-- [ ] MIXED(MX) 에너지 시스템 표현 방식 (Q5 보류)
 - [ ] LLM 단계 진입 시점 (사용자 N명 / 데이터 N건 누적 후?)
 - [ ] Personal Archive 화면 디자인

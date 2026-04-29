@@ -430,7 +430,7 @@ v1과 동일한 정보 구조 유지하되, 시각 톤 v2 통일:
 3. HR Zones
 4. AI · Coach (모드, 신뢰도 임계, 코치 연결)
 5. Data sync (Garmin, Strava, ...)
-6. Display (다크 모드, 고대비, 언어, 단위)
+6. Display (고대비, 언어, 단위) — ※ **다크 모드 미지원** (VISUALIZATION_SYSTEM §13.4 원칙)
 7. Notifications (푸시, 아침 브리핑, D-7)
 8. Account (이메일, 비번, 내보내기, 삭제)
 
@@ -543,7 +543,7 @@ Week 6: Public + Polish
 - Landing
 - Philosophy
 - Settings
-- Dark mode
+- ~~Dark mode~~ → **미지원 원칙** (VISUALIZATION_SYSTEM §13.4)
 - 성능 + a11y
 
 — LLM 단계 (추후) —

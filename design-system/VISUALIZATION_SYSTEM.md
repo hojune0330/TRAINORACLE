@@ -21,7 +21,7 @@
 | Q2 | **사용자 ↔ AI 1:1**. Cohort/Coach view 차트는 **P3로 미룸** |
 | Q3 | **Rule engine 단계**의 시각화만 다룸. Track Record 차트는 제외. PB·SB는 1급 시민. |
 | Q4 | 시간축 차트는 **1년 default + 범위 토글** (1y / 2y / 3y / all). 추후 확장 가능 구조. |
-| Q5 | MIXED(MX)는 보류. 등장 시 **두 시스템 50:50 줄무늬**로 임시 처리. |
+| Q5 | **MIXED(MX) 단계적 노출**. dominant<65%일 때 MIXED. 컴팩트=dominant, 셀=2색 split, hero=split+dual code. §13 참조. |
 | Q6 | **3중 인코딩 의무 (색 + 코드 + 위치/모양)**. 단 정보 과다 시 **단계적 노출**. |
 
 ---
@@ -276,6 +276,21 @@ User Input ──────────┐
 
 **Q3 결정 반영**: PB·SB는 시각화 1급 시민. PB Trail은 모든 종목별로 만든다 (1500m / 5000m / 10000m).
 
+**종목 토글 UI** (정리본 §13.5 결정 — 800m/마라톤 확장 대응):
+
+- **UI 형태**: 상단 **chip row** + 사용자 주종목 default + "+ 다른 종목" 펼치기
+- **칩 표기**: 거리 + 현재 PB 동시 표시 — 예 `5000m · 16:10`, `1500m · 4:14.82`
+- **주종목 등록**: Onboarding에서 **1~3개 선택**. Settings에서 변경 가능
+- **기본 표시**:
+  - 모바일: 주종목 1개 default, chip 클릭으로 전환
+  - 데스크톱: 주종목 ≤3개면 grid 동시, 4개+면 chip 토글
+- **Y축 스케일**: **종목별 독립** (마라톤 + 1500m을 한 차트에 그리지 않음). 페이스대 충돌 방지
+- **종목 비교 옵션**: 별도 "정규화 차트" — Y축을 km/h 또는 % of WR로 통일해 종목 간 상대 비교 가능
+- **확장성**: 칩 컴포넌트는 임의의 종목 배열을 prop으로 받도록 설계
+  - 현재 지원: 1500m / 5000m / 10000m
+  - 추후 확장: 800m / 3000m / 5km / 10km / Half / Marathon (정리본 §17.3)
+- **Keyboard**: `←/→` 키로 인접 종목 전환
+
 **Narrative 안전 (SAFEGUARDS §4)**:
 - 후퇴(현재 SB가 PB보다 느림)도 그대로 표시
 - "전성기 대비 N% 하락" 같은 평가 금지
@@ -458,6 +473,23 @@ User Input ──────────┐
 - privacy: opt-in only
 
 이번 시각화 시스템 산출물 디자인에는 **placeholder 상태**로만 포함 (locked card 형태).
+
+**활성화 트리거 (정리본 §13.2 결정)**:
+
+다음 3개 트리거 중 **둘 이상 충족** 시 활성화 검토.
+
+| # | 트리거 | 측정 |
+|---|---|---|
+| T1 | **종목별 사용자 ≥ 100명** | 1500m / 5000m / 10000m 각 종목당 등록 사용자 수 |
+| T2 | **Pro 출시 결정** | FEATURE_TIERS.md에 Pro 분리 시점 기록 |
+| T3 | **opt-in 동의율 ≥ 80%** | 등록 사용자 중 cohort 데이터 제공 동의자 비율 |
+
+**활성 후 정책 (그때 다시 결정)**:
+- A. Pro 전용 / B. 무료=평균만, Pro=분포 전체 / C. 모두 무료 + opt-in
+- 익명화: k-anonymity (cohort에 ≥50명 있어야 표시)
+- 결측 시 표시: "분포 부족" placeholder 유지
+
+**현재 산출물에서의 처리**: locked card overlay 그대로 (`SPRINT2_VisualizationSystem.html`).
 
 ---
 
@@ -667,7 +699,7 @@ User Input ──────────┐
 |---|---|---|
 | C-1 Energy stack | 100% width × 14px | 100% × 16px |
 | C-2 Heatmap | 1Y default, range 토글로 확장 | 3Y 동시 표시 |
-| C-3 PB Trail | 종목 토글 (한 종목씩) | 3개 동시 grid |
+| C-3 PB Trail | chip row · 주종목 1개 default | 주종목 ≤3개면 grid, 4+면 chip 토글 |
 | C-4 CTL/ATL/TSB | line 단순화, hover X (tap만) | 모든 인터랙션 |
 | C-7 Cycle rail | vertical list (10 row) | horizontal rail |
 
@@ -700,13 +732,104 @@ User Input ──────────┐
 
 ---
 
-## §13. 미해결 / 추후 결정
+## §13. 결정된 추후 사항 (구 미해결 항목)
 
-- [ ] **MIXED(MX) 시각화 방식** (Q5 보류) — 두 시스템 50:50 줄무늬 임시 채택, SPRINT2_VisualizationSystem.html 작업 중 재검토
-- [ ] Cohort 차트 (C-11) 활성 시점 — Pro 분리 결정과 연동
-- [ ] Track Record 차트 — LLM 단계 진입 후 다시 검토
-- [ ] Dark mode 시 Tier hex 보정값
-- [ ] 종목 확장 (800m / 마라톤) 시 PB Trail 종목 토글 UI
+이전 미해결로 남았던 5개 항목 모두 정책이 확정됨. 본 §13은 **각 항목의 결정 내용과 발동 조건**을 명시.
+
+### 13.1 MIXED(MX) — 단계적 노출
+
+**정의**: 한 세션이 두 에너지 시스템에 걸친 경우 (예: progression run, build-up).
+
+**분류 기준**:
+- dominant 시스템 ≥ 65% → dominant 단일 색
+- dominant 시스템 < 65% → MIXED 처리
+
+**시각화 방식 (컨텍스트별)**:
+
+| 컨텍스트 | 표시 방식 |
+|---|---|
+| Heatmap 셀 (작은 칸 ~5px) | dominant 색만 (정보 손실 감수) |
+| Calendar 셀 / Session card | 좌측 strip을 **2색 세로 split** (예: 60% LT 색 + 40% V2 색) |
+| Hero / 큰 영역 | split + 두 시스템 코드 모두 표시 — 예 `LT·V2` |
+| Inline tag | dominant 코드 + ` ·MX` suffix — 예 `LT·MX` |
+
+**3개 이상 시스템 혼합** (BASE+LT+VO2 progression): top 2만 split, 3번째는 inspect tooltip에서 노출.
+
+**컴포넌트 prop**:
+```ts
+<EnergyTag systems={[{code:'LT', pct:60}, {code:'V2', pct:40}]} />
+```
+
+---
+
+### 13.2 Cohort comparison (C-11) — 활성 트리거 3개
+
+§4 C-11 참조. 3개 트리거 중 둘 이상 충족 시 활성화 검토.
+
+- T1: 종목별 사용자 ≥ 100명
+- T2: Pro 출시 결정
+- T3: opt-in 동의율 ≥ 80%
+
+활성 시점에 정책(A/B/C) 다시 결정.
+
+---
+
+### 13.3 Track Record — LLM 단계 진입 후
+
+**현 단계**: 표시 X (SAFEGUARDS §6 유지).
+
+**진입 조건** (셋 다 충족):
+- AI 결정 ≥ 30회
+- 90일 경과
+- 동의율 30~95% (너무 높거나 낮으면 신뢰성 의심)
+
+**진입 시 차트 형태 — A+D 조합**:
+- Settings → AI 섹션에 적중률 1줄 ("지난 90일 92회 권고 · 적중 78회 · 82%")
+- "결정 로그 보기" 펼침 → Decision log table (모든 권고 + 결과)
+- 부정적 결과도 그대로 표시 (정리본 정직성 원칙)
+
+**LLM 단계 추가 지표**:
+- citation 정확도 (인용된 출처가 실제 그 내용을 포함하는지)
+- hallucination 감지 횟수 (rule engine의 cross-check로 차단된 건수)
+- 동의율 카테고리별 분리 (volume / intensity / rest / pace)
+
+---
+
+### 13.4 Dark mode — 만들지 않음 (원칙)
+
+**결정**: TRAINORACLE은 **다크 모드를 지원하지 않는다**.
+
+**근거**:
+- Tufte × Linear 시각 톤은 종이·논문의 **밝은 배경 + 잉크 가독성**을 전제. 다크 배경에서는 동일한 톤 재현 어려움.
+- 6주 빌드 플랜 외 항목으로 우선순위 낮음.
+- 4-tier 컬러 시스템 (24색 × 2 모드 = 48색) 토큰 관리 부담.
+- 차트 SVG stroke·fill 보정 필요 → 일관성 유지 비용 높음.
+- 핵심 사용자(중장거리 선수)는 **야간 사용 빈도 있으나 화면 밝기 조절로 충분**.
+
+**예외 없음**: 시스템 다크 모드 자동 추종도 비활성화 — `<meta name="color-scheme" content="light">` 명시.
+
+**향후 재검토 조건**: 사용자 설문에서 다크 모드 요청 비율 ≥ 30% 시.
+
+---
+
+### 13.5 PB Trail 종목 토글 UI — chip row + 주종목 default
+
+§4 C-3 "종목 토글 UI" 절 참조.
+
+**핵심 결정**:
+- UI 형태: chip row, 가로 스크롤 가능
+- Default: 사용자 주종목 (Onboarding에서 1~3개 선택)
+- Y축: 종목별 독립 스케일 (혼합 차트 X)
+- 정규화 옵션: km/h 또는 % of WR 기반 비교 차트 별도
+- 확장성: 임의 종목 배열 prop
+
+---
+
+### 13.6 추후 검토 (다음 사이클)
+
+- 정규화 차트의 기준값 — WR / 국가 기록 / 사용자 같은 그룹?
+- MIXED(MX) split 비율 표시를 사용자가 끌 수 있는 옵션 (시각 단순화)
+- Personal Archive에서 부상 기간 색 표현 (회색 wash vs 빈 셀)
 
 ---
 
