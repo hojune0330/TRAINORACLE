@@ -265,7 +265,7 @@
 | Target | 목표 기록 |
 | Reference | 참고 기록 (라이벌·동료) |
 
-PB·SB는 시각화 1급 시민. Reference는 사용자 직접 입력만 (Cohort 자동 비교는 P3).
+PB·SB는 시각화의 핵심 데이터로, 다른 데이터에 종속되지 않고 항상 함께 표시. Reference는 사용자 직접 입력만 (Cohort 자동 비교는 P3).
 자세한 화면: `designs/SPRINT2_Records.html`.
 
 ---

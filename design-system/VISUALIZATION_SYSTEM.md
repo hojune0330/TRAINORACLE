@@ -19,7 +19,7 @@
 |---|---|
 | Q1 | 에너지 시스템 색은 **컨텍스트별 4-tier 강도**. "도트·underline만" 규칙은 폐기. |
 | Q2 | **사용자 ↔ AI 1:1**. Cohort/Coach view 차트는 **P3로 미룸** |
-| Q3 | **Rule engine 단계**의 시각화만 다룸. Track Record 차트는 제외. PB·SB는 1급 시민. |
+| Q3 | **Rule engine 단계**의 시각화만 다룸. Track Record 차트는 제외. PB·SB는 핵심 표시 대상. |
 | Q4 | 시간축 차트는 **1년 default + 범위 토글** (1y / 2y / 3y / all). 추후 확장 가능 구조. |
 | Q5 | **MIXED(MX) 단계적 노출**. dominant<65%일 때 MIXED. 컴팩트=dominant, 셀=2색 split, hero=split+dual code. §13 참조. |
 | Q6 | **3중 인코딩 의무 (색 + 코드 + 위치/모양)**. 단 정보 과다 시 **단계적 노출**. |
@@ -274,7 +274,7 @@ User Input ──────────┐
 - Scan: 가장 최근 PB 값, target까지 거리
 - Inspect: 각 dot 클릭 → 그 PB 갱신 세션/대회 상세
 
-**Q3 결정 반영**: PB·SB는 시각화 1급 시민. PB Trail은 모든 종목별로 만든다 (1500m / 5000m / 10000m).
+**Q3 결정 반영**: PB·SB는 시각화 핵심 데이터 — 다른 데이터에 종속되지 않고 항상 함께 표시. PB Trail은 모든 종목별로 만든다 (1500m / 5000m / 10000m).
 
 **종목 토글 UI** (정리본 §13.5 결정 — 800m/마라톤 확장 대응):
 
@@ -454,7 +454,7 @@ User Input ──────────┐
 - 위에 시간 진행 bar (D−21 taper 시작점 표시, R-9)
 - D-day countdown mono 숫자
 
-**Q3 결정 반영**: PB·SB·Target은 모두 1급 시민. 동시에 표시.
+**Q3 결정 반영**: PB·SB·Target 모두 동등 표시 — 어느 하나가 다른 것에 종속되지 않고 동시 노출.
 
 **Inspect**:
 - 각 마커 클릭 → 해당 기록 세션/대회로 이동
