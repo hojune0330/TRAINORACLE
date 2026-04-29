@@ -16,8 +16,8 @@
 | 00 | Moodboard | `00_Moodboard.html` | ✅ 참고용 (참고만) | — |
 | 01 | Landing | `01_Landing.html` | ✅ v1 (Tufte) | P3 |
 | 02 | Onboarding | `02_Onboarding.html` | ✅ v1 (Tufte) | **P1** |
-| 03 | Dashboard | `03_Dashboard.html` | ⚠️ v1 (Opus, 재작업 필요) | **P1** |
-| 04 | Calendar | `04_Calendar.html` | ⚠️ v1 (Opus, 재작업 필요) | P2 |
+| 03 | Dashboard | `03_Dashboard.html` | ✅ v2 (Tufte × Linear) | **P1** |
+| 04 | Calendar | `04_Calendar.html` | ✅ v2 (Tufte × Linear · 5 frames) | P2 |
 | 05 | Session Detail | `05_SessionDetail.html` | ✅ v2 정본 (Tufte) | **P1** |
 | 06 | AI Chat | `06_AIChat.html` | ✅ v1 (Tufte) | **P1** |
 | 07 | AI Inbox | `07_AIInbox.html` | ✅ v1 (Tufte) | **P2** |
@@ -26,6 +26,7 @@
 | 10 | Competitions | `10_Competitions.html` | ✅ v1 (Tufte) | P2 |
 | 11 | Philosophy | `11_Philosophy.html` | ✅ v1 (Tufte) | P3 |
 | 12 | Settings | `12_Settings.html` | ✅ v1 (Tufte) | P3 |
+| 13 | Personal Archive ("내 이야기") | `13_PersonalArchive.html` | ✅ v2 (Tufte × Linear · 2 frames) | **P1** |
 
 ### Sprint 산출물 (이미 작업됨)
 
@@ -40,7 +41,6 @@
 
 | 화면 | 우선순위 | 비고 |
 |---|---|---|
-| **Personal Archive** ("내 이야기") | **P1** | PHILOSOPHY §5.6, SYSTEM_FOUNDATIONS §1.5에서 정의됨, 화면 미디자인 |
 | Session Timer (실행 중) | P2 | Big timer + lap + HR |
 | Knowledge base (Coach Jang notes) | P3 | RAG 도입 후 |
 | Reports (PDF export) | P3 | 사이클/월간 리뷰 export |
