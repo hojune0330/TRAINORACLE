@@ -1,14 +1,19 @@
 # SCREENS — 화면 인벤토리 & 다음 작업
 
-> 13개 화면의 현재 상태 + 개발 시 우선순위. 각 화면별 핵심 기능과 주의점.
+> 화면 현재 상태 + 개발 시 우선순위. 각 화면별 핵심 기능과 주의점.
+>
+> **사용자 정의 (정본)**: 사용자 ↔ AI 1:1. Coach view (8명 동시 보기), Cohort 비교 등 B2B
+> 시나리오는 **P3 후순위**로 미룸 (PHILOSOPHY §2 참조).
 
 ---
 
 ## 화면 상태 요약
 
+### Core 화면 (개인 사용자 1:1 흐름)
+
 | # | 화면 | 파일 | 상태 | 우선순위 |
 |---|---|---|---|---|
-| 00 | Moodboard | `00_Moodboard.html` | ✅ v1 정본 (참고용) | — |
+| 00 | Moodboard | `00_Moodboard.html` | ✅ 참고용 (참고만) | — |
 | 01 | Landing | `01_Landing.html` | ✅ v1 (Tufte) | P3 |
 | 02 | Onboarding | `02_Onboarding.html` | ✅ v1 (Tufte) | **P1** |
 | 03 | Dashboard | `03_Dashboard.html` | ⚠️ v1 (Opus, 재작업 필요) | **P1** |
@@ -22,9 +27,36 @@
 | 11 | Philosophy | `11_Philosophy.html` | ✅ v1 (Tufte) | P3 |
 | 12 | Settings | `12_Settings.html` | ✅ v1 (Tufte) | P3 |
 
-**P1 (Phase 2 — 2주차)**: 핵심 사용 흐름. 신규 가입 → 매일 사용.
-**P2 (Phase 3-4 — 3-4주차)**: 차별화 기능.
-**P3 (Phase 5 — 5주차)**: 퍼블릭 + 폴리시.
+### Sprint 산출물 (이미 작업됨)
+
+| # | 화면 | 파일 | 상태 | 우선순위 |
+|---|---|---|---|---|
+| S1 | Minji's Day (시연) | `SPRINT1_MinjisDay.html` | ✅ 시연용 | — |
+| S2a | Data Import | `SPRINT2_DataImport.html` | ✅ Onboarding 이후 흐름 | **P1** |
+| S2b | Records (PB/SB/Target/Reference) | `SPRINT2_Records.html` | ✅ 4-record 입력·표시 | **P1** |
+| S2c | Visualization System | `SPRINT2_VisualizationSystem.html` | 🚧 진행 중 | **P1** |
+
+### 미디자인 — 다음 작업 후보
+
+| 화면 | 우선순위 | 비고 |
+|---|---|---|
+| **Personal Archive** ("내 이야기") | **P1** | PHILOSOPHY §5.6, SYSTEM_FOUNDATIONS §1.5에서 정의됨, 화면 미디자인 |
+| Session Timer (실행 중) | P2 | Big timer + lap + HR |
+| Knowledge base (Coach Jang notes) | P3 | RAG 도입 후 |
+| Reports (PDF export) | P3 | 사이클/월간 리뷰 export |
+| 404 / Error | P3 | — |
+
+### B2B / 추후 (P3+)
+
+| 화면 | 비고 |
+|---|---|
+| ~~Athlete list (코치 view 8명)~~ | B2B 단계로 미룸 |
+| ~~Coach dashboard~~ | B2B 단계로 미룸 |
+| ~~Cohort comparison~~ | privacy 검토 후, P3+ |
+
+**P1 (Phase 2 — 2주차)**: 핵심 사용 흐름. 신규 가입 → 매일 사용 → 기록 추적.
+**P2 (Phase 3-4 — 3-4주차)**: 차별화 기능 (Calendar 9.5-Cycle, Analysis, Inbox).
+**P3 (Phase 5+)**: 퍼블릭, 폴리시, B2B/cohort.
 
 ---
 
@@ -247,7 +279,7 @@ v1과 동일한 정보 구조 유지하되, 시각 톤 v2 통일:
 ## 7. AI Inbox (`07_AIInbox.html`) — **P2**
 
 ### 목적
-- AI가 발견한 모든 신호의 큐. 코치 작업 흐름의 중심.
+- AI가 발견한 신호의 큐. **사용자 본인 데이터만**.
 
 ### 5 Categories
 | Code | 이름 | 트리거 |
@@ -260,7 +292,7 @@ v1과 동일한 정보 구조 유지하되, 시각 톤 v2 통일:
 
 ### Desktop 3-column
 - Left: Sidebar (220px)
-- Filter rail (280px): By type / By athlete / By time
+- Filter rail (280px): By type / By time
 - List (1fr): InboxItem stack
 - Detail (380px): 선택된 item 상세 + sources + actions
 
@@ -273,13 +305,12 @@ v1과 동일한 정보 구조 유지하되, 시각 톤 v2 통일:
 - Inbox는 **큐**가 아닌 **stream** — 새 이벤트 자동 추가, websocket 또는 polling
 - 읽음 상태: read/unread 구분
 - 일괄 작업: "전체 읽음", "필터별 읽음"
-- 코치 view: 8명 선수 데이터 통합
-- 선수 view: 본인 것만
+- 사용자는 본인 것만 본다 (Coach view 8명 통합은 B2B/P3로 미룸)
 
-### 자동 트리거 (서버사이드 cron)
+### 자동 트리거 (서버사이드 cron — 현 단계는 rule engine)
 - 매일 06:00 KST: 9 Rules 검증 → fail 시 INBOX 추가
-- 체크인 입력 직후: 패턴 분석 → 변화 감지 시 INBOX
-- AI 채팅 응답 직후: confidence < 70 → INBOX
+- 체크인 입력 직후: 결정 함수 → 변화 감지 시 INBOX
+- (LLM 도입 후) AI 응답 confidence < 70 → INBOX
 
 ---
 
@@ -421,12 +452,30 @@ v1과 동일한 정보 구조 유지하되, 시각 톤 v2 통일:
 
 ## 13. 화면 외 — 추가 작업 필요
 
-### 미디자인 (개발 에이전트가 디자인 가이드 따라 만들 것)
+### 미디자인 — 우선순위별
+
+**P1 (다음 작업 후보)**
+- **Personal Archive** — "내 이야기" 화면 (PHILOSOPHY §5.6 정의)
+  - 시작일부터 누적된 모든 세션 timeline
+  - PB / SB 갱신 timeline (PB Trail 차트)
+  - 부상·통증·복귀 기록
+  - DNF/DNS, 실패한 대회 포함
+  - "1년 전 오늘" 회상 (toggle off 가능)
+  - AI와의 주요 결정들 (Decision log)
+  - **차별화 핵심**: 이 화면이 사용자가 "이건 내 이야기다"고 느끼는 자리
+
+**P2**
 - **Session Timer** (실행 중 화면) — Big timer + 현재 페이스 + lap 분할 + HR
-- **Athlete list** (코치 view) — 8명 선수 테이블, 각자 상태
-- **Knowledge base** — Coach Jang 노트, 외부 문헌 검색
+
+**P3**
+- **Knowledge base** — Coach Jang 노트, 외부 문헌 검색 (LLM 단계 도입 후)
 - **Reports** — PDF export (사이클 리뷰, 월간 요약)
 - **404 / Error** pages
+
+### B2B / 추후 (P3+)
+- ~~Athlete list (코치 view 8명)~~
+- ~~Coach dashboard~~
+- ~~Cohort comparison~~
 
 ### 부속 컴포넌트
 - Modal (confirm, edit)
@@ -435,6 +484,8 @@ v1과 동일한 정보 구조 유지하되, 시각 톤 v2 통일:
 - Tooltip
 - DatePicker
 - Time Picker (페이스 입력용 m:ss.ms)
+- **Range Switcher** (1y / 2y / 3y / all) — Heatmap·PB Trail 등 시간축 차트용
+  *(Q4 결정: 모바일도 범위 토글 가능, 단계적 확장 구조)*
 
 ---
 
@@ -460,29 +511,32 @@ v1과 동일한 정보 구조 유지하되, 시각 톤 v2 통일:
 
 ```
 Week 1: Foundation
-- Tailwind config, tokens, primitives
+- Tailwind config, tokens (4-tier energy colors), primitives
 - Auth (Supabase)
 - Database schema
 
-Week 2: P1 화면 (Phase 2)
-- Onboarding
+Week 2: P1 화면 (Phase 2 — 신규 가입 + 매일 사용)
+- Onboarding (3-step)
+- Data Import (Primary device, 3년치 분석 경험)
+- Records (PB / SB / Target / Reference)
 - Daily Check-in
 - Session Detail (정본 따라가기)
 - Dashboard (v2 스타일로 재작업)
 
-Week 3: AI Chat 핵심
-- Claude API + RAG 셋업
-- AI Chat UI
-- 9 Rules 검증 엔진
+Week 3: AI 핵심 (Rule Engine 단계)
+- 9 Rules validation 엔진 (TS 결정 함수)
+- Verdict + Confidence 결정 함수
+- AI Chat UI (rule engine 출력)
 - InboxItem auto-create
 
-Week 4: AI Inbox + Analysis
-- AI Inbox 화면
+Week 4: 차별화 시각화 + Personal Archive
+- Visualization System (12 차트 타입)
+- Personal Archive ("내 이야기")
 - Analysis 화면 (Visx 차트)
-- Coach view (atheletes)
+- AI Inbox
 
-Week 5: 차별화 + 보조
-- Calendar (v2 재작업, 9.5-Cycle 뷰 강조)
+Week 5: 보조 + 사이클
+- Calendar (9.5-Cycle 뷰 강조)
 - Competitions
 
 Week 6: Public + Polish
@@ -491,4 +545,9 @@ Week 6: Public + Polish
 - Settings
 - Dark mode
 - 성능 + a11y
+
+— LLM 단계 (추후) —
+- Claude API + RAG 도입 (Coach Jang notes + 본인 세션)
+- Citation 검증 (server-side)
+- Coach view / Cohort (B2B 단계 진입 시)
 ```

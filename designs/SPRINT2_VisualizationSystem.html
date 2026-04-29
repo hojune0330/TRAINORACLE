@@ -1,0 +1,1244 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>TRAINORACLE — Sprint 2 · Visualization System</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+<link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css" rel="stylesheet" />
+<style>
+  :root{
+    --bg:#FAFAF7;--surface:#FFFFFF;--surface-2:#F4F3EE;
+    --ink:#0E1412;--ink-2:#2B3330;--ink-3:#5F6965;--ink-4:#8F9894;
+    --line:#D9D6CE;--line-2:#BFBBB0;--hair:#E8E6DF;
+    --brand:#0D5F5A;--brand-ink:#07302E;--brand-wash:#E6F0EE;
+    --ok:#1F7A3A;--ok-wash:#E6F2E9;
+    --warn:#B4530C;--warn-wash:#FAEAD9;
+    --info:#1D4ED8;--info-wash:#E6EBF8;
+    --unc:#6B3FB0;--unc-wash:#EFE8F7;
+    --err:#A11F1F;
+
+    /* Energy systems · 4-tier */
+    --e-base-strong:#2A6396; --e-base-mid:#4A8FC7; --e-base-text:#1D4E75; --e-base-wash:#E8F0F7;
+    --e-lt-strong:  #8A7818; --e-lt-mid:  #B8A024; --e-lt-text:  #7A6A1A; --e-lt-wash:  #F4F0DB;
+    --e-vo2-strong: #9E5A14; --e-vo2-mid: #C7761C; --e-vo2-text: #8A4A1C; --e-vo2-wash: #F7E9D9;
+    --e-gly-strong: #8E2421; --e-gly-mid: #B8332E; --e-gly-text: #8A2A2A; --e-gly-wash: #F2DAD8;
+    --e-atp-strong: #5A2D8A; --e-atp-mid: #7A3FB5; --e-atp-text: #5A2F8A; --e-atp-wash: #EBE0F5;
+    --e-rest-strong:#4A4A45; --e-rest-mid:#7A7A70; --e-rest-text:#5A5A55; --e-rest-wash:#EFEEEA;
+
+    --sans:"Inter","Pretendard Variable",ui-sans-serif,system-ui,sans-serif;
+    --mono:"JetBrains Mono",ui-monospace,SFMono-Regular,monospace;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;background:#E4E2DA;color:var(--ink);font-family:var(--sans);font-size:14.5px;line-height:1.55;-webkit-font-smoothing:antialiased;font-feature-settings:"ss01","cv11";}
+  .mono{font-family:var(--mono);font-variant-numeric:tabular-nums;}
+  svg{display:block;}
+
+  /* ============== SHELL ============== */
+  .shell{padding:32px 24px 80px;}
+  .shell-top{max-width:1440px;margin:0 auto 28px;display:flex;align-items:baseline;gap:18px;flex-wrap:wrap;padding-bottom:18px;border-bottom:1px solid var(--line-2);}
+  .shell-top h1{margin:0;font-size:26px;font-weight:500;letter-spacing:-0.025em;}
+  .shell-top h1 .em{font-style:italic;color:var(--brand);font-weight:400;}
+  .shell-top .meta{font-family:var(--mono);font-size:11px;color:var(--ink-3);letter-spacing:.04em;}
+  .shell-top .meta b{color:var(--ink);font-weight:500;}
+  .shell-top .nav{margin-left:auto;display:flex;gap:0;border:1px solid var(--line);}
+  .shell-top .nav a{padding:6px 14px;font-family:var(--mono);font-size:11px;color:var(--ink-3);text-decoration:none;letter-spacing:.06em;text-transform:uppercase;border-right:1px solid var(--line);}
+  .shell-top .nav a:last-child{border-right:0;}
+  .shell-top .nav a.on{background:var(--ink);color:var(--bg);font-weight:600;}
+  .shell-top .nav a:hover:not(.on){color:var(--ink);}
+
+  /* ============== TWO-COLUMN MASTER LAYOUT ============== */
+  .scope{max-width:1440px;margin:0 auto;display:grid;grid-template-columns:1fr;gap:48px;}
+
+  /* ===== Section header ===== */
+  .sec{background:var(--surface);border:1px solid var(--line);padding:32px 36px;}
+  .sec-h{display:flex;align-items:baseline;gap:14px;margin-bottom:22px;padding-bottom:14px;border-bottom:1px solid var(--hair);}
+  .sec-h .num{font-family:var(--mono);font-size:11px;color:var(--ink-3);letter-spacing:.14em;text-transform:uppercase;font-weight:600;}
+  .sec-h h2{margin:0;font-size:24px;font-weight:500;letter-spacing:-0.025em;}
+  .sec-h .tag{margin-left:auto;font-family:var(--mono);font-size:10px;color:var(--ink-3);letter-spacing:.1em;text-transform:uppercase;border:1px solid var(--line);padding:3px 8px;}
+  .sec-lead{font-size:14.5px;color:var(--ink-2);max-width:780px;margin:-6px 0 18px;}
+  .sec-lead .em{color:var(--brand);font-style:italic;}
+
+  /* ===== Decision summary ===== */
+  .dec{display:grid;grid-template-columns:repeat(6,1fr);gap:0;border:1px solid var(--line);}
+  @media(max-width:1100px){.dec{grid-template-columns:repeat(3,1fr);}}
+  @media(max-width:640px){.dec{grid-template-columns:repeat(2,1fr);}}
+  .dec .item{padding:14px 16px;border-right:1px solid var(--hair);border-bottom:1px solid var(--hair);}
+  .dec .item:last-child{border-right:0;}
+  .dec .k{font-family:var(--mono);font-size:10px;color:var(--brand);letter-spacing:.14em;text-transform:uppercase;font-weight:600;margin-bottom:4px;}
+  .dec .v{font-size:12.5px;color:var(--ink-2);line-height:1.45;}
+  .dec .v b{color:var(--ink);font-weight:600;}
+
+  /* ===== Color tier table ===== */
+  .tiers{display:grid;grid-template-columns:120px 1fr;gap:0;border:1px solid var(--line);}
+  .tiers .row{display:contents;}
+  .tiers .lbl{padding:14px 14px;border-bottom:1px solid var(--hair);background:var(--surface-2);font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-2);font-weight:600;}
+  .tiers .body{padding:14px 14px;border-bottom:1px solid var(--hair);}
+  .tiers .row:last-child .lbl,.tiers .row:last-child .body{border-bottom:0;}
+  .tiers .swatch{display:flex;gap:0;border:1px solid var(--hair);height:32px;}
+  .tiers .swatch span{flex:1;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:9.5px;letter-spacing:.06em;color:#fff;font-weight:600;}
+  .tiers .swatch span.text{color:var(--ink-2);background:var(--bg);border-left:1px solid var(--hair);}
+  .tiers .swatch span.wash{color:var(--ink-2);}
+  .tiers .desc{font-size:12.5px;color:var(--ink-2);margin-top:8px;line-height:1.5;}
+  .tiers .desc b{color:var(--ink);font-weight:500;}
+
+  /* ===== Encoding 3-axis ===== */
+  .enc{display:grid;grid-template-columns:repeat(3,1fr);gap:0;border:1px solid var(--line);}
+  @media(max-width:900px){.enc{grid-template-columns:1fr;}}
+  .enc .e{padding:18px 18px;border-right:1px solid var(--hair);}
+  @media(max-width:900px){.enc .e{border-right:0;border-bottom:1px solid var(--hair);}}
+  .enc .e:last-child{border-right:0;}
+  .enc .ax{font-family:var(--mono);font-size:10px;color:var(--brand);letter-spacing:.14em;text-transform:uppercase;font-weight:600;}
+  .enc .ttl{font-size:18px;font-weight:500;letter-spacing:-0.02em;margin:6px 0 4px;}
+  .enc .sub{font-family:var(--mono);font-size:10.5px;color:var(--ink-3);letter-spacing:.04em;margin-bottom:12px;}
+  .enc .demo{padding:14px;border:1px solid var(--hair);background:var(--bg);min-height:90px;display:flex;align-items:center;justify-content:center;}
+
+  /* Inline energy tag */
+  .etag{display:inline-flex;align-items:center;gap:6px;font-family:var(--mono);font-size:11px;letter-spacing:.04em;}
+  .etag .d{width:7px;height:7px;border-radius:50%;display:inline-block;}
+  .etag .c{font-weight:600;}
+  .etag .u{display:inline-block;border-bottom:1.5px solid currentColor;padding-bottom:1px;}
+  .etag.base{color:var(--e-base-text);} .etag.base .d{background:var(--e-base-mid);}
+  .etag.lt{color:var(--e-lt-text);}     .etag.lt .d{background:var(--e-lt-mid);}
+  .etag.vo2{color:var(--e-vo2-text);}   .etag.vo2 .d{background:var(--e-vo2-mid);}
+  .etag.gly{color:var(--e-gly-text);}   .etag.gly .d{background:var(--e-gly-mid);}
+  .etag.atp{color:var(--e-atp-text);}   .etag.atp .d{background:var(--e-atp-mid);}
+  .etag.rest{color:var(--e-rest-text);} .etag.rest .d{background:var(--e-rest-mid);}
+
+  /* ===== Chart card grid ===== */
+  .grid{display:grid;grid-template-columns:repeat(2,1fr);gap:0;border:1px solid var(--line);}
+  @media(max-width:1100px){.grid{grid-template-columns:1fr;}}
+  .card{padding:22px 24px;border-right:1px solid var(--hair);border-bottom:1px solid var(--hair);background:var(--surface);}
+  .card:nth-child(2n){border-right:0;}
+  @media(max-width:1100px){.card{border-right:0;}}
+  .card .head{display:flex;align-items:baseline;gap:10px;margin-bottom:4px;}
+  .card .ix{font-family:var(--mono);font-size:10px;color:var(--brand);letter-spacing:.14em;font-weight:700;}
+  .card h3{margin:0;font-size:16px;font-weight:500;letter-spacing:-0.015em;}
+  .card .tier{margin-left:auto;font-family:var(--mono);font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3);border:1px solid var(--hair);padding:2px 6px;}
+  .card .where{font-family:var(--mono);font-size:10.5px;color:var(--ink-3);letter-spacing:.04em;margin-bottom:14px;}
+  .card .where b{color:var(--ink-2);font-weight:500;}
+  .card .stage{padding:14px 0;border-top:1px dashed var(--hair);border-bottom:1px dashed var(--hair);margin-bottom:12px;}
+  .card .gsi{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;font-family:var(--mono);font-size:10px;color:var(--ink-3);letter-spacing:.06em;text-transform:uppercase;margin-top:10px;}
+  .card .gsi b{display:block;color:var(--ink);font-weight:600;font-size:11px;margin-bottom:2px;letter-spacing:.04em;}
+  .card .gsi span{display:block;font-family:var(--sans);text-transform:none;letter-spacing:0;color:var(--ink-2);font-size:12px;line-height:1.4;}
+
+  /* ===== Common chart container ===== */
+  .chart{width:100%;background:var(--bg);border:1px solid var(--hair);}
+  .chart-h{display:flex;align-items:baseline;justify-content:space-between;padding:8px 12px;border-bottom:1px dashed var(--hair);font-family:var(--mono);font-size:10px;color:var(--ink-3);letter-spacing:.06em;text-transform:uppercase;}
+  .chart-h .v{color:var(--ok);font-weight:600;}
+  .chart-h .v.unc{color:var(--unc);}
+  .chart-h .v.warn{color:var(--warn);}
+
+  /* legend */
+  .legend{display:flex;flex-wrap:wrap;gap:10px;padding:8px 12px;border-top:1px dashed var(--hair);font-family:var(--mono);font-size:10px;color:var(--ink-3);letter-spacing:.06em;}
+  .legend .l{display:inline-flex;align-items:center;gap:5px;}
+  .legend .l .sw{width:8px;height:8px;display:inline-block;}
+  .legend .l .sw.line{height:2px;width:14px;}
+
+  /* ===== Verdict chip ===== */
+  .vchip{display:inline-flex;align-items:center;gap:5px;font-family:var(--mono);font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;font-weight:600;}
+  .vchip::before{content:"●";font-size:8px;}
+  .vchip.cf{color:var(--ok);} .vchip.rec{color:var(--brand);} .vchip.unc{color:var(--unc);} .vchip.lk{color:var(--warn);}
+
+  /* ===== Range / comparison switcher ===== */
+  .switcher{display:inline-flex;border:1px solid var(--line);font-family:var(--mono);font-size:10px;letter-spacing:.06em;text-transform:uppercase;}
+  .switcher button{background:transparent;border:0;padding:5px 10px;color:var(--ink-3);cursor:pointer;border-right:1px solid var(--line);font-weight:500;}
+  .switcher button:last-child{border-right:0;}
+  .switcher button.on{background:var(--ink);color:var(--bg);font-weight:700;}
+
+  /* ===== Anomaly markers list ===== */
+  .markers{display:grid;grid-template-columns:repeat(4,1fr);gap:0;border:1px solid var(--line);}
+  @media(max-width:900px){.markers{grid-template-columns:repeat(2,1fr);}}
+  .markers .m{padding:14px 14px;border-right:1px solid var(--hair);border-bottom:1px solid var(--hair);display:flex;flex-direction:column;gap:4px;}
+  .markers .m:nth-child(4n){border-right:0;}
+  .markers .m .sym{font-family:var(--mono);font-size:18px;font-weight:600;line-height:1;}
+  .markers .m .sym.pb{color:var(--brand);}
+  .markers .m .sym.sb{color:var(--ink-2);}
+  .markers .m .sym.dnf{color:var(--warn);}
+  .markers .m .sym.pain{color:var(--warn);}
+  .markers .m .sym.race{color:var(--brand);}
+  .markers .m .sym.rule{color:var(--warn);}
+  .markers .m .sym.mode{color:var(--unc);}
+  .markers .m .sym.dns{color:var(--ink-3);}
+  .markers .m .lb{font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-2);font-weight:600;margin-top:2px;}
+  .markers .m .ds{font-size:11.5px;color:var(--ink-3);line-height:1.4;}
+
+  /* ===== Cold-start state table ===== */
+  .states{display:grid;grid-template-columns:120px 1fr 1fr;gap:0;border:1px solid var(--line);font-size:12.5px;}
+  .states .h{font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3);background:var(--surface-2);padding:10px 12px;border-bottom:1px solid var(--line);font-weight:600;}
+  .states .c{padding:12px;border-bottom:1px solid var(--hair);}
+  .states .c.k{font-family:var(--mono);font-size:11px;color:var(--ink-2);letter-spacing:.04em;font-weight:600;background:var(--bg);}
+  .states .c b{color:var(--ink);}
+  .states > div:nth-last-child(-n+3){border-bottom:0;}
+
+  /* ===== Validation matrix ===== */
+  .mat{display:grid;grid-template-columns:30px 1fr 1fr;gap:0;border:1px solid var(--line);font-size:12.5px;}
+  .mat .h{font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3);background:var(--surface-2);padding:10px 12px;border-bottom:1px solid var(--line);font-weight:600;}
+  .mat .h.n{padding:10px 6px;}
+  .mat .c{padding:10px 12px;border-bottom:1px solid var(--hair);}
+  .mat .c.n{font-family:var(--mono);font-size:11px;color:var(--brand);font-weight:700;text-align:center;padding:10px 6px;}
+  .mat .c b{color:var(--ink);}
+  .mat > div:nth-last-child(-n+3){border-bottom:0;}
+
+  /* ===== Footer ===== */
+  .foot{max-width:1440px;margin:48px auto 0;padding-top:18px;border-top:1px solid var(--line-2);font-family:var(--mono);font-size:10.5px;color:var(--ink-3);letter-spacing:.06em;display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px;}
+  .foot b{color:var(--ink);font-weight:500;}
+
+  /* ===== Quote ===== */
+  .quote{padding:28px 36px;background:var(--bg);border:1px solid var(--line);border-left:3px solid var(--brand);}
+  .quote p{margin:0 0 6px;font-size:16px;color:var(--ink-2);font-style:italic;letter-spacing:-0.005em;}
+  .quote p:last-child{margin-bottom:0;}
+  .quote .src{font-family:var(--mono);font-size:10.5px;color:var(--ink-3);letter-spacing:.06em;margin-top:10px;text-transform:uppercase;}
+
+</style>
+</head>
+<body>
+
+<div class="shell">
+
+  <!-- ============ TOP ============ -->
+  <header class="shell-top">
+    <h1>TRAINORACLE — <span class="em">Visualization System</span></h1>
+    <div class="meta">SPRINT <b>2</b> · DELIVERABLE <b>3 of 3</b> · DOC <b>VISUALIZATION_SYSTEM.md</b> · DATE <b>2026-04-29</b></div>
+    <nav class="nav">
+      <a href="SPRINT2_DataImport.html">DATA IMPORT</a>
+      <a href="SPRINT2_Records.html">RECORDS</a>
+      <a class="on" href="SPRINT2_VisualizationSystem.html">VIZ SYSTEM</a>
+    </nav>
+  </header>
+
+  <main class="scope">
+
+    <!-- ============ §0 DECISIONS ============ -->
+    <section class="sec">
+      <div class="sec-h">
+        <span class="num">§0</span>
+        <h2>결정 요약 (Q1–Q6)</h2>
+        <span class="tag">Reflected</span>
+      </div>
+      <p class="sec-lead">정리본의 6개 결정이 이 시각화 시스템 전반에 어떻게 반영되는지 한 줄로 정리. <span class="em">색은 인지 도구, 이유가 먼저인 추천, 모든 기록 보존.</span></p>
+      <div class="dec">
+        <div class="item"><div class="k">Q1 · Color Tier</div><div class="v">에너지 시스템 색을 <b>4-tier 강도</b>로 사용. "도트만" 규칙 폐기.</div></div>
+        <div class="item"><div class="k">Q2 · 1:1 only</div><div class="v">User ↔ AI 1:1. <b>Cohort/Coach view P3</b>로 이연.</div></div>
+        <div class="item"><div class="k">Q3 · Rule-engine</div><div class="v">Rule-engine 단계 차트만. <b>PB·SB는 1급 시민.</b></div></div>
+        <div class="item"><div class="k">Q4 · Range</div><div class="v">1년 default + <b>1y/2y/3y/all 토글</b>. 확장 가능 구조.</div></div>
+        <div class="item"><div class="k">Q5 · MIXED</div><div class="v">보류. 등장 시 <b>50:50 줄무늬</b> 임시 처리.</div></div>
+        <div class="item"><div class="k">Q6 · Encoding</div><div class="v">3중 인코딩 + <b>단계적 노출</b>. 컴팩트 시 색만.</div></div>
+      </div>
+    </section>
+
+    <!-- ============ §1 PHILOSOPHY ============ -->
+    <section class="sec">
+      <div class="sec-h">
+        <span class="num">§1</span>
+        <h2>인지 깊이 3단계</h2>
+        <span class="tag">Glance · Scan · Inspect</span>
+      </div>
+      <p class="sec-lead">한 차트가 <b>1초·5초·30초</b> 세 가지 시간대 모두에서 정보를 줄 수 있어야 한다. 단일 시간대만 잘하는 차트는 부적합.</p>
+
+      <div class="enc">
+        <div class="e">
+          <div class="ax">Glance · 1s</div>
+          <div class="ttl">색만 본다</div>
+          <div class="sub">에너지 시스템 분류 즉시 인지</div>
+          <div class="demo">
+            <!-- color block demo -->
+            <svg width="180" height="36" aria-label="energy stack 1s glance">
+              <rect x="0"   y="6" width="44" height="24" fill="var(--e-base-strong)"/>
+              <rect x="44"  y="6" width="62" height="24" fill="var(--e-lt-strong)"/>
+              <rect x="106" y="6" width="38" height="24" fill="var(--e-vo2-strong)"/>
+              <rect x="144" y="6" width="22" height="24" fill="var(--e-gly-strong)"/>
+              <rect x="166" y="6" width="14" height="24" fill="var(--e-rest-strong)"/>
+            </svg>
+          </div>
+        </div>
+        <div class="e">
+          <div class="ax">Scan · 5s</div>
+          <div class="ttl">숫자·라벨까지</div>
+          <div class="sub">상태와 추세 파악</div>
+          <div class="demo">
+            <div style="display:flex;flex-direction:column;gap:6px;width:100%;">
+              <div style="display:flex;justify-content:space-between;font-family:var(--mono);font-size:11px;color:var(--ink-2);"><span>BA · 24%</span><span>LT · 34%</span><span>V2 · 21%</span></div>
+              <svg width="100%" height="14" viewBox="0 0 200 14" preserveAspectRatio="none">
+                <rect x="0"   y="0" width="48"  height="14" fill="var(--e-base-mid)"/>
+                <rect x="48"  y="0" width="68"  height="14" fill="var(--e-lt-mid)"/>
+                <rect x="116" y="0" width="42"  height="14" fill="var(--e-vo2-mid)"/>
+                <rect x="158" y="0" width="26"  height="14" fill="var(--e-gly-mid)"/>
+                <rect x="184" y="0" width="16"  height="14" fill="var(--e-rest-mid)"/>
+              </svg>
+            </div>
+          </div>
+        </div>
+        <div class="e">
+          <div class="ax">Inspect · 30s</div>
+          <div class="ttl">근거를 확인한다</div>
+          <div class="sub">verdict · confidence · citation</div>
+          <div class="demo" style="flex-direction:column;align-items:flex-start;gap:8px;">
+            <div class="vchip rec">RECOMMEND · 78%</div>
+            <div style="font-size:11.5px;color:var(--ink-2);">근거 <span class="mono">3</span> · 대안 <span class="mono">1</span> · 충돌 <span class="mono">0</span></div>
+            <div style="font-family:var(--mono);font-size:10px;color:var(--ink-3);letter-spacing:.06em;">[J] Daniels'14 · [Y] User 14d · [P] Esteve'21</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ §2 4-TIER COLOR ============ -->
+    <section class="sec">
+      <div class="sec-h">
+        <span class="num">§2</span>
+        <h2>4-Tier 색 사용 규칙</h2>
+        <span class="tag">DESIGN_TOKENS §1.4</span>
+      </div>
+      <p class="sec-lead">같은 에너지 시스템이라도 <b>위치(컨텍스트)</b>에 따라 색의 강도를 다르게 쓴다. 같은 영역에 T1과 T4를 동시에 쓰지 않는다.</p>
+
+      <div class="tiers">
+        <div class="row">
+          <div class="lbl">T1 Strong</div>
+          <div class="body">
+            <div class="swatch">
+              <span style="background:var(--e-base-strong)">BA</span>
+              <span style="background:var(--e-lt-strong)">LT</span>
+              <span style="background:var(--e-vo2-strong)">V2</span>
+              <span style="background:var(--e-gly-strong)">GL</span>
+              <span style="background:var(--e-atp-strong)">AP</span>
+              <span style="background:var(--e-rest-strong)">RE</span>
+            </div>
+            <div class="desc"><b>즉시 인지.</b> Calendar 셀, Session card 좌측 strip 4–6px, Hero 좌측 strip, Energy stack bar, Heatmap 셀.</div>
+          </div>
+        </div>
+        <div class="row">
+          <div class="lbl">T2 Mid</div>
+          <div class="body">
+            <div class="swatch">
+              <span style="background:var(--e-base-mid)">BA</span>
+              <span style="background:var(--e-lt-mid)">LT</span>
+              <span style="background:var(--e-vo2-mid)">V2</span>
+              <span style="background:var(--e-gly-mid)">GL</span>
+              <span style="background:var(--e-atp-mid)">AP</span>
+              <span style="background:var(--e-rest-mid)">RE</span>
+            </div>
+            <div class="desc"><b>차트 데이터 레이어.</b> Line 1.5px stroke, bar fill, distribution stack, density scatter, PB Trail.</div>
+          </div>
+        </div>
+        <div class="row">
+          <div class="lbl">T3 Subtle</div>
+          <div class="body">
+            <div class="swatch" style="background:var(--bg);">
+              <span class="text"><span class="etag base"><span class="d"></span><span class="c">BA</span></span></span>
+              <span class="text"><span class="etag lt"><span class="d"></span><span class="c">LT</span></span></span>
+              <span class="text"><span class="etag vo2"><span class="d"></span><span class="c">V2</span></span></span>
+              <span class="text"><span class="etag gly"><span class="d"></span><span class="c">GL</span></span></span>
+              <span class="text"><span class="etag atp"><span class="d"></span><span class="c">AP</span></span></span>
+              <span class="text"><span class="etag rest"><span class="d"></span><span class="c">RE</span></span></span>
+            </div>
+            <div class="desc"><b>본문 inline.</b> 7px dot + 2자 코드 + 1.5px underline. Mini chip in table cell, footnote, reference.</div>
+          </div>
+        </div>
+        <div class="row">
+          <div class="lbl">T4 Wash</div>
+          <div class="body">
+            <div class="swatch">
+              <span class="wash" style="background:var(--e-base-wash)">BA</span>
+              <span class="wash" style="background:var(--e-lt-wash)">LT</span>
+              <span class="wash" style="background:var(--e-vo2-wash)">V2</span>
+              <span class="wash" style="background:var(--e-gly-wash)">GL</span>
+              <span class="wash" style="background:var(--e-atp-wash)">AP</span>
+              <span class="wash" style="background:var(--e-rest-wash)">RE</span>
+            </div>
+            <div class="desc"><b>5% 톤. 무의식적 인식.</b> Today highlight, selected state, Mode chip 배경, Cycle phase 배경.</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ §3 TRIPLE ENCODING ============ -->
+    <section class="sec">
+      <div class="sec-h">
+        <span class="num">§3</span>
+        <h2>3중 인코딩 · 단계적 노출</h2>
+        <span class="tag">Q6</span>
+      </div>
+      <p class="sec-lead">색만으로는 색맹 사용자가 분류할 수 없고, 모든 축을 항상 보여주면 시각적 불편함이 생긴다. 컨텍스트에 따라 <b>순차적으로 노출</b>한다.</p>
+
+      <div class="enc" style="margin-bottom:18px;">
+        <div class="e">
+          <div class="ax">축 1 · 색</div>
+          <div class="ttl">즉시 인지</div>
+          <div class="sub">Glance에서 유일한 정보원</div>
+          <div class="demo">
+            <div style="display:flex;gap:6px;">
+              <div style="width:24px;height:24px;background:var(--e-base-strong);"></div>
+              <div style="width:24px;height:24px;background:var(--e-lt-strong);"></div>
+              <div style="width:24px;height:24px;background:var(--e-vo2-strong);"></div>
+              <div style="width:24px;height:24px;background:var(--e-gly-strong);"></div>
+            </div>
+          </div>
+        </div>
+        <div class="e">
+          <div class="ax">축 2 · 2자 코드</div>
+          <div class="ttl">스캔 + a11y</div>
+          <div class="sub">색맹 사용자도 인식</div>
+          <div class="demo">
+            <div style="display:flex;gap:14px;">
+              <span class="etag base"><span class="d"></span><span class="c">BA</span></span>
+              <span class="etag lt"><span class="d"></span><span class="c">LT</span></span>
+              <span class="etag vo2"><span class="d"></span><span class="c">V2</span></span>
+              <span class="etag gly"><span class="d"></span><span class="c">GL</span></span>
+            </div>
+          </div>
+        </div>
+        <div class="e">
+          <div class="ax">축 3 · 위치/모양</div>
+          <div class="ttl">Inspect 보조</div>
+          <div class="sub">패턴 / 위치 / 줄무늬</div>
+          <div class="demo">
+            <svg width="180" height="40">
+              <line x1="6" y1="20" x2="56" y2="20" stroke="var(--e-base-mid)" stroke-width="1.5"/>
+              <line x1="62" y1="20" x2="112" y2="20" stroke="var(--e-lt-mid)" stroke-width="1.5" stroke-dasharray="4 3"/>
+              <line x1="118" y1="20" x2="174" y2="20" stroke="var(--e-vo2-mid)" stroke-width="1.5" stroke-dasharray="1 2"/>
+            </svg>
+          </div>
+        </div>
+      </div>
+
+      <table style="width:100%;border-collapse:collapse;font-size:12.5px;">
+        <thead>
+          <tr style="background:var(--surface-2);">
+            <th style="text-align:left;padding:9px 12px;border:1px solid var(--line);font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3);font-weight:600;">컨텍스트</th>
+            <th style="text-align:center;padding:9px 12px;border:1px solid var(--line);font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3);font-weight:600;">색</th>
+            <th style="text-align:center;padding:9px 12px;border:1px solid var(--line);font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3);font-weight:600;">코드</th>
+            <th style="text-align:center;padding:9px 12px;border:1px solid var(--line);font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3);font-weight:600;">위치/모양</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td style="padding:9px 12px;border:1px solid var(--hair);">Heatmap 셀 (1095개)</td><td style="text-align:center;border:1px solid var(--hair);color:var(--ok);">✓</td><td style="text-align:center;border:1px solid var(--hair);color:var(--ink-3);font-family:var(--mono);font-size:10px;">hover</td><td style="text-align:center;border:1px solid var(--hair);color:var(--ink-3);">—</td></tr>
+          <tr><td style="padding:9px 12px;border:1px solid var(--hair);">Calendar 셀</td><td style="text-align:center;border:1px solid var(--hair);color:var(--ok);">✓</td><td style="text-align:center;border:1px solid var(--hair);color:var(--ok);">✓</td><td style="text-align:center;border:1px solid var(--hair);color:var(--ink-3);font-family:var(--mono);font-size:10px;">AM/PM dot</td></tr>
+          <tr><td style="padding:9px 12px;border:1px solid var(--hair);">Session card</td><td style="text-align:center;border:1px solid var(--hair);color:var(--ok);">✓</td><td style="text-align:center;border:1px solid var(--hair);color:var(--ok);">✓</td><td style="text-align:center;border:1px solid var(--hair);color:var(--ink-3);font-family:var(--mono);font-size:10px;">left strip</td></tr>
+          <tr><td style="padding:9px 12px;border:1px solid var(--hair);">본문 inline tag</td><td style="text-align:center;border:1px solid var(--hair);color:var(--ok);">✓</td><td style="text-align:center;border:1px solid var(--hair);color:var(--ok);">✓</td><td style="text-align:center;border:1px solid var(--hair);color:var(--ink-3);font-family:var(--mono);font-size:10px;">underline</td></tr>
+          <tr><td style="padding:9px 12px;border:1px solid var(--hair);">Legend / Footnote</td><td style="text-align:center;border:1px solid var(--hair);color:var(--ok);">✓</td><td style="text-align:center;border:1px solid var(--hair);color:var(--ok);">✓</td><td style="text-align:center;border:1px solid var(--hair);color:var(--ok);">✓</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- ============ §4 12 CHART CATALOG ============ -->
+    <section class="sec">
+      <div class="sec-h">
+        <span class="num">§4</span>
+        <h2>12개 차트 카탈로그</h2>
+        <span class="tag">C-1 → C-12</span>
+      </div>
+      <p class="sec-lead">정리본 §16 + SYSTEM_FOUNDATIONS §2.3 통합. 각 차트는 <b>실제 렌더 미니어처 + Glance/Scan/Inspect 가이드</b>를 동봉.</p>
+
+      <div class="grid">
+
+        <!-- C-1 Energy stack bar -->
+        <article class="card">
+          <div class="head">
+            <span class="ix">C-1</span>
+            <h3>Energy System stack bar</h3>
+            <span class="tier">T2 · Stack</span>
+          </div>
+          <div class="where">USED IN <b>Dashboard · Analysis · Cycle Report</b> &nbsp;·&nbsp; STAGE <b>Energy classification</b></div>
+          <div class="chart">
+            <div class="chart-h"><span>이번 사이클 (D-1 → D-9.5) · 53.4 km</span><span class="v">CONFIRM · 92%</span></div>
+            <div style="padding:18px 14px;">
+              <div style="display:flex;justify-content:space-between;font-family:var(--mono);font-size:10.5px;color:var(--ink-2);margin-bottom:8px;letter-spacing:.04em;">
+                <span><span class="etag base"><span class="d"></span><span class="c">BA</span></span> 24%</span>
+                <span><span class="etag lt"><span class="d"></span><span class="c">LT</span></span> 34%</span>
+                <span><span class="etag vo2"><span class="d"></span><span class="c">V2</span></span> 21%</span>
+                <span><span class="etag gly"><span class="d"></span><span class="c">GL</span></span> 13%</span>
+                <span><span class="etag rest"><span class="d"></span><span class="c">RE</span></span> 8%</span>
+              </div>
+              <svg width="100%" height="16" viewBox="0 0 240 16" preserveAspectRatio="none">
+                <rect x="0"    y="0" width="58"  height="16" fill="var(--e-base-mid)"/>
+                <rect x="58"   y="0" width="82"  height="16" fill="var(--e-lt-mid)"/>
+                <rect x="140"  y="0" width="50"  height="16" fill="var(--e-vo2-mid)"/>
+                <rect x="190"  y="0" width="32"  height="16" fill="var(--e-gly-mid)"/>
+                <rect x="222"  y="0" width="18"  height="16" fill="var(--e-rest-mid)"/>
+              </svg>
+            </div>
+          </div>
+          <div class="gsi">
+            <div><b>Glance</b><span>가장 큰 색 → 사이클 강조</span></div>
+            <div><b>Scan</b><span>각 segment %</span></div>
+            <div><b>Inspect</b><span>일별 contribution</span></div>
+          </div>
+        </article>
+
+        <!-- C-2 Multi-year heatmap -->
+        <article class="card">
+          <div class="head">
+            <span class="ix">C-2</span>
+            <h3>Multi-year training heatmap</h3>
+            <span class="tier">T1 · Cell</span>
+          </div>
+          <div class="where">USED IN <b>Personal Archive ★ · Analysis</b> &nbsp;·&nbsp; STAGE <b>Raw activity volume</b></div>
+          <div class="chart">
+            <div class="chart-h">
+              <span>지난 52주 · km/day</span>
+              <span class="switcher" style="font-size:9px;">
+                <button>4w</button><button>12w</button><button class="on">1y</button><button>2y</button><button>3y</button><button>all</button>
+              </span>
+            </div>
+            <div style="padding:14px;overflow:hidden;">
+              <svg width="100%" height="86" viewBox="0 0 320 86" preserveAspectRatio="none" id="heatmap-svg">
+                <!-- Generated below via inline script -->
+              </svg>
+            </div>
+            <div class="legend">
+              <span class="l"><span class="sw" style="background:var(--surface-2);"></span> 0</span>
+              <span class="l"><span class="sw" style="background:var(--e-base-wash);"></span> &lt;5</span>
+              <span class="l"><span class="sw" style="background:var(--e-base-mid);opacity:.55;"></span> 5–10</span>
+              <span class="l"><span class="sw" style="background:var(--e-base-strong);opacity:.85;"></span> 10–18</span>
+              <span class="l"><span class="sw" style="background:var(--e-vo2-strong);"></span> &gt;18 (Race)</span>
+            </div>
+          </div>
+          <div class="gsi">
+            <div><b>Glance</b><span>전체 패턴 · 빈 주간</span></div>
+            <div><b>Scan</b><span>강조된 주, dominant system</span></div>
+            <div><b>Inspect</b><span>셀 hover → 일별 상세</span></div>
+          </div>
+        </article>
+
+        <!-- C-3 PB Trail -->
+        <article class="card">
+          <div class="head">
+            <span class="ix">C-3</span>
+            <h3>PB Trail (5000m)</h3>
+            <span class="tier">T2 · Line + Markers</span>
+          </div>
+          <div class="where">USED IN <b>Records · Personal Archive · Competitions</b> &nbsp;·&nbsp; STAGE <b>PB / SB / Target</b></div>
+          <div class="chart">
+            <div class="chart-h"><span>PB 5000m · 2023 → 2026</span><span class="v">CONFIRM · 95%</span></div>
+            <div style="padding:14px;">
+              <svg width="100%" height="120" viewBox="0 0 320 120">
+                <!-- grid -->
+                <line x1="36" y1="20"  x2="312" y2="20"  stroke="var(--hair)" stroke-width="1"/>
+                <line x1="36" y1="50"  x2="312" y2="50"  stroke="var(--hair)" stroke-width="1"/>
+                <line x1="36" y1="80"  x2="312" y2="80"  stroke="var(--hair)" stroke-width="1"/>
+                <line x1="36" y1="110" x2="312" y2="110" stroke="var(--hair)" stroke-width="1"/>
+                <!-- y labels -->
+                <text x="32" y="23"  text-anchor="end" font-family="JetBrains Mono" font-size="9" fill="var(--ink-3)">15:30</text>
+                <text x="32" y="53"  text-anchor="end" font-family="JetBrains Mono" font-size="9" fill="var(--ink-3)">16:00</text>
+                <text x="32" y="83"  text-anchor="end" font-family="JetBrains Mono" font-size="9" fill="var(--ink-3)">16:30</text>
+                <text x="32" y="113" text-anchor="end" font-family="JetBrains Mono" font-size="9" fill="var(--ink-3)">17:00</text>
+                <!-- Target dashed -->
+                <line x1="36" y1="35" x2="312" y2="35" stroke="var(--brand)" stroke-width="1" stroke-dasharray="4 3"/>
+                <text x="312" y="33" text-anchor="end" font-family="JetBrains Mono" font-size="9" fill="var(--brand)" font-weight="600">TARGET 15:45</text>
+                <!-- Reference dashed -->
+                <line x1="36" y1="60" x2="312" y2="60" stroke="var(--ink-3)" stroke-width="1" stroke-dasharray="2 2"/>
+                <text x="312" y="58" text-anchor="end" font-family="JetBrains Mono" font-size="9" fill="var(--ink-3)">REF 16:10</text>
+                <!-- PB line (going up = better/lower time) -->
+                <polyline fill="none" stroke="var(--e-vo2-mid)" stroke-width="1.5"
+                          points="50,98 90,92 130,80 170,68 210,55 250,50 290,42"/>
+                <!-- SB markers (open) -->
+                <circle cx="90"  cy="92" r="3" fill="var(--bg)" stroke="var(--ink-2)" stroke-width="1.5"/>
+                <circle cx="170" cy="68" r="3" fill="var(--bg)" stroke="var(--ink-2)" stroke-width="1.5"/>
+                <circle cx="250" cy="50" r="3" fill="var(--bg)" stroke="var(--ink-2)" stroke-width="1.5"/>
+                <!-- PB markers (filled triangle) -->
+                <polygon points="50,103 46,95 54,95"   fill="var(--brand)"/>
+                <polygon points="290,47 286,39 294,39" fill="var(--brand)"/>
+                <text x="290" y="32" text-anchor="middle" font-family="JetBrains Mono" font-size="9" fill="var(--brand)" font-weight="600">PB 15:58</text>
+                <!-- x labels -->
+                <text x="50"  y="118" text-anchor="middle" font-family="JetBrains Mono" font-size="9" fill="var(--ink-3)">'23</text>
+                <text x="130" y="118" text-anchor="middle" font-family="JetBrains Mono" font-size="9" fill="var(--ink-3)">'24</text>
+                <text x="210" y="118" text-anchor="middle" font-family="JetBrains Mono" font-size="9" fill="var(--ink-3)">'25</text>
+                <text x="290" y="118" text-anchor="middle" font-family="JetBrains Mono" font-size="9" fill="var(--ink-3)">'26</text>
+              </svg>
+            </div>
+          </div>
+          <div class="gsi">
+            <div><b>Glance</b><span>위로 가는가 (=빠름)</span></div>
+            <div><b>Scan</b><span>최근 SB · target 거리</span></div>
+            <div><b>Inspect</b><span>dot → 그날 세션</span></div>
+          </div>
+        </article>
+
+        <!-- C-4 CTL/ATL/TSB -->
+        <article class="card">
+          <div class="head">
+            <span class="ix">C-4</span>
+            <h3>CTL / ATL / TSB line</h3>
+            <span class="tier">T2 · Line</span>
+          </div>
+          <div class="where">USED IN <b>Analysis · Dashboard mini</b> &nbsp;·&nbsp; STAGE <b>Derived metrics</b></div>
+          <div class="chart">
+            <div class="chart-h"><span>Performance Manager · 12w</span><span class="v">CONFIRM · 88%</span></div>
+            <div style="padding:14px;">
+              <svg width="100%" height="120" viewBox="0 0 320 120">
+                <!-- grid -->
+                <line x1="36" y1="20"  x2="312" y2="20"  stroke="var(--hair)" stroke-width="1"/>
+                <line x1="36" y1="60"  x2="312" y2="60"  stroke="var(--hair)" stroke-dasharray="3 3" stroke-width="1"/>
+                <line x1="36" y1="100" x2="312" y2="100" stroke="var(--hair)" stroke-width="1"/>
+                <text x="32" y="23"  text-anchor="end" font-family="JetBrains Mono" font-size="9" fill="var(--ink-3)">+30</text>
+                <text x="32" y="63"  text-anchor="end" font-family="JetBrains Mono" font-size="9" fill="var(--ink-3)">0</text>
+                <text x="32" y="103" text-anchor="end" font-family="JetBrains Mono" font-size="9" fill="var(--ink-3)">-30</text>
+                <!-- CTL (chronic, ink) -->
+                <polyline fill="none" stroke="var(--ink)" stroke-width="1.5"
+                          points="50,90 80,84 110,78 140,72 170,66 200,60 230,56 260,52 290,50"/>
+                <!-- ATL (acute, warn) -->
+                <polyline fill="none" stroke="var(--warn)" stroke-width="1.5"
+                          points="50,82 80,70 110,62 140,80 170,55 200,68 230,46 260,58 290,40"/>
+                <!-- TSB (balance, brand) -->
+                <polyline fill="none" stroke="var(--brand)" stroke-width="1.5"
+                          points="50,68 80,76 110,80 140,55 170,72 200,58 230,82 260,60 290,82"/>
+                <!-- today marker -->
+                <line x1="290" y1="20" x2="290" y2="115" stroke="var(--ink-3)" stroke-width="1" stroke-dasharray="2 2"/>
+                <text x="290" y="118" text-anchor="middle" font-family="JetBrains Mono" font-size="9" fill="var(--ink-3)">TODAY</text>
+              </svg>
+            </div>
+            <div class="legend">
+              <span class="l"><span class="sw line" style="background:var(--ink);"></span> CTL · 만성</span>
+              <span class="l"><span class="sw line" style="background:var(--warn);"></span> ATL · 급성</span>
+              <span class="l"><span class="sw line" style="background:var(--brand);"></span> TSB · 밸런스</span>
+            </div>
+          </div>
+          <div class="gsi">
+            <div><b>Glance</b><span>3 line의 상하 관계</span></div>
+            <div><b>Scan</b><span>오늘 TSB 값</span></div>
+            <div><b>Inspect</b><span>그 일자 세션 drill-down</span></div>
+          </div>
+        </article>
+
+        <!-- C-5 HR drift bar -->
+        <article class="card">
+          <div class="head">
+            <span class="ix">C-5</span>
+            <h3>HR drift bar (target band)</h3>
+            <span class="tier">T2 · Bar</span>
+          </div>
+          <div class="where">USED IN <b>Session Detail · Analysis</b> &nbsp;·&nbsp; STAGE <b>Derived · MAIN sessions</b></div>
+          <div class="chart">
+            <div class="chart-h"><span>MAIN HR drift · 최근 10회</span><span class="v warn">RECOMMEND · 72%</span></div>
+            <div style="padding:14px;">
+              <svg width="100%" height="120" viewBox="0 0 320 120">
+                <!-- band ±3% -->
+                <rect x="36" y="55" width="276" height="20" fill="var(--surface-2)"/>
+                <text x="312" y="53" text-anchor="end" font-family="JetBrains Mono" font-size="9" fill="var(--ink-3)">+3%</text>
+                <text x="312" y="84" text-anchor="end" font-family="JetBrains Mono" font-size="9" fill="var(--ink-3)">-3%</text>
+                <!-- baseline -->
+                <line x1="36" y1="65" x2="312" y2="65" stroke="var(--ink-3)" stroke-width="1" stroke-dasharray="3 3"/>
+                <!-- bars (positive=down, neg=up). within band = mid color, outside = warn -->
+                <g>
+                  <rect x="48"  y="65" width="14" height="8"  fill="var(--e-lt-mid)"/>
+                  <rect x="74"  y="60" width="14" height="13" fill="var(--e-vo2-mid)"/>
+                  <rect x="100" y="65" width="14" height="6"  fill="var(--e-lt-mid)"/>
+                  <rect x="126" y="48" width="14" height="17" fill="var(--warn)"/>
+                  <rect x="152" y="58" width="14" height="7"  fill="var(--e-vo2-mid)"/>
+                  <rect x="178" y="65" width="14" height="10" fill="var(--e-lt-mid)"/>
+                  <rect x="204" y="42" width="14" height="23" fill="var(--warn)"/>
+                  <rect x="230" y="65" width="14" height="9"  fill="var(--e-lt-mid)"/>
+                  <rect x="256" y="55" width="14" height="10" fill="var(--e-vo2-mid)"/>
+                  <rect x="282" y="38" width="14" height="27" fill="var(--warn)"/>
+                </g>
+                <text x="55"  y="115" text-anchor="middle" font-family="JetBrains Mono" font-size="9" fill="var(--ink-3)">D1</text>
+                <text x="289" y="115" text-anchor="middle" font-family="JetBrains Mono" font-size="9" fill="var(--ink-3)">D10</text>
+              </svg>
+            </div>
+          </div>
+          <div class="gsi">
+            <div><b>Glance</b><span>warn 색 bar 개수</span></div>
+            <div><b>Scan</b><span>14d 평균 추세</span></div>
+            <div><b>Inspect</b><span>R-7 위반 → INBOX</span></div>
+          </div>
+        </article>
+
+        <!-- C-6 Pace split curve -->
+        <article class="card">
+          <div class="head">
+            <span class="ix">C-6</span>
+            <h3>Pace split curve</h3>
+            <span class="tier">T2 · Line</span>
+          </div>
+          <div class="where">USED IN <b>Session Detail · Competitions</b> &nbsp;·&nbsp; STAGE <b>Raw activity</b></div>
+          <div class="chart">
+            <div class="chart-h"><span>5000m · 12.5 lap</span><span class="v">CONFIRM · 91%</span></div>
+            <div style="padding:14px;">
+              <svg width="100%" height="120" viewBox="0 0 320 120">
+                <!-- target dashed -->
+                <line x1="36" y1="60" x2="312" y2="60" stroke="var(--brand)" stroke-width="1" stroke-dasharray="4 3"/>
+                <text x="312" y="58" text-anchor="end" font-family="JetBrains Mono" font-size="9" fill="var(--brand)" font-weight="600">TARGET 3:09/km</text>
+                <!-- drift threshold (last 2 lap) -->
+                <rect x="266" y="20" width="46" height="80" fill="var(--surface-2)"/>
+                <!-- pace line -->
+                <polyline fill="none" stroke="var(--e-lt-mid)" stroke-width="1.5"
+                          points="50,72 70,68 92,62 114,60 136,58 158,58 180,56 202,56 224,52 246,50 268,46 290,40 308,32"/>
+                <!-- dots -->
+                <g fill="var(--e-lt-strong)">
+                  <circle cx="50"  cy="72" r="2.5"/>
+                  <circle cx="92"  cy="62" r="2.5"/>
+                  <circle cx="158" cy="58" r="2.5"/>
+                  <circle cx="224" cy="52" r="2.5"/>
+                  <circle cx="290" cy="40" r="2.5"/>
+                  <circle cx="308" cy="32" r="2.5"/>
+                </g>
+                <!-- x-axis -->
+                <text x="50"  y="115" text-anchor="middle" font-family="JetBrains Mono" font-size="9" fill="var(--ink-3)">L1</text>
+                <text x="180" y="115" text-anchor="middle" font-family="JetBrains Mono" font-size="9" fill="var(--ink-3)">L7</text>
+                <text x="308" y="115" text-anchor="middle" font-family="JetBrains Mono" font-size="9" fill="var(--ink-3)">L12</text>
+              </svg>
+            </div>
+          </div>
+          <div class="gsi">
+            <div><b>Glance</b><span>line이 target 아래/위</span></div>
+            <div><b>Scan</b><span>마지막 2 lap drift</span></div>
+            <div><b>Inspect</b><span>lap 클릭 → split 표</span></div>
+          </div>
+        </article>
+
+        <!-- C-7 Cycle rhythm rail -->
+        <article class="card">
+          <div class="head">
+            <span class="ix">C-7</span>
+            <h3>Cycle rhythm rail (9.5-day)</h3>
+            <span class="tier">T1 · Cell rail</span>
+          </div>
+          <div class="where">USED IN <b>Calendar 9.5-Cycle ★ · Dashboard mini · Session Detail §5</b> &nbsp;·&nbsp; STAGE <b>Cycle slot</b></div>
+          <div class="chart">
+            <div class="chart-h"><span>Cycle 24 · D-6 진행 중</span><span class="v">CONFIRM · 99%</span></div>
+            <div style="padding:18px 14px 14px;">
+              <svg width="100%" height="68" viewBox="0 0 320 68" preserveAspectRatio="none">
+                <!-- 10 cells D-1..D-9 + .5 -->
+                <!-- D-1 BASE done -->
+                <rect x="2"   y="14" width="28" height="40" fill="var(--e-base-strong)"/>
+                <text x="16"  y="38" text-anchor="middle" font-family="JetBrains Mono" font-size="10" fill="#fff" font-weight="700">BA</text>
+                <text x="16"  y="10" text-anchor="middle" font-family="JetBrains Mono" font-size="8" fill="var(--ink-3)">D-1</text>
+                <text x="16"  y="64" text-anchor="middle" font-family="JetBrains Mono" font-size="9" fill="var(--ok)">✓</text>
+                <!-- D-2 LT done -->
+                <rect x="34"  y="14" width="28" height="40" fill="var(--e-lt-strong)"/>
+                <text x="48"  y="38" text-anchor="middle" font-family="JetBrains Mono" font-size="10" fill="#fff" font-weight="700">LT</text>
+                <text x="48"  y="10" text-anchor="middle" font-family="JetBrains Mono" font-size="8" fill="var(--ink-3)">D-2</text>
+                <text x="48"  y="64" text-anchor="middle" font-family="JetBrains Mono" font-size="9" fill="var(--ok)">✓</text>
+                <!-- D-3 BASE done -->
+                <rect x="66"  y="14" width="28" height="40" fill="var(--e-base-strong)"/>
+                <text x="80"  y="38" text-anchor="middle" font-family="JetBrains Mono" font-size="10" fill="#fff" font-weight="700">BA</text>
+                <text x="80"  y="10" text-anchor="middle" font-family="JetBrains Mono" font-size="8" fill="var(--ink-3)">D-3</text>
+                <text x="80"  y="64" text-anchor="middle" font-family="JetBrains Mono" font-size="9" fill="var(--ok)">✓</text>
+                <!-- D-4 REST done -->
+                <rect x="98"  y="14" width="28" height="40" fill="var(--e-rest-strong)"/>
+                <text x="112" y="38" text-anchor="middle" font-family="JetBrains Mono" font-size="10" fill="#fff" font-weight="700">RE</text>
+                <text x="112" y="10" text-anchor="middle" font-family="JetBrains Mono" font-size="8" fill="var(--ink-3)">D-4</text>
+                <text x="112" y="64" text-anchor="middle" font-family="JetBrains Mono" font-size="9" fill="var(--ok)">✓</text>
+                <!-- D-5 MAIN VO2 done -->
+                <rect x="130" y="10" width="28" height="48" fill="var(--e-vo2-strong)" stroke="var(--ink)" stroke-width="2"/>
+                <text x="144" y="38" text-anchor="middle" font-family="JetBrains Mono" font-size="10" fill="#fff" font-weight="700">V2</text>
+                <text x="144" y="6"  text-anchor="middle" font-family="JetBrains Mono" font-size="8" fill="var(--ink)" font-weight="700">MAIN ※</text>
+                <text x="144" y="68" text-anchor="middle" font-family="JetBrains Mono" font-size="9" fill="var(--ok)">✓</text>
+                <!-- D-6 today wash -->
+                <rect x="162" y="14" width="28" height="40" fill="var(--e-base-wash)" stroke="var(--ink)" stroke-width="1.5"/>
+                <text x="176" y="38" text-anchor="middle" font-family="JetBrains Mono" font-size="10" fill="var(--e-base-text)" font-weight="700">BA</text>
+                <text x="176" y="10" text-anchor="middle" font-family="JetBrains Mono" font-size="8" fill="var(--ink)" font-weight="700">D-6 NOW</text>
+                <!-- D-7 future LT -->
+                <rect x="194" y="14" width="28" height="40" fill="var(--surface-2)" stroke="var(--hair)"/>
+                <text x="208" y="38" text-anchor="middle" font-family="JetBrains Mono" font-size="10" fill="var(--ink-3)">LT</text>
+                <text x="208" y="10" text-anchor="middle" font-family="JetBrains Mono" font-size="8" fill="var(--ink-3)">D-7</text>
+                <!-- D-8 future BASE -->
+                <rect x="226" y="14" width="28" height="40" fill="var(--surface-2)" stroke="var(--hair)"/>
+                <text x="240" y="38" text-anchor="middle" font-family="JetBrains Mono" font-size="10" fill="var(--ink-3)">BA</text>
+                <text x="240" y="10" text-anchor="middle" font-family="JetBrains Mono" font-size="8" fill="var(--ink-3)">D-8</text>
+                <!-- D-9 future REST -->
+                <rect x="258" y="14" width="28" height="40" fill="var(--surface-2)" stroke="var(--hair)"/>
+                <text x="272" y="38" text-anchor="middle" font-family="JetBrains Mono" font-size="10" fill="var(--ink-3)">RE</text>
+                <text x="272" y="10" text-anchor="middle" font-family="JetBrains Mono" font-size="8" fill="var(--ink-3)">D-9</text>
+                <!-- D-9.5 transition narrow -->
+                <rect x="290" y="14" width="14" height="40" fill="var(--surface-2)" stroke="var(--hair)" stroke-dasharray="2 2"/>
+                <text x="297" y="38" text-anchor="middle" font-family="JetBrains Mono" font-size="8" fill="var(--ink-3)">.5</text>
+              </svg>
+            </div>
+          </div>
+          <div class="gsi">
+            <div><b>Glance</b><span>오늘 위치 · MAIN 색</span></div>
+            <div><b>Scan</b><span>완료/미래 분포</span></div>
+            <div><b>Inspect</b><span>cell → 세션 상세</span></div>
+          </div>
+        </article>
+
+        <!-- C-8 Weekly load distribution -->
+        <article class="card">
+          <div class="head">
+            <span class="ix">C-8</span>
+            <h3>Weekly load distribution</h3>
+            <span class="tier">T2 · Bar</span>
+          </div>
+          <div class="where">USED IN <b>Dashboard · Analysis</b> &nbsp;·&nbsp; STAGE <b>Energy + Volume</b></div>
+          <div class="chart">
+            <div class="chart-h"><span>이번 주 · TSS 384</span><span class="v">CONFIRM · 95%</span></div>
+            <div style="padding:14px;">
+              <svg width="100%" height="120" viewBox="0 0 320 120">
+                <line x1="36" y1="100" x2="312" y2="100" stroke="var(--ink-3)" stroke-width="1"/>
+                <!-- bars -->
+                <rect x="48"  y="60" width="28" height="40" fill="var(--e-base-mid)"/>
+                <rect x="86"  y="38" width="28" height="62" fill="var(--e-lt-mid)"/>
+                <rect x="124" y="78" width="28" height="22" fill="var(--e-rest-mid)"/>
+                <rect x="162" y="46" width="28" height="54" fill="var(--e-base-mid)"/>
+                <rect x="200" y="20" width="28" height="80" fill="var(--e-vo2-mid)"/>
+                <rect x="238" y="86" width="28" height="14" fill="var(--e-rest-mid)"/>
+                <rect x="276" y="60" width="28" height="40" fill="var(--e-base-mid)" opacity=".4"/>
+                <!-- today line -->
+                <line x1="214" y1="14" x2="214" y2="100" stroke="var(--ink-3)" stroke-width="1" stroke-dasharray="2 2"/>
+                <text x="214" y="14" text-anchor="middle" font-family="JetBrains Mono" font-size="9" fill="var(--ink-3)">TODAY</text>
+                <!-- x labels -->
+                <text x="62"  y="116" text-anchor="middle" font-family="JetBrains Mono" font-size="9" fill="var(--ink-3)">월</text>
+                <text x="100" y="116" text-anchor="middle" font-family="JetBrains Mono" font-size="9" fill="var(--ink-3)">화</text>
+                <text x="138" y="116" text-anchor="middle" font-family="JetBrains Mono" font-size="9" fill="var(--ink-3)">수</text>
+                <text x="176" y="116" text-anchor="middle" font-family="JetBrains Mono" font-size="9" fill="var(--ink-3)">목</text>
+                <text x="214" y="116" text-anchor="middle" font-family="JetBrains Mono" font-size="9" fill="var(--ink)" font-weight="700">금</text>
+                <text x="252" y="116" text-anchor="middle" font-family="JetBrains Mono" font-size="9" fill="var(--ink-3)">토</text>
+                <text x="290" y="116" text-anchor="middle" font-family="JetBrains Mono" font-size="9" fill="var(--ink-3)">일</text>
+              </svg>
+            </div>
+          </div>
+          <div class="gsi">
+            <div><b>Glance</b><span>큰 day · dominant 시스템</span></div>
+            <div><b>Scan</b><span>주 누적값</span></div>
+            <div><b>Inspect</b><span>일별 세션 목록</span></div>
+          </div>
+        </article>
+
+        <!-- C-9 Pain trend -->
+        <article class="card">
+          <div class="head">
+            <span class="ix">C-9</span>
+            <h3>Injury / pain trend</h3>
+            <span class="tier">T2 · Line · No-energy</span>
+          </div>
+          <div class="where">USED IN <b>Personal Archive · Dashboard CAUTION</b> &nbsp;·&nbsp; STAGE <b>User input</b></div>
+          <div class="chart">
+            <div class="chart-h"><span>오른 무릎 · 8w</span><span class="v unc">UNC · 64%</span></div>
+            <div style="padding:14px;">
+              <svg width="100%" height="120" viewBox="0 0 320 120">
+                <!-- thresholds -->
+                <line x1="36" y1="40" x2="312" y2="40" stroke="var(--warn)" stroke-width="1"/>
+                <line x1="36" y1="60" x2="312" y2="60" stroke="var(--warn)" stroke-width="1" stroke-dasharray="3 3"/>
+                <text x="40" y="38" font-family="JetBrains Mono" font-size="9" fill="var(--warn)" font-weight="600">4/5 CAUTION</text>
+                <text x="40" y="58" font-family="JetBrains Mono" font-size="9" fill="var(--warn)">3/5 alert</text>
+                <!-- y labels -->
+                <text x="32" y="103" text-anchor="end" font-family="JetBrains Mono" font-size="9" fill="var(--ink-3)">0</text>
+                <text x="32" y="83"  text-anchor="end" font-family="JetBrains Mono" font-size="9" fill="var(--ink-3)">2</text>
+                <text x="32" y="43"  text-anchor="end" font-family="JetBrains Mono" font-size="9" fill="var(--ink-3)">4</text>
+                <!-- pain line right knee -->
+                <polyline fill="none" stroke="var(--ink-2)" stroke-width="1.5"
+                          points="50,100 80,100 110,90 140,80 170,70 200,52 230,50 260,60 290,72"/>
+                <!-- pain line calf (gray) -->
+                <polyline fill="none" stroke="var(--ink-3)" stroke-width="1" stroke-dasharray="3 3"
+                          points="50,100 80,100 110,100 140,100 170,90 200,90 230,82 260,90 290,100"/>
+                <!-- markers at 4/5 -->
+                <text x="200" y="50" text-anchor="middle" font-family="JetBrains Mono" font-size="10" fill="var(--warn)" font-weight="700">×</text>
+                <text x="230" y="48" text-anchor="middle" font-family="JetBrains Mono" font-size="10" fill="var(--warn)" font-weight="700">×</text>
+              </svg>
+            </div>
+            <div class="legend">
+              <span class="l"><span class="sw line" style="background:var(--ink-2);"></span> 오른 무릎</span>
+              <span class="l"><span class="sw line" style="background:var(--ink-3);height:1px;border-top:1px dashed var(--ink-3);"></span> 왼 종아리</span>
+            </div>
+          </div>
+          <div class="gsi">
+            <div><b>Glance</b><span>4/5 line 넘었는가</span></div>
+            <div><b>Scan</b><span>14d 추세 방향</span></div>
+            <div><b>Inspect</b><span>날짜별 입력 기록</span></div>
+          </div>
+        </article>
+
+        <!-- C-10 Race target gap -->
+        <article class="card">
+          <div class="head">
+            <span class="ix">C-10</span>
+            <h3>Race target gap</h3>
+            <span class="tier">T2 · Number line</span>
+          </div>
+          <div class="where">USED IN <b>Competitions Hero · Dashboard Race Week</b> &nbsp;·&nbsp; STAGE <b>Target vs PB/SB</b></div>
+          <div class="chart">
+            <div class="chart-h"><span>경기 D-21 · 5000m</span><span class="v">RECOMMEND · 81%</span></div>
+            <div style="padding:18px 14px;">
+              <svg width="100%" height="100" viewBox="0 0 320 100">
+                <!-- axis -->
+                <line x1="36" y1="50" x2="296" y2="50" stroke="var(--ink-2)" stroke-width="1.5"/>
+                <!-- ticks -->
+                <line x1="60"  y1="46" x2="60"  y2="54" stroke="var(--ink-2)" stroke-width="1.5"/>
+                <line x1="160" y1="46" x2="160" y2="54" stroke="var(--ink-2)" stroke-width="1.5"/>
+                <line x1="260" y1="46" x2="260" y2="54" stroke="var(--brand)" stroke-width="2"/>
+                <!-- markers -->
+                <polygon points="60,40 56,32 64,32"   fill="var(--brand)"/>
+                <text x="60"  y="26" text-anchor="middle" font-family="JetBrains Mono" font-size="10" fill="var(--brand)" font-weight="700">PB</text>
+                <text x="60"  y="74" text-anchor="middle" font-family="JetBrains Mono" font-size="11" fill="var(--ink)" font-weight="600">16:10</text>
+                <circle cx="160" cy="40" r="4" fill="var(--bg)" stroke="var(--ink-2)" stroke-width="1.5"/>
+                <text x="160" y="26" text-anchor="middle" font-family="JetBrains Mono" font-size="10" fill="var(--ink-2)" font-weight="700">SB</text>
+                <text x="160" y="74" text-anchor="middle" font-family="JetBrains Mono" font-size="11" fill="var(--ink)" font-weight="600">15:58</text>
+                <text x="260" y="26" text-anchor="middle" font-family="JetBrains Mono" font-size="10" fill="var(--brand)" font-weight="700">TARGET</text>
+                <text x="260" y="74" text-anchor="middle" font-family="JetBrains Mono" font-size="11" fill="var(--brand)" font-weight="700">15:45</text>
+                <!-- delta -->
+                <text x="210" y="92" text-anchor="middle" font-family="JetBrains Mono" font-size="9" fill="var(--ink-3)" letter-spacing=".06em">SB → TARGET  −13"</text>
+              </svg>
+            </div>
+          </div>
+          <div class="gsi">
+            <div><b>Glance</b><span>3 마커의 거리</span></div>
+            <div><b>Scan</b><span>delta 시간</span></div>
+            <div><b>Inspect</b><span>마커 클릭 → 기록 상세</span></div>
+          </div>
+        </article>
+
+        <!-- C-11 Cohort comparison (P3 lock) -->
+        <article class="card">
+          <div class="head">
+            <span class="ix">C-11</span>
+            <h3>Cohort comparison <span style="color:var(--ink-4);font-weight:400;">(P3)</span></h3>
+            <span class="tier" style="border-color:var(--unc);color:var(--unc);">PRO · LOCKED</span>
+          </div>
+          <div class="where">USED IN <b>(Pro 분리 후 활성)</b> &nbsp;·&nbsp; STAGE <b>External · Reference</b></div>
+          <div class="chart" style="position:relative;">
+            <div class="chart-h"><span>5000m · 동일 그룹 N=312 (locked)</span><span class="v unc">PLACEHOLDER</span></div>
+            <div style="padding:14px;filter:grayscale(.6);opacity:.45;">
+              <svg width="100%" height="120" viewBox="0 0 320 120">
+                <line x1="36" y1="100" x2="312" y2="100" stroke="var(--ink-3)" stroke-width="1"/>
+                <!-- distribution -->
+                <rect x="50"  y="70"  width="20" height="30" fill="var(--ink-3)" opacity=".4"/>
+                <rect x="80"  y="50"  width="20" height="50" fill="var(--ink-3)" opacity=".5"/>
+                <rect x="110" y="30"  width="20" height="70" fill="var(--ink-3)" opacity=".7"/>
+                <rect x="140" y="20"  width="20" height="80" fill="var(--ink-3)" opacity=".7"/>
+                <rect x="170" y="40"  width="20" height="60" fill="var(--ink-3)" opacity=".5"/>
+                <rect x="200" y="60"  width="20" height="40" fill="var(--ink-3)" opacity=".4"/>
+                <rect x="230" y="80"  width="20" height="20" fill="var(--ink-3)" opacity=".3"/>
+                <!-- you marker -->
+                <line x1="125" y1="14" x2="125" y2="100" stroke="var(--brand)" stroke-width="2" stroke-dasharray="3 3"/>
+                <text x="125" y="10" text-anchor="middle" font-family="JetBrains Mono" font-size="9" fill="var(--brand)" font-weight="700">YOU</text>
+              </svg>
+            </div>
+            <div style="position:absolute;inset:32px 14px 14px;display:flex;align-items:center;justify-content:center;background:rgba(250,250,247,.55);">
+              <div style="border:1px solid var(--unc);background:var(--surface);padding:10px 14px;font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--unc);font-weight:600;">
+                ⚐ P3 · Pro 분리 후 활성
+              </div>
+            </div>
+          </div>
+          <div class="gsi">
+            <div><b>Glance</b><span>(추후)</span></div>
+            <div><b>Scan</b><span>(추후)</span></div>
+            <div><b>Inspect</b><span>opt-in only</span></div>
+          </div>
+        </article>
+
+        <!-- C-12 Curve compare -->
+        <article class="card">
+          <div class="head">
+            <span class="ix">C-12</span>
+            <h3>Session result comparison</h3>
+            <span class="tier">T2 · Compare</span>
+          </div>
+          <div class="where">USED IN <b>Session Detail · Analysis</b> &nbsp;·&nbsp; STAGE <b>This vs Last / Target</b></div>
+          <div class="chart">
+            <div class="chart-h"><span>오늘 · vs 지난 D-5 MAIN</span><span class="v">CONFIRM · 90%</span></div>
+            <div style="padding:14px;">
+              <svg width="100%" height="120" viewBox="0 0 320 120">
+                <!-- previous (dashed gray) -->
+                <polyline fill="none" stroke="var(--ink-3)" stroke-width="1.5" stroke-dasharray="3 3"
+                          points="50,72 80,68 110,64 140,62 170,60 200,58 230,56 260,52 290,50"/>
+                <!-- this session (energy color) -->
+                <polyline fill="none" stroke="var(--e-vo2-mid)" stroke-width="1.5"
+                          points="50,70 80,64 110,60 140,56 170,54 200,52 230,48 260,42 290,38"/>
+                <!-- delta label -->
+                <text x="296" y="42" text-anchor="end" font-family="JetBrains Mono" font-size="11" fill="var(--ink)" font-weight="600">−12s</text>
+                <!-- y labels -->
+                <text x="40" y="73" text-anchor="end" font-family="JetBrains Mono" font-size="9" fill="var(--ink-3)">3:20</text>
+                <text x="40" y="53" text-anchor="end" font-family="JetBrains Mono" font-size="9" fill="var(--ink-3)">3:10</text>
+                <text x="40" y="33" text-anchor="end" font-family="JetBrains Mono" font-size="9" fill="var(--ink-3)">3:00</text>
+              </svg>
+            </div>
+            <div class="legend">
+              <span class="l"><span class="sw line" style="background:var(--e-vo2-mid);"></span> 오늘 (V2)</span>
+              <span class="l"><span class="sw line" style="background:var(--ink-3);"></span> 지난 D-5</span>
+            </div>
+          </div>
+          <div class="gsi">
+            <div><b>Glance</b><span>두 line 위/아래 관계</span></div>
+            <div><b>Scan</b><span>delta 숫자</span></div>
+            <div><b>Inspect</b><span>구간별 분해</span></div>
+          </div>
+        </article>
+
+      </div>
+    </section>
+
+    <!-- ============ §5 ANOMALY MARKERS ============ -->
+    <section class="sec">
+      <div class="sec-h">
+        <span class="num">§5</span>
+        <h2>Anomaly Markers</h2>
+        <span class="tag">Overlay</span>
+      </div>
+      <p class="sec-lead">차트 데이터 line 위에 overlay. 한 화면 8개 초과 시 상위 4개 + "이 외 N" 형태로 접는다.</p>
+      <div class="markers">
+        <div class="m"><span class="sym pb">▲</span><span class="lb">PB</span><span class="ds">신기록 · brand 색 채움</span></div>
+        <div class="m"><span class="sym sb">△</span><span class="lb">SB</span><span class="ds">시즌 신기록 · 빈 삼각형</span></div>
+        <div class="m"><span class="sym dnf">◯</span><span class="lb">DNF</span><span class="ds">미완주 · warn outline</span></div>
+        <div class="m"><span class="sym dns">◯</span><span class="lb">DNS</span><span class="ds">미출전 · 점선 outline</span></div>
+        <div class="m"><span class="sym pain">×</span><span class="lb">Pain ≥ 4</span><span class="ds">통증 4/5 입력</span></div>
+        <div class="m"><span class="sym mode">┊</span><span class="lb">Mode</span><span class="ds">CAUTION/RECOVERY 진입</span></div>
+        <div class="m"><span class="sym race">⚑</span><span class="lb">Race</span><span class="ds">대회일 vertical line</span></div>
+        <div class="m"><span class="sym rule">×</span><span class="lb">Rule R-N</span><span class="ds">9 Rules 위반</span></div>
+      </div>
+    </section>
+
+    <!-- ============ §6 COLD-START STATES ============ -->
+    <section class="sec">
+      <div class="sec-h">
+        <span class="num">§6</span>
+        <h2>Cold-start · dataState 차트 동작</h2>
+        <span class="tag">SAFEGUARDS §1</span>
+      </div>
+      <p class="sec-lead">5개 상태 모두에서 차트가 어떻게 보이는가를 정의해야 production 통과.</p>
+      <div class="states">
+        <div class="h">dataState</div><div class="h">차트 표시</div><div class="h">라벨</div>
+
+        <div class="c k">bootstrap</div>
+        <div class="c">차트 영역 spinner + 진행률</div>
+        <div class="c">"<b>데이터 분석 중 · 47%</b>"</div>
+
+        <div class="c k">fresh-import</div>
+        <div class="c">정상 표시</div>
+        <div class="c">"<b>3년 / 412개 활동 분석 완료</b>"</div>
+
+        <div class="c k">cold</div>
+        <div class="c">빈 차트 + 추정값 점선</div>
+        <div class="c">"<b>PB 기준 추정. 14일 후 정확해집니다</b>"</div>
+
+        <div class="c k">warming</div>
+        <div class="c">점선 stroke + 회색화</div>
+        <div class="c">"<b>초기 데이터 (신뢰도 −20%)</b>"</div>
+
+        <div class="c k">normal</div>
+        <div class="c">정상 표시</div>
+        <div class="c">—</div>
+      </div>
+    </section>
+
+    <!-- ============ §7 RANGE SWITCHER ============ -->
+    <section class="sec">
+      <div class="sec-h">
+        <span class="num">§7</span>
+        <h2>Range Switcher · Comparison · Filter</h2>
+        <span class="tag">Q4 확장 가능</span>
+      </div>
+      <p class="sec-lead">컴포넌트는 임의의 range 배열을 prop으로 받도록 설계 — 추후 800m/마라톤 확장이나 5y/10y 같은 새 range 추가 시 디자인 수정 없이 적용.</p>
+
+      <div class="enc">
+        <div class="e">
+          <div class="ax">7.1 · Range Switcher</div>
+          <div class="ttl">시간축 차트</div>
+          <div class="sub">컴팩트: 4w / 12w / 1y &nbsp;·&nbsp; 확장: all</div>
+          <div class="demo">
+            <span class="switcher">
+              <button>4w</button><button>8w</button><button>12w</button><button class="on">1y</button><button>2y</button><button>3y</button><button>all</button>
+            </span>
+          </div>
+        </div>
+        <div class="e">
+          <div class="ax">7.2 · Comparison Toggle</div>
+          <div class="ttl">한 번에 1개</div>
+          <div class="sub">none default · current ink, prev ink-3 dashed</div>
+          <div class="demo">
+            <span class="switcher">
+              <button class="on">none</button><button>어제</button><button>지난주</button><button>지난 사이클</button><button>작년</button>
+            </span>
+          </div>
+        </div>
+        <div class="e">
+          <div class="ax">7.3 · Energy Filter</div>
+          <div class="ttl">체크 · default ON</div>
+          <div class="sub">에너지 시스템 한정 시 사용</div>
+          <div class="demo">
+            <div style="display:flex;flex-wrap:wrap;gap:8px;justify-content:center;">
+              <span class="etag base"><span class="d"></span><span class="c">BA ✓</span></span>
+              <span class="etag lt"><span class="d"></span><span class="c">LT ✓</span></span>
+              <span class="etag vo2"><span class="d"></span><span class="c">V2 ✓</span></span>
+              <span class="etag gly"><span class="d"></span><span class="c">GL ✓</span></span>
+              <span class="etag atp"><span class="d"></span><span class="c">AP ✓</span></span>
+              <span class="etag rest"><span class="d"></span><span class="c">RE ✓</span></span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ §8 VERDICT ON CHART ============ -->
+    <section class="sec">
+      <div class="sec-h">
+        <span class="num">§8</span>
+        <h2>Verdict 시각화</h2>
+        <span class="tag">SAFEGUARDS §2</span>
+      </div>
+      <p class="sec-lead">차트 자체가 verdict와 confidence를 머리에 달고 다닌다. 사용자가 어떤 판단인지 모르는 차트는 만들지 않는다.</p>
+
+      <div class="enc">
+        <div class="e">
+          <div class="ax">CONFIRM</div>
+          <div class="ttl">≥ 90%</div>
+          <div class="sub">데이터 충분 · 강한 근거</div>
+          <div class="demo">
+            <div style="text-align:center;">
+              <div class="vchip cf" style="font-size:11px;">CONFIRM · 92%</div>
+              <div style="margin-top:8px;border-bottom:1.5px solid var(--ok);width:100px;"></div>
+            </div>
+          </div>
+        </div>
+        <div class="e">
+          <div class="ax">RECOMMEND</div>
+          <div class="ttl">70–89%</div>
+          <div class="sub">제안 · 사용자 판단 여지</div>
+          <div class="demo">
+            <div style="text-align:center;">
+              <div class="vchip rec" style="font-size:11px;">RECOMMEND · 78%</div>
+              <div style="margin-top:8px;border-bottom:1.5px solid var(--brand);width:100px;"></div>
+            </div>
+          </div>
+        </div>
+        <div class="e">
+          <div class="ax">UNC · LACK</div>
+          <div class="ttl">&lt; 70%</div>
+          <div class="sub">차트 회색화 · "필요 데이터" 명시</div>
+          <div class="demo">
+            <div style="text-align:center;">
+              <div class="vchip unc" style="font-size:11px;">UNC · 64%</div>
+              <div class="vchip lk" style="font-size:11px;margin-top:6px;">LACK · 38%</div>
+              <div style="margin-top:6px;font-family:var(--mono);font-size:9px;color:var(--ink-3);letter-spacing:.06em;">RPE 14d 추가 입력</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ §9 NARRATIVE SAFETY ============ -->
+    <section class="sec">
+      <div class="sec-h">
+        <span class="num">§9</span>
+        <h2>Narrative 안전</h2>
+        <span class="tag">SAFEGUARDS §4</span>
+      </div>
+      <p class="sec-lead"><span class="em">데이터는 사용자의 이야기다.</span> 좋은 기록도 나쁜 기록도, DNF도 부상도, 그대로 시간 위에 표시한다 — 감정 평가 없이.</p>
+
+      <div class="quote">
+        <p>❌ "전성기 대비 8% 하락. 분발해야 합니다." (감정 평가)</p>
+        <p>❌ "스트릭 14일 달성!" (게임화)</p>
+        <p>❌ 향상 = 녹색, 후퇴 = 빨강 (좋고 나쁨의 색)</p>
+        <div class="src">— 모두 금지</div>
+      </div>
+
+      <div style="height:14px;"></div>
+
+      <div class="quote" style="border-left-color:var(--ok);">
+        <p>✓ "1년 전 16:42, 지금 16:10. <span class="mono">−32"</span>"</p>
+        <p>✓ "오늘 오른 무릎 4/5 입력 — 14일 추세에 반영"</p>
+        <p>✓ "DNF 1건 — 사실 그대로 시간축에 표시"</p>
+        <div class="src">— 사실만, mono 숫자로</div>
+      </div>
+    </section>
+
+    <!-- ============ §10 VALIDATION MATRIX ============ -->
+    <section class="sec">
+      <div class="sec-h">
+        <span class="num">§10</span>
+        <h2>새 차트 검증 매트릭스</h2>
+        <span class="tag">12 / 12</span>
+      </div>
+      <p class="sec-lead">새 차트를 추가하거나 기존 차트를 수정할 때 12개 모두 통과해야 production 배포.</p>
+
+      <div class="mat">
+        <div class="h n">#</div><div class="h">체크</div><div class="h">통과 기준</div>
+
+        <div class="c n">1</div><div class="c"><b>Tier 명시</b></div><div class="c">T1 / T2 / T3 / T4 중 어느 tier 사용?</div>
+        <div class="c n">2</div><div class="c"><b>3중 인코딩</b></div><div class="c">색 + 코드 + 위치/모양 — 컴팩트일 때 무엇 노출?</div>
+        <div class="c n">3</div><div class="c"><b>시간축</b></div><div class="c">X축 = 시간? 아니면 그 이유는?</div>
+        <div class="c n">4</div><div class="c"><b>Cold start</b></div><div class="c">5개 dataState 모두 동작 정의?</div>
+        <div class="c n">5</div><div class="c"><b>Verdict</b></div><div class="c">confidence 표시? &lt;50% 동작?</div>
+        <div class="c n">6</div><div class="c"><b>Narrative 안전</b></div><div class="c">감정 평가 0 · "좋고 나쁨" 색 0?</div>
+        <div class="c n">7</div><div class="c"><b>Comparison</b></div><div class="c">Comparison toggle 통합?</div>
+        <div class="c n">8</div><div class="c"><b>Drill-down</b></div><div class="c">숫자/마커 클릭 가능?</div>
+        <div class="c n">9</div><div class="c"><b>Range</b></div><div class="c">시간축이면 RangeSwitcher 통합?</div>
+        <div class="c n">10</div><div class="c"><b>a11y</b></div><div class="c">코드 표시 · 키보드 가능 · sr-only fallback?</div>
+        <div class="c n">11</div><div class="c"><b>모바일</b></div><div class="c">360px 작동 · 터치 44px?</div>
+        <div class="c n">12</div><div class="c"><b>Tier 충돌</b></div><div class="c">T1+T4 동시 X · T3 차트 안 X?</div>
+      </div>
+    </section>
+
+    <!-- ============ §11 CONCLUSION ============ -->
+    <section class="sec">
+      <div class="sec-h">
+        <span class="num">§11</span>
+        <h2>한 줄 결론</h2>
+        <span class="tag">VISUALIZATION_SYSTEM.md §14</span>
+      </div>
+      <div class="quote">
+        <p>시각화는 사용자의 이야기를 시간 위에 펼치는 일이다.</p>
+        <p>에너지 시스템 색은 그 이야기의 챕터를 1초에 알아보게 하는 글자이고,</p>
+        <p>숫자·코드·위치는 5초·30초의 깊이를 만든다.</p>
+        <p>모르면 모른다고, 후퇴했으면 후퇴한 대로, 부상했으면 부상한 대로 — 그대로 그린다.</p>
+        <div class="src">— TRAINORACLE Visualization System</div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ============ FOOT ============ -->
+  <footer class="foot">
+    <span><b>TRAINORACLE</b> Sprint 2 · Visualization System</span>
+    <span>v <b>1.0</b> · 2026-04-29 · paired with <b>VISUALIZATION_SYSTEM.md</b></span>
+  </footer>
+
+</div>
+
+<!-- Heatmap inline generator -->
+<script>
+(function(){
+  var svg = document.getElementById('heatmap-svg');
+  if(!svg) return;
+  var COLS = 52, ROWS = 7;
+  var W = 320, H = 86;
+  var PAD_L = 12, PAD_T = 4;
+  var cw = (W - PAD_L - 4) / COLS;
+  var ch = (H - PAD_T - 4) / ROWS;
+  // Pseudo-random deterministic data
+  function v(i,j){
+    var s = Math.sin(i*12.9898 + j*78.233) * 43758.5453;
+    s = s - Math.floor(s);
+    // some weeks empty (rest week ~ every 4 weeks)
+    if(i%4===3 && j>=5) return 0;
+    if(s < .15) return 0;
+    if(s < .40) return 1;
+    if(s < .70) return 2;
+    if(s < .92) return 3;
+    return 4;
+  }
+  function color(v, sys){
+    if(v===0) return 'var(--surface-2)';
+    if(v===1) return 'var(--e-base-wash)';
+    if(v===2) return sys === 'lt' ? 'var(--e-lt-mid)' : 'var(--e-base-mid)';
+    if(v===3) return sys === 'vo2' ? 'var(--e-vo2-strong)' : 'var(--e-base-strong)';
+    if(v===4) return 'var(--e-vo2-strong)';
+    return 'var(--surface-2)';
+  }
+  function sysFor(i,j){
+    var k = (i+j) % 9;
+    if(k<3) return 'base';
+    if(k<5) return 'lt';
+    if(k<7) return 'base';
+    if(k===7) return 'vo2';
+    return 'base';
+  }
+  var html = '';
+  for(var i=0;i<COLS;i++){
+    for(var j=0;j<ROWS;j++){
+      var val = v(i,j);
+      var sys = sysFor(i,j);
+      var c = color(val, sys);
+      // opacity by val
+      var op = val===2 ? .55 : val===3 ? .85 : 1;
+      html += '<rect x="'+(PAD_L + i*cw + .4).toFixed(2)+'" y="'+(PAD_T + j*ch + .4).toFixed(2)+
+              '" width="'+(cw-.8).toFixed(2)+'" height="'+(ch-.8).toFixed(2)+
+              '" fill="'+c+'" opacity="'+op+'"/>';
+    }
+  }
+  svg.innerHTML = html;
+})();
+</script>
+
+</body>
+</html>

@@ -22,6 +22,15 @@
 
 **총 13개 화면 (00-12) + 1개 archive**
 
+### Sprint 산출물
+
+| 파일 | 내용 | 페어 문서 |
+|---|---|---|
+| `SPRINT1_MinjisDay.html` | "민지의 하루" 6컷 시나리오 (4 시스템 작동) | `design-system/SYSTEM_FOUNDATIONS.md` |
+| `SPRINT2_DataImport.html` | Primary Device · 3년 데이터 import 경험 | `design-system/SAFEGUARDS.md` §1 |
+| `SPRINT2_Records.html` | PB · SB · Target · Reference 4 records | `PHILOSOPHY.md` §5.5 |
+| `SPRINT2_VisualizationSystem.html` | 4-tier 컬러 · 12 차트 카탈로그 · 검증 매트릭스 | `design-system/VISUALIZATION_SYSTEM.md` |
+
 ---
 
 ## 보는 방법
@@ -62,10 +71,8 @@ npx serve .
 - 1500m PB: 4:14.82 / 5000m PB: 16:10.44
 - CK +18% (warning), RPE stable
 
-코치 시나리오는 **장호준** 기준:
-- 8명 선수 관리
-- AI 인박스 3 미확인
-- 다음 목표 대회: D-26
+> **참고**: 코치 8명 관리 시나리오는 P3로 이연됨 (정리본 §3 — User ↔ AI 1:1).
+> AI 코치 **장호준**은 사용자 1명을 위한 개인 AI 코치 역할로 통합.
 
 ---
 
