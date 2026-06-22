@@ -1,0 +1,27 @@
+<!doctype html>
+<html><head><meta charset="utf-8"/>
+<link rel="stylesheet" href="../colors_and_type.css">
+<style>
+  body{margin:0;padding:20px;background:#E4E2DA;font-family:var(--sans);}
+  .grid{display:grid;grid-template-columns:repeat(5,1fr);gap:1px;background:var(--line);border:1px solid var(--line);}
+  .sw{background:var(--surface);padding:14px 12px;display:flex;flex-direction:column;justify-content:space-between;min-height:108px;}
+  .chip{width:42px;height:42px;border:1px solid var(--line);margin-bottom:10px;}
+  .nm{font-family:var(--mono);font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--ink);}
+  .hex{font-family:var(--mono);font-size:10px;color:var(--ink-3);margin-top:2px;letter-spacing:0;}
+  .row2{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line);border:1px solid var(--line);border-top:0;}
+</style>
+</head><body>
+  <div class="grid">
+    <div class="sw"><div class="chip" style="background:#FAFAF7"></div><div><div class="nm">bg</div><div class="hex">#FAFAF7</div></div></div>
+    <div class="sw"><div class="chip" style="background:#FFFFFF"></div><div><div class="nm">surface</div><div class="hex">#FFFFFF</div></div></div>
+    <div class="sw"><div class="chip" style="background:#F4F3EE"></div><div><div class="nm">surface-2</div><div class="hex">#F4F3EE</div></div></div>
+    <div class="sw"><div class="chip" style="background:#E8E6DF"></div><div><div class="nm">hair</div><div class="hex">#E8E6DF</div></div></div>
+    <div class="sw"><div class="chip" style="background:#D9D6CE"></div><div><div class="nm">line</div><div class="hex">#D9D6CE</div></div></div>
+  </div>
+  <div class="row2">
+    <div class="sw"><div class="chip" style="background:#0E1412"></div><div><div class="nm">ink</div><div class="hex">#0E1412</div></div></div>
+    <div class="sw"><div class="chip" style="background:#2B3330"></div><div><div class="nm">ink-2</div><div class="hex">#2B3330</div></div></div>
+    <div class="sw"><div class="chip" style="background:#5F6965"></div><div><div class="nm">ink-3</div><div class="hex">#5F6965</div></div></div>
+    <div class="sw"><div class="chip" style="background:#8F9894"></div><div><div class="nm">ink-4</div><div class="hex">#8F9894</div></div></div>
+  </div>
+</body></html>

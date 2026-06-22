@@ -1,0 +1,36 @@
+<!doctype html>
+<html><head><meta charset="utf-8"/>
+<link rel="stylesheet" href="../colors_and_type.css">
+<style>
+  body{margin:0;padding:22px 24px;background:var(--bg);font-family:var(--sans);}
+  .lb{font-family:var(--mono);font-size:10px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3);margin-bottom:12px;}
+  .lb b{color:var(--ink);}
+  .rail{display:grid;grid-template-columns:repeat(10,1fr);border:1px solid var(--ink);}
+  .cell{padding:14px 6px 12px;border-right:1px solid var(--line);text-align:center;min-height:84px;display:flex;flex-direction:column;justify-content:space-between;align-items:center;}
+  .cell:last-child{border-right:0;}
+  .cell.main{background:var(--ink);color:var(--bg);}
+  .cell.today{background:var(--surface-2);}
+  .cell .day{font-family:var(--mono);font-size:10px;color:var(--ink-3);letter-spacing:.08em;font-weight:500;}
+  .cell.main .day{color:rgba(255,255,255,.6);}
+  .cell .label{font-family:var(--mono);font-size:11px;font-weight:600;color:var(--ink);letter-spacing:.04em;}
+  .cell.main .label{color:#fff;}
+  .cell .label.r{color:var(--ink-3);font-weight:500;}
+  .cell .dot{width:7px;height:7px;border-radius:50%;}
+  .cell .mk{font-family:var(--mono);font-size:9px;color:#fff;letter-spacing:.14em;}
+</style>
+</head><body>
+  <div class="lb">— <b>Cycle Rail</b> · 9.5-day cycle (Cycle 7)  · 핵심 차별 컴포넌트</div>
+  <div class="rail">
+    <div class="cell"><div class="day">D-1</div><div class="dot" style="background:#7A7A70"></div><div class="label r">REC</div></div>
+    <div class="cell"><div class="day">D-2</div><div class="dot" style="background:#4A8FC7"></div><div class="label">BA</div></div>
+    <div class="cell"><div class="day">D-3</div><div class="dot" style="background:#4A8FC7"></div><div class="label">BA</div></div>
+    <div class="cell"><div class="day">D-4</div><div class="dot" style="background:#4A8FC7"></div><div class="label">BA+</div></div>
+    <div class="cell main"><div class="day">D-5</div><div class="dot" style="background:#C7761C"></div><div class="label">V2</div><div class="mk">※ MAIN</div></div>
+    <div class="cell today"><div class="day">D-6</div><div class="dot" style="background:#7A7A70"></div><div class="label r">Z1</div></div>
+    <div class="cell"><div class="day">D-7</div><div class="dot" style="background:#B8A024"></div><div class="label">LT</div></div>
+    <div class="cell"><div class="day">D-8</div><div class="dot" style="background:#4A8FC7"></div><div class="label">BA</div></div>
+    <div class="cell"><div class="day">D-9</div><div class="dot" style="background:#7A7A70"></div><div class="label r">OFF</div></div>
+    <div class="cell"><div class="day">D-.5</div><div class="dot" style="background:#7A7A70"></div><div class="label r">··</div></div>
+  </div>
+  <div class="lb" style="margin-top:12px;color:var(--ink-3);"><b>D-6</b> 오늘 · MAIN 세션(D-5)에서 1일 경과 · 다음 LT(D-7)까지 1일</div>
+</body></html>

@@ -1,0 +1,25 @@
+<!doctype html>
+<html><head><meta charset="utf-8"/>
+<link rel="stylesheet" href="../colors_and_type.css">
+<style>
+  body{margin:0;padding:22px 26px;background:var(--bg);font-family:var(--sans);}
+  .lb{font-family:var(--mono);font-size:10px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3);margin-bottom:12px;}
+  .item{display:grid;grid-template-columns:18px 52px 1fr;gap:12px;padding:11px 0;border-bottom:1px solid var(--hair);align-items:baseline;}
+  .item:last-child{border-bottom:0;}
+  .icon{font-family:var(--mono);font-size:13px;font-weight:600;line-height:1;}
+  .icon.ok{color:var(--ok);}
+  .icon.warn{color:var(--warn);}
+  .icon.info{color:var(--info);}
+  .icon.fail{color:var(--err);}
+  .code{font-family:var(--mono);font-size:11px;font-weight:600;letter-spacing:.06em;color:var(--ink);}
+  .title{font-size:13.5px;color:var(--ink);font-weight:500;letter-spacing:-0.005em;}
+  .detail{font-family:var(--mono);font-size:11px;color:var(--ink-3);margin-top:3px;letter-spacing:.02em;}
+</style>
+</head><body>
+  <div class="lb">— Validation items (9 Rules engine output)</div>
+  <div class="item"><span class="icon ok">✓</span><span class="code">R-6</span><div><div class="title">VO2 반복 볼륨 기준 내</div><div class="detail">6 × 1000m = 6 km · 권고 5–8 km</div></div></div>
+  <div class="item"><span class="icon ok">✓</span><span class="code">R-3</span><div><div class="title">Z1 회복 비율 21.4% (≥ 20%)</div><div class="detail">cycle 7 누적: 2h 14m / 10h 28m</div></div></div>
+  <div class="item"><span class="icon warn">!</span><span class="code">R-7</span><div><div class="title">드리프트 +4.2" — 관찰 기준 초과</div><div class="detail">MAIN 마지막 2 rep · 권고 ±3"</div></div></div>
+  <div class="item"><span class="icon info">i</span><span class="code">R-4</span><div><div class="title">주관 신호 우선 — RPE 5.8 안정</div><div class="detail">CK +18% vs RPE stable, 주관 우선 적용</div></div></div>
+  <div class="item"><span class="icon fail">✕</span><span class="code">R-2</span><div><div class="title">MAIN 위치 위반 — D-3 배치</div><div class="detail">권고: D-5 ±1일 · 인박스 자동 이관</div></div></div>
+</body></html>

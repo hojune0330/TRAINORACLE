@@ -1,0 +1,27 @@
+<!doctype html>
+<html><head><meta charset="utf-8"/>
+<link rel="stylesheet" href="../colors_and_type.css">
+<style>
+  body{margin:0;padding:22px 26px;background:var(--bg);}
+  .lb{font-family:var(--mono);font-size:10px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3);margin-bottom:14px;}
+  .grid{display:grid;grid-template-columns:repeat(4,1fr);border-top:1px solid var(--ink);border-bottom:1px solid var(--ink);}
+  .it{padding:14px 14px 14px 0;border-right:1px solid var(--hair);}
+  .it:last-child{border-right:0;}
+  .it:not(:first-child){padding-left:14px;}
+  .l{font-family:var(--mono);font-size:9.5px;color:var(--ink-3);letter-spacing:.14em;text-transform:uppercase;font-weight:500;}
+  .v{font-family:var(--mono);font-size:22px;font-weight:500;color:var(--ink);letter-spacing:-0.02em;margin-top:6px;font-variant-numeric:tabular-nums;line-height:1.05;}
+  .v .u{font-size:11px;color:var(--ink-3);font-weight:400;margin-left:2px;}
+  .sub{font-family:var(--mono);font-size:10px;color:var(--ink-3);margin-top:4px;letter-spacing:.04em;}
+  .sub.up{color:var(--ok);}
+  .sub.dn{color:var(--err);}
+  .spark{margin-top:6px;height:18px;width:100%;display:block;}
+</style>
+</head><body>
+  <div class="lb">— Metric grid (4-col KPI · Analysis hero)</div>
+  <div class="grid">
+    <div class="it"><div class="l">CTL · Fitness</div><div class="v">62.4</div><div class="sub up">+2.1 · 7d</div></div>
+    <div class="it"><div class="l">ATL · Fatigue</div><div class="v">48.2</div><div class="sub">±0.3 · 7d</div></div>
+    <div class="it"><div class="l">TSB · Form</div><div class="v">+14.2</div><div class="sub up">good shape</div></div>
+    <div class="it"><div class="l">5000m PB</div><div class="v">16:10<span class="u">.44</span></div><div class="sub up">−32" · 12m</div></div>
+  </div>
+</body></html>

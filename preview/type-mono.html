@@ -1,0 +1,29 @@
+<!doctype html>
+<html><head><meta charset="utf-8"/>
+<link rel="stylesheet" href="../colors_and_type.css">
+<style>
+  body{margin:0;padding:24px;background:var(--bg);}
+  .row{display:grid;grid-template-columns:90px 1fr;gap:18px;align-items:baseline;padding:11px 0;border-bottom:1px solid var(--hair);}
+  .row:last-child{border-bottom:0;}
+  .lb{font-family:var(--mono);font-size:10px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3);}
+  .v{font-family:var(--mono);font-variant-numeric:tabular-nums;color:var(--ink);}
+  .meta{font-family:var(--mono);font-size:10px;color:var(--ink-4);margin-top:4px;letter-spacing:0;text-transform:none;}
+</style>
+</head><body>
+  <div class="row">
+    <div class="lb">Mono-num</div>
+    <div><span class="v" style="font-size:28px;font-weight:500;letter-spacing:-0.02em;">16:10.44</span> &nbsp; <span class="v" style="font-size:20px;font-weight:500;">3'20"/km</span> &nbsp; <span class="v" style="font-size:20px;font-weight:500;">HR 178</span><div class="meta">JetBrains Mono · tabular-nums · pace / HR / time</div></div>
+  </div>
+  <div class="row">
+    <div class="lb">Mono-SM</div>
+    <div><span class="v" style="font-size:11px;font-weight:500;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-3);">CYCLE 7 · D-5 / 9.5 · VO2-LONG</span><div class="meta">11px · 500 · uppercase · letter-spacing 0.06em · default label</div></div>
+  </div>
+  <div class="row">
+    <div class="lb">Mono-XS</div>
+    <div><span class="v" style="font-size:10px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3);">VERDICT · RECOMMEND · 87%</span><div class="meta">10px · 600 · uppercase · letter-spacing 0.14em · meta chip</div></div>
+  </div>
+  <div class="row">
+    <div class="lb">Inline-mono</div>
+    <div>본문에 섞일 때: 오늘 세션 <span class="v" style="font-size:12.5px;background:var(--surface-2);padding:1px 5px;border:1px solid var(--line);">6×1000m</span> · <span class="v" style="font-size:12.5px;background:var(--surface-2);padding:1px 5px;border:1px solid var(--line);">D-5</span><div class="meta">surface-2 bg + 1px line border · inline numerics</div></div>
+  </div>
+</body></html>

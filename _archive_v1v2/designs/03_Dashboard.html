@@ -1,0 +1,921 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="color-scheme" content="light" />
+<title>TRAINORACLE — Dashboard v2</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+<link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css" rel="stylesheet" />
+<style>
+  /* ============================================================
+     TRAINORACLE · Dashboard v2 — Tufte × Linear
+     Mobile (380) + Desktop (1408) · Light only
+     ============================================================ */
+  :root{
+    --bg:#FAFAF7;--surface:#FFFFFF;--surface-2:#F4F3EE;
+    --ink:#0E1412;--ink-2:#2B3330;--ink-3:#5F6965;--ink-4:#8F9894;
+    --line:#D9D6CE;--line-2:#BFBBB0;--hair:#E8E6DF;
+    --brand:#0D5F5A;--brand-ink:#07302E;
+    --ok:#1F7A3A;--warn:#B4530C;--err:#A11F1F;--info:#1D4ED8;--unc:#6B3FB0;
+    --e-base:#4A8FC7;--e-lt:#B8A024;--e-vo2:#C7761C;--e-gly:#B8332E;--e-atp:#7A3FB5;--e-rest:#7A7A70;
+    --sans:"Inter","Pretendard Variable",ui-sans-serif,system-ui,sans-serif;
+    --mono:"JetBrains Mono",ui-monospace,SFMono-Regular,monospace;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;background:#E4E2DA;color:var(--ink);font-family:var(--sans);-webkit-font-smoothing:antialiased;font-feature-settings:"ss01","cv11";}
+  body{font-size:14.5px;line-height:1.55;}
+  .mono{font-family:var(--mono);font-variant-numeric:tabular-nums;}
+
+  /* Chrome */
+  .chrome{position:sticky;top:0;z-index:100;background:rgba(228,226,218,.92);backdrop-filter:blur(12px);border-bottom:1px solid var(--line);padding:12px 24px;display:flex;align-items:center;gap:16px;}
+  .chrome-brand{font-weight:500;font-size:15px;letter-spacing:0.02em;}
+  .chrome-brand .dot{display:inline-block;width:5px;height:5px;background:var(--brand);border-radius:50%;margin:0 1px;transform:translateY(-2px);}
+  .chrome-path{font-family:var(--mono);font-size:10.5px;color:var(--ink-3);letter-spacing:.08em;text-transform:uppercase;}
+  .tabs{margin-left:auto;display:flex;border:1px solid var(--line);background:var(--surface);}
+  .tabs button{background:transparent;border:0;padding:9px 16px;font-family:var(--mono);font-size:11px;font-weight:500;color:var(--ink-3);cursor:pointer;letter-spacing:.08em;text-transform:uppercase;min-height:38px;border-right:1px solid var(--line);}
+  .tabs button:last-child{border-right:0;}
+  .tabs button.on{background:var(--ink);color:var(--bg);}
+  .tabs button:hover:not(.on){color:var(--ink);}
+
+  .canvas{padding:28px 24px 80px;display:flex;justify-content:center;}
+  .frame{display:none;}
+  .frame.on{display:block;}
+  .view-label{font-family:var(--mono);font-size:11px;color:var(--ink-3);letter-spacing:.14em;text-transform:uppercase;margin-bottom:14px;display:flex;align-items:center;gap:10px;}
+  .view-label .dot{width:5px;height:5px;background:var(--brand);border-radius:50%;}
+  .view-label .dim{color:var(--ink-4);}
+
+  /* ============== MOBILE FRAME ============== */
+  .m-frame{width:380px;margin:0 auto;background:#0E1412;padding:10px;box-shadow:0 40px 100px -30px rgba(0,0,0,.28),0 10px 30px -10px rgba(0,0,0,.18);}
+  .m-inner{background:var(--bg);overflow:hidden;height:820px;position:relative;display:flex;flex-direction:column;}
+  .m-status{height:30px;display:flex;align-items:center;justify-content:space-between;padding:6px 22px 0;font-size:13px;font-weight:600;flex-shrink:0;}
+  .m-status .r{display:flex;gap:6px;align-items:center;}
+  .m-status svg{fill:var(--ink);}
+
+  .m-top{padding:14px 18px 12px;border-bottom:1px solid var(--line);display:flex;align-items:flex-start;gap:14px;flex-shrink:0;}
+  .m-top .mt-l{flex:1;min-width:0;}
+  .m-top .greet{margin:0;font-size:19px;font-weight:500;letter-spacing:-0.02em;color:var(--ink);line-height:1.2;}
+  .m-top .greet em{font-style:normal;font-weight:600;}
+  .m-top .meta{font-family:var(--mono);font-size:10px;color:var(--ink-3);letter-spacing:.08em;text-transform:uppercase;margin-top:6px;display:flex;gap:10px;align-items:center;}
+  .m-top .meta b{color:var(--ink);font-weight:500;}
+  .m-top .ic{width:30px;height:30px;display:flex;align-items:center;justify-content:center;color:var(--ink-2);position:relative;flex-shrink:0;}
+  .m-top .ic .badge{position:absolute;top:2px;right:2px;width:6px;height:6px;background:var(--err);border-radius:50%;}
+
+  .m-scroll{flex:1;overflow-y:auto;padding-bottom:60px;}
+
+  /* Section heading — sectional */
+  .m-sec{padding:18px 18px 18px;border-bottom:1px solid var(--line);}
+  .m-sec-h{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:12px;padding-bottom:6px;border-bottom:1px solid var(--ink);}
+  .m-sec-h .sn{font-family:var(--mono);font-size:10px;color:var(--ink-3);letter-spacing:.14em;text-transform:uppercase;font-weight:500;}
+  .m-sec-h .sn b{color:var(--ink);font-weight:500;}
+  .m-sec-h .act{font-family:var(--mono);font-size:10.5px;color:var(--ink-2);text-decoration:underline;text-underline-offset:3px;letter-spacing:.04em;cursor:pointer;}
+
+  /* Energy tag — dot + code (no fill) */
+  .etag{display:inline-flex;align-items:center;gap:5px;font-family:var(--mono);font-size:10.5px;font-weight:600;color:var(--ink);letter-spacing:.06em;}
+  .etag .d{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
+  .etag.base .d{background:var(--e-base);} .etag.base{color:var(--e-base);}
+  .etag.lt .d{background:var(--e-lt);} .etag.lt{color:var(--e-lt);}
+  .etag.vo2 .d{background:var(--e-vo2);} .etag.vo2{color:var(--e-vo2);}
+  .etag.gly .d{background:var(--e-gly);} .etag.gly{color:var(--e-gly);}
+  .etag.atp .d{background:var(--e-atp);} .etag.atp{color:var(--e-atp);}
+  .etag.rest .d{background:var(--e-rest);} .etag.rest{color:var(--e-rest);}
+
+  /* Today sessions — table style, no cards */
+  .m-sess{padding:14px 0;border-bottom:1px dashed var(--hair);}
+  .m-sess:first-child{padding-top:0;}
+  .m-sess:last-child{border-bottom:0;padding-bottom:0;}
+  .m-sess.main{padding-top:14px;border-top:1px solid var(--ink);margin-top:14px;}
+  .m-sess.main:first-child{border-top:0;margin-top:0;padding-top:0;}
+  .m-sess .row1{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:4px;}
+  .m-sess .lbl{font-family:var(--mono);font-size:10px;color:var(--ink-3);letter-spacing:.12em;text-transform:uppercase;font-weight:500;}
+  .m-sess .lbl b{color:var(--ink);font-weight:500;}
+  .m-sess .lbl .ck{color:var(--ok);margin-left:4px;}
+  .m-sess .lbl .mn{color:var(--ink);font-weight:600;}
+  .m-sess .when{font-family:var(--mono);font-size:10px;color:var(--ink-3);letter-spacing:.06em;}
+  .m-sess h3{margin:2px 0 4px;font-size:16px;font-weight:500;letter-spacing:-0.015em;line-height:1.25;color:var(--ink);}
+  .m-sess.main h3{font-weight:600;}
+  .m-sess .desc{font-family:var(--mono);font-size:11px;color:var(--ink-2);letter-spacing:.02em;line-height:1.5;}
+  .m-sess .desc .dim{color:var(--ink-4);}
+  .m-sess .etags{display:flex;gap:14px;margin-top:7px;}
+  .m-sess .acts{display:flex;gap:8px;margin-top:12px;}
+  .m-sess .btn{flex:1;background:var(--ink);color:var(--bg);border:0;padding:10px 12px;font-family:var(--mono);font-size:11px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px;min-height:38px;}
+  .m-sess .btn.sec{background:transparent;color:var(--ink);border:1px solid var(--line-2);}
+
+  /* 9.5 Cycle rail */
+  .m-cycle-info{font-family:var(--mono);font-size:11px;color:var(--ink-2);letter-spacing:.04em;margin-bottom:14px;display:flex;justify-content:space-between;}
+  .m-cycle-info b{color:var(--ink);font-weight:600;}
+  .m-cycle-rail{position:relative;height:62px;margin:0 4px;}
+  .m-cycle-rail .axis{position:absolute;top:22px;left:0;right:0;height:1px;background:var(--line-2);}
+  .m-cycle-rail .axis-now{position:absolute;top:14px;height:18px;width:1px;background:var(--ink);}
+  .m-cycle-slot{position:absolute;top:0;width:11.1%;text-align:center;}
+  .m-cycle-slot .dot{width:7px;height:7px;border-radius:50%;background:var(--ink-4);margin:18px auto 0;border:1px solid var(--ink-4);}
+  .m-cycle-slot.future .dot{background:transparent;border-color:var(--line-2);}
+  .m-cycle-slot.now .dot{width:11px;height:11px;background:var(--ink);border-color:var(--ink);margin-top:16px;}
+  .m-cycle-slot.main .dot{width:9px;height:9px;background:var(--brand);border-color:var(--brand);margin-top:17px;}
+  .m-cycle-slot.main.future .dot{background:var(--surface);border-color:var(--brand);border-width:2px;}
+  .m-cycle-slot .lb{font-family:var(--mono);font-size:9px;color:var(--ink-3);letter-spacing:.04em;margin-top:6px;}
+  .m-cycle-slot.now .lb{color:var(--ink);font-weight:600;}
+  .m-cycle-slot.main .lb{color:var(--brand);font-weight:600;}
+  .m-cycle-slot .top-lb{font-family:var(--mono);font-size:8.5px;color:var(--ink-4);letter-spacing:.04em;margin-bottom:3px;height:10px;}
+  .m-cycle-slot.main .top-lb{color:var(--brand);font-weight:600;}
+
+  /* Validation — table style (D-N · name · value · target) */
+  .m-vtable{width:100%;border-collapse:collapse;font-family:var(--mono);}
+  .m-vtable tr{border-bottom:1px dashed var(--hair);}
+  .m-vtable tr:last-child{border-bottom:0;}
+  .m-vtable td{padding:10px 0;font-size:11.5px;vertical-align:baseline;}
+  .m-vtable td.id{color:var(--ink-3);font-size:10px;letter-spacing:.08em;width:48px;font-weight:500;}
+  .m-vtable td.id b{color:var(--ink);font-weight:600;}
+  .m-vtable tr.warn td.id b{color:var(--warn);}
+  .m-vtable td.nm{color:var(--ink);font-family:var(--sans);font-size:13px;font-weight:500;letter-spacing:-0.005em;}
+  .m-vtable td.nm .sub{font-family:var(--mono);font-size:10px;color:var(--ink-3);font-weight:400;display:block;margin-top:1px;letter-spacing:.04em;}
+  .m-vtable td.vl{text-align:right;font-size:13px;font-weight:600;color:var(--ink);letter-spacing:-0.01em;}
+  .m-vtable tr.warn td.vl{color:var(--warn);}
+  .m-vtable td.vl .u{font-size:10px;color:var(--ink-3);font-weight:400;margin-left:2px;}
+
+  /* Inbox items */
+  .m-inbox-item{padding:14px 0;border-bottom:1px dashed var(--hair);}
+  .m-inbox-item:last-child{border-bottom:0;padding-bottom:0;}
+  .m-inbox-item:first-child{padding-top:0;}
+  .m-inbox-item .hd{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:4px;}
+  .m-inbox-item .ttag{font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;font-weight:600;display:inline-flex;align-items:center;gap:5px;}
+  .m-inbox-item .ttag .c{font-family:var(--mono);font-weight:700;}
+  .m-inbox-item.unc .ttag{color:var(--unc);}
+  .m-inbox-item.warn .ttag{color:var(--warn);}
+  .m-inbox-item .when{font-family:var(--mono);font-size:10px;color:var(--ink-3);letter-spacing:.04em;}
+  .m-inbox-item h4{margin:2px 0 4px;font-size:14.5px;font-weight:500;letter-spacing:-0.01em;color:var(--ink);}
+  .m-inbox-item p{margin:0;font-size:12.5px;color:var(--ink-2);line-height:1.5;}
+  .m-inbox-item p .k{font-family:var(--mono);background:var(--surface-2);padding:1px 4px;border:1px solid var(--line);font-size:11.5px;}
+  .m-inbox-item .btns{display:flex;gap:6px;margin-top:10px;flex-wrap:wrap;}
+  .m-inbox-item .btn{background:transparent;border:1px solid var(--line-2);color:var(--ink-2);padding:6px 10px;font-family:var(--mono);font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;cursor:pointer;font-weight:500;min-height:30px;}
+  .m-inbox-item .btn.p{background:var(--ink);color:var(--bg);border-color:var(--ink);}
+
+  /* Week summary — energy distribution stack */
+  .m-wk{}
+  .m-wk-hd{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:10px;}
+  .m-wk-hd .t{font-size:13px;font-weight:500;color:var(--ink);}
+  .m-wk-hd .v{font-family:var(--mono);font-size:13px;color:var(--ink);font-weight:600;}
+  .m-wk-hd .v .u{color:var(--ink-3);font-size:10px;font-weight:400;margin-left:2px;}
+  .m-wk-bar{display:flex;height:14px;border:1px solid var(--line);}
+  .m-wk-bar > div{height:100%;border-right:1px solid var(--surface);}
+  .m-wk-bar > div:last-child{border-right:0;}
+  .m-wk-legend{margin-top:10px;display:grid;grid-template-columns:repeat(2,1fr);gap:6px 14px;font-family:var(--mono);font-size:10.5px;color:var(--ink-2);}
+  .m-wk-legend .lg{display:flex;align-items:center;gap:6px;}
+  .m-wk-legend .lg .sw{width:8px;height:8px;border-radius:50%;}
+  .m-wk-legend .lg .nm{color:var(--ink-2);min-width:36px;letter-spacing:.06em;}
+  .m-wk-legend .lg .pct{color:var(--ink);font-weight:600;margin-left:auto;}
+
+  /* Next MAIN — bottom band */
+  .m-next{display:flex;align-items:baseline;gap:14px;}
+  .m-next .lf{flex:1;}
+  .m-next .lf .l1{font-family:var(--mono);font-size:10.5px;color:var(--ink-3);letter-spacing:.08em;text-transform:uppercase;}
+  .m-next .lf .l1 b{color:var(--ink);font-weight:500;}
+  .m-next .lf .l2{font-size:15px;font-weight:600;letter-spacing:-0.01em;margin-top:3px;}
+  .m-next .lf .l3{font-family:var(--mono);font-size:11px;color:var(--ink-3);margin-top:2px;letter-spacing:.04em;}
+  .m-next .rt{text-align:right;}
+  .m-next .rt .big{font-family:var(--mono);font-size:24px;font-weight:500;color:var(--ink);letter-spacing:-0.02em;line-height:1;}
+  .m-next .rt .big .u{font-size:11px;color:var(--ink-3);font-weight:400;margin-left:2px;}
+  .m-next .rt .sm{font-family:var(--mono);font-size:9.5px;color:var(--ink-3);letter-spacing:.1em;text-transform:uppercase;margin-top:4px;}
+
+  /* Bottom tab bar */
+  .m-tabs{position:absolute;left:0;right:0;bottom:0;background:rgba(250,250,247,.94);backdrop-filter:blur(8px);border-top:1px solid var(--line);display:grid;grid-template-columns:repeat(5,1fr);height:60px;}
+  .m-tab{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;color:var(--ink-3);cursor:pointer;font-family:var(--mono);font-size:9px;letter-spacing:.1em;text-transform:uppercase;border-top:2px solid transparent;}
+  .m-tab.on{color:var(--ink);font-weight:600;border-top-color:var(--ink);background:var(--surface);}
+  .m-tab svg{stroke:currentColor;}
+
+  /* ============== DESKTOP ============== */
+  .d-frame{width:1408px;margin:0 auto;background:var(--surface);overflow:hidden;box-shadow:0 40px 100px -30px rgba(0,0,0,.22);border:1px solid var(--line);}
+  .d-chrome{background:var(--surface-2);border-bottom:1px solid var(--line);padding:10px 16px;display:flex;align-items:center;gap:10px;}
+  .d-chrome .dots{display:flex;gap:6px;}
+  .d-chrome .dot{width:11px;height:11px;border-radius:50%;}
+  .d-chrome .dot.r{background:#F25F5C;opacity:.85;} .d-chrome .dot.y{background:#F7C548;opacity:.85;} .d-chrome .dot.g{background:#4CB963;opacity:.85;}
+  .d-chrome .url{margin-left:14px;background:var(--surface);border:1px solid var(--line);padding:5px 14px;font-family:var(--mono);font-size:11px;color:var(--ink-3);flex:1;max-width:460px;}
+  .d-chrome .url b{color:var(--ink);font-weight:500;}
+
+  .d-app{display:grid;grid-template-columns:220px 1fr 380px;min-height:880px;}
+
+  /* Sidebar */
+  .d-side{background:var(--bg);border-right:1px solid var(--line);padding:18px 0;display:flex;flex-direction:column;}
+  .d-side .sd-brand{padding:4px 20px 22px;font-size:15px;font-weight:600;letter-spacing:.04em;}
+  .d-side .sd-brand .dot{display:inline-block;width:5px;height:5px;border-radius:50%;background:var(--brand);margin:0 1px;transform:translateY(-2px);}
+  .d-side .sd-lb{font-family:var(--mono);font-size:9.5px;color:var(--ink-4);letter-spacing:.14em;text-transform:uppercase;padding:18px 20px 8px;font-weight:600;}
+  .d-side .sd-nav{display:flex;align-items:center;gap:11px;padding:8px 20px;font-size:13px;color:var(--ink-2);text-decoration:none;border-left:2px solid transparent;cursor:pointer;}
+  .d-side .sd-nav:hover{background:var(--surface-2);color:var(--ink);}
+  .d-side .sd-nav.on{background:var(--surface);color:var(--ink);font-weight:500;border-left-color:var(--ink);}
+  .d-side .sd-nav .ic{width:14px;height:14px;flex-shrink:0;}
+  .d-side .sd-nav .sd-k{margin-left:auto;font-family:var(--mono);font-size:10px;color:var(--ink-4);letter-spacing:.04em;}
+  .d-side .sd-nav .sd-badge{margin-left:auto;font-family:var(--mono);font-size:10px;background:var(--err);color:#fff;padding:1px 5px;letter-spacing:.04em;}
+  .d-side .sd-user{margin:auto 12px 12px;display:flex;align-items:center;gap:10px;padding:14px 12px 0;border-top:1px solid var(--line);}
+  .d-side .sd-user .av{width:30px;height:30px;background:var(--ink);color:var(--bg);display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:11px;font-weight:600;}
+  .d-side .sd-user .un{font-size:12.5px;font-weight:500;}
+  .d-side .sd-user .ur{font-family:var(--mono);font-size:10px;color:var(--ink-3);margin-top:1px;letter-spacing:.04em;}
+
+  /* Main column */
+  .d-main{padding:0;overflow:auto;border-right:1px solid var(--line);}
+  .d-top{padding:24px 36px 20px;border-bottom:1px solid var(--line);}
+  .d-top .kicker{font-family:var(--mono);font-size:11px;color:var(--ink-3);letter-spacing:.08em;text-transform:uppercase;margin-bottom:8px;display:flex;gap:14px;align-items:center;flex-wrap:wrap;}
+  .d-top .kicker b{color:var(--ink);font-weight:500;}
+  .d-top .kicker .dlm{color:var(--ink-4);}
+  .d-top h1{margin:0;font-size:30px;font-weight:500;letter-spacing:-0.025em;line-height:1.15;}
+  .d-top h1 em{font-style:normal;font-weight:600;}
+  .d-top .lede{margin:10px 0 0;font-size:14.5px;color:var(--ink-2);line-height:1.55;max-width:680px;}
+  .d-top .lede .warn{color:var(--warn);font-weight:500;}
+  .d-top .acts{margin-top:18px;display:flex;gap:10px;}
+  .d-top .acts .btn{background:var(--ink);color:var(--bg);border:0;padding:10px 16px;font-family:var(--mono);font-size:11.5px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;cursor:pointer;display:flex;align-items:center;gap:6px;min-height:36px;}
+  .d-top .acts .btn.sec{background:transparent;color:var(--ink);border:1px solid var(--line-2);}
+
+  /* Section in main */
+  .d-sec{padding:24px 36px;border-bottom:1px solid var(--line);}
+  .d-sec-h{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:16px;padding-bottom:8px;border-bottom:1px solid var(--ink);}
+  .d-sec-h .sn{font-family:var(--mono);font-size:11px;color:var(--ink-3);letter-spacing:.14em;text-transform:uppercase;font-weight:500;}
+  .d-sec-h .sn b{color:var(--ink);font-weight:500;}
+  .d-sec-h .act{font-family:var(--mono);font-size:11px;color:var(--ink-2);text-decoration:underline;text-underline-offset:3px;letter-spacing:.04em;cursor:pointer;}
+
+  /* Today — desktop split into AM/PM rows */
+  .d-today{display:grid;grid-template-columns:1fr 1fr;gap:0;border-top:1px solid var(--hair);border-bottom:1px solid var(--hair);}
+  .d-today .ts{padding:18px 24px 18px 0;border-right:1px solid var(--hair);}
+  .d-today .ts:last-child{padding-left:24px;padding-right:0;border-right:0;}
+  .d-today .ts.main{}
+  .d-today .ts .row1{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:6px;}
+  .d-today .ts .lbl{font-family:var(--mono);font-size:10.5px;color:var(--ink-3);letter-spacing:.12em;text-transform:uppercase;font-weight:500;}
+  .d-today .ts .lbl b{color:var(--ink);font-weight:500;}
+  .d-today .ts .lbl .ck{color:var(--ok);margin-left:4px;}
+  .d-today .ts .lbl .mn{color:var(--ink);font-weight:600;}
+  .d-today .ts .when{font-family:var(--mono);font-size:11px;color:var(--ink-3);letter-spacing:.04em;}
+  .d-today .ts h3{margin:2px 0 6px;font-size:20px;font-weight:500;letter-spacing:-0.02em;color:var(--ink);}
+  .d-today .ts.main h3{font-weight:600;}
+  .d-today .ts .desc{font-family:var(--mono);font-size:12px;color:var(--ink-2);letter-spacing:.02em;margin-bottom:10px;}
+  .d-today .ts .desc .dim{color:var(--ink-4);}
+  .d-today .ts .etags{display:flex;gap:14px;margin-bottom:14px;}
+  .d-today .ts .protocol{margin-top:14px;padding-top:12px;border-top:1px dashed var(--hair);}
+  .d-today .ts .protocol .pr{display:flex;justify-content:space-between;font-family:var(--mono);font-size:11px;padding:5px 0;border-bottom:1px dashed var(--hair);}
+  .d-today .ts .protocol .pr:last-child{border-bottom:0;}
+  .d-today .ts .protocol .pr .l{color:var(--ink-3);letter-spacing:.06em;}
+  .d-today .ts .protocol .pr .v{color:var(--ink);font-weight:500;}
+  .d-today .ts .acts{display:flex;gap:8px;margin-top:14px;}
+  .d-today .ts .acts .btn{background:var(--ink);color:var(--bg);border:0;padding:9px 14px;font-family:var(--mono);font-size:11px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;cursor:pointer;display:flex;align-items:center;gap:5px;min-height:34px;}
+  .d-today .ts .acts .btn.sec{background:transparent;color:var(--ink);border:1px solid var(--line-2);}
+
+  /* Validation grid — desktop */
+  .d-vgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:0;border-top:1px solid var(--hair);border-bottom:1px solid var(--hair);}
+  .d-vc{padding:14px 18px 16px 0;border-right:1px solid var(--hair);border-bottom:1px solid var(--hair);}
+  .d-vc:nth-child(3n){border-right:0;padding-right:0;}
+  .d-vc:nth-child(3n+2){padding-left:18px;padding-right:18px;}
+  .d-vc:nth-child(3n+3){padding-left:18px;}
+  .d-vc:nth-last-child(-n+3){border-bottom:0;}
+  .d-vc .id{font-family:var(--mono);font-size:10px;color:var(--ink-3);letter-spacing:.14em;text-transform:uppercase;font-weight:500;margin-bottom:5px;}
+  .d-vc .id b{color:var(--ink);font-weight:600;}
+  .d-vc.warn .id b{color:var(--warn);}
+  .d-vc .nm{font-size:13.5px;font-weight:500;color:var(--ink);letter-spacing:-0.005em;margin-bottom:6px;}
+  .d-vc .vl{font-family:var(--mono);font-size:22px;font-weight:500;color:var(--ink);letter-spacing:-0.02em;line-height:1;}
+  .d-vc.warn .vl{color:var(--warn);}
+  .d-vc .vl .u{font-size:12px;color:var(--ink-3);font-weight:400;margin-left:3px;}
+  .d-vc .tg{font-family:var(--mono);font-size:10.5px;color:var(--ink-3);margin-top:6px;letter-spacing:.04em;}
+
+  /* Cycle rail — desktop */
+  .d-cycle-info{font-family:var(--mono);font-size:11.5px;color:var(--ink-2);letter-spacing:.04em;margin-bottom:18px;display:flex;justify-content:space-between;}
+  .d-cycle-info b{color:var(--ink);font-weight:600;}
+  .d-cycle-rail{position:relative;height:84px;}
+  .d-cycle-rail .axis{position:absolute;top:38px;left:0;right:0;height:1px;background:var(--line-2);}
+  .d-cycle-rail .axis-now{position:absolute;top:28px;height:22px;width:1px;background:var(--ink);}
+  .d-cycle-slot{position:absolute;top:0;width:9.9%;text-align:center;}
+  .d-cycle-slot .top-lb{font-family:var(--mono);font-size:9.5px;color:var(--ink-4);letter-spacing:.06em;text-transform:uppercase;height:13px;margin-bottom:3px;}
+  .d-cycle-slot.main .top-lb{color:var(--brand);font-weight:600;}
+  .d-cycle-slot.now .top-lb{color:var(--ink);font-weight:600;}
+  .d-cycle-slot .dot{width:8px;height:8px;border-radius:50%;background:var(--ink-4);margin:18px auto 0;border:1px solid var(--ink-4);}
+  .d-cycle-slot.future .dot{background:transparent;border-color:var(--line-2);}
+  .d-cycle-slot.now .dot{width:13px;height:13px;background:var(--ink);border-color:var(--ink);margin-top:15px;}
+  .d-cycle-slot.main .dot{width:11px;height:11px;background:var(--brand);border-color:var(--brand);margin-top:16px;}
+  .d-cycle-slot.main.future .dot{background:var(--surface);border-color:var(--brand);border-width:2px;}
+  .d-cycle-slot .lb{font-family:var(--mono);font-size:10px;color:var(--ink-3);letter-spacing:.04em;margin-top:8px;font-weight:500;}
+  .d-cycle-slot.now .lb{color:var(--ink);font-weight:600;}
+  .d-cycle-slot.main .lb{color:var(--brand);font-weight:600;}
+  .d-cycle-slot .date-lb{font-family:var(--mono);font-size:9px;color:var(--ink-4);margin-top:2px;letter-spacing:.04em;}
+
+  /* Right column */
+  .d-right{padding:24px 28px;background:var(--bg);overflow-y:auto;display:flex;flex-direction:column;gap:24px;}
+  .d-rs{}
+  .d-rs-h{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:12px;padding-bottom:7px;border-bottom:1px solid var(--ink);}
+  .d-rs-h .sn{font-family:var(--mono);font-size:10.5px;color:var(--ink-3);letter-spacing:.14em;text-transform:uppercase;font-weight:500;}
+  .d-rs-h .sn b{color:var(--ink);font-weight:500;}
+  .d-rs-h .ct{font-family:var(--mono);font-size:10px;color:var(--ink-3);letter-spacing:.04em;}
+
+  /* Coach briefing — left brand hairline */
+  .d-coach{padding:14px 0 0;}
+  .d-coach .hd{display:flex;align-items:center;gap:10px;margin-bottom:10px;}
+  .d-coach .hd .av{width:26px;height:26px;background:var(--brand);color:#fff;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:10px;font-weight:600;}
+  .d-coach .hd .nm{font-size:13px;font-weight:500;}
+  .d-coach .hd .when{font-family:var(--mono);font-size:10px;color:var(--ink-3);margin-left:auto;letter-spacing:.04em;}
+  .d-coach .msg{padding-left:14px;border-left:2px solid var(--brand);font-size:13.5px;line-height:1.55;color:var(--ink);}
+  .d-coach .msg b{font-weight:600;}
+  .d-coach .src{font-family:var(--mono);font-size:10px;color:var(--ink-3);letter-spacing:.06em;margin-top:8px;text-transform:uppercase;padding-left:14px;}
+  .d-coach .src b{color:var(--ink-2);font-weight:500;}
+  .d-coach .go{margin-top:12px;background:transparent;border:1px solid var(--line-2);color:var(--ink-2);padding:8px 12px;font-family:var(--mono);font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;cursor:pointer;font-weight:500;width:100%;text-align:left;}
+
+  /* Inbox in right — same style as main inbox */
+  .d-rs .m-inbox-item{padding:12px 0;}
+  .d-rs .m-inbox-item:first-child{padding-top:0;}
+
+  /* Quick actions */
+  .d-qa{display:grid;grid-template-columns:repeat(2,1fr);gap:0;border:1px solid var(--line);}
+  .d-qa button{background:transparent;border:0;padding:14px 14px;text-align:left;cursor:pointer;border-right:1px solid var(--line);border-bottom:1px solid var(--line);font-family:var(--mono);}
+  .d-qa button:nth-child(2n){border-right:0;}
+  .d-qa button:nth-last-child(-n+2){border-bottom:0;}
+  .d-qa button:hover{background:var(--surface);}
+  .d-qa button .k{display:block;font-size:11px;color:var(--ink);font-weight:600;letter-spacing:.1em;text-transform:uppercase;}
+  .d-qa button .l{display:block;font-size:10.5px;color:var(--ink-3);letter-spacing:.04em;margin-top:3px;}
+
+  /* SVG sparkline */
+  .spark{width:100%;height:36px;display:block;}
+
+  @media (max-width:1450px){
+    .d-frame{width:100%;}
+  }
+</style>
+</head>
+<body>
+
+<div class="chrome">
+  <div class="chrome-brand">TRAIN<span class="dot"></span>ORACLE</div>
+  <div class="chrome-path">DESIGNS / 03 · DASHBOARD · v2</div>
+  <div class="tabs">
+    <button data-frame="m" class="on">MOBILE</button>
+    <button data-frame="d">DESKTOP</button>
+  </div>
+</div>
+
+<div class="canvas">
+
+  <!-- =================== MOBILE =================== -->
+  <div class="frame on" id="frame-m">
+    <div class="view-label"><span class="dot"></span>iPhone · 380 × 820 <span class="dim">· Tufte × Linear</span></div>
+
+    <div class="m-frame">
+      <div class="m-inner">
+        <div class="m-status">
+          <span>9:41</span>
+          <div class="r">
+            <svg width="18" height="10" viewBox="0 0 18 10"><rect x="0" y="6" width="3" height="4"/><rect x="5" y="4" width="3" height="6"/><rect x="10" y="2" width="3" height="8"/><rect x="15" y="0" width="3" height="10"/></svg>
+            <svg width="24" height="11" viewBox="0 0 24 11" fill="none"><rect x="0.5" y="0.5" width="20" height="10" rx="1.5" stroke="var(--ink)"/><rect x="2" y="2" width="16" height="7" fill="var(--ink)"/><rect x="21" y="4" width="1.5" height="3" fill="var(--ink)"/></svg>
+          </div>
+        </div>
+
+        <div class="m-top">
+          <div class="mt-l">
+            <h1 class="greet">좋은 아침이에요, <em>민지</em></h1>
+            <div class="meta">
+              <span>화 · 4월 22일</span>
+              <span>·</span>
+              <span><b>CYCLE 7 · D5/9.5</b></span>
+            </div>
+          </div>
+          <div class="ic">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10 21a2 2 0 0 0 4 0"/></svg>
+            <span class="badge"></span>
+          </div>
+        </div>
+
+        <div class="m-scroll">
+
+          <!-- §1 Today -->
+          <div class="m-sec">
+            <div class="m-sec-h">
+              <div class="sn"><b>§1</b> · 오늘 · 2 SESSIONS</div>
+              <div class="act">자세히</div>
+            </div>
+
+            <div class="m-sess">
+              <div class="row1">
+                <div class="lbl">AM · 07:00 · <b>완료</b><span class="ck">✓</span></div>
+                <div class="when">60min · 12.0km</div>
+              </div>
+              <h3>Easy jog · Z2 Base</h3>
+              <div class="desc">HR 142 평균 <span class="dim">·</span> Pace 5'12"/km</div>
+              <div class="etags"><span class="etag base"><span class="d"></span>BASE · BA</span></div>
+            </div>
+
+            <div class="m-sess main">
+              <div class="row1">
+                <div class="lbl"><span class="mn">※ MAIN</span> · PM · 17:30</div>
+                <div class="when">8h 23m 후</div>
+              </div>
+              <h3>6 × 1000m @ 3'20"</h3>
+              <div class="desc">70min <span class="dim">·</span> 10km 목표 <span class="dim">·</span> rest 90s <span class="dim">·</span> Target HR 172–178</div>
+              <div class="etags">
+                <span class="etag vo2"><span class="d"></span>VO2 · V2</span>
+                <span class="etag lt"><span class="d"></span>LT · LT</span>
+              </div>
+              <div class="acts">
+                <button class="btn">▶ 세션 시작</button>
+                <button class="btn sec">프로토콜</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- §2 9.5 Cycle -->
+          <div class="m-sec">
+            <div class="m-sec-h">
+              <div class="sn"><b>§2</b> · 9.5일 사이클</div>
+              <div class="act">전체</div>
+            </div>
+            <div class="m-cycle-info">
+              <span>D5/9.5 — 지난 MAIN 이후 <b>4일</b></span>
+              <span>NEXT MAIN <b>D8 · 4.24</b></span>
+            </div>
+            <div class="m-cycle-rail">
+              <div class="axis"></div>
+              <div class="axis-now" style="left:44%;"></div>
+              <div class="m-cycle-slot main" style="left:0%;"><div class="top-lb">MAIN</div><div class="dot"></div><div class="lb">D1</div></div>
+              <div class="m-cycle-slot" style="left:11.1%;"><div class="top-lb">LOW</div><div class="dot"></div><div class="lb">D2</div></div>
+              <div class="m-cycle-slot" style="left:22.2%;"><div class="top-lb">MOD</div><div class="dot"></div><div class="lb">D3</div></div>
+              <div class="m-cycle-slot" style="left:33.3%;"><div class="top-lb">LOW</div><div class="dot"></div><div class="lb">D4</div></div>
+              <div class="m-cycle-slot now" style="left:44.4%;"><div class="top-lb">Z1</div><div class="dot"></div><div class="lb">D5</div></div>
+              <div class="m-cycle-slot future" style="left:55.5%;"><div class="top-lb">MOD</div><div class="dot"></div><div class="lb">D6</div></div>
+              <div class="m-cycle-slot future" style="left:66.6%;"><div class="top-lb">LOW</div><div class="dot"></div><div class="lb">D7</div></div>
+              <div class="m-cycle-slot main future" style="left:77.7%;"><div class="top-lb">MAIN</div><div class="dot"></div><div class="lb">D8</div></div>
+              <div class="m-cycle-slot future" style="left:88.8%;"><div class="top-lb">LOW</div><div class="dot"></div><div class="lb">D9</div></div>
+              <div class="m-cycle-slot future" style="left:99%;"><div class="top-lb">REST</div><div class="dot"></div><div class="lb">D10</div></div>
+            </div>
+          </div>
+
+          <!-- §3 Validation -->
+          <div class="m-sec">
+            <div class="m-sec-h">
+              <div class="sn"><b>§3</b> · 9 RULES · 1 WARN · 8 OK</div>
+              <div class="act">전체</div>
+            </div>
+            <table class="m-vtable">
+              <tr>
+                <td class="id"><b>D-1</b></td>
+                <td class="nm">Energy Balance<span class="sub">5 / 5 systems</span></td>
+                <td class="vl">OK</td>
+              </tr>
+              <tr class="warn">
+                <td class="id"><b>D-3</b><br>WARN</td>
+                <td class="nm">Z1 Recovery<span class="sub">목표 ≥ 15% · −2pp</span></td>
+                <td class="vl">13<span class="u">%</span></td>
+              </tr>
+              <tr>
+                <td class="id"><b>D-4</b></td>
+                <td class="nm">EPOC Recovery<span class="sub">last spike 102 ml/kg</span></td>
+                <td class="vl">72<span class="u">h</span></td>
+              </tr>
+              <tr>
+                <td class="id"><b>D-7</b></td>
+                <td class="nm">Weekly Volume<span class="sub">목표 500–625 min</span></td>
+                <td class="vl">523<span class="u">min</span></td>
+              </tr>
+              <tr>
+                <td class="id"><b>D-8</b></td>
+                <td class="nm">Pace Regression<span class="sub">8주 연속 안정</span></td>
+                <td class="vl">+0.4<span class="u">%</span></td>
+              </tr>
+            </table>
+          </div>
+
+          <!-- §4 AI Inbox -->
+          <div class="m-sec">
+            <div class="m-sec-h">
+              <div class="sn"><b>§4</b> · AI 인박스 · 2건</div>
+              <div class="act">전체</div>
+            </div>
+            <div class="m-inbox-item unc">
+              <div class="hd">
+                <span class="ttag"><span class="c">[?]</span> 판정 불확실</span>
+                <span class="when">4.20 · PM</span>
+              </div>
+              <h4>분류 확인이 필요합니다</h4>
+              <p>Rep time <span class="k">72s</span> — VO2-LONG과 GLY-SHORT의 겹침 구간(70–75s).</p>
+              <div class="btns">
+                <button class="btn p">VO2</button>
+                <button class="btn">GLY</button>
+                <button class="btn">건너뛰기</button>
+              </div>
+            </div>
+            <div class="m-inbox-item warn">
+              <div class="hd">
+                <span class="ttag"><span class="c">⚠</span> 패턴 감지</span>
+                <span class="when">최근 7일</span>
+              </div>
+              <h4>오른쪽 무릎 ×2 언급</h4>
+              <p>D-9 injury risk 패턴에 해당합니다. 부상 기록을 남기거나 해결되었다면 닫아 주세요.</p>
+              <div class="btns">
+                <button class="btn p">부상 기록</button>
+                <button class="btn">닫기</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- §5 Week summary -->
+          <div class="m-sec">
+            <div class="m-sec-h">
+              <div class="sn"><b>§5</b> · 주간 요약 · 7일</div>
+              <div class="act">분석</div>
+            </div>
+            <div class="m-wk">
+              <div class="m-wk-hd">
+                <div class="t">Energy System 분포</div>
+                <div class="v">523<span class="u">min</span></div>
+              </div>
+              <div class="m-wk-bar">
+                <div style="width:45%;background:var(--e-base);"></div>
+                <div style="width:20%;background:var(--e-lt);"></div>
+                <div style="width:15%;background:var(--e-vo2);"></div>
+                <div style="width:12%;background:var(--e-gly);"></div>
+                <div style="width:8%;background:var(--e-rest);"></div>
+              </div>
+              <div class="m-wk-legend">
+                <div class="lg"><span class="sw" style="background:var(--e-base);"></span><span class="nm">BASE</span><span class="pct">45%</span></div>
+                <div class="lg"><span class="sw" style="background:var(--e-lt);"></span><span class="nm">LT</span><span class="pct">20%</span></div>
+                <div class="lg"><span class="sw" style="background:var(--e-vo2);"></span><span class="nm">VO2</span><span class="pct">15%</span></div>
+                <div class="lg"><span class="sw" style="background:var(--e-gly);"></span><span class="nm">GLY</span><span class="pct">12%</span></div>
+                <div class="lg"><span class="sw" style="background:var(--e-rest);"></span><span class="nm">REST</span><span class="pct">8%</span></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- §6 Next MAIN -->
+          <div class="m-sec" style="border-bottom:0;">
+            <div class="m-sec-h">
+              <div class="sn"><b>§6</b> · 다음 MAIN</div>
+              <div class="act">캘린더</div>
+            </div>
+            <div class="m-next">
+              <div class="lf">
+                <div class="l1"><b>목 · 4월 24일</b> · PM 17:00</div>
+                <div class="l2">8 × 800m · VO2-LONG</div>
+                <div class="l3">Rest 120s · target 2'35"</div>
+              </div>
+              <div class="rt">
+                <div class="big">2<span class="u">d</span></div>
+                <div class="sm">남음</div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Bottom tab bar -->
+        <div class="m-tabs">
+          <div class="m-tab on">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke-width="1.6"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+            <span>홈</span>
+          </div>
+          <div class="m-tab">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke-width="1.6"><rect x="3" y="4" width="18" height="18" rx="0"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+            <span>캘린더</span>
+          </div>
+          <div class="m-tab">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke-width="1.6"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+            <span>채팅</span>
+          </div>
+          <div class="m-tab">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke-width="1.6"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+            <span>분석</span>
+          </div>
+          <div class="m-tab">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke-width="1.6"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+            <span>설정</span>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- =================== DESKTOP =================== -->
+  <div class="frame" id="frame-d">
+    <div class="view-label"><span class="dot"></span>MacBook · 1408 × 880 <span class="dim">· 3-column · Tufte × Linear</span></div>
+
+    <div class="d-frame">
+      <div class="d-chrome">
+        <div class="dots"><div class="dot r"></div><div class="dot y"></div><div class="dot g"></div></div>
+        <div class="url"><b>trainoracle.app</b>/dashboard</div>
+      </div>
+
+      <div class="d-app">
+        <!-- LEFT SIDEBAR -->
+        <aside class="d-side">
+          <div class="sd-brand">TRAIN<span class="dot"></span>ORACLE</div>
+
+          <a class="sd-nav on">
+            <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+            대시보드<span class="sd-k">H</span>
+          </a>
+          <a class="sd-nav">
+            <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="4" width="18" height="18"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+            캘린더<span class="sd-k">C</span>
+          </a>
+          <a class="sd-nav">
+            <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+            장호준 AI<span class="sd-k">J</span>
+          </a>
+          <a class="sd-nav">
+            <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+            분석<span class="sd-k">A</span>
+          </a>
+          <a class="sd-nav">
+            <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+            대회
+          </a>
+
+          <div class="sd-lb">검토</div>
+          <a class="sd-nav">
+            <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.45 5.11L2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/></svg>
+            AI 인박스<span class="sd-badge">2</span>
+          </a>
+          <a class="sd-nav">
+            <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+            기록 (PB / SB)
+          </a>
+
+          <div class="sd-lb">설정</div>
+          <a class="sd-nav">
+            <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83"/></svg>
+            연동 (Garmin)
+          </a>
+
+          <div class="sd-user">
+            <div class="av">MJ</div>
+            <div style="flex:1;min-width:0;">
+              <div class="un">김민지</div>
+              <div class="ur">선수 · 1500M</div>
+            </div>
+          </div>
+        </aside>
+
+        <!-- MAIN -->
+        <main class="d-main">
+          <div class="d-top">
+            <div class="kicker">
+              <span>2026년 4월 22일 · 화</span>
+              <span class="dlm">/</span>
+              <span><b>CYCLE 7 · DAY 5 / 9.5</b></span>
+              <span class="dlm">/</span>
+              <span>지난 MAIN 4.18 (토)</span>
+            </div>
+            <h1>좋은 아침이에요, <em>민지</em></h1>
+            <p class="lede">오늘은 MAIN 세션 사이의 중강도 회복일입니다. 검토하실 경고 1건 — <span class="warn">지난 7일 Z1 Recovery 비율이 13%로 떨어졌습니다.</span></p>
+            <div class="acts">
+              <button class="btn">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                장호준 AI에게 물어보기
+              </button>
+              <button class="btn sec">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                세션 기록
+              </button>
+            </div>
+          </div>
+
+          <!-- §1 Today -->
+          <div class="d-sec">
+            <div class="d-sec-h">
+              <div class="sn"><b>§1</b> · 오늘 · 2 SESSIONS · 105MIN · 17KM</div>
+              <div class="act">자세히 →</div>
+            </div>
+            <div class="d-today">
+              <div class="ts">
+                <div class="row1">
+                  <div class="lbl">AM · 07:00 · <b>완료</b><span class="ck">✓</span></div>
+                  <div class="when">60min · 12.0km</div>
+                </div>
+                <h3>Easy jog · Z2 Base</h3>
+                <div class="desc">HR 142 평균 <span class="dim">·</span> Pace 5'12"/km</div>
+                <div class="etags"><span class="etag base"><span class="d"></span>BASE · BA</span></div>
+              </div>
+              <div class="ts main">
+                <div class="row1">
+                  <div class="lbl"><span class="mn">※ MAIN</span> · PM · 17:30</div>
+                  <div class="when">8h 23m 후</div>
+                </div>
+                <h3>6 × 1000m @ 3'20"</h3>
+                <div class="desc">70min <span class="dim">·</span> 10km 목표 <span class="dim">·</span> rest 90s</div>
+                <div class="etags">
+                  <span class="etag vo2"><span class="d"></span>VO2 · V2</span>
+                  <span class="etag lt"><span class="d"></span>LT · LT</span>
+                </div>
+                <div class="protocol">
+                  <div class="pr"><span class="l">WARMUP</span><span class="v">15min Z1 + 4×strides</span></div>
+                  <div class="pr"><span class="l">MAIN SET</span><span class="v">6 × 1000m @ 3'20" · rest 90s</span></div>
+                  <div class="pr"><span class="l">COOLDOWN</span><span class="v">10min Z1 jog</span></div>
+                  <div class="pr"><span class="l">TARGET HR</span><span class="v">172–178 on reps</span></div>
+                </div>
+                <div class="acts">
+                  <button class="btn">▶ 세션 시작</button>
+                  <button class="btn sec">프로토콜 편집</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- §2 9.5 Cycle -->
+          <div class="d-sec">
+            <div class="d-sec-h">
+              <div class="sn"><b>§2</b> · 9.5일 사이클 · 트랙</div>
+              <div class="act">사이클 보기 →</div>
+            </div>
+            <div class="d-cycle-info">
+              <span><b>CYCLE 7</b> · 2026 · 4.18 → 4.27 · D60–69 OF MESO</span>
+              <span>NEXT MAIN · <b>D8 · 4.24 (목)</b></span>
+            </div>
+            <div class="d-cycle-rail">
+              <div class="axis"></div>
+              <div class="axis-now" style="left:44.4%;"></div>
+              <div class="d-cycle-slot main" style="left:0%;"><div class="top-lb">MAIN · 4.18</div><div class="dot"></div><div class="lb">D1</div><div class="date-lb">토</div></div>
+              <div class="d-cycle-slot" style="left:11.1%;"><div class="top-lb">LOW</div><div class="dot"></div><div class="lb">D2</div><div class="date-lb">일</div></div>
+              <div class="d-cycle-slot" style="left:22.2%;"><div class="top-lb">MOD</div><div class="dot"></div><div class="lb">D3</div><div class="date-lb">월</div></div>
+              <div class="d-cycle-slot" style="left:33.3%;"><div class="top-lb">LOW</div><div class="dot"></div><div class="lb">D4</div><div class="date-lb">화</div></div>
+              <div class="d-cycle-slot now" style="left:44.4%;"><div class="top-lb">Z1 · 4.22</div><div class="dot"></div><div class="lb">오늘 · D5</div><div class="date-lb">수</div></div>
+              <div class="d-cycle-slot future" style="left:55.5%;"><div class="top-lb">MOD</div><div class="dot"></div><div class="lb">D6</div><div class="date-lb">목</div></div>
+              <div class="d-cycle-slot future" style="left:66.6%;"><div class="top-lb">LOW</div><div class="dot"></div><div class="lb">D7</div><div class="date-lb">금</div></div>
+              <div class="d-cycle-slot main future" style="left:77.7%;"><div class="top-lb">MAIN · 4.24</div><div class="dot"></div><div class="lb">D8</div><div class="date-lb">목</div></div>
+              <div class="d-cycle-slot future" style="left:88.8%;"><div class="top-lb">LOW</div><div class="dot"></div><div class="lb">D9</div><div class="date-lb">금</div></div>
+              <div class="d-cycle-slot future" style="left:99%;"><div class="top-lb">REST</div><div class="dot"></div><div class="lb">D10</div><div class="date-lb">토</div></div>
+            </div>
+          </div>
+
+          <!-- §3 Validation -->
+          <div class="d-sec">
+            <div class="d-sec-h">
+              <div class="sn"><b>§3</b> · 9 VALIDATION RULES · 8 OK · 1 WARN</div>
+              <div class="act">전체 보기 →</div>
+            </div>
+            <div class="d-vgrid">
+              <div class="d-vc"><div class="id"><b>D-1</b></div><div class="nm">Energy Balance</div><div class="vl">OK</div><div class="tg">5 / 5 systems</div></div>
+              <div class="d-vc"><div class="id"><b>D-2</b></div><div class="nm">MAIN Interval</div><div class="vl">9.0<span class="u">d</span></div><div class="tg">목표 9.5 ± 1.5</div></div>
+              <div class="d-vc warn"><div class="id"><b>D-3</b> · WARN</div><div class="nm">Z1 Recovery</div><div class="vl">13<span class="u">%</span></div><div class="tg">목표 ≥ 15% · −2pp</div></div>
+              <div class="d-vc"><div class="id"><b>D-4</b></div><div class="nm">EPOC Recovery</div><div class="vl">72<span class="u">h</span></div><div class="tg">last spike 102 ml/kg</div></div>
+              <div class="d-vc"><div class="id"><b>D-7</b></div><div class="nm">Weekly Volume</div><div class="vl">523<span class="u">min</span></div><div class="tg">목표 500–625</div></div>
+              <div class="d-vc"><div class="id"><b>D-8</b></div><div class="nm">Pace Regression</div><div class="vl">+0.4<span class="u">%</span></div><div class="tg">8주 연속 안정</div></div>
+            </div>
+          </div>
+
+          <!-- §4 Week summary -->
+          <div class="d-sec">
+            <div class="d-sec-h">
+              <div class="sn"><b>§4</b> · 주간 요약 · 7일</div>
+              <div class="act">분석 →</div>
+            </div>
+            <div class="m-wk" style="max-width:760px;">
+              <div class="m-wk-hd">
+                <div class="t">Energy System 분포</div>
+                <div class="v">523<span class="u">min</span></div>
+              </div>
+              <div class="m-wk-bar" style="height:18px;">
+                <div style="width:45%;background:var(--e-base);"></div>
+                <div style="width:20%;background:var(--e-lt);"></div>
+                <div style="width:15%;background:var(--e-vo2);"></div>
+                <div style="width:12%;background:var(--e-gly);"></div>
+                <div style="width:8%;background:var(--e-rest);"></div>
+              </div>
+              <div class="m-wk-legend" style="grid-template-columns:repeat(5,1fr);">
+                <div class="lg"><span class="sw" style="background:var(--e-base);"></span><span class="nm">BASE</span><span class="pct">45%</span></div>
+                <div class="lg"><span class="sw" style="background:var(--e-lt);"></span><span class="nm">LT</span><span class="pct">20%</span></div>
+                <div class="lg"><span class="sw" style="background:var(--e-vo2);"></span><span class="nm">VO2</span><span class="pct">15%</span></div>
+                <div class="lg"><span class="sw" style="background:var(--e-gly);"></span><span class="nm">GLY</span><span class="pct">12%</span></div>
+                <div class="lg"><span class="sw" style="background:var(--e-rest);"></span><span class="nm">REST</span><span class="pct">8%</span></div>
+              </div>
+
+              <!-- Z1 Recovery sparkline -->
+              <div style="margin-top:24px;padding-top:18px;border-top:1px dashed var(--hair);">
+                <div class="m-wk-hd">
+                  <div class="t">Z1 Recovery · 8주 추이</div>
+                  <div class="v" style="color:var(--warn);">13<span class="u" style="color:var(--warn);">%</span></div>
+                </div>
+                <svg class="spark" viewBox="0 0 380 56" preserveAspectRatio="none">
+                  <line x1="0" y1="22" x2="380" y2="22" stroke="var(--unc)" stroke-width="0.7" stroke-dasharray="3 3"/>
+                  <text x="376" y="18" text-anchor="end" font-family="JetBrains Mono" font-size="8" fill="var(--unc)">target 15%</text>
+                  <polyline points="22,40 70,32 118,22 166,16 214,28 262,20 310,32 358,38" fill="none" stroke="var(--ink)" stroke-width="1.2"/>
+                  <circle cx="22" cy="40" r="2" fill="var(--ink)"/>
+                  <circle cx="70" cy="32" r="2" fill="var(--ink)"/>
+                  <circle cx="118" cy="22" r="2" fill="var(--ink)"/>
+                  <circle cx="166" cy="16" r="2" fill="var(--ink)"/>
+                  <circle cx="214" cy="28" r="2" fill="var(--ink)"/>
+                  <circle cx="262" cy="20" r="2" fill="var(--ink)"/>
+                  <circle cx="310" cy="32" r="2" fill="var(--ink)"/>
+                  <circle cx="358" cy="38" r="3" fill="var(--warn)"/>
+                </svg>
+                <div class="mono" style="font-size:10px;color:var(--ink-4);letter-spacing:.08em;margin-top:4px;display:flex;justify-content:space-between;">
+                  <span>W10</span><span>W17 ← 현재</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- §5 Next MAIN -->
+          <div class="d-sec" style="border-bottom:0;">
+            <div class="d-sec-h">
+              <div class="sn"><b>§5</b> · 다음 MAIN</div>
+              <div class="act">캘린더 →</div>
+            </div>
+            <div class="m-next" style="max-width:560px;">
+              <div class="lf">
+                <div class="l1"><b>목 · 4월 24일</b> · PM 17:00</div>
+                <div class="l2" style="font-size:18px;">8 × 800m · VO2-LONG</div>
+                <div class="l3">Rest 120s · target 2'35"</div>
+              </div>
+              <div class="rt">
+                <div class="big" style="font-size:32px;">2<span class="u" style="font-size:14px;">d</span></div>
+                <div class="sm">남음</div>
+              </div>
+            </div>
+          </div>
+
+        </main>
+
+        <!-- RIGHT COLUMN -->
+        <aside class="d-right">
+          <!-- Coach briefing -->
+          <div class="d-rs">
+            <div class="d-rs-h">
+              <div class="sn">장호준 AI · <b>오늘의 브리핑</b></div>
+              <div class="ct">v5.1.2</div>
+            </div>
+            <div class="d-coach">
+              <div class="hd">
+                <div class="av">JH</div>
+                <div class="nm">오늘의 브리핑</div>
+                <div class="when">오전 9:41</div>
+              </div>
+              <div class="msg">오늘은 <b>D5/9.5 · Z1 회복일</b>입니다. 다만 지난 7일 Z1 비중이 <b>13%</b>로 목표 15%에 미달합니다. 오늘 PM VO2 세션 전, AM Z2 조깅 강도를 살짝 낮추는 것을 권합니다.</div>
+              <div class="src">CITED · <b>A_GUIDE RULE 6</b> · PAPER [7]</div>
+              <button class="go">전체 브리핑 열기 →</button>
+            </div>
+          </div>
+
+          <!-- Inbox -->
+          <div class="d-rs">
+            <div class="d-rs-h">
+              <div class="sn">AI 인박스 · <b>2건 미확인</b></div>
+              <div class="ct">전체 →</div>
+            </div>
+            <div class="m-inbox-item unc">
+              <div class="hd">
+                <span class="ttag"><span class="c">[?]</span> 판정 불확실</span>
+                <span class="when">4.20 · PM</span>
+              </div>
+              <h4>분류 확인이 필요합니다</h4>
+              <p>Rep time <span class="k">72s</span> — VO2-LONG / GLY-SHORT 겹침.</p>
+              <div class="btns">
+                <button class="btn p">VO2</button>
+                <button class="btn">GLY</button>
+                <button class="btn">건너뛰기</button>
+              </div>
+            </div>
+            <div class="m-inbox-item warn">
+              <div class="hd">
+                <span class="ttag"><span class="c">⚠</span> 패턴 감지</span>
+                <span class="when">최근 7일</span>
+              </div>
+              <h4>오른쪽 무릎 ×2 언급</h4>
+              <p>D-9 injury risk 패턴.</p>
+              <div class="btns">
+                <button class="btn p">부상 기록</button>
+                <button class="btn">닫기</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Quick actions -->
+          <div class="d-rs">
+            <div class="d-rs-h">
+              <div class="sn">빠른 명령어</div>
+              <div class="ct mono">⌘K</div>
+            </div>
+            <div class="d-qa">
+              <button><span class="k">ANALYZE</span><span class="l">분석</span></button>
+              <button><span class="k">DESIGN</span><span class="l">설계</span></button>
+              <button><span class="k">DIAGNOSE</span><span class="l">진단</span></button>
+              <button><span class="k">DOCUMENT</span><span class="l">문서화</span></button>
+            </div>
+          </div>
+        </aside>
+
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  // Frame switcher with localStorage
+  document.querySelectorAll('.tabs button').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      const t = btn.dataset.frame;
+      document.querySelectorAll('.tabs button').forEach(b=>b.classList.toggle('on', b.dataset.frame===t));
+      document.querySelectorAll('.frame').forEach(f=>f.classList.toggle('on', f.id==='frame-'+t));
+      localStorage.setItem('to-dash-frame', t);
+    });
+  });
+  const saved = localStorage.getItem('to-dash-frame');
+  if(saved){
+    const btn = document.querySelector('.tabs button[data-frame="'+saved+'"]');
+    if(btn) btn.click();
+  }
+</script>
+
+</body>
+</html>

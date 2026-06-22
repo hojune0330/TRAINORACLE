@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>Pain Scale</title>
+<link rel="stylesheet" href="../colors_and_type.css">
+<link rel="stylesheet" href="../colors_and_type_journal.css">
+<style>
+  html, body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--sans); }
+  .wrap { padding: 18px; display: grid; grid-template-columns: 1.4fr 1fr; gap: 14px; }
+  .left { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; }
+  .cell { border: 1px solid var(--hair); padding: 12px 8px; display: flex; flex-direction: column; align-items: center; gap: 8px; }
+  .dot { width: 24px; height: 24px; border-radius: 50%; }
+  .lbl { font-family: var(--mono); font-size: 9px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink-3); }
+  .kr { font-size: 11px; color: var(--ink-2); }
+  .right { border: 1px solid var(--hair); padding: 10px; display: flex; gap: 10px; align-items: center; }
+  .body-svg { width: 70px; height: 130px; }
+  .body-svg circle.mark { fill: var(--pain-3); stroke: var(--ink); stroke-width: 0.8; }
+  .right-meta { font-family: var(--mono); font-size: 10px; color: var(--ink-2); line-height: 1.5; }
+  .right-meta b { color: var(--ink); font-weight: 600; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="left">
+    <div class="cell"><span class="dot" style="background:var(--pain-1)"></span><div class="lbl">P1</div><div class="kr">살짝</div></div>
+    <div class="cell"><span class="dot" style="background:var(--pain-2)"></span><div class="lbl">P2</div><div class="kr">불편</div></div>
+    <div class="cell"><span class="dot" style="background:var(--pain-3)"></span><div class="lbl">P3</div><div class="kr">통증</div></div>
+    <div class="cell"><span class="dot" style="background:var(--pain-4)"></span><div class="lbl">P4</div><div class="kr">심함</div></div>
+    <div class="cell"><span class="dot" style="background:var(--pain-5)"></span><div class="lbl">P5</div><div class="kr">못 뛰어</div></div>
+  </div>
+  <div class="right">
+    <svg class="body-svg" viewBox="0 0 70 130" fill="none" stroke="var(--ink-2)" stroke-width="1">
+      <circle cx="35" cy="14" r="8"/>
+      <line x1="35" y1="22" x2="35" y2="70"/>
+      <line x1="35" y1="32" x2="18" y2="55"/>
+      <line x1="35" y1="32" x2="52" y2="55"/>
+      <line x1="35" y1="70" x2="24" y2="115"/>
+      <line x1="35" y1="70" x2="46" y2="115"/>
+      <circle class="mark" cx="46" cy="98" r="3.2"/>
+    </svg>
+    <div class="right-meta">
+      <b>R 종아리</b><br>
+      P3 · 3d 째<br>
+      <span style="color:var(--ink-3)">last: 06·19</span>
+    </div>
+  </div>
+</div>
+</body>
+</html>

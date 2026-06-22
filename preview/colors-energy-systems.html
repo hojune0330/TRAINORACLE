@@ -1,0 +1,27 @@
+<!doctype html>
+<html><head><meta charset="utf-8"/>
+<link rel="stylesheet" href="../colors_and_type.css">
+<style>
+  body{margin:0;padding:22px;background:var(--bg);font-family:var(--sans);}
+  .grid{display:grid;grid-template-columns:repeat(6,1fr);gap:0;border:1px solid var(--line);}
+  .it{padding:14px 12px;border-right:1px solid var(--line);}
+  .it:last-child{border-right:0;}
+  .dot{width:14px;height:14px;border-radius:50%;margin-bottom:10px;}
+  .code{font-family:var(--mono);font-size:11px;font-weight:600;letter-spacing:.08em;color:var(--ink);}
+  .name{font-family:var(--sans);font-size:12px;font-weight:500;margin-top:2px;padding-bottom:2px;border-bottom:1.5px solid;display:inline-block;}
+  .zone{font-family:var(--mono);font-size:9.5px;color:var(--ink-3);margin-top:8px;letter-spacing:.06em;}
+  .hex{font-family:var(--mono);font-size:9.5px;color:var(--ink-3);margin-top:1px;}
+  .note{font-family:var(--mono);font-size:9.5px;color:var(--ink-3);letter-spacing:.12em;text-transform:uppercase;margin-top:16px;text-align:center;border-top:1px dashed var(--hair);padding-top:10px;}
+  .note b{color:var(--err);font-weight:600;letter-spacing:.08em;}
+</style>
+</head><body>
+  <div class="grid">
+    <div class="it"><div class="dot" style="background:#4A8FC7"></div><div class="code">BA</div><span class="name" style="color:#4A8FC7;border-color:#4A8FC7">BASE</span><div class="zone">Z1–Z2</div><div class="hex">#4A8FC7</div></div>
+    <div class="it"><div class="dot" style="background:#B8A024"></div><div class="code">LT</div><span class="name" style="color:#B8A024;border-color:#B8A024">Lactate</span><div class="zone">Z3–Z4</div><div class="hex">#B8A024</div></div>
+    <div class="it"><div class="dot" style="background:#C7761C"></div><div class="code">V2</div><span class="name" style="color:#C7761C;border-color:#C7761C">VO2max</span><div class="zone">Z5</div><div class="hex">#C7761C</div></div>
+    <div class="it"><div class="dot" style="background:#B8332E"></div><div class="code">GL</div><span class="name" style="color:#B8332E;border-color:#B8332E">Glycolytic</span><div class="zone">Z6</div><div class="hex">#B8332E</div></div>
+    <div class="it"><div class="dot" style="background:#7A3FB5"></div><div class="code">AP</div><span class="name" style="color:#7A3FB5;border-color:#7A3FB5">ATP-PC</span><div class="zone">Z7</div><div class="hex">#7A3FB5</div></div>
+    <div class="it"><div class="dot" style="background:#7A7A70"></div><div class="code">RE</div><span class="name" style="color:#7A7A70;border-color:#7A7A70">Rest</span><div class="zone">off</div><div class="hex">#7A7A70</div></div>
+  </div>
+  <div class="note"><b>RULE</b> · 7px 도트 + 2자 코드 + 1.5px underline에만 사용 · 배경색 사용 금지</div>
+</body></html>

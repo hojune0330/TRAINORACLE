@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>Journal Tokens</title>
+<link rel="stylesheet" href="../colors_and_type.css">
+<link rel="stylesheet" href="../colors_and_type_journal.css">
+<style>
+  html, body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--sans); }
+  .wrap { padding: 16px; display: grid; gap: 12px; grid-template-columns: 1fr 1fr 1fr; }
+  .cell { border: 1px solid var(--hair); padding: 10px 12px; min-height: 80px; display: flex; flex-direction: column; justify-content: space-between; }
+  .lbl { font-family: var(--mono); font-size: 9px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink-3); }
+  .swatch { height: 38px; border: 1px solid var(--hair); }
+  .row { display: flex; gap: 6px; align-items: baseline; }
+  .hex { font-family: var(--mono); font-size: 10px; color: var(--ink-2); }
+  .hand-sample { font-size: 22px; line-height: 1; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="cell">
+    <div class="lbl">paper</div>
+    <div class="swatch paper"></div>
+    <div class="hex">#F7F3E8</div>
+  </div>
+  <div class="cell">
+    <div class="lbl">paper-grid · 8px dot</div>
+    <div class="swatch paper-grid"></div>
+    <div class="hex">radial-grad · dcd4bc</div>
+  </div>
+  <div class="cell">
+    <div class="lbl">paper-lines · 24px</div>
+    <div class="swatch paper-lines"></div>
+    <div class="hex">repeating-linear</div>
+  </div>
+
+  <div class="cell" style="background: var(--paper);">
+    <div class="lbl">hand · Caveat</div>
+    <div class="hand-sample hand">good morning</div>
+    <div class="hex">ink-blue · 1A3A6F</div>
+  </div>
+  <div class="cell" style="background: var(--paper);">
+    <div class="lbl">hand · Gowun Dodum</div>
+    <div class="hand-sample hand">민지, 좋은 아침</div>
+    <div class="hex">한글 손글씨</div>
+  </div>
+  <div class="cell" style="background: var(--paper);">
+    <div class="lbl">hand-pencil</div>
+    <div class="hand-sample hand-pencil">메모 한 줄</div>
+    <div class="hex">pencil · 2B3330</div>
+  </div>
+</div>
+</body>
+</html>

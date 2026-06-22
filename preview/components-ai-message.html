@@ -1,0 +1,41 @@
+<!doctype html>
+<html><head><meta charset="utf-8"/>
+<link rel="stylesheet" href="../colors_and_type.css">
+<style>
+  body{margin:0;padding:22px 24px;background:var(--bg);font-family:var(--sans);}
+  .msg{padding:14px 18px;border-left:2px solid var(--ink);background:var(--surface);}
+  .head{display:flex;align-items:center;gap:10px;margin-bottom:10px;font-family:var(--mono);font-size:11px;color:var(--ink-3);letter-spacing:.04em;}
+  .head .who{color:var(--ink);font-weight:600;}
+  .head .sep{color:var(--ink-4);}
+  .body{font-size:14px;line-height:1.55;color:var(--ink);letter-spacing:-0.005em;}
+  .body b{font-weight:600;}
+  .body .cit{font-family:var(--mono);font-size:11px;color:var(--brand);text-decoration:underline;text-underline-offset:2px;cursor:pointer;}
+  .alt{margin-top:12px;border-top:1px dashed var(--hair);padding-top:10px;font-size:13px;color:var(--ink-2);line-height:1.5;}
+  .alt .lb{font-family:var(--mono);font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3);font-weight:600;margin-bottom:4px;}
+  .src{margin-top:12px;display:flex;gap:8px;flex-wrap:wrap;}
+  .src .ref{font-family:var(--mono);font-size:10px;color:var(--ink-3);border:1px solid var(--line);padding:3px 7px;letter-spacing:.04em;}
+  .src .ref b{color:var(--ink);}
+</style>
+</head><body>
+  <div class="msg">
+    <div class="head">
+      <span style="display:inline-flex;align-items:center;gap:5px;"><span style="width:5px;height:5px;background:var(--brand);border-radius:50%;"></span><span class="who">장호준 AI</span></span>
+      <span class="sep">·</span>
+      <span class="verdict unc">UNC · 72%</span>
+      <span class="sep">·</span>
+      <span>2026-06-04 14:20</span>
+    </div>
+    <div class="body">
+      CK +18% (above ±8% band) — fatigue marker raised <span class="cit">[J1]</span>. 그러나 RPE 5.8 안정, HR drift 2.1%로 band 내 <span class="cit">[Y2]</span>. A_guide §4 — 신호 충돌 시 주관 신호 우선 → <b>강도 −10% 권장 (3'20" → 3'25")</b>.
+    </div>
+    <div class="alt">
+      <div class="lb">— 다른 관점</div>
+      Daniels (2026) <span class="cit">[P3]</span> 는 CK만으로도 −15% 감량을 권고. 보수적 접근 시 채택 가능.
+    </div>
+    <div class="src">
+      <span class="ref"><b>[J1]</b> Coach Jang A_guide §4.2</span>
+      <span class="ref"><b>[Y2]</b> Your 14d HR drift avg</span>
+      <span class="ref"><b>[P3]</b> Daniels 2026 ch.7</span>
+    </div>
+  </div>
+</body></html>

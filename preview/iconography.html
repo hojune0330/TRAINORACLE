@@ -1,0 +1,38 @@
+<!doctype html>
+<html><head><meta charset="utf-8"/>
+<link rel="stylesheet" href="../colors_and_type.css">
+<style>
+  body{margin:0;padding:22px 26px;background:var(--bg);font-family:var(--sans);}
+  .lb{font-family:var(--mono);font-size:10px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3);margin-bottom:12px;}
+  .row{display:flex;gap:24px;align-items:center;flex-wrap:wrap;margin-bottom:18px;}
+  .glyph{display:flex;flex-direction:column;align-items:center;gap:6px;}
+  .ch{font-family:var(--mono);font-size:22px;color:var(--ink);line-height:1;}
+  .nm{font-family:var(--mono);font-size:9.5px;color:var(--ink-3);letter-spacing:.06em;text-transform:uppercase;}
+  .icon{width:24px;height:24px;color:var(--ink);}
+  .note{font-family:var(--mono);font-size:10px;color:var(--ink-3);letter-spacing:.04em;border-top:1px dashed var(--hair);padding-top:10px;margin-top:8px;}
+  .note b{color:var(--err);}
+</style>
+</head><body>
+  <div class="lb">— Unicode marks (1순위)</div>
+  <div class="row">
+    <div class="glyph"><span class="ch">●</span><span class="nm">dot · 7px</span></div>
+    <div class="glyph"><span class="ch">※</span><span class="nm">MAIN mark</span></div>
+    <div class="glyph"><span class="ch">▸</span><span class="nm">expand</span></div>
+    <div class="glyph"><span class="ch">↗</span><span class="nm">external</span></div>
+    <div class="glyph"><span class="ch">↵</span><span class="nm">enter</span></div>
+    <div class="glyph"><span class="ch">⌘</span><span class="nm">cmd</span></div>
+    <div class="glyph"><span class="ch">✓</span><span class="nm">pass</span></div>
+    <div class="glyph"><span class="ch">✕</span><span class="nm">fail</span></div>
+    <div class="glyph"><span class="ch">—</span><span class="nm">divider</span></div>
+  </div>
+  <div class="lb">— SVG stroke icons (substituted via Lucide · 1.5–2px stroke)</div>
+  <div class="row">
+    <div class="glyph"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><span class="nm">clock</span></div>
+    <div class="glyph"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 17l4-4 3 3 7-8 4 5"/><path d="M3 21h18"/></svg><span class="nm">chart</span></div>
+    <div class="glyph"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="4" width="18" height="17"/><path d="M3 9h18"/><path d="M8 2v4M16 2v4"/></svg><span class="nm">calendar</span></div>
+    <div class="glyph"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg><span class="nm">chat</span></div>
+    <div class="glyph"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 4h16v16H4z"/><path d="M4 10h16M10 4v16"/></svg><span class="nm">grid</span></div>
+    <div class="glyph"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg><span class="nm">search</span></div>
+  </div>
+  <div class="note"><b>금지</b> · UI 안에서 이모지 사용 · drawn glyph · neumorphic icon · gradient icon. 사용자 입력은 자유.</div>
+</body></html>

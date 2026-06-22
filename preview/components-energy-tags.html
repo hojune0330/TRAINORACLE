@@ -1,0 +1,32 @@
+<!doctype html>
+<html><head><meta charset="utf-8"/>
+<link rel="stylesheet" href="../colors_and_type.css">
+<style>
+  body{margin:0;padding:22px 26px;background:var(--bg);}
+  .lb{font-family:var(--mono);font-size:10px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3);margin-bottom:14px;}
+  .row{display:flex;flex-wrap:wrap;gap:18px 22px;align-items:center;}
+  .sep{height:1px;background:var(--hair);margin:18px 0;}
+  .main-mark{font-family:var(--mono);font-size:11px;font-weight:600;color:var(--ink);letter-spacing:.08em;display:inline-flex;align-items:baseline;gap:4px;text-transform:uppercase;}
+  .main-mark::before{content:"※";font-size:13px;color:var(--ink);}
+  .aux{font-family:var(--mono);font-size:11px;color:var(--ink-3);letter-spacing:.04em;}
+  .aux b{color:var(--ink);font-weight:500;}
+</style>
+</head><body>
+  <div class="lb">— Energy tag (dot + code + underline)</div>
+  <div class="row">
+    <span class="etag base"><span class="d"></span><span class="c">BA</span><span class="n">BASE</span></span>
+    <span class="etag lt"><span class="d"></span><span class="c">LT</span><span class="n">Lactate</span></span>
+    <span class="etag vo2"><span class="d"></span><span class="c">V2</span><span class="n">VO2-Long</span></span>
+    <span class="etag gly"><span class="d"></span><span class="c">GL</span><span class="n">Glycolytic</span></span>
+    <span class="etag atp"><span class="d"></span><span class="c">AP</span><span class="n">ATP-PC</span></span>
+    <span class="etag rest"><span class="d"></span><span class="c">RE</span><span class="n">Recovery</span></span>
+  </div>
+  <div class="sep"></div>
+  <div class="lb">— Adjacent markers</div>
+  <div class="row">
+    <span class="main-mark">MAIN</span>
+    <span class="aux"><b>AUX</b> · LT bridge</span>
+    <span class="aux"><b>TRK</b> · Track session</span>
+    <span class="aux"><b>SUB</b> · sub-session</span>
+  </div>
+</body></html>
