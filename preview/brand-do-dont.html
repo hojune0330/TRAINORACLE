@@ -1,0 +1,39 @@
+<!doctype html>
+<html><head><meta charset="utf-8"/>
+<link rel="stylesheet" href="../colors_and_type.css">
+<style>
+  body{margin:0;padding:22px 26px;background:var(--bg);font-family:var(--sans);}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:0;border:1px solid var(--line);}
+  .col{padding:16px 18px;border-right:1px solid var(--line);}
+  .col:last-child{border-right:0;}
+  .lb{font-family:var(--mono);font-size:10px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;margin-bottom:14px;}
+  .lb.do{color:var(--ok);}
+  .lb.dont{color:var(--err);}
+  .item{display:grid;grid-template-columns:16px 1fr;gap:8px;padding:7px 0;border-bottom:1px dashed var(--hair);font-size:12.5px;line-height:1.45;color:var(--ink);}
+  .item:last-child{border-bottom:0;}
+  .mk{font-family:var(--mono);font-weight:600;}
+  .mk.ok{color:var(--ok);}
+  .mk.no{color:var(--err);}
+  .item b{font-weight:600;}
+  .item .quote{font-family:var(--mono);font-size:11px;color:var(--ink-2);display:block;margin-top:3px;}
+</style>
+</head><body>
+  <div class="grid">
+    <div class="col">
+      <div class="lb do">✓ Do — 정직한 사실</div>
+      <div class="item"><span class="mk ok">✓</span><div>verdict + confidence 동반 <span class="quote">"UNC · 72% · CK +18%, RPE 5.8 stable"</span></div></div>
+      <div class="item"><span class="mk ok">✓</span><div>"민지" 단독 호명 (일상 메시지)</div></div>
+      <div class="item"><span class="mk ok">✓</span><div>훈련 용어 영어 원문 유지 <span class="quote">VO2, LT, BASE, MAIN, RPE, TSS</span></div></div>
+      <div class="item"><span class="mk ok">✓</span><div>모노 + 단위 <span class="quote">3'20"/km · HR 178 · CK +18%</span></div></div>
+      <div class="item"><span class="mk ok">✓</span><div>반대 의견 함께 제시</div></div>
+    </div>
+    <div class="col">
+      <div class="lb dont">✕ Don't — 운동복 광고</div>
+      <div class="item"><span class="mk no">✕</span><div>이모지·격려 메시지 <span class="quote">"오늘 화이팅! 🔥🌱"</span></div></div>
+      <div class="item"><span class="mk no">✕</span><div>막연한 추측 <span class="quote">"아마도 무리하지 않는 게…"</span></div></div>
+      <div class="item"><span class="mk no">✕</span><div>스트릭/배지/포인트</div></div>
+      <div class="item"><span class="mk no">✕</span><div>그라데이션·glow·둥근 모서리 12px+</div></div>
+      <div class="item"><span class="mk no">✕</span><div>AI의 100% 확신 단정</div></div>
+    </div>
+  </div>
+</body></html>

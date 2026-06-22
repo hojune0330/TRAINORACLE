@@ -1,0 +1,44 @@
+<!doctype html>
+<html><head><meta charset="utf-8"/>
+<link rel="stylesheet" href="../colors_and_type.css">
+<style>
+  body{margin:0;padding:24px;background:var(--bg);font-family:var(--sans);display:flex;align-items:center;gap:0;border:1px solid var(--line);}
+  body{display:grid;grid-template-columns:1fr 1fr;gap:0;border:0;min-height:calc(100vh - 48px);}
+  .panel{padding:20px 22px;border-right:1px solid var(--line);}
+  .panel:last-child{border-right:0;}
+  .panel.dark{background:var(--ink);color:#fff;}
+  .lb{font-family:var(--mono);font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3);margin-bottom:18px;}
+  .panel.dark .lb{color:rgba(255,255,255,.5);}
+  .row{display:flex;align-items:center;gap:14px;margin-bottom:14px;}
+  .chip{width:48px;height:48px;flex-shrink:0;}
+  .meta .nm{font-family:var(--mono);font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--ink);}
+  .panel.dark .meta .nm{color:#fff;}
+  .meta .hex{font-family:var(--mono);font-size:11px;color:var(--ink-3);}
+  .panel.dark .meta .hex{color:rgba(255,255,255,.5);}
+  .usage{font-family:var(--sans);font-size:12.5px;color:var(--ink-2);line-height:1.5;margin-top:14px;border-top:1px solid var(--hair);padding-top:10px;}
+  .panel.dark .usage{color:rgba(255,255,255,.7);border-top-color:rgba(255,255,255,.15);}
+  .panel.dark .usage b{color:#fff;}
+</style>
+</head><body>
+  <div class="panel">
+    <div class="lb">— Brand · light context</div>
+    <div class="row">
+      <div class="chip" style="background:#0D5F5A;"></div>
+      <div class="meta"><div class="nm">brand</div><div class="hex">#0D5F5A · Deep Teal</div></div>
+    </div>
+    <div class="row">
+      <div class="chip" style="background:#07302E;"></div>
+      <div class="meta"><div class="nm">brand-ink</div><div class="hex">#07302E · darker variant</div></div>
+    </div>
+    <div class="usage">단 한 가지 accent. <b>그라데이션 금지.</b> 채도 높은 컬러 배경 박스 금지.</div>
+  </div>
+  <div class="panel dark">
+    <div class="lb">— Brand · dark context</div>
+    <div class="row">
+      <div class="chip" style="background:#0D5F5A;"></div>
+      <div class="meta"><div class="nm">brand</div><div class="hex">#0D5F5A</div></div>
+    </div>
+    <div style="font-family:var(--sans);font-size:18px;font-weight:500;letter-spacing:-0.01em;margin-top:18px;">TRAIN<span style="display:inline-block;width:4px;height:4px;background:#0D5F5A;border-radius:50%;margin:0 2px;transform:translateY(-3px);"></span>O<span style="display:inline-block;width:4px;height:4px;background:#0D5F5A;border-radius:50%;margin:0 2px;transform:translateY(-3px);"></span>RACLE</div>
+    <div class="usage">CTA 버튼, dark hero 액센트, 워드마크 도트.</div>
+  </div>
+</body></html>

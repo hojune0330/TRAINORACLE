@@ -27,18 +27,27 @@
 - **JetBrains Mono** (수치) — 페이스/HR/TSS 등 모든 숫자
 - **❌ Instrument Serif 제거** — 초기 v1에서 사용했으나 "Opus-style 티남"으로 사용자가 거부. UI에서 완전 제거.
 
-### 1.4 에너지 시스템 컬러 표기 (중요한 결정)
-- **이전 (v1, 거부됨)**: 파스텔 배경 박스 + 진한 텍스트
-- **현재 (v2, 정본)**:
-  ```
-  ● V2  VO2-Long
-       ─────       ← underline은 에너지 시스템 컬러
-  ```
-  - 7px dot (점)
-  - 2자 모노 코드 (V2, BA, LT, GL, AP, RE)
-  - 하단 1.5px underline (에너지 시스템 컬러)
-  - **배경 색 박스 절대 사용 금지**
-- 이유: 색은 정보 전달용으로 유지하되, 파스텔 카드 분위기는 제거
+### 1.4 에너지 시스템 컬러 표기 (중요한 결정 — 갱신됨)
+
+#### v1 → v2 → v3 진화
+
+- **v1 (거부됨)**: 파스텔 배경 박스 + 진한 텍스트
+- **v2 (보완 필요)**: 점·2자 코드·1.5px underline만, 배경 사용 금지
+  - 문제: 너무 약함. Calendar/Today 카드에서 1초 분류가 안 됨
+- **v3 (현재 정본, 4-tier)**: 컨텍스트별 강도 차등
+  - **T1 Strong**: Calendar 셀, Session card 좌측 4–6px 컬러바, hero — 색 면적 큼
+  - **T2 Mid**: 분석 차트 (line/bar/distribution)
+  - **T3 Subtle**: 본문 안 점·코드·underline (v2 패턴 유지)
+  - **T4 Wash**: 선택 상태, 컨텍스트 배경 5%
+
+자세한 hex 토큰은 `design-system/DESIGN_TOKENS.md` §1.4, 사용 규칙은 `VISUALIZATION_SYSTEM.md` §3.
+
+#### 3중 인코딩 의무
+- 색 (color) — 즉시 인지
+- 2자 모노 코드 (BA / LT / V2 / GL / AP / RE) — color-blind 대응
+- 위치/모양 (도트 위치, 패턴) — 보조
+
+단, 정보 과다 시 **단계적 노출** 허용 (컴팩트 모드 = 색만, 확장 = 코드 추가, 더 확장 = 위치/모양).
 
 ---
 
@@ -213,11 +222,67 @@
 
 ---
 
-## 7. 미해결 / 추후 결정 필요
+## 7. 사용자 정의 변경 (재정리)
 
-- [ ] Dark mode (브리프엔 있으나 v1엔 미구현)
+### 이전 — 코치 + 선수 양쪽
+- 엘리트 선수 + 코치(8명 모니터링) + 선수+코치
+- AI Inbox에 코치 view 8명 통합
+- Cohort 비교 활성
+
+### 현재 (정본) — 사용자 ↔ AI 1:1
+- **1차 사용자**: 중장거리 선수 본인. 인간 코치 필수 X
+- 사용자 ↔ AI 코치 장호준 1:1 관계가 중심
+- Coach view (8명), Cohort 비교 등은 **B2B / P3 후순위**
+
+자세한 변경: PHILOSOPHY.md §2 참조.
+
+---
+
+## 8. AI 구현 단계 (재정리)
+
+### 현재 — Rule Engine
+- 하드코딩된 코칭 지식 + 결정 함수 + 고정 피드백 템플릿
+- LLM API 자유 호출 없음
+- Verdict / Confidence는 모두 결정 함수 출력값
+- 비용 0, hallucination 0, 일관성 100%
+
+### 추후 — LLM 도입
+- Claude API + RAG (Coach Jang notes + 본인 세션)
+- Citation 검증 (server-side)
+- Track Record 표시 (LLM 단계에서만)
+- Stable / Latest channel 선택
+
+자세한 차이: SAFEGUARDS.md §5 참조.
+
+---
+
+## 9. 기록 시스템 (4 Records)
+
+| 종류 | 의미 |
+|---|---|
+| PB | 평생 최고기록 |
+| SB | 시즌 최고기록 |
+| Target | 목표 기록 |
+| Reference | 참고 기록 (라이벌·동료) |
+
+PB·SB는 시각화의 핵심 데이터로, 다른 데이터에 종속되지 않고 항상 함께 표시. Reference는 사용자 직접 입력만 (Cohort 자동 비교는 P3).
+자세한 화면: `designs/SPRINT2_Records.html`.
+
+---
+
+## 10. 결정 / 추후 결정 필요
+
+### 결정됨 (2026-04-29)
+- **Dark mode 미지원** (원칙) — Tufte × Linear 시각 톤은 밝은 배경 전제. 다크 자동 추종도 비활성화. `<meta name="color-scheme" content="light">` 명시. (VISUALIZATION_SYSTEM §13.4)
+- **MIXED(MX) 단계적 노출** — dominant<65% 시 MIXED 처리. Heatmap=dominant 단일 색, 셀=2색 split, hero=split+dual code. (VISUALIZATION_SYSTEM §13.1)
+- **Cohort comparison 활성 트리거** — 종목당 ≥100명 / Pro 출시 / opt-in ≥80% 중 둘 이상. (VISUALIZATION_SYSTEM §13.2)
+- **Track Record** — 현재 표시 X. LLM 단계 진입 시 A+D 조합(요약 + decision log). (VISUALIZATION_SYSTEM §13.3)
+- **PB Trail 종목 토글** — chip row + 주종목 default + 종목별 독립 Y축 + 정규화 차트 옵션. (VISUALIZATION_SYSTEM §13.5)
+
+### 미해결
 - [ ] 고대비 모드 토글 (트랙용)
 - [ ] 음성 입력 (Daily check-in 시)
 - [ ] 다국어 외 다른 언어 (일본어, 중국어?)
-- [ ] 결제 모델 (월 구독? 코치당? 선수당?)
-- [ ] B2B 코치 라이선스 vs 개인 라이선스
+- [ ] 결제 모델 (월 구독? 분리 결제? B2B?)
+- [ ] LLM 단계 진입 시점 (사용자 N명 / 데이터 N건 누적 후?)
+- [ ] Personal Archive 화면 디자인

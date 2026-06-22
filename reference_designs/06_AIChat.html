@@ -1,0 +1,805 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>TRAINORACLE — AI Chat</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+<link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css" rel="stylesheet" />
+<style>
+  :root{
+    --bg:#FAFAF7;--surface:#FFFFFF;--surface-2:#F4F3EE;
+    --ink:#0E1412;--ink-2:#2B3330;--ink-3:#5F6965;--ink-4:#8F9894;
+    --line:#D9D6CE;--line-2:#BFBBB0;--hair:#E8E6DF;
+    --brand:#0D5F5A;--brand-ink:#07302E;
+    --ok:#1F7A3A;--warn:#B4530C;--err:#A11F1F;--info:#1D4ED8;--unc:#6B3FB0;
+    --e-base:#4A8FC7;--e-lt:#B8A024;--e-vo2:#C7761C;--e-gly:#B8332E;--e-atp:#7A3FB5;--e-rest:#7A7A70;
+    --sans:"Inter","Pretendard Variable",ui-sans-serif,system-ui,sans-serif;
+    --mono:"JetBrains Mono",ui-monospace,SFMono-Regular,monospace;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;background:#E4E2DA;color:var(--ink);font-family:var(--sans);-webkit-font-smoothing:antialiased;font-feature-settings:"ss01","cv11";}
+  body{font-size:14.5px;line-height:1.55;}
+  .mono{font-family:var(--mono);font-variant-numeric:tabular-nums;}
+
+  /* CHROME */
+  .chrome{position:sticky;top:0;z-index:100;background:rgba(228,226,218,.92);backdrop-filter:blur(12px);border-bottom:1px solid var(--line);padding:12px 24px;display:flex;align-items:center;gap:16px;}
+  .chrome-brand{font-weight:500;font-size:15px;letter-spacing:0.02em;color:var(--ink);}
+  .chrome-brand .dot{display:inline-block;width:5px;height:5px;background:var(--brand);border-radius:50%;margin:0 1px;transform:translateY(-2px);}
+  .chrome-path{font-family:var(--mono);font-size:10.5px;color:var(--ink-3);letter-spacing:.08em;text-transform:uppercase;}
+  .tabs{margin-left:auto;display:flex;border:1px solid var(--line);background:var(--surface);}
+  .tabs button{background:transparent;border:0;padding:9px 16px;font-family:var(--mono);font-size:11px;font-weight:500;color:var(--ink-3);cursor:pointer;letter-spacing:.08em;text-transform:uppercase;min-height:38px;border-right:1px solid var(--line);}
+  .tabs button:last-child{border-right:0;}
+  .tabs button.on{background:var(--ink);color:var(--bg);}
+  .tabs button:hover:not(.on){color:var(--ink);}
+
+  .canvas{padding:28px 24px 80px;display:flex;justify-content:center;}
+  .frame{display:none;}
+  .frame.on{display:block;}
+
+  .view-label{font-family:var(--mono);font-size:11px;color:var(--ink-3);letter-spacing:.14em;text-transform:uppercase;margin-bottom:14px;display:flex;align-items:center;gap:10px;}
+  .view-label .dot{width:5px;height:5px;background:var(--brand);border-radius:50%;}
+  .view-label .dim{color:var(--ink-4);}
+
+  /* ============== MOBILE ============== */
+  .m-frame{width:380px;margin:0 auto;background:#0E1412;padding:10px;box-shadow:0 40px 100px -30px rgba(0,0,0,.28),0 10px 30px -10px rgba(0,0,0,.18);}
+  .m-inner{background:var(--bg);overflow:hidden;height:820px;position:relative;display:flex;flex-direction:column;}
+  .m-status{position:relative;height:30px;display:flex;align-items:center;justify-content:space-between;padding:6px 22px 0;font-size:13px;font-weight:600;background:var(--bg);z-index:2;flex-shrink:0;}
+  .m-status .r{display:flex;gap:6px;align-items:center;font-size:13px;}
+
+  /* CHAT — header */
+  .c-top{padding:12px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:12px;flex-shrink:0;}
+  .c-top .back{width:30px;height:30px;display:flex;align-items:center;justify-content:center;color:var(--ink);background:transparent;border:0;cursor:pointer;margin-left:-6px;}
+  .c-top .who{flex:1;min-width:0;}
+  .c-top .who .n{font-size:14.5px;font-weight:600;letter-spacing:-0.005em;}
+  .c-top .who .s{font-family:var(--mono);font-size:10px;color:var(--brand);letter-spacing:.08em;text-transform:uppercase;margin-top:1px;}
+  .c-top .who .s .dot{display:inline-block;width:5px;height:5px;border-radius:50%;background:var(--brand);margin-right:5px;vertical-align:1px;animation:pulse 2s ease-in-out infinite;}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+  .c-top .more{width:30px;height:30px;display:flex;align-items:center;justify-content:center;color:var(--ink-2);background:transparent;border:0;cursor:pointer;margin-right:-6px;}
+
+  /* Context bar — what AI knows about user */
+  .c-ctx{padding:10px 18px;border-bottom:1px solid var(--line);background:var(--surface-2);display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-family:var(--mono);font-size:10.5px;color:var(--ink-3);letter-spacing:.04em;flex-shrink:0;}
+  .c-ctx .lb{color:var(--ink-4);font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;}
+  .c-ctx b{color:var(--ink);font-weight:500;}
+
+  /* Stream */
+  .stream{flex:1;overflow-y:auto;padding:18px 18px 100px;}
+
+  /* Day divider */
+  .day-div{display:flex;align-items:center;gap:10px;margin:14px 0 18px;font-family:var(--mono);font-size:10px;color:var(--ink-4);letter-spacing:.14em;text-transform:uppercase;}
+  .day-div::before,.day-div::after{content:"";flex:1;height:1px;background:var(--hair);}
+
+  /* User message — right aligned, no bubble */
+  .msg-user{display:flex;justify-content:flex-end;margin-bottom:18px;}
+  .msg-user .body{max-width:80%;background:var(--ink);color:var(--bg);padding:10px 13px;font-size:14px;line-height:1.5;letter-spacing:-0.005em;}
+  .msg-user .ts{font-family:var(--mono);font-size:9.5px;color:var(--ink-4);text-align:right;margin-top:4px;letter-spacing:.04em;}
+
+  /* AI message — left, structured */
+  .msg-ai{margin-bottom:24px;padding-left:14px;border-left:2px solid var(--brand);}
+  .msg-ai .head{display:flex;align-items:baseline;gap:8px;margin-bottom:8px;}
+  .msg-ai .head .nm{font-family:var(--mono);font-size:10px;color:var(--brand);letter-spacing:.14em;text-transform:uppercase;font-weight:600;}
+  .msg-ai .head .verdict{font-family:var(--mono);font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;font-weight:600;padding-bottom:1px;border-bottom:1.5px solid;}
+  .msg-ai .head .verdict.confirm{color:var(--ok);border-color:var(--ok);}
+  .msg-ai .head .verdict.recommend{color:var(--brand);border-color:var(--brand);}
+  .msg-ai .head .verdict.unc{color:var(--unc);border-color:var(--unc);}
+  .msg-ai .head .verdict.lack{color:var(--warn);border-color:var(--warn);}
+  .msg-ai .head .conf{margin-left:auto;font-family:var(--mono);font-size:10px;color:var(--ink-3);letter-spacing:.04em;}
+  .msg-ai .head .conf b{color:var(--ink);font-weight:500;}
+
+  .msg-ai .answer{font-size:14.5px;line-height:1.6;color:var(--ink);letter-spacing:-0.005em;}
+  .msg-ai .answer p{margin:0 0 10px;}
+  .msg-ai .answer p:last-child{margin-bottom:0;}
+  .msg-ai .answer b{font-weight:600;}
+  .msg-ai .answer .k{font-family:var(--mono);font-size:13px;color:var(--ink);background:var(--surface-2);padding:1px 5px;border:1px solid var(--line);}
+  .msg-ai .answer .hi{background:linear-gradient(transparent 62%, rgba(13,95,90,.16) 62%);padding:0 1px;}
+  .msg-ai .answer sup{font-family:var(--mono);font-size:9.5px;color:var(--brand);font-weight:600;cursor:pointer;letter-spacing:.04em;text-decoration:underline;text-underline-offset:2px;}
+  .msg-ai .answer sup:hover{color:var(--brand-ink);}
+
+  /* AI - data callout (tabular) */
+  .ai-data{margin:12px 0;border-top:1px solid var(--ink);border-bottom:1px solid var(--ink);font-family:var(--mono);font-size:11.5px;}
+  .ai-data .row{display:grid;grid-template-columns:auto 1fr auto;gap:10px;padding:7px 0;border-bottom:1px dashed var(--hair);}
+  .ai-data .row:last-child{border-bottom:0;}
+  .ai-data .row .l{color:var(--ink-3);font-size:10px;letter-spacing:.1em;text-transform:uppercase;font-weight:500;}
+  .ai-data .row .v{text-align:right;font-weight:500;color:var(--ink);font-variant-numeric:tabular-nums;letter-spacing:-0.01em;font-size:13px;}
+  .ai-data .row .v.warn{color:var(--warn);}
+  .ai-data .row .v.ok{color:var(--ok);}
+
+  /* AI - alternative view */
+  .ai-alt{margin:12px 0 8px;padding:10px 0 0;border-top:1px solid var(--hair);}
+  .ai-alt .lb{font-family:var(--mono);font-size:9.5px;color:var(--ink-3);letter-spacing:.14em;text-transform:uppercase;font-weight:600;margin-bottom:6px;}
+  .ai-alt p{margin:0;font-size:13.5px;line-height:1.55;color:var(--ink-2);font-style:italic;}
+  .ai-alt p::before{content:"※ ";color:var(--ink-3);font-style:normal;}
+
+  /* AI — sources accordion */
+  .ai-srcs{margin-top:12px;padding-top:10px;border-top:1px solid var(--hair);}
+  .ai-srcs .sh{font-family:var(--mono);font-size:9.5px;color:var(--ink-3);letter-spacing:.14em;text-transform:uppercase;font-weight:600;margin-bottom:8px;display:flex;align-items:baseline;gap:8px;}
+  .ai-srcs .sh .ct{margin-left:auto;color:var(--ink);}
+  .ai-srcs .src{display:grid;grid-template-columns:auto 1fr auto;gap:8px;padding:7px 0;border-bottom:1px solid var(--hair);text-decoration:none;color:inherit;align-items:baseline;}
+  .ai-srcs .src:last-child{border-bottom:0;}
+  .ai-srcs .src .n{font-family:var(--mono);font-size:10px;color:var(--ink-3);font-weight:500;letter-spacing:.04em;}
+  .ai-srcs .src .t{font-size:12.5px;color:var(--ink);line-height:1.4;letter-spacing:-0.005em;}
+  .ai-srcs .src .t .meta{display:block;font-family:var(--mono);font-size:10px;color:var(--ink-3);margin-top:2px;letter-spacing:.02em;}
+  .ai-srcs .src .a{color:var(--ink-3);font-family:var(--mono);font-size:10px;letter-spacing:.04em;text-decoration:underline;text-underline-offset:3px;}
+
+  /* AI - actions */
+  .ai-acts{display:flex;gap:0;margin-top:12px;border-top:1px solid var(--line);}
+  .ai-acts button{background:transparent;border:0;border-right:1px solid var(--hair);padding:10px 12px;font-family:var(--mono);font-size:10.5px;color:var(--ink-2);cursor:pointer;letter-spacing:.06em;text-transform:uppercase;font-weight:500;}
+  .ai-acts button:last-child{border-right:0;}
+  .ai-acts button:hover{color:var(--ink);}
+  .ai-acts button.primary{color:var(--brand);font-weight:600;}
+
+  /* Streaming dot */
+  .typing{display:inline-flex;gap:3px;align-items:center;padding:3px 0;}
+  .typing span{width:5px;height:5px;background:var(--brand);border-radius:50%;animation:bounce 1.2s ease-in-out infinite;}
+  .typing span:nth-child(2){animation-delay:.15s;}
+  .typing span:nth-child(3){animation-delay:.3s;}
+  @keyframes bounce{0%,80%,100%{opacity:.3;transform:translateY(0)}40%{opacity:1;transform:translateY(-3px)}}
+
+  /* Suggested prompts */
+  .c-suggest{padding:10px 18px 12px;border-top:1px solid var(--line);background:var(--bg);}
+  .c-suggest .lb{font-family:var(--mono);font-size:9.5px;color:var(--ink-4);letter-spacing:.14em;text-transform:uppercase;font-weight:600;margin-bottom:8px;}
+  .c-suggest .row{display:flex;gap:6px;flex-wrap:wrap;}
+  .c-suggest .chip{background:transparent;border:1px solid var(--line);padding:8px 12px;font-size:12.5px;color:var(--ink-2);cursor:pointer;font-family:var(--sans);letter-spacing:-0.005em;min-height:36px;font-weight:400;}
+  .c-suggest .chip:hover{border-color:var(--ink);color:var(--ink);}
+
+  /* Composer */
+  .composer{position:absolute;bottom:0;left:0;right:0;background:var(--bg);border-top:1px solid var(--ink);padding:10px 14px 12px;display:flex;gap:8px;align-items:flex-end;z-index:5;}
+  .composer .input{flex:1;border:1px solid var(--line);background:var(--surface);padding:11px 14px;font-family:var(--sans);font-size:14px;color:var(--ink);min-height:44px;line-height:1.4;letter-spacing:-0.005em;outline:none;}
+  .composer .input:focus{border-color:var(--ink);}
+  .composer .input::placeholder{color:var(--ink-4);}
+  .composer .send{width:44px;height:44px;background:var(--ink);color:var(--bg);border:0;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+  .composer .send:disabled{background:var(--ink-4);}
+  .composer .icon-btn{width:44px;height:44px;background:transparent;border:1px solid var(--line);cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--ink);flex-shrink:0;}
+
+  /* ============== DESKTOP ============== */
+  .d-frame{width:1408px;margin:0 auto;background:var(--surface);overflow:hidden;box-shadow:0 40px 100px -30px rgba(0,0,0,.22),0 10px 30px -10px rgba(0,0,0,.12);border:1px solid var(--line);}
+  .d-chrome{background:var(--surface-2);border-bottom:1px solid var(--line);padding:10px 16px;display:flex;align-items:center;gap:10px;}
+  .d-chrome .dots{display:flex;gap:6px;}
+  .d-chrome .dot{width:11px;height:11px;border-radius:50%;background:var(--ink-4);opacity:.5;}
+  .d-chrome .dot.r{background:#F25F5C;opacity:.85;} .d-chrome .dot.y{background:#F7C548;opacity:.85;} .d-chrome .dot.g{background:#4CB963;opacity:.85;}
+  .d-chrome .url{margin-left:14px;background:var(--surface);border:1px solid var(--line);padding:5px 14px;font-family:var(--mono);font-size:11px;color:var(--ink-3);flex:1;max-width:460px;}
+  .d-chrome .url b{color:var(--ink);font-weight:500;}
+
+  .d-app{display:grid;grid-template-columns:220px 1fr 320px;min-height:880px;}
+
+  /* Sidebar */
+  .d-side{background:var(--bg);border-right:1px solid var(--line);padding:18px 0;display:flex;flex-direction:column;}
+  .d-side .sd-brand{padding:4px 20px 22px;font-size:15px;font-weight:600;letter-spacing:.04em;}
+  .d-side .sd-brand .dot{display:inline-block;width:5px;height:5px;border-radius:50%;background:var(--brand);margin:0 1px;transform:translateY(-2px);}
+  .d-side .sd-lb{font-family:var(--mono);font-size:9.5px;color:var(--ink-4);letter-spacing:.14em;text-transform:uppercase;padding:18px 20px 8px;font-weight:600;}
+  .d-side .sd-nav{display:flex;align-items:center;gap:11px;padding:8px 20px;font-size:13px;color:var(--ink-2);text-decoration:none;border-left:2px solid transparent;}
+  .d-side .sd-nav:hover{background:var(--surface-2);color:var(--ink);}
+  .d-side .sd-nav.on{background:var(--surface);color:var(--ink);font-weight:500;border-left-color:var(--ink);}
+  .d-side .sd-nav .sd-k{margin-left:auto;font-family:var(--mono);font-size:10px;color:var(--ink-4);letter-spacing:.04em;}
+  .d-side .sd-user{margin:auto 12px 12px;display:flex;align-items:center;gap:10px;padding:14px 12px 0;border-top:1px solid var(--line);}
+  .d-side .sd-user .av{width:30px;height:30px;background:var(--ink);color:var(--bg);display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:11px;font-weight:600;}
+  .d-side .sd-user .un{font-size:12.5px;font-weight:500;}
+  .d-side .sd-user .ur{font-family:var(--mono);font-size:10px;color:var(--ink-3);margin-top:1px;letter-spacing:.04em;}
+
+  /* History panel (left of chat) */
+  .d-hist{background:var(--bg);border-right:1px solid var(--line);padding:0;display:none;}
+
+  /* Chat main */
+  .d-chat{display:flex;flex-direction:column;min-width:0;border-right:1px solid var(--line);}
+  .d-chat-top{padding:14px 28px;border-bottom:1px solid var(--line);background:var(--bg);display:flex;align-items:center;gap:16px;flex-shrink:0;}
+  .d-chat-top .who-block{flex:1;min-width:0;}
+  .d-chat-top .who-block .nm{font-size:16px;font-weight:600;letter-spacing:-0.01em;color:var(--ink);}
+  .d-chat-top .who-block .nm::before{content:"";display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--brand);margin-right:8px;vertical-align:2px;animation:pulse 2s ease-in-out infinite;}
+  .d-chat-top .who-block .meta{font-family:var(--mono);font-size:10.5px;color:var(--ink-3);letter-spacing:.04em;margin-top:2px;}
+  .d-chat-top .who-block .meta b{color:var(--ink);font-weight:500;}
+  .d-chat-top .actions{display:flex;gap:0;border:1px solid var(--line);}
+  .d-chat-top .actions button{min-height:34px;padding:0 14px;background:transparent;border:0;border-right:1px solid var(--line);font-family:var(--mono);font-size:10.5px;color:var(--ink-2);cursor:pointer;letter-spacing:.08em;text-transform:uppercase;font-weight:500;}
+  .d-chat-top .actions button:last-child{border-right:0;}
+  .d-chat-top .actions button:hover{background:var(--surface-2);color:var(--ink);}
+
+  /* Context bar desktop */
+  .d-ctx{padding:10px 28px;border-bottom:1px solid var(--line);background:var(--surface-2);display:flex;align-items:center;gap:24px;font-family:var(--mono);font-size:11px;color:var(--ink-3);letter-spacing:.04em;flex-wrap:wrap;flex-shrink:0;}
+  .d-ctx .lb{color:var(--ink-4);font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;}
+  .d-ctx b{color:var(--ink);font-weight:500;}
+  .d-ctx .grp{display:flex;align-items:center;gap:8px;}
+  .d-ctx .grp .lb::after{content:":";margin-left:2px;}
+
+  /* stream desktop */
+  .d-stream{flex:1;overflow-y:auto;padding:32px 60px 200px;}
+  .d-stream .stream-inner{max-width:780px;margin:0 auto;}
+
+  .d-msg-user{display:flex;justify-content:flex-end;margin-bottom:24px;}
+  .d-msg-user .body{max-width:65%;background:var(--ink);color:var(--bg);padding:12px 16px;font-size:14.5px;line-height:1.55;letter-spacing:-0.005em;}
+  .d-msg-user .ts{font-family:var(--mono);font-size:10px;color:var(--ink-4);text-align:right;margin-top:5px;letter-spacing:.04em;}
+
+  .d-msg-ai{margin-bottom:32px;padding-left:18px;border-left:2px solid var(--brand);}
+  .d-msg-ai .head{display:flex;align-items:baseline;gap:10px;margin-bottom:10px;}
+  .d-msg-ai .head .nm{font-family:var(--mono);font-size:10px;color:var(--brand);letter-spacing:.14em;text-transform:uppercase;font-weight:600;}
+  .d-msg-ai .head .verdict{font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;font-weight:600;padding-bottom:1px;border-bottom:1.5px solid;}
+  .d-msg-ai .head .verdict.confirm{color:var(--ok);border-color:var(--ok);}
+  .d-msg-ai .head .verdict.recommend{color:var(--brand);border-color:var(--brand);}
+  .d-msg-ai .head .verdict.unc{color:var(--unc);border-color:var(--unc);}
+  .d-msg-ai .head .verdict.lack{color:var(--warn);border-color:var(--warn);}
+  .d-msg-ai .head .conf{margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3);letter-spacing:.04em;}
+  .d-msg-ai .head .conf b{color:var(--ink);font-weight:500;}
+
+  .d-msg-ai .answer{font-size:15px;line-height:1.65;color:var(--ink);letter-spacing:-0.005em;}
+  .d-msg-ai .answer p{margin:0 0 12px;}
+  .d-msg-ai .answer p:last-child{margin-bottom:0;}
+  .d-msg-ai .answer b{font-weight:600;}
+  .d-msg-ai .answer .k{font-family:var(--mono);font-size:13.5px;color:var(--ink);background:var(--surface-2);padding:1px 5px;border:1px solid var(--line);}
+  .d-msg-ai .answer .hi{background:linear-gradient(transparent 62%, rgba(13,95,90,.16) 62%);padding:0 1px;}
+  .d-msg-ai .answer sup{font-family:var(--mono);font-size:10px;color:var(--brand);font-weight:600;cursor:pointer;letter-spacing:.04em;text-decoration:underline;text-underline-offset:2px;margin:0 1px;}
+
+  .d-msg-ai .ai-data{font-size:12.5px;}
+  .d-msg-ai .ai-data .row{padding:9px 0;}
+  .d-msg-ai .ai-data .row .l{font-size:10.5px;}
+  .d-msg-ai .ai-data .row .v{font-size:14px;}
+
+  .d-msg-ai .ai-alt{padding:14px 0 0;}
+  .d-msg-ai .ai-alt p{font-size:14px;}
+
+  .d-msg-ai .ai-srcs .src .t{font-size:13px;}
+
+  .d-msg-ai .ai-acts{margin-top:14px;}
+  .d-msg-ai .ai-acts button{padding:11px 14px;font-size:11px;}
+
+  /* Composer desktop */
+  .d-composer{position:absolute;bottom:0;left:220px;right:320px;background:var(--bg);border-top:1px solid var(--ink);padding:14px 60px 18px;}
+  .d-composer-inner{max-width:780px;margin:0 auto;}
+  .d-suggest{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;}
+  .d-suggest .chip{background:transparent;border:1px solid var(--line);padding:7px 12px;font-size:12.5px;color:var(--ink-2);cursor:pointer;letter-spacing:-0.005em;min-height:34px;}
+  .d-suggest .chip:hover{border-color:var(--ink);color:var(--ink);}
+  .d-comp-row{display:flex;gap:8px;align-items:flex-end;}
+  .d-comp-row .input{flex:1;border:1px solid var(--line);background:var(--surface);padding:13px 16px;font-family:var(--sans);font-size:14.5px;min-height:48px;line-height:1.45;outline:none;letter-spacing:-0.005em;}
+  .d-comp-row .input:focus{border-color:var(--ink);}
+  .d-comp-row .input::placeholder{color:var(--ink-4);}
+  .d-comp-row .icon-btn{width:48px;height:48px;background:transparent;border:1px solid var(--line);cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--ink);flex-shrink:0;}
+  .d-comp-row .send{width:auto;min-width:80px;height:48px;background:var(--ink);color:var(--bg);border:0;cursor:pointer;font-family:var(--sans);font-size:13px;font-weight:500;letter-spacing:.04em;text-transform:uppercase;display:flex;align-items:center;justify-content:center;gap:8px;padding:0 18px;}
+  .d-comp-row .send .kbd{font-family:var(--mono);font-size:10px;opacity:.6;border:1px solid rgba(255,255,255,.3);padding:1px 5px;}
+  .d-composer-foot{display:flex;justify-content:space-between;margin-top:10px;font-family:var(--mono);font-size:10px;color:var(--ink-4);letter-spacing:.06em;}
+  .d-composer-foot .l{display:flex;gap:14px;}
+  .d-composer-foot .l b{color:var(--ink-2);font-weight:500;}
+
+  /* Right context panel */
+  .d-rpanel{background:var(--bg);display:flex;flex-direction:column;}
+  .d-rpanel .rp-tab{display:flex;border-bottom:1px solid var(--line);}
+  .d-rpanel .rp-tab button{flex:1;background:transparent;border:0;padding:11px 8px;font-family:var(--mono);font-size:10px;color:var(--ink-3);letter-spacing:.1em;text-transform:uppercase;cursor:pointer;font-weight:600;border-bottom:2px solid transparent;}
+  .d-rpanel .rp-tab button.on{color:var(--ink);border-bottom-color:var(--ink);}
+  .d-rpanel .rp-content{flex:1;overflow-y:auto;padding:20px 22px;}
+
+  .rp-sec{padding-bottom:20px;border-bottom:1px solid var(--hair);margin-bottom:20px;}
+  .rp-sec:last-child{border-bottom:0;margin-bottom:0;}
+  .rp-sec h4{font-family:var(--mono);font-size:9.5px;color:var(--ink-3);letter-spacing:.14em;text-transform:uppercase;margin:0 0 10px;font-weight:600;}
+  .rp-sec h4 .ct{margin-left:6px;color:var(--ink);font-weight:500;}
+
+  .rp-cited{display:grid;grid-template-columns:auto 1fr;gap:8px;padding:8px 0;border-bottom:1px solid var(--hair);align-items:baseline;}
+  .rp-cited:last-child{border-bottom:0;}
+  .rp-cited .n{font-family:var(--mono);font-size:10.5px;color:var(--brand);font-weight:600;letter-spacing:.04em;}
+  .rp-cited .t{font-size:12.5px;line-height:1.4;color:var(--ink);letter-spacing:-0.005em;}
+  .rp-cited .t .s{display:block;font-family:var(--mono);font-size:10px;color:var(--ink-3);margin-top:3px;letter-spacing:.02em;}
+  .rp-cited .t a{color:var(--ink-3);font-family:var(--mono);font-size:10px;letter-spacing:.04em;text-decoration:underline;text-underline-offset:3px;display:inline-block;margin-top:4px;}
+
+  .rp-mini{padding:8px 0;border-bottom:1px solid var(--hair);}
+  .rp-mini:last-child{border-bottom:0;}
+  .rp-mini .row{display:flex;justify-content:space-between;align-items:baseline;font-family:var(--mono);font-size:11px;}
+  .rp-mini .row .l{color:var(--ink-3);font-size:10px;letter-spacing:.1em;text-transform:uppercase;font-weight:500;}
+  .rp-mini .row .v{color:var(--ink);font-weight:500;letter-spacing:-0.005em;font-size:12.5px;}
+
+  .rp-hist a{display:block;padding:9px 0;border-bottom:1px solid var(--hair);text-decoration:none;color:inherit;}
+  .rp-hist a:last-child{border-bottom:0;}
+  .rp-hist .qt{font-size:12.5px;color:var(--ink);font-weight:500;line-height:1.35;letter-spacing:-0.005em;}
+  .rp-hist .qm{font-family:var(--mono);font-size:10px;color:var(--ink-3);margin-top:3px;letter-spacing:.02em;}
+
+  @media (max-width: 1460px){
+    .d-frame{width:calc(100vw - 60px);}
+    .d-app{grid-template-columns:200px 1fr 300px;}
+    .d-composer{left:200px;right:300px;}
+  }
+  @media (max-width: 900px){
+    .canvas{padding:14px 10px 60px;}
+    .d-frame{display:none;}
+  }
+</style>
+</head>
+<body>
+
+<div class="chrome">
+  <div class="chrome-brand">TRAIN<span class="dot"></span>RACLE</div>
+  <div class="chrome-path">AI Chat · v1</div>
+  <div class="tabs" id="tabs">
+    <button data-tab="mobile" class="on">Mobile</button>
+    <button data-tab="desktop">Desktop</button>
+  </div>
+</div>
+
+<div class="canvas">
+
+<!-- ============== MOBILE ============== -->
+<div class="frame on" data-frame="mobile">
+  <div class="view-label"><span class="dot"></span>Mobile · 360 × 800 · Light <span class="dim">— 장호준 AI · 대화</span></div>
+
+  <div class="m-frame">
+    <div class="m-inner">
+      <div class="m-status">
+        <span class="mono">9:41</span>
+        <span class="r">
+          <svg width="16" height="10" viewBox="0 0 16 10"><path d="M0 8h2v2H0zM4 6h2v4H4zM8 3h2v7H8zM12 0h2v10h-2z"/></svg>
+          <svg width="22" height="10" viewBox="0 0 22 10"><rect x="0" y="1" width="18" height="8" rx="1" fill="none" stroke="currentColor" stroke-width="1"/><rect x="2" y="3" width="11" height="4"/><rect x="19" y="3.5" width="1.5" height="3"/></svg>
+        </span>
+      </div>
+
+      <div class="c-top">
+        <button class="back" aria-label="뒤로">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg>
+        </button>
+        <div class="who">
+          <div class="n">장호준 AI</div>
+          <div class="s"><span class="dot"></span>Online · reasoning v0.3.1</div>
+        </div>
+        <button class="more" aria-label="더보기">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="12" cy="19" r="1.6"/></svg>
+        </button>
+      </div>
+
+      <div class="c-ctx">
+        <span class="lb">Context</span>
+        <span><b>민지</b></span>
+        <span>·</span>
+        <span>Cycle <b>7</b> · Day <b>5/9.5</b></span>
+        <span>·</span>
+        <span>CK <b style="color:var(--warn);">+18%</b></span>
+      </div>
+
+      <div class="stream">
+        <div class="day-div">2026 · 4월 22일 · 화</div>
+
+        <!-- USER msg -->
+        <div class="msg-user">
+          <div>
+            <div class="body">오늘 PM 세션, 강도 그대로 갈까요? CK 좀 높던데</div>
+            <div class="ts">02:11</div>
+          </div>
+        </div>
+
+        <!-- AI msg 1 — 판정 불확실 -->
+        <div class="msg-ai">
+          <div class="head">
+            <span class="nm">장호준 AI</span>
+            <span class="verdict unc">판정 불확실</span>
+            <span class="conf">신뢰도 <b>72%</b></span>
+          </div>
+          <div class="answer">
+            <p><span class="hi">강도를 <b>−10%</b>로 조정하는 것을 권장</span>하지만, 코치 판단이 필요한 영역입니다<sup>[1]</sup>.</p>
+            <p>지난 14일간 CK 추이를 보면 <span class="k">+18%</span>로 평소 변동 범위(±8%)를 벗어났습니다. 그러나 <b>RPE는 안정적</b>이고, 어제 Z2 세션의 HR drift가 <span class="k">2.1%</span>로 정상 범위입니다<sup>[2]</sup>.</p>
+            <div class="ai-data">
+              <div class="row"><span class="l">CK trend (14d)</span><span class="v warn">+18%</span></div>
+              <div class="row"><span class="l">RPE trend (7d)</span><span class="v ok">stable</span></div>
+              <div class="row"><span class="l">HR drift yesterday</span><span class="v">2.1%</span></div>
+              <div class="row"><span class="l">Sleep avg (7d)</span><span class="v">7h 02m</span></div>
+            </div>
+            <p>두 신호가 엇갈립니다. <b>회복 신호(RPE/HR/수면)는 OK</b>, <b>피로 마커(CK)는 경고</b>. 이런 경우 A_guide Rule 4는 "주관적 신호 우선"을 권합니다<sup>[3]</sup>.</p>
+
+            <div class="ai-alt">
+              <div class="lb">다른 관점</div>
+              <p>CK 단독으로 판정하면 −15%까지 내려야 한다. Daniels 방식은 더 보수적입니다<sup>[4]</sup>.</p>
+            </div>
+
+            <div class="ai-srcs">
+              <div class="sh">Sources <span class="ct">4</span></div>
+              <a class="src" href="#">
+                <span class="n">[1]</span>
+                <span class="t">A_guide Rule 4 — 회복 신호 충돌 시 판단<span class="meta">Coach Jang · 2023</span></span>
+                <span class="a">→</span>
+              </a>
+              <a class="src" href="#">
+                <span class="n">[2]</span>
+                <span class="t">D‑4 Z2 세션 데이터<span class="meta">4.21 · 5.8km · HR 138 avg</span></span>
+                <span class="a">→</span>
+              </a>
+              <a class="src" href="#">
+                <span class="n">[3]</span>
+                <span class="t">민지 14일 RPE/Sleep 로그<span class="meta">자동 수집 · 14d</span></span>
+                <span class="a">→</span>
+              </a>
+              <a class="src" href="#">
+                <span class="n">[4]</span>
+                <span class="t">Daniels Running Formula · CK guideline<span class="meta">3rd ed. 2013 · p.114</span></span>
+                <span class="a">→</span>
+              </a>
+            </div>
+
+            <div class="ai-acts">
+              <button>저장</button>
+              <button>복사</button>
+              <button class="primary">코치 판단 입력</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- USER msg 2 -->
+        <div class="msg-user">
+          <div>
+            <div class="body">−10%면 페이스 어떻게 잡지?</div>
+            <div class="ts">02:14</div>
+          </div>
+        </div>
+
+        <!-- AI msg 2 — 권장 -->
+        <div class="msg-ai">
+          <div class="head">
+            <span class="nm">장호준 AI</span>
+            <span class="verdict recommend">권장</span>
+            <span class="conf">신뢰도 <b>89%</b></span>
+          </div>
+          <div class="answer">
+            <p>VO2 페이스 <span class="k">3'20"/km</span> → <span class="k">3'25"/km</span>로 5초 늦추는 것이 적절합니다<sup>[1]</sup>.</p>
+            <div class="ai-data">
+              <div class="row"><span class="l">Original pace</span><span class="v">3'20"/km</span></div>
+              <div class="row"><span class="l">Adjusted pace</span><span class="v ok">3'25"/km</span></div>
+              <div class="row"><span class="l">HR target</span><span class="v">175–183</span></div>
+              <div class="row"><span class="l">Est. TSS</span><span class="v">112 (−12)</span></div>
+            </div>
+            <p>볼륨(<span class="k">6 reps</span>)은 유지. 마지막 2 rep에서 페이스 drift 관찰 — drift <span class="k">±3"</span> 이내면 다음 사이클 정상 복귀.</p>
+
+            <div class="ai-srcs">
+              <div class="sh">Sources <span class="ct">2</span></div>
+              <a class="src" href="#">
+                <span class="n">[1]</span>
+                <span class="t">A_guide Rule 6 · 강도 조정 시 페이스 환산표<span class="meta">−10% intensity = +5"/km</span></span>
+                <span class="a">→</span>
+              </a>
+              <a class="src" href="#">
+                <span class="n">[2]</span>
+                <span class="t">민지 5000m PB 16:10<span class="meta">2026.03.14 · official</span></span>
+                <span class="a">→</span>
+              </a>
+            </div>
+
+            <div class="ai-acts">
+              <button>저장</button>
+              <button>세션에 적용</button>
+              <button class="primary">계속 질문</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- typing -->
+        <div class="msg-ai" style="border-left-color:var(--ink-4);">
+          <div class="head">
+            <span class="nm">장호준 AI</span>
+          </div>
+          <div class="answer">
+            <div class="typing"><span></span><span></span><span></span></div>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="c-suggest">
+        <div class="lb">제안</div>
+        <div class="row">
+          <button class="chip">−10% 적용 후 일정 보여줘</button>
+          <button class="chip">CK는 어떻게 측정해?</button>
+        </div>
+      </div>
+
+      <div class="composer">
+        <button class="icon-btn" aria-label="첨부">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
+        </button>
+        <input class="input" placeholder="장호준 AI에게 질문..." />
+        <button class="send">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============== DESKTOP ============== -->
+<div class="frame" data-frame="desktop">
+  <div class="view-label"><span class="dot"></span>Desktop · 1440 × 900 · Light <span class="dim">— 3열: 사이드 / 대화 / 인용·컨텍스트</span></div>
+
+  <div class="d-frame">
+    <div class="d-chrome">
+      <div class="dots"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span></div>
+      <div class="url"><b>app.trainoracle.run</b>/chat/jang</div>
+    </div>
+
+    <div class="d-app">
+      <aside class="d-side">
+        <div class="sd-brand">TRAIN<span class="dot"></span>RACLE</div>
+        <div class="sd-lb">Training</div>
+        <a class="sd-nav" href="#">대시보드<span class="sd-k">⌘1</span></a>
+        <a class="sd-nav" href="#">캘린더<span class="sd-k">⌘2</span></a>
+        <a class="sd-nav on" href="#">장호준 AI<span class="sd-k">⌘3</span></a>
+        <a class="sd-nav" href="#">분석<span class="sd-k">⌘4</span></a>
+        <a class="sd-nav" href="#">AI 인박스<span class="sd-k">2</span></a>
+        <div class="sd-lb">Coach view</div>
+        <a class="sd-nav" href="#">선수 8<span class="sd-k">⌘5</span></a>
+        <div class="sd-user">
+          <div class="av">MJ</div>
+          <div>
+            <div class="un">민지</div>
+            <div class="ur">ATHLETE · 1500M</div>
+          </div>
+        </div>
+      </aside>
+
+      <main class="d-chat">
+        <div class="d-chat-top">
+          <div class="who-block">
+            <div class="nm">장호준 AI</div>
+            <div class="meta">reasoning <b>v0.3.1</b> · 응답 평균 <b>1.4s</b> · 오늘 호출 <b>14 / 50</b></div>
+          </div>
+          <div class="actions">
+            <button>대화 새로</button>
+            <button>내보내기</button>
+            <button>모델 정보</button>
+          </div>
+        </div>
+
+        <div class="d-ctx">
+          <div class="grp"><span class="lb">athlete</span><b>민지</b></div>
+          <div class="grp"><span class="lb">cycle</span><b>7 · D5/9.5</b></div>
+          <div class="grp"><span class="lb">today</span><b>VO2 6×1000m @ 3'20"</b></div>
+          <div class="grp"><span class="lb">CK</span><b style="color:var(--warn);">+18% (14d)</b></div>
+          <div class="grp"><span class="lb">memory</span><b>active · 142 facts</b></div>
+        </div>
+
+        <div class="d-stream">
+          <div class="stream-inner">
+            <div class="day-div">2026 · 4월 22일 · 화</div>
+
+            <div class="d-msg-user">
+              <div>
+                <div class="body">오늘 PM 세션, 강도 그대로 갈까요? CK 좀 높던데</div>
+                <div class="ts">02:11</div>
+              </div>
+            </div>
+
+            <div class="d-msg-ai">
+              <div class="head">
+                <span class="nm">장호준 AI</span>
+                <span class="verdict unc">판정 불확실</span>
+                <span class="conf">신뢰도 <b>72%</b> · 4 sources · 1.6s</span>
+              </div>
+              <div class="answer">
+                <p><span class="hi">강도를 <b>−10%</b>로 조정하는 것을 권장</span>하지만, 코치 판단이 필요한 영역입니다<sup>[1]</sup>.</p>
+                <p>지난 14일간 CK 추이를 보면 <span class="k">+18%</span>로 평소 변동 범위(±8%)를 벗어났습니다. 그러나 <b>RPE는 안정적</b>이고, 어제 Z2 세션의 HR drift가 <span class="k">2.1%</span>로 정상 범위입니다<sup>[2]</sup>. 두 신호가 충돌하는 상황입니다.</p>
+
+                <div class="ai-data">
+                  <div class="row"><span class="l">CK trend (14d)</span><span class="v warn">+18%  ↑ above ±8% band</span></div>
+                  <div class="row"><span class="l">RPE trend (7d)</span><span class="v ok">stable · avg 5.8 / 10</span></div>
+                  <div class="row"><span class="l">HR drift yesterday</span><span class="v">2.1% · within band</span></div>
+                  <div class="row"><span class="l">Sleep avg (7d)</span><span class="v">7h 02m · normal</span></div>
+                  <div class="row"><span class="l">Last MAIN</span><span class="v">Cycle 6 · 4.13 · −2" drift OK</span></div>
+                </div>
+
+                <p>이런 경우 A_guide Rule 4는 <b>"주관적 신호 우선, 객관 마커는 보조"</b>를 권합니다<sup>[3]</sup>. 즉 CK가 높아도 RPE/Sleep이 안정적이면 강도 조정은 <span class="k">−5~10%</span> 범위가 합리적입니다.</p>
+
+                <p>다만 사이클 7은 시즌 첫 VO2 MAIN이고, 다음 사이클로 영향을 주는 시점이라 <span class="hi">보수적으로 가는 것이 장기적으로 안전</span>합니다.</p>
+
+                <div class="ai-alt">
+                  <div class="lb">다른 관점</div>
+                  <p>CK 단독으로 판정하면 −15%까지 내려야 한다. Daniels 방식은 객관 마커에 더 무게를 둡니다<sup>[4]</sup>. 코치의 마지막 4 사이클 패턴을 보면 RPE 우선 판정이 8/10 정확했음.</p>
+                </div>
+
+                <div class="ai-srcs">
+                  <div class="sh">Sources <span class="ct">4 cited · 12 considered</span></div>
+                  <a class="src" href="#">
+                    <span class="n">[1]</span>
+                    <span class="t">A_guide Rule 4 — 회복 신호 충돌 시 판단<span class="meta">Coach Jang · 내부 문서 · 2023 · §4.2</span></span>
+                    <span class="a">open →</span>
+                  </a>
+                  <a class="src" href="#">
+                    <span class="n">[2]</span>
+                    <span class="t">D‑4 Z2 세션 데이터<span class="meta">4.21 · 5.8 km · HR 138 avg · drift 2.1%</span></span>
+                    <span class="a">open →</span>
+                  </a>
+                  <a class="src" href="#">
+                    <span class="n">[3]</span>
+                    <span class="t">민지 14일 RPE / Sleep 로그<span class="meta">자동 수집 · 4.8 ~ 4.22</span></span>
+                    <span class="a">open →</span>
+                  </a>
+                  <a class="src" href="#">
+                    <span class="n">[4]</span>
+                    <span class="t">Daniels Running Formula · CK guideline<span class="meta">3rd ed. 2013 · p.114 (보수적 관점)</span></span>
+                    <span class="a">open →</span>
+                  </a>
+                </div>
+
+                <div class="ai-acts">
+                  <button>저장</button>
+                  <button>복사</button>
+                  <button>인박스 추가</button>
+                  <button class="primary">코치 판단 입력</button>
+                </div>
+              </div>
+            </div>
+
+            <div class="d-msg-user">
+              <div>
+                <div class="body">−10%면 페이스 어떻게 잡지?</div>
+                <div class="ts">02:14</div>
+              </div>
+            </div>
+
+            <div class="d-msg-ai">
+              <div class="head">
+                <span class="nm">장호준 AI</span>
+                <span class="verdict recommend">권장</span>
+                <span class="conf">신뢰도 <b>89%</b> · 2 sources · 0.9s</span>
+              </div>
+              <div class="answer">
+                <p>VO2 페이스 <span class="k">3'20"/km</span> → <span class="k">3'25"/km</span>로 5초 늦추는 것이 적절합니다<sup>[1]</sup>.</p>
+                <div class="ai-data">
+                  <div class="row"><span class="l">Original pace</span><span class="v">3'20"/km</span></div>
+                  <div class="row"><span class="l">Adjusted pace (−10%)</span><span class="v ok">3'25"/km</span></div>
+                  <div class="row"><span class="l">HR target</span><span class="v">175–183 (was 178–186)</span></div>
+                  <div class="row"><span class="l">Est. TSS</span><span class="v">112 pts (was 124)</span></div>
+                  <div class="row"><span class="l">Volume</span><span class="v">6 reps × 1000m (unchanged)</span></div>
+                </div>
+                <p>볼륨(<span class="k">6 reps × 1000m</span>)은 유지합니다 — Rule 6는 강도와 볼륨 중 하나만 조정합니다. 마지막 2 rep에서 페이스 drift <span class="k">±3"</span> 이내라면 신호 정상으로 보고 다음 사이클은 원래 강도로 복귀.</p>
+
+                <div class="ai-srcs">
+                  <div class="sh">Sources <span class="ct">2</span></div>
+                  <a class="src" href="#">
+                    <span class="n">[1]</span>
+                    <span class="t">A_guide Rule 6 — 강도 조정 시 페이스 환산표<span class="meta">−10% intensity ≈ +5"/km · Coach Jang 2023</span></span>
+                    <span class="a">open →</span>
+                  </a>
+                  <a class="src" href="#">
+                    <span class="n">[2]</span>
+                    <span class="t">민지 5000m PB · 16:10<span class="meta">2026.03.14 · 공식 기록 · 1500m PB 4:14</span></span>
+                    <span class="a">open →</span>
+                  </a>
+                </div>
+
+                <div class="ai-acts">
+                  <button>저장</button>
+                  <button>세션에 적용</button>
+                  <button>인박스 추가</button>
+                  <button class="primary">계속 질문</button>
+                </div>
+              </div>
+            </div>
+
+            <div class="d-msg-ai" style="border-left-color:var(--ink-4);">
+              <div class="head">
+                <span class="nm">장호준 AI</span>
+              </div>
+              <div class="answer">
+                <div class="typing"><span></span><span></span><span></span></div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <div class="d-composer">
+          <div class="d-composer-inner">
+            <div class="d-suggest">
+              <button class="chip">−10% 적용 후 일정 보여줘</button>
+              <button class="chip">CK는 어떻게 측정해?</button>
+              <button class="chip">다음 사이클 plan 미리 보기</button>
+              <button class="chip">왜 RPE 우선?</button>
+            </div>
+            <div class="d-comp-row">
+              <button class="icon-btn" aria-label="첨부">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
+              </button>
+              <input class="input" placeholder="장호준 AI에게 질문..." />
+              <button class="icon-btn" aria-label="음성">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/></svg>
+              </button>
+              <button class="send">전송<span class="kbd">↵</span></button>
+            </div>
+            <div class="d-composer-foot">
+              <div class="l">
+                <span><b>⌘ K</b> 검색</span>
+                <span><b>⌘ /</b> 명령</span>
+                <span><b>Shift + ↵</b> 줄바꿈</span>
+              </div>
+              <span>이 대화는 메모리에 저장됩니다.</span>
+            </div>
+          </div>
+        </div>
+      </main>
+
+      <aside class="d-rpanel">
+        <div class="rp-tab">
+          <button class="on">Cited</button>
+          <button>Context</button>
+          <button>History</button>
+        </div>
+        <div class="rp-content">
+          <div class="rp-sec">
+            <h4>Cited in this chat <span class="ct">6</span></h4>
+            <div class="rp-cited">
+              <span class="n">[1]</span>
+              <span class="t">A_guide Rule 4 — 회복 신호 충돌 시 판단<span class="s">Coach Jang · 2023 · §4.2</span><a href="#">open document →</a></span>
+            </div>
+            <div class="rp-cited">
+              <span class="n">[2]</span>
+              <span class="t">D‑4 Z2 세션 데이터<span class="s">4.21 · 5.8km · HR 138</span><a href="#">view session →</a></span>
+            </div>
+            <div class="rp-cited">
+              <span class="n">[3]</span>
+              <span class="t">민지 14일 RPE / Sleep<span class="s">자동 수집 · 4.8 ~ 4.22</span><a href="#">view log →</a></span>
+            </div>
+            <div class="rp-cited">
+              <span class="n">[4]</span>
+              <span class="t">Daniels · CK guideline<span class="s">3rd ed. 2013 · p.114</span><a href="#">view note →</a></span>
+            </div>
+            <div class="rp-cited">
+              <span class="n">[5]</span>
+              <span class="t">A_guide Rule 6 · 페이스 환산표<span class="s">Coach Jang · 2023</span><a href="#">open document →</a></span>
+            </div>
+            <div class="rp-cited">
+              <span class="n">[6]</span>
+              <span class="t">민지 5000m PB · 16:10<span class="s">2026.03.14 · 공식</span><a href="#">view record →</a></span>
+            </div>
+          </div>
+
+          <div class="rp-sec">
+            <h4>Athlete state</h4>
+            <div class="rp-mini">
+              <div class="row"><span class="l">Cycle</span><span class="v">7 · D5/9.5</span></div>
+            </div>
+            <div class="rp-mini">
+              <div class="row"><span class="l">CK 14d</span><span class="v" style="color:var(--warn);">+18%</span></div>
+            </div>
+            <div class="rp-mini">
+              <div class="row"><span class="l">RPE 7d avg</span><span class="v">5.8 / 10</span></div>
+            </div>
+            <div class="rp-mini">
+              <div class="row"><span class="l">Sleep 7d</span><span class="v">7h 02m</span></div>
+            </div>
+            <div class="rp-mini">
+              <div class="row"><span class="l">Next MAIN</span><span class="v">today PM</span></div>
+            </div>
+          </div>
+
+          <div class="rp-sec">
+            <h4>Recent chats</h4>
+            <div class="rp-hist">
+              <a href="#">
+                <div class="qt">왜 9.5일 사이클이야?</div>
+                <div class="qm">4.20 · 02:48 · 14 turns</div>
+              </a>
+              <a href="#">
+                <div class="qt">VO2 vs LT 우선순위</div>
+                <div class="qm">4.18 · 19:11 · 8 turns</div>
+              </a>
+              <a href="#">
+                <div class="qt">대회 D−21 plan 검토</div>
+                <div class="qm">4.15 · 06:22 · 22 turns</div>
+              </a>
+            </div>
+          </div>
+        </div>
+      </aside>
+    </div>
+  </div>
+</div>
+
+</div>
+
+<script>
+  const tabs = document.getElementById('tabs');
+  tabs.addEventListener('click', (e) => {
+    const btn = e.target.closest('button[data-tab]');
+    if (!btn) return;
+    tabs.querySelectorAll('button').forEach(b => b.classList.remove('on'));
+    btn.classList.add('on');
+    const which = btn.dataset.tab;
+    document.querySelectorAll('.frame').forEach(f => f.classList.toggle('on', f.dataset.frame === which));
+    try { localStorage.setItem('to_aichat_tab', which); } catch(e){}
+  });
+  try {
+    const saved = localStorage.getItem('to_aichat_tab');
+    if (saved) { const btn = tabs.querySelector(`button[data-tab="${saved}"]`); if (btn) btn.click(); }
+  } catch(e){}
+</script>
+
+</body>
+</html>

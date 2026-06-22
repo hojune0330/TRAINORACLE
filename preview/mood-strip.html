@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>Mood Strip</title>
+<link rel="stylesheet" href="../colors_and_type.css">
+<link rel="stylesheet" href="../colors_and_type_journal.css">
+<style>
+  html, body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--sans); }
+  .wrap { padding: 18px; }
+  .row { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; }
+  .cell { border: 1px solid var(--hair); padding: 14px 12px; display: flex; flex-direction: column; align-items: center; gap: 10px; }
+  .lbl { font-family: var(--mono); font-size: 9px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink-3); }
+  .kr { font-size: 12px; color: var(--ink-2); }
+  .scale-row { margin-top: 14px; display: flex; align-items: center; gap: 8px; padding: 10px 12px; background: var(--paper); border: 1px solid var(--hair); }
+  .scale-row .lbl { color: var(--ink-2); }
+  .swatch-line { display: flex; flex: 1; height: 10px; }
+  .swatch-line span { flex: 1; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="row">
+    <div class="cell"><div class="mood-strip m1"><i class="b"></i><i class="b"></i><i class="b"></i><i class="b"></i><i class="b"></i></div><div class="lbl">m1</div><div class="kr">흐림</div></div>
+    <div class="cell"><div class="mood-strip m2"><i class="b"></i><i class="b"></i><i class="b"></i><i class="b"></i><i class="b"></i></div><div class="lbl">m2</div><div class="kr">무덤덤</div></div>
+    <div class="cell"><div class="mood-strip m3"><i class="b"></i><i class="b"></i><i class="b"></i><i class="b"></i><i class="b"></i></div><div class="lbl">m3</div><div class="kr">보통</div></div>
+    <div class="cell"><div class="mood-strip m4"><i class="b"></i><i class="b"></i><i class="b"></i><i class="b"></i><i class="b"></i></div><div class="lbl">m4</div><div class="kr">좋음</div></div>
+    <div class="cell"><div class="mood-strip m5"><i class="b"></i><i class="b"></i><i class="b"></i><i class="b"></i><i class="b"></i></div><div class="lbl">m5</div><div class="kr">최고</div></div>
+  </div>
+  <div class="scale-row">
+    <div class="lbl">scale</div>
+    <div class="swatch-line">
+      <span style="background:var(--mood-1)"></span>
+      <span style="background:var(--mood-2)"></span>
+      <span style="background:var(--mood-3)"></span>
+      <span style="background:var(--mood-4)"></span>
+      <span style="background:var(--mood-5)"></span>
+    </div>
+  </div>
+</div>
+</body>
+</html>

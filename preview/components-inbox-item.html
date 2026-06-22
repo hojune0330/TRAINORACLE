@@ -1,0 +1,39 @@
+<!doctype html>
+<html><head><meta charset="utf-8"/>
+<link rel="stylesheet" href="../colors_and_type.css">
+<style>
+  body{margin:0;padding:20px 24px;background:var(--bg);font-family:var(--sans);}
+  .item{display:grid;grid-template-columns:auto 1fr auto;gap:14px;padding:14px 14px 14px 12px;border-bottom:1px solid var(--hair);border-left:2px solid;}
+  .item.unc{border-left-color:var(--unc);}
+  .item.risk{border-left-color:var(--warn);}
+  .item.pattern{border-left-color:var(--info);}
+  .item.pass{border-left-color:var(--ok);}
+  .who{font-family:var(--mono);font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--ink);min-width:64px;}
+  .title{font-size:13.5px;color:var(--ink);font-weight:500;letter-spacing:-0.005em;}
+  .desc{font-family:var(--mono);font-size:11px;color:var(--ink-3);margin-top:3px;letter-spacing:.02em;line-height:1.5;}
+  .meta{font-family:var(--mono);font-size:10px;color:var(--ink-4);text-align:right;letter-spacing:.04em;white-space:nowrap;}
+  .meta .t{display:block;}
+  .meta .kind{display:block;margin-top:2px;}
+</style>
+</head><body>
+  <div class="item unc">
+    <span class="who">MIN-JI</span>
+    <div><div class="title">D-5 강도 판단 불확실 — 신호 충돌</div><div class="desc">CK +18% vs RPE stable · AI 신뢰도 72%</div></div>
+    <div class="meta"><span class="t">14:20</span><span class="kind">UNC</span></div>
+  </div>
+  <div class="item risk">
+    <span class="who">JUN-WOO</span>
+    <div><div class="title">3주 연속 CTL +14% — 부상 위험</div><div class="desc">권고: 다음 사이클 볼륨 −15% · CAUTION mode 진입</div></div>
+    <div class="meta"><span class="t">09:42</span><span class="kind">RISK</span></div>
+  </div>
+  <div class="item pattern">
+    <span class="who">SOO-YEON</span>
+    <div><div class="title">VO2 세션 후 sleep latency 패턴 발견</div><div class="desc">최근 4회 D-5 후 평균 +38분 · 14일 데이터 누적</div></div>
+    <div class="meta"><span class="t">어제</span><span class="kind">PATTERN</span></div>
+  </div>
+  <div class="item pass">
+    <span class="who">DA-EUN</span>
+    <div><div class="title">9 Rules 전체 통과 — Cycle 8 완료</div><div class="desc">9/9 pass · 다음 사이클 자동 생성됨</div></div>
+    <div class="meta"><span class="t">2일전</span><span class="kind">PASS</span></div>
+  </div>
+</body></html>

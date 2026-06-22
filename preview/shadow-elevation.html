@@ -1,0 +1,19 @@
+<!doctype html>
+<html><head><meta charset="utf-8"/>
+<link rel="stylesheet" href="../colors_and_type.css">
+<style>
+  body{margin:0;padding:30px 24px;background:#E4E2DA;font-family:var(--sans);display:flex;gap:24px;align-items:center;justify-content:center;}
+  .cell{display:flex;flex-direction:column;align-items:center;gap:12px;}
+  .box{width:120px;height:80px;background:var(--bg);border:1px solid var(--line);}
+  .box.frame{box-shadow:0 40px 100px -30px rgba(0,0,0,0.22), 0 10px 30px -10px rgba(0,0,0,0.12);}
+  .box.subtle{box-shadow:0 1px 2px rgba(0,0,0,0.04);}
+  .lb{font-family:var(--mono);font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--ink);}
+  .px{font-family:var(--mono);font-size:9.5px;color:var(--ink-3);text-align:center;line-height:1.5;max-width:140px;}
+  .rule{font-family:var(--mono);font-size:10px;color:var(--err);letter-spacing:.1em;text-align:center;max-width:180px;}
+</style>
+</head><body>
+  <div class="cell"><div class="box"></div><div class="lb">none · default</div><div class="px">시각 위계는 색·border·여백으로</div></div>
+  <div class="cell"><div class="box subtle"></div><div class="lb">subtle</div><div class="px">0 1px 2px rgba(0,0,0,.04)<br>hover only</div></div>
+  <div class="cell"><div class="box frame"></div><div class="lb">frame</div><div class="px">preview frame 외곽<br>실제 UI 사용 X</div></div>
+  <div class="cell" style="margin-left:8px"><div class="rule">▸ glow / neumorphism /<br>blur ≥ 12px<br>금지</div></div>
+</body></html>

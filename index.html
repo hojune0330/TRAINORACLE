@@ -4,532 +4,165 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <meta name="color-scheme" content="light" />
-<title>TRAINORACLE — Design Demo Index</title>
-<link rel="preconnect" href="https://fonts.googleapis.com" />
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
-<link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css" rel="stylesheet" />
+<title>TRAINORACLE — Design Handoff (v3 · Journal-first)</title>
+<link rel="stylesheet" href="colors_and_type.css" />
+<link rel="stylesheet" href="colors_and_type_journal.css" />
 <style>
-  :root{
-    --sans:"Inter","Pretendard Variable",ui-sans-serif,system-ui,sans-serif;
-    --mono:"JetBrains Mono",ui-monospace,SFMono-Regular,monospace;
-    --paper:#FAFAF7;
-    --paper-2:#F4F4EF;
-    --ink:#1A1A1A;
-    --ink-2:#4A4A48;
-    --ink-3:#8A8A86;
-    --line:#E4E4DE;
-    --line-2:#D0D0C8;
-    --brand:#2A6396;
-    --ok:#2F6B3A;
-    --warn:#A14A1A;
-    --err:#8B2A2A;
-    /* energy systems · tier 2 (mid) */
-    --e-base:#4A8FC7;
-    --e-vo2:#D97A4A;
-    --e-thr:#7A8FA0;
-    --e-anaerobic:#9B5BA8;
-    --e-strength:#6B7A4A;
-    --e-recovery:#A8B2BC;
-  }
   *{box-sizing:border-box}
-  html,body{margin:0;padding:0;font-family:var(--sans);background:var(--paper);color:var(--ink);}
-  body{font-feature-settings:"ss01","cv11";-webkit-font-smoothing:antialiased;}
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);font-family:var(--sans);
+    -webkit-font-smoothing:antialiased;font-feature-settings:"ss01","cv11";}
   .mono{font-family:var(--mono);font-variant-numeric:tabular-nums;}
+  a{color:inherit;}
 
-  /* ============== HEADER ============== */
-  header{
-    border-bottom:1px solid var(--line);
-    background:var(--paper);
-    padding:32px 48px 24px;
-  }
-  .brand{
-    font-family:var(--mono);
-    font-size:11px;
-    letter-spacing:.18em;
-    text-transform:uppercase;
-    color:var(--ink-3);
-    margin:0 0 8px;
-  }
-  h1{
-    margin:0 0 6px;
-    font-size:32px;
-    font-weight:600;
-    letter-spacing:-0.02em;
-  }
-  .lede{
-    margin:0;
-    font-size:14px;
-    color:var(--ink-2);
-    max-width:760px;
-    line-height:1.6;
-  }
-  .meta-row{
-    display:flex;
-    gap:20px;
-    margin-top:16px;
-    flex-wrap:wrap;
-    font-family:var(--mono);
-    font-size:11px;
-    color:var(--ink-3);
-  }
-  .meta-row span b{color:var(--ink);font-weight:500;}
+  .wrap{max-width:1100px;margin:0 auto;padding:0 24px;}
 
-  /* ============== LAYOUT ============== */
-  main{padding:32px 48px 80px;max-width:1400px;}
-  section{margin-bottom:40px;}
-  h2{
-    font-size:13px;
-    font-family:var(--mono);
-    letter-spacing:.14em;
-    text-transform:uppercase;
-    color:var(--ink-2);
-    margin:0 0 12px;
-    padding-bottom:6px;
-    border-bottom:1px solid var(--line);
-  }
-  h2 .count{color:var(--ink-3);font-weight:400;margin-left:8px;}
+  /* ---- header ---- */
+  header{border-bottom:1px solid var(--line);padding:40px 0 28px;margin-bottom:40px;}
+  .brand-line{font-family:var(--mono);font-size:11px;letter-spacing:.18em;text-transform:uppercase;
+    color:var(--ink-3);margin:0 0 12px;}
+  .brand-line .dot{display:inline-block;width:3px;height:3px;background:var(--brand);
+    border-radius:50%;vertical-align:middle;margin:0 5px 2px;}
+  h1{margin:0 0 10px;font-size:clamp(28px,4.5vw,46px);font-weight:500;letter-spacing:-.03em;line-height:1.08;}
+  .lede{max-width:680px;margin:0;color:var(--ink-2);font-size:15.5px;line-height:1.6;}
+  .hand-quote{font-family:'Caveat','Gowun Dodum',cursive;color:var(--ink-blue);font-size:22px;
+    margin:18px 0 0;letter-spacing:.01em;}
 
-  /* ============== VALIDATION ============== */
-  .validation{
-    background:var(--paper-2);
-    border:1px solid var(--line);
-    padding:20px 24px;
-    margin-bottom:32px;
-  }
-  .validation h2{margin-top:0;border:none;padding:0;margin-bottom:14px;}
-  .v-grid{
-    display:grid;
-    grid-template-columns:repeat(auto-fill,minmax(260px,1fr));
-    gap:10px 24px;
-  }
-  .v-item{
-    display:flex;
-    align-items:flex-start;
-    gap:10px;
-    font-size:13px;
-    line-height:1.5;
-  }
-  .v-mark{
-    font-family:var(--mono);
-    font-size:11px;
-    width:22px;
-    flex-shrink:0;
-    text-align:center;
-    padding:1px 0;
-    color:#fff;
-    font-weight:500;
-  }
-  .v-mark.pass{background:var(--ok);}
-  .v-mark.warn{background:var(--warn);}
-  .v-mark.info{background:var(--ink-3);}
-  .v-text b{font-weight:500;}
-  .v-text span{color:var(--ink-3);font-size:12px;display:block;margin-top:2px;}
+  /* ---- version banner ---- */
+  .vbanner{border:1px solid var(--ink);background:var(--surface);padding:16px 18px;margin:0 0 40px;
+    display:flex;gap:16px;align-items:flex-start;}
+  .vbanner .tag{font-family:var(--mono);font-size:10px;font-weight:600;letter-spacing:.14em;
+    text-transform:uppercase;border:1.5px solid var(--brand);color:var(--brand);padding:3px 8px;flex:0 0 auto;}
+  .vbanner p{margin:0;font-size:13.5px;color:var(--ink-2);line-height:1.55;}
 
-  /* ============== CARDS ============== */
-  .grid{
-    display:grid;
-    grid-template-columns:repeat(auto-fill,minmax(300px,1fr));
-    gap:1px;
-    background:var(--line);
-    border:1px solid var(--line);
-  }
-  .card{
-    background:var(--paper);
-    padding:18px 20px;
-    display:flex;
-    flex-direction:column;
-    gap:8px;
-    transition:background .12s;
-    text-decoration:none;
-    color:inherit;
-  }
-  .card:hover{background:var(--paper-2);}
-  .card-head{
-    display:flex;
-    align-items:baseline;
-    justify-content:space-between;
-    gap:12px;
-  }
-  .card-id{
-    font-family:var(--mono);
-    font-size:11px;
-    color:var(--ink-3);
-    letter-spacing:.06em;
-  }
-  .card-status{
-    font-family:var(--mono);
-    font-size:10px;
-    padding:2px 6px;
-    letter-spacing:.06em;
-  }
-  .st-v2{background:var(--ok);color:#fff;}
-  .st-v1{background:var(--warn);color:#fff;}
-  .st-ref{background:var(--ink-3);color:#fff;}
-  .st-sprint{background:var(--brand);color:#fff;}
-  .card-title{
-    font-size:15px;
-    font-weight:500;
-    margin:0;
-    letter-spacing:-0.01em;
-  }
-  .card-desc{
-    font-size:12.5px;
-    color:var(--ink-2);
-    line-height:1.5;
-    margin:0;
-  }
-  .card-foot{
-    margin-top:auto;
-    padding-top:8px;
-    border-top:1px dashed var(--line);
-    display:flex;
-    justify-content:space-between;
-    font-family:var(--mono);
-    font-size:10.5px;
-    color:var(--ink-3);
-  }
-  .card-foot a{
-    color:var(--brand);
-    text-decoration:none;
-  }
-  .card-foot a:hover{text-decoration:underline;}
+  /* ---- section ---- */
+  .sec-head{display:flex;align-items:baseline;gap:10px;border-bottom:1px solid var(--hair);
+    padding-bottom:8px;margin:0 0 18px;}
+  .sec-head .no{font-family:var(--mono);font-size:11px;letter-spacing:.06em;color:var(--ink-3);}
+  .sec-head .no b{color:var(--ink);}
+  .sec-head h2{margin:0;font-size:18px;font-weight:500;letter-spacing:-.01em;}
+  section{margin-bottom:48px;}
 
-  /* ============== TOKENS PREVIEW ============== */
-  .token-row{
-    display:grid;
-    grid-template-columns:repeat(6,1fr);
-    gap:1px;
-    background:var(--line);
-    border:1px solid var(--line);
-    margin-bottom:6px;
-  }
-  .token{
-    background:var(--paper);
-    padding:10px 12px;
-    font-family:var(--mono);
-    font-size:10.5px;
-  }
-  .token .swatch{
-    display:block;
-    height:32px;
-    margin-bottom:6px;
-    border:1px solid rgba(0,0,0,.06);
-  }
-  .token b{font-weight:500;color:var(--ink);}
-  .token span{color:var(--ink-3);}
+  /* ---- card grid ---- */
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:0;
+    border-top:1px solid var(--line);border-left:1px solid var(--line);}
+  .card{border-right:1px solid var(--line);border-bottom:1px solid var(--line);
+    padding:18px 20px;text-decoration:none;display:block;transition:background var(--dur-fast) var(--ease-default);}
+  .card:hover{background:var(--surface-2);}
+  .card .k{font-family:var(--mono);font-size:10px;letter-spacing:.12em;text-transform:uppercase;
+    color:var(--brand);margin:0 0 8px;}
+  .card .t{font-size:15px;font-weight:500;margin:0 0 6px;letter-spacing:-.01em;}
+  .card .d{font-size:12.5px;color:var(--ink-3);line-height:1.5;margin:0;}
+  .card .arrow{font-family:var(--mono);color:var(--ink-3);font-size:12px;margin-top:10px;display:inline-block;}
+  .card.main .t{color:var(--ink);}
+  .card.archive .k{color:var(--ink-3);}
 
-  /* ============== DOCS ============== */
-  .docs{
-    display:grid;
-    grid-template-columns:repeat(auto-fill,minmax(220px,1fr));
-    gap:1px;
-    background:var(--line);
-    border:1px solid var(--line);
-  }
-  .doc{
-    background:var(--paper);
-    padding:14px 16px;
-    text-decoration:none;
-    color:inherit;
-    display:flex;
-    flex-direction:column;
-    gap:4px;
-  }
-  .doc:hover{background:var(--paper-2);}
-  .doc b{font-size:13px;font-weight:500;}
-  .doc span{font-size:11px;color:var(--ink-3);font-family:var(--mono);}
+  /* ---- doc list ---- */
+  .docs{border-top:1px solid var(--line);border-bottom:1px solid var(--line);}
+  .docs a{display:grid;grid-template-columns:200px 1fr auto;gap:14px;align-items:baseline;
+    padding:11px 4px;border-bottom:1px dashed var(--hair);text-decoration:none;
+    transition:background var(--dur-fast) var(--ease-default);}
+  .docs a:last-child{border-bottom:0;}
+  .docs a:hover{background:var(--surface-2);}
+  .docs .fn{font-family:var(--mono);font-size:12px;color:var(--ink);letter-spacing:.02em;}
+  .docs .ds{font-size:12.5px;color:var(--ink-3);}
+  .docs .ext{font-family:var(--mono);font-size:11px;color:var(--ink-3);}
 
-  footer{
-    border-top:1px solid var(--line);
-    padding:24px 48px;
-    font-family:var(--mono);
-    font-size:11px;
-    color:var(--ink-3);
-    display:flex;
-    justify-content:space-between;
-    flex-wrap:wrap;
-    gap:12px;
-  }
-  footer a{color:var(--brand);text-decoration:none;}
-  footer a:hover{text-decoration:underline;}
-
-  @media (max-width:720px){
-    header,main,footer{padding-left:20px;padding-right:20px;}
-    .token-row{grid-template-columns:repeat(3,1fr);}
-  }
+  footer{border-top:1px solid var(--line);padding:24px 0 60px;margin-top:24px;}
+  footer p{font-family:var(--mono);font-size:11px;color:var(--ink-3);letter-spacing:.04em;margin:4px 0;}
 </style>
 </head>
 <body>
+<div class="wrap">
 
-<header>
-  <p class="brand">TRAINORACLE · DESIGN DEMO INDEX</p>
-  <h1>모든 화면·문서를 한 자리에서 점검</h1>
-  <p class="lede">디자인 시스템이 17개 화면 전반에 일관되게 적용되어 있는지 검증하고, 본격 개발(시스템 적용) 단계로 넘어가기 전에 데모/리뷰를 위한 단일 진입점입니다. 각 카드를 클릭하면 해당 화면이 새 탭에서 열립니다.</p>
-  <div class="meta-row">
-    <span>Date · <b>2026-04-29</b></span>
-    <span>Designs · <b>17 HTML</b></span>
-    <span>Docs · <b>7 MD (design-system) + 7 MD (root)</b></span>
-    <span>Theme · <b>Light only</b></span>
-    <span>Tone · <b>Tufte × Linear</b></span>
+  <header>
+    <p class="brand-line">TRAIN<span class="dot"></span>O<span class="dot"></span>RACLE · DESIGN HANDOFF</p>
+    <h1>일지가 메인인 트레이닝 도구</h1>
+    <p class="lede">
+      엘리트 1500m–10000m 중장거리 선수를 위한 도구. v2(AI·코치 중심)에서
+      <strong>v3(일지 중심·모바일 우선)</strong>로 방향 전환된 정본 핸드오프입니다.
+      Tufte × Linear의 직각·hairline·모노 톤은 그대로 두고, 사용자가 적는 메모 영역만 종이톤·손글씨를 입혔습니다.
+    </p>
+    <p class="hand-quote">"매일 손으로 쓰던 일지를, 프린트해서 가지고 싶게."</p>
+  </header>
+
+  <div class="vbanner">
+    <span class="tag">v3 · NOW</span>
+    <p>
+      메인은 <b>오늘 일지 쓰기 CTA + 어제 요약</b>이고, AI는 1–2줄로 옆에서 패턴만 짚어줍니다(끄고 켜기 가능).
+      v2 데스크탑 5화면(AI Chat / Inbox / Calendar 등)은 코치 페르소나용으로 <b>archive</b>되어 보존됩니다.
+      먼저 <span class="mono">DECISION_LOG.md</span> → <span class="mono">VARIANTS.md</span> → <span class="mono">NEGATIVE_SPACE.md</span> 순으로 읽으세요.
+    </p>
   </div>
-</header>
 
-<main>
-
-  <!-- ================= VALIDATION ================= -->
-  <section class="validation">
-    <h2>System readiness check</h2>
-    <div class="v-grid">
-      <div class="v-item">
-        <span class="v-mark pass">OK</span>
-        <div class="v-text"><b>color-scheme:light meta</b><span>17/17 HTML 모두 적용 — 다크모드 자동추종 차단</span></div>
-      </div>
-      <div class="v-item">
-        <span class="v-mark pass">OK</span>
-        <div class="v-text"><b>Instrument Serif 제거</b><span>03/04에서 제거. 00(무드보드)는 참조용 보존</span></div>
-      </div>
-      <div class="v-item">
-        <span class="v-mark pass">OK</span>
-        <div class="v-text"><b>폰트 CDN 통일</b><span>Inter · JetBrains Mono · Pretendard</span></div>
-      </div>
-      <div class="v-item">
-        <span class="v-mark pass">OK</span>
-        <div class="v-text"><b>5개 결정 반영</b><span>MIXED 단계적 공개 · Cohort 발동 조건 · Track Record A+D · Dark 미지원 · PB chip row</span></div>
-      </div>
-      <div class="v-item">
-        <span class="v-mark pass">OK</span>
-        <div class="v-text"><b>03 Dashboard · 04 Calendar v2 재디자인</b><span>Tufte × Linear 톤으로 전면 재작성. v1은 _archive/로 보관</span></div>
-      </div>
-      <div class="v-item">
-        <span class="v-mark warn">REDO</span>
-        <div class="v-text"><b>4-tier 토큰 확장 적용</b><span>현재 Sprint 1·2 산출물 4개만. v2 화면도 점진 적용 필요</span></div>
-      </div>
-      <div class="v-item">
-        <span class="v-mark pass">OK</span>
-        <div class="v-text"><b>Personal Archive 화면 ("내 이야기")</b><span>13_PersonalArchive.html 신규 작성 — Timeline(시간순 기록) + PB Trail + 부상/대회/AI 결정 이력</span></div>
-      </div>
-      <div class="v-item">
-        <span class="v-mark pass">OK</span>
-        <div class="v-text"><b>GLOSSARY 용어집 정본</b><span>훈련·시스템·디자인 용어 100여 개 + 한영 표기 규칙 통합 — 사용자·외부 자문·개발자 공용</span></div>
-      </div>
-      <div class="v-item">
-        <span class="v-mark info">NEXT</span>
-        <div class="v-text"><b>9 Rules 검증 차트 (R-1~R-9)</b><span>VISUALIZATION_SYSTEM 적용 첫 후보</span></div>
-      </div>
-    </div>
-  </section>
-
-  <!-- ================= TOKENS ================= -->
   <section>
-    <h2>4-Tier energy color tokens <span class="count">· tier 2 (mid) preview</span></h2>
-    <div class="token-row">
-      <div class="token">
-        <span class="swatch" style="background:#4A8FC7"></span>
-        <b>BASE · BA</b><br><span>#4A8FC7</span>
-      </div>
-      <div class="token">
-        <span class="swatch" style="background:#D97A4A"></span>
-        <b>VO2 · V2</b><br><span>#D97A4A</span>
-      </div>
-      <div class="token">
-        <span class="swatch" style="background:#7A8FA0"></span>
-        <b>THR · TH</b><br><span>#7A8FA0</span>
-      </div>
-      <div class="token">
-        <span class="swatch" style="background:#9B5BA8"></span>
-        <b>ANA · AN</b><br><span>#9B5BA8</span>
-      </div>
-      <div class="token">
-        <span class="swatch" style="background:#6B7A4A"></span>
-        <b>STR · ST</b><br><span>#6B7A4A</span>
-      </div>
-      <div class="token">
-        <span class="swatch" style="background:#A8B2BC"></span>
-        <b>REC · RE</b><br><span>#A8B2BC</span>
-      </div>
-    </div>
-    <p style="margin:8px 0 0;font-size:11.5px;color:var(--ink-3);">정본: <a href="design-system/DESIGN_TOKENS.md" style="color:var(--brand);">design-system/DESIGN_TOKENS.md §1.4</a> · 4-tier 풀 셋(Strong/Mid/Subtle/Wash)은 정의서 참조</p>
-  </section>
-
-  <!-- ================= MAIN SCREENS ================= -->
-  <section>
-    <h2>Main screens <span class="count">· 14 (00–13)</span></h2>
+    <div class="sec-head"><span class="no"><b>§1</b> · UI KITS</span><h2>인터랙티브 미리보기</h2></div>
     <div class="grid">
-
-      <a class="card" href="designs/00_Moodboard.html" target="_blank">
-        <div class="card-head"><span class="card-id">00 · MOODBOARD</span><span class="card-status st-ref">REF</span></div>
-        <h3 class="card-title">Moodboard</h3>
-        <p class="card-desc">톤·타이포·컬러 기준점. Instrument Serif 참조용으로 보존.</p>
-        <div class="card-foot"><span>~67 KB</span><span>scrollable</span></div>
+      <a class="card main" href="ui_kits/trainoracle-app-v3/index.html">
+        <p class="k">v3 · MAIN</p>
+        <p class="t">Journal-first 모바일 키트</p>
+        <p class="d">7개 모바일 화면(Home · LogEntry · Post-session · Evening · Race pre/post · LogDetail · Trends) + Tweaks 패널. 손글씨·종이톤·인쇄 스타일 포함.</p>
+        <span class="arrow">열기 →</span>
       </a>
-
-      <a class="card" href="designs/01_Landing.html" target="_blank">
-        <div class="card-head"><span class="card-id">01 · LANDING</span><span class="card-status st-v2">v2</span></div>
-        <h3 class="card-title">Landing</h3>
-        <p class="card-desc">공개 랜딩, Tufte 톤. 데스크톱+모바일 토글.</p>
-        <div class="card-foot"><span>~26 KB</span><span>responsive</span></div>
+      <a class="card archive" href="ui_kits/trainoracle-app/index.html">
+        <p class="k">v2 · ARCHIVE</p>
+        <p class="t">데스크탑 코치 앱 키트</p>
+        <p class="d">Dashboard · Session Detail · 9.5-Cycle Calendar · AI Chat · Inbox. 코치 페르소나용으로 보존. 신규 기능은 v3 기준.</p>
+        <span class="arrow">열기 →</span>
       </a>
-
-      <a class="card" href="designs/02_Onboarding.html" target="_blank">
-        <div class="card-head"><span class="card-id">02 · ONBOARDING</span><span class="card-status st-v2">v2</span></div>
-        <h3 class="card-title">Onboarding (3-step + Welcome)</h3>
-        <p class="card-desc">3단계 + 환영. 모바일 4프레임.</p>
-        <div class="card-foot"><span>~21 KB</span><span>multi-frame</span></div>
-      </a>
-
-      <a class="card" href="designs/03_Dashboard.html" target="_blank">
-        <div class="card-head"><span class="card-id">03 · DASHBOARD</span><span class="card-status st-v2">v2</span></div>
-        <h3 class="card-title">Dashboard Home</h3>
-        <p class="card-desc">Tufte × Linear. 모바일 + 데스크톱 (라이트 단일).</p>
-        <div class="card-foot"><span>~57 KB</span><span>2 frames</span></div>
-      </a>
-
-      <a class="card" href="designs/04_Calendar.html" target="_blank">
-        <div class="card-head"><span class="card-id">04 · CALENDAR</span><span class="card-status st-v2">v2</span></div>
-        <h3 class="card-title">Calendar (Week / 9.5-Cycle / Timeline)</h3>
-        <p class="card-desc">Tufte × Linear. 데스크톱 3뷰 + 모바일 2뷰.</p>
-        <div class="card-foot"><span>~79 KB</span><span>5 frames</span></div>
-      </a>
-
-      <a class="card" href="designs/05_SessionDetail.html" target="_blank">
-        <div class="card-head"><span class="card-id">05 · SESSION</span><span class="card-status st-v2">v2</span></div>
-        <h3 class="card-title">Session Detail</h3>
-        <p class="card-desc">세션 상세, v2 final.</p>
-        <div class="card-foot"><span>~61 KB</span><span>final</span></div>
-      </a>
-
-      <a class="card" href="designs/06_AIChat.html" target="_blank">
-        <div class="card-head"><span class="card-id">06 · AI CHAT</span><span class="card-status st-v2">v2</span></div>
-        <h3 class="card-title">AI Chat (Coach Jang Ho-Joon)</h3>
-        <p class="card-desc">1:1 AI 코치 채팅.</p>
-        <div class="card-foot"><span>~49 KB</span><span>RAG</span></div>
-      </a>
-
-      <a class="card" href="designs/07_AIInbox.html" target="_blank">
-        <div class="card-head"><span class="card-id">07 · AI INBOX</span><span class="card-status st-v2">v2</span></div>
-        <h3 class="card-title">AI Inbox</h3>
-        <p class="card-desc">알림 큐. 코치 3건 미확인.</p>
-        <div class="card-foot"><span>~31 KB</span><span>queue</span></div>
-      </a>
-
-      <a class="card" href="designs/08_Analysis.html" target="_blank">
-        <div class="card-head"><span class="card-id">08 · ANALYSIS</span><span class="card-status st-v2">v2</span></div>
-        <h3 class="card-title">Analysis Dashboard</h3>
-        <p class="card-desc">분석 차트. VISUALIZATION_SYSTEM 적용 후보.</p>
-        <div class="card-foot"><span>~40 KB</span><span>charts</span></div>
-      </a>
-
-      <a class="card" href="designs/09_DailyCheckin.html" target="_blank">
-        <div class="card-head"><span class="card-id">09 · CHECKIN</span><span class="card-status st-v2">v2</span></div>
-        <h3 class="card-title">Daily Check-in</h3>
-        <p class="card-desc">5분 폼. 모바일 3프레임.</p>
-        <div class="card-foot"><span>~20 KB</span><span>multi-frame</span></div>
-      </a>
-
-      <a class="card" href="designs/10_Competitions.html" target="_blank">
-        <div class="card-head"><span class="card-id">10 · COMPETITIONS</span><span class="card-status st-v2">v2</span></div>
-        <h3 class="card-title">Competitions</h3>
-        <p class="card-desc">대회 관리. D-26 시나리오.</p>
-        <div class="card-foot"><span>~30 KB</span><span>—</span></div>
-      </a>
-
-      <a class="card" href="designs/11_Philosophy.html" target="_blank">
-        <div class="card-head"><span class="card-id">11 · PHILOSOPHY</span><span class="card-status st-v2">v2</span></div>
-        <h3 class="card-title">Philosophy</h3>
-        <p class="card-desc">철학 페이지(공개).</p>
-        <div class="card-foot"><span>~20 KB</span><span>public</span></div>
-      </a>
-
-      <a class="card" href="designs/12_Settings.html" target="_blank">
-        <div class="card-head"><span class="card-id">12 · SETTINGS</span><span class="card-status st-v2">v2</span></div>
-        <h3 class="card-title">Settings</h3>
-        <p class="card-desc">설정 8섹션. 다크모드 토글 제거됨.</p>
-        <div class="card-foot"><span>~22 KB</span><span>8 sections</span></div>
-      </a>
-
-      <a class="card" href="designs/13_PersonalArchive.html" target="_blank">
-        <div class="card-head"><span class="card-id">13 · STORY</span><span class="card-status st-v2">v2 NEW</span></div>
-        <h3 class="card-title">Personal Archive ("내 이야기")</h3>
-        <p class="card-desc">시간순 기록(Timeline) · PB Trail(최고기록 추이) · 부상/대회/AI 결정 이력. PHILOSOPHY §5.6.</p>
-        <div class="card-foot"><span>~66 KB</span><span>2 frames</span></div>
-      </a>
-
     </div>
   </section>
 
-  <!-- ================= SPRINT DELIVERABLES ================= -->
   <section>
-    <h2>Sprint deliverables <span class="count">· 4 (시스템 정본)</span></h2>
+    <div class="sec-head"><span class="no"><b>§2</b> · PREVIEW</span><h2>디자인 시스템 카드</h2></div>
     <div class="grid">
-
-      <a class="card" href="designs/SPRINT1_MinjisDay.html" target="_blank">
-        <div class="card-head"><span class="card-id">SPRINT 1</span><span class="card-status st-sprint">SPEC</span></div>
-        <h3 class="card-title">민지의 하루 (Day-in-the-life)</h3>
-        <p class="card-desc">Cycle 7 Day 5 시나리오 정본. 시스템 적용 1순위 후보.</p>
-        <div class="card-foot"><span>~50 KB</span><span>scenario</span></div>
-      </a>
-
-      <a class="card" href="designs/SPRINT2_DataImport.html" target="_blank">
-        <div class="card-head"><span class="card-id">SPRINT 2 · 1/3</span><span class="card-status st-sprint">SPEC</span></div>
-        <h3 class="card-title">Data Import</h3>
-        <p class="card-desc">Garmin·Strava·수기 입력 흐름.</p>
-        <div class="card-foot"><span>~42 KB</span><span>flow</span></div>
-      </a>
-
-      <a class="card" href="designs/SPRINT2_Records.html" target="_blank">
-        <div class="card-head"><span class="card-id">SPRINT 2 · 2/3</span><span class="card-status st-sprint">SPEC</span></div>
-        <h3 class="card-title">Records (PB·SB·Target·Reference)</h3>
-        <p class="card-desc">최고기록·시즌기록·목표·참고. 항상 우선 표시.</p>
-        <div class="card-foot"><span>~48 KB</span><span>4 categories</span></div>
-      </a>
-
-      <a class="card" href="designs/SPRINT2_VisualizationSystem.html" target="_blank">
-        <div class="card-head"><span class="card-id">SPRINT 2 · 3/3</span><span class="card-status st-sprint">SPEC</span></div>
-        <h3 class="card-title">Visualization System</h3>
-        <p class="card-desc">12차트 카탈로그 + 5개 추후 결정(MIXED·Cohort·TR·Dark·PB chip).</p>
-        <div class="card-foot"><span>~92 KB</span><span>system</span></div>
-      </a>
-
+      <a class="card" href="preview/journal-tokens.html"><p class="k">v3 token</p><p class="t">Journal Tokens</p><p class="d">종이·손글씨·잉크 견본.</p><span class="arrow">→</span></a>
+      <a class="card" href="preview/mood-strip.html"><p class="k">v3 token</p><p class="t">Mood Strip</p><p class="d">5단계 감정 바.</p><span class="arrow">→</span></a>
+      <a class="card" href="preview/pain-scale.html"><p class="k">v3 token</p><p class="t">Pain Scale</p><p class="d">5단계 통증 + body marker.</p><span class="arrow">→</span></a>
+      <a class="card" href="preview/index-card.html"><p class="k">v3 token</p><p class="t">Index Card</p><p class="d">도서관 카탈로그 헤더.</p><span class="arrow">→</span></a>
+      <a class="card" href="preview/intensity-stack.html"><p class="k">v3 token</p><p class="t">Intensity Stack</p><p class="d">에너지 시스템 분포 바.</p><span class="arrow">→</span></a>
+      <a class="card" href="preview/colors-energy-systems.html"><p class="k">core</p><p class="t">Energy Systems</p><p class="d">BA/LT/V2/GL/AP/RE 도트+코드.</p><span class="arrow">→</span></a>
+      <a class="card" href="preview/components-verdicts.html"><p class="k">core</p><p class="t">AI Verdicts</p><p class="d">CONFIRM/RECOMMEND/UNC/LACK.</p><span class="arrow">→</span></a>
+      <a class="card" href="preview/components-cycle-rail.html"><p class="k">core</p><p class="t">Cycle Rail</p><p class="d">9.5-day 10셀 레일.</p><span class="arrow">→</span></a>
+      <a class="card" href="preview/type-display-headings.html"><p class="k">core</p><p class="t">Type Scale</p><p class="d">Display·H1·본문·모노.</p><span class="arrow">→</span></a>
     </div>
   </section>
 
-  <!-- ================= DOCS ================= -->
   <section>
-    <h2>Design system docs <span class="count">· 7 markdown</span></h2>
-    <div class="docs">
-      <a class="doc" href="design-system/VISUALIZATION_SYSTEM.md" target="_blank"><b>VISUALIZATION_SYSTEM</b><span>30 KB · 정본</span></a>
-      <a class="doc" href="design-system/DESIGN_TOKENS.md" target="_blank"><b>DESIGN_TOKENS</b><span>15 KB · 4-tier</span></a>
-      <a class="doc" href="design-system/SCREENS.md" target="_blank"><b>SCREENS</b><span>19 KB · 화면 명세</span></a>
-      <a class="doc" href="design-system/SAFEGUARDS.md" target="_blank"><b>SAFEGUARDS</b><span>14 KB · 안전장치</span></a>
-      <a class="doc" href="design-system/COMPONENT_INVENTORY.md" target="_blank"><b>COMPONENT_INVENTORY</b><span>12 KB · 컴포넌트</span></a>
-      <a class="doc" href="design-system/SYSTEM_FOUNDATIONS.md" target="_blank"><b>SYSTEM_FOUNDATIONS</b><span>13 KB · 토대</span></a>
-      <a class="doc" href="design-system/FEATURE_TIERS.md" target="_blank"><b>FEATURE_TIERS</b><span>10 KB · 기능 등급</span></a>
+    <div class="sec-head"><span class="no"><b>§3</b> · REFERENCE</span><h2>참고 디자인 (v2 hi-fi)</h2></div>
+    <div class="grid">
+      <a class="card" href="reference_designs/01_Landing.html"><p class="k">ref</p><p class="t">Landing</p><p class="d">마케팅 랜딩 · vs-Strava/TP 비교.</p><span class="arrow">→</span></a>
+      <a class="card" href="reference_designs/SPRINT1_MinjisDay.html"><p class="k">ref</p><p class="t">Minji's Day</p><p class="d">하루 6컷 · 4 시스템 한 눈에.</p><span class="arrow">→</span></a>
+      <a class="card" href="reference_designs/05_SessionDetail.html"><p class="k">ref · canonical</p><p class="t">Session Detail</p><p class="d">훈련 한 건 + 모바일 380px 프레임.</p><span class="arrow">→</span></a>
+      <a class="card" href="reference_designs/06_AIChat.html"><p class="k">ref</p><p class="t">AI Chat</p><p class="d">verdict + citation 응답 구조.</p><span class="arrow">→</span></a>
+      <a class="card archive" href="reference_designs/03_Dashboard.html"><p class="k">v1 · 미구현</p><p class="t">Dashboard (v1)</p><p class="d">둥근 모서리·다크. archive 전용.</p><span class="arrow">→</span></a>
+      <a class="card archive" href="reference_designs/04_Calendar.html"><p class="k">v1 · 미구현</p><p class="t">Calendar (v1)</p><p class="d">동일 사유. archive 전용.</p><span class="arrow">→</span></a>
     </div>
   </section>
 
-  <!-- ================= ROOT DOCS ================= -->
   <section>
-    <h2>Root docs <span class="count">· 8 markdown</span></h2>
+    <div class="sec-head"><span class="no"><b>§4</b> · DOCS</span><h2>문서 — 이 순서로 읽으세요</h2></div>
     <div class="docs">
-      <a class="doc" href="README.md" target="_blank"><b>README</b><span>프로젝트 입구</span></a>
-      <a class="doc" href="GLOSSARY.md" target="_blank"><b>GLOSSARY</b><span>용어집 · 한영 표기 규칙 (정본)</span></a>
-      <a class="doc" href="PHILOSOPHY.md" target="_blank"><b>PHILOSOPHY</b><span>철학</span></a>
-      <a class="doc" href="DESIGN_DECISIONS.md" target="_blank"><b>DESIGN_DECISIONS</b><span>의사결정 로그</span></a>
-      <a class="doc" href="HANDOFF.md" target="_blank"><b>HANDOFF</b><span>개발 인수인계</span></a>
-      <a class="doc" href="BRIEF_ORIGINAL.md" target="_blank"><b>BRIEF_ORIGINAL</b><span>원본 브리프</span></a>
-      <a class="doc" href="CONVERSATION_LOG.md" target="_blank"><b>CONVERSATION_LOG</b><span>대화 기록</span></a>
-      <a class="doc" href="PUSH_TO_GITHUB.md" target="_blank"><b>PUSH_TO_GITHUB</b><span>배포 지침</span></a>
+      <a href="DECISION_LOG.md"><span class="fn">DECISION_LOG.md</span><span class="ds">왜 일지로 출시하는가 · 14개 질문 원문. 가장 먼저.</span><span class="ext">md</span></a>
+      <a href="VARIANTS.md"><span class="fn">VARIANTS.md</span><span class="ds">Home 3 / LogDetail 2 / Trends 2 변형이 각각 누구를 노리나.</span><span class="ext">md</span></a>
+      <a href="NEGATIVE_SPACE.md"><span class="fn">NEGATIVE_SPACE.md</span><span class="ds">의도적으로 거부한 옵션 목록.</span><span class="ext">md</span></a>
+      <a href="PHILOSOPHY.md"><span class="fn">PHILOSOPHY.md</span><span class="ds">10 규칙 + 10 금지. v3에도 전부 유효.</span><span class="ext">md</span></a>
+      <a href="DESIGN_DECISIONS.md"><span class="fn">DESIGN_DECISIONS.md</span><span class="ds">v1 → v2 → v3 디자인 의사결정.</span><span class="ext">md</span></a>
+      <a href="SESSION_TIMELINE.md"><span class="fn">SESSION_TIMELINE.md</span><span class="ds">디자인 시스템이 만들어진 순서.</span><span class="ext">md</span></a>
+      <a href="HANDOFF_NEXT_CHAT.md"><span class="fn">HANDOFF_NEXT_CHAT.md</span><span class="ds">이전 디자인 세션의 마지막 상태.</span><span class="ext">md</span></a>
+      <a href="README.md"><span class="fn">README.md</span><span class="ds">전체 개요 · 화면 스펙 · 토큰 · 구현 가이드.</span><span class="ext">md</span></a>
+      <a href="SKILL.md"><span class="fn">SKILL.md</span><span class="ds">한 페이지 요약 — 10 브랜드 규칙.</span><span class="ext">md</span></a>
+      <a href="design-system/DESIGN_TOKENS.md"><span class="fn">design-system/DESIGN_TOKENS.md</span><span class="ds">Tailwind-ready 토큰.</span><span class="ext">md</span></a>
+      <a href="design-system/COMPONENT_INVENTORY.md"><span class="fn">design-system/COMPONENT_INVENTORY.md</span><span class="ds">47 재사용 컴포넌트 스펙.</span><span class="ext">md</span></a>
+      <a href="design-system/SAFEGUARDS.md"><span class="fn">design-system/SAFEGUARDS.md</span><span class="ds">안전 가드레일 (부상·오탐·AI 과신).</span><span class="ext">md</span></a>
     </div>
   </section>
 
-</main>
+  <footer>
+    <p>TRAINORACLE · Scientific Minimalism — Tufte × Linear + Field Journal</p>
+    <p>v1 / v2 자료는 <span class="mono">_archive_v1v2/</span> 에 보존됨 · 신규 결정은 모두 v3 기준</p>
+    <p>"This tool helps the coach think — it does not replace the coach."</p>
+  </footer>
 
-<footer>
-  <span>TRAINORACLE © 2026 · Internal demo index</span>
-  <span>Repo · <a href="https://github.com/hojune0330/TRAINORACLE" target="_blank">github.com/hojune0330/TRAINORACLE</a></span>
-</footer>
-
+</div>
 </body>
 </html>
-ml>
