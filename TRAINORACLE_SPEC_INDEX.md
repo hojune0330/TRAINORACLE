@@ -1,0 +1,154 @@
+# TRAINORACLE_SPEC_INDEX.md
+
+doc_id: TRAINORACLE_SPEC_INDEX
+spec_id: TRAINORACLE.SPEC_INDEX
+title: "TrainOracle SPEC Index And Local Inventory Registry"
+version: 0.1
+round: RT1
+status: DRAFT_FOR_REVIEW
+owner: COACH_HOJUNE
+open_issues_total: 0
+canonical_blocking_count: 0
+executed_tests_total: 0
+canonical_promotion_allowed: false
+registry_note: "Counts apply only to this registry document. Source SPEC issue counts remain owned by each target document and must be recounted from the local target file before use."
+
+---
+
+## 1. Purpose
+
+This registry records the current TrainOracle SPEC layer added to the `hojune0330/TRAINORACLE` repository.
+
+It is not a product rule definition, not runtime evidence, and not canonical promotion.
+
+The highest-priority operating rule remains:
+
+- local files are truth
+- conversation ledgers are reference only
+- file existence must be verified locally before use
+- absolute downstream counts must not be copied from memory
+- runtime issues must not be closed without actual execution evidence
+
+---
+
+## 2. Repository Layout
+
+| Path | Role | Status |
+|---|---|---|
+| `specs/active/` | Current active SPEC candidates copied from the verified local source package | DRAFT_FOR_REVIEW / source status preserved in each file |
+| `specs/test-packages/` | Candidate local test packages | TEST_PACKAGE / not runtime evidence |
+| `specs/legacy-reference/` | Legacy and reference documents | REFERENCE_ONLY |
+| `specs/reconstruct/` | Placeholder for missing or reconstructed required contracts | SOURCE_NOT_VERIFIED / RECONSTRUCT_IF_ABSENT |
+| `.omo/` | Codex handoff, evidence, plans, and readiness reports | PROCESS_EVIDENCE |
+
+---
+
+## 3. Active SPEC Candidates
+
+These files are active SPEC candidates, but each file's own metadata and open-issue table remain authoritative.
+
+| File | Current repository path | Role |
+|---|---|---|
+| `RULE_SPEC_D1_D9.md` | `specs/active/RULE_SPEC_D1_D9.md` | D1-D9 rule semantic baseline |
+| `SESSION_CLASSIFIER_SPEC.md` | `specs/active/SESSION_CLASSIFIER_SPEC.md` | Session classification baseline |
+| `ATHLETE_PROFILE_SPEC.md` | `specs/active/ATHLETE_PROFILE_SPEC.md` | Athlete-scoped profile and config baseline |
+| `APP_IMPLEMENTATION_BRIDGE.md` | `specs/active/APP_IMPLEMENTATION_BRIDGE.md` | Storage, consent, capability, audit, and app bridge |
+| `PLAN_GENERATOR_SPEC.md` | `specs/active/PLAN_GENERATOR_SPEC.md` | Plan candidate generation contract |
+| `TEMPLATE_LIBRARY_SPEC.md` | `specs/active/TEMPLATE_LIBRARY_SPEC.md` | Template ownership, lifecycle, and eligibility |
+| `PHYSIO_SOURCE_TRUST_SPEC.md` | `specs/active/PHYSIO_SOURCE_TRUST_SPEC.md` | Physiological source trust, recency, conflict, and consent boundary |
+| `RVE_RULE_EVALUATOR_BINDING_SPEC.md` | `specs/active/RVE_RULE_EVALUATOR_BINDING_SPEC.md` | D9 evaluator to RVE / Safety Gate / Plan Generator binding |
+
+---
+
+## 4. Test Package
+
+| File | Current repository path | Treatment |
+|---|---|---|
+| `D9_SAFETY_EVALUATOR_V2_1_1_TEST_PACKAGE.md` | `specs/test-packages/D9_SAFETY_EVALUATOR_V2_1_1_TEST_PACKAGE.md` | Candidate package only. Markdown PASS/self-check is not runtime evidence. |
+
+---
+
+## 5. Legacy Reference
+
+These files must not be deleted, but they do not directly replace the current SPEC layer.
+
+| File | Current repository path | Treatment |
+|---|---|---|
+| `SOURCE_MAP.md` | `specs/legacy-reference/SOURCE_MAP.md` | Reference |
+| `_SOURCE_TO_DOC_MAP_v3.0.md` | `specs/legacy-reference/_SOURCE_TO_DOC_MAP_v3.0.md` | Reference; exact `SOURCE_TO_DOC_MAP.md` was not found in the verified package |
+| `GLOSSARY.md` | `specs/legacy-reference/GLOSSARY.md` | Reference |
+| `02_AI_STRATEGY.md` | `specs/legacy-reference/02_AI_STRATEGY.md` | Legacy/reference |
+| `06_VALIDATION_AND_SAFEGUARDS.md` | `specs/legacy-reference/06_VALIDATION_AND_SAFEGUARDS.md` | Legacy/reference |
+| `11_API_AND_ENGINE_CONTRACTS.md` | `specs/legacy-reference/11_API_AND_ENGINE_CONTRACTS.md` | Legacy Phase A-F output contract; not `RULE_VALIDATION_ENGINE_CONTRACT.md` |
+| `12_SCREEN_GUIDE.md` | `specs/legacy-reference/12_SCREEN_GUIDE.md` | Legacy/reference |
+
+---
+
+## 6. Missing Or Source-Not-Verified Required Contracts
+
+These files were not found in the searched local source package and workspace at the time of this registry.
+
+| Required file | Expected repository area | Status | Required treatment |
+|---|---|---|---|
+| `RULE_VALIDATION_ENGINE_CONTRACT.md` | `specs/reconstruct/` | MISSING_OR_SOURCE_NOT_VERIFIED | Search local first; if absent, reconstruct as `RECONSTRUCTED_DRAFT_FOR_REVIEW` |
+| `PLAN_SAFETY_GATE_SPEC.md` | `specs/reconstruct/` | MISSING_OR_SOURCE_NOT_VERIFIED | Search local first; if absent, reconstruct as `RECONSTRUCTED_DRAFT_FOR_REVIEW` |
+| `COACH_RATIFICATION_SAFETY_DEFAULTS_2026_06_04_001` | `specs/reconstruct/` or evidence area | MISSING_OR_SOURCE_NOT_VERIFIED | Do not claim ratification found until local evidence exists |
+
+---
+
+## 7. Namespace Policy
+
+Bare D-rule references are forbidden in new SPEC work.
+
+| Namespace | Example | Meaning |
+|---|---|---|
+| `RULE_SPEC_D1_D9` | `RULE_SPEC_D1_D9.D-9` | Current SPEC-layer validation rule |
+| `LEGACY_PHASE_D` | `LEGACY_PHASE_D.D-9` | Old workflow Phase D validation item |
+| `CYCLE_DAY` | `CYCLE_DAY.D-5` | Cycle or race-day label, not a rule id |
+
+---
+
+## 8. Safety And Privacy Invariants
+
+- No global coach authority.
+- No safety hard-stop override.
+- No D-rule semantic redefinition outside `RULE_SPEC_D1_D9.md`.
+- No external LLM with private athlete data.
+- Raw athlete free-text, raw symptom clauses, injury narratives, medical notes, guardian private notes, and sensitive free-form comments must not be stored in audit contracts.
+- Reason-code storage is preferred.
+- Free-text can raise risk but cannot clear existing risk.
+- Good physiological data cannot clear D9 risk.
+- Template selection cannot clear D9 risk.
+- `D9_ACTIVE` blocks plan generation.
+- `D9_UNKNOWN` blocks generation or requires human review.
+- `D9_CLEARED` is not medical clearance.
+- Advisory is not a fourth D9 disposition; it is a non-blocking sub-status under `D9_CLEARED`.
+
+---
+
+## 9. Next Work Order
+
+1. Re-open target files in this repository before making claims about file status, issue counts, or blockers.
+2. Reconstruct `RULE_VALIDATION_ENGINE_CONTRACT.md` if still absent after final local search.
+3. Reconstruct `PLAN_SAFETY_GATE_SPEC.md` if still absent after final local search.
+4. Recheck `PLAN_GENERATOR_SPEC.md` open issue table from the file itself.
+5. Patch physio source consumption only after opening `PLAN_GENERATOR_SPEC.md`, `APP_IMPLEMENTATION_BRIDGE.md`, and `ATHLETE_PROFILE_SPEC.md`.
+6. Obtain actual D9 evaluator runtime output before closing RVE or Plan Generator safety-gate binding issues.
+7. Continue productization specs only after the safety core chain is stable.
+
+---
+
+## 10. Evidence
+
+Current handoff, inventory, and readiness evidence lives under `.omo/`.
+
+Important starting points:
+
+- `.omo/drafts/train-oracle-spec-handoff.md`
+- `.omo/evidence/trainoracle-confirmed-inventory.md`
+- `.omo/evidence/trainoracle-missing-quarantine.md`
+- `.omo/evidence/trainoracle-remaining-work-flow-reference.md`
+- `.omo/reports/trainoracle-reconstruction-readiness.md`
+- `.omo/reports/github-publish-readiness.md`
+
+[DRAFT_COMPLETE]

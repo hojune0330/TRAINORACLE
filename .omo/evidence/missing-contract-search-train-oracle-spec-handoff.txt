@@ -1,0 +1,11 @@
+Search roots:
+  D:/admin/Documents/트레인 오라클 진도
+  D:/admin/Downloads/정본 제작 1차
+
+Target filename search:
+-- /d/admin/Documents/트레인 오라클 진도
+-- /d/admin/Downloads/정본 제작 1차
+
+Markdown inventory counts by immediate root:
+/d/admin/Documents/트레인 오라클 진도 => 2 markdown files
+/d/admin/Downloads/정본 제작 1차 => 16 markdown files

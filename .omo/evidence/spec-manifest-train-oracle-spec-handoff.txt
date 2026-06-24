@@ -1,0 +1,26 @@
+TrainOracle spec handoff manifest
+Generated: 2026-06-24 Asia/Seoul
+Workspace: D:/admin/Documents/트레인 오라클 진도
+Source directory: D:/admin/Downloads/정본 제작 1차
+
+OK	RULE_SPEC_D1_D9.md	50292 bytes	1898 lines	# RULE_SPEC_D1_D9.md — TrainOracle Rule Validator Specification
+OK	PLAN_GENERATOR_SPEC.md	32901 bytes	1011 lines	# PLAN_GENERATOR_SPEC.md
+OK	TEMPLATE_LIBRARY_SPEC.md	21818 bytes	736 lines	# TEMPLATE_LIBRARY_SPEC.md
+OK	PHYSIO_SOURCE_TRUST_SPEC.md	31361 bytes	1008 lines	# PHYSIO_SOURCE_TRUST_SPEC.md
+OK	D9_SAFETY_EVALUATOR_V2_1_1_TEST_PACKAGE.md	25386 bytes	645 lines	# D9_SAFETY_EVALUATOR_V2_1_1_TEST_PACKAGE.md
+OK	RVE_RULE_EVALUATOR_BINDING_SPEC.md	28868 bytes	963 lines	# RVE_RULE_EVALUATOR_BINDING_SPEC.md
+OK	APP_IMPLEMENTATION_BRIDGE.md	37349 bytes	987 lines	# APP_IMPLEMENTATION_BRIDGE.md
+OK	_SOURCE_TO_DOC_MAP_v3.0.md	4354 bytes	74 lines	# 정본 → docs/ 매핑표 v3.1
+OK	06_VALIDATION_AND_SAFEGUARDS.md	9819 bytes	217 lines	# 06. 검증 & 세이프가드 (Validation & Safeguards)
+OK	GLOSSARY.md	29999 bytes	648 lines	# GLOSSARY — 용어집 (정본)
+OK	02_AI_STRATEGY.md	10184 bytes	255 lines	# 02. AI 전략 — Coach Jang Workflow Engine
+OK	11_API_AND_ENGINE_CONTRACTS.md	7371 bytes	269 lines	# 11. 엔진 계약 (Phase Output Contracts)
+OK	12_SCREEN_GUIDE.md	5472 bytes	179 lines	# 12. 화면 / 출력 가이드 (Screen & Output Guide)
+OK	SOURCE_MAP.md	8091 bytes	156 lines	# SOURCE_MAP v3.1
+OK	ATHLETE_PROFILE_SPEC.md	34957 bytes	975 lines	# ATHLETE_PROFILE_SPEC.md
+OK	SESSION_CLASSIFIER_SPEC.md	39904 bytes	1228 lines	# SESSION_CLASSIFIER_SPEC.md
+
+Key source-map evidence:
+_SOURCE_TO_DOC_MAP_v3.0.md:19-23 => 정본 우선, 루트명 유지, 단일 책임, 인용 명시
+SOURCE_MAP.md:18-40 => L0 current SPEC baselines and conflict priority
+APP_IMPLEMENTATION_BRIDGE.md:24-39 => upstream baselines and canonical-promotion flags

@@ -1,0 +1,6 @@
+Broader filename search roots:
+  D:/admin/Documents
+  D:/admin/Downloads
+
+-- /d/admin/Documents
+-- /d/admin/Downloads

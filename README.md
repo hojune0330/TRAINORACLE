@@ -24,6 +24,7 @@
 ```
 TRAINORACLE/                          ← 저장소 루트
 ├── README.md                         ← 시작점 (이 파일)
+├── TRAINORACLE_SPEC_INDEX.md         ← SPEC 계층 시작점 / inventory registry
 ├── HANDOFF.md                        ← 개발 에이전트용 첫 프롬프트
 ├── PHILOSOPHY.md                     ← 제품 철학·UX 원칙 (정본)
 ├── DESIGN_DECISIONS.md               ← 결정사항 정제본
@@ -39,6 +40,12 @@ TRAINORACLE/                          ← 저장소 루트
 │   ├── SAFEGUARDS.md                 ← 7 가드레일 (cold start, mode 등)
 │   ├── FEATURE_TIERS.md              ← 무료/Pro 분리 준비
 │   └── VISUALIZATION_SYSTEM.md       ← 시각화 정본 (작성 예정)
+│
+├── specs/                            ← SPEC 계층 문서
+│   ├── active/                       ← 현재 active SPEC 후보
+│   ├── test-packages/                ← 테스트 후보 패키지
+│   ├── legacy-reference/             ← legacy/reference 문서
+│   └── reconstruct/                  ← missing/reconstructed 계약 영역
 │
 └── designs/
     ├── README.md                     ← 디자인 미리보기 가이드
@@ -110,11 +117,12 @@ TRAINORACLE/                          ← 저장소 루트
 
 ## 다음 단계 (개발 에이전트용)
 
-1. **[HANDOFF.md](./HANDOFF.md) 읽기** — 첫 프롬프트
-2. **[PHILOSOPHY.md](./PHILOSOPHY.md) 읽기** — 제품 가치관
-3. **[DESIGN_TOKENS.md](./design-system/DESIGN_TOKENS.md)** — Tailwind config 작성
-4. **[SCREENS.md](./design-system/SCREENS.md)** — 우선순위 결정
-5. 디자인 파일 직접 열어 확인 → 컴포넌트 단위로 분해 → 구현 시작
+1. **[TRAINORACLE_SPEC_INDEX.md](./TRAINORACLE_SPEC_INDEX.md) 읽기** — SPEC 계층과 안전 계약 inventory
+2. **[HANDOFF.md](./HANDOFF.md) 읽기** — 디자인/개발 첫 프롬프트
+3. **[PHILOSOPHY.md](./PHILOSOPHY.md) 읽기** — 제품 가치관
+4. **[DESIGN_TOKENS.md](./design-system/DESIGN_TOKENS.md)** — Tailwind config 작성
+5. **[SCREENS.md](./design-system/SCREENS.md)** — 우선순위 결정
+6. 디자인 파일 직접 열어 확인 → SPEC 안전 계약과 충돌하지 않게 컴포넌트 단위로 분해 → 구현 시작
 
 ---
 

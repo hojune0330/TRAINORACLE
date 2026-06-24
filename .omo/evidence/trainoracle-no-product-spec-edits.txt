@@ -1,0 +1,39 @@
+﻿NO PRODUCT SPEC EDIT PROOF
+Generated: 2026-06-24 Asia/Seoul
+
+git status --short:
+?? .omo/
+
+External source package integrity:
+PASS source package integrity evidence generated
+report=D:\admin\Documents\트레인 오라클 진도\.omo\evidence\trainoracle-source-package-integrity.md
+source_md_count=16
+all_last_write_before_ulw_start=True
+cleanup=no processes spawned; no temp files created
+integrity_report=.omo/evidence/trainoracle-source-package-integrity.md
+
+Generated/modified workspace files are under .omo:
+D:\admin\Documents\트레인 오라클 진도\.omo\drafts\train-oracle-spec-handoff.md
+D:\admin\Documents\트레인 오라클 진도\.omo\evidence\codex-goal-snapshot-trainoracle-inventory.json
+D:\admin\Documents\트레인 오라클 진도\.omo\evidence\inventory-classification-train-oracle-spec-handoff.md
+D:\admin\Documents\트레인 오라클 진도\.omo\evidence\missing-contract-broader-search-train-oracle-spec-handoff.txt
+D:\admin\Documents\트레인 오라클 진도\.omo\evidence\missing-contract-search-train-oracle-spec-handoff.txt
+D:\admin\Documents\트레인 오라클 진도\.omo\evidence\model-belief-files-train-oracle-spec-handoff.md
+D:\admin\Documents\트레인 오라클 진도\.omo\evidence\plan-generator-count-lines-train-oracle-spec-handoff.md
+D:\admin\Documents\트레인 오라클 진도\.omo\evidence\spec-manifest-train-oracle-spec-handoff.txt
+D:\admin\Documents\트레인 오라클 진도\.omo\evidence\trainoracle-confirmed-inventory.md
+D:\admin\Documents\트레인 오라클 진도\.omo\evidence\trainoracle-confirmed-inventory.stdout.txt
+D:\admin\Documents\트레인 오라클 진도\.omo\evidence\trainoracle-missing-quarantine.md
+D:\admin\Documents\트레인 오라클 진도\.omo\evidence\trainoracle-missing-quarantine.stdout.txt
+D:\admin\Documents\트레인 오라클 진도\.omo\evidence\trainoracle-no-product-spec-edits.txt
+D:\admin\Documents\트레인 오라클 진도\.omo\evidence\trainoracle-source-package-integrity.md
+D:\admin\Documents\트레인 오라클 진도\.omo\evidence\trainoracle-source-package-integrity.stdout.txt
+D:\admin\Documents\트레인 오라클 진도\.omo\evidence\trainoracle-spec-inventory-readiness-gate-review.md
+D:\admin\Documents\트레인 오라클 진도\.omo\plans\train-oracle-spec-handoff.md
+D:\admin\Documents\트레인 오라클 진도\.omo\plans\trainoracle-spec-inventory-pass.md
+D:\admin\Documents\트레인 오라클 진도\.omo\reports\trainoracle-reconstruction-readiness.md
+D:\admin\Documents\트레인 오라클 진도\.omo\ulw-loop\019ef850-bb65-7082-ad74-7dc718b3f8e8\brief.md
+D:\admin\Documents\트레인 오라클 진도\.omo\ulw-loop\019ef850-bb65-7082-ad74-7dc718b3f8e8\goals.json
+D:\admin\Documents\트레인 오라클 진도\.omo\ulw-loop\019ef850-bb65-7082-ad74-7dc718b3f8e8\ledger.jsonl
+
+This work unit wrote only .omo reports/evidence. External source markdown files under D:/admin/Downloads/정본 제작 1차 have SHA256/LastWriteTimeUtc integrity evidence showing all 16 source markdown LastWriteTimeUtc values predate the ULW start timestamp 2026-06-24T08:41:01.075Z.
