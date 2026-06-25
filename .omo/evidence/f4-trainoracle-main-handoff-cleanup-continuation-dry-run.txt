@@ -1,0 +1,55 @@
+Question: What file should I read first?
+4:> SPEC / 안전 계약 작업을 이어받는 시작점은 [`TRAINORACLE_SPEC_INDEX.md`](./TRAINORACLE_SPEC_INDEX.md)입니다. 그 다음 현재 상태는 [`SPEC_WORK_STATUS.md`](./SPEC_WORK_STATUS.md)에서 확인하세요.
+29:├── TRAINORACLE_SPEC_INDEX.md         ← SPEC 계층 시작점 / inventory registry
+30:├── SPEC_WORK_STATUS.md               ← 현재 SPEC 작업 상태 / 다음 제작 순서
+123:1. **[TRAINORACLE_SPEC_INDEX.md](./TRAINORACLE_SPEC_INDEX.md) 읽기** — SPEC 계층과 안전 계약 inventory
+124:2. **[SPEC_WORK_STATUS.md](./SPEC_WORK_STATUS.md) 읽기** — 미완성 SPEC 상태, missing contract, 다음 제작 순서
+
+Question: Which contracts are missing or source-not-verified?
+SPEC_WORK_STATUS.md:62:- `RULE_VALIDATION_ENGINE_CONTRACT.md`
+SPEC_WORK_STATUS.md:63:- `PLAN_SAFETY_GATE_SPEC.md`
+SPEC_WORK_STATUS.md:68:`11_API_AND_ENGINE_CONTRACTS.md` is a legacy Phase A-F output contract. It is not `RULE_VALIDATION_ENGINE_CONTRACT.md`.
+SPEC_WORK_STATUS.md:73:2. Search locally/repo-wide for `RULE_VALIDATION_ENGINE_CONTRACT.md`.
+SPEC_WORK_STATUS.md:74:3. If still absent, reconstruct `RULE_VALIDATION_ENGINE_CONTRACT.md` as `RECONSTRUCTED_DRAFT_FOR_REVIEW`.
+SPEC_WORK_STATUS.md:75:4. Search locally/repo-wide for `PLAN_SAFETY_GATE_SPEC.md`.
+SPEC_WORK_STATUS.md:76:5. If still absent, reconstruct `PLAN_SAFETY_GATE_SPEC.md` as `RECONSTRUCTED_DRAFT_FOR_REVIEW`.
+TRAINORACLE_SPEC_INDEX.md:84:| `11_API_AND_ENGINE_CONTRACTS.md` | `specs/legacy-reference/11_API_AND_ENGINE_CONTRACTS.md` | Legacy Phase A-F output contract; not `RULE_VALIDATION_ENGINE_CONTRACT.md` |
+TRAINORACLE_SPEC_INDEX.md:95:| `RULE_VALIDATION_ENGINE_CONTRACT.md` | `specs/reconstruct/` | MISSING_OR_SOURCE_NOT_VERIFIED | Search local first; if absent, reconstruct as `RECONSTRUCTED_DRAFT_FOR_REVIEW` |
+TRAINORACLE_SPEC_INDEX.md:96:| `PLAN_SAFETY_GATE_SPEC.md` | `specs/reconstruct/` | MISSING_OR_SOURCE_NOT_VERIFIED | Search local first; if absent, reconstruct as `RECONSTRUCTED_DRAFT_FOR_REVIEW` |
+TRAINORACLE_SPEC_INDEX.md:134:2. Reconstruct `RULE_VALIDATION_ENGINE_CONTRACT.md` if still absent after final local search.
+TRAINORACLE_SPEC_INDEX.md:135:3. Reconstruct `PLAN_SAFETY_GATE_SPEC.md` if still absent after final local search.
+specs/reconstruct/README.md:7:- `RULE_VALIDATION_ENGINE_CONTRACT.md`
+specs/reconstruct/README.md:8:- `PLAN_SAFETY_GATE_SPEC.md`
+specs/reconstruct/README.md:28:`RULE_VALIDATION_ENGINE_CONTRACT.md`:
+specs/reconstruct/README.md:35:`PLAN_SAFETY_GATE_SPEC.md`:
+
+Question: What is the next production order?
+SPEC_WORK_STATUS.md:21:- reconstruct missing core contracts only after local/repo existence checks
+SPEC_WORK_STATUS.md:54:Missing/reconstruct area:
+SPEC_WORK_STATUS.md:56:- [`specs/reconstruct/README.md`](./specs/reconstruct/README.md)
+SPEC_WORK_STATUS.md:70:## Next SPEC Production Order
+SPEC_WORK_STATUS.md:74:3. If still absent, reconstruct `RULE_VALIDATION_ENGINE_CONTRACT.md` as `RECONSTRUCTED_DRAFT_FOR_REVIEW`.
+SPEC_WORK_STATUS.md:76:5. If still absent, reconstruct `PLAN_SAFETY_GATE_SPEC.md` as `RECONSTRUCTED_DRAFT_FOR_REVIEW`.
+SPEC_WORK_STATUS.md:108:- [`.omo/reports/trainoracle-reconstruction-readiness.md`](./.omo/reports/trainoracle-reconstruction-readiness.md)
+SPEC_WORK_STATUS.md:124:3. [`specs/reconstruct/README.md`](./specs/reconstruct/README.md)
+SPEC_WORK_STATUS.md:125:4. [`.omo/reports/trainoracle-reconstruction-readiness.md`](./.omo/reports/trainoracle-reconstruction-readiness.md)
+specs/reconstruct/README.md:11:If a local original is later found, add it with evidence. If not found, reconstruct only as `RECONSTRUCTED_DRAFT_FOR_REVIEW` and do not claim prior approval, issue closure, or runtime execution evidence.
+specs/reconstruct/README.md:15:Use this order before creating any reconstructed file:
+specs/reconstruct/README.md:17:0. Always search first; do not reconstruct from memory.
+specs/reconstruct/README.md:20:3. If no original is found, reconstruct the file only as `RECONSTRUCTED_DRAFT_FOR_REVIEW`.
+specs/reconstruct/README.md:22:5. Keep `[DRAFT_COMPLETE]` as the final line of any reconstructed SPEC.
+specs/reconstruct/README.md:24:7. Do not close RVE, Safety Gate, Plan Generator, Physio Source, App Bridge, or Athlete Profile issues from reconstruction alone.
+specs/reconstruct/README.md:31:- If absent, reconstruct from `specs/active/RULE_SPEC_D1_D9.md`, `specs/active/RVE_RULE_EVALUATOR_BINDING_SPEC.md`, `specs/active/APP_IMPLEMENTATION_BRIDGE.md`, and `specs/test-packages/D9_SAFETY_EVALUATOR_V2_1_1_TEST_PACKAGE.md`.
+specs/reconstruct/README.md:38:- If absent, reconstruct from `specs/active/PLAN_GENERATOR_SPEC.md`, `specs/active/RVE_RULE_EVALUATOR_BINDING_SPEC.md`, `specs/active/RULE_SPEC_D1_D9.md`, and `specs/active/APP_IMPLEMENTATION_BRIDGE.md`.
+
+Question: What must not be claimed?
+SPEC_WORK_STATUS.md:9:It is not a product rule definition, not canonical promotion, not runtime evidence, and not issue closure.
+SPEC_WORK_STATUS.md:95:- Raw athlete free-text, raw symptom clauses, injury narratives, medical notes, guardian private notes, and sensitive free-form comments must not be stored in audit contracts.
+specs/reconstruct/README.md:49:- Raw athlete free-text, symptom clauses, injury narratives, medical notes, and guardian private notes must not be stored in audit contracts.
+TRAINORACLE_SPEC_INDEX.md:22:It is not a product rule definition, not runtime evidence, and not canonical promotion.
+TRAINORACLE_SPEC_INDEX.md:31:- absolute downstream counts must not be copied from memory
+TRAINORACLE_SPEC_INDEX.md:32:- runtime issues must not be closed without actual execution evidence
+TRAINORACLE_SPEC_INDEX.md:41:| `specs/test-packages/` | Candidate local test packages | TEST_PACKAGE / not runtime evidence |
+TRAINORACLE_SPEC_INDEX.md:69:| `D9_SAFETY_EVALUATOR_V2_1_1_TEST_PACKAGE.md` | `specs/test-packages/D9_SAFETY_EVALUATOR_V2_1_1_TEST_PACKAGE.md` | Candidate package only. Markdown PASS/self-check is not runtime evidence. |
+TRAINORACLE_SPEC_INDEX.md:75:These files must not be deleted, but they do not directly replace the current SPEC layer.
+TRAINORACLE_SPEC_INDEX.md:119:- Raw athlete free-text, raw symptom clauses, injury narratives, medical notes, guardian private notes, and sensitive free-form comments must not be stored in audit contracts.

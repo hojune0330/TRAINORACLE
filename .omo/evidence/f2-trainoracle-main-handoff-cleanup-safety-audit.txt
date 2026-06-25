@@ -1,0 +1,29 @@
+TRAINORACLE_SPEC_INDEX.md:22:It is not a product rule definition, not runtime evidence, and not canonical promotion.
+TRAINORACLE_SPEC_INDEX.md:28:- local files are truth
+TRAINORACLE_SPEC_INDEX.md:41:| `specs/test-packages/` | Candidate local test packages | TEST_PACKAGE / not runtime evidence |
+TRAINORACLE_SPEC_INDEX.md:69:| `D9_SAFETY_EVALUATOR_V2_1_1_TEST_PACKAGE.md` | `specs/test-packages/D9_SAFETY_EVALUATOR_V2_1_1_TEST_PACKAGE.md` | Candidate package only. Markdown PASS/self-check is not runtime evidence. |
+TRAINORACLE_SPEC_INDEX.md:124:- `D9_ACTIVE` blocks plan generation.
+TRAINORACLE_SPEC_INDEX.md:125:- `D9_UNKNOWN` blocks generation or requires human review.
+TRAINORACLE_SPEC_INDEX.md:126:- `D9_CLEARED` is not medical clearance.
+TRAINORACLE_SPEC_INDEX.md:127:- Advisory is not a fourth D9 disposition; it is a non-blocking sub-status under `D9_CLEARED`.
+SPEC_WORK_STATUS.md:9:It is not a product rule definition, not canonical promotion, not runtime evidence, and not issue closure.
+SPEC_WORK_STATUS.md:83:- Local/repo files are truth for file existence and repository state.
+SPEC_WORK_STATUS.md:89:- `D9_ACTIVE` blocks plan generation.
+SPEC_WORK_STATUS.md:90:- `D9_UNKNOWN` blocks generation or requires human review.
+SPEC_WORK_STATUS.md:91:- `D9_CLEARED` is not medical clearance.
+SPEC_WORK_STATUS.md:92:- ADVISORY is not a fourth D9 disposition; it is a non-blocking sub-status under `D9_CLEARED`.
+specs/reconstruct/README.md:44:- `D9_ACTIVE` blocks Plan Generator.
+specs/reconstruct/README.md:45:- `D9_UNKNOWN` blocks Plan Generator or requires human review.
+specs/reconstruct/README.md:46:- `D9_CLEARED` permits generation only as "no D9 signal detected by evaluator at this time"; it is not medical clearance.
+specs/reconstruct/README.md:47:- ADVISORY is not a fourth disposition. It remains under `D9_CLEARED`, stores status as `CLEARED`, and does not block generation.
+.omo/reports/trainoracle-reconstruction-readiness.md:49:- ADVISORY is not a fourth blocking disposition; it is under CLEARED, stored as CLEARED, and does not block Plan Generator.
+.omo/reports/trainoracle-reconstruction-readiness.md:51:- Markdown PASS/self-check is not runtime evidence; actual D9 evaluator execution logs are required before RVE/PG binding issue closure.
+.omo/reports/trainoracle-reconstruction-readiness.md:115:6. D9 signal handling: ACTIVE, UNKNOWN, CLEARED, CLEARED_WITH_ADVISORY as CLEARED sub-status
+.omo/reports/trainoracle-reconstruction-readiness.md:196:5. Blocking matrix: ACTIVE blocks, UNKNOWN blocks or requires human review, CLEARED allows candidate generation, CLEARED_WITH_ADVISORY remains non-blocking CLEARED with reason codes
+TRAINORACLE_SPEC_INDEX.md:126:- `D9_CLEARED` is not medical clearance.
+SPEC_WORK_STATUS.md:91:- `D9_CLEARED` is not medical clearance.
+specs/reconstruct/README.md:46:- `D9_CLEARED` permits generation only as "no D9 signal detected by evaluator at this time"; it is not medical clearance.
+specs/reconstruct/README.md:47:- ADVISORY is not a fourth disposition. It remains under `D9_CLEARED`, stores status as `CLEARED`, and does not block generation.
+.omo/reports/trainoracle-reconstruction-readiness.md:48:- D9 ACTIVE and D9 UNKNOWN block generation or require human review; D9 CLEARED is not medical clearance.
+.omo/reports/trainoracle-reconstruction-readiness.md:121:Must not claim: original restored; prior approved version restored; RVE binding issue closed; D9 evaluator passed runtime tests; medical clearance.
+.omo/reports/trainoracle-reconstruction-readiness.md:203:Must not claim: coach ratification found unless local file found; safety gate issue closed; PG binding issue closed; D9 cleared means medical clearance; advisory blocks generation.

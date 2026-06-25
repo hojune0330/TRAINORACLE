@@ -1,0 +1,19 @@
+## main...origin/main
+?? .omo/evidence/f1-trainoracle-main-handoff-cleanup-plan-compliance.txt
+af6cd07 (HEAD -> main, origin/main) docs(handoff): make TrainOracle SPEC status self-contained
+37f5e40 (origin/codex/trainoracle-spec-handoff, codex/trainoracle-spec-handoff) Add
+e02964e feat(viz): 5개 추후 결정 항목 모두 확정 — MIXED 단계적 노출, Cohort 트리거, Track Record A+D, Dark mode 미지원, PB Trail chip row
+4:> SPEC / 안전 계약 작업을 이어받는 시작점은 [`TRAINORACLE_SPEC_INDEX.md`](./TRAINORACLE_SPEC_INDEX.md)입니다. 그 다음 현재 상태는 [`SPEC_WORK_STATUS.md`](./SPEC_WORK_STATUS.md)에서 확인하세요.
+29:├── TRAINORACLE_SPEC_INDEX.md         ← SPEC 계층 시작점 / inventory registry
+123:1. **[TRAINORACLE_SPEC_INDEX.md](./TRAINORACLE_SPEC_INDEX.md) 읽기** — SPEC 계층과 안전 계약 inventory
+SPEC_WORK_STATUS.md:62:- `RULE_VALIDATION_ENGINE_CONTRACT.md`
+SPEC_WORK_STATUS.md:68:`11_API_AND_ENGINE_CONTRACTS.md` is a legacy Phase A-F output contract. It is not `RULE_VALIDATION_ENGINE_CONTRACT.md`.
+SPEC_WORK_STATUS.md:73:2. Search locally/repo-wide for `RULE_VALIDATION_ENGINE_CONTRACT.md`.
+SPEC_WORK_STATUS.md:74:3. If still absent, reconstruct `RULE_VALIDATION_ENGINE_CONTRACT.md` as `RECONSTRUCTED_DRAFT_FOR_REVIEW`.
+specs/reconstruct/README.md:7:- `RULE_VALIDATION_ENGINE_CONTRACT.md`
+specs/reconstruct/README.md:28:`RULE_VALIDATION_ENGINE_CONTRACT.md`:
+SPEC_WORK_STATUS.md:63:- `PLAN_SAFETY_GATE_SPEC.md`
+SPEC_WORK_STATUS.md:75:4. Search locally/repo-wide for `PLAN_SAFETY_GATE_SPEC.md`.
+SPEC_WORK_STATUS.md:76:5. If still absent, reconstruct `PLAN_SAFETY_GATE_SPEC.md` as `RECONSTRUCTED_DRAFT_FOR_REVIEW`.
+specs/reconstruct/README.md:8:- `PLAN_SAFETY_GATE_SPEC.md`
+specs/reconstruct/README.md:35:`PLAN_SAFETY_GATE_SPEC.md`:
