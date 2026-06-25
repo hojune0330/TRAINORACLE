@@ -1,10 +1,33 @@
+﻿fetch output:
+git : From https://github.com/hojune0330/TRAINORACLE
+At line:15 char:16
++ $fetchOutput = git fetch origin main 2>&1 | Out-String
++                ~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (From https://gi...330/TRAINORACLE:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+
+ * branch            main       -> FETCH_HEAD
+status:
 ## main...origin/main
-?? .omo/evidence/f1-trainoracle-main-handoff-cleanup-plan-compliance.txt
-?? .omo/evidence/f2-trainoracle-main-handoff-cleanup-safety-audit.txt
-?? .omo/evidence/f3-trainoracle-main-handoff-cleanup-remote-proof.txt
-af6cd07 (HEAD -> main, origin/main) docs(handoff): make TrainOracle SPEC status self-contained
+ M .omo/drafts/trainoracle-main-handoff-cleanup.md
+ M .omo/evidence/f1-trainoracle-main-handoff-cleanup-plan-compliance.txt
+?? .omo/evidence/trainoracle-main-handoff-cleanup-code-review.md
+?? .omo/evidence/trainoracle-main-handoff-cleanup-gate-review.md
+?? .omo/evidence/trainoracle-main-handoff-cleanup-review-coverage.md
+rev-parse HEAD origin/main:
+83752ce46e441a9f7263a5df68fa99711a3b3b99
+83752ce46e441a9f7263a5df68fa99711a3b3b99
+origin/main log:
+83752ce (HEAD -> main, origin/main) docs(handoff): add TrainOracle verification evidence
+af6cd07 docs(handoff): make TrainOracle SPEC status self-contained
 37f5e40 (origin/codex/trainoracle-spec-handoff, codex/trainoracle-spec-handoff) Add
-e02964e feat(viz): 5개 추후 결정 항목 모두 확정 — MIXED 단계적 노출, Cohort 트리거, Track Record A+D, Dark mode 미지원, PB Trail chip row
+origin/main key files:
+.omo/drafts/trainoracle-main-handoff-cleanup.md
+.omo/evidence/f3-trainoracle-main-handoff-cleanup-remote-proof.txt
+.omo/plans/trainoracle-main-handoff-cleanup.md
+.omo/reports/github-main-publish-complete.md
+SPEC_WORK_STATUS.md
+origin/main README head:
 # TRAINORACLE — SPEC And Design Handoff
 
 > **이 폴더는 다른 AI 개발 에이전트에게 그대로 전달하기 위한 패키지입니다.**
@@ -45,6 +68,7 @@ TRAINORACLE/                          ← 저장소 루트
 ├── design-system/
 │   ├── DESIGN_TOKENS.md              ← 색·타입·spacing (4-tier energy colors)
 │   ├── COMPONENT_INVENTORY.md        ← 컴포넌트 목록
+origin/main SPEC_WORK_STATUS head:
 # SPEC_WORK_STATUS.md
 
 Updated: 2026-06-25 Asia/Seoul
@@ -165,6 +189,7 @@ Documentation QA evidence from this handoff cleanup:
 Markdown self-checks and documentation scans are not D9 evaluator runtime evidence.
 
 ## What To Read First
+origin/main index key lines:
 24:For the current continuation snapshot after this index, read [`SPEC_WORK_STATUS.md`](./SPEC_WORK_STATUS.md).
 84:| `11_API_AND_ENGINE_CONTRACTS.md` | `specs/legacy-reference/11_API_AND_ENGINE_CONTRACTS.md` | Legacy Phase A-F output contract; not `RULE_VALIDATION_ENGINE_CONTRACT.md` |
 95:| `RULE_VALIDATION_ENGINE_CONTRACT.md` | `specs/reconstruct/` | MISSING_OR_SOURCE_NOT_VERIFIED | Search local first; if absent, reconstruct as `RECONSTRUCTED_DRAFT_FOR_REVIEW` |

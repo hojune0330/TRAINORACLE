@@ -1,8 +1,8 @@
 ---
 slug: trainoracle-main-handoff-cleanup
-status: awaiting-approval
+status: executed-pushed-final-review-fixes-applied
 intent: clear
-pending-action: user chooses whether to execute on main now or run an optional high-accuracy review first
+pending-action: final gate re-review after blocker fixes
 approach: docs-only main-branch handoff cleanup; make GitHub self-contained for continuing incomplete TrainOracle SPEC work without changing active SPEC semantics
 ---
 
@@ -68,6 +68,11 @@ approach: docs-only main-branch handoff cleanup; make GitHub self-contained for 
 - None blocking. The only meaningful execution choice is whether to run directly on `main` now, or run an optional high-accuracy review before touching the docs.
 
 ## Approval gate
-status: awaiting-approval
-recommended-next-action: execute the docs-only cleanup on main
-alternate-next-action: run a high-accuracy review of this plan first, then execute
+status: executed-pushed-final-review-fixes-applied
+executed_commits:
+- `af6cd07` docs(handoff): make TrainOracle SPEC status self-contained
+- `83752ce` docs(handoff): add TrainOracle verification evidence
+review_status:
+- QA reviewer approved the evidence matrix.
+- Code/document reviewer approved with no blockers.
+- Gate reviewer rejected iteration 1 on evidence/process drift; fixes are applied in this draft and companion evidence artifacts for re-review.
