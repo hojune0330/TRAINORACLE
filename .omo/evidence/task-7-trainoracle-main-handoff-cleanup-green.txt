@@ -1,0 +1,9 @@
+README.md:4:> SPEC / 안전 계약 작업을 이어받는 시작점은 [`TRAINORACLE_SPEC_INDEX.md`](./TRAINORACLE_SPEC_INDEX.md)입니다. 그 다음 현재 상태는 [`SPEC_WORK_STATUS.md`](./SPEC_WORK_STATUS.md)에서 확인하세요.
+README.md:30:├── SPEC_WORK_STATUS.md               ← 현재 SPEC 작업 상태 / 다음 제작 순서
+README.md:124:2. **[SPEC_WORK_STATUS.md](./SPEC_WORK_STATUS.md) 읽기** — 미완성 SPEC 상태, missing contract, 다음 제작 순서
+TRAINORACLE_SPEC_INDEX.md:24:For the current continuation snapshot after this index, read [`SPEC_WORK_STATUS.md`](./SPEC_WORK_STATUS.md).
+TRAINORACLE_SPEC_INDEX.md:149:- `SPEC_WORK_STATUS.md`
+108:- [`.omo/reports/trainoracle-reconstruction-readiness.md`](./.omo/reports/trainoracle-reconstruction-readiness.md)
+125:4. [`.omo/reports/trainoracle-reconstruction-readiness.md`](./.omo/reports/trainoracle-reconstruction-readiness.md)
+107:- [`.omo/evidence/trainoracle-remaining-work-flow-reference.md`](./.omo/evidence/trainoracle-remaining-work-flow-reference.md)
+126:5. [`.omo/evidence/trainoracle-remaining-work-flow-reference.md`](./.omo/evidence/trainoracle-remaining-work-flow-reference.md)

@@ -1,7 +1,9 @@
-# TRAINORACLE — Design Handoff
+# TRAINORACLE — SPEC And Design Handoff
 
 > **이 폴더는 다른 AI 개발 에이전트에게 그대로 전달하기 위한 패키지입니다.**
-> 시작점은 [`HANDOFF.md`](./HANDOFF.md)입니다. 그 다음 [`PHILOSOPHY.md`](./PHILOSOPHY.md)를 읽으세요.
+> SPEC / 안전 계약 작업을 이어받는 시작점은 [`TRAINORACLE_SPEC_INDEX.md`](./TRAINORACLE_SPEC_INDEX.md)입니다. 그 다음 현재 상태는 [`SPEC_WORK_STATUS.md`](./SPEC_WORK_STATUS.md)에서 확인하세요.
+> 디자인 / UI 구현 작업을 이어받을 때는 [`HANDOFF.md`](./HANDOFF.md)를 읽고, 그 다음 [`PHILOSOPHY.md`](./PHILOSOPHY.md)를 읽으세요.
+> 이 저장소의 SPEC 계층은 아직 draft handoff 상태입니다. GitHub 업로드는 canonical promotion, runtime evidence, issue closure가 아닙니다.
 
 ---
 
@@ -25,6 +27,7 @@
 TRAINORACLE/                          ← 저장소 루트
 ├── README.md                         ← 시작점 (이 파일)
 ├── TRAINORACLE_SPEC_INDEX.md         ← SPEC 계층 시작점 / inventory registry
+├── SPEC_WORK_STATUS.md               ← 현재 SPEC 작업 상태 / 다음 제작 순서
 ├── HANDOFF.md                        ← 개발 에이전트용 첫 프롬프트
 ├── PHILOSOPHY.md                     ← 제품 철학·UX 원칙 (정본)
 ├── DESIGN_DECISIONS.md               ← 결정사항 정제본
@@ -118,11 +121,12 @@ TRAINORACLE/                          ← 저장소 루트
 ## 다음 단계 (개발 에이전트용)
 
 1. **[TRAINORACLE_SPEC_INDEX.md](./TRAINORACLE_SPEC_INDEX.md) 읽기** — SPEC 계층과 안전 계약 inventory
-2. **[HANDOFF.md](./HANDOFF.md) 읽기** — 디자인/개발 첫 프롬프트
-3. **[PHILOSOPHY.md](./PHILOSOPHY.md) 읽기** — 제품 가치관
-4. **[DESIGN_TOKENS.md](./design-system/DESIGN_TOKENS.md)** — Tailwind config 작성
-5. **[SCREENS.md](./design-system/SCREENS.md)** — 우선순위 결정
-6. 디자인 파일 직접 열어 확인 → SPEC 안전 계약과 충돌하지 않게 컴포넌트 단위로 분해 → 구현 시작
+2. **[SPEC_WORK_STATUS.md](./SPEC_WORK_STATUS.md) 읽기** — 미완성 SPEC 상태, missing contract, 다음 제작 순서
+3. **[HANDOFF.md](./HANDOFF.md) 읽기** — 디자인/개발 첫 프롬프트
+4. **[PHILOSOPHY.md](./PHILOSOPHY.md) 읽기** — 제품 가치관
+5. **[DESIGN_TOKENS.md](./design-system/DESIGN_TOKENS.md)** — Tailwind config 작성
+6. **[SCREENS.md](./design-system/SCREENS.md)** — 우선순위 결정
+7. 디자인 파일 직접 열어 확인 → SPEC 안전 계약과 충돌하지 않게 컴포넌트 단위로 분해 → 구현 시작
 
 ---
 

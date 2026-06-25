@@ -47,3 +47,7 @@ Use this order before creating any reconstructed file:
 - ADVISORY is not a fourth disposition. It remains under `D9_CLEARED`, stores status as `CLEARED`, and does not block generation.
 - Good physiological data and template selection cannot clear D9 risk.
 - Raw athlete free-text, symptom clauses, injury narratives, medical notes, and guardian private notes must not be stored in audit contracts.
+11:If a local original is later found, add it with evidence. If not found, reconstruct only as `RECONSTRUCTED_DRAFT_FOR_REVIEW` and do not claim prior approval, issue closure, or runtime execution evidence.
+20:3. If no original is found, reconstruct the file only as `RECONSTRUCTED_DRAFT_FOR_REVIEW`.
+17:0. Always search first; do not reconstruct from memory.
+40:- Do not close `OI-PG-RULE-SAFETY-GATE-BINDING-001` without actual runtime evidence and accepted target patches.

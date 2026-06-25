@@ -1,0 +1,29 @@
+Forbidden overclaim scan
+SPEC_WORK_STATUS.md:91:- `D9_CLEARED` is not medical clearance.
+TRAINORACLE_SPEC_INDEX.md:126:- `D9_CLEARED` is not medical clearance.
+specs/reconstruct/README.md:46:- `D9_CLEARED` permits generation only as "no D9 signal detected by evaluator at this time"; it is not medical clearance.
+.omo/reports/trainoracle-reconstruction-readiness.md:48:- D9 ACTIVE and D9 UNKNOWN block generation or require human review; D9 CLEARED is not medical clearance.
+.omo/reports/trainoracle-reconstruction-readiness.md:121:Must not claim: original restored; prior approved version restored; RVE binding issue closed; D9 evaluator passed runtime tests; medical clearance.
+.omo/reports/trainoracle-reconstruction-readiness.md:203:Must not claim: coach ratification found unless local file found; safety gate issue closed; PG binding issue closed; D9 cleared means medical clearance; advisory blocks generation.
+
+Required caution terms
+SPEC_WORK_STATUS.md:9:It is not a product rule definition, not canonical promotion, not runtime evidence, and not issue closure.
+SPEC_WORK_STATUS.md:74:3. If still absent, reconstruct `RULE_VALIDATION_ENGINE_CONTRACT.md` as `RECONSTRUCTED_DRAFT_FOR_REVIEW`.
+SPEC_WORK_STATUS.md:76:5. If still absent, reconstruct `PLAN_SAFETY_GATE_SPEC.md` as `RECONSTRUCTED_DRAFT_FOR_REVIEW`.
+TRAINORACLE_SPEC_INDEX.md:22:It is not a product rule definition, not runtime evidence, and not canonical promotion.
+TRAINORACLE_SPEC_INDEX.md:41:| `specs/test-packages/` | Candidate local test packages | TEST_PACKAGE / not runtime evidence |
+TRAINORACLE_SPEC_INDEX.md:69:| `D9_SAFETY_EVALUATOR_V2_1_1_TEST_PACKAGE.md` | `specs/test-packages/D9_SAFETY_EVALUATOR_V2_1_1_TEST_PACKAGE.md` | Candidate package only. Markdown PASS/self-check is not runtime evidence. |
+TRAINORACLE_SPEC_INDEX.md:95:| `RULE_VALIDATION_ENGINE_CONTRACT.md` | `specs/reconstruct/` | MISSING_OR_SOURCE_NOT_VERIFIED | Search local first; if absent, reconstruct as `RECONSTRUCTED_DRAFT_FOR_REVIEW` |
+TRAINORACLE_SPEC_INDEX.md:96:| `PLAN_SAFETY_GATE_SPEC.md` | `specs/reconstruct/` | MISSING_OR_SOURCE_NOT_VERIFIED | Search local first; if absent, reconstruct as `RECONSTRUCTED_DRAFT_FOR_REVIEW` |
+specs/reconstruct/README.md:11:If a local original is later found, add it with evidence. If not found, reconstruct only as `RECONSTRUCTED_DRAFT_FOR_REVIEW` and do not claim prior approval, issue closure, or runtime execution evidence.
+specs/reconstruct/README.md:20:3. If no original is found, reconstruct the file only as `RECONSTRUCTED_DRAFT_FOR_REVIEW`.
+.omo/reports/github-main-publish-complete.md:50:4. Reconstruct `RULE_VALIDATION_ENGINE_CONTRACT.md` only if still absent, with `status: RECONSTRUCTED_DRAFT_FOR_REVIEW`.
+.omo/reports/github-main-publish-complete.md:52:6. Reconstruct `PLAN_SAFETY_GATE_SPEC.md` only if still absent, with `status: RECONSTRUCTED_DRAFT_FOR_REVIEW`.
+.omo/reports/trainoracle-reconstruction-readiness.md:43:- Use `RECONSTRUCTED_DRAFT_FOR_REVIEW` for missing contracts unless a local original is later found.
+.omo/reports/trainoracle-reconstruction-readiness.md:51:- Markdown PASS/self-check is not runtime evidence; actual D9 evaluator execution logs are required before RVE/PG binding issue closure.
+.omo/reports/trainoracle-reconstruction-readiness.md:55:Recommended status: `RECONSTRUCTED_DRAFT_FOR_REVIEW` if still absent after final local search.
+.omo/reports/trainoracle-reconstruction-readiness.md:111:2. metadata with `status: RECONSTRUCTED_DRAFT_FOR_REVIEW`, `executed_tests_total: 0` unless runtime log exists
+.omo/reports/trainoracle-reconstruction-readiness.md:125:Recommended status: `RECONSTRUCTED_DRAFT_FOR_REVIEW` if still absent after final local search.
+.omo/reports/trainoracle-reconstruction-readiness.md:193:2. metadata with `status: RECONSTRUCTED_DRAFT_FOR_REVIEW`, no canonical promotion
+
+Diff whitespace check

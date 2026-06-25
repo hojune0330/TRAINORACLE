@@ -1,0 +1,78 @@
+git state
+## main...origin/main
+ M .omo/reports/github-publish-readiness.md
+ M .omo/reports/trainoracle-reconstruction-readiness.md
+ M README.md
+ M TRAINORACLE_SPEC_INDEX.md
+ M specs/reconstruct/README.md
+?? .omo/drafts/trainoracle-main-handoff-cleanup.md
+?? .omo/evidence/task-1-trainoracle-main-handoff-cleanup-red.txt
+?? .omo/evidence/task-2-trainoracle-main-handoff-cleanup-green.txt
+?? .omo/evidence/task-3-trainoracle-main-handoff-cleanup-green.txt
+?? .omo/evidence/task-4-trainoracle-main-handoff-cleanup-green.txt
+?? .omo/plans/trainoracle-main-handoff-cleanup.md
+?? .omo/reports/github-main-publish-complete.md
+?? SPEC_WORK_STATUS.md
+37f5e40 (HEAD -> main, origin/main, origin/codex/trainoracle-spec-handoff, codex/trainoracle-spec-handoff) Add
+e02964e feat(viz): 5개 추후 결정 항목 모두 확정 — MIXED 단계적 노출, Cohort 트리거, Track Record A+D, Dark mode 미지원, PB Trail chip row
+f6a4d93 feat(viz): Sprint 2 Visualization System (도큐먼트 + HTML) + 워크스페이스 정리
+9d4c3b9 Add files via upload
+b49f825 Add files via upload
+
+publish readiness current labels
+7:Superseded current-state report: `.omo/reports/github-main-publish-complete.md` (main publish complete)
+13:Update: target repository confirmed as `hojune0330/TRAINORACLE`; local branch `codex/trainoracle-spec-handoff` was created from `origin/main` for publish preparation.
+19:- Base branch: `origin/main`
+# TrainOracle GitHub Main Publish Complete
+
+Generated: 2026-06-25 Asia/Seoul
+
+Status: CURRENT_HANDOFF_REPORT
+
+Scope: current GitHub-main handoff status for the TrainOracle SPEC package. This report supersedes the pre-publish state in `.omo/reports/github-publish-readiness.md`.
+
+## Current Repository State
+
+- Repository: `hojune0330/TRAINORACLE`
+- Remote: `origin`
+- Working branch for this phase: `main`
+- User direction: continue work directly on `main` for now.
+- SPEC source of truth for repository continuation: committed files in this repo, not conversation ledgers.
+
+## What This Confirms
+
+- The TrainOracle design handoff and SPEC handoff package are already in the repository.
+- `TRAINORACLE_SPEC_INDEX.md` is the SPEC inventory starting point.
+- `SPEC_WORK_STATUS.md` records the current incomplete SPEC phase and next work order.
+- `specs/active/` contains active SPEC candidates.
+- `specs/test-packages/` contains candidate test packages only.
+- `specs/legacy-reference/` contains legacy/reference documents.
+- `specs/reconstruct/` is the area for missing or reconstructed required contracts.
+
+## What This Does Not Confirm
+
+- No canonical promotion.
+- No product runtime deployment.
+- No actual D9 evaluator runtime evidence.
+- No RVE or Plan Generator binding issue closure.
+- No discovery of `RULE_VALIDATION_ENGINE_CONTRACT.md` or `PLAN_SAFETY_GATE_SPEC.md` as approved originals.
+
+## Final Push Evidence
+
+This cleanup records final remote proof under:
+
+- `.omo/evidence/task-9-trainoracle-main-handoff-cleanup-precommit.txt`
+- `.omo/evidence/f1-trainoracle-main-handoff-cleanup-plan-compliance.txt`
+- `.omo/evidence/f2-trainoracle-main-handoff-cleanup-safety-audit.txt`
+- `.omo/evidence/f3-trainoracle-main-handoff-cleanup-remote-proof.txt`
+- `.omo/evidence/f4-trainoracle-main-handoff-cleanup-continuation-dry-run.txt`
+
+## Next Work
+
+1. Read `TRAINORACLE_SPEC_INDEX.md`.
+2. Read `SPEC_WORK_STATUS.md`.
+3. Reconfirm local/repo absence of `RULE_VALIDATION_ENGINE_CONTRACT.md`.
+4. Reconstruct `RULE_VALIDATION_ENGINE_CONTRACT.md` only if still absent, with `status: RECONSTRUCTED_DRAFT_FOR_REVIEW`.
+5. Reconfirm local/repo absence of `PLAN_SAFETY_GATE_SPEC.md`.
+6. Reconstruct `PLAN_SAFETY_GATE_SPEC.md` only if still absent, with `status: RECONSTRUCTED_DRAFT_FOR_REVIEW`.
+7. Do not close RVE/PG binding issues until actual D9 evaluator runtime evidence exists.

@@ -1,0 +1,221 @@
+## main...origin/main
+ M .omo/reports/github-publish-readiness.md
+ M .omo/reports/trainoracle-reconstruction-readiness.md
+ M README.md
+ M TRAINORACLE_SPEC_INDEX.md
+ M specs/reconstruct/README.md
+?? .omo/drafts/trainoracle-main-handoff-cleanup.md
+?? .omo/evidence/task-1-trainoracle-main-handoff-cleanup-red.txt
+?? .omo/evidence/task-2-trainoracle-main-handoff-cleanup-green.txt
+?? .omo/evidence/task-3-trainoracle-main-handoff-cleanup-green.txt
+?? .omo/evidence/task-4-trainoracle-main-handoff-cleanup-green.txt
+?? .omo/evidence/task-5-trainoracle-main-handoff-cleanup-green.txt
+?? .omo/evidence/task-6-trainoracle-main-handoff-cleanup-green.txt
+?? .omo/evidence/task-7-trainoracle-main-handoff-cleanup-green.txt
+?? .omo/evidence/task-8-trainoracle-main-handoff-cleanup-green.txt
+?? .omo/evidence/task-9-trainoracle-main-handoff-cleanup-precommit.txt
+?? .omo/plans/trainoracle-main-handoff-cleanup.md
+?? .omo/reports/github-main-publish-complete.md
+?? SPEC_WORK_STATUS.md
+
+Tracked diff stat
+ .omo/reports/github-publish-readiness.md           | 10 ++++--
+ .../trainoracle-reconstruction-readiness.md        | 21 ++++++++++++
+ README.md                                          | 18 ++++++----
+ TRAINORACLE_SPEC_INDEX.md                          |  5 +++
+ specs/reconstruct/README.md                        | 40 +++++++++++++++++++++-
+ 5 files changed, 84 insertions(+), 10 deletions(-)
+
+Untracked planned files
+.omo/drafts/trainoracle-main-handoff-cleanup.md
+.omo/evidence/task-1-trainoracle-main-handoff-cleanup-red.txt
+.omo/evidence/task-2-trainoracle-main-handoff-cleanup-green.txt
+.omo/evidence/task-3-trainoracle-main-handoff-cleanup-green.txt
+.omo/evidence/task-4-trainoracle-main-handoff-cleanup-green.txt
+.omo/evidence/task-5-trainoracle-main-handoff-cleanup-green.txt
+.omo/evidence/task-6-trainoracle-main-handoff-cleanup-green.txt
+.omo/evidence/task-7-trainoracle-main-handoff-cleanup-green.txt
+.omo/evidence/task-8-trainoracle-main-handoff-cleanup-green.txt
+.omo/plans/trainoracle-main-handoff-cleanup.md
+.omo/reports/github-main-publish-complete.md
+SPEC_WORK_STATUS.md
+
+Tracked diff preview
+diff --git a/.omo/reports/github-publish-readiness.md b/.omo/reports/github-publish-readiness.md
+index 1dfb466..8a218a9 100644
+--- a/.omo/reports/github-publish-readiness.md
++++ b/.omo/reports/github-publish-readiness.md
+@@ -2,7 +2,13 @@
+
+ Generated: 2026-06-24 Asia/Seoul
+
+-Scope: preparation only. No commit, push, remote creation, repository creation, or product SPEC movement was performed.
++Status: HISTORICAL_PRE_PUBLISH_REPORT
++
++Superseded current-state report: `.omo/reports/github-main-publish-complete.md` (main publish complete)
++
++Current note, 2026-06-25 Asia/Seoul: this report is preserved as pre-publish process evidence. Its branch, identity, and push blockers describe the earlier preparation state and must not be read as the current `main` branch state.
++
++Historical scope: preparation only. At the time this report was generated, no commit, push, remote creation, repository creation, or product SPEC movement was performed.
+
+ Update: target repository confirmed as `hojune0330/TRAINORACLE`; local branch `codex/trainoracle-spec-handoff` was created from `origin/main` for publish preparation.
+
+@@ -53,7 +59,7 @@ Recommended later scope after explicit confirmation:
+ 1. Copy or move verified active SPEC files into a chosen repository structure.
+ 2. Add missing/reconstructed specs under a draft/reconstruct area.
+ 3. Keep legacy references separate from active SPEC files.
+-4. Add runtime evidence only after actual D9 evaluator execution.
++4. Add runtime execution evidence only after actual D9 evaluator execution.
+
+ ## Required Decisions Before Push
+
+diff --git a/.omo/reports/trainoracle-reconstruction-readiness.md b/.omo/reports/trainoracle-reconstruction-readiness.md
+index 480a62f..b158cd9 100644
+--- a/.omo/reports/trainoracle-reconstruction-readiness.md
++++ b/.omo/reports/trainoracle-reconstruction-readiness.md
+@@ -4,6 +4,27 @@ Generated: 2026-06-24 Asia/Seoul
+
+ Scope: readiness only. This does not reconstruct product SPEC files, close issues, or claim runtime evidence.
+
++## Repository Path Mapping For GitHub Continuation
++
++Repository path mapping is the table below.
++
++The `D:\admin\Downloads\...` paths below are historical source provenance from the local preparation environment. A GitHub-only worker should use the committed repository paths first and verify local files before claiming anything about existence, issue counts, or status.
++
++| Source filename | Repository path |
++|---|---|
++| `RULE_SPEC_D1_D9.md` | `specs/active/RULE_SPEC_D1_D9.md` |
++| `SESSION_CLASSIFIER_SPEC.md` | `specs/active/SESSION_CLASSIFIER_SPEC.md` |
++| `ATHLETE_PROFILE_SPEC.md` | `specs/active/ATHLETE_PROFILE_SPEC.md` |
++| `APP_IMPLEMENTATION_BRIDGE.md` | `specs/active/APP_IMPLEMENTATION_BRIDGE.md` |
++| `PLAN_GENERATOR_SPEC.md` | `specs/active/PLAN_GENERATOR_SPEC.md` |
++| `TEMPLATE_LIBRARY_SPEC.md` | `specs/active/TEMPLATE_LIBRARY_SPEC.md` |
++| `PHYSIO_SOURCE_TRUST_SPEC.md` | `specs/active/PHYSIO_SOURCE_TRUST_SPEC.md` |
++| `RVE_RULE_EVALUATOR_BINDING_SPEC.md` | `specs/active/RVE_RULE_EVALUATOR_BINDING_SPEC.md` |
++| `D9_SAFETY_EVALUATOR_V2_1_1_TEST_PACKAGE.md` | `specs/test-packages/D9_SAFETY_EVALUATOR_V2_1_1_TEST_PACKAGE.md` |
++| `11_API_AND_ENGINE_CONTRACTS.md` | `specs/legacy-reference/11_API_AND_ENGINE_CONTRACTS.md` |
++
++Current status reference: `SPEC_WORK_STATUS.md`.
++
+ ## New Remaining-Work Reference
+
+ `D:/admin/Downloads/새 텍스트 문서.md` is now `TRAINORACLE_SPEC_FLOW_AND_REMAINING_WORK.md`, not the earlier charter content. It is a handoff/reference document, not an active SPEC baseline, but it changes the next-work ordering:
+diff --git a/README.md b/README.md
+index 8218656..541de23 100644
+--- a/README.md
++++ b/README.md
+@@ -1,7 +1,9 @@
+-# TRAINORACLE — Design Handoff
++# TRAINORACLE — SPEC And Design Handoff
+
+ > **이 폴더는 다른 AI 개발 에이전트에게 그대로 전달하기 위한 패키지입니다.**
+-> 시작점은 [`HANDOFF.md`](./HANDOFF.md)입니다. 그 다음 [`PHILOSOPHY.md`](./PHILOSOPHY.md)를 읽으세요.
++> SPEC / 안전 계약 작업을 이어받는 시작점은 [`TRAINORACLE_SPEC_INDEX.md`](./TRAINORACLE_SPEC_INDEX.md)입니다. 그 다음 현재 상태는 [`SPEC_WORK_STATUS.md`](./SPEC_WORK_STATUS.md)에서 확인하세요.
++> 디자인 / UI 구현 작업을 이어받을 때는 [`HANDOFF.md`](./HANDOFF.md)를 읽고, 그 다음 [`PHILOSOPHY.md`](./PHILOSOPHY.md)를 읽으세요.
++> 이 저장소의 SPEC 계층은 아직 draft handoff 상태입니다. GitHub 업로드는 canonical promotion, runtime evidence, issue closure가 아닙니다.
+
+ ---
+
+@@ -25,6 +27,7 @@
+ TRAINORACLE/                          ← 저장소 루트
+ ├── README.md                         ← 시작점 (이 파일)
+ ├── TRAINORACLE_SPEC_INDEX.md         ← SPEC 계층 시작점 / inventory registry
++├── SPEC_WORK_STATUS.md               ← 현재 SPEC 작업 상태 / 다음 제작 순서
+ ├── HANDOFF.md                        ← 개발 에이전트용 첫 프롬프트
+ ├── PHILOSOPHY.md                     ← 제품 철학·UX 원칙 (정본)
+ ├── DESIGN_DECISIONS.md               ← 결정사항 정제본
+@@ -118,11 +121,12 @@ TRAINORACLE/                          ← 저장소 루트
+ ## 다음 단계 (개발 에이전트용)
+
+ 1. **[TRAINORACLE_SPEC_INDEX.md](./TRAINORACLE_SPEC_INDEX.md) 읽기** — SPEC 계층과 안전 계약 inventory
+-2. **[HANDOFF.md](./HANDOFF.md) 읽기** — 디자인/개발 첫 프롬프트
+-3. **[PHILOSOPHY.md](./PHILOSOPHY.md) 읽기** — 제품 가치관
+-4. **[DESIGN_TOKENS.md](./design-system/DESIGN_TOKENS.md)** — Tailwind config 작성
+-5. **[SCREENS.md](./design-system/SCREENS.md)** — 우선순위 결정
+-6. 디자인 파일 직접 열어 확인 → SPEC 안전 계약과 충돌하지 않게 컴포넌트 단위로 분해 → 구현 시작
++2. **[SPEC_WORK_STATUS.md](./SPEC_WORK_STATUS.md) 읽기** — 미완성 SPEC 상태, missing contract, 다음 제작 순서
++3. **[HANDOFF.md](./HANDOFF.md) 읽기** — 디자인/개발 첫 프롬프트
++4. **[PHILOSOPHY.md](./PHILOSOPHY.md) 읽기** — 제품 가치관
++5. **[DESIGN_TOKENS.md](./design-system/DESIGN_TOKENS.md)** — Tailwind config 작성
++6. **[SCREENS.md](./design-system/SCREENS.md)** — 우선순위 결정
++7. 디자인 파일 직접 열어 확인 → SPEC 안전 계약과 충돌하지 않게 컴포넌트 단위로 분해 → 구현 시작
+
+ ---
+
+diff --git a/TRAINORACLE_SPEC_INDEX.md b/TRAINORACLE_SPEC_INDEX.md
+index 02f0280..0d8df22 100644
+--- a/TRAINORACLE_SPEC_INDEX.md
++++ b/TRAINORACLE_SPEC_INDEX.md
+@@ -21,6 +21,8 @@ This registry records the current TrainOracle SPEC layer added to the `hojune033
+
+ It is not a product rule definition, not runtime evidence, and not canonical promotion.
+
++For the current continuation snapshot after this index, read [`SPEC_WORK_STATUS.md`](./SPEC_WORK_STATUS.md).
++
+ The highest-priority operating rule remains:
+
+ - local files are truth
+@@ -144,11 +146,14 @@ Current handoff, inventory, and readiness evidence lives under `.omo/`.
+
+ Important starting points:
+
++- `SPEC_WORK_STATUS.md`
+ - `.omo/drafts/train-oracle-spec-handoff.md`
++- `.omo/plans/trainoracle-main-handoff-cleanup.md`
+ - `.omo/evidence/trainoracle-confirmed-inventory.md`
+ - `.omo/evidence/trainoracle-missing-quarantine.md`
+ - `.omo/evidence/trainoracle-remaining-work-flow-reference.md`
+ - `.omo/reports/trainoracle-reconstruction-readiness.md`
+ - `.omo/reports/github-publish-readiness.md`
++- `.omo/reports/github-main-publish-complete.md`
+
+ [DRAFT_COMPLETE]
+diff --git a/specs/reconstruct/README.md b/specs/reconstruct/README.md
+index e8525cc..a815679 100644
+--- a/specs/reconstruct/README.md
++++ b/specs/reconstruct/README.md
+@@ -8,4 +8,42 @@ Known missing or source-not-verified targets:
+ - `PLAN_SAFETY_GATE_SPEC.md`
+ - `COACH_RATIFICATION_SAFETY_DEFAULTS_2026_06_04_001`
+
+-If a local original is later found, add it with evidence. If not found, reconstruct only as `RECONSTRUCTED_DRAFT_FOR_REVIEW` and do not claim prior approval, issue closure, or runtime PASS evidence.
++If a local original is later found, add it with evidence. If not found, reconstruct only as `RECONSTRUCTED_DRAFT_FOR_REVIEW` and do not claim prior approval, issue closure, or runtime execution evidence.
++
++## Continuation Checklist
++
++Use this order before creating any reconstructed file:
++
++0. Always search first; do not reconstruct from memory.
++1. Search the repository and any explicitly provided local source package for the target filename.
++2. If an original is found, record where it was found and add it with provenance.
++3. If no original is found, reconstruct the file only as `RECONSTRUCTED_DRAFT_FOR_REVIEW`.
++4. Preserve `executed_tests_total: 0` unless actual runtime logs exist.
++5. Keep `[DRAFT_COMPLETE]` as the final line of any reconstructed SPEC.
++6. Recount target open-issue tables from the target file before changing counts.
++7. Do not close RVE, Safety Gate, Plan Generator, Physio Source, App Bridge, or Athlete Profile issues from reconstruction alone.
++
++## Reconstruction Targets
++
++`RULE_VALIDATION_ENGINE_CONTRACT.md`:
++
++- Search first.
++- If absent, reconstruct from `specs/active/RULE_SPEC_D1_D9.md`, `specs/active/RVE_RULE_EVALUATOR_BINDING_SPEC.md`, `specs/active/APP_IMPLEMENTATION_BRIDGE.md`, and `specs/test-packages/D9_SAFETY_EVALUATOR_V2_1_1_TEST_PACKAGE.md`.
++- Do not claim it is the original restored file.
++- Do not use `specs/legacy-reference/11_API_AND_ENGINE_CONTRACTS.md` as a replacement contract.
++
++`PLAN_SAFETY_GATE_SPEC.md`:
++
++- Search first.
++- If absent, reconstruct from `specs/active/PLAN_GENERATOR_SPEC.md`, `specs/active/RVE_RULE_EVALUATOR_BINDING_SPEC.md`, `specs/active/RULE_SPEC_D1_D9.md`, and `specs/active/APP_IMPLEMENTATION_BRIDGE.md`.
++- Define only the pre-generation safety gate boundary.
++- Do not close `OI-PG-RULE-SAFETY-GATE-BINDING-001` without actual runtime evidence and accepted target patches.
++
++## Required Safety Semantics
++
++- `D9_ACTIVE` blocks Plan Generator.
++- `D9_UNKNOWN` blocks Plan Generator or requires human review.
++- `D9_CLEARED` permits generation only as "no D9 signal detected by evaluator at this time"; it is not medical clearance.
++- ADVISORY is not a fourth disposition. It remains under `D9_CLEARED`, stores status as `CLEARED`, and does not block generation.
++- Good physiological data and template selection cannot clear D9 risk.
++- Raw athlete free-text, symptom clauses, injury narratives, medical notes, and guardian private notes must not be stored in audit contracts.

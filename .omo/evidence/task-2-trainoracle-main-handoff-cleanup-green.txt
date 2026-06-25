@@ -1,0 +1,51 @@
+README entrypoint after edit
+# TRAINORACLE — SPEC And Design Handoff
+
+> **이 폴더는 다른 AI 개발 에이전트에게 그대로 전달하기 위한 패키지입니다.**
+> SPEC / 안전 계약 작업을 이어받는 시작점은 [`TRAINORACLE_SPEC_INDEX.md`](./TRAINORACLE_SPEC_INDEX.md)입니다. 그 다음 현재 상태는 [`SPEC_WORK_STATUS.md`](./SPEC_WORK_STATUS.md)에서 확인하세요.
+> 디자인 / UI 구현 작업을 이어받을 때는 [`HANDOFF.md`](./HANDOFF.md)를 읽고, 그 다음 [`PHILOSOPHY.md`](./PHILOSOPHY.md)를 읽으세요.
+> 이 저장소의 SPEC 계층은 아직 draft handoff 상태입니다. GitHub 업로드는 canonical promotion, runtime evidence, issue closure가 아닙니다.
+
+---
+
+## 제품 개요
+
+**TRAINORACLE**은 중장거리(1500m / 5000m / 10000m) 선수를 위한 **AI 코치 시스템**입니다.
+
+> **"너의 데이터를 모두 줘봐. AI 코치 장호준이 분석해서 해결해줄게."**
+
+사용자 ↔ AI 코치 장호준의 **1:1 관계**가 중심. 사용자의 훈련 데이터·기록·목표·컨디션을 가져와서, 그 사람만의 맥락을 이해하고 지속적인 코칭을 제공합니다.
+
+코치 장호준의 30년 경험에서 추출한 **9.5일 사이클 방법론** + **9 Rules**가 시스템의 심장. 모든 추천은 verdict + confidence + citation을 동반합니다.
+
+**현재 단계**: AI는 하드코딩된 코칭 지식 + 결정 함수 + 고정 피드백 템플릿 기반 (rule engine). LLM 자유 호출은 추후 단계.
+
+---
+
+## 패키지 구조
+
+```
+TRAINORACLE/                          ← 저장소 루트
+├── README.md                         ← 시작점 (이 파일)
+├── TRAINORACLE_SPEC_INDEX.md         ← SPEC 계층 시작점 / inventory registry
+├── SPEC_WORK_STATUS.md               ← 현재 SPEC 작업 상태 / 다음 제작 순서
+├── HANDOFF.md                        ← 개발 에이전트용 첫 프롬프트
+├── PHILOSOPHY.md                     ← 제품 철학·UX 원칙 (정본)
+├── DESIGN_DECISIONS.md               ← 결정사항 정제본
+├── CONVERSATION_LOG.md               ← 디자인 의사결정 흐름
+├── BRIEF_ORIGINAL.md                 ← 원본 디자인 브리프
+├── PUSH_TO_GITHUB.md                 ← (선택) GitHub 업로드 가이드
+
+4:> SPEC / 안전 계약 작업을 이어받는 시작점은 [`TRAINORACLE_SPEC_INDEX.md`](./TRAINORACLE_SPEC_INDEX.md)입니다. 그 다음 현재 상태는 [`SPEC_WORK_STATUS.md`](./SPEC_WORK_STATUS.md)에서 확인하세요.
+29:├── TRAINORACLE_SPEC_INDEX.md         ← SPEC 계층 시작점 / inventory registry
+123:1. **[TRAINORACLE_SPEC_INDEX.md](./TRAINORACLE_SPEC_INDEX.md) 읽기** — SPEC 계층과 안전 계약 inventory
+1:# TRAINORACLE — SPEC And Design Handoff
+4:> SPEC / 안전 계약 작업을 이어받는 시작점은 [`TRAINORACLE_SPEC_INDEX.md`](./TRAINORACLE_SPEC_INDEX.md)입니다. 그 다음 현재 상태는 [`SPEC_WORK_STATUS.md`](./SPEC_WORK_STATUS.md)에서 확인하세요.
+6:> 이 저장소의 SPEC 계층은 아직 draft handoff 상태입니다. GitHub 업로드는 canonical promotion, runtime evidence, issue closure가 아닙니다.
+29:├── TRAINORACLE_SPEC_INDEX.md         ← SPEC 계층 시작점 / inventory registry
+30:├── SPEC_WORK_STATUS.md               ← 현재 SPEC 작업 상태 / 다음 제작 순서
+47:├── specs/                            ← SPEC 계층 문서
+48:│   ├── active/                       ← 현재 active SPEC 후보
+123:1. **[TRAINORACLE_SPEC_INDEX.md](./TRAINORACLE_SPEC_INDEX.md) 읽기** — SPEC 계층과 안전 계약 inventory
+124:2. **[SPEC_WORK_STATUS.md](./SPEC_WORK_STATUS.md) 읽기** — 미완성 SPEC 상태, missing contract, 다음 제작 순서
+129:7. 디자인 파일 직접 열어 확인 → SPEC 안전 계약과 충돌하지 않게 컴포넌트 단위로 분해 → 구현 시작

@@ -21,6 +21,8 @@ This registry records the current TrainOracle SPEC layer added to the `hojune033
 
 It is not a product rule definition, not runtime evidence, and not canonical promotion.
 
+For the current continuation snapshot after this index, read [`SPEC_WORK_STATUS.md`](./SPEC_WORK_STATUS.md).
+
 The highest-priority operating rule remains:
 
 - local files are truth
@@ -144,11 +146,14 @@ Current handoff, inventory, and readiness evidence lives under `.omo/`.
 
 Important starting points:
 
+- `SPEC_WORK_STATUS.md`
 - `.omo/drafts/train-oracle-spec-handoff.md`
+- `.omo/plans/trainoracle-main-handoff-cleanup.md`
 - `.omo/evidence/trainoracle-confirmed-inventory.md`
 - `.omo/evidence/trainoracle-missing-quarantine.md`
 - `.omo/evidence/trainoracle-remaining-work-flow-reference.md`
 - `.omo/reports/trainoracle-reconstruction-readiness.md`
 - `.omo/reports/github-publish-readiness.md`
+- `.omo/reports/github-main-publish-complete.md`
 
 [DRAFT_COMPLETE]
