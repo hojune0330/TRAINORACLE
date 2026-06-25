@@ -52,3 +52,15 @@ This file exists to close the first gate review blockers:
 - Browser/server/tmux/container resources: not applicable; none were started.
 - Subagents from first review gate: closed after receiving QA/code/gate results.
 - Remaining local state before re-review: only tracked evidence/process fixes should be dirty.
+
+## ULW State Note
+
+The cleanup criteria were recorded in `.omo/ulw-loop/goals.json` with all three criteria passing. The installed `omo ulw-loop status` command is currently resolving an older session-scoped state under `.omo/ulw-loop/019ef850-bb65-7082-ad74-7dc718b3f8e8/` rather than the root cleanup state and exposes no help output for selecting the root state.
+
+Because the skill explicitly says not to hand-edit ULW state files, this pass does not manually mutate `.omo/ulw-loop/goals.json`. Final completion should be judged from:
+
+- committed RED/GREEN evidence under `.omo/evidence/task-*trainoracle-main-handoff-cleanup*`
+- committed final evidence under `.omo/evidence/f1-*` through `.omo/evidence/f4-*`
+- direct `git rev-parse HEAD origin/main`
+- direct `git ls-tree -r --name-only origin/main`
+- reviewer artifacts in this cleanup scope
