@@ -1,0 +1,5 @@
+REDACTED_DOM_SNAPSHOT
+surface: loaded Genspark browser page
+status: raw DOM text withheld from handoff artifacts
+observed: current workspace, direct request, continuation response, link inventory, access metadata
+limits: compacted history is not recovered; expired/unavailable links are metadata only; agent-generated reconstructions are reference only; sensitive/session-boundary exclusions remain active

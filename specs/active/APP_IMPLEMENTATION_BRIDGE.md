@@ -351,6 +351,11 @@ storage_record_families:
   athlete_profile_snapshot_records:
     purpose: "ATHLETE_PROFILE immutable snapshot storage."
     mutable: false
+  physio_source_trust_result_records:
+    purpose: "PHYSIO_SOURCE_TRUST_SPEC output storage without raw payload, raw symptom clause, or raw free-text."
+    mutable: false
+    target_issue: OI-AIB-PHYSIO-SOURCE-001
+    closure_state: OPEN_UNTIL_SOURCE_ACCEPTANCE_AND_TARGET_RECOUNT
   consent_grant_records:
     purpose: "Consent lifecycle including onboarding scoped consents and guardian consent."
     mutable: append_only_status_transition
@@ -399,6 +404,40 @@ source_snapshot_policy:
       may_feed_analysis: false
 ```
 
+```yaml
+physio_source_trust_storage_policy:
+  source_document: PHYSIO_SOURCE_TRUST_SPEC.md
+  target_issue: OI-AIB-PHYSIO-SOURCE-001
+  status_after_patch: PATCHED_PENDING_SOURCE_ACCEPTANCE
+
+  may_store:
+    - physioSourceTrustResultId
+    - sourceSnapshotId
+    - trustStatus
+    - sourceCategory
+    - recencyStatus
+    - conflictStatus
+    - consentStatus
+    - nonSensitiveReasonCodes
+    - createdAt
+    - auditLogId
+
+  must_not_store:
+    - raw_device_payload
+    - raw_athlete_free_text
+    - raw_symptom_clause
+    - injury_narrative
+    - medical_note
+    - rehab_note
+    - guardian_private_note
+    - D9_evidence_clause
+
+  safety_boundary:
+    good_physio_data_can_clear_D9: false
+    template_or_physio_can_override_safety_hard_stop: false
+    missing_or_conflicting_physio_may_raise_review: true
+```
+
 ## Section 8. Cross-Spec Data Flow
 
 ```yaml
@@ -436,6 +475,23 @@ data_flow:
     creates:
       - AthleteProfileSnapshotStorageRecord
       - ProfileAuditRecord
+  physio_source_trust_evaluation:
+    reads:
+      - SourceSnapshotRecord
+      - ConsentGrantRecord
+      - AthleteProfileSnapshotStorageRecord
+    creates:
+      - PhysioSourceTrustResultRecord
+      - AuditLogRecord
+    must_not_store:
+      - raw_athlete_free_text
+      - raw_symptom_clause
+      - injury_narrative
+      - medical_note
+      - guardian_private_note
+    must_not_clear:
+      - RULE_SPEC_D1_D9.D-9
+      - Safety_Gate_block_state
 ```
 
 ```yaml
@@ -467,6 +523,13 @@ cross_spec_impact:
 | `/bridge/consents/onboarding` | POST | onboarding 분리 동의 일괄 생성 | `MANAGE_PROFILE_CONSENT` | separate records, minor guard |
 | `/bridge/consents/{id}/revoke` | POST | consent revoke | `MANAGE_PROFILE_CONSENT` | append-only status |
 | `/bridge/audit-logs` | GET | audit 조회 | `VIEW_AUDIT_LOG` | restricted access |
+
+Physio source trust API addendum:
+
+| Endpoint | Method | Purpose | Required Capability | Notes |
+|---|---|---|---|---|
+| `/bridge/physio-source-trust-results` | POST | physio source trust result storage | `WRITE_PHYSIO_SOURCE_TRUST_RESULT` | reason-code only; no raw payload/free-text |
+| `/bridge/physio-source-trust-results/{id}` | GET | physio source trust result lookup | `VIEW_PHYSIO_SOURCE_TRUST_RESULT` | scoped consent and audit required |
 
 ## Section 10. Serialization Mapping
 
@@ -681,6 +744,36 @@ export interface SourceSnapshotRecord {
   immutableAfterCreate: true;
 }
 
+export type PhysioSourceTrustStatus =
+  | "TRUSTED_FOR_GENERATION"
+  | "TRUSTED_FOR_LOW_RISK_CONTEXT_ONLY"
+  | "REVIEW_REQUIRED"
+  | "INSUFFICIENT_DATA"
+  | "EXCLUDED_UNTRUSTED"
+  | "BLOCKED_BY_CONSENT";
+
+export interface PhysioSourceTrustResultRecord {
+  physioSourceTrustResultId: string;
+  tenantId: TenantId;
+  groupId: GroupId;
+  athleteId: AthleteId;
+  sourceSnapshotId: SourceSnapshotId;
+  consentGrantId?: ConsentGrantId;
+  guardianConsentGrantId?: ConsentGrantId;
+  trustStatus: PhysioSourceTrustStatus;
+  sourceCategory: SourceType;
+  recencyStatus: string;
+  conflictStatus: string;
+  consentStatus: string;
+  nonSensitiveReasonCodes: readonly string[];
+  rawPayloadStored: false;
+  rawFreeTextStored: false;
+  rawSymptomClauseStored: false;
+  mayClearD9Risk: false;
+  createdAt: ISO8601;
+  auditLogId: AuditLogId;
+}
+
 export interface ClassifiedSessionRecord {
   classifiedSessionId: ClassifiedSessionId;
   tenantId: TenantId;
@@ -836,6 +929,19 @@ export interface AuditLogRecord {
 | OI-AIB-ESCALATION-LIFECYCLE-001 | P2 | false | Escalation | scoped review escalation의 상태 전이와 종결 처리 정의 필요 | APP_BRIDGE_DESIGNER |
 | OI-AIB-LEGAL-REVIEW-001 | P2 | false | Legal | onboarding 분리 동의·미성년 보호자 동의 흐름의 실제 법률 검토 필요 | COACH_HOJUNE |
 
+Physio source trust issue addendum:
+
+```yaml
+OI-AIB-PHYSIO-SOURCE-001:
+  status: OPEN
+  target_patch_status: PATCHED_PENDING_SOURCE_ACCEPTANCE
+  closure_allowed_now: false
+  closure_requires:
+    - PHYSIO_SOURCE_TRUST_SPEC.md owner/source acceptance
+    - target open issue table recount from this file
+    - implementation/privacy review before production storage
+```
+
 ## Section 14. Test Cases
 
 | ID | Area | Scenario | Expected | Result |
@@ -962,6 +1068,7 @@ handoff_summary:
     - consent_record_extended_with_minor_and_guardian_fields
     - onboarding_consent_capture_record_added
     - legal_review_open_issue_added
+    - physio_source_trust_storage_boundary_pending_acceptance
   resolved_open_issues:
     - OI-AIB-CONSENT-LEGAL-BASIS-001
     - OI-AIB-GUARDIAN-CONSENT-001

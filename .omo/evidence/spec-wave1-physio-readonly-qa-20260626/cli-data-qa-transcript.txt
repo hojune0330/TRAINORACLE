@@ -1,0 +1,1060 @@
+# TrainOracle Wave 1 physio patch read-only CLI/data QA transcript
+# Started: 2026-06-26T16:55:49.5637074+09:00
+# CWD: D:\admin\Documents\트레인 오라클 진도
+
+
+## Get target file metadata and non-empty byte counts
+
+
+Path                                                                                Length LastWriteTime
+----                                                                                ------ -------------
+D:\admin\Documents\트레인 오라클 진도\.omo\evidence\spec-wave1-physio-red-20260626.txt        6915 2026-06-26 오후 4:38:54
+D:\admin\Documents\트레인 오라클 진도\.omo\evidence\spec-wave1-physio-green-20260626.txt     12065 2026-06-26 오후 4:52:48
+D:\admin\Documents\트레인 오라클 진도\.omo\evidence\spec-wave1-physio-final-qa-20260626.txt   9177 2026-06-26 오후 4:53:43
+D:\admin\Documents\트레인 오라클 진도\specs\active\PLAN_GENERATOR_SPEC.md                    36789 2026-06-26 오후 4:47:09
+D:\admin\Documents\트레인 오라클 진도\specs\active\APP_IMPLEMENTATION_BRIDGE.md              41528 2026-06-26 오후 4:49:18
+D:\admin\Documents\트레인 오라클 진도\specs\active\ATHLETE_PROFILE_SPEC.md                   37024 2026-06-26 오후 4:50:22
+D:\admin\Documents\트레인 오라클 진도\SPEC_WAVE1_PHYSIO_PATCH_REPORT.md                       3110 2026-06-26 오후 4:51:46
+
+
+
+[exit] 0
+
+
+## Show final/evidence markers in Wave 1 evidence files
+
+
+Path                                                                                LineNumber Line
+----                                                                                ---------- ----
+D:\admin\Documents\트레인 오라클 진도\.omo\evidence\spec-wave1-physio-red-20260626.txt               1 # SPEC Wave 1 Physio RED
+                                                                                                Evidence - 2026-06-26
+D:\admin\Documents\트레인 오라클 진도\.omo\evidence\spec-wave1-physio-red-20260626.txt               3 Purpose: pre-edit proof
+                                                                                               that Wave 1 target issue
+                                                                                               s are open and must be p
+                                                                                               atched from local files
+                                                                                               only.
+D:\admin\Documents\트레인 오라클 진도\.omo\evidence\spec-wave1-physio-red-20260626.txt              12 ?? .omo/evidence/genspar
+                                                                                               k-legacy-recovery-202606
+                                                                                               25-final-qa.ps1
+D:\admin\Documents\트레인 오라클 진도\.omo\evidence\spec-wave1-physio-red-20260626.txt              14 ?? .omo/evidence/genspar
+                                                                                               k-legacy-recovery-202606
+                                                                                               25-qa-review-raw.json
+D:\admin\Documents\트레인 오라클 진도\.omo\evidence\spec-wave1-physio-red-20260626.txt              15 ?? .omo/evidence/genspar
+                                                                                               k-legacy-recovery-202606
+                                                                                               25-qa-review.md
+D:\admin\Documents\트레인 오라클 진도\.omo\evidence\spec-wave1-physio-red-20260626.txt              35 44:  open_issues_total:
+                                                                                               7
+D:\admin\Documents\트레인 오라클 진도\.omo\evidence\spec-wave1-physio-red-20260626.txt              36 45:  open_issues_canonic
+                                                                                               al_blocking_count: 2
+D:\admin\Documents\트레인 오라클 진도\.omo\evidence\spec-wave1-physio-red-20260626.txt              37 133:| Physiological sour
+                                                                                               ce trust | `APP_IMPLEMEN
+                                                                                               TATION_BRIDGE.md v1.1` |
+                                                                                                Physiological source co
+                                                                                               nsumption policy remains
+                                                                                                open through `OI-PG-PHY
+                                                                                               SIO-SOURCE-CONSUMPTION-0
+                                                                                               01` | PARTIAL_OPEN |
+D:\admin\Documents\트레인 오라클 진도\.omo\evidence\spec-wave1-physio-red-20260626.txt              39 827:| `OI-PG-PHYSIO-SOUR
+                                                                                               CE-CONSUMPTION-001` | P1
+                                                                                                | YES | OPEN | Trusted
+                                                                                               physiological source con
+                                                                                               sumption remains unresol
+                                                                                               ved. | Bind to APP Bridg
+                                                                                               e physiology source-trus
+                                                                                               t resolution. |
+D:\admin\Documents\트레인 오라클 진도\.omo\evidence\spec-wave1-physio-red-20260626.txt              40 935:  expected_open_issu
+                                                                                               es_total: 7
+D:\admin\Documents\트레인 오라클 진도\.omo\evidence\spec-wave1-physio-red-20260626.txt              45 58:open_issues_total: 12
+D:\admin\Documents\트레인 오라클 진도\.omo\evidence\spec-wave1-physio-red-20260626.txt              46 59:open_issues_canonical
+                                                                                               _blocking_count: 4
+D:\admin\Documents\트레인 오라클 진도\.omo\evidence\spec-wave1-physio-red-20260626.txt              48 927:    open_issues_tota
+                                                                                               l: 12
+D:\admin\Documents\트레인 오라클 진도\.omo\evidence\spec-wave1-physio-red-20260626.txt              49 928:    open_issues_cano
+                                                                                               nical_blocking_count: 4
+D:\admin\Documents\트레인 오라클 진도\.omo\evidence\spec-wave1-physio-red-20260626.txt              54 28:open_issues_canonical
+                                                                                               _blocking_count: 6
+D:\admin\Documents\트레인 오라클 진도\.omo\evidence\spec-wave1-physio-red-20260626.txt              55 249:        open_issue:
+                                                                                               OI-AP-PHYSIO-SOURCE-001
+D:\admin\Documents\트레인 오라클 진도\.omo\evidence\spec-wave1-physio-red-20260626.txt              57 699:open_issues_canonica
+                                                                                               l_blocking_count: 6
+D:\admin\Documents\트레인 오라클 진도\.omo\evidence\spec-wave1-physio-red-20260626.txt              59 829:    open_issues_cano
+                                                                                               nical_blocking_count: 6
+D:\admin\Documents\트레인 오라클 진도\.omo\evidence\spec-wave1-physio-red-20260626.txt              61 966:  open_issues_canoni
+                                                                                               cal_blocking_count: 6
+D:\admin\Documents\트레인 오라클 진도\.omo\evidence\spec-wave1-physio-red-20260626.txt              68 915:  downstream_absolut
+                                                                                               e_count_not_declared: SA
+                                                                                               TISFIED
+D:\admin\Documents\트레인 오라클 진도\.omo\evidence\spec-wave1-physio-red-20260626.txt              69 926:이 문서는 downstream tar
+                                                                                               get의 절대 open issue count
+                                                                                               를 단정하지 않는다.
+D:\admin\Documents\트레인 오라클 진도\.omo\evidence\spec-wave1-physio-red-20260626.txt              76 54:| `PHYSIO_SOURCE_TRUS
+                                                                                               T_SPEC.md` | Active SPEC
+                                                                                                candidate | Physio sour
+                                                                                               ce trust, recency, confl
+                                                                                               ict, structured readines
+                                                                                               s/soreness/RPE policy |
+                                                                                               Automatic closure of PG/
+                                                                                               AIB/AP issues |
+D:\admin\Documents\트레인 오라클 진도\.omo\evidence\spec-wave1-physio-red-20260626.txt              78 66:| `PLAN_GENERATOR_SPE
+                                                                                               C.md` | `OI-PG-RULE-SAFE
+                                                                                               TY-GATE-BINDING-001` | L
+                                                                                               ine 826: P1 / YES / OPEN
+                                                                                                | `PLAN_SAFETY_GATE_SPE
+                                                                                               C.md`, `RULE_VALIDATION_
+                                                                                               ENGINE_CONTRACT.md`, `RV
+                                                                                               E_RULE_EVALUATOR_BINDING
+                                                                                               _SPEC.md` | Bind Plan Ge
+                                                                                               nerator to consume D9/RV
+                                                                                               E only through Safety Ga
+                                                                                               te; ACTIVE/UNKNOWN block
+                                                                                               ; advisory non-blocking
+                                                                                               under CLEARED | No. Requ
+                                                                                               ires accepted target pat
+                                                                                               ch, recount, and actual
+                                                                                               D9 runtime evidence |
+D:\admin\Documents\트레인 오라클 진도\.omo\evidence\spec-wave1-physio-red-20260626.txt              79 67:| `PLAN_GENERATOR_SPE
+                                                                                               C.md` | `OI-PG-PHYSIO-SO
+                                                                                               URCE-CONSUMPTION-001` |
+                                                                                               Line 827: P1 / YES / OPE
+                                                                                               N | `PHYSIO_SOURCE_TRUST
+                                                                                               _SPEC.md` | Consume trus
+                                                                                               ted physio source status
+                                                                                                without allowing good p
+                                                                                               hysio data to clear D9 r
+                                                                                               isk | No. Requires targe
+                                                                                               t patch and recount; do
+                                                                                               not copy expected deltas
+                                                                                                |
+D:\admin\Documents\트레인 오라클 진도\.omo\evidence\spec-wave1-physio-red-20260626.txt              80 68:| `APP_IMPLEMENTATION
+                                                                                               _BRIDGE.md` | `OI-AIB-PH
+                                                                                               YSIO-SOURCE-001` | Line
+                                                                                               829: P1 / true / OPEN |
+                                                                                               `PHYSIO_SOURCE_TRUST_SPE
+                                                                                               C.md`, `DAILY_LOG_AND_CH
+                                                                                               ECKIN_SPEC.md` | Add sto
+                                                                                               rage/use boundary for ph
+                                                                                               ysio source trust and da
+                                                                                               ily check-in structured
+                                                                                               data | No. Requires targ
+                                                                                               et patch and recount |
+D:\admin\Documents\트레인 오라클 진도\.omo\evidence\spec-wave1-physio-red-20260626.txt              82 71:| `PLAN_SAFETY_GATE_S
+                                                                                               PEC.md` | `OI-PSG-PHYSIO
+                                                                                               -SOURCE-CONSUMPTION-001`
+                                                                                                | Line 442: P2 / NO / O
+                                                                                               PEN | `PHYSIO_SOURCE_TRU
+                                                                                               ST_SPEC.md` | Clarify ho
+                                                                                               w poor/missing/conflicti
+                                                                                               ng physio data may raise
+                                                                                                review/block while good
+                                                                                                data cannot clear D9 ri
+                                                                                               sk | No. Requires target
+                                                                                                patch and recount |
+D:\admin\Documents\트레인 오라클 진도\.omo\evidence\spec-wave1-physio-red-20260626.txt              83 73:| `DAILY_LOG_AND_CHEC
+                                                                                               KIN_SPEC.md` | `OI-DLC-A
+                                                                                               PP-BRIDGE-BINDING-001` |
+                                                                                                Line 607: P1 / YES / OP
+                                                                                               EN | `APP_IMPLEMENTATION
+                                                                                               _BRIDGE.md` target patch
+                                                                                                | Add DailyCheckInRecor
+                                                                                               d storage/audit endpoint
+                                                                                                to App Bridge | No. Req
+                                                                                               uires target patch and r
+                                                                                               ecount |
+D:\admin\Documents\트레인 오라클 진도\.omo\evidence\spec-wave1-physio-red-20260626.txt              84 74:| `DAILY_LOG_AND_CHEC
+                                                                                               KIN_SPEC.md` | `OI-DLC-R
+                                                                                               VE-SAFETY-BINDING-001` |
+                                                                                                Line 608: P1 / YES / OP
+                                                                                               EN | RVE/Safety Gate imp
+                                                                                               lementation evidence | B
+                                                                                               ind structured/transient
+                                                                                                daily signals to RVE/Sa
+                                                                                               fety Gate runtime path |
+                                                                                                No. Requires implementa
+                                                                                               tion/runtime evidence |
+D:\admin\Documents\트레인 오라클 진도\.omo\evidence\spec-wave1-physio-red-20260626.txt              85 75:| `DAILY_LOG_AND_CHEC
+                                                                                               KIN_SPEC.md` | `OI-DLC-R
+                                                                                               AW-NOTE-REDACTION-001` |
+                                                                                                Line 609: P1 / YES / OP
+                                                                                               EN | App Bridge implemen
+                                                                                               tation/privacy review |
+                                                                                               Define and verify raw no
+                                                                                               te redaction/transient d
+                                                                                               eletion lifecycle | No.
+                                                                                               Requires implementation/
+                                                                                               privacy proof |
+D:\admin\Documents\트레인 오라클 진도\.omo\evidence\spec-wave1-physio-red-20260626.txt              93 PASS condition: target i
+                                                                                               ssues are locally presen
+                                                                                               t/open before patch; sou
+                                                                                               rce policy forbids copie
+                                                                                               d absolute downstream co
+                                                                                               unts; cleanup: no runtim
+                                                                                               e resources spawned.
+D:\admin\Documents\트레인 오라클 진도\.omo\evidence\spec-wave1-physio-green-20260626.txt             1 # SPEC Wave 1 Physio GRE
+                                                                                               EN Evidence - 2026-06-26
+D:\admin\Documents\트레인 오라클 진도\.omo\evidence\spec-wave1-physio-green-20260626.txt            19 specs/active/PLAN_GENERA
+                                                                                               TOR_SPEC.md:482:  target
+                                                                                               _issue_status_after_patc
+                                                                                               h: OPEN_PENDING_SOURCE_A
+                                                                                               CCEPTANCE
+D:\admin\Documents\트레인 오라클 진도\.omo\evidence\spec-wave1-physio-green-20260626.txt            25 specs/active/PLAN_GENERA
+                                                                                               TOR_SPEC.md:524:  D9_CLE
+                                                                                               ARED:
+D:\admin\Documents\트레인 오라클 진도\.omo\evidence\spec-wave1-physio-green-20260626.txt            26 specs/active/PLAN_GENERA
+                                                                                               TOR_SPEC.md:527:  adviso
+                                                                                               ry_under_D9_CLEARED:
+D:\admin\Documents\트레인 오라클 진도\.omo\evidence\spec-wave1-physio-green-20260626.txt            27 specs/active/PLAN_GENERA
+                                                                                               TOR_SPEC.md:892:| `OI-PG
+                                                                                               -PHYSIO-SOURCE-CONSUMPTI
+                                                                                               ON-001` | P1 | YES | OPE
+                                                                                               N | Target binding to `P
+                                                                                               HYSIO_SOURCE_TRUST_SPEC.
+                                                                                               md` is patched, but sour
+                                                                                               ce acceptance and owner
+                                                                                               recount are still pendin
+                                                                                               g. | Review source accep
+                                                                                               tance, confirm App Bridg
+                                                                                               e record binding, then r
+                                                                                               ecount before closure. |
+D:\admin\Documents\트레인 오라클 진도\.omo\evidence\spec-wave1-physio-green-20260626.txt            45 SPEC_TARGET_PATCH_MATRIX
+                                                                                               .md:54:| `PHYSIO_SOURCE_
+                                                                                               TRUST_SPEC.md` | Active
+                                                                                               SPEC candidate | Physio
+                                                                                               source trust, recency, c
+                                                                                               onflict, structured read
+                                                                                               iness/soreness/RPE polic
+                                                                                               y | Automatic closure of
+                                                                                                PG/AIB/AP issues |
+D:\admin\Documents\트레인 오라클 진도\.omo\evidence\spec-wave1-physio-green-20260626.txt            46 SPEC_TARGET_PATCH_MATRIX
+                                                                                               .md:67:| `PLAN_GENERATOR
+                                                                                               _SPEC.md` | `OI-PG-PHYSI
+                                                                                               O-SOURCE-CONSUMPTION-001
+                                                                                               ` | Line 892: P1 / YES /
+                                                                                                OPEN; target binding pa
+                                                                                               tched in Section 6B | `P
+                                                                                               HYSIO_SOURCE_TRUST_SPEC.
+                                                                                               md` | Consume trusted ph
+                                                                                               ysio source status witho
+                                                                                               ut allowing good physio
+                                                                                               data to clear D9 risk |
+                                                                                               No. Target patch exists,
+                                                                                                but closure still requi
+                                                                                               res source acceptance an
+                                                                                               d target recount approva
+                                                                                               l; do not copy expected
+                                                                                               deltas |
+D:\admin\Documents\트레인 오라클 진도\.omo\evidence\spec-wave1-physio-green-20260626.txt            47 SPEC_TARGET_PATCH_MATRIX
+                                                                                               .md:68:| `APP_IMPLEMENTA
+                                                                                               TION_BRIDGE.md` | `OI-AI
+                                                                                               B-PHYSIO-SOURCE-001` | L
+                                                                                               ine 921: P1 / true / OPE
+                                                                                               N; issue addendum record
+                                                                                               s patched-pending-source
+                                                                                               -acceptance | `PHYSIO_SO
+                                                                                               URCE_TRUST_SPEC.md`, `DA
+                                                                                               ILY_LOG_AND_CHECKIN_SPEC
+                                                                                               .md` | Add storage/use b
+                                                                                               oundary for physio sourc
+                                                                                               e trust and daily check-
+                                                                                               in structured data | No.
+                                                                                                Target patch exists, bu
+                                                                                               t closure still requires
+                                                                                                source acceptance, targ
+                                                                                               et recount approval, and
+                                                                                                implementation/privacy
+                                                                                               review |
+D:\admin\Documents\트레인 오라클 진도\.omo\evidence\spec-wave1-physio-green-20260626.txt            48 SPEC_TARGET_PATCH_MATRIX
+                                                                                               .md:69:| `ATHLETE_PROFIL
+                                                                                               E_SPEC.md` | `OI-AP-PHYS
+                                                                                               IO-SOURCE-001` | Lines 6
+                                                                                               68-674 and 727-735: cano
+                                                                                               nical blocking issue rem
+                                                                                               ains OPEN with patched-p
+                                                                                               ending-source-acceptance
+                                                                                                addendum | `PHYSIO_SOUR
+                                                                                               CE_TRUST_SPEC.md`, `DAIL
+                                                                                               Y_LOG_AND_CHECKIN_SPEC.m
+                                                                                               d` | Clarify profile phy
+                                                                                               siological attributes so
+                                                                                               urce priority and confli
+                                                                                               ct handling | No. Target
+                                                                                                patch exists, but closu
+                                                                                               re still requires source
+                                                                                                acceptance, App Bridge
+                                                                                               binding acceptance, and
+                                                                                               target recount approval
+                                                                                               |
+D:\admin\Documents\트레인 오라클 진도\.omo\evidence\spec-wave1-physio-green-20260626.txt            49 SPEC_TARGET_PATCH_MATRIX
+                                                                                               .md:71:| `PLAN_SAFETY_GA
+                                                                                               TE_SPEC.md` | `OI-PSG-PH
+                                                                                               YSIO-SOURCE-CONSUMPTION-
+                                                                                               001` | Line 442: P2 / NO
+                                                                                                / OPEN | `PHYSIO_SOURCE
+                                                                                               _TRUST_SPEC.md` | Clarif
+                                                                                               y how poor/missing/confl
+                                                                                               icting physio data may r
+                                                                                               aise review/block while
+                                                                                               good data cannot clear D
+                                                                                               9 risk | No. Requires ta
+                                                                                               rget patch and recount |
+D:\admin\Documents\트레인 오라클 진도\.omo\evidence\spec-wave1-physio-green-20260626.txt            51 SPEC_TARGET_PATCH_MATRIX
+                                                                                               .md:104:- The three targ
+                                                                                               et issues remain open as
+                                                                                                `PATCHED_PENDING_SOURCE
+                                                                                               _ACCEPTANCE` or equivale
+                                                                                               nt addendum state.
+D:\admin\Documents\트레인 오라클 진도\.omo\evidence\spec-wave1-physio-green-20260626.txt            62 ## Target issues remain
+                                                                                               open and counts remain t
+                                                                                               arget-owned
+D:\admin\Documents\트레인 오라클 진도\.omo\evidence\spec-wave1-physio-green-20260626.txt            63 SPEC_WAVE1_PHYSIO_PATCH_
+                                                                                               REPORT.md:11:open_issues
+                                                                                               _total: 0
+D:\admin\Documents\트레인 오라클 진도\.omo\evidence\spec-wave1-physio-green-20260626.txt            65 SPEC_WAVE1_PHYSIO_PATCH_
+                                                                                               REPORT.md:35:| `PLAN_GEN
+                                                                                               ERATOR_SPEC.md` | `OI-PG
+                                                                                               -PHYSIO-SOURCE-CONSUMPTI
+                                                                                               ON-001` | Added Section
+                                                                                               6B consumption contract
+                                                                                               and D9/Safety Gate bound
+                                                                                               ary | OPEN; patched pend
+                                                                                               ing source acceptance an
+                                                                                               d target recount approva
+                                                                                               l |
+D:\admin\Documents\트레인 오라클 진도\.omo\evidence\spec-wave1-physio-green-20260626.txt            66 SPEC_WAVE1_PHYSIO_PATCH_
+                                                                                               REPORT.md:36:| `APP_IMPL
+                                                                                               EMENTATION_BRIDGE.md` |
+                                                                                               `OI-AIB-PHYSIO-SOURCE-00
+                                                                                               1` | Added storage famil
+                                                                                               y, storage policy, data
+                                                                                               flow, API addendum, and
+                                                                                               TypeScript record shape
+                                                                                               | OPEN; patched pending
+                                                                                               source acceptance, targe
+                                                                                               t recount approval, and
+                                                                                               implementation/privacy r
+                                                                                               eview |
+D:\admin\Documents\트레인 오라클 진도\.omo\evidence\spec-wave1-physio-green-20260626.txt            67 SPEC_WAVE1_PHYSIO_PATCH_
+                                                                                               REPORT.md:37:| `ATHLETE_
+                                                                                               PROFILE_SPEC.md` | `OI-A
+                                                                                               P-PHYSIO-SOURCE-001` | A
+                                                                                               dded Physio Source Trust
+                                                                                                source-priority/conflic
+                                                                                               t handling and snapshot
+                                                                                               fields | OPEN; patched p
+                                                                                               ending source acceptance
+                                                                                               , App Bridge binding acc
+                                                                                               eptance, and target reco
+                                                                                               unt approval |
+D:\admin\Documents\트레인 오라클 진도\.omo\evidence\spec-wave1-physio-green-20260626.txt            68 SPEC_WAVE1_PHYSIO_PATCH_
+                                                                                               REPORT.md:47:| `PLAN_GEN
+                                                                                               ERATOR_SPEC.md` | 7 | 2
+                                                                                               | `OI-PG-PHYSIO-SOURCE-C
+                                                                                               ONSUMPTION-001` remains
+                                                                                               OPEN pending source acce
+                                                                                               ptance and owner recount
+                                                                                                approval |
+D:\admin\Documents\트레인 오라클 진도\.omo\evidence\spec-wave1-physio-green-20260626.txt            69 SPEC_WAVE1_PHYSIO_PATCH_
+                                                                                               REPORT.md:48:| `APP_IMPL
+                                                                                               EMENTATION_BRIDGE.md` |
+                                                                                               12 | 4 | `OI-AIB-PHYSIO-
+                                                                                               SOURCE-001` remains OPEN
+                                                                                                pending source acceptan
+                                                                                               ce, recount approval, an
+                                                                                               d implementation/privacy
+                                                                                                review |
+D:\admin\Documents\트레인 오라클 진도\.omo\evidence\spec-wave1-physio-green-20260626.txt            70 SPEC_WAVE1_PHYSIO_PATCH_
+                                                                                               REPORT.md:49:| `ATHLETE_
+                                                                                               PROFILE_SPEC.md` | 11 |
+                                                                                               6 | `OI-AP-PHYSIO-SOURCE
+                                                                                               -001` remains OPEN pendi
+                                                                                               ng source acceptance and
+                                                                                                App Bridge binding acce
+                                                                                               ptance |
+D:\admin\Documents\트레인 오라클 진도\.omo\evidence\spec-wave1-physio-green-20260626.txt            71 specs/active/ATHLETE_PRO
+                                                                                               FILE_SPEC.md:27:open_iss
+                                                                                               ues_count: 11
+D:\admin\Documents\트레인 오라클 진도\.omo\evidence\spec-wave1-physio-green-20260626.txt            72 specs/active/ATHLETE_PRO
+                                                                                               FILE_SPEC.md:28:open_iss
+                                                                                               ues_canonical_blocking_c
+                                                                                               ount: 6
+D:\admin\Documents\트레인 오라클 진도\.omo\evidence\spec-wave1-physio-green-20260626.txt            73 specs/active/ATHLETE_PRO
+                                                                                               FILE_SPEC.md:252:
+                                                                                                open_issue: OI-AP-PHYSI
+                                                                                               O-SOURCE-001
+D:\admin\Documents\트레인 오라클 진도\.omo\evidence\spec-wave1-physio-green-20260626.txt            75 specs/active/ATHLETE_PRO
+                                                                                               FILE_SPEC.md:713:open_is
+                                                                                               sues_count: 11
+D:\admin\Documents\트레인 오라클 진도\.omo\evidence\spec-wave1-physio-green-20260626.txt            76 specs/active/ATHLETE_PRO
+                                                                                               FILE_SPEC.md:714:open_is
+                                                                                               sues_canonical_blocking_
+                                                                                               count: 6
+D:\admin\Documents\트레인 오라클 진도\.omo\evidence\spec-wave1-physio-green-20260626.txt            79 specs/active/ATHLETE_PRO
+                                                                                               FILE_SPEC.md:856:    ope
+                                                                                               n_issues_count: 11
+D:\admin\Documents\트레인 오라클 진도\.omo\evidence\spec-wave1-physio-green-20260626.txt            80 specs/active/ATHLETE_PRO
+                                                                                               FILE_SPEC.md:857:    ope
+                                                                                               n_issues_canonical_block
+                                                                                               ing_count: 6
+D:\admin\Documents\트레인 오라클 진도\.omo\evidence\spec-wave1-physio-green-20260626.txt            81 specs/active/ATHLETE_PRO
+                                                                                               FILE_SPEC.md:993:  open_
+                                                                                               issues_count: 11
+D:\admin\Documents\트레인 오라클 진도\.omo\evidence\spec-wave1-physio-green-20260626.txt            82 specs/active/ATHLETE_PRO
+                                                                                               FILE_SPEC.md:994:  open_
+                                                                                               issues_canonical_blockin
+                                                                                               g_count: 6
+D:\admin\Documents\트레인 오라클 진도\.omo\evidence\spec-wave1-physio-green-20260626.txt            83 specs/active/APP_IMPLEME
+                                                                                               NTATION_BRIDGE.md:58:ope
+                                                                                               n_issues_total: 12
+D:\admin\Documents\트레인 오라클 진도\.omo\evidence\spec-wave1-physio-green-20260626.txt            84 specs/active/APP_IMPLEME
+                                                                                               NTATION_BRIDGE.md:59:ope
+                                                                                               n_issues_canonical_block
+                                                                                               ing_count: 4
+D:\admin\Documents\트레인 오라클 진도\.omo\evidence\spec-wave1-physio-green-20260626.txt            89 specs/active/APP_IMPLEME
+                                                                                               NTATION_BRIDGE.md:1032:
+                                                                                                  open_issues_total: 12
+D:\admin\Documents\트레인 오라클 진도\.omo\evidence\spec-wave1-physio-green-20260626.txt            90 specs/active/APP_IMPLEME
+                                                                                               NTATION_BRIDGE.md:1033:
+                                                                                                  open_issues_canonical
+                                                                                               _blocking_count: 4
+D:\admin\Documents\트레인 오라클 진도\.omo\evidence\spec-wave1-physio-green-20260626.txt            91 specs/active/APP_IMPLEME
+                                                                                               NTATION_BRIDGE.md:1074:
+                                                                                                open_issues_count: 12
+D:\admin\Documents\트레인 오라클 진도\.omo\evidence\spec-wave1-physio-green-20260626.txt            94 specs/active/PLAN_GENERA
+                                                                                               TOR_SPEC.md:44:  open_is
+                                                                                               sues_total: 7
+D:\admin\Documents\트레인 오라클 진도\.omo\evidence\spec-wave1-physio-green-20260626.txt            95 specs/active/PLAN_GENERA
+                                                                                               TOR_SPEC.md:45:  open_is
+                                                                                               sues_canonical_blocking_
+                                                                                               count: 2
+D:\admin\Documents\트레인 오라클 진도\.omo\evidence\spec-wave1-physio-green-20260626.txt            96 specs/active/PLAN_GENERA
+                                                                                               TOR_SPEC.md:133:| Physio
+                                                                                               logical source trust | `
+                                                                                               APP_IMPLEMENTATION_BRIDG
+                                                                                               E.md v1.1` | Physiologic
+                                                                                               al source consumption po
+                                                                                               licy remains open throug
+                                                                                               h `OI-PG-PHYSIO-SOURCE-C
+                                                                                               ONSUMPTION-001` | PARTIA
+                                                                                               L_OPEN |
+D:\admin\Documents\트레인 오라클 진도\.omo\evidence\spec-wave1-physio-green-20260626.txt            99 specs/active/PLAN_GENERA
+                                                                                               TOR_SPEC.md:892:| `OI-PG
+                                                                                               -PHYSIO-SOURCE-CONSUMPTI
+                                                                                               ON-001` | P1 | YES | OPE
+                                                                                               N | Target binding to `P
+                                                                                               HYSIO_SOURCE_TRUST_SPEC.
+                                                                                               md` is patched, but sour
+                                                                                               ce acceptance and owner
+                                                                                               recount are still pendin
+                                                                                               g. | Review source accep
+                                                                                               tance, confirm App Bridg
+                                                                                               e record binding, then r
+                                                                                               ecount before closure. |
+D:\admin\Documents\트레인 오라클 진도\.omo\evidence\spec-wave1-physio-green-20260626.txt           100 specs/active/PLAN_GENERA
+                                                                                               TOR_SPEC.md:1000:  expec
+                                                                                               ted_open_issues_total: 7
+D:\admin\Documents\트레인 오라클 진도\.omo\evidence\spec-wave1-physio-green-20260626.txt           104 ## Final marker check
+D:\admin\Documents\트레인 오라클 진도\.omo\evidence\spec-wave1-physio-green-20260626.txt           105 specs/active/PLAN_GENERA
+                                                                                               TOR_SPEC.md => [DRAFT_CO
+                                                                                               MPLETE]
+D:\admin\Documents\트레인 오라클 진도\.omo\evidence\spec-wave1-physio-green-20260626.txt           106 specs/active/APP_IMPLEME
+                                                                                               NTATION_BRIDGE.md => [DR
+                                                                                               AFT_COMPLETE]
+D:\admin\Documents\트레인 오라클 진도\.omo\evidence\spec-wave1-physio-green-20260626.txt           107 specs/active/ATHLETE_PRO
+                                                                                               FILE_SPEC.md => [DRAFT_C
+                                                                                               OMPLETE]
+D:\admin\Documents\트레인 오라클 진도\.omo\evidence\spec-wave1-physio-green-20260626.txt           108 SPEC_TARGET_PATCH_MATRIX
+                                                                                               .md => [DRAFT_COMPLETE]
+D:\admin\Documents\트레인 오라클 진도\.omo\evidence\spec-wave1-physio-green-20260626.txt           109 SPEC_WAVE1_PHYSIO_PATCH_
+                                                                                               REPORT.md => [DRAFT_COMP
+                                                                                               LETE]
+D:\admin\Documents\트레인 오라클 진도\.omo\evidence\spec-wave1-physio-green-20260626.txt           110 SPEC_WORK_STATUS.md => [
+                                                                                               DRAFT_COMPLETE]
+D:\admin\Documents\트레인 오라클 진도\.omo\evidence\spec-wave1-physio-green-20260626.txt           111 TRAINORACLE_SPEC_INDEX.m
+                                                                                               d => [DRAFT_COMPLETE]
+D:\admin\Documents\트레인 오라클 진도\.omo\evidence\spec-wave1-physio-green-20260626.txt           112 SPEC_DOCUMENTATION_REPOR
+                                                                                               T.md => [DRAFT_COMPLETE]
+D:\admin\Documents\트레인 오라클 진도\.omo\evidence\spec-wave1-physio-green-20260626.txt           113 SPEC_LEGACY_ALIGNMENT_AN
+                                                                                               D_DAILY_LOG_PLAN.md => [
+                                                                                               DRAFT_COMPLETE]
+D:\admin\Documents\트레인 오라클 진도\.omo\evidence\spec-wave1-physio-green-20260626.txt           116 SPEC_LEGACY_ALIGNMENT_AN
+                                                                                               D_DAILY_LOG_PLAN.md:262:
+                                                                                               - Which issues must rema
+                                                                                               in open until runtime ev
+                                                                                               idence exists?
+D:\admin\Documents\트레인 오라클 진도\.omo\evidence\spec-wave1-physio-green-20260626.txt           118 PASS condition: physio b
+                                                                                               indings are present; rel
+                                                                                               ated target issues remai
+                                                                                               n open; no runtime/canon
+                                                                                               ical/closure overclaim;
+                                                                                               cleanup: no runtime reso
+                                                                                               urces spawned.
+D:\admin\Documents\트레인 오라클 진도\.omo\evidence\spec-wave1-physio-final-qa-20260626.txt          1 # SPEC Wave 1 Physio Fin
+                                                                                               al QA - 2026-06-26
+D:\admin\Documents\트레인 오라클 진도\.omo\evidence\spec-wave1-physio-final-qa-20260626.txt          4 CLI/data surface: target
+                                                                                                recount, final marker c
+                                                                                               hecks, forbidden overcla
+                                                                                               im scan, and diff/status
+                                                                                                review.
+D:\admin\Documents\트레인 오라클 진도\.omo\evidence\spec-wave1-physio-final-qa-20260626.txt          8 44:  open_issues_total:
+                                                                                               7
+D:\admin\Documents\트레인 오라클 진도\.omo\evidence\spec-wave1-physio-final-qa-20260626.txt          9 45:  open_issues_canonic
+                                                                                               al_blocking_count: 2
+D:\admin\Documents\트레인 오라클 진도\.omo\evidence\spec-wave1-physio-final-qa-20260626.txt         10 891:| `OI-PG-RULE-SAFETY
+                                                                                               -GATE-BINDING-001` | P1
+                                                                                               | YES | OPEN | Runtime b
+                                                                                               inding between active `R
+                                                                                               ULE_SPEC_D1_D9.D-9` stat
+                                                                                               e and generation block m
+                                                                                               ust be finalized. | Defi
+                                                                                               ne exact bridge query an
+                                                                                               d active-state interpret
+                                                                                               ation. |
+D:\admin\Documents\트레인 오라클 진도\.omo\evidence\spec-wave1-physio-final-qa-20260626.txt         11 892:| `OI-PG-PHYSIO-SOUR
+                                                                                               CE-CONSUMPTION-001` | P1
+                                                                                                | YES | OPEN | Target b
+                                                                                               inding to `PHYSIO_SOURCE
+                                                                                               _TRUST_SPEC.md` is patch
+                                                                                               ed, but source acceptanc
+                                                                                               e and owner recount are
+                                                                                               still pending. | Review
+                                                                                               source acceptance, confi
+                                                                                               rm App Bridge record bin
+                                                                                               ding, then recount befor
+                                                                                               e closure. |
+D:\admin\Documents\트레인 오라클 진도\.omo\evidence\spec-wave1-physio-final-qa-20260626.txt         12 893:| `OI-PG-OUTPUT-FORM
+                                                                                               AT-BINDING-001` | P2 | N
+                                                                                               O | OPEN | Final export
+                                                                                               format is not fixed. | D
+                                                                                               ecide UI/export schema l
+                                                                                               ater. |
+D:\admin\Documents\트레인 오라클 진도\.omo\evidence\spec-wave1-physio-final-qa-20260626.txt         13 894:| `OI-PG-OPTION-RATI
+                                                                                               ONALE-PRIVACY-001` | P2
+                                                                                               | NO | OPEN | Rationale
+                                                                                               text may accidentally re
+                                                                                               veal sensitive data. | A
+                                                                                               dd redaction templates b
+                                                                                               efore production. |
+D:\admin\Documents\트레인 오라클 진도\.omo\evidence\spec-wave1-physio-final-qa-20260626.txt         14 895:| `OI-PG-COMPETITION
+                                                                                               -TAPER-POLICY-001` | P2
+                                                                                               | NO | OPEN | Competitio
+                                                                                               n taper details are not
+                                                                                               fully specified. | Creat
+                                                                                               e taper sub-policy or co
+                                                                                               mpetition-prep template.
+                                                                                                |
+D:\admin\Documents\트레인 오라클 진도\.omo\evidence\spec-wave1-physio-final-qa-20260626.txt         15 896:| `OI-PG-MICROCYCLE-
+                                                                                               CALENDAR-MAPPING-001` |
+                                                                                               P2 | NO | OPEN | 9.5-day
+                                                                                                reference cycle to 7-da
+                                                                                               y calendar output needs
+                                                                                               final mapping. | Define
+                                                                                               mapping and display poli
+                                                                                               cy. |
+D:\admin\Documents\트레인 오라클 진도\.omo\evidence\spec-wave1-physio-final-qa-20260626.txt         16 897:| `OI-PG-AIB-V1_1-CA
+                                                                                               NONICAL-PROMOTION-001` |
+                                                                                                P2 | NO | OPEN | This s
+                                                                                               pec depends on APP Bridg
+                                                                                               e v1.1 local baseline ca
+                                                                                               ndidate. | Plan Generato
+                                                                                               r cannot canonical-promo
+                                                                                               te before APP Bridge can
+                                                                                               onical promotion. |
+D:\admin\Documents\트레인 오라클 진도\.omo\evidence\spec-wave1-physio-final-qa-20260626.txt         17 1000:  expected_open_iss
+                                                                                               ues_total: 7
+D:\admin\Documents\트레인 오라클 진도\.omo\evidence\spec-wave1-physio-final-qa-20260626.txt         21 58:open_issues_total: 12
+D:\admin\Documents\트레인 오라클 진도\.omo\evidence\spec-wave1-physio-final-qa-20260626.txt         22 59:open_issues_canonical
+                                                                                               _blocking_count: 4
+D:\admin\Documents\트레인 오라클 진도\.omo\evidence\spec-wave1-physio-final-qa-20260626.txt         35 1032:    open_issues_tot
+                                                                                               al: 12
+D:\admin\Documents\트레인 오라클 진도\.omo\evidence\spec-wave1-physio-final-qa-20260626.txt         36 1033:    open_issues_can
+                                                                                               onical_blocking_count: 4
+D:\admin\Documents\트레인 오라클 진도\.omo\evidence\spec-wave1-physio-final-qa-20260626.txt         37 1074:  open_issues_count
+                                                                                               : 12
+D:\admin\Documents\트레인 오라클 진도\.omo\evidence\spec-wave1-physio-final-qa-20260626.txt         41 27:open_issues_count: 11
+D:\admin\Documents\트레인 오라클 진도\.omo\evidence\spec-wave1-physio-final-qa-20260626.txt         42 28:open_issues_canonical
+                                                                                               _blocking_count: 6
+D:\admin\Documents\트레인 오라클 진도\.omo\evidence\spec-wave1-physio-final-qa-20260626.txt         43 317:    status: OPEN_ISS
+                                                                                               UE
+D:\admin\Documents\트레인 오라클 진도\.omo\evidence\spec-wave1-physio-final-qa-20260626.txt         55 713:open_issues_count: 1
+                                                                                               1
+D:\admin\Documents\트레인 오라클 진도\.omo\evidence\spec-wave1-physio-final-qa-20260626.txt         56 714:open_issues_canonica
+                                                                                               l_blocking_count: 6
+D:\admin\Documents\트레인 오라클 진도\.omo\evidence\spec-wave1-physio-final-qa-20260626.txt         57 728:  status: OPEN
+D:\admin\Documents\트레인 오라클 진도\.omo\evidence\spec-wave1-physio-final-qa-20260626.txt         60 856:    open_issues_coun
+                                                                                               t: 11
+D:\admin\Documents\트레인 오라클 진도\.omo\evidence\spec-wave1-physio-final-qa-20260626.txt         61 857:    open_issues_cano
+                                                                                               nical_blocking_count: 6
+D:\admin\Documents\트레인 오라클 진도\.omo\evidence\spec-wave1-physio-final-qa-20260626.txt         63 993:  open_issues_count:
+                                                                                                11
+D:\admin\Documents\트레인 오라클 진도\.omo\evidence\spec-wave1-physio-final-qa-20260626.txt         64 994:  open_issues_canoni
+                                                                                               cal_blocking_count: 6
+D:\admin\Documents\트레인 오라클 진도\.omo\evidence\spec-wave1-physio-final-qa-20260626.txt         66 ## Final marker checks
+D:\admin\Documents\트레인 오라클 진도\.omo\evidence\spec-wave1-physio-final-qa-20260626.txt         67 specs/active/PLAN_GENERA
+                                                                                               TOR_SPEC.md => [DRAFT_CO
+                                                                                               MPLETE]
+D:\admin\Documents\트레인 오라클 진도\.omo\evidence\spec-wave1-physio-final-qa-20260626.txt         68 specs/active/APP_IMPLEME
+                                                                                               NTATION_BRIDGE.md => [DR
+                                                                                               AFT_COMPLETE]
+D:\admin\Documents\트레인 오라클 진도\.omo\evidence\spec-wave1-physio-final-qa-20260626.txt         69 specs/active/ATHLETE_PRO
+                                                                                               FILE_SPEC.md => [DRAFT_C
+                                                                                               OMPLETE]
+D:\admin\Documents\트레인 오라클 진도\.omo\evidence\spec-wave1-physio-final-qa-20260626.txt         70 SPEC_TARGET_PATCH_MATRIX
+                                                                                               .md => [DRAFT_COMPLETE]
+D:\admin\Documents\트레인 오라클 진도\.omo\evidence\spec-wave1-physio-final-qa-20260626.txt         71 SPEC_WAVE1_PHYSIO_PATCH_
+                                                                                               REPORT.md => [DRAFT_COMP
+                                                                                               LETE]
+D:\admin\Documents\트레인 오라클 진도\.omo\evidence\spec-wave1-physio-final-qa-20260626.txt         72 SPEC_WORK_STATUS.md => [
+                                                                                               DRAFT_COMPLETE]
+D:\admin\Documents\트레인 오라클 진도\.omo\evidence\spec-wave1-physio-final-qa-20260626.txt         73 TRAINORACLE_SPEC_INDEX.m
+                                                                                               d => [DRAFT_COMPLETE]
+D:\admin\Documents\트레인 오라클 진도\.omo\evidence\spec-wave1-physio-final-qa-20260626.txt         74 SPEC_DOCUMENTATION_REPOR
+                                                                                               T.md => [DRAFT_COMPLETE]
+D:\admin\Documents\트레인 오라클 진도\.omo\evidence\spec-wave1-physio-final-qa-20260626.txt         75 SPEC_LEGACY_ALIGNMENT_AN
+                                                                                               D_DAILY_LOG_PLAN.md => [
+                                                                                               DRAFT_COMPLETE]
+D:\admin\Documents\트레인 오라클 진도\.omo\evidence\spec-wave1-physio-final-qa-20260626.txt         80 SPEC_WAVE1_PHYSIO_PATCH_
+                                                                                               REPORT.md:61:  no_physio
+                                                                                               _issue_closed_in_this_wa
+                                                                                               ve: true
+D:\admin\Documents\트레인 오라클 진도\.omo\evidence\spec-wave1-physio-final-qa-20260626.txt         98 SPEC_LEGACY_ALIGNMENT_AN
+                                                                                               D_DAILY_LOG_PLAN.md:262:
+                                                                                               - Which issues must rema
+                                                                                               in open until runtime ev
+                                                                                               idence exists?
+D:\admin\Documents\트레인 오라클 진도\.omo\evidence\spec-wave1-physio-final-qa-20260626.txt        121 ?? .omo/evidence/genspar
+                                                                                               k-legacy-recovery-202606
+                                                                                               25-final-qa.ps1
+D:\admin\Documents\트레인 오라클 진도\.omo\evidence\spec-wave1-physio-final-qa-20260626.txt        123 ?? .omo/evidence/genspar
+                                                                                               k-legacy-recovery-202606
+                                                                                               25-qa-review-raw.json
+D:\admin\Documents\트레인 오라클 진도\.omo\evidence\spec-wave1-physio-final-qa-20260626.txt        124 ?? .omo/evidence/genspar
+                                                                                               k-legacy-recovery-202606
+                                                                                               25-qa-review.md
+D:\admin\Documents\트레인 오라클 진도\.omo\evidence\spec-wave1-physio-final-qa-20260626.txt        133 ?? .omo/evidence/spec-wa
+                                                                                               ve1-physio-green-2026062
+                                                                                               6.txt
+D:\admin\Documents\트레인 오라클 진도\.omo\evidence\spec-wave1-physio-final-qa-20260626.txt        134 ?? .omo/evidence/spec-wa
+                                                                                               ve1-physio-red-20260626.
+                                                                                               txt
+D:\admin\Documents\트레인 오라클 진도\.omo\evidence\spec-wave1-physio-final-qa-20260626.txt        146 PASS: target files show
+                                                                                               physio patch state, issu
+                                                                                               es remain open, counts r
+                                                                                               emain target-owned, mark
+                                                                                               ers are clean for touche
+                                                                                               d docs, no forbidden ove
+                                                                                               rclaim matched. cleanup:
+                                                                                                no runtime resources sp
+                                                                                               awned.
+
+
+
+[exit] 0
+
+
+## Search docs/report for target issue OPEN markers
+
+
+Path                                                                    LineNumber Line
+----                                                                    ---------- ----
+D:\admin\Documents\트레인 오라클 진도\specs\active\PLAN_GENERATOR_SPEC.md               44   open_issues_total: 7
+D:\admin\Documents\트레인 오라클 진도\specs\active\PLAN_GENERATOR_SPEC.md               45   open_issues_canonical_blocking_cou
+                                                                                   nt: 2
+D:\admin\Documents\트레인 오라클 진도\specs\active\PLAN_GENERATOR_SPEC.md               49 final_marker_required: "[DRAFT_COMPL
+                                                                                   ETE]"
+D:\admin\Documents\트레인 오라클 진도\specs\active\PLAN_GENERATOR_SPEC.md              125 | Rule safety hard-stop policy | `RU
+                                                                                   LE_SPEC_D1_D9.md v1.4` | Active `RUL
+                                                                                   E_SPEC_D1_D9.D-9` state must block p
+                                                                                   lan generation | RESOLVED |
+D:\admin\Documents\트레인 오라클 진도\specs\active\PLAN_GENERATOR_SPEC.md              126 | Rule safety hard-stop runtime bind
+                                                                                   ing | `RULE_SPEC_D1_D9.md v1.4` / `A
+                                                                                   PP_IMPLEMENTATION_BRIDGE.md v1.1` |
+                                                                                   Runtime detection and binding tracke
+                                                                                   d by `OI-PG-RULE-SAFETY-GATE-BINDING
+                                                                                   -001` | PARTIAL_OPEN |
+D:\admin\Documents\트레인 오라클 진도\specs\active\PLAN_GENERATOR_SPEC.md              127 | Session classification inputs | `S
+                                                                                   ESSION_CLASSIFIER_SPEC.md v1.2` | Ge
+                                                                                   nerator may read classified sessions
+                                                                                    but must not redefine classifier ou
+                                                                                   tputs | RESOLVED |
+D:\admin\Documents\트레인 오라클 진도\specs\active\PLAN_GENERATOR_SPEC.md              128 | Athlete profile snapshot | `ATHLET
+                                                                                   E_PROFILE_SPEC.md v1.0` | Generator
+                                                                                   may read approved profile snapshot f
+                                                                                   ields within consent scope | RESOLVE
+                                                                                   D |
+D:\admin\Documents\트레인 오라클 진도\specs\active\PLAN_GENERATOR_SPEC.md              129 | Template Library ownership and lif
+                                                                                   ecycle | `TEMPLATE_LIBRARY_SPEC.md v
+                                                                                   1.0` | Generator consumes templates
+                                                                                   only through Template Library contra
+                                                                                   ct and cannot mutate template record
+                                                                                   s | RESOLVED |
+D:\admin\Documents\트레인 오라클 진도\specs\active\PLAN_GENERATOR_SPEC.md              130 | Consent and guardian guard | `APP_
+                                                                                   IMPLEMENTATION_BRIDGE.md v1.1` | No
+                                                                                   sensitive or minor-related processin
+                                                                                   g without valid consent/guardian con
+                                                                                   sent | RESOLVED |
+D:\admin\Documents\트레인 오라클 진도\specs\active\PLAN_GENERATOR_SPEC.md              131 | Capability grant model | `APP_IMPL
+                                                                                   EMENTATION_BRIDGE.md v1.1` | Plan ge
+                                                                                   neration requires scoped capability
+                                                                                   grant | RESOLVED |
+D:\admin\Documents\트레인 오라클 진도\specs\active\PLAN_GENERATOR_SPEC.md              132 | Audit logging | `APP_IMPLEMENTATIO
+                                                                                   N_BRIDGE.md v1.1` | Every generation
+                                                                                    run and coach selection requires au
+                                                                                   dit record reference | RESOLVED |
+D:\admin\Documents\트레인 오라클 진도\specs\active\PLAN_GENERATOR_SPEC.md              133 | Physiological source trust | `APP_
+                                                                                   IMPLEMENTATION_BRIDGE.md v1.1` | Phy
+                                                                                   siological source consumption policy
+                                                                                    remains open through `OI-PG-PHYSIO-
+                                                                                   SOURCE-CONSUMPTION-001` | PARTIAL_OP
+                                                                                   EN |
+D:\admin\Documents\트레인 오라클 진도\specs\active\PLAN_GENERATOR_SPEC.md              359       closure_state: OPEN_UNTIL_SOUR
+                                                                                   CE_ACCEPTANCE_AND_TARGET_RECOUNT
+D:\admin\Documents\트레인 오라클 진도\specs\active\PLAN_GENERATOR_SPEC.md              481   target_issue: OI-PG-PHYSIO-SOURCE-
+                                                                                   CONSUMPTION-001
+D:\admin\Documents\트레인 오라클 진도\specs\active\PLAN_GENERATOR_SPEC.md              482   target_issue_status_after_patch: O
+                                                                                   PEN_PENDING_SOURCE_ACCEPTANCE
+D:\admin\Documents\트레인 오라클 진도\specs\active\PLAN_GENERATOR_SPEC.md              887 ## 11. Open Issues
+D:\admin\Documents\트레인 오라클 진도\specs\active\PLAN_GENERATOR_SPEC.md              891 | `OI-PG-RULE-SAFETY-GATE-BINDING-00
+                                                                                   1` | P1 | YES | OPEN | Runtime bindi
+                                                                                   ng between active `RULE_SPEC_D1_D9.D
+                                                                                   -9` state and generation block must
+                                                                                   be finalized. | Define exact bridge
+                                                                                   query and active-state interpretatio
+                                                                                   n. |
+D:\admin\Documents\트레인 오라클 진도\specs\active\PLAN_GENERATOR_SPEC.md              892 | `OI-PG-PHYSIO-SOURCE-CONSUMPTION-0
+                                                                                   01` | P1 | YES | OPEN | Target bindi
+                                                                                   ng to `PHYSIO_SOURCE_TRUST_SPEC.md`
+                                                                                   is patched, but source acceptance an
+                                                                                   d owner recount are still pending. |
+                                                                                    Review source acceptance, confirm A
+                                                                                   pp Bridge record binding, then recou
+                                                                                   nt before closure. |
+D:\admin\Documents\트레인 오라클 진도\specs\active\PLAN_GENERATOR_SPEC.md              893 | `OI-PG-OUTPUT-FORMAT-BINDING-001`
+                                                                                   | P2 | NO | OPEN | Final export form
+                                                                                   at is not fixed. | Decide UI/export
+                                                                                   schema later. |
+D:\admin\Documents\트레인 오라클 진도\specs\active\PLAN_GENERATOR_SPEC.md              894 | `OI-PG-OPTION-RATIONALE-PRIVACY-00
+                                                                                   1` | P2 | NO | OPEN | Rationale text
+                                                                                    may accidentally reveal sensitive d
+                                                                                   ata. | Add redaction templates befor
+                                                                                   e production. |
+D:\admin\Documents\트레인 오라클 진도\specs\active\PLAN_GENERATOR_SPEC.md              895 | `OI-PG-COMPETITION-TAPER-POLICY-00
+                                                                                   1` | P2 | NO | OPEN | Competition ta
+                                                                                   per details are not fully specified.
+                                                                                    | Create taper sub-policy or compet
+                                                                                   ition-prep template. |
+D:\admin\Documents\트레인 오라클 진도\specs\active\PLAN_GENERATOR_SPEC.md              896 | `OI-PG-MICROCYCLE-CALENDAR-MAPPING
+                                                                                   -001` | P2 | NO | OPEN | 9.5-day ref
+                                                                                   erence cycle to 7-day calendar outpu
+                                                                                   t needs final mapping. | Define mapp
+                                                                                   ing and display policy. |
+D:\admin\Documents\트레인 오라클 진도\specs\active\PLAN_GENERATOR_SPEC.md              897 | `OI-PG-AIB-V1_1-CANONICAL-PROMOTIO
+                                                                                   N-001` | P2 | NO | OPEN | This spec
+                                                                                   depends on APP Bridge v1.1 local bas
+                                                                                   eline candidate. | Plan Generator ca
+                                                                                   nnot canonical-promote before APP Br
+                                                                                   idge canonical promotion. |
+D:\admin\Documents\트레인 오라클 진도\specs\active\PLAN_GENERATOR_SPEC.md              906 | `PG-TC-002` | integrity | Last lin
+                                                                                   e is `[DRAFT_COMPLETE]`. | PASS |
+D:\admin\Documents\트레인 오라클 진도\specs\active\PLAN_GENERATOR_SPEC.md              910 | `PG-TC-006` | metadata | Open issu
+                                                                                   e count is 7. | PASS |
+D:\admin\Documents\트레인 오라클 진도\specs\active\PLAN_GENERATOR_SPEC.md              916 | `PG-TC-012` | dependency | Safety
+                                                                                   hard-stop policy is RESOLVED but run
+                                                                                   time binding is PARTIAL_OPEN. | PASS
+                                                                                    |
+D:\admin\Documents\트레인 오라클 진도\specs\active\PLAN_GENERATOR_SPEC.md              944 | `PG-TC-040` | open_issue | Runtime
+                                                                                    hard-stop binding remains tracked a
+                                                                                   s P1. | PASS |
+D:\admin\Documents\트레인 오라클 진도\specs\active\PLAN_GENERATOR_SPEC.md              945 | `PG-TC-041` | open_issue | Physiol
+                                                                                   ogical source consumption remains tr
+                                                                                   acked as P1. | PASS |
+D:\admin\Documents\트레인 오라클 진도\specs\active\PLAN_GENERATOR_SPEC.md              946 | `PG-TC-042` | open_issue | APP Bri
+                                                                                   dge canonical promotion dependency i
+                                                                                   s non-blocking P2. | PASS |
+D:\admin\Documents\트레인 오라클 진도\specs\active\PLAN_GENERATOR_SPEC.md              978   open_issues:
+D:\admin\Documents\트레인 오라클 진도\specs\active\PLAN_GENERATOR_SPEC.md              994   expected_last_line: "[DRAFT_COMPLE
+                                                                                   TE]"
+D:\admin\Documents\트레인 오라클 진도\specs\active\PLAN_GENERATOR_SPEC.md             1000   expected_open_issues_total: 7
+D:\admin\Documents\트레인 오라클 진도\specs\active\PLAN_GENERATOR_SPEC.md             1045   remaining_canonical_blocking_open_
+                                                                                   issues:
+D:\admin\Documents\트레인 오라클 진도\specs\active\PLAN_GENERATOR_SPEC.md             1048   non_blocking_open_issues:
+D:\admin\Documents\트레인 오라클 진도\specs\active\PLAN_GENERATOR_SPEC.md             1070 last_line: "[DRAFT_COMPLETE]"
+D:\admin\Documents\트레인 오라클 진도\specs\active\PLAN_GENERATOR_SPEC.md             1078 [DRAFT_COMPLETE]
+D:\admin\Documents\트레인 오라클 진도\specs\active\APP_IMPLEMENTATION_BRIDGE.md         58 open_issues_total: 12
+D:\admin\Documents\트레인 오라클 진도\specs\active\APP_IMPLEMENTATION_BRIDGE.md         59 open_issues_canonical_blocking_count
+                                                                                   : 4
+D:\admin\Documents\트레인 오라클 진도\specs\active\APP_IMPLEMENTATION_BRIDGE.md        117 | Rule validation result storage | R
+                                                                                   ULE_SPEC_D1_D9 v1.4 | rule run, resu
+                                                                                   lt, evidence, audit linkage 저장 | RES
+                                                                                   OLVED |
+D:\admin\Documents\트레인 오라클 진도\specs\active\APP_IMPLEMENTATION_BRIDGE.md        118 | Safety hard-stop preservation | RU
+                                                                                   LE_SPEC_D1_D9 v1.4 | `RULE_SPEC_D1_D
+                                                                                   9.D-9` 결과를 planner나 escalation이 해제하지
+                                                                                    못하게 보존 | RESOLVED |
+D:\admin\Documents\트레인 오라클 진도\specs\active\APP_IMPLEMENTATION_BRIDGE.md        119 | Verdict and severity handling | RU
+                                                                                   LE_SPEC_D1_D9 v1.4 | opaque passthro
+                                                                                   ugh 저장만, 값 정의 금지 | RESOLVED |
+D:\admin\Documents\트레인 오라클 진도\specs\active\APP_IMPLEMENTATION_BRIDGE.md        120 | Session classification storage | S
+                                                                                   ESSION_CLASSIFIER_SPEC v1.2 | classi
+                                                                                   fied session, uncertainty, correctio
+                                                                                   n lineage 저장 | RESOLVED |
+D:\admin\Documents\트레인 오라클 진도\specs\active\APP_IMPLEMENTATION_BRIDGE.md        121 | LD inclusion preferences | SESSION
+                                                                                   _CLASSIFIER_SPEC v1.2 + ATHLETE_PROF
+                                                                                   ILE v1.0 | profile snapshot 기준으로 cla
+                                                                                   ssifier input에 연결 | RESOLVED |
+D:\admin\Documents\트레인 오라클 진도\specs\active\APP_IMPLEMENTATION_BRIDGE.md        122 | Manual correction authorization |
+                                                                                   SESSION_CLASSIFIER_SPEC v1.2 + ATHLE
+                                                                                   TE_PROFILE v1.0 | scoped capability
+                                                                                   + consent + audit 필수화 | RESOLVED |
+D:\admin\Documents\트레인 오라클 진도\specs\active\APP_IMPLEMENTATION_BRIDGE.md        123 | Athlete profile snapshot storage |
+                                                                                    ATHLETE_PROFILE_SPEC v1.0 | immutab
+                                                                                   le snapshot, group isolation, audit
+                                                                                   pointer 저장 | RESOLVED |
+D:\admin\Documents\트레인 오라클 진도\specs\active\APP_IMPLEMENTATION_BRIDGE.md        124 | Secondary group access | ATHLETE_P
+                                                                                   ROFILE_SPEC v1.0 | secondary group g
+                                                                                   rant record + 4대 invariant 보존 | RESO
+                                                                                   LVED |
+D:\admin\Documents\트레인 오라클 진도\specs\active\APP_IMPLEMENTATION_BRIDGE.md        125 | Consent lifecycle | ATHLETE_PROFIL
+                                                                                   E_SPEC v1.0 | grant/revoke/expire mo
+                                                                                   del + onboarding 분리 동의 저장 | RESOLVED
+                                                                                    |
+D:\admin\Documents\트레인 오라클 진도\specs\active\APP_IMPLEMENTATION_BRIDGE.md        126 | Consent legal basis | ATHLETE_PROF
+                                                                                   ILE_SPEC v1.0 | scoped 분리 동의, 끼워넣기 동
+                                                                                   의 금지, 민감정보 별도 동의 | RESOLVED |
+D:\admin\Documents\트레인 오라클 진도\specs\active\APP_IMPLEMENTATION_BRIDGE.md        127 | Guardian consent | ATHLETE_PROFILE
+                                                                                   _SPEC v1.0 | 미성년 선수 보호자 별도 동의 가드 | R
+                                                                                   ESOLVED |
+D:\admin\Documents\트레인 오라클 진도\specs\active\APP_IMPLEMENTATION_BRIDGE.md        128 | Profile retention | ATHLETE_PROFIL
+                                                                                   E_SPEC v1.0 | retention matrix와 purg
+                                                                                   e policy 연결 | OPEN |
+D:\admin\Documents\트레인 오라클 진도\specs\active\APP_IMPLEMENTATION_BRIDGE.md        129 | Physiological source trust | ATHLE
+                                                                                   TE_PROFILE_SPEC v1.0 | source qualit
+                                                                                   y policy 연결 | PARTIAL_OPEN |
+D:\admin\Documents\트레인 오라클 진도\specs\active\APP_IMPLEMENTATION_BRIDGE.md        130 | Primary device only | GLOSSARY S-0
+                                                                                   4 | analysis input은 primary device s
+                                                                                   ource만 허용 | RESOLVED |
+D:\admin\Documents\트레인 오라클 진도\specs\active\APP_IMPLEMENTATION_BRIDGE.md        131 | External LLM restriction | GLOSSAR
+                                                                                   Y S-02/S-03 | Free/Beta 외부 LLM 전송 금지
+                                                                                   , LLM explainer only | RESOLVED |
+D:\admin\Documents\트레인 오라클 진도\specs\active\APP_IMPLEMENTATION_BRIDGE.md        357     target_issue: OI-AIB-PHYSIO-SOUR
+                                                                                   CE-001
+D:\admin\Documents\트레인 오라클 진도\specs\active\APP_IMPLEMENTATION_BRIDGE.md        358     closure_state: OPEN_UNTIL_SOURCE
+                                                                                   _ACCEPTANCE_AND_TARGET_RECOUNT
+D:\admin\Documents\트레인 오라클 진도\specs\active\APP_IMPLEMENTATION_BRIDGE.md        401     rule: "Analysis inputs must use
+                                                                                   exactly one primary device source un
+                                                                                   less a future RFC changes this."
+D:\admin\Documents\트레인 오라클 진도\specs\active\APP_IMPLEMENTATION_BRIDGE.md        410   target_issue: OI-AIB-PHYSIO-SOURCE
+                                                                                   -001
+D:\admin\Documents\트레인 오라클 진도\specs\active\APP_IMPLEMENTATION_BRIDGE.md        501     bridge_impact: "Storage can pres
+                                                                                   erve durationMin and optional segmen
+                                                                                   t metadata, but classifier v1.2 does
+                                                                                    not enforce future LD minimum segme
+                                                                                   nt policy."
+D:\admin\Documents\트레인 오라클 진도\specs\active\APP_IMPLEMENTATION_BRIDGE.md        503     requires_future_classifier_versi
+                                                                                   on: true
+D:\admin\Documents\트레인 오라클 진도\specs\active\APP_IMPLEMENTATION_BRIDGE.md        505     owner: FUTURE_CLASSIFIER_VERSION
+D:\admin\Documents\트레인 오라클 진도\specs\active\APP_IMPLEMENTATION_BRIDGE.md        914 ## Section 13. Open Issues
+D:\admin\Documents\트레인 오라클 진도\specs\active\APP_IMPLEMENTATION_BRIDGE.md        931 Physio source trust issue addendum:
+D:\admin\Documents\트레인 오라클 진도\specs\active\APP_IMPLEMENTATION_BRIDGE.md        935   status: OPEN
+D:\admin\Documents\트레인 오라클 진도\specs\active\APP_IMPLEMENTATION_BRIDGE.md        940     - target open issue table recoun
+                                                                                   t from this file
+D:\admin\Documents\트레인 오라클 진도\specs\active\APP_IMPLEMENTATION_BRIDGE.md        993 | AIB-TC-046 | Open Issues | open is
+                                                                                   sues total = 12, canonical blocking
+                                                                                   = 4 | 12 / 4 | PASS |
+D:\admin\Documents\트레인 오라클 진도\specs\active\APP_IMPLEMENTATION_BRIDGE.md       1006     typescript_block_fenced_and_clos
+                                                                                   ed: PASS
+D:\admin\Documents\트레인 오라클 진도\specs\active\APP_IMPLEMENTATION_BRIDGE.md       1009     open_issues_table_is_markdown_pi
+                                                                                   pe_table: PASS
+D:\admin\Documents\트레인 오라클 진도\specs\active\APP_IMPLEMENTATION_BRIDGE.md       1032     open_issues_total: 12
+D:\admin\Documents\트레인 오라클 진도\specs\active\APP_IMPLEMENTATION_BRIDGE.md       1033     open_issues_canonical_blocking_c
+                                                                                   ount: 4
+D:\admin\Documents\트레인 오라클 진도\specs\active\APP_IMPLEMENTATION_BRIDGE.md       1039   resolved_this_round:
+D:\admin\Documents\트레인 오라클 진도\specs\active\APP_IMPLEMENTATION_BRIDGE.md       1042   newly_opened_this_round:
+D:\admin\Documents\트레인 오라클 진도\specs\active\APP_IMPLEMENTATION_BRIDGE.md       1069     - legal_review_open_issue_added
+D:\admin\Documents\트레인 오라클 진도\specs\active\APP_IMPLEMENTATION_BRIDGE.md       1071   resolved_open_issues:
+D:\admin\Documents\트레인 오라클 진도\specs\active\APP_IMPLEMENTATION_BRIDGE.md       1074   open_issues_count: 12
+D:\admin\Documents\트레인 오라클 진도\specs\active\APP_IMPLEMENTATION_BRIDGE.md       1084     - coach_resolve_remaining_4_cano
+                                                                                   nical_blocking_open_issues
+D:\admin\Documents\트레인 오라클 진도\specs\active\APP_IMPLEMENTATION_BRIDGE.md       1094 [DRAFT_COMPLETE]
+D:\admin\Documents\트레인 오라클 진도\specs\active\ATHLETE_PROFILE_SPEC.md              27 open_issues_count: 11
+D:\admin\Documents\트레인 오라클 진도\specs\active\ATHLETE_PROFILE_SPEC.md              28 open_issues_canonical_blocking_count
+                                                                                   : 6
+D:\admin\Documents\트레인 오라클 진도\specs\active\ATHLETE_PROFILE_SPEC.md              53 | Dependency | Declared By | Resolve
+                                                                                   d In | Status | Notes |
+D:\admin\Documents\트레인 오라클 진도\specs\active\ATHLETE_PROFILE_SPEC.md              55 | ld_inclusion_preferences | SESSION
+                                                                                   _CLASSIFIER_SPEC v1.2 | Section 6 |
+                                                                                   RESOLVED | Athlete-scoped preference
+                                                                                    fields defined. |
+D:\admin\Documents\트레인 오라클 진도\specs\active\ATHLETE_PROFILE_SPEC.md              56 | cross_training_counts_as_ld | SESS
+                                                                                   ION_CLASSIFIER_SPEC v1.2 | Section 6
+                                                                                    | RESOLVED | camelCase field plus e
+                                                                                   nabled-flag consistency rule. |
+D:\admin\Documents\트레인 오라클 진도\specs\active\ATHLETE_PROFILE_SPEC.md              57 | base_low_intensity_segment_inclusi
+                                                                                   on_override | SESSION_CLASSIFIER_SPE
+                                                                                   C v1.2 | Section 6 | RESOLVED | Sess
+                                                                                   ion-level exclusion boundary invaria
+                                                                                   nts included. |
+D:\admin\Documents\트레인 오라클 진도\specs\active\ATHLETE_PROFILE_SPEC.md              58 | manual_correction_consent_policy |
+                                                                                    SESSION_CLASSIFIER_SPEC v1.2 | Sect
+                                                                                   ion 7 | RESOLVED | Capability-based
+                                                                                   consent, distinct from Coach Overrid
+                                                                                   e. |
+D:\admin\Documents\트레인 오라클 진도\specs\active\ATHLETE_PROFILE_SPEC.md              59 | manual_correction_authorization_in
+                                                                                   variants | SESSION_CLASSIFIER_SPEC v
+                                                                                   1.2 | Section 7 | RESOLVED | Non-ove
+                                                                                   rride, no raw or safety effect. |
+D:\admin\Documents\트레인 오라클 진도\specs\active\ATHLETE_PROFILE_SPEC.md             252         open_issue: OI-AP-PHYSIO-SOU
+                                                                                   RCE-001
+D:\admin\Documents\트레인 오라클 진도\specs\active\ATHLETE_PROFILE_SPEC.md             317     status: OPEN_ISSUE
+D:\admin\Documents\트레인 오라클 진도\specs\active\ATHLETE_PROFILE_SPEC.md             318     open_issue: OI-AP-LD-MIN-SEGMENT
+                                                                                   -DURATION-001
+D:\admin\Documents\트레인 오라클 진도\specs\active\ATHLETE_PROFILE_SPEC.md             321     requires_future_classifier_versi
+                                                                                   on: true
+D:\admin\Documents\트레인 오라클 진도\specs\active\ATHLETE_PROFILE_SPEC.md             324       consumable by SESSION_CLASSIFI
+                                                                                   ER v1.2. It is deferred to a future
+D:\admin\Documents\트레인 오라클 진도\specs\active\ATHLETE_PROFILE_SPEC.md             325       classifier version and tracked
+                                                                                    as an open issue.
+D:\admin\Documents\트레인 오라클 진도\specs\active\ATHLETE_PROFILE_SPEC.md             344     capability_name_open_issue: OI-A
+                                                                                   P-CAPABILITY-NAME-001
+D:\admin\Documents\트레인 오라클 진도\specs\active\ATHLETE_PROFILE_SPEC.md             389   open_issue: OI-AP-CONSENT-LIFECYCL
+                                                                                   E-001
+D:\admin\Documents\트레인 오라클 진도\specs\active\ATHLETE_PROFILE_SPEC.md             629 ## Section AA. Open Issues
+D:\admin\Documents\트레인 오라클 진도\specs\active\ATHLETE_PROFILE_SPEC.md             632 open_issues:
+D:\admin\Documents\트레인 오라클 진도\specs\active\ATHLETE_PROFILE_SPEC.md             680     requires_future_classifier_versi
+                                                                                   on: true
+D:\admin\Documents\트레인 오라클 진도\specs\active\ATHLETE_PROFILE_SPEC.md             713 open_issues_count: 11
+D:\admin\Documents\트레인 오라클 진도\specs\active\ATHLETE_PROFILE_SPEC.md             714 open_issues_canonical_blocking_count
+                                                                                   : 6
+D:\admin\Documents\트레인 오라클 진도\specs\active\ATHLETE_PROFILE_SPEC.md             724 Physio source trust issue addendum:
+D:\admin\Documents\트레인 오라클 진도\specs\active\ATHLETE_PROFILE_SPEC.md             728   status: OPEN
+D:\admin\Documents\트레인 오라클 진도\specs\active\ATHLETE_PROFILE_SPEC.md             734     - target open issue table recoun
+                                                                                   t from this file
+D:\admin\Documents\트레인 오라클 진도\specs\active\ATHLETE_PROFILE_SPEC.md             778 | TC-AP-030 | ld_segment | low_inten
+                                                                                   sity_segment_minimum_duration_sec no
+                                                                                   t consumable by classifier v1.2 | tr
+                                                                                   acked as open issue | PASS |
+D:\admin\Documents\트레인 오라클 진도\specs\active\ATHLETE_PROFILE_SPEC.md             806     typescript_fence_closed_before_s
+                                                                                   ection_aa: PASS
+D:\admin\Documents\트레인 오라클 진도\specs\active\ATHLETE_PROFILE_SPEC.md             855   open_issues:
+D:\admin\Documents\트레인 오라클 진도\specs\active\ATHLETE_PROFILE_SPEC.md             856     open_issues_count: 11
+D:\admin\Documents\트레인 오라클 진도\specs\active\ATHLETE_PROFILE_SPEC.md             857     open_issues_canonical_blocking_c
+                                                                                   ount: 6
+D:\admin\Documents\트레인 오라클 진도\specs\active\ATHLETE_PROFILE_SPEC.md             868     ld_inclusion_preferences: RESOLV
+                                                                                   ED
+D:\admin\Documents\트레인 오라클 진도\specs\active\ATHLETE_PROFILE_SPEC.md             869     cross_training_counts_as_ld: RES
+                                                                                   OLVED
+D:\admin\Documents\트레인 오라클 진도\specs\active\ATHLETE_PROFILE_SPEC.md             870     base_low_intensity_segment_inclu
+                                                                                   sion_override: RESOLVED
+D:\admin\Documents\트레인 오라클 진도\specs\active\ATHLETE_PROFILE_SPEC.md             871     manual_correction_consent_policy
+                                                                                   : RESOLVED
+D:\admin\Documents\트레인 오라클 진도\specs\active\ATHLETE_PROFILE_SPEC.md             872     manual_correction_authorization_
+                                                                                   invariants: RESOLVED
+D:\admin\Documents\트레인 오라클 진도\specs\active\ATHLETE_PROFILE_SPEC.md             889         cause: "Document integrity P
+                                                                                   0 issues in transported artifact."
+D:\admin\Documents\트레인 오라클 진도\specs\active\ATHLETE_PROFILE_SPEC.md             895         cause: "Multi-part assembly
+                                                                                   did not provide complete raw source
+                                                                                   to reviewer."
+D:\admin\Documents\트레인 오라클 진도\specs\active\ATHLETE_PROFILE_SPEC.md             903           fenced and closed before S
+                                                                                   ection AA. Test cases are a 38-row M
+                                                                                   arkdown
+D:\admin\Documents\트레인 오라클 진도\specs\active\ATHLETE_PROFILE_SPEC.md             906           document state. Canonical
+                                                                                   blocking open issue count is 6.
+D:\admin\Documents\트레인 오라클 진도\specs\active\ATHLETE_PROFILE_SPEC.md             934       resolved_in: Section 6
+D:\admin\Documents\트레인 오라클 진도\specs\active\ATHLETE_PROFILE_SPEC.md             935       status: RESOLVED
+D:\admin\Documents\트레인 오라클 진도\specs\active\ATHLETE_PROFILE_SPEC.md             938       resolved_in: Section 6
+D:\admin\Documents\트레인 오라클 진도\specs\active\ATHLETE_PROFILE_SPEC.md             939       status: RESOLVED
+D:\admin\Documents\트레인 오라클 진도\specs\active\ATHLETE_PROFILE_SPEC.md             942       resolved_in: Section 6
+D:\admin\Documents\트레인 오라클 진도\specs\active\ATHLETE_PROFILE_SPEC.md             943       status: RESOLVED
+D:\admin\Documents\트레인 오라클 진도\specs\active\ATHLETE_PROFILE_SPEC.md             946       resolved_in: Section 7
+D:\admin\Documents\트레인 오라클 진도\specs\active\ATHLETE_PROFILE_SPEC.md             947       status: RESOLVED
+D:\admin\Documents\트레인 오라클 진도\specs\active\ATHLETE_PROFILE_SPEC.md             950       resolved_in: Section 7
+D:\admin\Documents\트레인 오라클 진도\specs\active\ATHLETE_PROFILE_SPEC.md             951       status: RESOLVED
+D:\admin\Documents\트레인 오라클 진도\specs\active\ATHLETE_PROFILE_SPEC.md             954       resolved_in: Section 7
+D:\admin\Documents\트레인 오라클 진도\specs\active\ATHLETE_PROFILE_SPEC.md             956       tracking_open_issue: OI-AP-CAP
+                                                                                   ABILITY-NAME-001
+D:\admin\Documents\트레인 오라클 진도\specs\active\ATHLETE_PROFILE_SPEC.md             959     complete_document_single_file: t
+                                                                                   rue
+D:\admin\Documents\트레인 오라클 진도\specs\active\ATHLETE_PROFILE_SPEC.md             962     yaml_fences_open_and_close: true
+D:\admin\Documents\트레인 오라클 진도\specs\active\ATHLETE_PROFILE_SPEC.md             969     typescript_section_present_and_c
+                                                                                   losed: true
+D:\admin\Documents\트레인 오라클 진도\specs\active\ATHLETE_PROFILE_SPEC.md             993   open_issues_count: 11
+D:\admin\Documents\트레인 오라클 진도\specs\active\ATHLETE_PROFILE_SPEC.md             994   open_issues_canonical_blocking_cou
+                                                                                   nt: 6
+D:\admin\Documents\트레인 오라클 진도\specs\active\ATHLETE_PROFILE_SPEC.md            1005 [DRAFT_COMPLETE]
+D:\admin\Documents\트레인 오라클 진도\SPEC_WAVE1_PHYSIO_PATCH_REPORT.md                 11 open_issues_total: 0
+D:\admin\Documents\트레인 오라클 진도\SPEC_WAVE1_PHYSIO_PATCH_REPORT.md                 27 It is not runtime evidence, not cano
+                                                                                   nical promotion, and not issue closu
+                                                                                   re.
+D:\admin\Documents\트레인 오라클 진도\SPEC_WAVE1_PHYSIO_PATCH_REPORT.md                 33 | Target document | Target issue | P
+                                                                                   atch result | Closure state |
+D:\admin\Documents\트레인 오라클 진도\SPEC_WAVE1_PHYSIO_PATCH_REPORT.md                 35 | `PLAN_GENERATOR_SPEC.md` | `OI-PG-
+                                                                                   PHYSIO-SOURCE-CONSUMPTION-001` | Add
+                                                                                   ed Section 6B consumption contract a
+                                                                                   nd D9/Safety Gate boundary | OPEN; p
+                                                                                   atched pending source acceptance and
+                                                                                    target recount approval |
+D:\admin\Documents\트레인 오라클 진도\SPEC_WAVE1_PHYSIO_PATCH_REPORT.md                 36 | `APP_IMPLEMENTATION_BRIDGE.md` | `
+                                                                                   OI-AIB-PHYSIO-SOURCE-001` | Added st
+                                                                                   orage family, storage policy, data f
+                                                                                   low, API addendum, and TypeScript re
+                                                                                   cord shape | OPEN; patched pending s
+                                                                                   ource acceptance, target recount app
+                                                                                   roval, and implementation/privacy re
+                                                                                   view |
+D:\admin\Documents\트레인 오라클 진도\SPEC_WAVE1_PHYSIO_PATCH_REPORT.md                 37 | `ATHLETE_PROFILE_SPEC.md` | `OI-AP
+                                                                                   -PHYSIO-SOURCE-001` | Added Physio S
+                                                                                   ource Trust source-priority/conflict
+                                                                                    handling and snapshot fields | OPEN
+                                                                                   ; patched pending source acceptance,
+                                                                                    App Bridge binding acceptance, and
+                                                                                   target recount approval |
+D:\admin\Documents\트레인 오라클 진도\SPEC_WAVE1_PHYSIO_PATCH_REPORT.md                 43 These counts were read from the targ
+                                                                                   et files after the patch. They remai
+                                                                                   n open because this wave deliberatel
+                                                                                   y did not close target issues.
+D:\admin\Documents\트레인 오라클 진도\SPEC_WAVE1_PHYSIO_PATCH_REPORT.md                 45 | Target document | Open issues | Ca
+                                                                                   nonical blockers | Reason counts did
+                                                                                    not decrease |
+D:\admin\Documents\트레인 오라클 진도\SPEC_WAVE1_PHYSIO_PATCH_REPORT.md                 47 | `PLAN_GENERATOR_SPEC.md` | 7 | 2 |
+                                                                                    `OI-PG-PHYSIO-SOURCE-CONSUMPTION-00
+                                                                                   1` remains OPEN pending source accep
+                                                                                   tance and owner recount approval |
+D:\admin\Documents\트레인 오라클 진도\SPEC_WAVE1_PHYSIO_PATCH_REPORT.md                 48 | `APP_IMPLEMENTATION_BRIDGE.md` | 1
+                                                                                   2 | 4 | `OI-AIB-PHYSIO-SOURCE-001` r
+                                                                                   emains OPEN pending source acceptanc
+                                                                                   e, recount approval, and implementat
+                                                                                   ion/privacy review |
+D:\admin\Documents\트레인 오라클 진도\SPEC_WAVE1_PHYSIO_PATCH_REPORT.md                 49 | `ATHLETE_PROFILE_SPEC.md` | 11 | 6
+                                                                                    | `OI-AP-PHYSIO-SOURCE-001` remains
+                                                                                    OPEN pending source acceptance and
+                                                                                   App Bridge binding acceptance |
+D:\admin\Documents\트레인 오라클 진도\SPEC_WAVE1_PHYSIO_PATCH_REPORT.md                 61   no_physio_issue_closed_in_this_wav
+                                                                                   e: true
+D:\admin\Documents\트레인 오라클 진도\SPEC_WAVE1_PHYSIO_PATCH_REPORT.md                 74 2. If accepted, recount each target
+                                                                                   issue table from the target file imm
+                                                                                   ediately before any closure.
+D:\admin\Documents\트레인 오라클 진도\SPEC_WAVE1_PHYSIO_PATCH_REPORT.md                 76 4. Keep D9/RVE/Safety Gate runtime i
+                                                                                   ssues open until actual execution ev
+                                                                                   idence exists.
+D:\admin\Documents\트레인 오라클 진도\SPEC_WAVE1_PHYSIO_PATCH_REPORT.md                 78 [DRAFT_COMPLETE]
+
+
+
+[exit] 0
+
+
+## Search forbidden overclaim patterns in scoped docs/evidence
+
+
+[exit] 0
+
+
+## Git changed files name-status
+
+git : warning: in the working copy of 'README.md', LF will be replaced by CRLF the next time Git touches it
+At line:32 char:44
++ ... Step 'Git changed files name-status' { git diff --name-status; git ls ...
++                                            ~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (warning: in the... Git touches it:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+
+
+[exit] 1

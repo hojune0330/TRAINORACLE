@@ -353,8 +353,10 @@ safety_gate:
       must_not_override_safety_gate: true
       failure_state: NEEDS_COACH_CLARIFICATION
     physiological_source_consumption:
-      status: PARTIAL_OPEN
+      status: PATCHED_PENDING_SOURCE_ACCEPTANCE
       tracked_by: OI-PG-PHYSIO-SOURCE-CONSUMPTION-001
+      source_document: PHYSIO_SOURCE_TRUST_SPEC.md
+      closure_state: OPEN_UNTIL_SOURCE_ACCEPTANCE_AND_TARGET_RECOUNT
   allowed_output_when_blocked_by_safety_hard_stop:
     - blocked_state
     - non_sensitive_block_reason
@@ -368,7 +370,7 @@ safety_gate:
     - template_based_alternative_plan
 ```
 
-Coach intent cannot override the safety gate.  
+Coach intent cannot override the safety gate.
 Template Library cannot override the safety gate.
 
 ---
@@ -462,6 +464,69 @@ plan_generator_template_privacy_boundary:
     - isMinor
     - guardianConsentAvailable
     - safetyGateStatus
+```
+
+---
+
+## 6B. Physiological Source Trust Consumption Contract
+
+Plan Generator may consume physiological source trust only through `PHYSIO_SOURCE_TRUST_SPEC.md` and App Bridge source-trust records.
+
+This binding is a target patch. It does not by itself prove runtime behavior, canonical promotion, or source acceptance.
+
+```yaml
+physiological_source_trust_dependency:
+  source_document: PHYSIO_SOURCE_TRUST_SPEC.md
+  app_bridge_record_family: PhysioSourceTrustResultRecord
+  target_issue: OI-PG-PHYSIO-SOURCE-CONSUMPTION-001
+  target_issue_status_after_patch: PATCHED_PENDING_SOURCE_ACCEPTANCE
+
+  plan_generator_may_consume_physio_if:
+    - tenant_group_athlete_scope_valid
+    - capability_grant_active
+    - PHYSIOLOGICAL_DATA_USE_consent_active_when_required
+    - guardian_consent_satisfied_when_athlete_is_minor
+    - safety_gate_status_allows_generation
+    - physio_source_trust_status_allows_consumption
+
+  plan_generator_must_not:
+    - consume_physio_when_safety_gate_blocks_generation
+    - consume_BLOCKED_BY_CONSENT_data
+    - consume_EXCLUDED_UNTRUSTED_required_data
+    - treat_TRUSTED_FOR_GENERATION_as_D9_clearance
+    - treat_good_physio_data_as_safety_clearance
+    - use_missing_or_stale_physio_to_justify_intensity_increase
+    - store_raw_athlete_free_text
+    - store_raw_symptom_clause
+    - send_private_physio_data_to_external_llm
+```
+
+| Physio Source Trust Status | Plan Generator handling |
+|---|---|
+| `TRUSTED_FOR_GENERATION` | May use as scoped plan input only after Safety Gate allows generation. |
+| `TRUSTED_FOR_LOW_RISK_CONTEXT_ONLY` | May bias toward conservative or recovery-focused options only. |
+| `REVIEW_REQUIRED` | Must not auto-increase load; requires coach review or clarification. |
+| `INSUFFICIENT_DATA` required | Blocks generation as insufficient data. |
+| `INSUFFICIENT_DATA` optional | Continue without physio claims. |
+| `EXCLUDED_UNTRUSTED` required | Do not auto-generate; request coach clarification. |
+| `EXCLUDED_UNTRUSTED` optional | Ignore as evidence and continue without physio claims. |
+| `BLOCKED_BY_CONSENT` | Block sensitive physiological processing. |
+
+```yaml
+physio_consumption_safety_boundary:
+  D9_ACTIVE:
+    physio_can_clear: false
+    plan_generation_allowed: false
+  D9_UNKNOWN:
+    physio_can_clear: false
+    plan_generation_allowed: false
+    human_review_required: true
+  D9_CLEARED:
+    physio_can_upgrade_to_medical_clearance: false
+    plan_generation_may_continue_only_if_all_other_gates_pass: true
+  advisory_under_D9_CLEARED:
+    physio_can_clear_advisory_reason_codes: false
+    blocks_generation_by_itself: false
 ```
 
 ---
@@ -824,7 +889,7 @@ llm_policy:
 | ID | Priority | Canonical blocking | Status | Summary | Resolution needed |
 |---|---|---:|---|---|---|
 | `OI-PG-RULE-SAFETY-GATE-BINDING-001` | P1 | YES | OPEN | Runtime binding between active `RULE_SPEC_D1_D9.D-9` state and generation block must be finalized. | Define exact bridge query and active-state interpretation. |
-| `OI-PG-PHYSIO-SOURCE-CONSUMPTION-001` | P1 | YES | OPEN | Trusted physiological source consumption remains unresolved. | Bind to APP Bridge physiology source-trust resolution. |
+| `OI-PG-PHYSIO-SOURCE-CONSUMPTION-001` | P1 | YES | OPEN | Target binding to `PHYSIO_SOURCE_TRUST_SPEC.md` is patched, but source acceptance and owner recount are still pending. | Review source acceptance, confirm App Bridge record binding, then recount before closure. |
 | `OI-PG-OUTPUT-FORMAT-BINDING-001` | P2 | NO | OPEN | Final export format is not fixed. | Decide UI/export schema later. |
 | `OI-PG-OPTION-RATIONALE-PRIVACY-001` | P2 | NO | OPEN | Rationale text may accidentally reveal sensitive data. | Add redaction templates before production. |
 | `OI-PG-COMPETITION-TAPER-POLICY-001` | P2 | NO | OPEN | Competition taper details are not fully specified. | Create taper sub-policy or competition-prep template. |
@@ -976,6 +1041,7 @@ handoff:
   applied_local_patches:
     - PROGRESSION_GUARD_ACCOUNTING_SYNC
     - TEMPLATE_LIBRARY_OWNERSHIP_SYNC
+    - PHYSIO_SOURCE_TRUST_CONSUMPTION_BINDING_PENDING_ACCEPTANCE
   remaining_canonical_blocking_open_issues:
     - OI-PG-RULE-SAFETY-GATE-BINDING-001
     - OI-PG-PHYSIO-SOURCE-CONSUMPTION-001

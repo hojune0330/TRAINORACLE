@@ -1,0 +1,114 @@
+# Targeted Wave 1 physio checks
+# Generated: 2026-06-26T16:57:40.8585143+09:00
+
+
+## Non-empty target files
+.omo/evidence/spec-wave1-physio-red-20260626.txt	6915
+.omo/evidence/spec-wave1-physio-green-20260626.txt	12065
+.omo/evidence/spec-wave1-physio-final-qa-20260626.txt	9223
+specs/active/PLAN_GENERATOR_SPEC.md	36789
+specs/active/APP_IMPLEMENTATION_BRIDGE.md	41528
+specs/active/ATHLETE_PROFILE_SPEC.md	37024
+SPEC_WAVE1_PHYSIO_PATCH_REPORT.md	3110
+
+## Target issue IDs in scoped docs/report
+D:\admin\Documents\트레인 오라클 진도\specs\active\PLAN_GENERATOR_SPEC.md:133: | Physiological source trust | `APP_IMPLEMENTATION_BRIDGE.md v1.1` | Physiological source consumption policy remains open through `OI-PG-PHYSIO-SOURCE-CONSUMPTION-001` | PARTIAL_OPEN |
+
+  ---
+D:\admin\Documents\트레인 오라클 진도\specs\active\PLAN_GENERATOR_SPEC.md:357:       tracked_by: OI-PG-PHYSIO-SOURCE-CONSUMPTION-001
+        source_document: PHYSIO_SOURCE_TRUST_SPEC.md
+        closure_state: OPEN_UNTIL_SOURCE_ACCEPTANCE_AND_TARGET_RECOUNT
+D:\admin\Documents\트레인 오라클 진도\specs\active\PLAN_GENERATOR_SPEC.md:481:   target_issue: OI-PG-PHYSIO-SOURCE-CONSUMPTION-001
+    target_issue_status_after_patch: OPEN_PENDING_SOURCE_ACCEPTANCE
+
+D:\admin\Documents\트레인 오라클 진도\specs\active\PLAN_GENERATOR_SPEC.md:892: | `OI-PG-PHYSIO-SOURCE-CONSUMPTION-001` | P1 | YES | OPEN | Target binding to `PHYSIO_SOURCE_TRUST_SPEC.md` is patched, but source acceptance and owner recount are still pending. | Review source acceptance, confirm App Bridge record binding, then recount before closure. |
+  | `OI-PG-OUTPUT-FORMAT-BINDING-001` | P2 | NO | OPEN | Final export format is not fixed. | Decide UI/export schema later. |
+  | `OI-PG-OPTION-RATIONALE-PRIVACY-001` | P2 | NO | OPEN | Rationale text may accidentally reveal sensitive data. | Add redaction templates before production. |
+D:\admin\Documents\트레인 오라클 진도\specs\active\PLAN_GENERATOR_SPEC.md:1047:     - OI-PG-PHYSIO-SOURCE-CONSUMPTION-001
+    non_blocking_open_issues:
+      - OI-PG-OUTPUT-FORMAT-BINDING-001
+D:\admin\Documents\트레인 오라클 진도\specs\active\APP_IMPLEMENTATION_BRIDGE.md:357:     target_issue: OI-AIB-PHYSIO-SOURCE-001
+      closure_state: OPEN_UNTIL_SOURCE_ACCEPTANCE_AND_TARGET_RECOUNT
+    consent_grant_records:
+D:\admin\Documents\트레인 오라클 진도\specs\active\APP_IMPLEMENTATION_BRIDGE.md:410:   target_issue: OI-AIB-PHYSIO-SOURCE-001
+    status_after_patch: PATCHED_PENDING_SOURCE_ACCEPTANCE
+
+D:\admin\Documents\트레인 오라클 진도\specs\active\APP_IMPLEMENTATION_BRIDGE.md:921: | OI-AIB-PHYSIO-SOURCE-001 | P1 | true | Physiology | physiological source trust 등급과 사용 가능 범위 확정 필요 | APP_BRIDGE_DESIGNER |
+  | OI-AIB-DB-VENDOR-001 | P2 | false | Storage | DB vendor 결정은 별도 | IMPLEMENTATION |
+  | OI-AIB-IDEMPOTENCY-001 | P2 | false | API | POST endpoint idempotency key 정책 상세화 필요 | IMPLEMENTATION |
+D:\admin\Documents\트레인 오라클 진도\specs\active\APP_IMPLEMENTATION_BRIDGE.md:934: OI-AIB-PHYSIO-SOURCE-001:
+    status: OPEN
+    target_patch_status: PATCHED_PENDING_SOURCE_ACCEPTANCE
+D:\admin\Documents\트레인 오라클 진도\specs\active\APP_IMPLEMENTATION_BRIDGE.md:1081:     - OI-AIB-PHYSIO-SOURCE-001
+    next_recommended_actions:
+      - reviewer_validate_against_baselines
+D:\admin\Documents\트레인 오라클 진도\specs\active\ATHLETE_PROFILE_SPEC.md:252:         open_issue: OI-AP-PHYSIO-SOURCE-001
+
+      availability_defaults:
+D:\admin\Documents\트레인 오라클 진도\specs\active\ATHLETE_PROFILE_SPEC.md:668:   - id: OI-AP-PHYSIO-SOURCE-001
+      priority: P1
+      title: "Source of truth for physiological attributes when device and self-report conflict"
+D:\admin\Documents\트레인 오라클 진도\specs\active\ATHLETE_PROFILE_SPEC.md:721:   - OI-AP-PHYSIO-SOURCE-001
+  ```
+
+D:\admin\Documents\트레인 오라클 진도\specs\active\ATHLETE_PROFILE_SPEC.md:727: OI-AP-PHYSIO-SOURCE-001:
+    status: OPEN
+    target_patch_status: PATCHED_PENDING_SOURCE_ACCEPTANCE
+D:\admin\Documents\트레인 오라클 진도\SPEC_WAVE1_PHYSIO_PATCH_REPORT.md:35: | `PLAN_GENERATOR_SPEC.md` | `OI-PG-PHYSIO-SOURCE-CONSUMPTION-001` | Added Section 6B consumption contract and D9/Safety Gate boundary | OPEN; patched pending source acceptance and target recount approval |
+  | `APP_IMPLEMENTATION_BRIDGE.md` | `OI-AIB-PHYSIO-SOURCE-001` | Added storage family, storage policy, data flow, API addendum, and TypeScript record shape | OPEN; patched pending source acceptance, target recount approval, and implementation/privacy review |
+  | `ATHLETE_PROFILE_SPEC.md` | `OI-AP-PHYSIO-SOURCE-001` | Added Physio Source Trust source-priority/conflict handling and snapshot fields | OPEN; patched pending source acceptance, App Bridge binding acceptance, and target recount approval |
+D:\admin\Documents\트레인 오라클 진도\SPEC_WAVE1_PHYSIO_PATCH_REPORT.md:36: | `APP_IMPLEMENTATION_BRIDGE.md` | `OI-AIB-PHYSIO-SOURCE-001` | Added storage family, storage policy, data flow, API addendum, and TypeScript record shape | OPEN; patched pending source acceptance, target recount approval, and implementation/privacy review |
+  | `ATHLETE_PROFILE_SPEC.md` | `OI-AP-PHYSIO-SOURCE-001` | Added Physio Source Trust source-priority/conflict handling and snapshot fields | OPEN; patched pending source acceptance, App Bridge binding acceptance, and target recount approval |
+
+D:\admin\Documents\트레인 오라클 진도\SPEC_WAVE1_PHYSIO_PATCH_REPORT.md:37: | `ATHLETE_PROFILE_SPEC.md` | `OI-AP-PHYSIO-SOURCE-001` | Added Physio Source Trust source-priority/conflict handling and snapshot fields | OPEN; patched pending source acceptance, App Bridge binding acceptance, and target recount approval |
+
+  ---
+D:\admin\Documents\트레인 오라클 진도\SPEC_WAVE1_PHYSIO_PATCH_REPORT.md:47: | `PLAN_GENERATOR_SPEC.md` | 7 | 2 | `OI-PG-PHYSIO-SOURCE-CONSUMPTION-001` remains OPEN pending source acceptance and owner recount approval |
+  | `APP_IMPLEMENTATION_BRIDGE.md` | 12 | 4 | `OI-AIB-PHYSIO-SOURCE-001` remains OPEN pending source acceptance, recount approval, and implementation/privacy review |
+  | `ATHLETE_PROFILE_SPEC.md` | 11 | 6 | `OI-AP-PHYSIO-SOURCE-001` remains OPEN pending source acceptance and App Bridge binding acceptance |
+D:\admin\Documents\트레인 오라클 진도\SPEC_WAVE1_PHYSIO_PATCH_REPORT.md:48: | `APP_IMPLEMENTATION_BRIDGE.md` | 12 | 4 | `OI-AIB-PHYSIO-SOURCE-001` remains OPEN pending source acceptance, recount approval, and implementation/privacy review |
+  | `ATHLETE_PROFILE_SPEC.md` | 11 | 6 | `OI-AP-PHYSIO-SOURCE-001` remains OPEN pending source acceptance and App Bridge binding acceptance |
+
+D:\admin\Documents\트레인 오라클 진도\SPEC_WAVE1_PHYSIO_PATCH_REPORT.md:49: | `ATHLETE_PROFILE_SPEC.md` | 11 | 6 | `OI-AP-PHYSIO-SOURCE-001` remains OPEN pending source acceptance and App Bridge binding acceptance |
+
+  ---
+
+## Final markers in evidence/report
+D:\admin\Documents\트레인 오라클 진도\.omo\evidence\spec-wave1-physio-red-20260626.txt:93: PASS condition: target issues are locally present/open before patch; source policy forbids copied absolute downstream counts; cleanup: no runtime resources spawned.
+D:\admin\Documents\트레인 오라클 진도\.omo\evidence\spec-wave1-physio-green-20260626.txt:65: SPEC_WAVE1_PHYSIO_PATCH_REPORT.md:35:| `PLAN_GENERATOR_SPEC.md` | `OI-PG-PHYSIO-SOURCE-CONSUMPTION-001` | Added Section 6B consumption contract and D9/Safety Gate boundary | OPEN; patched pending source acceptance and target recount approval |
+D:\admin\Documents\트레인 오라클 진도\.omo\evidence\spec-wave1-physio-green-20260626.txt:66: SPEC_WAVE1_PHYSIO_PATCH_REPORT.md:36:| `APP_IMPLEMENTATION_BRIDGE.md` | `OI-AIB-PHYSIO-SOURCE-001` | Added storage family, storage policy, data flow, API addendum, and TypeScript record shape | OPEN; patched pending source acceptance, target recount approval, and implementation/privacy review |
+D:\admin\Documents\트레인 오라클 진도\.omo\evidence\spec-wave1-physio-green-20260626.txt:67: SPEC_WAVE1_PHYSIO_PATCH_REPORT.md:37:| `ATHLETE_PROFILE_SPEC.md` | `OI-AP-PHYSIO-SOURCE-001` | Added Physio Source Trust source-priority/conflict handling and snapshot fields | OPEN; patched pending source acceptance, App Bridge binding acceptance, and target recount approval |
+D:\admin\Documents\트레인 오라클 진도\.omo\evidence\spec-wave1-physio-green-20260626.txt:105: specs/active/PLAN_GENERATOR_SPEC.md => [DRAFT_COMPLETE]
+D:\admin\Documents\트레인 오라클 진도\.omo\evidence\spec-wave1-physio-green-20260626.txt:106: specs/active/APP_IMPLEMENTATION_BRIDGE.md => [DRAFT_COMPLETE]
+D:\admin\Documents\트레인 오라클 진도\.omo\evidence\spec-wave1-physio-green-20260626.txt:107: specs/active/ATHLETE_PROFILE_SPEC.md => [DRAFT_COMPLETE]
+D:\admin\Documents\트레인 오라클 진도\.omo\evidence\spec-wave1-physio-green-20260626.txt:108: SPEC_TARGET_PATCH_MATRIX.md => [DRAFT_COMPLETE]
+D:\admin\Documents\트레인 오라클 진도\.omo\evidence\spec-wave1-physio-green-20260626.txt:109: SPEC_WAVE1_PHYSIO_PATCH_REPORT.md => [DRAFT_COMPLETE]
+D:\admin\Documents\트레인 오라클 진도\.omo\evidence\spec-wave1-physio-green-20260626.txt:110: SPEC_WORK_STATUS.md => [DRAFT_COMPLETE]
+D:\admin\Documents\트레인 오라클 진도\.omo\evidence\spec-wave1-physio-green-20260626.txt:111: TRAINORACLE_SPEC_INDEX.md => [DRAFT_COMPLETE]
+D:\admin\Documents\트레인 오라클 진도\.omo\evidence\spec-wave1-physio-green-20260626.txt:112: SPEC_DOCUMENTATION_REPORT.md => [DRAFT_COMPLETE]
+D:\admin\Documents\트레인 오라클 진도\.omo\evidence\spec-wave1-physio-green-20260626.txt:113: SPEC_LEGACY_ALIGNMENT_AND_DAILY_LOG_PLAN.md => [DRAFT_COMPLETE]
+D:\admin\Documents\트레인 오라클 진도\.omo\evidence\spec-wave1-physio-green-20260626.txt:118: PASS condition: physio bindings are present; related target issues remain open; no runtime/canonical/closure overclaim; cleanup: no runtime resources spawned.
+D:\admin\Documents\트레인 오라클 진도\.omo\evidence\spec-wave1-physio-final-qa-20260626.txt:67: specs/active/PLAN_GENERATOR_SPEC.md => [DRAFT_COMPLETE]
+D:\admin\Documents\트레인 오라클 진도\.omo\evidence\spec-wave1-physio-final-qa-20260626.txt:68: specs/active/APP_IMPLEMENTATION_BRIDGE.md => [DRAFT_COMPLETE]
+D:\admin\Documents\트레인 오라클 진도\.omo\evidence\spec-wave1-physio-final-qa-20260626.txt:69: specs/active/ATHLETE_PROFILE_SPEC.md => [DRAFT_COMPLETE]
+D:\admin\Documents\트레인 오라클 진도\.omo\evidence\spec-wave1-physio-final-qa-20260626.txt:70: SPEC_TARGET_PATCH_MATRIX.md => [DRAFT_COMPLETE]
+D:\admin\Documents\트레인 오라클 진도\.omo\evidence\spec-wave1-physio-final-qa-20260626.txt:71: SPEC_WAVE1_PHYSIO_PATCH_REPORT.md => [DRAFT_COMPLETE]
+D:\admin\Documents\트레인 오라클 진도\.omo\evidence\spec-wave1-physio-final-qa-20260626.txt:72: SPEC_WORK_STATUS.md => [DRAFT_COMPLETE]
+D:\admin\Documents\트레인 오라클 진도\.omo\evidence\spec-wave1-physio-final-qa-20260626.txt:73: TRAINORACLE_SPEC_INDEX.md => [DRAFT_COMPLETE]
+D:\admin\Documents\트레인 오라클 진도\.omo\evidence\spec-wave1-physio-final-qa-20260626.txt:74: SPEC_DOCUMENTATION_REPORT.md => [DRAFT_COMPLETE]
+D:\admin\Documents\트레인 오라클 진도\.omo\evidence\spec-wave1-physio-final-qa-20260626.txt:75: SPEC_LEGACY_ALIGNMENT_AND_DAILY_LOG_PLAN.md => [DRAFT_COMPLETE]
+D:\admin\Documents\트레인 오라클 진도\.omo\evidence\spec-wave1-physio-final-qa-20260626.txt:80: SPEC_WAVE1_PHYSIO_PATCH_REPORT.md:61:  no_physio_issue_closed_in_this_wave: true
+D:\admin\Documents\트레인 오라클 진도\.omo\evidence\spec-wave1-physio-final-qa-20260626.txt:148: PASS: target files show physio patch state, issues remain open, counts remain target-owned, markers are clean for touched docs, no forbidden overclaim matched. cleanup: no runtime resources spawned.
+D:\admin\Documents\트레인 오라클 진도\SPEC_WAVE1_PHYSIO_PATCH_REPORT.md:35: | `PLAN_GENERATOR_SPEC.md` | `OI-PG-PHYSIO-SOURCE-CONSUMPTION-001` | Added Section 6B consumption contract and D9/Safety Gate boundary | OPEN; patched pending source acceptance and target recount approval |
+D:\admin\Documents\트레인 오라클 진도\SPEC_WAVE1_PHYSIO_PATCH_REPORT.md:36: | `APP_IMPLEMENTATION_BRIDGE.md` | `OI-AIB-PHYSIO-SOURCE-001` | Added storage family, storage policy, data flow, API addendum, and TypeScript record shape | OPEN; patched pending source acceptance, target recount approval, and implementation/privacy review |
+D:\admin\Documents\트레인 오라클 진도\SPEC_WAVE1_PHYSIO_PATCH_REPORT.md:37: | `ATHLETE_PROFILE_SPEC.md` | `OI-AP-PHYSIO-SOURCE-001` | Added Physio Source Trust source-priority/conflict handling and snapshot fields | OPEN; patched pending source acceptance, App Bridge binding acceptance, and target recount approval |
+D:\admin\Documents\트레인 오라클 진도\SPEC_WAVE1_PHYSIO_PATCH_REPORT.md:61:   no_physio_issue_closed_in_this_wave: true
+D:\admin\Documents\트레인 오라클 진도\SPEC_WAVE1_PHYSIO_PATCH_REPORT.md:78: [DRAFT_COMPLETE]
+
+## Forbidden overclaim pattern hits
+NO HITS
+
+## Git docs/evidence-only classification
+README.md SPEC_WORK_STATUS.md TRAINORACLE_SPEC_INDEX.md specs/README.md specs/active/APP_IMPLEMENTATION_BRIDGE.md specs/active/ATHLETE_PROFILE_SPEC.md specs/active/PLAN_GENERATOR_SPEC.md specs/reconstruct/README.md	DocsOrEvidence=True
+.omo/evidence/genspark-legacy-recovery-20260625-code-review.md .omo/evidence/genspark-legacy-recovery-20260625-final-qa.ps1 .omo/evidence/genspark-legacy-recovery-20260625-gate-review.md .omo/evidence/genspark-legacy-recovery-20260625-qa-review-raw.json .omo/evidence/genspark-legacy-recovery-20260625-qa-review.md .omo/evidence/genspark-legacy-recovery-20260625/01-body-text.txt .omo/evidence/genspark-legacy-recovery-20260625/01-browser-screenshot.png .omo/evidence/genspark-legacy-recovery-20260625/01-browser-state.md .omo/evidence/genspark-legacy-recovery-20260625/01-compaction-notices.json .omo/evidence/genspark-legacy-recovery-20260625/01-link-manifest.json .omo/evidence/genspark-legacy-recovery-20260625/01-redacted-dom-snapshot.txt .omo/evidence/genspark-legacy-recovery-20260625/02-agent-response.md .omo/evidence/genspark-legacy-recovery-20260625/02-agent-response.png .omo/evidence/genspark-legacy-recovery-20260625/02-download-attempts.json .omo/evidence/genspark-legacy-recovery-20260625/02-recovered-material-index.json .omo/evidence/genspark-legacy-recovery-20260625/02-request-prompt.md .omo/evidence/genspark-legacy-recovery-20260625/03-adversarial-compaction-expiry.md .omo/evidence/genspark-legacy-recovery-20260625/03-private-name-scan.txt .omo/evidence/genspark-legacy-recovery-20260625/03-recovery-report.md .omo/evidence/genspark-legacy-recovery-20260625/03-review-coverage.md .omo/evidence/genspark-legacy-recovery-20260625/03-sensitive-boundary-audit-scan.txt .omo/evidence/genspark-legacy-recovery-20260625/03-sensitive-boundary-audit.txt .omo/evidence/genspark-legacy-recovery-20260625/qa-review-artifacts/qa-body-text-size.txt .omo/evidence/genspark-legacy-recovery-20260625/qa-review-artifacts/qa-compaction-notices.txt .omo/evidence/genspark-legacy-recovery-20260625/qa-review-artifacts/qa-link-counts-evidencepaths.txt .omo/evidence/genspark-legacy-recovery-20260625/qa-review-artifacts/qa-local-archive-inventory.txt .omo/evidence/genspark-legacy-recovery-20260625/qa-review-artifacts/qa-png-decode.txt .omo/evidence/genspark-legacy-recovery-20260625/qa-review-artifacts/qa-report-limit-phrases.txt .omo/evidence/genspark-legacy-recovery-20260625/qa-review-artifacts/qa-required-artifacts.txt .omo/evidence/genspark-legacy-recovery-20260625/qa-review-artifacts/qa-sensitive-control-scan.txt .omo/evidence/genspark-legacy-recovery-20260625/qa-review-run.ps1 .omo/evidence/genspark-legacy-recovery-20260625/task-3-required-artifacts.txt .omo/evidence/genspark-spec-readiness-validation-20260626.md .omo/evidence/spec-continuation-daily-log-and-doc-report-20260626-code-review.md .omo/evidence/spec-continuation-daily-log-and-doc-report-20260626/c001-red-daily-log-file-truth.md .omo/evidence/spec-continuation-daily-log-and-doc-report-20260626/c002-green-local-qa.md .omo/evidence/spec-continuation-daily-log-and-doc-report-20260626/c003-final-local-qa.md .omo/evidence/spec-continuation-daily-log-and-doc-report-20260626/c004-final-gate.md .omo/evidence/spec-continuation-daily-log-and-doc-report-20260626/explorer-source-map.md .omo/evidence/spec-continuation-daily-log-and-doc-report-20260626/planner-inconclusive.md .omo/evidence/spec-continuation-phantom-doc-guard-20260626/c001-red-filesystem-truth.md .omo/evidence/spec-continuation-phantom-doc-guard-20260626/c002-green-guarded-handoff.md .omo/evidence/spec-continuation-phantom-doc-guard-20260626/c003-next-spec-artifact.md .omo/evidence/spec-continuation-phantom-doc-guard-20260626/code-review-slop-coverage.md .omo/evidence/spec-continuation-phantom-doc-guard-20260626/final-review.md .omo/evidence/spec-continuation-plan-safety-gate-20260626-code-review.md .omo/evidence/spec-continuation-plan-safety-gate-20260626/c001-red-filesystem-truth.md .omo/evidence/spec-continuation-plan-safety-gate-20260626/c002-green-safety-gate-reconstruction.md .omo/evidence/spec-continuation-plan-safety-gate-20260626/c003-integration-and-forbidden-claims.md .omo/evidence/spec-continuation-plan-safety-gate-20260626/c004-local-qa.md .omo/evidence/spec-continuation-plan-safety-gate-20260626/c005-final-gate.md .omo/evidence/spec-continuation-plan-safety-gate-20260626/metis-constraints-review.md .omo/evidence/spec-continuation-plan-safety-gate-20260626/product-design-continuity-review.md .omo/evidence/spec-target-patch-matrix-20260626.md .omo/evidence/spec-wave1-physio-final-qa-20260626.txt .omo/evidence/spec-wave1-physio-green-20260626.txt .omo/evidence/spec-wave1-physio-readonly-qa-20260626/cli-data-qa-transcript-rerun.txt .omo/evidence/spec-wave1-physio-readonly-qa-20260626/cli-data-qa-transcript.txt .omo/evidence/spec-wave1-physio-readonly-qa-20260626/targeted-checks.txt .omo/evidence/spec-wave1-physio-red-20260626.txt .omo/evidence/trainoracle-spec-documents-code-review.md .omo/plans/genspark-legacy-recovery-run.md SPEC_DOCUMENTATION_REPORT.md SPEC_FILE_TRUTH_GUARD.md SPEC_LEGACY_ALIGNMENT_AND_DAILY_LOG_PLAN.md SPEC_TARGET_PATCH_MATRIX.md SPEC_WAVE1_PHYSIO_PATCH_REPORT.md specs/reconstruct/DAILY_LOG_AND_CHECKIN_SPEC.md specs/reconstruct/PLAN_SAFETY_GATE_SPEC.md specs/reconstruct/RULE_VALIDATION_ENGINE_CONTRACT.md	DocsOrEvidence=True
+SuspiciousProductCodeCount=0

@@ -1,0 +1,5 @@
+{
+    "path":  "D:\\admin\\Documents\\트레인 오라클 진도\\.omo\\evidence\\genspark-legacy-recovery-20260625\\01-body-text.txt",
+    "length":  410076,
+    "gt400000":  true
+}

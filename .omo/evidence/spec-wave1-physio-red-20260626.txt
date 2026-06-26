@@ -1,0 +1,93 @@
+# SPEC Wave 1 Physio RED Evidence - 2026-06-26
+
+Purpose: pre-edit proof that Wave 1 target issues are open and must be patched from local files only.
+
+## git status before Wave 1 edits
+ M README.md
+ M SPEC_WORK_STATUS.md
+ M TRAINORACLE_SPEC_INDEX.md
+ M specs/README.md
+ M specs/reconstruct/README.md
+?? .omo/evidence/genspark-legacy-recovery-20260625-code-review.md
+?? .omo/evidence/genspark-legacy-recovery-20260625-final-qa.ps1
+?? .omo/evidence/genspark-legacy-recovery-20260625-gate-review.md
+?? .omo/evidence/genspark-legacy-recovery-20260625-qa-review-raw.json
+?? .omo/evidence/genspark-legacy-recovery-20260625-qa-review.md
+?? .omo/evidence/genspark-legacy-recovery-20260625/
+?? .omo/evidence/genspark-spec-readiness-validation-20260626.md
+?? .omo/evidence/spec-continuation-daily-log-and-doc-report-20260626-code-review.md
+?? .omo/evidence/spec-continuation-daily-log-and-doc-report-20260626/
+?? .omo/evidence/spec-continuation-phantom-doc-guard-20260626/
+?? .omo/evidence/spec-continuation-plan-safety-gate-20260626-code-review.md
+?? .omo/evidence/spec-continuation-plan-safety-gate-20260626/
+?? .omo/evidence/spec-target-patch-matrix-20260626.md
+?? .omo/evidence/trainoracle-spec-documents-code-review.md
+?? .omo/plans/genspark-legacy-recovery-run.md
+?? SPEC_DOCUMENTATION_REPORT.md
+?? SPEC_FILE_TRUTH_GUARD.md
+?? SPEC_LEGACY_ALIGNMENT_AND_DAILY_LOG_PLAN.md
+?? SPEC_TARGET_PATCH_MATRIX.md
+?? specs/reconstruct/DAILY_LOG_AND_CHECKIN_SPEC.md
+?? specs/reconstruct/PLAN_SAFETY_GATE_SPEC.md
+?? specs/reconstruct/RULE_VALIDATION_ENGINE_CONTRACT.md
+
+## PLAN_GENERATOR target issue and counts
+44:  open_issues_total: 7
+45:  open_issues_canonical_blocking_count: 2
+133:| Physiological source trust | `APP_IMPLEMENTATION_BRIDGE.md v1.1` | Physiological source consumption policy remains open through `OI-PG-PHYSIO-SOURCE-CONSUMPTION-001` | PARTIAL_OPEN |
+357:      tracked_by: OI-PG-PHYSIO-SOURCE-CONSUMPTION-001
+827:| `OI-PG-PHYSIO-SOURCE-CONSUMPTION-001` | P1 | YES | OPEN | Trusted physiological source consumption remains unresolved. | Bind to APP Bridge physiology source-trust resolution. |
+935:  expected_open_issues_total: 7
+936:  expected_canonical_blocking_count: 2
+981:    - OI-PG-PHYSIO-SOURCE-CONSUMPTION-001
+
+## APP_IMPLEMENTATION_BRIDGE target issue and counts
+58:open_issues_total: 12
+59:open_issues_canonical_blocking_count: 4
+829:| OI-AIB-PHYSIO-SOURCE-001 | P1 | true | Physiology | physiological source trust 등급과 사용 가능 범위 확정 필요 | APP_BRIDGE_DESIGNER |
+927:    open_issues_total: 12
+928:    open_issues_canonical_blocking_count: 4
+969:  canonical_blocking_count: 4
+975:    - OI-AIB-PHYSIO-SOURCE-001
+
+## ATHLETE_PROFILE target issue and counts
+28:open_issues_canonical_blocking_count: 6
+249:        open_issue: OI-AP-PHYSIO-SOURCE-001
+653:  - id: OI-AP-PHYSIO-SOURCE-001
+699:open_issues_canonical_blocking_count: 6
+706:  - OI-AP-PHYSIO-SOURCE-001
+829:    open_issues_canonical_blocking_count: 6
+831:    physio_source_blocking: true
+966:  open_issues_canonical_blocking_count: 6
+
+## PHYSIO_SOURCE_TRUST downstream policy
+14:  target_downstream_document: PLAN_GENERATOR_SPEC.md
+15:  target_downstream_issue: OI-PG-PHYSIO-SOURCE-CONSUMPTION-001
+858:| SC-PST-009 | source_taxonomy | Athlete self-report cannot clear risk | SATISFIED |
+877:| SC-PST-028 | plan_generator_consumption | Good physio cannot clear D9 risk | SATISFIED |
+915:  downstream_absolute_count_not_declared: SATISFIED
+926:이 문서는 downstream target의 절대 open issue count를 단정하지 않는다.
+931:  target_document: PLAN_GENERATOR_SPEC.md
+932:  target_issue: OI-PG-PHYSIO-SOURCE-CONSUMPTION-001
+954:  - confirm_OI-PG-PHYSIO-SOURCE-CONSUMPTION-001_exists
+977:    target_document: PLAN_GENERATOR_SPEC.md
+
+## SPEC_TARGET_PATCH_MATRIX Wave 1 rows
+54:| `PHYSIO_SOURCE_TRUST_SPEC.md` | Active SPEC candidate | Physio source trust, recency, conflict, structured readiness/soreness/RPE policy | Automatic closure of PG/AIB/AP issues |
+64:| Target document | Target issue | Current target evidence | Source to consume | Patch intent | Closure allowed now |
+66:| `PLAN_GENERATOR_SPEC.md` | `OI-PG-RULE-SAFETY-GATE-BINDING-001` | Line 826: P1 / YES / OPEN | `PLAN_SAFETY_GATE_SPEC.md`, `RULE_VALIDATION_ENGINE_CONTRACT.md`, `RVE_RULE_EVALUATOR_BINDING_SPEC.md` | Bind Plan Generator to consume D9/RVE only through Safety Gate; ACTIVE/UNKNOWN block; advisory non-blocking under CLEARED | No. Requires accepted target patch, recount, and actual D9 runtime evidence |
+67:| `PLAN_GENERATOR_SPEC.md` | `OI-PG-PHYSIO-SOURCE-CONSUMPTION-001` | Line 827: P1 / YES / OPEN | `PHYSIO_SOURCE_TRUST_SPEC.md` | Consume trusted physio source status without allowing good physio data to clear D9 risk | No. Requires target patch and recount; do not copy expected deltas |
+68:| `APP_IMPLEMENTATION_BRIDGE.md` | `OI-AIB-PHYSIO-SOURCE-001` | Line 829: P1 / true / OPEN | `PHYSIO_SOURCE_TRUST_SPEC.md`, `DAILY_LOG_AND_CHECKIN_SPEC.md` | Add storage/use boundary for physio source trust and daily check-in structured data | No. Requires target patch and recount |
+69:| `ATHLETE_PROFILE_SPEC.md` | `OI-AP-PHYSIO-SOURCE-001` | Lines 653-659: canonical blocking physiological source conflict issue | `PHYSIO_SOURCE_TRUST_SPEC.md`, `DAILY_LOG_AND_CHECKIN_SPEC.md` | Clarify profile physiological attributes source priority and conflict handling | No. Requires target patch and recount |
+71:| `PLAN_SAFETY_GATE_SPEC.md` | `OI-PSG-PHYSIO-SOURCE-CONSUMPTION-001` | Line 442: P2 / NO / OPEN | `PHYSIO_SOURCE_TRUST_SPEC.md` | Clarify how poor/missing/conflicting physio data may raise review/block while good data cannot clear D9 risk | No. Requires target patch and recount |
+73:| `DAILY_LOG_AND_CHECKIN_SPEC.md` | `OI-DLC-APP-BRIDGE-BINDING-001` | Line 607: P1 / YES / OPEN | `APP_IMPLEMENTATION_BRIDGE.md` target patch | Add DailyCheckInRecord storage/audit endpoint to App Bridge | No. Requires target patch and recount |
+74:| `DAILY_LOG_AND_CHECKIN_SPEC.md` | `OI-DLC-RVE-SAFETY-BINDING-001` | Line 608: P1 / YES / OPEN | RVE/Safety Gate implementation evidence | Bind structured/transient daily signals to RVE/Safety Gate runtime path | No. Requires implementation/runtime evidence |
+75:| `DAILY_LOG_AND_CHECKIN_SPEC.md` | `OI-DLC-RAW-NOTE-REDACTION-001` | Line 609: P1 / YES / OPEN | App Bridge implementation/privacy review | Define and verify raw note redaction/transient deletion lifecycle | No. Requires implementation/privacy proof |
+81:### Wave 1 - Count-Safe Physio Consumption Patches
+85:- `PLAN_GENERATOR_SPEC.md`
+86:- `APP_IMPLEMENTATION_BRIDGE.md`
+87:- `ATHLETE_PROFILE_SPEC.md`
+91:- `PHYSIO_SOURCE_TRUST_SPEC.md`
+105:- `APP_IMPLEMENTATION_BRIDGE.md`
+
+PASS condition: target issues are locally present/open before patch; source policy forbids copied absolute downstream counts; cleanup: no runtime resources spawned.

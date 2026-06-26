@@ -1,0 +1,5 @@
+{
+    "path":  "D:\\admin\\Downloads\\trainoracle_genspark_legacy_recovery_20260625",
+    "fileCount":  7,
+    "allNonEmpty":  true
+}

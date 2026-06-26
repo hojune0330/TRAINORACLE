@@ -4,6 +4,8 @@ This directory contains the TrainOracle SPEC layer added after the initial desig
 
 Start with [`../TRAINORACLE_SPEC_INDEX.md`](../TRAINORACLE_SPEC_INDEX.md).
 
+Before patching active SPEC targets, read [`../SPEC_TARGET_PATCH_MATRIX.md`](../SPEC_TARGET_PATCH_MATRIX.md). It is the current count-safe source-to-target patch guide, not runtime evidence or issue closure.
+
 Directory roles:
 
 - `active/`: current active SPEC candidates.

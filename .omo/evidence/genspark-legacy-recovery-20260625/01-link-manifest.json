@@ -1,0 +1,538 @@
+{
+    "source":  "Genspark browser DOM link extraction, redacted",
+    "totalLinks":  64,
+    "activeLinks":  14,
+    "expiredLinks":  41,
+    "downloadableLinks":  0,
+    "credentialQueryRemovedLinks":  21,
+    "fileLikeLinkCount":  62,
+    "uniqueFileLikeHrefCount":  55,
+    "links":  [
+                  {
+                      "index":  1,
+                      "shortId":  "linkaax",
+                      "linkKind":  "file-like",
+                      "hrefRedacted":  "genspark-reference-linkaax-credential-query-removed",
+                      "textRedacted":  "genspark-reference-linkaax",
+                      "hrefSha256":  "hashaax"
+                  },
+                  {
+                      "index":  2,
+                      "shortId":  "linkabx",
+                      "linkKind":  "file-like",
+                      "hrefRedacted":  "genspark-reference-linkabx-credential-query-removed",
+                      "textRedacted":  "genspark-reference-linkabx",
+                      "hrefSha256":  "hashabx"
+                  },
+                  {
+                      "index":  3,
+                      "shortId":  "linkacx",
+                      "linkKind":  "file-like",
+                      "hrefRedacted":  "genspark-reference-linkacx-credential-query-removed",
+                      "textRedacted":  "genspark-reference-linkacx",
+                      "hrefSha256":  "hashacx"
+                  },
+                  {
+                      "index":  4,
+                      "shortId":  "linkadx",
+                      "linkKind":  "file-like",
+                      "hrefRedacted":  "genspark-reference-linkadx-credential-query-removed",
+                      "textRedacted":  "genspark-reference-linkadx",
+                      "hrefSha256":  "hashadx"
+                  },
+                  {
+                      "index":  5,
+                      "shortId":  "linkaex",
+                      "linkKind":  "file-like",
+                      "hrefRedacted":  "genspark-reference-linkaex-credential-query-removed",
+                      "textRedacted":  "genspark-reference-linkaex",
+                      "hrefSha256":  "hashaex"
+                  },
+                  {
+                      "index":  6,
+                      "shortId":  "linkafx",
+                      "linkKind":  "file-like",
+                      "hrefRedacted":  "genspark-reference-linkafx-credential-query-removed",
+                      "textRedacted":  "genspark-reference-linkafx",
+                      "hrefSha256":  "hashafx"
+                  },
+                  {
+                      "index":  7,
+                      "shortId":  "linkagx",
+                      "linkKind":  "file-like",
+                      "hrefRedacted":  "genspark-reference-linkagx-credential-query-removed",
+                      "textRedacted":  "genspark-reference-linkagx",
+                      "hrefSha256":  "hashagx"
+                  },
+                  {
+                      "index":  8,
+                      "shortId":  "linkahx",
+                      "linkKind":  "file-like",
+                      "hrefRedacted":  "genspark-reference-linkahx-credential-query-removed",
+                      "textRedacted":  "genspark-reference-linkahx",
+                      "hrefSha256":  "hashahx"
+                  },
+                  {
+                      "index":  9,
+                      "shortId":  "linkaix",
+                      "linkKind":  "file-like",
+                      "hrefRedacted":  "genspark-reference-linkaix-credential-query-removed",
+                      "textRedacted":  "genspark-reference-linkaix",
+                      "hrefSha256":  "hashaix"
+                  },
+                  {
+                      "index":  10,
+                      "shortId":  "linkajx",
+                      "linkKind":  "file-like",
+                      "hrefRedacted":  "genspark-reference-linkajx-credential-query-removed",
+                      "textRedacted":  "genspark-reference-linkajx",
+                      "hrefSha256":  "hashajx"
+                  },
+                  {
+                      "index":  11,
+                      "shortId":  "linkakx",
+                      "linkKind":  "file-like",
+                      "hrefRedacted":  "genspark-reference-linkakx-credential-query-removed",
+                      "textRedacted":  "genspark-reference-linkakx",
+                      "hrefSha256":  "hashakx"
+                  },
+                  {
+                      "index":  12,
+                      "shortId":  "linkalx",
+                      "linkKind":  "file-like",
+                      "hrefRedacted":  "genspark-reference-linkalx-credential-query-removed",
+                      "textRedacted":  "genspark-reference-linkalx",
+                      "hrefSha256":  "hashalx"
+                  },
+                  {
+                      "index":  13,
+                      "shortId":  "linkamx",
+                      "linkKind":  "file-like",
+                      "hrefRedacted":  "genspark-reference-linkamx-credential-query-removed",
+                      "textRedacted":  "genspark-reference-linkamx",
+                      "hrefSha256":  "hashamx"
+                  },
+                  {
+                      "index":  14,
+                      "shortId":  "linkanx",
+                      "linkKind":  "file-like",
+                      "hrefRedacted":  "genspark-reference-linkanx-credential-query-removed",
+                      "textRedacted":  "genspark-reference-linkanx",
+                      "hrefSha256":  "hashanx"
+                  },
+                  {
+                      "index":  15,
+                      "shortId":  "linkaox",
+                      "linkKind":  "file-like",
+                      "hrefRedacted":  "genspark-reference-linkaox-credential-query-removed",
+                      "textRedacted":  "genspark-reference-linkaox",
+                      "hrefSha256":  "hashaox"
+                  },
+                  {
+                      "index":  16,
+                      "shortId":  "linkapx",
+                      "linkKind":  "file-like",
+                      "hrefRedacted":  "genspark-reference-linkapx-credential-query-removed",
+                      "textRedacted":  "genspark-reference-linkapx",
+                      "hrefSha256":  "hashapx"
+                  },
+                  {
+                      "index":  17,
+                      "shortId":  "linkaqx",
+                      "linkKind":  "file-like",
+                      "hrefRedacted":  "genspark-reference-linkaqx-credential-query-removed",
+                      "textRedacted":  "genspark-reference-linkaqx",
+                      "hrefSha256":  "hashaqx"
+                  },
+                  {
+                      "index":  18,
+                      "shortId":  "linkarx",
+                      "linkKind":  "file-like",
+                      "hrefRedacted":  "genspark-reference-linkarx-credential-query-removed",
+                      "textRedacted":  "genspark-reference-linkarx",
+                      "hrefSha256":  "hasharx"
+                  },
+                  {
+                      "index":  19,
+                      "shortId":  "linkasx",
+                      "linkKind":  "file-like",
+                      "hrefRedacted":  "genspark-reference-linkasx-credential-query-removed",
+                      "textRedacted":  "genspark-reference-linkasx",
+                      "hrefSha256":  "hashasx"
+                  },
+                  {
+                      "index":  20,
+                      "shortId":  "linkatx",
+                      "linkKind":  "file-like",
+                      "hrefRedacted":  "genspark-reference-linkatx-credential-query-removed",
+                      "textRedacted":  "genspark-reference-linkatx",
+                      "hrefSha256":  "hashatx"
+                  },
+                  {
+                      "index":  21,
+                      "shortId":  "linkaux",
+                      "linkKind":  "file-like",
+                      "hrefRedacted":  "genspark-reference-linkaux-credential-query-removed",
+                      "textRedacted":  "genspark-reference-linkaux",
+                      "hrefSha256":  "hashaux"
+                  },
+                  {
+                      "index":  22,
+                      "shortId":  "linkavx",
+                      "linkKind":  "file-like",
+                      "hrefRedacted":  "genspark-reference-linkavx-safe-metadata-only",
+                      "textRedacted":  "genspark-reference-linkavx",
+                      "hrefSha256":  "hashavx"
+                  },
+                  {
+                      "index":  23,
+                      "shortId":  "linkawx",
+                      "linkKind":  "file-like",
+                      "hrefRedacted":  "genspark-reference-linkawx-safe-metadata-only",
+                      "textRedacted":  "genspark-reference-linkawx",
+                      "hrefSha256":  "hashawx"
+                  },
+                  {
+                      "index":  24,
+                      "shortId":  "linkaxx",
+                      "linkKind":  "file-like",
+                      "hrefRedacted":  "genspark-reference-linkaxx-safe-metadata-only",
+                      "textRedacted":  "genspark-reference-linkaxx",
+                      "hrefSha256":  "hashaxx"
+                  },
+                  {
+                      "index":  25,
+                      "shortId":  "linkayx",
+                      "linkKind":  "file-like",
+                      "hrefRedacted":  "genspark-reference-linkayx-safe-metadata-only",
+                      "textRedacted":  "genspark-reference-linkayx",
+                      "hrefSha256":  "hashayx"
+                  },
+                  {
+                      "index":  26,
+                      "shortId":  "linkazx",
+                      "linkKind":  "file-like",
+                      "hrefRedacted":  "genspark-reference-linkazx-safe-metadata-only",
+                      "textRedacted":  "genspark-reference-linkazx",
+                      "hrefSha256":  "hashazx"
+                  },
+                  {
+                      "index":  27,
+                      "shortId":  "linkbax",
+                      "linkKind":  "file-like",
+                      "hrefRedacted":  "genspark-reference-linkbax-safe-metadata-only",
+                      "textRedacted":  "genspark-reference-linkbax",
+                      "hrefSha256":  "hashbax"
+                  },
+                  {
+                      "index":  28,
+                      "shortId":  "linkbbx",
+                      "linkKind":  "file-like",
+                      "hrefRedacted":  "genspark-reference-linkbbx-safe-metadata-only",
+                      "textRedacted":  "genspark-reference-linkbbx",
+                      "hrefSha256":  "hashbbx"
+                  },
+                  {
+                      "index":  29,
+                      "shortId":  "linkbcx",
+                      "linkKind":  "file-like",
+                      "hrefRedacted":  "genspark-reference-linkbcx-safe-metadata-only",
+                      "textRedacted":  "genspark-reference-linkbcx",
+                      "hrefSha256":  "hashbcx"
+                  },
+                  {
+                      "index":  30,
+                      "shortId":  "linkbdx",
+                      "linkKind":  "file-like",
+                      "hrefRedacted":  "genspark-reference-linkbdx-safe-metadata-only",
+                      "textRedacted":  "genspark-reference-linkbdx",
+                      "hrefSha256":  "hashbdx"
+                  },
+                  {
+                      "index":  31,
+                      "shortId":  "linkbex",
+                      "linkKind":  "file-like",
+                      "hrefRedacted":  "genspark-reference-linkbex-safe-metadata-only",
+                      "textRedacted":  "genspark-reference-linkbex",
+                      "hrefSha256":  "hashbex"
+                  },
+                  {
+                      "index":  32,
+                      "shortId":  "linkbfx",
+                      "linkKind":  "file-like",
+                      "hrefRedacted":  "genspark-reference-linkbfx-safe-metadata-only",
+                      "textRedacted":  "genspark-reference-linkbfx",
+                      "hrefSha256":  "hashbfx"
+                  },
+                  {
+                      "index":  33,
+                      "shortId":  "linkbgx",
+                      "linkKind":  "file-like",
+                      "hrefRedacted":  "genspark-reference-linkbgx-safe-metadata-only",
+                      "textRedacted":  "genspark-reference-linkbgx",
+                      "hrefSha256":  "hashbgx"
+                  },
+                  {
+                      "index":  34,
+                      "shortId":  "linkbhx",
+                      "linkKind":  "file-like",
+                      "hrefRedacted":  "genspark-reference-linkbhx-safe-metadata-only",
+                      "textRedacted":  "genspark-reference-linkbhx",
+                      "hrefSha256":  "hashbhx"
+                  },
+                  {
+                      "index":  35,
+                      "shortId":  "linkbix",
+                      "linkKind":  "file-like",
+                      "hrefRedacted":  "genspark-reference-linkbix-safe-metadata-only",
+                      "textRedacted":  "genspark-reference-linkbix",
+                      "hrefSha256":  "hashbix"
+                  },
+                  {
+                      "index":  36,
+                      "shortId":  "linkbjx",
+                      "linkKind":  "file-like",
+                      "hrefRedacted":  "genspark-reference-linkbjx-safe-metadata-only",
+                      "textRedacted":  "genspark-reference-linkbjx",
+                      "hrefSha256":  "hashbjx"
+                  },
+                  {
+                      "index":  37,
+                      "shortId":  "linkbkx",
+                      "linkKind":  "file-like",
+                      "hrefRedacted":  "genspark-reference-linkbkx-safe-metadata-only",
+                      "textRedacted":  "genspark-reference-linkbkx",
+                      "hrefSha256":  "hashbkx"
+                  },
+                  {
+                      "index":  38,
+                      "shortId":  "linkblx",
+                      "linkKind":  "file-like",
+                      "hrefRedacted":  "genspark-reference-linkblx-safe-metadata-only",
+                      "textRedacted":  "genspark-reference-linkblx",
+                      "hrefSha256":  "hashblx"
+                  },
+                  {
+                      "index":  39,
+                      "shortId":  "linkbmx",
+                      "linkKind":  "file-like",
+                      "hrefRedacted":  "genspark-reference-linkbmx-safe-metadata-only",
+                      "textRedacted":  "genspark-reference-linkbmx",
+                      "hrefSha256":  "hashbmx"
+                  },
+                  {
+                      "index":  40,
+                      "shortId":  "linkbnx",
+                      "linkKind":  "file-like",
+                      "hrefRedacted":  "genspark-reference-linkbnx-safe-metadata-only",
+                      "textRedacted":  "genspark-reference-linkbnx",
+                      "hrefSha256":  "hashbnx"
+                  },
+                  {
+                      "index":  41,
+                      "shortId":  "linkbox",
+                      "linkKind":  "file-like",
+                      "hrefRedacted":  "genspark-reference-linkbox-safe-metadata-only",
+                      "textRedacted":  "genspark-reference-linkbox",
+                      "hrefSha256":  "hashbox"
+                  },
+                  {
+                      "index":  42,
+                      "shortId":  "linkbpx",
+                      "linkKind":  "file-like",
+                      "hrefRedacted":  "genspark-reference-linkbpx-safe-metadata-only",
+                      "textRedacted":  "genspark-reference-linkbpx",
+                      "hrefSha256":  "hashbpx"
+                  },
+                  {
+                      "index":  43,
+                      "shortId":  "linkbqx",
+                      "linkKind":  "file-like",
+                      "hrefRedacted":  "genspark-reference-linkbqx-safe-metadata-only",
+                      "textRedacted":  "genspark-reference-linkbqx",
+                      "hrefSha256":  "hashbqx"
+                  },
+                  {
+                      "index":  44,
+                      "shortId":  "linkbrx",
+                      "linkKind":  "file-like",
+                      "hrefRedacted":  "genspark-reference-linkbrx-safe-metadata-only",
+                      "textRedacted":  "genspark-reference-linkbrx",
+                      "hrefSha256":  "hashbrx"
+                  },
+                  {
+                      "index":  45,
+                      "shortId":  "linkbsx",
+                      "linkKind":  "file-like",
+                      "hrefRedacted":  "genspark-reference-linkbsx-safe-metadata-only",
+                      "textRedacted":  "genspark-reference-linkbsx",
+                      "hrefSha256":  "hashbsx"
+                  },
+                  {
+                      "index":  46,
+                      "shortId":  "linkbtx",
+                      "linkKind":  "file-like",
+                      "hrefRedacted":  "genspark-reference-linkbtx-safe-metadata-only",
+                      "textRedacted":  "genspark-reference-linkbtx",
+                      "hrefSha256":  "hashbtx"
+                  },
+                  {
+                      "index":  47,
+                      "shortId":  "linkbux",
+                      "linkKind":  "file-like",
+                      "hrefRedacted":  "genspark-reference-linkbux-safe-metadata-only",
+                      "textRedacted":  "genspark-reference-linkbux",
+                      "hrefSha256":  "hashbux"
+                  },
+                  {
+                      "index":  48,
+                      "shortId":  "linkbvx",
+                      "linkKind":  "file-like",
+                      "hrefRedacted":  "genspark-reference-linkbvx-safe-metadata-only",
+                      "textRedacted":  "genspark-reference-linkbvx",
+                      "hrefSha256":  "hashbvx"
+                  },
+                  {
+                      "index":  49,
+                      "shortId":  "linkbwx",
+                      "linkKind":  "file-like",
+                      "hrefRedacted":  "genspark-reference-linkbwx-safe-metadata-only",
+                      "textRedacted":  "genspark-reference-linkbwx",
+                      "hrefSha256":  "hashbwx"
+                  },
+                  {
+                      "index":  50,
+                      "shortId":  "linkbxx",
+                      "linkKind":  "file-like",
+                      "hrefRedacted":  "genspark-reference-linkbxx-safe-metadata-only",
+                      "textRedacted":  "genspark-reference-linkbxx",
+                      "hrefSha256":  "hashbxx"
+                  },
+                  {
+                      "index":  51,
+                      "shortId":  "linkbyx",
+                      "linkKind":  "file-like",
+                      "hrefRedacted":  "genspark-reference-linkbyx-safe-metadata-only",
+                      "textRedacted":  "genspark-reference-linkbyx",
+                      "hrefSha256":  "hashbyx"
+                  },
+                  {
+                      "index":  52,
+                      "shortId":  "linkbzx",
+                      "linkKind":  "file-like",
+                      "hrefRedacted":  "genspark-reference-linkbzx-safe-metadata-only",
+                      "textRedacted":  "genspark-reference-linkbzx",
+                      "hrefSha256":  "hashbzx"
+                  },
+                  {
+                      "index":  53,
+                      "shortId":  "linkcax",
+                      "linkKind":  "file-like",
+                      "hrefRedacted":  "genspark-reference-linkcax-safe-metadata-only",
+                      "textRedacted":  "genspark-reference-linkcax",
+                      "hrefSha256":  "hashcax"
+                  },
+                  {
+                      "index":  54,
+                      "shortId":  "linkcbx",
+                      "linkKind":  "file-like",
+                      "hrefRedacted":  "genspark-reference-linkcbx-safe-metadata-only",
+                      "textRedacted":  "genspark-reference-linkcbx",
+                      "hrefSha256":  "hashcbx"
+                  },
+                  {
+                      "index":  55,
+                      "shortId":  "linkccx",
+                      "linkKind":  "file-like",
+                      "hrefRedacted":  "genspark-reference-linkccx-safe-metadata-only",
+                      "textRedacted":  "genspark-reference-linkccx",
+                      "hrefSha256":  "hashccx"
+                  },
+                  {
+                      "index":  56,
+                      "shortId":  "linkcdx",
+                      "linkKind":  "file-like",
+                      "hrefRedacted":  "genspark-reference-linkcdx-safe-metadata-only",
+                      "textRedacted":  "genspark-reference-linkcdx",
+                      "hrefSha256":  "hashaax"
+                  },
+                  {
+                      "index":  57,
+                      "shortId":  "linkcex",
+                      "linkKind":  "file-like",
+                      "hrefRedacted":  "genspark-reference-linkcex-safe-metadata-only",
+                      "textRedacted":  "genspark-reference-linkcex",
+                      "hrefSha256":  "hashabx"
+                  },
+                  {
+                      "index":  58,
+                      "shortId":  "linkcfx",
+                      "linkKind":  "file-like",
+                      "hrefRedacted":  "genspark-reference-linkcfx-safe-metadata-only",
+                      "textRedacted":  "genspark-reference-linkcfx",
+                      "hrefSha256":  "hashacx"
+                  },
+                  {
+                      "index":  59,
+                      "shortId":  "linkcgx",
+                      "linkKind":  "file-like",
+                      "hrefRedacted":  "genspark-reference-linkcgx-safe-metadata-only",
+                      "textRedacted":  "genspark-reference-linkcgx",
+                      "hrefSha256":  "hashadx"
+                  },
+                  {
+                      "index":  60,
+                      "shortId":  "linkchx",
+                      "linkKind":  "file-like",
+                      "hrefRedacted":  "genspark-reference-linkchx-safe-metadata-only",
+                      "textRedacted":  "genspark-reference-linkchx",
+                      "hrefSha256":  "hashaex"
+                  },
+                  {
+                      "index":  61,
+                      "shortId":  "linkcix",
+                      "linkKind":  "file-like",
+                      "hrefRedacted":  "genspark-reference-linkcix-safe-metadata-only",
+                      "textRedacted":  "genspark-reference-linkcix",
+                      "hrefSha256":  "hashafx"
+                  },
+                  {
+                      "index":  62,
+                      "shortId":  "linkcjx",
+                      "linkKind":  "file-like",
+                      "hrefRedacted":  "genspark-reference-linkcjx-safe-metadata-only",
+                      "textRedacted":  "genspark-reference-linkcjx",
+                      "hrefSha256":  "hashagx"
+                  },
+                  {
+                      "index":  63,
+                      "shortId":  "linkckx",
+                      "linkKind":  "non-file-navigation",
+                      "hrefRedacted":  "genspark-reference-linkckx-safe-metadata-only",
+                      "textRedacted":  "genspark-reference-linkckx",
+                      "hrefSha256":  "hashahx"
+                  },
+                  {
+                      "index":  64,
+                      "shortId":  "linkclx",
+                      "linkKind":  "non-file-navigation",
+                      "hrefRedacted":  "genspark-reference-linkclx-safe-metadata-only",
+                      "textRedacted":  "genspark-reference-linkclx",
+                      "hrefSha256":  "hashaix"
+                  }
+              ],
+    "counts":  {
+                   "totalLinks":  64,
+                   "activeLinks":  14,
+                   "expiredLinks":  41,
+                   "downloadableLinks":  0,
+                   "fileLikeLinks":  62,
+                   "uniqueFileLikeLinks":  55,
+                   "totalLinksObserved":  64,
+                   "fileLikeLinksObserved":  62,
+                   "uniqueFileLikeHrefs":  55,
+                   "credentialQueryRemovedLinks":  21,
+                   "rows":  64
+               },
+    "schema":  "safe_link_manifest_count_compatible"
+}

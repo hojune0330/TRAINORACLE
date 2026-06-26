@@ -22,6 +22,11 @@ This registry records the current TrainOracle SPEC layer added to the `hojune033
 It is not a product rule definition, not runtime evidence, and not canonical promotion.
 
 For the current continuation snapshot after this index, read [`SPEC_WORK_STATUS.md`](./SPEC_WORK_STATUS.md).
+For a human-readable map of all existing, reconstructed, legacy, design, and planned documents, read [`SPEC_DOCUMENTATION_REPORT.md`](./SPEC_DOCUMENTATION_REPORT.md).
+For the next count-safe target patch sequence, read [`SPEC_TARGET_PATCH_MATRIX.md`](./SPEC_TARGET_PATCH_MATRIX.md).
+For the Wave 1 Physio Source Trust target patch result, read [`SPEC_WAVE1_PHYSIO_PATCH_REPORT.md`](./SPEC_WAVE1_PHYSIO_PATCH_REPORT.md).
+For SPEC-to-legacy continuity and daily-log productization planning, read [`SPEC_LEGACY_ALIGNMENT_AND_DAILY_LOG_PLAN.md`](./SPEC_LEGACY_ALIGNMENT_AND_DAILY_LOG_PLAN.md).
+For file-existence and chapter/title disambiguation rules, read [`SPEC_FILE_TRUTH_GUARD.md`](./SPEC_FILE_TRUTH_GUARD.md).
 
 The highest-priority operating rule remains:
 
@@ -40,7 +45,7 @@ The highest-priority operating rule remains:
 | `specs/active/` | Current active SPEC candidates copied from the verified local source package | DRAFT_FOR_REVIEW / source status preserved in each file |
 | `specs/test-packages/` | Candidate local test packages | TEST_PACKAGE / not runtime evidence |
 | `specs/legacy-reference/` | Legacy and reference documents | REFERENCE_ONLY |
-| `specs/reconstruct/` | Placeholder for missing or reconstructed required contracts | SOURCE_NOT_VERIFIED / RECONSTRUCT_IF_ABSENT |
+| `specs/reconstruct/` | Missing or reconstructed required contracts | SOURCE_NOT_VERIFIED / RECONSTRUCTED_DRAFT_FOR_REVIEW |
 | `.omo/` | Codex handoff, evidence, plans, and readiness reports | PROCESS_EVIDENCE |
 
 ---
@@ -86,14 +91,15 @@ These files must not be deleted, but they do not directly replace the current SP
 
 ---
 
-## 6. Missing Or Source-Not-Verified Required Contracts
+## 6. Reconstructed Or Source-Not-Verified Required Contracts
 
-These files were not found in the searched local source package and workspace at the time of this registry.
+This table records exact repository file state. Text references, chapter titles, and status rows do not count as file existence.
 
 | Required file | Expected repository area | Status | Required treatment |
 |---|---|---|---|
-| `RULE_VALIDATION_ENGINE_CONTRACT.md` | `specs/reconstruct/` | MISSING_OR_SOURCE_NOT_VERIFIED | Search local first; if absent, reconstruct as `RECONSTRUCTED_DRAFT_FOR_REVIEW` |
-| `PLAN_SAFETY_GATE_SPEC.md` | `specs/reconstruct/` | MISSING_OR_SOURCE_NOT_VERIFIED | Search local first; if absent, reconstruct as `RECONSTRUCTED_DRAFT_FOR_REVIEW` |
+| `RULE_VALIDATION_ENGINE_CONTRACT.md` | `specs/reconstruct/RULE_VALIDATION_ENGINE_CONTRACT.md` | RECONSTRUCTED_DRAFT_FOR_REVIEW | Reconstructed draft only; not original restored, not canonical, not runtime evidence |
+| `PLAN_SAFETY_GATE_SPEC.md` | `specs/reconstruct/PLAN_SAFETY_GATE_SPEC.md` | RECONSTRUCTED_DRAFT_FOR_REVIEW | Reconstructed draft only; not original restored, not canonical, not runtime evidence |
+| `DAILY_LOG_AND_CHECKIN_SPEC.md` | `specs/reconstruct/DAILY_LOG_AND_CHECKIN_SPEC.md` | RECONSTRUCTED_DRAFT_FOR_REVIEW | Reconstructed draft only; not original restored, not canonical, not runtime evidence |
 | `COACH_RATIFICATION_SAFETY_DEFAULTS_2026_06_04_001` | `specs/reconstruct/` or evidence area | MISSING_OR_SOURCE_NOT_VERIFIED | Do not claim ratification found until local evidence exists |
 
 ---
@@ -131,12 +137,14 @@ Bare D-rule references are forbidden in new SPEC work.
 ## 9. Next Work Order
 
 1. Re-open target files in this repository before making claims about file status, issue counts, or blockers.
-2. Reconstruct `RULE_VALIDATION_ENGINE_CONTRACT.md` if still absent after final local search.
-3. Reconstruct `PLAN_SAFETY_GATE_SPEC.md` if still absent after final local search.
-4. Recheck `PLAN_GENERATOR_SPEC.md` open issue table from the file itself.
-5. Patch physio source consumption only after opening `PLAN_GENERATOR_SPEC.md`, `APP_IMPLEMENTATION_BRIDGE.md`, and `ATHLETE_PROFILE_SPEC.md`.
-6. Obtain actual D9 evaluator runtime output before closing RVE or Plan Generator safety-gate binding issues.
-7. Continue productization specs only after the safety core chain is stable.
+2. Review `SPEC_TARGET_PATCH_MATRIX.md` before any target patch; it records the next source-to-target order and the non-closure conditions.
+3. Review `specs/reconstruct/RULE_VALIDATION_ENGINE_CONTRACT.md` as a reconstructed draft; do not treat it as an original or accepted contract yet.
+4. Review `specs/reconstruct/PLAN_SAFETY_GATE_SPEC.md` as a reconstructed draft; do not treat it as an original or accepted contract yet.
+5. Review `specs/reconstruct/DAILY_LOG_AND_CHECKIN_SPEC.md` as a reconstructed draft; do not treat it as an original or accepted contract yet.
+6. Recheck `PLAN_GENERATOR_SPEC.md` open issue table from the file itself before any target patch.
+7. Review the Wave 1 physio source consumption target patches in `PLAN_GENERATOR_SPEC.md`, `APP_IMPLEMENTATION_BRIDGE.md`, and `ATHLETE_PROFILE_SPEC.md`; do not close related issues before source acceptance and target recount approval.
+8. Obtain actual D9 evaluator runtime output before closing RVE or Plan Generator safety-gate binding issues.
+9. Draft Daily Brief / AI Inbox and Analysis visualization contracts before implementation touches those product surfaces.
 
 ---
 
@@ -147,6 +155,11 @@ Current handoff, inventory, and readiness evidence lives under `.omo/`.
 Important starting points:
 
 - `SPEC_WORK_STATUS.md`
+- `SPEC_DOCUMENTATION_REPORT.md`
+- `SPEC_TARGET_PATCH_MATRIX.md`
+- `SPEC_WAVE1_PHYSIO_PATCH_REPORT.md`
+- `SPEC_FILE_TRUTH_GUARD.md`
+- `SPEC_LEGACY_ALIGNMENT_AND_DAILY_LOG_PLAN.md`
 - `.omo/drafts/train-oracle-spec-handoff.md`
 - `.omo/plans/trainoracle-main-handoff-cleanup.md`
 - `.omo/evidence/trainoracle-confirmed-inventory.md`

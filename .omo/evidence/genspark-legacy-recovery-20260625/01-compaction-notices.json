@@ -1,0 +1,12 @@
+{
+    "schema":  "safe_compaction_notice_index",
+    "status":  "available",
+    "checks":  {
+                   "compactedHistory":  "not recovered unless visible or separately exported",
+                   "expiredUnavailableLinks":  "metadata only; no file bodies claimed",
+                   "agentGeneratedReconstructions":  "reference only; not source of truth",
+                   "sensitiveSessionBoundaryExclusions":  "active; source lines excluded from handoff"
+               },
+    "noFileBodiesStored":  true,
+    "noCredentialValuesStored":  true
+}

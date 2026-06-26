@@ -1,0 +1,18 @@
+[
+    {
+        "phrase":  "Report limit: compacted history is represented by available compaction notices and recoverable transcript/body text only.",
+        "presentAsLiteralLine":  true
+    },
+    {
+        "phrase":  "Report limit: expired or unavailable links are recorded as unavailable rather than reconstructed as fetched content.",
+        "presentAsLiteralLine":  true
+    },
+    {
+        "phrase":  "Report limit: agent-generated reconstructions are labeled as reconstructions and are not substituted for unavailable source artifacts.",
+        "presentAsLiteralLine":  true
+    },
+    {
+        "phrase":  "Report limit: sensitive/session-boundary exclusions are intentionally omitted from recovered material.",
+        "presentAsLiteralLine":  true
+    }
+]

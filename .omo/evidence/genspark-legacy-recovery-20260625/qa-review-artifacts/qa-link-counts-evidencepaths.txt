@@ -1,0 +1,12 @@
+{
+    "linkCounts":  {
+                       "totalLinks":  64,
+                       "linksLength":  64,
+                       "credentialQueryRemovedLinks":  21,
+                       "derivedMarkerCountInManifest":  21,
+                       "derivedMarkerCountAllPackageText":  23
+                   },
+    "evidencePaths":  [
+
+                      ]
+}

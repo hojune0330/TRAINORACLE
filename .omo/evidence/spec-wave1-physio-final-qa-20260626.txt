@@ -1,0 +1,166 @@
+# SPEC Wave 1 Physio Final QA - 2026-06-26
+
+## Scenario
+CLI/data surface: target recount, final marker checks, stale-reference scan, forbidden overclaim scan, and diff/status review after reviewer-blocker fixes.
+
+## Reviewer blocker fix checks
+No stale future-patch or line-number patterns matched.
+SPEC_TARGET_PATCH_MATRIX.md:104:- The three target issues remain open as `PATCHED_PENDING_SOURCE_ACCEPTANCE` or equivalent addendum state.
+specs/active/PLAN_GENERATOR_SPEC.md:356:      status: PATCHED_PENDING_SOURCE_ACCEPTANCE
+specs/active/PLAN_GENERATOR_SPEC.md:480:  app_bridge_record_family: PhysioSourceTrustResultRecord
+specs/active/PLAN_GENERATOR_SPEC.md:482:  target_issue_status_after_patch: PATCHED_PENDING_SOURCE_ACCEPTANCE
+specs/active/APP_IMPLEMENTATION_BRIDGE.md:411:  status_after_patch: PATCHED_PENDING_SOURCE_ACCEPTANCE
+specs/active/APP_IMPLEMENTATION_BRIDGE.md:420:    - consentStatus
+specs/active/APP_IMPLEMENTATION_BRIDGE.md:484:      - PhysioSourceTrustResultRecord
+specs/active/APP_IMPLEMENTATION_BRIDGE.md:755:export interface PhysioSourceTrustResultRecord {
+specs/active/APP_IMPLEMENTATION_BRIDGE.md:767:  consentStatus: string;
+specs/active/APP_IMPLEMENTATION_BRIDGE.md:937:  target_patch_status: PATCHED_PENDING_SOURCE_ACCEPTANCE
+
+## Target-file recount evidence
+### PLAN_GENERATOR_SPEC.md
+44:  open_issues_total: 7
+45:  open_issues_canonical_blocking_count: 2
+891:| `OI-PG-RULE-SAFETY-GATE-BINDING-001` | P1 | YES | OPEN | Runtime binding between active `RULE_SPEC_D1_D9.D-9` state and generation block must be finalized. | Define exact bridge query and active-state interpretation. |
+892:| `OI-PG-PHYSIO-SOURCE-CONSUMPTION-001` | P1 | YES | OPEN | Target binding to `PHYSIO_SOURCE_TRUST_SPEC.md` is patched, but source acceptance and owner recount are still pending. | Review source acceptance, confirm App Bridge record binding, then recount before closure. |
+893:| `OI-PG-OUTPUT-FORMAT-BINDING-001` | P2 | NO | OPEN | Final export format is not fixed. | Decide UI/export schema later. |
+894:| `OI-PG-OPTION-RATIONALE-PRIVACY-001` | P2 | NO | OPEN | Rationale text may accidentally reveal sensitive data. | Add redaction templates before production. |
+895:| `OI-PG-COMPETITION-TAPER-POLICY-001` | P2 | NO | OPEN | Competition taper details are not fully specified. | Create taper sub-policy or competition-prep template. |
+896:| `OI-PG-MICROCYCLE-CALENDAR-MAPPING-001` | P2 | NO | OPEN | 9.5-day reference cycle to 7-day calendar output needs final mapping. | Define mapping and display policy. |
+897:| `OI-PG-AIB-V1_1-CANONICAL-PROMOTION-001` | P2 | NO | OPEN | This spec depends on APP Bridge v1.1 local baseline candidate. | Plan Generator cannot canonical-promote before APP Bridge canonical promotion. |
+1000:  expected_open_issues_total: 7
+1001:  expected_canonical_blocking_count: 2
+
+### APP_IMPLEMENTATION_BRIDGE.md
+58:open_issues_total: 12
+59:open_issues_canonical_blocking_count: 4
+919:| OI-AIB-RLS-STRATEGY-001 | P1 | true | Isolation | 실제 row-level isolation 구현 방식 확정 필요 | APP_BRIDGE_DESIGNER |
+920:| OI-AIB-RETENTION-POLICY-001 | P1 | true | Retention | profile, consent, source snapshot retention matrix 확정 필요 | COACH_HOJUNE |
+921:| OI-AIB-ENCRYPTION-KEY-MGMT-001 | P1 | true | Security | sensitive record encryption key 관리 방식 확정 필요 | APP_BRIDGE_DESIGNER |
+922:| OI-AIB-PHYSIO-SOURCE-001 | P1 | true | Physiology | physiological source trust 등급과 사용 가능 범위 확정 필요 | APP_BRIDGE_DESIGNER |
+923:| OI-AIB-DB-VENDOR-001 | P2 | false | Storage | DB vendor 결정은 별도 | IMPLEMENTATION |
+924:| OI-AIB-IDEMPOTENCY-001 | P2 | false | API | POST endpoint idempotency key 정책 상세화 필요 | IMPLEMENTATION |
+925:| OI-AIB-OBSERVABILITY-001 | P2 | false | Operations | audit와 observability 로그 분리 기준 필요 | IMPLEMENTATION |
+926:| OI-AIB-EXPORT-SCOPE-001 | P2 | false | Privacy | athlete data export 범위와 포맷 정의 필요 | APP_BRIDGE_DESIGNER |
+927:| OI-AIB-HASH-CANONICALIZATION-001 | P2 | false | Source Snapshot | source content hash canonicalization 규칙 상세화 필요 | IMPLEMENTATION |
+928:| OI-AIB-SECONDARY-GROUP-UX-001 | P2 | false | Group Access | secondary group grant의 UI 흐름은 후속 화면 SPEC에서 정의 | APP_UI |
+929:| OI-AIB-ESCALATION-LIFECYCLE-001 | P2 | false | Escalation | scoped review escalation의 상태 전이와 종결 처리 정의 필요 | APP_BRIDGE_DESIGNER |
+930:| OI-AIB-LEGAL-REVIEW-001 | P2 | false | Legal | onboarding 분리 동의·미성년 보호자 동의 흐름의 실제 법률 검토 필요 | COACH_HOJUNE |
+1033:    open_issues_total: 12
+1034:    open_issues_canonical_blocking_count: 4
+1075:  open_issues_count: 12
+1076:  canonical_blocking_count: 4
+
+### ATHLETE_PROFILE_SPEC.md
+27:open_issues_count: 11
+28:open_issues_canonical_blocking_count: 6
+317:    status: OPEN_ISSUE
+633:  - id: OI-AP-CAPABILITY-NAME-001
+640:  - id: OI-AP-CONSENT-LIFECYCLE-001
+647:  - id: OI-AP-SECONDARY-GROUP-MODEL-001
+654:  - id: OI-AP-PROFILE-RETENTION-001
+661:  - id: OI-AP-GUARDIAN-CONSENT-001
+668:  - id: OI-AP-PHYSIO-SOURCE-001
+676:  - id: OI-AP-LD-MIN-SEGMENT-DURATION-001
+685:  - id: OI-AP-CROSS-TRAINING-SPORT-ENUM-001
+692:  - id: OI-AP-CONSTRAINT-RECURRENCE-001
+699:  - id: OI-AP-SNAPSHOT-VERSIONING-001
+706:  - id: OI-AP-DISPLAY-I18N-001
+713:open_issues_count: 11
+714:open_issues_canonical_blocking_count: 6
+728:  status: OPEN
+729:  target_patch_status: PATCHED_PENDING_SOURCE_ACCEPTANCE
+730:  closure_allowed_now: false
+856:    open_issues_count: 11
+857:    open_issues_canonical_blocking_count: 6
+859:    physio_source_blocking: true
+993:  open_issues_count: 11
+994:  open_issues_canonical_blocking_count: 6
+
+## Final marker checks
+specs/active/PLAN_GENERATOR_SPEC.md => [DRAFT_COMPLETE]
+specs/active/APP_IMPLEMENTATION_BRIDGE.md => [DRAFT_COMPLETE]
+specs/active/ATHLETE_PROFILE_SPEC.md => [DRAFT_COMPLETE]
+SPEC_TARGET_PATCH_MATRIX.md => [DRAFT_COMPLETE]
+SPEC_WAVE1_PHYSIO_PATCH_REPORT.md => [DRAFT_COMPLETE]
+SPEC_WORK_STATUS.md => [DRAFT_COMPLETE]
+TRAINORACLE_SPEC_INDEX.md => [DRAFT_COMPLETE]
+SPEC_DOCUMENTATION_REPORT.md => [DRAFT_COMPLETE]
+SPEC_LEGACY_ALIGNMENT_AND_DAILY_LOG_PLAN.md => [DRAFT_COMPLETE]
+
+## Guardrail scan
+SPEC_WAVE1_PHYSIO_PATCH_REPORT.md:59:  no_runtime_evidence_claimed: true
+SPEC_WAVE1_PHYSIO_PATCH_REPORT.md:60:  no_canonical_promotion_claimed: true
+SPEC_WAVE1_PHYSIO_PATCH_REPORT.md:61:  no_physio_issue_closed_in_this_wave: true
+SPEC_WAVE1_PHYSIO_PATCH_REPORT.md:64:  raw_athlete_free_text_storage_forbidden: true
+SPEC_WAVE1_PHYSIO_PATCH_REPORT.md:65:  raw_symptom_clause_storage_forbidden: true
+specs/active/ATHLETE_PROFILE_SPEC.md:251:        good_physio_can_clear_D9: false
+specs/active/ATHLETE_PROFILE_SPEC.md:534:  mayClearD9Risk?: false;
+specs/active/ATHLETE_PROFILE_SPEC.md:730:  closure_allowed_now: false
+specs/active/APP_IMPLEMENTATION_BRIDGE.md:427:    - raw_athlete_free_text
+specs/active/APP_IMPLEMENTATION_BRIDGE.md:428:    - raw_symptom_clause
+specs/active/APP_IMPLEMENTATION_BRIDGE.md:436:    good_physio_data_can_clear_D9: false
+specs/active/APP_IMPLEMENTATION_BRIDGE.md:487:      - raw_athlete_free_text
+specs/active/APP_IMPLEMENTATION_BRIDGE.md:488:      - raw_symptom_clause
+specs/active/APP_IMPLEMENTATION_BRIDGE.md:772:  mayClearD9Risk: false;
+specs/active/APP_IMPLEMENTATION_BRIDGE.md:938:  closure_allowed_now: false
+specs/active/PLAN_GENERATOR_SPEC.md:451:    - raw_athlete_free_text
+specs/active/PLAN_GENERATOR_SPEC.md:499:    - store_raw_athlete_free_text
+specs/active/PLAN_GENERATOR_SPEC.md:500:    - store_raw_symptom_clause
+
+## Forbidden overclaim scan
+No forbidden overclaim patterns matched.
+
+## Diff stat
+ README.md                                 |   5 +-
+ SPEC_WORK_STATUS.md                       |  63 ++++++++++++-----
+ TRAINORACLE_SPEC_INDEX.md                 |  35 +++++++---
+ specs/README.md                           |   2 +
+ specs/active/APP_IMPLEMENTATION_BRIDGE.md | 109 +++++++++++++++++++++++++++++-
+ specs/active/ATHLETE_PROFILE_SPEC.md      |  40 +++++++++--
+ specs/active/PLAN_GENERATOR_SPEC.md       |  72 +++++++++++++++++++-
+ specs/reconstruct/README.md               |  36 +++++++---
+ 8 files changed, 317 insertions(+), 45 deletions(-)
+
+## Git status
+ M README.md
+ M SPEC_WORK_STATUS.md
+ M TRAINORACLE_SPEC_INDEX.md
+ M specs/README.md
+ M specs/active/APP_IMPLEMENTATION_BRIDGE.md
+ M specs/active/ATHLETE_PROFILE_SPEC.md
+ M specs/active/PLAN_GENERATOR_SPEC.md
+ M specs/reconstruct/README.md
+?? .omo/evidence/genspark-legacy-recovery-20260625-code-review.md
+?? .omo/evidence/genspark-legacy-recovery-20260625-final-qa.ps1
+?? .omo/evidence/genspark-legacy-recovery-20260625-gate-review.md
+?? .omo/evidence/genspark-legacy-recovery-20260625-qa-review-raw.json
+?? .omo/evidence/genspark-legacy-recovery-20260625-qa-review.md
+?? .omo/evidence/genspark-legacy-recovery-20260625/
+?? .omo/evidence/genspark-spec-readiness-validation-20260626.md
+?? .omo/evidence/spec-continuation-daily-log-and-doc-report-20260626-code-review.md
+?? .omo/evidence/spec-continuation-daily-log-and-doc-report-20260626/
+?? .omo/evidence/spec-continuation-phantom-doc-guard-20260626/
+?? .omo/evidence/spec-continuation-plan-safety-gate-20260626-code-review.md
+?? .omo/evidence/spec-continuation-plan-safety-gate-20260626/
+?? .omo/evidence/spec-target-patch-matrix-20260626.md
+?? .omo/evidence/spec-wave1-physio-code-review.md
+?? .omo/evidence/spec-wave1-physio-context-review.md
+?? .omo/evidence/spec-wave1-physio-final-qa-20260626.txt
+?? .omo/evidence/spec-wave1-physio-gate-review.md
+?? .omo/evidence/spec-wave1-physio-green-20260626.txt
+?? .omo/evidence/spec-wave1-physio-readonly-qa-20260626/
+?? .omo/evidence/spec-wave1-physio-red-20260626.txt
+?? .omo/evidence/spec-wave1-physio-security-review-code-review.md
+?? .omo/evidence/spec-wave1-physio-security-review.md
+?? .omo/evidence/trainoracle-spec-documents-code-review.md
+?? .omo/plans/genspark-legacy-recovery-run.md
+?? SPEC_DOCUMENTATION_REPORT.md
+?? SPEC_FILE_TRUTH_GUARD.md
+?? SPEC_LEGACY_ALIGNMENT_AND_DAILY_LOG_PLAN.md
+?? SPEC_TARGET_PATCH_MATRIX.md
+?? SPEC_WAVE1_PHYSIO_PATCH_REPORT.md
+?? specs/reconstruct/DAILY_LOG_AND_CHECKIN_SPEC.md
+?? specs/reconstruct/PLAN_SAFETY_GATE_SPEC.md
+?? specs/reconstruct/RULE_VALIDATION_ENGINE_CONTRACT.md
+
+PASS: reviewer blocker fixes applied; no stale future-patch/line-number patterns; target files show physio patch state; issues remain open; counts remain target-owned; markers are clean; no forbidden overclaim matched. cleanup: no runtime resources spawned.

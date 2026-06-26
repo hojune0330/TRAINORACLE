@@ -1,12 +1,18 @@
 # SPEC_WORK_STATUS.md
 
-Updated: 2026-06-25 Asia/Seoul
+Updated: 2026-06-26 Asia/Seoul
 status: DRAFT_HANDOFF_STATUS
 owner: COACH_HOJUNE
 
 This is the current GitHub-main handoff status for continuing TrainOracle SPEC work.
 
 It is not a product rule definition, not canonical promotion, not runtime evidence, and not issue closure.
+
+For SPEC-to-legacy continuity, daily-log service flow, and later productization document order, read [`SPEC_LEGACY_ALIGNMENT_AND_DAILY_LOG_PLAN.md`](./SPEC_LEGACY_ALIGNMENT_AND_DAILY_LOG_PLAN.md).
+For an easy document-by-document report, read [`SPEC_DOCUMENTATION_REPORT.md`](./SPEC_DOCUMENTATION_REPORT.md).
+For the next source-to-target patch order and non-closure conditions, read [`SPEC_TARGET_PATCH_MATRIX.md`](./SPEC_TARGET_PATCH_MATRIX.md).
+For the Wave 1 Physio Source Trust target patch result, read [`SPEC_WAVE1_PHYSIO_PATCH_REPORT.md`](./SPEC_WAVE1_PHYSIO_PATCH_REPORT.md).
+For the rule that prevents chapter/title/status text from being treated as file existence, read [`SPEC_FILE_TRUTH_GUARD.md`](./SPEC_FILE_TRUTH_GUARD.md).
 
 ## Current Phase
 
@@ -19,6 +25,12 @@ Current focus:
 - prevent raw athlete free-text, raw symptom clauses, and private notes from entering audit/storage contracts
 - keep Template Library and Physio Source Trust consumable by Plan Generator without clearing D9 risk
 - reconstruct missing core contracts only after local/repo existence checks
+
+Current Wave 1 physio patch state:
+
+- `PLAN_GENERATOR_SPEC.md`, `APP_IMPLEMENTATION_BRIDGE.md`, and `ATHLETE_PROFILE_SPEC.md` now have target-local Physio Source Trust bindings.
+- The related target issues remain OPEN as patched-pending-source-acceptance work; this is not issue closure.
+- Counts remain owned by each target file and must be recounted from those files before any closure.
 
 Not yet:
 
@@ -54,34 +66,42 @@ Legacy references:
 Missing/reconstruct area:
 
 - [`specs/reconstruct/README.md`](./specs/reconstruct/README.md)
+- [`specs/reconstruct/RULE_VALIDATION_ENGINE_CONTRACT.md`](./specs/reconstruct/RULE_VALIDATION_ENGINE_CONTRACT.md) (`RECONSTRUCTED_DRAFT_FOR_REVIEW`; not original restored)
+- [`specs/reconstruct/PLAN_SAFETY_GATE_SPEC.md`](./specs/reconstruct/PLAN_SAFETY_GATE_SPEC.md) (`RECONSTRUCTED_DRAFT_FOR_REVIEW`; not original restored)
+- [`specs/reconstruct/DAILY_LOG_AND_CHECKIN_SPEC.md`](./specs/reconstruct/DAILY_LOG_AND_CHECKIN_SPEC.md) (`RECONSTRUCTED_DRAFT_FOR_REVIEW`; not original restored)
 
-## Missing Or Source-Not-Verified Contracts
+## Reconstructed Or Source-Not-Verified Contracts
 
-These required contracts are not present as approved source files in this repo at this checkpoint:
+These required contracts are not all present as approved source files in this repo at this checkpoint:
 
-- `RULE_VALIDATION_ENGINE_CONTRACT.md`
-- `PLAN_SAFETY_GATE_SPEC.md`
-- `COACH_RATIFICATION_SAFETY_DEFAULTS_2026_06_04_001`
+| Required item | Current exact repository state |
+|---|---|
+| `RULE_VALIDATION_ENGINE_CONTRACT.md` | `specs/reconstruct/RULE_VALIDATION_ENGINE_CONTRACT.md` exists as `RECONSTRUCTED_DRAFT_FOR_REVIEW`; not original restored, not canonical, not runtime evidence |
+| `PLAN_SAFETY_GATE_SPEC.md` | `specs/reconstruct/PLAN_SAFETY_GATE_SPEC.md` exists as `RECONSTRUCTED_DRAFT_FOR_REVIEW`; not original restored, not canonical, not runtime evidence |
+| `DAILY_LOG_AND_CHECKIN_SPEC.md` | `specs/reconstruct/DAILY_LOG_AND_CHECKIN_SPEC.md` exists as `RECONSTRUCTED_DRAFT_FOR_REVIEW`; not original restored, not canonical, not runtime evidence |
+| `COACH_RATIFICATION_SAFETY_DEFAULTS_2026_06_04_001` | Not found as approved local evidence |
 
-Do not claim any of these exists unless a file is found locally or committed in the repo.
+Do not claim a document exists from a chapter title, H1, table row, status label, or conversation summary. Exact local filename search is required.
 
 `11_API_AND_ENGINE_CONTRACTS.md` is a legacy Phase A-F output contract. It is not `RULE_VALIDATION_ENGINE_CONTRACT.md`.
 
 ## Next SPEC Production Order
 
 1. Re-open the target repository files before making claims about file status, issue counts, blockers, or runtime evidence.
-2. Search locally/repo-wide for `RULE_VALIDATION_ENGINE_CONTRACT.md`.
-3. If still absent, reconstruct `RULE_VALIDATION_ENGINE_CONTRACT.md` as `RECONSTRUCTED_DRAFT_FOR_REVIEW`.
-4. Search locally/repo-wide for `PLAN_SAFETY_GATE_SPEC.md`.
-5. If still absent, reconstruct `PLAN_SAFETY_GATE_SPEC.md` as `RECONSTRUCTED_DRAFT_FOR_REVIEW`.
-6. Only after target files exist, patch physio source consumption into `PLAN_GENERATOR_SPEC.md`, `APP_IMPLEMENTATION_BRIDGE.md`, and `ATHLETE_PROFILE_SPEC.md` with target open-issue table recounts.
+2. Review `SPEC_TARGET_PATCH_MATRIX.md` to choose the next safe target patch wave; do not treat the matrix as issue closure or runtime evidence.
+3. Review `specs/reconstruct/RULE_VALIDATION_ENGINE_CONTRACT.md` as a reconstructed draft and patch only with direct file evidence.
+4. Review `specs/reconstruct/PLAN_SAFETY_GATE_SPEC.md` as a reconstructed draft and patch only with direct file evidence.
+5. Review `specs/reconstruct/DAILY_LOG_AND_CHECKIN_SPEC.md` as a reconstructed draft and patch only with direct file evidence.
+6. Review the Wave 1 physio target patches in `PLAN_GENERATOR_SPEC.md`, `APP_IMPLEMENTATION_BRIDGE.md`, and `ATHLETE_PROFILE_SPEC.md`; do not close their physio issues until source acceptance and target recount approval exist.
 7. Obtain actual D9 evaluator runtime output before closing RVE or Plan Generator safety-gate binding issues.
-8. Continue productization specs only after the safety core chain is stable.
+8. Draft Daily Brief / AI Inbox and Analysis visualization contracts before implementation touches those product surfaces.
+9. Continue productization specs only after the safety core chain is stable.
 
 ## Hard Guardrails
 
 - Local/repo files are truth for file existence and repository state.
 - Conversation ledgers, chat summaries, and belief files are reference only.
+- H1 headings, chapter titles, table rows, and status labels are not file-existence evidence.
 - Do not copy absolute downstream counts from memory.
 - Do not close issues without required target patches and runtime evidence.
 - Do not redefine `RULE_SPEC_D1_D9.D-*` semantics outside `RULE_SPEC_D1_D9.md`.
@@ -99,12 +119,18 @@ Do not claim any of these exists unless a file is found locally or committed in 
 Candidate-only evidence:
 
 - [`specs/test-packages/D9_SAFETY_EVALUATOR_V2_1_1_TEST_PACKAGE.md`](./specs/test-packages/D9_SAFETY_EVALUATOR_V2_1_1_TEST_PACKAGE.md)
+- [`SPEC_LEGACY_ALIGNMENT_AND_DAILY_LOG_PLAN.md`](./SPEC_LEGACY_ALIGNMENT_AND_DAILY_LOG_PLAN.md)
 
 Process evidence and handoff reports:
 
 - [`.omo/evidence/trainoracle-confirmed-inventory.md`](./.omo/evidence/trainoracle-confirmed-inventory.md)
 - [`.omo/evidence/trainoracle-missing-quarantine.md`](./.omo/evidence/trainoracle-missing-quarantine.md)
 - [`.omo/evidence/trainoracle-remaining-work-flow-reference.md`](./.omo/evidence/trainoracle-remaining-work-flow-reference.md)
+- [`.omo/evidence/genspark-spec-readiness-validation-20260626.md`](./.omo/evidence/genspark-spec-readiness-validation-20260626.md)
+- [`.omo/evidence/spec-continuation-phantom-doc-guard-20260626/c001-red-filesystem-truth.md`](./.omo/evidence/spec-continuation-phantom-doc-guard-20260626/c001-red-filesystem-truth.md)
+- [`.omo/evidence/spec-continuation-plan-safety-gate-20260626/c001-red-filesystem-truth.md`](./.omo/evidence/spec-continuation-plan-safety-gate-20260626/c001-red-filesystem-truth.md)
+- [`.omo/evidence/spec-continuation-daily-log-and-doc-report-20260626/c001-red-daily-log-file-truth.md`](./.omo/evidence/spec-continuation-daily-log-and-doc-report-20260626/c001-red-daily-log-file-truth.md)
+- [`.omo/evidence/spec-target-patch-matrix-20260626.md`](./.omo/evidence/spec-target-patch-matrix-20260626.md)
 - [`.omo/reports/trainoracle-reconstruction-readiness.md`](./.omo/reports/trainoracle-reconstruction-readiness.md)
 - [`.omo/reports/github-main-publish-complete.md`](./.omo/reports/github-main-publish-complete.md)
 
@@ -121,8 +147,13 @@ Markdown self-checks and documentation scans are not D9 evaluator runtime eviden
 
 1. [`TRAINORACLE_SPEC_INDEX.md`](./TRAINORACLE_SPEC_INDEX.md)
 2. This file
-3. [`specs/reconstruct/README.md`](./specs/reconstruct/README.md)
-4. [`.omo/reports/trainoracle-reconstruction-readiness.md`](./.omo/reports/trainoracle-reconstruction-readiness.md)
-5. [`.omo/evidence/trainoracle-remaining-work-flow-reference.md`](./.omo/evidence/trainoracle-remaining-work-flow-reference.md)
+3. [`SPEC_DOCUMENTATION_REPORT.md`](./SPEC_DOCUMENTATION_REPORT.md)
+4. [`SPEC_TARGET_PATCH_MATRIX.md`](./SPEC_TARGET_PATCH_MATRIX.md)
+5. [`SPEC_WAVE1_PHYSIO_PATCH_REPORT.md`](./SPEC_WAVE1_PHYSIO_PATCH_REPORT.md)
+6. [`SPEC_FILE_TRUTH_GUARD.md`](./SPEC_FILE_TRUTH_GUARD.md)
+7. [`SPEC_LEGACY_ALIGNMENT_AND_DAILY_LOG_PLAN.md`](./SPEC_LEGACY_ALIGNMENT_AND_DAILY_LOG_PLAN.md)
+8. [`specs/reconstruct/README.md`](./specs/reconstruct/README.md)
+9. [`.omo/reports/trainoracle-reconstruction-readiness.md`](./.omo/reports/trainoracle-reconstruction-readiness.md)
+10. [`.omo/evidence/trainoracle-remaining-work-flow-reference.md`](./.omo/evidence/trainoracle-remaining-work-flow-reference.md)
 
 [DRAFT_COMPLETE]

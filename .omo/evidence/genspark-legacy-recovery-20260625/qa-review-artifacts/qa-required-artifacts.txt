@@ -1,0 +1,128 @@
+[
+    {
+        "name":  "01-body-text.txt",
+        "path":  "D:\\admin\\Documents\\트레인 오라클 진도\\.omo\\evidence\\genspark-legacy-recovery-20260625\\01-body-text.txt",
+        "exists":  true,
+        "length":  410076,
+        "nonEmpty":  true
+    },
+    {
+        "name":  "01-browser-screenshot.png",
+        "path":  "D:\\admin\\Documents\\트레인 오라클 진도\\.omo\\evidence\\genspark-legacy-recovery-20260625\\01-browser-screenshot.png",
+        "exists":  true,
+        "length":  12505,
+        "nonEmpty":  true
+    },
+    {
+        "name":  "01-browser-state.md",
+        "path":  "D:\\admin\\Documents\\트레인 오라클 진도\\.omo\\evidence\\genspark-legacy-recovery-20260625\\01-browser-state.md",
+        "exists":  true,
+        "length":  737,
+        "nonEmpty":  true
+    },
+    {
+        "name":  "01-compaction-notices.json",
+        "path":  "D:\\admin\\Documents\\트레인 오라클 진도\\.omo\\evidence\\genspark-legacy-recovery-20260625\\01-compaction-notices.json",
+        "exists":  true,
+        "length":  578,
+        "nonEmpty":  true
+    },
+    {
+        "name":  "01-link-manifest.json",
+        "path":  "D:\\admin\\Documents\\트레인 오라클 진도\\.omo\\evidence\\genspark-legacy-recovery-20260625\\01-link-manifest.json",
+        "exists":  true,
+        "length":  25487,
+        "nonEmpty":  true
+    },
+    {
+        "name":  "01-redacted-dom-snapshot.txt",
+        "path":  "D:\\admin\\Documents\\트레인 오라클 진도\\.omo\\evidence\\genspark-legacy-recovery-20260625\\01-redacted-dom-snapshot.txt",
+        "exists":  true,
+        "length":  410,
+        "nonEmpty":  true
+    },
+    {
+        "name":  "02-agent-response.md",
+        "path":  "D:\\admin\\Documents\\트레인 오라클 진도\\.omo\\evidence\\genspark-legacy-recovery-20260625\\02-agent-response.md",
+        "exists":  true,
+        "length":  668,
+        "nonEmpty":  true
+    },
+    {
+        "name":  "02-agent-response.png",
+        "path":  "D:\\admin\\Documents\\트레인 오라클 진도\\.omo\\evidence\\genspark-legacy-recovery-20260625\\02-agent-response.png",
+        "exists":  true,
+        "length":  12180,
+        "nonEmpty":  true
+    },
+    {
+        "name":  "02-download-attempts.json",
+        "path":  "D:\\admin\\Documents\\트레인 오라클 진도\\.omo\\evidence\\genspark-legacy-recovery-20260625\\02-download-attempts.json",
+        "exists":  true,
+        "length":  18614,
+        "nonEmpty":  true
+    },
+    {
+        "name":  "02-recovered-material-index.json",
+        "path":  "D:\\admin\\Documents\\트레인 오라클 진도\\.omo\\evidence\\genspark-legacy-recovery-20260625\\02-recovered-material-index.json",
+        "exists":  true,
+        "length":  2345,
+        "nonEmpty":  true
+    },
+    {
+        "name":  "02-request-prompt.md",
+        "path":  "D:\\admin\\Documents\\트레인 오라클 진도\\.omo\\evidence\\genspark-legacy-recovery-20260625\\02-request-prompt.md",
+        "exists":  true,
+        "length":  418,
+        "nonEmpty":  true
+    },
+    {
+        "name":  "03-adversarial-compaction-expiry.md",
+        "path":  "D:\\admin\\Documents\\트레인 오라클 진도\\.omo\\evidence\\genspark-legacy-recovery-20260625\\03-adversarial-compaction-expiry.md",
+        "exists":  true,
+        "length":  788,
+        "nonEmpty":  true
+    },
+    {
+        "name":  "03-private-name-scan.txt",
+        "path":  "D:\\admin\\Documents\\트레인 오라클 진도\\.omo\\evidence\\genspark-legacy-recovery-20260625\\03-private-name-scan.txt",
+        "exists":  true,
+        "length":  170,
+        "nonEmpty":  true
+    },
+    {
+        "name":  "03-recovery-report.md",
+        "path":  "D:\\admin\\Documents\\트레인 오라클 진도\\.omo\\evidence\\genspark-legacy-recovery-20260625\\03-recovery-report.md",
+        "exists":  true,
+        "length":  1461,
+        "nonEmpty":  true
+    },
+    {
+        "name":  "03-review-coverage.md",
+        "path":  "D:\\admin\\Documents\\트레인 오라클 진도\\.omo\\evidence\\genspark-legacy-recovery-20260625\\03-review-coverage.md",
+        "exists":  true,
+        "length":  824,
+        "nonEmpty":  true
+    },
+    {
+        "name":  "03-sensitive-boundary-audit-scan.txt",
+        "path":  "D:\\admin\\Documents\\트레인 오라클 진도\\.omo\\evidence\\genspark-legacy-recovery-20260625\\03-sensitive-boundary-audit-scan.txt",
+        "exists":  true,
+        "length":  203,
+        "nonEmpty":  true
+    },
+    {
+        "name":  "03-sensitive-boundary-audit.txt",
+        "path":  "D:\\admin\\Documents\\트레인 오라클 진도\\.omo\\evidence\\genspark-legacy-recovery-20260625\\03-sensitive-boundary-audit.txt",
+        "exists":  true,
+        "length":  280,
+        "nonEmpty":  true
+    },
+    {
+        "name":  "task-3-required-artifacts.txt",
+        "path":  "D:\\admin\\Documents\\트레인 오라클 진도\\.omo\\evidence\\genspark-legacy-recovery-20260625\\task-3-required-artifacts.txt",
+        "exists":  true,
+        "length":  545,
+        "nonEmpty":  true
+    }
+]

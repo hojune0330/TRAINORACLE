@@ -1,0 +1,396 @@
+{
+    "schema":  "safe_access_attempt_metadata",
+    "summary":  {
+                    "uniqueFileLikeLinks":  55,
+                    "accessibleHeadOnly":  14,
+                    "blockedOrUnavailable":  41,
+                    "fileBodiesStored":  0
+                },
+    "attempts":  [
+                     {
+                         "id":  "linkaa",
+                         "terminalStatus":  "accessible-head-metadata-only",
+                         "bodyStored":  false,
+                         "secretMaterialStored":  false,
+                         "sourceClaim":  "metadata-only"
+                     },
+                     {
+                         "id":  "linkbb",
+                         "terminalStatus":  "accessible-head-metadata-only",
+                         "bodyStored":  false,
+                         "secretMaterialStored":  false,
+                         "sourceClaim":  "metadata-only"
+                     },
+                     {
+                         "id":  "linkcc",
+                         "terminalStatus":  "accessible-head-metadata-only",
+                         "bodyStored":  false,
+                         "secretMaterialStored":  false,
+                         "sourceClaim":  "metadata-only"
+                     },
+                     {
+                         "id":  "linkdd",
+                         "terminalStatus":  "accessible-head-metadata-only",
+                         "bodyStored":  false,
+                         "secretMaterialStored":  false,
+                         "sourceClaim":  "metadata-only"
+                     },
+                     {
+                         "id":  "linkee",
+                         "terminalStatus":  "accessible-head-metadata-only",
+                         "bodyStored":  false,
+                         "secretMaterialStored":  false,
+                         "sourceClaim":  "metadata-only"
+                     },
+                     {
+                         "id":  "linkff",
+                         "terminalStatus":  "accessible-head-metadata-only",
+                         "bodyStored":  false,
+                         "secretMaterialStored":  false,
+                         "sourceClaim":  "metadata-only"
+                     },
+                     {
+                         "id":  "linkgg",
+                         "terminalStatus":  "accessible-head-metadata-only",
+                         "bodyStored":  false,
+                         "secretMaterialStored":  false,
+                         "sourceClaim":  "metadata-only"
+                     },
+                     {
+                         "id":  "linkhh",
+                         "terminalStatus":  "accessible-head-metadata-only",
+                         "bodyStored":  false,
+                         "secretMaterialStored":  false,
+                         "sourceClaim":  "metadata-only"
+                     },
+                     {
+                         "id":  "linkii",
+                         "terminalStatus":  "accessible-head-metadata-only",
+                         "bodyStored":  false,
+                         "secretMaterialStored":  false,
+                         "sourceClaim":  "metadata-only"
+                     },
+                     {
+                         "id":  "linkjj",
+                         "terminalStatus":  "accessible-head-metadata-only",
+                         "bodyStored":  false,
+                         "secretMaterialStored":  false,
+                         "sourceClaim":  "metadata-only"
+                     },
+                     {
+                         "id":  "linkkk",
+                         "terminalStatus":  "accessible-head-metadata-only",
+                         "bodyStored":  false,
+                         "secretMaterialStored":  false,
+                         "sourceClaim":  "metadata-only"
+                     },
+                     {
+                         "id":  "linkll",
+                         "terminalStatus":  "accessible-head-metadata-only",
+                         "bodyStored":  false,
+                         "secretMaterialStored":  false,
+                         "sourceClaim":  "metadata-only"
+                     },
+                     {
+                         "id":  "linkmm",
+                         "terminalStatus":  "accessible-head-metadata-only",
+                         "bodyStored":  false,
+                         "secretMaterialStored":  false,
+                         "sourceClaim":  "metadata-only"
+                     },
+                     {
+                         "id":  "linknn",
+                         "terminalStatus":  "accessible-head-metadata-only",
+                         "bodyStored":  false,
+                         "secretMaterialStored":  false,
+                         "sourceClaim":  "metadata-only"
+                     },
+                     {
+                         "id":  "linkoo",
+                         "terminalStatus":  "blocked-or-permission-bound",
+                         "bodyStored":  false,
+                         "secretMaterialStored":  false,
+                         "sourceClaim":  "metadata-only"
+                     },
+                     {
+                         "id":  "linkpp",
+                         "terminalStatus":  "blocked-or-permission-bound",
+                         "bodyStored":  false,
+                         "secretMaterialStored":  false,
+                         "sourceClaim":  "metadata-only"
+                     },
+                     {
+                         "id":  "linkqq",
+                         "terminalStatus":  "blocked-or-permission-bound",
+                         "bodyStored":  false,
+                         "secretMaterialStored":  false,
+                         "sourceClaim":  "metadata-only"
+                     },
+                     {
+                         "id":  "linkrr",
+                         "terminalStatus":  "blocked-or-permission-bound",
+                         "bodyStored":  false,
+                         "secretMaterialStored":  false,
+                         "sourceClaim":  "metadata-only"
+                     },
+                     {
+                         "id":  "linkss",
+                         "terminalStatus":  "blocked-or-permission-bound",
+                         "bodyStored":  false,
+                         "secretMaterialStored":  false,
+                         "sourceClaim":  "metadata-only"
+                     },
+                     {
+                         "id":  "linktt",
+                         "terminalStatus":  "blocked-or-permission-bound",
+                         "bodyStored":  false,
+                         "secretMaterialStored":  false,
+                         "sourceClaim":  "metadata-only"
+                     },
+                     {
+                         "id":  "linkuu",
+                         "terminalStatus":  "blocked-or-permission-bound",
+                         "bodyStored":  false,
+                         "secretMaterialStored":  false,
+                         "sourceClaim":  "metadata-only"
+                     },
+                     {
+                         "id":  "linkvv",
+                         "terminalStatus":  "blocked-or-permission-bound",
+                         "bodyStored":  false,
+                         "secretMaterialStored":  false,
+                         "sourceClaim":  "metadata-only"
+                     },
+                     {
+                         "id":  "linkww",
+                         "terminalStatus":  "blocked-or-permission-bound",
+                         "bodyStored":  false,
+                         "secretMaterialStored":  false,
+                         "sourceClaim":  "metadata-only"
+                     },
+                     {
+                         "id":  "linkxx",
+                         "terminalStatus":  "blocked-or-permission-bound",
+                         "bodyStored":  false,
+                         "secretMaterialStored":  false,
+                         "sourceClaim":  "metadata-only"
+                     },
+                     {
+                         "id":  "linkyy",
+                         "terminalStatus":  "blocked-or-permission-bound",
+                         "bodyStored":  false,
+                         "secretMaterialStored":  false,
+                         "sourceClaim":  "metadata-only"
+                     },
+                     {
+                         "id":  "linkzz",
+                         "terminalStatus":  "blocked-or-permission-bound",
+                         "bodyStored":  false,
+                         "secretMaterialStored":  false,
+                         "sourceClaim":  "metadata-only"
+                     },
+                     {
+                         "id":  "linkba",
+                         "terminalStatus":  "blocked-or-permission-bound",
+                         "bodyStored":  false,
+                         "secretMaterialStored":  false,
+                         "sourceClaim":  "metadata-only"
+                     },
+                     {
+                         "id":  "linkbb",
+                         "terminalStatus":  "blocked-or-permission-bound",
+                         "bodyStored":  false,
+                         "secretMaterialStored":  false,
+                         "sourceClaim":  "metadata-only"
+                     },
+                     {
+                         "id":  "linkbc",
+                         "terminalStatus":  "blocked-or-permission-bound",
+                         "bodyStored":  false,
+                         "secretMaterialStored":  false,
+                         "sourceClaim":  "metadata-only"
+                     },
+                     {
+                         "id":  "linkbd",
+                         "terminalStatus":  "blocked-or-permission-bound",
+                         "bodyStored":  false,
+                         "secretMaterialStored":  false,
+                         "sourceClaim":  "metadata-only"
+                     },
+                     {
+                         "id":  "linkbe",
+                         "terminalStatus":  "blocked-or-permission-bound",
+                         "bodyStored":  false,
+                         "secretMaterialStored":  false,
+                         "sourceClaim":  "metadata-only"
+                     },
+                     {
+                         "id":  "linkbf",
+                         "terminalStatus":  "blocked-or-permission-bound",
+                         "bodyStored":  false,
+                         "secretMaterialStored":  false,
+                         "sourceClaim":  "metadata-only"
+                     },
+                     {
+                         "id":  "linkbg",
+                         "terminalStatus":  "blocked-or-permission-bound",
+                         "bodyStored":  false,
+                         "secretMaterialStored":  false,
+                         "sourceClaim":  "metadata-only"
+                     },
+                     {
+                         "id":  "linkbh",
+                         "terminalStatus":  "blocked-or-permission-bound",
+                         "bodyStored":  false,
+                         "secretMaterialStored":  false,
+                         "sourceClaim":  "metadata-only"
+                     },
+                     {
+                         "id":  "linkbi",
+                         "terminalStatus":  "blocked-or-permission-bound",
+                         "bodyStored":  false,
+                         "secretMaterialStored":  false,
+                         "sourceClaim":  "metadata-only"
+                     },
+                     {
+                         "id":  "linkbj",
+                         "terminalStatus":  "blocked-or-permission-bound",
+                         "bodyStored":  false,
+                         "secretMaterialStored":  false,
+                         "sourceClaim":  "metadata-only"
+                     },
+                     {
+                         "id":  "linkbk",
+                         "terminalStatus":  "blocked-or-permission-bound",
+                         "bodyStored":  false,
+                         "secretMaterialStored":  false,
+                         "sourceClaim":  "metadata-only"
+                     },
+                     {
+                         "id":  "linkbl",
+                         "terminalStatus":  "blocked-or-permission-bound",
+                         "bodyStored":  false,
+                         "secretMaterialStored":  false,
+                         "sourceClaim":  "metadata-only"
+                     },
+                     {
+                         "id":  "linkbm",
+                         "terminalStatus":  "blocked-or-permission-bound",
+                         "bodyStored":  false,
+                         "secretMaterialStored":  false,
+                         "sourceClaim":  "metadata-only"
+                     },
+                     {
+                         "id":  "linkbn",
+                         "terminalStatus":  "blocked-or-permission-bound",
+                         "bodyStored":  false,
+                         "secretMaterialStored":  false,
+                         "sourceClaim":  "metadata-only"
+                     },
+                     {
+                         "id":  "linkbo",
+                         "terminalStatus":  "blocked-or-permission-bound",
+                         "bodyStored":  false,
+                         "secretMaterialStored":  false,
+                         "sourceClaim":  "metadata-only"
+                     },
+                     {
+                         "id":  "linkbp",
+                         "terminalStatus":  "blocked-or-permission-bound",
+                         "bodyStored":  false,
+                         "secretMaterialStored":  false,
+                         "sourceClaim":  "metadata-only"
+                     },
+                     {
+                         "id":  "linkbq",
+                         "terminalStatus":  "blocked-or-permission-bound",
+                         "bodyStored":  false,
+                         "secretMaterialStored":  false,
+                         "sourceClaim":  "metadata-only"
+                     },
+                     {
+                         "id":  "linkbr",
+                         "terminalStatus":  "blocked-or-permission-bound",
+                         "bodyStored":  false,
+                         "secretMaterialStored":  false,
+                         "sourceClaim":  "metadata-only"
+                     },
+                     {
+                         "id":  "linkbs",
+                         "terminalStatus":  "blocked-or-permission-bound",
+                         "bodyStored":  false,
+                         "secretMaterialStored":  false,
+                         "sourceClaim":  "metadata-only"
+                     },
+                     {
+                         "id":  "linkbt",
+                         "terminalStatus":  "blocked-or-permission-bound",
+                         "bodyStored":  false,
+                         "secretMaterialStored":  false,
+                         "sourceClaim":  "metadata-only"
+                     },
+                     {
+                         "id":  "linkbu",
+                         "terminalStatus":  "blocked-or-permission-bound",
+                         "bodyStored":  false,
+                         "secretMaterialStored":  false,
+                         "sourceClaim":  "metadata-only"
+                     },
+                     {
+                         "id":  "linkbv",
+                         "terminalStatus":  "blocked-or-permission-bound",
+                         "bodyStored":  false,
+                         "secretMaterialStored":  false,
+                         "sourceClaim":  "metadata-only"
+                     },
+                     {
+                         "id":  "linkbw",
+                         "terminalStatus":  "blocked-or-permission-bound",
+                         "bodyStored":  false,
+                         "secretMaterialStored":  false,
+                         "sourceClaim":  "metadata-only"
+                     },
+                     {
+                         "id":  "linkbx",
+                         "terminalStatus":  "blocked-or-permission-bound",
+                         "bodyStored":  false,
+                         "secretMaterialStored":  false,
+                         "sourceClaim":  "metadata-only"
+                     },
+                     {
+                         "id":  "linkby",
+                         "terminalStatus":  "blocked-or-permission-bound",
+                         "bodyStored":  false,
+                         "secretMaterialStored":  false,
+                         "sourceClaim":  "metadata-only"
+                     },
+                     {
+                         "id":  "linkbz",
+                         "terminalStatus":  "blocked-or-permission-bound",
+                         "bodyStored":  false,
+                         "secretMaterialStored":  false,
+                         "sourceClaim":  "metadata-only"
+                     },
+                     {
+                         "id":  "linkca",
+                         "terminalStatus":  "blocked-or-permission-bound",
+                         "bodyStored":  false,
+                         "secretMaterialStored":  false,
+                         "sourceClaim":  "metadata-only"
+                     },
+                     {
+                         "id":  "linkcb",
+                         "terminalStatus":  "blocked-or-permission-bound",
+                         "bodyStored":  false,
+                         "secretMaterialStored":  false,
+                         "sourceClaim":  "metadata-only"
+                     },
+                     {
+                         "id":  "linkcc",
+                         "terminalStatus":  "blocked-or-permission-bound",
+                         "bodyStored":  false,
+                         "secretMaterialStored":  false,
+                         "sourceClaim":  "metadata-only"
+                     }
+                 ]
+}

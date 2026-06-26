@@ -245,7 +245,10 @@ athlete_attributes:
         - thresholdHrBpm
       threshold_ownership: "Zone thresholds are owned by the training guideline layer, not this spec."
       source_conflict_handling:
-        when_device_and_self_report_conflict: ESCALATE_OR_OPEN_ISSUE
+        source_document: PHYSIO_SOURCE_TRUST_SPEC.md
+        when_device_and_self_report_conflict: USE_PHYSIO_SOURCE_TRUST_STATUS_OR_ESCALATE
+        self_report_can_clear_risk: false
+        good_physio_can_clear_D9: false
         open_issue: OI-AP-PHYSIO-SOURCE-001
 
     availability_defaults:
@@ -253,9 +256,11 @@ athlete_attributes:
       meaning: "Reference to athlete availability constraint set in Section 8."
 
   attribute_source_priority:
-    1: source_defined_or_group_setting
-    2: athlete_self_declared_with_consent
-    3: derived_estimate_with_annotation
+    1: accepted_PHYSIO_SOURCE_TRUST_SPEC_result_with_scope_and_consent
+    2: source_defined_or_group_setting
+    3: athlete_self_declared_with_consent_and_review
+    4: derived_estimate_with_annotation
+    conflict_rule: "Conflicts remain review-required until PHYSIO_SOURCE_TRUST_SPEC source acceptance and App Bridge storage binding are accepted."
 ```
 
 ## Section 6. LD Inclusion Preferences
@@ -517,6 +522,16 @@ export interface PhysiologicalAttributes {
   hrMaxBpm?: number;
   restingHrBpm?: number;
   thresholdHrBpm?: number;
+  physioSourceTrustResultId?: string;
+  sourceTrustStatus?:
+    | "TRUSTED_FOR_GENERATION"
+    | "TRUSTED_FOR_LOW_RISK_CONTEXT_ONLY"
+    | "REVIEW_REQUIRED"
+    | "INSUFFICIENT_DATA"
+    | "EXCLUDED_UNTRUSTED"
+    | "BLOCKED_BY_CONSENT";
+  sourceConflictRequiresReview?: boolean;
+  mayClearD9Risk?: false;
 }
 
 export interface TimeWindow {
@@ -656,7 +671,7 @@ open_issues:
     blocks_rule_execution: false
     blocks_canonical_promotion: true
     owner: ATHLETE_PROFILE_SPEC
-    note: "Promoted to P1. Physiological source conflict can propagate into downstream zone and plan derivation, so it is treated as a canonical blocking issue."
+    note: "Target binding to PHYSIO_SOURCE_TRUST_SPEC.md is patched, but remains canonical blocking until source acceptance, App Bridge storage binding review, and target recount are accepted."
 
   - id: OI-AP-LD-MIN-SEGMENT-DURATION-001
     priority: P2
@@ -704,6 +719,19 @@ canonical_blocking_ids:
   - OI-AP-PROFILE-RETENTION-001
   - OI-AP-GUARDIAN-CONSENT-001
   - OI-AP-PHYSIO-SOURCE-001
+```
+
+Physio source trust issue addendum:
+
+```yaml
+OI-AP-PHYSIO-SOURCE-001:
+  status: OPEN
+  target_patch_status: PATCHED_PENDING_SOURCE_ACCEPTANCE
+  closure_allowed_now: false
+  closure_requires:
+    - PHYSIO_SOURCE_TRUST_SPEC.md owner/source acceptance
+    - APP_IMPLEMENTATION_BRIDGE.md physio source trust storage binding acceptance
+    - target open issue table recount from this file
 ```
 
 ## Section BB. Test Cases
@@ -973,3 +1001,5 @@ handoff_summary:
     upload: NO
     canonical_promotion: NO
 ```
+
+[DRAFT_COMPLETE]

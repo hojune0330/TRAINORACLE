@@ -1,7 +1,9 @@
 # TRAINORACLE — SPEC And Design Handoff
 
+> Wave 1 physio target patch status: [`SPEC_WAVE1_PHYSIO_PATCH_REPORT.md`](./SPEC_WAVE1_PHYSIO_PATCH_REPORT.md). Next patch order: [`SPEC_TARGET_PATCH_MATRIX.md`](./SPEC_TARGET_PATCH_MATRIX.md). File-truth guardrails: [`SPEC_FILE_TRUTH_GUARD.md`](./SPEC_FILE_TRUTH_GUARD.md).
+
 > **이 폴더는 다른 AI 개발 에이전트에게 그대로 전달하기 위한 패키지입니다.**
-> SPEC / 안전 계약 작업을 이어받는 시작점은 [`TRAINORACLE_SPEC_INDEX.md`](./TRAINORACLE_SPEC_INDEX.md)입니다. 그 다음 현재 상태는 [`SPEC_WORK_STATUS.md`](./SPEC_WORK_STATUS.md)에서 확인하세요.
+> SPEC / 안전 계약 작업을 이어받는 시작점은 [`TRAINORACLE_SPEC_INDEX.md`](./TRAINORACLE_SPEC_INDEX.md)입니다. 그 다음 현재 상태는 [`SPEC_WORK_STATUS.md`](./SPEC_WORK_STATUS.md), 전체 문서 지도는 [`SPEC_DOCUMENTATION_REPORT.md`](./SPEC_DOCUMENTATION_REPORT.md)에서 확인하세요.
 > 디자인 / UI 구현 작업을 이어받을 때는 [`HANDOFF.md`](./HANDOFF.md)를 읽고, 그 다음 [`PHILOSOPHY.md`](./PHILOSOPHY.md)를 읽으세요.
 > 이 저장소의 SPEC 계층은 아직 draft handoff 상태입니다. GitHub 업로드는 canonical promotion, runtime evidence, issue closure가 아닙니다.
 
@@ -28,6 +30,7 @@ TRAINORACLE/                          ← 저장소 루트
 ├── README.md                         ← 시작점 (이 파일)
 ├── TRAINORACLE_SPEC_INDEX.md         ← SPEC 계층 시작점 / inventory registry
 ├── SPEC_WORK_STATUS.md               ← 현재 SPEC 작업 상태 / 다음 제작 순서
+├── SPEC_DOCUMENTATION_REPORT.md      ← 현재/재구성/예정 문서 전체 리포트
 ├── HANDOFF.md                        ← 개발 에이전트용 첫 프롬프트
 ├── PHILOSOPHY.md                     ← 제품 철학·UX 원칙 (정본)
 ├── DESIGN_DECISIONS.md               ← 결정사항 정제본

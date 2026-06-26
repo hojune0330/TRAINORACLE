@@ -1,0 +1,635 @@
+# DAILY_LOG_AND_CHECKIN_SPEC.md
+
+```yaml
+document_metadata:
+  doc_id: trainoracle-spec-013-daily-log-and-checkin
+  spec_id: DAILY_LOG_AND_CHECKIN_SPEC
+  title: TrainOracle Daily Log And Check-in Spec
+  version: "0.1"
+  round: RT1_RECONSTRUCT
+  status: RECONSTRUCTED_DRAFT_FOR_REVIEW
+  owner: COACH_HOJUNE
+  owner_english_name: hojune jang
+
+  reconstruction_notice:
+    local_original_found: false
+    reconstructed_from_sources: true
+    restored_original: false
+    prior_approved_version_restored: false
+
+  open_issues_total: 6
+  canonical_blocking_count: 3
+
+  executed_tests_total: 0
+  executed_tests_passed: 0
+  self_check_is_runtime_evidence: false
+
+  upload_allowed: false
+  canonical_promotion_allowed: false
+  final_marker_required: "[DRAFT_COMPLETE]"
+```
+
+---
+
+## 1. Purpose
+
+`DAILY_LOG_AND_CHECKIN_SPEC.md` defines the daily training-journal and check-in ingestion contract for TrainOracle.
+
+This reconstructed draft exists because exact local filename search did not find an original `DAILY_LOG_AND_CHECKIN_SPEC.md` before reconstruction. It must not be treated as a restored original, prior approved version, runtime evidence, canonical promotion, or issue closure.
+
+Daily Log is the athlete-facing ingestion layer for training analysis, plan design, evidence-based coaching, Safety Gate context, and future daily brief / AI Inbox signals. It is not a separate planning engine and must not bypass RVE, Plan Safety Gate, Plan Generator, Template Library, Physio Source Trust, App Bridge, Athlete Profile, or Session Classifier contracts.
+
+---
+
+## 2. Non-Purpose
+
+This document does not:
+
+- redefine `RULE_SPEC_D1_D9.D-*` rule semantics
+- implement the D9 evaluator
+- replace `RULE_VALIDATION_ENGINE_CONTRACT.md`
+- replace `PLAN_SAFETY_GATE_SPEC.md`
+- replace `APP_IMPLEMENTATION_BRIDGE.md`
+- replace `PHYSIO_SOURCE_TRUST_SPEC.md`
+- define final web/app UI
+- create a parallel plan generator
+- create medical, injury, rehab, return-to-play, or high-intensity clearance
+- store raw athlete free text, raw symptom clauses, injury narratives, medical notes, rehab notes, evidence clauses, or guardian private notes in audit records
+- claim D9 evaluator runtime PASS evidence
+- close any RVE, Safety Gate, Plan Generator, Physio Source, App Bridge, Athlete Profile, or Daily Brief issue
+
+---
+
+## 3. Source Priority
+
+```yaml
+source_priority:
+  daily_flow_planning:
+    - document: SPEC_LEGACY_ALIGNMENT_AND_DAILY_LOG_PLAN.md
+      treatment: CONTINUITY_PLAN
+      consumed_for:
+        - daily_log_service_flow
+        - missing_daily_log_contract_gap
+        - memo_free_text_reconciliation
+        - future_productization_order
+
+  app_storage_and_consent:
+    - document: specs/active/APP_IMPLEMENTATION_BRIDGE.md
+      treatment: READ_ONLY_APP_BRIDGE_BASELINE
+      consumed_for:
+        - source_snapshot_records
+        - consent_guard
+        - capability_guard
+        - audit_boundary
+        - tenant_group_athlete_scope
+
+  athlete_profile:
+    - document: specs/active/ATHLETE_PROFILE_SPEC.md
+      treatment: READ_ONLY_PROFILE_BASELINE
+      consumed_for:
+        - athlete_scoped_preferences
+        - consent_lifecycle
+        - minor_guardian_boundary
+        - privacy_reason_text_policy
+
+  session_classifier:
+    - document: specs/active/SESSION_CLASSIFIER_SPEC.md
+      treatment: READ_ONLY_CLASSIFIER_BASELINE
+      consumed_for:
+        - session_context_refs
+        - completed_session_linkage
+        - no_classifier_output_redefinition
+
+  physio_source_trust:
+    - document: specs/active/PHYSIO_SOURCE_TRUST_SPEC.md
+      treatment: READ_ONLY_PHYSIO_BASELINE
+      consumed_for:
+        - structured_readiness
+        - structured_soreness
+        - structured_wellness
+        - structured_RPE
+        - freshness_and_conflict_policy
+
+  rve_and_safety_gate:
+    - document: specs/reconstruct/RULE_VALIDATION_ENGINE_CONTRACT.md
+      treatment: RECONSTRUCTED_DRAFT_FOR_REVIEW
+      consumed_for:
+        - reason_code_storage
+        - D9_signal_boundary
+        - raw_text_forbidden_storage
+    - document: specs/reconstruct/PLAN_SAFETY_GATE_SPEC.md
+      treatment: RECONSTRUCTED_DRAFT_FOR_REVIEW
+      consumed_for:
+        - pre_generation_safety_gate
+        - D9_ACTIVE_UNKNOWN_CLEARED_routing
+        - no_raw_text_safety_gate_inputs
+
+  design_context_reference:
+    - document: design-system/SCREENS.md
+      treatment: DESIGN_REFERENCE_ONLY
+      consumed_for:
+        - Daily_Checkin_six_question_surface
+        - RPE_sleep_condition_pain_memo_UI_intent
+    - document: HANDOFF.md
+      treatment: DESIGN_REFERENCE_ONLY
+      consumed_for:
+        - draft_CheckIn_shape
+        - screen_priority_context
+```
+
+---
+
+## 4. Hard Constraints
+
+```yaml
+hard_constraints:
+  no_global_coach_authority: true
+  no_safety_hard_stop_override: true
+  no_D9_rule_semantic_redefinition: true
+  no_rule_threshold_definition: true
+  no_external_llm_with_private_athlete_data: true
+  no_raw_free_text_storage: true
+  no_raw_symptom_clause_storage: true
+  no_evidence_clause_storage_in_audit: true
+  no_medical_note_storage_in_daily_log: true
+  no_guardian_private_note_storage_in_daily_log: true
+  no_free_text_clearance_of_existing_risk: true
+  free_text_can_raise_risk: true
+  good_physio_data_cannot_clear_D9_risk: true
+  template_selection_cannot_clear_D9_risk: true
+  daily_log_cannot_bypass_RVE_or_Safety_Gate: true
+  daily_log_cannot_generate_plan_candidates: true
+  no_runtime_pass_claim_without_actual_log: true
+  no_issue_closure_from_reconstruction_only: true
+```
+
+Daily check-in can make the system more cautious. It cannot make the system less cautious when a safety risk is already `ACTIVE` or `UNKNOWN`.
+
+---
+
+## 5. Namespace Policy
+
+```yaml
+namespace_policy:
+  current_rule_namespace:
+    name: RULE_SPEC_D1_D9
+    example: RULE_SPEC_D1_D9.D-9
+    meaning: current SPEC-layer validation rule
+
+  legacy_workflow_namespace:
+    name: LEGACY_PHASE_D
+    example: LEGACY_PHASE_D.D-9
+    meaning: old workflow Phase D validation item
+
+  cycle_day_namespace:
+    name: CYCLE_DAY
+    example: CYCLE_DAY.D-5
+    meaning: cycle or race-day label, not a rule id
+
+  bare_D_reference_in_new_specs: FORBIDDEN
+```
+
+Daily log records may include cycle-day labels only through `CYCLE_DAY.*` fields. They must not use bare `D-*` strings as rule IDs.
+
+---
+
+## 6. User-Facing Daily Check-in Scope
+
+Design references describe a fast daily check-in with RPE, sleep, condition, pain/body area, and optional memo. This spec preserves that product intent while defining the storage contract as structured-first and privacy-safe.
+
+```yaml
+daily_checkin_surface:
+  target_completion_time: "<=5 minutes"
+  common_steps:
+    - previous_session_RPE
+    - sleep_hours
+    - sleep_quality
+    - overall_condition
+    - pain_or_soreness_body_area
+    - optional_constrained_note
+
+  display_surfaces:
+    - Dashboard_today_checkin_state
+    - Session_Detail_context
+    - Analysis_trends
+    - AI_Inbox_signal_candidate
+    - Daily_Brief_candidate_future_spec
+
+  not_owned_here:
+    - final_visual_layout
+    - final_component_library
+    - push_notification_policy
+    - daily_brief_generation_copy
+    - AI_Inbox_ranking_algorithm
+```
+
+---
+
+## 7. Storable Structured Fields
+
+```yaml
+DailyCheckInRecord:
+  required_scope:
+    - tenantId
+    - groupId
+    - athleteId
+    - checkInDate
+    - createdAt
+    - sourceSnapshotId
+    - auditLogId
+
+  structured_fields_allowed:
+    rpe:
+      type: integer
+      range: 1..10
+      nullable: true
+    sleepHours:
+      type: decimal_hours
+      range: 0..16
+      nullable: true
+    sleepQuality:
+      type: enum
+      values: [VERY_POOR, POOR, OK, GOOD, GREAT]
+      nullable: true
+    overallCondition:
+      type: enum
+      values: [VERY_LOW, LOW, NORMAL, GOOD, GREAT]
+      nullable: true
+    mood:
+      type: enum
+      values: [LOW, NEUTRAL, GOOD, HIGH]
+      nullable: true
+    readiness:
+      type: enum
+      values: [NOT_READY, CAUTION, NORMAL, READY]
+      nullable: true
+    sorenessOverall:
+      type: integer
+      range: 0..5
+      nullable: true
+    bodyAreaSignals:
+      type: readonly BodyAreaSignal[]
+      nullable: true
+    completedSessionRef:
+      type: ClassifiedSessionRecordRef
+      nullable: true
+    plannedSessionRef:
+      type: PlannedSessionDraftRef
+      nullable: true
+    nonSensitiveReasonCodes:
+      type: readonly string[]
+      nullable: false
+```
+
+```typescript
+export type BodyArea =
+  | "HEAD_NECK"
+  | "SHOULDER_ARM"
+  | "CHEST_BACK"
+  | "HIP_GLUTE"
+  | "THIGH"
+  | "KNEE"
+  | "CALF_ACHILLES"
+  | "ANKLE_FOOT"
+  | "OTHER_STRUCTURED";
+
+export interface BodyAreaSignal {
+  bodyArea: BodyArea;
+  side?: "LEFT" | "RIGHT" | "BILATERAL" | "UNSPECIFIED";
+  level: 0 | 1 | 2 | 3 | 4 | 5;
+  signalType: "SORENESS" | "PAIN_SIGNAL" | "TIGHTNESS" | "FATIGUE" | "OTHER_STRUCTURED";
+  durationBand?: "TODAY_ONLY" | "TWO_TO_THREE_DAYS" | "FOUR_TO_SEVEN_DAYS" | "MORE_THAN_SEVEN_DAYS";
+}
+
+export interface DailyCheckInRecord {
+  tenantId: TenantId;
+  groupId: GroupId;
+  athleteId: AthleteId;
+  checkInDate: ISO8601Date;
+  rpe?: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10;
+  sleepHours?: number;
+  sleepQuality?: "VERY_POOR" | "POOR" | "OK" | "GOOD" | "GREAT";
+  overallCondition?: "VERY_LOW" | "LOW" | "NORMAL" | "GOOD" | "GREAT";
+  mood?: "LOW" | "NEUTRAL" | "GOOD" | "HIGH";
+  readiness?: "NOT_READY" | "CAUTION" | "NORMAL" | "READY";
+  sorenessOverall?: 0 | 1 | 2 | 3 | 4 | 5;
+  bodyAreaSignals: readonly BodyAreaSignal[];
+  completedSessionRef?: ClassifiedSessionRecordRef;
+  plannedSessionRef?: PlannedSessionDraftRef;
+  nonSensitiveReasonCodes: readonly string[];
+  sourceSnapshotId: SourceSnapshotId;
+  auditLogId: AuditLogId;
+  createdAt: ISO8601;
+}
+```
+
+---
+
+## 8. Free-Text And Memo Boundary
+
+Daily Check-in may offer a user-facing memo field, but raw memo text is not a persistent training-analysis or audit field.
+
+```yaml
+memo_policy:
+  user_facing_memo_input_allowed: true
+  production_raw_memo_persistence_allowed: false
+  raw_symptom_clause_persistence_allowed: false
+  raw_injury_narrative_persistence_allowed: false
+  raw_medical_note_persistence_allowed: false
+  raw_guardian_private_note_persistence_allowed: false
+
+  allowed_processing:
+    - transient_local_validation
+    - transient_risk_extraction
+    - transient_redaction
+    - non_sensitive_summary_generation
+    - reason_code_generation
+
+  allowed_persistence_after_processing:
+    - structured_fields
+    - nonSensitiveReasonCodes
+    - redactedNonSensitiveSummary_when_policy_allows
+    - sourceSnapshotId
+    - auditLogId
+    - extractionVersion
+
+  forbidden_downstream_payloads:
+    - raw_memo_text
+    - raw_athlete_statement
+    - symptom_clause
+    - evidence_clause
+    - injury_description
+    - medical_note
+    - rehab_note
+    - guardian_private_note
+    - external_llm_prompt_with_private_athlete_data
+```
+
+Free text can raise risk, request review, or produce non-sensitive reason codes. It cannot clear `D9_ACTIVE`, `D9_UNKNOWN`, Safety Gate block states, physio-source conflict states, or template eligibility failures.
+
+---
+
+## 9. Processing Flow
+
+```yaml
+daily_log_processing_flow:
+  1_capture:
+    creates:
+      - transient_checkin_input
+    validates:
+      - tenant_group_athlete_scope
+      - athlete_identity_or_authorized_actor
+      - active_consent
+      - minor_guardian_consent_when_required
+
+  2_normalize:
+    creates:
+      - DailyCheckInRecord
+      - SourceSnapshotRecord
+      - AuditLogRecord
+    removes_before_persistence:
+      - raw_memo_text
+      - raw_symptom_clause
+      - raw_evidence_clause
+
+  3_classify_or_link_session:
+    may_read:
+      - completedSessionRef
+      - plannedSessionRef
+      - sourceSnapshotId
+    must_not_redefine:
+      - SESSION_CLASSIFIER_outputs
+
+  4_profile_and_physio_context:
+    may_read:
+      - AthleteProfileSnapshotStorageRecord
+      - PHYSIO_SOURCE_TRUST structured status
+    must_not_clear:
+      - D9_ACTIVE
+      - D9_UNKNOWN
+      - SafetyGate_BLOCK
+
+  5_RVE_signal_candidate:
+    may_send_to_RVE_runtime_boundary:
+      - structured_safety_status
+      - current_symptom_flags_from_structured_fields
+      - recent_session_context_refs
+      - consent_and_scope_context
+      - transient_free_text_only_inside_runtime_processing_boundary
+    must_not_store_in_RVE_or_audit:
+      - raw_free_text
+      - raw_symptom_clause
+      - raw_evidence_clause
+
+  6_safety_gate_and_plan_generator:
+    SafetyGate_consumes_RVE_signal: true
+    PlanGenerator_consumes_SafetyGate_result: true
+    DailyLog_must_not_bypass_SafetyGate: true
+    blocked_generation_outputs_forbidden: true
+
+  7_product_surfaces:
+    may_emit_candidates_for_future_specs:
+      - DailyBriefSignal
+      - AIInboxSignal
+      - AnalysisTrendPoint
+    must_include_when_generated:
+      - sourceRefs
+      - confidence_or_uncertainty
+      - nonSensitiveReasonCodes
+```
+
+---
+
+## 10. Risk Raising Rules
+
+Daily check-in values can raise risk or request review only through structured rules and reason codes.
+
+```yaml
+risk_raising_policy:
+  may_raise_review_or_block:
+    - body_area_signal_level_high
+    - same_body_area_repeated
+    - sleep_low_repeated
+    - RPE_rising_against_baseline
+    - readiness_not_ready
+    - memo_transient_extraction_flags_review
+    - physio_source_conflict
+
+  must_not_clear_risk:
+    - good_sleep
+    - low_RPE
+    - athlete_says_ok
+    - coach_preference
+    - good_template_match
+    - good_physio_source
+
+  reason_code_examples_non_exhaustive:
+    - DAILY_LOG_HIGH_PAIN_SIGNAL
+    - DAILY_LOG_REPEATED_BODY_AREA_SIGNAL
+    - DAILY_LOG_LOW_SLEEP_REPEATED
+    - DAILY_LOG_RPE_SPIKE
+    - DAILY_LOG_READINESS_CAUTION
+    - DAILY_LOG_TRANSIENT_NOTE_REVIEW_REQUESTED
+```
+
+This document does not define D9 thresholds. Threshold ownership remains with `RULE_SPEC_D1_D9.md` and downstream accepted evaluator contracts.
+
+---
+
+## 11. Consent, Minor, And Capability Boundary
+
+```yaml
+consent_and_capability:
+  required_for_capture:
+    - ATHLETE_PROFILE_VISIBILITY_or_equivalent_service_consent
+  required_for_training_analysis_use:
+    - TRAINING_HISTORY_USE_FOR_PLAN_GENERATION
+  required_for_physio_use_when_present:
+    - PHYSIOLOGICAL_DATA_USE
+  required_for_minor_sensitive_or_health_related_fields:
+    - GUARDIAN_CONSENT
+
+  actor_rules:
+    athlete_self_checkin: allowed_with_scope_and_consent
+    coach_entered_checkin: requires_scoped_capability_and_audit
+    guardian_entered_checkin: requires_minor_guardian_scope_and_audit
+
+  forbidden:
+    - global_coach_authority
+    - consent_bundling_for_sensitive_fields
+    - revoked_consent_authorizing_new_processing
+    - expired_consent_authorizing_new_processing
+```
+
+---
+
+## 12. API And Storage Draft
+
+```yaml
+api_surface_draft:
+  create_daily_checkin:
+    method: POST
+    path: /bridge/daily-checkins
+    required_capability_or_actor:
+      - ATHLETE_SELF_CHECKIN
+      - WRITE_DAILY_CHECKIN_SCOPED
+    creates:
+      - DailyCheckInRecord
+      - SourceSnapshotRecord
+      - AuditLogRecord
+    raw_text_persistence: false
+
+  get_daily_checkin:
+    method: GET
+    path: /bridge/daily-checkins/{id}
+    requires:
+      - tenant_group_athlete_scope
+      - active_consent_or_valid_policy_exception
+
+  list_daily_checkins:
+    method: GET
+    path: /bridge/athletes/{athleteId}/daily-checkins
+    requires:
+      - tenant_group_athlete_scope
+      - date_range
+
+  redact_transient_note_safety_cleanup:
+    method: POST
+    path: /bridge/daily-checkins/{id}/redact-transient-note
+    purpose: "Safety cleanup for accidental raw text capture."
+```
+
+This API draft is a contract sketch only. It does not select database vendor, auth vendor, or final route names.
+
+---
+
+## 13. Downstream Productization Boundaries
+
+```yaml
+downstream_boundaries:
+  DAILY_BRIEF_AND_INBOX_SIGNAL_SPEC:
+    needed_before:
+      - daily_summary_generation
+      - AI_Inbox_item_generation_from_checkin
+      - push_or_notification_policy
+    must_require:
+      - source_refs
+      - confidence_or_uncertainty
+      - non_sensitive_reason_codes
+      - no_private_athlete_data_to_external_LLM
+
+  PLAN_OUTPUT_RATIONALE_PRIVACY_SPEC:
+    needed_before:
+      - plan_option_rationale_generation_from_checkin_context
+      - coach_visible_reasoning_copy
+
+  ANALYSIS_AND_VISUALIZATION_DATA_CONTRACT:
+    needed_before:
+      - trend_visualizations_from_daily_checkins
+      - body_area_trend_chart
+      - readiness_panel
+```
+
+Daily Log can feed these future contracts, but it does not define them.
+
+---
+
+## 14. Issue Closure Boundary
+
+This document alone does not close target issues.
+
+```yaml
+not_closed_now:
+  - OI-PSG-DAILY-LOG-INPUT-BINDING-001
+  - OI-RVE-RULE-EVALUATOR-BINDING-001
+  - OI-PG-RULE-SAFETY-GATE-BINDING-001
+  - OI-PG-PHYSIO-SOURCE-CONSUMPTION-001
+  - OI-AIB-PHYSIO-SOURCE-001
+  - OI-AP-PHYSIO-SOURCE-001
+
+closure_requires:
+  - source_spec_accepted
+  - target_document_patched
+  - target_open_issue_table_recounted
+  - actual_runtime_evidence_when_runtime_claim_is_involved
+```
+
+Absolute downstream issue counts are not declared here.
+
+---
+
+## 15. Open Issues
+
+These are this reconstructed document's own issues. They do not change issue counts in other SPEC files.
+
+| ID | Priority | Canonical blocking | Status | Summary | Resolution needed |
+|---|---|---:|---|---|---|
+| `OI-DLC-APP-BRIDGE-BINDING-001` | P1 | YES | OPEN | App Bridge does not yet own DailyCheckInRecord storage endpoints or audit lineage. | Patch App Bridge after this spec is accepted, then recount target issues. |
+| `OI-DLC-RVE-SAFETY-BINDING-001` | P1 | YES | OPEN | Daily check-in structured and transient signals are not yet runtime-bound to RVE/Safety Gate. | Add implementation/runtime evidence before any safety binding issue closure. |
+| `OI-DLC-RAW-NOTE-REDACTION-001` | P1 | YES | OPEN | Final redaction/transient-note deletion implementation is not defined. | Define storage lifecycle and verify no raw memo/symptom clause persists. |
+| `OI-DLC-DAILY-BRIEF-INBOX-001` | P2 | NO | OPEN | Daily Brief and AI Inbox signal generation remain future productization contracts. | Draft `DAILY_BRIEF_AND_INBOX_SIGNAL_SPEC.md`. |
+| `OI-DLC-ANALYSIS-VISUALIZATION-001` | P2 | NO | OPEN | Analysis charts and body-area trend visualization contract is not defined. | Draft `ANALYSIS_AND_VISUALIZATION_DATA_CONTRACT.md`. |
+| `OI-DLC-IMPLEMENTATION-BINDING-001` | P2 | NO | OPEN | No app implementation or database schema has consumed this contract. | Bind after SPEC acceptance and privacy review. |
+
+---
+
+## 16. Self-Check
+
+| Check | Status |
+|---|---|
+| First line is exact filename H1 | PASS |
+| Metadata includes required fields | PASS |
+| Status is `RECONSTRUCTED_DRAFT_FOR_REVIEW` | PASS |
+| Does not claim original restored | PASS |
+| Does not claim runtime evidence | PASS |
+| Does not close downstream issues | PASS |
+| Raw free-text storage is forbidden | PASS |
+| Raw symptom clause storage is forbidden | PASS |
+| Free text can raise risk but cannot clear risk | PASS |
+| `D9_ACTIVE` / `D9_UNKNOWN` cannot be cleared by check-in | PASS |
+| `D9_CLEARED` is not medical clearance | PASS |
+| Daily Log does not generate plan candidates | PASS |
+| Future Daily Brief / Inbox contract remains separate | PASS |
+| Final marker is required as final line | PASS |
+
+[DRAFT_COMPLETE]

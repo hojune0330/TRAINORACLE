@@ -1,0 +1,5 @@
+SENSITIVE_SOURCE_SCAN_PASS_REPO_AND_LOCAL_ARCHIVE
+repoHitFiles: zero
+localArchiveHitFiles: zero
+matchedContentPrinted: false
+scope: targeted labels from prior review

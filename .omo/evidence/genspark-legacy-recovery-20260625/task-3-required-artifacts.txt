@@ -1,0 +1,18 @@
+REQUIRED_ARTIFACT_CHECK
+missingOrEmptyCount: zero
+materialIndexSchemaOk: true
+linkManifestRootFieldsOk: true
+linkManifestCountFieldsOk: true
+linkManifestCountValuesOk: true
+credentialQueryRemovedLinksRootOk: true
+countDeltaPresent: true
+adversarialLabelsPresent: true
+compactionNoticesPresent: true
+screenshotsPresent: true
+credentialScanStatus: pass
+sensitiveSourceScanStatus: pass
+redactedDomSnapshotPresent: true
+pngSignatureValid: true
+materialEvidencePathsResolvable: true
+pngDimensionsMeaningful: true
+reportLimitPhrasesPresent: true

@@ -1,0 +1,11 @@
+{
+    "roots":  [
+                  "D:\\admin\\Documents\\트레인 오라클 진도\\.omo\\evidence\\genspark-legacy-recovery-20260625",
+                  "D:\\admin\\Downloads\\trainoracle_genspark_legacy_recovery_20260625"
+              ],
+    "fileCount":  23,
+    "findingCount":  0,
+    "findingsNoValues":  [
+
+                         ]
+}

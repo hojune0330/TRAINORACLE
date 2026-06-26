@@ -1,0 +1,45 @@
+{
+    "schema":  "safe_recovered_material_index",
+    "materials":  [
+                      {
+                          "name":  "loaded-surface-synopsis",
+                          "sourceLayer":  "browser surface",
+                          "classification":  "redacted synopsis",
+                          "recoveryStatus":  "available as safe envelope",
+                          "sensitivityAction":  "source lines withheld",
+                          "evidencePath":  "01-body-text.txt"
+                      },
+                      {
+                          "name":  "session-response-synopsis",
+                          "sourceLayer":  "agent response",
+                          "classification":  "reference only",
+                          "recoveryStatus":  "available as safe summary",
+                          "sensitivityAction":  "canonical claims disallowed",
+                          "evidencePath":  "02-agent-response.md"
+                      },
+                      {
+                          "name":  "link-manifest",
+                          "sourceLayer":  "DOM extraction",
+                          "classification":  "metadata only",
+                          "recoveryStatus":  "counts preserved",
+                          "sensitivityAction":  "credential query removed",
+                          "evidencePath":  "01-link-manifest.json"
+                      },
+                      {
+                          "name":  "access-attempts",
+                          "sourceLayer":  "CLI metadata probe",
+                          "classification":  "metadata only",
+                          "recoveryStatus":  "statuses preserved",
+                          "sensitivityAction":  "file bodies not stored",
+                          "evidencePath":  "02-download-attempts.json"
+                      },
+                      {
+                          "name":  "recovery-report",
+                          "sourceLayer":  "Codex synthesis",
+                          "classification":  "handoff report",
+                          "recoveryStatus":  "available",
+                          "sensitivityAction":  "sensitive material excluded",
+                          "evidencePath":  "03-recovery-report.md"
+                      }
+                  ]
+}

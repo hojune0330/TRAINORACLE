@@ -1,0 +1,353 @@
+{
+    "verdict":  "PASS",
+    "generatedAt":  "2026-06-26T06:42:28.3147225+09:00",
+    "surface":  "local filesystem",
+    "invocation":  "powershell -NoProfile -ExecutionPolicy Bypass -File .omo\\evidence\\genspark-legacy-recovery-20260625-final-qa.ps1",
+    "scannedPackage":  "D:\\admin\\Documents\\트레인 오라클 진도\\.omo\\evidence\\genspark-legacy-recovery-20260625",
+    "scannedArchive":  "D:\\admin\\Downloads\\trainoracle_genspark_legacy_recovery_20260625",
+    "cleanupState":  "no runtime resources spawned",
+    "checks":  {
+                   "requiredArtifacts":  [
+                                             {
+                                                 "name":  "01-body-text.txt",
+                                                 "exists":  true,
+                                                 "length":  410076,
+                                                 "nonEmpty":  true
+                                             },
+                                             {
+                                                 "name":  "01-compaction-notices.json",
+                                                 "exists":  true,
+                                                 "length":  578,
+                                                 "nonEmpty":  true
+                                             },
+                                             {
+                                                 "name":  "01-browser-screenshot.png",
+                                                 "exists":  true,
+                                                 "length":  12505,
+                                                 "nonEmpty":  true
+                                             },
+                                             {
+                                                 "name":  "02-agent-response.png",
+                                                 "exists":  true,
+                                                 "length":  12180,
+                                                 "nonEmpty":  true
+                                             },
+                                             {
+                                                 "name":  "01-redacted-dom-snapshot.txt",
+                                                 "exists":  true,
+                                                 "length":  410,
+                                                 "nonEmpty":  true
+                                             },
+                                             {
+                                                 "name":  "01-link-manifest.json",
+                                                 "exists":  true,
+                                                 "length":  25487,
+                                                 "nonEmpty":  true
+                                             },
+                                             {
+                                                 "name":  "02-recovered-material-index.json",
+                                                 "exists":  true,
+                                                 "length":  2345,
+                                                 "nonEmpty":  true
+                                             },
+                                             {
+                                                 "name":  "03-recovery-report.md",
+                                                 "exists":  true,
+                                                 "length":  1461,
+                                                 "nonEmpty":  true
+                                             },
+                                             {
+                                                 "name":  "03-adversarial-compaction-expiry.md",
+                                                 "exists":  true,
+                                                 "length":  788,
+                                                 "nonEmpty":  true
+                                             }
+                                         ],
+                   "archive":  {
+                                   "exists":  true,
+                                   "fileCount":  7,
+                                   "emptyFileCount":  0
+                               },
+                   "bodyLength":  410076,
+                   "pngArtifacts":  [
+                                        {
+                                            "path":  "D:\\admin\\Documents\\트레인 오라클 진도\\.omo\\evidence\\genspark-legacy-recovery-20260625\\01-browser-screenshot.png",
+                                            "exists":  true,
+                                            "length":  12505,
+                                            "signatureOk":  true,
+                                            "ihdrWidth":  800,
+                                            "ihdrHeight":  450,
+                                            "decodeOk":  true,
+                                            "decodedWidth":  800,
+                                            "decodedHeight":  450,
+                                            "decodeError":  null,
+                                            "dimensionsGt1x1":  true
+                                        },
+                                        {
+                                            "path":  "D:\\admin\\Documents\\트레인 오라클 진도\\.omo\\evidence\\genspark-legacy-recovery-20260625\\02-agent-response.png",
+                                            "exists":  true,
+                                            "length":  12180,
+                                            "signatureOk":  true,
+                                            "ihdrWidth":  800,
+                                            "ihdrHeight":  450,
+                                            "decodeOk":  true,
+                                            "decodedWidth":  800,
+                                            "decodedHeight":  450,
+                                            "decodeError":  null,
+                                            "dimensionsGt1x1":  true
+                                        }
+                                    ],
+                   "manifest":  {
+                                    "rootFieldsPresent":  true,
+                                    "totalLinks":  64,
+                                    "linksLength":  64,
+                                    "credentialQueryRemovedLinks":  21,
+                                    "derivedCredentialMarkerCount":  21
+                                },
+                   "materialIndex":  {
+                                         "materialCount":  5,
+                                         "missingRequiredFields":  [
+
+                                                                   ],
+                                         "evidencePathResults":  [
+                                                                     {
+                                                                         "name":  "loaded-surface-synopsis",
+                                                                         "evidencePath":  "01-body-text.txt",
+                                                                         "resolvedPath":  "D:\\admin\\Documents\\트레인 오라클 진도\\.omo\\evidence\\genspark-legacy-recovery-20260625\\01-body-text.txt",
+                                                                         "exists":  true,
+                                                                         "length":  410076,
+                                                                         "nonEmpty":  true
+                                                                     },
+                                                                     {
+                                                                         "name":  "session-response-synopsis",
+                                                                         "evidencePath":  "02-agent-response.md",
+                                                                         "resolvedPath":  "D:\\admin\\Documents\\트레인 오라클 진도\\.omo\\evidence\\genspark-legacy-recovery-20260625\\02-agent-response.md",
+                                                                         "exists":  true,
+                                                                         "length":  668,
+                                                                         "nonEmpty":  true
+                                                                     },
+                                                                     {
+                                                                         "name":  "link-manifest",
+                                                                         "evidencePath":  "01-link-manifest.json",
+                                                                         "resolvedPath":  "D:\\admin\\Documents\\트레인 오라클 진도\\.omo\\evidence\\genspark-legacy-recovery-20260625\\01-link-manifest.json",
+                                                                         "exists":  true,
+                                                                         "length":  25487,
+                                                                         "nonEmpty":  true
+                                                                     },
+                                                                     {
+                                                                         "name":  "access-attempts",
+                                                                         "evidencePath":  "02-download-attempts.json",
+                                                                         "resolvedPath":  "D:\\admin\\Documents\\트레인 오라클 진도\\.omo\\evidence\\genspark-legacy-recovery-20260625\\02-download-attempts.json",
+                                                                         "exists":  true,
+                                                                         "length":  18614,
+                                                                         "nonEmpty":  true
+                                                                     },
+                                                                     {
+                                                                         "name":  "recovery-report",
+                                                                         "evidencePath":  "03-recovery-report.md",
+                                                                         "resolvedPath":  "D:\\admin\\Documents\\트레인 오라클 진도\\.omo\\evidence\\genspark-legacy-recovery-20260625\\03-recovery-report.md",
+                                                                         "exists":  true,
+                                                                         "length":  1461,
+                                                                         "nonEmpty":  true
+                                                                     }
+                                                                 ],
+                                         "unresolvedEvidencePaths":  [
+
+                                                                     ]
+                                     },
+                   "recoveryReport":  {
+                                          "missingRequiredPhrases":  [
+
+                                                                     ]
+                                      },
+                   "adversarialLabels":  {
+                                             "missingLabels":  [
+
+                                                               ]
+                                         },
+                   "sensitiveScan":  {
+                                         "scannedTextFileCount":  31,
+                                         "hitRecordCount":  0,
+                                         "hitRecordsWithoutValues":  [
+
+                                                                     ]
+                                     }
+               },
+    "manualQa":  {
+                     "surfaceEvidence":  [
+                                             {
+                                                 "scenarioId":  "S01",
+                                                 "criterionReference":  "required package artifacts are present/non-empty",
+                                                 "surface":  "filesystem",
+                                                 "exactInvocation":  "Get-ChildItem -Force -Recurse .omo\\evidence\\genspark-legacy-recovery-20260625",
+                                                 "verdict":  "PASS",
+                                                 "artifactRefs":  [
+                                                                      "package-dir",
+                                                                      "raw-json"
+                                                                  ],
+                                                 "details":  "Required artifact count: 9; missing/empty count: 0."
+                                             },
+                                             {
+                                                 "scenarioId":  "S02",
+                                                 "criterionReference":  "local archive present",
+                                                 "surface":  "filesystem",
+                                                 "exactInvocation":  "Get-ChildItem -Force -Recurse \u0027D:\\admin\\Downloads\\trainoracle_genspark_legacy_recovery_20260625\u0027",
+                                                 "verdict":  "PASS",
+                                                 "artifactRefs":  [
+                                                                      "local-archive",
+                                                                      "raw-json"
+                                                                  ],
+                                                 "details":  "Archive files: 7; empty files: 0."
+                                             },
+                                             {
+                                                 "scenarioId":  "S03",
+                                                 "criterionReference":  "01-body-text.txt is greater than 400000 bytes",
+                                                 "surface":  "filesystem",
+                                                 "exactInvocation":  "(Get-Item .omo\\evidence\\genspark-legacy-recovery-20260625\\01-body-text.txt).Length",
+                                                 "verdict":  "PASS",
+                                                 "artifactRefs":  [
+                                                                      "package-dir",
+                                                                      "raw-json"
+                                                                  ],
+                                                 "details":  "Observed byte length: 410076."
+                                             },
+                                             {
+                                                 "scenarioId":  "S04",
+                                                 "criterionReference":  "browser and agent-response PNG artifacts decode and have meaningful dimensions",
+                                                 "surface":  "filesystem + System.Drawing decoder",
+                                                 "exactInvocation":  "ReadAllBytes + System.Drawing.Image::FromFile for 01-browser-screenshot.png and 02-agent-response.png",
+                                                 "verdict":  "PASS",
+                                                 "artifactRefs":  [
+                                                                      "package-dir",
+                                                                      "raw-json"
+                                                                  ],
+                                                 "details":  "Observed PNG dimensions: 800x450, 800x450."
+                                             },
+                                             {
+                                                 "scenarioId":  "S05",
+                                                 "criterionReference":  "01-link-manifest.json root counts and derived credential marker count",
+                                                 "surface":  "JSON parse",
+                                                 "exactInvocation":  "Get-Content -Raw .omo\\evidence\\genspark-legacy-recovery-20260625\\01-link-manifest.json | ConvertFrom-Json",
+                                                 "verdict":  "PASS",
+                                                 "artifactRefs":  [
+                                                                      "package-dir",
+                                                                      "raw-json"
+                                                                  ],
+                                                 "details":  "totalLinks=64; links.length=64; credentialQueryRemovedLinks=21; derivedMarkerCount=21."
+                                             },
+                                             {
+                                                 "scenarioId":  "S06",
+                                                 "criterionReference":  "material index fields present and evidencePath values resolve to non-empty package artifacts",
+                                                 "surface":  "JSON parse + filesystem",
+                                                 "exactInvocation":  "ConvertFrom-Json 02-recovered-material-index.json; Test-Path each materials[].evidencePath",
+                                                 "verdict":  "PASS",
+                                                 "artifactRefs":  [
+                                                                      "package-dir",
+                                                                      "raw-json"
+                                                                  ],
+                                                 "details":  "Material entries: 5; missing field instances: 0; unresolved evidencePath count: 0."
+                                             },
+                                             {
+                                                 "scenarioId":  "S07",
+                                                 "criterionReference":  "COUNT_DELTA and exact limit phrases are present in 03-recovery-report.md",
+                                                 "surface":  "text file",
+                                                 "exactInvocation":  "Select-String -Path .omo\\evidence\\genspark-legacy-recovery-20260625\\03-recovery-report.md -Pattern \u003crequired literal phrases\u003e",
+                                                 "verdict":  "PASS",
+                                                 "artifactRefs":  [
+                                                                      "package-dir",
+                                                                      "raw-json"
+                                                                  ],
+                                                 "details":  "Required phrases: 5; missing phrases: 0."
+                                             },
+                                             {
+                                                 "scenarioId":  "S08",
+                                                 "criterionReference":  "adversarial labels present",
+                                                 "surface":  "text file",
+                                                 "exactInvocation":  "Select-String -Path .omo\\evidence\\genspark-legacy-recovery-20260625\\03-adversarial-compaction-expiry.md -Pattern \u003crequired labels\u003e",
+                                                 "verdict":  "PASS",
+                                                 "artifactRefs":  [
+                                                                      "package-dir",
+                                                                      "raw-json"
+                                                                  ],
+                                                 "details":  "Required labels: 6; missing labels: 0."
+                                             }
+                                         ],
+                     "adversarialCases":  [
+                                              {
+                                                  "scenarioId":  "A01",
+                                                  "criterionReference":  "broad sensitive/credential/control scan has zero exposed hits",
+                                                  "adversarialClass":  "credential material exposure",
+                                                  "expectedBehavior":  "No exposed bearer/API/secret/private-key/signed-query values appear in package or local archive text files.",
+                                                  "verdict":  "PASS",
+                                                  "artifactRefs":  [
+                                                                       "package-dir",
+                                                                       "local-archive",
+                                                                       "raw-json"
+                                                                   ],
+                                                  "details":  "Scanned text files: 31; hit records: 0; matched values intentionally omitted."
+                                              },
+                                              {
+                                                  "scenarioId":  "A02",
+                                                  "criterionReference":  "compacted history not over-claimed",
+                                                  "adversarialClass":  "compaction boundary",
+                                                  "expectedBehavior":  "Report preserves the exact compacted-history limit phrase.",
+                                                  "verdict":  "PASS",
+                                                  "artifactRefs":  [
+                                                                       "package-dir",
+                                                                       "raw-json"
+                                                                   ],
+                                                  "details":  "Exact phrase check only."
+                                              },
+                                              {
+                                                  "scenarioId":  "A03",
+                                                  "criterionReference":  "expired links not over-claimed",
+                                                  "adversarialClass":  "expiry boundary",
+                                                  "expectedBehavior":  "Report preserves the exact expired/unavailable-link limit phrase.",
+                                                  "verdict":  "PASS",
+                                                  "artifactRefs":  [
+                                                                       "package-dir",
+                                                                       "raw-json"
+                                                                   ],
+                                                  "details":  "Exact phrase check only."
+                                              },
+                                              {
+                                                  "scenarioId":  "A04",
+                                                  "criterionReference":  "agent-generated reconstruction not canonical",
+                                                  "adversarialClass":  "generated recollection boundary",
+                                                  "expectedBehavior":  "Report preserves the exact generated-reconstruction limit phrase.",
+                                                  "verdict":  "PASS",
+                                                  "artifactRefs":  [
+                                                                       "package-dir",
+                                                                       "raw-json"
+                                                                   ],
+                                                  "details":  "Exact phrase check only."
+                                              }
+                                          ],
+                     "artifactRefs":  [
+                                          {
+                                              "id":  "raw-json",
+                                              "kind":  "json",
+                                              "description":  "Machine-readable QA review result.",
+                                              "path":  "D:\\admin\\Documents\\트레인 오라클 진도\\.omo\\evidence\\genspark-legacy-recovery-20260625-qa-review-raw.json"
+                                          },
+                                          {
+                                              "id":  "qa-report",
+                                              "kind":  "markdown",
+                                              "description":  "Human-readable QA review report.",
+                                              "path":  "D:\\admin\\Documents\\트레인 오라클 진도\\.omo\\evidence\\genspark-legacy-recovery-20260625-qa-review.md"
+                                          },
+                                          {
+                                              "id":  "package-dir",
+                                              "kind":  "directory",
+                                              "description":  "Scanned evidence package directory.",
+                                              "path":  "D:\\admin\\Documents\\트레인 오라클 진도\\.omo\\evidence\\genspark-legacy-recovery-20260625"
+                                          },
+                                          {
+                                              "id":  "local-archive",
+                                              "kind":  "directory",
+                                              "description":  "Scanned local raw archive directory.",
+                                              "path":  "D:\\admin\\Downloads\\trainoracle_genspark_legacy_recovery_20260625"
+                                          }
+                                      ]
+                 }
+}

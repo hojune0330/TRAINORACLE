@@ -1,0 +1,122 @@
+# SPEC Wave 1 Physio GREEN Evidence - 2026-06-26
+
+Purpose: prove target-local physio patches exist while preserving non-closure and safety/privacy guardrails.
+
+## Changed file diff stat
+ README.md                                 |   5 +-
+ SPEC_WORK_STATUS.md                       |  63 ++++++++++++-----
+ TRAINORACLE_SPEC_INDEX.md                 |  35 +++++++---
+ specs/active/APP_IMPLEMENTATION_BRIDGE.md | 109 +++++++++++++++++++++++++++++-
+ specs/active/ATHLETE_PROFILE_SPEC.md      |  40 +++++++++--
+ specs/active/PLAN_GENERATOR_SPEC.md       |  72 +++++++++++++++++++-
+ 6 files changed, 287 insertions(+), 37 deletions(-)
+
+## Patch anchors and safety/privacy guardrails
+SPEC_WAVE1_PHYSIO_PATCH_REPORT.md:21:This report records the Wave 1 target patches that connected `PHYSIO_SOURCE_TRUST_SPEC.md` into:
+SPEC_WAVE1_PHYSIO_PATCH_REPORT.md:62:  good_physio_data_cannot_clear_D9: true
+SPEC_WAVE1_PHYSIO_PATCH_REPORT.md:64:  raw_athlete_free_text_storage_forbidden: true
+SPEC_WAVE1_PHYSIO_PATCH_REPORT.md:65:  raw_symptom_clause_storage_forbidden: true
+SPEC_WAVE1_PHYSIO_PATCH_REPORT.md:66:  private_physio_data_to_external_llm_forbidden: true
+SPEC_WAVE1_PHYSIO_PATCH_REPORT.md:73:1. Source/owner review of `PHYSIO_SOURCE_TRUST_SPEC.md` and the three target patches.
+specs/active/ATHLETE_PROFILE_SPEC.md:248:        source_document: PHYSIO_SOURCE_TRUST_SPEC.md
+specs/active/ATHLETE_PROFILE_SPEC.md:251:        good_physio_can_clear_D9: false
+specs/active/ATHLETE_PROFILE_SPEC.md:534:  mayClearD9Risk?: false;
+specs/active/ATHLETE_PROFILE_SPEC.md:674:    note: "Target binding to PHYSIO_SOURCE_TRUST_SPEC.md is patched, but remains canonical blocking until source acceptance, App Bridge storage binding review, and target recount are accepted."
+specs/active/ATHLETE_PROFILE_SPEC.md:729:  target_patch_status: PATCHED_PENDING_SOURCE_ACCEPTANCE
+specs/active/ATHLETE_PROFILE_SPEC.md:730:  closure_allowed_now: false
+specs/active/ATHLETE_PROFILE_SPEC.md:732:    - PHYSIO_SOURCE_TRUST_SPEC.md owner/source acceptance
+specs/active/APP_IMPLEMENTATION_BRIDGE.md:409:  source_document: PHYSIO_SOURCE_TRUST_SPEC.md
+specs/active/APP_IMPLEMENTATION_BRIDGE.md:411:  status_after_patch: PATCHED_PENDING_SOURCE_ACCEPTANCE
+specs/active/APP_IMPLEMENTATION_BRIDGE.md:427:    - raw_athlete_free_text
+specs/active/APP_IMPLEMENTATION_BRIDGE.md:428:    - raw_symptom_clause
+specs/active/APP_IMPLEMENTATION_BRIDGE.md:436:    good_physio_data_can_clear_D9: false
+specs/active/APP_IMPLEMENTATION_BRIDGE.md:487:      - raw_athlete_free_text
+specs/active/APP_IMPLEMENTATION_BRIDGE.md:488:      - raw_symptom_clause
+specs/active/APP_IMPLEMENTATION_BRIDGE.md:772:  mayClearD9Risk: false;
+specs/active/APP_IMPLEMENTATION_BRIDGE.md:937:  target_patch_status: PATCHED_PENDING_SOURCE_ACCEPTANCE
+specs/active/APP_IMPLEMENTATION_BRIDGE.md:938:  closure_allowed_now: false
+specs/active/APP_IMPLEMENTATION_BRIDGE.md:940:    - PHYSIO_SOURCE_TRUST_SPEC.md owner/source acceptance
+specs/active/PLAN_GENERATOR_SPEC.md:356:      status: PATCHED_PENDING_SOURCE_ACCEPTANCE
+specs/active/PLAN_GENERATOR_SPEC.md:358:      source_document: PHYSIO_SOURCE_TRUST_SPEC.md
+specs/active/PLAN_GENERATOR_SPEC.md:451:    - raw_athlete_free_text
+specs/active/PLAN_GENERATOR_SPEC.md:473:Plan Generator may consume physiological source trust only through `PHYSIO_SOURCE_TRUST_SPEC.md` and App Bridge source-trust records.
+specs/active/PLAN_GENERATOR_SPEC.md:479:  source_document: PHYSIO_SOURCE_TRUST_SPEC.md
+specs/active/PLAN_GENERATOR_SPEC.md:482:  target_issue_status_after_patch: PATCHED_PENDING_SOURCE_ACCEPTANCE
+specs/active/PLAN_GENERATOR_SPEC.md:497:    - treat_good_physio_data_as_safety_clearance
+specs/active/PLAN_GENERATOR_SPEC.md:499:    - store_raw_athlete_free_text
+specs/active/PLAN_GENERATOR_SPEC.md:500:    - store_raw_symptom_clause
+specs/active/PLAN_GENERATOR_SPEC.md:517:  D9_ACTIVE:
+specs/active/PLAN_GENERATOR_SPEC.md:520:  D9_UNKNOWN:
+specs/active/PLAN_GENERATOR_SPEC.md:524:  D9_CLEARED:
+specs/active/PLAN_GENERATOR_SPEC.md:527:  advisory_under_D9_CLEARED:
+specs/active/PLAN_GENERATOR_SPEC.md:892:| `OI-PG-PHYSIO-SOURCE-CONSUMPTION-001` | P1 | YES | OPEN | Target binding to `PHYSIO_SOURCE_TRUST_SPEC.md` is patched, but source acceptance and owner recount are still pending. | Review source acceptance, confirm App Bridge record binding, then recount before closure. |
+SPEC_TARGET_PATCH_MATRIX.md:54:| `PHYSIO_SOURCE_TRUST_SPEC.md` | Active SPEC candidate | Physio source trust, recency, conflict, structured readiness/soreness/RPE policy | Automatic closure of PG/AIB/AP issues |
+SPEC_TARGET_PATCH_MATRIX.md:67:| `PLAN_GENERATOR_SPEC.md` | `OI-PG-PHYSIO-SOURCE-CONSUMPTION-001` | P1 / YES / OPEN; target binding patched in Section 6B | `PHYSIO_SOURCE_TRUST_SPEC.md` | Consume trusted physio source status without allowing good physio data to clear D9 risk | No. Target patch exists, but closure still requires source acceptance and target recount approval; do not copy expected deltas |
+SPEC_TARGET_PATCH_MATRIX.md:68:| `APP_IMPLEMENTATION_BRIDGE.md` | `OI-AIB-PHYSIO-SOURCE-001` | P1 / true / OPEN in current target file; issue addendum records patched-pending-source-acceptance | `PHYSIO_SOURCE_TRUST_SPEC.md`, `DAILY_LOG_AND_CHECKIN_SPEC.md` | Add storage/use boundary for physio source trust and daily check-in structured data | No. Target patch exists, but closure still requires source acceptance, target recount approval, and implementation/privacy review |
+SPEC_TARGET_PATCH_MATRIX.md:69:| `ATHLETE_PROFILE_SPEC.md` | `OI-AP-PHYSIO-SOURCE-001` | Canonical blocking issue remains OPEN with patched-pending-source-acceptance addendum | `PHYSIO_SOURCE_TRUST_SPEC.md`, `DAILY_LOG_AND_CHECKIN_SPEC.md` | Clarify profile physiological attributes source priority and conflict handling | No. Target patch exists, but closure still requires source acceptance, App Bridge binding acceptance, and target recount approval |
+SPEC_TARGET_PATCH_MATRIX.md:71:| `PLAN_SAFETY_GATE_SPEC.md` | `OI-PSG-PHYSIO-SOURCE-CONSUMPTION-001` | P2 / NO / OPEN in current target file | `PHYSIO_SOURCE_TRUST_SPEC.md` | Clarify how poor/missing/conflicting physio data may raise review/block while good data cannot clear D9 risk | No. Requires target patch and recount |
+SPEC_TARGET_PATCH_MATRIX.md:91:- `PHYSIO_SOURCE_TRUST_SPEC.md`
+SPEC_TARGET_PATCH_MATRIX.md:104:- The three target issues remain open as `PATCHED_PENDING_SOURCE_ACCEPTANCE` or equivalent addendum state.
+SPEC_TARGET_PATCH_MATRIX.md:105:- No absolute downstream count was copied from `PHYSIO_SOURCE_TRUST_SPEC.md`.
+SPEC_TARGET_PATCH_MATRIX.md:124:- Daily Log may raise risk but cannot clear `D9_ACTIVE`, `D9_UNKNOWN`, or Safety Gate block states.
+
+## Target issues remain open and counts remain target-owned
+SPEC_WAVE1_PHYSIO_PATCH_REPORT.md:11:open_issues_total: 0
+SPEC_WAVE1_PHYSIO_PATCH_REPORT.md:12:canonical_blocking_count: 0
+SPEC_WAVE1_PHYSIO_PATCH_REPORT.md:35:| `PLAN_GENERATOR_SPEC.md` | `OI-PG-PHYSIO-SOURCE-CONSUMPTION-001` | Added Section 6B consumption contract and D9/Safety Gate boundary | OPEN; patched pending source acceptance and target recount approval |
+SPEC_WAVE1_PHYSIO_PATCH_REPORT.md:36:| `APP_IMPLEMENTATION_BRIDGE.md` | `OI-AIB-PHYSIO-SOURCE-001` | Added storage family, storage policy, data flow, API addendum, and TypeScript record shape | OPEN; patched pending source acceptance, target recount approval, and implementation/privacy review |
+SPEC_WAVE1_PHYSIO_PATCH_REPORT.md:37:| `ATHLETE_PROFILE_SPEC.md` | `OI-AP-PHYSIO-SOURCE-001` | Added Physio Source Trust source-priority/conflict handling and snapshot fields | OPEN; patched pending source acceptance, App Bridge binding acceptance, and target recount approval |
+SPEC_WAVE1_PHYSIO_PATCH_REPORT.md:47:| `PLAN_GENERATOR_SPEC.md` | 7 | 2 | `OI-PG-PHYSIO-SOURCE-CONSUMPTION-001` remains OPEN pending source acceptance and owner recount approval |
+SPEC_WAVE1_PHYSIO_PATCH_REPORT.md:48:| `APP_IMPLEMENTATION_BRIDGE.md` | 12 | 4 | `OI-AIB-PHYSIO-SOURCE-001` remains OPEN pending source acceptance, recount approval, and implementation/privacy review |
+SPEC_WAVE1_PHYSIO_PATCH_REPORT.md:49:| `ATHLETE_PROFILE_SPEC.md` | 11 | 6 | `OI-AP-PHYSIO-SOURCE-001` remains OPEN pending source acceptance and App Bridge binding acceptance |
+specs/active/ATHLETE_PROFILE_SPEC.md:27:open_issues_count: 11
+specs/active/ATHLETE_PROFILE_SPEC.md:28:open_issues_canonical_blocking_count: 6
+specs/active/ATHLETE_PROFILE_SPEC.md:252:        open_issue: OI-AP-PHYSIO-SOURCE-001
+specs/active/ATHLETE_PROFILE_SPEC.md:668:  - id: OI-AP-PHYSIO-SOURCE-001
+specs/active/ATHLETE_PROFILE_SPEC.md:713:open_issues_count: 11
+specs/active/ATHLETE_PROFILE_SPEC.md:714:open_issues_canonical_blocking_count: 6
+specs/active/ATHLETE_PROFILE_SPEC.md:721:  - OI-AP-PHYSIO-SOURCE-001
+specs/active/ATHLETE_PROFILE_SPEC.md:727:OI-AP-PHYSIO-SOURCE-001:
+specs/active/ATHLETE_PROFILE_SPEC.md:856:    open_issues_count: 11
+specs/active/ATHLETE_PROFILE_SPEC.md:857:    open_issues_canonical_blocking_count: 6
+specs/active/ATHLETE_PROFILE_SPEC.md:993:  open_issues_count: 11
+specs/active/ATHLETE_PROFILE_SPEC.md:994:  open_issues_canonical_blocking_count: 6
+specs/active/PLAN_GENERATOR_SPEC.md:44:  open_issues_total: 7
+specs/active/PLAN_GENERATOR_SPEC.md:45:  open_issues_canonical_blocking_count: 2
+specs/active/PLAN_GENERATOR_SPEC.md:133:| Physiological source trust | `APP_IMPLEMENTATION_BRIDGE.md v1.1` | Physiological source consumption policy remains open through `OI-PG-PHYSIO-SOURCE-CONSUMPTION-001` | PARTIAL_OPEN |
+specs/active/PLAN_GENERATOR_SPEC.md:357:      tracked_by: OI-PG-PHYSIO-SOURCE-CONSUMPTION-001
+specs/active/PLAN_GENERATOR_SPEC.md:481:  target_issue: OI-PG-PHYSIO-SOURCE-CONSUMPTION-001
+specs/active/PLAN_GENERATOR_SPEC.md:892:| `OI-PG-PHYSIO-SOURCE-CONSUMPTION-001` | P1 | YES | OPEN | Target binding to `PHYSIO_SOURCE_TRUST_SPEC.md` is patched, but source acceptance and owner recount are still pending. | Review source acceptance, confirm App Bridge record binding, then recount before closure. |
+specs/active/PLAN_GENERATOR_SPEC.md:1000:  expected_open_issues_total: 7
+specs/active/PLAN_GENERATOR_SPEC.md:1001:  expected_canonical_blocking_count: 2
+specs/active/PLAN_GENERATOR_SPEC.md:1047:    - OI-PG-PHYSIO-SOURCE-CONSUMPTION-001
+specs/active/APP_IMPLEMENTATION_BRIDGE.md:58:open_issues_total: 12
+specs/active/APP_IMPLEMENTATION_BRIDGE.md:59:open_issues_canonical_blocking_count: 4
+specs/active/APP_IMPLEMENTATION_BRIDGE.md:357:    target_issue: OI-AIB-PHYSIO-SOURCE-001
+specs/active/APP_IMPLEMENTATION_BRIDGE.md:410:  target_issue: OI-AIB-PHYSIO-SOURCE-001
+specs/active/APP_IMPLEMENTATION_BRIDGE.md:922:| OI-AIB-PHYSIO-SOURCE-001 | P1 | true | Physiology | physiological source trust 등급과 사용 가능 범위 확정 필요 | APP_BRIDGE_DESIGNER |
+specs/active/APP_IMPLEMENTATION_BRIDGE.md:935:OI-AIB-PHYSIO-SOURCE-001:
+specs/active/APP_IMPLEMENTATION_BRIDGE.md:1033:    open_issues_total: 12
+specs/active/APP_IMPLEMENTATION_BRIDGE.md:1034:    open_issues_canonical_blocking_count: 4
+specs/active/APP_IMPLEMENTATION_BRIDGE.md:1075:  open_issues_count: 12
+specs/active/APP_IMPLEMENTATION_BRIDGE.md:1076:  canonical_blocking_count: 4
+specs/active/APP_IMPLEMENTATION_BRIDGE.md:1082:    - OI-AIB-PHYSIO-SOURCE-001
+
+## Final marker check
+specs/active/PLAN_GENERATOR_SPEC.md => [DRAFT_COMPLETE]
+specs/active/APP_IMPLEMENTATION_BRIDGE.md => [DRAFT_COMPLETE]
+specs/active/ATHLETE_PROFILE_SPEC.md => [DRAFT_COMPLETE]
+SPEC_TARGET_PATCH_MATRIX.md => [DRAFT_COMPLETE]
+SPEC_WAVE1_PHYSIO_PATCH_REPORT.md => [DRAFT_COMPLETE]
+SPEC_WORK_STATUS.md => [DRAFT_COMPLETE]
+TRAINORACLE_SPEC_INDEX.md => [DRAFT_COMPLETE]
+SPEC_DOCUMENTATION_REPORT.md => [DRAFT_COMPLETE]
+SPEC_LEGACY_ALIGNMENT_AND_DAILY_LOG_PLAN.md => [DRAFT_COMPLETE]
+
+## Stale-reference scan
+No stale reference patterns matched.
+
+## Forbidden overclaim scan
+No forbidden overclaim patterns matched.
+
+PASS condition: physio bindings are present; related target issues remain open; no runtime/canonical/closure overclaim; no stale Wave 1 future-work reference; cleanup: no runtime resources spawned.
