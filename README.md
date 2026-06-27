@@ -1,5 +1,37 @@
 # TRAINORACLE — SPEC And Design Handoff
 
+## TrainOracle SPEC를 처음 보는 사람에게
+
+TrainOracle의 핵심은 예쁜 훈련 일지 화면만이 아니라, **선수 데이터를 안전하게 읽고, 훈련을 분석하고, 근거 있는 계획을 만드는 코칭 시스템**입니다.
+
+현재 GitHub에는 앱 구현 전에 필요한 SPEC 계약층이 정리되어 있습니다. 핵심 흐름은 `선수 데이터 -> 세션 분류 -> 선수 프로필/동의 -> D9 안전 평가 -> RVE -> Safety Gate -> Plan Generator -> 훈련 계획/분석/일지`입니다.
+
+먼저 아래 문서를 읽으면 됩니다.
+
+- 쉬운 전체 설명: [`SPEC_OVERVIEW_FOR_HOJUNE.md`](./SPEC_OVERVIEW_FOR_HOJUNE.md)
+- 정확한 파일 목록과 상태: [`TRAINORACLE_SPEC_INDEX.md`](./TRAINORACLE_SPEC_INDEX.md)
+- 현재 남은 작업: [`SPEC_WORK_STATUS.md`](./SPEC_WORK_STATUS.md)
+- 다음 패치 순서: [`SPEC_TARGET_PATCH_MATRIX.md`](./SPEC_TARGET_PATCH_MATRIX.md)
+
+## 스펙별 근거와 결과물
+
+| 스펙 | 근거로 삼는 것 | 만들어내는 결과물 |
+|---|---|---|
+| `RULE_SPEC_D1_D9.md` | D1-D9 안전 규칙과 D9 hard-stop 의미 | 훈련 계획을 막아야 하는 안전 판단 기준 |
+| `SESSION_CLASSIFIER_SPEC.md` | 세션 기록, 운동 의도, 강도/구성 신호 | 조깅, 회복주, 인터벌, 경기 등 세션 분류 결과 |
+| `ATHLETE_PROFILE_SPEC.md` | 선수별 프로필, 제한, 선호, 동의/권한 | 선수별 적용 가능 조건과 개인화 경계 |
+| `APP_IMPLEMENTATION_BRIDGE.md` | 저장 정책, 동의, 권한, audit 요구사항 | 앱/웹이 저장할 데이터, API, 감사 로그 계약 |
+| `PHYSIO_SOURCE_TRUST_SPEC.md` | HR, RPE, 피로도, 최신성, 충돌 여부 | 생리 데이터의 신뢰 등급과 사용 가능 범위 |
+| `TEMPLATE_LIBRARY_SPEC.md` | 훈련 템플릿 소유권, lifecycle, eligibility | 사용할 수 있는 훈련 템플릿 후보와 제한 조건 |
+| `RVE_RULE_EVALUATOR_BINDING_SPEC.md` | D9 evaluator 결과와 reason code | RVE, Safety Gate, Plan Generator가 읽는 표준 안전 신호 |
+| `PLAN_SAFETY_GATE_SPEC.md` | RVE 신호, D9 상태, safety routing 규칙 | 계획 생성 전 차단/검토/통과 결정 |
+| `PLAN_GENERATOR_SPEC.md` | Safety Gate 결과, 선수 프로필, 세션/템플릿/physio 신호 | 근거와 제한을 가진 훈련 계획 후보 |
+| `DAILY_LOG_AND_CHECKIN_SPEC.md` | 매일 들어오는 훈련 일지, 컨디션, 구조화된 체크인 | 저장 가능한 일지 데이터와 RVE/Safety Gate/분석 입력 |
+
+이 표의 핵심은 “데이터가 들어오면 바로 AI가 답을 만드는 구조”가 아니라는 점입니다. TrainOracle은 먼저 근거를 분류하고, 저장해도 되는 정보만 남기고, 안전 게이트를 통과한 뒤에 계획과 분석 결과를 만들도록 설계되어 있습니다.
+
+중요한 약속: 아직 완성 앱, 정본 승인, production 배포, D9 runtime evidence 단계는 아닙니다. 대신 무엇이 준비됐고 무엇은 아직 닫으면 안 되는지 분리해서 기록해 둔 상태입니다.
+
 > Wave 1 physio target patch status: [`SPEC_WAVE1_PHYSIO_PATCH_REPORT.md`](./SPEC_WAVE1_PHYSIO_PATCH_REPORT.md). Next patch order: [`SPEC_TARGET_PATCH_MATRIX.md`](./SPEC_TARGET_PATCH_MATRIX.md). File-truth guardrails: [`SPEC_FILE_TRUTH_GUARD.md`](./SPEC_FILE_TRUTH_GUARD.md).
 
 > **이 폴더는 다른 AI 개발 에이전트에게 그대로 전달하기 위한 패키지입니다.**

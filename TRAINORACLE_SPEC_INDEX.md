@@ -15,6 +15,28 @@ registry_note: "Counts apply only to this registry document. Source SPEC issue c
 
 ---
 
+## 0. Easy Start
+
+If this repository feels too dense, start with [`SPEC_OVERVIEW_FOR_HOJUNE.md`](./SPEC_OVERVIEW_FOR_HOJUNE.md).
+
+That document explains, in plain Korean:
+
+- what the TrainOracle SPEC layer is trying to protect
+- why the current SPEC structure is solid
+- what each core SPEC does
+- which SPECs are still reconstructed drafts
+- which productization SPECs still need to be written
+
+Short version:
+
+```text
+TrainOracle is not only a training diary UI.
+It is a safety-bound coaching system:
+athlete data -> classifier -> profile/consent -> D9 safety evaluation -> RVE -> Safety Gate -> Plan Generator -> plan, analysis, daily log.
+```
+
+---
+
 ## 1. Purpose
 
 This registry records the current TrainOracle SPEC layer added to the `hojune0330/TRAINORACLE` repository.
