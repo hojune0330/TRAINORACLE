@@ -1,0 +1,99 @@
+﻿TrainOracle Productization SPEC Daily Brief / AI Inbox Final QA Evidence
+timestamp_local: 2026-06-27T11:26:50.2892669+09:00
+target_file: specs/reconstruct/DAILY_BRIEF_AND_INBOX_SIGNAL_SPEC.md
+
+== git status ==
+## main...origin/main
+ M SPEC_DOCUMENTATION_REPORT.md
+ M SPEC_OVERVIEW_FOR_HOJUNE.md
+ M SPEC_TARGET_PATCH_MATRIX.md
+ M SPEC_WORK_STATUS.md
+ M TRAINORACLE_SPEC_INDEX.md
+ M specs/reconstruct/README.md
+?? .omo/evidence/spec-productization-daily-brief-code-review.md
+?? .omo/evidence/spec-productization-daily-brief-final-qa-20260627.txt
+?? .omo/evidence/spec-productization-daily-brief-green-20260627.txt
+?? .omo/evidence/spec-productization-daily-brief-red-20260627.txt
+?? specs/reconstruct/DAILY_BRIEF_AND_INBOX_SIGNAL_SPEC.md
+
+== diff stat ==
+ SPEC_DOCUMENTATION_REPORT.md | 25 +++++++++++++++++++++++++
+ SPEC_OVERVIEW_FOR_HOJUNE.md  | 20 ++++++++++++++++++++
+ SPEC_TARGET_PATCH_MATRIX.md  |  9 ++++++++-
+ SPEC_WORK_STATUS.md          | 18 ++++++++++++++++--
+ TRAINORACLE_SPEC_INDEX.md    | 13 ++++++++++++-
+ specs/reconstruct/README.md  | 14 ++++++++++++++
+ 6 files changed, 95 insertions(+), 4 deletions(-)
+
+== final marker checks ==
+specs/reconstruct/DAILY_BRIEF_AND_INBOX_SIGNAL_SPEC.md	first=# DAILY_BRIEF_AND_INBOX_SIGNAL_SPEC.md	last=[DRAFT_COMPLETE]	line_count=618
+TRAINORACLE_SPEC_INDEX.md	first=# TRAINORACLE_SPEC_INDEX.md	last=[DRAFT_COMPLETE]	line_count=205
+SPEC_TARGET_PATCH_MATRIX.md	first=# SPEC_TARGET_PATCH_MATRIX.md	last=[DRAFT_COMPLETE]	line_count=197
+SPEC_WORK_STATUS.md	first=# SPEC_WORK_STATUS.md	last=[DRAFT_COMPLETE]	line_count=187
+SPEC_DOCUMENTATION_REPORT.md	first=# SPEC_DOCUMENTATION_REPORT.md	last=[DRAFT_COMPLETE]	line_count=166
+SPEC_OVERVIEW_FOR_HOJUNE.md	first=# SPEC_OVERVIEW_FOR_HOJUNE.md	last=[DRAFT_COMPLETE]	line_count=166
+specs/reconstruct/README.md is a directory README and does not use the SPEC final-marker contract.
+
+== issue table recount ==
+issue_rows=6
+588:| `OI-DBI-APP-BRIDGE-BINDING-001` | P1 | YES | OPEN | App Bridge does not yet own DailyBriefItemRecord, InboxSignalRecord, capabilities, or API routes. | Patch App Bridge only after this draft is accepted, then recount the target issue table. |
+589:| `OI-DBI-SIGNAL-RANKING-001` | P1 | YES | OPEN | Final ranking weights and stale/conflict handling are not implementation-bound. | Define deterministic ranking rules and verify no safety override behavior. |
+590:| `OI-DBI-RUNTIME-EVIDENCE-001` | P1 | YES | OPEN | No runtime generation logs prove item creation, sourceRef preservation, or privacy filtering. | Run local/CI generation tests after implementation exists. |
+591:| `OI-DBI-EXTERNAL-LLM-POLICY-001` | P2 | NO | OPEN | Future LLM summarization boundary is not accepted. | Keep external LLM disabled for private athlete data until a separate privacy/security review exists. |
+592:| `OI-DBI-UI-SURFACE-BINDING-001` | P2 | NO | OPEN | Dashboard and AI Inbox screens are design references only, not accepted implementation contracts. | Patch UI/screen contracts after this data contract is accepted. |
+593:| `OI-DBI-ANALYSIS-CONTRACT-BINDING-001` | P2 | NO | OPEN | Analysis trend items and visualization data contracts remain separate future work. | Draft `ANALYSIS_AND_VISUALIZATION_DATA_CONTRACT.md`. |
+canonical_blocking_rows=3
+open_rows=6
+
+== positive invariant scans ==
+10:  status: DRAFT_FOR_REVIEW
+16:    new_productization_draft: true
+17:    restored_original: false
+68:      treatment: RECONSTRUCTED_DRAFT_FOR_REVIEW
+78:      treatment: DRAFT_FOR_REVIEW_ACTIVE_SPEC_CANDIDATE
+87:      treatment: RECONSTRUCTED_DRAFT_FOR_REVIEW
+141:  no_external_llm_with_private_athlete_data: true
+247:    - nonSensitiveReasonCodes
+262:    - nonSensitiveReasonCodes
+271:    - nonSensitiveReasonCodes
+301:    external_llm_with_private_athlete_data_allowed: false
+307:    - sourceRefs
+308:    - nonSensitiveReasonCodes
+309:    - confidence_or_uncertainty
+385:  nonSensitiveReasonCodes: readonly string[];
+386:  sourceRefs: readonly SourceRef[];
+391:  rawTextStored: false;
+392:  rawMemoStored: false;
+393:  rawSymptomClauseStored: false;
+394:  mayCreatePlanOption: false;
+395:  mayClearD9Risk: false;
+396:  mayClearSafetyGateBlock: false;
+470:      - sourceRefs
+471:      - confidence_or_uncertainty
+472:      - nonSensitiveReasonCodes
+588:| `OI-DBI-APP-BRIDGE-BINDING-001` | P1 | YES | OPEN | App Bridge does not yet own DailyBriefItemRecord, InboxSignalRecord, capabilities, or API routes. | Patch App Bridge only after this draft is accepted, then recount the target issue table. |
+589:| `OI-DBI-SIGNAL-RANKING-001` | P1 | YES | OPEN | Final ranking weights and stale/conflict handling are not implementation-bound. | Define deterministic ranking rules and verify no safety override behavior. |
+590:| `OI-DBI-RUNTIME-EVIDENCE-001` | P1 | YES | OPEN | No runtime generation logs prove item creation, sourceRef preservation, or privacy filtering. | Run local/CI generation tests after implementation exists. |
+591:| `OI-DBI-EXTERNAL-LLM-POLICY-001` | P2 | NO | OPEN | Future LLM summarization boundary is not accepted. | Keep external LLM disabled for private athlete data until a separate privacy/security review exists. |
+592:| `OI-DBI-UI-SURFACE-BINDING-001` | P2 | NO | OPEN | Dashboard and AI Inbox screens are design references only, not accepted implementation contracts. | Patch UI/screen contracts after this data contract is accepted. |
+593:| `OI-DBI-ANALYSIS-CONTRACT-BINDING-001` | P2 | NO | OPEN | Analysis trend items and visualization data contracts remain separate future work. | Draft `ANALYSIS_AND_VISUALIZATION_DATA_CONTRACT.md`. |
+603:| Status is `DRAFT_FOR_REVIEW` | PASS |
+
+== forbidden overclaim scan ==
+PASS: no forbidden overclaim patterns found.
+
+== reviewer result ==
+Code reviewer: PASS / APPROVE. Report path: .omo/evidence/spec-productization-daily-brief-code-review.md
+Reviewer verified draft/new/not canonical, sourceRefs/confidence/reason-code requirements, raw/private text prohibition, no plan creation or D9/Safety Gate clearing, matching issue counts, and final markers.
+
+== evidence artifacts ==
+FOUND	.omo/evidence/spec-productization-daily-brief-red-20260627.txt	5485 bytes	2026-06-27T11:17:30.9700796+09:00
+FOUND	.omo/evidence/spec-productization-daily-brief-green-20260627.txt	8055 bytes	2026-06-27T11:21:38.2546352+09:00
+FOUND	.omo/evidence/spec-productization-daily-brief-code-review.md	6502 bytes	2026-06-27T11:24:51.0503585+09:00
+
+== cleanup receipt ==
+No dev server, browser session, app runtime, CI, or D9 evaluator runtime was started.
+Reviewer agent will be closed after final result capture.
+
+== post-write self check ==
+FOUND_SELF_FILE: True

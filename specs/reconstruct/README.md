@@ -8,6 +8,10 @@ Current reconstructed drafts:
 - `PLAN_SAFETY_GATE_SPEC.md` (`RECONSTRUCTED_DRAFT_FOR_REVIEW`; not original restored, not canonical, not runtime evidence)
 - `DAILY_LOG_AND_CHECKIN_SPEC.md` (`RECONSTRUCTED_DRAFT_FOR_REVIEW`; not original restored, not canonical, not runtime evidence)
 
+Current productization drafts:
+
+- `DAILY_BRIEF_AND_INBOX_SIGNAL_SPEC.md` (`DRAFT_FOR_REVIEW`; new productization draft, not original restored, not canonical, not runtime evidence)
+
 Known missing or source-not-verified targets:
 
 - `COACH_RATIFICATION_SAFETY_DEFAULTS_2026_06_04_001`
@@ -58,6 +62,16 @@ Use this order before creating any reconstructed file:
 - Do not claim it is the original restored file.
 - Do not persist raw memo text, raw symptom clauses, injury narratives, medical notes, rehab notes, evidence clauses, or guardian private notes.
 - Do not close Safety Gate, RVE, Plan Generator, App Bridge, Athlete Profile, or Physio issues from reconstruction alone.
+
+`DAILY_BRIEF_AND_INBOX_SIGNAL_SPEC.md`:
+
+- Exact search before creation was captured in `.omo/evidence/spec-productization-daily-brief-red-20260627.txt`.
+- `specs/reconstruct/DAILY_BRIEF_AND_INBOX_SIGNAL_SPEC.md` now exists as `DRAFT_FOR_REVIEW`.
+- It is a new productization draft, not an original restored file.
+- It defines daily brief, dashboard prompt, and AI Inbox signal records from structured facts.
+- It requires source refs, confidence/uncertainty, and non-sensitive reason codes.
+- It forbids raw memo text, raw free text, raw symptom clauses, private medical/guardian notes, and external LLM prompts with private athlete data.
+- It cannot create plan options, clear D9 risk, clear Safety Gate blocks, or close downstream issues.
 
 ## Required Safety Semantics
 

@@ -1,0 +1,112 @@
+﻿TrainOracle Productization SPEC Daily Brief / AI Inbox GREEN Evidence
+timestamp_local: 2026-06-27T11:21:37.8712282+09:00
+target_file: specs/reconstruct/DAILY_BRIEF_AND_INBOX_SIGNAL_SPEC.md
+
+== git status ==
+## main...origin/main
+ M SPEC_DOCUMENTATION_REPORT.md
+ M SPEC_OVERVIEW_FOR_HOJUNE.md
+ M SPEC_TARGET_PATCH_MATRIX.md
+ M SPEC_WORK_STATUS.md
+ M TRAINORACLE_SPEC_INDEX.md
+ M specs/reconstruct/README.md
+?? .omo/evidence/spec-productization-daily-brief-red-20260627.txt
+?? specs/reconstruct/DAILY_BRIEF_AND_INBOX_SIGNAL_SPEC.md
+
+== target file existence ==
+FOUND	D:\admin\Documents\트레인 오라클 진도\specs\reconstruct\DAILY_BRIEF_AND_INBOX_SIGNAL_SPEC.md	18330 bytes
+
+== metadata and open issue count scan ==
+10:  status: DRAFT_FOR_REVIEW
+15:    local_original_found: false
+16:    new_productization_draft: true
+17:    restored_original: false
+18:    prior_approved_version_restored: false
+21:  open_issues_total: 6
+22:  canonical_blocking_count: 3
+24:  executed_tests_total: 0
+25:  executed_tests_passed: 0
+26:  self_check_is_runtime_evidence: false
+29:  canonical_promotion_allowed: false
+
+== required contract scans ==
+30:  final_marker_required: "[DRAFT_COMPLETE]"
+98:        - uncertainty and correction lineage
+120:        - confidence and uncertainty display intent
+126:        - required citation/confidence/source-ref boundary
+141:  no_external_llm_with_private_athlete_data: true
+142:  no_raw_free_text_storage: true
+202:    meaning: "Uncertain classification, insufficient evidence, stale source, or low confidence."
+247:    - nonSensitiveReasonCodes
+252:    - classification_confidence
+262:    - nonSensitiveReasonCodes
+271:    - nonSensitiveReasonCodes
+307:    - sourceRefs
+308:    - nonSensitiveReasonCodes
+309:    - confidence_or_uncertainty
+348:  | "OPEN_SOURCE_CONTEXT"
+349:  | "OPEN_SAFETY_GATE_STATE"
+350:  | "OPEN_SESSION_DETAIL"
+351:  | "OPEN_ANALYSIS_VIEW";
+385:  nonSensitiveReasonCodes: readonly string[];
+386:  sourceRefs: readonly SourceRef[];
+387:  confidence: number | null;
+388:  uncertaintyState: BriefUncertaintyState;
+391:  rawTextStored: false;
+392:  rawMemoStored: false;
+393:  rawSymptomClauseStored: false;
+394:  mayCreatePlanOption: false;
+395:  mayClearD9Risk: false;
+396:  mayClearSafetyGateBlock: false;
+423:    - uncertaintyState
+438:    uncertainty_without_block: medium_or_high
+470:      - sourceRefs
+471:      - confidence_or_uncertainty
+472:      - nonSensitiveReasonCodes
+588:| `OI-DBI-APP-BRIDGE-BINDING-001` | P1 | YES | OPEN | App Bridge does not yet own DailyBriefItemRecord, InboxSignalRecord, capabilities, or API routes. | Patch App Bridge only after this draft is accepted, then recount the target issue table. |
+589:| `OI-DBI-SIGNAL-RANKING-001` | P1 | YES | OPEN | Final ranking weights and stale/conflict handling are not implementation-bound. | Define deterministic ranking rules and verify no safety override behavior. |
+590:| `OI-DBI-RUNTIME-EVIDENCE-001` | P1 | YES | OPEN | No runtime generation logs prove item creation, sourceRef preservation, or privacy filtering. | Run local/CI generation tests after implementation exists. |
+591:| `OI-DBI-EXTERNAL-LLM-POLICY-001` | P2 | NO | OPEN | Future LLM summarization boundary is not accepted. | Keep external LLM disabled for private athlete data until a separate privacy/security review exists. |
+592:| `OI-DBI-UI-SURFACE-BINDING-001` | P2 | NO | OPEN | Dashboard and AI Inbox screens are design references only, not accepted implementation contracts. | Patch UI/screen contracts after this data contract is accepted. |
+593:| `OI-DBI-ANALYSIS-CONTRACT-BINDING-001` | P2 | NO | OPEN | Analysis trend items and visualization data contracts remain separate future work. | Draft `ANALYSIS_AND_VISUALIZATION_DATA_CONTRACT.md`. |
+609:| Requires confidence or uncertainty | PASS |
+618:[DRAFT_COMPLETE]
+
+== linked handoff docs scans ==
+SPEC_OVERVIEW_FOR_HOJUNE.md:114:| `DAILY_BRIEF_AND_INBOX_SIGNAL_SPEC.md` | 매일 요약, 코치 알림, AI Inbox 항목을 만들기 위해 | Daily Log 저장 경계 확정 |
+SPEC_OVERVIEW_FOR_HOJUNE.md:150:## Productization Update - 2026-06-27
+SPEC_OVERVIEW_FOR_HOJUNE.md:152:`DAILY_BRIEF_AND_INBOX_SIGNAL_SPEC.md` now exists at `specs/reconstruct/DAILY_BRIEF_AND_INBOX_SIGNAL_SPEC.md`.
+SPEC_DOCUMENTATION_REPORT.md:106:| `DAILY_BRIEF_AND_INBOX_SIGNAL_SPEC.md` | Future SPEC | Daily Check-in, 세션, 분석 결과를 daily brief / AI Inbox item으로 바꾸는 계약 | Daily Log 구조화 입력 경계 확정 |
+SPEC_DOCUMENTATION_REPORT.md:141:## Productization Draft Addendum - 2026-06-27
+SPEC_DOCUMENTATION_REPORT.md:143:`DAILY_BRIEF_AND_INBOX_SIGNAL_SPEC.md` now exists at `specs/reconstruct/DAILY_BRIEF_AND_INBOX_SIGNAL_SPEC.md`.
+TRAINORACLE_SPEC_INDEX.md:129:## 6A. Productization Drafts
+TRAINORACLE_SPEC_INDEX.md:135:| `DAILY_BRIEF_AND_INBOX_SIGNAL_SPEC.md` | `specs/reconstruct/DAILY_BRIEF_AND_INBOX_SIGNAL_SPEC.md` | DRAFT_FOR_REVIEW | New productization draft. Requires source refs, confidence/uncertainty, non-sensitive reason codes, and raw-text privacy boundary. Does not clear D9/Safety Gate states or create plan options. |
+TRAINORACLE_SPEC_INDEX.md:179:9. Review `specs/reconstruct/DAILY_BRIEF_AND_INBOX_SIGNAL_SPEC.md` as a productization draft; do not treat it as canonical, runtime evidence, or downstream issue closure.
+SPEC_TARGET_PATCH_MATRIX.md:136:- `DAILY_BRIEF_AND_INBOX_SIGNAL_SPEC.md` - created as `specs/reconstruct/DAILY_BRIEF_AND_INBOX_SIGNAL_SPEC.md`
+SPEC_TARGET_PATCH_MATRIX.md:147:Current Wave 3 state:
+SPEC_TARGET_PATCH_MATRIX.md:149:- `DAILY_BRIEF_AND_INBOX_SIGNAL_SPEC.md` now exists as a new productization draft.
+specs/reconstruct/README.md:13:- `DAILY_BRIEF_AND_INBOX_SIGNAL_SPEC.md` (`DRAFT_FOR_REVIEW`; new productization draft, not original restored, not canonical, not runtime evidence)
+specs/reconstruct/README.md:66:`DAILY_BRIEF_AND_INBOX_SIGNAL_SPEC.md`:
+specs/reconstruct/README.md:68:- Exact search before creation was captured in `.omo/evidence/spec-productization-daily-brief-red-20260627.txt`.
+specs/reconstruct/README.md:69:- `specs/reconstruct/DAILY_BRIEF_AND_INBOX_SIGNAL_SPEC.md` now exists as `DRAFT_FOR_REVIEW`.
+SPEC_WORK_STATUS.md:43:Current Wave 3 productization draft state:
+SPEC_WORK_STATUS.md:45:- `specs/reconstruct/DAILY_BRIEF_AND_INBOX_SIGNAL_SPEC.md` now exists as a new `DRAFT_FOR_REVIEW` productization SPEC.
+SPEC_WORK_STATUS.md:114:8. Review `specs/reconstruct/DAILY_BRIEF_AND_INBOX_SIGNAL_SPEC.md`; it is a productization draft, not canonical or runtime evidence.
+SPEC_WORK_STATUS.md:166:- [`.omo/evidence/spec-productization-daily-brief-red-20260627.txt`](./.omo/evidence/spec-productization-daily-brief-red-20260627.txt)
+SPEC_WORK_STATUS.md:167:- [`.omo/evidence/spec-productization-daily-brief-green-20260627.txt`](./.omo/evidence/spec-productization-daily-brief-green-20260627.txt)
+
+== final marker checks ==
+specs/reconstruct/DAILY_BRIEF_AND_INBOX_SIGNAL_SPEC.md	first=# DAILY_BRIEF_AND_INBOX_SIGNAL_SPEC.md	last=[DRAFT_COMPLETE]	line_count=618
+TRAINORACLE_SPEC_INDEX.md	first=# TRAINORACLE_SPEC_INDEX.md	last=[DRAFT_COMPLETE]	line_count=205
+SPEC_TARGET_PATCH_MATRIX.md	first=# SPEC_TARGET_PATCH_MATRIX.md	last=[DRAFT_COMPLETE]	line_count=197
+SPEC_WORK_STATUS.md	first=# SPEC_WORK_STATUS.md	last=[DRAFT_COMPLETE]	line_count=185
+SPEC_DOCUMENTATION_REPORT.md	first=# SPEC_DOCUMENTATION_REPORT.md	last=[DRAFT_COMPLETE]	line_count=166
+SPEC_OVERVIEW_FOR_HOJUNE.md	first=# SPEC_OVERVIEW_FOR_HOJUNE.md	last=[DRAFT_COMPLETE]	line_count=166
+specs/reconstruct/README.md	first=# Missing Or Reconstructed SPEC Area	last=- Raw athlete free-text, symptom clauses, injury narratives, medical notes, and guardian private notes must not be stored in audit contracts.	line_count=83
+
+== forbidden overclaim scan ==
+PASS: no forbidden overclaim patterns found in scanned files.
+
+== cleanup receipt ==
+No dev server, browser session, D9 evaluator runtime, app runtime, or CI command was started.
+This is documentation/spec QA only.

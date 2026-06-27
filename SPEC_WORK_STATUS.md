@@ -40,6 +40,14 @@ Current Wave 2 Daily Log patch state:
 - Raw memo/free-text remains transient only; structured daily signals may raise review or block, but cannot clear `D9_ACTIVE`, `D9_UNKNOWN`, or Safety Gate blocks.
 - Related target issues remain OPEN; this is not canonical promotion, runtime evidence, or issue closure.
 
+Current Wave 3 productization draft state:
+
+- `specs/reconstruct/DAILY_BRIEF_AND_INBOX_SIGNAL_SPEC.md` now exists as a new `DRAFT_FOR_REVIEW` productization SPEC.
+- It defines Daily Brief and AI Inbox signal records from structured facts only.
+- It requires source refs, confidence/uncertainty, and non-sensitive reason codes.
+- It forbids raw memo/free-text/symptom clause storage, external LLM use with private athlete data, D9/Safety Gate clearing, plan option creation, runtime evidence claims, and issue closure.
+- Remaining productization drafts: `ANALYSIS_AND_VISUALIZATION_DATA_CONTRACT.md`, `PLAN_OUTPUT_RATIONALE_PRIVACY_SPEC.md`, and `MICROCYCLE_AND_CALENDAR_MAPPING_SPEC.md`.
+
 Not yet:
 
 - full working web/app implementation
@@ -47,6 +55,7 @@ Not yet:
 - production deployment
 - actual D9 evaluator runtime evidence
 - closure of RVE or Plan Generator safety-gate binding issues
+- acceptance of productization drafts into implementation contracts
 
 ## What Exists In This Repo
 
@@ -102,8 +111,9 @@ Do not claim a document exists from a chapter title, H1, table row, status label
 5. Review `specs/reconstruct/DAILY_LOG_AND_CHECKIN_SPEC.md` as a reconstructed draft and patch only with direct file evidence.
 6. Review the Wave 1 physio target patches in `PLAN_GENERATOR_SPEC.md`, `APP_IMPLEMENTATION_BRIDGE.md`, and `ATHLETE_PROFILE_SPEC.md`; do not close their physio issues until source acceptance and target recount approval exist.
 7. Obtain actual D9 evaluator runtime output before closing RVE or Plan Generator safety-gate binding issues.
-8. Draft Daily Brief / AI Inbox and Analysis visualization contracts before implementation touches those product surfaces.
-9. Continue productization specs only after the safety core chain is stable.
+8. Review `specs/reconstruct/DAILY_BRIEF_AND_INBOX_SIGNAL_SPEC.md`; it is a productization draft, not canonical or runtime evidence.
+9. Draft Analysis visualization, plan rationale privacy, and microcycle/calendar contracts before implementation touches those product surfaces.
+10. Continue productization specs only after preserving the safety core chain.
 
 ## Hard Guardrails
 
@@ -153,6 +163,10 @@ Documentation QA evidence from this handoff cleanup:
 - [`.omo/evidence/spec-wave2-daily-log-final-qa-20260627.txt`](./.omo/evidence/spec-wave2-daily-log-final-qa-20260627.txt)
 - [`.omo/evidence/trainoracle-spec-wave2-daily-log-binding-code-review-followup-pass.md`](./.omo/evidence/trainoracle-spec-wave2-daily-log-binding-code-review-followup-pass.md)
 - [`.omo/evidence/spec-wave2-daily-log-20260627-gate-review.md`](./.omo/evidence/spec-wave2-daily-log-20260627-gate-review.md)
+- [`.omo/evidence/spec-productization-daily-brief-red-20260627.txt`](./.omo/evidence/spec-productization-daily-brief-red-20260627.txt)
+- [`.omo/evidence/spec-productization-daily-brief-green-20260627.txt`](./.omo/evidence/spec-productization-daily-brief-green-20260627.txt)
+- [`.omo/evidence/spec-productization-daily-brief-code-review.md`](./.omo/evidence/spec-productization-daily-brief-code-review.md)
+- [`.omo/evidence/spec-productization-daily-brief-final-qa-20260627.txt`](./.omo/evidence/spec-productization-daily-brief-final-qa-20260627.txt)
 
 Markdown self-checks and documentation scans are not D9 evaluator runtime evidence.
 

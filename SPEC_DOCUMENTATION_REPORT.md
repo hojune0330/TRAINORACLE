@@ -138,4 +138,29 @@ Use it before patching Plan Generator, App Bridge, Athlete Profile, Safety Gate,
 
 Wave 1 update: PG/AIB/AP physio consumption patches are no longer future work. They are present as target-local patches, while the related issues remain open pending source acceptance, review, and target-file recount approval.
 
+## Productization Draft Addendum - 2026-06-27
+
+`DAILY_BRIEF_AND_INBOX_SIGNAL_SPEC.md` now exists at `specs/reconstruct/DAILY_BRIEF_AND_INBOX_SIGNAL_SPEC.md`.
+
+Treatment:
+
+- It is a new `DRAFT_FOR_REVIEW` productization SPEC.
+- It is not an original restored file.
+- It is not canonical promotion.
+- It is not runtime evidence.
+- It does not close `OI-DLC-DAILY-BRIEF-INBOX-001` or any downstream issue.
+
+Purpose:
+
+- Convert structured Daily Log, session, safety, profile, and physio facts into Daily Brief and AI Inbox signal records.
+- Require source refs, confidence/uncertainty, and non-sensitive reason codes.
+- Keep raw memo/free-text/symptom clauses, injury narratives, medical notes, rehab notes, guardian private notes, and private external LLM prompts out of storage and audit.
+- Prevent Daily Brief / AI Inbox from creating plan options or clearing D9/Safety Gate blocks.
+
+Remaining future productization documents:
+
+- `ANALYSIS_AND_VISUALIZATION_DATA_CONTRACT.md`
+- `PLAN_OUTPUT_RATIONALE_PRIVACY_SPEC.md`
+- `MICROCYCLE_AND_CALENDAR_MAPPING_SPEC.md`
+
 [DRAFT_COMPLETE]

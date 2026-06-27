@@ -133,7 +133,7 @@ Current Wave 2 state:
 
 Drafts:
 
-- `DAILY_BRIEF_AND_INBOX_SIGNAL_SPEC.md`
+- `DAILY_BRIEF_AND_INBOX_SIGNAL_SPEC.md` - created as `specs/reconstruct/DAILY_BRIEF_AND_INBOX_SIGNAL_SPEC.md`
 - `ANALYSIS_AND_VISUALIZATION_DATA_CONTRACT.md`
 - `PLAN_OUTPUT_RATIONALE_PRIVACY_SPEC.md`
 - `MICROCYCLE_AND_CALENDAR_MAPPING_SPEC.md`
@@ -143,6 +143,13 @@ Rules:
 - Draft only after Daily Log storage boundary is stable.
 - No external LLM with private athlete data in the current rule-engine phase.
 - Every generated brief/inbox/rationale item must preserve source refs, confidence/uncertainty, and non-sensitive reason codes.
+
+Current Wave 3 state:
+
+- `DAILY_BRIEF_AND_INBOX_SIGNAL_SPEC.md` now exists as a new productization draft.
+- It is not an original restored file, not canonical promotion, not runtime evidence, and not issue closure.
+- It defines daily brief and AI Inbox signal records from structured facts only; raw memo/free-text/symptom clauses remain forbidden.
+- Remaining productization drafts are Analysis/Visualization, Plan Output Rationale Privacy, and Microcycle/Calendar Mapping.
 
 ### Wave 4 - Runtime Evidence
 

@@ -126,6 +126,16 @@ This table records exact repository file state. Text references, chapter titles,
 
 ---
 
+## 6A. Productization Drafts
+
+These files translate the safety/spec core into product surfaces. They are not canonical promotion and not runtime evidence.
+
+| Productization draft | Repository path | Status | Required treatment |
+|---|---|---|---|
+| `DAILY_BRIEF_AND_INBOX_SIGNAL_SPEC.md` | `specs/reconstruct/DAILY_BRIEF_AND_INBOX_SIGNAL_SPEC.md` | DRAFT_FOR_REVIEW | New productization draft. Requires source refs, confidence/uncertainty, non-sensitive reason codes, and raw-text privacy boundary. Does not clear D9/Safety Gate states or create plan options. |
+
+---
+
 ## 7. Namespace Policy
 
 Bare D-rule references are forbidden in new SPEC work.
@@ -166,7 +176,8 @@ Bare D-rule references are forbidden in new SPEC work.
 6. Recheck `PLAN_GENERATOR_SPEC.md` open issue table from the file itself before any target patch.
 7. Review the Wave 1 physio source consumption target patches in `PLAN_GENERATOR_SPEC.md`, `APP_IMPLEMENTATION_BRIDGE.md`, and `ATHLETE_PROFILE_SPEC.md`; do not close related issues before source acceptance and target recount approval.
 8. Obtain actual D9 evaluator runtime output before closing RVE or Plan Generator safety-gate binding issues.
-9. Draft Daily Brief / AI Inbox and Analysis visualization contracts before implementation touches those product surfaces.
+9. Review `specs/reconstruct/DAILY_BRIEF_AND_INBOX_SIGNAL_SPEC.md` as a productization draft; do not treat it as canonical, runtime evidence, or downstream issue closure.
+10. Draft Analysis visualization, plan rationale privacy, and microcycle/calendar contracts before implementation touches those product surfaces.
 
 ---
 
