@@ -67,7 +67,7 @@ patch_rules:
 | `PLAN_GENERATOR_SPEC.md` | `OI-PG-PHYSIO-SOURCE-CONSUMPTION-001` | P1 / YES / OPEN; target binding patched in Section 6B | `PHYSIO_SOURCE_TRUST_SPEC.md` | Consume trusted physio source status without allowing good physio data to clear D9 risk | No. Target patch exists, but closure still requires source acceptance and target recount approval; do not copy expected deltas |
 | `APP_IMPLEMENTATION_BRIDGE.md` | `OI-AIB-PHYSIO-SOURCE-001` | P1 / true / OPEN in current target file; issue addendum records patched-pending-source-acceptance | `PHYSIO_SOURCE_TRUST_SPEC.md`, `DAILY_LOG_AND_CHECKIN_SPEC.md` | Add storage/use boundary for physio source trust and daily check-in structured data | No. Target patch exists, but closure still requires source acceptance, target recount approval, and implementation/privacy review |
 | `ATHLETE_PROFILE_SPEC.md` | `OI-AP-PHYSIO-SOURCE-001` | Canonical blocking issue remains OPEN with patched-pending-source-acceptance addendum | `PHYSIO_SOURCE_TRUST_SPEC.md`, `DAILY_LOG_AND_CHECKIN_SPEC.md` | Clarify profile physiological attributes source priority and conflict handling | No. Target patch exists, but closure still requires source acceptance, App Bridge binding acceptance, and target recount approval |
-| `PLAN_SAFETY_GATE_SPEC.md` | `OI-PSG-DAILY-LOG-INPUT-BINDING-001` | P2 / NO / OPEN in current target file | `DAILY_LOG_AND_CHECKIN_SPEC.md` | Bind daily check-in structured signals as possible RVE/Safety Gate context without raw text storage | No. Reconstructed source must be accepted first |
+| `PLAN_SAFETY_GATE_SPEC.md` | `OI-PSG-DAILY-LOG-INPUT-BINDING-001` | P2 / NO / OPEN in current target file; target-local input boundary patched in Section 9A | `DAILY_LOG_AND_CHECKIN_SPEC.md` | Bind daily check-in structured signals as possible RVE/Safety Gate context without raw text storage | No. Requires Daily Log source acceptance, target recount approval, and implementation/runtime evidence before closure |
 | `PLAN_SAFETY_GATE_SPEC.md` | `OI-PSG-PHYSIO-SOURCE-CONSUMPTION-001` | P2 / NO / OPEN in current target file | `PHYSIO_SOURCE_TRUST_SPEC.md` | Clarify how poor/missing/conflicting physio data may raise review/block while good data cannot clear D9 risk | No. Requires target patch and recount |
 | `RULE_VALIDATION_ENGINE_CONTRACT.md` | `OI-RVEC-PLAN-SAFETY-GATE-001` | P1 / YES / OPEN in current target file | `PLAN_SAFETY_GATE_SPEC.md` | Update RVE contract after Safety Gate acceptance; preserve no-runtime-claim boundary | No. Reconstructed Safety Gate is not acceptance |
 | `DAILY_LOG_AND_CHECKIN_SPEC.md` | `OI-DLC-APP-BRIDGE-BINDING-001` | P1 / YES / OPEN in current target file | `APP_IMPLEMENTATION_BRIDGE.md` target patch | Add DailyCheckInRecord storage/audit endpoint to App Bridge | No. Requires target patch and recount |
@@ -122,6 +122,12 @@ Rules:
 - Raw memo/free-text remains transient only.
 - Persist structured fields, non-sensitive reason codes, source refs, audit refs, and policy-allowed redacted summaries only.
 - Daily Log may raise risk but cannot clear `D9_ACTIVE`, `D9_UNKNOWN`, or Safety Gate block states.
+
+Current Wave 2 state:
+
+- App Bridge has a target-local Daily Check-in storage/API/type patch for structured fields only.
+- Plan Safety Gate has a target-local Daily Log input boundary patch in Section 9A.
+- Related issues remain open; no runtime evidence, canonical promotion, or issue closure is claimed.
 
 ### Wave 3 - Productization SPEC Drafts
 
@@ -179,6 +185,6 @@ implementation_missing:
 
 ## 7. One-Line Summary
 
-The next safe work is not issue closure. Wave 1 Physio Source Trust target patches now exist for Plan Generator/App Bridge/Athlete Profile, so the next work is review/acceptance and target-file recount approval for those patches, then Daily Log into App Bridge/Safety Gate with each target file opened and recounted at patch time.
+The next safe work is not issue closure. Wave 1 Physio Source Trust target patches and Wave 2 Daily Log target patches now exist, so the next work is review/acceptance, target-file recount approval, productization draft selection, and runtime evidence before any safety-chain issue closure.
 
 [DRAFT_COMPLETE]

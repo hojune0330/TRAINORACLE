@@ -1,0 +1,86 @@
+﻿TrainOracle SPEC Wave 2 Daily Log Final QA Evidence
+timestamp_local: 2026-06-27T11:09:02.9947694+09:00
+session_id: spec-wave2-daily-log-20260627
+goal_id: G001-trainoracle-spec-wave-2-daily-log-bi
+scope: final QA for target-local Daily Log binding patches.
+
+== files changed ==
+ M SPEC_TARGET_PATCH_MATRIX.md
+ M SPEC_WORK_STATUS.md
+ M specs/active/APP_IMPLEMENTATION_BRIDGE.md
+ M specs/reconstruct/PLAN_SAFETY_GATE_SPEC.md
+?? .omo/evidence/spec-wave2-daily-log-20260627-gate-review.md
+?? .omo/evidence/spec-wave2-daily-log-final-qa-20260627.txt
+?? .omo/evidence/spec-wave2-daily-log-green-20260627.txt
+?? .omo/evidence/spec-wave2-daily-log-red-20260627.txt
+?? .omo/evidence/trainoracle-spec-wave2-daily-log-binding-code-review-followup-pass.md
+?? .omo/evidence/trainoracle-spec-wave2-daily-log-binding-code-review.md
+
+== diff stat ==
+ SPEC_TARGET_PATCH_MATRIX.md                |  10 +-
+ SPEC_WORK_STATUS.md                        |  14 ++-
+ specs/active/APP_IMPLEMENTATION_BRIDGE.md  | 166 +++++++++++++++++++++++++++++
+ specs/reconstruct/PLAN_SAFETY_GATE_SPEC.md |  71 +++++++++++-
+ 4 files changed, 257 insertions(+), 4 deletions(-)
+
+== draft-complete final-line checks ==
+specs/active/APP_IMPLEMENTATION_BRIDGE.md	first=# APP_IMPLEMENTATION_BRIDGE.md	last=[DRAFT_COMPLETE]	line_count=1261
+specs/reconstruct/PLAN_SAFETY_GATE_SPEC.md	first=# PLAN_SAFETY_GATE_SPEC.md	last=[DRAFT_COMPLETE]	line_count=537
+SPEC_TARGET_PATCH_MATRIX.md	first=# SPEC_TARGET_PATCH_MATRIX.md	last=[DRAFT_COMPLETE]	line_count=190
+SPEC_WORK_STATUS.md	first=# SPEC_WORK_STATUS.md	last=[DRAFT_COMPLETE]	line_count=173
+
+== git diff --check ==
+warning: in the working copy of 'SPEC_TARGET_PATCH_MATRIX.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'SPEC_WORK_STATUS.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'specs/active/APP_IMPLEMENTATION_BRIDGE.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'specs/reconstruct/PLAN_SAFETY_GATE_SPEC.md', LF will be replaced by CRLF the next time Git touches it
+
+== forbidden claim scan ==
+Pattern set: closure_allowed_now true, target_issue_closure_allowed_now true, canonical promotion true, restored-original true, nonzero executed tests, raw storage true, D9/Safety Gate clearing true.
+PASS: no forbidden claim patterns found.
+
+== positive invariant scans ==
+specs/reconstruct/PLAN_SAFETY_GATE_SPEC.md:304:daily_log_input_boundary:
+specs/reconstruct/PLAN_SAFETY_GATE_SPEC.md:337:    may_clear_D9_ACTIVE: false
+specs/reconstruct/PLAN_SAFETY_GATE_SPEC.md:338:    may_clear_D9_UNKNOWN: false
+specs/reconstruct/PLAN_SAFETY_GATE_SPEC.md:339:    may_clear_existing_Safety_Gate_block: false
+specs/reconstruct/PLAN_SAFETY_GATE_SPEC.md:340:    may_turn_D9_CLEARED_into_medical_clearance: false
+specs/reconstruct/PLAN_SAFETY_GATE_SPEC.md:463:  target_issue_closure_allowed_now: false
+specs/reconstruct/PLAN_SAFETY_GATE_SPEC.md:511:| `OI-PSG-DAILY-LOG-INPUT-BINDING-001` | P2 | NO | OPEN | Target-local Daily Log input boundary now exists, but the Daily Log contract remains a reconstructed draft and has no runtime proof. | Keep open until `DAILY_LOG_AND_CHECKIN_SPEC.md` is accepted, this target table is recounted, and implementation/runtime evidence proves structured-only routing without raw text storage. |
+specs/active/APP_IMPLEMENTATION_BRIDGE.md:451:daily_checkin_storage_policy:
+specs/active/APP_IMPLEMENTATION_BRIDGE.md:607:Daily Check-in API addendum:
+specs/active/APP_IMPLEMENTATION_BRIDGE.md:864:  rawFreeTextStored: false;
+specs/active/APP_IMPLEMENTATION_BRIDGE.md:865:  rawSymptomClauseStored: false;
+specs/active/APP_IMPLEMENTATION_BRIDGE.md:866:  mayClearD9Risk: false;
+specs/active/APP_IMPLEMENTATION_BRIDGE.md:896:export interface DailyCheckInRecord {
+specs/active/APP_IMPLEMENTATION_BRIDGE.md:916:  rawMemoStored: false;
+specs/active/APP_IMPLEMENTATION_BRIDGE.md:917:  rawFreeTextStored: false;
+specs/active/APP_IMPLEMENTATION_BRIDGE.md:918:  rawSymptomClauseStored: false;
+specs/active/APP_IMPLEMENTATION_BRIDGE.md:922:  mayClearD9Risk: false;
+specs/active/APP_IMPLEMENTATION_BRIDGE.md:923:  mayClearSafetyGateBlock: false;
+specs/active/APP_IMPLEMENTATION_BRIDGE.md:1090:  closure_allowed_now: false
+specs/active/APP_IMPLEMENTATION_BRIDGE.md:1100:OI-DLC-APP-BRIDGE-BINDING-001:
+specs/active/APP_IMPLEMENTATION_BRIDGE.md:1103:  closure_allowed_now: false
+
+== evidence artifacts ==
+FOUND	.omo/evidence/spec-wave2-daily-log-red-20260627.txt	6981 bytes	2026-06-27T10:47:21.9287712+09:00
+FOUND	.omo/evidence/spec-wave2-daily-log-green-20260627.txt	8953 bytes	2026-06-27T10:52:30.7341076+09:00
+FOUND	.omo/evidence/trainoracle-spec-wave2-daily-log-binding-code-review.md	5889 bytes	2026-06-27T10:56:44.4423899+09:00
+FOUND	.omo/evidence/trainoracle-spec-wave2-daily-log-binding-code-review-followup-pass.md	970 bytes	2026-06-27T11:03:40.3136955+09:00
+FOUND	.omo/evidence/spec-wave2-daily-log-20260627-gate-review.md	6223 bytes	2026-06-27T11:02:32.1407138+09:00
+
+== reviewer status ==
+Code reviewer follow-up: PASS. Prior blocker was only the missing final QA artifact.
+Gate reviewer follow-up: PASS / APPROVE. Evidence package complete; issues remain open; no runtime/canonical/original-restored claim introduced.
+
+== cleanup receipt ==
+No dev server, browser session, test runner, D9 evaluator runtime, or long-running resource was started.
+Reviewer agents and accidental placeholder explorer agent were closed after PASS capture.
+
+== ulw checkpoint reconciliation note ==
+C001, C002, and C003 were recorded PASS in .omo/ulw-loop/spec-wave2-daily-log-20260627/ledger.jsonl.
+Formal ulw-loop checkpoint --status complete was attempted after Codex update_goal completion, but rejected with ulw_loop_codex_snapshot_mismatch because the active Codex goal objective used for this thread differed from the OMO aggregate codexObjective string. This is a loop-state reconciliation issue, not a SPEC content or QA blocker.
+Reviewer agents were closed after PASS capture.
+
+== post-write self check ==
+FOUND_SELF_FILE: True

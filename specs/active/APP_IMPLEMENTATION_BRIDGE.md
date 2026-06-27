@@ -242,6 +242,8 @@ bridge_capabilities:
   - VIEW_CLASSIFIED_SESSION
   - WRITE_CLASSIFIED_SESSION
   - IMPORT_SOURCE_SNAPSHOT
+  - WRITE_DAILY_CHECKIN
+  - VIEW_DAILY_CHECKIN
   - RUN_RULE_VALIDATION
   - VIEW_RULE_VALIDATION_RESULT
   - REQUEST_SCOPED_REVIEW_ESCALATION
@@ -265,6 +267,7 @@ scoped_review_escalation_policy:
 consent_model:
   consent_record_types:
     - ATHLETE_PROFILE_VISIBILITY
+    - TRAINING_HISTORY_USE_FOR_PLAN_GENERATION
     - MANUAL_CLASSIFICATION_CORRECTION
     - SECONDARY_GROUP_ACCESS
     - PHYSIOLOGICAL_DATA_USE
@@ -351,6 +354,11 @@ storage_record_families:
   athlete_profile_snapshot_records:
     purpose: "ATHLETE_PROFILE immutable snapshot storage."
     mutable: false
+  daily_checkin_records:
+    purpose: "DAILY_LOG_AND_CHECKIN_SPEC structured daily check-in storage without raw memo, raw symptom clause, or raw free-text."
+    mutable: false
+    target_issue: OI-DLC-APP-BRIDGE-BINDING-001
+    closure_state: OPEN_UNTIL_DAILY_LOG_SOURCE_ACCEPTANCE_TARGET_RECOUNT_AND_PRIVACY_REVIEW
   physio_source_trust_result_records:
     purpose: "PHYSIO_SOURCE_TRUST_SPEC output storage without raw payload, raw symptom clause, or raw free-text."
     mutable: false
@@ -390,6 +398,7 @@ source_snapshot_policy:
     - GSHEET_INPUT
     - MANUAL_COACH_ENTRY
     - ATHLETE_SELF_REPORT
+    - DAILY_CHECKIN_SELF_REPORT
     - LAB_PHYSIOLOGY
     - SYSTEM_DERIVED
   immutability:
@@ -438,6 +447,51 @@ physio_source_trust_storage_policy:
     missing_or_conflicting_physio_may_raise_review: true
 ```
 
+```yaml
+daily_checkin_storage_policy:
+  source_document: DAILY_LOG_AND_CHECKIN_SPEC.md
+  target_issue: OI-DLC-APP-BRIDGE-BINDING-001
+  status_after_patch: PATCHED_PENDING_SOURCE_ACCEPTANCE_AND_TARGET_RECOUNT
+
+  may_store:
+    - dailyCheckInId
+    - sourceSnapshotId
+    - tenantId
+    - groupId
+    - athleteId
+    - checkInDate
+    - structured_rpe
+    - structured_sleep
+    - structured_condition
+    - structured_readiness
+    - structured_body_area_signals
+    - completedSessionRef
+    - plannedSessionRef
+    - nonSensitiveReasonCodes
+    - redactedNonSensitiveSummary_when_policy_allows
+    - extractionVersion
+    - createdAt
+    - auditLogId
+
+  must_not_store:
+    - raw_memo_text
+    - raw_athlete_free_text
+    - raw_symptom_clause
+    - injury_narrative
+    - medical_note
+    - rehab_note
+    - guardian_private_note
+    - D9_evidence_clause
+    - external_llm_prompt_with_private_athlete_data
+
+  safety_boundary:
+    daily_checkin_can_raise_review_or_block: true
+    daily_checkin_can_clear_D9_ACTIVE: false
+    daily_checkin_can_clear_D9_UNKNOWN: false
+    daily_checkin_can_clear_Safety_Gate_block_state: false
+    good_daily_checkin_values_can_create_medical_clearance: false
+```
+
 ## Section 8. Cross-Spec Data Flow
 
 ```yaml
@@ -475,6 +529,32 @@ data_flow:
     creates:
       - AthleteProfileSnapshotStorageRecord
       - ProfileAuditRecord
+  daily_checkin_capture:
+    reads:
+      - ConsentGrantRecord
+      - CapabilityGrantRecord_when_actor_is_not_self
+      - SourceSnapshotRecord_when_linking_completed_or_planned_session
+    creates:
+      - DailyCheckInRecord
+      - SourceSnapshotRecord
+      - AuditLogRecord
+    may_emit_for_runtime_processing:
+      - structured_daily_signals
+      - nonSensitiveReasonCodes
+      - sourceSnapshotId
+      - auditLogId
+    must_not_store:
+      - raw_memo_text
+      - raw_athlete_free_text
+      - raw_symptom_clause
+      - injury_narrative
+      - medical_note
+      - rehab_note
+      - guardian_private_note
+      - D9_evidence_clause
+    must_not_clear:
+      - RULE_SPEC_D1_D9.D-9
+      - Safety_Gate_block_state
   physio_source_trust_evaluation:
     reads:
       - SourceSnapshotRecord
@@ -523,6 +603,15 @@ cross_spec_impact:
 | `/bridge/consents/onboarding` | POST | onboarding 분리 동의 일괄 생성 | `MANAGE_PROFILE_CONSENT` | separate records, minor guard |
 | `/bridge/consents/{id}/revoke` | POST | consent revoke | `MANAGE_PROFILE_CONSENT` | append-only status |
 | `/bridge/audit-logs` | GET | audit 조회 | `VIEW_AUDIT_LOG` | restricted access |
+
+Daily Check-in API addendum:
+
+| Endpoint | Method | Purpose | Required Capability | Notes |
+|---|---|---|---|---|
+| `/bridge/daily-checkins` | POST | structured daily check-in storage | `WRITE_DAILY_CHECKIN` or athlete self-check-in scope | creates DailyCheckInRecord, SourceSnapshotRecord, AuditLogRecord; raw memo/free-text is transient only |
+| `/bridge/daily-checkins/{id}` | GET | daily check-in lookup | `VIEW_DAILY_CHECKIN` | scoped consent and tenant/group/athlete isolation required |
+| `/bridge/athletes/{athleteId}/daily-checkins` | GET | athlete daily check-in list | `VIEW_DAILY_CHECKIN` | date range required; no raw memo/free-text returned |
+| `/bridge/daily-checkins/{id}/redact-transient-note` | POST | safety cleanup for accidental transient note capture | `WRITE_DAILY_CHECKIN` plus privacy/admin review scope | must not be needed in normal flow; exists only as a defensive cleanup contract |
 
 Physio source trust API addendum:
 
@@ -607,6 +696,7 @@ export type ProfileSnapshotId = string;
 export type ConsentGrantId = string;
 export type CapabilityGrantId = string;
 export type AuditLogId = string;
+export type DailyCheckInId = string;
 
 export type RuleNamespace =
   | "RULE_SPEC_D1_D9"
@@ -644,6 +734,8 @@ export type BridgeCapability =
   | "VIEW_CLASSIFIED_SESSION"
   | "WRITE_CLASSIFIED_SESSION"
   | "IMPORT_SOURCE_SNAPSHOT"
+  | "WRITE_DAILY_CHECKIN"
+  | "VIEW_DAILY_CHECKIN"
   | "RUN_RULE_VALIDATION"
   | "VIEW_RULE_VALIDATION_RESULT"
   | "REQUEST_SCOPED_REVIEW_ESCALATION"
@@ -680,6 +772,7 @@ export interface CapabilityGrantRecord {
 
 export type ConsentType =
   | "ATHLETE_PROFILE_VISIBILITY"
+  | "TRAINING_HISTORY_USE_FOR_PLAN_GENERATION"
   | "MANUAL_CLASSIFICATION_CORRECTION"
   | "SECONDARY_GROUP_ACCESS"
   | "PHYSIOLOGICAL_DATA_USE"
@@ -727,6 +820,7 @@ export type SourceType =
   | "GSHEET_INPUT"
   | "MANUAL_COACH_ENTRY"
   | "ATHLETE_SELF_REPORT"
+  | "DAILY_CHECKIN_SELF_REPORT"
   | "LAB_PHYSIOLOGY"
   | "SYSTEM_DERIVED";
 
@@ -772,6 +866,64 @@ export interface PhysioSourceTrustResultRecord {
   mayClearD9Risk: false;
   createdAt: ISO8601;
   auditLogId: AuditLogId;
+}
+
+export type DailyCheckInReadiness =
+  | "NOT_READY"
+  | "CAUTION"
+  | "NORMAL"
+  | "READY";
+
+export type DailyCheckInBodyArea =
+  | "HEAD_NECK"
+  | "SHOULDER_ARM"
+  | "CHEST_BACK"
+  | "HIP_GLUTE"
+  | "THIGH"
+  | "KNEE"
+  | "CALF_ACHILLES"
+  | "ANKLE_FOOT"
+  | "OTHER_STRUCTURED";
+
+export interface DailyCheckInBodyAreaSignal {
+  bodyArea: DailyCheckInBodyArea;
+  side?: "LEFT" | "RIGHT" | "BILATERAL" | "UNSPECIFIED";
+  level: 0 | 1 | 2 | 3 | 4 | 5;
+  signalType: "SORENESS" | "PAIN_SIGNAL" | "TIGHTNESS" | "FATIGUE" | "OTHER_STRUCTURED";
+  durationBand?: "TODAY_ONLY" | "TWO_TO_THREE_DAYS" | "FOUR_TO_SEVEN_DAYS" | "MORE_THAN_SEVEN_DAYS";
+}
+
+export interface DailyCheckInRecord {
+  dailyCheckInId: DailyCheckInId;
+  tenantId: TenantId;
+  groupId: GroupId;
+  athleteId: AthleteId;
+  checkInDate: ISO8601;
+  sourceSnapshotId: SourceSnapshotId;
+  completedSessionRef?: ClassifiedSessionId;
+  plannedSessionRef?: SessionId;
+  rpe?: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10;
+  sleepHours?: number;
+  sleepQuality?: "VERY_POOR" | "POOR" | "OK" | "GOOD" | "GREAT";
+  overallCondition?: "VERY_LOW" | "LOW" | "NORMAL" | "GOOD" | "GREAT";
+  mood?: "LOW" | "NEUTRAL" | "GOOD" | "HIGH";
+  readiness?: DailyCheckInReadiness;
+  sorenessOverall?: 0 | 1 | 2 | 3 | 4 | 5;
+  bodyAreaSignals: readonly DailyCheckInBodyAreaSignal[];
+  nonSensitiveReasonCodes: readonly string[];
+  redactedNonSensitiveSummary?: string;
+  extractionVersion?: string;
+  rawMemoStored: false;
+  rawFreeTextStored: false;
+  rawSymptomClauseStored: false;
+  rawMedicalNoteStored: false;
+  rawGuardianPrivateNoteStored: false;
+  mayRaiseReviewOrBlock: true;
+  mayClearD9Risk: false;
+  mayClearSafetyGateBlock: false;
+  createdAt: ISO8601;
+  auditLogId: AuditLogId;
+  immutableAfterCreate: true;
 }
 
 export interface ClassifiedSessionRecord {
@@ -940,6 +1092,20 @@ OI-AIB-PHYSIO-SOURCE-001:
     - PHYSIO_SOURCE_TRUST_SPEC.md owner/source acceptance
     - target open issue table recount from this file
     - implementation/privacy review before production storage
+```
+
+Daily Log binding issue addendum:
+
+```yaml
+OI-DLC-APP-BRIDGE-BINDING-001:
+  status: OPEN
+  target_patch_status: PATCHED_PENDING_SOURCE_ACCEPTANCE_AND_TARGET_RECOUNT
+  closure_allowed_now: false
+  closure_requires:
+    - DAILY_LOG_AND_CHECKIN_SPEC.md owner/source acceptance
+    - target open issue table recount from this file
+    - implementation/privacy review proving raw memo/free-text is transient only
+    - no runtime evidence claim from this target-local patch
 ```
 
 ## Section 14. Test Cases

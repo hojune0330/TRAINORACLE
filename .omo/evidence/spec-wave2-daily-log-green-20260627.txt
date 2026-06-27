@@ -1,0 +1,101 @@
+﻿TrainOracle SPEC Wave 2 Daily Log GREEN Evidence
+timestamp_local: 2026-06-27T10:52:30.0099409+09:00
+session_id: spec-wave2-daily-log-20260627
+goal_id: G001-trainoracle-spec-wave-2-daily-log-bi
+scope: APP_IMPLEMENTATION_BRIDGE.md + PLAN_SAFETY_GATE_SPEC.md target-local Daily Log binding, plus handoff matrix/status updates.
+
+== git status ==
+## main...origin/main
+ M SPEC_TARGET_PATCH_MATRIX.md
+ M SPEC_WORK_STATUS.md
+ M specs/active/APP_IMPLEMENTATION_BRIDGE.md
+ M specs/reconstruct/PLAN_SAFETY_GATE_SPEC.md
+?? .omo/evidence/spec-wave2-daily-log-red-20260627.txt
+
+== App Bridge Daily Check-in binding proof ==
+357:  daily_checkin_records:
+360:    target_issue: OI-DLC-APP-BRIDGE-BINDING-001
+451:daily_checkin_storage_policy:
+453:  target_issue: OI-DLC-APP-BRIDGE-BINDING-001
+477:    - raw_memo_text
+489:    daily_checkin_can_clear_D9_ACTIVE: false
+490:    daily_checkin_can_clear_D9_UNKNOWN: false
+491:    daily_checkin_can_clear_Safety_Gate_block_state: false
+547:      - raw_memo_text
+607:Daily Check-in API addendum:
+864:  rawFreeTextStored: false;
+866:  mayClearD9Risk: false;
+896:export interface DailyCheckInRecord {
+917:  rawFreeTextStored: false;
+922:  mayClearD9Risk: false;
+923:  mayClearSafetyGateBlock: false;
+1090:  closure_allowed_now: false
+1100:OI-DLC-APP-BRIDGE-BINDING-001:
+1103:  closure_allowed_now: false
+
+== Plan Safety Gate Daily Log binding proof ==
+108:  daily_log_context:
+223:  daily_log_context_optional:
+258:  - daily_checkin_context_sanitization
+299:## 9A. Daily Log Input Boundary
+304:daily_log_input_boundary:
+306:  target_issue: OI-PSG-DAILY-LOG-INPUT-BINDING-001
+323:    - raw_memo_text
+337:    may_clear_D9_ACTIVE: false
+338:    may_clear_D9_UNKNOWN: false
+339:    may_clear_existing_Safety_Gate_block: false
+340:    may_turn_D9_CLEARED_into_medical_clearance: false
+345:Daily Log binding remains an input contract only. Closing `OI-PSG-DAILY-LOG-INPUT-BINDING-001` still requires source acceptance, target recount approval, and implementation/runtime evidence where runtime behavior is claimed.
+507:| `OI-PSG-RUNTIME-EVIDENCE-001` | P1 | YES | OPEN | Actual D9 evaluator runtime output is missing. | Run local/CI evaluator tests and attach logs before runtime claims or downstream issue closure. |
+508:| `OI-PSG-PLAN-GENERATOR-PATCH-001` | P1 | YES | OPEN | Plan Generator still has `OI-PG-RULE-SAFETY-GATE-BINDING-001` open. | Patch Plan Generator after Safety Gate acceptance, then recount the target issue table. |
+509:| `OI-PSG-IMPLEMENTATION-BINDING-001` | P1 | YES | OPEN | No app implementation, API endpoint, or database schema has consumed this gate. | Bind Safety Gate result in implementation after SPEC acceptance. |
+510:| `OI-PSG-PHYSIO-SOURCE-CONSUMPTION-001` | P2 | NO | OPEN | Physio source trust consumption remains unresolved in downstream targets. | Patch the named target files from `PHYSIO_SOURCE_TRUST_SPEC.md` with target-file recounts. |
+511:| `OI-PSG-DAILY-LOG-INPUT-BINDING-001` | P2 | NO | OPEN | Target-local Daily Log input boundary now exists, but the Daily Log contract remains a reconstructed draft and has no runtime proof. | Keep open until `DAILY_LOG_AND_CHECKIN_SPEC.md` is accepted, this target table is recounted, and implementation/runtime evidence proves structured-only routing without raw text storage. |
+533:| Runtime evidence is not claimed | PASS |
+534:| Target issues remain open | PASS |
+
+== Matrix/status proof ==
+SPEC_WORK_STATUS.md:9:It is not a product rule definition, not canonical promotion, not runtime evidence, and not issue closure.
+SPEC_WORK_STATUS.md:33:- The related target issues remain OPEN as patched-pending-source-acceptance work; this is not issue closure.
+SPEC_WORK_STATUS.md:36:Current Wave 2 Daily Log patch state:
+SPEC_WORK_STATUS.md:41:- Related target issues remain OPEN; this is not canonical promotion, runtime evidence, or issue closure.
+SPEC_WORK_STATUS.md:46:- canonical promotion
+SPEC_WORK_STATUS.md:99:2. Review `SPEC_TARGET_PATCH_MATRIX.md` to choose the next safe target patch wave; do not treat the matrix as issue closure or runtime evidence.
+SPEC_WORK_STATUS.md:151:- [`.omo/evidence/spec-wave2-daily-log-red-20260627.txt`](./.omo/evidence/spec-wave2-daily-log-red-20260627.txt)
+SPEC_WORK_STATUS.md:152:- [`.omo/evidence/spec-wave2-daily-log-green-20260627.txt`](./.omo/evidence/spec-wave2-daily-log-green-20260627.txt)
+SPEC_WORK_STATUS.md:153:- [`.omo/evidence/spec-wave2-daily-log-final-qa-20260627.txt`](./.omo/evidence/spec-wave2-daily-log-final-qa-20260627.txt)
+SPEC_TARGET_PATCH_MATRIX.md:23:It is not a product rule definition, not runtime evidence, not canonical promotion, and not issue closure.
+SPEC_TARGET_PATCH_MATRIX.md:106:- No runtime evidence, canonical promotion, or issue closure is claimed by this matrix.
+SPEC_TARGET_PATCH_MATRIX.md:126:Current Wave 2 state:
+SPEC_TARGET_PATCH_MATRIX.md:130:- Related issues remain open; no runtime evidence, canonical promotion, or issue closure is claimed.
+SPEC_TARGET_PATCH_MATRIX.md:188:The next safe work is not issue closure. Wave 1 Physio Source Trust target patches and Wave 2 Daily Log target patches now exist, so the next work is review/acceptance, target-file recount approval, productization draft selection, and runtime evidence before any safety-chain issue closure.
+
+== forbidden closure/runtime/canonical claim scan ==
+Expected matches are false/negative or explicit no-claim text. Any true positive here should be reviewed.
+specs/reconstruct/PLAN_SAFETY_GATE_SPEC.md:53:- claim D9 evaluator runtime PASS evidence
+specs/active/APP_IMPLEMENTATION_BRIDGE.md:117:| Rule validation result storage | RULE_SPEC_D1_D9 v1.4 | rule run, result, evidence, audit linkage 저장 | RESOLVED |
+specs/active/APP_IMPLEMENTATION_BRIDGE.md:118:| Safety hard-stop preservation | RULE_SPEC_D1_D9 v1.4 | `RULE_SPEC_D1_D9.D-9` 결과를 planner나 escalation이 해제하지 못하게 보존 | RESOLVED |
+specs/active/APP_IMPLEMENTATION_BRIDGE.md:119:| Verdict and severity handling | RULE_SPEC_D1_D9 v1.4 | opaque passthrough 저장만, 값 정의 금지 | RESOLVED |
+specs/active/APP_IMPLEMENTATION_BRIDGE.md:120:| Session classification storage | SESSION_CLASSIFIER_SPEC v1.2 | classified session, uncertainty, correction lineage 저장 | RESOLVED |
+specs/active/APP_IMPLEMENTATION_BRIDGE.md:121:| LD inclusion preferences | SESSION_CLASSIFIER_SPEC v1.2 + ATHLETE_PROFILE v1.0 | profile snapshot 기준으로 classifier input에 연결 | RESOLVED |
+specs/active/APP_IMPLEMENTATION_BRIDGE.md:122:| Manual correction authorization | SESSION_CLASSIFIER_SPEC v1.2 + ATHLETE_PROFILE v1.0 | scoped capability + consent + audit 필수화 | RESOLVED |
+specs/active/APP_IMPLEMENTATION_BRIDGE.md:123:| Athlete profile snapshot storage | ATHLETE_PROFILE_SPEC v1.0 | immutable snapshot, group isolation, audit pointer 저장 | RESOLVED |
+specs/active/APP_IMPLEMENTATION_BRIDGE.md:124:| Secondary group access | ATHLETE_PROFILE_SPEC v1.0 | secondary group grant record + 4대 invariant 보존 | RESOLVED |
+specs/active/APP_IMPLEMENTATION_BRIDGE.md:125:| Consent lifecycle | ATHLETE_PROFILE_SPEC v1.0 | grant/revoke/expire model + onboarding 분리 동의 저장 | RESOLVED |
+specs/active/APP_IMPLEMENTATION_BRIDGE.md:126:| Consent legal basis | ATHLETE_PROFILE_SPEC v1.0 | scoped 분리 동의, 끼워넣기 동의 금지, 민감정보 별도 동의 | RESOLVED |
+specs/active/APP_IMPLEMENTATION_BRIDGE.md:127:| Guardian consent | ATHLETE_PROFILE_SPEC v1.0 | 미성년 선수 보호자 별도 동의 가드 | RESOLVED |
+specs/active/APP_IMPLEMENTATION_BRIDGE.md:130:| Primary device only | GLOSSARY S-04 | analysis input은 primary device source만 허용 | RESOLVED |
+specs/active/APP_IMPLEMENTATION_BRIDGE.md:131:| External LLM restriction | GLOSSARY S-02/S-03 | Free/Beta 외부 LLM 전송 금지, LLM explainer only | RESOLVED |
+
+== open issue preservation ==
+specs/reconstruct/PLAN_SAFETY_GATE_SPEC.md:463:  target_issue_closure_allowed_now: false
+specs/reconstruct/PLAN_SAFETY_GATE_SPEC.md:511:| `OI-PSG-DAILY-LOG-INPUT-BINDING-001` | P2 | NO | OPEN | Target-local Daily Log input boundary now exists, but the Daily Log contract remains a reconstructed draft and has no runtime proof. | Keep open until `DAILY_LOG_AND_CHECKIN_SPEC.md` is accepted, this target table is recounted, and implementation/runtime evidence proves structured-only routing without raw text storage. |
+specs/active/APP_IMPLEMENTATION_BRIDGE.md:1088:  status: OPEN
+specs/active/APP_IMPLEMENTATION_BRIDGE.md:1090:  closure_allowed_now: false
+specs/active/APP_IMPLEMENTATION_BRIDGE.md:1100:OI-DLC-APP-BRIDGE-BINDING-001:
+specs/active/APP_IMPLEMENTATION_BRIDGE.md:1101:  status: OPEN
+specs/active/APP_IMPLEMENTATION_BRIDGE.md:1103:  closure_allowed_now: false
+
+== cleanup receipt ==
+No dev server, test runner, browser session, or D9 evaluator runtime was started for this GREEN pass.
+No runtime resources spawned.

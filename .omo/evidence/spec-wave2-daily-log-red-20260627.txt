@@ -1,0 +1,89 @@
+﻿TrainOracle SPEC Wave 2 Daily Log RED Evidence
+timestamp_local: 2026-06-27T10:47:21.6004570+09:00
+session_id: spec-wave2-daily-log-20260627
+goal_id: G001-trainoracle-spec-wave-2-daily-log-bi
+tool_note: git_bash MCP diagnose failed earlier with Transport closed; PowerShell/rg fallback used.
+
+== git status ==
+## main...origin/main
+?? .omo/evidence/spec-wave2-daily-log-red-20260627.txt
+
+== required local file existence ==
+FOUND	specs/active/APP_IMPLEMENTATION_BRIDGE.md	41553 bytes
+FOUND	specs/reconstruct/PLAN_SAFETY_GATE_SPEC.md	15400 bytes
+FOUND	specs/reconstruct/DAILY_LOG_AND_CHECKIN_SPEC.md	19142 bytes
+FOUND	SPEC_TARGET_PATCH_MATRIX.md	9107 bytes
+
+== metadata counts observed from local files ==
+-- specs/active/APP_IMPLEMENTATION_BRIDGE.md
+10:status: DRAFT_FOR_REVIEW
+12:canonical_promotion_allowed: false
+38:    canonical_promotion_allowed: false
+58:open_issues_total: 12
+59:open_issues_canonical_blocking_count: 4
+566:  canonical_promotion_allowed: false
+672:  status: CapabilityGrantStatus;
+694:  status: ConsentGrantStatus;
+893:  status: CapabilityGrantStatus;
+936:  status: OPEN
+937:  target_patch_status: PATCHED_PENDING_SOURCE_ACCEPTANCE
+951:| AIB-TC-003 | Metadata | `canonical_promotion_allowed: false` 유지 | false | PASS |
+1031:    canonical_promotion_allowed_false: PASS
+1033:    open_issues_total: 12
+1034:    open_issues_canonical_blocking_count: 4
+1056:  status: DRAFT_FOR_REVIEW
+1076:  canonical_blocking_count: 4
+1089:    status: DRAFT_FOR_REVIEW
+1091:    canonical_promotion_allowed: false
+-- specs/reconstruct/PLAN_SAFETY_GATE_SPEC.md
+10:  status: RECONSTRUCTED_DRAFT_FOR_REVIEW
+20:  open_issues_total: 5
+21:  canonical_blocking_count: 3
+23:  executed_tests_total: 0
+24:  executed_tests_passed: 0
+25:  self_check_is_runtime_evidence: false
+28:  canonical_promotion_allowed: false
+390:  executed_tests_total: 0
+391:  executed_tests_passed: 0
+-- specs/reconstruct/DAILY_LOG_AND_CHECKIN_SPEC.md
+10:  status: RECONSTRUCTED_DRAFT_FOR_REVIEW
+20:  open_issues_total: 6
+21:  canonical_blocking_count: 3
+23:  executed_tests_total: 0
+24:  executed_tests_passed: 0
+25:  self_check_is_runtime_evidence: false
+28:  canonical_promotion_allowed: false
+
+== current target issue rows/addenda ==
+specs/reconstruct/DAILY_LOG_AND_CHECKIN_SPEC.md:583:  - OI-PSG-DAILY-LOG-INPUT-BINDING-001
+specs/reconstruct/DAILY_LOG_AND_CHECKIN_SPEC.md:587:  - OI-AIB-PHYSIO-SOURCE-001
+specs/reconstruct/DAILY_LOG_AND_CHECKIN_SPEC.md:607:| `OI-DLC-APP-BRIDGE-BINDING-001` | P1 | YES | OPEN | App Bridge does not yet own DailyCheckInRecord storage endpoints or audit lineage. | Patch App Bridge after this spec is accepted, then recount target issues. |
+specs/reconstruct/DAILY_LOG_AND_CHECKIN_SPEC.md:608:| `OI-DLC-RVE-SAFETY-BINDING-001` | P1 | YES | OPEN | Daily check-in structured and transient signals are not yet runtime-bound to RVE/Safety Gate. | Add implementation/runtime evidence before any safety binding issue closure. |
+specs/reconstruct/DAILY_LOG_AND_CHECKIN_SPEC.md:609:| `OI-DLC-RAW-NOTE-REDACTION-001` | P1 | YES | OPEN | Final redaction/transient-note deletion implementation is not defined. | Define storage lifecycle and verify no raw memo/symptom clause persists. |
+SPEC_TARGET_PATCH_MATRIX.md:68:| `APP_IMPLEMENTATION_BRIDGE.md` | `OI-AIB-PHYSIO-SOURCE-001` | P1 / true / OPEN in current target file; issue addendum records patched-pending-source-acceptance | `PHYSIO_SOURCE_TRUST_SPEC.md`, `DAILY_LOG_AND_CHECKIN_SPEC.md` | Add storage/use boundary for physio source trust and daily check-in structured data | No. Target patch exists, but closure still requires source acceptance, target recount approval, and implementation/privacy review |
+SPEC_TARGET_PATCH_MATRIX.md:70:| `PLAN_SAFETY_GATE_SPEC.md` | `OI-PSG-DAILY-LOG-INPUT-BINDING-001` | P2 / NO / OPEN in current target file | `DAILY_LOG_AND_CHECKIN_SPEC.md` | Bind daily check-in structured signals as possible RVE/Safety Gate context without raw text storage | No. Reconstructed source must be accepted first |
+SPEC_TARGET_PATCH_MATRIX.md:73:| `DAILY_LOG_AND_CHECKIN_SPEC.md` | `OI-DLC-APP-BRIDGE-BINDING-001` | P1 / YES / OPEN in current target file | `APP_IMPLEMENTATION_BRIDGE.md` target patch | Add DailyCheckInRecord storage/audit endpoint to App Bridge | No. Requires target patch and recount |
+SPEC_TARGET_PATCH_MATRIX.md:74:| `DAILY_LOG_AND_CHECKIN_SPEC.md` | `OI-DLC-RVE-SAFETY-BINDING-001` | P1 / YES / OPEN in current target file | RVE/Safety Gate implementation evidence | Bind structured/transient daily signals to RVE/Safety Gate runtime path | No. Requires implementation/runtime evidence |
+SPEC_TARGET_PATCH_MATRIX.md:75:| `DAILY_LOG_AND_CHECKIN_SPEC.md` | `OI-DLC-RAW-NOTE-REDACTION-001` | P1 / YES / OPEN in current target file | App Bridge implementation/privacy review | Define and verify raw note redaction/transient deletion lifecycle | No. Requires implementation/privacy proof |
+specs/active/APP_IMPLEMENTATION_BRIDGE.md:357:    target_issue: OI-AIB-PHYSIO-SOURCE-001
+specs/active/APP_IMPLEMENTATION_BRIDGE.md:410:  target_issue: OI-AIB-PHYSIO-SOURCE-001
+specs/active/APP_IMPLEMENTATION_BRIDGE.md:922:| OI-AIB-PHYSIO-SOURCE-001 | P1 | true | Physiology | physiological source trust 등급과 사용 가능 범위 확정 필요 | APP_BRIDGE_DESIGNER |
+specs/active/APP_IMPLEMENTATION_BRIDGE.md:935:OI-AIB-PHYSIO-SOURCE-001:
+specs/active/APP_IMPLEMENTATION_BRIDGE.md:936:  status: OPEN
+specs/active/APP_IMPLEMENTATION_BRIDGE.md:937:  target_patch_status: PATCHED_PENDING_SOURCE_ACCEPTANCE
+specs/active/APP_IMPLEMENTATION_BRIDGE.md:938:  closure_allowed_now: false
+specs/active/APP_IMPLEMENTATION_BRIDGE.md:1082:    - OI-AIB-PHYSIO-SOURCE-001
+specs/reconstruct/PLAN_SAFETY_GATE_SPEC.md:395:  target_issue_closure_allowed_now: false
+specs/reconstruct/PLAN_SAFETY_GATE_SPEC.md:419:  - OI-AIB-PHYSIO-SOURCE-001
+specs/reconstruct/PLAN_SAFETY_GATE_SPEC.md:443:| `OI-PSG-DAILY-LOG-INPUT-BINDING-001` | P2 | NO | OPEN | Daily check-in input may later feed RVE/Safety Gate, and the Daily Log contract now exists only as a reconstructed draft. | Review and accept `DAILY_LOG_AND_CHECKIN_SPEC.md`, then bind it to Safety Gate and app storage without treating reconstruction as runtime evidence. |
+
+== daily log binding gap scan before patch ==
+-- App Bridge daily/checkin mentions before patch
+770:  rawFreeTextStored: false;
+-- Safety Gate daily/checkin mentions before patch
+443:| `OI-PSG-DAILY-LOG-INPUT-BINDING-001` | P2 | NO | OPEN | Daily check-in input may later feed RVE/Safety Gate, and the Daily Log contract now exists only as a reconstructed draft. | Review and accept `DAILY_LOG_AND_CHECKIN_SPEC.md`, then bind it to Safety Gate and app storage without treating reconstruction as runtime evidence. |
+
+== runtime/closure boundary ==
+No runtime command for D9 evaluator was executed in this RED pass.
+No downstream issue closure is claimed.
+Self-check markdown remains non-runtime evidence.

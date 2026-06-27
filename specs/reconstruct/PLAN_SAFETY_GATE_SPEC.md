@@ -104,6 +104,15 @@ source_priority:
         - consent_guard
         - capability_guard
         - audit_privacy_policy
+
+  daily_log_context:
+    - document: specs/reconstruct/DAILY_LOG_AND_CHECKIN_SPEC.md
+      treatment: RECONSTRUCTED_DRAFT_FOR_REVIEW
+      consumed_for:
+        - structured_daily_checkin_fields
+        - transient_memo_boundary
+        - daily_signal_risk_raising_only_policy
+      caveat: "This source is reconstructed, not canonical, and cannot provide runtime proof or issue closure."
 ```
 
 ---
@@ -211,6 +220,14 @@ required_inputs:
     - profileSnapshotId
     - classifiedSessionRefs
 
+  daily_log_context_optional:
+    - dailyCheckInRecordRefs
+    - structuredReadinessSignals
+    - structuredBodyAreaSignals
+    - dailyNonSensitiveReasonCodes
+    - dailyCheckInSourceSnapshotIds
+    - dailyCheckInAuditLogIds
+
   rve_signal:
     - validationRunId
     - ruleRef
@@ -238,6 +255,7 @@ gate_order:
   - sensitive_field_guard
   - source_snapshot_availability
   - primary_device_policy
+  - daily_checkin_context_sanitization
   - RVE_D9_signal_consumption
   - downstream_physio_source_trust_check_when_required
   - template_library_query_permission
@@ -275,6 +293,56 @@ failure_or_stale_signal_handling:
     templateLibraryQueryAllowed: false
     requiredNextAction: MORE_INFO_OR_HUMAN_REVIEW
 ```
+
+---
+
+## 9A. Daily Log Input Boundary
+
+Daily Check-in may provide structured context to RVE and Safety Gate routing, but it is not a fourth safety disposition, not a medical clearance source, and not a Plan Generator bypass.
+
+```yaml
+daily_log_input_boundary:
+  source_document: specs/reconstruct/DAILY_LOG_AND_CHECKIN_SPEC.md
+  target_issue: OI-PSG-DAILY-LOG-INPUT-BINDING-001
+  status_after_patch: PATCHED_PENDING_DAILY_LOG_ACCEPTANCE_TARGET_RECOUNT_AND_RUNTIME_EVIDENCE
+
+  may_consume:
+    - DailyCheckInRecord_ref
+    - sourceSnapshotId
+    - auditLogId
+    - structured_rpe
+    - structured_sleep
+    - structured_readiness
+    - structured_body_area_signals
+    - nonSensitiveReasonCodes
+    - extractionVersion
+    - completedSessionRef
+    - plannedSessionRef
+
+  must_not_consume_or_persist:
+    - raw_memo_text
+    - raw_athlete_free_text
+    - raw_symptom_clause
+    - injury_narrative
+    - medical_note
+    - rehab_note
+    - guardian_private_note
+    - D9_evidence_clause
+    - external_llm_prompt_with_private_athlete_data
+
+  routing_effect:
+    may_raise_review_or_block: true
+    may_route_missing_or_concerning_context_to_UNKNOWN: true
+    may_add_non_sensitive_reason_codes: true
+    may_clear_D9_ACTIVE: false
+    may_clear_D9_UNKNOWN: false
+    may_clear_existing_Safety_Gate_block: false
+    may_turn_D9_CLEARED_into_medical_clearance: false
+```
+
+If Daily Check-in context is stale, missing, internally conflicting, or contains structured concerning signals, Safety Gate may become more conservative. Good sleep, low RPE, "feels fine" statements, clean body-area signals, or favorable readiness values cannot reverse an `ACTIVE`, `UNKNOWN`, or blocked result.
+
+Daily Log binding remains an input contract only. Closing `OI-PSG-DAILY-LOG-INPUT-BINDING-001` still requires source acceptance, target recount approval, and implementation/runtime evidence where runtime behavior is claimed.
 
 ---
 
@@ -440,7 +508,7 @@ These are this reconstructed document's own issues. They do not change issue cou
 | `OI-PSG-PLAN-GENERATOR-PATCH-001` | P1 | YES | OPEN | Plan Generator still has `OI-PG-RULE-SAFETY-GATE-BINDING-001` open. | Patch Plan Generator after Safety Gate acceptance, then recount the target issue table. |
 | `OI-PSG-IMPLEMENTATION-BINDING-001` | P1 | YES | OPEN | No app implementation, API endpoint, or database schema has consumed this gate. | Bind Safety Gate result in implementation after SPEC acceptance. |
 | `OI-PSG-PHYSIO-SOURCE-CONSUMPTION-001` | P2 | NO | OPEN | Physio source trust consumption remains unresolved in downstream targets. | Patch the named target files from `PHYSIO_SOURCE_TRUST_SPEC.md` with target-file recounts. |
-| `OI-PSG-DAILY-LOG-INPUT-BINDING-001` | P2 | NO | OPEN | Daily check-in input may later feed RVE/Safety Gate, and the Daily Log contract now exists only as a reconstructed draft. | Review and accept `DAILY_LOG_AND_CHECKIN_SPEC.md`, then bind it to Safety Gate and app storage without treating reconstruction as runtime evidence. |
+| `OI-PSG-DAILY-LOG-INPUT-BINDING-001` | P2 | NO | OPEN | Target-local Daily Log input boundary now exists, but the Daily Log contract remains a reconstructed draft and has no runtime proof. | Keep open until `DAILY_LOG_AND_CHECKIN_SPEC.md` is accepted, this target table is recounted, and implementation/runtime evidence proves structured-only routing without raw text storage. |
 
 ---
 
@@ -460,6 +528,7 @@ These are this reconstructed document's own issues. They do not change issue cou
 | Advisory is not a fourth disposition | PASS |
 | Template Library cannot clear D9 risk | PASS |
 | Good physio data cannot clear D9 risk | PASS |
+| Daily Log structured signals may raise review but cannot clear D9/Safety Gate blocks | PASS |
 | Raw athlete free-text storage is forbidden | PASS |
 | Runtime evidence is not claimed | PASS |
 | Target issues remain open | PASS |

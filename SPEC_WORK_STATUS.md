@@ -1,6 +1,6 @@
 # SPEC_WORK_STATUS.md
 
-Updated: 2026-06-26 Asia/Seoul
+Updated: 2026-06-27 Asia/Seoul
 status: DRAFT_HANDOFF_STATUS
 owner: COACH_HOJUNE
 
@@ -32,6 +32,13 @@ Current Wave 1 physio patch state:
 - `PLAN_GENERATOR_SPEC.md`, `APP_IMPLEMENTATION_BRIDGE.md`, and `ATHLETE_PROFILE_SPEC.md` now have target-local Physio Source Trust bindings.
 - The related target issues remain OPEN as patched-pending-source-acceptance work; this is not issue closure.
 - Counts remain owned by each target file and must be recounted from those files before any closure.
+
+Current Wave 2 Daily Log patch state:
+
+- `APP_IMPLEMENTATION_BRIDGE.md` now has target-local Daily Check-in storage/API/type bindings for structured fields only.
+- `PLAN_SAFETY_GATE_SPEC.md` now has a target-local Daily Log input boundary in Section 9A.
+- Raw memo/free-text remains transient only; structured daily signals may raise review or block, but cannot clear `D9_ACTIVE`, `D9_UNKNOWN`, or Safety Gate blocks.
+- Related target issues remain OPEN; this is not canonical promotion, runtime evidence, or issue closure.
 
 Not yet:
 
@@ -141,6 +148,11 @@ Documentation QA evidence from this handoff cleanup:
 - [`.omo/evidence/task-2-trainoracle-main-handoff-cleanup-green.txt`](./.omo/evidence/task-2-trainoracle-main-handoff-cleanup-green.txt)
 - [`.omo/evidence/task-8-trainoracle-main-handoff-cleanup-green.txt`](./.omo/evidence/task-8-trainoracle-main-handoff-cleanup-green.txt)
 - [`.omo/evidence/f3-trainoracle-main-handoff-cleanup-remote-proof.txt`](./.omo/evidence/f3-trainoracle-main-handoff-cleanup-remote-proof.txt)
+- [`.omo/evidence/spec-wave2-daily-log-red-20260627.txt`](./.omo/evidence/spec-wave2-daily-log-red-20260627.txt)
+- [`.omo/evidence/spec-wave2-daily-log-green-20260627.txt`](./.omo/evidence/spec-wave2-daily-log-green-20260627.txt)
+- [`.omo/evidence/spec-wave2-daily-log-final-qa-20260627.txt`](./.omo/evidence/spec-wave2-daily-log-final-qa-20260627.txt)
+- [`.omo/evidence/trainoracle-spec-wave2-daily-log-binding-code-review-followup-pass.md`](./.omo/evidence/trainoracle-spec-wave2-daily-log-binding-code-review-followup-pass.md)
+- [`.omo/evidence/spec-wave2-daily-log-20260627-gate-review.md`](./.omo/evidence/spec-wave2-daily-log-20260627-gate-review.md)
 
 Markdown self-checks and documentation scans are not D9 evaluator runtime evidence.
 
