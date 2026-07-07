@@ -213,8 +213,10 @@ The daily-log surface is therefore not a separate lightweight feature. It is the
    - Must keep `CYCLE_DAY.D-*` separate from rule namespaces.
 
 7. `ANALYSIS_AND_VISUALIZATION_DATA_CONTRACT.md`
+   - Current status: created at `specs/reconstruct/ANALYSIS_AND_VISUALIZATION_DATA_CONTRACT.md` as `DRAFT_FOR_REVIEW`.
    - Purpose: bind Analysis, Session Detail, Calendar, and Dashboard visualizations to structured data sources.
    - Must preserve the design-system requirement that visualizations reveal evidence quickly without becoming decoration.
+   - Must not define final metric formulas, clear D9/Safety Gate states, create plan options, claim runtime evidence, or close downstream issues.
 
 ---
 
@@ -227,10 +229,13 @@ The daily-log surface is therefore not a separate lightweight feature. It is the
 5. Run or prepare actual D9 evaluator runtime execution. Do not close RVE/PG binding issues from markdown self-checks.
 6. Review the Wave 1 physio consumption target patches in `PLAN_GENERATOR_SPEC.md`, `APP_IMPLEMENTATION_BRIDGE.md`, and `ATHLETE_PROFILE_SPEC.md`; keep their issues open until source acceptance and target recount approval exist.
 7. Patch Daily Log consumption into App Bridge, Athlete Profile, Physio Source Trust, RVE, and Safety Gate only after opening each target file and recounting its open-issue table.
-8. Draft `DAILY_BRIEF_AND_INBOX_SIGNAL_SPEC.md` before wiring daily summaries, push prompts, or AI Inbox generation.
-9. Draft productization contracts for rationale privacy, cycle/calendar mapping, and analysis visualization after the safety core chain is stable.
+8. Review `DAILY_BRIEF_AND_INBOX_SIGNAL_SPEC.md` before wiring daily summaries, push prompts, or AI Inbox generation.
+9. Review `ANALYSIS_AND_VISUALIZATION_DATA_CONTRACT.md` before implementing Analysis, Dashboard, Session Detail, Calendar, coach review, Daily Brief, or AI Inbox visualization data.
+10. Draft productization contracts for rationale privacy and cycle/calendar mapping after the safety core chain is stable.
 
 Wave 1 note: Physio Source Trust target patches into Plan Generator, App Bridge, and Athlete Profile now exist. They remain open for review/acceptance and target-file recount approval; this note does not close any issue.
+
+Wave 3 note: Daily Brief / AI Inbox and Analysis / Visualization productization drafts now exist. They remain drafts for review and do not provide implementation, runtime evidence, canonical promotion, or downstream issue closure.
 
 ---
 

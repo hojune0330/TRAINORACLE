@@ -46,7 +46,11 @@ Current Wave 3 productization draft state:
 - It defines Daily Brief and AI Inbox signal records from structured facts only.
 - It requires source refs, confidence/uncertainty, and non-sensitive reason codes.
 - It forbids raw memo/free-text/symptom clause storage, external LLM use with private athlete data, D9/Safety Gate clearing, plan option creation, runtime evidence claims, and issue closure.
-- Remaining productization drafts: `ANALYSIS_AND_VISUALIZATION_DATA_CONTRACT.md`, `PLAN_OUTPUT_RATIONALE_PRIVACY_SPEC.md`, and `MICROCYCLE_AND_CALENDAR_MAPPING_SPEC.md`.
+- `specs/reconstruct/ANALYSIS_AND_VISUALIZATION_DATA_CONTRACT.md` now exists as a new `DRAFT_FOR_REVIEW` productization SPEC.
+- It defines source-backed visualization data for Analysis, Dashboard, Session Detail, Calendar, coach review, Daily Brief, and AI Inbox surfaces.
+- It requires source refs, confidence/uncertainty, non-sensitive reason codes, and visible missing/stale/conflicting source states.
+- It forbids raw memo/free-text/symptom clause storage, external LLM use with private athlete data, final metric formula authority, D9/Safety Gate clearing, plan option creation, runtime evidence claims, and issue closure.
+- Remaining productization drafts: `PLAN_OUTPUT_RATIONALE_PRIVACY_SPEC.md` and `MICROCYCLE_AND_CALENDAR_MAPPING_SPEC.md`.
 
 Not yet:
 
@@ -86,6 +90,8 @@ Missing/reconstruct area:
 - [`specs/reconstruct/RULE_VALIDATION_ENGINE_CONTRACT.md`](./specs/reconstruct/RULE_VALIDATION_ENGINE_CONTRACT.md) (`RECONSTRUCTED_DRAFT_FOR_REVIEW`; not original restored)
 - [`specs/reconstruct/PLAN_SAFETY_GATE_SPEC.md`](./specs/reconstruct/PLAN_SAFETY_GATE_SPEC.md) (`RECONSTRUCTED_DRAFT_FOR_REVIEW`; not original restored)
 - [`specs/reconstruct/DAILY_LOG_AND_CHECKIN_SPEC.md`](./specs/reconstruct/DAILY_LOG_AND_CHECKIN_SPEC.md) (`RECONSTRUCTED_DRAFT_FOR_REVIEW`; not original restored)
+- [`specs/reconstruct/DAILY_BRIEF_AND_INBOX_SIGNAL_SPEC.md`](./specs/reconstruct/DAILY_BRIEF_AND_INBOX_SIGNAL_SPEC.md) (`DRAFT_FOR_REVIEW`; new productization draft)
+- [`specs/reconstruct/ANALYSIS_AND_VISUALIZATION_DATA_CONTRACT.md`](./specs/reconstruct/ANALYSIS_AND_VISUALIZATION_DATA_CONTRACT.md) (`DRAFT_FOR_REVIEW`; new productization draft)
 
 ## Reconstructed Or Source-Not-Verified Contracts
 
@@ -96,6 +102,8 @@ These required contracts are not all present as approved source files in this re
 | `RULE_VALIDATION_ENGINE_CONTRACT.md` | `specs/reconstruct/RULE_VALIDATION_ENGINE_CONTRACT.md` exists as `RECONSTRUCTED_DRAFT_FOR_REVIEW`; not original restored, not canonical, not runtime evidence |
 | `PLAN_SAFETY_GATE_SPEC.md` | `specs/reconstruct/PLAN_SAFETY_GATE_SPEC.md` exists as `RECONSTRUCTED_DRAFT_FOR_REVIEW`; not original restored, not canonical, not runtime evidence |
 | `DAILY_LOG_AND_CHECKIN_SPEC.md` | `specs/reconstruct/DAILY_LOG_AND_CHECKIN_SPEC.md` exists as `RECONSTRUCTED_DRAFT_FOR_REVIEW`; not original restored, not canonical, not runtime evidence |
+| `DAILY_BRIEF_AND_INBOX_SIGNAL_SPEC.md` | `specs/reconstruct/DAILY_BRIEF_AND_INBOX_SIGNAL_SPEC.md` exists as `DRAFT_FOR_REVIEW`; new productization draft, not canonical, not runtime evidence |
+| `ANALYSIS_AND_VISUALIZATION_DATA_CONTRACT.md` | `specs/reconstruct/ANALYSIS_AND_VISUALIZATION_DATA_CONTRACT.md` exists as `DRAFT_FOR_REVIEW`; new productization draft, not metric formula authority, not canonical, not runtime evidence |
 | `COACH_RATIFICATION_SAFETY_DEFAULTS_2026_06_04_001` | Not found as approved local evidence |
 
 Do not claim a document exists from a chapter title, H1, table row, status label, or conversation summary. Exact local filename search is required.
@@ -112,8 +120,9 @@ Do not claim a document exists from a chapter title, H1, table row, status label
 6. Review the Wave 1 physio target patches in `PLAN_GENERATOR_SPEC.md`, `APP_IMPLEMENTATION_BRIDGE.md`, and `ATHLETE_PROFILE_SPEC.md`; do not close their physio issues until source acceptance and target recount approval exist.
 7. Obtain actual D9 evaluator runtime output before closing RVE or Plan Generator safety-gate binding issues.
 8. Review `specs/reconstruct/DAILY_BRIEF_AND_INBOX_SIGNAL_SPEC.md`; it is a productization draft, not canonical or runtime evidence.
-9. Draft Analysis visualization, plan rationale privacy, and microcycle/calendar contracts before implementation touches those product surfaces.
-10. Continue productization specs only after preserving the safety core chain.
+9. Review `specs/reconstruct/ANALYSIS_AND_VISUALIZATION_DATA_CONTRACT.md`; it is a productization draft, not metric formula authority, canonical, or runtime evidence.
+10. Draft plan rationale privacy and microcycle/calendar contracts before implementation touches those product surfaces.
+11. Continue productization specs only after preserving the safety core chain.
 
 ## Hard Guardrails
 
@@ -167,6 +176,10 @@ Documentation QA evidence from this handoff cleanup:
 - [`.omo/evidence/spec-productization-daily-brief-green-20260627.txt`](./.omo/evidence/spec-productization-daily-brief-green-20260627.txt)
 - [`.omo/evidence/spec-productization-daily-brief-code-review.md`](./.omo/evidence/spec-productization-daily-brief-code-review.md)
 - [`.omo/evidence/spec-productization-daily-brief-final-qa-20260627.txt`](./.omo/evidence/spec-productization-daily-brief-final-qa-20260627.txt)
+- [`.omo/evidence/spec-productization-analysis-red-20260707.txt`](./.omo/evidence/spec-productization-analysis-red-20260707.txt)
+- [`.omo/evidence/spec-productization-analysis-green-20260707.txt`](./.omo/evidence/spec-productization-analysis-green-20260707.txt)
+- [`.omo/evidence/spec-productization-analysis-code-review.md`](./.omo/evidence/spec-productization-analysis-code-review.md)
+- [`.omo/evidence/spec-productization-analysis-final-qa-20260707.txt`](./.omo/evidence/spec-productization-analysis-final-qa-20260707.txt)
 
 Markdown self-checks and documentation scans are not D9 evaluator runtime evidence.
 

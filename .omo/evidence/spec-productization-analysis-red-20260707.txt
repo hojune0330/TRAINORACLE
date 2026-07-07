@@ -1,0 +1,21 @@
+RED EVIDENCE - 2026-07-07
+
+Exact target filename search before edits:
+
+Future-spec references:
+specs/reconstruct/DAILY_BRIEF_AND_INBOX_SIGNAL_SPEC.md:535:      - ANALYSIS_AND_VISUALIZATION_DATA_CONTRACT.md
+specs/reconstruct/DAILY_BRIEF_AND_INBOX_SIGNAL_SPEC.md:593:| `OI-DBI-ANALYSIS-CONTRACT-BINDING-001` | P2 | NO | OPEN | Analysis trend items and visualization data contracts remain separate future work. | Draft `ANALYSIS_AND_VISUALIZATION_DATA_CONTRACT.md`. |
+specs/reconstruct/DAILY_LOG_AND_CHECKIN_SPEC.md:566:  ANALYSIS_AND_VISUALIZATION_DATA_CONTRACT:
+specs/reconstruct/DAILY_LOG_AND_CHECKIN_SPEC.md:611:| `OI-DLC-ANALYSIS-VISUALIZATION-001` | P2 | NO | OPEN | Analysis charts and body-area trend visualization contract is not defined. | Draft `ANALYSIS_AND_VISUALIZATION_DATA_CONTRACT.md`. |
+SPEC_DOCUMENTATION_REPORT.md:109:| `ANALYSIS_AND_VISUALIZATION_DATA_CONTRACT.md` | Future SPEC | Analysis, Session Detail, Dashboard 시각화가 어떤 구조 데이터에서 나오는지 정의 | Daily Log, Session Classifier, Physio Source Trust 연결 |
+SPEC_DOCUMENTATION_REPORT.md:162:- `ANALYSIS_AND_VISUALIZATION_DATA_CONTRACT.md`
+SPEC_OVERVIEW_FOR_HOJUNE.md:115:| `ANALYSIS_AND_VISUALIZATION_DATA_CONTRACT.md` | 분석 화면과 시각화가 어떤 데이터 구조를 쓰는지 정하기 위해 | Daily Log, Session Classifier, Physio Source Trust 연결 |
+SPEC_OVERVIEW_FOR_HOJUNE.md:164:- `ANALYSIS_AND_VISUALIZATION_DATA_CONTRACT.md`
+SPEC_LEGACY_ALIGNMENT_AND_DAILY_LOG_PLAN.md:215:7. `ANALYSIS_AND_VISUALIZATION_DATA_CONTRACT.md`
+SPEC_LEGACY_ALIGNMENT_AND_DAILY_LOG_PLAN.md:216:   - Purpose: bind Analysis, Session Detail, Calendar, and Dashboard visualizations to structured data sources.
+SPEC_TARGET_PATCH_MATRIX.md:137:- `ANALYSIS_AND_VISUALIZATION_DATA_CONTRACT.md`
+SPEC_WORK_STATUS.md:49:- Remaining productization drafts: `ANALYSIS_AND_VISUALIZATION_DATA_CONTRACT.md`, `PLAN_OUTPUT_RATIONALE_PRIVACY_SPEC.md`, and `MICROCYCLE_AND_CALENDAR_MAPPING_SPEC.md`.
+
+Baseline git status:
+## main...origin/main
+?? .omo/evidence/spec-productization-analysis-red-20260707.txt

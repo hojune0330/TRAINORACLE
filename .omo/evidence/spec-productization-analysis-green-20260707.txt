@@ -1,0 +1,129 @@
+GREEN EVIDENCE - 2026-07-07
+
+Created target file:
+-rw-r--r-- 1 admin 197121 21994  7월  7 13:47 specs/reconstruct/ANALYSIS_AND_VISUALIZATION_DATA_CONTRACT.md
+
+Metadata and open issues:
+# ANALYSIS_AND_VISUALIZATION_DATA_CONTRACT.md
+
+```yaml
+doc_id: trainoracle-spec-015-analysis-and-visualization-data-contract
+spec_id: ANALYSIS_AND_VISUALIZATION_DATA_CONTRACT
+title: TrainOracle Analysis And Visualization Data Contract
+version: "0.1"
+round: RT1_PRODUCTIZATION_DRAFT
+status: DRAFT_FOR_REVIEW
+owner: COACH_HOJUNE
+source_state:
+  local_original_found: false
+  new_productization_draft: true
+  restored_original: false
+  previous_approved_version_restored: false
+open_issues_total: 7
+canonical_blocking_count: 4
+executed_tests_total: 0
+executed_tests_passed: 0
+self_check_is_runtime_evidence: false
+canonical_promotion_allowed: false
+```
+
+---
+
+## 1. Purpose
+
+`ANALYSIS_AND_VISUALIZATION_DATA_CONTRACT.md` defines how TrainOracle turns accepted structured facts into data that can be shown in Analysis, Dashboard, Session Detail, Calendar, and coach review surfaces.
+
+This document exists so visual products can show training load, readiness, session patterns, body-area trends, source coverage, safety context, and uncertainty without inventing facts or storing private free text.
+
+It is a productization data contract. It is not a training-load algorithm, not a chart implementation spec, not a medical clearance workflow, not a Plan Generator, not runtime evidence, and not canonical promotion.
+
+---
+
+## 2. Non-Purpose
+
+This document does not:
+
+- define new `RULE_SPEC_D1_D9.D-*` rule semantics
+- redefine `D9_ACTIVE`, `D9_UNKNOWN`, `D9_CLEARED`, or ADVISORY
+- calculate final CTL, ATL, TSB, TSS, HR drift, or race-readiness formulas
+- authorize external LLM processing with private athlete data
+- store raw athlete free text, raw memo text, raw symptom clauses, injury narratives, medical notes, rehab notes, evidence clauses, or guardian private notes
+- create plan options or modify Plan Generator output
+- clear `D9_ACTIVE`, `D9_UNKNOWN`, Safety Gate blocks, or human-review requirements
+- close Daily Log, Daily Brief, RVE, Safety Gate, Plan Generator, App Bridge, UI, or implementation issues
+
+---
+
+## 3. Source Basis
+
+This draft was created only after exact local filename search found no current `ANALYSIS_AND_VISUALIZATION_DATA_CONTRACT.md`.
+
+Source references used for this draft:
+
+| Source | Treatment |
+|---|---|
+| `SPEC_LEGACY_ALIGNMENT_AND_DAILY_LOG_PLAN.md` | Productization order and requirement that Analysis, Session Detail, Calendar, and Dashboard visualizations bind to structured data sources |
+| `specs/reconstruct/DAILY_LOG_AND_CHECKIN_SPEC.md` | Daily structured ingestion, transient memo boundary, body-area and readiness trend needs |
+| `specs/reconstruct/DAILY_BRIEF_AND_INBOX_SIGNAL_SPEC.md` | Source refs, confidence/uncertainty, reason-code boundary, and non-blocking attention surfaces |
+| `specs/active/SESSION_CLASSIFIER_SPEC.md` | Session category and classification source |
+| `specs/active/ATHLETE_PROFILE_SPEC.md` | Athlete-scoped profile context and source priority boundaries |
+| `specs/active/PHYSIO_SOURCE_TRUST_SPEC.md` | Physio source trust, recency, conflict, consent, and no-D9-clearing rule |
+| `specs/reconstruct/RULE_VALIDATION_ENGINE_CONTRACT.md` | RVE signal shape and safety status boundary |
+| `specs/reconstruct/PLAN_SAFETY_GATE_SPEC.md` | Pre-generation safety gate status boundary |
+| `specs/active/PLAN_GENERATOR_SPEC.md` | Plan output as downstream context only |
+| `design-system/VISUALIZATION_SYSTEM.md` | Visualization intent, chart families, evidence-first display direction |
+| `design-system/SCREENS.md` | Dashboard, Calendar, Session Detail, AI Inbox, and Analysis surface references |
+
+
+585:| `OI-AVD-APP-BRIDGE-BINDING-001` | P1 | YES | OPEN | Read-only analysis endpoints and storage/audit boundaries are not accepted in App Bridge. | Patch `APP_IMPLEMENTATION_BRIDGE.md`, recount target issues, and review privacy boundary. |
+586:| `OI-AVD-METRIC-SOURCE-OWNERSHIP-001` | P1 | YES | OPEN | Final formulas for CTL/ATL/TSB, HR drift, load, and related derived metrics are not accepted here. | Draft or accept a metric algorithm contract before using numeric authority. |
+587:| `OI-AVD-SAFETY-DISPLAY-BINDING-001` | P1 | YES | OPEN | Safety display projections are defined in this draft but not accepted in App Bridge or UI implementation contracts. | Patch implementation contracts without allowing visualization to clear D9 or Safety Gate states. |
+588:| `OI-AVD-RUNTIME-EVIDENCE-001` | P1 | YES | OPEN | No runtime or CI evidence proves dataset generation, source refs, or privacy guards. | Add actual terminal or CI logs after implementation exists. |
+589:| `OI-AVD-UI-SURFACE-BINDING-001` | P2 | NO | OPEN | Dashboard, Analysis, Session Detail, Calendar, Daily Brief, and AI Inbox surfaces are design references only. | Patch implementation or UI contracts after this data contract is reviewed. |
+590:| `OI-AVD-DESIGN-SYSTEM-A11Y-BINDING-001` | P2 | NO | OPEN | Visualization design references still need accessibility and non-color-only encoding acceptance. | Bind chart states to design-system accessibility rules before implementation. |
+591:| `OI-AVD-EXPORT-TOOLTIP-PRIVACY-001` | P2 | NO | OPEN | Tooltip, drilldown, export, and screenshot privacy boundaries are not accepted in implementation. | Prove raw text and private notes cannot appear in labels, tooltips, exports, or audit. |
+
+Linked handoff docs:
+SPEC_LEGACY_ALIGNMENT_AND_DAILY_LOG_PLAN.md:215:7. `ANALYSIS_AND_VISUALIZATION_DATA_CONTRACT.md`
+SPEC_LEGACY_ALIGNMENT_AND_DAILY_LOG_PLAN.md:216:   - Current status: created at `specs/reconstruct/ANALYSIS_AND_VISUALIZATION_DATA_CONTRACT.md` as `DRAFT_FOR_REVIEW`.
+SPEC_LEGACY_ALIGNMENT_AND_DAILY_LOG_PLAN.md:233:9. Review `ANALYSIS_AND_VISUALIZATION_DATA_CONTRACT.md` before implementing Analysis, Dashboard, Session Detail, Calendar, coach review, Daily Brief, or AI Inbox visualization data.
+SPEC_LEGACY_ALIGNMENT_AND_DAILY_LOG_PLAN.md:238:Wave 3 note: Daily Brief / AI Inbox and Analysis / Visualization productization drafts now exist. They remain drafts for review and do not provide implementation, runtime evidence, canonical promotion, or downstream issue closure.
+SPEC_DOCUMENTATION_REPORT.md:100:| `ANALYSIS_AND_VISUALIZATION_DATA_CONTRACT.md` | 분석 화면과 시각화 데이터 계약을 만들기 위해 | 그래프/패널은 구조화 source refs와 uncertainty를 보존하고 안전 상태를 절대 clear하지 않는다. |
+SPEC_DOCUMENTATION_REPORT.md:109:| `ANALYSIS_AND_VISUALIZATION_DATA_CONTRACT.md` | Productization SPEC draft | Analysis, Session Detail, Dashboard, Calendar 시각화가 어떤 구조 데이터에서 나오는지 정의 | Draft created; App Bridge binding, metric formula authority, runtime evidence는 아직 없음 |
+SPEC_DOCUMENTATION_REPORT.md:169:`ANALYSIS_AND_VISUALIZATION_DATA_CONTRACT.md` now exists at `specs/reconstruct/ANALYSIS_AND_VISUALIZATION_DATA_CONTRACT.md`.
+SPEC_WORK_STATUS.md:49:- `specs/reconstruct/ANALYSIS_AND_VISUALIZATION_DATA_CONTRACT.md` now exists as a new `DRAFT_FOR_REVIEW` productization SPEC.
+SPEC_WORK_STATUS.md:94:- [`specs/reconstruct/ANALYSIS_AND_VISUALIZATION_DATA_CONTRACT.md`](./specs/reconstruct/ANALYSIS_AND_VISUALIZATION_DATA_CONTRACT.md) (`DRAFT_FOR_REVIEW`; new productization draft)
+SPEC_WORK_STATUS.md:106:| `ANALYSIS_AND_VISUALIZATION_DATA_CONTRACT.md` | `specs/reconstruct/ANALYSIS_AND_VISUALIZATION_DATA_CONTRACT.md` exists as `DRAFT_FOR_REVIEW`; new productization draft, not metric formula authority, not canonical, not runtime evidence |
+SPEC_WORK_STATUS.md:123:9. Review `specs/reconstruct/ANALYSIS_AND_VISUALIZATION_DATA_CONTRACT.md`; it is a productization draft, not metric formula authority, canonical, or runtime evidence.
+SPEC_WORK_STATUS.md:179:- [`.omo/evidence/spec-productization-analysis-red-20260707.txt`](./.omo/evidence/spec-productization-analysis-red-20260707.txt)
+SPEC_WORK_STATUS.md:180:- [`.omo/evidence/spec-productization-analysis-green-20260707.txt`](./.omo/evidence/spec-productization-analysis-green-20260707.txt)
+SPEC_WORK_STATUS.md:181:- [`.omo/evidence/spec-productization-analysis-code-review.md`](./.omo/evidence/spec-productization-analysis-code-review.md)
+SPEC_WORK_STATUS.md:182:- [`.omo/evidence/spec-productization-analysis-final-qa-20260707.txt`](./.omo/evidence/spec-productization-analysis-final-qa-20260707.txt)
+TRAINORACLE_SPEC_INDEX.md:136:| `ANALYSIS_AND_VISUALIZATION_DATA_CONTRACT.md` | `specs/reconstruct/ANALYSIS_AND_VISUALIZATION_DATA_CONTRACT.md` | DRAFT_FOR_REVIEW | New productization draft. Defines source-backed visualization data, uncertainty/source coverage, and privacy boundary. Does not define final metric formulas, clear D9/Safety Gate states, or create plan options. |
+TRAINORACLE_SPEC_INDEX.md:181:10. Review `specs/reconstruct/ANALYSIS_AND_VISUALIZATION_DATA_CONTRACT.md` as a productization draft; do not treat it as metric formula authority, canonical, runtime evidence, or downstream issue closure.
+SPEC_OVERVIEW_FOR_HOJUNE.md:115:| `ANALYSIS_AND_VISUALIZATION_DATA_CONTRACT.md` | 분석 화면과 시각화가 어떤 데이터 구조를 쓰는지 정하기 위해 | Draft created. App Bridge binding, metric formula authority, runtime evidence가 남아 있음 |
+SPEC_OVERVIEW_FOR_HOJUNE.md:167:## Productization Update - 2026-07-07
+SPEC_OVERVIEW_FOR_HOJUNE.md:169:`ANALYSIS_AND_VISUALIZATION_DATA_CONTRACT.md` now exists at `specs/reconstruct/ANALYSIS_AND_VISUALIZATION_DATA_CONTRACT.md`.
+README.md:31:| `ANALYSIS_AND_VISUALIZATION_DATA_CONTRACT.md` | 구조화된 일지/세션/분류/안전/physio/계획 신호 | Dashboard, Analysis, Session Detail, Calendar가 읽는 근거 기반 시각화 데이터 |
+specs/reconstruct/README.md:14:- `ANALYSIS_AND_VISUALIZATION_DATA_CONTRACT.md` (`DRAFT_FOR_REVIEW`; new productization draft, not original restored, not canonical, not runtime evidence)
+specs/reconstruct/README.md:77:`ANALYSIS_AND_VISUALIZATION_DATA_CONTRACT.md`:
+specs/reconstruct/README.md:79:- Exact search before creation was captured in `.omo/evidence/spec-productization-analysis-red-20260707.txt`.
+specs/reconstruct/README.md:80:- `specs/reconstruct/ANALYSIS_AND_VISUALIZATION_DATA_CONTRACT.md` now exists as `DRAFT_FOR_REVIEW`.
+SPEC_TARGET_PATCH_MATRIX.md:58:| `ANALYSIS_AND_VISUALIZATION_DATA_CONTRACT.md` | `DRAFT_FOR_REVIEW` | Source-backed visualization data shapes, uncertainty/source coverage, analysis privacy boundary | Metric algorithm authority, App Bridge implementation, runtime proof |
+SPEC_TARGET_PATCH_MATRIX.md:138:- `ANALYSIS_AND_VISUALIZATION_DATA_CONTRACT.md` - created as `specs/reconstruct/ANALYSIS_AND_VISUALIZATION_DATA_CONTRACT.md`
+SPEC_TARGET_PATCH_MATRIX.md:153:- `ANALYSIS_AND_VISUALIZATION_DATA_CONTRACT.md` now exists as a new productization draft.
+
+Git status:
+## main...origin/main
+ M README.md
+ M SPEC_DOCUMENTATION_REPORT.md
+ M SPEC_LEGACY_ALIGNMENT_AND_DAILY_LOG_PLAN.md
+ M SPEC_OVERVIEW_FOR_HOJUNE.md
+ M SPEC_TARGET_PATCH_MATRIX.md
+ M SPEC_WORK_STATUS.md
+ M TRAINORACLE_SPEC_INDEX.md
+ M specs/reconstruct/README.md
+?? .omo/evidence/spec-productization-analysis-final-qa-20260707.txt
+?? .omo/evidence/spec-productization-analysis-green-20260707.txt
+?? .omo/evidence/spec-productization-analysis-red-20260707.txt
+?? specs/reconstruct/ANALYSIS_AND_VISUALIZATION_DATA_CONTRACT.md

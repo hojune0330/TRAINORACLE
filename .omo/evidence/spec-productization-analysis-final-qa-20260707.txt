@@ -1,0 +1,87 @@
+QA SCAN - 2026-07-07
+
+Scope includes:
+README.md
+SPEC_DOCUMENTATION_REPORT.md
+SPEC_LEGACY_ALIGNMENT_AND_DAILY_LOG_PLAN.md
+SPEC_OVERVIEW_FOR_HOJUNE.md
+SPEC_TARGET_PATCH_MATRIX.md
+SPEC_WORK_STATUS.md
+TRAINORACLE_SPEC_INDEX.md
+specs/reconstruct/README.md
+specs/reconstruct/ANALYSIS_AND_VISUALIZATION_DATA_CONTRACT.md
+
+Final marker lines:
+TRAINORACLE_SPEC_INDEX.md:207:[DRAFT_COMPLETE]
+SPEC_OVERVIEW_FOR_HOJUNE.md:185:[DRAFT_COMPLETE]
+SPEC_LEGACY_ALIGNMENT_AND_DAILY_LOG_PLAN.md:272:[DRAFT_COMPLETE]
+SPEC_WORK_STATUS.md:200:[DRAFT_COMPLETE]
+SPEC_TARGET_PATCH_MATRIX.md:202:[DRAFT_COMPLETE]
+SPEC_DOCUMENTATION_REPORT.md:192:[DRAFT_COMPLETE]
+specs/reconstruct/ANALYSIS_AND_VISUALIZATION_DATA_CONTRACT.md:615:[DRAFT_COMPLETE]
+
+Open issue count:
+7
+Canonical YES count:
+4
+
+Required phrase checks:
+43:- authorize external LLM processing with private athlete data
+44:- store raw athlete free text, raw memo text, raw symptom clauses, injury narratives, medical notes, rehab notes, evidence clauses, or guardian private notes
+61:| `specs/reconstruct/DAILY_BRIEF_AND_INBOX_SIGNAL_SPEC.md` | Source refs, confidence/uncertainty, reason-code boundary, and non-blocking attention surfaces |
+128:Visualization data may persist only structured values, source refs, confidence/uncertainty states, non-sensitive reason codes, and display-safe labels.
+155:| Analysis | Show medium-range and long-range trends | Use structured metrics with source refs, date ranges, and uncertainty |
+156:| Session Detail | Show one session result and evidence context | Link each claim to source refs; show validation and uncertainty visibly |
+157:| Calendar | Show planned/completed sessions, cycle context, and safe status indicators | Use `CYCLE_DAY` labels only for calendar/cycle meaning; never as D-rule IDs |
+159:| AI Inbox / Daily Brief | Reuse visualization signal summaries where accepted | Preserve source refs, confidence/uncertainty, and no-plan-option boundary |
+186:    mayClearD9Risk: false
+187:    mayClearSafetyGateBlock: false
+234:Every panel and data point must carry source refs or an explicit insufficient-source state.
+279:  | "METRIC_NOT_DEFINED"
+286:- `NONE` requires accepted source refs and no unresolved conflict for the displayed claim.
+287:- `METRIC_NOT_DEFINED` must be used when a design surface names a metric but no accepted algorithm contract exists.
+303:  unknown_formula_display_state: METRIC_NOT_DEFINED
+355:  mayClearD9Risk: false;
+356:  mayClearSafetyGateBlock: false;
+467:    mayClearD9Risk: false;
+468:    mayClearSafetyGateBlock: false;
+481:Daily Log can provide structured check-in values, body-area codes, readiness values, non-sensitive reason codes, and source refs.
+483:Daily Log cannot provide persisted raw memo text, raw symptom clauses, injury narratives, or medical notes to visualization storage.
+516:Daily Brief and AI Inbox may consume accepted visualization panels or data points as context only when source refs and uncertainty states are preserved.
+530:| `METRIC_NOT_DEFINED` | A named metric exists in design/product intent but no accepted formula contract exists |
+546:- source refs
+550:- policy booleans proving no raw text or private external LLM data was stored
+558:- private external LLM prompts or responses
+587:| `OI-AVD-SAFETY-DISPLAY-BINDING-001` | P1 | YES | OPEN | Safety display projections are defined in this draft but not accepted in App Bridge or UI implementation contracts. | Patch implementation contracts without allowing visualization to clear D9 or Safety Gate states. |
+588:| `OI-AVD-RUNTIME-EVIDENCE-001` | P1 | YES | OPEN | No runtime or CI evidence proves dataset generation, source refs, or privacy guards. | Add actual terminal or CI logs after implementation exists. |
+607:| Requires source refs | PASS |
+609:| Forbids raw memo/free-text/symptom clause storage | PASS |
+610:| Forbids external LLM with private athlete data | PASS |
+612:| Keeps `CYCLE_DAY` separate from D-rule IDs | PASS |
+
+Forbidden positive-claim scan; expected matches should be none:
+SPEC_OVERVIEW_FOR_HOJUNE.md:137:| `runtime evidence` | 실제 코드나 CI를 돌린 실행 로그다. Markdown PASS나 self-check는 아니다. |
+specs/reconstruct/ANALYSIS_AND_VISUALIZATION_DATA_CONTRACT.md:605:| Does not claim runtime evidence | PASS |
+
+git diff --check:
+
+File ends with marker check:
+| Avoids final metric formula authority | PASS |
+
+[DRAFT_COMPLETE]
+
+Status:
+ M README.md
+ M SPEC_DOCUMENTATION_REPORT.md
+ M SPEC_LEGACY_ALIGNMENT_AND_DAILY_LOG_PLAN.md
+ M SPEC_OVERVIEW_FOR_HOJUNE.md
+ M SPEC_TARGET_PATCH_MATRIX.md
+ M SPEC_WORK_STATUS.md
+ M TRAINORACLE_SPEC_INDEX.md
+ M specs/reconstruct/README.md
+?? .omo/evidence/spec-productization-analysis-code-review.md
+?? .omo/evidence/spec-productization-analysis-final-qa-20260707.txt
+?? .omo/evidence/spec-productization-analysis-gate-review.md
+?? .omo/evidence/spec-productization-analysis-green-20260707.txt
+?? .omo/evidence/spec-productization-analysis-red-20260707.txt
+?? specs/reconstruct/ANALYSIS_AND_VISUALIZATION_DATA_CONTRACT.md
