@@ -13,12 +13,16 @@
 ## 먼저 할 일 (반드시 순서대로)
 
 1. **[`README.md`](./README.md)** — 패키지 전체 구조 파악 (3분)
-2. **[`PHILOSOPHY.md`](./PHILOSOPHY.md)** — 제품의 가치관, 절대 어겨선 안 되는 원칙 (5분)
-3. **[`DESIGN_DECISIONS.md`](./DESIGN_DECISIONS.md)** — 왜 이렇게 디자인됐는지 (10분)
-4. **[`design-system/DESIGN_TOKENS.md`](./design-system/DESIGN_TOKENS.md)** — 색·타이포·spacing 토큰
-5. **[`design-system/COMPONENT_INVENTORY.md`](./design-system/COMPONENT_INVENTORY.md)** — 컴포넌트 카탈로그
-6. **[`design-system/SCREENS.md`](./design-system/SCREENS.md)** — 화면별 상태와 다음 작업
-7. 그 다음 `designs/*.html` 파일들을 열어 직접 확인
+2. **[`SPEC_REVIEW_PACKET.md`](./SPEC_REVIEW_PACKET.md)** — SPEC 리뷰 read order, reviewer lens, GitHub-only 한계
+3. **[`SPEC_TARGET_PATCH_READINESS.md`](./SPEC_TARGET_PATCH_READINESS.md)** — target patch readiness와 evidence gate
+4. **[`PHILOSOPHY.md`](./PHILOSOPHY.md)** — 제품의 가치관, 절대 어겨선 안 되는 원칙 (5분)
+5. **[`DESIGN_DECISIONS.md`](./DESIGN_DECISIONS.md)** — 왜 이렇게 디자인됐는지 (10분)
+6. **[`design-system/DESIGN_TOKENS.md`](./design-system/DESIGN_TOKENS.md)** — 색·타이포·spacing 토큰
+7. **[`design-system/COMPONENT_INVENTORY.md`](./design-system/COMPONENT_INVENTORY.md)** — 컴포넌트 카탈로그
+8. **[`design-system/SCREENS.md`](./design-system/SCREENS.md)** — 화면별 상태와 다음 작업
+9. 그 다음 `designs/*.html` 파일들을 열어 직접 확인
+
+SPEC 리뷰/readiness 문서는 앱 구현 전에 안전 계약과 target patch 순서를 확인하기 위한 문서다. 이것들은 canonical promotion, runtime evidence, issue closure가 아니다.
 
 ---
 

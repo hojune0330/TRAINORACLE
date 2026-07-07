@@ -1,0 +1,146 @@
+﻿# TrainOracle next phase final review
+timestamp: 2026-07-07T16:08:58.9940172+09:00
+gate_review_iterations: iteration 1 rejected missing HANDOFF links/stale final-review evidence/unchecked plan todos; iteration 2 rejected stale ULW tmp file and unchecked final verification boxes.
+fixes_applied: HANDOFF links added; final review includes remove-ai-slops/programming coverage; plan todos and F1-F4 checked; stale ULW tmp file removed; C001/C002/C003 evidence rerun with accurate cleanup receipt.
+
+remove-ai-slops coverage:
+PASS docs-only scope reviewed for markdown governance slop: vague unsupported claims, duplicated misleading handoff paths, stale artifacts, over-broad verification, unsupported runtime/canonical/closure claims. Stale ULW tmp artifact was removed.
+
+programming coverage:
+PASS not applicable to production code because no .py/.pyi/.rs/.ts/.tsx/.mts/.cts/.go files or manifests were edited. Programming skill was read; no code type/lint/test gate applies to this markdown-only change.
+
+tmp cleanup check:
+PASS no *.tmp files remain under .omo/ulw-loop/trainoracle-next-spec-review-20260707
+
+git diff --check:
+PASS no whitespace errors; only Git CRLF working-copy warnings if any
+
+git status:
+## main...origin/main
+ M HANDOFF.md
+ M README.md
+ M SPEC_DOCUMENTATION_REPORT.md
+ M SPEC_TARGET_PATCH_MATRIX.md
+ M SPEC_WORK_STATUS.md
+ M TRAINORACLE_SPEC_INDEX.md
+?? .omo/drafts/trainoracle-next-spec-review-and-patch-plan.md
+?? .omo/evidence/trainoracle-next-phase-c001-green.txt
+?? .omo/evidence/trainoracle-next-phase-c002-guardrails.txt
+?? .omo/evidence/trainoracle-next-phase-c003-regression.txt
+?? .omo/evidence/trainoracle-next-phase-codex-goal-snapshot.json
+?? .omo/evidence/trainoracle-next-phase-final-review.txt
+?? .omo/evidence/trainoracle-next-phase-gate-review.md
+?? .omo/evidence/trainoracle-next-phase-red.txt
+?? .omo/plans/trainoracle-next-spec-review-and-patch-plan.md
+?? SPEC_REVIEW_PACKET.md
+?? SPEC_TARGET_PATCH_READINESS.md
+
+Forbidden claim scan:
+PASS absent: canonical_promotion_allowed:\s*true
+PASS absent: Closure allowed now:\s*Yes
+PASS absent: runtime evidence (exists|complete|passed|provided)
+PASS absent: D9_CLEARED\s+(is|means|=)\s+medical clearance
+PASS absent: raw athlete free-text.*may be stored
+PASS absent: raw symptom clause.*may be stored
+
+Required link scan:
+PASS README.md links SPEC_REVIEW_PACKET.md at 15
+PASS README.md links SPEC_TARGET_PATCH_READINESS.md at 16
+PASS HANDOFF.md links SPEC_REVIEW_PACKET.md at 16
+PASS HANDOFF.md links SPEC_TARGET_PATCH_READINESS.md at 17
+PASS SPEC_WORK_STATUS.md links SPEC_REVIEW_PACKET.md at 15
+PASS SPEC_WORK_STATUS.md links SPEC_TARGET_PATCH_READINESS.md at 16
+PASS TRAINORACLE_SPEC_INDEX.md links SPEC_REVIEW_PACKET.md at 49
+PASS TRAINORACLE_SPEC_INDEX.md links SPEC_TARGET_PATCH_READINESS.md at 50
+PASS SPEC_DOCUMENTATION_REPORT.md links SPEC_REVIEW_PACKET.md at 241
+PASS SPEC_DOCUMENTATION_REPORT.md links SPEC_TARGET_PATCH_READINESS.md at 257
+
+Plan completion scan:
+PASS plan todos 6/7 and F1-F4 are checked
+
+Evidence files:
+PASS .omo/evidence/trainoracle-next-phase-red.txt bytes=2439
+PASS .omo/evidence/trainoracle-next-phase-c001-green.txt bytes=972
+PASS .omo/evidence/trainoracle-next-phase-c002-guardrails.txt bytes=1725
+PASS .omo/evidence/trainoracle-next-phase-c003-regression.txt bytes=1383
+PASS .omo/evidence/trainoracle-next-phase-gate-review.md bytes=7790
+
+ULW status summary:
+{
+  "ok": true,
+  "plan": {
+    "version": 1,
+    "createdAt": "2026-07-07T06:40:03.635Z",
+    "updatedAt": "2026-07-07T07:08:28.320Z",
+    "briefPath": ".omo/ulw-loop/trainoracle-next-spec-review-20260707/brief.md",
+    "goalsPath": ".omo/ulw-loop/trainoracle-next-spec-review-20260707/goals.json",
+    "ledgerPath": ".omo/ulw-loop/trainoracle-next-spec-review-20260707/ledger.jsonl",
+    "codexGoalMode": "aggregate",
+    "goals": [
+      {
+        "id": "G001-trainoracle-spec-next-phase-after-ap",
+        "title": "TrainOracle SPEC next phase after approval: complete the review-first...",
+        "objective": "TrainOracle SPEC next phase after approval: complete the review-first plan; create reviewer-facing documentation; update stale handoff and patch-matrix language now that Wave 3 productization drafts exist; define target patch readiness, external reviewer usage, GitHub-only review limits, and runtime evidence guardrails. Do not close issues, do not claim canonical promotion, do not claim runtime evidence, do not redefine D9 semantics.",
+        "status": "in_progress",
+        "successCriteria": [
+          {
+            "id": "C001",
+            "scenario": "CLI auxiliary surface: inspect review-first deliverables after edits; PASS iff .omo/plans/trainoracle-next-spec-review-and-patch-plan.md, SPEC_REVIEW_PACKET.md, and SPEC_TARGET_PATCH_READINESS.md exist, are non-empty, and contain reviewer lenses, GitHub-only limits, target patch order, and no issue-closure/runtime-evidence claims.",
+            "userModel": "happy",
+            "expectedEvidence": ".omo/evidence/trainoracle-next-phase-c001-green.txt; cleanup: no processes spawned, no temp files left",
+            "essential": true,
+            "capturedEvidence": ".omo/evidence/trainoracle-next-phase-c001-green.txt | cleanup: removed stale ULW goals.json tmp file; verified no *.tmp remains; no processes spawned",
+            "status": "pass",
+            "capturedAt": "2026-07-07T07:08:27.886Z"
+          },
+          {
+            "id": "C002",
+            "scenario": "CLI auxiliary surface: inspect guardrails after edits; PASS iff grep/select checks show no new resolved/closed safety-chain issues, no runtime evidence claims, no canonical promotion claims, and no bare D-rule ambiguity introduced in new next-phase docs.",
+            "userModel": "edge",
+            "expectedEvidence": ".omo/evidence/trainoracle-next-phase-c002-guardrails.txt; cleanup: no processes spawned, no temp files left",
+            "essential": true,
+            "capturedEvidence": ".omo/evidence/trainoracle-next-phase-c002-guardrails.txt | cleanup: removed stale ULW goals.json tmp file; verified no *.tmp remains; no processes spawned",
+            "status": "pass",
+            "capturedAt": "2026-07-07T07:08:27.928Z"
+          },
+          {
+            "id": "C003",
+            "scenario": "CLI auxiliary surface: inspect adjacent handoff regression; PASS iff SPEC_WORK_STATUS.md, TRAINORACLE_SPEC_INDEX.md, SPEC_TARGET_PATCH_MATRIX.md, SPEC_DOCUMENTATION_REPORT.md, and README.md point readers to the new review/readiness docs while preserving [DRAFT_COMPLETE] final markers where present and keeping productization drafts as draft-for-review.",
+            "userModel": "regression",
+            "expectedEvidence": ".omo/evidence/trainoracle-next-phase-c003-regression.txt; cleanup: no processes spawned, no temp files left",
+            "essential": false,
+            "capturedEvidence": ".omo/evidence/trainoracle-next-phase-c003-regression.txt | cleanup: removed stale ULW goals.json tmp file; verified no *.tmp remains; no processes spawned",
+            "status": "pass",
+            "capturedAt": "2026-07-07T07:08:28.320Z"
+          }
+        ],
+        "attempt": 1,
+        "createdAt": "2026-07-07T06:40:03.635Z",
+        "updatedAt": "2026-07-07T07:08:28.320Z",
+        "startedAt": "2026-07-07T06:51:24.989Z"
+      }
+    ],
+    "codexObjective": "Complete the durable ulw-loop plan in .omo/ulw-loop/trainoracle-next-spec-review-20260707/goals.json, including later accepted/appended stories, under the original brief constraints; use .omo/ulw-loop/trainoracle-next-spec-review-20260707/ledger.jsonl as the audit trail.",
+    "activeGoalId": "G001-trainoracle-spec-next-phase-after-ap"
+  },
+  "summary": {
+    "total": 1,
+    "pending": 0,
+    "in_progress": 1,
+    "complete": 0,
+    "failed": 0,
+    "blocked": 0,
+    "review_blocked": 0,
+    "needs_user_decision": 0,
+    "superseded": 0,
+    "criteria": {
+      "total": 3,
+      "pass": 3,
+      "pending": 0,
+      "fail": 0,
+      "blocked": 0
+    }
+  }
+}
+
+cleanup: removed stale ULW goals.json tmp file; verified no *.tmp remains; no processes spawned; completed reviewer agents were closed before this rerun

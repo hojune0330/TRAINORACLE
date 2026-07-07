@@ -12,6 +12,8 @@ For SPEC-to-legacy continuity, daily-log service flow, and later productization 
 For a plain Korean overview of why the SPEC layer is solid and what remains, read [`SPEC_OVERVIEW_FOR_HOJUNE.md`](./SPEC_OVERVIEW_FOR_HOJUNE.md).
 For an easy document-by-document report, read [`SPEC_DOCUMENTATION_REPORT.md`](./SPEC_DOCUMENTATION_REPORT.md).
 For the next source-to-target patch order and non-closure conditions, read [`SPEC_TARGET_PATCH_MATRIX.md`](./SPEC_TARGET_PATCH_MATRIX.md).
+For external reviewer read order, lenses, and review prompts, read [`SPEC_REVIEW_PACKET.md`](./SPEC_REVIEW_PACKET.md).
+For the next target-patch readiness gates and wave order, read [`SPEC_TARGET_PATCH_READINESS.md`](./SPEC_TARGET_PATCH_READINESS.md).
 For the Wave 1 Physio Source Trust target patch result, read [`SPEC_WAVE1_PHYSIO_PATCH_REPORT.md`](./SPEC_WAVE1_PHYSIO_PATCH_REPORT.md).
 For the rule that prevents chapter/title/status text from being treated as file existence, read [`SPEC_FILE_TRUTH_GUARD.md`](./SPEC_FILE_TRUTH_GUARD.md).
 
@@ -67,6 +69,12 @@ Not yet:
 - actual D9 evaluator runtime evidence
 - closure of RVE or Plan Generator safety-gate binding issues
 - acceptance of productization drafts into implementation contracts
+
+Current review/readiness state:
+
+- `SPEC_REVIEW_PACKET.md` now exists as a reviewer-facing read-order and question packet.
+- `SPEC_TARGET_PATCH_READINESS.md` now exists as a target patch readiness and evidence-gate guide.
+- These documents do not close issues, promote drafts, or create runtime evidence.
 
 ## What Exists In This Repo
 
@@ -125,16 +133,18 @@ Do not claim a document exists from a chapter title, H1, table row, status label
 
 1. Re-open the target repository files before making claims about file status, issue counts, blockers, or runtime evidence.
 2. Review `SPEC_TARGET_PATCH_MATRIX.md` to choose the next safe target patch wave; do not treat the matrix as issue closure or runtime evidence.
-3. Review `specs/reconstruct/RULE_VALIDATION_ENGINE_CONTRACT.md` as a reconstructed draft and patch only with direct file evidence.
-4. Review `specs/reconstruct/PLAN_SAFETY_GATE_SPEC.md` as a reconstructed draft and patch only with direct file evidence.
-5. Review `specs/reconstruct/DAILY_LOG_AND_CHECKIN_SPEC.md` as a reconstructed draft and patch only with direct file evidence.
-6. Review the Wave 1 physio target patches in `PLAN_GENERATOR_SPEC.md`, `APP_IMPLEMENTATION_BRIDGE.md`, and `ATHLETE_PROFILE_SPEC.md`; do not close their physio issues until source acceptance and target recount approval exist.
-7. Obtain actual D9 evaluator runtime output before closing RVE or Plan Generator safety-gate binding issues.
-8. Review `specs/reconstruct/DAILY_BRIEF_AND_INBOX_SIGNAL_SPEC.md`; it is a productization draft, not canonical or runtime evidence.
-9. Review `specs/reconstruct/ANALYSIS_AND_VISUALIZATION_DATA_CONTRACT.md`; it is a productization draft, not metric formula authority, canonical, or runtime evidence.
-10. Review `specs/reconstruct/PLAN_OUTPUT_RATIONALE_PRIVACY_SPEC.md`; it is a productization draft, not Plan Generator target issue closure, canonical, or runtime evidence.
-11. Review `specs/reconstruct/MICROCYCLE_AND_CALENDAR_MAPPING_SPEC.md`; it is a productization draft, not Plan Generator target issue closure, D-rule redefinition, canonical, or runtime evidence.
-12. Begin target patches, App Bridge/API schema contracts, and runtime evidence only after preserving the safety core chain.
+3. Use `SPEC_REVIEW_PACKET.md` to run Review Round 1 with specific reviewer lenses.
+4. Use `SPEC_TARGET_PATCH_READINESS.md` to choose the next target patch wave and evidence gates.
+5. Review `specs/reconstruct/RULE_VALIDATION_ENGINE_CONTRACT.md` as a reconstructed draft and patch only with direct file evidence.
+6. Review `specs/reconstruct/PLAN_SAFETY_GATE_SPEC.md` as a reconstructed draft and patch only with direct file evidence.
+7. Review `specs/reconstruct/DAILY_LOG_AND_CHECKIN_SPEC.md` as a reconstructed draft and patch only with direct file evidence.
+8. Review the Wave 1 physio target patches in `PLAN_GENERATOR_SPEC.md`, `APP_IMPLEMENTATION_BRIDGE.md`, and `ATHLETE_PROFILE_SPEC.md`; do not close their physio issues until source acceptance and target recount approval exist.
+9. Obtain actual D9 evaluator runtime output before closing RVE or Plan Generator safety-gate binding issues.
+10. Review `specs/reconstruct/DAILY_BRIEF_AND_INBOX_SIGNAL_SPEC.md`; it is a productization draft, not canonical or runtime evidence.
+11. Review `specs/reconstruct/ANALYSIS_AND_VISUALIZATION_DATA_CONTRACT.md`; it is a productization draft, not metric formula authority, canonical, or runtime evidence.
+12. Review `specs/reconstruct/PLAN_OUTPUT_RATIONALE_PRIVACY_SPEC.md`; it is a productization draft, not Plan Generator target issue closure, canonical, or runtime evidence.
+13. Review `specs/reconstruct/MICROCYCLE_AND_CALENDAR_MAPPING_SPEC.md`; it is a productization draft, not Plan Generator target issue closure, D-rule redefinition, canonical, or runtime evidence.
+14. Begin target patches, App Bridge/API schema contracts, and runtime evidence only after preserving the safety core chain.
 
 ## Hard Guardrails
 
@@ -212,11 +222,13 @@ Markdown self-checks and documentation scans are not D9 evaluator runtime eviden
 3. This file
 4. [`SPEC_DOCUMENTATION_REPORT.md`](./SPEC_DOCUMENTATION_REPORT.md)
 5. [`SPEC_TARGET_PATCH_MATRIX.md`](./SPEC_TARGET_PATCH_MATRIX.md)
-6. [`SPEC_WAVE1_PHYSIO_PATCH_REPORT.md`](./SPEC_WAVE1_PHYSIO_PATCH_REPORT.md)
-7. [`SPEC_FILE_TRUTH_GUARD.md`](./SPEC_FILE_TRUTH_GUARD.md)
-8. [`SPEC_LEGACY_ALIGNMENT_AND_DAILY_LOG_PLAN.md`](./SPEC_LEGACY_ALIGNMENT_AND_DAILY_LOG_PLAN.md)
-9. [`specs/reconstruct/README.md`](./specs/reconstruct/README.md)
-10. [`.omo/reports/trainoracle-reconstruction-readiness.md`](./.omo/reports/trainoracle-reconstruction-readiness.md)
-11. [`.omo/evidence/trainoracle-remaining-work-flow-reference.md`](./.omo/evidence/trainoracle-remaining-work-flow-reference.md)
+6. [`SPEC_REVIEW_PACKET.md`](./SPEC_REVIEW_PACKET.md)
+7. [`SPEC_TARGET_PATCH_READINESS.md`](./SPEC_TARGET_PATCH_READINESS.md)
+8. [`SPEC_WAVE1_PHYSIO_PATCH_REPORT.md`](./SPEC_WAVE1_PHYSIO_PATCH_REPORT.md)
+9. [`SPEC_FILE_TRUTH_GUARD.md`](./SPEC_FILE_TRUTH_GUARD.md)
+10. [`SPEC_LEGACY_ALIGNMENT_AND_DAILY_LOG_PLAN.md`](./SPEC_LEGACY_ALIGNMENT_AND_DAILY_LOG_PLAN.md)
+11. [`specs/reconstruct/README.md`](./specs/reconstruct/README.md)
+12. [`.omo/reports/trainoracle-reconstruction-readiness.md`](./.omo/reports/trainoracle-reconstruction-readiness.md)
+13. [`.omo/evidence/trainoracle-remaining-work-flow-reference.md`](./.omo/evidence/trainoracle-remaining-work-flow-reference.md)
 
 [DRAFT_COMPLETE]

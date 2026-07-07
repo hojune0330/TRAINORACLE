@@ -236,4 +236,38 @@ Remaining future productization document:
 
 - None. Productization drafts now exist, but all remain draft-for-review and not runtime evidence.
 
+## Review And Patch Readiness Addendum - 2026-07-07
+
+`SPEC_REVIEW_PACKET.md` now exists at the repository root.
+
+Treatment:
+
+- It is a reviewer-facing handoff packet.
+- It is not a product rule definition.
+- It is not canonical promotion.
+- It is not runtime evidence.
+- It does not close any downstream issue.
+
+Purpose:
+
+- Give reviewers a read order, known non-claims, review lenses, and exact questions.
+- Clarify what GitHub-only review can and cannot prove.
+- Prevent vague "looks good" review from being treated as source acceptance.
+
+`SPEC_TARGET_PATCH_READINESS.md` now exists at the repository root.
+
+Treatment:
+
+- It is a target patch readiness guide.
+- It is not a product rule definition.
+- It is not canonical promotion.
+- It is not runtime evidence.
+- It does not close any downstream issue.
+
+Purpose:
+
+- Define the next review -> source acceptance -> target patch -> recount -> runtime evidence sequence.
+- Make clear that Wave 3 productization drafts now exist and the next work is review/acceptance and target-patch readiness.
+- Preserve no-closure, no-runtime-evidence, and no-D9-redefinition guardrails.
+
 [DRAFT_COMPLETE]

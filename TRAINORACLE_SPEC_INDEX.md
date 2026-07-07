@@ -46,6 +46,8 @@ It is not a product rule definition, not runtime evidence, and not canonical pro
 For the current continuation snapshot after this index, read [`SPEC_WORK_STATUS.md`](./SPEC_WORK_STATUS.md).
 For a human-readable map of all existing, reconstructed, legacy, design, and planned documents, read [`SPEC_DOCUMENTATION_REPORT.md`](./SPEC_DOCUMENTATION_REPORT.md).
 For the next count-safe target patch sequence, read [`SPEC_TARGET_PATCH_MATRIX.md`](./SPEC_TARGET_PATCH_MATRIX.md).
+For external reviewer read order, lenses, and review questions, read [`SPEC_REVIEW_PACKET.md`](./SPEC_REVIEW_PACKET.md).
+For target patch readiness gates and wave order, read [`SPEC_TARGET_PATCH_READINESS.md`](./SPEC_TARGET_PATCH_READINESS.md).
 For the Wave 1 Physio Source Trust target patch result, read [`SPEC_WAVE1_PHYSIO_PATCH_REPORT.md`](./SPEC_WAVE1_PHYSIO_PATCH_REPORT.md).
 For SPEC-to-legacy continuity and daily-log productization planning, read [`SPEC_LEGACY_ALIGNMENT_AND_DAILY_LOG_PLAN.md`](./SPEC_LEGACY_ALIGNMENT_AND_DAILY_LOG_PLAN.md).
 For file-existence and chapter/title disambiguation rules, read [`SPEC_FILE_TRUTH_GUARD.md`](./SPEC_FILE_TRUTH_GUARD.md).
@@ -173,17 +175,19 @@ Bare D-rule references are forbidden in new SPEC work.
 
 1. Re-open target files in this repository before making claims about file status, issue counts, or blockers.
 2. Review `SPEC_TARGET_PATCH_MATRIX.md` before any target patch; it records the next source-to-target order and the non-closure conditions.
-3. Review `specs/reconstruct/RULE_VALIDATION_ENGINE_CONTRACT.md` as a reconstructed draft; do not treat it as an original or accepted contract yet.
-4. Review `specs/reconstruct/PLAN_SAFETY_GATE_SPEC.md` as a reconstructed draft; do not treat it as an original or accepted contract yet.
-5. Review `specs/reconstruct/DAILY_LOG_AND_CHECKIN_SPEC.md` as a reconstructed draft; do not treat it as an original or accepted contract yet.
-6. Recheck `PLAN_GENERATOR_SPEC.md` open issue table from the file itself before any target patch.
-7. Review the Wave 1 physio source consumption target patches in `PLAN_GENERATOR_SPEC.md`, `APP_IMPLEMENTATION_BRIDGE.md`, and `ATHLETE_PROFILE_SPEC.md`; do not close related issues before source acceptance and target recount approval.
-8. Obtain actual D9 evaluator runtime output before closing RVE or Plan Generator safety-gate binding issues.
-9. Review `specs/reconstruct/DAILY_BRIEF_AND_INBOX_SIGNAL_SPEC.md` as a productization draft; do not treat it as canonical, runtime evidence, or downstream issue closure.
-10. Review `specs/reconstruct/ANALYSIS_AND_VISUALIZATION_DATA_CONTRACT.md` as a productization draft; do not treat it as metric formula authority, canonical, runtime evidence, or downstream issue closure.
-11. Review `specs/reconstruct/PLAN_OUTPUT_RATIONALE_PRIVACY_SPEC.md` as a productization draft; do not treat it as Plan Generator issue closure, canonical, runtime evidence, or downstream issue closure.
-12. Review `specs/reconstruct/MICROCYCLE_AND_CALENDAR_MAPPING_SPEC.md` as a productization draft; do not treat it as Plan Generator issue closure, canonical, runtime evidence, D-rule redefinition, or downstream issue closure.
-13. Begin target patches, App Bridge/API schema contracts, and runtime evidence only after preserving the safety core chain.
+3. Use `SPEC_REVIEW_PACKET.md` before external review; assign a specific reviewer lens rather than asking for generic feedback.
+4. Use `SPEC_TARGET_PATCH_READINESS.md` before target patches; it records readiness gates and patch waves.
+5. Review `specs/reconstruct/RULE_VALIDATION_ENGINE_CONTRACT.md` as a reconstructed draft; do not treat it as an original or accepted contract yet.
+6. Review `specs/reconstruct/PLAN_SAFETY_GATE_SPEC.md` as a reconstructed draft; do not treat it as an original or accepted contract yet.
+7. Review `specs/reconstruct/DAILY_LOG_AND_CHECKIN_SPEC.md` as a reconstructed draft; do not treat it as an original or accepted contract yet.
+8. Recheck `PLAN_GENERATOR_SPEC.md` open issue table from the file itself before any target patch.
+9. Review the Wave 1 physio source consumption target patches in `PLAN_GENERATOR_SPEC.md`, `APP_IMPLEMENTATION_BRIDGE.md`, and `ATHLETE_PROFILE_SPEC.md`; do not close related issues before source acceptance and target recount approval.
+10. Obtain actual D9 evaluator runtime output before closing RVE or Plan Generator safety-gate binding issues.
+11. Review `specs/reconstruct/DAILY_BRIEF_AND_INBOX_SIGNAL_SPEC.md` as a productization draft; do not treat it as canonical, runtime evidence, or downstream issue closure.
+12. Review `specs/reconstruct/ANALYSIS_AND_VISUALIZATION_DATA_CONTRACT.md` as a productization draft; do not treat it as metric formula authority, canonical, runtime evidence, or downstream issue closure.
+13. Review `specs/reconstruct/PLAN_OUTPUT_RATIONALE_PRIVACY_SPEC.md` as a productization draft; do not treat it as Plan Generator issue closure, canonical, runtime evidence, or downstream issue closure.
+14. Review `specs/reconstruct/MICROCYCLE_AND_CALENDAR_MAPPING_SPEC.md` as a productization draft; do not treat it as Plan Generator issue closure, canonical, runtime evidence, D-rule redefinition, or downstream issue closure.
+15. Begin target patches, App Bridge/API schema contracts, and runtime evidence only after preserving the safety core chain.
 
 ---
 
@@ -196,6 +200,8 @@ Important starting points:
 - `SPEC_WORK_STATUS.md`
 - `SPEC_DOCUMENTATION_REPORT.md`
 - `SPEC_TARGET_PATCH_MATRIX.md`
+- `SPEC_REVIEW_PACKET.md`
+- `SPEC_TARGET_PATCH_READINESS.md`
 - `SPEC_WAVE1_PHYSIO_PATCH_REPORT.md`
 - `SPEC_FILE_TRUTH_GUARD.md`
 - `SPEC_LEGACY_ALIGNMENT_AND_DAILY_LOG_PLAN.md`

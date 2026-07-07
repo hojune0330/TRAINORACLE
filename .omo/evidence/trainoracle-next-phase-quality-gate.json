@@ -1,0 +1,135 @@
+{
+    "codeReview":  {
+                       "by":  "lazycodex-gate-reviewer",
+                       "recommendation":  "APPROVE",
+                       "codeQualityStatus":  "CLEAR",
+                       "reportPath":  ".omo/evidence/trainoracle-next-phase-gate-review.md",
+                       "evidence":  "Gate Reviewer the 7th returned APPROVE after HANDOFF links, cleanup receipts, final review coverage, and plan checklist fixes.",
+                       "blockers":  [
+
+                                    ]
+                   },
+    "manualQa":  {
+                     "by":  "Codex root CLI auxiliary surface",
+                     "status":  "passed",
+                     "evidence":  "C001/C002/C003 CLI evidence artifacts passed and include cleanup receipts.",
+                     "surfaceEvidence":  [
+                                             {
+                                                 "id":  "surface-c001",
+                                                 "criterionRef":  "C001",
+                                                 "surface":  "cli",
+                                                 "invocation":  "PowerShell Test-Path/Get-Item/Select-String over plan, SPEC_REVIEW_PACKET.md, SPEC_TARGET_PATCH_READINESS.md",
+                                                 "verdict":  "passed",
+                                                 "artifactRefs":  [
+                                                                      "artifact-c001"
+                                                                  ]
+                                             },
+                                             {
+                                                 "id":  "surface-c002",
+                                                 "criterionRef":  "C002",
+                                                 "surface":  "cli",
+                                                 "invocation":  "PowerShell Select-String forbidden-claim and guardrail scan",
+                                                 "verdict":  "passed",
+                                                 "artifactRefs":  [
+                                                                      "artifact-c002"
+                                                                  ]
+                                             },
+                                             {
+                                                 "id":  "surface-c003",
+                                                 "criterionRef":  "C003",
+                                                 "surface":  "cli",
+                                                 "invocation":  "PowerShell link/final-marker/handoff regression scan",
+                                                 "verdict":  "passed",
+                                                 "artifactRefs":  [
+                                                                      "artifact-c003"
+                                                                  ]
+                                             }
+                                         ],
+                     "adversarialCases":  [
+                                              {
+                                                  "id":  "adv-stale-state",
+                                                  "criterionRef":  "C003",
+                                                  "scenario":  "stale ULW tmp file existed after parallel record failure",
+                                                  "expectedBehavior":  "tmp artifact removed and cleanup receipt updated",
+                                                  "verdict":  "passed",
+                                                  "artifactRefs":  [
+                                                                       "artifact-final"
+                                                                   ]
+                                              },
+                                              {
+                                                  "id":  "adv-misleading-success-output",
+                                                  "criterionRef":  "C002",
+                                                  "scenario":  "guardrail regex over-broadly flagged a negative D9_CLEARED sentence",
+                                                  "expectedBehavior":  "test corrected to reject only positive unsupported clearance claims",
+                                                  "verdict":  "passed",
+                                                  "artifactRefs":  [
+                                                                       "artifact-c002"
+                                                                   ]
+                                              }
+                                          ],
+                     "artifactRefs":  [
+                                          {
+                                              "id":  "artifact-red",
+                                              "kind":  "cli-transcript",
+                                              "description":  "RED baseline for missing docs/stale placeholders",
+                                              "path":  ".omo/evidence/trainoracle-next-phase-red.txt"
+                                          },
+                                          {
+                                              "id":  "artifact-c001",
+                                              "kind":  "cli-transcript",
+                                              "description":  "Deliverable existence and content check",
+                                              "path":  ".omo/evidence/trainoracle-next-phase-c001-green.txt"
+                                          },
+                                          {
+                                              "id":  "artifact-c002",
+                                              "kind":  "cli-transcript",
+                                              "description":  "Guardrail forbidden-claim check",
+                                              "path":  ".omo/evidence/trainoracle-next-phase-c002-guardrails.txt"
+                                          },
+                                          {
+                                              "id":  "artifact-c003",
+                                              "kind":  "cli-transcript",
+                                              "description":  "Handoff regression check",
+                                              "path":  ".omo/evidence/trainoracle-next-phase-c003-regression.txt"
+                                          },
+                                          {
+                                              "id":  "artifact-final",
+                                              "kind":  "cli-transcript",
+                                              "description":  "Final self-review and cleanup check",
+                                              "path":  ".omo/evidence/trainoracle-next-phase-final-review.txt"
+                                          }
+                                      ]
+                 },
+    "gateReview":  {
+                       "by":  "lazycodex-gate-reviewer",
+                       "recommendation":  "APPROVE",
+                       "reportPath":  ".omo/evidence/trainoracle-next-phase-gate-review.md",
+                       "evidence":  "Gate Reviewer the 7th returned APPROVE.",
+                       "blockers":  [
+
+                                    ]
+                   },
+    "iteration":  {
+                      "fullRerun":  true,
+                      "status":  "passed",
+                      "rerunCommands":  [
+                                            "PowerShell C001/C002/C003 evidence scripts rerun after cleanup",
+                                            "git diff --check",
+                                            "lazycodex-gate-reviewer final pass"
+                                        ],
+                      "evidence":  ".omo/evidence/trainoracle-next-phase-final-review.txt and Gate Reviewer the 7th APPROVE"
+                  },
+    "criteriaCoverage":  {
+                             "totalCriteria":  3,
+                             "passCount":  3,
+                             "originalIntent":  "Plan TrainOracle SPEC next phase, validate current order, review points, reviewer usage, GitHub-only limits, and execution sequence.",
+                             "desiredOutcome":  "Review-first plan plus reviewer packet, target patch readiness guide, handoff links, and guardrail evidence.",
+                             "userOutcomeReview":  "Artifacts explain that next phase is review/acceptance/readiness before target patches and runtime evidence; no issue closure or runtime claims.",
+                             "adversarialClassesCovered":  [
+                                                               "stale_state",
+                                                               "misleading_success_output",
+                                                               "dirty_worktree",
+                                                               "scope_fidelity"
+                                                           ]
+                         }
+}

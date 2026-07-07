@@ -1,0 +1,20 @@
+﻿# C003 adjacent handoff regression check
+timestamp: 2026-07-07T16:08:02.3279736+09:00
+note: rerun after cleanup removed stale ULW tmp file; HANDOFF.md is included in the handoff surface.
+PASS README.md references SPEC_REVIEW_PACKET.md at line 15
+PASS README.md references SPEC_TARGET_PATCH_READINESS.md at line 16
+PASS HANDOFF.md references SPEC_REVIEW_PACKET.md at line 16
+PASS HANDOFF.md references SPEC_TARGET_PATCH_READINESS.md at line 17
+PASS SPEC_WORK_STATUS.md references SPEC_REVIEW_PACKET.md at line 15
+PASS SPEC_WORK_STATUS.md references SPEC_TARGET_PATCH_READINESS.md at line 16
+PASS TRAINORACLE_SPEC_INDEX.md references SPEC_REVIEW_PACKET.md at line 49
+PASS TRAINORACLE_SPEC_INDEX.md references SPEC_TARGET_PATCH_READINESS.md at line 50
+PASS SPEC_DOCUMENTATION_REPORT.md references SPEC_REVIEW_PACKET.md at line 241
+PASS SPEC_DOCUMENTATION_REPORT.md references SPEC_TARGET_PATCH_READINESS.md at line 257
+PASS final marker is last line: SPEC_WORK_STATUS.md
+PASS final marker is last line: TRAINORACLE_SPEC_INDEX.md
+PASS final marker is last line: SPEC_DOCUMENTATION_REPORT.md
+PASS final marker is last line: SPEC_TARGET_PATCH_MATRIX.md
+PASS final marker is last line: SPEC_REVIEW_PACKET.md
+PASS final marker is last line: SPEC_TARGET_PATCH_READINESS.md
+cleanup: removed stale ULW goals.json tmp file; verified no *.tmp remains; no processes spawned

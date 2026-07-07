@@ -1,0 +1,15 @@
+﻿# C001 review-first deliverables check
+timestamp: 2026-07-07T16:08:02.1567910+09:00
+note: rerun after cleanup removed stale ULW tmp file.
+.omo/plans/trainoracle-next-spec-review-and-patch-plan.md bytes: 11525
+SPEC_REVIEW_PACKET.md bytes: 7754
+SPEC_TARGET_PATCH_READINESS.md bytes: 7687
+PASS reviewer lenses: 106:## 6. Reviewer Lenses
+PASS GitHub-only limits: 81:## 5. GitHub-Only Review: What It Can And Cannot Prove
+PASS known non-claims: 64:## 4. Known Non-Claims
+PASS review output template: 181:## 7. Review Output Template
+PASS target patch waves: 65:## 4. Recommended Target Patch Waves
+PASS readiness gates: 48:## 3. Readiness Gates
+PASS closure gate wording: 83:Closure allowed now:
+PASS plan non-goals: 9:**What it will NOT do:** It will not close any open issue, promote any draft to canonical, claim D9 runtime evidence, or redefine D9 semantics.
+cleanup: removed stale ULW goals.json tmp file; verified no *.tmp remains; no processes spawned

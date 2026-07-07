@@ -179,6 +179,20 @@ Rules:
 - Actual terminal or CI output is required.
 - Advisory must map to `CLEARED`, preserve non-sensitive advisory reason codes, and not block.
 
+### Wave 3.5 - Review And Target Patch Readiness
+
+Documents:
+
+- `SPEC_REVIEW_PACKET.md`
+- `SPEC_TARGET_PATCH_READINESS.md`
+
+Rules:
+
+- Use the review packet to give external reviewers a read order, lens, known non-claims, and exact questions.
+- Use the readiness document before editing target SPEC files.
+- Do not treat either document as source acceptance, canonical promotion, runtime evidence, or issue closure.
+- Do not close downstream issues from reviewer comments alone; target files must still be opened, patched, recounted, and verified.
+
 ---
 
 ## 6. Closure Blockers Still Active
@@ -205,6 +219,6 @@ implementation_missing:
 
 ## 7. One-Line Summary
 
-The next safe work is not issue closure. Wave 1 Physio Source Trust target patches and Wave 2 Daily Log target patches now exist, so the next work is review/acceptance, target-file recount approval, productization draft selection, and runtime evidence before any safety-chain issue closure.
+The next safe work is not issue closure. Wave 1 Physio Source Trust target patches, Wave 2 Daily Log target patches, and Wave 3 productization drafts now exist, so the next work is Review Round 1, productization draft review/acceptance, target-patch readiness, target-file recount approval, and runtime evidence preparation before any safety-chain issue closure.
 
 [DRAFT_COMPLETE]
