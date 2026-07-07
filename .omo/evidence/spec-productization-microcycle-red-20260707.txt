@@ -1,0 +1,129 @@
+﻿RED EVIDENCE - 2026-07-07
+
+Git Bash MCP note:
+- git_bash transport remains closed, so PowerShell fallback was used for this work.
+
+Exact target filename search before edits:
+specs\reconstruct\ANALYSIS_AND_VISUALIZATION_DATA_CONTRACT.md
+specs\reconstruct\PLAN_OUTPUT_RATIONALE_PRIVACY_SPEC.md
+
+Future-spec and source references:
+SPEC_WORK_STATUS.md:24:- keep the `RULE_SPEC_D1_D9` safety semantics stable
+SPEC_WORK_STATUS.md:50:- It defines source-backed visualization data for Analysis, Dashboard, Session Detail, Calendar, coach review, Daily Brief, and AI Inbox surfaces.
+SPEC_WORK_STATUS.md:56:- Remaining productization draft: `MICROCYCLE_AND_CALENDAR_MAPPING_SPEC.md`.
+SPEC_WORK_STATUS.md:73:- [`specs/active/RULE_SPEC_D1_D9.md`](./specs/active/RULE_SPEC_D1_D9.md)
+SPEC_WORK_STATUS.md:140:- Do not redefine `RULE_SPEC_D1_D9.D-*` semantics outside `RULE_SPEC_D1_D9.md`.
+SPEC_WORK_STATUS.md:141:- Keep `RULE_SPEC_D1_D9.D-*`, `LEGACY_PHASE_D.D-*`, and `CYCLE_DAY.D-*` separate.
+README.md:20:| `RULE_SPEC_D1_D9.md` | D1-D9 안전 규칙과 D9 hard-stop 의미 | 훈련 계획을 막아야 하는 안전 판단 기준 |
+README.md:31:| `ANALYSIS_AND_VISUALIZATION_DATA_CONTRACT.md` | 구조화된 일지/세션/분류/안전/physio/계획 신호 | Dashboard, Analysis, Session Detail, Calendar가 읽는 근거 기반 시각화 데이터 |
+README.md:55:코치 장호준의 30년 경험에서 추출한 **9.5일 사이클 방법론** + **9 Rules**가 시스템의 심장. 모든 추천은 verdict + confidence + citation을 동반합니다.
+README.md:97:    ├── 04_Calendar.html               [v1 - Opus-style, 재작업 필요]
+README.md:126:  - T1 Strong: Calendar 셀, Session card 컬러바, hero
+design-system/SCREENS.md:20:| 04 | Calendar | `04_Calendar.html` | ⚠️ v1 (Opus, 재작업 필요) | P2 |
+design-system/SCREENS.md:58:**P2 (Phase 3-4 — 3-4주차)**: 차별화 기능 (Calendar 9.5-Cycle, Analysis, Inbox).
+design-system/SCREENS.md:71:3. Three pillars (Why-first / Honest uncertainty / 9.5-day cycle)
+design-system/SCREENS.md:72:4. Feature 3개 (Calendar / AI Chat / AI Inbox) — placeholder 자리에 실제 스크린샷 삽입 예정
+design-system/SCREENS.md:129:3. 9.5 Cycle Progress (10-slot rail mini)
+design-system/SCREENS.md:147:## 4. Calendar (`04_Calendar.html`) — P2 ⚠️ 재작업
+design-system/SCREENS.md:150:- 3가지 view 전환 — 9.5-Cycle이 핵심 차별화
+design-system/SCREENS.md:160:2. **9.5-Cycle** ★ — 10-slot rail, MAIN 정중앙 (D-5)
+design-system/SCREENS.md:164:- 기본 view: 9.5-Cycle (제품 정체성)
+design-system/SCREENS.md:392:- 대회 일정 → Calendar에 마커 표시
+design-system/SCREENS.md:404:2. §2 The 9.5-day cycle — 왜 9.5일인가 (figure 포함)
+design-system/SCREENS.md:498:| Calendar | Cycle, Session[] |
+design-system/SCREENS.md:539:- Calendar (9.5-Cycle 뷰 강조)
+HANDOFF.md:87:- [ ] **Calendar** — 3-view (단, v2 재작업 필요)
+HANDOFF.md:118:- ⚠️ Calendar
+HANDOFF.md:120:→ Dashboard와 Calendar는 v1 디자인을 참고해서 **정보 구조만 가져오고**, 시각 스타일은 다른 v2 화면(특히 Session Detail, Analysis)을 참고해 재작업하세요.
+HANDOFF.md:182:4. **9.5-day cycle** — Calendar의 **9.5-Cycle 뷰**가 핵심 차별화. 일반 Week 뷰만 있으면 가치 없음.
+specs/reconstruct/PLAN_OUTPUT_RATIONALE_PRIVACY_SPEC.md:41:- redefine `RULE_SPEC_D1_D9.D-*` semantics
+design-system/VISUALIZATION_SYSTEM.md:86:| Calendar 셀 (Week / 9.5-Cycle view) | 셀 배경 또는 좌측 strip 4–6px | 큼 |
+design-system/VISUALIZATION_SYSTEM.md:126:| Today highlight (Calendar 오늘 셀) | 셀 배경 wash |
+design-system/VISUALIZATION_SYSTEM.md:147:| **색** | Glance (1초 인지) | `#9E5A14` (VO2 strong) |
+design-system/VISUALIZATION_SYSTEM.md:158:| **Calendar 셀** | ✓ | ✓ | 점 위치 (AM/PM) |
+design-system/VISUALIZATION_SYSTEM.md:188:| C-7 | Cycle rhythm rail (9.5-day) | T1 | Calendar, Dashboard | Cycle slot |
+design-system/VISUALIZATION_SYSTEM.md:369:### C-7. Cycle rhythm rail (9.5-day)
+design-system/VISUALIZATION_SYSTEM.md:371:**무엇을**: 9.5일 사이클의 10-slot rail. 각 slot이 어느 세션 타입인지 색으로.
+design-system/VISUALIZATION_SYSTEM.md:374:- Calendar 9.5-Cycle view (메인)
+design-system/VISUALIZATION_SYSTEM.md:388:**Tier**: T1 (Strong) — 9.5-Cycle은 제품 정체성, 색 강도 최대.
+design-system/VISUALIZATION_SYSTEM.md:752:| Calendar 셀 / Session card | 좌측 strip을 **2색 세로 split** (예: 60% LT 색 + 40% V2 색) |
+specs/reconstruct/ANALYSIS_AND_VISUALIZATION_DATA_CONTRACT.md:28:`ANALYSIS_AND_VISUALIZATION_DATA_CONTRACT.md` defines how TrainOracle turns accepted structured facts into data that can be shown in Analysis, Dashboard, Session Detail, Calendar, and coach review surfaces.
+specs/reconstruct/ANALYSIS_AND_VISUALIZATION_DATA_CONTRACT.md:40:- define new `RULE_SPEC_D1_D9.D-*` rule semantics
+specs/reconstruct/ANALYSIS_AND_VISUALIZATION_DATA_CONTRACT.md:59:| `SPEC_LEGACY_ALIGNMENT_AND_DAILY_LOG_PLAN.md` | Productization order and requirement that Analysis, Session Detail, Calendar, and Dashboard visualizations bind to structured data sources |
+specs/reconstruct/ANALYSIS_AND_VISUALIZATION_DATA_CONTRACT.md:69:| `design-system/SCREENS.md` | Dashboard, Calendar, Session Detail, AI Inbox, and Analysis surface references |
+specs/reconstruct/ANALYSIS_AND_VISUALIZATION_DATA_CONTRACT.md:157:| Calendar | Show planned/completed sessions, cycle context, and safe status indicators | Use `CYCLE_DAY` labels only for calendar/cycle meaning; never as D-rule IDs |
+specs/reconstruct/ANALYSIS_AND_VISUALIZATION_DATA_CONTRACT.md:380:    purpose: retrieve panel-specific data for Dashboard, Analysis, Session Detail, Calendar, Coach Review, Daily Brief, or AI Inbox
+specs/reconstruct/ANALYSIS_AND_VISUALIZATION_DATA_CONTRACT.md:589:| `OI-AVD-UI-SURFACE-BINDING-001` | P2 | NO | OPEN | Dashboard, Analysis, Session Detail, Calendar, Daily Brief, and AI Inbox surfaces are design references only. | Patch implementation or UI contracts after this data contract is reviewed. |
+specs/reconstruct/ANALYSIS_AND_VISUALIZATION_DATA_CONTRACT.md:612:| Keeps `CYCLE_DAY` separate from D-rule IDs | PASS |
+specs/reconstruct/DAILY_LOG_AND_CHECKIN_SPEC.md:48:- redefine `RULE_SPEC_D1_D9.D-*` rule semantics
+specs/reconstruct/DAILY_LOG_AND_CHECKIN_SPEC.md:175:    name: RULE_SPEC_D1_D9
+specs/reconstruct/DAILY_LOG_AND_CHECKIN_SPEC.md:176:    example: RULE_SPEC_D1_D9.D-9
+specs/reconstruct/DAILY_LOG_AND_CHECKIN_SPEC.md:180:    name: LEGACY_PHASE_D
+specs/reconstruct/DAILY_LOG_AND_CHECKIN_SPEC.md:181:    example: LEGACY_PHASE_D.D-9
+specs/reconstruct/DAILY_LOG_AND_CHECKIN_SPEC.md:185:    name: CYCLE_DAY
+specs/reconstruct/DAILY_LOG_AND_CHECKIN_SPEC.md:186:    example: CYCLE_DAY.D-5
+specs/reconstruct/DAILY_LOG_AND_CHECKIN_SPEC.md:192:Daily log records may include cycle-day labels only through `CYCLE_DAY.*` fields. They must not use bare `D-*` strings as rule IDs.
+specs/reconstruct/DAILY_LOG_AND_CHECKIN_SPEC.md:475:This document does not define D9 thresholds. Threshold ownership remains with `RULE_SPEC_D1_D9.md` and downstream accepted evaluator contracts.
+SPEC_OVERVIEW_FOR_HOJUNE.md:54:`RULE_SPEC_D1_D9.md`가 D1-D9 규칙의 의미를 잡고 있다. 특히 D9은 훈련 계획을 멈출 수 있는 안전 hard-stop이다.
+SPEC_OVERVIEW_FOR_HOJUNE.md:84:| `RULE_SPEC_D1_D9.md` | TrainOracle의 안전 규칙 책 | D1-D9 규칙 의미의 기준이다. D9 안전 hard-stop을 함부로 바꾸면 안 된다. |
+SPEC_OVERVIEW_FOR_HOJUNE.md:117:| `MICROCYCLE_AND_CALENDAR_MAPPING_SPEC.md` | 9.5-day cycle, 달력, 경기일 기준 표기를 헷갈리지 않게 하기 위해 | Not created yet |
+SPEC_OVERVIEW_FOR_HOJUNE.md:127:5. Calendar 쪽 제품화 스펙 작성.
+SPEC_OVERVIEW_FOR_HOJUNE.md:165:- `MICROCYCLE_AND_CALENDAR_MAPPING_SPEC.md`
+SPEC_OVERVIEW_FOR_HOJUNE.md:173:- Analysis, Dashboard, Session Detail, Calendar, coach review, Daily Brief, and AI Inbox can now point to one draft contract for visualization data.
+SPEC_OVERVIEW_FOR_HOJUNE.md:182:- `MICROCYCLE_AND_CALENDAR_MAPPING_SPEC.md`
+SPEC_OVERVIEW_FOR_HOJUNE.md:198:- `MICROCYCLE_AND_CALENDAR_MAPPING_SPEC.md`
+SPEC_LEGACY_ALIGNMENT_AND_DAILY_LOG_PLAN.md:44:| `RULE_SPEC_D1_D9.md` | `specs/active/RULE_SPEC_D1_D9.md` | Current rule semantics and safety hard-stop baseline |
+SPEC_LEGACY_ALIGNMENT_AND_DAILY_LOG_PLAN.md:90:| `RULE_SPEC_D1_D9` | `RULE_SPEC_D1_D9.D-9` | Current SPEC-layer validation rule |
+SPEC_LEGACY_ALIGNMENT_AND_DAILY_LOG_PLAN.md:91:| `LEGACY_PHASE_D` | `LEGACY_PHASE_D.D-9` | Old workflow Phase validation item |
+SPEC_LEGACY_ALIGNMENT_AND_DAILY_LOG_PLAN.md:92:| `CYCLE_DAY` | `CYCLE_DAY.D-5` | Cycle or race-day label, not a rule id |
+SPEC_LEGACY_ALIGNMENT_AND_DAILY_LOG_PLAN.md:94:`02_AI_STRATEGY.md`, `06_VALIDATION_AND_SAFEGUARDS.md`, `11_API_AND_ENGINE_CONTRACTS.md`, and `12_SCREEN_GUIDE.md` contain legacy workflow references. They are not allowed to redefine `RULE_SPEC_D1_D9.D-*` semantics.
+SPEC_LEGACY_ALIGNMENT_AND_DAILY_LOG_PLAN.md:102:| `RULE_SPEC_D1_D9.md` | `06_VALIDATION_AND_SAFEGUARDS.md`, `SOURCE_MAP.md`, `_SOURCE_TO_DOC_MAP_v3.0.md` | Current SPEC semantics win. Legacy validation text remains operational background only. | RVE and Safety Gate contracts now exist only as reconstructed drafts; neither is accepted or runtime-proven. |
+SPEC_LEGACY_ALIGNMENT_AND_DAILY_LOG_PLAN.md:108:| `PHYSIO_SOURCE_TRUST_SPEC.md` | `GLOSSARY.md` metrics, design primary-device safeguards, legacy data-import references | Good physiological data cannot clear `RULE_SPEC_D1_D9.D-9` risk. Bad or missing data can route to review or block generation when required. | Consumer patches in Plan Generator, App Bridge, and Athlete Profile now exist; source acceptance and target-file recount approval are still required before closure. |
+SPEC_LEGACY_ALIGNMENT_AND_DAILY_LOG_PLAN.md:109:| `RVE_RULE_EVALUATOR_BINDING_SPEC.md` | `RULE_SPEC_D1_D9.md`, D9 test package, App Bridge audit policy | Defines D9 evaluator signal binding, but does not itself provide final runtime evidence. | RVE and Safety Gate reconstructed drafts now exist; accepted contract status and runtime evidence are still needed. |
+SPEC_LEGACY_ALIGNMENT_AND_DAILY_LOG_PLAN.md:138:- `RULE_SPEC_D1_D9.md` starts with a source comment before the H1 and does not currently end with `[DRAFT_COMPLETE]`.
+SPEC_LEGACY_ALIGNMENT_AND_DAILY_LOG_PLAN.md:165:13. Session Detail, Analysis, Calendar, and AI Inbox show outcomes with verdict, confidence, citation, and visible uncertainty.
+SPEC_LEGACY_ALIGNMENT_AND_DAILY_LOG_PLAN.md:213:6. `MICROCYCLE_AND_CALENDAR_MAPPING_SPEC.md`
+SPEC_LEGACY_ALIGNMENT_AND_DAILY_LOG_PLAN.md:214:   - Purpose: connect `CYCLE_DAY` labels, 9.5-cycle display, Calendar, Dashboard, and Plan Generator output.
+SPEC_LEGACY_ALIGNMENT_AND_DAILY_LOG_PLAN.md:215:   - Must keep `CYCLE_DAY.D-*` separate from rule namespaces.
+SPEC_LEGACY_ALIGNMENT_AND_DAILY_LOG_PLAN.md:219:   - Purpose: bind Analysis, Session Detail, Calendar, and Dashboard visualizations to structured data sources.
+SPEC_LEGACY_ALIGNMENT_AND_DAILY_LOG_PLAN.md:235:9. Review `ANALYSIS_AND_VISUALIZATION_DATA_CONTRACT.md` before implementing Analysis, Dashboard, Session Detail, Calendar, coach review, Daily Brief, or AI Inbox visualization data.
+SPEC_LEGACY_ALIGNMENT_AND_DAILY_LOG_PLAN.md:248:- No rule semantic redefinition outside `RULE_SPEC_D1_D9.md`.
+SPEC_LEGACY_ALIGNMENT_AND_DAILY_LOG_PLAN.md:252:- Good physiological data cannot clear `RULE_SPEC_D1_D9.D-9` risk.
+SPEC_LEGACY_ALIGNMENT_AND_DAILY_LOG_PLAN.md:253:- Template selection cannot clear `RULE_SPEC_D1_D9.D-9` risk.
+SPEC_DOCUMENTATION_REPORT.md:37:| `RULE_SPEC_D1_D9.md` | Active SPEC | `specs/active/RULE_SPEC_D1_D9.md` | READY_FOR_UPLOAD / canonical blocked | D1-D9 rule 의미와 D9 safety hard-stop 기준선 | 규칙 의미는 여기서만 바꾼다. |
+SPEC_DOCUMENTATION_REPORT.md:72:| `GLOSSARY.md` | Legacy reference | `specs/legacy-reference/GLOSSARY.md` | 용어와 초기 개념 | `CYCLE_DAY.D-*`와 rule namespace를 구분한다. |
+SPEC_DOCUMENTATION_REPORT.md:73:| `02_AI_STRATEGY.md` | Legacy reference | `specs/legacy-reference/02_AI_STRATEGY.md` | 옛 Phase A-F AI workflow | `LEGACY_PHASE_D`와 `RULE_SPEC_D1_D9`를 동일시하지 않는다. |
+SPEC_DOCUMENTATION_REPORT.md:110:| `ANALYSIS_AND_VISUALIZATION_DATA_CONTRACT.md` | Productization SPEC draft | Analysis, Session Detail, Dashboard, Calendar 시각화가 어떤 구조 데이터에서 나오는지 정의 | Draft created; App Bridge binding, metric formula authority, runtime evidence는 아직 없음 |
+SPEC_DOCUMENTATION_REPORT.md:112:| `MICROCYCLE_AND_CALENDAR_MAPPING_SPEC.md` | Future SPEC | 9.5-day cycle, calendar, `CYCLE_DAY` 라벨을 화면/계획과 연결 | Not created yet; namespace policy 유지 필요 |
+SPEC_DOCUMENTATION_REPORT.md:166:- `MICROCYCLE_AND_CALENDAR_MAPPING_SPEC.md`
+SPEC_DOCUMENTATION_REPORT.md:185:- Prevent Analysis, Dashboard, Session Detail, Calendar, coach review, Daily Brief, or AI Inbox visualizations from creating plan options or clearing D9/Safety Gate blocks.
+SPEC_DOCUMENTATION_REPORT.md:190:- `MICROCYCLE_AND_CALENDAR_MAPPING_SPEC.md`
+SPEC_DOCUMENTATION_REPORT.md:213:- `MICROCYCLE_AND_CALENDAR_MAPPING_SPEC.md`
+TRAINORACLE_SPEC_INDEX.md:81:| `RULE_SPEC_D1_D9.md` | `specs/active/RULE_SPEC_D1_D9.md` | D1-D9 rule semantic baseline |
+TRAINORACLE_SPEC_INDEX.md:147:| `RULE_SPEC_D1_D9` | `RULE_SPEC_D1_D9.D-9` | Current SPEC-layer validation rule |
+TRAINORACLE_SPEC_INDEX.md:148:| `LEGACY_PHASE_D` | `LEGACY_PHASE_D.D-9` | Old workflow Phase D validation item |
+TRAINORACLE_SPEC_INDEX.md:149:| `CYCLE_DAY` | `CYCLE_DAY.D-5` | Cycle or race-day label, not a rule id |
+TRAINORACLE_SPEC_INDEX.md:157:- No D-rule semantic redefinition outside `RULE_SPEC_D1_D9.md`.
+SPEC_TARGET_PATCH_MATRIX.md:141:- `MICROCYCLE_AND_CALENDAR_MAPPING_SPEC.md`
+SPEC_TARGET_PATCH_MATRIX.md:155:- It defines source-backed visualization data for Analysis, Dashboard, Session Detail, Calendar, coach review, Daily Brief, and AI Inbox surfaces.
+SPEC_TARGET_PATCH_MATRIX.md:161:- Remaining productization draft is Microcycle/Calendar Mapping.
+specs/active/PLAN_GENERATOR_SPEC.md:27:  - file: RULE_SPEC_D1_D9.md
+specs/active/PLAN_GENERATOR_SPEC.md:67:- validation request handoff to `RULE_SPEC_D1_D9`
+specs/active/PLAN_GENERATOR_SPEC.md:73:- `RULE_SPEC_D1_D9` rule semantics
+specs/active/PLAN_GENERATOR_SPEC.md:92:| `RULE_SPEC_D1_D9.md` | 1.4 | Rule safety baseline and validation target | READ_ONLY |
+specs/active/PLAN_GENERATOR_SPEC.md:125:| Rule safety hard-stop policy | `RULE_SPEC_D1_D9.md v1.4` | Active `RULE_SPEC_D1_D9.D-9` state must block plan generation | RESOLVED |
+specs/active/PLAN_GENERATOR_SPEC.md:126:| Rule safety hard-stop runtime binding | `RULE_SPEC_D1_D9.md v1.4` / `APP_IMPLEMENTATION_BRIDGE.md v1.1` | Runtime detection and binding tracked by `OI-PG-RULE-SAFETY-GATE-BINDING-001` | PARTIAL_OPEN |
+specs/active/PLAN_GENERATOR_SPEC.md:277:- `RULE_SPEC_D1_D9` verdicts
+specs/active/PLAN_GENERATOR_SPEC.md:346:      rule_ref: RULE_SPEC_D1_D9.D-9
+specs/active/PLAN_GENERATOR_SPEC.md:596:      - plannedDate
+specs/active/PLAN_GENERATOR_SPEC.md:597:      - sessionSlot
+specs/active/PLAN_GENERATOR_SPEC.md:779:  plannedDate: ISODate;
+specs/active/PLAN_GENERATOR_SPEC.md:780:  sessionSlot: SessionSlot;
+specs/active/PLAN_GENERATOR_SPEC.md:841:- A validation request may then be submitted to `RULE_SPEC_D1_D9`.
+specs/active/PLAN_GENERATOR_SPEC.md:891:| `OI-PG-RULE-SAFETY-GATE-BINDING-001` | P1 | YES | OPEN | Runtime binding between active `RULE_SPEC_D1_D9.D-9` state and generation block must be finalized. | Define exact bridge query and active-state interpretation. |
+specs/active/PLAN_GENERATOR_SPEC.md:896:| `OI-PG-MICROCYCLE-CALENDAR-MAPPING-001` | P2 | NO | OPEN | 9.5-day reference cycle to 7-day calendar output needs final mapping. | Define mapping and display policy. |
+specs/active/PLAN_GENERATOR_SPEC.md:1052:    - OI-PG-MICROCYCLE-CALENDAR-MAPPING-001
+
+Baseline git status:
+## main...origin/main
+?? .omo/evidence/spec-productization-microcycle-red-20260707.txt

@@ -1,0 +1,155 @@
+﻿GREEN EVIDENCE - 2026-07-07
+
+Created target file:
+
+
+FullName      : D:\admin\Documents\트레인 오라클 진도\specs\reconstruct\MICROCYCLE_AND_CALENDAR_MAPPING_SPEC.md
+Length        : 19943
+LastWriteTime : 2026-07-07 오후 2:36:03
+
+
+
+
+
+Metadata and open issues:
+# MICROCYCLE_AND_CALENDAR_MAPPING_SPEC.md
+
+```yaml
+doc_id: trainoracle-spec-017-microcycle-and-calendar-mapping
+spec_id: MICROCYCLE_AND_CALENDAR_MAPPING_SPEC
+title: TrainOracle Microcycle And Calendar Mapping Spec
+version: "0.1"
+round: RT1_PRODUCTIZATION_DRAFT
+status: DRAFT_FOR_REVIEW
+owner: COACH_HOJUNE
+source_state:
+  local_original_found: false
+  new_productization_draft: true
+  restored_original: false
+  previous_approved_version_restored: false
+open_issues_total: 7
+canonical_blocking_count: 4
+executed_tests_total: 0
+executed_tests_passed: 0
+self_check_is_runtime_evidence: false
+canonical_promotion_allowed: false
+```
+
+---
+
+## 1. Purpose
+
+`MICROCYCLE_AND_CALENDAR_MAPPING_SPEC.md` defines how TrainOracle maps the 9.5-day training cycle, `CYCLE_DAY.*` labels, planned sessions, race anchors, and Calendar/Dashboard displays without confusing cycle labels with safety rule identifiers.
+
+The goal is to let Plan Generator, Calendar, Dashboard, Session Detail, Analysis, Daily Brief, and AI Inbox refer to the same date/cycle context while preserving namespace separation, source refs, uncertainty, and safety-gate boundaries.
+
+This document is a productization mapping contract. It is not a Plan Generator, not a training philosophy proof, not a calendar UI implementation, not a D9 evaluator, not runtime evidence, and not canonical promotion.
+
+---
+
+## 2. Non-Purpose
+
+This document does not:
+
+- define or justify the 9.5-day coaching method itself
+- create, rank, select, or modify plan options
+- redefine `RULE_SPEC_D1_D9.D-*` rule semantics
+- treat `LEGACY_PHASE_D.D-*` workflow items as current rule IDs
+- use bare `D-*` labels in new contracts
+- clear `D9_ACTIVE`, `D9_UNKNOWN`, Safety Gate blocks, or human-review requirements
+- treat `D9_CLEARED` as medical clearance
+- authorize plan generation when Safety Gate blocks generation
+- store raw athlete free text, raw memo text, raw symptom clauses, injury narratives, medical notes, rehab notes, evidence clauses, or guardian private notes
+- close `OI-PG-MICROCYCLE-CALENDAR-MAPPING-001` or any downstream issue
+
+---
+
+## 3. Source Basis
+
+This draft was created only after exact local filename search found no current `MICROCYCLE_AND_CALENDAR_MAPPING_SPEC.md`.
+
+Source references used for this draft:
+
+| Source | Treatment |
+|---|---|
+| `SPEC_LEGACY_ALIGNMENT_AND_DAILY_LOG_PLAN.md` | Productization order and namespace guardrails |
+| `specs/active/PLAN_GENERATOR_SPEC.md` | Owns planned dates, session slots, and `OI-PG-MICROCYCLE-CALENDAR-MAPPING-001` |
+| `specs/reconstruct/DAILY_LOG_AND_CHECKIN_SPEC.md` | Defines `CYCLE_DAY` namespace and forbids bare D labels as rule IDs |
+| `specs/reconstruct/ANALYSIS_AND_VISUALIZATION_DATA_CONTRACT.md` | Requires Calendar and visualization data to preserve source refs and namespace separation |
+| `specs/reconstruct/PLAN_OUTPUT_RATIONALE_PRIVACY_SPEC.md` | Provides rationale privacy boundary for planned-session explanations |
+| `specs/reconstruct/PLAN_SAFETY_GATE_SPEC.md` | Defines pre-generation block/review/allow boundary |
+| `specs/reconstruct/RULE_VALIDATION_ENGINE_CONTRACT.md` | Provides RVE signal and D9 status boundary |
+| `design-system/SCREENS.md` | Calendar 9.5-Cycle product intent and screen priority |
+| `design-system/VISUALIZATION_SYSTEM.md` | Cycle rhythm rail and Calendar visual encoding references |
+| `HANDOFF.md` | Calendar and 9.5-day cycle implementation handoff context |
+
+---
+
+## 4. Namespace Policy
+
+```yaml
+namespace_policy:
+  current_rule_namespace:
+    name: RULE_SPEC_D1_D9
+    example: RULE_SPEC_D1_D9.D-9
+583:| `OI-MCM-PLAN-GENERATOR-BINDING-001` | P1 | YES | OPEN | `PLAN_GENERATOR_SPEC.md` still owns `OI-PG-MICROCYCLE-CALENDAR-MAPPING-001`; this draft has not been patched into the target issue table. | Patch Plan Generator after review, then recount target issues. |
+584:| `OI-MCM-APP-BRIDGE-BINDING-001` | P1 | YES | OPEN | App Bridge does not yet define microcycle/calendar storage, audit, endpoint, permission, or tenant-isolation enforcement. | Patch App Bridge and run implementation/privacy review before production. |
+585:| `OI-MCM-NAMESPACE-ENFORCEMENT-001` | P1 | YES | OPEN | No implementation evidence proves `CYCLE_DAY.*`, `RULE_SPEC_D1_D9.*`, and `LEGACY_PHASE_D.*` cannot be confused. | Add parser/type/API checks after implementation exists. |
+586:| `OI-MCM-RUNTIME-EVIDENCE-001` | P1 | YES | OPEN | No runtime or CI evidence proves date mapping, timezone handling, source refs, or namespace guards. | Add actual terminal or CI logs after implementation exists. |
+587:| `OI-MCM-UI-SURFACE-BINDING-001` | P2 | NO | OPEN | Calendar, Dashboard, Session Detail, and Analysis surfaces are design references only. | Patch UI/screen contracts after this mapping contract is reviewed. |
+588:| `OI-MCM-RACE-ANCHOR-POLICY-001` | P2 | NO | OPEN | Race anchor selection, updates, conflicts, and timezone correction need product review. | Define accepted anchor workflow and human review behavior. |
+589:| `OI-MCM-EDIT-WORKFLOW-001` | P2 | NO | OPEN | Calendar drag/drop or manual edits are not accepted plan modification workflows. | Define App Bridge/Plan Generator write workflow before any edit UI implementation. |
+
+Linked handoff docs:
+SPEC_WORK_STATUS.md:56:- `specs/reconstruct/MICROCYCLE_AND_CALENDAR_MAPPING_SPEC.md` now exists as a new `DRAFT_FOR_REVIEW` productization SPEC.
+SPEC_WORK_STATUS.md:103:- [`specs/reconstruct/MICROCYCLE_AND_CALENDAR_MAPPING_SPEC.md`](./specs/reconstruct/MICROCYCLE_AND_CALENDAR_MAPPING_SPEC.md) (`DRAFT_FOR_REVIEW`; new productization draft)
+SPEC_WORK_STATUS.md:117:| `MICROCYCLE_AND_CALENDAR_MAPPING_SPEC.md` | `specs/reconstruct/MICROCYCLE_AND_CALENDAR_MAPPING_SPEC.md` exists as `DRAFT_FOR_REVIEW`; new productization draft, not Plan Generator issue closure, not D-rule redefinition, not canonical, not runtime evidence |
+SPEC_WORK_STATUS.md:136:11. Review `specs/reconstruct/MICROCYCLE_AND_CALENDAR_MAPPING_SPEC.md`; it is a productization draft, not Plan Generator target issue closure, D-rule redefinition, canonical, or runtime evidence.
+SPEC_WORK_STATUS.md:200:- [`.omo/evidence/spec-productization-microcycle-red-20260707.txt`](./.omo/evidence/spec-productization-microcycle-red-20260707.txt)
+SPEC_WORK_STATUS.md:201:- [`.omo/evidence/spec-productization-microcycle-green-20260707.txt`](./.omo/evidence/spec-productization-microcycle-green-20260707.txt)
+SPEC_WORK_STATUS.md:202:- [`.omo/evidence/spec-productization-microcycle-code-review.md`](./.omo/evidence/spec-productization-microcycle-code-review.md)
+SPEC_WORK_STATUS.md:203:- [`.omo/evidence/spec-productization-microcycle-gate-review.md`](./.omo/evidence/spec-productization-microcycle-gate-review.md)
+SPEC_WORK_STATUS.md:204:- [`.omo/evidence/spec-productization-microcycle-final-qa-20260707.txt`](./.omo/evidence/spec-productization-microcycle-final-qa-20260707.txt)
+TRAINORACLE_SPEC_INDEX.md:138:| `MICROCYCLE_AND_CALENDAR_MAPPING_SPEC.md` | `specs/reconstruct/MICROCYCLE_AND_CALENDAR_MAPPING_SPEC.md` | DRAFT_FOR_REVIEW | New productization draft. Defines namespace-safe 9.5-day cycle, `CYCLE_DAY`, planned-date/session-slot, race-anchor, and Calendar projection mapping. Does not create/select plan options, redefine D-rules, or clear D9/Safety Gate states. |
+TRAINORACLE_SPEC_INDEX.md:185:12. Review `specs/reconstruct/MICROCYCLE_AND_CALENDAR_MAPPING_SPEC.md` as a productization draft; do not treat it as Plan Generator issue closure, canonical, runtime evidence, D-rule redefinition, or downstream issue closure.
+SPEC_TARGET_PATCH_MATRIX.md:60:| `MICROCYCLE_AND_CALENDAR_MAPPING_SPEC.md` | `DRAFT_FOR_REVIEW` | Namespace-safe 9.5-cycle, `CYCLE_DAY`, planned-date/session-slot, and Calendar projection mapping | Plan Generator target closure, App Bridge/UI implementation, runtime proof |
+SPEC_TARGET_PATCH_MATRIX.md:142:- `MICROCYCLE_AND_CALENDAR_MAPPING_SPEC.md` - created as `specs/reconstruct/MICROCYCLE_AND_CALENDAR_MAPPING_SPEC.md`
+SPEC_TARGET_PATCH_MATRIX.md:162:- `MICROCYCLE_AND_CALENDAR_MAPPING_SPEC.md` now exists as a new productization draft.
+SPEC_TARGET_PATCH_MATRIX.md:165:- No productization draft remains uncreated in Wave 3.
+specs/reconstruct/README.md:16:- `MICROCYCLE_AND_CALENDAR_MAPPING_SPEC.md` (`DRAFT_FOR_REVIEW`; new productization draft, not original restored, not canonical, not runtime evidence)
+specs/reconstruct/README.md:98:`MICROCYCLE_AND_CALENDAR_MAPPING_SPEC.md`:
+specs/reconstruct/README.md:100:- Exact search before creation was captured in `.omo/evidence/spec-productization-microcycle-red-20260707.txt`.
+specs/reconstruct/README.md:101:- `specs/reconstruct/MICROCYCLE_AND_CALENDAR_MAPPING_SPEC.md` now exists as `DRAFT_FOR_REVIEW`.
+README.md:33:| `MICROCYCLE_AND_CALENDAR_MAPPING_SPEC.md` | 9.5-day cycle, `CYCLE_DAY`, plannedDate/sessionSlot, Calendar | 사이클/달력 라벨을 규칙 ID와 섞지 않는 날짜 매핑 계약 |
+SPEC_OVERVIEW_FOR_HOJUNE.md:117:| `MICROCYCLE_AND_CALENDAR_MAPPING_SPEC.md` | 9.5-day cycle, 달력, 경기일 기준 표기를 헷갈리지 않게 하기 위해 | Draft created. Plan Generator/App Bridge/UI binding과 runtime evidence가 남아 있음 |
+SPEC_OVERVIEW_FOR_HOJUNE.md:165:- `MICROCYCLE_AND_CALENDAR_MAPPING_SPEC.md`
+SPEC_OVERVIEW_FOR_HOJUNE.md:182:- `MICROCYCLE_AND_CALENDAR_MAPPING_SPEC.md`
+SPEC_OVERVIEW_FOR_HOJUNE.md:198:- `MICROCYCLE_AND_CALENDAR_MAPPING_SPEC.md`
+SPEC_OVERVIEW_FOR_HOJUNE.md:200:## Productization Update - 2026-07-07 C
+SPEC_OVERVIEW_FOR_HOJUNE.md:202:`MICROCYCLE_AND_CALENDAR_MAPPING_SPEC.md` now exists at `specs/reconstruct/MICROCYCLE_AND_CALENDAR_MAPPING_SPEC.md`.
+SPEC_OVERVIEW_FOR_HOJUNE.md:214:- None. Productization drafts now exist, but all remain draft-for-review and not runtime evidence.
+SPEC_DOCUMENTATION_REPORT.md:102:| `MICROCYCLE_AND_CALENDAR_MAPPING_SPEC.md` | 9.5-day cycle과 Calendar 매핑 계약을 만들기 위해 | `CYCLE_DAY.*`와 `RULE_SPEC_D1_D9.*`를 분리하고 plannedDate/sessionSlot을 Calendar projection으로 연결한다. |
+SPEC_DOCUMENTATION_REPORT.md:113:| `MICROCYCLE_AND_CALENDAR_MAPPING_SPEC.md` | Productization SPEC draft | 9.5-day cycle, calendar, `CYCLE_DAY` 라벨을 화면/계획과 연결 | Draft created; Plan Generator/App Bridge/UI target binding과 runtime evidence는 아직 없음 |
+SPEC_DOCUMENTATION_REPORT.md:167:- `MICROCYCLE_AND_CALENDAR_MAPPING_SPEC.md`
+SPEC_DOCUMENTATION_REPORT.md:191:- `MICROCYCLE_AND_CALENDAR_MAPPING_SPEC.md`
+SPEC_DOCUMENTATION_REPORT.md:214:- `MICROCYCLE_AND_CALENDAR_MAPPING_SPEC.md`
+SPEC_DOCUMENTATION_REPORT.md:216:## Productization Draft Addendum - 2026-07-07 C
+SPEC_DOCUMENTATION_REPORT.md:218:`MICROCYCLE_AND_CALENDAR_MAPPING_SPEC.md` now exists at `specs/reconstruct/MICROCYCLE_AND_CALENDAR_MAPPING_SPEC.md`.
+SPEC_DOCUMENTATION_REPORT.md:237:- None. Productization drafts now exist, but all remain draft-for-review and not runtime evidence.
+SPEC_LEGACY_ALIGNMENT_AND_DAILY_LOG_PLAN.md:213:6. `MICROCYCLE_AND_CALENDAR_MAPPING_SPEC.md`
+SPEC_LEGACY_ALIGNMENT_AND_DAILY_LOG_PLAN.md:214:   - Current status: created at `specs/reconstruct/MICROCYCLE_AND_CALENDAR_MAPPING_SPEC.md` as `DRAFT_FOR_REVIEW`.
+SPEC_LEGACY_ALIGNMENT_AND_DAILY_LOG_PLAN.md:238:10. Review `MICROCYCLE_AND_CALENDAR_MAPPING_SPEC.md` before implementing Calendar, Dashboard cycle rail, Session Detail cycle context, Analysis cycle summaries, or plan calendar projection.
+
+Git status:
+## main...origin/main
+ M README.md
+ M SPEC_DOCUMENTATION_REPORT.md
+ M SPEC_LEGACY_ALIGNMENT_AND_DAILY_LOG_PLAN.md
+ M SPEC_OVERVIEW_FOR_HOJUNE.md
+ M SPEC_TARGET_PATCH_MATRIX.md
+ M SPEC_WORK_STATUS.md
+ M TRAINORACLE_SPEC_INDEX.md
+ M specs/reconstruct/README.md
+?? .omo/evidence/spec-productization-microcycle-green-20260707.txt
+?? .omo/evidence/spec-productization-microcycle-red-20260707.txt
+?? specs/reconstruct/MICROCYCLE_AND_CALENDAR_MAPPING_SPEC.md

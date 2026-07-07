@@ -1,0 +1,142 @@
+﻿QA SCAN - 2026-07-07
+
+Scope includes:
+README.md
+SPEC_DOCUMENTATION_REPORT.md
+SPEC_LEGACY_ALIGNMENT_AND_DAILY_LOG_PLAN.md
+SPEC_OVERVIEW_FOR_HOJUNE.md
+SPEC_TARGET_PATCH_MATRIX.md
+SPEC_WORK_STATUS.md
+TRAINORACLE_SPEC_INDEX.md
+specs/reconstruct/README.md
+specs/reconstruct/MICROCYCLE_AND_CALENDAR_MAPPING_SPEC.md
+.omo/evidence/spec-productization-microcycle-code-review.md
+.omo/evidence/spec-productization-microcycle-gate-review.md
+
+Final marker lines:
+TRAINORACLE_SPEC_INDEX.md:211:[DRAFT_COMPLETE]
+SPEC_WORK_STATUS.md:222:[DRAFT_COMPLETE]
+SPEC_OVERVIEW_FOR_HOJUNE.md:216:[DRAFT_COMPLETE]
+SPEC_LEGACY_ALIGNMENT_AND_DAILY_LOG_PLAN.md:276:[DRAFT_COMPLETE]
+SPEC_DOCUMENTATION_REPORT.md:239:[DRAFT_COMPLETE]
+SPEC_TARGET_PATCH_MATRIX.md:210:[DRAFT_COMPLETE]
+specs/reconstruct/MICROCYCLE_AND_CALENDAR_MAPPING_SPEC.md:612:[DRAFT_COMPLETE]
+.omo/evidence/spec-productization-microcycle-gate-review.md:56:[GATE_REVIEW_COMPLETE]
+
+Open issue count:
+7
+Canonical YES count:
+4
+
+Required phrase checks:
+28:`MICROCYCLE_AND_CALENDAR_MAPPING_SPEC.md` defines how TrainOracle maps the 9.5-day training cycle, `CYCLE_DAY.*` labels, planned sessions, race anchors, and Calendar/Dashboard displays without confusing cycle labels with safety rule identifiers.
+30:The goal is to let Plan Generator, Calendar, Dashboard, Session Detail, Analysis, Daily Brief, and AI Inbox refer to the same date/cycle context while preserving namespace separation, source refs, uncertainty, and safety-gate boundaries.
+42:- redefine `RULE_SPEC_D1_D9.D-*` rule semantics
+43:- treat `LEGACY_PHASE_D.D-*` workflow items as current rule IDs
+63:| `specs/reconstruct/DAILY_LOG_AND_CHECKIN_SPEC.md` | Defines `CYCLE_DAY` namespace and forbids bare D labels as rule IDs |
+64:| `specs/reconstruct/ANALYSIS_AND_VISUALIZATION_DATA_CONTRACT.md` | Requires Calendar and visualization data to preserve source refs and namespace separation |
+79:    name: RULE_SPEC_D1_D9
+80:    example: RULE_SPEC_D1_D9.D-9
+84:    name: LEGACY_PHASE_D
+85:    example: LEGACY_PHASE_D.D-9
+89:    name: CYCLE_DAY
+90:    example: CYCLE_DAY.D-5
+98:- New product and implementation contracts must use `CYCLE_DAY.*` when referring to calendar/cycle labels.
+99:- New safety contracts must use `RULE_SPEC_D1_D9.*` when referring to current rule IDs.
+100:- Legacy workflow text may be referenced only as `LEGACY_PHASE_D.*`.
+101:- Calendar UI may display short labels like `D-5` only when the backing data field is explicitly `namespace: CYCLE_DAY`.
+117:  uncertainty_required_when_anchor_or_timezone_missing: true
+136:| `CycleDayLabel` | A `CYCLE_DAY.*` label such as `CYCLE_DAY.D-5` | Not `RULE_SPEC_D1_D9.D-*` |
+139:| `MappingUncertaintyState` | Missing/stale/conflicting anchor, timezone, or source state | Must be visible instead of guessed |
+153:  timezone: IANA_TIMEZONE
+163:  uncertaintyState: MappingUncertaintyState
+165:    cycleDayNamespace: CYCLE_DAY
+169:    mayCreatePlanOption: false
+170:    maySelectPlanOption: false
+171:    mayClearD9Risk: false
+172:    mayClearSafetyGateBlock: false
+182:  timezone: IANA_TIMEZONE
+185:  uncertaintyState: MappingUncertaintyState
+195:  timezone: IANA_TIMEZONE
+196:  namespace: CYCLE_DAY
+203:  uncertaintyState: MappingUncertaintyState
+204:  isRuleId: false
+207:`displayLabel` may be short for UI, but storage and API contracts must keep `namespace: CYCLE_DAY` and `isRuleId: false`.
+218:  timezone: IANA_TIMEZONE
+226:  uncertaintyState: MappingUncertaintyState
+227:  mayCreatePlanOption: false
+228:  mayClearD9Risk: false
+229:  mayClearSafetyGateBlock: false
+288:- `NONE` requires accepted source refs, accepted timezone, accepted anchor, and no unresolved conflict.
+308:  uncertainty_state_required: true
+329:- show uncertainty for missing anchor/timezone/source
+331:- preserve `CYCLE_DAY` namespace in data layer
+338:- display `D-5` as if it were a `RULE_SPEC_D1_D9` rule
+368:- uncertainty and review-required states
+386:- timezone
+387:- cycle labels under `CYCLE_DAY`
+388:- source refs
+391:- uncertainty state
+410:export type CycleDayNamespace = "CYCLE_DAY";
+425:  timezone: string;
+433:  uncertaintyState: MappingUncertaintyState;
+434:  isRuleId: false;
+443:  timezone: string;
+451:  uncertaintyState: MappingUncertaintyState;
+452:  mayCreatePlanOption: false;
+453:  mayClearD9Risk: false;
+454:  mayClearSafetyGateBlock: false;
+462:  timezone: string;
+470:  uncertaintyState: MappingUncertaintyState;
+472:    cycleDayNamespace: "CYCLE_DAY";
+477:    mayCreatePlanOption: false;
+478:    maySelectPlanOption: false;
+479:    mayClearD9Risk: false;
+480:    mayClearSafetyGateBlock: false;
+534:Daily Brief, AI Inbox, and Plan Rationale may cite cycle context only when source refs, namespace, uncertainty, and privacy boundaries are preserved.
+547:- timezone
+548:- cycle labels with `namespace: CYCLE_DAY`
+551:- uncertainty state
+562:- bare D labels without namespace
+583:| `OI-MCM-PLAN-GENERATOR-BINDING-001` | P1 | YES | OPEN | `PLAN_GENERATOR_SPEC.md` still owns `OI-PG-MICROCYCLE-CALENDAR-MAPPING-001`; this draft has not been patched into the target issue table. | Patch Plan Generator after review, then recount target issues. |
+585:| `OI-MCM-NAMESPACE-ENFORCEMENT-001` | P1 | YES | OPEN | No implementation evidence proves `CYCLE_DAY.*`, `RULE_SPEC_D1_D9.*`, and `LEGACY_PHASE_D.*` cannot be confused. | Add parser/type/API checks after implementation exists. |
+586:| `OI-MCM-RUNTIME-EVIDENCE-001` | P1 | YES | OPEN | No runtime or CI evidence proves date mapping, timezone handling, source refs, or namespace guards. | Add actual terminal or CI logs after implementation exists. |
+588:| `OI-MCM-RACE-ANCHOR-POLICY-001` | P2 | NO | OPEN | Race anchor selection, updates, conflicts, and timezone correction need product review. | Define accepted anchor workflow and human review behavior. |
+605:| Keeps `CYCLE_DAY` separate from rule namespaces | PASS |
+606:| Forbids bare D references in contract fields | PASS |
+609:| Requires source refs and uncertainty states | PASS |
+
+Forbidden positive-claim scan; expected matches should be none:
+SPEC_OVERVIEW_FOR_HOJUNE.md:137:| `runtime evidence` | 실제 코드나 CI를 돌린 실행 로그다. Markdown PASS나 self-check는 아니다. |
+specs/reconstruct/MICROCYCLE_AND_CALENDAR_MAPPING_SPEC.md:603:| Does not claim runtime evidence | PASS |
+
+git diff --check:
+warning: in the working copy of 'README.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'SPEC_DOCUMENTATION_REPORT.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'SPEC_LEGACY_ALIGNMENT_AND_DAILY_LOG_PLAN.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'SPEC_OVERVIEW_FOR_HOJUNE.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'SPEC_TARGET_PATCH_MATRIX.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'SPEC_WORK_STATUS.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'TRAINORACLE_SPEC_INDEX.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'specs/reconstruct/README.md', LF will be replaced by CRLF the next time Git touches it
+
+File ends with marker check:
+| Forbids raw text/private note storage | PASS |
+
+[DRAFT_COMPLETE]
+
+Status:
+ M README.md
+ M SPEC_DOCUMENTATION_REPORT.md
+ M SPEC_LEGACY_ALIGNMENT_AND_DAILY_LOG_PLAN.md
+ M SPEC_OVERVIEW_FOR_HOJUNE.md
+ M SPEC_TARGET_PATCH_MATRIX.md
+ M SPEC_WORK_STATUS.md
+ M TRAINORACLE_SPEC_INDEX.md
+ M specs/reconstruct/README.md
+?? .omo/evidence/spec-productization-microcycle-code-review.md
+?? .omo/evidence/spec-productization-microcycle-final-qa-20260707.txt
+?? .omo/evidence/spec-productization-microcycle-gate-review.md
+?? .omo/evidence/spec-productization-microcycle-green-20260707.txt
+?? .omo/evidence/spec-productization-microcycle-red-20260707.txt
+?? specs/reconstruct/MICROCYCLE_AND_CALENDAR_MAPPING_SPEC.md
