@@ -134,6 +134,7 @@ These files translate the safety/spec core into product surfaces. They are not c
 |---|---|---|---|
 | `DAILY_BRIEF_AND_INBOX_SIGNAL_SPEC.md` | `specs/reconstruct/DAILY_BRIEF_AND_INBOX_SIGNAL_SPEC.md` | DRAFT_FOR_REVIEW | New productization draft. Requires source refs, confidence/uncertainty, non-sensitive reason codes, and raw-text privacy boundary. Does not clear D9/Safety Gate states or create plan options. |
 | `ANALYSIS_AND_VISUALIZATION_DATA_CONTRACT.md` | `specs/reconstruct/ANALYSIS_AND_VISUALIZATION_DATA_CONTRACT.md` | DRAFT_FOR_REVIEW | New productization draft. Defines source-backed visualization data, uncertainty/source coverage, and privacy boundary. Does not define final metric formulas, clear D9/Safety Gate states, or create plan options. |
+| `PLAN_OUTPUT_RATIONALE_PRIVACY_SPEC.md` | `specs/reconstruct/PLAN_OUTPUT_RATIONALE_PRIVACY_SPEC.md` | DRAFT_FOR_REVIEW | New productization draft. Defines privacy-safe plan rationale bundles using source refs, rationale codes, privacy tiers, and redaction states. Does not create/select plan options, clear D9/Safety Gate states, or close Plan Generator issues. |
 
 ---
 
@@ -179,7 +180,8 @@ Bare D-rule references are forbidden in new SPEC work.
 8. Obtain actual D9 evaluator runtime output before closing RVE or Plan Generator safety-gate binding issues.
 9. Review `specs/reconstruct/DAILY_BRIEF_AND_INBOX_SIGNAL_SPEC.md` as a productization draft; do not treat it as canonical, runtime evidence, or downstream issue closure.
 10. Review `specs/reconstruct/ANALYSIS_AND_VISUALIZATION_DATA_CONTRACT.md` as a productization draft; do not treat it as metric formula authority, canonical, runtime evidence, or downstream issue closure.
-11. Draft plan rationale privacy and microcycle/calendar contracts before implementation touches those product surfaces.
+11. Review `specs/reconstruct/PLAN_OUTPUT_RATIONALE_PRIVACY_SPEC.md` as a productization draft; do not treat it as Plan Generator issue closure, canonical, runtime evidence, or downstream issue closure.
+12. Draft microcycle/calendar contract before implementation touches that product surface.
 
 ---
 

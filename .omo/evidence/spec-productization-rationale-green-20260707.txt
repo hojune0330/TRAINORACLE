@@ -1,0 +1,141 @@
+﻿GREEN EVIDENCE - 2026-07-07
+
+Created target file:
+
+
+FullName      : D:\admin\Documents\트레인 오라클 진도\specs\reconstruct\PLAN_OUTPUT_RATIONALE_PRIVACY_SPEC.md
+Length        : 20423
+LastWriteTime : 2026-07-07 오후 2:25:29
+
+
+
+
+
+Metadata and open issues:
+# PLAN_OUTPUT_RATIONALE_PRIVACY_SPEC.md
+
+```yaml
+doc_id: trainoracle-spec-016-plan-output-rationale-privacy
+spec_id: PLAN_OUTPUT_RATIONALE_PRIVACY_SPEC
+title: TrainOracle Plan Output Rationale Privacy Spec
+version: "0.1"
+round: RT1_PRODUCTIZATION_DRAFT
+status: DRAFT_FOR_REVIEW
+owner: COACH_HOJUNE
+source_state:
+  local_original_found: false
+  new_productization_draft: true
+  restored_original: false
+  previous_approved_version_restored: false
+open_issues_total: 7
+canonical_blocking_count: 4
+executed_tests_total: 0
+executed_tests_passed: 0
+self_check_is_runtime_evidence: false
+canonical_promotion_allowed: false
+```
+
+---
+
+## 1. Purpose
+
+`PLAN_OUTPUT_RATIONALE_PRIVACY_SPEC.md` defines how TrainOracle may explain why a Plan Generator option or planned session was proposed without leaking sensitive athlete data.
+
+The goal is to preserve useful coaching reasoning while keeping raw athlete text, symptom clauses, medical notes, guardian notes, private profile details, and private LLM prompts out of plan rationale copy, tooltips, exports, audit records, and downstream product surfaces.
+
+This document is a productization privacy contract. It is not a Plan Generator, not a D9 evaluator, not a Safety Gate, not a metric algorithm, not runtime evidence, and not canonical promotion.
+
+---
+
+## 2. Non-Purpose
+
+This document does not:
+
+- create, rank, select, or modify plan options
+- redefine `RULE_SPEC_D1_D9.D-*` semantics
+- override `D9_ACTIVE`, `D9_UNKNOWN`, Safety Gate blocks, or human-review requirements
+- treat `D9_CLEARED` as medical clearance
+- make ADVISORY a fourth D9 disposition
+- authorize external LLM processing with private athlete data
+- store raw athlete free text, raw memo text, raw symptom clauses, injury narratives, medical notes, rehab notes, evidence clauses, or guardian private notes
+- define final UI copy, localization strings, push notification text, or export templates
+- close `OI-PG-OPTION-RATIONALE-PRIVACY-001` or any downstream issue
+
+---
+
+## 3. Source Basis
+
+This draft was created only after exact local filename search found no current `PLAN_OUTPUT_RATIONALE_PRIVACY_SPEC.md`.
+
+Source references used for this draft:
+
+| Source | Treatment |
+|---|---|
+| `specs/active/PLAN_GENERATOR_SPEC.md` | Owns plan generation, `rationaleRefs`, and `OI-PG-OPTION-RATIONALE-PRIVACY-001` |
+| `specs/reconstruct/DAILY_LOG_AND_CHECKIN_SPEC.md` | Names this contract before plan option rationale generation from check-in context and coach-visible reasoning copy |
+| `specs/reconstruct/PLAN_SAFETY_GATE_SPEC.md` | Defines pre-generation safety block/review/allow boundary |
+| `specs/reconstruct/RULE_VALIDATION_ENGINE_CONTRACT.md` | Provides privacy-safe RVE signal and reason-code boundary |
+| `specs/active/APP_IMPLEMENTATION_BRIDGE.md` | Provides storage, capability, consent, audit, and privacy boundary |
+| `specs/active/ATHLETE_PROFILE_SPEC.md` | Provides athlete profile and sensitive-field consent boundary |
+| `specs/active/SESSION_CLASSIFIER_SPEC.md` | Provides classified session source and uncertainty boundary |
+| `specs/active/PHYSIO_SOURCE_TRUST_SPEC.md` | Provides physio source trust, recency, conflict, and no-D9-clearing rule |
+| `specs/active/TEMPLATE_LIBRARY_SPEC.md` | Provides template eligibility and template privacy boundary |
+| `specs/reconstruct/DAILY_BRIEF_AND_INBOX_SIGNAL_SPEC.md` | Requires source refs, confidence/uncertainty, non-sensitive reason codes, and no private external LLM use |
+| `specs/reconstruct/ANALYSIS_AND_VISUALIZATION_DATA_CONTRACT.md` | Defines source-backed visualization and display privacy boundary |
+562:| `OI-PORP-PLAN-GENERATOR-BINDING-001` | P1 | YES | OPEN | `PLAN_GENERATOR_SPEC.md` still owns `OI-PG-OPTION-RATIONALE-PRIVACY-001`; this draft has not been patched into the target issue table. | Patch Plan Generator after review, then recount target issues. |
+563:| `OI-PORP-APP-BRIDGE-AUDIT-BINDING-001` | P1 | YES | OPEN | App Bridge does not yet define rationale storage, audit, endpoint, capability, consent, or redaction enforcement. | Patch App Bridge and run privacy review before implementation. |
+564:| `OI-PORP-REDACTION-POLICY-001` | P1 | YES | OPEN | Redaction and suppression templates are draft-only and not implementation-tested. | Define template keys and prove raw/private text cannot leak. |
+565:| `OI-PORP-RUNTIME-EVIDENCE-001` | P1 | YES | OPEN | No runtime or CI evidence proves rationale generation, sourceRef preservation, or privacy filtering. | Add actual terminal or CI logs after implementation exists. |
+566:| `OI-PORP-UI-COPY-SURFACE-BINDING-001` | P2 | NO | OPEN | UI surfaces, exports, tooltips, notifications, and screenshots are not accepted implementation contracts. | Patch UI/screen contracts after this data contract is reviewed. |
+567:| `OI-PORP-EXTERNAL-LLM-POLICY-001` | P2 | NO | OPEN | Future LLM summarization boundary is not accepted for private athlete data. | Keep private external LLM disabled until privacy/security review exists. |
+568:| `OI-PORP-MULTI-AUDIENCE-COPY-001` | P2 | NO | OPEN | Athlete, coach, guardian, audit-only copy policies need final product review. | Confirm audience-specific copy and consent rules before UI implementation. |
+
+Linked handoff docs:
+SPEC_LEGACY_ALIGNMENT_AND_DAILY_LOG_PLAN.md:207:5. `PLAN_OUTPUT_RATIONALE_PRIVACY_SPEC.md`
+SPEC_LEGACY_ALIGNMENT_AND_DAILY_LOG_PLAN.md:208:   - Current status: created at `specs/reconstruct/PLAN_OUTPUT_RATIONALE_PRIVACY_SPEC.md` as `DRAFT_FOR_REVIEW`.
+SPEC_WORK_STATUS.md:53:- `specs/reconstruct/PLAN_OUTPUT_RATIONALE_PRIVACY_SPEC.md` now exists as a new `DRAFT_FOR_REVIEW` productization SPEC.
+SPEC_WORK_STATUS.md:56:- Remaining productization draft: `MICROCYCLE_AND_CALENDAR_MAPPING_SPEC.md`.
+SPEC_WORK_STATUS.md:98:- [`specs/reconstruct/PLAN_OUTPUT_RATIONALE_PRIVACY_SPEC.md`](./specs/reconstruct/PLAN_OUTPUT_RATIONALE_PRIVACY_SPEC.md) (`DRAFT_FOR_REVIEW`; new productization draft)
+SPEC_WORK_STATUS.md:111:| `PLAN_OUTPUT_RATIONALE_PRIVACY_SPEC.md` | `specs/reconstruct/PLAN_OUTPUT_RATIONALE_PRIVACY_SPEC.md` exists as `DRAFT_FOR_REVIEW`; new productization draft, not Plan Generator issue closure, not canonical, not runtime evidence |
+SPEC_WORK_STATUS.md:129:10. Review `specs/reconstruct/PLAN_OUTPUT_RATIONALE_PRIVACY_SPEC.md`; it is a productization draft, not Plan Generator target issue closure, canonical, or runtime evidence.
+SPEC_WORK_STATUS.md:189:- [`.omo/evidence/spec-productization-rationale-red-20260707.txt`](./.omo/evidence/spec-productization-rationale-red-20260707.txt)
+SPEC_WORK_STATUS.md:190:- [`.omo/evidence/spec-productization-rationale-green-20260707.txt`](./.omo/evidence/spec-productization-rationale-green-20260707.txt)
+SPEC_WORK_STATUS.md:191:- [`.omo/evidence/spec-productization-rationale-code-review.md`](./.omo/evidence/spec-productization-rationale-code-review.md)
+SPEC_WORK_STATUS.md:192:- [`.omo/evidence/spec-productization-rationale-gate-review.md`](./.omo/evidence/spec-productization-rationale-gate-review.md)
+SPEC_WORK_STATUS.md:193:- [`.omo/evidence/spec-productization-rationale-final-qa-20260707.txt`](./.omo/evidence/spec-productization-rationale-final-qa-20260707.txt)
+TRAINORACLE_SPEC_INDEX.md:137:| `PLAN_OUTPUT_RATIONALE_PRIVACY_SPEC.md` | `specs/reconstruct/PLAN_OUTPUT_RATIONALE_PRIVACY_SPEC.md` | DRAFT_FOR_REVIEW | New productization draft. Defines privacy-safe plan rationale bundles using source refs, rationale codes, privacy tiers, and redaction states. Does not create/select plan options, clear D9/Safety Gate states, or close Plan Generator issues. |
+TRAINORACLE_SPEC_INDEX.md:183:11. Review `specs/reconstruct/PLAN_OUTPUT_RATIONALE_PRIVACY_SPEC.md` as a productization draft; do not treat it as Plan Generator issue closure, canonical, runtime evidence, or downstream issue closure.
+SPEC_TARGET_PATCH_MATRIX.md:59:| `PLAN_OUTPUT_RATIONALE_PRIVACY_SPEC.md` | `DRAFT_FOR_REVIEW` | Privacy-safe plan rationale refs, rationale codes, audience tiers, redaction state | Plan Generator target closure, App Bridge implementation, runtime/privacy proof |
+SPEC_TARGET_PATCH_MATRIX.md:140:- `PLAN_OUTPUT_RATIONALE_PRIVACY_SPEC.md` - created as `specs/reconstruct/PLAN_OUTPUT_RATIONALE_PRIVACY_SPEC.md`
+SPEC_TARGET_PATCH_MATRIX.md:158:- `PLAN_OUTPUT_RATIONALE_PRIVACY_SPEC.md` now exists as a new productization draft.
+SPEC_TARGET_PATCH_MATRIX.md:161:- Remaining productization draft is Microcycle/Calendar Mapping.
+specs/reconstruct/README.md:15:- `PLAN_OUTPUT_RATIONALE_PRIVACY_SPEC.md` (`DRAFT_FOR_REVIEW`; new productization draft, not original restored, not canonical, not runtime evidence)
+specs/reconstruct/README.md:88:`PLAN_OUTPUT_RATIONALE_PRIVACY_SPEC.md`:
+specs/reconstruct/README.md:90:- Exact search before creation was captured in `.omo/evidence/spec-productization-rationale-red-20260707.txt`.
+specs/reconstruct/README.md:91:- `specs/reconstruct/PLAN_OUTPUT_RATIONALE_PRIVACY_SPEC.md` now exists as `DRAFT_FOR_REVIEW`.
+README.md:32:| `PLAN_OUTPUT_RATIONALE_PRIVACY_SPEC.md` | Plan Generator 결과, source refs, privacy tier, redaction state | 훈련 계획 설명이 민감정보를 누출하지 않게 하는 rationale 계약 |
+SPEC_DOCUMENTATION_REPORT.md:101:| `PLAN_OUTPUT_RATIONALE_PRIVACY_SPEC.md` | 훈련 계획 설명의 privacy 계약을 만들기 위해 | Plan rationale은 source refs, rationale codes, privacy tier, redaction state로만 설명한다. |
+SPEC_DOCUMENTATION_REPORT.md:111:| `PLAN_OUTPUT_RATIONALE_PRIVACY_SPEC.md` | Productization SPEC draft | Plan option rationale과 코치-visible 설명이 민감정보를 누출하지 않게 함 | Draft created; Plan Generator/App Bridge target binding과 runtime evidence는 아직 없음 |
+SPEC_DOCUMENTATION_REPORT.md:165:- `PLAN_OUTPUT_RATIONALE_PRIVACY_SPEC.md`
+SPEC_DOCUMENTATION_REPORT.md:192:## Productization Draft Addendum - 2026-07-07 B
+SPEC_DOCUMENTATION_REPORT.md:194:`PLAN_OUTPUT_RATIONALE_PRIVACY_SPEC.md` now exists at `specs/reconstruct/PLAN_OUTPUT_RATIONALE_PRIVACY_SPEC.md`.
+SPEC_OVERVIEW_FOR_HOJUNE.md:116:| `PLAN_OUTPUT_RATIONALE_PRIVACY_SPEC.md` | 훈련 계획의 이유 설명이 민감정보를 드러내지 않게 하기 위해 | Draft created. Plan Generator/App Bridge binding과 runtime evidence가 남아 있음 |
+SPEC_OVERVIEW_FOR_HOJUNE.md:164:- `PLAN_OUTPUT_RATIONALE_PRIVACY_SPEC.md`
+SPEC_OVERVIEW_FOR_HOJUNE.md:184:## Productization Update - 2026-07-07 B
+SPEC_OVERVIEW_FOR_HOJUNE.md:186:`PLAN_OUTPUT_RATIONALE_PRIVACY_SPEC.md` now exists at `specs/reconstruct/PLAN_OUTPUT_RATIONALE_PRIVACY_SPEC.md`.
+SPEC_OVERVIEW_FOR_HOJUNE.md:196:Remaining productization SPEC:
+
+Git status:
+## main...origin/main
+ M README.md
+ M SPEC_DOCUMENTATION_REPORT.md
+ M SPEC_LEGACY_ALIGNMENT_AND_DAILY_LOG_PLAN.md
+ M SPEC_OVERVIEW_FOR_HOJUNE.md
+ M SPEC_TARGET_PATCH_MATRIX.md
+ M SPEC_WORK_STATUS.md
+ M TRAINORACLE_SPEC_INDEX.md
+ M specs/reconstruct/README.md
+?? .omo/evidence/spec-productization-rationale-green-20260707.txt
+?? .omo/evidence/spec-productization-rationale-red-20260707.txt
+?? .omo/plans/plan-output-rationale-privacy-spec-checklist.md
+?? specs/reconstruct/PLAN_OUTPUT_RATIONALE_PRIVACY_SPEC.md

@@ -205,8 +205,10 @@ The daily-log surface is therefore not a separate lightweight feature. It is the
 ### Phase 3 - Productization Contracts
 
 5. `PLAN_OUTPUT_RATIONALE_PRIVACY_SPEC.md`
+   - Current status: created at `specs/reconstruct/PLAN_OUTPUT_RATIONALE_PRIVACY_SPEC.md` as `DRAFT_FOR_REVIEW`.
    - Purpose: ensure Plan Generator rationale and UI copy do not leak sensitive athlete data.
    - Should address the local Plan Generator privacy issue around option rationale.
+   - Must not create or select plan options, clear D9/Safety Gate states, claim runtime evidence, or close `OI-PG-OPTION-RATIONALE-PRIVACY-001`.
 
 6. `MICROCYCLE_AND_CALENDAR_MAPPING_SPEC.md`
    - Purpose: connect `CYCLE_DAY` labels, 9.5-cycle display, Calendar, Dashboard, and Plan Generator output.
@@ -231,11 +233,11 @@ The daily-log surface is therefore not a separate lightweight feature. It is the
 7. Patch Daily Log consumption into App Bridge, Athlete Profile, Physio Source Trust, RVE, and Safety Gate only after opening each target file and recounting its open-issue table.
 8. Review `DAILY_BRIEF_AND_INBOX_SIGNAL_SPEC.md` before wiring daily summaries, push prompts, or AI Inbox generation.
 9. Review `ANALYSIS_AND_VISUALIZATION_DATA_CONTRACT.md` before implementing Analysis, Dashboard, Session Detail, Calendar, coach review, Daily Brief, or AI Inbox visualization data.
-10. Draft productization contracts for rationale privacy and cycle/calendar mapping after the safety core chain is stable.
+10. Draft the productization contract for cycle/calendar mapping after the safety core chain is stable.
 
 Wave 1 note: Physio Source Trust target patches into Plan Generator, App Bridge, and Athlete Profile now exist. They remain open for review/acceptance and target-file recount approval; this note does not close any issue.
 
-Wave 3 note: Daily Brief / AI Inbox and Analysis / Visualization productization drafts now exist. They remain drafts for review and do not provide implementation, runtime evidence, canonical promotion, or downstream issue closure.
+Wave 3 note: Daily Brief / AI Inbox, Analysis / Visualization, and Plan Output Rationale Privacy productization drafts now exist. They remain drafts for review and do not provide implementation, runtime evidence, canonical promotion, or downstream issue closure.
 
 ---
 

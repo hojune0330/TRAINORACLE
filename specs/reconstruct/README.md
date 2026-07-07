@@ -12,6 +12,7 @@ Current productization drafts:
 
 - `DAILY_BRIEF_AND_INBOX_SIGNAL_SPEC.md` (`DRAFT_FOR_REVIEW`; new productization draft, not original restored, not canonical, not runtime evidence)
 - `ANALYSIS_AND_VISUALIZATION_DATA_CONTRACT.md` (`DRAFT_FOR_REVIEW`; new productization draft, not original restored, not canonical, not runtime evidence)
+- `PLAN_OUTPUT_RATIONALE_PRIVACY_SPEC.md` (`DRAFT_FOR_REVIEW`; new productization draft, not original restored, not canonical, not runtime evidence)
 
 Known missing or source-not-verified targets:
 
@@ -83,6 +84,15 @@ Use this order before creating any reconstructed file:
 - It requires source refs, confidence/uncertainty, non-sensitive reason codes, and visible missing/stale/conflicting source states.
 - It forbids raw memo text, raw free text, raw symptom clauses, private medical/guardian notes, and external LLM prompts with private athlete data.
 - It cannot define final CTL/ATL/TSB formulas, create plan options, clear D9 risk, clear Safety Gate blocks, or close downstream issues.
+
+`PLAN_OUTPUT_RATIONALE_PRIVACY_SPEC.md`:
+
+- Exact search before creation was captured in `.omo/evidence/spec-productization-rationale-red-20260707.txt`.
+- `specs/reconstruct/PLAN_OUTPUT_RATIONALE_PRIVACY_SPEC.md` now exists as `DRAFT_FOR_REVIEW`.
+- It is a new productization draft, not an original restored file.
+- It defines privacy-safe plan rationale bundles and items using source refs, rationale codes, privacy tiers, redaction states, and confidence/uncertainty.
+- It forbids raw memo text, raw free text, raw symptom clauses, private medical/guardian notes, hidden chain-of-thought, and external LLM prompts with private athlete data.
+- It cannot create or select plan options, clear D9 risk, clear Safety Gate blocks, resolve `OI-PG-OPTION-RATIONALE-PRIVACY-001`, or close downstream issues.
 
 ## Required Safety Semantics
 

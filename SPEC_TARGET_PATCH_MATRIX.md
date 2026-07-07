@@ -56,6 +56,7 @@ patch_rules:
 | `PLAN_SAFETY_GATE_SPEC.md` | `RECONSTRUCTED_DRAFT_FOR_REVIEW` | Pre-generation RVE-to-Plan Generator gate contract | Original/canonical Safety Gate contract or runtime proof |
 | `DAILY_LOG_AND_CHECKIN_SPEC.md` | `RECONSTRUCTED_DRAFT_FOR_REVIEW` | Structured daily check-in ingestion and transient memo boundary | App storage implementation, canonical source, runtime proof |
 | `ANALYSIS_AND_VISUALIZATION_DATA_CONTRACT.md` | `DRAFT_FOR_REVIEW` | Source-backed visualization data shapes, uncertainty/source coverage, analysis privacy boundary | Metric algorithm authority, App Bridge implementation, runtime proof |
+| `PLAN_OUTPUT_RATIONALE_PRIVACY_SPEC.md` | `DRAFT_FOR_REVIEW` | Privacy-safe plan rationale refs, rationale codes, audience tiers, redaction state | Plan Generator target closure, App Bridge implementation, runtime/privacy proof |
 | `SPEC_DOCUMENTATION_REPORT.md` | Handoff report | Human-readable document map | Product rule authority |
 
 ---
@@ -136,7 +137,7 @@ Drafts:
 
 - `DAILY_BRIEF_AND_INBOX_SIGNAL_SPEC.md` - created as `specs/reconstruct/DAILY_BRIEF_AND_INBOX_SIGNAL_SPEC.md`
 - `ANALYSIS_AND_VISUALIZATION_DATA_CONTRACT.md` - created as `specs/reconstruct/ANALYSIS_AND_VISUALIZATION_DATA_CONTRACT.md`
-- `PLAN_OUTPUT_RATIONALE_PRIVACY_SPEC.md`
+- `PLAN_OUTPUT_RATIONALE_PRIVACY_SPEC.md` - created as `specs/reconstruct/PLAN_OUTPUT_RATIONALE_PRIVACY_SPEC.md`
 - `MICROCYCLE_AND_CALENDAR_MAPPING_SPEC.md`
 
 Rules:
@@ -154,7 +155,10 @@ Current Wave 3 state:
 - It defines source-backed visualization data for Analysis, Dashboard, Session Detail, Calendar, coach review, Daily Brief, and AI Inbox surfaces.
 - It preserves source refs, confidence/uncertainty, non-sensitive reason codes, and visible missing/stale/conflicting states.
 - It cannot define final metric formulas, clear D9/Safety Gate states, create plan options, claim runtime evidence, or close downstream issues.
-- Remaining productization drafts are Plan Output Rationale Privacy and Microcycle/Calendar Mapping.
+- `PLAN_OUTPUT_RATIONALE_PRIVACY_SPEC.md` now exists as a new productization draft.
+- It defines privacy-safe plan rationale bundles and items using source refs, rationale codes, privacy tiers, redaction states, and confidence/uncertainty.
+- It cannot create or select plan options, clear D9/Safety Gate states, claim runtime evidence, resolve `OI-PG-OPTION-RATIONALE-PRIVACY-001`, or close downstream issues.
+- Remaining productization draft is Microcycle/Calendar Mapping.
 
 ### Wave 4 - Runtime Evidence
 

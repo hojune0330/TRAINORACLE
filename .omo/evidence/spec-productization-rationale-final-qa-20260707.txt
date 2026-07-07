@@ -1,0 +1,102 @@
+﻿QA SCAN - 2026-07-07
+
+Scope includes:
+README.md
+SPEC_DOCUMENTATION_REPORT.md
+SPEC_LEGACY_ALIGNMENT_AND_DAILY_LOG_PLAN.md
+SPEC_OVERVIEW_FOR_HOJUNE.md
+SPEC_TARGET_PATCH_MATRIX.md
+SPEC_WORK_STATUS.md
+TRAINORACLE_SPEC_INDEX.md
+specs/reconstruct/README.md
+specs/reconstruct/PLAN_OUTPUT_RATIONALE_PRIVACY_SPEC.md
+.omo/evidence/spec-productization-rationale-code-review.md
+.omo/evidence/spec-productization-rationale-gate-review.md
+.omo/plans/plan-output-rationale-privacy-spec-checklist.md
+
+Final marker lines:
+TRAINORACLE_SPEC_INDEX.md:209:[DRAFT_COMPLETE]
+SPEC_WORK_STATUS.md:211:[DRAFT_COMPLETE]
+SPEC_OVERVIEW_FOR_HOJUNE.md:200:[DRAFT_COMPLETE]
+SPEC_LEGACY_ALIGNMENT_AND_DAILY_LOG_PLAN.md:274:[DRAFT_COMPLETE]
+SPEC_DOCUMENTATION_REPORT.md:215:[DRAFT_COMPLETE]
+SPEC_TARGET_PATCH_MATRIX.md:206:[DRAFT_COMPLETE]
+specs/reconstruct/PLAN_OUTPUT_RATIONALE_PRIVACY_SPEC.md:592:[DRAFT_COMPLETE]
+.omo/evidence/spec-productization-rationale-gate-review.md:57:[GATE_REVIEW_COMPLETE]
+
+Open issue count:
+7
+Canonical YES count:
+4
+
+Required phrase checks:
+45:- authorize external LLM processing with private athlete data
+46:- store raw athlete free text, raw memo text, raw symptom clauses, injury narratives, medical notes, rehab notes, evidence clauses, or guardian private notes
+69:| `specs/reconstruct/DAILY_BRIEF_AND_INBOX_SIGNAL_SPEC.md` | Requires source refs, confidence/uncertainty, non-sensitive reason codes, and no private external LLM use |
+115:- which source refs support the explanation
+119:- what the athlete wrote in a raw memo
+227:    mayCreatePlanOption: false
+228:    maySelectPlanOption: false
+229:    mayClearD9Risk: false
+230:    mayClearSafetyGateBlock: false
+242:  rationaleCodes: string[]
+247:  privacyTier: PUBLIC_SAFE | INTERNAL_SAFE | SENSITIVE_SUPPRESSED | AUDIT_ONLY
+248:  redactionState: NOT_NEEDED | REDACTED | SUPPRESSED | REVIEW_REQUIRED
+320:- `NONE` requires accepted source refs and no unresolved privacy/safety conflict.
+342:The word "rationale" means product-visible explanation. It does not authorize hidden chain-of-thought storage or private prompt logging.
+350:| Structured source is accepted and non-sensitive | Show template copy with source refs |
+355:| Raw athlete memo is present | Do not store or display raw memo text |
+376:If a plan is blocked, rationale may explain the block with safe reason codes and source refs. It must not produce a workaround plan.
+416:  rationaleCodes: readonly string[];
+421:  privacyTier: RationalePrivacyTier;
+422:  redactionState: PrivacyReviewState;
+444:    mayCreatePlanOption: false;
+445:    maySelectPlanOption: false;
+446:    mayClearD9Risk: false;
+447:    mayClearSafetyGateBlock: false;
+473:Daily Log cannot provide persisted raw memo text, raw symptom clauses, injury narratives, medical notes, or guardian notes to plan rationale copy.
+477:Daily Brief, AI Inbox, and Analysis may display or cite accepted rationale items only when source refs, uncertainty, privacy tier, and redaction state are preserved.
+525:- source refs
+539:- private external LLM prompts or responses
+540:- hidden chain-of-thought
+562:| `OI-PORP-PLAN-GENERATOR-BINDING-001` | P1 | YES | OPEN | `PLAN_GENERATOR_SPEC.md` still owns `OI-PG-OPTION-RATIONALE-PRIVACY-001`; this draft has not been patched into the target issue table. | Patch Plan Generator after review, then recount target issues. |
+567:| `OI-PORP-EXTERNAL-LLM-POLICY-001` | P2 | NO | OPEN | Future LLM summarization boundary is not accepted for private athlete data. | Keep private external LLM disabled until privacy/security review exists. |
+584:| Requires source refs | PASS |
+587:| Forbids raw memo/free-text/symptom clause storage | PASS |
+588:| Forbids private external LLM use | PASS |
+
+Forbidden positive-claim scan; expected matches should be none:
+SPEC_OVERVIEW_FOR_HOJUNE.md:137:| `runtime evidence` | 실제 코드나 CI를 돌린 실행 로그다. Markdown PASS나 self-check는 아니다. |
+specs/reconstruct/PLAN_OUTPUT_RATIONALE_PRIVACY_SPEC.md:582:| Does not claim runtime evidence | PASS |
+
+git diff --check:
+warning: in the working copy of 'README.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'SPEC_DOCUMENTATION_REPORT.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'SPEC_LEGACY_ALIGNMENT_AND_DAILY_LOG_PLAN.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'SPEC_OVERVIEW_FOR_HOJUNE.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'SPEC_TARGET_PATCH_MATRIX.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'SPEC_WORK_STATUS.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'TRAINORACLE_SPEC_INDEX.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'specs/reconstruct/README.md', LF will be replaced by CRLF the next time Git touches it
+
+File ends with marker check:
+| Cannot clear D9 or Safety Gate blocks | PASS |
+
+[DRAFT_COMPLETE]
+
+Status:
+ M README.md
+ M SPEC_DOCUMENTATION_REPORT.md
+ M SPEC_LEGACY_ALIGNMENT_AND_DAILY_LOG_PLAN.md
+ M SPEC_OVERVIEW_FOR_HOJUNE.md
+ M SPEC_TARGET_PATCH_MATRIX.md
+ M SPEC_WORK_STATUS.md
+ M TRAINORACLE_SPEC_INDEX.md
+ M specs/reconstruct/README.md
+?? .omo/evidence/spec-productization-rationale-code-review.md
+?? .omo/evidence/spec-productization-rationale-final-qa-20260707.txt
+?? .omo/evidence/spec-productization-rationale-gate-review.md
+?? .omo/evidence/spec-productization-rationale-green-20260707.txt
+?? .omo/evidence/spec-productization-rationale-red-20260707.txt
+?? .omo/plans/plan-output-rationale-privacy-spec-checklist.md
+?? specs/reconstruct/PLAN_OUTPUT_RATIONALE_PRIVACY_SPEC.md

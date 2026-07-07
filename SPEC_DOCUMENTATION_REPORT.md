@@ -98,6 +98,7 @@ canonical_promotion_allowed: false
 | `SPEC_DOCUMENTATION_REPORT.md` | 현재/재구성/예정 문서를 사람이 한눈에 보게 하기 위해 | 사용자와 다음 작업자가 전체 서류 지도를 빠르게 읽는 시작점으로 쓴다. |
 | `DAILY_BRIEF_AND_INBOX_SIGNAL_SPEC.md` | 매일 요약과 AI Inbox를 구조화 데이터에서 만들기 위해 | Raw text 없이 source refs, confidence/uncertainty, reason codes를 보존한다. |
 | `ANALYSIS_AND_VISUALIZATION_DATA_CONTRACT.md` | 분석 화면과 시각화 데이터 계약을 만들기 위해 | 그래프/패널은 구조화 source refs와 uncertainty를 보존하고 안전 상태를 절대 clear하지 않는다. |
+| `PLAN_OUTPUT_RATIONALE_PRIVACY_SPEC.md` | 훈련 계획 설명의 privacy 계약을 만들기 위해 | Plan rationale은 source refs, rationale codes, privacy tier, redaction state로만 설명한다. |
 
 ---
 
@@ -107,7 +108,7 @@ canonical_promotion_allowed: false
 |---|---|---|---|
 | `DAILY_BRIEF_AND_INBOX_SIGNAL_SPEC.md` | Productization SPEC draft | Daily Check-in, 세션, 분석 결과를 daily brief / AI Inbox item으로 바꾸는 계약 | Draft created; implementation/runtime evidence는 아직 없음 |
 | `ANALYSIS_AND_VISUALIZATION_DATA_CONTRACT.md` | Productization SPEC draft | Analysis, Session Detail, Dashboard, Calendar 시각화가 어떤 구조 데이터에서 나오는지 정의 | Draft created; App Bridge binding, metric formula authority, runtime evidence는 아직 없음 |
-| `PLAN_OUTPUT_RATIONALE_PRIVACY_SPEC.md` | Future SPEC | Plan option rationale과 코치-visible 설명이 민감정보를 누출하지 않게 함 | Not created yet; Plan Generator, Daily Log, Safety Gate 경계 확인 필요 |
+| `PLAN_OUTPUT_RATIONALE_PRIVACY_SPEC.md` | Productization SPEC draft | Plan option rationale과 코치-visible 설명이 민감정보를 누출하지 않게 함 | Draft created; Plan Generator/App Bridge target binding과 runtime evidence는 아직 없음 |
 | `MICROCYCLE_AND_CALENDAR_MAPPING_SPEC.md` | Future SPEC | 9.5-day cycle, calendar, `CYCLE_DAY` 라벨을 화면/계획과 연결 | Not created yet; namespace policy 유지 필요 |
 | App implementation DB/API schemas | Implementation contract | SPEC를 실제 앱 저장소와 API로 내리는 단계 | Core SPEC acceptance와 privacy review |
 | D9 runtime evidence report | Runtime evidence | D9 evaluator 실제 실행 결과와 RVE/Safety Gate mapping 증거 | test package 실행 및 로그 확보 |
@@ -120,7 +121,7 @@ canonical_promotion_allowed: false
 2. `DAILY_LOG_AND_CHECKIN_SPEC.md`를 기준으로 App Bridge / Athlete Profile / Physio Source Trust / RVE / Safety Gate target patch 계획을 세운다.
 3. Wave 1 Physio Source Trust target patches in `PLAN_GENERATOR_SPEC.md`, `APP_IMPLEMENTATION_BRIDGE.md`, and `ATHLETE_PROFILE_SPEC.md` are present; review source acceptance and target-file recount approval before any issue closure.
 4. 실제 D9 evaluator runtime output을 확보하기 전까지 RVE/PG/Safety Gate binding issue를 닫지 않는다.
-5. Plan rationale privacy와 microcycle/calendar 문서를 만들고, 그 뒤 구현 스키마와 runtime evidence로 넘어간다.
+5. Microcycle/calendar 문서를 만들고, 그 뒤 구현 스키마와 runtime evidence로 넘어간다.
 
 ---
 
@@ -159,7 +160,7 @@ Purpose:
 - Keep raw memo/free-text/symptom clauses, injury narratives, medical notes, rehab notes, guardian private notes, and private external LLM prompts out of storage and audit.
 - Prevent Daily Brief / AI Inbox from creating plan options or clearing D9/Safety Gate blocks.
 
-Remaining future productization documents:
+Then-remaining future productization documents at this checkpoint. Later updates below supersede this list:
 
 - `PLAN_OUTPUT_RATIONALE_PRIVACY_SPEC.md`
 - `MICROCYCLE_AND_CALENDAR_MAPPING_SPEC.md`
@@ -184,9 +185,31 @@ Purpose:
 - Prevent Analysis, Dashboard, Session Detail, Calendar, coach review, Daily Brief, or AI Inbox visualizations from creating plan options or clearing D9/Safety Gate blocks.
 - Avoid claiming final CTL/ATL/TSB or other metric formula authority until a separate accepted metric algorithm contract exists.
 
-Remaining future productization documents:
+Then-remaining future productization documents at this checkpoint. Later updates below supersede this list:
 
-- `PLAN_OUTPUT_RATIONALE_PRIVACY_SPEC.md`
+- `MICROCYCLE_AND_CALENDAR_MAPPING_SPEC.md`
+
+## Productization Draft Addendum - 2026-07-07 B
+
+`PLAN_OUTPUT_RATIONALE_PRIVACY_SPEC.md` now exists at `specs/reconstruct/PLAN_OUTPUT_RATIONALE_PRIVACY_SPEC.md`.
+
+Treatment:
+
+- It is a new `DRAFT_FOR_REVIEW` productization SPEC.
+- It is not an original restored file.
+- It is not canonical promotion.
+- It is not runtime evidence.
+- It does not close `OI-PG-OPTION-RATIONALE-PRIVACY-001` or any downstream issue.
+
+Purpose:
+
+- Convert Plan Generator rationale refs into privacy-safe rationale bundles and items.
+- Require source refs, rationale codes, privacy tiers, redaction states, and confidence/uncertainty.
+- Keep raw memo/free-text/symptom clauses, injury narratives, medical notes, rehab notes, guardian private notes, hidden chain-of-thought, and private external LLM prompts out of storage and audit.
+- Prevent plan rationale copy from creating/selecting plan options or clearing D9/Safety Gate blocks.
+
+Remaining future productization document:
+
 - `MICROCYCLE_AND_CALENDAR_MAPPING_SPEC.md`
 
 [DRAFT_COMPLETE]
