@@ -270,4 +270,26 @@ Purpose:
 - Make clear that Wave 3 productization drafts now exist and the next work is review/acceptance and target-patch readiness.
 - Preserve no-closure, no-runtime-evidence, and no-D9-redefinition guardrails.
 
+## Wave B Safety Gate Patch Addendum - 2026-07-07
+
+`SPEC_WAVEB_SAFETY_GATE_PATCH_REPORT.md` now exists at the repository root.
+
+Treatment:
+
+- It is a target patch report.
+- It is not source acceptance.
+- It is not canonical promotion.
+- It is not runtime evidence.
+- It does not close any downstream issue.
+
+Target patched:
+
+- `specs/active/PLAN_GENERATOR_SPEC.md`
+
+Purpose:
+
+- Record that Plan Generator now has target-local Safety Gate/RVE consumption binding guidance.
+- Preserve that `ACTIVE` and `UNKNOWN` block generation, while advisory remains non-blocking under `CLEARED`.
+- Preserve that `OI-PG-RULE-SAFETY-GATE-BINDING-001` remains open until source acceptance, target recount approval, and actual D9 runtime evidence exist.
+
 [DRAFT_COMPLETE]

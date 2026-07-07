@@ -6,7 +6,7 @@ spec_id: PLAN_GENERATOR_SPEC
 title: TrainOracle Plan Generator Spec
 version: "1.0"
 round: RT3
-revision: RT3_TEMPLATE_LIBRARY_OWNERSHIP_PATCHED_AFTER_PROGRESS_GUARD_SYNC
+revision: RT3_SAFETY_GATE_BINDING_PATCHED_PENDING_RUNTIME_EVIDENCE
 schema_build: "2026-06-03"
 owner: COACH_HOJUNE
 owner_english_name: hojune jang
@@ -22,6 +22,8 @@ coach_final_approval_required: true
 applied_local_patches:
   - PROGRESSION_GUARD_ACCOUNTING_SYNC
   - TEMPLATE_LIBRARY_OWNERSHIP_SYNC
+  - PHYSIO_SOURCE_TRUST_CONSUMPTION_BINDING_PENDING_ACCEPTANCE
+  - PLAN_SAFETY_GATE_BINDING_PATCH_PENDING_RUNTIME_EVIDENCE
 
 upstream_baselines:
   - file: RULE_SPEC_D1_D9.md
@@ -39,6 +41,12 @@ upstream_baselines:
   - file: TEMPLATE_LIBRARY_SPEC.md
     version: "1.0"
     role: READ_ONLY_LOCAL_TEMPLATE_LIBRARY_BASELINE
+  - file: PLAN_SAFETY_GATE_SPEC.md
+    version: "0.1"
+    role: RECONSTRUCTED_DRAFT_SOURCE_PENDING_ACCEPTANCE
+  - file: RULE_VALIDATION_ENGINE_CONTRACT.md
+    version: "0.1"
+    role: RECONSTRUCTED_DRAFT_SOURCE_PENDING_ACCEPTANCE
 
 metrics:
   open_issues_total: 7
@@ -94,6 +102,8 @@ The generator produces draft options only. It cannot auto-finalize a plan withou
 | `ATHLETE_PROFILE_SPEC.md` | 1.0 | Athlete profile snapshot and privacy baseline | READ_ONLY |
 | `APP_IMPLEMENTATION_BRIDGE.md` | 1.1 | Storage, tenancy, consent, capability, audit baseline | READ_ONLY local baseline candidate |
 | `TEMPLATE_LIBRARY_SPEC.md` | 1.0 | Template ownership, lifecycle, eligibility, and consumption baseline | READ_ONLY local baseline |
+| `PLAN_SAFETY_GATE_SPEC.md` | 0.1 | Reconstructed pre-generation gate contract for RVE/D9 safety signal consumption | RECONSTRUCTED_DRAFT pending acceptance |
+| `RULE_VALIDATION_ENGINE_CONTRACT.md` | 0.1 | Reconstructed RVE signal shape and D9 status mapping contract | RECONSTRUCTED_DRAFT pending acceptance |
 
 `APP_IMPLEMENTATION_BRIDGE.md v1.1` is used because it contains the consent/guardian/sensitive-field hard guards needed by the Plan Generator.
 
@@ -114,6 +124,31 @@ template_library_v1_0_role:
     - template_eligibility_filter_contract
     - template_privacy_boundary
     - plan_generator_consumption_contract
+
+plan_safety_gate_v0_1_role:
+  role: RECONSTRUCTED_DRAFT_SOURCE_PENDING_ACCEPTANCE
+  source_document: specs/reconstruct/PLAN_SAFETY_GATE_SPEC.md
+  consumed_for:
+    - pre_generation_gate_order
+    - blocked_output_restrictions
+    - RVE_signal_consumption_boundary
+  non_claims:
+    - source_acceptance
+    - runtime_evidence
+    - issue_closure
+
+rule_validation_engine_contract_v0_1_role:
+  role: RECONSTRUCTED_DRAFT_SOURCE_PENDING_ACCEPTANCE
+  source_document: specs/reconstruct/RULE_VALIDATION_ENGINE_CONTRACT.md
+  consumed_for:
+    - storedStatus_mapping
+    - blocksPlanGeneration_field_shape
+    - requiresHumanReview_field_shape
+    - non_sensitive_reason_code_boundary
+  non_claims:
+    - original_file_restored
+    - runtime_evidence
+    - issue_closure
 ```
 
 ---
@@ -123,7 +158,7 @@ template_library_v1_0_role:
 | Dependency | Upstream source | Required behavior | Status |
 |---|---|---|---|
 | Rule safety hard-stop policy | `RULE_SPEC_D1_D9.md v1.4` | Active `RULE_SPEC_D1_D9.D-9` state must block plan generation | RESOLVED |
-| Rule safety hard-stop runtime binding | `RULE_SPEC_D1_D9.md v1.4` / `APP_IMPLEMENTATION_BRIDGE.md v1.1` | Runtime detection and binding tracked by `OI-PG-RULE-SAFETY-GATE-BINDING-001` | PARTIAL_OPEN |
+| Rule safety hard-stop runtime binding | `RULE_SPEC_D1_D9.md v1.4` / `RULE_VALIDATION_ENGINE_CONTRACT.md v0.1 reconstructed draft` / `PLAN_SAFETY_GATE_SPEC.md v0.1 reconstructed draft` | Plan Generator must consume D9/RVE state only through Safety Gate; runtime evidence and source acceptance remain required before issue closure | PARTIAL_OPEN |
 | Session classification inputs | `SESSION_CLASSIFIER_SPEC.md v1.2` | Generator may read classified sessions but must not redefine classifier outputs | RESOLVED |
 | Athlete profile snapshot | `ATHLETE_PROFILE_SPEC.md v1.0` | Generator may read approved profile snapshot fields within consent scope | RESOLVED |
 | Template Library ownership and lifecycle | `TEMPLATE_LIBRARY_SPEC.md v1.0` | Generator consumes templates only through Template Library contract and cannot mutate template records | RESOLVED |
@@ -346,6 +381,44 @@ safety_gate:
       rule_ref: RULE_SPEC_D1_D9.D-9
       active_state_blocks_generation: true
       failure_state: BLOCKED_BY_RULE_SPEC_SAFETY_HARD_STOP
+    rule_validation_engine_signal:
+      source_document: specs/reconstruct/RULE_VALIDATION_ENGINE_CONTRACT.md
+      source_status: RECONSTRUCTED_DRAFT_PENDING_ACCEPTANCE
+      required_fields:
+        - ruleRef
+        - storedStatus
+        - blocksPlanGeneration
+        - requiresHumanReview
+        - nonSensitiveReasonCodes
+        - auditLogId
+      active_mapping:
+        storedStatus: ACTIVE
+        blocksPlanGeneration: true
+        requiresHumanReview: true
+        generator_state: BLOCKED_BY_RULE_SPEC_SAFETY_HARD_STOP
+      unknown_mapping:
+        storedStatus: UNKNOWN
+        blocksPlanGeneration: true
+        requiresHumanReview: true
+        generator_state: BLOCKED_PENDING_HUMAN_REVIEW
+      cleared_mapping:
+        storedStatus: CLEARED
+        blocksPlanGeneration: false
+        requiresHumanReview: false
+        generator_state: CONTINUE_TO_NEXT_PRECHECK
+      advisory_mapping:
+        parent_status: CLEARED
+        storedStatus: CLEARED
+        blocksPlanGeneration: false
+        requiresHumanReview: false
+        preserve_non_sensitive_reason_codes: true
+    plan_safety_gate_binding:
+      source_document: specs/reconstruct/PLAN_SAFETY_GATE_SPEC.md
+      source_status: RECONSTRUCTED_DRAFT_PENDING_ACCEPTANCE
+      tracked_by: OI-PG-RULE-SAFETY-GATE-BINDING-001
+      gate_result_required_before_generation: true
+      closure_state: OPEN_UNTIL_SOURCE_ACCEPTANCE_TARGET_RECOUNT_AND_RUNTIME_EVIDENCE
+      generator_must_not_read_RVE_as_generation_bypass: true
     template_library_consumption:
       source: TEMPLATE_LIBRARY_SPEC.md
       required_when_template_based_option_generation: true
@@ -372,6 +445,9 @@ safety_gate:
 
 Coach intent cannot override the safety gate.
 Template Library cannot override the safety gate.
+Good physio data, favorable daily-log entries, template eligibility, or coach intent cannot clear `ACTIVE` or `UNKNOWN` RVE/Safety Gate results.
+
+This target-local binding is a patch to the Plan Generator contract only. It does not close `OI-PG-RULE-SAFETY-GATE-BINDING-001`, does not accept reconstructed source documents as canonical, and does not create D9 evaluator runtime evidence.
 
 ---
 
@@ -888,7 +964,7 @@ llm_policy:
 
 | ID | Priority | Canonical blocking | Status | Summary | Resolution needed |
 |---|---|---:|---|---|---|
-| `OI-PG-RULE-SAFETY-GATE-BINDING-001` | P1 | YES | OPEN | Runtime binding between active `RULE_SPEC_D1_D9.D-9` state and generation block must be finalized. | Define exact bridge query and active-state interpretation. |
+| `OI-PG-RULE-SAFETY-GATE-BINDING-001` | P1 | YES | OPEN | Target-local Safety Gate/RVE consumption binding is patched, but source acceptance, target recount approval, and actual D9 evaluator runtime evidence remain missing. | Review and accept reconstructed Safety Gate/RVE source docs, recount this target issue table, then attach actual runtime evidence before closure. |
 | `OI-PG-PHYSIO-SOURCE-CONSUMPTION-001` | P1 | YES | OPEN | Target binding to `PHYSIO_SOURCE_TRUST_SPEC.md` is patched, but source acceptance and owner recount are still pending. | Review source acceptance, confirm App Bridge record binding, then recount before closure. |
 | `OI-PG-OUTPUT-FORMAT-BINDING-001` | P2 | NO | OPEN | Final export format is not fixed. | Decide UI/export schema later. |
 | `OI-PG-OPTION-RATIONALE-PRIVACY-001` | P2 | NO | OPEN | Rationale text may accidentally reveal sensitive data. | Add redaction templates before production. |
@@ -1042,6 +1118,7 @@ handoff:
     - PROGRESSION_GUARD_ACCOUNTING_SYNC
     - TEMPLATE_LIBRARY_OWNERSHIP_SYNC
     - PHYSIO_SOURCE_TRUST_CONSUMPTION_BINDING_PENDING_ACCEPTANCE
+    - PLAN_SAFETY_GATE_BINDING_PATCH_PENDING_RUNTIME_EVIDENCE
   remaining_canonical_blocking_open_issues:
     - OI-PG-RULE-SAFETY-GATE-BINDING-001
     - OI-PG-PHYSIO-SOURCE-CONSUMPTION-001

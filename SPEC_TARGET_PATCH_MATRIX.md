@@ -66,7 +66,7 @@ patch_rules:
 
 | Target document | Target issue | Current target evidence | Source to consume | Patch intent | Closure allowed now |
 |---|---|---|---|---|---|
-| `PLAN_GENERATOR_SPEC.md` | `OI-PG-RULE-SAFETY-GATE-BINDING-001` | P1 / YES / OPEN in current target file | `PLAN_SAFETY_GATE_SPEC.md`, `RULE_VALIDATION_ENGINE_CONTRACT.md`, `RVE_RULE_EVALUATOR_BINDING_SPEC.md` | Bind Plan Generator to consume D9/RVE only through Safety Gate; ACTIVE/UNKNOWN block; advisory non-blocking under CLEARED | No. Requires accepted target patch, recount, and actual D9 runtime evidence |
+| `PLAN_GENERATOR_SPEC.md` | `OI-PG-RULE-SAFETY-GATE-BINDING-001` | P1 / YES / OPEN; target-local Safety Gate/RVE binding patched, issue still open | `PLAN_SAFETY_GATE_SPEC.md`, `RULE_VALIDATION_ENGINE_CONTRACT.md`, `RVE_RULE_EVALUATOR_BINDING_SPEC.md` | Bind Plan Generator to consume D9/RVE only through Safety Gate; ACTIVE/UNKNOWN block; advisory non-blocking under CLEARED | No. Requires source acceptance, target recount approval, and actual D9 runtime evidence |
 | `PLAN_GENERATOR_SPEC.md` | `OI-PG-PHYSIO-SOURCE-CONSUMPTION-001` | P1 / YES / OPEN; target binding patched in Section 6B | `PHYSIO_SOURCE_TRUST_SPEC.md` | Consume trusted physio source status without allowing good physio data to clear D9 risk | No. Target patch exists, but closure still requires source acceptance and target recount approval; do not copy expected deltas |
 | `APP_IMPLEMENTATION_BRIDGE.md` | `OI-AIB-PHYSIO-SOURCE-001` | P1 / true / OPEN in current target file; issue addendum records patched-pending-source-acceptance | `PHYSIO_SOURCE_TRUST_SPEC.md`, `DAILY_LOG_AND_CHECKIN_SPEC.md` | Add storage/use boundary for physio source trust and daily check-in structured data | No. Target patch exists, but closure still requires source acceptance, target recount approval, and implementation/privacy review |
 | `ATHLETE_PROFILE_SPEC.md` | `OI-AP-PHYSIO-SOURCE-001` | Canonical blocking issue remains OPEN with patched-pending-source-acceptance addendum | `PHYSIO_SOURCE_TRUST_SPEC.md`, `DAILY_LOG_AND_CHECKIN_SPEC.md` | Clarify profile physiological attributes source priority and conflict handling | No. Target patch exists, but closure still requires source acceptance, App Bridge binding acceptance, and target recount approval |
@@ -192,6 +192,23 @@ Rules:
 - Use the readiness document before editing target SPEC files.
 - Do not treat either document as source acceptance, canonical promotion, runtime evidence, or issue closure.
 - Do not close downstream issues from reviewer comments alone; target files must still be opened, patched, recounted, and verified.
+
+### Wave B Progress - Plan Generator Safety Gate Target Patch
+
+Document:
+
+- `SPEC_WAVEB_SAFETY_GATE_PATCH_REPORT.md`
+
+Target:
+
+- `specs/active/PLAN_GENERATOR_SPEC.md`
+
+Rules:
+
+- Treat the Wave B patch as target-local binding guidance only.
+- Keep `OI-PG-RULE-SAFETY-GATE-BINDING-001` open.
+- Do not treat reconstructed Safety Gate or RVE contracts as accepted canonical sources.
+- Do not close the issue before source acceptance, target recount approval, and actual D9 runtime evidence.
 
 ---
 
