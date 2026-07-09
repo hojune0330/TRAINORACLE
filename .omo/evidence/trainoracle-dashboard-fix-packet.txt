@@ -1,0 +1,41 @@
+TrainOracle dashboard fix packet
+Date: 2026-07-09
+Branch: codex/dashboard-status
+
+Reviewer findings addressed:
+1. CI metric precision
+   - Before: dashboard claimed "2 jobs".
+   - After: dashboard says "2 suites" and explains they run in one GitHub Actions job.
+   - Source: .github/workflows/ci.yml defines one job named contract-tests.
+
+2. Branch label precision
+   - Before: "branch dashboard-status".
+   - After: "branch codex/dashboard-status".
+
+3. Desktop source-card overflow
+   - Added `overflow-wrap: anywhere` to panel headings.
+   - Targeted issue: RULE_VALIDATION_ENGINE_CONTRACT.md heading overflow outside source card.
+
+4. Issue registry completeness
+   - Replaced summary-only issue cards with a full table.
+   - Each document now lists declared open issues split into:
+     - Canonical Blockers
+     - Non-Blocking Open
+     - Cross-Refs / Addenda
+   - Addenda and cross references are explicitly marked as not closing target issues.
+
+5. Gate artifacts
+   - Included reviewer-generated dashboard review artifacts:
+     - .omo/evidence/trainoracle-dashboard-code-review.md
+     - .omo/evidence/trainoracle-dashboard-data-claim-review-code-review.md
+     - .omo/evidence/trainoracle-dashboard-design-system-functional-integrity-gate-review.md
+     - .omo/evidence/trainoracle-dashboard-visual-fidelity-cjk-precision-gate-review.md
+   - Expanded visual QA ledger with a manual QA matrix and executor change packet.
+
+Safety invariants preserved:
+- No issue closure claimed.
+- No canonical promotion claimed.
+- No new runtime evidence invented.
+- D9_ACTIVE blocks generation.
+- D9_UNKNOWN blocks or requires human review.
+- D9_CLEARED is not medical clearance.

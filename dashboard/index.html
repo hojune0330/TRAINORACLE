@@ -86,6 +86,7 @@
       font-size: 15px;
       line-height: 1.35;
       letter-spacing: 0;
+      overflow-wrap: anywhere;
     }
 
     p {
@@ -395,7 +396,7 @@
         </p>
       </div>
       <div class="meta-stack">
-        <span class="chip info">branch dashboard-status</span>
+        <span class="chip info">branch codex/dashboard-status</span>
         <span class="chip warn">issues remain open</span>
         <span class="stamp-line">Last local review: 2026-07-09</span>
       </div>
@@ -430,8 +431,8 @@
         </article>
         <article class="panel">
           <h3>CI 브랜치</h3>
-          <div class="metric"><strong>2</strong><span class="chip info">jobs</span></div>
-          <p class="caption">D9 evaluator와 impl skeleton을 PR마다 실행하도록 구성.</p>
+          <div class="metric"><strong>2</strong><span class="chip info">suites</span></div>
+          <p class="caption">D9 evaluator와 impl skeleton을 하나의 GitHub Actions job에서 PR마다 실행하도록 구성.</p>
         </article>
       </div>
     </section>
@@ -685,40 +686,127 @@
           <p class="kicker">issue registry</p>
           <h2 id="issues-title">문서별 OI 참조 현황</h2>
         </div>
-        <p class="section-note">이 표는 각 파일에서 발견된 고유 OI-* 참조를 문서별로 묶은 것입니다. 선언 카운트와 다를 수 있는 교차 참조는 숨기지 않고 그대로 보입니다.</p>
+        <p class="section-note">각 문서의 open issue를 canonical-blocking 여부와 함께 나눠 표시합니다. 교차 참조만 있고 해당 문서의 open issue table 행이 아닌 항목은 별도로 적었습니다.</p>
       </div>
-      <div class="grid two">
-        <article class="panel">
-          <h3>Active SPEC issues</h3>
-          <details open>
-            <summary>Open active issue IDs</summary>
-            <ul class="issue-list">
-              <li>RULE_SPEC_D1_D9: 23 IDs</li>
-              <li>SESSION_CLASSIFIER_SPEC: 13 IDs</li>
-              <li>ATHLETE_PROFILE_SPEC: 11 IDs</li>
-              <li>APP_IMPLEMENTATION_BRIDGE: 15 IDs including Daily Log binding addendum</li>
-              <li>PLAN_GENERATOR_SPEC: 7 IDs</li>
-              <li>TEMPLATE_LIBRARY_SPEC: 5 referenced IDs, declared open issues 4</li>
-              <li>PHYSIO_SOURCE_TRUST_SPEC: 7 referenced IDs, declared open issues 4</li>
-              <li>RVE_RULE_EVALUATOR_BINDING_SPEC: 7 referenced IDs, declared open issues 4</li>
-            </ul>
-          </details>
-        </article>
-        <article class="panel">
-          <h3>Reconstruct SPEC issues</h3>
-          <details open>
-            <summary>Productization draft issue IDs</summary>
-            <ul class="issue-list">
-              <li>PLAN_SAFETY_GATE_SPEC: 10 referenced IDs, declared open issues 5</li>
-              <li>RULE_VALIDATION_ENGINE_CONTRACT: 7 referenced IDs, declared open issues 5</li>
-              <li>DAILY_LOG_AND_CHECKIN_SPEC: 12 referenced IDs, declared open issues 6</li>
-              <li>DAILY_BRIEF_AND_INBOX_SIGNAL_SPEC: 12 referenced IDs, declared open issues 6</li>
-              <li>ANALYSIS_AND_VISUALIZATION_DATA_CONTRACT: 7 IDs</li>
-              <li>PLAN_OUTPUT_RATIONALE_PRIVACY_SPEC: 8 IDs</li>
-              <li>MICROCYCLE_AND_CALENDAR_MAPPING_SPEC: 8 IDs</li>
-            </ul>
-          </details>
-        </article>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Document</th>
+              <th>Declared Open</th>
+              <th>Canonical Blockers</th>
+              <th>Non-Blocking Open</th>
+              <th>Cross-Refs / Addenda</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><a href="../specs/active/RULE_SPEC_D1_D9.md">RULE_SPEC_D1_D9.md</a></td>
+              <td class="count">23</td>
+              <td class="mono-text">OI-D2-MAIN-INTERVAL-001, OI-D9-TRIGGER-THRESHOLD-001, OI-PRIVACY-RETENTION-001, OI-CONSENT-SHARING-001, OI-CAPABILITY-GRANT-001, OI-SOLO-SAFETY-001, OI-SESSION-TEMPLATE-CONFIDENCE-001, OI-SESSION-EPOC-ENUM-001, OI-MULTI-ENERGY-POLICY-001, OI-LD-DEFINITION-001, OI-RETROACTIVE-OVERRIDE-WINDOW-001</td>
+              <td class="mono-text">OI-D6-VALIDITY-SOURCE-001, OI-NOTIFICATION-CONTEXT-001, OI-RULE-SOURCE-MANIFEST-001, OI-D4-NEXT-DAY-WINDOW-001, OI-D5-SEVERITY-SOURCE-001, OI-D7-WEEK-ANCHOR-001, OI-D8-REQUIRED-INPUT-001, OI-AUDIT-SNAPSHOT-SCHEMA-001, OI-APP-BRIDGE-DB-SCHEMA-001, OI-TEST-DATA-ANONYMIZATION-001, OI-DISPLAY-LABEL-I18N-001, OI-MODE-THRESHOLD-SOURCE-001</td>
+              <td></td>
+            </tr>
+            <tr>
+              <td><a href="../specs/active/SESSION_CLASSIFIER_SPEC.md">SESSION_CLASSIFIER_SPEC.md</a></td>
+              <td class="count">13</td>
+              <td class="mono-text">OI-SC-CONFIDENCE-CALIBRATION-001, OI-SC-TEMPLATE-LIBRARY-001, OI-SC-MAIN-LABEL-HEURISTIC-001, OI-SC-RECOVERY-LABEL-HEURISTIC-001, OI-SC-EPOC-BAND-THRESHOLD-001, OI-SC-HR-PACE-PRIORITY-001, OI-SC-ALLOCATION-INVARIANT-FAILURE-001</td>
+              <td class="mono-text">OI-SC-CROSS-TRAINING-LD-001, OI-SC-INTERVAL-INFERENCE-001, OI-SC-EPOC-ESTIMATE-BAND-MODEL-001, OI-SC-MANUAL-CORRECTION-AUDIT-001, OI-SC-SPORT-TYPE-EXPANSION-001, OI-SC-EPOC-SOURCE-UNKNOWN-HANDLING-001</td>
+              <td></td>
+            </tr>
+            <tr>
+              <td><a href="../specs/active/ATHLETE_PROFILE_SPEC.md">ATHLETE_PROFILE_SPEC.md</a></td>
+              <td class="count">11</td>
+              <td class="mono-text">OI-AP-CAPABILITY-NAME-001, OI-AP-CONSENT-LIFECYCLE-001, OI-AP-SECONDARY-GROUP-MODEL-001, OI-AP-PROFILE-RETENTION-001, OI-AP-GUARDIAN-CONSENT-001, OI-AP-PHYSIO-SOURCE-001</td>
+              <td class="mono-text">OI-AP-LD-MIN-SEGMENT-DURATION-001, OI-AP-CROSS-TRAINING-SPORT-ENUM-001, OI-AP-CONSTRAINT-RECURRENCE-001, OI-AP-SNAPSHOT-VERSIONING-001, OI-AP-DISPLAY-I18N-001</td>
+              <td></td>
+            </tr>
+            <tr>
+              <td><a href="../specs/active/APP_IMPLEMENTATION_BRIDGE.md">APP_IMPLEMENTATION_BRIDGE.md</a></td>
+              <td class="count">12</td>
+              <td class="mono-text">OI-AIB-RLS-STRATEGY-001, OI-AIB-RETENTION-POLICY-001, OI-AIB-ENCRYPTION-KEY-MGMT-001, OI-AIB-PHYSIO-SOURCE-001</td>
+              <td class="mono-text">OI-AIB-DB-VENDOR-001, OI-AIB-IDEMPOTENCY-001, OI-AIB-OBSERVABILITY-001, OI-AIB-EXPORT-SCOPE-001, OI-AIB-HASH-CANONICALIZATION-001, OI-AIB-SECONDARY-GROUP-UX-001, OI-AIB-ESCALATION-LIFECYCLE-001, OI-AIB-LEGAL-REVIEW-001</td>
+              <td class="mono-text">OI-DLC-APP-BRIDGE-BINDING-001 addendum remains OPEN, not a Section 13 row.</td>
+            </tr>
+            <tr>
+              <td><a href="../specs/active/PLAN_GENERATOR_SPEC.md">PLAN_GENERATOR_SPEC.md</a></td>
+              <td class="count">7</td>
+              <td class="mono-text">OI-PG-RULE-SAFETY-GATE-BINDING-001, OI-PG-PHYSIO-SOURCE-CONSUMPTION-001</td>
+              <td class="mono-text">OI-PG-OUTPUT-FORMAT-BINDING-001, OI-PG-OPTION-RATIONALE-PRIVACY-001, OI-PG-COMPETITION-TAPER-POLICY-001, OI-PG-MICROCYCLE-CALENDAR-MAPPING-001, OI-PG-AIB-V1_1-CANONICAL-PROMOTION-001</td>
+              <td></td>
+            </tr>
+            <tr>
+              <td><a href="../specs/active/TEMPLATE_LIBRARY_SPEC.md">TEMPLATE_LIBRARY_SPEC.md</a></td>
+              <td class="count">4</td>
+              <td class="mono-text">none</td>
+              <td class="mono-text">OI-TL-EVENT-SPECIFIC-CATALOG-EXPANSION-001, OI-TL-UI-COPY-CATALOG-BROWSING-001, OI-TL-COACH-FEEDBACK-LOOP-001, OI-TL-MULTI-LANGUAGE-TAXONOMY-001</td>
+              <td class="mono-text">OI-PG-TEMPLATE-LIBRARY-OWNERSHIP-001 referenced upstream.</td>
+            </tr>
+            <tr>
+              <td><a href="../specs/active/PHYSIO_SOURCE_TRUST_SPEC.md">PHYSIO_SOURCE_TRUST_SPEC.md</a></td>
+              <td class="count">4</td>
+              <td class="mono-text">none</td>
+              <td class="mono-text">OI-PST-DEVICE-VENDOR-MAPPING-001, OI-PST-CALIBRATION-UX-001, OI-PST-SPORT-SPECIFIC-WEIGHTS-001, OI-PST-LONGITUDINAL-TREND-MODEL-001</td>
+              <td class="mono-text">References PG/RVE downstream issues but does not close them.</td>
+            </tr>
+            <tr>
+              <td><a href="../specs/active/RVE_RULE_EVALUATOR_BINDING_SPEC.md">RVE_RULE_EVALUATOR_BINDING_SPEC.md</a></td>
+              <td class="count">4</td>
+              <td class="mono-text">none</td>
+              <td class="mono-text">OI-REB-PROD-DEPLOYMENT-WIRING-001, OI-REB-MULTILINGUAL-RISK-TOKENS-001, OI-REB-UI-REVIEW-COPY-001, OI-REB-PERFORMANCE-MONITORING-001</td>
+              <td class="mono-text">OI-DLC-RVE-SAFETY-BINDING-001 addendum remains OPEN, not a Section 20 row.</td>
+            </tr>
+            <tr>
+              <td><a href="../specs/reconstruct/PLAN_SAFETY_GATE_SPEC.md">PLAN_SAFETY_GATE_SPEC.md</a></td>
+              <td class="count">5</td>
+              <td class="mono-text">OI-PSG-RUNTIME-EVIDENCE-001, OI-PSG-PLAN-GENERATOR-PATCH-001, OI-PSG-IMPLEMENTATION-BINDING-001</td>
+              <td class="mono-text">OI-PSG-PHYSIO-SOURCE-CONSUMPTION-001, OI-PSG-DAILY-LOG-INPUT-BINDING-001</td>
+              <td class="mono-text">Reconstructed draft only.</td>
+            </tr>
+            <tr>
+              <td><a href="../specs/reconstruct/RULE_VALIDATION_ENGINE_CONTRACT.md">RULE_VALIDATION_ENGINE_CONTRACT.md</a></td>
+              <td class="count">5</td>
+              <td class="mono-text">OI-RVEC-RUNTIME-EVIDENCE-001, OI-RVEC-PLAN-SAFETY-GATE-001, OI-RVEC-IMPLEMENTATION-BINDING-001</td>
+              <td class="mono-text">OI-RVEC-RETENTION-POLICY-001, OI-RVEC-ORIGINAL-SOURCE-TRACE-001</td>
+              <td class="mono-text">Reconstructed draft only.</td>
+            </tr>
+            <tr>
+              <td><a href="../specs/reconstruct/DAILY_LOG_AND_CHECKIN_SPEC.md">DAILY_LOG_AND_CHECKIN_SPEC.md</a></td>
+              <td class="count">6</td>
+              <td class="mono-text">OI-DLC-APP-BRIDGE-BINDING-001, OI-DLC-RVE-SAFETY-BINDING-001, OI-DLC-RAW-NOTE-REDACTION-001</td>
+              <td class="mono-text">OI-DLC-DAILY-BRIEF-INBOX-001, OI-DLC-ANALYSIS-VISUALIZATION-001, OI-DLC-IMPLEMENTATION-BINDING-001</td>
+              <td class="mono-text">Round 2 accepted working source, not canonical.</td>
+            </tr>
+            <tr>
+              <td><a href="../specs/reconstruct/DAILY_BRIEF_AND_INBOX_SIGNAL_SPEC.md">DAILY_BRIEF_AND_INBOX_SIGNAL_SPEC.md</a></td>
+              <td class="count">6</td>
+              <td class="mono-text">OI-DBI-APP-BRIDGE-BINDING-001, OI-DBI-SIGNAL-RANKING-001, OI-DBI-RUNTIME-EVIDENCE-001</td>
+              <td class="mono-text">OI-DBI-EXTERNAL-LLM-POLICY-001, OI-DBI-UI-SURFACE-BINDING-001, OI-DBI-ANALYSIS-CONTRACT-BINDING-001</td>
+              <td></td>
+            </tr>
+            <tr>
+              <td><a href="../specs/reconstruct/ANALYSIS_AND_VISUALIZATION_DATA_CONTRACT.md">ANALYSIS_AND_VISUALIZATION_DATA_CONTRACT.md</a></td>
+              <td class="count">7</td>
+              <td class="mono-text">OI-AVD-APP-BRIDGE-BINDING-001, OI-AVD-METRIC-SOURCE-OWNERSHIP-001, OI-AVD-SAFETY-DISPLAY-BINDING-001, OI-AVD-RUNTIME-EVIDENCE-001</td>
+              <td class="mono-text">OI-AVD-UI-SURFACE-BINDING-001, OI-AVD-DESIGN-SYSTEM-A11Y-BINDING-001, OI-AVD-EXPORT-TOOLTIP-PRIVACY-001</td>
+              <td></td>
+            </tr>
+            <tr>
+              <td><a href="../specs/reconstruct/PLAN_OUTPUT_RATIONALE_PRIVACY_SPEC.md">PLAN_OUTPUT_RATIONALE_PRIVACY_SPEC.md</a></td>
+              <td class="count">7</td>
+              <td class="mono-text">OI-PORP-PLAN-GENERATOR-BINDING-001, OI-PORP-APP-BRIDGE-AUDIT-BINDING-001, OI-PORP-REDACTION-POLICY-001, OI-PORP-RUNTIME-EVIDENCE-001</td>
+              <td class="mono-text">OI-PORP-UI-COPY-SURFACE-BINDING-001, OI-PORP-EXTERNAL-LLM-POLICY-001, OI-PORP-MULTI-AUDIENCE-COPY-001</td>
+              <td class="mono-text">References OI-PG-OPTION-RATIONALE-PRIVACY-001 without closing it.</td>
+            </tr>
+            <tr>
+              <td><a href="../specs/reconstruct/MICROCYCLE_AND_CALENDAR_MAPPING_SPEC.md">MICROCYCLE_AND_CALENDAR_MAPPING_SPEC.md</a></td>
+              <td class="count">7</td>
+              <td class="mono-text">OI-MCM-PLAN-GENERATOR-BINDING-001, OI-MCM-APP-BRIDGE-BINDING-001, OI-MCM-NAMESPACE-ENFORCEMENT-001, OI-MCM-RUNTIME-EVIDENCE-001</td>
+              <td class="mono-text">OI-MCM-UI-SURFACE-BINDING-001, OI-MCM-RACE-ANCHOR-POLICY-001, OI-MCM-EDIT-WORKFLOW-001</td>
+              <td class="mono-text">References OI-PG-MICROCYCLE-CALENDAR-MAPPING-001 without closing it.</td>
+            </tr>
+          </tbody>
+        </table>
       </div>
     </section>
 

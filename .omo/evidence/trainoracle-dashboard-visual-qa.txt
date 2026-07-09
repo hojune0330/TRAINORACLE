@@ -12,9 +12,9 @@ Browser:
 - executablePath: C:/Program Files/Google/Chrome/Application/chrome.exe
 
 Viewport checks:
-- mobile-375: errors=[], scrollWidth=375, clientWidth=375, links=26, tables=2, SVG rendered
-- tablet-768: errors=[], scrollWidth=768, clientWidth=768, links=26, tables=2, SVG rendered
-- desktop-1280: errors=[], scrollWidth=1280, clientWidth=1280, links=26, tables=2, SVG rendered
+- mobile-375: errors=[], scrollWidth=375, clientWidth=375, links=41, tables=3, SVG rendered, visible element overflow scan=[]
+- tablet-768: errors=[], scrollWidth=768, clientWidth=768, links=41, tables=3, SVG rendered, visible element overflow scan=[]
+- desktop-1280: errors=[], scrollWidth=1280, clientWidth=1280, links=41, tables=3, SVG rendered, visible element overflow scan=[]
 
 Screenshot evidence:
 - screenshots/dashboard/mobile-375.png
@@ -27,6 +27,31 @@ Manual visual notes:
 - Page-level horizontal overflow was not detected.
 - The dashboard uses real DOM, tables, links, and SVG nodes, not a pasted screenshot.
 - The dashboard does not claim issue closure, canonical promotion, or new runtime evidence.
+- Revision pass: reviewer findings corrected `2 jobs` to `2 suites`, expanded branch label to `codex/dashboard-status`, allowed long panel headings to wrap, and replaced issue-count summaries with a full per-document OI registry showing canonical-blocking vs non-blocking open issues.
+
+Manual QA matrix:
+- S1 mobile 375: PASS. Korean text readable; page-level scrollWidth matched clientWidth; wide chain/table content stayed in local wrappers.
+- S2 tablet 768: PASS. Korean text readable; safety chain local scroll behavior remained intentional.
+- S3 desktop 1280: PASS after heading-wrap patch. Source cards no longer rely on visible overflow for long document names.
+- S4 required sections: PASS. Snapshot, safety-chain SVG, source decisions, SPEC board, runtime evidence, Wave D table, full issue registry, and next gates are present.
+- S5 safety claim audit: PASS. Dashboard says issues remain open and does not promote drafts, close issues, or create runtime evidence.
+
+Review artifacts:
+- .omo/evidence/trainoracle-dashboard-code-review.md
+- .omo/evidence/trainoracle-dashboard-data-claim-review-code-review.md
+- .omo/evidence/trainoracle-dashboard-design-system-functional-integrity-gate-review.md
+- .omo/evidence/trainoracle-dashboard-visual-fidelity-cjk-precision-gate-review.md
+
+Executor change packet:
+- DESIGN.md: root dashboard design-system contract.
+- dashboard/index.html: static dashboard, revised after reviewer findings.
+- README.md: dashboard entry link.
+- screenshots/dashboard/*.png: browser screenshot evidence.
+- .omo/evidence/trainoracle-dashboard-visual-qa.txt: this QA ledger.
+- .omo/evidence/trainoracle-dashboard-fix-packet.txt: revision summary.
+
+Notepad path:
+- Not used for this dashboard revision. All task notes are kept in committed evidence files above.
 
 Runtime evidence referenced by dashboard:
 - runtime-evidence/d9-evaluator/d9-vitest-run-2026-07-09.log: 11 passed
