@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <title>TRAINORACLE v3 — Journal-first</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="../../colors_and_type.css" />
+  <link rel="stylesheet" href="../../colors_and_type_journal.css" />
+  <style>
+    html, body { margin: 0; padding: 0; background: #E4E2DA; }
+    #root { min-height: 100vh; }
+    /* allow phones to scroll inside frames */
+    button { font-family: inherit; }
+    input, textarea { font-family: inherit; }
+
+    /* ========== PRINT ==========
+       사용자 요구: "프린트해서 가지고 싶다."
+       LogDetail (variant A · Journal page) 만 단독 페이지로 출력.
+       모바일 베젤·다른 프레임·Tweaks 패널 다 숨김, 종이톤 그대로 살림. */
+    @media print {
+      @page { size: A5 portrait; margin: 14mm 12mm; }
+      html, body { background: #fff !important; }
+      /* 인쇄 대상이 아닌 건 전부 숨김 */
+      body > *:not(#root) { display: none !important; }
+      #root > * { display: none !important; }
+      .print-target { display: block !important; }
+      /* 인쇄 대상이 있으면 그 안의 모바일 베젤은 비활성화 — 페이지로 펼쳐서 */
+      .print-target [data-mobile-frame] {
+        border: 0 !important;
+        background: transparent !important;
+        box-shadow: none !important;
+        width: auto !important;
+        max-width: 100% !important;
+        height: auto !important;
+        overflow: visible !important;
+      }
+      .print-target [data-mobile-statusbar],
+      .print-target [data-mobile-homeindicator] { display: none !important; }
+      /* 종이 배경은 살리되 잉크는 보장 */
+      .paper, .paper-grid, .paper-lines { background-color: #fff !important; }
+      .hand { color: #1A3A6F !important; }
+      /* 줄바꿈 안전망 */
+      .idx-card, .stamp { break-inside: avoid; }
+    }
+  </style>
+  <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+</head>
+<body>
+  <div id="root" data-screen-label="TRAINORACLE v3"></div>
+
+  <script type="text/babel" src="tweaks_panel.jsx"></script>
+  <script type="text/babel" src="MobileFrame.jsx"></script>
+  <script type="text/babel" src="JournalPrimitives.jsx"></script>
+  <script type="text/babel" src="Home.jsx"></script>
+  <script type="text/babel" src="LogEntry.jsx"></script>
+  <script type="text/babel" src="LogDetail.jsx"></script>
+  <script type="text/babel" src="Trends.jsx"></script>
+  <script type="text/babel" src="App.jsx"></script>
+</body>
+</html>

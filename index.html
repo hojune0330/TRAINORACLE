@@ -1,0 +1,177 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="color-scheme" content="light" />
+<title>TRAINORACLE — Design Handoff (v3 · Journal-first)</title>
+<link rel="stylesheet" href="colors_and_type.css" />
+<link rel="stylesheet" href="colors_and_type_journal.css" />
+<style>
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);font-family:var(--sans);
+    -webkit-font-smoothing:antialiased;font-feature-settings:"ss01","cv11";}
+  .mono{font-family:var(--mono);font-variant-numeric:tabular-nums;}
+  a{color:inherit;}
+
+  .wrap{max-width:1100px;margin:0 auto;padding:0 24px;}
+
+  /* ---- header ---- */
+  header{border-bottom:1px solid var(--line);padding:40px 0 28px;margin-bottom:40px;}
+  .brand-line{font-family:var(--mono);font-size:11px;letter-spacing:.18em;text-transform:uppercase;
+    color:var(--ink-3);margin:0 0 12px;}
+  .brand-line .dot{display:inline-block;width:3px;height:3px;background:var(--brand);
+    border-radius:50%;vertical-align:middle;margin:0 5px 2px;}
+  h1{margin:0 0 10px;font-size:clamp(28px,4.5vw,46px);font-weight:500;letter-spacing:-.03em;line-height:1.08;}
+  .lede{max-width:680px;margin:0;color:var(--ink-2);font-size:15.5px;line-height:1.6;}
+  .hand-quote{font-family:'Caveat','Gowun Dodum',cursive;color:var(--ink-blue);font-size:22px;
+    margin:18px 0 0;letter-spacing:.01em;}
+
+  /* ---- version banner ---- */
+  .vbanner{border:1px solid var(--ink);background:var(--surface);padding:16px 18px;margin:0 0 40px;
+    display:flex;gap:16px;align-items:flex-start;}
+  .vbanner .tag{font-family:var(--mono);font-size:10px;font-weight:600;letter-spacing:.14em;
+    text-transform:uppercase;border:1.5px solid var(--brand);color:var(--brand);padding:3px 8px;flex:0 0 auto;}
+  .vbanner p{margin:0;font-size:13.5px;color:var(--ink-2);line-height:1.55;}
+
+  /* ---- section ---- */
+  .sec-head{display:flex;align-items:baseline;gap:10px;border-bottom:1px solid var(--hair);
+    padding-bottom:8px;margin:0 0 18px;}
+  .sec-head .no{font-family:var(--mono);font-size:11px;letter-spacing:.06em;color:var(--ink-3);}
+  .sec-head .no b{color:var(--ink);}
+  .sec-head h2{margin:0;font-size:18px;font-weight:500;letter-spacing:-.01em;}
+  section{margin-bottom:48px;}
+
+  /* ---- card grid ---- */
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:0;
+    border-top:1px solid var(--line);border-left:1px solid var(--line);}
+  .card{border-right:1px solid var(--line);border-bottom:1px solid var(--line);
+    padding:18px 20px;text-decoration:none;display:block;transition:background var(--dur-fast) var(--ease-default);}
+  .card:hover{background:var(--surface-2);}
+  .card .k{font-family:var(--mono);font-size:10px;letter-spacing:.12em;text-transform:uppercase;
+    color:var(--brand);margin:0 0 8px;}
+  .card .t{font-size:15px;font-weight:500;margin:0 0 6px;letter-spacing:-.01em;}
+  .card .d{font-size:12.5px;color:var(--ink-3);line-height:1.5;margin:0;}
+  .card .arrow{font-family:var(--mono);color:var(--ink-3);font-size:12px;margin-top:10px;display:inline-block;}
+  .card.main .t{color:var(--ink);}
+  .card.archive .k{color:var(--ink-3);}
+
+  /* ---- doc list ---- */
+  .docs{border-top:1px solid var(--line);border-bottom:1px solid var(--line);}
+  .docs a{display:grid;grid-template-columns:200px 1fr auto;gap:14px;align-items:baseline;
+    padding:11px 4px;border-bottom:1px dashed var(--hair);text-decoration:none;
+    transition:background var(--dur-fast) var(--ease-default);}
+  .docs a:last-child{border-bottom:0;}
+  .docs a:hover{background:var(--surface-2);}
+  .docs .fn{font-family:var(--mono);font-size:12px;color:var(--ink);letter-spacing:.02em;}
+  .docs .ds{font-size:12.5px;color:var(--ink-3);}
+  .docs .ext{font-family:var(--mono);font-size:11px;color:var(--ink-3);}
+
+  footer{border-top:1px solid var(--line);padding:24px 0 60px;margin-top:24px;}
+  footer p{font-family:var(--mono);font-size:11px;color:var(--ink-3);letter-spacing:.04em;margin:4px 0;}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <p class="brand-line">TRAIN<span class="dot"></span>O<span class="dot"></span>RACLE · DESIGN HANDOFF</p>
+    <h1>일지가 메인인 트레이닝 도구</h1>
+    <p class="lede">
+      엘리트 1500m–10000m 중장거리 선수를 위한 도구. v2(AI·코치 중심)에서
+      <strong>v3(일지 중심·모바일 우선)</strong>로 방향 전환된 정본 핸드오프입니다.
+      Tufte × Linear의 직각·hairline·모노 톤은 그대로 두고, 사용자가 적는 메모 영역만 종이톤·손글씨를 입혔습니다.
+    </p>
+    <p class="hand-quote">"매일 손으로 쓰던 일지를, 프린트해서 가지고 싶게."</p>
+  </header>
+
+  <div class="vbanner">
+    <span class="tag">v3 · NOW</span>
+    <p>
+      메인은 <b>오늘 일지 쓰기 CTA + 어제 요약</b>이고, AI는 1–2줄로 옆에서 패턴만 짚어줍니다(끄고 켜기 가능).
+      v2 데스크탑 5화면(AI Chat / Inbox / Calendar 등)은 코치 페르소나용으로 <b>archive</b>되어 보존됩니다.
+      먼저 <span class="mono">DECISION_LOG.md</span> → <span class="mono">VARIANTS.md</span> → <span class="mono">NEGATIVE_SPACE.md</span> 순으로 읽으세요.
+    </p>
+  </div>
+
+  <section>
+    <div class="sec-head"><span class="no"><b>§1</b> · UI KITS</span><h2>인터랙티브 미리보기</h2></div>
+    <div class="grid">
+      <a class="card main" href="ui_kits/trainoracle-app-v3/index.html">
+        <p class="k">v3 · MAIN</p>
+        <p class="t">Journal-first 모바일 키트</p>
+        <p class="d">7개 모바일 화면(Home · LogEntry · Post-session · Evening · Race pre/post · LogDetail · Trends) + Tweaks 패널. 손글씨·종이톤·인쇄 스타일 포함.</p>
+        <span class="arrow">열기 →</span>
+      </a>
+      <a class="card archive" href="ui_kits/trainoracle-app/index.html">
+        <p class="k">v2 · ARCHIVE</p>
+        <p class="t">데스크탑 코치 앱 키트</p>
+        <p class="d">Dashboard · Session Detail · 9.5-Cycle Calendar · AI Chat · Inbox. 코치 페르소나용으로 보존. 신규 기능은 v3 기준.</p>
+        <span class="arrow">열기 →</span>
+      </a>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head"><span class="no"><b>§2</b> · PREVIEW</span><h2>디자인 시스템 카드</h2></div>
+    <div class="grid">
+      <a class="card" href="preview/journal-tokens.html"><p class="k">v3 token</p><p class="t">Journal Tokens</p><p class="d">종이·손글씨·잉크 견본.</p><span class="arrow">→</span></a>
+      <a class="card" href="preview/mood-strip.html"><p class="k">v3 token</p><p class="t">Mood Strip</p><p class="d">5단계 감정 바.</p><span class="arrow">→</span></a>
+      <a class="card" href="preview/pain-scale.html"><p class="k">v3 token</p><p class="t">Pain Scale</p><p class="d">5단계 통증 + body marker.</p><span class="arrow">→</span></a>
+      <a class="card" href="preview/index-card.html"><p class="k">v3 token</p><p class="t">Index Card</p><p class="d">도서관 카탈로그 헤더.</p><span class="arrow">→</span></a>
+      <a class="card" href="preview/intensity-stack.html"><p class="k">v3 token</p><p class="t">Intensity Stack</p><p class="d">에너지 시스템 분포 바.</p><span class="arrow">→</span></a>
+      <a class="card" href="preview/colors-energy-systems.html"><p class="k">core</p><p class="t">Energy Systems</p><p class="d">BA/LT/V2/GL/AP/RE 도트+코드.</p><span class="arrow">→</span></a>
+      <a class="card" href="preview/components-verdicts.html"><p class="k">core</p><p class="t">AI Verdicts</p><p class="d">CONFIRM/RECOMMEND/UNC/LACK.</p><span class="arrow">→</span></a>
+      <a class="card" href="preview/components-cycle-rail.html"><p class="k">core</p><p class="t">Cycle Rail</p><p class="d">9.5-day 10셀 레일.</p><span class="arrow">→</span></a>
+      <a class="card" href="preview/type-display-headings.html"><p class="k">core</p><p class="t">Type Scale</p><p class="d">Display·H1·본문·모노.</p><span class="arrow">→</span></a>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head"><span class="no"><b>§3</b> · REFERENCE</span><h2>참고 디자인 (v2 hi-fi)</h2></div>
+    <div class="grid">
+      <a class="card" href="reference_designs/01_Landing.html"><p class="k">ref</p><p class="t">Landing</p><p class="d">마케팅 랜딩 · vs-Strava/TP 비교.</p><span class="arrow">→</span></a>
+      <a class="card" href="reference_designs/SPRINT1_MinjisDay.html"><p class="k">ref</p><p class="t">Minji's Day</p><p class="d">하루 6컷 · 4 시스템 한 눈에.</p><span class="arrow">→</span></a>
+      <a class="card" href="reference_designs/05_SessionDetail.html"><p class="k">ref · canonical</p><p class="t">Session Detail</p><p class="d">훈련 한 건 + 모바일 380px 프레임.</p><span class="arrow">→</span></a>
+      <a class="card" href="reference_designs/06_AIChat.html"><p class="k">ref</p><p class="t">AI Chat</p><p class="d">verdict + citation 응답 구조.</p><span class="arrow">→</span></a>
+      <a class="card archive" href="reference_designs/03_Dashboard.html"><p class="k">v1 · 미구현</p><p class="t">Dashboard (v1)</p><p class="d">둥근 모서리·다크. archive 전용.</p><span class="arrow">→</span></a>
+      <a class="card archive" href="reference_designs/04_Calendar.html"><p class="k">v1 · 미구현</p><p class="t">Calendar (v1)</p><p class="d">동일 사유. archive 전용.</p><span class="arrow">→</span></a>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head"><span class="no"><b>§4</b> · DOCS</span><h2>문서 — 이 순서로 읽으세요</h2></div>
+    <div class="docs">
+      <a href="DECISION_LOG.md"><span class="fn">DECISION_LOG.md</span><span class="ds">왜 일지로 출시하는가 · 14개 질문 원문. 가장 먼저.</span><span class="ext">md</span></a>
+      <a href="VARIANTS.md"><span class="fn">VARIANTS.md</span><span class="ds">Home 3 / LogDetail 2 / Trends 2 변형이 각각 누구를 노리나.</span><span class="ext">md</span></a>
+      <a href="NEGATIVE_SPACE.md"><span class="fn">NEGATIVE_SPACE.md</span><span class="ds">의도적으로 거부한 옵션 목록.</span><span class="ext">md</span></a>
+      <a href="PHILOSOPHY.md"><span class="fn">PHILOSOPHY.md</span><span class="ds">10 규칙 + 10 금지. v3에도 전부 유효.</span><span class="ext">md</span></a>
+      <a href="DESIGN_DECISIONS.md"><span class="fn">DESIGN_DECISIONS.md</span><span class="ds">v1 → v2 → v3 디자인 의사결정.</span><span class="ext">md</span></a>
+      <a href="SESSION_TIMELINE.md"><span class="fn">SESSION_TIMELINE.md</span><span class="ds">디자인 시스템이 만들어진 순서.</span><span class="ext">md</span></a>
+      <a href="HANDOFF_NEXT_CHAT.md"><span class="fn">HANDOFF_NEXT_CHAT.md</span><span class="ds">이전 디자인 세션의 마지막 상태.</span><span class="ext">md</span></a>
+      <a href="README.md"><span class="fn">README.md</span><span class="ds">전체 개요 · 화면 스펙 · 토큰 · 구현 가이드.</span><span class="ext">md</span></a>
+      <a href="SKILL.md"><span class="fn">SKILL.md</span><span class="ds">한 페이지 요약 — 10 브랜드 규칙.</span><span class="ext">md</span></a>
+      <a href="design-system/DESIGN_TOKENS.md"><span class="fn">design-system/DESIGN_TOKENS.md</span><span class="ds">Tailwind-ready 토큰.</span><span class="ext">md</span></a>
+      <a href="design-system/COMPONENT_INVENTORY.md"><span class="fn">design-system/COMPONENT_INVENTORY.md</span><span class="ds">47 재사용 컴포넌트 스펙.</span><span class="ext">md</span></a>
+      <a href="design-system/SAFEGUARDS.md"><span class="fn">design-system/SAFEGUARDS.md</span><span class="ds">안전 가드레일 (부상·오탐·AI 과신).</span><span class="ext">md</span></a>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head"><span class="no"><b>§5</b> · REPO</span><h2>저장소 내 다른 산출물</h2></div>
+    <div class="grid">
+      <a class="card" href="dashboard/index.html"><p class="k">status</p><p class="t">SPEC 현황 대시보드</p><p class="d">안전 체인 · SPEC 수용 상태 · 런타임 증거 · 이슈 총괄.</p><span class="arrow">→</span></a>
+      <a class="card" href="design-v3/index.html"><p class="k">static</p><p class="t">design-v3 정적 화면</p><p class="d">SPEC 바인딩 표가 붙은 정적 재작성판 4화면.</p><span class="arrow">→</span></a>
+      <a class="card" href="designs/README.md"><p class="k">v2 hi-fi</p><p class="t">designs/ 17화면</p><p class="d">Landing~Settings + Sprint 1·2 hi-fi 정적 화면.</p><span class="arrow">→</span></a>
+    </div>
+  </section>
+
+  <footer>
+    <p>TRAINORACLE · Scientific Minimalism — Tufte × Linear + Field Journal</p>
+    <p>v1 / v2 원본 아카이브는 <span class="mono">genspark_ai_developer</span> 브랜치 <span class="mono">_archive_v1v2/</span> 에 보존됨 · 신규 결정은 모두 v3 기준</p>
+    <p>"This tool helps the coach think — it does not replace the coach."</p>
+  </footer>
+
+</div>
+</body>
+</html>

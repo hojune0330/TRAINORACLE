@@ -37,81 +37,17 @@
 --unc:   #6B3FB0;  /* uncertainty (judgment unclear) */
 ```
 
-### 1.4 Energy systems (4-tier intensity)
-
-> **변경 이력 (정리본 §7.3 / Q1 결정 반영)**: 이전 규칙은 "도트·underline에만 사용, 배경 금지"였다.
-> 현재 규칙은 **컨텍스트별 4단계 강도**로 변경됨. 즉시 인지가 필요한 곳에선 색 면적을 키우고,
-> 본문 안에선 도트·underline만 유지한다. 자세한 사용 규칙은 `VISUALIZATION_SYSTEM.md` §3 참조.
-
-#### Tier 별 hex (정본)
-
-| System | Code | Mark | Strong (T1) | Mid (T2) | Subtle (T3, text) | Wash (T4, 5%) |
-|---|---|---|---|---|---|---|
-| BASE Z1–Z2 | BA | ● | `#2A6396` | `#4A8FC7` | `#1D4E75` | `#E8F0F7` |
-| LT Z3–Z4 | LT | ● | `#8A7818` | `#B8A024` | `#7A6A1A` | `#F4F0DB` |
-| VO2 Z5 | V2 | ● | `#9E5A14` | `#C7761C` | `#8A4A1C` | `#F7E9D9` |
-| GLY Z6 | GL | ● | `#8E2421` | `#B8332E` | `#8A2A2A` | `#F2DAD8` |
-| ATP Z7 | AP | ● | `#5A2D8A` | `#7A3FB5` | `#5A2F8A` | `#EBE0F5` |
-| REST | RE | ● | `#4A4A45` | `#7A7A70` | `#5A5A55` | `#EFEEEA` |
-
-**MIXED(MX)**: 한 세션이 두 시스템에 걸칠 때 — 별도 색 대신 **두 시스템의 줄무늬 또는 50:50 분할**로 표현. 시각화 시스템에서 추후 검토 (Q5 보류 항목).
-
-#### CSS variables
+### 1.4 Energy systems (dot/underline ONLY — never as background)
 ```css
-/* Tier 1 — Strong (즉시 인지 — Calendar 셀, Session card 좌측 4–6px 컬러바, hero 등) */
---e-base-strong: #2A6396; --e-lt-strong: #8A7818; --e-vo2-strong: #9E5A14;
---e-gly-strong:  #8E2421; --e-atp-strong: #5A2D8A; --e-rest-strong: #4A4A45;
-
-/* Tier 2 — Mid (분석 차트 — line, bar, distribution stack) */
---e-base-mid:    #4A8FC7; --e-lt-mid:    #B8A024; --e-vo2-mid:    #C7761C;
---e-gly-mid:     #B8332E; --e-atp-mid:   #7A3FB5; --e-rest-mid:   #7A7A70;
-
-/* Tier 3 — Subtle (본문 안 라벨 — 점·코드·underline 색) */
---e-base-text:   #1D4E75; --e-lt-text:   #7A6A1A; --e-vo2-text:   #8A4A1C;
---e-gly-text:    #8A2A2A; --e-atp-text:  #5A2F8A; --e-rest-text:  #5A5A55;
-
-/* Tier 4 — Wash (선택 상태, 배경 힌트 — 5% 톤) */
---e-base-wash:   #E8F0F7; --e-lt-wash:   #F4F0DB; --e-vo2-wash:   #F7E9D9;
---e-gly-wash:    #F2DAD8; --e-atp-wash:  #EBE0F5; --e-rest-wash:  #EFEEEA;
-
-/* 하위 호환 — 기존 코드용 별칭 (mid와 동일) */
---e-base: var(--e-base-mid); --e-lt:  var(--e-lt-mid);  --e-vo2: var(--e-vo2-mid);
---e-gly:  var(--e-gly-mid);  --e-atp: var(--e-atp-mid); --e-rest:var(--e-rest-mid);
+--e-base:  #4A8FC7;  /* Z1-Z2 Aerobic base */
+--e-lt:    #B8A024;  /* Z3-Z4 Lactate Threshold */
+--e-vo2:   #C7761C;  /* Z5 VO2max */
+--e-gly:   #B8332E;  /* Z6 Glycolytic */
+--e-atp:   #7A3FB5;  /* Z7 ATP-PC */
+--e-rest:  #7A7A70;  /* Recovery / off */
 ```
 
-#### 사용 규칙 요약 (자세한 건 VISUALIZATION_SYSTEM.md §3)
-
-| Tier | 사용처 | 색 면적 | 함께 표시 |
-|---|---|---|---|
-| **T1 Strong** | Calendar 셀, Session card 좌측 4–6px 컬러바, hero 영역, heatmap 셀, energy stack bar | 큼 | 2자 코드 의무 |
-| **T2 Mid** | line/bar/density 차트의 데이터 레이어 | 중 | legend에 코드 |
-| **T3 Subtle** | 본문 안 inline tag, mini chip, footnote | 매우 작음 (점 7px + underline 1.5px) | 코드 의무 |
-| **T4 Wash** | 선택 상태, 오늘 셀 highlight, 컨텍스트 wash | 배경 (5%) | 본문 텍스트는 ink |
-
-**금지**:
-- 채도 더 높임 (Strong 톤이 상한)
-- gradient/glow
-- T1과 T4를 같은 영역에서 동시에 사용 (둘 중 하나만)
-- 코드 미표시 (색만으로 분류 시도 금지 — Q6 결정: 3중 인코딩 의무, 단 컴팩트 모드에선 단계적 노출 허용)
-
-### 1.5 Color scheme — Light only (원칙)
-
-> **결정 (2026-04-29)**: TRAINORACLE은 **다크 모드를 지원하지 않는다**.
-> 자세한 근거는 `VISUALIZATION_SYSTEM.md §13.4` 참조.
-
-**적용**:
-- 모든 페이지에 `<meta name="color-scheme" content="light">` 명시
-- CSS의 `prefers-color-scheme: dark` 미디어 쿼리 사용 금지
-- 시스템 다크 추종 비활성화 — 사용자가 OS를 다크 모드로 사용해도 본 앱은 라이트 유지
-- 모든 토큰 hex는 **흰 배경 (#FAFAF7) 기준 1세트만** 운영
-
-**근거 요약**:
-- Tufte × Linear 시각 톤은 종이·논문의 밝은 배경 + 잉크 대비 전제
-- 4-tier × 6 시스템 = 24색을 다크 보정으로 두 번 만들면 토큰 관리 부담 ×2
-- 차트 SVG stroke·fill 일관성 유지 비용 높음
-- 화면 밝기 조절로 야간 사용 부담 충분히 완화
-
-**예외**: 향후 사용자 설문에서 다크 모드 요청 ≥ 30% 시 재검토.
+**규칙: 이 색들은 7px 도트 + 1.5px underline에만 사용. 배경 색으로 사용 금지.**
 
 ---
 
@@ -299,13 +235,12 @@ export default {
         err:       '#A11F1F',
         info:      '#1D4ED8',
         unc:       '#6B3FB0',
-        // Energy systems — 4 tier (strong / mid / text / wash)
-        'e-base-strong': '#2A6396', 'e-base': '#4A8FC7', 'e-base-text': '#1D4E75', 'e-base-wash': '#E8F0F7',
-        'e-lt-strong':   '#8A7818', 'e-lt':   '#B8A024', 'e-lt-text':   '#7A6A1A', 'e-lt-wash':   '#F4F0DB',
-        'e-vo2-strong':  '#9E5A14', 'e-vo2':  '#C7761C', 'e-vo2-text':  '#8A4A1C', 'e-vo2-wash':  '#F7E9D9',
-        'e-gly-strong':  '#8E2421', 'e-gly':  '#B8332E', 'e-gly-text':  '#8A2A2A', 'e-gly-wash':  '#F2DAD8',
-        'e-atp-strong':  '#5A2D8A', 'e-atp':  '#7A3FB5', 'e-atp-text':  '#5A2F8A', 'e-atp-wash':  '#EBE0F5',
-        'e-rest-strong': '#4A4A45', 'e-rest': '#7A7A70', 'e-rest-text': '#5A5A55', 'e-rest-wash': '#EFEEEA',
+        'e-base':  '#4A8FC7',
+        'e-lt':    '#B8A024',
+        'e-vo2':   '#C7761C',
+        'e-gly':   '#B8332E',
+        'e-atp':   '#7A3FB5',
+        'e-rest':  '#7A7A70',
       },
       fontFamily: {
         sans: ['Inter', 'Pretendard Variable', 'ui-sans-serif', 'system-ui', 'sans-serif'],
@@ -363,7 +298,7 @@ export default {
 }
 
 @layer components {
-  /* Energy tag — Tier 3 (Subtle, 본문 안 inline) */
+  /* Energy tag */
   .etag {
     @apply inline-flex items-center gap-1.5;
   }
@@ -376,26 +311,6 @@ export default {
   .etag .name {
     @apply font-sans text-[12.5px] font-medium pb-px border-b-[1.5px];
   }
-
-  /* Energy strip — Tier 1 (Strong, 좌측 4–6px 컬러바, Calendar 셀 등) */
-  .estrip {
-    /* width: 4–6px, background: var(--e-{system}-strong) — 인라인 또는 modifier로 지정 */
-    @apply w-[4px] flex-shrink-0;
-  }
-  .estrip-base { background: var(--e-base-strong); }
-  .estrip-lt   { background: var(--e-lt-strong); }
-  .estrip-vo2  { background: var(--e-vo2-strong); }
-  .estrip-gly  { background: var(--e-gly-strong); }
-  .estrip-atp  { background: var(--e-atp-strong); }
-  .estrip-rest { background: var(--e-rest-strong); }
-
-  /* Energy wash — Tier 4 (선택 상태, 컨텍스트 배경 5%) */
-  .ewash-base { background: var(--e-base-wash); }
-  .ewash-lt   { background: var(--e-lt-wash); }
-  .ewash-vo2  { background: var(--e-vo2-wash); }
-  .ewash-gly  { background: var(--e-gly-wash); }
-  .ewash-atp  { background: var(--e-atp-wash); }
-  .ewash-rest { background: var(--e-rest-wash); }
 
   /* Verdict chip (AI) */
   .verdict {
@@ -418,8 +333,7 @@ export default {
 - [ ] 그림자 없음 (또는 hairline 수준만)?
 - [ ] 폰트는 Inter / Pretendard / JetBrains Mono 만?
 - [ ] Serif 폰트 없음?
-- [ ] 에너지 시스템 색을 사용한다면 **Tier 1–4 중 어디에 해당하는지 명시**?
-- [ ] 색을 쓰는 곳에 **2자 코드(BA/LT/V2/GL/AP/RE)도 함께 표시**?
+- [ ] 채도 높은 컬러 배경 박스 없음?
 - [ ] 숫자에 `tabular-nums` 적용?
 - [ ] 모노스페이스 라벨에 `tracking-wider-2` 또는 그 이상?
 - [ ] 터치 타깃 ≥ 44px?

@@ -1,0 +1,861 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>TRAINORACLE — Sprint 1 · 민지의 하루</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+<link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css" rel="stylesheet" />
+<style>
+  :root{
+    --bg:#FAFAF7;--surface:#FFFFFF;--surface-2:#F4F3EE;
+    --ink:#0E1412;--ink-2:#2B3330;--ink-3:#5F6965;--ink-4:#8F9894;
+    --line:#D9D6CE;--line-2:#BFBBB0;--hair:#E8E6DF;
+    --brand:#0D5F5A;--brand-ink:#07302E;--brand-wash:#E6F0EE;
+    --ok:#1F7A3A;--ok-wash:#E6F2E9;
+    --warn:#B4530C;--warn-wash:#FAEAD9;
+    --err:#A11F1F;--err-wash:#F7E0E0;
+    --info:#1D4ED8;--info-wash:#E6EBF8;
+    --unc:#6B3FB0;--unc-wash:#EFE8F7;
+
+    /* Energy systems — 4 tiers */
+    --e-base-strong:#2A6396; --e-base-mid:#4A8FC7; --e-base-text:#1D4E75; --e-base-wash:#E8F0F7;
+    --e-lt-strong:  #8A7818; --e-lt-mid:  #B8A024; --e-lt-text:  #7A6A1A; --e-lt-wash:  #F4F0DB;
+    --e-vo2-strong: #9E5A14; --e-vo2-mid: #C7761C; --e-vo2-text: #8A4A1C; --e-vo2-wash: #F7E9D9;
+    --e-gly-strong: #8E2421; --e-gly-mid: #B8332E; --e-gly-text: #8A2A2A; --e-gly-wash: #F2DAD8;
+    --e-atp-strong: #5A2D8A; --e-atp-mid: #7A3FB5; --e-atp-text: #5A2F8A; --e-atp-wash: #EBE0F5;
+    --e-rest-strong:#4A4A45; --e-rest-mid:#7A7A70; --e-rest-text:#5A5A55; --e-rest-wash:#EFEEEA;
+
+    --sans:"Inter","Pretendard Variable",ui-sans-serif,system-ui,sans-serif;
+    --mono:"JetBrains Mono",ui-monospace,SFMono-Regular,monospace;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;background:#E4E2DA;color:var(--ink);font-family:var(--sans);font-size:14.5px;line-height:1.55;-webkit-font-smoothing:antialiased;font-feature-settings:"ss01","cv11";}
+  .mono{font-family:var(--mono);font-variant-numeric:tabular-nums;}
+
+  /* === SHELL === */
+  .shell{padding:32px 24px 64px;}
+  .shell-top{max-width:1440px;margin:0 auto 28px;display:flex;align-items:baseline;gap:18px;flex-wrap:wrap;padding-bottom:18px;border-bottom:1px solid var(--line-2);}
+  .shell-top h1{margin:0;font-size:26px;font-weight:500;letter-spacing:-0.025em;}
+  .shell-top h1 .em{font-style:italic;color:var(--brand);font-weight:400;}
+  .shell-top .meta{font-family:var(--mono);font-size:11px;color:var(--ink-3);letter-spacing:.04em;}
+  .shell-top .meta b{color:var(--ink);font-weight:500;}
+  .shell-top .leg{margin-left:auto;display:flex;gap:14px;font-family:var(--mono);font-size:10.5px;color:var(--ink-3);letter-spacing:.06em;text-transform:uppercase;font-weight:600;}
+  .shell-top .leg b{color:var(--ink);}
+  .shell-top .leg .lg{display:flex;align-items:center;gap:6px;}
+  .shell-top .leg .lg .sw{width:8px;height:8px;}
+  .shell-top .leg .lg .sw.iden{background:var(--brand);}
+  .shell-top .leg .lg .sw.vis{background:var(--e-vo2-mid);}
+  .shell-top .leg .lg .sw.trust{background:var(--info);}
+  .shell-top .leg .lg .sw.fb{background:var(--ok);}
+
+  .grid{max-width:1440px;margin:0 auto;display:grid;grid-template-columns:repeat(3, 1fr);gap:32px 28px;}
+  @media(max-width:1100px){.grid{grid-template-columns:1fr 1fr;}}
+  @media(max-width:760px){.grid{grid-template-columns:1fr;}}
+
+  .cut{display:flex;flex-direction:column;}
+  .cut-head{margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid var(--ink);}
+  .cut-head .num{font-family:var(--mono);font-size:11px;color:var(--ink-3);letter-spacing:.14em;text-transform:uppercase;font-weight:600;}
+  .cut-head .num b{color:var(--ink);}
+  .cut-head h2{margin:4px 0 6px;font-size:18px;font-weight:500;letter-spacing:-0.015em;line-height:1.2;}
+  .cut-head .ts{font-family:var(--mono);font-size:11px;color:var(--ink-3);letter-spacing:.04em;}
+  .cut-head .sys{margin-top:10px;display:flex;flex-wrap:wrap;gap:5px;}
+  .cut-head .sys span{font-family:var(--mono);font-size:9px;letter-spacing:.1em;text-transform:uppercase;font-weight:600;padding:2px 6px;border:1px solid;}
+  .cut-head .sys .iden{color:var(--brand);border-color:var(--brand);}
+  .cut-head .sys .vis{color:var(--e-vo2-text);border-color:var(--e-vo2-mid);}
+  .cut-head .sys .trust{color:var(--info);border-color:var(--info);}
+  .cut-head .sys .fb{color:var(--ok);border-color:var(--ok);}
+
+  /* mobile frame for each cut */
+  .mf{background:#0E1412;padding:8px;align-self:center;}
+  .mfi{background:var(--bg);width:340px;height:640px;display:flex;flex-direction:column;overflow:hidden;position:relative;}
+  .stat{height:24px;display:flex;align-items:center;justify-content:space-between;padding:4px 18px 0;font-size:11.5px;font-weight:600;flex-shrink:0;}
+  .stat .r{display:flex;gap:5px;align-items:center;}
+  .stat svg{display:block;}
+
+  /* note panel beside each */
+  .cut-note{margin-top:14px;padding-top:12px;border-top:1px dashed var(--hair);font-family:var(--mono);font-size:10.5px;color:var(--ink-3);letter-spacing:.02em;line-height:1.6;}
+  .cut-note b{color:var(--ink);font-weight:500;}
+  .cut-note .row{display:grid;grid-template-columns:auto 1fr;gap:8px;padding:3px 0;}
+  .cut-note .tag{font-size:9px;letter-spacing:.14em;text-transform:uppercase;font-weight:600;}
+  .cut-note .tag.iden{color:var(--brand);}
+  .cut-note .tag.vis{color:var(--e-vo2-text);}
+  .cut-note .tag.trust{color:var(--info);}
+  .cut-note .tag.fb{color:var(--ok);}
+
+  /* === COMMON COMPONENTS === */
+  .greet{padding:18px 18px 16px;border-bottom:1px solid var(--line);}
+  .greet .who{font-family:var(--mono);font-size:10.5px;color:var(--ink-3);letter-spacing:.1em;text-transform:uppercase;font-weight:600;display:flex;align-items:baseline;gap:8px;}
+  .greet .who b{color:var(--ink);}
+  .greet .who .mode{margin-left:auto;font-family:var(--mono);font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3);border-bottom:1.5px solid;padding-bottom:1px;font-weight:600;}
+  .greet h3{margin:8px 0 0;font-size:22px;font-weight:500;letter-spacing:-0.025em;line-height:1.2;}
+  .greet h3 .em{font-style:italic;color:var(--brand);font-weight:400;}
+  .greet .narr{margin-top:6px;font-family:var(--mono);font-size:11px;color:var(--ink-3);letter-spacing:.02em;}
+  .greet .narr b{color:var(--ink);font-weight:500;}
+
+  /* memory chip — Identity signal */
+  .mchip{padding:8px 18px;background:var(--surface-2);border-bottom:1px solid var(--line);font-family:var(--mono);font-size:10px;color:var(--ink-3);letter-spacing:.04em;display:flex;align-items:center;gap:8px;flex-wrap:wrap;line-height:1.6;}
+  .mchip .lb{font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-4);font-weight:600;}
+  .mchip b{color:var(--ink);font-weight:500;}
+  .mchip .dot{display:inline-block;width:5px;height:5px;border-radius:50%;background:var(--brand);margin-right:5px;}
+
+  /* energy tag — strong (for cards) */
+  .etg{display:inline-flex;align-items:center;gap:6px;}
+  .etg .sw{width:8px;height:8px;flex-shrink:0;}
+  .etg .c{font-family:var(--mono);font-size:10.5px;font-weight:600;color:var(--ink);letter-spacing:.04em;}
+
+  /* Verdict + confidence (Trust core) */
+  .verdict{display:inline-flex;align-items:baseline;gap:8px;font-family:var(--mono);font-size:10px;letter-spacing:.12em;text-transform:uppercase;font-weight:600;}
+  .verdict .v{padding-bottom:1px;border-bottom:1.5px solid;}
+  .verdict .conf{color:var(--ink-3);font-size:9.5px;}
+  .verdict .conf b{color:var(--ink);font-weight:500;}
+  .verdict.unc .v{color:var(--unc);border-color:var(--unc);}
+  .verdict.recommend .v{color:var(--brand);border-color:var(--brand);}
+  .verdict.confirm .v{color:var(--ok);border-color:var(--ok);}
+
+  /* citation marks */
+  sup.cite{font-family:var(--mono);font-size:9px;color:var(--brand);font-weight:600;cursor:pointer;letter-spacing:.04em;margin:0 1px;}
+  sup.cite::before{content:"[";} sup.cite::after{content:"]";}
+
+  /* tier-specific source badge */
+  .src-tier{font-family:var(--mono);font-size:8.5px;letter-spacing:.1em;text-transform:uppercase;font-weight:700;padding:1px 4px;color:#fff;}
+  .src-tier.j{background:var(--ink);} /* Coach Jang note */
+  .src-tier.p{background:var(--brand);} /* Paper */
+  .src-tier.y{background:var(--info);} /* Your data */
+  .src-tier.c{background:var(--ink-3);} /* Cohort */
+
+  /* AI block (Trust + Identity) */
+  .ai{padding:14px 18px;border-left:2px solid var(--brand);background:transparent;}
+  .ai .head{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;margin-bottom:8px;}
+  .ai .who{font-family:var(--mono);font-size:9.5px;color:var(--brand);letter-spacing:.14em;text-transform:uppercase;font-weight:600;}
+  .ai .who::before{content:"●";margin-right:5px;}
+  .ai p{margin:0 0 8px;font-size:13.5px;line-height:1.55;letter-spacing:-0.005em;color:var(--ink);}
+  .ai p:last-child{margin-bottom:0;}
+  .ai p .k{font-family:var(--mono);font-size:12.5px;background:var(--surface-2);border:1px solid var(--line);padding:0 4px;}
+  .ai p .hi{background:linear-gradient(transparent 62%, rgba(13,95,90,.18) 62%);padding:0 1px;font-weight:500;}
+
+  /* Process trace expandable */
+  .ptrace{margin-top:10px;padding-top:8px;border-top:1px dashed var(--hair);font-family:var(--mono);font-size:10px;color:var(--ink-3);letter-spacing:.02em;}
+  .ptrace .lb{font-size:9px;letter-spacing:.14em;text-transform:uppercase;font-weight:600;color:var(--ink-3);margin-bottom:4px;display:flex;align-items:center;gap:6px;}
+  .ptrace .lb b{color:var(--ink);}
+  .ptrace .lb .ar{margin-left:auto;}
+  .ptrace ul{margin:4px 0 0 0;padding:0;list-style:none;}
+  .ptrace li{padding:2px 0;display:flex;align-items:baseline;gap:6px;}
+  .ptrace li::before{content:"·";color:var(--ink-4);}
+
+  /* Track record badge */
+  .trk{margin-top:8px;font-family:var(--mono);font-size:9.5px;color:var(--ink-3);letter-spacing:.04em;line-height:1.55;}
+  .trk b{color:var(--ink);font-weight:500;}
+
+  /* Session card — strong tier (vis tier 1) */
+  .scard{margin:12px 18px;border:1px solid var(--ink);position:relative;background:var(--surface);padding:14px 14px 14px 18px;}
+  .scard::before{content:"";position:absolute;left:0;top:0;bottom:0;width:5px;}
+  .scard.vo2::before{background:var(--e-vo2-mid);}
+  .scard.base::before{background:var(--e-base-mid);}
+  .scard.lt::before{background:var(--e-lt-mid);}
+  .scard.gly::before{background:var(--e-gly-mid);}
+  .scard.rest::before{background:var(--e-rest-mid);}
+  .scard .top{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;}
+  .scard .pill{font-family:var(--mono);font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;font-weight:600;padding:2px 6px;}
+  .scard.vo2 .pill{background:var(--e-vo2-wash);color:var(--e-vo2-text);}
+  .scard.base .pill{background:var(--e-base-wash);color:var(--e-base-text);}
+  .scard.lt .pill{background:var(--e-lt-wash);color:var(--e-lt-text);}
+  .scard.rest .pill{background:var(--e-rest-wash);color:var(--e-rest-text);}
+  .scard .main{font-family:var(--mono);font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;font-weight:600;background:var(--ink);color:var(--bg);padding:2px 6px;}
+  .scard .ts{margin-left:auto;font-family:var(--mono);font-size:10.5px;color:var(--ink-3);letter-spacing:.04em;}
+  .scard .ts b{color:var(--ink);font-weight:500;}
+  .scard h4{margin:6px 0 2px;font-size:15.5px;font-weight:500;letter-spacing:-0.015em;}
+  .scard .meta{font-family:var(--mono);font-size:11px;color:var(--ink-3);letter-spacing:.02em;}
+  .scard .meta b{color:var(--ink);font-weight:500;}
+  .scard .narr{margin-top:8px;padding-top:8px;border-top:1px dashed var(--hair);font-family:var(--mono);font-size:10.5px;color:var(--ink-3);line-height:1.5;letter-spacing:.02em;}
+  .scard .narr b{color:var(--ink);font-weight:500;}
+
+  /* Pace mini chart for result */
+  .pace-chart{margin-top:10px;}
+  .pace-chart .top-row{display:flex;justify-content:space-between;font-family:var(--mono);font-size:10px;color:var(--ink-3);margin-bottom:4px;letter-spacing:.04em;}
+  .pace-chart svg{display:block;width:100%;height:auto;}
+  .pace-chart .legend-row{display:flex;gap:14px;margin-top:6px;font-family:var(--mono);font-size:9.5px;color:var(--ink-3);letter-spacing:.04em;}
+  .pace-chart .lg{display:flex;align-items:center;gap:5px;}
+  .pace-chart .lg .swa{width:14px;height:2px;}
+
+  /* Lock screen / push */
+  .lockscreen{background:linear-gradient(180deg,#1a1f1d 0%,#0E1412 100%);color:#fff;height:100%;padding:60px 18px 30px;display:flex;flex-direction:column;}
+  .lockscreen .time{font-size:64px;font-weight:300;letter-spacing:-0.04em;line-height:1;margin-bottom:6px;}
+  .lockscreen .date{font-family:var(--mono);font-size:11px;color:rgba(255,255,255,.6);letter-spacing:.14em;text-transform:uppercase;font-weight:500;margin-bottom:36px;}
+  .lockscreen .push{margin-top:auto;background:rgba(255,255,255,.1);backdrop-filter:blur(10px);padding:14px 14px;border-left:2px solid var(--brand);}
+  .lockscreen .push .src{font-family:var(--mono);font-size:9.5px;color:rgba(255,255,255,.65);letter-spacing:.14em;text-transform:uppercase;font-weight:600;margin-bottom:6px;display:flex;align-items:center;gap:8px;}
+  .lockscreen .push .src::before{content:"●";color:var(--brand);}
+  .lockscreen .push .src .ts{margin-left:auto;color:rgba(255,255,255,.5);}
+  .lockscreen .push .t{font-size:14px;font-weight:500;line-height:1.35;letter-spacing:-0.005em;color:#fff;margin-bottom:4px;}
+  .lockscreen .push .d{font-size:12.5px;color:rgba(255,255,255,.7);line-height:1.5;}
+  .lockscreen .push .d b{color:#fff;font-weight:500;}
+
+  /* Check-in body diagram */
+  .ci-body{padding:18px;display:grid;grid-template-columns:120px 1fr;gap:14px;align-items:start;}
+  .ci-body svg{width:100%;display:block;}
+  .ci-body .area{fill:transparent;stroke:var(--line-2);stroke-width:1;}
+  .ci-body .area.on{fill:rgba(180,83,12,.4);stroke:var(--warn);stroke-width:2;}
+  .ci-body .info{font-family:var(--mono);font-size:10.5px;color:var(--ink);}
+  .ci-body .info .lb{font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3);font-weight:600;margin-bottom:4px;}
+  .ci-body .info ul{margin:0 0 14px;padding:0;list-style:none;}
+  .ci-body .info li{padding:3px 0;font-size:11px;}
+  .ci-body .info li b{color:var(--warn);font-weight:500;}
+
+  .ci-rpe{padding:0 18px 14px;}
+  .ci-rpe .lb{font-family:var(--mono);font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3);font-weight:600;margin-bottom:6px;}
+  .ci-rpe .scale{display:grid;grid-template-columns:repeat(10,1fr);border:1px solid var(--ink);}
+  .ci-rpe .scale .c{padding:9px 0;border-right:1px solid var(--line);text-align:center;font-family:var(--mono);font-size:11.5px;color:var(--ink-2);font-weight:500;}
+  .ci-rpe .scale .c:last-child{border-right:0;}
+  .ci-rpe .scale .c.on{background:var(--ink);color:var(--bg);font-weight:600;}
+  .ci-rpe .ends{display:flex;justify-content:space-between;font-family:var(--mono);font-size:9px;color:var(--ink-3);margin-top:4px;letter-spacing:.04em;text-transform:uppercase;}
+
+  /* AI chat scene */
+  .chat-ctx{padding:8px 18px;background:var(--surface-2);border-bottom:1px solid var(--line);font-family:var(--mono);font-size:10px;color:var(--ink-3);letter-spacing:.04em;line-height:1.5;}
+  .chat-ctx .lb{font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-4);font-weight:600;}
+  .chat-ctx b{color:var(--ink);font-weight:500;}
+
+  .ubody{display:flex;justify-content:flex-end;padding:14px 18px 0;}
+  .ubody .mb{background:var(--ink);color:var(--bg);max-width:70%;padding:10px 12px;font-size:13px;line-height:1.45;letter-spacing:-0.005em;}
+  .ubody .ts{font-family:var(--mono);font-size:9px;color:var(--ink-4);text-align:right;margin-top:4px;letter-spacing:.04em;}
+
+  /* Result hero (cut 5) */
+  .result-hero{padding:18px;border-bottom:1px solid var(--ink);}
+  .result-hero .lbl{font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--brand);font-weight:600;margin-bottom:4px;}
+  .result-hero .lbl::before{content:"●";margin-right:6px;}
+  .result-hero h4{margin:0;font-size:18px;font-weight:500;letter-spacing:-0.015em;line-height:1.2;}
+  .result-hero h4 .em{font-style:italic;color:var(--brand);font-weight:400;}
+  .result-hero .nar{margin-top:6px;font-family:var(--mono);font-size:11px;color:var(--ink-3);letter-spacing:.02em;line-height:1.55;}
+  .result-hero .nar b{color:var(--ink);font-weight:500;}
+
+  .result-grid{display:grid;grid-template-columns:1fr 1fr;border-top:1px solid var(--hair);border-bottom:1px solid var(--hair);font-family:var(--mono);}
+  .result-grid .it{padding:10px 14px;border-right:1px solid var(--hair);border-bottom:1px solid var(--hair);}
+  .result-grid .it:nth-child(2n){border-right:0;}
+  .result-grid .it:nth-last-child(-n+2){border-bottom:0;}
+  .result-grid .l{font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3);font-weight:600;}
+  .result-grid .v{font-size:18px;font-weight:500;color:var(--ink);letter-spacing:-0.02em;margin-top:3px;}
+  .result-grid .v.ok{color:var(--ok);} .result-grid .v.warn{color:var(--warn);}
+  .result-grid .vs{font-size:10px;color:var(--ink-3);margin-top:2px;letter-spacing:.04em;}
+  .result-grid .vs b{color:var(--ink);font-weight:500;}
+
+  /* Personal archive */
+  .arc-head{padding:18px 18px 14px;}
+  .arc-head .who{font-family:var(--mono);font-size:10.5px;color:var(--ink-3);letter-spacing:.1em;text-transform:uppercase;font-weight:600;}
+  .arc-head .who b{color:var(--ink);}
+  .arc-head h3{margin:6px 0 0;font-size:20px;font-weight:500;letter-spacing:-0.02em;line-height:1.2;}
+  .arc-head h3 .em{font-style:italic;color:var(--brand);font-weight:400;}
+
+  .arc-tl{padding:0 18px 14px;}
+  .arc-tl .ti{display:grid;grid-template-columns:60px 1fr;gap:12px;padding:10px 0;border-bottom:1px solid var(--hair);align-items:start;}
+  .arc-tl .ti:last-child{border-bottom:0;}
+  .arc-tl .ti .when{font-family:var(--mono);font-size:10.5px;color:var(--ink-3);letter-spacing:.04em;text-align:right;line-height:1.4;}
+  .arc-tl .ti .when b{display:block;color:var(--ink);font-size:11.5px;font-weight:500;}
+  .arc-tl .ti .what{font-size:13px;line-height:1.5;letter-spacing:-0.005em;}
+  .arc-tl .ti .what b{font-weight:500;}
+  .arc-tl .ti .what .k{font-family:var(--mono);font-size:11.5px;background:var(--surface-2);border:1px solid var(--line);padding:0 4px;}
+  .arc-tl .ti .what .e-vo2{display:inline-flex;align-items:center;gap:4px;font-family:var(--mono);font-size:10.5px;letter-spacing:.04em;color:var(--e-vo2-text);font-weight:600;}
+  .arc-tl .ti .what .e-vo2::before{content:"";display:inline-block;width:7px;height:7px;background:var(--e-vo2-mid);}
+  .arc-tl .ti .what .e-base{display:inline-flex;align-items:center;gap:4px;font-family:var(--mono);font-size:10.5px;letter-spacing:.04em;color:var(--e-base-text);font-weight:600;}
+  .arc-tl .ti .what .e-base::before{content:"";display:inline-block;width:7px;height:7px;background:var(--e-base-mid);}
+
+  /* Year-ago module */
+  .yago{margin:0 18px 14px;padding:12px 14px;border:1px solid var(--line);background:var(--surface-2);}
+  .yago .lb{font-family:var(--mono);font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3);font-weight:600;margin-bottom:6px;}
+  .yago .v{font-size:13.5px;font-weight:500;letter-spacing:-0.005em;line-height:1.4;}
+  .yago .v b{font-weight:600;}
+  .yago .vs{font-family:var(--mono);font-size:11px;color:var(--ink-3);margin-top:4px;letter-spacing:.02em;}
+  .yago .vs b{color:var(--ink);font-weight:500;}
+
+  /* Mode chip */
+  .mode{font-family:var(--mono);font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;font-weight:600;padding:2px 6px;border:1px solid;display:inline-flex;align-items:center;gap:5px;}
+  .mode.normal{color:var(--ink);border-color:var(--ink);}
+  .mode.caution{color:var(--warn);border-color:var(--warn);background:var(--warn-wash);}
+  .mode.normal::before{content:"";width:5px;height:5px;background:var(--brand);}
+  .mode.caution::before{content:"⚠";font-size:11px;}
+
+  /* divider hairline label */
+  .dl{padding:6px 18px;font-family:var(--mono);font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3);font-weight:600;background:var(--surface-2);border-top:1px solid var(--hair);border-bottom:1px solid var(--hair);}
+  .dl b{color:var(--ink);}
+
+  /* footer summary */
+  .footer{max-width:1440px;margin:60px auto 0;padding:32px 0 0;border-top:1px solid var(--line-2);}
+  .footer h2{margin:0 0 18px;font-size:18px;font-weight:500;letter-spacing:-0.015em;}
+  .footer .grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:24px;}
+  @media(max-width:900px){.footer .grid4{grid-template-columns:1fr 1fr;}}
+  .footer .sys-card{padding:18px 0;border-top:2px solid;}
+  .footer .sys-card.iden{border-color:var(--brand);}
+  .footer .sys-card.vis{border-color:var(--e-vo2-mid);}
+  .footer .sys-card.trust{border-color:var(--info);}
+  .footer .sys-card.fb{border-color:var(--ok);}
+  .footer .sys-card .num{font-family:var(--mono);font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;font-weight:600;}
+  .footer .sys-card.iden .num{color:var(--brand);}
+  .footer .sys-card.vis .num{color:var(--e-vo2-text);}
+  .footer .sys-card.trust .num{color:var(--info);}
+  .footer .sys-card.fb .num{color:var(--ok);}
+  .footer .sys-card h3{margin:6px 0 8px;font-size:16px;font-weight:500;letter-spacing:-0.005em;}
+  .footer .sys-card p{margin:0;font-size:13px;line-height:1.55;color:var(--ink-2);letter-spacing:-0.005em;}
+  .footer .sys-card ul{margin:8px 0 0;padding:0;list-style:none;font-family:var(--mono);font-size:10.5px;color:var(--ink-3);letter-spacing:.02em;line-height:1.6;}
+  .footer .sys-card li{padding:2px 0;}
+  .footer .sys-card li::before{content:"· ";color:var(--ink-4);}
+
+</style>
+</head>
+<body>
+
+<div class="shell">
+  <div class="shell-top">
+    <h1>Sprint <span class="em">1</span> · 민지의 하루</h1>
+    <span class="meta">4 시스템이 한 사용자의 하루에 어떻게 작동하는지 · <b>6 cuts</b></span>
+    <div class="leg">
+      <span class="lg"><span class="sw iden"></span><b>1</b> Identity</span>
+      <span class="lg"><span class="sw vis"></span><b>2</b> Visual</span>
+      <span class="lg"><span class="sw trust"></span><b>3</b> Trust</span>
+      <span class="lg"><span class="sw fb"></span><b>4</b> Feedback</span>
+    </div>
+  </div>
+
+  <div class="grid">
+
+    <!-- ============ CUT 1 — 06:30 LOCK SCREEN ============ -->
+    <div class="cut">
+      <div class="cut-head">
+        <div class="num">CUT <b>1 / 6</b></div>
+        <h2>알람 — 잠금화면 푸시</h2>
+        <div class="ts">화 · 4월 22일 · 06:30</div>
+        <div class="sys">
+          <span class="iden">Identity</span>
+          <span class="fb">Feedback · Daily</span>
+        </div>
+      </div>
+
+      <div class="mf">
+        <div class="mfi">
+          <div class="lockscreen">
+            <div class="time">6:30</div>
+            <div class="date">화 · 4월 22일</div>
+
+            <div class="push">
+              <div class="src">장호준 AI<span class="ts mono">방금 전</span></div>
+              <div class="t">민지님, 화요일 아침입니다.</div>
+              <div class="d">오늘 PM, <b>VO2 6×1000m</b> 예정. 어제 회복 신호 정상. <b>8시간 23분</b> 후 시작.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="cut-note">
+        <div class="row"><span class="tag iden">IDEN</span><span><b>호명</b> "민지님" + <b>AI 시그니처</b> "장호준 AI"가 항상 보임. AI는 사람 이름을 가진 일관된 캐릭터.</span></div>
+        <div class="row"><span class="tag fb">FB</span><span><b>Daily push</b> — 매일 06:00 자동. 오늘 + 어제 한 줄 요약. 격려 메시지 X, 사실만.</span></div>
+      </div>
+    </div>
+
+    <!-- ============ CUT 2 — 06:32 TODAY ============ -->
+    <div class="cut">
+      <div class="cut-head">
+        <div class="num">CUT <b>2 / 6</b></div>
+        <h2>앱 진입 — Today</h2>
+        <div class="ts">화 · 4월 22일 · 06:32</div>
+        <div class="sys">
+          <span class="iden">Identity</span>
+          <span class="vis">Visual</span>
+          <span class="trust">Trust</span>
+          <span class="fb">Feedback · Daily</span>
+        </div>
+      </div>
+
+      <div class="mf">
+        <div class="mfi">
+          <div class="stat mono">
+            <span>9:41</span>
+            <span class="r"><svg width="22" height="10" viewBox="0 0 22 10"><rect x="0" y="1" width="18" height="8" fill="none" stroke="currentColor"/><rect x="2" y="3" width="14" height="4"/></svg></span>
+          </div>
+
+          <div class="greet">
+            <div class="who">
+              <span><b>민지</b>님</span>
+              <span class="mode mode-inline" style="margin-left:auto;font-size:9px;letter-spacing:.14em;color:var(--ink);border-bottom:1.5px solid var(--ink);padding-bottom:1px;font-weight:600;text-transform:uppercase;">NORMAL</span>
+            </div>
+            <h3>좋은 아침이에요,<br/><span class="em">화요일</span> 06:32.</h3>
+            <div class="narr"><b>Cycle 7 · Day 5/9.5</b> · 오늘 PM <b>MAIN</b></div>
+          </div>
+
+          <div class="mchip">
+            <span class="lb">컨텍스트</span>
+            <span><span class="dot"></span>어제 <b>Z2 5.8km</b> 완료</span>
+            <span>· 14d RPE <b>5.8</b></span>
+            <span>· CK <b style="color:var(--warn);">+18%</b></span>
+          </div>
+
+          <!-- Yesterday result -->
+          <div class="dl"><b>어제 · 4.21 월</b> · 완료</div>
+          <div class="scard base">
+            <div class="top">
+              <span class="pill">BA Z2</span>
+              <span class="ts mono">완료 <b>05:45/km</b></span>
+            </div>
+            <h4>Easy jog 40 min</h4>
+            <div class="meta">5.8 km · HR <b>138 avg</b> · drift <b style="color:var(--ok);">2.1%</b></div>
+            <div class="narr">평소 페이스. <b>HR drift 2.1%</b>, 14d 평균 <b>2.4%</b> 안쪽.</div>
+          </div>
+
+          <!-- Today MAIN -->
+          <div class="dl"><b>오늘 · 4.22 화</b> · 8h 23m 후</div>
+          <div class="scard vo2">
+            <div class="top">
+              <span class="pill">V2 Z5</span>
+              <span class="main">※ MAIN</span>
+              <span class="ts mono">PM <b>20:00</b></span>
+            </div>
+            <h4>VO2 인터벌 6×1000m @ 3'20"</h4>
+            <div class="meta">10.4 km · HR <b>178–186</b> · TSS <b>124</b></div>
+          </div>
+
+          <!-- AI brief -->
+          <div class="ai" style="margin:8px 0 0;border-top:1px solid var(--hair);padding-top:14px;">
+            <div class="head">
+              <span class="who">장호준 AI · 오늘의 브리프</span>
+              <span class="verdict recommend"><span class="v">권장</span><span class="conf">신뢰도 <b>89%</b></span></span>
+            </div>
+            <p>민지, 오늘 페이스는 <span class="k">3'20"/km</span>. 마지막 2 rep에서 drift <span class="k">±3"</span> 이내라면 다음 사이클 정상 복귀<sup class="cite">1</sup>.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="cut-note">
+        <div class="row"><span class="tag iden">IDEN</span><span><b>호명 + 메모리 chip</b>으로 "AI가 나를 안다" 신호. <b>Mode chip</b> NORMAL — 위기 아님 표시.</span></div>
+        <div class="row"><span class="tag vis">VIS</span><span><b>Strong tier 색상</b> — 좌측 5px 컬러바 + pill 배경 wash. 사이클 분류 1초 인식.</span></div>
+        <div class="row"><span class="tag trust">TR</span><span>AI 발언에 <b>verdict + confidence</b> + 인용 [1]. 모든 추천에 출처 클릭 가능.</span></div>
+        <div class="row"><span class="tag fb">FB</span><span><b>Daily brief</b> — 어제 결과 narrative + 오늘 단서. 매일 06:00 자동.</span></div>
+      </div>
+    </div>
+
+    <!-- ============ CUT 3 — 06:35 CHECK-IN ============ -->
+    <div class="cut">
+      <div class="cut-head">
+        <div class="num">CUT <b>3 / 6</b></div>
+        <h2>일일 체크인 — 통증 입력</h2>
+        <div class="ts">화 · 4월 22일 · 06:35</div>
+        <div class="sys">
+          <span class="iden">Identity</span>
+          <span class="vis">Visual</span>
+          <span class="fb">Feedback · Realtime</span>
+        </div>
+      </div>
+
+      <div class="mf">
+        <div class="mfi">
+          <div class="stat mono">
+            <span>9:41</span>
+            <span class="r"><svg width="22" height="10" viewBox="0 0 22 10"><rect x="0" y="1" width="18" height="8" fill="none" stroke="currentColor"/><rect x="2" y="3" width="14" height="4"/></svg></span>
+          </div>
+
+          <div class="greet">
+            <div class="who">
+              <span><b>일일 체크인</b></span>
+              <span class="mode caution" style="margin-left:auto;font-size:9px;">CAUTION</span>
+            </div>
+            <h3>민지, 오늘 어디가<br/>아파요?</h3>
+            <div class="narr">통증 입력 시 자동으로 모드 변경됩니다.</div>
+          </div>
+
+          <div class="ci-rpe">
+            <div class="lb">§1 어제 RPE · 6 / 10</div>
+            <div class="scale">
+              <div class="c">1</div><div class="c">2</div><div class="c">3</div><div class="c">4</div>
+              <div class="c">5</div><div class="c on">6</div><div class="c">7</div><div class="c">8</div><div class="c">9</div><div class="c">10</div>
+            </div>
+            <div class="ends"><span>매우 쉬움</span><span>최대 노력</span></div>
+          </div>
+
+          <div class="ci-body">
+            <svg viewBox="0 0 100 200">
+              <circle class="area" cx="50" cy="20" r="12"/>
+              <rect class="area" x="36" y="36" width="28" height="50"/>
+              <rect class="area" x="22" y="38" width="14" height="14"/>
+              <rect class="area" x="64" y="38" width="14" height="14"/>
+              <rect class="area" x="20" y="54" width="14" height="40"/>
+              <rect class="area" x="66" y="54" width="14" height="40"/>
+              <rect class="area" x="38" y="88" width="11" height="44"/>
+              <rect class="area" x="51" y="88" width="11" height="44"/>
+              <rect class="area" x="38" y="132" width="11" height="14"/>
+              <rect class="area on" x="51" y="132" width="11" height="14"/>
+              <rect class="area" x="38" y="146" width="11" height="40"/>
+              <rect class="area" x="51" y="146" width="11" height="40"/>
+              <text x="56" y="142" font-family="JetBrains Mono" font-size="6" fill="#B4530C" font-weight="600" text-anchor="middle">!</text>
+            </svg>
+            <div class="info">
+              <div class="lb">선택됨 · 1</div>
+              <ul>
+                <li><b>오른 무릎</b> · 둔통 3/5</li>
+              </ul>
+              <div class="lb">참고</div>
+              <ul style="font-size:10.5px;color:var(--ink-3);">
+                <li>이번 사이클 들어 <b style="color:var(--warn);">처음</b></li>
+              </ul>
+            </div>
+          </div>
+
+          <!-- AI realtime comment -->
+          <div class="ai" style="background:var(--warn-wash);border-left-color:var(--warn);">
+            <div class="head">
+              <span class="who" style="color:var(--warn);">장호준 AI · 모드 변경</span>
+            </div>
+            <p style="font-size:13px;">민지, <b>오른 무릎 첫 통증 입력</b>이에요. 오늘 PM 워밍업에서 통증 다시 확인합시다. <b style="background:linear-gradient(transparent 62%,rgba(180,83,12,.18) 62%);padding:0 1px;">4/5 이상</b>이면 세션 중단을 권장합니다.</p>
+            <div class="trk">14d 이런 통증 입력은 <b>처음</b>. 자동으로 <b>CAUTION 모드</b> 진입.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="cut-note">
+        <div class="row"><span class="tag iden">IDEN</span><span>"민지," 대화체 호명. AI는 친밀하지만 감정 안 끼움.</span></div>
+        <div class="row"><span class="tag vis">VIS</span><span>Body diagram <b>warn 색</b>으로 통증 즉시 강조. RPE scale 직각, 색 강조 X.</span></div>
+        <div class="row"><span class="tag fb">FB</span><span><b>Realtime</b> — 입력 1분 내 AI 코멘트. <b>Mode 자동 전환</b> NORMAL → CAUTION.</span></div>
+      </div>
+    </div>
+
+    <!-- ============ CUT 4 — 14:20 AI CHAT ============ -->
+    <div class="cut">
+      <div class="cut-head">
+        <div class="num">CUT <b>4 / 6</b></div>
+        <h2>점심시간 — AI에게 질문</h2>
+        <div class="ts">화 · 4월 22일 · 14:20</div>
+        <div class="sys">
+          <span class="iden">Identity</span>
+          <span class="trust">Trust · 풀</span>
+          <span class="vis">Visual</span>
+        </div>
+      </div>
+
+      <div class="mf">
+        <div class="mfi">
+          <div class="stat mono">
+            <span>14:20</span>
+            <span class="r"><svg width="22" height="10" viewBox="0 0 22 10"><rect x="0" y="1" width="18" height="8" fill="none" stroke="currentColor"/><rect x="2" y="3" width="14" height="4"/></svg></span>
+          </div>
+
+          <div class="greet" style="padding-bottom:10px;">
+            <div class="who">
+              <span><b>장호준 AI</b> · v0.3.1</span>
+              <span class="mode caution" style="margin-left:auto;font-size:9px;">CAUTION</span>
+            </div>
+            <h3 style="font-size:18px;">대화</h3>
+          </div>
+
+          <div class="chat-ctx">
+            <span class="lb">메모리</span>
+            <b style="margin-left:6px;">민지</b> · Cycle <b>7</b> · D<b>5</b> · 오른 무릎 <b style="color:var(--warn);">3/5</b> · 오늘 PM VO2
+          </div>
+
+          <div class="ubody">
+            <div>
+              <div class="mb">오늘 무릎 때문에 강도 -10% 가는게 맞을까?</div>
+              <div class="ts mono">14:18</div>
+            </div>
+          </div>
+
+          <!-- AI response with all Trust layers -->
+          <div class="ai">
+            <div class="head">
+              <span class="who">장호준 AI</span>
+              <span class="verdict unc"><span class="v">판정 불확실</span><span class="conf">신뢰도 <b>72%</b></span></span>
+            </div>
+            <p>민지, <span class="hi"><b>−10% 권장</b></span>이지만 코치 본인 판단 필요.<sup class="cite">J1</sup></p>
+            <p>통증 첫 입력 + CK <span class="k">+18%</span>. 그러나 RPE <span class="k">5.8</span> 안정, HR drift <span class="k">2.1%</span>.<sup class="cite">Y2</sup> 신호 충돌.</p>
+
+            <div class="ptrace">
+              <div class="lb"><b>참고한 데이터</b> · 12개 <span class="ar">▾</span></div>
+              <ul>
+                <li>오늘 06:35 무릎 통증 3/5 (첫 입력)</li>
+                <li>지난 14d Z2 세션 8회 · drift 평균 2.3%</li>
+                <li>지난 14d RPE · 5.8 ± 0.6</li>
+                <li>14d sleep · 7h 02m</li>
+                <li>CK trend · +18% (above ±8% band)</li>
+                <li>+ 7개 더…</li>
+              </ul>
+            </div>
+
+            <div style="margin-top:10px;padding-top:8px;border-top:1px dashed var(--hair);">
+              <div style="font-family:var(--mono);font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3);font-weight:600;margin-bottom:6px;">출처 · 4</div>
+              <div style="display:grid;grid-template-columns:auto 1fr;gap:6px;font-family:var(--mono);font-size:10px;align-items:baseline;padding:3px 0;">
+                <span class="src-tier j">J1</span><span>A_guide §4.2 — 회복 신호 충돌 시 판단 (Coach Jang)</span>
+              </div>
+              <div style="display:grid;grid-template-columns:auto 1fr;gap:6px;font-family:var(--mono);font-size:10px;align-items:baseline;padding:3px 0;">
+                <span class="src-tier y">Y2</span><span>본인 14일 통계 (자동 수집)</span>
+              </div>
+              <div style="display:grid;grid-template-columns:auto 1fr;gap:6px;font-family:var(--mono);font-size:10px;align-items:baseline;padding:3px 0;">
+                <span class="src-tier p">P3</span><span>Daniels 2013 · CK guideline · p.114</span>
+              </div>
+            </div>
+
+            <div class="trk">
+              <b>이 종류 추천 track record</b> · 지난 90d 동의율 <b>84%</b> (16/19) · 결과 일치 <b>78%</b>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="cut-note">
+        <div class="row"><span class="tag iden">IDEN</span><span>대화는 컨텍스트 chip 위에서 — AI가 본 것을 항상 보여줌.</span></div>
+        <div class="row"><span class="tag trust">TR</span><span>4 layer 모두 작동: <b>verdict</b>(unc) + <b>인용</b>(J/Y/P 3종) + <b>process trace</b>(12 inputs) + <b>track record</b>(84%).</span></div>
+        <div class="row"><span class="tag vis">VIS</span><span>출처는 <b>tier별 색</b> — 코치 노트(검정), 본인 데이터(파랑), 논문(브랜드). 즉시 분류.</span></div>
+      </div>
+    </div>
+
+    <!-- ============ CUT 5 — 22:30 SESSION RESULT ============ -->
+    <div class="cut">
+      <div class="cut-head">
+        <div class="num">CUT <b>5 / 6</b></div>
+        <h2>세션 완료 — 결과</h2>
+        <div class="ts">화 · 4월 22일 · 22:30</div>
+        <div class="sys">
+          <span class="iden">Identity</span>
+          <span class="vis">Visual · Comparison</span>
+          <span class="trust">Trust · 결과 검증</span>
+          <span class="fb">Feedback · Realtime</span>
+        </div>
+      </div>
+
+      <div class="mf">
+        <div class="mfi">
+          <div class="stat mono">
+            <span>22:30</span>
+            <span class="r"><svg width="22" height="10" viewBox="0 0 22 10"><rect x="0" y="1" width="18" height="8" fill="none" stroke="currentColor"/><rect x="2" y="3" width="14" height="4"/></svg></span>
+          </div>
+
+          <div class="result-hero">
+            <div class="lbl">세션 완료 · VO2 6×1000m</div>
+            <h4>완주, drift <span class="em">−1"</span></h4>
+            <div class="nar">목표 <b>3'20"/km</b>, 실제 <b>3'19"/km</b>. 마지막 2 rep drift <b style="color:var(--ok);">±3" 이내</b>.</div>
+          </div>
+
+          <div class="result-grid">
+            <div class="it">
+              <div class="l">avg pace</div>
+              <div class="v ok">3'19"</div>
+              <div class="vs">target 3'20" · <b>−1"</b></div>
+            </div>
+            <div class="it">
+              <div class="l">HR avg</div>
+              <div class="v">182</div>
+              <div class="vs">target 178–186 · <b>OK</b></div>
+            </div>
+            <div class="it">
+              <div class="l">drift</div>
+              <div class="v ok">2.4%</div>
+              <div class="vs">band ±3% · <b>OK</b></div>
+            </div>
+            <div class="it">
+              <div class="l">RPE</div>
+              <div class="v">7</div>
+              <div class="vs">예상 7 · <b>일치</b></div>
+            </div>
+          </div>
+
+          <!-- pace lap chart with comparison -->
+          <div style="padding:14px 18px 8px;">
+            <div class="pace-chart">
+              <div class="top-row">
+                <span><b style="color:var(--ink);">Lap pace</b> · 6 reps</span>
+                <span>target 3'20"</span>
+              </div>
+              <svg viewBox="0 0 280 100" preserveAspectRatio="none">
+                <!-- target band -->
+                <rect x="0" y="38" width="280" height="22" fill="#E6F0EE"/>
+                <!-- target line -->
+                <line x1="0" y1="50" x2="280" y2="50" stroke="#0D5F5A" stroke-width="1" stroke-dasharray="3,2"/>
+                <!-- gridline -->
+                <line x1="0" y1="20" x2="280" y2="20" stroke="#E8E6DF"/>
+                <line x1="0" y1="80" x2="280" y2="80" stroke="#0E1412"/>
+                <!-- previous cycle (gray) -->
+                <polyline fill="none" stroke="#8F9894" stroke-width="1.5" stroke-dasharray="2,2" points="20,52 70,54 120,56 170,58 220,62 260,68"/>
+                <!-- this cycle (ink) -->
+                <polyline fill="none" stroke="#0E1412" stroke-width="2.5" points="20,52 70,50 120,48 170,46 220,46 260,44"/>
+                <!-- dots -->
+                <circle cx="20" cy="52" r="3" fill="#0E1412"/>
+                <circle cx="70" cy="50" r="3" fill="#0E1412"/>
+                <circle cx="120" cy="48" r="3" fill="#0E1412"/>
+                <circle cx="170" cy="46" r="3" fill="#0E1412"/>
+                <circle cx="220" cy="46" r="3" fill="#0E1412"/>
+                <circle cx="260" cy="44" r="3" fill="#0E1412"/>
+                <!-- x labels -->
+                <text x="20" y="94" font-family="JetBrains Mono" font-size="8" fill="#5F6965" text-anchor="middle">1</text>
+                <text x="70" y="94" font-family="JetBrains Mono" font-size="8" fill="#5F6965" text-anchor="middle">2</text>
+                <text x="120" y="94" font-family="JetBrains Mono" font-size="8" fill="#5F6965" text-anchor="middle">3</text>
+                <text x="170" y="94" font-family="JetBrains Mono" font-size="8" fill="#5F6965" text-anchor="middle">4</text>
+                <text x="220" y="94" font-family="JetBrains Mono" font-size="8" fill="#5F6965" text-anchor="middle">5</text>
+                <text x="260" y="94" font-family="JetBrains Mono" font-size="8" fill="#5F6965" text-anchor="middle">6</text>
+                <!-- y labels -->
+                <text x="0" y="22" font-family="JetBrains Mono" font-size="7" fill="#8F9894">3'15</text>
+                <text x="0" y="52" font-family="JetBrains Mono" font-size="7" fill="#0D5F5A" font-weight="600">3'20</text>
+                <text x="0" y="82" font-family="JetBrains Mono" font-size="7" fill="#8F9894">3'25</text>
+              </svg>
+              <div class="legend-row">
+                <span class="lg"><span class="swa" style="background:#0E1412;"></span>이번 (Cycle 7)</span>
+                <span class="lg"><span class="swa" style="background:#8F9894;border-top:1.5px dashed #8F9894;height:0;"></span>지난 사이클 (Cycle 6)</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- AI realtime comment -->
+          <div class="ai" style="margin-top:8px;">
+            <div class="head">
+              <span class="who">장호준 AI · 즉시 코멘트</span>
+              <span class="verdict confirm"><span class="v">확정</span><span class="conf">신뢰도 <b>94%</b></span></span>
+            </div>
+            <p>민지, <span class="hi"><b>잘 끝냈어</b></span>. 마지막 2 rep <span class="k">3'17", 3'15"</span> — 예상보다 좋음. 무릎 통증 <b>변화 없음</b>.<sup class="cite">Y1</sup></p>
+            <p style="font-size:12.5px;color:var(--ink-2);">다음 사이클 <b>+1 rep 증량</b> 검토 가능. 단, 무릎 1주 추적 후 결정.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="cut-note">
+        <div class="row"><span class="tag iden">IDEN</span><span>"민지, 잘 끝냈어" — 친밀, 감정 X 사실. 본인 데이터로 만든 narrative.</span></div>
+        <div class="row"><span class="tag vis">VIS</span><span><b>Comparison mode</b> — 이번 vs 지난 사이클 두 라인. 이번이 더 좋음 시각으로 바로 인지.</span></div>
+        <div class="row"><span class="tag trust">TR</span><span>결과는 <b>verdict CONFIRM 94%</b>. 단정 X — "검토 가능, 단 1주 추적".</span></div>
+        <div class="row"><span class="tag fb">FB</span><span><b>Realtime</b> 1분 내. 다음 행동(증량) 시사 + 조건(무릎).</span></div>
+      </div>
+    </div>
+
+    <!-- ============ CUT 6 — 23:00 ARCHIVE ============ -->
+    <div class="cut">
+      <div class="cut-head">
+        <div class="num">CUT <b>6 / 6</b></div>
+        <h2>잠자기 전 — 내 이야기</h2>
+        <div class="ts">화 · 4월 22일 · 23:00</div>
+        <div class="sys">
+          <span class="iden">Identity · Personal Archive</span>
+          <span class="vis">Visual</span>
+        </div>
+      </div>
+
+      <div class="mf">
+        <div class="mfi">
+          <div class="stat mono">
+            <span>23:00</span>
+            <span class="r"><svg width="22" height="10" viewBox="0 0 22 10"><rect x="0" y="1" width="18" height="8" fill="none" stroke="currentColor"/><rect x="2" y="3" width="14" height="4"/></svg></span>
+          </div>
+
+          <div class="arc-head">
+            <div class="who"><b>민지</b>의 기록</div>
+            <h3>오늘은 <span class="em">Cycle 7 · D5</span> · MAIN을 끝냈어요</h3>
+          </div>
+
+          <!-- 1년 전 오늘 -->
+          <div class="yago">
+            <div class="lb">1년 전 오늘 · 2025.04.22</div>
+            <div class="v">5000m TT — <b>16:42.18</b></div>
+            <div class="vs">현재 <b>16:10.44</b> · <b style="color:var(--ok);">−32"</b> 단축</div>
+          </div>
+
+          <div class="dl"><b>이번 사이클 · 5일째</b></div>
+
+          <div class="arc-tl">
+            <div class="ti">
+              <div class="when"><b>오늘</b><br/>22:30</div>
+              <div class="what">
+                <span class="e-vo2">V2</span> VO2 6×1000m <span class="k">3'19"</span> · drift <b style="color:var(--ok);">−1"</b><br/>
+                <span style="font-family:var(--mono);font-size:11px;color:var(--ink-3);">장호준 AI: "잘 끝냈어"</span>
+              </div>
+            </div>
+            <div class="ti">
+              <div class="when"><b>오늘</b><br/>06:35</div>
+              <div class="what">
+                통증 입력 — <b style="color:var(--warn);">오른 무릎 3/5</b> (첫 입력)
+              </div>
+            </div>
+            <div class="ti">
+              <div class="when"><b>어제</b><br/>월</div>
+              <div class="what">
+                <span class="e-base">BA</span> Easy jog 5.8km <span class="k">5'45"</span>
+              </div>
+            </div>
+            <div class="ti">
+              <div class="when">D−2<br/>일</div>
+              <div class="what">
+                <span class="e-base">BA</span> Long run 14km <span class="k">5'10"</span>
+              </div>
+            </div>
+            <div class="ti">
+              <div class="when">D−1<br/>토</div>
+              <div class="what">
+                휴식 (Rule 1)
+              </div>
+            </div>
+          </div>
+
+          <!-- AI 한 줄 -->
+          <div class="ai" style="margin-top:8px;border-top:1px solid var(--line);padding-top:14px;">
+            <div class="head">
+              <span class="who">장호준 AI</span>
+            </div>
+            <p style="font-size:13px;">민지, <b>14번째 사이클</b>이에요. 시작했을 때 5000m <span class="k">16:42</span>, 지금 <span class="k">16:10</span>. <span class="hi">잘 가고 있어.</span></p>
+          </div>
+        </div>
+      </div>
+
+      <div class="cut-note">
+        <div class="row"><span class="tag iden">IDEN</span><span><b>Personal Archive</b> — 오늘 → 어제 → D-2 시간순. "내 이야기"가 시간 누적으로 쌓임.</span></div>
+        <div class="row"><span class="tag iden">IDEN</span><span><b>1년 전 오늘</b> — Strava On This Day 같은 회상. 단, 사실 기반 (-32" 단축).</span></div>
+        <div class="row"><span class="tag iden">IDEN</span><span>AI가 <b>14번째 사이클</b>임을 기억 — long-term memory 신호.</span></div>
+        <div class="row"><span class="tag vis">VIS</span><span>에너지 시스템 <b>Tier 3 subtle</b> — 본문 흐름 안 끊고 라벨 역할.</span></div>
+      </div>
+    </div>
+
+  </div><!-- /grid -->
+
+  <!-- =========== FOOTER SUMMARY =========== -->
+  <div class="footer">
+    <h2>4 Systems · 한 사용자의 하루에 어떻게 짜이는가</h2>
+    <div class="grid4">
+      <div class="sys-card iden">
+        <div class="num">SYSTEM 1</div>
+        <h3>Identity</h3>
+        <p>"이 코치는 나를 안다"는 신호. 호명, 메모리, 시그니처, 대화 누적.</p>
+        <ul>
+          <li>"민지님" / "민지" 컨텍스트별 호명</li>
+          <li>장호준 AI 일관 페르소나</li>
+          <li>Memory chip · 컨텍스트 항상 표시</li>
+          <li>Personal Archive · 시간 누적</li>
+          <li>1년 전 오늘 · 회상 모듈</li>
+        </ul>
+      </div>
+      <div class="sys-card vis">
+        <div class="num">SYSTEM 2</div>
+        <h3>Visualization</h3>
+        <p>훈련 분류 즉시 인식. Tier 4단계 (strong/mid/subtle/wash).</p>
+        <ul>
+          <li>에너지 시스템 6 × 4 tier = 24 색상</li>
+          <li>Strong tier · 카드 좌측 5px</li>
+          <li>Comparison mode · vs 지난 사이클</li>
+          <li>모든 통계 drill-down 가능</li>
+          <li>색 + 코드 + 패턴 3중 인코딩</li>
+        </ul>
+      </div>
+      <div class="sys-card trust">
+        <div class="num">SYSTEM 3</div>
+        <h3>Trust</h3>
+        <p>4 Layer 검증. AI는 항상 자기 점수를 공개한다.</p>
+        <ul>
+          <li>Verdict + Confidence (필수)</li>
+          <li>인용 4 tier (J/P/Y/C)</li>
+          <li>Process trace · 본 데이터 공개</li>
+          <li>Track record · 동의율/일치율</li>
+          <li>Disagreement · 반대 의견 의무</li>
+        </ul>
+      </div>
+      <div class="sys-card fb">
+        <div class="num">SYSTEM 4</div>
+        <h3>Feedback</h3>
+        <p>6단계 시간 tier + 5 모드. 살아있는 코치.</p>
+        <ul>
+          <li>Realtime · Daily · Weekly · Cycle · Monthly · Season</li>
+          <li>Mode 5종 · Normal/Caution/Recovery/Race/Off</li>
+          <li>자동 mode 전환 (통증 → CAUTION)</li>
+          <li>알림 규칙 · 무의미 알림 X</li>
+          <li>Auto-narrative · 모든 통계 옆 1줄</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+</body></html>

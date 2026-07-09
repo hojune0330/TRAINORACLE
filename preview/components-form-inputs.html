@@ -1,0 +1,39 @@
+<!doctype html>
+<html><head><meta charset="utf-8"/>
+<link rel="stylesheet" href="../colors_and_type.css">
+<style>
+  body{margin:0;padding:22px 26px;background:var(--bg);font-family:var(--sans);}
+  .lb{font-family:var(--mono);font-size:10px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3);margin-bottom:10px;}
+  .row{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;}
+  .field label{font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3);font-weight:500;display:block;margin-bottom:6px;}
+  input,select,textarea{font-family:var(--sans);font-size:14px;width:100%;padding:11px 12px;border:1px solid var(--line);background:var(--surface);color:var(--ink);box-sizing:border-box;border-radius:0;}
+  input:focus,select:focus,textarea:focus{outline:none;border-color:var(--ink);}
+  .err input{border-color:var(--err);}
+  .errmsg{font-family:var(--mono);font-size:10px;color:var(--err);margin-top:4px;letter-spacing:.04em;}
+  .toggle{width:42px;height:24px;background:var(--ink-4);border:0;display:inline-block;position:relative;cursor:pointer;border-radius:0;}
+  .toggle.on{background:var(--ink);}
+  .toggle::after{content:'';position:absolute;top:3px;left:3px;width:18px;height:18px;background:#fff;transition:all 150ms;}
+  .toggle.on::after{left:21px;}
+  .scale{display:grid;grid-template-columns:repeat(10,1fr);gap:0;border:1px solid var(--line);}
+  .scale span{font-family:var(--mono);font-size:11px;text-align:center;padding:9px 0;border-right:1px solid var(--line);color:var(--ink);}
+  .scale span:last-child{border-right:0;}
+  .scale span.on{background:var(--ink);color:var(--bg);}
+</style>
+</head><body>
+  <div class="row">
+    <div class="field"><label>이름</label><input type="text" value="민지" /></div>
+    <div class="field"><label>5000m PB</label><input type="text" value="16:10.44" style="font-family:var(--mono);" /></div>
+    <div class="field err"><label>이메일</label><input type="email" value="invalid@" /><div class="errmsg">유효한 형식이 아닙니다</div></div>
+  </div>
+  <div style="margin-top:18px;">
+    <div class="lb">— RPE Scale (1-10)</div>
+    <div class="scale">
+      <span>1</span><span>2</span><span>3</span><span>4</span><span>5</span><span class="on">6</span><span>7</span><span>8</span><span>9</span><span>10</span>
+    </div>
+  </div>
+  <div style="margin-top:18px;display:flex;gap:24px;align-items:center;">
+    <div class="lb" style="margin:0">— Toggle</div>
+    <span class="toggle on" aria-label="on"></span> <span style="font-family:var(--mono);font-size:11px;color:var(--ink-3);">on</span>
+    <span class="toggle" aria-label="off"></span> <span style="font-family:var(--mono);font-size:11px;color:var(--ink-3);">off</span>
+  </div>
+</body></html>

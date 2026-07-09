@@ -1,0 +1,217 @@
+/* ============================================================
+   TRAINORACLE — Colors & Type
+   "Scientific Minimalism — Tufte × Linear"
+
+   Pretendard + Inter + JetBrains Mono.
+   직각 박스, hairline border, 색은 정보 전달용으로만.
+   ============================================================ */
+
+/* ---- Fonts: Google Fonts + Pretendard CDN ---- */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+@import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css');
+
+:root {
+  /* ============== COLORS ============== */
+
+  /* Neutrals — warm off-white + teal-tinted charcoal */
+  --bg:         #FAFAF7;  /* primary surface (warm off-white) */
+  --surface:    #FFFFFF;  /* card / elevated */
+  --surface-2:  #F4F3EE;  /* recessed (subtle warm gray) */
+
+  --ink:        #0E1412;  /* primary text (deep charcoal, teal-tinted) */
+  --ink-2:      #2B3330;  /* secondary text */
+  --ink-3:      #5F6965;  /* tertiary / meta */
+  --ink-4:      #8F9894;  /* quaternary / disabled */
+
+  --line:       #D9D6CE;  /* default border */
+  --line-2:     #BFBBB0;  /* stronger border */
+  --hair:       #E8E6DF;  /* hairline divider */
+
+  /* Brand — Deep Teal, single accent only */
+  --brand:      #0D5F5A;
+  --brand-ink:  #07302E;
+
+  /* Semantic */
+  --ok:    #1F7A3A;
+  --warn:  #B4530C;
+  --err:   #A11F1F;
+  --info:  #1D4ED8;
+  --unc:   #6B3FB0;  /* uncertainty — AI verdict */
+
+  /* Energy systems (dot + underline ONLY, never as bg) */
+  --e-base: #4A8FC7;  /* Z1-Z2 Aerobic Base */
+  --e-lt:   #B8A024;  /* Z3-Z4 Lactate Threshold */
+  --e-vo2:  #C7761C;  /* Z5 VO2max */
+  --e-gly:  #B8332E;  /* Z6 Glycolytic */
+  --e-atp:  #7A3FB5;  /* Z7 ATP-PC */
+  --e-rest: #7A7A70;  /* Recovery / off */
+
+  /* Energy systems — 4-tier (strong/mid/text/wash) for Sprint 2+ contexts */
+  --e-base-strong: #2A6396; --e-base-mid: #4A8FC7; --e-base-text: #1D4E75; --e-base-wash: #E8F0F7;
+  --e-lt-strong:   #8A7818; --e-lt-mid:   #B8A024; --e-lt-text:   #7A6A1A; --e-lt-wash:   #F4F0DB;
+  --e-vo2-strong:  #9E5A14; --e-vo2-mid:  #C7761C; --e-vo2-text:  #8A4A1C; --e-vo2-wash:  #F7E9D9;
+  --e-gly-strong:  #8E2421; --e-gly-mid:  #B8332E; --e-gly-text:  #8A2A2A; --e-gly-wash:  #F2DAD8;
+  --e-atp-strong:  #5A2D8A; --e-atp-mid:  #7A3FB5; --e-atp-text:  #5A2F8A; --e-atp-wash:  #EBE0F5;
+  --e-rest-strong: #4A4A45; --e-rest-mid: #7A7A70; --e-rest-text: #5A5A55; --e-rest-wash: #EFEEEA;
+
+  /* ============== TYPOGRAPHY ============== */
+  --sans: "Inter", "Pretendard Variable", ui-sans-serif, system-ui, sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+  /* NO serif. Instrument Serif removed in v2. */
+
+  /* ============== SPACING (4px base) ============== */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+  --space-16: 64px;
+
+  /* ============== RADIUS (직각 우선) ============== */
+  --r-0: 0;       /* default — boxes, cards */
+  --r-sm: 2px;
+  --r-md: 4px;    /* max for inputs/buttons */
+  /* avatar circles use 50% — only exception */
+
+  /* ============== BORDERS ============== */
+  --bw-hair:  1px;   /* hairline (--hair) */
+  --bw-line:  1px;   /* default (--line) */
+  --bw-bold:  1px;   /* solid emphasis (--ink) */
+  --bw-strip: 2px;   /* left color strip (inbox cards) */
+  --bw-under: 1.5px; /* energy underline */
+
+  /* ============== SHADOWS (거의 안 씀) ============== */
+  --shadow-frame: 0 40px 100px -30px rgba(0,0,0,0.22), 0 10px 30px -10px rgba(0,0,0,0.12);
+  --shadow-subtle: 0 1px 2px rgba(0,0,0,0.04);
+
+  /* ============== ANIMATION ============== */
+  --ease-default: cubic-bezier(0.2, 0.0, 0.2, 1.0);
+  --ease-out:     cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in:      cubic-bezier(0.7, 0, 0.84, 0);
+  --dur-instant: 80ms;
+  --dur-fast:    150ms;
+  --dur-base:    200ms;
+  --dur-slow:    300ms;
+  --dur-slower:  500ms;
+
+  /* ============== Z-INDEX ============== */
+  --z-base:    0;
+  --z-sticky:  10;
+  --z-overlay: 50;
+  --z-modal:   100;
+  --z-toast:   200;
+  --z-tooltip: 300;
+
+  /* ============== SEMANTIC TYPE TOKENS ============== */
+  --fs-display: clamp(56px, 8vw, 116px);
+  --fs-h1: clamp(32px, 4.5vw, 52px);
+  --fs-h2: clamp(22px, 3vw, 32px);
+  --fs-h3: 18px;
+  --fs-body-lg: 16.5px;
+  --fs-body: 14.5px;
+  --fs-body-sm: 13px;
+  --fs-caption: 12px;
+  --fs-mono-sm: 11px;
+  --fs-mono-xs: 10px;
+}
+
+/* ============== BASE ============== */
+html { font-feature-settings: "ss01", "cv11"; -webkit-font-smoothing: antialiased; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--sans);
+  font-size: var(--fs-body);
+  line-height: 1.55;
+}
+
+/* ============== SEMANTIC TYPE CLASSES ============== */
+.t-display {
+  font-family: var(--sans);
+  font-size: var(--fs-display);
+  font-weight: 500;
+  letter-spacing: -0.045em;
+  line-height: 0.95;
+}
+.t-h1 {
+  font-family: var(--sans);
+  font-size: var(--fs-h1);
+  font-weight: 500;
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+}
+.t-h2 {
+  font-family: var(--sans);
+  font-size: var(--fs-h2);
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+}
+.t-h3 {
+  font-family: var(--sans);
+  font-size: var(--fs-h3);
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  line-height: 1.3;
+}
+.t-body-lg { font-size: var(--fs-body-lg); line-height: 1.6; letter-spacing: -0.005em; }
+.t-body    { font-size: var(--fs-body);    line-height: 1.55; letter-spacing: -0.005em; }
+.t-body-sm { font-size: var(--fs-body-sm); line-height: 1.5; letter-spacing: -0.005em; color: var(--ink-2); }
+.t-caption { font-size: var(--fs-caption); line-height: 1.45; color: var(--ink-3); }
+
+.mono { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+.t-mono-sm {
+  font-family: var(--mono);
+  font-size: var(--fs-mono-sm);
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+.t-mono-xs {
+  font-family: var(--mono);
+  font-size: var(--fs-mono-xs);
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+
+/* ============== COMPONENT TOKENS — ENERGY TAG ============== */
+.etag { display: inline-flex; align-items: center; gap: 6px; }
+.etag .d { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+.etag .c {
+  font-family: var(--mono); font-size: 11px; font-weight: 600;
+  color: var(--ink); letter-spacing: 0.04em;
+}
+.etag .n {
+  font-family: var(--sans); font-size: 12.5px; font-weight: 500;
+  color: var(--ink-2); border-bottom: var(--bw-under) solid;
+  padding-bottom: 1px;
+}
+.etag.base .d { background: var(--e-base); } .etag.base .n { color: var(--e-base); border-color: var(--e-base); }
+.etag.lt   .d { background: var(--e-lt);   } .etag.lt   .n { color: var(--e-lt);   border-color: var(--e-lt);   }
+.etag.vo2  .d { background: var(--e-vo2);  } .etag.vo2  .n { color: var(--e-vo2);  border-color: var(--e-vo2);  }
+.etag.gly  .d { background: var(--e-gly);  } .etag.gly  .n { color: var(--e-gly);  border-color: var(--e-gly);  }
+.etag.atp  .d { background: var(--e-atp);  } .etag.atp  .n { color: var(--e-atp);  border-color: var(--e-atp);  }
+.etag.rest .d { background: var(--e-rest); } .etag.rest .n { color: var(--e-rest); border-color: var(--e-rest); }
+
+/* ============== VERDICT ============== */
+.verdict {
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  padding-bottom: 1px;
+  border-bottom: var(--bw-under) solid;
+}
+.verdict.confirm   { color: var(--ok);    border-color: var(--ok); }
+.verdict.recommend { color: var(--brand); border-color: var(--brand); }
+.verdict.unc       { color: var(--unc);   border-color: var(--unc); }
+.verdict.lack      { color: var(--warn);  border-color: var(--warn); }
