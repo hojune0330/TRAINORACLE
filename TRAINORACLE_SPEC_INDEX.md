@@ -48,6 +48,7 @@ For a human-readable map of all existing, reconstructed, legacy, design, and pla
 For the next count-safe target patch sequence, read [`SPEC_TARGET_PATCH_MATRIX.md`](./SPEC_TARGET_PATCH_MATRIX.md).
 For external reviewer read order, lenses, and review questions, read [`SPEC_REVIEW_PACKET.md`](./SPEC_REVIEW_PACKET.md).
 For target patch readiness gates and wave order, read [`SPEC_TARGET_PATCH_READINESS.md`](./SPEC_TARGET_PATCH_READINESS.md).
+For documentation link/terminology quality findings, read [`SPEC_DOC_QUALITY_REPORT.md`](./SPEC_DOC_QUALITY_REPORT.md).
 For the Wave B Safety Gate target-local patch report, read [`SPEC_WAVEB_SAFETY_GATE_PATCH_REPORT.md`](./SPEC_WAVEB_SAFETY_GATE_PATCH_REPORT.md).
 For Safety Gate/RVE source acceptance review prep, read [`SPEC_SOURCE_ACCEPTANCE_REVIEW_ROUND1.md`](./SPEC_SOURCE_ACCEPTANCE_REVIEW_ROUND1.md).
 For the Wave D downstream binding patch report, read [`SPEC_WAVED_BINDING_PATCH_REPORT.md`](./SPEC_WAVED_BINDING_PATCH_REPORT.md).
@@ -74,6 +75,43 @@ The highest-priority operating rule remains:
 | `specs/legacy-reference/` | Legacy and reference documents | REFERENCE_ONLY |
 | `specs/reconstruct/` | Missing or reconstructed required contracts | SOURCE_NOT_VERIFIED / RECONSTRUCTED_DRAFT_FOR_REVIEW |
 | `.omo/` | Codex handoff, evidence, plans, and readiness reports | PROCESS_EVIDENCE |
+| `ui_kits/` | Imported executable service-screen prototypes | DESIGN_SCREEN_ASSET / read-only for Codex Work Order 002 |
+| `design-v3/` | Static v3 journal-style screen set and tokens | DESIGN_SCREEN_ASSET / read-only for Codex Work Order 002 |
+| `preview/` | Design-system component preview cards | DESIGN_SCREEN_ASSET / read-only for Codex Work Order 002 |
+| `impl/` | TypeScript safety-chain skeleton and contract tests | IMPLEMENTATION_SKELETON |
+| `runtime-evidence/` | Actual local runtime evidence artifacts | RUNTIME_EVIDENCE |
+| `dashboard/` | Static SPEC status dashboard | STATUS_DASHBOARD |
+| `.github/workflows/` | GitHub Actions workflow definitions | CI_CONFIGURATION |
+
+---
+
+## 2A. Main-Branch Asset Inventory
+
+This table records files found in the repository at the time of this index update. It does not grant acceptance or implementation completeness.
+
+| Asset group | Current files counted from local tree | Status | Notes |
+|---|---:|---|---|
+| `preview/*.html` | 30 | DESIGN_ASSET | Design-system cards visible from the root design index. |
+| `design-v3/` files | 7 | DESIGN_ASSET | Static v3 journal screens and token CSS. |
+| `ui_kits/` files | 19 | DESIGN_ASSET | Executable v2/v3 prototype screens. Work Order 002 assigns design/screen implementation to Project Lead AI. |
+| `impl/**/*.ts` excluding `node_modules` | 7 | IMPLEMENTATION_SKELETON | D9 -> RVE -> Safety Gate -> Plan Generator vertical slice skeleton. |
+| `.github/workflows/ci.yml` | 1 | CI_CONFIGURATION | Runs implementation contract checks and D9 evaluator runtime package checks. |
+| `runtime-evidence/d9-evaluator/` | present | RUNTIME_EVIDENCE | Contains D9 evaluator source, package files, and `d9-vitest-run-2026-07-09.log`. |
+| `dashboard/index.html` | 1 | STATUS_DASHBOARD | Visual SPEC status dashboard. |
+
+---
+
+## 2B. Work Orders, Decisions, And Evidence
+
+| Document / area | Repository path | Status | Treatment |
+|---|---|---|---|
+| `CODEX_WORK_ORDER_001.md` | root | ISSUED / completed by PR sequence | Historical work order for Wave D patches, impl skeleton, CI, and dashboard. |
+| `CODEX_WORK_ORDER_002.md` | root | ISSUED | Current work order for screen/SPEC traceability, Round 3 review prep, doc quality, and dashboard data sync. |
+| `SPEC_SOURCE_ACCEPTANCE_DECISION_ROUND1.md` | root | DECIDED | Safety Gate and RVE reconstructed drafts accepted as working sources only; not canonical promotion or issue closure. |
+| `SPEC_SOURCE_ACCEPTANCE_DECISION_ROUND2.md` | root | DECIDED | Physio Source Trust and Daily Log accepted as working sources only; not canonical promotion or issue closure. |
+| D9 runtime evidence | `runtime-evidence/d9-evaluator/` | RUNTIME_EVIDENCE_PRESENT | Actual local D9 evaluator run evidence exists; downstream issue closure still requires target review/recount and owner approval. |
+| Work Order 002 Task 2 PR | GitHub PR #14 | OPEN_AT_UPDATE_TIME | `SPEC_SCREEN_TRACEABILITY_MATRIX.md` proposed there; not present in this branch unless the PR is merged. |
+| Work Order 002 Task 1 PR | GitHub PR #15 | OPEN_AT_UPDATE_TIME | `SPEC_SOURCE_ACCEPTANCE_REVIEW_ROUND3.md` proposed there; not present in this branch unless the PR is merged. |
 
 ---
 
@@ -208,6 +246,7 @@ Important starting points:
 - `SPEC_TARGET_PATCH_MATRIX.md`
 - `SPEC_REVIEW_PACKET.md`
 - `SPEC_TARGET_PATCH_READINESS.md`
+- `SPEC_DOC_QUALITY_REPORT.md`
 - `SPEC_WAVEB_SAFETY_GATE_PATCH_REPORT.md`
 - `SPEC_SOURCE_ACCEPTANCE_REVIEW_ROUND1.md`
 - `SPEC_WAVED_BINDING_PATCH_REPORT.md`

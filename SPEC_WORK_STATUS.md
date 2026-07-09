@@ -1,6 +1,6 @@
 # SPEC_WORK_STATUS.md
 
-Updated: 2026-06-27 Asia/Seoul
+Updated: 2026-07-09 Asia/Seoul
 status: DRAFT_HANDOFF_STATUS
 owner: COACH_HOJUNE
 
@@ -14,6 +14,7 @@ For an easy document-by-document report, read [`SPEC_DOCUMENTATION_REPORT.md`](.
 For the next source-to-target patch order and non-closure conditions, read [`SPEC_TARGET_PATCH_MATRIX.md`](./SPEC_TARGET_PATCH_MATRIX.md).
 For external reviewer read order, lenses, and review prompts, read [`SPEC_REVIEW_PACKET.md`](./SPEC_REVIEW_PACKET.md).
 For the next target-patch readiness gates and wave order, read [`SPEC_TARGET_PATCH_READINESS.md`](./SPEC_TARGET_PATCH_READINESS.md).
+For documentation link/terminology quality findings, read [`SPEC_DOC_QUALITY_REPORT.md`](./SPEC_DOC_QUALITY_REPORT.md).
 For the Wave B Safety Gate target-local patch result, read [`SPEC_WAVEB_SAFETY_GATE_PATCH_REPORT.md`](./SPEC_WAVEB_SAFETY_GATE_PATCH_REPORT.md).
 For Safety Gate/RVE source acceptance review prep, read [`SPEC_SOURCE_ACCEPTANCE_REVIEW_ROUND1.md`](./SPEC_SOURCE_ACCEPTANCE_REVIEW_ROUND1.md).
 For the Wave D downstream binding patch result, read [`SPEC_WAVED_BINDING_PATCH_REPORT.md`](./SPEC_WAVED_BINDING_PATCH_REPORT.md).
@@ -31,6 +32,23 @@ Current focus:
 - prevent raw athlete free-text, raw symptom clauses, and private notes from entering audit/storage contracts
 - keep Template Library and Physio Source Trust consumable by Plan Generator without clearing D9 risk
 - reconstruct missing core contracts only after local/repo existence checks
+
+Current Work Order 001 implementation/evidence state:
+
+- Wave D binding patches were merged to main through PR #6.
+- The TypeScript implementation skeleton under `impl/` was merged through PR #7.
+- GitHub Actions CI configuration was merged through PR #8.
+- The static SPEC status dashboard under `dashboard/` was merged through PR #9.
+- `runtime-evidence/d9-evaluator/` now contains actual D9 evaluator runtime evidence, including `d9-vitest-run-2026-07-09.log`.
+- This runtime evidence proves the candidate evaluator package execution for its covered cases only; it does not by itself close RVE, Safety Gate, Plan Generator, App Bridge, UI, or productization-draft issues.
+
+Current Work Order 002 state:
+
+- `CODEX_WORK_ORDER_002.md` is present on main and assigns Codex to spec verification, flow audit, and document improvement.
+- Design and screen implementation files remain Project Lead AI territory under Work Order 002; Codex findings should be documented, not patched into `ui_kits/`, `preview/`, `design-v3/`, `designs/`, `colors_and_type*.css`, or root `index.html`.
+- Task 2 (`SPEC_SCREEN_TRACEABILITY_MATRIX.md`) is proposed in PR #14 and must not be treated as a local main file until merged.
+- Task 1 (`SPEC_SOURCE_ACCEPTANCE_REVIEW_ROUND3.md`) is proposed in PR #15 and must not be treated as a local main file until merged.
+- Task 3 is this document/index/quality-report update.
 
 Current Wave 1 physio patch state:
 
@@ -69,9 +87,9 @@ Not yet:
 - full working web/app implementation
 - canonical promotion
 - production deployment
-- actual D9 evaluator runtime evidence
 - closure of RVE or Plan Generator safety-gate binding issues
 - acceptance of productization drafts into implementation contracts
+- runtime evidence for productization data generation, UI binding, App Bridge storage, or dashboard data sync beyond the D9 evaluator package
 
 Current review/readiness state:
 
@@ -84,13 +102,15 @@ Current Wave B Safety Gate patch state:
 - `PLAN_GENERATOR_SPEC.md` now has a target-local Safety Gate/RVE consumption binding.
 - `OI-PG-RULE-SAFETY-GATE-BINDING-001` remains open.
 - `PLAN_GENERATOR_SPEC.md` still has 7 open issues and 2 canonical blocking open issues after local recount.
-- Closure still requires source acceptance, target recount approval, and actual D9 runtime evidence.
+- Actual D9 evaluator runtime evidence now exists under `runtime-evidence/d9-evaluator/`, but closure still requires source acceptance scope, target recount approval, owner review, and any additional implementation/runtime evidence required by the target issue.
 
 Current source acceptance review state:
 
-- `SPEC_SOURCE_ACCEPTANCE_REVIEW_ROUND1.md` now exists as a review-prep packet for `PLAN_SAFETY_GATE_SPEC.md` and `RULE_VALIDATION_ENGINE_CONTRACT.md`.
-- Both source documents remain `RECONSTRUCTED_DRAFT_FOR_REVIEW`.
-- The source acceptance decision remains pending review; no closure or canonical promotion is claimed.
+- `SPEC_SOURCE_ACCEPTANCE_REVIEW_ROUND1.md` exists as the review-prep packet for `PLAN_SAFETY_GATE_SPEC.md` and `RULE_VALIDATION_ENGINE_CONTRACT.md`.
+- `SPEC_SOURCE_ACCEPTANCE_DECISION_ROUND1.md` records that Safety Gate and RVE reconstructed drafts were accepted as working sources only.
+- `SPEC_SOURCE_ACCEPTANCE_DECISION_ROUND2.md` records that Physio Source Trust and Daily Log were accepted as working sources only.
+- Round 1/2 decisions do not grant canonical promotion, implementation completeness, issue closure, or runtime evidence for downstream behavior.
+- Productization drafts remain pending review unless a separate Round 3 decision document is merged.
 
 Current Wave D downstream binding state:
 
@@ -250,14 +270,15 @@ Markdown self-checks and documentation scans are not D9 evaluator runtime eviden
 5. [`SPEC_TARGET_PATCH_MATRIX.md`](./SPEC_TARGET_PATCH_MATRIX.md)
 6. [`SPEC_REVIEW_PACKET.md`](./SPEC_REVIEW_PACKET.md)
 7. [`SPEC_TARGET_PATCH_READINESS.md`](./SPEC_TARGET_PATCH_READINESS.md)
-8. [`SPEC_WAVEB_SAFETY_GATE_PATCH_REPORT.md`](./SPEC_WAVEB_SAFETY_GATE_PATCH_REPORT.md)
-9. [`SPEC_SOURCE_ACCEPTANCE_REVIEW_ROUND1.md`](./SPEC_SOURCE_ACCEPTANCE_REVIEW_ROUND1.md)
-10. [`SPEC_WAVED_BINDING_PATCH_REPORT.md`](./SPEC_WAVED_BINDING_PATCH_REPORT.md)
-11. [`SPEC_WAVE1_PHYSIO_PATCH_REPORT.md`](./SPEC_WAVE1_PHYSIO_PATCH_REPORT.md)
-12. [`SPEC_FILE_TRUTH_GUARD.md`](./SPEC_FILE_TRUTH_GUARD.md)
-13. [`SPEC_LEGACY_ALIGNMENT_AND_DAILY_LOG_PLAN.md`](./SPEC_LEGACY_ALIGNMENT_AND_DAILY_LOG_PLAN.md)
-14. [`specs/reconstruct/README.md`](./specs/reconstruct/README.md)
-15. [`.omo/reports/trainoracle-reconstruction-readiness.md`](./.omo/reports/trainoracle-reconstruction-readiness.md)
-16. [`.omo/evidence/trainoracle-remaining-work-flow-reference.md`](./.omo/evidence/trainoracle-remaining-work-flow-reference.md)
+8. [`SPEC_DOC_QUALITY_REPORT.md`](./SPEC_DOC_QUALITY_REPORT.md)
+9. [`SPEC_WAVEB_SAFETY_GATE_PATCH_REPORT.md`](./SPEC_WAVEB_SAFETY_GATE_PATCH_REPORT.md)
+10. [`SPEC_SOURCE_ACCEPTANCE_REVIEW_ROUND1.md`](./SPEC_SOURCE_ACCEPTANCE_REVIEW_ROUND1.md)
+11. [`SPEC_WAVED_BINDING_PATCH_REPORT.md`](./SPEC_WAVED_BINDING_PATCH_REPORT.md)
+12. [`SPEC_WAVE1_PHYSIO_PATCH_REPORT.md`](./SPEC_WAVE1_PHYSIO_PATCH_REPORT.md)
+13. [`SPEC_FILE_TRUTH_GUARD.md`](./SPEC_FILE_TRUTH_GUARD.md)
+14. [`SPEC_LEGACY_ALIGNMENT_AND_DAILY_LOG_PLAN.md`](./SPEC_LEGACY_ALIGNMENT_AND_DAILY_LOG_PLAN.md)
+15. [`specs/reconstruct/README.md`](./specs/reconstruct/README.md)
+16. [`.omo/reports/trainoracle-reconstruction-readiness.md`](./.omo/reports/trainoracle-reconstruction-readiness.md)
+17. [`.omo/evidence/trainoracle-remaining-work-flow-reference.md`](./.omo/evidence/trainoracle-remaining-work-flow-reference.md)
 
 [DRAFT_COMPLETE]
