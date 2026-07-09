@@ -395,7 +395,7 @@
         </p>
       </div>
       <div class="meta-stack">
-        <span class="chip info">branch dashboard-status</span>
+        <span class="chip info">branch work-order-002-task4</span>
         <span class="chip warn">issues remain open</span>
         <span class="stamp-line">Last local review: 2026-07-09</span>
       </div>
@@ -430,10 +430,61 @@
         </article>
         <article class="panel">
           <h3>CI 브랜치</h3>
-          <div class="metric"><strong>2</strong><span class="chip info">jobs</span></div>
-          <p class="caption">D9 evaluator와 impl skeleton을 PR마다 실행하도록 구성.</p>
+          <div class="metric"><strong>2</strong><span class="chip info">suites</span></div>
+          <p class="caption">One Actions job runs D9 evaluator and impl skeleton suites.</p>
         </article>
       </div>
+    </section>
+
+    <section class="section" aria-labelledby="traceability-title">
+      <div class="section-head">
+        <div>
+          <p class="kicker">screen-spec traceability</p>
+          <h2 id="traceability-title">화면과 스펙 정합성 감사</h2>
+        </div>
+        <p class="section-note">Work Order 002 Task 2 결과를 대시보드 데이터로 반영합니다. 이 통계는 수용 결정이나 이슈 종결이 아니라 서비스 개발 전 검토 입력입니다.</p>
+      </div>
+      <div class="grid four">
+        <article class="panel">
+          <h3>감사한 화면 요소</h3>
+          <div class="metric"><strong>25</strong><span class="chip info">total</span></div>
+          <p class="caption">v3 앱, v2 앱, static v3 화면의 핵심 5개 플로우 기준.</p>
+        </article>
+        <article class="panel">
+          <h3>정합</h3>
+          <div class="metric"><strong>6</strong><span class="chip ok">aligned</span></div>
+          <p class="caption">Daily Log 구조화 입력, privacy note, static Review 상태 등.</p>
+        </article>
+        <article class="panel">
+          <h3>보완 필요</h3>
+          <div class="metric"><strong>13</strong><span class="chip warn">gaps</span></div>
+          <p class="caption">GAP_UI_MISSING 8, GAP_SPEC_MISSING 5.</p>
+        </article>
+        <article class="panel">
+          <h3>충돌</h3>
+          <div class="metric"><strong>5</strong><span class="chip err">conflict</span></div>
+          <p class="caption">Rule/R-* 표기와 bare D-* cycle labels가 주요 차단 항목.</p>
+        </article>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Status</th>
+              <th>Count</th>
+              <th>Meaning</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td><span class="chip ok">ALIGNED</span></td><td class="count">6</td><td>화면 요소가 현재 스펙 조항과 직접 연결됩니다.</td></tr>
+            <tr><td><span class="chip warn">GAP_UI_MISSING</span></td><td class="count">8</td><td>스펙은 요구하지만 UI 표시/상태가 아직 부족합니다.</td></tr>
+            <tr><td><span class="chip warn">GAP_SPEC_MISSING</span></td><td class="count">5</td><td>UI는 있지만 저장/보안/출처 계약이 아직 부족합니다.</td></tr>
+            <tr><td><span class="chip err">CONFLICT</span></td><td class="count">5</td><td>서비스 개발 전 우선 해소해야 할 네임스페이스/안전 의미 충돌입니다.</td></tr>
+            <tr><td><span class="chip info">OUT_OF_SCOPE</span></td><td class="count">1</td><td>순수 시각 품질은 총책임 AI 소관으로 분리했습니다.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="caption">Task 2 source: Work Order 002 traceability PR #14. 이 대시보드는 해당 통계를 표시만 하며, 화면 파일을 수정하지 않습니다.</p>
     </section>
 
     <section class="section" aria-labelledby="chain-title">
@@ -751,7 +802,7 @@
 
     <p class="footer-note">
       Sources: `SPEC_SOURCE_ACCEPTANCE_DECISION_ROUND1.md`, `SPEC_SOURCE_ACCEPTANCE_DECISION_ROUND2.md`,
-      `SPEC_WAVED_BINDING_PATCH_REPORT.md`, `.github/workflows/ci.yml`, `runtime-evidence/`.
+      `SPEC_WAVED_BINDING_PATCH_REPORT.md`, `.github/workflows/ci.yml`, `runtime-evidence/`, Work Order 002 Task 2 PR #14.
       This dashboard does not promote drafts, close issues, or create runtime evidence.
     </p>
   </main>
