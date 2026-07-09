@@ -1,0 +1,33 @@
+TrainOracle dashboard visual QA
+Date: 2026-07-09
+Branch: codex/dashboard-status
+
+Surface:
+- dashboard/index.html
+- DESIGN.md
+- design-v3/tokens/tokens.css
+
+Browser:
+- Local Google Chrome via Playwright package
+- executablePath: C:/Program Files/Google/Chrome/Application/chrome.exe
+
+Viewport checks:
+- mobile-375: errors=[], scrollWidth=375, clientWidth=375, links=26, tables=2, SVG rendered
+- tablet-768: errors=[], scrollWidth=768, clientWidth=768, links=26, tables=2, SVG rendered
+- desktop-1280: errors=[], scrollWidth=1280, clientWidth=1280, links=26, tables=2, SVG rendered
+
+Screenshot evidence:
+- screenshots/dashboard/mobile-375.png
+- screenshots/dashboard/tablet-768.png
+- screenshots/dashboard/desktop-1280.png
+
+Manual visual notes:
+- Korean heading and body text render without clipping in all screenshots.
+- Wide safety-chain SVG and tables are contained inside local scroll wrappers.
+- Page-level horizontal overflow was not detected.
+- The dashboard uses real DOM, tables, links, and SVG nodes, not a pasted screenshot.
+- The dashboard does not claim issue closure, canonical promotion, or new runtime evidence.
+
+Runtime evidence referenced by dashboard:
+- runtime-evidence/d9-evaluator/d9-vitest-run-2026-07-09.log: 11 passed
+- runtime-evidence/impl-skeleton/impl-vitest-run-2026-07-09.log: 7 passed
