@@ -1,0 +1,30 @@
+
+ RUN  v4.1.10 /home/user/webapp/runtime-evidence/d9-evaluator
+
+ ✓ d9-safety-evaluator.test.ts > D9 colloquial evaluator v2.1.1 - realistic athlete phrases > 20개 현장형 문장을 기대 라우팅으로 분류한다 23ms
+ ✓ d9-safety-evaluator.test.ts > D9 colloquial evaluator v2.1.1 - realistic athlete phrases > worsening 활용형: 뛸수록/달릴수록 같은 표현을 놓치지 않는다 1ms
+ ✓ d9-safety-evaluator.test.ts > D9 colloquial evaluator v2.1.1 - realistic athlete phrases > 부위 없는 약한 통증은 advisory로 남기되 block하지 않는다 2ms
+ ✓ d9-safety-evaluator.test.ts > D9 colloquial evaluator v2.1.1 - realistic athlete phrases > soft mitigation은 advisory만 낮추고 hard risk는 낮추지 못한다 1ms
+ ✓ d9-safety-evaluator.test.ts > D9 colloquial evaluator v2.1.1 - realistic athlete phrases > 연결어미를 무리하게 잘라 위험 조합을 깨지 않는다 1ms
+ ✓ d9-safety-evaluator.test.ts > D9 colloquial evaluator v2.1.1 - false positive / false negative 방지 > 짧은 토큰 오탐을 막는다 1ms
+ ✓ d9-safety-evaluator.test.ts > D9 colloquial evaluator v2.1.1 - false positive / false negative 방지 > 토요일/열감 같은 단어가 있어도 실제 구토/발열은 놓치지 않는다 1ms
+ ✓ d9-safety-evaluator.test.ts > D9 colloquial evaluator v2.1.1 - false positive / false negative 방지 > 전신 발열과 국소 열감을 구분한다 1ms
+ ✓ d9-safety-evaluator.test.ts > D9 colloquial evaluator v2.1.1 - false positive / false negative 방지 > 장비만 불편하면 D9 신체 안전 신호로 남기지 않는다 1ms
+ ✓ d9-safety-evaluator.test.ts > D9 colloquial evaluator v2.1.1 - false positive / false negative 방지 > 장비 맥락이 있어도 신체 통증이 있으면 UNKNOWN으로 잡는다 1ms
+ ✓ d9-safety-evaluator.test.ts > D9 to RVE safety signal adapter > ACTIVE/UNKNOWN/CLEARED를 RVE signal로 매핑한다 3ms
+
+ Test Files  1 passed (1)
+      Tests  11 passed (11)
+   Start at  01:04:43
+   Duration  543ms (transform 158ms, setup 0ms, import 195ms, tests 39ms, environment 1ms)
+
+
+--- environment ---
+date_utc: 2026-07-09T01:05:01Z
+node: v20.19.6
+npm: 10.8.2
+vitest: vitest/4.1.10 linux-x64 node-v20.19.6
+platform: Linux 6.1.102 x86_64
+test_file_sha256: 5caf8dd5c2e860435e2eba3d7966ab173a125bc5f1d55aab663f113ed60649a3
+source_package: specs/test-packages/D9_SAFETY_EVALUATOR_V2_1_1_TEST_PACKAGE.md @ origin/main 90cbd61
+extraction: verbatim TS code block, zero modification (vitest.ts -> test.ts rename only for glob match)
