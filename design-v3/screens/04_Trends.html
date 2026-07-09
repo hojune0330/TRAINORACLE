@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TRAINORACLE v3 — Trends (추이)</title>
+<link rel="stylesheet" href="../tokens/tokens.css">
+<style>
+  .stage { display: flex; flex-wrap: wrap; gap: 40px; justify-content: center; padding: 48px 20px; }
+  .frame { width: 380px; background: var(--bg); border: 1px solid var(--ink);
+    box-shadow: 0 40px 100px -30px rgba(0,0,0,0.22); display: flex; flex-direction: column; min-height: 780px; }
+  .frame-label { font-family: var(--mono); font-size: 10px; letter-spacing: 0.14em;
+    text-transform: uppercase; color: var(--ink-3); text-align: center; margin-bottom: 10px; }
+  .topbar { display: flex; justify-content: space-between; align-items: center;
+    padding: 14px 20px; border-bottom: 1px solid var(--hair); }
+  .body { padding: 20px; flex: 1; overflow-y: auto; }
+  .sec { margin-bottom: 26px; }
+  .sec h2 { font-size: 15px; font-weight: 600; letter-spacing: -0.01em; margin: 6px 0 12px; }
+
+  /* sparkline (inline svg) */
+  .spark-row { display: flex; align-items: baseline; gap: 12px; padding: 10px 0;
+    border-bottom: 1px dashed var(--hair); }
+  .spark-row .name { font-size: 13px; width: 84px; flex: none; }
+  .spark-row .v { font-family: var(--mono); font-size: 14px; font-weight: 600;
+    font-variant-numeric: tabular-nums; width: 56px; text-align: right; flex: none; }
+  .spark-row svg { flex: 1; height: 22px; align-self: center; }
+  .delta-up { color: var(--delta-up); } .delta-down { color: var(--delta-down); }
+  .delta { font-family: var(--mono); font-size: 10.5px; font-weight: 600; width: 44px;
+    text-align: right; flex: none; }
+
+  /* intensity stack — 주간 강도 분포 */
+  .stack { display: flex; height: 18px; border: 1px solid var(--line); }
+  .stack div { height: 100%; }
+  .stack-legend { display: flex; gap: 12px; margin-top: 8px; flex-wrap: wrap; }
+
+  /* missing / stale source 표시 — SPEC: 소스 상태는 시각적으로 노출 */
+  .src-state { display: flex; gap: 8px; align-items: center; margin-top: 10px;
+    border: 1px dashed var(--line-2); padding: 8px 10px; }
+  .src-state .txt { font-size: 11.5px; color: var(--ink-3); flex: 1; }
+
+  .nav { margin-top: auto; display: grid; grid-template-columns: repeat(4, 1fr); border-top: 1px solid var(--line); }
+  .nav a { padding: 13px 0; text-align: center; font-family: var(--mono); font-size: 9.5px;
+    font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink-4);
+    text-decoration: none; border-right: 1px solid var(--hair); }
+  .nav a:last-child { border-right: 0; }
+  .nav a.on { color: var(--ink); border-top: 2px solid var(--ink); margin-top: -1px; }
+</style>
+</head>
+<body>
+<div class="stage">
+
+  <div>
+    <div class="frame-label">Trends — 스크롤형 (정본)</div>
+    <div class="frame">
+
+      <div class="topbar">
+        <span class="mono" style="font-size:11px; font-weight:700; letter-spacing:0.2em;">추이</span>
+        <span class="mono" style="font-size:10px; color:var(--ink-3);">최근 6주</span>
+      </div>
+
+      <div class="body">
+
+        <div class="sec">
+          <span class="lb">§1 · 핵심 지표</span>
+          <h2>6주 흐름</h2>
+
+          <div class="spark-row">
+            <span class="name">1000m 페이스</span>
+            <svg viewBox="0 0 120 22" preserveAspectRatio="none">
+              <polyline points="0,16 20,15 40,17 60,12 80,10 100,11 120,6" fill="none" stroke="#0E1412" stroke-width="1.5"/>
+              <circle cx="120" cy="6" r="2.5" fill="#0D5F5A"/>
+            </svg>
+            <span class="v">3'09"</span>
+            <span class="delta delta-up">▾ 5"</span>
+          </div>
+
+          <div class="spark-row">
+            <span class="name">주간 거리</span>
+            <svg viewBox="0 0 120 22" preserveAspectRatio="none">
+              <polyline points="0,14 20,12 40,13 60,9 80,11 100,8 120,9" fill="none" stroke="#0E1412" stroke-width="1.5"/>
+              <circle cx="120" cy="9" r="2.5" fill="#0D5F5A"/>
+            </svg>
+            <span class="v">72km</span>
+            <span class="delta delta-flat mono">—</span>
+          </div>
+
+          <div class="spark-row">
+            <span class="name">안정시 HR</span>
+            <svg viewBox="0 0 120 22" preserveAspectRatio="none">
+              <polyline points="0,8 20,9 40,10 60,10 80,12 100,13 120,14" fill="none" stroke="#0E1412" stroke-width="1.5"/>
+              <circle cx="120" cy="14" r="2.5" fill="#0D5F5A"/>
+            </svg>
+            <span class="v">47</span>
+            <span class="delta delta-up">▾ 2</span>
+          </div>
+
+          <div class="spark-row">
+            <span class="name">기분 평균</span>
+            <svg viewBox="0 0 120 22" preserveAspectRatio="none">
+              <polyline points="0,14 20,12 40,15 60,10 80,9 100,10 120,7" fill="none" stroke="#0E1412" stroke-width="1.5"/>
+              <circle cx="120" cy="7" r="2.5" fill="#0D5F5A"/>
+            </svg>
+            <span class="v">3.8</span>
+            <span class="delta delta-up">▴ 0.4</span>
+          </div>
+        </div>
+
+        <div class="sec">
+          <span class="lb">§2 · 이번 주 강도 분포</span>
+          <h2>07·06 – 07·12</h2>
+          <div class="stack">
+            <div style="width:52%; background:var(--e-base);"></div>
+            <div style="width:16%; background:var(--e-lt);"></div>
+            <div style="width:12%; background:var(--e-vo2);"></div>
+            <div style="width:4%;  background:var(--e-gly);"></div>
+            <div style="width:16%; background:var(--e-rest);"></div>
+          </div>
+          <div class="stack-legend">
+            <span class="es ba"><span class="dot" style="background:var(--e-base)"></span><span class="code">BA 52%</span></span>
+            <span class="es lt"><span class="dot" style="background:var(--e-lt)"></span><span class="code">LT 16%</span></span>
+            <span class="es v2"><span class="dot" style="background:var(--e-vo2)"></span><span class="code">V2 12%</span></span>
+            <span class="es gl"><span class="dot" style="background:var(--e-gly)"></span><span class="code">GL 4%</span></span>
+            <span class="es re"><span class="dot" style="background:var(--e-rest)"></span><span class="code">RE 16%</span></span>
+          </div>
+        </div>
+
+        <div class="sec">
+          <span class="lb">§3 · 데이터 상태</span>
+          <div class="src-state">
+            <span class="safety unknown" style="font-size:9px;">Stale</span>
+            <span class="txt">HR 데이터가 3일째 동기화되지 않았습니다. 위 HR 추이는 07·05까지의 값입니다.</span>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="nav">
+        <a href="01_Home.html">Home</a>
+        <a href="02_LogEntry.html">기록</a>
+        <a class="on" href="#">추이</a>
+        <a href="#">설정</a>
+      </div>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>

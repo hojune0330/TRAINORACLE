@@ -1,0 +1,12 @@
+{
+  "name": "trainoracle-d9-runtime-evidence",
+  "private": true,
+  "version": "0.1.0",
+  "scripts": {
+    "test": "vitest run d9-safety-evaluator.vitest.ts --reporter=verbose"
+  },
+  "devDependencies": {
+    "typescript": "^7.0.2",
+    "vitest": "^4.1.10"
+  }
+}
