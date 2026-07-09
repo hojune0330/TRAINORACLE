@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TRAINORACLE v3 — Log Entry (기록 입력)</title>
+<link rel="stylesheet" href="../tokens/tokens.css">
+<style>
+  .stage { display: flex; flex-wrap: wrap; gap: 40px; justify-content: center; padding: 48px 20px; }
+  .frame { width: 380px; background: var(--bg); border: 1px solid var(--ink);
+    box-shadow: 0 40px 100px -30px rgba(0,0,0,0.22); display: flex; flex-direction: column; min-height: 780px; }
+  .frame-label { font-family: var(--mono); font-size: 10px; letter-spacing: 0.14em;
+    text-transform: uppercase; color: var(--ink-3); text-align: center; margin-bottom: 10px; }
+  .topbar { display: flex; justify-content: space-between; align-items: center;
+    padding: 14px 20px; border-bottom: 1px solid var(--hair); }
+  .topbar .back { font-family: var(--mono); font-size: 11px; color: var(--ink-3);
+    text-decoration: none; letter-spacing: 0.08em; }
+  .topbar .mode { font-family: var(--mono); font-size: 10px; font-weight: 700;
+    letter-spacing: 0.14em; text-transform: uppercase; }
+  .body { padding: 20px; flex: 1; overflow-y: auto; }
+
+  .q { margin-bottom: 22px; }
+  .q .qt { font-size: 14px; font-weight: 600; margin-bottom: 10px; letter-spacing: -0.01em; }
+  .q .qn { font-family: var(--mono); font-size: 10px; color: var(--ink-4); margin-right: 6px; }
+
+  /* structured selectors */
+  .seg { display: grid; grid-template-columns: repeat(5, 1fr); border: 1px solid var(--line); }
+  .seg button { border: 0; border-right: 1px solid var(--hair); background: var(--surface);
+    padding: 10px 0; font-family: var(--mono); font-size: 13px; font-weight: 600;
+    font-variant-numeric: tabular-nums; cursor: pointer; color: var(--ink-3); }
+  .seg button:last-child { border-right: 0; }
+  .seg button.on { background: var(--ink); color: var(--bg); }
+
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .chip { border: 1px solid var(--line); background: var(--surface); padding: 7px 12px;
+    font-size: 12.5px; cursor: pointer; border-radius: var(--r-sm); }
+  .chip.on { border-color: var(--ink); background: var(--surface-2); font-weight: 600; }
+
+  .num-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .num-field { border: 1px solid var(--line); background: var(--surface); padding: 10px 12px; }
+  .num-field .l { font-family: var(--mono); font-size: 9px; letter-spacing: 0.12em;
+    text-transform: uppercase; color: var(--ink-4); display: block; margin-bottom: 4px; }
+  .num-field input { border: 0; outline: 0; width: 100%; font-family: var(--mono);
+    font-size: 17px; font-weight: 600; font-variant-numeric: tabular-nums; background: transparent; color: var(--ink); }
+
+  /* memo — 손글씨 + 종이, 비영속 안내 */
+  .memo { border: 1px solid var(--line); }
+  .memo textarea { width: 100%; min-height: 110px; border: 0; outline: 0; resize: vertical;
+    padding: 14px; font-family: var(--hand-font); font-size: 19px; color: var(--ink-blue);
+    background: transparent; line-height: 1.7; }
+  .memo-head { display: flex; justify-content: space-between; align-items: center;
+    padding: 8px 12px; border-bottom: 1px solid var(--hair); background: var(--surface); }
+
+  /* safety notice — 표시만 하고 UI가 해제할 수 없음 */
+  .safety-strip { display: flex; gap: 10px; align-items: center; margin: 0 20px 14px;
+    border: 1px solid var(--warn); padding: 10px 12px; }
+  .safety-strip .txt { font-size: 12px; color: var(--ink-2); flex: 1; }
+
+  .bottom { padding: 14px 20px; border-top: 1px solid var(--line); display: flex; gap: 8px; }
+  .bottom .btn { flex: 1; }
+</style>
+</head>
+<body>
+<div class="stage">
+
+  <div>
+    <div class="frame-label">Log Entry — Post-session (구조화 6문항 + 비영속 메모)</div>
+    <div class="frame">
+
+      <div class="topbar">
+        <a class="back" href="01_Home.html">← 홈</a>
+        <span class="mode">Post-session · 07·09</span>
+        <span class="mono" style="font-size:10px; color:var(--ink-4);">2/6</span>
+      </div>
+
+      <div class="body paper-grid">
+
+        <div class="q">
+          <div class="qt"><span class="qn">Q1</span>오늘 세션은 어떤 훈련이었나요?</div>
+          <div class="chips">
+            <button class="chip"><span class="es ba" style="margin-right:4px"><span class="dot" style="background:var(--e-base)"></span><span class="code">BA</span></span> 유산소</button>
+            <button class="chip on"><span class="es v2" style="margin-right:4px"><span class="dot" style="background:var(--e-vo2)"></span><span class="code">V2</span></span> 인터벌</button>
+            <button class="chip"><span class="es lt" style="margin-right:4px"><span class="dot" style="background:var(--e-lt)"></span><span class="code">LT</span></span> 템포</button>
+            <button class="chip"><span class="es re" style="margin-right:4px"><span class="dot" style="background:var(--e-rest)"></span><span class="code">RE</span></span> 회복</button>
+          </div>
+        </div>
+
+        <div class="q">
+          <div class="qt"><span class="qn">Q2</span>주관적 강도 (RPE)</div>
+          <div class="seg">
+            <button>6</button><button>7</button><button class="on">8</button><button>9</button><button>10</button>
+          </div>
+        </div>
+
+        <div class="q">
+          <div class="qt"><span class="qn">Q3</span>핵심 수치</div>
+          <div class="num-row">
+            <div class="num-field"><span class="l">avg pace /km</span><input value="3'12&quot;"></div>
+            <div class="num-field"><span class="l">avg hr</span><input value="176"></div>
+          </div>
+        </div>
+
+        <div class="q">
+          <div class="qt"><span class="qn">Q4</span>지금 기분</div>
+          <div class="chips">
+            <button class="chip"><span class="mood-strip m1"><span class="b"></span><span class="b"></span><span class="b"></span><span class="b"></span><span class="b"></span></span></button>
+            <button class="chip"><span class="mood-strip m2"><span class="b"></span><span class="b"></span><span class="b"></span><span class="b"></span><span class="b"></span></span></button>
+            <button class="chip"><span class="mood-strip m3"><span class="b"></span><span class="b"></span><span class="b"></span><span class="b"></span><span class="b"></span></span></button>
+            <button class="chip on"><span class="mood-strip m4"><span class="b"></span><span class="b"></span><span class="b"></span><span class="b"></span><span class="b"></span></span></button>
+            <button class="chip"><span class="mood-strip m5"><span class="b"></span><span class="b"></span><span class="b"></span><span class="b"></span><span class="b"></span></span></button>
+          </div>
+        </div>
+
+        <div class="q">
+          <div class="qt"><span class="qn">Q5</span>통증이 있었나요? <span class="mono" style="font-size:10px;color:var(--ink-4)">(부위 선택 + 1–5)</span></div>
+          <div class="chips">
+            <button class="chip">없음</button>
+            <button class="chip on">종아리 R <span class="pain p2" style="margin-left:6px"><span class="p"></span><span class="p"></span><span class="p"></span><span class="p"></span><span class="p"></span></span></button>
+            <button class="chip">+ 부위 추가</button>
+          </div>
+        </div>
+
+        <div class="q">
+          <div class="qt"><span class="qn">Q6</span>오늘의 메모 <span class="mono" style="font-size:10px;color:var(--ink-4)">(자유롭게)</span></div>
+          <div class="memo">
+            <div class="memo-head">
+              <span class="lb" style="font-size:9px;">Memo</span>
+              <span class="transient-note">기기에만 보관 · 서버 저장 안 함</span>
+            </div>
+            <textarea class="paper-lines" placeholder="손으로 쓰던 일지처럼, 자유롭게.">4번째 rep에서 다리가 풀렸는데 5번째가 제일 빨랐다.</textarea>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- 통증 신호 → 검토 상향 가능 안내. 단, 어떤 입력도 위험을 '해제'하지 못함 -->
+      <div class="safety-strip">
+        <span class="safety unknown">Review</span>
+        <span class="txt">통증 기록이 반복되고 있어 코치 검토 대상으로 표시됩니다. 계획 생성 전 안전 확인이 필요할 수 있어요.</span>
+      </div>
+
+      <div class="bottom">
+        <button class="btn">임시 저장</button>
+        <button class="btn primary">일지 완성</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>

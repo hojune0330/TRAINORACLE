@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TRAINORACLE v3 — Log Detail (일지 페이지)</title>
+<link rel="stylesheet" href="../tokens/tokens.css">
+<style>
+  .stage { display: flex; flex-wrap: wrap; gap: 40px; justify-content: center; padding: 48px 20px; }
+  .frame { width: 380px; background: var(--bg); border: 1px solid var(--ink);
+    box-shadow: 0 40px 100px -30px rgba(0,0,0,0.22); display: flex; flex-direction: column; min-height: 780px; }
+  .frame-label { font-family: var(--mono); font-size: 10px; letter-spacing: 0.14em;
+    text-transform: uppercase; color: var(--ink-3); text-align: center; margin-bottom: 10px; }
+  .topbar { display: flex; justify-content: space-between; align-items: center;
+    padding: 14px 20px; border-bottom: 1px solid var(--hair); }
+  .topbar a { font-family: var(--mono); font-size: 11px; color: var(--ink-3);
+    text-decoration: none; letter-spacing: 0.08em; }
+  .print-btn { font-family: var(--mono); font-size: 10px; font-weight: 600; letter-spacing: 0.1em;
+    text-transform: uppercase; border: 1px solid var(--line); background: var(--surface);
+    padding: 5px 10px; cursor: pointer; }
+
+  .journal-page { margin: 18px 20px; border: 1px solid var(--line); background: var(--paper); }
+  .jp-inner { padding: 18px 16px; }
+  .photo { position: relative; border: 1px solid var(--line-2); background: var(--surface-2);
+    height: 120px; margin: 16px 8px; display: flex; align-items: center; justify-content: center; }
+  .photo .tape { top: -6px; left: 24px; }
+  .photo .tape.sage { left: auto; right: 24px; top: -6px; transform: rotate(1.4deg); }
+  .photo .ph { font-family: var(--mono); font-size: 10px; color: var(--ink-4); letter-spacing: 0.1em; }
+
+  .sess { display: flex; gap: 12px; margin: 16px 0 0; }
+  .sess .body { flex: 1; }
+  .sess h2 { font-size: 17px; font-weight: 600; margin: 0 0 2px; letter-spacing: -0.02em; }
+  .sess .meta { font-family: var(--mono); font-size: 11px; color: var(--ink-3); }
+
+  .splits { width: 100%; border-collapse: collapse; margin: 14px 0; }
+  .splits th { font-family: var(--mono); font-size: 9px; font-weight: 600; letter-spacing: 0.12em;
+    text-transform: uppercase; color: var(--ink-4); text-align: right; padding: 5px 8px;
+    border-bottom: 1px solid var(--line); }
+  .splits th:first-child { text-align: left; }
+  .splits td { font-family: var(--mono); font-size: 12.5px; font-variant-numeric: tabular-nums;
+    text-align: right; padding: 6px 8px; border-bottom: 1px dashed var(--hair); }
+  .splits td:first-child { text-align: left; color: var(--ink-3); }
+  .splits tr.best td { font-weight: 700; }
+
+  .memo-quote { border-left: 2px solid var(--ink); padding: 4px 0 4px 12px; margin: 14px 0 6px; }
+
+  .footer-row { display: flex; justify-content: space-between; align-items: center;
+    padding: 12px 16px; border-top: 1px solid var(--hair); }
+
+  /* AI 각주 — 페이지 하단 각주 스타일, 본문 침범 없음 */
+  .ai-footnote { margin: 0 20px 18px; padding: 12px 14px; border-top: 1px solid var(--line); }
+  .ai-footnote .fn { display: flex; gap: 8px; align-items: baseline; }
+  .ai-footnote .txt { font-size: 12.5px; color: var(--ink-2); flex: 1; }
+  .ai-footnote .src { font-family: var(--mono); font-size: 9.5px; color: var(--ink-4);
+    margin-top: 6px; letter-spacing: 0.04em; }
+</style>
+</head>
+<body>
+<div class="stage">
+
+  <div>
+    <div class="frame-label">Log Detail — 일지 페이지 (인쇄 가능)</div>
+    <div class="frame">
+
+      <div class="topbar no-print">
+        <a href="01_Home.html">← 홈</a>
+        <span class="mono" style="font-size:10px; letter-spacing:0.12em;">JOURNAL · 07·08</span>
+        <button class="print-btn" onclick="window.print()">Print</button>
+      </div>
+
+      <div class="journal-page">
+        <div class="idx-card" style="border-left:0;border-right:0;border-top:0;">
+          <span class="date">2026·07·08</span>
+          <span class="dow">WED · 맑음 26°C</span>
+          <span class="meta">CYCLE_DAY 5<br>quality day</span>
+        </div>
+
+        <div class="jp-inner paper-grid">
+          <div class="sess">
+            <span class="es-bar v2"></span>
+            <div class="body">
+              <h2>1000m × 5 인터벌</h2>
+              <div class="meta">트랙 · 19:10 – 20:24 · 회복조깅 400m</div>
+            </div>
+            <span class="stamp brand">SB</span>
+          </div>
+
+          <table class="splits">
+            <thead><tr><th>rep</th><th>time</th><th>pace</th><th>hr</th></tr></thead>
+            <tbody>
+              <tr><td>1</td><td>3'14"2</td><td>3'14"</td><td>168</td></tr>
+              <tr><td>2</td><td>3'13"8</td><td>3'14"</td><td>172</td></tr>
+              <tr><td>3</td><td>3'12"9</td><td>3'13"</td><td>175</td></tr>
+              <tr><td>4</td><td>3'15"6</td><td>3'16"</td><td>178</td></tr>
+              <tr class="best"><td>5</td><td>3'09"1</td><td>3'09"</td><td>181</td></tr>
+            </tbody>
+          </table>
+
+          <div class="photo">
+            <span class="tape"></span><span class="tape sage"></span>
+            <span class="ph">PHOTO · track_0708.jpg</span>
+          </div>
+
+          <div class="memo-quote">
+            <span class="hand">4번째 rep에서 다리가 풀렸는데 5번째가 제일 빨랐다. 몸이 아니라 머리 문제였음.</span>
+          </div>
+          <div class="transient-note">메모 원문은 이 기기에만 보관됩니다</div>
+        </div>
+
+        <div class="footer-row">
+          <span class="mono" style="font-size:10px; color:var(--ink-3);">RPE 8 · 종아리 R
+            <span class="pain p2" style="margin-left:4px"><span class="p"></span><span class="p"></span><span class="p"></span><span class="p"></span><span class="p"></span></span>
+          </span>
+          <span class="mood-strip m4"><span class="b"></span><span class="b"></span><span class="b"></span><span class="b"></span><span class="b"></span></span>
+        </div>
+      </div>
+
+      <!-- AI 각주: 근거(source ref) + confidence 필수, 판정 아님 -->
+      <div class="ai-footnote no-print">
+        <div class="fn">
+          <span class="lb" style="flex:none;">JH ¹</span>
+          <span class="txt">rep 4의 페이스 하락 후 rep 5 최고 기록 — 최근 3회 인터벌에서 같은 패턴이 보여요. 초반 배분을 검토할 만합니다.</span>
+          <span class="conf">conf 82%</span>
+        </div>
+        <div class="src">sources: session_0708.splits · session_0701.splits · session_0624.splits</div>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+</body>
+</html>

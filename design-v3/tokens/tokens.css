@@ -1,0 +1,289 @@
+/* ============================================================
+   TRAINORACLE — Design Tokens v3 (canonical, single file)
+   v2 base (Tufte × Linear) + v3 journal extension (Field Journal)
+   status: DRAFT_FOR_REVIEW — rebuilt 2026-07-09 on top of main
+   ------------------------------------------------------------
+   구성:
+   §1 Base neutrals / brand / semantic
+   §2 Energy systems (4-tier 사용 규칙은 VISUALIZATION_SYSTEM.md)
+   §3 Typography
+   §4 Journal extension (paper / handwriting / mood / pain)
+   §5 Utility classes
+   ------------------------------------------------------------
+   불변 규칙 (PHILOSOPHY.md):
+   - radius 기본 0, 인터랙티브만 ≤4px (아바타 50%만 예외)
+   - 그라데이션/네온/glow 금지 (highlighter linear-gradient만 예외)
+   - UI 이모지 금지 (사용자 입력 영역만 자유)
+   - 모든 숫자 tabular-nums
+   - serif 폰트 UI 사용 금지 (손글씨 폰트는 사용자 입력 영역 전용)
+   ============================================================ */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Caveat:wght@400;500;600&family=Gowun+Dodum&display=swap');
+
+:root {
+  /* ---- §1.1 Neutrals ---- */
+  --bg:        #FAFAF7;
+  --surface:   #FFFFFF;
+  --surface-2: #F4F3EE;
+  --ink:       #0E1412;
+  --ink-2:     #2B3330;
+  --ink-3:     #5F6965;
+  --ink-4:     #8F9894;
+  --line:      #D9D6CE;
+  --line-2:    #BFBBB0;
+  --hair:      #E8E6DF;
+
+  /* ---- §1.2 Brand ---- */
+  --brand:     #0D5F5A;   /* Deep Teal — UI의 5% 이하, accent only */
+  --brand-ink: #07302E;
+
+  /* ---- §1.3 Semantic ---- */
+  --ok:   #1F7A3A;
+  --warn: #B4530C;
+  --err:  #A11F1F;
+  --info: #1D4ED8;
+  --unc:  #6B3FB0;        /* uncertainty — AI 판단 불확실 표시 전용 */
+
+  /* ---- §2 Energy systems ----
+     T1 Strong(캘린더 셀/세션 컬러바) · T2 Mid(차트) ·
+     T3 Subtle(점+코드+underline) · T4 Wash(선택 배경 5%) */
+  --e-base: #4A8FC7;      /* BA Z1-Z2 Aerobic base */
+  --e-lt:   #B8A024;      /* LT Z3-Z4 Threshold */
+  --e-vo2:  #C7761C;      /* V2 Z5 VO2max */
+  --e-gly:  #B8332E;      /* GL Z6 Glycolytic */
+  --e-atp:  #7A3FB5;      /* AP Z7 ATP-PC */
+  --e-rest: #7A7A70;      /* RE Recovery */
+
+  /* ---- §3 Typography ---- */
+  --sans: "Inter", "Pretendard Variable", ui-sans-serif, system-ui, sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+  --hand-font: 'Caveat', 'Gowun Dodum', cursive;   /* 사용자 입력 전용 */
+
+  /* ---- §4 Journal extension ---- */
+  --paper:      #F7F3E8;  /* warm cream — 일지 페이지 배경 */
+  --paper-2:    #EFEADC;
+  --paper-edge: #C9C0A6;
+  --grid-dot:   #DCD4BC;
+  --pencil:     #2B3330;
+  --ink-blue:   #1A3A6F;  /* 만년필 잉크 — 손글씨/스탬프 */
+  --tape:       #E8DCB0;
+  --tape-2:     #DDE3D2;
+  --highlighter: rgba(255, 215, 64, 0.32);
+
+  /* mood 5단계 (cool→warm) */
+  --mood-1: #5B7B8E; --mood-2: #7E8B86; --mood-3: #B8A878;
+  --mood-4: #C9824E; --mood-5: #A04830;
+
+  /* pain 5단계 (light→dark) — SPEC 주의: pain 수치는 구조화 필드,
+     자유 서술 통증 문구는 저장 금지 (DAILY_LOG_AND_CHECKIN_SPEC §8) */
+  --pain-1: #E8C9B5; --pain-2: #D89E78; --pain-3: #B86F44;
+  --pain-4: #8C4A28; --pain-5: #5C2E18;
+
+  /* condition deltas */
+  --delta-up: #1F7A3A; --delta-down: #B4530C; --delta-flat: #5F6965;
+
+  /* radius / border */
+  --r-0: 0; --r-sm: 2px; --r-md: 4px;
+  --bw-under: 1.5px;
+
+  /* motion */
+  --ease-default: cubic-bezier(0.2, 0, 0.2, 1);
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* ============== §5 Utility classes ============== */
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--sans);
+  font-size: 14.5px;
+  line-height: 1.55;
+  letter-spacing: -0.005em;
+  font-feature-settings: "ss01", "cv11";
+  -webkit-font-smoothing: antialiased;
+}
+
+.mono {
+  font-family: var(--mono);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.005em;
+}
+
+.lb {  /* 논문식 섹션 라벨 */
+  font-family: var(--mono);
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+
+/* --- paper backgrounds --- */
+.paper { background: var(--paper); }
+.paper-grid {
+  background-color: var(--paper);
+  background-image: radial-gradient(circle, var(--grid-dot) 1px, transparent 1px);
+  background-size: 8px 8px;
+}
+.paper-lines {
+  background-color: var(--paper);
+  background-image: repeating-linear-gradient(180deg,
+    transparent 0px, transparent 23px,
+    var(--grid-dot) 23px, var(--grid-dot) 24px);
+}
+
+/* --- handwriting (사용자 입력 영역 전용 — UI 라벨 사용 금지) --- */
+.hand {
+  font-family: var(--hand-font);
+  font-weight: 500;
+  font-size: 1.28em;
+  letter-spacing: 0.01em;
+  color: var(--ink-blue);
+}
+.hand-pencil {
+  font-family: 'Gowun Dodum', 'Caveat', cursive;
+  font-weight: 400;
+  color: var(--pencil);
+}
+
+/* --- index card header (도서관 카드 카탈로그) --- */
+.idx-card {
+  background: var(--surface);
+  border: 1px solid var(--ink);
+  padding: 12px 16px;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 14px;
+  align-items: baseline;
+}
+.idx-card .date {
+  font-family: var(--mono); font-size: 11px; font-weight: 600;
+  letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink);
+}
+.idx-card .dow {
+  font-family: var(--mono); font-size: 11px; color: var(--ink-3);
+  letter-spacing: 0.14em; text-transform: uppercase;
+}
+.idx-card .meta {
+  font-family: var(--mono); font-size: 10px; color: var(--ink-3);
+  letter-spacing: 0.06em; text-align: right;
+}
+
+/* --- energy system T3 subtle (점 + 코드 + underline) --- */
+.es { display: inline-flex; align-items: baseline; gap: 5px; }
+.es .dot { width: 7px; height: 7px; border-radius: 50%; align-self: center; }
+.es .code {
+  font-family: var(--mono); font-size: 10px; font-weight: 600;
+  letter-spacing: 0.08em;
+  border-bottom: var(--bw-under) solid currentColor;
+  padding-bottom: 1px;
+}
+.es.ba { color: var(--e-base); } .es.lt { color: var(--e-lt); }
+.es.v2 { color: var(--e-vo2); }  .es.gl { color: var(--e-gly); }
+.es.ap { color: var(--e-atp); }  .es.re { color: var(--e-rest); }
+
+/* --- energy system T1 strong (세션 카드 좌측 컬러바) --- */
+.es-bar { width: 5px; align-self: stretch; flex: none; }
+.es-bar.ba { background: var(--e-base); } .es-bar.lt { background: var(--e-lt); }
+.es-bar.v2 { background: var(--e-vo2); }  .es-bar.gl { background: var(--e-gly); }
+.es-bar.ap { background: var(--e-atp); }  .es-bar.re { background: var(--e-rest); }
+
+/* --- mood strip --- */
+.mood-strip { display: inline-flex; gap: 2px; align-items: flex-end; height: 16px; }
+.mood-strip .b { width: 4px; height: 4px; background: var(--hair); }
+.mood-strip .b:nth-child(2) { height: 7px; }
+.mood-strip .b:nth-child(3) { height: 10px; }
+.mood-strip .b:nth-child(4) { height: 13px; }
+.mood-strip .b:nth-child(5) { height: 16px; }
+.mood-strip.m1 .b:nth-child(1) { background: var(--mood-1); }
+.mood-strip.m2 .b:nth-child(-n+2) { background: var(--mood-2); }
+.mood-strip.m3 .b:nth-child(-n+3) { background: var(--mood-3); }
+.mood-strip.m4 .b:nth-child(-n+4) { background: var(--mood-4); }
+.mood-strip.m5 .b { background: var(--mood-5); }
+
+/* --- pain dots --- */
+.pain { display: inline-flex; gap: 3px; align-items: center; }
+.pain .p { width: 8px; height: 8px; border: 1px solid var(--line-2); }
+.pain.p1 .p:nth-child(-n+1), .pain.p2 .p:nth-child(-n+2),
+.pain.p3 .p:nth-child(-n+3), .pain.p4 .p:nth-child(-n+4),
+.pain.p5 .p { border-color: transparent; }
+.pain.p1 .p:nth-child(-n+1) { background: var(--pain-1); }
+.pain.p2 .p:nth-child(-n+2) { background: var(--pain-2); }
+.pain.p3 .p:nth-child(-n+3) { background: var(--pain-3); }
+.pain.p4 .p:nth-child(-n+4) { background: var(--pain-4); }
+.pain.p5 .p { background: var(--pain-5); }
+
+/* --- highlighter (유일하게 허용되는 gradient) --- */
+.hl { background: linear-gradient(transparent 60%, var(--highlighter) 60%); padding: 0 1px; }
+
+/* --- stamp (잉크 도장) --- */
+.stamp {
+  display: inline-block;
+  font-family: var(--mono); font-size: 10px; font-weight: 700;
+  letter-spacing: 0.18em; text-transform: uppercase;
+  padding: 3px 7px;
+  border: 1.5px solid var(--ink-blue); color: var(--ink-blue);
+  transform: rotate(-2deg);
+  background: rgba(255,255,255,0.4);
+}
+.stamp.red { border-color: var(--err); color: var(--err); }
+.stamp.brand { border-color: var(--brand); color: var(--brand); }
+
+/* --- masking tape --- */
+.tape {
+  background: var(--tape); height: 12px; width: 56px;
+  display: inline-block; transform: rotate(-1.2deg);
+  position: absolute; box-shadow: 0 1px 2px rgba(0,0,0,0.08);
+}
+.tape.sage { background: var(--tape-2); }
+
+/* --- AI confidence chip (AI 응답 필수 요소 — 100% 표시 금지) --- */
+.conf {
+  font-family: var(--mono); font-size: 10px; font-weight: 600;
+  letter-spacing: 0.06em; color: var(--ink-3);
+  border: 1px solid var(--hair); padding: 2px 6px;
+}
+.conf.low { color: var(--unc); border-color: var(--unc); }
+
+/* --- safety state chip (D9/Safety Gate — UI는 표시만, 해제 불가) --- */
+.safety {
+  font-family: var(--mono); font-size: 10px; font-weight: 700;
+  letter-spacing: 0.1em; text-transform: uppercase; padding: 3px 8px;
+}
+.safety.active  { background: var(--err); color: #fff; }
+.safety.unknown { background: var(--warn); color: #fff; }
+.safety.cleared { background: transparent; color: var(--ok); border: 1px solid var(--ok); }
+
+/* --- transient memo notice (SPEC: raw memo 비영속) --- */
+.transient-note {
+  font-family: var(--mono); font-size: 9.5px;
+  letter-spacing: 0.05em; color: var(--ink-4);
+}
+
+/* --- buttons --- */
+.btn {
+  font-family: var(--sans); font-size: 13.5px; font-weight: 600;
+  border: 1px solid var(--ink); background: var(--surface); color: var(--ink);
+  padding: 10px 18px; border-radius: var(--r-md); cursor: pointer;
+  transition: background 150ms var(--ease-default);
+}
+.btn:hover { background: var(--surface-2); }
+.btn.primary { background: var(--ink); color: var(--bg); }
+.btn.primary:hover { background: var(--ink-2); }
+.btn.brand { background: var(--brand); border-color: var(--brand); color: #fff; }
+
+/* --- hairline dividers --- */
+.hr { border: 0; border-top: 1px solid var(--hair); margin: 0; }
+.hr.strong { border-top-color: var(--line); }
+
+/* --- print (일지 인쇄 — "프린트해서 가지고 싶다") --- */
+@media print {
+  body { background: #fff; }
+  .no-print { display: none !important; }
+  .paper, .paper-grid, .paper-lines { background: #fff; }
+  .journal-page { border: none; box-shadow: none; page-break-inside: avoid; }
+}

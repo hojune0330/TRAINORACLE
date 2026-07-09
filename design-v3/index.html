@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TRAINORACLE — Design v3 (일지 중심) Index</title>
+<link rel="stylesheet" href="tokens/tokens.css">
+<style>
+  .wrap { max-width: 780px; margin: 0 auto; padding: 56px 24px; }
+  h1 { font-size: 34px; font-weight: 500; letter-spacing: -0.035em; margin: 8px 0 6px; }
+  .sub { color: var(--ink-3); font-size: 14px; margin-bottom: 36px; }
+  table { width: 100%; border-collapse: collapse; margin: 14px 0 32px; }
+  th { font-family: var(--mono); font-size: 10px; font-weight: 600; letter-spacing: 0.12em;
+    text-transform: uppercase; color: var(--ink-4); text-align: left; padding: 8px 10px;
+    border-bottom: 1px solid var(--line); }
+  td { font-size: 13.5px; padding: 10px; border-bottom: 1px dashed var(--hair); vertical-align: top; }
+  td a { color: var(--ink); font-weight: 600; }
+  .note { border-left: 2px solid var(--ink); padding: 6px 0 6px 14px; margin: 24px 0;
+    font-size: 13.5px; color: var(--ink-2); }
+  .mono-s { font-family: var(--mono); font-size: 11px; color: var(--ink-3); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <span class="lb">TRAINORACLE · Design v3 · 2026-07-09 rebuild</span>
+  <h1>일지 중심 디자인 v3</h1>
+  <p class="sub">"손으로 적던 일지처럼, 꾸미고 싶고, 프린트해서 가지고 싶게." — AI는 각주로 물러나고, 메인은 사용자가 쌓는 기록.</p>
+
+  <span class="lb">§1 · 화면</span>
+  <table>
+    <thead><tr><th>#</th><th>화면</th><th>내용</th><th>SPEC 연동</th></tr></thead>
+    <tbody>
+      <tr>
+        <td class="mono-s">01</td>
+        <td><a href="screens/01_Home.html">Home</a></td>
+        <td>오늘 일지 CTA (훈련 직후 / 하루 마무리 / 경기) + 어제 일지 요약 + AI 1줄</td>
+        <td class="mono-s">DAILY_BRIEF_AND_INBOX_SIGNAL_SPEC</td>
+      </tr>
+      <tr>
+        <td class="mono-s">02</td>
+        <td><a href="screens/02_LogEntry.html">Log Entry</a></td>
+        <td>구조화 6문항 (세션·RPE·수치·기분·통증·메모) — 메모는 비영속</td>
+        <td class="mono-s">DAILY_LOG_AND_CHECKIN_SPEC §8</td>
+      </tr>
+      <tr>
+        <td class="mono-s">03</td>
+        <td><a href="screens/03_LogDetail.html">Log Detail</a></td>
+        <td>일지 페이지 — 인덱스 카드·스플릿 테이블·테이프 사진·손글씨 메모·인쇄</td>
+        <td class="mono-s">ANALYSIS_AND_VISUALIZATION_DATA_CONTRACT</td>
+      </tr>
+      <tr>
+        <td class="mono-s">04</td>
+        <td><a href="screens/04_Trends.html">Trends</a></td>
+        <td>스파크라인·강도 분포 스택·데이터 소스 상태(stale) 노출</td>
+        <td class="mono-s">ANALYSIS_AND_VISUALIZATION_DATA_CONTRACT</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <span class="lb">§2 · 토큰</span>
+  <table>
+    <tbody>
+      <tr>
+        <td><a href="tokens/tokens.css">tokens/tokens.css</a></td>
+        <td>v2 base (Tufte × Linear) + v3 journal extension 통합 단일 파일</td>
+        <td class="mono-s">design-system/DESIGN_TOKENS.md 후속 정본 후보</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="note">
+    이 디자인 계층은 SPEC 계약층(<span class="mono-s">specs/</span>)의 프론트엔드 표면입니다.
+    안전 상태(D9/Safety Gate)는 UI가 <b>표시만</b> 하고 절대 해제하지 못하며,
+    AI 표현에는 confidence가 항상 붙고, 메모 원문은 서버에 저장되지 않습니다.
+  </div>
+
+  <span class="lb">§3 · 문서</span>
+  <table>
+    <tbody>
+      <tr><td><a href="README.md">design-v3/README.md</a></td><td>v3 재작성 배경, PR #1 폐기 사유, SPEC-디자인 바인딩 규칙</td><td></td></tr>
+      <tr><td>../design-system/</td><td>v2 디자인 시스템 문서 (유효 — v3는 확장)</td><td></td></tr>
+      <tr><td>../designs/</td><td>v2 화면 13종 (reference — v3가 Home/Log/Trends 대체)</td><td></td></tr>
+    </tbody>
+  </table>
+</div>
+</body>
+</html>
