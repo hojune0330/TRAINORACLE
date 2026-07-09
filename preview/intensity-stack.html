@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>Intensity Stack</title>
+<link rel="stylesheet" href="../colors_and_type.css">
+<link rel="stylesheet" href="../colors_and_type_journal.css">
+<style>
+  html, body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--sans); }
+  .wrap { padding: 18px; }
+  .row { display: grid; grid-template-columns: 70px 1fr 70px; gap: 12px; align-items: center; margin-bottom: 8px; font-family: var(--mono); font-size: 10px; }
+  .row .code { color: var(--ink); letter-spacing: 0.14em; text-transform: uppercase; }
+  .row .km { color: var(--ink-2); text-align: right; font-variant-numeric: tabular-nums; }
+  .bar { height: 8px; background: var(--hair); position: relative; }
+  .bar .fill { height: 100%; background: var(--ink); }
+  .legend { margin-top: 14px; padding: 10px 12px; border: 1px solid var(--hair); display: flex; gap: 18px; flex-wrap: wrap; font-family: var(--mono); font-size: 10px; color: var(--ink-2); }
+  .legend i { display: inline-block; width: 8px; height: 8px; background: var(--ink); margin-right: 4px; vertical-align: middle; }
+  .stack { margin-top: 6px; display: flex; height: 10px; border: 1px solid var(--ink); }
+  .stack span { display: block; }
+  .lbl-top { font-family: var(--mono); font-size: 9px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink-3); margin-bottom: 8px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="lbl-top">— intensity distribution · last 7 days · 184.2 km</div>
+  <div class="row"><span class="code">BA · easy</span><span class="bar"><span class="fill" style="width:55%"></span></span><span class="km">101.3 km</span></div>
+  <div class="row"><span class="code">AP · mod</span><span class="bar"><span class="fill" style="width:18%; background:var(--ink-2)"></span></span><span class="km">33.2 km</span></div>
+  <div class="row"><span class="code">LT · thr</span><span class="bar"><span class="fill" style="width:14%; background:var(--ink-blue)"></span></span><span class="km">25.8 km</span></div>
+  <div class="row"><span class="code">V2 · VO₂</span><span class="bar"><span class="fill" style="width:8%; background:var(--brand)"></span></span><span class="km">14.7 km</span></div>
+  <div class="row"><span class="code">GL · spd</span><span class="bar"><span class="fill" style="width:3%; background:var(--err)"></span></span><span class="km">5.6 km</span></div>
+  <div class="row"><span class="code">RE · race</span><span class="bar"><span class="fill" style="width:2%; background:var(--ink)"></span></span><span class="km">3.6 km</span></div>
+  <div class="legend">
+    <span><i style="background:var(--ink)"></i>BA</span>
+    <span><i style="background:var(--ink-2)"></i>AP</span>
+    <span><i style="background:var(--ink-blue)"></i>LT</span>
+    <span><i style="background:var(--brand)"></i>V2</span>
+    <span><i style="background:var(--err)"></i>GL</span>
+    <span><i style="background:var(--ink)"></i>RE</span>
+  </div>
+</div>
+</body>
+</html>

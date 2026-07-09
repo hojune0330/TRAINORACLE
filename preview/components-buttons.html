@@ -1,0 +1,55 @@
+<!doctype html>
+<html><head><meta charset="utf-8"/>
+<link rel="stylesheet" href="../colors_and_type.css">
+<style>
+  body{margin:0;padding:22px 26px;background:var(--bg);font-family:var(--sans);}
+  .grid{display:grid;grid-template-columns:90px 1fr;gap:18px;align-items:center;padding:14px 0;border-bottom:1px solid var(--hair);}
+  .grid:last-child{border-bottom:0;}
+  .lb{font-family:var(--mono);font-size:10px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3);}
+  .row{display:flex;gap:12px;align-items:center;flex-wrap:wrap;}
+
+  .btn{font-family:var(--sans);font-size:13.5px;font-weight:500;padding:11px 18px;cursor:pointer;border:0;letter-spacing:.005em;display:inline-flex;align-items:center;gap:8px;}
+  .btn-primary{background:var(--ink);color:var(--bg);}
+  .btn-secondary{background:transparent;color:var(--ink);border:1px solid var(--ink);}
+  .btn-tertiary{background:transparent;color:var(--ink);text-decoration:underline;text-underline-offset:3px;padding:11px 4px;font-family:var(--mono);font-size:12px;letter-spacing:.04em;text-transform:uppercase;}
+  .btn-danger{background:transparent;color:var(--err);border:1px solid var(--err);}
+  .btn .kbd{font-family:var(--mono);font-size:11px;background:rgba(255,255,255,.18);padding:1px 6px;border:1px solid rgba(255,255,255,.3);margin-left:6px;}
+  .btn-secondary .kbd{background:var(--surface-2);border-color:var(--line);color:var(--ink-2);}
+
+  .btn-sm{padding:6px 12px;font-size:12px;min-height:32px;}
+  .btn-md{padding:11px 18px;font-size:13.5px;min-height:44px;}
+  .btn-lg{padding:14px 22px;font-size:14.5px;min-height:52px;}
+</style>
+</head><body>
+  <div class="grid">
+    <div class="lb">Primary</div>
+    <div class="row">
+      <button class="btn btn-primary btn-sm">저장</button>
+      <button class="btn btn-primary btn-md">세션 시작 <span class="kbd">↵</span></button>
+      <button class="btn btn-primary btn-lg">체크인 완료</button>
+    </div>
+  </div>
+  <div class="grid">
+    <div class="lb">Secondary</div>
+    <div class="row">
+      <button class="btn btn-secondary btn-sm">취소</button>
+      <button class="btn btn-secondary btn-md">코치에게 전달 <span class="kbd">⌘E</span></button>
+      <button class="btn btn-secondary btn-lg">다른 관점 보기</button>
+    </div>
+  </div>
+  <div class="grid">
+    <div class="lb">Tertiary</div>
+    <div class="row">
+      <button class="btn btn-tertiary">편집</button>
+      <button class="btn btn-tertiary">출처 펼침 ▸</button>
+      <button class="btn btn-tertiary">근거 보기 →</button>
+    </div>
+  </div>
+  <div class="grid">
+    <div class="lb">Danger</div>
+    <div class="row">
+      <button class="btn btn-danger btn-md">세션 삭제</button>
+      <button class="btn btn-danger btn-sm">거부</button>
+    </div>
+  </div>
+</body></html>

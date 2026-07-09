@@ -1,0 +1,185 @@
+/* ============================================================
+   TRAINORACLE — Journal extension
+   "Field notebook + Tufte" : 종이 미감 + 손글씨 흔적
+   기존 colors_and_type.css 위에 얹어서 사용.
+   ============================================================ */
+
+/* 손글씨 폰트 — 영문 Caveat, 한글 Gowun Dodum (Google Fonts) */
+@import url('https://fonts.googleapis.com/css2?family=Caveat:wght@400;500;600&family=Gowun+Dodum&display=swap');
+
+:root {
+  /* ---- Paper tones (warmer than --bg, for journal areas) ---- */
+  --paper:        #F7F3E8;  /* warm cream — journal page bg */
+  --paper-2:      #EFEADC;  /* aged cream — section dividers */
+  --paper-edge:   #C9C0A6;  /* paper edge / fold */
+  --grid-dot:     #DCD4BC;  /* dot grid color (1px dots, 8px gap) */
+
+  /* ---- Handwritten / mark tones ---- */
+  --pencil:       #2B3330;  /* same as --ink-2, but conceptually pencil */
+  --ink-blue:     #1A3A6F;  /* 만년필 잉크 청색 — emotion mark, 강조 */
+  --tape:         #E8DCB0;  /* masking tape yellow */
+  --tape-2:       #DDE3D2;  /* sage masking tape */
+  --highlighter:  rgba(255, 215, 64, 0.32);  /* 형광펜 */
+
+  /* ---- Mood scale (5-step, cool→warm) ---- */
+  --mood-1: #5B7B8E;  /* 흐림 — cool slate */
+  --mood-2: #7E8B86;  /* 무덤덤 — neutral sage */
+  --mood-3: #B8A878;  /* 보통 — warm sand */
+  --mood-4: #C9824E;  /* 좋음 — terracotta */
+  --mood-5: #A04830;  /* 최고 — clay red */
+
+  /* ---- Injury scale (1-5 pain, light→dark) ---- */
+  --pain-1: #E8C9B5;
+  --pain-2: #D89E78;
+  --pain-3: #B86F44;
+  --pain-4: #8C4A28;
+  --pain-5: #5C2E18;
+
+  /* ---- Condition deltas ---- */
+  --delta-up:   #1F7A3A;  /* same as --ok */
+  --delta-down: #B4530C;  /* same as --warn but on neutrals */
+  --delta-flat: #5F6965;
+}
+
+/* ============== JOURNAL PAGE BACKGROUNDS ============== */
+
+.paper {
+  background: var(--paper);
+}
+
+.paper-grid {
+  background-color: var(--paper);
+  background-image: radial-gradient(circle, var(--grid-dot) 1px, transparent 1px);
+  background-size: 8px 8px;
+  background-position: 0 0;
+}
+
+.paper-lines {
+  background-color: var(--paper);
+  background-image: repeating-linear-gradient(
+    180deg,
+    transparent 0px,
+    transparent 23px,
+    var(--grid-dot) 23px,
+    var(--grid-dot) 24px
+  );
+}
+
+/* ============== HANDWRITTEN CLASSES ============== */
+
+.hand {
+  font-family: 'Caveat', 'Gowun Dodum', cursive;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  color: var(--ink-blue);
+}
+
+.hand-pencil {
+  font-family: 'Gowun Dodum', 'Caveat', cursive;
+  font-weight: 400;
+  color: var(--pencil);
+}
+
+/* ============== INDEX CARD HEADER ============== */
+/* 일지 페이지 상단 — 도서관 카드 카탈로그 미감 */
+
+.idx-card {
+  background: var(--surface);
+  border: 1px solid var(--ink);
+  padding: 12px 16px;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 14px;
+  align-items: baseline;
+}
+.idx-card .date {
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink);
+}
+.idx-card .day-of-week {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--ink-3);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+.idx-card .meta {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--ink-3);
+  letter-spacing: 0.06em;
+  text-align: right;
+}
+
+/* ============== TAPE / STICKER (사진 첨부) ============== */
+
+.tape {
+  background: var(--tape);
+  height: 12px;
+  display: inline-block;
+  transform: rotate(-1.2deg);
+  position: absolute;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.08);
+}
+.tape.sage { background: var(--tape-2); }
+
+/* ============== MOOD STRIP ============== */
+/* 5단계 감정 — 작은 막대 5개 (하나만 활성, 옅은 회색은 비활성) */
+
+.mood-strip {
+  display: inline-flex;
+  gap: 2px;
+  align-items: flex-end;
+  height: 16px;
+}
+.mood-strip .b {
+  width: 4px;
+  height: 4px;
+  background: var(--hair);
+}
+.mood-strip .b:nth-child(2) { height: 7px; }
+.mood-strip .b:nth-child(3) { height: 10px; }
+.mood-strip .b:nth-child(4) { height: 13px; }
+.mood-strip .b:nth-child(5) { height: 16px; }
+.mood-strip.m1 .b:nth-child(1) { background: var(--mood-1); }
+.mood-strip.m2 .b:nth-child(2) { background: var(--mood-2); }
+.mood-strip.m3 .b:nth-child(3) { background: var(--mood-3); }
+.mood-strip.m4 .b:nth-child(4) { background: var(--mood-4); }
+.mood-strip.m5 .b:nth-child(5) { background: var(--mood-5); }
+
+/* ============== HIGHLIGHTER ============== */
+/* 본문 강조 — 종이 일지의 노란 형광펜 */
+
+.hl {
+  background: linear-gradient(transparent 60%, var(--highlighter) 60%);
+  padding: 0 1px;
+}
+
+/* ============== STAMP ============== */
+/* PB / SB / 완료 같은 마일스톤 — 잉크 도장 미감 */
+
+.stamp {
+  display: inline-block;
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  padding: 3px 7px;
+  border: 1.5px solid var(--ink-blue);
+  color: var(--ink-blue);
+  transform: rotate(-2deg);
+  background: rgba(255,255,255,0.4);
+}
+.stamp.red {
+  border-color: var(--err);
+  color: var(--err);
+}
+.stamp.brand {
+  border-color: var(--brand);
+  color: var(--brand);
+}

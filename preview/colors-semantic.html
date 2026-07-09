@@ -1,0 +1,22 @@
+<!doctype html>
+<html><head><meta charset="utf-8"/>
+<link rel="stylesheet" href="../colors_and_type.css">
+<style>
+  body{margin:0;padding:22px;background:var(--bg);font-family:var(--sans);}
+  .grid{display:grid;grid-template-columns:repeat(5,1fr);gap:0;border:1px solid var(--line);}
+  .it{padding:16px 14px;border-right:1px solid var(--line);}
+  .it:last-child{border-right:0;}
+  .chip{width:36px;height:36px;margin-bottom:12px;}
+  .nm{font-family:var(--mono);font-size:10px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--ink);}
+  .hex{font-family:var(--mono);font-size:10px;color:var(--ink-3);margin-top:2px;}
+  .use{font-family:var(--sans);font-size:11.5px;color:var(--ink-2);margin-top:10px;line-height:1.45;border-top:1px dashed var(--hair);padding-top:8px;}
+</style>
+</head><body>
+  <div class="grid">
+    <div class="it"><div class="chip" style="background:#1F7A3A"></div><div class="nm">ok</div><div class="hex">#1F7A3A</div><div class="use">CONFIRM verdict, pass state</div></div>
+    <div class="it"><div class="chip" style="background:#B4530C"></div><div class="nm">warn</div><div class="hex">#B4530C</div><div class="use">LACK verdict, 경고</div></div>
+    <div class="it"><div class="chip" style="background:#A11F1F"></div><div class="nm">err</div><div class="hex">#A11F1F</div><div class="use">에러, 부상 마커</div></div>
+    <div class="it"><div class="chip" style="background:#1D4ED8"></div><div class="nm">info</div><div class="hex">#1D4ED8</div><div class="use">중립 안내, 링크</div></div>
+    <div class="it"><div class="chip" style="background:#6B3FB0"></div><div class="nm">unc</div><div class="hex">#6B3FB0</div><div class="use">UNC verdict, AI 불확실</div></div>
+  </div>
+</body></html>
