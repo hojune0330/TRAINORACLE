@@ -118,6 +118,14 @@ upstream_references:
       - consent_boundary
       - storage_policy
 
+  - document: DAILY_LOG_AND_CHECKIN_SPEC.md
+    expected_status: ACCEPTED_AS_WORKING_SOURCE
+    decision_document: SPEC_SOURCE_ACCEPTANCE_DECISION_ROUND2.md
+    consumed_for:
+      - structured_daily_checkin_signal_boundary
+      - transient_free_text_risk_raising_only_policy
+      - OI-DLC-RVE-SAFETY-BINDING-001_source_issue
+
   - document: D9_SAFETY_EVALUATOR_V2_1_1_TEST_PACKAGE.md
     expected_status: IMPLEMENTATION_CANDIDATE_READY_FOR_LOCAL_TEST
     consumed_for:
@@ -473,6 +481,49 @@ plan_safety_gate_consumption:
 ```
 
 `CLEARED`는 전체 안전 승인 또는 훈련 승인과 같지 않다.  
+
+---
+
+## 12A. Daily Log Structured Input Boundary
+
+Daily Log / Daily Check-in signals may feed RVE only as structured, privacy-safe context.
+
+```yaml
+daily_log_rve_binding:
+  source_document: specs/reconstruct/DAILY_LOG_AND_CHECKIN_SPEC.md
+  source_decision_document: SPEC_SOURCE_ACCEPTANCE_DECISION_ROUND2.md
+  source_decision: ACCEPTED_AS_WORKING_SOURCE
+  source_issue: OI-DLC-RVE-SAFETY-BINDING-001
+  target_patch_status: PATCHED_BUT_NOT_CLOSED
+  target_recount_status: RECOUNTED_IN_WAVE_D
+
+  allowed_inputs:
+    - structured_daily_checkin_fields
+    - structured_body_area_signals
+    - structured_readiness_state
+    - nonSensitiveReasonCodes
+    - sourceSnapshotId
+
+  forbidden_inputs:
+    - raw_memo_text
+    - raw_athlete_free_text
+    - raw_symptom_clause
+    - injury_narrative
+    - medical_note
+    - rehab_note
+    - guardian_private_note
+    - external_llm_prompt_with_private_athlete_data
+
+  safety_boundary:
+    may_raise_to_UNKNOWN_or_review: true
+    may_add_non_sensitive_reason_codes: true
+    may_clear_D9_ACTIVE: false
+    may_clear_D9_UNKNOWN: false
+    may_clear_existing_Safety_Gate_block: false
+    good_daily_checkin_values_can_create_medical_clearance: false
+```
+
+`OI-DLC-RVE-SAFETY-BINDING-001` is a Daily Log source issue consumed by this target-local addendum. It is not added as a Section 20 issue row in this document, so this document's own open issue count remains 4 and canonical blocking count remains 0.
 `CLEARED_WITH_ADVISORY`도 전체 안전 승인 또는 고강도 승인과 같지 않다.
 
 ---
@@ -754,6 +805,24 @@ typescript_invariants:
 | OI-REB-MULTILINGUAL-RISK-TOKENS-001 | OPEN | NO | Multilingual colloquial safety token expansion is not finalized. | Add language packs after Korean v2.1.1 validation |
 | OI-REB-UI-REVIEW-COPY-001 | OPEN | NO | Coach-facing review copy is not finalized. | UI copy review completed |
 | OI-REB-PERFORMANCE-MONITORING-001 | OPEN | NO | Evaluator latency and monitoring thresholds are not defined. | Add performance monitoring policy |
+
+Daily Log safety binding issue addendum:
+
+```yaml
+OI-DLC-RVE-SAFETY-BINDING-001:
+  status: OPEN
+  source_document: specs/reconstruct/DAILY_LOG_AND_CHECKIN_SPEC.md
+  source_decision_document: SPEC_SOURCE_ACCEPTANCE_DECISION_ROUND2.md
+  source_decision: ACCEPTED_AS_WORKING_SOURCE
+  target_patch_status: PATCHED_BUT_NOT_CLOSED
+  target_recount_status: RECOUNTED_IN_WAVE_D
+  counted_in_section_20_open_issue_table: false
+  closure_allowed_now: false
+  closure_requires:
+    - implementation/runtime evidence proving structured-only RVE/Safety Gate routing
+    - privacy review proving raw memo/free-text is transient only
+    - owner approval for downstream closure
+```
 
 ```yaml
 open_issue_count_validation:
