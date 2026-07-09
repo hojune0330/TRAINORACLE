@@ -1,0 +1,44 @@
+name: TrainOracle CI
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+      - "codex/**"
+
+jobs:
+  contract-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: |
+            runtime-evidence/d9-evaluator/package-lock.json
+            impl/package-lock.json
+
+      - name: Install D9 evaluator dependencies
+        working-directory: runtime-evidence/d9-evaluator
+        run: npm ci
+
+      - name: Run D9 evaluator evidence tests
+        working-directory: runtime-evidence/d9-evaluator
+        run: npm test
+
+      - name: Install impl dependencies
+        working-directory: impl
+        run: npm ci
+
+      - name: Typecheck impl skeleton
+        working-directory: impl
+        run: npm run typecheck
+
+      - name: Run impl skeleton tests
+        working-directory: impl
+        run: npm test

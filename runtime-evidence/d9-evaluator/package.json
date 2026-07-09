@@ -3,7 +3,7 @@
   "private": true,
   "version": "0.1.0",
   "scripts": {
-    "test": "vitest run d9-safety-evaluator.vitest.ts --reporter=verbose"
+    "test": "vitest run d9-safety-evaluator.test.ts --reporter=verbose"
   },
   "devDependencies": {
     "typescript": "^7.0.2",
