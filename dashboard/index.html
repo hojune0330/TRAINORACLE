@@ -1,0 +1,759 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>TrainOracle SPEC Dashboard</title>
+  <meta name="description" content="TrainOracle SPEC, runtime evidence, and open issue status dashboard.">
+  <link rel="stylesheet" href="../design-v3/tokens/tokens.css">
+  <style>
+    :root {
+      --space-1: 4px;
+      --space-2: 8px;
+      --space-3: 12px;
+      --space-4: 16px;
+      --space-5: 20px;
+      --space-6: 24px;
+      --space-8: 32px;
+      --max-page: 1440px;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      min-width: 320px;
+    }
+
+    a {
+      color: var(--brand);
+      text-underline-offset: 3px;
+    }
+
+    a:hover,
+    a:focus-visible {
+      color: var(--brand-ink);
+    }
+
+    a:focus-visible,
+    summary:focus-visible {
+      outline: 2px solid var(--info);
+      outline-offset: 3px;
+    }
+
+    .page {
+      width: min(var(--max-page), calc(100% - 32px));
+      margin: 0 auto;
+      padding: var(--space-6) 0 var(--space-8);
+    }
+
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      gap: var(--space-4);
+      align-items: flex-start;
+      padding-bottom: var(--space-5);
+      border-bottom: 1px solid var(--line);
+    }
+
+    .kicker {
+      font-family: var(--mono);
+      font-size: 10.5px;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--ink-3);
+      margin: 0 0 var(--space-2);
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 32px;
+      line-height: 1.15;
+      letter-spacing: 0;
+    }
+
+    h2 {
+      margin: 0;
+      font-size: 20px;
+      line-height: 1.25;
+      letter-spacing: 0;
+    }
+
+    h3 {
+      margin: 0;
+      font-size: 15px;
+      line-height: 1.35;
+      letter-spacing: 0;
+    }
+
+    p {
+      margin: 0;
+    }
+
+    .lead {
+      max-width: 820px;
+      margin-top: var(--space-3);
+      color: var(--ink-3);
+      font-size: 14.5px;
+    }
+
+    .meta-stack {
+      display: grid;
+      gap: var(--space-2);
+      justify-items: end;
+      min-width: 220px;
+    }
+
+    .stamp-line {
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--ink-3);
+      text-align: right;
+    }
+
+    .section {
+      margin-top: var(--space-6);
+      border-top: 1px solid var(--line);
+      padding-top: var(--space-5);
+    }
+
+    .section-head {
+      display: flex;
+      justify-content: space-between;
+      gap: var(--space-4);
+      align-items: end;
+      margin-bottom: var(--space-4);
+    }
+
+    .section-note {
+      max-width: 620px;
+      color: var(--ink-3);
+      font-size: 13px;
+    }
+
+    .grid {
+      display: grid;
+      gap: var(--space-4);
+    }
+
+    .grid.four {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+
+    .grid.three {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .grid.two {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .panel {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: var(--r-md);
+      padding: var(--space-4);
+    }
+
+    .panel.subtle {
+      background: var(--surface-2);
+    }
+
+    .metric {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: var(--space-3);
+      margin-top: var(--space-3);
+    }
+
+    .metric strong {
+      font-family: var(--mono);
+      font-size: 26px;
+      line-height: 1;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .caption {
+      color: var(--ink-3);
+      font-size: 12px;
+      line-height: 1.45;
+      margin-top: var(--space-2);
+    }
+
+    .mono-text {
+      font-family: var(--mono);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      width: fit-content;
+      border: 1px solid currentColor;
+      border-radius: var(--r-sm);
+      padding: var(--space-1) var(--space-2);
+      font-family: var(--mono);
+      font-size: 10.5px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      line-height: 1.2;
+      white-space: nowrap;
+    }
+
+    .chip.ok {
+      color: var(--ok);
+      background: color-mix(in srgb, var(--ok) 8%, transparent);
+    }
+
+    .chip.warn {
+      color: var(--warn);
+      background: color-mix(in srgb, var(--warn) 8%, transparent);
+    }
+
+    .chip.err {
+      color: var(--err);
+      background: color-mix(in srgb, var(--err) 8%, transparent);
+    }
+
+    .chip.info {
+      color: var(--info);
+      background: color-mix(in srgb, var(--info) 8%, transparent);
+    }
+
+    .chip.unc {
+      color: var(--unc);
+      background: color-mix(in srgb, var(--unc) 8%, transparent);
+    }
+
+    .chain-wrap {
+      overflow-x: auto;
+      border: 1px solid var(--line);
+      background: var(--surface);
+      border-radius: var(--r-md);
+    }
+
+    .chain {
+      width: 1180px;
+      max-width: none;
+      display: block;
+    }
+
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--space-2);
+      margin-top: var(--space-3);
+    }
+
+    .table-wrap {
+      overflow-x: auto;
+      border: 1px solid var(--line);
+      border-radius: var(--r-md);
+      background: var(--surface);
+    }
+
+    table {
+      width: 100%;
+      min-width: 760px;
+      border-collapse: collapse;
+    }
+
+    th,
+    td {
+      padding: var(--space-3);
+      border-bottom: 1px solid var(--hair);
+      text-align: left;
+      vertical-align: top;
+    }
+
+    th {
+      font-family: var(--mono);
+      font-size: 10.5px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--ink-3);
+      background: var(--surface-2);
+    }
+
+    td {
+      font-size: 13px;
+    }
+
+    tr:last-child td {
+      border-bottom: 0;
+    }
+
+    .count {
+      font-family: var(--mono);
+      font-variant-numeric: tabular-nums;
+      white-space: nowrap;
+    }
+
+    details {
+      border-top: 1px solid var(--hair);
+      padding-top: var(--space-3);
+      margin-top: var(--space-3);
+    }
+
+    summary {
+      cursor: pointer;
+      color: var(--brand);
+      font-weight: 700;
+      font-size: 12px;
+    }
+
+    .issue-list {
+      margin: var(--space-3) 0 0;
+      padding: 0;
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--space-2);
+      list-style: none;
+    }
+
+    .issue-list li {
+      border: 1px solid var(--hair);
+      border-radius: var(--r-sm);
+      padding: var(--space-1) var(--space-2);
+      font-family: var(--mono);
+      font-size: 11px;
+      background: var(--surface);
+    }
+
+    .path {
+      display: block;
+      margin-top: var(--space-2);
+      font-family: var(--mono);
+      font-size: 11px;
+      overflow-wrap: anywhere;
+    }
+
+    .footer-note {
+      margin-top: var(--space-6);
+      padding-top: var(--space-4);
+      border-top: 1px solid var(--line);
+      color: var(--ink-3);
+      font-size: 12px;
+    }
+
+    @media (max-width: 1120px) {
+      .grid.four,
+      .grid.three {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+
+    @media (max-width: 760px) {
+      .page {
+        width: min(100% - 24px, var(--max-page));
+        padding-top: var(--space-4);
+      }
+
+      .topbar,
+      .section-head {
+        display: grid;
+      }
+
+      .meta-stack {
+        justify-items: start;
+        min-width: 0;
+      }
+
+      .stamp-line {
+        text-align: left;
+      }
+
+      h1 {
+        font-size: 26px;
+      }
+
+      .grid.four,
+      .grid.three,
+      .grid.two {
+        grid-template-columns: 1fr;
+      }
+
+      .panel {
+        padding: var(--space-3);
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <header class="topbar">
+      <div>
+        <p class="kicker">TrainOracle SPEC control dashboard</p>
+        <h1>스펙, 런타임 증거, 남은 이슈를 한눈에 보는 현황판</h1>
+        <p class="lead">
+          이 화면은 코치와 구현자가 같은 기준을 보도록 만든 정적 대시보드입니다.
+          수치는 로컬 파일에서 확인한 값만 사용하며, 문서 수용과 패치는 이슈 종결이나 정본 승격으로 표시하지 않습니다.
+        </p>
+      </div>
+      <div class="meta-stack">
+        <span class="chip info">branch dashboard-status</span>
+        <span class="chip warn">issues remain open</span>
+        <span class="stamp-line">Last local review: 2026-07-09</span>
+      </div>
+    </header>
+
+    <section class="section" aria-labelledby="snapshot-title">
+      <div class="section-head">
+        <div>
+          <p class="kicker">project snapshot</p>
+          <h2 id="snapshot-title">현재 결론</h2>
+        </div>
+        <p class="section-note">
+          소스 문서 4개가 작업 소스로 수용되었고, D9 평가기와 구현 스켈레톤은 실제 vitest 로그를 갖습니다.
+          단, open issue는 계속 열려 있습니다.
+        </p>
+      </div>
+      <div class="grid four">
+        <article class="panel">
+          <h3>수용된 작업 소스</h3>
+          <div class="metric"><strong>4</strong><span class="chip ok">accepted</span></div>
+          <p class="caption">Safety Gate, RVE Contract, Physio Source Trust, Daily Log.</p>
+        </article>
+        <article class="panel">
+          <h3>런타임 테스트</h3>
+          <div class="metric"><strong>18</strong><span class="chip ok">passed</span></div>
+          <p class="caption">D9 evaluator 11/11, impl skeleton 7/7.</p>
+        </article>
+        <article class="panel">
+          <h3>Wave D 패치</h3>
+          <div class="metric"><strong>3</strong><span class="chip warn">open</span></div>
+          <p class="caption">대상 문서 패치 완료, 이슈 종결 없음.</p>
+        </article>
+        <article class="panel">
+          <h3>CI 브랜치</h3>
+          <div class="metric"><strong>2</strong><span class="chip info">jobs</span></div>
+          <p class="caption">D9 evaluator와 impl skeleton을 PR마다 실행하도록 구성.</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="section" aria-labelledby="chain-title">
+      <div class="section-head">
+        <div>
+          <p class="kicker">safety chain</p>
+          <h2 id="chain-title">D9에서 Plan Generator까지</h2>
+        </div>
+        <p class="section-note">
+          핵심은 ACTIVE와 UNKNOWN은 계획 생성을 막고, CLEARED는 의학적 허가가 아니라 현재 평가기의 미검출 상태라는 점입니다.
+        </p>
+      </div>
+      <div class="chain-wrap" role="img" aria-label="TrainOracle safety chain diagram">
+        <svg class="chain" viewBox="0 0 1180 420" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <marker id="arrow-ok" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto">
+              <path d="M0,0 L0,6 L9,3 z" fill="var(--ok)"></path>
+            </marker>
+            <marker id="arrow-warn" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto">
+              <path d="M0,0 L0,6 L9,3 z" fill="var(--warn)"></path>
+            </marker>
+            <marker id="arrow-err" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto">
+              <path d="M0,0 L0,6 L9,3 z" fill="var(--err)"></path>
+            </marker>
+            <marker id="arrow-info" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto">
+              <path d="M0,0 L0,6 L9,3 z" fill="var(--info)"></path>
+            </marker>
+          </defs>
+
+          <rect x="20" y="44" width="140" height="76" fill="var(--surface-2)" stroke="var(--line)"></rect>
+          <text x="90" y="76" text-anchor="middle" font-family="var(--mono)" font-size="13" font-weight="700" fill="var(--ink)">Data Intake</text>
+          <text x="90" y="98" text-anchor="middle" font-family="var(--sans)" font-size="12" fill="var(--ink-3)">structured only</text>
+
+          <rect x="200" y="44" width="150" height="76" fill="var(--surface-2)" stroke="var(--line)"></rect>
+          <text x="275" y="76" text-anchor="middle" font-family="var(--mono)" font-size="13" font-weight="700" fill="var(--ink)">Classifier</text>
+          <text x="275" y="98" text-anchor="middle" font-family="var(--sans)" font-size="12" fill="var(--ink-3)">session type</text>
+
+          <rect x="390" y="44" width="150" height="76" fill="var(--surface-2)" stroke="var(--line)"></rect>
+          <text x="465" y="76" text-anchor="middle" font-family="var(--mono)" font-size="13" font-weight="700" fill="var(--ink)">Profile</text>
+          <text x="465" y="98" text-anchor="middle" font-family="var(--sans)" font-size="12" fill="var(--ink-3)">consent boundary</text>
+
+          <rect x="580" y="44" width="150" height="76" fill="var(--surface)" stroke="var(--line)"></rect>
+          <text x="655" y="76" text-anchor="middle" font-family="var(--mono)" font-size="13" font-weight="700" fill="var(--ink)">D9 Evaluator</text>
+          <text x="655" y="98" text-anchor="middle" font-family="var(--sans)" font-size="12" fill="var(--ink-3)">11/11 runtime PASS</text>
+
+          <rect x="770" y="44" width="150" height="76" fill="var(--surface)" stroke="var(--line)"></rect>
+          <text x="845" y="76" text-anchor="middle" font-family="var(--mono)" font-size="13" font-weight="700" fill="var(--ink)">RVE Signal</text>
+          <text x="845" y="98" text-anchor="middle" font-family="var(--sans)" font-size="12" fill="var(--ink-3)">storedStatus</text>
+
+          <rect x="960" y="44" width="160" height="76" fill="var(--surface)" stroke="var(--line)"></rect>
+          <text x="1040" y="76" text-anchor="middle" font-family="var(--mono)" font-size="13" font-weight="700" fill="var(--ink)">Safety Gate</text>
+          <text x="1040" y="98" text-anchor="middle" font-family="var(--sans)" font-size="12" fill="var(--ink-3)">pre-generation</text>
+
+          <path d="M160 82 H200" stroke="var(--info)" stroke-width="2" marker-end="url(#arrow-info)"></path>
+          <path d="M350 82 H390" stroke="var(--info)" stroke-width="2" marker-end="url(#arrow-info)"></path>
+          <path d="M540 82 H580" stroke="var(--info)" stroke-width="2" marker-end="url(#arrow-info)"></path>
+          <path d="M730 82 H770" stroke="var(--info)" stroke-width="2" marker-end="url(#arrow-info)"></path>
+          <path d="M920 82 H960" stroke="var(--info)" stroke-width="2" marker-end="url(#arrow-info)"></path>
+
+          <rect x="144" y="188" width="208" height="70" fill="var(--surface)" stroke="var(--ok)"></rect>
+          <text x="248" y="216" text-anchor="middle" font-family="var(--mono)" font-size="13" font-weight="700" fill="var(--ok)">D9_CLEARED</text>
+          <text x="248" y="238" text-anchor="middle" font-family="var(--sans)" font-size="12" fill="var(--ink-3)">passes gate, not medical clearance</text>
+
+          <rect x="472" y="188" width="208" height="70" fill="var(--surface)" stroke="var(--warn)"></rect>
+          <text x="576" y="216" text-anchor="middle" font-family="var(--mono)" font-size="13" font-weight="700" fill="var(--warn)">D9_UNKNOWN</text>
+          <text x="576" y="238" text-anchor="middle" font-family="var(--sans)" font-size="12" fill="var(--ink-3)">block or human review</text>
+
+          <rect x="800" y="188" width="208" height="70" fill="var(--surface)" stroke="var(--err)"></rect>
+          <text x="904" y="216" text-anchor="middle" font-family="var(--mono)" font-size="13" font-weight="700" fill="var(--err)">D9_ACTIVE</text>
+          <text x="904" y="238" text-anchor="middle" font-family="var(--sans)" font-size="12" fill="var(--ink-3)">hard stop blocks plan</text>
+
+          <path d="M655 120 C640 162, 438 152, 318 188" stroke="var(--ok)" stroke-width="2.5" fill="none" marker-end="url(#arrow-ok)"></path>
+          <path d="M655 120 C648 152, 608 158, 592 188" stroke="var(--warn)" stroke-width="2.5" fill="none" marker-end="url(#arrow-warn)"></path>
+          <path d="M655 120 C704 152, 830 152, 884 188" stroke="var(--err)" stroke-width="2.5" fill="none" marker-end="url(#arrow-err)"></path>
+
+          <rect x="144" y="320" width="208" height="54" fill="var(--surface-2)" stroke="var(--ok)"></rect>
+          <text x="248" y="352" text-anchor="middle" font-family="var(--mono)" font-size="12" font-weight="700" fill="var(--ok)">Plan Generator allowed</text>
+
+          <rect x="472" y="320" width="536" height="54" fill="var(--surface-2)" stroke="var(--err)"></rect>
+          <text x="740" y="352" text-anchor="middle" font-family="var(--mono)" font-size="12" font-weight="700" fill="var(--err)">Plan Generator blocked before generation</text>
+
+          <path d="M248 258 V320" stroke="var(--ok)" stroke-width="2" marker-end="url(#arrow-ok)"></path>
+          <path d="M576 258 V320" stroke="var(--warn)" stroke-width="2" marker-end="url(#arrow-warn)"></path>
+          <path d="M904 258 V320" stroke="var(--err)" stroke-width="2" marker-end="url(#arrow-err)"></path>
+        </svg>
+      </div>
+      <div class="legend" aria-label="safety legend">
+        <span class="chip ok">CLEARED passes</span>
+        <span class="chip warn">UNKNOWN blocks or review</span>
+        <span class="chip err">ACTIVE blocks</span>
+        <span class="chip info">structured flow</span>
+      </div>
+    </section>
+
+    <section class="section" aria-labelledby="source-title">
+      <div class="section-head">
+        <div>
+          <p class="kicker">source decisions</p>
+          <h2 id="source-title">작업 소스로 수용된 문서</h2>
+        </div>
+        <p class="section-note">수용은 downstream patch 전제조건입니다. 정본 승격, 이슈 종결, 런타임 증거 주장을 뜻하지 않습니다.</p>
+      </div>
+      <div class="grid four">
+        <article class="panel">
+          <span class="chip ok">accepted source</span>
+          <h3>PLAN_SAFETY_GATE_SPEC.md</h3>
+          <a class="path" href="../specs/reconstruct/PLAN_SAFETY_GATE_SPEC.md">specs/reconstruct/PLAN_SAFETY_GATE_SPEC.md</a>
+          <p class="caption">Round 1 decision: ACCEPTED_AS_WORKING_SOURCE.</p>
+        </article>
+        <article class="panel">
+          <span class="chip ok">accepted source</span>
+          <h3>RULE_VALIDATION_ENGINE_CONTRACT.md</h3>
+          <a class="path" href="../specs/reconstruct/RULE_VALIDATION_ENGINE_CONTRACT.md">specs/reconstruct/RULE_VALIDATION_ENGINE_CONTRACT.md</a>
+          <p class="caption">Round 1 decision: ACCEPTED_AS_WORKING_SOURCE.</p>
+        </article>
+        <article class="panel">
+          <span class="chip ok">accepted source</span>
+          <h3>PHYSIO_SOURCE_TRUST_SPEC.md</h3>
+          <a class="path" href="../specs/active/PHYSIO_SOURCE_TRUST_SPEC.md">specs/active/PHYSIO_SOURCE_TRUST_SPEC.md</a>
+          <p class="caption">Round 2 decision: ACCEPTED_AS_WORKING_SOURCE.</p>
+        </article>
+        <article class="panel">
+          <span class="chip ok">accepted source</span>
+          <h3>DAILY_LOG_AND_CHECKIN_SPEC.md</h3>
+          <a class="path" href="../specs/reconstruct/DAILY_LOG_AND_CHECKIN_SPEC.md">specs/reconstruct/DAILY_LOG_AND_CHECKIN_SPEC.md</a>
+          <p class="caption">Round 2 decision: ACCEPTED_AS_WORKING_SOURCE.</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="section" aria-labelledby="spec-title">
+      <div class="section-head">
+        <div>
+          <p class="kicker">spec board</p>
+          <h2 id="spec-title">SPEC 문서 현황</h2>
+        </div>
+        <p class="section-note">각 행은 현재 브랜치의 실제 파일에서 확인한 선언값입니다. 빈칸은 대시보드에서 임의로 보충하지 않은 값입니다.</p>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Document</th>
+              <th>Group</th>
+              <th>Status</th>
+              <th>Round</th>
+              <th>Open</th>
+              <th>Blocking</th>
+              <th>Tests</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td><a href="../specs/active/RULE_SPEC_D1_D9.md">RULE_SPEC_D1_D9.md</a></td><td>active</td><td><span class="chip ok">READY_FOR_UPLOAD</span></td><td></td><td class="count">23</td><td class="count"></td><td class="count">55/55 self-check</td></tr>
+            <tr><td><a href="../specs/active/SESSION_CLASSIFIER_SPEC.md">SESSION_CLASSIFIER_SPEC.md</a></td><td>active</td><td><span class="chip ok">READY_FOR_UPLOAD</span></td><td></td><td class="count">13</td><td class="count"></td><td class="count">54/54 self-check</td></tr>
+            <tr><td><a href="../specs/active/ATHLETE_PROFILE_SPEC.md">ATHLETE_PROFILE_SPEC.md</a></td><td>active</td><td><span class="chip warn">DRAFT_FOR_REVIEW</span></td><td>RT4</td><td class="count">11</td><td class="count">6</td><td class="count">38/38 self-check</td></tr>
+            <tr><td><a href="../specs/active/APP_IMPLEMENTATION_BRIDGE.md">APP_IMPLEMENTATION_BRIDGE.md</a></td><td>active</td><td><span class="chip warn">DRAFT_FOR_REVIEW</span></td><td>RT4</td><td class="count">12</td><td class="count">4</td><td class="count">46/46 self-check</td></tr>
+            <tr><td><a href="../specs/active/PLAN_GENERATOR_SPEC.md">PLAN_GENERATOR_SPEC.md</a></td><td>active</td><td><span class="chip warn">DRAFT_FOR_REVIEW</span></td><td>RT3</td><td class="count">7</td><td class="count">2</td><td class="count">46/46 self-check</td></tr>
+            <tr><td><a href="../specs/active/TEMPLATE_LIBRARY_SPEC.md">TEMPLATE_LIBRARY_SPEC.md</a></td><td>active</td><td><span class="chip warn">DRAFT_FOR_REVIEW</span></td><td>RT1</td><td class="count">4</td><td class="count">0</td><td class="count">0 runtime</td></tr>
+            <tr><td><a href="../specs/active/PHYSIO_SOURCE_TRUST_SPEC.md">PHYSIO_SOURCE_TRUST_SPEC.md</a></td><td>active</td><td><span class="chip warn">DRAFT_FOR_REVIEW</span></td><td>RT1</td><td class="count">4</td><td class="count">0</td><td class="count">0 runtime</td></tr>
+            <tr><td><a href="../specs/active/RVE_RULE_EVALUATOR_BINDING_SPEC.md">RVE_RULE_EVALUATOR_BINDING_SPEC.md</a></td><td>active</td><td><span class="chip warn">DRAFT_FOR_REVIEW</span></td><td>RT1</td><td class="count">4</td><td class="count">0</td><td class="count">0 runtime</td></tr>
+            <tr><td><a href="../specs/reconstruct/PLAN_SAFETY_GATE_SPEC.md">PLAN_SAFETY_GATE_SPEC.md</a></td><td>reconstruct</td><td><span class="chip unc">RECONSTRUCTED_DRAFT</span></td><td>RT1</td><td class="count">5</td><td class="count">3</td><td class="count">0 runtime</td></tr>
+            <tr><td><a href="../specs/reconstruct/RULE_VALIDATION_ENGINE_CONTRACT.md">RULE_VALIDATION_ENGINE_CONTRACT.md</a></td><td>reconstruct</td><td><span class="chip unc">RECONSTRUCTED_DRAFT</span></td><td>RT1</td><td class="count">5</td><td class="count">3</td><td class="count">0 runtime</td></tr>
+            <tr><td><a href="../specs/reconstruct/DAILY_LOG_AND_CHECKIN_SPEC.md">DAILY_LOG_AND_CHECKIN_SPEC.md</a></td><td>reconstruct</td><td><span class="chip unc">RECONSTRUCTED_DRAFT</span></td><td>RT1</td><td class="count">6</td><td class="count">3</td><td class="count">0 runtime</td></tr>
+            <tr><td><a href="../specs/reconstruct/DAILY_BRIEF_AND_INBOX_SIGNAL_SPEC.md">DAILY_BRIEF_AND_INBOX_SIGNAL_SPEC.md</a></td><td>reconstruct</td><td><span class="chip warn">DRAFT_FOR_REVIEW</span></td><td>RT1</td><td class="count">6</td><td class="count">3</td><td class="count">0 runtime</td></tr>
+            <tr><td><a href="../specs/reconstruct/ANALYSIS_AND_VISUALIZATION_DATA_CONTRACT.md">ANALYSIS_AND_VISUALIZATION_DATA_CONTRACT.md</a></td><td>reconstruct</td><td><span class="chip warn">DRAFT_FOR_REVIEW</span></td><td>RT1</td><td class="count">7</td><td class="count">4</td><td class="count">0 runtime</td></tr>
+            <tr><td><a href="../specs/reconstruct/PLAN_OUTPUT_RATIONALE_PRIVACY_SPEC.md">PLAN_OUTPUT_RATIONALE_PRIVACY_SPEC.md</a></td><td>reconstruct</td><td><span class="chip warn">DRAFT_FOR_REVIEW</span></td><td>RT1</td><td class="count">7</td><td class="count">4</td><td class="count">0 runtime</td></tr>
+            <tr><td><a href="../specs/reconstruct/MICROCYCLE_AND_CALENDAR_MAPPING_SPEC.md">MICROCYCLE_AND_CALENDAR_MAPPING_SPEC.md</a></td><td>reconstruct</td><td><span class="chip warn">DRAFT_FOR_REVIEW</span></td><td>RT1</td><td class="count">7</td><td class="count">4</td><td class="count">0 runtime</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="section" aria-labelledby="runtime-title">
+      <div class="section-head">
+        <div>
+          <p class="kicker">runtime evidence</p>
+          <h2 id="runtime-title">실제 실행 증거</h2>
+        </div>
+        <p class="section-note">Markdown PASS나 자체점검은 런타임 증거가 아닙니다. 아래 두 항목만 현재 실제 실행 로그로 표시합니다.</p>
+      </div>
+      <div class="grid three">
+        <article class="panel">
+          <span class="chip ok">11/11 PASS</span>
+          <h3>D9 Safety Evaluator</h3>
+          <a class="path" href="../runtime-evidence/d9-evaluator/d9-vitest-run-2026-07-09.log">runtime-evidence/d9-evaluator/d9-vitest-run-2026-07-09.log</a>
+          <p class="caption">D9_ACTIVE, D9_UNKNOWN, D9_CLEARED, advisory mapping을 실행 로그로 검증.</p>
+        </article>
+        <article class="panel">
+          <span class="chip ok">7/7 PASS</span>
+          <h3>Impl Vertical Slice</h3>
+          <a class="path" href="../runtime-evidence/impl-skeleton/impl-vitest-run-2026-07-09.log">runtime-evidence/impl-skeleton/impl-vitest-run-2026-07-09.log</a>
+          <p class="caption">D9 -> RVE -> Safety Gate -> Plan Generator 최소 수직 경로 검증.</p>
+        </article>
+        <article class="panel">
+          <span class="chip info">CI ready</span>
+          <h3>GitHub Actions</h3>
+          <a class="path" href="../.github/workflows/ci.yml">.github/workflows/ci.yml</a>
+          <p class="caption">PR과 main/codex 브랜치 push에서 D9 및 impl 테스트 실행.</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="section" aria-labelledby="wave-title">
+      <div class="section-head">
+        <div>
+          <p class="kicker">Wave D</p>
+          <h2 id="wave-title">다운스트림 바인딩 패치</h2>
+        </div>
+        <p class="section-note">패치 완료는 안전 체인의 연결성 강화입니다. 세 이슈 모두 OPEN이며, 런타임 증거와 승인 없이는 닫지 않습니다.</p>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Target</th>
+              <th>Issue</th>
+              <th>Patch</th>
+              <th>State</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><a href="../specs/active/PLAN_GENERATOR_SPEC.md">PLAN_GENERATOR_SPEC.md</a></td>
+              <td class="mono-text">OI-PG-PHYSIO-SOURCE-CONSUMPTION-001</td>
+              <td>Physio source binding now references Round 2 source acceptance and Wave D recount.</td>
+              <td><span class="chip warn">open</span></td>
+            </tr>
+            <tr>
+              <td><a href="../specs/active/APP_IMPLEMENTATION_BRIDGE.md">APP_IMPLEMENTATION_BRIDGE.md</a></td>
+              <td class="mono-text">OI-DLC-APP-BRIDGE-BINDING-001</td>
+              <td>Daily Check-in storage addendum now references Round 2 source acceptance and Wave D recount.</td>
+              <td><span class="chip warn">open</span></td>
+            </tr>
+            <tr>
+              <td><a href="../specs/active/RVE_RULE_EVALUATOR_BINDING_SPEC.md">RVE_RULE_EVALUATOR_BINDING_SPEC.md</a></td>
+              <td class="mono-text">OI-DLC-RVE-SAFETY-BINDING-001</td>
+              <td>Daily Log structured input boundary added as target-local addendum.</td>
+              <td><span class="chip warn">open</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="caption">Patch report: <a href="../SPEC_WAVED_BINDING_PATCH_REPORT.md">SPEC_WAVED_BINDING_PATCH_REPORT.md</a></p>
+    </section>
+
+    <section class="section" aria-labelledby="issues-title">
+      <div class="section-head">
+        <div>
+          <p class="kicker">issue registry</p>
+          <h2 id="issues-title">문서별 OI 참조 현황</h2>
+        </div>
+        <p class="section-note">이 표는 각 파일에서 발견된 고유 OI-* 참조를 문서별로 묶은 것입니다. 선언 카운트와 다를 수 있는 교차 참조는 숨기지 않고 그대로 보입니다.</p>
+      </div>
+      <div class="grid two">
+        <article class="panel">
+          <h3>Active SPEC issues</h3>
+          <details open>
+            <summary>Open active issue IDs</summary>
+            <ul class="issue-list">
+              <li>RULE_SPEC_D1_D9: 23 IDs</li>
+              <li>SESSION_CLASSIFIER_SPEC: 13 IDs</li>
+              <li>ATHLETE_PROFILE_SPEC: 11 IDs</li>
+              <li>APP_IMPLEMENTATION_BRIDGE: 15 IDs including Daily Log binding addendum</li>
+              <li>PLAN_GENERATOR_SPEC: 7 IDs</li>
+              <li>TEMPLATE_LIBRARY_SPEC: 5 referenced IDs, declared open issues 4</li>
+              <li>PHYSIO_SOURCE_TRUST_SPEC: 7 referenced IDs, declared open issues 4</li>
+              <li>RVE_RULE_EVALUATOR_BINDING_SPEC: 7 referenced IDs, declared open issues 4</li>
+            </ul>
+          </details>
+        </article>
+        <article class="panel">
+          <h3>Reconstruct SPEC issues</h3>
+          <details open>
+            <summary>Productization draft issue IDs</summary>
+            <ul class="issue-list">
+              <li>PLAN_SAFETY_GATE_SPEC: 10 referenced IDs, declared open issues 5</li>
+              <li>RULE_VALIDATION_ENGINE_CONTRACT: 7 referenced IDs, declared open issues 5</li>
+              <li>DAILY_LOG_AND_CHECKIN_SPEC: 12 referenced IDs, declared open issues 6</li>
+              <li>DAILY_BRIEF_AND_INBOX_SIGNAL_SPEC: 12 referenced IDs, declared open issues 6</li>
+              <li>ANALYSIS_AND_VISUALIZATION_DATA_CONTRACT: 7 IDs</li>
+              <li>PLAN_OUTPUT_RATIONALE_PRIVACY_SPEC: 8 IDs</li>
+              <li>MICROCYCLE_AND_CALENDAR_MAPPING_SPEC: 8 IDs</li>
+            </ul>
+          </details>
+        </article>
+      </div>
+    </section>
+
+    <section class="section" aria-labelledby="next-title">
+      <div class="section-head">
+        <div>
+          <p class="kicker">next gates</p>
+          <h2 id="next-title">다음에 닫아야 하는 문</h2>
+        </div>
+        <p class="section-note">이 대시보드는 완료 선언이 아니라, 다음 리뷰가 어디를 봐야 하는지 보여주는 표지판입니다.</p>
+      </div>
+      <div class="grid three">
+        <article class="panel subtle">
+          <span class="chip err">do not close yet</span>
+          <h3>RVE와 PG safety binding</h3>
+          <p class="caption">RVE/PG binding 이슈는 런타임 증거, target recount 승인, owner approval 전까지 닫지 않습니다.</p>
+        </article>
+        <article class="panel subtle">
+          <span class="chip warn">implementation next</span>
+          <h3>App Bridge/API contract</h3>
+          <p class="caption">raw memo, symptom clause, private athlete text가 저장되지 않는 서버 계약과 테스트가 필요합니다.</p>
+        </article>
+        <article class="panel subtle">
+          <span class="chip info">pages setup</span>
+          <h3>GitHub Pages</h3>
+          <p class="caption">main 병합 후 Pages가 활성화되면 <span class="mono-text">/dashboard/</span> 경로로 바로 열 수 있습니다.</p>
+        </article>
+      </div>
+    </section>
+
+    <p class="footer-note">
+      Sources: `SPEC_SOURCE_ACCEPTANCE_DECISION_ROUND1.md`, `SPEC_SOURCE_ACCEPTANCE_DECISION_ROUND2.md`,
+      `SPEC_WAVED_BINDING_PATCH_REPORT.md`, `.github/workflows/ci.yml`, `runtime-evidence/`.
+      This dashboard does not promote drafts, close issues, or create runtime evidence.
+    </p>
+  </main>
+</body>
+</html>
