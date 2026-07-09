@@ -49,6 +49,7 @@ For the next count-safe target patch sequence, read [`SPEC_TARGET_PATCH_MATRIX.m
 For external reviewer read order, lenses, and review questions, read [`SPEC_REVIEW_PACKET.md`](./SPEC_REVIEW_PACKET.md).
 For target patch readiness gates and wave order, read [`SPEC_TARGET_PATCH_READINESS.md`](./SPEC_TARGET_PATCH_READINESS.md).
 For the Wave B Safety Gate target-local patch report, read [`SPEC_WAVEB_SAFETY_GATE_PATCH_REPORT.md`](./SPEC_WAVEB_SAFETY_GATE_PATCH_REPORT.md).
+For Safety Gate/RVE source acceptance review prep, read [`SPEC_SOURCE_ACCEPTANCE_REVIEW_ROUND1.md`](./SPEC_SOURCE_ACCEPTANCE_REVIEW_ROUND1.md).
 For the Wave 1 Physio Source Trust target patch result, read [`SPEC_WAVE1_PHYSIO_PATCH_REPORT.md`](./SPEC_WAVE1_PHYSIO_PATCH_REPORT.md).
 For SPEC-to-legacy continuity and daily-log productization planning, read [`SPEC_LEGACY_ALIGNMENT_AND_DAILY_LOG_PLAN.md`](./SPEC_LEGACY_ALIGNMENT_AND_DAILY_LOG_PLAN.md).
 For file-existence and chapter/title disambiguation rules, read [`SPEC_FILE_TRUTH_GUARD.md`](./SPEC_FILE_TRUTH_GUARD.md).
@@ -184,12 +185,13 @@ Bare D-rule references are forbidden in new SPEC work.
 8. Recheck `PLAN_GENERATOR_SPEC.md` open issue table from the file itself before any target patch.
 9. Review the Wave 1 physio source consumption target patches in `PLAN_GENERATOR_SPEC.md`, `APP_IMPLEMENTATION_BRIDGE.md`, and `ATHLETE_PROFILE_SPEC.md`; do not close related issues before source acceptance and target recount approval.
 10. Review the Wave B Safety Gate target-local patch in `PLAN_GENERATOR_SPEC.md`; do not close `OI-PG-RULE-SAFETY-GATE-BINDING-001` before source acceptance, target recount approval, and actual D9 runtime evidence.
-11. Obtain actual D9 evaluator runtime output before closing RVE or Plan Generator safety-gate binding issues.
-12. Review `specs/reconstruct/DAILY_BRIEF_AND_INBOX_SIGNAL_SPEC.md` as a productization draft; do not treat it as canonical, runtime evidence, or downstream issue closure.
-13. Review `specs/reconstruct/ANALYSIS_AND_VISUALIZATION_DATA_CONTRACT.md` as a productization draft; do not treat it as metric formula authority, canonical, runtime evidence, or downstream issue closure.
-14. Review `specs/reconstruct/PLAN_OUTPUT_RATIONALE_PRIVACY_SPEC.md` as a productization draft; do not treat it as Plan Generator issue closure, canonical, runtime evidence, or downstream issue closure.
-15. Review `specs/reconstruct/MICROCYCLE_AND_CALENDAR_MAPPING_SPEC.md` as a productization draft; do not treat it as Plan Generator issue closure, canonical, runtime evidence, D-rule redefinition, or downstream issue closure.
-16. Begin App Bridge/API schema contracts and runtime evidence only after preserving the safety core chain.
+11. Use `SPEC_SOURCE_ACCEPTANCE_REVIEW_ROUND1.md` before treating reconstructed Safety Gate/RVE documents as accepted sources.
+12. Obtain actual D9 evaluator runtime output before closing RVE or Plan Generator safety-gate binding issues.
+13. Review `specs/reconstruct/DAILY_BRIEF_AND_INBOX_SIGNAL_SPEC.md` as a productization draft; do not treat it as canonical, runtime evidence, or downstream issue closure.
+14. Review `specs/reconstruct/ANALYSIS_AND_VISUALIZATION_DATA_CONTRACT.md` as a productization draft; do not treat it as metric formula authority, canonical, runtime evidence, or downstream issue closure.
+15. Review `specs/reconstruct/PLAN_OUTPUT_RATIONALE_PRIVACY_SPEC.md` as a productization draft; do not treat it as Plan Generator issue closure, canonical, runtime evidence, or downstream issue closure.
+16. Review `specs/reconstruct/MICROCYCLE_AND_CALENDAR_MAPPING_SPEC.md` as a productization draft; do not treat it as Plan Generator issue closure, canonical, runtime evidence, D-rule redefinition, or downstream issue closure.
+17. Begin App Bridge/API schema contracts and runtime evidence only after preserving the safety core chain.
 
 ---
 
@@ -205,6 +207,7 @@ Important starting points:
 - `SPEC_REVIEW_PACKET.md`
 - `SPEC_TARGET_PATCH_READINESS.md`
 - `SPEC_WAVEB_SAFETY_GATE_PATCH_REPORT.md`
+- `SPEC_SOURCE_ACCEPTANCE_REVIEW_ROUND1.md`
 - `SPEC_WAVE1_PHYSIO_PATCH_REPORT.md`
 - `SPEC_FILE_TRUTH_GUARD.md`
 - `SPEC_LEGACY_ALIGNMENT_AND_DAILY_LOG_PLAN.md`

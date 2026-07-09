@@ -292,4 +292,27 @@ Purpose:
 - Preserve that `ACTIVE` and `UNKNOWN` block generation, while advisory remains non-blocking under `CLEARED`.
 - Preserve that `OI-PG-RULE-SAFETY-GATE-BINDING-001` remains open until source acceptance, target recount approval, and actual D9 runtime evidence exist.
 
+## Source Acceptance Review Round 1 Addendum - 2026-07-09
+
+`SPEC_SOURCE_ACCEPTANCE_REVIEW_ROUND1.md` now exists at the repository root.
+
+Treatment:
+
+- It is a source-acceptance review prep packet.
+- It is not source acceptance.
+- It is not canonical promotion.
+- It is not runtime evidence.
+- It does not close any downstream issue.
+
+Documents under review:
+
+- `specs/reconstruct/PLAN_SAFETY_GATE_SPEC.md`
+- `specs/reconstruct/RULE_VALIDATION_ENGINE_CONTRACT.md`
+
+Purpose:
+
+- Give reviewers a concrete acceptance checklist for the reconstructed Safety Gate and RVE contracts.
+- Record that both source documents are still `RECONSTRUCTED_DRAFT_FOR_REVIEW`.
+- Preserve that Safety Gate/RVE source acceptance remains pending before downstream issue closure.
+
 [DRAFT_COMPLETE]

@@ -505,7 +505,7 @@ These are this reconstructed document's own issues. They do not change issue cou
 | ID | Priority | Canonical blocking | Status | Summary | Resolution needed |
 |---|---|---:|---|---|---|
 | `OI-PSG-RUNTIME-EVIDENCE-001` | P1 | YES | OPEN | Actual D9 evaluator runtime output is missing. | Run local/CI evaluator tests and attach logs before runtime claims or downstream issue closure. |
-| `OI-PSG-PLAN-GENERATOR-PATCH-001` | P1 | YES | OPEN | Plan Generator still has `OI-PG-RULE-SAFETY-GATE-BINDING-001` open. | Patch Plan Generator after Safety Gate acceptance, then recount the target issue table. |
+| `OI-PSG-PLAN-GENERATOR-PATCH-001` | P1 | YES | OPEN | Plan Generator now has a target-local Safety Gate/RVE binding patch, but `OI-PG-RULE-SAFETY-GATE-BINDING-001` remains open. | Review and accept this Safety Gate source, approve the target recount, and attach actual D9 runtime evidence before closure. |
 | `OI-PSG-IMPLEMENTATION-BINDING-001` | P1 | YES | OPEN | No app implementation, API endpoint, or database schema has consumed this gate. | Bind Safety Gate result in implementation after SPEC acceptance. |
 | `OI-PSG-PHYSIO-SOURCE-CONSUMPTION-001` | P2 | NO | OPEN | Physio source trust consumption remains unresolved in downstream targets. | Patch the named target files from `PHYSIO_SOURCE_TRUST_SPEC.md` with target-file recounts. |
 | `OI-PSG-DAILY-LOG-INPUT-BINDING-001` | P2 | NO | OPEN | Target-local Daily Log input boundary now exists, but the Daily Log contract remains a reconstructed draft and has no runtime proof. | Keep open until `DAILY_LOG_AND_CHECKIN_SPEC.md` is accepted, this target table is recounted, and implementation/runtime evidence proves structured-only routing without raw text storage. |
