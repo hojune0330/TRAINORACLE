@@ -24,6 +24,7 @@ applied_local_patches:
   - TEMPLATE_LIBRARY_OWNERSHIP_SYNC
   - PHYSIO_SOURCE_TRUST_CONSUMPTION_BINDING_PENDING_ACCEPTANCE
   - PLAN_SAFETY_GATE_BINDING_PATCH_PENDING_RUNTIME_EVIDENCE
+  - WAVE_D_PHYSIO_SOURCE_ACCEPTANCE_TARGET_RECOUNT_SYNC
 
 upstream_baselines:
   - file: RULE_SPEC_D1_D9.md
@@ -553,9 +554,12 @@ This binding is a target patch. It does not by itself prove runtime behavior, ca
 ```yaml
 physiological_source_trust_dependency:
   source_document: PHYSIO_SOURCE_TRUST_SPEC.md
+  source_decision_document: SPEC_SOURCE_ACCEPTANCE_DECISION_ROUND2.md
+  source_decision: ACCEPTED_AS_WORKING_SOURCE
   app_bridge_record_family: PhysioSourceTrustResultRecord
   target_issue: OI-PG-PHYSIO-SOURCE-CONSUMPTION-001
-  target_issue_status_after_patch: PATCHED_PENDING_SOURCE_ACCEPTANCE
+  target_issue_status_after_patch: PATCHED_BUT_NOT_CLOSED
+  target_recount_status: RECOUNTED_IN_WAVE_D
 
   plan_generator_may_consume_physio_if:
     - tenant_group_athlete_scope_valid
@@ -965,7 +969,7 @@ llm_policy:
 | ID | Priority | Canonical blocking | Status | Summary | Resolution needed |
 |---|---|---:|---|---|---|
 | `OI-PG-RULE-SAFETY-GATE-BINDING-001` | P1 | YES | OPEN | Target-local Safety Gate/RVE consumption binding is patched, but source acceptance, target recount approval, and actual D9 evaluator runtime evidence remain missing. | Review and accept reconstructed Safety Gate/RVE source docs, recount this target issue table, then attach actual runtime evidence before closure. |
-| `OI-PG-PHYSIO-SOURCE-CONSUMPTION-001` | P1 | YES | OPEN | Target binding to `PHYSIO_SOURCE_TRUST_SPEC.md` is patched, but source acceptance and owner recount are still pending. | Review source acceptance, confirm App Bridge record binding, then recount before closure. |
+| `OI-PG-PHYSIO-SOURCE-CONSUMPTION-001` | P1 | YES | OPEN | Target binding to `PHYSIO_SOURCE_TRUST_SPEC.md` is patched and source acceptance is recorded in `SPEC_SOURCE_ACCEPTANCE_DECISION_ROUND2.md`; Wave D target recount is recorded, but issue closure is still not allowed. | Keep open until owner approves closure and implementation/privacy evidence proves the binding without D9/Safety Gate clearance bypass. |
 | `OI-PG-OUTPUT-FORMAT-BINDING-001` | P2 | NO | OPEN | Final export format is not fixed. | Decide UI/export schema later. |
 | `OI-PG-OPTION-RATIONALE-PRIVACY-001` | P2 | NO | OPEN | Rationale text may accidentally reveal sensitive data. | Add redaction templates before production. |
 | `OI-PG-COMPETITION-TAPER-POLICY-001` | P2 | NO | OPEN | Competition taper details are not fully specified. | Create taper sub-policy or competition-prep template. |
@@ -1119,6 +1123,7 @@ handoff:
     - TEMPLATE_LIBRARY_OWNERSHIP_SYNC
     - PHYSIO_SOURCE_TRUST_CONSUMPTION_BINDING_PENDING_ACCEPTANCE
     - PLAN_SAFETY_GATE_BINDING_PATCH_PENDING_RUNTIME_EVIDENCE
+    - WAVE_D_PHYSIO_SOURCE_ACCEPTANCE_TARGET_RECOUNT_SYNC
   remaining_canonical_blocking_open_issues:
     - OI-PG-RULE-SAFETY-GATE-BINDING-001
     - OI-PG-PHYSIO-SOURCE-CONSUMPTION-001

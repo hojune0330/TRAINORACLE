@@ -315,4 +315,27 @@ Purpose:
 - Record that both source documents are still `RECONSTRUCTED_DRAFT_FOR_REVIEW`.
 - Preserve that Safety Gate/RVE source acceptance remains pending before downstream issue closure.
 
+## Wave D Binding Patch Addendum - 2026-07-09
+
+`SPEC_WAVED_BINDING_PATCH_REPORT.md` now exists at the repository root.
+
+Treatment:
+
+- It is a target patch report.
+- It is not issue closure.
+- It is not canonical promotion.
+- It is not new runtime evidence.
+
+Targets patched:
+
+- `specs/active/PLAN_GENERATOR_SPEC.md`
+- `specs/active/APP_IMPLEMENTATION_BRIDGE.md`
+- `specs/active/RVE_RULE_EVALUATOR_BINDING_SPEC.md`
+
+Purpose:
+
+- Record Round 1/2 source acceptance references in downstream binding targets.
+- Record target-local recounts for Wave D.
+- Keep `OI-PG-PHYSIO-SOURCE-CONSUMPTION-001`, `OI-DLC-APP-BRIDGE-BINDING-001`, and `OI-DLC-RVE-SAFETY-BINDING-001` open.
+
 [DRAFT_COMPLETE]

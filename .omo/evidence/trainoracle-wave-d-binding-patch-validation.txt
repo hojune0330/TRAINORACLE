@@ -1,0 +1,28 @@
+TrainOracle Wave D downstream binding patch validation
+Date: 2026-07-09
+
+Scope:
+- specs/active/PLAN_GENERATOR_SPEC.md
+- specs/active/APP_IMPLEMENTATION_BRIDGE.md
+- specs/active/RVE_RULE_EVALUATOR_BINDING_SPEC.md
+- SPEC_WAVED_BINDING_PATCH_REPORT.md
+
+Recount:
+- PLAN_GENERATOR_SPEC.md: declared open issues 7, issue rows 7; declared canonical blockers 2, blocking rows 2
+- APP_IMPLEMENTATION_BRIDGE.md: declared open issues 12, issue rows 12; declared canonical blockers 4, blocking rows 4
+- RVE_RULE_EVALUATOR_BINDING_SPEC.md: declared open issues 4, issue rows 4; declared canonical blockers 0, blocking rows 0
+
+Target issue existence:
+- OI-PG-PHYSIO-SOURCE-CONSUMPTION-001 exists in PLAN_GENERATOR_SPEC.md open issue table and remains OPEN.
+- OI-DLC-APP-BRIDGE-BINDING-001 exists in APP_IMPLEMENTATION_BRIDGE.md Daily Log binding issue addendum and remains OPEN.
+- OI-DLC-RVE-SAFETY-BINDING-001 exists in DAILY_LOG_AND_CHECKIN_SPEC.md source open issue table and is consumed by RVE_RULE_EVALUATOR_BINDING_SPEC.md target-local addendum; it remains OPEN and is not counted as a Section 20 RVE issue row.
+
+Validation:
+- All patched SPEC files retain exactly one [DRAFT_COMPLETE] final marker.
+- git diff --check: no whitespace errors after patch.
+
+Non-claims:
+- No issue closure.
+- No canonical promotion.
+- No new runtime evidence.
+- No raw athlete free-text, raw memo text, raw symptom clause, injury narrative, medical note, rehab note, or guardian private note storage.

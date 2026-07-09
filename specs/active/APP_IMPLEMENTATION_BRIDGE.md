@@ -450,8 +450,12 @@ physio_source_trust_storage_policy:
 ```yaml
 daily_checkin_storage_policy:
   source_document: DAILY_LOG_AND_CHECKIN_SPEC.md
+  source_decision_document: SPEC_SOURCE_ACCEPTANCE_DECISION_ROUND2.md
+  source_decision: ACCEPTED_AS_WORKING_SOURCE
   target_issue: OI-DLC-APP-BRIDGE-BINDING-001
-  status_after_patch: PATCHED_PENDING_SOURCE_ACCEPTANCE_AND_TARGET_RECOUNT
+  target_issue_location: Daily_Log_binding_issue_addendum
+  status_after_patch: PATCHED_BUT_NOT_CLOSED
+  target_recount_status: RECOUNTED_IN_WAVE_D
 
   may_store:
     - dailyCheckInId
@@ -1099,11 +1103,13 @@ Daily Log binding issue addendum:
 ```yaml
 OI-DLC-APP-BRIDGE-BINDING-001:
   status: OPEN
-  target_patch_status: PATCHED_PENDING_SOURCE_ACCEPTANCE_AND_TARGET_RECOUNT
+  target_patch_status: PATCHED_BUT_NOT_CLOSED
+  source_decision_document: SPEC_SOURCE_ACCEPTANCE_DECISION_ROUND2.md
+  source_decision: ACCEPTED_AS_WORKING_SOURCE
+  target_recount_status: RECOUNTED_IN_WAVE_D
   closure_allowed_now: false
   closure_requires:
-    - DAILY_LOG_AND_CHECKIN_SPEC.md owner/source acceptance
-    - target open issue table recount from this file
+    - owner approval for downstream closure
     - implementation/privacy review proving raw memo/free-text is transient only
     - no runtime evidence claim from this target-local patch
 ```
