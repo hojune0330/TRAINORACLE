@@ -1,0 +1,22 @@
+
+ RUN  v4.1.10 D:/admin/Documents/트레인 오라클 진도/impl
+
+ ✓ test/contract.test.ts > D9 -> RVE -> Safety Gate contract slice > maps ACTIVE to RVE ACTIVE and blocks plan generation 5ms
+ ✓ test/contract.test.ts > D9 -> RVE -> Safety Gate contract slice > maps UNKNOWN to human review and prevents plan generation 1ms
+ ✓ test/contract.test.ts > D9 -> RVE -> Safety Gate contract slice > maps CLEARED advisory to non-blocking CLEARED with reason codes preserved 1ms
+ ✓ test/contract.test.ts > D9 -> RVE -> Safety Gate contract slice > fails safe to UNKNOWN when evaluator failure is timeout 0ms
+ ✓ test/contract.test.ts > D9 -> RVE -> Safety Gate contract slice > fails safe to UNKNOWN when evaluator failure is exception 0ms
+ ✓ test/contract.test.ts > D9 -> RVE -> Safety Gate contract slice > fails safe to UNKNOWN when evaluator failure is stale_version 0ms
+ ✓ test/contract.test.ts > D9 -> RVE -> Safety Gate contract slice > does not include raw athlete text in RVE signal, Safety Gate output, or audit object 0ms
+
+ Test Files  1 passed (1)
+      Tests  7 passed (7)
+   Start at  11:26:15
+   Duration  338ms (transform 63ms, setup 0ms, import 92ms, tests 10ms, environment 0ms)
+
+
+--- environment ---
+date_local: 2026-07-09T11:26:16.8167410+09:00
+node: v24.11.1
+npm: 11.6.2
+command: cd impl && npx.cmd vitest run --reporter=verbose
