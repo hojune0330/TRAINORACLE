@@ -1,0 +1,32 @@
+/* TRAINORACLE app-level styles (Phase 1)
+   토큰의 단일 소스는 저장소 루트의 colors_and_type*.css —
+   main.tsx에서 직접 import 하여 이중 정의를 만들지 않는다 (ADR A3 정신). */
+
+html, body { margin: 0; padding: 0; background: #E4E2DA; }
+#root { min-height: 100vh; }
+button { font-family: inherit; }
+input, textarea { font-family: inherit; }
+
+/* ========== PRINT ==========
+   LogDetail (variant A · Journal page) 만 단독 페이지로 출력. */
+@media print {
+  @page { size: A5 portrait; margin: 14mm 12mm; }
+  html, body { background: #fff !important; }
+  body > *:not(#root) { display: none !important; }
+  #root > * { display: none !important; }
+  .print-target { display: block !important; }
+  .print-target [data-mobile-frame] {
+    border: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    width: auto !important;
+    max-width: 100% !important;
+    height: auto !important;
+    overflow: visible !important;
+  }
+  .print-target [data-mobile-statusbar],
+  .print-target [data-mobile-homeindicator] { display: none !important; }
+  .paper, .paper-grid, .paper-lines { background-color: #fff !important; }
+  .hand { color: #1A3A6F !important; }
+  .idx-card, .stamp { break-inside: avoid; }
+}
