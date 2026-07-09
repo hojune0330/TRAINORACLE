@@ -1,33 +1,28 @@
 # DAILY_BRIEF_AND_INBOX_SIGNAL_SPEC.md
 
 ```yaml
-document_metadata:
-  doc_id: trainoracle-spec-014-daily-brief-and-inbox-signal
-  spec_id: DAILY_BRIEF_AND_INBOX_SIGNAL_SPEC
-  title: TrainOracle Daily Brief And AI Inbox Signal Spec
-  version: "0.1"
-  round: RT1_PRODUCTIZATION_DRAFT
-  status: DRAFT_FOR_REVIEW
-  owner: COACH_HOJUNE
-  owner_english_name: hojune jang
-
-  source_state:
-    local_original_found: false
-    new_productization_draft: true
-    restored_original: false
-    prior_approved_version_restored: false
-    reconstructed_from_missing_original: false
-
-  open_issues_total: 6
-  canonical_blocking_count: 3
-
-  executed_tests_total: 0
-  executed_tests_passed: 0
-  self_check_is_runtime_evidence: false
-
-  upload_allowed: false
-  canonical_promotion_allowed: false
-  final_marker_required: "[DRAFT_COMPLETE]"
+doc_id: trainoracle-spec-014-daily-brief-and-inbox-signal
+spec_id: DAILY_BRIEF_AND_INBOX_SIGNAL_SPEC
+title: TrainOracle Daily Brief And AI Inbox Signal Spec
+version: "0.1"
+round: RT1_PRODUCTIZATION_DRAFT
+status: DRAFT_FOR_REVIEW
+owner: COACH_HOJUNE
+owner_english_name: hojune jang
+source_state:
+  local_original_found: false
+  new_productization_draft: true
+  restored_original: false
+  prior_approved_version_restored: false
+  reconstructed_from_missing_original: false
+open_issues_total: 6
+canonical_blocking_count: 3
+executed_tests_total: 0
+executed_tests_passed: 0
+self_check_is_runtime_evidence: false
+upload_allowed: false
+canonical_promotion_allowed: false
+final_marker_required: "[DRAFT_COMPLETE]"
 ```
 
 ---

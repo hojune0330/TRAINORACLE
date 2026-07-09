@@ -106,12 +106,17 @@ This table records files found in the repository at the time of this index updat
 | Document / area | Repository path | Status | Treatment |
 |---|---|---|---|
 | `CODEX_WORK_ORDER_001.md` | root | ISSUED / completed by PR sequence | Historical work order for Wave D patches, impl skeleton, CI, and dashboard. |
-| `CODEX_WORK_ORDER_002.md` | root | ISSUED | Current work order for screen/SPEC traceability, Round 3 review prep, doc quality, and dashboard data sync. |
+| `CODEX_WORK_ORDER_002.md` | root | COMPLETED | Work order for screen/SPEC traceability, Round 3 review prep, doc quality, and dashboard data sync; PR #14-#17 merged. |
+| `CODEX_WORK_ORDER_003.md` | root | ISSUED | Current work order for GAP_SPEC draft contracts and Round 3 follow-up binding. |
 | `SPEC_SOURCE_ACCEPTANCE_DECISION_ROUND1.md` | root | DECIDED | Safety Gate and RVE reconstructed drafts accepted as working sources only; not canonical promotion or issue closure. |
 | `SPEC_SOURCE_ACCEPTANCE_DECISION_ROUND2.md` | root | DECIDED | Physio Source Trust and Daily Log accepted as working sources only; not canonical promotion or issue closure. |
+| `SPEC_SOURCE_ACCEPTANCE_DECISION_ROUND3.md` | root | DECIDED | Analysis/Visualization, Daily Brief/Inbox, Microcycle/Calendar, and Plan Output Rationale Privacy accepted as working sources only; not canonical promotion or issue closure. |
 | D9 runtime evidence | `runtime-evidence/d9-evaluator/` | RUNTIME_EVIDENCE_PRESENT | Actual local D9 evaluator run evidence exists; downstream issue closure still requires target review/recount and owner approval. |
-| Work Order 002 Task 2 PR | GitHub PR #14 | OPEN_AT_UPDATE_TIME | `SPEC_SCREEN_TRACEABILITY_MATRIX.md` proposed there; not present in this branch unless the PR is merged. |
-| Work Order 002 Task 1 PR | GitHub PR #15 | OPEN_AT_UPDATE_TIME | `SPEC_SOURCE_ACCEPTANCE_REVIEW_ROUND3.md` proposed there; not present in this branch unless the PR is merged. |
+| Work Order 002 Task 2 output | `SPEC_SCREEN_TRACEABILITY_MATRIX.md` | MERGED | Screen/spec traceability matrix; documents five `CONFLICT` rows and five `GAP_SPEC_MISSING` rows. |
+| Work Order 002 Task 1 output | `SPEC_SOURCE_ACCEPTANCE_REVIEW_ROUND3.md` | MERGED | Round 3 review packet; decisions issued separately by `SPEC_SOURCE_ACCEPTANCE_DECISION_ROUND3.md`. |
+| Work Order 003 Task 1 PR | GitHub PR #22 | OPEN_AT_UPDATE_TIME | `MEDIA_AND_TRANSIENT_CAPTURE_SPEC.md` proposed there; not a local main file until merged. |
+| Work Order 003 Task 2 PR | GitHub PR #23 | OPEN_AT_UPDATE_TIME | `RACE_RECORD_AND_HISTORICAL_RECALL_SPEC.md` proposed there; not a local main file until merged. |
+| Work Order 003 Task 3 PR | GitHub PR #24 | OPEN_AT_UPDATE_TIME | `METRIC_ALGORITHM_CONTRACT.md` proposed there; not a local main file until merged. |
 
 ---
 
