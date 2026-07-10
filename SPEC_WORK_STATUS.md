@@ -46,9 +46,17 @@ Current Work Order 002 state:
 
 - `CODEX_WORK_ORDER_002.md` is present on main and assigns Codex to spec verification, flow audit, and document improvement.
 - Design and screen implementation files remain Project Lead AI territory under Work Order 002; Codex findings should be documented, not patched into `ui_kits/`, `preview/`, `design-v3/`, `designs/`, `colors_and_type*.css`, or root `index.html`.
-- Task 2 (`SPEC_SCREEN_TRACEABILITY_MATRIX.md`) is proposed in PR #14 and must not be treated as a local main file until merged.
-- Task 1 (`SPEC_SOURCE_ACCEPTANCE_REVIEW_ROUND3.md`) is proposed in PR #15 and must not be treated as a local main file until merged.
-- Task 3 is this document/index/quality-report update.
+- PR #14-#17 are merged.
+- `SPEC_SCREEN_TRACEABILITY_MATRIX.md`, `SPEC_SOURCE_ACCEPTANCE_REVIEW_ROUND3.md`, `SPEC_DOC_QUALITY_REPORT.md`, and the dashboard Task 4 update are now present on main.
+- `SPEC_SOURCE_ACCEPTANCE_DECISION_ROUND3.md` records the Project Lead AI decision for Round 3 sources.
+
+Current Work Order 003 state:
+
+- `CODEX_WORK_ORDER_003.md` is present on main and assigns Codex to GAP_SPEC draft contracts plus Round 3 follow-up binding.
+- Work Order 003 Task 1 is proposed in PR #22: `MEDIA_AND_TRANSIENT_CAPTURE_SPEC.md`; not present on main until merged.
+- Work Order 003 Task 2 is proposed in PR #23: `RACE_RECORD_AND_HISTORICAL_RECALL_SPEC.md`; not present on main until merged.
+- Work Order 003 Task 3 is proposed in PR #24: `METRIC_ALGORITHM_CONTRACT.md`; not present on main until merged.
+- Task 4 normalizes Daily Brief metadata, annotates Plan Generator Round 3 patch sources, and updates index/status. It does not close issues.
 
 Current Wave 1 physio patch state:
 
@@ -109,8 +117,9 @@ Current source acceptance review state:
 - `SPEC_SOURCE_ACCEPTANCE_REVIEW_ROUND1.md` exists as the review-prep packet for `PLAN_SAFETY_GATE_SPEC.md` and `RULE_VALIDATION_ENGINE_CONTRACT.md`.
 - `SPEC_SOURCE_ACCEPTANCE_DECISION_ROUND1.md` records that Safety Gate and RVE reconstructed drafts were accepted as working sources only.
 - `SPEC_SOURCE_ACCEPTANCE_DECISION_ROUND2.md` records that Physio Source Trust and Daily Log were accepted as working sources only.
-- Round 1/2 decisions do not grant canonical promotion, implementation completeness, issue closure, or runtime evidence for downstream behavior.
-- Productization drafts remain pending review unless a separate Round 3 decision document is merged.
+- `SPEC_SOURCE_ACCEPTANCE_DECISION_ROUND3.md` records that Analysis/Visualization, Daily Brief/Inbox, Microcycle/Calendar, and Plan Output Rationale Privacy were accepted as working sources only.
+- Round 1/2/3 decisions do not grant canonical promotion, implementation completeness, issue closure, or runtime evidence for downstream behavior.
+- Reconstructed/productization working-source decisions now cover 8 documents across Rounds 1-3; downstream target issues remain OPEN unless separately closed with required evidence and owner approval.
 
 Current Wave D downstream binding state:
 
