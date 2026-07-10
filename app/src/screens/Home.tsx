@@ -1,105 +1,161 @@
-// Home — 모바일 메인. "오늘 일지 쓰기 CTA + 어제 요약" 우선.
-// 3 variants: A. Index-card top, B. Sparkline-heavy, C. Recall-strong
-//
-// CONFLICT C5 수정: cycleDay prop은 bare string이 아닌 CycleDayLabel typed object.
-// 매트릭스 권고: "namespace: CYCLE_DAY, value: D-5, isRuleId: false" 백킹 후
-// 짧은 표시 라벨은 최종 UI 계층에서만 렌더.
+// Home — 모바일 메인. 실데이터 전용 (F0-d).
+//  - 이 화면의 모든 숫자·문장은 로컬 저장(journal-store) 실데이터에서만 나온다.
+//  - 데모 인물·데모 수치 금지. 예시는 Guide 화면에만 존재.
+//  - 일지가 하나도 없으면 "첫 페이지" 온보딩을 보여준다 (흥미 유발, 강요 없음).
 import React from "react"
-import { IndexCard, MoodStrip, IntensityDots, IntensityStack, Stamp, PainDot, Sparkline, Delta, SectionLb } from "../components/JournalPrimitives"
-import { cycleDay } from "../domain/display-label"
-import type { EnergyDist } from "../components/JournalPrimitives"
+import { IndexCard, SectionLb } from "../components/JournalPrimitives"
 import { TermHelp } from "../components/TermHelp"
-import { recentEntries } from "../domain/journal-store"
 import type { JournalEntry } from "../domain/journal-store"
-
-export type HomeVariant = "A" | "B" | "C"
-export type Encoding = "dot-code" | "chip" | "glyph"
+import { recentEntries, loadEntries } from "../domain/journal-store"
+import { thisWeekStats, lifetimeStats } from "../domain/aggregates"
+import { cardDate, dowOf, seasonOf, compactDate } from "../domain/dates"
+import { todayISO } from "../domain/journal-store"
 
 export interface HomeProps {
-  variant?: HomeVariant
-  encoding?: Encoding
-  showAI?: boolean
   onWriteLog?: () => void
   onOpenDay?: (date: string) => void
+  onOpenGuide?: () => void
 }
 
-export function Home({ variant = "A", showAI = true, onWriteLog, onOpenDay }: HomeProps) {
-  if (variant === "B") return <HomeSparkline onWriteLog={onWriteLog} onOpenDay={onOpenDay} />
-  if (variant === "C") return <HomeRecall onWriteLog={onWriteLog} onOpenDay={onOpenDay} />
-  return <HomeIndexCard onWriteLog={onWriteLog} onOpenDay={onOpenDay} showAI={showAI} />
-}
+export function Home({ onWriteLog, onOpenDay, onOpenGuide }: HomeProps) {
+  const all = React.useMemo(() => loadEntries(), [])
+  const today = todayISO()
+  const life = lifetimeStats(all)
+  const isEmpty = life.total === 0
 
-type SubProps = {
-  onWriteLog?: (() => void) | undefined
-  onOpenDay?: ((date: string) => void) | undefined
-  showAI?: boolean
-}
+  // ?uitest 런타임 증거: 홈이 실데이터 기준으로 무엇을 렌더했는지
+  React.useEffect(() => {
+    if (window.location.search.includes("uitest")) {
+      console.log(`[HOMEJ] mode=${isEmpty ? "empty" : "data"} total=${life.total} days=${life.days}`)
+    }
+  }, [isEmpty, life.total, life.days])
 
-// ───────── A. Index Card top (most journal-like) ─────────
-function HomeIndexCard({ onWriteLog, onOpenDay, showAI }: SubProps) {
   return (
     <div style={{ paddingBottom: 90 }}>
-      {/* Index card header — C5: typed CycleDayLabel */}
+      {/* Index card header — 실제 오늘 날짜 */}
       <div style={{ padding: "16px 18px 14px" }}>
-        <IndexCard
-          date="2026 · 06 · 22"
-          dow="MON · 15°C 흐림"
-          cycleDay={cycleDay("D-6", { cycleNumber: 7, cycleLength: 9.5 })}
-          season="2026 spring"
-        />
+        <IndexCard date={cardDate(today)} dow={dowOf(today)} season={seasonOf(today)} />
       </div>
 
-      {/* Greeting + write CTA */}
+      {isEmpty ? (
+        <FirstPage onWriteLog={onWriteLog} onOpenGuide={onOpenGuide} />
+      ) : (
+        <DataHome all={all} onWriteLog={onWriteLog} onOpenDay={onOpenDay} onOpenGuide={onOpenGuide} />
+      )}
+    </div>
+  )
+}
+
+// ───────── 첫 페이지 (일지 0건) — 초대장 ─────────
+function FirstPage({ onWriteLog, onOpenGuide }: { onWriteLog?: (() => void) | undefined; onOpenGuide?: (() => void) | undefined }) {
+  return (
+    <>
+      <div className="paper-lines" style={{ padding: "26px 20px 22px", margin: "6px 20px 0", border: "1px solid var(--line)" }}>
+        <div style={{ fontFamily: "var(--mono)", fontSize: 9.5, color: "var(--ink-3)", letterSpacing: "0.14em", textTransform: "uppercase" }}>
+          PAGE 1 · 아직 아무것도 없는
+        </div>
+        <div className="hand" style={{ marginTop: 12, fontSize: 27, color: "var(--ink-blue)", lineHeight: 1.25 }}>
+          여기는 당신의<br />첫 페이지예요.
+        </div>
+        <div style={{ marginTop: 14, fontSize: 13.5, color: "var(--ink-2)", lineHeight: 1.65, letterSpacing: "-0.005em" }}>
+          오늘 뛴 것, 잔 시간, 기분 한 줄 — 뭐든 1분이면 적혀요.
+          하루하루는 짧은 메모지만, 계속 쌓이면 <b style={{ color: "var(--ink)" }}>나만 아는 나의 기록</b>이 됩니다.
+        </div>
+        <div className="hand-pencil" style={{ marginTop: 12, fontSize: 15, color: "var(--pencil)" }}>
+          1년 뒤 오늘, 이 페이지를 다시 펼치게 될 거예요.
+        </div>
+      </div>
+
+      <div style={{ padding: "20px 20px 0" }}>
+        <button onClick={onWriteLog} style={{
+          width: "100%", padding: "18px 20px",
+          background: "var(--ink)", color: "var(--bg)",
+          border: 0, borderRadius: 0,
+          fontFamily: "var(--sans)", fontSize: 16, fontWeight: 500,
+          letterSpacing: "-0.005em",
+          display: "flex", alignItems: "center", justifyContent: "space-between",
+          cursor: "pointer",
+        }}>
+          <span>첫 일지 쓰기</span>
+          <span style={{ fontFamily: "var(--mono)", fontSize: 10, color: "rgba(255,255,255,.7)", letterSpacing: "0.14em", textTransform: "uppercase" }}>~ 1분</span>
+        </button>
+      </div>
+
+      <div style={{ padding: "14px 20px 0" }}>
+        <button onClick={onOpenGuide} style={{
+          width: "100%", padding: "13px 16px",
+          background: "transparent", color: "var(--ink-2)",
+          border: "1px dashed var(--line-2)", borderRadius: 0,
+          fontFamily: "var(--mono)", fontSize: 11, letterSpacing: "0.06em",
+          cursor: "pointer", textAlign: "left",
+        }}>
+          일지가 쌓이면 어떤 모습이 되나요? → <b style={{ color: "var(--ink)" }}>예시 보기</b>
+        </button>
+      </div>
+
+      <div style={{ padding: "26px 20px 0" }}>
+        <SectionLb>— 세 가지 일지</SectionLb>
+        <div style={{ margin: "0 0", borderTop: "1px solid var(--ink)", borderBottom: "1px solid var(--ink)" }}>
+          {[
+            { mark: "↻", t: "훈련 후", d: "방금 끝낸 세션 · 거리·페이스·한 줄 메모", m: "~1분" },
+            { mark: "☾", t: "하루 마무리", d: "수면·체중·기분·통증 체크", m: "~2분" },
+            { mark: "▲", t: "경기", d: "직전 긴장도 · 직후 기록과 감정", m: "~30초" },
+          ].map((o, i, a) => (
+            <div key={i} style={{
+              display: "grid", gridTemplateColumns: "30px 1fr auto", gap: 12,
+              padding: "13px 4px", alignItems: "center",
+              borderBottom: i < a.length - 1 ? "1px dashed var(--hair)" : 0,
+            }}>
+              <span style={{ fontFamily: "var(--mono)", fontSize: 19, color: "var(--brand)", lineHeight: 1 }}>{o.mark}</span>
+              <div>
+                <div style={{ fontFamily: "var(--sans)", fontSize: 14.5, fontWeight: 500, color: "var(--ink)" }}>{o.t}</div>
+                <div style={{ fontFamily: "var(--mono)", fontSize: 10, color: "var(--ink-3)", letterSpacing: "0.03em", marginTop: 2 }}>{o.d}</div>
+              </div>
+              <span style={{ fontFamily: "var(--mono)", fontSize: 9.5, color: "var(--ink-4)", letterSpacing: "0.1em" }}>{o.m}</span>
+            </div>
+          ))}
+        </div>
+        <div style={{ marginTop: 12, fontFamily: "var(--mono)", fontSize: 9.5, color: "var(--ink-4)", letterSpacing: "0.04em", lineHeight: 1.6 }}>
+          회원가입 없이 시작돼요. 일지는 이 기기에 저장됩니다.
+        </div>
+      </div>
+    </>
+  )
+}
+
+// ───────── 데이터 홈 (일지 1건 이상) ─────────
+function DataHome({ all, onWriteLog, onOpenDay, onOpenGuide }: {
+  all: JournalEntry[]
+  onWriteLog?: (() => void) | undefined
+  onOpenDay?: ((date: string) => void) | undefined
+  onOpenGuide?: (() => void) | undefined
+}) {
+  const today = todayISO()
+  const life = lifetimeStats(all)
+  const wk = thisWeekStats(all)
+  const hour = new Date().getHours()
+  const greet = hour < 11 ? "좋은 아침이에요." : hour < 18 ? "좋은 오후예요." : "오늘 하루 수고했어요."
+  const wroteToday = all.some((e) => e.date === today)
+
+  return (
+    <>
+      {/* Greeting — 실데이터 누적만 언급 */}
       <div style={{ padding: "6px 20px 0" }}>
         <h1 style={{
           fontFamily: "var(--sans)", fontSize: 22, fontWeight: 500,
           letterSpacing: "-0.02em", lineHeight: 1.2, margin: 0,
-        }}>민지, 좋은 아침이에요.</h1>
+        }}>{greet}</h1>
         <div style={{
           marginTop: 4, fontFamily: "var(--mono)", fontSize: 10.5,
           color: "var(--ink-3)", letterSpacing: "0.06em",
-        }}>오늘로 <b style={{ color: "var(--ink)" }}>184</b>일째 · 마지막 일지 어제</div>
-      </div>
-
-      {/* Yesterday recap card */}
-      <div style={{ padding: "20px 20px 0" }}>
-        <SectionLb action="펼치기" onAction={() => onOpenDay?.("2026-06-21")}>— 어제 · 06·21 SUN</SectionLb>
-      </div>
-      <div style={{ padding: "0 20px" }}>
-        <div className="paper-grid" style={{
-          border: "1px solid var(--line)",
-          padding: 14, position: "relative",
         }}>
-          <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", marginBottom: 8 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-              <span className="etag vo2"><span className="d"></span><span className="c">V2</span></span>
-              <span style={{ fontFamily: "var(--mono)", fontSize: 11, color: "var(--ink)", fontWeight: 600 }}>※ MAIN</span>
-            </div>
-            <span style={{ fontFamily: "var(--mono)", fontSize: 10.5, color: "var(--ink-3)" }}>62 min · 10.4km</span>
-          </div>
-          <div style={{ fontFamily: "var(--sans)", fontSize: 16, fontWeight: 500, color: "var(--ink)", letterSpacing: "-0.005em" }}>
-            6 × 1000m @ 3'20"
-          </div>
-          <div className="hand" style={{
-            marginTop: 10, fontSize: 18, lineHeight: 1.35,
-            color: "var(--ink-blue)", borderTop: "1px dashed var(--paper-edge)", paddingTop: 8,
-          }}>
-            마지막 두 rep 페이스 5초씩 떨어짐. 다리 무거웠음.
-          </div>
-          <div style={{
-            marginTop: 10, paddingTop: 10, borderTop: "1px dashed var(--paper-edge)",
-            display: "flex", alignItems: "center", justifyContent: "space-between",
-            fontFamily: "var(--mono)", fontSize: 10.5, color: "var(--ink-3)",
-          }}>
-            <span>RPE<TermHelp term="rpe" /> <b style={{ color: "var(--ink)" }}>8</b></span>
-            <span>HR <b style={{ color: "var(--ink)" }}>182</b></span>
-            <MoodStrip level={3} showLabel />
-          </div>
+          일지 <b style={{ color: "var(--ink)" }}>{life.total}</b>건 · <b style={{ color: "var(--ink)" }}>{life.days}</b>일의 기록
+          {life.firstDate ? ` · ${compactDate(life.firstDate)}부터` : ""}
         </div>
       </div>
 
       {/* Write today CTA */}
-      <div style={{ padding: "24px 20px 0" }}>
+      <div style={{ padding: "20px 20px 0" }}>
         <button onClick={onWriteLog} style={{
           width: "100%", padding: "16px 20px",
           background: "var(--ink)", color: "var(--bg)",
@@ -109,7 +165,7 @@ function HomeIndexCard({ onWriteLog, onOpenDay, showAI }: SubProps) {
           display: "flex", alignItems: "center", justifyContent: "space-between",
           cursor: "pointer",
         }}>
-          <span>오늘 일지 쓰기</span>
+          <span>{wroteToday ? "오늘 일지 더 쓰기" : "오늘 일지 쓰기"}</span>
           <span style={{
             fontFamily: "var(--mono)", fontSize: 10, color: "rgba(255,255,255,.7)",
             letterSpacing: "0.14em", textTransform: "uppercase",
@@ -117,70 +173,51 @@ function HomeIndexCard({ onWriteLog, onOpenDay, showAI }: SubProps) {
         </button>
       </div>
 
-      {/* 이 기기의 일지 — 로컬 우선 실데이터 (F0-c). 없으면 섹션 자체를 숨긴다. */}
+      {/* 이 기기의 일지 — 로컬 실데이터 */}
       <MyDeviceJournal onOpenDay={onOpenDay} />
 
-      {/* Weekly mini summary */}
+      {/* THIS WEEK — 실데이터 집계 */}
       <div style={{ padding: "24px 0 0" }}>
-        <SectionLb action="이번 주">— THIS WEEK</SectionLb>
+        <SectionLb>— THIS WEEK</SectionLb>
         <div style={{ padding: "0 20px", display: "grid", gridTemplateColumns: "repeat(2, 1fr)", borderTop: "1px solid var(--ink)", borderBottom: "1px solid var(--ink)" }}>
-          <div style={{ padding: "12px 12px 12px 0", borderRight: "1px solid var(--hair)", borderBottom: "1px solid var(--hair)" }}>
-            <div style={{ fontFamily: "var(--mono)", fontSize: 9.5, color: "var(--ink-3)", letterSpacing: "0.14em", textTransform: "uppercase" }}>거리 누적</div>
-            <div style={{ fontFamily: "var(--mono)", fontSize: 22, fontWeight: 500, color: "var(--ink)", letterSpacing: "-0.02em", marginTop: 4 }}>42.8<span style={{ fontSize: 11, color: "var(--ink-3)", fontWeight: 400, marginLeft: 2 }}>km</span></div>
-            <Delta value={4.2} suffix="km vs 지난주" />
-          </div>
-          <div style={{ padding: "12px 0 12px 12px", borderBottom: "1px solid var(--hair)" }}>
-            <div style={{ fontFamily: "var(--mono)", fontSize: 9.5, color: "var(--ink-3)", letterSpacing: "0.14em", textTransform: "uppercase" }}>세션</div>
-            <div style={{ fontFamily: "var(--mono)", fontSize: 22, fontWeight: 500, color: "var(--ink)", letterSpacing: "-0.02em", marginTop: 4 }}>5<span style={{ fontSize: 11, color: "var(--ink-3)", fontWeight: 400, marginLeft: 2 }}>/ 7d</span></div>
-            <Delta value={1} suffix=" vs 지난주" />
-          </div>
-          <div style={{ padding: "12px 12px 12px 0", borderRight: "1px solid var(--hair)" }}>
-            <div style={{ fontFamily: "var(--mono)", fontSize: 9.5, color: "var(--ink-3)", letterSpacing: "0.14em", textTransform: "uppercase" }}>RPE 평균<TermHelp term="rpe" /></div>
-            <div style={{ fontFamily: "var(--mono)", fontSize: 22, fontWeight: 500, color: "var(--ink)", letterSpacing: "-0.02em", marginTop: 4 }}>5.8<span style={{ fontSize: 11, color: "var(--ink-3)", fontWeight: 400, marginLeft: 2 }}>/ 10</span></div>
-            <Delta value="-0.2" suffix=" vs 지난주" invert />
-          </div>
-          <div style={{ padding: "12px 0 12px 12px" }}>
-            <div style={{ fontFamily: "var(--mono)", fontSize: 9.5, color: "var(--ink-3)", letterSpacing: "0.14em", textTransform: "uppercase" }}>강도 분포<TermHelp term="energy-system" /></div>
-            <div style={{ marginTop: 8 }}>
-              <IntensityStack data={{ base: 58, lt: 18, vo2: 14, rest: 10 }} height={10} />
-            </div>
-            <div style={{ marginTop: 6, fontFamily: "var(--mono)", fontSize: 9.5, color: "var(--ink-3)", letterSpacing: "0.06em" }}>BA 58 · LT 18 · V2 14</div>
-          </div>
+          <WeekCell lb="거리 누적" v={wk.distanceKm > 0 ? String(wk.distanceKm) : "—"} u="km" right border />
+          <WeekCell lb="세션" v={String(wk.sessions)} u={`/ ${wk.daysLogged}d 기록`} border />
+          <WeekCell lb={<>RPE 평균<TermHelp term="rpe" /></>} v={wk.avgRpe !== null ? String(wk.avgRpe) : "—"} u="/ 10" right />
+          <WeekCell lb="일지 쓴 날" v={String(wk.daysLogged)} u="일" />
+        </div>
+        <div style={{ padding: "8px 20px 0", fontFamily: "var(--mono)", fontSize: 9, color: "var(--ink-4)", letterSpacing: "0.05em" }}>
+          이번 주 월요일부터 · 이 기기에 저장된 일지 기준
         </div>
       </div>
 
-      {/* AI insight (optional) — GAP_UI 대응: 출처·불확실성 표기 유지 */}
-      {showAI && (
+      {/* Guide nudge — 데이터가 적을 때만 */}
+      {life.days < 7 && (
         <div style={{ padding: "24px 20px 0" }}>
-          <SectionLb>— THIS WEEK · PATTERN</SectionLb>
-          <div style={{ padding: "0 0 0 12px", borderLeft: "2px solid var(--brand)" }}>
-            <div style={{ fontSize: 13.5, color: "var(--ink)", lineHeight: 1.5, letterSpacing: "-0.005em" }}>
-              월·화 연속 강도 세션 후 <span className="hl">수요일 RPE 평균 +1.2</span>. 지난 3주 동일 패턴.
-            </div>
-            <div style={{ marginTop: 6, fontFamily: "var(--mono)", fontSize: 10, color: "var(--ink-3)", letterSpacing: "0.04em" }}>
-              장호준 AI · 신뢰도 78% · 3주 데이터
-            </div>
-          </div>
+          <button onClick={onOpenGuide} style={{
+            width: "100%", padding: "13px 16px",
+            background: "transparent", color: "var(--ink-2)",
+            border: "1px dashed var(--line-2)", borderRadius: 0,
+            fontFamily: "var(--mono)", fontSize: 10.5, letterSpacing: "0.05em",
+            cursor: "pointer", textAlign: "left", lineHeight: 1.5,
+          }}>
+            {7 - life.days}일만 더 쓰면 한 주가 채워져요 · 쌓이면 어떤 모습인지 → <b style={{ color: "var(--ink)" }}>예시 보기</b>
+          </button>
         </div>
       )}
+    </>
+  )
+}
 
-      {/* 1년 전 오늘 */}
-      <div style={{ padding: "24px 20px 0" }}>
-        <SectionLb>— 1 YEAR AGO TODAY</SectionLb>
-        <div onClick={() => onOpenDay?.("2025-06-22")} style={{
-          padding: 12, border: "1px dashed var(--line-2)",
-          background: "var(--paper-2)",
-          cursor: "pointer",
-        }}>
-          <div style={{ fontFamily: "var(--mono)", fontSize: 10.5, color: "var(--ink-3)", letterSpacing: "0.08em" }}>2025·06·22 SUN</div>
-          <div className="hand" style={{ marginTop: 6, fontSize: 16, color: "var(--ink-blue)", lineHeight: 1.3 }}>
-            처음 16분대 깬 날. 5000m 16:42.
-          </div>
-          <div style={{ marginTop: 8, display: "flex", alignItems: "center", gap: 8 }}>
-            <Stamp kind="pb">PB · 5000m</Stamp>
-            <span style={{ fontFamily: "var(--mono)", fontSize: 10.5, color: "var(--ink)", fontWeight: 600 }}>16:42.18</span>
-          </div>
-        </div>
+function WeekCell({ lb, v, u, right, border }: { lb: React.ReactNode; v: string; u: string; right?: boolean; border?: boolean }) {
+  return (
+    <div style={{
+      padding: right ? "12px 12px 12px 0" : "12px 0 12px 12px",
+      borderRight: right ? "1px solid var(--hair)" : 0,
+      borderBottom: border ? "1px solid var(--hair)" : 0,
+    }}>
+      <div style={{ fontFamily: "var(--mono)", fontSize: 9.5, color: "var(--ink-3)", letterSpacing: "0.14em", textTransform: "uppercase" }}>{lb}</div>
+      <div style={{ fontFamily: "var(--mono)", fontSize: 22, fontWeight: 500, color: "var(--ink)", letterSpacing: "-0.02em", marginTop: 4 }}>
+        {v}<span style={{ fontSize: 11, color: "var(--ink-3)", fontWeight: 400, marginLeft: 2 }}>{u}</span>
       </div>
     </div>
   )
@@ -206,9 +243,8 @@ function entrySub(e: JournalEntry): string {
 }
 
 function MyDeviceJournal({ onOpenDay }: { onOpenDay?: ((date: string) => void) | undefined }) {
-  // 홈 복귀 시마다 재조회 (AppShell이 Home을 재마운트하므로 mount 시점 조회로 충분)
   const entries = React.useMemo(() => recentEntries(5), [])
-  // ?uitest 런타임 증거: 홈 실데이터 섹션의 실제 렌더 건수를 [HOMEJ] 로그로 남긴다
+  // ?uitest 런타임 증거: 홈 실데이터 섹션의 실제 렌더 건수
   React.useEffect(() => {
     if (window.location.search.includes("uitest")) {
       console.log(`[HOMEJ] rendered=${entries.length} kinds=${entries.map((e) => e.kind).join(",") || "-"}`)
@@ -235,7 +271,7 @@ function MyDeviceJournal({ onOpenDay }: { onOpenDay?: ((date: string) => void) |
               <span style={{ fontFamily: "var(--mono)", fontSize: 15, color: "var(--brand)", lineHeight: 1 }}>{meta.mark}</span>
               <div style={{ minWidth: 0 }}>
                 <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
-                  <span style={{ fontFamily: "var(--mono)", fontSize: 10, color: "var(--ink-3)", letterSpacing: "0.1em" }}>{e.date.replaceAll("-", "·")}</span>
+                  <span style={{ fontFamily: "var(--mono)", fontSize: 10, color: "var(--ink-3)", letterSpacing: "0.1em" }}>{compactDate(e.date)}</span>
                   <span style={{ fontFamily: "var(--mono)", fontSize: 9.5, color: "var(--ink-4)", letterSpacing: "0.08em" }}>{meta.label}</span>
                 </div>
                 <div style={{
@@ -253,143 +289,6 @@ function MyDeviceJournal({ onOpenDay }: { onOpenDay?: ((date: string) => void) |
             </div>
           )
         })}
-      </div>
-    </div>
-  )
-}
-
-// ───────── B. Sparkline-heavy (data first) ─────────
-function HomeSparkline({ onWriteLog, onOpenDay }: SubProps) {
-  const wk = [38.2, 42.1, 40.5, 45.8, 43.2, 38.6, 42.8]
-  const rpe = [5.2, 5.8, 6.1, 5.6, 5.9, 6.4, 5.8]
-  const wt = [54.2, 54.0, 53.8, 53.9, 54.1, 53.8, 53.7]
-  const rows: { lb: string; v: string; u: string; data: number[]; d: number; dsuf: string; invert?: boolean }[] = [
-    { lb: "주간 거리", v: "42.8", u: "km", data: wk, d: 4.2, dsuf: "km" },
-    { lb: "RPE 평균", v: "5.8", u: "/10", data: rpe, d: -0.2, dsuf: "", invert: true },
-    { lb: "체중", v: "53.7", u: "kg", data: wt, d: -0.5, dsuf: "kg", invert: false },
-  ]
-  return (
-    <div style={{ paddingBottom: 90 }}>
-      <div style={{ padding: "16px 20px 0" }}>
-        <div style={{ fontFamily: "var(--mono)", fontSize: 10, color: "var(--ink-3)", letterSpacing: "0.14em", textTransform: "uppercase" }}>
-          <span style={{ display: "inline-block", width: 5, height: 5, background: "var(--brand)", borderRadius: "50%", marginRight: 6 }}></span>
-          {/* C3/C5 계열 수정: bare "D-184" 표기 제거 — 네임스페이스 없는 D-*는 금지.
-              의미(연속 기록 일수)를 그대로 명시적 라벨로 표기 */}
-          2026·06·22 MON · DAY 184
-        </div>
-        <h1 style={{ fontFamily: "var(--sans)", fontSize: 24, fontWeight: 500, letterSpacing: "-0.02em", margin: "4px 0 0" }}>민지</h1>
-      </div>
-
-      {/* Trend strip */}
-      <div style={{ padding: "20px 0 0" }}>
-        <SectionLb action="자세히 →">— 7-DAY TRENDS</SectionLb>
-        <div style={{ borderTop: "1px solid var(--ink)", borderBottom: "1px solid var(--ink)", margin: "0 20px" }}>
-          {rows.map((r, i, arr) => (
-            <div key={i} style={{
-              display: "grid", gridTemplateColumns: "1fr auto auto",
-              gap: 14, padding: "14px 0", alignItems: "center",
-              borderBottom: i < arr.length - 1 ? "1px dashed var(--hair)" : 0,
-            }}>
-              <div>
-                <div style={{ fontFamily: "var(--mono)", fontSize: 9.5, color: "var(--ink-3)", letterSpacing: "0.14em", textTransform: "uppercase" }}>{r.lb}</div>
-                <div style={{ fontFamily: "var(--mono)", fontSize: 20, fontWeight: 500, color: "var(--ink)", letterSpacing: "-0.02em", marginTop: 2 }}>
-                  {r.v}<span style={{ fontSize: 10, color: "var(--ink-3)", fontWeight: 400, marginLeft: 2 }}>{r.u}</span>
-                </div>
-              </div>
-              <Sparkline data={r.data} width={92} height={28} showLast />
-              <Delta value={r.d} suffix={r.dsuf} invert={r.invert ?? false} />
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Yesterday compact */}
-      <div style={{ padding: "20px 20px 0" }}>
-        <SectionLb action="펼치기" onAction={() => onOpenDay?.("2026-06-21")}>— 어제</SectionLb>
-        <div style={{ padding: 12, border: "1px solid var(--line)" }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-            <span style={{ display: "flex", gap: 8, alignItems: "center" }}>
-              <span className="etag vo2"><span className="d"></span><span className="c">V2</span></span>
-              <span style={{ fontFamily: "var(--sans)", fontSize: 13, fontWeight: 500 }}>6 × 1000m @ 3'20"</span>
-            </span>
-            <MoodStrip level={3} />
-          </div>
-        </div>
-      </div>
-
-      {/* Write CTA */}
-      <div style={{ padding: "24px 20px 0" }}>
-        <button onClick={onWriteLog} style={{
-          width: "100%", padding: "16px 20px",
-          background: "var(--ink)", color: "var(--bg)",
-          border: 0, fontFamily: "var(--sans)", fontSize: 15, fontWeight: 500,
-          display: "flex", alignItems: "center", justifyContent: "center", gap: 10,
-          cursor: "pointer",
-        }}>
-          오늘 일지 쓰기 <span style={{ fontFamily: "var(--mono)", fontSize: 10, opacity: 0.7, letterSpacing: "0.14em" }}>NEW</span>
-        </button>
-      </div>
-    </div>
-  )
-}
-
-// ───────── C. Recall-strong (history surfaces first) ─────────
-function HomeRecall({ onWriteLog, onOpenDay }: SubProps) {
-  const memories: { y: string; date: string; t: string; stamp?: string; pain?: number; dist?: EnergyDist }[] = [
-    { y: "1년 전", date: "2025·06·22", t: "5000m 처음 16분대 — 16:42", stamp: "PB", dist: { vo2: 1 } },
-    { y: "2년 전", date: "2024·06·22", t: "오른 무릎 통증 시작. Z2로 전환", pain: 3 },
-    { y: "3년 전", date: "2023·06·22", t: "첫 트랙 미팅 출전 — 1500m", stamp: "DEBUT" },
-  ]
-  return (
-    <div style={{ paddingBottom: 90 }}>
-      <div className="paper-lines" style={{ padding: "20px 20px 16px" }}>
-        <div style={{ fontFamily: "var(--mono)", fontSize: 10, color: "var(--ink-3)", letterSpacing: "0.14em", textTransform: "uppercase" }}>
-          2026·06·22 MON
-        </div>
-        <div className="hand" style={{
-          marginTop: 12, fontSize: 28, color: "var(--ink-blue)", lineHeight: 1.2,
-        }}>안녕, 민지.</div>
-        <div className="hand-pencil" style={{
-          marginTop: 4, fontSize: 16, color: "var(--pencil)",
-        }}>오늘은 어떤 하루였나요?</div>
-      </div>
-
-      {/* Big CTA */}
-      <div style={{ padding: "20px" }}>
-        <button onClick={onWriteLog} style={{
-          width: "100%", padding: "22px 20px",
-          background: "var(--ink)", color: "var(--bg)",
-          border: 0, fontFamily: "var(--sans)", fontSize: 17, fontWeight: 500,
-          letterSpacing: "-0.005em",
-          display: "flex", flexDirection: "column", alignItems: "flex-start", gap: 4,
-          cursor: "pointer",
-        }}>
-          <span>일지 펼치기</span>
-          <span style={{ fontFamily: "var(--mono)", fontSize: 10.5, color: "rgba(255,255,255,.65)", letterSpacing: "0.06em", fontWeight: 400 }}>훈련 후 · 하루 마무리 · 경기 직전/직후</span>
-        </button>
-      </div>
-
-      {/* Memory rows */}
-      <SectionLb>— ON THIS DAY</SectionLb>
-      <div style={{ padding: "0 20px" }}>
-        {memories.map((m, i) => (
-          <div key={i} onClick={() => onOpenDay?.(m.date)} style={{
-            padding: "14px 0",
-            borderBottom: "1px dashed var(--hair)",
-            cursor: "pointer",
-          }}>
-            <div style={{
-              fontFamily: "var(--mono)", fontSize: 10, color: "var(--ink-3)",
-              letterSpacing: "0.14em", textTransform: "uppercase", marginBottom: 4,
-            }}>{m.y} · {m.date}</div>
-            <div className="hand" style={{ fontSize: 17, color: "var(--ink-blue)", lineHeight: 1.25 }}>{m.t}</div>
-            <div style={{ marginTop: 8, display: "flex", alignItems: "center", gap: 8 }}>
-              {m.stamp && <Stamp kind={m.stamp === "PB" ? "pb" : "sb"}>{m.stamp}</Stamp>}
-              {m.pain && <><PainDot level={m.pain} /> <span style={{ fontFamily: "var(--mono)", fontSize: 10, color: "var(--ink-3)" }}>통증 {m.pain}/5</span></>}
-              {m.dist && <IntensityDots dist={m.dist} />}
-            </div>
-          </div>
-        ))}
       </div>
     </div>
   )

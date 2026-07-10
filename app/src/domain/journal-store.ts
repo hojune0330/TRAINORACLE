@@ -161,7 +161,7 @@ export function runStoreSelfTest(opts?: { seed?: boolean }): void {
       {
         id: "__uiseed_1__", kind: "post-session", date: todayISO(),
         savedAt: new Date(now - 1000).toISOString(), syncState: "local",
-        system: "tempo", title: "시드 · 템포런", distanceKm: "8", durationMin: "40", avgPace: "5'00",
+        system: "lt", title: "시드 · 템포런", distanceKm: "8", durationMin: "40", avgPace: "5'00",
         rpe: 6, memo: "",
       },
       {

@@ -8,9 +8,10 @@ import { LogEntry } from "./screens/LogEntry"
 import type { EntryType } from "./screens/LogEntry"
 import { LogDetail } from "./screens/LogDetail"
 import { Trends } from "./screens/Trends"
+import { Guide } from "./screens/Guide"
 import { LOCAL_SAVE_NOTICE, SYNC_UPSELL_NOTICE, localOnlyCount } from "./domain/journal-store"
 
-type Tab = "home" | "log" | "trends"
+type Tab = "home" | "log" | "trends" | "guide"
 
 interface ViewState {
   tab: Tab
@@ -43,14 +44,12 @@ export function AppShell() {
   let screen: React.ReactNode
   if (v.tab === "home") {
     screen = v.detailDate ? (
-      <LogDetail variant="A" onBack={() => setV(s => ({ ...s, detailDate: null }))} />
+      <LogDetail date={v.detailDate} onBack={() => setV(s => ({ ...s, detailDate: null }))} />
     ) : (
       <Home
-        variant="A"
-        showAI
-        encoding="dot-code"
         onWriteLog={() => setV(s => ({ ...s, tab: "log", entryType: "choose" }))}
         onOpenDay={(date) => setV(s => ({ ...s, detailDate: date }))}
+        onOpenGuide={() => setV(s => ({ ...s, tab: "guide" }))}
       />
     )
   } else if (v.tab === "log") {
@@ -67,8 +66,10 @@ export function AppShell() {
         }}
       />
     )
+  } else if (v.tab === "trends") {
+    screen = <Trends onBack={goHome} />
   } else {
-    screen = <Trends variant="A" onBack={goHome} />
+    screen = <Guide onWriteLog={() => setV({ tab: "log", entryType: "choose", detailDate: null })} />
   }
 
   return (
@@ -116,12 +117,13 @@ function TabBar({ tab, onTab }: { tab: Tab; onTab: (t: Tab) => void }) {
     ["home", "—", "홈"],
     ["log", "＋", "기록"],
     ["trends", "↗", "추이"],
+    ["guide", "?", "가이드"],
   ]
   return (
     <nav aria-label="주 탭" style={{
       position: "fixed", left: 0, right: 0, bottom: 0, zIndex: 30,
       maxWidth: 520, margin: "0 auto",
-      display: "grid", gridTemplateColumns: "repeat(3, 1fr)",
+      display: "grid", gridTemplateColumns: "repeat(4, 1fr)",
       background: "var(--surface)",
       borderTop: "1px solid var(--ink)",
       paddingBottom: "env(safe-area-inset-bottom, 0px)",
