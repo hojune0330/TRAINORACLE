@@ -62,11 +62,19 @@ Current Work Order 003 state:
 
 Current Work Order 004 state:
 
-- `CODEX_WORK_ORDER_004.md` is present on main and assigns Codex to Round 4 follow-up patches.
-- Task 1 is proposed in PR #28: MEDIA transcript-to-D9 precheck patch. It is not merged at this status update.
-- Task 2 is proposed in PR #30: Daily Log race subtype reference and Analysis metric envelope reference. It is not merged at this status update.
-- Task 3 is proposed in PR #31: legacy v1 kit disposition proposal. It is not merged at this status update.
-- Task 4 updates the traceability matrix, index, and status documents. It does not close issues.
+- `CODEX_WORK_ORDER_004.md` is present on main and completed.
+- PR #28 merged the MEDIA transcript-to-D9 precheck patch.
+- PR #30 merged the Daily Log race subtype reference and Analysis metric envelope reference.
+- PR #31 merged the legacy v1 kit disposition proposal.
+- PR #32 merged the traceability matrix, index, and status recount. It does not close issues.
+- `SPEC_SOURCE_ACCEPTANCE_DECISION_ROUND5.md` records the Project Lead AI decision for Work Order 004 outputs. It does not grant canonical promotion, issue closure, implementation completeness, or runtime evidence.
+
+Current Work Order 005 state:
+
+- `CODEX_WORK_ORDER_005.md` is present on main and assigns Codex to external record integration, composition balance baseline, and index/status refresh work.
+- Task A is proposed in PR #36: `EXTERNAL_RECORD_INTEGRATION_SPEC.md` as a new `DRAFT_FOR_REVIEW` contract for AthleteTime PB/SB inbound records. It is not merged at this status update.
+- Task B is proposed in PR #37: `COMPOSITION_BALANCE_BASELINE_CONTRACT.md` as a new `DRAFT_FOR_REVIEW` contract for composition balance baselines. It is not merged at this status update.
+- Task C is this index/status refresh. It does not close issues, promote drafts, claim runtime evidence, edit `app/`, or edit design files.
 
 Current Wave 1 physio patch state:
 
