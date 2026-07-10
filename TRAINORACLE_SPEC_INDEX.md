@@ -107,16 +107,22 @@ This table records files found in the repository at the time of this index updat
 |---|---|---|---|
 | `CODEX_WORK_ORDER_001.md` | root | ISSUED / completed by PR sequence | Historical work order for Wave D patches, impl skeleton, CI, and dashboard. |
 | `CODEX_WORK_ORDER_002.md` | root | COMPLETED | Work order for screen/SPEC traceability, Round 3 review prep, doc quality, and dashboard data sync; PR #14-#17 merged. |
-| `CODEX_WORK_ORDER_003.md` | root | ISSUED | Current work order for GAP_SPEC draft contracts and Round 3 follow-up binding. |
+| `CODEX_WORK_ORDER_003.md` | root | COMPLETED / MERGED | Work order for GAP_SPEC draft contracts and Round 3 follow-up binding; PR #22-#25 merged. |
+| `CODEX_WORK_ORDER_004.md` | root | ISSUED | Work order for Round 4 downstream patches, legacy v1 kit disposition proposal, and traceability/index/status recount. |
 | `SPEC_SOURCE_ACCEPTANCE_DECISION_ROUND1.md` | root | DECIDED | Safety Gate and RVE reconstructed drafts accepted as working sources only; not canonical promotion or issue closure. |
 | `SPEC_SOURCE_ACCEPTANCE_DECISION_ROUND2.md` | root | DECIDED | Physio Source Trust and Daily Log accepted as working sources only; not canonical promotion or issue closure. |
 | `SPEC_SOURCE_ACCEPTANCE_DECISION_ROUND3.md` | root | DECIDED | Analysis/Visualization, Daily Brief/Inbox, Microcycle/Calendar, and Plan Output Rationale Privacy accepted as working sources only; not canonical promotion or issue closure. |
+| `SPEC_SOURCE_ACCEPTANCE_DECISION_ROUND4.md` | root | DECIDED | Media/Transient Capture, Race Record/Historical Recall, and Metric Algorithm accepted as working sources only; METRIC §6 formulas remain unaccepted. |
 | D9 runtime evidence | `runtime-evidence/d9-evaluator/` | RUNTIME_EVIDENCE_PRESENT | Actual local D9 evaluator run evidence exists; downstream issue closure still requires target review/recount and owner approval. |
-| Work Order 002 Task 2 output | `SPEC_SCREEN_TRACEABILITY_MATRIX.md` | MERGED | Screen/spec traceability matrix; documents five `CONFLICT` rows and five `GAP_SPEC_MISSING` rows. |
+| Work Order 002 Task 2 output | `SPEC_SCREEN_TRACEABILITY_MATRIX.md` | MERGED / UPDATED_BY_ORDER_004 | Screen/spec traceability matrix; originally documented five `GAP_SPEC_MISSING` rows, now recounts those rows as `RESOLVED_BY_SOURCE(ROUND4)` without claiming implementation completion. |
 | Work Order 002 Task 1 output | `SPEC_SOURCE_ACCEPTANCE_REVIEW_ROUND3.md` | MERGED | Round 3 review packet; decisions issued separately by `SPEC_SOURCE_ACCEPTANCE_DECISION_ROUND3.md`. |
-| Work Order 003 Task 1 PR | GitHub PR #22 | OPEN_AT_UPDATE_TIME | `MEDIA_AND_TRANSIENT_CAPTURE_SPEC.md` proposed there; not a local main file until merged. |
-| Work Order 003 Task 2 PR | GitHub PR #23 | OPEN_AT_UPDATE_TIME | `RACE_RECORD_AND_HISTORICAL_RECALL_SPEC.md` proposed there; not a local main file until merged. |
-| Work Order 003 Task 3 PR | GitHub PR #24 | OPEN_AT_UPDATE_TIME | `METRIC_ALGORITHM_CONTRACT.md` proposed there; not a local main file until merged. |
+| Work Order 003 Task 1 PR | GitHub PR #22 | MERGED | `MEDIA_AND_TRANSIENT_CAPTURE_SPEC.md` is present on main as a Round 4 accepted working source only. |
+| Work Order 003 Task 2 PR | GitHub PR #23 | MERGED | `RACE_RECORD_AND_HISTORICAL_RECALL_SPEC.md` is present on main as a Round 4 accepted working source only. |
+| Work Order 003 Task 3 PR | GitHub PR #24 | MERGED | `METRIC_ALGORITHM_CONTRACT.md` is present on main as a Round 4 accepted working source only; §6 formulas are not accepted. |
+| Work Order 003 Task 4 PR | GitHub PR #25 | MERGED | Daily Brief flat metadata, Plan Generator Round 3 patch notes, and index/status updates merged. |
+| Work Order 004 Task 1 PR | GitHub PR #28 | OPEN_AT_UPDATE_TIME | MEDIA transcript-to-D9 precheck patch proposed; not merged at this update. |
+| Work Order 004 Task 2 PR | GitHub PR #30 | OPEN_AT_UPDATE_TIME | Daily Log race subtype reference and Analysis metric envelope reference proposed; not merged at this update. |
+| Work Order 004 Task 3 PR | GitHub PR #31 | OPEN_AT_UPDATE_TIME | Legacy v1 kit disposition proposal proposed; not merged at this update. |
 
 ---
 
@@ -170,6 +176,9 @@ This table records exact repository file state. Text references, chapter titles,
 | `RULE_VALIDATION_ENGINE_CONTRACT.md` | `specs/reconstruct/RULE_VALIDATION_ENGINE_CONTRACT.md` | RECONSTRUCTED_DRAFT_FOR_REVIEW | Reconstructed draft only; not original restored, not canonical, not runtime evidence |
 | `PLAN_SAFETY_GATE_SPEC.md` | `specs/reconstruct/PLAN_SAFETY_GATE_SPEC.md` | RECONSTRUCTED_DRAFT_FOR_REVIEW | Reconstructed draft only; not original restored, not canonical, not runtime evidence |
 | `DAILY_LOG_AND_CHECKIN_SPEC.md` | `specs/reconstruct/DAILY_LOG_AND_CHECKIN_SPEC.md` | RECONSTRUCTED_DRAFT_FOR_REVIEW | Reconstructed draft only; not original restored, not canonical, not runtime evidence |
+| `MEDIA_AND_TRANSIENT_CAPTURE_SPEC.md` | `specs/reconstruct/MEDIA_AND_TRANSIENT_CAPTURE_SPEC.md` | DRAFT_FOR_REVIEW / ACCEPTED_AS_WORKING_SOURCE_FOR_PATCHING | New/reconstructed media and transient capture contract; not canonical, not implementation evidence |
+| `RACE_RECORD_AND_HISTORICAL_RECALL_SPEC.md` | `specs/reconstruct/RACE_RECORD_AND_HISTORICAL_RECALL_SPEC.md` | DRAFT_FOR_REVIEW / ACCEPTED_AS_WORKING_SOURCE_FOR_PATCHING | New/reconstructed race record and historical recall contract; not canonical, not implementation evidence |
+| `METRIC_ALGORITHM_CONTRACT.md` | `specs/reconstruct/METRIC_ALGORITHM_CONTRACT.md` | DRAFT_FOR_REVIEW / ACCEPTED_AS_WORKING_SOURCE_FOR_PATCHING | Metric envelope/boundary source only; §6 formulas are not accepted while formula issue remains open |
 | `COACH_RATIFICATION_SAFETY_DEFAULTS_2026_06_04_001` | `specs/reconstruct/` or evidence area | MISSING_OR_SOURCE_NOT_VERIFIED | Do not claim ratification found until local evidence exists |
 
 ---

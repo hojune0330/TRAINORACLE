@@ -39,10 +39,13 @@ Primary SPEC sources used:
 - `specs/reconstruct/ANALYSIS_AND_VISUALIZATION_DATA_CONTRACT.md`
 - `specs/reconstruct/MICROCYCLE_AND_CALENDAR_MAPPING_SPEC.md`
 - `specs/reconstruct/PLAN_OUTPUT_RATIONALE_PRIVACY_SPEC.md`
+- `specs/reconstruct/MEDIA_AND_TRANSIENT_CAPTURE_SPEC.md`
+- `specs/reconstruct/RACE_RECORD_AND_HISTORICAL_RECALL_SPEC.md`
+- `specs/reconstruct/METRIC_ALGORITHM_CONTRACT.md`
 - `specs/reconstruct/PLAN_SAFETY_GATE_SPEC.md`
 - `specs/active/RVE_RULE_EVALUATOR_BINDING_SPEC.md`
 
-Important source caveat: the four Work Order 002 Round 3 source documents are in `specs/reconstruct/`, not `specs/active/`. This matrix treats them as draft/reconstructed sources only.
+Important source caveat: Round 3 and Round 4 source documents are in `specs/reconstruct/`, not `specs/active/`. Round 4 accepts `MEDIA_AND_TRANSIENT_CAPTURE_SPEC.md`, `RACE_RECORD_AND_HISTORICAL_RECALL_SPEC.md`, and `METRIC_ALGORITHM_CONTRACT.md` as working sources only. This is source availability, not implementation completion, issue closure, canonical promotion, or runtime evidence.
 
 ## 3. Summary Counts
 
@@ -51,7 +54,8 @@ Important source caveat: the four Work Order 002 Round 3 source documents are in
 | Screen elements / actions audited | 25 |
 | `ALIGNED` | 6 |
 | `GAP_UI_MISSING` | 8 |
-| `GAP_SPEC_MISSING` | 5 |
+| `GAP_SPEC_MISSING` | 0 |
+| `RESOLVED_BY_SOURCE(ROUND4)` | 5 |
 | `CONFLICT` | 5 |
 | `OUT_OF_SCOPE` | 1 |
 
@@ -82,12 +86,12 @@ These items should be treated as service-development blockers until the UI copy/
 | `design-v3/screens/02_LogEntry.html` | pain repeat review banner | `DAILY_LOG_AND_CHECKIN_SPEC.md` lines 443-472; `RVE_RULE_EVALUATOR_BINDING_SPEC.md` lines 487-523; `PLAN_SAFETY_GATE_SPEC.md` lines 299-345 | `ALIGNED` | Static screen shows Review and says plan generation may require safety confirmation. |
 | `design-v3/screens/01_Home.html`, `design-v3/screens/03_LogDetail.html` | `CYCLE_DAY 6 / 9.5`, `CYCLE_DAY 5` labels | `MICROCYCLE_AND_CALENDAR_MAPPING_SPEC.md` lines 88-101, 196-207 | `ALIGNED` | Static v3 screens use the safer namespace-visible form. |
 | `design-v3/screens/04_Trends.html` | stale source badge/comment | `ANALYSIS_AND_VISUALIZATION_DATA_CONTRACT.md` lines 90-92, 522-530 | `ALIGNED` | The static screen explicitly anticipates missing/stale source visibility. |
-| `ui_kits/trainoracle-app-v3/LogEntry.jsx` | photo attachment row | `DAILY_LOG_AND_CHECKIN_SPEC.md` lines 231-319, 328-368; `ANALYSIS_AND_VISUALIZATION_DATA_CONTRACT.md` lines 537-548 | `GAP_SPEC_MISSING` | Daily check-in structured fields do not define photo attachment storage, privacy, retention, or audit rules. |
-| `ui_kits/trainoracle-app-v3/LogEntry.jsx` | voice memo input | `DAILY_LOG_AND_CHECKIN_SPEC.md` lines 328-368, 391-422 | `GAP_SPEC_MISSING` | Voice memo needs a separate transient/raw-media policy before implementation. |
-| `ui_kits/trainoracle-app-v3/LogDetail.jsx`, `design-v3/screens/03_LogDetail.html` | displayed photos / `PHOTO · track_0708.jpg` | `ANALYSIS_AND_VISUALIZATION_DATA_CONTRACT.md` lines 537-548; `PLAN_OUTPUT_RATIONALE_PRIVACY_SPEC.md` lines 185-203 | `GAP_SPEC_MISSING` | Photo display exists, but accepted media-source/privacy/sourceRef contract is not present. |
-| `ui_kits/trainoracle-app-v3/LogEntry.jsx` | Race quick check / `D-0` race form | `DAILY_LOG_AND_CHECKIN_SPEC.md` lines 196-223; `MICROCYCLE_AND_CALENDAR_MAPPING_SPEC.md` lines 130-137 | `GAP_SPEC_MISSING` | Race-day quick check has product value, but the daily log contract does not yet define a race-specific record subtype. |
-| `ui_kits/trainoracle-app-v3/Home.jsx` | historical memory row with pain text | `DAILY_LOG_AND_CHECKIN_SPEC.md` lines 328-368; `PLAN_OUTPUT_RATIONALE_PRIVACY_SPEC.md` lines 185-203 | `GAP_SPEC_MISSING` | Historical recall needs a contract for whether the text is local-only, derived, or a structured reason-code summary. |
-| `ui_kits/trainoracle-app-v3/LogEntry.jsx` | pain/body diagram can reach 4-5, but JSX form has no visible Review/block state | `DAILY_LOG_AND_CHECKIN_SPEC.md` lines 443-472; `RVE_RULE_EVALUATOR_BINDING_SPEC.md` lines 487-523; `PLAN_SAFETY_GATE_SPEC.md` lines 272-281, 299-345 | `GAP_UI_MISSING` | Static design has Review copy; interactive JSX should show pending review/block state after concerning structured pain input. |
+| `ui_kits/trainoracle-app-v3/LogEntry.jsx` | photo attachment row | `MEDIA_AND_TRANSIENT_CAPTURE_SPEC.md`; `SPEC_SOURCE_ACCEPTANCE_DECISION_ROUND4.md` | `RESOLVED_BY_SOURCE(ROUND4)` | Source contract now exists for photo attachment storage/privacy/sourceRef boundaries. Implementation, App Bridge binding, retention, and runtime evidence remain open. |
+| `ui_kits/trainoracle-app-v3/LogEntry.jsx` | voice memo input | `MEDIA_AND_TRANSIENT_CAPTURE_SPEC.md`; `SPEC_SOURCE_ACCEPTANCE_DECISION_ROUND4.md` | `RESOLVED_BY_SOURCE(ROUND4)` | Source contract now exists for transient voice memo/audio/transcript handling. ORDER_004 Task 1 adds D9 precheck wording in PR #28; implementation evidence remains open. |
+| `ui_kits/trainoracle-app-v3/LogDetail.jsx`, `design-v3/screens/03_LogDetail.html` | displayed photos / `PHOTO · track_0708.jpg` | `MEDIA_AND_TRANSIENT_CAPTURE_SPEC.md`; `SPEC_SOURCE_ACCEPTANCE_DECISION_ROUND4.md` | `RESOLVED_BY_SOURCE(ROUND4)` | Source contract now exists for display-safe media labels/sourceRefs. App display binding and runtime evidence remain open. |
+| `ui_kits/trainoracle-app-v3/LogEntry.jsx` | Race quick check / `D-0` race form | `RACE_RECORD_AND_HISTORICAL_RECALL_SPEC.md`; `SPEC_SOURCE_ACCEPTANCE_DECISION_ROUND4.md` | `RESOLVED_BY_SOURCE(ROUND4)` | Source contract now exists for race-day quick check subtype and `CYCLE_DAY.D-0` handling. Daily Log reference binding is proposed in PR #30; implementation remains open. |
+| `ui_kits/trainoracle-app-v3/Home.jsx` | historical memory row with pain text | `RACE_RECORD_AND_HISTORICAL_RECALL_SPEC.md`; `SPEC_SOURCE_ACCEPTANCE_DECISION_ROUND4.md` | `RESOLVED_BY_SOURCE(ROUND4)` | Source contract now exists for historical recall display records without raw quote persistence. Implementation and privacy review remain open. |
+| `ui_kits/trainoracle-app-v3/LogEntry.jsx` | pain/body diagram can reach 4-5, but JSX form has no visible Review/block state | `DAILY_LOG_AND_CHECKIN_SPEC.md` lines 443-472; `RVE_RULE_EVALUATOR_BINDING_SPEC.md` lines 487-523; `PLAN_SAFETY_GATE_SPEC.md` lines 272-281, 299-345 | `GAP_UI_MISSING` | Static design has Review copy; Phase 1 app PR #20 added `PainReviewBanner` in `app/src/screens/LogEntry.tsx`, but this row stays `GAP_UI_MISSING` until owner-side app verification accepts the UI binding. |
 | `ui_kits/trainoracle-app-v3/Home.jsx` | Home AI one-line insight | `PLAN_OUTPUT_RATIONALE_PRIVACY_SPEC.md` lines 207-249, 259-319; `ANALYSIS_AND_VISUALIZATION_DATA_CONTRACT.md` lines 192-224 | `GAP_UI_MISSING` | Shows confidence and time range, but lacks sourceRefs, rationaleCodes, privacy tier, redaction state, and source freshness. |
 | `ui_kits/trainoracle-app-v3/Trends.jsx` | trend cards, heatmap, mood, records | `ANALYSIS_AND_VISUALIZATION_DATA_CONTRACT.md` lines 192-224, 232-289, 522-530 | `GAP_UI_MISSING` | The dynamic JSX trend surface does not visibly bind each claim to source refs, confidence/uncertainty, missing/stale states, or metric-definition status. |
 | `ui_kits/trainoracle-app-v3/LogDetail.jsx`, `design-v3/screens/03_LogDetail.html` | AI footnote / split-pattern explanation | `PLAN_OUTPUT_RATIONALE_PRIVACY_SPEC.md` lines 207-249, 346-358; `ANALYSIS_AND_VISUALIZATION_DATA_CONTRACT.md` lines 154-159, 192-224 | `GAP_UI_MISSING` | Static screen shows sources, but confidence/privacy tier/reason-code/redaction state are not displayed. JSX detail has no equivalent AI footnote traceability. |
@@ -105,9 +109,8 @@ These items should be treated as service-development blockers until the UI copy/
 
 Remaining gaps:
 
-- Photo attachments are present in UI but lack a media/privacy/source contract.
-- Voice memo is present in UI but lacks transient audio handling, retention, redaction, and audit policy.
-- Race quick check needs a record subtype or explicit out-of-scope decision.
+- Photo attachments and voice memo now have Round 4 working-source contracts, but implementation, storage, retention, and runtime evidence remain open.
+- Race quick check now has a Round 4 working-source subtype contract, but implementation and Daily Log binding review remain open.
 
 ### 6.2 Safety Signal Display Flow
 
@@ -153,8 +156,8 @@ v3 `LogEntry` has the strongest privacy treatment. Static v3 screens also includ
 Remaining gaps:
 
 - v2 AIChat free-text prompt has no privacy notice.
-- historical recall/memory text needs a local-only or derived-structured contract.
-- attachment and voice memo privacy are not covered by the current Daily Log draft.
+- historical recall/memory text now has a Round 4 working-source contract, but UI implementation and privacy review remain open.
+- attachment and voice memo privacy are covered by the Round 4 media working source, but not by completed app/storage implementation.
 - AI output surfaces need explicit privacy/redaction/source states before production.
 
 ## 7. Design File Modification Check
@@ -178,9 +181,9 @@ Forbidden paths not edited:
 ## 8. Follow-Up Recommendations
 
 1. Resolve `CONFLICT` rows before service implementation uses these labels as data.
-2. Add a media/transient-input contract for photo and voice memo before wiring storage.
+2. Bind the Round 4 media/transient-input source contract to App Bridge/storage before wiring photo or voice memo persistence.
 3. Bind AI output surfaces to `sourceRefs`, `confidence`, `uncertaintyState`, `privacyTier`, `redactionState`, and `nonSensitiveReasonCodes`.
 4. Add visible Review/block state to interactive pain/safety flows, not only static mockups.
-5. Keep all Round 3 source decisions as `PENDING_REVIEW` until the Project Lead AI issues the acceptance decision.
+5. Treat Round 3 and Round 4 accepted working sources as patch sources only; do not treat them as implementation completion, issue closure, canonical promotion, or runtime evidence.
 
 [DRAFT_COMPLETE]
