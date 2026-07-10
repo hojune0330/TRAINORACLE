@@ -85,10 +85,11 @@ function EntryChooser({ onBack, onPick }: { onBack?: (() => void) | undefined; o
 function PostSessionForm({ onBack, onDone }: { onBack?: (() => void) | undefined; onDone?: ((t: string) => void) | undefined }) {
   const [rpe, setRpe] = React.useState(5)
   const [memo, setMemo] = React.useState("")
+  const [saveError, setSaveError] = React.useState(false)
   const [system, setSystem] = React.useState("base")
   const [title, setTitle] = React.useState("")
   const [distanceKm, setDistanceKm] = React.useState("")
-  const [durationMin, setDurationMin] = React.useState("62")
+  const [durationMin, setDurationMin] = React.useState("")
   const [avgPace, setAvgPace] = React.useState("")
 
   const persist = () => {
@@ -97,7 +98,9 @@ function PostSessionForm({ onBack, onDone }: { onBack?: (() => void) | undefined
       savedAt: new Date().toISOString(), syncState: "local",
       system, title, distanceKm, durationMin, avgPace, rpe, memo,
     }
-    saveEntry(entry)
+    const r = saveEntry(entry)
+    if (window.location.search.includes("uitest")) console.log(`[JSAVE] kind=post-session ok=${r.ok}`)
+    if (!r.ok) { setSaveError(true); return }
     onDone?.("post-session")
   }
   return (
@@ -218,7 +221,7 @@ function PostSessionForm({ onBack, onDone }: { onBack?: (() => void) | undefined
       </FormSec>
 
       {/* Sticky save — 로컬 우선 저장 */}
-      <StickyBar onSave={persist} secondary="저녁에 마저 쓰기" />
+      <StickyBar onSave={persist} secondary="저녁에 마저 쓰기" error={saveError} />
     </div>
   )
 }
@@ -230,8 +233,9 @@ function EveningCheckin({ onBack, onDone }: { onBack?: (() => void) | undefined;
   const [mood, setMood] = React.useState(3)
   const [painParts, setPainParts] = React.useState<Record<string, number>>({})
   const [weight, setWeight] = React.useState("")
-  const [hr, setHr] = React.useState("48")
+  const [hr, setHr] = React.useState("")
   const [note, setNote] = React.useState("")
+  const [saveError, setSaveError] = React.useState(false)
 
   const persist = () => {
     const entry: JournalEntry = {
@@ -240,7 +244,9 @@ function EveningCheckin({ onBack, onDone }: { onBack?: (() => void) | undefined;
       sleepH: sleep, sleepQuality: quality, weightKg: weight, restingHr: hr,
       painParts, mood, note,
     }
-    saveEntry(entry)
+    const r = saveEntry(entry)
+    if (window.location.search.includes("uitest")) console.log(`[JSAVE] kind=evening ok=${r.ok}`)
+    if (!r.ok) { setSaveError(true); return }
     onDone?.("evening")
   }
 
@@ -330,7 +336,7 @@ function EveningCheckin({ onBack, onDone }: { onBack?: (() => void) | undefined;
         <PrivacyNote />
       </FormSec>
 
-      <StickyBar onSave={persist} />
+      <StickyBar onSave={persist} error={saveError} />
     </div>
   )
 }
@@ -339,9 +345,10 @@ function EveningCheckin({ onBack, onDone }: { onBack?: (() => void) | undefined;
 function RaceForm({ onBack, onDone }: { onBack?: (() => void) | undefined; onDone?: ((t: string) => void) | undefined }) {
   const [stage, setStage] = React.useState<"pre" | "post">("pre")
   const [record, setRecord] = React.useState("")
-  const [rank, setRank] = React.useState("2위")
-  const [result, setResult] = React.useState("결승 진출")
-  const [memo, setMemo] = React.useState("2000m부터 따라붙음. 마지막 200 스퍼트 컸음.")
+  const [rank, setRank] = React.useState("")
+  const [result, setResult] = React.useState("")
+  const [memo, setMemo] = React.useState("")
+  const [saveError, setSaveError] = React.useState(false)
 
   const persist = () => {
     const entry: JournalEntry = {
@@ -349,7 +356,9 @@ function RaceForm({ onBack, onDone }: { onBack?: (() => void) | undefined; onDon
       savedAt: new Date().toISOString(), syncState: "local",
       stage, record, rank, result, memo,
     }
-    saveEntry(entry)
+    const r = saveEntry(entry)
+    if (window.location.search.includes("uitest")) console.log(`[JSAVE] kind=race ok=${r.ok}`)
+    if (!r.ok) { setSaveError(true); return }
     onDone?.("race")
   }
   return (
@@ -445,8 +454,8 @@ function RaceForm({ onBack, onDone }: { onBack?: (() => void) | undefined; onDon
           </FormSec>
           <FormSec lb="순위 · 결과">
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
-              <input type="text" value={rank} onChange={e => setRank(e.target.value)} style={inputStyle()} />
-              <input type="text" value={result} onChange={e => setResult(e.target.value)} style={inputStyle()} />
+              <input type="text" value={rank} onChange={e => setRank(e.target.value)} placeholder="예: 2위" style={inputStyle()} />
+              <input type="text" value={result} onChange={e => setResult(e.target.value)} placeholder="예: 결승 진출" style={inputStyle()} />
             </div>
           </FormSec>
           <FormSec lb="감정">
@@ -479,7 +488,7 @@ function RaceForm({ onBack, onDone }: { onBack?: (() => void) | undefined; onDon
         </>
       )}
 
-      <StickyBar onSave={persist} />
+      <StickyBar onSave={persist} error={saveError} />
     </div>
   )
 }
@@ -654,13 +663,25 @@ function TopBar({ onBack, children }: { onBack?: (() => void) | undefined; child
   )
 }
 
-function StickyBar({ onSave, secondary }: { onSave?: () => void; secondary?: string }) {
+function StickyBar({ onSave, secondary, error }: { onSave?: () => void; secondary?: string; error?: boolean }) {
   return (
     <div style={{
       position: "absolute", bottom: 0, left: 0, right: 0,
       borderTop: "1px solid var(--ink)", background: "var(--bg)",
-      padding: "12px 16px", display: "flex", gap: 8,
+      padding: "12px 16px",
     }}>
+      {error && (
+        <div data-testid="save-error" style={{
+          marginBottom: 10, padding: "10px 12px",
+          border: "1px solid var(--pain-5)", background: "var(--surface)",
+          fontFamily: "var(--mono)", fontSize: 10.5, lineHeight: 1.55,
+          color: "var(--ink)", letterSpacing: "0.03em",
+        }}>
+          저장이 안 됐어요 — 기기 저장 공간이 가득 찼거나 브라우저가 저장을 막고 있어요.<br />
+          적은 내용은 화면에 그대로 있어요. 공간을 비운 뒤 다시 저장을 눌러 주세요.
+        </div>
+      )}
+      <div style={{ display: "flex", gap: 8 }}>
       {secondary && (
         <button style={{
           flex: 1, padding: "14px", background: "transparent",
@@ -675,6 +696,7 @@ function StickyBar({ onSave, secondary }: { onSave?: () => void; secondary?: str
         cursor: "pointer", borderRadius: 0,
         display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
       }}>저장 <span style={{ fontFamily: "var(--mono)", fontSize: 10, opacity: 0.65, letterSpacing: "0.14em" }}>↵</span></button>
+      </div>
     </div>
   )
 }

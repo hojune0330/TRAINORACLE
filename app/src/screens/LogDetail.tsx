@@ -2,11 +2,13 @@
 // F0-d 실데이터화: 이 화면은 로컬 저장(journal-store)의 해당 날짜 실제 일지만 렌더한다.
 //  - 데모 수치 혼입 금지. 예시 일지는 Guide 화면에만 존재.
 //  - variant B(대시보드)는 디자인 워크스페이스 전용 데모 표면으로 유지 (앱 셸 미사용).
+import React from "react"
 import type { ReactNode } from "react"
 import { IndexCard, MoodStrip, PainDot, SectionLb } from "../components/JournalPrimitives"
 import { TermHelp } from "../components/TermHelp"
 import type { JournalEntry, PostSessionEntry, EveningEntry, RaceEntry } from "../domain/journal-store"
-import { entriesForDate } from "../domain/journal-store"
+import { entriesForDate, deleteEntry } from "../domain/journal-store"
+import { painLevelsRequireReview } from "../safety/memo-safety"
 import { cardDate, dowOf, seasonOf } from "../domain/dates"
 
 export type LogDetailVariant = "A" | "B"
@@ -32,7 +34,15 @@ function savedClock(iso: string): string {
 
 // ───────── A. Journal-page (실데이터) ─────────
 function LogDetailJournal({ date, onBack }: { date: string; onBack?: (() => void) | undefined }) {
-  const entries = entriesForDate(date)
+  const [rev, setRev] = React.useState(0)
+  const entries = React.useMemo(() => entriesForDate(date), [date, rev])
+  const remove = (id: string, label: string) => {
+    if (!window.confirm(`${label} 일지를 지울까요?\n지운 일지는 되돌릴 수 없어요.`)) return
+    const r = deleteEntry(id)
+    if (window.location.search.includes("uitest")) console.log(`[JDEL] ok=${r.ok} remain=${r.total}`)
+    if (!r.ok) { window.alert("지우지 못했어요. 잠시 후 다시 시도해 주세요."); return }
+    setRev(v => v + 1)
+  }
   const sessions = entries.filter((e): e is PostSessionEntry => e.kind === "post-session")
   const evenings = entries.filter((e): e is EveningEntry => e.kind === "evening")
   const races = entries.filter((e): e is RaceEntry => e.kind === "race")
@@ -89,6 +99,7 @@ function LogDetailJournal({ date, onBack }: { date: string; onBack?: (() => void
                   {s.memo}
                 </div>
               )}
+              <EntryDeleteRow onDelete={() => remove(s.id, "훈련")} />
             </div>
           </div>
         )
@@ -116,6 +127,7 @@ function LogDetailJournal({ date, onBack }: { date: string; onBack?: (() => void
                 {r.memo}
               </div>
             )}
+            <EntryDeleteRow onDelete={() => remove(r.id, "경기")} />
           </div>
         </div>
       ))}
@@ -123,6 +135,7 @@ function LogDetailJournal({ date, onBack }: { date: string; onBack?: (() => void
       {/* 하루 마무리 (실데이터) */}
       {evenings.map((ev) => {
         const pains = Object.entries(ev.painParts ?? {}).filter(([, lv]) => lv > 0)
+        const needsReview = painLevelsRequireReview(ev.painParts ?? {})
         return (
           <div key={ev.id} style={{ padding: "24px 20px 0" }}>
             <SectionLb action={savedClock(ev.savedAt)}>— EVENING CHECK-IN</SectionLb>
@@ -139,7 +152,23 @@ function LogDetailJournal({ date, onBack }: { date: string; onBack?: (() => void
                   {ev.note}
                 </div>
               )}
+              <div style={{ padding: "0 14px" }}>
+                <EntryDeleteRow onDelete={() => remove(ev.id, "하루 마무리")} />
+              </div>
             </div>
+            {needsReview && (
+              <div data-testid="pain-review-persist" style={{
+                marginTop: 10, padding: "11px 13px",
+                border: "1px solid var(--pain-5)", background: "var(--surface)",
+              }}>
+                <div style={{ fontFamily: "var(--mono)", fontSize: 10, fontWeight: 600, color: "var(--pain-5)", letterSpacing: "0.14em" }}>
+                  REVIEW · 통증 4 이상 기록됨<TermHelp term="review" />
+                </div>
+                <div style={{ marginTop: 6, fontFamily: "var(--mono)", fontSize: 10, color: "var(--ink-2)", letterSpacing: "0.03em", lineHeight: 1.6 }}>
+                  이 날 강한 통증이 적혀 있어요. 통증이 계속되면 훈련 전에 지도자·보호자와 꼭 상의해 주세요. 기록은 그대로 보관돼요.
+                </div>
+              </div>
+            )}
           </div>
         )
       })}
@@ -149,6 +178,19 @@ function LogDetailJournal({ date, onBack }: { date: string; onBack?: (() => void
           이 페이지는 이 기기에만 저장돼 있어요. 온라인 보관·기기 이동은 계정 연동 후에 할 수 있어요.
         </div>
       )}
+    </div>
+  )
+}
+
+function EntryDeleteRow({ onDelete }: { onDelete: () => void }) {
+  return (
+    <div style={{ marginTop: 12, borderTop: "1px dashed var(--hair)", paddingTop: 8, textAlign: "right" }}>
+      <button onClick={onDelete} style={{
+        background: "transparent", border: 0, cursor: "pointer",
+        fontFamily: "var(--mono)", fontSize: 9.5, color: "var(--ink-4)",
+        letterSpacing: "0.1em", padding: "4px 2px", textDecoration: "underline",
+        textUnderlineOffset: 3,
+      }}>이 일지 지우기</button>
     </div>
   )
 }

@@ -6,7 +6,9 @@ import React from "react"
 import { IndexCard, SectionLb } from "../components/JournalPrimitives"
 import { TermHelp } from "../components/TermHelp"
 import type { JournalEntry } from "../domain/journal-store"
-import { recentEntries, loadEntries } from "../domain/journal-store"
+import { recentEntries, loadEntries, exportEntriesJSON } from "../domain/journal-store"
+import { painLevelsRequireReview } from "../safety/memo-safety"
+import { isoShift } from "../domain/dates"
 import { thisWeekStats, lifetimeStats } from "../domain/aggregates"
 import { cardDate, dowOf, seasonOf, compactDate } from "../domain/dates"
 import { todayISO } from "../domain/journal-store"
@@ -136,6 +138,19 @@ function DataHome({ all, onWriteLog, onOpenDay, onOpenGuide }: {
   const hour = new Date().getHours()
   const greet = hour < 11 ? "좋은 아침이에요." : hour < 18 ? "좋은 오후예요." : "오늘 하루 수고했어요."
   const wroteToday = all.some((e) => e.date === today)
+  // 최근 7일 내 통증 4~5 기록 — 저장 후에도 놓치지 않도록 홈에서 지속 표시
+  const painReviewDates = React.useMemo(() => {
+    const from = isoShift(today, -6)
+    const dates = all
+      .filter((e) => e.kind === "evening" && e.date >= from && painLevelsRequireReview(e.painParts ?? {}))
+      .map((e) => e.date)
+    return [...new Set(dates)].sort().reverse()
+  }, [all, today])
+  React.useEffect(() => {
+    if (window.location.search.includes("uitest")) {
+      console.log(`[HOMEJ] painReview=${painReviewDates.length}`)
+    }
+  }, [painReviewDates])
 
   return (
     <>
@@ -153,6 +168,21 @@ function DataHome({ all, onWriteLog, onOpenDay, onOpenGuide }: {
           {life.firstDate ? ` · ${compactDate(life.firstDate)}부터` : ""}
         </div>
       </div>
+
+      {/* 통증 REVIEW 지속 표시 — 최근 7일 */}
+      {painReviewDates.length > 0 && (
+        <div style={{ padding: "16px 20px 0" }}>
+          <div data-testid="home-pain-review" style={{ border: "1px solid var(--pain-5)", background: "var(--surface)", padding: "11px 13px" }}>
+            <div style={{ fontFamily: "var(--mono)", fontSize: 10, fontWeight: 600, color: "var(--pain-5)", letterSpacing: "0.14em" }}>
+              REVIEW · 최근 통증 4 이상 기록<TermHelp term="review" />
+            </div>
+            <div style={{ marginTop: 6, fontFamily: "var(--mono)", fontSize: 10, color: "var(--ink-2)", letterSpacing: "0.03em", lineHeight: 1.6 }}>
+              {painReviewDates.map((d) => compactDate(d)).join(" · ")}에 강한 통증이 적혀 있어요.
+              통증이 계속되면 훈련 전에 지도자·보호자와 꼭 상의해 주세요.
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Write today CTA */}
       <div style={{ padding: "20px 20px 0" }}>
@@ -204,8 +234,38 @@ function DataHome({ all, onWriteLog, onOpenDay, onOpenGuide }: {
           </button>
         </div>
       )}
+
+      {/* 내 데이터 통제 — 내보내기 (파일 다운로드, 기기 밖 전송 없음) */}
+      <div style={{ padding: "28px 20px 0" }}>
+        <button onClick={downloadJournalExport} style={{
+          background: "transparent", border: 0, cursor: "pointer", padding: 0,
+          fontFamily: "var(--mono)", fontSize: 9.5, color: "var(--ink-4)",
+          letterSpacing: "0.08em", textDecoration: "underline", textUnderlineOffset: 3,
+        }}>내 일지 데이터 내려받기 (JSON)</button>
+        <div style={{ marginTop: 4, fontFamily: "var(--mono)", fontSize: 9, color: "var(--ink-4)", letterSpacing: "0.04em" }}>
+          파일이 이 기기에만 저장돼요 · 어디로도 전송되지 않아요
+        </div>
+      </div>
     </>
   )
+}
+
+function downloadJournalExport() {
+  try {
+    const blob = new Blob([exportEntriesJSON()], { type: "application/json" })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement("a")
+    a.href = url
+    a.download = `trainoracle-journal-${todayISO()}.json`
+    document.body.appendChild(a)
+    a.click()
+    a.remove()
+    URL.revokeObjectURL(url)
+    if (window.location.search.includes("uitest")) console.log("[JEXPORT] ok=true")
+  } catch {
+    if (window.location.search.includes("uitest")) console.log("[JEXPORT] ok=false")
+    window.alert("내보내기에 실패했어요. 잠시 후 다시 시도해 주세요.")
+  }
 }
 
 function WeekCell({ lb, v, u, right, border }: { lb: React.ReactNode; v: string; u: string; right?: boolean; border?: boolean }) {
