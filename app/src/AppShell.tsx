@@ -8,6 +8,7 @@ import { LogEntry } from "./screens/LogEntry"
 import type { EntryType } from "./screens/LogEntry"
 import { LogDetail } from "./screens/LogDetail"
 import { Trends } from "./screens/Trends"
+import { LOCAL_SAVE_NOTICE, SYNC_UPSELL_NOTICE, localOnlyCount } from "./domain/journal-store"
 
 type Tab = "home" | "log" | "trends"
 
@@ -23,8 +24,19 @@ const INITIAL: ViewState = { tab: "home", entryType: "choose", detailDate: null 
 
 export function AppShell() {
   const [v, setV] = React.useState<ViewState>(INITIAL)
+  const [savedToast, setSavedToast] = React.useState<number | null>(null)
 
   const goHome = () => setV(INITIAL)
+  const goHomeAfterSave = () => {
+    setV(INITIAL)
+    setSavedToast(localOnlyCount())
+  }
+
+  React.useEffect(() => {
+    if (savedToast === null) return
+    const t = window.setTimeout(() => setSavedToast(null), 4200)
+    return () => window.clearTimeout(t)
+  }, [savedToast])
   const goTab = (tab: Tab) =>
     setV({ tab, entryType: "choose", detailDate: null })
 
@@ -50,7 +62,7 @@ export function AppShell() {
           if (v.entryType === "choose" && picked) {
             setV(s => ({ ...s, entryType: picked as EntryType }))
           } else {
-            goHome()
+            goHomeAfterSave()
           }
         }}
       />
@@ -68,7 +80,33 @@ export function AppShell() {
       <div style={{ flex: 1, minHeight: 0, overflowY: "auto", paddingBottom: 62 }}>
         {screen}
       </div>
+      {savedToast !== null && <SavedToast count={savedToast} />}
       <TabBar tab={v.tab} onTab={goTab} />
+    </div>
+  )
+}
+
+/** 저장 직후 안내 — 로컬 우선 원칙을 사용자 언어로.
+ *  문구 소스는 journal-store (이중정의 금지). 계정 연동(F3) 전까지 업셀은 안내만, 버튼 없음. */
+function SavedToast({ count }: { count: number }) {
+  return (
+    <div role="status" style={{
+      position: "fixed", left: 0, right: 0, bottom: "calc(64px + env(safe-area-inset-bottom, 0px))",
+      zIndex: 40, maxWidth: 520, margin: "0 auto", padding: "0 16px",
+      pointerEvents: "none",
+    }}>
+      <div style={{
+        background: "var(--ink)", color: "var(--bg)",
+        padding: "11px 14px", border: "1px solid var(--ink)",
+        display: "flex", flexDirection: "column", gap: 3,
+      }}>
+        <div style={{ fontFamily: "var(--mono)", fontSize: 11.5, fontWeight: 600, letterSpacing: "0.04em" }}>
+          ✓ {LOCAL_SAVE_NOTICE}{count > 0 ? ` · 이 기기에 ${count}건` : ""}
+        </div>
+        <div style={{ fontFamily: "var(--mono)", fontSize: 10, opacity: 0.75, letterSpacing: "0.03em" }}>
+          {SYNC_UPSELL_NOTICE}
+        </div>
+      </div>
     </div>
   )
 }

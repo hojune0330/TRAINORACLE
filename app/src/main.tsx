@@ -17,6 +17,11 @@ if ("serviceWorker" in navigator && !window.location.search.includes("uitest")) 
   })
 }
 
+// ?uitest: 저장 계층 자가검증 (런타임 증거 [JSTORE])
+if (typeof window !== "undefined" && new URLSearchParams(window.location.search).has("uitest")) {
+  import("./domain/journal-store").then((m) => m.runStoreSelfTest())
+}
+
 const rootEl = document.getElementById("root")
 if (!rootEl) throw new Error("root element not found")
 
