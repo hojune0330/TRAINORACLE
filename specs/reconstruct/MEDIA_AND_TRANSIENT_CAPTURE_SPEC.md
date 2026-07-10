@@ -260,7 +260,35 @@ voice_memo_policy:
     - external_llm_response_with_private_data
 ```
 
+```yaml
+voice_transcript_d9_precheck_patch:
+  patched_from: SPEC_SOURCE_ACCEPTANCE_DECISION_ROUND4.md (N1/T1)
+  binding_source: specs/active/RVE_RULE_EVALUATOR_BINDING_SPEC.md Section 9 and Section 11
+  rule:
+    - transcript_text_must_be_treated_as_raw_free_text_before_structured_extraction
+    - D9_colloquial_layer_evaluation_runs_before_structured_field_extraction
+    - D9_colloquial_layer_evaluation_runs_before_non_sensitive_reason_code_generation
+  pipeline_outputs_allowed_after_precheck:
+    - D9_disposition
+    - non_sensitive_reason_codes
+    - structured_daily_checkin_fields
+    - sourceRef
+    - confidence
+    - uncertaintyState
+    - redactionState
+  discard_policy:
+    raw_transcript_text_discarded_immediately_after_processing: true
+    evidence_clause_discarded_immediately_after_processing: true
+    raw_athlete_words_must_not_enter_audit: true
+  fail_safe:
+    transcription_failed: insufficient_source
+    D9_evaluation_unavailable_or_invalid: D9_UNKNOWN
+    D9_UNKNOWN_blocks_or_requires_human_review: true
+```
+
 If transcription fails, the product must show `uncertaintyState: insufficient_source` or equivalent. It must not silently infer a safe status.
+
+If the transcript exists but the D9 colloquial-layer evaluation cannot run, the voice-memo pathway must fail safe to `D9_UNKNOWN` before any downstream structured extraction or reason-code generation is treated as usable. Only the evaluator disposition and non-sensitive derived outputs may continue; transcript text and evidence clauses must be discarded.
 
 ---
 
@@ -430,7 +458,7 @@ These are this draft's own issues. They do not change issue counts in other SPEC
 |---|---|---|---|---|---|
 | `OI-MTC-APP-BRIDGE-STORAGE-BINDING-001` | P1 | YES | OPEN | App Bridge does not yet own media storage location, consent, retention, deletion, capability, or audit metadata. | Patch App Bridge after this draft is accepted, then recount target issues. |
 | `OI-MTC-MEDIA-LIFECYCLE-001` | P1 | YES | OPEN | Photo EXIF stripping, raw filename suppression, sourceRef generation, and retention lifecycle are draft-only. | Add accepted storage lifecycle and implementation tests before any closure. |
-| `OI-MTC-VOICE-TRANSIENT-REDACTION-001` | P1 | YES | OPEN | Voice memo capture, local transcription, raw audio deletion, and transcript discard are not implementation-bound. | Prove raw audio and raw transcript cannot persist. |
+| `OI-MTC-VOICE-TRANSIENT-REDACTION-001` | P1 | YES | OPEN | Voice memo capture, local transcription, raw audio deletion, transcript discard, and transcript-before-structure D9 precheck are not implementation-bound. | Patched from `SPEC_SOURCE_ACCEPTANCE_DECISION_ROUND4.md` N1/T1; prove raw audio/transcript cannot persist and D9 evaluation failure maps to `D9_UNKNOWN`. |
 | `OI-MTC-RUNTIME-EVIDENCE-001` | P1 | YES | OPEN | No runtime or CI evidence proves media redaction, sourceRef preservation, or deletion behavior. | Add actual terminal or CI logs after implementation exists. |
 | `OI-MTC-UI-SURFACE-BINDING-001` | P2 | NO | OPEN | Log Entry and Log Detail screens are design references only and still display media affordances without accepted implementation binding. | Patch UI/screen contracts or implementation after this draft is reviewed. |
 | `OI-MTC-EXTERNAL-LLM-POLICY-001` | P2 | NO | OPEN | Future media summarization or transcription through external LLM services is not accepted for private athlete data. | Keep disabled until explicit privacy/security review exists. |
