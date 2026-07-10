@@ -305,6 +305,30 @@ metric_definition_policy:
   invented_values_forbidden: true
 ```
 
+```yaml
+metric_envelope_binding:
+  patched_from: METRIC_ALGORITHM_CONTRACT.md; accepted 2026-07-10 by SPEC_SOURCE_ACCEPTANCE_DECISION_ROUND4.md
+  binding_type: envelope_and_boundary_reference_only
+  accepted_scope:
+    - formulaVersion
+    - sourceRefs
+    - inputCompleteness
+    - confidence
+    - uncertaintyState
+    - uncertaintyBand
+    - privacyTier
+    - nonSensitiveReasonCodes
+  explicitly_excluded_scope:
+    - METRIC_ALGORITHM_CONTRACT.md Section 6 Draft Formula Set
+    - CTL_ATL_TSB_numeric_formula_authority
+    - HR_drift_numeric_formula_authority
+    - monotony_or_load_change_numeric_formula_authority
+  implementation_rule:
+    formulas_must_not_be_implemented_or_copied_while_OI_MAC_FORMULA_ACCEPTANCE_001_is_OPEN: true
+```
+
+Analysis may consume the accepted metric envelope, source-reference, confidence, and uncertainty boundary from `METRIC_ALGORITHM_CONTRACT.md`. It must not copy, quote as authority, or implement that document's §6 draft formulas while Round 4 note N2 and `OI-MAC-FORMULA-ACCEPTANCE-001` keep formula acceptance open.
+
 Recommended initial metric code families:
 
 | Family | Example metric codes | Initial treatment |
@@ -583,7 +607,7 @@ Issue closure requires accepted source spec, target patch, target open-issue rec
 | Issue ID | Priority | Canonical blocking | Status | Problem | Required next evidence |
 |---|---|---|---|---|---|
 | `OI-AVD-APP-BRIDGE-BINDING-001` | P1 | YES | OPEN | Read-only analysis endpoints and storage/audit boundaries are not accepted in App Bridge. | Patch `APP_IMPLEMENTATION_BRIDGE.md`, recount target issues, and review privacy boundary. |
-| `OI-AVD-METRIC-SOURCE-OWNERSHIP-001` | P1 | YES | OPEN | Final formulas for CTL/ATL/TSB, HR drift, load, and related derived metrics are not accepted here. | Draft or accept a metric algorithm contract before using numeric authority. |
+| `OI-AVD-METRIC-SOURCE-OWNERSHIP-001` | P1 | YES | OPEN | Final formulas for CTL/ATL/TSB, HR drift, load, and related derived metrics are not accepted here; only the metric envelope/boundary reference is patched. | Patched from `METRIC_ALGORITHM_CONTRACT.md` and `SPEC_SOURCE_ACCEPTANCE_DECISION_ROUND4.md` for envelope scope only; do not use numeric formula authority while `OI-MAC-FORMULA-ACCEPTANCE-001` is OPEN. |
 | `OI-AVD-SAFETY-DISPLAY-BINDING-001` | P1 | YES | OPEN | Safety display projections are defined in this draft but not accepted in App Bridge or UI implementation contracts. | Patch implementation contracts without allowing visualization to clear D9 or Safety Gate states. |
 | `OI-AVD-RUNTIME-EVIDENCE-001` | P1 | YES | OPEN | No runtime or CI evidence proves dataset generation, source refs, or privacy guards. | Add actual terminal or CI logs after implementation exists. |
 | `OI-AVD-UI-SURFACE-BINDING-001` | P2 | NO | OPEN | Dashboard, Analysis, Session Detail, Calendar, Daily Brief, and AI Inbox surfaces are design references only. | Patch implementation or UI contracts after this data contract is reviewed. |

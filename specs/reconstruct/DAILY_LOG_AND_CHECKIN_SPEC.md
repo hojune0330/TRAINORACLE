@@ -323,6 +323,27 @@ export interface DailyCheckInRecord {
 }
 ```
 
+### 7A. Race-Day Quick Check Binding
+
+```yaml
+race_day_quick_check_binding:
+  patched_from: RACE_RECORD_AND_HISTORICAL_RECALL_SPEC.md; accepted 2026-07-10 by SPEC_SOURCE_ACCEPTANCE_DECISION_ROUND4.md
+  binding_type: reference_only
+  local_field_duplication_allowed: false
+  defined_in: specs/reconstruct/RACE_RECORD_AND_HISTORICAL_RECALL_SPEC.md
+  applicable_surface:
+    - LogEntry race quick check
+    - CYCLE_DAY.D-0 race form
+  namespace_requirement:
+    race_day_label_namespace: CYCLE_DAY
+    bare_D_reference_in_storage_or_audit: forbidden
+  safety_boundary:
+    can_raise_review_attention: true
+    can_clear_D9_or_Safety_Gate: false
+```
+
+Race-day quick check subtypes are not reproduced in this document. `DAILY_LOG_AND_CHECKIN_SPEC.md` may reference them as daily-log-adjacent ingestion records only when the subtype, namespace handling, privacy boundary, and race safety boundary remain owned by `RACE_RECORD_AND_HISTORICAL_RECALL_SPEC.md`.
+
 ---
 
 ## 8. Free-Text And Memo Boundary
