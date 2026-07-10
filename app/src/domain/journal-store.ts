@@ -97,6 +97,14 @@ export function entriesForDate(date: string): JournalEntry[] {
   return loadEntries().filter((e) => e.date === date)
 }
 
+/** 최근 저장 순(내림차순) 목록 — 홈 '이 기기의 일지' 섹션용 */
+export function recentEntries(limit = 10): JournalEntry[] {
+  return loadEntries()
+    .slice()
+    .sort((a, b) => (a.savedAt < b.savedAt ? 1 : -1))
+    .slice(0, limit)
+}
+
 export function localOnlyCount(): number {
   return loadEntries().filter((e) => e.syncState === "local").length
 }
@@ -119,8 +127,9 @@ export function todayISO(): string {
 export const LOCAL_SAVE_NOTICE = "이 기기에 저장됐어요"
 export const SYNC_UPSELL_NOTICE = "온라인 보관·기기 이동은 계정 연동 후에 할 수 있어요"
 
-/** ?uitest 전용 — 저장/조회/정리 왕복 자가검증. 콘솔에 [JSTORE] 증거 로그. */
-export function runStoreSelfTest(): void {
+/** ?uitest 전용 — 저장/조회/정리 왕복 자가검증. 콘솔에 [JSTORE] 증거 로그.
+ *  opts.seed=true (?uitest=seed): 정리 후 시드 2건을 남겨 홈 '이 기기의 일지' 렌더 증거([HOMEJ]) 확보용. */
+export function runStoreSelfTest(opts?: { seed?: boolean }): void {
   const s = storage()
   if (!s) {
     console.log("[JSTORE] storage=unavailable roundtrip=skip")
@@ -136,12 +145,36 @@ export function runStoreSelfTest(): void {
   const saved = saveEntry(probe)
   const after = loadEntries()
   const found = after.some((e) => e.id === probe.id)
-  // 정리: probe 제거 (uitest가 실데이터를 남기지 않도록)
+  // 최근순 조회 검증: 방금 저장한 probe가 recentEntries의 최상단이어야 한다
+  const recentTop = recentEntries(1)[0]?.id === probe.id
+  // 정리: probe + 이전 시드 제거 (uitest가 실데이터를 남기지 않도록)
   try {
-    s.setItem(KEY, JSON.stringify(after.filter((e) => e.id !== probe.id)))
+    s.setItem(KEY, JSON.stringify(
+      after.filter((e) => e.id !== probe.id && !e.id.startsWith("__uiseed_")),
+    ))
   } catch { /* noop */ }
   const restored = loadEntries().length
+  let seeded = 0
+  if (opts?.seed) {
+    const now = Date.now()
+    const seeds: JournalEntry[] = [
+      {
+        id: "__uiseed_1__", kind: "post-session", date: todayISO(),
+        savedAt: new Date(now - 1000).toISOString(), syncState: "local",
+        system: "tempo", title: "시드 · 템포런", distanceKm: "8", durationMin: "40", avgPace: "5'00",
+        rpe: 6, memo: "",
+      },
+      {
+        id: "__uiseed_2__", kind: "evening", date: todayISO(),
+        savedAt: new Date(now).toISOString(), syncState: "local",
+        sleepH: 7.5, sleepQuality: 4, weightKg: "62.0", restingHr: "48",
+        painParts: {}, mood: 4, note: "시드 · 컨디션 좋음",
+      },
+    ]
+    for (const e of seeds) saveEntry(e)
+    seeded = seeds.length
+  }
   console.log(
-    `[JSTORE] roundtrip=${saved.ok && found} before=${before} afterSave=${after.length} afterClean=${restored}`,
+    `[JSTORE] roundtrip=${saved.ok && found} recentTop=${recentTop} before=${before} afterSave=${after.length} afterClean=${restored} seeded=${seeded}`,
   )
 }

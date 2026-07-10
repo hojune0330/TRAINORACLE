@@ -4,10 +4,13 @@
 // CONFLICT C5 수정: cycleDay prop은 bare string이 아닌 CycleDayLabel typed object.
 // 매트릭스 권고: "namespace: CYCLE_DAY, value: D-5, isRuleId: false" 백킹 후
 // 짧은 표시 라벨은 최종 UI 계층에서만 렌더.
+import React from "react"
 import { IndexCard, MoodStrip, IntensityDots, IntensityStack, Stamp, PainDot, Sparkline, Delta, SectionLb } from "../components/JournalPrimitives"
 import { cycleDay } from "../domain/display-label"
 import type { EnergyDist } from "../components/JournalPrimitives"
 import { TermHelp } from "../components/TermHelp"
+import { recentEntries } from "../domain/journal-store"
+import type { JournalEntry } from "../domain/journal-store"
 
 export type HomeVariant = "A" | "B" | "C"
 export type Encoding = "dot-code" | "chip" | "glyph"
@@ -114,6 +117,9 @@ function HomeIndexCard({ onWriteLog, onOpenDay, showAI }: SubProps) {
         </button>
       </div>
 
+      {/* 이 기기의 일지 — 로컬 우선 실데이터 (F0-c). 없으면 섹션 자체를 숨긴다. */}
+      <MyDeviceJournal onOpenDay={onOpenDay} />
+
       {/* Weekly mini summary */}
       <div style={{ padding: "24px 0 0" }}>
         <SectionLb action="이번 주">— THIS WEEK</SectionLb>
@@ -175,6 +181,78 @@ function HomeIndexCard({ onWriteLog, onOpenDay, showAI }: SubProps) {
             <span style={{ fontFamily: "var(--mono)", fontSize: 10.5, color: "var(--ink)", fontWeight: 600 }}>16:42.18</span>
           </div>
         </div>
+      </div>
+    </div>
+  )
+}
+
+// ───────── 이 기기의 일지 (로컬 실데이터) ─────────
+const KIND_META: Record<JournalEntry["kind"], { label: string; mark: string }> = {
+  "post-session": { label: "훈련 후", mark: "↻" },
+  "evening": { label: "하루 마무리", mark: "☾" },
+  "race": { label: "경기", mark: "▲" },
+}
+
+function entryHeadline(e: JournalEntry): string {
+  if (e.kind === "post-session") return e.title || "훈련 기록"
+  if (e.kind === "race") return e.record ? `기록 ${e.record}` : "경기 기록"
+  return e.note || `수면 ${e.sleepH}h · 기분 ${e.mood}/5`
+}
+
+function entrySub(e: JournalEntry): string {
+  if (e.kind === "post-session") return `${e.distanceKm}km · ${e.durationMin}min · RPE ${e.rpe}`
+  if (e.kind === "race") return [e.rank, e.result].filter(Boolean).join(" · ")
+  return `체중 ${e.weightKg}kg · 안정시 HR ${e.restingHr}`
+}
+
+function MyDeviceJournal({ onOpenDay }: { onOpenDay?: ((date: string) => void) | undefined }) {
+  // 홈 복귀 시마다 재조회 (AppShell이 Home을 재마운트하므로 mount 시점 조회로 충분)
+  const entries = React.useMemo(() => recentEntries(5), [])
+  // ?uitest 런타임 증거: 홈 실데이터 섹션의 실제 렌더 건수를 [HOMEJ] 로그로 남긴다
+  React.useEffect(() => {
+    if (window.location.search.includes("uitest")) {
+      console.log(`[HOMEJ] rendered=${entries.length} kinds=${entries.map((e) => e.kind).join(",") || "-"}`)
+    }
+  }, [entries])
+  if (entries.length === 0) return null
+  return (
+    <div style={{ padding: "24px 0 0" }}>
+      <SectionLb>— 이 기기의 일지 · 최근 {entries.length}건</SectionLb>
+      <div style={{ margin: "0 20px", borderTop: "1px solid var(--ink)", borderBottom: "1px solid var(--ink)" }}>
+        {entries.map((e, i) => {
+          const meta = KIND_META[e.kind]
+          return (
+            <div
+              key={e.id}
+              onClick={() => onOpenDay?.(e.date)}
+              style={{
+                padding: "12px 0",
+                borderBottom: i < entries.length - 1 ? "1px dashed var(--hair)" : 0,
+                display: "grid", gridTemplateColumns: "26px 1fr auto", gap: 10,
+                alignItems: "baseline", cursor: "pointer",
+              }}
+            >
+              <span style={{ fontFamily: "var(--mono)", fontSize: 15, color: "var(--brand)", lineHeight: 1 }}>{meta.mark}</span>
+              <div style={{ minWidth: 0 }}>
+                <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
+                  <span style={{ fontFamily: "var(--mono)", fontSize: 10, color: "var(--ink-3)", letterSpacing: "0.1em" }}>{e.date.replaceAll("-", "·")}</span>
+                  <span style={{ fontFamily: "var(--mono)", fontSize: 9.5, color: "var(--ink-4)", letterSpacing: "0.08em" }}>{meta.label}</span>
+                </div>
+                <div style={{
+                  fontFamily: "var(--sans)", fontSize: 14, fontWeight: 500, color: "var(--ink)",
+                  letterSpacing: "-0.005em", marginTop: 3,
+                  overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+                }}>{entryHeadline(e)}</div>
+                <div style={{ fontFamily: "var(--mono)", fontSize: 10, color: "var(--ink-3)", letterSpacing: "0.04em", marginTop: 2 }}>{entrySub(e)}</div>
+              </div>
+              <span style={{
+                fontFamily: "var(--mono)", fontSize: 8.5, letterSpacing: "0.1em",
+                color: e.syncState === "local" ? "var(--ink-4)" : "var(--brand)",
+                border: "1px solid var(--hair)", padding: "2px 5px", whiteSpace: "nowrap",
+              }}>{e.syncState === "local" ? "이 기기" : "동기화됨"}</span>
+            </div>
+          )
+        })}
       </div>
     </div>
   )

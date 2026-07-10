@@ -18,15 +18,25 @@ if ("serviceWorker" in navigator && !window.location.search.includes("uitest")) 
 }
 
 // ?uitest: 저장 계층 자가검증 (런타임 증거 [JSTORE])
-if (typeof window !== "undefined" && new URLSearchParams(window.location.search).has("uitest")) {
-  import("./domain/journal-store").then((m) => m.runStoreSelfTest())
+// ?uitest=seed: 자가검증 후 시드 2건을 남겨 홈 '이 기기의 일지' 렌더 증거([HOMEJ]) 확보.
+// 시드가 렌더 전에 준비되도록 자가검증을 먼저 await 한 뒤 렌더한다.
+async function bootstrap() {
+  if (typeof window !== "undefined") {
+    const params = new URLSearchParams(window.location.search)
+    if (params.has("uitest")) {
+      const m = await import("./domain/journal-store")
+      m.runStoreSelfTest({ seed: params.get("uitest") === "seed" })
+    }
+  }
+
+  const rootEl = document.getElementById("root")
+  if (!rootEl) throw new Error("root element not found")
+
+  ReactDOM.createRoot(rootEl).render(
+    <React.StrictMode>
+      <App />
+    </React.StrictMode>,
+  )
 }
 
-const rootEl = document.getElementById("root")
-if (!rootEl) throw new Error("root element not found")
-
-ReactDOM.createRoot(rootEl).render(
-  <React.StrictMode>
-    <App />
-  </React.StrictMode>,
-)
+void bootstrap()
