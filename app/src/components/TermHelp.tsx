@@ -7,87 +7,75 @@
  * - 안전 용어(safety: true)의 설명 카드는 경고 색으로 구분하고,
  *   "진단이 아님" 등의 경계 문구를 glossary 원문 그대로 표시한다.
  * - 설명은 표시 전용이며 어떤 데이터·안전 상태도 변경하지 않는다.
+ * - 위치 보정(오버플로우/플립)·Escape 닫기는 공용 Popover가 담당.
+ * - 터치 타깃: 시각 14px 유지하되 히트 영역은 26px (모바일 최소 탭 크기 보강).
  */
-import { useEffect, useRef, useState } from "react"
 import { GLOSSARY, type TermId } from "../domain/glossary"
+import { usePopover, PopCard } from "./Popover"
 
 export function TermHelp({ term }: { term: TermId }) {
-  const [open, setOpen] = useState(false)
-  const ref = useRef<HTMLSpanElement>(null)
+  const { open, toggle, wrapRef } = usePopover()
   const entry = GLOSSARY[term]
-
-  // 바깥 탭/클릭 시 닫기
-  useEffect(() => {
-    if (!open) return
-    const onDown = (e: MouseEvent | TouchEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
-    }
-    document.addEventListener("mousedown", onDown)
-    document.addEventListener("touchstart", onDown)
-    return () => {
-      document.removeEventListener("mousedown", onDown)
-      document.removeEventListener("touchstart", onDown)
-    }
-  }, [open])
-
   const accent = entry.safety ? "var(--warn)" : "var(--ink-3)"
 
   return (
-    <span ref={ref} style={{ position: "relative", display: "inline-flex", alignItems: "center" }}>
+    <span ref={wrapRef} style={{ position: "relative", display: "inline-flex", alignItems: "center" }}>
       <button
         type="button"
         aria-label={`${entry.label} 설명 ${open ? "닫기" : "보기"}`}
         aria-expanded={open}
-        onClick={() => setOpen(v => !v)}
+        onClick={toggle}
         style={{
-          width: 14, height: 14, marginLeft: 5, padding: 0,
+          // 히트 영역 26px — 시각 원은 내부 span 14px
+          width: 26, height: 26, marginLeft: 1, padding: 0,
+          border: 0, background: "transparent", cursor: "pointer",
+          display: "inline-flex", alignItems: "center", justifyContent: "center",
+          verticalAlign: "middle",
+        }}
+      >
+        <span aria-hidden="true" style={{
+          width: 14, height: 14,
           border: `1px solid ${accent}`, borderRadius: "50%",
           background: open ? accent : "transparent",
           color: open ? "var(--bg)" : accent,
           fontFamily: "var(--mono)", fontSize: 8.5, fontWeight: 700,
-          lineHeight: 1, cursor: "pointer",
+          lineHeight: 1,
           display: "inline-flex", alignItems: "center", justifyContent: "center",
-          verticalAlign: "middle",
-        }}
-      >?</button>
+        }}>?</span>
+      </button>
 
-      {open && (
-        <div
-          role="note"
-          style={{
-            position: "absolute", top: "calc(100% + 6px)", left: -8,
-            width: 232, zIndex: 40,
-            background: "var(--surface)",
-            border: `1px solid ${entry.safety ? "var(--warn)" : "var(--line)"}`,
-            borderLeft: `3px solid ${entry.safety ? "var(--warn)" : "var(--ink-3)"}`,
-            boxShadow: "0 4px 14px rgba(0,0,0,0.12)",
-            padding: "10px 12px",
-            textTransform: "none", letterSpacing: 0,
-          }}
-        >
-          <div style={{
-            fontFamily: "var(--mono)", fontSize: 9.5, fontWeight: 700,
-            color: entry.safety ? "var(--warn)" : "var(--ink-3)",
-            letterSpacing: "0.1em", marginBottom: 5,
-          }}>
-            {entry.label}{entry.safety ? " · 안전 표시" : ""}
-          </div>
-          <div style={{
-            fontFamily: "var(--serif, inherit)", fontSize: 11.5, lineHeight: 1.55,
-            color: "var(--ink)", fontWeight: 400, whiteSpace: "normal",
-          }}>
-            {entry.short}
-          </div>
-          {entry.detail && (
-            <div style={{
-              marginTop: 6, fontSize: 10.5, lineHeight: 1.5,
-              color: "var(--ink-2)", fontWeight: 400, whiteSpace: "normal",
-            }}>
-              {entry.detail}
-            </div>
-          )}
+      <PopCard
+        open={open}
+        align="left"
+        width={232}
+        label={`term:${term}`}
+        accentBorder={{
+          border: entry.safety ? "var(--warn)" : "var(--line)",
+          bar: entry.safety ? "var(--warn)" : "var(--ink-3)",
+        }}
+      >
+        <div style={{
+          fontFamily: "var(--mono)", fontSize: 9.5, fontWeight: 700,
+          color: entry.safety ? "var(--warn)" : "var(--ink-3)",
+          letterSpacing: "0.1em", marginBottom: 5,
+        }}>
+          {entry.label}{entry.safety ? " · 안전 표시" : ""}
         </div>
-      )}
+        <div style={{
+          fontFamily: "var(--serif, inherit)", fontSize: 11.5, lineHeight: 1.55,
+          color: "var(--ink)", fontWeight: 400, whiteSpace: "normal",
+        }}>
+          {entry.short}
+        </div>
+        {entry.detail && (
+          <div style={{
+            marginTop: 6, fontSize: 10.5, lineHeight: 1.5,
+            color: "var(--ink-2)", fontWeight: 400, whiteSpace: "normal",
+          }}>
+            {entry.detail}
+          </div>
+        )}
+      </PopCard>
     </span>
   )
 }
