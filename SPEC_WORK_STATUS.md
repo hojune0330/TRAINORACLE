@@ -1,6 +1,6 @@
 # SPEC_WORK_STATUS.md
 
-Updated: 2026-07-09 Asia/Seoul
+Updated: 2026-07-10 Asia/Seoul
 status: DRAFT_HANDOFF_STATUS
 owner: COACH_HOJUNE
 
@@ -52,11 +52,21 @@ Current Work Order 002 state:
 
 Current Work Order 003 state:
 
-- `CODEX_WORK_ORDER_003.md` is present on main and assigns Codex to GAP_SPEC draft contracts plus Round 3 follow-up binding.
-- Work Order 003 Task 1 is proposed in PR #22: `MEDIA_AND_TRANSIENT_CAPTURE_SPEC.md`; not present on main until merged.
-- Work Order 003 Task 2 is proposed in PR #23: `RACE_RECORD_AND_HISTORICAL_RECALL_SPEC.md`; not present on main until merged.
-- Work Order 003 Task 3 is proposed in PR #24: `METRIC_ALGORITHM_CONTRACT.md`; not present on main until merged.
-- Task 4 normalizes Daily Brief metadata, annotates Plan Generator Round 3 patch sources, and updates index/status. It does not close issues.
+- `CODEX_WORK_ORDER_003.md` is present on main and completed.
+- PR #22 merged `MEDIA_AND_TRANSIENT_CAPTURE_SPEC.md`.
+- PR #23 merged `RACE_RECORD_AND_HISTORICAL_RECALL_SPEC.md`.
+- PR #24 merged `METRIC_ALGORITHM_CONTRACT.md`.
+- PR #25 merged the Daily Brief metadata normalization, Plan Generator Round 3 patch notes, and index/status update.
+- `SPEC_SOURCE_ACCEPTANCE_DECISION_ROUND4.md` accepts the three Work Order 003 draft specs as working sources only. It does not grant canonical promotion, issue closure, implementation completeness, or runtime evidence.
+- Round 4 note N2 explicitly withholds acceptance of `METRIC_ALGORITHM_CONTRACT.md` §6 formulas while the formula acceptance issue remains open.
+
+Current Work Order 004 state:
+
+- `CODEX_WORK_ORDER_004.md` is present on main and assigns Codex to Round 4 follow-up patches.
+- Task 1 is proposed in PR #28: MEDIA transcript-to-D9 precheck patch. It is not merged at this status update.
+- Task 2 is proposed in PR #30: Daily Log race subtype reference and Analysis metric envelope reference. It is not merged at this status update.
+- Task 3 is proposed in PR #31: legacy v1 kit disposition proposal. It is not merged at this status update.
+- Task 4 updates the traceability matrix, index, and status documents. It does not close issues.
 
 Current Wave 1 physio patch state:
 
