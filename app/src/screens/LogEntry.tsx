@@ -5,11 +5,13 @@
 //  - §8 memo_policy: PrivacyNote 유지 (자유 입력 전부)
 import React from "react"
 import type { ReactNode, CSSProperties } from "react"
-import { IndexCard, MoodStrip, PainDot, Delta, Stamp } from "../components/JournalPrimitives"
-import { cycleDay } from "../domain/display-label"
+import { IndexCard, MoodStrip, PainDot, Stamp } from "../components/JournalPrimitives"
 import { painLevelsRequireReview } from "../safety/memo-safety"
 import { TermHelp } from "../components/TermHelp"
 import type { TermId } from "../domain/glossary"
+import { saveEntry, newEntryId, todayISO, entriesForDate } from "../domain/journal-store"
+import type { JournalEntry } from "../domain/journal-store"
+import { compactDate, dowOf, nowClock } from "../domain/dates"
 
 export type EntryType = "choose" | "post-session" | "evening" | "race"
 
@@ -39,7 +41,7 @@ function EntryChooser({ onBack, onPick }: { onBack?: (() => void) | undefined; o
       <TopBar onBack={onBack}>새 일지</TopBar>
       <div style={{ padding: "20px 20px 4px" }}>
         <div style={{ fontFamily: "var(--mono)", fontSize: 10, color: "var(--ink-3)", letterSpacing: "0.14em", textTransform: "uppercase" }}>
-          2026·06·22 MON · 18:42
+          {compactDate(todayISO())} {dowOf(todayISO())} · {nowClock()}
         </div>
         <h1 style={{ fontFamily: "var(--sans)", fontSize: 22, fontWeight: 500, letterSpacing: "-0.02em", margin: "6px 0 0" }}>어떤 일지를 쓰세요?</h1>
       </div>
@@ -70,7 +72,9 @@ function EntryChooser({ onBack, onPick }: { onBack?: (() => void) | undefined; o
 
       <div style={{ padding: "24px 20px" }}>
         <div style={{ fontFamily: "var(--mono)", fontSize: 10, color: "var(--ink-4)", letterSpacing: "0.06em", lineHeight: 1.55 }}>
-          이미 오늘 일지가 있어요. 같은 날에 여러 진입점으로 쓰면 한 페이지에 합쳐집니다.
+          {entriesForDate(todayISO()).length > 0
+            ? "오늘 일지가 이미 있어요. 같은 날에 여러 진입점으로 쓰면 한 페이지에 합쳐집니다."
+            : "오늘 첫 일지예요. 짧게 몰아 쓰면 1분이면 끝나요."}
         </div>
       </div>
     </div>
@@ -79,16 +83,30 @@ function EntryChooser({ onBack, onPick }: { onBack?: (() => void) | undefined; o
 
 // ───────── Post-session form ─────────
 function PostSessionForm({ onBack, onDone }: { onBack?: (() => void) | undefined; onDone?: ((t: string) => void) | undefined }) {
-  const [rpe, setRpe] = React.useState(7)
+  const [rpe, setRpe] = React.useState(5)
   const [memo, setMemo] = React.useState("")
-  const [system, setSystem] = React.useState("vo2")
+  const [system, setSystem] = React.useState("base")
+  const [title, setTitle] = React.useState("")
+  const [distanceKm, setDistanceKm] = React.useState("")
+  const [durationMin, setDurationMin] = React.useState("62")
+  const [avgPace, setAvgPace] = React.useState("")
+
+  const persist = () => {
+    const entry: JournalEntry = {
+      id: newEntryId(), kind: "post-session", date: todayISO(),
+      savedAt: new Date().toISOString(), syncState: "local",
+      system, title, distanceKm, durationMin, avgPace, rpe, memo,
+    }
+    saveEntry(entry)
+    onDone?.("post-session")
+  }
   return (
     <div style={{ paddingBottom: 100 }}>
       <TopBar onBack={onBack}>훈련 후 · 기록</TopBar>
 
       {/* Index card mini — C5: typed CycleDayLabel */}
       <div style={{ padding: "14px 20px 0" }}>
-        <IndexCard date="2026·06·22" dow="MON · 18:42" cycleDay={cycleDay("D-6", { cycleNumber: 7 })} />
+        <IndexCard date={compactDate(todayISO())} dow={`${dowOf(todayISO())} · ${nowClock()}`} />
       </div>
 
       {/* Energy system picker */}
@@ -118,15 +136,15 @@ function PostSessionForm({ onBack, onDone }: { onBack?: (() => void) | undefined
 
       {/* Title */}
       <FormSec lb="세션 제목">
-        <input type="text" defaultValue={`6 × 1000m @ 3'20"`} style={inputStyle()} />
+        <input type="text" value={title} onChange={e => setTitle(e.target.value)} style={inputStyle()} />
       </FormSec>
 
       {/* Meta row */}
       <FormSec lb="거리 · 시간 · 평균 페이스" help="pace">
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8 }}>
-          <input type="text" defaultValue="10.4" style={{ ...inputStyle(), fontFamily: "var(--mono)", textAlign: "right" }} />
-          <input type="text" defaultValue="62" style={{ ...inputStyle(), fontFamily: "var(--mono)", textAlign: "right" }} />
-          <input type="text" defaultValue="3'24" style={{ ...inputStyle(), fontFamily: "var(--mono)", textAlign: "right" }} />
+          <input type="text" value={distanceKm} onChange={e => setDistanceKm(e.target.value)} style={{ ...inputStyle(), fontFamily: "var(--mono)", textAlign: "right" }} />
+          <input type="text" value={durationMin} onChange={e => setDurationMin(e.target.value)} style={{ ...inputStyle(), fontFamily: "var(--mono)", textAlign: "right" }} />
+          <input type="text" value={avgPace} onChange={e => setAvgPace(e.target.value)} style={{ ...inputStyle(), fontFamily: "var(--mono)", textAlign: "right" }} />
         </div>
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, marginTop: 4, fontFamily: "var(--mono)", fontSize: 9, color: "var(--ink-4)", letterSpacing: "0.06em" }}>
           <span>km</span><span>min</span><span>/km</span>
@@ -199,27 +217,39 @@ function PostSessionForm({ onBack, onDone }: { onBack?: (() => void) | undefined
         <PrivacyNote />
       </FormSec>
 
-      {/* Sticky save */}
-      <StickyBar onSave={() => onDone?.("post-session")} secondary="저녁에 마저 쓰기" />
+      {/* Sticky save — 로컬 우선 저장 */}
+      <StickyBar onSave={persist} secondary="저녁에 마저 쓰기" />
     </div>
   )
 }
 
 // ───────── Evening checkin ─────────
 function EveningCheckin({ onBack, onDone }: { onBack?: (() => void) | undefined; onDone?: ((t: string) => void) | undefined }) {
-  const [sleep, setSleep] = React.useState(7.5)
-  const [quality, setQuality] = React.useState(4)
+  const [sleep, setSleep] = React.useState(7)
+  const [quality, setQuality] = React.useState(3)
   const [mood, setMood] = React.useState(3)
-  const [painParts, setPainParts] = React.useState<Record<string, number>>({ rKnee: 2 })
-  const [weight, setWeight] = React.useState("53.7")
+  const [painParts, setPainParts] = React.useState<Record<string, number>>({})
+  const [weight, setWeight] = React.useState("")
   const [hr, setHr] = React.useState("48")
+  const [note, setNote] = React.useState("")
+
+  const persist = () => {
+    const entry: JournalEntry = {
+      id: newEntryId(), kind: "evening", date: todayISO(),
+      savedAt: new Date().toISOString(), syncState: "local",
+      sleepH: sleep, sleepQuality: quality, weightKg: weight, restingHr: hr,
+      painParts, mood, note,
+    }
+    saveEntry(entry)
+    onDone?.("evening")
+  }
 
   return (
     <div style={{ paddingBottom: 100 }}>
       <TopBar onBack={onBack}>저녁 체크인</TopBar>
 
       <div style={{ padding: "14px 20px 0" }}>
-        <IndexCard date="2026·06·22" dow="MON · 22:15" cycleDay={cycleDay("D-6", { cycleNumber: 7 })} />
+        <IndexCard date={compactDate(todayISO())} dow={`${dowOf(todayISO())} · ${nowClock()}`} />
       </div>
 
       <FormSec lb={`수면 · ${sleep}h`}>
@@ -249,12 +279,12 @@ function EveningCheckin({ onBack, onDone }: { onBack?: (() => void) | undefined;
       <FormSec lb="체중 · 안정시 심박">
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
           <div>
-            <input type="text" value={weight} onChange={e => setWeight(e.target.value)} style={{ ...inputStyle(), fontFamily: "var(--mono)", textAlign: "right" }} />
-            <div style={{ fontFamily: "var(--mono)", fontSize: 9.5, color: "var(--ink-4)", letterSpacing: "0.06em", marginTop: 4 }}>kg · 어제 53.9 <Delta value="-0.2" suffix="kg" invert /></div>
+            <input type="text" value={weight} onChange={e => setWeight(e.target.value)} placeholder="62.0" style={{ ...inputStyle(), fontFamily: "var(--mono)", textAlign: "right" }} />
+            <div style={{ fontFamily: "var(--mono)", fontSize: 9.5, color: "var(--ink-4)", letterSpacing: "0.06em", marginTop: 4 }}>kg · 안 재면 비워둬요</div>
           </div>
           <div>
-            <input type="text" value={hr} onChange={e => setHr(e.target.value)} style={{ ...inputStyle(), fontFamily: "var(--mono)", textAlign: "right" }} />
-            <div style={{ fontFamily: "var(--mono)", fontSize: 9.5, color: "var(--ink-4)", letterSpacing: "0.06em", marginTop: 4 }}>bpm · 14d avg 49 <Delta value="-1" suffix="bpm" invert /></div>
+            <input type="text" value={hr} onChange={e => setHr(e.target.value)} placeholder="55" style={{ ...inputStyle(), fontFamily: "var(--mono)", textAlign: "right" }} />
+            <div style={{ fontFamily: "var(--mono)", fontSize: 9.5, color: "var(--ink-4)", letterSpacing: "0.06em", marginTop: 4 }}>bpm · 아침 안정시 기준</div>
           </div>
         </div>
       </FormSec>
@@ -285,6 +315,8 @@ function EveningCheckin({ onBack, onDone }: { onBack?: (() => void) | undefined;
 
       <FormSec lb="오늘의 한 줄">
         <textarea
+          value={note}
+          onChange={e => setNote(e.target.value)}
           placeholder="자유롭게..."
           rows={3}
           className="paper-grid"
@@ -298,7 +330,7 @@ function EveningCheckin({ onBack, onDone }: { onBack?: (() => void) | undefined;
         <PrivacyNote />
       </FormSec>
 
-      <StickyBar onSave={() => onDone?.("evening")} />
+      <StickyBar onSave={persist} />
     </div>
   )
 }
@@ -306,6 +338,20 @@ function EveningCheckin({ onBack, onDone }: { onBack?: (() => void) | undefined;
 // ───────── Race form ─────────
 function RaceForm({ onBack, onDone }: { onBack?: (() => void) | undefined; onDone?: ((t: string) => void) | undefined }) {
   const [stage, setStage] = React.useState<"pre" | "post">("pre")
+  const [record, setRecord] = React.useState("")
+  const [rank, setRank] = React.useState("2위")
+  const [result, setResult] = React.useState("결승 진출")
+  const [memo, setMemo] = React.useState("2000m부터 따라붙음. 마지막 200 스퍼트 컸음.")
+
+  const persist = () => {
+    const entry: JournalEntry = {
+      id: newEntryId(), kind: "race", date: todayISO(),
+      savedAt: new Date().toISOString(), syncState: "local",
+      stage, record, rank, result, memo,
+    }
+    saveEntry(entry)
+    onDone?.("race")
+  }
   return (
     <div style={{ paddingBottom: 100 }}>
       <TopBar onBack={onBack}>경기 · 빠른 점검</TopBar>
@@ -318,12 +364,12 @@ function RaceForm({ onBack, onDone }: { onBack?: (() => void) | undefined; onDon
         }}>
           <div>
             <div style={{ fontFamily: "var(--mono)", fontSize: 10.5, fontWeight: 600, color: "var(--ink-blue)", letterSpacing: "0.14em", textTransform: "uppercase" }}>RACE DAY</div>
-            <div style={{ fontFamily: "var(--sans)", fontSize: 16, fontWeight: 500, marginTop: 4, color: "var(--ink)" }}>전국체전 · 5000m</div>
-            <div style={{ fontFamily: "var(--mono)", fontSize: 10, color: "var(--ink-3)", letterSpacing: "0.06em", marginTop: 2 }}>잠실 트랙 · 2026·06·22 19:30</div>
+            <div style={{ fontFamily: "var(--sans)", fontSize: 16, fontWeight: 500, marginTop: 4, color: "var(--ink)" }}>오늘의 경기</div>
+            <div style={{ fontFamily: "var(--mono)", fontSize: 10, color: "var(--ink-3)", letterSpacing: "0.06em", marginTop: 2 }}>{compactDate(todayISO())} {dowOf(todayISO())} · {nowClock()}</div>
           </div>
           {/* C3 계열 수정: race day 앵커는 CYCLE_DAY 네임스페이스의 D-0 —
               MICROCYCLE_AND_CALENDAR_MAPPING_SPEC (ACCEPTED) 기준 표시 */}
-          <Stamp kind="brand">RACE · D-0</Stamp>
+          <Stamp kind="brand">D-0</Stamp>
         </div>
       </div>
 
@@ -375,7 +421,7 @@ function RaceForm({ onBack, onDone }: { onBack?: (() => void) | undefined; onDon
             </div>
           </FormSec>
           <FormSec lb="목표 페이스 · 전략" help="pace">
-            <input type="text" defaultValue={`3'12"/km · negative split`} style={{ ...inputStyle(), fontFamily: "var(--mono)" }} />
+            <input type="text" placeholder={`예: 3'40"/km · 후반 올리기`} style={{ ...inputStyle(), fontFamily: "var(--mono)" }} />
           </FormSec>
           <FormSec lb="혼잣말 한 줄">
             <textarea placeholder="레이스 전에 자신에게..." rows={3}
@@ -392,16 +438,15 @@ function RaceForm({ onBack, onDone }: { onBack?: (() => void) | undefined; onDon
       ) : (
         <>
           <FormSec lb="기록">
-            <input type="text" defaultValue="16:08.24" style={{ ...inputStyle(), fontFamily: "var(--mono)", fontSize: 24, textAlign: "center", fontWeight: 500, letterSpacing: "-0.02em" }} />
-            <div style={{ display: "flex", justifyContent: "space-between", marginTop: 8, fontFamily: "var(--mono)", fontSize: 10.5, color: "var(--ink-3)" }}>
-              <span>이전 PB<TermHelp term="pb" /> <b style={{ color: "var(--ink)" }}>16:10.44</b></span>
-              <Delta value="-2.2" suffix="s · PB" invert />
+            <input type="text" value={record} onChange={e => setRecord(e.target.value)} placeholder="16:42.18" style={{ ...inputStyle(), fontFamily: "var(--mono)", fontSize: 24, textAlign: "center", fontWeight: 500, letterSpacing: "-0.02em" }} />
+            <div style={{ marginTop: 8, fontFamily: "var(--mono)", fontSize: 10, color: "var(--ink-4)", letterSpacing: "0.04em" }}>
+              분:초 형식으로 적어요 · PB<TermHelp term="pb" /> 비교는 기록이 쌓이면 보여줘요
             </div>
           </FormSec>
           <FormSec lb="순위 · 결과">
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
-              <input type="text" defaultValue="2위" style={inputStyle()} />
-              <input type="text" defaultValue="결승 진출" style={inputStyle()} />
+              <input type="text" value={rank} onChange={e => setRank(e.target.value)} style={inputStyle()} />
+              <input type="text" value={result} onChange={e => setResult(e.target.value)} style={inputStyle()} />
             </div>
           </FormSec>
           <FormSec lb="감정">
@@ -421,7 +466,7 @@ function RaceForm({ onBack, onDone }: { onBack?: (() => void) | undefined; onDon
             </div>
           </FormSec>
           <FormSec lb="레이스 메모">
-            <textarea defaultValue="2000m부터 따라붙음. 마지막 200 스퍼트 컸음." rows={3}
+            <textarea value={memo} onChange={e => setMemo(e.target.value)} rows={3}
               className="paper-grid"
               style={{
                 ...inputStyle(),
@@ -431,16 +476,10 @@ function RaceForm({ onBack, onDone }: { onBack?: (() => void) | undefined; onDon
               }} />
             <PrivacyNote />
           </FormSec>
-          <div style={{ padding: "4px 20px 0" }}>
-            <div style={{ display: "flex", gap: 8 }}>
-              <Stamp kind="pb">PB · 5000m</Stamp>
-              <Stamp kind="sb">SB · 2026</Stamp>
-            </div>
-          </div>
         </>
       )}
 
-      <StickyBar onSave={() => onDone?.("race")} />
+      <StickyBar onSave={persist} />
     </div>
   )
 }

@@ -1,229 +1,179 @@
 // LogDetail — 하루를 펼친 일지 페이지. journal-page 미감.
-// v3 JSX 포팅 + 매트릭스 반영:
-//  - CONFLICT C5: IndexCard cycleDay → CycleDayLabel typed object
-//  - CONFLICT C1 계열: variant B의 bare "R-7" 규칙 언급 → RuleIdLabel typed object로 백킹
-//  - 사진 표시: GAP_SPEC_MISSING(미디어 계약) 수용 전 — 파일명 미표시 데모 표면 유지
+// F0-d 실데이터화: 이 화면은 로컬 저장(journal-store)의 해당 날짜 실제 일지만 렌더한다.
+//  - 데모 수치 혼입 금지. 예시 일지는 Guide 화면에만 존재.
+//  - variant B(대시보드)는 디자인 워크스페이스 전용 데모 표면으로 유지 (앱 셸 미사용).
 import type { ReactNode } from "react"
-import { IndexCard, MoodStrip, PainDot, Delta, SectionLb } from "../components/JournalPrimitives"
-import { cycleDay, ruleId, formatRuleIdLabel } from "../domain/display-label"
+import { IndexCard, MoodStrip, PainDot, SectionLb } from "../components/JournalPrimitives"
 import { TermHelp } from "../components/TermHelp"
+import type { JournalEntry, PostSessionEntry, EveningEntry, RaceEntry } from "../domain/journal-store"
+import { entriesForDate } from "../domain/journal-store"
+import { cardDate, dowOf, seasonOf } from "../domain/dates"
 
 export type LogDetailVariant = "A" | "B"
 
-export function LogDetail({ variant = "A", onBack }: { variant?: LogDetailVariant; onBack?: () => void }) {
-  if (variant === "B") return <LogDetailDashboard onBack={onBack} />
-  return <LogDetailJournal onBack={onBack} />
+export function LogDetail({ date, onBack }: { date: string; variant?: LogDetailVariant; onBack?: () => void }) {
+  return <LogDetailJournal date={date} onBack={onBack} />
 }
 
-// ───────── A. Journal-page (paper-feel) ─────────
-function LogDetailJournal({ onBack }: { onBack?: (() => void) | undefined }) {
+const SYSTEM_META: Record<string, { c: string; n: string; cls: string }> = {
+  base: { c: "BA", n: "Base", cls: "base" },
+  lt:   { c: "LT", n: "Lactate", cls: "lt" },
+  vo2:  { c: "V2", n: "VO2", cls: "vo2" },
+  gly:  { c: "GL", n: "Glycolytic", cls: "gly" },
+  atp:  { c: "AP", n: "ATP-PC", cls: "atp" },
+  rest: { c: "RE", n: "Recovery", cls: "rest" },
+}
+
+function savedClock(iso: string): string {
+  const d = new Date(iso)
+  const p = (n: number) => String(n).padStart(2, "0")
+  return `${p(d.getHours())}:${p(d.getMinutes())}`
+}
+
+// ───────── A. Journal-page (실데이터) ─────────
+function LogDetailJournal({ date, onBack }: { date: string; onBack?: (() => void) | undefined }) {
+  const entries = entriesForDate(date)
+  const sessions = entries.filter((e): e is PostSessionEntry => e.kind === "post-session")
+  const evenings = entries.filter((e): e is EveningEntry => e.kind === "evening")
+  const races = entries.filter((e): e is RaceEntry => e.kind === "race")
+
   return (
     <div style={{ paddingBottom: 40 }} className="paper-grid">
       <TopBar2 onBack={onBack}>일지</TopBar2>
 
-      {/* Index card — C5: typed object + 부가 표기는 suffix로 분리 */}
       <div style={{ padding: "14px 20px 0" }}>
-        <IndexCard date="2026·06·21" dow="SUN · 16°C 맑음"
-          cycleDay={cycleDay("D-5", { cycleNumber: 7 })} cycleSuffix="★ MAIN"
-          season="2026 spring" />
+        <IndexCard date={cardDate(date)} dow={dowOf(date)} season={seasonOf(date)} />
       </div>
 
-      {/* Big handwritten title */}
-      <div style={{ padding: "20px 20px 0" }}>
-        <div className="hand" style={{
-          fontSize: 28, color: "var(--ink-blue)", lineHeight: 1.15,
-        }}>드디어 사이클의 정점,<br/>그날.</div>
-      </div>
+      {entries.length === 0 && (
+        <div style={{ padding: "40px 20px" }}>
+          <div className="hand" style={{ fontSize: 22, color: "var(--pencil)", lineHeight: 1.35 }}>
+            이 날의 일지는 아직 비어 있어요.
+          </div>
+          <div style={{ marginTop: 12, fontFamily: "var(--mono)", fontSize: 10.5, color: "var(--ink-3)", letterSpacing: "0.04em", lineHeight: 1.6 }}>
+            오늘 일지는 홈 → 일지 쓰기에서 1분이면 남길 수 있어요.<br />
+            어떤 모습으로 쌓이는지 궁금하면 가이드 탭의 예시 일지를 봐 주세요.
+          </div>
+        </div>
+      )}
 
-      {/* Session block */}
-      <div style={{ padding: "24px 20px 0" }}>
-        <SectionLb action="편집">— TRAINING SESSION</SectionLb>
-        <div style={{ background: "var(--surface)", border: "1px solid var(--ink)", padding: "14px 16px" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
-            <span className="etag vo2"><span className="d"></span><span className="c">V2</span><span className="n">VO2-Long</span></span>
-            <span style={{ fontFamily: "var(--mono)", fontSize: 10, color: "var(--ink)", fontWeight: 600 }}>※ MAIN</span>
-          </div>
-          <div style={{ fontFamily: "var(--sans)", fontSize: 17, fontWeight: 500, color: "var(--ink)", letterSpacing: "-0.005em" }}>
-            6 × 1000m @ 3'20"
-          </div>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", borderTop: "1px solid var(--ink)", borderBottom: "1px solid var(--ink)", marginTop: 12 }}>
-            {([
-              ["거리", "10.4", "km"],
-              ["시간", "62", "min"],
-              ["평균 페이스", "3'24", "/km"],
-              ["Avg HR", "182", "bpm"],
-            ] as const).map(([l, v, u], i, a) => (
-              <div key={i} style={{ padding: "10px 8px 10px 0", borderRight: i < a.length - 1 ? "1px solid var(--hair)" : 0, paddingLeft: i > 0 ? 8 : 0 }}>
-                <div style={{ fontFamily: "var(--mono)", fontSize: 8.5, color: "var(--ink-3)", letterSpacing: "0.14em", textTransform: "uppercase" }}>{l}</div>
-                <div style={{ fontFamily: "var(--mono)", fontSize: 14, fontWeight: 500, color: "var(--ink)", marginTop: 3, letterSpacing: "-0.01em" }}>{v}<span style={{ fontSize: 9, color: "var(--ink-3)", fontWeight: 400, marginLeft: 2 }}>{u}</span></div>
+      {/* 훈련 세션 (실데이터) */}
+      {sessions.map((s) => {
+        const meta = SYSTEM_META[s.system] ?? { c: "??", n: s.system, cls: "rest" }
+        return (
+          <div key={s.id} style={{ padding: "24px 20px 0" }}>
+            <SectionLb action={savedClock(s.savedAt)}>— TRAINING SESSION</SectionLb>
+            <div style={{ background: "var(--surface)", border: "1px solid var(--ink)", padding: "14px 16px" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
+                <span className={`etag ${meta.cls}`}><span className="d"></span><span className="c">{meta.c}</span><span className="n">{meta.n}</span></span>
+                <SyncChip state={s.syncState} />
               </div>
-            ))}
-          </div>
-
-          {/* Rep breakdown */}
-          <div style={{ marginTop: 14 }}>
-            <div style={{ fontFamily: "var(--mono)", fontSize: 9.5, color: "var(--ink-3)", letterSpacing: "0.14em", textTransform: "uppercase", marginBottom: 6 }}>REP × 6</div>
-            <div style={{ borderTop: "1px solid var(--ink)" }}>
-              {([
-                ["1", "3'18\"", "178", false],
-                ["2", "3'19\"", "180", false],
-                ["3", "3'20\"", "182", false],
-                ["4", "3'21\"", "184", false],
-                ["5", "3'25\"", "186", true],
-                ["6", "3'26\"", "186", true],
-              ] as const).map(([n, p, h, slow], i) => (
-                <div key={i} style={{
-                  display: "grid", gridTemplateColumns: "36px 1fr 1fr",
-                  padding: "7px 0", borderBottom: "1px dashed var(--hair)",
-                  background: slow ? "rgba(180,83,12,0.06)" : "transparent",
-                  fontFamily: "var(--mono)", fontSize: 11,
-                  alignItems: "baseline",
-                }}>
-                  <span style={{ color: "var(--ink-3)", letterSpacing: "0.06em" }}>{n}</span>
-                  <span style={{ color: "var(--ink)", fontWeight: 500 }}>{p}<span style={{ color: "var(--ink-3)", marginLeft: 6, fontSize: 9.5 }}>/km</span></span>
-                  <span style={{ color: "var(--ink)", textAlign: "right" }}>HR {h}</span>
+              <div style={{ fontFamily: "var(--sans)", fontSize: 17, fontWeight: 500, color: "var(--ink)", letterSpacing: "-0.005em" }}>
+                {s.title || "훈련 기록"}
+              </div>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", borderTop: "1px solid var(--ink)", borderBottom: "1px solid var(--ink)", marginTop: 12 }}>
+                {([
+                  ["거리", s.distanceKm || "—", "km"],
+                  ["시간", s.durationMin || "—", "min"],
+                  ["평균 페이스", s.avgPace || "—", "/km"],
+                  ["RPE", String(s.rpe), "/10"],
+                ] as const).map(([l, v, u], i, a) => (
+                  <div key={i} style={{ padding: "10px 8px 10px 0", borderRight: i < a.length - 1 ? "1px solid var(--hair)" : 0, paddingLeft: i > 0 ? 8 : 0 }}>
+                    <div style={{ fontFamily: "var(--mono)", fontSize: 8.5, color: "var(--ink-3)", letterSpacing: "0.14em", textTransform: "uppercase" }}>{l}{l === "RPE" && <TermHelp term="rpe" />}</div>
+                    <div style={{ fontFamily: "var(--mono)", fontSize: 14, fontWeight: 500, color: "var(--ink)", marginTop: 3, letterSpacing: "-0.01em" }}>{v}<span style={{ fontSize: 9, color: "var(--ink-3)", fontWeight: 400, marginLeft: 2 }}>{u}</span></div>
+                  </div>
+                ))}
+              </div>
+              {s.memo && (
+                <div className="hand" style={{ marginTop: 12, fontSize: 19, lineHeight: 1.45, color: "var(--ink-blue)", borderTop: "1px dashed var(--paper-edge)", paddingTop: 10 }}>
+                  {s.memo}
                 </div>
+              )}
+            </div>
+          </div>
+        )
+      })}
+
+      {/* 경기 (실데이터) */}
+      {races.map((r) => (
+        <div key={r.id} style={{ padding: "24px 20px 0" }}>
+          <SectionLb action={savedClock(r.savedAt)}>— RACE · {r.stage === "pre" ? "직전" : "직후"}</SectionLb>
+          <div style={{ border: "2px solid var(--ink-blue)", background: "var(--paper)", padding: "14px 16px" }}>
+            <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between" }}>
+              <span style={{ fontFamily: "var(--mono)", fontSize: 10.5, fontWeight: 600, color: "var(--ink-blue)", letterSpacing: "0.14em", textTransform: "uppercase" }}>RACE DAY</span>
+              <SyncChip state={r.syncState} />
+            </div>
+            {r.record && (
+              <div style={{ fontFamily: "var(--mono)", fontSize: 28, fontWeight: 500, color: "var(--ink)", letterSpacing: "-0.02em", marginTop: 8 }}>{r.record}</div>
+            )}
+            {(r.rank || r.result) && (
+              <div style={{ marginTop: 6, fontFamily: "var(--mono)", fontSize: 11, color: "var(--ink-2)", letterSpacing: "0.04em" }}>
+                {[r.rank, r.result].filter(Boolean).join(" · ")}
+              </div>
+            )}
+            {r.memo && (
+              <div className="hand" style={{ marginTop: 12, fontSize: 18, lineHeight: 1.4, color: "var(--ink-blue)", borderTop: "1px dashed var(--paper-edge)", paddingTop: 10 }}>
+                {r.memo}
+              </div>
+            )}
+          </div>
+        </div>
+      ))}
+
+      {/* 하루 마무리 (실데이터) */}
+      {evenings.map((ev) => {
+        const pains = Object.entries(ev.painParts ?? {}).filter(([, lv]) => lv > 0)
+        return (
+          <div key={ev.id} style={{ padding: "24px 20px 0" }}>
+            <SectionLb action={savedClock(ev.savedAt)}>— EVENING CHECK-IN</SectionLb>
+            <div style={{ background: "var(--surface)", border: "1px solid var(--line)" }}>
+              <CheckinRow lb="수면" v={`${ev.sleepH} h · ${["", "나쁨", "부족", "보통", "좋음", "최고"][ev.sleepQuality] ?? ev.sleepQuality}`} />
+              {ev.weightKg && <CheckinRow lb="체중" v={`${ev.weightKg} kg`} />}
+              {ev.restingHr && <CheckinRow lb="안정시 HR" v={`${ev.restingHr} bpm`} />}
+              {pains.map(([part, lv]) => (
+                <CheckinRow key={part} lb="통증" v={`${part} ${lv}/5`} right={<PainDot level={lv} size={10} />} />
               ))}
+              <CheckinRow lb="감정" v="" right={<MoodStrip level={ev.mood} showLabel />} last={!ev.note} />
+              {ev.note && (
+                <div className="hand" style={{ padding: "12px 14px", fontSize: 17, lineHeight: 1.4, color: "var(--ink-blue)", borderTop: "1px dashed var(--hair)" }}>
+                  {ev.note}
+                </div>
+              )}
             </div>
-            <div style={{ marginTop: 6, fontFamily: "var(--mono)", fontSize: 9.5, color: "var(--warn)", letterSpacing: "0.04em" }}>드리프트 +8" — 마지막 2 rep</div>
           </div>
-        </div>
-      </div>
+        )
+      })}
 
-      {/* Handwritten memo (highlighted) */}
-      <div style={{ padding: "20px 20px 0" }}>
-        <SectionLb>— MEMO</SectionLb>
-        <div className="paper-grid" style={{ padding: "16px 18px", border: "1px solid var(--line-2)" }}>
-          <div className="hand" style={{ fontSize: 19, lineHeight: 1.45, color: "var(--ink-blue)" }}>
-            마지막 두 <span className="hl">rep 페이스 5초씩 떨어짐.</span> 다리 무거웠음. 햇볕 직사로 32도까지 올라간 게 컸던 듯. 4번째까지 호흡은 안정적이었는데 다리가 먼저 끊김.
-          </div>
-          <div className="hand-pencil" style={{ marginTop: 14, fontSize: 14, color: "var(--pencil)", borderTop: "1px dashed var(--paper-edge)", paddingTop: 10 }}>
-            다음엔 PM 늦은 시간으로 옮길 것. 워밍업 5분 더.
-          </div>
+      {entries.length > 0 && (
+        <div style={{ padding: "24px 20px 8px", fontFamily: "var(--mono)", fontSize: 9.5, color: "var(--ink-4)", letterSpacing: "0.06em", lineHeight: 1.6 }}>
+          이 페이지는 이 기기에만 저장돼 있어요. 온라인 보관·기기 이동은 계정 연동 후에 할 수 있어요.
         </div>
-      </div>
-
-      {/* Photos with tape — 미디어 계약(ORDER_003 Task 1) 수용 전: 파일명 비노출 */}
-      <div style={{ padding: "24px 20px 0" }}>
-        <SectionLb>— PHOTOS</SectionLb>
-        <div style={{ display: "flex", gap: 12 }}>
-          {[
-            { lb: "시계 화면", bg: "var(--surface-2)" },
-            { lb: "트랙 사진", bg: "var(--paper-2)" },
-            { lb: "랩 차트", bg: "var(--surface-2)" },
-          ].map((p, i) => (
-            <div key={i} style={{ flex: 1, position: "relative", paddingTop: 12 }}>
-              <span className={`tape ${i % 2 ? "sage" : ""}`} style={{ top: 4, left: "30%", width: 32 }}></span>
-              <div style={{
-                aspectRatio: "1", background: p.bg, border: "1px solid var(--line)",
-                display: "flex", alignItems: "center", justifyContent: "center",
-                fontFamily: "var(--mono)", fontSize: 9, color: "var(--ink-4)",
-                letterSpacing: "0.06em", textTransform: "uppercase",
-              }}>{p.lb}</div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Evening checkin row */}
-      <div style={{ padding: "24px 20px 0" }}>
-        <SectionLb>— EVENING CHECK-IN</SectionLb>
-        <div style={{ background: "var(--surface)", border: "1px solid var(--line)" }}>
-          {([
-            ["수면", "7.5 h · 좋음", null],
-            ["체중", "53.9 kg", { v: "-0.1", invert: true }],
-            ["안정시 HR", "49 bpm", { v: "0", invert: true }],
-            ["통증", "오른 무릎 2/5", { dot: 2 }],
-            ["감정", null, { mood: 3 }],
-          ] as [string, string | null, { v?: string; invert?: boolean; dot?: number; mood?: number } | null][]).map(([l, v, extra], i, a) => (
-            <div key={i} style={{
-              display: "grid", gridTemplateColumns: "90px 1fr auto",
-              gap: 12, padding: "11px 14px", alignItems: "center",
-              borderBottom: i < a.length - 1 ? "1px dashed var(--hair)" : 0,
-              fontFamily: "var(--mono)",
-            }}>
-              <span style={{ fontSize: 9.5, color: "var(--ink-3)", letterSpacing: "0.14em", textTransform: "uppercase", fontWeight: 600 }}>{l}</span>
-              <span style={{ fontSize: 12, color: "var(--ink)", fontWeight: 500 }}>{v}</span>
-              <span>
-                {extra?.v != null && <Delta value={extra.v} suffix="kg" invert={extra.invert ?? false} />}
-                {extra?.dot && <PainDot level={extra.dot} size={10} />}
-                {extra?.mood && <MoodStrip level={extra.mood} showLabel />}
-              </span>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Footer print actions */}
-      <div style={{ padding: "24px 20px 8px", display: "flex", gap: 8 }}>
-        <button style={{ flex: 1, padding: 12, background: "transparent", border: "1px solid var(--ink)", fontFamily: "var(--mono)", fontSize: 10.5, letterSpacing: "0.14em", textTransform: "uppercase", cursor: "pointer", borderRadius: 0 }}>이 페이지 인쇄</button>
-        <button style={{ flex: 1, padding: 12, background: "transparent", border: "1px solid var(--line)", fontFamily: "var(--mono)", fontSize: 10.5, letterSpacing: "0.14em", textTransform: "uppercase", cursor: "pointer", color: "var(--ink-2)", borderRadius: 0 }}>공유</button>
-      </div>
+      )}
     </div>
   )
 }
 
-// ───────── B. Dashboard-style (data-first) ─────────
-function LogDetailDashboard({ onBack }: { onBack?: (() => void) | undefined }) {
-  // C1 계열 수정: 규칙 언급은 RULE_SPEC_D1_D9 typed object로 백킹.
-  // 이 표기는 표시 전용 경고이며 어떤 안전 판정도 해제·대체하지 않는다.
-  const driftRule = ruleId("R-7")
+function SyncChip({ state }: { state: JournalEntry["syncState"] }) {
   return (
-    <div style={{ paddingBottom: 30 }}>
-      <TopBar2 onBack={onBack}>일지 · 데이터 뷰</TopBar2>
-      <div style={{ padding: "14px 20px 0" }}>
-        <IndexCard date="2026·06·21" dow="SUN"
-          cycleDay={cycleDay("D-5", { cycleNumber: 7 })} cycleSuffix="★" />
-      </div>
+    <span style={{
+      fontFamily: "var(--mono)", fontSize: 8.5, letterSpacing: "0.1em",
+      color: state === "local" ? "var(--ink-4)" : "var(--brand)",
+      border: "1px solid var(--hair)", padding: "2px 5px", whiteSpace: "nowrap",
+    }}>{state === "local" ? "이 기기" : "동기화됨"}</span>
+  )
+}
 
-      <div style={{ padding: "20px 20px 0" }}>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", borderTop: "1px solid var(--ink)", borderBottom: "1px solid var(--ink)" }}>
-          {([
-            ["DISTANCE", "10.4", "km", null],
-            ["DURATION", "62", "min", null],
-            ["AVG HR", "182", "bpm", { delta: 4 }],
-            ["RPE", "8", "/10", { delta: 1, invert: true }],
-            ["DRIFT", "+8", '"', { warn: true }],
-            ["TSS", "124", "", { delta: 12 }],
-          ] as [string, string, string, { delta?: number; invert?: boolean; warn?: boolean } | null][]).map(([l, v, u, ex], i, a) => (
-            <div key={i} style={{
-              padding: "12px 12px", borderRight: i % 2 === 0 ? "1px solid var(--hair)" : 0,
-              borderBottom: i < a.length - 2 ? "1px solid var(--hair)" : 0,
-            }}>
-              <div style={{ fontFamily: "var(--mono)", fontSize: 9.5, color: "var(--ink-3)", letterSpacing: "0.14em" }}>{l}</div>
-              <div style={{ fontFamily: "var(--mono)", fontSize: 22, fontWeight: 500, color: ex?.warn ? "var(--warn)" : "var(--ink)", letterSpacing: "-0.02em", marginTop: 4 }}>
-                {v}<span style={{ fontSize: 10, color: "var(--ink-3)", fontWeight: 400, marginLeft: 2 }}>{u}</span>
-              </div>
-              {ex?.delta != null && <Delta value={ex.delta} suffix={u} invert={ex.invert ?? false} />}
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Rep mini chart */}
-      <div style={{ padding: "24px 20px 0" }}>
-        <SectionLb>— 6 × 1000m · PACE PER REP</SectionLb>
-        <div style={{ borderTop: "1px solid var(--ink)", borderBottom: "1px solid var(--ink)", padding: "16px 0" }}>
-          <div style={{ display: "flex", alignItems: "flex-end", gap: 8, height: 80 }}>
-            {[200, 201, 200, 201, 205, 206].map((p, i) => (
-              <div key={i} style={{ flex: 1, textAlign: "center" }}>
-                <div style={{
-                  width: "100%", background: i >= 4 ? "var(--warn)" : "var(--ink)",
-                  height: `${(p - 195) * 8}px`, minHeight: 8,
-                }}></div>
-                <div style={{ fontFamily: "var(--mono)", fontSize: 9, color: "var(--ink-3)", marginTop: 4 }}>{i + 1}</div>
-                <div style={{ fontFamily: "var(--mono)", fontSize: 9.5, color: "var(--ink)", fontWeight: 500 }}>3'{p % 100 < 10 ? "0" + (p % 100) : p % 100}"</div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      <div style={{ padding: "20px 20px 0" }}>
-        <div style={{ fontFamily: "var(--mono)", fontSize: 10.5, color: "var(--ink-2)", lineHeight: 1.5, padding: 12, background: "var(--surface-2)" }}>
-          <b style={{ color: "var(--ink)" }}>드리프트</b><TermHelp term="drift" /> rep 4→5에서 +4", 5→6에서 +1". 권고 ±3" 초과 — <b style={{ color: "var(--warn)" }}>{formatRuleIdLabel(driftRule)} 경고</b>.
-        </div>
-      </div>
+function CheckinRow({ lb, v, right, last }: { lb: string; v: string; right?: ReactNode; last?: boolean }) {
+  return (
+    <div style={{
+      display: "grid", gridTemplateColumns: "90px 1fr auto",
+      gap: 12, padding: "11px 14px", alignItems: "center",
+      borderBottom: last ? 0 : "1px dashed var(--hair)",
+      fontFamily: "var(--mono)",
+    }}>
+      <span style={{ fontSize: 9.5, color: "var(--ink-3)", letterSpacing: "0.14em", textTransform: "uppercase", fontWeight: 600 }}>{lb}</span>
+      <span style={{ fontSize: 12, color: "var(--ink)", fontWeight: 500 }}>{v}</span>
+      <span>{right}</span>
     </div>
   )
 }
@@ -246,13 +196,7 @@ function TopBar2({ onBack, children }: { onBack?: (() => void) | undefined; chil
         color: "var(--ink)", letterSpacing: "0.14em", textTransform: "uppercase",
         textAlign: "center",
       }}>{children}</div>
-      <div style={{ width: 48, textAlign: "right" }}>
-        <button style={{
-          background: "transparent", border: 0, cursor: "pointer",
-          fontFamily: "var(--mono)", fontSize: 11, color: "var(--ink-2)",
-          letterSpacing: "0.06em", padding: 4,
-        }}>···</button>
-      </div>
+      <div style={{ width: 48 }}></div>
     </div>
   )
 }
