@@ -3,6 +3,8 @@ import React from "react"
 import type { ReactNode } from "react"
 import { IntensityStack, Sparkline, Delta, Stamp, SectionLb } from "../components/JournalPrimitives"
 import { TermHelp } from "../components/TermHelp"
+import { BalanceMarker, DemoBasisBadge } from "../components/BalanceMarker"
+import { intensityBalance, distanceRampBalance, type TrendRange } from "../domain/balance"
 
 export type TrendsVariant = "A" | "B"
 
@@ -13,7 +15,12 @@ export function Trends({ variant = "A", onBack }: { variant?: TrendsVariant; onB
 
 // ───────── A. Single scroll (all metrics in one page) ─────────
 function TrendsScroll({ onBack }: { onBack?: (() => void) | undefined }) {
-  const [range, setRange] = React.useState("month")
+  const [range, setRange] = React.useState<TrendRange>("month")
+
+  // 균형 피드백 (참고 표시 전용 — 안전 판정 아님; 기준은 데모)
+  const weeklyKm = [42, 38, 51, 53]
+  const weekLabels = ["W22", "W23", "W24", "W25"]
+  const rampHint = distanceRampBalance(weeklyKm, weekLabels, range)
 
   return (
     <div style={{ paddingBottom: 30 }}>
@@ -45,19 +52,22 @@ function TrendsScroll({ onBack }: { onBack?: (() => void) | undefined }) {
 
       {/* Volume — line chart */}
       <div style={{ padding: "24px 20px 0" }}>
-        <SectionLb action="펼치기">— DISTANCE</SectionLb>
+        <SectionLb action="펼치기">— DISTANCE<DemoBasisBadge /></SectionLb>
         <div style={{ borderTop: "1px solid var(--ink)", borderBottom: "1px solid var(--ink)", padding: "14px 0 10px" }}>
           <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", marginBottom: 12 }}>
             <span style={{ fontFamily: "var(--mono)", fontSize: 28, fontWeight: 500, color: "var(--ink)", letterSpacing: "-0.025em" }}>184.2<span style={{ fontSize: 12, color: "var(--ink-3)", fontWeight: 400, marginLeft: 3 }}>km · 22 days</span></span>
-            <Delta value={18.4} suffix="km vs 5월" />
+            <span style={{ display: "inline-flex", alignItems: "center" }}>
+              <Delta value={18.4} suffix="km vs 5월" />
+              <BalanceMarker hint={rampHint} />
+            </span>
           </div>
-          <BarChart data={[42, 38, 51, 53]} labels={["W22", "W23", "W24", "W25"]} />
+          <BarChart data={weeklyKm} labels={weekLabels} />
         </div>
       </div>
 
       {/* Intensity stack */}
       <div style={{ padding: "24px 20px 0" }}>
-        <SectionLb>— INTENSITY DISTRIBUTION</SectionLb>
+        <SectionLb>— INTENSITY DISTRIBUTION<DemoBasisBadge /></SectionLb>
         <div style={{ paddingTop: 4 }}>
           <IntensityStack data={{ base: 102, lt: 32, vo2: 28, gly: 6, rest: 16 }} height={18} />
         </div>
@@ -71,7 +81,10 @@ function TrendsScroll({ onBack }: { onBack?: (() => void) | undefined }) {
             <div key={k} style={{ display: "flex", alignItems: "center", gap: 6 }}>
               <span style={{ width: 7, height: 7, borderRadius: "50%", background: c }}></span>
               <span style={{ fontFamily: "var(--mono)", fontSize: 10, color: "var(--ink-2)", letterSpacing: "0.04em" }}>{n}</span>
-              <span style={{ marginLeft: "auto", fontFamily: "var(--mono)", fontSize: 10.5, color: "var(--ink)", fontWeight: 500 }}>{v}<span style={{ color: "var(--ink-3)", fontSize: 9, marginLeft: 2 }}>km · {pct}%</span></span>
+              <span style={{ marginLeft: "auto", fontFamily: "var(--mono)", fontSize: 10.5, color: "var(--ink)", fontWeight: 500, display: "inline-flex", alignItems: "center" }}>
+                <span>{v}<span style={{ color: "var(--ink-3)", fontSize: 9, marginLeft: 2 }}>km · {pct}%</span></span>
+                <BalanceMarker hint={intensityBalance(k, pct, range)} />
+              </span>
             </div>
           ))}
         </div>
