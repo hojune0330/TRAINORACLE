@@ -7,27 +7,14 @@
  * - 절대 안전 판정이 아니다 — '과다'가 떠도 훈련을 막지 않고,
  *   '균형'이어도 D9/Safety Gate 차단을 풀지 않는다. 표시 전용.
  * - 기준값 계약(ORDER_005 Task B) 수용 전까지 `기준: 데모` 배지 유지.
+ * - 위치 보정(오버플로우/플립)·Escape 닫기는 공용 Popover가 담당.
  */
-import { useEffect, useRef, useState } from "react"
 import type { BalanceHintData } from "../domain/balance"
 import { BALANCE_BASIS_LABEL } from "../domain/balance"
+import { usePopover, PopCard } from "./Popover"
 
 export function BalanceMarker({ hint }: { hint: BalanceHintData | null }) {
-  const [open, setOpen] = useState(false)
-  const ref = useRef<HTMLSpanElement>(null)
-
-  useEffect(() => {
-    if (!open) return
-    const onDown = (e: MouseEvent | TouchEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
-    }
-    document.addEventListener("mousedown", onDown)
-    document.addEventListener("touchstart", onDown)
-    return () => {
-      document.removeEventListener("mousedown", onDown)
-      document.removeEventListener("touchstart", onDown)
-    }
-  }, [open])
+  const { open, toggle, wrapRef } = usePopover()
 
   if (!hint) return null // in_range → 마커 없음 (침묵)
 
@@ -36,14 +23,15 @@ export function BalanceMarker({ hint }: { hint: BalanceHintData | null }) {
   const accent = above ? "var(--warn)" : "var(--ink-3)"
 
   return (
-    <span ref={ref} style={{ position: "relative", display: "inline-flex", alignItems: "center" }}>
+    <span ref={wrapRef} style={{ position: "relative", display: "inline-flex", alignItems: "center" }}>
       <button
         type="button"
         aria-label={`${hint.title} — 자세히 ${open ? "닫기" : "보기"}`}
         aria-expanded={open}
-        onClick={() => setOpen(v => !v)}
+        onClick={toggle}
         style={{
-          marginLeft: 5, padding: "0 3px", height: 14,
+          // 히트 영역 26px 확보 (시각 글리프는 그대로)
+          marginLeft: 2, padding: "0 6px", height: 26,
           border: 0, background: "transparent",
           color: accent, fontFamily: "var(--mono)",
           fontSize: 10, fontWeight: 700, lineHeight: 1,
@@ -53,47 +41,39 @@ export function BalanceMarker({ hint }: { hint: BalanceHintData | null }) {
         }}
       >{glyph}</button>
 
-      {open && (
-        <div
-          role="note"
-          style={{
-            position: "absolute", top: "calc(100% + 6px)", right: -8,
-            width: 244, zIndex: 40,
-            background: "var(--surface)",
-            border: `1px solid ${above ? "var(--warn)" : "var(--line)"}`,
-            borderLeft: `3px solid ${accent}`,
-            boxShadow: "0 4px 14px rgba(0,0,0,0.12)",
-            padding: "10px 12px",
-            textTransform: "none", letterSpacing: 0, textAlign: "left",
-          }}
-        >
-          <div style={{
-            fontFamily: "var(--mono)", fontSize: 9.5, fontWeight: 700,
-            color: accent, letterSpacing: "0.1em", marginBottom: 5,
-          }}>
-            {glyph} {hint.title}
-          </div>
-          <div style={{
-            fontFamily: "var(--sans, inherit)", fontSize: 11.5, lineHeight: 1.55,
-            color: "var(--ink)", fontWeight: 400, whiteSpace: "normal",
-          }}>
-            {hint.detail}
-          </div>
-          <div style={{
-            marginTop: 5, fontSize: 10.5, lineHeight: 1.5,
-            color: "var(--ink-2)", fontWeight: 400, whiteSpace: "normal",
-          }}>
-            {hint.signal}
-          </div>
-          <div style={{
-            marginTop: 7, paddingTop: 6, borderTop: "1px dashed var(--hair)",
-            fontFamily: "var(--mono)", fontSize: 9, lineHeight: 1.5,
-            color: "var(--ink-3)", letterSpacing: "0.03em", whiteSpace: "normal",
-          }}>
-            자세한 건 분석 탭에서 · 참고용이에요 — 훈련 판단은 코치와 함께
-          </div>
+      <PopCard
+        open={open}
+        align="right"
+        width={244}
+        label={`balance:${hint.title}`}
+        accentBorder={{ border: above ? "var(--warn)" : "var(--line)", bar: accent }}
+      >
+        <div style={{
+          fontFamily: "var(--mono)", fontSize: 9.5, fontWeight: 700,
+          color: accent, letterSpacing: "0.1em", marginBottom: 5,
+        }}>
+          {glyph} {hint.title}
         </div>
-      )}
+        <div style={{
+          fontFamily: "var(--sans, inherit)", fontSize: 11.5, lineHeight: 1.55,
+          color: "var(--ink)", fontWeight: 400, whiteSpace: "normal",
+        }}>
+          {hint.detail}
+        </div>
+        <div style={{
+          marginTop: 5, fontSize: 10.5, lineHeight: 1.5,
+          color: "var(--ink-2)", fontWeight: 400, whiteSpace: "normal",
+        }}>
+          {hint.signal}
+        </div>
+        <div style={{
+          marginTop: 7, paddingTop: 6, borderTop: "1px dashed var(--hair)",
+          fontFamily: "var(--mono)", fontSize: 9, lineHeight: 1.5,
+          color: "var(--ink-3)", letterSpacing: "0.03em", whiteSpace: "normal",
+        }}>
+          자세한 건 분석 탭에서 · 참고용이에요 — 훈련 판단은 코치와 함께
+        </div>
+      </PopCard>
     </span>
   )
 }

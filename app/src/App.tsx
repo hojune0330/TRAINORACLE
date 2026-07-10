@@ -3,6 +3,7 @@
 // tweaks_panel.jsx(772줄, 디자인 탐색 도구)는 앱 워크스페이스 목적에 맞게
 // 동일 기능의 타입 세이프 컨트롤 바로 재설계 (총책임자 설계 결정).
 import React from "react"
+import { AppShell, useIsMobileShell } from "./AppShell"
 import { MobileFrame } from "./components/MobileFrame"
 import { Home } from "./screens/Home"
 import type { HomeVariant, Encoding } from "./screens/Home"
@@ -29,6 +30,13 @@ const TWEAK_DEFAULTS: Tweaks = {
 }
 
 export default function App() {
+  // 모바일(≤700px) 또는 ?app=1 → 실제 앱 셸. 넓은 화면 = 디자인 워크스페이스.
+  const mobile = useIsMobileShell()
+  if (mobile) return <AppShell />
+  return <Workspace />
+}
+
+function Workspace() {
   const [t, setT] = React.useState<Tweaks>(TWEAK_DEFAULTS)
   const set = <K extends keyof Tweaks>(k: K, v: Tweaks[K]) => setT(prev => ({ ...prev, [k]: v }))
 
