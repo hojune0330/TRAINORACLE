@@ -2,6 +2,7 @@
 import React from "react"
 import type { ReactNode } from "react"
 import { IntensityStack, Sparkline, Delta, Stamp, SectionLb } from "../components/JournalPrimitives"
+import { TermHelp } from "../components/TermHelp"
 
 export type TrendsVariant = "A" | "B"
 
@@ -106,7 +107,7 @@ function TrendsScroll({ onBack }: { onBack?: (() => void) | undefined }) {
 
       {/* PB / SB cumulative */}
       <div style={{ padding: "24px 20px 0" }}>
-        <SectionLb>— PB · SB</SectionLb>
+        <SectionLb>— PB<TermHelp term="pb" /> · SB<TermHelp term="sb" /></SectionLb>
         <div style={{ borderTop: "1px solid var(--ink)", borderBottom: "1px solid var(--ink)" }}>
           {([
             { evt: "5000m", pb: "16:10.44", pbDate: "2025·06·22", sb: "16:14.20", sbDate: "2026·05·12", stamp: "PB · 1 YR" },
