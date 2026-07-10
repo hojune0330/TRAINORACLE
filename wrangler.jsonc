@@ -1,0 +1,10 @@
+{
+  // TRAINORACLE — Phase 1 앱 배포 구성 (정적 자산 전용)
+  // 빌드 산출물: app/dist (vite build). 서버 코드·DB 없음 — 표시 전용 프런트엔드.
+  "name": "trainoracle",
+  "compatibility_date": "2026-07-01",
+  "assets": {
+    "directory": "./app/dist",
+    "not_found_handling": "single-page-application"
+  }
+}
