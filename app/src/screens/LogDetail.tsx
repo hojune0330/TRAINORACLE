@@ -6,6 +6,7 @@
 import type { ReactNode } from "react"
 import { IndexCard, MoodStrip, PainDot, Delta, SectionLb } from "../components/JournalPrimitives"
 import { cycleDay, ruleId, formatRuleIdLabel } from "../domain/display-label"
+import { TermHelp } from "../components/TermHelp"
 
 export type LogDetailVariant = "A" | "B"
 
@@ -220,7 +221,7 @@ function LogDetailDashboard({ onBack }: { onBack?: (() => void) | undefined }) {
 
       <div style={{ padding: "20px 20px 0" }}>
         <div style={{ fontFamily: "var(--mono)", fontSize: 10.5, color: "var(--ink-2)", lineHeight: 1.5, padding: 12, background: "var(--surface-2)" }}>
-          <b style={{ color: "var(--ink)" }}>드리프트</b> rep 4→5에서 +4", 5→6에서 +1". 권고 ±3" 초과 — <b style={{ color: "var(--warn)" }}>{formatRuleIdLabel(driftRule)} 경고</b>.
+          <b style={{ color: "var(--ink)" }}>드리프트</b><TermHelp term="drift" /> rep 4→5에서 +4", 5→6에서 +1". 권고 ±3" 초과 — <b style={{ color: "var(--warn)" }}>{formatRuleIdLabel(driftRule)} 경고</b>.
         </div>
       </div>
     </div>

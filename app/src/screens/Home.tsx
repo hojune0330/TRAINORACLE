@@ -7,6 +7,7 @@
 import { IndexCard, MoodStrip, IntensityDots, IntensityStack, Stamp, PainDot, Sparkline, Delta, SectionLb } from "../components/JournalPrimitives"
 import { cycleDay } from "../domain/display-label"
 import type { EnergyDist } from "../components/JournalPrimitives"
+import { TermHelp } from "../components/TermHelp"
 
 export type HomeVariant = "A" | "B" | "C"
 export type Encoding = "dot-code" | "chip" | "glyph"
@@ -87,7 +88,7 @@ function HomeIndexCard({ onWriteLog, onOpenDay, showAI }: SubProps) {
             display: "flex", alignItems: "center", justifyContent: "space-between",
             fontFamily: "var(--mono)", fontSize: 10.5, color: "var(--ink-3)",
           }}>
-            <span>RPE <b style={{ color: "var(--ink)" }}>8</b></span>
+            <span>RPE<TermHelp term="rpe" /> <b style={{ color: "var(--ink)" }}>8</b></span>
             <span>HR <b style={{ color: "var(--ink)" }}>182</b></span>
             <MoodStrip level={3} showLabel />
           </div>
@@ -128,12 +129,12 @@ function HomeIndexCard({ onWriteLog, onOpenDay, showAI }: SubProps) {
             <Delta value={1} suffix=" vs 지난주" />
           </div>
           <div style={{ padding: "12px 12px 12px 0", borderRight: "1px solid var(--hair)" }}>
-            <div style={{ fontFamily: "var(--mono)", fontSize: 9.5, color: "var(--ink-3)", letterSpacing: "0.14em", textTransform: "uppercase" }}>RPE 평균</div>
+            <div style={{ fontFamily: "var(--mono)", fontSize: 9.5, color: "var(--ink-3)", letterSpacing: "0.14em", textTransform: "uppercase" }}>RPE 평균<TermHelp term="rpe" /></div>
             <div style={{ fontFamily: "var(--mono)", fontSize: 22, fontWeight: 500, color: "var(--ink)", letterSpacing: "-0.02em", marginTop: 4 }}>5.8<span style={{ fontSize: 11, color: "var(--ink-3)", fontWeight: 400, marginLeft: 2 }}>/ 10</span></div>
             <Delta value="-0.2" suffix=" vs 지난주" invert />
           </div>
           <div style={{ padding: "12px 0 12px 12px" }}>
-            <div style={{ fontFamily: "var(--mono)", fontSize: 9.5, color: "var(--ink-3)", letterSpacing: "0.14em", textTransform: "uppercase" }}>강도 분포</div>
+            <div style={{ fontFamily: "var(--mono)", fontSize: 9.5, color: "var(--ink-3)", letterSpacing: "0.14em", textTransform: "uppercase" }}>강도 분포<TermHelp term="energy-system" /></div>
             <div style={{ marginTop: 8 }}>
               <IntensityStack data={{ base: 58, lt: 18, vo2: 14, rest: 10 }} height={10} />
             </div>

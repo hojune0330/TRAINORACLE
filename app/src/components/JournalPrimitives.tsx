@@ -4,6 +4,7 @@
 import type { ReactNode, CSSProperties } from "react"
 import type { CycleDayLabel } from "../domain/display-label"
 import { formatCycleDayLabel } from "../domain/display-label"
+import { TermHelp } from "./TermHelp"
 
 // ============== INDEX CARD (날짜 헤더) ==============
 export interface IndexCardProps {
@@ -46,6 +47,7 @@ export function IndexCard({ date, dow, weather, cycleDay, cycleSuffix, season }:
           <div>
             {formatCycleDayLabel(cycleDay)}
             {cycleSuffix ? ` ${cycleSuffix}` : ""}
+            <TermHelp term="cycle-day" />
           </div>
         )}
         {season && <div>{season}</div>}

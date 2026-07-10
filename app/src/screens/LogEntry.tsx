@@ -8,6 +8,8 @@ import type { ReactNode, CSSProperties } from "react"
 import { IndexCard, MoodStrip, PainDot, Delta, Stamp } from "../components/JournalPrimitives"
 import { cycleDay } from "../domain/display-label"
 import { painLevelsRequireReview } from "../safety/memo-safety"
+import { TermHelp } from "../components/TermHelp"
+import type { TermId } from "../domain/glossary"
 
 export type EntryType = "choose" | "post-session" | "evening" | "race"
 
@@ -90,7 +92,7 @@ function PostSessionForm({ onBack, onDone }: { onBack?: (() => void) | undefined
       </div>
 
       {/* Energy system picker */}
-      <FormSec lb="강도 시스템">
+      <FormSec lb="강도 시스템" help="energy-system">
         <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
           {[
             { id: "base", c: "BA", n: "BASE", color: "#4A8FC7" },
@@ -120,7 +122,7 @@ function PostSessionForm({ onBack, onDone }: { onBack?: (() => void) | undefined
       </FormSec>
 
       {/* Meta row */}
-      <FormSec lb="거리 · 시간 · 평균 페이스">
+      <FormSec lb="거리 · 시간 · 평균 페이스" help="pace">
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8 }}>
           <input type="text" defaultValue="10.4" style={{ ...inputStyle(), fontFamily: "var(--mono)", textAlign: "right" }} />
           <input type="text" defaultValue="62" style={{ ...inputStyle(), fontFamily: "var(--mono)", textAlign: "right" }} />
@@ -132,7 +134,7 @@ function PostSessionForm({ onBack, onDone }: { onBack?: (() => void) | undefined
       </FormSec>
 
       {/* RPE */}
-      <FormSec lb={`RPE · 주관 강도 (${rpe}/10)`}>
+      <FormSec lb={`RPE · 주관 강도 (${rpe}/10)`} help="rpe">
         <div style={{ display: "grid", gridTemplateColumns: "repeat(10, 1fr)", gap: 0, border: "1px solid var(--ink)" }}>
           {Array.from({ length: 10 }, (_, i) => i + 1).map(n => (
             <button key={n} onClick={() => setRpe(n)} style={{
@@ -372,7 +374,7 @@ function RaceForm({ onBack, onDone }: { onBack?: (() => void) | undefined; onDon
               ))}
             </div>
           </FormSec>
-          <FormSec lb="목표 페이스 · 전략">
+          <FormSec lb="목표 페이스 · 전략" help="pace">
             <input type="text" defaultValue={`3'12"/km · negative split`} style={{ ...inputStyle(), fontFamily: "var(--mono)" }} />
           </FormSec>
           <FormSec lb="혼잣말 한 줄">
@@ -392,7 +394,7 @@ function RaceForm({ onBack, onDone }: { onBack?: (() => void) | undefined; onDon
           <FormSec lb="기록">
             <input type="text" defaultValue="16:08.24" style={{ ...inputStyle(), fontFamily: "var(--mono)", fontSize: 24, textAlign: "center", fontWeight: 500, letterSpacing: "-0.02em" }} />
             <div style={{ display: "flex", justifyContent: "space-between", marginTop: 8, fontFamily: "var(--mono)", fontSize: 10.5, color: "var(--ink-3)" }}>
-              <span>이전 PB <b style={{ color: "var(--ink)" }}>16:10.44</b></span>
+              <span>이전 PB<TermHelp term="pb" /> <b style={{ color: "var(--ink)" }}>16:10.44</b></span>
               <Delta value="-2.2" suffix="s · PB" invert />
             </div>
           </FormSec>
@@ -538,7 +540,7 @@ function PainReviewBanner() {
         <div style={{
           fontFamily: "var(--mono)", fontSize: 10, fontWeight: 600,
           letterSpacing: "0.14em", textTransform: "uppercase", color: "var(--warn)",
-        }}>REVIEW · 통증 4 이상</div>
+        }}>REVIEW · 통증 4 이상<TermHelp term="review" /></div>
         <div style={{
           marginTop: 4, fontFamily: "var(--sans)", fontSize: 12.5,
           color: "var(--ink-2)", lineHeight: 1.5,
@@ -569,14 +571,14 @@ function PrivacyNote() {
   )
 }
 
-function FormSec({ lb, children }: { lb: string; children: ReactNode }) {
+function FormSec({ lb, help, children }: { lb: string; help?: TermId | undefined; children: ReactNode }) {
   return (
     <div style={{ padding: "18px 20px 0" }}>
       <div style={{
         fontFamily: "var(--mono)", fontSize: 9.5, color: "var(--ink-3)",
         letterSpacing: "0.14em", textTransform: "uppercase", fontWeight: 600,
         marginBottom: 8,
-      }}>{lb}</div>
+      }}>{lb}{help && <TermHelp term={help} />}</div>
       {children}
     </div>
   )
