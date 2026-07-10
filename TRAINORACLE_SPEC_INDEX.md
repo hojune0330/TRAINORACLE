@@ -108,11 +108,13 @@ This table records files found in the repository at the time of this index updat
 | `CODEX_WORK_ORDER_001.md` | root | ISSUED / completed by PR sequence | Historical work order for Wave D patches, impl skeleton, CI, and dashboard. |
 | `CODEX_WORK_ORDER_002.md` | root | COMPLETED | Work order for screen/SPEC traceability, Round 3 review prep, doc quality, and dashboard data sync; PR #14-#17 merged. |
 | `CODEX_WORK_ORDER_003.md` | root | COMPLETED / MERGED | Work order for GAP_SPEC draft contracts and Round 3 follow-up binding; PR #22-#25 merged. |
-| `CODEX_WORK_ORDER_004.md` | root | ISSUED | Work order for Round 4 downstream patches, legacy v1 kit disposition proposal, and traceability/index/status recount. |
+| `CODEX_WORK_ORDER_004.md` | root | COMPLETED / MERGED | Work order for Round 4 downstream patches, legacy v1 kit disposition proposal, and traceability/index/status recount; PR #28/#30/#31/#32 merged. |
+| `CODEX_WORK_ORDER_005.md` | root | ISSUED / IN_PROGRESS | Work order for external record integration draft, composition balance baseline draft, and index/status refresh. |
 | `SPEC_SOURCE_ACCEPTANCE_DECISION_ROUND1.md` | root | DECIDED | Safety Gate and RVE reconstructed drafts accepted as working sources only; not canonical promotion or issue closure. |
 | `SPEC_SOURCE_ACCEPTANCE_DECISION_ROUND2.md` | root | DECIDED | Physio Source Trust and Daily Log accepted as working sources only; not canonical promotion or issue closure. |
 | `SPEC_SOURCE_ACCEPTANCE_DECISION_ROUND3.md` | root | DECIDED | Analysis/Visualization, Daily Brief/Inbox, Microcycle/Calendar, and Plan Output Rationale Privacy accepted as working sources only; not canonical promotion or issue closure. |
 | `SPEC_SOURCE_ACCEPTANCE_DECISION_ROUND4.md` | root | DECIDED | Media/Transient Capture, Race Record/Historical Recall, and Metric Algorithm accepted as working sources only; METRIC §6 formulas remain unaccepted. |
+| `SPEC_SOURCE_ACCEPTANCE_DECISION_ROUND5.md` | root | DECIDED | Work Order 004 outputs accepted as working-source amendments only; legacy v1 kit is idea source only; no canonical promotion, issue closure, or runtime evidence. |
 | D9 runtime evidence | `runtime-evidence/d9-evaluator/` | RUNTIME_EVIDENCE_PRESENT | Actual local D9 evaluator run evidence exists; downstream issue closure still requires target review/recount and owner approval. |
 | Work Order 002 Task 2 output | `SPEC_SCREEN_TRACEABILITY_MATRIX.md` | MERGED / UPDATED_BY_ORDER_004 | Screen/spec traceability matrix; originally documented five `GAP_SPEC_MISSING` rows, now recounts those rows as `RESOLVED_BY_SOURCE(ROUND4)` without claiming implementation completion. |
 | Work Order 002 Task 1 output | `SPEC_SOURCE_ACCEPTANCE_REVIEW_ROUND3.md` | MERGED | Round 3 review packet; decisions issued separately by `SPEC_SOURCE_ACCEPTANCE_DECISION_ROUND3.md`. |
@@ -120,9 +122,13 @@ This table records files found in the repository at the time of this index updat
 | Work Order 003 Task 2 PR | GitHub PR #23 | MERGED | `RACE_RECORD_AND_HISTORICAL_RECALL_SPEC.md` is present on main as a Round 4 accepted working source only. |
 | Work Order 003 Task 3 PR | GitHub PR #24 | MERGED | `METRIC_ALGORITHM_CONTRACT.md` is present on main as a Round 4 accepted working source only; §6 formulas are not accepted. |
 | Work Order 003 Task 4 PR | GitHub PR #25 | MERGED | Daily Brief flat metadata, Plan Generator Round 3 patch notes, and index/status updates merged. |
-| Work Order 004 Task 1 PR | GitHub PR #28 | OPEN_AT_UPDATE_TIME | MEDIA transcript-to-D9 precheck patch proposed; not merged at this update. |
-| Work Order 004 Task 2 PR | GitHub PR #30 | OPEN_AT_UPDATE_TIME | Daily Log race subtype reference and Analysis metric envelope reference proposed; not merged at this update. |
-| Work Order 004 Task 3 PR | GitHub PR #31 | OPEN_AT_UPDATE_TIME | Legacy v1 kit disposition proposal proposed; not merged at this update. |
+| Work Order 004 Task 1 PR | GitHub PR #28 | MERGED | MEDIA transcript-to-D9 precheck patch merged. |
+| Work Order 004 Task 2 PR | GitHub PR #30 | MERGED | Daily Log race subtype reference and Analysis metric envelope reference merged. |
+| Work Order 004 Task 3 PR | GitHub PR #31 | MERGED | Legacy v1 kit disposition proposal merged as proposal; owner disposition is recorded in Round 5. |
+| Work Order 004 Task 4 PR | GitHub PR #32 | MERGED | Traceability matrix, index, and status recount merged. |
+| Round 5 decision PR | GitHub PR #34 | MERGED | Round 5 decision, Work Order 005, and Project Lead app UI work merged. Codex Work Order 005 forbids Codex from editing `app/` and design files. |
+| Work Order 005 Task A PR | GitHub PR #36 | OPEN_AT_UPDATE_TIME | External record integration draft proposed; review/merge pending. |
+| Work Order 005 Task B PR | GitHub PR #37 | OPEN_AT_UPDATE_TIME | Composition balance baseline draft proposed; review/merge pending. |
 
 ---
 
@@ -193,6 +199,8 @@ These files translate the safety/spec core into product surfaces. They are not c
 | `ANALYSIS_AND_VISUALIZATION_DATA_CONTRACT.md` | `specs/reconstruct/ANALYSIS_AND_VISUALIZATION_DATA_CONTRACT.md` | DRAFT_FOR_REVIEW | New productization draft. Defines source-backed visualization data, uncertainty/source coverage, and privacy boundary. Does not define final metric formulas, clear D9/Safety Gate states, or create plan options. |
 | `PLAN_OUTPUT_RATIONALE_PRIVACY_SPEC.md` | `specs/reconstruct/PLAN_OUTPUT_RATIONALE_PRIVACY_SPEC.md` | DRAFT_FOR_REVIEW | New productization draft. Defines privacy-safe plan rationale bundles using source refs, rationale codes, privacy tiers, and redaction states. Does not create/select plan options, clear D9/Safety Gate states, or close Plan Generator issues. |
 | `MICROCYCLE_AND_CALENDAR_MAPPING_SPEC.md` | `specs/reconstruct/MICROCYCLE_AND_CALENDAR_MAPPING_SPEC.md` | DRAFT_FOR_REVIEW | New productization draft. Defines namespace-safe 9.5-day cycle, `CYCLE_DAY`, planned-date/session-slot, race-anchor, and Calendar projection mapping. Does not create/select plan options, redefine D-rules, or clear D9/Safety Gate states. |
+| `EXTERNAL_RECORD_INTEGRATION_SPEC.md` | `specs/reconstruct/EXTERNAL_RECORD_INTEGRATION_SPEC.md` | DRAFT_FOR_REVIEW / PR #36 OPEN_AT_UPDATE_TIME | Work Order 005 Task A draft. Defines one-way inbound external PB/SB record boundaries, consent, freshness display, conflict handling, and non-safety authority. Review/merge pending. |
+| `COMPOSITION_BALANCE_BASELINE_CONTRACT.md` | `specs/reconstruct/COMPOSITION_BALANCE_BASELINE_CONTRACT.md` | DRAFT_FOR_REVIEW / PR #37 OPEN_AT_UPDATE_TIME | Work Order 005 Task B draft. Defines baseline basis, period axis, athlete-level placeholder, display states, demo badge requirement, and non-safety authority. Review/merge pending. |
 
 ---
 
@@ -245,7 +253,9 @@ Bare D-rule references are forbidden in new SPEC work.
 15. Review `specs/reconstruct/ANALYSIS_AND_VISUALIZATION_DATA_CONTRACT.md` as a productization draft; do not treat it as metric formula authority, canonical, runtime evidence, or downstream issue closure.
 16. Review `specs/reconstruct/PLAN_OUTPUT_RATIONALE_PRIVACY_SPEC.md` as a productization draft; do not treat it as Plan Generator issue closure, canonical, runtime evidence, or downstream issue closure.
 17. Review `specs/reconstruct/MICROCYCLE_AND_CALENDAR_MAPPING_SPEC.md` as a productization draft; do not treat it as Plan Generator issue closure, canonical, runtime evidence, D-rule redefinition, or downstream issue closure.
-18. Begin App Bridge/API schema contracts and runtime evidence only after preserving the safety core chain.
+18. Review Work Order 005 Task A PR #36 before treating `EXTERNAL_RECORD_INTEGRATION_SPEC.md` as a merged local file; do not implement AthleteTime integration until API reality and terms are verified.
+19. Review Work Order 005 Task B PR #37 before treating `COMPOSITION_BALANCE_BASELINE_CONTRACT.md` as a merged local file; keep placeholder baselines visibly marked as demo until accepted by owner decision.
+20. Begin App Bridge/API schema contracts and runtime evidence only after preserving the safety core chain.
 
 ---
 
