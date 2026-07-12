@@ -97,6 +97,27 @@ export function entriesForDate(date: string): JournalEntry[] {
   return loadEntries().filter((e) => e.date === date)
 }
 
+/** 일지 1건 삭제 — 사용자 명시 확인 후에만 호출할 것 (로컬 데이터 통제권) */
+export function deleteEntry(id: string): { ok: boolean; total: number } {
+  const s = storage()
+  const remain = loadEntries().filter((e) => e.id !== id)
+  if (!s) return { ok: false, total: remain.length }
+  try {
+    s.setItem(KEY, JSON.stringify(remain))
+    return { ok: true, total: remain.length }
+  } catch {
+    return { ok: false, total: remain.length }
+  }
+}
+
+/** 전체 일지 JSON 문자열 — 내 데이터 내보내기용 (기기 밖 전송 없음, 파일 다운로드만) */
+export function exportEntriesJSON(): string {
+  return JSON.stringify(
+    { app: "TRAINORACLE", format: "trainoracle.journal.v1", exportedAt: new Date().toISOString(), entries: loadEntries() },
+    null, 2,
+  )
+}
+
 /** 최근 저장 순(내림차순) 목록 — 홈 '이 기기의 일지' 섹션용 */
 export function recentEntries(limit = 10): JournalEntry[] {
   return loadEntries()
@@ -168,7 +189,7 @@ export function runStoreSelfTest(opts?: { seed?: boolean }): void {
         id: "__uiseed_2__", kind: "evening", date: todayISO(),
         savedAt: new Date(now).toISOString(), syncState: "local",
         sleepH: 7.5, sleepQuality: 4, weightKg: "62.0", restingHr: "48",
-        painParts: {}, mood: 4, note: "시드 · 컨디션 좋음",
+        painParts: { "왼 무릎": 4 }, mood: 4, note: "시드 · 컨디션 좋음",
       },
     ]
     for (const e of seeds) saveEntry(e)
