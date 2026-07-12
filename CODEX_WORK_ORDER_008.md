@@ -13,6 +13,16 @@ work_order_metadata:
   branch_pattern: codex/work-order-008-task{N}
   report_channel: 본 지시서를 발행한 GitHub 이슈 댓글
   prerequisite_status: 선행 조건 없음 — 즉시 착수 가능 (ORDER_007 잔여와 병행 허용)
+  amendment_v2: >
+    2026-07-12 개정. 기획 정본이 v2로 갱신되었다 (페르소나 리뷰
+    reports/review/TAP_FIRST_V1_PERSONA_REVIEW.md에서 v1의 "한 화면 한 질문"
+    구조가 반려됨). Task A·B는 반드시 v2 정본(§2.1~2.5)을 기준으로 작성하라.
+    핵심 변경: ① "한 화면 한 맥락" + 전환 예산(훈련 후 ≤2전환·마무리 ≤2전환·
+    경기 직전 ≤1전환) ② 잉크 스택 캔버스(누적 답 상시 표시·종이 줄 탭으로 제자리
+    수정·파생값 자동 기입) ③ 마이크로인터랙션 계약 M1~M6("느낌 예산").
+    Task B에는 다음 검증 항목을 추가하라: 전환 수 계수 시나리오, 잉크 스택
+    불변(전환 후 누적 답 표시 유지), M1~M6 각각의 수동 확인 절차,
+    prefers-reduced-motion 동작.
 ```
 
 ---
