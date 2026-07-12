@@ -14,6 +14,18 @@ Current productization drafts:
 - `ANALYSIS_AND_VISUALIZATION_DATA_CONTRACT.md` (`DRAFT_FOR_REVIEW`; new productization draft, not original restored, not canonical, not runtime evidence)
 - `PLAN_OUTPUT_RATIONALE_PRIVACY_SPEC.md` (`DRAFT_FOR_REVIEW`; new productization draft, not original restored, not canonical, not runtime evidence)
 - `MICROCYCLE_AND_CALENDAR_MAPPING_SPEC.md` (`DRAFT_FOR_REVIEW`; new productization draft, not original restored, not canonical, not runtime evidence)
+- `EXTERNAL_RECORD_INTEGRATION_SPEC.md` (`DRAFT_FOR_REVIEW`; Work Order 005 Task A draft, merged to main, not canonical, not runtime evidence)
+- `COMPOSITION_BALANCE_BASELINE_CONTRACT.md` (`DRAFT_FOR_REVIEW`; Work Order 005 Task B draft, merged to main, not canonical, not runtime evidence)
+- `JOURNAL_DELIGHT_AND_DECORATION_SPEC.md` (`DRAFT_FOR_REVIEW`; Work Order 006 Task A draft, merged to main, not canonical, not runtime evidence)
+- `LOCAL_FIRST_SYNC_AND_PROMOTION_CONTRACT.md` (`DRAFT_FOR_REVIEW`; Work Order 006 Task B draft, merged to main, not canonical, not runtime evidence)
+- `FEDERATED_ACCOUNT_SSO_CONTRACT.md` (`DRAFT_FOR_REVIEW`; Work Order 006 Task C draft, merged to main, not canonical, not runtime evidence)
+
+Related root decision and planning documents:
+
+- `ACCOUNT_FEDERATION_DECISION.md` records the owner-level account direction for TrainOracle and AthleteTime federation.
+- `ATHLETETIME_INTEGRATION_REVIEW.md` records integration review context for AthleteTime boundaries.
+- `LAUNCH_BACKEND_AND_ACCOUNT_PLAN.md` records launch/backend/account planning context.
+- These root documents are planning/decision context. They are not runtime evidence, canonical promotion, or issue closure.
 
 Known missing or source-not-verified targets:
 
@@ -103,6 +115,41 @@ Use this order before creating any reconstructed file:
 - It defines namespace-safe microcycle/calendar mapping for 9.5-day cycle display, `CYCLE_DAY.*` labels, planned dates, session slots, race anchors, and Calendar projections.
 - It keeps `CYCLE_DAY.*`, `RULE_SPEC_D1_D9.*`, and `LEGACY_PHASE_D.*` separate.
 - It cannot create or select plan options, clear D9 risk, clear Safety Gate blocks, resolve `OI-PG-MICROCYCLE-CALENDAR-MAPPING-001`, or close downstream issues.
+
+`EXTERNAL_RECORD_INTEGRATION_SPEC.md`:
+
+- `specs/reconstruct/EXTERNAL_RECORD_INTEGRATION_SPEC.md` now exists as `DRAFT_FOR_REVIEW`.
+- It is a Work Order 005 Task A productization draft, not an original restored file.
+- It defines one-way inbound external PB/SB record boundaries, consent, freshness display, conflict handling, and non-safety authority.
+- It cannot implement AthleteTime integration, clear D9 risk, clear Safety Gate blocks, close downstream issues, or claim runtime evidence.
+
+`COMPOSITION_BALANCE_BASELINE_CONTRACT.md`:
+
+- `specs/reconstruct/COMPOSITION_BALANCE_BASELINE_CONTRACT.md` now exists as `DRAFT_FOR_REVIEW`.
+- It is a Work Order 005 Task B productization draft, not an original restored file.
+- It defines composition-balance baseline placeholders, athlete-level axis, visible demo states, and non-safety authority.
+- It cannot define accepted final coaching ranges, clear D9 risk, clear Safety Gate blocks, close downstream issues, or claim runtime evidence.
+
+`JOURNAL_DELIGHT_AND_DECORATION_SPEC.md`:
+
+- `specs/reconstruct/JOURNAL_DELIGHT_AND_DECORATION_SPEC.md` now exists as `DRAFT_FOR_REVIEW`.
+- It is a Work Order 006 Task A productization draft, not an original restored file.
+- It defines journal-only mode, safe decoration items, non-volume unlock constraints, and streak handling that includes rest/injury days.
+- It cannot reward training load, clear D9 risk, clear Safety Gate blocks, close downstream issues, or claim runtime evidence.
+
+`LOCAL_FIRST_SYNC_AND_PROMOTION_CONTRACT.md`:
+
+- `specs/reconstruct/LOCAL_FIRST_SYNC_AND_PROMOTION_CONTRACT.md` now exists as `DRAFT_FOR_REVIEW`.
+- It is a Work Order 006 Task B productization draft, not an original restored file.
+- It defines local-first journal persistence, later account-linked promotion, conflict handling, and memo/privacy boundaries.
+- It cannot authorize raw memo server persistence, clear D9 risk, clear Safety Gate blocks, close downstream issues, or claim runtime evidence.
+
+`FEDERATED_ACCOUNT_SSO_CONTRACT.md`:
+
+- `specs/reconstruct/FEDERATED_ACCOUNT_SSO_CONTRACT.md` now exists as `DRAFT_FOR_REVIEW`.
+- It is a Work Order 006 Task C productization draft, not an original restored file.
+- It defines "Continue with AthleteTime" identity federation boundaries while keeping TrainOracle storage, consent, and safety authority separate.
+- It cannot edit AthleteTime code, export TrainOracle private data, clear D9 risk, clear Safety Gate blocks, close downstream issues, or claim runtime evidence.
 
 ## Required Safety Semantics
 

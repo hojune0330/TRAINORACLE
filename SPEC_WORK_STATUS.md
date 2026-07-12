@@ -1,6 +1,6 @@
 # SPEC_WORK_STATUS.md
 
-Updated: 2026-07-10 Asia/Seoul
+Updated: 2026-07-12 Asia/Seoul
 status: DRAFT_HANDOFF_STATUS
 owner: COACH_HOJUNE
 
@@ -72,9 +72,24 @@ Current Work Order 004 state:
 Current Work Order 005 state:
 
 - `CODEX_WORK_ORDER_005.md` is present on main and assigns Codex to external record integration, composition balance baseline, and index/status refresh work.
-- Task A is proposed in PR #36: `EXTERNAL_RECORD_INTEGRATION_SPEC.md` as a new `DRAFT_FOR_REVIEW` contract for AthleteTime PB/SB inbound records. It is not merged at this status update.
-- Task B is proposed in PR #37: `COMPOSITION_BALANCE_BASELINE_CONTRACT.md` as a new `DRAFT_FOR_REVIEW` contract for composition balance baselines. It is not merged at this status update.
-- Task C is this index/status refresh. It does not close issues, promote drafts, claim runtime evidence, edit `app/`, or edit design files.
+- `EXTERNAL_RECORD_INTEGRATION_SPEC.md` is present on main as a `DRAFT_FOR_REVIEW` contract for AthleteTime PB/SB inbound records. Direct file recount: open issues 5, canonical blockers 3.
+- `COMPOSITION_BALANCE_BASELINE_CONTRACT.md` is present on main as a `DRAFT_FOR_REVIEW` contract for composition balance baselines. Direct file recount: open issues 5, canonical blockers 3.
+- These drafts do not close issues, promote drafts, claim runtime evidence, edit `app/`, or edit design files.
+
+Current Work Order 006 state:
+
+- `CODEX_WORK_ORDER_006.md` is present on main and assigns Codex to journal delight, local-first sync promotion, federated SSO, and index refresh work.
+- Task A is merged through PR #44: `JOURNAL_DELIGHT_AND_DECORATION_SPEC.md` as a new `DRAFT_FOR_REVIEW` contract. Direct file recount: open issues 3, canonical blockers 2.
+- Task B is merged through PR #45: `LOCAL_FIRST_SYNC_AND_PROMOTION_CONTRACT.md` as a new `DRAFT_FOR_REVIEW` contract. Direct file recount: open issues 4, canonical blockers 3.
+- Task C is merged through PR #46: `FEDERATED_ACCOUNT_SSO_CONTRACT.md` as a new `DRAFT_FOR_REVIEW` contract. Direct file recount: open issues 5, canonical blockers 4.
+- Supporting account/backend context documents exist at root: `ACCOUNT_FEDERATION_DECISION.md`, `ATHLETETIME_INTEGRATION_REVIEW.md`, and `LAUNCH_BACKEND_AND_ACCOUNT_PLAN.md`.
+- Task D is the current index/status refresh. It does not close issues, promote drafts, claim runtime evidence, edit `app/`, edit design files, or edit AthleteTime repository code.
+
+Current Work Order 007 state:
+
+- `CODEX_WORK_ORDER_007.md` is present on main and unblocked ORDER_006 after the F0 app work merged.
+- It also requested multi-persona review. That review may produce findings, but findings are not fixes until separately accepted and assigned.
+- PR #47 is open at this status update for app-area stability/data-control work by another branch. Codex Task D does not edit `app/` files.
 
 Current Wave 1 physio patch state:
 
@@ -106,7 +121,9 @@ Current Wave 3 productization draft state:
 - It defines namespace-safe microcycle/calendar mapping for 9.5-day cycle display, `CYCLE_DAY.*` labels, planned dates, session slots, race anchors, and Calendar projections.
 - It keeps `CYCLE_DAY.*`, `RULE_SPEC_D1_D9.*`, and `LEGACY_PHASE_D.*` separate and forbids bare D-rule ambiguity in contract fields.
 - It cannot create/select plan options, clear D9/Safety Gate states, claim runtime evidence, resolve `OI-PG-MICROCYCLE-CALENDAR-MAPPING-001`, or close downstream issues.
-- Wave 3 productization drafts are now all created as drafts for review.
+- Work Order 005 productization drafts now present on main: `EXTERNAL_RECORD_INTEGRATION_SPEC.md` and `COMPOSITION_BALANCE_BASELINE_CONTRACT.md`.
+- Work Order 006 productization drafts now present on main: `JOURNAL_DELIGHT_AND_DECORATION_SPEC.md`, `LOCAL_FIRST_SYNC_AND_PROMOTION_CONTRACT.md`, and `FEDERATED_ACCOUNT_SSO_CONTRACT.md`.
+- All productization drafts remain drafts for review; none are canonical promotion, issue closure, or runtime evidence.
 
 Not yet:
 
@@ -179,6 +196,11 @@ Missing/reconstruct area:
 - [`specs/reconstruct/ANALYSIS_AND_VISUALIZATION_DATA_CONTRACT.md`](./specs/reconstruct/ANALYSIS_AND_VISUALIZATION_DATA_CONTRACT.md) (`DRAFT_FOR_REVIEW`; new productization draft)
 - [`specs/reconstruct/PLAN_OUTPUT_RATIONALE_PRIVACY_SPEC.md`](./specs/reconstruct/PLAN_OUTPUT_RATIONALE_PRIVACY_SPEC.md) (`DRAFT_FOR_REVIEW`; new productization draft)
 - [`specs/reconstruct/MICROCYCLE_AND_CALENDAR_MAPPING_SPEC.md`](./specs/reconstruct/MICROCYCLE_AND_CALENDAR_MAPPING_SPEC.md) (`DRAFT_FOR_REVIEW`; new productization draft)
+- [`specs/reconstruct/EXTERNAL_RECORD_INTEGRATION_SPEC.md`](./specs/reconstruct/EXTERNAL_RECORD_INTEGRATION_SPEC.md) (`DRAFT_FOR_REVIEW`; Work Order 005 draft)
+- [`specs/reconstruct/COMPOSITION_BALANCE_BASELINE_CONTRACT.md`](./specs/reconstruct/COMPOSITION_BALANCE_BASELINE_CONTRACT.md) (`DRAFT_FOR_REVIEW`; Work Order 005 draft)
+- [`specs/reconstruct/JOURNAL_DELIGHT_AND_DECORATION_SPEC.md`](./specs/reconstruct/JOURNAL_DELIGHT_AND_DECORATION_SPEC.md) (`DRAFT_FOR_REVIEW`; Work Order 006 draft)
+- [`specs/reconstruct/LOCAL_FIRST_SYNC_AND_PROMOTION_CONTRACT.md`](./specs/reconstruct/LOCAL_FIRST_SYNC_AND_PROMOTION_CONTRACT.md) (`DRAFT_FOR_REVIEW`; Work Order 006 draft)
+- [`specs/reconstruct/FEDERATED_ACCOUNT_SSO_CONTRACT.md`](./specs/reconstruct/FEDERATED_ACCOUNT_SSO_CONTRACT.md) (`DRAFT_FOR_REVIEW`; Work Order 006 draft)
 
 ## Reconstructed Or Source-Not-Verified Contracts
 
@@ -193,6 +215,11 @@ These required contracts are not all present as approved source files in this re
 | `ANALYSIS_AND_VISUALIZATION_DATA_CONTRACT.md` | `specs/reconstruct/ANALYSIS_AND_VISUALIZATION_DATA_CONTRACT.md` exists as `DRAFT_FOR_REVIEW`; new productization draft, not metric formula authority, not canonical, not runtime evidence |
 | `PLAN_OUTPUT_RATIONALE_PRIVACY_SPEC.md` | `specs/reconstruct/PLAN_OUTPUT_RATIONALE_PRIVACY_SPEC.md` exists as `DRAFT_FOR_REVIEW`; new productization draft, not Plan Generator issue closure, not canonical, not runtime evidence |
 | `MICROCYCLE_AND_CALENDAR_MAPPING_SPEC.md` | `specs/reconstruct/MICROCYCLE_AND_CALENDAR_MAPPING_SPEC.md` exists as `DRAFT_FOR_REVIEW`; new productization draft, not Plan Generator issue closure, not D-rule redefinition, not canonical, not runtime evidence |
+| `EXTERNAL_RECORD_INTEGRATION_SPEC.md` | `specs/reconstruct/EXTERNAL_RECORD_INTEGRATION_SPEC.md` exists as `DRAFT_FOR_REVIEW`; Work Order 005 draft, not AthleteTime implementation, not safety authority, not canonical, not runtime evidence |
+| `COMPOSITION_BALANCE_BASELINE_CONTRACT.md` | `specs/reconstruct/COMPOSITION_BALANCE_BASELINE_CONTRACT.md` exists as `DRAFT_FOR_REVIEW`; Work Order 005 draft, not accepted final baseline, not safety authority, not canonical, not runtime evidence |
+| `JOURNAL_DELIGHT_AND_DECORATION_SPEC.md` | `specs/reconstruct/JOURNAL_DELIGHT_AND_DECORATION_SPEC.md` exists as `DRAFT_FOR_REVIEW`; Work Order 006 draft, not training-load reward authority, not safety authority, not canonical, not runtime evidence |
+| `LOCAL_FIRST_SYNC_AND_PROMOTION_CONTRACT.md` | `specs/reconstruct/LOCAL_FIRST_SYNC_AND_PROMOTION_CONTRACT.md` exists as `DRAFT_FOR_REVIEW`; Work Order 006 draft, not raw memo server-storage approval, not safety authority, not canonical, not runtime evidence |
+| `FEDERATED_ACCOUNT_SSO_CONTRACT.md` | `specs/reconstruct/FEDERATED_ACCOUNT_SSO_CONTRACT.md` exists as `DRAFT_FOR_REVIEW`; Work Order 006 draft, not AthleteTime code implementation, not TrainOracle safety authority, not canonical, not runtime evidence |
 | `COACH_RATIFICATION_SAFETY_DEFAULTS_2026_06_04_001` | Not found as approved local evidence |
 
 Do not claim a document exists from a chapter title, H1, table row, status label, or conversation summary. Exact local filename search is required.
@@ -217,7 +244,13 @@ Do not claim a document exists from a chapter title, H1, table row, status label
 14. Review `specs/reconstruct/ANALYSIS_AND_VISUALIZATION_DATA_CONTRACT.md`; it is a productization draft, not metric formula authority, canonical, or runtime evidence.
 15. Review `specs/reconstruct/PLAN_OUTPUT_RATIONALE_PRIVACY_SPEC.md`; it is a productization draft, not Plan Generator target issue closure, canonical, or runtime evidence.
 16. Review `specs/reconstruct/MICROCYCLE_AND_CALENDAR_MAPPING_SPEC.md`; it is a productization draft, not Plan Generator target issue closure, D-rule redefinition, canonical, or runtime evidence.
-17. Begin App Bridge/API schema contracts and runtime evidence only after preserving the safety core chain.
+17. Review `specs/reconstruct/EXTERNAL_RECORD_INTEGRATION_SPEC.md`; do not implement AthleteTime integration until API reality, terms, consent, and owner decisions are verified.
+18. Review `specs/reconstruct/COMPOSITION_BALANCE_BASELINE_CONTRACT.md`; keep placeholder baselines visibly marked as demo until owner/coach approval and source validation exist.
+19. Review `specs/reconstruct/JOURNAL_DELIGHT_AND_DECORATION_SPEC.md`; decoration, streak, and unlock logic must not reward training volume or hide pain/rest/injury signals.
+20. Review `specs/reconstruct/LOCAL_FIRST_SYNC_AND_PROMOTION_CONTRACT.md`; raw memo/note server persistence remains unresolved until owner policy, encryption, retention, export, and deletion decisions exist.
+21. Review `specs/reconstruct/FEDERATED_ACCOUNT_SSO_CONTRACT.md`; AthleteTime SSO is identity authority only and does not grant TrainOracle safety or coaching authority.
+22. Read `ACCOUNT_FEDERATION_DECISION.md`, `ATHLETETIME_INTEGRATION_REVIEW.md`, and `LAUNCH_BACKEND_AND_ACCOUNT_PLAN.md` before backend/account work; they are planning context, not runtime evidence.
+23. Begin App Bridge/API schema contracts and runtime evidence only after preserving the safety core chain and resolving the owner decisions called out by the account/sync drafts.
 
 ## Hard Guardrails
 
@@ -305,7 +338,10 @@ Markdown self-checks and documentation scans are not D9 evaluator runtime eviden
 13. [`SPEC_FILE_TRUTH_GUARD.md`](./SPEC_FILE_TRUTH_GUARD.md)
 14. [`SPEC_LEGACY_ALIGNMENT_AND_DAILY_LOG_PLAN.md`](./SPEC_LEGACY_ALIGNMENT_AND_DAILY_LOG_PLAN.md)
 15. [`specs/reconstruct/README.md`](./specs/reconstruct/README.md)
-16. [`.omo/reports/trainoracle-reconstruction-readiness.md`](./.omo/reports/trainoracle-reconstruction-readiness.md)
-17. [`.omo/evidence/trainoracle-remaining-work-flow-reference.md`](./.omo/evidence/trainoracle-remaining-work-flow-reference.md)
+16. [`ACCOUNT_FEDERATION_DECISION.md`](./ACCOUNT_FEDERATION_DECISION.md)
+17. [`ATHLETETIME_INTEGRATION_REVIEW.md`](./ATHLETETIME_INTEGRATION_REVIEW.md)
+18. [`LAUNCH_BACKEND_AND_ACCOUNT_PLAN.md`](./LAUNCH_BACKEND_AND_ACCOUNT_PLAN.md)
+19. [`.omo/reports/trainoracle-reconstruction-readiness.md`](./.omo/reports/trainoracle-reconstruction-readiness.md)
+20. [`.omo/evidence/trainoracle-remaining-work-flow-reference.md`](./.omo/evidence/trainoracle-remaining-work-flow-reference.md)
 
 [DRAFT_COMPLETE]

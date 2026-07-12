@@ -25,7 +25,7 @@ That document explains, in plain Korean:
 - why the current SPEC structure is solid
 - what each core SPEC does
 - which SPECs are still reconstructed drafts
-- which productization SPECs still need to be written
+- which productization drafts still need review, owner decisions, target patches, or runtime evidence
 
 Short version:
 
@@ -109,7 +109,9 @@ This table records files found in the repository at the time of this index updat
 | `CODEX_WORK_ORDER_002.md` | root | COMPLETED | Work order for screen/SPEC traceability, Round 3 review prep, doc quality, and dashboard data sync; PR #14-#17 merged. |
 | `CODEX_WORK_ORDER_003.md` | root | COMPLETED / MERGED | Work order for GAP_SPEC draft contracts and Round 3 follow-up binding; PR #22-#25 merged. |
 | `CODEX_WORK_ORDER_004.md` | root | COMPLETED / MERGED | Work order for Round 4 downstream patches, legacy v1 kit disposition proposal, and traceability/index/status recount; PR #28/#30/#31/#32 merged. |
-| `CODEX_WORK_ORDER_005.md` | root | ISSUED / IN_PROGRESS | Work order for external record integration draft, composition balance baseline draft, and index/status refresh. |
+| `CODEX_WORK_ORDER_005.md` | root | COMPLETED / MERGED_TO_MAIN | Work order for external record integration draft, composition balance baseline draft, and index/status refresh. |
+| `CODEX_WORK_ORDER_006.md` | root | PARTIALLY_COMPLETED / TASK_D_IN_PROGRESS | Work order for journal delight, local-first sync promotion, federated SSO, and index refresh. Tasks A-C are merged; Task D is this index/status refresh. |
+| `CODEX_WORK_ORDER_007.md` | root | ISSUED / REVIEW_TRACK | Work order that unblocked ORDER_006 after F0 main merge and requested multi-persona review. It is not implementation acceptance or issue closure. |
 | `SPEC_SOURCE_ACCEPTANCE_DECISION_ROUND1.md` | root | DECIDED | Safety Gate and RVE reconstructed drafts accepted as working sources only; not canonical promotion or issue closure. |
 | `SPEC_SOURCE_ACCEPTANCE_DECISION_ROUND2.md` | root | DECIDED | Physio Source Trust and Daily Log accepted as working sources only; not canonical promotion or issue closure. |
 | `SPEC_SOURCE_ACCEPTANCE_DECISION_ROUND3.md` | root | DECIDED | Analysis/Visualization, Daily Brief/Inbox, Microcycle/Calendar, and Plan Output Rationale Privacy accepted as working sources only; not canonical promotion or issue closure. |
@@ -127,8 +129,14 @@ This table records files found in the repository at the time of this index updat
 | Work Order 004 Task 3 PR | GitHub PR #31 | MERGED | Legacy v1 kit disposition proposal merged as proposal; owner disposition is recorded in Round 5. |
 | Work Order 004 Task 4 PR | GitHub PR #32 | MERGED | Traceability matrix, index, and status recount merged. |
 | Round 5 decision PR | GitHub PR #34 | MERGED | Round 5 decision, Work Order 005, and Project Lead app UI work merged. Codex Work Order 005 forbids Codex from editing `app/` and design files. |
-| Work Order 005 Task A PR | GitHub PR #36 | OPEN_AT_UPDATE_TIME | External record integration draft proposed; review/merge pending. |
-| Work Order 005 Task B PR | GitHub PR #37 | OPEN_AT_UPDATE_TIME | Composition balance baseline draft proposed; review/merge pending. |
+| Work Order 005 Task A output | `specs/reconstruct/EXTERNAL_RECORD_INTEGRATION_SPEC.md` | MERGED_TO_MAIN / DRAFT_FOR_REVIEW | External record integration draft is present locally; open issues 5, canonical blockers 3 by direct metadata/table check. |
+| Work Order 005 Task B output | `specs/reconstruct/COMPOSITION_BALANCE_BASELINE_CONTRACT.md` | MERGED_TO_MAIN / DRAFT_FOR_REVIEW | Composition balance baseline draft is present locally; open issues 5, canonical blockers 3 by direct metadata/table check. |
+| Work Order 006 Task A PR | GitHub PR #44 | MERGED | `JOURNAL_DELIGHT_AND_DECORATION_SPEC.md` is present on main as a draft; open issues 3, canonical blockers 2 by direct metadata/table check. |
+| Work Order 006 Task B PR | GitHub PR #45 | MERGED | `LOCAL_FIRST_SYNC_AND_PROMOTION_CONTRACT.md` is present on main as a draft; open issues 4, canonical blockers 3 by direct metadata/table check. |
+| Work Order 006 Task C PR | GitHub PR #46 | MERGED | `FEDERATED_ACCOUNT_SSO_CONTRACT.md` is present on main as a draft; open issues 5, canonical blockers 4 by direct metadata/table check. |
+| Work Order 006 supporting decision docs | `ACCOUNT_FEDERATION_DECISION.md`, `ATHLETETIME_INTEGRATION_REVIEW.md`, `LAUNCH_BACKEND_AND_ACCOUNT_PLAN.md` | MERGED_TO_MAIN / DECISION_CONTEXT | Account federation, AthleteTime integration review, and launch/backend/account planning context. Not runtime evidence or canonical promotion. |
+| F0-e app stability PR | GitHub PR #47 | OPEN_AT_UPDATE_TIME | App-area response to selected improvement findings. Codex Task D does not edit `app/` or design files. |
+| Improvement discovery report PR | GitHub PR #48 | OPEN_AT_UPDATE_TIME | Report-only PR for `reports/review/CODEX_PARALLEL_IMPROVEMENT_DISCOVERY_20260711.md`; not a spec status change. |
 
 ---
 
@@ -199,8 +207,11 @@ These files translate the safety/spec core into product surfaces. They are not c
 | `ANALYSIS_AND_VISUALIZATION_DATA_CONTRACT.md` | `specs/reconstruct/ANALYSIS_AND_VISUALIZATION_DATA_CONTRACT.md` | DRAFT_FOR_REVIEW | New productization draft. Defines source-backed visualization data, uncertainty/source coverage, and privacy boundary. Does not define final metric formulas, clear D9/Safety Gate states, or create plan options. |
 | `PLAN_OUTPUT_RATIONALE_PRIVACY_SPEC.md` | `specs/reconstruct/PLAN_OUTPUT_RATIONALE_PRIVACY_SPEC.md` | DRAFT_FOR_REVIEW | New productization draft. Defines privacy-safe plan rationale bundles using source refs, rationale codes, privacy tiers, and redaction states. Does not create/select plan options, clear D9/Safety Gate states, or close Plan Generator issues. |
 | `MICROCYCLE_AND_CALENDAR_MAPPING_SPEC.md` | `specs/reconstruct/MICROCYCLE_AND_CALENDAR_MAPPING_SPEC.md` | DRAFT_FOR_REVIEW | New productization draft. Defines namespace-safe 9.5-day cycle, `CYCLE_DAY`, planned-date/session-slot, race-anchor, and Calendar projection mapping. Does not create/select plan options, redefine D-rules, or clear D9/Safety Gate states. |
-| `EXTERNAL_RECORD_INTEGRATION_SPEC.md` | `specs/reconstruct/EXTERNAL_RECORD_INTEGRATION_SPEC.md` | DRAFT_FOR_REVIEW / PR #36 OPEN_AT_UPDATE_TIME | Work Order 005 Task A draft. Defines one-way inbound external PB/SB record boundaries, consent, freshness display, conflict handling, and non-safety authority. Review/merge pending. |
-| `COMPOSITION_BALANCE_BASELINE_CONTRACT.md` | `specs/reconstruct/COMPOSITION_BALANCE_BASELINE_CONTRACT.md` | DRAFT_FOR_REVIEW / PR #37 OPEN_AT_UPDATE_TIME | Work Order 005 Task B draft. Defines baseline basis, period axis, athlete-level placeholder, display states, demo badge requirement, and non-safety authority. Review/merge pending. |
+| `EXTERNAL_RECORD_INTEGRATION_SPEC.md` | `specs/reconstruct/EXTERNAL_RECORD_INTEGRATION_SPEC.md` | DRAFT_FOR_REVIEW / MERGED_TO_MAIN | Work Order 005 Task A draft. Defines one-way inbound external PB/SB record boundaries, consent, freshness display, conflict handling, and non-safety authority. Not canonical or runtime evidence. |
+| `COMPOSITION_BALANCE_BASELINE_CONTRACT.md` | `specs/reconstruct/COMPOSITION_BALANCE_BASELINE_CONTRACT.md` | DRAFT_FOR_REVIEW / MERGED_TO_MAIN | Work Order 005 Task B draft. Defines baseline basis, period axis, athlete-level placeholder, display states, demo badge requirement, and non-safety authority. Not canonical or runtime evidence. |
+| `JOURNAL_DELIGHT_AND_DECORATION_SPEC.md` | `specs/reconstruct/JOURNAL_DELIGHT_AND_DECORATION_SPEC.md` | DRAFT_FOR_REVIEW / MERGED_TO_MAIN | Work Order 006 Task A draft. Defines journal-only mode, decoration catalog boundaries, safe unlock constraints, and streak handling that must not reward training load. Not canonical or runtime evidence. |
+| `LOCAL_FIRST_SYNC_AND_PROMOTION_CONTRACT.md` | `specs/reconstruct/LOCAL_FIRST_SYNC_AND_PROMOTION_CONTRACT.md` | DRAFT_FOR_REVIEW / MERGED_TO_MAIN | Work Order 006 Task B draft. Defines local-first journal persistence, later account-linked promotion, conflict handling, and memo/privacy boundaries. Not canonical or runtime evidence. |
+| `FEDERATED_ACCOUNT_SSO_CONTRACT.md` | `specs/reconstruct/FEDERATED_ACCOUNT_SSO_CONTRACT.md` | DRAFT_FOR_REVIEW / MERGED_TO_MAIN | Work Order 006 Task C draft. Defines "Continue with AthleteTime" identity federation boundaries while keeping TrainOracle storage, consent, and safety authority separate. Not canonical or runtime evidence. |
 
 ---
 
@@ -253,9 +264,13 @@ Bare D-rule references are forbidden in new SPEC work.
 15. Review `specs/reconstruct/ANALYSIS_AND_VISUALIZATION_DATA_CONTRACT.md` as a productization draft; do not treat it as metric formula authority, canonical, runtime evidence, or downstream issue closure.
 16. Review `specs/reconstruct/PLAN_OUTPUT_RATIONALE_PRIVACY_SPEC.md` as a productization draft; do not treat it as Plan Generator issue closure, canonical, runtime evidence, or downstream issue closure.
 17. Review `specs/reconstruct/MICROCYCLE_AND_CALENDAR_MAPPING_SPEC.md` as a productization draft; do not treat it as Plan Generator issue closure, canonical, runtime evidence, D-rule redefinition, or downstream issue closure.
-18. Review Work Order 005 Task A PR #36 before treating `EXTERNAL_RECORD_INTEGRATION_SPEC.md` as a merged local file; do not implement AthleteTime integration until API reality and terms are verified.
-19. Review Work Order 005 Task B PR #37 before treating `COMPOSITION_BALANCE_BASELINE_CONTRACT.md` as a merged local file; keep placeholder baselines visibly marked as demo until accepted by owner decision.
-20. Begin App Bridge/API schema contracts and runtime evidence only after preserving the safety core chain.
+18. Review `specs/reconstruct/EXTERNAL_RECORD_INTEGRATION_SPEC.md` as a merged local draft; do not implement AthleteTime integration until API reality, terms, consent, and owner decisions are verified.
+19. Review `specs/reconstruct/COMPOSITION_BALANCE_BASELINE_CONTRACT.md` as a merged local draft; keep placeholder baselines visibly marked as demo until accepted by owner decision.
+20. Review `specs/reconstruct/JOURNAL_DELIGHT_AND_DECORATION_SPEC.md` as a merged local draft; decoration, streaks, and unlocks must not reward training volume or hide pain/rest/injury signals.
+21. Review `specs/reconstruct/LOCAL_FIRST_SYNC_AND_PROMOTION_CONTRACT.md` as a merged local draft; raw memo/server persistence remains unresolved until owner policy and encryption/retention decisions are accepted.
+22. Review `specs/reconstruct/FEDERATED_ACCOUNT_SSO_CONTRACT.md` as a merged local draft; AthleteTime is identity context only and does not grant TrainOracle safety, storage, or coaching authority.
+23. Read `ACCOUNT_FEDERATION_DECISION.md`, `ATHLETETIME_INTEGRATION_REVIEW.md`, and `LAUNCH_BACKEND_AND_ACCOUNT_PLAN.md` before backend/account work; treat them as planning context, not runtime evidence.
+24. Begin App Bridge/API schema contracts and runtime evidence only after preserving the safety core chain and resolving the owner decisions called out by the account/sync drafts.
 
 ---
 
@@ -277,6 +292,9 @@ Important starting points:
 - `SPEC_WAVE1_PHYSIO_PATCH_REPORT.md`
 - `SPEC_FILE_TRUTH_GUARD.md`
 - `SPEC_LEGACY_ALIGNMENT_AND_DAILY_LOG_PLAN.md`
+- `ACCOUNT_FEDERATION_DECISION.md`
+- `ATHLETETIME_INTEGRATION_REVIEW.md`
+- `LAUNCH_BACKEND_AND_ACCOUNT_PLAN.md`
 - `.omo/drafts/train-oracle-spec-handoff.md`
 - `.omo/plans/trainoracle-main-handoff-cleanup.md`
 - `.omo/evidence/trainoracle-confirmed-inventory.md`

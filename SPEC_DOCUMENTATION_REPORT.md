@@ -100,6 +100,14 @@ canonical_promotion_allowed: false
 | `ANALYSIS_AND_VISUALIZATION_DATA_CONTRACT.md` | 분석 화면과 시각화 데이터 계약을 만들기 위해 | 그래프/패널은 구조화 source refs와 uncertainty를 보존하고 안전 상태를 절대 clear하지 않는다. |
 | `PLAN_OUTPUT_RATIONALE_PRIVACY_SPEC.md` | 훈련 계획 설명의 privacy 계약을 만들기 위해 | Plan rationale은 source refs, rationale codes, privacy tier, redaction state로만 설명한다. |
 | `MICROCYCLE_AND_CALENDAR_MAPPING_SPEC.md` | 9.5-day cycle과 Calendar 매핑 계약을 만들기 위해 | `CYCLE_DAY.*`와 `RULE_SPEC_D1_D9.*`를 분리하고 plannedDate/sessionSlot을 Calendar projection으로 연결한다. |
+| `EXTERNAL_RECORD_INTEGRATION_SPEC.md` | AthleteTime 같은 외부 기록을 PB/SB 구조 데이터로만 안전하게 들여오기 위해 | 외부 기록은 non-safety authority이며 충돌/신선도/동의 상태를 표시한다. |
+| `COMPOSITION_BALANCE_BASELINE_CONTRACT.md` | 구성 균형 기준을 데모/초안 상태로 안전하게 다루기 위해 | 최종 범위 승인 전에는 기준값을 `기준: 데모`로 표시하고 안전 판단에 쓰지 않는다. |
+| `JOURNAL_DELIGHT_AND_DECORATION_SPEC.md` | 선수가 일지만 쓰러 들어와도 재미를 느끼게 하기 위해 | 꾸미기/스티커/스트릭은 훈련량 보상이 아니며 휴식/부상 기록도 유지 행동으로 인정한다. |
+| `LOCAL_FIRST_SYNC_AND_PROMOTION_CONTRACT.md` | 기기 로컬 일지를 계정 연동 후 서버로 승격하는 경계를 정하기 위해 | Raw memo 서버 저장은 아직 미결이며 구조화 필드/동기화 상태/충돌 처리를 분리한다. |
+| `FEDERATED_ACCOUNT_SSO_CONTRACT.md` | "AthleteTime으로 계속하기" 계정 연동을 TrainOracle 안전 경계와 분리하기 위해 | AthleteTime은 identity provider이고 TrainOracle의 안전/저장/코칭 권한을 대신하지 않는다. |
+| `ACCOUNT_FEDERATION_DECISION.md` | 계정 연동 방향의 owner-level 결정을 남기기 위해 | SSO/동기화/백엔드 작업 전에 결정 맥락으로 읽되 runtime evidence로 쓰지 않는다. |
+| `ATHLETETIME_INTEGRATION_REVIEW.md` | AthleteTime 연동 가능성과 경계 검토를 남기기 위해 | 외부 API/약관/권한 확인 전 구현을 시작하지 않는다. |
+| `LAUNCH_BACKEND_AND_ACCOUNT_PLAN.md` | 출시 전 백엔드와 계정 작업 순서를 잡기 위해 | F2 backend/account work의 planning context로 쓰며 issue closure 근거로 쓰지 않는다. |
 
 ---
 
@@ -111,6 +119,11 @@ canonical_promotion_allowed: false
 | `ANALYSIS_AND_VISUALIZATION_DATA_CONTRACT.md` | Productization SPEC draft | Analysis, Session Detail, Dashboard, Calendar 시각화가 어떤 구조 데이터에서 나오는지 정의 | Draft created; App Bridge binding, metric formula authority, runtime evidence는 아직 없음 |
 | `PLAN_OUTPUT_RATIONALE_PRIVACY_SPEC.md` | Productization SPEC draft | Plan option rationale과 코치-visible 설명이 민감정보를 누출하지 않게 함 | Draft created; Plan Generator/App Bridge target binding과 runtime evidence는 아직 없음 |
 | `MICROCYCLE_AND_CALENDAR_MAPPING_SPEC.md` | Productization SPEC draft | 9.5-day cycle, calendar, `CYCLE_DAY` 라벨을 화면/계획과 연결 | Draft created; Plan Generator/App Bridge/UI target binding과 runtime evidence는 아직 없음 |
+| `EXTERNAL_RECORD_INTEGRATION_SPEC.md` | Productization SPEC draft | 외부 PB/SB 기록을 TrainOracle에 구조화 inbound source로 연결 | Draft created and merged to main; API reality, consent, conflict UX, runtime evidence는 아직 없음 |
+| `COMPOSITION_BALANCE_BASELINE_CONTRACT.md` | Productization SPEC draft | 구성 균형 기준/placeholder/demo badge를 안전하게 표현 | Draft created and merged to main; owner-approved baseline, literature validation, runtime evidence는 아직 없음 |
+| `JOURNAL_DELIGHT_AND_DECORATION_SPEC.md` | Productization SPEC draft | 일지만 쓰는 사용자 모드와 꾸미기/스트릭/스탬프 체계 | Draft created and merged to main; final asset catalog, safe unlock thresholds, monetization decision은 아직 없음 |
+| `LOCAL_FIRST_SYNC_AND_PROMOTION_CONTRACT.md` | Productization SPEC draft | 로컬 일지를 계정 연동 후 서버 저장으로 승격하는 규칙 | Draft created and merged to main; backend, raw memo policy, encryption, deletion/export UX는 아직 없음 |
+| `FEDERATED_ACCOUNT_SSO_CONTRACT.md` | Productization SPEC draft | AthleteTime SSO를 identity boundary로만 연결하는 계약 | Draft created and merged to main; OAuth endpoints, redirect registry, guardian consent, revocation evidence는 아직 없음 |
 | App implementation DB/API schemas | Implementation contract | SPEC를 실제 앱 저장소와 API로 내리는 단계 | Core SPEC acceptance와 privacy review |
 | D9 runtime evidence report | Runtime evidence | D9 evaluator 실제 실행 결과와 RVE/Safety Gate mapping 증거 | test package 실행 및 로그 확보 |
 
@@ -122,13 +135,14 @@ canonical_promotion_allowed: false
 2. `DAILY_LOG_AND_CHECKIN_SPEC.md`를 기준으로 App Bridge / Athlete Profile / Physio Source Trust / RVE / Safety Gate target patch 계획을 세운다.
 3. Wave 1 Physio Source Trust target patches in `PLAN_GENERATOR_SPEC.md`, `APP_IMPLEMENTATION_BRIDGE.md`, and `ATHLETE_PROFILE_SPEC.md` are present; review source acceptance and target-file recount approval before any issue closure.
 4. 실제 D9 evaluator runtime output을 확보하기 전까지 RVE/PG/Safety Gate binding issue를 닫지 않는다.
-5. Productization drafts are now created; next work is target patches, implementation schema contracts, and runtime evidence.
+5. Work Order 006 A-C drafts are now present; review journal delight, local-first sync, and federated SSO before backend/account implementation.
+6. Productization drafts are now created; next work is target patches, owner decisions, implementation schema contracts, and runtime evidence.
 
 ---
 
 ## 10. 한 줄 요약
 
-TrainOracle의 문서 계층은 이제 `Rule semantics -> RVE -> Safety Gate -> Plan Generator` 안전 체인과 `Daily Log -> structured source context -> RVE/Safety Gate/Analysis` 일지 체인을 분리해서 볼 수 있다. 아직 정본 승인이나 runtime evidence 단계는 아니며, 다음 핵심은 target patch와 실제 D9 실행 증거다.
+TrainOracle의 문서 계층은 이제 `Rule semantics -> RVE -> Safety Gate -> Plan Generator` 안전 체인과 `Daily Log -> structured source context -> RVE/Safety Gate/Analysis` 일지 체인, 그리고 `local journal -> account sync -> AthleteTime identity` 계정 체인을 분리해서 볼 수 있다. 아직 정본 승인이나 runtime evidence 단계는 아니며, 다음 핵심은 owner decision, target patch, backend/account 구현 증거다.
 
 ---
 
@@ -337,5 +351,29 @@ Purpose:
 - Record Round 1/2 source acceptance references in downstream binding targets.
 - Record target-local recounts for Wave D.
 - Keep `OI-PG-PHYSIO-SOURCE-CONSUMPTION-001`, `OI-DLC-APP-BRIDGE-BINDING-001`, and `OI-DLC-RVE-SAFETY-BINDING-001` open.
+
+## Work Order 006 Contract Addendum - 2026-07-12
+
+The following Work Order 006 draft contracts now exist under `specs/reconstruct/`:
+
+- `JOURNAL_DELIGHT_AND_DECORATION_SPEC.md`
+- `LOCAL_FIRST_SYNC_AND_PROMOTION_CONTRACT.md`
+- `FEDERATED_ACCOUNT_SSO_CONTRACT.md`
+
+Directly recounted metadata/open-issue totals from those files:
+
+| Document | Open issues | Canonical blockers | Treatment |
+|---|---:|---:|---|
+| `JOURNAL_DELIGHT_AND_DECORATION_SPEC.md` | 3 | 2 | Draft only; not canonical, not runtime evidence, no issue closure |
+| `LOCAL_FIRST_SYNC_AND_PROMOTION_CONTRACT.md` | 4 | 3 | Draft only; not canonical, not runtime evidence, no issue closure |
+| `FEDERATED_ACCOUNT_SSO_CONTRACT.md` | 5 | 4 | Draft only; not canonical, not runtime evidence, no issue closure |
+
+Supporting root context documents now listed for account/backend work:
+
+- `ACCOUNT_FEDERATION_DECISION.md`
+- `ATHLETETIME_INTEGRATION_REVIEW.md`
+- `LAUNCH_BACKEND_AND_ACCOUNT_PLAN.md`
+
+At this checkpoint, exact local file existence must still be verified before any downstream patch or issue closure.
 
 [DRAFT_COMPLETE]
