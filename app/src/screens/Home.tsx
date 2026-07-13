@@ -293,13 +293,13 @@ const KIND_META: Record<JournalEntry["kind"], { label: string; mark: string }> =
 function entryHeadline(e: JournalEntry): string {
   if (e.kind === "post-session") return e.title || "훈련 기록"
   if (e.kind === "race") return e.record ? `기록 ${e.record}` : "경기 기록"
-  return e.note || `수면 ${e.sleepH}h · 기분 ${e.mood}/5`
+  return e.note || [e.sleepH > 0 ? `수면 ${e.sleepH}h` : null, e.mood > 0 ? `기분 ${e.mood}/5` : null].filter(Boolean).join(" · ") || "하루 마무리"
 }
 
 function entrySub(e: JournalEntry): string {
-  if (e.kind === "post-session") return `${e.distanceKm}km · ${e.durationMin}min · RPE ${e.rpe}`
+  if (e.kind === "post-session") return [e.distanceKm ? `${e.distanceKm}km` : null, e.durationMin ? `${e.durationMin}min` : null, e.rpe > 0 ? `RPE ${e.rpe}` : null].filter(Boolean).join(" · ") || "훈련 후"
   if (e.kind === "race") return [e.rank, e.result].filter(Boolean).join(" · ")
-  return `체중 ${e.weightKg}kg · 안정시 HR ${e.restingHr}`
+  return [e.weightKg ? `체중 ${e.weightKg}kg` : null, e.restingHr ? `안정시 HR ${e.restingHr}` : null].filter(Boolean).join(" · ")
 }
 
 function MyDeviceJournal({ onOpenDay }: { onOpenDay?: ((date: string) => void) | undefined }) {

@@ -86,7 +86,7 @@ function LogDetailJournal({ date, onBack }: { date: string; onBack?: (() => void
                   ["거리", s.distanceKm || "—", "km"],
                   ["시간", s.durationMin || "—", "min"],
                   ["평균 페이스", s.avgPace || "—", "/km"],
-                  ["RPE", String(s.rpe), "/10"],
+                  ["RPE", s.rpe > 0 ? String(s.rpe) : "—", "/10"],
                 ] as const).map(([l, v, u], i, a) => (
                   <div key={i} style={{ padding: "10px 8px 10px 0", borderRight: i < a.length - 1 ? "1px solid var(--hair)" : 0, paddingLeft: i > 0 ? 8 : 0 }}>
                     <div style={{ fontFamily: "var(--mono)", fontSize: 8.5, color: "var(--ink-3)", letterSpacing: "0.14em", textTransform: "uppercase" }}>{l}{l === "RPE" && <TermHelp term="rpe" />}</div>
@@ -140,13 +140,13 @@ function LogDetailJournal({ date, onBack }: { date: string; onBack?: (() => void
           <div key={ev.id} style={{ padding: "24px 20px 0" }}>
             <SectionLb action={savedClock(ev.savedAt)}>— EVENING CHECK-IN</SectionLb>
             <div style={{ background: "var(--surface)", border: "1px solid var(--line)" }}>
-              <CheckinRow lb="수면" v={`${ev.sleepH} h · ${["", "나쁨", "부족", "보통", "좋음", "최고"][ev.sleepQuality] ?? ev.sleepQuality}`} />
+              <CheckinRow lb="수면" v={ev.sleepH > 0 ? `${ev.sleepH} h · ${["", "나쁨", "부족", "보통", "좋음", "최고"][ev.sleepQuality] ?? "—"}` : "미기록"} />
               {ev.weightKg && <CheckinRow lb="체중" v={`${ev.weightKg} kg`} />}
               {ev.restingHr && <CheckinRow lb="안정시 HR" v={`${ev.restingHr} bpm`} />}
               {pains.map(([part, lv]) => (
                 <CheckinRow key={part} lb="통증" v={`${part} ${lv}/5`} right={<PainDot level={lv} size={10} />} />
               ))}
-              <CheckinRow lb="감정" v="" right={<MoodStrip level={ev.mood} showLabel />} last={!ev.note} />
+              <CheckinRow lb="감정" v={ev.mood > 0 ? "" : "미기록"} right={ev.mood > 0 ? <MoodStrip level={ev.mood} showLabel /> : undefined} last={!ev.note} />
               {ev.note && (
                 <div className="hand" style={{ padding: "12px 14px", fontSize: 17, lineHeight: 1.4, color: "var(--ink-blue)", borderTop: "1px dashed var(--hair)" }}>
                   {ev.note}
