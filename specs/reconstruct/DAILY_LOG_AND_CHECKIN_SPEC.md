@@ -5,7 +5,7 @@ document_metadata:
   doc_id: trainoracle-spec-013-daily-log-and-checkin
   spec_id: DAILY_LOG_AND_CHECKIN_SPEC
   title: TrainOracle Daily Log And Check-in Spec
-  version: "0.1"
+  version: "0.2"
   round: RT1_RECONSTRUCT
   status: RECONSTRUCTED_DRAFT_FOR_REVIEW
   owner: COACH_HOJUNE
@@ -54,7 +54,7 @@ This document does not:
 - define final web/app UI
 - create a parallel plan generator
 - create medical, injury, rehab, return-to-play, or high-intensity clearance
-- store raw athlete free text, raw symptom clauses, injury narratives, medical notes, rehab notes, evidence clauses, or guardian private notes in audit records
+- store raw athlete free text, raw symptom clauses, injury narratives, medical notes, rehab notes, evidence clauses, or guardian private notes in server, analysis, or audit records
 - claim D9 evaluator runtime PASS evidence
 - close any RVE, Safety Gate, Plan Generator, Physio Source, App Bridge, Athlete Profile, or Daily Brief issue
 
@@ -148,7 +148,8 @@ hard_constraints:
   no_D9_rule_semantic_redefinition: true
   no_rule_threshold_definition: true
   no_external_llm_with_private_athlete_data: true
-  no_raw_free_text_storage: true
+  no_raw_free_text_server_analysis_or_audit_storage: true
+  local_device_raw_text_requires_explicit_purpose_contract: true
   no_raw_symptom_clause_storage: true
   no_evidence_clause_storage_in_audit: true
   no_medical_note_storage_in_daily_log: true
@@ -527,31 +528,104 @@ data_provenance_contract:
 
 ## 8. Free-Text And Memo Boundary
 
-Daily Check-in may offer a user-facing memo field, but raw memo text is not a persistent training-analysis or audit field.
+Daily Check-in separates private writing from analyzable training notes. A private
+note is not a hidden safety input. An analyzable training note is not permission to
+persist or expose its raw text outside the athlete's device.
 
 ```yaml
 memo_policy:
-  user_facing_memo_input_allowed: true
-  production_raw_memo_persistence_allowed: false
+  patched_from: CODEX_WORK_ORDER_009 amendment_v3 + user decision 2026-07-14
+  contract_status: SPEC_ONLY_OWNER_ADOPTION_PENDING
+  runtime_implementation_status: NOT_CLAIMED
+  purposes: [PRIVATE_SELF_ONLY, ANALYZABLE_TRAINING_NOTE]
+  legacy_or_unlabeled_text_read_as: PRIVATE_SELF_ONLY
+  implicit_consent_from_existing_memo_field: forbidden
+
+  PRIVATE_SELF_ONLY:
+    user_facing_name_candidate: 나만의 메모
+    raw_text_local_device_persistence_allowed: true
+    D9_or_safety_assessment_allowed: false
+    athlete_analysis_allowed: false
+    derived_signal_generation_allowed: false
+    server_sync_allowed: false
+    coach_access_allowed: false
+    future_plan_evidence_allowed: false
+    export_default: excluded
+    account_reward_event_from_presence_frequency_length_or_content: forbidden
+    UI_must_not_claim_safety_monitoring: true
+    processing_flow_after_local_device_save: stop
+
+  ANALYZABLE_TRAINING_NOTE:
+    user_facing_name_candidates: [훈련 메모, 오늘의 메모]
+    explicit_current_entry_purpose_required: true
+    raw_text_local_device_persistence_allowed: true
+    transient_local_D9_assessment_allowed: true
+    transient_local_athlete_analysis_allowed: true
+    athlete_analysis_runtime_status: NOT_IMPLEMENTED
+    privacy_safe_structured_derivation_allowed: true
+    raw_text_server_sync_allowed: false
+    raw_text_coach_access_allowed: false
+    structured_result_coach_access_default: true
+    future_plan_evidence_allowed_before_separate_adoption: false
+    export_default: excluded
+
+  current_device_security_truth:
+    current_app_storage: browser_localStorage
+    at_rest_encryption_evidence: absent
+    secure_storage_claim_allowed: false
+    encrypted_diary_claim_allowed: false
+    allowed_UI_claim: 이 기기에만 저장
+    device_or_browser_profile_access_risk_remains: true
+
+  storage_location_matrix:
+    athlete_device_raw_text: allowed_only_under_selected_purpose
+    server_raw_text: forbidden
+    audit_raw_text: forbidden
+    analytics_raw_text: forbidden
+    plan_generator_raw_text: forbidden
+    coach_surface_raw_text: forbidden
+
   raw_symptom_clause_persistence_allowed: false
   raw_injury_narrative_persistence_allowed: false
   raw_medical_note_persistence_allowed: false
   raw_guardian_private_note_persistence_allowed: false
 
-  allowed_processing:
+  analyzable_note_allowed_processing:
     - transient_local_validation
     - transient_risk_extraction
-    - transient_redaction
-    - non_sensitive_summary_generation
+    - transient_athlete_analysis
     - reason_code_generation
+    - privacy_safe_structured_signal_generation
 
   allowed_persistence_after_processing:
     - structured_fields
     - nonSensitiveReasonCodes
-    - redactedNonSensitiveSummary_when_policy_allows
+    - D9_disposition
+    - analysisSignalCodes
     - sourceSnapshotId
     - auditLogId
     - extractionVersion
+
+  AthleteNoteDerivedSignal:
+    runtime_status: NOT_IMPLEMENTED
+    sourcePurpose: ANALYZABLE_TRAINING_NOTE_only
+    required_fields:
+      - registeredSignalCode
+      - confidenceOrUncertainty
+      - sourceSnapshotId
+      - extractionVersion
+    optional_fields:
+      - valueBand_from_closed_vocabulary
+    forbidden_fields:
+      - rawText
+      - quote
+      - generatedNarrative
+      - sentimentLabel_without_adopted_vocabulary
+      - diagnosis
+      - medicalInference
+    registeredSignalCode_vocabulary_status: PENDING_SEPARATE_ADOPTION
+    may_feed_athlete_analysis_before_vocabulary_adoption: false
+    may_feed_future_plan_before_separate_adoption: false
 
   forbidden_downstream_payloads:
     - raw_memo_text
@@ -565,7 +639,75 @@ memo_policy:
     - external_llm_prompt_with_private_athlete_data
 ```
 
-Free text can raise risk, request review, or produce non-sensitive reason codes. It cannot clear `D9_ACTIVE`, `D9_UNKNOWN`, Safety Gate block states, physio-source conflict states, or template eligibility failures.
+`PRIVATE_SELF_ONLY` cannot raise or clear risk because it is never evaluated. Safety
+capture remains available through separate structured pain and check-in fields.
+`ANALYZABLE_TRAINING_NOTE` can raise risk, request review, or produce non-sensitive
+structured signals. It cannot clear `D9_ACTIVE`, `D9_UNKNOWN`, Safety Gate block
+states, physio-source conflict states, or template eligibility failures.
+
+### 8A. Transient Note Assessment Contract
+
+```yaml
+memo_transient_assessment_contract:
+  patched_from: PLAN_F0F_TASKR_HARDENING.md + ORDER_007_R_safety.md + CODEX_WORK_ORDER_009 amendment_v3
+  contract_status: SPEC_ONLY_OWNER_ADOPTION_PENDING
+
+  invocation:
+    function: assessMemoTransient(rawText)
+    timing: immediately_before_saveEntry
+    required_conditions:
+      - memoPurpose_is_ANALYZABLE_TRAINING_NOTE
+      - raw_text_is_nonempty
+      - current_entry_purpose_was_explicitly_selected
+    forbidden_conditions:
+      - memoPurpose_is_PRIVATE_SELF_ONLY
+      - purpose_is_absent_legacy_or_unrecognized
+      - raw_text_is_empty
+
+  allowed_result_metadata:
+    - memoPurpose
+    - disposition
+    - blocksPlanGeneration
+    - nonSensitiveReasonCodes
+    - evaluatorVersion
+    - evaluatedAt
+  forbidden_result_metadata:
+    - rawText
+    - rawTextHash
+    - quotedClause
+    - evidenceClause
+    - generatedSummary
+    - reconstructable_token_or_embedding
+
+  failure_behavior:
+    evaluator_exception_disposition: D9_UNKNOWN
+    entry_save_blocked: false
+    review_attention_required: true
+    current_UI_copy_ceiling: 분석 결과를 확인해야 해요. 기록은 저장됐어요.
+    current_UI_must_not_claim_plan_block_is_runtime_active: true
+
+  future_consumption:
+    plan_generator_implemented_now: false
+    blocksPlanGeneration_runtime_consumer_exists_now: false
+    future_consumer_must_use_SafetyGate: true
+    current_app_may_claim_future_plan_blocking: false
+
+  console_marker:
+    format: "[D9MEMO] disposition=<v> codes=<n>"
+    raw_text_logging: forbidden
+    reason_code_value_logging: forbidden
+
+  backward_compatible_metadata_proposal:
+    adoption_authority: COACH_HOJUNE
+    memoPurpose_field: optional
+    memoAssessment_field: optional
+    absent_memoPurpose_read_as: PRIVATE_SELF_ONLY
+    separate_review_index_alternative: rejected_due_to_entry_linkage_and_divergence_risk
+```
+
+The optional metadata proposal is not runtime schema authority until owner adoption.
+In particular, `memoAssessment` may carry only the allowlisted metadata above. It
+must never become a container for raw text, summaries, embeddings, or quoted evidence.
 
 ---
 
@@ -573,14 +715,28 @@ Free text can raise risk, request review, or produce non-sensitive reason codes.
 
 ```yaml
 daily_log_processing_flow:
+  0_route_free_text_by_purpose:
+    PRIVATE_SELF_ONLY:
+      save_raw_text_to_selected_local_device_store: true
+      continue_to_normalize_RVE_analysis_or_product_surfaces: false
+      emit_presence_or_processing_telemetry: false
+    ANALYZABLE_TRAINING_NOTE:
+      requires_explicit_current_entry_purpose: true
+      may_continue_to_transient_processing: true
+    absent_legacy_or_unrecognized_purpose:
+      read_as: PRIVATE_SELF_ONLY
+      may_continue_to_transient_processing: false
+
   1_capture:
     creates:
       - transient_checkin_input
+      - purpose_labeled_local_note_input_when_present
     validates:
       - tenant_group_athlete_scope
       - athlete_identity_or_authorized_actor
       - active_consent
       - minor_guardian_consent_when_required
+      - explicit_note_purpose_for_new_nonempty_text
 
   2_normalize:
     creates:
@@ -588,7 +744,7 @@ daily_log_processing_flow:
       - SourceSnapshotRecord
       - AuditLogRecord
     removes_before_persistence:
-      - raw_memo_text
+      - raw_memo_text_from_server_analysis_and_audit_records
       - raw_symptom_clause
       - raw_evidence_clause
 
@@ -615,7 +771,7 @@ daily_log_processing_flow:
       - current_symptom_flags_from_structured_fields
       - recent_session_context_refs
       - consent_and_scope_context
-      - transient_free_text_only_inside_runtime_processing_boundary
+      - transient_ANALYZABLE_TRAINING_NOTE_only_inside_runtime_processing_boundary
     must_not_store_in_RVE_or_audit:
       - raw_free_text
       - raw_symptom_clause
@@ -636,6 +792,9 @@ daily_log_processing_flow:
       - sourceRefs
       - confidence_or_uncertainty
       - nonSensitiveReasonCodes
+    must_exclude:
+      - PRIVATE_SELF_ONLY_presence_or_metadata
+      - raw_ANALYZABLE_TRAINING_NOTE_text
 ```
 
 ---
@@ -652,7 +811,7 @@ risk_raising_policy:
     - sleep_low_repeated
     - RPE_rising_against_baseline
     - readiness_not_ready
-    - memo_transient_extraction_flags_review
+    - analyzable_training_note_transient_extraction_flags_review
     - physio_source_conflict
 
   must_not_clear_risk:
@@ -806,7 +965,7 @@ These are this reconstructed document's own issues. They do not change issue cou
 |---|---|---:|---|---|---|
 | `OI-DLC-APP-BRIDGE-BINDING-001` | P1 | YES | OPEN | App Bridge does not yet own DailyCheckInRecord storage endpoints or audit lineage. | Patch App Bridge after this spec is accepted, then recount target issues. |
 | `OI-DLC-RVE-SAFETY-BINDING-001` | P1 | YES | OPEN | Daily check-in structured and transient signals are not yet runtime-bound to RVE/Safety Gate. | Add implementation/runtime evidence before any safety binding issue closure. |
-| `OI-DLC-RAW-NOTE-REDACTION-001` | P1 | YES | OPEN | Final redaction/transient-note deletion implementation is not defined. | Define storage lifecycle and verify no raw memo/symptom clause persists. |
+| `OI-DLC-RAW-NOTE-REDACTION-001` | P1 | YES | OPEN | Purpose-separated note UI, local lifecycle, transient assessment binding, and server omission are not implemented. | Prove PRIVATE_SELF_ONLY is never evaluated or synced; prove ANALYZABLE_TRAINING_NOTE raw text remains device-local and only allowlisted metadata can persist. |
 | `OI-DLC-DAILY-BRIEF-INBOX-001` | P2 | NO | OPEN | Daily Brief and AI Inbox signal generation remain future productization contracts. | Draft `DAILY_BRIEF_AND_INBOX_SIGNAL_SPEC.md`. |
 | `OI-DLC-ANALYSIS-VISUALIZATION-001` | P2 | NO | OPEN | Analysis charts and body-area trend visualization contract is not defined. | Draft `ANALYSIS_AND_VISUALIZATION_DATA_CONTRACT.md`. |
 | `OI-DLC-IMPLEMENTATION-BINDING-001` | P2 | NO | OPEN | No app implementation or database schema has consumed this contract. | Bind after SPEC acceptance and privacy review. |
@@ -823,9 +982,14 @@ These are this reconstructed document's own issues. They do not change issue cou
 | Does not claim original restored | PASS |
 | Does not claim runtime evidence | PASS |
 | Does not close downstream issues | PASS |
-| Raw free-text storage is forbidden | PASS |
+| Raw free-text server, analysis, and audit storage is forbidden | PASS |
+| PRIVATE_SELF_ONLY is local-only and never evaluated | PASS |
+| Unlabeled legacy text is not silently treated as analyzable | PASS |
+| ANALYZABLE_TRAINING_NOTE requires explicit purpose | PASS |
 | Raw symptom clause storage is forbidden | PASS |
-| Free text can raise risk but cannot clear risk | PASS |
+| Only ANALYZABLE_TRAINING_NOTE can raise risk; no note can clear risk | PASS |
+| Current localStorage is not described as encrypted or secure storage | PASS |
+| Athlete note analysis runtime is not claimed | PASS |
 | `D9_ACTIVE` / `D9_UNKNOWN` cannot be cleared by check-in | PASS |
 | `D9_CLEARED` is not medical clearance | PASS |
 | Daily Log does not generate plan candidates | PASS |
