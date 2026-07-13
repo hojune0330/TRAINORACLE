@@ -23,6 +23,24 @@ work_order_metadata:
     Task B에는 다음 검증 항목을 추가하라: 전환 수 계수 시나리오, 잉크 스택
     불변(전환 후 누적 답 표시 유지), M1~M6 각각의 수동 확인 절차,
     prefers-reduced-motion 동작.
+  amendment_v3: >
+    2026-07-13 개정 (근거: 코덱스 기획 검토 보고 — 총책임자 독립 검증으로
+    "빈 폼 저장 시 RPE 5·수면 7h·수면질 3·기분 3이 기본값으로 기록되고
+    주간 RPE 평균에 합산됨"을 코드 대조(LogEntry.tsx:86,231-233 /
+    aggregates.ts:49)로 사실 확인).
+    ① Task A 범위 확장: quick_log_contract에 더해 같은 패치에서
+    **data_provenance_contract** 절을 추가하라 — 모든 수치 필드에
+    EXPLICIT(사용자가 직접 탭/입력) / DERIVED(자동 계산, 예: 페이스) /
+    MISSING(건너뜀) 출처 분류를 계약하고, MISSING·비EXPLICIT 값은
+    주간 통계·추이·(미래)훈련계획 근거에서 제외한다는 불변식을 명문화.
+    부분 작성 일지도 저장은 항상 허용(저장 차단 금지).
+    ② Task A-1의 "스키마 필드 추가·삭제 금지"를 다음과 같이 완화한다:
+    기존 필드의 추가·삭제·타입 변경은 여전히 금지하되, **하위호환 선택
+    메타데이터 필드**(예: fieldProvenance — 기존 entry에 없으면 legacy로
+    판독)는 계약에 명시하는 조건으로 허용. 필드명·판독 규칙·legacy 처리를
+    Task A 패치에 정의하라 (채택은 총책임자).
+    ③ 순서: ORDER_009 Task A(D9 transient 계약)는 본 Task A 병합 후
+    같은 문서 기준으로 작성 — 퀵 로그·데이터 출처·D9를 한 문서에서 정렬.
 ```
 
 ---
