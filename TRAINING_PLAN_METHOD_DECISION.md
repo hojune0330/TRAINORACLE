@@ -10,7 +10,7 @@ decision_metadata:
   recorder: CODEX
   applies_to: ONE_COACH_LINKED_1500M_ATHLETE
   production_authority: false
-  supersedes_joint_brief_pending_items: D1_D2_D3_D4_D5_ONLY_AS_LISTED_BELOW
+  supersedes_joint_brief_pending_items: PARTIAL_ONLY_SEE_SECTION_4
 ```
 
 ## 1. Confirmed Decisions
@@ -38,6 +38,8 @@ The following remain open and cannot execute merely because this decision record
 exists:
 
 - exact phase-specific placement, progression, recovery, taper, and exception rules
+- whether MAIN count applies to every sliding 9.5-day window or named lineage frames,
+  including re-anchor carry-over and missed-MAIN accounting
 - exact MAIN exposure-class vocabulary and allowed class sequences
 - whether the user-facing option taxonomy is `BALANCED`, `CONSERVATIVE`,
   `RECOVERY_FOCUSED`, or `COMPETITION_PREP`
@@ -46,6 +48,8 @@ exists:
 - automatic readiness, fatigue, injury-risk, or medical clearance decisions
 - one-athlete pilot baseline, stop criteria, and success criteria
 - production implementation, canonical promotion, or runtime safety evidence
+- coach-free advisory scope, provenance/legacy detail, encrypted backup timing, and
+  final Fable/Codex implementation ownership
 
 The statement in `DECISION_LOG.md` that useful AI coaching needs at least six months
 of journal data is a product-sequencing rationale. It is not an executable formation
@@ -58,5 +62,18 @@ a versioned rule with applicability and tests.
 provenance. Any proposal from Section 2 must remain visibly draft or held. This file
 does not authorize edits to `app/`, automatic coaching, downstream issue closure, or
 production deployment.
+
+## 4. Joint-Brief Partial Supersession
+
+This decision only narrows the 2026-07-14 parts below; it does not mark D1-D5 as
+fully resolved.
+
+| Joint item | Confirmed here | Still pending |
+|---|---|---|
+| D1 | Final selection for this pilot requires a linked coach. | Coach-free advisory scope. |
+| D2 | Formation requires explicit eligible provenance and rejects silent defaults. | Metadata names, legacy/import/demo handling, and partial-log eligibility. |
+| D3 | `PRIVATE_SELF_ONLY` is zero-signal; raw analyzable-note text is not a plan input. | Encrypted backup and any future structured derivative policy. |
+| D4 | One linked 1500 m pilot, 9.5-day frame, 2-3 MAINs, and deterministic 2-3 candidates. | Exact coaching rules, taxonomy, bindings, and pilot protocol. |
+| D5 | This draft preserves Fable `app/` ownership and Codex contract work. | Final vertical-slice ownership and app integration approval. |
 
 [DECISION_RECORDED]

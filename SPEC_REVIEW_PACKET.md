@@ -37,7 +37,7 @@ TrainOracle은 단순한 훈련 일지 UI가 아니다.
 - 핵심 SPEC 계층은 정리되어 있다.
 - Wave 1 Physio Source Trust target patch와 Wave 2 Daily Log binding patch는 일부 적용되어 있다.
 - Wave 3 productization draft는 모두 만들어졌다.
-- 아직 canonical promotion, production deployment, D9 runtime evidence, safety-chain issue closure 단계는 아니다.
+- D9 evaluator 11-case 실행 로그는 존재하지만 target/Formation coverage 증거는 아니다. 아직 canonical promotion, production deployment, safety-chain issue closure 단계는 아니다.
 
 따라서 리뷰의 핵심 질문은 "더 멋진 앱을 바로 만들 수 있는가"가 아니라 "지금 SPEC 계층이 구현으로 넘어가기 전에 안전/개인정보/근거/패치 순서를 잘 지키고 있는가"다.
 
@@ -55,9 +55,10 @@ Read in this order.
 6. [`SPEC_TARGET_PATCH_READINESS.md`](./SPEC_TARGET_PATCH_READINESS.md) - next target-patch readiness plan.
 7. [`SPEC_DOCUMENTATION_REPORT.md`](./SPEC_DOCUMENTATION_REPORT.md) - document-by-document map.
 8. [`TRAINING_PLAN_METHOD_DECISION.md`](./TRAINING_PLAN_METHOD_DECISION.md) - owner-confirmed formation boundary and explicit non-decisions.
-9. [`specs/reconstruct/TRAINING_PLAN_FORMATION_AND_ADAPTATION_SPEC.md`](./specs/reconstruct/TRAINING_PLAN_FORMATION_AND_ADAPTATION_SPEC.md) - first-pilot formation/adaptation draft with six canonical blockers.
-10. Active SPEC files under [`specs/active/`](./specs/active/).
-11. Reconstructed and productization drafts under [`specs/reconstruct/`](./specs/reconstruct/).
+9. [`TRAINING_PLAN_BLUEPRINT_MULTIPERSPECTIVE_REVIEW.md`](./TRAINING_PLAN_BLUEPRINT_MULTIPERSPECTIVE_REVIEW.md) - nine-persona findings, Mermaid blueprint, and blocker order.
+10. [`specs/reconstruct/TRAINING_PLAN_FORMATION_AND_ADAPTATION_SPEC.md`](./specs/reconstruct/TRAINING_PLAN_FORMATION_AND_ADAPTATION_SPEC.md) - first-pilot formation/adaptation draft with ten canonical blockers.
+11. Active SPEC files under [`specs/active/`](./specs/active/).
+12. Reconstructed and productization drafts under [`specs/reconstruct/`](./specs/reconstruct/).
 
 Do not start from legacy files unless the review question is specifically about legacy alignment.
 
@@ -70,7 +71,7 @@ The repository does not currently claim:
 - full working web/app implementation
 - canonical SPEC promotion
 - production deployment
-- D9 evaluator runtime evidence
+- D9 evaluator runtime evidence beyond the tracked 11-case package; its target-coverage assessment is still pending
 - RVE or Plan Generator safety-gate binding issue closure
 - final metric algorithm authority for analysis charts
 - medical clearance from `D9_CLEARED`
@@ -218,7 +219,7 @@ Do not accept a vague "looks good" as a sufficient review.
 
 The recommended next move is:
 
-1. Review `TRAINING_PLAN_METHOD_DECISION.md` and Formation/Adaptation together and resolve or explicitly retain all six canonical blockers.
+1. Review the multiperspective report, method decision, and Formation/Adaptation together and resolve or explicitly retain all ten canonical blockers.
 2. Run the remaining Review Round 1 lenses using this packet.
 3. Use [`SPEC_TARGET_PATCH_READINESS.md`](./SPEC_TARGET_PATCH_READINESS.md) to choose the first safe target patch wave.
 4. Patch Plan Generator or Calendar only after source acceptance, exact target-file review, and issue recount.

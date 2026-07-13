@@ -126,24 +126,24 @@ canonical_promotion_allowed: false
 | `LOCAL_FIRST_SYNC_AND_PROMOTION_CONTRACT.md` | Productization SPEC draft | 로컬 일지를 계정 연동 후 서버 저장으로 승격하는 규칙 | Draft created and merged to main; backend, raw memo policy, encryption, deletion/export UX는 아직 없음 |
 | `FEDERATED_ACCOUNT_SSO_CONTRACT.md` | Productization SPEC draft | AthleteTime SSO를 identity boundary로만 연결하는 계약 | Draft created and merged to main; OAuth endpoints, redirect registry, guardian consent, revocation evidence는 아직 없음 |
 | App implementation DB/API schemas | Implementation contract | SPEC를 실제 앱 저장소와 API로 내리는 단계 | Core SPEC acceptance와 privacy review |
-| D9 runtime evidence report | Runtime evidence | D9 evaluator 실제 실행 결과와 RVE/Safety Gate mapping 증거 | test package 실행 및 로그 확보 |
+| D9 runtime evidence report | Runtime evidence | 기존 11-case D9 실행 로그와 RVE/Safety Gate/Formation coverage gap | tracked 로그를 평가하고 필요한 추가 실행 증거 확보 |
 
 ---
 
 ## 9. 현재 가장 중요한 작업 순서
 
-1. `TRAINING_PLAN_METHOD_DECISION.md`와 `TRAINING_PLAN_FORMATION_AND_ADAPTATION_SPEC.md`를 함께 검토하고 여섯 canonical blocker를 결정한다.
+1. `TRAINING_PLAN_BLUEPRINT_MULTIPERSPECTIVE_REVIEW.md`와 Formation spec을 함께 검토하고 열 개 canonical blocker를 결정한다.
 2. `RULE_VALIDATION_ENGINE_CONTRACT.md`, `PLAN_SAFETY_GATE_SPEC.md`, `DAILY_LOG_AND_CHECKIN_SPEC.md`를 reconstructed draft로 review한다.
 3. `DAILY_LOG_AND_CHECKIN_SPEC.md`를 기준으로 App Bridge / Athlete Profile / Physio Source Trust / RVE / Safety Gate target patch 계획을 세운다.
 4. Wave 1 Physio Source Trust target patches are present; review source acceptance and target-file recount approval before issue closure.
-5. 실제 D9 evaluator runtime output을 확보하기 전까지 RVE/PG/Safety Gate binding issue를 닫지 않는다.
+5. 기존 D9 evaluator runtime output의 target coverage를 평가하고 필요한 추가 증거를 확보하기 전까지 RVE/PG/Safety Gate binding issue를 닫지 않는다.
 6. Formation source acceptance 뒤에만 Plan Generator와 Calendar projection schema target patch를 시작한다.
 
 ---
 
 ## 10. 한 줄 요약
 
-TrainOracle의 문서 계층은 이제 `Rule semantics -> RVE -> Safety Gate -> Formation -> Plan Generator -> immutable plan/adaptation` 안전·계획 체인과 `Daily Log -> structured source context -> RVE/Safety Gate/Analysis` 일지 체인을 분리해서 볼 수 있다. 아직 정본 승인이나 runtime evidence 단계는 아니며, Formation의 여섯 blocker와 target schema binding을 먼저 닫아야 한다.
+TrainOracle의 문서 계층은 이제 `Rule semantics -> RVE -> Safety Gate -> Formation -> Plan Generator -> immutable plan/adaptation` 안전·계획 체인과 `Daily Log -> structured source context -> RVE/Safety Gate/Analysis` 일지 체인을 분리해서 볼 수 있다. 아직 정본 승인이나 Formation runtime evidence 단계는 아니며, Formation의 열 개 blocker와 target schema binding을 먼저 닫아야 한다.
 
 ---
 
@@ -249,7 +249,7 @@ Purpose:
 
 Remaining future productization document:
 
-- `TRAINING_PLAN_FORMATION_AND_ADAPTATION_SPEC.md` now exists as a later `DRAFT_FOR_REVIEW`, grounded by root decision `TRAINING_PLAN_METHOD_DECISION.md`. It has six canonical blockers and is not Plan Generator/Calendar target closure or runtime evidence.
+- `TRAINING_PLAN_FORMATION_AND_ADAPTATION_SPEC.md` now exists as a later `DRAFT_FOR_REVIEW`, grounded by root decision `TRAINING_PLAN_METHOD_DECISION.md`. Its nine-perspective review is recorded in `TRAINING_PLAN_BLUEPRINT_MULTIPERSPECTIVE_REVIEW.md`; ten canonical blockers remain. It is not Plan Generator/Calendar target closure or runtime evidence.
 
 - None. Productization drafts now exist, but all remain draft-for-review and not runtime evidence.
 
@@ -307,7 +307,7 @@ Purpose:
 
 - Record that Plan Generator now has target-local Safety Gate/RVE consumption binding guidance.
 - Preserve that `ACTIVE` and `UNKNOWN` block generation, while advisory remains non-blocking under `CLEARED`.
-- Preserve that `OI-PG-RULE-SAFETY-GATE-BINDING-001` remains open until source acceptance, target recount approval, and actual D9 runtime evidence exist.
+- Preserve that `OI-PG-RULE-SAFETY-GATE-BINDING-001` remains open until source acceptance, target recount approval, tracked D9 evidence coverage assessment, and any missing runtime evidence exist.
 
 ## Source Acceptance Review Round 1 Addendum - 2026-07-09
 

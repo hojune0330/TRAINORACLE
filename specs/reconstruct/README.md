@@ -14,7 +14,7 @@ Current productization drafts:
 - `ANALYSIS_AND_VISUALIZATION_DATA_CONTRACT.md` (`DRAFT_FOR_REVIEW`; new productization draft, not original restored, not canonical, not runtime evidence)
 - `PLAN_OUTPUT_RATIONALE_PRIVACY_SPEC.md` (`DRAFT_FOR_REVIEW`; new productization draft, not original restored, not canonical, not runtime evidence)
 - `MICROCYCLE_AND_CALENDAR_MAPPING_SPEC.md` (`DRAFT_FOR_REVIEW`; new productization draft, not original restored, not canonical, not runtime evidence)
-- `TRAINING_PLAN_FORMATION_AND_ADAPTATION_SPEC.md` (`DRAFT_FOR_REVIEW`; decision-provenanced first-pilot formation/adaptation policy with six canonical blockers, not canonical, not runtime evidence)
+- `TRAINING_PLAN_FORMATION_AND_ADAPTATION_SPEC.md` (`DRAFT_FOR_REVIEW`; decision-provenanced first-pilot formation/adaptation policy with ten canonical blockers, audited in root `TRAINING_PLAN_BLUEPRINT_MULTIPERSPECTIVE_REVIEW.md`, not canonical, not runtime evidence)
 - `EXTERNAL_RECORD_INTEGRATION_SPEC.md` (`DRAFT_FOR_REVIEW`; Work Order 005 Task A draft, merged to main, not canonical, not runtime evidence)
 - `COMPOSITION_BALANCE_BASELINE_CONTRACT.md` (`DRAFT_FOR_REVIEW`; Work Order 005 Task B draft, merged to main, not canonical, not runtime evidence)
 - `JOURNAL_DELIGHT_AND_DECORATION_SPEC.md` (`DRAFT_FOR_REVIEW`; Work Order 006 Task A draft, merged to main, not canonical, not runtime evidence)
@@ -23,6 +23,7 @@ Current productization drafts:
 
 Related root decision and planning documents:
 
+- `TRAINING_PLAN_BLUEPRINT_MULTIPERSPECTIVE_REVIEW.md` records the nine-persona findings, Mermaid blueprint, and review-recommended order of the canonical blockers.
 - `ACCOUNT_FEDERATION_DECISION.md` records the owner-level account direction for TrainOracle and AthleteTime federation.
 - `ATHLETETIME_INTEGRATION_REVIEW.md` records integration review context for AthleteTime boundaries.
 - `LAUNCH_BACKEND_AND_ACCOUNT_PLAN.md` records launch/backend/account planning context.
@@ -165,6 +166,6 @@ Use this order before creating any reconstructed file:
 - `D9_ACTIVE` blocks Plan Generator.
 - `D9_UNKNOWN` blocks Plan Generator or requires human review.
 - `D9_CLEARED` permits generation only as "no D9 signal detected by evaluator at this time"; it is not medical clearance.
-- ADVISORY is not a fourth disposition. It remains under `D9_CLEARED`, stores status as `CLEARED`, and does not block generation.
+- ADVISORY is not a fourth disposition. For non-note structured origin it may remain under `D9_CLEARED`; analyzable-note CLEARED/advisory emits no Formation authorization signal, and private-only input is never evaluated.
 - Good physiological data and template selection cannot clear D9 risk.
 - Raw athlete free-text, symptom clauses, injury narratives, medical notes, and guardian private notes must not be stored in audit contracts.

@@ -185,7 +185,7 @@ The daily-log surface is therefore not a separate lightweight feature. It is the
    - Must block generation for `D9_ACTIVE`.
    - Must block or require review for `D9_UNKNOWN`.
    - Must treat `D9_CLEARED` as no detected D9 signal at that time only, not medical clearance.
-   - Must keep advisory non-blocking under `D9_CLEARED`.
+   - Non-note structured advisory may remain non-blocking under `D9_CLEARED`; analyzable-note CLEARED/advisory must emit no Formation authorization signal, and private-only input must never be evaluated.
 
 ### Phase 2 - Daily Ingestion And Diary Contract
 
@@ -226,7 +226,7 @@ The daily-log surface is therefore not a separate lightweight feature. It is the
    - Current status: created at `specs/reconstruct/TRAINING_PLAN_FORMATION_AND_ADAPTATION_SPEC.md` as `DRAFT_FOR_REVIEW`, grounded by root decision `TRAINING_PLAN_METHOD_DECISION.md`.
    - Purpose: turn the confirmed 9.5-day/MAIN boundary into deterministic candidate, composite-load, safety-hold, and immutable adaptation contracts.
    - Must preserve separate planning-role, classifier-label, energy-focus, component, completion, and experienced-response facts.
-   - Must not execute before its six canonical blockers, source acceptance, target schema patches, and runtime tests are complete.
+   - Must not execute before its ten canonical blockers, source acceptance, target schema patches, and runtime tests are complete. See `TRAINING_PLAN_BLUEPRINT_MULTIPERSPECTIVE_REVIEW.md`.
 
 ---
 

@@ -83,7 +83,7 @@ source_priority:
       consumed_for:
         - Daily Log input boundary
         - D9/RVE/Safety Gate block preservation
-        - advisory non-blocking semantics
+        - non-note structured advisory semantics; analyzable-note origin cannot authorize Formation
 
   classification_and_context:
     - document: specs/active/SESSION_CLASSIFIER_SPEC.md

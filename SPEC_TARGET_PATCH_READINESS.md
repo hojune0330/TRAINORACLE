@@ -29,7 +29,8 @@ Use it after reading [`SPEC_REVIEW_PACKET.md`](./SPEC_REVIEW_PACKET.md) and befo
 ## 2. Current Phase Decision
 
 Wave 3 productization drafts now exist, including the later Formation/Adaptation draft
-and its owner-decision record. Formation currently has six canonical blockers.
+and its owner-decision record. Formation currently has ten canonical blockers; the
+nine-perspective audit is `TRAINING_PLAN_BLUEPRINT_MULTIPERSPECTIVE_REVIEW.md`.
 
 Therefore the next phase is not "make more productization drafts" by default. The next phase is:
 
@@ -39,7 +40,7 @@ Review Round 1
 -> source acceptance decision
 -> target patch readiness
 -> target-local patches with recount
--> runtime evidence preparation
+-> existing D9 evidence coverage assessment plus missing runtime evidence
 -> issue closure only when evidence gates are met
 ```
 
@@ -217,9 +218,16 @@ Required runtime observations:
 
 - `D9_ACTIVE` maps to stored `ACTIVE` and blocks plan generation.
 - `D9_UNKNOWN` maps to stored `UNKNOWN` and blocks or requires human review.
-- `D9_CLEARED` maps to stored `CLEARED` and does not block, while not implying medical clearance.
-- ADVISORY preserves reason codes under `CLEARED` and does not block.
+- For non-note structured origin, `D9_CLEARED` may map to stored `CLEARED` and continue
+  to other gates without implying medical clearance.
+- For `ANALYZABLE_TRAINING_NOTE` origin, `CLEARED`/ADVISORY emits no Formation
+  authorization signal; ACTIVE/UNKNOWN/STALE may emit only an opaque block.
+- `PRIVATE_SELF_ONLY` never reaches evaluation, storage, telemetry, hash, audit, sync,
+  reward, cache, or idempotency paths.
 - Raw free-text and symptom clauses do not enter audit/storage evidence.
+- The tracked 11-case behavior is conflict evidence for Formation, not satisfying
+  coverage. Formation source acceptance remains blocked until the origin-aware path is
+  patched and re-evidenced.
 
 Closure allowed now:
 
@@ -243,11 +251,17 @@ Stop and do not patch if any of these are true:
 
 ## 6. Recommended Next Execution Order
 
-1. Review `TRAINING_PLAN_METHOD_DECISION.md` and Formation/Adaptation with coaching, security, and implementation lenses.
-2. Resolve or explicitly retain its six canonical blockers; draft self-checks are not acceptance.
-3. Run Wave B safety-gate and Wave C source-acceptance/recount planning where still open.
-4. Add Plan Generator and Calendar target issues only after exact target-file recount and Formation source acceptance.
-5. Run Wave D binding only after the safety/privacy and Formation source boundaries are accepted.
-6. Prepare Wave E runtime evidence after target contracts are stable.
+1. Review `TRAINING_PLAN_BLUEPRINT_MULTIPERSPECTIVE_REVIEW.md` with the method decision and Formation draft.
+2. Resolve the five source-gate blockers: coach rules/frame semantics, load/component
+   registries, minimum evidence, upstream safety/privacy, and record governance.
+   Merely retaining one keeps Formation source acceptance blocked.
+3. Make a bounded Formation source-acceptance decision, then reopen and recount exact
+   Rule Spec, Plan Generator, App Bridge, Safety Gate, Calendar, and product targets.
+4. Close the exposure-ledger, version/lifecycle, Calendar, and product-projection
+   blockers through target-owned patches; these cannot be prerequisites to their own patches.
+5. Accept the pilot protocol only after target bindings are stable and before any
+   vertical slice or athlete execution.
+6. Assess existing D9/impl evidence and prepare missing Formation/concurrency/privacy
+   runtime evidence after target contracts are stable.
 
 [DRAFT_COMPLETE]

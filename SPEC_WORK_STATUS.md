@@ -1,6 +1,6 @@
 # SPEC_WORK_STATUS.md
 
-Updated: 2026-07-12 Asia/Seoul
+Updated: 2026-07-14 Asia/Seoul
 status: DRAFT_HANDOFF_STATUS
 owner: COACH_HOJUNE
 
@@ -14,6 +14,7 @@ For an easy document-by-document report, read [`SPEC_DOCUMENTATION_REPORT.md`](.
 For the next source-to-target patch order and non-closure conditions, read [`SPEC_TARGET_PATCH_MATRIX.md`](./SPEC_TARGET_PATCH_MATRIX.md).
 For external reviewer read order, lenses, and review prompts, read [`SPEC_REVIEW_PACKET.md`](./SPEC_REVIEW_PACKET.md).
 For the next target-patch readiness gates and wave order, read [`SPEC_TARGET_PATCH_READINESS.md`](./SPEC_TARGET_PATCH_READINESS.md).
+For the current review-recommended Formation next-action order and visual blueprint, read [`TRAINING_PLAN_BLUEPRINT_MULTIPERSPECTIVE_REVIEW.md`](./TRAINING_PLAN_BLUEPRINT_MULTIPERSPECTIVE_REVIEW.md), Section 11.
 For documentation link/terminology quality findings, read [`SPEC_DOC_QUALITY_REPORT.md`](./SPEC_DOC_QUALITY_REPORT.md).
 For the Wave B Safety Gate target-local patch result, read [`SPEC_WAVEB_SAFETY_GATE_PATCH_REPORT.md`](./SPEC_WAVEB_SAFETY_GATE_PATCH_REPORT.md).
 For Safety Gate/RVE source acceptance review prep, read [`SPEC_SOURCE_ACCEPTANCE_REVIEW_ROUND1.md`](./SPEC_SOURCE_ACCEPTANCE_REVIEW_ROUND1.md).
@@ -122,7 +123,7 @@ Current Wave 3 productization draft state:
 - It keeps `CYCLE_DAY.*`, `RULE_SPEC_D1_D9.*`, and `LEGACY_PHASE_D.*` separate and forbids bare D-rule ambiguity in contract fields.
 - It cannot create/select plan options, clear D9/Safety Gate states, claim runtime evidence, resolve `OI-PG-MICROCYCLE-CALENDAR-MAPPING-001`, or close downstream issues.
 - `TRAINING_PLAN_METHOD_DECISION.md` now records owner-confirmed first-pilot method boundaries without approving option taxonomy, thresholds, or production execution.
-- `specs/reconstruct/TRAINING_PLAN_FORMATION_AND_ADAPTATION_SPEC.md` now exists as `DRAFT_FOR_REVIEW`; it defines the local-civil 9.5-day formation frame, MAIN exposure accounting, typed composite load, deterministic candidate arbitration, immediate safety holds, and append-only plan adaptation. Six canonical blockers remain.
+- `specs/reconstruct/TRAINING_PLAN_FORMATION_AND_ADAPTATION_SPEC.md` now exists as `DRAFT_FOR_REVIEW`; its nine-perspective audit is `TRAINING_PLAN_BLUEPRINT_MULTIPERSPECTIVE_REVIEW.md`. Ten canonical blockers remain.
 - Work Order 005 productization drafts now present on main: `EXTERNAL_RECORD_INTEGRATION_SPEC.md` and `COMPOSITION_BALANCE_BASELINE_CONTRACT.md`.
 - Work Order 006 productization drafts now present on main: `JOURNAL_DELIGHT_AND_DECORATION_SPEC.md`, `LOCAL_FIRST_SYNC_AND_PROMOTION_CONTRACT.md`, and `FEDERATED_ACCOUNT_SSO_CONTRACT.md`.
 - All productization drafts remain drafts for review; none are canonical promotion, issue closure, or runtime evidence.
@@ -198,7 +199,7 @@ Missing/reconstruct area:
 - [`specs/reconstruct/ANALYSIS_AND_VISUALIZATION_DATA_CONTRACT.md`](./specs/reconstruct/ANALYSIS_AND_VISUALIZATION_DATA_CONTRACT.md) (`DRAFT_FOR_REVIEW`; new productization draft)
 - [`specs/reconstruct/PLAN_OUTPUT_RATIONALE_PRIVACY_SPEC.md`](./specs/reconstruct/PLAN_OUTPUT_RATIONALE_PRIVACY_SPEC.md) (`DRAFT_FOR_REVIEW`; new productization draft)
 - [`specs/reconstruct/MICROCYCLE_AND_CALENDAR_MAPPING_SPEC.md`](./specs/reconstruct/MICROCYCLE_AND_CALENDAR_MAPPING_SPEC.md) (`DRAFT_FOR_REVIEW`; new productization draft)
-- [`specs/reconstruct/TRAINING_PLAN_FORMATION_AND_ADAPTATION_SPEC.md`](./specs/reconstruct/TRAINING_PLAN_FORMATION_AND_ADAPTATION_SPEC.md) (`DRAFT_FOR_REVIEW`; owner-decision-provenanced first-pilot policy with six canonical blockers)
+- [`specs/reconstruct/TRAINING_PLAN_FORMATION_AND_ADAPTATION_SPEC.md`](./specs/reconstruct/TRAINING_PLAN_FORMATION_AND_ADAPTATION_SPEC.md) (`DRAFT_FOR_REVIEW`; owner-decision-provenanced first-pilot policy with ten canonical blockers; multiperspective review linked above)
 - [`specs/reconstruct/EXTERNAL_RECORD_INTEGRATION_SPEC.md`](./specs/reconstruct/EXTERNAL_RECORD_INTEGRATION_SPEC.md) (`DRAFT_FOR_REVIEW`; Work Order 005 draft)
 - [`specs/reconstruct/COMPOSITION_BALANCE_BASELINE_CONTRACT.md`](./specs/reconstruct/COMPOSITION_BALANCE_BASELINE_CONTRACT.md) (`DRAFT_FOR_REVIEW`; Work Order 005 draft)
 - [`specs/reconstruct/JOURNAL_DELIGHT_AND_DECORATION_SPEC.md`](./specs/reconstruct/JOURNAL_DELIGHT_AND_DECORATION_SPEC.md) (`DRAFT_FOR_REVIEW`; Work Order 006 draft)
@@ -242,12 +243,12 @@ Do not claim a document exists from a chapter title, H1, table row, status label
 9. Review the Wave B Safety Gate target-local patch in `PLAN_GENERATOR_SPEC.md`; do not close `OI-PG-RULE-SAFETY-GATE-BINDING-001` before source acceptance, target recount approval, and runtime evidence.
 10. Use `SPEC_SOURCE_ACCEPTANCE_REVIEW_ROUND1.md` for Safety Gate/RVE source review before treating reconstructed drafts as accepted sources.
 11. Review `SPEC_WAVED_BINDING_PATCH_REPORT.md`; do not close Wave D issues before implementation/runtime evidence and owner approval.
-12. Obtain actual D9 evaluator runtime output before closing RVE or Plan Generator safety-gate binding issues.
+12. Assess the tracked D9 evaluator runtime output against target coverage and obtain the missing evidence before closing RVE or Plan Generator safety-gate binding issues.
 13. Review `specs/reconstruct/DAILY_BRIEF_AND_INBOX_SIGNAL_SPEC.md`; it is a productization draft, not canonical or runtime evidence.
 14. Review `specs/reconstruct/ANALYSIS_AND_VISUALIZATION_DATA_CONTRACT.md`; it is a productization draft, not metric formula authority, canonical, or runtime evidence.
 15. Review `specs/reconstruct/PLAN_OUTPUT_RATIONALE_PRIVACY_SPEC.md`; it is a productization draft, not Plan Generator target issue closure, canonical, or runtime evidence.
 16. Review `specs/reconstruct/MICROCYCLE_AND_CALENDAR_MAPPING_SPEC.md`; it is a productization draft, not Plan Generator target issue closure, D-rule redefinition, canonical, or runtime evidence.
-17. Review `TRAINING_PLAN_METHOD_DECISION.md` with `specs/reconstruct/TRAINING_PLAN_FORMATION_AND_ADAPTATION_SPEC.md`; do not implement formation rules before the option taxonomy, coach rule set, schema bindings, and pilot protocol are accepted.
+17. Review `TRAINING_PLAN_BLUEPRINT_MULTIPERSPECTIVE_REVIEW.md` with the method decision and Formation spec; do not implement before all ten canonical blockers are resolved or explicitly retained.
 18. Review `specs/reconstruct/EXTERNAL_RECORD_INTEGRATION_SPEC.md`; do not implement AthleteTime integration until API reality, terms, consent, and owner decisions are verified.
 19. Review `specs/reconstruct/COMPOSITION_BALANCE_BASELINE_CONTRACT.md`; keep placeholder baselines visibly marked as demo until owner/coach approval and source validation exist.
 20. Review `specs/reconstruct/JOURNAL_DELIGHT_AND_DECORATION_SPEC.md`; decoration, streak, and unlock logic must not reward training volume or hide pain/rest/injury signals.
