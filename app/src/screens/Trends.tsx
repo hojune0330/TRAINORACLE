@@ -101,7 +101,24 @@ export function Trends({ onBack }: { onBack?: () => void }) {
                 <BalanceMarker hint={rampHint} />
               </div>
               {weeksWithData > 0 ? (
-                <BarChart data={weeks.map((w) => w.km)} labels={weekLabels} />
+                <>
+                  <BarChart data={weeks.map((w) => w.km)} labels={weekLabels} />
+                  {/* F0-f-5c (R-a11y-003): 스크린리더·터치용 텍스트 표 */}
+                  <details style={{ marginTop: 8 }}>
+                    <summary style={{ fontFamily: "var(--mono)", fontSize: 9.5, color: "var(--ink-4)", cursor: "pointer", letterSpacing: "0.06em" }}>표로 보기</summary>
+                    <table style={{ width: "100%", marginTop: 6, fontFamily: "var(--mono)", fontSize: 10.5, color: "var(--ink-2)", borderCollapse: "collapse" }}>
+                      <caption style={{ position: "absolute", width: 1, height: 1, overflow: "hidden", clip: "rect(0 0 0 0)" }}>주간 거리 (km)</caption>
+                      <tbody>
+                        {weeks.map((w, i) => (
+                          <tr key={i} style={{ borderBottom: "1px dashed var(--hair)" }}>
+                            <th scope="row" style={{ textAlign: "left", padding: "3px 0", fontWeight: 400 }}>{weekLabels[i]}</th>
+                            <td style={{ textAlign: "right", padding: "3px 0" }}>{w.km} km</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </details>
+                </>
               ) : (
                 <ThinNote>훈련 후 일지에 거리를 적으면 여기에 주간 그래프가 그려져요.</ThinNote>
               )}
@@ -113,7 +130,8 @@ export function Trends({ onBack }: { onBack?: () => void }) {
             <SectionLb>— MOOD · 28 DAYS {moodCount > 0 ? `(${moodCount}일 기록)` : ""}</SectionLb>
             {moodCount > 0 ? (
               <>
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(28, 1fr)", gap: 1, padding: "10px 0" }}>
+                <div role="img" aria-label={`최근 28일 감정 기록 ${moodCount}일 — 자세한 값은 아래 표로 보기`}
+                  style={{ display: "grid", gridTemplateColumns: "repeat(28, 1fr)", gap: 1, padding: "10px 0" }}>
                   {moodDays.map((d, i) => (
                     <div key={i} title={`${compactDate(d.date)} · ${d.mood > 0 ? `기분 ${d.mood}/5` : "기록 없음"}`} style={{ height: 28, position: "relative", background: "var(--surface-2)" }}>
                       {d.mood > 0 && (
@@ -125,6 +143,20 @@ export function Trends({ onBack }: { onBack?: () => void }) {
                 <div style={{ display: "flex", justifyContent: "space-between", fontFamily: "var(--mono)", fontSize: 9, color: "var(--ink-4)", letterSpacing: "0.06em" }}>
                   <span>{compactDate(isoShift(today, -27)).slice(5)}</span><span>{compactDate(today).slice(5)} (오늘)</span>
                 </div>
+                <details style={{ marginTop: 6 }}>
+                  <summary style={{ fontFamily: "var(--mono)", fontSize: 9.5, color: "var(--ink-4)", cursor: "pointer", letterSpacing: "0.06em" }}>표로 보기</summary>
+                  <table style={{ width: "100%", marginTop: 6, fontFamily: "var(--mono)", fontSize: 10.5, color: "var(--ink-2)", borderCollapse: "collapse" }}>
+                    <caption style={{ position: "absolute", width: 1, height: 1, overflow: "hidden", clip: "rect(0 0 0 0)" }}>최근 28일 감정 기록</caption>
+                    <tbody>
+                      {moodDays.filter((d) => d.mood > 0).map((d, i) => (
+                        <tr key={i} style={{ borderBottom: "1px dashed var(--hair)" }}>
+                          <th scope="row" style={{ textAlign: "left", padding: "3px 0", fontWeight: 400 }}>{compactDate(d.date)}</th>
+                          <td style={{ textAlign: "right", padding: "3px 0" }}>기분 {d.mood}/5</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </details>
               </>
             ) : (
               <ThinNote>하루 마무리 일지의 감정 체크가 여기에 색으로 쌓여요.</ThinNote>
@@ -136,7 +168,8 @@ export function Trends({ onBack }: { onBack?: () => void }) {
             <SectionLb>— PAIN · 12 WEEKS</SectionLb>
             {painAny ? (
               <div style={{ borderTop: "1px solid var(--ink)", borderBottom: "1px solid var(--ink)", padding: "14px 0" }}>
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(12, 1fr)", gap: 2 }}>
+                <div role="img" aria-label="최근 12주 주간 최대 통증 — 자세한 값은 아래 표로 보기"
+                  style={{ display: "grid", gridTemplateColumns: "repeat(12, 1fr)", gap: 2 }}>
                   {painWeeks.map((w, i) => (
                     <div key={i} title={`${compactDate(w.start)}~ · ${w.max > 0 ? `최대 ${w.max}/5` : "없음"}`} style={{
                       aspectRatio: "1",
@@ -148,6 +181,20 @@ export function Trends({ onBack }: { onBack?: () => void }) {
                 <div style={{ marginTop: 10, fontFamily: "var(--mono)", fontSize: 10, color: "var(--ink-3)", letterSpacing: "0.06em" }}>
                   주 단위 최대 통증 · 참고 표시 전용
                 </div>
+                <details style={{ marginTop: 6 }}>
+                  <summary style={{ fontFamily: "var(--mono)", fontSize: 9.5, color: "var(--ink-4)", cursor: "pointer", letterSpacing: "0.06em" }}>표로 보기</summary>
+                  <table style={{ width: "100%", marginTop: 6, fontFamily: "var(--mono)", fontSize: 10.5, color: "var(--ink-2)", borderCollapse: "collapse" }}>
+                    <caption style={{ position: "absolute", width: 1, height: 1, overflow: "hidden", clip: "rect(0 0 0 0)" }}>최근 12주 주간 최대 통증</caption>
+                    <tbody>
+                      {painWeeks.map((w, i) => (
+                        <tr key={i} style={{ borderBottom: "1px dashed var(--hair)" }}>
+                          <th scope="row" style={{ textAlign: "left", padding: "3px 0", fontWeight: 400 }}>{compactDate(w.start)}~</th>
+                          <td style={{ textAlign: "right", padding: "3px 0" }}>{w.max > 0 ? `최대 ${w.max}/5` : "없음"}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </details>
               </div>
             ) : (
               <ThinNote>통증 기록이 없어요 — 좋은 신호예요. 생기면 여기서 추이를 봐요.</ThinNote>

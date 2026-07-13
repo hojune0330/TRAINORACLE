@@ -47,6 +47,12 @@ export interface RaceEntry extends JournalEntryBase {
   rank: string
   result: string
   memo: string
+  // F0-f-6 (R-coach-001): 경기 자기 점검 — 탭하지 않으면 필드 자체를 저장하지 않는다.
+  // (부재 = MISSING. ORDER_008 amendment_v3 하위호환 optional 필드 조항 적용)
+  tension?: number   // 경기 직전 긴장도 1-10
+  condition?: number // 경기 직전 컨디션 1-5
+  goalPace?: string  // 경기 직전 목표 페이스·전략
+  mood?: number      // 경기 직후 감정 1-5
 }
 
 export type JournalEntry = PostSessionEntry | EveningEntry | RaceEntry
@@ -67,6 +73,35 @@ function storage(): Storage | null {
   }
 }
 
+// F0-f-4 (R-privacy-002): localStorage 변조·구버전 데이터가 무검증으로
+// 렌더에 도달하지 않도록 kind별 필수 필드 shape를 수동 검증한다.
+// (외부 스키마 라이브러리 미도입 — 번들 최소 원칙)
+function isValidEntry(e: unknown): e is JournalEntry {
+  if (typeof e !== "object" || e === null) return false
+  const o = e as Record<string, unknown>
+  if (typeof o.id !== "string" || typeof o.date !== "string" || typeof o.savedAt !== "string") return false
+  if (o.syncState !== "local" && o.syncState !== "synced") return false
+  if (o.kind === "post-session") {
+    return typeof o.system === "string" && typeof o.title === "string" &&
+      typeof o.distanceKm === "string" && typeof o.durationMin === "string" &&
+      typeof o.avgPace === "string" && typeof o.rpe === "number" && typeof o.memo === "string"
+  }
+  if (o.kind === "evening") {
+    return typeof o.sleepH === "number" && typeof o.sleepQuality === "number" &&
+      typeof o.weightKg === "string" && typeof o.restingHr === "string" &&
+      typeof o.painParts === "object" && o.painParts !== null &&
+      typeof o.mood === "number" && typeof o.note === "string"
+  }
+  if (o.kind === "race") {
+    const opt = (v: unknown, t: string) => v === undefined || typeof v === t
+    return (o.stage === "pre" || o.stage === "post") && typeof o.record === "string" &&
+      typeof o.rank === "string" && typeof o.result === "string" && typeof o.memo === "string" &&
+      opt(o.tension, "number") && opt(o.condition, "number") &&
+      opt(o.goalPace, "string") && opt(o.mood, "number")
+  }
+  return false
+}
+
 export function loadEntries(): JournalEntry[] {
   const s = storage()
   if (!s) return []
@@ -74,7 +109,12 @@ export function loadEntries(): JournalEntry[] {
     const raw = s.getItem(KEY)
     if (!raw) return []
     const parsed = JSON.parse(raw)
-    return Array.isArray(parsed) ? (parsed as JournalEntry[]) : []
+    if (!Array.isArray(parsed)) return []
+    const valid = parsed.filter(isValidEntry)
+    if (valid.length !== parsed.length && typeof window !== "undefined" && window.location.search.includes("uitest")) {
+      console.log(`[JSTORE] dropped=${parsed.length - valid.length}`)
+    }
+    return valid
   } catch {
     return []
   }
@@ -110,10 +150,26 @@ export function deleteEntry(id: string): { ok: boolean; total: number } {
   }
 }
 
-/** 전체 일지 JSON 문자열 — 내 데이터 내보내기용 (기기 밖 전송 없음, 파일 다운로드만) */
-export function exportEntriesJSON(): string {
+/**
+ * 전체 일지 JSON 문자열 — 내 데이터 내보내기용 (기기 밖 전송 없음, 파일 다운로드만).
+ * F0-f-3 (R-privacy-001, 결정 D1): 자유 텍스트(memo/note)는 기본 제외.
+ * includeMemo=true를 명시해야 원문 포함 — 호출부가 사용자에게 경고를 보여야 한다.
+ */
+export function exportEntriesJSON(opts?: { includeMemo?: boolean }): string {
+  const includeMemo = opts?.includeMemo === true
+  const entries = loadEntries().map((e) => {
+    if (includeMemo) return e
+    if (e.kind === "evening") return { ...e, note: e.note ? "[제외됨]" : "" }
+    return { ...e, memo: e.memo ? "[제외됨]" : "" }
+  })
   return JSON.stringify(
-    { app: "TRAINORACLE", format: "trainoracle.journal.v1", exportedAt: new Date().toISOString(), entries: loadEntries() },
+    {
+      app: "TRAINORACLE",
+      format: "trainoracle.journal.v1",
+      exportedAt: new Date().toISOString(),
+      memoIncluded: includeMemo,
+      entries,
+    },
     null, 2,
   )
 }

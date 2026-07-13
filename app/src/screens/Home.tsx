@@ -252,7 +252,13 @@ function DataHome({ all, onWriteLog, onOpenDay, onOpenGuide }: {
 
 function downloadJournalExport() {
   try {
-    const blob = new Blob([exportEntriesJSON()], { type: "application/json" })
+    // F0-f-3 (R-privacy-001): 메모 원문은 기본 제외. 포함은 명시적 선택 + 경고.
+    const includeMemo = window.confirm(
+      "일기 메모 원문도 파일에 포함할까요?\n\n" +
+      "[확인] 포함 — 파일을 다른 사람과 공유하면 메모 내용이 그대로 보여요.\n" +
+      "[취소] 제외(권장) — 훈련 수치만 내보내요.",
+    )
+    const blob = new Blob([exportEntriesJSON({ includeMemo })], { type: "application/json" })
     const url = URL.createObjectURL(blob)
     const a = document.createElement("a")
     a.href = url
@@ -261,7 +267,7 @@ function downloadJournalExport() {
     a.click()
     a.remove()
     URL.revokeObjectURL(url)
-    if (window.location.search.includes("uitest")) console.log("[JEXPORT] ok=true")
+    if (window.location.search.includes("uitest")) console.log(`[JEXPORT] ok=true memoIncluded=${includeMemo}`)
   } catch {
     if (window.location.search.includes("uitest")) console.log("[JEXPORT] ok=false")
     window.alert("내보내기에 실패했어요. 잠시 후 다시 시도해 주세요.")
@@ -317,15 +323,18 @@ function MyDeviceJournal({ onOpenDay }: { onOpenDay?: ((date: string) => void) |
       <div style={{ margin: "0 20px", borderTop: "1px solid var(--ink)", borderBottom: "1px solid var(--ink)" }}>
         {entries.map((e, i) => {
           const meta = KIND_META[e.kind]
+          // F0-f-5b (R-a11y-002): 시맨틱 button — 키보드 포커스·Enter/Space 기본 제공
           return (
-            <div
+            <button
               key={e.id}
               onClick={() => onOpenDay?.(e.date)}
+              aria-label={`${compactDate(e.date)} ${meta.label} 일지 열기 — ${entryHeadline(e)}`}
               style={{
-                padding: "12px 0",
+                width: "100%", textAlign: "left", background: "transparent",
+                border: 0, borderRadius: 0, padding: "12px 0",
                 borderBottom: i < entries.length - 1 ? "1px dashed var(--hair)" : 0,
                 display: "grid", gridTemplateColumns: "26px 1fr auto", gap: 10,
-                alignItems: "baseline", cursor: "pointer",
+                alignItems: "baseline", cursor: "pointer", font: "inherit",
               }}
             >
               <span style={{ fontFamily: "var(--mono)", fontSize: 15, color: "var(--brand)", lineHeight: 1 }}>{meta.mark}</span>
@@ -346,7 +355,7 @@ function MyDeviceJournal({ onOpenDay }: { onOpenDay?: ((date: string) => void) |
                 color: e.syncState === "local" ? "var(--ink-4)" : "var(--brand)",
                 border: "1px solid var(--hair)", padding: "2px 5px", whiteSpace: "nowrap",
               }}>{e.syncState === "local" ? "이 기기" : "동기화됨"}</span>
-            </div>
+            </button>
           )
         })}
       </div>

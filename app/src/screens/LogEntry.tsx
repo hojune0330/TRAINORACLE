@@ -204,20 +204,19 @@ function PostSessionForm({ onBack, onDone }: { onBack?: (() => void) | undefined
         </div>
       </FormSec>
 
-      {/* Voice memo — GAP_SPEC_MISSING: transient 미디어 계약 수용 전 데모 표면 */}
+      {/* Voice memo — F0-f-2 (R-safety-003): MEDIA transient 계약 수용 전까지
+          비활성 + 정직한 상태 표기. 자동 변환 약속 금지. */}
       <FormSec lb="음성 메모">
-        <button style={{
+        <button disabled aria-disabled="true" style={{
           width: "100%", padding: "14px",
-          background: "var(--surface)", border: "1px solid var(--line)",
+          background: "var(--surface-2)", border: "1px dashed var(--line-2)",
           fontFamily: "var(--mono)", fontSize: 11, letterSpacing: "0.14em",
-          textTransform: "uppercase", color: "var(--ink-2)", cursor: "pointer",
+          textTransform: "uppercase", color: "var(--ink-4)", cursor: "default",
           display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
           borderRadius: 0,
         }}>
-          <span style={{ width: 8, height: 8, borderRadius: "50%", background: "var(--err)" }}></span>
-          녹음 · 30초 자동 변환
+          준비 중 — 녹음 기능은 아직 없어요
         </button>
-        <PrivacyNote />
       </FormSec>
 
       {/* Sticky save — 로컬 우선 저장 */}
@@ -348,6 +347,12 @@ function RaceForm({ onBack, onDone }: { onBack?: (() => void) | undefined; onDon
   const [rank, setRank] = React.useState("")
   const [result, setResult] = React.useState("")
   const [memo, setMemo] = React.useState("")
+  // F0-f-6 (R-coach-001): 자기 점검 항목 — 데모 하드코딩을 실제 상태로 연결.
+  // null = 탭 안 함 = 저장 시 필드 자체를 생략 (F0-f-9 무언의 기본값 금지 원칙과 동일)
+  const [tension, setTension] = React.useState<number | null>(null)
+  const [condition, setCondition] = React.useState<number | null>(null)
+  const [goalPace, setGoalPace] = React.useState("")
+  const [raceMood, setRaceMood] = React.useState<number | null>(null)
   const [saveError, setSaveError] = React.useState(false)
 
   const persist = () => {
@@ -355,6 +360,11 @@ function RaceForm({ onBack, onDone }: { onBack?: (() => void) | undefined; onDon
       id: newEntryId(), kind: "race", date: todayISO(),
       savedAt: new Date().toISOString(), syncState: "local",
       stage, record, rank, result, memo,
+      // 탭한 항목만 저장 — 탭하지 않은 항목은 필드 부재(=MISSING)로 남긴다
+      ...(tension !== null ? { tension } : {}),
+      ...(condition !== null ? { condition } : {}),
+      ...(goalPace.trim() !== "" ? { goalPace: goalPace.trim() } : {}),
+      ...(raceMood !== null ? { mood: raceMood } : {}),
     }
     const r = saveEntry(entry)
     if (window.location.search.includes("uitest")) console.log(`[JSAVE] kind=race ok=${r.ok}`)
@@ -401,28 +411,35 @@ function RaceForm({ onBack, onDone }: { onBack?: (() => void) | undefined; onDon
       {stage === "pre" ? (
         <>
           <FormSec lb="긴장도 · 1-10">
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(10, 1fr)", border: "1px solid var(--ink)" }}>
+            <div role="radiogroup" aria-label="경기 직전 긴장도, 1에서 10"
+              style={{ display: "grid", gridTemplateColumns: "repeat(10, 1fr)", border: "1px solid var(--ink)" }}>
               {Array.from({ length: 10 }, (_, i) => i + 1).map(n => (
-                <button key={n} style={{
-                  padding: "12px 0", border: 0,
-                  background: n === 7 ? "var(--ink-blue)" : "transparent",
-                  color: n === 7 ? "#fff" : "var(--ink)",
-                  borderRight: n < 10 ? "1px solid var(--line)" : 0,
-                  fontFamily: "var(--mono)", fontSize: 12, cursor: "pointer",
-                }}>{n}</button>
+                <button key={n} role="radio" aria-checked={tension === n}
+                  aria-label={`긴장도 ${n}`}
+                  onClick={() => setTension(tension === n ? null : n)}
+                  style={{
+                    padding: "12px 0", border: 0,
+                    background: tension === n ? "var(--ink-blue)" : "transparent",
+                    color: tension === n ? "#fff" : "var(--ink)",
+                    borderRight: n < 10 ? "1px solid var(--line)" : 0,
+                    fontFamily: "var(--mono)", fontSize: 12, cursor: "pointer",
+                  }}>{n}</button>
               ))}
             </div>
           </FormSec>
           <FormSec lb="컨디션 자기 평가">
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 4 }}>
+            <div role="radiogroup" aria-label="경기 직전 컨디션 자기 평가"
+              style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 4 }}>
               {["흐림", "무덤덤", "보통", "좋음", "최고"].map((l, i) => (
-                <button key={i} style={{
-                  padding: "14px 4px 10px",
-                  background: i === 3 ? "var(--surface)" : "transparent",
-                  border: i === 3 ? "1px solid var(--ink)" : "1px solid var(--line)",
-                  display: "flex", flexDirection: "column", alignItems: "center", gap: 6,
-                  cursor: "pointer", borderRadius: 0,
-                }}>
+                <button key={i} role="radio" aria-checked={condition === i + 1}
+                  onClick={() => setCondition(condition === i + 1 ? null : i + 1)}
+                  style={{
+                    padding: "14px 4px 10px",
+                    background: condition === i + 1 ? "var(--surface)" : "transparent",
+                    border: condition === i + 1 ? "1px solid var(--ink)" : "1px solid var(--line)",
+                    display: "flex", flexDirection: "column", alignItems: "center", gap: 6,
+                    cursor: "pointer", borderRadius: 0,
+                  }}>
                   <MoodStrip level={i + 1} />
                   <span style={{ fontFamily: "var(--mono)", fontSize: 9, color: "var(--ink-3)", letterSpacing: "0.06em" }}>{l}</span>
                 </button>
@@ -430,10 +447,12 @@ function RaceForm({ onBack, onDone }: { onBack?: (() => void) | undefined; onDon
             </div>
           </FormSec>
           <FormSec lb="목표 페이스 · 전략" help="pace">
-            <input type="text" placeholder={`예: 3'40"/km · 후반 올리기`} style={{ ...inputStyle(), fontFamily: "var(--mono)" }} />
+            <input type="text" value={goalPace} onChange={e => setGoalPace(e.target.value)}
+              placeholder={`예: 3'40"/km · 후반 올리기`} style={{ ...inputStyle(), fontFamily: "var(--mono)" }} />
           </FormSec>
           <FormSec lb="혼잣말 한 줄">
-            <textarea placeholder="레이스 전에 자신에게..." rows={3}
+            <textarea value={memo} onChange={e => setMemo(e.target.value)}
+              placeholder="레이스 전에 자신에게..." rows={3}
               className="paper-grid"
               style={{
                 ...inputStyle(),
@@ -459,15 +478,18 @@ function RaceForm({ onBack, onDone }: { onBack?: (() => void) | undefined; onDon
             </div>
           </FormSec>
           <FormSec lb="감정">
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 4 }}>
+            <div role="radiogroup" aria-label="경기 직후 감정"
+              style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 4 }}>
               {["흐림", "무덤덤", "보통", "좋음", "최고"].map((l, i) => (
-                <button key={i} style={{
-                  padding: "14px 4px 10px",
-                  background: i === 4 ? "var(--surface)" : "transparent",
-                  border: i === 4 ? "1px solid var(--ink)" : "1px solid var(--line)",
-                  display: "flex", flexDirection: "column", alignItems: "center", gap: 6,
-                  cursor: "pointer", borderRadius: 0,
-                }}>
+                <button key={i} role="radio" aria-checked={raceMood === i + 1}
+                  onClick={() => setRaceMood(raceMood === i + 1 ? null : i + 1)}
+                  style={{
+                    padding: "14px 4px 10px",
+                    background: raceMood === i + 1 ? "var(--surface)" : "transparent",
+                    border: raceMood === i + 1 ? "1px solid var(--ink)" : "1px solid var(--line)",
+                    display: "flex", flexDirection: "column", alignItems: "center", gap: 6,
+                    cursor: "pointer", borderRadius: 0,
+                  }}>
                   <MoodStrip level={i + 1} />
                   <span style={{ fontFamily: "var(--mono)", fontSize: 9, color: "var(--ink-3)" }}>{l}</span>
                 </button>
@@ -522,7 +544,9 @@ export function BodyDiagram({ selected = {}, onChange }: {
   return (
     <div style={{ display: "flex", gap: 12 }}>
       <div style={{ flex: "0 0 220px", position: "relative", background: "var(--paper)", padding: 8 }}>
-        <svg viewBox="0 0 220 460" width="100%" preserveAspectRatio="xMidYMid meet" style={{ display: "block", height: "auto" }}>
+        <svg viewBox="0 0 220 460" width="100%" preserveAspectRatio="xMidYMid meet"
+          role="group" aria-label="통증 부위 선택 — 각 부위를 누르면 1에서 5단계, 다시 누르면 해제"
+          style={{ display: "block", height: "auto" }}>
           {/* Simple body silhouette */}
           <g fill="none" stroke="var(--ink-3)" strokeWidth="1.2">
             <circle cx="110" cy="60" r="22" />
@@ -534,8 +558,13 @@ export function BodyDiagram({ selected = {}, onChange }: {
           </g>
           {parts.map(p => {
             const lvl = selected[p.id] || 0
+            // F0-f-5a (R-a11y-001): 키보드(Enter/Space)·스크린리더 접근 가능한 핫스팟
             return (
-              <g key={p.id} onClick={() => cycle(p.id)} style={{ cursor: "pointer" }}>
+              <g key={p.id} onClick={() => cycle(p.id)}
+                role="button" tabIndex={0}
+                aria-label={`${p.name}${lvl > 0 ? `, 통증 ${lvl}단계` : ", 통증 없음"}. 누르면 ${lvl >= 5 ? "해제" : `${lvl + 1}단계`}`}
+                onKeyDown={(ev) => { if (ev.key === "Enter" || ev.key === " ") { ev.preventDefault(); cycle(p.id) } }}
+                style={{ cursor: "pointer", outline: "none" }}>
                 <circle cx={p.x} cy={p.y} r={lvl ? 9 : 6}
                   fill={lvl ? `var(--pain-${lvl})` : "rgba(0,0,0,0)"}
                   stroke={lvl ? `var(--pain-${lvl})` : "var(--ink-4)"}
@@ -593,8 +622,10 @@ function PainReviewBanner() {
           marginTop: 4, fontFamily: "var(--sans)", fontSize: 12.5,
           color: "var(--ink-2)", lineHeight: 1.5,
         }}>
-          높은 통증이 기록되면 코치 확인 전까지 고강도 훈련 계획이 보류됩니다.
-          기록은 그대로 저장돼요.
+          {/* F0-f-1 (R-safety-002): Plan Safety Gate 연결 전까지 실행 능력을
+              앞서는 문구 금지. 게이트 구현 후 "계획 보류" 문구로 복귀 예정. */}
+          높은 통증은 사람이 꼭 확인해야 하는 기록이에요.
+          지도자·보호자와 상의해 주세요. 기록은 그대로 저장돼요.
         </div>
       </div>
     </div>
