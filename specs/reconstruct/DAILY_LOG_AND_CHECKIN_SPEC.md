@@ -346,6 +346,185 @@ Race-day quick check subtypes are not reproduced in this document. `DAILY_LOG_AN
 
 ---
 
+## 7B. Quick Log Contract
+
+```yaml
+quick_log_contract:
+  patched_from: SPEC_TAP_FIRST_LOGGING.md
+  contract_status: SPEC_ONLY_OWNER_ADOPTION_PENDING
+  runtime_implementation_status: NOT_CLAIMED
+  canonical_promotion_status: NOT_CLAIMED
+  issue_closure_status: NOT_CLAIMED
+
+  modes:
+    quick:
+      entry_behavior: default_fast_entry
+      text_input_fields: 0
+    detail:
+      entry_behavior: existing_full_form
+    shared_invariants:
+      JournalEntry_schema: identical
+      save_path: same_saveEntry()
+      existing_field_addition_deletion_or_type_change: forbidden
+      quick_to_detail_value_handoff: preserve_current_values
+
+  tap_counting:
+    counted_event: one_deliberate_user_tap_that_selects_changes_or_confirms_a_value_or_command
+    entry_point_tap_counts: true
+    automatic_transition_after_selection_counts_as_tap: false
+    animation_or_derived_value_appearance_counts_as_tap: false
+
+  budgets:
+    post_session_quick:
+      maximum_taps: 5
+      same_kind_prefill_maximum_taps: 3
+      maximum_screen_transitions: 2
+    evening_quick:
+      maximum_taps: 7
+      no_pain_path_maximum_taps: 4
+      maximum_screen_transitions: 2
+    race_pre_quick:
+      maximum_taps: 4
+      maximum_screen_transitions: 1
+
+  preset_standard:
+    distance_km_chips: [3, 5, 8, 10, 12]
+    duration_min_chips: [20, 30, 40, 60, 90]
+    sleep_hours_chips: [6, 6.5, 7, 7.5, 8, 9]
+    stepper_increments:
+      distance_km: 0.5
+      duration_min: 5
+      body_weight_kg: 0.1
+      heart_rate_bpm: 1
+    default_sorting: nearest_relevant_or_previous_value
+    largest_value_first_or_training_increase_nudge: forbidden
+
+  derived_pace:
+    formula: durationMin / distanceKm
+    display_unit: pace_per_km
+    requires_nonzero_fields: [durationMin, distanceKm]
+    when_either_input_is_missing_or_zero: do_not_display_or_persist_a_pace_value
+    quick_mode_user_input_surface: forbidden
+    provenance_requirement: DERIVED_under_data_provenance_contract
+
+  same_kind_prefill:
+    trigger: explicit_current_entry_user_tap_on_same_kind_prefill
+    source: most_recent_entry_with_identical_kind
+    copies_only: [system, distanceKm, durationMin]
+    never_copies: [memo, rpe]
+    copied_values_require_current_entry_confirmation: true
+    no_matching_entry_behavior: leave_fields_MISSING
+
+  partial_and_completion_state:
+    partial_save_allowed: true
+    missing_answers_never_block_save: true
+    silent_defaults_as_athlete_facts: forbidden
+    completion_paper_shows_only_values_selected_for_current_entry: true
+    weekly_written_day_dots_are_fact_display_only: true
+    streak_pressure_or_training_volume_nudge_copy: forbidden
+
+  pain_review_invariants:
+    quick_and_detail_use_same_painLevelsRequireReview: true
+    REVIEW_banner_visibility_identical_for_same_pain_values: true
+    quick_mode_can_bypass_safety_evaluation: false
+    no_pain_action_requires_explicit_current_entry_tap: true
+    favorable_checkin_or_completion_state_can_clear_D9_or_Safety_Gate: false
+```
+
+Quick mode changes interaction cost, not storage truth or safety authority. It must preserve the visible ink stack across each automatic transition, and the accumulated values must remain editable without treating a transition, animation, preset ordering, or prior record as a new athlete fact.
+
+---
+
+## 7C. Data Provenance Contract
+
+```yaml
+data_provenance_contract:
+  contract_status: BACKWARD_COMPATIBLE_METADATA_PROPOSAL_OWNER_ADOPTION_PENDING
+  applies_to: every_coaching_relevant_numeric_field_in_each_entry
+  persisted_states: [EXPLICIT, DERIVED, MISSING]
+  read_time_only_state: LEGACY_MISSING_PROVENANCE
+  unrecognized_provenance_state: INVALID_AND_INELIGIBLE
+  imported_and_demo_scope:
+    labels: [IMPORTED, DEMO]
+    contract_status: PENDING_OWNER_DECISION
+    persisted_as_new_states_under_this_contract: false
+    ineligible_until_contract_adopted_by: COACH_HOJUNE
+    excluded_surfaces:
+      - weekly_statistics
+      - trend_analysis
+      - future_training_plan_evidence
+
+  state_semantics:
+    EXPLICIT:
+      meaning: user_directly_tapped_selected_or_entered_the_current_entry_value
+      may_be_eligible_for_analysis_or_future_plan_evidence: true
+    DERIVED:
+      meaning: system_calculated_from_current_entry_inputs
+      may_be_eligible_for_analysis_or_future_plan_evidence: conditional
+    MISSING:
+      meaning: user_skipped_the_field_and_no_athlete_fact_exists
+      may_be_eligible_for_analysis_or_future_plan_evidence: false
+    LEGACY_MISSING_PROVENANCE:
+      meaning: metadata_absent_on_a_record_created_before_provenance_adoption
+      persisted_as_a_new_state: false
+      may_be_eligible_for_analysis_or_future_plan_evidence: false
+
+  optional_metadata_proposal:
+    adoption_authority: COACH_HOJUNE
+    optional_field_name: fieldProvenance
+    compatibility: existing_entries_without_fieldProvenance_remain_readable
+    absent_metadata_read_as: LEGACY_MISSING_PROVENANCE
+    existing_JournalEntry_field_names_and_types: unchanged
+    existing_field_addition_deletion_or_type_change: forbidden
+    metadata_keys: existing_field_names_only
+    raw_text_values_allowed: false
+    per_field_shape:
+      provenance: EXPLICIT_or_DERIVED_or_MISSING
+      derivedFrom: required_nonempty_array_of_existing_field_names_for_DERIVED_only
+      derivationRuleId: required_nonempty_stable_rule_identifier_for_DERIVED_only
+
+  derived_eligibility:
+    derivedFrom_must_enumerate_every_actual_input: true
+    derivationRuleId_must_be_present_and_nonempty: true
+    derived_inputs_must_all_be: EXPLICIT
+    nested_DERIVED_input_is_eligible: false
+    MISSING_input_is_eligible: false
+    LEGACY_MISSING_PROVENANCE_input_is_eligible: false
+    unknown_input_provenance_is_eligible: false
+    omitted_actual_input_is_eligible: false
+    any_non_EXPLICIT_actual_input_makes_DERIVED_ineligible: true
+
+  aggregate_and_plan_eligibility:
+    eligible_direct_value: EXPLICIT_only
+    eligible_derived_value: DERIVED_only_when_every_derived_eligibility_rule_passes
+    excluded_surfaces:
+      - weekly_statistics
+      - trend_analysis
+      - future_training_plan_evidence
+    MISSING_excluded_from_all_listed_surfaces: true
+    LEGACY_MISSING_PROVENANCE_excluded_from_all_listed_surfaces: true
+    invalid_unknown_or_omitted_provenance_excluded_from_all_listed_surfaces: true
+    ineligible_DERIVED_excluded_from_all_listed_surfaces: true
+
+  save_and_default_invariants:
+    partial_save_allowed: true
+    missing_or_ineligible_field_can_block_entry_save: false
+    skipped_field_must_be_MISSING_when_metadata_is_created: true
+    silent_default_can_be_reclassified_as_EXPLICIT: false
+    metadata_absence_can_be_inferred_as_EXPLICIT: false
+
+  privacy_and_safety:
+    fieldProvenance_may_store_raw_memo_symptom_evidence_or_private_text: false
+    derivedFrom_contains_field_identifiers_not_values: true
+    provenance_can_clear_D9_or_Safety_Gate: false
+    free_text_favorable_checkin_template_or_good_physio_can_clear_D9_risk: false
+    daily_log_still_cannot_bypass_RVE_or_Safety_Gate: true
+```
+
+`LEGACY_MISSING_PROVENANCE` is a conservative read-time interpretation, not permission to rewrite old records or infer athlete intent. A caller may display a partial or legacy entry, but only an `EXPLICIT` value or a `DERIVED` value whose complete dependency set is entirely `EXPLICIT` may enter weekly statistics, trends, or future training-plan evidence.
+
+---
+
 ## 8. Free-Text And Memo Boundary
 
 Daily Check-in may offer a user-facing memo field, but raw memo text is not a persistent training-analysis or audit field.
