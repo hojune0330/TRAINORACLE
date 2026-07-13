@@ -83,7 +83,7 @@ function EntryChooser({ onBack, onPick }: { onBack?: (() => void) | undefined; o
 
 // ───────── Post-session form ─────────
 function PostSessionForm({ onBack, onDone }: { onBack?: (() => void) | undefined; onDone?: ((t: string) => void) | undefined }) {
-  const [rpe, setRpe] = React.useState(5)
+  const [rpe, setRpe] = React.useState(0) // F0-f-9: 무언의 기본값 금지 — 0 = 미선택(집계 제외)
   const [memo, setMemo] = React.useState("")
   const [saveError, setSaveError] = React.useState(false)
   const [system, setSystem] = React.useState("base")
@@ -155,7 +155,7 @@ function PostSessionForm({ onBack, onDone }: { onBack?: (() => void) | undefined
       </FormSec>
 
       {/* RPE */}
-      <FormSec lb={`RPE · 주관 강도 (${rpe}/10)`} help="rpe">
+      <FormSec lb={`RPE · 주관 강도 (${rpe > 0 ? `${rpe}/10` : "미선택"})`} help="rpe">
         <div style={{ display: "grid", gridTemplateColumns: "repeat(10, 1fr)", gap: 0, border: "1px solid var(--ink)" }}>
           {Array.from({ length: 10 }, (_, i) => i + 1).map(n => (
             <button key={n} onClick={() => setRpe(n)} style={{
@@ -228,9 +228,9 @@ function PostSessionForm({ onBack, onDone }: { onBack?: (() => void) | undefined
 
 // ───────── Evening checkin ─────────
 function EveningCheckin({ onBack, onDone }: { onBack?: (() => void) | undefined; onDone?: ((t: string) => void) | undefined }) {
-  const [sleep, setSleep] = React.useState(7)
-  const [quality, setQuality] = React.useState(3)
-  const [mood, setMood] = React.useState(3)
+  const [sleep, setSleep] = React.useState(0) // F0-f-9: 0 = 미기록
+  const [quality, setQuality] = React.useState(0) // F0-f-9: 0 = 미선택
+  const [mood, setMood] = React.useState(0) // F0-f-9: 0 = 미선택
   const [painParts, setPainParts] = React.useState<Record<string, number>>({})
   const [weight, setWeight] = React.useState("")
   const [hr, setHr] = React.useState("")
@@ -258,8 +258,8 @@ function EveningCheckin({ onBack, onDone }: { onBack?: (() => void) | undefined;
         <IndexCard date={compactDate(todayISO())} dow={`${dowOf(todayISO())} · ${nowClock()}`} />
       </div>
 
-      <FormSec lb={`수면 · ${sleep}h`}>
-        <input type="range" min="4" max="12" step="0.5" value={sleep}
+      <FormSec lb={`수면 · ${sleep > 0 ? `${sleep}h` : "미기록 (움직여서 기록)"}`}>
+        <input type="range" min="4" max="12" step="0.5" value={sleep > 0 ? sleep : 7}
           onChange={e => setSleep(parseFloat(e.target.value))}
           style={{ width: "100%" }} />
         <div style={{ display: "flex", justifyContent: "space-between", fontFamily: "var(--mono)", fontSize: 9.5, color: "var(--ink-4)", letterSpacing: "0.06em", marginTop: 4 }}>
