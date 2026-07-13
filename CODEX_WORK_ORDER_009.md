@@ -13,6 +13,12 @@ work_order_metadata:
   prerequisite_status: >
     선행 조건 없음. 단 ORDER_008(Task A/B/C)이 우선순위가 높다 —
     008 산출물 PR을 먼저 올리고, 009는 그 다음 또는 병행하라.
+  amendment_v2: >
+    2026-07-13 개정. Task A는 ORDER_008 Task A(quick_log_contract +
+    data_provenance_contract, amendment_v3로 확장됨)가 병합된 뒤
+    같은 DAILY_LOG_AND_CHECKIN_SPEC 기준으로 작성하라 — 퀵 로그·
+    데이터 출처·D9 transient 세 계약이 한 문서에서 충돌 없이 정렬돼야
+    한다. Task B·C는 이 순서와 무관하게 즉시 착수 가능.
   relation_to_app_work: >
     총책임자가 F0-f 앱 하드닝(PLAN §2)을 병행 구현한다. 이 지시서의 Task A가
     병합되어야 총책임자가 F0-f-7(D9 연결 구현)에 착수한다.
