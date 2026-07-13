@@ -119,6 +119,7 @@ canonical_promotion_allowed: false
 | `ANALYSIS_AND_VISUALIZATION_DATA_CONTRACT.md` | Productization SPEC draft | Analysis, Session Detail, Dashboard, Calendar 시각화가 어떤 구조 데이터에서 나오는지 정의 | Draft created; App Bridge binding, metric formula authority, runtime evidence는 아직 없음 |
 | `PLAN_OUTPUT_RATIONALE_PRIVACY_SPEC.md` | Productization SPEC draft | Plan option rationale과 코치-visible 설명이 민감정보를 누출하지 않게 함 | Draft created; Plan Generator/App Bridge target binding과 runtime evidence는 아직 없음 |
 | `MICROCYCLE_AND_CALENDAR_MAPPING_SPEC.md` | Productization SPEC draft | 9.5-day cycle, calendar, `CYCLE_DAY` 라벨을 화면/계획과 연결 | Draft created; Plan Generator/App Bridge/UI target binding과 runtime evidence는 아직 없음 |
+| `TRAINING_PLAN_FORMATION_AND_ADAPTATION_SPEC.md` | Productization SPEC draft | 소유자 결정의 9.5일 방법을 결정론적 후보, 복합 부하, 안전 중단, 불변 버전 계약으로 구체화 | Draft created; option taxonomy, coach rule set, statistics policy, Plan Generator/Calendar binding, pilot protocol은 아직 open |
 | `EXTERNAL_RECORD_INTEGRATION_SPEC.md` | Productization SPEC draft | 외부 PB/SB 기록을 TrainOracle에 구조화 inbound source로 연결 | Draft created and merged to main; API reality, consent, conflict UX, runtime evidence는 아직 없음 |
 | `COMPOSITION_BALANCE_BASELINE_CONTRACT.md` | Productization SPEC draft | 구성 균형 기준/placeholder/demo badge를 안전하게 표현 | Draft created and merged to main; owner-approved baseline, literature validation, runtime evidence는 아직 없음 |
 | `JOURNAL_DELIGHT_AND_DECORATION_SPEC.md` | Productization SPEC draft | 일지만 쓰는 사용자 모드와 꾸미기/스트릭/스탬프 체계 | Draft created and merged to main; final asset catalog, safe unlock thresholds, monetization decision은 아직 없음 |
@@ -131,18 +132,18 @@ canonical_promotion_allowed: false
 
 ## 9. 현재 가장 중요한 작업 순서
 
-1. `RULE_VALIDATION_ENGINE_CONTRACT.md`, `PLAN_SAFETY_GATE_SPEC.md`, `DAILY_LOG_AND_CHECKIN_SPEC.md`를 reconstructed draft로 review한다.
-2. `DAILY_LOG_AND_CHECKIN_SPEC.md`를 기준으로 App Bridge / Athlete Profile / Physio Source Trust / RVE / Safety Gate target patch 계획을 세운다.
-3. Wave 1 Physio Source Trust target patches in `PLAN_GENERATOR_SPEC.md`, `APP_IMPLEMENTATION_BRIDGE.md`, and `ATHLETE_PROFILE_SPEC.md` are present; review source acceptance and target-file recount approval before any issue closure.
-4. 실제 D9 evaluator runtime output을 확보하기 전까지 RVE/PG/Safety Gate binding issue를 닫지 않는다.
-5. Work Order 006 A-C drafts are now present; review journal delight, local-first sync, and federated SSO before backend/account implementation.
-6. Productization drafts are now created; next work is target patches, owner decisions, implementation schema contracts, and runtime evidence.
+1. `TRAINING_PLAN_METHOD_DECISION.md`와 `TRAINING_PLAN_FORMATION_AND_ADAPTATION_SPEC.md`를 함께 검토하고 여섯 canonical blocker를 결정한다.
+2. `RULE_VALIDATION_ENGINE_CONTRACT.md`, `PLAN_SAFETY_GATE_SPEC.md`, `DAILY_LOG_AND_CHECKIN_SPEC.md`를 reconstructed draft로 review한다.
+3. `DAILY_LOG_AND_CHECKIN_SPEC.md`를 기준으로 App Bridge / Athlete Profile / Physio Source Trust / RVE / Safety Gate target patch 계획을 세운다.
+4. Wave 1 Physio Source Trust target patches are present; review source acceptance and target-file recount approval before issue closure.
+5. 실제 D9 evaluator runtime output을 확보하기 전까지 RVE/PG/Safety Gate binding issue를 닫지 않는다.
+6. Formation source acceptance 뒤에만 Plan Generator와 Calendar projection schema target patch를 시작한다.
 
 ---
 
 ## 10. 한 줄 요약
 
-TrainOracle의 문서 계층은 이제 `Rule semantics -> RVE -> Safety Gate -> Plan Generator` 안전 체인과 `Daily Log -> structured source context -> RVE/Safety Gate/Analysis` 일지 체인, 그리고 `local journal -> account sync -> AthleteTime identity` 계정 체인을 분리해서 볼 수 있다. 아직 정본 승인이나 runtime evidence 단계는 아니며, 다음 핵심은 owner decision, target patch, backend/account 구현 증거다.
+TrainOracle의 문서 계층은 이제 `Rule semantics -> RVE -> Safety Gate -> Formation -> Plan Generator -> immutable plan/adaptation` 안전·계획 체인과 `Daily Log -> structured source context -> RVE/Safety Gate/Analysis` 일지 체인을 분리해서 볼 수 있다. 아직 정본 승인이나 runtime evidence 단계는 아니며, Formation의 여섯 blocker와 target schema binding을 먼저 닫아야 한다.
 
 ---
 
@@ -247,6 +248,8 @@ Purpose:
 - Preserve source refs, timezone/anchor uncertainty, and privacy-safe audit fields.
 
 Remaining future productization document:
+
+- `TRAINING_PLAN_FORMATION_AND_ADAPTATION_SPEC.md` now exists as a later `DRAFT_FOR_REVIEW`, grounded by root decision `TRAINING_PLAN_METHOD_DECISION.md`. It has six canonical blockers and is not Plan Generator/Calendar target closure or runtime evidence.
 
 - None. Productization drafts now exist, but all remain draft-for-review and not runtime evidence.
 

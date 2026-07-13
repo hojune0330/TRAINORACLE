@@ -28,12 +28,14 @@ Use it after reading [`SPEC_REVIEW_PACKET.md`](./SPEC_REVIEW_PACKET.md) and befo
 
 ## 2. Current Phase Decision
 
-Wave 3 productization drafts now exist.
+Wave 3 productization drafts now exist, including the later Formation/Adaptation draft
+and its owner-decision record. Formation currently has six canonical blockers.
 
 Therefore the next phase is not "make more productization drafts" by default. The next phase is:
 
 ```text
 Review Round 1
+-> Formation owner/blocker decision
 -> source acceptance decision
 -> target patch readiness
 -> target-local patches with recount
@@ -163,12 +165,23 @@ Source documents:
 - `specs/reconstruct/ANALYSIS_AND_VISUALIZATION_DATA_CONTRACT.md`
 - `specs/reconstruct/PLAN_OUTPUT_RATIONALE_PRIVACY_SPEC.md`
 - `specs/reconstruct/MICROCYCLE_AND_CALENDAR_MAPPING_SPEC.md`
+- `TRAINING_PLAN_METHOD_DECISION.md`
+- `specs/reconstruct/TRAINING_PLAN_FORMATION_AND_ADAPTATION_SPEC.md`
+
+Additional target:
+
+- `specs/reconstruct/MICROCYCLE_AND_CALENDAR_MAPPING_SPEC.md` for the missing
+  `frameId` / `blockId` projection schema
 
 Target issues:
 
 - `OI-PG-OUTPUT-FORMAT-BINDING-001`
 - `OI-PG-OPTION-RATIONALE-PRIVACY-001`
 - `OI-PG-MICROCYCLE-CALENDAR-MAPPING-001`
+- `OI-FA-CALENDAR-SCHEMA-BINDING-001` remains a source-side blocker until a
+  target-local mapping issue is added after recount
+- a Plan Generator Formation/version binding issue may be added only after approved
+  target-file recount
 - downstream App Bridge/API/UI issues to be opened only after target files are reviewed
 
 Intent:
@@ -176,6 +189,9 @@ Intent:
 - Connect product surfaces to structured source refs, reason codes, privacy tiers, redaction states, uncertainty, and source coverage.
 - Keep product surfaces from creating/selecting plan options outside Plan Generator.
 - Keep analysis/calendar/rationale surfaces from clearing D9 or Safety Gate blocks.
+- Do not bind Formation until its proposed MAIN class registry, option taxonomy,
+  coach rule set, load allocation, evidence/statistics, pilot protocol, and target
+  schemas are accepted or explicitly held.
 
 Closure allowed now:
 
@@ -227,11 +243,11 @@ Stop and do not patch if any of these are true:
 
 ## 6. Recommended Next Execution Order
 
-1. Send [`SPEC_REVIEW_PACKET.md`](./SPEC_REVIEW_PACKET.md) to reviewers with a specific lens.
-2. Collect findings as `APPROVE_FOR_NEXT_PATCH_PLAN`, `ITERATE_BEFORE_PATCH`, or `BLOCKED`.
-3. If not blocked, run Wave B safety-gate target patch planning first.
-4. Run Wave C source acceptance and recount planning.
-5. Run Wave D productization binding only after safety/privacy source boundaries are accepted.
+1. Review `TRAINING_PLAN_METHOD_DECISION.md` and Formation/Adaptation with coaching, security, and implementation lenses.
+2. Resolve or explicitly retain its six canonical blockers; draft self-checks are not acceptance.
+3. Run Wave B safety-gate and Wave C source-acceptance/recount planning where still open.
+4. Add Plan Generator and Calendar target issues only after exact target-file recount and Formation source acceptance.
+5. Run Wave D binding only after the safety/privacy and Formation source boundaries are accepted.
 6. Prepare Wave E runtime evidence after target contracts are stable.
 
 [DRAFT_COMPLETE]

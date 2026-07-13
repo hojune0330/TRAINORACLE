@@ -58,6 +58,7 @@ patch_rules:
 | `ANALYSIS_AND_VISUALIZATION_DATA_CONTRACT.md` | `DRAFT_FOR_REVIEW` | Source-backed visualization data shapes, uncertainty/source coverage, analysis privacy boundary | Metric algorithm authority, App Bridge implementation, runtime proof |
 | `PLAN_OUTPUT_RATIONALE_PRIVACY_SPEC.md` | `DRAFT_FOR_REVIEW` | Privacy-safe plan rationale refs, rationale codes, audience tiers, redaction state | Plan Generator target closure, App Bridge implementation, runtime/privacy proof |
 | `MICROCYCLE_AND_CALENDAR_MAPPING_SPEC.md` | `DRAFT_FOR_REVIEW` | Namespace-safe 9.5-cycle, `CYCLE_DAY`, planned-date/session-slot, and Calendar projection mapping | Plan Generator target closure, App Bridge/UI implementation, runtime proof |
+| `TRAINING_PLAN_FORMATION_AND_ADAPTATION_SPEC.md` | `DRAFT_FOR_REVIEW` | Decision-provenanced local-civil frame, MAIN exposure accounting, typed load components, deterministic candidate and immutable adaptation contracts | Execution before six blockers, source acceptance, target patches, and runtime proof |
 | `SPEC_DOCUMENTATION_REPORT.md` | Handoff report | Human-readable document map | Product rule authority |
 
 ---
@@ -68,6 +69,8 @@ patch_rules:
 |---|---|---|---|---|---|
 | `PLAN_GENERATOR_SPEC.md` | `OI-PG-RULE-SAFETY-GATE-BINDING-001` | P1 / YES / OPEN; target-local Safety Gate/RVE binding patched, issue still open | `PLAN_SAFETY_GATE_SPEC.md`, `RULE_VALIDATION_ENGINE_CONTRACT.md`, `RVE_RULE_EVALUATOR_BINDING_SPEC.md` | Bind Plan Generator to consume D9/RVE only through Safety Gate; ACTIVE/UNKNOWN block; advisory non-blocking under CLEARED | No. Requires source acceptance, target recount approval, and actual D9 runtime evidence |
 | `PLAN_GENERATOR_SPEC.md` | `OI-PG-PHYSIO-SOURCE-CONSUMPTION-001` | P1 / YES / OPEN; target binding patched in Section 6B | `PHYSIO_SOURCE_TRUST_SPEC.md` | Consume trusted physio source status without allowing good physio data to clear D9 risk | No. Target patch exists, but closure still requires source acceptance and target recount approval; do not copy expected deltas |
+| `PLAN_GENERATOR_SPEC.md` | New Formation/Version binding issue after approved recount | Target lacks frame, block, component, difference, hold, version, CAS, and adaptation records | `TRAINING_PLAN_FORMATION_AND_ADAPTATION_SPEC.md` | Bind accepted formation source without redefining Safety Gate, classifier, or coach authority | No. Six source blockers and source acceptance remain open; target issue must be added only after recount approval |
+| `MICROCYCLE_AND_CALENDAR_MAPPING_SPEC.md` | `OI-FA-CALENDAR-SCHEMA-BINDING-001` source-side blocker | `CalendarSessionProjection` lacks `frameId` and `blockId` | `TRAINING_PLAN_FORMATION_AND_ADAPTATION_SPEC.md` | Make 7-day projection identity representable while keeping mapping projection-only | No. Requires source acceptance, target-local issue/recount, schema patch, DST tests, and runtime evidence |
 | `APP_IMPLEMENTATION_BRIDGE.md` | `OI-AIB-PHYSIO-SOURCE-001` | P1 / true / OPEN in current target file; issue addendum records patched-pending-source-acceptance | `PHYSIO_SOURCE_TRUST_SPEC.md`, `DAILY_LOG_AND_CHECKIN_SPEC.md` | Add storage/use boundary for physio source trust and daily check-in structured data | No. Target patch exists, but closure still requires source acceptance, target recount approval, and implementation/privacy review |
 | `ATHLETE_PROFILE_SPEC.md` | `OI-AP-PHYSIO-SOURCE-001` | Canonical blocking issue remains OPEN with patched-pending-source-acceptance addendum | `PHYSIO_SOURCE_TRUST_SPEC.md`, `DAILY_LOG_AND_CHECKIN_SPEC.md` | Clarify profile physiological attributes source priority and conflict handling | No. Target patch exists, but closure still requires source acceptance, App Bridge binding acceptance, and target recount approval |
 | `PLAN_SAFETY_GATE_SPEC.md` | `OI-PSG-DAILY-LOG-INPUT-BINDING-001` | P2 / NO / OPEN in current target file; target-local input boundary patched in Section 9A | `DAILY_LOG_AND_CHECKIN_SPEC.md` | Bind daily check-in structured signals as possible RVE/Safety Gate context without raw text storage | No. Requires Daily Log source acceptance, target recount approval, and implementation/runtime evidence before closure |
@@ -140,6 +143,7 @@ Drafts:
 - `ANALYSIS_AND_VISUALIZATION_DATA_CONTRACT.md` - created as `specs/reconstruct/ANALYSIS_AND_VISUALIZATION_DATA_CONTRACT.md`
 - `PLAN_OUTPUT_RATIONALE_PRIVACY_SPEC.md` - created as `specs/reconstruct/PLAN_OUTPUT_RATIONALE_PRIVACY_SPEC.md`
 - `MICROCYCLE_AND_CALENDAR_MAPPING_SPEC.md` - created as `specs/reconstruct/MICROCYCLE_AND_CALENDAR_MAPPING_SPEC.md`
+- `TRAINING_PLAN_FORMATION_AND_ADAPTATION_SPEC.md` - created as `specs/reconstruct/TRAINING_PLAN_FORMATION_AND_ADAPTATION_SPEC.md`, with root owner-decision record `TRAINING_PLAN_METHOD_DECISION.md`
 
 Rules:
 
@@ -162,7 +166,8 @@ Current Wave 3 state:
 - `MICROCYCLE_AND_CALENDAR_MAPPING_SPEC.md` now exists as a new productization draft.
 - It defines namespace-safe 9.5-day cycle display, `CYCLE_DAY.*` labels, planned dates, session slots, race anchors, and Calendar projections.
 - It cannot create or select plan options, redefine D-rule semantics, clear D9/Safety Gate states, claim runtime evidence, resolve `OI-PG-MICROCYCLE-CALENDAR-MAPPING-001`, or close downstream issues.
-- No productization draft remains uncreated in Wave 3.
+- `TRAINING_PLAN_FORMATION_AND_ADAPTATION_SPEC.md` now exists as a decision-provenanced draft with six canonical blockers. It cannot execute, patch downstream targets, or claim runtime evidence.
+- Productization draft creation is complete; Formation acceptance and target binding remain open.
 
 ### Wave 4 - Runtime Evidence
 
@@ -236,6 +241,6 @@ implementation_missing:
 
 ## 7. One-Line Summary
 
-The next safe work is not issue closure. Wave 1 Physio Source Trust target patches, Wave 2 Daily Log target patches, and Wave 3 productization drafts now exist, so the next work is Review Round 1, productization draft review/acceptance, target-patch readiness, target-file recount approval, and runtime evidence preparation before any safety-chain issue closure.
+The next safe work is not issue closure. Review the Formation/Adaptation draft against its owner decision, resolve its six canonical blockers, then perform count-safe Plan Generator and Calendar schema patches before implementation or runtime claims.
 
 [DRAFT_COMPLETE]

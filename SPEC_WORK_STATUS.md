@@ -121,6 +121,8 @@ Current Wave 3 productization draft state:
 - It defines namespace-safe microcycle/calendar mapping for 9.5-day cycle display, `CYCLE_DAY.*` labels, planned dates, session slots, race anchors, and Calendar projections.
 - It keeps `CYCLE_DAY.*`, `RULE_SPEC_D1_D9.*`, and `LEGACY_PHASE_D.*` separate and forbids bare D-rule ambiguity in contract fields.
 - It cannot create/select plan options, clear D9/Safety Gate states, claim runtime evidence, resolve `OI-PG-MICROCYCLE-CALENDAR-MAPPING-001`, or close downstream issues.
+- `TRAINING_PLAN_METHOD_DECISION.md` now records owner-confirmed first-pilot method boundaries without approving option taxonomy, thresholds, or production execution.
+- `specs/reconstruct/TRAINING_PLAN_FORMATION_AND_ADAPTATION_SPEC.md` now exists as `DRAFT_FOR_REVIEW`; it defines the local-civil 9.5-day formation frame, MAIN exposure accounting, typed composite load, deterministic candidate arbitration, immediate safety holds, and append-only plan adaptation. Six canonical blockers remain.
 - Work Order 005 productization drafts now present on main: `EXTERNAL_RECORD_INTEGRATION_SPEC.md` and `COMPOSITION_BALANCE_BASELINE_CONTRACT.md`.
 - Work Order 006 productization drafts now present on main: `JOURNAL_DELIGHT_AND_DECORATION_SPEC.md`, `LOCAL_FIRST_SYNC_AND_PROMOTION_CONTRACT.md`, and `FEDERATED_ACCOUNT_SSO_CONTRACT.md`.
 - All productization drafts remain drafts for review; none are canonical promotion, issue closure, or runtime evidence.
@@ -196,6 +198,7 @@ Missing/reconstruct area:
 - [`specs/reconstruct/ANALYSIS_AND_VISUALIZATION_DATA_CONTRACT.md`](./specs/reconstruct/ANALYSIS_AND_VISUALIZATION_DATA_CONTRACT.md) (`DRAFT_FOR_REVIEW`; new productization draft)
 - [`specs/reconstruct/PLAN_OUTPUT_RATIONALE_PRIVACY_SPEC.md`](./specs/reconstruct/PLAN_OUTPUT_RATIONALE_PRIVACY_SPEC.md) (`DRAFT_FOR_REVIEW`; new productization draft)
 - [`specs/reconstruct/MICROCYCLE_AND_CALENDAR_MAPPING_SPEC.md`](./specs/reconstruct/MICROCYCLE_AND_CALENDAR_MAPPING_SPEC.md) (`DRAFT_FOR_REVIEW`; new productization draft)
+- [`specs/reconstruct/TRAINING_PLAN_FORMATION_AND_ADAPTATION_SPEC.md`](./specs/reconstruct/TRAINING_PLAN_FORMATION_AND_ADAPTATION_SPEC.md) (`DRAFT_FOR_REVIEW`; owner-decision-provenanced first-pilot policy with six canonical blockers)
 - [`specs/reconstruct/EXTERNAL_RECORD_INTEGRATION_SPEC.md`](./specs/reconstruct/EXTERNAL_RECORD_INTEGRATION_SPEC.md) (`DRAFT_FOR_REVIEW`; Work Order 005 draft)
 - [`specs/reconstruct/COMPOSITION_BALANCE_BASELINE_CONTRACT.md`](./specs/reconstruct/COMPOSITION_BALANCE_BASELINE_CONTRACT.md) (`DRAFT_FOR_REVIEW`; Work Order 005 draft)
 - [`specs/reconstruct/JOURNAL_DELIGHT_AND_DECORATION_SPEC.md`](./specs/reconstruct/JOURNAL_DELIGHT_AND_DECORATION_SPEC.md) (`DRAFT_FOR_REVIEW`; Work Order 006 draft)
@@ -244,13 +247,14 @@ Do not claim a document exists from a chapter title, H1, table row, status label
 14. Review `specs/reconstruct/ANALYSIS_AND_VISUALIZATION_DATA_CONTRACT.md`; it is a productization draft, not metric formula authority, canonical, or runtime evidence.
 15. Review `specs/reconstruct/PLAN_OUTPUT_RATIONALE_PRIVACY_SPEC.md`; it is a productization draft, not Plan Generator target issue closure, canonical, or runtime evidence.
 16. Review `specs/reconstruct/MICROCYCLE_AND_CALENDAR_MAPPING_SPEC.md`; it is a productization draft, not Plan Generator target issue closure, D-rule redefinition, canonical, or runtime evidence.
-17. Review `specs/reconstruct/EXTERNAL_RECORD_INTEGRATION_SPEC.md`; do not implement AthleteTime integration until API reality, terms, consent, and owner decisions are verified.
-18. Review `specs/reconstruct/COMPOSITION_BALANCE_BASELINE_CONTRACT.md`; keep placeholder baselines visibly marked as demo until owner/coach approval and source validation exist.
-19. Review `specs/reconstruct/JOURNAL_DELIGHT_AND_DECORATION_SPEC.md`; decoration, streak, and unlock logic must not reward training volume or hide pain/rest/injury signals.
-20. Review `specs/reconstruct/LOCAL_FIRST_SYNC_AND_PROMOTION_CONTRACT.md`; raw memo/note server persistence remains unresolved until owner policy, encryption, retention, export, and deletion decisions exist.
-21. Review `specs/reconstruct/FEDERATED_ACCOUNT_SSO_CONTRACT.md`; AthleteTime SSO is identity authority only and does not grant TrainOracle safety or coaching authority.
-22. Read `ACCOUNT_FEDERATION_DECISION.md`, `ATHLETETIME_INTEGRATION_REVIEW.md`, and `LAUNCH_BACKEND_AND_ACCOUNT_PLAN.md` before backend/account work; they are planning context, not runtime evidence.
-23. Begin App Bridge/API schema contracts and runtime evidence only after preserving the safety core chain and resolving the owner decisions called out by the account/sync drafts.
+17. Review `TRAINING_PLAN_METHOD_DECISION.md` with `specs/reconstruct/TRAINING_PLAN_FORMATION_AND_ADAPTATION_SPEC.md`; do not implement formation rules before the option taxonomy, coach rule set, schema bindings, and pilot protocol are accepted.
+18. Review `specs/reconstruct/EXTERNAL_RECORD_INTEGRATION_SPEC.md`; do not implement AthleteTime integration until API reality, terms, consent, and owner decisions are verified.
+19. Review `specs/reconstruct/COMPOSITION_BALANCE_BASELINE_CONTRACT.md`; keep placeholder baselines visibly marked as demo until owner/coach approval and source validation exist.
+20. Review `specs/reconstruct/JOURNAL_DELIGHT_AND_DECORATION_SPEC.md`; decoration, streak, and unlock logic must not reward training volume or hide pain/rest/injury signals.
+21. Review `specs/reconstruct/LOCAL_FIRST_SYNC_AND_PROMOTION_CONTRACT.md`; raw memo/note server persistence remains unresolved until owner policy, encryption, retention, export, and deletion decisions exist.
+22. Review `specs/reconstruct/FEDERATED_ACCOUNT_SSO_CONTRACT.md`; AthleteTime SSO is identity authority only and does not grant TrainOracle safety or coaching authority.
+23. Read `ACCOUNT_FEDERATION_DECISION.md`, `ATHLETETIME_INTEGRATION_REVIEW.md`, and `LAUNCH_BACKEND_AND_ACCOUNT_PLAN.md` before backend/account work; they are planning context, not runtime evidence.
+24. Begin App Bridge/API schema contracts and runtime evidence only after preserving the safety core chain and resolving the owner decisions called out by the account/sync drafts.
 
 ## Hard Guardrails
 

@@ -54,8 +54,10 @@ Read in this order.
 5. [`SPEC_TARGET_PATCH_MATRIX.md`](./SPEC_TARGET_PATCH_MATRIX.md) - current source-to-target patch matrix and non-closure gates.
 6. [`SPEC_TARGET_PATCH_READINESS.md`](./SPEC_TARGET_PATCH_READINESS.md) - next target-patch readiness plan.
 7. [`SPEC_DOCUMENTATION_REPORT.md`](./SPEC_DOCUMENTATION_REPORT.md) - document-by-document map.
-8. Active SPEC files under [`specs/active/`](./specs/active/).
-9. Reconstructed and productization drafts under [`specs/reconstruct/`](./specs/reconstruct/).
+8. [`TRAINING_PLAN_METHOD_DECISION.md`](./TRAINING_PLAN_METHOD_DECISION.md) - owner-confirmed formation boundary and explicit non-decisions.
+9. [`specs/reconstruct/TRAINING_PLAN_FORMATION_AND_ADAPTATION_SPEC.md`](./specs/reconstruct/TRAINING_PLAN_FORMATION_AND_ADAPTATION_SPEC.md) - first-pilot formation/adaptation draft with six canonical blockers.
+10. Active SPEC files under [`specs/active/`](./specs/active/).
+11. Reconstructed and productization drafts under [`specs/reconstruct/`](./specs/reconstruct/).
 
 Do not start from legacy files unless the review question is specifically about legacy alignment.
 
@@ -167,6 +169,8 @@ Review:
 - `DAILY_BRIEF_AND_INBOX_SIGNAL_SPEC.md`
 - `ANALYSIS_AND_VISUALIZATION_DATA_CONTRACT.md`
 - `MICROCYCLE_AND_CALENDAR_MAPPING_SPEC.md`
+- `TRAINING_PLAN_METHOD_DECISION.md`
+- `TRAINING_PLAN_FORMATION_AND_ADAPTATION_SPEC.md`
 - design docs under [`design-system/`](./design-system/) and [`designs/`](./designs/)
 
 Questions:
@@ -174,6 +178,9 @@ Questions:
 - Does the daily-log flow support athletes coming back every day?
 - Do Daily Brief, AI Inbox, Analysis, Calendar, and rationale surfaces explain uncertainty and source coverage?
 - Is the 9.5-day cycle display separated from `RULE_SPEC_D1_D9.*` rule IDs?
+- Are the owner-confirmed method boundaries separated from the proposed MAIN class registry, option taxonomy, coach rules, statistics, and pilot protocol?
+- Are planning role, classifier label, MAIN exposure class, typed load components, completion state, and experienced response preserved as distinct facts?
+- Do safety/auth changes create an immediate non-overridable hold rather than a coach-selectable delay?
 - Are product surfaces prevented from creating/selecting plan options unless Plan Generator owns that decision?
 
 ---
@@ -211,10 +218,10 @@ Do not accept a vague "looks good" as a sufficient review.
 
 The recommended next move is:
 
-1. Run Review Round 1 using this packet.
-2. Use [`SPEC_TARGET_PATCH_READINESS.md`](./SPEC_TARGET_PATCH_READINESS.md) to choose the first safe target patch wave.
-3. Patch target docs only after opening the exact target files and verifying issue rows.
-4. Keep all related issues open until source acceptance, target recount, and required runtime/implementation evidence exist.
-5. Prepare D9 runtime evidence after review/readiness is stable.
+1. Review `TRAINING_PLAN_METHOD_DECISION.md` and Formation/Adaptation together and resolve or explicitly retain all six canonical blockers.
+2. Run the remaining Review Round 1 lenses using this packet.
+3. Use [`SPEC_TARGET_PATCH_READINESS.md`](./SPEC_TARGET_PATCH_READINESS.md) to choose the first safe target patch wave.
+4. Patch Plan Generator or Calendar only after source acceptance, exact target-file review, and issue recount.
+5. Keep all related issues open until source acceptance and required runtime/implementation evidence exist.
 
 [DRAFT_COMPLETE]
