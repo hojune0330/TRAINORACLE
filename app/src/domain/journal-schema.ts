@@ -1,4 +1,6 @@
 import { z } from "zod"
+import { fieldProvenanceSchema } from "./field-provenance"
+import type { FieldProvenanceMap } from "./field-provenance"
 
 export const MEMO_PURPOSE = {
   privateSelfOnly: "PRIVATE_SELF_ONLY",
@@ -21,6 +23,7 @@ export type JournalEntryBase = {
   readonly date: string
   readonly savedAt: string
   readonly syncState: "local" | "synced"
+  readonly fieldProvenance?: FieldProvenanceMap
 }
 
 type PurposeScopedMemo = {
@@ -76,6 +79,7 @@ const baseShape = {
   date: z.string().min(1),
   savedAt: z.string().min(1),
   syncState: z.enum(["local", "synced"]),
+  fieldProvenance: fieldProvenanceSchema.optional(),
 } as const
 
 const purposeShape = {
@@ -141,6 +145,14 @@ const journalEntryWriteSchema = journalEntrySchema.superRefine((entry, context) 
       code: "custom",
       message: "New journal entries must remain device-local until sync is implemented.",
       path: ["syncState"],
+    })
+  }
+
+  if (entry.fieldProvenance === undefined) {
+    context.addIssue({
+      code: "custom",
+      message: "New journal entries must record field provenance.",
+      path: ["fieldProvenance"],
     })
   }
 

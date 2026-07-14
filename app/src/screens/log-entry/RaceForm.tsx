@@ -2,6 +2,7 @@ import React from "react"
 import { Stamp } from "../../components/JournalPrimitives"
 import { TermHelp } from "../../components/TermHelp"
 import { compactDate, dowOf, nowClock } from "../../domain/dates"
+import { explicitOrMissing } from "../../domain/field-provenance"
 import { parseTargetPaceInput } from "../../domain/journal-schema"
 import { newEntryId, saveEntry, todayISO } from "../../domain/journal-store"
 import type { JournalEntry } from "../../domain/journal-store"
@@ -41,6 +42,12 @@ export function RaceForm({ onBack, onDone }: EntryFormProps) {
       id: newEntryId(), kind: "race", date: todayISO(),
       savedAt: new Date().toISOString(), syncState: "local",
       stage, record, rank, result, memo: memo.text,
+      fieldProvenance: {
+        tension: explicitOrMissing(tension !== null),
+        condition: explicitOrMissing(condition !== null),
+        mood: explicitOrMissing(mood !== null),
+        goalPace: explicitOrMissing(goalPace !== null),
+      },
       ...(memo.text.trim() !== "" && memo.purpose !== undefined ? { memoPurpose: memo.purpose } : {}),
       ...(tension !== null ? { tension } : {}),
       ...(condition !== null ? { condition } : {}),

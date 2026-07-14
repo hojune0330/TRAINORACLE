@@ -21,6 +21,10 @@ document_metadata:
 
 ---
 
+> 상태 정렬 (2026-07-13): 제품 결정은 AthleteTime SSO 단일 계정이다. 단 AthleteTime OAuth endpoint, API, 약관, redirect, client registration은 검증·구현되지 않았으며 현재 기능이 아니다. TrainOracle 저장소·안전·코칭 권한은 별도다.
+
+---
+
 ## 1. 확정된 모델 — "AthleteTime으로 계속하기" (계열사 SSO)
 
 카카오가 제3자 앱에 로그인 제공자 역할을 하듯, **애슬리트타임이 계열사 서비스(TRAINORACLE)의

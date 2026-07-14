@@ -17,6 +17,12 @@ function validRaceEntry(id: string): RaceEntry {
     date: "2026-07-14",
     savedAt: "2026-07-14T00:00:00.000Z",
     syncState: "local",
+    fieldProvenance: {
+      tension: { provenance: "EXPLICIT" },
+      condition: { provenance: "EXPLICIT" },
+      mood: { provenance: "EXPLICIT" },
+      goalPace: { provenance: "EXPLICIT" },
+    },
     stage: "pre",
     record: "",
     rank: "",
@@ -53,6 +59,12 @@ describe("journal storage boundary", () => {
       date: "2026-07-14",
       savedAt: "2026-07-14T00:01:00.000Z",
       syncState: "local",
+      fieldProvenance: {
+        tension: { provenance: "MISSING" },
+        condition: { provenance: "MISSING" },
+        mood: { provenance: "MISSING" },
+        goalPace: { provenance: "MISSING" },
+      },
       stage: "post",
       record: "4:08.21",
       rank: "2위",
@@ -107,6 +119,21 @@ describe("journal storage boundary", () => {
 
     // Then
     expect(loaded).toEqual([valid])
+  })
+
+  it("keeps legacy values readable but excludes them from analytics", () => {
+    // Given
+    const legacy = {
+      id: "legacy", kind: "post-session", date: "2026-07-14",
+      savedAt: "2026-07-14T00:00:00.000Z", syncState: "local",
+      system: "lt", title: "legacy tempo", distanceKm: "8", durationMin: "40",
+      avgPace: "5:00", rpe: 6, memo: "",
+    }
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify([legacy]))
+
+    // When / Then
+    expect(loadEntries()).toHaveLength(1)
+    expect(loadAnalysisEntries()).toEqual([])
   })
 
   it.each([
@@ -190,6 +217,12 @@ describe("journal storage boundary", () => {
       date: "2026-07-14",
       savedAt: "2026-07-14T00:00:00.000Z",
       syncState: "local",
+      fieldProvenance: {
+        tension: { provenance: "MISSING" },
+        condition: { provenance: "MISSING" },
+        mood: { provenance: "MISSING" },
+        goalPace: { provenance: "MISSING" },
+      },
       stage: "pre",
       record: "",
       rank: "",

@@ -4,10 +4,11 @@ import type {
   PostSessionEntry,
   RaceEntry,
 } from "./journal-schema"
+import { isEligibleForAnalysis } from "./field-provenance"
 
-export type SafePostSessionEntry = Omit<PostSessionEntry, "memo" | "memoPurpose">
-export type SafeEveningEntry = Omit<EveningEntry, "note" | "memoPurpose">
-export type SafeRaceEntry = Omit<RaceEntry, "memo" | "memoPurpose">
+export type SafePostSessionEntry = Omit<PostSessionEntry, "memo" | "memoPurpose" | "fieldProvenance">
+export type SafeEveningEntry = Omit<EveningEntry, "note" | "memoPurpose" | "fieldProvenance">
+export type SafeRaceEntry = Omit<RaceEntry, "memo" | "memoPurpose" | "fieldProvenance">
 
 export type SafeJournalEntry = SafePostSessionEntry | SafeEveningEntry | SafeRaceEntry
 
@@ -71,12 +72,37 @@ function toSafeJournalEntry(entry: JournalEntry): SafeJournalEntry {
   }
 }
 
+function toAnalysisPostSessionEntry(entry: PostSessionEntry): AnalysisPostSessionEntry {
+  return {
+    id: entry.id, kind: entry.kind, date: entry.date, savedAt: entry.savedAt,
+    syncState: "local", system: entry.system, title: entry.title,
+    distanceKm: isEligibleForAnalysis("distanceKm", entry.fieldProvenance) ? entry.distanceKm : "",
+    durationMin: isEligibleForAnalysis("durationMin", entry.fieldProvenance) ? entry.durationMin : "",
+    avgPace: isEligibleForAnalysis("avgPace", entry.fieldProvenance) ? entry.avgPace : "",
+    rpe: isEligibleForAnalysis("rpe", entry.fieldProvenance) ? entry.rpe : 0,
+  }
+}
+
+function toAnalysisEveningEntry(entry: EveningEntry): AnalysisEveningEntry {
+  return {
+    id: entry.id, kind: entry.kind, date: entry.date, savedAt: entry.savedAt,
+    syncState: "local",
+    sleepH: isEligibleForAnalysis("sleepH", entry.fieldProvenance) ? entry.sleepH : 0,
+    sleepQuality: isEligibleForAnalysis("sleepQuality", entry.fieldProvenance) ? entry.sleepQuality : 0,
+    weightKg: isEligibleForAnalysis("weightKg", entry.fieldProvenance) ? entry.weightKg : "",
+    restingHr: isEligibleForAnalysis("restingHr", entry.fieldProvenance) ? entry.restingHr : "",
+    painParts: isEligibleForAnalysis("painParts", entry.fieldProvenance) ? entry.painParts : {},
+    mood: isEligibleForAnalysis("mood", entry.fieldProvenance) ? entry.mood : 0,
+  }
+}
+
 export function toExportJournalEntry(entry: JournalEntry): SafeJournalEntry | null {
   if (!hasExportableStructuredSignal(entry)) return null
   return toSafeJournalEntry(entry)
 }
 
 export function toAnalysisJournalEntry(entry: JournalEntry): AnalysisJournalEntry | null {
+  if (entry.fieldProvenance === undefined) return null
   if (!hasApprovedAnalysisSignal(entry)) return null
   if (entry.kind === "race") {
     return {
@@ -91,7 +117,9 @@ export function toAnalysisJournalEntry(entry: JournalEntry): AnalysisJournalEntr
       result: entry.result,
     }
   }
-  return toSafeJournalEntry(entry)
+  return entry.kind === "post-session"
+    ? toAnalysisPostSessionEntry(entry)
+    : toAnalysisEveningEntry(entry)
 }
 
 function hasExportableStructuredSignal(entry: JournalEntry): boolean {

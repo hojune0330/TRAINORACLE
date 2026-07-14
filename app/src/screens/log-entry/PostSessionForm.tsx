@@ -1,6 +1,7 @@
 import React from "react"
 import { IndexCard } from "../../components/JournalPrimitives"
 import { compactDate, dowOf, nowClock } from "../../domain/dates"
+import { explicitOrMissing } from "../../domain/field-provenance"
 import { newEntryId, saveEntry, todayISO } from "../../domain/journal-store"
 import type { JournalEntry } from "../../domain/journal-store"
 import { PurposeScopedMemoField, usePurposeScopedMemo } from "./PurposeScopedMemoField"
@@ -33,6 +34,12 @@ export function PostSessionForm({ onBack, onDone }: EntryFormProps) {
       id: newEntryId(), kind: "post-session", date: todayISO(),
       savedAt: new Date().toISOString(), syncState: "local",
       system, title, distanceKm, durationMin, avgPace, rpe, memo: memo.text,
+      fieldProvenance: {
+        distanceKm: explicitOrMissing(distanceKm.trim() !== ""),
+        durationMin: explicitOrMissing(durationMin.trim() !== ""),
+        avgPace: explicitOrMissing(avgPace.trim() !== ""),
+        rpe: explicitOrMissing(rpe > 0),
+      },
       ...(memo.text.trim() !== "" && memo.purpose !== undefined ? { memoPurpose: memo.purpose } : {}),
     }
     const result = saveEntry(entry)

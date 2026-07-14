@@ -21,6 +21,10 @@ document_metadata:
 
 ---
 
+> 상태 정렬 (2026-07-13): 제품 결정은 AthleteTime SSO 단일 계정이다. 단 AthleteTime OAuth endpoint, API, 약관, redirect, client registration은 검증·구현되지 않았으며 현재 기능이 아니다. TrainOracle 저장소·안전·코칭 권한은 별도다.
+
+---
+
 ## 1. Purpose
 
 This document expands the accepted account federation decision into a draft

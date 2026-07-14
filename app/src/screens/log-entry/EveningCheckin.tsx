@@ -1,6 +1,7 @@
 import React from "react"
 import { IndexCard, MoodStrip } from "../../components/JournalPrimitives"
 import { compactDate, dowOf, nowClock } from "../../domain/dates"
+import { explicitOrMissing } from "../../domain/field-provenance"
 import { newEntryId, saveEntry, todayISO } from "../../domain/journal-store"
 import type { JournalEntry } from "../../domain/journal-store"
 import { painLevelsRequireReview } from "../../safety/memo-safety"
@@ -30,6 +31,14 @@ export function EveningCheckin({ onBack, onDone }: EntryFormProps) {
       savedAt: new Date().toISOString(), syncState: "local",
       sleepH: sleep, sleepQuality: quality, weightKg: weight, restingHr: hr,
       painParts, mood, note: note.text,
+      fieldProvenance: {
+        sleepH: explicitOrMissing(sleep > 0),
+        sleepQuality: explicitOrMissing(quality > 0),
+        weightKg: explicitOrMissing(weight.trim() !== ""),
+        restingHr: explicitOrMissing(hr.trim() !== ""),
+        painParts: explicitOrMissing(Object.values(painParts).some((level) => level > 0)),
+        mood: explicitOrMissing(mood > 0),
+      },
       ...(note.text.trim() !== "" && note.purpose !== undefined ? { memoPurpose: note.purpose } : {}),
     }
     const result = saveEntry(entry)

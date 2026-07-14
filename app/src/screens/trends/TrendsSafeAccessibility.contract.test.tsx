@@ -16,6 +16,10 @@ function trendEntries(): readonly JournalEntry[] {
       date: today,
       savedAt: `${today}T08:00:00.000Z`,
       syncState: "local",
+      fieldProvenance: {
+        distanceKm: { provenance: "EXPLICIT" }, durationMin: { provenance: "EXPLICIT" },
+        avgPace: { provenance: "EXPLICIT" }, rpe: { provenance: "EXPLICIT" },
+      },
       system: "base",
       title: "이지런",
       distanceKm: "8",
@@ -30,6 +34,11 @@ function trendEntries(): readonly JournalEntry[] {
       date: today,
       savedAt: `${today}T20:00:00.000Z`,
       syncState: "local",
+      fieldProvenance: {
+        sleepH: { provenance: "EXPLICIT" }, sleepQuality: { provenance: "EXPLICIT" },
+        weightKg: { provenance: "EXPLICIT" }, restingHr: { provenance: "EXPLICIT" },
+        painParts: { provenance: "EXPLICIT" }, mood: { provenance: "EXPLICIT" },
+      },
       sleepH: 8,
       sleepQuality: 4,
       weightKg: "60",
