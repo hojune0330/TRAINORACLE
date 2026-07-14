@@ -19,7 +19,7 @@ decision and is not silently dropped.
 | R-student-003 | S3 | App UX observation | OPEN | No explicit rest-day entry path is present. | Decide a low-pressure rest/check-in entry without turning it into a training-load reward. |
 | R-student-004 | S4 | Positive copy observation | DONE | First-page invitation tone remains present. | Preserve tone; optional rest-day copy belongs with the previous item. |
 | R-parent-001 | S2 | Guardian/privacy product decision | DEFERRED | Local-only journaling remains current; guardian/account policy is not accepted. | Qualified privacy/legal and owner decision before account-linked storage. |
-| R-parent-002 | S2 | Owner-export privacy boundary | DONE | PR #64 default export excludes memo/note/purpose fields. | PR #67 remains OPEN for a separately confirmed local full export. |
+| R-parent-002 | S2 | Owner-export privacy boundary | DONE | PR #64 default export excludes memo/note/purpose fields; PR #68 draft adds a separately confirmed local full export. | Review PR #68 and preserve explicit owner choice. |
 | R-parent-003 | S3 | Sync-copy/document drift | OPEN | Future sync policy remains unresolved. | Align SSO/account documents as a report-only Task 4 artifact. |
 | R-parent-004 | S3 | Coach/guardian workflow | DEFERRED | Pain is visibly retained, but no human-review workflow exists. | Owner product decision; no automatic coach notification. |
 | R-coach-001 | S2 | App data-integrity observation | DONE | PR #64 stores race self-check fields and renders a saved summary. | Keep them out of aggregate and plan-input paths. |
@@ -30,15 +30,15 @@ decision and is not silently dropped.
 | R-safety-002 | S2 | Safety-copy accuracy | DONE | PR #64 changed the unsupported plan-hold claim to a human-review message. | Do not reintroduce plan-block wording before a real gate exists. |
 | R-safety-003 | S2 | Media/D9 safety boundary | DONE | The misleading voice surface was removed. | Any future voice feature needs transcript-before-D9 and fail-safe evidence. |
 | R-safety-004 | S3 | Motivation/safety copy | OPEN | The current `N일만 더` copy lacks an explicit rest/pain-day acknowledgement. | Resolve with the rest/check-in copy decision, never a volume reward. |
-| R-privacy-001 | S2 | Export privacy boundary | DONE | Current default export is structured and redacted. | PR #67 must retain explicit local opt-in for full export. |
+| R-privacy-001 | S2 | Export privacy boundary | DONE | Current default export is structured and redacted; PR #68 draft proves explicit local opt-in for full export. | Merge only if the confirmation and local-only boundary remain intact. |
 | R-privacy-002 | S2 | Local-data parser boundary | DONE | PR #64 added `journal-schema` parsing before entries reach rendering. | Preserve parser tests and reject invalid rows safely. |
-| R-privacy-003 | S2 | SSO status clarity | OPEN | The three SSO/account documents remain a draft-alignment task in PR #66. | Recover document-only alignment; do not start provider work. |
-| R-privacy-004 | S3 | Production test-hook risk | OPEN | `?uitest=seed` still reaches `runStoreSelfTest` on current main. | Task 2 splits and verifies removal before provenance work. |
+| R-privacy-003 | S2 | SSO status clarity | OPEN | PR #68 draft aligns the three SSO/account documents without provider implementation. | Review and merge the document-only alignment; do not start provider work. |
+| R-privacy-004 | S3 | Production test-hook risk | OPEN | PR #68 draft removes the `?uitest=seed` writer and adds production-query browser coverage. | Review the regression evidence before marking this DONE on main. |
 | R-frontend-001 | S3 | Local-data parser boundary | DONE | Same parser boundary as R-privacy-002. | Keep invalid-entry behavior covered by contract tests. |
 | R-frontend-002 | S3 | Analysis input validation | OPEN | Same permissive numeric parsing as R-coach-002. | Resolve once with strict parsing and one behavior suite. |
 | R-frontend-003 | S3 | Multi-tab refresh behavior | DEFERRED | No subscription/revision contract has been accepted. | Defer until a local-first sync/refresh requirement is owned. |
 | R-frontend-004 | S3 | Race-form control integrity | DONE | PR #64 replaces the old uncontrolled race pre-stage surface. | Preserve the race-form contract tests. |
-| R-frontend-005 | S3 | Documentation automation clarity | OPEN | `[DRAFT_COMPLETE]` literal audit is proposed in PR #66 only. | Recover the marker audit as a report; do not mutate source documents from this audit. |
+| R-frontend-005 | S3 | Documentation automation clarity | OPEN | PR #68 draft recovers the `[DRAFT_COMPLETE]` literal audit as a report-only artifact. | Review and merge the audit; do not mutate source documents from it. |
 | R-a11y-001 | S2 | Accessibility implementation | DONE | PR #64 provides keyboard focus and aria labels for body parts. | Keep accessibility tests and manual keyboard QA. |
 | R-a11y-002 | S2 | Accessibility implementation | DONE | Recent journal items are semantic buttons with accessible names. | Keep semantic navigation in later UI work. |
 | R-a11y-003 | S2 | Accessibility implementation | DONE | Trends includes accessible labels and text-table alternatives. | Keep table data synchronized with visuals. |
