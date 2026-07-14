@@ -28,16 +28,19 @@ Use it after reading [`SPEC_REVIEW_PACKET.md`](./SPEC_REVIEW_PACKET.md) and befo
 
 ## 2. Current Phase Decision
 
-Wave 3 productization drafts now exist.
+Wave 3 productization drafts now exist, including the later Formation/Adaptation draft
+and its owner-decision record. Formation currently has ten canonical blockers; the
+nine-perspective audit is `TRAINING_PLAN_BLUEPRINT_MULTIPERSPECTIVE_REVIEW.md`.
 
 Therefore the next phase is not "make more productization drafts" by default. The next phase is:
 
 ```text
 Review Round 1
+-> Formation owner/blocker decision
 -> source acceptance decision
 -> target patch readiness
 -> target-local patches with recount
--> runtime evidence preparation
+-> existing D9 evidence coverage assessment plus missing runtime evidence
 -> issue closure only when evidence gates are met
 ```
 
@@ -163,12 +166,23 @@ Source documents:
 - `specs/reconstruct/ANALYSIS_AND_VISUALIZATION_DATA_CONTRACT.md`
 - `specs/reconstruct/PLAN_OUTPUT_RATIONALE_PRIVACY_SPEC.md`
 - `specs/reconstruct/MICROCYCLE_AND_CALENDAR_MAPPING_SPEC.md`
+- `TRAINING_PLAN_METHOD_DECISION.md`
+- `specs/reconstruct/TRAINING_PLAN_FORMATION_AND_ADAPTATION_SPEC.md`
+
+Additional target:
+
+- `specs/reconstruct/MICROCYCLE_AND_CALENDAR_MAPPING_SPEC.md` for the missing
+  `frameId` / `blockId` projection schema
 
 Target issues:
 
 - `OI-PG-OUTPUT-FORMAT-BINDING-001`
 - `OI-PG-OPTION-RATIONALE-PRIVACY-001`
 - `OI-PG-MICROCYCLE-CALENDAR-MAPPING-001`
+- `OI-FA-CALENDAR-SCHEMA-BINDING-001` remains a source-side blocker until a
+  target-local mapping issue is added after recount
+- a Plan Generator Formation/version binding issue may be added only after approved
+  target-file recount
 - downstream App Bridge/API/UI issues to be opened only after target files are reviewed
 
 Intent:
@@ -176,6 +190,9 @@ Intent:
 - Connect product surfaces to structured source refs, reason codes, privacy tiers, redaction states, uncertainty, and source coverage.
 - Keep product surfaces from creating/selecting plan options outside Plan Generator.
 - Keep analysis/calendar/rationale surfaces from clearing D9 or Safety Gate blocks.
+- Do not bind Formation until its proposed MAIN class registry, option taxonomy,
+  coach rule set, load allocation, evidence/statistics, pilot protocol, and target
+  schemas are accepted or explicitly held.
 
 Closure allowed now:
 
@@ -201,9 +218,16 @@ Required runtime observations:
 
 - `D9_ACTIVE` maps to stored `ACTIVE` and blocks plan generation.
 - `D9_UNKNOWN` maps to stored `UNKNOWN` and blocks or requires human review.
-- `D9_CLEARED` maps to stored `CLEARED` and does not block, while not implying medical clearance.
-- ADVISORY preserves reason codes under `CLEARED` and does not block.
+- For non-note structured origin, `D9_CLEARED` may map to stored `CLEARED` and continue
+  to other gates without implying medical clearance.
+- For `ANALYZABLE_TRAINING_NOTE` origin, `CLEARED`/ADVISORY emits no Formation
+  authorization signal; ACTIVE/UNKNOWN/STALE may emit only an opaque block.
+- `PRIVATE_SELF_ONLY` never reaches evaluation, storage, telemetry, hash, audit, sync,
+  reward, cache, or idempotency paths.
 - Raw free-text and symptom clauses do not enter audit/storage evidence.
+- The tracked 11-case behavior is conflict evidence for Formation, not satisfying
+  coverage. Formation source acceptance remains blocked until the origin-aware path is
+  patched and re-evidenced.
 
 Closure allowed now:
 
@@ -227,11 +251,17 @@ Stop and do not patch if any of these are true:
 
 ## 6. Recommended Next Execution Order
 
-1. Send [`SPEC_REVIEW_PACKET.md`](./SPEC_REVIEW_PACKET.md) to reviewers with a specific lens.
-2. Collect findings as `APPROVE_FOR_NEXT_PATCH_PLAN`, `ITERATE_BEFORE_PATCH`, or `BLOCKED`.
-3. If not blocked, run Wave B safety-gate target patch planning first.
-4. Run Wave C source acceptance and recount planning.
-5. Run Wave D productization binding only after safety/privacy source boundaries are accepted.
-6. Prepare Wave E runtime evidence after target contracts are stable.
+1. Review `TRAINING_PLAN_BLUEPRINT_MULTIPERSPECTIVE_REVIEW.md` with the method decision and Formation draft.
+2. Resolve the five source-gate blockers: coach rules/frame semantics, load/component
+   registries, minimum evidence, upstream safety/privacy, and record governance.
+   Merely retaining one keeps Formation source acceptance blocked.
+3. Make a bounded Formation source-acceptance decision, then reopen and recount exact
+   Rule Spec, Plan Generator, App Bridge, Safety Gate, Calendar, and product targets.
+4. Close the exposure-ledger, version/lifecycle, Calendar, and product-projection
+   blockers through target-owned patches; these cannot be prerequisites to their own patches.
+5. Accept the pilot protocol only after target bindings are stable and before any
+   vertical slice or athlete execution.
+6. Assess existing D9/impl evidence and prepare missing Formation/concurrency/privacy
+   runtime evidence after target contracts are stable.
 
 [DRAFT_COMPLETE]

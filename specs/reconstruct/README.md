@@ -14,6 +14,7 @@ Current productization drafts:
 - `ANALYSIS_AND_VISUALIZATION_DATA_CONTRACT.md` (`DRAFT_FOR_REVIEW`; new productization draft, not original restored, not canonical, not runtime evidence)
 - `PLAN_OUTPUT_RATIONALE_PRIVACY_SPEC.md` (`DRAFT_FOR_REVIEW`; new productization draft, not original restored, not canonical, not runtime evidence)
 - `MICROCYCLE_AND_CALENDAR_MAPPING_SPEC.md` (`DRAFT_FOR_REVIEW`; new productization draft, not original restored, not canonical, not runtime evidence)
+- `TRAINING_PLAN_FORMATION_AND_ADAPTATION_SPEC.md` (`DRAFT_FOR_REVIEW`; decision-provenanced first-pilot formation/adaptation policy with ten canonical blockers and an athlete-visible non-executing shadow-pilot boundary, audited in root `TRAINING_PLAN_BLUEPRINT_MULTIPERSPECTIVE_REVIEW.md`, not canonical, not runtime evidence)
 - `EXTERNAL_RECORD_INTEGRATION_SPEC.md` (`DRAFT_FOR_REVIEW`; Work Order 005 Task A draft, merged to main, not canonical, not runtime evidence)
 - `COMPOSITION_BALANCE_BASELINE_CONTRACT.md` (`DRAFT_FOR_REVIEW`; Work Order 005 Task B draft, merged to main, not canonical, not runtime evidence)
 - `JOURNAL_DELIGHT_AND_DECORATION_SPEC.md` (`DRAFT_FOR_REVIEW`; Work Order 006 Task A draft, merged to main, not canonical, not runtime evidence)
@@ -22,6 +23,7 @@ Current productization drafts:
 
 Related root decision and planning documents:
 
+- `TRAINING_PLAN_BLUEPRINT_MULTIPERSPECTIVE_REVIEW.md` records the nine-persona findings, Mermaid blueprint, and review-recommended order of the canonical blockers.
 - `ACCOUNT_FEDERATION_DECISION.md` records the owner-level account direction for TrainOracle and AthleteTime federation.
 - `ATHLETETIME_INTEGRATION_REVIEW.md` records integration review context for AthleteTime boundaries.
 - `LAUNCH_BACKEND_AND_ACCOUNT_PLAN.md` records launch/backend/account planning context.
@@ -116,6 +118,14 @@ Use this order before creating any reconstructed file:
 - It keeps `CYCLE_DAY.*`, `RULE_SPEC_D1_D9.*`, and `LEGACY_PHASE_D.*` separate.
 - It cannot create or select plan options, clear D9 risk, clear Safety Gate blocks, resolve `OI-PG-MICROCYCLE-CALENDAR-MAPPING-001`, or close downstream issues.
 
+`TRAINING_PLAN_FORMATION_AND_ADAPTATION_SPEC.md`:
+
+- `specs/reconstruct/TRAINING_PLAN_FORMATION_AND_ADAPTATION_SPEC.md` exists as `DRAFT_FOR_REVIEW`.
+- It is grounded by root decision record `TRAINING_PLAN_METHOD_DECISION.md` and separates confirmed method boundaries from proposed option taxonomy and unresolved coach rules.
+- It defines a local-civil 9.5-day frame, 2-3 MAIN exposure events, planning/classifier namespace crosswalk, typed composite load/measure records, deterministic candidate arbitration, planned/completion/experienced separation, immediate safety holds, and append-only adaptation versions.
+- It classifies every policy as automated invariant, coach decision support, or held for insufficient evidence.
+- Calendar identity is explicitly blocked until `CalendarSessionProjection` gains `frameId` and `blockId`; it does not claim a universal 72-hour rule, one fatigue/readiness score, runtime implementation, canonical promotion, or downstream issue closure.
+
 `EXTERNAL_RECORD_INTEGRATION_SPEC.md`:
 
 - `specs/reconstruct/EXTERNAL_RECORD_INTEGRATION_SPEC.md` now exists as `DRAFT_FOR_REVIEW`.
@@ -156,6 +166,6 @@ Use this order before creating any reconstructed file:
 - `D9_ACTIVE` blocks Plan Generator.
 - `D9_UNKNOWN` blocks Plan Generator or requires human review.
 - `D9_CLEARED` permits generation only as "no D9 signal detected by evaluator at this time"; it is not medical clearance.
-- ADVISORY is not a fourth disposition. It remains under `D9_CLEARED`, stores status as `CLEARED`, and does not block generation.
+- ADVISORY is not a fourth disposition. For non-note structured origin it may remain under `D9_CLEARED`; analyzable-note CLEARED/advisory emits no Formation authorization signal, and private-only input is never evaluated.
 - Good physiological data and template selection cannot clear D9 risk.
 - Raw athlete free-text, symptom clauses, injury narratives, medical notes, and guardian private notes must not be stored in audit contracts.

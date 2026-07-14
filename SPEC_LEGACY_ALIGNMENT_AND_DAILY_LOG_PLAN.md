@@ -185,7 +185,7 @@ The daily-log surface is therefore not a separate lightweight feature. It is the
    - Must block generation for `D9_ACTIVE`.
    - Must block or require review for `D9_UNKNOWN`.
    - Must treat `D9_CLEARED` as no detected D9 signal at that time only, not medical clearance.
-   - Must keep advisory non-blocking under `D9_CLEARED`.
+   - Non-note structured advisory may remain non-blocking under `D9_CLEARED`; analyzable-note CLEARED/advisory must emit no Formation authorization signal, and private-only input must never be evaluated.
 
 ### Phase 2 - Daily Ingestion And Diary Contract
 
@@ -222,6 +222,12 @@ The daily-log surface is therefore not a separate lightweight feature. It is the
    - Must preserve the design-system requirement that visualizations reveal evidence quickly without becoming decoration.
    - Must not define final metric formulas, clear D9/Safety Gate states, create plan options, claim runtime evidence, or close downstream issues.
 
+8. `TRAINING_PLAN_FORMATION_AND_ADAPTATION_SPEC.md`
+   - Current status: created at `specs/reconstruct/TRAINING_PLAN_FORMATION_AND_ADAPTATION_SPEC.md` as `DRAFT_FOR_REVIEW`, grounded by root decision `TRAINING_PLAN_METHOD_DECISION.md`.
+   - Purpose: turn the confirmed 9.5-day/MAIN boundary into deterministic candidate, composite-load, safety-hold, and immutable adaptation contracts.
+   - Must preserve separate planning-role, classifier-label, energy-focus, component, completion, and experienced-response facts.
+   - Must not execute before its ten canonical blockers, source acceptance, target schema patches, and runtime tests are complete. See `TRAINING_PLAN_BLUEPRINT_MULTIPERSPECTIVE_REVIEW.md`.
+
 ---
 
 ## 8. Next Work Order
@@ -236,10 +242,11 @@ The daily-log surface is therefore not a separate lightweight feature. It is the
 8. Review `DAILY_BRIEF_AND_INBOX_SIGNAL_SPEC.md` before wiring daily summaries, push prompts, or AI Inbox generation.
 9. Review `ANALYSIS_AND_VISUALIZATION_DATA_CONTRACT.md` before implementing Analysis, Dashboard, Session Detail, Calendar, coach review, Daily Brief, or AI Inbox visualization data.
 10. Review `MICROCYCLE_AND_CALENDAR_MAPPING_SPEC.md` before implementing Calendar, Dashboard cycle rail, Session Detail cycle context, Analysis cycle summaries, or plan calendar projection.
+11. Review `TRAINING_PLAN_METHOD_DECISION.md` with `TRAINING_PLAN_FORMATION_AND_ADAPTATION_SPEC.md`; keep option taxonomy, coach rule set, statistics, schema bindings, and pilot protocol visibly open.
 
 Wave 1 note: Physio Source Trust target patches into Plan Generator, App Bridge, and Athlete Profile now exist. They remain open for review/acceptance and target-file recount approval; this note does not close any issue.
 
-Wave 3 note: Daily Brief / AI Inbox, Analysis / Visualization, Plan Output Rationale Privacy, and Microcycle / Calendar Mapping productization drafts now exist. They remain drafts for review and do not provide implementation, runtime evidence, canonical promotion, or downstream issue closure.
+Wave 3 note: Daily Brief / AI Inbox, Analysis / Visualization, Plan Output Rationale Privacy, Microcycle / Calendar Mapping, and Training Plan Formation / Adaptation drafts now exist. They remain drafts for review and do not provide implementation, runtime evidence, canonical promotion, or downstream issue closure.
 
 ---
 

@@ -5,14 +5,15 @@ document_metadata:
   doc_id: trainoracle-journal-delight-decoration-spec
   spec_id: JOURNAL_DELIGHT_AND_DECORATION_SPEC
   title: Journal Delight And Decoration Contract
-  version: 0.1
-  round: RT1_RECONSTRUCTED
+  version: 0.2
+  round: RT2_SHADOW_PILOT_BINDING
   status: DRAFT_FOR_REVIEW
   owner: COACH_HOJUNE
   created_from:
     - CODEX_WORK_ORDER_006.md Task A
     - ACCOUNT_FEDERATION_DECISION.md
     - app/src/domain/journal-store.ts local-first model
+    - TRAINING_PLAN_METHOD_DECISION.md Section 5
   open_issues_total: 3
   canonical_blocking_count: 2
   executed_tests_total: 0
@@ -165,10 +166,58 @@ forbidden_unlock_conditions:
   - training_load_increase
   - weight_loss_or_body_metric_target
   - D9_cleared_or_safety_gate_passed_reward
+  - shadow_pilot_consent_grant
+  - remaining_enrolled_or_not_withdrawing
+  - following_a_generated_or_coach_plan
+  - favorable_self_report_or_private_memo_content
 ```
 
 Decoration must not reward an athlete for running more, running faster,
 ignoring pain, losing weight, or clearing safety checks.
+
+### 5.3 Athlete-Visible Shadow Pilot Binding
+
+Shadow-pilot progress and journal rewards are related in the experience but remain
+different records. Pilot progress says what the system has completed. Journal
+delight recognizes safe reflection habits. Neither is a training-compliance score.
+
+```yaml
+shadow_pilot_delight_binding:
+  owner_decision_ref: TO-DEC-ATHLETE-VISIBLE-SHADOW-2026-07-14-001
+  informational_progress:
+    allowed:
+      - current_frame_and_total_frames
+      - completed_frame_check_mark_with_text
+      - paused_or_withdrawn_state_with_plain_language
+      - coach_review_completed_milestone
+    may_claim_training_effect: false
+    may_claim_medical_or_safety_clearance: false
+  safe_journal_delight:
+    allowed:
+      - daily_recorded_check_mark
+      - safe_consistency_sticker
+      - non_monetary_frame_memento_after_accepted_policy
+    counts_rest_and_injury_days: true
+    raw_or_private_text_input: forbidden
+  consent_and_exit:
+    consent_itself_is_rewardable: false
+    withdrawal_penalty: forbidden
+    earned_item_clawback_on_withdrawal: forbidden
+    user_requested_data_deletion_may_remove_linked_items: true
+  economic_rewards:
+    cash_shopping_or_game_points_authorized_here: false
+    separate_monetization_and_incentive_review_required: true
+```
+
+The first recommended surface is deliberately simple: a three-segment progress
+line when a three-frame protocol is accepted, one text-labeled check per completed
+system-and-coach review, and a separate daily journal sticker/check path. A missing
+day, rest day, pain report, paused frame, or withdrawal must never produce shame
+copy or remove an already earned decoration.
+
+Exact counts, assets, and economic value remain open. `FA-TC-097` through
+`FA-TC-104` in the Formation draft own the cross-contract behavior checks; this
+document owns the decoration and safe-unlock meaning only.
 
 ---
 
@@ -244,8 +293,8 @@ narratives, medical notes, guardian notes, or coach private notes.
 | issue_id | title | status | canonical_blocking | notes |
 |---|---|---|---:|---|
 | OI-JDD-CATALOG-DESIGN-001 | Final decoration catalog and visual assets are not accepted | OPEN | YES | This contract defines taxonomy and data shape only; final assets remain design/owner decision. |
-| OI-JDD-UNLOCK-NUMBERS-001 | Safe unlock thresholds are not accepted | OPEN | YES | Streak or consistency counts must be owner-approved and must not use training volume, speed, body metrics, or safety clearance. |
-| OI-JDD-MONETIZATION-001 | Free versus paid decoration policy undecided | OPEN | NO | Monetization, if any, must not sell safety clearance, coach authority, or training-load advantages. |
+| OI-JDD-UNLOCK-NUMBERS-001 | Safe unlock thresholds are not accepted | OPEN | YES | Streak, consistency, or shadow-frame memento counts must be owner-approved and must not use training volume, speed, body metrics, safety clearance, consent, or continued enrollment. |
+| OI-JDD-MONETIZATION-001 | Free versus paid decoration policy undecided | OPEN | NO | Monetization or economic pilot incentives, if any, require separate review and must not sell safety clearance, coach authority, consent, or training-load advantages. |
 
 ---
 
@@ -260,5 +309,7 @@ This draft does not claim:
 - Any open issue is closed.
 - Any canonical promotion is granted.
 - Decoration can clear D9, RVE, Safety Gate, or human review.
+- Shadow progress or decoration proves training safety, efficacy, or performance benefit.
+- Consent, non-withdrawal, or obedience to a generated plan is rewardable.
 
 [DRAFT_COMPLETE]

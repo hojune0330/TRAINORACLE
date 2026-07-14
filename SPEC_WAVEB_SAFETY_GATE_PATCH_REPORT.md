@@ -54,7 +54,7 @@ The patched binding states:
 - `ACTIVE` RVE status blocks plan generation.
 - `UNKNOWN` RVE status blocks plan generation or requires human review.
 - `CLEARED` RVE status may continue only to the next pre-generation check.
-- Advisory remains under `CLEARED`, stores only non-sensitive reason codes, and does not block by itself.
+- Historical Wave B behavior kept advisory under `CLEARED` and nonblocking. RT2 Formation review now treats analyzable-note-origin CLEARED/advisory as a conflict that must emit no Formation authorization signal; this report is not evidence that the newer privacy-origin boundary is satisfied.
 - Plan Generator must not read RVE directly as a bypass around Safety Gate.
 - Good physio data, favorable daily-log entries, template eligibility, or coach intent cannot clear `ACTIVE` or `UNKNOWN` gate results.
 

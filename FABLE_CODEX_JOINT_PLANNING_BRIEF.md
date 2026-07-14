@@ -388,6 +388,14 @@ PR #56의 Fable 1차 답변을 Codex 사전안과 대조한 결과다.
 
 합의되지 않은 항목을 구현 지시로 바꾸지 않는다. 합의 후에는 이 브리프를 결정 로그로 바꾸기보다 별도의 decision-complete 실행 계획과 Work Order를 만든다.
 
+### 2026-07-14 부분 결정 갱신
+
+`TRAINING_PLAN_METHOD_DECISION.md`는 D1-D5 전체를 닫지 않는다. 연결 코치의 최종
+선택, 명시적 provenance, 개인 메모 zero-signal, 1500 m 1인 파일럿의 9.5일/2-3
+MAIN/2-3 후보, 현 작업의 `app/` 비수정 경계만 부분 확정했다. 코치 없는 advisory,
+legacy/import/demo 자격, 암호화 백업, 세부 훈련 규칙과 파일럿 프로토콜, 최종 앱
+연결 소유권은 계속 `PENDING`이다.
+
 ---
 
 ## 11. 유지할 가드레일
