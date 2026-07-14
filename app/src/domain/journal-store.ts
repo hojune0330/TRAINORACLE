@@ -48,11 +48,14 @@ export interface RaceEntry extends JournalEntryBase {
   result: string
   memo: string
   // F0-f-6 (R-coach-001): 경기 자기 점검 — 탭하지 않으면 필드 자체를 저장하지 않는다.
-  // (부재 = MISSING. ORDER_008 amendment_v3 하위호환 optional 필드 조항 적용)
-  tension?: number   // 경기 직전 긴장도 1-10
-  condition?: number // 경기 직전 컨디션 1-5
-  goalPace?: string  // 경기 직전 목표 페이스·전략
-  mood?: number      // 경기 직후 감정 1-5
+  // 근거: RACE_SELFCHECK_FIELDS_DECISION.md (총책임자 스키마 채택 결정).
+  // 주의: amendment_v3의 하위호환 메타데이터 조항은 이 필드들의 근거가 아니다 —
+  // 이것은 새 도메인 필드이며 별도 결정으로 채택되었다 (PR #60 리뷰 지적 ① 정정).
+  // 부재 = 미기록(MISSING 상당). fieldProvenance 메타데이터 채택 시 그 계약을 따른다.
+  tension?: number   // 경기 직전 긴장도 1-10 (정수)
+  condition?: number // 경기 직전 컨디션 1-5 (정수)
+  goalPace?: string  // 경기 직전 목표 페이스·전략 (≤120자)
+  mood?: number      // 경기 직후 감정 1-5 (정수)
 }
 
 export type JournalEntry = PostSessionEntry | EveningEntry | RaceEntry
@@ -93,11 +96,17 @@ function isValidEntry(e: unknown): e is JournalEntry {
       typeof o.mood === "number" && typeof o.note === "string"
   }
   if (o.kind === "race") {
-    const opt = (v: unknown, t: string) => v === undefined || typeof v === t
+    // 선택 필드: 부재는 허용(MISSING), 존재하면 타입 + 계약 범위 검증
+    // (RACE_SELFCHECK_FIELDS_DECISION.md — PR #60 리뷰 지적 ② 반영:
+    //  타입만 보면 변조된 범위 밖 값이 정상 데이터로 통과함)
+    const optInt = (v: unknown, min: number, max: number) =>
+      v === undefined || (typeof v === "number" && Number.isInteger(v) && v >= min && v <= max)
+    const optStr = (v: unknown, maxLen: number) =>
+      v === undefined || (typeof v === "string" && v.length <= maxLen)
     return (o.stage === "pre" || o.stage === "post") && typeof o.record === "string" &&
       typeof o.rank === "string" && typeof o.result === "string" && typeof o.memo === "string" &&
-      opt(o.tension, "number") && opt(o.condition, "number") &&
-      opt(o.goalPace, "string") && opt(o.mood, "number")
+      optInt(o.tension, 1, 10) && optInt(o.condition, 1, 5) &&
+      optStr(o.goalPace, 120) && optInt(o.mood, 1, 5)
   }
   return false
 }
@@ -121,6 +130,14 @@ export function loadEntries(): JournalEntry[] {
 }
 
 export function saveEntry(entry: JournalEntry): { ok: boolean; total: number } {
+  // 저장 시점 계약 검증 — UI 버그·프로그래밍 오류로 범위 밖 값이
+  // 영속되는 경로를 차단 (읽기 시점 isValidEntry와 동일 계약)
+  if (!isValidEntry(entry)) {
+    if (typeof window !== "undefined" && window.location.search.includes("uitest")) {
+      console.log(`[JSTORE] saveRejected kind=${(entry as { kind?: string }).kind ?? "?"}`)
+    }
+    return { ok: false, total: loadEntries().length }
+  }
   const s = storage()
   const all = loadEntries()
   all.push(entry)
@@ -251,7 +268,16 @@ export function runStoreSelfTest(opts?: { seed?: boolean }): void {
     for (const e of seeds) saveEntry(e)
     seeded = seeds.length
   }
+  // 계약 범위 검증 프로브: 범위 밖 race 자기 점검 값은 저장이 거부되어야 한다
+  // (RACE_SELFCHECK_FIELDS_DECISION.md §3 — PR #60 리뷰 지적 ② 증거)
+  const badProbe = {
+    id: newEntryId(), kind: "race", date: todayISO(),
+    savedAt: new Date().toISOString(), syncState: "local",
+    stage: "pre", record: "", rank: "", result: "", memo: "",
+    tension: 999,
+  } as unknown as JournalEntry
+  const rangeRejected = !saveEntry(badProbe).ok && !loadEntries().some((e) => e.id === badProbe.id)
   console.log(
-    `[JSTORE] roundtrip=${saved.ok && found} recentTop=${recentTop} before=${before} afterSave=${after.length} afterClean=${restored} seeded=${seeded}`,
+    `[JSTORE] roundtrip=${saved.ok && found} recentTop=${recentTop} rangeRejected=${rangeRejected} before=${before} afterSave=${after.length} afterClean=${restored} seeded=${seeded}`,
   )
 }

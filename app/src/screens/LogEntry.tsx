@@ -448,6 +448,7 @@ function RaceForm({ onBack, onDone }: { onBack?: (() => void) | undefined; onDon
           </FormSec>
           <FormSec lb="목표 페이스 · 전략" help="pace">
             <input type="text" value={goalPace} onChange={e => setGoalPace(e.target.value)}
+              maxLength={120}
               placeholder={`예: 3'40"/km · 후반 올리기`} style={{ ...inputStyle(), fontFamily: "var(--mono)" }} />
           </FormSec>
           <FormSec lb="혼잣말 한 줄">
