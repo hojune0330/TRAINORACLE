@@ -23,6 +23,12 @@ function trendEntries(): readonly JournalEntry[] {
       avgPace: "5:00",
       rpe: 4,
       memo: "",
+      fieldProvenance: {
+        distanceKm: { provenance: "EXPLICIT" },
+        durationMin: { provenance: "EXPLICIT" },
+        avgPace: { provenance: "EXPLICIT" },
+        rpe: { provenance: "EXPLICIT" },
+      },
     },
     {
       id: "trend-evening",
@@ -37,6 +43,14 @@ function trendEntries(): readonly JournalEntry[] {
       painParts: { rKnee: 4 },
       mood: 4,
       note: "",
+      fieldProvenance: {
+        sleepH: { provenance: "EXPLICIT" },
+        sleepQuality: { provenance: "EXPLICIT" },
+        weightKg: { provenance: "EXPLICIT" },
+        restingHr: { provenance: "EXPLICIT" },
+        painParts: { provenance: "EXPLICIT" },
+        mood: { provenance: "EXPLICIT" },
+      },
     },
   ]
 }
