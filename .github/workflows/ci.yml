@@ -22,6 +22,7 @@ jobs:
           cache-dependency-path: |
             runtime-evidence/d9-evaluator/package-lock.json
             impl/package-lock.json
+            app/package-lock.json
 
       - name: Install D9 evaluator dependencies
         working-directory: runtime-evidence/d9-evaluator
@@ -42,3 +43,31 @@ jobs:
       - name: Run impl skeleton tests
         working-directory: impl
         run: npm test
+
+      - name: Install app dependencies
+        working-directory: app
+        run: npm ci
+
+      - name: Typecheck app
+        working-directory: app
+        run: npm run typecheck
+
+      - name: Typecheck app browser tests
+        working-directory: app
+        run: npm run typecheck:e2e
+
+      - name: Run app unit tests
+        working-directory: app
+        run: npm run test:unit -- --passWithNoTests
+
+      - name: Build app
+        working-directory: app
+        run: npm run build
+
+      - name: Install Playwright Chromium
+        working-directory: app
+        run: npx playwright install --with-deps chromium
+
+      - name: Run app browser tests
+        working-directory: app
+        run: npx playwright test

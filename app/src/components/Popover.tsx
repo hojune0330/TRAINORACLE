@@ -101,13 +101,17 @@ export function PopCard({ open, align = "left", width = 232, accentBorder, label
 
   if (!open) return null
 
-  const style: CSSProperties = {
+  const positionerStyle: CSSProperties = {
     position: "absolute",
     ...(adj?.up ? { bottom: "calc(100% + 6px)" } : { top: "calc(100% + 6px)" }),
     ...(align === "right" ? { right: -8 } : { left: -8 }),
     transform: adj ? `translateX(${adj.dx}px)` : undefined,
     visibility: adj ? "visible" : "hidden",
-    width, zIndex: 40,
+    zIndex: 40,
+  }
+
+  const surfaceStyle: CSSProperties = {
+    width,
     background: "var(--surface)",
     border: `1px solid ${accentBorder.border}`,
     borderLeft: `3px solid ${accentBorder.bar}`,
@@ -116,5 +120,15 @@ export function PopCard({ open, align = "left", width = 232, accentBorder, label
     textTransform: "none", letterSpacing: 0, textAlign: "left",
   }
 
-  return <div ref={cardRef} role="note" style={style}>{children}</div>
+  return (
+    <div
+      ref={cardRef}
+      className="popover-positioner"
+      data-align={align}
+      data-side={adj?.up ? "top" : "bottom"}
+      style={positionerStyle}
+    >
+      <div role="note" className="popover-surface" style={surfaceStyle}>{children}</div>
+    </div>
+  )
 }

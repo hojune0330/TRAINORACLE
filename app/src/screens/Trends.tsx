@@ -7,14 +7,15 @@ import type { ReactNode } from "react"
 import { SectionLb } from "../components/JournalPrimitives"
 import { BalanceMarker } from "../components/BalanceMarker"
 import { distanceRampBalance } from "../domain/balance"
-import type { JournalEntry, PostSessionEntry, EveningEntry } from "../domain/journal-store"
-import { loadEntries, todayISO } from "../domain/journal-store"
+import { loadAnalysisEntries, todayISO } from "../domain/journal-store"
+import type { AnalysisEveningEntry, AnalysisJournalEntry, AnalysisPostSessionEntry } from "../domain/safe-export"
 import { isoShift, weekStartOf, compactDate } from "../domain/dates"
+import { AccessibleTrendTable } from "./trends/AccessibleTrendTable"
 
 export function Trends({ onBack }: { onBack?: () => void }) {
-  const all = React.useMemo(() => loadEntries(), [])
-  const sessions = all.filter((e): e is PostSessionEntry => e.kind === "post-session")
-  const evenings = all.filter((e): e is EveningEntry => e.kind === "evening")
+  const all = React.useMemo(() => loadAnalysisEntries(), [])
+  const sessions = all.filter((entry): entry is AnalysisPostSessionEntry => entry.kind === "post-session")
+  const evenings = all.filter((entry): entry is AnalysisEveningEntry => entry.kind === "evening")
 
   // 주간 거리 (최근 4주, 월요일 시작)
   const today = todayISO()
@@ -101,7 +102,17 @@ export function Trends({ onBack }: { onBack?: () => void }) {
                 <BalanceMarker hint={rampHint} />
               </div>
               {weeksWithData > 0 ? (
-                <BarChart data={weeks.map((w) => w.km)} labels={weekLabels} />
+                <>
+                  <BarChart data={weeks.map((week) => week.km)} labels={weekLabels} />
+                  <AccessibleTrendTable
+                    caption="주간 거리 (km)"
+                    rows={weeks.map((week, index) => ({
+                      key: week.start,
+                      label: weekLabels[index] ?? week.start,
+                      value: `${week.km} km`,
+                    }))}
+                  />
+                </>
               ) : (
                 <ThinNote>훈련 후 일지에 거리를 적으면 여기에 주간 그래프가 그려져요.</ThinNote>
               )}
@@ -113,7 +124,11 @@ export function Trends({ onBack }: { onBack?: () => void }) {
             <SectionLb>— MOOD · 28 DAYS {moodCount > 0 ? `(${moodCount}일 기록)` : ""}</SectionLb>
             {moodCount > 0 ? (
               <>
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(28, 1fr)", gap: 1, padding: "10px 0" }}>
+                <div
+                  role="img"
+                  aria-label={`최근 28일 감정 기록 ${moodCount}일. 자세한 값은 아래 표로 볼 수 있어요.`}
+                  style={{ display: "grid", gridTemplateColumns: "repeat(28, 1fr)", gap: 1, padding: "10px 0" }}
+                >
                   {moodDays.map((d, i) => (
                     <div key={i} title={`${compactDate(d.date)} · ${d.mood > 0 ? `기분 ${d.mood}/5` : "기록 없음"}`} style={{ height: 28, position: "relative", background: "var(--surface-2)" }}>
                       {d.mood > 0 && (
@@ -125,6 +140,12 @@ export function Trends({ onBack }: { onBack?: () => void }) {
                 <div style={{ display: "flex", justifyContent: "space-between", fontFamily: "var(--mono)", fontSize: 9, color: "var(--ink-4)", letterSpacing: "0.06em" }}>
                   <span>{compactDate(isoShift(today, -27)).slice(5)}</span><span>{compactDate(today).slice(5)} (오늘)</span>
                 </div>
+                <AccessibleTrendTable
+                  caption="최근 28일 감정 기록"
+                  rows={moodDays
+                    .filter((day) => day.mood > 0)
+                    .map((day) => ({ key: day.date, label: compactDate(day.date), value: `기분 ${day.mood}/5` }))}
+                />
               </>
             ) : (
               <ThinNote>하루 마무리 일지의 감정 체크가 여기에 색으로 쌓여요.</ThinNote>
@@ -136,7 +157,11 @@ export function Trends({ onBack }: { onBack?: () => void }) {
             <SectionLb>— PAIN · 12 WEEKS</SectionLb>
             {painAny ? (
               <div style={{ borderTop: "1px solid var(--ink)", borderBottom: "1px solid var(--ink)", padding: "14px 0" }}>
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(12, 1fr)", gap: 2 }}>
+                <div
+                  role="img"
+                  aria-label="최근 12주 주간 최대 통증. 자세한 값은 아래 표로 볼 수 있어요."
+                  style={{ display: "grid", gridTemplateColumns: "repeat(12, 1fr)", gap: 2 }}
+                >
                   {painWeeks.map((w, i) => (
                     <div key={i} title={`${compactDate(w.start)}~ · ${w.max > 0 ? `최대 ${w.max}/5` : "없음"}`} style={{
                       aspectRatio: "1",
@@ -148,9 +173,17 @@ export function Trends({ onBack }: { onBack?: () => void }) {
                 <div style={{ marginTop: 10, fontFamily: "var(--mono)", fontSize: 10, color: "var(--ink-3)", letterSpacing: "0.06em" }}>
                   주 단위 최대 통증 · 참고 표시 전용
                 </div>
+                <AccessibleTrendTable
+                  caption="최근 12주 주간 최대 통증"
+                  rows={painWeeks.map((week) => ({
+                    key: week.start,
+                    label: `${compactDate(week.start)}~`,
+                    value: week.max > 0 ? `최대 ${week.max}/5` : "없음",
+                  }))}
+                />
               </div>
             ) : (
-              <ThinNote>통증 기록이 없어요 — 좋은 신호예요. 생기면 여기서 추이를 봐요.</ThinNote>
+              <ThinNote>통증 기록이 생기면 여기서 추이를 볼 수 있어요.</ThinNote>
             )}
           </div>
 
@@ -175,7 +208,11 @@ function ThinNote({ children }: { children: ReactNode }) {
 function BarChart({ data, labels }: { data: number[]; labels: string[] }) {
   const max = Math.max(...data, 1)
   return (
-    <div style={{ display: "flex", alignItems: "flex-end", gap: 12, height: 80, padding: "0 8px" }}>
+    <div
+      role="img"
+      aria-label={`최근 4주 거리: ${data.map((distance, index) => `${labels[index] ?? "기간"} ${distance}km`).join(", ")}. 자세한 값은 아래 표로 볼 수 있어요.`}
+      style={{ display: "flex", alignItems: "flex-end", gap: 12, height: 80, padding: "0 8px" }}
+    >
       {data.map((d, i) => (
         <div key={i} style={{ flex: 1, textAlign: "center" }}>
           <div style={{
@@ -214,4 +251,4 @@ function TopBar3({ onBack, children }: { onBack?: (() => void) | undefined; chil
 }
 
 // 사용되지 않는 JournalEntry 타입 참조 방지용 (집계 입력 타입 문서화)
-export type TrendsInput = JournalEntry[]
+export type TrendsInput = AnalysisJournalEntry[]

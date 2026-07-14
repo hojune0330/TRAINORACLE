@@ -4,8 +4,8 @@
 //  - 표시 전용 계산 — 어떤 안전 판정에도 쓰지 않는다.
 //  - 숫자 파싱 실패(빈 입력 등)는 0이 아니라 "제외"로 처리해 평균이 왜곡되지 않게 한다.
 
-import type { JournalEntry, PostSessionEntry } from "./journal-store"
-import { loadEntries, todayISO } from "./journal-store"
+import { loadAnalysisEntries, todayISO } from "./journal-store"
+import type { AnalysisJournalEntry, AnalysisPostSessionEntry } from "./safe-export"
 import { isoShift, weekStartOf } from "./dates"
 
 export interface WeekStats {
@@ -24,18 +24,18 @@ function num(v: string): number | null {
   return Number.isFinite(n) ? n : null
 }
 
-function isPostSession(e: JournalEntry): e is PostSessionEntry {
-  return e.kind === "post-session"
+function isPostSession(entry: AnalysisJournalEntry): entry is AnalysisPostSessionEntry {
+  return entry.kind === "post-session"
 }
 
 /** [fromISO, toISO] 폐구간의 엔트리 */
-export function entriesBetween(fromISO: string, toISO: string, all?: JournalEntry[]): JournalEntry[] {
-  const src = all ?? loadEntries()
+export function entriesBetween(fromISO: string, toISO: string, all?: AnalysisJournalEntry[]): AnalysisJournalEntry[] {
+  const src = all ?? loadAnalysisEntries()
   return src.filter((e) => e.date >= fromISO && e.date <= toISO)
 }
 
 /** 이번 주(월~오늘) 통계 */
-export function thisWeekStats(all?: JournalEntry[]): WeekStats {
+export function thisWeekStats(all?: AnalysisJournalEntry[]): WeekStats {
   const today = todayISO()
   const start = weekStartOf(today)
   const wk = entriesBetween(start, today, all)
@@ -57,15 +57,15 @@ export function thisWeekStats(all?: JournalEntry[]): WeekStats {
 }
 
 /** 전체 누적: 총 일지 수·유니크 날짜 수·첫 기록일 */
-export function lifetimeStats(all?: JournalEntry[]): { total: number; days: number; firstDate: string | null } {
-  const src = all ?? loadEntries()
+export function lifetimeStats(all?: AnalysisJournalEntry[]): { total: number; days: number; firstDate: string | null } {
+  const src = all ?? loadAnalysisEntries()
   const dates = [...new Set(src.map((e) => e.date))].sort()
   return { total: src.length, days: dates.length, firstDate: dates[0] ?? null }
 }
 
 /** 최근 n일 일자별 거리(km) — 스파크라인용. 데이터 없는 날은 0. */
-export function dailyDistance(nDays: number, all?: JournalEntry[]): { labels: string[]; values: number[] } {
-  const src = (all ?? loadEntries()).filter(isPostSession)
+export function dailyDistance(nDays: number, all?: AnalysisJournalEntry[]): { labels: string[]; values: number[] } {
+  const src = (all ?? loadAnalysisEntries()).filter(isPostSession)
   const today = todayISO()
   const labels: string[] = []
   const values: number[] = []

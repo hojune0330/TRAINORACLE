@@ -17,7 +17,7 @@ document_metadata:
     restored_original: false
     prior_approved_version_restored: false
 
-  open_issues_total: 6
+  open_issues_total: 7
   canonical_blocking_count: 3
 
   executed_tests_total: 0
@@ -330,7 +330,7 @@ export interface DailyCheckInRecord {
 race_day_quick_check_binding:
   patched_from: RACE_RECORD_AND_HISTORICAL_RECALL_SPEC.md; accepted 2026-07-10 by SPEC_SOURCE_ACCEPTANCE_DECISION_ROUND4.md
   binding_type: reference_only
-  local_field_duplication_allowed: false
+  canonical_field_duplication_allowed: false
   defined_in: specs/reconstruct/RACE_RECORD_AND_HISTORICAL_RECALL_SPEC.md
   applicable_surface:
     - LogEntry race quick check
@@ -341,9 +341,36 @@ race_day_quick_check_binding:
   safety_boundary:
     can_raise_review_attention: true
     can_clear_D9_or_Safety_Gate: false
+
+  interim_app_local_projection:
+    decision_ref: TO-DECISION-RACE-SELFCHECK-FIELDS-2026-07-14-001
+    source_document: RACE_SELFCHECK_FIELDS_DECISION.md
+    owner_approved_at: 2026-07-14
+    owner: COACH_HOJUNE
+    scope: app_local_JournalEntry_pilot_only
+    pending_binding_to_canonical_RaceDayCheckInRecord: true
+    creates_new_canonical_subtype: false
+    grants_server_or_Formation_runtime_authority: false
+    fields:
+      tension: optional_integer_1_to_10
+      condition: optional_integer_1_to_5
+      goalPace:
+        schemaVersion: 1
+        unit: seconds_per_kilometer
+        secondsPerKm: positive_integer
+      mood: optional_integer_1_to_5
+    strategy_or_other_free_text_field: forbidden
+    strategy_text_route: explicit_purpose_scoped_note_only
+    current_use: collection_and_display_only
+    excluded_consumers: [Trends, Formation, PlanGenerator, D9, SafetyGate]
 ```
 
 Race-day quick check subtypes are not reproduced in this document. `DAILY_LOG_AND_CHECKIN_SPEC.md` may reference them as daily-log-adjacent ingestion records only when the subtype, namespace handling, privacy boundary, and race safety boundary remain owned by `RACE_RECORD_AND_HISTORICAL_RECALL_SPEC.md`.
+
+The owner-approved local `RaceEntry` fields above are an interim app projection, not
+a duplicated canonical record or a new canonical subtype. Canonical binding remains
+open until the Race Record owner contract, provenance handling, analysis acceptance,
+and runtime evidence are reviewed separately.
 
 ---
 
@@ -534,12 +561,21 @@ persist or expose its raw text outside the athlete's device.
 
 ```yaml
 memo_policy:
-  patched_from: CODEX_WORK_ORDER_009 amendment_v3 + user decision 2026-07-14
-  contract_status: SPEC_ONLY_OWNER_ADOPTION_PENDING
+  patched_from: CODEX_WORK_ORDER_009 amendment_v3 + TO-DECISION-RACE-SELFCHECK-FIELDS-2026-07-14-001
+  contract_status: OWNER_APPROVED_APP_LOCAL_INCREMENT
   runtime_implementation_status: NOT_CLAIMED
+  owner_adoption:
+    owner: COACH_HOJUNE
+    approved_at: 2026-07-14
+    scope: purpose_selector_and_app_local_storage_boundary
+    spec_canonical_promotion: NOT_CLAIMED
+    server_sync_authority: none
+    Formation_or_plan_evidence_authority: none
   purposes: [PRIVATE_SELF_ONLY, ANALYZABLE_TRAINING_NOTE]
   legacy_or_unlabeled_text_read_as: PRIVATE_SELF_ONLY
   implicit_consent_from_existing_memo_field: forbidden
+  new_nonempty_text_requires_explicit_purpose_selector: true
+  race_strategy_free_text_requires_explicit_note_purpose: true
 
   PRIVATE_SELF_ONLY:
     user_facing_name_candidate: 나만의 메모
@@ -550,7 +586,7 @@ memo_policy:
     server_sync_allowed: false
     coach_access_allowed: false
     future_plan_evidence_allowed: false
-    export_default: excluded
+    export_allowed: false
     account_reward_event_from_presence_frequency_length_or_content: forbidden
     UI_must_not_claim_safety_monitoring: true
     processing_flow_after_local_device_save: stop
@@ -561,12 +597,18 @@ memo_policy:
     raw_text_local_device_persistence_allowed: true
     transient_local_D9_assessment_allowed: true
     transient_local_athlete_analysis_allowed: true
+    transient_sanitized_review_metadata_allowed: true
+    can_raise_review_attention: true
+    can_clear_D9_or_SafetyGate_risk: false
+    current_sanitized_result_persistence_allowed: false
+    current_downstream_plan_or_SafetyGate_consumer_exists: false
     athlete_analysis_runtime_status: NOT_IMPLEMENTED
     privacy_safe_structured_derivation_allowed: true
     raw_text_server_sync_allowed: false
     raw_text_coach_access_allowed: false
-    structured_result_coach_access_default: true
+    structured_result_coach_access_default: false_until_separate_adoption
     future_plan_evidence_allowed_before_separate_adoption: false
+    raw_text_export_allowed: false
     export_default: excluded
 
   current_device_security_truth:
@@ -597,7 +639,7 @@ memo_policy:
     - reason_code_generation
     - privacy_safe_structured_signal_generation
 
-  allowed_persistence_after_processing:
+  future_persistence_allowlist_after_separate_adoption:
     - structured_fields
     - nonSensitiveReasonCodes
     - D9_disposition
@@ -645,12 +687,23 @@ capture remains available through separate structured pain and check-in fields.
 structured signals. It cannot clear `D9_ACTIVE`, `D9_UNKNOWN`, Safety Gate block
 states, physio-source conflict states, or template eligibility failures.
 
+Any transient sanitized assessment remains local implementation output and is not
+persisted or plan evidence. After explicit `ANALYZABLE_TRAINING_NOTE` selection, the
+local transient D9 evaluator may return allowlisted review metadata and raise review
+attention. It can never clear risk. No current Formation, Plan Generator, Safety Gate,
+Trends, or coach-surface consumer exists or is claimed. Any future persistence or
+downstream consumption requires provenance, registered signal vocabulary, privacy
+review, runtime evidence, and separate owner adoption. PR #63's athlete-visible
+shadow-mode direction remains a draft disclosure contract; this app-local increment
+does not activate shadow generation or a shadow pilot.
+
 ### 8A. Transient Note Assessment Contract
 
 ```yaml
 memo_transient_assessment_contract:
   patched_from: PLAN_F0F_TASKR_HARDENING.md + ORDER_007_R_safety.md + CODEX_WORK_ORDER_009 amendment_v3
-  contract_status: SPEC_ONLY_OWNER_ADOPTION_PENDING
+  contract_status: OWNER_APPROVED_APP_LOCAL_TRANSIENT_PATH
+  runtime_evidence_status: NOT_CLAIMED
 
   invocation:
     function: assessMemoTransient(rawText)
@@ -671,6 +724,11 @@ memo_transient_assessment_contract:
     - nonSensitiveReasonCodes
     - evaluatorVersion
     - evaluatedAt
+  result_lifecycle:
+    current_scope: in_memory_current_entry_review_only
+    persistence_allowed_now: false
+    Formation_or_PlanGenerator_evidence_allowed_now: false
+    downstream_SafetyGate_consumer_exists_now: false
   forbidden_result_metadata:
     - rawText
     - rawTextHash
@@ -700,14 +758,16 @@ memo_transient_assessment_contract:
   backward_compatible_metadata_proposal:
     adoption_authority: COACH_HOJUNE
     memoPurpose_field: optional
-    memoAssessment_field: optional
+    memoAssessment_field: forbidden_in_current_app_persistence
+    sanitized_assessment_persistence_status: NOT_ADOPTED
     absent_memoPurpose_read_as: PRIVATE_SELF_ONLY
     separate_review_index_alternative: rejected_due_to_entry_linkage_and_divergence_risk
 ```
 
-The optional metadata proposal is not runtime schema authority until owner adoption.
-In particular, `memoAssessment` may carry only the allowlisted metadata above. It
-must never become a container for raw text, summaries, embeddings, or quoted evidence.
+The sanitized assessment persistence proposal is not adopted runtime schema
+authority. The current result is transient only. Any future `memoAssessment` field
+would require a separate owner decision and could carry only the allowlisted metadata
+above; it must never contain raw text, summaries, embeddings, or quoted evidence.
 
 ---
 
@@ -965,10 +1025,11 @@ These are this reconstructed document's own issues. They do not change issue cou
 |---|---|---:|---|---|---|
 | `OI-DLC-APP-BRIDGE-BINDING-001` | P1 | YES | OPEN | App Bridge does not yet own DailyCheckInRecord storage endpoints or audit lineage. | Patch App Bridge after this spec is accepted, then recount target issues. |
 | `OI-DLC-RVE-SAFETY-BINDING-001` | P1 | YES | OPEN | Daily check-in structured and transient signals are not yet runtime-bound to RVE/Safety Gate. | Add implementation/runtime evidence before any safety binding issue closure. |
-| `OI-DLC-RAW-NOTE-REDACTION-001` | P1 | YES | OPEN | Purpose-separated note UI, local lifecycle, transient assessment binding, and server omission are not implemented. | Prove PRIVATE_SELF_ONLY is never evaluated or synced; prove ANALYZABLE_TRAINING_NOTE raw text remains device-local and only allowlisted metadata can persist. |
+| `OI-DLC-RAW-NOTE-REDACTION-001` | P1 | YES | OPEN | Purpose-separated note UI, local lifecycle, transient assessment binding, and server omission are not accepted as runtime evidence. | Prove PRIVATE_SELF_ONLY is never evaluated or synced; prove ANALYZABLE_TRAINING_NOTE raw text remains device-local and sanitized review metadata remains transient and unpersisted. |
 | `OI-DLC-DAILY-BRIEF-INBOX-001` | P2 | NO | OPEN | Daily Brief and AI Inbox signal generation remain future productization contracts. | Draft `DAILY_BRIEF_AND_INBOX_SIGNAL_SPEC.md`. |
 | `OI-DLC-ANALYSIS-VISUALIZATION-001` | P2 | NO | OPEN | Analysis charts and body-area trend visualization contract is not defined. | Draft `ANALYSIS_AND_VISUALIZATION_DATA_CONTRACT.md`. |
-| `OI-DLC-IMPLEMENTATION-BINDING-001` | P2 | NO | OPEN | No app implementation or database schema has consumed this contract. | Bind after SPEC acceptance and privacy review. |
+| `OI-DLC-IMPLEMENTATION-BINDING-001` | P2 | NO | OPEN | An app-local UI, storage schema, and transient assessment path exist, but they are not accepted as canonical binding or runtime evidence. | Bind only after SPEC acceptance, privacy review, and separate runtime-evidence acceptance. |
+| `OI-DLC-RACE-LOCAL-PROJECTION-BINDING-001` | P2 | NO | OPEN | Owner-approved race self-check fields are an interim app-local projection, not yet bound to canonical `RaceDayCheckInRecord`. | Review provenance, privacy, analysis acceptance, runtime evidence, and Race Record binding before canonical or downstream use. |
 
 ---
 
@@ -990,6 +1051,11 @@ These are this reconstructed document's own issues. They do not change issue cou
 | Only ANALYZABLE_TRAINING_NOTE can raise risk; no note can clear risk | PASS |
 | Current localStorage is not described as encrypted or secure storage | PASS |
 | Athlete note analysis runtime is not claimed | PASS |
+| Analyzable note may raise local transient review but cannot clear risk | PASS |
+| Sanitized transient assessment is not persisted or used as plan evidence | PASS |
+| Owner-approved purpose selector remains app-local with no server or plan authority | PASS |
+| Race self-check fields remain an interim local projection, not a canonical subtype | PASS |
+| Shadow-mode disclosure direction does not activate shadow runtime | PASS |
 | `D9_ACTIVE` / `D9_UNKNOWN` cannot be cleared by check-in | PASS |
 | `D9_CLEARED` is not medical clearance | PASS |
 | Daily Log does not generate plan candidates | PASS |
