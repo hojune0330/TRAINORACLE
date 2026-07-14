@@ -181,6 +181,13 @@ Active SPEC candidates:
 - [`specs/active/PHYSIO_SOURCE_TRUST_SPEC.md`](./specs/active/PHYSIO_SOURCE_TRUST_SPEC.md)
 - [`specs/active/RVE_RULE_EVALUATOR_BINDING_SPEC.md`](./specs/active/RVE_RULE_EVALUATOR_BINDING_SPEC.md)
 
+Owner-approved app-local pilot decisions:
+
+- [`RACE_SELFCHECK_FIELDS_DECISION.md`](./RACE_SELFCHECK_FIELDS_DECISION.md) records the
+  race self-check, structured target pace, purpose-scoped memo, provenance limitation,
+  and 2026-07-14 owner-authorized Codex handoff boundaries. It does not grant canonical,
+  Formation, Plan Generator, sync, or shadow-runtime authority.
+
 Candidate test package:
 
 - [`specs/test-packages/D9_SAFETY_EVALUATOR_V2_1_1_TEST_PACKAGE.md`](./specs/test-packages/D9_SAFETY_EVALUATOR_V2_1_1_TEST_PACKAGE.md)
