@@ -107,17 +107,34 @@ export function SafeJournalExport() {
       <div id={EXPORT_DESCRIPTION_ID} style={{ marginTop: 4, fontFamily: "var(--mono)", fontSize: 9, color: "var(--ink-4)", lineHeight: 1.5 }}>
         메모 원문과 메모 목적은 제외해요 · 파일은 이 기기에만 저장되고 어디로도 전송되지 않아요
       </div>
+      <button type="button" onClick={downloadOwnerFullBackup} style={{
+        background: "transparent", border: 0, cursor: "pointer", padding: "8px 0 0",
+        fontFamily: "var(--mono)", fontSize: 9.5, color: "var(--ink-4)",
+        letterSpacing: "0.08em", textDecoration: "underline", textUnderlineOffset: 3,
+      }}>메모 포함 내보내기 · 공유하기 (JSON)</button>
     </div>
   )
 }
 
 function downloadSafeJournalExport(): void {
+  downloadJournalExport(false)
+}
+
+function downloadOwnerFullBackup(): void {
+  const confirmed = window.confirm(
+    "메모 원문과 메모 목적까지 포함한 JSON 파일을 만듭니다. 코치·친구 등 다른 사람에게 공유할 수 있으니, 포함할 내용을 확인했어요.",
+  )
+  if (confirmed) downloadJournalExport(true)
+}
+
+function downloadJournalExport(includeRawMemos: boolean): void {
   try {
-    const blob = new Blob([exportEntriesJSON()], { type: "application/json" })
+    const blob = new Blob([exportEntriesJSON({ includeRawMemos })], { type: "application/json" })
     const url = URL.createObjectURL(blob)
     const anchor = document.createElement("a")
     anchor.href = url
-    anchor.download = `trainoracle-journal-${todayISO()}.json`
+    const suffix = includeRawMemos ? "full-backup" : "journal"
+    anchor.download = `trainoracle-${suffix}-${todayISO()}.json`
     document.body.appendChild(anchor)
     anchor.click()
     anchor.remove()

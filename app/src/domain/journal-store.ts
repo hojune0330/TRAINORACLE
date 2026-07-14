@@ -16,6 +16,10 @@ export type {
 
 const KEY = "trainoracle.journal.v1"
 
+export type JournalExportOptions = {
+  readonly includeRawMemos?: boolean
+}
+
 function storage(): Storage | null {
   try {
     if (typeof window === "undefined") return null
@@ -83,7 +87,21 @@ export function deleteEntry(id: string): { readonly ok: boolean; readonly total:
   return { ok: writeEntries(localStorage, remaining), total: remaining.length }
 }
 
-export function exportEntriesJSON(): string {
+export function exportEntriesJSON(options: JournalExportOptions = {}): string {
+  if (options.includeRawMemos === true) {
+    return JSON.stringify(
+      {
+        app: "TRAINORACLE",
+        format: "trainoracle.journal.full-backup.v1",
+        exportMode: "OWNER_FULL_BACKUP",
+        exportedAt: new Date().toISOString(),
+        entries: loadEntries(),
+      },
+      null,
+      2,
+    )
+  }
+
   const entries: SafeJournalEntry[] = []
   for (const entry of loadEntries()) {
     const projected = toExportJournalEntry(entry)

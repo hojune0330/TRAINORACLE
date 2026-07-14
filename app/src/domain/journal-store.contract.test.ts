@@ -76,6 +76,26 @@ describe("journal storage boundary", () => {
     expect(loaded[1]).not.toHaveProperty("goalPace")
   })
 
+  it("includes raw notes only in an explicitly requested full export", () => {
+    // Given
+    const secret = "OWNER_EXPORT_ONLY_SECRET"
+    saveEntry({
+      ...validRaceEntry("owner-full-export"),
+      memo: secret,
+      memoPurpose: "PRIVATE_SELF_ONLY",
+    })
+
+    // When
+    const defaultExport = exportEntriesJSON()
+    const fullExport = exportEntriesJSON({ includeRawMemos: true })
+
+    // Then
+    expect(defaultExport).not.toContain(secret)
+    expect(fullExport).toContain(secret)
+    expect(fullExport).toContain("PRIVATE_SELF_ONLY")
+    expect(fullExport).toContain('"exportMode": "OWNER_FULL_BACKUP"')
+  })
+
   it.each([
     ["tension below range", { tension: 0 }],
     ["tension above range", { tension: 11 }],

@@ -57,4 +57,12 @@ describe("home journal controls", () => {
     // Then
     expect(exportButton).toBeVisible()
   })
+
+  it("offers a separately labeled memo-inclusive export action", () => {
+    // Given
+    render(<Home />)
+
+    // When / Then
+    expect(screen.getByRole("button", { name: /메모 포함 내보내기/u })).toBeVisible()
+  })
 })
