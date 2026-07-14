@@ -5,15 +5,16 @@ document_metadata:
   doc_id: trainoracle-spec-018-training-plan-formation-and-adaptation
   spec_id: TRAINING_PLAN_FORMATION_AND_ADAPTATION_SPEC
   title: TrainOracle Training Plan Formation And Adaptation Spec
-  version: "0.3"
-  round: RT2_MULTIPERSPECTIVE_REVIEW
+  version: "0.4"
+  round: RT3_OWNER_SHADOW_PILOT_BINDING
   status: DRAFT_FOR_REVIEW
   owner: COACH_HOJUNE
   owner_decision_ref: TO-DEC-TRAINING-METHOD-2026-07-14-001
+  owner_product_decision_ref: TO-DEC-ATHLETE-VISIBLE-SHADOW-2026-07-14-001
   pilot_scope: ONE_COACH_LINKED_1500M_ATHLETE
   open_issues_total: 11
   canonical_blocking_count: 10
-  contract_vectors_total: 96
+  contract_vectors_total: 104
   executed_tests_total: 0
   executed_tests_passed: 0
   production_execution_allowed: false
@@ -1374,7 +1375,10 @@ Abbreviations: `DEC-001` means
 `SESSION_CLASSIFIER_SPEC`; `MCM` means
 `MICROCYCLE_AND_CALENDAR_MAPPING_SPEC`; `DLC` means
 `DAILY_LOG_AND_CHECKIN_SPEC`; `AB` means `APP_IMPLEMENTATION_BRIDGE`; `RS` means
-`RULE_SPEC_D1_D9`; `WO009A` means `CODEX_WORK_ORDER_009.md` Task A.
+`RULE_SPEC_D1_D9`; `JDD` means `JOURNAL_DELIGHT_AND_DECORATION_SPEC`; `AVD` means
+`ANALYSIS_AND_VISUALIZATION_DATA_CONTRACT`; `DEC-SHADOW` means
+`TO-DEC-ATHLETE-VISIBLE-SHADOW-2026-07-14-001`; `WO009A` means
+`CODEX_WORK_ORDER_009.md` Task A.
 
 Reason codes are non-sensitive system states, not medical or note-derived categories:
 
@@ -1396,6 +1400,9 @@ Reason codes are non-sensitive system states, not medical or note-derived catego
 | `FA_MAPPING_SCHEMA_BLOCKED` | Projection contract cannot preserve identity. |
 | `FA_STATS_SUPPRESSED` | Longitudinal output is unavailable pending policy. |
 | `FA_ADAPTATION_PROPOSED` | Coach-reviewed change proposal created. |
+| `FA_SHADOW_ACTIVE` | Disclosed non-executing comparison is active; real training remains coach-governed. |
+| `FA_SHADOW_PAUSED` | Comparison needs review or eligible structured data; the athlete is not blamed. |
+| `FA_SHADOW_COMPLETE` | Accepted comparison protocol finished; no safety, efficacy, or performance claim is implied. |
 
 | ruleId | authorityClass | owner / version | applicability | requiredInputs | missingInputBehavior | output | reasonCodeRefs | evidenceSourceRefs | counterexampleOrFailureState | contractTestIds |
 |---|---|---|---|---|---|---|---|---|---|---|
@@ -1415,6 +1422,117 @@ Reason codes are non-sensitive system states, not medical or note-derived catego
 | `FA-R-014` | `PROPOSED_PENDING_OWNER_ACCEPTANCE` | MCM + product projection owner / 0.3 | Seven-day and audience projection after schema patch | frame/block/version/session identity, resolved boundaries, audience, action state, visual grammar | block projection binding | identity-preserving accessible projection | `FA_MAPPING_SCHEMA_BLOCKED` | MCM | fixed D-5, missing version, slot mismatch, color/hover-only meaning, or composite collapse | 015, 050, 071-072, 074, 087-090 |
 | `FA-R-015` | `HOLD_INSUFFICIENT_EVIDENCE` | Research and privacy target owners / 0.3 | Longitudinal context | accepted sample/privacy/redaction/retention policies | suppress | null counts/statistics, empty refs, no influence | `FA_STATS_SUPPRESSED` | evidence ledger | count, source list, percentile, or unaccepted Physio result influences candidate | 025, 056-057 |
 | `FA-R-016` | `COACH_DECISION_SUPPORT` | Coach Hojune / 0.3 | Non-safety adaptation trigger | valid outcome, current accepted plan, accepted coach rules | review | deterministic proposal action | `FA_ADAPTATION_PROPOSED` | DEC-001, PG | threshold invented, stale response, or missed MAIN compressed | 010, 013, 028, 058-060, 064 |
+| `FA-R-017` | `PROPOSED_PENDING_OWNER_ACCEPTANCE` | Product + AB + JDD + AVD / 0.4 | Shadow enrollment, generation, progress, pause, completion, and withdrawal | separate consent, immutable source/frame state, non-executing candidate result, linked-coach review, privacy-safe progress refs | block or show paused state | athlete-visible non-executing status plus safe progress projection | `FA_SHADOW_ACTIVE`, `FA_SHADOW_PAUSED`, `FA_SHADOW_COMPLETE` | DEC-SHADOW, AB, DLC, JDD, AVD | hidden operation, bundled consent, real-plan mutation, private-note signal, fake completion, coercive reward, inaccessible progress, or withdrawal penalty | 097-104 |
+
+---
+
+## 11A. Athlete-Visible Shadow Pilot Contract
+
+Shadow operation is a disclosed, non-executing comparison period. It is not a
+hidden experiment and not a quiet release of automatic coaching. The athlete keeps
+following the real linked-coach plan while TrainOracle forms a separate candidate
+from an immutable eligible snapshot for later comparison.
+
+The owner-confirmed product boundary is recorded as
+`TO-DEC-ATHLETE-VISIBLE-SHADOW-2026-07-14-001`. The exact three-frame protocol,
+monitoring cadence, incentives, and stop criteria remain proposed until the pilot
+protocol and owning target contracts accept them.
+
+```yaml
+athlete_visible_shadow_pilot:
+  mode: ATHLETE_VISIBLE_NON_EXECUTING_COMPARISON
+  real_training_authority: LINKED_HUMAN_COACH_ONLY
+  generated_candidate:
+    athlete_execution_allowed: false
+    calendar_write_allowed: false
+    notification_as_instruction_allowed: false
+    may_replace_or_edit_real_plan: false
+    may_claim_safety_or_efficacy: false
+  enrollment:
+    separate_plain_language_notice_required: true
+    separate_active_consent_purpose: SHADOW_PILOT_DATA_USE
+    bundled_with_base_journal_service: forbidden
+    refusal_keeps_base_journal_available: true
+    withdrawal_available_at_any_time: true
+  notice_must_explain:
+    - what_is_being_compared
+    - that_the_shadow_candidate_does_not_govern_training
+    - structured_data_categories_used
+    - private_and_raw_note_exclusions
+    - proposed_duration_and_current_progress
+    - coach_review_role
+    - how_to_pause_withdraw_and_request_deletion
+    - no_medical_safety_or_performance_guarantee
+  data_boundary:
+    eligible_structured_EXPLICIT_data_only: true
+    PRIVATE_SELF_ONLY_presence_and_content: zero_signal
+    raw_ANALYZABLE_TRAINING_NOTE_plan_or_reward_use: forbidden
+    missing_values_may_be_imputed_favorably: false
+  proposed_sequence:
+    complete_frames: 3
+    frame_duration: LOCAL_CIVIL_9_DAYS_12_HOURS
+    production_execution_during_sequence: forbidden
+  progress_projection:
+    states:
+      - NOT_STARTED
+      - ACTIVE_FRAME_1_OF_3
+      - ACTIVE_FRAME_2_OF_3
+      - ACTIVE_FRAME_3_OF_3
+      - PAUSED_NEEDS_REVIEW
+      - COMPLETE
+      - WITHDRAWN
+    completion_requires:
+      - immutable_shadow_candidate_or_typed_no_candidate_result
+      - linked_coach_review_record
+      - no_privacy_authorization_or_safety_contract_violation
+    display_requires:
+      - number_and_text_not_color_only
+      - completed_check_mark_plus_label
+      - actual_date_boundary
+      - simulation_not_execution_label
+      - accessible_middle_school_language
+  analysis_projection:
+    descriptive_development_allowed: true
+    athlete_display_requires_sample_count_missingness_and_uncertainty: true
+    causal_or_performance_claim: forbidden
+    real_plan_influence_before_separate_acceptance: forbidden
+  delight_binding:
+    owner: JOURNAL_DELIGHT_AND_DECORATION_SPEC
+    safe_recording_check_or_sticker_allowed: true
+    frame_progress_marker_is_informational: true
+    training_load_speed_pain_silence_or_consent_reward: forbidden
+    withdrawal_penalty_or_earned_item_clawback: forbidden
+```
+
+### 11A.1 Plain-language projection intent
+
+Final copy remains a product/design decision, but every implementation must preserve
+the following meaning at explanation levels 1 and 2:
+
+| Surface element | Required plain meaning |
+|---|---|
+| Title | "내 훈련 리듬을 알아가는 중" or an equivalent non-clinical phrase. |
+| One-line explanation | TrainOracle is comparing a draft with the real coach plan; the draft does not change today's training. |
+| Progress | "1/3 비교 완료" with a check mark, date, and text label. |
+| Paused state | More review or eligible structured data is needed; the athlete did nothing wrong. |
+| Completion | The comparison period finished; show what was compared and uncertainty, not a success/performance claim. |
+| Exit | Pause or leave at any time without losing base journaling or being punished. |
+
+### 11A.2 Cross-spec ownership
+
+| Concern | Owning contract | Formation use |
+|---|---|---|
+| Consent, revocation, retention, deletion, guardian scope | `APP_IMPLEMENTATION_BRIDGE.md` and `ATHLETE_PROFILE_SPEC.md` | Requires an accepted `SHADOW_PILOT_DATA_USE` purpose; does not invent persistence. |
+| Private/analyzable memo boundary and structured daily sources | `DAILY_LOG_AND_CHECKIN_SPEC.md` | Consumes eligible structured refs only; private memo is byte-identical zero-signal. |
+| Descriptive trends, missingness, sample counts, uncertainty | `ANALYSIS_AND_VISUALIZATION_DATA_CONTRACT.md` | May project accepted descriptive comparison only; no causal or plan authority. |
+| Checks, stickers, streaks, and collection safety | `JOURNAL_DELIGHT_AND_DECORATION_SPEC.md` | Delegates all unlock meaning; frame progress itself is not training reward. |
+| Candidate rationale and audience redaction | `PLAN_OUTPUT_RATIONALE_PRIVACY_SPEC.md` | Uses only athlete-authorized plain explanation and privacy-safe reason codes. |
+| Frame/calendar identity and dates | `MICROCYCLE_AND_CALENDAR_MAPPING_SPEC.md` | Shows the shadow boundary without writing an executable plan to the real calendar. |
+
+This section narrows athlete transparency and product experience. It does not close
+`OI-FA-PILOT-PROTOCOL-001`, authorize a three-frame run, or bypass any canonical
+blocker. The proposed sequence may start only after the remaining protocol details
+and exact target bindings are accepted.
 
 ---
 
@@ -1449,7 +1567,7 @@ or efficacy.
 
 ## 13. Contract Test Vectors
 
-These are future contract tests, not executed runtime evidence. All 96 vectors test
+These are future contract tests, not executed runtime evidence. All 104 vectors test
 policy, data, privacy, authorization, identity, deterministic arbitration, and
 fail-closed mechanics. They do not validate physiological efficacy, recovery
 adequacy, performance benefit, injury-risk reduction, or safety.
@@ -1552,6 +1670,14 @@ adequacy, performance benefit, injury-risk reduction, or safety.
 | `FA-TC-094` | Concurrent validation ACCEPT/REJECT callbacks and duplicate replay target one reserved version | Shared aggregate/unique terminal constraint commits one result; exact replay returns it without duplicate transition |
 | `FA-TC-095` | Proposal reserves version A, validation targets A, but acceptance attempts successor B or reuses A elsewhere | Equality/unique reservation invariant rejects substitution or reuse; no successor commits |
 | `FA-TC-096` | Authorized proposal rejection races acceptance, is replayed, or occurs while target is held | One terminal decision; rejection appends no version/validation/hold release/sibling supersession; exact retry returns prior result |
+| `FA-TC-097` | Athlete has no active separate `SHADOW_PILOT_DATA_USE` consent | No shadow generation, analysis, progress, or reward event; base journal remains available |
+| `FA-TC-098` | Enrollment copy hides simulation status, omits data categories/exit, or implies AI controls training | Enrollment blocked; no consent or shadow state created |
+| `FA-TC-099` | Shadow candidate attempts to write the real calendar, notify an instruction, or replace the linked-coach plan | Mutation rejected and audited without athlete payload; real plan remains unchanged |
+| `FA-TC-100` | UI attempts to mark a frame complete without a typed candidate/no-candidate result and linked-coach review | Progress remains paused/incomplete with plain non-blaming copy |
+| `FA-TC-101` | Rest-day or injury/pain check-in is the day's eligible structured record | Safe journal check eligibility matches a training-day record; load, pace, and pain silence add no reward advantage |
+| `FA-TC-102` | Identical structured sources are compared with no memo versus a `PRIVATE_SELF_ONLY` memo | Shadow candidate, analysis, progress, reward, telemetry, and audit outputs are byte-identical |
+| `FA-TC-103` | Athlete withdraws during frame 2 | No new shadow processing; real plan and base journal continue; no shame/penalty/clawback; accepted retention/deletion policy governs existing records |
+| `FA-TC-104` | Progress is viewed on touch, grayscale/print, and screen reader | Frame number, text state, check label, dates, simulation status, and exit remain perceivable without color or hover |
 
 ---
 
@@ -1592,6 +1718,15 @@ aggregate/CAS primitives, records, endpoints, tenant isolation, append-only stor
 governance envelopes, audit/outbox, and uniqueness constraints. Formation states
 target requirements; it does not create a parallel backend owner.
 
+Before an athlete-visible shadow run, App Bridge must also accept a separate
+`SHADOW_PILOT_DATA_USE` consent purpose, refusal-with-base-journal behavior,
+revocation/withdrawal processing, progress-state storage, retention/deletion, and
+guardian handling. `JOURNAL_DELIGHT_AND_DECORATION_SPEC` must accept the exact safe
+check/sticker thresholds without rewarding consent, continued enrollment, training
+load, speed, favorable reports, or silence about pain. `ANALYSIS_AND_VISUALIZATION_DATA_CONTRACT`
+must accept the descriptive shadow comparison projection with sample count,
+missingness, uncertainty, and no causal or plan authority.
+
 `PLAN_SAFETY_GATE_SPEC` must own a stable, versioned, expiring, target-bound
 `SafetyBlockRef` materialization with opaque note-derived blocking. The tracked D9/RVE
 implementation currently treats `D9_CLEARED` as nonblocking and has positive contract
@@ -1624,7 +1759,7 @@ No downstream patch is authorized by this draft alone.
 | `OI-FA-LOAD-COMPONENT-001` | P1 | YES | OPEN | Component allocation, measure units, and whole-session intensity mapping are unresolved. | Accept registry, allocation, dedupe, and conflict behavior. |
 | `OI-FA-MINIMUM-EVIDENCE-001` | P1 | YES | OPEN | Required history by frame type, freshness, typed absence/staleness, Physio-source acceptance, statistical privacy, and suppression policies are unresolved. | Accept pilot thresholds/source versions or keep sources rejected and statistics/counts/refs fully suppressed. |
 | `OI-FA-PLAN-VERSION-BINDING-001` | P1 | YES | OPEN | Plan Generator/App Bridge lack complete option sets, linked selection, shared aggregate/safety epochs, validation lifecycle, sequenced holds, durable idempotency, canonical preimages, atomicity, and adaptation records. | Owning targets accept exact extensions, patch/recount, add database constraints/outbox, and publish concurrency/hash fixtures. |
-| `OI-FA-PILOT-PROTOCOL-001` | P1 | YES | OPEN | One-athlete baseline, feasibility/usefulness metrics, adverse/safety event recording, intervention rules, abort/stop criteria, and monitoring cadence are unresolved. | Accept a prospective protocol that does not claim safety or efficacy before pilot execution. |
+| `OI-FA-PILOT-PROTOCOL-001` | P1 | YES | OPEN | Athlete visibility, separate participation, and non-executing progress meaning are narrowed by `DEC-SHADOW`; exact duration acceptance, baseline, feasibility/usefulness metrics, adverse/safety event recording, intervention rules, abort/stop criteria, monitoring cadence, and target bindings remain unresolved. | Accept a prospective athlete-visible protocol that does not claim safety or efficacy before pilot execution. |
 | `OI-FA-CALENDAR-SCHEMA-BINDING-001` | P1 | YES | OPEN | Calendar lacks frame/block/version/session/hash/boundary/watermark identity and a DOUBLE/FLEX slot crosswalk. | Patch mapping schema, recount, and add accepted-only DST/re-anchor/projection tests. |
 | `OI-FA-UPSTREAM-SAFETY-PRIVACY-BINDING-001` | P1 | YES | OPEN | Safety Gate cannot materialize the required stable target-bound opaque ref, and current D9/RVE runtime positively encodes note-derived CLEARED as nonblocking. | Patch owning contracts/runtime so analyzable-note origin can emit only opaque blocking/unknown/stale state, then re-run privacy/safety evidence. |
 | `OI-FA-RULE-CLASSIFIER-EXPOSURE-BINDING-001` | P1 | YES | OPEN | Formation counts competition as MAIN exposure while Rule D1/D2 consume MAIN-only semantics and Session Classifier preserves COMPETITION. | Bind Rule D1/D2 to a normalized exposure ledger/adapter without rewriting classifier labels. |
@@ -1654,7 +1789,8 @@ No downstream patch is authorized by this draft alone.
 | Selection/adaptation target requirements include validation lifecycle, scope, append-only records, CAS, atomicity, and durable idempotency | PASS |
 | Calendar identity claim is blocked pending schema patch | PASS |
 | Evidence types and one-athlete safety/efficacy limits are explicit | PASS |
-| All 96 vectors are labeled policy mechanics rather than physiology validation | PASS |
+| Athlete-visible shadow operation is disclosed, non-executing, withdrawable, and separated from coercive reward | PASS |
+| All 104 vectors are labeled policy mechanics rather than physiology validation | PASS |
 | No production, app, canonical, or runtime claim is made | PASS |
 | Open issue count is 11 and canonical blocker count is 10 | PASS |
 | Final marker is the final line | PASS |

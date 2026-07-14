@@ -14,7 +14,7 @@ Current productization drafts:
 - `ANALYSIS_AND_VISUALIZATION_DATA_CONTRACT.md` (`DRAFT_FOR_REVIEW`; new productization draft, not original restored, not canonical, not runtime evidence)
 - `PLAN_OUTPUT_RATIONALE_PRIVACY_SPEC.md` (`DRAFT_FOR_REVIEW`; new productization draft, not original restored, not canonical, not runtime evidence)
 - `MICROCYCLE_AND_CALENDAR_MAPPING_SPEC.md` (`DRAFT_FOR_REVIEW`; new productization draft, not original restored, not canonical, not runtime evidence)
-- `TRAINING_PLAN_FORMATION_AND_ADAPTATION_SPEC.md` (`DRAFT_FOR_REVIEW`; decision-provenanced first-pilot formation/adaptation policy with ten canonical blockers, audited in root `TRAINING_PLAN_BLUEPRINT_MULTIPERSPECTIVE_REVIEW.md`, not canonical, not runtime evidence)
+- `TRAINING_PLAN_FORMATION_AND_ADAPTATION_SPEC.md` (`DRAFT_FOR_REVIEW`; decision-provenanced first-pilot formation/adaptation policy with ten canonical blockers and an athlete-visible non-executing shadow-pilot boundary, audited in root `TRAINING_PLAN_BLUEPRINT_MULTIPERSPECTIVE_REVIEW.md`, not canonical, not runtime evidence)
 - `EXTERNAL_RECORD_INTEGRATION_SPEC.md` (`DRAFT_FOR_REVIEW`; Work Order 005 Task A draft, merged to main, not canonical, not runtime evidence)
 - `COMPOSITION_BALANCE_BASELINE_CONTRACT.md` (`DRAFT_FOR_REVIEW`; Work Order 005 Task B draft, merged to main, not canonical, not runtime evidence)
 - `JOURNAL_DELIGHT_AND_DECORATION_SPEC.md` (`DRAFT_FOR_REVIEW`; Work Order 006 Task A draft, merged to main, not canonical, not runtime evidence)

@@ -382,4 +382,37 @@ source blocker. Runtime work before those decisions would test an invented contr
 10. Run a minimal no-UI vertical slice and the required concurrency, security, and E2E
     evidence. Only then may the owners make a separate pilot-approval decision.
 
+---
+
+## 12. Owner Follow-Up Addendum
+
+This addendum records a decision after the nine-persona review. It does not rewrite
+the historical verdict for commit `807380c`.
+
+```yaml
+owner_follow_up:
+  decision_ref: TO-DEC-ATHLETE-VISIBLE-SHADOW-2026-07-14-001
+  pr63_treatment: MERGEABLE_AS_DRAFT_REVIEW_RECORD_AFTER_OWNER_SUMMARY
+  canonical_acceptance: false
+  runtime_authority: false
+  shadow_operation_must_be_athlete_visible: true
+  hidden_shadow_operation: forbidden
+  exact_pilot_protocol_accepted: false
+  current_formation_contract_vectors_after_addendum: 104
+```
+
+The owner accepted an athlete-visible product boundary: the journal owner knows what
+is being compared, that the generated candidate does not govern real training, which
+structured data categories are used, how progress is shown, and how to stop. Safe
+checks, stickers, or milestones may support journaling, but consent, continued
+enrollment, training load, speed, favorable reporting, and silence about pain cannot
+be reward conditions.
+
+The original nine-persona review produced 96 vectors. Formation version 0.4 adds
+`FA-TC-097` through `FA-TC-104` for separate consent, honest notice, no real-plan
+mutation, evidence-bound progress, safe rest/pain recognition, private-memo
+zero-signal, withdrawal, and accessible projection. These additions narrow the
+product boundary but do not close `OI-FA-PILOT-PROTOCOL-001` or any other canonical
+blocker.
+
 [REVIEW_RECORDED]

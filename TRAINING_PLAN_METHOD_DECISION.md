@@ -76,4 +76,32 @@ fully resolved.
 | D4 | One linked 1500 m pilot, 9.5-day frame, 2-3 MAINs, and deterministic 2-3 candidates. | Exact coaching rules, taxonomy, bindings, and pilot protocol. |
 | D5 | This draft preserves Fable `app/` ownership and Codex contract work. | Final vertical-slice ownership and app integration approval. |
 
+## 5. Owner Follow-Up: Athlete-Visible Shadow Pilot
+
+```yaml
+decision_amendment:
+  decision_id: TO-DEC-ATHLETE-VISIBLE-SHADOW-2026-07-14-001
+  status: OWNER_CONFIRMED_IN_CONVERSATION
+  owner: COACH_HOJUNE
+  recorded_at: 2026-07-14
+  production_authority: false
+  canonical_promotion_authority: false
+```
+
+Coach Hojune confirmed the product boundary below after reviewing the proposed
+shadow-pilot sequence in PR #63.
+
+| Decision | Confirmed boundary |
+|---|---|
+| Athlete awareness | Shadow operation is never hidden. The journal owner is told what is being compared, which data categories are used, that the generated candidate does not govern training, and how to stop participation. |
+| Meaningful participation | The athlete surface should explain the purpose in plain language and show visible progress, milestones, and a comprehensible finish state. |
+| Progress and delight | Check marks, frame milestones, stickers, or another small collection experience may support participation. They follow `JOURNAL_DELIGHT_AND_DECORATION_SPEC.md` and may reward safe recording consistency, never training load or silence about pain. |
+| Analysis sequencing | Structured self-check data may be collected and displayed first while descriptive analysis continues to be developed. Analysis must remain non-causal and must not change a real plan until its separate acceptance and shadow evidence exist. |
+| PR #63 status | The Formation/Adaptation blueprint may be preserved as a review draft after an owner-readable summary and cross-spec map are added. This is not canonical acceptance or implementation authority. |
+
+This amendment does not yet accept exact pilot duration, incentive amounts,
+catalog assets, statistical thresholds, adverse-event protocol, stop criteria,
+production execution, or an automatic plan. A proposed three-frame sequence remains
+part of the pilot protocol that must be accepted with those operational details.
+
 [DECISION_RECORDED]
