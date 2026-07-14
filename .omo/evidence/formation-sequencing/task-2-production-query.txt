@@ -1,0 +1,35 @@
+Task 2 browser regression evidence
+
+Baseline characterization
+- Command: cd app && npm.cmd exec playwright test e2e/mobile-save-overlap.spec.ts --project=mobile-chromium --reporter=list
+- Result before change: 3 browser projects passed.
+
+RED
+- Command: cd app && npm.cmd exec playwright test e2e/production-query.spec.ts --reporter=list
+- Result before change: desktop, mobile, and reduced-motion all observed a non-null
+  `trainoracle.journal.v1` containing `__uiseed_1__` and `__uiseed_2__`.
+
+GREEN
+- Command: cd app && npm.cmd run build && npm.cmd exec playwright test e2e/production-query.spec.ts e2e/mobile-save-overlap.spec.ts --workers=1 --reporter=list
+- Result after change: 6 passed.
+- Browser observable: opening `/?app=1&uitest=seed` renders the app but leaves
+  `window.localStorage.getItem("trainoracle.journal.v1")` as `null`.
+
+Runtime-debug result
+- The focused first green attempt did not run a build. Playwright preview serves
+  `app/dist`, so it correctly exercised a stale bundle and failed.
+- A fresh `npm.cmd run build` toggled the behavior to GREEN without changing the
+  production fix, confirming stale `dist` as the root cause.
+
+Static verification
+- `npm.cmd run typecheck`, `npm.cmd run typecheck:e2e`, and the full Vitest suite
+  passed after the change (8 files, 57 tests).
+- The shared no-excuse checker could not resolve its own `typescript`/`tsx`
+  dependencies from the plugin cache. No project dependency or configuration was
+  changed to force that external tool; `tsc` and a changed-file diff scan remain the
+  applicable project checks.
+
+Cleanup receipt
+- Removed ignored generated `app/dist` and `app/test-results` after browser QA.
+- Removed the local debug journal and temporary checker link; no server or port
+  remained running.
