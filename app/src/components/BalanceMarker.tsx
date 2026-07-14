@@ -30,8 +30,8 @@ export function BalanceMarker({ hint }: { hint: BalanceHintData | null }) {
         aria-expanded={open}
         onClick={toggle}
         style={{
-          // 히트 영역 26px 확보 (시각 글리프는 그대로)
-          marginLeft: 2, padding: "0 6px", height: 26,
+          margin: "-9px -9px -9px -7px", padding: "0 6px",
+          minWidth: 44, height: 44,
           border: 0, background: "transparent",
           color: accent, fontFamily: "var(--mono)",
           fontSize: 10, fontWeight: 700, lineHeight: 1,

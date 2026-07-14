@@ -103,6 +103,7 @@ export function SafeJournalExport() {
     <div style={{ padding: "28px 20px 0" }}>
       <button type="button" onClick={downloadSafeJournalExport} aria-describedby={EXPORT_DESCRIPTION_ID} style={{
         background: "transparent", border: 0, cursor: "pointer", padding: 0,
+        minHeight: 44,
         fontFamily: "var(--mono)", fontSize: 9.5, color: "var(--ink-4)",
         letterSpacing: "0.08em", textDecoration: "underline", textUnderlineOffset: 3,
       }}>내 일지 데이터 내려받기 (JSON)</button>
@@ -111,6 +112,7 @@ export function SafeJournalExport() {
       </div>
       <button type="button" onClick={() => setIsFullExportDialogOpen(true)} style={{
         background: "transparent", border: 0, cursor: "pointer", padding: "8px 0 0",
+        minHeight: 44,
         fontFamily: "var(--mono)", fontSize: 9.5, color: "var(--ink-4)",
         letterSpacing: "0.08em", textDecoration: "underline", textUnderlineOffset: 3,
       }}>메모 포함 파일 내보내기 (JSON)</button>
@@ -167,11 +169,11 @@ function FullExportDialog({ onCancel, onConfirm }: {
         </div>
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginTop: 18 }}>
           <button type="button" onClick={onCancel} style={{
-            minHeight: 42, border: "1px solid var(--ink)", background: "transparent", color: "var(--ink)",
+            minHeight: 44, border: "1px solid var(--ink)", background: "transparent", color: "var(--ink)",
             fontFamily: "var(--mono)", fontSize: 11, cursor: "pointer",
           }}>취소</button>
           <button type="button" onClick={onConfirm} style={{
-            minHeight: 42, border: "1px solid var(--ink)", background: "var(--ink)", color: "var(--bg)",
+            minHeight: 44, border: "1px solid var(--ink)", background: "var(--ink)", color: "var(--bg)",
             fontFamily: "var(--mono)", fontSize: 11, fontWeight: 600, cursor: "pointer",
           }}>파일 만들기</button>
         </div>

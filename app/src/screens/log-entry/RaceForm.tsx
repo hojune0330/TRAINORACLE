@@ -131,7 +131,7 @@ function StageTabs({ stage, onChange }: { readonly stage: RaceStage; readonly on
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", border: "1px solid var(--ink)" }}>
         {(["pre", "post"] as const).map((stageOption, index) => (
           <button key={stageOption} type="button" aria-pressed={stage === stageOption} onClick={() => onChange(stageOption)} style={{
-            padding: "12px 0", background: stage === stageOption ? "var(--ink)" : "transparent",
+            minHeight: 44, padding: "12px 0", background: stage === stageOption ? "var(--ink)" : "transparent",
             color: stage === stageOption ? "var(--bg)" : "var(--ink-2)", border: 0,
             borderRight: index === 0 ? "1px solid var(--ink)" : 0,
             fontFamily: "var(--mono)", fontSize: 11, fontWeight: 500, cursor: "pointer",

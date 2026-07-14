@@ -165,7 +165,7 @@ function purposeExplanation(purpose: MemoPurpose | undefined): string {
 
 function optionStyle(selected: boolean): React.CSSProperties {
   return {
-    display: "flex", alignItems: "center", gap: 7, padding: "9px 10px",
+    display: "flex", alignItems: "center", gap: 7, minHeight: 44, padding: "9px 10px",
     border: selected ? "1px solid var(--ink)" : "1px solid var(--line)",
     background: selected ? "var(--surface)" : "transparent",
     fontFamily: "var(--sans)", fontSize: 12.5, color: "var(--ink)", cursor: "pointer",

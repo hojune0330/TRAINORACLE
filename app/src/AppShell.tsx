@@ -137,7 +137,8 @@ export function SavedToast({ count, phase, reviewMessage, onDismiss }: {
           {reviewMessage !== undefined && (
             <button type="button" aria-label="검토 안내 닫기" title="닫기" onClick={onDismiss} style={{
               border: 0, background: "transparent", color: "var(--bg)", cursor: "pointer",
-              padding: 4, fontFamily: "var(--mono)", fontSize: 18, lineHeight: 1,
+              padding: 4, minWidth: 44, minHeight: 44, margin: -8,
+              fontFamily: "var(--mono)", fontSize: 18, lineHeight: 1,
             }}>×</button>
           )}
         </div>
