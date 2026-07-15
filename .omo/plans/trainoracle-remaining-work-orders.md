@@ -12,8 +12,8 @@ have immutable acceptance records.
 
 | 순서 | 무엇을 결정하는가 | 지금 실행 가능한가 |
 |---:|---|---|
-| 010 | 논문·반대근거, 피로/부하 통계, 경기 분석, 퀵로그 프리셋 | 연구 범위 승인 후 가능 |
-| 011 | 메모 안전 신호, 선수·보호자 개인정보, 보존·삭제 | 결정문 작성 가능, 전문 검토 전 구현 금지 |
+| 010 | 논문·반대근거, 피로/부하 통계, 경기 분석, 퀵로그 프리셋 | 연구 경계만 승인됨; 016용 엄격 승인은 아님 |
+| 011 | 메모 안전 신호, 선수·보호자 개인정보, 보존·삭제 | 검토 패킷 완료; 실명 전문 검토 전 구현 금지 |
 | 012 | 9.5일·MAIN·대회·테이퍼·예외 코치 규칙 | 010·011 승인 후 가능 |
 | 013 | 달력·버전·여러 탭/기기 동기화·충돌 처리 | 011·012 승인 후 가능 |
 | 014 | 선수가 아는 그림자 모드, 중단 기준, 사람 검토·공유 | 012·013 승인 후 가능 |
@@ -26,12 +26,12 @@ have immutable acceptance records.
 
 ## Current Baseline
 
-- Repository baseline: `origin/main` after PR #75.
+- Repository baseline: `origin/main` at `5c4673fc968d3e8b8ae22f50837eded7678594f0` after PR #78.
 - GitHub open issues: 0.
 - GitHub open pull requests: 0.
 - Task-R audit: DONE 28 / OPEN 1 / DEFERRED 5.
 - Formation deferred register: 8 goals.
-- Additional deferred item: `CODEX_WORK_ORDER_008` Task C preset research.
+- `CODEX_WORK_ORDER_008` Task C preset research: bounded UX-only conclusion accepted by Order 010; runtime adoption remains deferred.
 - Current Formation runtime authority: none.
 
 ## Source Inventory
@@ -117,24 +117,25 @@ Required approval roles must map to real people at execution time:
 
 | Wave | Work order | Execution state | Depends on |
 |---:|---|---|---|
-| 1 | `CODEX_WORK_ORDER_010` Research Foundation | `READY_FOR_HIGH_ACCURACY_RESEARCH` | none |
-| 2 | `CODEX_WORK_ORDER_011` Safety, Privacy, Youth Governance | `READY_FOR_DECISION_PACKET` | 010 research may use public/synthetic data before 011; real athlete data may not |
-| 3 | `CODEX_WORK_ORDER_012` Coach Rules and Exposure | `BLOCKED_UNTIL_010_011_ACCEPTED` | 010, 011 |
-| 4 | `CODEX_WORK_ORDER_013` Calendar, Version, and Sync | `BLOCKED_UNTIL_011_012_ACCEPTED` | 011, 012 |
-| 5 | `CODEX_WORK_ORDER_014` Human Review and Shadow Protocol | `BLOCKED_UNTIL_012_013_ACCEPTED` | 012, 013 |
-| 6 | `CODEX_WORK_ORDER_015` Projection and Accessibility | `BLOCKED_UNTIL_011_014_ACCEPTED` | 011, 014 |
-| 7 | `CODEX_WORK_ORDER_016` Gated Runtime Integration | `DORMANT` | accepted 010-015 records |
+| 1 | `CODEX_WORK_ORDER_010` Research Foundation | `ACCEPTED_RESEARCH_BOUNDARY_ONLY` | none |
+| 2 | `CODEX_WORK_ORDER_011` Safety, Privacy, Youth Governance | `DECISION_PACKET_COMPLETE_QUALIFIED_REVIEW_BLOCKED` | 010 research may use public/synthetic data before 011; real athlete data may not |
+| 3 | `CODEX_WORK_ORDER_012` Coach Rules and Exposure | `PACKET_PREPARED_COACH_AND_011_APPROVAL_BLOCKED` | 010, 011 |
+| 4 | `CODEX_WORK_ORDER_013` Calendar, Version, and Sync | `PACKET_PREPARED_DEPENDENCIES_BLOCKED` | 011, 012 |
+| 5 | `CODEX_WORK_ORDER_014` Human Review and Shadow Protocol | `SYNTHETIC_PACKET_COMPLETE_PARTICIPANT_GATE_BLOCKED` | 012, 013 |
+| 6 | `CODEX_WORK_ORDER_015` Projection and Accessibility | `DRAFT_PACKET_RENDER_AND_FEEDBACK_BLOCKED` | 011, 014 |
+| 7 | `CODEX_WORK_ORDER_016` Gated Runtime Integration | `ENTRY_GATE_FAILED_RUNTIME_NOT_STARTED` | accepted 010-015 records |
 
 ## TODOs
 
-- [x] 1. Execute and accept `CODEX_WORK_ORDER_010` research foundation.
+- [x] 1. Execute and accept the bounded research-only scope of `CODEX_WORK_ORDER_010`. Its record is not yet a strict Order 016 dependency acceptance.
 - [ ] 2. Execute and accept `CODEX_WORK_ORDER_011` safety, privacy, and youth governance packet. Packet complete; acceptance blocked on named qualified review.
-- [ ] 3. Execute and accept `CODEX_WORK_ORDER_012` coach rules and exposure authority.
-- [ ] 4. Execute and accept `CODEX_WORK_ORDER_013` calendar, version, and local-first sync contract.
-- [ ] 5. Execute and accept `CODEX_WORK_ORDER_014` human review and athlete-visible shadow protocol.
-- [ ] 6. Execute and accept `CODEX_WORK_ORDER_015` product projection and accessibility contract.
-- [ ] 7. Evaluate the entry gate and execute only the authorized scope of `CODEX_WORK_ORDER_016` runtime integration.
-- [ ] 8. Complete final cross-order verification, evidence reconciliation, and cleanup.
+- [ ] 3. Execute and accept `CODEX_WORK_ORDER_012` coach rules and exposure authority. Thirty-case readiness packet prepared; Order 011 and coach walkthrough acceptance remain blocked.
+- [ ] 4. Execute and accept `CODEX_WORK_ORDER_013` calendar, version, and local-first sync contract. Thirty-six-case deterministic packet prepared; Orders 011-012 remain blocked.
+- [ ] 5. Execute and accept `CODEX_WORK_ORDER_014` human review and athlete-visible shadow protocol. Thirty-seven-case synthetic packet and document validator complete; named participant/reviewer and upstream acceptance remain blocked.
+- [ ] 6. Execute and accept `CODEX_WORK_ORDER_015` product projection and accessibility contract. Forty-case draft packet prepared; named feedback, rendered UI, and assistive-technology evidence remain blocked.
+- [x] 7a. Evaluate the `CODEX_WORK_ORDER_016` entry gate. It failed correctly: strict acceptance is 0/6, canonical P1 blockers are 10/10 OPEN, and approved target-patch plans are 0/10.
+- [ ] 7b. Execute `CODEX_WORK_ORDER_016` runtime integration. Dormant until every dependency, blocker decision/patch plan, and owner activation passes.
+- [x] 8. Complete final cross-order readiness verification, evidence reconciliation, and cleanup. This closes packet verification only; unchecked acceptance/runtime items remain open.
 
 ## Formal Work Orders
 
@@ -285,7 +286,7 @@ exit_evidence:
 
 ```yaml
 order_id: CODEX_WORK_ORDER_012
-execution_state: BLOCKED_UNTIL_010_011_ACCEPTED
+execution_state: PACKET_PREPARED_COACH_AND_011_APPROVAL_BLOCKED
 runtime_authority: false
 primary_items:
   - R-coach-003
@@ -352,7 +353,7 @@ registry while keeping it distinct from scientific fact and runtime authority.
 
 ```yaml
 order_id: CODEX_WORK_ORDER_013
-execution_state: BLOCKED_UNTIL_011_012_ACCEPTED
+execution_state: PACKET_PREPARED_DEPENDENCIES_BLOCKED
 runtime_authority: false
 primary_items:
   - R-frontend-003
@@ -419,7 +420,7 @@ before multitab, multidevice, calendar, or backend behavior is implemented.
 
 ```yaml
 order_id: CODEX_WORK_ORDER_014
-execution_state: BLOCKED_UNTIL_012_013_ACCEPTED
+execution_state: SYNTHETIC_PACKET_COMPLETE_PARTICIPANT_GATE_BLOCKED
 runtime_authority: false
 primary_items:
   - R-parent-004
@@ -489,7 +490,7 @@ pain/review signals without automatically sharing private information.
 
 ```yaml
 order_id: CODEX_WORK_ORDER_015
-execution_state: BLOCKED_UNTIL_011_014_ACCEPTED
+execution_state: DRAFT_PACKET_RENDER_AND_FEEDBACK_BLOCKED
 runtime_authority: false
 primary_items:
   - R-a11y-005
@@ -562,7 +563,7 @@ understandable to a middle-school athlete while preserving expert detail on dema
 
 ```yaml
 order_id: CODEX_WORK_ORDER_016
-execution_state: DORMANT
+execution_state: ENTRY_GATE_FAILED_RUNTIME_NOT_STARTED
 runtime_authority: false
 primary_items: []
 dependency_owned_item:
@@ -653,8 +654,10 @@ or production plan authority.
 6. Manual QA `QA-DEP-001`: extract the dependency matrix; PASS only with zero cycles.
 7. Manual QA `QA-GATE-001`: inspect all gated orders; PASS only if runtime authority
    remains false before Order 016 and Order 016 remains non-prescriptive shadow-only.
-8. Manual QA `QA-SCOPE-001`: inspect the actual Git diff; PASS only if no app, SPEC,
-   CI, design, or production file changed.
+8. Manual QA `QA-SCOPE-001`: for the original planning-only PR, require only planning
+   paths. For an execution/readiness wave, require declared contract, fixture, review,
+   decision, ledger, and evidence paths only; reject app, backend, schema, migration,
+   CI, deployment, or production runtime changes before the Order 016 gate.
 
 ## Commit Strategy
 
