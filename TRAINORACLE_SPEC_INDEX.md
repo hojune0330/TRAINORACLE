@@ -110,7 +110,7 @@ This table records files found in the repository at the time of this index updat
 | `CODEX_WORK_ORDER_003.md` | root | COMPLETED / MERGED | Work order for GAP_SPEC draft contracts and Round 3 follow-up binding; PR #22-#25 merged. |
 | `CODEX_WORK_ORDER_004.md` | root | COMPLETED / MERGED | Work order for Round 4 downstream patches, legacy v1 kit disposition proposal, and traceability/index/status recount; PR #28/#30/#31/#32 merged. |
 | `CODEX_WORK_ORDER_005.md` | root | COMPLETED / MERGED_TO_MAIN | Work order for external record integration draft, composition balance baseline draft, and index/status refresh. |
-| `CODEX_WORK_ORDER_006.md` | root | PARTIALLY_COMPLETED / TASK_D_IN_PROGRESS | Work order for journal delight, local-first sync promotion, federated SSO, and index refresh. Tasks A-C are merged; Task D is this index/status refresh. |
+| `CODEX_WORK_ORDER_006.md` | root | COMPLETED / MERGED | Work order for journal delight, local-first sync promotion, federated SSO, and index refresh; Tasks A-D merged through PR #44/#45/#46/#49. |
 | `CODEX_WORK_ORDER_007.md` | root | ISSUED / REVIEW_TRACK | Work order that unblocked ORDER_006 after F0 main merge and requested multi-persona review. It is not implementation acceptance or issue closure. |
 | `SPEC_AUTHORITY_AND_RECOVERY_LEDGER.md` | root | CURRENT_STATE_AUDIT | Current `origin/main@0588e68` PR/work-order reconciliation with a linked Task-R finding closure audit. It does not grant Formation authority, canonical promotion, or runtime evidence. |
 | `FORMATION_READ_NOW_DECIDE_LATER.md` | root | OWNER_READABLE_BOUNDARY | Plain-language Formation status map. It says the current app does not change training and keeps shadow operation non-executing. |
@@ -137,9 +137,10 @@ This table records files found in the repository at the time of this index updat
 | Work Order 006 Task A PR | GitHub PR #44 | MERGED | `JOURNAL_DELIGHT_AND_DECORATION_SPEC.md` is present on main as a draft; open issues 3, canonical blockers 2 by direct metadata/table check. |
 | Work Order 006 Task B PR | GitHub PR #45 | MERGED | `LOCAL_FIRST_SYNC_AND_PROMOTION_CONTRACT.md` is present on main as a draft; open issues 4, canonical blockers 3 by direct metadata/table check. |
 | Work Order 006 Task C PR | GitHub PR #46 | MERGED | `FEDERATED_ACCOUNT_SSO_CONTRACT.md` is present on main as a draft; open issues 5, canonical blockers 4 by direct metadata/table check. |
+| Work Order 006 Task D PR | GitHub PR #49 | MERGED | Reconstruction README, spec index, and work status refresh merged; no draft promotion or runtime-evidence claim. |
 | Work Order 006 supporting decision docs | `ACCOUNT_FEDERATION_DECISION.md`, `ATHLETETIME_INTEGRATION_REVIEW.md`, `LAUNCH_BACKEND_AND_ACCOUNT_PLAN.md` | MERGED_TO_MAIN / DECISION_CONTEXT | Account federation, AthleteTime integration review, and launch/backend/account planning context. Not runtime evidence or canonical promotion. |
-| F0-e app stability PR | GitHub PR #47 | OPEN_AT_UPDATE_TIME | App-area response to selected improvement findings. Codex Task D does not edit `app/` or design files. |
-| Improvement discovery report PR | GitHub PR #48 | OPEN_AT_UPDATE_TIME | Report-only PR for `reports/review/CODEX_PARALLEL_IMPROVEMENT_DISCOVERY_20260711.md`; not a spec status change. |
+| F0-e app stability PR | GitHub PR #47 | MERGED | App-area response to selected improvement findings. Work Order 006 Task D did not edit `app/` or design files. |
+| Improvement discovery report PR | GitHub PR #48 | MERGED | Report-only PR for `reports/review/CODEX_PARALLEL_IMPROVEMENT_DISCOVERY_20260711.md`; not a spec status change. |
 
 ---
 

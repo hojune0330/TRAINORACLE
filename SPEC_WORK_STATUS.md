@@ -81,20 +81,21 @@ Current Work Order 005 state:
 - `COMPOSITION_BALANCE_BASELINE_CONTRACT.md` is present on main as a `DRAFT_FOR_REVIEW` contract for composition balance baselines. Direct file recount: open issues 5, canonical blockers 3.
 - These drafts do not close issues, promote drafts, claim runtime evidence, edit `app/`, or edit design files.
 
-Current Work Order 006 state:
+Completed Work Order 006 state:
 
 - `CODEX_WORK_ORDER_006.md` is present on main and assigns Codex to journal delight, local-first sync promotion, federated SSO, and index refresh work.
 - Task A is merged through PR #44: `JOURNAL_DELIGHT_AND_DECORATION_SPEC.md` as a new `DRAFT_FOR_REVIEW` contract. Direct file recount: open issues 3, canonical blockers 2.
 - Task B is merged through PR #45: `LOCAL_FIRST_SYNC_AND_PROMOTION_CONTRACT.md` as a new `DRAFT_FOR_REVIEW` contract. Direct file recount: open issues 4, canonical blockers 3.
 - Task C is merged through PR #46: `FEDERATED_ACCOUNT_SSO_CONTRACT.md` as a new `DRAFT_FOR_REVIEW` contract. Direct file recount: open issues 5, canonical blockers 4.
 - Supporting account/backend context documents exist at root: `ACCOUNT_FEDERATION_DECISION.md`, `ATHLETETIME_INTEGRATION_REVIEW.md`, and `LAUNCH_BACKEND_AND_ACCOUNT_PLAN.md`.
-- Task D is the current index/status refresh. It does not close issues, promote drafts, claim runtime evidence, edit `app/`, edit design files, or edit AthleteTime repository code.
+- Task D merged through PR #49: reconstruction README, spec index, and work status were refreshed without promoting drafts or claiming runtime evidence.
+- Work Order 006 Tasks A-D are complete. Their draft contracts retain their own open issues and canonical blockers.
 
 Current Work Order 007 state:
 
 - `CODEX_WORK_ORDER_007.md` is present on main and unblocked ORDER_006 after the F0 app work merged.
 - It also requested multi-persona review. That review may produce findings, but findings are not fixes until separately accepted and assigned.
-- PR #47 is open at this status update for app-area stability/data-control work by another branch. Codex Task D does not edit `app/` files.
+- PR #47 and the report-only PR #48 are merged. Codex Task D did not edit `app/` files.
 
 Current recovery and app-stabilization state:
 
