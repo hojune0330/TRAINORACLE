@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it } from "vitest"
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import {
   exportEntriesJSON,
   loadAnalysisEntries,
@@ -42,7 +42,10 @@ function raceWithoutPurpose(): RaceEntry {
 describe("journal storage boundary", () => {
   beforeEach(() => {
     window.localStorage.clear()
+    window.history.replaceState({}, "", "/?app=1")
   })
+
+  afterEach(() => vi.restoreAllMocks())
 
   it("round-trips approved optional race self-check fields without inventing defaults", () => {
     // Given
@@ -98,15 +101,19 @@ describe("journal storage boundary", () => {
 
   it("drops malformed persisted entries while retaining a valid sibling", () => {
     // Given
+    const warning = vi.spyOn(console, "warn").mockImplementation(() => undefined)
     const malformed = { ...validRaceEntry("malformed"), mood: 999 }
     const valid = validRaceEntry("valid")
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify([malformed, valid]))
+    window.history.replaceState({}, "", "/?app=1&uitest=1")
 
     // When
     const loaded = loadEntries()
 
     // Then
     expect(loaded).toEqual([valid])
+    expect(warning).toHaveBeenCalledExactlyOnceWith("[JSTORE] dropped=1 loaded=1")
+    expect(warning.mock.calls.flat().join(" ")).not.toContain(malformed.memo)
   })
 
   it.each([
