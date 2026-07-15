@@ -125,13 +125,24 @@ Required approval roles must map to real people at execution time:
 | 6 | `CODEX_WORK_ORDER_015` Projection and Accessibility | `BLOCKED_UNTIL_011_014_ACCEPTED` | 011, 014 |
 | 7 | `CODEX_WORK_ORDER_016` Gated Runtime Integration | `DORMANT` | accepted 010-015 records |
 
+## TODOs
+
+- [x] 1. Execute and accept `CODEX_WORK_ORDER_010` research foundation.
+- [ ] 2. Execute and accept `CODEX_WORK_ORDER_011` safety, privacy, and youth governance packet.
+- [ ] 3. Execute and accept `CODEX_WORK_ORDER_012` coach rules and exposure authority.
+- [ ] 4. Execute and accept `CODEX_WORK_ORDER_013` calendar, version, and local-first sync contract.
+- [ ] 5. Execute and accept `CODEX_WORK_ORDER_014` human review and athlete-visible shadow protocol.
+- [ ] 6. Execute and accept `CODEX_WORK_ORDER_015` product projection and accessibility contract.
+- [ ] 7. Evaluate the entry gate and execute only the authorized scope of `CODEX_WORK_ORDER_016` runtime integration.
+- [ ] 8. Complete final cross-order verification, evidence reconciliation, and cleanup.
+
 ## Formal Work Orders
 
 ### CODEX_WORK_ORDER_010 — Research Foundation
 
 ```yaml
 order_id: CODEX_WORK_ORDER_010
-execution_state: READY_FOR_HIGH_ACCURACY_RESEARCH
+execution_state: ACCEPTED_RESEARCH_BOUNDARY_ONLY
 runtime_authority: false
 primary_items:
   - formation_sports_science_evidence_and_counterevidence

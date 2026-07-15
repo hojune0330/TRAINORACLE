@@ -1,6 +1,6 @@
 {
   "schema_version": 2,
-  "active_work_id": "trainoracle-feasible-recovery-formation-sequencing",
+  "active_work_id": "trainoracle-orders-010-016",
   "works": {
     "trainoracle-feasible-recovery-formation-sequencing": {
       "work_id": "trainoracle-feasible-recovery-formation-sequencing",
@@ -11,6 +11,16 @@
       ],
       "status": "complete",
       "worktree_path": null
+    },
+    "trainoracle-orders-010-016": {
+      "work_id": "trainoracle-orders-010-016",
+      "active_plan": ".omo/plans/trainoracle-remaining-work-orders.md",
+      "plan_name": "trainoracle-remaining-work-orders",
+      "session_ids": [
+        "codex:019f5957-dca8-7ad1-8a74-e738e2192a8d"
+      ],
+      "status": "active",
+      "worktree_path": "C:\\Users\\SAMSUNG\\.codex\\worktrees\\TRAINORACLE-pr65-review-record"
     }
   }
 }
