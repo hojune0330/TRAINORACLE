@@ -82,12 +82,12 @@ export function Trends({ onBack }: { onBack?: () => void }) {
       {isEmpty ? (
         <div style={{ padding: "40px 20px" }}>
           <div className="hand" style={{ fontSize: 22, color: "var(--pencil)", lineHeight: 1.35 }}>
-            추이는 일지가 쌓여야<br />그려지기 시작해요.
+            훈련한 날도, 쉰 날도<br />기록은 모두 남아요.
           </div>
           <div style={{ marginTop: 14, fontFamily: "var(--mono)", fontSize: 10.5, color: "var(--ink-3)", letterSpacing: "0.04em", lineHeight: 1.7 }}>
             훈련 후 일지 → 주간 거리 그래프<br />
             하루 마무리 → 감정·통증 타임라인<br /><br />
-            일주일만 써도 첫 그래프가 생겨요.
+            서두르지 않아도 괜찮아요. 기록이 생기면 여기서 함께 볼 수 있어요.
           </div>
         </div>
       ) : (

@@ -10,7 +10,7 @@ interface EntryChooserProps {
 
 const ENTRY_OPTIONS = [
   { id: "post-session", t: "훈련 후", d: "방금 끝낸 세션 기록", meta: "POST · ~1분", mark: "↻" },
-  { id: "evening", t: "하루 마무리", d: "수면·체중·감정·통증 체크", meta: "EVENING · ~2분", mark: "☾" },
+  { id: "evening", t: "회복 · 하루 마무리", d: "쉬는 날도 그대로 · 수면·감정·통증 체크", meta: "EVENING · ~2분", mark: "☾" },
   { id: "race", t: "경기 직전/직후", d: "기록·심박·감정", meta: "RACE · ~30초", mark: "▲" },
 ] as const
 
