@@ -22,6 +22,12 @@ test("excludes a tampered distance with trailing text from the trends total", as
       avgPace: "5:00",
       rpe: 4,
       memo: "",
+      fieldProvenance: {
+        distanceKm: { provenance: "EXPLICIT" },
+        durationMin: { provenance: "EXPLICIT" },
+        avgPace: { provenance: "EXPLICIT" },
+        rpe: { provenance: "EXPLICIT" },
+      },
     }]))
   }, date)
   await page.goto("/?app=1")
