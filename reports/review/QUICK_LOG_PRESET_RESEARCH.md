@@ -2,7 +2,7 @@
 
 ```yaml
 review_id: TO-WO010-QUICK-PRESETS-2026-07-15
-status: RESEARCH_COMPLETE_OWNER_ACCEPTANCE_PENDING
+status: BOUNDED_UX_CONCLUSION_ACCEPTED_BY_WO010
 authority: input_convenience_only
 recommendation_authority: false
 ```
