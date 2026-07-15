@@ -8,6 +8,7 @@ import { SectionLb } from "../components/JournalPrimitives"
 import { BalanceMarker } from "../components/BalanceMarker"
 import { distanceRampBalance } from "../domain/balance"
 import { loadAnalysisEntries, todayISO } from "../domain/journal-store"
+import { parseDecimalString } from "../domain/numeric-input"
 import type { AnalysisEveningEntry, AnalysisJournalEntry, AnalysisPostSessionEntry } from "../domain/safe-export"
 import { isoShift, weekStartOf, compactDate } from "../domain/dates"
 import { AccessibleTrendTable } from "./trends/AccessibleTrendTable"
@@ -27,8 +28,8 @@ export function Trends({ onBack }: { onBack?: () => void }) {
     let n = 0
     for (const s of sessions) {
       if (s.date >= start && s.date <= end) {
-        const d = parseFloat(s.distanceKm)
-        if (Number.isFinite(d)) km += d
+        const d = parseDecimalString(s.distanceKm)
+        if (d !== null) km += d
         n += 1
       }
     }
@@ -39,8 +40,8 @@ export function Trends({ onBack }: { onBack?: () => void }) {
   const rampHint = weeksWithData >= 4 ? distanceRampBalance(weeks.map((w) => w.km), weekLabels, "month") : null
 
   const totalKm = Math.round(sessions.reduce((a, s) => {
-    const d = parseFloat(s.distanceKm)
-    return a + (Number.isFinite(d) ? d : 0)
+    const d = parseDecimalString(s.distanceKm)
+    return a + (d ?? 0)
   }, 0) * 10) / 10
 
   // 감정 타임라인 (최근 28일, 하루 마무리 기준)

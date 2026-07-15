@@ -7,6 +7,7 @@
 import { loadAnalysisEntries, todayISO } from "./journal-store"
 import type { AnalysisJournalEntry, AnalysisPostSessionEntry } from "./safe-export"
 import { isoShift, weekStartOf } from "./dates"
+import { parseDecimalString } from "./numeric-input"
 
 export interface WeekStats {
   /** 이번 주(월요일 시작) 훈련 세션 수 */
@@ -17,11 +18,6 @@ export interface WeekStats {
   avgRpe: number | null
   /** 일지를 쓴 날짜 수 (종류 무관, 유니크 날짜) */
   daysLogged: number
-}
-
-function num(v: string): number | null {
-  const n = parseFloat(v)
-  return Number.isFinite(n) ? n : null
 }
 
 function isPostSession(entry: AnalysisJournalEntry): entry is AnalysisPostSessionEntry {
@@ -44,7 +40,7 @@ export function thisWeekStats(all?: AnalysisJournalEntry[]): WeekStats {
   let rpeSum = 0
   let rpeN = 0
   for (const s of sessions) {
-    const d = num(s.distanceKm)
+    const d = parseDecimalString(s.distanceKm)
     if (d !== null) dist += d
     if (Number.isFinite(s.rpe) && s.rpe > 0) { rpeSum += s.rpe; rpeN += 1 }
   }
@@ -75,7 +71,7 @@ export function dailyDistance(nDays: number, all?: AnalysisJournalEntry[]): { la
     let v = 0
     for (const s of src) {
       if (s.date === day) {
-        const d = num(s.distanceKm)
+        const d = parseDecimalString(s.distanceKm)
         if (d !== null) v += d
       }
     }
