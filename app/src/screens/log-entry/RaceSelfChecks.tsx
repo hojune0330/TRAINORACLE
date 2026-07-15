@@ -86,7 +86,7 @@ export function RacePostMood({ selected, onSelect }: {
 
 function NumberToggleScale({ label, length, selected, onSelect }: ToggleScaleProps) {
   return (
-    <div role="group" aria-label={label} style={{ display: "grid", gridTemplateColumns: `repeat(${length}, 1fr)`, border: "1px solid var(--ink)" }}>
+    <div role="group" aria-label={label} className={length === 10 ? "journal-ten-scale" : undefined} style={{ display: "grid", gridTemplateColumns: length === 10 ? undefined : `repeat(${length}, 1fr)`, border: "1px solid var(--ink)" }}>
       {Array.from({ length }, (_, index) => index + 1).map((value) => (
         <button
           key={value}
@@ -95,7 +95,7 @@ function NumberToggleScale({ label, length, selected, onSelect }: ToggleScalePro
           aria-pressed={selected === value}
           onClick={() => onSelect(selected === value ? null : value)}
           style={{
-            minWidth: 0, padding: "12px 0", border: 0,
+            minWidth: 0, minHeight: 44, padding: "12px 0", border: 0,
             background: selected === value ? "var(--ink-blue)" : "transparent",
             color: selected === value ? "#fff" : "var(--ink)",
             borderRight: value < length ? "1px solid var(--line)" : 0,
@@ -120,7 +120,7 @@ function MoodToggleScale({ label, selected, onSelect }: Omit<ToggleScaleProps, "
             aria-pressed={selected === value}
             onClick={() => onSelect(selected === value ? null : value)}
             style={{
-              minWidth: 0, padding: "14px 2px 10px",
+              minWidth: 0, minHeight: 44, padding: "14px 2px 10px",
               background: selected === value ? "var(--surface)" : "transparent",
               border: selected === value ? "1px solid var(--ink)" : "1px solid var(--line)",
               display: "flex", flexDirection: "column", alignItems: "center", gap: 6,

@@ -7,6 +7,51 @@ html, body { margin: 0; padding: 0; background: #E4E2DA; }
 button { font-family: inherit; }
 input, textarea { font-family: inherit; }
 
+.journal-ten-scale {
+  grid-template-columns: repeat(10, minmax(0, 1fr));
+}
+
+@media (max-width: 700px) {
+  .journal-ten-scale {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+
+  .journal-ten-scale > button:nth-child(n + 6) {
+    border-top: 1px solid var(--line) !important;
+  }
+
+  .journal-ten-scale > button:nth-child(5) {
+    border-right: 0 !important;
+  }
+}
+
+.body-pain-selector {
+  display: grid;
+  grid-template-columns: minmax(0, 220px) minmax(0, 1fr);
+  gap: 12px;
+}
+
+.body-pain-selector__buttons {
+  display: grid;
+  gap: 4px;
+}
+
+@media (max-width: 420px) {
+  .body-pain-selector {
+    grid-template-columns: 1fr;
+  }
+
+  .body-pain-selector__visual {
+    width: min(220px, 100%);
+    justify-self: center;
+    box-sizing: border-box;
+  }
+
+  .body-pain-selector__buttons {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
 :root {
   --ease-out-strong: cubic-bezier(0.23, 1, 0.32, 1);
   --focus-ring: #0B63A5;

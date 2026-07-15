@@ -43,7 +43,7 @@ export function FirstPage({ onWriteLog, onOpenGuide }: FirstPageProps) {
 
       <div style={{ padding: "14px 20px 0" }}>
         <button type="button" onClick={onOpenGuide} style={{
-          width: "100%", padding: "13px 16px", background: "transparent", color: "var(--ink-2)",
+          width: "100%", minHeight: 44, padding: "13px 16px", background: "transparent", color: "var(--ink-2)",
           border: "1px dashed var(--line-2)", borderRadius: 0, fontFamily: "var(--mono)", fontSize: 11,
           letterSpacing: "0.06em", cursor: "pointer", textAlign: "left",
         }}>

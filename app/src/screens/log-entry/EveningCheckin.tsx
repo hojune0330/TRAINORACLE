@@ -58,7 +58,7 @@ export function EveningCheckin({ onBack, onDone }: EntryFormProps) {
       <FormSec lb={`수면 · ${sleep > 0 ? `${sleep}h` : "미기록 (움직여서 기록)"}`}>
         <input aria-label="수면 시간" type="range" min="4" max="12" step="0.5" value={sleep > 0 ? sleep : 7}
           onChange={(event) => setSleep(parseFloat(event.target.value))}
-          style={{ width: "100%" }} />
+          style={{ width: "100%", height: 44 }} />
         <div style={{ display: "flex", justifyContent: "space-between", fontFamily: "var(--mono)", fontSize: 9.5, color: "var(--ink-4)", letterSpacing: "0.06em", marginTop: 4 }}>
           <span>4h</span><span>8h</span><span>12h</span>
         </div>
@@ -67,8 +67,8 @@ export function EveningCheckin({ onBack, onDone }: EntryFormProps) {
       <FormSec lb="수면 질">
         <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", border: "1px solid var(--ink)" }}>
           {SLEEP_QUALITY_LABELS.map((label, index) => (
-            <button key={label} aria-pressed={quality === index + 1} onClick={() => setQuality(index + 1)} style={{
-              padding: "10px 0", border: 0,
+            <button key={label} aria-label={`수면 질 ${index + 1} ${label}`} aria-pressed={quality === index + 1} onClick={() => setQuality(index + 1)} style={{
+              minHeight: 44, padding: "10px 0", border: 0,
               background: quality === index + 1 ? "var(--ink)" : "transparent",
               color: quality === index + 1 ? "var(--bg)" : "var(--ink)",
               fontFamily: "var(--mono)", fontSize: 10.5,
@@ -100,8 +100,8 @@ export function EveningCheckin({ onBack, onDone }: EntryFormProps) {
       <FormSec lb="오늘 감정">
         <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 4 }}>
           {MOOD_LABELS.map((label, index) => (
-            <button key={label} aria-pressed={mood === index + 1} onClick={() => setMood(index + 1)} style={{
-              padding: "14px 4px 10px",
+            <button key={label} aria-label={`감정 ${index + 1} ${label}`} aria-pressed={mood === index + 1} onClick={() => setMood(index + 1)} style={{
+              minHeight: 44, padding: "14px 4px 10px",
               background: mood === index + 1 ? "var(--surface)" : "transparent",
               border: mood === index + 1 ? "1px solid var(--ink)" : "1px solid var(--line)",
               cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", gap: 6,

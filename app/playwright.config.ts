@@ -4,6 +4,7 @@ export default defineConfig({
   testDir: "./e2e",
   outputDir: "./test-results",
   fullyParallel: true,
+  timeout: 60_000,
   forbidOnly: Boolean(process.env.CI),
   retries: process.env.CI ? 2 : 0,
   reporter: process.env.CI ? "github" : "list",
@@ -30,6 +31,13 @@ export default defineConfig({
     {
       name: "mobile-chromium",
       use: devices["Pixel 5"],
+    },
+    {
+      name: "touch-narrow",
+      use: {
+        ...devices["Pixel 5"],
+        viewport: { width: 320, height: 568 },
+      },
     },
     {
       name: "reduced-motion",

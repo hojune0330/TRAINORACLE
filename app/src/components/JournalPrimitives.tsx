@@ -208,14 +208,19 @@ export function SectionLb({ children, action, onAction }: {
         fontFamily: "var(--mono)", fontSize: 10, color: "var(--ink-3)",
         letterSpacing: "0.14em", textTransform: "uppercase", fontWeight: 600,
       }}>{children}</div>
-      {action && (
+      {action && onAction ? (
         <button onClick={onAction} style={{
           fontFamily: "var(--mono)", fontSize: 10, color: "var(--ink-2)",
           background: "transparent", border: 0, cursor: "pointer",
           textDecoration: "underline", textUnderlineOffset: "3px",
-          letterSpacing: "0.04em", padding: 0,
+          letterSpacing: "0.04em", padding: 0, minWidth: 44, minHeight: 44,
         }}>{action}</button>
-      )}
+      ) : action ? (
+        <span style={{
+          fontFamily: "var(--mono)", fontSize: 10, color: "var(--ink-2)",
+          letterSpacing: "0.04em",
+        }}>{action}</span>
+      ) : null}
     </div>
   )
 }
