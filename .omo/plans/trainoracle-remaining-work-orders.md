@@ -128,7 +128,7 @@ Required approval roles must map to real people at execution time:
 ## TODOs
 
 - [x] 1. Execute and accept `CODEX_WORK_ORDER_010` research foundation.
-- [ ] 2. Execute and accept `CODEX_WORK_ORDER_011` safety, privacy, and youth governance packet.
+- [ ] 2. Execute and accept `CODEX_WORK_ORDER_011` safety, privacy, and youth governance packet. Packet complete; acceptance blocked on named qualified review.
 - [ ] 3. Execute and accept `CODEX_WORK_ORDER_012` coach rules and exposure authority.
 - [ ] 4. Execute and accept `CODEX_WORK_ORDER_013` calendar, version, and local-first sync contract.
 - [ ] 5. Execute and accept `CODEX_WORK_ORDER_014` human review and athlete-visible shadow protocol.
@@ -213,7 +213,7 @@ coach rule or athlete-facing Formation behavior is designed.
 
 ```yaml
 order_id: CODEX_WORK_ORDER_011
-execution_state: READY_FOR_DECISION_PACKET
+execution_state: DECISION_PACKET_COMPLETE_BLOCKED_ON_QUALIFIED_REVIEW
 runtime_authority: false
 primary_items:
   - R-safety-001
