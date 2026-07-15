@@ -96,6 +96,15 @@ Current Work Order 007 state:
 - It also requested multi-persona review. That review may produce findings, but findings are not fixes until separately accepted and assigned.
 - PR #47 is open at this status update for app-area stability/data-control work by another branch. Codex Task D does not edit `app/` files.
 
+Current recovery and app-stabilization state:
+
+- PR #68 merged runtime field provenance, production-query safety, explicit local full export, and the non-executing Formation readiness boundary.
+- PR #69 merged strict decimal parsing so malformed stored distances cannot become analysis totals.
+- PR #70 merged measured mobile touch-target corrections and narrow-screen browser evidence.
+- PR #71 stabilized the post-load memo-export network audit without changing product behavior.
+- Superseded draft PRs #66 and #67 are closed; their accepted scope is tracked through PR #68.
+- Formation, shadow mode, plan generation, SSO implementation, guardian policy, and backend work remain unactivated.
+
 Current Wave 1 physio patch state:
 
 - `PLAN_GENERATOR_SPEC.md`, `APP_IMPLEMENTATION_BRIDGE.md`, and `ATHLETE_PROFILE_SPEC.md` now have target-local Physio Source Trust bindings.
