@@ -1,0 +1,19 @@
+Task 5 Formation boundary evidence
+
+Owner-readable first screen
+- FORMATION_READ_NOW_DECIDE_LATER.md begins: "오늘 훈련은 바뀌지 않습니다."
+- The opening paragraph says Formation is a future comparison draft and does not instruct training, automatically change a schedule, or replace a coach.
+
+Deferred register
+- FORMATION_DEFERRED_GOALS.md assigns every advanced lane one of:
+  DEFERRED_HIGH_ACCURACY_RESEARCH,
+  DEFERRED_QUALIFIED_REVIEW,
+  DEFERRED_OWNER_DECISION.
+- Every row names why it is deferred, its reactivation condition, and a current prohibition.
+
+Claim scan
+- Command: rg -n '자동 처방|실제 계획 변경|효능 입증|안전성 입증|canonical acceptance' FORMATION_READ_NOW_DECIDE_LATER.md FORMATION_DEFERRED_GOALS.md
+- Result: exit 1 with no matches, which is the expected no-match result.
+
+Index result
+- SPEC_WORK_STATUS.md and TRAINORACLE_SPEC_INDEX.md link both documents and preserve non-runtime status.

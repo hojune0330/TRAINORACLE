@@ -1,0 +1,13 @@
+Task 2 mobile regression evidence
+
+Command:
+cd app && npm.cmd run build && npm.cmd exec playwright test e2e/production-query.spec.ts e2e/mobile-save-overlap.spec.ts --workers=1 --reporter=list
+
+Observed result:
+- mobile-chromium mobile save-layout test: PASS
+- desktop-chromium mobile save-layout test: PASS
+- reduced-motion mobile save-layout test: PASS
+
+The mobile flow now starts at `/?app=1`, has no dependency on a production test
+query, keeps the save action above the bottom navigation, and preserves the visible
+invalid-pace validation alert.

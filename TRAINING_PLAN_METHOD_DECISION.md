@@ -97,7 +97,7 @@ shadow-pilot sequence in PR #63.
 | Meaningful participation | The athlete surface should explain the purpose in plain language and show visible progress, milestones, and a comprehensible finish state. |
 | Progress and delight | Check marks, frame milestones, stickers, or another small collection experience may support participation. They follow `JOURNAL_DELIGHT_AND_DECORATION_SPEC.md` and may reward safe recording consistency, never training load or silence about pain. |
 | Analysis sequencing | Structured self-check data may be collected and displayed first while descriptive analysis continues to be developed. Analysis must remain non-causal and must not change a real plan until its separate acceptance and shadow evidence exist. |
-| PR #63 status | The Formation/Adaptation blueprint may be preserved as a review draft after an owner-readable summary and cross-spec map are added. This is not canonical acceptance or implementation authority. |
+| PR #63 status | The Formation/Adaptation blueprint is merged on `main` as a review draft; its owner-readable summary and cross-spec map remain required recovery artifacts. This is not canonical acceptance or implementation authority. |
 
 This amendment does not yet accept exact pilot duration, incentive amounts,
 catalog assets, statistical thresholds, adverse-event protocol, stop criteria,

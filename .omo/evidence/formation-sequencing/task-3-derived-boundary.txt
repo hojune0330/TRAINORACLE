@@ -1,0 +1,24 @@
+Task 3 provenance eligibility evidence
+
+Focused TDD evidence
+- RED: the new field-provenance contract test failed before its runtime module existed.
+- GREEN command:
+  cd app && npm.cmd test -- field-provenance.contract.test.ts journal-provenance.contract.test.ts --reporter=verbose
+- Result: 2 files, 8 tests passed.
+
+Covered rules
+- absent provenance and MISSING do not enter analysis;
+- unknown derivation rules, nested derivations, and non-explicit derived inputs do not enter analysis;
+- invalid persisted provenance is sanitized to ineligible metadata while the journal record remains readable;
+- unknown provenance field names are rejected on new writes;
+- a mixed entry exposes only EXPLICIT values to analysis;
+- an entry with no eligible field contributes no analysis row, weekly session, logged day, or lifetime count.
+
+Browser writer evidence
+- Fresh build plus e2e/journal-provenance.spec.ts: 6 passed across desktop, mobile, and reduced motion.
+- A regular post-session save recorded distanceKm/RPE as EXPLICIT and omitted durationMin/avgPace as MISSING. No test-only query parameter was used.
+
+Full regression result
+- cd app && npm.cmd test -- --reporter=verbose: 10 files, 65 tests passed.
+- cd app && npm.cmd run typecheck:e2e: passed.
+- cd app && npm.cmd run build && npx.cmd playwright test --workers=1 --reporter=list: 15 passed.

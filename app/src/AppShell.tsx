@@ -22,20 +22,37 @@ interface ViewState {
 }
 
 const INITIAL: ViewState = { tab: "home", entryType: "choose", detailDate: null }
+const TOAST_READABLE_MS = 4050
+const TOAST_EXIT_MS = 150
+
+type ToastPhase = "enter" | "exit"
+
+type SavedToastState = {
+  readonly count: number
+  readonly phase: ToastPhase
+  readonly reviewMessage?: string
+}
 
 export function AppShell() {
   const [v, setV] = React.useState<ViewState>(INITIAL)
-  const [savedToast, setSavedToast] = React.useState<number | null>(null)
+  const [savedToast, setSavedToast] = React.useState<SavedToastState | null>(null)
 
   const goHome = () => setV(INITIAL)
-  const goHomeAfterSave = () => {
+  const goHomeAfterSave = (reviewMessage?: string) => {
     setV(INITIAL)
-    setSavedToast(localOnlyCount())
+    setSavedToast({ count: localOnlyCount(), phase: "enter", reviewMessage })
   }
 
   React.useEffect(() => {
     if (savedToast === null) return
-    const t = window.setTimeout(() => setSavedToast(null), 4200)
+    if (savedToast.reviewMessage !== undefined) return
+    const delay = savedToast.phase === "enter" ? TOAST_READABLE_MS : TOAST_EXIT_MS
+    const t = window.setTimeout(() => {
+      setSavedToast(current => {
+        if (current === null) return null
+        return current.phase === "enter" ? { ...current, phase: "exit" } : null
+      })
+    }, delay)
     return () => window.clearTimeout(t)
   }, [savedToast])
   const goTab = (tab: Tab) =>
@@ -57,11 +74,11 @@ export function AppShell() {
       <LogEntry
         entryType={v.entryType}
         onBack={v.entryType === "choose" ? goHome : () => setV(s => ({ ...s, entryType: "choose" }))}
-        onDone={(picked?: string) => {
-          if (v.entryType === "choose" && picked) {
-            setV(s => ({ ...s, entryType: picked as EntryType }))
+        onDone={(picked, reviewMessage) => {
+          if (v.entryType === "choose") {
+            setV(s => ({ ...s, entryType: picked }))
           } else {
-            goHomeAfterSave()
+            goHomeAfterSave(reviewMessage)
           }
         }}
       />
@@ -73,15 +90,22 @@ export function AppShell() {
   }
 
   return (
-    <div style={{
-      minHeight: "100dvh", background: "var(--bg)",
+    <div className="app-shell" style={{
+      height: "100dvh", minHeight: 0, background: "var(--bg)",
       display: "flex", flexDirection: "column",
       maxWidth: 520, margin: "0 auto",
     }}>
       <div style={{ flex: 1, minHeight: 0, overflowY: "auto", paddingBottom: 62 }}>
         {screen}
       </div>
-      {savedToast !== null && <SavedToast count={savedToast} />}
+      {savedToast !== null && (
+        <SavedToast
+          count={savedToast.count}
+          phase={savedToast.phase}
+          reviewMessage={savedToast.reviewMessage}
+          onDismiss={() => setSavedToast(null)}
+        />
+      )}
       <TabBar tab={v.tab} onTab={goTab} />
     </div>
   )
@@ -89,23 +113,37 @@ export function AppShell() {
 
 /** 저장 직후 안내 — 로컬 우선 원칙을 사용자 언어로.
  *  문구 소스는 journal-store (이중정의 금지). 계정 연동(F3) 전까지 업셀은 안내만, 버튼 없음. */
-function SavedToast({ count }: { count: number }) {
+export function SavedToast({ count, phase, reviewMessage, onDismiss }: {
+  readonly count: number
+  readonly phase: ToastPhase
+  readonly reviewMessage?: string
+  readonly onDismiss?: () => void
+}) {
   return (
-    <div role="status" style={{
+    <div role={reviewMessage === undefined ? "status" : "alert"} aria-atomic="true" className={`saved-toast saved-toast--${phase}`} style={{
       position: "fixed", left: 0, right: 0, bottom: "calc(64px + env(safe-area-inset-bottom, 0px))",
       zIndex: 40, maxWidth: 520, margin: "0 auto", padding: "0 16px",
-      pointerEvents: "none",
+      pointerEvents: reviewMessage === undefined ? "none" : "auto",
     }}>
-      <div style={{
+      <div className="saved-toast__surface" style={{
         background: "var(--ink)", color: "var(--bg)",
         padding: "11px 14px", border: "1px solid var(--ink)",
         display: "flex", flexDirection: "column", gap: 3,
       }}>
-        <div style={{ fontFamily: "var(--mono)", fontSize: 11.5, fontWeight: 600, letterSpacing: "0.04em" }}>
-          ✓ {LOCAL_SAVE_NOTICE}{count > 0 ? ` · 이 기기에 ${count}건` : ""}
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
+          <span style={{ fontFamily: "var(--mono)", fontSize: 11.5, fontWeight: 600, letterSpacing: "0.04em" }}>
+            ✓ {LOCAL_SAVE_NOTICE}{count > 0 ? ` · 이 기기에 ${count}건` : ""}
+          </span>
+          {reviewMessage !== undefined && (
+            <button type="button" aria-label="검토 안내 닫기" title="닫기" onClick={onDismiss} style={{
+              border: 0, background: "transparent", color: "var(--bg)", cursor: "pointer",
+              padding: 4, minWidth: 44, minHeight: 44, margin: -8,
+              fontFamily: "var(--mono)", fontSize: 18, lineHeight: 1,
+            }}>×</button>
+          )}
         </div>
         <div style={{ fontFamily: "var(--mono)", fontSize: 10, opacity: 0.75, letterSpacing: "0.03em" }}>
-          {SYNC_UPSELL_NOTICE}
+          {reviewMessage === undefined ? SYNC_UPSELL_NOTICE : `분석 결과를 확인해야 해요. ${reviewMessage}`}
         </div>
       </div>
     </div>

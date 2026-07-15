@@ -112,6 +112,9 @@ This table records files found in the repository at the time of this index updat
 | `CODEX_WORK_ORDER_005.md` | root | COMPLETED / MERGED_TO_MAIN | Work order for external record integration draft, composition balance baseline draft, and index/status refresh. |
 | `CODEX_WORK_ORDER_006.md` | root | PARTIALLY_COMPLETED / TASK_D_IN_PROGRESS | Work order for journal delight, local-first sync promotion, federated SSO, and index refresh. Tasks A-C are merged; Task D is this index/status refresh. |
 | `CODEX_WORK_ORDER_007.md` | root | ISSUED / REVIEW_TRACK | Work order that unblocked ORDER_006 after F0 main merge and requested multi-persona review. It is not implementation acceptance or issue closure. |
+| `SPEC_AUTHORITY_AND_RECOVERY_LEDGER.md` | root | CURRENT_STATE_AUDIT | Current `origin/main@0588e68` PR/work-order reconciliation with a linked Task-R finding closure audit. It does not grant Formation authority, canonical promotion, or runtime evidence. |
+| `FORMATION_READ_NOW_DECIDE_LATER.md` | root | OWNER_READABLE_BOUNDARY | Plain-language Formation status map. It says the current app does not change training and keeps shadow operation non-executing. |
+| `FORMATION_DEFERRED_GOALS.md` | root | DEFERRED_GOAL_REGISTER | High-accuracy research, qualified review, and owner-decision Formation work with explicit reactivation conditions. |
 | `SPEC_SOURCE_ACCEPTANCE_DECISION_ROUND1.md` | root | DECIDED | Safety Gate and RVE reconstructed drafts accepted as working sources only; not canonical promotion or issue closure. |
 | `SPEC_SOURCE_ACCEPTANCE_DECISION_ROUND2.md` | root | DECIDED | Physio Source Trust and Daily Log accepted as working sources only; not canonical promotion or issue closure. |
 | `SPEC_SOURCE_ACCEPTANCE_DECISION_ROUND3.md` | root | DECIDED | Analysis/Visualization, Daily Brief/Inbox, Microcycle/Calendar, and Plan Output Rationale Privacy accepted as working sources only; not canonical promotion or issue closure. |
@@ -296,6 +299,7 @@ Important starting points:
 - `SPEC_WAVE1_PHYSIO_PATCH_REPORT.md`
 - `SPEC_FILE_TRUTH_GUARD.md`
 - `SPEC_LEGACY_ALIGNMENT_AND_DAILY_LOG_PLAN.md`
+- `RACE_SELFCHECK_FIELDS_DECISION.md`
 - `ACCOUNT_FEDERATION_DECISION.md`
 - `ATHLETETIME_INTEGRATION_REVIEW.md`
 - `LAUNCH_BACKEND_AND_ACCOUNT_PLAN.md`

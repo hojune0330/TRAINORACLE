@@ -7,6 +7,143 @@ html, body { margin: 0; padding: 0; background: #E4E2DA; }
 button { font-family: inherit; }
 input, textarea { font-family: inherit; }
 
+.journal-ten-scale {
+  grid-template-columns: repeat(10, minmax(0, 1fr));
+}
+
+@media (max-width: 700px) {
+  .journal-ten-scale {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+
+  .journal-ten-scale > button:nth-child(n + 6) {
+    border-top: 1px solid var(--line) !important;
+  }
+
+  .journal-ten-scale > button:nth-child(5) {
+    border-right: 0 !important;
+  }
+}
+
+.body-pain-selector {
+  display: grid;
+  grid-template-columns: minmax(0, 220px) minmax(0, 1fr);
+  gap: 12px;
+}
+
+.body-pain-selector__buttons {
+  display: grid;
+  gap: 4px;
+}
+
+@media (max-width: 420px) {
+  .body-pain-selector {
+    grid-template-columns: 1fr;
+  }
+
+  .body-pain-selector__visual {
+    width: min(220px, 100%);
+    justify-self: center;
+    box-sizing: border-box;
+  }
+
+  .body-pain-selector__buttons {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+:root {
+  --ease-out-strong: cubic-bezier(0.23, 1, 0.32, 1);
+  --focus-ring: #0B63A5;
+}
+
+.app-shell {
+  --app-shell-tab-bar-height: 45px;
+  --entry-sticky-bottom: calc(var(--app-shell-tab-bar-height) + env(safe-area-inset-bottom, 0px));
+  position: relative;
+}
+
+button:not(:disabled):not([aria-disabled="true"]):active {
+  transform: scale(0.97);
+  transition: transform 90ms var(--ease-out-strong);
+}
+
+:where(button, [href], input, textarea, select, [tabindex]):focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 3px;
+}
+
+.popover-surface {
+  animation: popover-enter 150ms var(--ease-out-strong) both;
+}
+
+.popover-positioner[data-align="left"][data-side="bottom"] .popover-surface {
+  transform-origin: left top;
+}
+
+.popover-positioner[data-align="right"][data-side="bottom"] .popover-surface {
+  transform-origin: right top;
+}
+
+.popover-positioner[data-align="left"][data-side="top"] .popover-surface {
+  transform-origin: left bottom;
+}
+
+.popover-positioner[data-align="right"][data-side="top"] .popover-surface {
+  transform-origin: right bottom;
+}
+
+.saved-toast--enter .saved-toast__surface {
+  animation: saved-toast-enter 200ms var(--ease-out-strong) both;
+}
+
+.saved-toast--exit .saved-toast__surface {
+  animation: saved-toast-exit 150ms var(--ease-out-strong) both;
+}
+
+@keyframes popover-enter {
+  from { opacity: 0; transform: scale(0.96); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes saved-toast-enter {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes saved-toast-exit {
+  from { opacity: 1; transform: translateY(0); }
+  to { opacity: 0; transform: translateY(6px); }
+}
+
+@keyframes ui-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes ui-fade-out {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  button:not(:disabled):not([aria-disabled="true"]):active {
+    transform: none;
+    transition: none;
+  }
+
+  .popover-surface,
+  .saved-toast--enter .saved-toast__surface {
+    animation-name: ui-fade-in;
+    transform: none;
+  }
+
+  .saved-toast--exit .saved-toast__surface {
+    animation-name: ui-fade-out;
+    transform: none;
+  }
+}
+
 /* ========== PRINT ==========
    LogDetail (variant A · Journal page) 만 단독 페이지로 출력. */
 @media print {

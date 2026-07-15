@@ -10,6 +10,7 @@ import type { JournalEntry, PostSessionEntry, EveningEntry, RaceEntry } from "..
 import { entriesForDate, deleteEntry } from "../domain/journal-store"
 import { painLevelsRequireReview } from "../safety/memo-safety"
 import { cardDate, dowOf, seasonOf } from "../domain/dates"
+import { RaceSelfCheckSummary, SavedMemo } from "./log-entry/SavedEntryContext"
 
 export type LogDetailVariant = "A" | "B"
 
@@ -76,7 +77,7 @@ function LogDetailJournal({ date, onBack }: { date: string; onBack?: (() => void
             <div style={{ background: "var(--surface)", border: "1px solid var(--ink)", padding: "14px 16px" }}>
               <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
                 <span className={`etag ${meta.cls}`}><span className="d"></span><span className="c">{meta.c}</span><span className="n">{meta.n}</span></span>
-                <SyncChip state={s.syncState} />
+                <SyncChip />
               </div>
               <div style={{ fontFamily: "var(--sans)", fontSize: 17, fontWeight: 500, color: "var(--ink)", letterSpacing: "-0.005em" }}>
                 {s.title || "훈련 기록"}
@@ -94,11 +95,7 @@ function LogDetailJournal({ date, onBack }: { date: string; onBack?: (() => void
                   </div>
                 ))}
               </div>
-              {s.memo && (
-                <div className="hand" style={{ marginTop: 12, fontSize: 19, lineHeight: 1.45, color: "var(--ink-blue)", borderTop: "1px dashed var(--paper-edge)", paddingTop: 10 }}>
-                  {s.memo}
-                </div>
-              )}
+              <SavedMemo entry={s} text={s.memo} fontSize={19} />
               <EntryDeleteRow onDelete={() => remove(s.id, "훈련")} />
             </div>
           </div>
@@ -112,7 +109,7 @@ function LogDetailJournal({ date, onBack }: { date: string; onBack?: (() => void
           <div style={{ border: "2px solid var(--ink-blue)", background: "var(--paper)", padding: "14px 16px" }}>
             <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between" }}>
               <span style={{ fontFamily: "var(--mono)", fontSize: 10.5, fontWeight: 600, color: "var(--ink-blue)", letterSpacing: "0.14em", textTransform: "uppercase" }}>RACE DAY</span>
-              <SyncChip state={r.syncState} />
+              <SyncChip />
             </div>
             {r.record && (
               <div style={{ fontFamily: "var(--mono)", fontSize: 28, fontWeight: 500, color: "var(--ink)", letterSpacing: "-0.02em", marginTop: 8 }}>{r.record}</div>
@@ -122,11 +119,8 @@ function LogDetailJournal({ date, onBack }: { date: string; onBack?: (() => void
                 {[r.rank, r.result].filter(Boolean).join(" · ")}
               </div>
             )}
-            {r.memo && (
-              <div className="hand" style={{ marginTop: 12, fontSize: 18, lineHeight: 1.4, color: "var(--ink-blue)", borderTop: "1px dashed var(--paper-edge)", paddingTop: 10 }}>
-                {r.memo}
-              </div>
-            )}
+            <RaceSelfCheckSummary entry={r} />
+            <SavedMemo entry={r} text={r.memo} fontSize={18} />
             <EntryDeleteRow onDelete={() => remove(r.id, "경기")} />
           </div>
         </div>
@@ -147,11 +141,9 @@ function LogDetailJournal({ date, onBack }: { date: string; onBack?: (() => void
                 <CheckinRow key={part} lb="통증" v={`${part} ${lv}/5`} right={<PainDot level={lv} size={10} />} />
               ))}
               <CheckinRow lb="감정" v={ev.mood > 0 ? "" : "미기록"} right={ev.mood > 0 ? <MoodStrip level={ev.mood} showLabel /> : undefined} last={!ev.note} />
-              {ev.note && (
-                <div className="hand" style={{ padding: "12px 14px", fontSize: 17, lineHeight: 1.4, color: "var(--ink-blue)", borderTop: "1px dashed var(--hair)" }}>
-                  {ev.note}
-                </div>
-              )}
+              <div style={{ padding: ev.note ? "0 14px" : 0 }}>
+                <SavedMemo entry={ev} text={ev.note} fontSize={17} />
+              </div>
               <div style={{ padding: "0 14px" }}>
                 <EntryDeleteRow onDelete={() => remove(ev.id, "하루 마무리")} />
               </div>
@@ -188,20 +180,21 @@ function EntryDeleteRow({ onDelete }: { onDelete: () => void }) {
       <button onClick={onDelete} style={{
         background: "transparent", border: 0, cursor: "pointer",
         fontFamily: "var(--mono)", fontSize: 9.5, color: "var(--ink-4)",
-        letterSpacing: "0.1em", padding: "4px 2px", textDecoration: "underline",
+        letterSpacing: "0.1em", padding: "4px 2px", minHeight: 44,
+        textDecoration: "underline",
         textUnderlineOffset: 3,
       }}>이 일지 지우기</button>
     </div>
   )
 }
 
-function SyncChip({ state }: { state: JournalEntry["syncState"] }) {
+function SyncChip() {
   return (
     <span style={{
       fontFamily: "var(--mono)", fontSize: 8.5, letterSpacing: "0.1em",
-      color: state === "local" ? "var(--ink-4)" : "var(--brand)",
+      color: "var(--ink-4)",
       border: "1px solid var(--hair)", padding: "2px 5px", whiteSpace: "nowrap",
-    }}>{state === "local" ? "이 기기" : "동기화됨"}</span>
+    }}>이 기기</span>
   )
 }
 
@@ -224,21 +217,22 @@ function TopBar2({ onBack, children }: { onBack?: (() => void) | undefined; chil
   return (
     <div style={{
       padding: "12px 16px", borderBottom: "1px solid var(--line)",
-      display: "flex", alignItems: "center", gap: 14,
+      display: "grid", gridTemplateColumns: "64px minmax(0, 1fr) 64px",
+      alignItems: "center",
       background: "var(--bg)",
     }}>
       <button onClick={onBack} style={{
         background: "transparent", border: 0, cursor: "pointer",
-        padding: 4, marginLeft: -4,
+        padding: 4, minWidth: 64, minHeight: 44,
         fontFamily: "var(--mono)", fontSize: 11, color: "var(--ink-2)",
         letterSpacing: "0.06em",
       }}>← 뒤로</button>
       <div style={{
-        flex: 1, fontFamily: "var(--mono)", fontSize: 11, fontWeight: 600,
+        minWidth: 0, fontFamily: "var(--mono)", fontSize: 11, fontWeight: 600,
         color: "var(--ink)", letterSpacing: "0.14em", textTransform: "uppercase",
         textAlign: "center",
       }}>{children}</div>
-      <div style={{ width: 48 }}></div>
+      <div aria-hidden="true"></div>
     </div>
   )
 }

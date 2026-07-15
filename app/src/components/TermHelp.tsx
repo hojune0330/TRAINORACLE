@@ -8,7 +8,7 @@
  *   "진단이 아님" 등의 경계 문구를 glossary 원문 그대로 표시한다.
  * - 설명은 표시 전용이며 어떤 데이터·안전 상태도 변경하지 않는다.
  * - 위치 보정(오버플로우/플립)·Escape 닫기는 공용 Popover가 담당.
- * - 터치 타깃: 시각 14px 유지하되 히트 영역은 26px (모바일 최소 탭 크기 보강).
+ * - 터치 타깃: 시각 14px 유지하되 히트 영역은 44px.
  */
 import { GLOSSARY, type TermId } from "../domain/glossary"
 import { usePopover, PopCard } from "./Popover"
@@ -26,8 +26,7 @@ export function TermHelp({ term }: { term: TermId }) {
         aria-expanded={open}
         onClick={toggle}
         style={{
-          // 히트 영역 26px — 시각 원은 내부 span 14px
-          width: 26, height: 26, marginLeft: 1, padding: 0,
+          width: 44, height: 44, margin: "-9px -8px -9px 1px", padding: 0,
           border: 0, background: "transparent", cursor: "pointer",
           display: "inline-flex", alignItems: "center", justifyContent: "center",
           verticalAlign: "middle",
@@ -36,6 +35,7 @@ export function TermHelp({ term }: { term: TermId }) {
         <span aria-hidden="true" style={{
           width: 14, height: 14,
           border: `1px solid ${accent}`, borderRadius: "50%",
+          boxSizing: "border-box",
           background: open ? accent : "transparent",
           color: open ? "var(--bg)" : accent,
           fontFamily: "var(--mono)", fontSize: 8.5, fontWeight: 700,
