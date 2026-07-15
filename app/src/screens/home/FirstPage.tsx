@@ -7,7 +7,7 @@ type FirstPageProps = {
 
 const JOURNAL_TYPES = [
   { mark: "↻", title: "훈련 후", description: "방금 끝낸 세션 · 거리·페이스·한 줄 메모", duration: "~1분" },
-  { mark: "☾", title: "하루 마무리", description: "수면·체중·기분·통증 체크", duration: "~2분" },
+  { mark: "☾", title: "회복 · 하루 마무리", description: "쉰 날도 그대로 · 수면·기분·통증 체크", duration: "~2분" },
   { mark: "▲", title: "경기", description: "직전 긴장도 · 직후 기록과 감정", duration: "~30초" },
 ] as const
 
@@ -22,7 +22,7 @@ export function FirstPage({ onWriteLog, onOpenGuide }: FirstPageProps) {
           여기는 당신의<br />첫 페이지예요.
         </div>
         <div style={{ marginTop: 14, fontSize: 13.5, color: "var(--ink-2)", lineHeight: 1.65 }}>
-          오늘 뛴 것, 잔 시간, 기분 한 줄 — 뭐든 1분이면 적혀요.
+          오늘 뛴 것, 쉰 것, 잔 시간, 기분 한 줄 — 뭐든 1분이면 적혀요.
           하루하루는 짧은 메모지만, 계속 쌓이면 <b style={{ color: "var(--ink)" }}>나만 아는 나의 기록</b>이 됩니다.
         </div>
         <div className="hand-pencil" style={{ marginTop: 12, fontSize: 15, color: "var(--pencil)" }}>

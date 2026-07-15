@@ -109,7 +109,7 @@ function DataHome({ all, analysisEntries, onWriteLog, onOpenDay, onOpenGuide }: 
           display: "flex", alignItems: "center", justifyContent: "space-between", cursor: "pointer",
         }}>
           <span>{wroteToday ? "오늘 일지 더 쓰기" : "오늘 일지 쓰기"}</span>
-          <span style={{ fontFamily: "var(--mono)", fontSize: 10, color: "rgba(255,255,255,.7)", letterSpacing: "0.14em" }}>훈련 후 · 저녁 · 경기</span>
+          <span style={{ fontFamily: "var(--mono)", fontSize: 10, color: "rgba(255,255,255,.7)", letterSpacing: "0.14em" }}>훈련 후 · 회복/저녁 · 경기</span>
         </button>
       </div>
 
@@ -135,7 +135,7 @@ function DataHome({ all, analysisEntries, onWriteLog, onOpenDay, onOpenGuide }: 
             border: "1px dashed var(--line-2)", borderRadius: 0, fontFamily: "var(--mono)", fontSize: 10.5,
             cursor: "pointer", textAlign: "left", lineHeight: 1.5,
           }}>
-            {7 - life.days}일만 더 쓰면 한 주가 채워져요 · 쌓이면 어떤 모습인지 → <b style={{ color: "var(--ink)" }}>예시 보기</b>
+            쉰 날과 아픈 날도 기록이에요 · 쌓이면 어떤 모습인지 → <b style={{ color: "var(--ink)" }}>예시 보기</b>
           </button>
         </div>
       )}

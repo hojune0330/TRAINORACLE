@@ -50,7 +50,7 @@ export function EveningCheckin({ onBack, onDone }: EntryFormProps) {
 
   return (
     <div style={{ paddingBottom: 100 }}>
-      <TopBar onBack={onBack}>저녁 체크인</TopBar>
+      <TopBar onBack={onBack}>회복 · 하루 마무리</TopBar>
       <div style={{ padding: "14px 20px 0" }}>
         <IndexCard date={compactDate(todayISO())} dow={`${dowOf(todayISO())} · ${nowClock()}`} />
       </div>
