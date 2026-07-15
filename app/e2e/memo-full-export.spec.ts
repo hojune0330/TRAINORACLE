@@ -20,6 +20,7 @@ test("makes a memo-inclusive backup only after confirmation and without a networ
     }]))
   })
   await page.goto("/?app=1")
+  await page.waitForLoadState("networkidle")
   const networkRequests: string[] = []
   page.on("request", (request) => networkRequests.push(request.url()))
 
