@@ -1,4 +1,10 @@
 import { z } from "zod"
+import {
+  fieldProvenanceSchema,
+  fieldProvenanceWriteSchema,
+  isValidEntryFieldProvenance,
+} from "./field-provenance"
+import type { FieldProvenanceMap } from "./field-provenance"
 
 export const MEMO_PURPOSE = {
   privateSelfOnly: "PRIVATE_SELF_ONLY",
@@ -21,6 +27,7 @@ export type JournalEntryBase = {
   readonly date: string
   readonly savedAt: string
   readonly syncState: "local" | "synced"
+  readonly fieldProvenance?: FieldProvenanceMap
 }
 
 type PurposeScopedMemo = {
@@ -76,6 +83,7 @@ const baseShape = {
   date: z.string().min(1),
   savedAt: z.string().min(1),
   syncState: z.enum(["local", "synced"]),
+  fieldProvenance: fieldProvenanceSchema.optional(),
 } as const
 
 const purposeShape = {
@@ -152,6 +160,16 @@ const journalEntryWriteSchema = journalEntrySchema.superRefine((entry, context) 
       path: ["memoPurpose"],
     })
   }
+
+  if (entry.fieldProvenance === undefined) return
+
+  if (!isValidEntryFieldProvenance(entry.kind, entry.fieldProvenance)) {
+    context.addIssue({
+      code: "custom",
+      message: "Provenance metadata may only name fields on this journal entry.",
+      path: ["fieldProvenance"],
+    })
+  }
 })
 
 export function parseJournalEntry(value: unknown): JournalEntry | null {
@@ -160,6 +178,11 @@ export function parseJournalEntry(value: unknown): JournalEntry | null {
 }
 
 export function parseJournalEntryForWrite(value: unknown): JournalEntry | null {
+  if (typeof value !== "object" || value === null) return null
+  const candidate = value as Record<string, unknown>
+  if (candidate.fieldProvenance !== undefined && !fieldProvenanceWriteSchema.safeParse(candidate.fieldProvenance).success) {
+    return null
+  }
   const result = journalEntryWriteSchema.safeParse(value)
   return result.success ? result.data : null
 }

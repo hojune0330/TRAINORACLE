@@ -58,7 +58,16 @@ describe("high-pain review guidance", () => {
 })
 
 describe("body pain keyboard controls", () => {
-  it("cycles a pain hotspot with the keyboard", async () => {
+  it("uses native buttons while the body drawing stays noninteractive", () => {
+    const { container } = render(<BodyDiagram />)
+    const bodyPartButtons = screen.getAllByRole("button", { name: /통증/u })
+
+    expect(bodyPartButtons).toHaveLength(10)
+    expect(bodyPartButtons.every((button) => button.tagName === "BUTTON")).toBe(true)
+    expect(container.querySelector("svg [role='button']")).toBeNull()
+  })
+
+  it("cycles a pain selector once for Enter and once for Space", async () => {
     // Given
     const user = userEvent.setup()
     const onChange = vi.fn()
@@ -68,8 +77,10 @@ describe("body pain keyboard controls", () => {
     // When
     rightKnee.focus()
     await user.keyboard("{Enter}")
+    await user.keyboard(" ")
 
     // Then
-    expect(onChange).toHaveBeenCalledWith({ rKnee: 1 })
+    expect(onChange).toHaveBeenNthCalledWith(1, { rKnee: 1 })
+    expect(onChange).toHaveBeenNthCalledWith(2, { rKnee: 1 })
   })
 })

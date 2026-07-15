@@ -21,6 +21,10 @@ document_metadata:
 
 ---
 
+> **상태 정렬 (2026-07-14):** 제품 방향은 AthleteTime으로 계속하기 연합 계정 연결이다. 다만 AthleteTime OAuth 제공자, 등록된 클라이언트, 동의 화면, redirect, 토큰 교환은 검증·구현되지 않았다. 아래 OAuth 흐름은 목표 계약이며 현재 동작하는 로그인 기능이 아니다.
+
+---
+
 ## 1. Purpose
 
 This document expands the accepted account federation decision into a draft

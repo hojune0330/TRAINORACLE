@@ -1,6 +1,7 @@
 import React from "react"
 import { IndexCard } from "../../components/JournalPrimitives"
 import { compactDate, dowOf, nowClock } from "../../domain/dates"
+import { explicitOrMissing } from "../../domain/field-provenance"
 import { newEntryId, saveEntry, todayISO } from "../../domain/journal-store"
 import type { JournalEntry } from "../../domain/journal-store"
 import { PurposeScopedMemoField, usePurposeScopedMemo } from "./PurposeScopedMemoField"
@@ -33,6 +34,12 @@ export function PostSessionForm({ onBack, onDone }: EntryFormProps) {
       id: newEntryId(), kind: "post-session", date: todayISO(),
       savedAt: new Date().toISOString(), syncState: "local",
       system, title, distanceKm, durationMin, avgPace, rpe, memo: memo.text,
+      fieldProvenance: {
+        distanceKm: explicitOrMissing(distanceKm.trim() !== ""),
+        durationMin: explicitOrMissing(durationMin.trim() !== ""),
+        avgPace: explicitOrMissing(avgPace.trim() !== ""),
+        rpe: explicitOrMissing(rpe > 0),
+      },
       ...(memo.text.trim() !== "" && memo.purpose !== undefined ? { memoPurpose: memo.purpose } : {}),
     }
     const result = saveEntry(entry)
@@ -53,7 +60,7 @@ export function PostSessionForm({ onBack, onDone }: EntryFormProps) {
         <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
           {ENERGY_SYSTEMS.map((energySystem) => (
             <button key={energySystem.id} aria-label={`${energySystem.c} ${energySystem.n}`} aria-pressed={system === energySystem.id} onClick={() => setSystem(energySystem.id)} style={{
-              padding: "8px 12px", background: "var(--surface)",
+              minHeight: 44, padding: "8px 12px", background: "var(--surface)",
               border: system === energySystem.id ? `1.5px solid ${energySystem.color}` : "1px solid var(--line)",
               cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 6,
               borderRadius: 0,
@@ -81,10 +88,10 @@ export function PostSessionForm({ onBack, onDone }: EntryFormProps) {
       </FormSec>
 
       <FormSec lb={`RPE · 주관 강도 (${rpe > 0 ? `${rpe}/10` : "미선택"})`} help="rpe">
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(10, 1fr)", gap: 0, border: "1px solid var(--ink)" }}>
+        <div className="journal-ten-scale" style={{ display: "grid", gap: 0, border: "1px solid var(--ink)" }}>
           {Array.from({ length: 10 }, (_, index) => index + 1).map((value) => (
             <button key={value} aria-pressed={rpe === value} onClick={() => setRpe(value)} style={{
-              padding: "12px 0", border: 0, cursor: "pointer",
+              minHeight: 44, padding: "12px 0", border: 0, cursor: "pointer",
               background: rpe === value ? "var(--ink)" : "transparent",
               color: rpe === value ? "var(--bg)" : "var(--ink)",
               fontFamily: "var(--mono)", fontSize: 12, fontWeight: 500,

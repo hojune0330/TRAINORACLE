@@ -1,0 +1,13 @@
+Final deferred-boundary audit
+
+Formation document claim scan
+- rg -n '자동 처방|실제 계획 변경|효능 입증|안전성 입증|canonical acceptance' FORMATION_READ_NOW_DECIDE_LATER.md FORMATION_DEFERRED_GOALS.md
+- Result: exit 1, no matches (expected).
+
+Registered deferred states
+- DEFERRED_HIGH_ACCURACY_RESEARCH: sport-science/counterevidence, load/statistical rules, race descriptive analysis.
+- DEFERRED_QUALIFIED_REVIEW: privacy, youth, retention, deletion, governance.
+- DEFERRED_OWNER_DECISION: coach rules, athlete-visible pilot protocol, product projection, calendar/backend fixtures.
+
+App scope scan
+- No Formation, Plan Generator, or shadow runtime path was introduced in app source or E2E coverage. The only broad `shadow` match is the unrelated CSS `box-shadow` property.

@@ -467,7 +467,7 @@ Quick mode changes interaction cost, not storage truth or safety authority. It m
 
 ```yaml
 data_provenance_contract:
-  contract_status: BACKWARD_COMPATIBLE_METADATA_PROPOSAL_OWNER_ADOPTION_PENDING
+  contract_status: OWNER_ADOPTED_RUNTIME_IMPLEMENTATION_UNMERGED
   applies_to: every_coaching_relevant_numeric_field_in_each_entry
   persisted_states: [EXPLICIT, DERIVED, MISSING]
   read_time_only_state: LEGACY_MISSING_PROVENANCE

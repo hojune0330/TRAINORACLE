@@ -30,9 +30,9 @@ export function BodyDiagram({ selected = {}, onChange }: BodyDiagramProps) {
   }
 
   return (
-    <div style={{ display: "flex", gap: 12 }}>
-      <div style={{ flex: "0 0 220px", position: "relative", background: "var(--paper)", padding: 8 }}>
-        <svg viewBox="0 0 220 460" width="100%" preserveAspectRatio="xMidYMid meet" style={{ display: "block", height: "auto" }}>
+    <div className="body-pain-selector">
+      <div className="body-pain-selector__visual" style={{ position: "relative", background: "var(--paper)", padding: 8 }}>
+        <svg aria-hidden="true" focusable="false" viewBox="0 0 220 460" width="100%" preserveAspectRatio="xMidYMid meet" style={{ display: "block", height: "auto" }}>
           <g fill="none" stroke="var(--ink-3)" strokeWidth="1.2">
             <circle cx="110" cy="60" r="22" />
             <line x1="110" y1="82" x2="110" y2="220" />
@@ -44,21 +44,8 @@ export function BodyDiagram({ selected = {}, onChange }: BodyDiagramProps) {
           {BODY_PARTS.map((part) => {
             const level = selected[part.id] || 0
             return (
-              <g
-                key={part.id}
-                onClick={() => cycle(part.id)}
-                role="button"
-                tabIndex={0}
-                aria-label={`${part.name}${level > 0 ? `, 통증 ${level}단계` : ", 통증 없음"}. 누르면 ${level >= 5 ? "해제" : `${level + 1}단계`}`}
-                onKeyDown={(event) => {
-                  if (event.key === "Enter" || event.key === " ") {
-                    event.preventDefault()
-                    cycle(part.id)
-                  }
-                }}
-                style={{ cursor: "pointer" }}
-              >
-                <circle cx={part.x} cy={part.y} r={level ? 9 : 6}
+              <g key={part.id}>
+                <circle data-body-part={part.id} cx={part.x} cy={part.y} r={level ? 9 : 6}
                   fill={level ? `var(--pain-${level})` : "rgba(0,0,0,0)"}
                   stroke={level ? `var(--pain-${level})` : "var(--ink-4)"}
                   strokeWidth={level ? 0 : 1.2} />
@@ -72,19 +59,31 @@ export function BodyDiagram({ selected = {}, onChange }: BodyDiagramProps) {
           })}
         </svg>
       </div>
-      <div style={{ flex: 1, fontFamily: "var(--mono)", fontSize: 11, color: "var(--ink-3)", letterSpacing: "0.04em" }}>
+      <div style={{ fontFamily: "var(--mono)", fontSize: 11, color: "var(--ink-3)", letterSpacing: "0.04em" }}>
         <div style={{ marginBottom: 8, fontSize: 9.5, letterSpacing: "0.14em", textTransform: "uppercase" }}>탭으로 1→5→해제</div>
-        {Object.entries(selected).map(([id, level]) => {
-          const part = BODY_PARTS.find((candidate) => candidate.id === id)
-          return part ? (
-            <div key={id} style={{ display: "flex", alignItems: "center", gap: 8, padding: "5px 0", borderBottom: "1px dashed var(--hair)" }}>
-              <PainDot level={level} />
-              <span style={{ color: "var(--ink)", fontFamily: "var(--sans)", fontSize: 12.5 }}>{part.name}</span>
-              <span style={{ marginLeft: "auto", color: `var(--pain-${level})`, fontWeight: 600 }}>{level}/5</span>
-            </div>
-          ) : null
-        })}
-        {!Object.keys(selected).length && <div style={{ color: "var(--ink-4)" }}>통증 없음</div>}
+        <div className="body-pain-selector__buttons">
+          {BODY_PARTS.map((part) => {
+            const level = selected[part.id] || 0
+            return (
+              <button
+                key={part.id}
+                type="button"
+                aria-label={`${part.name}${level > 0 ? `, 통증 ${level}단계` : ", 통증 없음"}. 누르면 ${level >= 5 ? "해제" : `${level + 1}단계`}`}
+                aria-pressed={level > 0}
+                onClick={() => cycle(part.id)}
+                style={{
+                  minHeight: 44, width: "100%", display: "flex", alignItems: "center", gap: 8,
+                  padding: "7px 8px", border: "1px solid var(--line)", background: level > 0 ? "var(--surface)" : "transparent",
+                  color: "var(--ink)", cursor: "pointer", borderRadius: 0, textAlign: "left",
+                }}
+              >
+                <PainDot level={level} />
+                <span style={{ color: "var(--ink)", fontFamily: "var(--sans)", fontSize: 12.5 }}>{part.name}</span>
+                <span style={{ marginLeft: "auto", color: level > 0 ? `var(--pain-${level})` : "var(--ink-4)", fontWeight: 600 }}>{level > 0 ? `${level}/5` : "—"}</span>
+              </button>
+            )
+          })}
+        </div>
       </div>
     </div>
   )

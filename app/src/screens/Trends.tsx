@@ -232,21 +232,22 @@ function TopBar3({ onBack, children }: { onBack?: (() => void) | undefined; chil
   return (
     <div style={{
       padding: "12px 16px", borderBottom: "1px solid var(--line)",
-      display: "flex", alignItems: "center", gap: 14,
+      display: "grid", gridTemplateColumns: "64px minmax(0, 1fr) 64px",
+      alignItems: "center",
       background: "var(--bg)",
     }}>
       <button onClick={onBack} style={{
         background: "transparent", border: 0, cursor: "pointer",
-        padding: 4, marginLeft: -4,
+        padding: 4, minWidth: 64, minHeight: 44,
         fontFamily: "var(--mono)", fontSize: 11, color: "var(--ink-2)",
         letterSpacing: "0.06em",
       }}>← 뒤로</button>
       <div style={{
-        flex: 1, fontFamily: "var(--mono)", fontSize: 11, fontWeight: 600,
+        minWidth: 0, fontFamily: "var(--mono)", fontSize: 11, fontWeight: 600,
         color: "var(--ink)", letterSpacing: "0.14em", textTransform: "uppercase",
         textAlign: "center",
       }}>{children}</div>
-      <div style={{ width: 48 }}></div>
+      <div aria-hidden="true"></div>
     </div>
   )
 }

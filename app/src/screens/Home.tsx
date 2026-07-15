@@ -131,7 +131,7 @@ function DataHome({ all, analysisEntries, onWriteLog, onOpenDay, onOpenGuide }: 
       {life.days < 7 && (
         <div style={{ padding: "24px 20px 0" }}>
           <button type="button" onClick={onOpenGuide} style={{
-            width: "100%", padding: "13px 16px", background: "transparent", color: "var(--ink-2)",
+            width: "100%", minHeight: 44, padding: "13px 16px", background: "transparent", color: "var(--ink-2)",
             border: "1px dashed var(--line-2)", borderRadius: 0, fontFamily: "var(--mono)", fontSize: 10.5,
             cursor: "pointer", textAlign: "left", lineHeight: 1.5,
           }}>

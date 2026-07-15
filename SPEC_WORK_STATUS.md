@@ -8,6 +8,9 @@ This is the current GitHub-main handoff status for continuing TrainOracle SPEC w
 
 It is not a product rule definition, not canonical promotion, not runtime evidence, and not issue closure.
 
+For the current main baseline, PR reconciliation, and Task-R finding disposition,
+read [`SPEC_AUTHORITY_AND_RECOVERY_LEDGER.md`](./SPEC_AUTHORITY_AND_RECOVERY_LEDGER.md).
+
 For SPEC-to-legacy continuity, daily-log service flow, and later productization document order, read [`SPEC_LEGACY_ALIGNMENT_AND_DAILY_LOG_PLAN.md`](./SPEC_LEGACY_ALIGNMENT_AND_DAILY_LOG_PLAN.md).
 For a plain Korean overview of why the SPEC layer is solid and what remains, read [`SPEC_OVERVIEW_FOR_HOJUNE.md`](./SPEC_OVERVIEW_FOR_HOJUNE.md).
 For an easy document-by-document report, read [`SPEC_DOCUMENTATION_REPORT.md`](./SPEC_DOCUMENTATION_REPORT.md).
@@ -15,6 +18,7 @@ For the next source-to-target patch order and non-closure conditions, read [`SPE
 For external reviewer read order, lenses, and review prompts, read [`SPEC_REVIEW_PACKET.md`](./SPEC_REVIEW_PACKET.md).
 For the next target-patch readiness gates and wave order, read [`SPEC_TARGET_PATCH_READINESS.md`](./SPEC_TARGET_PATCH_READINESS.md).
 For the current review-recommended Formation next-action order and visual blueprint, read [`TRAINING_PLAN_BLUEPRINT_MULTIPERSPECTIVE_REVIEW.md`](./TRAINING_PLAN_BLUEPRINT_MULTIPERSPECTIVE_REVIEW.md), Section 11.
+For the owner-readable Formation boundary and deferred work register, read [`FORMATION_READ_NOW_DECIDE_LATER.md`](./FORMATION_READ_NOW_DECIDE_LATER.md) and [`FORMATION_DEFERRED_GOALS.md`](./FORMATION_DEFERRED_GOALS.md).
 For documentation link/terminology quality findings, read [`SPEC_DOC_QUALITY_REPORT.md`](./SPEC_DOC_QUALITY_REPORT.md).
 For the Wave B Safety Gate target-local patch result, read [`SPEC_WAVEB_SAFETY_GATE_PATCH_REPORT.md`](./SPEC_WAVEB_SAFETY_GATE_PATCH_REPORT.md).
 For Safety Gate/RVE source acceptance review prep, read [`SPEC_SOURCE_ACCEPTANCE_REVIEW_ROUND1.md`](./SPEC_SOURCE_ACCEPTANCE_REVIEW_ROUND1.md).
@@ -124,6 +128,7 @@ Current Wave 3 productization draft state:
 - It cannot create/select plan options, clear D9/Safety Gate states, claim runtime evidence, resolve `OI-PG-MICROCYCLE-CALENDAR-MAPPING-001`, or close downstream issues.
 - `TRAINING_PLAN_METHOD_DECISION.md` now records owner-confirmed first-pilot method boundaries without approving option taxonomy, thresholds, or production execution.
 - `specs/reconstruct/TRAINING_PLAN_FORMATION_AND_ADAPTATION_SPEC.md` now exists as `DRAFT_FOR_REVIEW`; its nine-perspective audit is `TRAINING_PLAN_BLUEPRINT_MULTIPERSPECTIVE_REVIEW.md`. Ten canonical blockers remain.
+- `FORMATION_READ_NOW_DECIDE_LATER.md` and `FORMATION_DEFERRED_GOALS.md` separate the non-executing current boundary from high-accuracy research, qualified review, and owner-decision goals that remain deferred.
 - Work Order 005 productization drafts now present on main: `EXTERNAL_RECORD_INTEGRATION_SPEC.md` and `COMPOSITION_BALANCE_BASELINE_CONTRACT.md`.
 - Work Order 006 productization drafts now present on main: `JOURNAL_DELIGHT_AND_DECORATION_SPEC.md`, `LOCAL_FIRST_SYNC_AND_PROMOTION_CONTRACT.md`, and `FEDERATED_ACCOUNT_SSO_CONTRACT.md`.
 - All productization drafts remain drafts for review; none are canonical promotion, issue closure, or runtime evidence.
