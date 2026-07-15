@@ -50,7 +50,11 @@ export function loadEntries(): JournalEntry[] {
     const raw = localStorage.getItem(KEY)
     if (raw === null) return []
     const parsed: unknown = JSON.parse(raw)
-    return parseJournalEntryList(parsed)
+    const entries = parseJournalEntryList(parsed)
+    if (window.location.search.includes("uitest") && Array.isArray(parsed) && parsed.length > entries.length) {
+      console.warn(`[JSTORE] dropped=${parsed.length - entries.length} loaded=${entries.length}`)
+    }
+    return entries
   } catch {
     return []
   }
