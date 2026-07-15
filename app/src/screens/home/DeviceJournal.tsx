@@ -97,6 +97,8 @@ export function DeviceJournal({ onOpenDay }: DeviceJournalProps) {
 const EXPORT_DESCRIPTION_ID = "safe-journal-export-description"
 
 export function SafeJournalExport() {
+  const [isFullExportDialogOpen, setIsFullExportDialogOpen] = React.useState(false)
+
   return (
     <div style={{ padding: "28px 20px 0" }}>
       <button type="button" onClick={downloadSafeJournalExport} aria-describedby={EXPORT_DESCRIPTION_ID} style={{
@@ -107,17 +109,36 @@ export function SafeJournalExport() {
       <div id={EXPORT_DESCRIPTION_ID} style={{ marginTop: 4, fontFamily: "var(--mono)", fontSize: 9, color: "var(--ink-4)", lineHeight: 1.5 }}>
         메모 원문과 메모 목적은 제외해요 · 파일은 이 기기에만 저장되고 어디로도 전송되지 않아요
       </div>
+      <button type="button" onClick={() => setIsFullExportDialogOpen(true)} style={{
+        background: "transparent", border: 0, cursor: "pointer", padding: "8px 0 0",
+        fontFamily: "var(--mono)", fontSize: 9.5, color: "var(--ink-4)",
+        letterSpacing: "0.08em", textDecoration: "underline", textUnderlineOffset: 3,
+      }}>메모 포함 파일 내보내기 (JSON)</button>
+      {isFullExportDialogOpen && (
+        <FullExportDialog
+          onCancel={() => setIsFullExportDialogOpen(false)}
+          onConfirm={() => {
+            downloadJournalExport("OWNER_FULL_BACKUP")
+            setIsFullExportDialogOpen(false)
+          }}
+        />
+      )}
     </div>
   )
 }
 
 function downloadSafeJournalExport(): void {
+  downloadJournalExport("SAFE")
+}
+
+function downloadJournalExport(mode: "SAFE" | "OWNER_FULL_BACKUP"): void {
   try {
-    const blob = new Blob([exportEntriesJSON()], { type: "application/json" })
+    const isFullBackup = mode === "OWNER_FULL_BACKUP"
+    const blob = new Blob([exportEntriesJSON({ includeRawMemos: isFullBackup })], { type: "application/json" })
     const url = URL.createObjectURL(blob)
     const anchor = document.createElement("a")
     anchor.href = url
-    anchor.download = `trainoracle-journal-${todayISO()}.json`
+    anchor.download = `trainoracle-${isFullBackup ? "full-backup" : "journal"}-${todayISO()}.json`
     document.body.appendChild(anchor)
     anchor.click()
     anchor.remove()
@@ -128,4 +149,33 @@ function downloadSafeJournalExport(): void {
     if (window.location.search.includes("uitest")) console.log("[JEXPORT] ok=false")
     window.alert("내보내기에 실패했어요. 잠시 후 다시 시도해 주세요.")
   }
+}
+
+function FullExportDialog({ onCancel, onConfirm }: {
+  readonly onCancel: () => void
+  readonly onConfirm: () => void
+}) {
+  return (
+    <div role="dialog" aria-modal="true" aria-labelledby="full-export-title" style={{
+      position: "fixed", inset: 0, zIndex: 50, display: "grid", placeItems: "center",
+      padding: 20, background: "rgba(16, 18, 22, 0.52)",
+    }}>
+      <div style={{ width: "min(100%, 360px)", background: "var(--bg)", border: "1px solid var(--ink)", padding: 18 }}>
+        <div id="full-export-title" style={{ fontFamily: "var(--sans)", fontSize: 17, fontWeight: 600, color: "var(--ink)" }}>메모까지 포함할까요?</div>
+        <div style={{ marginTop: 8, fontFamily: "var(--mono)", fontSize: 10.5, color: "var(--ink-2)", lineHeight: 1.65 }}>
+          이 파일에는 메모 원문과 메모 목적이 함께 들어가요. 받을 사람을 확인한 뒤 파일을 만들어요.
+        </div>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginTop: 18 }}>
+          <button type="button" onClick={onCancel} style={{
+            minHeight: 42, border: "1px solid var(--ink)", background: "transparent", color: "var(--ink)",
+            fontFamily: "var(--mono)", fontSize: 11, cursor: "pointer",
+          }}>취소</button>
+          <button type="button" onClick={onConfirm} style={{
+            minHeight: 42, border: "1px solid var(--ink)", background: "var(--ink)", color: "var(--bg)",
+            fontFamily: "var(--mono)", fontSize: 11, fontWeight: 600, cursor: "pointer",
+          }}>파일 만들기</button>
+        </div>
+      </div>
+    </div>
+  )
 }

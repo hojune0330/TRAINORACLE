@@ -1,0 +1,14 @@
+Final current-state audit
+
+Command result
+- git fetch origin main --quiet && git rev-parse origin/main
+- origin/main = 0588e68df79832884e367da9de0593cb7499688b
+
+GitHub REST result
+- PR #64: closed, merged_at 2026-07-14T12:31:58Z, merge commit 0588e68df79832884e367da9de0593cb7499688b
+- PR #66: open draft, head ec4f31234930ba1e570bcd2a54c76aa8609f887f, base 0588e68df79832884e367da9de0593cb7499688b
+- PR #67: open draft, head 7de403302e540879b20243dffdbb5adda5d9088c, base 0588e68df79832884e367da9de0593cb7499688b
+
+Interpretation
+- PR #64 is merged journal/input work only.
+- PR #66 and PR #67 remain draft references; this local plan did not merge them wholesale.

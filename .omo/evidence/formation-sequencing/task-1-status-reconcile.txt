@@ -1,0 +1,26 @@
+Baseline command: git fetch origin main --quiet && git rev-parse origin/main
+Observed origin/main: 0588e68df79832884e367da9de0593cb7499688b
+
+GitHub REST metadata checked: PR #61, #62, #63, #64, #66, #67.
+Merged: #61=ff27087, #62=681f7a0, #63=bc96e17, #64=0588e68.
+Open drafts: #66=ec4f312, #67=7de4033.
+
+Status surfaces checked:
+- SPEC_WORK_STATUS.md
+- TRAINORACLE_SPEC_INDEX.md
+- SPEC_TARGET_PATCH_MATRIX.md
+- SPEC_TARGET_PATCH_READINESS.md
+
+Result: existing Formation non-authority and open-blocker wording remains correct.
+Only current-ledger and Task-R-audit discovery links were added. No document was
+promoted to canonical, runtime evidence, or closed because a pull request merged.
+
+Historical wording repaired:
+- TRAINING_PLAN_METHOD_DECISION.md now records PR #63 as merged review-draft status.
+- TRAINING_PLAN_BLUEPRINT_MULTIPERSPECTIVE_REVIEW.md now records
+  MERGED_AS_DRAFT_REVIEW_RECORD while retaining false canonical/runtime authority flags.
+
+Completeness verification:
+- Initial `rg -h` output was command help, not a passing finding comparison.
+- Rerun with `rg --no-filename` produced an empty difference between the 34 source
+  finding IDs and the 34 audit finding IDs.

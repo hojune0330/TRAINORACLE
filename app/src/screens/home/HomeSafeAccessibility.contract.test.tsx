@@ -57,4 +57,14 @@ describe("home journal controls", () => {
     // Then
     expect(exportButton).toBeVisible()
   })
+
+  it("requires an explicit confirmation before creating a memo-inclusive file", async () => {
+    const user = userEvent.setup()
+    render(<Home />)
+
+    await user.click(screen.getByRole("button", { name: /메모 포함 파일 내보내기/u }))
+    expect(screen.getByRole("dialog", { name: "메모까지 포함할까요?" })).toBeVisible()
+    await user.click(screen.getByRole("button", { name: "취소" }))
+    expect(screen.queryByRole("dialog", { name: "메모까지 포함할까요?" })).toBeNull()
+  })
 })

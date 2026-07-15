@@ -392,7 +392,7 @@ the historical verdict for commit `807380c`.
 ```yaml
 owner_follow_up:
   decision_ref: TO-DEC-ATHLETE-VISIBLE-SHADOW-2026-07-14-001
-  pr63_treatment: MERGEABLE_AS_DRAFT_REVIEW_RECORD_AFTER_OWNER_SUMMARY
+  pr63_treatment: MERGED_AS_DRAFT_REVIEW_RECORD
   canonical_acceptance: false
   runtime_authority: false
   shadow_operation_must_be_athlete_visible: true
