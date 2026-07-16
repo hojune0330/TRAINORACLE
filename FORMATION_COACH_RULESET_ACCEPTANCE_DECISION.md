@@ -13,6 +13,7 @@ qualified_privacy_reviewer: UNASSIGNED
 order_010: ACCEPTED_RESEARCH_BOUNDARY_ONLY
 order_011: NOT_ACCEPTED
 ruleset_accepted: false
+coach_walkthrough_prepared: true
 coach_walkthrough_accepted: false
 runtime_authority: false
 formation_activation: false
@@ -35,13 +36,15 @@ is authorized. This record cannot close an Order 012 blocker or satisfy an Order
 - `specs/reconstruct/FORMATION_COACH_RULESET_AND_EXPOSURE_CONTRACT.md`
 - `reports/review/COACH_TEAM_AND_MICROCYCLE_VIEW_DECISION.md`
 - `specs/test-packages/FORMATION_COACH_RULESET_FIXTURES.md`
+- `reports/review/WO012_COACH_OWNER_WALKTHROUGH.md`
+- `reports/review/WO012_COACH_DECISION_RESPONSE_TEMPLATE.md`
 - `FORMATION_PRIVACY_GOVERNANCE_DECISION.md`
 - `FORMATION_RESEARCH_ACCEPTANCE_DECISION.md`
 
 ## Remaining Risks And Blockers
 
 - named qualified privacy acceptance is absent;
-- coach-owner walkthrough and approval are absent;
+- coach-owner walkthrough material is prepared, but the coach response and approval are absent;
 - current D9 note-derived `CLEARED` behavior conflicts with the proposed Formation
   privacy boundary;
 - Rule D1/D2 do not consume the normalized competition exposure adapter;

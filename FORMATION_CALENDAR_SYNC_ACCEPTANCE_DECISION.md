@@ -10,6 +10,7 @@ readiness_contract_version: 0.2
 fixture_pack_version: 0.2
 fixture_count: 36
 architecture_accepted: false
+repository_target_binding_prepared: true
 runtime_authority: false
 backend_or_migration_authority: false
 ```
@@ -20,5 +21,10 @@ not accepted, DOUBLE/FLEX is unmapped, and no production adapter has runtime evi
 The fixtures are specifications, not executed runtime evidence. No backend, sync,
 schema migration, account sharing, calendar mutation, or Formation activation is
 authorized.
+
+The 36 fixtures are now mapped in
+`reports/review/WO013_REPOSITORY_TARGET_BINDING_PLAN.md`: 2 current local targets, 5
+future seams that already exist, and 29 targets that do not exist yet. This is a review
+map only. It does not choose a backend, create a schema, or accept the architecture.
 
 [BLOCKED_ENTRY_GATE]

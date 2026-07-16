@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <title>TRAINORACLE | Formation 미리보기</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="#projection">TRAINORACLE</a>
+    <span class="prototype-label">검토용 화면</span>
+  </header>
+
+  <main id="projection" data-audience="athlete" data-fact-hash="synthetic-facts-v1" data-real-plan-hash="unchanged-plan-v1">
+    <section class="status-band" aria-labelledby="status-title" aria-live="polite">
+      <div>
+        <div class="status-line">
+          <span class="status-beacon" aria-hidden="true"></span>
+          <strong id="status-title">비실행 시뮬레이션</strong>
+        </div>
+        <p>실제 훈련계획은 바뀌지 않아요</p>
+      </div>
+      <div class="status-actions">
+        <label for="scenario">화면 상태</label>
+        <select id="scenario">
+          <option value="current">최신 기록</option>
+          <option value="missing">기록 부족</option>
+          <option value="stale">오래된 기록</option>
+          <option value="unknown">확인할 수 없음</option>
+          <option value="conflict">기록 충돌</option>
+          <option value="paused">분석 일시정지</option>
+          <option value="withdrawn">동의 철회</option>
+          <option value="stopped">검토 중단</option>
+        </select>
+      </div>
+    </section>
+
+    <section class="controls-band" aria-label="미리보기 설정">
+      <div class="control-group">
+        <span class="control-label">보는 사람</span>
+        <div class="segment" role="radiogroup" aria-label="보는 사람">
+          <label><input type="radio" name="audience" value="athlete" checked><span>선수</span></label>
+          <label><input type="radio" name="audience" value="journal"><span>일지만</span></label>
+          <label><input type="radio" name="audience" value="coach"><span>코치</span></label>
+          <label><input type="radio" name="audience" value="guardian"><span>허용된 보호자</span></label>
+        </div>
+      </div>
+
+      <fieldset class="control-group">
+        <legend>설명 수준</legend>
+        <div class="segment level-segment">
+          <label><input type="radio" name="level" value="easy"><span>쉽게</span></label>
+          <label><input type="radio" name="level" value="short"><span>짧게</span></label>
+          <label><input type="radio" name="level" value="balanced" checked><span>균형</span></label>
+          <label><input type="radio" name="level" value="detail"><span>자세히</span></label>
+          <label><input type="radio" name="level" value="precise"><span>정확히</span></label>
+        </div>
+      </fieldset>
+    </section>
+
+    <section class="workspace" aria-label="Formation 미리보기">
+      <section class="audience-notice" id="audience-notice" aria-live="polite" hidden>
+        <p class="eyebrow" id="audience-notice-kicker">권한에 맞춘 보기</p>
+        <h2 id="audience-notice-title"></h2>
+        <p id="audience-notice-copy"></p>
+      </section>
+      <article class="projection-panel">
+        <div class="panel-heading">
+          <div>
+            <p class="eyebrow">다음 9.5일 · 합성 예시</p>
+            <h1>훈련 흐름 미리보기</h1>
+          </div>
+          <span class="confidence"><span aria-hidden="true">●</span> 판단 보류 1건</span>
+        </div>
+
+        <div class="frame-strip" aria-label="9.5일 훈련 흐름">
+          <div class="day"><b>1일</b><span class="load easy">회복</span></div>
+          <div class="day"><b>2일</b><span class="load medium">웨이트</span></div>
+          <div class="day main-day"><b>3일</b><span class="load high">MAIN</span></div>
+          <div class="day"><b>4일</b><span class="load easy">가볍게</span></div>
+          <div class="day"><b>5일</b><span class="load medium">플라이오</span></div>
+          <div class="day main-day"><b>6일</b><span class="load race">대회</span></div>
+          <div class="day"><b>7일</b><span class="load easy">회복</span></div>
+          <div class="day"><b>8일</b><span class="load medium">언덕</span></div>
+          <div class="day main-day"><b>9.5일</b><span class="load high">MAIN</span></div>
+        </div>
+
+        <div class="explanation" aria-live="polite">
+          <p class="explanation-kicker" id="audience-title">선수에게 보이는 설명</p>
+          <h2 id="explanation-title">강한 날 사이에 회복할 틈을 둔 흐름이에요.</h2>
+          <p id="explanation-copy" data-testid="explanation-copy">3개의 중심 훈련 사이에 회복과 보조 훈련을 나눠 놓았습니다. 몸 상태가 달라지면 코치가 먼저 확인합니다.</p>
+        </div>
+
+        <section class="composite-visual" aria-labelledby="composite-title">
+          <div class="subheading">
+            <div>
+              <p class="eyebrow">복합 훈련 · 5일</p>
+              <h2 id="composite-title">플라이오 + 웨이트</h2>
+            </div>
+            <span class="review-badge">따로 기록</span>
+          </div>
+          <div class="component-grid">
+            <div><span class="component-dot plyo"></span><b>플라이오</b><small>짧은 접지 · 18회</small></div>
+            <div><span class="component-dot weight"></span><b>웨이트</b><small>중간 부하 · 4세트</small></div>
+            <div><span class="component-dot neural"></span><b>신경계 부담</b><small>계산하지 않음 · 확인 필요</small></div>
+          </div>
+          <p class="boundary-copy">운동 종류를 한 숫자로 뭉개지 않고, 확인된 사실을 각각 보여줍니다.</p>
+        </section>
+      </article>
+
+      <aside class="journal-panel" aria-labelledby="journal-title">
+        <div class="subheading">
+          <div>
+            <p class="eyebrow">오늘의 기록</p>
+            <h2 id="journal-title">꾸준함 표시</h2>
+          </div>
+          <span class="streak">4일째</span>
+        </div>
+        <div class="sticker-row" aria-label="최근 7일 기록 현황">
+          <span class="done" aria-label="기록 완료">✓</span><span class="done" aria-label="기록 완료">✓</span>
+          <span class="done" aria-label="기록 완료">✓</span><span class="today" aria-label="오늘 기록 완료">★</span>
+          <span aria-label="기록 전">·</span><span aria-label="기록 전">·</span><span aria-label="기록 전">·</span>
+        </div>
+        <p class="reward-copy">매일 기록한 흔적만 보여줘요. 운동 성과나 순위를 매기지 않습니다.</p>
+
+        <div class="privacy-boundary">
+          <strong>나만의 메모는 여기에도 나타나지 않아요.</strong>
+          <p>PRIVATE_SELF_ONLY 메모는 존재 여부, 길이, 작성 시각까지 분석 화면에 보내지 않습니다.</p>
+        </div>
+
+        <div class="fact-list">
+          <div><span>최근 RPE</span><b>6 / 10</b><small>직접 입력</small></div>
+          <div><span>수면</span><b>7시간 20분</b><small>직접 입력</small></div>
+          <div><span>훈련 메모</span><b>분석 허용</b><small>선택됨</small></div>
+        </div>
+        <p class="source-state">출처 상태: 최신 · 선수가 직접 입력</p>
+
+        <button class="review-button" type="button" disabled>검토 요청</button>
+        <p class="disabled-reason">정식 검토자와 연결되기 전에는 요청할 수 없습니다.</p>
+      </aside>
+    </section>
+  </main>
+
+  <footer>합성 데이터만 사용한 독립 시제품 · 저장과 전송 없음</footer>
+  <script src="prototype.js"></script>
+</body>
+</html>
