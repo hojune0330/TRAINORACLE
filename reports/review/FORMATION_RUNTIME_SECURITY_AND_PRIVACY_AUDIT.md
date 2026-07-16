@@ -25,6 +25,11 @@ Result: 0 of 6 strict acceptance records exists. The runtime entry gate fails. O
 immutable Order 016 acceptance because it does not name every required review role,
 source SHA, evidence manifest hash, and remaining risk.
 
+All six reviewer handoff packets are now prepared, but preparation is not acceptance.
+The current role roster remains unassigned and no trusted signing key or strict
+acceptance record has been enrolled. See `FORMATION_FORMAL_GATE_STATUS.md` and
+`FORMATION_FORMAL_APPROVAL_ROSTER.md`.
+
 ## Canonical P1 And Target-Patch Inventory
 
 The governing source still marks all ten canonical P1 blockers `OPEN`. None has both an
@@ -42,6 +47,10 @@ accepted decision artifact and an approved target-patch plan:
 | `OI-FA-RULE-CLASSIFIER-EXPOSURE-BINDING-001` | OPEN | no | no |
 | `OI-FA-PRODUCT-PROJECTION-001` | OPEN | no | no |
 | `OI-FA-RECORD-GOVERNANCE-001` | OPEN | no | no |
+
+Owner-ready plans now exist for all ten rows under `reports/target-patch-plans/`.
+They remain `approved: false`; accepted decision artifacts and owner approvals are still
+zero of ten.
 
 An `OPEN` row may pass this part of the future gate only when its accepted decision and
 approved target-patch plan exist and the sole remaining closure evidence belongs to Order

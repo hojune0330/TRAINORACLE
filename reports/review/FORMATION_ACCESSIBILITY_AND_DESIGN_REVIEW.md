@@ -6,7 +6,8 @@ status: STATIC_READINESS_REVIEW_ONLY
 named_athlete_feedback: absent
 named_coach_feedback: absent
 assistive_technology_evidence: absent
-rendered_evidence: absent
+automated_rendered_evidence: present
+human_render_review: absent
 ```
 
 ## Static Findings
@@ -18,8 +19,10 @@ requirements. They are not a visual acceptance.
 Existing tokens require caution: `--ink-4` was measured about 2.83:1 on the background,
 `--e-lt` about 2.48:1, and `--e-rest` about 4.14:1. `--line`/`--line-2` are below 3:1.
 These values cannot carry normal-size text or the sole state/control boundary without
-changing the token or using it only where it carries no required meaning. Rendered and
-assistive-technology testing remains separately required and cannot rescue a mathematically
+changing the token or using it only where it carries no required meaning. Automated
+mobile, desktop, zoom, keyboard-focus, and reduced-motion renders now exist under
+`runtime-evidence/formation-projection/`. Named human render and assistive-technology
+testing remain separately required and cannot rescue a mathematically
 failing contrast pair. Final palette remains unaccepted.
 
 ## Required Human Checks
@@ -35,6 +38,6 @@ failing contrast pair. Final palette remains unaccepted.
   obscured, status changes are announced without focus theft, and screen-reader meaning
   matches the visible authority, facts, uncertainty, and action.
 
-Until named participants and rendered evidence exist, `R-a11y-005` remains open.
+Until named participants and human/AT evidence exist, `R-a11y-005` remains open.
 
-[REVIEW_PENDING_RENDERED_EVIDENCE]
+[REVIEW_PENDING_NAMED_HUMAN_AND_AT_EVIDENCE]
