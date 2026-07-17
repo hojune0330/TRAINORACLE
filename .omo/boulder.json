@@ -1,6 +1,6 @@
 {
   "schema_version": 2,
-  "active_work_id": "trainoracle-formal-gates-and-p1-targets",
+  "active_work_id": "trainoracle-session-intensity-assessment",
   "works": {
     "trainoracle-feasible-recovery-formation-sequencing": {
       "work_id": "trainoracle-feasible-recovery-formation-sequencing",
@@ -31,6 +31,16 @@
       ],
       "status": "complete",
       "worktree_path": "C:\\Users\\SAMSUNG\\.codex\\worktrees\\TRAINORACLE-formal-formation-gates"
+    },
+    "trainoracle-session-intensity-assessment": {
+      "work_id": "trainoracle-session-intensity-assessment",
+      "active_plan": ".omo/plans/trainoracle-session-intensity-assessment.md",
+      "plan_name": "trainoracle-session-intensity-assessment",
+      "session_ids": [
+        "codex:019f5957-dca8-7ad1-8a74-e738e2192a8d"
+      ],
+      "status": "complete",
+      "worktree_path": "C:\\tmp\\TRAINORACLE-intensity-assessment"
     }
   }
 }

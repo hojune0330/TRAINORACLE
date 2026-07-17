@@ -2,15 +2,17 @@ import { beforeEach, describe, expect, it } from "vitest"
 import { FIELD_PROVENANCE } from "./field-provenance"
 import { lifetimeStats, thisWeekStats } from "./aggregates"
 import {
+  exportEntriesJSON,
   loadAnalysisEntries,
   loadEntries,
   saveEntry,
   type JournalEntry,
+  type PostSessionEntry,
 } from "./journal-store"
 
 const STORAGE_KEY = "trainoracle.journal.v1"
 
-function legacyPostSession(id: string): JournalEntry {
+function legacyPostSession(id: string): PostSessionEntry {
   return {
     id,
     kind: "post-session",
@@ -68,6 +70,43 @@ describe("journal provenance rollout boundary", () => {
         rpe: 0,
       }),
     ])
+  })
+
+  it("projects explicit intensity evidence without exposing a private memo", () => {
+    const secret = "PRIVATE_INTENSITY_NOTE"
+    const intensityAssessment = {
+      schemaVersion: 1,
+      plannedRpe: 7,
+      objectiveComponents: [{
+        componentId: "interval-analysis",
+        kind: "INTERVALS",
+        repetitions: 6,
+        workSeconds: 60,
+        recoverySeconds: 90,
+      }],
+    } as const
+    const entry = {
+      ...legacyPostSession("explicit-intensity"),
+      memo: secret,
+      memoPurpose: "PRIVATE_SELF_ONLY",
+      intensityAssessment,
+      fieldProvenance: {
+        distanceKm: { provenance: FIELD_PROVENANCE.missing },
+        durationMin: { provenance: FIELD_PROVENANCE.missing },
+        avgPace: { provenance: FIELD_PROVENANCE.missing },
+        rpe: { provenance: FIELD_PROVENANCE.missing },
+        plannedRpe: { provenance: FIELD_PROVENANCE.explicit },
+        objectiveComponents: { provenance: FIELD_PROVENANCE.explicit },
+      },
+    } satisfies JournalEntry
+
+    expect(saveEntry(entry).ok).toBe(true)
+    expect(loadAnalysisEntries()).toEqual([
+      expect.objectContaining({ id: "explicit-intensity", intensityAssessment }),
+    ])
+    expect(JSON.stringify(loadAnalysisEntries())).not.toContain(secret)
+    expect(exportEntriesJSON()).toContain('"plannedRpe": 7')
+    expect(exportEntriesJSON()).not.toContain(secret)
   })
 
   it("rejects an unregistered derivation from analysis without deleting its journal entry", () => {

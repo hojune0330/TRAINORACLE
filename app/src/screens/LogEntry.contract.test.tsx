@@ -102,4 +102,59 @@ describe("existing journal entry regression", () => {
     expect(onDone).toHaveBeenCalledWith("post-session")
     expect(window.localStorage.getItem("trainoracle.journal.v1")).toContain('"kind":"post-session"')
   })
+
+  it("captures a planned subjective intensity before saving", async () => {
+    // Given
+    const user = userEvent.setup()
+    const onDone = vi.fn()
+    render(<LogEntry entryType="post-session" onDone={onDone} />)
+
+    // When
+    await user.click(screen.getByRole("button", { name: "예상 강도 7" }))
+    await user.click(screen.getByRole("button", { name: /^저장/u }))
+
+    // Then
+    expect(onDone).toHaveBeenCalledWith("post-session")
+    expect(window.localStorage.getItem("trainoracle.journal.v1")).toContain('"plannedRpe":7')
+  })
+
+  it("saves an interval component beside subjective intensity", async () => {
+    const user = userEvent.setup()
+    render(<LogEntry entryType="post-session" />)
+
+    await user.click(screen.getByRole("button", { name: "예상 강도 7" }))
+    await user.selectOptions(screen.getByRole("combobox", { name: "객관 기록 종류" }), "INTERVALS")
+    await user.type(screen.getByRole("spinbutton", { name: "반복 횟수" }), "6")
+    await user.type(screen.getByRole("spinbutton", { name: "운동 시간 (초)" }), "60")
+    await user.type(screen.getByRole("spinbutton", { name: "회복 시간 (초)" }), "90")
+    await user.click(screen.getByRole("button", { name: "객관 구성 추가" }))
+    await user.click(screen.getByRole("button", { name: /^저장/u }))
+
+    const saved = window.localStorage.getItem("trainoracle.journal.v1")
+    expect(saved).toContain('"plannedRpe":7')
+    expect(saved).toContain('"kind":"INTERVALS"')
+    expect(saved).toContain('"repetitions":6')
+    expect(saved).toContain('"recoverySeconds":90')
+  })
+
+  it("does not silently drop malformed optional objective inputs", async () => {
+    const user = userEvent.setup()
+    render(<LogEntry entryType="post-session" />)
+
+    await user.type(screen.getByRole("spinbutton", { name: "반복 횟수" }), "6")
+    await user.type(screen.getByRole("spinbutton", { name: "운동 시간 (초)" }), "60")
+    await user.type(screen.getByRole("spinbutton", { name: "회복 시간 (초)" }), "90")
+    await user.type(screen.getByRole("textbox", { name: "반복 페이스 · 선택" }), "3:99")
+    await user.click(screen.getByRole("button", { name: "객관 구성 추가" }))
+    expect(screen.getByRole("alert")).toBeVisible()
+
+    await user.selectOptions(screen.getByRole("combobox", { name: "객관 기록 종류" }), "STRENGTH")
+    await user.type(screen.getByRole("textbox", { name: "운동 종류" }), "스쿼트")
+    await user.type(screen.getByRole("spinbutton", { name: "세트" }), "4")
+    await user.type(screen.getByRole("spinbutton", { name: "세트당 반복" }), "5")
+    await user.type(screen.getByRole("spinbutton", { name: "강도 (%1RM) · 선택" }), "-1")
+    await user.click(screen.getByRole("button", { name: "객관 구성 추가" }))
+    expect(screen.getByRole("alert")).toBeVisible()
+    expect(screen.queryByRole("button", { name: /구성 삭제/u })).not.toBeInTheDocument()
+  })
 })

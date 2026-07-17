@@ -5,6 +5,9 @@ import {
   isValidEntryFieldProvenance,
 } from "./field-provenance"
 import type { FieldProvenanceMap } from "./field-provenance"
+import { sessionIntensityAssessmentSchema } from "./intensity-assessment"
+import type { SessionIntensityAssessment } from "./intensity-assessment"
+import { parsePaceText } from "./numeric-input"
 
 export const MEMO_PURPOSE = {
   privateSelfOnly: "PRIVATE_SELF_ONLY",
@@ -43,6 +46,7 @@ export type PostSessionEntry = JournalEntryBase & PurposeScopedMemo & {
   readonly avgPace: string
   readonly rpe: number
   readonly memo: string
+  readonly intensityAssessment?: SessionIntensityAssessment
 }
 
 export type EveningEntry = JournalEntryBase & PurposeScopedMemo & {
@@ -101,6 +105,7 @@ const postSessionSchema: z.ZodType<PostSessionEntry> = z.object({
   avgPace: z.string(),
   rpe: z.number().int().min(0).max(10),
   memo: z.string(),
+  intensityAssessment: sessionIntensityAssessmentSchema.optional(),
 })
 
 const eveningSchema: z.ZodType<EveningEntry> = z.object({
@@ -217,10 +222,9 @@ export function parseTargetPaceInput(minutesInput: string, secondsInput: string)
   let minutes: number
   let seconds: number
   if (colonMatch !== null && secondsText === "") {
-    const [, minutesPart, secondsPart] = colonMatch
-    if (minutesPart === undefined || secondsPart === undefined) return null
-    minutes = Number(minutesPart)
-    seconds = Number(secondsPart)
+    const secondsPerKm = parsePaceText(minutesText)
+    if (secondsPerKm === null) return null
+    return { schemaVersion: 1, unit: "seconds_per_kilometer", secondsPerKm }
   } else if (splitMatch !== null && secondsMatch !== null) {
     const [, minutesPart] = splitMatch
     const [, secondsPart] = secondsMatch

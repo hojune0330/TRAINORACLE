@@ -1,30 +1,39 @@
 import { MEMO_PURPOSE, memoPurposeOf } from "../../domain/journal-schema"
-import type { RaceEntry } from "../../domain/journal-store"
+import { summarizeIntensityAssessment } from "../../domain/intensity-assessment"
+import type { JournalEntry, RaceEntry } from "../../domain/journal-store"
+import { IntensitySummaryPanel } from "./IntensitySummaryPanel"
 
 export function SavedMemo({
   entry,
   text,
   fontSize,
 }: {
-  readonly entry: { readonly memoPurpose?: unknown }
+  readonly entry: JournalEntry
   readonly text: string
   readonly fontSize: number
 }) {
-  if (text === "") return null
+  const intensitySummary = entry.kind === "post-session"
+    ? summarizeIntensityAssessment(entry.intensityAssessment, entry.rpe)
+    : null
   const purpose = memoPurposeOf(entry)
   const purposeLabel = purpose === MEMO_PURPOSE.privateSelfOnly
     ? "나만의 메모 · 분석하지 않아요"
     : "훈련 메모 · 분석용으로 구분됨"
 
   return (
-    <div style={{ marginTop: 12, borderTop: "1px dashed var(--paper-edge)", paddingTop: 10 }}>
-      <div style={{ fontFamily: "var(--mono)", fontSize: 9, color: "var(--ink-3)", marginBottom: 5 }}>
-        {purposeLabel}
-      </div>
-      <div className="hand" style={{ fontSize, lineHeight: 1.45, color: "var(--ink-blue)" }}>
-        {text}
-      </div>
-    </div>
+    <>
+      {intensitySummary !== null && <IntensitySummaryPanel summary={intensitySummary} />}
+      {text !== "" && (
+        <div style={{ marginTop: 12, borderTop: "1px dashed var(--paper-edge)", paddingTop: 10 }}>
+          <div style={{ fontFamily: "var(--mono)", fontSize: 9, color: "var(--ink-3)", marginBottom: 5 }}>
+            {purposeLabel}
+          </div>
+          <div className="hand" style={{ fontSize, lineHeight: 1.45, color: "var(--ink-blue)" }}>
+            {text}
+          </div>
+        </div>
+      )}
+    </>
   )
 }
 
