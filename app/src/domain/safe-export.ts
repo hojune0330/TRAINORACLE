@@ -36,6 +36,7 @@ function toSafeJournalEntry(entry: JournalEntry): SafeJournalEntry {
         durationMin: entry.durationMin,
         avgPace: entry.avgPace,
         rpe: entry.rpe,
+        ...(entry.intensityAssessment === undefined ? {} : { intensityAssessment: entry.intensityAssessment }),
       }
     case "evening":
       return {
@@ -73,13 +74,34 @@ function toSafeJournalEntry(entry: JournalEntry): SafeJournalEntry {
 }
 
 function hasEligibleAnalysisField(entry: PostSessionEntry | EveningEntry): boolean {
-  const fields = entry.kind === "post-session"
-    ? ["distanceKm", "durationMin", "avgPace", "rpe"]
-    : ["sleepH", "sleepQuality", "weightKg", "restingHr", "painParts", "mood"]
-  return fields.some((fieldName) => isEligibleForAnalysis(fieldName, entry.fieldProvenance))
+  if (entry.kind === "post-session") {
+    const hasIntensity = entry.intensityAssessment !== undefined
+      && ((entry.intensityAssessment.plannedRpe !== undefined
+          && isEligibleForAnalysis("plannedRpe", entry.fieldProvenance))
+        || (entry.intensityAssessment.objectiveComponents.length > 0
+          && isEligibleForAnalysis("objectiveComponents", entry.fieldProvenance)))
+    return hasIntensity
+      || ["distanceKm", "durationMin", "avgPace", "rpe"]
+        .some((fieldName) => isEligibleForAnalysis(fieldName, entry.fieldProvenance))
+  }
+  return ["sleepH", "sleepQuality", "weightKg", "restingHr", "painParts", "mood"]
+    .some((fieldName) => isEligibleForAnalysis(fieldName, entry.fieldProvenance))
 }
 
 function toAnalysisPostSessionEntry(entry: PostSessionEntry): AnalysisPostSessionEntry {
+  const plannedRpe = isEligibleForAnalysis("plannedRpe", entry.fieldProvenance)
+    ? entry.intensityAssessment?.plannedRpe
+    : undefined
+  const objectiveComponents = isEligibleForAnalysis("objectiveComponents", entry.fieldProvenance)
+    ? (entry.intensityAssessment?.objectiveComponents ?? [])
+    : []
+  const intensityAssessment = plannedRpe === undefined && objectiveComponents.length === 0
+    ? undefined
+    : {
+        schemaVersion: 1 as const,
+        ...(plannedRpe === undefined ? {} : { plannedRpe }),
+        objectiveComponents,
+      }
   return {
     id: entry.id,
     kind: entry.kind,
@@ -92,6 +114,7 @@ function toAnalysisPostSessionEntry(entry: PostSessionEntry): AnalysisPostSessio
     durationMin: isEligibleForAnalysis("durationMin", entry.fieldProvenance) ? entry.durationMin : "",
     avgPace: isEligibleForAnalysis("avgPace", entry.fieldProvenance) ? entry.avgPace : "",
     rpe: isEligibleForAnalysis("rpe", entry.fieldProvenance) ? entry.rpe : 0,
+    ...(intensityAssessment === undefined ? {} : { intensityAssessment }),
   }
 }
 
@@ -144,6 +167,8 @@ function hasExportableStructuredSignal(entry: JournalEntry): boolean {
       || entry.durationMin.trim() !== ""
       || entry.avgPace.trim() !== ""
       || entry.rpe > 0
+      || entry.intensityAssessment?.plannedRpe !== undefined
+      || (entry.intensityAssessment?.objectiveComponents.length ?? 0) > 0
   }
   if (entry.kind === "evening") {
     return entry.sleepH > 0

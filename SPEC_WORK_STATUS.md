@@ -195,9 +195,14 @@ Active SPEC candidates:
 - [`specs/active/TEMPLATE_LIBRARY_SPEC.md`](./specs/active/TEMPLATE_LIBRARY_SPEC.md)
 - [`specs/active/PHYSIO_SOURCE_TRUST_SPEC.md`](./specs/active/PHYSIO_SOURCE_TRUST_SPEC.md)
 - [`specs/active/RVE_RULE_EVALUATOR_BINDING_SPEC.md`](./specs/active/RVE_RULE_EVALUATOR_BINDING_SPEC.md)
+- [`specs/active/SESSION_INTENSITY_ASSESSMENT_SPEC.md`](./specs/active/SESSION_INTENSITY_ASSESSMENT_SPEC.md)
 
 Owner-approved app-local pilot decisions:
 
+- [`specs/active/SESSION_INTENSITY_ASSESSMENT_SPEC.md`](./specs/active/SESSION_INTENSITY_ASSESSMENT_SPEC.md)
+  records `OWNER_SESSION_INTENSITY_V1_2026_07_18`: separate planned/reported subjective evidence,
+  modality-specific objective components, display-only derived rule IDs, and provenance-gated
+  analysis projection. It grants no Formation, safety, readiness, or plan authority.
 - [`RACE_SELFCHECK_FIELDS_DECISION.md`](./RACE_SELFCHECK_FIELDS_DECISION.md) records the
   race self-check, structured target pace, purpose-scoped memo, provenance limitation,
   and 2026-07-14 owner-authorized Codex handoff boundaries. It does not grant canonical,
