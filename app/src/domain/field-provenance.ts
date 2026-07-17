@@ -25,7 +25,7 @@ export type FieldProvenanceMap = Readonly<Record<string, FieldProvenance>>
 export type ProvenanceEntryKind = "post-session" | "evening" | "race"
 
 const ENTRY_PROVENANCE_FIELDS: Readonly<Record<ProvenanceEntryKind, readonly string[]>> = {
-  "post-session": ["distanceKm", "durationMin", "avgPace", "rpe"],
+  "post-session": ["distanceKm", "durationMin", "avgPace", "rpe", "plannedRpe", "objectiveComponents"],
   evening: ["sleepH", "sleepQuality", "weightKg", "restingHr", "painParts", "mood"],
   race: ["tension", "condition", "mood", "goalPace"],
 }

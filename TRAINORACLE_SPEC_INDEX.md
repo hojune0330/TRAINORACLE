@@ -158,6 +158,7 @@ These files are active SPEC candidates, but each file's own metadata and open-is
 | `TEMPLATE_LIBRARY_SPEC.md` | `specs/active/TEMPLATE_LIBRARY_SPEC.md` | Template ownership, lifecycle, and eligibility |
 | `PHYSIO_SOURCE_TRUST_SPEC.md` | `specs/active/PHYSIO_SOURCE_TRUST_SPEC.md` | Physiological source trust, recency, conflict, and consent boundary |
 | `RVE_RULE_EVALUATOR_BINDING_SPEC.md` | `specs/active/RVE_RULE_EVALUATOR_BINDING_SPEC.md` | D9 evaluator to RVE / Safety Gate / Plan Generator binding |
+| `SESSION_INTENSITY_ASSESSMENT_SPEC.md` | `specs/active/SESSION_INTENSITY_ASSESSMENT_SPEC.md` | Owner-approved app-local V1 subjective/objective intensity capture; no Formation or plan authority |
 
 ---
 

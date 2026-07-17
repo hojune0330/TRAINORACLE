@@ -5,6 +5,7 @@ import { explicitOrMissing } from "../../domain/field-provenance"
 import { newEntryId, saveEntry, todayISO } from "../../domain/journal-store"
 import type { JournalEntry } from "../../domain/journal-store"
 import { PurposeScopedMemoField, usePurposeScopedMemo } from "./PurposeScopedMemoField"
+import { IntensityAssessmentField, useIntensityAssessment } from "./IntensityAssessmentField"
 import { FormSec, inputStyle, StickyBar, TopBar } from "./shared"
 import type { EntryFormProps } from "./shared"
 
@@ -25,6 +26,7 @@ export function PostSessionForm({ onBack, onDone }: EntryFormProps) {
   const [distanceKm, setDistanceKm] = React.useState("")
   const [durationMin, setDurationMin] = React.useState("")
   const [avgPace, setAvgPace] = React.useState("")
+  const intensity = useIntensityAssessment()
   const memo = usePurposeScopedMemo()
 
   const persist = () => {
@@ -34,11 +36,14 @@ export function PostSessionForm({ onBack, onDone }: EntryFormProps) {
       id: newEntryId(), kind: "post-session", date: todayISO(),
       savedAt: new Date().toISOString(), syncState: "local",
       system, title, distanceKm, durationMin, avgPace, rpe, memo: memo.text,
+      ...(intensity.assessment === undefined ? {} : { intensityAssessment: intensity.assessment }),
       fieldProvenance: {
         distanceKm: explicitOrMissing(distanceKm.trim() !== ""),
         durationMin: explicitOrMissing(durationMin.trim() !== ""),
         avgPace: explicitOrMissing(avgPace.trim() !== ""),
         rpe: explicitOrMissing(rpe > 0),
+        plannedRpe: explicitOrMissing(intensity.plannedRpe > 0),
+        objectiveComponents: explicitOrMissing(intensity.objectiveComponents.length > 0),
       },
       ...(memo.text.trim() !== "" && memo.purpose !== undefined ? { memoPurpose: memo.purpose } : {}),
     }
@@ -103,6 +108,8 @@ export function PostSessionForm({ onBack, onDone }: EntryFormProps) {
           <span>매우 쉬움</span><span>최대</span>
         </div>
       </FormSec>
+
+      <IntensityAssessmentField controller={intensity} reportedRpe={rpe} />
 
       <FormSec lb="메모 · 손글씨처럼">
         <PurposeScopedMemoField
