@@ -65,7 +65,7 @@ describe("intensity coverage summary contract", () => {
     expect(summary.objectiveComponents[0]?.facts.map((fact) => fact.text)).toEqual([
       "6회 · 운동 60초 / 회복 60초",
       "운동 비중 50%",
-      "개인 기준 페이스 대비 105%",
+      "개인 기준 페이스 대비 5% 빠름 (105%)",
     ])
     expect(summary.objectiveComponents[0]?.facts[1]).toEqual({
       text: "운동 비중 50%",

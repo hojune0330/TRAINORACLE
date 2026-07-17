@@ -32,6 +32,14 @@ function percent(numerator: number, denominator: number): string {
   return `${Math.round((numerator / denominator) * 100)}%`
 }
 
+function paceComparison(referenceSeconds: number, actualSeconds: number): string {
+  const ratio = Math.round((referenceSeconds / actualSeconds) * 100)
+  const difference = Math.abs(ratio - 100)
+  if (ratio > 100) return `${difference}% 빠름 (${ratio}%)`
+  if (ratio < 100) return `${difference}% 느림 (${ratio}%)`
+  return `같음 (${ratio}%)`
+}
+
 function density(workSeconds: number, recoverySeconds: number): string {
   return percent(workSeconds, workSeconds + recoverySeconds)
 }
@@ -56,7 +64,7 @@ function summarizeComponent(component: ObjectiveLoadComponent): ObjectiveCompone
           ...(component.referencePaceSecondsPerKm === undefined
             ? []
             : [derived(
-                `개인 기준 페이스 대비 ${percent(component.referencePaceSecondsPerKm, component.actualPaceSecondsPerKm)}`,
+                `개인 기준 페이스 대비 ${paceComparison(component.referencePaceSecondsPerKm, component.actualPaceSecondsPerKm)}`,
                 "INTENSITY_RUNNING_PACE_RATIO_V1",
                 ["referencePaceSecondsPerKm", "actualPaceSecondsPerKm"],
               )]),
@@ -84,7 +92,7 @@ function summarizeComponent(component: ObjectiveLoadComponent): ObjectiveCompone
           ...(component.referencePaceSecondsPerKm === undefined || component.actualPaceSecondsPerKm === undefined
             ? []
             : [derived(
-                `개인 기준 페이스 대비 ${percent(component.referencePaceSecondsPerKm, component.actualPaceSecondsPerKm)}`,
+                `개인 기준 페이스 대비 ${paceComparison(component.referencePaceSecondsPerKm, component.actualPaceSecondsPerKm)}`,
                 "INTENSITY_INTERVAL_PACE_RATIO_V1",
                 ["referencePaceSecondsPerKm", "actualPaceSecondsPerKm"],
               )]),
