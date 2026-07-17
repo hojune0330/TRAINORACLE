@@ -79,8 +79,8 @@ async function main() {
     assert.match(body, /state: READY_FOR_OWNER_APPROVAL/);
     const readinessClass = body.match(/^readiness_class: ([A-Z_]+)$/m)?.[1];
     assert.ok(readinessClass && READINESS_CLASSES.has(readinessClass), `${filename} has invalid readiness_class`);
-    assert.match(body, /owning_files:\n(?:  - `[^`]+`\n)+/);
-    assert.match(body, /owning_issues:\n(?:  - `[^`]+`\n)+/);
+    assert.match(body, /owning_files:\r?\n(?:  - `[^`]+`\r?\n)+/);
+    assert.match(body, /owning_issues:\r?\n(?:  - `[^`]+`\r?\n)+/);
     assert.match(body, /runtime_authorized: false/);
     assert.match(body, /canonical_spec_patch_authorized: false/);
 
