@@ -1,6 +1,20 @@
 # RACE_SELFCHECK_FIELDS_DECISION.md
 
 ```yaml
+latest_direction_status: CURRENT_DISPLAY_ONLY_FUTURE_ANALYSIS_INTENDED_FOR_ATHLETE_OWN_ANALYSIS
+latest_owner_baseline: reports/review/FORMATION_LATEST_OWNER_DECISION_BASELINE.md
+current_behavior: DISPLAY_ONLY
+future_athlete_own_analysis_authority: NOT_YET_APPROVED
+runtime_authority: false
+current_plan_use: prohibited
+current_plan_safety_reward_telemetry_use: PROHIBITED
+current_coach_guardian_third_party_use: PROHIBITED
+```
+
+> 현재 네 필드는 수집·표시 전용이다. 최신 제품 방향은 별도 계약과 승인을 거친
+> 선수 본인용 미래 분석을 의도하지만, 현재 분석이나 다른 사람의 접근 권한을 열지 않는다.
+
+```yaml
 decision_metadata:
   decision_id: TO-DECISION-RACE-SELFCHECK-FIELDS-2026-07-14-001
   status: OWNER_APPROVED_APP_LOCAL_PILOT
@@ -56,15 +70,18 @@ interface TargetPaceV1 {
 
 | 목적 | 사용자 표기 | 처리 계약 |
 |---|---|---|
-| `PRIVATE_SELF_ONLY` | 나만의 메모 | 로컬 저장 뒤 처리 종료. 분석, 신호 생성, 동기화, 코치 접근, 내보내기 금지 |
-| `ANALYZABLE_TRAINING_NOTE` | 훈련 메모 / 오늘의 메모 | 원문은 이 기기에만 저장. 명시적 선택이 있을 때만 로컬 일시 분석 허용 |
+| `PRIVATE_SELF_ONLY` | 나만의 메모 | 로컬 저장 뒤 분석 처리 종료. 분석·신호 생성·자동 코치 접근 금지. 백업·공유는 아래의 별도 사용자 선택을 따름 |
+| `ANALYZABLE_TRAINING_NOTE` | 훈련 메모 / 오늘의 메모 | 원문은 이 기기에만 저장. 분석 목적을 명시적으로 고른 기록만 승인된 로컬 범위에서 일시 분석. 백업·공유는 별도 선택 |
 
 - 기존 메모, 목적이 없는 메모, 알 수 없는 목적의 메모는 모두
   `PRIVATE_SELF_ONLY`로 읽는다.
 - `PRIVATE_SELF_ONLY`의 내용뿐 아니라 존재 여부, 길이, 작성 빈도도 분석이나
   보상 신호로 사용하지 않는다. 안전 입력으로도 평가하지 않는다.
-- `ANALYZABLE_TRAINING_NOTE` 원문은 서버, 분석 저장소, 감사 로그, 코치 화면,
-  외부 LLM, 내보내기 데이터에 포함하지 않는다.
+- 두 메모의 **분석 선택**과 **파일 백업·공유 선택**은 서로 다르다. 백업·공유의 메모
+  포함은 기본 꺼짐이며, 사용자가 미리보기에서 별도로 켠 경우에만 선택한 파일이나
+  수신자 범위에 포함할 수 있다. 이 선택은 분석 동의나 코치 상시 접근이 아니다.
+- `ANALYZABLE_TRAINING_NOTE` 원문은 서버 분석 저장소, 감사 로그, 자동 코치 화면,
+  외부 LLM에 포함하지 않는다.
 - `ANALYZABLE_TRAINING_NOTE`를 현재 기록에서 명시적으로 선택한 경우에만 원문을
   로컬 일시 D9 평가기에 전달할 수 있다. 평가는 검토 필요성을 높이는 비식별
   허용목록 메타데이터를 현재 화면에 반환할 수 있지만, 위험을 낮추거나
@@ -93,14 +110,24 @@ interface TargetPaceV1 {
 
 ## 4. 분석과 계획 사용 제한
 
-네 필드는 현재 **수집 및 표시 전용**이다. 주간 통계, Trends, Formation,
-훈련계획 생성, 추천, 안전 판정에 사용하지 않는다. 이후 사용하려면 최소한
-다음 별도 승인이 필요하다.
+네 필드는 현재 **수집 및 표시 전용**이다. 이 현재 파일럿 제한은 영구적인
+무분석 결정이 아니다. 최신 제품 방향은 `tension`, `condition`, `goalPace`, `mood`를
+별도 승인된 **선수 본인용 미래 분석**에서만 다루려는 의도다. 그 계약이 승인되기
+전에는 분석하지 않으며, 현재 주간 통계, Trends, Formation, 훈련계획 생성·변경,
+추천, 안전 판정, 보상, telemetry에 사용하지 않는다. 코치, 보호자, 제3자에게
+제공하거나 그들을 위한 신호로 만들지도 않는다.
+
+선수 본인용 미래 분석 계약에는 최소한 다음이 모두 필요하다.
 
 1. 필드별 출처와 결측을 구분하는 provenance 계약
-2. 분석 어휘, 계산 방식, 불확실성 표시에 대한 검수
-3. 실제 입력·내보내기·레거시 판독 증거
-4. COACH_HOJUNE의 분석 및 계획 소비 승인
+2. 선수 개인 안에서만 해석하는 방법과 비교 경계
+3. 분석 어휘, 계산 방식, 불확실성 표시와 사용자 설명에 대한 검수
+4. 실제 입력·내보내기·레거시 판독 증거
+5. COACH_HOJUNE의 별도 선수 본인용 분석 계약 승인
+
+이 미래 의도는 계획, 안전, 보상, telemetry, 코치, 보호자 또는 제3자 사용을
+미리 승인하지 않는다. 각 사용 목적은 별도 owner 결정과 안전·개인정보·사람 검토가
+없으면 계속 금지된다.
 
 ## 5. 권한 경계
 

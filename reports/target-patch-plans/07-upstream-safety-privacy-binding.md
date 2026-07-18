@@ -96,6 +96,31 @@ threat model covers inference, replay, substitution, stale ref, IDOR, logs, and 
 Signed contract decisions, zero-signal proof, target diffs/recounts, later executable
 RED/GREEN logs, threat model, log scrub, ref expiry/target tests, and closure PR.
 
+## Latest Research Reconciliation
+
+```yaml
+latest_owner_baseline: reports/review/FORMATION_LATEST_OWNER_DECISION_BASELINE.md
+related_conflicts:
+  - FRV2-CONF-007
+  - FRV2-CONF-010
+research_inputs:
+  - reports/review/FORMATION_RUNTIME_SECURITY_AND_PRIVACY_AUDIT.md
+  - reports/research/RACE_DESCRIPTIVE_ANALYSIS_REVIEW.md
+decision_packets:
+  - FORMATION_PRIVACY_GOVERNANCE_DECISION.md
+  - reports/review/PRIVACY_YOUTH_QUALIFIED_REVIEW_PACKET.md
+prepared_evidence:
+  - reports/review/FORMATION_USER_SCENARIOS_AND_TEACH_BACK_V1.md
+remaining_named_gates:
+  - NAMED_QUALIFIED_PRIVACY_REVIEW
+  - SAFETY_OWNER_REFERENCE_STATE_DECISION
+  - INDEPENDENT_SECURITY_REVIEW
+  - COACH_HOJUNE_GOVERNANCE_DECISION
+approval_state_unchanged: true
+runtime_authorized: false
+canonical_spec_patch_authorized: false
+```
+
 ## Human Decision
 
 `COACH_HOJUNE` may approve the target plan only after qualified privacy and safety review.

@@ -93,6 +93,31 @@ reviewer verifies athlete/tenant/session/version/frame scope and duplicate resis
 Accepted adapter version/hash, target diffs/recounts, RED/GREEN logs, label preservation
 and exactly-once proofs, manual coach trace, reviewer sign-offs, and closure PR.
 
+## Latest Research Reconciliation
+
+```yaml
+latest_owner_baseline: reports/review/FORMATION_LATEST_OWNER_DECISION_BASELINE.md
+related_conflicts:
+  - FRV2-CONF-011
+  - FRV2-CONF-012
+research_inputs:
+  - reports/research/FORMATION_COMPETITION_ANCHOR_EVIDENCE_SUPPLEMENT.md
+  - reports/review/FORMATION_LATEST_DECISION_AND_USER_GAP_AUDIT_V2.md
+decision_packets:
+  - FORMATION_COACH_RULESET_ACCEPTANCE_DECISION.md
+  - reports/review/FORMATION_COMPETITION_ANCHOR_DECISION_PACKET_V1.md
+prepared_evidence:
+  - specs/test-packages/FORMATION_COACH_RULESET_FIXTURES.md
+remaining_named_gates:
+  - P1_PLAN_01_APPROVED
+  - RULE_OWNER_ADAPTER_DECISION
+  - CLASSIFIER_OWNER_ADAPTER_DECISION
+  - CA-02_CA-03_OWNER_DECISION
+approval_state_unchanged: true
+runtime_authorized: false
+canonical_spec_patch_authorized: false
+```
+
 ## Human Decision
 
 `COACH_HOJUNE`, Rule owner, and Classifier owner approve one adapter contract. Current

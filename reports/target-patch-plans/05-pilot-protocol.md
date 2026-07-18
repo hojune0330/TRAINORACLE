@@ -95,6 +95,31 @@ access and incident handling; security reviewer checks isolation and unauthorize
 Named signatures, accepted protocol version/hash, scenario logs, rendered disclosures,
 withdrawal/deletion proof, App Bridge diff/recount, review record, and closure PR.
 
+## Latest Research Reconciliation
+
+```yaml
+latest_owner_baseline: reports/review/FORMATION_LATEST_OWNER_DECISION_BASELINE.md
+related_conflicts:
+  - FRV2-CONF-007
+  - FRV2-CONF-009
+research_inputs:
+  - reports/research/FORMATION_YOUTH_TRANSFER_AND_PILOT_REVIEW.md
+  - reports/review/FORMATION_USER_SCENARIOS_AND_TEACH_BACK_V1.md
+decision_packets:
+  - FORMATION_SHADOW_PROTOCOL_ACCEPTANCE_DECISION.md
+prepared_evidence:
+  - reports/review/WO014_ATHLETE_PARTICIPANT_MATERIALS.md
+  - reports/review/WO014_INDEPENDENT_REVIEW_FORMS.md
+remaining_named_gates:
+  - ORDERS_011_TO_013_ACCEPTED_FOR_PILOT
+  - NAMED_ATHLETE_AND_INDEPENDENT_REVIEW
+  - QUALIFIED_LEGAL_PRIVACY_REVIEW
+  - COACH_HOJUNE_PILOT_DECISION
+approval_state_unchanged: true
+runtime_authorized: false
+canonical_spec_patch_authorized: false
+```
+
 ## Human Decision
 
 `COACH_HOJUNE` approves, revises, or rejects protocol duration and operating rules only

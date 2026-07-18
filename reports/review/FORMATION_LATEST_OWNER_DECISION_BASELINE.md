@@ -15,7 +15,9 @@ runtime_authority: false_until_named_gates_pass
 
 ## 기준 결정
 
-1. TRAINORACLE의 제품 정체성은 `9_5_DAY_FORMATION`이다.
+1. TRAINORACLE의 제품 정체성은 `9_5_DAY_FORMATION`이다. 9.5일은 모든 선수에게 같은
+   훈련을 복사하는 규칙이 아니라 기본 시간 틀이다. 그 안의 훈련 종류, 양, 순서, 회복,
+   대회 대응은 선수 기록과 코치 규칙에 맞춰 달라진다.
 2. 목표 권한은 `DEFAULT_AUTOMATED_PRESCRIPTION`이다.
 3. 적격 입력에서는 시스템이 결정적으로 **기본 계획 1개**를 먼저 고른다.
 4. 코치는 비교·수정·예외 계획·초기 청소년 실행 확인을 담당한다. 시스템이 기본안을
@@ -26,6 +28,8 @@ runtime_authority: false_until_named_gates_pass
    `NO_AUTOMATED_PLAN -> KEEP_CURRENT_COACH_AUTHORED_PLAN`이다.
 7. `PRIVATE_SELF_ONLY`는 분석·계획·보상·telemetry·안전 신호에서 존재 여부까지
    zero-signal이다.
+   `ANALYZABLE_TRAINING_NOTE`는 사용자가 그 기록에서 분석 목적을 선택한 경우에만 승인된
+   로컬 범위에서 분석할 수 있다. 이 분석 선택과 백업·공유 선택은 서로 다른 결정이다.
 8. 메모 export 기본값은 제외다. 사용자는 preview와 명시 확인 뒤 자기 메모를 포함한
    로컬 전체 백업 `OWNER_FULL_LOCAL_BACKUP`을 만들 수 있다.
 9. 사용자는 코치·친구·보호자 등 직접 선택한 사람에게 정확한 범위와 기간을 정해 공유할

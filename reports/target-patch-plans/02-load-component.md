@@ -95,6 +95,30 @@ reviewer verifies dedupe keys cannot mix athlete, tenant, plan version, or sessi
 Accepted registry, mapping review, RED/GREEN logs, compatibility matrix, diff and
 recount for all targets, reviewer names, source commit, and closure PR.
 
+## Latest Research Reconciliation
+
+```yaml
+latest_owner_baseline: reports/review/FORMATION_LATEST_OWNER_DECISION_BASELINE.md
+related_conflicts:
+  - FRV2-CONF-012
+research_inputs:
+  - reports/research/FORMATION_COMPOSITE_AND_LOAD_EVIDENCE_REVIEW.md
+  - reports/research/FORMATION_COMPETITION_ANCHOR_EVIDENCE_SUPPLEMENT.md
+decision_packets:
+  - reports/review/FORMATION_LOAD_COMPONENT_DECISION_PACKET_V2.md
+  - reports/review/FORMATION_COMPETITION_ANCHOR_DECISION_PACKET_V1.md
+prepared_evidence:
+  - .omo/evidence/formation-research-v2/youth-composite-session-primary-research.md
+remaining_named_gates:
+  - COACH_HOJUNE_COMPONENT_REGISTRY_DECISION
+  - YOUTH_ENDURANCE_SPORT_SCIENCE_REVIEW
+  - QUALIFIED_PRIVACY_REVIEW
+  - ACCEPTED_HUMAN_RESEARCH_APPRAISAL
+approval_state_unchanged: true
+runtime_authorized: false
+canonical_spec_patch_authorized: false
+```
+
 ## Human Decision
 
 `COACH_HOJUNE` must accept or revise units, allocation, intensity mapping, and conflict

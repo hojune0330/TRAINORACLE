@@ -78,7 +78,8 @@ try {
     "utf8",
   );
   const recordedHash = amendmentLog.match(/amended_sha256: ([a-f0-9]{64})/u)?.[1];
-  const actualHash = createHash("sha256").update(protocol).digest("hex");
+  const canonicalProtocol = protocol.replaceAll("\r\n", "\n");
+  const actualHash = createHash("sha256").update(canonicalProtocol).digest("hex");
   if (!recordedHash || recordedHash !== actualHash) {
     errors.push(`protocol hash mismatch recorded=${recordedHash ?? "MISSING"} actual=${actualHash}`);
   }

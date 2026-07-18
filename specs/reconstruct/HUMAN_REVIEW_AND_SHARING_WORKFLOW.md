@@ -5,6 +5,8 @@ spec_id: HUMAN_REVIEW_AND_SHARING_WORKFLOW
 status: READINESS_ONLY_BLOCKED_ON_GOVERNANCE
 runtime_authority: false
 in_app_delivery: false
+latest_owner_direction_bound: true
+qualified_human_acceptance: false
 ```
 
 ## Review
@@ -51,10 +53,17 @@ with the separate rules in `ATHLETE_VISIBLE_SHADOW_PILOT_PROTOCOL.md`.
 
 ## Sharing
 
-Private notes are never eligible. Raw training notes are not delivered. The athlete must
-select exact recipient, exact structured fields, purpose, one-time/expiry, preview, and
-confirmation. No default recipient, role inference, auto-notification, or blanket journal
-grant exists.
+Private notes are never eligible for analysis. Raw training-note text is not delivered by
+default. A later recipient-share flow may include either note type only when the athlete
+separately turns memo inclusion on in the same preview. The athlete must select exact
+recipient, exact structured fields, purpose, one-time/expiry, preview, and confirmation.
+No default recipient, role inference, auto-notification, or blanket journal grant exists.
+
+Memo purpose and file transport are separate choices. `PRIVATE_SELF_ONLY` always stays
+zero-signal for analysis even when its owner explicitly includes it in a local backup or
+recipient share. `ANALYZABLE_TRAINING_NOTE` analysis requires its own explicit purpose choice;
+backup or sharing neither grants nor revokes that analysis choice. Recipient transport grants
+no standing access, Formation, plan, safety, reward, telemetry, or other secondary-use authority.
 
 Order 011 currently blocks in-app coach/guardian/friend delivery, so every synthetic
 share case ends `HOLD_PENDING_RECIPIENT_CONTRACT`. The athlete may independently show or

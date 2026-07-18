@@ -94,6 +94,31 @@ athlete, version, revision, watermark, and hash cannot be substituted or enumera
 Accepted crosswalk/hash version, target diffs/recounts, executable DST and concurrency
 logs, manual projection evidence, privacy/security sign-off, and closure PR.
 
+## Latest Research Reconciliation
+
+```yaml
+latest_owner_baseline: reports/review/FORMATION_LATEST_OWNER_DECISION_BASELINE.md
+related_conflicts:
+  - FRV2-CONF-001
+  - FRV2-CONF-012
+research_inputs:
+  - reports/research/FORMATION_COMPETITION_ANCHOR_EVIDENCE_SUPPLEMENT.md
+  - reports/review/FORMATION_LATEST_DECISION_AND_USER_GAP_AUDIT_V2.md
+decision_packets:
+  - FORMATION_CALENDAR_SYNC_ACCEPTANCE_DECISION.md
+  - reports/review/FORMATION_COMPETITION_ANCHOR_DECISION_PACKET_V1.md
+prepared_evidence:
+  - reports/review/WO013_REPOSITORY_TARGET_BINDING_PLAN.md
+remaining_named_gates:
+  - ORDERS_011_AND_012_ACCEPTED
+  - COACH_HOJUNE_DOUBLE_FLEX_AND_BOUNDARY_DECISION
+  - P1_PLAN_04_APPROVED
+  - CA-02_CA-03_OWNER_DECISION
+approval_state_unchanged: true
+runtime_authorized: false
+canonical_spec_patch_authorized: false
+```
+
 ## Human Decision
 
 `COACH_HOJUNE` approves DOUBLE/FLEX and boundary semantics, then target owners approve

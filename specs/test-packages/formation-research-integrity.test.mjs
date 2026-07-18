@@ -49,6 +49,27 @@ async function withFixture(callback) {
   }
 }
 
+test("research protocol hash accepts a CRLF checkout of the frozen LF blob", async () => {
+  await withFixture(async (root) => {
+    await rewrite(root, "reports/research/FORMATION_RESEARCH_PROTOCOL_V2.md", (source) =>
+      source.replaceAll(/\r?\n/gu, "\r\n"),
+    );
+    const result = run(root, "validate-formation-research-v2.mjs");
+    assert.equal(result.status, 0, result.stderr || result.stdout);
+  });
+});
+
+test("research protocol hash still rejects changed content after newline normalization", async () => {
+  await withFixture(async (root) => {
+    await rewrite(root, "reports/research/FORMATION_RESEARCH_PROTOCOL_V2.md", (source) =>
+      `${source.replaceAll(/\r?\n/gu, "\r\n")}UNRECORDED_PROTOCOL_CHANGE\r\n`,
+    );
+    const result = run(root, "validate-formation-research-v2.mjs");
+    assert.notEqual(result.status, 0, "protocol content changed without a dated amendment");
+    assert.match(result.stderr, /protocol hash mismatch/u);
+  });
+});
+
 test("screening acceptance cannot be forged by changing canonical markers", async () => {
   await withFixture(async (root) => {
     await rewrite(root, "reports/research/evidence/FORMATION_SCREENING_LEDGER.csv", (source) =>

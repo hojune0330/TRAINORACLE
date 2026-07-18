@@ -95,6 +95,35 @@ coach/guardian access, source-ref enumeration, stale cache, and export leakage.
 Named feedback, accepted contract hash, target diffs/recounts, existing render matrix,
 screenshots, named AT review, privacy/security review, and closure PR.
 
+## Latest Research Reconciliation
+
+```yaml
+latest_owner_baseline: reports/review/FORMATION_LATEST_OWNER_DECISION_BASELINE.md
+related_conflicts:
+  - FRV2-CONF-001
+  - FRV2-CONF-004
+  - FRV2-CONF-005
+  - FRV2-CONF-006
+  - FRV2-CONF-009
+research_inputs:
+  - reports/review/FORMATION_LATEST_DECISION_AND_USER_GAP_AUDIT_V2.md
+  - reports/review/FORMATION_USER_SPEC_ALIGNMENT_REVIEW.md
+decision_packets:
+  - FORMATION_PRODUCT_PROJECTION_ACCEPTANCE_DECISION.md
+  - reports/review/COACH_TEAM_AND_MICROCYCLE_VIEW_DECISION.md
+prepared_evidence:
+  - reports/review/FORMATION_USER_SCENARIOS_AND_TEACH_BACK_V1.md
+  - reports/review/FORMATION_ACCESSIBILITY_AND_DESIGN_REVIEW.md
+remaining_named_gates:
+  - ORDERS_011_AND_014_ACCEPTED
+  - NAMED_ATHLETE_COACH_ACCESSIBILITY_AND_PRIVACY_REVIEW
+  - ASSISTIVE_TECHNOLOGY_REVIEW
+  - COACH_HOJUNE_PRODUCT_SEMANTICS_DECISION
+approval_state_unchanged: true
+runtime_authorized: false
+canonical_spec_patch_authorized: false
+```
+
 ## Human Decision
 
 `COACH_HOJUNE` approves product semantics only after named reviews; UI activation is a

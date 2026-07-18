@@ -94,6 +94,29 @@ reviewer threat-models replay, IDOR, tenant mixing, hash substitution, and outbo
 Accepted architecture hash, target issues/recounts, schema design, RED/GREEN and
 concurrency logs, migration rehearsal, threat model, rollback proof, and closure PR.
 
+## Latest Research Reconciliation
+
+```yaml
+latest_owner_baseline: reports/review/FORMATION_LATEST_OWNER_DECISION_BASELINE.md
+related_conflicts:
+  - FRV2-CONF-001
+research_inputs:
+  - reports/review/FORMATION_LATEST_DECISION_AND_USER_GAP_AUDIT_V2.md
+decision_packets:
+  - reports/review/MULTITAB_REFRESH_AND_REVISION_DECISION.md
+prepared_evidence:
+  - reports/review/WO013_REPOSITORY_TARGET_BINDING_PLAN.md
+  - reports/review/FORMATION_RUNTIME_SECURITY_AND_PRIVACY_AUDIT.md
+remaining_named_gates:
+  - ORDER_011_QUALIFIED_PRIVACY_ACCEPTANCE
+  - ORDER_012_COACH_OWNER_ACCEPTANCE
+  - COACH_HOJUNE_VERSION_IDENTITY_DECISION
+  - BACKEND_SECURITY_IMPLEMENTATION_DECISION
+approval_state_unchanged: true
+runtime_authorized: false
+canonical_spec_patch_authorized: false
+```
+
 ## Human Decision
 
 `COACH_HOJUNE` approves the bounded contract plan; backend/security owners later approve
