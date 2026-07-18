@@ -5,7 +5,9 @@ intake_id: TO-OWNER-DECISION-INTAKE-2026-07-18-01
 recorded_by: FABLE_CHIEF_OF_STAFF
 owner: COACH_HOJUNE
 recorded_at: 2026-07-18T00:00:00+09:00 (수신 시각 기준, 정확 시각은 대화 로그)
-status: RECEIVED_MAPPING_PENDING_OWNER_CONFIRMATION
+status: SUPERSEDED_MAPPING_CONFIRMED
+superseded_by: reports/review/FORMATION_OWNER_DIRECTION_BINDING_2026-07-18.md
+confirmed_mapping: "1=부하 구성, 2=개인별 최소 근거, 3=CA-02 경기 정체성 분리, 4=CA-03 수정(같은 현지 달력 날짜당 MAIN 최대 1회), 5=선택 내보내기·OS 공유 우선, 6=내부 비처방 QA 승인·파일럿은 전문가 검토 후"
 decision_precedence: LATEST_EXPLICIT_OWNER_DECISION_GOVERNS
 runtime_authority: false
 packet_status_mutation: NONE (매핑 확정 전 패킷 결정란 변경 금지)
