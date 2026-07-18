@@ -96,6 +96,30 @@ security review verifies tenant/audience scope and repeated-query rate/audit con
 Signed threshold matrix, source allowlist, RED/GREEN logs, suppression manual QA,
 privacy attack review, exact target diffs/recounts, and closure PR.
 
+## Latest Research Reconciliation
+
+```yaml
+latest_owner_baseline: reports/review/FORMATION_LATEST_OWNER_DECISION_BASELINE.md
+related_conflicts:
+  - FRV2-CONF-003
+  - FRV2-CONF-010
+research_inputs:
+  - reports/research/FORMATION_MINIMUM_EVIDENCE_METHODS_REVIEW.md
+  - reports/research/RACE_DESCRIPTIVE_ANALYSIS_REVIEW.md
+decision_packets:
+  - reports/review/FORMATION_MINIMUM_EVIDENCE_DECISION_PACKET_V2.md
+prepared_evidence:
+  - .omo/evidence/formation-research-v2/within-athlete-minimum-evidence-primary-research.md
+remaining_named_gates:
+  - COACH_HOJUNE_THRESHOLD_DECISION
+  - LONGITUDINAL_N_OF_1_STATISTICIAN_REVIEW
+  - QUALIFIED_PRIVACY_REVIEW
+  - ACCEPTED_HUMAN_RESEARCH_APPRAISAL
+approval_state_unchanged: true
+runtime_authorized: false
+canonical_spec_patch_authorized: false
+```
+
 ## Human Decision
 
 `COACH_HOJUNE` selects thresholds or keeps all affected sources rejected and output

@@ -1,6 +1,17 @@
 # TRAINING_PLAN_METHOD_DECISION.md
 
 ```yaml
+product_direction_status: SUPERSEDED_PRODUCT_DIRECTION
+historical_runtime_facts_preserved: true
+latest_owner_baseline: reports/review/FORMATION_LATEST_OWNER_DECISION_BASELINE.md
+```
+
+> Current product direction is governed by the
+> [latest owner baseline](reports/review/FORMATION_LATEST_OWNER_DECISION_BASELINE.md).
+> The dated method decision and its runtime-off constraints remain historical facts;
+> its candidate-count and coach-only final-selection guidance is not current product direction.
+
+```yaml
 decision_metadata:
   decision_id: TO-DEC-TRAINING-METHOD-2026-07-14-001
   title: First-pilot training-plan method boundary

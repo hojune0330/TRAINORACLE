@@ -97,6 +97,33 @@ trace enters coach rules; security reviewer confirms registry and target hashes 
 Owner-signed walkthrough, accepted registry hash, RED/GREEN logs, target diffs, issue
 recounts, privacy/security sign-off, and a closure PR linking this canonical P1.
 
+## Latest Research Reconciliation
+
+```yaml
+latest_owner_baseline: reports/review/FORMATION_LATEST_OWNER_DECISION_BASELINE.md
+related_conflicts:
+  - FRV2-CONF-002
+  - FRV2-CONF-003
+  - FRV2-CONF-011
+  - FRV2-CONF-012
+research_inputs:
+  - reports/research/FORMATION_COMPETITION_ANCHOR_EVIDENCE_SUPPLEMENT.md
+  - reports/review/FORMATION_LATEST_DECISION_AND_USER_GAP_AUDIT_V2.md
+decision_packets:
+  - reports/review/FORMATION_COMPETITION_ANCHOR_DECISION_PACKET_V1.md
+prepared_evidence:
+  - reports/review/FORMATION_USER_SCENARIOS_AND_TEACH_BACK_V1.md
+  - reports/review/WO012_COACH_OWNER_WALKTHROUGH.md
+remaining_named_gates:
+  - COACH_HOJUNE_RULESET_DECISION
+  - ORDER_011_QUALIFIED_PRIVACY_ACCEPTANCE
+  - CA-02_CA-03_OWNER_DECISION
+  - YOUTH_ENDURANCE_SPORT_SCIENCE_REVIEW
+approval_state_unchanged: true
+runtime_authorized: false
+canonical_spec_patch_authorized: false
+```
+
 ## Human Decision
 
 `COACH_HOJUNE`: approve, revise, or reject the registry and patch order. Current answer:

@@ -1,5 +1,16 @@
 # FABLE_CODEX_JOINT_PLANNING_BRIEF.md
 
+```yaml
+product_direction_status: SUPERSEDED_PRODUCT_DIRECTION
+historical_runtime_facts_preserved: true
+latest_owner_baseline: reports/review/FORMATION_LATEST_OWNER_DECISION_BASELINE.md
+```
+
+> Current product direction is governed by the
+> [latest owner baseline](reports/review/FORMATION_LATEST_OWNER_DECISION_BASELINE.md).
+> This brief preserves its dated planning observations and runtime facts; earlier
+> option-generation and coach-only selection guidance is not current product direction.
+
 doc_id: FABLE_CODEX_JOINT_PLANNING_BRIEF
 title: "TrainOracle 서비스화 및 훈련계획 코어 공동 기획 사전 브리프"
 version: 0.3

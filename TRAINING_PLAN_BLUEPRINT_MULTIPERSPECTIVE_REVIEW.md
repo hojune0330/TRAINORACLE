@@ -1,6 +1,17 @@
 # TRAINING_PLAN_BLUEPRINT_MULTIPERSPECTIVE_REVIEW.md
 
 ```yaml
+product_direction_status: SUPERSEDED_PRODUCT_DIRECTION
+historical_runtime_facts_preserved: true
+latest_owner_baseline: reports/review/FORMATION_LATEST_OWNER_DECISION_BASELINE.md
+```
+
+> Current product direction is governed by the
+> [latest owner baseline](reports/review/FORMATION_LATEST_OWNER_DECISION_BASELINE.md).
+> The review findings, verdicts, and runtime-off evidence below remain historical facts;
+> earlier candidate and coach-only selection guidance is not current product direction.
+
+```yaml
 review_metadata:
   review_id: TO-REVIEW-FORMATION-MULTIPERSPECTIVE-2026-07-14-001
   reviewed_commit: 807380c

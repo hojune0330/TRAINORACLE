@@ -6,6 +6,7 @@ source_issue_table: specs/reconstruct/TRAINING_PLAN_FORMATION_AND_ADAPTATION_SPE
 state: READY_FOR_OWNER_APPROVAL
 approved_plans: 0
 ready_for_owner_approval: 10
+research_reconciliation: 10/10
 runtime_authorized: false
 ```
 
@@ -15,6 +16,10 @@ These plans turn the ten canonical P1 blockers into bounded, reviewable patches.
 do not approve a policy, close an issue, patch the canonical Formation draft, or start
 runtime work. `COACH_HOJUNE` must record the Human Decision in each plan after its
 named prerequisites and specialist reviews are satisfied.
+
+연구 자료를 10개 계획에 연결한 것은 검토 준비일 뿐, 계획 승인을 뜻하지 않습니다. 각 계획의
+이름이 적힌 사람 검토와 책임자 결정이 기록되기 전에는 정본 사양 패치와 런타임 작업을
+시작할 수 없습니다.
 
 ## Index
 

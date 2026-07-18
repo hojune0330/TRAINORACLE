@@ -27,6 +27,20 @@ const expectedConflictIds = new Set([
   "FRV2-CONF-011",
   "FRV2-CONF-012",
 ]);
+const expectedStatusByConflict = new Map([
+  ["FRV2-CONF-001", "PATCH_REQUIRED"],
+  ["FRV2-CONF-002", "PATCH_REQUIRED"],
+  ["FRV2-CONF-003", "PATCH_REQUIRED"],
+  ["FRV2-CONF-004", "PATCH_APPLIED_PENDING_INDEPENDENT_REVIEW"],
+  ["FRV2-CONF-005", "PATCH_APPLIED_PENDING_INDEPENDENT_REVIEW"],
+  ["FRV2-CONF-006", "PATCH_APPLIED_PENDING_INDEPENDENT_REVIEW"],
+  ["FRV2-CONF-007", "PATCH_REQUIRED"],
+  ["FRV2-CONF-008", "TARGET_BOUND_PENDING_QUALIFIED_REVIEW"],
+  ["FRV2-CONF-009", "HUMAN_REVIEW_REQUIRED"],
+  ["FRV2-CONF-010", "PATCH_APPLIED_PENDING_INDEPENDENT_REVIEW"],
+  ["FRV2-CONF-011", "PATCH_REQUIRED"],
+  ["FRV2-CONF-012", "OWNER_DECISION_REQUIRED"],
+]);
 const errors = [];
 for (const phrase of [
   "LATEST_EXPLICIT_OWNER_DECISION_GOVERNS",
@@ -56,12 +70,7 @@ for (const conflictId of actualConflictIds) {
 }
 for (const conflict of conflicts) {
   if (!conflict.required_patch || !conflict.user_impact) errors.push(`incomplete ${conflict.conflict_id}`);
-  if (!new Set([
-    "PATCH_REQUIRED",
-    "TARGET_REQUIRED",
-    "HUMAN_REVIEW_REQUIRED",
-    "OWNER_DECISION_REQUIRED",
-  ]).has(conflict.status)) {
+  if (expectedStatusByConflict.get(conflict.conflict_id) !== conflict.status) {
     errors.push(`invalid status ${conflict.conflict_id}`);
   }
 }

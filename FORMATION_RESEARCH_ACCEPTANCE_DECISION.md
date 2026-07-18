@@ -1,6 +1,17 @@
 # Formation Research Acceptance Decision
 
 ```yaml
+product_direction_status: SUPERSEDED_PRODUCT_DIRECTION
+historical_runtime_facts_preserved: true
+latest_owner_baseline: reports/review/FORMATION_LATEST_OWNER_DECISION_BASELINE.md
+```
+
+> Current product direction is governed by the
+> [latest owner baseline](reports/review/FORMATION_LATEST_OWNER_DECISION_BASELINE.md).
+> The dated research verdict, runtime-off state, and safety/privacy limits below remain
+> historical facts; earlier selection guidance is not current product direction.
+
+```yaml
 decision_id: TO-DECISION-WO010-2026-07-15
 order_id: CODEX_WORK_ORDER_010
 decision: ACCEPT_RESEARCH_BOUNDARY_ONLY

@@ -6,6 +6,8 @@ status: NOT_REVIEWED
 runtime_authority: false
 owner_product_identity: 9_5_DAY_FORMATION
 owner_target_authority: DEFAULT_AUTOMATED_PRESCRIPTION
+owner_product_direction: APPROVE_RECORDED_PENDING_NAMED_REVIEW
+owner_direction_binding: reports/review/FORMATION_OWNER_DIRECTION_BINDING_2026-07-18.md
 owned_fields:
   - component_id
   - component_family
@@ -36,6 +38,9 @@ forbidden_fields:
 
 이 패킷은 “무슨 데이터를 어떤 구조로 보존할지”만 결정한다. 몇 개가 쌓여야 분석하는지,
 언제 오래된 데이터인지, 변화가 의미 있는지는 Minimum Evidence 패킷의 소유다.
+
+책임자는 2026-07-18에 아래 권고 전체를 제품 방향으로 승인했다. 이 기록은 이름 붙은
+스포츠과학 검토, 정식 결정란 서명, 정본 패치 또는 런타임 권한을 대신하지 않는다.
 
 | ID | 결정 | 권고 |
 |---|---|---|

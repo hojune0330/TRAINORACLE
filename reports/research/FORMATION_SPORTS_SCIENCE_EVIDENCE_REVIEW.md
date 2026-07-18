@@ -1,6 +1,17 @@
 # Formation Sports-Science Evidence Review
 
 ```yaml
+product_direction_status: SUPERSEDED_PRODUCT_DIRECTION
+historical_runtime_facts_preserved: true
+latest_owner_baseline: reports/review/FORMATION_LATEST_OWNER_DECISION_BASELINE.md
+```
+
+> Current product direction is governed by the
+> [latest owner baseline](../review/FORMATION_LATEST_OWNER_DECISION_BASELINE.md).
+> The research observations, evidence ratings, and runtime-off limits below remain
+> historical facts; they do not determine the current product selection authority.
+
+```yaml
 review_id: TO-WO010-SPORTS-SCIENCE-2026-07-15
 status: RESEARCH_COMPLETE_OWNER_ACCEPTANCE_PENDING
 authority: descriptive_research_only

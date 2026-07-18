@@ -18,6 +18,7 @@ owning_issues:
   - `OI-AIB-RLS-STRATEGY-001`
   - `OI-AIB-RETENTION-POLICY-001`
   - `OI-AIB-ENCRYPTION-KEY-MGMT-001`
+  - `OI-FRG-RECIPIENT-SHARE-001`
 ```
 
 ## Classification
@@ -95,6 +96,58 @@ keys, logs, backups, export, breach detection, processors, regions, and restore 
 
 Signed reviewer report, product-fact snapshot, accepted contract hash, target diffs/recounts,
 later RED/GREEN and migration/restore logs, threat model, and closure PR.
+
+## Latest Research Reconciliation
+
+```yaml
+latest_owner_baseline: reports/review/FORMATION_LATEST_OWNER_DECISION_BASELINE.md
+related_conflicts:
+  - FRV2-CONF-007
+  - FRV2-CONF-008
+  - FRV2-CONF-010
+  - FRV2-CONF-012
+research_inputs:
+  - reports/review/FORMATION_RUNTIME_SECURITY_AND_PRIVACY_AUDIT.md
+  - reports/research/FORMATION_COMPETITION_ANCHOR_EVIDENCE_SUPPLEMENT.md
+decision_packets:
+  - FORMATION_PRIVACY_GOVERNANCE_DECISION.md
+  - reports/review/PRIVACY_YOUTH_QUALIFIED_REVIEW_PACKET.md
+  - reports/review/FORMATION_COMPETITION_ANCHOR_DECISION_PACKET_V1.md
+  - reports/review/FORMATION_OWNER_DIRECTION_BINDING_2026-07-18.md
+prepared_evidence:
+  - specs/reconstruct/FORMATION_RECORD_GOVERNANCE_CONTRACT.md
+  - specs/reconstruct/HUMAN_REVIEW_AND_SHARING_WORKFLOW.md
+  - reports/review/FORMATION_USER_SCENARIOS_AND_TEACH_BACK_V1.md
+remaining_named_gates:
+  - OI-FRG-RECIPIENT-SHARE-001_OPEN
+  - NAMED_QUALIFIED_PRIVACY_REVIEW
+  - COACH_HOJUNE_GOVERNANCE_DECISION
+  - ACCEPTED_RECIPIENT_SHARE_IMPLEMENTATION_AND_PRIVACY_EVIDENCE
+  - CA-02_CA-03_OWNER_DECISION
+approval_state_unchanged: true
+runtime_authorized: false
+canonical_spec_patch_authorized: false
+```
+
+### Recipient Sharing Ownership
+
+`FRV2-CONF-008` belongs to this existing P1 plan and open governance issue
+`OI-FRG-RECIPIENT-SHARE-001`; it does not create an eleventh P1 plan. In-app recipient
+sharing remains unavailable until the named gates and separate implementation evidence pass.
+
+Any later proposal must require a user-selected recipient identity, exact structured fields,
+purpose, one-time or explicit expiry, preview, confirmation, revocation, download and re-share
+behavior, privacy-safe audit, youth handling, and deletion propagation. Memo inclusion off by default
+is mandatory and requires a separate explicit selection in the same preview flow.
+
+Sharing is a user-directed transport operation only. It grants no analysis consent, standing access
+for a coach or guardian, Formation authority, plan authority, safety signal, reward effect,
+telemetry permission, or other secondary-use permission.
+
+The owner-selected first delivery is `SELECTIVE_EXPORT_AND_OS_SHARE`: preview exact fields, keep
+memo inclusion off by default, require confirmation, then hand the file to the device share surface.
+In-app recipient accounts, server links, standing access, expiry and revocation services remain
+deferred to the qualified-reviewed recipient-sharing path.
 
 ## Human Decision
 
