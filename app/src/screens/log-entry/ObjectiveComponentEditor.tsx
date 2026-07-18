@@ -16,6 +16,10 @@ type FieldSpec = {
   readonly type?: "number" | "text"
 }
 
+type ComponentBuildResult =
+  | { readonly success: true; readonly component: ObjectiveLoadComponent }
+  | { readonly success: false; readonly invalidKeys: readonly string[] }
+
 const KIND_LABELS: Readonly<Record<ComponentKind, string>> = {
   RUNNING: "달리기",
   INTERVALS: "인터벌",
@@ -64,6 +68,26 @@ const FIELDS: Readonly<Record<ComponentKind, readonly FieldSpec[]>> = {
   ],
 }
 
+const FIELD_KEY_BY_SCHEMA_PATH: Readonly<Record<string, string>> = {
+  distanceKm: "distanceKm",
+  actualPaceSecondsPerKm: "actualPace",
+  typicalDistanceKm: "typicalDistanceKm",
+  referencePaceSecondsPerKm: "referencePace",
+  repetitions: "repetitions",
+  workSeconds: "workSeconds",
+  recoverySeconds: "recoverySeconds",
+  exerciseType: "exerciseType",
+  sets: "sets",
+  loadPercent1Rm: "loadPercent1Rm",
+  repsInReserve: "repsInReserve",
+  contacts: "contacts",
+  typicalContacts: "typicalContacts",
+  gradePercent: "gradePercent",
+  modality: "modality",
+  durationMin: "durationMin",
+  averageHeartRatePercentMax: "heartRatePercent",
+}
+
 function optionalNumber(fields: DraftFields, key: string): number | null | undefined {
   const value = fields[key]?.trim() ?? ""
   return value === "" ? undefined : parseDecimalString(value)
@@ -83,7 +107,7 @@ function parseComponentKind(value: string): ComponentKind {
   }
 }
 
-function buildComponent(kind: ComponentKind, fields: DraftFields): ObjectiveLoadComponent | null {
+function buildComponent(kind: ComponentKind, fields: DraftFields): ComponentBuildResult {
   const n = (key: string) => parseDecimalString(fields[key] ?? "")
   const pace = (key: string): number | null | undefined => {
     const value = fields[key]?.trim() ?? ""
@@ -135,7 +159,22 @@ function buildComponent(kind: ComponentKind, fields: DraftFields): ObjectiveLoad
   }
 
   const parsed = objectiveLoadComponentSchema.safeParse(candidate)
-  return parsed.success ? parsed.data : null
+  if (parsed.success) return { success: true, component: parsed.data }
+
+  const invalidKeys = parsed.error.issues.flatMap((issue) => {
+    if (issue.code !== "invalid_union") {
+      const fieldKey = FIELD_KEY_BY_SCHEMA_PATH[String(issue.path[0] ?? "")]
+      return fieldKey === undefined ? [] : [fieldKey]
+    }
+    const matchingBranch = issue.errors.find((errors) => (
+      errors.every((nestedIssue) => nestedIssue.path[0] !== "kind")
+    ))
+    return (matchingBranch ?? []).flatMap((nestedIssue) => {
+      const fieldKey = FIELD_KEY_BY_SCHEMA_PATH[String(nestedIssue.path[0] ?? "")]
+      return fieldKey === undefined ? [] : [fieldKey]
+    })
+  })
+  return { success: false, invalidKeys: [...new Set(invalidKeys)] }
 }
 
 export function ObjectiveComponentEditor({
@@ -147,21 +186,24 @@ export function ObjectiveComponentEditor({
 }) {
   const [kind, setKind] = React.useState<ComponentKind>(OBJECTIVE_COMPONENT_KIND.intervals)
   const [fields, setFields] = React.useState<Record<string, string>>({})
-  const [error, setError] = React.useState(false)
+  const [invalidKeys, setInvalidKeys] = React.useState<readonly string[] | null>(null)
   const add = () => {
-    const component = buildComponent(kind, fields)
-    if (component === null) { setError(true); return }
-    onAdd(component)
+    const result = buildComponent(kind, fields)
+    if (!result.success) { setInvalidKeys(result.invalidKeys); return }
+    onAdd(result.component)
     setFields({})
-    setError(false)
+    setInvalidKeys(null)
   }
+  const invalidLabels = FIELDS[kind]
+    .filter((field) => invalidKeys?.includes(field.key) ?? false)
+    .map((field) => field.label)
 
   return (
     <div style={{ border: "1px solid var(--line)", padding: 12, background: "var(--surface)" }}>
       <select aria-label="객관 기록 종류" value={kind} onChange={(event) => {
         setKind(parseComponentKind(event.target.value))
         setFields({})
-        setError(false)
+        setInvalidKeys(null)
       }} style={inputStyle()}>
         {Object.entries(KIND_LABELS).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
       </select>
@@ -177,13 +219,22 @@ export function ObjectiveComponentEditor({
               inputMode={field.type === "number" ? "decimal" : "text"}
               placeholder={field.placeholder}
               value={fields[field.key] ?? ""}
-              onChange={(event) => setFields((current) => ({ ...current, [field.key]: event.target.value }))}
+              aria-invalid={invalidKeys?.includes(field.key) ?? false}
+              onChange={(event) => {
+                setFields((current) => ({ ...current, [field.key]: event.target.value }))
+                setInvalidKeys((current) => {
+                  const remaining = current?.filter((key) => key !== field.key) ?? []
+                  return remaining.length > 0 ? remaining : null
+                })
+              }}
               style={{ ...inputStyle(), fontFamily: "var(--mono)" }}
             />
           </label>
         ))}
       </div>
-      {error && <div role="alert" style={{ marginTop: 8, fontFamily: "var(--mono)", fontSize: 10, color: "var(--pain-5)" }}>필수 숫자와 범위를 확인해 주세요.</div>}
+      {invalidKeys !== null && <div role="alert" style={{ marginTop: 8, fontFamily: "var(--mono)", fontSize: 10, color: "var(--pain-5)" }}>
+        {invalidLabels.length > 0 ? `다시 확인: ${invalidLabels.join(", ")}` : "필수 숫자와 범위를 확인해 주세요."}
+      </div>}
       <button type="button" disabled={disabled} onClick={add} style={{
         width: "100%", minHeight: 44, marginTop: 10, border: "1px solid var(--ink)",
         background: disabled ? "var(--hair)" : "var(--ink)", color: disabled ? "var(--ink-3)" : "var(--bg)",

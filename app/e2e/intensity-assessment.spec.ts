@@ -14,6 +14,8 @@ test("saves and reopens subjective intensity with mixed objective components", a
   await page.getByRole("spinbutton", { name: "반복 횟수" }).fill("6")
   await page.getByRole("spinbutton", { name: "운동 시간 (초)" }).fill("60")
   await page.getByRole("spinbutton", { name: "회복 시간 (초)" }).fill("90")
+  await page.getByRole("textbox", { name: "반복 페이스 · 선택" }).fill("3:00")
+  await page.getByRole("textbox", { name: "개인 기준 페이스 · 선택" }).fill("3:09")
   await page.getByRole("button", { name: "객관 구성 추가" }).click()
 
   await page.getByRole("combobox", { name: "객관 기록 종류" }).selectOption("STRENGTH")
@@ -30,6 +32,7 @@ test("saves and reopens subjective intensity with mixed objective components", a
   await savedSession.click()
   await expect(page.getByText("주관 + 객관 함께 기록")).toBeVisible()
   await expect(page.getByText("운동 비중 40%", { exact: false })).toBeVisible()
+  await expect(page.getByText("개인 기준 페이스 대비 5% 빠름 (105%)", { exact: false })).toBeVisible()
   await expect(page.getByText("스쿼트 · 4세트 × 5회", { exact: false })).toBeVisible()
   await expect(page.getByText("80% 1RM", { exact: false })).toBeVisible()
 })
@@ -49,4 +52,16 @@ test("uses objective records without fabricating missing subjective intensity", 
   await expect(page.getByText("객관 기록으로만 표시")).toBeVisible()
   await expect(page.getByText("평소 접지 수 대비 125%", { exact: false })).toBeVisible()
   await expect(page.getByText(/RPE \d/u)).toHaveCount(0)
+})
+
+test("identifies the objective field that needs correction", async ({ page }) => {
+  await openPostSession(page)
+  await page.getByRole("spinbutton", { name: "반복 횟수" }).fill("6")
+  await page.getByRole("spinbutton", { name: "운동 시간 (초)" }).fill("60")
+  await page.getByRole("spinbutton", { name: "회복 시간 (초)" }).fill("90")
+  await page.getByRole("textbox", { name: "반복 페이스 · 선택" }).fill("3:99")
+  await page.getByRole("button", { name: "객관 구성 추가" }).click()
+
+  await expect(page.getByRole("alert")).toContainText("반복 페이스 · 선택")
+  await expect(page.getByRole("textbox", { name: "반복 페이스 · 선택" })).toHaveAttribute("aria-invalid", "true")
 })

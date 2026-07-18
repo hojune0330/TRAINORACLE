@@ -75,6 +75,11 @@ remain transient display facts and are not registered analysis, Formation, safet
 
 These formulas are descriptive. They are not scientific high-intensity cutoffs. Input values remain
 explicit data; calculated metrics are marked derived and list their source fields and rule ID.
+Pace ratios are displayed with a faster, slower, or equal label so the athlete does not have to
+interpret direction from the percentage alone.
+
+When an objective component fails validation, the editor identifies each input field that needs
+correction and preserves the draft instead of silently dropping malformed values.
 
 ## Coverage State
 
