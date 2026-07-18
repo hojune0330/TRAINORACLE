@@ -1,0 +1,168 @@
+source_id,primary_rq,secondary_rqs,decision,reason,reviewer_id
+FRV2-A-005,RQ-A,,INCLUDE,Indirect periodization-method critique; use only against whole-architecture and superiority inference,AI_SCREEN_LANE_2
+FRV2-A-006,RQ-A,,INCLUDE,Broad coach survey supports revisable planning concepts only; no running cycle prevalence or efficacy claim,AI_SCREEN_LANE_2
+FRV2-A-007,RQ-A,,INCLUDE,Indirect elite-endurance practice description and weekly countercontext; middle-distance under six minutes excluded,AI_SCREEN_LANE_2
+FRV2-A-008,RQ-A,,INCLUDE,Adult distance-running practice review; typical weeks only and no nonweekly comparison,AI_SCREEN_LANE_2
+FRV2-A-009,RQ-A,,INCLUDE,Small adult middle-distance observational case supports individualized weekly adjustment only,AI_SCREEN_LANE_2
+FRV2-A-010,RQ-A,,EXCLUDE,Nine-day overload experiment is not a recurring microcycle or prescription-frame study,AI_SCREEN_LANE_2
+FRV2-A-011,RQ-A,,INCLUDE,Verified elite adult self-report supports 9-day practical use only; no causal or youth inference,AI_SCREEN_LANE_2
+FRV2-A-012,RQ-A,,INCLUDE,Single recreational self-report supports existence of 9-day use only; concurrent changes defeat efficacy inference,AI_SCREEN_LANE_2
+FRV2-A-013,RQ-A,,INCLUDE,Coach and athlete article supports practical nonweekly rationale and counterconstraints only,AI_SCREEN_LANE_2
+FRV2-A-014,RQ-A,,INCLUDE,Third-party coaching discourse supports rationale only; named program use and injury claims remain unverified,AI_SCREEN_LANE_2
+FRV2-A-015,RQ-A,,INCLUDE,Published 9-day template supports design exemplar only; not prevalence implementation or outcome evidence,AI_SCREEN_LANE_2
+FRV2-A-016,RQ-A,,INCLUDE,Official sprint coaching presentation verifies a 10-day plan only; event-indirect and outcome-free,AI_SCREEN_LANE_2
+FRV2-A-017,RQ-A,,INCLUDE,Verified elite adult female self-report supports 10-day use only; no causal attribution,AI_SCREEN_LANE_2
+FRV2-B-001,RQ-B,,INCLUDE,Direct adolescent-runner biochemical time course; abstract-only and limited to reported 21-km markers through 24 h,AI_SCREEN_LANE_2
+FRV2-B-002,RQ-B,,INCLUDE,Direct adolescent-runner renal-marker time course; abstract-only and no readiness or clearance inference,AI_SCREEN_LANE_2
+FRV2-B-003,RQ-B,,INCLUDE,Youth endurance evidence for marker-specific 24-72 h kinetics; mixed-modality race is middle-distance indirect,AI_SCREEN_LANE_2
+FRV2-B-004,RQ-B,,INCLUDE,Youth match study supports outcome-specific force kinetics and variability only; soccer transfer is indirect,AI_SCREEN_LANE_2
+FRV2-B-005,RQ-B,,INCLUDE,Youth crossover evidence informs recovery-intervention context; soccer and intervention confound natural kinetics,AI_SCREEN_LANE_2
+FRV2-B-006,RQ-B,,INCLUDE,Youth match abstract supports divergent objective and subjective kinetics only; extraction restricted to abstract,AI_SCREEN_LANE_2
+FRV2-B-007,RQ-B,,INCLUDE,Youth randomized post-match training study informs intervening-load effects; not natural recovery or running clearance,AI_SCREEN_LANE_2
+FRV2-B-009,RQ-B,,INCLUDE,Youth resistance and plyometric time course is relevant but soccer and fixed-order crossover are indirect,AI_SCREEN_LANE_2
+FRV2-B-010,RQ-B,,INCLUDE,Systematic youth-adult EIMD comparison supplies mechanism context only; abstract cannot define session spacing,AI_SCREEN_LANE_2
+FRV2-B-011,RQ-B,,INCLUDE,Adult middle-distance repeated 1500-m trial supplies performance-specific 24-h counterevidence only,AI_SCREEN_LANE_2
+FRV2-B-013,RQ-B,,INCLUDE,Adult runner downhill study supplies marker-specific 24-48 h kinetics; abstract-only and protocol-specific,AI_SCREEN_LANE_2
+FRV2-B-014,RQ-B,,INCLUDE,Adult runner repeated-downhill study supports outcome-specific persistence beyond 72 h; no universal threshold,AI_SCREEN_LANE_2
+FRV2-B-019,RQ-B,,INCLUDE,Indirect cycling repeated-sprint study supports disagreement across markers; abstract-only and modality-indirect,AI_SCREEN_LANE_2
+FRV2-B-020,RQ-B,,INCLUDE,Indirect heterogeneous EIMD review supports outcome-specific time courses; not a running clearance rule,AI_SCREEN_LANE_2
+FRV2-B-022,RQ-B,,INCLUDE,Team-sport recovery review supports heterogeneous 24-144 h outcomes only; extraction restricted to abstract,AI_SCREEN_LANE_2
+FRV2-C-002,RQ-C,,INCLUDE,Direct adolescent distance-running trial supports combined component feasibility; abstract lacks order and separation,AI_SCREEN_LANE_2
+FRV2-C-003,RQ-C,,INCLUDE,Young distance-runner trial supports explosive component outcomes; abstract lacks scheduling mechanics,AI_SCREEN_LANE_2
+FRV2-C-004,RQ-C,,INCLUDE,Small maturity-matched youth-runner trial is relevant counterevidence; abstract-review frequency conflict blocks schedule inference,AI_SCREEN_LANE_2
+FRV2-C-005,RQ-C,,INCLUDE,Junior middle-distance crossover supports acute depth-jump response only; no chronic placement transfer,AI_SCREEN_LANE_2
+FRV2-C-007,RQ-C,,INCLUDE,Runner training trial supports one AM-PM complex arrangement; reverse order and separation dose were not tested,AI_SCREEN_LANE_2
+FRV2-C-010,RQ-C,,INCLUDE,Adult runner trial supports one same-session sequence with reduced volume; not a universal ordering rule,AI_SCREEN_LANE_2
+FRV2-C-011,RQ-C,,INCLUDE,Hill-program trial supports component comparison only; abstract provides no strength or plyometric placement test,AI_SCREEN_LANE_2
+FRV2-C-012,RQ-C,,INCLUDE,Small adult run-versus-cycle trial is useful counterevidence; no modality equivalence or lower-fatigue inference,AI_SCREEN_LANE_2
+FRV2-C-013,RQ-C,,INCLUDE,Heterogeneous adult cross-training review informs mode transfer only; no recovery or placement equivalence,AI_SCREEN_LANE_2
+FRV2-C-015,RQ-C,,INCLUDE,Large adult meta-analysis informs conditional same-session interference; youth thresholds are unsupported,AI_SCREEN_LANE_2
+FRV2-C-016,RQ-C,,INCLUDE,Adult sequence review informs outcome-specific ordering; null domains defeat a universal order,AI_SCREEN_LANE_2
+FRV2-C-018,RQ-C,,INCLUDE,Indirect adult rugby trial compares 0 6 and 24 h separation; abstract cannot set youth-runner threshold,AI_SCREEN_LANE_2
+FRV2-C-019,RQ-C,,INCLUDE,Inactive-adult rehabilitation trial is very indirect but usable as order counterevidence only,AI_SCREEN_LANE_2
+FRV2-C-020,RQ-C,,INCLUDE,Historical adult meta-analysis supports interference context only; abstract and updated overlap block calendar rules,AI_SCREEN_LANE_2
+FRV2-D-002,RQ-D,,INCLUDE,Conceptual internal-external load distinction is relevant; commentary is not metric validation,AI_SCREEN_LANE_2
+FRV2-D-003,RQ-D,,INCLUDE,Comparative sRPE study supports method noninterchangeability; abstract limits population and protocol detail,AI_SCREEN_LANE_2
+FRV2-D-006,RQ-D,,INCLUDE,Scale comparison supports persisting scale identity and anchors; abstract cannot validate cross-method aggregation,AI_SCREEN_LANE_2
+FRV2-D-007,RQ-D,,INCLUDE,sRPE history defines whole-session averaging; abstract does not permit component allocation,AI_SCREEN_LANE_2
+FRV2-D-008,RQ-D,,INCLUDE,Small adult runner method study supports individual threshold and method identity; abstract limits validation detail,AI_SCREEN_LANE_2
+FRV2-D-009,RQ-D,,INCLUDE,Runner comparison supports separate load families; abstract-only correlations cannot create one currency,AI_SCREEN_LANE_2
+FRV2-D-010,RQ-D,,INCLUDE,Rowing validation supports modality-specific agreement only; abstract and sport indirectness are explicit,AI_SCREEN_LANE_2
+FRV2-D-011,RQ-D,,INCLUDE,Device-validation evidence supports model activity and protocol provenance; adult wearable transfer is bounded,AI_SCREEN_LANE_2
+FRV2-D-012,RQ-D,,INCLUDE,Device comparison supports outcome-specific error and non-equivalence; abstract-only adult cohort,AI_SCREEN_LANE_2
+FRV2-D-013,RQ-D,,INCLUDE,Sport-watch validation supports environment activity and model provenance; no athlete state inference,AI_SCREEN_LANE_2
+FRV2-D-014,RQ-D,,INCLUDE,Systematic Garmin review supports model-outcome-specific validity limits; abstract-only and adult-dominant,AI_SCREEN_LANE_2
+FRV2-D-015,RQ-D,,INCLUDE,Youth imputation study informs missing-data handling only; team-sport estimates cannot replace observations,AI_SCREEN_LANE_2
+FRV2-D-016,RQ-D,,INCLUDE,Method commentary supports visible missingness mechanisms; illustrative football data are indirect,AI_SCREEN_LANE_2
+FRV2-D-017,RQ-D,,INCLUDE,Official provenance ontology supports entity activity agent and derivation fields; not sport-effect evidence,AI_SCREEN_LANE_2
+FRV2-D-019,RQ-D,,INCLUDE,Simulation directly establishes mathematical-coupling artifact risk; no injury or plan authority,AI_SCREEN_LANE_2
+FRV2-D-020,RQ-D,,INCLUDE,Applied counterexample shows coupling effects are dataset-dependent; commentary cannot privilege a variant,AI_SCREEN_LANE_2
+FRV2-D-021,RQ-D,,INCLUDE,Retain as historical affirmative ACWR counterposition only; narrative model cannot define product zones,AI_SCREEN_LANE_2
+FRV2-D-023,RQ-D,,INCLUDE,Youth cluster trial directly rejects health-benefit authority for tested ACWR management; soccer transfer bounded,AI_SCREEN_LANE_2
+FRV2-D-024,RQ-D,,INCLUDE,Large runner dataset supports method-dependent flag rates; abstract cannot establish injury or readiness thresholds,AI_SCREEN_LANE_2
+FRV2-E-001,RQ-E,,INCLUDE,Measurement-error review supports separating bias random error and agreement; abstract cannot set universal counts,AI_SCREEN_LANE_2
+FRV2-E-003,RQ-E,,INCLUDE,ICC and SEM tutorial supports explicit model and confidence provenance; no universal MDC threshold,AI_SCREEN_LANE_2
+FRV2-E-004,RQ-E,,INCLUDE,Sport measurement review separates validity reliability and sensitivity; abstract-only and nonprescriptive,AI_SCREEN_LANE_2
+FRV2-E-006,RQ-E,,INCLUDE,Statistical framework distinguishes error exceedance from worthwhile change; it cannot prove causality,AI_SCREEN_LANE_2
+FRV2-E-007,RQ-E,,INCLUDE,Method review supports replicated contrasts for personal response; abstract cannot define minimum observations,AI_SCREEN_LANE_2
+FRV2-E-008,RQ-E,,INCLUDE,Systematic review supports error-aware response classification; heterogeneous outcomes block universal thresholds,AI_SCREEN_LANE_2
+FRV2-E-009,RQ-E,,INCLUDE,Variance critique directly guards against naive responder claims; not sport-specific prescription evidence,AI_SCREEN_LANE_2
+FRV2-E-010,RQ-E,,INCLUDE,Statistical review supports rejecting magnitude-based inference shortcuts; not an effect-size rule by itself,AI_SCREEN_LANE_2
+FRV2-E-011,RQ-E,,INCLUDE,Simulation critique supports false-positive safeguards; abstract supplies no replacement model or sample rule,AI_SCREEN_LANE_2
+FRV2-E-013,RQ-E,,INCLUDE,Government N-of-1 guide supports intervention-specific periods carryover and washout; clinical transfer is methodological only,AI_SCREEN_LANE_2
+FRV2-E-014,RQ-E,,INCLUDE,SCRIBE supports transparent phase outcome fidelity and deviation reporting; checklist is not validity,AI_SCREEN_LANE_2
+FRV2-E-015,RQ-E,,INCLUDE,Design standard supplies indirect SCED quality cautions; education-specific point rules cannot transfer to athletes,AI_SCREEN_LANE_2
+FRV2-E-016,RQ-E,,INCLUDE,Simulation challenges rigid baseline-stability waiting; it does not permit ignoring trend or short universal baselines,AI_SCREEN_LANE_2
+FRV2-E-017,RQ-E,,INCLUDE,Method study supports modeling serial correlation; examples do not establish a universal observation count,AI_SCREEN_LANE_2
+FRV2-E-018,RQ-E,,INCLUDE,Systematic methods review supports multidimensional SCED appraisal; published practice is not efficacy evidence,AI_SCREEN_LANE_2
+FRV2-E-019,RQ-E,,INCLUDE,Randomized SCED tutorial supports assignment-aware analysis; healthcare transfer remains methodological,AI_SCREEN_LANE_2
+FRV2-E-021,RQ-E,,INCLUDE,Athlete-monitoring review supports marker-specific contextual interpretation; no fatigue diagnosis or clearance,AI_SCREEN_LANE_2
+FRV2-E-022,RQ-E,,INCLUDE,Systematic review supports preserving subjective and objective streams; disagreement cannot become a readiness score,AI_SCREEN_LANE_2
+FRV2-E-023,RQ-E,,INCLUDE,Sport-specific SCED review supports design options and serial-dependency cautions; abstract-only and no Formation efficacy,AI_SCREEN_LANE_2
+FRV2-F-001,RQ-F,,INCLUDE,Direct adolescent athletics co-creation evidence supports burden clarity feedback and completion outcomes only,AI_SCREEN_LANE_2
+FRV2-F-002,RQ-F,,INCLUDE,Adolescent wearable cohort informs adherence missingness withdrawal and technical failure; injured mixed-sport sample is indirect,AI_SCREEN_LANE_2
+FRV2-F-003,RQ-F,,INCLUDE,Adolescent usability study informs friction and feedback specificity; non-athlete context limits transfer,AI_SCREEN_LANE_2
+FRV2-F-004,RQ-F,,INCLUDE,Youth systematic review supports separate feasibility acceptability and effectiveness outcomes; no plan validation,AI_SCREEN_LANE_2
+FRV2-F-005,RQ-F,,INCLUDE,Adolescent implementation study supports dropout and notification-burden measurement; no prescription efficacy,AI_SCREEN_LANE_2
+FRV2-F-006,RQ-F,,INCLUDE,Adult competitive runner qualitative evidence informs definitions routine fit feedback and data control only,AI_SCREEN_LANE_2
+FRV2-F-007,RQ-F,,INCLUDE,Athlete surveillance pilot supports complementing coach communication; mixed sports and adult age limit transfer,AI_SCREEN_LANE_2
+FRV2-F-008,RQ-F,,INCLUDE,General feasibility framework supports acceptability implementation practicality and integration; excludes efficacy inference,AI_SCREEN_LANE_2
+FRV2-F-009,RQ-F,,INCLUDE,Delphi methods source distinguishes pilot process from effectiveness and safety; no sport-specific authority,AI_SCREEN_LANE_2
+FRV2-F-010,RQ-F,,INCLUDE,Healthcare explainability analysis supports reasons missingness uncertainty and human authority; exposure is not comprehension,AI_SCREEN_LANE_2
+FRV2-F-011,RQ-F,,INCLUDE,DECIDE-AI supports versioned prospective workflow and error logging; healthcare guidance cannot validate sport prescription,AI_SCREEN_LANE_2
+FRV2-F-012,RQ-F,,INCLUDE,Silent-trial review supports parallel evaluation mechanics only; concealment is rejected for this participant-visible pilot,AI_SCREEN_LANE_2
+FRV2-F-013,RQ-F,,INCLUDE,International ethics guidance supports assent permission and withdrawal boundaries; local law and review still control,AI_SCREEN_LANE_2
+FRV2-F-014,RQ-F,,INCLUDE,UK child-research guidance supports comprehension and withdrawal safeguards; jurisdictional transfer is explicit,AI_SCREEN_LANE_2
+FRV2-F-015,RQ-E,RQ-F,INCLUDE,SCED guide supports carryover and irreversibility cautions; rehabilitation methods do not make the pilot a SCED,AI_SCREEN_LANE_2
+FRV2-F-016,RQ-E,RQ-F,EXCLUDE,Duplicate publication of the SCRIBE statement with no unique data beyond FRV2-E-014,AI_SCREEN_LANE_2
+FRV2-G-002,RQ-G,,INCLUDE,Direct youth clinical report supports pain overuse and burnout referral boundaries; no diagnosis or treatment automation,AI_SCREEN_LANE_2
+FRV2-G-006,RQ-G,,INCLUDE,Adolescent female-athlete consensus informs sex-specific health boundary; no product score or restriction,AI_SCREEN_LANE_2
+FRV2-G-007,RQ-G,,INCLUDE,Clinical Triad guideline supports human-only screening diagnosis and return-to-play boundary; thresholds are not automation inputs,AI_SCREEN_LANE_2
+FRV2-G-008,RQ-G,,INCLUDE,Male Athlete Triad consensus supports sex-inclusive referral boundary; abstract-only and clinician-facing,AI_SCREEN_LANE_2
+FRV2-G-009,RQ-G,,INCLUDE,Pediatric sleep consensus supplies general context only; duration guidance is not athlete readiness,AI_SCREEN_LANE_2
+FRV2-G-010,RQ-G,,INCLUDE,Athlete respiratory consensus supports clinician-led illness and return assessment; abstract-only and youth directness low,AI_SCREEN_LANE_2
+FRV2-G-011,RQ-G,,INCLUDE,Adolescent team-physician consensus supports human authority for injury illness and return; abstract-only,AI_SCREEN_LANE_2
+FRV2-G-012,RQ-G,,INCLUDE,IOC safeguarding consensus supports routing concern content to trained humans; not planner inference,AI_SCREEN_LANE_2
+FRV2-G-013,RQ-G,,INCLUDE,Child-sport organizational safeguards support governance boundaries; jurisdiction-specific duties remain unresolved locally,AI_SCREEN_LANE_2
+FRV2-G-014,RQ-G,,INCLUDE,Youth growth-maturation injury review supports contextual handoff only; heterogeneous and underrepresentative evidence blocks risk scoring,AI_SCREEN_LANE_2
+FRV2-G-015,RQ-G,,INCLUDE,Prospective adolescent athletics cohort supports growth context; abstract-only association cannot become individual risk score,AI_SCREEN_LANE_2
+FRV2-G-016,RQ-G,,INCLUDE,Large adolescent-runner cohort is directly relevant to stress-fracture context; low events defeat automated thresholds,AI_SCREEN_LANE_2
+FRV2-G-017,RQ-G,,INCLUDE,Runner injury systematic review supports low-certainty boundary language; abstract cannot justify prediction,AI_SCREEN_LANE_2
+FRV2-G-018,RQ-G,,INCLUDE,Adolescent bone-stress review supports symptom referral context; narrative synthesis cannot supply individual probabilities,AI_SCREEN_LANE_2
+FRV2-G-019,RQ-G,,INCLUDE,Youth systematic review supports periphyseal-stress concern boundary; case-report dominance and abstract-only state limit inference,AI_SCREEN_LANE_2
+FRV2-G-020,RQ-G,,INCLUDE,Youth sleep-injury review supports chronic association context only; no acute readiness or causal rule,AI_SCREEN_LANE_2
+FRV2-G-021,RQ-G,,INCLUDE,Clinical review supports human assessment of growing-bone pain; diagnosis and imaging stay outside product scope,AI_SCREEN_LANE_2
+FRV2-G-022,RQ-G,,INCLUDE,Editorial opposition is retained as conceptual counterevidence; it cannot establish an alternate clinical model,AI_SCREEN_LANE_2
+SRC-DOI-10.1136-BMJ.H1793,RQ-E,RQ-F,INCLUDE,CENT elaboration supports N-of-1 reporting mechanics; clinical guidance cannot validate cumulative training crossover,AI_SCREEN_LANE_2
+SRC-PMID-10907753,RQ-E,RQ-D,DEFER,Correction metadata conflict must be reconciled before relying on the otherwise relevant reliability framework,AI_SCREEN_LANE_2
+SRC-PMID-12741870,RQ-C,,INCLUDE,Small female collegiate off-season trial informs cycling substitution limits; abstract cannot establish modality equivalence,AI_SCREEN_LANE_2
+SRC-PMID-17149987,RQ-C,,INCLUDE,Adult runner plyometric trial supports component outcomes only; abstract and missing maturity block scheduling transfer,AI_SCREEN_LANE_2
+SRC-PMID-20386477,RQ-B,RQ-C,INCLUDE,Acute plyometric study supports outcome-specific 24-120 h kinetics; abstract population detail is limited,AI_SCREEN_LANE_2
+SRC-PMID-23134196,RQ-A,,INCLUDE,Small adult cyclist block trial informs periodization countercontext only; not nonweekly running-frame evidence,AI_SCREEN_LANE_2
+SRC-PMID-23838975,RQ-C,,INCLUDE,Competitive-runner trial supports added plyometric component outcomes; abstract does not verify shared-day placement,AI_SCREEN_LANE_2
+SRC-PMID-25976398,RQ-E,RQ-F,INCLUDE,CENT statement is eligible with linked erratum applied; reporting completeness does not establish design validity,AI_SCREEN_LANE_2
+SRC-PMID-26084524,RQ-G,RQ-C;RQ-F,INCLUDE,IOC youth consensus supports growth health and sustainable-participation boundaries; no Formation efficacy,AI_SCREEN_LANE_2
+SRC-PMID-27300278,RQ-A,,INCLUDE,Adult cycling trial supplies counterevidence against universal intensity-order effects; not cycle-length evidence,AI_SCREEN_LANE_2
+SRC-PMID-28054257,RQ-E,RQ-D,INCLUDE,Measurement-property Delphi separates reliability validity responsiveness and feasibility; no metric validation or universal n,AI_SCREEN_LANE_2
+SRC-PMID-28463642,RQ-D,RQ-E,INCLUDE,Consensus supports separate internal and external load taxonomy; abstract cannot confer readiness or safety authority,AI_SCREEN_LANE_2
+SRC-PMID-29163016,RQ-D,,INCLUDE,sRPE review supports named protocol and limitations; heterogeneity blocks fatigue-score or interchangeability claims,AI_SCREEN_LANE_2
+SRC-PMID-29712629,RQ-D,RQ-E,INCLUDE,Wearable assessment guidance supports device-specific validity before change interpretation; no athlete-state inference,AI_SCREEN_LANE_2
+SRC-PMID-30131714,RQ-C,RQ-F;RQ-G,INCLUDE,Youth concurrent-training review supports conditional component compatibility; heterogeneity blocks exact sequencing,AI_SCREEN_LANE_2
+SRC-PMID-30160557,RQ-D,RQ-F,INCLUDE,Direct adolescent-runner study supports timestamp as method identity; abstract-only and not a readiness validator,AI_SCREEN_LANE_2
+SRC-PMID-31024338,RQ-A,,INCLUDE,Elite adult skiing n-of-1 history supports descriptive block use only; not causal or youth-running evidence,AI_SCREEN_LANE_2
+SRC-PMID-31802956,RQ-A,,INCLUDE,Endurance block review supplies low-certainty comparative context; no nonweekly-frame or 9.5-day superiority,AI_SCREEN_LANE_2
+SRC-PMID-31820260,RQ-B,RQ-D,INCLUDE,Soccer review supports weak external-load prediction of residual outcomes; indirect and no 72-h rule,AI_SCREEN_LANE_2
+SRC-PMID-32407361,RQ-C,,INCLUDE,Adult same-day trial supports outcome-specific order effects with 3-h separation; no universal or youth rule,AI_SCREEN_LANE_2
+SRC-PMID-32502973,RQ-D,,INCLUDE,ACWR methods critique supports prohibiting causal injury and readiness use; abstract-only and nonprescriptive,AI_SCREEN_LANE_2
+SRC-PMID-32991706,RQ-D,,INCLUDE,Team-sport wellbeing review supports weak and inconsistent single-item evidence; no unified fatigue score,AI_SCREEN_LANE_2
+SRC-PMID-33122252,RQ-G,RQ-F,INCLUDE,Direct youth-running consensus supports evidence-gap and protection boundaries; opinion guidance is not clearance,AI_SCREEN_LANE_2
+SRC-PMID-33751469,RQ-C,,INCLUDE,Adult concurrent-training review supports conditional same-session strength interference; bins are not youth thresholds,AI_SCREEN_LANE_2
+SRC-PMID-34021488,RQ-A,RQ-F;RQ-G,INCLUDE,Elite 800 and 1500 review supports event-demand separation; not adolescent 9.5-day efficacy or safety evidence,AI_SCREEN_LANE_2
+SRC-PMID-34052983,RQ-D,RQ-G,INCLUDE,Adult runner ACWR association is retained as counterevidence; abstract cannot validate causal safe zones,AI_SCREEN_LANE_2
+SRC-PMID-34062089,RQ-A,RQ-C,INCLUDE,Tiny 1500-m taper crossover informs taper components only; abstract cannot set a 9.5-day taper rule,AI_SCREEN_LANE_2
+SRC-PMID-34250468,RQ-G,RQ-F,INCLUDE,Direct adolescent-runner observational evidence supports practice and injury context only; no causal thresholds,AI_SCREEN_LANE_2
+SRC-PMID-34296839,RQ-B,RQ-C,INCLUDE,Small adult team-sport study supports selected 24-48 h residuals; abstract and modality limit transfer,AI_SCREEN_LANE_2
+SRC-PMID-34749417,RQ-A,,INCLUDE,Runner intensity-distribution review supports classification sensitivity; no microcycle-length comparison,AI_SCREEN_LANE_2
+SRC-PMID-34767655,RQ-C,,INCLUDE,Adult runner concurrent trial supports performance outcomes only; abstract lacks dose order and separation,AI_SCREEN_LANE_2
+SRC-PMID-35299664,RQ-A,,INCLUDE,Adult cycling trial counters universal block-periodization superiority; no nonweekly running-frame evidence,AI_SCREEN_LANE_2
+SRC-PMID-35418513,RQ-A,,INCLUDE,Elite runner review supports descriptive hard-easy practice only; abstract has no cycle-length comparison,AI_SCREEN_LANE_2
+SRC-PMID-35721873,RQ-B,,INCLUDE,Adult masters runner study supports marker-specific 24-h residuals; no complete-recovery guarantee,AI_SCREEN_LANE_2
+SRC-PMID-36086887,RQ-B,,EXCLUDE,Identifier resolves to an irrelevant swimming study and the intended running source is not this record,AI_SCREEN_LANE_2
+SRC-PMID-36370207,RQ-C,,INCLUDE,Adult runner strength meta-analysis compares component methods; no Formation interval or placement evidence,AI_SCREEN_LANE_2
+SRC-PMID-37285051,RQ-B,,INCLUDE,Adult cycling SIT study supports selected marker kinetics only; title cannot establish whole-person recovery,AI_SCREEN_LANE_2
+SRC-PMID-37435592,RQ-C,RQ-F;RQ-G,INCLUDE,Small adolescent male 800-m trial supports component outcomes; no recovery safety or architecture inference,AI_SCREEN_LANE_2
+SRC-PMID-37752011,RQ-G,,INCLUDE,Corrected IOC REDs consensus supports clinician-only energy-health boundary; CAT2 must not be automated,AI_SCREEN_LANE_2
+SRC-PMID-37776346,RQ-B,,INCLUDE,Adult sprint study supports load-specific 24-72 h outcomes; bad link noted and no youth-runner threshold,AI_SCREEN_LANE_2
+SRC-PMID-38627351,RQ-C,,INCLUDE,Runner strength meta-analysis supports selected component outcomes; certainty and missing placement block calendar rules,AI_SCREEN_LANE_2
+SRC-PMID-38662890,RQ-E,,INCLUDE,Practitioner methods paper distinguishes error and change statistics; abstract supplies no universal minimum n,AI_SCREEN_LANE_2
+SRC-PMID-39197945,RQ-G,RQ-F,INCLUDE,IOC elite-youth consensus supports athlete-centred maturation safeguards; no automated prescription authority,AI_SCREEN_LANE_2
+SRC-PMID-39888556,RQ-A,,INCLUDE,Endurance network meta-analysis informs average intensity-distribution comparisons; not a 9.5-day frame test,AI_SCREEN_LANE_2
+SRC-PMID-40016936,RQ-C,,INCLUDE,Adult male runner trial supports selected strength and fatigued-state outcomes; abstract does not measure neural fatigue,AI_SCREEN_LANE_2
+SRC-PMID-40566441,RQ-E,RQ-F,INCLUDE,Sport multiple-baseline application supports individual-path methodology; phase details are not universal rules,AI_SCREEN_LANE_2
+SRC-PMID-40596578,RQ-C,,INCLUDE,Middle-distance uphill trial supports component adaptation in its sample; no neural-fatigue or Formation-slot inference,AI_SCREEN_LANE_2
+SRC-PMID-41048235,RQ-B,RQ-F;RQ-G,INCLUDE,Youth soccer evidence supports residual force context; intervening load blocks match-only and running inference,AI_SCREEN_LANE_2
+SRC-PMID-41312139,RQ-C,RQ-F;RQ-G,INCLUDE,Direct adolescent-runner trial supports one complex-training arrangement; male-only and scheduling details limit transfer,AI_SCREEN_LANE_2
+SRC-PMID-7649149,RQ-C,,INCLUDE,Adult cross-training trial supports partial aerobic transfer and mode specificity; abstract gives no recovery equivalence,AI_SCREEN_LANE_2
+SRC-WEB-COCHRANE-HB-CH14,RQ-E,RQ-A;RQ-B;RQ-C;RQ-D;RQ-F;RQ-G,INCLUDE,GRADE guidance supports transparent certainty appraisal across RQs; athlete directness must be added separately,AI_SCREEN_LANE_2
+SRC-WEB-HHS-HIPAA-DEID,RQ-G,RQ-D,INCLUDE,US de-identification guidance supports residual privacy-risk safeguards; it is not a global rule,AI_SCREEN_LANE_2
+SRC-WEB-PRISMA-2020,RQ-F,,INCLUDE,PRISMA supports transparent search and exclusion reporting; it does not appraise sports evidence,AI_SCREEN_LANE_2

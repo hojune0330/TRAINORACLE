@@ -1,0 +1,1 @@
+FORMATION_EXTRACTION_INVALID acceptance blocked pending_rows=167 pending_conflicts=2824

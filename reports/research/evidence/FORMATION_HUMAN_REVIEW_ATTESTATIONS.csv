@@ -1,0 +1,1 @@
+review_type,source_id,reviewer_id,qualification_ref,decision,raw_input_sha256,canonical_record_sha256,reviewed_at,record_ref,key_id,signature_algorithm,signature_base64
