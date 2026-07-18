@@ -6,6 +6,8 @@ status: NOT_REVIEWED
 runtime_authority: false
 owner_product_identity: 9_5_DAY_FORMATION
 owner_target_authority: DEFAULT_AUTOMATED_PRESCRIPTION
+owner_product_direction: APPROVE_RECORDED_PENDING_NAMED_REVIEW
+owner_direction_binding: reports/review/FORMATION_OWNER_DIRECTION_BINDING_2026-07-18.md
 owned_fields:
   - claim_level
   - intended_use
@@ -37,6 +39,9 @@ forbidden_fields:
 
 이 패킷은 “현재 데이터로 어떤 말까지 해도 되는지”를 결정한다. 구성요소·단위·공식 자체는
 Load Components 패킷이 정하며 여기서 재정의하지 않는다.
+
+책임자는 2026-07-18에 아래 권고 전체를 제품 방향으로 승인했다. 이 기록은 이름 붙은 통계
+검토, 정식 결정란 서명, 정본 패치 또는 런타임 권한을 대신하지 않는다.
 
 | ID | 결정 | 권고 |
 |---|---|---|

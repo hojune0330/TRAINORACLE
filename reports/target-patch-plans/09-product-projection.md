@@ -111,6 +111,7 @@ research_inputs:
 decision_packets:
   - FORMATION_PRODUCT_PROJECTION_ACCEPTANCE_DECISION.md
   - reports/review/COACH_TEAM_AND_MICROCYCLE_VIEW_DECISION.md
+  - reports/review/FORMATION_OWNER_DIRECTION_BINDING_2026-07-18.md
 prepared_evidence:
   - reports/review/FORMATION_USER_SCENARIOS_AND_TEACH_BACK_V1.md
   - reports/review/FORMATION_ACCESSIBILITY_AND_DESIGN_REVIEW.md
@@ -123,6 +124,12 @@ approval_state_unchanged: true
 runtime_authorized: false
 canonical_spec_patch_authorized: false
 ```
+
+### Internal QA Boundary
+
+The owner direction permits a non-prescriptive internal projection using synthetic,
+owner-controlled, or explicitly consented adult internal data. It remains disposable, cannot
+change a real plan, and does not authorize the participant pilot or production screen.
 
 ## Human Decision
 

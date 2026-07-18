@@ -6,6 +6,9 @@ status: NOT_REVIEWED
 runtime_authority: false
 owner_product_identity: 9_5_DAY_FORMATION
 owner_target_authority: DEFAULT_AUTOMATED_PRESCRIPTION
+ca_02_owner_direction: APPROVE_RECORDED_PENDING_NAMED_REVIEW
+ca_03_owner_direction: REVISE_RECORDED_PENDING_NAMED_REVIEW
+owner_direction_binding: reports/review/FORMATION_OWNER_DIRECTION_BINDING_2026-07-18.md
 owned_fields:
   - competition_anchor_id
   - competition_name
@@ -42,13 +45,16 @@ forbidden_fields:
 이 패킷은 대회 날짜 고정, 실제 출발 수, taper와 대회 후 다음 MAIN 처리의 소유권만
 결정한다. 9.5일 제품 정체성을 다시 선택하거나 대회 후 회복을 의학적으로 판정하지 않는다.
 
+2026-07-18 책임자 방향은 CA-02 승인, CA-03 수정이다. 정식 결정란과 이름 붙은 검토는
+계속 `NOT_REVIEWED`이며, 아래 표는 최신 방향을 반영한 검토 대상이다.
+
 | ID | 결정 | 권고 |
 |---|---|---|
 | CA-01 | 달력의 대회 앵커를 유연한 훈련보다 먼저 고정한다 | 승인 권고 |
 | CA-02 | 대회 앵커 1개와 실제 경기 bout N개를 분리한다 | 승인 권고 |
-| CA-03 | 완료 bout 하나는 MAIN 노출 하나에만 기여하고 앵커는 기여하지 않는다 | 승인 권고 |
+| CA-03 | bout별 부하는 보존하고 같은 대회일의 계획상 MAIN 배치는 최대 1회로 묶으며 앵커는 기여하지 않는다 | 수정 방향 기록 |
 | CA-04 | 단일 출발 대회는 앵커 1개·bout 1개·완료 MAIN 1회로 처리한다 | 승인 권고 |
-| CA-05 | 예선·결승·복수 종목은 bout별 완료 노출을 보존하고 부모와 중복 계산하지 않는다 | 승인 권고 |
+| CA-05 | 예선·결승·복수 종목은 bout별 부하 기록을 보존하되 같은 대회일 MAIN 배치와 부모를 중복 계산하지 않는다 | 수정 방향 기록 |
 | CA-06 | 대회 충돌이나 누락으로 catch-up·압축·MAIN 빚을 만들지 않는다 | 승인 권고 |
 | CA-07 | 72시간은 목표·경과 표시만 하고 회복·안전 허가에 쓰지 않는다 | 승인 권고 |
 | CA-08 | 승인된 버전형 template 없이는 taper나 post-race transform을 생성하지 않는다 | 승인 권고 |
@@ -130,7 +136,8 @@ prohibited_collection:
 ## 승인 시 허용
 
 - 9.5일 기본안 생성 전에 대회 앵커를 고정한다.
-- 단일·다중 출발을 실제 완료 bout 단위로 한 번씩 계산한다.
+- 단일·다중 출발의 완료 bout 기록과 부하를 각각 보존하고 같은 대회일 MAIN 배치는 최대
+  한 번으로 계산하는 후보를 검토한다.
 - 대회 때문에 바뀐 세션과 이유를 사용자에게 보여준다.
 - 승인된 coach template과 입력이 모두 있을 때만 taper 후보를 만든다.
 
@@ -148,7 +155,7 @@ prohibited_collection:
 선수 화면은 대회 전문용어보다 결과부터 말한다.
 
 - 단일 출발: “이 경기를 고정했고, 강한 훈련 1회로 계산했어요.”
-- 예선·결승: “이 대회에는 경기 2개가 있어요. 각각 따로 계산했어요.”
+- 예선·결승: “경기 기록은 2개예요. 오늘의 강한 훈련 배치는 1회로 묶었어요.”
 - 계획 변경: “대회를 지키려고 화요일 훈련을 옮겼어요.”
 - 정보 부족: “자동 계획을 만들지 못했어요. 지금 코치 계획은 그대로예요.”
 

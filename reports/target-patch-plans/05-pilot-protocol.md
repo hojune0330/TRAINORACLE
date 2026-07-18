@@ -107,6 +107,7 @@ research_inputs:
   - reports/review/FORMATION_USER_SCENARIOS_AND_TEACH_BACK_V1.md
 decision_packets:
   - FORMATION_SHADOW_PROTOCOL_ACCEPTANCE_DECISION.md
+  - reports/review/FORMATION_OWNER_DIRECTION_BINDING_2026-07-18.md
 prepared_evidence:
   - reports/review/WO014_ATHLETE_PARTICIPANT_MATERIALS.md
   - reports/review/WO014_INDEPENDENT_REVIEW_FORMS.md
@@ -119,6 +120,12 @@ approval_state_unchanged: true
 runtime_authorized: false
 canonical_spec_patch_authorized: false
 ```
+
+### Internal QA Boundary
+
+The owner direction permits non-prescriptive internal QA with synthetic, owner-controlled, or
+explicitly consented adult internal data. This is not participant enrollment: it cannot mutate a
+real plan, recruit minors, make safety claims, or bypass the named pilot gates above.
 
 ## Human Decision
 

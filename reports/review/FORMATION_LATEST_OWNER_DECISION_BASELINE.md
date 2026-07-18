@@ -7,6 +7,7 @@ owner: COACH_HOJUNE
 decision_id: TO-OWNER-FORMATION-2026-07-17-01
 recorded_at: 2026-07-17T20:56:07+09:00
 source_ref: CURRENT_TASK_OWNER_DIRECTIVE_LATEST_CHOICES_ARE_BASELINE
+latest_owner_direction_binding: reports/review/FORMATION_OWNER_DIRECTION_BINDING_2026-07-18.md
 owner_product_identity: 9_5_DAY_FORMATION
 owner_target_authority: DEFAULT_AUTOMATED_PRESCRIPTION
 canonical_spec_patch_required: true
@@ -41,6 +42,16 @@ runtime_authority: false_until_named_gates_pass
     수집·표시 전용이지만, 제품 방향은 `CURRENT_DISPLAY_ONLY_FUTURE_ANALYSIS_INTENDED`다.
     provenance·결측·분석 방법·불확실성·사용자 설명·소유자 승인을 별도 계약으로 통과한
     뒤 선수 본인의 분석에 사용한다. 현재 제한을 영구 미사용 결정으로 읽지 않는다.
+12. 부하 구성은 주관적·객관적·파생·맥락 값을 분리하고, 복합 세션을 순서 있는 구성요소로
+    보존한다. 이 구조만으로 종합 피로·회복·안전 점수를 만들지 않는다.
+13. 개인내 최소 근거는 관찰·설명 기준선·측정오차보다 큰 변화·사전 비교 가설의 단계로
+    제한한다. 보편 최소 기록 수를 만들지 않고 근거가 부족하면 현재 코치 계획을 유지한다.
+14. 대회 앵커와 실제 bout 기록은 분리한다. 같은 대회일의 완료 bout는 부하 기록으로 각각
+    남기되 9.5일 계획의 MAIN 배치는 최대 한 번으로 묶는다.
+15. 공유의 첫 구현은 메모 기본 제외, 미리보기와 확인을 거친 선택 내보내기·기기 공유다.
+    앱 안 수신자 계정과 상시 접근은 별도 개인정보 계약 뒤로 미룬다.
+16. 합성·책임자 통제·동의한 성인 내부 데이터로 비처방 그림자 QA를 할 수 있다. 실제 계획
+    변경, 모집 선수 파일럿, 청소년 운영과 상용 처방은 이름 붙은 검토 전까지 금지한다.
 
 ## 개인정보와 중단 상태의 불변식
 
@@ -83,10 +94,9 @@ runtime_authority: false
 
 제품 방향이 확정됐다는 사실과 지금 실제 자동 처방을 켤 수 없다는 사실은 동시에 참이다.
 
-## 최신 기준 안의 해석 공백
+## 최신 방향과 남은 정식 게이트
 
-“완료된 `COMPETITION` 기록 한 건은 MAIN 노출 한 번”은 그대로 유지한다. 다만 예선·결승·
-복수 종목 대회에서 무엇을 한 기록으로 볼지는 최신 결정에 아직 없다. 보충 연구는
-`달력 대회 앵커 1개 + 실제 출발 bout N개`를 권고하지만, 이는
-`FORMATION_COMPETITION_ANCHOR_DECISION_PACKET_V1.md`의 CA-02/03 승인 전까지 정본 규칙이
-아니다. 충돌 `FRV2-CONF-012`는 이 경계만 결정 대기로 보존한다.
+책임자 방향은 `FORMATION_OWNER_DIRECTION_BINDING_2026-07-18.md`에 기록됐다. CA-02는 대회
+앵커와 bout 기록 분리, CA-03은 경기별 부하 기록과 같은 대회일 MAIN 배치를 분리하는
+수정안이다. 정식 결정란, 스포츠과학·통계·개인정보 검토와 정본 패치 전까지 기존 계산은
+바뀌지 않으며 `FRV2-CONF-012`와 10개 P1도 열린 상태다.

@@ -113,6 +113,7 @@ decision_packets:
   - FORMATION_PRIVACY_GOVERNANCE_DECISION.md
   - reports/review/PRIVACY_YOUTH_QUALIFIED_REVIEW_PACKET.md
   - reports/review/FORMATION_COMPETITION_ANCHOR_DECISION_PACKET_V1.md
+  - reports/review/FORMATION_OWNER_DIRECTION_BINDING_2026-07-18.md
 prepared_evidence:
   - specs/reconstruct/FORMATION_RECORD_GOVERNANCE_CONTRACT.md
   - specs/reconstruct/HUMAN_REVIEW_AND_SHARING_WORKFLOW.md
@@ -142,6 +143,11 @@ is mandatory and requires a separate explicit selection in the same preview flow
 Sharing is a user-directed transport operation only. It grants no analysis consent, standing access
 for a coach or guardian, Formation authority, plan authority, safety signal, reward effect,
 telemetry permission, or other secondary-use permission.
+
+The owner-selected first delivery is `SELECTIVE_EXPORT_AND_OS_SHARE`: preview exact fields, keep
+memo inclusion off by default, require confirmation, then hand the file to the device share surface.
+In-app recipient accounts, server links, standing access, expiry and revocation services remain
+deferred to the qualified-reviewed recipient-sharing path.
 
 ## Human Decision
 
