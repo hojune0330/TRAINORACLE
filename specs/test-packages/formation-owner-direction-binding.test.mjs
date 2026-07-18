@@ -60,6 +60,29 @@ test("first sharing delivery and internal shadow stay bounded", async () => {
   assert.match(binding, /minor_participant_operation: BLOCKED_PENDING_SAFEGUARDING/u)
 })
 
+test("daily-log memo transport follows the explicit owner file operation", async () => {
+  const dailyLog = await read("specs/reconstruct/DAILY_LOG_AND_CHECKIN_SPEC.md")
+
+  for (const value of [
+    "first_delivery: SELECTIVE_EXPORT_AND_OS_SHARE",
+    "operation_class: USER_DIRECTED_FILE_OPERATION",
+    "memo_inclusion_default: false",
+    "exact_field_preview_required: true",
+    "explicit_memo_inclusion_confirmation_required: true",
+    "owner_full_local_backup_allowed: true",
+    "automatic_network_upload_allowed: false",
+    "analysis_consent_from_export_or_share: prohibited",
+    "standing_coach_guardian_or_friend_access_from_export_or_share: prohibited",
+    "Formation_plan_safety_reward_or_telemetry_effect: prohibited",
+  ]) assertIncludesExactlyOnce(dailyLog, value)
+
+  assert.equal(
+    dailyLog.split("explicit_user_selected_file_inclusion: allowed_under_file_transport_contract").length - 1,
+    2,
+  )
+  assert.doesNotMatch(dailyLog, /^\s+(?:raw_text_)?export_allowed: false\s*$/gmu)
+})
+
 test("latest baseline and handoff point to the owner-direction binding", async () => {
   const [baseline, handoff] = await Promise.all([
     read("reports/review/FORMATION_LATEST_OWNER_DECISION_BASELINE.md"),

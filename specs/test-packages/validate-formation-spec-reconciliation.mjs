@@ -33,7 +33,7 @@ const EXPECTED_STATUS_BY_CONFLICT = new Map([
   ["FRV2-CONF-004", "PATCH_APPLIED_PENDING_INDEPENDENT_REVIEW"],
   ["FRV2-CONF-005", "PATCH_APPLIED_PENDING_INDEPENDENT_REVIEW"],
   ["FRV2-CONF-006", "PATCH_APPLIED_PENDING_INDEPENDENT_REVIEW"],
-  ["FRV2-CONF-007", "PATCH_REQUIRED"],
+  ["FRV2-CONF-007", "PATCH_APPLIED_PENDING_INDEPENDENT_REVIEW"],
   ["FRV2-CONF-008", "TARGET_BOUND_PENDING_QUALIFIED_REVIEW"],
   ["FRV2-CONF-009", "HUMAN_REVIEW_REQUIRED"],
   ["FRV2-CONF-010", "PATCH_APPLIED_PENDING_INDEPENDENT_REVIEW"],
@@ -159,7 +159,7 @@ export async function validateFormationSpecReconciliation(root = process.cwd()) 
   assert.match(sharing?.path ?? "", /HUMAN_REVIEW_AND_SHARING_WORKFLOW\.md/u)
   assert.equal(sharing?.status, "TARGET_BOUND_PENDING_QUALIFIED_REVIEW")
   const backup = registered.get("FRV2-CONF-007")
-  assert.equal(backup?.status, "PATCH_REQUIRED")
+  assert.equal(backup?.status, "PATCH_APPLIED_PENDING_INDEPENDENT_REVIEW")
   assert.match(backup?.latest_owner_baseline ?? "", /OWNER_FULL_LOCAL_BACKUP_EXPLICIT_INCLUDE/u)
   assert.match(backup?.required_patch ?? "", /USER_DIRECTED_FILE_OPERATION/u)
   assert.equal(registered.get("FRV2-CONF-012")?.status, "OWNER_DECISION_REQUIRED")
@@ -227,7 +227,7 @@ export async function validateFormationSpecReconciliation(root = process.cwd()) 
   for (const required of [
     "status: PREPARATION_PASS_GATES_OPEN",
     "conflicts_mapped: 12/12",
-    "patches_applied: 4/12",
+    "patches_applied: 5/12",
     "p1_plans_prepared: 10/10",
     "p1_plans_approved: 0/10",
     "preparation_review_lanes: 5/5_PASS",
