@@ -46,7 +46,7 @@
       "risks": { "policyInterpretation": true, "scientificJudgment": true, "legalJudgment": false, "humanAuthority": true, "runtimeActivation": false },
       "dependsOn": [],
       "evidence": [
-        { "path": "reports/review/WO012_COACH_OWNER_WALKTHROUGH.md", "contains": "owner_answers_recorded: false" },
+        { "path": "reports/review/WO012_COACH_OWNER_WALKTHROUGH.md", "contains": "owner_answers_recorded: true" },
         { "path": "reports/review/FORMATION_COMPETITION_ANCHOR_DECISION_PACKET_V1.md", "contains": "status: NOT_REVIEWED" },
         { "path": "reports/target-patch-plans/01-coach-ruleset.md", "contains": "approved: false" }
       ],

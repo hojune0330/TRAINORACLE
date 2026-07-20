@@ -224,3 +224,14 @@ test("real catalog has no autonomous work after the safe gate recount completes"
   assert.deepEqual(selectReadyTasks(source, "S3_MECHANICAL_BATCH"), [])
   assert.equal(source.tasks.find(({ id }) => id === "S3-GATE-RECOUNT")?.status, "DONE")
 })
+
+test("formation coach rules stay owner-blocked after answers are recorded", () => {
+  const path = resolve(process.cwd(), "reports/work-harness/TRAINORACLE_WORK_CATALOG.json")
+  const source = JSON.parse(readFileSync(path, "utf8"))
+  const task = source.tasks.find(({ id }) => id === "S1-FORMATION-COACH-RULES")
+
+  assert.equal(task?.status, "BLOCKED_OWNER")
+  assert.equal(task?.decisionComplete, false)
+  assert.ok(task?.evidence.some(({ contains }) => contains === "owner_answers_recorded: true"))
+  assert.deepEqual(selectReadyTasks(source, "S1_DEEP_FRAME"), [])
+})

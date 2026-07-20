@@ -1,101 +1,76 @@
-# WO012 코치 책임자 검토 안내서
+# WO012 코치 책임자 검토 안내
 
 ```yaml
 order_id: CODEX_WORK_ORDER_012
 document_role: OWNER_READABLE_WALKTHROUGH
 fixture_source: specs/test-packages/FORMATION_COACH_RULESET_FIXTURES.md
 fixture_count: 30
+status: OWNER_RESPONSES_RECORDED_PENDING_INDEPENDENT_REVIEW
 competition_direction_ref: reports/review/FORMATION_COMPETITION_RECORD_IDENTITY_OWNER_DECISION.md
 ca_02_formal_decision: NOT_REVIEWED
 ca_03_formal_decision: NOT_REVIEWED
-owner_answers_recorded: false
+owner_answers_recorded: true
 ruleset_accepted: false
 runtime_authority: false
+marker_text_or_visual_semantics: PENDING_OWNER_RECONCILIATION
 ```
 
-## 먼저 알아둘 점
+## 검토 경계
 
-이 문서는 코치가 규칙을 사례별로 판단하기 위한 설명서입니다. 9.5일과 약
-72시간은 검증된 법칙이 아니라 코치의 파일럿 가설입니다. 아래 예상 상태는
-초안의 안전한 기본값일 뿐이며 코치 답변이나 실행 승인이 아닙니다.
+이 안내서는 기록된 책임자 방향을 독립 검수자에게 보여줍니다. 규칙을 실행하거나
+계획을 만들거나 레지스트리를 채택하지 않으며, 9.5일과 약 72시간을 안전·생리학
+보장으로 만들지 않습니다. 모든 사례는 비실행 경계를 지켜야 합니다.
 
-경기 관련 사례는 **경기 기록 수**와 **계획상 MAIN 배치 수**를 따로 봅니다.
-예선·결승·계주를 모두 마치면 각 경기 기록과 부하는 따로 보존하지만, 같은 현지
-대회 날짜가 9.5일 계획에서 차지하는 MAIN 배치는 최대 한 번입니다. 대회 달력
-앵커 자체는 0회입니다. 이 내용은 책임자 최신 방향을 질문에 반영한 것이며,
-CA-02/03 정식 결정은 아직 `NOT_REVIEWED`이고 런타임 계산도 바뀌지 않습니다.
-근거는 `FORMATION_COMPETITION_RECORD_IDENTITY_OWNER_DECISION.md`입니다.
+MAIN 1회·4회 예외는 현재 + 바로 앞 + 바로 뒤, 최대 3개 프레임을 검토합니다. 그 외에는
+2-3 MAIN 기본값과 `NEEDS_REVIEW_WITH_REASON`을 유지합니다. 강한 플라이오는 명시
+`strong/high` 분류만 뜻하며 RPE·자유 서술에서 추정하지 않습니다. 보호된 상호작용은
+첫 화면에서 이유와 보수적 대안을 보여주고, 둘째 별도 화면에서 검토 요청·조정 초안만
+만듭니다. 실행하거나 안전을 우회하지 않습니다.
 
-## 프레임·횟수
+대회 관련 기록과 계획 MAIN은 분리합니다. 병합된 방향은 완료 경기 기록을 각각
+보존하고, 달력 앵커 기여를 0으로 두며, 같은 현지 대회 날짜의 계획 MAIN은 0 또는
+1회로 제한합니다. CR-07의 "1회"와 "별표 같은 표식"은 이 기준을 바꾸는 최종 규칙이
+아니며, 책임자 정렬이 끝날 때까지 검토 대기입니다.
 
-| ID | 상황 | 예상 상태 | 코치가 결정할 일 |
-|---|---|---|---|
-| CR-01 | 규칙 버전·책임자·프레임 중 하나가 없음 | 거부 | 세 항목을 모두 채울지 결정 |
-| CR-02 | 9.5일을 과학적 최적값처럼 표현 | 거부 | 파일럿 가설 표현과 비교 주기 결정 |
-| CR-03 | 약 72시간을 안전 보장처럼 표현 | 거부 | 배치 목표일 뿐임을 승인 또는 수정 |
-| CR-04 | 한 프레임의 MAIN이 1회 또는 4회 | 계획 후보 거부 | 2~3회 원칙의 예외 허용 여부 결정 |
-| CR-05 | MAIN 2회 | 횟수만 유효 | 실제 배치와 회복 조건 확인 |
-| CR-06 | MAIN 3회 | 횟수만 유효 | 실제 배치와 회복 조건 확인 |
-| CR-10 | 같은 세션이 두 번 집계됨 | 입력 거부 | 중복 판정 기준 결정 |
-| CR-11 | 계획과 완료 기록이 함께 있음 | 분리 표시 | 두 기록을 합산하지 않는 원칙 확인 |
-| CR-17 | 필수 사실이 오래됐거나 없음 | 코치 확인 필요 | 최신 범위·출처·구성요소 보완 기준 결정 |
-| CR-29 | 우선순위가 모호하거나 규칙 충돌 | 자동 선택 금지 | 충돌 우선순위를 명시 |
+## Case-by-Case Direction
 
-## 경기
-
-| ID | 상황 | 예상 상태 | 코치가 결정할 일 |
-|---|---|---|---|
-| CR-07 | 대회 앵커 아래 실제 경기 한 번을 완료함 | 경기 기록·부하 1건 보존, 앵커 0회, 그 날짜 계획 MAIN은 최대 1회 | 경기 기록과 날짜별 계획 MAIN 계산을 분리할지 확인 |
-| CR-08 | 같은 날 예선·결승·계주처럼 실제 경기를 여러 번 완료함 | 완료 경기 기록은 각각 보존, 경기별 중복 제거, 그 날짜 계획 MAIN은 합쳐서 최대 1회 | 경기별 부하는 잃지 않되 MAIN 2~3회를 하루 대회로 모두 채우지 않는 원칙 확인 |
-| CR-23 | 대회 날짜와 이동 가능한 MAIN이 충돌함 | 대회 날짜·경기 기록 보존, MAIN 자동 이동 금지, 코치 확인 | 같은 날짜 계획 MAIN을 0회 또는 1회로 두고 이동·취소할지 결정 |
-
-## 놓친 훈련·몰아넣기 금지
-
-| ID | 상황 | 예상 상태 | 코치가 결정할 일 |
-|---|---|---|---|
-| CR-09 | SUB·LD·TEST 보조 세션 | MAIN 노출 0회 | 분류가 세션과 맞는지 확인 |
-| CR-12 | 계획 MAIN을 수행하지 못함 | 완료 노출 0회 | 다음 날 자동 보충하지 않는 원칙 확인 |
-| CR-13 | 놓친 MAIN 여러 개가 가까이 모임 | 거부, 자동 따라잡기 없음 | 각 세션 이동·취소·재계획 결정 |
-| CR-25 | 이전 프레임 MAIN을 놓친 채 새 프레임 시작 | 자동 이월 없음 | 새 프레임을 독립적으로 계획할지 결정 |
-
-## 테이퍼·진행·회복
-
-| ID | 상황 | 예상 상태 | 코치가 결정할 일 |
-|---|---|---|---|
-| CR-20 | 등록 양식 없이 자동 테이퍼 요청 | 후보 없음 | 코치가 버전 있는 테이퍼를 직접 작성 |
-| CR-21 | RPE·통계·메모만으로 자동 회복 선택 | 자동 방아쇠 거부 | 선수 상태 확인 후 회복일 직접 작성 |
-| CR-22 | 자동 훈련 증가 요청 | 후보 없음 | 거리·강도·양을 직접 승인 |
-
-## 복합 훈련
-
-| ID | 상황 | 예상 상태 | 코치가 결정할 일 |
-|---|---|---|---|
-| CR-14 | 전체 세션과 구성 운동이 함께 집계됨 | 중복 거부 | 전체와 구성요소 표시·집계 구분 |
-| CR-15 | 전체 RPE를 운동별로 나눔 | 분할 거부 | 필요한 구성별 값은 선수가 직접 입력할지 결정 |
-| CR-16 | MAIN 사이에 강한 플라이오가 있음 | 구성요소 유지, 코치 확인 | 강도·배치·회복 사유 검토 |
-
-## 기준점·이동·경계
-
-| ID | 상황 | 예상 상태 | 코치가 결정할 일 |
-|---|---|---|---|
-| CR-24 | 기준점을 옮길 때 남은 세션 처리법 없음 | 이동 거부 | 이전 유지·이동·취소·추가 중 선택 |
-| CR-26 | 세션 시각이 프레임 시작과 같음 | 현재 프레임에 1회 포함 | 시작 경계 포함 원칙 확인 |
-| CR-27 | 세션 시각이 프레임 끝과 같음 | 다음 프레임에 1회 포함 | 끝 경계 제외 원칙 확인 |
-| CR-28 | 일광절약시간 중복·누락 시각이 불명확 | 프레임 거부 | 시간대·중복 선택·보정 시각 명시 |
-
-## 개인정보·권한
-
-| ID | 상황 | 예상 상태 | 코치가 결정할 일 |
-|---|---|---|---|
-| CR-18 | 유일한 차이가 나만의 메모뿐임 | 결과·출처·감사 기록 동일 | 개인 메모를 판단 근거로 쓰지 않음을 확인 |
-| CR-19 | 안전 상태가 활성 또는 불명확 | 차단, 우회 금지 | 안전 절차가 풀릴 때까지 계획 금지 확인 |
-| CR-30 | 권한 없는 팀 조회 또는 수정 | 조회·수정 거부 | 접근 범위와 수정 감사 규칙 확인 |
+| ID | Recorded direction | Independent-review cue |
+|---|---|---|
+| CR-01 | Approve version, owner, and frame gates. | Missing gate data remains ineligible. |
+| CR-02 | Approve the 9.5-day pilot heuristic. | It is not a proven optimum. |
+| CR-03 | Approve roughly 72 hours as a placement heuristic. | It is not recovery clearance. |
+| CR-04 | Default to 2-3 MAIN; exception is review-only. | A one/four frame returns `NEEDS_REVIEW_WITH_REASON`. |
+| CR-05 | Approve two MAIN. | Review placement and recovery. |
+| CR-06 | Approve three MAIN. | Review placement and recovery. |
+| CR-07 | Record a revision request: one MAIN and a star-like marker. | Keep the merged local-date zero-or-one direction until owner reconciliation. |
+| CR-08 | Never double count competition components. | Parent and components contribute once. |
+| CR-09 | Auxiliary sessions contribute zero. | Classification check recommended. |
+| CR-10 | De-dupe repeated records. | Distinct same-day sessions remain protected; review recommended. |
+| CR-11 | Keep planned and completed separate. | Do not sum views. |
+| CR-12 | Do not catch up missed MAIN. | A miss does not create an automatic candidate. |
+| CR-13 | Do not compress MAIN after a miss. | No double count or catch-up. |
+| CR-14 | Preserve composite identity. | Do not double count parent and leaves. |
+| CR-15 | Keep whole-session RPE whole. | Do not allocate it to components. |
+| CR-16 | Prompt for an added check on explicit strong/high plyometrics. | Never infer a threshold. |
+| CR-17 | Request current provenance for stale/missing facts. | Do not infer facts. |
+| CR-18 | Exclude private memo from analysis. | One-tap acknowledgement cannot create a signal or alter exclusion. |
+| CR-19 | Safety interaction is two-step and request-only. | Safety cannot be bypassed. |
+| CR-20 | Show conservative rest for taper. | Taper is a two-step request only. |
+| CR-21 | Offer coach review or self-confirmed adjustment draft after two steps. | Never automatically execute or change the actual plan. |
+| CR-22 | Offer the same two-step choice for an increase. | Never automatically execute or change the actual plan. |
+| CR-23 | Preserve fixed competition. | A flexible MAIN does not displace it. |
+| CR-24 | Use an easy guided re-anchor selector; never an accidental one-click schedule mutation. | Disposition must stay reviewable. |
+| CR-25 | Do not carry MAIN debt across frames. | A missed predecessor remains missed. |
+| CR-26 | Use start-inclusive frame membership. | Start boundary belongs to current frame. |
+| CR-27 | Use end-exclusive frame membership. | End boundary belongs to successor frame. |
+| CR-28 | Require an explicit DST resolution. | Never guess an instant. |
+| CR-29 | Apply the recorded conflict-priority proposal. | Safety outranks convenience. |
+| CR-30 | Deny unauthorized access. | Sharing is explicit; correction is auditable. |
 
 ## 검토 완료 조건
 
-응답 양식의 CR-01부터 CR-30까지 각각 `승인`, `수정 후 재검토`, `반려` 중
-하나를 고르고 필요한 규칙 문구를 적어야 합니다. 빈칸, 묶음 승인, 대리 입력은
-승인이 아닙니다. 개인정보 전문 검토와 상위 진입 조건이 끝나기 전에는 어떤
-답변도 런타임 권한을 만들지 않습니다.
+검수자는 30개 사례를 픽스처와 대조하고 우려를 독립 검수에 기록합니다. 이 기록은
+계속 대기 상태이며, 런타임 권한·정본 스펙 변경·개인정보 또는 과학 전문 승인으로
+간주할 수 없습니다.
 
-[END_WALKTHROUGH]
+[OWNER_RESPONSES_RECORDED_PENDING_INDEPENDENT_REVIEW]
