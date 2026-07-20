@@ -23,7 +23,7 @@ const failures = [];
 
 const caseIds = (text) => [...text.matchAll(casePattern)].map((match) => match[0]);
 const unique = (values) => new Set(values);
-const tableRows = (text) => text.split("\n").filter((line) => /^\| CR-/.test(line));
+const tableRows = (text) => text.split(/\r?\n/u).filter((line) => /^\| CR-/.test(line));
 const failUnless = (condition, message) => {
   if (!condition) failures.push(message);
 };
