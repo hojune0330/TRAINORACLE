@@ -71,6 +71,7 @@ test("daily-log memo transport follows the explicit owner file operation", async
     "explicit_memo_inclusion_confirmation_required: true",
     "owner_full_local_backup_allowed: true",
     "automatic_network_upload_allowed: false",
+    "preselected_recipient_allowed: false",
     "analysis_consent_from_export_or_share: prohibited",
     "standing_coach_guardian_or_friend_access_from_export_or_share: prohibited",
     "Formation_plan_safety_reward_or_telemetry_effect: prohibited",
@@ -80,7 +81,7 @@ test("daily-log memo transport follows the explicit owner file operation", async
     dailyLog.split("explicit_user_selected_file_inclusion: allowed_under_file_transport_contract").length - 1,
     2,
   )
-  assert.doesNotMatch(dailyLog, /^\s+(?:raw_text_)?export_allowed: false\s*$/gmu)
+  assert.doesNotMatch(dailyLog, /^\s+(?:raw_text_)?export_allowed: false\s*$/mu)
 })
 
 test("latest baseline and handoff point to the owner-direction binding", async () => {

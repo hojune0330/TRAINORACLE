@@ -39,6 +39,19 @@ for (const marker of [
   if (!`${walkthrough}\n${response}`.includes(marker)) failures.push(`missing marker: ${marker}`);
 }
 
+for (const [label, text, marker] of [
+  ["fixture competition direction", fixtures, "competition_direction_state: OWNER_DIRECTION_RECORDED_PENDING_NAMED_REVIEW"],
+  ["fixture completed bout identity", fixtures, "completed_bout_records: SEPARATE"],
+  ["fixture calendar anchor", fixtures, "calendar_anchor_exposure: 0"],
+  ["fixture same-date MAIN cap", fixtures, "same_competition_day_main_placement: ZERO_OR_ONE"],
+  ["fixture canonical boundary", fixtures, "canonical_counting_changed: false"],
+  ["walkthrough direction source", walkthrough, "FORMATION_COMPETITION_RECORD_IDENTITY_OWNER_DECISION.md"],
+  ["walkthrough formal boundary", walkthrough, "CA-02/03 정식 결정은 아직 `NOT_REVIEWED`"],
+  ["response formal boundary", response, "CA-02/03 정식 결정은 아직 `NOT_REVIEWED`"],
+]) {
+  if (!text.includes(marker)) failures.push(`missing ${label}: ${marker}`);
+}
+
 if (failures.length) {
   for (const failure of failures) console.error(`FAIL ${failure}`);
   process.exitCode = 1;

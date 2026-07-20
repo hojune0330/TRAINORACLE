@@ -5,6 +5,9 @@ order_id: CODEX_WORK_ORDER_012
 document_role: OWNER_READABLE_WALKTHROUGH
 fixture_source: specs/test-packages/FORMATION_COACH_RULESET_FIXTURES.md
 fixture_count: 30
+competition_direction_ref: reports/review/FORMATION_COMPETITION_RECORD_IDENTITY_OWNER_DECISION.md
+ca_02_formal_decision: NOT_REVIEWED
+ca_03_formal_decision: NOT_REVIEWED
 owner_answers_recorded: false
 ruleset_accepted: false
 runtime_authority: false
@@ -15,6 +18,13 @@ runtime_authority: false
 이 문서는 코치가 규칙을 사례별로 판단하기 위한 설명서입니다. 9.5일과 약
 72시간은 검증된 법칙이 아니라 코치의 파일럿 가설입니다. 아래 예상 상태는
 초안의 안전한 기본값일 뿐이며 코치 답변이나 실행 승인이 아닙니다.
+
+경기 관련 사례는 **경기 기록 수**와 **계획상 MAIN 배치 수**를 따로 봅니다.
+예선·결승·계주를 모두 마치면 각 경기 기록과 부하는 따로 보존하지만, 같은 현지
+대회 날짜가 9.5일 계획에서 차지하는 MAIN 배치는 최대 한 번입니다. 대회 달력
+앵커 자체는 0회입니다. 이 내용은 책임자 최신 방향을 질문에 반영한 것이며,
+CA-02/03 정식 결정은 아직 `NOT_REVIEWED`이고 런타임 계산도 바뀌지 않습니다.
+근거는 `FORMATION_COMPETITION_RECORD_IDENTITY_OWNER_DECISION.md`입니다.
 
 ## 프레임·횟수
 
@@ -35,9 +45,9 @@ runtime_authority: false
 
 | ID | 상황 | 예상 상태 | 코치가 결정할 일 |
 |---|---|---|---|
-| CR-07 | 경기를 완료함 | 경기 유지, MAIN 노출 1회 | 1회 집계 원칙 확인 |
-| CR-08 | 경기와 내부 구성요소가 함께 있음 | 전체 경기만 1회 집계 | 구성요소 중복 집계 금지 확인 |
-| CR-23 | 고정 경기와 이동 가능한 MAIN 충돌 | 경기 보존, 코치 확인 | MAIN 이동·취소 여부 결정 |
+| CR-07 | 대회 앵커 아래 실제 경기 한 번을 완료함 | 경기 기록·부하 1건 보존, 앵커 0회, 그 날짜 계획 MAIN은 최대 1회 | 경기 기록과 날짜별 계획 MAIN 계산을 분리할지 확인 |
+| CR-08 | 같은 날 예선·결승·계주처럼 실제 경기를 여러 번 완료함 | 완료 경기 기록은 각각 보존, 경기별 중복 제거, 그 날짜 계획 MAIN은 합쳐서 최대 1회 | 경기별 부하는 잃지 않되 MAIN 2~3회를 하루 대회로 모두 채우지 않는 원칙 확인 |
+| CR-23 | 대회 날짜와 이동 가능한 MAIN이 충돌함 | 대회 날짜·경기 기록 보존, MAIN 자동 이동 금지, 코치 확인 | 같은 날짜 계획 MAIN을 0회 또는 1회로 두고 이동·취소할지 결정 |
 
 ## 놓친 훈련·몰아넣기 금지
 
