@@ -13,6 +13,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Setup Node
         uses: actions/setup-node@v4
@@ -23,6 +25,14 @@ jobs:
             runtime-evidence/d9-evaluator/package-lock.json
             impl/package-lock.json
             app/package-lock.json
+
+      - name: Validate reasoning-tier work harness
+        run: |
+          node --test specs/test-packages/reasoning-tier-harness.test.mjs
+          node specs/test-packages/reasoning-tier-harness.mjs validate
+          node specs/test-packages/validate-formal-approval-foundation.mjs
+          node specs/test-packages/validate-formation-p1-target-plans.mjs
+          node specs/test-packages/test-wo016-gate-verifier.mjs
 
       - name: Install D9 evaluator dependencies
         working-directory: runtime-evidence/d9-evaluator
