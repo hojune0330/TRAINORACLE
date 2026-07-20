@@ -315,7 +315,7 @@
       "id": "S3-CITATION-METADATA-AUDIT",
       "title": "Batch-check research identity, duplicate, and link metadata only",
       "stage": "S3_MECHANICAL_BATCH",
-      "status": "DEFERRED_VOLUME",
+      "status": "DONE",
       "priority": 2,
       "kind": "METADATA_AUDIT",
       "decisionComplete": true,
@@ -323,7 +323,8 @@
       "dependsOn": [],
       "evidence": [
         { "path": "reports/review/FORMATION_RESEARCH_TECHNICAL_ANNEX.md", "contains": "source_ledger: 167" },
-        { "path": "reports/research/evidence/FORMATION_SOURCE_LEDGER.csv", "contains": "source_id" }
+        { "path": "reports/research/evidence/FORMATION_SOURCE_LEDGER.csv", "contains": "source_id" },
+        { "path": "reports/research/evidence/FORMATION_SOURCE_AUDIT_EXECUTION_20260720.md", "contains": "status: MECHANICAL_AUDIT_COMPLETE" }
       ],
       "allowedPaths": ["reports/research/evidence/**"],
       "deterministicChecks": ["node specs/test-packages/validate-formation-source-audit.mjs", "node specs/test-packages/validate-formation-supplemental-evidence.mjs"],
