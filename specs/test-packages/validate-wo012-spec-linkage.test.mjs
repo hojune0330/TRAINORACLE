@@ -63,6 +63,16 @@ test("Given private memo analysis language, when the linkage matrix validates, t
   assert.match(result.stderr, /private memo exclusion/u);
 });
 
+test("Given actual-plan mutation language outside the forbidden outcome, when the linkage matrix validates, then it fails closed", async () => {
+  const result = await validateWith({
+    from: "| 이유와 보수적 대안, 두 번째 화면의 검토 요청 초안 | 안전 우회, 실제 계획 변경 |",
+    to: "| 이유와 보수적 대안, 실제 계획 변경을 금지한 두 번째 화면의 검토 요청 초안 | 안전 우회 |",
+  });
+
+  assert.notEqual(result.status, 0);
+  assert.match(result.stderr, /CR-19 must forbid actual plan mutation/u);
+});
+
 test("Given runtime authority, when the linkage matrix validates, then it fails closed", async () => {
   const result = await validateWith({ from: "runtime_authority: false", to: "runtime_authority: true" });
 

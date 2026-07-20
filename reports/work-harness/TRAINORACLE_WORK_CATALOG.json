@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "catalogId": "TO-REASONING-TIER-WORK-CATALOG-2026-07-20",
-  "sourceSnapshot": "a0a51096762a82f1cdf56b0eb522e72e870484c6",
+  "sourceSnapshot": "6d84e273eacd7aca334b4ee7ccf8d1c29b8f9ed2",
   "runtimeAuthority": false,
   "handoffPolicy": {
     "mode": "STOP_AND_HANDOFF",
