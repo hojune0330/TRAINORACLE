@@ -5,7 +5,7 @@ status: PREPARATION_PASS_GATES_OPEN
 source_research_head: 6acc26c9cf025b2b22b92bb33dcdaaef870cc409
 merged_main_base: b0c48810da20f869094312f81cc0485111e7f85a
 conflicts_mapped: 12/12
-patches_applied: 4/12
+patches_applied: 5/12
 p1_plans_prepared: 10/10
 p1_plans_approved: 0/10
 preparation_review_lanes: 5/5_PASS
@@ -52,7 +52,7 @@ runtime_authority: false
 
 - 가장 먼저 풀어야 할 계획(P1)은 정확히 10개이며 모두 미승인이고 실제 자동 처방 실행도
   꺼져 있습니다. 연구가 연결됐다는 사실은 계획 승인이 아닙니다.
-- 충돌 상태는 `PATCH_REQUIRED` 5건, `PATCH_APPLIED_PENDING_INDEPENDENT_REVIEW` 4건,
+- 충돌 상태는 `PATCH_REQUIRED` 4건, `PATCH_APPLIED_PENDING_INDEPENDENT_REVIEW` 5건,
   `TARGET_BOUND_PENDING_QUALIFIED_REVIEW` 1건, `HUMAN_REVIEW_REQUIRED` 1건,
   `OWNER_DECISION_REQUIRED` 1건입니다.
 - 메모를 코치·친구·보호자 등 선택한 상대에게 보내는 방향은 허용합니다. 그러나 현재 앱에

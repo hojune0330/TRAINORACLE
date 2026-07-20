@@ -165,8 +165,9 @@ Current adopted behavior is preserved:
   the service must not silently upload, preselect a recipient, or claim continued access
   control after the file leaves the device.
 
-The conflicting absolute-export prohibitions in `DAILY_LOG_AND_CHECKIN_SPEC.md` require
-a target-owner patch before this contract can be promoted.
+`DAILY_LOG_AND_CHECKIN_SPEC.md` now aligns the local file-transport boundary with this
+contract. That specification alignment does not itself approve privacy governance,
+server sharing, recipient accounts, or runtime promotion.
 
 ## 10. Open Issues
 
@@ -175,7 +176,7 @@ a target-owner patch before this contract can be promoted.
 | `OI-NSR-QUALIFIED-PRIVACY-001` | YES | OPEN | Named qualified privacy reviewer signs the processing and access boundary. |
 | `OI-NSR-CRYPTO-BINDING-001` | YES | OPEN | Security owner defines keyed binding, key rotation, and erasure. |
 | `OI-NSR-RELEASE-PATH-001` | YES | OPEN | Safety owner accepts structured human release path. |
-| `OI-NSR-EXPORT-DRIFT-001` | YES | OPEN | Daily Log aligns absolute prohibition with owner-selected local export. |
+| `OI-NSR-EXPORT-DRIFT-001` | NO | RESOLVED_SPEC_ONLY | Daily Log permits only explicit user-selected local file inclusion under preview and confirmation; implementation and qualified review remain separate gates. |
 | `OI-NSR-RUNTIME-EVIDENCE-001` | YES | OPEN | RED/GREEN implementation and information-flow evidence. |
 
 ## 11. Non-Claims

@@ -577,6 +577,19 @@ memo_policy:
   new_nonempty_text_requires_explicit_purpose_selector: true
   race_strategy_free_text_requires_explicit_note_purpose: true
 
+  file_transport:
+    first_delivery: SELECTIVE_EXPORT_AND_OS_SHARE
+    operation_class: USER_DIRECTED_FILE_OPERATION
+    memo_inclusion_default: false
+    exact_field_preview_required: true
+    explicit_memo_inclusion_confirmation_required: true
+    owner_full_local_backup_allowed: true
+    automatic_network_upload_allowed: false
+    preselected_recipient_allowed: false
+    analysis_consent_from_export_or_share: prohibited
+    standing_coach_guardian_or_friend_access_from_export_or_share: prohibited
+    Formation_plan_safety_reward_or_telemetry_effect: prohibited
+
   PRIVATE_SELF_ONLY:
     user_facing_name_candidate: 나만의 메모
     raw_text_local_device_persistence_allowed: true
@@ -586,7 +599,8 @@ memo_policy:
     server_sync_allowed: false
     coach_access_allowed: false
     future_plan_evidence_allowed: false
-    export_allowed: false
+    default_export_inclusion: false
+    explicit_user_selected_file_inclusion: allowed_under_file_transport_contract
     account_reward_event_from_presence_frequency_length_or_content: forbidden
     UI_must_not_claim_safety_monitoring: true
     processing_flow_after_local_device_save: stop
@@ -608,8 +622,8 @@ memo_policy:
     raw_text_coach_access_allowed: false
     structured_result_coach_access_default: false_until_separate_adoption
     future_plan_evidence_allowed_before_separate_adoption: false
-    raw_text_export_allowed: false
-    export_default: excluded
+    default_export_inclusion: false
+    explicit_user_selected_file_inclusion: allowed_under_file_transport_contract
 
   current_device_security_truth:
     current_app_storage: browser_localStorage
