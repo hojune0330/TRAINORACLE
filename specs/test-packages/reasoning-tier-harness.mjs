@@ -5,10 +5,11 @@ import { pathToFileURL } from "node:url"
 
 const CATALOG_PATH = "reports/work-harness/TRAINORACLE_WORK_CATALOG.json"
 const EXPECTED_STAGES = [
-  ["S1_DEEP_FRAME", "high"],
-  ["S2_BOUNDED_BUILD", "medium"],
-  ["S3_MECHANICAL_BATCH", "low"],
+  ["S1_DEEP_FRAME", "high", null],
+  ["S2_BOUNDED_BUILD", "medium", null],
+  ["S3_MECHANICAL_BATCH", "high", "gpt-5.6-terra"],
 ]
+const REQUIRED_HANDOFF_TRIGGERS = ["evidence_stale", "scope_expansion", "authority_required", "check_failure"]
 const STATUSES = new Set(["READY", "WAIT_DEPENDENCY", "BLOCKED_OWNER", "BLOCKED_HUMAN", "DEFERRED_VOLUME", "DONE"])
 const LOW_KINDS = new Set(["VALIDATION", "METADATA_AUDIT", "DOC_SYNC", "FIXTURE_TRANSCRIPTION"])
 const RISK_KEYS = ["policyInterpretation", "scientificJudgment", "legalJudgment", "humanAuthority", "runtimeActivation"]
@@ -39,15 +40,25 @@ export function validateCatalog(catalog, { repoRoot } = {}) {
   if (!/^[0-9a-f]{40}$/u.test(catalog.sourceSnapshot ?? "")) issue(errors, "E_SOURCE_SNAPSHOT", "sourceSnapshot must be a full lowercase commit SHA")
   if (catalog.runtimeAuthority !== false) issue(errors, "E_RUNTIME_AUTHORITY", "runtimeAuthority must remain false")
   if (JSON.stringify(catalog).includes("�")) issue(errors, "E_TEXT_ENCODING", "catalog contains a replacement character")
+  const handoffTriggers = catalog.handoffPolicy?.triggers
+  if (
+    catalog.handoffPolicy?.mode !== "STOP_AND_HANDOFF" ||
+    !Array.isArray(handoffTriggers) ||
+    handoffTriggers.length !== REQUIRED_HANDOFF_TRIGGERS.length ||
+    REQUIRED_HANDOFF_TRIGGERS.some((trigger) => !handoffTriggers.includes(trigger))
+  ) issue(errors, "E_HANDOFF_POLICY", "catalog must stop and hand off evidence, scope, authority, or check failures")
 
   const declaredStages = Array.isArray(catalog.stages) ? catalog.stages : []
   if (declaredStages.length !== EXPECTED_STAGES.length) {
     issue(errors, "E_STAGE_SET", "catalog must declare exactly three stages")
   } else {
-    for (const [index, [expectedId, expectedReasoning]] of EXPECTED_STAGES.entries()) {
+    for (const [index, [expectedId, expectedReasoning, executionModel]] of EXPECTED_STAGES.entries()) {
       const stage = declaredStages[index]
       if (stage?.id !== expectedId || stage?.order !== index + 1 || stage?.reasoning !== expectedReasoning) {
         issue(errors, "E_STAGE_SET", `stage ${index + 1} must be ${expectedId}/${expectedReasoning}`)
+      }
+      if (executionModel !== null && stage?.executionModel !== executionModel) {
+        issue(errors, "E_STAGE_EXECUTION", `${expectedId} must use ${executionModel}`)
       }
       for (const key of ["maxReferences", "maxCapsuleChars", "maxBatchTasks"]) {
         if (!Number.isInteger(stage?.[key]) || stage[key] < 1) issue(errors, "E_STAGE_BUDGET", `${expectedId}.${key} must be positive`)
@@ -149,9 +160,11 @@ export function renderWorkCapsule(catalog, stageId, tasks) {
     "",
     "```yaml",
     `reasoning: ${stage.reasoning}`,
+    ...(stage.executionModel ? [`model: ${stage.executionModel}`] : []),
     `reference_cap: ${stage.maxReferences}`,
     `capsule_character_cap: ${stage.maxCapsuleChars}`,
     "runtime_authority: false",
+    "handoff_policy: STOP_AND_HANDOFF",
     "```",
     "",
   ]

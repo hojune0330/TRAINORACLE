@@ -3,6 +3,10 @@
   "catalogId": "TO-REASONING-TIER-WORK-CATALOG-2026-07-20",
   "sourceSnapshot": "a0a51096762a82f1cdf56b0eb522e72e870484c6",
   "runtimeAuthority": false,
+  "handoffPolicy": {
+    "mode": "STOP_AND_HANDOFF",
+    "triggers": ["evidence_stale", "scope_expansion", "authority_required", "check_failure"]
+  },
   "stages": [
     {
       "id": "S1_DEEP_FRAME",
@@ -23,7 +27,8 @@
     {
       "id": "S3_MECHANICAL_BATCH",
       "order": 3,
-      "reasoning": "low",
+      "reasoning": "high",
+      "executionModel": "gpt-5.6-terra",
       "maxReferences": 3,
       "maxCapsuleChars": 3000,
       "maxBatchTasks": 5

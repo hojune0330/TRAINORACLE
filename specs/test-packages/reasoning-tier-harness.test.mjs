@@ -25,7 +25,8 @@ const stages = [
   {
     id: "S3_MECHANICAL_BATCH",
     order: 3,
-    reasoning: "low",
+    reasoning: "high",
+    executionModel: "gpt-5.6-terra",
     maxReferences: 3,
     maxCapsuleChars: 3000,
     maxBatchTasks: 5,
@@ -63,6 +64,10 @@ function catalog(overrides = {}) {
     catalogId: "TO-REASONING-TIER-HARNESS-TEST",
     sourceSnapshot: "a0a51096762a82f1cdf56b0eb522e72e870484c6",
     runtimeAuthority: false,
+    handoffPolicy: {
+      mode: "STOP_AND_HANDOFF",
+      triggers: ["evidence_stale", "scope_expansion", "authority_required", "check_failure"],
+    },
     stages,
     tasks: [
       task({
@@ -88,6 +93,18 @@ test("stage budgets must strictly descend", () => {
   invalidStages[2].maxReferences = 7
   const errors = validateCatalog(catalog({ stages: invalidStages }), { repoRoot: process.cwd() })
   assert.ok(errors.some((error) => error.code === "E_STAGE_BUDGET_DESCENT"))
+})
+
+test("mechanical stage requires the Terra high execution profile", () => {
+  const invalidStages = structuredClone(stages)
+  invalidStages[2].executionModel = "gpt-5.6-sol"
+  const errors = validateCatalog(catalog({ stages: invalidStages }), { repoRoot: process.cwd() })
+  assert.ok(errors.some((error) => error.code === "E_STAGE_EXECUTION"))
+})
+
+test("catalog requires stop-and-handoff triggers for uncertain work", () => {
+  const errors = validateCatalog(catalog({ handoffPolicy: { mode: "CONTINUE", triggers: [] } }), { repoRoot: process.cwd() })
+  assert.ok(errors.some((error) => error.code === "E_HANDOFF_POLICY"))
 })
 
 test("catalog requires a pinned source snapshot", () => {
@@ -183,6 +200,7 @@ test("rendered capsule preserves authority boundary and stage cap", () => {
   const source = catalog()
   const capsule = renderWorkCapsule(source, "S3_MECHANICAL_BATCH", selectReadyTasks(source, "S3_MECHANICAL_BATCH"))
   assert.match(capsule, /runtime_authority: false/u)
+  assert.match(capsule, /model: gpt-5\.6-terra/u)
   assert.match(capsule, /MECH-001/u)
   assert.ok(capsule.length <= 3000)
 })
