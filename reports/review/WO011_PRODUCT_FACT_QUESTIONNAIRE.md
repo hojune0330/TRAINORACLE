@@ -3,6 +3,8 @@
 ```yaml
 questionnaire_id: TO-WO011-PRODUCT-FACTS-2026-07-16
 source_commit: a6857bcdcd9f2989799c505f52773256ce492e14
+latest_owner_fact_update_base: a0a51096762a82f1cdf56b0eb522e72e870484c6
+owner_fact_batch_01: RECORDED_PENDING_QUALIFIED_REVIEW
 legal_advice_status: NOT_LEGAL_ADVICE
 decision: NOT_ACCEPTED
 reviewer: UNASSIGNED
@@ -20,12 +22,12 @@ reference or dated accountable-owner attestation.
 
 | ID | Product-fact question | Current answer | State | Evidence or next action | Fact owner |
 |---|---|---|---|---|---|
-| PF-LA-01 | Which countries are included at first public launch? | No launch-country decision is recorded. | UNKNOWN | UNKNOWN - total responsibility holder must name included and excluded countries. | TOTAL_RESPONSIBILITY_HOLDER |
+| PF-LA-01 | Which countries are included at first public launch? | South Korea is the only included country for the first public launch; US, EU, and UK launch are deferred. | CONFIRMED | `WO011_OWNER_PRODUCT_FACT_DECISION_01_LAUNCH_SCOPE_2026-07-20.md`. | TOTAL_RESPONSIBILITY_HOLDER |
 | PF-LA-02 | Is access determined by residence, location, nationality, store, or contract entity? | No conflict rule is recorded. | UNKNOWN | UNKNOWN - product/legal operations must define the jurisdiction-resolution rule. | PRODUCT_OWNER |
 | PF-LA-03 | What is the minimum athlete age in each launch country? | No minimum age is recorded. | UNKNOWN | UNKNOWN - owner must provide country-by-country age bands. | PRODUCT_OWNER |
-| PF-LA-04 | Will under-14 Korean athletes be offered account features? | Not decided; local journal and future account features must be separated. | UNKNOWN | UNKNOWN - owner must explicitly include or exclude this cohort by feature. | PRODUCT_OWNER |
-| PF-LA-05 | Will under-13 US children be offered any online/account feature? | US launch and child-directed scope are not decided. | UNKNOWN | UNKNOWN - owner must state audience, actual-knowledge handling, and feature scope. | PRODUCT_OWNER |
-| PF-LA-06 | Will EU/UK children receive an information-society service directly? | EU/UK launch is not decided. | UNKNOWN | UNKNOWN - owner must describe offer, audience, and consent-dependent purposes. | PRODUCT_OWNER |
+| PF-LA-04 | Will under-14 Korean athletes be offered account features? | No. They may use the local journal only; account and server-linked features remain excluded pending qualified privacy review and a separate owner decision. | CONFIRMED | `WO011_OWNER_PRODUCT_FACT_DECISION_01_LAUNCH_SCOPE_2026-07-20.md`. | PRODUCT_OWNER |
+| PF-LA-05 | Will under-13 US children be offered any online/account feature? | Not applicable to the first public launch because the US is excluded; any future US child scope requires a new decision and review. | NOT_APPLICABLE | `WO011_OWNER_PRODUCT_FACT_DECISION_01_LAUNCH_SCOPE_2026-07-20.md`; limited to the first-launch scope. | PRODUCT_OWNER |
+| PF-LA-06 | Will EU/UK children receive an information-society service directly? | Not applicable to the first public launch because the EU and UK are excluded; any future child scope there requires a new decision and review. | NOT_APPLICABLE | `WO011_OWNER_PRODUCT_FACT_DECISION_01_LAUNCH_SCOPE_2026-07-20.md`; limited to the first-launch scope. | PRODUCT_OWNER |
 | PF-LA-07 | What launch date and legal/source freeze date apply? | No release date is approved. | UNKNOWN | UNKNOWN - release owner must set both dates and a re-review lead time. | RELEASE_OWNER |
 
 ## B. Controller And Processor Roles
@@ -55,7 +57,7 @@ reference or dated accountable-owner attestation.
 
 | ID | Product-fact question | Current answer | State | Evidence or next action | Fact owner |
 |---|---|---|---|---|---|
-| PF-PR-01 | Which account/server features will launch beyond the local journal? | No account-linked production scope is accepted. | UNKNOWN | UNKNOWN - product owner must list each launch feature and required/optional status. | PRODUCT_OWNER |
+| PF-PR-01 | Which account/server features will launch beyond the local journal? | The first public launch is local-journal-only; no account, server sync, or server-linked feature is included. | CONFIRMED | `WO011_OWNER_PRODUCT_FACT_DECISION_01_LAUNCH_SCOPE_2026-07-20.md`. | PRODUCT_OWNER |
 | PF-PR-02 | Is local journal use separable from sync, analysis, coach sharing, safety, AI, research, rewards, marketing, and payment? | The governance contract requires separate purposes and no penalty for refusing optional purposes. | CONFIRMED | `FORMATION_RECORD_GOVERNANCE_CONTRACT.md` section 5. | PRIVACY_CONTRACT_OWNER |
 | PF-PR-03 | Which recipients can receive raw journal fields in-app? | None are currently authorized. | CONFIRMED | `FORMATION_RECORD_GOVERNANCE_CONTRACT.md` sections 4 and 6. | PRIVACY_CONTRACT_OWNER |
 | PF-PR-04 | May an athlete create a local file that includes their memos? | Yes, only through explicit confirmed `OWNER_FULL_BACKUP`; default export excludes memos. | CONFIRMED | App full-export tests and `NOTE_SAFETY_SIGNAL_AND_REVIEW_STATE_CONTRACT.md` section 9. | APP_OWNER |
@@ -63,7 +65,7 @@ reference or dated accountable-owner attestation.
 | PF-PR-06 | Which hosting/database vendors and regions will receive account data? | No production hosting or database vendor is approved in this packet. | UNKNOWN | UNKNOWN - vendor owner must name entity, service, region, access countries, subprocessors, and fields. | VENDOR_OWNER |
 | PF-PR-07 | Which logging, error, email, analytics, AI, wearable, or support vendors will receive data? | No production vendor inventory is approved. | UNKNOWN | UNKNOWN - vendor owner must complete one row per provider, including an explicit none. | VENDOR_OWNER |
 | PF-PR-08 | Which payment provider, entity, region, and journal-data separation apply? | Payment is contemplated but no reviewed production contract is recorded. | UNKNOWN | UNKNOWN - commerce owner must provide provider and strict transaction-data boundary. | COMMERCE_OWNER |
-| PF-PR-09 | Will coach, guardian, friend, club, school, researcher, advertiser, or model provider receive any data? | In-app access is blocked; future intended recipients are not fully decided. | UNKNOWN | UNKNOWN - product owner must answer per recipient and exact field. | PRODUCT_OWNER |
+| PF-PR-09 | Will coach, guardian, friend, club, school, researcher, advertiser, or model provider receive any data? | No in-app recipient is included in the first public launch; future in-app recipient scope is deferred. Athlete-controlled local export and external OS sharing remain separate actions. | CONFIRMED | `WO011_OWNER_PRODUCT_FACT_DECISION_01_LAUNCH_SCOPE_2026-07-20.md`; PF-PR-04 and PF-PR-05. | PRODUCT_OWNER |
 | PF-PR-10 | Is any server share link or raw-memo sync intended? | Both are currently blocked. | CONFIRMED | `FORMATION_RECORD_GOVERNANCE_CONTRACT.md` section 6. | PRIVACY_CONTRACT_OWNER |
 
 ## E. Retention, Deletion, Backup, And Key Erasure
@@ -85,7 +87,7 @@ reference or dated accountable-owner attestation.
 | PF-BT-01 | What legal-hold authority, scope, vault, access, expiry, and release process exists? | No legal-hold policy is accepted. | UNKNOWN | UNKNOWN - legal/operations owners must define or explicitly prohibit launch use. | OPERATIONS_OWNER |
 | PF-BT-02 | What incident detection, isolation, kill switch, rotation, and recovery capabilities exist? | No production incident architecture is documented for account-linked data. | UNKNOWN | UNKNOWN - security owner must provide system-specific playbook and evidence. | SECURITY_OWNER |
 | PF-BT-03 | Who makes notification decisions and contacts authorities, athletes, and guardians? | No named incident roles or contacts are recorded. | UNKNOWN | UNKNOWN - business/security owners must name primary and backup contacts. | BUSINESS_OWNER |
-| PF-BT-04 | Which breach clocks and thresholds apply in each launch jurisdiction? | No launch jurisdictions are fixed; global defaults are forbidden. | UNKNOWN | UNKNOWN - qualified reviewer decides after PF-LA-01 and processing inventory. | QUALIFIED_REVIEWER |
+| PF-BT-04 | Which breach clocks and thresholds apply in each launch jurisdiction? | South Korea is the only first-launch jurisdiction; applicable breach clocks and thresholds have not been reviewed. | UNKNOWN | UNKNOWN - qualified reviewer decides after the processing inventory and launch-date source freeze are complete. | QUALIFIED_REVIEWER |
 | PF-BT-05 | Which international transfers, remote-access countries, and subprocessors exist? | No production transfer inventory exists. | UNKNOWN | UNKNOWN - vendor owner must provide data-flow and access-country register. | VENDOR_OWNER |
 | PF-BT-06 | What transfer mechanism, supplementary measures, and re-review triggers apply? | Cannot be decided before vendors, regions, and jurisdictions are known. | UNKNOWN | UNKNOWN - qualified reviewer and security owner assess each transfer. | QUALIFIED_REVIEWER |
 | PF-BT-07 | Does breach forensics preserve only minimized data without restoring product use? | The contract requires minimization; no production playbook exists. | UNKNOWN | UNKNOWN - security owner must define evidence scope, access, expiry, and deletion. | SECURITY_OWNER |
