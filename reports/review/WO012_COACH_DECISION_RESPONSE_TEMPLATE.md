@@ -3,6 +3,9 @@
 ```yaml
 order_id: CODEX_WORK_ORDER_012
 response_status: BLANK_TEMPLATE
+competition_direction_ref: reports/review/FORMATION_COMPETITION_RECORD_IDENTITY_OWNER_DECISION.md
+ca_02_formal_decision: NOT_REVIEWED
+ca_03_formal_decision: NOT_REVIEWED
 owner_answers_recorded: false
 ruleset_accepted: false
 runtime_authority: false
@@ -14,6 +17,10 @@ runtime_authority: false
 
 결정값은 `승인`, `수정 후 재검토`, `반려` 중 하나입니다. 한 번에 묶어서
 승인할 수 없으며 빈칸은 `NOT_REVIEWED`로 남습니다.
+
+CR-07·CR-08·CR-23은 경기별 기록·부하와 같은 현지 대회 날짜의 계획상 MAIN
+배치를 분리해 묻습니다. CA-02/03 정식 결정은 아직 `NOT_REVIEWED`이므로, 여기서
+각 사례에 답해도 정본 계산이나 런타임이 자동으로 바뀌지 않습니다.
 
 | ID | 결정 | 수정할 규칙·이유 |
 |---|---|---|
