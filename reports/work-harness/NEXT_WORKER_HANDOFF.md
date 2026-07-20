@@ -6,9 +6,31 @@
 - 3단계 기계 작업은 `gpt-5.6-terra`의 높은 추론으로 실행한다.
 - 정본 연구 자료의 기계적 메타데이터 점검은 2026-07-20에 완료됐다. 결과는 `FORMATION_SOURCE_AUDIT_EXECUTION_20260720.md`에 있다.
 - 현재 새로 실행할 3단계 작업은 없다. 승인이나 사람 검토가 필요한 일을 임의로 시작하지 않는다.
-- 상태 문서 동기화는 PR #94가 검수·병합된 뒤에만 한다. 병합 전 상태를 `main`의 사실처럼 쓰지 않는다.
-- 코치 규칙 전사는 WO012의 30개 책임자 답변이 기록된 뒤에만 한다. 빈 답변을 추정으로 채우지 않는다.
+- PR #95는 병합됐다. WO012 책임자 답변의 기록은 `reports/review/WO012_COACH_DECISION_RESPONSE_TEMPLATE.md`에, 각 답변의 스펙 연결은 `reports/review/WO012_SPEC_LINKAGE_MATRIX.md`에 있다.
+- 이 기록은 규칙 채택·정본 패치·과학 또는 개인정보 검토 완료·런타임 권한을 뜻하지 않는다. 빈 답변이나 미확정 사항을 추정으로 채우지 않는다.
 - 자동 처방과 런타임 권한은 계속 `false`다.
+
+## WO012 이후의 안전한 범위
+
+- 지금 가능한 다음 산출물은 **이름 있는 관문이 닫힌 뒤의 정본 패치 제안서**뿐이다. 제안서는 검토 대상이며 스스로 정본을 고치지 않는다.
+- 직접 `app/`, `impl/`, 런타임 평가기, 스키마, 실제 달력 쓰기, 실제 계획 쓰기, 알림 쓰기, 코치 지시 쓰기, 실제 참가자 파일럿을 시작하면 안 된다.
+- `approved_plans: 0`, 엄격 수용 기록, `runtime_authority: false`를 바꾸지 않는다.
+- CR-04는 `EXACTLY_TWO_OR_THREE_MAIN_CANDIDATE_VALIDITY_UNCHANGED`다. MAIN 1회·4회는 `NEEDS_REVIEW_WITH_REASON`만 남기며 `selectable_candidate: false`, `automatic_execution: false`다.
+- CR-07은 완료 경기 기록 분리·달력 앵커 0·같은 **현지 시민 대회 날짜**의 계획 MAIN `ZERO_OR_ONE`을 유지한다. "정확히 1회"와 별표 표식 의미는 CA-02·CA-03 정식 검토 전까지 미확정이다.
+- CR-18은 개인 메모의 존재와 내용 모두를 분석·telemetry·감사·해시·출처·표시에 쓰지 않는다. 원터치 확인도 신호를 만들지 않는다.
+
+## 다음 작업 전에 닫혀야 하는 관문
+
+1. CA-02·CA-03 대회 기록/MAIN 계산의 정식 책임자 결정
+2. Order 011 적격 개인정보·청소년 보호 검토
+3. 청소년 중거리 스포츠과학 검토
+4. D9/RVE 및 D1/D2 어댑터 근거
+5. 이름 있는 제품·접근성 검토
+6. 별도의 실제 참가자 파일럿 모집 승인
+
+그림자 비교는 기존 `ATHLETE_VISIBLE_SHADOW_PILOT_PROTOCOL.md`의 범위를 넘지 않는다.
+`participant_enrollment: false`, `hidden_shadow: forbidden`을 유지하며 실제 계획·달력·알림·
+코치 지시에는 쓰지 않는다.
 
 ## 책임자 지침: 거시적 배치 해석
 
@@ -29,15 +51,18 @@
 
 ## 다음으로 열릴 가능성이 큰 일
 
-- 책임자 결정: WO012 코치 규칙 30문항과 P1 계획 10건의 개별 승인
+- 책임자 결정: CA-02·CA-03 정식 결정과 P1 계획 10건의 개별 승인
 - 사람 검토: 연구 167편과 보조 자료 18편의 선별, 전문가 6인 검토, 사용자 확인
-- 위 결정이 기록된 뒤에만 2단계 정본 패치와 비실행형 Plan Generator 작업을 시작한다.
+- 위 관문이 기록된 뒤에만 정본 패치 **제안서**를 만들 수 있다. 비실행형 Plan Generator도 별도 D9/RVE·권한 검토 없이는 시작하지 않는다.
 
 ## 시작 전 확인
 
 ```bash
 node specs/test-packages/reasoning-tier-harness.mjs validate
 node specs/test-packages/reasoning-tier-harness.mjs next --stage S3_MECHANICAL_BATCH
+node specs/test-packages/validate-wo012-spec-linkage.mjs
+node specs/test-packages/validate-formation-spec-reconciliation.mjs
 ```
 
 두 번째 명령이 `NO_READY_TASKS`를 출력하면 새 일을 만들지 말고, 막힌 결정 또는 사람 검토를 요청한다.
+새 연결표 검증이 실패하면 정본·앱·런타임을 건드리지 말고 실패한 행과 관문을 인계한다.
