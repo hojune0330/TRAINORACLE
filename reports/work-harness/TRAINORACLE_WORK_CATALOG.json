@@ -1,0 +1,364 @@
+{
+  "schemaVersion": 1,
+  "catalogId": "TO-REASONING-TIER-WORK-CATALOG-2026-07-20",
+  "sourceSnapshot": "a0a51096762a82f1cdf56b0eb522e72e870484c6",
+  "runtimeAuthority": false,
+  "stages": [
+    {
+      "id": "S1_DEEP_FRAME",
+      "order": 1,
+      "reasoning": "high",
+      "maxReferences": 10,
+      "maxCapsuleChars": 12000,
+      "maxBatchTasks": 1
+    },
+    {
+      "id": "S2_BOUNDED_BUILD",
+      "order": 2,
+      "reasoning": "medium",
+      "maxReferences": 6,
+      "maxCapsuleChars": 6000,
+      "maxBatchTasks": 2
+    },
+    {
+      "id": "S3_MECHANICAL_BATCH",
+      "order": 3,
+      "reasoning": "low",
+      "maxReferences": 3,
+      "maxCapsuleChars": 3000,
+      "maxBatchTasks": 5
+    }
+  ],
+  "tasks": [
+    {
+      "id": "S1-FORMATION-COACH-RULES",
+      "title": "Resolve the 9.5-day Formation coach rules and competition cases",
+      "stage": "S1_DEEP_FRAME",
+      "status": "BLOCKED_OWNER",
+      "priority": 1,
+      "kind": "OWNER_DECISION",
+      "decisionComplete": false,
+      "risks": { "policyInterpretation": true, "scientificJudgment": true, "legalJudgment": false, "humanAuthority": true, "runtimeActivation": false },
+      "dependsOn": [],
+      "evidence": [
+        { "path": "reports/review/WO012_COACH_OWNER_WALKTHROUGH.md", "contains": "owner_answers_recorded: false" },
+        { "path": "reports/review/FORMATION_COMPETITION_ANCHOR_DECISION_PACKET_V1.md", "contains": "status: NOT_REVIEWED" },
+        { "path": "reports/target-patch-plans/01-coach-ruleset.md", "contains": "approved: false" }
+      ],
+      "allowedPaths": ["reports/review/WO012_COACH_DECISION_RESPONSE_TEMPLATE.md", "reports/review/FORMATION_COMPETITION_ANCHOR_DECISION_PACKET_V1.md", "reports/target-patch-plans/01-coach-ruleset.md"],
+      "deterministicChecks": ["node specs/test-packages/validate-wo012-coach-walkthrough.mjs", "node specs/test-packages/validate-formation-decision-packets.mjs"],
+      "forbiddenActions": ["Do not bulk-approve 30 coach cases", "Do not activate prescription runtime"]
+    },
+    {
+      "id": "S1-LOAD-MINIMUM-EVIDENCE",
+      "title": "Review load components and within-athlete minimum evidence",
+      "stage": "S1_DEEP_FRAME",
+      "status": "BLOCKED_HUMAN",
+      "priority": 2,
+      "kind": "SCIENTIFIC_REVIEW",
+      "decisionComplete": false,
+      "risks": { "policyInterpretation": true, "scientificJudgment": true, "legalJudgment": false, "humanAuthority": true, "runtimeActivation": false },
+      "dependsOn": [],
+      "evidence": [
+        { "path": "reports/review/FORMATION_LOAD_COMPONENT_DECISION_PACKET_V2.md", "contains": "sport_science_decision: NOT_REVIEWED" },
+        { "path": "reports/review/FORMATION_MINIMUM_EVIDENCE_DECISION_PACKET_V2.md", "contains": "statistics_decision: NOT_REVIEWED" },
+        { "path": "reports/review/FORMATION_RESEARCH_TECHNICAL_ANNEX.md", "contains": "whole_architecture_direct_sources: 0" }
+      ],
+      "allowedPaths": ["reports/review/FORMATION_LOAD_COMPONENT_DECISION_PACKET_V2.md", "reports/review/FORMATION_MINIMUM_EVIDENCE_DECISION_PACKET_V2.md"],
+      "deterministicChecks": ["node specs/test-packages/validate-formation-decision-packets.mjs", "node specs/test-packages/validate-formation-research-v2.mjs"],
+      "forbiddenActions": ["Do not invent a universal fatigue score", "Do not treat prepared research as scientific acceptance"]
+    },
+    {
+      "id": "S1-PRIVACY-YOUTH",
+      "title": "Complete WO011 product facts and qualified privacy review",
+      "stage": "S1_DEEP_FRAME",
+      "status": "BLOCKED_HUMAN",
+      "priority": 3,
+      "kind": "QUALIFIED_PRIVACY_REVIEW",
+      "decisionComplete": false,
+      "risks": { "policyInterpretation": true, "scientificJudgment": false, "legalJudgment": true, "humanAuthority": true, "runtimeActivation": false },
+      "dependsOn": [],
+      "evidence": [
+        { "path": "reports/review/WO011_QUALIFIED_PRIVACY_REVIEW_HANDOFF.md", "contains": "reviewer: UNASSIGNED" },
+        { "path": "reports/review/WO011_PRODUCT_FACT_QUESTIONNAIRE.md", "contains": "product_fact_intake: INCOMPLETE_WITH_EXPLICIT_UNKNOWNS" }
+      ],
+      "allowedPaths": ["reports/review/WO011_PRODUCT_FACT_QUESTIONNAIRE.md", "reports/review/WO011_QUALIFIED_PRIVACY_REVIEW_HANDOFF.md"],
+      "deterministicChecks": ["node specs/test-packages/validate-wo011-qualified-handoff.mjs"],
+      "forbiddenActions": ["Do not provide legal acceptance", "Do not enable account, server, or in-app sharing"]
+    },
+    {
+      "id": "S1-SHADOW-PILOT",
+      "title": "Approve the athlete-visible shadow-to-pilot protocol",
+      "stage": "S1_DEEP_FRAME",
+      "status": "BLOCKED_HUMAN",
+      "priority": 4,
+      "kind": "PARTICIPANT_PROTOCOL_REVIEW",
+      "decisionComplete": false,
+      "risks": { "policyInterpretation": true, "scientificJudgment": false, "legalJudgment": true, "humanAuthority": true, "runtimeActivation": true },
+      "dependsOn": ["S1-PRIVACY-YOUTH", "S1-FORMATION-COACH-RULES"],
+      "evidence": [
+        { "path": "reports/review/WO014_ATHLETE_PARTICIPANT_MATERIALS.md", "contains": "participant_enrollment: false" },
+        { "path": "reports/target-patch-plans/05-pilot-protocol.md", "contains": "approved: false" },
+        { "path": "reports/review/FORMATION_FORMAL_GATE_STATUS.md", "contains": "strict_acceptance_records: 0/6" }
+      ],
+      "allowedPaths": ["reports/review/WO014_ATHLETE_PARTICIPANT_MATERIALS.md", "reports/review/WO014_INDEPENDENT_REVIEW_FORMS.md", "reports/target-patch-plans/05-pilot-protocol.md"],
+      "deterministicChecks": ["node specs/test-packages/validate-wo014-participant-materials.mjs", "bash specs/test-packages/validate-shadow-protocol-readiness.sh"],
+      "forbiddenActions": ["Do not enroll an athlete", "Do not change a real plan or calendar"]
+    },
+    {
+      "id": "S1-PROJECTION-HUMAN-REVIEW",
+      "title": "Obtain athlete, coach, privacy, and accessibility projection review",
+      "stage": "S1_DEEP_FRAME",
+      "status": "BLOCKED_HUMAN",
+      "priority": 5,
+      "kind": "HUMAN_PRODUCT_REVIEW",
+      "decisionComplete": false,
+      "risks": { "policyInterpretation": true, "scientificJudgment": false, "legalJudgment": true, "humanAuthority": true, "runtimeActivation": false },
+      "dependsOn": ["S1-PRIVACY-YOUTH", "S1-FORMATION-COACH-RULES"],
+      "evidence": [
+        { "path": "reports/review/WO015_PROJECTION_REVIEW_HANDOFF.md", "contains": "projection_accepted: false" },
+        { "path": "reports/review/FORMATION_ACCESSIBILITY_AND_DESIGN_REVIEW.md", "contains": "R-a11y-005" }
+      ],
+      "allowedPaths": ["reports/review/WO015_PROJECTION_REVIEW_HANDOFF.md", "reports/review/FORMATION_ACCESSIBILITY_AND_DESIGN_REVIEW.md"],
+      "deterministicChecks": ["node specs/test-packages/validate-wo015-review-handoff.mjs", "node specs/test-packages/validate-formation-final-review-preparation.mjs"],
+      "forbiddenActions": ["Do not count AI review as human approval", "Do not present the prototype as coach authority"]
+    },
+    {
+      "id": "S1-P1-PLAN-APPROVALS",
+      "title": "Review and decide the ten P1 target patch plans individually",
+      "stage": "S1_DEEP_FRAME",
+      "status": "BLOCKED_OWNER",
+      "priority": 6,
+      "kind": "OWNER_DECISION",
+      "decisionComplete": false,
+      "risks": { "policyInterpretation": true, "scientificJudgment": true, "legalJudgment": true, "humanAuthority": true, "runtimeActivation": false },
+      "dependsOn": ["S1-FORMATION-COACH-RULES", "S1-LOAD-MINIMUM-EVIDENCE", "S1-PRIVACY-YOUTH", "S1-SHADOW-PILOT", "S1-PROJECTION-HUMAN-REVIEW"],
+      "evidence": [
+        { "path": "reports/target-patch-plans/README.md", "contains": "approved_plans: 0" },
+        { "path": "reports/review/FORMATION_FORMAL_GATE_STATUS.md", "contains": "owner_approved_p1_target_plans: 0/10" }
+      ],
+      "allowedPaths": ["reports/target-patch-plans/**"],
+      "deterministicChecks": ["node specs/test-packages/validate-formation-p1-target-plans.mjs", "node specs/test-packages/validate-formation-spec-reconciliation.mjs"],
+      "forbiddenActions": ["Do not approve the ten plans as one bundle", "Do not infer canonical or runtime authority"]
+    },
+    {
+      "id": "S1-HUMAN-RESEARCH-SCREENING",
+      "title": "Human-screen canonical and supplemental research sources",
+      "stage": "S1_DEEP_FRAME",
+      "status": "BLOCKED_HUMAN",
+      "priority": 7,
+      "kind": "HUMAN_RESEARCH_REVIEW",
+      "decisionComplete": false,
+      "risks": { "policyInterpretation": true, "scientificJudgment": true, "legalJudgment": false, "humanAuthority": true, "runtimeActivation": false },
+      "dependsOn": [],
+      "evidence": [
+        { "path": "reports/review/FORMATION_RESEARCH_TECHNICAL_ANNEX.md", "contains": "human_screening_confirmation: 0/167" },
+        { "path": "reports/review/FORMATION_RESEARCH_TECHNICAL_ANNEX.md", "contains": "supplemental_human_screening_confirmation: 0/18" }
+      ],
+      "allowedPaths": ["reports/research/evidence/**"],
+      "deterministicChecks": ["node specs/test-packages/validate-formation-screening.mjs", "node specs/test-packages/validate-formation-appraisal.mjs"],
+      "forbiddenActions": ["Do not let an AI attest human screening", "Do not turn prepared extraction into acceptance"]
+    },
+    {
+      "id": "S1-NAMED-EXPERT-AND-USER-REVIEWS",
+      "title": "Complete six expert reviews and named user verification",
+      "stage": "S1_DEEP_FRAME",
+      "status": "BLOCKED_HUMAN",
+      "priority": 8,
+      "kind": "HUMAN_ATTESTATION",
+      "decisionComplete": false,
+      "risks": { "policyInterpretation": true, "scientificJudgment": true, "legalJudgment": true, "humanAuthority": true, "runtimeActivation": false },
+      "dependsOn": [],
+      "evidence": [
+        { "path": "reports/review/FORMATION_LATEST_DECISION_RECONCILIATION_HANDOFF.md", "contains": "named_expert_reviews: 0/6" },
+        { "path": "reports/review/FORMATION_LATEST_DECISION_RECONCILIATION_HANDOFF.md", "contains": "manual_review_scenarios: 0/5" },
+        { "path": "reports/review/FORMATION_LATEST_DECISION_RECONCILIATION_HANDOFF.md", "contains": "user_teach_back_scenarios: 0/12" }
+      ],
+      "allowedPaths": ["reports/review/FORMATION_RESEARCH_REVIEWER_LEDGER.csv", "reports/review/FORMATION_FORMAL_APPROVAL_ROSTER.md", "reports/review/FORMATION_USER_SCENARIOS_AND_TEACH_BACK_V1.md"],
+      "deterministicChecks": ["node specs/test-packages/validate-formal-approval-foundation.mjs", "node specs/test-packages/validate-formation-final-review-preparation.mjs"],
+      "forbiddenActions": ["Do not invent reviewer identity or signature", "Do not count Fable or Codex as a qualified external human"]
+    },
+    {
+      "id": "S2-APPLY-COACH-RULES",
+      "title": "Apply accepted coach rules to Formation contracts and tests",
+      "stage": "S2_BOUNDED_BUILD",
+      "status": "WAIT_DEPENDENCY",
+      "priority": 1,
+      "kind": "SPEC_PATCH",
+      "decisionComplete": true,
+      "risks": { "policyInterpretation": false, "scientificJudgment": false, "legalJudgment": false, "humanAuthority": false, "runtimeActivation": false },
+      "dependsOn": ["S1-FORMATION-COACH-RULES"],
+      "evidence": [
+        { "path": "reports/target-patch-plans/01-coach-ruleset.md", "contains": "state: READY_FOR_OWNER_APPROVAL" },
+        { "path": "specs/reconstruct/TRAINING_PLAN_FORMATION_AND_ADAPTATION_SPEC.md", "contains": "OI-FA-COACH-RULESET-001" }
+      ],
+      "allowedPaths": ["specs/reconstruct/TRAINING_PLAN_FORMATION_AND_ADAPTATION_SPEC.md", "specs/test-packages/FORMATION_COACH_RULESET_FIXTURES.md"],
+      "deterministicChecks": ["node specs/test-packages/validate-wo012-coach-walkthrough.mjs", "node specs/test-packages/validate-formation-spec-reconciliation.mjs"],
+      "forbiddenActions": ["Do not change unapproved rule meaning", "Do not activate runtime"]
+    },
+    {
+      "id": "S2-APPLY-LOAD-EVIDENCE",
+      "title": "Apply accepted load and minimum-evidence contracts",
+      "stage": "S2_BOUNDED_BUILD",
+      "status": "WAIT_DEPENDENCY",
+      "priority": 2,
+      "kind": "SPEC_PATCH",
+      "decisionComplete": true,
+      "risks": { "policyInterpretation": false, "scientificJudgment": false, "legalJudgment": false, "humanAuthority": false, "runtimeActivation": false },
+      "dependsOn": ["S1-LOAD-MINIMUM-EVIDENCE"],
+      "evidence": [
+        { "path": "reports/target-patch-plans/02-load-component.md", "contains": "state: READY_FOR_OWNER_APPROVAL" },
+        { "path": "reports/target-patch-plans/03-minimum-evidence.md", "contains": "state: READY_FOR_OWNER_APPROVAL" },
+        { "path": "specs/active/SESSION_INTENSITY_ASSESSMENT_SPEC.md", "contains": "plan_authority: false" }
+      ],
+      "allowedPaths": ["specs/reconstruct/FORMATION_LOAD_AND_STATISTICAL_RULES_CONTRACT.md", "specs/reconstruct/TRAINING_PLAN_FORMATION_AND_ADAPTATION_SPEC.md", "specs/test-packages/FORMATION_RESEARCH_CALCULATION_FIXTURES.md"],
+      "deterministicChecks": ["node specs/test-packages/validate-formation-decision-packets.mjs", "node specs/test-packages/validate-formation-spec-reconciliation.mjs"],
+      "forbiddenActions": ["Do not synthesize missing subjective scores", "Do not create an injury or readiness score"]
+    },
+    {
+      "id": "S2-APPLY-PRIVACY-GOVERNANCE",
+      "title": "Apply qualified privacy and record-governance decisions",
+      "stage": "S2_BOUNDED_BUILD",
+      "status": "WAIT_DEPENDENCY",
+      "priority": 3,
+      "kind": "SPEC_PATCH",
+      "decisionComplete": true,
+      "risks": { "policyInterpretation": false, "scientificJudgment": false, "legalJudgment": false, "humanAuthority": false, "runtimeActivation": false },
+      "dependsOn": ["S1-PRIVACY-YOUTH"],
+      "evidence": [
+        { "path": "reports/target-patch-plans/07-upstream-safety-privacy-binding.md", "contains": "state: READY_FOR_OWNER_APPROVAL" },
+        { "path": "reports/target-patch-plans/10-record-governance.md", "contains": "state: READY_FOR_OWNER_APPROVAL" }
+      ],
+      "allowedPaths": ["specs/reconstruct/FORMATION_RECORD_GOVERNANCE_CONTRACT.md", "specs/reconstruct/TRAINING_PLAN_FORMATION_AND_ADAPTATION_SPEC.md"],
+      "deterministicChecks": ["node specs/test-packages/validate-wo011-qualified-handoff.mjs", "node specs/test-packages/validate-formation-spec-reconciliation.mjs"],
+      "forbiddenActions": ["Do not expand memo processing or recipients", "Do not infer legal approval"]
+    },
+    {
+      "id": "S2-APPLY-PILOT-PROTOCOL",
+      "title": "Apply the accepted synthetic-to-participant pilot protocol",
+      "stage": "S2_BOUNDED_BUILD",
+      "status": "WAIT_DEPENDENCY",
+      "priority": 4,
+      "kind": "SPEC_PATCH",
+      "decisionComplete": true,
+      "risks": { "policyInterpretation": false, "scientificJudgment": false, "legalJudgment": false, "humanAuthority": false, "runtimeActivation": false },
+      "dependsOn": ["S1-SHADOW-PILOT"],
+      "evidence": [
+        { "path": "reports/target-patch-plans/05-pilot-protocol.md", "contains": "state: READY_FOR_OWNER_APPROVAL" },
+        { "path": "specs/reconstruct/ATHLETE_VISIBLE_SHADOW_PILOT_PROTOCOL.md", "contains": "runtime_authority: false" }
+      ],
+      "allowedPaths": ["specs/reconstruct/ATHLETE_VISIBLE_SHADOW_PILOT_PROTOCOL.md", "specs/reconstruct/TRAINING_PLAN_FORMATION_AND_ADAPTATION_SPEC.md"],
+      "deterministicChecks": ["bash specs/test-packages/validate-shadow-protocol-readiness.sh", "node specs/test-packages/validate-wo014-participant-materials.mjs"],
+      "forbiddenActions": ["Do not enroll real participants", "Do not alter real training plans"]
+    },
+    {
+      "id": "S2-APPLY-PROJECTION-CONTRACT",
+      "title": "Apply accepted user explanation and projection requirements",
+      "stage": "S2_BOUNDED_BUILD",
+      "status": "WAIT_DEPENDENCY",
+      "priority": 5,
+      "kind": "SPEC_PATCH",
+      "decisionComplete": true,
+      "risks": { "policyInterpretation": false, "scientificJudgment": false, "legalJudgment": false, "humanAuthority": false, "runtimeActivation": false },
+      "dependsOn": ["S1-PROJECTION-HUMAN-REVIEW"],
+      "evidence": [
+        { "path": "reports/target-patch-plans/09-product-projection.md", "contains": "state: READY_FOR_OWNER_APPROVAL" },
+        { "path": "specs/reconstruct/FORMATION_PRODUCT_PROJECTION_AND_EXPLANATION_CONTRACT.md", "contains": "runtime_authority: false" }
+      ],
+      "allowedPaths": ["specs/reconstruct/FORMATION_PRODUCT_PROJECTION_AND_EXPLANATION_CONTRACT.md", "prototypes/formation-projection/**"],
+      "deterministicChecks": ["node specs/test-packages/validate-wo015-review-handoff.mjs", "node specs/test-packages/validate-formation-final-review-preparation.mjs"],
+      "forbiddenActions": ["Do not make a simulation look executable", "Do not expose private-note presence"]
+    },
+    {
+      "id": "S2-NONEXECUTING-VERTICAL-SLICE",
+      "title": "Build the non-executing Plan Generator vertical slice after all P1 decisions",
+      "stage": "S2_BOUNDED_BUILD",
+      "status": "WAIT_DEPENDENCY",
+      "priority": 6,
+      "kind": "CODE_CHANGE",
+      "decisionComplete": true,
+      "risks": { "policyInterpretation": false, "scientificJudgment": false, "legalJudgment": false, "humanAuthority": false, "runtimeActivation": false },
+      "dependsOn": ["S1-P1-PLAN-APPROVALS"],
+      "evidence": [
+        { "path": "reports/review/FORMATION_FORMAL_GATE_STATUS.md", "contains": "runtime_started: false" },
+        { "path": "impl/src/plan-generator/generator.ts", "contains": "PLAN_GENERATOR_STUB" }
+      ],
+      "allowedPaths": ["impl/src/plan-generator/**", "impl/tests/**"],
+      "deterministicChecks": ["cd impl && npm run typecheck", "cd impl && npm test", "node specs/test-packages/test-wo016-gate-verifier.mjs"],
+      "forbiddenActions": ["Do not connect to athlete data or calendars", "Do not set runtime authority true"]
+    },
+    {
+      "id": "S3-GATE-RECOUNT",
+      "title": "Re-run current Formation gate and catalog checks",
+      "stage": "S3_MECHANICAL_BATCH",
+      "status": "DONE",
+      "priority": 1,
+      "kind": "VALIDATION",
+      "decisionComplete": true,
+      "risks": { "policyInterpretation": false, "scientificJudgment": false, "legalJudgment": false, "humanAuthority": false, "runtimeActivation": false },
+      "dependsOn": [],
+      "evidence": [
+        { "path": "reports/review/FORMATION_FORMAL_GATE_STATUS.md", "contains": "strict_acceptance_records: 0/6" },
+        { "path": "reports/review/FORMATION_FORMAL_GATE_STATUS.md", "contains": "owner_approved_p1_target_plans: 0/10" },
+        { "path": "reports/review/FORMATION_LATEST_DECISION_RECONCILIATION_HANDOFF.md", "contains": "named_expert_reviews: 0/6" }
+      ],
+      "allowedPaths": ["NONE_READ_ONLY"],
+      "deterministicChecks": ["node specs/test-packages/validate-formal-approval-foundation.mjs", "node specs/test-packages/validate-formation-p1-target-plans.mjs", "node specs/test-packages/test-wo016-gate-verifier.mjs"],
+      "forbiddenActions": ["Do not edit approval counts", "Do not interpret a passing validator as acceptance"]
+    },
+    {
+      "id": "S3-CITATION-METADATA-AUDIT",
+      "title": "Batch-check research identity, duplicate, and link metadata only",
+      "stage": "S3_MECHANICAL_BATCH",
+      "status": "DEFERRED_VOLUME",
+      "priority": 2,
+      "kind": "METADATA_AUDIT",
+      "decisionComplete": true,
+      "risks": { "policyInterpretation": false, "scientificJudgment": false, "legalJudgment": false, "humanAuthority": false, "runtimeActivation": false },
+      "dependsOn": [],
+      "evidence": [
+        { "path": "reports/review/FORMATION_RESEARCH_TECHNICAL_ANNEX.md", "contains": "source_ledger: 167" },
+        { "path": "reports/research/evidence/FORMATION_SOURCE_LEDGER.csv", "contains": "source_id" }
+      ],
+      "allowedPaths": ["reports/research/evidence/**"],
+      "deterministicChecks": ["node specs/test-packages/validate-formation-source-audit.mjs", "node specs/test-packages/validate-formation-supplemental-evidence.mjs"],
+      "forbiddenActions": ["Do not judge study quality or applicability", "Do not mark human screening complete"]
+    },
+    {
+      "id": "S3-COACH-FIXTURE-TRANSCRIPTION",
+      "title": "Transcribe accepted coach responses into deterministic fixtures",
+      "stage": "S3_MECHANICAL_BATCH",
+      "status": "WAIT_DEPENDENCY",
+      "priority": 3,
+      "kind": "FIXTURE_TRANSCRIPTION",
+      "decisionComplete": true,
+      "risks": { "policyInterpretation": false, "scientificJudgment": false, "legalJudgment": false, "humanAuthority": false, "runtimeActivation": false },
+      "dependsOn": ["S1-FORMATION-COACH-RULES"],
+      "evidence": [
+        { "path": "reports/review/WO012_COACH_OWNER_WALKTHROUGH.md", "contains": "fixture_count: 30" },
+        { "path": "specs/test-packages/FORMATION_COACH_RULESET_FIXTURES.md", "contains": "runtime_authority: false" }
+      ],
+      "allowedPaths": ["specs/test-packages/FORMATION_COACH_RULESET_FIXTURES.md"],
+      "deterministicChecks": ["node specs/test-packages/validate-wo012-coach-walkthrough.mjs"],
+      "forbiddenActions": ["Do not reinterpret owner answers", "Do not fill unanswered cases"]
+    },
+    {
+      "id": "S3-STATUS-DOC-SYNC",
+      "title": "Synchronize status and index text after accepted merges",
+      "stage": "S3_MECHANICAL_BATCH",
+      "status": "DEFERRED_VOLUME",
+      "priority": 4,
+      "kind": "DOC_SYNC",
+      "decisionComplete": true,
+      "risks": { "policyInterpretation": false, "scientificJudgment": false, "legalJudgment": false, "humanAuthority": false, "runtimeActivation": false },
+      "dependsOn": [],
+      "evidence": [
+        { "path": "SPEC_WORK_STATUS.md", "contains": "It is not a product rule definition" },
+        { "path": "TRAINORACLE_SPEC_INDEX.md", "contains": "canonical_promotion_allowed: false" }
+      ],
+      "allowedPaths": ["SPEC_WORK_STATUS.md", "TRAINORACLE_SPEC_INDEX.md"],
+      "deterministicChecks": ["git diff --check", "node specs/test-packages/validate-formation-spec-reconciliation.mjs"],
+      "forbiddenActions": ["Do not promote draft status", "Do not close issues without evidence"]
+    }
+  ]
+}
