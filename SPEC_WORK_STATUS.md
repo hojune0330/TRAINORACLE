@@ -1,12 +1,26 @@
 # SPEC_WORK_STATUS.md
 
-Updated: 2026-07-14 Asia/Seoul
+Updated: 2026-07-22 Asia/Seoul
 status: DRAFT_HANDOFF_STATUS
 owner: COACH_HOJUNE
 
 This is the current GitHub-main handoff status for continuing TrainOracle SPEC work.
 
 It is not a product rule definition, not canonical promotion, not runtime evidence, and not issue closure.
+
+## 2026-07-22 Current GitHub Snapshot
+
+- verified main baseline: `6d84e273eacd7aca334b4ee7ccf8d1c29b8f9ed2`
+- actual SPEC files: active 9, reconstruct 25, total 34
+- open GitHub work: 3 PRs, 0 issues; all three PR check sets are green
+- Formation work catalog: 18 total, 2 DONE, 8 owner/human blocked, 7 waiting on dependencies, 1 deferred
+- current runnable catalog tasks: 0 (`NO_READY_TASKS` for S1, S2, and S3)
+- Plan Generator remains `PLAN_GENERATOR_STUB`; `runtime_started: false`
+
+These are dated inventory counts, not canonical acceptance or product-completion percentages.
+Read [`HANDOFF_NEXT_CHAT.md`](./HANDOFF_NEXT_CHAT.md) for the plain Korean handoff and
+[`reports/work-harness/PROJECT_STATUS_SNAPSHOT_20260722.md`](./reports/work-harness/PROJECT_STATUS_SNAPSHOT_20260722.md)
+for the recount evidence.
 
 For the current main baseline, PR reconciliation, and Task-R finding disposition,
 read [`SPEC_AUTHORITY_AND_RECOVERY_LEDGER.md`](./SPEC_AUTHORITY_AND_RECOVERY_LEDGER.md).

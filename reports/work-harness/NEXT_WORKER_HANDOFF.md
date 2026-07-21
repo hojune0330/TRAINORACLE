@@ -1,5 +1,61 @@
 # 다음 작업자 인계서
 
+> GitHub 재확인: 2026-07-22 Asia/Seoul
+>
+> 기준선: `main@6d84e273eacd7aca334b4ee7ccf8d1c29b8f9ed2`
+>
+> 사람용 전체 요약: [`../../HANDOFF_NEXT_CHAT.md`](../../HANDOFF_NEXT_CHAT.md)
+>
+> 수치 근거: [`PROJECT_STATUS_SNAPSHOT_20260722.md`](./PROJECT_STATUS_SNAPSHOT_20260722.md)
+
+## 현재 작업 권한과 모델 라우팅
+
+- 현재 S1/S2/S3 모두 `NO_READY_TASKS`다.
+- 따라서 현재 `next_actor`는 `OWNER | HUMAN_REVIEWER`이며 Terra나 Sol이 막힌 결정을 대신하지 않는다.
+- 사람 관문이 닫힌 뒤의 재계산·문서 동기화·승인된 패치는 Terra가 담당한다.
+- 안전, 개인정보, 훈련 논리, 권한 경계의 실제 충돌 한 건만 Sol에 넘긴다.
+- Sol은 비권위적 검토 권고안만 기록한다. 권한 있는 OWNER 또는 이름 있는 HUMAN_REVIEWER가 명시적으로 수용한 뒤에만 Terra가 허용 경로에 적용하고 결정적 검사를 실행한다.
+- 공유 라우팅 스킬은 `codex-skills/terra-sol-router/`에 있다.
+
+Sol·Fable·Codex의 검토는 사람 승인이나 책임자 결정을 대신하지 않는다. 수용 기록에는
+결정자 신원과 역할, 적용 범위, source/head SHA, 영구 근거 경로가 있어야 한다.
+
+정상 전환은 `Terra -> Sol -> Terra`지만, 교차 사용 자체가 목적은 아니다. 현재처럼
+실행 가능 작업이 0개이면 OWNER/HUMAN_REVIEWER에서 멈추는 것이 정상 동작이다.
+
+## 현재 GitHub 큐
+
+- PR #93: 검토 준비, CI 성공, 첫 공개 범위·미성년 계정 경계 기록
+- PR #97: 검토 준비, CI 성공, WO012 연결 안전 검증 강화
+- PR #98: 초안, CI 성공, Terra/Sol 공유 스킬·인계 갱신
+- 열린 이슈: 0개
+- 열린 PR 3개의 현재 CI: 모두 성공
+
+PR의 최신 head SHA는 인계 시점마다 GitHub에서 다시 확인한다. 이 문서의 기준 SHA를
+최신 head로 추정하지 않는다.
+
+## 두 컴퓨터·두 모델 인계 캡슐
+
+PR 댓글이나 다음 작업 기록에는 아래 필드를 모두 채운다.
+
+```yaml
+objective: one concrete outcome
+authority: allowed and forbidden changes
+repository: hojune0330/TRAINORACLE
+branch: exact branch
+base_sha: full commit SHA
+head_sha: full pushed commit SHA
+changed_paths: exact paths only
+verified_evidence: observed commands, CI, or artifact paths
+open_decision: one question only
+invariants: safety, privacy, compatibility, owner constraints
+next_actor: TERRA | SOL | OWNER | HUMAN_REVIEWER
+stop_when: exact observable completion condition
+```
+
+받는 컴퓨터는 fetch 뒤 `HEAD == head_sha`를 확인하기 전까지 작업하지 않는다. 로컬
+미추적 파일과 `codex://` 대화 링크는 공유 상태로 간주하지 않는다.
+
 ## 지금 상태
 
 - 작업 목록의 정본은 `TRAINORACLE_WORK_CATALOG.json`이다.

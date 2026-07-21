@@ -26,8 +26,9 @@ Use **Sol** only when frontier judgment is worth its larger context cost:
 - root-cause analysis after two materially different failed approaches;
 - final review of a high-impact change or release gate.
 
-Return to Terra as soon as Sol has produced a concrete decision delta. Do not leave Sol
-performing mechanical edits, broad inventories, or repeated green test runs.
+Return to Terra as soon as Sol has produced a concrete review or decision delta within its
+delegated authority. Do not leave Sol performing mechanical edits, broad inventories, or
+repeated green test runs.
 
 ## Phase Loop
 
@@ -36,10 +37,10 @@ performing mechanical edits, broad inventories, or repeated green test runs.
 2. **Stay on Terra** when the work is startable and bounded. Finish it without a model
    switch.
 3. **Escalate one question to Sol** only when an escalation trigger is present. Send the
-   handoff capsule below with exact artifact paths. Ask for a decision delta, not a new
-   project summary.
-4. **Execute with Terra.** Apply Sol's accepted decision, run the matching tests, and
-   record evidence.
+   handoff capsule below with exact artifact paths. Ask for one review or decision delta,
+   not a new project summary.
+4. **Execute with Terra.** Apply the delta only after the appropriate authority accepts
+   it, then run the matching tests and record evidence.
 5. **Use Sol once more only for a high-risk gate.** Review the exact diff or full commit
    SHA. Routine work ends on Terra after observed verification.
 
@@ -84,6 +85,11 @@ right one, continue locally. If model override is unavailable, name the recommen
 in the handoff and continue with the current model unless the user requested a pause. When
 `next_actor` is `OWNER` or `HUMAN_REVIEWER`, stop at that gate; no AI model may substitute.
 
+Sol, Terra, Codex, and other AI reviewers are non-authoritative for owner, medical, legal,
+privacy, scientific, and named-human-review gates. Their output is a recommendation until
+an authorized person records acceptance with identity and role, scope, source/head SHA,
+and a durable evidence path.
+
 ## Two-Computer Git Handoff
 
 Use Git, not chat memory or a `codex://` link, as the shared state boundary.
@@ -116,7 +122,7 @@ Local-only and untracked files are never shared evidence.
 - Do not switch models while a decision or edit is half-complete.
 - Do not claim token savings from intuition. Report model, phase, token clues, rework,
   and elapsed time only when actual session records exist.
-- Prefer one bounded Sol decision that removes uncertainty over many short Sol turns.
+- Prefer one bounded Sol review or delegated technical decision over many short Sol turns.
 - Prefer Terra completion over a ceremonial final Sol pass on routine changes.
 
 ## Completion Report
