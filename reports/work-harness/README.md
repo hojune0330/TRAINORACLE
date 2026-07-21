@@ -38,6 +38,26 @@ node specs/test-packages/reasoning-tier-harness.mjs next --stage S3_MECHANICAL_B
 `next`는 `READY`이고 선행 작업이 모두 `DONE`인 일만 고릅니다. 할 수 있는 일이
 없으면 억지로 만들지 않고 `NO_READY_TASKS`를 출력합니다.
 
+## 공유 Codex 스킬
+
+[`codex-skills/terra-sol-router/SKILL.md`](../../codex-skills/terra-sol-router/SKILL.md)는
+작업 단계가 바뀔 때 Terra와 Sol을 어떻게 넘겨 쓸지, 두 컴퓨터가 Git 커밋 SHA로
+어떻게 이어받을지를 정의합니다. 이 하네스가 **할 일을 선별**한다면 스킬은
+**선별된 일을 어떤 모델과 다음 작업자에게 넘길지** 정합니다.
+
+사무실 PC에서 저장소를 받은 뒤 PowerShell로 설치합니다.
+
+```powershell
+$source = ".\codex-skills\terra-sol-router"
+$target = Join-Path $HOME ".codex\skills\terra-sol-router"
+New-Item -ItemType Directory -Force "$target\agents" | Out-Null
+Copy-Item "$source\SKILL.md" "$target\SKILL.md" -Force
+Copy-Item "$source\agents\openai.yaml" "$target\agents\openai.yaml" -Force
+```
+
+설치 후 `$terra-sol-router`로 호출합니다. 저장소 사본은 배포 원본이고, 각 PC의
+`$HOME/.codex/skills/terra-sol-router`가 실제 실행 위치입니다.
+
 ## 상태 뜻
 
 | 상태 | 뜻 |
