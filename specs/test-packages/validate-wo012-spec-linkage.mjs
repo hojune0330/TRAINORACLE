@@ -17,6 +17,7 @@ const failUnless = (condition, message) => {
   if (!condition) failures.push(message);
 };
 const rowFor = (id) => matrix.split(/\r?\n/u).find((line) => line.startsWith(`| ${id} |`)) ?? "";
+const cellsFor = (id) => rowFor(id).split("|").slice(1, -1).map((cell) => cell.trim());
 const requireMarker = (marker, message = `matrix missing marker: ${marker}`) =>
   failUnless(matrix.includes(marker), message);
 
@@ -69,9 +70,10 @@ failUnless(!/private memo[^|]*may be analyzed/iu.test(cr18), "matrix must not al
 
 for (const id of ["CR-19", "CR-20", "CR-21", "CR-22"]) {
   const row = rowFor(id);
+  const forbiddenOutcome = cellsFor(id).at(-1) ?? "";
   failUnless(row.includes("두 단계"), `${id} must keep two-step review`);
   failUnless(row.includes("초안") || row.includes("검토 요청"), `${id} must allow only a review request or draft`);
-  failUnless(row.includes("실제 계획 변경"), `${id} must forbid actual plan mutation`);
+  failUnless(forbiddenOutcome.includes("실제 계획 변경"), `${id} must forbid actual plan mutation`);
 }
 
 for (const marker of [
