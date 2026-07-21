@@ -7,6 +7,8 @@
 > 사람용 전체 요약: [`../../HANDOFF_NEXT_CHAT.md`](../../HANDOFF_NEXT_CHAT.md)
 >
 > 수치 근거: [`PROJECT_STATUS_SNAPSHOT_20260722.md`](./PROJECT_STATUS_SNAPSHOT_20260722.md)
+>
+> 비정본 결정·검토 라우팅 체크리스트(승인·정본·런타임 권한 없음): [`OWNER_DECISION_CHECKLIST_20260722.md`](./OWNER_DECISION_CHECKLIST_20260722.md)
 
 ## 현재 작업 권한과 모델 라우팅
 

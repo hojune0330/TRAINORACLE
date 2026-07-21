@@ -101,6 +101,12 @@ stop_when: observable completion condition
 
 ## 다음 실행 순서
 
+책임자 제품 결정과 이름 있는 사람 검토의 라우팅 항목은
+[`reports/work-harness/OWNER_DECISION_CHECKLIST_20260722.md`](./reports/work-harness/OWNER_DECISION_CHECKLIST_20260722.md)에
+분리돼 있다. 이 체크리스트는 비정본 접수·라우팅 색인이며, ID는 요청을 연결하는 데만
+사용한다. 승인 효력은 결정자 신원·자격·범위·판단·source/head SHA와 영구 근거가 기존
+정식 승인 기록에 남을 때만 발생한다.
+
 1. OWNER와 해당 분야의 이름 있는 HUMAN_REVIEWER가 PR #93, #97, #98을 각자의 권한 범위에서 검토해 병합·수정·보류를 결정한다.
 2. 병합 뒤 Terra가 새 `origin/main`을 기준으로 작업 카탈로그 검증과 상태 재계산을 실행한다.
 3. 여전히 `NO_READY_TASKS`이면 책임자 결정 또는 이름 있는 사람 검토를 요청하고 멈춘다.
