@@ -10,9 +10,9 @@ It is not a product rule definition, not canonical promotion, not runtime eviden
 
 ## 2026-07-22 Current GitHub Snapshot
 
-- verified main baseline: `6d84e273eacd7aca334b4ee7ccf8d1c29b8f9ed2`
+- verified main baseline: `1d8fc5382289ce3e2d16ad3b19f7257e1fa858c2`
 - actual SPEC files: active 9, reconstruct 25, total 34
-- open GitHub work: 3 PRs, 0 issues; all three PR check sets are green
+- open GitHub work: 2 PRs, 0 issues; PR #97 merged after owner approval
 - Formation work catalog: 18 total, 2 DONE, 8 owner/human blocked, 7 waiting on dependencies, 1 deferred
 - current runnable catalog tasks: 0 (`NO_READY_TASKS` for S1, S2, and S3)
 - Plan Generator remains `PLAN_GENERATOR_STUB`; `runtime_started: false`

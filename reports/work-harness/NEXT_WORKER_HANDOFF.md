@@ -2,7 +2,7 @@
 
 > GitHub 재확인: 2026-07-22 Asia/Seoul
 >
-> 기준선: `main@6d84e273eacd7aca334b4ee7ccf8d1c29b8f9ed2`
+> 기준선: `main@1d8fc5382289ce3e2d16ad3b19f7257e1fa858c2`
 >
 > 사람용 전체 요약: [`../../HANDOFF_NEXT_CHAT.md`](../../HANDOFF_NEXT_CHAT.md)
 >
@@ -27,11 +27,11 @@ Sol·Fable·Codex의 검토는 사람 승인이나 책임자 결정을 대신하
 
 ## 현재 GitHub 큐
 
-- PR #93: 검토 준비, CI 성공, 첫 공개 범위·미성년 계정 경계 기록
-- PR #97: 검토 준비, CI 성공, WO012 연결 안전 검증 강화
+- PR #93: 검토 준비, CI 성공, owner-decision 권한 검증 보강 필요
+- PR #97: 책임자 승인 후 병합, merge commit `1d8fc5382289ce3e2d16ad3b19f7257e1fa858c2`
 - PR #98: 초안, CI 성공, Terra/Sol 공유 스킬·인계 갱신
 - 열린 이슈: 0개
-- 열린 PR 3개의 현재 CI: 모두 성공
+- 열린 PR: #93과 #98, 총 2개
 
 PR의 최신 head SHA는 인계 시점마다 GitHub에서 다시 확인한다. 이 문서의 기준 SHA를
 최신 head로 추정하지 않는다.

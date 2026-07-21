@@ -2,7 +2,7 @@
 
 > 기준 시각: 2026-07-22 Asia/Seoul
 >
-> GitHub 기준선: `main@6d84e273eacd7aca334b4ee7ccf8d1c29b8f9ed2`
+> GitHub 기준선: `main@1d8fc5382289ce3e2d16ad3b19f7257e1fa858c2`
 >
 > 성격: 현재 상태를 찾기 위한 인계 문서. 제품 규칙의 정본, 런타임 증거, 이슈 종결 기록이 아니다.
 
@@ -28,7 +28,7 @@ PR과 사람 관문을 정리한 뒤 승인된 계약만 구현하는 것이다.
 | 안전 체인 검사 | D9 **11/11**, impl **7/7** | 후보 D9 평가기와 D9→RVE→Gate 골격의 포함된 사례가 통과했다. |
 | Formation 작업 목록 | **18개 중 2개 DONE** | 카탈로그 진척도는 11.1%다. 제품 전체 완성률로 해석하면 안 된다. |
 | 아직 못 시작하는 작업 | 사람/책임자 대기 8개, 선행 의존 7개, 물량 보류 1개 | 현재 `READY` 작업은 **0개**다. |
-| GitHub 작업 큐 | 열린 PR **3개**, 열린 이슈 **0개** | PR 2개는 검토 준비, 1개는 초안이다. 세 PR의 CI는 모두 성공이다. |
+| GitHub 작업 큐 | 열린 PR **2개**, 열린 이슈 **0개** | #93은 수정 필요, #98은 초안이다. #97은 승인 후 병합됐다. |
 | 공개 페이지 | GitHub Pages `built`, HTTP **200** | 현재 공개 주소가 응답한다. 이것이 훈련 계획 런타임 승인을 뜻하지 않는다. |
 
 공개 주소: <https://hojune0330.github.io/TRAINORACLE/>
@@ -54,8 +54,11 @@ PR과 사람 관문을 정리한 뒤 승인된 계약만 구현하는 것이다.
 | PR | 상태 | 내용 | 다음 권한자 |
 |---|---|---|---|
 | [#93](https://github.com/hojune0330/TRAINORACLE/pull/93) | 검토 준비, CI 성공 | 첫 공개 범위와 미성년 계정 경계 기록 | OWNER / HUMAN_REVIEWER |
-| [#97](https://github.com/hojune0330/TRAINORACLE/pull/97) | 검토 준비, CI 성공 | WO012 연결 안전 검증 강화 | OWNER / HUMAN_REVIEWER |
 | [#98](https://github.com/hojune0330/TRAINORACLE/pull/98) | 초안, CI 성공 | Terra/Sol 공유 라우팅 스킬과 인계 갱신 | OWNER / HUMAN_REVIEWER |
+
+최근 병합: [#97](https://github.com/hojune0330/TRAINORACLE/pull/97) →
+`main@1d8fc5382289ce3e2d16ad3b19f7257e1fa858c2`. 병합 뒤 S1/S2/S3를 다시 계산했지만
+모두 `NO_READY_TASKS`다.
 
 열린 이슈가 0개라고 해서 남은 일이 0개인 것은 아니다. 현재 남은 일은 작업 카탈로그와
 열린 PR, 사람 관문에 기록돼 있다.
@@ -107,11 +110,12 @@ stop_when: observable completion condition
 사용한다. 승인 효력은 결정자 신원·자격·범위·판단·source/head SHA와 영구 근거가 기존
 정식 승인 기록에 남을 때만 발생한다.
 
-1. OWNER와 해당 분야의 이름 있는 HUMAN_REVIEWER가 PR #93, #97, #98을 각자의 권한 범위에서 검토해 병합·수정·보류를 결정한다.
-2. 병합 뒤 Terra가 새 `origin/main`을 기준으로 작업 카탈로그 검증과 상태 재계산을 실행한다.
-3. 여전히 `NO_READY_TASKS`이면 책임자 결정 또는 이름 있는 사람 검토를 요청하고 멈춘다.
-4. 안전·개인정보·훈련 논리의 충돌이 실제로 생길 때만 Sol에 질문 하나를 넘긴다.
-5. 결정이 기록되면 Terra가 허용된 경로만 패치하고 CI·수동 확인 증거를 남긴다.
+1. PR #93의 owner-decision 권한 검증기를 보강하고 이름 있는 개인정보/법률 검토 입력을 준비한다.
+2. OWNER와 해당 분야의 이름 있는 HUMAN_REVIEWER가 PR #93과 #98을 각자의 권한 범위에서 검토해 병합·수정·보류를 결정한다.
+3. 병합 뒤 Terra가 새 `origin/main`을 기준으로 작업 카탈로그 검증과 상태 재계산을 실행한다.
+4. 여전히 `NO_READY_TASKS`이면 책임자 결정 또는 이름 있는 사람 검토를 요청하고 멈춘다.
+5. 안전·개인정보·훈련 논리의 충돌이 실제로 생길 때만 Sol에 질문 하나를 넘긴다.
+6. 결정이 기록되면 Terra가 허용된 경로만 패치하고 CI·수동 확인 증거를 남긴다.
 
 시작 명령:
 

@@ -3,7 +3,7 @@
 ```yaml
 snapshot_date: 2026-07-22 Asia/Seoul
 repository: hojune0330/TRAINORACLE
-main_sha: 6d84e273eacd7aca334b4ee7ccf8d1c29b8f9ed2
+main_sha: 1d8fc5382289ce3e2d16ad3b19f7257e1fa858c2
 purpose: HUMAN_READABLE_HANDOFF_EVIDENCE
 canonical_promotion: false
 runtime_authority: false
@@ -18,12 +18,12 @@ runtime_authority: false
 
 | 항목 | 값 | 근거 범위 |
 |---|---:|---|
-| `main` 기준 SHA | `6d84e273eacd7aca334b4ee7ccf8d1c29b8f9ed2` | `origin/main` 직접 조회 |
-| 열린 PR | 3개 | GitHub open PR 조회 |
-| 검토 준비 PR | 2개 | #93, #97 |
+| `main` 기준 SHA | `1d8fc5382289ce3e2d16ad3b19f7257e1fa858c2` | PR #97 병합 뒤 `origin/main` 직접 조회 |
+| 열린 PR | 2개 | GitHub open PR 조회 |
+| 검토 준비 PR | 1개 | #93, 권한 검증 보강 필요 |
 | 초안 PR | 1개 | #98 |
 | 열린 이슈 | 0개 | GitHub open issue 조회 |
-| 열린 PR의 CI | 3개 모두 성공 | 각 PR `statusCheckRollup` |
+| 최근 병합 | PR #97 | WO012 연결 안전 검증 강화 |
 | GitHub Pages | `built`, HTTP 200 | Pages API와 공개 URL 응답 |
 
 열린 이슈 0개는 백로그 0개를 뜻하지 않는다. 이 저장소는 작업 카탈로그, PR,

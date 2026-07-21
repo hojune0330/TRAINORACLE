@@ -3,7 +3,8 @@
 ```yaml
 checklist_date: 2026-07-22 Asia/Seoul
 repository: hojune0330/TRAINORACLE
-source_main: 6d84e273eacd7aca334b4ee7ccf8d1c29b8f9ed2
+source_main: 1d8fc5382289ce3e2d16ad3b19f7257e1fa858c2
+pr_97_merge_commit: 1d8fc5382289ce3e2d16ad3b19f7257e1fa858c2
 owner: COACH_HOJUNE
 purpose: OWNER_DECISION_INTAKE_AND_ROUTING
 canonical_promotion: false
