@@ -7,6 +7,8 @@ source_main: 1d8fc5382289ce3e2d16ad3b19f7257e1fa858c2
 pr_97_merge_commit: 1d8fc5382289ce3e2d16ad3b19f7257e1fa858c2
 owner: COACH_HOJUNE
 purpose: OWNER_DECISION_INTAKE_AND_ROUTING
+owner_response_recorded_at: 2026-07-22 Asia/Seoul
+owner_response_status: RECORDED_WITH_ACTIVATION_GATES
 canonical_promotion: false
 runtime_authority: false
 ```
@@ -68,6 +70,24 @@ PR #93에는 다음 첫 공개 범위가 책임자 답변으로 기록돼 있지
 | NOW-07 | 첫 공개에서 웨어러블·위치·음성·이미지·결제·고유식별자를 받을까? | 전부 제외 | 항목별 `IN / OUT / LATER` | PF-FI-07, 공급자·보안 검토 범위 |
 | NOW-08 | 30개 코치 사례 답변을 규칙 레지스트리 검토 기준으로 사용할까? | 답변 기록은 유지하되 청소년 스포츠과학·D9/RVE·개인정보 관문 전 정본 적용 금지 | `ACCEPT_AS_REVIEW_INPUT / REVISE / REJECT` | S1 코치 규칙 검토 지속 |
 
+### 2.1 책임자 답변 접수 결과
+
+| ID | 접수한 답변 | 현재 기록과 실행 경계 |
+|---|---|---|
+| NOW-01 | `ACCEPT_SAFE_DEFAULT_WITH_INQUIRY_GUIDANCE` | 관할 기준이 불명확하면 계정·서버·앱 안 공유 없이 로컬 일지만 유지한다. 화면에는 제한 이유, 로컬 일지는 계속 쓸 수 있다는 설명, 민감한 선수 정보를 적지 않는 문의 경로를 제공한다. |
+| NOW-02 | `ACCEPT_SAFE_DEFAULT` | 중학생 이상을 주요 대상으로 하되 모든 연령이 로컬 일지를 쓸 수 있다. 만 14세 미만 계정·서버 기능은 적격 검토와 별도 활성화 전까지 제외한다. 생년월일은 첫 로컬 공개의 필수 수집값이 아니다. |
+| NOW-03 | `TARGET_DATE_2026-08-01` | 2026-08-01은 공개 준비 목표일이다. 이 날짜가 사람 검토, 법률 적합성, 런타임 또는 출시 승인을 대신하지 않는다. 관문이 남으면 검증된 로컬 일지 범위만 공개하거나 일정을 늦춘다. |
+| NOW-04 | `LEGAL_OPERATOR_DEFERRED`; working name `aaclub` | `aaclub`은 임시 서비스·운영 이름이며 확인된 법인명으로 취급하지 않는다. 실제 개인정보처리자·사업자·국가·연락처는 미정이다. 서버 수집·결제·공개 출시 전 적격 검토에 실제 운영자 사실을 제공해야 한다. |
+| NOW-05 | `COACH_CONNECTION_DESIRED` | 코치 연결은 제품 방향으로 수용한다. 다만 계정, 고유식별자, 서버 저장, 수신자 권한이 필요한 실제 연결은 NOW-07 및 P93-03과 동시에 켤 수 없다. 2026-08-01에는 `서비스 준비 중` 표시만 허용하며 ACT-05 전에는 실제 연결·상시 접근을 제공하지 않는다. |
+| NOW-06 | `COMBINED_WELLNESS_INFERENCE_DESIRED` | 통증·부상·기분·준비도 등의 결합 분석은 제품 방향으로 수용한다. 실제 활성화는 APPT-01~03, P1-07, D9/RVE/Safety Gate 검토 뒤로 둔다. 긍정 신호가 위험 신호를 상쇄할 수 없고, `ACTIVE`·`UNKNOWN`은 계속 계획 생성을 차단한다. 진단·의료 허가·안전 점수로 표현하지 않는다. |
+| NOW-07 | `ALL_OUT_FOR_FIRST_PUBLIC_RELEASE_PREPARING` | 웨어러블·위치·음성·이미지·결제·고유식별자는 첫 공개에서 모두 제외한다. 향후 후보로는 보존하며 화면에 노출할 경우 실제 동작하는 것처럼 보이지 않는 `서비스 준비 중` 상태만 허용한다. |
+| NOW-08 | `ACCEPT_AS_REVIEW_INPUT` | 코치 사례 답변 30개를 규칙 검토 입력으로 유지한다. 사람 검토와 D9/RVE·개인정보 관문 전에는 정본 규칙, 자동 처방 또는 런타임 권한으로 승격하지 않는다. |
+
+NOW-05와 NOW-07을 함께 만족시키는 현재 공개 범위는 **코치 연결의 준비 상태는 알리되
+실제 계정 연결은 열지 않는 것**이다. 실제 연결을 2026-08-01에 요구하려면 NOW-07,
+P93-03, ACT-05의 범위를 별도 책임자 결정으로 다시 열고 적격 개인정보·보안 검토와
+구현 증거를 먼저 갖춰야 한다.
+
 ## 3. 책임자가 지정해야 하지만 대신 결론 내릴 수 없는 검토
 
 | ID | 지정할 사람 또는 역할 | 검토 대상 | 현재 수치 | 책임자가 할 일 |
@@ -88,6 +108,13 @@ PR #93에는 다음 첫 공개 범위가 책임자 답변으로 기록돼 있지
 | APPT-14 | Classifier owner | 원래 label 보존과 adapter lineage 계약 | NOT_REVIEWED | 이름·권한·검토 패킷·서면 adapter 결정 지정 |
 
 Fable, Codex, Terra, Sol의 검토는 위 이름 있는 사람 검토를 대신하지 않는다.
+
+책임자는 APPT-01~14 전부에 대해 에이전트가 기존 문서 대조, 검색, 근거 정리, 질문표,
+테스트와 사전검토 보고서를 만드는 것을 허용했다. 이 허용은 APPT 담당자 지정이나
+사람 검토 완료가 아니며, 각 행은 실제 이름과 자격이 기록될 때까지 `UNASSIGNED`다.
+
+기존 스펙·테스트·AI 검토를 APPT별 사전자료로 재사용할 수 있는 범위와 실제 사람 검토
+공백은 [`../review/APPT_PRE_REVIEW_AND_EVIDENCE_AUDIT_20260722.md`](../review/APPT_PRE_REVIEW_AND_EVIDENCE_AUDIT_20260722.md)에 기록한다.
 
 ## 4. 이름 있는 검토 뒤 책임자가 개별 승인할 P1 계획 10건
 
