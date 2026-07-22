@@ -75,6 +75,7 @@ requireText(ownerDecision, "owner decision", [
   "record_status: OWNER_PRODUCT_FACT_BATCH_RECORDED_PENDING_QUALIFIED_REVIEW",
   "formal_privacy_acceptance: false",
   "public_launch_authorized: false",
+  "account_or_server_scope_authorized: false",
   "runtime_authority: false",
   "owner_response: \"ㅇㅋ ㄱㄱ\"",
   "PF-LA-02",
@@ -122,9 +123,10 @@ for (const id of requiredUnknowns) {
   }
 }
 
-forbidLine(`${handoff}\n${facts}`, "packet", [
+forbidLine(`${handoff}\n${facts}\n${ownerDecision}`, "packet", [
   "decision: ACCEPTED",
   "reviewer: ASSIGNED",
+  "account_or_server_scope_authorized: true",
   "runtime_authority: true",
   "formation_activation: true",
   "legal_advice_status: LEGAL_ADVICE",
