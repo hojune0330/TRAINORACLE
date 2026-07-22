@@ -1,0 +1,16 @@
+Surface: repository-root fresh PowerShell process / CLI-shaped document navigation
+Invocation: Fresh PowerShell process from repository root: Get-Content HANDOFF_NEXT_CHAT.md; resolve reports/review/appt-packets/README.md; read bundle metadata
+Observed:
+{
+  "handoffEntry": "reports/review/appt-packets/README.md",
+  "entryExists": true,
+  "packetCount": 14,
+  "sourceSnapshot": "9cf33692741167e1563a881ffec934477c41794d",
+  "handoffMainSha": "1d8fc5382289ce3e2d16ad3b19f7257e1fa858c2",
+  "serviceTrainOracle": true,
+  "providerAaclubProvisional": true,
+  "runtimeFalse": true,
+  "activationBlocked": true
+}
+Result: PASS
+Cleanup: fresh process exited; no persistent QA resource created.

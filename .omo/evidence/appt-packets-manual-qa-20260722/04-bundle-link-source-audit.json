@@ -1,0 +1,10 @@
+{
+  "invocation": "node - (inline fs audit): parse README markdown links; fs.statSync each target and each backtick repository source reference in APPT-01..14",
+  "tree": "a56a51b",
+  "readme": {"packetCount": 14, "linkCount": 14, "allLinksExist": true, "allTargetsNonEmpty": true, "utf8": true, "replacementCharacters": 0, "finalMarker": true},
+  "packets": {"count": 14, "allUtf8": true, "allFinalMarkers": true, "allTrainOracle": true, "allAaclubProvisional": true, "allRuntimeAuthorityFalse": true, "sourceReferenceCount": 68, "missingOrEmptySources": []},
+  "linkTargets": [
+    "APPT-01_PRIVACY_YOUTH_LEGAL.md", "APPT-02_YOUTH_ENDURANCE_SCIENCE.md", "APPT-03_YOUTH_SPORTS_MEDICINE.md", "APPT-04_N_OF_1_STATISTICS.md", "APPT-05_HUMAN_RESEARCH_SCREENING.md", "APPT-06_ATHLETE_COACH_USABILITY.md", "APPT-07_ACCESSIBILITY_AT.md", "APPT-08_BACKEND_OWNER.md", "APPT-09_INDEPENDENT_SECURITY.md", "APPT-10_INDEPENDENT_PILOT.md", "APPT-11_PILOT_SAFETY.md", "APPT-12_SAFETY_BLOCK_REF.md", "APPT-13_RULE_OWNER.md", "APPT-14_CLASSIFIER_OWNER.md"
+  ],
+  "cleanup": "no process/browser/temp resource created"
+}

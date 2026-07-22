@@ -3,12 +3,16 @@
 ```yaml
 audit_date: 2026-07-22 Asia/Seoul
 repository: hojune0330/TRAINORACLE
+service_name: TrainOracle
+provisional_service_provider_name: aaclub
+legal_service_provider_identity: UNCONFIRMED
 source_main: 1d8fc5382289ce3e2d16ad3b19f7257e1fa858c2
 source_branch_head_before_edit: b60cbae85e0be3449f44ff03f5b3cffe96ee9136
 scope: APPT-01_to_14
 named_human_reviews_found: 0
 ai_or_automated_work_reusable: true
 owner_authorized_agent_pre_review: true
+review_packets_assembled: 14/14
 human_review_replaced_by_ai: false
 canonical_promotion: false
 runtime_authority: false
@@ -24,6 +28,9 @@ runtime_authority: false
 따라서 올바른 상태는 `PRE_REVIEW_MATERIAL_AVAILABLE / NAMED_HUMAN_REVIEW_PENDING`이다.
 Fable, Codex, Terra, Sol, 자동검사와 페르소나 역할극은 사람 검토를 준비하고 오류를 찾을
 수 있지만 그 사람의 법률·의료·과학·보안·사용자 판단을 대신하지 않는다.
+
+실제 담당자에게 전달할 역할별 한 장 패킷 14개는
+[`appt-packets/README.md`](./appt-packets/README.md)에서 시작한다.
 
 ## 실제 파일 대조 결과
 
@@ -76,7 +83,8 @@ AI 리뷰, 자동검사, 프로토타입 스크린샷도 사람 서명으로 세
 
 사전 결론은 로컬 일지 공개가 계정·서버·코치 공유보다 노출이 작다는 것이다. 만 14세
 미만 동의, 건강·부상 추론의 민감정보 여부, 코치가 제3자인지, 해외 클라우드 이전,
-실제 개인정보처리자 `aaclub`의 법적 정체는 적격 한국 검토자가 결정해야 한다.
+`aaclub`을 임시 서비스 제공자명으로 사용할 때의 표시와 실제 개인정보처리자 법적
+정체는 적격 한국 검토자가 결정해야 한다. 서비스명은 `TrainOracle`로 유지한다.
 
 ### APPT-02: 청소년 중·장거리 스포츠과학
 
@@ -108,9 +116,9 @@ AI 리뷰, 자동검사, 프로토타입 스크린샷도 사람 서명으로 세
 
 ## 다음 실행 순서
 
-1. 에이전트는 APPT-01~14별 기존 자료를 짧은 검토 패킷으로 조립할 수 있다.
-2. 책임자는 각 APPT에 실제 사람을 지정하거나 `UNASSIGNED`를 기록한다.
-3. 지정된 사람은 신원·자격·관할·범위·이해충돌·대상 head SHA와 판단을 남긴다.
+1. APPT-01~14별 기존 자료를 짧은 검토 패킷 14개로 조립했다.
+2. 책임자는 각 APPT에 실제 사람을 지정하거나 `UNASSIGNED`를 유지한다.
+3. 지정된 사람은 패킷에 신원·자격·관할·범위·이해충돌·대상 head SHA와 판단을 남긴다.
 4. 그 결과가 수용된 행만 관련 P1 계획의 책임자 결정으로 이동한다.
 5. P1 수용과 구현 증거 뒤에도 ACT-01~06은 별도로 승인한다.
 

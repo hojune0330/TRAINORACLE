@@ -115,14 +115,18 @@ NOW-01~08의 책임자 답변은 위 체크리스트에 접수됐다. 2026-08-01
 표시뿐이다. 코치 연결과 결합 건강·준비도 분석은 제품 방향으로 기록됐지만 사람 검토,
 P1, ACT와 구현 증거 전에는 활성화하지 않는다. APPT 기존 증거 대조와 에이전트 사전조사
 결과는 [`reports/review/APPT_PRE_REVIEW_AND_EVIDENCE_AUDIT_20260722.md`](./reports/review/APPT_PRE_REVIEW_AND_EVIDENCE_AUDIT_20260722.md)에 있다.
+서비스명은 `TrainOracle`, 임시 서비스 제공자명은 `aaclub`이며 법적 제공자 신원은
+미확정이다. 역할별 검토 패킷 14개는
+[`reports/review/appt-packets/README.md`](./reports/review/appt-packets/README.md)에 있다.
 
 1. PR #93의 owner-decision 권한 검증기를 보강하고 NOW-01~08 결정과 충돌 없이 제품 사실을 재대조한다.
-2. APPT-01~14별 기존 자료를 검토 패킷으로 조립하되, 책임자가 실제 검토자를 지정하기 전에는 `UNASSIGNED`를 유지한다.
-3. OWNER와 해당 분야의 이름 있는 HUMAN_REVIEWER가 PR #93과 #98을 각자의 권한 범위에서 검토해 병합·수정·보류를 결정한다.
-4. 병합 뒤 Terra가 새 `origin/main`을 기준으로 작업 카탈로그 검증과 상태 재계산을 실행한다.
-5. 여전히 `NO_READY_TASKS`이면 이름 있는 사람 검토를 요청하고 멈춘다.
-6. 안전·개인정보·훈련 논리의 충돌이 실제로 생길 때만 Sol에 질문 하나를 넘긴다.
-7. 결정이 기록되면 Terra가 허용된 경로만 패치하고 CI·수동 확인 증거를 남긴다.
+2. 책임자가 조립된 APPT-01~14 패킷에 실제 검토자를 지정하거나 `UNASSIGNED`를 유지한다.
+3. 지정된 HUMAN_REVIEWER가 정확한 head SHA와 자신의 자격·범위·판단을 기록한다.
+4. OWNER와 해당 분야의 이름 있는 HUMAN_REVIEWER가 PR #93과 #98을 각자의 권한 범위에서 검토해 병합·수정·보류를 결정한다.
+5. 병합 뒤 Terra가 새 `origin/main`을 기준으로 작업 카탈로그 검증과 상태 재계산을 실행한다.
+6. 여전히 `NO_READY_TASKS`이면 이름 있는 사람 검토를 요청하고 멈춘다.
+7. 안전·개인정보·훈련 논리의 충돌이 실제로 생길 때만 Sol에 질문 하나를 넘긴다.
+8. 결정이 기록되면 Terra가 허용된 경로만 패치하고 CI·수동 확인 증거를 남긴다.
 
 시작 명령:
 

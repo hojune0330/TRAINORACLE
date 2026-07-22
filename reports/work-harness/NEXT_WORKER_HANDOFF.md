@@ -11,11 +11,13 @@
 > 비정본 결정·검토 라우팅 체크리스트(승인·정본·런타임 권한 없음): [`OWNER_DECISION_CHECKLIST_20260722.md`](./OWNER_DECISION_CHECKLIST_20260722.md)
 >
 > 기존 증거·AI 사전조사와 실제 사람 검토의 구분: [`../review/APPT_PRE_REVIEW_AND_EVIDENCE_AUDIT_20260722.md`](../review/APPT_PRE_REVIEW_AND_EVIDENCE_AUDIT_20260722.md)
+>
+> 역할별 한 장 검토 패킷 14개: [`../review/appt-packets/README.md`](../review/appt-packets/README.md)
 
 ## 현재 작업 권한과 모델 라우팅
 
 - 현재 S1/S2/S3 모두 `NO_READY_TASKS`다.
-- NOW-01~08의 제품 방향은 책임자가 답했다. 2026-08-01 공개 목표, 임시 이름 `aaclub`, 코치 연결과 결합 분석 방향을 포함하지만 런타임 권한은 아니다.
+- NOW-01~08의 제품 방향은 책임자가 답했다. 서비스명은 `TrainOracle`, 임시 서비스 제공자명은 `aaclub`이며 법적 제공자 신원은 미확정이다. 2026-08-01 공개 목표, 코치 연결과 결합 분석 방향을 포함하지만 런타임 권한은 아니다.
 - APPT-01~14의 이름 있는 사람 검토는 모두 미지정이다. 따라서 현재 `next_actor`는 `OWNER_APPOINTS_REVIEWER | HUMAN_REVIEWER`이며 Terra나 Sol이 막힌 결정을 대신하지 않는다.
 - 사람 관문이 닫힌 뒤의 재계산·문서 동기화·승인된 패치는 Terra가 담당한다.
 - 안전, 개인정보, 훈련 논리, 권한 경계의 실제 충돌 한 건만 Sol에 넘긴다.
@@ -68,6 +70,7 @@ stop_when: exact observable completion condition
 - 정본 연구 자료의 기계적 메타데이터 점검은 2026-07-20에 완료됐다. 결과는 `FORMATION_SOURCE_AUDIT_EXECUTION_20260720.md`에 있다.
 - 현재 새로 실행할 3단계 작업은 없다. 승인이나 사람 검토가 필요한 일을 임의로 시작하지 않는다.
 - 기존 스펙·연구·테스트·AI 리뷰는 APPT 사전 패킷으로 재사용한다. 저장소 대조 결과 이름·자격·범위·대상 SHA를 갖춘 실제 사람 검토는 0건이다.
+- Terra High 사전조사를 반영한 APPT-01~14 검토 패킷 14개가 조립됐다. 다음 작업은 패킷 재작성보다 실제 검토자 지정과 head SHA 동결이다.
 - PR #95는 병합됐다. WO012 책임자 답변의 기록은 `reports/review/WO012_COACH_DECISION_RESPONSE_TEMPLATE.md`에, 각 답변의 스펙 연결은 `reports/review/WO012_SPEC_LINKAGE_MATRIX.md`에 있다.
 - 이 기록은 규칙 채택·정본 패치·과학 또는 개인정보 검토 완료·런타임 권한을 뜻하지 않는다. 빈 답변이나 미확정 사항을 추정으로 채우지 않는다.
 - 자동 처방과 런타임 권한은 계속 `false`다.

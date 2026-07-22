@@ -1,0 +1,28 @@
+{
+  "surface": "local filesystem plus Git object database parsed-data audit",
+  "invocation": "Parse README links and APPT source bullets; git cat-file -e <declared_snapshot>:<path>; parse headers/markers/UTF-8",
+  "tree": "a56a51bc6bbc0bbdb95c1df261b59ff165ce1bf4",
+  "declaredSourceSnapshot": "9cf33692741167e1563a881ffec934477c41794d",
+  "packetCount": 14,
+  "advertisedLinks": 14,
+  "linksNonEmpty": 14,
+  "uniqueSourcePaths": 46,
+  "sourceReferences": 72,
+  "filesystemMissing": [],
+  "snapshotMissing": [],
+  "reviewHeadPresent": 15,
+  "reviewHeadValues": ["TO_BE_FROZEN_ON_ASSIGNMENT"],
+  "utf8ReplacementCount": 0,
+  "finalMarkers": 15,
+  "restrictedIdentityRules": {
+    "APPT-06": true,
+    "APPT-07": true,
+    "APPT-10": true,
+    "APPT-11": true
+  },
+  "dirtyWorktreeObserved": true,
+  "runtimeAuthority": false,
+  "participantEnrollment": false,
+  "namedHumanReviewsCompleted": 0,
+  "approvedPlans": 0
+}

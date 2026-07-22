@@ -18,7 +18,9 @@ It is not a product rule definition, not canonical promotion, not runtime eviden
 - Plan Generator remains `PLAN_GENERATOR_STUB`; `runtime_started: false`
 - owner NOW decisions: 8/8 recorded; this is product direction, not qualified review or runtime authority
 - named APPT human reviews: 0/14; existing SPEC, research, tests, AI/persona reviews remain reusable pre-review material
+- reviewer-facing APPT packets: 14/14 assembled under `reports/review/appt-packets/`; no human review status changed
 - target public-preparation date: 2026-08-01; verified local journal is the current runnable scope
+- naming: service `TrainOracle`; provisional service provider `aaclub`; legal provider/controller identity unconfirmed
 
 These are dated inventory counts, not canonical acceptance or product-completion percentages.
 Read [`HANDOFF_NEXT_CHAT.md`](./HANDOFF_NEXT_CHAT.md) for the plain Korean handoff and
@@ -38,6 +40,7 @@ For the current review-recommended Formation next-action order and visual bluepr
 For the owner-readable Formation boundary and deferred work register, read [`FORMATION_READ_NOW_DECIDE_LATER.md`](./FORMATION_READ_NOW_DECIDE_LATER.md) and [`FORMATION_DEFERRED_GOALS.md`](./FORMATION_DEFERRED_GOALS.md).
 For recorded owner answers and the activation boundary, read [`reports/work-harness/OWNER_DECISION_CHECKLIST_20260722.md`](./reports/work-harness/OWNER_DECISION_CHECKLIST_20260722.md).
 For APPT evidence reuse, preliminary research, and named-human gaps, read [`reports/review/APPT_PRE_REVIEW_AND_EVIDENCE_AUDIT_20260722.md`](./reports/review/APPT_PRE_REVIEW_AND_EVIDENCE_AUDIT_20260722.md).
+For the 14 reviewer-facing one-page packets, start at [`reports/review/appt-packets/README.md`](./reports/review/appt-packets/README.md).
 For documentation link/terminology quality findings, read [`SPEC_DOC_QUALITY_REPORT.md`](./SPEC_DOC_QUALITY_REPORT.md).
 For the Wave B Safety Gate target-local patch result, read [`SPEC_WAVEB_SAFETY_GATE_PATCH_REPORT.md`](./SPEC_WAVEB_SAFETY_GATE_PATCH_REPORT.md).
 For Safety Gate/RVE source acceptance review prep, read [`SPEC_SOURCE_ACCEPTANCE_REVIEW_ROUND1.md`](./SPEC_SOURCE_ACCEPTANCE_REVIEW_ROUND1.md).
