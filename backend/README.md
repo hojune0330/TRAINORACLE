@@ -33,3 +33,7 @@ npx wrangler deploy --dry-run
 
 No production D1 database, token, social-login secret, or deployment is
 required for these checks.
+
+The direct `@emnapi/*` development pins keep Wrangler's optional Sharp/WASM
+tooling tree reproducible between Windows development and Linux CI. They are
+not imported by the Worker.
