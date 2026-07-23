@@ -5,7 +5,7 @@
  *  - 아이콘/매니페스트: cache-first
  * 주의: 훈련일지 데이터는 SW 캐시가 아니라 localStorage/IndexedDB 소관 — 여기서 다루지 않는다.
  */
-const VERSION = "trainoracle-v1";
+const VERSION = "trainoracle-v2";
 const SHELL = ["./", "./manifest.webmanifest"];
 
 self.addEventListener("install", (e) => {
