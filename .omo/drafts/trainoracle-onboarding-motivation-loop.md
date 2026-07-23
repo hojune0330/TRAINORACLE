@@ -18,7 +18,8 @@ objective: Publish the WO017 documentation-only planning stack.
 authority: Documentation, validators, tests, review artifacts, one controlling issue, and four linked draft PRs only.
 repository: hojune0330/TRAINORACLE
 handoff_pr: 99
-expected_plan_sha256: 39075a3939f84df121179a46c5096bc20480c6fb5cee498c1a6a2b90adc9dd77
+expected_plan_sha256: 0c10c2f97740872566e19ce67458a1aa185b3114d8e8f20606c221624dedbd06
+plan_hash_method: "SHA-256 of raw Git blob bytes: git show <pr-head>:.omo/plans/trainoracle-onboarding-motivation-loop.md | node -e \"const c=require('node:crypto');const a=[];process.stdin.on('data',x=>a.push(x));process.stdin.on('end',()=>console.log(c.createHash('sha256').update(Buffer.concat(a)).digest('hex')))\""
 primary_worker: gpt-5.6-terra
 reasoning_effort: xhigh
 model_switch_for_primary_worker: forbidden
@@ -29,6 +30,14 @@ stop_when: Four linked draft PRs are validated and the activation packet remains
 ```
 
 The branch name `review/wo017-external-plan-gate` is historical. PR #99 is now an execution handoff, not an external-review gate.
+
+## Plan-pin reconciliation
+
+The owner approved the exact canonical plan hash `0c10c2f97740872566e19ce67458a1aa185b3114d8e8f20606c221624dedbd06` for the current PR #99 head. Calculate it from raw Git blob bytes, not checked-out file bytes, because Windows line-ending conversion can produce a different working-tree hash:
+
+```text
+git show <pr-head>:.omo/plans/trainoracle-onboarding-motivation-loop.md | node -e "const c=require('node:crypto');const a=[];process.stdin.on('data',x=>a.push(x));process.stdin.on('end',()=>console.log(c.createHash('sha256').update(Buffer.concat(a)).digest('hex')))"
+```
 
 ## Owner decisions
 
