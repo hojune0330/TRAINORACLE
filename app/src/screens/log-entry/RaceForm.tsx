@@ -8,7 +8,8 @@ import { newEntryId, saveEntry, todayISO } from "../../domain/journal-store"
 import type { JournalEntry } from "../../domain/journal-store"
 import { PurposeScopedMemoField, usePurposeScopedMemo } from "./PurposeScopedMemoField"
 import { RacePostMood, RacePreChecks } from "./RaceSelfChecks"
-import { FormSec, inputStyle, StickyBar, TopBar } from "./shared"
+import { inputStyle } from "./input-style"
+import { FormSec, StickyBar, TopBar } from "./shared"
 import type { EntryFormProps } from "./shared"
 
 type RaceStage = "pre" | "post"
@@ -57,8 +58,8 @@ export function RaceForm({ onBack, onDone }: EntryFormProps) {
     const saveResult = saveEntry(entry)
     if (window.location.search.includes("uitest")) console.log(`[JSAVE] kind=race ok=${saveResult.ok}`)
     if (!saveResult.ok) { setSaveError(true); return }
-    if (memoPreparation.reviewMessage === null) onDone?.("race")
-    else onDone?.("race", memoPreparation.reviewMessage)
+    if (memoPreparation.reviewMessage === null) onDone?.("race", entry)
+    else onDone?.("race", entry, memoPreparation.reviewMessage)
   }
 
   return (

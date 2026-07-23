@@ -242,11 +242,11 @@ function TopBar3({ onBack, children }: { onBack?: (() => void) | undefined; chil
         fontFamily: "var(--mono)", fontSize: 11, color: "var(--ink-2)",
         letterSpacing: "0.06em",
       }}>← 뒤로</button>
-      <div style={{
+      <h1 style={{
         minWidth: 0, fontFamily: "var(--mono)", fontSize: 11, fontWeight: 600,
         color: "var(--ink)", letterSpacing: "0.14em", textTransform: "uppercase",
-        textAlign: "center",
-      }}>{children}</div>
+        textAlign: "center", margin: 0,
+      }}>{children}</h1>
       <div aria-hidden="true"></div>
     </div>
   )

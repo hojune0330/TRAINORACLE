@@ -7,6 +7,11 @@ import "../../colors_and_type.css"
 import "../../colors_and_type_journal.css"
 import "./styles/app.css"
 
+if (import.meta.env.DEV) {
+  void import("react-grab")
+  void import("react-scan").then(({ scan }) => scan({ enabled: true, showToolbar: true }))
+}
+
 // PWA: service worker 등록 (배포 base 경로가 달라도 동작하도록 BASE_URL 기준 상대 등록)
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {

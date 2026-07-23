@@ -56,7 +56,7 @@ describe("race entry purpose-scoped notes", () => {
     await user.click(screen.getByRole("button", { name: /^저장/u }))
 
     // Then
-    expect(onDone).toHaveBeenCalledWith("race")
+    expect(onDone).toHaveBeenCalledWith("race", expect.objectContaining({ kind: "race" }))
     expect(window.localStorage.getItem("trainoracle.journal.v1")).toContain('"tension":7')
     expect(window.localStorage.getItem("trainoracle.journal.v1")).toContain('"condition":4')
     expect(window.localStorage.getItem("trainoracle.journal.v1")).toContain('"mood":5')
@@ -79,7 +79,11 @@ describe("race entry purpose-scoped notes", () => {
     await user.click(screen.getByRole("button", { name: /^저장/u }))
 
     // Then
-    expect(onDone).toHaveBeenCalledWith("race", expect.stringContaining(notice))
+    expect(onDone).toHaveBeenCalledWith(
+      "race",
+      expect.objectContaining({ kind: "race" }),
+      expect.stringContaining(notice),
+    )
     expect(window.localStorage.getItem("trainoracle.journal.v1")).toContain(text)
   })
 })
@@ -99,7 +103,10 @@ describe("existing journal entry regression", () => {
     await user.click(screen.getByRole("button", { name: /^저장/u }))
 
     // Then
-    expect(onDone).toHaveBeenCalledWith("post-session")
+    expect(onDone).toHaveBeenCalledWith(
+      "post-session",
+      expect.objectContaining({ kind: "post-session" }),
+    )
     expect(window.localStorage.getItem("trainoracle.journal.v1")).toContain('"kind":"post-session"')
   })
 
@@ -114,7 +121,10 @@ describe("existing journal entry regression", () => {
     await user.click(screen.getByRole("button", { name: /^저장/u }))
 
     // Then
-    expect(onDone).toHaveBeenCalledWith("post-session")
+    expect(onDone).toHaveBeenCalledWith(
+      "post-session",
+      expect.objectContaining({ kind: "post-session" }),
+    )
     expect(window.localStorage.getItem("trainoracle.journal.v1")).toContain('"plannedRpe":7')
   })
 

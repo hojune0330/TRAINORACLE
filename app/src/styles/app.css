@@ -2,7 +2,7 @@
    토큰의 단일 소스는 저장소 루트의 colors_and_type*.css —
    main.tsx에서 직접 import 하여 이중 정의를 만들지 않는다 (ADR A3 정신). */
 
-html, body { margin: 0; padding: 0; background: #E4E2DA; }
+html, body { margin: 0; padding: 0; background: var(--app-frame-canvas); }
 #root { min-height: 100vh; }
 button { font-family: inherit; }
 input, textarea { font-family: inherit; }
@@ -54,13 +54,337 @@ input, textarea { font-family: inherit; }
 
 :root {
   --ease-out-strong: cubic-bezier(0.23, 1, 0.32, 1);
-  --focus-ring: #0B63A5;
+  --focus-ring: var(--info);
 }
 
 .app-shell {
-  --app-shell-tab-bar-height: 45px;
+  --app-shell-tab-bar-height: var(--app-tab-height);
+  --first-visit-header-offset: var(--app-date-header-height);
   --entry-sticky-bottom: calc(var(--app-shell-tab-bar-height) + env(safe-area-inset-bottom, 0px));
   position: relative;
+  border-inline: var(--bw-line) solid var(--hair);
+  box-sizing: border-box;
+}
+
+.app-scroll-region {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.app-tab-bar {
+  position: relative;
+  flex: 0 0 auto;
+  z-index: 30;
+  width: 100%;
+  max-width: var(--app-shell-max-width);
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  background: var(--surface);
+  border-top: var(--bw-line) solid var(--ink);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+.app-tab-bar__button {
+  min-width: 0;
+  min-height: var(--app-tab-height);
+  padding: var(--space-2) 0 var(--space-1);
+  border: 0;
+  background: transparent;
+  color: var(--ink-2);
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-1);
+}
+
+.app-tab-bar__button[data-active="true"] {
+  background: var(--ink);
+  color: var(--bg);
+}
+
+.app-tab-bar__button span {
+  font-family: var(--mono);
+  font-size: var(--fs-mono-xs);
+  font-weight: 600;
+  letter-spacing: 0;
+}
+
+.first-visit {
+  min-height: calc(
+    100dvh
+    - var(--app-shell-tab-bar-height)
+    - var(--first-visit-header-offset)
+    - env(safe-area-inset-bottom, 0px)
+  );
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  background: var(--bg);
+}
+
+.first-visit__skip,
+.first-visit__back {
+  position: absolute;
+  top: max(var(--space-3), env(safe-area-inset-top, 0px));
+  z-index: 2;
+  min-width: var(--app-tab-height);
+  min-height: var(--app-touch-min);
+  border: 0;
+  background: transparent;
+  color: var(--ink-3);
+  cursor: pointer;
+  font-family: var(--mono);
+  font-size: var(--fs-mono-xs);
+  letter-spacing: 0;
+}
+
+.first-visit__skip {
+  right: var(--space-3);
+  text-decoration: underline;
+  text-underline-offset: var(--space-1);
+}
+
+.first-visit__back {
+  left: var(--space-3);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.first-visit__content {
+  width: 100%;
+  padding:
+    calc(var(--space-12) + var(--space-2))
+    var(--space-5)
+    var(--space-6);
+  box-sizing: border-box;
+  animation: ui-fade-in var(--dur-fast) var(--ease-out-strong) both;
+}
+
+.first-visit__content--welcome {
+  margin-block: auto;
+}
+
+.first-visit__content--centered {
+  margin-block: auto;
+  text-align: center;
+}
+
+.first-visit__brand {
+  font-family: var(--sans);
+  font-size: var(--fs-body);
+  font-weight: 700;
+  color: var(--ink);
+  letter-spacing: 0;
+}
+
+.first-visit__eyebrow {
+  margin-top: var(--space-2);
+  font-family: var(--mono);
+  font-size: var(--fs-mono-xs);
+  font-weight: 600;
+  color: var(--ink-3);
+  letter-spacing: 0;
+}
+
+.first-visit__title {
+  margin: var(--space-3) 0 0;
+  font-family: var(--sans);
+  font-size: var(--fs-app-title);
+  font-weight: 600;
+  line-height: 1.25;
+  color: var(--ink);
+  letter-spacing: 0;
+  text-wrap: balance;
+  word-break: keep-all;
+  overflow-wrap: break-word;
+}
+
+.first-visit__copy {
+  margin: var(--space-3) 0 0;
+  font-family: var(--sans);
+  font-size: var(--fs-body-sm);
+  line-height: 1.65;
+  color: var(--ink-2);
+  letter-spacing: 0;
+  text-wrap: pretty;
+  word-break: keep-all;
+  overflow-wrap: break-word;
+}
+
+.first-visit__promise {
+  margin-top: var(--space-4);
+  padding: var(--space-2) 0;
+  border-block: var(--bw-line) solid var(--line);
+  display: grid;
+  grid-template-columns: var(--space-6) minmax(0, 1fr);
+  gap: var(--space-3);
+  align-items: center;
+  color: var(--brand);
+}
+
+.first-visit__promise span {
+  min-width: 0;
+  display: grid;
+  gap: var(--space-1);
+}
+
+.first-visit__promise strong,
+.first-visit__promise small {
+  letter-spacing: 0;
+  word-break: keep-all;
+  overflow-wrap: break-word;
+}
+
+.first-visit__promise strong {
+  font-family: var(--sans);
+  font-size: var(--fs-body-sm);
+  color: var(--ink);
+}
+
+.first-visit__promise small {
+  font-family: var(--mono);
+  font-size: var(--fs-mono-xs);
+  line-height: 1.45;
+  color: var(--ink-3);
+}
+
+.first-visit__primary,
+.first-visit__secondary {
+  width: 100%;
+  min-height: var(--app-action-height);
+  margin-top: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border-radius: 0;
+  cursor: pointer;
+  display: grid;
+  grid-template-columns: var(--space-6) minmax(0, 1fr) var(--space-5);
+  gap: var(--space-2);
+  align-items: center;
+  text-align: left;
+  font-family: var(--sans);
+  font-size: var(--fs-body);
+  font-weight: 600;
+  letter-spacing: 0;
+}
+
+.first-visit__primary {
+  border: var(--bw-line) solid var(--ink);
+  background: var(--ink);
+  color: var(--bg);
+}
+
+.first-visit__secondary {
+  grid-template-columns: var(--space-6) minmax(0, 1fr);
+  border: var(--bw-line) solid var(--ink);
+  background: var(--surface);
+  color: var(--ink);
+}
+
+.first-visit__guide,
+.first-visit__text-action {
+  min-height: var(--app-touch-min);
+  border: 0;
+  background: transparent;
+  color: var(--ink-3);
+  cursor: pointer;
+  font-family: var(--mono);
+  font-size: var(--fs-mono-xs);
+  letter-spacing: 0;
+  text-decoration: underline;
+  text-underline-offset: var(--space-1);
+}
+
+.first-visit__guide {
+  width: 100%;
+  margin-top: var(--space-1);
+}
+
+.first-visit__text-action {
+  margin-top: var(--space-2);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+}
+
+.first-visit__choices {
+  margin-top: var(--space-5);
+  border-block: var(--bw-line) solid var(--ink);
+}
+
+.first-visit__choice {
+  width: 100%;
+  min-height: var(--app-choice-height);
+  padding: var(--space-3) var(--space-1);
+  border: 0;
+  border-bottom: var(--bw-line) solid var(--hair);
+  background: var(--surface);
+  color: var(--ink);
+  cursor: pointer;
+  display: grid;
+  grid-template-columns: var(--space-6) minmax(0, 1fr) var(--space-5);
+  gap: var(--space-3);
+  align-items: center;
+  text-align: left;
+}
+
+.first-visit__choice:last-child {
+  border-bottom: 0;
+}
+
+.first-visit__choice > span {
+  min-width: 0;
+  display: grid;
+  gap: var(--space-1);
+}
+
+.first-visit__choice strong {
+  font-family: var(--sans);
+  font-size: var(--fs-body);
+  font-weight: 600;
+  letter-spacing: 0;
+  word-break: keep-all;
+  overflow-wrap: break-word;
+}
+
+.first-visit__choice small {
+  font-family: var(--mono);
+  font-size: var(--fs-mono-xs);
+  line-height: 1.4;
+  color: var(--ink-3);
+  letter-spacing: 0;
+  word-break: keep-all;
+  overflow-wrap: break-word;
+}
+
+.first-visit__plan-mark {
+  width: var(--app-plan-mark-size);
+  height: var(--app-plan-mark-size);
+  margin: 0 auto var(--space-5);
+  border: var(--bw-line) solid var(--ink);
+  display: grid;
+  place-items: center;
+  color: var(--brand);
+  background: var(--surface);
+}
+
+.empty-journal-home {
+  padding: var(--space-10) var(--space-5) var(--space-6);
+}
+
+.empty-journal-home__title {
+  margin: var(--space-3) 0 0;
+  font-family: var(--sans);
+  font-size: var(--fs-app-section-title);
+  font-weight: 600;
+  line-height: 1.3;
+  letter-spacing: 0;
 }
 
 button:not(:disabled):not([aria-disabled="true"]):active {
@@ -101,6 +425,82 @@ button:not(:disabled):not([aria-disabled="true"]):active {
   animation: saved-toast-exit 150ms var(--ease-out-strong) both;
 }
 
+.saved-toast {
+  position: fixed;
+  inset-inline: 0;
+  bottom: calc(var(--app-shell-tab-bar-height) + env(safe-area-inset-bottom, 0px));
+  z-index: 40;
+  max-width: var(--app-shell-max-width);
+  margin: 0 auto;
+  padding: 0 var(--space-3) var(--space-2);
+  box-sizing: border-box;
+}
+
+.saved-toast__surface {
+  padding: var(--space-3) var(--space-4);
+  border: var(--bw-line) solid var(--ink);
+  background: var(--ink);
+  color: var(--bg);
+  display: grid;
+  gap: var(--space-1);
+}
+
+.saved-toast__heading {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.saved-toast__heading strong {
+  min-width: 0;
+  font-family: var(--mono);
+  font-size: var(--fs-mono-sm);
+  line-height: 1.45;
+  letter-spacing: 0;
+  overflow-wrap: anywhere;
+}
+
+.saved-toast__heading button {
+  min-width: var(--app-touch-min);
+  min-height: var(--app-touch-min);
+  margin: calc(-1 * var(--space-2));
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--bg);
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+}
+
+.saved-toast__detail {
+  font-family: var(--mono);
+  font-size: var(--fs-mono-xs);
+  line-height: 1.5;
+  letter-spacing: 0;
+  opacity: 0.78;
+}
+
+.saved-toast__action {
+  min-height: var(--app-touch-min);
+  margin-top: var(--space-1);
+  padding: var(--space-2) 0 var(--space-1);
+  border: 0;
+  border-top: var(--bw-line) solid var(--ink-3);
+  background: transparent;
+  color: var(--bg);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  font-family: var(--mono);
+  font-size: var(--fs-mono-xs);
+  font-weight: 600;
+  letter-spacing: 0;
+}
+
 @keyframes popover-enter {
   from { opacity: 0; transform: scale(0.96); }
   to { opacity: 1; transform: scale(1); }
@@ -133,7 +533,8 @@ button:not(:disabled):not([aria-disabled="true"]):active {
   }
 
   .popover-surface,
-  .saved-toast--enter .saved-toast__surface {
+  .saved-toast--enter .saved-toast__surface,
+  .first-visit__content {
     animation-name: ui-fade-in;
     transform: none;
   }

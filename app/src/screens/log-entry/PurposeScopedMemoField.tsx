@@ -2,7 +2,7 @@ import React from "react"
 import { MEMO_PURPOSE } from "../../domain/journal-schema"
 import type { MemoPurpose } from "../../domain/journal-schema"
 import { assessPurposeScopedMemo } from "../../safety/memo-safety"
-import { inputStyle } from "./shared"
+import { inputStyle } from "./input-style"
 
 export type PurposeScopedMemoController = {
   readonly text: string

@@ -6,7 +6,7 @@ TrainOracle feels like a coach's control room for serious training work: calm, d
 
 ## 2. Color
 
-The dashboard consumes `design-v3/tokens/tokens.css` as the product token source. Use semantic token names instead of raw colors in UI files.
+The SPEC dashboard consumes `design-v3/tokens/tokens.css`. The hosted journal app keeps its established root `colors_and_type.css` and `colors_and_type_journal.css` sources until token consolidation is explicitly approved. Both surfaces use the same semantic names below; UI files consume those names instead of adding raw colors.
 
 | Role | Token | Usage |
 |------|-------|-------|
@@ -73,6 +73,38 @@ Max content width is 1440px. Breakpoints: single column under 760px, two columns
 - Structure: grouped table with document, count, blocker count, referenced issue IDs.
 - Spacing: table cells use `--space-3`.
 - Accessibility: native table with visible headers.
+
+### App Shell
+- Structure: one centered journal surface with a fixed four-item bottom navigation.
+- Width: fills the viewport up to 520px; desktop visitors see the same real app unless `?workspace=1` is present.
+- Tokens: consumes the root journal token files through `app/src/main.tsx`; no duplicate token declarations in app components.
+- Component tokens: `--app-frame-canvas`, `--app-shell-max-width`, `--app-tab-height`, `--app-date-header-height`, `--app-touch-min`, `--app-action-height`, `--app-choice-height`, `--app-plan-mark-size`, `--fs-app-title`, and `--fs-app-section-title`.
+- States: first visit, empty journal, populated journal, entry form, trends, guide.
+- Accessibility: the main scroll region and bottom navigation remain distinct landmarks.
+
+### Primary Action
+- Structure: icon, short command label, optional factual helper text.
+- Surface: `--ink` background with `--bg` text; square corners and no shadow.
+- States: default, pressed, focus-visible, disabled.
+- Accessibility: minimum 44px touch height and a complete accessible name.
+
+### Choice Row
+- Structure: icon, one-line choice, one-line consequence, trailing chevron.
+- Surface: `--surface` with `--ink`/`--hair` separators.
+- States: default, pressed, focus-visible.
+- Accessibility: each row is an independent button because onboarding choices are transient navigation, not stored form values.
+
+### Fact Receipt
+- Structure: saved-state heading, one current local fact, optional secondary saved fact, optional destination action.
+- Variants: pain, mood, distance, generic local save, review-required.
+- Surface: `--ink` with `--bg` text; review-required uses the existing review copy and remains dismissible.
+- Accessibility: `status` for ordinary receipts and `alert` only for review-required content.
+- Content rule: never invent a score, threshold, readiness, diagnosis, safety clearance, or plan output.
+
+### Service Pending Panel
+- Structure: service name, plain status, honest scope explanation, journal action, back and skip controls.
+- Surface: borders-only using `--surface` and `--line`.
+- Accessibility: no waitlist, request, profile, or identity input is present.
 
 ## 6. Motion & Interaction
 

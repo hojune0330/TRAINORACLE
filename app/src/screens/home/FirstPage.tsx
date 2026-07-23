@@ -1,77 +1,203 @@
-import { SectionLb } from "../../components/JournalPrimitives"
+import React from "react"
+import {
+  Activity,
+  ArrowLeft,
+  CalendarClock,
+  ChevronRight,
+  Eye,
+  HeartPulse,
+  PencilLine,
+} from "lucide-react"
+import type { LucideIcon } from "lucide-react"
+import type { JournalEntryType } from "../log-entry/shared"
+
+export type FirstVisitStep = "welcome" | "context" | "plan"
 
 type FirstPageProps = {
-  readonly onWriteLog?: () => void
+  readonly initialStep?: FirstVisitStep
+  readonly onWriteLog?: (entryType?: JournalEntryType) => void
   readonly onOpenGuide?: () => void
+  readonly onDismiss?: () => void
 }
 
-const JOURNAL_TYPES = [
-  { mark: "↻", title: "훈련 후", description: "방금 끝낸 세션 · 거리·페이스·한 줄 메모", duration: "~1분" },
-  { mark: "☾", title: "회복 · 하루 마무리", description: "쉰 날도 그대로 · 수면·기분·통증 체크", duration: "~2분" },
-  { mark: "▲", title: "경기", description: "직전 긴장도 · 직후 기록과 감정", duration: "~30초" },
-] as const
+type ContextChoice = {
+  readonly label: string
+  readonly detail: string
+  readonly icon: LucideIcon
+  readonly action: () => void
+}
 
-export function FirstPage({ onWriteLog, onOpenGuide }: FirstPageProps) {
+export function FirstPage({
+  initialStep = "welcome",
+  onWriteLog,
+  onOpenGuide,
+  onDismiss,
+}: FirstPageProps) {
+  const [step, setStep] = React.useState<FirstVisitStep>(initialStep)
+  const frameRef = React.useRef<HTMLElement>(null)
+  const didMount = React.useRef(false)
+
+  React.useEffect(() => {
+    if (didMount.current) frameRef.current?.scrollIntoView?.({ block: "start" })
+    else didMount.current = true
+  }, [step])
+
+  if (step === "context") {
+    const choices: readonly ContextChoice[] = [
+      {
+        label: "훈련을 기록하고 싶어요",
+        detail: "거리·시간·강도를 남겨요",
+        icon: Activity,
+        action: () => onWriteLog?.("post-session"),
+      },
+      {
+        label: "통증·컨디션을 남기고 싶어요",
+        detail: "수면·기분·통증을 확인해요",
+        icon: HeartPulse,
+        action: () => onWriteLog?.("evening"),
+      },
+      {
+        label: "훈련 계획이 궁금해요",
+        detail: "훈련계획 기능 준비 현황을 확인해요",
+        icon: CalendarClock,
+        action: () => setStep("plan"),
+      },
+      {
+        label: "그냥 둘러볼래요",
+        detail: "기록 없이 홈을 살펴봐요",
+        icon: Eye,
+        action: () => onDismiss?.(),
+      },
+    ]
+
+    return (
+      <FirstVisitFrame rootRef={frameRef} onSkip={onDismiss}>
+        <BackButton onClick={() => setStep("welcome")} />
+        <div className="first-visit__content">
+          <div className="first-visit__eyebrow">ONE QUICK CHOICE</div>
+          <h1 className="first-visit__title">오늘 무엇 때문에 오셨나요?</h1>
+          <p className="first-visit__copy">한 번만 고르면 바로 해당 화면으로 이동해요. 이 선택은 저장하지 않아요.</p>
+          <div className="first-visit__choices">
+            {choices.map(({ label, detail, icon: Icon, action }) => (
+              <button className="first-visit__choice" type="button" onClick={action} key={label}>
+                <Icon aria-hidden="true" size={20} strokeWidth={1.7} />
+                <span>
+                  <strong>{label}</strong>
+                  <small>{detail}</small>
+                </span>
+                <ChevronRight aria-hidden="true" size={18} strokeWidth={1.7} />
+              </button>
+            ))}
+          </div>
+        </div>
+      </FirstVisitFrame>
+    )
+  }
+
+  if (step === "plan") {
+    return (
+      <FirstVisitFrame rootRef={frameRef} onSkip={onDismiss}>
+        <BackButton onClick={() => setStep("context")} />
+        <div className="first-visit__content first-visit__content--centered">
+          <div className="first-visit__plan-mark" aria-hidden="true">
+            <CalendarClock size={34} strokeWidth={1.45} />
+          </div>
+          <div className="first-visit__eyebrow">SERVICE PREPARING</div>
+          <h1 className="first-visit__title">훈련계획은 준비 중이에요</h1>
+          <p className="first-visit__copy">
+            안전 규칙과 선수의 기록을 확인한 뒤, 여러 후보 중 고르는 흐름을 만들고 있어요.
+            아직 훈련계획 신청 화면은 열지 않았고, 이 화면에서는 선수 정보나 계획 요청을 받지 않아요.
+          </p>
+          <button className="first-visit__primary" type="button" onClick={() => onWriteLog?.()}>
+            <PencilLine aria-hidden="true" size={19} />
+            <span>오늘 기록부터 남기기</span>
+            <ChevronRight aria-hidden="true" size={18} />
+          </button>
+          <button className="first-visit__text-action" type="button" onClick={() => setStep("context")}>
+            <ArrowLeft aria-hidden="true" size={16} />
+            이전 선택으로
+          </button>
+        </div>
+      </FirstVisitFrame>
+    )
+  }
+
   return (
-    <>
-      <div className="paper-lines" style={{ padding: "26px 20px 22px", margin: "6px 20px 0", border: "1px solid var(--line)" }}>
-        <div style={{ fontFamily: "var(--mono)", fontSize: 9.5, color: "var(--ink-3)", letterSpacing: "0.14em", textTransform: "uppercase" }}>
-          PAGE 1 · 아직 아무것도 없는
+    <FirstVisitFrame rootRef={frameRef} onSkip={onDismiss}>
+      <div className="first-visit__content first-visit__content--welcome">
+        <div className="first-visit__brand">TRAINORACLE</div>
+        <div className="first-visit__eyebrow">이 브라우저에만 저장 · 공용 기기 주의</div>
+        <h1 className="first-visit__title">오늘의 훈련을 기록해볼까요?</h1>
+        <p className="first-visit__copy">
+          회원가입 없이 1분 만에 시작해요. 훈련한 날, 쉰 날, 아픈 날의 기록이 쌓이면
+          거리·기분·통증의 변화를 실제 입력 기준으로 볼 수 있어요.
+        </p>
+        <div className="first-visit__promise">
+          <PencilLine aria-hidden="true" size={21} strokeWidth={1.6} />
+          <span>
+            <strong>첫 기록은 짧아도 충분해요.</strong>
+            <small>입력하지 않은 값은 분석에서 제외해요. 브라우저를 지우거나 기기를 바꾸기 전에는 내보내기로 백업하세요.</small>
+          </span>
         </div>
-        <div className="hand" style={{ marginTop: 12, fontSize: 27, color: "var(--ink-blue)", lineHeight: 1.25 }}>
-          여기는 당신의<br />첫 페이지예요.
-        </div>
-        <div style={{ marginTop: 14, fontSize: 13.5, color: "var(--ink-2)", lineHeight: 1.65 }}>
-          오늘 뛴 것, 쉰 것, 잔 시간, 기분 한 줄 — 뭐든 1분이면 적혀요.
-          하루하루는 짧은 메모지만, 계속 쌓이면 <b style={{ color: "var(--ink)" }}>나만 아는 나의 기록</b>이 됩니다.
-        </div>
-        <div className="hand-pencil" style={{ marginTop: 12, fontSize: 15, color: "var(--pencil)" }}>
-          1년 뒤 오늘, 이 페이지를 다시 펼치게 될 거예요.
-        </div>
-      </div>
-
-      <div style={{ padding: "20px 20px 0" }}>
-        <button type="button" onClick={onWriteLog} style={{
-          width: "100%", padding: "18px 20px", background: "var(--ink)", color: "var(--bg)",
-          border: 0, borderRadius: 0, fontFamily: "var(--sans)", fontSize: 16, fontWeight: 500,
-          display: "flex", alignItems: "center", justifyContent: "space-between", cursor: "pointer",
-        }}>
+        <button className="first-visit__primary" type="button" onClick={() => onWriteLog?.()}>
+          <PencilLine aria-hidden="true" size={19} />
           <span>첫 일지 쓰기</span>
-          <span style={{ fontFamily: "var(--mono)", fontSize: 10, color: "rgba(255,255,255,.7)", letterSpacing: "0.14em", textTransform: "uppercase" }}>~ 1분</span>
+          <ChevronRight aria-hidden="true" size={18} />
+        </button>
+        <button className="first-visit__secondary" type="button" onClick={() => setStep("context")}>
+          <Eye aria-hidden="true" size={18} />
+          무엇을 할 수 있나요?
+        </button>
+        <button className="first-visit__guide" type="button" onClick={onOpenGuide}>
+          쌓인 기록 예시 보기
         </button>
       </div>
+    </FirstVisitFrame>
+  )
+}
 
-      <div style={{ padding: "14px 20px 0" }}>
-        <button type="button" onClick={onOpenGuide} style={{
-          width: "100%", minHeight: 44, padding: "13px 16px", background: "transparent", color: "var(--ink-2)",
-          border: "1px dashed var(--line-2)", borderRadius: 0, fontFamily: "var(--mono)", fontSize: 11,
-          letterSpacing: "0.06em", cursor: "pointer", textAlign: "left",
-        }}>
-          일지가 쌓이면 어떤 모습이 되나요? → <b style={{ color: "var(--ink)" }}>예시 보기</b>
-        </button>
-      </div>
+export function EmptyJournalHome({
+  onWriteLog,
+  onOpenGuide,
+}: Pick<FirstPageProps, "onWriteLog" | "onOpenGuide">) {
+  return (
+    <div className="empty-journal-home">
+      <div className="first-visit__eyebrow">MY JOURNAL</div>
+      <h1 className="empty-journal-home__title">아직 기록이 없어요.</h1>
+      <p className="first-visit__copy">원할 때 짧게 시작하세요. 훈련하지 않은 날도 그대로 남길 수 있어요.</p>
+      <button className="first-visit__primary" type="button" onClick={() => onWriteLog?.()}>
+        <PencilLine aria-hidden="true" size={19} />
+        <span>일지 쓰기</span>
+        <ChevronRight aria-hidden="true" size={18} />
+      </button>
+      <button className="first-visit__secondary" type="button" onClick={onOpenGuide}>
+        <Eye aria-hidden="true" size={18} />
+        예시 보기
+      </button>
+    </div>
+  )
+}
 
-      <div style={{ padding: "26px 20px 0" }}>
-        <SectionLb>— 세 가지 일지</SectionLb>
-        <div style={{ borderTop: "1px solid var(--ink)", borderBottom: "1px solid var(--ink)" }}>
-          {JOURNAL_TYPES.map((journalType, index) => (
-            <div key={journalType.title} style={{
-              display: "grid", gridTemplateColumns: "30px 1fr auto", gap: 12, padding: "13px 4px", alignItems: "center",
-              borderBottom: index < JOURNAL_TYPES.length - 1 ? "1px dashed var(--hair)" : 0,
-            }}>
-              <span style={{ fontFamily: "var(--mono)", fontSize: 19, color: "var(--brand)", lineHeight: 1 }}>{journalType.mark}</span>
-              <div>
-                <div style={{ fontFamily: "var(--sans)", fontSize: 14.5, fontWeight: 500, color: "var(--ink)" }}>{journalType.title}</div>
-                <div style={{ fontFamily: "var(--mono)", fontSize: 10, color: "var(--ink-3)", marginTop: 2 }}>{journalType.description}</div>
-              </div>
-              <span style={{ fontFamily: "var(--mono)", fontSize: 9.5, color: "var(--ink-4)", letterSpacing: "0.1em" }}>{journalType.duration}</span>
-            </div>
-          ))}
-        </div>
-        <div style={{ marginTop: 12, fontFamily: "var(--mono)", fontSize: 9.5, color: "var(--ink-4)", lineHeight: 1.6 }}>
-          회원가입 없이 시작돼요. 일지는 이 기기에 저장됩니다.
-        </div>
-      </div>
-    </>
+function FirstVisitFrame({ children, onSkip, rootRef }: {
+  readonly children: React.ReactNode
+  readonly onSkip?: () => void
+  readonly rootRef?: React.Ref<HTMLElement>
+}) {
+  return (
+    <section ref={rootRef} className="first-visit" aria-label="TrainOracle 시작">
+      <button className="first-visit__skip" type="button" aria-label="온보딩 건너뛰기" onClick={onSkip}>
+        건너뛰기
+      </button>
+      {children}
+    </section>
+  )
+}
+
+function BackButton({ onClick }: { readonly onClick: () => void }) {
+  return (
+    <button className="first-visit__back" type="button" aria-label="이전 화면으로" onClick={onClick}>
+      <ArrowLeft aria-hidden="true" size={18} />
+      이전
+    </button>
   )
 }

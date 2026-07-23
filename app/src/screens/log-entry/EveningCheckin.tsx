@@ -7,7 +7,8 @@ import type { JournalEntry } from "../../domain/journal-store"
 import { painLevelsRequireReview } from "../../safety/memo-safety"
 import { BodyDiagram, PainReviewBanner } from "./BodyDiagram"
 import { PurposeScopedMemoField, usePurposeScopedMemo } from "./PurposeScopedMemoField"
-import { FormSec, inputStyle, StickyBar, TopBar } from "./shared"
+import { inputStyle } from "./input-style"
+import { FormSec, StickyBar, TopBar } from "./shared"
 import type { EntryFormProps } from "./shared"
 
 const MOOD_LABELS = ["흐림", "무덤덤", "보통", "좋음", "최고"] as const
@@ -44,8 +45,8 @@ export function EveningCheckin({ onBack, onDone }: EntryFormProps) {
     const result = saveEntry(entry)
     if (window.location.search.includes("uitest")) console.log(`[JSAVE] kind=evening ok=${result.ok}`)
     if (!result.ok) { setSaveError(true); return }
-    if (notePreparation.reviewMessage === null) onDone?.("evening")
-    else onDone?.("evening", notePreparation.reviewMessage)
+    if (notePreparation.reviewMessage === null) onDone?.("evening", entry)
+    else onDone?.("evening", entry, notePreparation.reviewMessage)
   }
 
   return (

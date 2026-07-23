@@ -9,12 +9,12 @@ import { LogEntry } from "./screens/LogEntry"
 import { LogDetail } from "./screens/LogDetail"
 import { Trends } from "./screens/Trends"
 import { Guide } from "./screens/Guide"
+import { FirstPage } from "./screens/home/FirstPage"
 import { todayISO } from "./domain/journal-store"
 
 export default function App() {
-  // 모바일(≤700px) 또는 ?app=1 → 실제 앱 셸. 넓은 화면 = 디자인 워크스페이스.
-  const mobile = useIsMobileShell()
-  if (mobile) return <AppShell />
+  const appShell = useIsMobileShell()
+  if (appShell) return <AppShell />
   return <Workspace />
 }
 
@@ -34,6 +34,18 @@ function Workspace() {
         display: "flex", flexWrap: "wrap", gap: 40,
         padding: "0 0 30px", justifyContent: "flex-start",
       }}>
+        <MobileFrame label="FIRST VISIT · WELCOME">
+          <FirstPage initialStep="welcome" onWriteLog={() => {}} onOpenGuide={() => {}} />
+        </MobileFrame>
+
+        <MobileFrame label="FIRST VISIT · ONE CONTEXT">
+          <FirstPage initialStep="context" onWriteLog={() => {}} />
+        </MobileFrame>
+
+        <MobileFrame label="FIRST VISIT · PLAN PREPARING">
+          <FirstPage initialStep="plan" onWriteLog={() => {}} />
+        </MobileFrame>
+
         <MobileFrame label="HOME · 실데이터">
           <Home onWriteLog={() => {}} onOpenDay={() => {}} onOpenGuide={() => {}} />
         </MobileFrame>

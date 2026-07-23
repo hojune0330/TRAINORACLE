@@ -9,15 +9,24 @@ import { toAnalysisJournalEntry } from "../domain/safe-export"
 import type { AnalysisJournalEntry } from "../domain/safe-export"
 import { painLevelsRequireReview } from "../safety/memo-safety"
 import { DeviceJournal, SafeJournalExport } from "./home/DeviceJournal"
-import { FirstPage } from "./home/FirstPage"
+import { EmptyJournalHome, FirstPage } from "./home/FirstPage"
+import type { JournalEntryType } from "./log-entry/shared"
 
 export type HomeProps = {
-  readonly onWriteLog?: () => void
+  readonly onWriteLog?: (entryType?: JournalEntryType) => void
   readonly onOpenDay?: (date: string) => void
   readonly onOpenGuide?: () => void
+  readonly firstVisitActive?: boolean
+  readonly onDismissFirstVisit?: () => void
 }
 
-export function Home({ onWriteLog, onOpenDay, onOpenGuide }: HomeProps) {
+export function Home({
+  onWriteLog,
+  onOpenDay,
+  onOpenGuide,
+  firstVisitActive = true,
+  onDismissFirstVisit,
+}: HomeProps) {
   const all = React.useMemo(() => loadEntries(), [])
   const analysisEntries = React.useMemo(() => {
     const projected: AnalysisJournalEntry[] = []
@@ -38,12 +47,20 @@ export function Home({ onWriteLog, onOpenDay, onOpenGuide }: HomeProps) {
   }, [isEmpty, life.total, life.days])
 
   return (
-    <div style={{ paddingBottom: 90 }}>
+    <div style={{ paddingBottom: isEmpty ? 0 : 90 }}>
       <div style={{ padding: "16px 18px 14px" }}>
         <IndexCard date={cardDate(today)} dow={dowOf(today)} season={seasonOf(today)} />
       </div>
       {isEmpty ? (
-        <FirstPage onWriteLog={onWriteLog} onOpenGuide={onOpenGuide} />
+        firstVisitActive ? (
+          <FirstPage
+            onWriteLog={onWriteLog}
+            onOpenGuide={onOpenGuide}
+            onDismiss={onDismissFirstVisit}
+          />
+        ) : (
+          <EmptyJournalHome onWriteLog={onWriteLog} onOpenGuide={onOpenGuide} />
+        )
       ) : (
         <DataHome all={all} analysisEntries={analysisEntries} onWriteLog={onWriteLog} onOpenDay={onOpenDay} onOpenGuide={onOpenGuide} />
       )}

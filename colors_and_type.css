@@ -117,6 +117,17 @@
   --fs-caption: 12px;
   --fs-mono-sm: 11px;
   --fs-mono-xs: 10px;
+
+  --app-frame-canvas: #E4E2DA;
+  --app-shell-max-width: 520px;
+  --app-tab-height: 56px;
+  --app-date-header-height: 88px;
+  --app-touch-min: 44px;
+  --app-action-height: 52px;
+  --app-choice-height: 68px;
+  --app-plan-mark-size: 72px;
+  --fs-app-title: 24px;
+  --fs-app-section-title: 22px;
 }
 
 /* ============== BASE ============== */
