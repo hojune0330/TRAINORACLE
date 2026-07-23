@@ -40,6 +40,12 @@ function requireFinal(text, label) {
   if (!text.trimEnd().endsWith("[DRAFT_COMPLETE]")) fail("MISSING_FINAL_MARKER", `${label} must end with [DRAFT_COMPLETE]`);
 }
 
+function requireGithubPrUrl(text, label) {
+  if (!/^pr_url: https:\/\/github\.com\/hojune0330\/TRAINORACLE\/pull\/\d+$/mu.test(text)) {
+    fail("MISSING_WO017_PR_LINK", `${label} PR link missing`);
+  }
+}
+
 function reject(text, pattern, code) {
   if (pattern.test(text)) fail(code, `forbidden contract value: ${pattern}`);
 }
@@ -151,14 +157,15 @@ function validateFable(root) {
   reject(text, /source_url:\s*https?:\/\/(?!github\.com\/hojune0330\/TRAINORACLE\/issues\/)/iu, "UNSAFE_FABLE_PROVENANCE");
   reject(text, /streak_pressure:\s*true/iu, "STREAK_PRESSURE");
   reject(text, /implementation_authorized:\s*true/iu, "IMPLEMENTATION_ACTIVATED");
-  if (!text.includes("pr_url: https://github.com/hojune0330/TRAINORACLE/pull/")) fail("MISSING_WO017_PR_LINK", "Fable PR link missing");
+  requireGithubPrUrl(text, "Fable");
   requireFinal(text, "Fable artifact");
 }
 
 function validateTerra(root) {
   const matrix = read(root, artifactPaths.terra[0]);
   const scenarios = read(root, artifactPaths.terra[1]);
-  for (const marker of ["primary_worker: gpt-5.6-terra", "reasoning_effort: xhigh", "implementation_authorized: false", "CURRENT_APP_EVIDENCE", "DRAFT_REFERENCE_ONLY", "insufficient_state:", "controlling_issue_url: https://github.com/hojune0330/TRAINORACLE/issues/", "pr_title: [WO017] Bind onboarding UX to current contracts", "pr_url: https://github.com/hojune0330/TRAINORACLE/pull/"]) requireText(matrix, marker);
+  for (const marker of ["primary_worker: gpt-5.6-terra", "reasoning_effort: xhigh", "implementation_authorized: false", "CURRENT_APP_EVIDENCE", "DRAFT_REFERENCE_ONLY", "insufficient_state:", "controlling_issue_url: https://github.com/hojune0330/TRAINORACLE/issues/", "pr_title: [WO017] Bind onboarding UX to current contracts"]) requireText(matrix, marker);
+  requireGithubPrUrl(matrix, "Terra");
   for (const marker of ["implementation_authorized: false", "SCENARIO-PAIN-MOOD", "SCENARIO-PLAN-STUB", "SCENARIO-INSUFFICIENT-FACTS"]) requireText(scenarios, marker);
   reject(`${matrix}\n${scenarios}`, /(?:factual_analysis|readiness|threshold):\s*(?:fabricated|true|invented)/iu, "FALSE_ANALYSIS");
   reject(`${matrix}\n${scenarios}`, /implementation_authorized:\s*true/iu, "IMPLEMENTATION_ACTIVATED");
