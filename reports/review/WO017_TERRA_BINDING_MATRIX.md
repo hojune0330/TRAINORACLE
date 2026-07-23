@@ -14,7 +14,7 @@ fable_pr_url: https://github.com/hojune0330/TRAINORACLE/pull/102
 fable_base_relationship: DIVERGED_AHEAD_2_BEHIND_1
 fable_provenance_rule: "Treat PR #102 as a bounded UX proposal only; do not treat its branch as current-main implementation evidence."
 pr_title: [WO017] Bind onboarding UX to current contracts
-pr_url: PENDING_GITHUB_DRAFT_PR
+pr_url: https://github.com/hojune0330/TRAINORACLE/pull/104
 ```
 
 ## Binding Rule

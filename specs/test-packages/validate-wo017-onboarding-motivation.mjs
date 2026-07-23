@@ -185,7 +185,7 @@ function validateSol(root) {
 }
 
 const validators = { owner: validateOwner, source: validateSource, order: validateOrder, handoff: validateHandoff, fable: validateFable, terra: validateTerra, sol: validateSol };
-const phaseArtifacts = { issuance: ["owner", "source", "order", "handoff"], fable: ["owner", "source", "order", "handoff", "fable"], terra: ["owner", "source", "order", "handoff", "fable", "terra"], sol: ["owner", "source", "order", "handoff", "fable", "terra", "sol"] };
+const phaseArtifacts = { issuance: ["owner", "source", "order", "handoff"], fable: ["fable", "owner", "source", "order", "handoff"], terra: ["terra", "fable", "owner", "source", "order", "handoff"], sol: ["sol", "terra", "fable", "owner", "source", "order", "handoff"] };
 
 export function validateArtifact(root, artifact) {
   const validator = validators[artifact];

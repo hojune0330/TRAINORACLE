@@ -63,6 +63,13 @@ test("rejects false analysis", async () => {
   await expectCode("terra-false-analysis", async () => {}, "FALSE_ANALYSIS", "terra", "terra");
 });
 
+test("reports Terra false analysis before missing issuance prerequisites", () => {
+  assert.throws(
+    () => validatePhase(resolve(fixtures, "terra-false-analysis"), "terra"),
+    (error) => error instanceof Wo017Error && error.code === "FALSE_ANALYSIS",
+  );
+});
+
 test("rejects app path change", () => {
   assert.throws(() => validateChangedPaths(["app/src/AppShell.tsx"]), (error) => error instanceof Wo017Error && error.code === "APP_PATH_CHANGE");
 });

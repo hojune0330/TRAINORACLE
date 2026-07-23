@@ -9,7 +9,7 @@ runtime_authority: false
 fable_head_sha: f900793601aa6e1409efb5ee8f756c3924f45549
 controlling_issue_url: https://github.com/hojune0330/TRAINORACLE/issues/100
 pr_title: [WO017] Bind onboarding UX to current contracts
-pr_url: PENDING_GITHUB_DRAFT_PR
+pr_url: https://github.com/hojune0330/TRAINORACLE/pull/104
 ```
 
 These are pre-implementation contract scenarios. They neither run a UI nor assert
