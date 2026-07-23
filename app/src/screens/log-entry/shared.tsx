@@ -1,12 +1,13 @@
-import type { CSSProperties, ReactNode } from "react"
+import type { ReactNode } from "react"
 import { TermHelp } from "../../components/TermHelp"
 import type { TermId } from "../../domain/glossary"
+import type { JournalEntry } from "../../domain/journal-store"
 
 export type JournalEntryType = "post-session" | "evening" | "race"
 
 export interface EntryFormProps {
   readonly onBack?: () => void
-  readonly onDone?: (entryType: JournalEntryType, reviewMessage?: string) => void
+  readonly onDone?: (entryType: JournalEntryType, savedEntry: JournalEntry, reviewMessage?: string) => void
 }
 
 export function FormSec({ lb, help, children }: {
@@ -26,16 +27,6 @@ export function FormSec({ lb, help, children }: {
   )
 }
 
-export function inputStyle(): CSSProperties {
-  return {
-    width: "100%", padding: "11px 12px",
-    minHeight: 44,
-    border: "1px solid var(--line)", background: "var(--surface)",
-    fontFamily: "var(--sans)", fontSize: 14, color: "var(--ink)",
-    boxSizing: "border-box", borderRadius: 0,
-  }
-}
-
 export function TopBar({ onBack, children }: {
   readonly onBack?: () => void
   readonly children: ReactNode
@@ -45,17 +36,17 @@ export function TopBar({ onBack, children }: {
       padding: "12px 16px", borderBottom: "1px solid var(--line)",
       display: "grid", gridTemplateColumns: "64px minmax(0, 1fr) 64px", alignItems: "center", flexShrink: 0,
     }}>
-      <button onClick={onBack} style={{
+      <button type="button" onClick={onBack} style={{
         background: "transparent", border: 0, cursor: "pointer",
         minWidth: 64, minHeight: 44, padding: "4px 8px",
         fontFamily: "var(--mono)", fontSize: 11, color: "var(--ink-2)",
         letterSpacing: "0.06em",
       }}>← 뒤로</button>
-      <div className="entry-topbar__title" style={{
+      <h1 className="entry-topbar__title" style={{
         flex: 1, fontFamily: "var(--mono)", fontSize: 11, fontWeight: 600,
         color: "var(--ink)", letterSpacing: "0.14em", textTransform: "uppercase",
-        textAlign: "center",
-      }}>{children}</div>
+        textAlign: "center", margin: 0,
+      }}>{children}</h1>
       <div aria-hidden="true" style={{ width: 64 }}></div>
     </div>
   )
@@ -83,7 +74,7 @@ export function StickyBar({ onSave, error }: {
         </div>
       )}
       <div style={{ display: "flex", gap: 8 }}>
-        <button onClick={onSave} style={{
+        <button type="button" onClick={onSave} style={{
           flex: 2, padding: "14px", background: "var(--ink)", color: "var(--bg)",
           border: 0, fontFamily: "var(--sans)", fontSize: 14, fontWeight: 500,
           cursor: "pointer", borderRadius: 0,

@@ -5,7 +5,7 @@ import {
 } from "../../domain/intensity-assessment"
 import type { ObjectiveLoadComponent } from "../../domain/intensity-assessment"
 import { parseDecimalString, parsePaceText } from "../../domain/numeric-input"
-import { inputStyle } from "./shared"
+import { inputStyle } from "./input-style"
 
 type ComponentKind = ObjectiveLoadComponent["kind"]
 type DraftFields = Readonly<Record<string, string>>

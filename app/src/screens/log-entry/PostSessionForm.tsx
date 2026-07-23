@@ -6,7 +6,8 @@ import { newEntryId, saveEntry, todayISO } from "../../domain/journal-store"
 import type { JournalEntry } from "../../domain/journal-store"
 import { PurposeScopedMemoField, usePurposeScopedMemo } from "./PurposeScopedMemoField"
 import { IntensityAssessmentField, useIntensityAssessment } from "./IntensityAssessmentField"
-import { FormSec, inputStyle, StickyBar, TopBar } from "./shared"
+import { inputStyle } from "./input-style"
+import { FormSec, StickyBar, TopBar } from "./shared"
 import type { EntryFormProps } from "./shared"
 
 const ENERGY_SYSTEMS = [
@@ -50,8 +51,8 @@ export function PostSessionForm({ onBack, onDone }: EntryFormProps) {
     const result = saveEntry(entry)
     if (window.location.search.includes("uitest")) console.log(`[JSAVE] kind=post-session ok=${result.ok}`)
     if (!result.ok) { setSaveError(true); return }
-    if (memoPreparation.reviewMessage === null) onDone?.("post-session")
-    else onDone?.("post-session", memoPreparation.reviewMessage)
+    if (memoPreparation.reviewMessage === null) onDone?.("post-session", entry)
+    else onDone?.("post-session", entry, memoPreparation.reviewMessage)
   }
 
   return (

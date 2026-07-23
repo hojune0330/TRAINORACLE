@@ -1,5 +1,6 @@
 import { MoodStrip } from "../../components/JournalPrimitives"
-import { FormSec, inputStyle } from "./shared"
+import { inputStyle } from "./input-style"
+import { FormSec } from "./shared"
 
 const MOOD_LABELS = ["흐림", "무덤덤", "보통", "좋음", "최고"] as const
 
