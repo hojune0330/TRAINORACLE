@@ -4,6 +4,7 @@ import { resolve } from "node:path"
 const repoRoot = resolve(import.meta.dirname, "../..")
 const handoffPath = resolve(repoRoot, "reports/review/WO011_QUALIFIED_PRIVACY_REVIEW_HANDOFF.md")
 const factsPath = resolve(repoRoot, "reports/review/WO011_PRODUCT_FACT_QUESTIONNAIRE.md")
+const ownerDecisionPath = resolve(repoRoot, "reports/review/WO011_OWNER_PRODUCT_FACT_DECISION_01_LAUNCH_SCOPE_2026-07-20.md")
 
 const failures = []
 
@@ -31,6 +32,7 @@ function forbidLine(text, label, lines) {
 
 const handoff = read(handoffPath)
 const facts = read(factsPath)
+const ownerDecision = read(ownerDecisionPath)
 
 requireText(handoff, "handoff", [
   "legal_advice_status: NOT_LEGAL_ADVICE",
@@ -62,6 +64,23 @@ requireText(facts, "questionnaire", [
   "## H. Owner Attestation",
   "PRIVATE_SELF_ONLY",
   "OWNER_FULL_BACKUP",
+  "latest_owner_fact_update_base: a0a51096762a82f1cdf56b0eb522e72e870484c6",
+  "owner_fact_batch_01: RECORDED_PENDING_QUALIFIED_REVIEW",
+  "South Korea is the only included country for the first public launch",
+  "The first public launch is local-journal-only",
+])
+
+requireText(ownerDecision, "owner decision", [
+  "decision_id: TO-WO011-OWNER-PRODUCT-FACTS-01-2026-07-20",
+  "record_status: OWNER_PRODUCT_FACT_BATCH_RECORDED_PENDING_QUALIFIED_REVIEW",
+  "formal_privacy_acceptance: false",
+  "public_launch_authorized: false",
+  "account_or_server_scope_authorized: false",
+  "runtime_authority: false",
+  "owner_response: \"ㅇㅋ ㄱㄱ\"",
+  "PF-LA-02",
+  "PF-LA-03",
+  "PF-LA-07",
 ])
 
 const questionRows = facts.split("\n").filter((line) => /^\| PF-[A-Z]+-\d{2} \|/.test(line))
@@ -81,7 +100,22 @@ for (const row of questionRows) {
   }
 }
 
-const requiredUnknowns = ["PF-LA-01", "PF-CP-01", "PF-PR-01", "PF-RD-01", "PF-BT-01"]
+const expectedStates = new Map([
+  ["PF-LA-01", "CONFIRMED"],
+  ["PF-LA-04", "CONFIRMED"],
+  ["PF-LA-05", "NOT_APPLICABLE"],
+  ["PF-LA-06", "NOT_APPLICABLE"],
+  ["PF-PR-01", "CONFIRMED"],
+  ["PF-PR-09", "CONFIRMED"],
+])
+for (const [id, expectedState] of expectedStates) {
+  const row = questionRows.find((candidate) => candidate.includes(`| ${id} |`))
+  if (row === undefined || !row.includes(`| ${expectedState} |`)) {
+    failures.push(`questionnaire: owner-decided fact ${id} must be ${expectedState}`)
+  }
+}
+
+const requiredUnknowns = ["PF-LA-02", "PF-LA-03", "PF-LA-07", "PF-CP-01", "PF-RD-01", "PF-BT-01"]
 for (const id of requiredUnknowns) {
   const row = questionRows.find((candidate) => candidate.includes(`| ${id} |`))
   if (row === undefined || !row.includes("| UNKNOWN |")) {
@@ -89,9 +123,10 @@ for (const id of requiredUnknowns) {
   }
 }
 
-forbidLine(`${handoff}\n${facts}`, "packet", [
+forbidLine(`${handoff}\n${facts}\n${ownerDecision}`, "packet", [
   "decision: ACCEPTED",
   "reviewer: ASSIGNED",
+  "account_or_server_scope_authorized: true",
   "runtime_authority: true",
   "formation_activation: true",
   "legal_advice_status: LEGAL_ADVICE",
