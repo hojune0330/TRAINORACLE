@@ -83,7 +83,7 @@ Your next move: Open this handoff with `gpt-5.6-terra` at `xhigh` reasoning, exe
 ## Todos
 > Implementation + Test = ONE todo. Never separate.
 <!-- APPEND TASK BATCHES BELOW THIS LINE WITH edit/apply_patch - never rewrite the headers above. -->
-- [ ] 1. Build the phased WO017 validator and mutation suite
+- [x] 1. Build the phased WO017 validator and mutation suite
   What to do / Must NOT do: Create `specs/test-packages/validate-wo017-onboarding-motivation.mjs`, `specs/test-packages/validate-wo017-onboarding-motivation.test.mjs`, and fixture directories under `specs/test-packages/fixtures/wo017/`. Add only `.omo/evidence/wo017/` to `.gitignore` so local receipts never dirty the four-commit stack. Export pure validators and CLI modes `--artifact owner|source|order|handoff|fable|terra|sol`, `--phase issuance|fable|terra|sol`, and `--check-worktree [--paths-file <file>]`. Validate structured authority fields, owner IDs, actor order, exact output paths, final markers, source classification, ordered factual-receipt mapping, plan-stub disclosure, separate decoration gate, sanitized Fable provenance, exact WO017 PR titles/issue links, `implementation_activation: PENDING_OWNER`, and changed-path allowlists. Do not use global forbidden-word scans because prohibition sections contain those terms.
   Parallelization: Wave 1 | Blocked by: none | Blocks: 2, 3, 4, 5, 6 | Can run with: none
   References: `.gitignore:1-4`; `specs/test-packages/validate-wo012-spec-linkage.mjs`; `specs/test-packages/validate-wo012-spec-linkage.test.mjs`; `CODEX_WORK_ORDER_008.md:88-101`; this plan's Scope and Required commands
@@ -91,7 +91,7 @@ Your next move: Open this handoff with `gpt-5.6-terra` at `xhigh` reasoning, exe
   QA scenarios: happy: `node specs/test-packages/validate-wo017-onboarding-motivation.mjs --phase issuance --root specs/test-packages/fixtures/wo017/valid-issuance` -> `PASS WO017 phase=issuance`; failure: `node specs/test-packages/validate-wo017-onboarding-motivation.mjs --phase issuance --root specs/test-packages/fixtures/wo017/mandatory-router` -> exit 1 and `FAIL WO017 MANDATORY_ROUTER`. Evidence `.omo/evidence/wo017/task-1.txt`.
   Commit: N | grouped into Todo 7 issuance commit
 
-- [ ] 2. Create the durable owner-direction record
+- [x] 2. Create the durable owner-direction record
   What to do / Must NOT do: Create `reports/review/WO017_OWNER_DIRECTION.md`. Record verbatim `권장 / 권장 / 권장+b` and bounded interpretations: optional one-context router with direct-record/skip; plan interest only as `서비스 준비 중`; factual analysis now plus future decoration only after separate acceptance. Add `runtime_authority: false`, `app_modification_authorized: false`, `decoration_runtime_authorized: false`, `plan_request_capture_authorized: false`, and `qualified_human_approval_recorded: false`. Existing local entries define returning users; router choices are transient.
   Parallelization: Wave 2 | Blocked by: 1 | Blocks: 4 | Can run with: 3
   References: `.omo/drafts/trainoracle-onboarding-motivation-loop.md`; `SPEC_TAP_FIRST_LOGGING.md:3-19,64-92,120-150`; `specs/reconstruct/JOURNAL_DELIGHT_AND_DECORATION_SPEC.md:132-176,207-220,292-313`; `NEGATIVE_SPACE.md:47-57,73-81`
@@ -99,7 +99,7 @@ Your next move: Open this handoff with `gpt-5.6-terra` at `xhigh` reasoning, exe
   QA scenarios: happy: exact artifact command; failure: `node --test --test-name-pattern="rejects decoration runtime" specs/test-packages/validate-wo017-onboarding-motivation.test.mjs` -> one named test passes. Evidence `.omo/evidence/wo017/task-2.txt`.
   Commit: N | grouped into Todo 7 issuance commit
 
-- [ ] 3. Create the source-authority and physical-file inventory matrix
+- [x] 3. Create the source-authority and physical-file inventory matrix
   What to do / Must NOT do: Create `reports/review/WO017_SOURCE_AUTHORITY_MATRIX.md`. Classify physical sources as `CURRENT_APP_EVIDENCE`, `DRAFT_REFERENCE_ONLY`, `HISTORICAL_REFERENCE_ONLY`, or `MISSING_PHYSICAL_FILE`. Record root 017 as to-be-created and root 010-016 as absent stage IDs. Never infer a file from a heading, decision record, or conversation.
   Parallelization: Wave 2 | Blocked by: 1 | Blocks: 4 | Can run with: 2
   References: `app/src/screens/home/FirstPage.tsx:17-74`; `app/src/screens/log-entry/EntryChooser.tsx:11-58`; `app/src/AppShell.tsx:14-24,36-90`; `app/src/screens/Trends.tsx:1-74,82-145`; `impl/src/plan-generator/generator.ts:3-12`; `specs/reconstruct/TRAINING_PLAN_FORMATION_AND_ADAPTATION_SPEC.md:1754-1768,1792-1795`; `.omo/plans/trainoracle-remaining-work-orders.md:116-126`
@@ -107,7 +107,7 @@ Your next move: Open this handoff with `gpt-5.6-terra` at `xhigh` reasoning, exe
   QA scenarios: happy: exact artifact command; failure: `node --test --test-name-pattern="rejects phantom work order" specs/test-packages/validate-wo017-onboarding-motivation.test.mjs` -> one named test passes. Evidence `.omo/evidence/wo017/task-3.txt`.
   Commit: N | grouped into Todo 7 issuance commit
 
-- [ ] 4. Create root CODEX_WORK_ORDER_017 with exact actor/model gates
+- [x] 4. Create root CODEX_WORK_ORDER_017 with exact actor/model gates
   What to do / Must NOT do: Create root `CODEX_WORK_ORDER_017.md` with `status: ISSUED_DOCUMENTATION_ONLY`, `runtime_authority: false`, `app_modification_authorized: false`, and `next_actor: FABLE`. Task A Fable creates `reports/review/WO017_FABLE_UX_FLOW.md`; Task B Terra Very High creates `reports/review/WO017_TERRA_BINDING_MATRIX.md` and `specs/test-packages/WO017_ONBOARDING_MOTIVATION_SCENARIOS.md`; Task C Sol High creates `reports/review/WO017_SOL_ADVISORY_PREFLIGHT.md` and `reports/review/WO017_IMPLEMENTATION_ACTIVATION.md` with `PENDING_OWNER`; Task D is owner-only activation. Require separate stacked PRs, exact `[WO017]` PR titles, and the controlling-issue URL in every PR body. Plan tap shows inline `서비스 준비 중` with only journal/back/skip, no request/profile/waitlist/candidate/output. Receipt mapping is ordered: structured evening pain wins and points to the pain timeline (while confirming mood was also saved when both exist); otherwise explicit evening mood -> mood timeline; otherwise valid post-session distance -> weekly-distance view; otherwise generic local-save receipt. No fabricated threshold.
   Parallelization: Wave 3 | Blocked by: 1, 2, 3 | Blocks: 5, 6
   References: `CODEX_WORK_ORDER_009.md:1-30`; `TRAINING_PLAN_BLUEPRINT_MULTIPERSPECTIVE_REVIEW.md:43-49`; `C:/Users/admin/.codex/skills/terra-sol-router/SKILL.md`; `app/src/screens/Trends.tsx:16-70,82-145`; `impl/src/plan-generator/generator.ts:3-12`; `specs/reconstruct/DAILY_BRIEF_AND_INBOX_SIGNAL_SPEC.md:577-588`; `specs/reconstruct/ANALYSIS_AND_VISUALIZATION_DATA_CONTRACT.md:220-234,270-289,546-557`
@@ -115,7 +115,7 @@ Your next move: Open this handoff with `gpt-5.6-terra` at `xhigh` reasoning, exe
   QA scenarios: happy: exact artifact command; failure: `node --test --test-name-pattern="rejects plan request capture|rejects AI as human approval|rejects ambiguous mood plus pain receipt" specs/test-packages/validate-wo017-onboarding-motivation.test.mjs` -> all three named tests pass. Evidence `.omo/evidence/wo017/task-4.txt`.
   Commit: N | grouped into Todo 7 issuance commit
 
-- [ ] 5. Refresh index, status, and current worker handoff
+- [x] 5. Refresh index, status, and current worker handoff
   What to do / Must NOT do: Update `TRAINORACLE_SPEC_INDEX.md`, `SPEC_WORK_STATUS.md`, and `reports/work-harness/NEXT_WORKER_HANDOFF.md`. Add WO017 as `ISSUED_DOCUMENTATION_ONLY / IMPLEMENTATION_NOT_AUTHORIZED`, link issuance artifacts/validator, and state Fable -> Terra Very High -> Sol High -> owner. Clarify the catalog JSON is Formation-only. Preserve all Formation gates and do not edit the catalog JSON, `HANDOFF_NEXT_CHAT.md`, README claims, issue counts, or SPEC statuses.
   Parallelization: Wave 4 | Blocked by: 1, 4 | Blocks: 6
   References: `TRAINORACLE_SPEC_INDEX.md:108-114,215-218`; `SPEC_WORK_STATUS.md:79-96,229-232,251,281`; `reports/work-harness/NEXT_WORKER_HANDOFF.md:1-17`; `reports/work-harness/TRAINORACLE_WORK_CATALOG.json:1-20`
@@ -123,7 +123,7 @@ Your next move: Open this handoff with `gpt-5.6-terra` at `xhigh` reasoning, exe
   QA scenarios: happy: both acceptance commands; failure: `node --test --test-name-pattern="rejects implementation authorized handoff" specs/test-packages/validate-wo017-onboarding-motivation.test.mjs` -> one named test passes. Evidence `.omo/evidence/wo017/task-5.txt`.
   Commit: N | grouped into Todo 7 issuance commit
 
-- [ ] 6. Run the local issuance gate and duplicate check
+- [x] 6. Run the local issuance gate and duplicate check
   What to do / Must NOT do: Run issuance validators once after inputs stabilize; stage no files yet. Before any publication, require the draft ledger to say `status: approved-for-terra-xhigh-execution`, identify `gpt-5.6-terra` with `reasoning_effort: xhigh` as the primary worker, record the owner's latest model-routing instruction, and contain no active obsolete review round; if not, stop before commit. A new pre-execution Momus or independent CLI review is not required. `node specs/test-packages/validate-wo017-onboarding-motivation.mjs --check-worktree` must inspect tracked and untracked paths. Use connector calls `mcp__codex_apps__github_search_issues({query:"WO017",repository_full_name:"hojune0330/TRAINORACLE",state:"open",topn:50})` and `mcp__codex_apps__github_search_prs({query:"WO017",repository_full_name:"hojune0330/TRAINORACLE",state:"open",topn:50})`; ignore only the exact handoff PR `[HANDOFF][WO017] Terra xhigh execution order`, then require zero exact execution-title or execution-branch duplicates before publication. Stop with returned URLs if duplicates exist.
   Parallelization: Wave 4 | Blocked by: 1, 4, 5 | Blocks: 7
   References: Verification strategy; current `origin/main`; GitHub repository `hojune0330/TRAINORACLE`

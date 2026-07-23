@@ -221,6 +221,12 @@ These files translate the safety/spec core into product surfaces. They are not c
 
 ---
 
+## WO017 Documentation-Only Track
+
+`WO017` is `ISSUED_DOCUMENTATION_ONLY / IMPLEMENTATION_NOT_AUTHORIZED`. Its issuance artifacts are [`CODEX_WORK_ORDER_017.md`](./CODEX_WORK_ORDER_017.md), [`WO017_OWNER_DIRECTION.md`](./reports/review/WO017_OWNER_DIRECTION.md), [`WO017_SOURCE_AUTHORITY_MATRIX.md`](./reports/review/WO017_SOURCE_AUTHORITY_MATRIX.md), and the [WO017 validator](./specs/test-packages/validate-wo017-onboarding-motivation.mjs). Fable -> Terra Very High -> Sol High -> Owner is a documentation and review sequence only; it does not authorize a runtime change, canonical promotion, or issue closure.
+
+---
+
 ## 7. Namespace Policy
 
 Bare D-rule references are forbidden in new SPEC work.

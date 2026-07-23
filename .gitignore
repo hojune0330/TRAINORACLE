@@ -1,6 +1,7 @@
 .codegraph/
 .omo/ulw-loop/
 .omo/evidence/*.stdout.txt
+.omo/evidence/wo017/
 .omo/evidence/codex-goal-snapshot-*.json
 
 # Local environment and secrets
