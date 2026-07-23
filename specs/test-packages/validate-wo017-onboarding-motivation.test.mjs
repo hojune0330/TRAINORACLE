@@ -63,6 +63,13 @@ test("rejects false analysis", async () => {
   await expectCode("terra-false-analysis", async () => {}, "FALSE_ANALYSIS", "terra", "terra");
 });
 
+test("reports Terra false analysis before missing issuance prerequisites", () => {
+  assert.throws(
+    () => validatePhase(resolve(fixtures, "terra-false-analysis"), "terra"),
+    (error) => error instanceof Wo017Error && error.code === "FALSE_ANALYSIS",
+  );
+});
+
 test("rejects app path change", () => {
   assert.throws(() => validateChangedPaths(["app/src/AppShell.tsx"]), (error) => error instanceof Wo017Error && error.code === "APP_PATH_CHANGE");
 });
@@ -85,4 +92,19 @@ test("rejects unsafe Fable provenance", async () => {
 
 test("rejects missing WO017 PR link", async () => {
   await expectCode("fable-missing-pr", async () => {}, "MISSING_WO017_PR_LINK", "fable");
+});
+
+test("rejects a Terra PR link satisfied only by Fable provenance", async () => {
+  await expectCode(
+    "valid-terra",
+    (directory) => replaceIn(
+      directory,
+      "reports/review/WO017_TERRA_BINDING_MATRIX.md",
+      "pr_url: https://github.com/hojune0330/TRAINORACLE/pull/172",
+      "fable_pr_url: https://github.com/hojune0330/TRAINORACLE/pull/102\npr_url: PENDING_GITHUB_DRAFT_PR",
+    ),
+    "MISSING_WO017_PR_LINK",
+    "terra",
+    "terra",
+  );
 });
