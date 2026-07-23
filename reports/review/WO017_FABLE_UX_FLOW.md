@@ -20,7 +20,7 @@ implementation_authorized: false
 streak_pressure: false
 controlling_issue_url: https://github.com/hojune0330/TRAINORACLE/issues/100
 pr_title: [WO017] Add Fable onboarding UX flow
-pr_url: PENDING_PR_CREATE
+pr_url: https://github.com/hojune0330/TRAINORACLE/pull/102
 ```
 
 ## 문서 경계
