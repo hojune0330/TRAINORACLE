@@ -1,0 +1,16 @@
+SCENARIO: QA-REVIEWER-01
+SURFACE: local UTF-8 packet text / CLI-shaped document surface
+INVOCATION:
+  Get-Content -Encoding UTF8 reports/review/appt-packets/APPT-09_INDEPENDENT_SECURITY.md
+  heading/front-matter/source-reference/record-field extraction via PowerShell
+
+OBSERVED:
+- Packet identity: APPT-09 Independent Security Review.
+- status READY_FOR_NAMED_REVIEWER; reviewer UNASSIGNED; review_head_sha TO_BE_FROZEN_ON_ASSIGNMENT; runtime_authority false.
+- “먼저 읽을 원문” lists five exact repository source files; all were independently resolved and non-empty in the bundle-wide audit.
+- Six concrete reviewer questions cover independence, tenant/group/athlete isolation, auth/revocation/audit, private-note leakage, medical-text handling, key/delete/recovery/retry/conflict attacks, and D9 preservation.
+- “사람이 남길 기록” requires reviewer legal name/roster ID, independence, current qualification, conflicts, scope/exclusions, manifest+head SHA, findings/retest/risk owner, decision enum, date/signature reference.
+- Provider distinction and no-activation boundary are explicit; final marker [DRAFT_COMPLETE] is present.
+
+VERDICT: PASS
+CLEANUP: no process/browser/temp resource created.

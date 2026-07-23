@@ -1,0 +1,16 @@
+SCENARIO: QA-OWNER-01
+SURFACE: local UTF-8 filesystem / CLI-shaped document surface
+INVOCATION:
+  Get-Content -Encoding UTF8 reports/review/appt-packets/README.md
+  role-table extraction and marker checks via PowerShell Select-String/regex
+
+OBSERVED:
+- UTF-8 title decoded as “TrainOracle APPT 검토 패킷 색인”; replacement-character count: 0.
+- Exactly 14 role rows, APPT-01 through APPT-14.
+- Read order tells the owner to open exactly one applicable packet, freeze source version/head SHA, record APPROVE/REVISE/REJECT/UNRESOLVED with reasons, and record identity/qualification/jurisdiction/scope/conflict/SHA/date.
+- service_name is TrainOracle; aaclub is explicitly provisional, not a confirmed legal entity/controller.
+- runtime_authority: false; participant_enrollment: false and approved_plans: 0 are stated as unchanged by packet preparation.
+- Final marker [DRAFT_COMPLETE] is present.
+
+VERDICT: PASS
+CLEANUP: no process/browser/temp resource created.

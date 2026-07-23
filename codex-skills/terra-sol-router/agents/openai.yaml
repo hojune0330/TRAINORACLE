@@ -1,0 +1,4 @@
+interface:
+  display_name: "Terra-Sol Router"
+  short_description: "Route long tasks by risk while minimizing repeated context"
+  default_prompt: "Use $terra-sol-router to route this work between Terra and Sol with a compact Git handoff."

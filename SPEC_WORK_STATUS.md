@@ -1,12 +1,31 @@
 # SPEC_WORK_STATUS.md
 
-Updated: 2026-07-14 Asia/Seoul
+Updated: 2026-07-22 Asia/Seoul
 status: DRAFT_HANDOFF_STATUS
 owner: COACH_HOJUNE
 
 This is the current GitHub-main handoff status for continuing TrainOracle SPEC work.
 
 It is not a product rule definition, not canonical promotion, not runtime evidence, and not issue closure.
+
+## 2026-07-22 Current GitHub Snapshot
+
+- verified main baseline: `1d8fc5382289ce3e2d16ad3b19f7257e1fa858c2`
+- actual SPEC files: active 9, reconstruct 25, total 34
+- open GitHub work: 2 PRs, 0 issues; PR #97 merged after owner approval
+- Formation work catalog: 18 total, 2 DONE, 8 owner/human blocked, 7 waiting on dependencies, 1 deferred
+- current runnable catalog tasks: 0 (`NO_READY_TASKS` for S1, S2, and S3)
+- Plan Generator remains `PLAN_GENERATOR_STUB`; `runtime_started: false`
+- owner NOW decisions: 8/8 recorded; this is product direction, not qualified review or runtime authority
+- named APPT human reviews: 0/14; existing SPEC, research, tests, AI/persona reviews remain reusable pre-review material
+- reviewer-facing APPT packets: 14/14 assembled under `reports/review/appt-packets/`; no human review status changed
+- target public-preparation date: 2026-08-01; verified local journal is the current runnable scope
+- naming: service `TrainOracle`; provisional service provider `aaclub`; legal provider/controller identity unconfirmed
+
+These are dated inventory counts, not canonical acceptance or product-completion percentages.
+Read [`HANDOFF_NEXT_CHAT.md`](./HANDOFF_NEXT_CHAT.md) for the plain Korean handoff and
+[`reports/work-harness/PROJECT_STATUS_SNAPSHOT_20260722.md`](./reports/work-harness/PROJECT_STATUS_SNAPSHOT_20260722.md)
+for the recount evidence.
 
 For the current main baseline, PR reconciliation, and Task-R finding disposition,
 read [`SPEC_AUTHORITY_AND_RECOVERY_LEDGER.md`](./SPEC_AUTHORITY_AND_RECOVERY_LEDGER.md).
@@ -19,6 +38,9 @@ For external reviewer read order, lenses, and review prompts, read [`SPEC_REVIEW
 For the next target-patch readiness gates and wave order, read [`SPEC_TARGET_PATCH_READINESS.md`](./SPEC_TARGET_PATCH_READINESS.md).
 For the current review-recommended Formation next-action order and visual blueprint, read [`TRAINING_PLAN_BLUEPRINT_MULTIPERSPECTIVE_REVIEW.md`](./TRAINING_PLAN_BLUEPRINT_MULTIPERSPECTIVE_REVIEW.md), Section 11.
 For the owner-readable Formation boundary and deferred work register, read [`FORMATION_READ_NOW_DECIDE_LATER.md`](./FORMATION_READ_NOW_DECIDE_LATER.md) and [`FORMATION_DEFERRED_GOALS.md`](./FORMATION_DEFERRED_GOALS.md).
+For recorded owner answers and the activation boundary, read [`reports/work-harness/OWNER_DECISION_CHECKLIST_20260722.md`](./reports/work-harness/OWNER_DECISION_CHECKLIST_20260722.md).
+For APPT evidence reuse, preliminary research, and named-human gaps, read [`reports/review/APPT_PRE_REVIEW_AND_EVIDENCE_AUDIT_20260722.md`](./reports/review/APPT_PRE_REVIEW_AND_EVIDENCE_AUDIT_20260722.md).
+For the 14 reviewer-facing one-page packets, start at [`reports/review/appt-packets/README.md`](./reports/review/appt-packets/README.md).
 For documentation link/terminology quality findings, read [`SPEC_DOC_QUALITY_REPORT.md`](./SPEC_DOC_QUALITY_REPORT.md).
 For the Wave B Safety Gate target-local patch result, read [`SPEC_WAVEB_SAFETY_GATE_PATCH_REPORT.md`](./SPEC_WAVEB_SAFETY_GATE_PATCH_REPORT.md).
 For Safety Gate/RVE source acceptance review prep, read [`SPEC_SOURCE_ACCEPTANCE_REVIEW_ROUND1.md`](./SPEC_SOURCE_ACCEPTANCE_REVIEW_ROUND1.md).

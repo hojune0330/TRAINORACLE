@@ -1,0 +1,22 @@
+Surface: local UTF-8 packet text / CLI-shaped data audit
+Invocation: Get-Content -Encoding UTF8 reports/review/appt-packets/APPT-09_INDEPENDENT_SECURITY.md; verify required completion fields; validate in-memory synthetic completion
+Observed:
+{
+  "packetStatus": "READY_FOR_NAMED_REVIEWER",
+  "requiredFields": 9,
+  "requiredFieldsFound": 9,
+  "reviewerInitiallyUnassigned": true,
+  "independenceRequired": true,
+  "syntheticCompletion": {
+    "reviewer_legal_name_and_roster_id": "Named Reviewer (simulated only)",
+    "reviewer_verified_id": "opaque-reviewer-001",
+    "restricted_identity_record_ref": "restricted://reviewer-ledger/opaque-reviewer-001",
+    "decision": "UNRESOLVED",
+    "reviewed_build_manifest_and_head_sha": "9cf33692741167e1563a881ffec934477c41794d",
+    "repository_identity_write": "forbidden",
+    "human_approval_effect": "none"
+  },
+  "noNamedApprovalCreated": true
+}
+Result: PASS (completion workflow; no human approval asserted)
+Cleanup: in-memory object only; no repository identity or reviewer record written.

@@ -1,0 +1,15 @@
+SCENARIO: QA-HANDOFF-01
+SURFACE: fresh-checkout-style repository-root filesystem / CLI-shaped handoff surface
+INVOCATION:
+  Get-Content -Encoding UTF8 HANDOFF_NEXT_CHAT.md
+  resolve ./reports/review/appt-packets/README.md from repository root
+
+OBSERVED:
+- Handoff identifies next actor as OWNER or HUMAN_REVIEWER, not an automatic model/runtime actor.
+- It points the worker to reports/review/appt-packets/README.md and states APPT-01~14 are to be assigned or remain UNASSIGNED.
+- It preserves source SHA 1d8fc5382289ce3e2d16ad3b19f7257e1fa858c2 and states runtime_started/runtime_authority false.
+- It distinguishes TrainOracle from provisional provider aaclub and states P1/ACT and implementation evidence precede activation.
+- UTF-8 decoded without replacement characters; final marker [DRAFT_COMPLETE] is present.
+
+VERDICT: PASS
+CLEANUP: no process/browser/temp resource created.
