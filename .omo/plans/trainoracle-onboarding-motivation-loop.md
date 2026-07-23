@@ -14,7 +14,7 @@
 **Risk:** Medium - all deliverables remain documentation-only, but the work crosses UX, safety, repository binding, model review, and GitHub handoff boundaries.
 **Decisions already fixed:** Optional one-context router; training-plan interest shown only as service preparing; factual analysis now plus future decoration behind a separate acceptance gate.
 
-Your next move: After two independent high-accuracy reviewers approve this exact plan, execute the documentation stack and stop before app implementation for the owner's next decision.
+Your next move: Open this handoff with `gpt-5.6-terra` at `xhigh` reasoning, execute the documentation stack, and stop before app implementation for the owner's next decision.
 
 ---
 
@@ -23,11 +23,12 @@ Your next move: After two independent high-accuracy reviewers approve this exact
 ## Scope
 ### Must have
 - Record the three owner decisions in a durable review artifact without promoting a draft SPEC or claiming runtime evidence.
-- Create root `CODEX_WORK_ORDER_017.md` as a documentation-only order, then actually complete its pre-implementation Fable, Terra High, and Sol High documentation stages.
+- Create root `CODEX_WORK_ORDER_017.md` as a documentation-only order, then actually complete its pre-implementation Fable, Terra Very High, and Sol High documentation stages.
 - Define the optional one-context first-visit router, returning-user rule, deterministic factual-receipt mapping, and honest `서비스 준비 중` training-plan route.
 - Keep factual analysis and future decoration as separate authorities. Decoration remains proposal-only until catalog, unlock, and monetization decisions are separately accepted.
 - Publish one controlling issue plus a four-PR stack: issuance -> Fable UX -> Terra binding -> Sol preflight/owner activation packet.
 - Stop with `implementation_activation: PENDING_OWNER` before any `app/` change.
+- Keep the primary worker fixed to `gpt-5.6-terra` with `reasoning_effort: xhigh` for the full handoff. Fable and Sol remain bounded delegated artifact/review roles; they do not replace the primary worker.
 ### Must NOT have (guardrails, anti-slop, scope boundaries)
 - Do not modify `app/`, `impl/`, runtime evaluators, storage, consent, identity, sync, schema, deployment, or production configuration.
 - Do not claim root `CODEX_WORK_ORDER_010.md` through `CODEX_WORK_ORDER_016.md` exist. They are inline stage IDs in `.omo/plans/trainoracle-remaining-work-orders.md:120-126`.
@@ -60,7 +61,7 @@ Your next move: After two independent high-accuracy reviewers approve this exact
 - Wave 4: Todo 5, then Todo 6 integrated issuance gate.
 - Wave 5: Todo 7 publishes the issuance issue/PR.
 - Wave 6: Todo 8 obtains and publishes Fable UX output.
-- Wave 7: Todo 9 performs Terra High binding/scenario work.
+- Wave 7: Todo 9 performs Terra Very High binding/scenario work.
 - Wave 8: Todo 10 performs Sol High advisory review and creates the pending activation packet.
 - Wave 9: Todo 11 validates the full stack and stops at the owner gate.
 
@@ -107,7 +108,7 @@ Your next move: After two independent high-accuracy reviewers approve this exact
   Commit: N | grouped into Todo 7 issuance commit
 
 - [ ] 4. Create root CODEX_WORK_ORDER_017 with exact actor/model gates
-  What to do / Must NOT do: Create root `CODEX_WORK_ORDER_017.md` with `status: ISSUED_DOCUMENTATION_ONLY`, `runtime_authority: false`, `app_modification_authorized: false`, and `next_actor: FABLE`. Task A Fable creates `reports/review/WO017_FABLE_UX_FLOW.md`; Task B Terra High creates `reports/review/WO017_TERRA_BINDING_MATRIX.md` and `specs/test-packages/WO017_ONBOARDING_MOTIVATION_SCENARIOS.md`; Task C Sol High creates `reports/review/WO017_SOL_ADVISORY_PREFLIGHT.md` and `reports/review/WO017_IMPLEMENTATION_ACTIVATION.md` with `PENDING_OWNER`; Task D is owner-only activation. Require separate stacked PRs, exact `[WO017]` PR titles, and the controlling-issue URL in every PR body. Plan tap shows inline `서비스 준비 중` with only journal/back/skip, no request/profile/waitlist/candidate/output. Receipt mapping is ordered: structured evening pain wins and points to the pain timeline (while confirming mood was also saved when both exist); otherwise explicit evening mood -> mood timeline; otherwise valid post-session distance -> weekly-distance view; otherwise generic local-save receipt. No fabricated threshold.
+  What to do / Must NOT do: Create root `CODEX_WORK_ORDER_017.md` with `status: ISSUED_DOCUMENTATION_ONLY`, `runtime_authority: false`, `app_modification_authorized: false`, and `next_actor: FABLE`. Task A Fable creates `reports/review/WO017_FABLE_UX_FLOW.md`; Task B Terra Very High creates `reports/review/WO017_TERRA_BINDING_MATRIX.md` and `specs/test-packages/WO017_ONBOARDING_MOTIVATION_SCENARIOS.md`; Task C Sol High creates `reports/review/WO017_SOL_ADVISORY_PREFLIGHT.md` and `reports/review/WO017_IMPLEMENTATION_ACTIVATION.md` with `PENDING_OWNER`; Task D is owner-only activation. Require separate stacked PRs, exact `[WO017]` PR titles, and the controlling-issue URL in every PR body. Plan tap shows inline `서비스 준비 중` with only journal/back/skip, no request/profile/waitlist/candidate/output. Receipt mapping is ordered: structured evening pain wins and points to the pain timeline (while confirming mood was also saved when both exist); otherwise explicit evening mood -> mood timeline; otherwise valid post-session distance -> weekly-distance view; otherwise generic local-save receipt. No fabricated threshold.
   Parallelization: Wave 3 | Blocked by: 1, 2, 3 | Blocks: 5, 6
   References: `CODEX_WORK_ORDER_009.md:1-30`; `TRAINING_PLAN_BLUEPRINT_MULTIPERSPECTIVE_REVIEW.md:43-49`; `C:/Users/admin/.codex/skills/terra-sol-router/SKILL.md`; `app/src/screens/Trends.tsx:16-70,82-145`; `impl/src/plan-generator/generator.ts:3-12`; `specs/reconstruct/DAILY_BRIEF_AND_INBOX_SIGNAL_SPEC.md:577-588`; `specs/reconstruct/ANALYSIS_AND_VISUALIZATION_DATA_CONTRACT.md:220-234,270-289,546-557`
   Acceptance criteria: `node specs/test-packages/validate-wo017-onboarding-motivation.mjs --artifact order CODEX_WORK_ORDER_017.md` -> `PASS WO017 artifact=order`; final line `[DRAFT_COMPLETE]`.
@@ -115,7 +116,7 @@ Your next move: After two independent high-accuracy reviewers approve this exact
   Commit: N | grouped into Todo 7 issuance commit
 
 - [ ] 5. Refresh index, status, and current worker handoff
-  What to do / Must NOT do: Update `TRAINORACLE_SPEC_INDEX.md`, `SPEC_WORK_STATUS.md`, and `reports/work-harness/NEXT_WORKER_HANDOFF.md`. Add WO017 as `ISSUED_DOCUMENTATION_ONLY / IMPLEMENTATION_NOT_AUTHORIZED`, link issuance artifacts/validator, and state Fable -> Terra High -> Sol High -> owner. Clarify the catalog JSON is Formation-only. Preserve all Formation gates and do not edit the catalog JSON, `HANDOFF_NEXT_CHAT.md`, README claims, issue counts, or SPEC statuses.
+  What to do / Must NOT do: Update `TRAINORACLE_SPEC_INDEX.md`, `SPEC_WORK_STATUS.md`, and `reports/work-harness/NEXT_WORKER_HANDOFF.md`. Add WO017 as `ISSUED_DOCUMENTATION_ONLY / IMPLEMENTATION_NOT_AUTHORIZED`, link issuance artifacts/validator, and state Fable -> Terra Very High -> Sol High -> owner. Clarify the catalog JSON is Formation-only. Preserve all Formation gates and do not edit the catalog JSON, `HANDOFF_NEXT_CHAT.md`, README claims, issue counts, or SPEC statuses.
   Parallelization: Wave 4 | Blocked by: 1, 4 | Blocks: 6
   References: `TRAINORACLE_SPEC_INDEX.md:108-114,215-218`; `SPEC_WORK_STATUS.md:79-96,229-232,251,281`; `reports/work-harness/NEXT_WORKER_HANDOFF.md:1-17`; `reports/work-harness/TRAINORACLE_WORK_CATALOG.json:1-20`
   Acceptance criteria: `node specs/test-packages/validate-wo017-onboarding-motivation.mjs --artifact handoff TRAINORACLE_SPEC_INDEX.md SPEC_WORK_STATUS.md reports/work-harness/NEXT_WORKER_HANDOFF.md` -> `PASS WO017 artifact=handoff`; `node specs/test-packages/reasoning-tier-harness.mjs validate` -> PASS; protected-file diff empty.
@@ -123,10 +124,10 @@ Your next move: After two independent high-accuracy reviewers approve this exact
   Commit: N | grouped into Todo 7 issuance commit
 
 - [ ] 6. Run the local issuance gate and duplicate check
-  What to do / Must NOT do: Run issuance validators once after inputs stabilize; stage no files yet. Before any publication, require the draft ledger to say `status: high-accuracy-review-approved`, contain the exact live plan SHA and two unconditional matching OKAY receipts, and contain no `round_status: active` entry for any obsolete round; if not, stop before commit. `node specs/test-packages/validate-wo017-onboarding-motivation.mjs --check-worktree` must inspect tracked and untracked paths. Use connector calls `mcp__codex_apps__github_search_issues({query:"WO017",repository_full_name:"hojune0330/TRAINORACLE",state:"open",topn:50})` and `mcp__codex_apps__github_search_prs({query:"WO017",repository_full_name:"hojune0330/TRAINORACLE",state:"open",topn:50})`; after filtering exact WO017 titles/branches, both result sets must be empty before publication. Stop with returned URLs if duplicates exist.
+  What to do / Must NOT do: Run issuance validators once after inputs stabilize; stage no files yet. Before any publication, require the draft ledger to say `status: approved-for-terra-xhigh-execution`, identify `gpt-5.6-terra` with `reasoning_effort: xhigh` as the primary worker, record the owner's latest model-routing instruction, and contain no active obsolete review round; if not, stop before commit. A new pre-execution Momus or independent CLI review is not required. `node specs/test-packages/validate-wo017-onboarding-motivation.mjs --check-worktree` must inspect tracked and untracked paths. Use connector calls `mcp__codex_apps__github_search_issues({query:"WO017",repository_full_name:"hojune0330/TRAINORACLE",state:"open",topn:50})` and `mcp__codex_apps__github_search_prs({query:"WO017",repository_full_name:"hojune0330/TRAINORACLE",state:"open",topn:50})`; ignore only the exact handoff PR `[HANDOFF][WO017] Terra xhigh execution order`, then require zero exact execution-title or execution-branch duplicates before publication. Stop with returned URLs if duplicates exist.
   Parallelization: Wave 4 | Blocked by: 1, 4, 5 | Blocks: 7
   References: Verification strategy; current `origin/main`; GitHub repository `hojune0330/TRAINORACLE`
-  Acceptance criteria: issuance phase, tests, Formation harness, `git diff --check`, worktree allowlist, and exact-hash draft-ledger validation all pass; GitHub queries return zero duplicates; `git diff -- reports/work-harness/TRAINORACLE_WORK_CATALOG.json HANDOFF_NEXT_CHAT.md` empty.
+  Acceptance criteria: issuance phase, tests, Formation harness, `git diff --check`, worktree allowlist, and Terra-xhigh owner-authorization ledger validation all pass; GitHub queries return zero execution duplicates after excluding the exact handoff PR; `git diff -- reports/work-harness/TRAINORACLE_WORK_CATALOG.json HANDOFF_NEXT_CHAT.md` empty.
   QA scenarios: happy: run all named commands and connector queries; failure: run `node -e "const fs=require('node:fs');fs.mkdirSync('.omo/evidence/wo017',{recursive:true});fs.writeFileSync('.omo/evidence/wo017/synthetic-paths.txt','app/src/AppShell.tsx','utf8')"`, then `node specs/test-packages/validate-wo017-onboarding-motivation.mjs --check-worktree --paths-file .omo/evidence/wo017/synthetic-paths.txt` -> exit 1 `FAIL WO017 APP_PATH_CHANGE`, then run `node -e "require('node:fs').rmSync('.omo/evidence/wo017/synthetic-paths.txt',{force:true})"`. Evidence `.omo/evidence/wo017/task-6.txt`.
   Commit: N | validation gate
 
@@ -146,8 +147,8 @@ Your next move: After two independent high-accuracy reviewers approve this exact
   QA scenarios: happy: through `mcp__node_repl__js`, read the visible thread identifier/title and final substantive response, write only sanitized label/timestamp/SHA plus `NOT_PUBLISHED_PRIVATE_SESSION` when needed, then run the phase validator; failure: `node specs/test-packages/validate-wo017-onboarding-motivation.mjs --phase fable --root specs/test-packages/fixtures/wo017/fable-streak-pressure` -> exit 1 `FAIL WO017 STREAK_PRESSURE`. Evidence `.omo/evidence/wo017/task-8.txt` plus redacted browser receipt.
   Commit: Y | `docs(WO017): add Fable onboarding UX flow`
 
-- [ ] 9. Run Terra High contract binding and scenario preparation
-  What to do / Must NOT do: Spawn `gpt-5.6-terra` at high reasoning, read-only outside owned files. Produce `reports/review/WO017_TERRA_BINDING_MATRIX.md` and `specs/test-packages/WO017_ONBOARDING_MOTIVATION_SCENARIOS.md`. Bind each Fable state/copy to current app evidence and draft authority, specify structured factual/insufficient states, and mark every future app change as `NOT_AUTHORIZED`. Do not edit `app/`, SPEC statuses, issue counts, or Fable artifact. Create branch `codex/wo017-terra-binding` from Fable head and draft PR `[WO017] Bind onboarding UX to current contracts` targeting `fable/wo017-ux-flow`; include the controlling-issue URL and rendered links to both Terra artifacts in its body and link the PR back from the issue.
+- [ ] 9. Run Terra Very High contract binding and scenario preparation
+  What to do / Must NOT do: Continue in the primary `gpt-5.6-terra` session with `reasoning_effort: xhigh`, read-only outside owned files. Produce `reports/review/WO017_TERRA_BINDING_MATRIX.md` and `specs/test-packages/WO017_ONBOARDING_MOTIVATION_SCENARIOS.md`. Bind each Fable state/copy to current app evidence and draft authority, specify structured factual/insufficient states, and mark every future app change as `NOT_AUTHORIZED`. Do not edit `app/`, SPEC statuses, issue counts, or Fable artifact. Create branch `codex/wo017-terra-binding` from Fable head and draft PR `[WO017] Bind onboarding UX to current contracts` targeting `fable/wo017-ux-flow`; include the controlling-issue URL and rendered links to both Terra artifacts in its body and link the PR back from the issue.
   Parallelization: Wave 7 | Blocked by: 8 | Blocks: 10
   References: `reports/review/WO017_FABLE_UX_FLOW.md`; `specs/reconstruct/ANALYSIS_AND_VISUALIZATION_DATA_CONTRACT.md:220-234,270-289,546-557`; `specs/reconstruct/FORMATION_PRODUCT_PROJECTION_AND_EXPLANATION_CONTRACT.md:115-127`; current app files cited by Task 8
   Acceptance criteria: `node specs/test-packages/validate-wo017-onboarding-motivation.mjs --phase terra` -> `PASS WO017 phase=terra`; every UX state has source path, authority, allowed fact, insufficient/error state, and implementation authorization false; exact-title stacked draft PR targets the Fable branch and contains the issue URL.
@@ -185,9 +186,9 @@ Your next move: After two independent high-accuracy reviewers approve this exact
 - The controlling issue remains open with `next_actor: OWNER`.
 
 ## Success criteria
-- Two-lane high-accuracy plan review approved the final plan hash before execution.
+- The owner-authorized primary worker remained `gpt-5.6-terra` with `reasoning_effort: xhigh`; no additional pre-execution dual-review gate was invented.
 - Root WO017, owner/source records, phased validator/tests, and current handoff surfaces physically exist and are linked.
-- Fable UX, Terra High binding/scenarios, and Sol High advisory outputs each have exact source/head SHA and separate stacked PRs.
+- Fable UX, Terra Very High binding/scenarios, and Sol High advisory outputs each have exact source/head SHA and separate stacked PRs.
 - First-visit, returning-user, factual receipt, service-preparing plan, and proposal-only decoration behavior are fully specified without stored router answers or fabricated analysis.
 - All validators pass; Formation harness remains green; the full stack changes no `app/`, `impl/`, runtime, schema, consent, identity, sync, or deployment path.
 - The project stops at `implementation_activation: PENDING_OWNER` with one controlling issue and four open draft PRs.
