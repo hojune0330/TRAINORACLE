@@ -163,7 +163,7 @@ Your next move: Open this handoff with `gpt-5.6-terra` at `xhigh` reasoning, exe
   QA scenarios: happy: phase command; failure: `node specs/test-packages/validate-wo017-onboarding-motivation.mjs --phase sol --root specs/test-packages/fixtures/wo017/sol-ai-approval` -> exit 1 `FAIL WO017 AI_AS_HUMAN_APPROVAL`, and the same command with root `specs/test-packages/fixtures/wo017/sol-activated` -> exit 1 `FAIL WO017 IMPLEMENTATION_ACTIVATED`. Evidence `.omo/evidence/wo017/task-10.txt`.
   Commit: Y | `docs(WO017): record Sol pre-implementation advisory`
 
-- [ ] 11. Validate the full PR stack and stop at the owner implementation gate
+- [x] 11. Validate the full PR stack and stop at the owner implementation gate
   What to do / Must NOT do: Run all phases and tests against Sol head, verify four PR bases/heads form the declared stack, and add a sanitized `STACK_READY_FOR_FINAL_GATES` controlling-issue comment with all PR/artifact links, model labels, validator summaries, remaining human gates, and `next_actor: FINAL_GATES`. Update no product file and do not set activation true. Leave every PR open and unmerged. Local ignored evidence may remain; `git status --short` must be empty.
   Parallelization: Wave 9 | Blocked by: 10 | Blocks: final verification
   References: Todos 7-10 GitHub objects and exact SHAs; activation packet; Verification strategy
