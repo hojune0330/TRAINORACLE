@@ -10,6 +10,15 @@
 - 이 기록은 규칙 채택·정본 패치·과학 또는 개인정보 검토 완료·런타임 권한을 뜻하지 않는다. 빈 답변이나 미확정 사항을 추정으로 채우지 않는다.
 - 자동 처방과 런타임 권한은 계속 `false`다.
 
+## WO017 문서 전용 인계
+
+- `WO017` 상태는 `ISSUED_DOCUMENTATION_ONLY / IMPLEMENTATION_NOT_AUTHORIZED`다.
+- 순서는 Fable -> Terra Very High -> Sol High -> Owner이며, 네 단계 모두 문서·검증·검토 기록만 만든다.
+- `CODEX_WORK_ORDER_017.md`, `reports/review/WO017_OWNER_DIRECTION.md`, `reports/review/WO017_SOURCE_AUTHORITY_MATRIX.md`, `specs/test-packages/validate-wo017-onboarding-motivation.mjs`를 함께 읽는다.
+- `reports/work-harness/TRAINORACLE_WORK_CATALOG.json`은 Formation-only catalog이며 WO017이 수정하거나 상태를 해석하지 않는다.
+- `implementation_activation: PENDING_OWNER`를 유지한다. 앱, impl, 런타임, 스키마, 저장, 동기화, 배포 또는 기존 이슈 상태를 바꾸지 않는다.
+- 교체 스택의 공개 제어 기록은 GitHub issue #106이다. 문서 안에는 `pr_url: RECORDED_IN_GITHUB_RECEIPT`만 남기며 실제 PR URL·SHA·검증 결과는 PR 본문과 issue #106 댓글에서 확인한다.
+
 ## WO012 이후의 안전한 범위
 
 - 지금 가능한 다음 산출물은 **이름 있는 관문이 닫힌 뒤의 정본 패치 제안서**뿐이다. 제안서는 검토 대상이며 스스로 정본을 고치지 않는다.
