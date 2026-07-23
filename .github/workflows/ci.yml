@@ -25,6 +25,7 @@ jobs:
             runtime-evidence/d9-evaluator/package-lock.json
             impl/package-lock.json
             app/package-lock.json
+            backend/package-lock.json
 
       - name: Validate reasoning-tier work harness
         run: |
@@ -53,6 +54,18 @@ jobs:
       - name: Run impl skeleton tests
         working-directory: impl
         run: npm test
+
+      - name: Install backend dependencies
+        working-directory: backend
+        run: npm ci
+
+      - name: Check backend contracts
+        working-directory: backend
+        run: npm run check
+
+      - name: Build backend Worker bundle
+        working-directory: backend
+        run: npx wrangler deploy --dry-run
 
       - name: Install app dependencies
         working-directory: app
