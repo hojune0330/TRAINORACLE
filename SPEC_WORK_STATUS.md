@@ -286,6 +286,13 @@ Do not claim a document exists from a chapter title, H1, table row, status label
 
 ## Hard Guardrails
 
+## WO017 Documentation-Only Track
+
+`WO017` is `ISSUED_DOCUMENTATION_ONLY / IMPLEMENTATION_NOT_AUTHORIZED`. The sequence is Fable -> Terra Very High -> Sol High -> Owner. Its bounded issuance record is `CODEX_WORK_ORDER_017.md`; validator and review artifacts are documentation-only and do not update SPEC acceptance, catalog status, issue counts, or implementation authority.
+
+- `reports/work-harness/TRAINORACLE_WORK_CATALOG.json` remains Formation-only and is not changed by WO017.
+- The owner-only activation record must remain `implementation_activation: PENDING_OWNER`.
+
 - Local/repo files are truth for file existence and repository state.
 - Conversation ledgers, chat summaries, and belief files are reference only.
 - H1 headings, chapter titles, table rows, and status labels are not file-existence evidence.
