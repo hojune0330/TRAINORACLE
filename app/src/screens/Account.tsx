@@ -119,8 +119,12 @@ export function Account({ onBack }: { readonly onBack?: () => void }) {
       ) : user === null ? (
         <div style={{ marginTop: 20, display: "flex", flexDirection: "column", gap: 12 }}>
           <p style={{ fontFamily: "var(--sans)", fontSize: 13, lineHeight: 1.6, color: "var(--ink-2)", margin: 0 }}>
+            일지는 지금 이 기기에만 있어요. 브라우저 정리·기기 변경 때 지워질 수
+            있으니, <b>계정에 연동해서 일지와 데이터를 지켜 주세요.</b>
+          </p>
+          <p style={{ fontFamily: "var(--sans)", fontSize: 12.5, lineHeight: 1.6, color: "var(--ink-3)", margin: 0 }}>
             비밀번호 없이 이메일 인증 코드로 가입하고 로그인해요.
-            로그인해도 <b>일지가 자동으로 올라가지 않아요</b> — 동기화는 아래에서 직접 켜야 시작돼요.
+            로그인해도 <b>일지가 자동으로 올라가지 않아요</b> — 동기화는 직접 켜야 시작돼요.
           </p>
 
           {step === "email" ? (
@@ -220,6 +224,24 @@ export function Account({ onBack }: { readonly onBack?: () => void }) {
           {syncMessage && (
             <p role="status" style={{ ...mono, fontSize: 12, color: "var(--ink-2)", margin: 0 }}>{syncMessage}</p>
           )}
+
+          <SectionLb>데이터 가져오기 — 준비 중</SectionLb>
+          <div
+            data-testid="import-teaser"
+            style={{ border: "1px dashed var(--line)", borderRadius: 10, padding: "12px 14px" }}
+          >
+            <div style={{ fontFamily: "var(--sans)", fontSize: 13.5, fontWeight: 600 }}>
+              가민 · WHOOP · 스트라바에 쌓인 기록, 곧 가져올 수 있어요
+            </div>
+            <p style={{ fontFamily: "var(--sans)", fontSize: 12, lineHeight: 1.6, color: "var(--ink-2)", margin: "6px 0 0" }}>
+              워치와 앱에 이미 쌓여 있는 훈련·수면·회복 데이터를 연동해서
+              일지 옆에 나란히 보는 기능을 만들고 있어요. 지금 계정을 연동해 두면
+              준비되는 대로 바로 쓸 수 있어요.
+            </p>
+            <div style={{ ...mono, fontSize: 9.5, color: "var(--ink-4)", marginTop: 8, letterSpacing: "0.06em" }}>
+              GARMIN · WHOOP · STRAVA · 준비 중 · 연동은 읽기 전용
+            </div>
+          </div>
 
           <button type="button" style={secondaryBtn} disabled={busy} onClick={() => void handleSignOut()}>
             로그아웃
