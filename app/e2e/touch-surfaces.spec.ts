@@ -16,8 +16,9 @@ test("audits empty home and chooser touch actions", async ({ page }, testInfo) =
   requireTouchProject(testInfo.project.name)
   await page.goto("/?app=1")
   await auditTouchTargets(page, [
+    { name: "empty-home.plan", locator: page.getByRole("button", { name: /훈련계획 후보 만들기/u }), heightOnly: true },
     { name: "empty-home.first-entry", locator: page.getByRole("button", { name: /첫 일지 쓰기/u }), heightOnly: true },
-    { name: "empty-home.example", locator: page.getByRole("button", { name: /예시 보기/u }), heightOnly: true },
+    { name: "empty-home.other-start", locator: page.getByRole("button", { name: /다른 시작 방법 보기/u }), heightOnly: true },
     { name: "empty-home.tabs", locator: page.getByRole("navigation", { name: "주 탭" }).getByRole("button"), count: 4 },
   ])
   await expectNoHorizontalOverflow(page)

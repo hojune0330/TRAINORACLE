@@ -1,6 +1,6 @@
 import {
   ArrowRight,
-  CircleHelp,
+  CalendarDays,
   House,
   Plus,
   TrendingUp,
@@ -10,7 +10,7 @@ import type { LucideIcon } from "lucide-react"
 import { LOCAL_SAVE_NOTICE, SYNC_UPSELL_NOTICE } from "../domain/journal-store"
 import type { SavedFactReceipt } from "../domain/save-receipt"
 
-export type AppTab = "home" | "log" | "trends" | "guide"
+export type AppTab = "home" | "plan" | "log" | "trends" | "guide"
 export type ToastPhase = "enter" | "exit"
 
 type TabItem = {
@@ -21,9 +21,9 @@ type TabItem = {
 
 const TAB_ITEMS: readonly TabItem[] = [
   { id: "home", label: "홈", icon: House },
+  { id: "plan", label: "계획", icon: CalendarDays },
   { id: "log", label: "기록", icon: Plus },
   { id: "trends", label: "추이", icon: TrendingUp },
-  { id: "guide", label: "가이드", icon: CircleHelp },
 ] as const
 
 export function TabBar({ tab, onTab }: {

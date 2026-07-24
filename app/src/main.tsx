@@ -6,6 +6,7 @@ import App from "./App"
 import "../../colors_and_type.css"
 import "../../colors_and_type_journal.css"
 import "./styles/app.css"
+import "./styles/plan-beta.css"
 
 if (import.meta.env.DEV) {
   void import("react-grab")
