@@ -8,6 +8,7 @@ import type { JournalEntry } from "../domain/journal-store"
 import { toAnalysisJournalEntry } from "../domain/safe-export"
 import type { AnalysisJournalEntry } from "../domain/safe-export"
 import { painLevelsRequireReview } from "../safety/memo-safety"
+import { DataSafetyNotice } from "../components/DataSafetyNotice"
 import { DeviceJournal, SafeJournalExport } from "./home/DeviceJournal"
 import { EngagementStrip } from "./home/EngagementStrip"
 import { EmptyJournalHome, FirstPage } from "./home/FirstPage"
@@ -106,6 +107,7 @@ export function Home({
           onOpenDay={onOpenDay}
           onOpenGuide={onOpenGuide}
           onOpenPlan={onOpenPlan}
+          onOpenAccount={onOpenAccount}
           engagement={engagement}
         />
       )}
@@ -120,10 +122,11 @@ type DataHomeProps = {
   readonly onOpenDay?: (date: string) => void
   readonly onOpenGuide?: () => void
   readonly onOpenPlan?: () => void
+  readonly onOpenAccount?: () => void
   readonly engagement: ReturnType<typeof engagementSummary>
 }
 
-function DataHome({ all, analysisEntries, onWriteLog, onOpenDay, onOpenGuide, onOpenPlan, engagement }: DataHomeProps) {
+function DataHome({ all, analysisEntries, onWriteLog, onOpenDay, onOpenGuide, onOpenPlan, onOpenAccount, engagement }: DataHomeProps) {
   const today = todayISO()
   const life = lifetimeStats([...analysisEntries])
   const weeklyStats = thisWeekStats([...analysisEntries])
@@ -189,6 +192,8 @@ function DataHome({ all, analysisEntries, onWriteLog, onOpenDay, onOpenGuide, on
       </div>
 
       <EngagementStrip summary={engagement} />
+
+      <DataSafetyNotice onOpenAccount={onOpenAccount} />
 
       <DeviceJournal onOpenDay={onOpenDay} />
 
