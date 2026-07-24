@@ -71,7 +71,7 @@ describe("D9 -> RVE -> Safety Gate contract slice", () => {
     }
     expect(createPlanDraft(gate)).toEqual({
       kind: "plan_draft",
-      source: "PLAN_GENERATOR_STUB",
+      source: "BETA_PLAN_ENGINE",
     })
   })
 
