@@ -84,6 +84,19 @@ export function entriesForDate(date: string): JournalEntry[] {
   return loadEntries().filter((entry) => entry.date === date)
 }
 
+/**
+ * 전체 교체 — 동기화 병합 결과 반영 전용.
+ * fail-closed: 스키마 파싱을 통과한 항목만 기록하고, 하나라도 유효하지 않으면
+ * 유효분만 저장한다. 저장 실패 시 기존 localStorage 내용은 건드리지 않는다.
+ */
+export function replaceAllEntries(entries: readonly unknown[]): { readonly ok: boolean; readonly total: number } {
+  const parsed = parseJournalEntryList(entries)
+  const localStorage = storage()
+  if (localStorage === null) return { ok: false, total: loadEntries().length }
+  const ok = writeEntries(localStorage, parsed)
+  return { ok, total: ok ? parsed.length : loadEntries().length }
+}
+
 export function deleteEntry(id: string): { readonly ok: boolean; readonly total: number } {
   const remaining = loadEntries().filter((entry) => entry.id !== id)
   const localStorage = storage()
