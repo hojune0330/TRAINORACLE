@@ -6,21 +6,22 @@ import type { JournalEntryType } from "./shared"
 interface EntryChooserProps {
   readonly onBack?: () => void
   readonly onPick?: (entryType: JournalEntryType) => void
+  readonly targetDate?: string
 }
 
 const ENTRY_OPTIONS = [
   { id: "post-session", t: "훈련 후", d: "방금 끝낸 세션 기록", meta: "POST · ~1분", mark: "↻" },
-  { id: "evening", t: "회복 · 하루 마무리", d: "쉬는 날도 그대로 · 수면·감정·통증 체크", meta: "EVENING · ~2분", mark: "☾" },
-  { id: "race", t: "경기 직전/직후", d: "기록·심박·감정", meta: "RACE · ~30초", mark: "▲" },
+  { id: "evening", t: "회복 · 하루 마무리", d: "쉬는 날도 그대로 · 수면 · 감정 · 통증 체크", meta: "EVENING · ~2분", mark: "☾" },
+  { id: "race", t: "경기 직전/직후", d: "기록 · 심박 · 감정", meta: "RACE · ~30초", mark: "▲" },
 ] as const
 
-export function EntryChooser({ onBack, onPick }: EntryChooserProps) {
+export function EntryChooser({ onBack, onPick, targetDate = todayISO() }: EntryChooserProps) {
   return (
     <div style={{ paddingBottom: 30 }}>
       <TopBar onBack={onBack}>새 일지</TopBar>
       <div style={{ padding: "20px 20px 4px" }}>
         <div style={{ fontFamily: "var(--mono)", fontSize: 10, color: "var(--ink-3)", letterSpacing: "0.14em", textTransform: "uppercase" }}>
-          {compactDate(todayISO())} {dowOf(todayISO())} · {nowClock()}
+          {compactDate(targetDate)} {dowOf(targetDate)}{targetDate === todayISO() ? ` · ${nowClock()}` : ""}
         </div>
         <h1 style={{ fontFamily: "var(--sans)", fontSize: 22, fontWeight: 500, letterSpacing: "-0.02em", margin: "6px 0 0" }}>어떤 일지를 쓰세요?</h1>
       </div>
@@ -42,7 +43,10 @@ export function EntryChooser({ onBack, onPick }: EntryChooserProps) {
             }}>{option.mark}</span>
             <div>
               <div style={{ fontFamily: "var(--sans)", fontSize: 16, fontWeight: 500, color: "var(--ink)", letterSpacing: "-0.005em" }}>{option.t}</div>
-              <div style={{ fontFamily: "var(--mono)", fontSize: 10.5, color: "var(--ink-3)", letterSpacing: "0.04em", marginTop: 3 }}>{option.d}</div>
+              <div style={{
+                fontFamily: "var(--mono)", fontSize: 10.5, color: "var(--ink-3)",
+                letterSpacing: "0.04em", lineHeight: 1.45, marginTop: 3, wordBreak: "keep-all",
+              }}>{option.d}</div>
             </div>
             <span style={{ fontFamily: "var(--mono)", fontSize: 10, color: "var(--ink-4)", letterSpacing: "0.1em" }}>{option.meta}</span>
           </button>
@@ -51,9 +55,11 @@ export function EntryChooser({ onBack, onPick }: EntryChooserProps) {
 
       <div style={{ padding: "24px 20px" }}>
         <div style={{ fontFamily: "var(--mono)", fontSize: 10, color: "var(--ink-4)", letterSpacing: "0.06em", lineHeight: 1.55 }}>
-          {entriesForDate(todayISO()).length > 0
-            ? "오늘 일지가 이미 있어요. 같은 날에 여러 진입점으로 쓰면 한 페이지에 합쳐집니다."
-            : "오늘 첫 일지예요. 짧게 몰아 쓰면 1분이면 끝나요."}
+          {entriesForDate(targetDate).length > 0
+            ? "이 날짜에 일지가 이미 있어요. 하나 더 쓰면 같은 날짜 페이지에 함께 모입니다."
+            : targetDate === todayISO()
+              ? "오늘 첫 일지예요. 짧게 몰아 쓰면 1분이면 끝나요."
+              : "이 날짜의 첫 일지예요. 저장하면 선택한 날짜에 남아요."}
         </div>
       </div>
     </div>

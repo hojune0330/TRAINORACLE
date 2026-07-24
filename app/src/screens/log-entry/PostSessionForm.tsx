@@ -2,7 +2,7 @@ import React from "react"
 import { IndexCard } from "../../components/JournalPrimitives"
 import { compactDate, dowOf, nowClock } from "../../domain/dates"
 import { explicitOrMissing } from "../../domain/field-provenance"
-import { newEntryId, saveEntry, todayISO } from "../../domain/journal-store"
+import { newEntryId, saveEntry, todayISO, updateEntry } from "../../domain/journal-store"
 import type { JournalEntry } from "../../domain/journal-store"
 import { PurposeScopedMemoField, usePurposeScopedMemo } from "./PurposeScopedMemoField"
 import { IntensityAssessmentField, useIntensityAssessment } from "./IntensityAssessmentField"
@@ -19,23 +19,25 @@ const ENERGY_SYSTEMS = [
   { id: "rest", c: "RE", n: "REST", color: "#7A7A70" },
 ] as const
 
-export function PostSessionForm({ onBack, onDone }: EntryFormProps) {
-  const [rpe, setRpe] = React.useState(0)
+export function PostSessionForm({ onBack, onDone, targetDate, initialEntry }: EntryFormProps) {
+  const initial = initialEntry?.kind === "post-session" ? initialEntry : undefined
+  const entryDate = targetDate ?? initial?.date ?? todayISO()
+  const [rpe, setRpe] = React.useState(initial?.rpe ?? 0)
   const [saveError, setSaveError] = React.useState(false)
-  const [system, setSystem] = React.useState("base")
-  const [title, setTitle] = React.useState("")
-  const [distanceKm, setDistanceKm] = React.useState("")
-  const [durationMin, setDurationMin] = React.useState("")
-  const [avgPace, setAvgPace] = React.useState("")
-  const intensity = useIntensityAssessment()
-  const memo = usePurposeScopedMemo()
+  const [system, setSystem] = React.useState(initial?.system ?? "base")
+  const [title, setTitle] = React.useState(initial?.title ?? "")
+  const [distanceKm, setDistanceKm] = React.useState(initial?.distanceKm ?? "")
+  const [durationMin, setDurationMin] = React.useState(initial?.durationMin ?? "")
+  const [avgPace, setAvgPace] = React.useState(initial?.avgPace ?? "")
+  const intensity = useIntensityAssessment(initial?.intensityAssessment)
+  const memo = usePurposeScopedMemo(initial?.memo ?? "", initial?.memoPurpose)
 
   const persist = () => {
     const memoPreparation = memo.prepareForSave()
     if (!memoPreparation.ready) return
     const entry: JournalEntry = {
-      id: newEntryId(), kind: "post-session", date: todayISO(),
-      savedAt: new Date().toISOString(), syncState: "local",
+      id: initial?.id ?? newEntryId(), kind: "post-session", date: entryDate,
+      savedAt: initial?.savedAt ?? new Date().toISOString(), syncState: "local",
       system, title, distanceKm, durationMin, avgPace, rpe, memo: memo.text,
       ...(intensity.assessment === undefined ? {} : { intensityAssessment: intensity.assessment }),
       fieldProvenance: {
@@ -48,7 +50,7 @@ export function PostSessionForm({ onBack, onDone }: EntryFormProps) {
       },
       ...(memo.text.trim() !== "" && memo.purpose !== undefined ? { memoPurpose: memo.purpose } : {}),
     }
-    const result = saveEntry(entry)
+    const result = initial === undefined ? saveEntry(entry) : updateEntry(entry)
     if (window.location.search.includes("uitest")) console.log(`[JSAVE] kind=post-session ok=${result.ok}`)
     if (!result.ok) { setSaveError(true); return }
     if (memoPreparation.reviewMessage === null) onDone?.("post-session", entry)
@@ -57,9 +59,12 @@ export function PostSessionForm({ onBack, onDone }: EntryFormProps) {
 
   return (
     <div style={{ paddingBottom: 100 }}>
-      <TopBar onBack={onBack}>훈련 후 · 기록</TopBar>
+      <TopBar onBack={onBack}>{initial === undefined ? "훈련 후 · 기록" : "훈련 후 · 수정"}</TopBar>
       <div style={{ padding: "14px 20px 0" }}>
-        <IndexCard date={compactDate(todayISO())} dow={`${dowOf(todayISO())} · ${nowClock()}`} />
+        <IndexCard
+          date={compactDate(entryDate)}
+          dow={`${dowOf(entryDate)}${entryDate === todayISO() ? ` · ${nowClock()}` : ""}`}
+        />
       </div>
 
       <FormSec lb="강도 시스템" help="energy-system">
@@ -122,7 +127,7 @@ export function PostSessionForm({ onBack, onDone }: EntryFormProps) {
         />
       </FormSec>
 
-      <StickyBar onSave={persist} error={saveError} />
+      <StickyBar onSave={persist} error={saveError} label={initial === undefined ? "저장" : "수정 저장"} />
     </div>
   )
 }
