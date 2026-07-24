@@ -4,6 +4,7 @@
 //  - variant B(대시보드)는 디자인 워크스페이스 전용 데모 표면으로 유지 (앱 셸 미사용).
 import React from "react"
 import type { ReactNode } from "react"
+import { PencilLine, Plus } from "lucide-react"
 import { IndexCard, MoodStrip, PainDot, SectionLb } from "../components/JournalPrimitives"
 import { TermHelp } from "../components/TermHelp"
 import type { JournalEntry, PostSessionEntry, EveningEntry, RaceEntry } from "../domain/journal-store"
@@ -14,8 +15,23 @@ import { RaceSelfCheckSummary, SavedMemo } from "./log-entry/SavedEntryContext"
 
 export type LogDetailVariant = "A" | "B"
 
-export function LogDetail({ date, onBack }: { date: string; variant?: LogDetailVariant; onBack?: () => void }) {
-  return <LogDetailJournal date={date} onBack={onBack} />
+interface LogDetailProps {
+  readonly date: string
+  readonly variant?: LogDetailVariant
+  readonly onBack?: () => void
+  readonly onEditEntry?: (entry: JournalEntry) => void
+  readonly onAddEntry?: (date: string) => void
+}
+
+export function LogDetail({ date, onBack, onEditEntry, onAddEntry }: LogDetailProps) {
+  return (
+    <LogDetailJournal
+      date={date}
+      onBack={onBack}
+      onEditEntry={onEditEntry}
+      onAddEntry={onAddEntry}
+    />
+  )
 }
 
 const SYSTEM_META: Record<string, { c: string; n: string; cls: string }> = {
@@ -34,7 +50,17 @@ function savedClock(iso: string): string {
 }
 
 // ───────── A. Journal-page (실데이터) ─────────
-function LogDetailJournal({ date, onBack }: { date: string; onBack?: (() => void) | undefined }) {
+function LogDetailJournal({
+  date,
+  onBack,
+  onEditEntry,
+  onAddEntry,
+}: {
+  readonly date: string
+  readonly onBack?: (() => void) | undefined
+  readonly onEditEntry?: ((entry: JournalEntry) => void) | undefined
+  readonly onAddEntry?: ((date: string) => void) | undefined
+}) {
   const [rev, setRev] = React.useState(0)
   const entries = React.useMemo(() => entriesForDate(date), [date, rev])
   const remove = (id: string, label: string) => {
@@ -55,6 +81,30 @@ function LogDetailJournal({ date, onBack }: { date: string; onBack?: (() => void
       <div style={{ padding: "14px 20px 0" }}>
         <IndexCard date={cardDate(date)} dow={dowOf(date)} season={seasonOf(date)} />
       </div>
+      {onAddEntry !== undefined && (
+        <div style={{ padding: "10px 20px 0" }}>
+          <button
+            type="button"
+            aria-label="이 날짜에 일지 더 쓰기"
+            onClick={() => onAddEntry(date)}
+            style={{
+              width: "100%", minHeight: 48, padding: "11px 14px",
+              border: "1px solid var(--ink)", background: "var(--surface)",
+              color: "var(--ink)", cursor: "pointer",
+              display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12,
+              fontFamily: "var(--sans)", fontSize: 13.5, fontWeight: 500,
+            }}
+          >
+            <span style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
+              <Plus aria-hidden="true" size={17} strokeWidth={1.8} />
+              이 날짜에 일지 더 쓰기
+            </span>
+            <span style={{ fontFamily: "var(--mono)", fontSize: 9, color: "var(--ink-3)" }}>
+              훈련 · 회복 · 경기
+            </span>
+          </button>
+        </div>
+      )}
 
       {entries.length === 0 && (
         <div style={{ padding: "40px 20px" }}>
@@ -96,7 +146,11 @@ function LogDetailJournal({ date, onBack }: { date: string; onBack?: (() => void
                 ))}
               </div>
               <SavedMemo entry={s} text={s.memo} fontSize={19} />
-              <EntryDeleteRow onDelete={() => remove(s.id, "훈련")} />
+              <EntryActionRow
+                editLabel={`${s.title || "훈련"} 일지 수정`}
+                onEdit={onEditEntry === undefined ? undefined : () => onEditEntry(s)}
+                onDelete={() => remove(s.id, "훈련")}
+              />
             </div>
           </div>
         )
@@ -121,7 +175,11 @@ function LogDetailJournal({ date, onBack }: { date: string; onBack?: (() => void
             )}
             <RaceSelfCheckSummary entry={r} />
             <SavedMemo entry={r} text={r.memo} fontSize={18} />
-            <EntryDeleteRow onDelete={() => remove(r.id, "경기")} />
+            <EntryActionRow
+              editLabel={`${r.stage === "pre" ? "경기 직전" : "경기 직후"} 일지 수정`}
+              onEdit={onEditEntry === undefined ? undefined : () => onEditEntry(r)}
+              onDelete={() => remove(r.id, "경기")}
+            />
           </div>
         </div>
       ))}
@@ -145,7 +203,11 @@ function LogDetailJournal({ date, onBack }: { date: string; onBack?: (() => void
                 <SavedMemo entry={ev} text={ev.note} fontSize={17} />
               </div>
               <div style={{ padding: "0 14px" }}>
-                <EntryDeleteRow onDelete={() => remove(ev.id, "하루 마무리")} />
+                <EntryActionRow
+                  editLabel="하루 마무리 일지 수정"
+                  onEdit={onEditEntry === undefined ? undefined : () => onEditEntry(ev)}
+                  onDelete={() => remove(ev.id, "하루 마무리")}
+                />
               </div>
             </div>
             {needsReview && (
@@ -174,10 +236,33 @@ function LogDetailJournal({ date, onBack }: { date: string; onBack?: (() => void
   )
 }
 
-function EntryDeleteRow({ onDelete }: { onDelete: () => void }) {
+function EntryActionRow({
+  editLabel,
+  onEdit,
+  onDelete,
+}: {
+  readonly editLabel: string
+  readonly onEdit?: () => void
+  readonly onDelete: () => void
+}) {
   return (
-    <div style={{ marginTop: 12, borderTop: "1px dashed var(--hair)", paddingTop: 8, textAlign: "right" }}>
-      <button onClick={onDelete} style={{
+    <div style={{
+      marginTop: 12, borderTop: "1px dashed var(--hair)", paddingTop: 8,
+      display: "flex", alignItems: "center",
+      justifyContent: onEdit === undefined ? "flex-end" : "space-between", gap: 8,
+    }}>
+      {onEdit !== undefined && (
+        <button type="button" aria-label={editLabel} onClick={onEdit} style={{
+          minHeight: 44, padding: "8px 10px",
+          background: "transparent", border: "1px solid var(--line)", cursor: "pointer",
+          display: "inline-flex", alignItems: "center", gap: 6,
+          fontFamily: "var(--mono)", fontSize: 10, color: "var(--ink-2)",
+        }}>
+          <PencilLine aria-hidden="true" size={15} strokeWidth={1.7} />
+          수정
+        </button>
+      )}
+      <button type="button" onClick={onDelete} style={{
         background: "transparent", border: 0, cursor: "pointer",
         fontFamily: "var(--mono)", fontSize: 9.5, color: "var(--ink-4)",
         letterSpacing: "0.1em", padding: "4px 2px", minHeight: 44,

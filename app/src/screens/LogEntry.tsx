@@ -11,10 +11,20 @@ export interface LogEntryProps {
   readonly entryType?: EntryType
   readonly onBack?: () => void
   readonly onDone?: (entryType: JournalEntryType, savedEntry?: JournalEntry, reviewMessage?: string) => void
+  readonly targetDate?: string
+  readonly initialEntry?: JournalEntry
 }
 
-export function LogEntry({ entryType = "choose", onBack, onDone }: LogEntryProps) {
-  if (entryType === "choose") return <EntryChooser onBack={onBack} onPick={(picked) => onDone?.(picked)} />
+export function LogEntry({
+  entryType = "choose",
+  onBack,
+  onDone,
+  targetDate,
+  initialEntry,
+}: LogEntryProps) {
+  if (entryType === "choose") {
+    return <EntryChooser onBack={onBack} onPick={(picked) => onDone?.(picked)} targetDate={targetDate} />
+  }
   const handleSaved = (
     picked: JournalEntryType,
     savedEntry: JournalEntry,
@@ -27,9 +37,10 @@ export function LogEntry({ entryType = "choose", onBack, onDone }: LogEntryProps
 
     onDone?.(picked, savedEntry, reviewMessage)
   }
-  if (entryType === "post-session") return <PostSessionForm onBack={onBack} onDone={handleSaved} />
-  if (entryType === "evening") return <EveningCheckin onBack={onBack} onDone={handleSaved} />
-  if (entryType === "race") return <RaceForm onBack={onBack} onDone={handleSaved} />
+  const formProps = { onBack, onDone: handleSaved, targetDate, initialEntry }
+  if (entryType === "post-session") return <PostSessionForm {...formProps} />
+  if (entryType === "evening") return <EveningCheckin {...formProps} />
+  if (entryType === "race") return <RaceForm {...formProps} />
   return null
 }
 

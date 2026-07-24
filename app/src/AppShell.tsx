@@ -21,9 +21,13 @@ interface ViewState {
   entryType: EntryType
   /** home에서 연 일지 상세 (날짜) — null이면 홈 목록 */
   detailDate: string | null
+  draft: {
+    readonly date: string
+    readonly entry: JournalEntry | null
+  } | null
 }
 
-const INITIAL: ViewState = { tab: "home", entryType: "choose", detailDate: null }
+const INITIAL: ViewState = { tab: "home", entryType: "choose", detailDate: null, draft: null }
 const TOAST_READABLE_MS = 4000
 const TOAST_EXIT_MS = 150
 
@@ -38,14 +42,17 @@ export function AppShell() {
   React.useState(() => recordDailyVisit(todayISO()))
   const [v, setV] = React.useState<ViewState>(INITIAL)
   const [savedToast, setSavedToast] = React.useState<SavedToastState | null>(null)
+  const scrollRegionRef = React.useRef<HTMLElement>(null)
   const [firstVisitActive, setFirstVisitActive] = React.useState(
     () => localOnlyCount() === 0 && !hasDismissedFirstVisit(),
   )
 
   const goHome = () => setV(INITIAL)
-  const goHomeAfterSave = (savedEntry: JournalEntry, reviewMessage?: string) => {
+  const goAfterSave = (savedEntry: JournalEntry, reviewMessage?: string) => {
     const receipt = createSavedFactReceipt(savedEntry)
-    setV(INITIAL)
+    setV(v.draft !== null
+      ? { ...INITIAL, detailDate: savedEntry.date }
+      : INITIAL)
     dismissFirstVisit()
     setFirstVisitActive(false)
     setSavedToast({ count: localOnlyCount(), phase: "enter", receipt, reviewMessage })
@@ -63,8 +70,17 @@ export function AppShell() {
     }, delay)
     return () => window.clearTimeout(t)
   }, [savedToast])
+  React.useLayoutEffect(() => {
+    if (scrollRegionRef.current === null) return
+    scrollRegionRef.current.scrollTop = 0
+    scrollRegionRef.current.scrollLeft = 0
+  }, [v.tab, v.entryType, v.detailDate])
   const goTab = (tab: AppTab) =>
-    setV({ tab, entryType: "choose", detailDate: null })
+    setV({ tab, entryType: "choose", detailDate: null, draft: null })
+  const returnToDraftDate = () => {
+    const date = v.draft?.date
+    setV(date === undefined ? INITIAL : { ...INITIAL, detailDate: date })
+  }
   const goTrendsFromReceipt = () => {
     setSavedToast(null)
     goTab("trends")
@@ -73,13 +89,33 @@ export function AppShell() {
   let screen: React.ReactNode
   if (v.tab === "home") {
     screen = v.detailDate ? (
-      <LogDetail date={v.detailDate} onBack={() => setV(s => ({ ...s, detailDate: null }))} />
+      <LogDetail
+        date={v.detailDate}
+        onBack={() => setV(s => ({ ...s, detailDate: null }))}
+        onEditEntry={(entry) => setV({
+          tab: "log",
+          entryType: entry.kind,
+          detailDate: null,
+          draft: { date: entry.date, entry },
+        })}
+        onAddEntry={(date) => setV({
+          tab: "log",
+          entryType: "choose",
+          detailDate: null,
+          draft: { date, entry: null },
+        })}
+      />
     ) : (
       <Home
-        onWriteLog={(entryType) => setV(s => ({ ...s, tab: "log", entryType: entryType ?? "choose" }))}
+        onWriteLog={(entryType) => setV({
+          tab: "log",
+          entryType: entryType ?? "choose",
+          detailDate: null,
+          draft: null,
+        })}
         onOpenDay={(date) => setV(s => ({ ...s, detailDate: date }))}
-        onOpenGuide={() => setV(s => ({ ...s, tab: "guide" }))}
-        onOpenPlan={() => setV(s => ({ ...s, tab: "plan" }))}
+        onOpenGuide={() => setV({ tab: "guide", entryType: "choose", detailDate: null, draft: null })}
+        onOpenPlan={() => setV({ tab: "plan", entryType: "choose", detailDate: null, draft: null })}
         firstVisitActive={firstVisitActive}
         onDismissFirstVisit={() => {
           dismissFirstVisit()
@@ -94,6 +130,7 @@ export function AppShell() {
           tab: "log",
           entryType: entryType ?? "choose",
           detailDate: null,
+          draft: null,
         })}
       />
     )
@@ -101,12 +138,22 @@ export function AppShell() {
     screen = (
       <LogEntry
         entryType={v.entryType}
-        onBack={v.entryType === "choose" ? goHome : () => setV(s => ({ ...s, entryType: "choose" }))}
+        onBack={
+          v.entryType === "choose"
+            ? (v.draft !== null ? returnToDraftDate : goHome)
+            : (v.draft !== null && v.draft.entry !== null
+                ? returnToDraftDate
+                : () => setV(s => ({ ...s, entryType: "choose" })))
+        }
+        {...(v.draft === null ? {} : { targetDate: v.draft.date })}
+        {...(v.draft?.entry === null || v.draft?.entry === undefined
+          ? {}
+          : { initialEntry: v.draft.entry })}
         onDone={(picked, savedEntry, reviewMessage) => {
           if (v.entryType === "choose") {
             setV(s => ({ ...s, entryType: picked }))
           } else if (savedEntry !== undefined) {
-            goHomeAfterSave(savedEntry, reviewMessage)
+            goAfterSave(savedEntry, reviewMessage)
           }
         }}
       />
@@ -114,7 +161,12 @@ export function AppShell() {
   } else if (v.tab === "trends") {
     screen = <Trends onBack={goHome} />
   } else {
-    screen = <Guide onWriteLog={() => setV({ tab: "log", entryType: "choose", detailDate: null })} />
+    screen = <Guide onWriteLog={() => setV({
+      tab: "log",
+      entryType: "choose",
+      detailDate: null,
+      draft: null,
+    })} />
   }
 
   return (
@@ -123,7 +175,7 @@ export function AppShell() {
       display: "flex", flexDirection: "column",
       maxWidth: "var(--app-shell-max-width)", margin: "0 auto",
     }}>
-      <main className="app-scroll-region">
+      <main ref={scrollRegionRef} className="app-scroll-region">
         {screen}
       </main>
       {savedToast !== null && (

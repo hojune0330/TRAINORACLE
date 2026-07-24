@@ -71,6 +71,20 @@ export function saveEntry(entry: unknown): { readonly ok: boolean; readonly tota
   return { ok: writeEntries(localStorage, all), total: all.length }
 }
 
+export function updateEntry(entry: unknown): { readonly ok: boolean; readonly total: number } {
+  const all = loadEntries()
+  const parsedEntry = parseJournalEntryForWrite(entry)
+  if (parsedEntry === null) return { ok: false, total: all.length }
+
+  const targetIndex = all.findIndex((candidate) => candidate.id === parsedEntry.id)
+  if (targetIndex < 0) return { ok: false, total: all.length }
+
+  all[targetIndex] = parsedEntry
+  const localStorage = storage()
+  if (localStorage === null) return { ok: false, total: all.length }
+  return { ok: writeEntries(localStorage, all), total: all.length }
+}
+
 export function loadAnalysisEntries(): AnalysisJournalEntry[] {
   const entries: AnalysisJournalEntry[] = []
   for (const entry of loadEntries()) {

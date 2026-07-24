@@ -8,6 +8,8 @@ export type JournalEntryType = "post-session" | "evening" | "race"
 export interface EntryFormProps {
   readonly onBack?: () => void
   readonly onDone?: (entryType: JournalEntryType, savedEntry: JournalEntry, reviewMessage?: string) => void
+  readonly targetDate?: string
+  readonly initialEntry?: JournalEntry
 }
 
 export function FormSec({ lb, help, children }: {
@@ -52,9 +54,10 @@ export function TopBar({ onBack, children }: {
   )
 }
 
-export function StickyBar({ onSave, error }: {
+export function StickyBar({ onSave, error, label = "저장" }: {
   readonly onSave?: () => void
   readonly error?: boolean
+  readonly label?: string
 }) {
   return (
     <div className="entry-sticky-bar" style={{
@@ -79,7 +82,7 @@ export function StickyBar({ onSave, error }: {
           border: 0, fontFamily: "var(--sans)", fontSize: 14, fontWeight: 500,
           cursor: "pointer", borderRadius: 0,
           display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
-        }}>저장 <span style={{ fontFamily: "var(--mono)", fontSize: 10, opacity: 0.65, letterSpacing: "0.14em" }}>↵</span></button>
+        }}>{label} <span style={{ fontFamily: "var(--mono)", fontSize: 10, opacity: 0.65, letterSpacing: "0.14em" }}>↵</span></button>
       </div>
     </div>
   )

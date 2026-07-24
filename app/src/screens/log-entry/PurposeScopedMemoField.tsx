@@ -30,9 +30,12 @@ function reviewMessageFor(text: string, purpose: MemoPurpose | undefined): strin
     : "자동 확인을 완료하지 못했어요. 안전 여부를 판정한 것이 아니에요. 필요하면 지도자·보호자와 함께 확인해 주세요."
 }
 
-export function usePurposeScopedMemo(): PurposeScopedMemoController {
-  const [text, setText] = React.useState("")
-  const [purpose, setPurpose] = React.useState<MemoPurpose>()
+export function usePurposeScopedMemo(
+  initialText = "",
+  initialPurpose?: MemoPurpose,
+): PurposeScopedMemoController {
+  const [text, setText] = React.useState(initialText)
+  const [purpose, setPurpose] = React.useState<MemoPurpose | undefined>(initialPurpose)
   const [purposeError, setPurposeError] = React.useState<string | null>(null)
   const [reviewMessage, setReviewMessage] = React.useState<string | null>(null)
   const privateOptionRef = React.useRef<HTMLInputElement>(null)

@@ -4,6 +4,7 @@ import {
   loadAnalysisEntries,
   loadEntries,
   saveEntry,
+  updateEntry,
   type JournalEntry,
   type RaceEntry,
 } from "./journal-store"
@@ -148,6 +149,32 @@ describe("journal storage boundary", () => {
 
     // Then
     expect(result.ok).toBe(false)
+    expect(loadEntries()).toEqual([])
+  })
+
+  it("updates one existing record without creating a duplicate", () => {
+    // Given
+    const original = validRaceEntry("editable-race")
+    saveEntry(original)
+    const edited = { ...original, result: "결승 진출" } satisfies JournalEntry
+
+    // When
+    const result = updateEntry(edited)
+
+    // Then
+    expect(result).toEqual({ ok: true, total: 1 })
+    expect(loadEntries()).toEqual([edited])
+  })
+
+  it("does not append an update when the target id is missing", () => {
+    // Given
+    const missing = validRaceEntry("missing-target")
+
+    // When
+    const result = updateEntry(missing)
+
+    // Then
+    expect(result).toEqual({ ok: false, total: 0 })
     expect(loadEntries()).toEqual([])
   })
 
