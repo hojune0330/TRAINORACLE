@@ -8,6 +8,8 @@ import { LogDetail } from "./screens/LogDetail"
 import { Trends } from "./screens/Trends"
 import { Guide } from "./screens/Guide"
 import { PlanBeta } from "./screens/PlanBeta"
+import { Account } from "./screens/Account"
+import { accountFeatureEnabled } from "./domain/account/config"
 import { localOnlyCount, todayISO } from "./domain/journal-store"
 import type { JournalEntry } from "./domain/journal-store"
 import { createSavedFactReceipt } from "./domain/save-receipt"
@@ -21,9 +23,11 @@ interface ViewState {
   entryType: EntryType
   /** home에서 연 일지 상세 (날짜) — null이면 홈 목록 */
   detailDate: string | null
+  /** 계정 화면 (home 탭 위 오버레이 성격) — feature flag ON일 때만 진입 가능 */
+  accountOpen: boolean
 }
 
-const INITIAL: ViewState = { tab: "home", entryType: "choose", detailDate: null }
+const INITIAL: ViewState = { tab: "home", entryType: "choose", detailDate: null, accountOpen: false }
 const TOAST_READABLE_MS = 4000
 const TOAST_EXIT_MS = 150
 
@@ -64,14 +68,18 @@ export function AppShell() {
     return () => window.clearTimeout(t)
   }, [savedToast])
   const goTab = (tab: AppTab) =>
-    setV({ tab, entryType: "choose", detailDate: null })
+    setV({ tab, entryType: "choose", detailDate: null, accountOpen: false })
   const goTrendsFromReceipt = () => {
     setSavedToast(null)
     goTab("trends")
   }
 
+  const accountEnabled = accountFeatureEnabled()
+
   let screen: React.ReactNode
-  if (v.tab === "home") {
+  if (v.tab === "home" && v.accountOpen && accountEnabled) {
+    screen = <Account onBack={() => setV(s => ({ ...s, accountOpen: false }))} />
+  } else if (v.tab === "home") {
     screen = v.detailDate ? (
       <LogDetail date={v.detailDate} onBack={() => setV(s => ({ ...s, detailDate: null }))} />
     ) : (
@@ -80,6 +88,7 @@ export function AppShell() {
         onOpenDay={(date) => setV(s => ({ ...s, detailDate: date }))}
         onOpenGuide={() => setV(s => ({ ...s, tab: "guide" }))}
         onOpenPlan={() => setV(s => ({ ...s, tab: "plan" }))}
+        onOpenAccount={accountEnabled ? () => setV(s => ({ ...s, accountOpen: true })) : undefined}
         firstVisitActive={firstVisitActive}
         onDismissFirstVisit={() => {
           dismissFirstVisit()
@@ -94,6 +103,7 @@ export function AppShell() {
           tab: "log",
           entryType: entryType ?? "choose",
           detailDate: null,
+          accountOpen: false,
         })}
       />
     )
@@ -114,7 +124,7 @@ export function AppShell() {
   } else if (v.tab === "trends") {
     screen = <Trends onBack={goHome} />
   } else {
-    screen = <Guide onWriteLog={() => setV({ tab: "log", entryType: "choose", detailDate: null })} />
+    screen = <Guide onWriteLog={() => setV({ tab: "log", entryType: "choose", detailDate: null, accountOpen: false })} />
   }
 
   return (

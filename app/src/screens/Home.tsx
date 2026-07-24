@@ -19,6 +19,8 @@ export type HomeProps = {
   readonly onOpenDay?: (date: string) => void
   readonly onOpenGuide?: () => void
   readonly onOpenPlan?: () => void
+  /** 계정 기능 flag ON일 때만 전달됨 — 없으면 버튼 미노출 */
+  readonly onOpenAccount?: () => void
   readonly firstVisitActive?: boolean
   readonly onDismissFirstVisit?: () => void
 }
@@ -28,6 +30,7 @@ export function Home({
   onOpenDay,
   onOpenGuide,
   onOpenPlan,
+  onOpenAccount,
   firstVisitActive = true,
   onDismissFirstVisit,
 }: HomeProps) {
@@ -60,8 +63,24 @@ export function Home({
       style={{ paddingBottom: isEmpty ? 0 : 90 }}
     >
       {!(isEmpty && firstVisitActive) && (
-        <div style={{ padding: "16px 18px 14px" }}>
+        <div style={{ padding: "16px 18px 14px", position: "relative" }}>
           <IndexCard date={cardDate(today)} dow={dowOf(today)} season={seasonOf(today)} />
+          {onOpenAccount && (
+            <button
+              type="button"
+              onClick={onOpenAccount}
+              aria-label="계정과 백업"
+              style={{
+                position: "absolute", top: 16, right: 18,
+                minWidth: 44, minHeight: 44, padding: "0 10px",
+                fontFamily: "var(--mono)", fontSize: 10, letterSpacing: "0.08em",
+                color: "var(--ink-2)", background: "transparent",
+                border: "1px solid var(--line)", borderRadius: 8, cursor: "pointer",
+              }}
+            >
+              계정
+            </button>
+          )}
         </div>
       )}
       {isEmpty ? (
