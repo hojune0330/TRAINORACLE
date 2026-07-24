@@ -1,11 +1,20 @@
 import { expect, test } from "@playwright/test"
+import type { Page } from "@playwright/test"
+
+async function answerMinimumPlanQuestions(page: Page): Promise<void> {
+  await page.getByRole("button", { name: /800m.*1500m/u }).click()
+  await page.getByRole("button", { name: /훈련 경험 있음/u }).click()
+  await page.getByRole("button", { name: /^3일/u }).click()
+  await page.getByRole("button", { name: /9일 계획.*권장/u }).click()
+  await page.getByRole("button", { name: /통증은 없고 몸 상태는 평소와 같아요/u }).click()
+}
 
 test("routes a first visitor from one context choice into the matching journal", async ({ page }) => {
   // Given
   await page.goto("/?app=1")
 
   // When
-  await page.getByRole("button", { name: "무엇을 할 수 있나요?" }).click()
+  await page.getByRole("button", { name: "다른 시작 방법 보기" }).click()
   await expect(page.getByRole("button", { name: "이전 화면으로" })).toBeInViewport()
   await page.getByRole("button", { name: /통증.*컨디션을 남기고 싶어요/u }).click()
 
@@ -13,18 +22,57 @@ test("routes a first visitor from one context choice into the matching journal",
   await expect(page.getByRole("heading", { name: /회복.*하루 마무리/u })).toBeVisible()
 })
 
-test("keeps plan interest honest and collects no request", async ({ page }) => {
+test("creates and selects a profile-only beta plan from the first screen", async ({ page }) => {
   // Given
   await page.goto("/?app=1")
 
   // When
-  await page.getByRole("button", { name: "무엇을 할 수 있나요?" }).click()
-  await page.getByRole("button", { name: /훈련 계획이 궁금해요/u }).click()
+  await page.getByRole("button", { name: "훈련계획 후보 만들기" }).click()
+  await answerMinimumPlanQuestions(page)
 
   // Then
-  await expect(page.getByRole("heading", { name: "훈련계획은 준비 중이에요" })).toBeVisible()
-  await expect(page.getByRole("textbox")).toHaveCount(0)
-  await expect(page.getByRole("button", { name: "오늘 기록부터 남기기" })).toBeVisible()
+  await expect(page.getByRole("heading", { name: "두 후보를 비교해보세요" })).toBeVisible()
+  await expect(page.getByRole("heading", { name: "균형형" })).toBeVisible()
+  await expect(page.getByRole("heading", { name: "보수형" })).toBeVisible()
+
+  // When
+  await page.getByRole("button", { name: "균형형 선택하기" }).click()
+
+  // Then
+  await expect(page.getByRole("heading", { name: "균형형 9일 계획" })).toBeVisible()
+  await expect(page.getByText(/프로필 기반.*제한 신뢰도/u)).toBeVisible()
+})
+
+test("does not let a favorable current answer override recent high pain", async ({ page }) => {
+  await page.addInitScript(() => {
+    const now = new Date()
+    const padded = (value: number) => String(value).padStart(2, "0")
+    const date = `${now.getFullYear()}-${padded(now.getMonth() + 1)}-${padded(now.getDate())}`
+    window.localStorage.setItem("trainoracle.journal.v1", JSON.stringify([{
+      id: "recent-high-pain-e2e",
+      kind: "evening",
+      date,
+      savedAt: `${date}T09:00:00.000Z`,
+      syncState: "local",
+      sleepH: 0,
+      sleepQuality: 0,
+      weightKg: "",
+      restingHr: "",
+      painParts: { knee: 5 },
+      mood: 0,
+      note: "",
+      fieldProvenance: {
+        painParts: { provenance: "EXPLICIT" },
+      },
+    }]))
+  })
+  await page.goto("/?app=1")
+  await page.getByRole("button", { name: "훈련계획 후보 만들기" }).click()
+
+  await answerMinimumPlanQuestions(page)
+
+  await expect(page.getByRole("heading", { name: "지금은 계획을 멈췄어요" })).toBeVisible()
+  await expect(page.getByRole("heading", { name: "균형형" })).toHaveCount(0)
 })
 
 test("shows a truthful distance receipt and opens the real trend", async ({ page }) => {

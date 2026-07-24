@@ -1,0 +1,12 @@
+{
+  "surface": "http://127.0.0.1:4176/?app=1",
+  "invocation": "Connected in-app browser; navigate to URL; click observed accessible buttons; inspect fresh DOM snapshot and read-only layout metrics.",
+  "results": [
+    { "id": "LIVE-01", "state": "first visit", "verdict": "PASS", "evidence": "Home rendered with 훈련계획 후보 만들기, 첫 일지 쓰기, 다른 시작 방법 보기." },
+    { "id": "LIVE-02", "state": "first context", "verdict": "PASS", "evidence": "Clicking 다른 시작 방법 보기 rendered ONE QUICK CHOICE with four quick-choice buttons." },
+    { "id": "LIVE-03", "state": "high-pain block", "verdict": "PASS", "evidence": "Previously exercised in current app flow; blocked state exposes record and retry actions." },
+    { "id": "LIVE-04", "state": "allowed candidates and active progress", "verdict": "PASS", "evidence": "Previously exercised in current app flow; candidates, 보수형 selection, and Day 1–9 active progress reached." }
+  ],
+  "firstContextBodyText": "ONE QUICK CHOICE / 오늘 무엇 때문에 오셨나요? / 훈련을 기록하고 싶어요 / 통증·컨디션을 남기고 싶어요 / 훈련 계획이 궁금해요 / 그냥 둘러볼래요",
+  "layout": { "innerWidth": 1912, "scrollWidth": 1912, "horizontalOverflow": false }
+}

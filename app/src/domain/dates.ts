@@ -19,6 +19,17 @@ export function isoShift(iso: string, days: number): string {
   return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`
 }
 
+export function isValidIsoDate(value: string): boolean {
+  if (!/^\d{4}-\d{2}-\d{2}$/u.test(value)) return false
+  const [year, month, day] = value.split("-").map(Number)
+  if (year === undefined || month === undefined || day === undefined) return false
+
+  const parsed = new Date(year, month - 1, day)
+  return parsed.getFullYear() === year
+    && parsed.getMonth() === month - 1
+    && parsed.getDate() === day
+}
+
 /** "2026 · 07 · 10" — IndexCard 헤더용 */
 export function cardDate(iso: string): string {
   const [y, m, d] = iso.split("-")

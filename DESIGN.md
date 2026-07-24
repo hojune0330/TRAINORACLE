@@ -75,11 +75,14 @@ Max content width is 1440px. Breakpoints: single column under 760px, two columns
 - Accessibility: native table with visible headers.
 
 ### App Shell
-- Structure: one centered journal surface with a fixed four-item bottom navigation.
+- Structure: one centered training surface with a fixed four-item bottom navigation.
 - Width: fills the viewport up to 520px; desktop visitors see the same real app unless `?workspace=1` is present.
 - Tokens: consumes the root journal token files through `app/src/main.tsx`; no duplicate token declarations in app components.
 - Component tokens: `--app-frame-canvas`, `--app-shell-max-width`, `--app-tab-height`, `--app-date-header-height`, `--app-touch-min`, `--app-action-height`, `--app-choice-height`, `--app-plan-mark-size`, `--fs-app-title`, and `--fs-app-section-title`.
-- States: first visit, empty journal, populated journal, entry form, trends, guide.
+- Primary navigation: Home, Plan, Record, Trends. Guide remains a secondary route from Home and first-visit examples.
+- States: first visit, empty journal, populated journal, plan intake, plan candidates, active plan, entry form, trends, guide.
+- Compact-height rule: at widths up to 340px and heights up to 650px, first-visit vertical spacing may tighten while both primary actions retain their full touch height.
+- Narrow plan rules: up to 340px the points strip may stack; up to 380px active-plan status moves below its session text and progress actions use two columns.
 - Accessibility: the main scroll region and bottom navigation remain distinct landmarks.
 
 ### Primary Action
@@ -105,6 +108,31 @@ Max content width is 1440px. Breakpoints: single column under 760px, two columns
 - Structure: service name, plain status, honest scope explanation, journal action, back and skip controls.
 - Surface: borders-only using `--surface` and `--line`.
 - Accessibility: no waitlist, request, profile, or identity input is present.
+
+### Plan Intake Step
+- Structure: one decision question, two to four full-width Choice Rows, progress label, back action.
+- Surface: unframed page band using `--surface`, `--line`, and existing action tokens.
+- States: goal, experience, available days, frame length, current-risk check.
+- Accessibility: one question per screen; current selection is exposed with `aria-pressed`; no hidden required fields.
+
+### Plan Candidate Comparison
+- Structure: source/confidence strip, candidate name, factual difference summary, ordered session list, select action.
+- Variants: `BALANCED`, `CONSERVATIVE`.
+- Surface: candidates are adjacent bordered sections, not cards inside a card.
+- Content rule: sparse-data candidates use duration and RPE ranges; never invent exact pace, readiness, medical clearance, or training history.
+- Accessibility: each candidate has a heading, a complete difference description, and one unique selection button.
+
+### Active Plan Timeline
+- Structure: frame identity, source/confidence state, ordered day rows, one progress action per planned session, next-frame continuity note.
+- Progress states: planned, completed, rested, skipped, pain check-in.
+- Safety: progress never clears a Safety Gate state and never grants a training-load reward.
+- Accessibility: state is always text plus icon; color is secondary.
+
+### Oracle Points Strip
+- Structure: current non-economic point total, safe recording continuity, one plain next-action sentence.
+- Earn sources: one daily visit and one eligible journal day; rest and pain/injury records count.
+- Forbidden meaning: distance, pace, load, plan compliance, safety clearance, consent, money, ranking, or coach authority.
+- Accessibility: no loss animation, shame copy, countdown pressure, or color-only status.
 
 ## 6. Motion & Interaction
 

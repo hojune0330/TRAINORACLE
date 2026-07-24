@@ -10,6 +10,7 @@ import { LogDetail } from "./screens/LogDetail"
 import { Trends } from "./screens/Trends"
 import { Guide } from "./screens/Guide"
 import { FirstPage } from "./screens/home/FirstPage"
+import { PlanBeta } from "./screens/PlanBeta"
 import { todayISO } from "./domain/journal-store"
 
 export default function App() {
@@ -35,15 +36,15 @@ function Workspace() {
         padding: "0 0 30px", justifyContent: "flex-start",
       }}>
         <MobileFrame label="FIRST VISIT · WELCOME">
-          <FirstPage initialStep="welcome" onWriteLog={() => {}} onOpenGuide={() => {}} />
+          <FirstPage initialStep="welcome" onWriteLog={() => {}} onOpenPlan={() => {}} />
         </MobileFrame>
 
         <MobileFrame label="FIRST VISIT · ONE CONTEXT">
           <FirstPage initialStep="context" onWriteLog={() => {}} />
         </MobileFrame>
 
-        <MobileFrame label="FIRST VISIT · PLAN PREPARING">
-          <FirstPage initialStep="plan" onWriteLog={() => {}} />
+        <MobileFrame label="PLAN · BETA">
+          <PlanBeta onWriteLog={() => {}} />
         </MobileFrame>
 
         <MobileFrame label="HOME · 실데이터">

@@ -9,13 +9,16 @@ import { toAnalysisJournalEntry } from "../domain/safe-export"
 import type { AnalysisJournalEntry } from "../domain/safe-export"
 import { painLevelsRequireReview } from "../safety/memo-safety"
 import { DeviceJournal, SafeJournalExport } from "./home/DeviceJournal"
+import { EngagementStrip } from "./home/EngagementStrip"
 import { EmptyJournalHome, FirstPage } from "./home/FirstPage"
 import type { JournalEntryType } from "./log-entry/shared"
+import { engagementSummary } from "../domain/engagement"
 
 export type HomeProps = {
   readonly onWriteLog?: (entryType?: JournalEntryType) => void
   readonly onOpenDay?: (date: string) => void
   readonly onOpenGuide?: () => void
+  readonly onOpenPlan?: () => void
   readonly firstVisitActive?: boolean
   readonly onDismissFirstVisit?: () => void
 }
@@ -24,6 +27,7 @@ export function Home({
   onWriteLog,
   onOpenDay,
   onOpenGuide,
+  onOpenPlan,
   firstVisitActive = true,
   onDismissFirstVisit,
 }: HomeProps) {
@@ -39,6 +43,10 @@ export function Home({
   const today = todayISO()
   const life = lifetimeStats(analysisEntries)
   const isEmpty = all.length === 0
+  const engagement = engagementSummary(
+    all.map((entry) => ({ date: entry.date, kind: entry.kind })),
+    today,
+  )
 
   React.useEffect(() => {
     if (window.location.search.includes("uitest")) {
@@ -47,22 +55,40 @@ export function Home({
   }, [isEmpty, life.total, life.days])
 
   return (
-    <div style={{ paddingBottom: isEmpty ? 0 : 90 }}>
-      <div style={{ padding: "16px 18px 14px" }}>
-        <IndexCard date={cardDate(today)} dow={dowOf(today)} season={seasonOf(today)} />
-      </div>
+    <div
+      className={isEmpty && firstVisitActive ? "home-screen--first-visit" : undefined}
+      style={{ paddingBottom: isEmpty ? 0 : 90 }}
+    >
+      {!(isEmpty && firstVisitActive) && (
+        <div style={{ padding: "16px 18px 14px" }}>
+          <IndexCard date={cardDate(today)} dow={dowOf(today)} season={seasonOf(today)} />
+        </div>
+      )}
       {isEmpty ? (
         firstVisitActive ? (
           <FirstPage
             onWriteLog={onWriteLog}
-            onOpenGuide={onOpenGuide}
+            onOpenPlan={onOpenPlan}
             onDismiss={onDismissFirstVisit}
+            oraclePoints={engagement.points}
           />
         ) : (
-          <EmptyJournalHome onWriteLog={onWriteLog} onOpenGuide={onOpenGuide} />
+          <EmptyJournalHome
+            onWriteLog={onWriteLog}
+            onOpenPlan={onOpenPlan}
+            oraclePoints={engagement.points}
+          />
         )
       ) : (
-        <DataHome all={all} analysisEntries={analysisEntries} onWriteLog={onWriteLog} onOpenDay={onOpenDay} onOpenGuide={onOpenGuide} />
+        <DataHome
+          all={all}
+          analysisEntries={analysisEntries}
+          onWriteLog={onWriteLog}
+          onOpenDay={onOpenDay}
+          onOpenGuide={onOpenGuide}
+          onOpenPlan={onOpenPlan}
+          engagement={engagement}
+        />
       )}
     </div>
   )
@@ -74,9 +100,11 @@ type DataHomeProps = {
   readonly onWriteLog?: () => void
   readonly onOpenDay?: (date: string) => void
   readonly onOpenGuide?: () => void
+  readonly onOpenPlan?: () => void
+  readonly engagement: ReturnType<typeof engagementSummary>
 }
 
-function DataHome({ all, analysisEntries, onWriteLog, onOpenDay, onOpenGuide }: DataHomeProps) {
+function DataHome({ all, analysisEntries, onWriteLog, onOpenDay, onOpenGuide, onOpenPlan, engagement }: DataHomeProps) {
   const today = todayISO()
   const life = lifetimeStats([...analysisEntries])
   const weeklyStats = thisWeekStats([...analysisEntries])
@@ -129,6 +157,19 @@ function DataHome({ all, analysisEntries, onWriteLog, onOpenDay, onOpenGuide }: 
           <span style={{ fontFamily: "var(--mono)", fontSize: 10, color: "rgba(255,255,255,.7)", letterSpacing: "0.14em" }}>훈련 후 · 회복/저녁 · 경기</span>
         </button>
       </div>
+
+      <div className="home-plan-entry">
+        <button
+          className="home-plan-action"
+          type="button"
+          onClick={onOpenPlan}
+        >
+          <span>훈련계획 후보 만들기</span>
+          <small>일지가 적어도 시작 가능 · 7일 또는 9~10일</small>
+        </button>
+      </div>
+
+      <EngagementStrip summary={engagement} />
 
       <DeviceJournal onOpenDay={onOpenDay} />
 

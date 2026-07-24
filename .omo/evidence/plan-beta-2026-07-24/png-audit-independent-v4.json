@@ -1,0 +1,14 @@
+{
+  "checkedAt": "2026-07-24T00:22:30Z",
+  "captureSurface": "vite-production-preview",
+  "count": 42,
+  "dimensions": { "1330x900": 14, "393x852": 14, "320x568": 14 },
+  "badPngSignatures": 0,
+  "badDimensions": 0,
+  "emptyFiles": 0,
+  "duplicatePayloadGroups": 0,
+  "oldestPng": "2026-07-24T00:14:44.3407837Z",
+  "newestRelevantSource": "2026-07-24T00:13:00.5982214Z",
+  "allPngsNewerThanRelevantSources": true,
+  "method": "Independent PowerShell read of every PNG signature, IHDR dimensions, byte length, SHA-256, duplicate group, and mtime."
+}

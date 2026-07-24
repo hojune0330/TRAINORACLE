@@ -7,11 +7,13 @@ import type { EntryType } from "./screens/LogEntry"
 import { LogDetail } from "./screens/LogDetail"
 import { Trends } from "./screens/Trends"
 import { Guide } from "./screens/Guide"
-import { localOnlyCount } from "./domain/journal-store"
+import { PlanBeta } from "./screens/PlanBeta"
+import { localOnlyCount, todayISO } from "./domain/journal-store"
 import type { JournalEntry } from "./domain/journal-store"
 import { createSavedFactReceipt } from "./domain/save-receipt"
 import type { SavedFactReceipt } from "./domain/save-receipt"
 import { dismissFirstVisit, hasDismissedFirstVisit } from "./domain/onboarding-state"
+import { recordDailyVisit } from "./domain/engagement"
 
 interface ViewState {
   tab: AppTab
@@ -33,6 +35,7 @@ type SavedToastState = {
 }
 
 export function AppShell() {
+  React.useState(() => recordDailyVisit(todayISO()))
   const [v, setV] = React.useState<ViewState>(INITIAL)
   const [savedToast, setSavedToast] = React.useState<SavedToastState | null>(null)
   const [firstVisitActive, setFirstVisitActive] = React.useState(
@@ -76,11 +79,22 @@ export function AppShell() {
         onWriteLog={(entryType) => setV(s => ({ ...s, tab: "log", entryType: entryType ?? "choose" }))}
         onOpenDay={(date) => setV(s => ({ ...s, detailDate: date }))}
         onOpenGuide={() => setV(s => ({ ...s, tab: "guide" }))}
+        onOpenPlan={() => setV(s => ({ ...s, tab: "plan" }))}
         firstVisitActive={firstVisitActive}
         onDismissFirstVisit={() => {
           dismissFirstVisit()
           setFirstVisitActive(false)
         }}
+      />
+    )
+  } else if (v.tab === "plan") {
+    screen = (
+      <PlanBeta
+        onWriteLog={(entryType) => setV({
+          tab: "log",
+          entryType: entryType ?? "choose",
+          detailDate: null,
+        })}
       />
     )
   } else if (v.tab === "log") {

@@ -1,0 +1,8 @@
+Targeted tests: npm.cmd test -- --run src/screens/PlanBeta.contract.test.tsx src/domain/plan-beta-store.test.ts
+Result: PASS — 2 test files passed, 13 tests passed.
+
+Typecheck: npm.cmd run typecheck
+Result: PASS — tsc --noEmit exited 0.
+
+Production build: npm.cmd run build
+Result: PASS — tsc --noEmit and vite build exited 0; 1723 modules transformed.

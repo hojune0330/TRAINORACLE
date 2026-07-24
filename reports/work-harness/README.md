@@ -52,7 +52,7 @@ node specs/test-packages/reasoning-tier-harness.mjs next --stage S3_MECHANICAL_B
 ## 현재 선별 결과
 
 - 1단계: 코치 규칙, 부하·최소근거, 개인정보, 파일럿, 화면 검토가 사람 결정을 기다립니다.
-- 2단계: 위 결정이 끝나기 전에는 정본 패치나 Plan Generator 작업을 시작하지 않습니다.
+- 2단계: 위 결정이 끝나기 전에는 정본 패치나 정식 Formation 적응형 Plan Generator 작업을 시작하지 않습니다. 공개 로컬 베타는 `PLAN_BETA_PRODUCT_DECISION_2026_07_24.md`의 제한 범위만 사용하며 이 작업을 완료한 것으로 간주하지 않습니다.
 - 3단계: 게이트 재검증까지 완료했습니다. 논문 메타데이터와 문서 상태 동기화는
   `DEFERRED_VOLUME`로 보류했으며, 현재 새로 실행할 `READY` 작업은 없습니다.
 

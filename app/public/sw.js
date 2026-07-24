@@ -1,9 +1,9 @@
-/* TRAINORACLE service worker — v1
+/* TRAINORACLE service worker — v2
  * 전략:
  *  - 내비게이션(HTML): network-first → 실패 시 캐시된 셸 (오프라인에서도 앱이 뜬다)
  *  - 해시된 정적 자산(/assets/): cache-first (Vite 해시 = 불변)
  *  - 아이콘/매니페스트: cache-first
- * 주의: 훈련일지 데이터는 SW 캐시가 아니라 localStorage/IndexedDB 소관 — 여기서 다루지 않는다.
+ * 주의: 훈련계획·일지 데이터는 SW 캐시가 아니라 localStorage/IndexedDB 소관 — 여기서 다루지 않는다.
  */
 const VERSION = "trainoracle-v2";
 const SHELL = ["./", "./manifest.webmanifest"];
