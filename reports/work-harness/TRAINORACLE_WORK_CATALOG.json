@@ -276,7 +276,7 @@
     },
     {
       "id": "S2-NONEXECUTING-VERTICAL-SLICE",
-      "title": "Build the non-executing Plan Generator vertical slice after all P1 decisions",
+      "title": "Replace the bounded public beta with a formal Formation vertical slice after all P1 decisions",
       "stage": "S2_BOUNDED_BUILD",
       "status": "WAIT_DEPENDENCY",
       "priority": 6,
@@ -286,11 +286,11 @@
       "dependsOn": ["S1-P1-PLAN-APPROVALS"],
       "evidence": [
         { "path": "reports/review/FORMATION_FORMAL_GATE_STATUS.md", "contains": "runtime_started: false" },
-        { "path": "impl/src/plan-generator/generator.ts", "contains": "PLAN_GENERATOR_STUB" }
+        { "path": "PLAN_BETA_PRODUCT_DECISION_2026_07_24.md", "contains": "canonical_spec_promotion: false" }
       ],
       "allowedPaths": ["impl/src/plan-generator/**", "impl/tests/**"],
       "deterministicChecks": ["cd impl && npm run typecheck", "cd impl && npm test", "node specs/test-packages/test-wo016-gate-verifier.mjs"],
-      "forbiddenActions": ["Do not connect to athlete data or calendars", "Do not set runtime authority true"]
+      "forbiddenActions": ["Do not treat the bounded beta as formal Formation runtime authority", "Do not set formal Formation runtime authority true"]
     },
     {
       "id": "S3-GATE-RECOUNT",
