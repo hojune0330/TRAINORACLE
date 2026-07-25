@@ -84,4 +84,16 @@ describe("eraseAllLocalData", () => {
     const raw = window.localStorage.getItem(JOURNAL)
     expect(raw).toBeNull()
   })
+  it("휴지통도 지운다 — 지운 일지의 메모 원문이 기기에 남으면 안 된다", () => {
+    // 휴지통에는 되돌리기용으로 일지 원본(메모 포함)이 통째로 들어 있다.
+    // 여기가 빠지면 "이 기기의 내 데이터 전부 지우기"가 거짓이 된다.
+    const TRASH = "trainoracle.journal.trash.v1"
+    window.localStorage.setItem(TRASH, JSON.stringify([
+      { entry: { id: "a", kind: "post-session", memo: "사적인메모" }, deletedAt: "2026-07-20T00:00:00.000Z" },
+    ]))
+    expect(erasableKeys()).toContain(TRASH)
+    const result = eraseAllLocalData()
+    expect(result.ok).toBe(true)
+    expect(window.localStorage.getItem(TRASH)).toBeNull()
+  })
 })

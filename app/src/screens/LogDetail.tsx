@@ -7,7 +7,8 @@ import type { ReactNode } from "react"
 import { IndexCard, MoodStrip, PainDot, SectionLb } from "../components/JournalPrimitives"
 import { TermHelp } from "../components/TermHelp"
 import type { JournalEntry, PostSessionEntry, EveningEntry, RaceEntry } from "../domain/journal-store"
-import { entriesForDate, deleteEntry } from "../domain/journal-store"
+import { entriesForDate, deleteEntry, restoreDeletedEntry } from "../domain/journal-store"
+import { TRASH_RETENTION_DAYS } from "../domain/journal-trash"
 import { hasImportedField } from "../domain/field-provenance"
 import { painLevelsRequireReview } from "../safety/memo-safety"
 import { cardDate, dowOf, seasonOf } from "../domain/dates"
@@ -37,12 +38,36 @@ function savedClock(iso: string): string {
 // ───────── A. Journal-page (실데이터) ─────────
 function LogDetailJournal({ date, onBack }: { date: string; onBack?: (() => void) | undefined }) {
   const [rev, setRev] = React.useState(0)
+  // 방금 지운 것 — 되돌리기 버튼을 그 자리에서 띄우기 위해 들고 있는다.
+  // 휴지통(30일)에 남아 있으므로 이 상태가 사라져도 복구는 가능하다.
+  const [justDeleted, setJustDeleted] = React.useState<
+    { readonly id: string; readonly label: string; readonly trashed: boolean } | null
+  >(null)
   const entries = React.useMemo(() => entriesForDate(date), [date, rev])
   const remove = (id: string, label: string) => {
-    if (!window.confirm(`${label} 일지를 지울까요?\n지운 일지는 되돌릴 수 없어요.`)) return
+    // 문구는 사실과 일치해야 한다. 휴지통 30일이 생겼으므로 예전 문구
+    // "되돌릴 수 없어요"는 거짓이 됐다 — 겁을 주는 방향의 거짓이라도 거짓이다.
+    if (!window.confirm(
+      `${label} 일지를 지울까요?\n`
+      + `휴지통에 ${TRASH_RETENTION_DAYS}일 보관되고, 그 안에는 되돌릴 수 있어요.\n`
+      + `${TRASH_RETENTION_DAYS}일이 지나면 완전히 사라져요.`,
+    )) return
     const r = deleteEntry(id)
-    if (window.location.search.includes("uitest")) console.log(`[JDEL] ok=${r.ok} remain=${r.total}`)
+    if (window.location.search.includes("uitest")) {
+      console.log(`[JDEL] ok=${r.ok} remain=${r.total} trashed=${r.trashed}`)
+    }
     if (!r.ok) { window.alert("지우지 못했어요. 잠시 후 다시 시도해 주세요."); return }
+    setJustDeleted({ id, label, trashed: r.trashed })
+    setRev(v => v + 1)
+  }
+  const undoRemove = (id: string) => {
+    const r = restoreDeletedEntry(id)
+    if (window.location.search.includes("uitest")) console.log(`[JUNDO] ok=${r.ok}`)
+    if (!r.ok) {
+      window.alert("되돌리지 못했어요. 휴지통에서 다시 시도해 주세요.")
+      return
+    }
+    setJustDeleted(null)
     setRev(v => v + 1)
   }
   const sessions = entries.filter((e): e is PostSessionEntry => e.kind === "post-session")
@@ -56,6 +81,34 @@ function LogDetailJournal({ date, onBack }: { date: string; onBack?: (() => void
       <div style={{ padding: "14px 20px 0" }}>
         <IndexCard date={cardDate(date)} dow={dowOf(date)} season={seasonOf(date)} />
       </div>
+
+      {justDeleted && (
+        <div data-testid="delete-undo" style={{
+          margin: "14px 20px 0", padding: "11px 13px",
+          border: "1px solid var(--ink)", background: "var(--surface)",
+          display: "grid", gridTemplateColumns: "1fr auto", gap: 10, alignItems: "center",
+        }}>
+          <div style={{ fontFamily: "var(--mono)", fontSize: 10, color: "var(--ink-2)", lineHeight: 1.6 }}>
+            {justDeleted.label} 일지를 지웠어요.
+            {justDeleted.trashed
+              ? ` 휴지통에 ${TRASH_RETENTION_DAYS}일 동안 남아 있어요.`
+              : " 이 기기에 자리가 없어 휴지통에 넣지 못했어요 — 되돌릴 수 없어요."}
+          </div>
+          {justDeleted.trashed && (
+            <button
+              type="button"
+              data-testid="delete-undo-button"
+              onClick={() => undoRemove(justDeleted.id)}
+              style={{
+                minHeight: 44, padding: "0 12px",
+                border: "1px solid var(--ink)", background: "var(--ink)", color: "var(--bg)",
+                fontFamily: "var(--mono)", fontSize: 10.5, fontWeight: 600, cursor: "pointer",
+                whiteSpace: "nowrap",
+              }}
+            >되돌리기</button>
+          )}
+        </div>
+      )}
 
       {entries.length === 0 && (
         <div style={{ padding: "40px 20px" }}>

@@ -30,6 +30,17 @@ create table if not exists public.journal_tombstones (
 
 alter table public.journal_tombstones enable row level security;
 
+-- 여러 번 붙여넣어도 안전하게 — `create policy`는 `if not exists`를 지원하지
+-- 않아 두 번째 실행에서 42710 에러로 멈춘다. 사람이 손으로 붙여넣는 절차라
+-- 두 번 실행되는 일은 실제로 일어난다. 그때 "이미 있는데 에러가 났다"를 보고
+-- 소유자가 판단을 못 하게 만드는 대신, 지우고 다시 만든다.
+-- (drop → create 사이에 RLS가 꺼지는 순간은 없다. RLS는 위에서 이미 켜졌고,
+--  정책이 없는 상태는 "아무도 접근 못 함"이라 열리는 쪽이 아니다.)
+drop policy if exists "own tombstones select" on public.journal_tombstones;
+drop policy if exists "own tombstones insert" on public.journal_tombstones;
+drop policy if exists "own tombstones update" on public.journal_tombstones;
+drop policy if exists "own tombstones delete" on public.journal_tombstones;
+
 -- 본인 행만 접근 (DB 레벨 격리 — 클라이언트 버그가 있어도 타인 데이터 접근 불가)
 create policy "own tombstones select" on public.journal_tombstones
   for select using (auth.uid() = user_id);

@@ -10,6 +10,7 @@ import type { AnalysisJournalEntry } from "../domain/safe-export"
 import { painLevelsRequireReview } from "../safety/memo-safety"
 import { DataSafetyNotice } from "../components/DataSafetyNotice"
 import { DeviceJournal, SafeJournalExport } from "./home/DeviceJournal"
+import { TrashBin } from "./home/TrashBin"
 import { EngagementStrip } from "./home/EngagementStrip"
 import { EmptyJournalHome, FirstPage } from "./home/FirstPage"
 import type { JournalEntryType } from "./log-entry/shared"
@@ -38,7 +39,10 @@ export function Home({
   firstVisitActive = true,
   onDismissFirstVisit,
 }: HomeProps) {
-  const all = React.useMemo(() => loadEntries(), [])
+  // 휴지통에서 되돌리면 일지가 늘어난다. rev 없이 `useMemo(…, [])`로 두면
+  // 되돌렸는데 홈 목록·통계가 그대로여서 "안 돌아왔다"로 보인다(e2e에서 확인).
+  const [rev, setRev] = React.useState(0)
+  const all = React.useMemo(() => loadEntries(), [rev])
   const analysisEntries = React.useMemo(() => {
     const projected: AnalysisJournalEntry[] = []
     for (const entry of all) {
@@ -116,6 +120,20 @@ export function Home({
           engagement={engagement}
         />
       )}
+
+      {/*
+        휴지통은 빈 화면/데이터 화면 **양쪽 바깥**에 둔다.
+        e2e에서 실제 결함을 잡았다: DataHome 안에 두면 마지막 일지를 지운 순간
+        홈이 "빈 화면" 분기로 넘어가 휴지통이 사라진다. 되돌리기가 가장 필요한
+        상황(하나 남은 일지를 실수로 지움)에서 정확히 닿을 수 없게 된다.
+        분기 조건을 붙이지 않는다: `TrashBin`은 휴지통이 비어 있으면 스스로
+        아무것도 렌더하지 않으므로, "비어 있을 땐 감춘다"는 판단이 이미 안에 있다.
+        여기서 화면 상태로 한 번 더 가드를 걸면(첫 방문 등) 휴지통에 항목이
+        있는데도 닿을 수 없는 경우가 생긴다 — e2e에서 실제로 그렇게 실패했다.
+      */}
+      <div style={{ paddingBottom: isEmpty ? 40 : 0 }}>
+        <TrashBin onChanged={() => setRev((value) => value + 1)} />
+      </div>
     </div>
   )
 }

@@ -1,7 +1,7 @@
 import React from "react"
 import { SectionLb } from "../../components/JournalPrimitives"
 import { compactDate } from "../../domain/dates"
-import { exportEntriesJSON, recentEntries, todayISO } from "../../domain/journal-store"
+import { exportEntriesJSON, recentEntries, safeExportSummary, todayISO } from "../../domain/journal-store"
 import type { JournalEntry } from "../../domain/journal-store"
 import { hasImportedField } from "../../domain/field-provenance"
 
@@ -111,6 +111,9 @@ export function SafeJournalExport({ onOpenRestore }: {
   readonly onOpenRestore?: () => void
 } = {}) {
   const [isFullExportDialogOpen, setIsFullExportDialogOpen] = React.useState(false)
+  // F-3 안내: 안전 백업에서 빠지는 일지가 있으면 **내려받기 전에** 알린다.
+  // 받은 뒤에 알려주면 이미 "전부 받았다"고 믿은 상태라 늦다.
+  const summary = React.useMemo(() => safeExportSummary(), [])
 
   return (
     <div style={{ padding: "28px 20px 0" }}>
@@ -123,6 +126,19 @@ export function SafeJournalExport({ onOpenRestore }: {
       <div id={EXPORT_DESCRIPTION_ID} style={{ marginTop: 4, fontFamily: "var(--mono)", fontSize: 9, color: "var(--ink-4)", lineHeight: 1.5 }}>
         메모 원문과 메모 목적은 제외해요 · 파일은 이 기기에만 저장되고 어디로도 전송되지 않아요
       </div>
+      {summary.skipped > 0 && (
+        <div data-testid="safe-export-skipped" style={{
+          marginTop: 8, padding: "8px 10px",
+          border: "1px solid var(--line)", background: "transparent",
+          fontFamily: "var(--mono)", fontSize: 9.5, color: "var(--ink-2)", lineHeight: 1.65,
+        }}>
+          수치 없이 메모만 쓴 일지 {summary.skipped}개는 이 파일에 들어가지 않아요.
+          메모를 빼면 남는 내용이 없기 때문이에요.
+          <br />
+          전부 남기려면 아래 <span style={{ color: "var(--ink)" }}>메모 포함 파일 내보내기</span>를 써 주세요.
+          {" "}({summary.included}개 포함 / 전체 {summary.total}개)
+        </div>
+      )}
       <button type="button" onClick={() => setIsFullExportDialogOpen(true)} style={{
         background: "transparent", border: 0, cursor: "pointer", padding: "8px 0 0",
         minHeight: 44,

@@ -20,6 +20,10 @@
 /** 일지 본문이 담기는 키 — 반드시 지운다 */
 const CONTENT_KEYS = [
   "trainoracle.journal.v1",
+  // 휴지통에는 **지운 일지 원본이 메모 원문까지 그대로** 들어 있다. 여기를
+  // 빼놓으면 "이 기기의 내 데이터 전부 지우기"가 거짓말이 된다 — 지운 일지가
+  // 30일 동안 기기에 남는다. 기기를 넘기는 상황에서 가장 위험한 누락이다.
+  "trainoracle.journal.trash.v1",
   "trainoracle.journal.full-backup.v1",
   "trainoracle.plan-beta.v1",
   "trainoracle.plan-beta.history.v1",
