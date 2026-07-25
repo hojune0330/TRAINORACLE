@@ -36,7 +36,11 @@ const secondaryBtn: React.CSSProperties = {
 
 type OtpStep = "email" | "code"
 
-export function Account({ onBack }: { readonly onBack?: () => void }) {
+export function Account({ onBack, onOpenImport }: {
+  readonly onBack?: () => void
+  /** 기기 데이터 가져오기 화면으로 이동 — 계정·승인 없이 지금 되는 경로 */
+  readonly onOpenImport?: () => void
+}) {
   const [user, setUser] = React.useState<AccountUser | null>(null)
   const [loading, setLoading] = React.useState(true)
   const [step, setStep] = React.useState<OtpStep>("email")
@@ -225,22 +229,32 @@ export function Account({ onBack }: { readonly onBack?: () => void }) {
             <p role="status" style={{ ...mono, fontSize: 12, color: "var(--ink-2)", margin: 0 }}>{syncMessage}</p>
           )}
 
-          <SectionLb>데이터 가져오기 — 준비 중</SectionLb>
+          <SectionLb>기기 데이터 가져오기</SectionLb>
           <div
             data-testid="import-teaser"
-            style={{ border: "1px dashed var(--line)", borderRadius: 10, padding: "12px 14px" }}
+            style={{ border: "1px solid var(--line)", borderRadius: 10, padding: "12px 14px" }}
           >
             <div style={{ fontFamily: "var(--sans)", fontSize: 13.5, fontWeight: 600 }}>
-              가민 · WHOOP · 스트라바에 쌓인 기록, 곧 가져올 수 있어요
+              워치에 쌓인 기록, 파일로 지금 가져올 수 있어요
             </div>
             <p style={{ fontFamily: "var(--sans)", fontSize: 12, lineHeight: 1.6, color: "var(--ink-2)", margin: "6px 0 0" }}>
-              워치와 앱에 이미 쌓여 있는 훈련·수면·회복 데이터를 연동해서
-              일지 옆에 나란히 보는 기능을 만들고 있어요. 지금 계정을 연동해 두면
-              준비되는 대로 바로 쓸 수 있어요.
+              가민 커넥트 등에서 활동을 TCX·GPX로 내보내면 거리·시간·평균 페이스가
+              자동으로 채워진 일지 초안이 만들어져요. <b>기록 탭 → 워치 기록 불러오기</b>에
+              있어요.
             </p>
-            <div style={{ ...mono, fontSize: 9.5, color: "var(--ink-4)", marginTop: 8, letterSpacing: "0.06em" }}>
-              GARMIN · WHOOP · STRAVA · 준비 중 · 연동은 읽기 전용
-            </div>
+            {onOpenImport && (
+              <button
+                type="button"
+                onClick={onOpenImport}
+                style={{ ...secondaryBtn, marginTop: 10, minHeight: 44 }}
+              >
+                지금 파일로 가져오기
+              </button>
+            )}
+            <p style={{ ...mono, fontSize: 10, color: "var(--ink-4)", lineHeight: 1.65, margin: "10px 0 0" }}>
+              계정 연결로 자동 수집하는 기능은 각 서비스의 승인·계약 조건 때문에
+              시점을 약속할 수 없어요. 연동은 언제나 읽기 전용이에요.
+            </p>
           </div>
 
           <button type="button" style={secondaryBtn} disabled={busy} onClick={() => void handleSignOut()}>

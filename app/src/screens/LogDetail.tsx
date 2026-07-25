@@ -8,6 +8,7 @@ import { IndexCard, MoodStrip, PainDot, SectionLb } from "../components/JournalP
 import { TermHelp } from "../components/TermHelp"
 import type { JournalEntry, PostSessionEntry, EveningEntry, RaceEntry } from "../domain/journal-store"
 import { entriesForDate, deleteEntry } from "../domain/journal-store"
+import { hasImportedField } from "../domain/field-provenance"
 import { painLevelsRequireReview } from "../safety/memo-safety"
 import { cardDate, dowOf, seasonOf } from "../domain/dates"
 import { RaceSelfCheckSummary, SavedMemo } from "./log-entry/SavedEntryContext"
@@ -78,6 +79,7 @@ function LogDetailJournal({ date, onBack }: { date: string; onBack?: (() => void
               <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
                 <span className={`etag ${meta.cls}`}><span className="d"></span><span className="c">{meta.c}</span><span className="n">{meta.n}</span></span>
                 <SyncChip />
+                {hasImportedField(s.fieldProvenance) && <ImportedChip />}
               </div>
               <div style={{ fontFamily: "var(--sans)", fontSize: 17, fontWeight: 500, color: "var(--ink)", letterSpacing: "-0.005em" }}>
                 {s.title || "훈련 기록"}
@@ -195,6 +197,25 @@ function SyncChip() {
       color: "var(--ink-4)",
       border: "1px solid var(--hair)", padding: "2px 5px", whiteSpace: "nowrap",
     }}>이 기기</span>
+  )
+}
+
+/**
+ * 가져온 기록 출처 배지 — 실측/자동/수기를 섞어 보여주지 않기 위한 표시.
+ * 가져온 값은 주간 통계·추이·훈련계획에서 제외되므로, 왜 숫자가 합계에
+ * 안 잡히는지 사용자가 알 수 있어야 한다.
+ */
+function ImportedChip() {
+  return (
+    <span
+      data-testid="imported-chip"
+      title="워치 파일에서 가져온 기록이에요 · 직접 확인한 값만 통계에 들어가요"
+      style={{
+        fontFamily: "var(--mono)", fontSize: 8.5, letterSpacing: "0.1em",
+        color: "var(--ink-2)",
+        border: "1px solid var(--line)", padding: "2px 5px", whiteSpace: "nowrap",
+      }}
+    >가져옴</span>
   )
 }
 

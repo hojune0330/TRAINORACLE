@@ -3,6 +3,7 @@ import { SectionLb } from "../../components/JournalPrimitives"
 import { compactDate } from "../../domain/dates"
 import { exportEntriesJSON, recentEntries, todayISO } from "../../domain/journal-store"
 import type { JournalEntry } from "../../domain/journal-store"
+import { hasImportedField } from "../../domain/field-provenance"
 
 type DeviceJournalProps = {
   readonly onOpenDay?: (date: string) => void
@@ -81,11 +82,20 @@ export function DeviceJournal({ onOpenDay }: DeviceJournalProps) {
                 }}>{headline}</span>
                 <span style={{ display: "block", fontFamily: "var(--mono)", fontSize: 10, color: "var(--ink-3)", marginTop: 2 }}>{entrySub(entry)}</span>
               </span>
-              <span style={{
-                fontFamily: "var(--mono)", fontSize: 8.5, letterSpacing: "0.1em",
-                color: "var(--ink-4)",
-                border: "1px solid var(--hair)", padding: "2px 5px", whiteSpace: "nowrap",
-              }}>이 기기</span>
+              <span style={{ display: "grid", gap: 3, justifyItems: "end" }}>
+                <span style={{
+                  fontFamily: "var(--mono)", fontSize: 8.5, letterSpacing: "0.1em",
+                  color: "var(--ink-4)",
+                  border: "1px solid var(--hair)", padding: "2px 5px", whiteSpace: "nowrap",
+                }}>이 기기</span>
+                {hasImportedField(entry.fieldProvenance) && (
+                  <span data-testid="imported-chip" style={{
+                    fontFamily: "var(--mono)", fontSize: 8.5, letterSpacing: "0.1em",
+                    color: "var(--ink-2)",
+                    border: "1px solid var(--line)", padding: "2px 5px", whiteSpace: "nowrap",
+                  }}>가져옴</span>
+                )}
+              </span>
             </button>
           )
         })}

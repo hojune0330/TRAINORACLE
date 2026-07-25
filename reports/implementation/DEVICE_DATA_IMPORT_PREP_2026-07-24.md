@@ -5,7 +5,15 @@ source_model: FABLE
 work_id: FABLE-DEVICE-IMPORT-PREP-2026-07-24
 owner_directive: "가민 훕 같은 쌓인 데이터를 가져오는 서비스도 구현할 준비하고
   구현중임을 알리자. 특히 athletedata.health 이걸 제대로 차용하면 좋을 듯"
-status: PREP_ONLY (이번 PR은 '준비 중' 안내 노출까지 — 실연동은 후속 PR)
+status: SUPERSEDED_IN_PART (2026-07-25)
+superseded_by:
+  - reports/implementation/DEVICE_IMPORT_FEASIBILITY_2026-07-25.md
+  - reports/implementation/DEVICE_IMPORT_FILE_PATH_2026-07-25.md
+note: |
+  작성 시점(2026-07-24) 상태는 PREP_ONLY(준비 중 안내까지)였다.
+  2026-07-25에 IMP-2(TCX/GPX 파일 업로드)와 IMP-4 일부(출처 배지·중복
+  감지)가 실제로 출하되었으므로 이 문서의 status와 §2 난이도·§5 순위는
+  더 이상 현재 상태가 아니다. 갱신된 사실은 위 두 문서를 볼 것.
 ```
 
 ## 1. 벤치마크: athletedata.health 분석 (2026-07-24 크롤링)
@@ -53,7 +61,26 @@ status: PREP_ONLY (이번 PR은 '준비 중' 안내 노출까지 — 실연동�
 
 ## 5. 후속 PR 로드맵
 
-1. IMP-1: Strava OAuth 연결 + 활동 목록 → post-session 초안 흐름
-2. IMP-2: FIT/TCX 파일 업로드 파서 (가민 수동 경로)
+> 2026-07-25 갱신: 아래 순위는 작성 시점 판단이다. 실제로는 **IMP-2가 먼저
+> 출하**되었다. IMP-1(Strava OAuth)을 1순위로 둔 판단이 틀렸기 때문이다 —
+> 2026년 Strava API는 개발자 구독 + 인증 앱 10명 한도 + 중개 서비스 금지
+> 조항이 있어 오너 계정 결정 없이는 착수할 수 없다. 근거:
+> `reports/implementation/DEVICE_IMPORT_FEASIBILITY_2026-07-25.md`
+
+1. ~~IMP-1: Strava OAuth 연결 + 활동 목록 → post-session 초안 흐름~~
+   → **BLOCKED (오너 결정 대기: 구독·10명 한도·중개 금지 조항)**
+2. ~~IMP-2: FIT/TCX 파일 업로드 파서 (가민 수동 경로)~~
+   → **SHIPPED 2026-07-25** (TCX/GPX. FIT는 바이너리라 미포함 — 아래 참고)
 3. IMP-3: WHOOP 수면/회복 → evening 초안
-4. IMP-4: 출처 배지·중복 감지(같은 날 같은 거리 활동 병합 UI)
+   → **BLOCKED (오너 결정 대기: WHOOP 기기 멤버십 필요)**
+4. ~~IMP-4: 출처 배지·중복 감지~~
+   → **부분 SHIPPED 2026-07-25** (배지·중복 표시 완료. 자동 병합 UI는 미구현
+   — 자동 병합은 사용자 확인 없는 데이터 변경이라 원칙상 보류)
+
+### 5.1 FIT 미지원 결정 (2026-07-25)
+
+§5의 원 계획은 "FIT/TCX"였으나 **TCX/GPX만** 구현했다. FIT는 바이너리
+프로토콜이라 외부 파서 의존성이 필요하고, 정적 SPA에 파서를 넣으면 번들이
+커지는데 비해 실익이 적다 — Garmin Connect는 활동별로 TCX·GPX 내보내기를
+함께 제공하므로 사용자가 잃는 것이 없다. FIT 지원은 실사용에서 요구가
+확인되면 다시 검토한다.
