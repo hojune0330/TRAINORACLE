@@ -8,6 +8,7 @@ import {
   HeartPulse,
   PencilLine,
   Sparkles,
+  Upload,
 } from "lucide-react"
 import type { LucideIcon } from "lucide-react"
 import type { JournalEntryType } from "../log-entry/shared"
@@ -19,6 +20,8 @@ type FirstPageProps = {
   readonly onWriteLog?: (entryType?: JournalEntryType) => void
   readonly onOpenPlan?: () => void
   readonly onDismiss?: () => void
+  /** 내려받은 백업 되돌리기 — 반대로 일지가 뱄 상황이 복원이 가장 필요한 순간이다 */
+  readonly onOpenRestore?: () => void
   readonly oraclePoints?: number
 }
 
@@ -142,8 +145,9 @@ export function FirstPage({
 export function EmptyJournalHome({
   onWriteLog,
   onOpenPlan,
+  onOpenRestore,
   oraclePoints = 0,
-}: Pick<FirstPageProps, "onWriteLog" | "onOpenPlan" | "oraclePoints">) {
+}: Pick<FirstPageProps, "onWriteLog" | "onOpenPlan" | "onOpenRestore" | "oraclePoints">) {
   return (
     <div className="empty-journal-home">
       <div className="first-visit__eyebrow">MY JOURNAL</div>
@@ -165,6 +169,17 @@ export function EmptyJournalHome({
         <PencilLine aria-hidden="true" size={18} />
         일지 쓰기
       </button>
+      {onOpenRestore && (
+        <button
+          className="empty-journal-home__restore"
+          type="button"
+          data-testid="open-restore-empty"
+          onClick={onOpenRestore}
+        >
+          <Upload aria-hidden="true" size={16} />
+          전에 내려받은 백업이 있어요
+        </button>
+      )}
     </div>
   )
 }

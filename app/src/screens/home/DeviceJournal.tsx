@@ -106,7 +106,10 @@ export function DeviceJournal({ onOpenDay }: DeviceJournalProps) {
 
 const EXPORT_DESCRIPTION_ID = "safe-journal-export-description"
 
-export function SafeJournalExport() {
+export function SafeJournalExport({ onOpenRestore }: {
+  /** 내려받은 백업을 다시 일지로 되돌리는 경로 — 백업을 권하면 복원도 있어야 한다 */
+  readonly onOpenRestore?: () => void
+} = {}) {
   const [isFullExportDialogOpen, setIsFullExportDialogOpen] = React.useState(false)
 
   return (
@@ -126,6 +129,20 @@ export function SafeJournalExport() {
         fontFamily: "var(--mono)", fontSize: 9.5, color: "var(--ink-4)",
         letterSpacing: "0.08em", textDecoration: "underline", textUnderlineOffset: 3,
       }}>메모 포함 파일 내보내기 (JSON)</button>
+      {onOpenRestore && (
+        <>
+          <button type="button" data-testid="open-restore" onClick={onOpenRestore} style={{
+            display: "block",
+            background: "transparent", border: 0, cursor: "pointer", padding: "8px 0 0",
+            minHeight: 44,
+            fontFamily: "var(--mono)", fontSize: 9.5, color: "var(--ink-4)",
+            letterSpacing: "0.08em", textDecoration: "underline", textUnderlineOffset: 3,
+          }}>내려받은 백업 되돌리기</button>
+          <div style={{ marginTop: 4, fontFamily: "var(--mono)", fontSize: 9, color: "var(--ink-4)", lineHeight: 1.5 }}>
+            지금 있는 일지는 그대로 두고 백업에 있는 것만 더해요 · 파일은 이 기기에서만 읽어요
+          </div>
+        </>
+      )}
       {isFullExportDialogOpen && (
         <FullExportDialog
           onCancel={() => setIsFullExportDialogOpen(false)}

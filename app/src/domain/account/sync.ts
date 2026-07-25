@@ -11,6 +11,7 @@ import type { JournalEntry } from "../journal-schema"
 import { loadEntries, replaceAllEntries } from "../journal-store"
 import { toExportJournalEntry } from "../safe-export"
 import { supabase } from "./supabase-client"
+import { loadTombstones, tombstonedIds } from "./tombstone"
 
 const CONSENT_KEY = "trainoracle.sync.consent.v1"
 const TABLE = "journal_entries"
@@ -65,10 +66,15 @@ export function saveSyncConsent(consent: SyncConsent): boolean {
  * id 기준 LWW 머지 (순수 함수 — 계약 테스트 대상).
  * 같은 id: savedAt 큰 쪽 승리, 동률이면 local 승리.
  * 한쪽에만 있으면 보존. 결과는 date, savedAt 순 정렬.
+ *
+ * **삭제는 LWW의 예외다.** 사용자가 지운 id(tombstone)는 서버 사본이 더
+ * 최신이어도 되살리지 않는다. 그렇게 하지 않으면 지운 일지가 다음 동기화에
+ * 말없이 돌아온다 — 삭제권 위반. 되살리고 싶으면 새로 쓰면 된다(새 id).
  */
 export function mergeEntries(
   local: readonly JournalEntry[],
   remote: readonly JournalEntry[],
+  deletedIds: ReadonlySet<string> = tombstonedIds(),
 ): JournalEntry[] {
   const byId = new Map<string, JournalEntry>()
   for (const entry of remote) byId.set(entry.id, entry)
@@ -78,6 +84,7 @@ export function mergeEntries(
       byId.set(entry.id, entry)
     }
   }
+  for (const id of deletedIds) byId.delete(id)
   return [...byId.values()].sort((a, b) =>
     a.date === b.date ? a.savedAt.localeCompare(b.savedAt) : a.date.localeCompare(b.date),
   )
@@ -99,11 +106,13 @@ export type SyncOutcome = {
   readonly message: string
   readonly pulled: number
   readonly pushed: number
+  /** 서버에서도 지운 개수 — 삭제가 기기 사이에 전파되었는지 보여준다 */
+  readonly deleted: number
   readonly total: number
 }
 
 function failed(message: string): SyncOutcome {
-  return { ok: false, message, pulled: 0, pushed: 0, total: loadEntries().length }
+  return { ok: false, message, pulled: 0, pushed: 0, deleted: 0, total: loadEntries().length }
 }
 
 /** pull → merge → 로컬 반영 → push(전체 upsert) */
@@ -123,9 +132,11 @@ export async function syncNow(userId: string): Promise<SyncOutcome> {
   const remoteRaw = (data ?? []).map((row: { entry: unknown }) => row.entry)
   const remote = parseJournalEntryList(remoteRaw)
 
-  // 2. merge (fail-closed: 파싱 통과분만)
+  // 2. merge (fail-closed: 파싱 통과분만). 지운 id는 되살리지 않는다.
   const local = loadEntries()
-  const merged = mergeEntries(local, remote)
+  const tombstones = loadTombstones()
+  const deletedIds = tombstonedIds(tombstones)
+  const merged = mergeEntries(local, remote, deletedIds)
 
   // 3. 로컬 반영 — 실패해도 기존 로컬은 그대로 남는다
   const replaced = replaceAllEntries(merged)
@@ -148,9 +159,34 @@ export async function syncNow(userId: string): Promise<SyncOutcome> {
         message: "서버 백업에 실패했어요. 로컬 일지는 안전해요.",
         pulled: remote.length,
         pushed: 0,
+        deleted: 0,
         total: merged.length,
       }
     }
+  }
+
+  // 5. 삭제 전파 — 서버에 남은 사본도 지운다. 여기까지 해야 다른 기기에서도
+  //    되살아나지 않는다. 실패해도 로컬 삭제는 그대로 유지된다.
+  const remoteIds = new Set(remote.map((entry) => entry.id))
+  const toDelete = [...deletedIds].filter((id) => remoteIds.has(id))
+  let deleted = 0
+  if (toDelete.length > 0) {
+    const { error: deleteError } = await client
+      .from(TABLE)
+      .delete()
+      .eq("user_id", userId)
+      .in("entry_id", toDelete)
+    if (deleteError) {
+      return {
+        ok: false,
+        message: "지운 일지를 서버에서도 지우지 못했어요. 이 기기에서는 그대로 지워진 상태예요.",
+        pulled: remote.length,
+        pushed: rows.length,
+        deleted: 0,
+        total: merged.length,
+      }
+    }
+    deleted = toDelete.length
   }
 
   return {
@@ -158,6 +194,7 @@ export async function syncNow(userId: string): Promise<SyncOutcome> {
     message: "동기화가 끝났어요.",
     pulled: remote.length,
     pushed: rows.length,
+    deleted,
     total: merged.length,
   }
 }

@@ -22,6 +22,8 @@ export type HomeProps = {
   readonly onOpenPlan?: () => void
   /** 계정 기능 flag ON일 때만 전달됨 — 없으면 버튼 미노출 */
   readonly onOpenAccount?: () => void
+  /** 내려받은 백업 되돌리기 — 계정 불필요, 모든 상황에서 열림 */
+  readonly onOpenRestore?: () => void
   readonly firstVisitActive?: boolean
   readonly onDismissFirstVisit?: () => void
 }
@@ -32,6 +34,7 @@ export function Home({
   onOpenGuide,
   onOpenPlan,
   onOpenAccount,
+  onOpenRestore,
   firstVisitActive = true,
   onDismissFirstVisit,
 }: HomeProps) {
@@ -96,6 +99,7 @@ export function Home({
           <EmptyJournalHome
             onWriteLog={onWriteLog}
             onOpenPlan={onOpenPlan}
+            onOpenRestore={onOpenRestore}
             oraclePoints={engagement.points}
           />
         )
@@ -108,6 +112,7 @@ export function Home({
           onOpenGuide={onOpenGuide}
           onOpenPlan={onOpenPlan}
           onOpenAccount={onOpenAccount}
+          onOpenRestore={onOpenRestore}
           engagement={engagement}
         />
       )}
@@ -123,10 +128,11 @@ type DataHomeProps = {
   readonly onOpenGuide?: () => void
   readonly onOpenPlan?: () => void
   readonly onOpenAccount?: () => void
+  readonly onOpenRestore?: () => void
   readonly engagement: ReturnType<typeof engagementSummary>
 }
 
-function DataHome({ all, analysisEntries, onWriteLog, onOpenDay, onOpenGuide, onOpenPlan, onOpenAccount, engagement }: DataHomeProps) {
+function DataHome({ all, analysisEntries, onWriteLog, onOpenDay, onOpenGuide, onOpenPlan, onOpenAccount, onOpenRestore, engagement }: DataHomeProps) {
   const today = todayISO()
   const life = lifetimeStats([...analysisEntries])
   const weeklyStats = thisWeekStats([...analysisEntries])
@@ -222,7 +228,7 @@ function DataHome({ all, analysisEntries, onWriteLog, onOpenDay, onOpenGuide, on
         </div>
       )}
 
-      <SafeJournalExport />
+      <SafeJournalExport onOpenRestore={onOpenRestore} />
     </>
   )
 }

@@ -2,6 +2,7 @@ import { parseJournalEntryForWrite, parseJournalEntryList } from "./journal-sche
 import type { JournalEntry } from "./journal-schema"
 import { toAnalysisJournalEntry, toExportJournalEntry } from "./safe-export"
 import type { AnalysisJournalEntry, SafeJournalEntry } from "./safe-export"
+import { recordTombstone } from "./account/tombstone"
 
 export type {
   EveningEntry,
@@ -97,11 +98,24 @@ export function replaceAllEntries(entries: readonly unknown[]): { readonly ok: b
   return { ok, total: ok ? parsed.length : loadEntries().length }
 }
 
+/**
+ * 일지 삭제.
+ *
+ * 삭제 기록(tombstone)을 함께 남긴다. 그렇게 하지 않으면 계정 동기화를 쓰는
+ * 사용자에게 지운 일지가 다음 동기화에서 되살아난다(서버 사본이 "한쪽에만
+ * 있는 항목"으로 판정되기 때문). 지우고 싶어서 지운 기록이 말없이 돌아오는
+ * 것은 삭제권 위반이므로, 계정 기능을 쓰지 않는 사용자에게도 항상 남긴다.
+ * tombstone에는 id와 시각만 담기며 날짜·수치·메모는 담기지 않는다.
+ */
 export function deleteEntry(id: string): { readonly ok: boolean; readonly total: number } {
   const remaining = loadEntries().filter((entry) => entry.id !== id)
   const localStorage = storage()
   if (localStorage === null) return { ok: false, total: remaining.length }
-  return { ok: writeEntries(localStorage, remaining), total: remaining.length }
+  const ok = writeEntries(localStorage, remaining)
+  // 로컬 삭제가 성공한 경우에만 기록한다 — 지워지지 않았는데 지웠다고
+  // 표시하면 다음 동기화가 살아있는 일지를 지워버린다.
+  if (ok) recordTombstone(id)
+  return { ok, total: remaining.length }
 }
 
 export function exportEntriesJSON(options: JournalExportOptions = {}): string {

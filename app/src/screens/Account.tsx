@@ -36,10 +36,12 @@ const secondaryBtn: React.CSSProperties = {
 
 type OtpStep = "email" | "code"
 
-export function Account({ onBack, onOpenImport }: {
+export function Account({ onBack, onOpenImport, onOpenRestore }: {
   readonly onBack?: () => void
   /** 기기 데이터 가져오기 화면으로 이동 — 계정·승인 없이 지금 되는 경로 */
   readonly onOpenImport?: () => void
+  /** 백업 되돌리기 화면으로 이동 — 로그인 여부와 무관하게 쓸 수 있다 */
+  readonly onOpenRestore?: () => void
 }) {
   const [user, setUser] = React.useState<AccountUser | null>(null)
   const [loading, setLoading] = React.useState(true)
@@ -263,6 +265,24 @@ export function Account({ onBack, onOpenImport }: {
           <p style={{ ...mono, fontSize: 10.5, color: "var(--ink-4)", lineHeight: 1.6, margin: 0 }}>
             로그아웃해도 이 기기의 일지는 지워지지 않아요.
           </p>
+        </div>
+      )}
+
+      {/* 로그인 여부와 무관하게 노출한다 — 브라우저를 지우고 온 사람은 로그아웃 상태다. */}
+      {onOpenRestore && !loading && (
+        <div style={{ marginTop: 24 }}>
+          <SectionLb>내려받은 백업 되돌리기</SectionLb>
+          <p style={{ fontFamily: "var(--sans)", fontSize: 12.5, lineHeight: 1.6, color: "var(--ink-2)", margin: "8px 0 0" }}>
+            전에 내려받아 둔 일지 백업 파일(JSON)이 있으면 계정 없이도 이 기기로
+            되돌릴 수 있어요. <b>지금 있는 일지는 지우지 않아요.</b>
+          </p>
+          <button
+            type="button" data-testid="open-restore-account"
+            onClick={onOpenRestore}
+            style={{ ...secondaryBtn, marginTop: 10, minHeight: 44 }}
+          >
+            백업 파일 고르기
+          </button>
         </div>
       )}
     </div>
