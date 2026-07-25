@@ -1,6 +1,7 @@
 import React from "react"
 import ReactDOM from "react-dom/client"
 import App from "./App"
+import { ErrorBoundary } from "./components/ErrorBoundary"
 
 // 토큰 단일 소스: 저장소 루트 CSS를 직접 import (이중 정의 금지)
 import "../../colors_and_type.css"
@@ -26,8 +27,11 @@ if ("serviceWorker" in navigator) {
 const rootEl = document.getElementById("root")
 if (!rootEl) throw new Error("root element not found")
 
+// ErrorBoundary는 App 바깥에 둔다 — App 자체가 렌더에 실패해도 잡아야 한다.
 ReactDOM.createRoot(rootEl).render(
   <React.StrictMode>
-    <App />
+    <ErrorBoundary>
+      <App />
+    </ErrorBoundary>
   </React.StrictMode>,
 )
