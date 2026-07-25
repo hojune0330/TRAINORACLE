@@ -191,6 +191,15 @@ export function restoreEntries(
     }
 
     // 복원한 일지는 이 기기 소유로 되돌린다 — 서버 상태를 가정하지 않는다.
+    //
+    // 출처(fieldProvenance)는 파일 값을 그대로 보존한다. 손댄 파일이 EXPLICIT을
+    // 주장할 수 있다는 점은 검토했고, 강등하지 않기로 했다:
+    //  - 위협 모델상 공격자는 곧 사용자 본인이다. 자기 기기의 자기 통계이고,
+    //    같은 값을 화면에 직접 입력하면 어차피 EXPLICIT이 된다. 강등은
+    //    막을 수 없는 것을 막는 시늉이다.
+    //  - 반면 강등하면 **정상 사용자**의 백업 복원 시 통계가 조용히 비어버린다.
+    //    실제 피해가 확실한 쪽은 이쪽이다.
+    // 남이 보낸 파일을 받아 넣는 경로가 생기면 이 판단은 다시 해야 한다.
     const candidate = parseJournalEntryForWrite({ ...item.entry, syncState: "local" })
     if (candidate === null) {
       failed += 1

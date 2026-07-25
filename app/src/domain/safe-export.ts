@@ -21,7 +21,26 @@ function unreachableEntry(entry: never): never {
   throw new TypeError(`Unsupported journal entry: ${String(entry)}`)
 }
 
+/**
+ * 출처(fieldProvenance)는 안전 투영에서도 보존한다.
+ *
+ * 왜 보존해야 하는가 (공격형 검증에서 드러난 결함):
+ *  출처를 빼면 복원·동기화 왕복 뒤 `isEligibleForAnalysis`가 전부 false가
+ *  되어 **분석에서 조용히 사라진다**. 기기A에서 통계에 잡히던 일지가 기기B에서
+ *  사라지고, 안전 백업을 복원하면 통계가 비는 식이다. 사용자에게는 아무 경고도
+ *  뜨지 않는다 — 조용한 데이터 손실이다.
+ *
+ *  출처 자체에는 메모 원문도 개인 식별 정보도 없다. `{provenance, derivationRuleId,
+ *  derivedFrom}` 뿐이며, 오히려 "이 값이 직접 쓴 것인지 가져온 것인지"를 지켜
+ *  파생값이 분석에 섞이는 것을 막는 **안전 장치**다. 빼는 쪽이 위험하다.
+ *
+ *  타입 정의(`Omit<PostSessionEntry, "memo" | "memoPurpose">`)도 원래 메모만
+ *  제거하도록 되어 있었다. 구현이 타입 의도보다 더 많이 지우고 있었다.
+ */
 function toSafeJournalEntry(entry: JournalEntry): SafeJournalEntry {
+  const provenance = entry.fieldProvenance === undefined
+    ? {}
+    : { fieldProvenance: entry.fieldProvenance }
   switch (entry.kind) {
     case "post-session":
       return {
@@ -36,6 +55,7 @@ function toSafeJournalEntry(entry: JournalEntry): SafeJournalEntry {
         durationMin: entry.durationMin,
         avgPace: entry.avgPace,
         rpe: entry.rpe,
+        ...provenance,
         ...(entry.intensityAssessment === undefined ? {} : { intensityAssessment: entry.intensityAssessment }),
       }
     case "evening":
@@ -51,6 +71,7 @@ function toSafeJournalEntry(entry: JournalEntry): SafeJournalEntry {
         restingHr: entry.restingHr,
         painParts: entry.painParts,
         mood: entry.mood,
+        ...provenance,
       }
     case "race":
       return {
@@ -67,6 +88,7 @@ function toSafeJournalEntry(entry: JournalEntry): SafeJournalEntry {
         condition: entry.condition,
         mood: entry.mood,
         goalPace: entry.goalPace,
+        ...provenance,
       }
     default:
       return unreachableEntry(entry)

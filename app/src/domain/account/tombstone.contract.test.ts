@@ -9,7 +9,8 @@ import type { PostSessionEntry } from "../journal-schema"
 import { deleteEntry, loadEntries, saveEntry } from "../journal-store"
 import { mergeEntries } from "./sync"
 import {
-  TOMBSTONE_LIMIT, clearTombstones, loadTombstones, recordTombstone, tombstonedIds,
+  TOMBSTONE_LIMIT, clearTombstones, loadTombstones, mergeTombstones, recordTombstone,
+  saveTombstones, tombstonedIds,
 } from "./tombstone"
 
 const TOMBSTONE_KEY = "trainoracle.sync.tombstones.v1"
@@ -215,5 +216,60 @@ describe("삭제 기록 저장의 견고함", () => {
 
     // Then
     expect(loadTombstones()).toEqual([])
+  })
+})
+
+// ── 기기 간 삭제 전파 ────────────────────────────────────────────────
+//
+// 공격형 검증에서 확인한 결함: tombstone이 기기 로컬에만 있으면 A기기에서
+// 지운 일지를 B기기가 자기 사본으로 다시 밀어 올려 되살린다. 서버 tombstone
+// 테이블을 pull해 합쳐야 삭제가 기기 사이로 전파된다.
+describe("기기 간 삭제 전파", () => {
+  beforeEach(() => { window.localStorage.clear() })
+
+  it("다른 기기에서 지운 id를 받아오면 이 기기에서도 되살리지 않는다", () => {
+    // B기기: 로컬에 X가 있고 tombstone은 없다 (A에서 지웠으므로)
+    const localB = [post("X", "2026-07-20T10:00:00.000Z")]
+    const fromServer = [{ id: "X", deletedAt: "2026-07-21T00:00:00.000Z" }]
+
+    const merged = mergeTombstones(loadTombstones(), fromServer)
+    saveTombstones(merged)
+
+    // 서버 사본이 없어도, 로컬 사본이 밀려 올라가면 안 된다
+    expect(mergeEntries(localB, [], tombstonedIds(merged))).toEqual([])
+  })
+
+  it("합집합을 쓴다 — 한쪽에만 있는 삭제도 유효하다", () => {
+    const local = [{ id: "a", deletedAt: "2026-07-20T00:00:00.000Z" }]
+    const remote = [{ id: "b", deletedAt: "2026-07-21T00:00:00.000Z" }]
+    expect(mergeTombstones(local, remote).map((t) => t.id).sort()).toEqual(["a", "b"])
+  })
+
+  it("같은 id는 더 이른 삭제 시각을 남긴다 (부활 틈 차단)", () => {
+    const local = [{ id: "a", deletedAt: "2026-07-25T00:00:00.000Z" }]
+    const remote = [{ id: "a", deletedAt: "2026-07-20T00:00:00.000Z" }]
+    const merged = mergeTombstones(local, remote)
+    expect(merged).toHaveLength(1)
+    expect(merged[0]?.deletedAt).toBe("2026-07-20T00:00:00.000Z")
+  })
+
+  it("합칠 때도 상한을 지킨다", () => {
+    const local = Array.from({ length: TOMBSTONE_LIMIT }, (_, i) => ({
+      id: `L${i}`, deletedAt: `2026-07-20T00:00:${String(i % 60).padStart(2, "0")}.000Z`,
+    }))
+    const remote = Array.from({ length: 50 }, (_, i) => ({
+      id: `R${i}`, deletedAt: `2026-07-25T00:00:${String(i % 60).padStart(2, "0")}.000Z`,
+    }))
+    expect(mergeTombstones(local, remote)).toHaveLength(TOMBSTONE_LIMIT)
+  })
+
+  it("서버에 올리는 내용에는 본문·날짜·수치가 없다 (최소 수집)", () => {
+    saveEntry(post("secret", "2026-07-20T10:00:00.000Z", { memo: "무릎 통증" }))
+    deleteEntry("secret")
+    const merged = mergeTombstones(loadTombstones(), [])
+    for (const tombstone of merged) {
+      expect(Object.keys(tombstone).sort()).toEqual(["deletedAt", "id"])
+    }
+    expect(JSON.stringify(merged)).not.toContain("무릎")
   })
 })

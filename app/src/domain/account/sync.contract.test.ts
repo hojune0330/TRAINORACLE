@@ -154,3 +154,27 @@ describe("feature flag OFF — 계정 기능 완전 비활성", () => {
     expect(await currentUser()).toBeNull()
   })
 })
+
+// ── 공격형 검증 회귀 방지 ──────────────────────────────────────────
+// 발견: 메모 제외 동기화가 fieldProvenance까지 버려서, 기기A에서 통계에
+// 잡히던 일지가 기기B로 동기화되면 **통계에서 조용히 사라졌다.**
+describe("동기화가 분석 자격을 파괴하지 않는다 (회귀 방지)", () => {
+  it("메모 제외 업로드 페이로드가 출처를 보존한다", () => {
+    const entry = {
+      id: "prov-1", kind: "post-session", date: "2026-07-20",
+      savedAt: "2026-07-20T10:00:00.000Z", syncState: "local",
+      system: "base", title: "이지런", distanceKm: "8", durationMin: "45",
+      avgPace: "5:30", rpe: 4, memo: "비밀 메모",
+      memoPurpose: "PRIVATE_SELF_ONLY",
+      fieldProvenance: { distanceKm: { provenance: "EXPLICIT" } },
+    } as unknown as JournalEntry
+
+    const payload = toUploadPayload(entry, { enabled: true, includeMemos: false })
+
+    // 메모는 여전히 빠져야 한다 (프라이버시 기본값 유지)
+    expect(payload?.memo).toBeUndefined()
+    expect(payload?.memoPurpose).toBeUndefined()
+    // 출처는 보존되어야 한다 (분석 자격 유지)
+    expect(payload?.fieldProvenance).toEqual({ distanceKm: { provenance: "EXPLICIT" } })
+  })
+})

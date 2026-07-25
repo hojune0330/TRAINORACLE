@@ -9,7 +9,7 @@
 //  6. 겹치는 항목을 바꿀 때 같은 id가 두 개 생기지 않는다.
 import { beforeEach, describe, expect, it } from "vitest"
 import type { PostSessionEntry } from "../journal-schema"
-import { exportEntriesJSON, deleteEntry, loadEntries, saveEntry } from "../journal-store"
+import { exportEntriesJSON, deleteEntry, loadAnalysisEntries, loadEntries, saveEntry } from "../journal-store"
 import {
   FULL_FORMAT, SAFE_FORMAT, buildRestorePlan, readBackupFile, restoreEntries,
 } from "./backup-file"
@@ -249,5 +249,70 @@ describe("전체 왕복 — 내보내고 지우고 되돌린다", () => {
     // Then — 상수와 실제 출력이 갈라지면 복원이 조용히 깨진다
     expect(exportEntriesJSON()).toContain(SAFE_FORMAT)
     expect(exportEntriesJSON({ includeRawMemos: true })).toContain(FULL_FORMAT)
+  })
+})
+
+// ── 공격형 검증에서 발견된 결함의 회귀 방지 ──────────────────────────
+//
+// 발견: 안전 백업을 복원하면 일지는 돌아오는데 **통계에서 조용히 사라졌다.**
+// 원인은 safe 투영이 fieldProvenance를 버려서 isEligibleForAnalysis가 전부
+// false가 된 것. 사용자에게는 아무 경고도 뜨지 않는 무증상 데이터 손실이었다.
+describe("백업 왕복이 분석 자격을 잃게 하지 않는다 (회귀 방지)", () => {
+  beforeEach(() => { window.localStorage.clear() })
+
+  function explicitPost(id: string): PostSessionEntry {
+    return post(id, {
+      fieldProvenance: {
+        distanceKm: { provenance: "EXPLICIT" },
+        durationMin: { provenance: "EXPLICIT" },
+        avgPace: { provenance: "EXPLICIT" },
+        rpe: { provenance: "EXPLICIT" },
+      },
+    })
+  }
+
+  it("안전 백업(메모 제외) 왕복 후에도 분석에 남는다", () => {
+    saveEntry(explicitPost("rt-safe"))
+    const before = loadAnalysisEntries().length
+    expect(before).toBe(1) // 대조군이 살아 있어야 이 테스트가 의미를 가진다
+
+    const json = exportEntriesJSON({ includeRawMemos: false })
+    window.localStorage.clear()
+    restoreEntries(buildRestorePlan(readBackupFile(json).entries))
+
+    expect(loadAnalysisEntries()).toHaveLength(before)
+  })
+
+  it("메모 포함 백업 왕복 후에도 분석에 남는다", () => {
+    saveEntry(explicitPost("rt-full"))
+    const before = loadAnalysisEntries().length
+    expect(before).toBe(1)
+
+    const json = exportEntriesJSON({ includeRawMemos: true })
+    window.localStorage.clear()
+    restoreEntries(buildRestorePlan(readBackupFile(json).entries))
+
+    expect(loadAnalysisEntries()).toHaveLength(before)
+  })
+
+  it("가져온(DERIVED) 값은 왕복해도 분석에 들어가지 않는다", () => {
+    saveEntry(post("rt-imported", {
+      fieldProvenance: {
+        distanceKm: {
+          provenance: "DERIVED",
+          derivedFrom: ["import:activity-file"],
+          derivationRuleId: "import.activity-file.v1",
+        },
+      },
+    }))
+    expect(loadAnalysisEntries()).toHaveLength(0)
+
+    const json = exportEntriesJSON({ includeRawMemos: false })
+    window.localStorage.clear()
+    restoreEntries(buildRestorePlan(readBackupFile(json).entries))
+
+    // 출처가 보존되므로 여전히 분석 제외 — 보존이 곧 안전장치다
+    expect(loadAnalysisEntries()).toHaveLength(0)
+    expect(loadEntries()[0]?.fieldProvenance?.distanceKm?.provenance).toBe("DERIVED")
   })
 })

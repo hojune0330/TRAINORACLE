@@ -94,10 +94,12 @@ export function Account({ onBack, onOpenImport, onOpenRestore }: {
     setBusy(true); setSyncMessage(null)
     const outcome = await syncNow(user.id)
     setBusy(false)
+    if (!outcome.ok) { setSyncMessage(outcome.message); return }
+    // 지운 개수도 함께 보여준다. 다른 기기에서 지운 일지가 이 기기에서
+    // 사라지는 경우, 이유를 밝히지 않으면 "기록이 없어졌다"로만 보인다.
+    const deletedPart = outcome.deleted > 0 ? ` · ${outcome.deleted}개 삭제 반영` : ""
     setSyncMessage(
-      outcome.ok
-        ? `${outcome.message} (서버에서 ${outcome.pulled}개 확인 · ${outcome.pushed}개 백업 · 총 ${outcome.total}개)`
-        : outcome.message,
+      `${outcome.message} (서버에서 ${outcome.pulled}개 확인 · ${outcome.pushed}개 백업${deletedPart} · 총 ${outcome.total}개)`,
     )
   }
 

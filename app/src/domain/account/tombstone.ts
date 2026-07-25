@@ -14,10 +14,13 @@
 //    삭제 후 같은 id를 되살리려면 새 일지를 쓰면 된다(새 id를 받으므로 안전).
 //  - tombstone에는 **id와 삭제 시각만** 담는다. 날짜·메모·수치는 담지 않는다.
 //    "무엇을 지웠는지"가 아니라 "이 id는 지워졌다"만 기록한다(최소 수집).
-//  - 로컬 전용 기록이며, 서버로 보내는 것은 후속 단계다(§tombstone 전파).
-//    지금 단계에서도 같은 기기에서의 부활은 완전히 막힌다.
+//  - **서버에도 올린다.** 로컬 전용이면 기기 간 삭제가 샌다: A기기에서 지워도
+//    tombstone이 없는 B기기가 자기 사본을 밀어 올리면 되살아난다.
+//    저장 비용은 행당 약 110 B이고, 이는 삭제된 일지 행(jsonb 0.5~1.5 KB)을
+//    **대체**하므로 서버 용량은 오히려 줄어든다.
 //  - 상한을 둔다: 오래된 tombstone은 잘라낸다. 무한 증가는 저장 공간을
 //    잡아먹고, 아주 오래 전 삭제분이 서버에 남아 있을 가능성은 낮다.
+//    **주의**: 상한 축출은 이론적 부활 경로다(§mergeTombstones 주석 참고).
 
 const KEY = "trainoracle.sync.tombstones.v1"
 
@@ -84,6 +87,36 @@ export function recordTombstone(id: string, deletedAt: string = new Date().toISO
     .sort((a, b) => a.deletedAt.localeCompare(b.deletedAt))
   const trimmed = next.length > TOMBSTONE_LIMIT ? next.slice(next.length - TOMBSTONE_LIMIT) : next
   return write(trimmed)
+}
+
+/**
+ * 서버에서 받은 삭제 기록을 로컬과 합친다.
+ *
+ * 다른 기기에서 지운 것을 이 기기도 알아야 부활을 막을 수 있다. 합집합을
+ * 쓰는 이유: tombstone은 "지웠다"는 단조 증가 사실이라 한쪽에만 있어도
+ * 유효하다. 같은 id는 **더 이른** 삭제 시각을 남긴다 — 처음 지운 순간이
+ * 사용자의 의도이고, 늦은 시각을 택하면 그 사이 동기화에서 부활할 틈이 생긴다.
+ */
+export function mergeTombstones(
+  local: readonly Tombstone[],
+  remote: readonly Tombstone[],
+): Tombstone[] {
+  const byId = new Map<string, Tombstone>()
+  for (const tombstone of [...local, ...remote]) {
+    const existing = byId.get(tombstone.id)
+    if (existing === undefined || tombstone.deletedAt < existing.deletedAt) {
+      byId.set(tombstone.id, tombstone)
+    }
+  }
+  const sorted = [...byId.values()].sort((a, b) => a.deletedAt.localeCompare(b.deletedAt))
+  // 상한 초과분은 오래된 것부터 버린다. 버려진 id는 이론상 부활 가능해지므로
+  // 상한은 넉넉해야 한다(§TOMBSTONE_LIMIT).
+  return sorted.length > TOMBSTONE_LIMIT ? sorted.slice(sorted.length - TOMBSTONE_LIMIT) : sorted
+}
+
+/** 합친 삭제 기록을 저장한다 — 서버 pull 이후 로컬 반영용 */
+export function saveTombstones(tombstones: readonly Tombstone[]): boolean {
+  return write(tombstones)
 }
 
 /** 삭제된 id 집합 — 머지에서 빠르게 조회하기 위한 형태 */
