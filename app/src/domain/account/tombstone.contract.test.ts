@@ -4,7 +4,7 @@
 //  기기A에서 일지를 동기화한 뒤 삭제하면, 다음 동기화에서 서버 사본이
 //  "한쪽에만 있는 항목"으로 판정되어 되살아났다. 사용자가 지우고 싶어서
 //  지운 기록이 말없이 돌아오는 것은 삭제권 위반이다.
-import { beforeEach, describe, expect, it } from "vitest"
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import type { PostSessionEntry } from "../journal-schema"
 import { deleteEntry, loadEntries, saveEntry } from "../journal-store"
 import { mergeEntries } from "./sync"
@@ -35,6 +35,10 @@ function post(id: string, savedAt: string, overrides: Partial<PostSessionEntry> 
 
 beforeEach(() => {
   window.localStorage.clear()
+})
+
+afterEach(() => {
+  vi.restoreAllMocks()
 })
 
 describe("삭제 부활 방지 — 이 기능의 존재 이유", () => {
@@ -127,6 +131,20 @@ describe("deleteEntry 연동", () => {
     expect(loadEntries().map((entry) => entry.id)).toEqual(["keep"])
     const merged = mergeEntries(loadEntries(), [post("keep", "2026-07-20T10:00:00.000Z")])
     expect(merged.map((entry) => entry.id)).toEqual(["keep"])
+  })
+
+  it("삭제 기록을 저장하지 못하면 본문을 지우지 않는다", () => {
+    saveEntry(post("protected", "2026-07-20T10:00:00.000Z"))
+    const original = Storage.prototype.setItem
+    vi.spyOn(Storage.prototype, "setItem").mockImplementation(function (this: Storage, key, value) {
+      if (key === "trainoracle.sync.tombstones.v1") throw new Error("quota")
+      original.call(this, key, value)
+    })
+
+    const result = deleteEntry("protected")
+
+    expect(result.ok).toBe(false)
+    expect(loadEntries().map((entry) => entry.id)).toEqual(["protected"])
   })
 })
 

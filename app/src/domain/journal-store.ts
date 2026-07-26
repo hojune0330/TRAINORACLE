@@ -2,7 +2,7 @@ import { parseJournalEntryForWrite, parseJournalEntryList } from "./journal-sche
 import type { JournalEntry } from "./journal-schema"
 import { toAnalysisJournalEntry, toExportJournalEntry } from "./safe-export"
 import type { AnalysisJournalEntry, SafeJournalEntry } from "./safe-export"
-import { recordTombstone } from "./account/tombstone"
+import { recordTombstone, removeTombstone } from "./account/tombstone"
 import { moveToTrash, takeFromTrash } from "./journal-trash"
 
 export type {
@@ -131,23 +131,25 @@ export type DeleteEntryResult = {
 export function deleteEntry(id: string): DeleteEntryResult {
   const all = loadEntries()
   const target = all.find((entry) => entry.id === id)
+  if (target === undefined) return { ok: false, total: all.length, trashed: false }
+
   const remaining = all.filter((entry) => entry.id !== id)
   const localStorage = storage()
   if (localStorage === null) return { ok: false, total: all.length, trashed: false }
 
-  const trashed = target === undefined ? false : moveToTrash(target)
+  if (!recordTombstone(id)) return { ok: false, total: all.length, trashed: false }
+
+  const trashed = moveToTrash(target)
 
   const ok = writeEntries(localStorage, remaining)
   if (!ok) {
     // 본문에 그대로 남아 있는데 휴지통에도 있으면 되돌리기가 사본을 하나 더
     // 만든다. 넣었던 것을 빼서 상태를 원래대로 돌린다.
     if (trashed) takeFromTrash(id)
+    removeTombstone(id)
     return { ok: false, total: all.length, trashed: false }
   }
 
-  // 로컬 삭제가 성공한 경우에만 기록한다 — 지워지지 않았는데 지웠다고
-  // 표시하면 다음 동기화가 살아있는 일지를 지워버린다.
-  recordTombstone(id)
   return { ok: true, total: remaining.length, trashed }
 }
 

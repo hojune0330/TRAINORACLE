@@ -5,16 +5,7 @@ import { expect, test } from "@playwright/test"
 
 const TRASH_KEY = "trainoracle.journal.trash.v1"
 
-// ⚠️ 미해결(테스트 쪽 문제, 기능 쪽 문제 아님):
-// 이 시나리오만 `이 일지 지우기` 클릭에서 60초 타임아웃이 난다. 로그를 보면 버튼은
-// "visible, enabled and stable"로 잡혔고 클릭 액션 중에 멈춘다 — confirm 대화상자와
-// 클릭이 서로를 기다리는 하네스 쪽 교착으로 보인다. 원인을 확정하지 못했으므로
-// 통과하는 것처럼 위장하지 않고 fixme로 남긴다.
-// 같은 경로의 실제 동작은 다음으로 이미 검증돼 있다:
-//   - 이 파일의 나머지 5개 e2e(휴지통 화면에서 되돌리기, 30일 표기, 완전 삭제 2단계 확인 등) 통과
-//   - journal-trash.contract.test.ts 31개 + TrashBin.contract.test.tsx 15개 단위 테스트 통과
-// 남은 일: 이 스펙의 dialog 처리 방식을 다시 짜서 되살린다.
-test.fixme("지운 일지를 그 자리에서 되돌릴 수 있다", async ({ page }) => {
+test("지운 일지를 그 자리에서 되돌릴 수 있다", async ({ page }) => {
   // Given — 일지 하나를 저장한다
   await page.goto("/?app=1&uitest=1")
   await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: /기록/u }).click()
@@ -24,32 +15,50 @@ test.fixme("지운 일지를 그 자리에서 되돌릴 수 있다", async ({ pa
   // 실제 접근성 이름은 "세션 제목"이다(PostSessionForm.tsx). 추측한 이름(/훈련 이름|제목/)은
   // 아무 요소에도 걸리지 않아 e2e가 60초 타임아웃으로 죽었다.
   await page.getByRole("textbox", { name: "세션 제목" }).first().fill("휴지통 시험 훈련")
+  await page.keyboard.press("Escape")
   await page.getByRole("button", { name: /^저장/u }).click()
 
   // 저장된 일지를 열어 삭제한다
   const saved = page.getByRole("button", { name: /훈련 후 .*상세 열기/u }).first()
   await expect(saved).toBeVisible()
   await saved.click()
+  await page.keyboard.press("Escape")
 
-  // 확인창에서 "되돌릴 수 없어요"가 아니라 휴지통 안내가 나와야 한다
-  const messages: string[] = []
+  let nativeDialogCount = 0
   page.on("dialog", (dialog) => {
-    messages.push(dialog.message())
-    void dialog.accept()
+    nativeDialogCount += 1
+    void dialog.dismiss()
   })
 
-  // When
-  await page.getByRole("button", { name: "이 일지 지우기" }).first().click()
+  const deleteButton = page.getByRole("button", { name: "이 일지 지우기" }).first()
+  await deleteButton.click()
 
-  // Then — 확인 문구가 사실과 맞는다
-  await expect.poll(() => messages.length).toBeGreaterThan(0)
-  expect(messages[0]).toContain("휴지통")
-  expect(messages[0]).toContain("30일")
-  expect(messages[0]).not.toContain("되돌릴 수 없어요")
+  const dialog = page.getByTestId("journal-delete-dialog")
+  await expect(dialog).toBeVisible()
+  await expect(dialog).toHaveAttribute("role", "alertdialog")
+  const cancelButton = page.getByTestId("journal-delete-cancel")
+  await expect(cancelButton).toBeFocused()
+  await expect(page.getByRole("status")).toHaveCount(0, { timeout: 6000 })
+  await expect(cancelButton).toBeFocused()
+  expect(nativeDialogCount).toBe(0)
+
+  await page.keyboard.press("Escape")
+  await expect(dialog).toHaveCount(0)
+  await expect(page.getByText("휴지통 시험 훈련")).toBeVisible()
+  await expect(deleteButton).toBeFocused()
+
+  await deleteButton.click()
+  await dialog.click({ position: { x: 4, y: 4 } })
+  await expect(dialog).toHaveCount(0)
+  await expect(deleteButton).toBeFocused()
+
+  await deleteButton.click()
+  await page.getByTestId("journal-delete-confirm").click()
 
   // 되돌리기 버튼이 그 자리에 뜬다
   const undo = page.getByTestId("delete-undo-button")
   await expect(undo).toBeVisible()
+  await expect(undo).toBeFocused()
 
   // 되돌리면 일지가 돌아온다
   await undo.click()
@@ -124,13 +133,16 @@ test("완전히 지우기는 확인을 한 번 더 받는다", async ({ page }) 
   await page.getByTestId("trash-purge").first().click()
 
   // 한 번 눌렀다고 사라지면 안 된다 — 확인 단계가 있어야 한다
-  await expect(page.getByTestId("trash-purge-confirm")).toBeVisible()
+  const purgeConfirm = page.getByTestId("trash-purge-confirm")
+  await expect(purgeConfirm).toBeVisible()
+  await expect(purgeConfirm).toBeFocused()
   await expect(page.getByText("완전히 지우면 되돌릴 수 없어요.")).toBeVisible()
   await expect(page.getByText("완전 삭제 대상")).toBeVisible()
 
   // 취소하면 남아 있다
   await page.getByTestId("trash-purge-cancel").first().click()
   await expect(page.getByText("완전 삭제 대상")).toBeVisible()
+  await expect(page.getByTestId("trash-purge")).toBeFocused()
 
   // 확인하면 사라진다
   await page.getByTestId("trash-purge").first().click()

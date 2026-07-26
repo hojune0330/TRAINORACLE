@@ -37,6 +37,7 @@
   --err:   #A11F1F;
   --info:  #1D4ED8;
   --unc:   #6B3FB0;  /* uncertainty — AI verdict */
+  --scrim: rgb(14 20 18 / 52%);
 
   /* Energy systems (dot + underline ONLY, never as bg) */
   --e-base: #4A8FC7;  /* Z1-Z2 Aerobic Base */
@@ -126,6 +127,7 @@
   --app-action-height: 52px;
   --app-choice-height: 68px;
   --app-plan-mark-size: 72px;
+  --app-dialog-max-width: 360px;
   --fs-app-title: 24px;
   --fs-app-section-title: 22px;
 }

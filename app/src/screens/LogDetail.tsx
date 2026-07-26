@@ -5,6 +5,7 @@
 import React from "react"
 import type { ReactNode } from "react"
 import { IndexCard, MoodStrip, PainDot, SectionLb } from "../components/JournalPrimitives"
+import { JournalConfirmationDialog } from "../components/JournalConfirmationDialog"
 import { TermHelp } from "../components/TermHelp"
 import type { JournalEntry, PostSessionEntry, EveningEntry, RaceEntry } from "../domain/journal-store"
 import { entriesForDate, deleteEntry, restoreDeletedEntry } from "../domain/journal-store"
@@ -43,23 +44,30 @@ function LogDetailJournal({ date, onBack }: { date: string; onBack?: (() => void
   const [justDeleted, setJustDeleted] = React.useState<
     { readonly id: string; readonly label: string; readonly trashed: boolean } | null
   >(null)
+  const [pendingDelete, setPendingDelete] = React.useState<
+    { readonly id: string; readonly label: string } | null
+  >(null)
+  const undoRef = React.useRef<HTMLButtonElement>(null)
   const entries = React.useMemo(() => entriesForDate(date), [date, rev])
-  const remove = (id: string, label: string) => {
-    // 문구는 사실과 일치해야 한다. 휴지통 30일이 생겼으므로 예전 문구
-    // "되돌릴 수 없어요"는 거짓이 됐다 — 겁을 주는 방향의 거짓이라도 거짓이다.
-    if (!window.confirm(
-      `${label} 일지를 지울까요?\n`
-      + `휴지통에 ${TRASH_RETENTION_DAYS}일 보관되고, 그 안에는 되돌릴 수 있어요.\n`
-      + `${TRASH_RETENTION_DAYS}일이 지나면 완전히 사라져요.`,
-    )) return
+  const remove = (): boolean => {
+    if (!pendingDelete) return false
+    const { id, label } = pendingDelete
     const r = deleteEntry(id)
     if (window.location.search.includes("uitest")) {
       console.log(`[JDEL] ok=${r.ok} remain=${r.total} trashed=${r.trashed}`)
     }
-    if (!r.ok) { window.alert("지우지 못했어요. 잠시 후 다시 시도해 주세요."); return }
+    if (!r.ok) {
+      window.alert("지우지 못했어요. 잠시 후 다시 시도해 주세요.")
+      return false
+    }
+    setPendingDelete(null)
     setJustDeleted({ id, label, trashed: r.trashed })
     setRev(v => v + 1)
+    return true
   }
+  React.useEffect(() => {
+    if (justDeleted?.trashed) undoRef.current?.focus()
+  }, [justDeleted])
   const undoRemove = (id: string) => {
     const r = restoreDeletedEntry(id)
     if (window.location.search.includes("uitest")) console.log(`[JUNDO] ok=${r.ok}`)
@@ -96,6 +104,7 @@ function LogDetailJournal({ date, onBack }: { date: string; onBack?: (() => void
           </div>
           {justDeleted.trashed && (
             <button
+              ref={undoRef}
               type="button"
               data-testid="delete-undo-button"
               onClick={() => undoRemove(justDeleted.id)}
@@ -151,7 +160,7 @@ function LogDetailJournal({ date, onBack }: { date: string; onBack?: (() => void
                 ))}
               </div>
               <SavedMemo entry={s} text={s.memo} fontSize={19} />
-              <EntryDeleteRow onDelete={() => remove(s.id, "훈련")} />
+              <EntryDeleteRow entryId={s.id} onDelete={() => setPendingDelete({ id: s.id, label: "훈련" })} />
             </div>
           </div>
         )
@@ -176,7 +185,7 @@ function LogDetailJournal({ date, onBack }: { date: string; onBack?: (() => void
             )}
             <RaceSelfCheckSummary entry={r} />
             <SavedMemo entry={r} text={r.memo} fontSize={18} />
-            <EntryDeleteRow onDelete={() => remove(r.id, "경기")} />
+            <EntryDeleteRow entryId={r.id} onDelete={() => setPendingDelete({ id: r.id, label: "경기" })} />
           </div>
         </div>
       ))}
@@ -200,7 +209,7 @@ function LogDetailJournal({ date, onBack }: { date: string; onBack?: (() => void
                 <SavedMemo entry={ev} text={ev.note} fontSize={17} />
               </div>
               <div style={{ padding: "0 14px" }}>
-                <EntryDeleteRow onDelete={() => remove(ev.id, "하루 마무리")} />
+                <EntryDeleteRow entryId={ev.id} onDelete={() => setPendingDelete({ id: ev.id, label: "하루 마무리" })} />
               </div>
             </div>
             {needsReview && (
@@ -225,14 +234,25 @@ function LogDetailJournal({ date, onBack }: { date: string; onBack?: (() => void
           이 페이지는 이 기기에만 저장돼 있어요. 온라인 보관·기기 이동은 계정 연동 후에 할 수 있어요.
         </div>
       )}
+
+      {pendingDelete && (
+        <JournalConfirmationDialog
+          title={`${pendingDelete.label} 일지를 지울까요?`}
+          description={`${TRASH_RETENTION_DAYS}일 안에는 휴지통에서 되돌릴 수 있어요. 이후에는 완전히 삭제돼요.`}
+          confirmLabel="휴지통으로 이동"
+          returnFocusTo={() => document.getElementById(`journal-delete-${pendingDelete.id}`)}
+          onCancel={() => setPendingDelete(null)}
+          onConfirm={remove}
+        />
+      )}
     </div>
   )
 }
 
-function EntryDeleteRow({ onDelete }: { onDelete: () => void }) {
+function EntryDeleteRow({ entryId, onDelete }: { entryId: string; onDelete: () => void }) {
   return (
     <div style={{ marginTop: 12, borderTop: "1px dashed var(--hair)", paddingTop: 8, textAlign: "right" }}>
-      <button onClick={onDelete} style={{
+      <button id={`journal-delete-${entryId}`} onClick={onDelete} style={{
         background: "transparent", border: 0, cursor: "pointer",
         fontFamily: "var(--mono)", fontSize: 9.5, color: "var(--ink-4)",
         letterSpacing: "0.1em", padding: "4px 2px", minHeight: 44,

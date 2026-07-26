@@ -40,6 +40,7 @@ const ACCOUNT_KEYS = [
 
 /** 삭제 기록 — 기본은 **남긴다**(서버 부활 방지) */
 const DELETION_RECORD_KEY = "trainoracle.sync.tombstones.v1"
+const SYNC_OWNER_KEY = "trainoracle.sync.owner.v1"
 
 export type EraseOptions = {
   /**
@@ -76,7 +77,9 @@ export function eraseAllLocalData(options: EraseOptions = {}): EraseResult {
   if (localStorage === null) return { ok: false, cleared: 0, failed: ["storage-unavailable"] }
 
   const keys: string[] = [...CONTENT_KEYS, ...ACCOUNT_KEYS]
-  if (options.includeDeletionRecord === true) keys.push(DELETION_RECORD_KEY)
+  if (options.includeDeletionRecord === true) {
+    keys.push(DELETION_RECORD_KEY, SYNC_OWNER_KEY)
+  }
 
   let cleared = 0
   const failed: string[] = []
@@ -101,6 +104,8 @@ export function eraseAllLocalData(options: EraseOptions = {}): EraseResult {
 /** 지워질 대상 키 목록 — UI에서 "무엇이 지워지는지" 보여줄 때 쓴다 */
 export function erasableKeys(options: EraseOptions = {}): readonly string[] {
   const keys: string[] = [...CONTENT_KEYS, ...ACCOUNT_KEYS]
-  if (options.includeDeletionRecord === true) keys.push(DELETION_RECORD_KEY)
+  if (options.includeDeletionRecord === true) {
+    keys.push(DELETION_RECORD_KEY, SYNC_OWNER_KEY)
+  }
   return keys
 }
