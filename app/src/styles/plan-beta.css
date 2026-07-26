@@ -211,7 +211,8 @@
 }
 
 .plan-heading-row > span {
-  margin-top: var(--space-2);
+  align-self: flex-end;
+  margin-top: 0;
   flex: 0 0 auto;
 }
 
@@ -361,6 +362,8 @@
   color: var(--ink-3);
   font-family: var(--mono);
   font-size: var(--fs-mono-xs);
+  word-break: keep-all;
+  overflow-wrap: break-word;
 }
 
 .plan-session-legend {
@@ -423,6 +426,8 @@
 .plan-session-content .plan-session-metric {
   font-family: var(--mono);
   font-size: var(--fs-mono-xs);
+  word-break: keep-all;
+  overflow-wrap: break-word;
 }
 
 .plan-session-intent {

@@ -476,6 +476,8 @@ button:not(:disabled):not([aria-disabled="true"]):active {
   line-height: 1.5;
   letter-spacing: 0;
   white-space: normal;
+  word-break: keep-all;
+  overflow-wrap: break-word;
 }
 
 .term-help__detail {

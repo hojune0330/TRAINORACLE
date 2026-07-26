@@ -9,6 +9,36 @@ async function answerMinimumPlanQuestions(page: Page): Promise<void> {
   await page.getByRole("button", { name: /통증은 없고 몸 상태는 평소와 같아요/u }).click()
 }
 
+test("keeps plan help inside the narrow scroll region", async ({ page }) => {
+  await page.setViewportSize({ width: 320, height: 650 })
+  await page.goto("/?app=1")
+  await page.getByRole("button", { name: "훈련계획 후보 만들기" }).click()
+  await page.getByRole("button", { name: "준비 목표 설명 보기" }).click()
+
+  const geometry = await page.evaluate(() => {
+    const scrollRegion = document.querySelector<HTMLElement>(".app-scroll-region")
+    const popover = document.querySelector<HTMLElement>(".popover-surface")
+    const detail = document.querySelector<HTMLElement>(".term-help__detail")
+    if (scrollRegion === null || popover === null || detail === null) return null
+    const scrollRect = scrollRegion.getBoundingClientRect()
+    const popoverRect = popover.getBoundingClientRect()
+    return {
+      scrollLeft: scrollRect.left + scrollRegion.clientLeft,
+      scrollRight: scrollRect.left + scrollRegion.clientLeft + scrollRegion.clientWidth,
+      popoverLeft: popoverRect.left,
+      popoverRight: popoverRect.right,
+      hasHorizontalOverflow: scrollRegion.scrollWidth > scrollRegion.clientWidth,
+      detailWordBreak: window.getComputedStyle(detail).wordBreak,
+    }
+  })
+
+  expect(geometry).not.toBeNull()
+  expect(geometry?.popoverLeft).toBeGreaterThanOrEqual(geometry?.scrollLeft ?? 0)
+  expect(geometry?.popoverRight).toBeLessThanOrEqual(geometry?.scrollRight ?? 0)
+  expect(geometry?.hasHorizontalOverflow).toBe(false)
+  expect(geometry?.detailWordBreak).toBe("keep-all")
+})
+
 test("routes a first visitor from one context choice into the matching journal", async ({ page }) => {
   // Given
   await page.goto("/?app=1")
@@ -50,9 +80,16 @@ test("creates and selects a profile-only beta plan from the first screen", async
   await expect(easySession.getByText(
     /대화가 어려워지면 속도를 낮추세요/u,
   )).toBeVisible()
+  expect(await easySession.locator(".plan-session-metric").evaluate(
+    (element) => window.getComputedStyle(element).wordBreak,
+  )).toBe("keep-all")
   expect(await page.evaluate(
     () => document.documentElement.scrollWidth <= window.innerWidth,
   )).toBe(true)
+  const scrollRegion = page.locator(".app-scroll-region")
+  await scrollRegion.evaluate((element) => {
+    element.scrollTop = element.scrollHeight
+  })
 
   // When
   await page.getByRole("button", {
@@ -62,7 +99,8 @@ test("creates and selects a profile-only beta plan from the first screen", async
   // Then
   await expect(page.getByRole("heading", {
     name: "편안한 달리기 + 조절 강도 9일 계획",
-  })).toBeVisible()
+  })).toBeInViewport()
+  expect(await scrollRegion.evaluate((element) => element.scrollTop)).toBe(0)
   await expect(page.getByText(/사용 정보 4가지.*베타 계획/u)).toBeVisible()
 })
 

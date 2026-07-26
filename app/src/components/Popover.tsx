@@ -48,6 +48,16 @@ export function usePopover(): {
 }
 
 function boundaryRect(el: HTMLElement): DOMRect {
+  const scrollRegion = el.closest(".app-scroll-region") as HTMLElement | null
+  if (scrollRegion) {
+    const rect = scrollRegion.getBoundingClientRect()
+    return new DOMRect(
+      rect.left + scrollRegion.clientLeft,
+      rect.top + scrollRegion.clientTop,
+      scrollRegion.clientWidth,
+      scrollRegion.clientHeight,
+    )
+  }
   const frame = el.closest("[data-mobile-frame]") as HTMLElement | null
   if (frame) return frame.getBoundingClientRect()
   return new DOMRect(0, 0, window.innerWidth, window.innerHeight)

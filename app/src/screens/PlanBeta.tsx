@@ -55,6 +55,18 @@ export function PlanBeta({
   const [gate, setGate] = React.useState<SafetyGateDecision | null>(null)
   const [blocked, setBlocked] = React.useState(false)
   const [errorCode, setErrorCode] = React.useState<string | null>(null)
+  const viewKey = stored !== null
+    ? "active"
+    : blocked
+      ? "blocked"
+      : generated !== null && gate !== null
+        ? "candidates"
+        : `intake-${step}`
+
+  React.useLayoutEffect(() => {
+    const scrollRegion = document.querySelector<HTMLElement>(".app-scroll-region")
+    if (scrollRegion !== null) scrollRegion.scrollTop = 0
+  }, [viewKey])
 
   if (stored !== null) {
     return (
