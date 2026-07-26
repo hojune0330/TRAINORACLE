@@ -35,7 +35,7 @@ open and unmerged. The hold preserves its current honest `미지정` boundary.
 |---|---|
 | Draft-document structural check | PASS: 30 catalogue entries, 25 intent seeds, 5 recovery-support seeds, required per-entry fields, final markers, and no `ACTIVE` lifecycle entry. |
 | Owner notation fixture in contract | PASS: 20 repetitions, 8000 m quality distance, 1260 s planned recovery. |
-| Draft-catalog fail-closed validator | PASS: one unchanged catalog and seven hostile mutations verified locally; CI runs both the validator and its tests. |
+| Draft-catalog fail-closed validator | PASS: one unchanged catalog and seventeen hostile mutations verified locally; CI runs both the validator and its tests. The gate also fixes each intent at five entries, locks the owner fixture totals, and requires one final marker as the last non-whitespace content. |
 | `git diff --check` | PASS |
 | `app/` typecheck | PASS |
 | `app/` Vitest regression suite | PASS: 34 files, 292 tests |
@@ -63,6 +63,9 @@ prescription runtime has executed.
 - The owner notation fixture is now explicitly an unbound parse case. It records
   the `5000m` target label but cannot create a prescription, calculate seconds, or
   display a numeric pace until a separate anchor passes the contract.
+- Independent review found that the first validator checked only the 30-entry total
+  and marker presence. The follow-up now fails closed on a 4/6 intent-family drift,
+  altered owner-fixture totals, a missing final marker, and any content after it.
 
 ## Handoff after PR #120 merges
 

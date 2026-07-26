@@ -10,6 +10,14 @@ const validator = resolve(import.meta.dirname, "validate-detailed-prescription-c
 const catalog = resolve(root, "specs/reconstruct/ENERGY_SYSTEM_SESSION_TEMPLATE_CATALOG.md");
 const contract = resolve(root, "specs/reconstruct/TRAINING_SESSION_PRESCRIPTION_CONTRACT.md");
 
+function applyRequiredReplacement(text, replacement, label) {
+  if (!replacement) return text;
+
+  const updated = text.replace(replacement.from, replacement.to);
+  assert.notEqual(updated, text, `${label} hostile mutation must alter its fixture`);
+  return updated;
+}
+
 async function validateWith({ catalogReplacement, contractReplacement }) {
   const directory = await mkdtemp(join(tmpdir(), "detailed-prescription-validator-"));
   const catalogPath = join(directory, "catalog.md");
@@ -23,12 +31,12 @@ async function validateWith({ catalogReplacement, contractReplacement }) {
     await Promise.all([
       writeFile(
         catalogPath,
-        catalogReplacement ? catalogText.replace(catalogReplacement.from, catalogReplacement.to) : catalogText,
+        applyRequiredReplacement(catalogText, catalogReplacement, "catalog"),
         "utf8",
       ),
       writeFile(
         contractPath,
-        contractReplacement ? contractText.replace(contractReplacement.from, contractReplacement.to) : contractText,
+        applyRequiredReplacement(contractText, contractReplacement, "contract"),
         "utf8",
       ),
     ]);
@@ -115,4 +123,101 @@ test("Given catalog prose may deserialize into a prescription, when validated, t
 
   assert.notEqual(result.status, 0);
   assert.match(result.stderr, /catalog-deserialization guard/u);
+});
+
+test("Given one BASE seed is relabeled as LT, when validated, then the 5-per-intent invariant fails closed", async () => {
+  const result = await validateWith({
+    catalogReplacement: { from: "planningIntent: BASE_INTENT", to: "planningIntent: LT_INTENT" },
+  });
+
+  assert.notEqual(result.status, 0);
+  assert.match(result.stderr, /BASE_INTENT must contain exactly 5 entries, got 4/u);
+  assert.match(result.stderr, /LT_INTENT must contain exactly 5 entries, got 6/u);
+});
+
+for (const fixtureMutation of [
+  {
+    name: "total repetitions",
+    from: "totalRepetitions: 20",
+    to: "totalRepetitions: 19",
+    expected: /incorrect or missing total repetitions/u,
+  },
+  {
+    name: "quality distance",
+    from: "qualityDistanceM: 8000",
+    to: "qualityDistanceM: 7900",
+    expected: /incorrect or missing quality distance/u,
+  },
+  {
+    name: "repetition recovery occurrences",
+    from: "repetitionRecoveryOccurrences: 18",
+    to: "repetitionRecoveryOccurrences: 17",
+    expected: /incorrect or missing repetition recovery occurrences/u,
+  },
+  {
+    name: "set recovery occurrences",
+    from: "setRecoveryOccurrences: 1",
+    to: "setRecoveryOccurrences: 2",
+    expected: /incorrect or missing set recovery occurrences/u,
+  },
+  {
+    name: "planned recovery seconds",
+    from: "plannedRecoverySeconds: 1260",
+    to: "plannedRecoverySeconds: 1200",
+    expected: /incorrect or missing planned recovery seconds/u,
+  },
+]) {
+  test(`Given the owner fixture ${fixtureMutation.name} changes, when validated, then it fails closed`, async () => {
+    const result = await validateWith({
+      contractReplacement: {
+        from: fixtureMutation.from,
+        to: fixtureMutation.to,
+      },
+    });
+
+    assert.notEqual(result.status, 0);
+    assert.match(result.stderr, fixtureMutation.expected);
+  });
+}
+
+test("Given the catalog final marker is removed, when validated, then it fails closed", async () => {
+  const result = await validateWith({
+    catalogReplacement: { from: /\r?\n\[DRAFT_COMPLETE\]\r?\n/u, to: "\n" },
+  });
+
+  assert.notEqual(result.status, 0);
+  assert.match(result.stderr, /catalog must contain exactly one final marker/u);
+});
+
+test("Given the contract final marker is removed, when validated, then it fails closed", async () => {
+  const result = await validateWith({
+    contractReplacement: { from: /\r?\n\[DRAFT_COMPLETE\]\r?\n/u, to: "\n" },
+  });
+
+  assert.notEqual(result.status, 0);
+  assert.match(result.stderr, /contract must contain exactly one final marker/u);
+});
+
+test("Given catalog text follows the final marker, when validated, then it fails closed", async () => {
+  const result = await validateWith({
+    catalogReplacement: {
+      from: /\r?\n\[DRAFT_COMPLETE\]\r?\n/u,
+      to: "\n[DRAFT_COMPLETE]\nUNAUTHORIZED_TRAILING_TEXT\n",
+    },
+  });
+
+  assert.notEqual(result.status, 0);
+  assert.match(result.stderr, /catalog final marker must be the last non-whitespace content/u);
+});
+
+test("Given contract text follows the final marker, when validated, then it fails closed", async () => {
+  const result = await validateWith({
+    contractReplacement: {
+      from: /\r?\n\[DRAFT_COMPLETE\]\r?\n/u,
+      to: "\n[DRAFT_COMPLETE]\nUNAUTHORIZED_TRAILING_TEXT\n",
+    },
+  });
+
+  assert.notEqual(result.status, 0);
+  assert.match(result.stderr, /contract final marker must be the last non-whitespace content/u);
 });
