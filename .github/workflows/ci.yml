@@ -140,6 +140,10 @@ jobs:
 
       - name: Build hosted app
         working-directory: app
+        env:
+          VITE_ACCOUNT_PUBLIC_ENABLED: ${{ vars.TRAINORACLE_ACCOUNT_PUBLIC_ENABLED }}
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
         run: |
           npm ci
           npm run build

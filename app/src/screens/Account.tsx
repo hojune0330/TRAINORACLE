@@ -15,6 +15,7 @@ import type { AccountUser } from "../domain/account/auth"
 import { loadSyncConsent, saveSyncConsent, syncNow } from "../domain/account/sync"
 import type { SyncConsent } from "../domain/account/sync"
 import { localOnlyCount } from "../domain/journal-store"
+import { eraseAllLocalData } from "../domain/erase-local-data"
 
 const mono: React.CSSProperties = { fontFamily: "var(--mono)" }
 const inputStyle: React.CSSProperties = {
@@ -36,7 +37,13 @@ const secondaryBtn: React.CSSProperties = {
 
 type OtpStep = "email" | "code"
 
-export function Account({ onBack }: { readonly onBack?: () => void }) {
+export function Account({ onBack, onOpenImport, onOpenRestore }: {
+  readonly onBack?: () => void
+  /** 기기 데이터 가져오기 화면으로 이동 — 계정·승인 없이 지금 되는 경로 */
+  readonly onOpenImport?: () => void
+  /** 백업 되돌리기 화면으로 이동 — 로그인 여부와 무관하게 쓸 수 있다 */
+  readonly onOpenRestore?: () => void
+}) {
   const [user, setUser] = React.useState<AccountUser | null>(null)
   const [loading, setLoading] = React.useState(true)
   const [step, setStep] = React.useState<OtpStep>("email")
@@ -88,10 +95,12 @@ export function Account({ onBack }: { readonly onBack?: () => void }) {
     setBusy(true); setSyncMessage(null)
     const outcome = await syncNow(user.id)
     setBusy(false)
+    if (!outcome.ok) { setSyncMessage(outcome.message); return }
+    // 지운 개수도 함께 보여준다. 다른 기기에서 지운 일지가 이 기기에서
+    // 사라지는 경우, 이유를 밝히지 않으면 "기록이 없어졌다"로만 보인다.
+    const deletedPart = outcome.deleted > 0 ? ` · ${outcome.deleted}개 삭제 반영` : ""
     setSyncMessage(
-      outcome.ok
-        ? `${outcome.message} (서버에서 ${outcome.pulled}개 확인 · ${outcome.pushed}개 백업 · 총 ${outcome.total}개)`
-        : outcome.message,
+      `${outcome.message} (서버에서 ${outcome.pulled}개 확인 · ${outcome.pushed}개 백업${deletedPart} · 총 ${outcome.total}개)`,
     )
   }
 
@@ -225,22 +234,32 @@ export function Account({ onBack }: { readonly onBack?: () => void }) {
             <p role="status" style={{ ...mono, fontSize: 12, color: "var(--ink-2)", margin: 0 }}>{syncMessage}</p>
           )}
 
-          <SectionLb>데이터 가져오기 — 준비 중</SectionLb>
+          <SectionLb>기기 데이터 가져오기</SectionLb>
           <div
             data-testid="import-teaser"
-            style={{ border: "1px dashed var(--line)", borderRadius: 10, padding: "12px 14px" }}
+            style={{ border: "1px solid var(--line)", borderRadius: 10, padding: "12px 14px" }}
           >
             <div style={{ fontFamily: "var(--sans)", fontSize: 13.5, fontWeight: 600 }}>
-              가민 · WHOOP · 스트라바에 쌓인 기록, 곧 가져올 수 있어요
+              워치에 쌓인 기록, 파일로 지금 가져올 수 있어요
             </div>
             <p style={{ fontFamily: "var(--sans)", fontSize: 12, lineHeight: 1.6, color: "var(--ink-2)", margin: "6px 0 0" }}>
-              워치와 앱에 이미 쌓여 있는 훈련·수면·회복 데이터를 연동해서
-              일지 옆에 나란히 보는 기능을 만들고 있어요. 지금 계정을 연동해 두면
-              준비되는 대로 바로 쓸 수 있어요.
+              가민 커넥트 등에서 활동을 TCX·GPX로 내보내면 거리·시간·평균 페이스가
+              자동으로 채워진 일지 초안이 만들어져요. <b>기록 탭 → 워치 기록 불러오기</b>에
+              있어요.
             </p>
-            <div style={{ ...mono, fontSize: 9.5, color: "var(--ink-4)", marginTop: 8, letterSpacing: "0.06em" }}>
-              GARMIN · WHOOP · STRAVA · 준비 중 · 연동은 읽기 전용
-            </div>
+            {onOpenImport && (
+              <button
+                type="button"
+                onClick={onOpenImport}
+                style={{ ...secondaryBtn, marginTop: 10, minHeight: 44 }}
+              >
+                지금 파일로 가져오기
+              </button>
+            )}
+            <p style={{ ...mono, fontSize: 10, color: "var(--ink-4)", lineHeight: 1.65, margin: "10px 0 0" }}>
+              계정 연결로 자동 수집하는 기능은 각 서비스의 승인·계약 조건 때문에
+              시점을 약속할 수 없어요. 연동은 언제나 읽기 전용이에요.
+            </p>
           </div>
 
           <button type="button" style={secondaryBtn} disabled={busy} onClick={() => void handleSignOut()}>
@@ -250,6 +269,98 @@ export function Account({ onBack }: { readonly onBack?: () => void }) {
             로그아웃해도 이 기기의 일지는 지워지지 않아요.
           </p>
         </div>
+      )}
+
+      {/* 로그인 여부와 무관하게 노출한다 — 브라우저를 지우고 온 사람은 로그아웃 상태다. */}
+      {onOpenRestore && !loading && (
+        <div style={{ marginTop: 24 }}>
+          <SectionLb>내려받은 백업 되돌리기</SectionLb>
+          <p style={{ fontFamily: "var(--sans)", fontSize: 12.5, lineHeight: 1.6, color: "var(--ink-2)", margin: "8px 0 0" }}>
+            전에 내려받아 둔 일지 백업 파일(JSON)이 있으면 계정 없이도 이 기기로
+            되돌릴 수 있어요. <b>지금 있는 일지는 지우지 않아요.</b>
+          </p>
+          <button
+            type="button" data-testid="open-restore-account"
+            onClick={onOpenRestore}
+            style={{ ...secondaryBtn, marginTop: 10, minHeight: 44 }}
+          >
+            백업 파일 고르기
+          </button>
+        </div>
+      )}
+
+      {!loading && <EraseLocalData />}
+    </div>
+  )
+}
+
+/**
+ * 이 기기의 데이터 전부 지우기.
+ *
+ * 개별 일지 삭제만으로는 삭제권이 완성되지 않는다. "그만 쓸래",
+ * "기기를 넘길 거야" 상황에서 사용자가 직접 지울 수단이 있어야 한다.
+ * 브라우저 설정을 찾아 들어가라고 안내하는 것은 삭제권 제공이 아니다.
+ *
+ * 되돌릴 수 없으므로 2단계 확인을 둔다. 다만 겁주는 문구는 쓰지 않는다 —
+ * 지우는 것은 사용자의 정당한 권리이고, 우리가 말릴 일이 아니다.
+ * 대신 **먼저 백업받을 수 있다는 사실**을 같은 자리에서 알린다.
+ */
+function EraseLocalData() {
+  const [confirming, setConfirming] = React.useState(false)
+  const [done, setDone] = React.useState<string | null>(null)
+
+  const handleErase = () => {
+    const result = eraseAllLocalData()
+    setConfirming(false)
+    setDone(
+      result.ok
+        ? `이 기기에서 ${result.cleared}개 항목을 지웠어요.`
+        : "일부 항목을 지우지 못했어요. 브라우저 설정에서 사이트 데이터를 삭제해 주세요.",
+    )
+  }
+
+  return (
+    <div style={{ marginTop: 28, paddingTop: 18, borderTop: "1px solid var(--line)" }}>
+      <SectionLb>이 기기 데이터 지우기</SectionLb>
+      <p style={{ fontFamily: "var(--sans)", fontSize: 12.5, lineHeight: 1.6, color: "var(--ink-2)", margin: "8px 0 0" }}>
+        이 기기에 저장된 일지·계획·로그인 정보를 모두 지워요.
+        <b> 되돌릴 수 없으니 필요하면 먼저 백업을 받아 두세요.</b>
+      </p>
+
+      {done !== null ? (
+        <p role="status" data-testid="erase-result"
+          style={{ fontFamily: "var(--mono)", fontSize: 12, color: "var(--ink-2)", margin: "10px 0 0" }}>
+          {done}
+        </p>
+      ) : confirming ? (
+        <div style={{ display: "flex", flexDirection: "column", gap: 8, marginTop: 10 }}>
+          <p style={{ fontFamily: "var(--sans)", fontSize: 13, fontWeight: 600, margin: 0 }}>
+            정말 지울까요? 이 작업은 되돌릴 수 없어요.
+          </p>
+          <button
+            type="button" data-testid="erase-confirm" onClick={handleErase}
+            style={{
+              minHeight: 44, borderRadius: 10, cursor: "pointer",
+              border: "1px solid var(--ink)", background: "var(--ink)",
+              color: "var(--paper)", fontFamily: "var(--sans)", fontSize: 14, fontWeight: 600,
+            }}
+          >
+            네, 전부 지울게요
+          </button>
+          <button
+            type="button" data-testid="erase-cancel" onClick={() => setConfirming(false)}
+            style={{ ...secondaryBtn, minHeight: 44 }}
+          >
+            그만두기
+          </button>
+        </div>
+      ) : (
+        <button
+          type="button" data-testid="erase-start" onClick={() => setConfirming(true)}
+          style={{ ...secondaryBtn, marginTop: 10, minHeight: 44 }}
+        >
+          이 기기 데이터 전부 지우기
+        </button>
       )}
     </div>
   )

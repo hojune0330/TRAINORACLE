@@ -257,9 +257,38 @@ export function Guide({ onWriteLog }: { onWriteLog?: () => void }) {
         <SectionLb>— 자주 묻는 질문</SectionLb>
         <Faq q="회원가입 해야 하나요?" a="아니요. 지금 바로 쓸 수 있어요. 일지는 이 기기(브라우저)에 저장돼요. 나중에 계정을 연동하면 온라인 보관과 기기 이동이 열려요." />
         <Faq q="일지를 매일 써야 하나요?" a="아니요. 빼먹어도 아무 일도 일어나지 않아요. 다시 돌아온 날부터 이어서 쌓이면 돼요. 쉰 날을 '쉬었다'고 적는 것도 좋은 기록이에요." />
-        <Faq q="메모는 누가 보나요?" a="메모는 서버로 보내지 않고 이 브라우저에 저장돼요. 공용 기기에서는 다른 사람이 볼 수 있어요. '나만의 메모'는 훈련 분석에 쓰지 않고, '훈련 메모'는 안전 확인과 훈련 분석에 쓰일 수 있어요." />
+        <Faq q="메모는 누가 보나요?" a="기본은 이 브라우저에만 저장되고 서버 동기화에서도 제외돼요. 계정 화면에서 '메모·노트 원문도 함께 백업'을 직접 켜면 그때만 서버로 보내요. 공용 기기에서는 다른 사람이 볼 수 있어요. '나만의 메모'는 훈련 분석에 쓰지 않고, '훈련 메모'는 안전 확인과 훈련 분석에 쓰일 수 있어요." />
         <Faq q="기록이 느린데 써도 되나요?" a="이 일지는 남과 비교하지 않아요. 어제의 나와 오늘의 나만 있어요. 시작이 어디든, 쌓이는 건 똑같이 소중해요." />
         <Faq q="아프면 어떻게 하나요?" a="하루 마무리에서 통증 부위를 표시할 수 있어요. 통증이 심하면(4~5) 무리하지 말라는 안내가 떠요. 이 앱은 절대 아픈 몸으로 훈련을 부추기지 않아요." />
+        <Faq q="기기를 바꾸면 일지는 어떻게 되나요?" a="일지는 이 기기에만 있어서 따라가지 않아요. 기기를 바꾸기 전에 기록 탭에서 백업 파일을 내려받고, 새 기기에서 '백업 되돌리기'로 넣으면 그대로 옮겨져요." />
+        <Faq q="실수로 지운 일지를 되돌릴 수 있나요?" a="네. 지운 일지는 휴지통에 30일 동안 남아요. 홈 화면 아래 '휴지통'에서 되돌리면 메모까지 그대로 돌아와요. 30일이 지나거나 휴지통에서 '완전히 지우기'를 하면 되돌릴 수 없어요." />
+        <Faq q="그만 쓰고 싶으면 어떻게 지우나요?" a="계정 화면 아래쪽 '이 기기 데이터 전부 지우기'를 누르면 일지·계획·휴지통·로그인 정보가 모두 지워져요. 되돌릴 수 없으니 필요하면 먼저 백업을 받아 두세요." />
+      </div>
+
+      {/* 문의 — 문제가 생겼을 때 알릴 곳이 없으면 사용자는 조용히 떠난다 */}
+      <div style={{ padding: "26px 20px 0" }}>
+        <SectionLb>— 문의와 의견</SectionLb>
+        <p style={{ fontFamily: "var(--sans)", fontSize: 12.5, lineHeight: 1.7, color: "var(--ink-2)", margin: "10px 0 0" }}>
+          잘 안 되는 곳이나 불편한 점이 있으면 알려주세요. 베타라서 고칠 게 많고,
+          알려주신 것부터 고쳐요.
+        </p>
+        <a
+          href="https://github.com/hojune0330/TRAINORACLE/issues"
+          target="_blank" rel="noreferrer"
+          data-testid="contact-link"
+          style={{
+            display: "flex", alignItems: "center", justifyContent: "center",
+            minHeight: 44, marginTop: 10, padding: "0 16px",
+            border: "1px solid var(--line)", borderRadius: 10,
+            fontFamily: "var(--sans)", fontSize: 13.5, color: "var(--ink)",
+            textDecoration: "none",
+          }}
+        >
+          의견 남기기 (GitHub Issues)
+        </a>
+        <p style={{ fontFamily: "var(--mono)", fontSize: 10, color: "var(--ink-4)", lineHeight: 1.65, margin: "8px 0 0" }}>
+          일지 내용은 자동으로 전송되지 않아요. 남기실 내용만 직접 적어 주세요.
+        </p>
       </div>
 
       {/* CTA */}

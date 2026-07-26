@@ -6,6 +6,8 @@ import type { JournalEntryType } from "./shared"
 interface EntryChooserProps {
   readonly onBack?: () => void
   readonly onPick?: (entryType: JournalEntryType) => void
+  /** 워치 내보내기 파일 가져오기 — 직접 쓰기의 대안 진입점 */
+  readonly onOpenImport?: () => void
 }
 
 const ENTRY_OPTIONS = [
@@ -14,7 +16,7 @@ const ENTRY_OPTIONS = [
   { id: "race", t: "경기 직전/직후", d: "기록·심박·감정", meta: "RACE · ~30초", mark: "▲" },
 ] as const
 
-export function EntryChooser({ onBack, onPick }: EntryChooserProps) {
+export function EntryChooser({ onBack, onPick, onOpenImport }: EntryChooserProps) {
   return (
     <div style={{ paddingBottom: 30 }}>
       <TopBar onBack={onBack}>새 일지</TopBar>
@@ -48,6 +50,29 @@ export function EntryChooser({ onBack, onPick }: EntryChooserProps) {
           </button>
         ))}
       </div>
+
+      {onOpenImport && (
+        <div style={{ padding: "20px 20px 0" }}>
+          <button
+            type="button"
+            onClick={onOpenImport}
+            data-testid="open-import"
+            style={{
+              width: "100%", minHeight: 48, padding: "13px 16px", textAlign: "left",
+              background: "transparent", color: "var(--ink-2)",
+              border: "1px dashed var(--line-2, var(--line))", borderRadius: 0,
+              cursor: "pointer", lineHeight: 1.5,
+            }}
+          >
+            <span style={{ fontFamily: "var(--sans)", fontSize: 13.5, fontWeight: 500, color: "var(--ink)" }}>
+              워치 기록 불러오기
+            </span>
+            <span style={{ display: "block", fontFamily: "var(--mono)", fontSize: 10, color: "var(--ink-3)", marginTop: 3 }}>
+              가민 커넥트 등에서 내보낸 TCX·GPX 파일 · 거리·시간 자동 입력
+            </span>
+          </button>
+        </div>
+      )}
 
       <div style={{ padding: "24px 20px" }}>
         <div style={{ fontFamily: "var(--mono)", fontSize: 10, color: "var(--ink-4)", letterSpacing: "0.06em", lineHeight: 1.55 }}>

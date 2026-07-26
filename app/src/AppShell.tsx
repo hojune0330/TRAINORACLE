@@ -9,6 +9,8 @@ import { Trends } from "./screens/Trends"
 import { Guide } from "./screens/Guide"
 import { PlanBeta } from "./screens/PlanBeta"
 import { Account } from "./screens/Account"
+import { ImportActivities } from "./screens/ImportActivities"
+import { RestoreBackup } from "./screens/RestoreBackup"
 import { accountFeatureEnabled } from "./domain/account/config"
 import { localOnlyCount, todayISO } from "./domain/journal-store"
 import type { JournalEntry } from "./domain/journal-store"
@@ -25,9 +27,16 @@ interface ViewState {
   detailDate: string | null
   /** 계정 화면 (home 탭 위 오버레이 성격) — feature flag ON일 때만 진입 가능 */
   accountOpen: boolean
+  /** 기기 데이터 가져오기 화면 (기록 탭 위 오버레이) — 계정·승인 불필요 */
+  importOpen: boolean
+  /** 백업 되돌리기 화면 (home 탭 위 오버레이) — 계정·승인 불필요 */
+  restoreOpen: boolean
 }
 
-const INITIAL: ViewState = { tab: "home", entryType: "choose", detailDate: null, accountOpen: false }
+const INITIAL: ViewState = {
+  tab: "home", entryType: "choose", detailDate: null,
+  accountOpen: false, importOpen: false, restoreOpen: false,
+}
 const TOAST_READABLE_MS = 4000
 const TOAST_EXIT_MS = 150
 
@@ -68,7 +77,7 @@ export function AppShell() {
     return () => window.clearTimeout(t)
   }, [savedToast])
   const goTab = (tab: AppTab) =>
-    setV({ tab, entryType: "choose", detailDate: null, accountOpen: false })
+    setV({ tab, entryType: "choose", detailDate: null, accountOpen: false, importOpen: false, restoreOpen: false })
   const goTrendsFromReceipt = () => {
     setSavedToast(null)
     goTab("trends")
@@ -76,9 +85,24 @@ export function AppShell() {
 
   const accountEnabled = accountFeatureEnabled()
 
+  const openRestore = () => setV(s => ({ ...s, tab: "home", accountOpen: false, importOpen: false, restoreOpen: true }))
+
   let screen: React.ReactNode
-  if (v.tab === "home" && v.accountOpen && accountEnabled) {
-    screen = <Account onBack={() => setV(s => ({ ...s, accountOpen: false }))} />
+  if (v.tab === "home" && v.restoreOpen) {
+    screen = (
+      <RestoreBackup
+        onBack={() => setV(s => ({ ...s, restoreOpen: false }))}
+        onOpenHome={goHome}
+      />
+    )
+  } else if (v.tab === "home" && v.accountOpen && accountEnabled) {
+    screen = (
+      <Account
+        onBack={() => setV(s => ({ ...s, accountOpen: false }))}
+        onOpenImport={() => setV(s => ({ ...s, tab: "log", accountOpen: false, importOpen: true }))}
+        onOpenRestore={openRestore}
+      />
+    )
   } else if (v.tab === "home") {
     screen = v.detailDate ? (
       <LogDetail date={v.detailDate} onBack={() => setV(s => ({ ...s, detailDate: null }))} />
@@ -89,6 +113,7 @@ export function AppShell() {
         onOpenGuide={() => setV(s => ({ ...s, tab: "guide" }))}
         onOpenPlan={() => setV(s => ({ ...s, tab: "plan" }))}
         onOpenAccount={accountEnabled ? () => setV(s => ({ ...s, accountOpen: true })) : undefined}
+        onOpenRestore={openRestore}
         firstVisitActive={firstVisitActive}
         onDismissFirstVisit={() => {
           dismissFirstVisit()
@@ -104,7 +129,16 @@ export function AppShell() {
           entryType: entryType ?? "choose",
           detailDate: null,
           accountOpen: false,
+          importOpen: false,
+          restoreOpen: false,
         })}
+      />
+    )
+  } else if (v.tab === "log" && v.importOpen) {
+    screen = (
+      <ImportActivities
+        onBack={() => setV(s => ({ ...s, importOpen: false }))}
+        onOpenLog={goHome}
       />
     )
   } else if (v.tab === "log") {
@@ -112,6 +146,7 @@ export function AppShell() {
       <LogEntry
         entryType={v.entryType}
         onBack={v.entryType === "choose" ? goHome : () => setV(s => ({ ...s, entryType: "choose" }))}
+        onOpenImport={() => setV(s => ({ ...s, importOpen: true }))}
         onDone={(picked, savedEntry, reviewMessage) => {
           if (v.entryType === "choose") {
             setV(s => ({ ...s, entryType: picked }))
@@ -124,7 +159,7 @@ export function AppShell() {
   } else if (v.tab === "trends") {
     screen = <Trends onBack={goHome} />
   } else {
-    screen = <Guide onWriteLog={() => setV({ tab: "log", entryType: "choose", detailDate: null, accountOpen: false })} />
+    screen = <Guide onWriteLog={() => setV({ tab: "log", entryType: "choose", detailDate: null, accountOpen: false, importOpen: false, restoreOpen: false })} />
   }
 
   return (
