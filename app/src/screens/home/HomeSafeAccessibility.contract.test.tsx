@@ -44,6 +44,12 @@ describe("home journal controls", () => {
     expect(onOpenDay).toHaveBeenCalledWith("2026-07-14")
   })
 
+  it("renders the journal archive from the same local entry source", () => {
+    render(<Home />)
+
+    expect(screen.getByLabelText("일지 아카이브")).toBeVisible()
+  })
+
   it("describes the default export as excluding raw note text", () => {
     // Given
     render(<Home />)

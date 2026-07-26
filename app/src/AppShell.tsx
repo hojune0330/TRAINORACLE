@@ -9,7 +9,9 @@ import type { EntryType } from "./screens/LogEntry"
 import { LogDetail } from "./screens/LogDetail"
 import { Trends } from "./screens/Trends"
 import { Guide } from "./screens/Guide"
-import { LOCAL_SAVE_NOTICE, SYNC_UPSELL_NOTICE, localOnlyCount } from "./domain/journal-store"
+import { LOCAL_SAVE_NOTICE, SYNC_UPSELL_NOTICE, localOnlyCount, todayISO } from "./domain/journal-store"
+import { journalArchiveViewForDate } from "./screens/home/JournalArchive"
+import type { JournalArchiveView } from "./screens/home/JournalArchive"
 
 type Tab = "home" | "log" | "trends" | "guide"
 
@@ -19,9 +21,10 @@ interface ViewState {
   entryType: EntryType
   /** home에서 연 일지 상세 (날짜) — null이면 홈 목록 */
   detailDate: string | null
+  archiveView: JournalArchiveView
 }
 
-const INITIAL: ViewState = { tab: "home", entryType: "choose", detailDate: null }
+const INITIAL: ViewState = { tab: "home", entryType: "choose", detailDate: null, archiveView: journalArchiveViewForDate(todayISO()) }
 const TOAST_READABLE_MS = 4050
 const TOAST_EXIT_MS = 150
 
@@ -56,7 +59,7 @@ export function AppShell() {
     return () => window.clearTimeout(t)
   }, [savedToast])
   const goTab = (tab: Tab) =>
-    setV({ tab, entryType: "choose", detailDate: null })
+    setV(current => ({ ...current, tab, entryType: "choose", detailDate: null }))
 
   let screen: React.ReactNode
   if (v.tab === "home") {
@@ -67,6 +70,8 @@ export function AppShell() {
         onWriteLog={() => setV(s => ({ ...s, tab: "log", entryType: "choose" }))}
         onOpenDay={(date) => setV(s => ({ ...s, detailDate: date }))}
         onOpenGuide={() => setV(s => ({ ...s, tab: "guide" }))}
+        archiveView={v.archiveView}
+        onArchiveViewChange={(archiveView) => setV(s => ({ ...s, archiveView }))}
       />
     )
   } else if (v.tab === "log") {
@@ -86,7 +91,7 @@ export function AppShell() {
   } else if (v.tab === "trends") {
     screen = <Trends onBack={goHome} />
   } else {
-    screen = <Guide onWriteLog={() => setV({ tab: "log", entryType: "choose", detailDate: null })} />
+    screen = <Guide onWriteLog={() => setV(current => ({ ...current, tab: "log", entryType: "choose", detailDate: null }))} />
   }
 
   return (

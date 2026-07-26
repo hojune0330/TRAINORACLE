@@ -10,14 +10,18 @@ import type { AnalysisJournalEntry } from "../domain/safe-export"
 import { painLevelsRequireReview } from "../safety/memo-safety"
 import { DeviceJournal, SafeJournalExport } from "./home/DeviceJournal"
 import { FirstPage } from "./home/FirstPage"
+import { JournalArchive } from "./home/JournalArchive"
+import type { JournalArchiveView } from "./home/JournalArchive"
 
 export type HomeProps = {
   readonly onWriteLog?: () => void
   readonly onOpenDay?: (date: string) => void
   readonly onOpenGuide?: () => void
+  readonly archiveView?: JournalArchiveView
+  readonly onArchiveViewChange?: (view: JournalArchiveView) => void
 }
 
-export function Home({ onWriteLog, onOpenDay, onOpenGuide }: HomeProps) {
+export function Home({ onWriteLog, onOpenDay, onOpenGuide, archiveView, onArchiveViewChange }: HomeProps) {
   const all = React.useMemo(() => loadEntries(), [])
   const analysisEntries = React.useMemo(() => {
     const projected: AnalysisJournalEntry[] = []
@@ -45,7 +49,7 @@ export function Home({ onWriteLog, onOpenDay, onOpenGuide }: HomeProps) {
       {isEmpty ? (
         <FirstPage onWriteLog={onWriteLog} onOpenGuide={onOpenGuide} />
       ) : (
-        <DataHome all={all} analysisEntries={analysisEntries} onWriteLog={onWriteLog} onOpenDay={onOpenDay} onOpenGuide={onOpenGuide} />
+        <DataHome all={all} analysisEntries={analysisEntries} onWriteLog={onWriteLog} onOpenDay={onOpenDay} onOpenGuide={onOpenGuide} archiveView={archiveView} onArchiveViewChange={onArchiveViewChange} />
       )}
     </div>
   )
@@ -57,9 +61,11 @@ type DataHomeProps = {
   readonly onWriteLog?: () => void
   readonly onOpenDay?: (date: string) => void
   readonly onOpenGuide?: () => void
+  readonly archiveView?: JournalArchiveView
+  readonly onArchiveViewChange?: (view: JournalArchiveView) => void
 }
 
-function DataHome({ all, analysisEntries, onWriteLog, onOpenDay, onOpenGuide }: DataHomeProps) {
+function DataHome({ all, analysisEntries, onWriteLog, onOpenDay, onOpenGuide, archiveView, onArchiveViewChange }: DataHomeProps) {
   const today = todayISO()
   const life = lifetimeStats([...analysisEntries])
   const weeklyStats = thisWeekStats([...analysisEntries])
@@ -112,6 +118,8 @@ function DataHome({ all, analysisEntries, onWriteLog, onOpenDay, onOpenGuide }: 
           <span style={{ fontFamily: "var(--mono)", fontSize: 10, color: "rgba(255,255,255,.7)", letterSpacing: "0.14em" }}>훈련 후 · 저녁 · 경기</span>
         </button>
       </div>
+
+      <JournalArchive entries={all} initialDate={today} view={archiveView} onViewChange={onArchiveViewChange} onOpenDay={onOpenDay} />
 
       <DeviceJournal onOpenDay={onOpenDay} />
 
