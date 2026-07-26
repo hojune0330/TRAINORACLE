@@ -3,7 +3,7 @@
 ```yaml
 document_metadata:
   doc_id: trainoracle-work-order-019-detailed-prescription-runtime
-  status: ISSUED_WAITING_FOR_DEPENDENCIES
+  status: READY_FOR_EXECUTION_AFTER_PR_124_MERGE
   owner: COACH_HOJUNE
   prepared_by: CODEX
   version: "1.0"
@@ -11,7 +11,8 @@ document_metadata:
   requested_model: gpt-5.6-terra
   requested_reasoning_effort: xhigh
   base_branch: main
-  base_commit: 0d5dc6548f920ca882f2d555b92b37f3c91ab6c7
+  base_commit: 37c810e11c155b6eefb1227a1c6bcda9fb4425c7
+  start_base: PR_124_MERGE_COMMIT_OR_LATER
   runtime_authority: false
   template_activation_authority: false
   deployment_authority: false
@@ -47,15 +48,17 @@ expected:
 
 ## 2. 착수 게이트
 
-아래 두 조건을 모두 확인하기 전에는 코드 작업을 시작하지 않는다.
+아래 두 조건은 2026-07-26 main에서 충족됐다.
 
-1. PR #120이 `main`에 병합되어 현재 Plan Beta의 쉬운 문구와 `미지정` 경계가 기준선이 됨
-2. PR #123이 독립 재검수 `APPROVE`를 받고 `main`에 병합됨
+1. PR #120 병합 커밋 `4fe794d501104395325d3926fe8f6f93036fb9f8`
+2. PR #123 독립 재검수 `APPROVE`, 승인 head
+   `9ae4cb9e8437840f8a443e0733d1d70a89b933a6`, 병합 커밋
+   `37c810e11c155b6eefb1227a1c6bcda9fb4425c7`
 
-PR #123에서 확인할 최소 head는 독립 검수 P1 수정이 들어간
-`9ae4cb9e8437840f8a443e0733d1d70a89b933a6` 이후다.
+Terra는 이 작업지시가 main에 들어간 PR #124 병합 커밋 또는 그 이후 main에서 시작한다.
+PR #124가 아직 병합되지 않았거나 위 두 커밋을 찾을 수 없으면 코드 작업을 시작하지 않는다.
 
-조건이 충족되지 않으면 다음 형식으로 정지 보고만 남긴다.
+착수 시 조건이 다시 충족되지 않으면 다음 형식으로 정지 보고만 남긴다.
 
 ```yaml
 status: BLOCKED_BY_UNMERGED_DEPENDENCY

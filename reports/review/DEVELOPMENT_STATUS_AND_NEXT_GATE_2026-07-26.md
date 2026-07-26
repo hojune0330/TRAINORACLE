@@ -3,11 +3,11 @@
 ```yaml
 document_metadata:
   doc_id: trainoracle-development-status-next-gate-2026-07-26
-  status: CURRENT_MAIN_AND_OPEN_PR_SNAPSHOT
+  status: CURRENT_MAIN_AFTER_PR_120_AND_PR_123
   owner: COACH_HOJUNE
   prepared_by: CODEX
   observed_at: "2026-07-26"
-  main_commit: 0d5dc6548f920ca882f2d555b92b37f3c91ab6c7
+  main_commit: 37c810e11c155b6eefb1227a1c6bcda9fb4425c7
   live_url: https://hojune0330.github.io/TRAINORACLE/
   canonical_promotion: false
   final_marker_required: "[DRAFT_COMPLETE]"
@@ -50,7 +50,7 @@ TrainOracle은 지금 **일지 앱과 기본 훈련계획 베타는 실제 공�
 | 상세 처방 연구 시드 | 30개 | 5개 의도 계열 각 5개 + 회복 지원 5개 |
 | 실제 활성 상세 템플릿 | 0개 | 사람 검토 전 선수에게 배정 금지 |
 | 상세 표기 parser/calculator | 0개 | 다음 작업 대상 |
-| 앱 단위 테스트 | 292 PASS | 현재 PR #123 head와 동일 앱 코드 기준 |
+| 앱 단위 테스트 | 293 PASS | PR #120 최종 head와 병합 전 동일 앱 코드 기준 |
 | Plan/D9 안전체인 테스트 | 36 PASS | 후보·선택·진행·D9 차단 |
 | D9 평가기 테스트 | 11 PASS | ACTIVE/UNKNOWN/CLEARED와 RVE 매핑 |
 
@@ -97,26 +97,28 @@ blocking_finding:
   - owner_fixture_totals_not_locked
   - final_marker_position_not_locked
 fix_commit: 9ae4cb9e8437840f8a443e0733d1d70a89b933a6
+independent_re_review: APPROVE
+merged_commit: 37c810e11c155b6eefb1227a1c6bcda9fb4425c7
 local_reverification:
   hostile_validator_tests: 18_PASS
-  app_tests: 292_PASS
+  app_tests: 293_PASS
   impl_tests: 36_PASS
   d9_tests: 11_PASS
 github_ci:
   contract_tests: PASS
   app_quality: PASS
   app_browser: PASS
-remaining_gate: INDEPENDENT_RE_REVIEW_APPROVE
+remaining_gate: SATISFIED
 ```
 
-기술적 차단은 고쳤지만 같은 구현자가 독립 승인까지 대신할 수는 없다.
-PR #123은 재검수 전까지 Draft와 병합 금지를 유지한다.
+초기 차단은 수정됐고, 독립 재검수 승인과 정확한 head 확인 후 main에 병합됐다.
+30개 항목은 여전히 전부 `DRAFT`이며 선수에게 활성화된 상세 템플릿은 0개다.
 
 ## 7. 다음 순서
 
-1. PR #120 검수·병합: 현재 화면의 쉬운 설명과 `미지정` 경계를 main에 고정
-2. PR #123 재검수 `APPROVE` 후 병합: 상세 처방 계약과 30개 연구 시드를 main에 고정
-3. WO019 Terra xhigh: parser, formatter, 같은 종목 RP 계산, 합계, DRAFT 거부 구현
+1. 완료: PR #120 병합으로 쉬운 설명, `미지정` 경계, 모바일 도움말과 화면 전환을 main에 고정
+2. 완료: PR #123 독립 재검수 승인 후 상세 처방 계약과 30개 연구 시드를 main에 고정
+3. 다음: WO019 Terra xhigh가 parser, formatter, 같은 종목 RP 계산, 합계, DRAFT 거부 구현
 4. Sol high: 코드·안전 경계 검수
 5. 사람 검토: 작은 활성화 후보군의 종목·경험·청소년 전이 범위 결정
 6. Fable: 선수에게 보일 쉬운 설명·숫자 상세·물음표 도움말 검토
