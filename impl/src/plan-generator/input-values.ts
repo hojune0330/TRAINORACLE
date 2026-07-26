@@ -5,6 +5,7 @@ import type {
   PlanEventGroup,
   PlanProfile,
   PlanSelectionAuthority,
+  PlannedEnergyIntent,
 } from "./types"
 
 export type ParsedJournalSource =
@@ -135,6 +136,23 @@ export function parseFrameLength(value: unknown): 7 | 9 | 10 | undefined {
     case 7:
     case 9:
     case 10:
+      return value
+    default:
+      return undefined
+  }
+}
+
+export function parsePlannedEnergyIntent(
+  value: unknown,
+): PlannedEnergyIntent | undefined {
+  switch (value) {
+    case "RECOVERY_INTENT":
+    case "BASE_INTENT":
+    case "LT_INTENT":
+    case "VO2_INTENT":
+    case "GLY_INTENT":
+    case "ATP_PC_INTENT":
+    case "MIXED_INTENT":
       return value
     default:
       return undefined

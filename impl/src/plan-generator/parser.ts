@@ -2,6 +2,7 @@ import {
   isRecord,
   parseFrameLength,
   parseJournalSource,
+  parsePlannedEnergyIntent,
   parseProfile,
   parseSafetyGate,
   parseSelectionAuthority,
@@ -61,6 +62,7 @@ export function parsePlanGenerationRequest(input: unknown): ParsedPlanRequest {
   const profile = parseProfile(input["profile"])
   const journal = parseJournalSource(input["journalSource"])
   const selectionAuthority = parseSelectionAuthority(input["selectionAuthority"])
+  const selectedEnergyIntent = parsePlannedEnergyIntent(input["selectedEnergyIntent"])
   const continuity = parseContinuityInput(input["continuity"])
   if (journal.kind === "invalid") {
     return reject("INVALID_JOURNAL_CONTEXT")
@@ -71,7 +73,8 @@ export function parsePlanGenerationRequest(input: unknown): ParsedPlanRequest {
   if (
     safetyGate === undefined ||
     profile === undefined ||
-    selectionAuthority === undefined
+    selectionAuthority === undefined ||
+    selectedEnergyIntent === undefined
   ) {
     return reject("MALFORMED_INPUT")
   }
@@ -88,6 +91,7 @@ export function parsePlanGenerationRequest(input: unknown): ParsedPlanRequest {
     requestedFrameLength,
     journalSource: journal.journalSource,
     selectionAuthority,
+    selectedEnergyIntent,
   }
   switch (continuity.kind) {
     case "absent":

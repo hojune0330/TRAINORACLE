@@ -15,6 +15,7 @@ const stateFixture = (): PlanBetaState => ({
     experienceBand: "DEVELOPING",
     availableDayCount: 4,
     requestedFrameLength: 9,
+    trainingFocus: "LT_INTENT",
   },
   activePlan: {
     kind: "BETA_ACTIVE_PLAN_SNAPSHOT",
@@ -23,6 +24,7 @@ const stateFixture = (): PlanBetaState => ({
     candidateKind: "BALANCED",
     selectionActor: "SELF",
     sourceMode: "PROFILE_ONLY",
+    selectedEnergyIntent: "LT_INTENT",
     frame: {
       lengthDays: 9,
       continuity: { kind: "STANDARD_FRAME" },
@@ -31,6 +33,7 @@ const stateFixture = (): PlanBetaState => ({
       {
         day: 1,
         role: "EASY",
+        plannedEnergyIntent: "BASE_INTENT",
         prescription: {
           kind: "RPE_TIME_RANGE",
           rpe: { minimum: 2, maximum: 4 },

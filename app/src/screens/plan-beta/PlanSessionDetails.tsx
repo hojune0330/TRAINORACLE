@@ -1,6 +1,7 @@
 import type { PlanSession } from "@impl/plan-generator/types"
 import { TermHelp } from "../../components/TermHelp"
 import {
+  ENERGY_INTENT_LABELS,
   prescriptionLabel,
   sessionGuidance,
   sessionIntentLabel,
@@ -20,22 +21,10 @@ export function PlanSessionDetails({
       </small>
       <span className="plan-session-intent">
         훈련 의도 ·{" "}
-        {session.role === "REST" && sessionIntentLabel(session)}
-        {session.role === "EASY" && (
-          <span className="plan-session-term">
-            {sessionIntentLabel(session)}
-            <TermHelp term="base" />
-          </span>
-        )}
-        {session.role === "QUALITY" && (
-          <>
-            <span className="plan-session-term">
-              조절 강도
-              <TermHelp term="quality-session" />
-            </span>
-            <span> · 세부 에너지 시스템 미지정</span>
-          </>
-        )}
+        <span className="plan-session-term">
+          {sessionIntentLabel(session)}
+          <TermHelp term={ENERGY_INTENT_LABELS[session.plannedEnergyIntent].term} />
+        </span>
       </span>
       <details className="plan-session-guidance">
         <summary>실행 방법 보기</summary>

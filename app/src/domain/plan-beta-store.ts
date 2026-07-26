@@ -19,6 +19,15 @@ const experienceBandSchema = z.enum([
   "DEVELOPING",
   "EXPERIENCED",
 ])
+const plannedEnergyIntentSchema = z.enum([
+  "RECOVERY_INTENT",
+  "BASE_INTENT",
+  "LT_INTENT",
+  "VO2_INTENT",
+  "GLY_INTENT",
+  "ATP_PC_INTENT",
+  "MIXED_INTENT",
+])
 const frameLengthSchema = z.union([z.literal(7), z.literal(9), z.literal(10)])
 const progressStateSchema = z.enum([
   "COMPLETED",
@@ -30,11 +39,35 @@ const planSessionSchema = z.discriminatedUnion("role", [
   z.object({
     day: z.number().int().positive(),
     role: z.literal("REST"),
+    plannedEnergyIntent: z.literal("RECOVERY_INTENT").optional().default("RECOVERY_INTENT"),
     prescription: z.object({ kind: z.literal("REST") }),
   }),
   z.object({
     day: z.number().int().positive(),
-    role: z.enum(["EASY", "QUALITY"]),
+    role: z.literal("EASY"),
+    plannedEnergyIntent: z.enum(["RECOVERY_INTENT", "BASE_INTENT"]).optional().default("BASE_INTENT"),
+    prescription: z.object({
+      kind: z.literal("RPE_TIME_RANGE"),
+      rpe: z.object({
+        minimum: z.number(),
+        maximum: z.number(),
+      }),
+      durationMinutes: z.object({
+        minimum: z.number(),
+        maximum: z.number(),
+      }),
+    }),
+  }),
+  z.object({
+    day: z.number().int().positive(),
+    role: z.literal("QUALITY"),
+    plannedEnergyIntent: z.enum([
+      "LT_INTENT",
+      "VO2_INTENT",
+      "GLY_INTENT",
+      "ATP_PC_INTENT",
+      "MIXED_INTENT",
+    ]).optional().default("MIXED_INTENT"),
     prescription: z.object({
       kind: z.literal("RPE_TIME_RANGE"),
       rpe: z.object({
@@ -65,6 +98,7 @@ const activePlanSchema = z.object({
   candidateKind: z.enum(["BALANCED", "CONSERVATIVE"]),
   selectionActor: z.enum(["SELF", "COACH"]),
   sourceMode: z.enum(["PROFILE_ONLY", "JOURNAL_CONTEXT_ONLY"]),
+  selectedEnergyIntent: plannedEnergyIntentSchema.optional().default("MIXED_INTENT"),
   frame: planFrameSchema,
   sessions: z.array(planSessionSchema).readonly(),
 })
@@ -73,6 +107,7 @@ const planIntakeSchema = z.object({
   experienceBand: experienceBandSchema,
   availableDayCount: z.union([z.literal(3), z.literal(4), z.literal(5)]),
   requestedFrameLength: frameLengthSchema,
+  trainingFocus: plannedEnergyIntentSchema.optional().default("MIXED_INTENT"),
 })
 const progressSchema = z.object({
   sessionDay: z.number().int().positive(),

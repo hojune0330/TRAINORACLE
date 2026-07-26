@@ -13,7 +13,7 @@ import type {
 } from "../../domain/plan-beta-store"
 import { TermHelp } from "../../components/TermHelp"
 import {
-  CANDIDATE_LABELS,
+  candidateLabel,
   PROGRESS_LABELS,
 } from "./labels"
 import { PlanSessionDetails } from "./PlanSessionDetails"
@@ -41,14 +41,17 @@ export function ActivePlan({
   const recorded = new Map(
     state.progress.map((progress) => [progress.sessionDay, progress.state]),
   )
-  const label = CANDIDATE_LABELS[activePlan.candidateKind]
+  const label = candidateLabel(
+    activePlan.candidateKind,
+    activePlan.selectedEnergyIntent,
+  )
 
   return (
     <section className="active-plan" aria-labelledby="active-plan-title">
       <div className="plan-eyebrow">ACTIVE · LOCAL BETA</div>
       <h1 id="active-plan-title">{label.title} {activePlan.frame.lengthDays}일 계획</h1>
       <p className="plan-copy">
-        오늘 할 훈련의 총 시간과 RPE를 확인하세요.
+        오늘 할 훈련의 총 시간, RPE, 훈련 목적을 확인하세요.
         완료하지 못한 날을 다음 날에 몰아서 하지 마세요.
       </p>
       <div className="plan-source-strip">
@@ -56,7 +59,7 @@ export function ActivePlan({
         <span>
           <strong>
             {activePlan.sourceMode === "PROFILE_ONLY"
-              ? "사용 정보 4가지 · 베타 계획"
+              ? "사용 정보 5가지 · 베타 계획"
               : "최근 일지 확인 · 계획 수치에는 미반영"}
             <TermHelp term="plan-beta-basis" />
           </strong>

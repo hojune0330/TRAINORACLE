@@ -38,6 +38,7 @@ function generatedCoachRequiredPlan() {
       kind: "NO_USABLE_JOURNAL",
     },
     selectionAuthority: "COACH_REQUIRED",
+    selectedEnergyIntent: "LT_INTENT",
   })
 
   if (result.kind !== "generated") {

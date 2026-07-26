@@ -2,17 +2,23 @@ import { ArrowLeft, ChevronRight } from "lucide-react"
 import {
   EXPERIENCE_BANDS,
   PLAN_EVENT_GROUPS,
+  PLANNED_ENERGY_INTENTS,
 } from "@impl/plan-generator/types"
 import type {
   ExperienceBand,
   PlanEventGroup,
+  PlannedEnergyIntent,
 } from "@impl/plan-generator/types"
 import { TermHelp } from "../../components/TermHelp"
 import type { TermId } from "../../domain/glossary"
 import type { PlanBetaIntake } from "../../domain/plan-beta-store"
-import { EVENT_LABELS, EXPERIENCE_LABELS } from "./labels"
+import {
+  ENERGY_INTENT_LABELS,
+  EVENT_LABELS,
+  EXPERIENCE_LABELS,
+} from "./labels"
 
-export type IntakeStep = "goal" | "experience" | "days" | "frame" | "safety"
+export type IntakeStep = "goal" | "experience" | "focus" | "days" | "frame" | "safety"
 
 type IntakeDraft = Partial<PlanBetaIntake>
 
@@ -22,6 +28,7 @@ type PlanIntakeProps = {
   readonly onBack: () => void
   readonly onGoal: (goal: PlanEventGroup) => void
   readonly onExperience: (band: ExperienceBand) => void
+  readonly onFocus: (focus: PlannedEnergyIntent) => void
   readonly onDays: (days: 3 | 4 | 5) => void
   readonly onFrame: (days: 7 | 9 | 10) => void
   readonly onOpenNotationReader: () => void
@@ -51,22 +58,29 @@ const STEP_META: Record<IntakeStep, {
     copy: "실력 점수가 아니에요. 고른 경험에 따라 한 번의 훈련 시간을 다르게 잡아요.",
     helpTerm: "plan-experience",
   },
-  days: {
+  focus: {
     number: 3,
+    eyebrow: "TRAINING FOCUS",
+    title: "이번 주기에 어떤 훈련을 더 넣고 싶나요?",
+    copy: "고른 목적은 고강도 날의 종류와 RPE 안내를 정해요. 반복 횟수·거리·페이스·회복 시간은 아직 정하지 않아요.",
+    helpTerm: "energy-system",
+  },
+  days: {
+    number: 4,
     eyebrow: "AVAILABLE DAYS",
     title: "평소 7~10일 동안 며칠을 훈련할 수 있나요?",
     copy: "고른 횟수만큼 훈련일을 넣고, 나머지는 휴식 또는 가벼운 회복일로 둡니다.",
     helpTerm: "training-days",
   },
   frame: {
-    number: 4,
+    number: 5,
     eyebrow: "FRAME",
     title: "첫 훈련 계획을 며칠로 만들까요?",
-    copy: "처음이라면 TrainOracle의 기본 길이인 9일을 권장해요. 7일을 골라도 끝난 뒤 새 계획을 만들 수 있어요.",
+    copy: "처음이라면 9일을 권장해요. 7일을 고르면 짧게 시작하고, 끝난 뒤에는 이번 선택과 진행 기록을 바탕으로 다음 주기를 이어 만듭니다.",
     helpTerm: "plan-frame",
   },
   safety: {
-    number: 5,
+    number: 6,
     eyebrow: "CURRENT CHECK",
     title: "계획을 만들기 전에 지금 몸 상태를 확인할게요",
     copy: "통증이나 몸 이상이 있으면 계획을 만들지 않아요. 지도자·보호자 또는 의료진과 직접 상의해 주세요. 이 질문은 진단이나 의료 허가가 아닙니다.",
@@ -80,6 +94,7 @@ export function PlanIntake({
   onBack,
   onGoal,
   onExperience,
+  onFocus,
   onDays,
   onFrame,
   onOpenNotationReader,
@@ -92,9 +107,9 @@ export function PlanIntake({
         <ArrowLeft aria-hidden="true" size={17} />
         이전
       </button>
-      <div className="plan-progress" aria-label={`계획 질문 ${meta.number}/5`}>
-        <span>{meta.number}/5</span>
-        <i style={{ width: `${meta.number * 20}%` }} />
+      <div className="plan-progress" aria-label={`계획 질문 ${meta.number}/6`}>
+        <span>{meta.number}/6</span>
+        <i style={{ width: `${meta.number * (100 / 6)}%` }} />
       </div>
       <div className="plan-eyebrow">{meta.eyebrow}</div>
       <div className="plan-heading-row">
@@ -122,6 +137,17 @@ export function PlanIntake({
               detail={EXPERIENCE_LABELS[value].detail}
               selected={draft.experienceBand === value}
               onClick={() => onExperience(value)}
+            />
+          ))
+        )}
+        {step === "focus" && (
+          PLANNED_ENERGY_INTENTS.filter((value) => value !== "MIXED_INTENT").map((value) => (
+            <Choice
+              key={value}
+              title={ENERGY_INTENT_LABELS[value].title}
+              detail={ENERGY_INTENT_LABELS[value].detail}
+              selected={draft.trainingFocus === value}
+              onClick={() => onFocus(value)}
             />
           ))
         )}

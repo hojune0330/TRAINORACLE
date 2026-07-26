@@ -6,7 +6,8 @@ import type {
 import { TermHelp } from "../../components/TermHelp"
 import {
   candidateSessionSummary,
-  CANDIDATE_LABELS,
+  candidateLabel,
+  ENERGY_INTENT_LABELS,
   EVENT_LABELS,
 } from "./labels"
 import { PlanSessionDetails } from "./PlanSessionDetails"
@@ -26,14 +27,14 @@ export function PlanCandidates({
         <ArrowLeft aria-hidden="true" size={17} />
         질문 다시 보기
       </button>
-      <div className="plan-eyebrow">베타 계획 2가지</div>
+      <div className="plan-eyebrow">선택 가능한 계획 2가지</div>
       <div className="plan-heading-row">
         <h1 id="plan-candidates-title">두 계획에서 하나를 골라보세요</h1>
         <TermHelp term="plan-option" />
       </div>
       <p className="plan-copy">
         {generated.sourceMode === "PROFILE_ONLY"
-          ? "종목, 경험, 가능한 훈련일, 계획 길이만 사용했어요. 개인 페이스와 최근 훈련량은 추정하지 않습니다."
+          ? "종목, 경험, 고른 훈련 목적, 가능한 훈련일, 계획 길이만 사용했어요. 개인 페이스와 최근 훈련량은 추정하지 않습니다."
           : "최근 일지가 있는지만 확인했어요. 일지의 거리, RPE, 메모는 이번 베타 계획의 시간이나 강도를 바꾸지 않습니다."}
       </p>
       <div className="plan-source-strip">
@@ -41,11 +42,13 @@ export function PlanCandidates({
         <span>
           <strong>
             {generated.sourceMode === "PROFILE_ONLY"
-              ? "사용 정보 4가지 · 베타 계획"
+              ? "사용 정보 5가지 · 베타 계획"
               : "최근 일지 확인 · 계획 수치에는 미반영"}
             <TermHelp term="plan-beta-basis" />
           </strong>
-          <small>시간과 RPE만 계산한 베타 계획 · 진단이나 의료 허가가 아님</small>
+          <small>
+            시간·RPE와 고른 훈련 목적만 안내 · 반복·거리·페이스·회복은 아직 미지정
+          </small>
           {generated.candidates[0].continuityContext.kind ===
             "PREVIOUS_FRAME_CONTEXT_RETAINED" && (
             <small>
@@ -74,7 +77,7 @@ function CandidateSection({
   readonly candidate: PlanCandidate
   readonly onSelect: () => void
 }) {
-  const label = CANDIDATE_LABELS[candidate.kind]
+  const label = candidateLabel(candidate.kind, candidate.selectedEnergyIntent)
   const optionNumber = candidate.kind === "BALANCED" ? 1 : 2
   return (
     <article className="plan-candidate" aria-labelledby={`candidate-${candidate.candidateId}`}>
@@ -87,12 +90,15 @@ function CandidateSection({
         </strong>
         <small>
           {EVENT_LABELS[candidate.eventGroup].title} · {candidate.frame.lengthDays}일
-          {" · "}훈련일마다 총 시간과 RPE 표시
+          {" · "}훈련일마다 총 시간·RPE·훈련 목적 표시
         </small>
         <div className="plan-session-legend" aria-label="훈련 수치와 의도 설명">
           <span>RPE<TermHelp term="rpe" /></span>
-          <span>BASE<TermHelp term="base" /></span>
-          <span>조절 강도<TermHelp term="quality-session" /></span>
+          <span>
+            {ENERGY_INTENT_LABELS[candidate.selectedEnergyIntent].title}
+            <TermHelp term={ENERGY_INTENT_LABELS[candidate.selectedEnergyIntent].term} />
+          </span>
+          <span>상세 수치 미지정<TermHelp term="quality-session" /></span>
         </div>
       </header>
       <ol className="plan-session-list">

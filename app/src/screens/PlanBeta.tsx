@@ -28,6 +28,7 @@ import { NotationReader } from "./plan-beta/NotationReader"
 const STEP_ORDER: readonly IntakeStep[] = [
   "goal",
   "experience",
+  "focus",
   "days",
   "frame",
   "safety",
@@ -169,6 +170,10 @@ export function PlanBeta({
         }}
         onExperience={(experienceBand) => {
           setDraft((current) => ({ ...current, experienceBand }))
+          setStep("focus")
+        }}
+        onFocus={(trainingFocus) => {
+          setDraft((current) => ({ ...current, trainingFocus }))
           setStep("days")
         }}
         onDays={(availableDayCount) => {

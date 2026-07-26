@@ -46,13 +46,25 @@ function copySession(session: PlanSession): PlanSession {
       return Object.freeze({
         day: session.day,
         role: "REST",
+        plannedEnergyIntent: "RECOVERY_INTENT",
         prescription: Object.freeze({ kind: "REST" }),
       })
     case "EASY":
+      return Object.freeze({
+        day: session.day,
+        role: "EASY",
+        plannedEnergyIntent: session.plannedEnergyIntent,
+        prescription: Object.freeze({
+          kind: "RPE_TIME_RANGE",
+          rpe: Object.freeze({ ...session.prescription.rpe }),
+          durationMinutes: Object.freeze({ ...session.prescription.durationMinutes }),
+        }),
+      })
     case "QUALITY":
       return Object.freeze({
         day: session.day,
-        role: session.role,
+        role: "QUALITY",
+        plannedEnergyIntent: session.plannedEnergyIntent,
         prescription: Object.freeze({
           kind: "RPE_TIME_RANGE",
           rpe: Object.freeze({ ...session.prescription.rpe }),
@@ -75,6 +87,7 @@ function createActiveSnapshot(
     candidateKind: candidate.kind,
     selectionActor: actor,
     sourceMode: candidate.sourceMode,
+    selectedEnergyIntent: candidate.selectedEnergyIntent,
     frame: copyFrame(candidate.frame),
     sessions: Object.freeze(candidate.sessions.map(copySession)),
   })

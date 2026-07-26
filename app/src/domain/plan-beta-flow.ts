@@ -96,6 +96,7 @@ export function generatePlanFromDraft(
       ),
     },
     requestedFrameLength: intake.requestedFrameLength,
+    selectedEnergyIntent: intake.trainingFocus,
     journalSource: structuredJournalSource(),
     selectionAuthority: "SELF",
     continuity: loadPreviousContinuity(),
@@ -149,12 +150,14 @@ function completeIntake(
     experienceBand,
     availableDayCount,
     requestedFrameLength,
+    trainingFocus,
   } = draft
   if (
     eventGroup === undefined
     || experienceBand === undefined
     || availableDayCount === undefined
     || requestedFrameLength === undefined
+    || trainingFocus === undefined
   ) {
     return null
   }
@@ -163,6 +166,7 @@ function completeIntake(
     experienceBand,
     availableDayCount,
     requestedFrameLength,
+    trainingFocus,
   }
 }
 

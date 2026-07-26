@@ -19,6 +19,7 @@ async function answerMinimumPlanQuestions(
   const user = userEvent.setup()
   await user.click(screen.getByRole("button", { name: /800m.*1500m/u }))
   await user.click(screen.getByRole("button", { name: /훈련 계획에 맞춰 달려 본 경험/u }))
+  await user.click(screen.getByRole("button", { name: /지속 페이스.*LT/u }))
   await user.click(screen.getByRole("button", { name: /^3일/u }))
   await user.click(screen.getByRole("button", { name: /9일 계획.*권장/u }))
   await user.click(screen.getByRole("button", {
@@ -94,6 +95,7 @@ describe("plan beta user flow", () => {
 
     await user.click(screen.getByRole("button", { name: /800m.*1500m/u }))
     await user.click(screen.getByRole("button", { name: /훈련 계획에 맞춰 달려 본 경험/u }))
+    await user.click(screen.getByRole("button", { name: /지속 페이스.*LT/u }))
 
     const availableDaysHelp = screen.getByRole("button", {
       name: "훈련할 수 있는 날 설명 보기",
@@ -108,6 +110,23 @@ describe("plan beta user flow", () => {
     })).toBeVisible()
   })
 
+  it("shows every supported high-intensity intention before generating a plan", async () => {
+    const user = userEvent.setup()
+    render(<PlanBeta />)
+
+    await user.click(screen.getByRole("button", { name: /800m.*1500m/u }))
+    await user.click(screen.getByRole("button", { name: /훈련 계획에 맞춰 달려 본 경험/u }))
+
+    expect(screen.getByRole("button", { name: /지속 페이스.*LT/u })).toBeVisible()
+    expect(screen.getByRole("button", { name: /반복 인터벌.*VO2/u })).toBeVisible()
+    expect(screen.getByRole("button", { name: /스피드 지구력.*GLY/u })).toBeVisible()
+    expect(screen.getByRole("button", { name: /짧고 빠른 가속.*ATP-PC/u })).toBeVisible()
+
+    const focusHelp = screen.getByRole("button", { name: "훈련 목적 설명 보기" })
+    await user.click(focusHelp)
+    expect(screen.getByText(/앱이 몸속 에너지 시스템을 측정한 결과는 아닙니다/u)).toBeVisible()
+  })
+
   it("creates two profile-only candidates without journal data", async () => {
     render(<PlanBeta />)
 
@@ -117,16 +136,23 @@ describe("plan beta user flow", () => {
       name: "두 계획에서 하나를 골라보세요",
     })).toBeVisible()
     expect(screen.getByRole("heading", {
-      name: "편안한 달리기 + 조절 강도",
+      name: "지속 페이스 포함",
     })).toBeVisible()
     expect(screen.getByRole("heading", {
-      name: "편안한 달리기 중심",
+      name: "기초 지구력 중심",
     })).toBeVisible()
     expect(screen.getByText(
-      "훈련 3일 · 기초 지구력 2일 · 조절 강도 1일 · 휴식·회복 6일",
+      "훈련 3일 · 기초 지구력 2일 · 지속 페이스 1일 · 휴식·회복 6일",
     )).toBeVisible()
-    expect(screen.getAllByText(/BASE.*기초 지구력/u).length).toBeGreaterThan(0)
-    expect(screen.getAllByText(/세부 에너지 시스템 미지정/u).length).toBeGreaterThan(0)
+    expect(screen.getAllByText(/기초 지구력.*BASE/u).length).toBeGreaterThan(0)
+    expect(screen.getAllByText(/지속 페이스.*LT/u).length).toBeGreaterThan(0)
+
+    const rpeHelp = screen.getAllByRole("button", { name: "RPE 설명 보기" })[0]
+    expect(rpeHelp).toBeDefined()
+    if (rpeHelp !== undefined) {
+      await userEvent.setup().click(rpeHelp)
+      expect(screen.getByText(/1~2는 빨리 걷기/u)).toBeVisible()
+    }
 
     const guidance = screen.getAllByText("실행 방법 보기")[0]
     expect(guidance).toBeDefined()
@@ -136,7 +162,7 @@ describe("plan beta user flow", () => {
       expect(openedGuidance).not.toBeNull()
       if (openedGuidance !== null) {
         expect(within(openedGuidance).getByText(
-          /대화가 어려워지면 속도를 낮추세요/u,
+          /친구와 대화하거나 전화 통화는 가능한 정도/u,
         )).toBeVisible()
       }
     }
@@ -152,7 +178,7 @@ describe("plan beta user flow", () => {
     expect(screen.getByText(/앱은 사람에게 자동으로 연결하거나 몸 상태를 확인할 수 없어요/u)).toBeVisible()
     expect(screen.getByText(/지도자·보호자 또는 의료진과 직접 상의해 주세요/u)).toBeVisible()
     expect(screen.queryByRole("heading", {
-      name: "편안한 달리기 + 조절 강도",
+      name: "지속 페이스 포함",
     })).toBeNull()
     await userEvent.setup().click(
       screen.getByRole("button", { name: "통증·컨디션 기록하기" }),
@@ -185,7 +211,7 @@ describe("plan beta user flow", () => {
 
     expect(screen.getByRole("heading", { name: "지금은 계획을 멈췄어요" })).toBeVisible()
     expect(screen.queryByRole("heading", {
-      name: "편안한 달리기 + 조절 강도",
+      name: "지속 페이스 포함",
     })).toBeNull()
   })
 
@@ -237,7 +263,7 @@ describe("plan beta user flow", () => {
 
     await answerMinimumPlanQuestions("clear")
 
-    expect(screen.getByText("사용 정보 4가지 · 베타 계획")).toBeVisible()
+    expect(screen.getByText("사용 정보 5가지 · 베타 계획")).toBeVisible()
     expect(screen.queryByText("최근 일지 확인 · 계획 수치에는 미반영")).toBeNull()
   })
 
@@ -247,11 +273,11 @@ describe("plan beta user flow", () => {
     await answerMinimumPlanQuestions()
 
     await user.click(screen.getByRole("button", {
-      name: "편안한 달리기 + 조절 강도 선택하기",
+      name: "지속 페이스 포함 선택하기",
     }))
 
     expect(screen.getByRole("heading", {
-      name: "편안한 달리기 + 조절 강도 9일 계획",
+      name: "지속 페이스 포함 9일 계획",
     })).toBeVisible()
     const dayOneActions = screen.getByLabelText("DAY 1 진행 기록")
     await user.click(within(dayOneActions).getByRole("button", { name: "완료" }))
@@ -266,7 +292,7 @@ describe("plan beta user flow", () => {
     render(<PlanBeta />)
     await answerMinimumPlanQuestions()
     await user.click(screen.getByRole("button", {
-      name: "편안한 달리기 중심 선택하기",
+      name: "기초 지구력 중심 선택하기",
     }))
     await user.click(
       within(screen.getByLabelText("DAY 1 진행 기록"))

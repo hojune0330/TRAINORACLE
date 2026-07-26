@@ -51,6 +51,7 @@ function generatedResult(request: PlanGenerationRequest): PlanGenerationResult {
     sourceMode: sourceModeFor(request),
     confidence: "LIMITED",
     selectionAuthority: request.selectionAuthority,
+    selectedEnergyIntent: request.selectedEnergyIntent,
     candidates: createDeterministicCandidates(request),
     audit: audit("PLAN_BETA_GENERATED", ["BETA_DURATION_RPE_ONLY"]),
   }
