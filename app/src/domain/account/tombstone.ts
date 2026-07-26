@@ -89,6 +89,10 @@ export function recordTombstone(id: string, deletedAt: string = new Date().toISO
   return write(trimmed)
 }
 
+export function removeTombstone(id: string): boolean {
+  return write(loadTombstones().filter((tombstone) => tombstone.id !== id))
+}
+
 /**
  * 서버에서 받은 삭제 기록을 로컬과 합친다.
  *

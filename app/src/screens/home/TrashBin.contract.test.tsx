@@ -1,6 +1,6 @@
 // 휴지통 화면 + 안전 백업 누락 안내 계약 테스트.
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
-import { cleanup, render, screen } from "@testing-library/react"
+import { cleanup, render, screen, waitFor } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { TrashBin } from "./TrashBin"
 import { SafeJournalExport } from "./DeviceJournal"
@@ -109,6 +109,7 @@ describe("휴지통 화면", () => {
     await user.click(screen.getByTestId("trash-purge"))
     // 확인 단계가 떠야 한다 — 한 번 누르고 바로 사라지면 안 된다
     expect(screen.getByTestId("trash-purge-confirm")).toBeInTheDocument()
+    expect(screen.getByTestId("trash-purge-confirm")).toHaveFocus()
     expect(loadTrash()).toHaveLength(1)
 
     await user.click(screen.getByTestId("trash-purge-confirm"))
@@ -125,6 +126,7 @@ describe("휴지통 화면", () => {
     await user.click(screen.getByTestId("trash-purge-cancel"))
     expect(loadTrash()).toHaveLength(1)
     expect(screen.queryByTestId("trash-purge-confirm")).toBeNull()
+    await waitFor(() => expect(screen.getByTestId("trash-purge")).toHaveFocus())
   })
 
   it("완전히 지우면 되돌릴 수 없다고 말한다", async () => {

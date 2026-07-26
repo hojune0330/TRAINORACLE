@@ -15,6 +15,7 @@ const server = {
   tombstones: [] as Row[],
   tombstonePushFails: false,
   tombstonePullFails: false,
+  entryDeleteFails: false,
 }
 
 function table(name: string) {
@@ -45,7 +46,11 @@ function table(name: string) {
         }))
         return Promise.resolve({ data: null, error: null })
       }
-      server.entries = rows
+      for (const row of rows) {
+        const index = server.entries.findIndex((entry) => entry.entry_id === row.entry_id)
+        if (index === -1) server.entries.push(row)
+        else server.entries[index] = row
+      }
       return Promise.resolve({ data: null, error: null })
     },
     delete() {
@@ -53,6 +58,9 @@ function table(name: string) {
         eq() {
           return {
             in(_column: string, ids: readonly string[]) {
+              if (!isTombstone && server.entryDeleteFails) {
+                return Promise.resolve({ data: null, error: { message: "permission denied" } })
+              }
               server.entries = server.entries.filter(
                 (row) => !ids.includes(row.entry_id as string),
               )
@@ -86,6 +94,18 @@ function post(id: string): PostSessionEntry {
   }
 }
 
+function memoOnlyPost(id: string): PostSessionEntry {
+  return {
+    ...post(id),
+    title: "",
+    distanceKm: "",
+    durationMin: "",
+    avgPace: "",
+    rpe: 0,
+    memo: "private",
+  }
+}
+
 function localIds(): string[] {
   const raw = window.localStorage.getItem(JOURNAL_KEY) ?? "[]"
   return (JSON.parse(raw) as Row[]).map((entry) => entry.id as string)
@@ -97,6 +117,7 @@ beforeEach(() => {
   server.tombstones = []
   server.tombstonePushFails = false
   server.tombstonePullFails = false
+  server.entryDeleteFails = false
   saveSyncConsent({ enabled: true, includeMemos: false })
 })
 
@@ -119,24 +140,28 @@ describe("syncNow — 삭제 기록 서버 전파", () => {
     expect(localIds()).toEqual([])
   })
 
-  it("삭제 기록 pull 실패는 동기화를 막지 않되, 숨기지도 않는다", async () => {
+  it("삭제 기록 pull 실패면 병합과 업로드를 시작하지 않는다", async () => {
     server.tombstonePullFails = true
-    saveEntry(post("Y"))
+    saveEntry(post("local-stale"))
+    server.entries = [{
+      user_id: "user-1",
+      entry_id: "remote-safe",
+      saved_at: "2026-07-20T10:00:00.000Z",
+      entry: post("remote-safe"),
+    }]
 
     const outcome = await syncNow("user-1")
 
-    // 비차단: 마이그레이션 미실행 환경에서도 기존 동기화는 살아 있어야 한다
-    expect(outcome.ok).toBe(true)
-    // 그러나 반쪽으로 끝났다는 사실은 드러난다
-    expect(outcome.tombstoneSyncDegraded).toBe(true)
+    expect(outcome.ok).toBe(false)
     expect(outcome.message).toMatch(/삭제 기록/u)
+    expect(server.entries.map((row) => row.entry_id)).toEqual(["remote-safe"])
+    expect(localIds()).toEqual(["local-stale"])
   })
 
-  it("정상 경로에서는 저하 플래그가 서지 않는다", async () => {
+  it("정상 경로는 실패 안내 없이 끝난다", async () => {
     saveEntry(post("ok-1"))
     const outcome = await syncNow("user-1")
     expect(outcome.ok).toBe(true)
-    expect(outcome.tombstoneSyncDegraded).toBe(false)
     expect(outcome.message).not.toMatch(/못했어요/u)
   })
 
@@ -165,5 +190,48 @@ describe("syncNow — 삭제 기록 서버 전파", () => {
 
     expect(server.tombstones).toHaveLength(1)
     expect(Object.keys(server.tombstones[0] ?? {}).sort()).toEqual(["deleted_at", "entry_id"])
+  })
+
+  it("다른 계정으로 바뀌면 이 기기의 일지를 업로드하지 않는다", async () => {
+    saveEntry(post("owned-local"))
+    expect((await syncNow("user-1")).ok).toBe(true)
+    server.entries = []
+
+    const outcome = await syncNow("user-2")
+
+    expect(outcome.ok).toBe(false)
+    expect(outcome.message).toMatch(/다른 계정/u)
+    expect(server.entries).toHaveLength(0)
+  })
+
+  it("메모 제외로 바꾸면 서버의 메모 전용 일지를 제거한다", async () => {
+    const memoOnly = memoOnlyPost("memo-only")
+    server.entries = [{
+      user_id: "user-1",
+      entry_id: memoOnly.id,
+      saved_at: memoOnly.savedAt,
+      entry: memoOnly,
+    }]
+
+    const outcome = await syncNow("user-1")
+
+    expect(outcome.ok).toBe(true)
+    expect(server.entries).toHaveLength(0)
+  })
+
+  it("서버 메모 제거 실패를 동기화 성공으로 보고하지 않는다", async () => {
+    const memoOnly = memoOnlyPost("memo-only")
+    server.entries = [{
+      user_id: "user-1",
+      entry_id: memoOnly.id,
+      saved_at: memoOnly.savedAt,
+      entry: memoOnly,
+    }]
+    server.entryDeleteFails = true
+
+    const outcome = await syncNow("user-1")
+
+    expect(outcome.ok).toBe(false)
+    expect(outcome.message).toMatch(/메모 제외/u)
   })
 })

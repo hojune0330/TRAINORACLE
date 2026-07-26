@@ -78,7 +78,7 @@ Max content width is 1440px. Breakpoints: single column under 760px, two columns
 - Structure: one centered training surface with a fixed four-item bottom navigation.
 - Width: fills the viewport up to 520px; desktop visitors see the same real app unless `?workspace=1` is present.
 - Tokens: consumes the root journal token files through `app/src/main.tsx`; no duplicate token declarations in app components.
-- Component tokens: `--app-frame-canvas`, `--app-shell-max-width`, `--app-tab-height`, `--app-date-header-height`, `--app-touch-min`, `--app-action-height`, `--app-choice-height`, `--app-plan-mark-size`, `--fs-app-title`, and `--fs-app-section-title`.
+- Component tokens: `--app-frame-canvas`, `--app-shell-max-width`, `--app-tab-height`, `--app-date-header-height`, `--app-touch-min`, `--app-action-height`, `--app-choice-height`, `--app-plan-mark-size`, `--app-dialog-max-width`, `--fs-app-title`, and `--fs-app-section-title`.
 - Primary navigation: Home, Plan, Record, Trends. Guide remains a secondary route from Home and first-visit examples.
 - States: first visit, empty journal, populated journal, plan intake, plan candidates, active plan, entry form, trends, guide.
 - Compact-height rule: at widths up to 340px and heights up to 650px, first-visit vertical spacing may tighten while both primary actions retain their full touch height.
@@ -133,6 +133,13 @@ Max content width is 1440px. Breakpoints: single column under 760px, two columns
 - Earn sources: one daily visit and one eligible journal day; rest and pain/injury records count.
 - Forbidden meaning: distance, pace, load, plan compliance, safety clearance, consent, money, ranking, or coach authority.
 - Accessibility: no loss animation, shame copy, countdown pressure, or color-only status.
+
+### Journal Confirmation Surface
+- Structure: one fixed, border-only panel with a factual consequence, Cancel, and one explicit destructive action.
+- Surface: `--bg`, `--ink`, `--hair`, and the existing error token; no shadow, glow, gradient, or nested card.
+- Scope: reversible journal deletion uses this surface; safe restoration remains a direct action, while permanent deletion keeps its separate two-step confirmation.
+- Accessibility: `alertdialog`, labelled title and description, Cancel receives initial focus, Tab remains inside, Escape and backdrop cancel, cancellation returns focus to the invoking control, and confirmed deletion moves focus to Undo.
+- Touch: every action is at least `--app-touch-min` and the panel must fit a 320px viewport without horizontal overflow.
 
 ## 6. Motion & Interaction
 

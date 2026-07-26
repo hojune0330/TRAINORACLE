@@ -49,6 +49,7 @@ function summarize(entry: JournalEntry): string {
 export function TrashBin({ onChanged }: { readonly onChanged?: () => void } = {}) {
   const [rev, setRev] = React.useState(0)
   const [confirmingId, setConfirmingId] = React.useState<string | null>(null)
+  const purgeConfirmRef = React.useRef<HTMLButtonElement>(null)
   const items = React.useMemo(() => loadTrash(), [rev])
 
   React.useEffect(() => {
@@ -56,6 +57,10 @@ export function TrashBin({ onChanged }: { readonly onChanged?: () => void } = {}
       console.log(`[JTRASH] items=${items.length}`)
     }
   }, [items])
+
+  React.useEffect(() => {
+    if (confirmingId !== null) purgeConfirmRef.current?.focus()
+  }, [confirmingId])
 
   if (items.length === 0) return null
 
@@ -83,6 +88,13 @@ export function TrashBin({ onChanged }: { readonly onChanged?: () => void } = {}
       return
     }
     refresh()
+  }
+
+  const cancelPurge = (id: string) => {
+    setConfirmingId(null)
+    window.setTimeout(() => {
+      document.getElementById(`trash-purge-${id}`)?.focus()
+    }, 0)
   }
 
   return (
@@ -127,6 +139,7 @@ export function TrashBin({ onChanged }: { readonly onChanged?: () => void } = {}
                   </div>
                   <div style={{ display: "flex", gap: 8, marginTop: 6 }}>
                     <button
+                      ref={purgeConfirmRef}
                       type="button"
                       data-testid="trash-purge-confirm"
                       onClick={() => purge(item.entry.id)}
@@ -139,7 +152,7 @@ export function TrashBin({ onChanged }: { readonly onChanged?: () => void } = {}
                     <button
                       type="button"
                       data-testid="trash-purge-cancel"
-                      onClick={() => setConfirmingId(null)}
+                      onClick={() => cancelPurge(item.entry.id)}
                       style={{
                         minHeight: 44, padding: "0 12px",
                         border: "1px solid var(--ink)", background: "transparent", color: "var(--ink)",
@@ -162,6 +175,7 @@ export function TrashBin({ onChanged }: { readonly onChanged?: () => void } = {}
                     }}
                   >되돌리기</button>
                   <button
+                    id={`trash-purge-${item.entry.id}`}
                     type="button"
                     data-testid="trash-purge"
                     onClick={() => setConfirmingId(item.entry.id)}

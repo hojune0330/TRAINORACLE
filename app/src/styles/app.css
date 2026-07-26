@@ -469,6 +469,78 @@ button:not(:disabled):not([aria-disabled="true"]):active {
   transform-origin: right bottom;
 }
 
+.journal-confirmation {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-modal);
+  display: grid;
+  place-items: center;
+  padding: var(--space-5);
+  background: var(--scrim);
+}
+
+.journal-confirmation__surface {
+  width: min(100%, var(--app-dialog-max-width));
+  max-height: calc(100dvh - 2 * var(--space-5));
+  overflow-y: auto;
+  box-sizing: border-box;
+  padding: var(--space-5);
+  border: var(--bw-line) solid var(--ink);
+  background: var(--bg);
+}
+
+.journal-confirmation__title {
+  margin: 0;
+  color: var(--ink);
+  font-family: var(--sans);
+  font-size: var(--fs-h3);
+  font-weight: 600;
+  line-height: 1.4;
+  letter-spacing: 0;
+  word-break: keep-all;
+  overflow-wrap: break-word;
+}
+
+.journal-confirmation__description {
+  margin: var(--space-2) 0 0;
+  color: var(--ink-2);
+  font-family: var(--mono);
+  font-size: var(--fs-mono-sm);
+  line-height: 1.65;
+  letter-spacing: 0;
+  word-break: keep-all;
+  overflow-wrap: break-word;
+}
+
+.journal-confirmation__actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-2);
+  margin-top: var(--space-5);
+}
+
+.journal-confirmation__button {
+  min-width: 0;
+  min-height: var(--app-touch-min);
+  padding: var(--space-2);
+  border: var(--bw-line) solid var(--ink);
+  background: transparent;
+  color: var(--ink);
+  cursor: pointer;
+  font-family: var(--mono);
+  font-size: var(--fs-mono-xs);
+  line-height: 1.4;
+  letter-spacing: 0;
+  overflow-wrap: anywhere;
+}
+
+.journal-confirmation__button--danger {
+  border-color: var(--err);
+  background: var(--err);
+  color: var(--bg);
+  font-weight: 600;
+}
+
 .saved-toast--enter .saved-toast__surface {
   animation: saved-toast-enter 200ms var(--ease-out-strong) both;
 }

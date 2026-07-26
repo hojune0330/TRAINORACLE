@@ -14,6 +14,7 @@ const TOMBSTONES = "trainoracle.sync.tombstones.v1"
 const AUTH = "trainoracle.auth.v1"
 const PLAN = "trainoracle.plan-beta.v1"
 const CONSENT = "trainoracle.sync.consent.v1"
+const SYNC_OWNER = "trainoracle.sync.owner.v1"
 
 beforeEach(() => {
   window.localStorage.clear()
@@ -24,6 +25,7 @@ function seed(): void {
   window.localStorage.setItem(PLAN, JSON.stringify({ picked: "x" }))
   window.localStorage.setItem(AUTH, JSON.stringify({ token: "secret" }))
   window.localStorage.setItem(CONSENT, JSON.stringify({ enabled: true }))
+  window.localStorage.setItem(SYNC_OWNER, "athlete-a")
   window.localStorage.setItem(TOMBSTONES, JSON.stringify([{ id: "gone", deletedAt: "2026-07-20T00:00:00.000Z" }]))
 }
 
@@ -48,6 +50,7 @@ describe("eraseAllLocalData", () => {
     eraseAllLocalData()
     // 이게 사라지면 다음 동기화에서 지운 일지가 전부 되돌아온다
     expect(window.localStorage.getItem(TOMBSTONES)).not.toBeNull()
+    expect(window.localStorage.getItem(SYNC_OWNER)).toBe("athlete-a")
   })
 
   it("명시적으로 요청하면 삭제 기록도 지운다", () => {
@@ -55,6 +58,7 @@ describe("eraseAllLocalData", () => {
     const result = eraseAllLocalData({ includeDeletionRecord: true })
     expect(result.ok).toBe(true)
     expect(window.localStorage.getItem(TOMBSTONES)).toBeNull()
+    expect(window.localStorage.getItem(SYNC_OWNER)).toBeNull()
   })
 
   it("지운 개수를 정확히 보고한다", () => {
@@ -75,7 +79,9 @@ describe("eraseAllLocalData", () => {
   it("지워질 키 목록을 미리 보여줄 수 있다", () => {
     expect(erasableKeys()).toContain(JOURNAL)
     expect(erasableKeys()).not.toContain(TOMBSTONES)
+    expect(erasableKeys()).not.toContain(SYNC_OWNER)
     expect(erasableKeys({ includeDeletionRecord: true })).toContain(TOMBSTONES)
+    expect(erasableKeys({ includeDeletionRecord: true })).toContain(SYNC_OWNER)
   })
 
   it("전체 삭제 후 일지를 읽으면 비어 있다", () => {

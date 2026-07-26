@@ -1,7 +1,10 @@
 # 계정·동기화 배포 설정 (소유자용, 약 15분)
 
-계정 기능은 **환경변수 2개가 있어야만 켜집니다.**
-설정하지 않으면 앱은 지금과 완전히 동일하게 동작합니다 (되돌릴 것 없음).
+계정 기능은 **출시 승인 변수 1개와 환경변수 2개가 모두 있어야만 켜집니다.**
+키를 먼저 등록해도 출시 승인 변수가 `true`가 아니면 앱은 로컬 전용으로 유지됩니다.
+
+> 공개 승인 전에 `docs/ACCOUNT_PUBLIC_RELEASE_GATE.md`의 필수 항목을 모두
+> 실제 증거로 확인해야 합니다. 변수는 그 확인을 대신하지 않습니다.
 
 ## 1. Supabase 프로젝트 만들기 (무료)
 
@@ -34,17 +37,16 @@ Dashboard → `SQL Editor` → New query →
 
 Google 설정을 건너뛰어도 이메일 코드 로그인은 동작합니다.
 
-## 5. CI 워크플로 패치 (사장님 또는 코덱스가 직접 — 1회)
+## 5. CI 워크플로 확인
 
-자동화 봇 토큰은 `.github/workflows/` 수정 권한이 없어 이 변경만 수동 반영이
-필요합니다. `.github/workflows/ci.yml`의 `deploy-pages` 잡 → `Build hosted app`
-스텝에 `env:` 두 줄을 추가:
+`.github/workflows/ci.yml`의 `deploy-pages` 잡은 아래 세 값을 배포 빌드에
+주입하도록 준비되어 있습니다.
 
 ```yaml
       - name: Build hosted app
         working-directory: app
         env:
-          # 계정·동기화 feature flag — Secrets 미설정이면 빈 값 → 기능 OFF
+          VITE_ACCOUNT_PUBLIC_ENABLED: ${{ vars.TRAINORACLE_ACCOUNT_PUBLIC_ENABLED }}
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
         run: |
@@ -52,7 +54,7 @@ Google 설정을 건너뛰어도 이메일 코드 로그인은 동작합니다.
           npm run build
 ```
 
-## 6. GitHub 저장소에 키 등록
+## 6. GitHub 저장소에 키와 출시 변수 등록
 
 저장소 `Settings → Secrets and variables → Actions → New repository secret`:
 
@@ -61,7 +63,14 @@ Google 설정을 건너뛰어도 이메일 코드 로그인은 동작합니다.
 | `VITE_SUPABASE_URL` | 1번의 Project URL |
 | `VITE_SUPABASE_ANON_KEY` | 1번의 anon public 키 |
 
-등록 후 main에 아무 커밋이나 병합되면 CI가 빌드에 키를 주입해 배포합니다.
+그다음 `Variables` 탭에서 아래 저장소 변수를 등록합니다.
+
+| 이름 | 준비 중 값 | 공개 승인 후 값 |
+|---|---|---|
+| `TRAINORACLE_ACCOUNT_PUBLIC_ENABLED` | `false` 또는 미등록 | `true` |
+
+키만 등록한 상태에서는 계정 기능이 노출되지 않습니다. 공개 게이트를 모두
+확인한 뒤 위 변수만 `true`로 바꾸고 main을 다시 배포합니다.
 
 ## 7. 로컬 개발에서 켜보기 (선택)
 
@@ -70,9 +79,10 @@ Google 설정을 건너뛰어도 이메일 코드 로그인은 동작합니다.
 ```
 VITE_SUPABASE_URL=https://abcdefgh.supabase.co
 VITE_SUPABASE_ANON_KEY=eyJ...
+VITE_ACCOUNT_PUBLIC_ENABLED=true
 ```
 
 ## 끄고 싶을 때
 
-GitHub Secrets 2개를 지우고 재배포하면 계정 버튼이 사라지고
-로컬 전용 앱으로 돌아갑니다. 데이터 마이그레이션 불필요.
+`TRAINORACLE_ACCOUNT_PUBLIC_ENABLED`를 `false`로 바꾸거나 삭제한 뒤
+재배포하면 계정 진입점이 사라지고 로컬 전용 앱으로 돌아갑니다.
