@@ -3,12 +3,13 @@ import type {
   PlanCandidate,
   PlanGenerationSuccess,
 } from "@impl/plan-generator/types"
+import { TermHelp } from "../../components/TermHelp"
 import {
+  candidateSessionSummary,
   CANDIDATE_LABELS,
   EVENT_LABELS,
-  prescriptionLabel,
-  sessionLabel,
 } from "./labels"
+import { PlanSessionDetails } from "./PlanSessionDetails"
 
 export function PlanCandidates({
   generated,
@@ -25,18 +26,26 @@ export function PlanCandidates({
         <ArrowLeft aria-hidden="true" size={17} />
         질문 다시 보기
       </button>
-      <div className="plan-eyebrow">TWO BETA OPTIONS</div>
-      <h1 id="plan-candidates-title">두 후보를 비교해보세요</h1>
+      <div className="plan-eyebrow">베타 계획 2가지</div>
+      <div className="plan-heading-row">
+        <h1 id="plan-candidates-title">두 계획에서 하나를 골라보세요</h1>
+        <TermHelp term="plan-option" />
+      </div>
       <p className="plan-copy">
         {generated.sourceMode === "PROFILE_ONLY"
-          ? "일지가 적어 최소 프로필만 사용했어요. 정확한 페이스를 만들지 않고 시간과 RPE 범위로 제안합니다."
-          : "최근 14일에 일지가 있다는 사실만 표시했어요. 이번 베타 처방에는 일지 수치나 메모를 반영하지 않습니다."}
+          ? "종목, 경험, 가능한 훈련일, 계획 길이만 사용했어요. 개인 페이스와 최근 훈련량은 추정하지 않습니다."
+          : "최근 일지가 있는지만 확인했어요. 일지의 거리, RPE, 메모는 이번 베타 계획의 시간이나 강도를 바꾸지 않습니다."}
       </p>
       <div className="plan-source-strip">
         <ShieldCheck aria-hidden="true" size={17} />
         <span>
-          <strong>{generated.sourceMode === "PROFILE_ONLY" ? "프로필 기반 · 제한 신뢰도" : "일지 보유 · 처방 미반영"}</strong>
-          <small>베타 제안 · 의료적 허가나 진단이 아님</small>
+          <strong>
+            {generated.sourceMode === "PROFILE_ONLY"
+              ? "사용 정보 4가지 · 베타 계획"
+              : "최근 일지 확인 · 계획 수치에는 미반영"}
+            <TermHelp term="plan-beta-basis" />
+          </strong>
+          <small>시간과 RPE만 계산한 베타 계획 · 진단이나 의료 허가가 아님</small>
           {generated.candidates[0].continuityContext.kind ===
             "PREVIOUS_FRAME_CONTEXT_RETAINED" && (
             <small>
@@ -66,27 +75,31 @@ function CandidateSection({
   readonly onSelect: () => void
 }) {
   const label = CANDIDATE_LABELS[candidate.kind]
+  const optionNumber = candidate.kind === "BALANCED" ? 1 : 2
   return (
     <article className="plan-candidate" aria-labelledby={`candidate-${candidate.candidateId}`}>
       <header>
-        <span>{candidate.kind}</span>
+        <span>계획 {optionNumber}</span>
         <h2 id={`candidate-${candidate.candidateId}`}>{label.title}</h2>
         <p>{label.detail}</p>
+        <strong className="plan-candidate-summary">
+          {candidateSessionSummary(candidate)}
+        </strong>
         <small>
           {EVENT_LABELS[candidate.eventGroup].title} · {candidate.frame.lengthDays}일
-          {" · "}베타 공통 시간·RPE 범위
+          {" · "}훈련일마다 총 시간과 RPE 표시
         </small>
+        <div className="plan-session-legend" aria-label="훈련 수치와 의도 설명">
+          <span>RPE<TermHelp term="rpe" /></span>
+          <span>BASE<TermHelp term="base" /></span>
+          <span>조절 강도<TermHelp term="quality-session" /></span>
+        </div>
       </header>
       <ol className="plan-session-list">
         {candidate.sessions.map((session) => (
           <li key={session.day}>
             <span>DAY {session.day}</span>
-            <div>
-              <strong>{sessionLabel(session)}</strong>
-              <small className={session.role === "REST" ? "plan-session-help" : "plan-session-metric"}>
-                {prescriptionLabel(session)}
-              </small>
-            </div>
+            <PlanSessionDetails session={session} />
           </li>
         ))}
       </ol>

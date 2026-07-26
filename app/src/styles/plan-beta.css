@@ -200,6 +200,22 @@
   word-break: keep-all;
 }
 
+.plan-heading-row {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-1);
+}
+
+.plan-heading-row h1 {
+  min-width: 0;
+}
+
+.plan-heading-row > span {
+  align-self: flex-end;
+  margin-top: 0;
+  flex: 0 0 auto;
+}
+
 .plan-copy,
 .plan-blocked p {
   margin: var(--space-2) 0 0;
@@ -329,12 +345,41 @@
   text-wrap: pretty;
 }
 
+.plan-candidate-summary {
+  display: block;
+  margin-top: var(--space-3);
+  font-family: var(--sans);
+  font-size: var(--fs-body-sm);
+  line-height: 1.55;
+  word-break: keep-all;
+  overflow-wrap: break-word;
+  text-wrap: pretty;
+}
+
 .plan-candidate header small {
   display: block;
   margin-top: var(--space-2);
   color: var(--ink-3);
   font-family: var(--mono);
   font-size: var(--fs-mono-xs);
+  word-break: keep-all;
+  overflow-wrap: break-word;
+}
+
+.plan-session-legend {
+  margin-top: var(--space-2);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0 var(--space-3);
+  color: var(--ink-3);
+  font-family: var(--mono);
+  font-size: var(--fs-mono-xs);
+}
+
+.plan-session-legend > span {
+  display: inline-flex;
+  align-items: center;
 }
 
 .plan-session-list,
@@ -361,30 +406,74 @@
   font-size: var(--fs-mono-xs);
 }
 
-.plan-session-list li div,
-.active-plan__session div {
+.plan-session-content {
   min-width: 0;
   display: grid;
   gap: var(--space-1);
 }
 
-.plan-session-list strong,
-.active-plan__session strong {
+.plan-session-content > strong {
   font-size: var(--fs-body);
 }
 
-.plan-session-list small,
-.active-plan__session small {
+.plan-session-content > small {
   color: var(--ink-3);
   font-family: var(--sans);
   font-size: var(--fs-body-sm);
   line-height: 1.45;
 }
 
-.plan-session-list .plan-session-metric,
-.active-plan__session .plan-session-metric {
+.plan-session-content .plan-session-metric {
   font-family: var(--mono);
   font-size: var(--fs-mono-xs);
+  word-break: keep-all;
+  overflow-wrap: break-word;
+}
+
+.plan-session-intent {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  color: var(--ink-2);
+  font-family: var(--sans);
+  font-size: var(--fs-body-sm);
+  line-height: 1.45;
+}
+
+.plan-session-term {
+  display: inline-flex;
+  align-items: center;
+  white-space: nowrap;
+}
+
+.plan-session-guidance {
+  margin-top: var(--space-1);
+}
+
+.plan-session-guidance summary {
+  width: fit-content;
+  min-height: var(--app-touch-min);
+  color: var(--ink-3);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  font-family: var(--sans);
+  font-size: var(--fs-body-sm);
+  text-decoration: underline;
+  text-underline-offset: var(--space-1);
+}
+
+.plan-session-guidance p {
+  margin: 0 0 var(--space-2);
+  padding: var(--space-2);
+  border-left: var(--bw-line) solid var(--line);
+  color: var(--ink-2);
+  font-family: var(--sans);
+  font-size: var(--fs-body-sm);
+  line-height: 1.55;
+  word-break: keep-all;
+  overflow-wrap: break-word;
+  text-wrap: pretty;
 }
 
 .plan-select-action,

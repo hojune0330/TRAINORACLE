@@ -3,11 +3,41 @@ import type { Page } from "@playwright/test"
 
 async function answerMinimumPlanQuestions(page: Page): Promise<void> {
   await page.getByRole("button", { name: /800m.*1500m/u }).click()
-  await page.getByRole("button", { name: /훈련 경험 있음/u }).click()
+  await page.getByRole("button", { name: /훈련 계획에 맞춰 달려 본 경험/u }).click()
   await page.getByRole("button", { name: /^3일/u }).click()
   await page.getByRole("button", { name: /9일 계획.*권장/u }).click()
   await page.getByRole("button", { name: /통증은 없고 몸 상태는 평소와 같아요/u }).click()
 }
+
+test("keeps plan help inside the narrow scroll region", async ({ page }) => {
+  await page.setViewportSize({ width: 320, height: 650 })
+  await page.goto("/?app=1")
+  await page.getByRole("button", { name: "훈련계획 후보 만들기" }).click()
+  await page.getByRole("button", { name: "준비 목표 설명 보기" }).click()
+
+  const geometry = await page.evaluate(() => {
+    const scrollRegion = document.querySelector<HTMLElement>(".app-scroll-region")
+    const popover = document.querySelector<HTMLElement>(".popover-surface")
+    const detail = document.querySelector<HTMLElement>(".term-help__detail")
+    if (scrollRegion === null || popover === null || detail === null) return null
+    const scrollRect = scrollRegion.getBoundingClientRect()
+    const popoverRect = popover.getBoundingClientRect()
+    return {
+      scrollLeft: scrollRect.left + scrollRegion.clientLeft,
+      scrollRight: scrollRect.left + scrollRegion.clientLeft + scrollRegion.clientWidth,
+      popoverLeft: popoverRect.left,
+      popoverRight: popoverRect.right,
+      hasHorizontalOverflow: scrollRegion.scrollWidth > scrollRegion.clientWidth,
+      detailWordBreak: window.getComputedStyle(detail).wordBreak,
+    }
+  })
+
+  expect(geometry).not.toBeNull()
+  expect(geometry?.popoverLeft).toBeGreaterThanOrEqual(geometry?.scrollLeft ?? 0)
+  expect(geometry?.popoverRight).toBeLessThanOrEqual(geometry?.scrollRight ?? 0)
+  expect(geometry?.hasHorizontalOverflow).toBe(false)
+  expect(geometry?.detailWordBreak).toBe("keep-all")
+})
 
 test("routes a first visitor from one context choice into the matching journal", async ({ page }) => {
   // Given
@@ -31,16 +61,47 @@ test("creates and selects a profile-only beta plan from the first screen", async
   await answerMinimumPlanQuestions(page)
 
   // Then
-  await expect(page.getByRole("heading", { name: "두 후보를 비교해보세요" })).toBeVisible()
-  await expect(page.getByRole("heading", { name: "균형형" })).toBeVisible()
-  await expect(page.getByRole("heading", { name: "보수형" })).toBeVisible()
+  await expect(page.getByRole("heading", {
+    name: "두 계획에서 하나를 골라보세요",
+  })).toBeVisible()
+  await expect(page.getByRole("heading", {
+    name: "편안한 달리기 + 조절 강도",
+  })).toBeVisible()
+  await expect(page.getByRole("heading", {
+    name: "편안한 달리기 중심",
+  })).toBeVisible()
+  await expect(page.getByText(
+    "훈련 3일 · 기초 지구력 2일 · 조절 강도 1일 · 휴식·회복 6일",
+  )).toBeVisible()
+  const easySession = page.locator(".plan-session-content").filter({
+    hasText: "기초 지구력 달리기",
+  }).first()
+  await easySession.getByText("실행 방법 보기").click()
+  await expect(easySession.getByText(
+    /대화가 어려워지면 속도를 낮추세요/u,
+  )).toBeVisible()
+  expect(await easySession.locator(".plan-session-metric").evaluate(
+    (element) => window.getComputedStyle(element).wordBreak,
+  )).toBe("keep-all")
+  expect(await page.evaluate(
+    () => document.documentElement.scrollWidth <= window.innerWidth,
+  )).toBe(true)
+  const scrollRegion = page.locator(".app-scroll-region")
+  await scrollRegion.evaluate((element) => {
+    element.scrollTop = element.scrollHeight
+  })
 
   // When
-  await page.getByRole("button", { name: "균형형 선택하기" }).click()
+  await page.getByRole("button", {
+    name: "편안한 달리기 + 조절 강도 선택하기",
+  }).click()
 
   // Then
-  await expect(page.getByRole("heading", { name: "균형형 9일 계획" })).toBeVisible()
-  await expect(page.getByText(/프로필 기반.*제한 신뢰도/u)).toBeVisible()
+  await expect(page.getByRole("heading", {
+    name: "편안한 달리기 + 조절 강도 9일 계획",
+  })).toBeInViewport()
+  expect(await scrollRegion.evaluate((element) => element.scrollTop)).toBe(0)
+  await expect(page.getByText(/사용 정보 4가지.*베타 계획/u)).toBeVisible()
 })
 
 test("does not let a favorable current answer override recent high pain", async ({ page }) => {
@@ -72,7 +133,9 @@ test("does not let a favorable current answer override recent high pain", async 
   await answerMinimumPlanQuestions(page)
 
   await expect(page.getByRole("heading", { name: "지금은 계획을 멈췄어요" })).toBeVisible()
-  await expect(page.getByRole("heading", { name: "균형형" })).toHaveCount(0)
+  await expect(page.getByRole("heading", {
+    name: "편안한 달리기 + 조절 강도",
+  })).toHaveCount(0)
 })
 
 test("shows a truthful distance receipt and opens the real trend", async ({ page }) => {
