@@ -45,12 +45,33 @@ describe("eraseAllLocalData", () => {
     expect(window.localStorage.getItem(CONSENT)).toBeNull()
   })
 
+  // 회귀 A-1: 이 키에는 계정 userId가 평문으로 들어 있다. 예전에는 삭제
+  // 기록과 한 묶음이라 기본 삭제에서 빠졌고, 이 파일의 테스트가
+  // `toBe("athlete-a")`로 그 상태를 **정상이라고 고정**하고 있었다. 화면은
+  // "일지·계획·로그인 정보를 모두 지워요"라고 말하므로 그 상태는 거짓이었다.
+  it("동기화 소유자 userId를 지운다 — 화면이 약속한 '로그인 정보 전부'에 포함된다", () => {
+    seed()
+    eraseAllLocalData()
+    expect(window.localStorage.getItem(SYNC_OWNER)).toBeNull()
+  })
+
+  // 회귀 A-2: claimSyncOwner는 owner 키가 있으면 다른 userId의 동기화를
+  // 영구히 막는다("다른 계정과 연결되어 있어요"). 기기를 넘겨받은 사람이
+  // 전부 지웠는데도 자기 계정을 쓸 수 없으면 안 된다 — 화면에 이를 푸는
+  // 수단이 없기 때문에 전체 삭제가 유일한 탈출구다.
+  it("전체 삭제 후에는 다른 계정도 이 기기를 쓸 수 있다 (소유자 잠금이 풀린다)", () => {
+    seed()
+    eraseAllLocalData()
+    // owner 키가 비어 있어야 claimSyncOwner가 새 userId를 받아들인다
+    expect(window.localStorage.getItem(SYNC_OWNER)).toBeNull()
+  })
+
   it("삭제 기록은 기본으로 **남긴다** — 서버 사본 부활 방지", () => {
     seed()
     eraseAllLocalData()
-    // 이게 사라지면 다음 동기화에서 지운 일지가 전부 되돌아온다
+    // 이게 사라지면 다음 동기화에서 지운 일지가 전부 되돌아온다.
+    // 부활 방지 근거가 실제로 적용되는 키는 이것 하나뿐이다.
     expect(window.localStorage.getItem(TOMBSTONES)).not.toBeNull()
-    expect(window.localStorage.getItem(SYNC_OWNER)).toBe("athlete-a")
   })
 
   it("명시적으로 요청하면 삭제 기록도 지운다", () => {
@@ -58,7 +79,6 @@ describe("eraseAllLocalData", () => {
     const result = eraseAllLocalData({ includeDeletionRecord: true })
     expect(result.ok).toBe(true)
     expect(window.localStorage.getItem(TOMBSTONES)).toBeNull()
-    expect(window.localStorage.getItem(SYNC_OWNER)).toBeNull()
   })
 
   it("지운 개수를 정확히 보고한다", () => {
@@ -78,10 +98,11 @@ describe("eraseAllLocalData", () => {
 
   it("지워질 키 목록을 미리 보여줄 수 있다", () => {
     expect(erasableKeys()).toContain(JOURNAL)
+    // owner userId는 기본 목록에 **들어간다** — 화면이 지운다고 말하는 대상이다
+    expect(erasableKeys()).toContain(SYNC_OWNER)
+    // 삭제 기록만 기본에서 빠진다(부활 방지)
     expect(erasableKeys()).not.toContain(TOMBSTONES)
-    expect(erasableKeys()).not.toContain(SYNC_OWNER)
     expect(erasableKeys({ includeDeletionRecord: true })).toContain(TOMBSTONES)
-    expect(erasableKeys({ includeDeletionRecord: true })).toContain(SYNC_OWNER)
   })
 
   it("전체 삭제 후 일지를 읽으면 비어 있다", () => {

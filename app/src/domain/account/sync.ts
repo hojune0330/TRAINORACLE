@@ -142,7 +142,14 @@ export async function syncNow(userId: string): Promise<SyncOutcome> {
   const consent = loadSyncConsent()
   if (!consent.enabled) return failed("동기화가 꺼져 있어요. 먼저 동기화를 켜 주세요.")
   if (!claimSyncOwner(userId)) {
-    return failed("이 기기의 일지는 다른 계정과 연결되어 있어요. 다른 계정으로 업로드하지 않았어요.")
+    // 막는 이유는 옳다(다른 사람 계정으로 이 기기의 일지가 올라가면 안 된다).
+    // 다만 **빠져나갈 길을 함께 알려야 한다.** 이 잠금은 기기를 넘겨받은
+    // 사람에게도 걸리고, 그 사람에게는 "안 된다"만 남는다. 잠금을 푸는
+    // 유일한 수단이 전체 삭제이므로 그 자리를 가리킨다.
+    return failed(
+      "이 기기의 일지는 다른 계정과 연결되어 있어요. 다른 계정으로 업로드하지 않았어요. "
+        + "이 기기를 새로 쓰려면 계정 화면의 '이 기기 데이터 전부 지우기'를 먼저 해 주세요.",
+    )
   }
 
   // 1. pull
