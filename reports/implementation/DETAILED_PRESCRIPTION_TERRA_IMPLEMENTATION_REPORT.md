@@ -35,6 +35,7 @@ open and unmerged. The hold preserves its current honest `미지정` boundary.
 |---|---|
 | Draft-document structural check | PASS: 30 catalogue entries, 25 intent seeds, 5 recovery-support seeds, required per-entry fields, final markers, and no `ACTIVE` lifecycle entry. |
 | Owner notation fixture in contract | PASS: 20 repetitions, 8000 m quality distance, 1260 s planned recovery. |
+| Draft-catalog fail-closed validator | PASS: one unchanged catalog and seven hostile mutations verified locally; CI runs both the validator and its tests. |
 | `git diff --check` | PASS |
 | `app/` typecheck | PASS |
 | `app/` Vitest regression suite | PASS: 34 files, 292 tests |
