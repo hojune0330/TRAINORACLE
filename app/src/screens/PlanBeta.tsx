@@ -23,6 +23,7 @@ import { ActivePlan } from "./plan-beta/ActivePlan"
 import { PlanCandidates } from "./plan-beta/PlanCandidates"
 import { PlanIntake } from "./plan-beta/PlanIntake"
 import type { IntakeStep } from "./plan-beta/PlanIntake"
+import { NotationReader } from "./plan-beta/NotationReader"
 
 const STEP_ORDER: readonly IntakeStep[] = [
   "goal",
@@ -55,7 +56,10 @@ export function PlanBeta({
   const [gate, setGate] = React.useState<SafetyGateDecision | null>(null)
   const [blocked, setBlocked] = React.useState(false)
   const [errorCode, setErrorCode] = React.useState<string | null>(null)
-  const viewKey = stored !== null
+  const [notationReaderOpen, setNotationReaderOpen] = React.useState(false)
+  const viewKey = notationReaderOpen
+    ? "notation-reader"
+    : stored !== null
     ? "active"
     : blocked
       ? "blocked"
@@ -67,6 +71,10 @@ export function PlanBeta({
     const scrollRegion = document.querySelector<HTMLElement>(".app-scroll-region")
     if (scrollRegion !== null) scrollRegion.scrollTop = 0
   }, [viewKey])
+
+  if (notationReaderOpen) {
+    return <NotationReader onBack={() => setNotationReaderOpen(false)} />
+  }
 
   if (stored !== null) {
     return (
@@ -171,6 +179,7 @@ export function PlanBeta({
           setDraft((current) => ({ ...current, requestedFrameLength }))
           setStep("safety")
         }}
+        onOpenNotationReader={() => setNotationReaderOpen(true)}
         onSafety={(currentCheck) => {
           const result = generatePlanFromDraft(draft, currentCheck)
           if (result.kind === "blocked") {

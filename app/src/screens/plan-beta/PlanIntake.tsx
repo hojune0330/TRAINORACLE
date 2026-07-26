@@ -24,6 +24,7 @@ type PlanIntakeProps = {
   readonly onExperience: (band: ExperienceBand) => void
   readonly onDays: (days: 3 | 4 | 5) => void
   readonly onFrame: (days: 7 | 9 | 10) => void
+  readonly onOpenNotationReader: () => void
   readonly onSafety: (
     currentCheck: "NO_KNOWN_RISK" | "REVIEW_REQUIRED",
   ) => void
@@ -81,6 +82,7 @@ export function PlanIntake({
   onExperience,
   onDays,
   onFrame,
+  onOpenNotationReader,
   onSafety,
 }: PlanIntakeProps) {
   const meta = STEP_META[step]
@@ -166,6 +168,15 @@ export function PlanIntake({
           </>
         )}
       </div>
+      {step === "goal" && (
+        <button
+          className="plan-text-action plan-notation-entry"
+          type="button"
+          onClick={onOpenNotationReader}
+        >
+          훈련표 표기 읽기
+        </button>
+      )}
     </section>
   )
 }

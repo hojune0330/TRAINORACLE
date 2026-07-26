@@ -122,7 +122,8 @@
 .plan-intake,
 .plan-candidates,
 .active-plan,
-.plan-blocked {
+.plan-blocked,
+.plan-notation-reader {
   min-height: 100%;
   padding: var(--space-5);
   box-sizing: border-box;
@@ -130,7 +131,8 @@
 }
 
 .plan-intake,
-.plan-blocked {
+.plan-blocked,
+.plan-notation-reader {
   display: flex;
   flex-direction: column;
 }
@@ -191,7 +193,8 @@
 .plan-intake h1,
 .plan-candidates h1,
 .active-plan h1,
-.plan-blocked h1 {
+.plan-blocked h1,
+.plan-notation-reader h1 {
   margin: var(--space-2) 0 0;
   font-family: var(--sans);
   font-size: var(--fs-app-title);
@@ -231,6 +234,120 @@
 
 .plan-intake .plan-copy {
   white-space: pre-line;
+}
+
+.plan-notation-field {
+  margin-top: var(--space-5);
+  display: grid;
+  gap: var(--space-2);
+  font-family: var(--sans);
+  font-size: var(--fs-body-sm);
+  font-weight: 600;
+}
+
+.plan-notation-field input {
+  width: 100%;
+  min-height: var(--app-touch-min);
+  padding: var(--space-2);
+  box-sizing: border-box;
+  border: var(--bw-line) solid var(--line);
+  border-radius: 0;
+  background: var(--surface);
+  color: var(--ink);
+  font-family: var(--mono);
+  font-size: var(--fs-body-sm);
+}
+
+.plan-notation-field input::placeholder {
+  color: var(--ink-3);
+  opacity: 1;
+}
+
+.plan-notation-actions {
+  margin-top: var(--space-3);
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.plan-notation-actions .plan-select-action {
+  margin: 0;
+}
+
+.plan-notation-entry {
+  margin-top: var(--space-3);
+}
+
+.plan-notation-error {
+  margin: var(--space-4) 0 0;
+  padding: var(--space-3);
+  border: var(--bw-line) solid var(--err);
+  color: var(--err);
+  font-family: var(--sans);
+  font-size: var(--fs-body-sm);
+  line-height: 1.5;
+  word-break: keep-all;
+  text-wrap: pretty;
+}
+
+.plan-notation-results {
+  margin-top: var(--space-5);
+  padding-top: var(--space-4);
+  border-top: var(--bw-line) solid var(--ink);
+}
+
+.plan-notation-results h2 {
+  margin: 0;
+  font-family: var(--sans);
+  font-size: var(--fs-app-section-title);
+  line-height: 1.35;
+  letter-spacing: 0;
+  word-break: keep-all;
+}
+
+.plan-notation-facts {
+  margin: var(--space-3) 0 0;
+  border-top: var(--bw-line) solid var(--hair);
+}
+
+.plan-notation-facts > div {
+  min-height: var(--app-touch-min);
+  padding: var(--space-2) 0;
+  border-bottom: var(--bw-line) solid var(--hair);
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.plan-notation-facts dt {
+  color: var(--ink-3);
+  font-family: var(--sans);
+  font-size: var(--fs-body-sm);
+}
+
+.plan-notation-facts dd {
+  margin: 0;
+  color: var(--ink);
+  font-family: var(--mono);
+  font-size: var(--fs-body-sm);
+  font-weight: 600;
+  text-align: right;
+}
+
+.plan-notation-race-pace {
+  margin: var(--space-3) 0 0;
+  color: var(--ink-3);
+  font-family: var(--sans);
+  font-size: var(--fs-body-sm);
+  line-height: 1.55;
+  word-break: keep-all;
+  text-wrap: pretty;
+}
+
+.plan-notation-boundary {
+  margin-top: var(--space-5);
 }
 
 .plan-choice-list {
