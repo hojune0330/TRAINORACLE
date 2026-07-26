@@ -50,6 +50,12 @@ access. `SOURCE_URL_RECORDED_ACCESS_RESTRICTED` means the provider URL is retain
 but its content could not be fetched in this environment; it does not upgrade the
 seed to direct evidence. PubMed titles/metadata were confirmed through NCBI E-utilities.
 
+An exact numeric seed may be `DIRECT_SOURCE_EXAMPLE` only when the current review
+re-opened that exact notation in the linked source. If the source body or full
+protocol could not be re-opened, this catalog keeps the seed for audit but marks it
+`REJECTED_OR_UNUSABLE`; a reviewer must not treat an earlier summary as the original
+source.
+
 | Source ref | URL | Recheck | Use limit |
 |---|---|---|---|
 | `SRC-VDOT-PACES` | https://vdoto2.com/calculator/ | `SOURCE_CONTENT_REOPENED` | Coach-facing examples, not TrainOracle dose authority. |
@@ -75,6 +81,26 @@ Each record below contains the same required fields. `derivedTotals` is a struct
 formula or `UNAVAILABLE`; it is not a completed-session result. `minorAllowed: false`
 means a minor is not eligible merely by having guardian consent. A later approved
 minor policy would still require guardian and designated human review.
+
+The records are **not** `SessionTemplateRecord` objects from
+`TEMPLATE_LIBRARY_SPEC.md`. Until a later accepted mapping exists, every catalog
+entry deliberately has empty `allowedEventGroups` and `allowedExperienceBands`.
+Those empty arrays are a zero-eligibility fence, not a claim that every group or
+experience level is allowed. `draftCandidateEventGroups` is research context only;
+it cannot be consumed by the Template Library or Plan Generator.
+
+```yaml
+catalog_to_template_library_boundary:
+  catalog_entry_is_registered_template_record: false
+  allowedEventGroups_empty_means: NOT_ELIGIBLE_FOR_ANY_EVENT_GROUP
+  allowedExperienceBands_empty_means: NOT_ELIGIBLE_FOR_ANY_EXPERIENCE_BAND
+  draftCandidateEventGroups_runtime_consumption: forbidden
+  required_before_any_mapping:
+    - exact_TemplateLibrary_EventGroup_mapping
+    - exact_TemplateLibrary_AthleteLevelBand_mapping
+    - source_and_transfer_review
+    - separate_lifecycle_activation_record
+```
 
 ```yaml
 required_review_state:
@@ -104,8 +130,10 @@ common_stop_condition_codes:
   sourceRefs: [SRC-VDOT-PACES]
   sourcePopulation: "VDOT coach-facing running example; individual ability not specified."
   transferLimitations: "No automatic duration, pace, youth, or volume assignment."
-  allowedEventGroups: [DISTANCE_RUNNING]
-  allowedExperienceBands: [UNRESOLVED_HUMAN_REVIEW]
+  allowedEventGroups: []
+  draftCandidateEventGroups: [MIDDLE_DISTANCE, LONG_DISTANCE, ROAD_RUNNING]
+  allowedExperienceBands: []
+  draftExperienceEvidence: SOURCE_AND_HUMAN_MAPPING_REQUIRED
   minorAllowed: false
   guardianOrCoachReview: "COACH_AND_GUARDIAN_POLICY_REVIEW_REQUIRED"
   paceAnchorKinds: [RPE_ONLY, RECENT_RESULT, COACH_REFERENCE]
@@ -131,8 +159,10 @@ common_stop_condition_codes:
   sourceRefs: [SRC-VDOT-PACES]
   sourcePopulation: "VDOT easy/recovery category, product duration adaptation."
   transferLimitations: "Duration is not a direct source prescription; no recovery-complete claim."
-  allowedEventGroups: [DISTANCE_RUNNING]
-  allowedExperienceBands: [UNRESOLVED_HUMAN_REVIEW]
+  allowedEventGroups: []
+  draftCandidateEventGroups: [MIDDLE_DISTANCE, LONG_DISTANCE, ROAD_RUNNING]
+  allowedExperienceBands: []
+  draftExperienceEvidence: SOURCE_AND_HUMAN_MAPPING_REQUIRED
   minorAllowed: false
   guardianOrCoachReview: "COACH_AND_GUARDIAN_POLICY_REVIEW_REQUIRED"
   paceAnchorKinds: [RPE_ONLY, COACH_REFERENCE]
@@ -158,8 +188,10 @@ common_stop_condition_codes:
   sourceRefs: [SRC-VDOT-PACES]
   sourcePopulation: "VDOT easy category, product duration adaptation."
   transferLimitations: "Longer duration is not a universal baseline and needs current context."
-  allowedEventGroups: [DISTANCE_RUNNING]
-  allowedExperienceBands: [UNRESOLVED_HUMAN_REVIEW]
+  allowedEventGroups: []
+  draftCandidateEventGroups: [MIDDLE_DISTANCE, LONG_DISTANCE, ROAD_RUNNING]
+  allowedExperienceBands: []
+  draftExperienceEvidence: SOURCE_AND_HUMAN_MAPPING_REQUIRED
   minorAllowed: false
   guardianOrCoachReview: "COACH_AND_GUARDIAN_POLICY_REVIEW_REQUIRED"
   paceAnchorKinds: [RPE_ONLY, COACH_REFERENCE]
@@ -185,8 +217,10 @@ common_stop_condition_codes:
   sourceRefs: [SRC-VDOT-PACES, SRC-VDOT-GUIDE]
   sourcePopulation: "General VDOT guidance."
   transferLimitations: "Exact duration and eligibility unresolved; unavailable for use."
-  allowedEventGroups: [DISTANCE_RUNNING]
-  allowedExperienceBands: [UNRESOLVED]
+  allowedEventGroups: []
+  draftCandidateEventGroups: [MIDDLE_DISTANCE, LONG_DISTANCE, ROAD_RUNNING]
+  allowedExperienceBands: []
+  draftExperienceEvidence: SOURCE_AND_HUMAN_MAPPING_REQUIRED
   minorAllowed: false
   guardianOrCoachReview: "HUMAN_REVIEW_REQUIRED_BEFORE_RECLASSIFICATION"
   paceAnchorKinds: [RPE_ONLY]
@@ -212,8 +246,10 @@ common_stop_condition_codes:
   sourceRefs: [SRC-VDOT-PACES]
   sourcePopulation: "Product representation of an easy-run category."
   transferLimitations: "The broken structure is not a direct source example."
-  allowedEventGroups: [DISTANCE_RUNNING]
-  allowedExperienceBands: [UNRESOLVED_HUMAN_REVIEW]
+  allowedEventGroups: []
+  draftCandidateEventGroups: [MIDDLE_DISTANCE, LONG_DISTANCE, ROAD_RUNNING]
+  allowedExperienceBands: []
+  draftExperienceEvidence: SOURCE_AND_HUMAN_MAPPING_REQUIRED
   minorAllowed: false
   guardianOrCoachReview: "COACH_AND_GUARDIAN_POLICY_REVIEW_REQUIRED"
   paceAnchorKinds: [RPE_ONLY, COACH_REFERENCE]
@@ -243,8 +279,10 @@ common_stop_condition_codes:
   sourceRefs: [SRC-VDOT-T]
   sourcePopulation: "VDOT threshold guidance; not athlete-specific."
   transferLimitations: "No automatic threshold pace or youth dose."
-  allowedEventGroups: [DISTANCE_RUNNING]
-  allowedExperienceBands: [UNRESOLVED_HUMAN_REVIEW]
+  allowedEventGroups: []
+  draftCandidateEventGroups: [MIDDLE_DISTANCE, LONG_DISTANCE, ROAD_RUNNING]
+  allowedExperienceBands: []
+  draftExperienceEvidence: SOURCE_AND_HUMAN_MAPPING_REQUIRED
   minorAllowed: false
   guardianOrCoachReview: "COACH_AND_GUARDIAN_POLICY_REVIEW_REQUIRED"
   paceAnchorKinds: [RPE_ONLY, COACH_REFERENCE]
@@ -261,17 +299,19 @@ common_stop_condition_codes:
   version: "0.1"
   lifecycleStatus: DRAFT
   eligibilityStatus: REVIEW_REQUIRED
-  sourceVerificationStatus: DIRECT_SOURCE_EXAMPLE
+  sourceVerificationStatus: SOURCE_ADAPTED
   planningIntent: LT_INTENT
   plainKoreanName: "1600미터 역치 반복 3회"
   coachingTerm: "Threshold cruise intervals"
   notationPattern: "3×1600m @T · r1~2′"
   plainKoreanReading: "1600미터를 역치 느낌으로 세 번 달리고, 사이에 1분에서 2분 쉽니다."
   sourceRefs: [SRC-VDOT-T]
-  sourcePopulation: "VDOT threshold guidance."
-  transferLimitations: "Distance and rest need athlete/event transfer review."
-  allowedEventGroups: [DISTANCE_RUNNING]
-  allowedExperienceBands: [UNRESOLVED_HUMAN_REVIEW]
+  sourcePopulation: "VDOT threshold guidance for 5-15 minute cruise intervals."
+  transferLimitations: "The exact 3×1600m format was not re-opened in the linked source; it remains an adapted seed."
+  allowedEventGroups: []
+  draftCandidateEventGroups: [MIDDLE_DISTANCE, LONG_DISTANCE, ROAD_RUNNING]
+  allowedExperienceBands: []
+  draftExperienceEvidence: SOURCE_AND_HUMAN_MAPPING_REQUIRED
   minorAllowed: false
   guardianOrCoachReview: "COACH_AND_GUARDIAN_POLICY_REVIEW_REQUIRED"
   paceAnchorKinds: [RPE_ONLY, COACH_REFERENCE]
@@ -297,8 +337,10 @@ common_stop_condition_codes:
   sourceRefs: [SRC-VDOT-CRUISE]
   sourcePopulation: "VDOT coaching article example."
   transferLimitations: "Source cautions against faster pace; no universal volume claim."
-  allowedEventGroups: [DISTANCE_RUNNING]
-  allowedExperienceBands: [UNRESOLVED_HUMAN_REVIEW]
+  allowedEventGroups: []
+  draftCandidateEventGroups: [MIDDLE_DISTANCE, LONG_DISTANCE, ROAD_RUNNING]
+  allowedExperienceBands: []
+  draftExperienceEvidence: SOURCE_AND_HUMAN_MAPPING_REQUIRED
   minorAllowed: false
   guardianOrCoachReview: "COACH_AND_GUARDIAN_POLICY_REVIEW_REQUIRED"
   paceAnchorKinds: [RPE_ONLY, COACH_REFERENCE]
@@ -324,8 +366,10 @@ common_stop_condition_codes:
   sourceRefs: [SRC-VDOT-T, SRC-VDOT-GUIDE]
   sourcePopulation: "VDOT duration preference and threshold guidance."
   transferLimitations: "Exact 7-minute format is adapted, not a direct protocol."
-  allowedEventGroups: [DISTANCE_RUNNING]
-  allowedExperienceBands: [UNRESOLVED_HUMAN_REVIEW]
+  allowedEventGroups: []
+  draftCandidateEventGroups: [MIDDLE_DISTANCE, LONG_DISTANCE, ROAD_RUNNING]
+  allowedExperienceBands: []
+  draftExperienceEvidence: SOURCE_AND_HUMAN_MAPPING_REQUIRED
   minorAllowed: false
   guardianOrCoachReview: "COACH_AND_GUARDIAN_POLICY_REVIEW_REQUIRED"
   paceAnchorKinds: [RPE_ONLY, COACH_REFERENCE]
@@ -342,28 +386,30 @@ common_stop_condition_codes:
   version: "0.1"
   lifecycleStatus: DRAFT
   eligibilityStatus: REVIEW_REQUIRED
-  sourceVerificationStatus: POPULATION_INDIRECT
+  sourceVerificationStatus: REJECTED_OR_UNUSABLE
   planningIntent: LT_INTENT
   plainKoreanName: "6분 역치 반복 6회 후보"
   coachingTerm: "High-volume threshold intervals"
   notationPattern: "6×6′ @T · r2′"
   plainKoreanReading: "상급 코치 검토 전에는 이 고용량 후보를 배정하지 않습니다."
   sourceRefs: [SRC-VDOT-T]
-  sourcePopulation: "Coach-case-derived high-volume threshold candidate."
-  transferLimitations: "Advanced volume; direct population and youth transfer unresolved."
-  allowedEventGroups: [DISTANCE_RUNNING]
-  allowedExperienceBands: [ADVANCED_PENDING_HUMAN_REVIEW]
+  sourcePopulation: "Exact coach-case source for this notation was not re-opened."
+  transferLimitations: "High-volume protocol is retained only as an audit seed; it must not be implemented or promoted from this catalog."
+  allowedEventGroups: []
+  draftCandidateEventGroups: [MIDDLE_DISTANCE, LONG_DISTANCE, ROAD_RUNNING]
+  allowedExperienceBands: []
+  draftExperienceEvidence: SOURCE_AND_HUMAN_MAPPING_REQUIRED
   minorAllowed: false
   guardianOrCoachReview: "COACH_AND_SPORTS_SCIENCE_REVIEW_REQUIRED"
   paceAnchorKinds: [RPE_ONLY, COACH_REFERENCE]
   warmup: "WU-QUALITY-REVIEW-REQUIRED"
-  mainSet: "1 set x 6 reps x 6 min"
-  repetitionRecovery: "120 sec COACH_DEFINED"
+  mainSet: "SOURCE_PROTOCOL_NOT_RECONFIRMED_DO_NOT_USE"
+  repetitionRecovery: "UNRESOLVED"
   setRecovery: NOT_APPLICABLE
   cooldown: "CD-QUALITY-REVIEW-REQUIRED"
-  downshiftOptions: [DO_NOT_USE_UNTIL_REVIEW, REDUCE_REPETITIONS]
-  stopConditionCodes: [STOP_IF_D9_BLOCKED_OR_UNKNOWN, STOP_REQUIRES_ADVANCED_HUMAN_REVIEW]
-  derivedTotals: "totalRepetitions=6; qualityDurationSeconds=2160; recoveryTotalSeconds=600"
+  downshiftOptions: [DO_NOT_USE]
+  stopConditionCodes: [STOP_UNVERIFIED_SOURCE_PROTOCOL]
+  derivedTotals: UNAVAILABLE_SOURCE_PROTOCOL_NOT_RECONFIRMED
 ```
 
 ## 6. VO2_INTENT seeds
@@ -382,8 +428,10 @@ common_stop_condition_codes:
   sourceRefs: [SRC-VDOT-PACES]
   sourcePopulation: "VDOT interval example."
   transferLimitations: "No automatic I-pace conversion or individual dose."
-  allowedEventGroups: [DISTANCE_RUNNING]
-  allowedExperienceBands: [UNRESOLVED_HUMAN_REVIEW]
+  allowedEventGroups: []
+  draftCandidateEventGroups: [MIDDLE_DISTANCE, LONG_DISTANCE, ROAD_RUNNING]
+  allowedExperienceBands: []
+  draftExperienceEvidence: SOURCE_AND_HUMAN_MAPPING_REQUIRED
   minorAllowed: false
   guardianOrCoachReview: "COACH_AND_GUARDIAN_POLICY_REVIEW_REQUIRED"
   paceAnchorKinds: [RPE_ONLY, COACH_REFERENCE]
@@ -409,8 +457,10 @@ common_stop_condition_codes:
   sourceRefs: [SRC-VDOT-PACES]
   sourcePopulation: "VDOT interval example."
   transferLimitations: "No automatic I-pace conversion or individual dose."
-  allowedEventGroups: [DISTANCE_RUNNING]
-  allowedExperienceBands: [UNRESOLVED_HUMAN_REVIEW]
+  allowedEventGroups: []
+  draftCandidateEventGroups: [MIDDLE_DISTANCE, LONG_DISTANCE, ROAD_RUNNING]
+  allowedExperienceBands: []
+  draftExperienceEvidence: SOURCE_AND_HUMAN_MAPPING_REQUIRED
   minorAllowed: false
   guardianOrCoachReview: "COACH_AND_GUARDIAN_POLICY_REVIEW_REQUIRED"
   paceAnchorKinds: [RPE_ONLY, COACH_REFERENCE]
@@ -436,8 +486,10 @@ common_stop_condition_codes:
   sourceRefs: [SRC-VDOT-PACES, SRC-PMID-36314990]
   sourcePopulation: "VDOT example plus well-trained adult-men study context."
   transferLimitations: "Study population is not youth or individual prescription evidence."
-  allowedEventGroups: [DISTANCE_RUNNING]
-  allowedExperienceBands: [UNRESOLVED_HUMAN_REVIEW]
+  allowedEventGroups: []
+  draftCandidateEventGroups: [MIDDLE_DISTANCE, LONG_DISTANCE, ROAD_RUNNING]
+  allowedExperienceBands: []
+  draftExperienceEvidence: SOURCE_AND_HUMAN_MAPPING_REQUIRED
   minorAllowed: false
   guardianOrCoachReview: "COACH_AND_SPORTS_SCIENCE_REVIEW_REQUIRED"
   paceAnchorKinds: [RPE_ONLY, COACH_REFERENCE]
@@ -454,28 +506,30 @@ common_stop_condition_codes:
   version: "0.1"
   lifecycleStatus: DRAFT
   eligibilityStatus: REVIEW_REQUIRED
-  sourceVerificationStatus: POPULATION_INDIRECT
+  sourceVerificationStatus: REJECTED_OR_UNUSABLE
   planningIntent: VO2_INTENT
   plainKoreanName: "3분 고강도 반복 4회 후보"
   coachingTerm: "Long VO2 interval"
   notationPattern: "4×3′ @95% vVO2max · r3′ easy"
   plainKoreanReading: "연구 프로토콜 후보이며 개인 기준과 전이 검토 전에는 배정하지 않습니다."
   sourceRefs: [SRC-PMID-39835194]
-  sourcePopulation: "Trained middle-distance runners in a published interval study."
-  transferLimitations: "Requires vVO2max measurement/context; not a general or youth template."
-  allowedEventGroups: [MIDDLE_DISTANCE_PENDING_REVIEW]
-  allowedExperienceBands: [ADVANCED_PENDING_HUMAN_REVIEW]
+  sourcePopulation: "PubMed metadata was confirmed; the exact full protocol was not re-opened."
+  transferLimitations: "The 4×3-minute 95% vVO2max notation must not be implemented until original full-text protocol and transfer review are complete."
+  allowedEventGroups: []
+  draftCandidateEventGroups: [MIDDLE_DISTANCE]
+  allowedExperienceBands: []
+  draftExperienceEvidence: SOURCE_AND_HUMAN_MAPPING_REQUIRED
   minorAllowed: false
   guardianOrCoachReview: "COACH_AND_SPORTS_SCIENCE_REVIEW_REQUIRED"
   paceAnchorKinds: [COACH_REFERENCE]
   warmup: "WU-QUALITY-REVIEW-REQUIRED"
-  mainSet: "1 set x 4 reps x 3 min"
-  repetitionRecovery: "180 sec EASY"
+  mainSet: "SOURCE_PROTOCOL_NOT_RECONFIRMED_DO_NOT_USE"
+  repetitionRecovery: "UNRESOLVED"
   setRecovery: NOT_APPLICABLE
   cooldown: "CD-QUALITY-REVIEW-REQUIRED"
-  downshiftOptions: [DO_NOT_USE_UNTIL_REVIEW, REDUCE_REPETITIONS]
-  stopConditionCodes: [STOP_IF_D9_BLOCKED_OR_UNKNOWN, STOP_REQUIRES_MEASURED_VVO2MAX_AND_HUMAN_REVIEW]
-  derivedTotals: "totalRepetitions=4; qualityDurationSeconds=720; recoveryTotalSeconds=540"
+  downshiftOptions: [DO_NOT_USE]
+  stopConditionCodes: [STOP_UNVERIFIED_SOURCE_PROTOCOL]
+  derivedTotals: UNAVAILABLE_SOURCE_PROTOCOL_NOT_RECONFIRMED
 
 - templateId: V2-SEED-05
   version: "0.1"
@@ -490,8 +544,10 @@ common_stop_condition_codes:
   sourceRefs: [SRC-VDOT-PACES]
   sourcePopulation: "VDOT 3-5 minute interval range, adapted to 1000m."
   transferLimitations: "Requires same-event explicit anchor or RPE-only; no cross-event conversion."
-  allowedEventGroups: [DISTANCE_RUNNING]
-  allowedExperienceBands: [UNRESOLVED_HUMAN_REVIEW]
+  allowedEventGroups: []
+  draftCandidateEventGroups: [MIDDLE_DISTANCE, LONG_DISTANCE, ROAD_RUNNING]
+  allowedExperienceBands: []
+  draftExperienceEvidence: SOURCE_AND_HUMAN_MAPPING_REQUIRED
   minorAllowed: false
   guardianOrCoachReview: "COACH_AND_SPORTS_SCIENCE_REVIEW_REQUIRED"
   paceAnchorKinds: [RECENT_RESULT, PB, SB, GOAL, RPE_ONLY, COACH_REFERENCE]
@@ -521,8 +577,10 @@ common_stop_condition_codes:
   sourceRefs: [SRC-WA-1500]
   sourcePopulation: "Endurance-runner speed-training coaching example."
   transferLimitations: "Goal pace is aspirational, not current capacity; source access and population require review."
-  allowedEventGroups: [MIDDLE_DISTANCE_PENDING_REVIEW]
-  allowedExperienceBands: [UNRESOLVED_HUMAN_REVIEW]
+  allowedEventGroups: []
+  draftCandidateEventGroups: [MIDDLE_DISTANCE]
+  allowedExperienceBands: []
+  draftExperienceEvidence: SOURCE_AND_HUMAN_MAPPING_REQUIRED
   minorAllowed: false
   guardianOrCoachReview: "COACH_AND_SPORTS_SCIENCE_REVIEW_REQUIRED"
   paceAnchorKinds: [GOAL, RPE_ONLY, COACH_REFERENCE]
@@ -548,8 +606,10 @@ common_stop_condition_codes:
   sourceRefs: [SRC-WA-1500]
   sourcePopulation: "Endurance-runner speed-training coaching example."
   transferLimitations: "Pace detail, athlete eligibility, and source access require human review."
-  allowedEventGroups: [MIDDLE_DISTANCE_PENDING_REVIEW]
-  allowedExperienceBands: [ADVANCED_PENDING_HUMAN_REVIEW]
+  allowedEventGroups: []
+  draftCandidateEventGroups: [MIDDLE_DISTANCE]
+  allowedExperienceBands: []
+  draftExperienceEvidence: SOURCE_AND_HUMAN_MAPPING_REQUIRED
   minorAllowed: false
   guardianOrCoachReview: "COACH_AND_SPORTS_SCIENCE_REVIEW_REQUIRED"
   paceAnchorKinds: [RPE_ONLY, COACH_REFERENCE]
@@ -575,8 +635,10 @@ common_stop_condition_codes:
   sourceRefs: [SRC-WA-DECATHLON]
   sourcePopulation: "Decathlon coaching example, indirect for middle-distance and youth."
   transferLimitations: "Population, exact rest range, and event transfer are unresolved."
-  allowedEventGroups: [SPRINT_OR_MIDDLE_DISTANCE_PENDING_REVIEW]
-  allowedExperienceBands: [ADVANCED_PENDING_HUMAN_REVIEW]
+  allowedEventGroups: []
+  draftCandidateEventGroups: [SPRINT, MIDDLE_DISTANCE]
+  allowedExperienceBands: []
+  draftExperienceEvidence: SOURCE_AND_HUMAN_MAPPING_REQUIRED
   minorAllowed: false
   guardianOrCoachReview: "COACH_AND_SPORTS_SCIENCE_REVIEW_REQUIRED"
   paceAnchorKinds: [RPE_ONLY, COACH_REFERENCE, SPRINT_BENCHMARK]
@@ -602,8 +664,10 @@ common_stop_condition_codes:
   sourceRefs: [SRC-WA-DECATHLON]
   sourcePopulation: "Decathlon coaching example."
   transferLimitations: "Adult combined-events context; percentage and recovery need human review."
-  allowedEventGroups: [SPRINT_OR_MIDDLE_DISTANCE_PENDING_REVIEW]
-  allowedExperienceBands: [ADVANCED_PENDING_HUMAN_REVIEW]
+  allowedEventGroups: []
+  draftCandidateEventGroups: [SPRINT, MIDDLE_DISTANCE]
+  allowedExperienceBands: []
+  draftExperienceEvidence: SOURCE_AND_HUMAN_MAPPING_REQUIRED
   minorAllowed: false
   guardianOrCoachReview: "COACH_AND_SPORTS_SCIENCE_REVIEW_REQUIRED"
   paceAnchorKinds: [RPE_ONLY, COACH_REFERENCE, SPRINT_BENCHMARK]
@@ -629,8 +693,10 @@ common_stop_condition_codes:
   sourceRefs: [SRC-WA-SPRINT-RT]
   sourcePopulation: "Sprint-category coaching context."
   transferLimitations: "Dose and population unresolved; inaccessible source content in this environment."
-  allowedEventGroups: [UNRESOLVED]
-  allowedExperienceBands: [UNRESOLVED]
+  allowedEventGroups: []
+  draftCandidateEventGroups: []
+  allowedExperienceBands: []
+  draftExperienceEvidence: SOURCE_AND_HUMAN_MAPPING_REQUIRED
   minorAllowed: false
   guardianOrCoachReview: "HUMAN_REVIEW_REQUIRED_BEFORE_RECLASSIFICATION"
   paceAnchorKinds: [RPE_ONLY, COACH_REFERENCE]
@@ -660,8 +726,10 @@ common_stop_condition_codes:
   sourceRefs: [SRC-WA-SPRINT-INTRO, SRC-WA-MEDICAL]
   sourcePopulation: "Sprint coaching material; general athlete transfer not established."
   transferLimitations: "Requires sprint-specific human review and structured warm-up; no race-pace conversion."
-  allowedEventGroups: [SPRINT_PENDING_REVIEW]
-  allowedExperienceBands: [UNRESOLVED_HUMAN_REVIEW]
+  allowedEventGroups: []
+  draftCandidateEventGroups: [SPRINT]
+  allowedExperienceBands: []
+  draftExperienceEvidence: SOURCE_AND_HUMAN_MAPPING_REQUIRED
   minorAllowed: false
   guardianOrCoachReview: "COACH_SPRINT_REVIEW_AND_GUARDIAN_POLICY_REQUIRED"
   paceAnchorKinds: [SPRINT_BENCHMARK, COACH_REFERENCE, RPE_ONLY]
@@ -687,8 +755,10 @@ common_stop_condition_codes:
   sourceRefs: [SRC-PMID-37776346]
   sourcePopulation: "Published sprint recovery study; exact participant transfer requires review."
   transferLimitations: "Research protocol is not a youth or public automatic template."
-  allowedEventGroups: [SPRINT_PENDING_REVIEW]
-  allowedExperienceBands: [UNRESOLVED_HUMAN_REVIEW]
+  allowedEventGroups: []
+  draftCandidateEventGroups: [SPRINT]
+  allowedExperienceBands: []
+  draftExperienceEvidence: SOURCE_AND_HUMAN_MAPPING_REQUIRED
   minorAllowed: false
   guardianOrCoachReview: "COACH_SPRINT_AND_SPORTS_SCIENCE_REVIEW_REQUIRED"
   paceAnchorKinds: [SPRINT_BENCHMARK, COACH_REFERENCE]
@@ -714,8 +784,10 @@ common_stop_condition_codes:
   sourceRefs: [SRC-PMID-37776346]
   sourcePopulation: "Published sprint recovery study; exact participant transfer requires review."
   transferLimitations: "No 5K/T/I/RP conversion; not a youth or public automatic template."
-  allowedEventGroups: [SPRINT_PENDING_REVIEW]
-  allowedExperienceBands: [UNRESOLVED_HUMAN_REVIEW]
+  allowedEventGroups: []
+  draftCandidateEventGroups: [SPRINT]
+  allowedExperienceBands: []
+  draftExperienceEvidence: SOURCE_AND_HUMAN_MAPPING_REQUIRED
   minorAllowed: false
   guardianOrCoachReview: "COACH_SPRINT_AND_SPORTS_SCIENCE_REVIEW_REQUIRED"
   paceAnchorKinds: [SPRINT_BENCHMARK, COACH_REFERENCE]
@@ -741,8 +813,10 @@ common_stop_condition_codes:
   sourceRefs: [SRC-WA-SPRINT-RT]
   sourcePopulation: "Sprint category guidance, adapted product structure."
   transferLimitations: "Exact mixed set is adapted; sprint review required."
-  allowedEventGroups: [SPRINT_PENDING_REVIEW]
-  allowedExperienceBands: [ADVANCED_PENDING_HUMAN_REVIEW]
+  allowedEventGroups: []
+  draftCandidateEventGroups: [SPRINT]
+  allowedExperienceBands: []
+  draftExperienceEvidence: SOURCE_AND_HUMAN_MAPPING_REQUIRED
   minorAllowed: false
   guardianOrCoachReview: "COACH_SPRINT_AND_SPORTS_SCIENCE_REVIEW_REQUIRED"
   paceAnchorKinds: [SPRINT_BENCHMARK, COACH_REFERENCE]
@@ -768,8 +842,10 @@ common_stop_condition_codes:
   sourceRefs: [SRC-WA-SPRINTS]
   sourcePopulation: "Sprint coaching example."
   transferLimitations: "Plyometric complex requires explicit classification and human review; no automatic use."
-  allowedEventGroups: [SPRINT_PENDING_REVIEW]
-  allowedExperienceBands: [ADVANCED_PENDING_HUMAN_REVIEW]
+  allowedEventGroups: []
+  draftCandidateEventGroups: [SPRINT]
+  allowedExperienceBands: []
+  draftExperienceEvidence: SOURCE_AND_HUMAN_MAPPING_REQUIRED
   minorAllowed: false
   guardianOrCoachReview: "MANDATORY_COACH_SPRINT_AND_PLYOMETRIC_REVIEW"
   paceAnchorKinds: [SPRINT_BENCHMARK, COACH_REFERENCE, RPE_ONLY]
@@ -799,8 +875,10 @@ common_stop_condition_codes:
   sourceRefs: [SRC-VDOT-GUIDE]
   sourcePopulation: "Product support representation."
   transferLimitations: "Not medical advice or a readiness decision."
-  allowedEventGroups: [ALL_PENDING_POLICY]
-  allowedExperienceBands: [ALL_PENDING_POLICY]
+  allowedEventGroups: []
+  draftCandidateEventGroups: []
+  allowedExperienceBands: []
+  draftExperienceEvidence: SOURCE_AND_HUMAN_MAPPING_REQUIRED
   minorAllowed: false
   guardianOrCoachReview: "POLICY_REVIEW_REQUIRED"
   paceAnchorKinds: [RPE_ONLY]
@@ -826,8 +904,10 @@ common_stop_condition_codes:
   sourceRefs: [SRC-VDOT-PACES]
   sourcePopulation: "Easy/recovery category adapted as support."
   transferLimitations: "No automatic recommendation; no recovery claim."
-  allowedEventGroups: [ALL_PENDING_POLICY]
-  allowedExperienceBands: [UNRESOLVED_HUMAN_REVIEW]
+  allowedEventGroups: []
+  draftCandidateEventGroups: []
+  allowedExperienceBands: []
+  draftExperienceEvidence: SOURCE_AND_HUMAN_MAPPING_REQUIRED
   minorAllowed: false
   guardianOrCoachReview: "POLICY_REVIEW_REQUIRED"
   paceAnchorKinds: [RPE_ONLY]
@@ -853,8 +933,10 @@ common_stop_condition_codes:
   sourceRefs: [SRC-PRODUCT-RECOVERY-SUPPORT-001]
   sourcePopulation: "No direct session source claimed."
   transferLimitations: "No exercise selection, medical, or rehabilitation instructions."
-  allowedEventGroups: [ALL_PENDING_POLICY]
-  allowedExperienceBands: [ALL_PENDING_POLICY]
+  allowedEventGroups: []
+  draftCandidateEventGroups: []
+  allowedExperienceBands: []
+  draftExperienceEvidence: SOURCE_AND_HUMAN_MAPPING_REQUIRED
   minorAllowed: false
   guardianOrCoachReview: "POLICY_AND_QUALIFIED_REVIEW_REQUIRED"
   paceAnchorKinds: [RPE_ONLY]
@@ -880,8 +962,10 @@ common_stop_condition_codes:
   sourceRefs: [SRC-PRODUCT-RECOVERY-SUPPORT-001]
   sourcePopulation: "Product support representation."
   transferLimitations: "No duration or medical purpose is set."
-  allowedEventGroups: [ALL_PENDING_POLICY]
-  allowedExperienceBands: [ALL_PENDING_POLICY]
+  allowedEventGroups: []
+  draftCandidateEventGroups: []
+  allowedExperienceBands: []
+  draftExperienceEvidence: SOURCE_AND_HUMAN_MAPPING_REQUIRED
   minorAllowed: false
   guardianOrCoachReview: "POLICY_REVIEW_REQUIRED"
   paceAnchorKinds: [RPE_ONLY]
@@ -907,8 +991,10 @@ common_stop_condition_codes:
   sourceRefs: [SRC-PRODUCT-RECOVERY-SUPPORT-001]
   sourcePopulation: "Product safety-support state, not a training protocol."
   transferLimitations: "Not a workout and not a safety clearance."
-  allowedEventGroups: [ALL_PENDING_POLICY]
-  allowedExperienceBands: [ALL_PENDING_POLICY]
+  allowedEventGroups: []
+  draftCandidateEventGroups: []
+  allowedExperienceBands: []
+  draftExperienceEvidence: SOURCE_AND_HUMAN_MAPPING_REQUIRED
   minorAllowed: false
   guardianOrCoachReview: "MANDATORY_HUMAN_REVIEW"
   paceAnchorKinds: [RPE_ONLY]

@@ -44,6 +44,25 @@ parser, calculator, Template Library binding, or runtime implementation exists y
 The app regression run is a baseline non-regression check, not evidence that a new
 prescription runtime has executed.
 
+## Adversarial review corrections before independent review
+
+- All 30 catalog entries now have empty active-library event and experience
+  eligibility arrays. Their candidate event labels are research context only, so a
+  lifecycle mistake cannot make them eligible for an athlete.
+- The prescription contract now stores the race-pace target event and display
+  rounding-policy version. This makes a future same-event calculation enforceable
+  instead of inferring the `5000m` in `@5000m RP` from prose.
+- A coach reference must use an explicit existing anchor-purpose enum; it no longer
+  has an undefined “coach context” purpose.
+- Exact numeric examples not re-opened from their original source were downgraded
+  to adapted or rejected audit seeds. `DIRECT_SOURCE_EXAMPLE` is now limited to
+  exact VDOT examples re-opened during this review.
+- Catalog seed prose is explicitly forbidden from being deserialized directly as a
+  runtime `StructuredPrescription`.
+- The owner notation fixture is now explicitly an unbound parse case. It records
+  the `5000m` target label but cannot create a prescription, calculate seconds, or
+  display a numeric pace until a separate anchor passes the contract.
+
 ## Handoff after PR #120 merges
 
 1. Add parser/formatter and same-event pace calculation with tests first.
