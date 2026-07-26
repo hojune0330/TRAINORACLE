@@ -104,6 +104,26 @@ test("creates and selects a profile-only beta plan from the first screen", async
   await expect(page.getByText(/사용 정보 4가지.*베타 계획/u)).toBeVisible()
 })
 
+test("reads a detailed training notation without creating a plan", async ({ page }) => {
+  await page.goto("/?app=1")
+  await page.getByRole("button", { name: "훈련계획 후보 만들기" }).click()
+  await page.getByRole("button", { name: "훈련표 표기 읽기" }).click()
+  await page.getByRole("textbox", { name: "훈련표 표기" }).fill(
+    "2×(10×400m) @5000m RP · r60″ · R3′",
+  )
+  await page.getByRole("button", { name: "표기 풀어보기" }).click()
+
+  const result = page.getByRole("region", { name: "훈련표 표기 결과" })
+  await expect(result.getByText("20회")).toBeVisible()
+  await expect(result.getByText("8,000m")).toBeVisible()
+  await expect(result.getByText("60초 · 18번")).toBeVisible()
+  await expect(result.getByText("3분 · 1번")).toBeVisible()
+  await expect(result.getByText("1,260초")).toBeVisible()
+  await expect.poll(async () => page.evaluate(
+    () => window.localStorage.getItem("trainoracle.plan-beta.v1"),
+  )).toBeNull()
+})
+
 test("does not let a favorable current answer override recent high pain", async ({ page }) => {
   await page.addInitScript(() => {
     const now = new Date()

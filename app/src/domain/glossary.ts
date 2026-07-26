@@ -34,6 +34,7 @@ export type TermId =
   | "plan-beta-basis"
   | "plan-option"
   | "quality-session"
+  | "training-notation"
 
 export interface GlossaryEntry {
   /** 화면에 쓰는 원래 표기 */
@@ -150,5 +151,10 @@ export const GLOSSARY: Record<TermId, GlossaryEntry> = {
     label: "조절 강도",
     short: "현재 베타에서 RPE 5~6으로 정한 달리기예요. 완전히 편안한 달리기보다 집중이 필요하지만, 최대 강도로 달리는 훈련은 아닙니다.",
     detail: "RPE와 총 시간만 정해져 있습니다. LT, VO2 같은 세부 에너지 시스템과 반복 횟수, 거리, 회복 시간, 목표 페이스는 아직 지정하지 않습니다.",
+  },
+  "training-notation": {
+    label: "훈련표 표기",
+    short: "세트, 반복, 거리, 회복 시간을 짧게 적는 약속이에요. 예: 2×(10×400m)는 400m를 10번 뛰는 세트를 2번 한다는 뜻이에요.",
+    detail: "이 화면은 표기에 적힌 구조와 회복 시간만 풀어 보여줍니다. 개인 기록으로 페이스를 계산하거나, 자동으로 훈련 계획을 만들거나, 몸 상태를 판단하지 않습니다.",
   },
 }

@@ -135,6 +135,12 @@ Max content width is 1440px. Breakpoints: single column under 760px, two columns
 - Content rule: current public beta shows only generator-owned duration and RPE values. Unknown pace, repetitions, distance, recovery, and LT/VO2 identity are stated as unassigned rather than inferred.
 - Accessibility: execution guidance is available without hover and remains readable at 320px.
 
+### Training Notation Reader
+- Structure: one locally held text input, a parse action, an unframed fact list, and a boundary disclosure.
+- Surface: uses the existing plan page band, `--surface`, `--line`, `--hair`, `--sans`, and `--mono` tokens; no card nesting, shadow, or decorative treatment.
+- Content rule: show only notation-derived set, repetition, distance or duration, and recovery facts. State clearly that the reader does not calculate a personal pace, create a plan, activate a draft template, persist the input, or make a safety judgment.
+- Accessibility: input has a visible label, parse errors use `alert`, result facts are in an announced region, and the boundary disclosure uses native `details`.
+
 ### Active Plan Timeline
 - Structure: frame identity, source/confidence state, ordered day rows, one progress action per planned session, next-frame continuity note.
 - Progress states: planned, completed, rested, skipped, pain check-in.

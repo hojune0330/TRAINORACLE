@@ -52,6 +52,42 @@ function savePostSession(
 }
 
 describe("plan beta user flow", () => {
+  it("reads a detailed notation without storing or creating a plan", async () => {
+    const user = userEvent.setup()
+    render(<PlanBeta />)
+
+    await user.click(screen.getByRole("button", { name: "훈련표 표기 읽기" }))
+    expect(screen.getByRole("heading", { name: "훈련표 표기 읽기" })).toBeVisible()
+
+    await user.type(
+      screen.getByRole("textbox", { name: "훈련표 표기" }),
+      "2×(10×400m) @5000m RP · r60″ · R3′",
+    )
+    await user.click(screen.getByRole("button", { name: "표기 풀어보기" }))
+
+    const results = screen.getByRole("region", { name: "훈련표 표기 결과" })
+    expect(within(results).getByText("20회")).toBeVisible()
+    expect(within(results).getByText("8,000m")).toBeVisible()
+    expect(within(results).getByText("60초 · 18번")).toBeVisible()
+    expect(within(results).getByText("3분 · 1번")).toBeVisible()
+    expect(within(results).getByText("1,260초")).toBeVisible()
+    expect(window.localStorage.getItem("trainoracle.plan-beta.v1")).toBeNull()
+  })
+
+  it("shows an error for an incomplete notation without creating a plan", async () => {
+    const user = userEvent.setup()
+    render(<PlanBeta />)
+
+    await user.click(screen.getByRole("button", { name: "훈련표 표기 읽기" }))
+    await user.type(screen.getByRole("textbox", { name: "훈련표 표기" }), "10×400m")
+    await user.click(screen.getByRole("button", { name: "표기 풀어보기" }))
+
+    expect(screen.getByRole("alert")).toHaveTextContent(
+      "아직 이 표기 형식은 읽지 못해요",
+    )
+    expect(window.localStorage.getItem("trainoracle.plan-beta.v1")).toBeNull()
+  })
+
   it("explains plan availability and frame choices before selection", async () => {
     const user = userEvent.setup()
     render(<PlanBeta />)
