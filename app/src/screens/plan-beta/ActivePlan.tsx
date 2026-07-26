@@ -11,12 +11,12 @@ import type {
   PlanBetaState,
   StoredPlanProgress,
 } from "../../domain/plan-beta-store"
+import { TermHelp } from "../../components/TermHelp"
 import {
   CANDIDATE_LABELS,
-  prescriptionLabel,
   PROGRESS_LABELS,
-  sessionLabel,
 } from "./labels"
+import { PlanSessionDetails } from "./PlanSessionDetails"
 
 const PROGRESS_ACTIONS: readonly {
   readonly state: PlanProgressState
@@ -48,14 +48,19 @@ export function ActivePlan({
       <div className="plan-eyebrow">ACTIVE · LOCAL BETA</div>
       <h1 id="active-plan-title">{label.title} {activePlan.frame.lengthDays}일 계획</h1>
       <p className="plan-copy">
-        이 계획과 진행 상태는 이 브라우저에만 저장돼요.
-        완료하지 못한 날은 몰아서 훈련하지 마세요.
+        오늘 할 훈련의 총 시간과 RPE를 확인하세요.
+        완료하지 못한 날을 다음 날에 몰아서 하지 마세요.
       </p>
       <div className="plan-source-strip">
         <AlertTriangle aria-hidden="true" size={17} />
         <span>
-          <strong>{activePlan.sourceMode === "PROFILE_ONLY" ? "프로필 기반 · 제한 신뢰도" : "일지 보유 · 처방 미반영"}</strong>
-          <small>현재 응답 기준 · 의료 판단 아님</small>
+          <strong>
+            {activePlan.sourceMode === "PROFILE_ONLY"
+              ? "사용 정보 4가지 · 베타 계획"
+              : "최근 일지 확인 · 계획 수치에는 미반영"}
+            <TermHelp term="plan-beta-basis" />
+          </strong>
+          <small>이 계획과 진행 상태는 이 브라우저에만 저장 · 의료 판단 아님</small>
         </span>
       </div>
       <ol className="active-plan__days">
@@ -65,12 +70,7 @@ export function ActivePlan({
             <li key={session.day}>
               <div className="active-plan__session">
                 <span>DAY {session.day}</span>
-                <div>
-                  <strong>{sessionLabel(session)}</strong>
-                  <small className={session.role === "REST" ? "plan-session-help" : "plan-session-metric"}>
-                    {prescriptionLabel(session)}
-                  </small>
-                </div>
+                <PlanSessionDetails session={session} />
                 <em>{current === undefined ? "예정" : PROGRESS_LABELS[current]}</em>
               </div>
               <div className="active-plan__actions" aria-label={`DAY ${session.day} 진행 기록`}>
@@ -94,11 +94,11 @@ export function ActivePlan({
         })}
       </ol>
       <div className="active-plan__continuity">
-        <strong>다음 계획도 이 기록에서 이어져요.</strong>
+        <strong>다음 계획에 이어지는 정보</strong>
         <p>
-          선택한 후보와 진행 상태만 보관합니다.
-          다음 후보를 만들 때 몸 상태를 다시 확인해요.
-          강도는 자동으로 올리지 않아요.
+          어떤 계획을 골랐는지와 완료·휴식·건너뜀·통증 체크 횟수만 이어갑니다.
+          이번 훈련의 거리·페이스·메모는 넘기지 않고 강도도 자동으로 올리지 않습니다.
+          새 계획을 만들기 전에 몸 상태를 다시 확인합니다.
         </p>
         <button type="button" onClick={onNextFrame}>
           다음 주기 후보 만들기

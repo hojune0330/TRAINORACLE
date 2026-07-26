@@ -92,9 +92,9 @@ export function PlanBeta({
         <div className="plan-eyebrow">PLAN NOT GENERATED</div>
         <h1 id="plan-blocked-title">지금은 계획을 멈췄어요</h1>
         <p>
-          몸 상태는 사람의 확인이 필요해요.
+          이 앱은 사람에게 자동으로 연결하거나 몸 상태를 확인할 수 없어요.
           <br />
-          확인 전에는 계획을 만들지 않아요.
+          계획을 만들지 말고 지도자·보호자 또는 의료진과 직접 상의해 주세요.
         </p>
         <button type="button" onClick={() => onWriteLog?.("evening")}>
           통증·컨디션 기록하기

@@ -113,10 +113,9 @@ export function PopCard({ open, align = "left", width = 232, accentBorder, label
   const surfaceStyle: CSSProperties = {
     width,
     background: "var(--surface)",
-    border: `1px solid ${accentBorder.border}`,
+    border: `var(--bw-line) solid ${accentBorder.border}`,
     borderLeft: `3px solid ${accentBorder.bar}`,
-    boxShadow: "0 4px 14px rgba(0,0,0,0.12)",
-    padding: "10px 12px",
+    padding: "var(--space-3)",
     textTransform: "none", letterSpacing: 0, textAlign: "left",
   }
 

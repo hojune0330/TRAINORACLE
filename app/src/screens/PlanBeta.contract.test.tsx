@@ -18,7 +18,7 @@ async function answerMinimumPlanQuestions(
 ): Promise<void> {
   const user = userEvent.setup()
   await user.click(screen.getByRole("button", { name: /800m.*1500m/u }))
-  await user.click(screen.getByRole("button", { name: /훈련 경험 있음/u }))
+  await user.click(screen.getByRole("button", { name: /훈련 계획에 맞춰 달려 본 경험/u }))
   await user.click(screen.getByRole("button", { name: /^3일/u }))
   await user.click(screen.getByRole("button", { name: /9일 계획.*권장/u }))
   await user.click(screen.getByRole("button", {
@@ -52,16 +52,58 @@ function savePostSession(
 }
 
 describe("plan beta user flow", () => {
+  it("explains plan availability and frame choices before selection", async () => {
+    const user = userEvent.setup()
+    render(<PlanBeta />)
+
+    await user.click(screen.getByRole("button", { name: /800m.*1500m/u }))
+    await user.click(screen.getByRole("button", { name: /훈련 계획에 맞춰 달려 본 경험/u }))
+
+    const availableDaysHelp = screen.getByRole("button", {
+      name: "훈련할 수 있는 날 설명 보기",
+    })
+    expect(availableDaysHelp).toHaveAttribute("aria-expanded", "false")
+    await user.click(availableDaysHelp)
+    expect(availableDaysHelp).toHaveAttribute("aria-expanded", "true")
+
+    await user.click(screen.getByRole("button", { name: /^3일/u }))
+    expect(screen.getByRole("button", {
+      name: "계획 길이 설명 보기",
+    })).toBeVisible()
+  })
+
   it("creates two profile-only candidates without journal data", async () => {
     render(<PlanBeta />)
 
     await answerMinimumPlanQuestions()
 
-    expect(screen.getByRole("heading", { name: "두 후보를 비교해보세요" })).toBeVisible()
-    expect(screen.getByRole("heading", { name: "균형형" })).toBeVisible()
-    expect(screen.getByRole("heading", { name: "보수형" })).toBeVisible()
-    expect(screen.getByText(/프로필 기반.*제한 신뢰도/u)).toBeVisible()
-    expect(screen.queryByText(/정확한 페이스/u)).toBeVisible()
+    expect(screen.getByRole("heading", {
+      name: "두 계획에서 하나를 골라보세요",
+    })).toBeVisible()
+    expect(screen.getByRole("heading", {
+      name: "편안한 달리기 + 조절 강도",
+    })).toBeVisible()
+    expect(screen.getByRole("heading", {
+      name: "편안한 달리기 중심",
+    })).toBeVisible()
+    expect(screen.getByText(
+      "훈련 3일 · 기초 지구력 2일 · 조절 강도 1일 · 휴식·회복 6일",
+    )).toBeVisible()
+    expect(screen.getAllByText(/BASE.*기초 지구력/u).length).toBeGreaterThan(0)
+    expect(screen.getAllByText(/세부 에너지 시스템 미지정/u).length).toBeGreaterThan(0)
+
+    const guidance = screen.getAllByText("실행 방법 보기")[0]
+    expect(guidance).toBeDefined()
+    if (guidance !== undefined) {
+      await userEvent.setup().click(guidance)
+      const openedGuidance = guidance.closest("details")
+      expect(openedGuidance).not.toBeNull()
+      if (openedGuidance !== null) {
+        expect(within(openedGuidance).getByText(
+          /대화가 어려워지면 속도를 낮추세요/u,
+        )).toBeVisible()
+      }
+    }
   })
 
   it("blocks generation when current risk is present or unclear", async () => {
@@ -71,7 +113,11 @@ describe("plan beta user flow", () => {
     await answerMinimumPlanQuestions("review")
 
     expect(screen.getByRole("heading", { name: "지금은 계획을 멈췄어요" })).toBeVisible()
-    expect(screen.queryByRole("heading", { name: "균형형" })).toBeNull()
+    expect(screen.getByText(/앱은 사람에게 자동으로 연결하거나 몸 상태를 확인할 수 없어요/u)).toBeVisible()
+    expect(screen.getByText(/지도자·보호자 또는 의료진과 직접 상의해 주세요/u)).toBeVisible()
+    expect(screen.queryByRole("heading", {
+      name: "편안한 달리기 + 조절 강도",
+    })).toBeNull()
     await userEvent.setup().click(
       screen.getByRole("button", { name: "통증·컨디션 기록하기" }),
     )
@@ -102,7 +148,9 @@ describe("plan beta user flow", () => {
     await answerMinimumPlanQuestions("clear")
 
     expect(screen.getByRole("heading", { name: "지금은 계획을 멈췄어요" })).toBeVisible()
-    expect(screen.queryByRole("heading", { name: "균형형" })).toBeNull()
+    expect(screen.queryByRole("heading", {
+      name: "편안한 달리기 + 조절 강도",
+    })).toBeNull()
   })
 
   it("blocks on a recent analyzable memo without retaining its raw text", async () => {
@@ -129,7 +177,9 @@ describe("plan beta user flow", () => {
 
     await answerMinimumPlanQuestions("clear")
 
-    expect(screen.getByRole("heading", { name: "두 후보를 비교해보세요" })).toBeVisible()
+    expect(screen.getByRole("heading", {
+      name: "두 계획에서 하나를 골라보세요",
+    })).toBeVisible()
   })
 
   it("labels journal presence honestly when its values do not alter prescriptions", async () => {
@@ -139,8 +189,8 @@ describe("plan beta user flow", () => {
 
     await answerMinimumPlanQuestions("clear")
 
-    expect(screen.getByText("일지 보유 · 처방 미반영")).toBeVisible()
-    expect(screen.getByText(/일지 수치나 메모를 반영하지 않습니다/u)).toBeVisible()
+    expect(screen.getByText("최근 일지 확인 · 계획 수치에는 미반영")).toBeVisible()
+    expect(screen.getByText(/일지의 거리, RPE, 메모는 이번 베타 계획/u)).toBeVisible()
   })
 
   it("does not label future or calendar-invalid entries as recent journal context", async () => {
@@ -151,8 +201,8 @@ describe("plan beta user flow", () => {
 
     await answerMinimumPlanQuestions("clear")
 
-    expect(screen.getByText("프로필 기반 · 제한 신뢰도")).toBeVisible()
-    expect(screen.queryByText("일지 보유 · 처방 미반영")).toBeNull()
+    expect(screen.getByText("사용 정보 4가지 · 베타 계획")).toBeVisible()
+    expect(screen.queryByText("최근 일지 확인 · 계획 수치에는 미반영")).toBeNull()
   })
 
   it("selects a candidate, stores it locally, and records progress without points", async () => {
@@ -160,9 +210,13 @@ describe("plan beta user flow", () => {
     render(<PlanBeta />)
     await answerMinimumPlanQuestions()
 
-    await user.click(screen.getByRole("button", { name: "균형형 선택하기" }))
+    await user.click(screen.getByRole("button", {
+      name: "편안한 달리기 + 조절 강도 선택하기",
+    }))
 
-    expect(screen.getByRole("heading", { name: "균형형 9일 계획" })).toBeVisible()
+    expect(screen.getByRole("heading", {
+      name: "편안한 달리기 + 조절 강도 9일 계획",
+    })).toBeVisible()
     const dayOneActions = screen.getByLabelText("DAY 1 진행 기록")
     await user.click(within(dayOneActions).getByRole("button", { name: "완료" }))
 
@@ -175,7 +229,9 @@ describe("plan beta user flow", () => {
     const user = userEvent.setup()
     render(<PlanBeta />)
     await answerMinimumPlanQuestions()
-    await user.click(screen.getByRole("button", { name: "보수형 선택하기" }))
+    await user.click(screen.getByRole("button", {
+      name: "편안한 달리기 중심 선택하기",
+    }))
     await user.click(
       within(screen.getByLabelText("DAY 1 진행 기록"))
         .getByRole("button", { name: "휴식" }),

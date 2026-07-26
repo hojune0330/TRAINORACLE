@@ -110,17 +110,30 @@ Max content width is 1440px. Breakpoints: single column under 760px, two columns
 - Accessibility: no waitlist, request, profile, or identity input is present.
 
 ### Plan Intake Step
-- Structure: one decision question, two to four full-width Choice Rows, progress label, back action.
+- Structure: one decision question, contextual help trigger, two to four full-width Choice Rows, progress label, back action.
 - Surface: unframed page band using `--surface`, `--line`, and existing action tokens.
 - States: goal, experience, available days, frame length, current-risk check.
+- Content rule: state what the answer changes in the current generator and disclose important limits such as no personal-pace calculation.
 - Accessibility: one question per screen; current selection is exposed with `aria-pressed`; no hidden required fields.
 
 ### Plan Candidate Comparison
-- Structure: source/confidence strip, candidate name, factual difference summary, ordered session list, select action.
+- Structure: source/confidence strip, candidate name, factual training/easy/quality/rest day counts, ordered session list, select action.
 - Variants: `BALANCED`, `CONSERVATIVE`.
 - Surface: candidates are adjacent bordered sections, not cards inside a card.
-- Content rule: sparse-data candidates use duration and RPE ranges; never invent exact pace, readiness, medical clearance, or training history.
+- Content rule: each training day shows total duration, RPE range, training intent, and an execution disclosure. Sparse-data candidates never invent exact pace, interval distance, repetition count, recovery duration, energy-system identity, readiness, medical clearance, or training history.
 - Accessibility: each candidate has a heading, a complete difference description, and one unique selection button.
+
+### Context Help Trigger
+- Structure: the existing 44px `TermHelp` trigger immediately follows the question or term it explains.
+- Surface: 14px visible question mark with the existing border-only Popover.
+- Content rule: explain the concrete consequence first, then boundaries or exclusions. Help text never changes plan or safety state.
+- Accessibility: the accessible name uses the visible concept followed by `설명 보기` or `설명 닫기`; `aria-expanded` exposes state.
+
+### Plan Session Prescription
+- Structure: session name, factual numeric prescription, intent label, and native `details` execution disclosure.
+- Intent states: recovery, `BASE(기초 지구력)`, or controlled intensity with detailed energy system unassigned.
+- Content rule: current public beta shows only generator-owned duration and RPE values. Unknown pace, repetitions, distance, recovery, and LT/VO2 identity are stated as unassigned rather than inferred.
+- Accessibility: execution guidance is available without hover and remains readable at 320px.
 
 ### Active Plan Timeline
 - Structure: frame identity, source/confidence state, ordered day rows, one progress action per planned session, next-frame continuity note.

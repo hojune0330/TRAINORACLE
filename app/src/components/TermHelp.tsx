@@ -54,24 +54,17 @@ export function TermHelp({ term }: { term: TermId }) {
           bar: entry.safety ? "var(--warn)" : "var(--ink-3)",
         }}
       >
-        <div style={{
-          fontFamily: "var(--mono)", fontSize: 9.5, fontWeight: 700,
-          color: entry.safety ? "var(--warn)" : "var(--ink-3)",
-          letterSpacing: "0.1em", marginBottom: 5,
-        }}>
+        <div
+          className="term-help__label"
+          data-safety={entry.safety ? "true" : "false"}
+        >
           {entry.label}{entry.safety ? " · 안전 표시" : ""}
         </div>
-        <div style={{
-          fontFamily: "var(--serif, inherit)", fontSize: 11.5, lineHeight: 1.55,
-          color: "var(--ink)", fontWeight: 400, whiteSpace: "normal",
-        }}>
+        <div className="term-help__short">
           {entry.short}
         </div>
         {entry.detail && (
-          <div style={{
-            marginTop: 6, fontSize: 10.5, lineHeight: 1.5,
-            color: "var(--ink-2)", fontWeight: 400, whiteSpace: "normal",
-          }}>
+          <div className="term-help__detail">
             {entry.detail}
           </div>
         )}
