@@ -29,6 +29,7 @@ TrainOracle의 핵심은 예쁜 훈련 일지 화면만이 아니라, **선수 �
 - 쉬운 전체 설명: [`SPEC_OVERVIEW_FOR_HOJUNE.md`](./SPEC_OVERVIEW_FOR_HOJUNE.md)
 - Fable·Codex 공동 기획 기준선: [`FABLE_CODEX_JOINT_PLANNING_BRIEF.md`](./FABLE_CODEX_JOINT_PLANNING_BRIEF.md)
 - 9.5일 훈련계획 소유자 결정 기록: [`TRAINING_PLAN_METHOD_DECISION.md`](./TRAINING_PLAN_METHOD_DECISION.md)
+- **현재 구현·배포·다음 작업 인계서:** [`CURRENT_IMPLEMENTATION_HANDOFF_2026-07-27.md`](./CURRENT_IMPLEMENTATION_HANDOFF_2026-07-27.md). 과거 work-harness 인계와 달리, 현재 `main`의 공개 훈련계획 베타와 AM/PM 회복 운동 경계를 설명합니다.
 - 실제 공개 훈련계획 베타 구현·검증 상태: [`PLAN_BETA_PUBLIC_IMPLEMENTATION_REPORT_2026-07-24.md`](./reports/implementation/PLAN_BETA_PUBLIC_IMPLEMENTATION_REPORT_2026-07-24.md)
 - 9개 관점 청사진 검증·시각화: [`TRAINING_PLAN_BLUEPRINT_MULTIPERSPECTIVE_REVIEW.md`](./TRAINING_PLAN_BLUEPRINT_MULTIPERSPECTIVE_REVIEW.md)
 - 정확한 파일 목록과 상태: [`TRAINORACLE_SPEC_INDEX.md`](./TRAINORACLE_SPEC_INDEX.md)
