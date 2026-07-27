@@ -11,6 +11,11 @@ plan:
 
 > **이 문서를 읽기 전에 [`PRODUCT_NORTH_STAR.md`](./PRODUCT_NORTH_STAR.md)를
 > 먼저 읽으십시오.** 이 기획은 그 최종 목표의 첫 단계입니다.
+>
+> **오너께서 결정을 검토하실 때는 이 문서 대신
+> [`DECISION_BRIEFING_PERSONAL_PACE.md`](./DECISION_BRIEFING_PERSONAL_PACE.md)를
+> 보십시오.** 이 문서는 실무 기획서라 배경 설명이 생략돼 있습니다.
+> 브리핑 문서에 맥락·선택지·위험이 풀어서 적혀 있습니다.
 
 ## 0. 이전 안을 왜 폐기했는가 (같은 실수 방지)
 
