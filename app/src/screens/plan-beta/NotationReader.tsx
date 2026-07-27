@@ -88,6 +88,7 @@ export function NotationReader({ onBack }: { readonly onBack: () => void }) {
       {hasTried && result === null && (
         <p className="plan-notation-error" role="alert">
           아직 이 표기 형식은 읽지 못해요. 예시처럼 세트·반복·회복 단위를 모두 적어 주세요.
+          곱셈은 <code>×</code> 대신 <code>x</code>로 써도 되고, 따옴표도 <code>&quot;</code>·<code>&apos;</code>로 써도 읽어요.
         </p>
       )}
 

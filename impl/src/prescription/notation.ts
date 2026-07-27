@@ -17,8 +17,24 @@ function reject(): PrescriptionNotationResult {
   return { kind: "rejected", code: "MALFORMED_NOTATION" }
 }
 
+// 곱셈 기호 별칭. `×`(U+00D7)는 일반 키보드로 바로 칠 수 없어서 사람들은 `x`, `X`, `*`를 쓴다.
+// 이 별칭을 받지 않으면 표기를 정확히 옮겨 적은 사용자에게 "읽지 못해요"가 떠서,
+// 자기 입력이 틀린 줄 알게 된다. 숫자를 바꾸는 관용이 아니라 글자 별칭이므로
+// 잘못된 값이 사실로 표시될 위험은 없다.
+const MULTIPLICATION_ALIASES = /[xX*]/gu
+
+// 아포스트로피/프라임 별칭도 같은 이유다. 기존 패턴은 `″`/`"`와 `′`/`'`만 받았는데,
+// iOS·macOS 자동 교정은 `"`를 `“`/`”`로, `'`를 `‘`/`’`로 바꿔 버린다.
+const DOUBLE_PRIME_ALIASES = /[“”]/gu
+const SINGLE_PRIME_ALIASES = /[‘’]/gu
+
 function normalizedInput(input: string): string {
-  return input.trim().replace(/\s+/gu, " ")
+  return input
+    .trim()
+    .replace(/\s+/gu, " ")
+    .replace(MULTIPLICATION_ALIASES, "×")
+    .replace(DOUBLE_PRIME_ALIASES, "\"")
+    .replace(SINGLE_PRIME_ALIASES, "'")
 }
 
 function isValidParentheses(input: string, setCount: number): boolean {
