@@ -4,6 +4,7 @@ import type {
   PlanEventGroup,
   PlanProgressState,
   PlanSession,
+  PlanSessionSlot,
   PlannedEnergyIntent,
 } from "@impl/plan-generator/types"
 import { PLANNED_ENERGY_INTENTS } from "@impl/plan-generator/types"
@@ -141,7 +142,9 @@ export function sessionLabel(session: PlanSession): string {
       return "휴식일"
     case "EASY":
       return session.plannedEnergyIntent === "RECOVERY_INTENT"
-        ? "가벼운 회복 움직임"
+        ? session.slot === "PM"
+          ? "오후 회복 운동"
+          : "가벼운 회복 움직임"
         : "기초 지구력 달리기"
     case "QUALITY":
       return `${ENERGY_INTENT_LABELS[session.plannedEnergyIntent].title} 훈련`
@@ -162,6 +165,17 @@ export function prescriptionLabel(session: PlanSession): string {
 
 export function sessionIntentLabel(session: PlanSession): string {
   return ENERGY_INTENT_LABELS[session.plannedEnergyIntent].title
+}
+
+export function sessionSlotLabel(slot: PlanSessionSlot): string {
+  switch (slot) {
+    case "AM":
+      return "오전"
+    case "PM":
+      return "오후"
+    default:
+      return slot satisfies never
+  }
 }
 
 export function sessionGuidance(session: PlanSession): string {
@@ -205,8 +219,9 @@ export function candidateSessionSummary(candidate: {
       easy: current.easy + (session.role === "EASY" ? 1 : 0),
       quality: current.quality + (session.role === "QUALITY" ? 1 : 0),
       rest: current.rest + (session.role === "REST" ? 1 : 0),
+      afternoonRecovery: current.afternoonRecovery + (session.slot === "PM" ? 1 : 0),
     }),
-    { training: 0, easy: 0, quality: 0, rest: 0 },
+    { training: 0, easy: 0, quality: 0, rest: 0, afternoonRecovery: 0 },
   )
 
   const intentionCounts = candidate.sessions.reduce<Record<PlannedEnergyIntent, number>>(
@@ -233,5 +248,8 @@ export function candidateSessionSummary(candidate: {
     ? "고강도 0일"
     : `${ENERGY_INTENT_LABELS[qualityIntent].title.split(" · ")[0]} ${intentionCounts[qualityIntent]}일`
 
-  return `훈련 ${counts.training}일 · 기초 지구력 ${intentionCounts.BASE_INTENT}일 · ${qualityLabel} · 휴식·회복 ${counts.rest}일`
+  const secondSession = counts.afternoonRecovery === 0
+    ? ""
+    : ` · 하루 2회 ${counts.afternoonRecovery}일`
+  return `운동 ${counts.training}회 · 기초 지구력 ${intentionCounts.BASE_INTENT}일 · ${qualityLabel} · 완전 휴식 ${counts.rest}일${secondSession}`
 }

@@ -26,7 +26,7 @@ test("keeps core journal controls at least 44px tall", async ({ page }, testInfo
 
   await auditTouchTargets(page, [
     { name: "post.back", locator: page.getByRole("button", { name: "← 뒤로" }) },
-    { name: "post.energy-help", locator: page.getByRole("button", { name: /강도 시스템 설명 보기/u }) },
+    { name: "post.energy-help", locator: page.getByRole("button", { name: /훈련 목적 설명 보기/u }) },
     { name: "post.energy", locator: page.getByRole("button", { name: /^(BA BASE|LT LT|V2 VO2|GL GLY|AP ATP|RE REST)$/u }), count: 6 },
     { name: "post.title", locator: page.getByRole("textbox", { name: "세션 제목" }), heightOnly: true },
     { name: "post.distance", locator: page.getByRole("textbox", { name: "거리 (km)" }), heightOnly: true },

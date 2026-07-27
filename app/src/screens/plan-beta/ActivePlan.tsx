@@ -15,6 +15,7 @@ import { TermHelp } from "../../components/TermHelp"
 import {
   candidateLabel,
   PROGRESS_LABELS,
+  sessionSlotLabel,
 } from "./labels"
 import { PlanSessionDetails } from "./PlanSessionDetails"
 
@@ -39,7 +40,10 @@ export function ActivePlan({
 }) {
   const { activePlan } = state
   const recorded = new Map(
-    state.progress.map((progress) => [progress.sessionDay, progress.state]),
+    state.progress.map((progress) => [
+      `${progress.sessionDay}:${progress.sessionSlot}`,
+      progress.state,
+    ]),
   )
   const label = candidateLabel(
     activePlan.candidateKind,
@@ -59,7 +63,7 @@ export function ActivePlan({
         <span>
           <strong>
             {activePlan.sourceMode === "PROFILE_ONLY"
-              ? "사용 정보 5가지 · 베타 계획"
+              ? "사용 정보 6가지 · 베타 계획"
               : "최근 일지 확인 · 계획 수치에는 미반영"}
             <TermHelp term="plan-beta-basis" />
           </strong>
@@ -68,15 +72,15 @@ export function ActivePlan({
       </div>
       <ol className="active-plan__days">
         {activePlan.sessions.map((session) => {
-          const current = recorded.get(session.day)
+          const current = recorded.get(`${session.day}:${session.slot}`)
           return (
-            <li key={session.day}>
+            <li key={`${session.day}-${session.slot}`}>
               <div className="active-plan__session">
-                <span>DAY {session.day}</span>
+                <span>DAY {session.day} · {sessionSlotLabel(session.slot)}</span>
                 <PlanSessionDetails session={session} />
                 <em>{current === undefined ? "예정" : PROGRESS_LABELS[current]}</em>
               </div>
-              <div className="active-plan__actions" aria-label={`DAY ${session.day} 진행 기록`}>
+              <div className="active-plan__actions" aria-label={`DAY ${session.day} ${sessionSlotLabel(session.slot)} 진행 기록`}>
                 {actionsForRole(session.role).map(({ state: progressState, icon: Icon }) => (
                   <button
                     type="button"
@@ -84,6 +88,7 @@ export function ActivePlan({
                     aria-pressed={current === progressState}
                     onClick={() => onProgress({
                       sessionDay: session.day,
+                      sessionSlot: session.slot,
                       state: progressState,
                     })}
                   >

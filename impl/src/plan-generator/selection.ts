@@ -45,6 +45,7 @@ function copySession(session: PlanSession): PlanSession {
     case "REST":
       return Object.freeze({
         day: session.day,
+        slot: "AM",
         role: "REST",
         plannedEnergyIntent: "RECOVERY_INTENT",
         prescription: Object.freeze({ kind: "REST" }),
@@ -52,6 +53,7 @@ function copySession(session: PlanSession): PlanSession {
     case "EASY":
       return Object.freeze({
         day: session.day,
+        slot: session.slot,
         role: "EASY",
         plannedEnergyIntent: session.plannedEnergyIntent,
         prescription: Object.freeze({
@@ -63,6 +65,7 @@ function copySession(session: PlanSession): PlanSession {
     case "QUALITY":
       return Object.freeze({
         day: session.day,
+        slot: "AM",
         role: "QUALITY",
         plannedEnergyIntent: session.plannedEnergyIntent,
         prescription: Object.freeze({

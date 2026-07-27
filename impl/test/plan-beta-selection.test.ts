@@ -32,6 +32,7 @@ function generatedCoachRequiredPlan() {
       eventGroup: "MIDDLE_DISTANCE",
       experienceBand: "DEVELOPING",
       availableTrainingDays: [1, 3, 5, 7, 9],
+      secondSessionMode: "SINGLE_SESSION_ONLY",
     },
     requestedFrameLength: 9,
     journalSource: {
@@ -119,12 +120,14 @@ describe("plan beta selection and progress contract", () => {
       }
 
       const sessionDay = selection.activePlan.sessions[0]?.day ?? 1
+      const sessionSlot = selection.activePlan.sessions[0]?.slot ?? "AM"
 
       // When
       const result = recordPlanProgress({
         kind: "PLAN_BETA_PROGRESS_REQUEST",
         activePlan: selection.activePlan,
         sessionDay,
+        sessionSlot,
         state,
       })
 
@@ -139,4 +142,32 @@ describe("plan beta selection and progress contract", () => {
       expect(JSON.stringify(result)).not.toContain("reward")
     },
   )
+
+  it("rejects a progress record for a slot that the selected plan does not contain", () => {
+    const generatedPlan = generatedCoachRequiredPlan()
+    const candidateId = generatedPlan.candidates[0]?.candidateId ?? "missing-candidate"
+    const selection = selectPlanCandidate({
+      kind: "PLAN_BETA_SELECTION_REQUEST",
+      generatedPlan,
+      selectedCandidateId: candidateId,
+      actor: "COACH",
+      safetyGate: clearedGate(),
+    })
+    if (selection.kind !== "selected") {
+      throw new Error("Expected coach selection to succeed")
+    }
+
+    const result = recordPlanProgress({
+      kind: "PLAN_BETA_PROGRESS_REQUEST",
+      activePlan: selection.activePlan,
+      sessionDay: 1,
+      sessionSlot: "PM",
+      state: "COMPLETED",
+    })
+
+    expect(result).toMatchObject({
+      kind: "rejected",
+      code: "SESSION_SLOT_NOT_IN_ACTIVE_PLAN",
+    })
+  })
 })

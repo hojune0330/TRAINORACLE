@@ -27,6 +27,7 @@ function generateFor(selectedEnergyIntent: string) {
       eventGroup: "FIVE_K",
       experienceBand: "DEVELOPING",
       availableTrainingDays: [1, 3, 5, 7, 9],
+      secondSessionMode: "SINGLE_SESSION_ONLY",
     },
     requestedFrameLength: 9,
     journalSource: { kind: "NO_USABLE_JOURNAL" },
@@ -83,5 +84,76 @@ describe("personal plan energy intention contract", () => {
         }),
       }),
     ]))
+  })
+
+  it("adds only optional PM recovery support when a self-selecting athlete allows two-a-day training", () => {
+    // Given
+    const result = generatePlanCandidates({
+      kind: "PLAN_BETA_GENERATION_REQUEST",
+      safetyGate: clearedGate(),
+      profile: {
+        eventGroup: "FIVE_K",
+        experienceBand: "EXPERIENCED",
+        availableTrainingDays: [1, 2, 3, 4, 5, 6, 7, 8, 9],
+        secondSessionMode: "RECOVERY_PM_ALLOWED",
+      },
+      requestedFrameLength: 9,
+      journalSource: { kind: "NO_USABLE_JOURNAL" },
+      selectionAuthority: "SELF",
+      selectedEnergyIntent: "LT_INTENT",
+    })
+
+    // When
+    const generated = expectGenerated(result)
+    const balanced = generated.candidates[0]
+    const conservative = generated.candidates[1]
+    const pmSessions = balanced?.sessions.filter((session) => (
+      "slot" in session && session.slot === "PM"
+    )) ?? []
+
+    // Then
+    expect(pmSessions).toHaveLength(2)
+    expect(pmSessions).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        role: "EASY",
+        plannedEnergyIntent: "RECOVERY_INTENT",
+        prescription: expect.objectContaining({
+          rpe: { minimum: 1, maximum: 2 },
+        }),
+      }),
+    ]))
+    expect(pmSessions).not.toEqual(expect.arrayContaining([
+      expect.objectContaining({ role: "QUALITY" }),
+    ]))
+    expect(
+      new Set(pmSessions.map((session) => session.day)).size,
+    ).toBe(pmSessions.length)
+    expect(
+      conservative?.sessions.filter((session) => "slot" in session && session.slot === "PM"),
+    ).toEqual([])
+  })
+
+  it("does not add extra quality sessions when an athlete can move every day", () => {
+    const generated = expectGenerated(generatePlanCandidates({
+      kind: "PLAN_BETA_GENERATION_REQUEST",
+      safetyGate: clearedGate(),
+      profile: {
+        eventGroup: "FIVE_K",
+        experienceBand: "EXPERIENCED",
+        availableTrainingDays: [1, 2, 3, 4, 5, 6, 7, 8, 9],
+        secondSessionMode: "RECOVERY_PM_ALLOWED",
+      },
+      requestedFrameLength: 9,
+      journalSource: { kind: "NO_USABLE_JOURNAL" },
+      selectionAuthority: "SELF",
+      selectedEnergyIntent: "VO2_INTENT",
+    }))
+
+    const balanced = generated.candidates[0]
+    const qualitySessions = balanced.sessions.filter((session) => session.role === "QUALITY")
+
+    expect(qualitySessions).toHaveLength(2)
+    expect(qualitySessions.every((session) => session.slot === "AM")).toBe(true)
+    expect(balanced.sessions.filter((session) => session.slot === "PM")).toHaveLength(2)
   })
 })

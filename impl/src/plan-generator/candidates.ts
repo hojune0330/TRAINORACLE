@@ -19,6 +19,7 @@ type DurationRange = {
 
 type ExperienceRanges = {
   readonly easy: DurationRange
+  readonly recoverySupport: DurationRange
   readonly quality: DurationRange
 }
 
@@ -33,16 +34,19 @@ function rangesFor(experienceBand: ExperienceBand): ExperienceRanges {
     case "NEW_TO_RUNNING":
       return {
         easy: { minimum: 20, maximum: 35 },
+        recoverySupport: { minimum: 10, maximum: 20 },
         quality: { minimum: 20, maximum: 30 },
       }
     case "DEVELOPING":
       return {
         easy: { minimum: 30, maximum: 45 },
+        recoverySupport: { minimum: 15, maximum: 25 },
         quality: { minimum: 25, maximum: 40 },
       }
     case "EXPERIENCED":
       return {
         easy: { minimum: 35, maximum: 60 },
+        recoverySupport: { minimum: 20, maximum: 30 },
         quality: { minimum: 30, maximum: 50 },
       }
     default:
@@ -61,6 +65,7 @@ function freezeRange(range: RpeTimeRange): RpeTimeRange {
 function restSession(day: number): PlanSession {
   return Object.freeze({
     day,
+    slot: "AM",
     role: "REST",
     plannedEnergyIntent: "RECOVERY_INTENT",
     prescription: Object.freeze({ kind: "REST" }),
@@ -109,11 +114,13 @@ function restsAvailableRecoveryDays(input: CandidateBuildInput): boolean {
 
 function easyTrainingSession(
   day: number,
+  slot: "AM" | "PM",
   durationMinutes: DurationRange,
   plannedEnergyIntent: EasyEnergyIntent,
 ): PlanSession {
   return Object.freeze({
     day,
+    slot,
     role: "EASY",
     plannedEnergyIntent,
     prescription: freezeRange({
@@ -131,6 +138,7 @@ function qualityTrainingSession(
 ): PlanSession {
   return Object.freeze({
     day,
+    slot: "AM",
     role: "QUALITY",
     plannedEnergyIntent,
     prescription: freezeRange({
@@ -139,6 +147,30 @@ function qualityTrainingSession(
       durationMinutes,
     }),
   })
+}
+
+function recoverySecondSessionDays(input: CandidateBuildInput): readonly number[] {
+  if (
+    input.kind !== "BALANCED"
+    || input.request.profile.secondSessionMode !== "RECOVERY_PM_ALLOWED"
+    || input.request.selectedEnergyIntent === "RECOVERY_INTENT"
+  ) {
+    return Object.freeze([])
+  }
+
+  const qualityDays = new Set(input.qualityDays)
+  const eligibleDays = input.request.profile.availableTrainingDays.filter(
+    (day) => !qualityDays.has(day),
+  )
+  const limit = input.request.requestedFrameLength === 7 ? 1 : 2
+  if (eligibleDays.length <= limit) return Object.freeze([...eligibleDays])
+
+  const selected: number[] = []
+  for (let index = 1; index <= limit; index += 1) {
+    const day = eligibleDays[Math.floor((index * eligibleDays.length) / (limit + 1))]
+    if (day !== undefined) selected.push(day)
+  }
+  return Object.freeze(selected)
 }
 
 function qualityIntentFor(request: PlanGenerationRequest): QualityEnergyIntent {
@@ -161,6 +193,7 @@ function makeSessions(input: CandidateBuildInput): readonly PlanSession[] {
   const ranges = rangesFor(input.request.profile.experienceBand)
   const availableDays = new Set(input.request.profile.availableTrainingDays)
   const qualityDays = new Set(input.qualityDays)
+  const recoverySecondDays = new Set(recoverySecondSessionDays(input))
   const sessions: PlanSession[] = []
 
   for (let day = 1; day <= input.request.requestedFrameLength; day += 1) {
@@ -178,7 +211,15 @@ function makeSessions(input: CandidateBuildInput): readonly PlanSession[] {
       continue
     }
 
-    sessions.push(easyTrainingSession(day, ranges.easy, easyIntent(input)))
+    sessions.push(easyTrainingSession(day, "AM", ranges.easy, easyIntent(input)))
+    if (recoverySecondDays.has(day)) {
+      sessions.push(easyTrainingSession(
+        day,
+        "PM",
+        ranges.recoverySupport,
+        "RECOVERY_INTENT",
+      ))
+    }
   }
 
   return Object.freeze(sessions)
@@ -239,6 +280,7 @@ function candidateId(input: CandidateBuildInput): string {
     input.request.profile.eventGroup.toLowerCase(),
     input.request.profile.experienceBand.toLowerCase(),
     input.request.selectedEnergyIntent.toLowerCase(),
+    input.request.profile.secondSessionMode.toLowerCase(),
     input.request.requestedFrameLength,
     input.request.profile.availableTrainingDays.join("-"),
     input.request.journalSource.kind.toLowerCase(),

@@ -27,11 +27,26 @@ export function recordPlanProgress(request: PlanProgressRequest): PlanProgressRe
     }
   }
 
+  const hasSessionSlot = request.activePlan.sessions.some(
+    (session) => (
+      session.day === request.sessionDay
+      && session.slot === request.sessionSlot
+    ),
+  )
+  if (!hasSessionSlot) {
+    return {
+      kind: "rejected",
+      code: "SESSION_SLOT_NOT_IN_ACTIVE_PLAN",
+      audit: audit("PLAN_BETA_PROGRESS_REJECTED", ["SESSION_SLOT_NOT_IN_ACTIVE_PLAN"]),
+    }
+  }
+
   return {
     kind: "recorded",
     progress: Object.freeze({
       activePlanCandidateId: request.activePlan.candidateId,
       sessionDay: request.sessionDay,
+      sessionSlot: request.sessionSlot,
       state: request.state,
     }),
     audit: audit("PLAN_BETA_PROGRESS_RECORDED", []),

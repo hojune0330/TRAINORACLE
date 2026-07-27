@@ -6,6 +6,7 @@ import type {
   PlanProfile,
   PlanSelectionAuthority,
   PlannedEnergyIntent,
+  SecondSessionMode,
 } from "./types"
 
 export type ParsedJournalSource =
@@ -174,6 +175,18 @@ function parseTrainingDays(value: unknown): readonly number[] | undefined {
   return Object.freeze([...days].sort((left, right) => left - right))
 }
 
+function parseSecondSessionMode(value: unknown): SecondSessionMode | undefined {
+  if (value === undefined) return "SINGLE_SESSION_ONLY"
+  switch (value) {
+    case "SINGLE_SESSION_ONLY":
+      return "SINGLE_SESSION_ONLY"
+    case "RECOVERY_PM_ALLOWED":
+      return "RECOVERY_PM_ALLOWED"
+    default:
+      return undefined
+  }
+}
+
 export function parseProfile(value: unknown): PlanProfile | undefined {
   if (!isRecord(value)) {
     return undefined
@@ -182,10 +195,12 @@ export function parseProfile(value: unknown): PlanProfile | undefined {
   const eventGroup = parseEventGroup(value["eventGroup"])
   const experienceBand = parseExperienceBand(value["experienceBand"])
   const availableTrainingDays = parseTrainingDays(value["availableTrainingDays"])
+  const secondSessionMode = parseSecondSessionMode(value["secondSessionMode"])
   if (
     eventGroup === undefined ||
     experienceBand === undefined ||
-    availableTrainingDays === undefined
+    availableTrainingDays === undefined ||
+    secondSessionMode === undefined
   ) {
     return undefined
   }
@@ -194,6 +209,7 @@ export function parseProfile(value: unknown): PlanProfile | undefined {
     eventGroup,
     experienceBand,
     availableTrainingDays,
+    secondSessionMode,
   }
 }
 

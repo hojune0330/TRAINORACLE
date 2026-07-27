@@ -9,6 +9,7 @@ import {
   candidateLabel,
   ENERGY_INTENT_LABELS,
   EVENT_LABELS,
+  sessionSlotLabel,
 } from "./labels"
 import { PlanSessionDetails } from "./PlanSessionDetails"
 
@@ -42,7 +43,7 @@ export function PlanCandidates({
         <span>
           <strong>
             {generated.sourceMode === "PROFILE_ONLY"
-              ? "사용 정보 5가지 · 베타 계획"
+              ? "사용 정보 6가지 · 베타 계획"
               : "최근 일지 확인 · 계획 수치에는 미반영"}
             <TermHelp term="plan-beta-basis" />
           </strong>
@@ -103,8 +104,8 @@ function CandidateSection({
       </header>
       <ol className="plan-session-list">
         {candidate.sessions.map((session) => (
-          <li key={session.day}>
-            <span>DAY {session.day}</span>
+          <li key={`${session.day}-${session.slot}`}>
+            <span>DAY {session.day} · {sessionSlotLabel(session.slot)}</span>
             <PlanSessionDetails session={session} />
           </li>
         ))}

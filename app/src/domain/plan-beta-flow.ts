@@ -94,6 +94,7 @@ export function generatePlanFromDraft(
         intake.requestedFrameLength,
         intake.availableDayCount,
       ),
+      secondSessionMode: intake.secondSessionMode,
     },
     requestedFrameLength: intake.requestedFrameLength,
     selectedEnergyIntent: intake.trainingFocus,
@@ -151,6 +152,7 @@ function completeIntake(
     availableDayCount,
     requestedFrameLength,
     trainingFocus,
+    secondSessionMode,
   } = draft
   if (
     eventGroup === undefined
@@ -158,6 +160,7 @@ function completeIntake(
     || availableDayCount === undefined
     || requestedFrameLength === undefined
     || trainingFocus === undefined
+    || secondSessionMode === undefined
   ) {
     return null
   }
@@ -167,6 +170,7 @@ function completeIntake(
     availableDayCount,
     requestedFrameLength,
     trainingFocus,
+    secondSessionMode,
   }
 }
 
@@ -217,24 +221,32 @@ function structuredJournalSource() {
 
 function spreadTrainingDays(
   frameLength: 7 | 9 | 10,
-  count: 3 | 4 | 5,
+  count: PlanBetaIntake["availableDayCount"],
 ): readonly number[] {
+  if (count === "EVERY_DAY") {
+    return Object.freeze(
+      Array.from({ length: frameLength }, (_, index) => index + 1),
+    )
+  }
   const matrix = {
     7: {
       3: [1, 3, 5],
       4: [1, 3, 5, 7],
       5: [1, 2, 4, 5, 7],
+      6: [1, 2, 3, 4, 6, 7],
     },
     9: {
       3: [1, 4, 7],
       4: [1, 3, 6, 9],
       5: [1, 3, 5, 7, 9],
+      6: [1, 3, 4, 6, 7, 9],
     },
     10: {
       3: [1, 5, 9],
       4: [1, 4, 7, 10],
       5: [1, 3, 5, 7, 9],
+      6: [1, 3, 5, 6, 8, 10],
     },
   } as const
-  return matrix[frameLength][count]
+  return Object.freeze([...matrix[frameLength][count]])
 }

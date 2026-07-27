@@ -22,6 +22,7 @@ async function answerMinimumPlanQuestions(
   await user.click(screen.getByRole("button", { name: /지속 페이스.*LT/u }))
   await user.click(screen.getByRole("button", { name: /^3일/u }))
   await user.click(screen.getByRole("button", { name: /9일 계획.*권장/u }))
+  await user.click(screen.getByRole("button", { name: /하루 한 번 운동/u }))
   await user.click(screen.getByRole("button", {
     name: riskAnswer === "clear"
       ? /통증은 없고 몸 상태는 평소와 같아요/u
@@ -142,7 +143,7 @@ describe("plan beta user flow", () => {
       name: "기초 지구력 중심",
     })).toBeVisible()
     expect(screen.getByText(
-      "훈련 3일 · 기초 지구력 2일 · 지속 페이스 1일 · 휴식·회복 6일",
+      "운동 3회 · 기초 지구력 2일 · 지속 페이스 1일 · 완전 휴식 6일",
     )).toBeVisible()
     expect(screen.getAllByText(/기초 지구력.*BASE/u).length).toBeGreaterThan(0)
     expect(screen.getAllByText(/지속 페이스.*LT/u).length).toBeGreaterThan(0)
@@ -263,7 +264,7 @@ describe("plan beta user flow", () => {
 
     await answerMinimumPlanQuestions("clear")
 
-    expect(screen.getByText("사용 정보 5가지 · 베타 계획")).toBeVisible()
+    expect(screen.getByText("사용 정보 6가지 · 베타 계획")).toBeVisible()
     expect(screen.queryByText("최근 일지 확인 · 계획 수치에는 미반영")).toBeNull()
   })
 
@@ -279,7 +280,7 @@ describe("plan beta user flow", () => {
     expect(screen.getByRole("heading", {
       name: "지속 페이스 포함 9일 계획",
     })).toBeVisible()
-    const dayOneActions = screen.getByLabelText("DAY 1 진행 기록")
+    const dayOneActions = screen.getByLabelText("DAY 1 오전 진행 기록")
     await user.click(within(dayOneActions).getByRole("button", { name: "완료" }))
 
     const stored = window.localStorage.getItem("trainoracle.plan-beta.v1")
@@ -295,7 +296,7 @@ describe("plan beta user flow", () => {
       name: "기초 지구력 중심 선택하기",
     }))
     await user.click(
-      within(screen.getByLabelText("DAY 1 진행 기록"))
+      within(screen.getByLabelText("DAY 1 오전 진행 기록"))
         .getByRole("button", { name: "휴식" }),
     )
     await user.click(screen.getByRole("button", { name: "다음 주기 후보 만들기" }))

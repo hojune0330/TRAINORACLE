@@ -28,6 +28,11 @@ const plannedEnergyIntentSchema = z.enum([
   "ATP_PC_INTENT",
   "MIXED_INTENT",
 ])
+const secondSessionModeSchema = z.enum([
+  "SINGLE_SESSION_ONLY",
+  "RECOVERY_PM_ALLOWED",
+])
+const sessionSlotSchema = z.enum(["AM", "PM"])
 const frameLengthSchema = z.union([z.literal(7), z.literal(9), z.literal(10)])
 const progressStateSchema = z.enum([
   "COMPLETED",
@@ -38,12 +43,14 @@ const progressStateSchema = z.enum([
 const planSessionSchema = z.discriminatedUnion("role", [
   z.object({
     day: z.number().int().positive(),
+    slot: z.literal("AM").optional().default("AM"),
     role: z.literal("REST"),
     plannedEnergyIntent: z.literal("RECOVERY_INTENT").optional().default("RECOVERY_INTENT"),
     prescription: z.object({ kind: z.literal("REST") }),
   }),
   z.object({
     day: z.number().int().positive(),
+    slot: sessionSlotSchema.optional().default("AM"),
     role: z.literal("EASY"),
     plannedEnergyIntent: z.enum(["RECOVERY_INTENT", "BASE_INTENT"]).optional().default("BASE_INTENT"),
     prescription: z.object({
@@ -60,6 +67,7 @@ const planSessionSchema = z.discriminatedUnion("role", [
   }),
   z.object({
     day: z.number().int().positive(),
+    slot: z.literal("AM").optional().default("AM"),
     role: z.literal("QUALITY"),
     plannedEnergyIntent: z.enum([
       "LT_INTENT",
@@ -105,12 +113,20 @@ const activePlanSchema = z.object({
 const planIntakeSchema = z.object({
   eventGroup: planEventGroupSchema,
   experienceBand: experienceBandSchema,
-  availableDayCount: z.union([z.literal(3), z.literal(4), z.literal(5)]),
+  availableDayCount: z.union([
+    z.literal(3),
+    z.literal(4),
+    z.literal(5),
+    z.literal(6),
+    z.literal("EVERY_DAY"),
+  ]),
   requestedFrameLength: frameLengthSchema,
   trainingFocus: plannedEnergyIntentSchema.optional().default("MIXED_INTENT"),
+  secondSessionMode: secondSessionModeSchema.optional().default("SINGLE_SESSION_ONLY"),
 })
 const progressSchema = z.object({
   sessionDay: z.number().int().positive(),
+  sessionSlot: sessionSlotSchema.optional().default("AM"),
   state: progressStateSchema,
 })
 const planHistorySchema = z.object({
@@ -126,6 +142,86 @@ const planBetaStateSchema = z.object({
   activePlan: activePlanSchema,
   progress: z.array(progressSchema),
   generatedAt: z.string().datetime(),
+}).superRefine((state, context) => {
+  const sessionsByDay = new Map<number, typeof state.activePlan.sessions>()
+  const sessionKeys = new Set<string>()
+
+  for (const session of state.activePlan.sessions) {
+    const sessionKey = `${session.day}:${session.slot}`
+    if (sessionKeys.has(sessionKey)) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["activePlan", "sessions"],
+        message: "A plan may contain one session for each day and slot.",
+      })
+    }
+    sessionKeys.add(sessionKey)
+
+    const daySessions = sessionsByDay.get(session.day) ?? []
+    sessionsByDay.set(session.day, [...daySessions, session])
+
+    if (session.slot === "PM") {
+      const isRecoverySupport = session.role === "EASY"
+        && session.plannedEnergyIntent === "RECOVERY_INTENT"
+        && session.prescription.kind === "RPE_TIME_RANGE"
+        && session.prescription.rpe.minimum === 1
+        && session.prescription.rpe.maximum === 2
+      if (!isRecoverySupport) {
+        context.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["activePlan", "sessions"],
+          message: "A PM beta session must be RPE 1-2 recovery support.",
+        })
+      }
+      if (state.intake.secondSessionMode !== "RECOVERY_PM_ALLOWED") {
+        context.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["intake", "secondSessionMode"],
+          message: "PM sessions require explicit second-session consent.",
+        })
+      }
+      if (
+        state.activePlan.candidateKind !== "BALANCED"
+        || state.activePlan.selectedEnergyIntent === "RECOVERY_INTENT"
+      ) {
+        context.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["activePlan", "sessions"],
+          message: "PM recovery support is limited to a non-recovery Balanced candidate.",
+        })
+      }
+    }
+  }
+
+  for (const sessions of sessionsByDay.values()) {
+    if (sessions.length > 2) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["activePlan", "sessions"],
+        message: "A beta day may contain no more than AM and PM sessions.",
+      })
+    }
+    if (sessions.some((session) => session.slot === "PM") && sessions.some((session) => session.role === "QUALITY")) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["activePlan", "sessions"],
+        message: "A PM recovery session cannot share a day with quality training.",
+      })
+    }
+  }
+
+  const progressKeys = new Set<string>()
+  for (const progress of state.progress) {
+    const progressKey = `${progress.sessionDay}:${progress.sessionSlot}`
+    if (progressKeys.has(progressKey) || !sessionKeys.has(progressKey)) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["progress"],
+        message: "Progress must reference one stored plan session exactly once.",
+      })
+    }
+    progressKeys.add(progressKey)
+  }
 })
 const planHistoryListSchema = z.array(planHistorySchema).max(5)
 
@@ -161,14 +257,18 @@ export function updateStoredProgress(
   state: PlanBetaState,
   progress: StoredPlanProgress,
 ): PlanBetaState {
-  const withoutDay = state.progress.filter(
-    (item) => item.sessionDay !== progress.sessionDay,
+  const withoutSession = state.progress.filter(
+    (item) => (
+      item.sessionDay !== progress.sessionDay
+      || item.sessionSlot !== progress.sessionSlot
+    ),
   )
   return {
     ...state,
-    progress: [...withoutDay, progress].sort(
-      (left, right) => left.sessionDay - right.sessionDay,
-    ),
+    progress: [...withoutSession, progress].sort((left, right) => (
+      left.sessionDay - right.sessionDay
+      || left.sessionSlot.localeCompare(right.sessionSlot)
+    )),
   }
 }
 
