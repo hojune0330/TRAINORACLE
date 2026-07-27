@@ -208,7 +208,7 @@ test("keeps race stages, checks, fields, and help controls touchable", async ({ 
 
 test("keeps the help mark small while its hit area and popover remain usable", async ({ page }, testInfo) => {
   await openEntry(page, /훈련 후/u)
-  const help = page.getByRole("button", { name: /강도 시스템 설명 보기/u })
+  const help = page.getByRole("button", { name: /훈련 목적 설명 보기/u })
   if (TOUCH_PROJECTS.has(testInfo.project.name)) await expectMinimumTouchSize(help)
   const markBox = await help.locator("span").boundingBox()
   expect(markBox?.width).toBe(14)

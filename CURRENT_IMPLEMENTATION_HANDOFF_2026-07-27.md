@@ -46,6 +46,17 @@ must not claim that this URL contains the current AM/PM feature until the
 `main` workflow has completed successfully and the deployed page has been
 opened again in a browser.
 
+### Post-Record CI Correction
+
+After this handoff was first recorded, main Actions run `30232215464` failed
+only in `app-browser`: `e2e/touch-targets.spec.ts` still searched for the old
+accessible button name `강도 시스템 설명 보기`. The actual rendered button was
+already `훈련 목적 설명 보기`, as shown by the failing Playwright page snapshot.
+All four viewport projects timed out on that stale locator; this was a test
+contract mismatch, not a user-facing plan-generation, AM/PM, D9, or storage
+failure. The follow-up fix changes that one locator and must receive a fresh
+main CI and Pages result before deployment is claimed.
+
 ## 3. What Users Can Do After The Main Deployment Succeeds
 
 The plan beta remains deliberately bounded, but it is no longer limited to
