@@ -149,6 +149,20 @@ describe("deleteEntry 연동", () => {
 })
 
 describe("삭제 기록의 최소 수집", () => {
+  // 시계를 고정한다. deleteEntry는 deletedAt에 실제 현재 시각을 넣는데,
+  // 그 ISO 문자열이 우연히 "12.5"를 포함할 수 있다(예: ...T08:53:12.500Z).
+  // 그러면 아래 not.toContain("12.5")가 삭제 기록에 거리값이 샌 것으로
+  // 오판해 실패한다. 실제로 CI에서 이 우연으로 한 번 실패했다.
+  // 초·밀리초를 고정하면 검사 대상이 "우리가 넣은 12.5"만으로 좁혀진다.
+  beforeEach(() => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date("2026-07-21T09:30:00.000Z"))
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
   it("id와 삭제 시각만 담고 날짜·수치·메모는 담지 않는다", () => {
     // Given
     saveEntry(post("target", "2026-07-20T10:00:00.000Z", {
