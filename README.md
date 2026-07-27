@@ -1,5 +1,21 @@
 # TRAINORACLE — SPEC And Design Handoff
 
+> # ⚠️ 먼저 읽으십시오 — [`PRODUCT_NORTH_STAR.md`](./PRODUCT_NORTH_STAR.md)
+>
+> **이 저장소에서 작업하는 모든 사람과 모든 AI 작업자는 위 문서를 가장 먼저
+> 읽습니다. 다른 어떤 문서보다 우선하며, 충돌 시 위 문서가 이깁니다.**
+>
+> TrainOracle는 기록 보관함이 아니라 **AI 코치**입니다. 훈련을 분석하고,
+> 개인 기록에 맞는 훈련을 설계하고, 조언하고, 성과와 예측을 인포그래픽으로
+> 보여주고, 부족한 에너지 시스템·훈련 부하·편향된 계획을 짚어내고, 일지 속
+> 작은 위험 신호를 감지하는 것이 최종 목표입니다.
+>
+> **문서가 코드보다 두 배 이상 많은 것은 낭비가 아닙니다.**
+> (문서 277개 : 제품 코드 128개 — 세는 기준은 `PRODUCT_NORTH_STAR.md` §2)
+> 이 제품은 사람의 몸을 다루므로 위험 신호 규칙·일지 취급 경계·지표 산출
+> 공식을 문서로 못 박아 둡니다. 그 문서들이 곧 하드코딩된 안전 규칙입니다.
+> 문서 정리는 **활용하기 위한 구분**이지 삭제가 아닙니다.
+
 ## 훈련계획 베타 공개 중
 
 **현재 공개 앱: [TrainOracle 베타 열기](https://hojune0330.github.io/TRAINORACLE/)**
@@ -26,6 +42,7 @@ TrainOracle의 핵심은 예쁜 훈련 일지 화면만이 아니라, **선수 �
 
 먼저 아래 문서를 읽으면 됩니다.
 
+- **🔴 최고 지침 (1순위):** [`PRODUCT_NORTH_STAR.md`](./PRODUCT_NORTH_STAR.md). 제품의 최종 목표, 절대 넘지 않는 안전선, 문서를 대하는 원칙, 그리고 이전 작업자가 실제로 저지른 오판 사례를 담았습니다.
 - 쉬운 전체 설명: [`SPEC_OVERVIEW_FOR_HOJUNE.md`](./SPEC_OVERVIEW_FOR_HOJUNE.md)
 - Fable·Codex 공동 기획 기준선: [`FABLE_CODEX_JOINT_PLANNING_BRIEF.md`](./FABLE_CODEX_JOINT_PLANNING_BRIEF.md)
 - 9.5일 훈련계획 소유자 결정 기록: [`TRAINING_PLAN_METHOD_DECISION.md`](./TRAINING_PLAN_METHOD_DECISION.md)
