@@ -36,11 +36,22 @@ const CONTENT_KEYS = [
 const ACCOUNT_KEYS = [
   "trainoracle.auth.v1",
   "trainoracle.sync.consent.v1",
+  // 이 키에는 **계정 userId가 평문으로** 들어 있다(`sync.ts`의 claimSyncOwner).
+  // 원래는 삭제 기록과 한 묶음으로 다뤄 기본 삭제에서 빠져 있었는데, 그 묶음의
+  // 근거는 "지웠다는 사실이 없으면 서버 사본이 되살아난다"였다. 그 근거는
+  // tombstone에만 해당한다 — owner 키는 부활을 막는 데 아무 역할이 없다.
+  // 남겨 두면 두 가지가 깨진다.
+  //  1) 화면은 "일지·계획·로그인 정보를 모두 지워요"라고 말한다. userId가
+  //     남으면 그 문장이 거짓이 된다(A-1).
+  //  2) claimSyncOwner는 owner 키가 있으면 다른 userId의 동기화를 영구히
+  //     막는다. 기기를 넘겨받은 사람은 전부 지웠는데도 자기 계정으로
+  //     동기화할 수 없고, 화면에는 이를 푸는 방법이 없다(A-2).
+  // tombstone은 그대로 남긴다 — 부활 방지 근거가 실제로 적용되는 유일한 키다.
+  "trainoracle.sync.owner.v1",
 ] as const
 
 /** 삭제 기록 — 기본은 **남긴다**(서버 부활 방지) */
 const DELETION_RECORD_KEY = "trainoracle.sync.tombstones.v1"
-const SYNC_OWNER_KEY = "trainoracle.sync.owner.v1"
 
 export type EraseOptions = {
   /**
@@ -78,7 +89,7 @@ export function eraseAllLocalData(options: EraseOptions = {}): EraseResult {
 
   const keys: string[] = [...CONTENT_KEYS, ...ACCOUNT_KEYS]
   if (options.includeDeletionRecord === true) {
-    keys.push(DELETION_RECORD_KEY, SYNC_OWNER_KEY)
+    keys.push(DELETION_RECORD_KEY)
   }
 
   let cleared = 0
@@ -105,7 +116,7 @@ export function eraseAllLocalData(options: EraseOptions = {}): EraseResult {
 export function erasableKeys(options: EraseOptions = {}): readonly string[] {
   const keys: string[] = [...CONTENT_KEYS, ...ACCOUNT_KEYS]
   if (options.includeDeletionRecord === true) {
-    keys.push(DELETION_RECORD_KEY, SYNC_OWNER_KEY)
+    keys.push(DELETION_RECORD_KEY)
   }
   return keys
 }
