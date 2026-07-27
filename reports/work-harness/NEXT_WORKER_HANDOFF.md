@@ -1,5 +1,9 @@
 # 다음 작업자 인계서
 
+> **현재 공개 제품·구현 인계는 이 문서가 아닙니다.** 먼저
+> [`CURRENT_IMPLEMENTATION_HANDOFF_2026-07-27.md`](../../CURRENT_IMPLEMENTATION_HANDOFF_2026-07-27.md)를
+> 읽으세요. 이 파일은 2026-07-20 전후의 제한된 formal-SPEC work harness 기록을 보존합니다.
+
 ## 지금 상태
 
 - 작업 목록의 정본은 `TRAINORACLE_WORK_CATALOG.json`이다.
