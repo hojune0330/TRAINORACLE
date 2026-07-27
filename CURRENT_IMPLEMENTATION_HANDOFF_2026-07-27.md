@@ -57,6 +57,18 @@ contract mismatch, not a user-facing plan-generation, AM/PM, D9, or storage
 failure. The follow-up fix changes that one locator and must receive a fresh
 main CI and Pages result before deployment is claimed.
 
+### Verified Resolution
+
+PR #134 merged that one-line test correction into `main` as `843c90e`.
+GitHub Actions run `30233240200` then completed successfully: `contract-tests`,
+`app-quality`, `app-browser`, and `deploy-pages` all passed. The deployed
+public site was opened in a real browser after that run. At mobile width, the
+live flow `5km -> VO2 -> EVERY_DAY -> 9 days -> explicit AM/PM -> clear check`
+showed two PM `RPE 1-2` sessions, two `RPE 7-8` quality sessions, a selectable
+`DAY 4` PM progress control, no horizontal overflow, and no browser console
+errors. This verified result supersedes the conditional deployment warning
+above for commit `843c90e`; a later commit still requires its own CI check.
+
 ## 3. What Users Can Do After The Main Deployment Succeeds
 
 The plan beta remains deliberately bounded, but it is no longer limited to
