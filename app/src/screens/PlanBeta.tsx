@@ -28,8 +28,10 @@ import { NotationReader } from "./plan-beta/NotationReader"
 const STEP_ORDER: readonly IntakeStep[] = [
   "goal",
   "experience",
+  "focus",
   "days",
   "frame",
+  "two-a-day",
   "safety",
 ]
 
@@ -85,6 +87,7 @@ export function PlanBeta({
             kind: "PLAN_BETA_PROGRESS_REQUEST",
             activePlan: stored.activePlan,
             sessionDay: progress.sessionDay,
+            sessionSlot: progress.sessionSlot,
             state: progress.state,
           })
           if (result.kind !== "recorded") return
@@ -169,6 +172,10 @@ export function PlanBeta({
         }}
         onExperience={(experienceBand) => {
           setDraft((current) => ({ ...current, experienceBand }))
+          setStep("focus")
+        }}
+        onFocus={(trainingFocus) => {
+          setDraft((current) => ({ ...current, trainingFocus }))
           setStep("days")
         }}
         onDays={(availableDayCount) => {
@@ -177,6 +184,10 @@ export function PlanBeta({
         }}
         onFrame={(requestedFrameLength) => {
           setDraft((current) => ({ ...current, requestedFrameLength }))
+          setStep("two-a-day")
+        }}
+        onSecondSession={(secondSessionMode) => {
+          setDraft((current) => ({ ...current, secondSessionMode }))
           setStep("safety")
         }}
         onOpenNotationReader={() => setNotationReaderOpen(true)}

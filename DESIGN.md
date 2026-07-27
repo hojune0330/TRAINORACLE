@@ -112,15 +112,15 @@ Max content width is 1440px. Breakpoints: single column under 760px, two columns
 ### Plan Intake Step
 - Structure: one decision question, contextual help trigger, two to four full-width Choice Rows, progress label, back action.
 - Surface: unframed page band using `--surface`, `--line`, and existing action tokens.
-- States: goal, experience, available days, frame length, current-risk check.
-- Content rule: state what the answer changes in the current generator and disclose important limits such as no personal-pace calculation.
+- States: goal, experience, training focus, available days, frame length, current-risk check.
+- Content rule: the training-focus step shows recovery, base, LT, VO2, speed-endurance, and short acceleration intentions in plain Korean. It states what the answer changes in the generator and discloses important limits such as no personal-pace calculation.
 - Accessibility: one question per screen; current selection is exposed with `aria-pressed`; no hidden required fields.
 
 ### Plan Candidate Comparison
 - Structure: source/confidence strip, candidate name, factual training/easy/quality/rest day counts, ordered session list, select action.
 - Variants: `BALANCED`, `CONSERVATIVE`.
 - Surface: candidates are adjacent bordered sections, not cards inside a card.
-- Content rule: each training day shows total duration, RPE range, training intent, and an execution disclosure. Sparse-data candidates never invent exact pace, interval distance, repetition count, recovery duration, energy-system identity, readiness, medical clearance, or training history.
+- Content rule: each training day shows total duration, RPE range, planned training intention, and an execution disclosure. The public beta may show a selected LT/VO2/speed-endurance/short-acceleration *intention*, but never presents it as a measured physiological state. Sparse-data candidates never invent exact pace, interval distance, repetition count, recovery duration, readiness, medical clearance, or training history. Exact numeric sessions appear only after a reviewed source-backed template and athlete-specific gate are active.
 - Accessibility: each candidate has a heading, a complete difference description, and one unique selection button.
 
 ### Context Help Trigger
@@ -131,8 +131,8 @@ Max content width is 1440px. Breakpoints: single column under 760px, two columns
 
 ### Plan Session Prescription
 - Structure: session name, factual numeric prescription, intent label, and native `details` execution disclosure.
-- Intent states: recovery, `BASE(기초 지구력)`, or controlled intensity with detailed energy system unassigned.
-- Content rule: current public beta shows only generator-owned duration and RPE values. Unknown pace, repetitions, distance, recovery, and LT/VO2 identity are stated as unassigned rather than inferred.
+- Intent states: recovery, `BASE(기초 지구력)`, LT, VO2, speed endurance, short acceleration, and mixed intent.
+- Content rule: current public beta shows only generator-owned duration and RPE values. The selected intent is a planning label, not a physiological measurement or a medical/safety judgment. Unknown pace, repetitions, distance, recovery, and exact numeric session structure remain unassigned until the reviewed template and athlete-specific gate are active.
 - Accessibility: execution guidance is available without hover and remains readable at 320px.
 
 ### Training Notation Reader

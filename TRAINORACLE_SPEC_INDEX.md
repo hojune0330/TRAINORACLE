@@ -218,6 +218,7 @@ These files translate the safety/spec core into product surfaces. They are not c
 | `JOURNAL_DELIGHT_AND_DECORATION_SPEC.md` | `specs/reconstruct/JOURNAL_DELIGHT_AND_DECORATION_SPEC.md` | DRAFT_FOR_REVIEW / MERGED_TO_MAIN | Work Order 006 Task A draft. Defines journal-only mode, decoration catalog boundaries, safe unlock constraints, and streak handling that must not reward training load. Not canonical or runtime evidence. |
 | `LOCAL_FIRST_SYNC_AND_PROMOTION_CONTRACT.md` | `specs/reconstruct/LOCAL_FIRST_SYNC_AND_PROMOTION_CONTRACT.md` | DRAFT_FOR_REVIEW / MERGED_TO_MAIN | Work Order 006 Task B draft. Defines local-first journal persistence, later account-linked promotion, conflict handling, and memo/privacy boundaries. Not canonical or runtime evidence. |
 | `FEDERATED_ACCOUNT_SSO_CONTRACT.md` | `specs/reconstruct/FEDERATED_ACCOUNT_SSO_CONTRACT.md` | DRAFT_FOR_REVIEW / MERGED_TO_MAIN | Work Order 006 Task C draft. Defines "Continue with AthleteTime" identity federation boundaries while keeping TrainOracle storage, consent, and safety authority separate. Not canonical or runtime evidence. |
+| `DOUBLE_SESSION_BETA_SAFETY_CONTRACT.md` | `specs/reconstruct/DOUBLE_SESSION_BETA_SAFETY_CONTRACT.md` | DRAFT_FOR_REVIEW | Bounded local-beta AM/PM session contract. It permits only explicit, RPE 1-2 PM recovery support and preserves unresolved `DOUBLE`/`FLEX` calendar crosswalk, safety-hold, and numeric-template eligibility issues. Not canonical or runtime evidence. |
 
 ---
 
@@ -278,6 +279,7 @@ Bare D-rule references are forbidden in new SPEC work.
 23. Review `specs/reconstruct/FEDERATED_ACCOUNT_SSO_CONTRACT.md` as a merged local draft; AthleteTime is identity context only and does not grant TrainOracle safety, storage, or coaching authority.
 24. Read `ACCOUNT_FEDERATION_DECISION.md`, `ATHLETETIME_INTEGRATION_REVIEW.md`, and `LAUNCH_BACKEND_AND_ACCOUNT_PLAN.md` before backend/account work; treat them as planning context, not runtime evidence.
 25. Begin App Bridge/API schema contracts and runtime evidence only after preserving the safety core chain and resolving the owner decisions called out by the account/sync drafts.
+26. Review `specs/reconstruct/DOUBLE_SESSION_BETA_SAFETY_CONTRACT.md` before treating local AM/PM display as a dated calendar, a second high-intensity session, or a numeric prescription. Its three open issues remain open.
 
 ---
 

@@ -31,6 +31,7 @@ function request(frameLength: 7 | 9 | 10, includeContinuity: boolean) {
     requestedFrameLength: frameLength,
     journalSource: { kind: "NO_USABLE_JOURNAL" },
     selectionAuthority: "SELF",
+    selectedEnergyIntent: "LT_INTENT",
     ...(includeContinuity
       ? {
           continuity: {

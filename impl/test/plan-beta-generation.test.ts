@@ -58,6 +58,7 @@ function baseRequest(frameLength = 9, safetyGate: SafetyGateDecision = clearedGa
       kind: "NO_USABLE_JOURNAL",
     },
     selectionAuthority: "SELF",
+    selectedEnergyIntent: "LT_INTENT",
   }
 }
 

@@ -13,11 +13,41 @@ export const EXPERIENCE_BANDS = ["NEW_TO_RUNNING", "DEVELOPING", "EXPERIENCED"] 
 
 export type ExperienceBand = (typeof EXPERIENCE_BANDS)[number]
 
+export const PLANNED_ENERGY_INTENTS = [
+  "RECOVERY_INTENT",
+  "BASE_INTENT",
+  "LT_INTENT",
+  "VO2_INTENT",
+  "GLY_INTENT",
+  "ATP_PC_INTENT",
+  "MIXED_INTENT",
+] as const
+
+export type PlannedEnergyIntent = (typeof PLANNED_ENERGY_INTENTS)[number]
+
+export type EasyEnergyIntent = "RECOVERY_INTENT" | "BASE_INTENT"
+
+export type QualityEnergyIntent = Exclude<
+  PlannedEnergyIntent,
+  EasyEnergyIntent
+>
+
 export type PlanSourceMode = "PROFILE_ONLY" | "JOURNAL_CONTEXT_ONLY"
 
 export type PlanSelectionAuthority = "SELF" | "COACH_REQUIRED"
 
 export type PlanCandidateKind = "BALANCED" | "CONSERVATIVE"
+
+export const SECOND_SESSION_MODES = [
+  "SINGLE_SESSION_ONLY",
+  "RECOVERY_PM_ALLOWED",
+] as const
+
+export type SecondSessionMode = (typeof SECOND_SESSION_MODES)[number]
+
+export const PLAN_SESSION_SLOTS = ["AM", "PM"] as const
+
+export type PlanSessionSlot = (typeof PLAN_SESSION_SLOTS)[number]
 
 export type PlanProgressState = "COMPLETED" | "RESTED" | "SKIPPED" | "PAIN_CHECKIN"
 
@@ -49,6 +79,7 @@ export type PlanBetaCode =
   | "CANDIDATE_NOT_FOUND"
   | "SAFETY_GATE_RECHECK_BLOCKED"
   | "SESSION_DAY_NOT_IN_ACTIVE_PLAN"
+  | "SESSION_SLOT_NOT_IN_ACTIVE_PLAN"
 
 export type PlanBetaAudit = {
   readonly event:
@@ -78,14 +109,25 @@ export type RpeTimeRange = {
 export type PlanSession =
   | {
       readonly day: number
+      readonly slot: "AM"
       readonly role: "REST"
+      readonly plannedEnergyIntent: "RECOVERY_INTENT"
       readonly prescription: {
         readonly kind: "REST"
       }
     }
   | {
       readonly day: number
-      readonly role: "EASY" | "QUALITY"
+      readonly slot: PlanSessionSlot
+      readonly role: "EASY"
+      readonly plannedEnergyIntent: EasyEnergyIntent
+      readonly prescription: RpeTimeRange
+    }
+  | {
+      readonly day: number
+      readonly slot: "AM"
+      readonly role: "QUALITY"
+      readonly plannedEnergyIntent: QualityEnergyIntent
       readonly prescription: RpeTimeRange
     }
 
@@ -105,6 +147,7 @@ export type PlanCandidate = {
   readonly candidateId: string
   readonly kind: PlanCandidateKind
   readonly eventGroup: PlanEventGroup
+  readonly selectedEnergyIntent: PlannedEnergyIntent
   readonly sourceMode: PlanSourceMode
   readonly confidence: "LIMITED"
   readonly beta: {
@@ -131,6 +174,7 @@ export type PlanProfile = {
   readonly eventGroup: PlanEventGroup
   readonly experienceBand: ExperienceBand
   readonly availableTrainingDays: readonly number[]
+  readonly secondSessionMode: SecondSessionMode
 }
 
 export type JournalSource =
@@ -147,6 +191,7 @@ export type PlanGenerationRequest = {
   readonly safetyGate: SafetyGateDecision
   readonly profile: PlanProfile
   readonly requestedFrameLength: 7 | 9 | 10
+  readonly selectedEnergyIntent: PlannedEnergyIntent
   readonly journalSource: JournalSource
   readonly selectionAuthority: PlanSelectionAuthority
   readonly continuity?: PlanContinuityInput
@@ -155,6 +200,7 @@ export type PlanGenerationRequest = {
 export type PlanGenerationSuccess = {
   readonly kind: "generated"
   readonly sourceMode: PlanSourceMode
+  readonly selectedEnergyIntent: PlannedEnergyIntent
   readonly confidence: "LIMITED"
   readonly selectionAuthority: PlanSelectionAuthority
   readonly candidates: readonly [PlanCandidate, PlanCandidate]
@@ -189,6 +235,7 @@ export type BetaActivePlanSnapshot = {
   readonly candidateKind: PlanCandidateKind
   readonly selectionActor: "SELF" | "COACH"
   readonly sourceMode: PlanSourceMode
+  readonly selectedEnergyIntent: PlannedEnergyIntent
   readonly frame: PlanFrame
   readonly sessions: readonly PlanSession[]
 }
@@ -222,6 +269,7 @@ export type PlanProgressRequest = {
   readonly kind: "PLAN_BETA_PROGRESS_REQUEST"
   readonly activePlan: BetaActivePlanSnapshot
   readonly sessionDay: number
+  readonly sessionSlot: PlanSessionSlot
   readonly state: PlanProgressState
 }
 
@@ -231,12 +279,15 @@ export type PlanProgressResult =
       readonly progress: {
         readonly activePlanCandidateId: string
         readonly sessionDay: number
+        readonly sessionSlot: PlanSessionSlot
         readonly state: PlanProgressState
       }
       readonly audit: PlanBetaAudit
     }
   | {
       readonly kind: "rejected"
-      readonly code: "SESSION_DAY_NOT_IN_ACTIVE_PLAN"
+      readonly code:
+        | "SESSION_DAY_NOT_IN_ACTIVE_PLAN"
+        | "SESSION_SLOT_NOT_IN_ACTIVE_PLAN"
       readonly audit: PlanBetaAudit
     }

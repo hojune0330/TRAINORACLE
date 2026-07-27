@@ -2,17 +2,24 @@ import { ArrowLeft, ChevronRight } from "lucide-react"
 import {
   EXPERIENCE_BANDS,
   PLAN_EVENT_GROUPS,
+  PLANNED_ENERGY_INTENTS,
 } from "@impl/plan-generator/types"
 import type {
   ExperienceBand,
   PlanEventGroup,
+  PlannedEnergyIntent,
+  SecondSessionMode,
 } from "@impl/plan-generator/types"
 import { TermHelp } from "../../components/TermHelp"
 import type { TermId } from "../../domain/glossary"
 import type { PlanBetaIntake } from "../../domain/plan-beta-store"
-import { EVENT_LABELS, EXPERIENCE_LABELS } from "./labels"
+import {
+  ENERGY_INTENT_LABELS,
+  EVENT_LABELS,
+  EXPERIENCE_LABELS,
+} from "./labels"
 
-export type IntakeStep = "goal" | "experience" | "days" | "frame" | "safety"
+export type IntakeStep = "goal" | "experience" | "focus" | "days" | "frame" | "two-a-day" | "safety"
 
 type IntakeDraft = Partial<PlanBetaIntake>
 
@@ -22,8 +29,10 @@ type PlanIntakeProps = {
   readonly onBack: () => void
   readonly onGoal: (goal: PlanEventGroup) => void
   readonly onExperience: (band: ExperienceBand) => void
-  readonly onDays: (days: 3 | 4 | 5) => void
+  readonly onFocus: (focus: PlannedEnergyIntent) => void
+  readonly onDays: (days: PlanBetaIntake["availableDayCount"]) => void
   readonly onFrame: (days: 7 | 9 | 10) => void
+  readonly onSecondSession: (mode: SecondSessionMode) => void
   readonly onOpenNotationReader: () => void
   readonly onSafety: (
     currentCheck: "NO_KNOWN_RISK" | "REVIEW_REQUIRED",
@@ -51,22 +60,36 @@ const STEP_META: Record<IntakeStep, {
     copy: "실력 점수가 아니에요. 고른 경험에 따라 한 번의 훈련 시간을 다르게 잡아요.",
     helpTerm: "plan-experience",
   },
-  days: {
+  focus: {
     number: 3,
+    eyebrow: "TRAINING FOCUS",
+    title: "이번 주기에 어떤 훈련을 더 넣고 싶나요?",
+    copy: "고른 목적은 고강도 날의 종류와 RPE 안내를 정해요. 반복 횟수·거리·페이스·회복 시간은 아직 정하지 않아요.",
+    helpTerm: "energy-system",
+  },
+  days: {
+    number: 4,
     eyebrow: "AVAILABLE DAYS",
-    title: "평소 7~10일 동안 며칠을 훈련할 수 있나요?",
-    copy: "고른 횟수만큼 훈련일을 넣고, 나머지는 휴식 또는 가벼운 회복일로 둡니다.",
+    title: "이번 계획에서 운동할 수 있는 날은 며칠인가요?",
+    copy: "달리기뿐 아니라 걷기, 가벼운 조깅, 자전거 같은 회복 운동을 하는 날도 포함해 골라주세요. 완전히 쉬는 날은 빼세요.",
     helpTerm: "training-days",
   },
   frame: {
-    number: 4,
+    number: 5,
     eyebrow: "FRAME",
     title: "첫 훈련 계획을 며칠로 만들까요?",
-    copy: "처음이라면 TrainOracle의 기본 길이인 9일을 권장해요. 7일을 골라도 끝난 뒤 새 계획을 만들 수 있어요.",
+    copy: "처음이라면 9일을 권장해요. 7일을 고르면 짧게 시작하고, 끝난 뒤에는 이번 선택과 진행 기록을 바탕으로 다음 주기를 이어 만듭니다.",
     helpTerm: "plan-frame",
   },
+  "two-a-day": {
+    number: 6,
+    eyebrow: "SECOND SESSION",
+    title: "하루에 두 번 운동하는 날도 넣을까요?",
+    copy: "선택하면 일부 날에 오전 기본 훈련과 오후 회복 운동을 나눠 보여줘요. 오후 운동은 RPE 1~2이고, 고강도 두 번이나 놓친 운동 보충은 만들지 않아요.",
+    helpTerm: "two-a-day",
+  },
   safety: {
-    number: 5,
+    number: 7,
     eyebrow: "CURRENT CHECK",
     title: "계획을 만들기 전에 지금 몸 상태를 확인할게요",
     copy: "통증이나 몸 이상이 있으면 계획을 만들지 않아요. 지도자·보호자 또는 의료진과 직접 상의해 주세요. 이 질문은 진단이나 의료 허가가 아닙니다.",
@@ -80,8 +103,10 @@ export function PlanIntake({
   onBack,
   onGoal,
   onExperience,
+  onFocus,
   onDays,
   onFrame,
+  onSecondSession,
   onOpenNotationReader,
   onSafety,
 }: PlanIntakeProps) {
@@ -92,9 +117,9 @@ export function PlanIntake({
         <ArrowLeft aria-hidden="true" size={17} />
         이전
       </button>
-      <div className="plan-progress" aria-label={`계획 질문 ${meta.number}/5`}>
-        <span>{meta.number}/5</span>
-        <i style={{ width: `${meta.number * 20}%` }} />
+      <div className="plan-progress" aria-label={`계획 질문 ${meta.number}/7`}>
+        <span>{meta.number}/7</span>
+        <i style={{ width: `${meta.number * (100 / 7)}%` }} />
       </div>
       <div className="plan-eyebrow">{meta.eyebrow}</div>
       <div className="plan-heading-row">
@@ -125,12 +150,25 @@ export function PlanIntake({
             />
           ))
         )}
+        {step === "focus" && (
+          PLANNED_ENERGY_INTENTS.filter((value) => value !== "MIXED_INTENT").map((value) => (
+            <Choice
+              key={value}
+              title={ENERGY_INTENT_LABELS[value].title}
+              detail={ENERGY_INTENT_LABELS[value].detail}
+              selected={draft.trainingFocus === value}
+              onClick={() => onFocus(value)}
+            />
+          ))
+        )}
         {step === "days" && (
-          ([3, 4, 5] as const).map((days) => (
+          ([3, 4, 5, 6, "EVERY_DAY"] as const).map((days) => (
             <Choice
               key={days}
-              title={`${days}일`}
-              detail={`훈련 ${days}일 · 나머지는 휴식·회복`}
+              title={days === "EVERY_DAY" ? "매일" : `${days}일`}
+              detail={days === "EVERY_DAY"
+                ? "매일 움직일 수 있어요 · 완전 휴식일도 계획에서 따로 보여요"
+                : `운동 ${days}일 · 고르지 않은 날은 완전 휴식`}
               selected={draft.availableDayCount === days}
               onClick={() => onDays(days)}
             />
@@ -150,6 +188,22 @@ export function PlanIntake({
               onClick={() => onFrame(days)}
             />
           ))
+        )}
+        {step === "two-a-day" && (
+          <>
+            <Choice
+              title="하루 한 번 운동"
+              detail="하루에 한 가지 운동만 계획에 넣어요"
+              selected={draft.secondSessionMode === "SINGLE_SESSION_ONLY"}
+              onClick={() => onSecondSession("SINGLE_SESSION_ONLY")}
+            />
+            <Choice
+              title="일부 날은 하루 두 번 운동"
+              detail="오전 기본 훈련과 오후 RPE 1~2 회복 운동만 나눠 보여줘요"
+              selected={draft.secondSessionMode === "RECOVERY_PM_ALLOWED"}
+              onClick={() => onSecondSession("RECOVERY_PM_ALLOWED")}
+            />
+          </>
         )}
         {step === "safety" && (
           <>
