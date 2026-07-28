@@ -1,3 +1,4 @@
+import React from "react"
 import { PainDot } from "../../components/JournalPrimitives"
 import { TermHelp } from "../../components/TermHelp"
 
@@ -20,6 +21,24 @@ const BODY_PARTS = [
 ] as const
 
 export function BodyDiagram({ selected = {}, onChange }: BodyDiagramProps) {
+  const anySelected = Object.values(selected).some((level) => level > 0)
+  // 그림은 기본으로 닫는다. 하루 마무리 화면 길이의 절반을 이 그림이 먹는데
+  // (476px / 754px), 그림은 aria-hidden 이고 onClick 도 없어서 고르는 데는
+  // 쓰이지 않는다. 선택은 아래 버튼 10개에서만 일어난다. — 작업지시서 UX1 §2-3
+  //
+  // 통증을 하나라도 고르면 자동으로 펼친다. 어디를 골랐는지 한눈에
+  // 보여주는 게 그림이 하는 일이다. 반대로 코드가 닫는 일은 없다.
+  //
+  // 닫혀 있어도 <svg> 는 DOM 에 그대로 둔다 (display:none). 지우면
+  // [data-body-part] 를 읽는 검사가 깨지고, 다시 열 때 그림이 새로 그려진다.
+  const [diagramOpen, setDiagramOpen] = React.useState(false)
+  const wasSelected = React.useRef(anySelected)
+
+  React.useEffect(() => {
+    if (anySelected && !wasSelected.current) setDiagramOpen(true)
+    wasSelected.current = anySelected
+  }, [anySelected])
+
   const cycle = (id: string) => {
     const current = selected[id] || 0
     const next = current >= 5 ? 0 : current + 1
@@ -30,8 +49,13 @@ export function BodyDiagram({ selected = {}, onChange }: BodyDiagramProps) {
   }
 
   return (
-    <div className="body-pain-selector">
-      <div className="body-pain-selector__visual" style={{ position: "relative", background: "var(--paper)", padding: 8 }}>
+    <div className="body-pain-selector" data-diagram-open={diagramOpen ? "true" : "false"}>
+      <div
+        className="body-pain-selector__visual"
+        style={diagramOpen
+          ? { position: "relative", background: "var(--paper)", padding: 8 }
+          : { display: "none" }}
+      >
         <svg aria-hidden="true" focusable="false" viewBox="0 0 220 460" width="100%" preserveAspectRatio="xMidYMid meet" style={{ display: "block", height: "auto" }}>
           <g fill="none" stroke="var(--ink-3)" strokeWidth="1.2">
             <circle cx="110" cy="60" r="22" />
@@ -60,7 +84,20 @@ export function BodyDiagram({ selected = {}, onChange }: BodyDiagramProps) {
         </svg>
       </div>
       <div style={{ fontFamily: "var(--mono)", fontSize: 11, color: "var(--ink-3)", letterSpacing: "0.04em" }}>
-        <div style={{ marginBottom: 8, fontSize: 9.5, letterSpacing: "0.14em", textTransform: "uppercase" }}>탭으로 1→5→해제</div>
+        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
+          <span style={{ fontSize: 9.5, letterSpacing: "0.14em", textTransform: "uppercase" }}>탭으로 1→5→해제</span>
+          <button
+            type="button"
+            aria-expanded={diagramOpen}
+            onClick={() => setDiagramOpen((current) => !current)}
+            style={{
+              marginLeft: "auto", minHeight: 44, padding: "8px 10px",
+              border: "1px solid var(--line)", background: "transparent", borderRadius: 0,
+              fontFamily: "var(--mono)", fontSize: 10, color: "var(--ink-2)",
+              letterSpacing: "0.06em", cursor: "pointer",
+            }}
+          >{diagramOpen ? "몸 그림 접기" : "몸 그림 보기"}</button>
+        </div>
         <div className="body-pain-selector__buttons">
           {BODY_PARTS.map((part) => {
             const level = selected[part.id] || 0

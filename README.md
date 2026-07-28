@@ -32,7 +32,45 @@
 | 메모 제외 기본 내보내기, 동의 후 전체 백업 | 의료 판단 또는 부상 복귀 판정 |
 | 모바일·데스크톱 웹 앱, PWA 설치 | 계정 기반 장기 보관 |
 
-브라우저 데이터 삭제나 기기 변경 전에는 앱의 내보내기 기능으로 백업해 주세요. 훈련계획 베타는 정확한 페이스를 발명하지 않고 시간·RPE 범위만 제안하며, 최근 일지나 현재 확인에서 통증·부상·몸 이상이 있거나 불명확하면 후보를 만들지 않습니다. 최근 일지의 존재는 표시하지만 아직 그 수치를 처방에 반영하지 않습니다. 문의와 베타 의견은 [GitHub Issues](https://github.com/hojune0330/TRAINORACLE/issues)에 남길 수 있습니다.
+브라우저 데이터 삭제나 기기 변경 전에는 앱의 내보내기 기능으로 백업해 주세요. 훈련계획 베타는 근거 없는 페이스 숫자를 만들지 않고 시간·RPE 범위만 제안하며, 최근 일지나 현재 확인에서 통증·부상·몸 이상이 있거나 불명확하면 후보를 만들지 않습니다. 최근 일지의 존재는 표시하지만 아직 그 수치를 처방에 반영하지 않습니다. 문의와 베타 의견은 [GitHub Issues](https://github.com/hojune0330/TRAINORACLE/issues)에 남길 수 있습니다.
+
+## 지금 진행 중인 최우선 작업 — 개인 목표 페이스
+
+훈련계획 베타는 현재 **체감강도(RPE)와 시간 범위만** 제안합니다. 선수 개인의
+최고기록·시즌기록·목표기록으로 훈련 페이스를 계산하는 기능은 **2026-07-27
+오너 승인을 받아 착수 단계에 들어갔습니다.**
+
+- 🔴 **결정 정본:** [`PERSONAL_PACE_DECISION_2026-07-27.md`](./PERSONAL_PACE_DECISION_2026-07-27.md)
+- 🔴 **기준 기록 선택제 결정:** [`OWNER_DECISION_ANCHOR_CHOICE_2026-07-27.md`](./OWNER_DECISION_ANCHOR_CHOICE_2026-07-27.md)
+  — PB 기준 / SB 기준을 **사람이 고르고**, 고르지 않은 쪽과의 차이도 함께 보여줍니다. 일지 불러오기 개방 조건 포함
+  — **시즌 창 = 오늘로부터 18개월**(SB 전용, **PB는 기간 무관**). 범위 밖 기록은 거부하지 않고 **"시즌 밖 기록"으로 표시**합니다
+- 🔴 **제품 방향(점진적 코칭):** [`PROGRESSIVE_COACHING_DESIGN_2026-07-27.md`](./PROGRESSIVE_COACHING_DESIGN_2026-07-27.md)
+  — 기록이 쌓일수록 좋은 계획이 나오는 구조. **일지 원문은 계획에 들어갈 수 없음**, **개수 임계값 금지**
+- 결정의 근거와 맥락: [`DECISION_BRIEFING_PERSONAL_PACE.md`](./DECISION_BRIEFING_PERSONAL_PACE.md)
+- 실행 계획: [`PLAN_A_FIRST_TEMPLATE_ACTIVATION.md`](./PLAN_A_FIRST_TEMPLATE_ACTIVATION.md)
+
+### 하위 에이전트 작업지시서
+
+| 순서 | 지시서 | 내용 | 선행조건 |
+|---|---|---|---|
+| 1 | [`WORK_ORDER_P1_ATHLETE_RECORDS.md`](./WORK_ORDER_P1_ATHLETE_RECORDS.md) | 선수 기록 입력·저장 | **없음 — 즉시 착수 가능** |
+| 2 | [`WORK_ORDER_P2_MACHINE_NOTATION.md`](./WORK_ORDER_P2_MACHINE_NOTATION.md) | 카탈로그 기계용 표기 추가 (원본 보존) | 없음 (문서 작업) |
+| 3 | [`WORK_ORDER_P3_PACE_WIRING.md`](./WORK_ORDER_P3_PACE_WIRING.md) | 페이스 계산 배선·2단 표시 | P1·P2 병합 후 |
+| 4 | (일부러 미작성) | 종목 간 환산 모델 | **오너 재승인 필요** |
+| 5 | [`WORK_ORDER_P5_JOURNAL_IMPORT_AND_CHARTS.md`](./WORK_ORDER_P5_JOURNAL_IMPORT_AND_CHARTS.md) | 일지 불러오기 + 분포·그래프·통계 | P1 병합 후 |
+| UX1 | [`WORK_ORDER_UX1_TAP_FATIGUE.md`](./WORK_ORDER_UX1_TAP_FATIGUE.md) | 손가락 피로 줄이기 (스크롤 깊이·글자량·누른 느낌) | **없음 — 즉시 착수 가능** |
+
+**UX1은 P1~P5와 파일이 겹치지 않습니다.** 화면 밀도와 반응만 다루므로 순서와 무관하게 병행할 수 있습니다. 근거는 추측이 아니라 실측입니다 — 훈련 후 일지 2.01화면, 하루 마무리 2.14화면, 눌러도 반응 없는 입력칸 21개를 390×844에서 재서 지시서 §1에 적어 뒀습니다.
+
+**P4(환산 모델)는 부가기능이 아니라 전제 조건입니다.** 400m 인터벌·2000m 크루즈·템포런 페이스, 그리고 "짧은 거리가 상대적으로 빠르니 장거리를 키우라"는 조언은 모두 종목 간 환산 없이는 불가능합니다. 근거: [`PROGRESSIVE_COACHING_DESIGN_2026-07-27.md`](./PROGRESSIVE_COACHING_DESIGN_2026-07-27.md) §3
+
+**기록에 유효기간은 없습니다.** 오래된 최고기록도 지우지 않고, 역할·달성일·경과 기간을 함께 표시합니다. 무엇을 현재 실력으로 인정할지는 사람이 고릅니다. (근거: `FORMATION_LOAD_AND_STATISTICAL_RULES_CONTRACT.md` §9 — "no evidence-backed universal freshness cutoff")
+
+**시즌 창 18개월도 만료가 아닙니다.** 오늘로부터 18개월 범위는 **시즌기록(SB)에만** 적용되는 **표시·그룹화 기준**이며, 개인 최고기록(PB)에는 적용되지 않습니다. 범위 밖 기록은 지우거나 계산을 거부하지 않고 **"시즌 밖 기록" 그룹에 그대로 남습니다.** 또 화면에서 "현재 경기력 지표"로 부를 수 있지만, 그것은 **표시 라벨이며 엔진이 쓰는 `purpose`를 바꾸지 않습니다** (SB는 항상 `SEASON_CONTEXT`). 기록이 여러 개인 사용자는 분포·그래프·통계로 살펴보게 되며, **개수 임계값은 없습니다**(기록 1개부터 그래프가 켜집니다).
+
+작업지시서를 받은 에이전트는 **`PRODUCT_NORTH_STAR.md` → 결정 정본 →
+자기 지시서** 순서로 읽습니다. 지시서 안에 이미 조사된 사실이 정리돼
+있으므로 같은 조사를 반복하지 않습니다.
 
 ## TrainOracle SPEC를 처음 보는 사람에게
 
@@ -43,6 +81,8 @@ TrainOracle의 핵심은 예쁜 훈련 일지 화면만이 아니라, **선수 �
 먼저 아래 문서를 읽으면 됩니다.
 
 - **🔴 최고 지침 (1순위):** [`PRODUCT_NORTH_STAR.md`](./PRODUCT_NORTH_STAR.md). 제품의 최종 목표, 절대 넘지 않는 안전선, 문서를 대하는 원칙, 그리고 이전 작업자가 실제로 저지른 오판 사례를 담았습니다.
+- **🔴 진행 중인 최우선 작업 (2순위):** [`PERSONAL_PACE_DECISION_2026-07-27.md`](./PERSONAL_PACE_DECISION_2026-07-27.md). 개인 목표 페이스 처방에 대한 **오너 승인 결정 정본**입니다. 승인된 것과 승인되지 **않은** 것이 표로 구분돼 있습니다. 관련 작업을 시작하기 전에 반드시 읽습니다.
+- **🔴 제품이 향하는 코칭 구조 (2순위):** [`PROGRESSIVE_COACHING_DESIGN_2026-07-27.md`](./PROGRESSIVE_COACHING_DESIGN_2026-07-27.md). 프로필·기록이 쌓일수록 훈련 계획이 정밀해지는 구조와, 그 과정에서 **절대 하면 안 되는 두 가지**(일지 원문을 계획에 반영, 데이터 개수로 임계값 만들기)를 담았습니다.
 - 쉬운 전체 설명: [`SPEC_OVERVIEW_FOR_HOJUNE.md`](./SPEC_OVERVIEW_FOR_HOJUNE.md)
 - Fable·Codex 공동 기획 기준선: [`FABLE_CODEX_JOINT_PLANNING_BRIEF.md`](./FABLE_CODEX_JOINT_PLANNING_BRIEF.md)
 - 9.5일 훈련계획 소유자 결정 기록: [`TRAINING_PLAN_METHOD_DECISION.md`](./TRAINING_PLAN_METHOD_DECISION.md)

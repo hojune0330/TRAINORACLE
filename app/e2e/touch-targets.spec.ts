@@ -129,6 +129,11 @@ test("keeps evening controls and every body-part selector touchable", async ({ p
   const bodyButtons = page.getByRole("button", { name: /통증/u })
   const orderedLabels = await bodyButtons.evaluateAll((buttons) => buttons.map((button) => button.getAttribute("aria-label") ?? ""))
   expect(orderedLabels.map((label) => label.split(",")[0])).toEqual(bodyPartNames)
+  // 몸 그림은 닫힌 상태로 시작한다 (작업지시서 UX1 §2-3).
+  // 그림은 aria-hidden 이고 onClick 도 없어서 고르는 데 쓰이지 않는데
+  // 하루 마무리 화면 길이의 절반(476px)을 먹었다. 접어도 기능 손실은 없다.
+  // 닫혀 있어도 <svg> 는 DOM 에 남으므로 [data-body-part] 는 계속 읽힌다.
+  await expect(page.locator(".body-pain-selector")).toHaveAttribute("data-diagram-open", "false")
   expect(await page.locator('[data-body-part="rKnee"]').getAttribute("r")).toBe("6")
   for (const { id, name } of bodyParts) {
     const selectedBefore = await bodyButtons.evaluateAll((buttons) => buttons.filter((button) => button.getAttribute("aria-pressed") === "true").length)
@@ -140,6 +145,9 @@ test("keeps evening controls and every body-part selector touchable", async ({ p
     expect(await page.locator(`[data-body-part="${id}"]`).getAttribute("r")).toBe("9")
   }
   expect(await page.locator('[data-body-part="rKnee"]').getAttribute("r")).toBe("9")
+  // 통증을 고르면 그림이 저절로 펼쳐진다 — 어디를 골랐는지 한눈에 보여주는 게
+  // 그림이 하는 일이다. 반대로 코드가 다시 닫는 일은 없다.
+  await expect(page.locator(".body-pain-selector")).toHaveAttribute("data-diagram-open", "true")
   const rightKnee = page.getByRole("button", { name: /^오른 무릎.*통증/u })
   await rightKnee.focus()
   const scrollBeforeSpace = await page.evaluate(() => window.scrollY)
