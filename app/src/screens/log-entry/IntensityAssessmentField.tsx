@@ -38,15 +38,27 @@ export function useIntensityAssessment(): IntensityAssessmentController {
 export function IntensityAssessmentField({
   controller,
   reportedRpe,
+  onSectionTouch,
 }: {
   readonly controller: IntensityAssessmentController
   readonly reportedRpe: number
+  /**
+   * 구획을 건드렸다고 화면에 알린다. 이 화면이 아니라 **앞 구획** 을 접는 데
+   * 쓰인다 (오너 결정 "건드릴 때"). 안 주면 아무 일도 안 일어난다.
+   */
+  readonly onSectionTouch?: (sectionId: string) => void
 }) {
   const summary = summarizeIntensityAssessment(controller.assessment, reportedRpe)
+  const touchOf = (sectionId: string) => onSectionTouch === undefined
+    ? undefined
+    : () => onSectionTouch(sectionId)
 
   return (
     <>
-      <FormSec lb={`예상 강도 (${controller.plannedRpe > 0 ? `${controller.plannedRpe}/10` : "미선택"})`}>
+      <FormSec
+        lb={`예상 강도 (${controller.plannedRpe > 0 ? `${controller.plannedRpe}/10` : "미선택"})`}
+        onTouch={touchOf("planned-rpe")}
+      >
         <div className="journal-ten-scale" style={{ display: "grid", gap: 0, border: "1px solid var(--ink)" }}>
           {Array.from({ length: 10 }, (_, index) => index + 1).map((value) => (
             <button
@@ -66,7 +78,20 @@ export function IntensityAssessmentField({
           ))}
         </div>
       </FormSec>
-      <FormSec lb={`객관 기록 · ${controller.objectiveComponents.length}개`}>
+      {/*
+        객관 기록은 아무것도 안 넣어도 393px 다 — 훈련 후 일지 길이의 29%.
+        필수 입력이 아니므로 닫힌 상태로 시작한다. (작업지시서 UX1 §2-2)
+        이미 넣은 항목이 있으면 autoOpenWhen 이 펼친다.
+        닫혀 있어도 children 은 DOM 에 남는다. 지우면 저장된 값이 사라진다.
+      */}
+      <FormSec
+        lb={`객관 기록 · ${controller.objectiveComponents.length}개`}
+        collapsible
+        defaultOpen={false}
+        autoOpenWhen={controller.objectiveComponents.length > 0}
+        expandHint="+ 추가"
+        onTouch={touchOf("objective")}
+      >
         <ObjectiveComponentEditor
           disabled={controller.objectiveComponents.length >= 6}
           onAdd={controller.addComponent}

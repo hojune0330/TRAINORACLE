@@ -133,6 +133,10 @@ describe("existing journal entry regression", () => {
     render(<LogEntry entryType="post-session" />)
 
     await user.click(screen.getByRole("button", { name: "예상 강도 7" }))
+    // 객관 기록 구획은 닫힌 상태로 시작한다 (작업지시서 UX1 §2-2).
+    // 필수 입력이 아니고 아무것도 안 넣어도 393px 를 먹기 때문이다.
+    // 실제 사용자도 이 한 번을 누르고 들어간다.
+    await user.click(screen.getByRole("button", { name: /객관 기록 · \d+개/u }))
     await user.selectOptions(screen.getByRole("combobox", { name: "객관 기록 종류" }), "INTERVALS")
     await user.type(screen.getByRole("spinbutton", { name: "반복 횟수" }), "6")
     await user.type(screen.getByRole("spinbutton", { name: "운동 시간 (초)" }), "60")
@@ -151,6 +155,8 @@ describe("existing journal entry regression", () => {
     const user = userEvent.setup()
     render(<LogEntry entryType="post-session" />)
 
+    // 객관 기록 구획을 먼저 펼친다 (작업지시서 UX1 §2-2).
+    await user.click(screen.getByRole("button", { name: /객관 기록 · \d+개/u }))
     await user.type(screen.getByRole("spinbutton", { name: "반복 횟수" }), "6")
     await user.type(screen.getByRole("spinbutton", { name: "운동 시간 (초)" }), "60")
     await user.type(screen.getByRole("spinbutton", { name: "회복 시간 (초)" }), "90")
