@@ -53,6 +53,27 @@ test("Given the draft catalog and contract, when validated, then all 30 entries 
   assert.match(result.stdout, /detailed prescription validation passed: 30\/30 inert draft entries/u);
 });
 
+test("Given a ranged interval seed, when it is documented, then context keeps volume and recovery unfixed", async () => {
+  const catalogText = await readFile(catalog, "utf8");
+
+  assert.match(catalogText, /machineNotationStatus: PENDING_COACH_CONTEXT/u);
+  assert.match(catalogText, /fixed_default_from_energy_intent: forbidden/u);
+  assert.match(catalogText, /goal_label_required: true/u);
+  assert.match(catalogText, /same_event_comparison_only: true/u);
+});
+
+test("Given goal and recent results may compare across events, when validated, then it fails closed", async () => {
+  const result = await validateWith({
+    catalogReplacement: {
+      from: "same_event_comparison_only: true",
+      to: "same_event_comparison_only: false",
+    },
+  });
+
+  assert.notEqual(result.status, 0);
+  assert.match(result.stderr, /same_event_comparison_only: true/u);
+});
+
 test("Given one catalog event group becomes eligible, when validated, then it fails closed", async () => {
   const result = await validateWith({
     catalogReplacement: { from: "allowedEventGroups: []", to: "allowedEventGroups: [SPRINT]" },
@@ -247,8 +268,8 @@ for (const machineNotationMutation of [
     expected: /V2-SEED-05 must keep its parser-ready basis/u,
   },
   {
-    name: "pending range decision receives a machine notation",
-    from: /machineNotation: null\r?\n  machineNotationStatus: PENDING_OWNER_RANGE_DECISION/u,
+    name: "pending coach-context range receives a machine notation",
+    from: /machineNotation: null\r?\n  machineNotationStatus: PENDING_COACH_CONTEXT/u,
     to: 'machineNotation: "3×500m @1500m RP · r120″"\n  machineNotationStatus: PENDING_OWNER_RANGE_DECISION',
     expected: /GL-SEED-01 must keep machineNotation null while pending/u,
   },

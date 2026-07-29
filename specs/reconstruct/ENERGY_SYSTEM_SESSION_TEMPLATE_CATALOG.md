@@ -123,7 +123,7 @@ never stored in `machineNotation`; it belongs in `machineNotationStatus`.
 ```ts
 type MachineNotationStatus =
   | "PARSER_READY"
-  | "PENDING_OWNER_RANGE_DECISION"
+  | "PENDING_COACH_CONTEXT"
   | "NOT_APPLICABLE_INTENSITY_ZONE"
   | "NOT_APPLICABLE_NO_PACE_TARGET"
   | "PENDING_CONVERSION_MODEL";
@@ -138,6 +138,16 @@ machine_notation_invariants:
   parser_ready_blockers_must_be_empty: true
   narrowing_a_range_without_human_decision: forbidden
   runtime_template_activation_from_this_field: forbidden
+range_sensitive_interval_policy:
+  repetition_count_and_recovery: CONTEXTUAL_COACH_SELECTION
+  fixed_default_from_energy_intent: forbidden
+  required_context: [session_objective, target_distance, speed_anchor_or_effort_target, current_context]
+goal_and_recent_result_display:
+  goal_label_required: true
+  recent_result_requires: [same_event, recorded_date, performance]
+  same_event_comparison_only: true
+  cross_event_display_must_not_derive_pace_or_capability: true
+  missing_recent_result_label: UNRECORDED
 ```
 
 Every entry below therefore contains `machineNotation`, `machineNotationStatus`,
@@ -678,12 +688,12 @@ does not activate a template, change eligibility, or authorise runtime use.
   coachingTerm: "1500m race-pace repeats"
   notationPattern: "3~4×500m @GOAL 1500m RP · r2~3′"
   machineNotation: null
-  machineNotationStatus: PENDING_OWNER_RANGE_DECISION
+  machineNotationStatus: PENDING_COACH_CONTEXT
   machineNotationBasis: null
   machineNotationBlockers:
-    - "A human must select 3 or 4 repetitions."
-    - "A human must select 2 or 3 minutes of repetition recovery."
-    - "A display and runtime path must keep GOAL RP distinct from current capability."
+    - "Coach context must select the 3-to-4 repetition range from session objective, target distance, speed anchor, and current context; no fixed default is authorized."
+    - "Coach context must select the 2-to-3 minute repetition recovery range from session objective, target distance, speed anchor, and current context; no fixed default is authorized."
+    - "GOAL RP and a dated recent same-event result may be shown as separate labels; neither value becomes current capability automatically."
   plainKoreanReading: "1500미터 목표 페이스라는 점을 분명히 보이는 500미터 반복 후보입니다."
   sourceRefs: [SRC-WA-1500]
   sourcePopulation: "Endurance-runner speed-training coaching example."

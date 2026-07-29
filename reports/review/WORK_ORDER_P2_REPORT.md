@@ -18,7 +18,7 @@ it does not activate a template or bind a plan.
 | Machine notation status | Count |
 |---|---:|
 | `PARSER_READY` | 1 |
-| `PENDING_OWNER_RANGE_DECISION` | 1 |
+| `PENDING_COACH_CONTEXT` | 1 |
 | `NOT_APPLICABLE_INTENSITY_ZONE` | 13 |
 | `NOT_APPLICABLE_NO_PACE_TARGET` | 13 |
 | `PENDING_CONVERSION_MODEL` | 2 |
@@ -54,17 +54,22 @@ The catalog validator and its hostile tests reject all of the following:
 - a pending range record given a machine notation
 - the original canonical notation pattern changed
 
-`GL-SEED-01` remains `PENDING_OWNER_RANGE_DECISION`. It requires three owner-level
-decisions before it can become parser-ready: select 3 or 4 repetitions, select 2 or
-3 minutes recovery, and define a path that displays GOAL RP without treating it as
-current capability.
+`GL-SEED-01` remains `PENDING_COACH_CONTEXT`. The owner recorded that both the
+3-to-4 repetition range and the 2-to-3 minute recovery range must vary with the
+session objective, target distance, speed anchor, and current context. No energy
+intent creates a fixed default.
+
+The catalog also records the selected display policy: GOAL RP and a dated recent
+same-event result may appear as separate labels. The comparison cannot derive a
+pace or current-capability verdict, cross-event results cannot be compared, and a
+missing result remains `UNRECORDED`.
 
 ## Verification
 
 | Check | Result |
 |---|---|
 | Catalog validator | PASS: 30/30 inert DRAFT entries |
-| Catalog Node tests | PASS: 28/28 |
+| Catalog Node tests | PASS: 30/30 |
 | Parser semantic contract | PASS: 1/1 |
 | Full impl tests | PASS: 99/99 |
 | Impl typecheck | PASS |

@@ -32,7 +32,7 @@ const expectedIntentCounts = new Map([
 ]);
 const expectedMachineNotationStatusCounts = new Map([
   ["PARSER_READY", 1],
-  ["PENDING_OWNER_RANGE_DECISION", 1],
+  ["PENDING_COACH_CONTEXT", 1],
   ["NOT_APPLICABLE_INTENSITY_ZONE", 13],
   ["NOT_APPLICABLE_NO_PACE_TARGET", 13],
   ["PENDING_CONVERSION_MODEL", 2],
@@ -71,10 +71,10 @@ const expectedNotationPatterns = new Map([
 ]);
 const parserReadyNotation = "5\u00d71000m @5000m RP \u00b7 r150\u2033";
 const parserReadyBasis = "5K=5000m; 2 minutes 30 seconds=150 seconds; repetitions, distance, and recovery are unchanged.";
-const pendingRangeBlockers = [
-  "A human must select 3 or 4 repetitions.",
-  "A human must select 2 or 3 minutes of repetition recovery.",
-  "A display and runtime path must keep GOAL RP distinct from current capability.",
+const pendingCoachContextBlockers = [
+  "Coach context must select the 3-to-4 repetition range from session objective, target distance, speed anchor, and current context; no fixed default is authorized.",
+  "Coach context must select the 2-to-3 minute repetition recovery range from session objective, target distance, speed anchor, and current context; no fixed default is authorized.",
+  "GOAL RP and a dated recent same-event result may be shown as separate labels; neither value becomes current capability automatically.",
 ];
 
 function requireFinalMarker(text, documentName) {
@@ -133,13 +133,17 @@ for (const block of blocks) {
   } else {
     failUnless(machineNotation === "null", `${id} must keep machineNotation null while pending`);
   }
+  if (notationPattern.includes("~")) {
+    failUnless(machineNotation === "null", `${id} must not narrow a ranged notation into machineNotation`);
+    failUnless(machineNotationStatus !== "PARSER_READY", `${id} ranged notation must remain context-dependent`);
+  }
   if (id === "V2-SEED-05") {
     failUnless(machineNotation === `"${parserReadyNotation}"`, "V2-SEED-05 must keep its exact parser-ready machineNotation");
     failUnless(machineNotationBasis === `"${parserReadyBasis}"`, "V2-SEED-05 must keep its parser-ready basis");
   }
   if (id === "GL-SEED-01") {
-    failUnless(machineNotationStatus === "PENDING_OWNER_RANGE_DECISION", "GL-SEED-01 must require an owner range decision");
-    failUnless(machineNotationBlockerValues.join("\u0000") === pendingRangeBlockers.join("\u0000"), "GL-SEED-01 must keep its three range blockers");
+    failUnless(machineNotationStatus === "PENDING_COACH_CONTEXT", "GL-SEED-01 must require coach context instead of a fixed range");
+    failUnless(machineNotationBlockerValues.join("\u0000") === pendingCoachContextBlockers.join("\u0000"), "GL-SEED-01 must keep its three contextual blockers");
   }
 
   if (block.includes("sourceVerificationStatus: DIRECT_SOURCE_EXAMPLE")) {
@@ -178,9 +182,17 @@ for (const marker of [
   "machineNotation_requires_status: PARSER_READY",
   "non_parser_ready_machineNotation_must_be_null: true",
   "runtime_template_activation_from_this_field: forbidden",
+  "range_sensitive_interval_policy:",
+  "fixed_default_from_energy_intent: forbidden",
+  "goal_label_required: true",
+  "recent_result_requires: [same_event, recorded_date, performance]",
+  "same_event_comparison_only: true",
+  "cross_event_display_must_not_derive_pace_or_capability: true",
+  "missing_recent_result_label: UNRECORDED",
 ]) {
   failUnless(catalog.includes(marker), `catalog missing required boundary: ${marker}`);
 }
+failUnless(!catalog.includes("PENDING_OWNER_RANGE_DECISION"), "catalog must not retain an owner range decision after context policy is recorded");
 
 for (const [marker, message] of [
   ["runtime_authority: false", "runtime-authority guard"],
