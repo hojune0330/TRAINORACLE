@@ -30,6 +30,52 @@ const expectedIntentCounts = new Map([
   ["ATP_PC_INTENT", 5],
   ["RECOVERY_INTENT", 5],
 ]);
+const expectedMachineNotationStatusCounts = new Map([
+  ["PARSER_READY", 1],
+  ["PENDING_OWNER_RANGE_DECISION", 1],
+  ["NOT_APPLICABLE_INTENSITY_ZONE", 13],
+  ["NOT_APPLICABLE_NO_PACE_TARGET", 13],
+  ["PENDING_CONVERSION_MODEL", 2],
+]);
+const expectedNotationPatterns = new Map([
+  ["BA-SEED-01", "30~45\u2032 @E"],
+  ["BA-SEED-02", "20~30\u2032 @E"],
+  ["BA-SEED-03", "45~60\u2032 @E"],
+  ["BA-SEED-04", "long easy @E \u00b7 duration unresolved"],
+  ["BA-SEED-05", "3\u00d710\u2032 @E \u00b7 r1\u2032 walk/jog"],
+  ["LT-SEED-01", "20\u2032 @T"],
+  ["LT-SEED-02", "3\u00d71600m @T \u00b7 r1~2\u2032"],
+  ["LT-SEED-03", "4\u00d71600m @T \u00b7 r1\u2032"],
+  ["LT-SEED-04", "3\u00d77\u2032 @T \u00b7 r1~2\u2032"],
+  ["LT-SEED-05", "6\u00d76\u2032 @T \u00b7 r2\u2032"],
+  ["V2-SEED-01", "6\u00d72\u2032 @I \u00b7 r1\u2032 jog"],
+  ["V2-SEED-02", "5\u00d73\u2032 @I \u00b7 r2\u2032 jog"],
+  ["V2-SEED-03", "4\u00d74\u2032 @I \u00b7 r3\u2032 jog"],
+  ["V2-SEED-04", "4\u00d73\u2032 @95% vVO2max \u00b7 r3\u2032 easy"],
+  ["V2-SEED-05", "5\u00d71000m @5K RP \u00b7 r2\u203230\u2033"],
+  ["GL-SEED-01", "3~4\u00d7500m @GOAL 1500m RP \u00b7 r2~3\u2032"],
+  ["GL-SEED-02", "3\u00d7(800m+200m+200m) \u00b7 r90\u2033 \u00b7 R3\u2032"],
+  ["GL-SEED-03", "2~3\u00d7(250m+100m) \u00b7 r30\u2033 \u00b7 R4~8\u2032"],
+  ["GL-SEED-04", "150m-200m-300m @90~100% \u00b7 full recovery"],
+  ["GL-SEED-05", "1~2\u00d7300~600m \u00b7 long full recovery"],
+  ["AP-SEED-01", "3\u00d7(15~25m acceleration + 30m max velocity) \u00b7 r2~5\u2032"],
+  ["AP-SEED-02", "2\u00d7(3\u00d720m) \u00b7 r2\u2032"],
+  ["AP-SEED-03", "3\u00d730m \u00b7 r3\u2032"],
+  ["AP-SEED-04", "4\u00d730m + 4\u00d750m \u00b7 r2~3\u2032 full recovery"],
+  ["AP-SEED-05", "5\u00d7(4 bounds + 30m acceleration)"],
+  ["RE-SUPPORT-01", "REST"],
+  ["RE-SUPPORT-02", "20~30\u2032 very easy"],
+  ["RE-SUPPORT-03", "mobility-only"],
+  ["RE-SUPPORT-04", "walk only"],
+  ["RE-SUPPORT-05", "REVIEW_REQUIRED"],
+]);
+const parserReadyNotation = "5\u00d71000m @5000m RP \u00b7 r150\u2033";
+const parserReadyBasis = "5K=5000m; 2 minutes 30 seconds=150 seconds; repetitions, distance, and recovery are unchanged.";
+const pendingRangeBlockers = [
+  "A human must select 3 or 4 repetitions.",
+  "A human must select 2 or 3 minutes of repetition recovery.",
+  "A display and runtime path must keep GOAL RP distinct from current capability.",
+];
 
 function requireFinalMarker(text, documentName) {
   const markerMatches = text.match(/^\[DRAFT_COMPLETE\]$/gmu) ?? [];
@@ -43,12 +89,21 @@ function requireFinalMarker(text, documentName) {
 failUnless(blocks.length === 30, `catalog must contain exactly 30 entries, got ${blocks.length}`);
 
 const intentCounts = new Map([...expectedIntentCounts.keys()].map((intent) => [intent, 0]));
+const machineNotationStatusCounts = new Map(
+  [...expectedMachineNotationStatusCounts.keys()].map((status) => [status, 0]),
+);
 const templateIds = new Set();
 
 for (const block of blocks) {
   const id = block.match(/^- templateId: ([^\r\n]+)/mu)?.[1] ?? "unknown";
   const requireEntryMarker = (marker, message) => failUnless(block.includes(marker), `${id} ${message}`);
   const intent = block.match(/^\s+planningIntent: ([^\r\n]+)/mu)?.[1] ?? "missing";
+  const notationPattern = block.match(/^\s+notationPattern: "([^\r\n]+)"$/mu)?.[1] ?? "missing";
+  const machineNotation = block.match(/^\s+machineNotation: (null|"[^\r\n]+")$/mu)?.[1] ?? "missing";
+  const machineNotationStatus = block.match(/^\s+machineNotationStatus: ([^\r\n]+)/mu)?.[1] ?? "missing";
+  const machineNotationBasis = block.match(/^\s+machineNotationBasis: (null|"[^\r\n]+")$/mu)?.[1] ?? "missing";
+  const machineNotationBlockers = block.match(/^\s+machineNotationBlockers:\r?\n((?:\s+- "[^\r\n]+"\r?\n)*)/mu)?.[1] ?? "missing";
+  const machineNotationBlockerValues = [...machineNotationBlockers.matchAll(/^\s+- "([^\r\n]+)"$/gmu)].map((match) => match[1]);
 
   requireEntryMarker("lifecycleStatus: DRAFT", "must remain DRAFT");
   requireEntryMarker("eligibilityStatus: REVIEW_REQUIRED", "must require review");
@@ -59,9 +114,33 @@ for (const block of blocks) {
   failUnless(!/^\s+eligibility:/mu.test(block), `${id} must not contain a TemplateLibrary eligibility object`);
   failUnless(!templateIds.has(id), `${id} templateId must be unique`);
   templateIds.add(id);
+  failUnless(notationPattern === expectedNotationPatterns.get(id), `${id} must preserve its canonical notationPattern`);
 
   failUnless(intentCounts.has(intent), `${id} has unsupported or missing planningIntent: ${intent}`);
   if (intentCounts.has(intent)) intentCounts.set(intent, intentCounts.get(intent) + 1);
+
+  failUnless(
+    machineNotationStatusCounts.has(machineNotationStatus),
+    `${id} has unsupported or missing machineNotationStatus: ${machineNotationStatus}`,
+  );
+  if (machineNotationStatusCounts.has(machineNotationStatus)) {
+    machineNotationStatusCounts.set(machineNotationStatus, machineNotationStatusCounts.get(machineNotationStatus) + 1);
+  }
+  if (machineNotationStatus === "PARSER_READY") {
+    failUnless(machineNotation !== "null", `${id} parser-ready machineNotation must not be null`);
+    failUnless(machineNotationBasis !== "null", `${id} parser-ready machineNotationBasis must not be null`);
+    failUnless(machineNotationBlockerValues.length === 0, `${id} parser-ready machineNotationBlockers must be empty`);
+  } else {
+    failUnless(machineNotation === "null", `${id} must keep machineNotation null while pending`);
+  }
+  if (id === "V2-SEED-05") {
+    failUnless(machineNotation === `"${parserReadyNotation}"`, "V2-SEED-05 must keep its exact parser-ready machineNotation");
+    failUnless(machineNotationBasis === `"${parserReadyBasis}"`, "V2-SEED-05 must keep its parser-ready basis");
+  }
+  if (id === "GL-SEED-01") {
+    failUnless(machineNotationStatus === "PENDING_OWNER_RANGE_DECISION", "GL-SEED-01 must require an owner range decision");
+    failUnless(machineNotationBlockerValues.join("\u0000") === pendingRangeBlockers.join("\u0000"), "GL-SEED-01 must keep its three range blockers");
+  }
 
   if (block.includes("sourceVerificationStatus: DIRECT_SOURCE_EXAMPLE")) {
     const refs = block.match(/sourceRefs: \[([^\]]+)\]/u)?.[1]?.split(",").map((value) => value.trim()) ?? [];
@@ -80,6 +159,14 @@ for (const [intent, expectedCount] of expectedIntentCounts) {
   );
 }
 
+for (const [status, expectedCount] of expectedMachineNotationStatusCounts) {
+  const actualCount = machineNotationStatusCounts.get(status);
+  failUnless(
+    actualCount === expectedCount,
+    `${status} must contain exactly ${expectedCount} entries, got ${actualCount}`,
+  );
+}
+
 for (const marker of [
   "catalog_entry_is_registered_template_record: false",
   "allowedEventGroups_empty_means: NOT_ELIGIBLE_FOR_ANY_EVENT_GROUP",
@@ -87,6 +174,10 @@ for (const marker of [
   "draftCandidateEventGroups_runtime_consumption: forbidden",
   "automatic_plan_binding: forbidden",
   "automatic_prescription_authorized: false",
+  "notationPattern_is_canonical: true",
+  "machineNotation_requires_status: PARSER_READY",
+  "non_parser_ready_machineNotation_must_be_null: true",
+  "runtime_template_activation_from_this_field: forbidden",
 ]) {
   failUnless(catalog.includes(marker), `catalog missing required boundary: ${marker}`);
 }

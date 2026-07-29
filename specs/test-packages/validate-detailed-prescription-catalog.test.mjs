@@ -221,3 +221,48 @@ test("Given contract text follows the final marker, when validated, then it fail
   assert.notEqual(result.status, 0);
   assert.match(result.stderr, /contract final marker must be the last non-whitespace content/u);
 });
+
+for (const machineNotationMutation of [
+  { name: "V2 parser-ready repetition count changes", from: 'machineNotation: "5×1000m @5000m RP · r150″"', to: 'machineNotation: "4×1000m @5000m RP · r150″"', expected: /V2-SEED-05 must keep its exact parser-ready machineNotation/u },
+  { name: "V2 parser-ready repetition distance changes", from: 'machineNotation: "5×1000m @5000m RP · r150″"', to: 'machineNotation: "5×100m @5000m RP · r150″"', expected: /V2-SEED-05 must keep its exact parser-ready machineNotation/u },
+  { name: "V2 parser-ready race-pace event changes", from: 'machineNotation: "5×1000m @5000m RP · r150″"', to: 'machineNotation: "5×1000m @1500m RP · r150″"', expected: /V2-SEED-05 must keep its exact parser-ready machineNotation/u },
+  { name: "V2 parser-ready machine notation becomes null", from: 'machineNotation: "5×1000m @5000m RP · r150″"', to: "machineNotation: null", expected: /V2-SEED-05 parser-ready machineNotation must not be null/u },
+  { name: "V2 machine notation receives a pending-state string", from: 'machineNotation: "5×1000m @5000m RP · r150″"', to: "machineNotation: PENDING_OWNER_RANGE_DECISION", expected: /V2-SEED-05 must keep its exact parser-ready machineNotation/u },
+  {
+    name: "V2 parser-ready recovery changes from 150 seconds to one second",
+    from: 'machineNotation: "5×1000m @5000m RP · r150″"',
+    to: 'machineNotation: "5×1000m @5000m RP · r1″"',
+    expected: /V2-SEED-05 must keep its exact parser-ready machineNotation/u,
+  },
+  {
+    name: "V2 parser-ready status changes",
+    from: "machineNotationStatus: PARSER_READY",
+    to: "machineNotationStatus: NOT_APPLICABLE_NO_PACE_TARGET",
+    expected: /PARSER_READY must contain exactly 1 entries, got 0/u,
+  },
+  {
+    name: "V2 parser-ready basis becomes null",
+    from: 'machineNotationBasis: "5K=5000m; 2 minutes 30 seconds=150 seconds; repetitions, distance, and recovery are unchanged."',
+    to: "machineNotationBasis: null",
+    expected: /V2-SEED-05 must keep its parser-ready basis/u,
+  },
+  {
+    name: "pending range decision receives a machine notation",
+    from: /machineNotation: null\r?\n  machineNotationStatus: PENDING_OWNER_RANGE_DECISION/u,
+    to: 'machineNotation: "3×500m @1500m RP · r120″"\n  machineNotationStatus: PENDING_OWNER_RANGE_DECISION',
+    expected: /GL-SEED-01 must keep machineNotation null while pending/u,
+  },
+  {
+    name: "V2 canonical notation pattern changes",
+    from: 'notationPattern: "5×1000m @5K RP · r2′30″"',
+    to: 'notationPattern: "4×1000m @5K RP · r2′30″"',
+    expected: /V2-SEED-05 must preserve its canonical notationPattern/u,
+  },
+]) {
+  test(`Given ${machineNotationMutation.name}, when validated, then it fails closed`, async () => {
+    const result = await validateWith({ catalogReplacement: machineNotationMutation });
+
+    assert.notEqual(result.status, 0);
+    assert.match(result.stderr, machineNotationMutation.expected);
+  });
+}

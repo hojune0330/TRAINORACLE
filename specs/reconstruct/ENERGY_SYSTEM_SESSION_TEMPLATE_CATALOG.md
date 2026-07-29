@@ -114,6 +114,36 @@ common_stop_condition_codes:
   - STOP_IF_TECHNIQUE_OR_STRUCTURED_EFFORT_CANNOT_BE_MAINTAINED
 ```
 
+### 3.1 Machine notation boundary
+
+`notationPattern` is the canonical source notation. `machineNotation` is a parser
+input only when an exact, non-narrowing representation exists. A pending state is
+never stored in `machineNotation`; it belongs in `machineNotationStatus`.
+
+```ts
+type MachineNotationStatus =
+  | "PARSER_READY"
+  | "PENDING_OWNER_RANGE_DECISION"
+  | "NOT_APPLICABLE_INTENSITY_ZONE"
+  | "NOT_APPLICABLE_NO_PACE_TARGET"
+  | "PENDING_CONVERSION_MODEL";
+```
+
+```yaml
+machine_notation_invariants:
+  notationPattern_is_canonical: true
+  machineNotation_requires_status: PARSER_READY
+  non_parser_ready_machineNotation_must_be_null: true
+  parser_ready_basis_required: true
+  parser_ready_blockers_must_be_empty: true
+  narrowing_a_range_without_human_decision: forbidden
+  runtime_template_activation_from_this_field: forbidden
+```
+
+Every entry below therefore contains `machineNotation`, `machineNotationStatus`,
+`machineNotationBasis`, and `machineNotationBlockers`. This documentation field
+does not activate a template, change eligibility, or authorise runtime use.
+
 ## 4. BASE_INTENT seeds
 
 ```yaml
@@ -126,6 +156,11 @@ common_stop_condition_codes:
   plainKoreanName: "30~45분 편안한 달리기"
   coachingTerm: "Easy run"
   notationPattern: "30~45′ @E"
+  machineNotation: null
+  machineNotationStatus: NOT_APPLICABLE_INTENSITY_ZONE
+  machineNotationBasis: null
+  machineNotationBlockers:
+    - "No approved model converts this intensity zone to same-event race pace."
   plainKoreanReading: "편안히 대화할 수 있는 느낌으로 30분에서 45분 달립니다."
   sourceRefs: [SRC-VDOT-PACES]
   sourcePopulation: "VDOT coach-facing running example; individual ability not specified."
@@ -155,6 +190,11 @@ common_stop_condition_codes:
   plainKoreanName: "20~30분 짧은 회복 달리기"
   coachingTerm: "Recovery easy run"
   notationPattern: "20~30′ @E"
+  machineNotation: null
+  machineNotationStatus: NOT_APPLICABLE_INTENSITY_ZONE
+  machineNotationBasis: null
+  machineNotationBlockers:
+    - "No approved model converts this intensity zone to same-event race pace."
   plainKoreanReading: "가볍고 편안한 느낌으로 20분에서 30분 달립니다."
   sourceRefs: [SRC-VDOT-PACES]
   sourcePopulation: "VDOT easy/recovery category, product duration adaptation."
@@ -184,6 +224,11 @@ common_stop_condition_codes:
   plainKoreanName: "45~60분 편안한 지속주"
   coachingTerm: "Extended easy run"
   notationPattern: "45~60′ @E"
+  machineNotation: null
+  machineNotationStatus: NOT_APPLICABLE_INTENSITY_ZONE
+  machineNotationBasis: null
+  machineNotationBlockers:
+    - "No approved model converts this intensity zone to same-event race pace."
   plainKoreanReading: "편안한 느낌을 유지하며 45분에서 60분 달립니다."
   sourceRefs: [SRC-VDOT-PACES]
   sourcePopulation: "VDOT easy category, product duration adaptation."
@@ -213,6 +258,11 @@ common_stop_condition_codes:
   plainKoreanName: "장거리 지속주 후보"
   coachingTerm: "Long easy run"
   notationPattern: "long easy @E · duration unresolved"
+  machineNotation: null
+  machineNotationStatus: NOT_APPLICABLE_INTENSITY_ZONE
+  machineNotationBasis: null
+  machineNotationBlockers:
+    - "No approved model converts this intensity zone to same-event race pace."
   plainKoreanReading: "시간이 승인된 개인 기준선으로 정해지기 전에는 이 항목을 배정하지 않습니다."
   sourceRefs: [SRC-VDOT-PACES, SRC-VDOT-GUIDE]
   sourcePopulation: "General VDOT guidance."
@@ -242,6 +292,11 @@ common_stop_condition_codes:
   plainKoreanName: "10분씩 나누어 편안하게 달리기"
   coachingTerm: "Broken easy run"
   notationPattern: "3×10′ @E · r1′ walk/jog"
+  machineNotation: null
+  machineNotationStatus: NOT_APPLICABLE_INTENSITY_ZONE
+  machineNotationBasis: null
+  machineNotationBlockers:
+    - "No approved model converts this intensity zone to same-event race pace."
   plainKoreanReading: "편안하게 10분 달린 뒤 1분 걷거나 조깅하며, 이를 세 번 반복합니다."
   sourceRefs: [SRC-VDOT-PACES]
   sourcePopulation: "Product representation of an easy-run category."
@@ -275,6 +330,11 @@ common_stop_condition_codes:
   plainKoreanName: "20분 역치 지속주"
   coachingTerm: "Threshold tempo"
   notationPattern: "20′ @T"
+  machineNotation: null
+  machineNotationStatus: NOT_APPLICABLE_INTENSITY_ZONE
+  machineNotationBasis: null
+  machineNotationBlockers:
+    - "No approved model converts this intensity zone to same-event race pace."
   plainKoreanReading: "역치 느낌으로 20분을 지속합니다."
   sourceRefs: [SRC-VDOT-T]
   sourcePopulation: "VDOT threshold guidance; not athlete-specific."
@@ -304,6 +364,11 @@ common_stop_condition_codes:
   plainKoreanName: "1600미터 역치 반복 3회"
   coachingTerm: "Threshold cruise intervals"
   notationPattern: "3×1600m @T · r1~2′"
+  machineNotation: null
+  machineNotationStatus: NOT_APPLICABLE_INTENSITY_ZONE
+  machineNotationBasis: null
+  machineNotationBlockers:
+    - "No approved model converts this intensity zone to same-event race pace."
   plainKoreanReading: "1600미터를 역치 느낌으로 세 번 달리고, 사이에 1분에서 2분 쉽니다."
   sourceRefs: [SRC-VDOT-T]
   sourcePopulation: "VDOT threshold guidance for 5-15 minute cruise intervals."
@@ -333,6 +398,11 @@ common_stop_condition_codes:
   plainKoreanName: "1600미터 크루즈 반복 4회"
   coachingTerm: "Cruise intervals"
   notationPattern: "4×1600m @T · r1′"
+  machineNotation: null
+  machineNotationStatus: NOT_APPLICABLE_INTENSITY_ZONE
+  machineNotationBasis: null
+  machineNotationBlockers:
+    - "No approved model converts this intensity zone to same-event race pace."
   plainKoreanReading: "1600미터를 같은 역치 느낌으로 네 번 달리고, 사이마다 1분 쉽니다."
   sourceRefs: [SRC-VDOT-CRUISE]
   sourcePopulation: "VDOT coaching article example."
@@ -362,6 +432,11 @@ common_stop_condition_codes:
   plainKoreanName: "7분 역치 반복 3회"
   coachingTerm: "Time-based cruise intervals"
   notationPattern: "3×7′ @T · r1~2′"
+  machineNotation: null
+  machineNotationStatus: NOT_APPLICABLE_INTENSITY_ZONE
+  machineNotationBasis: null
+  machineNotationBlockers:
+    - "No approved model converts this intensity zone to same-event race pace."
   plainKoreanReading: "역치 느낌으로 7분 달린 뒤 1분에서 2분 쉬며 세 번 반복합니다."
   sourceRefs: [SRC-VDOT-T, SRC-VDOT-GUIDE]
   sourcePopulation: "VDOT duration preference and threshold guidance."
@@ -391,6 +466,11 @@ common_stop_condition_codes:
   plainKoreanName: "6분 역치 반복 6회 후보"
   coachingTerm: "High-volume threshold intervals"
   notationPattern: "6×6′ @T · r2′"
+  machineNotation: null
+  machineNotationStatus: NOT_APPLICABLE_INTENSITY_ZONE
+  machineNotationBasis: null
+  machineNotationBlockers:
+    - "No approved model converts this intensity zone to same-event race pace."
   plainKoreanReading: "상급 코치 검토 전에는 이 고용량 후보를 배정하지 않습니다."
   sourceRefs: [SRC-VDOT-T]
   sourcePopulation: "Exact coach-case source for this notation was not re-opened."
@@ -424,6 +504,11 @@ common_stop_condition_codes:
   plainKoreanName: "2분 인터벌 6회"
   coachingTerm: "Interval pace"
   notationPattern: "6×2′ @I · r1′ jog"
+  machineNotation: null
+  machineNotationStatus: NOT_APPLICABLE_INTENSITY_ZONE
+  machineNotationBasis: null
+  machineNotationBlockers:
+    - "No approved model converts this intensity zone to same-event race pace."
   plainKoreanReading: "2분간 인터벌 느낌으로 달리고 1분 조깅하며 여섯 번 반복합니다."
   sourceRefs: [SRC-VDOT-PACES]
   sourcePopulation: "VDOT interval example."
@@ -453,6 +538,11 @@ common_stop_condition_codes:
   plainKoreanName: "3분 인터벌 5회"
   coachingTerm: "Interval pace"
   notationPattern: "5×3′ @I · r2′ jog"
+  machineNotation: null
+  machineNotationStatus: NOT_APPLICABLE_INTENSITY_ZONE
+  machineNotationBasis: null
+  machineNotationBlockers:
+    - "No approved model converts this intensity zone to same-event race pace."
   plainKoreanReading: "3분간 인터벌 느낌으로 달리고 2분 조깅하며 다섯 번 반복합니다."
   sourceRefs: [SRC-VDOT-PACES]
   sourcePopulation: "VDOT interval example."
@@ -482,6 +572,11 @@ common_stop_condition_codes:
   plainKoreanName: "4분 인터벌 4회"
   coachingTerm: "Long interval"
   notationPattern: "4×4′ @I · r3′ jog"
+  machineNotation: null
+  machineNotationStatus: NOT_APPLICABLE_INTENSITY_ZONE
+  machineNotationBasis: null
+  machineNotationBlockers:
+    - "No approved model converts this intensity zone to same-event race pace."
   plainKoreanReading: "4분간 인터벌 느낌으로 달리고 3분 조깅하며 네 번 반복합니다."
   sourceRefs: [SRC-VDOT-PACES, SRC-PMID-36314990]
   sourcePopulation: "VDOT example plus well-trained adult-men study context."
@@ -511,6 +606,11 @@ common_stop_condition_codes:
   plainKoreanName: "3분 고강도 반복 4회 후보"
   coachingTerm: "Long VO2 interval"
   notationPattern: "4×3′ @95% vVO2max · r3′ easy"
+  machineNotation: null
+  machineNotationStatus: PENDING_CONVERSION_MODEL
+  machineNotationBasis: null
+  machineNotationBlockers:
+    - "No approved model converts this percentage-based intensity to same-event race pace."
   plainKoreanReading: "연구 프로토콜 후보이며 개인 기준과 전이 검토 전에는 배정하지 않습니다."
   sourceRefs: [SRC-PMID-39835194]
   sourcePopulation: "PubMed metadata was confirmed; the exact full protocol was not re-opened."
@@ -540,6 +640,10 @@ common_stop_condition_codes:
   plainKoreanName: "1000미터 5회 5K 페이스 후보"
   coachingTerm: "5K-pace intervals"
   notationPattern: "5×1000m @5K RP · r2′30″"
+  machineNotation: "5×1000m @5000m RP · r150″"
+  machineNotationStatus: PARSER_READY
+  machineNotationBasis: "5K=5000m; 2 minutes 30 seconds=150 seconds; repetitions, distance, and recovery are unchanged."
+  machineNotationBlockers: []
   plainKoreanReading: "1000미터를 5K 레이스 페이스 기준으로 다섯 번 달리는 후보입니다."
   sourceRefs: [SRC-VDOT-PACES]
   sourcePopulation: "VDOT 3-5 minute interval range, adapted to 1000m."
@@ -573,6 +677,13 @@ common_stop_condition_codes:
   plainKoreanName: "500미터 3~4회 1500m 목표 페이스 후보"
   coachingTerm: "1500m race-pace repeats"
   notationPattern: "3~4×500m @GOAL 1500m RP · r2~3′"
+  machineNotation: null
+  machineNotationStatus: PENDING_OWNER_RANGE_DECISION
+  machineNotationBasis: null
+  machineNotationBlockers:
+    - "A human must select 3 or 4 repetitions."
+    - "A human must select 2 or 3 minutes of repetition recovery."
+    - "A display and runtime path must keep GOAL RP distinct from current capability."
   plainKoreanReading: "1500미터 목표 페이스라는 점을 분명히 보이는 500미터 반복 후보입니다."
   sourceRefs: [SRC-WA-1500]
   sourcePopulation: "Endurance-runner speed-training coaching example."
@@ -602,6 +713,11 @@ common_stop_condition_codes:
   plainKoreanName: "800-200-200 복합 반복 후보"
   coachingTerm: "Broken middle-distance set"
   notationPattern: "3×(800m+200m+200m) · r90″ · R3′"
+  machineNotation: null
+  machineNotationStatus: NOT_APPLICABLE_NO_PACE_TARGET
+  machineNotationBasis: null
+  machineNotationBlockers:
+    - "Current race-pace parser does not represent this sprint, recovery, or composite pattern."
   plainKoreanReading: "800미터와 200미터 두 번을 묶어 세 번 반복하는 복합 후보입니다."
   sourceRefs: [SRC-WA-1500]
   sourcePopulation: "Endurance-runner speed-training coaching example."
@@ -631,6 +747,11 @@ common_stop_condition_codes:
   plainKoreanName: "250-100 복합 반복 후보"
   coachingTerm: "Speed-endurance combination"
   notationPattern: "2~3×(250m+100m) · r30″ · R4~8′"
+  machineNotation: null
+  machineNotationStatus: NOT_APPLICABLE_NO_PACE_TARGET
+  machineNotationBasis: null
+  machineNotationBlockers:
+    - "Current race-pace parser does not represent this sprint, recovery, or composite pattern."
   plainKoreanReading: "250미터와 100미터를 묶는 후보이며, 대상 전이 검토 전에는 배정하지 않습니다."
   sourceRefs: [SRC-WA-DECATHLON]
   sourcePopulation: "Decathlon coaching example, indirect for middle-distance and youth."
@@ -660,6 +781,11 @@ common_stop_condition_codes:
   plainKoreanName: "150-200-300 스피드 지구력 후보"
   coachingTerm: "Speed endurance ladder"
   notationPattern: "150m-200m-300m @90~100% · full recovery"
+  machineNotation: null
+  machineNotationStatus: PENDING_CONVERSION_MODEL
+  machineNotationBasis: null
+  machineNotationBlockers:
+    - "No approved model converts this percentage-based intensity to same-event race pace."
   plainKoreanReading: "150미터, 200미터, 300미터를 긴 회복과 함께 하는 후보입니다."
   sourceRefs: [SRC-WA-DECATHLON]
   sourcePopulation: "Decathlon coaching example."
@@ -689,6 +815,11 @@ common_stop_condition_codes:
   plainKoreanName: "300~600미터 젖산 내성 후보"
   coachingTerm: "Long speed-endurance candidate"
   notationPattern: "1~2×300~600m · long full recovery"
+  machineNotation: null
+  machineNotationStatus: NOT_APPLICABLE_NO_PACE_TARGET
+  machineNotationBasis: null
+  machineNotationBlockers:
+    - "Current race-pace parser does not represent this sprint, recovery, or composite pattern."
   plainKoreanReading: "거리와 회복이 넓게 열려 있어 사람 검토 전에는 배정하지 않습니다."
   sourceRefs: [SRC-WA-SPRINT-RT]
   sourcePopulation: "Sprint-category coaching context."
@@ -722,6 +853,11 @@ common_stop_condition_codes:
   plainKoreanName: "가속과 최고속 구간 후보"
   coachingTerm: "Acceleration plus max velocity"
   notationPattern: "3×(15~25m acceleration + 30m max velocity) · r2~5′"
+  machineNotation: null
+  machineNotationStatus: NOT_APPLICABLE_NO_PACE_TARGET
+  machineNotationBasis: null
+  machineNotationBlockers:
+    - "Current race-pace parser does not represent this sprint, recovery, or composite pattern."
   plainKoreanReading: "짧은 가속과 30미터 최고속 구간을 묶는 스프린트 후보입니다."
   sourceRefs: [SRC-WA-SPRINT-INTRO, SRC-WA-MEDICAL]
   sourcePopulation: "Sprint coaching material; general athlete transfer not established."
@@ -751,6 +887,11 @@ common_stop_condition_codes:
   plainKoreanName: "20미터 3회씩 두 세트 후보"
   coachingTerm: "Short sprint recovery protocol"
   notationPattern: "2×(3×20m) · r2′"
+  machineNotation: null
+  machineNotationStatus: NOT_APPLICABLE_NO_PACE_TARGET
+  machineNotationBasis: null
+  machineNotationBlockers:
+    - "Current race-pace parser does not represent this sprint, recovery, or composite pattern."
   plainKoreanReading: "20미터를 세 번 달리고 쉬는 세트를 두 번 하는 연구 프로토콜 후보입니다."
   sourceRefs: [SRC-PMID-37776346]
   sourcePopulation: "Published sprint recovery study; exact participant transfer requires review."
@@ -780,6 +921,11 @@ common_stop_condition_codes:
   plainKoreanName: "30미터 3회 후보"
   coachingTerm: "Short sprint protocol"
   notationPattern: "3×30m · r3′"
+  machineNotation: null
+  machineNotationStatus: NOT_APPLICABLE_NO_PACE_TARGET
+  machineNotationBasis: null
+  machineNotationBlockers:
+    - "Current race-pace parser does not represent this sprint, recovery, or composite pattern."
   plainKoreanReading: "30미터를 세 번 달리고 사이마다 3분 회복하는 연구 프로토콜 후보입니다."
   sourceRefs: [SRC-PMID-37776346]
   sourcePopulation: "Published sprint recovery study; exact participant transfer requires review."
@@ -809,6 +955,11 @@ common_stop_condition_codes:
   plainKoreanName: "30미터와 50미터 스프린트 후보"
   coachingTerm: "Mixed short sprint set"
   notationPattern: "4×30m + 4×50m · r2~3′ full recovery"
+  machineNotation: null
+  machineNotationStatus: NOT_APPLICABLE_NO_PACE_TARGET
+  machineNotationBasis: null
+  machineNotationBlockers:
+    - "Current race-pace parser does not represent this sprint, recovery, or composite pattern."
   plainKoreanReading: "30미터와 50미터 스프린트를 긴 회복과 함께 하는 후보입니다."
   sourceRefs: [SRC-WA-SPRINT-RT]
   sourcePopulation: "Sprint category guidance, adapted product structure."
@@ -838,6 +989,11 @@ common_stop_condition_codes:
   plainKoreanName: "바운드와 30미터 가속 복합 후보"
   coachingTerm: "Plyometric-sprint complex"
   notationPattern: "5×(4 bounds + 30m acceleration)"
+  machineNotation: null
+  machineNotationStatus: NOT_APPLICABLE_NO_PACE_TARGET
+  machineNotationBasis: null
+  machineNotationBlockers:
+    - "Current race-pace parser does not represent this sprint, recovery, or composite pattern."
   plainKoreanReading: "바운드와 30미터 가속을 묶는 플라이오메트릭 복합 후보입니다."
   sourceRefs: [SRC-WA-SPRINTS]
   sourcePopulation: "Sprint coaching example."
@@ -871,6 +1027,11 @@ common_stop_condition_codes:
   plainKoreanName: "완전 휴식 지원 항목"
   coachingTerm: "Rest support"
   notationPattern: "REST"
+  machineNotation: null
+  machineNotationStatus: NOT_APPLICABLE_NO_PACE_TARGET
+  machineNotationBasis: null
+  machineNotationBlockers:
+    - "Current race-pace parser does not represent this sprint, recovery, or composite pattern."
   plainKoreanReading: "훈련을 배정하지 않는 지원 항목입니다. 회복 완료를 선언하지 않습니다."
   sourceRefs: [SRC-VDOT-GUIDE]
   sourcePopulation: "Product support representation."
@@ -900,6 +1061,11 @@ common_stop_condition_codes:
   plainKoreanName: "짧은 매우 편안한 움직임 후보"
   coachingTerm: "Easy movement support"
   notationPattern: "20~30′ very easy"
+  machineNotation: null
+  machineNotationStatus: NOT_APPLICABLE_NO_PACE_TARGET
+  machineNotationBasis: null
+  machineNotationBlockers:
+    - "Current race-pace parser does not represent this sprint, recovery, or composite pattern."
   plainKoreanReading: "매우 편안한 움직임 후보이며 회복 완료를 뜻하지 않습니다."
   sourceRefs: [SRC-VDOT-PACES]
   sourcePopulation: "Easy/recovery category adapted as support."
@@ -929,6 +1095,11 @@ common_stop_condition_codes:
   plainKoreanName: "가벼운 가동성 지원 항목"
   coachingTerm: "Mobility support"
   notationPattern: "mobility-only"
+  machineNotation: null
+  machineNotationStatus: NOT_APPLICABLE_NO_PACE_TARGET
+  machineNotationBasis: null
+  machineNotationBlockers:
+    - "Current race-pace parser does not represent this sprint, recovery, or composite pattern."
   plainKoreanReading: "가벼운 가동성 활동의 지원 항목이며 치료나 복귀 허가가 아닙니다."
   sourceRefs: [SRC-PRODUCT-RECOVERY-SUPPORT-001]
   sourcePopulation: "No direct session source claimed."
@@ -958,6 +1129,11 @@ common_stop_condition_codes:
   plainKoreanName: "걷기 전환 지원 항목"
   coachingTerm: "Walk support"
   notationPattern: "walk only"
+  machineNotation: null
+  machineNotationStatus: NOT_APPLICABLE_NO_PACE_TARGET
+  machineNotationBasis: null
+  machineNotationBlockers:
+    - "Current race-pace parser does not represent this sprint, recovery, or composite pattern."
   plainKoreanReading: "달리기 대신 걷기로 바꾸는 지원 항목이며 회복을 판정하지 않습니다."
   sourceRefs: [SRC-PRODUCT-RECOVERY-SUPPORT-001]
   sourcePopulation: "Product support representation."
@@ -987,6 +1163,11 @@ common_stop_condition_codes:
   plainKoreanName: "코치 확인 대기 지원 상태"
   coachingTerm: "Hold for review"
   notationPattern: "REVIEW_REQUIRED"
+  machineNotation: null
+  machineNotationStatus: NOT_APPLICABLE_NO_PACE_TARGET
+  machineNotationBasis: null
+  machineNotationBlockers:
+    - "Current race-pace parser does not represent this sprint, recovery, or composite pattern."
   plainKoreanReading: "회복 훈련을 대신 배정하지 않고 현재 계획을 유지하며 확인을 기다립니다."
   sourceRefs: [SRC-PRODUCT-RECOVERY-SUPPORT-001]
   sourcePopulation: "Product safety-support state, not a training protocol."
