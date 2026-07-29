@@ -35,7 +35,7 @@ test("current reconciliation records every legacy PR exactly once", async () => 
   assert.equal(result.status, 0, result.stderr);
   assert.match(
     result.stdout,
-    /legacyPrCount=18 terminalDispositionCount=16 pendingRebuildCount=2/u,
+    /legacyPrCount=18 terminalDispositionCount=18 pendingRebuildCount=0/u,
   );
 });
 
@@ -61,12 +61,12 @@ for (const [name, replacement, expected] of [
     /must record a successor/u,
   ],
   [
-    "missing rebuild-task link",
+    "missing replacement successor",
     {
-      from: "successorTask: Task 4",
-      to: "successorTask: UNRECORDED",
+      from: "successor: this reconciliation PR; Task 4",
+      to: "successor: UNRECORDED",
     },
-    /must record a successor task/u,
+    /must record a successor/u,
   ],
   [
     "content after final marker",
