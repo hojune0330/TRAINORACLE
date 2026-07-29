@@ -8,13 +8,19 @@
 
 ## Git 연결과 작업 기준
 
-- PR #139 head: `de0bcd5d4932988e5c0b512bb30d14de1de7afef`
-- PR #141 head와 이번 작업의 stack base:
-  `507444741c216f7535b12fef4802d5b5d231970b`
-- PR #139와 #141은 같은 main에서 갈라진 sibling branch이며 Git 조상 관계가
-  아니다.
-- PR #141의 보고서와 본문이 #139의 교정된 P2 작업지시를 명시적으로 인계한다.
-- 따라서 이번 PR은 #141 위에 쌓고, #139를 별도 병합 전제로 삼지 않는다.
+- PR #139 head `de0bcd5d4932988e5c0b512bb30d14de1de7afef`는 merge commit
+  `52a6b6a4ac45e92971e8828f51a45ce69ebe1628`로 main에 병합됐다.
+- PR #140 문서 지도는 merge commit
+  `0dcfb7c90e314841b2bf7a0d6355d3f3ceacb4dd`로 main에 병합됐다.
+- PR #141 head `507444741c216f7535b12fef4802d5b5d231970b`는 merge commit
+  `405b61943eaa78a6f75040e90e234e6acc2bc8c9`로 main에 병합됐다.
+- 이번 작업은 처음에는 PR #141 위에 쌓였고, PR #141 병합 뒤 PR #142의
+  base를 main으로 바꿨다. 이어서 최신 main을 작업 브랜치에 병합했다.
+- PR #139와 #141은 원래 같은 main에서 갈라진 sibling branch였지만,
+  PR #141의 보고서와 본문이 #139의 교정된 P2 작업지시를 명시적으로
+  인계했다. 두 PR은 이제 모두 main 이력에 보존되어 있다.
+- main 기준 PR #142의 실제 변경은 추천 계약·카탈로그 확장·검증·보고서
+  8개 파일이며, #139·#140·#141의 변경을 중복 제안하지 않는다.
 
 ## 오너 결정 원문
 
