@@ -154,6 +154,70 @@ Every entry below therefore contains `machineNotation`, `machineNotationStatus`,
 `machineNotationBasis`, and `machineNotationBlockers`. This documentation field
 does not activate a template, change eligibility, or authorise runtime use.
 
+### 3.2 Research Preview Visibility Policy
+
+This is a documentation-only source visibility boundary. Set
+`sourceTierVisibleForResearchPreview: true` only for records whose unchanged
+`sourceVerificationStatus` is `DIRECT_SOURCE_EXAMPLE` or `SOURCE_ADAPTED`. This
+does not establish runtime eligibility, safety, dose, order, selection, or
+activation.
+
+```yaml
+research_preview_visibility_policy:
+  source_tiers_visible_for_research_preview:
+    - DIRECT_SOURCE_EXAMPLE
+    - SOURCE_ADAPTED
+  source_visible_counts:
+    direct_source_example: 6
+    source_adapted: 9
+    source_visible_research_records: 15
+  excluded_before_count_ranking_or_explanation:
+    population_indirect: 6
+    product_variant: 4
+    rejected_or_unusable: 5
+    missing_or_unknown_source_tier: forbidden
+  sourceTierVisibleForResearchPreview_is_runtime_eligibility: false
+  current_catalog_runtime_candidates: 0
+  all_catalog_records_lifecycle_status: DRAFT
+  all_catalog_records_eligibility_status: REVIEW_REQUIRED
+  all_catalog_record_event_group_eligibility: EMPTY_FOR_ALL_30
+  all_catalog_record_experience_band_eligibility: EMPTY_FOR_ALL_30
+  catalog_eligibility_bypass: forbidden
+```
+
+### 3.3 Research Preview Group Contract
+
+The groups below are non-executable audit examples of the visibility policy. A
+group only identifies existing source-visible seed IDs; it cannot recommend,
+rank, select, schedule, dose, order, or activate a catalog record. In particular,
+a ranged source notation remains context-pending and must retain its exact range.
+
+```yaml
+research_preview_groups:
+  - groupId: RESEARCH-PREVIEW-LT-001
+    intent: LT_INTENT
+    templateIds: [LT-SEED-01, LT-SEED-02]
+    source_tiers: [DIRECT_SOURCE_EXAMPLE, SOURCE_ADAPTED]
+  - groupId: RESEARCH-PREVIEW-VO2-001
+    intent: VO2_INTENT
+    templateIds: [V2-SEED-01, V2-SEED-05]
+    source_tiers: [DIRECT_SOURCE_EXAMPLE, SOURCE_ADAPTED]
+  - groupId: RESEARCH-PREVIEW-GLY-001
+    intent: GLY_INTENT
+    templateIds: [GL-SEED-01, GL-SEED-02]
+    source_tiers: [SOURCE_ADAPTED, SOURCE_ADAPTED]
+research_preview_group_invariants:
+  audit_example_only: true
+  non_executable: true
+  source_tier_filter_before_group_display: true
+  establishes_safety: false
+  establishes_dose: false
+  establishes_order: false
+  establishes_selection: false
+  establishes_activation: false
+  runtime_candidates_from_preview_groups: 0
+```
+
 ## 4. BASE_INTENT seeds
 
 ```yaml
