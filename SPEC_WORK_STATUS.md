@@ -232,6 +232,7 @@ Missing/reconstruct area:
 - [`specs/reconstruct/JOURNAL_DELIGHT_AND_DECORATION_SPEC.md`](./specs/reconstruct/JOURNAL_DELIGHT_AND_DECORATION_SPEC.md) (`DRAFT_FOR_REVIEW`; Work Order 006 draft)
 - [`specs/reconstruct/LOCAL_FIRST_SYNC_AND_PROMOTION_CONTRACT.md`](./specs/reconstruct/LOCAL_FIRST_SYNC_AND_PROMOTION_CONTRACT.md) (`DRAFT_FOR_REVIEW`; Work Order 006 draft)
 - [`specs/reconstruct/FEDERATED_ACCOUNT_SSO_CONTRACT.md`](./specs/reconstruct/FEDERATED_ACCOUNT_SSO_CONTRACT.md) (`DRAFT_FOR_REVIEW`; Work Order 006 draft)
+- [`specs/reconstruct/ADVISORY_SESSION_EXAMPLE_RECOMMENDER_CONTRACT.md`](./specs/reconstruct/ADVISORY_SESSION_EXAMPLE_RECOMMENDER_CONTRACT.md) (`DRAFT_FOR_REVIEW`; research-example advisory boundary, current runtime candidates 0)
 
 ## Reconstructed Or Source-Not-Verified Contracts
 
@@ -251,6 +252,7 @@ These required contracts are not all present as approved source files in this re
 | `JOURNAL_DELIGHT_AND_DECORATION_SPEC.md` | `specs/reconstruct/JOURNAL_DELIGHT_AND_DECORATION_SPEC.md` exists as `DRAFT_FOR_REVIEW`; Work Order 006 draft, not training-load reward authority, not safety authority, not canonical, not runtime evidence |
 | `LOCAL_FIRST_SYNC_AND_PROMOTION_CONTRACT.md` | `specs/reconstruct/LOCAL_FIRST_SYNC_AND_PROMOTION_CONTRACT.md` exists as `DRAFT_FOR_REVIEW`; Work Order 006 draft, not raw memo server-storage approval, not safety authority, not canonical, not runtime evidence |
 | `FEDERATED_ACCOUNT_SSO_CONTRACT.md` | `specs/reconstruct/FEDERATED_ACCOUNT_SSO_CONTRACT.md` exists as `DRAFT_FOR_REVIEW`; Work Order 006 draft, not AthleteTime code implementation, not TrainOracle safety authority, not canonical, not runtime evidence |
+| `ADVISORY_SESSION_EXAMPLE_RECOMMENDER_CONTRACT.md` | `specs/reconstruct/ADVISORY_SESSION_EXAMPLE_RECOMMENDER_CONTRACT.md` exists as `DRAFT_FOR_REVIEW`; direct/adapted research-example filtering and twice-confirmed non-executable personal-draft boundary only, current runtime candidates 0, not canonical or runtime behavior |
 | `COACH_RATIFICATION_SAFETY_DEFAULTS_2026_06_04_001` | Not found as approved local evidence |
 
 Do not claim a document exists from a chapter title, H1, table row, status label, or conversation summary. Exact local filename search is required.
@@ -283,6 +285,7 @@ Do not claim a document exists from a chapter title, H1, table row, status label
 22. Review `specs/reconstruct/FEDERATED_ACCOUNT_SSO_CONTRACT.md`; AthleteTime SSO is identity authority only and does not grant TrainOracle safety or coaching authority.
 23. Read `ACCOUNT_FEDERATION_DECISION.md`, `ATHLETETIME_INTEGRATION_REVIEW.md`, and `LAUNCH_BACKEND_AND_ACCOUNT_PLAN.md` before backend/account work; they are planning context, not runtime evidence.
 24. Begin App Bridge/API schema contracts and runtime evidence only after preserving the safety core chain and resolving the owner decisions called out by the account/sync drafts.
+25. Review `specs/reconstruct/ADVISORY_SESSION_EXAMPLE_RECOMMENDER_CONTRACT.md` with its validator package before any recommender implementation. Do not activate the 30-entry catalog, fabricate candidates, or convert the personal draft into an executable plan.
 
 ## Hard Guardrails
 
