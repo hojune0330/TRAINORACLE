@@ -72,6 +72,8 @@ function validateFixture(fixture, fixtureIndex) {
       : "BLOCKED_BY_D9_UNKNOWN";
     failUnless(fixture.state === expectedState, `${label} D9 state must short-circuit`);
     failUnless(candidates.length === 0, `${label} D9 block must contain zero candidates`);
+    failUnless(fixture.personalDraft == null, `${label} D9 block must not create a personal draft`);
+    failUnless(fixture.confirmations == null, `${label} D9 block must not record draft confirmations`);
   } else if (eligiblePoolCount < 2) {
     failUnless(
       fixture.state === "INSUFFICIENT_ELIGIBLE_CANDIDATES",
@@ -116,10 +118,27 @@ function validateFixture(fixture, fixtureIndex) {
     failUnless(eventIds.size === 2, `${label} confirmation event ids must be distinct`);
     const draft = fixture.personalDraft ?? {};
     failUnless(candidates.some((entry) => entry.candidateId === draft.sourceCandidateId), `${label} draft candidate must be visible`);
+    const acknowledgement = confirmations.find(
+      (entry) => entry.eventType === "ADVISORY_CANDIDATE_ACKNOWLEDGED",
+    );
+    const creation = confirmations.find(
+      (entry) => entry.eventType === "PERSONAL_DRAFT_CREATION_CONFIRMED",
+    );
+    failUnless(
+      acknowledgement?.candidateId === draft.sourceCandidateId,
+      `${label} acknowledgement candidate must match the draft source`,
+    );
+    failUnless(
+      creation?.selectedCandidateId === draft.sourceCandidateId,
+      `${label} selected candidate must match the draft source`,
+    );
     failUnless(draft.nonExecutable === true && draft.authority === false, `${label} personal draft must be inert`);
     for (const field of ["maySubmitValidation", "mayWriteCalendar", "mayExecuteSession", "mayApplyPlan"]) {
       failUnless(draft[field] === false, `${label} personal draft ${field} must be false`);
     }
+  } else {
+    failUnless(fixture.personalDraft == null, `${label} non-draft state must not create a personal draft`);
+    failUnless(fixture.confirmations == null, `${label} non-draft state must not record draft confirmations`);
   }
 }
 
