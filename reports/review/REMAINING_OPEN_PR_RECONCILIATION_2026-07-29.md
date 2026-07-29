@@ -5,8 +5,8 @@
     execution_model: gpt-5.6-terra
     reasoning_effort: xhigh
     legacy_pr_count: 18
-    terminal_disposition_count: 16
-    pending_rebuild_count: 2
+    terminal_disposition_count: 17
+    pending_rebuild_count: 1
     backend_code_harvested: false
     historical_review_claims_harvested: false
     runtime_authority: false
@@ -41,7 +41,7 @@ explicitly frozen product snapshot.
 | #108 | CLOSED_SUPERSEDED | successor: PR #109 | Close after this PR merges. | Replacement UX-flow document does not supersede shipped implementation. |
 | #110 | CLOSED_SUPERSEDED | successor: PR #109 | Close after this PR merges. | Replacement contract binding is historical and carries no runtime authority. |
 | #111 | CLOSED_SUPERSEDED | successor: PR #109 | Close after this PR merges. | Replacement Sol delta is advisory history, not an active product gate. |
-| #114 | PENDING_REBUILD_WITH_SUCCESSOR_TASK | successor: Task 4 fresh-main replacement after verification and merge | Keep open until Task 4 replacement is merged and publicly deployed. | It conflicts with current account, import, trash, and restore behavior; direct merge is unsafe. |
+| #114 | CLOSED_REPLACED | successor: PR #148 (main@40c2640) | Closed on 2026-07-29 after the fresh-main replacement merged and deployed. | PR #148 reimplemented past-date edit and same-date add against current account, import, trash, and restore behavior; the legacy branch was not revived. |
 | #115 | CLOSED_SUPERSEDED | successor: PR #123 and PR #127 | Close after this PR merges. | Proposal-only detailed-prescription material has been replaced by catalog and notation contracts. |
 | #121 | CLOSED_SUPERSEDED | successor: PR #123, PR #139, PR #141, and PR #142 | Close after this PR merges. | Calibration guidance is represented by corrected work orders and advisory boundary. |
 | #122 | CLOSED_SUPERSEDED | successor: PR #123, PR #139, PR #141, and PR #142 | Close after this PR merges. | Terra work order is historical once its detailed-prescription successor contracts exist. |
@@ -52,13 +52,12 @@ explicitly frozen product snapshot.
 
 1. Merge this documentation-only reconciliation PR after its validator and current-main
    CI are green.
-2. Close the 16 terminal rows using the exact successor text above. Keep #114 and #126
-   open until their Task 4 and Task 9 fresh-main replacements are merged and publicly
-   deployed; their later close comments must link the verified replacement PRs.
+2. #114 is already closed after PR #148 merged and deployed. Keep #126 open until its
+   Task 9 fresh-main replacement is merged and publicly deployed; its later close
+   comment must link the verified replacement PR.
 3. Do not rebase, cherry-pick, or merge either legacy branch.
-4. Task 4 and Task 9 build fresh-main replacement PRs. Each replacement must cite its
-   legacy PR only after it has tests, independent review, merged SHA, and public-deploy
-   verification.
+4. Task 9 builds a fresh-main replacement PR. It may cite its legacy PR only after it
+   has tests, independent review, merged SHA, and public-deploy verification.
 
 ## Non-Authority Reminder
 

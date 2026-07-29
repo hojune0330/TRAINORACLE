@@ -10,7 +10,6 @@ const terminalStatuses = new Set([
   "MERGED_AS_RECONCILED",
 ]);
 const pendingRebuildSuccessors = new Map([
-  [114, "successor: Task 4 fresh-main replacement"],
   [126, "successor: Task 9 fresh-main provenance-safe archive replacement"],
 ]);
 
@@ -69,10 +68,10 @@ if (nonEmptyLines.at(-1) !== "[DRAFT_COMPLETE]") {
     } else if (row.status === "PENDING_REBUILD_WITH_SUCCESSOR_TASK") {
       const expectedSuccessor = pendingRebuildSuccessors.get(row.pr);
       if (!expectedSuccessor) {
-        fail("pending rebuild disposition is only allowed for PR #114 or PR #126");
+        fail("pending rebuild disposition is only allowed for PR #126");
         valid = false;
       } else if (!row.successor.startsWith(expectedSuccessor)) {
-        fail("pending replacement for PR #" + row.pr + " must record its Task " + (row.pr === 114 ? "4" : "9") + " successor");
+        fail("pending replacement for PR #" + row.pr + " must record its Task 9 successor");
         valid = false;
       }
     } else {
@@ -90,7 +89,7 @@ if (nonEmptyLines.at(-1) !== "[DRAFT_COMPLETE]") {
     fail("declared disposition counts must match table");
     valid = false;
   }
-  if (valid && rows.length === expectedPrs.length && terminalCount === 16 && pendingCount === 2) {
+  if (valid && rows.length === expectedPrs.length && terminalCount === 17 && pendingCount === 1) {
     process.stdout.write(
       "legacyPrCount=" + rows.length +
       " terminalDispositionCount=" + terminalCount +
