@@ -70,7 +70,7 @@ for (const [name, replacement, expected] of [
   ],
   [
     "content after final marker",
-    { from: "[DRAFT_COMPLETE]\n", to: "[DRAFT_COMPLETE]\nUNAUTHORIZED_TRAILING_TEXT\n" },
+    { from: "[DRAFT_COMPLETE]", to: "[DRAFT_COMPLETE]\nUNAUTHORIZED_TRAILING_TEXT" },
     /final marker must be the final non-empty line/u,
   ],
 ]) {
