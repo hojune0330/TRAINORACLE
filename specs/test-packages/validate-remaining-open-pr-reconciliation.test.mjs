@@ -35,7 +35,7 @@ test("current reconciliation records every legacy PR exactly once", async () => 
   assert.equal(result.status, 0, result.stderr);
   assert.match(
     result.stdout,
-    /legacyPrCount=18 terminalDispositionCount=16 pendingRebuildCount=2/u,
+    /legacyPrCount=18 terminalDispositionCount=17 pendingRebuildCount=1/u,
   );
 });
 
@@ -63,26 +63,26 @@ for (const [name, replacement, expected] of [
   [
     "missing pending replacement successor",
     {
-      from: "successor: Task 4 fresh-main replacement",
+      from: "successor: Task 9 fresh-main provenance-safe archive replacement",
       to: "successor: UNRECORDED",
     },
-    /pending replacement for PR #114 must record its Task 4 successor/u,
+    /pending replacement for PR #126 must record its Task 9 successor/u,
   ],
   [
     "premature terminal disposition for deferred PR",
     {
-      from: "| #114 | PENDING_REBUILD_WITH_SUCCESSOR_TASK |",
-      to: "| #114 | CLOSED_REPLACED |",
+      from: "| #126 | PENDING_REBUILD_WITH_SUCCESSOR_TASK |",
+      to: "| #126 | CLOSED_REPLACED |",
     },
-    /PR #114 must remain pending until its fresh-main replacement is verified/u,
+    /PR #126 must remain pending until its fresh-main replacement is verified/u,
   ],
   [
-    "wrong pending replacement successor for PR #114",
+    "closed replacement cannot be reopened as pending",
     {
-      from: "successor: Task 4 fresh-main replacement",
-      to: "successor: Task 9 fresh-main provenance-safe archive replacement",
+      from: "| #114 | CLOSED_REPLACED |",
+      to: "| #114 | PENDING_REBUILD_WITH_SUCCESSOR_TASK |",
     },
-    /pending replacement for PR #114 must record its Task 4 successor/u,
+    /pending rebuild disposition is only allowed for PR #126/u,
   ],
   [
     "wrong pending replacement successor for PR #126",
@@ -95,8 +95,8 @@ for (const [name, replacement, expected] of [
   [
     "declared disposition counts differ from table counts",
     {
-      from: "terminal_disposition_count: 16",
-      to: "terminal_disposition_count: 17",
+      from: "terminal_disposition_count: 17",
+      to: "terminal_disposition_count: 18",
     },
     /declared disposition counts must match table/u,
   ],
