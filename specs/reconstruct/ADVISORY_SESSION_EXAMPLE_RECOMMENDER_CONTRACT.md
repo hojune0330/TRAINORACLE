@@ -144,6 +144,51 @@ journal_and_llm_boundary:
   d9_clearance_from_journal_result: forbidden
 ```
 
+### 4.1 Confirmed journal projection and range context
+
+`ConfirmedJournalResult` is a separate user-confirmed projection, not the raw
+journal record. The projection contains an explicit normalized event identity,
+date, and performance only after user confirmation. Raw journal record, memo, and
+symptom text remain outside the projection and are ineligible for ranking, pace,
+capability, eligibility, candidate reason text, and external LLM inputs.
+
+```ts
+interface UserConfirmedJournalProjection {
+  journalResultId: string;
+  userConfirmationStatus: "USER_CONFIRMED";
+  eventIdentity: NormalizedEventIdentity;
+  eventDate: string;
+  performance: NormalizedPerformance;
+}
+```
+
+`ConfirmedJournalResult` must satisfy this projection shape in addition to its
+existing confirmation status. Only an exact same-event projection may be displayed.
+A goal label and a dated same-event result label may be displayed separately; they
+must not be converted into a cross-event comparison, pace target, or current-
+capability verdict.
+
+Ranged source notation is preserved as written. A repetition or recovery range is
+unresolved and context-pending until all of `sessionObjective`,
+`targetEventIdentityOrDistance`, `speedOrEffortAnchor`, and `currentContext` are
+structured and present. Energy intent cannot supply a fixed default, and no
+context-pending notation may gain fixed machine notation.
+
+### 4.2 Catalog research preview binding
+
+The catalog's `Research Preview Visibility Policy` admits exactly the 6
+`DIRECT_SOURCE_EXAMPLE` and 9 `SOURCE_ADAPTED` records to a 15-record
+documentation-only research view. The 6 `POPULATION_INDIRECT`, 4
+`PRODUCT_VARIANT`, and 5 `REJECTED_OR_UNUSABLE` records are excluded before
+counting, ranking, or explanation. `sourceTierVisibleForResearchPreview: true`
+is not runtime eligibility: all 30 catalog records remain `DRAFT`,
+`REVIEW_REQUIRED`, with empty event and experience arrays, so the current catalog
+still has 0 runtime candidates and no eligibility bypass.
+
+The catalog's LT, VO2, and GLY research preview groups are audit-only references
+to existing direct/adapted IDs. They are not recommendations and cannot establish
+safety, dose, order, selection, or activation.
+
 ## 5. Candidate shape and source filter
 
 ```ts
