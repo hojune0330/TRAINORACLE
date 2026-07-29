@@ -9,7 +9,6 @@ const terminalStatuses = new Set([
   "CLOSED_DUPLICATE_IMPLEMENTATION",
   "MERGED_AS_RECONCILED",
 ]);
-const pendingStatuses = new Set(["PENDING_REBUILD_WITH_SUCCESSOR_TASK"]);
 
 function fail(message) {
   process.stderr.write(message + "\n");
@@ -59,11 +58,6 @@ if (nonEmptyLines.at(-1) !== "[DRAFT_COMPLETE]") {
         fail("terminal disposition for PR #" + row.pr + " must record a successor");
         valid = false;
       }
-    } else if (pendingStatuses.has(row.status)) {
-      if (!/^successorTask: Task (4|9)$/u.test(row.successor)) {
-        fail("pending rebuild for PR #" + row.pr + " must record a successor task");
-        valid = false;
-      }
     } else {
       fail("invalid disposition for PR #" + row.pr);
       valid = false;
@@ -71,8 +65,8 @@ if (nonEmptyLines.at(-1) !== "[DRAFT_COMPLETE]") {
   }
 
   const terminalCount = rows.filter((row) => terminalStatuses.has(row.status)).length;
-  const pendingCount = rows.filter((row) => pendingStatuses.has(row.status)).length;
-  if (valid && rows.length === expectedPrs.length && terminalCount === 16 && pendingCount === 2) {
+  const pendingCount = 0;
+  if (valid && rows.length === expectedPrs.length && terminalCount === 18) {
     process.stdout.write(
       "legacyPrCount=" + rows.length +
       " terminalDispositionCount=" + terminalCount +
