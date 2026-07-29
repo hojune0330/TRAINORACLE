@@ -41,19 +41,20 @@ explicitly frozen product snapshot.
 | #108 | CLOSED_SUPERSEDED | successor: PR #109 | Close after this PR merges. | Replacement UX-flow document does not supersede shipped implementation. |
 | #110 | CLOSED_SUPERSEDED | successor: PR #109 | Close after this PR merges. | Replacement contract binding is historical and carries no runtime authority. |
 | #111 | CLOSED_SUPERSEDED | successor: PR #109 | Close after this PR merges. | Replacement Sol delta is advisory history, not an active product gate. |
-| #114 | CLOSED_REPLACED | successor: this reconciliation PR; Task 4 fresh-main replacement link is required in the close comment | Close after this PR merges. | It conflicts with current account, import, trash, and restore behavior; direct merge is unsafe. |
+| #114 | PENDING_REBUILD_WITH_SUCCESSOR_TASK | successor: Task 4 fresh-main replacement after verification and merge | Keep open until Task 4 replacement is merged and publicly deployed. | It conflicts with current account, import, trash, and restore behavior; direct merge is unsafe. |
 | #115 | CLOSED_SUPERSEDED | successor: PR #123 and PR #127 | Close after this PR merges. | Proposal-only detailed-prescription material has been replaced by catalog and notation contracts. |
 | #121 | CLOSED_SUPERSEDED | successor: PR #123, PR #139, PR #141, and PR #142 | Close after this PR merges. | Calibration guidance is represented by corrected work orders and advisory boundary. |
 | #122 | CLOSED_SUPERSEDED | successor: PR #123, PR #139, PR #141, and PR #142 | Close after this PR merges. | Terra work order is historical once its detailed-prescription successor contracts exist. |
-| #126 | CLOSED_REPLACED | successor: this reconciliation PR; Task 9 fresh-main replacement link is required in the close comment | Close after this PR merges. | Archive aggregation lacks a provenance gate and is based on a non-main branch. |
+| #126 | PENDING_REBUILD_WITH_SUCCESSOR_TASK | successor: Task 9 fresh-main provenance-safe archive replacement after verification and merge | Keep open until Task 9 replacement is merged and publicly deployed. | Archive aggregation lacks a provenance gate and is based on a non-main branch. |
 | #130 | CLOSED_SUPERSEDED | successor: PR #131 | Close after this PR merges. | Training-schedule research corpus and acceptance artifacts already landed through PR #131. |
 
 ## Execution Sequence
 
 1. Merge this documentation-only reconciliation PR after its validator and current-main
    CI are green.
-2. Close all 18 rows using the exact successor text above. The #114 and #126 comments
-   must also link the fresh-main Task 4 and Task 9 replacements.
+2. Close the 16 terminal rows using the exact successor text above. Keep #114 and #126
+   open until their Task 4 and Task 9 fresh-main replacements are merged and publicly
+   deployed; their later close comments must link the verified replacement PRs.
 3. Do not rebase, cherry-pick, or merge either legacy branch.
 4. Task 4 and Task 9 build fresh-main replacement PRs. Each replacement must cite its
    legacy PR only after it has tests, independent review, merged SHA, and public-deploy
