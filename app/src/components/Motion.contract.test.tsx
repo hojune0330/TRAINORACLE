@@ -41,6 +41,46 @@ describe("motion CSS contract", () => {
     expect(appCss).not.toContain("scale(0)")
   })
 
+  it("gives text fields a press response without moving the caret", () => {
+    // 입력칸 21개가 눌러도 아무 반응이 없었다 (작업지시서 UX1 §1-3).
+    expect(appCss).toContain(":where(input, select, textarea):not(:disabled):active")
+    expect(appCss).toContain("transition: border-color 90ms var(--ease-out-strong)")
+
+    // 입력칸에는 transform 을 쓰지 않는다 — 글자 커서가 흔들린다.
+    const inputActiveRule = appCss.slice(
+      appCss.indexOf(":where(input, select, textarea):not(:disabled):active"),
+    ).slice(0, appCss.slice(appCss.indexOf(":where(input, select, textarea):not(:disabled):active")).indexOf("}"))
+    expect(inputActiveRule).not.toContain("transform")
+  })
+
+  it("settles a collapsed section briefly without animating layout height", () => {
+    expect(appCss).toContain("formsec-settle 120ms var(--ease-out-strong)")
+    expect(appCss).toContain("translateY(-2px)")
+
+    // height 를 애니메이션하면 아래 구획이 통째로 밀려 올라와 눈이 위치를 잃는다.
+    const keyframesMatch = appCss.match(/@keyframes formsec-settle\s*\{[\s\S]*?^\}/mu)
+    expect(keyframesMatch).not.toBeNull()
+    const keyframes = keyframesMatch?.[0] ?? ""
+    expect(keyframes).not.toMatch(/\bheight\b/u)
+    // opacity 0 에서 시작하면 새로 나타나는 느낌이라 산만하다.
+    expect(keyframes).toContain("opacity: 0.55")
+  })
+
+  it("keeps the collapsed-section motion inside the reduced-motion fallback", () => {
+    const reduceBlock = appCss.slice(appCss.indexOf("@media (prefers-reduced-motion: reduce)"))
+    expect(reduceBlock).toContain(".formsec--collapsed")
+    // 색 반응은 남기고 시간만 없앤다. 움직임을 싫어하는 설정이지
+    // 반응이 없기를 바라는 설정이 아니다.
+    expect(reduceBlock).toContain(":where(input, select, textarea):not(:disabled):active")
+  })
+
+  it("does not introduce a second easing curve or new hard-coded colors", () => {
+    // 가속 곡선은 --ease-out-strong 정의 한 줄뿐이어야 한다.
+    expect(appCss.match(/cubic-bezier/gu)?.length ?? 0).toBe(1)
+    // 색은 인쇄용 블록의 3개뿐 (ADR A3 — 토큰 단일 소스).
+    expect(appCss.match(/#[0-9a-fA-F]{3,6}/gu)?.length ?? 0).toBe(3)
+  })
+
   it("keeps keyboard focus visible and avoids unguarded hover motion", () => {
     expect(appCss).toContain(":focus-visible")
     expect(appCss).toContain("outline: 2px solid var(--focus-ring)")
