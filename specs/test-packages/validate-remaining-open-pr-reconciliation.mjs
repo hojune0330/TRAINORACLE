@@ -9,6 +9,10 @@ const terminalStatuses = new Set([
   "CLOSED_DUPLICATE_IMPLEMENTATION",
   "MERGED_AS_RECONCILED",
 ]);
+const pendingRebuildSuccessors = new Map([
+  [114, "successor: Task 4 fresh-main replacement"],
+  [126, "successor: Task 9 fresh-main provenance-safe archive replacement"],
+]);
 
 function fail(message) {
   process.stderr.write(message + "\n");
@@ -53,9 +57,22 @@ if (nonEmptyLines.at(-1) !== "[DRAFT_COMPLETE]") {
       fail("unexpected legacy PR #" + row.pr);
       valid = false;
     }
-    if (terminalStatuses.has(row.status)) {
+    const pendingSuccessor = pendingRebuildSuccessors.get(row.pr);
+    if (pendingSuccessor && row.status !== "PENDING_REBUILD_WITH_SUCCESSOR_TASK") {
+      fail("PR #" + row.pr + " must remain pending until its fresh-main replacement is verified");
+      valid = false;
+    } else if (terminalStatuses.has(row.status)) {
       if (!/^successor: (PR #\d+|main@|this reconciliation PR)/u.test(row.successor)) {
         fail("terminal disposition for PR #" + row.pr + " must record a successor");
+        valid = false;
+      }
+    } else if (row.status === "PENDING_REBUILD_WITH_SUCCESSOR_TASK") {
+      const expectedSuccessor = pendingRebuildSuccessors.get(row.pr);
+      if (!expectedSuccessor) {
+        fail("pending rebuild disposition is only allowed for PR #114 or PR #126");
+        valid = false;
+      } else if (!row.successor.startsWith(expectedSuccessor)) {
+        fail("pending replacement for PR #" + row.pr + " must record its Task " + (row.pr === 114 ? "4" : "9") + " successor");
         valid = false;
       }
     } else {
@@ -65,8 +82,15 @@ if (nonEmptyLines.at(-1) !== "[DRAFT_COMPLETE]") {
   }
 
   const terminalCount = rows.filter((row) => terminalStatuses.has(row.status)).length;
-  const pendingCount = 0;
-  if (valid && rows.length === expectedPrs.length && terminalCount === 18) {
+  const pendingCount = rows.filter((row) => row.status === "PENDING_REBUILD_WITH_SUCCESSOR_TASK").length;
+  const declaredTerminal = Number(/^\s*terminal_disposition_count: (\d+)$/mu.exec(text)?.[1]);
+  const declaredPending = Number(/^\s*pending_rebuild_count: (\d+)$/mu.exec(text)?.[1]);
+  if (!Number.isInteger(declaredTerminal) || !Number.isInteger(declaredPending) ||
+      declaredTerminal !== terminalCount || declaredPending !== pendingCount) {
+    fail("declared disposition counts must match table");
+    valid = false;
+  }
+  if (valid && rows.length === expectedPrs.length && terminalCount === 16 && pendingCount === 2) {
     process.stdout.write(
       "legacyPrCount=" + rows.length +
       " terminalDispositionCount=" + terminalCount +
