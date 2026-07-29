@@ -37,6 +37,8 @@ jobs:
           node specs/test-packages/test-wo016-gate-verifier.mjs
           node --test specs/test-packages/validate-detailed-prescription-catalog.test.mjs
           node specs/test-packages/validate-detailed-prescription-catalog.mjs
+          node --test specs/test-packages/validate-advisory-session-recommender.test.mjs
+          node specs/test-packages/validate-advisory-session-recommender.mjs
 
       - name: Install D9 evaluator dependencies
         working-directory: runtime-evidence/d9-evaluator
