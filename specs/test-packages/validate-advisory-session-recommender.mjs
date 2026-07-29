@@ -21,6 +21,9 @@ const failUnless = (condition, message) => {
   if (!condition) failures.push(message);
 };
 const allowedSourceTiers = new Set(["DIRECT_SOURCE_EXAMPLE", "SOURCE_ADAPTED"]);
+const eventGroups = new Set(["SPRINT", "MIDDLE_DISTANCE", "LONG_DISTANCE", "ROAD_RUNNING"]);
+const performanceUnits = new Set(["MILLISECONDS", "SECONDS", "DISTANCE_METERS"]);
+const identifierPattern = /^[A-Z0-9][A-Z0-9._-]*$/u;
 const expectedSourceCounts = new Map([
   ["DIRECT_SOURCE_EXAMPLE", 6],
   ["SOURCE_ADAPTED", 9],
@@ -47,6 +50,35 @@ function requireFinalMarker(text, documentName) {
 
 function getField(block, field) {
   return block.match(new RegExp(`^\\s+${field}: ([^\\r\\n]+)`, "mu"))?.[1] ?? "MISSING";
+}
+
+function isNormalizedEventIdentity(value) {
+  const distance = value?.eventDistanceM;
+  return eventGroups.has(value?.eventGroup)
+    && typeof value.eventCode === "string" && identifierPattern.test(value.eventCode)
+    && (distance === null || (Number.isInteger(distance) && distance > 0));
+}
+
+function isNormalizedPerformance(value) {
+  return Number.isFinite(value?.value) && value.value > 0
+    && performanceUnits.has(value.unit)
+    && typeof value.canonicalText === "string" && value.canonicalText.trim().length > 0;
+}
+
+function isValidDate(value) {
+  return typeof value === "string" && /^\d{4}-\d{2}-\d{2}$/u.test(value)
+    && new Date(`${value}T00:00:00Z`).toISOString().slice(0, 10) === value;
+}
+
+function isSameEvent(left, right) {
+  return isNormalizedEventIdentity(left) && isNormalizedEventIdentity(right)
+    && left.eventGroup === right.eventGroup && left.eventCode === right.eventCode
+    && left.eventDistanceM === right.eventDistanceM;
+}
+
+function isValidSourceRef(value) {
+  return typeof value?.sourceId === "string" && identifierPattern.test(value.sourceId)
+    && (value.sourceVersion === null || typeof value.sourceVersion === "string");
 }
 
 function validateFixture(fixture, fixtureIndex) {
@@ -89,9 +121,12 @@ function validateFixture(fixture, fixtureIndex) {
 
   for (const candidate of candidates) {
     failUnless(allowedSourceTiers.has(candidate.sourceTier), `${label} contains a forbidden source tier`);
+    failUnless(typeof candidate.candidateId === "string"
+      && identifierPattern.test(candidate.candidateId), `${label} candidate id is invalid`);
     failUnless(candidate.nonExecutable === true, `${label} candidate must be non-executable`);
     failUnless(candidate.authority === false, `${label} candidate must have no authority`);
-    failUnless(Array.isArray(candidate.sourceRefs) && candidate.sourceRefs.length > 0, `${label} source refs required`);
+    failUnless(Array.isArray(candidate.sourceRefs) && candidate.sourceRefs.length > 0
+      && candidate.sourceRefs.every(isValidSourceRef), `${label} structured source refs required`);
   }
   failUnless(
     new Set(candidates.map((candidate) => candidate.candidateId)).size === candidates.length,
@@ -101,11 +136,11 @@ function validateFixture(fixture, fixtureIndex) {
   if (fixture.usesJournal === true) {
     const projection = fixture.journalProjection ?? {};
     failUnless(projection.confirmed === true, `${label} journal projection must be confirmed`);
-    failUnless(typeof projection.eventIdentity === "string" && projection.eventIdentity.length > 0, `${label} event identity required`);
-    failUnless(typeof projection.eventDate === "string" && projection.eventDate.length > 0, `${label} event date required`);
-    failUnless(typeof projection.performance === "string" && projection.performance.length > 0, `${label} performance required`);
+    failUnless(isNormalizedEventIdentity(projection.eventIdentity), `${label} normalized event identity required`);
+    failUnless(isValidDate(projection.eventDate), `${label} valid event date required`);
+    failUnless(isNormalizedPerformance(projection.performance), `${label} normalized performance required`);
     failUnless(projection.rawTextUsed === false, `${label} raw journal text must not be used`);
-    failUnless(projection.eventIdentity === fixture.targetEventIdentity, `${label} journal comparison must be same-event`);
+    failUnless(isSameEvent(projection.eventIdentity, fixture.targetEventIdentity), `${label} journal comparison must be same-event`);
   }
 
   if (fixture.state === "PERSONAL_DRAFT_CREATED") {
@@ -113,6 +148,9 @@ function validateFixture(fixture, fixtureIndex) {
     const eventTypes = new Set(confirmations.map((entry) => entry.eventType));
     const eventIds = new Set(confirmations.map((entry) => entry.confirmationEventId));
     failUnless(confirmations.length === 2, `${label} requires exactly two confirmation records`);
+    failUnless(confirmations.every((entry) => typeof entry.confirmationEventId === "string"
+      && identifierPattern.test(entry.confirmationEventId)),
+      `${label} confirmation event ids must be valid`);
     failUnless(eventTypes.has("ADVISORY_CANDIDATE_ACKNOWLEDGED"), `${label} acknowledgement confirmation missing`);
     failUnless(eventTypes.has("PERSONAL_DRAFT_CREATION_CONFIRMED"), `${label} draft confirmation missing`);
     failUnless(eventIds.size === 2, `${label} confirmation event ids must be distinct`);
@@ -172,7 +210,8 @@ for (const [tier, expectedCount] of expectedSourceCounts) {
 const previewSection = catalog.match(/research_preview_groups:\r?\n([\s\S]*?)research_preview_group_invariants:/u)?.[1] ?? "";
 const previewIds = [...previewSection.matchAll(/templateIds: \[([^\]]+)\]/gu)]
   .flatMap((match) => match[1].split(",").map((value) => value.trim()));
-failUnless(previewIds.length > 0, "catalog must define research preview groups");
+failUnless(previewIds.length === 6, "catalog must define exactly six preview ids");
+failUnless(new Set(previewIds).size === 6, "catalog preview ids must be unique");
 for (const previewId of previewIds) {
   failUnless(recordsById.has(previewId), `preview id ${previewId} must exist`);
   failUnless(allowedSourceTiers.has(recordsById.get(previewId)?.sourceTier), `preview id ${previewId} has forbidden source tier`);

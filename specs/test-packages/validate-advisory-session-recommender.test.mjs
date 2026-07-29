@@ -20,7 +20,7 @@ function applyRequiredReplacement(text, replacement, label) {
 function candidate(candidateId, sourceTier = "DIRECT_SOURCE_EXAMPLE") {
   return {
     candidateId, sourceTier, nonExecutable: true, authority: false,
-    sourceRefs: [`SRC-${candidateId}`],
+    sourceRefs: [{ sourceId: `SRC-${candidateId}`, sourceVersion: null }],
   };
 }
 
@@ -72,9 +72,12 @@ function journalFixture() {
   return {
     ...readyFixture(),
     usesJournal: true,
-    targetEventIdentity: "1500M",
+    targetEventIdentity: { eventGroup: "MIDDLE_DISTANCE", eventCode: "1500M", eventDistanceM: 1500 },
     journalProjection: {
-      confirmed: true, eventIdentity: "1500M", eventDate: "2026-07-29", performance: "PT4M05S",
+      confirmed: true,
+      eventIdentity: { eventGroup: "MIDDLE_DISTANCE", eventCode: "1500M", eventDistanceM: 1500 },
+      eventDate: "2026-07-29",
+      performance: { value: 245000, unit: "MILLISECONDS", canonicalText: "4:05.00" },
       rawTextUsed: false,
     },
   };
@@ -154,18 +157,15 @@ for (const [name, fixture] of [
   ["one visible candidate", readyFixture(2, 1)],
   ["four visible candidates", readyFixture(4, 4)],
   ["padded insufficient pool", { ...readyFixture(1), candidates: [candidate("C1"), candidate("C1")] }],
+  ["invalid candidate id", changed(readyFixture(), (f) => { f.candidates[0].candidateId = ""; })],
+  ["raw source ref", changed(readyFixture(), (f) => { f.candidates[0].sourceRefs = ["memo text"]; })],
 ]) {
   test(`${name} fails closed`, async () => {
-    await assertInvalid(fixture, /visible candidate count|candidate ids must be unique/u);
+    await assertInvalid(fixture, /visible candidate count|candidate ids must be unique|candidate id is invalid|structured source refs required/u);
   });
 }
 
-for (const tier of [
-  "POPULATION_INDIRECT",
-  "PRODUCT_VARIANT",
-  "REJECTED_OR_UNUSABLE",
-  "UNKNOWN_SOURCE",
-]) {
+for (const tier of ["POPULATION_INDIRECT", "PRODUCT_VARIANT", "REJECTED_OR_UNUSABLE", "UNKNOWN_SOURCE"]) {
   test(`visible source tier ${tier} fails closed`, async () => {
     await assertInvalid(
       changed(readyFixture(), (fixture) => { fixture.candidates[0].sourceTier = tier; }),
@@ -204,14 +204,7 @@ test("selected candidate and draft source mismatch fails closed", async () => {
   );
 });
 
-for (const field of [
-  "nonExecutable",
-  "authority",
-  "maySubmitValidation",
-  "mayWriteCalendar",
-  "mayExecuteSession",
-  "mayApplyPlan",
-]) {
+for (const field of ["nonExecutable", "authority", "maySubmitValidation", "mayWriteCalendar", "mayExecuteSession", "mayApplyPlan"]) {
   test(`unsafe personal draft field ${field} fails closed`, async () => {
     const fixture = draftFixture();
     fixture.personalDraft[field] = field === "nonExecutable" ? false : true;
@@ -234,11 +227,14 @@ test("confirmed structured same-event journal input passes", async () => {
 
 for (const [name, mutate, expected] of [
   ["unconfirmed projection", (f) => { f.journalProjection.confirmed = false; }, /must be confirmed/u],
+  ["free-text event", (f) => { f.journalProjection.eventIdentity = "1500m"; }, /normalized event identity required/u],
+  ["invalid date", (f) => { f.journalProjection.eventDate = "2026-02-30"; }, /valid event date required/u],
+  ["free-text performance", (f) => { f.journalProjection.performance = "4:05"; }, /normalized performance required/u],
   ["missing event", (f) => { f.journalProjection.eventIdentity = ""; }, /event identity required/u],
   ["missing date", (f) => { f.journalProjection.eventDate = ""; }, /event date required/u],
   ["missing performance", (f) => { f.journalProjection.performance = ""; }, /performance required/u],
   ["raw text", (f) => { f.journalProjection.rawTextUsed = true; }, /raw journal text must not be used/u],
-  ["cross-event", (f) => { f.targetEventIdentity = "800M"; }, /journal comparison must be same-event/u],
+  ["cross-event", (f) => { f.targetEventIdentity.eventCode = "800M"; }, /journal comparison must be same-event/u],
 ]) {
   test(`journal ${name} fails closed`, async () => {
     await assertInvalid(changed(journalFixture(), mutate), expected);
@@ -272,4 +268,9 @@ test("an absent hostile replacement makes the test itself fail", async () => {
     }),
     /hostile mutation must alter its fixture/u,
   );
+});
+
+test("a duplicated research preview id fails closed", async () => {
+  const result = await validateWith({ catalogReplacement: { from: "templateIds: [LT-SEED-01, LT-SEED-02]", to: "templateIds: [LT-SEED-01, LT-SEED-01]" } });
+  assert.notEqual(result.status, 0); assert.match(result.stderr, /catalog preview ids must be unique/u);
 });
