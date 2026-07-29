@@ -6,6 +6,7 @@ import type { JournalEntryType } from "./shared"
 interface EntryChooserProps {
   readonly onBack?: () => void
   readonly onPick?: (entryType: JournalEntryType) => void
+  readonly targetDate?: string
   /** 워치 내보내기 파일 가져오기 — 직접 쓰기의 대안 진입점 */
   readonly onOpenImport?: () => void
 }
@@ -16,20 +17,21 @@ const ENTRY_OPTIONS = [
   { id: "race", t: "경기 직전/직후", d: "기록·심박·감정", meta: "RACE · ~30초", mark: "▲" },
 ] as const
 
-export function EntryChooser({ onBack, onPick, onOpenImport }: EntryChooserProps) {
+export function EntryChooser({ onBack, onPick, onOpenImport, targetDate }: EntryChooserProps) {
+  const entryDate = targetDate ?? todayISO()
   return (
     <div style={{ paddingBottom: 30 }}>
       <TopBar onBack={onBack}>새 일지</TopBar>
       <div style={{ padding: "20px 20px 4px" }}>
         <div style={{ fontFamily: "var(--mono)", fontSize: 10, color: "var(--ink-3)", letterSpacing: "0.14em", textTransform: "uppercase" }}>
-          {compactDate(todayISO())} {dowOf(todayISO())} · {nowClock()}
+          {compactDate(entryDate)} {dowOf(entryDate)} · {nowClock()}
         </div>
         <h1 style={{ fontFamily: "var(--sans)", fontSize: 22, fontWeight: 500, letterSpacing: "-0.02em", margin: "6px 0 0" }}>어떤 일지를 쓰세요?</h1>
       </div>
 
       <div style={{ marginTop: 18 }}>
         {ENTRY_OPTIONS.map((option, index) => (
-          <button key={option.id} onClick={() => onPick?.(option.id)} style={{
+          <button key={option.id} data-testid={`entry-choice-${option.id}`} onClick={() => onPick?.(option.id)} style={{
             width: "100%", textAlign: "left",
             padding: "18px 20px",
             background: "var(--surface)",
@@ -76,7 +78,7 @@ export function EntryChooser({ onBack, onPick, onOpenImport }: EntryChooserProps
 
       <div style={{ padding: "24px 20px" }}>
         <div style={{ fontFamily: "var(--mono)", fontSize: 10, color: "var(--ink-4)", letterSpacing: "0.06em", lineHeight: 1.55 }}>
-          {entriesForDate(todayISO()).length > 0
+          {entriesForDate(entryDate).length > 0
             ? "오늘 일지가 이미 있어요. 같은 날에 여러 진입점으로 쓰면 한 페이지에 합쳐집니다."
             : "오늘 첫 일지예요. 짧게 몰아 쓰면 1분이면 끝나요."}
         </div>

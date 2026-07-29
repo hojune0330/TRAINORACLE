@@ -4,6 +4,7 @@ import { toAnalysisJournalEntry, toExportJournalEntry } from "./safe-export"
 import type { AnalysisJournalEntry, SafeJournalEntry } from "./safe-export"
 import { recordTombstone, removeTombstone } from "./account/tombstone"
 import { moveToTrash, takeFromTrash } from "./journal-trash"
+import { JOURNAL_STORAGE_KEY, journalStorage, writeJournalEntries } from "./journal-local-storage"
 
 export type {
   EveningEntry,
@@ -16,40 +17,16 @@ export type {
   RaceEntry,
 } from "./journal-schema"
 
-const KEY = "trainoracle.journal.v1"
-
 export type JournalExportOptions = {
   readonly includeRawMemos?: boolean
 }
 
-function storage(): Storage | null {
-  try {
-    if (typeof window === "undefined") return null
-    const localStorage = window.localStorage
-    const probe = "__to_probe__"
-    localStorage.setItem(probe, "1")
-    localStorage.removeItem(probe)
-    return localStorage
-  } catch {
-    return null
-  }
-}
-
-function writeEntries(localStorage: Storage, entries: readonly JournalEntry[]): boolean {
-  try {
-    localStorage.setItem(KEY, JSON.stringify(entries))
-    return true
-  } catch {
-    return false
-  }
-}
-
 export function loadEntries(): JournalEntry[] {
-  const localStorage = storage()
+  const localStorage = journalStorage()
   if (localStorage === null) return []
 
   try {
-    const raw = localStorage.getItem(KEY)
+    const raw = localStorage.getItem(JOURNAL_STORAGE_KEY)
     if (raw === null) return []
     const parsed: unknown = JSON.parse(raw)
     const entries = parseJournalEntryList(parsed)
@@ -68,9 +45,9 @@ export function saveEntry(entry: unknown): { readonly ok: boolean; readonly tota
   if (parsedEntry === null) return { ok: false, total: all.length }
 
   all.push(parsedEntry)
-  const localStorage = storage()
+  const localStorage = journalStorage()
   if (localStorage === null) return { ok: false, total: all.length }
-  return { ok: writeEntries(localStorage, all), total: all.length }
+  return { ok: writeJournalEntries(localStorage, all), total: all.length }
 }
 
 export function loadAnalysisEntries(): AnalysisJournalEntry[] {
@@ -93,9 +70,9 @@ export function entriesForDate(date: string): JournalEntry[] {
  */
 export function replaceAllEntries(entries: readonly unknown[]): { readonly ok: boolean; readonly total: number } {
   const parsed = parseJournalEntryList(entries)
-  const localStorage = storage()
+  const localStorage = journalStorage()
   if (localStorage === null) return { ok: false, total: loadEntries().length }
-  const ok = writeEntries(localStorage, parsed)
+  const ok = writeJournalEntries(localStorage, parsed)
   return { ok, total: ok ? parsed.length : loadEntries().length }
 }
 
@@ -134,14 +111,14 @@ export function deleteEntry(id: string): DeleteEntryResult {
   if (target === undefined) return { ok: false, total: all.length, trashed: false }
 
   const remaining = all.filter((entry) => entry.id !== id)
-  const localStorage = storage()
+  const localStorage = journalStorage()
   if (localStorage === null) return { ok: false, total: all.length, trashed: false }
 
   if (!recordTombstone(id)) return { ok: false, total: all.length, trashed: false }
 
   const trashed = moveToTrash(target)
 
-  const ok = writeEntries(localStorage, remaining)
+  const ok = writeJournalEntries(localStorage, remaining)
   if (!ok) {
     // 본문에 그대로 남아 있는데 휴지통에도 있으면 되돌리기가 사본을 하나 더
     // 만든다. 넣었던 것을 빼서 상태를 원래대로 돌린다.
@@ -179,12 +156,12 @@ export function restoreDeletedEntry(id: string): RestoreDeletedResult {
 
   const restored = { ...taken.entry, id: newEntryId(), syncState: "local" as const }
   const next = [...loadEntries(), restored]
-  const localStorage = storage()
+  const localStorage = journalStorage()
   if (localStorage === null) {
     moveToTrash(taken.entry, taken.deletedAt)
     return { ok: false, restoredId: null, total: next.length - 1 }
   }
-  if (!writeEntries(localStorage, next)) {
+  if (!writeJournalEntries(localStorage, next)) {
     // 꺼내 놓고 저장에 실패하면 일지가 어디에도 없게 된다. 휴지통에 되돌린다.
     moveToTrash(taken.entry, taken.deletedAt)
     return { ok: false, restoredId: null, total: next.length - 1 }
@@ -282,6 +259,9 @@ export function todayISO(): string {
   const padded = (value: number) => String(value).padStart(2, "0")
   return `${date.getFullYear()}-${padded(date.getMonth() + 1)}-${padded(date.getDate())}`
 }
+
+export { updateEntry } from "./journal-update"
+export type { UpdateEntryResult } from "./journal-update"
 
 export const LOCAL_SAVE_NOTICE = "이 기기에 저장됐어요"
 export const SYNC_UPSELL_NOTICE = "온라인 보관·기기 이동은 계정 연동 후에 할 수 있어요"

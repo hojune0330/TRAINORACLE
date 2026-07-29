@@ -14,9 +14,11 @@ export type IntensityAssessmentController = {
   readonly removeComponent: (componentId: string) => void
 }
 
-export function useIntensityAssessment(): IntensityAssessmentController {
-  const [plannedRpe, setPlannedRpe] = React.useState(0)
-  const [objectiveComponents, setObjectiveComponents] = React.useState<readonly ObjectiveLoadComponent[]>([])
+export function useIntensityAssessment(initial?: SessionIntensityAssessment): IntensityAssessmentController {
+  const [plannedRpe, setPlannedRpe] = React.useState(() => initial?.plannedRpe ?? 0)
+  const [objectiveComponents, setObjectiveComponents] = React.useState<readonly ObjectiveLoadComponent[]>(
+    () => initial?.objectiveComponents.map((component) => ({ ...component })) ?? [],
+  )
   const assessment: SessionIntensityAssessment | undefined = plannedRpe === 0 && objectiveComponents.length === 0
     ? undefined
     : {

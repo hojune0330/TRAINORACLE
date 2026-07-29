@@ -31,6 +31,10 @@ interface ViewState {
   importOpen: boolean
   /** 백업 되돌리기 화면 (home 탭 위 오버레이) — 계정·승인 불필요 */
   restoreOpen: boolean
+  journalDraft?: {
+    readonly date: string
+    readonly initialEntry?: JournalEntry
+  }
 }
 
 const INITIAL: ViewState = {
@@ -51,14 +55,15 @@ export function AppShell() {
   React.useState(() => recordDailyVisit(todayISO()))
   const [v, setV] = React.useState<ViewState>(INITIAL)
   const [savedToast, setSavedToast] = React.useState<SavedToastState | null>(null)
+  const scrollRegionRef = React.useRef<HTMLElement | null>(null)
   const [firstVisitActive, setFirstVisitActive] = React.useState(
     () => localOnlyCount() === 0 && !hasDismissedFirstVisit(),
   )
 
   const goHome = () => setV(INITIAL)
-  const goHomeAfterSave = (savedEntry: JournalEntry, reviewMessage?: string) => {
+  const goHomeAfterSave = (savedEntry: JournalEntry, reviewMessage?: string, detailDate?: string) => {
     const receipt = createSavedFactReceipt(savedEntry)
-    setV(INITIAL)
+    setV(detailDate === undefined ? INITIAL : { ...INITIAL, detailDate })
     dismissFirstVisit()
     setFirstVisitActive(false)
     setSavedToast({ count: localOnlyCount(), phase: "enter", receipt, reviewMessage })
@@ -76,6 +81,12 @@ export function AppShell() {
     }, delay)
     return () => window.clearTimeout(t)
   }, [savedToast])
+  React.useLayoutEffect(() => {
+    const scrollRegion = scrollRegionRef.current
+    if (scrollRegion === null) return
+    scrollRegion.scrollTop = 0
+    scrollRegion.scrollLeft = 0
+  }, [v.tab, v.entryType, v.detailDate, v.journalDraft?.date, v.journalDraft?.initialEntry?.id])
   const goTab = (tab: AppTab) =>
     setV({ tab, entryType: "choose", detailDate: null, accountOpen: false, importOpen: false, restoreOpen: false })
   const goTrendsFromReceipt = () => {
@@ -105,7 +116,24 @@ export function AppShell() {
     )
   } else if (v.tab === "home") {
     screen = v.detailDate ? (
-      <LogDetail date={v.detailDate} onBack={() => setV(s => ({ ...s, detailDate: null }))} />
+      <LogDetail
+        date={v.detailDate}
+        onBack={() => setV(s => ({ ...s, detailDate: null }))}
+        onAddEntry={(date) => setV(s => ({
+          ...s,
+          tab: "log",
+          entryType: "choose",
+          detailDate: date,
+          journalDraft: { date },
+        }))}
+        onEditEntry={(entry) => setV(s => ({
+          ...s,
+          tab: "log",
+          entryType: entry.kind,
+          detailDate: entry.date,
+          journalDraft: { date: entry.date, initialEntry: entry },
+        }))}
+      />
     ) : (
       <Home
         onWriteLog={(entryType) => setV(s => ({ ...s, tab: "log", entryType: entryType ?? "choose" }))}
@@ -145,13 +173,21 @@ export function AppShell() {
     screen = (
       <LogEntry
         entryType={v.entryType}
-        onBack={v.entryType === "choose" ? goHome : () => setV(s => ({ ...s, entryType: "choose" }))}
+        targetDate={v.journalDraft?.date}
+        initialEntry={v.journalDraft?.initialEntry}
+        onBack={v.entryType === "choose"
+          ? v.journalDraft === undefined
+            ? goHome
+            : () => setV(s => ({ ...s, tab: "home", entryType: "choose", detailDate: s.journalDraft?.date ?? null, journalDraft: undefined }))
+          : v.journalDraft?.initialEntry !== undefined
+            ? () => setV(s => ({ ...s, tab: "home", entryType: "choose", detailDate: s.journalDraft?.date ?? null, journalDraft: undefined }))
+            : () => setV(s => ({ ...s, entryType: "choose" }))}
         onOpenImport={() => setV(s => ({ ...s, importOpen: true }))}
         onDone={(picked, savedEntry, reviewMessage) => {
           if (v.entryType === "choose") {
             setV(s => ({ ...s, entryType: picked }))
           } else if (savedEntry !== undefined) {
-            goHomeAfterSave(savedEntry, reviewMessage)
+            goHomeAfterSave(savedEntry, reviewMessage, v.journalDraft?.date)
           }
         }}
       />
@@ -168,7 +204,7 @@ export function AppShell() {
       display: "flex", flexDirection: "column",
       maxWidth: "var(--app-shell-max-width)", margin: "0 auto",
     }}>
-      <main className="app-scroll-region">
+      <main ref={scrollRegionRef} className="app-scroll-region">
         {screen}
       </main>
       {savedToast !== null && (

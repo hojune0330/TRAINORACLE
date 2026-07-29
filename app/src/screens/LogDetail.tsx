@@ -3,7 +3,6 @@
 //  - 데모 수치 혼입 금지. 예시 일지는 Guide 화면에만 존재.
 //  - variant B(대시보드)는 디자인 워크스페이스 전용 데모 표면으로 유지 (앱 셸 미사용).
 import React from "react"
-import type { ReactNode } from "react"
 import { IndexCard, MoodStrip, PainDot, SectionLb } from "../components/JournalPrimitives"
 import { JournalConfirmationDialog } from "../components/JournalConfirmationDialog"
 import { TermHelp } from "../components/TermHelp"
@@ -14,11 +13,21 @@ import { hasImportedField } from "../domain/field-provenance"
 import { painLevelsRequireReview } from "../safety/memo-safety"
 import { cardDate, dowOf, seasonOf } from "../domain/dates"
 import { RaceSelfCheckSummary, SavedMemo } from "./log-entry/SavedEntryContext"
+import { CheckinRow, EntryDeleteRow, ImportedChip, SyncChip, TopBar2 } from "./journal-detail-primitives"
+import { JournalDetailActions } from "./journal-detail-actions"
 
 export type LogDetailVariant = "A" | "B"
 
-export function LogDetail({ date, onBack }: { date: string; variant?: LogDetailVariant; onBack?: () => void }) {
-  return <LogDetailJournal date={date} onBack={onBack} />
+export type LogDetailProps = {
+  readonly date: string
+  readonly variant?: LogDetailVariant
+  readonly onBack?: () => void
+  readonly onAddEntry?: (date: string) => void
+  readonly onEditEntry?: (entry: JournalEntry) => void
+}
+
+export function LogDetail({ date, onBack, onAddEntry, onEditEntry }: LogDetailProps) {
+  return <LogDetailJournal date={date} onBack={onBack} onAddEntry={onAddEntry} onEditEntry={onEditEntry} />
 }
 
 const SYSTEM_META: Record<string, { c: string; n: string; cls: string }> = {
@@ -37,7 +46,7 @@ function savedClock(iso: string): string {
 }
 
 // ───────── A. Journal-page (실데이터) ─────────
-function LogDetailJournal({ date, onBack }: { date: string; onBack?: (() => void) | undefined }) {
+function LogDetailJournal({ date, onBack, onAddEntry, onEditEntry }: LogDetailProps) {
   const [rev, setRev] = React.useState(0)
   // 방금 지운 것 — 되돌리기 버튼을 그 자리에서 띄우기 위해 들고 있는다.
   // 휴지통(30일)에 남아 있으므로 이 상태가 사라져도 복구는 가능하다.
@@ -89,6 +98,7 @@ function LogDetailJournal({ date, onBack }: { date: string; onBack?: (() => void
       <div style={{ padding: "14px 20px 0" }}>
         <IndexCard date={cardDate(date)} dow={dowOf(date)} season={seasonOf(date)} />
       </div>
+      <JournalDetailActions date={date} entries={entries} onAddEntry={onAddEntry} onEditEntry={onEditEntry} />
 
       {justDeleted && (
         <div data-testid="delete-undo" style={{
@@ -245,88 +255,6 @@ function LogDetailJournal({ date, onBack }: { date: string; onBack?: (() => void
           onConfirm={remove}
         />
       )}
-    </div>
-  )
-}
-
-function EntryDeleteRow({ entryId, onDelete }: { entryId: string; onDelete: () => void }) {
-  return (
-    <div style={{ marginTop: 12, borderTop: "1px dashed var(--hair)", paddingTop: 8, textAlign: "right" }}>
-      <button id={`journal-delete-${entryId}`} onClick={onDelete} style={{
-        background: "transparent", border: 0, cursor: "pointer",
-        fontFamily: "var(--mono)", fontSize: 9.5, color: "var(--ink-4)",
-        letterSpacing: "0.1em", padding: "4px 2px", minHeight: 44,
-        textDecoration: "underline",
-        textUnderlineOffset: 3,
-      }}>이 일지 지우기</button>
-    </div>
-  )
-}
-
-function SyncChip() {
-  return (
-    <span style={{
-      fontFamily: "var(--mono)", fontSize: 8.5, letterSpacing: "0.1em",
-      color: "var(--ink-4)",
-      border: "1px solid var(--hair)", padding: "2px 5px", whiteSpace: "nowrap",
-    }}>이 기기</span>
-  )
-}
-
-/**
- * 가져온 기록 출처 배지 — 실측/자동/수기를 섞어 보여주지 않기 위한 표시.
- * 가져온 값은 주간 통계·추이·훈련계획에서 제외되므로, 왜 숫자가 합계에
- * 안 잡히는지 사용자가 알 수 있어야 한다.
- */
-function ImportedChip() {
-  return (
-    <span
-      data-testid="imported-chip"
-      title="워치 파일에서 가져온 기록이에요 · 직접 확인한 값만 통계에 들어가요"
-      style={{
-        fontFamily: "var(--mono)", fontSize: 8.5, letterSpacing: "0.1em",
-        color: "var(--ink-2)",
-        border: "1px solid var(--line)", padding: "2px 5px", whiteSpace: "nowrap",
-      }}
-    >가져옴</span>
-  )
-}
-
-function CheckinRow({ lb, v, right, last }: { lb: string; v: string; right?: ReactNode; last?: boolean }) {
-  return (
-    <div style={{
-      display: "grid", gridTemplateColumns: "90px 1fr auto",
-      gap: 12, padding: "11px 14px", alignItems: "center",
-      borderBottom: last ? 0 : "1px dashed var(--hair)",
-      fontFamily: "var(--mono)",
-    }}>
-      <span style={{ fontSize: 9.5, color: "var(--ink-3)", letterSpacing: "0.14em", textTransform: "uppercase", fontWeight: 600 }}>{lb}</span>
-      <span style={{ fontSize: 12, color: "var(--ink)", fontWeight: 500 }}>{v}</span>
-      <span>{right}</span>
-    </div>
-  )
-}
-
-function TopBar2({ onBack, children }: { onBack?: (() => void) | undefined; children: ReactNode }) {
-  return (
-    <div style={{
-      padding: "12px 16px", borderBottom: "1px solid var(--line)",
-      display: "grid", gridTemplateColumns: "64px minmax(0, 1fr) 64px",
-      alignItems: "center",
-      background: "var(--bg)",
-    }}>
-      <button onClick={onBack} style={{
-        background: "transparent", border: 0, cursor: "pointer",
-        padding: 4, minWidth: 64, minHeight: 44,
-        fontFamily: "var(--mono)", fontSize: 11, color: "var(--ink-2)",
-        letterSpacing: "0.06em",
-      }}>← 뒤로</button>
-      <div style={{
-        minWidth: 0, fontFamily: "var(--mono)", fontSize: 11, fontWeight: 600,
-        color: "var(--ink)", letterSpacing: "0.14em", textTransform: "uppercase",
-        textAlign: "center",
-      }}>{children}</div>
-      <div aria-hidden="true"></div>
     </div>
   )
 }

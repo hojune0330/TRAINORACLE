@@ -2,34 +2,38 @@ import React from "react"
 import { IndexCard, MoodStrip } from "../../components/JournalPrimitives"
 import { compactDate, dowOf, nowClock } from "../../domain/dates"
 import { explicitOrMissing } from "../../domain/field-provenance"
-import { newEntryId, saveEntry, todayISO } from "../../domain/journal-store"
+import { newEntryId, saveEntry, todayISO, updateEntry } from "../../domain/journal-store"
 import type { JournalEntry } from "../../domain/journal-store"
 import { painLevelsRequireReview } from "../../safety/memo-safety"
 import { BodyDiagram, PainReviewBanner } from "./BodyDiagram"
 import { PurposeScopedMemoField, usePurposeScopedMemo } from "./PurposeScopedMemoField"
 import { inputStyle } from "./input-style"
-import { FormSec, StickyBar, TopBar } from "./shared"
+import { FormSec, TopBar } from "./shared"
+import { StickyBar } from "./StickyBar"
 import type { EntryFormProps } from "./shared"
 
 const MOOD_LABELS = ["흐림", "무덤덤", "보통", "좋음", "최고"] as const
 const SLEEP_QUALITY_LABELS = ["최악", "나쁨", "보통", "좋음", "최고"] as const
 
-export function EveningCheckin({ onBack, onDone }: EntryFormProps) {
-  const [sleep, setSleep] = React.useState(0)
-  const [quality, setQuality] = React.useState(0)
-  const [mood, setMood] = React.useState(0)
-  const [painParts, setPainParts] = React.useState<Record<string, number>>({})
-  const [weight, setWeight] = React.useState("")
-  const [hr, setHr] = React.useState("")
+export function EveningCheckin({ onBack, onDone, targetDate, initialEntry }: EntryFormProps) {
+  const initial = initialEntry?.kind === "evening" ? initialEntry : undefined
+  const isEditing = initial !== undefined
+  const entryDate = initial?.date ?? targetDate ?? todayISO()
+  const [sleep, setSleep] = React.useState(() => initial?.sleepH ?? 0)
+  const [quality, setQuality] = React.useState(() => initial?.sleepQuality ?? 0)
+  const [mood, setMood] = React.useState(() => initial?.mood ?? 0)
+  const [painParts, setPainParts] = React.useState<Record<string, number>>(() => ({ ...initial?.painParts }))
+  const [weight, setWeight] = React.useState(() => initial?.weightKg ?? "")
+  const [hr, setHr] = React.useState(() => initial?.restingHr ?? "")
   const [saveError, setSaveError] = React.useState(false)
-  const note = usePurposeScopedMemo()
+  const note = usePurposeScopedMemo(initial?.note ?? "", initial?.memoPurpose)
 
   const persist = () => {
     const notePreparation = note.prepareForSave()
     if (!notePreparation.ready) return
     const entry: JournalEntry = {
-      id: newEntryId(), kind: "evening", date: todayISO(),
-      savedAt: new Date().toISOString(), syncState: "local",
+      id: initial?.id ?? newEntryId(), kind: "evening", date: entryDate,
+      savedAt: initial?.savedAt ?? new Date().toISOString(), syncState: "local",
       sleepH: sleep, sleepQuality: quality, weightKg: weight, restingHr: hr,
       painParts, mood, note: note.text,
       fieldProvenance: {
@@ -42,7 +46,7 @@ export function EveningCheckin({ onBack, onDone }: EntryFormProps) {
       },
       ...(note.text.trim() !== "" && note.purpose !== undefined ? { memoPurpose: note.purpose } : {}),
     }
-    const result = saveEntry(entry)
+    const result = isEditing ? updateEntry(entry) : saveEntry(entry)
     if (window.location.search.includes("uitest")) console.log(`[JSAVE] kind=evening ok=${result.ok}`)
     if (!result.ok) { setSaveError(true); return }
     if (notePreparation.reviewMessage === null) onDone?.("evening", entry)
@@ -53,7 +57,7 @@ export function EveningCheckin({ onBack, onDone }: EntryFormProps) {
     <div style={{ paddingBottom: 100 }}>
       <TopBar onBack={onBack}>회복 · 하루 마무리</TopBar>
       <div style={{ padding: "14px 20px 0" }}>
-        <IndexCard date={compactDate(todayISO())} dow={`${dowOf(todayISO())} · ${nowClock()}`} />
+        <IndexCard date={compactDate(entryDate)} dow={`${dowOf(entryDate)} · ${nowClock()}`} />
       </div>
 
       <FormSec lb={`수면 · ${sleep > 0 ? `${sleep}h` : "미기록 (움직여서 기록)"}`}>
@@ -123,7 +127,7 @@ export function EveningCheckin({ onBack, onDone }: EntryFormProps) {
           placeholder="자유롭게..."
         />
       </FormSec>
-      <StickyBar onSave={persist} error={saveError} />
+      <StickyBar onSave={persist} error={saveError} label={isEditing ? "수정 저장" : undefined} />
     </div>
   )
 }
