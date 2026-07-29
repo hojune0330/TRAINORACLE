@@ -1,0 +1,4 @@
+interface:
+  display_name: "Terra-Sol Router"
+  short_description: "Route work by risk with compact Git handoffs"
+  default_prompt: "Use $terra-sol-router to assign this work between Terra and Sol, then leave a Git-SHA handoff."
