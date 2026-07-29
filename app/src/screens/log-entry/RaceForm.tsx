@@ -4,29 +4,34 @@ import { TermHelp } from "../../components/TermHelp"
 import { compactDate, dowOf, nowClock } from "../../domain/dates"
 import { explicitOrMissing } from "../../domain/field-provenance"
 import { parseTargetPaceInput } from "../../domain/journal-schema"
-import { newEntryId, saveEntry, todayISO } from "../../domain/journal-store"
+import { newEntryId, saveEntry, todayISO, updateEntry } from "../../domain/journal-store"
 import type { JournalEntry } from "../../domain/journal-store"
 import { PurposeScopedMemoField, usePurposeScopedMemo } from "./PurposeScopedMemoField"
 import { RacePostMood, RacePreChecks } from "./RaceSelfChecks"
 import { inputStyle } from "./input-style"
-import { FormSec, StickyBar, TopBar } from "./shared"
+import { FormSec, TopBar } from "./shared"
+import { StickyBar } from "./StickyBar"
 import type { EntryFormProps } from "./shared"
 
 type RaceStage = "pre" | "post"
 
-export function RaceForm({ onBack, onDone }: EntryFormProps) {
-  const [stage, setStage] = React.useState<RaceStage>("pre")
-  const [record, setRecord] = React.useState("")
-  const [rank, setRank] = React.useState("")
-  const [result, setResult] = React.useState("")
-  const [tension, setTension] = React.useState<number | null>(null)
-  const [condition, setCondition] = React.useState<number | null>(null)
-  const [mood, setMood] = React.useState<number | null>(null)
-  const [paceMinutes, setPaceMinutes] = React.useState("")
-  const [paceSeconds, setPaceSeconds] = React.useState("")
+export function RaceForm({ onBack, onDone, targetDate, initialEntry }: EntryFormProps) {
+  const initial = initialEntry?.kind === "race" ? initialEntry : undefined
+  const isEditing = initial !== undefined
+  const entryDate = initial?.date ?? targetDate ?? todayISO()
+  const initialPaceSeconds = initial?.goalPace?.secondsPerKm
+  const [stage, setStage] = React.useState<RaceStage>(() => initial?.stage ?? "pre")
+  const [record, setRecord] = React.useState(() => initial?.record ?? "")
+  const [rank, setRank] = React.useState(() => initial?.rank ?? "")
+  const [result, setResult] = React.useState(() => initial?.result ?? "")
+  const [tension, setTension] = React.useState<number | null>(() => initial?.tension ?? null)
+  const [condition, setCondition] = React.useState<number | null>(() => initial?.condition ?? null)
+  const [mood, setMood] = React.useState<number | null>(() => initial?.mood ?? null)
+  const [paceMinutes, setPaceMinutes] = React.useState(() => initialPaceSeconds === undefined ? "" : String(Math.floor(initialPaceSeconds / 60)))
+  const [paceSeconds, setPaceSeconds] = React.useState(() => initialPaceSeconds === undefined ? "" : String(initialPaceSeconds % 60).padStart(2, "0"))
   const [paceError, setPaceError] = React.useState<string | null>(null)
   const [saveError, setSaveError] = React.useState(false)
-  const memo = usePurposeScopedMemo()
+  const memo = usePurposeScopedMemo(initial?.memo ?? "", initial?.memoPurpose)
 
   const persist = () => {
     const hasPaceInput = paceMinutes.trim() !== "" || paceSeconds.trim() !== ""
@@ -40,8 +45,8 @@ export function RaceForm({ onBack, onDone }: EntryFormProps) {
     if (!memoPreparation.ready) return
 
     const entry: JournalEntry = {
-      id: newEntryId(), kind: "race", date: todayISO(),
-      savedAt: new Date().toISOString(), syncState: "local",
+      id: initial?.id ?? newEntryId(), kind: "race", date: entryDate,
+      savedAt: initial?.savedAt ?? new Date().toISOString(), syncState: "local",
       stage, record, rank, result, memo: memo.text,
       fieldProvenance: {
         tension: explicitOrMissing(tension !== null),
@@ -55,7 +60,7 @@ export function RaceForm({ onBack, onDone }: EntryFormProps) {
       ...(mood !== null ? { mood } : {}),
       ...(goalPace !== null ? { goalPace } : {}),
     }
-    const saveResult = saveEntry(entry)
+    const saveResult = isEditing ? updateEntry(entry) : saveEntry(entry)
     if (window.location.search.includes("uitest")) console.log(`[JSAVE] kind=race ok=${saveResult.ok}`)
     if (!saveResult.ok) { setSaveError(true); return }
     if (memoPreparation.reviewMessage === null) onDone?.("race", entry)
@@ -65,7 +70,7 @@ export function RaceForm({ onBack, onDone }: EntryFormProps) {
   return (
     <div style={{ paddingBottom: 100 }}>
       <TopBar onBack={onBack}>경기 · 빠른 점검</TopBar>
-      <RaceHeader />
+      <RaceHeader date={entryDate} />
       <StageTabs stage={stage} onChange={setStage} />
 
       {stage === "pre" ? (
@@ -106,19 +111,19 @@ export function RaceForm({ onBack, onDone }: EntryFormProps) {
           placeholder={stage === "pre" ? "레이스 전에 자신에게..." : "경기를 마치고 남길 말..."}
         />
       </FormSec>
-      <StickyBar onSave={persist} error={saveError} />
+      <StickyBar onSave={persist} error={saveError} label={isEditing ? "수정 저장" : undefined} />
     </div>
   )
 }
 
-function RaceHeader() {
+function RaceHeader({ date }: { readonly date: string }) {
   return (
     <div style={{ padding: "14px 20px 0" }}>
       <div style={{ border: "2px solid var(--ink-blue)", padding: "12px 14px", background: "var(--paper)", display: "grid", gridTemplateColumns: "1fr auto", gap: 12, alignItems: "baseline" }}>
         <div>
           <div style={{ fontFamily: "var(--mono)", fontSize: 10.5, fontWeight: 600, color: "var(--ink-blue)" }}>RACE DAY</div>
           <div style={{ fontFamily: "var(--sans)", fontSize: 16, fontWeight: 500, marginTop: 4, color: "var(--ink)" }}>오늘의 경기</div>
-          <div style={{ fontFamily: "var(--mono)", fontSize: 10, color: "var(--ink-3)", marginTop: 2 }}>{compactDate(todayISO())} {dowOf(todayISO())} · {nowClock()}</div>
+          <div style={{ fontFamily: "var(--mono)", fontSize: 10, color: "var(--ink-3)", marginTop: 2 }}>{compactDate(date)} {dowOf(date)} · {nowClock()}</div>
         </div>
         <Stamp kind="brand">D-0</Stamp>
       </div>
