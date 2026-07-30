@@ -8,6 +8,7 @@ import { LogDetail } from "./screens/LogDetail"
 import { Trends } from "./screens/Trends"
 import { Guide } from "./screens/Guide"
 import { PlanBeta } from "./screens/PlanBeta"
+import { AthleteRecords } from "./screens/AthleteRecords"
 import { Account } from "./screens/Account"
 import { ImportActivities } from "./screens/ImportActivities"
 import { RestoreBackup } from "./screens/RestoreBackup"
@@ -55,12 +56,16 @@ export function AppShell() {
   React.useState(() => recordDailyVisit(todayISO()))
   const [v, setV] = React.useState<ViewState>(INITIAL)
   const [savedToast, setSavedToast] = React.useState<SavedToastState | null>(null)
+  const [athleteRecordsOpen, setAthleteRecordsOpen] = React.useState(false)
   const scrollRegionRef = React.useRef<HTMLElement | null>(null)
   const [firstVisitActive, setFirstVisitActive] = React.useState(
     () => localOnlyCount() === 0 && !hasDismissedFirstVisit(),
   )
 
-  const goHome = () => setV(INITIAL)
+  const goHome = () => {
+    setAthleteRecordsOpen(false)
+    setV(INITIAL)
+  }
   const goHomeAfterSave = (savedEntry: JournalEntry, reviewMessage?: string, detailDate?: string) => {
     const receipt = createSavedFactReceipt(savedEntry)
     setV(detailDate === undefined ? INITIAL : { ...INITIAL, detailDate })
@@ -86,9 +91,11 @@ export function AppShell() {
     if (scrollRegion === null) return
     scrollRegion.scrollTop = 0
     scrollRegion.scrollLeft = 0
-  }, [v.tab, v.entryType, v.detailDate, v.journalDraft?.date, v.journalDraft?.initialEntry?.id])
-  const goTab = (tab: AppTab) =>
+  }, [v.tab, v.entryType, v.detailDate, v.journalDraft?.date, v.journalDraft?.initialEntry?.id, athleteRecordsOpen])
+  const goTab = (tab: AppTab) => {
+    setAthleteRecordsOpen(false)
     setV({ tab, entryType: "choose", detailDate: null, accountOpen: false, importOpen: false, restoreOpen: false })
+  }
   const goTrendsFromReceipt = () => {
     setSavedToast(null)
     goTab("trends")
@@ -150,8 +157,11 @@ export function AppShell() {
       />
     )
   } else if (v.tab === "plan") {
-    screen = (
+    screen = athleteRecordsOpen ? (
+      <AthleteRecords onBack={() => setAthleteRecordsOpen(false)} />
+    ) : (
       <PlanBeta
+        onManageRecords={() => setAthleteRecordsOpen(true)}
         onWriteLog={(entryType) => setV({
           tab: "log",
           entryType: entryType ?? "choose",

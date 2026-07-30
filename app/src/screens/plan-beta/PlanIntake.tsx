@@ -1,4 +1,4 @@
-import { ArrowLeft, ChevronRight } from "lucide-react"
+import { ArrowLeft, Medal } from "lucide-react"
 import {
   EXPERIENCE_BANDS,
   PLAN_EVENT_GROUPS,
@@ -18,6 +18,7 @@ import {
   EVENT_LABELS,
   EXPERIENCE_LABELS,
 } from "./labels"
+import { PlanChoice as Choice } from "./PlanChoice"
 
 export type IntakeStep = "goal" | "experience" | "focus" | "days" | "frame" | "two-a-day" | "safety"
 
@@ -33,6 +34,7 @@ type PlanIntakeProps = {
   readonly onDays: (days: PlanBetaIntake["availableDayCount"]) => void
   readonly onFrame: (days: 7 | 9 | 10) => void
   readonly onSecondSession: (mode: SecondSessionMode) => void
+  readonly onManageRecords: () => void
   readonly onOpenNotationReader: () => void
   readonly onSafety: (
     currentCheck: "NO_KNOWN_RISK" | "REVIEW_REQUIRED",
@@ -107,6 +109,7 @@ export function PlanIntake({
   onDays,
   onFrame,
   onSecondSession,
+  onManageRecords,
   onOpenNotationReader,
   onSafety,
 }: PlanIntakeProps) {
@@ -223,41 +226,24 @@ export function PlanIntake({
         )}
       </div>
       {step === "goal" && (
-        <button
-          className="plan-text-action plan-notation-entry"
-          type="button"
-          onClick={onOpenNotationReader}
-        >
-          훈련표 표기 읽기
-        </button>
+        <div className="plan-support-actions">
+          <button
+            className="plan-text-action plan-records-entry"
+            type="button"
+            onClick={onManageRecords}
+          >
+            <Medal aria-hidden="true" size={17} />
+            내 경기 기록 관리
+          </button>
+          <button
+            className="plan-text-action plan-notation-entry"
+            type="button"
+            onClick={onOpenNotationReader}
+          >
+            훈련표 표기 읽기
+          </button>
+        </div>
       )}
     </section>
-  )
-}
-
-function Choice({
-  title,
-  detail,
-  selected,
-  onClick,
-}: {
-  readonly title: string
-  readonly detail: string
-  readonly selected: boolean
-  readonly onClick: () => void
-}) {
-  return (
-    <button
-      className="plan-choice"
-      type="button"
-      aria-pressed={selected}
-      onClick={onClick}
-    >
-      <span>
-        <strong>{title}</strong>
-        <small>{detail}</small>
-      </span>
-      <ChevronRight aria-hidden="true" size={18} />
-    </button>
   )
 }

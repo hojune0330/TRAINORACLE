@@ -16,6 +16,7 @@
 //    이 경우 서버 부활 위험을 사용자가 감수하는 것이므로 UI에서 설명해야 한다.
 //  - 로그인 토큰도 지운다. 기기를 넘기는데 계정이 남아 있으면 안 된다.
 //  - 실패를 숨기지 않는다. 지워진 키와 실패한 키를 그대로 돌려준다.
+import { ATHLETE_RECORDS_STORAGE_KEY } from "./athlete-records"
 
 /** 일지 본문이 담기는 키 — 반드시 지운다 */
 const CONTENT_KEYS = [
@@ -25,6 +26,7 @@ const CONTENT_KEYS = [
   // 30일 동안 기기에 남는다. 기기를 넘기는 상황에서 가장 위험한 누락이다.
   "trainoracle.journal.trash.v1",
   "trainoracle.journal.full-backup.v1",
+  ATHLETE_RECORDS_STORAGE_KEY,
   "trainoracle.plan-beta.v1",
   "trainoracle.plan-beta.history.v1",
   "trainoracle.plan-beta.previous-intake.v1",

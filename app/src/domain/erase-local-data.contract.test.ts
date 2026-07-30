@@ -7,6 +7,7 @@
 //  3) 명시적으로 요청하면 삭제 기록도 지운다
 //  4) 실패를 숨기지 않는다
 import { beforeEach, describe, expect, it } from "vitest"
+import { ATHLETE_RECORDS_STORAGE_KEY } from "./athlete-records"
 import { eraseAllLocalData, erasableKeys } from "./erase-local-data"
 
 const JOURNAL = "trainoracle.journal.v1"
@@ -22,6 +23,10 @@ beforeEach(() => {
 
 function seed(): void {
   window.localStorage.setItem(JOURNAL, JSON.stringify([{ id: "a" }, { id: "b" }]))
+  window.localStorage.setItem(
+    ATHLETE_RECORDS_STORAGE_KEY,
+    JSON.stringify([{ id: "pb-5000" }]),
+  )
   window.localStorage.setItem(PLAN, JSON.stringify({ picked: "x" }))
   window.localStorage.setItem(AUTH, JSON.stringify({ token: "secret" }))
   window.localStorage.setItem(CONSENT, JSON.stringify({ enabled: true }))
@@ -36,6 +41,14 @@ describe("eraseAllLocalData", () => {
     expect(result.ok).toBe(true)
     expect(window.localStorage.getItem(JOURNAL)).toBeNull()
     expect(window.localStorage.getItem(PLAN)).toBeNull()
+  })
+
+  it("구조화 선수 기록도 지운다", () => {
+    seed()
+    const result = eraseAllLocalData()
+    expect(result.ok).toBe(true)
+    expect(erasableKeys()).toContain(ATHLETE_RECORDS_STORAGE_KEY)
+    expect(window.localStorage.getItem(ATHLETE_RECORDS_STORAGE_KEY)).toBeNull()
   })
 
   it("로그인 토큰과 동기화 동의를 지운다 (기기 양도 대비)", () => {
