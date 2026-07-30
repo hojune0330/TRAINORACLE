@@ -5,8 +5,9 @@ work_order: WORK_ORDER_P1
 implementation_model: gpt-5.6-sol
 reasoning_effort: ultra
 base_main_sha: f9d012e8d2a45f5305a74fc3d1b23ff61f10fd73
+implementation_commit_sha: ade5c16944e94a84b756d7d762e7b0a88cb7d519
 head_sha: RECORDED_IN_GITHUB_PR_METADATA
-pull_request: PENDING_PUBLICATION
+pull_request: https://github.com/hojune0330/TRAINORACLE/pull/152
 runtime_authority_added: false
 pace_anchor_selected: false
 freshness_state_created: false
