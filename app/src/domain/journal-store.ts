@@ -107,7 +107,9 @@ export type DeleteEntryResult = {
  */
 export function deleteEntry(id: string): DeleteEntryResult {
   const all = loadEntries()
-  const target = all.find((entry) => entry.id === id)
+  const matches = all.filter((entry) => entry.id === id)
+  if (matches.length !== 1) return { ok: false, total: all.length, trashed: false }
+  const [target] = matches
   if (target === undefined) return { ok: false, total: all.length, trashed: false }
 
   const remaining = all.filter((entry) => entry.id !== id)
@@ -260,7 +262,7 @@ export function todayISO(): string {
   return `${date.getFullYear()}-${padded(date.getMonth() + 1)}-${padded(date.getDate())}`
 }
 
-export { updateEntry } from "./journal-update"
+export { nextJournalSavedAt, updateEntry } from "./journal-update"
 export type { UpdateEntryResult } from "./journal-update"
 
 export const LOCAL_SAVE_NOTICE = "이 기기에 저장됐어요"

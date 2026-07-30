@@ -33,9 +33,10 @@ export function LogEntry({ entryType = "choose", onBack, onDone, onOpenImport, t
 
     onDone?.(picked, savedEntry, reviewMessage)
   }
-  if (entryType === "post-session") return <PostSessionForm onBack={onBack} onDone={handleSaved} targetDate={targetDate} initialEntry={initialEntry} />
-  if (entryType === "evening") return <EveningCheckin onBack={onBack} onDone={handleSaved} targetDate={targetDate} initialEntry={initialEntry} />
-  if (entryType === "race") return <RaceForm onBack={onBack} onDone={handleSaved} targetDate={targetDate} initialEntry={initialEntry} />
+  const draftKey = `${entryType}:${initialEntry?.id ?? targetDate ?? "new"}`
+  if (entryType === "post-session") return <PostSessionForm key={draftKey} onBack={onBack} onDone={handleSaved} targetDate={targetDate} initialEntry={initialEntry} />
+  if (entryType === "evening") return <EveningCheckin key={draftKey} onBack={onBack} onDone={handleSaved} targetDate={targetDate} initialEntry={initialEntry} />
+  if (entryType === "race") return <RaceForm key={draftKey} onBack={onBack} onDone={handleSaved} targetDate={targetDate} initialEntry={initialEntry} />
   return null
 }
 

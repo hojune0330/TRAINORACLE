@@ -4,7 +4,10 @@ import { loadEntries, saveEntry } from "./journal-store"
 
 const DATE = "2026-07-20"
 
-type JournalUpdate = (entry: unknown) => { readonly ok: boolean; readonly total: number }
+type JournalUpdate = (
+  entry: unknown,
+  expectedSavedAt: string,
+) => { readonly ok: boolean; readonly total: number }
 
 function isUpdateResult(value: unknown): value is { readonly ok: unknown; readonly total: unknown } {
   return typeof value === "object" && value !== null && "ok" in value && "total" in value
@@ -13,8 +16,8 @@ function isUpdateResult(value: unknown): value is { readonly ok: unknown; readon
 function findJournalUpdate(): JournalUpdate | null {
   const candidate: unknown = Reflect.get(journalStore, "updateEntry")
   if (typeof candidate !== "function") return null
-  return (entry: unknown) => {
-    const result: unknown = candidate(entry)
+  return (entry: unknown, expectedSavedAt: string) => {
+    const result: unknown = candidate(entry, expectedSavedAt)
     if (!isUpdateResult(result)) return { ok: false, total: 0 }
     return {
       ok: result.ok === true,
@@ -50,12 +53,19 @@ describe("past local journal updates", () => {
     const updateEntry = findJournalUpdate()
 
     // When
-    const result = updateEntry?.({ ...original, distanceKm: "6" })
+    const result = updateEntry?.(
+      { ...original, distanceKm: "6", savedAt: "2026-07-20T10:00:00.000Z" },
+      original.savedAt,
+    )
 
     // Then
     expect(updateEntry).not.toBeNull()
     expect(result).toEqual({ ok: true, total: 1 })
-    expect(loadEntries()).toEqual([{ ...original, distanceKm: "6" }])
+    expect(loadEntries()).toEqual([{
+      ...original,
+      distanceKm: "6",
+      savedAt: "2026-07-20T10:00:00.000Z",
+    }])
   })
 
   it("does not promote a legacy record to explicit provenance during an edit", () => {
@@ -81,15 +91,20 @@ describe("past local journal updates", () => {
     const result = updateEntry?.({
       ...original,
       distanceKm: "6",
+      savedAt: "2026-07-20T10:00:00.000Z",
       fieldProvenance: {
         distanceKm: { provenance: "EXPLICIT" },
       },
-    })
+    }, original.savedAt)
 
     // Then
     expect(updateEntry).not.toBeNull()
     expect(result).toEqual({ ok: true, total: 1 })
-    expect(loadEntries()).toEqual([{ ...original, distanceKm: "6" }])
+    expect(loadEntries()).toEqual([{
+      ...original,
+      distanceKm: "6",
+      savedAt: "2026-07-20T10:00:00.000Z",
+    }])
   })
 
   it("refuses to rewrite an imported entry into a local value", () => {
@@ -119,7 +134,10 @@ describe("past local journal updates", () => {
     const updateEntry = findJournalUpdate()
 
     // When
-    const result = updateEntry?.({ ...imported, distanceKm: "6" })
+    const result = updateEntry?.(
+      { ...imported, distanceKm: "6", savedAt: "2026-07-20T10:00:00.000Z" },
+      imported.savedAt,
+    )
 
     // Then
     expect(updateEntry).not.toBeNull()
@@ -147,7 +165,10 @@ describe("past local journal updates", () => {
     const updateEntry = findJournalUpdate()
 
     // When
-    const result = updateEntry?.({ ...original, date: "2026-07-21" })
+    const result = updateEntry?.(
+      { ...original, date: "2026-07-21", savedAt: "2026-07-20T10:00:00.000Z" },
+      original.savedAt,
+    )
 
     // Then
     expect(updateEntry).not.toBeNull()

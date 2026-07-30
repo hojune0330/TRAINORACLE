@@ -18,7 +18,9 @@ const ENTRY_OPTIONS = [
 ] as const
 
 export function EntryChooser({ onBack, onPick, onOpenImport, targetDate }: EntryChooserProps) {
-  const entryDate = targetDate ?? todayISO()
+  const today = todayISO()
+  const entryDate = targetDate ?? today
+  const isToday = entryDate === today
   return (
     <div style={{ paddingBottom: 30 }}>
       <TopBar onBack={onBack}>새 일지</TopBar>
@@ -79,8 +81,8 @@ export function EntryChooser({ onBack, onPick, onOpenImport, targetDate }: Entry
       <div style={{ padding: "24px 20px" }}>
         <div style={{ fontFamily: "var(--mono)", fontSize: 10, color: "var(--ink-4)", letterSpacing: "0.06em", lineHeight: 1.55 }}>
           {entriesForDate(entryDate).length > 0
-            ? "오늘 일지가 이미 있어요. 같은 날에 여러 진입점으로 쓰면 한 페이지에 합쳐집니다."
-            : "오늘 첫 일지예요. 짧게 몰아 쓰면 1분이면 끝나요."}
+            ? `${isToday ? "오늘" : "이 날짜에"} 일지가 이미 있어요. 같은 날에 여러 진입점으로 쓰면 한 페이지에 합쳐집니다.`
+            : `${isToday ? "오늘" : "이 날짜의"} 첫 일지예요. 짧게 몰아 쓰면 1분이면 끝나요.`}
         </div>
       </div>
     </div>

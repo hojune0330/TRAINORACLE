@@ -2,7 +2,13 @@ import React from "react"
 import { IndexCard, MoodStrip } from "../../components/JournalPrimitives"
 import { compactDate, dowOf, nowClock } from "../../domain/dates"
 import { explicitOrMissing } from "../../domain/field-provenance"
-import { newEntryId, saveEntry, todayISO, updateEntry } from "../../domain/journal-store"
+import {
+  newEntryId,
+  nextJournalSavedAt,
+  saveEntry,
+  todayISO,
+  updateEntry,
+} from "../../domain/journal-store"
 import type { JournalEntry } from "../../domain/journal-store"
 import { painLevelsRequireReview } from "../../safety/memo-safety"
 import { BodyDiagram, PainReviewBanner } from "./BodyDiagram"
@@ -33,7 +39,7 @@ export function EveningCheckin({ onBack, onDone, targetDate, initialEntry }: Ent
     if (!notePreparation.ready) return
     const entry: JournalEntry = {
       id: initial?.id ?? newEntryId(), kind: "evening", date: entryDate,
-      savedAt: initial?.savedAt ?? new Date().toISOString(), syncState: "local",
+      savedAt: nextJournalSavedAt(initial?.savedAt), syncState: "local",
       sleepH: sleep, sleepQuality: quality, weightKg: weight, restingHr: hr,
       painParts, mood, note: note.text,
       fieldProvenance: {
@@ -46,7 +52,7 @@ export function EveningCheckin({ onBack, onDone, targetDate, initialEntry }: Ent
       },
       ...(note.text.trim() !== "" && note.purpose !== undefined ? { memoPurpose: note.purpose } : {}),
     }
-    const result = isEditing ? updateEntry(entry) : saveEntry(entry)
+    const result = initial === undefined ? saveEntry(entry) : updateEntry(entry, initial.savedAt)
     if (window.location.search.includes("uitest")) console.log(`[JSAVE] kind=evening ok=${result.ok}`)
     if (!result.ok) { setSaveError(true); return }
     if (notePreparation.reviewMessage === null) onDone?.("evening", entry)

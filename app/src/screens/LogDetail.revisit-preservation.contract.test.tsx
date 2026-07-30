@@ -96,4 +96,61 @@ describe("past journal preservation before revisit work", () => {
     expect(screen.queryByTestId(`journal-edit-${imported.id}`)).not.toBeInTheDocument()
     expect(onEditEntry).not.toHaveBeenCalled()
   })
+
+  it("gives same-kind edit actions distinct names", () => {
+    // Given
+    const first = {
+      id: "morning-session",
+      kind: "post-session" as const,
+      date: DATE,
+      savedAt: "2026-07-20T09:00:00.000Z",
+      syncState: "local" as const,
+      system: "base",
+      title: "Morning run",
+      distanceKm: "5",
+      durationMin: "25",
+      avgPace: "5:00",
+      rpe: 6,
+      memo: "",
+    }
+    const second = {
+      ...first,
+      id: "evening-session",
+      savedAt: "2026-07-20T18:00:00.000Z",
+      title: "Evening run",
+    }
+    expect(replaceAllEntries([first, second]).ok).toBe(true)
+
+    // When
+    render(<LogDetail date={DATE} onEditEntry={vi.fn()} />)
+
+    // Then
+    expect(screen.getByRole("button", { name: "훈련 기록 수정 1/2 · Morning run" })).toBeVisible()
+    expect(screen.getByRole("button", { name: "훈련 기록 수정 2/2 · Evening run" })).toBeVisible()
+  })
+
+  it("hides ambiguous edit actions when stored entries share an id", () => {
+    // Given
+    const first = {
+      id: "duplicate-entry",
+      kind: "post-session" as const,
+      date: DATE,
+      savedAt: "2026-07-20T09:00:00.000Z",
+      syncState: "local" as const,
+      system: "base",
+      title: "First duplicate",
+      distanceKm: "5",
+      durationMin: "25",
+      avgPace: "5:00",
+      rpe: 6,
+      memo: "",
+    }
+    expect(replaceAllEntries([first, { ...first, title: "Second duplicate" }]).ok).toBe(true)
+
+    // When
+    render(<LogDetail date={DATE} onEditEntry={vi.fn()} />)
+
+    // Then
+    expect(screen.queryByTestId("journal-edit-duplicate-entry")).not.toBeInTheDocument()
+  })
 })
