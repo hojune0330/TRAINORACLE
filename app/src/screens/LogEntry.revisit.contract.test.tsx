@@ -48,9 +48,11 @@ describe("past journal revisit forms", () => {
     await user.click(screen.getByRole("button", { name: /수정 저장/u }))
 
     // Then
-    expect(loadEntries()).toEqual([
-      expect.objectContaining({ id: entry.id, date: DATE, savedAt: entry.savedAt, weightKg: "61.0" }),
-    ])
+    const [updated] = loadEntries()
+    expect(updated).toEqual(
+      expect.objectContaining({ id: entry.id, date: DATE, weightKg: "61.0" }),
+    )
+    expect(Date.parse(updated?.savedAt ?? "")).toBeGreaterThan(Date.parse(entry.savedAt))
   })
 
   it("reopens a post-race record in its recorded stage and replaces it in place", async () => {
@@ -89,8 +91,62 @@ describe("past journal revisit forms", () => {
     await user.click(screen.getByRole("button", { name: /수정 저장/u }))
 
     // Then
-    expect(loadEntries()).toEqual([
-      expect.objectContaining({ id: entry.id, date: DATE, savedAt: entry.savedAt, result: "결승 2위" }),
-    ])
+    const [updated] = loadEntries()
+    expect(updated).toEqual(
+      expect.objectContaining({ id: entry.id, date: DATE, result: "결승 2위" }),
+    )
+    expect(Date.parse(updated?.savedAt ?? "")).toBeGreaterThan(Date.parse(entry.savedAt))
+  })
+
+  it("resets the form when another entry of the same kind is selected", () => {
+    // Given
+    const first = {
+      id: "morning-session",
+      kind: "post-session",
+      date: DATE,
+      savedAt: "2026-07-20T09:00:00.000Z",
+      syncState: "local",
+      system: "base",
+      title: "Morning run",
+      distanceKm: "5",
+      durationMin: "25",
+      avgPace: "5:00",
+      rpe: 6,
+      memo: "",
+    } satisfies JournalEntry
+    const second = {
+      ...first,
+      id: "evening-session",
+      savedAt: "2026-07-20T18:00:00.000Z",
+      title: "Evening run",
+      distanceKm: "8",
+    } satisfies JournalEntry
+    const { rerender } = render(<LogEntry entryType="post-session" initialEntry={first} />)
+    expect(screen.getByLabelText("세션 제목")).toHaveValue("Morning run")
+
+    // When
+    rerender(<LogEntry entryType="post-session" initialEntry={second} />)
+
+    // Then
+    expect(screen.getByLabelText("세션 제목")).toHaveValue("Evening run")
+    expect(screen.getByLabelText("거리 (km)")).toHaveValue("8")
+  })
+
+  it("describes a historical chooser as the selected date rather than today", () => {
+    // When
+    render(<LogEntry entryType="choose" targetDate={DATE} />)
+
+    // Then
+    expect(screen.getByText("이 날짜의 첫 일지예요. 짧게 몰아 쓰면 1분이면 끝나요.")).toBeVisible()
+    expect(screen.queryByText(/오늘 첫 일지/u)).not.toBeInTheDocument()
+  })
+
+  it("describes a historical race as belonging to the selected date", () => {
+    // When
+    render(<LogEntry entryType="race" targetDate={DATE} />)
+
+    // Then
+    expect(screen.getByText("이 날짜의 경기")).toBeVisible()
+    expect(screen.queryByText("오늘의 경기")).not.toBeInTheDocument()
   })
 })

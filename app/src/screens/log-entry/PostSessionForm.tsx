@@ -2,7 +2,13 @@ import React from "react"
 import { IndexCard } from "../../components/JournalPrimitives"
 import { compactDate, dowOf, nowClock } from "../../domain/dates"
 import { explicitOrMissing } from "../../domain/field-provenance"
-import { newEntryId, saveEntry, todayISO, updateEntry } from "../../domain/journal-store"
+import {
+  newEntryId,
+  nextJournalSavedAt,
+  saveEntry,
+  todayISO,
+  updateEntry,
+} from "../../domain/journal-store"
 import type { JournalEntry } from "../../domain/journal-store"
 import { PurposeScopedMemoField, usePurposeScopedMemo } from "./PurposeScopedMemoField"
 import { IntensityAssessmentField, useIntensityAssessment } from "./IntensityAssessmentField"
@@ -48,7 +54,7 @@ export function PostSessionForm({ onBack, onDone, targetDate, initialEntry }: En
     if (!memoPreparation.ready) return
     const entry: JournalEntry = {
       id: initial?.id ?? newEntryId(), kind: "post-session", date: entryDate,
-      savedAt: initial?.savedAt ?? new Date().toISOString(), syncState: "local",
+      savedAt: nextJournalSavedAt(initial?.savedAt), syncState: "local",
       system, title, distanceKm, durationMin, avgPace, rpe, memo: memo.text,
       ...(intensity.assessment === undefined ? {} : { intensityAssessment: intensity.assessment }),
       fieldProvenance: {
@@ -61,7 +67,7 @@ export function PostSessionForm({ onBack, onDone, targetDate, initialEntry }: En
       },
       ...(memo.text.trim() !== "" && memo.purpose !== undefined ? { memoPurpose: memo.purpose } : {}),
     }
-    const result = isEditing ? updateEntry(entry) : saveEntry(entry)
+    const result = initial === undefined ? saveEntry(entry) : updateEntry(entry, initial.savedAt)
     if (window.location.search.includes("uitest")) console.log(`[JSAVE] kind=post-session ok=${result.ok}`)
     if (!result.ok) { setSaveError(true); return }
     if (memoPreparation.reviewMessage === null) onDone?.("post-session", entry)

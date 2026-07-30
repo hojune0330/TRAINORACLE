@@ -4,7 +4,13 @@ import { TermHelp } from "../../components/TermHelp"
 import { compactDate, dowOf, nowClock } from "../../domain/dates"
 import { explicitOrMissing } from "../../domain/field-provenance"
 import { parseTargetPaceInput } from "../../domain/journal-schema"
-import { newEntryId, saveEntry, todayISO, updateEntry } from "../../domain/journal-store"
+import {
+  newEntryId,
+  nextJournalSavedAt,
+  saveEntry,
+  todayISO,
+  updateEntry,
+} from "../../domain/journal-store"
 import type { JournalEntry } from "../../domain/journal-store"
 import { PurposeScopedMemoField, usePurposeScopedMemo } from "./PurposeScopedMemoField"
 import { RacePostMood, RacePreChecks } from "./RaceSelfChecks"
@@ -46,7 +52,7 @@ export function RaceForm({ onBack, onDone, targetDate, initialEntry }: EntryForm
 
     const entry: JournalEntry = {
       id: initial?.id ?? newEntryId(), kind: "race", date: entryDate,
-      savedAt: initial?.savedAt ?? new Date().toISOString(), syncState: "local",
+      savedAt: nextJournalSavedAt(initial?.savedAt), syncState: "local",
       stage, record, rank, result, memo: memo.text,
       fieldProvenance: {
         tension: explicitOrMissing(tension !== null),
@@ -60,7 +66,7 @@ export function RaceForm({ onBack, onDone, targetDate, initialEntry }: EntryForm
       ...(mood !== null ? { mood } : {}),
       ...(goalPace !== null ? { goalPace } : {}),
     }
-    const saveResult = isEditing ? updateEntry(entry) : saveEntry(entry)
+    const saveResult = initial === undefined ? saveEntry(entry) : updateEntry(entry, initial.savedAt)
     if (window.location.search.includes("uitest")) console.log(`[JSAVE] kind=race ok=${saveResult.ok}`)
     if (!saveResult.ok) { setSaveError(true); return }
     if (memoPreparation.reviewMessage === null) onDone?.("race", entry)
@@ -70,7 +76,7 @@ export function RaceForm({ onBack, onDone, targetDate, initialEntry }: EntryForm
   return (
     <div style={{ paddingBottom: 100 }}>
       <TopBar onBack={onBack}>경기 · 빠른 점검</TopBar>
-      <RaceHeader date={entryDate} />
+      <RaceHeader date={entryDate} isToday={entryDate === todayISO()} />
       <StageTabs stage={stage} onChange={setStage} />
 
       {stage === "pre" ? (
@@ -116,13 +122,21 @@ export function RaceForm({ onBack, onDone, targetDate, initialEntry }: EntryForm
   )
 }
 
-function RaceHeader({ date }: { readonly date: string }) {
+function RaceHeader({
+  date,
+  isToday,
+}: {
+  readonly date: string
+  readonly isToday: boolean
+}) {
   return (
     <div style={{ padding: "14px 20px 0" }}>
       <div style={{ border: "2px solid var(--ink-blue)", padding: "12px 14px", background: "var(--paper)", display: "grid", gridTemplateColumns: "1fr auto", gap: 12, alignItems: "baseline" }}>
         <div>
           <div style={{ fontFamily: "var(--mono)", fontSize: 10.5, fontWeight: 600, color: "var(--ink-blue)" }}>RACE DAY</div>
-          <div style={{ fontFamily: "var(--sans)", fontSize: 16, fontWeight: 500, marginTop: 4, color: "var(--ink)" }}>오늘의 경기</div>
+          <div style={{ fontFamily: "var(--sans)", fontSize: 16, fontWeight: 500, marginTop: 4, color: "var(--ink)" }}>
+            {isToday ? "오늘의 경기" : "이 날짜의 경기"}
+          </div>
           <div style={{ fontFamily: "var(--mono)", fontSize: 10, color: "var(--ink-3)", marginTop: 2 }}>{compactDate(date)} {dowOf(date)} · {nowClock()}</div>
         </div>
         <Stamp kind="brand">D-0</Stamp>

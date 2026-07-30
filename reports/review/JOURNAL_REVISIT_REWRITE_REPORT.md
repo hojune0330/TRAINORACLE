@@ -15,8 +15,9 @@
 2. Local, non-imported entries show a distinct edit action: `훈련 기록 수정`,
    `하루 마무리 수정`, or `경기 기록 수정`.
 3. Edit forms preload the selected entry. A successful edit replaces the original
-   storage item in place: its id, kind, date, saved time, and sync state do not
-   change, and no duplicate entry is created.
+   storage item in place: its id, kind, date, and sync state do not change, and no
+   duplicate entry is created. Its `savedAt` advances so the existing LWW sync
+   contract keeps the edit over an older device copy.
 4. `이 날짜에 일지 더 쓰기` opens the chooser for the selected historical date.
    Saving returns to that same date detail rather than to today's home screen.
 5. Imported activity records and non-local records have no edit control. The domain
@@ -33,6 +34,36 @@
   analytics, plans, recommendations, exports by default, or D9 authority.
 - Account opt-in, import, D9, training-plan, and safety authority behavior was not
   expanded by this work.
+
+## Post-Merge Integrity Amendment
+
+The original PR #148 head preserved `savedAt`. A post-merge adversarial review found
+that this contradicted the already-merged account release gate: sync resolves equal
+IDs by the latest `savedAt`, so preserving the old value could let an older device
+copy overwrite a user's edit.
+
+The follow-up therefore:
+
+- advances `savedAt` on every successful edit and rejects stale edit snapshots;
+- rejects ambiguous updates and deletes when duplicate IDs are present;
+- preserves provenance for untouched fields instead of promoting them to explicit;
+- distinguishes multiple same-kind edit actions and remounts a form when a different
+  entry of the same kind is selected;
+- keeps historical-date copy from calling a past day "today".
+
+### Follow-Up Execution Record
+
+- review model: `gpt-5.6-sol`
+- reasoning effort: `ultra`
+- attacked head: `2ac980648fa6104f0b2af59deac44cd2d958641b`
+- RED: exact-head review reproduced ambiguous duplicate-ID writes/deletes, stale
+  snapshot overwrite, untouched provenance promotion, indistinguishable same-kind
+  edit actions, and historical-date wording.
+- GREEN: focused integrity and revisit contracts pass `20/20`; the complete unit
+  suite passes `358/358`; TypeScript app and E2E checks, production build, and the
+  four-viewport journal revisit browser scenario pass.
+- authority boundary: this patch changes local journal integrity only. Account
+  opt-in, memo visibility, D9, safety, and training-plan authority remain unchanged.
 
 ## Test Evidence
 
