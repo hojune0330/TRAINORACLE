@@ -37,8 +37,10 @@ const STEP_ORDER: readonly IntakeStep[] = [
 
 export function PlanBeta({
   onWriteLog,
+  onManageRecords,
 }: {
   readonly onWriteLog?: (entryType?: JournalEntryType) => void
+  readonly onManageRecords?: () => void
 }) {
   const [stored, setStored] = React.useState<PlanBetaState | null>(
     () => loadPlanBetaState(),
@@ -190,6 +192,7 @@ export function PlanBeta({
           setDraft((current) => ({ ...current, secondSessionMode }))
           setStep("safety")
         }}
+        onManageRecords={() => onManageRecords?.()}
         onOpenNotationReader={() => setNotationReaderOpen(true)}
         onSafety={(currentCheck) => {
           const result = generatePlanFromDraft(draft, currentCheck)

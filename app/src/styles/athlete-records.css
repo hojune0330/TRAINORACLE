@@ -1,0 +1,172 @@
+.athlete-records {
+  width: min(100%, 720px);
+  margin: 0 auto;
+  padding: 24px 20px 112px;
+}
+
+.athlete-records-header {
+  margin-bottom: 28px;
+}
+
+.athlete-records-header h1 {
+  margin: 12px 0 8px;
+  font-size: 28px;
+  line-height: 1.2;
+}
+
+.athlete-records-header p,
+.athlete-record-provenance,
+.athlete-record-row span,
+.athlete-record-row small,
+.athlete-record-empty {
+  color: var(--ink-3);
+}
+
+.athlete-record-form {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  padding: 24px 0 28px;
+  border-block: 1px solid var(--line);
+}
+
+.athlete-record-form label {
+  display: grid;
+  gap: 7px;
+  min-width: 0;
+  color: var(--ink-2);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.athlete-record-form input,
+.athlete-record-form select {
+  width: 100%;
+  min-height: 44px;
+  box-sizing: border-box;
+  border: 1px solid var(--line-2);
+  border-radius: var(--r-md);
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+  padding: 10px 12px;
+}
+
+.athlete-record-form input:focus,
+.athlete-record-form select:focus {
+  outline: 2px solid var(--brand);
+  outline-offset: 2px;
+}
+
+.athlete-record-time {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.athlete-record-provenance,
+.athlete-record-error {
+  grid-column: 1 / -1;
+  margin: 0;
+  font-size: 13px;
+}
+
+.athlete-record-error {
+  color: var(--err);
+  font-weight: 700;
+}
+
+.athlete-record-save {
+  grid-column: 1 / -1;
+  min-height: 48px;
+  border: 0;
+  border-radius: var(--r-md);
+  background: var(--brand);
+  color: var(--surface);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font: inherit;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.athlete-record-list {
+  padding-top: 28px;
+}
+
+.athlete-record-list-heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.athlete-record-list-heading h2 {
+  margin: 0;
+  font-size: 18px;
+}
+
+.athlete-record-list-heading span {
+  color: var(--ink-3);
+  font-family: var(--mono);
+  font-size: 12px;
+}
+
+.athlete-record-list ol {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.athlete-record-row {
+  display: grid;
+  gap: 6px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  padding: 16px;
+  background: var(--surface);
+}
+
+.athlete-record-row strong {
+  color: var(--ink);
+  font-size: 15px;
+}
+
+.athlete-record-row span,
+.athlete-record-row small {
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.plan-support-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 18px;
+}
+
+.plan-records-entry {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+
+@media (max-width: 520px) {
+  .athlete-records {
+    padding-inline: 16px;
+  }
+
+  .athlete-record-form {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .athlete-record-provenance,
+  .athlete-record-error,
+  .athlete-record-save {
+    grid-column: 1;
+  }
+}
