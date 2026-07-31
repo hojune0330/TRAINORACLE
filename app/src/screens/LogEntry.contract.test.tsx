@@ -1,6 +1,7 @@
 import { cleanup, render, screen } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
+import { ATHLETE_RECORDS_STORAGE_KEY } from "../domain/athlete-records"
 import { LogEntry } from "./LogEntry"
 
 afterEach(cleanup)
@@ -24,6 +25,43 @@ describe("race entry purpose-scoped notes", () => {
     expect(onDone).not.toHaveBeenCalled()
     expect(screen.getByRole("alert")).toHaveTextContent("메모를 저장할 방법을 선택해 주세요")
     expect(window.localStorage.getItem("trainoracle.journal.v1")).toBeNull()
+  })
+
+  it("still starts without athlete-record-driven pace wiring on a clean store", () => {
+    // Given
+    render(<LogEntry entryType="race" />)
+
+    // Then
+    expect(screen.queryByRole("button", { name: /기록.*페이스/u })).toBeNull()
+    expect(screen.queryByRole("button", { name: /5000m.*18:30/u })).toBeNull()
+    expect(window.localStorage.getItem(ATHLETE_RECORDS_STORAGE_KEY)).toBeNull()
+  })
+
+  it("does not turn an athlete record into pace fields inside the race journal", () => {
+    // Given
+    window.localStorage.setItem(
+      ATHLETE_RECORDS_STORAGE_KEY,
+      JSON.stringify([{
+        schemaVersion: 1,
+        id: "pb-5000",
+        purpose: "PERSONAL_BEST",
+        eventDistanceM: 5000,
+        performanceSeconds: 1110,
+        achievedOn: "2026-07-01",
+        seasonId: null,
+        enteredBy: "ATHLETE",
+        verificationState: "SELF_REPORTED",
+        sourceRef: "athlete-record:pb-5000",
+        savedAt: "2026-07-01T00:00:00.000Z",
+      }]),
+    )
+    render(<LogEntry entryType="race" />)
+
+    // Then
+    expect(screen.queryByText(/5000m.*18:30/u)).toBeNull()
+    expect(screen.queryByText(/CURRENT/u)).toBeNull()
+    expect(screen.getByRole("spinbutton", { name: /목표 페이스 분/u })).toHaveValue(null)
+    expect(screen.getByRole("spinbutton", { name: /목표 페이스 초/u })).toHaveValue(null)
   })
 
   it("explains that private text is not analyzed", async () => {
