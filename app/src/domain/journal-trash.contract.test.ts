@@ -95,9 +95,10 @@ describe("휴지통 보관", () => {
   })
 
   it("최근에 지운 것이 먼저 온다", () => {
-    moveToTrash(session("old"), "2026-07-01T00:00:00.000Z")
-    moveToTrash(session("new"), "2026-07-20T00:00:00.000Z")
-    expect(loadTrash().map((item) => item.entry.id)).toEqual(["new", "old"])
+    const now = Date.now()
+    moveToTrash(session("old"), new Date(now - 2000).toISOString())
+    moveToTrash(session("new"), new Date(now - 1000).toISOString())
+    expect(loadTrash(now).map((item) => item.entry.id)).toEqual(["new", "old"])
   })
 
   it("깨진 항목은 조용히 버리고 나머지는 살린다", () => {

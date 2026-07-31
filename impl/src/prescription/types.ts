@@ -37,6 +37,19 @@ export type PaceAnchorRecord = {
     | "EFFORT_ONLY"
 }
 
+export type GoalReferenceRacePaceResult =
+  | {
+      readonly kind: "calculated-goal-reference"
+      readonly targetRepSeconds: number
+      readonly displayOnly: true
+      readonly sourceRef: string
+      readonly displayRoundingPolicyVersion: string
+    }
+  | {
+      readonly kind: "rejected"
+      readonly code: PrescriptionErrorCode
+    }
+
 export type UnboundPrescriptionNotation = {
   readonly kind: "UNBOUND_PRESCRIPTION_NOTATION"
   readonly setCount: number

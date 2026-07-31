@@ -11,7 +11,10 @@ import "./styles/app.css"
 import "./styles/plan-beta.css"
 import "./styles/athlete-records.css"
 
-if (import.meta.env.DEV) {
+const showP3PaceHarness = import.meta.env.DEV
+  && new URLSearchParams(window.location.search).get("p3-pace-fixture") === "1"
+
+if (import.meta.env.DEV && !showP3PaceHarness) {
   void import("react-grab")
   void import("react-scan").then(({ scan }) => scan({ enabled: true, showToolbar: true }))
 }
@@ -38,11 +41,23 @@ try {
 const rootEl = document.getElementById("root")
 if (!rootEl) throw new Error("root element not found")
 
-// ErrorBoundary는 App 바깥에 둔다 — App 자체가 렌더에 실패해도 잡아야 한다.
-ReactDOM.createRoot(rootEl).render(
-  <React.StrictMode>
-    <ErrorBoundary>
-      <App />
-    </ErrorBoundary>
-  </React.StrictMode>,
-)
+const root = ReactDOM.createRoot(rootEl)
+
+function renderRoot(content: React.ReactNode): void {
+  root.render(
+    <React.StrictMode>
+      <ErrorBoundary>
+        {content}
+      </ErrorBoundary>
+    </React.StrictMode>,
+  )
+}
+
+if (showP3PaceHarness) {
+  void import("./testing/P3PaceHarness").then(({ P3PaceHarness }) => {
+    renderRoot(<P3PaceHarness />)
+  })
+} else {
+  // ErrorBoundary는 App 바깥에 둔다 — App 자체가 렌더에 실패해도 잡아야 한다.
+  renderRoot(<App />)
+}

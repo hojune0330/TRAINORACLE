@@ -134,6 +134,72 @@ describe("same-event race-pace calculation", () => {
     expect(result).toEqual({ kind: "rejected", code: "ANCHOR_PROVENANCE_INCOMPLETE" })
   })
 
+  it("rejects a 59m same-event anchor as sprint pace", () => {
+    // Given
+    const notation = parsePrescriptionNotation("1×59m @59m RP")
+    if (notation.kind !== "parsed") {
+      throw new Error(`Expected parsed notation, received ${notation.code}`)
+    }
+    const anchor = {
+      ...currentFiveKAnchor(),
+      anchorId: "race:59:current",
+      eventDistanceM: 59,
+      performanceSeconds: 8,
+      sourceRef: "journal:race:59:2026-07-20",
+    }
+
+    // When
+    const result = createStructuredPrescription({
+      notation: notation.notation,
+      anchor,
+      displayRoundingPolicyVersion: "seconds-v1",
+    })
+
+    // Then
+    expect(result).toEqual({ kind: "rejected", code: "SPRINT_RACE_PACE_FORBIDDEN" })
+  })
+
+  it("calculates a 60m same-event anchor without sprint rejection", () => {
+    // Given
+    const notation = parsePrescriptionNotation("1×60m @60m RP")
+    if (notation.kind !== "parsed") {
+      throw new Error(`Expected parsed notation, received ${notation.code}`)
+    }
+    const anchor = {
+      ...currentFiveKAnchor(),
+      anchorId: "race:60:current",
+      eventDistanceM: 60,
+      performanceSeconds: 8,
+      sourceRef: "journal:race:60:2026-07-20",
+    }
+
+    // When
+    const created = createStructuredPrescription({
+      notation: notation.notation,
+      anchor,
+      displayRoundingPolicyVersion: "seconds-v1",
+    })
+
+    // Then
+    expect(created).toEqual({
+      kind: "created",
+      prescription: expect.objectContaining({
+        paceTargetEventDistanceM: 60,
+        paceAnchorRef: "race:60:current",
+      }),
+    })
+
+    if (created.kind !== "created") {
+      throw new Error(`Expected structured prescription, received ${created.code}`)
+    }
+
+    expect(calculateSameEventRacePace({ prescription: created.prescription, anchor })).toEqual({
+      kind: "calculated",
+      targetRepSeconds: 8,
+      displayRoundingPolicyVersion: "seconds-v1",
+    })
+  })
+
   it("rejects 30m sprint race-pace conversion", () => {
     // Given
     const sprintNotation = parsePrescriptionNotation("3×30m @30m RP · r120″")

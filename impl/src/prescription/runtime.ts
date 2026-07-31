@@ -2,6 +2,7 @@ import { parseSafetyGate } from "../plan-generator/input-values"
 import type { SafetyGateDecision } from "../safety-gate/gate"
 import { validatePrescriptionAnchorReference, validateRacePaceAnchor } from "./anchor"
 import { parsePrescriptionNotation } from "./notation"
+import { calculateRacePaceSeconds } from "./race-pace"
 import { derivePrescriptionTotals } from "./totals"
 import type {
   PaceAnchorRecord,
@@ -187,10 +188,11 @@ export function calculateSameEventRacePace(
   }
   return {
     kind: "calculated",
-    targetRepSeconds:
-      input.anchor.performanceSeconds
-      * input.prescription.repetitionDistanceM
-      / input.anchor.eventDistanceM,
+    targetRepSeconds: calculateRacePaceSeconds({
+      performanceSeconds: input.anchor.performanceSeconds,
+      repetitionDistanceM: input.prescription.repetitionDistanceM,
+      eventDistanceM: input.anchor.eventDistanceM,
+    }),
     displayRoundingPolicyVersion: input.prescription.displayRoundingPolicyVersion,
   }
 }
@@ -220,3 +222,5 @@ export function preparePrescriptionRuntime(input: unknown): RuntimePreparationRe
     pace,
   })
 }
+
+export { calculateGoalReferenceRacePace } from "./race-pace"
