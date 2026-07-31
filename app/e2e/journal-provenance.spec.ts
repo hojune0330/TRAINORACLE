@@ -47,5 +47,6 @@ test("shows a legacy journal entry without allowing it into home totals or trend
   await expect(page.getByRole("button", { name: /훈련 후.*legacy tempo/u })).toBeVisible()
   await expect(page.getByText(/일지\s*0건\s*·\s*0일의 기록/u)).toBeVisible()
   await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "추이" }).click()
-  await expect(page.getByText("훈련한 날도, 쉰 날도")).toBeVisible()
+  await expect(page.getByText("집계 가능한 거리 없음")).toBeVisible()
+  await expect(page.getByText(/집계 제외 1건/u).first()).toBeVisible()
 })
