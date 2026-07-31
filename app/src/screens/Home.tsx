@@ -19,6 +19,7 @@ import { engagementSummary } from "../domain/engagement"
 export type HomeProps = {
   readonly onWriteLog?: (entryType?: JournalEntryType) => void
   readonly onOpenDay?: (date: string) => void
+  readonly onOpenArchive?: () => void
   readonly onOpenGuide?: () => void
   readonly onOpenPlan?: () => void
   /** 계정 기능 flag ON일 때만 전달됨 — 없으면 버튼 미노출 */
@@ -32,6 +33,7 @@ export type HomeProps = {
 export function Home({
   onWriteLog,
   onOpenDay,
+  onOpenArchive,
   onOpenGuide,
   onOpenPlan,
   onOpenAccount,
@@ -113,6 +115,7 @@ export function Home({
           analysisEntries={analysisEntries}
           onWriteLog={onWriteLog}
           onOpenDay={onOpenDay}
+          onOpenArchive={onOpenArchive}
           onOpenGuide={onOpenGuide}
           onOpenPlan={onOpenPlan}
           onOpenAccount={onOpenAccount}
@@ -143,6 +146,7 @@ type DataHomeProps = {
   readonly analysisEntries: readonly AnalysisJournalEntry[]
   readonly onWriteLog?: () => void
   readonly onOpenDay?: (date: string) => void
+  readonly onOpenArchive?: () => void
   readonly onOpenGuide?: () => void
   readonly onOpenPlan?: () => void
   readonly onOpenAccount?: () => void
@@ -150,7 +154,7 @@ type DataHomeProps = {
   readonly engagement: ReturnType<typeof engagementSummary>
 }
 
-function DataHome({ all, analysisEntries, onWriteLog, onOpenDay, onOpenGuide, onOpenPlan, onOpenAccount, onOpenRestore, engagement }: DataHomeProps) {
+function DataHome({ all, analysisEntries, onWriteLog, onOpenDay, onOpenArchive, onOpenGuide, onOpenPlan, onOpenAccount, onOpenRestore, engagement }: DataHomeProps) {
   const today = todayISO()
   const life = lifetimeStats([...analysisEntries])
   const weeklyStats = thisWeekStats([...analysisEntries])
@@ -219,7 +223,7 @@ function DataHome({ all, analysisEntries, onWriteLog, onOpenDay, onOpenGuide, on
 
       <DataSafetyNotice onOpenAccount={onOpenAccount} />
 
-      <DeviceJournal onOpenDay={onOpenDay} />
+      <DeviceJournal onOpenDay={onOpenDay} onOpenArchive={onOpenArchive} />
 
       <div style={{ padding: "24px 0 0" }}>
         <SectionLb>— THIS WEEK</SectionLb>
