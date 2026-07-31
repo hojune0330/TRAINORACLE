@@ -5,6 +5,7 @@ import { Home } from "./screens/Home"
 import { LogEntry } from "./screens/LogEntry"
 import type { EntryType } from "./screens/LogEntry"
 import { LogDetail } from "./screens/LogDetail"
+import { JournalArchive } from "./screens/JournalArchive"
 import { Trends } from "./screens/Trends"
 import { Guide } from "./screens/Guide"
 import { PlanBeta } from "./screens/PlanBeta"
@@ -13,8 +14,9 @@ import { Account } from "./screens/Account"
 import { ImportActivities } from "./screens/ImportActivities"
 import { RestoreBackup } from "./screens/RestoreBackup"
 import { accountFeatureEnabled } from "./domain/account/config"
-import { localOnlyCount, todayISO } from "./domain/journal-store"
+import { loadEntries, localOnlyCount, todayISO } from "./domain/journal-store"
 import type { JournalEntry } from "./domain/journal-store"
+import type { ArchiveSelection } from "./domain/journal-archive"
 import { createSavedFactReceipt } from "./domain/save-receipt"
 import type { SavedFactReceipt } from "./domain/save-receipt"
 import { dismissFirstVisit, hasDismissedFirstVisit } from "./domain/onboarding-state"
@@ -32,6 +34,7 @@ interface ViewState {
   importOpen: boolean
   /** 백업 되돌리기 화면 (home 탭 위 오버레이) — 계정·승인 불필요 */
   restoreOpen: boolean
+  archiveSelection: ArchiveSelection | null
   journalDraft?: {
     readonly date: string
     readonly initialEntry?: JournalEntry
@@ -41,6 +44,7 @@ interface ViewState {
 const INITIAL: ViewState = {
   tab: "home", entryType: "choose", detailDate: null,
   accountOpen: false, importOpen: false, restoreOpen: false,
+  archiveSelection: null,
 }
 const TOAST_READABLE_MS = 4000
 const TOAST_EXIT_MS = 150
@@ -68,7 +72,9 @@ export function AppShell() {
   }
   const goHomeAfterSave = (savedEntry: JournalEntry, reviewMessage?: string, detailDate?: string) => {
     const receipt = createSavedFactReceipt(savedEntry)
-    setV(detailDate === undefined ? INITIAL : { ...INITIAL, detailDate })
+    setV(detailDate === undefined
+      ? INITIAL
+      : { ...INITIAL, detailDate, archiveSelection: v.archiveSelection })
     dismissFirstVisit()
     setFirstVisitActive(false)
     setSavedToast({ count: localOnlyCount(), phase: "enter", receipt, reviewMessage })
@@ -91,10 +97,27 @@ export function AppShell() {
     if (scrollRegion === null) return
     scrollRegion.scrollTop = 0
     scrollRegion.scrollLeft = 0
-  }, [v.tab, v.entryType, v.detailDate, v.journalDraft?.date, v.journalDraft?.initialEntry?.id, athleteRecordsOpen])
+  }, [
+    v.tab,
+    v.entryType,
+    v.detailDate,
+    v.archiveSelection?.selectedMonth,
+    v.archiveSelection?.selectedWeekStart,
+    v.journalDraft?.date,
+    v.journalDraft?.initialEntry?.id,
+    athleteRecordsOpen,
+  ])
   const goTab = (tab: AppTab) => {
     setAthleteRecordsOpen(false)
-    setV({ tab, entryType: "choose", detailDate: null, accountOpen: false, importOpen: false, restoreOpen: false })
+    setV({
+      tab,
+      entryType: "choose",
+      detailDate: null,
+      accountOpen: false,
+      importOpen: false,
+      restoreOpen: false,
+      archiveSelection: null,
+    })
   }
   const goTrendsFromReceipt = () => {
     setSavedToast(null)
@@ -103,7 +126,35 @@ export function AppShell() {
 
   const accountEnabled = accountFeatureEnabled()
 
-  const openRestore = () => setV(s => ({ ...s, tab: "home", accountOpen: false, importOpen: false, restoreOpen: true }))
+  const openRestore = () => setV(s => ({
+    ...s,
+    tab: "home",
+    accountOpen: false,
+    importOpen: false,
+    restoreOpen: true,
+    archiveSelection: null,
+  }))
+
+  const detailScreen = (onBack: () => void) => (
+    <LogDetail
+      date={v.detailDate ?? ""}
+      onBack={onBack}
+      onAddEntry={(date) => setV(s => ({
+        ...s,
+        tab: "log",
+        entryType: "choose",
+        detailDate: date,
+        journalDraft: { date },
+      }))}
+      onEditEntry={(entry) => setV(s => ({
+        ...s,
+        tab: "log",
+        entryType: entry.kind,
+        detailDate: entry.date,
+        journalDraft: { date: entry.date, initialEntry: entry },
+      }))}
+    />
+  )
 
   let screen: React.ReactNode
   if (v.tab === "home" && v.restoreOpen) {
@@ -122,40 +173,42 @@ export function AppShell() {
       />
     )
   } else if (v.tab === "home") {
-    screen = v.detailDate ? (
-      <LogDetail
-        date={v.detailDate}
-        onBack={() => setV(s => ({ ...s, detailDate: null }))}
-        onAddEntry={(date) => setV(s => ({
-          ...s,
-          tab: "log",
-          entryType: "choose",
-          detailDate: date,
-          journalDraft: { date },
-        }))}
-        onEditEntry={(entry) => setV(s => ({
-          ...s,
-          tab: "log",
-          entryType: entry.kind,
-          detailDate: entry.date,
-          journalDraft: { date: entry.date, initialEntry: entry },
-        }))}
-      />
-    ) : (
-      <Home
-        onWriteLog={(entryType) => setV(s => ({ ...s, tab: "log", entryType: entryType ?? "choose" }))}
-        onOpenDay={(date) => setV(s => ({ ...s, detailDate: date }))}
-        onOpenGuide={() => setV(s => ({ ...s, tab: "guide" }))}
-        onOpenPlan={() => setV(s => ({ ...s, tab: "plan" }))}
-        onOpenAccount={accountEnabled ? () => setV(s => ({ ...s, accountOpen: true })) : undefined}
-        onOpenRestore={openRestore}
-        firstVisitActive={firstVisitActive}
-        onDismissFirstVisit={() => {
-          dismissFirstVisit()
-          setFirstVisitActive(false)
-        }}
-      />
-    )
+    if (v.archiveSelection !== null) {
+      screen = v.detailDate !== null
+        ? detailScreen(() => setV(s => ({ ...s, detailDate: null })))
+        : (
+          <JournalArchive
+            entries={loadEntries()}
+            selection={v.archiveSelection}
+            onSelectionChange={(archiveSelection) => setV(s => ({ ...s, archiveSelection }))}
+            onOpenDay={(detailDate) => setV(s => ({ ...s, detailDate }))}
+            onBack={goHome}
+          />
+        )
+    } else {
+      screen = v.detailDate !== null
+        ? detailScreen(() => setV(s => ({ ...s, detailDate: null })))
+        : (
+          <Home
+            onWriteLog={(entryType) => setV(s => ({ ...s, tab: "log", entryType: entryType ?? "choose" }))}
+            onOpenDay={(date) => setV(s => ({ ...s, detailDate: date }))}
+            onOpenArchive={() => setV(s => ({
+              ...s,
+              detailDate: null,
+              archiveSelection: { selectedMonth: null, selectedWeekStart: null },
+            }))}
+            onOpenGuide={() => setV(s => ({ ...s, tab: "guide" }))}
+            onOpenPlan={() => setV(s => ({ ...s, tab: "plan" }))}
+            onOpenAccount={accountEnabled ? () => setV(s => ({ ...s, accountOpen: true })) : undefined}
+            onOpenRestore={openRestore}
+            firstVisitActive={firstVisitActive}
+            onDismissFirstVisit={() => {
+              dismissFirstVisit()
+              setFirstVisitActive(false)
+            }}
+          />
+        )
+    }
   } else if (v.tab === "plan") {
     screen = athleteRecordsOpen ? (
       <AthleteRecords onBack={() => setAthleteRecordsOpen(false)} />
@@ -169,6 +222,7 @@ export function AppShell() {
           accountOpen: false,
           importOpen: false,
           restoreOpen: false,
+          archiveSelection: null,
         })}
       />
     )
@@ -205,7 +259,15 @@ export function AppShell() {
   } else if (v.tab === "trends") {
     screen = <Trends onBack={goHome} />
   } else {
-    screen = <Guide onWriteLog={() => setV({ tab: "log", entryType: "choose", detailDate: null, accountOpen: false, importOpen: false, restoreOpen: false })} />
+    screen = <Guide onWriteLog={() => setV({
+      tab: "log",
+      entryType: "choose",
+      detailDate: null,
+      accountOpen: false,
+      importOpen: false,
+      restoreOpen: false,
+      archiveSelection: null,
+    })} />
   }
 
   return (

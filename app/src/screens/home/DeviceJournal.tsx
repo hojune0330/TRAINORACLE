@@ -7,6 +7,7 @@ import { hasImportedField } from "../../domain/field-provenance"
 
 type DeviceJournalProps = {
   readonly onOpenDay?: (date: string) => void
+  readonly onOpenArchive?: () => void
 }
 
 const KIND_META: Record<JournalEntry["kind"], { readonly label: string; readonly mark: string }> = {
@@ -39,7 +40,7 @@ function entrySub(entry: JournalEntry): string {
   ].filter(Boolean).join(" · ")
 }
 
-export function DeviceJournal({ onOpenDay }: DeviceJournalProps) {
+export function DeviceJournal({ onOpenDay, onOpenArchive }: DeviceJournalProps) {
   const entries = React.useMemo(() => recentEntries(5), [])
 
   React.useEffect(() => {
@@ -51,7 +52,9 @@ export function DeviceJournal({ onOpenDay }: DeviceJournalProps) {
   if (entries.length === 0) return null
   return (
     <div style={{ padding: "24px 0 0" }}>
-      <SectionLb>— 이 기기의 일지 · 최근 {entries.length}건</SectionLb>
+      <SectionLb action="전체 보기" onAction={onOpenArchive}>
+        — 이 기기의 일지 · 최근 {entries.length}건
+      </SectionLb>
       <div style={{ margin: "0 20px", borderTop: "1px solid var(--ink)", borderBottom: "1px solid var(--ink)" }}>
         {entries.map((entry, index) => {
           const meta = KIND_META[entry.kind]
