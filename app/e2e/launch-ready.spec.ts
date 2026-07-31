@@ -232,7 +232,9 @@ test("shows a truthful distance receipt and opens the real trend", async ({ page
   await expect(receipt).toContainText("8 km")
   await receipt.getByRole("button", { name: "거리 추이 보기" }).click()
   await expect(page.getByRole("heading", { name: "추이" })).toBeVisible()
-  await expect(page.getByText("8km · 전체 누적")).toBeVisible()
+  const weekly = page.getByRole("region", { name: "최근 4주 거리" })
+  await expect(weekly.getByText(/^8$/u)).toBeVisible()
+  await expect(weekly.getByText(/집계 사용 1건/u)).toBeVisible()
 })
 
 test("uses the real app on desktop and reserves the workspace for an explicit query", async ({ page }, testInfo) => {

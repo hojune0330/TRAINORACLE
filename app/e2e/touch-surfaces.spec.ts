@@ -59,14 +59,13 @@ test("audits populated home, detail, and trends actions", async ({ page }, testI
   await expectNoHorizontalOverflow(page)
   await page.getByRole("button", { name: "← 뒤로" }).click()
   await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: /추이/u }).click()
-  const balance = page.getByRole("button", { name: /자세히 보기/u })
+  const metricButtons = page
+    .getByRole("region", { name: "최근 4개월 추이" })
+    .getByRole("button")
   await auditTouchTargets(page, [
     { name: "trends.back", locator: page.getByRole("button", { name: "← 뒤로" }) },
-    { name: "trends.balance", locator: balance },
+    { name: "trends.metrics", locator: metricButtons, count: 4 },
   ])
-  await balance.click()
-  await expect(page.locator(".popover-surface")).toBeVisible()
-  await page.keyboard.press("Escape")
   await expectNoHorizontalOverflow(page)
   if (testInfo.project.name === "touch-narrow") {
     await page.screenshot({ path: "../.omo/evidence/mobile-touch-targets/task-5-320.png" })

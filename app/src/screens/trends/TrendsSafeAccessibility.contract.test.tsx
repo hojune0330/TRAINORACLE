@@ -1,4 +1,4 @@
-import { cleanup, render, screen } from "@testing-library/react"
+import { cleanup, render, screen, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
 import type { JournalEntry } from "../../domain/journal-store"
@@ -73,8 +73,19 @@ describe("trend chart alternatives", () => {
     for (const toggle of tableToggles) await user.click(toggle)
 
     // Then
-    expect(tableToggles).toHaveLength(3)
-    expect(screen.getAllByRole("table")).toHaveLength(3)
-    expect(screen.getAllByRole("img")).toHaveLength(3)
+    expect(tableToggles).toHaveLength(2)
+    expect(screen.getAllByRole("table")).toHaveLength(2)
+    expect(screen.getAllByRole("img")).toHaveLength(2)
+
+    const monthly = screen.getByRole("region", { name: "최근 4개월 추이" })
+    for (const metric of ["거리", "페이스", "기분", "통증"]) {
+      await user.click(within(monthly).getByRole("button", { name: metric }))
+      expect(within(monthly).getByRole("table", {
+        name: `${metric} 최근 4개월 중앙값`,
+      })).toBeVisible()
+      expect(within(monthly).getByRole("img")).toHaveAccessibleName(
+        new RegExp(`${metric} 최근 4개월`, "u"),
+      )
+    }
   })
 })

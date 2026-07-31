@@ -36,6 +36,6 @@ test("excludes a tampered distance with trailing text from the trends total", as
   await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: /추이/u }).click()
 
   // Then
-  await expect(page.getByText(/0km · 전체 누적/u)).toBeVisible()
-  await expect(page.getByText(/12km · 전체 누적/u)).toHaveCount(0)
+  await expect(page.getByText("집계 가능한 거리 없음")).toBeVisible()
+  await expect(page.getByText(/12\s*km/u)).toHaveCount(0)
 })
