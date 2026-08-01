@@ -39,4 +39,31 @@ describe("private memo recovery code", () => {
     expect(rotateCode).toHaveBeenCalledWith(previousCode, expect.stringMatching(/^(?:[A-F0-9]{4}-){7}[A-F0-9]{4}$/u))
     expect(screen.getByTestId("recovery-code")).toHaveTextContent(/^(?:[A-F0-9]{4}-){7}[A-F0-9]{4}$/u)
   })
+
+  it("prevents another recovery-code rotation while the current rotation is pending", async () => {
+    const previousCode = "ABCD-EF12-3456-7890-ABCD-EF12-3456-7890"
+    let resolveRotation: ((result: { readonly ok: boolean }) => void) | undefined
+    const rotateCode = vi.fn(() => new Promise<{ readonly ok: boolean }>((resolve) => {
+      resolveRotation = resolve
+    }))
+    render(<PrivateMemoVault onLoadCode={() => previousCode} onRotateCode={rotateCode} />)
+    const [createButton] = screen.getAllByRole("button")
+    if (createButton === undefined) throw new Error("The recovery-code creation control is missing.")
+    const user = userEvent.setup()
+
+    await user.click(createButton)
+    await user.click(createButton)
+
+    expect(rotateCode).toHaveBeenCalledTimes(1)
+    expect(createButton).toBeDisabled()
+    expect(screen.queryByTestId("recovery-code")).not.toBeInTheDocument()
+
+    if (resolveRotation === undefined) throw new Error("The pending rotation did not provide a resolver.")
+    resolveRotation({ ok: false })
+    await vi.waitFor(() => expect(createButton).toBeEnabled())
+    expect(screen.queryByTestId("recovery-code")).not.toBeInTheDocument()
+
+    await user.click(createButton)
+    expect(rotateCode).toHaveBeenCalledTimes(2)
+  })
 })
