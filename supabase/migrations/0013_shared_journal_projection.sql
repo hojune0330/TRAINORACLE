@@ -35,6 +35,10 @@ begin
     raise exception 'shared journal access denied' using errcode = '42501';
   end if;
 
+  if not (allowed_fields && array['TRAINING_RECORD', 'TRAINING_NOTE', 'PAIN', 'MOOD', 'BODY_STATE']::text[]) then
+    return;
+  end if;
+
   return query
   select
     journal.entry_id,

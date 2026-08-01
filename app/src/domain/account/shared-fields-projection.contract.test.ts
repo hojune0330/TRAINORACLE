@@ -16,6 +16,7 @@ function assertSharedProjectionBoundary(sql: string): void {
   expect(sql).toContain("jsonb_strip_nulls(jsonb_build_object(")
   expect(sql).toContain("'TRAINING_NOTE' = any(allowed_fields)")
   expect(sql).toContain("journal.entry ->> 'memoPurpose' = 'ANALYZABLE_TRAINING_NOTE'")
+  expect(sql).toContain("allowed_fields && array['TRAINING_RECORD', 'TRAINING_NOTE', 'PAIN', 'MOOD', 'BODY_STATE']::text[]")
   expect(sql).not.toMatch(/journal\.saved_at,\s*journal\.entry\s*(?:as\s+shared_entry)?\s+from/iu)
   expect(sql).not.toMatch(/^\s*'(?:memo|note|memoPurpose|PRIVATE_MEMO)'\s*,/mu)
   expect(sql).not.toMatch(/jsonb_object_agg|jsonb_each|unnest\(allowed_fields\)|format\(/iu)
@@ -67,6 +68,19 @@ describe("supporter shared-fields boundary", () => {
     expect(migration).toContain("'PAIN' = any(allowed_fields)")
     expect(migration).toContain("'MOOD' = any(allowed_fields)")
     expect(migration).toContain("'BODY_STATE' = any(allowed_fields)")
+  })
+
+  it("returns no row when a connection has no recognized shared field", () => {
+    expect(migration).toContain("allowed_fields && array['TRAINING_RECORD', 'TRAINING_NOTE', 'PAIN', 'MOOD', 'BODY_STATE']::text[]")
+  })
+
+  it("rejects a mutation that would return metadata for an empty share scope", () => {
+    const mutated = migration.replace(
+      "if not (allowed_fields && array['TRAINING_RECORD', 'TRAINING_NOTE', 'PAIN', 'MOOD', 'BODY_STATE']::text[]) then\n    return;\n  end if;\n\n",
+      "",
+    )
+
+    expect(() => assertSharedProjectionBoundary(mutated)).toThrow()
   })
 
   it("shares training text only for the explicit training-note purpose", () => {
