@@ -8,8 +8,10 @@ import {
   newEntryId,
   nextJournalSavedAt,
   saveEntry,
+  savePrivateEntry,
   todayISO,
   updateEntry,
+  updatePrivateEntry,
 } from "../../domain/journal-store"
 import type { JournalEntry } from "../../domain/journal-store"
 import { PurposeScopedMemoField, usePurposeScopedMemo } from "./PurposeScopedMemoField"
@@ -39,7 +41,7 @@ export function RaceForm({ onBack, onDone, targetDate, initialEntry }: EntryForm
   const [saveError, setSaveError] = React.useState(false)
   const memo = usePurposeScopedMemo(initial?.memo ?? "", initial?.memoPurpose)
 
-  const persist = () => {
+  const persist = async () => {
     const hasPaceInput = paceMinutes.trim() !== "" || paceSeconds.trim() !== ""
     const goalPace = parseTargetPaceInput(paceMinutes, paceSeconds)
     if (hasPaceInput && goalPace === null) {
@@ -66,7 +68,10 @@ export function RaceForm({ onBack, onDone, targetDate, initialEntry }: EntryForm
       ...(mood !== null ? { mood } : {}),
       ...(goalPace !== null ? { goalPace } : {}),
     }
-    const saveResult = initial === undefined ? saveEntry(entry) : updateEntry(entry, initial.savedAt)
+    const isPrivateMemo = entry.memoPurpose === "PRIVATE_SELF_ONLY" && entry.memo.trim() !== ""
+    const saveResult = initial === undefined
+      ? isPrivateMemo ? await savePrivateEntry(entry) : saveEntry(entry)
+      : isPrivateMemo ? await updatePrivateEntry(entry, initial.savedAt) : updateEntry(entry, initial.savedAt)
     if (window.location.search.includes("uitest")) console.log(`[JSAVE] kind=race ok=${saveResult.ok}`)
     if (!saveResult.ok) { setSaveError(true); return }
     if (memoPreparation.reviewMessage === null) onDone?.("race", entry)

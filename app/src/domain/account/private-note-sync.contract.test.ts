@@ -1,12 +1,14 @@
-import { beforeEach, describe, expect, it } from "vitest"
+import { beforeEach, describe, expect, it, vi } from "vitest"
 import type { PostSessionEntry } from "../journal-schema"
 import {
   decryptPrivateJournalEntry,
   encryptPrivateJournalEntry,
   loadSessionRecoveryCode,
+  rotateSessionRecoveryCode,
   saveSessionRecoveryCode,
 } from "./private-note-sync"
 import { createRecoveryCode } from "./private-note-crypto"
+import { loadEntriesWithPrivateMemos, savePrivateEntry } from "../journal-store"
 
 const privateEntry: PostSessionEntry = {
   id: "private-1",
@@ -52,5 +54,40 @@ describe("private memo encrypted sync", () => {
     expect(loadSessionRecoveryCode()).toBe(code)
     expect([...Array(window.localStorage.length)].map((_, index) => window.localStorage.key(index)))
       .not.toContain("trainoracle.private-note.recovery.v1")
+  })
+
+  it("rotates the session recovery code and keeps a real private memo decryptable", async () => {
+    const previousCode = createRecoveryCode()
+    const nextCode = createRecoveryCode()
+    expect(saveSessionRecoveryCode(previousCode)).toBe(true)
+    await expect(savePrivateEntry(privateEntry)).resolves.toEqual({ ok: true, total: 1 })
+
+    await expect(rotateSessionRecoveryCode(previousCode, nextCode)).resolves.toEqual({ ok: true })
+
+    expect(loadSessionRecoveryCode()).toBe(nextCode)
+    await expect(loadEntriesWithPrivateMemos()).resolves.toEqual([privateEntry])
+  })
+
+  it("keeps the old session and vault decryptable when saving a rotated code fails", async () => {
+    const previousCode = createRecoveryCode()
+    const nextCode = createRecoveryCode()
+    expect(saveSessionRecoveryCode(previousCode)).toBe(true)
+    await expect(savePrivateEntry(privateEntry)).resolves.toEqual({ ok: true, total: 1 })
+    const realSetItem = Storage.prototype.setItem
+    vi.spyOn(Storage.prototype, "setItem").mockImplementation(function (
+      this: Storage,
+      key: string,
+      value: string,
+    ) {
+      if (this === window.sessionStorage && key === "trainoracle.private-note.recovery.v1") {
+        throw new DOMException("Injected session write failure", "QuotaExceededError")
+      }
+      return realSetItem.call(this, key, value)
+    })
+
+    await expect(rotateSessionRecoveryCode(previousCode, nextCode)).resolves.toEqual({ ok: false })
+
+    expect(loadSessionRecoveryCode()).toBe(previousCode)
+    await expect(loadEntriesWithPrivateMemos()).resolves.toEqual([privateEntry])
   })
 })

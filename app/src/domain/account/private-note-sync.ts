@@ -3,8 +3,11 @@ import type { JournalEntry } from "../journal-schema"
 import {
   decryptPrivateNote,
   encryptPrivateNote,
+  isValidRecoveryCode,
 } from "./private-note-crypto"
 import type { EncryptedPrivateNote } from "./private-note-crypto"
+import { restorePrivateMemo, rotatePrivateMemoVault } from "../private-memo-vault"
+import { journalStorage } from "../journal-local-storage"
 
 const RECOVERY_KEY = "trainoracle.private-note.recovery.v1"
 
@@ -13,9 +16,11 @@ export async function encryptPrivateJournalEntry(
   recoveryCode: string,
 ): Promise<EncryptedPrivateNote | null> {
   if (memoPurposeOf(entry) !== "PRIVATE_SELF_ONLY") return null
-  const text = entry.kind === "evening" ? entry.note : entry.memo
+  const storage = journalStorage()
+  const restored = storage === null ? entry : await restorePrivateMemo(storage, entry, recoveryCode)
+  const text = restored.kind === "evening" ? restored.note : restored.memo
   if (text.trim() === "") return null
-  return encryptPrivateNote(JSON.stringify(entry), recoveryCode)
+  return encryptPrivateNote(JSON.stringify(restored), recoveryCode)
 }
 
 export async function decryptPrivateJournalEntry(
@@ -34,6 +39,7 @@ export async function decryptPrivateJournalEntry(
 
 export function saveSessionRecoveryCode(recoveryCode: string): boolean {
   if (typeof window === "undefined") return false
+  if (!isValidRecoveryCode(recoveryCode)) return false
   try {
     window.sessionStorage.setItem(RECOVERY_KEY, recoveryCode)
     return window.sessionStorage.getItem(RECOVERY_KEY) === recoveryCode
@@ -45,11 +51,25 @@ export function saveSessionRecoveryCode(recoveryCode: string): boolean {
 export function loadSessionRecoveryCode(): string | null {
   if (typeof window === "undefined") return null
   try {
-    return window.sessionStorage.getItem(RECOVERY_KEY)
+    const recoveryCode = window.sessionStorage.getItem(RECOVERY_KEY)
+    return recoveryCode !== null && isValidRecoveryCode(recoveryCode) ? recoveryCode : null
   } catch {
     return null
   }
 }
+
+export async function rotateSessionRecoveryCode(
+  previousRecoveryCode: string,
+  nextRecoveryCode: string,
+): Promise<{ readonly ok: boolean }> {
+  const result = await rotatePrivateMemoVault(previousRecoveryCode, nextRecoveryCode)
+  if (!result.ok) return result
+  if (saveSessionRecoveryCode(nextRecoveryCode)) return { ok: true }
+  await rotatePrivateMemoVault(nextRecoveryCode, previousRecoveryCode)
+  return { ok: false }
+}
+
+export { rotatePrivateMemoVault }
 
 export function clearSessionRecoveryCode(): void {
   if (typeof window === "undefined") return

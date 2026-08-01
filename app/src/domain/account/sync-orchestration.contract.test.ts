@@ -103,7 +103,7 @@ import { saveSyncConsent, syncNow } from "./sync"
 import { saveSessionRecoveryCode } from "./private-note-sync"
 import { createRecoveryCode } from "./private-note-crypto"
 import { loadTombstones, recordTombstone } from "./tombstone"
-import { saveEntry } from "../journal-store"
+import { saveEntry, savePrivateEntry } from "../journal-store"
 import type { PostSessionEntry } from "../journal-schema"
 
 const JOURNAL_KEY = "trainoracle.journal.v1"
@@ -263,7 +263,7 @@ describe("syncNow — 삭제 기록 서버 전파", () => {
   it("나만의 메모는 복구 코드가 있을 때 암호문으로만 서버에 올린다", async () => {
     const code = createRecoveryCode()
     saveSessionRecoveryCode(code)
-    saveEntry({
+    await savePrivateEntry({
       ...memoOnlyPost("encrypted-private"),
       memo: "나만 보는 원문",
       memoPurpose: "PRIVATE_SELF_ONLY",

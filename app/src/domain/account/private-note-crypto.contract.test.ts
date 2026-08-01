@@ -23,4 +23,18 @@ describe("private memo end-to-end encryption", () => {
   it("rejects an invalid recovery code before encryption", async () => {
     await expect(encryptPrivateNote("나만 보는 글", "short")).rejects.toThrow(/복구 코드/u)
   })
+
+  it("rejects malformed ciphertext without returning private text", async () => {
+    const code = createRecoveryCode()
+
+    await expect(decryptPrivateNote({
+      version: 1,
+      algorithm: "AES-GCM",
+      derivation: "PBKDF2-SHA-256",
+      iterations: 210_000,
+      salt: "not-base64",
+      iv: "not-base64",
+      ciphertext: "not-base64",
+    }, code)).rejects.toThrow()
+  })
 })

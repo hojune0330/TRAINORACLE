@@ -27,4 +27,16 @@ describe("private memo recovery code", () => {
 
     expect(saveCode).toHaveBeenCalledWith(code)
   })
+
+  it("rotates an unlocked recovery code exactly once and displays the replacement", async () => {
+    const previousCode = "ABCD-EF12-3456-7890-ABCD-EF12-3456-7890"
+    const rotateCode = vi.fn().mockResolvedValue({ ok: true })
+    render(<PrivateMemoVault onLoadCode={() => previousCode} onRotateCode={rotateCode} />)
+
+    await userEvent.click(screen.getByRole("button", { name: "새 복구 코드 만들기" }))
+
+    await vi.waitFor(() => expect(rotateCode).toHaveBeenCalledTimes(1))
+    expect(rotateCode).toHaveBeenCalledWith(previousCode, expect.stringMatching(/^(?:[A-F0-9]{4}-){7}[A-F0-9]{4}$/u))
+    expect(screen.getByTestId("recovery-code")).toHaveTextContent(/^(?:[A-F0-9]{4}-){7}[A-F0-9]{4}$/u)
+  })
 })

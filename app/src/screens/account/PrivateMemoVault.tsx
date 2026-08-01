@@ -1,24 +1,42 @@
 import React from "react"
 import { SectionLb } from "../../components/JournalPrimitives"
 import { createRecoveryCode, isValidRecoveryCode } from "../../domain/account/private-note-crypto"
-import { saveSessionRecoveryCode } from "../../domain/account/private-note-sync"
+import {
+  loadSessionRecoveryCode,
+  rotateSessionRecoveryCode,
+  saveSessionRecoveryCode,
+} from "../../domain/account/private-note-sync"
 import { inputStyle, primaryBtn, secondaryBtn } from "./styles"
 
 type PrivateMemoVaultProps = {
   readonly onSaveCode?: (code: string) => boolean
+  readonly onLoadCode?: () => string | null
+  readonly onRotateCode?: (previousCode: string, nextCode: string) => Promise<{ readonly ok: boolean }>
 }
 
-export function PrivateMemoVault({ onSaveCode = saveSessionRecoveryCode }: PrivateMemoVaultProps) {
+export function PrivateMemoVault({
+  onSaveCode = saveSessionRecoveryCode,
+  onLoadCode = loadSessionRecoveryCode,
+  onRotateCode = rotateSessionRecoveryCode,
+}: PrivateMemoVaultProps) {
   const [existingCode, setExistingCode] = React.useState("")
   const [createdCode, setCreatedCode] = React.useState<string | null>(null)
   const [notice, setNotice] = React.useState<string | null>(null)
+  const [isRotating, setIsRotating] = React.useState(false)
 
-  const create = () => {
+  const create = async () => {
+    if (isRotating) return
+    setIsRotating(true)
     const code = createRecoveryCode()
-    setCreatedCode(code)
-    setNotice(onSaveCode(code)
+    const currentCode = onLoadCode()
+    const saved = currentCode === null
+      ? onSaveCode(code)
+      : (await onRotateCode(currentCode, code)).ok
+    if (saved) setCreatedCode(code)
+    setNotice(saved
       ? "이 브라우저 세션에서 나만의 메모를 암호화해 동기화할 수 있어요."
       : "이 브라우저에 복구 코드를 준비하지 못했어요.")
+    setIsRotating(false)
   }
 
   const unlock = () => {
@@ -38,7 +56,7 @@ export function PrivateMemoVault({ onSaveCode = saveSessionRecoveryCode }: Priva
       <p style={{ fontFamily: "var(--sans)", fontSize: 12, lineHeight: 1.65, color: "var(--ink-2)", margin: 0 }}>
         나만의 메모는 기기에서 암호화하고 서버에는 암호문만 저장해요. 복구 코드를 잃으면 <b>서비스 운영자도 대신 복구할 수 없어요.</b>
       </p>
-      <button type="button" style={primaryBtn} onClick={create}>새 복구 코드 만들기</button>
+      <button type="button" style={primaryBtn} onClick={create} disabled={isRotating}>새 복구 코드 만들기</button>
       {createdCode !== null && (
         <output data-testid="recovery-code" style={{ fontFamily: "var(--mono)", fontSize: 13, lineHeight: 1.7, overflowWrap: "anywhere", padding: 10, border: "1px dashed var(--line)" }}>
           {createdCode}

@@ -228,7 +228,7 @@ describe("전체 왕복 — 내보내고 지우고 되돌린다", () => {
 
   it("안전 백업 복원은 메모가 없는 상태로 되돌아간다 (파일에 없으니 만들지 않는다)", () => {
     // Given
-    saveEntry(post("a", { memo: "비밀 메모", memoPurpose: "PRIVATE_SELF_ONLY" }))
+    saveEntry(post("a", { memo: "비밀 메모", memoPurpose: "ANALYZABLE_TRAINING_NOTE" }))
     const safeBackup = exportEntriesJSON()
 
     // When

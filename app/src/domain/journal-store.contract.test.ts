@@ -4,9 +4,12 @@ import {
   loadAnalysisEntries,
   loadEntries,
   saveEntry,
+  savePrivateEntry,
   type JournalEntry,
   type RaceEntry,
 } from "./journal-store"
+import { createRecoveryCode } from "./account/private-note-crypto"
+import { saveSessionRecoveryCode } from "./account/private-note-sync"
 
 const STORAGE_KEY = "trainoracle.journal.v1"
 
@@ -151,10 +154,11 @@ describe("journal storage boundary", () => {
     expect(loadEntries()).toEqual([])
   })
 
-  it("projects owner-visible records into a raw-text-free analytics boundary", () => {
+  it("projects owner-visible records into a raw-text-free analytics boundary", async () => {
     // Given
     const secret = "PRIVATE_ANALYTICS_SECRET"
-    saveEntry({
+    expect(saveSessionRecoveryCode(createRecoveryCode())).toBe(true)
+    await savePrivateEntry({
       ...validRaceEntry("analytics-private"),
       record: "4:08.21",
       memo: secret,
@@ -189,9 +193,10 @@ describe("journal storage boundary", () => {
     expect(exported).not.toContain("첫 바퀴는 침착하게")
   })
 
-  it("does not turn a private-note-only record into an analysis or progress row", () => {
+  it("does not turn a private-note-only record into an analysis or progress row", async () => {
     // Given
-    saveEntry({
+    expect(saveSessionRecoveryCode(createRecoveryCode())).toBe(true)
+    await savePrivateEntry({
       id: "private-only",
       kind: "race",
       date: "2026-07-14",
@@ -221,7 +226,7 @@ describe("safe journal export", () => {
     window.localStorage.clear()
   })
 
-  it("omits private raw text and purpose metadata while retaining approved structured fields", () => {
+  it("omits private raw text and purpose metadata while retaining approved structured fields", async () => {
     // Given
     const privateSecret = "PRIVATE_SECRET_7f32"
     const privateEntry = {
@@ -229,7 +234,8 @@ describe("safe journal export", () => {
       memo: privateSecret,
       memoPurpose: "PRIVATE_SELF_ONLY",
     } satisfies JournalEntry
-    saveEntry(privateEntry)
+    expect(saveSessionRecoveryCode(createRecoveryCode())).toBe(true)
+    await savePrivateEntry(privateEntry)
 
     // When
     const exported = exportEntriesJSON()

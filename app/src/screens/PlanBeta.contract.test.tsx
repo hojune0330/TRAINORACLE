@@ -3,7 +3,9 @@ import userEvent from "@testing-library/user-event"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { FIELD_PROVENANCE } from "../domain/field-provenance"
 import { MEMO_PURPOSE } from "../domain/journal-schema"
-import { saveEntry, todayISO } from "../domain/journal-store"
+import { saveEntry, savePrivateEntry, todayISO } from "../domain/journal-store"
+import { createRecoveryCode } from "../domain/account/private-note-crypto"
+import { saveSessionRecoveryCode } from "../domain/account/private-note-sync"
 import { PlanBeta } from "./PlanBeta"
 
 beforeEach(() => {
@@ -231,11 +233,23 @@ describe("plan beta user flow", () => {
   })
 
   it("does not inspect a private memo while checking recent journal risk", async () => {
-    savePostSession(
-      "recent-private-note",
-      "무릎이 계속 아파요",
-      MEMO_PURPOSE.privateSelfOnly,
-    )
+    const date = todayISO()
+    expect(saveSessionRecoveryCode(createRecoveryCode())).toBe(true)
+    await expect(savePrivateEntry({
+      id: "recent-private-note",
+      kind: "post-session",
+      date,
+      savedAt: `${date}T08:00:00.000Z`,
+      syncState: "local",
+      system: "",
+      title: "",
+      distanceKm: "",
+      durationMin: "",
+      avgPace: "",
+      rpe: 0,
+      memo: "무릎이 계속 아파요",
+      memoPurpose: MEMO_PURPOSE.privateSelfOnly,
+    })).resolves.toEqual({ ok: true, total: 1 })
     render(<PlanBeta />)
 
     await answerMinimumPlanQuestions("clear")

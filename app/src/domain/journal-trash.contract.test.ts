@@ -38,7 +38,7 @@ function session(id: string, overrides: Partial<JournalEntry> = {}): JournalEntr
     memo: "종아리가 조금 뻐근했다",
     // 메모가 비어 있지 않으면 스키마가 memoPurpose를 요구한다.
     // 빼면 픽스처가 통째로 거부되어 테스트가 조용히 무의미해진다.
-    memoPurpose: MEMO_PURPOSE.privateSelfOnly,
+    memoPurpose: MEMO_PURPOSE.analyzableTrainingNote,
     ...overrides,
   } as JournalEntry
 }

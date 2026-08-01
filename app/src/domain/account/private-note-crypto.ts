@@ -69,15 +69,19 @@ export async function decryptPrivateNote(
   if (!payload.success || !parsedCode.success) {
     throw new PrivateNoteCryptoError("암호화된 메모나 복구 코드를 확인해 주세요.")
   }
-  const salt = base64ToBytes(payload.data.salt)
-  const iv = base64ToBytes(payload.data.iv)
-  const key = await deriveKey(parsedCode.data, salt)
-  const decrypted = await crypto.subtle.decrypt(
-    { name: "AES-GCM", iv: toArrayBuffer(iv) },
-    key,
-    toArrayBuffer(base64ToBytes(payload.data.ciphertext)),
-  )
-  return new TextDecoder().decode(decrypted)
+  try {
+    const salt = base64ToBytes(payload.data.salt)
+    const iv = base64ToBytes(payload.data.iv)
+    const key = await deriveKey(parsedCode.data, salt)
+    const decrypted = await crypto.subtle.decrypt(
+      { name: "AES-GCM", iv: toArrayBuffer(iv) },
+      key,
+      toArrayBuffer(base64ToBytes(payload.data.ciphertext)),
+    )
+    return new TextDecoder().decode(decrypted)
+  } catch {
+    throw new PrivateNoteCryptoError("Encrypted memo cannot be decrypted with this recovery code.")
+  }
 }
 
 async function deriveKey(recoveryCode: string, salt: Uint8Array): Promise<CryptoKey> {

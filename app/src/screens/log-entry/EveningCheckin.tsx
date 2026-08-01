@@ -6,8 +6,10 @@ import {
   newEntryId,
   nextJournalSavedAt,
   saveEntry,
+  savePrivateEntry,
   todayISO,
   updateEntry,
+  updatePrivateEntry,
 } from "../../domain/journal-store"
 import type { JournalEntry } from "../../domain/journal-store"
 import { painLevelsRequireReview } from "../../safety/memo-safety"
@@ -34,7 +36,7 @@ export function EveningCheckin({ onBack, onDone, targetDate, initialEntry }: Ent
   const [saveError, setSaveError] = React.useState(false)
   const note = usePurposeScopedMemo(initial?.note ?? "", initial?.memoPurpose)
 
-  const persist = () => {
+  const persist = async () => {
     const notePreparation = note.prepareForSave()
     if (!notePreparation.ready) return
     const entry: JournalEntry = {
@@ -52,7 +54,10 @@ export function EveningCheckin({ onBack, onDone, targetDate, initialEntry }: Ent
       },
       ...(note.text.trim() !== "" && note.purpose !== undefined ? { memoPurpose: note.purpose } : {}),
     }
-    const result = initial === undefined ? saveEntry(entry) : updateEntry(entry, initial.savedAt)
+    const isPrivateMemo = entry.memoPurpose === "PRIVATE_SELF_ONLY" && entry.note.trim() !== ""
+    const result = initial === undefined
+      ? isPrivateMemo ? await savePrivateEntry(entry) : saveEntry(entry)
+      : isPrivateMemo ? await updatePrivateEntry(entry, initial.savedAt) : updateEntry(entry, initial.savedAt)
     if (window.location.search.includes("uitest")) console.log(`[JSAVE] kind=evening ok=${result.ok}`)
     if (!result.ok) { setSaveError(true); return }
     if (notePreparation.reviewMessage === null) onDone?.("evening", entry)
