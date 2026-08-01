@@ -17,6 +17,7 @@ function assertSharedProjectionBoundary(sql: string): void {
   expect(sql).toContain("'TRAINING_NOTE' = any(allowed_fields)")
   expect(sql).toContain("journal.entry ->> 'memoPurpose' = 'ANALYZABLE_TRAINING_NOTE'")
   expect(sql).toContain("allowed_fields && array['TRAINING_RECORD', 'TRAINING_NOTE', 'PAIN', 'MOOD', 'BODY_STATE']::text[]")
+  expect(sql).toContain("public.athlete_support_access_allowed(target_athlete)")
   expect(sql).not.toMatch(/journal\.saved_at,\s*journal\.entry\s*(?:as\s+shared_entry)?\s+from/iu)
   expect(sql).not.toMatch(/^\s*'(?:memo|note|memoPurpose|PRIVATE_MEMO)'\s*,/mu)
   expect(sql).not.toMatch(/jsonb_object_agg|jsonb_each|unnest\(allowed_fields\)|format\(/iu)
@@ -72,6 +73,19 @@ describe("supporter shared-fields boundary", () => {
 
   it("returns no row when a connection has no recognized shared field", () => {
     expect(migration).toContain("allowed_fields && array['TRAINING_RECORD', 'TRAINING_NOTE', 'PAIN', 'MOOD', 'BODY_STATE']::text[]")
+  })
+
+  it("denies shared projection when athlete access is no longer allowed", () => {
+    expect(migration).toContain("public.athlete_support_access_allowed(target_athlete)")
+  })
+
+  it("rejects a mutation that bypasses the athlete lifecycle gate", () => {
+    const mutated = migration.replace(
+      "if not public.athlete_support_access_allowed(target_athlete) then\n    raise exception 'shared journal access denied' using errcode = '42501';\n  end if;\n\n",
+      "",
+    )
+
+    expect(() => assertSharedProjectionBoundary(mutated)).toThrow()
   })
 
   it("rejects a mutation that would return metadata for an empty share scope", () => {

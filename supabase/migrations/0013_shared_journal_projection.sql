@@ -21,6 +21,10 @@ begin
     raise exception 'authentication required' using errcode = '42501';
   end if;
 
+  if not public.athlete_support_access_allowed(target_athlete) then
+    raise exception 'shared journal access denied' using errcode = '42501';
+  end if;
+
   select connection.shared_fields
   into allowed_fields
   from public.support_connections connection
