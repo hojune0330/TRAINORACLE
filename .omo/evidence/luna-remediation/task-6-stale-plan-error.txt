@@ -1,0 +1,44 @@
+Task 6 atomic plan-proposal activation evidence
+Date: 2026-08-01
+
+RED-GREEN
+RED command:
+  npm.cmd run test -- --run src/domain/account/plan-proposal-atomic.contract.test.ts
+RED result: 1 failed, 1 passed.
+Failure: the final legacy review_plan_proposal reference was an authenticated grant rather than a DROP FUNCTION retirement. The characterization test confirmed 0008 directly writes ACTIVE and USER_ACCEPTED_WITH_WARNING.
+
+Focused plan-proposal tests:
+  npm.cmd run test -- --run src/domain/account/plan-proposal-atomic.contract.test.ts src/domain/account/plan-proposal-migration.contract.test.ts src/domain/account/plan-proposal-service.contract.test.ts src/screens/plan-beta/PlanProposalInbox.contract.test.tsx
+Result: PASS, 4 files, 14 tests.
+
+Hostile mutation:
+  A temporary migration copy was created by the atomic migration contract test.
+  The test replaced every "for update;" lock with "for share;".
+  The source-contract validator failed with "missing atomic activation clause: for update;".
+  The test removed its temporary directory in finally. PASS.
+
+Verification:
+  npm.cmd run typecheck: PASS.
+  npm.cmd run build: PASS.
+  git diff --check: PASS; only pre-existing CRLF conversion warnings were emitted.
+  curl -i --max-time 20 http://127.0.0.1:5173/: PASS.
+  Observable smoke result: HTTP/1.1 200 OK and body contains <div id="root">.
+  The server was pre-existing and not task-owned. It is smoke-only, not Supabase verification.
+
+Adversarial outcomes:
+  Malformed input: warning review reason is server-limited to nonblank, <=500 characters; malformed atomic results are rejected by the client parser.
+  Prompt injection: not applicable; this flow has no model or prompt-processing surface.
+  Cancel/resume: activation is a database function; any error aborts the transaction and the client does not invoke onActivated.
+  Stale state: expired proposal, missing/stale/revoked snapshot, stale base revision, revoked/deleted athlete, and unreviewed/superseded proposal paths fail closed in the activation function.
+  Dirty worktree: pre-existing private-memo/journal changes were left untouched and were not staged.
+  Hung/long commands: focused tests, typecheck, build, and curl completed; no task-owned process was started.
+  Flaky tests: focused suite was rerun after changes and passed 14/14.
+  Misleading success output: the client accepts only the complete ACTIVATED receipt before invoking onActivated.
+  Repeated interruption: progress requests did not interrupt a task-owned process; scoped files were rechecked before final verification.
+
+Live Supabase limitation:
+  No disposable Supabase/Postgres environment was available. No live database activation was claimed. SQL contract tests and the hostile mutation test are the server-side evidence.
+
+Cleanup receipt:
+  No browser, server, tmux session, container, account, or port was created.
+  The sole temporary directory was created inside the hostile mutation test and removed in finally.

@@ -1,24 +1,32 @@
 import React from "react"
 import {
+  activatePlanProposal,
   loadPlanProposals,
-  reviewPlanProposal,
+  recordPlanProposalWarningReview,
 } from "../../domain/account/plan-proposal-service"
 import type {
-  PlanProposalReviewResult,
+  PlanProposalActivationReceipt,
+  PlanProposalActivationResult,
   PlanProposalSummary,
+  PlanProposalWarningReviewResult,
 } from "../../domain/account/plan-proposal-service"
 import { productFeatures } from "../../domain/product-features"
 
 export function PlanProposalInbox({
   enabled = productFeatures().planProposals,
   onLoad = loadPlanProposals,
-  onReview = reviewPlanProposal,
+  onRecordWarningReview = recordPlanProposalWarningReview,
+  onActivate = activatePlanProposal,
+  onActivated,
 }: {
   readonly enabled?: boolean
   readonly onLoad?: () => Promise<readonly PlanProposalSummary[]>
-  readonly onReview?: (id: string) => Promise<PlanProposalReviewResult>
+  readonly onRecordWarningReview?: (id: string, reviewReason: string) => Promise<PlanProposalWarningReviewResult>
+  readonly onActivate?: (id: string) => Promise<PlanProposalActivationResult>
+  readonly onActivated?: (receipt: PlanProposalActivationReceipt) => void
 }) {
   const [proposals, setProposals] = React.useState<readonly PlanProposalSummary[]>([])
+  const [warningReasons, setWarningReasons] = React.useState<Readonly<Record<string, string>>>({})
   const [notice, setNotice] = React.useState<string | null>(null)
   const [busyId, setBusyId] = React.useState<string | null>(null)
 
@@ -31,16 +39,31 @@ export function PlanProposalInbox({
 
   if (!enabled || proposals.length === 0) return null
 
-  const review = async (proposal: PlanProposalSummary) => {
+  const recordWarningReview = async (proposal: PlanProposalSummary) => {
+    const reviewReason = warningReasons[proposal.id]?.trim() ?? ""
+    if (reviewReason.length === 0) return
     setBusyId(proposal.id)
-    const result = await onReview(proposal.id)
+    const result = await onRecordWarningReview(proposal.id, reviewReason)
     setBusyId(null)
     setNotice(result.message)
-    if (result.ok && result.status !== undefined) {
+    if (result.ok) {
       setProposals((items) => items.map((item) => item.id === proposal.id
-        ? { ...item, status: result.status ?? item.status }
+        ? { ...item, status: "WARNING_REVIEWED" }
         : item))
     }
+  }
+
+  const activate = async (proposal: PlanProposalSummary) => {
+    setBusyId(proposal.id)
+    const result = await onActivate(proposal.id)
+    setBusyId(null)
+    if (!result.ok) {
+      setNotice(result.message)
+      return
+    }
+    onActivated?.(result.receipt)
+    setNotice("계획을 적용했어요.")
+    setProposals((items) => items.filter((item) => item.id !== proposal.id))
   }
 
   return (
@@ -60,10 +83,23 @@ export function PlanProposalInbox({
               <br />이 확인은 의료 허가가 아니에요.
             </div>
           )}
+          {proposal.warningReason !== null && proposal.status === "DRAFT" && (
+            <label style={{ display: "block", marginTop: 10, fontFamily: "var(--sans)", fontSize: 12 }}>
+              경고 검토 이유
+              <input
+                aria-label="경고 검토 이유"
+                value={warningReasons[proposal.id] ?? ""}
+                onChange={(event) => setWarningReasons((reasons) => ({ ...reasons, [proposal.id]: event.target.value }))}
+                style={{ boxSizing: "border-box", display: "block", width: "100%", minHeight: 40, marginTop: 5, border: "1px solid var(--line)", font: "inherit" }}
+              />
+            </label>
+          )}
           <button
             type="button"
-            disabled={!proposal.reviewable || busyId === proposal.id}
-            onClick={() => void review(proposal)}
+            disabled={!proposal.reviewable || busyId === proposal.id || (proposal.warningReason !== null && proposal.status === "DRAFT" && (warningReasons[proposal.id]?.trim().length ?? 0) === 0)}
+            onClick={() => void (proposal.warningReason !== null && proposal.status === "DRAFT"
+              ? recordWarningReview(proposal)
+              : activate(proposal))}
             style={{ width: "100%", minHeight: 44, marginTop: 10, border: "1px solid var(--ink)", background: "var(--ink)", color: "var(--bg)", cursor: "pointer", fontFamily: "var(--sans)" }}
           >
             {proposal.warningReason === null
