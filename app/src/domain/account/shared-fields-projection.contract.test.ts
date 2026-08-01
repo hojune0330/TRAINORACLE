@@ -25,6 +25,7 @@ describe("supporter shared-fields boundary", () => {
   it("projects a redacted journal DTO on the server from shared_fields", () => {
     assertSharedProjectionBoundary(migration)
     expect(migration).toMatch(/returns table \(\s*entry_id text,\s*saved_at text,\s*shared_entry jsonb/iu)
+    expect(migration).toContain("journal.saved_at::text")
     expect(migration).toMatch(
       /create\s+(?:or\s+replace\s+)?function[\s\S]+shared_fields[\s\S]+jsonb_build_object/iu,
     )

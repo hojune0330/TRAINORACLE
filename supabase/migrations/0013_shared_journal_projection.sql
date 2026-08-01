@@ -38,7 +38,7 @@ begin
   return query
   select
     journal.entry_id,
-    journal.saved_at,
+    journal.saved_at::text,
     jsonb_strip_nulls(jsonb_build_object(
       'id', journal.entry -> 'id',
       'date', journal.entry -> 'date',
