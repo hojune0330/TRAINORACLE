@@ -20,11 +20,8 @@ export async function createGuardianInvitation(
   if (client === null) return { ok: false, message: "보호자 확인 기능이 꺼져 있어요." }
   const code = createGuardianInvitationCode()
   const codeHash = await hashGuardianInvitationCode(code)
-  const expiresAt = new Date(Date.now() + 7 * 86_400_000).toISOString()
-  const { error } = await client.from("guardian_invitations").insert({
-    child_user_id: childUserId,
-    code_hash: codeHash,
-    expires_at: expiresAt,
+  const { error } = await client.rpc("create_guardian_invitation", {
+    invitation_code_hash: codeHash,
   })
   return error === null
     ? { ok: true, message: "보호자 확인 코드를 만들었어요. 7일 안에 전달해 주세요.", code }
