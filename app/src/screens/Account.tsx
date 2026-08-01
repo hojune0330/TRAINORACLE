@@ -12,30 +12,8 @@ import {
   currentUser, onAuthChange, requestEmailOtp, signInWithGoogle, signOut, verifyEmailOtp,
 } from "../domain/account/auth"
 import type { AccountUser } from "../domain/account/auth"
-import { loadSyncConsent, saveSyncConsent, syncNow } from "../domain/account/sync"
-import type { SyncConsent } from "../domain/account/sync"
-import { localOnlyCount } from "../domain/journal-store"
-import { eraseAllLocalData } from "../domain/erase-local-data"
-
-const mono: React.CSSProperties = { fontFamily: "var(--mono)" }
-const inputStyle: React.CSSProperties = {
-  width: "100%", boxSizing: "border-box", minHeight: 44,
-  padding: "10px 12px", fontSize: 16, fontFamily: "var(--mono)",
-  border: "1px solid var(--line)", borderRadius: 8,
-  background: "var(--paper, #fff)", color: "var(--ink)",
-}
-const primaryBtn: React.CSSProperties = {
-  width: "100%", minHeight: 48, fontSize: 15, fontWeight: 600,
-  fontFamily: "var(--sans)", border: "1px solid var(--ink)",
-  borderRadius: 8, background: "var(--ink)", color: "var(--bg, #fff)",
-  cursor: "pointer",
-}
-const secondaryBtn: React.CSSProperties = {
-  ...primaryBtn, background: "transparent", color: "var(--ink)",
-  border: "1px solid var(--line)", fontWeight: 500,
-}
-
-type OtpStep = "email" | "code"
+import { AccountNetworkSettings, AccountSyncPanel, EraseLocalData } from "./account/index"
+import { inputStyle, mono, primaryBtn, secondaryBtn } from "./account/styles"
 
 export function Account({ onBack, onOpenImport, onOpenRestore }: {
   readonly onBack?: () => void
@@ -46,13 +24,11 @@ export function Account({ onBack, onOpenImport, onOpenRestore }: {
 }) {
   const [user, setUser] = React.useState<AccountUser | null>(null)
   const [loading, setLoading] = React.useState(true)
-  const [step, setStep] = React.useState<OtpStep>("email")
+  const [step, setStep] = React.useState<"email" | "code">("email")
   const [email, setEmail] = React.useState("")
   const [code, setCode] = React.useState("")
   const [busy, setBusy] = React.useState(false)
   const [notice, setNotice] = React.useState<string | null>(null)
-  const [consent, setConsent] = React.useState<SyncConsent>(() => loadSyncConsent())
-  const [syncMessage, setSyncMessage] = React.useState<string | null>(null)
 
   React.useEffect(() => {
     let mounted = true
@@ -62,11 +38,6 @@ export function Account({ onBack, onOpenImport, onOpenRestore }: {
     const unsubscribe = onAuthChange((u) => { setUser(u) })
     return () => { mounted = false; unsubscribe() }
   }, [])
-
-  const updateConsent = (next: SyncConsent) => {
-    setConsent(next)
-    saveSyncConsent(next)
-  }
 
   const handleSendOtp = async () => {
     setBusy(true); setNotice(null)
@@ -88,20 +59,7 @@ export function Account({ onBack, onOpenImport, onOpenRestore }: {
   const handleSignOut = async () => {
     setBusy(true)
     await signOut()
-    setBusy(false); setStep("email"); setCode(""); setSyncMessage(null)
-  }
-  const handleSync = async () => {
-    if (user === null) return
-    setBusy(true); setSyncMessage(null)
-    const outcome = await syncNow(user.id)
-    setBusy(false)
-    if (!outcome.ok) { setSyncMessage(outcome.message); return }
-    // 지운 개수도 함께 보여준다. 다른 기기에서 지운 일지가 이 기기에서
-    // 사라지는 경우, 이유를 밝히지 않으면 "기록이 없어졌다"로만 보인다.
-    const deletedPart = outcome.deleted > 0 ? ` · ${outcome.deleted}개 삭제 반영` : ""
-    setSyncMessage(
-      `${outcome.message} (서버에서 ${outcome.pulled}개 확인 · ${outcome.pushed}개 백업${deletedPart} · 총 ${outcome.total}개)`,
-    )
+    setBusy(false); setStep("email"); setCode("")
   }
 
   return (
@@ -194,45 +152,9 @@ export function Account({ onBack, onOpenImport, onOpenRestore }: {
             )}
           </div>
 
-          <SectionLb>일지 동기화</SectionLb>
-          <p style={{ fontFamily: "var(--sans)", fontSize: 12.5, lineHeight: 1.6, color: "var(--ink-2)", margin: 0 }}>
-            이 기기에 있는 일지 {localOnlyCount()}개를 계정에 백업하고, 다른 기기의
-            일지와 합쳐요. 같은 일지는 <b>더 최근에 저장한 쪽</b>이 남아요.
-          </p>
+          <AccountNetworkSettings userId={user.id} today={new Date().toISOString().slice(0, 10)} />
 
-          <label style={{ display: "flex", alignItems: "center", gap: 10, minHeight: 44, cursor: "pointer" }}>
-            <input
-              type="checkbox" checked={consent.enabled}
-              onChange={(e) => updateConsent({ ...consent, enabled: e.target.checked })}
-              style={{ width: 20, height: 20 }}
-            />
-            <span style={{ fontFamily: "var(--sans)", fontSize: 14 }}>동기화 켜기 (직접 눌러야 시작돼요)</span>
-          </label>
-
-          <label style={{ display: "flex", alignItems: "flex-start", gap: 10, minHeight: 44, cursor: "pointer", opacity: consent.enabled ? 1 : 0.45 }}>
-            <input
-              type="checkbox" checked={consent.includeMemos} disabled={!consent.enabled}
-              onChange={(e) => updateConsent({ ...consent, includeMemos: e.target.checked })}
-              style={{ width: 20, height: 20, marginTop: 2 }}
-            />
-            <span style={{ fontFamily: "var(--sans)", fontSize: 13, lineHeight: 1.5 }}>
-              메모·노트 원문도 함께 백업
-              <br /><span style={{ ...mono, fontSize: 10.5, color: "var(--ink-4)" }}>
-                기본은 제외예요. 끄면 숫자 기록만 올라가요.
-              </span>
-            </span>
-          </label>
-
-          <button
-            type="button" style={primaryBtn}
-            disabled={busy || !consent.enabled}
-            onClick={() => void handleSync()}
-          >
-            {busy ? "동기화 중…" : "지금 동기화"}
-          </button>
-          {syncMessage && (
-            <p role="status" style={{ ...mono, fontSize: 12, color: "var(--ink-2)", margin: 0 }}>{syncMessage}</p>
-          )}
+          <AccountSyncPanel userId={user.id} />
 
           <SectionLb>기기 데이터 가져오기</SectionLb>
           <div
@@ -290,78 +212,6 @@ export function Account({ onBack, onOpenImport, onOpenRestore }: {
       )}
 
       {!loading && <EraseLocalData />}
-    </div>
-  )
-}
-
-/**
- * 이 기기의 데이터 전부 지우기.
- *
- * 개별 일지 삭제만으로는 삭제권이 완성되지 않는다. "그만 쓸래",
- * "기기를 넘길 거야" 상황에서 사용자가 직접 지울 수단이 있어야 한다.
- * 브라우저 설정을 찾아 들어가라고 안내하는 것은 삭제권 제공이 아니다.
- *
- * 되돌릴 수 없으므로 2단계 확인을 둔다. 다만 겁주는 문구는 쓰지 않는다 —
- * 지우는 것은 사용자의 정당한 권리이고, 우리가 말릴 일이 아니다.
- * 대신 **먼저 백업받을 수 있다는 사실**을 같은 자리에서 알린다.
- */
-function EraseLocalData() {
-  const [confirming, setConfirming] = React.useState(false)
-  const [done, setDone] = React.useState<string | null>(null)
-
-  const handleErase = () => {
-    const result = eraseAllLocalData()
-    setConfirming(false)
-    setDone(
-      result.ok
-        ? `이 기기에서 ${result.cleared}개 항목을 지웠어요.`
-        : "일부 항목을 지우지 못했어요. 브라우저 설정에서 사이트 데이터를 삭제해 주세요.",
-    )
-  }
-
-  return (
-    <div style={{ marginTop: 28, paddingTop: 18, borderTop: "1px solid var(--line)" }}>
-      <SectionLb>이 기기 데이터 지우기</SectionLb>
-      <p style={{ fontFamily: "var(--sans)", fontSize: 12.5, lineHeight: 1.6, color: "var(--ink-2)", margin: "8px 0 0" }}>
-        이 기기에 저장된 일지·계획·로그인 정보를 모두 지워요.
-        <b> 되돌릴 수 없으니 필요하면 먼저 백업을 받아 두세요.</b>
-      </p>
-
-      {done !== null ? (
-        <p role="status" data-testid="erase-result"
-          style={{ fontFamily: "var(--mono)", fontSize: 12, color: "var(--ink-2)", margin: "10px 0 0" }}>
-          {done}
-        </p>
-      ) : confirming ? (
-        <div style={{ display: "flex", flexDirection: "column", gap: 8, marginTop: 10 }}>
-          <p style={{ fontFamily: "var(--sans)", fontSize: 13, fontWeight: 600, margin: 0 }}>
-            정말 지울까요? 이 작업은 되돌릴 수 없어요.
-          </p>
-          <button
-            type="button" data-testid="erase-confirm" onClick={handleErase}
-            style={{
-              minHeight: 44, borderRadius: 10, cursor: "pointer",
-              border: "1px solid var(--ink)", background: "var(--ink)",
-              color: "var(--paper)", fontFamily: "var(--sans)", fontSize: 14, fontWeight: 600,
-            }}
-          >
-            네, 전부 지울게요
-          </button>
-          <button
-            type="button" data-testid="erase-cancel" onClick={() => setConfirming(false)}
-            style={{ ...secondaryBtn, minHeight: 44 }}
-          >
-            그만두기
-          </button>
-        </div>
-      ) : (
-        <button
-          type="button" data-testid="erase-start" onClick={() => setConfirming(true)}
-          style={{ ...secondaryBtn, marginTop: 10, minHeight: 44 }}
-        >
-          이 기기 데이터 전부 지우기
-        </button>
-      )}
     </div>
   )
 }

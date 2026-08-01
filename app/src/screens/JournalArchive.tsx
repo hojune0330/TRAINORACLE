@@ -16,6 +16,7 @@ import {
   weekButtonLabel,
   weekHeading,
 } from "./JournalArchiveSummary"
+import { CycleArchive } from "./CycleArchive"
 
 export type JournalArchiveProps = {
   readonly entries: readonly JournalEntry[]
@@ -32,6 +33,7 @@ export function JournalArchive({
   onOpenDay,
   onBack,
 }: JournalArchiveProps) {
+  const [mode, setMode] = React.useState<"CALENDAR" | "CYCLE">("CALENDAR")
   const archive = React.useMemo(() => projectJournalArchive(entries), [entries])
   const selectedMonth = archive.months.find((month) => month.month === selection.selectedMonth) ?? null
   const selectedWeek = selectedMonth?.weeks.find(
@@ -39,7 +41,9 @@ export function JournalArchive({
   ) ?? null
 
   const goBack = () => {
-    if (selectedWeek !== null) {
+    if (mode === "CYCLE") {
+      setMode("CALENDAR")
+    } else if (selectedWeek !== null) {
       onSelectionChange({
         selectedMonth: selectedMonth?.month ?? null,
         selectedWeekStart: null,
@@ -51,7 +55,9 @@ export function JournalArchive({
     }
   }
 
-  const heading = selectedWeek !== null
+  const heading = mode === "CYCLE"
+    ? "9.5일 주기 일지"
+    : selectedWeek !== null
     ? weekHeading(selectedWeek)
     : selectedMonth !== null
       ? monthLabel(selectedMonth.month)
@@ -108,7 +114,18 @@ export function JournalArchive({
         </div>
       </header>
 
-      {archive.months.length === 0 ? (
+      <div style={{ margin: "14px 20px 0", display: "grid", gridTemplateColumns: "1fr 1fr", border: "1px solid var(--line)" }}>
+        <button type="button" aria-pressed={mode === "CALENDAR"} onClick={() => setMode("CALENDAR")} style={modeButtonStyle(mode === "CALENDAR")}>
+          달력·주간
+        </button>
+        <button type="button" aria-pressed={mode === "CYCLE"} onClick={() => setMode("CYCLE")} style={modeButtonStyle(mode === "CYCLE")}>
+          9.5일 주기
+        </button>
+      </div>
+
+      {mode === "CYCLE" ? (
+        <CycleArchive entries={entries} onOpenDay={onOpenDay} />
+      ) : archive.months.length === 0 ? (
         <div style={{ padding: "48px 20px", textAlign: "center" }}>
           <div style={{ fontFamily: "var(--sans)", fontSize: 16, color: "var(--ink)" }}>
             아직 지난 일지가 없어요.
@@ -165,4 +182,16 @@ export function JournalArchive({
       )}
     </div>
   )
+}
+
+function modeButtonStyle(active: boolean): React.CSSProperties {
+  return {
+    minHeight: 44,
+    border: 0,
+    background: active ? "var(--ink)" : "var(--surface)",
+    color: active ? "var(--bg)" : "var(--ink)",
+    cursor: "pointer",
+    fontFamily: "var(--sans)",
+    fontSize: 13,
+  }
 }

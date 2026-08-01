@@ -6,6 +6,8 @@ import {
 import { loadEntries, todayISO } from "../domain/journal-store"
 import { MonthlyTrendSection } from "./trends/MonthlyTrendSection"
 import { WeeklyDistanceSection } from "./trends/WeeklyDistanceSection"
+import { FatigueExperimentPanel } from "./trends/FatigueExperimentPanel"
+import { productFeatures } from "../domain/product-features"
 
 export function Trends({ onBack }: { onBack?: () => void }) {
   const observations = React.useMemo(() => loadEntries().flatMap((entry) => {
@@ -56,6 +58,7 @@ export function Trends({ onBack }: { onBack?: () => void }) {
           </div>
         </>
       )}
+      {productFeatures().experimentalFatigue && <FatigueExperimentPanel />}
     </div>
   )
 }

@@ -75,31 +75,31 @@ describe("mergeEntries — id 기준 LWW", () => {
   })
 })
 
-describe("동기화 동의 상태 — 옵트인 기본값", () => {
-  it("저장된 값이 없으면 enabled=false, includeMemos=false", () => {
-    expect(loadSyncConsent()).toEqual({ enabled: false, includeMemos: false })
+describe("동기화 동의 상태 — 메모 목적 분리", () => {
+  it("저장된 값이 없으면 동기화와 훈련 메모 공유가 꺼져 있다", () => {
+    expect(loadSyncConsent()).toEqual({ enabled: false, shareTrainingNotes: false })
   })
 
   it("저장 후 복원된다", () => {
-    saveSyncConsent({ enabled: true, includeMemos: false })
-    expect(loadSyncConsent()).toEqual({ enabled: true, includeMemos: false })
+    saveSyncConsent({ enabled: true, shareTrainingNotes: true })
+    expect(loadSyncConsent()).toEqual({ enabled: true, shareTrainingNotes: true })
   })
 
   it("깨진 JSON이면 안전 기본값으로 돌아간다", () => {
     window.localStorage.setItem(CONSENT_KEY, "{broken")
-    expect(loadSyncConsent()).toEqual({ enabled: false, includeMemos: false })
+    expect(loadSyncConsent()).toEqual({ enabled: false, shareTrainingNotes: false })
   })
 
   it("불리언이 아닌 값은 false로 강제된다", () => {
-    window.localStorage.setItem(CONSENT_KEY, JSON.stringify({ enabled: "yes", includeMemos: 1 }))
-    expect(loadSyncConsent()).toEqual({ enabled: false, includeMemos: false })
+    window.localStorage.setItem(CONSENT_KEY, JSON.stringify({ enabled: "yes", shareTrainingNotes: 1 }))
+    expect(loadSyncConsent()).toEqual({ enabled: false, shareTrainingNotes: false })
   })
 })
 
-describe("업로드 페이로드 — 메모 원문 기본 제외", () => {
-  it("includeMemos=false면 memo/memoPurpose가 제거된다", () => {
+describe("업로드 페이로드 — 메모 목적별 경계", () => {
+  it("훈련 메모 공유를 끄면 memo/memoPurpose가 제거된다", () => {
     const payload = toUploadPayload(post("a", "2026-07-20T10:00:00.000Z"), {
-      enabled: true, includeMemos: false,
+      enabled: true, shareTrainingNotes: false,
     })
     expect(payload).not.toBeNull()
     expect(payload).not.toHaveProperty("memo")
@@ -107,11 +107,21 @@ describe("업로드 페이로드 — 메모 원문 기본 제외", () => {
     expect(payload).toHaveProperty("rpe", 4)
   })
 
-  it("includeMemos=true면 원문이 포함된다", () => {
+  it("훈련 메모 공유를 켜면 훈련 메모 원문만 포함된다", () => {
     const payload = toUploadPayload(post("a", "2026-07-20T10:00:00.000Z"), {
-      enabled: true, includeMemos: true,
+      enabled: true, shareTrainingNotes: true,
     })
     expect(payload).toHaveProperty("memo", "오늘 메모")
+  })
+
+  it("나만의 메모 원문은 공유 설정과 관계없이 구조화 페이로드에서 제외된다", () => {
+    const payload = toUploadPayload(post("a", "2026-07-20T10:00:00.000Z", {
+      memo: "절대 공유하지 않을 일기",
+      memoPurpose: "PRIVATE_SELF_ONLY",
+    }), { enabled: true, shareTrainingNotes: true })
+
+    expect(payload).not.toHaveProperty("memo")
+    expect(payload).not.toHaveProperty("memoPurpose")
   })
 })
 
@@ -167,9 +177,9 @@ describe("동기화가 분석 자격을 파괴하지 않는다 (회귀 방지)",
       avgPace: "5:30", rpe: 4, memo: "비밀 메모",
       memoPurpose: "PRIVATE_SELF_ONLY",
       fieldProvenance: { distanceKm: { provenance: "EXPLICIT" } },
-    } as unknown as JournalEntry
+    } satisfies JournalEntry
 
-    const payload = toUploadPayload(entry, { enabled: true, includeMemos: false })
+    const payload = toUploadPayload(entry, { enabled: true, shareTrainingNotes: false })
 
     // 메모는 여전히 빠져야 한다 (프라이버시 기본값 유지)
     expect(payload?.memo).toBeUndefined()

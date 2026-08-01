@@ -14,6 +14,7 @@ function textValue(env: Readonly<Record<string, unknown>>, name: string): string
 
 export function resolveAccountConfig(env: Readonly<Record<string, unknown>>): AccountConfig | null {
   if (textValue(env, "VITE_ACCOUNT_PUBLIC_ENABLED") !== "true") return null
+  if (textValue(env, "VITE_KILL_ACCOUNT") === "true") return null
 
   const url = textValue(env, "VITE_SUPABASE_URL")
   const anonKey = textValue(env, "VITE_SUPABASE_ANON_KEY")
@@ -23,12 +24,7 @@ export function resolveAccountConfig(env: Readonly<Record<string, unknown>>): Ac
 }
 
 export function accountConfig(): AccountConfig | null {
-  try {
-    const env = (import.meta as unknown as { env?: Record<string, unknown> }).env
-    return resolveAccountConfig(env ?? {})
-  } catch {
-    return null
-  }
+  return resolveAccountConfig(import.meta.env)
 }
 
 export function accountFeatureEnabled(): boolean {

@@ -1,5 +1,5 @@
 import React from "react"
-import { cleanup, render, screen } from "@testing-library/react"
+import { cleanup, fireEvent, render, screen } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { afterEach, describe, expect, it, vi } from "vitest"
 import type { JournalEntry } from "../domain/journal-schema"
@@ -170,5 +170,26 @@ describe("journal archive surface", () => {
 
     expect(screen.getByRole("heading", { name: "7월 6일–12일" })).toBeVisible()
     expect(screen.getByRole("button", { name: /2026년 7월 10일/u })).toBeVisible()
+  })
+
+  it("switches to an explicit 9.5-day view without exposing private memo text", async () => {
+    const user = userEvent.setup()
+    render(
+      <JournalArchive
+        entries={ENTRIES}
+        selection={{ selectedMonth: null, selectedWeekStart: null }}
+        onSelectionChange={vi.fn()}
+        onOpenDay={vi.fn()}
+        onBack={vi.fn()}
+      />,
+    )
+
+    await user.click(screen.getByRole("button", { name: "9.5일 주기" }))
+    fireEvent.change(screen.getByLabelText("주기 시작일"), { target: { value: "2026-07-10" } })
+
+    expect(screen.getAllByText(/10일 구간/u)).toHaveLength(2)
+    expect(screen.getByRole("button", { name: /2026년 7월 10일/u })).toBeVisible()
+    expect(document.body.textContent).not.toContain(SECRET)
+    expect(screen.getByText(/계획을 자동으로 바꾸지 않아요/u)).toBeVisible()
   })
 })

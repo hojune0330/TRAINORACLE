@@ -66,6 +66,27 @@ describe("ImportActivities — 고르기 단계", () => {
     expect(status.textContent ?? "").not.toMatch(/곧 가져올 수 있어요/u)
   })
 
+  it("CSV와 JSON 파일을 선택할 수 있고 저장 전 미리보기를 보여준다", async () => {
+    const user = userEvent.setup()
+    render(<ImportActivities />)
+    const input = screen.getByLabelText(/내보낸 활동 파일/u)
+
+    expect(input).toHaveAttribute("accept", expect.stringContaining(".csv"))
+    expect(input).toHaveAttribute("accept", expect.stringContaining(".json"))
+
+    const json = JSON.stringify([{
+      date: "2026-07-28",
+      name: "저녁 러닝",
+      sport: "running",
+      distanceKm: 7,
+      durationMin: 35,
+    }])
+    await pickFile(user, new File([json], "activities.json", { type: "application/json" }))
+
+    expect(await screen.findByText("저녁 러닝")).toBeVisible()
+    expect(loadEntries()).toEqual([])
+  })
+
   it("읽지 못한 파일은 실패를 드러내고 기존 일지를 건드리지 않는다", async () => {
     // Given
     const user = userEvent.setup()

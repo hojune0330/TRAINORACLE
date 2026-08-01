@@ -32,4 +32,12 @@ describe("account public release gate", () => {
       VITE_SUPABASE_URL: "http://example.supabase.co",
     })).toBeNull()
   })
+
+  it("lets the service operator close only account access during an incident", () => {
+    expect(resolveAccountConfig({
+      ...credentials,
+      VITE_ACCOUNT_PUBLIC_ENABLED: "true",
+      VITE_KILL_ACCOUNT: "true",
+    })).toBeNull()
+  })
 })
