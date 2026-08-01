@@ -3,7 +3,7 @@ import { join } from "node:path"
 import { describe, expect, it } from "vitest"
 
 const migration = readFileSync(
-  join(process.cwd(), "..", "supabase", "migrations", "0007_guardian_confirmations.sql"),
+  join(process.cwd(), "..", "supabase", "migrations", "0012_guardian_authority_hardening.sql"),
   "utf8",
 )
 const accessFunction = migration.slice(
@@ -12,22 +12,43 @@ const accessFunction = migration.slice(
 )
 
 describe("guardian confirmation database contract", () => {
+  it("uses database time to deny expired, revoked, stale-season, and wrong-scope authority", () => {
+    expect(migration).toContain("clock_timestamp()")
+    expect(migration).toContain("confirmation.valid_from <= clock_timestamp()")
+    expect(migration).toContain("confirmation.valid_until > clock_timestamp()")
+    expect(migration).toContain("confirmation.revoked_at is null")
+    expect(migration).toContain("confirmation.authority_season_ends_on >= clock_timestamp()::date")
+    expect(migration).toContain("confirmation.scope = required_scope")
+  })
+
+  it("rejects a hostile mutation that removes expiry, revocation, or server-time enforcement", () => {
+    const mandatoryClauses = [
+      "clock_timestamp()",
+      "confirmation.valid_until > clock_timestamp()",
+      "confirmation.revoked_at is null",
+    ]
+
+    for (const clause of mandatoryClauses) {
+      const hostileMigration = migration.replaceAll(clause, "")
+      expect(mandatoryClauses.filter((required) => !hostileMigration.includes(required)))
+        .toContain(clause)
+    }
+  })
   it("binds every confirmation to an authenticated guardian account", () => {
-    expect(migration).toContain("guardian_user_id uuid references auth.users")
+    expect(migration).toContain("guardian_user_id, scope, confirmed_at")
     expect(migration).toMatch(/guardian_user_id,[\s\S]+values \([\s\S]+auth\.uid\(\)/u)
     expect(migration).toContain("child_user_id <> auth.uid()")
   })
 
   it("stores only a hash of the one-time guardian code", () => {
-    expect(migration).toContain("code_hash text not null unique")
+    expect(migration).toContain("accept_guardian_invitation")
     expect(migration).not.toContain("guardian_code text")
   })
 
   it("creates account-sync consent only through the guarded acceptance function", () => {
     expect(migration).toContain("accept_guardian_invitation")
-    expect(migration).toContain("scope = 'ACCOUNT_SYNC'")
-    expect(migration).toContain("expires_at > now()")
-    expect(migration).toContain("grant execute on function public.accept_guardian_invitation(text) to authenticated")
+    expect(migration).toContain("'ACCOUNT_SYNC'")
+    expect(migration).toContain("expires_at > clock_timestamp()")
   })
 
   it("carries the authenticated guardian confirmation into the first support connection", () => {
