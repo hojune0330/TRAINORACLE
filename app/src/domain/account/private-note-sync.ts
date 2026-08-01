@@ -62,10 +62,10 @@ export async function rotateSessionRecoveryCode(
   previousRecoveryCode: string,
   nextRecoveryCode: string,
 ): Promise<{ readonly ok: boolean }> {
+  if (!saveSessionRecoveryCode(nextRecoveryCode)) return { ok: false }
   const result = await rotatePrivateMemoVault(previousRecoveryCode, nextRecoveryCode)
-  if (!result.ok) return result
-  if (saveSessionRecoveryCode(nextRecoveryCode)) return { ok: true }
-  await rotatePrivateMemoVault(nextRecoveryCode, previousRecoveryCode)
+  if (result.ok) return result
+  saveSessionRecoveryCode(previousRecoveryCode)
   return { ok: false }
 }
 

@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it } from "vitest"
+import { beforeEach, describe, expect, it, vi } from "vitest"
 import { z } from "zod"
 import {
   loadEntries,
@@ -7,10 +7,12 @@ import {
   savePrivateEntry,
   updateEntry,
   deleteEntry,
+  restoreDeletedEntry,
 } from "./journal-store"
 import type { JournalEntry, PostSessionEntry } from "./journal-schema"
 import { createRecoveryCode, decryptPrivateNote } from "./account/private-note-crypto"
 import { rotatePrivateMemoVault, saveSessionRecoveryCode } from "./account/private-note-sync"
+import { purgeExpiredTrash } from "./journal-trash"
 
 const vaultSchema = z.object({
   version: z.literal(1),
@@ -175,6 +177,57 @@ describe("private memo local vault", () => {
     expect(result.ok).toBe(true)
     expect(allLocalStorageValues()).not.toContain("PRIVATE-LUNA-DELETE")
     expect(window.localStorage.getItem("trainoracle.private-memo.v1")).not.toContain("delete-private")
+  })
+
+  it("hydrates a fresh session before creating a full private backup", async () => {
+    // Given
+    const recoveryCode = createRecoveryCode()
+    expect(saveSessionRecoveryCode(recoveryCode)).toBe(true)
+    await expect(savePrivateEntry(privateEntry("fresh-export", "PRIVATE-LUNA-FRESH-EXPORT"))).resolves.toEqual({ ok: true, total: 1 })
+
+    // When
+    vi.resetModules()
+    const reloadedStore = await import("./journal-store")
+    expect(() => reloadedStore.exportEntriesJSON({ includeRawMemos: true }))
+      .toThrow("PRIVATE_MEMO_UNLOCK_REQUIRED")
+    await reloadedStore.loadEntriesWithPrivateMemos()
+    const fullExport = reloadedStore.exportEntriesJSON({ includeRawMemos: true })
+    const safeExport = reloadedStore.exportEntriesJSON()
+
+    // Then
+    expect(fullExport).toContain("PRIVATE-LUNA-FRESH-EXPORT")
+    expect(safeExport).not.toContain("PRIVATE-LUNA-FRESH-EXPORT")
+    expect(allLocalStorageValues()).not.toContain("PRIVATE-LUNA-FRESH-EXPORT")
+  })
+
+  it("restores a private trash entry from ciphertext under its new id", async () => {
+    // Given
+    const recoveryCode = createRecoveryCode()
+    expect(saveSessionRecoveryCode(recoveryCode)).toBe(true)
+    await expect(savePrivateEntry(privateEntry("trash-private", "PRIVATE-LUNA-TRASH"))).resolves.toEqual({ ok: true, total: 1 })
+
+    // When
+    expect(deleteEntry("trash-private").ok).toBe(true)
+    const restored = restoreDeletedEntry("trash-private")
+
+    // Then
+    expect(restored.ok).toBe(true)
+    const entries = await loadEntriesWithPrivateMemos()
+    expect(entries).toHaveLength(1)
+    expect(entries[0]).toEqual(expect.objectContaining({ id: restored.restoredId, memo: "PRIVATE-LUNA-TRASH" }))
+    expect(allLocalStorageValues()).not.toContain("PRIVATE-LUNA-TRASH")
+  })
+
+  it("removes expired private-trash ciphertext without persisting plaintext", async () => {
+    const recoveryCode = createRecoveryCode()
+    expect(saveSessionRecoveryCode(recoveryCode)).toBe(true)
+    await expect(savePrivateEntry(privateEntry("expired-private", "PRIVATE-LUNA-EXPIRED"))).resolves.toEqual({ ok: true, total: 1 })
+    expect(deleteEntry("expired-private").ok).toBe(true)
+
+    expect(purgeExpiredTrash(Date.now() + 31 * 24 * 60 * 60 * 1000)).toBe(1)
+
+    expect(window.localStorage.getItem("trainoracle.journal.trash.v1")).not.toContain("expired-private")
+    expect(allLocalStorageValues()).not.toContain("PRIVATE-LUNA-EXPIRED")
   })
 })
 

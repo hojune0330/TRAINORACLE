@@ -2,6 +2,9 @@ import React from "react"
 import { SectionLb } from "../../components/JournalPrimitives"
 import { createRecoveryCode, isValidRecoveryCode } from "../../domain/account/private-note-crypto"
 import {
+  loadEntriesWithPrivateMemos,
+} from "../../domain/journal-store"
+import {
   loadSessionRecoveryCode,
   rotateSessionRecoveryCode,
   saveSessionRecoveryCode,
@@ -12,12 +15,14 @@ type PrivateMemoVaultProps = {
   readonly onSaveCode?: (code: string) => boolean
   readonly onLoadCode?: () => string | null
   readonly onRotateCode?: (previousCode: string, nextCode: string) => Promise<{ readonly ok: boolean }>
+  readonly onHydratePrivateMemos?: () => Promise<unknown>
 }
 
 export function PrivateMemoVault({
   onSaveCode = saveSessionRecoveryCode,
   onLoadCode = loadSessionRecoveryCode,
   onRotateCode = rotateSessionRecoveryCode,
+  onHydratePrivateMemos = loadEntriesWithPrivateMemos,
 }: PrivateMemoVaultProps) {
   const [existingCode, setExistingCode] = React.useState("")
   const [createdCode, setCreatedCode] = React.useState<string | null>(null)
@@ -39,13 +44,15 @@ export function PrivateMemoVault({
     setIsRotating(false)
   }
 
-  const unlock = () => {
+  const unlock = async () => {
     const normalized = existingCode.trim().toUpperCase()
     if (!isValidRecoveryCode(normalized)) {
       setNotice("복구 코드 형식을 확인해 주세요.")
       return
     }
-    setNotice(onSaveCode(normalized)
+    const unlocked = onSaveCode(normalized)
+    if (unlocked) await onHydratePrivateMemos()
+    setNotice(unlocked
       ? "이 브라우저 세션에서 나만의 메모를 열 수 있어요."
       : "이 브라우저에 복구 코드를 준비하지 못했어요.")
   }

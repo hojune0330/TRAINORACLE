@@ -9,7 +9,9 @@ import { JOURNAL_STORAGE_KEY, journalStorage, writeJournalEntries } from "./jour
 import {
   hasPrivateMemoText,
   isPrivateMemoEntry,
+  privateMemoRecord,
   removePrivateMemoWithJournalEntries,
+  restorePrivateMemoRecordWithJournalShell,
   restorePrivateMemo,
   restorePrivateMemoShell,
   savePrivateMemoWithJournalShell,
@@ -31,6 +33,15 @@ export type {
 
 export type JournalExportOptions = {
   readonly includeRawMemos?: boolean
+}
+
+export class PrivateMemoUnlockRequiredError extends Error {
+  readonly code = "PRIVATE_MEMO_UNLOCK_REQUIRED"
+
+  constructor() {
+    super("PRIVATE_MEMO_UNLOCK_REQUIRED")
+    this.name = "PrivateMemoUnlockRequiredError"
+  }
 }
 
 export function loadEntries(): JournalEntry[] {
@@ -195,7 +206,8 @@ export function deleteEntry(id: string): DeleteEntryResult {
 
   if (!recordTombstone(id)) return { ok: false, total: all.length, trashed: false }
 
-  const trashed = moveToTrash(target)
+  const record = isPrivateMemoEntry(target) ? privateMemoRecord(localStorage, target.id) : null
+  const trashed = moveToTrash(target, undefined, record ?? undefined)
 
   const ok = isPrivateMemoEntry(target)
     ? removePrivateMemoWithJournalEntries(localStorage, remaining, target.id)
@@ -239,12 +251,15 @@ export function restoreDeletedEntry(id: string): RestoreDeletedResult {
   const next = [...loadEntries(), restored]
   const localStorage = journalStorage()
   if (localStorage === null) {
-    moveToTrash(taken.entry, taken.deletedAt)
+    moveToTrash(taken.entry, taken.deletedAt, taken.privateMemo)
     return { ok: false, restoredId: null, total: next.length - 1 }
   }
-  if (!writeJournalEntries(localStorage, next)) {
+  const ok = taken.privateMemo === undefined
+    ? writeJournalEntries(localStorage, next)
+    : restorePrivateMemoRecordWithJournalShell(localStorage, next, taken.entry.id, restored.id, taken.privateMemo)
+  if (!ok) {
     // 꺼내 놓고 저장에 실패하면 일지가 어디에도 없게 된다. 휴지통에 되돌린다.
-    moveToTrash(taken.entry, taken.deletedAt)
+    moveToTrash(taken.entry, taken.deletedAt, taken.privateMemo)
     return { ok: false, restoredId: null, total: next.length - 1 }
   }
   return { ok: true, restoredId: restored.id, total: next.length }
@@ -284,9 +299,16 @@ export function exportEntriesJSON(options: JournalExportOptions = {}): string {
 
 function entriesForOwnerFullBackup(): JournalEntry[] {
   const recoveryCode = loadSessionRecoveryCode()
-  if (recoveryCode === null) return loadEntries()
-  return loadEntries().map((entry) => {
+  const entries = loadEntries()
+  if (recoveryCode === null) {
+    if (entries.some(isPrivateMemoEntry)) throw new PrivateMemoUnlockRequiredError()
+    return entries
+  }
+  return entries.map((entry) => {
     const cached = privateMemoCache.get(entry.id)
+    if (isPrivateMemoEntry(entry) && (cached === undefined || cached.recoveryCode !== recoveryCode)) {
+      throw new PrivateMemoUnlockRequiredError()
+    }
     if (cached === undefined || cached.recoveryCode !== recoveryCode) return entry
     return restorePrivateMemoShell(entry, cached.memo)
   })

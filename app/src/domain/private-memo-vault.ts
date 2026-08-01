@@ -10,7 +10,7 @@ import type { EncryptedPrivateNote } from "./account/private-note-crypto"
 
 export const PRIVATE_MEMO_VAULT_STORAGE_KEY = "trainoracle.private-memo.v1"
 
-const encryptedRecordSchema: z.ZodType<{ readonly encrypted: EncryptedPrivateNote }> = z.object({
+const encryptedRecordSchema: z.ZodType<PrivateMemoRecord> = z.object({
   encrypted: z.object({
     version: z.literal(1),
     algorithm: z.literal("AES-GCM"),
@@ -29,7 +29,11 @@ const privateMemoVaultSchema = z.object({
 
 export type PrivateMemoVault = {
   readonly version: 1
-  readonly records: Readonly<Record<string, { readonly encrypted: EncryptedPrivateNote }>>
+  readonly records: Readonly<Record<string, PrivateMemoRecord>>
+}
+
+export type PrivateMemoRecord = {
+  readonly encrypted: EncryptedPrivateNote
 }
 
 function privateTextOf(entry: JournalEntry): string {
@@ -76,6 +80,15 @@ export function loadPrivateMemoVault(storage: Storage): PrivateMemoVault | null 
   } catch {
     return null
   }
+}
+
+export function privateMemoRecord(storage: Storage, entryId: string): PrivateMemoRecord | null {
+  return loadPrivateMemoVault(storage)?.records[entryId] ?? null
+}
+
+export function parsePrivateMemoRecord(value: unknown): PrivateMemoRecord | null {
+  const parsed = encryptedRecordSchema.safeParse(value)
+  return parsed.success ? parsed.data : null
 }
 
 export async function savePrivateMemoWithJournalShell(
@@ -151,6 +164,23 @@ export function removePrivateMemoWithJournalEntries(
   if (vault === null) return false
   const { [entryId]: _removed, ...remainingRecords } = vault.records
   const nextVault: PrivateMemoVault = { version: 1, records: remainingRecords }
+  return writeVaultAndJournalAtomically(storage, nextVault, entries)
+}
+
+export function restorePrivateMemoRecordWithJournalShell(
+  storage: Storage,
+  entries: readonly JournalEntry[],
+  deletedEntryId: string,
+  restoredEntryId: string,
+  record: PrivateMemoRecord,
+): boolean {
+  const vault = loadPrivateMemoVault(storage)
+  if (vault === null) return false
+  const { [deletedEntryId]: _removed, ...remainingRecords } = vault.records
+  const nextVault: PrivateMemoVault = {
+    version: 1,
+    records: { ...remainingRecords, [restoredEntryId]: record },
+  }
   return writeVaultAndJournalAtomically(storage, nextVault, entries)
 }
 

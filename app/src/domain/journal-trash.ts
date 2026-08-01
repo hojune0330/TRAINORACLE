@@ -32,6 +32,8 @@
 
 import { parseJournalEntryForWrite } from "./journal-schema"
 import type { JournalEntry } from "./journal-schema"
+import { parsePrivateMemoRecord } from "./private-memo-vault"
+import type { PrivateMemoRecord } from "./private-memo-vault"
 
 const KEY = "trainoracle.journal.trash.v1"
 
@@ -50,6 +52,7 @@ export type TrashedEntry = {
   readonly entry: JournalEntry
   /** 지운 시각 ISO — 남은 기간 계산 기준 */
   readonly deletedAt: string
+  readonly privateMemo?: PrivateMemoRecord
 }
 
 function storage(): Storage | null {
@@ -75,7 +78,9 @@ function parseTrashed(value: unknown): TrashedEntry | null {
   if (typeof record.deletedAt !== "string" || record.deletedAt === "") return null
   const entry = parseJournalEntryForWrite(record.entry)
   if (entry === null) return null
-  return { entry, deletedAt: record.deletedAt }
+  if (record.privateMemo === undefined) return { entry, deletedAt: record.deletedAt }
+  const privateMemo = parsePrivateMemoRecord(record.privateMemo)
+  return privateMemo === null ? null : { entry, deletedAt: record.deletedAt, privateMemo }
 }
 
 function write(items: readonly TrashedEntry[]): boolean {
@@ -142,9 +147,14 @@ export function purgeExpiredTrash(now: number = Date.now()): number {
  * 지운 일지를 휴지통에 넣는다.
  * 같은 id가 이미 있으면 최신 것으로 교체한다(중복 보관 방지).
  */
-export function moveToTrash(entry: JournalEntry, deletedAt: string = new Date().toISOString()): boolean {
+export function moveToTrash(
+  entry: JournalEntry,
+  deletedAt: string = new Date().toISOString(),
+  privateMemo?: PrivateMemoRecord,
+): boolean {
   const existing = loadTrash().filter((item) => item.entry.id !== entry.id)
-  const next = [...existing, { entry, deletedAt }]
+  const item = privateMemo === undefined ? { entry, deletedAt } : { entry, deletedAt, privateMemo }
+  const next = [...existing, item]
     .sort((a, b) => a.deletedAt.localeCompare(b.deletedAt))
   const trimmed = next.length > TRASH_LIMIT ? next.slice(next.length - TRASH_LIMIT) : next
   return write(trimmed)

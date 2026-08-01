@@ -19,13 +19,15 @@ describe("private memo recovery code", () => {
 
   it("accepts an existing code for this browser session", async () => {
     const saveCode = vi.fn().mockReturnValue(true)
-    render(<PrivateMemoVault onSaveCode={saveCode} />)
+    const hydratePrivateMemos = vi.fn().mockResolvedValue(undefined)
+    render(<PrivateMemoVault onSaveCode={saveCode} onHydratePrivateMemos={hydratePrivateMemos} />)
     const code = "ABCD-EF12-3456-7890-ABCD-EF12-3456-7890"
 
     await userEvent.type(screen.getByLabelText("기존 복구 코드"), code)
     await userEvent.click(screen.getByRole("button", { name: "이 세션에서 메모 열기" }))
 
     expect(saveCode).toHaveBeenCalledWith(code)
+    await vi.waitFor(() => expect(hydratePrivateMemos).toHaveBeenCalledTimes(1))
   })
 
   it("rotates an unlocked recovery code exactly once and displays the replacement", async () => {
