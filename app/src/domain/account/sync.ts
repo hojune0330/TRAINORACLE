@@ -27,6 +27,8 @@ const TOMBSTONE_TABLE = "journal_tombstones"
 export { loadSyncConsent, mergeEntries, saveSyncConsent, toUploadPayload } from "./sync-local"
 export type { SyncConsent } from "./sync-local"
 
+export type SyncFailureCode = "NO_AUTH_SESSION" | "SESSION_TARGET_MISMATCH"
+
 export type SyncOutcome = {
   readonly ok: boolean
   readonly message: string
@@ -35,6 +37,7 @@ export type SyncOutcome = {
   /** 서버에서도 지운 개수 — 삭제가 기기 사이에 전파되었는지 보여준다 */
   readonly deleted: number
   readonly total: number
+  readonly failureCode?: SyncFailureCode
 }
 
 export type SyncPreviewOutcome = {
@@ -43,6 +46,14 @@ export type SyncPreviewOutcome = {
   readonly localCount: number
   readonly remoteJournalCount: number
   readonly remotePrivateCount: number
+  readonly failureCode?: SyncFailureCode
+}
+
+async function sessionFailureCode(client: Awaited<ReturnType<typeof supabase>>, userId: string): Promise<SyncFailureCode | null> {
+  if (client === null) return "NO_AUTH_SESSION"
+  const { data, error } = await client.auth.getSession()
+  if (error !== null || data.session === null) return "NO_AUTH_SESSION"
+  return userId === "" || data.session.user.id !== userId ? "SESSION_TARGET_MISMATCH" : null
 }
 
 export async function previewSync(userId: string): Promise<SyncPreviewOutcome> {
@@ -51,8 +62,12 @@ export async function previewSync(userId: string): Promise<SyncPreviewOutcome> {
   if (client === null) {
     return { ok: false, message: "계정 기능이 꺼져 있어요.", localCount, remoteJournalCount: 0, remotePrivateCount: 0 }
   }
-  const consent = loadSyncConsent()
-  if (!consent.enabled) {
+  const failureCode = await sessionFailureCode(client, userId)
+  if (failureCode !== null) {
+    return { ok: false, message: "Sync requires the matching signed-in account.", localCount, remoteJournalCount: 0, remotePrivateCount: 0, failureCode }
+  }
+  const previewConsent = loadSyncConsent()
+  if (!previewConsent.enabled) {
     return { ok: false, message: "동기화를 먼저 켜 주세요.", localCount, remoteJournalCount: 0, remotePrivateCount: 0 }
   }
   if (!claimSyncBinding(userId)) {
@@ -86,10 +101,11 @@ export async function previewSync(userId: string): Promise<SyncPreviewOutcome> {
   }
 }
 
-function failed(message: string): SyncOutcome {
+function failed(message: string, failureCode?: SyncFailureCode): SyncOutcome {
   return {
     ok: false, message, pulled: 0, pushed: 0, deleted: 0,
     total: loadEntries().length,
+    failureCode,
   }
 }
 
@@ -97,6 +113,10 @@ function failed(message: string): SyncOutcome {
 export async function syncNow(userId: string): Promise<SyncOutcome> {
   const client = await supabase()
   if (client === null) return failed("계정 기능이 꺼져 있어요.")
+  const failureCode = await sessionFailureCode(client, userId)
+  if (failureCode !== null) {
+    return failed("Sync requires the matching signed-in account.", failureCode)
+  }
   const consent = loadSyncConsent()
   if (!consent.enabled) return failed("동기화가 꺼져 있어요. 먼저 동기화를 켜 주세요.")
   if (!claimSyncBinding(userId)) {

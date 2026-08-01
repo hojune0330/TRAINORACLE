@@ -87,7 +87,15 @@ function table(name: string) {
 }
 
 vi.mock("./supabase-client", () => ({
-  supabase: () => Promise.resolve({ from: (name: string) => table(name) }),
+  supabase: () => Promise.resolve({
+    auth: {
+      getSession: () => Promise.resolve({
+        data: { session: { user: { id: "user-1" } } },
+        error: null,
+      }),
+    },
+    from: (name: string) => table(name),
+  }),
   __resetSupabaseForTest: () => {},
 }))
 
@@ -217,7 +225,7 @@ describe("syncNow — 삭제 기록 서버 전파", () => {
     const outcome = await syncNow("user-2")
 
     expect(outcome.ok).toBe(false)
-    expect(outcome.message).toMatch(/다른 계정/u)
+    expect(outcome.message).toContain("matching signed-in account")
     expect(server.entries).toHaveLength(0)
   })
 
