@@ -20,7 +20,7 @@ export function buildTrainingHomeViewModel(
 ): TrainingHomeViewModel {
   const todayCount = entries.filter((entry) => entry.date === today).length
   const journalDays = new Set(entries.map((entry) => entry.date)).size
-  const week = thisWeekStats([...analysisEntries])
+  const week = thisWeekStats([...analysisEntries], today)
 
   return {
     todayMessage: todayCount === 0

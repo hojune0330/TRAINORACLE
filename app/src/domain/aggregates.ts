@@ -31,8 +31,8 @@ export function entriesBetween(fromISO: string, toISO: string, all?: AnalysisJou
 }
 
 /** 이번 주(월~오늘) 통계 */
-export function thisWeekStats(all?: AnalysisJournalEntry[]): WeekStats {
-  const today = todayISO()
+export function thisWeekStats(all?: AnalysisJournalEntry[], referenceDate = todayISO()): WeekStats {
+  const today = referenceDate
   const start = weekStartOf(today)
   const wk = entriesBetween(start, today, all)
   const sessions = wk.filter(isPostSession)
