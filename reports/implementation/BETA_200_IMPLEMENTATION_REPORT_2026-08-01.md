@@ -91,7 +91,10 @@
 
 ## 데이터베이스 적용 순서
 
-이 문서의 기존 `0001`~`0010` 목록은 더 이상 정본이 아니다. 최신 정본은 `SERVER_OPERATIONS_IMPLEMENTATION_REPORT_2026-08-02.md`의 `데이터베이스 정본 순서`다. 중간 번호를 건너뛰거나 `0018`만 따로 적용하지 않는다.
+이 문서와 `SERVER_OPERATIONS_IMPLEMENTATION_REPORT_2026-08-02.md`의 목록은 당시
+구현 기록으로만 보존한다. 현재 적용 절차의 정본은 `docs/SUPABASE_SETUP.md`이며,
+실제 적용 결과는 `reports/operations/SUPABASE_TRIAL_MIGRATION_RECEIPT_2026-08-02.md`에서
+확인한다. 중간 번호를 건너뛰거나 최신 `0020`을 빼고 적용하지 않는다.
 
 ## 용량 시험의 정확한 의미
 
