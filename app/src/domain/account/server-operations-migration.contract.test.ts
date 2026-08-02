@@ -11,7 +11,9 @@ const migrationPath = join(
 )
 
 function loadMigration(): string {
-  return existsSync(migrationPath) ? readFileSync(migrationPath, "utf8") : ""
+  return existsSync(migrationPath)
+    ? readFileSync(migrationPath, "utf8").replaceAll("\r\n", "\n")
+    : ""
 }
 
 const featureTriggerCases = [
