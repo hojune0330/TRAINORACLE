@@ -17,6 +17,11 @@ const server = {
   tombstonePushFails: false,
   tombstonePullFails: false,
   entryDeleteFails: false,
+  entryPushFails: false,
+  schemaVersion: 17,
+  schemaRpcFails: false,
+  rpcCallCount: 0,
+  journalSelectCount: 0,
 }
 
 function table(name: string) {
@@ -32,6 +37,7 @@ function table(name: string) {
               : Promise.resolve({ data: server.tombstones, error: null })
           }
           if (isPrivateNote) return Promise.resolve({ data: server.privateNotes, error: null })
+          server.journalSelectCount += 1
           return Promise.resolve({
             data: server.entries.map((row) => ({ entry: row.entry })),
             error: null,
@@ -52,6 +58,9 @@ function table(name: string) {
       if (isPrivateNote) {
         server.privateNotes = rows
         return Promise.resolve({ data: null, error: null })
+      }
+      if (server.entryPushFails) {
+        return Promise.resolve({ data: null, error: { message: "network interrupted" } })
       }
       for (const row of rows) {
         const index = server.entries.findIndex((entry) => entry.entry_id === row.entry_id)
@@ -94,12 +103,18 @@ vi.mock("./supabase-client", () => ({
         error: null,
       }),
     },
+    rpc: (name: string) => {
+      server.rpcCallCount += 1
+      return Promise.resolve(name === "get_sync_schema_version" && !server.schemaRpcFails
+        ? { data: server.schemaVersion, error: null }
+        : { data: null, error: { message: "schema contract unavailable" } })
+    },
     from: (name: string) => table(name),
   }),
   __resetSupabaseForTest: () => {},
 }))
 
-import { saveSyncConsent, syncNow } from "./sync"
+import { previewSync, saveSyncConsent, syncNow } from "./sync"
 import { saveSessionRecoveryCode } from "./private-note-sync"
 import { createRecoveryCode } from "./private-note-crypto"
 import { loadTombstones, recordTombstone } from "./tombstone"
@@ -108,10 +123,10 @@ import type { PostSessionEntry } from "../journal-schema"
 
 const JOURNAL_KEY = "trainoracle.journal.v1"
 
-function post(id: string): PostSessionEntry {
+function post(id: string, savedAt = "2026-07-20T10:00:00.000Z"): PostSessionEntry {
   return {
     id, kind: "post-session", date: "2026-07-20",
-    savedAt: "2026-07-20T10:00:00.000Z", syncState: "local",
+    savedAt, syncState: "local",
     system: "base", title: "이지런", distanceKm: "8",
     durationMin: "45", avgPace: "5:30", rpe: 4, memo: "",
   }
@@ -143,10 +158,89 @@ beforeEach(() => {
   server.tombstonePushFails = false
   server.tombstonePullFails = false
   server.entryDeleteFails = false
+  server.entryPushFails = false
+  server.schemaVersion = 17
+  server.schemaRpcFails = false
+  server.rpcCallCount = 0
+  server.journalSelectCount = 0
   saveSyncConsent({ enabled: true, shareTrainingNotes: false })
 })
 
 describe("syncNow — 삭제 기록 서버 전파", () => {
+  it("서버 동기화 스키마가 오래되면 원격 읽기와 로컬 변경을 시작하지 않는다", async () => {
+    server.schemaVersion = 16
+    saveEntry(post("local-safe"))
+
+    const outcome = await syncNow("user-1")
+
+    expect(outcome.ok).toBe(false)
+    expect(outcome.failureCode).toBe("SERVER_SCHEMA_OUTDATED")
+    expect(server.rpcCallCount).toBe(1)
+    expect(server.journalSelectCount).toBe(0)
+    expect(localIds()).toEqual(["local-safe"])
+  })
+
+  it("미리보기도 오래된 서버 스키마에서 원격 일지를 읽지 않는다", async () => {
+    server.schemaVersion = 16
+
+    const outcome = await previewSync("user-1")
+
+    expect(outcome.failureCode).toBe("SERVER_SCHEMA_OUTDATED")
+    expect(server.journalSelectCount).toBe(0)
+  })
+
+  it("서버 버전을 확인할 수 없으면 원격 읽기를 시작하지 않는다", async () => {
+    server.schemaRpcFails = true
+    saveEntry(post("local-safe"))
+
+    const outcome = await syncNow("user-1")
+
+    expect(outcome.ok).toBe(false)
+    expect(outcome.failureCode).toBe("SERVER_SCHEMA_OUTDATED")
+    expect(server.journalSelectCount).toBe(0)
+    expect(localIds()).toEqual(["local-safe"])
+  })
+
+  it("서버 버전 응답이 숫자가 아니면 원격 읽기를 시작하지 않는다", async () => {
+    server.schemaVersion = Number.NaN
+    saveEntry(post("local-safe"))
+
+    const outcome = await syncNow("user-1")
+
+    expect(outcome.failureCode).toBe("SERVER_SCHEMA_OUTDATED")
+    expect(server.journalSelectCount).toBe(0)
+    expect(localIds()).toEqual(["local-safe"])
+  })
+
+  it("서버가 더 새 버전이면 호환 가능한 동기화를 계속한다", async () => {
+    server.schemaVersion = 18
+    saveEntry(post("forward-compatible"))
+
+    const outcome = await syncNow("user-1")
+
+    expect(outcome.ok).toBe(true)
+    expect(server.journalSelectCount).toBe(1)
+  })
+
+  it("중단된 업로드를 다시 시도할 때 그 사이 새로 쓴 일지도 보존한다", async () => {
+    saveEntry(post("before"))
+    server.entries = [{
+      user_id: "user-1",
+      entry_id: "remote",
+      saved_at: "2026-08-02T08:00:00.000Z",
+      entry: post("remote"),
+    }]
+    server.entryPushFails = true
+
+    expect((await syncNow("user-1")).ok).toBe(false)
+    saveEntry(post("during-outage", "2026-08-02T09:00:00.000Z"))
+    server.entryPushFails = false
+
+    expect((await syncNow("user-1")).ok).toBe(true)
+    expect(localIds().sort()).toEqual(["before", "during-outage", "remote"])
+    expect(window.localStorage.getItem("trainoracle.sync.recovery.v1")).toBeNull()
+  })
+
   it("삭제 기록 push 실패를 성공으로 보고하지 않는다", async () => {
     saveEntry(post("X"))
     await syncNow("user-1")
