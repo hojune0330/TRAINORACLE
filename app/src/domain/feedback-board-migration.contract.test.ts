@@ -22,6 +22,10 @@ const abuseAndRetentionMigration = readFileSync(
   join(process.cwd(), "..", "supabase", "migrations", "0025_feedback_board_abuse_retention.sql"),
   "utf8",
 )
+const expiryBoundaryMigration = readFileSync(
+  join(process.cwd(), "..", "supabase", "migrations", "0026_feedback_board_expiry_boundary.sql"),
+  "utf8",
+)
 
 describe("private feedback board migration", () => {
   it("exposes only receipt-token RPCs to anonymous users", () => {
@@ -95,5 +99,12 @@ describe("private feedback board migration", () => {
   it("serializes comment count enforcement per thread", () => {
     expect(abuseAndRetentionMigration).toContain("FEEDBACK_COMMENT_THREAD")
     expect(abuseAndRetentionMigration).toContain("pg_advisory_xact_lock")
+  })
+
+  it("hides expired threads from receipt owners and prevents resurrection", () => {
+    expect(expiryBoundaryMigration).toContain("create or replace function public.list_my_feedback_threads")
+    expect(expiryBoundaryMigration).toContain("create or replace function public.append_feedback_comment")
+    expect(expiryBoundaryMigration).toContain("create or replace function public.reply_to_feedback_thread")
+    expect(expiryBoundaryMigration.match(/expires_at > clock_timestamp\(\)/gu)).toHaveLength(3)
   })
 })

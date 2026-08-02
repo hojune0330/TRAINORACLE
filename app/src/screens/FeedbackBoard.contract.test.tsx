@@ -72,8 +72,9 @@ describe("private feedback board", () => {
     expect(remove).toHaveBeenCalledWith(thread.id)
   })
 
-  it("removes a deleted thread immediately even when the next list request fails", async () => {
+  it("removes a deleted thread without depending on a second list request", async () => {
     const user = userEvent.setup()
+    const list = vi.fn<FeedbackGateway["list"]>()
     const thread = {
       id: "b2b2b2b2-b2b2-4b2b-8b2b-b2b2b2b2b2b2",
       category: "QUESTION" as const,
@@ -83,9 +84,10 @@ describe("private feedback board", () => {
       lastActivityAt: "2026-08-03T00:00:00.000Z",
       comments: [],
     }
+    list.mockResolvedValueOnce([thread]).mockRejectedValue(new Error("refresh unavailable"))
     render(<FeedbackBoard available gateway={{
       ...gateway(async () => undefined),
-      list: async () => [thread],
+      list,
       remove: async () => undefined,
     }} />)
 
@@ -95,5 +97,6 @@ describe("private feedback board", () => {
     await user.click(screen.getByRole("button", { name: "정말 삭제" }))
 
     expect(await screen.findByText("아직 남긴 문의가 없어요.")).toBeVisible()
+    expect(list).toHaveBeenCalledTimes(1)
   })
 })
