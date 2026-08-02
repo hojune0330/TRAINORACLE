@@ -171,6 +171,24 @@ jobs:
         shell: bash
         run: |
           git fetch origin gh-pages
+          PREVIOUS_PAGES_SHA="$(git rev-parse origin/gh-pages)"
+          export PREVIOUS_PAGES_SHA
+          export SOURCE_SHA="${{ github.sha }}"
+          export WORKFLOW_RUN_ID="${{ github.run_id }}"
+          export WORKFLOW_ATTEMPT="${{ github.run_attempt }}"
+          node --input-type=module <<'NODE'
+          import { writeFileSync } from "node:fs"
+
+          const receipt = {
+            kind: "TRAINORACLE_PAGES_DEPLOYMENT",
+            sourceSha: process.env.SOURCE_SHA,
+            previousPagesSha: process.env.PREVIOUS_PAGES_SHA,
+            workflowRunId: process.env.WORKFLOW_RUN_ID,
+            workflowAttempt: process.env.WORKFLOW_ATTEMPT,
+            deployedAt: new Date().toISOString(),
+          }
+          writeFileSync("app/dist/trainoracle-deploy-receipt.json", `${JSON.stringify(receipt, null, 2)}\n`)
+          NODE
           git worktree add "$RUNNER_TEMP/trainoracle-pages" origin/gh-pages
           find "$RUNNER_TEMP/trainoracle-pages" -mindepth 1 -maxdepth 1 ! -name .git -exec rm -rf {} +
           cp -R app/dist/. "$RUNNER_TEMP/trainoracle-pages/"
@@ -185,3 +203,9 @@ jobs:
           fi
           git commit -m "deploy: verified app from main ${GITHUB_SHA::7}"
           git push origin HEAD:gh-pages
+          {
+            echo "### deployment receipt"
+            echo "- source: \`${GITHUB_SHA}\`"
+            echo "- previous Pages: \`${PREVIOUS_PAGES_SHA}\`"
+            echo "- deployed Pages: \`$(git rev-parse HEAD)\`"
+          } >> "$GITHUB_STEP_SUMMARY"

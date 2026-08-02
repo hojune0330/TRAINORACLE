@@ -1,0 +1,114 @@
+name: TrainOracle Pages rollback
+
+permissions:
+  contents: write
+
+on:
+  workflow_dispatch:
+    inputs:
+      target_gh_pages_sha:
+        description: "Full 40-character gh-pages commit to restore"
+        required: true
+        type: string
+      reason_code:
+        description: "Why the deployed site is being rolled back"
+        required: true
+        type: choice
+        options:
+          - DATA_EXPOSURE
+          - DATA_CORRUPTION
+          - BROKEN_SYNC
+          - BROKEN_UI
+          - OTHER_CONFIRMED_INCIDENT
+      incident_issue_number:
+        description: "GitHub issue number containing the incident record"
+        required: true
+        type: string
+
+concurrency:
+  group: trainoracle-pages
+  cancel-in-progress: false
+
+jobs:
+  rollback:
+    runs-on: ubuntu-latest
+    env:
+      TARGET_SHA: ${{ inputs.target_gh_pages_sha }}
+      REASON_CODE: ${{ inputs.reason_code }}
+      INCIDENT_ISSUE_NUMBER: ${{ inputs.incident_issue_number }}
+    steps:
+      - name: Checkout deployment history
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Validate rollback target
+        shell: bash
+        run: |
+          [[ "$TARGET_SHA" =~ ^[0-9a-f]{40}$ ]]
+          [[ "$INCIDENT_ISSUE_NUMBER" =~ ^[1-9][0-9]*$ ]]
+          case "$REASON_CODE" in
+            DATA_EXPOSURE|DATA_CORRUPTION|BROKEN_SYNC|BROKEN_UI|OTHER_CONFIRMED_INCIDENT) ;;
+            *) echo "unsupported rollback reason" >&2; exit 1 ;;
+          esac
+          git fetch origin gh-pages
+          CURRENT_PAGES_SHA="$(git rev-parse origin/gh-pages)"
+          test "$TARGET_SHA" != "$CURRENT_PAGES_SHA"
+          git cat-file -e "${TARGET_SHA}^{commit}"
+          git merge-base --is-ancestor "$TARGET_SHA" origin/gh-pages
+          git show "${TARGET_SHA}:index.html" >/dev/null
+          if git ls-tree -r "$TARGET_SHA" | grep -q '^120000 '; then
+            echo "rollback target contains a symbolic link" >&2
+            exit 1
+          fi
+
+      - name: Restore target as a new audited commit
+        shell: bash
+        run: |
+          CURRENT_PAGES_SHA="$(git rev-parse origin/gh-pages)"
+          PAGES_WORKTREE="$RUNNER_TEMP/trainoracle-pages-rollback"
+          ROLLBACK_SOURCE="$RUNNER_TEMP/trainoracle-pages-source"
+          mkdir -p "$ROLLBACK_SOURCE"
+          git archive "$TARGET_SHA" | tar -x -C "$ROLLBACK_SOURCE"
+          git worktree add "$PAGES_WORKTREE" origin/gh-pages
+          find "$PAGES_WORKTREE" -mindepth 1 -maxdepth 1 ! -name .git -exec rm -rf {} +
+          cp -R "$ROLLBACK_SOURCE"/. "$PAGES_WORKTREE"/
+          rm -f "$PAGES_WORKTREE/trainoracle-rollback-receipt.json"
+          touch "$PAGES_WORKTREE/.nojekyll"
+
+          export CURRENT_PAGES_SHA TARGET_SHA REASON_CODE INCIDENT_ISSUE_NUMBER PAGES_WORKTREE
+          export WORKFLOW_RUN_ID="$GITHUB_RUN_ID"
+          export ROLLED_BACK_AT="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          node --input-type=module <<'NODE'
+          import { writeFileSync } from "node:fs"
+
+          const receipt = {
+            kind: "TRAINORACLE_PAGES_ROLLBACK",
+            fromPagesSha: process.env.CURRENT_PAGES_SHA,
+            targetPagesSha: process.env.TARGET_SHA,
+            reasonCode: process.env.REASON_CODE,
+            incidentIssue: process.env.INCIDENT_ISSUE_NUMBER,
+            workflowRunId: process.env.WORKFLOW_RUN_ID,
+            rolledBackAt: process.env.ROLLED_BACK_AT,
+          }
+          writeFileSync(
+            `${process.env.PAGES_WORKTREE ?? ""}/trainoracle-rollback-receipt.json`,
+            `${JSON.stringify(receipt, null, 2)}\n`,
+          )
+          NODE
+
+          cd "$PAGES_WORKTREE"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "rollback: Pages to ${TARGET_SHA:0:7} for issue #$INCIDENT_ISSUE_NUMBER"
+          git push origin HEAD:gh-pages
+
+          {
+            echo "### rollback receipt"
+            echo "- from Pages: \`${CURRENT_PAGES_SHA}\`"
+            echo "- restored tree: \`${TARGET_SHA}\`"
+            echo "- new Pages commit: \`$(git rev-parse HEAD)\`"
+            echo "- reason: \`${REASON_CODE}\`"
+            echo "- incident: #${INCIDENT_ISSUE_NUMBER}"
+          } >> "$GITHUB_STEP_SUMMARY"

@@ -85,26 +85,13 @@
 | 동기화 | 실제 Supabase에서 200명·하루 1,000회 저장·순간 50요청 시험 | 동기화 꺼짐 |
 | 보호자 | 법정대리인임을 확인하는 운영 수단과 시즌 갱신·공유 확대 화면 | 공유 꺼짐 |
 | 계획 제안 | 서버 제안의 계획 본문과 로컬 활성 계획을 실패 없이 한 번에 전환하는 연결, 코치 작성 화면 | 계획 제안 꺼짐 |
-| 제품 분석 | 매일 정리 함수를 실행할 서버 일정 작업과 운영 지표 화면 | 제품 분석 꺼짐 |
+| 제품 분석 | 예약 정리 작업의 시험 환경 실행과 운영 지표 화면 | 제품 분석 꺼짐 |
 
 위 항목은 외부 전문가의 승인을 기다린다는 뜻이 아니다. 서비스 운영자가 실제 서버 설정과 실패 시험 결과를 확인한 뒤 해당 스위치를 열면 된다.
 
 ## 데이터베이스 적용 순서
 
-`supabase/migrations`에서 다음 순서로 적용한다.
-
-1. `0001_journal_sync.sql`
-2. `0002_journal_tombstones.sql`
-3. `0003_beta_accounts.sql`
-4. `0004_support_invitations.sql`
-5. `0005_support_connection_hardening.sql`
-6. `0006_retention_cleanup.sql`
-7. `0007_guardian_confirmations.sql`
-8. `0008_plan_proposal_actions.sql`
-9. `0009_account_deletion_actions.sql`
-10. `0010_product_analytics_actions.sql`
-
-`purge_expired_beta_data()`는 `service_role`만 실행할 수 있다. 운영 서버에서 하루 한 번 실행하도록 등록해야 30일 보존 규칙이 실제로 지켜진다. 브라우저나 공개 키에서 이 함수를 실행하면 안 된다.
+이 문서의 기존 `0001`~`0010` 목록은 더 이상 정본이 아니다. 최신 정본은 `SERVER_OPERATIONS_IMPLEMENTATION_REPORT_2026-08-02.md`의 `데이터베이스 정본 순서`다. 중간 번호를 건너뛰거나 `0018`만 따로 적용하지 않는다.
 
 ## 용량 시험의 정확한 의미
 
