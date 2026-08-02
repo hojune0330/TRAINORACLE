@@ -8,7 +8,13 @@ import {
   parseSelectionAuthority,
 } from "./input-values"
 import { parseContinuityInput } from "./continuity"
-import type { PlanGenerationRequest, PlanProfile } from "./types"
+import { parseFormation } from "./formation-parser"
+import type {
+  CanonicalPlanGenerationRequest,
+  PlanGenerationRequest,
+  PlanProfile,
+  PlanReviewReasonCode,
+} from "./types"
 
 type ParseRejectionCode =
   | "MALFORMED_INPUT"
@@ -21,7 +27,11 @@ type ParseRejectionCode =
 type ParsedPlanRequest =
   | {
       readonly kind: "parsed"
-      readonly request: PlanGenerationRequest
+      readonly request: CanonicalPlanGenerationRequest
+    }
+  | {
+      readonly kind: "review"
+      readonly code: PlanReviewReasonCode
     }
   | {
       readonly kind: "rejected"
@@ -30,6 +40,10 @@ type ParsedPlanRequest =
 
 function reject(code: ParseRejectionCode): ParsedPlanRequest {
   return { kind: "rejected", code }
+}
+
+function review(code: PlanReviewReasonCode): ParsedPlanRequest {
+  return { kind: "review", code }
 }
 
 function profileDayError(
@@ -48,14 +62,22 @@ function profileDayError(
   return undefined
 }
 
+function canonicalProfileDayError(profile: PlanProfile): ParseRejectionCode | undefined {
+  if (profile.availableTrainingDays.length < 2) {
+    return "INSUFFICIENT_AVAILABLE_DAYS"
+  }
+
+  for (const day of profile.availableTrainingDays) {
+    if (day < 1 || day > 10) {
+      return "INVALID_AVAILABLE_DAY"
+    }
+  }
+  return undefined
+}
+
 export function parsePlanGenerationRequest(input: unknown): ParsedPlanRequest {
   if (!isRecord(input) || input["kind"] !== "PLAN_BETA_GENERATION_REQUEST") {
     return reject("MALFORMED_INPUT")
-  }
-
-  const requestedFrameLength = parseFrameLength(input["requestedFrameLength"])
-  if (requestedFrameLength === undefined) {
-    return reject("UNSUPPORTED_FRAME_LENGTH")
   }
 
   const safetyGate = parseSafetyGate(input["safetyGate"])
@@ -79,16 +101,40 @@ export function parsePlanGenerationRequest(input: unknown): ParsedPlanRequest {
     return reject("MALFORMED_INPUT")
   }
 
-  const dayError = profileDayError(profile, requestedFrameLength)
+  const formationValue = input["formation"]
+  const legacyFrameValue = input["requestedFrameLength"]
+  if (formationValue !== undefined && legacyFrameValue !== undefined) {
+    return reject("MALFORMED_INPUT")
+  }
+
+  if (formationValue === undefined) {
+    const requestedFrameLength = parseFrameLength(legacyFrameValue)
+    if (requestedFrameLength === undefined) {
+      return reject("UNSUPPORTED_FRAME_LENGTH")
+    }
+
+    const dayError = profileDayError(profile, requestedFrameLength)
+    if (dayError !== undefined) {
+      return reject(dayError)
+    }
+    return review("NON_CANONICAL_FRAME_REQUIRES_REVIEW")
+  }
+
+  const formation = parseFormation(formationValue)
+  if (formation === undefined) {
+    return reject("MALFORMED_INPUT")
+  }
+
+  const dayError = canonicalProfileDayError(profile)
   if (dayError !== undefined) {
     return reject(dayError)
   }
 
-  const request: Omit<PlanGenerationRequest, "continuity"> = {
+  const request: Omit<CanonicalPlanGenerationRequest, "continuity"> = {
     kind: "PLAN_BETA_GENERATION_REQUEST",
     safetyGate,
     profile,
-    requestedFrameLength,
+    formation,
     journalSource: journal.journalSource,
     selectionAuthority,
     selectedEnergyIntent,

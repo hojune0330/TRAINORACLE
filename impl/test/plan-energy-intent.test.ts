@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest"
 import { generatePlanCandidates } from "../src/plan-generator/generator"
 import { decideSafetyGate } from "../src/safety-gate/gate"
 import { mapD9ResultToRveSignal } from "../src/rve/signal"
+import { canonicalFormation } from "./fixtures/canonical-formation"
 
 function clearedGate() {
   const gate = decideSafetyGate(
@@ -29,7 +30,7 @@ function generateFor(selectedEnergyIntent: string) {
       availableTrainingDays: [1, 3, 5, 7, 9],
       secondSessionMode: "SINGLE_SESSION_ONLY",
     },
-    requestedFrameLength: 9,
+    formation: canonicalFormation(),
     journalSource: { kind: "NO_USABLE_JOURNAL" },
     selectionAuthority: "SELF",
     selectedEnergyIntent,
@@ -97,7 +98,7 @@ describe("personal plan energy intention contract", () => {
         availableTrainingDays: [1, 2, 3, 4, 5, 6, 7, 8, 9],
         secondSessionMode: "RECOVERY_PM_ALLOWED",
       },
-      requestedFrameLength: 9,
+      formation: canonicalFormation(),
       journalSource: { kind: "NO_USABLE_JOURNAL" },
       selectionAuthority: "SELF",
       selectedEnergyIntent: "LT_INTENT",
@@ -143,7 +144,7 @@ describe("personal plan energy intention contract", () => {
         availableTrainingDays: [1, 2, 3, 4, 5, 6, 7, 8, 9],
         secondSessionMode: "RECOVERY_PM_ALLOWED",
       },
-      requestedFrameLength: 9,
+      formation: canonicalFormation(),
       journalSource: { kind: "NO_USABLE_JOURNAL" },
       selectionAuthority: "SELF",
       selectedEnergyIntent: "VO2_INTENT",

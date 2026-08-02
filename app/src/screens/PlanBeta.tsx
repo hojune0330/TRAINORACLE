@@ -213,11 +213,20 @@ export function PlanBeta({
       />
       {errorCode !== null && (
         <div className="plan-inline-error" role="alert">
-          계획을 만들지 못했어요 · {errorCode}
+          {planErrorMessage(errorCode)}
         </div>
       )}
     </>
   )
+}
+
+function planErrorMessage(errorCode: string): string {
+  switch (errorCode) {
+    case "FORMATION_REVIEW_REQUIRED":
+      return "현재 입력만으로는 계획 후보를 만들지 않아요. 훈련 내용을 검토한 뒤 초안으로 이어집니다."
+    default:
+      return `계획을 만들지 못했어요 · ${errorCode}`
+  }
 }
 
 function previousStep(step: IntakeStep): IntakeStep {

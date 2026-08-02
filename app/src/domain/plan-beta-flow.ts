@@ -1,4 +1,5 @@
 import { evaluateD9ColloquialLayer } from "@impl/d9/evaluator"
+import { assertNever } from "@impl/shared/assert-never"
 import {
   generatePlanCandidates,
   selectPlanCandidate,
@@ -103,14 +104,21 @@ export function generatePlanFromDraft(
     continuity: loadPreviousContinuity(),
   })
 
-  if (result.kind !== "generated") {
-    return { kind: "rejected", code: result.code }
-  }
-  return {
-    kind: "generated",
-    generated: result,
-    gate: safetyGate,
-    intake,
+  switch (result.kind) {
+    case "generated":
+      return {
+        kind: "generated",
+        generated: result,
+        gate: safetyGate,
+        intake,
+      }
+    case "needs_review_with_reason":
+      return { kind: "rejected", code: "FORMATION_REVIEW_REQUIRED" }
+    case "blocked":
+    case "rejected":
+      return { kind: "rejected", code: result.code }
+    default:
+      return assertNever(result)
   }
 }
 

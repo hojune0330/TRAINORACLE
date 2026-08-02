@@ -27,6 +27,10 @@ const progressStateSchema = z.enum([
   "SKIPPED",
   "PAIN_CHECKIN",
 ])
+const storedFrameLengthSchema = z.union([
+  frameLengthSchema,
+  z.literal(9.5),
+])
 
 export const planIntakeSchema = z.object({
   eventGroup: planEventGroupSchema,
@@ -52,7 +56,7 @@ export const progressSchema = z.object({
 export const planHistorySchema = z.object({
   candidateId: z.string().min(1),
   candidateKind: z.enum(["BALANCED", "CONSERVATIVE"]),
-  frameLengthDays: frameLengthSchema,
+  frameLengthDays: storedFrameLengthSchema,
   progress: z.array(progressSchema),
   archivedAt: z.string().datetime(),
 })

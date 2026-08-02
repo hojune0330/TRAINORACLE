@@ -2,6 +2,7 @@ export { evaluateD9ColloquialLayer } from "./d9/evaluator"
 export { createEvaluatorFailureSignal, mapD9ResultToRveSignal } from "./rve/signal"
 export { decideSafetyGate } from "./safety-gate/gate"
 export { createPlanDraft, generatePlanCandidates } from "./plan-generator/generator"
+export { compileExposureLedger } from "./plan-generator/exposure-ledger"
 export {
   formatPrescriptionNotation,
   parsePrescriptionNotation,
@@ -33,8 +34,16 @@ export type {
 } from "./prescription/types"
 export type {
   BetaActivePlanSnapshot,
+  CanonicalPlanFrame,
+  CanonicalPlanGenerationRequest,
+  ExplicitMainExposure,
   ExperienceBand,
   JournalSource,
+  LocalCivilHalfDaySlot,
+  LocalCivilNinePointFiveFormation,
+  LegacyPlanFrame,
+  MainExposureClassification,
+  MainExposureComponent,
   PlanBetaAudit,
   PlanBetaCode,
   PlanCandidate,
@@ -44,12 +53,15 @@ export type {
   PlanFrame,
   PlanGenerationRequest,
   PlanGenerationResult,
+  PlanGenerationReviewResult,
   PlanGenerationSuccess,
   PlanProfile,
   PlanProgressRequest,
   PlanProgressResult,
   PlanProgressState,
   PlanProgressStateCount,
+  PlanReviewConservativeAlternative,
+  PlanReviewReasonCode,
   PlanSelectionAuthority,
   PlanSelectionRequest,
   PlanSelectionResult,
@@ -57,3 +69,7 @@ export type {
   PlanSourceMode,
   RpeTimeRange,
 } from "./plan-generator/types"
+export type {
+  CompiledExposureLedger,
+  MainExposureLedgerEntry,
+} from "./plan-generator/exposure-ledger"

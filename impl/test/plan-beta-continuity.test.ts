@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest"
 import { mapD9ResultToRveSignal } from "../src/rve/signal"
 import { decideSafetyGate } from "../src/safety-gate/gate"
 import { generatePlanCandidates } from "../src/plan-generator/generator"
+import { canonicalFormation } from "./fixtures/canonical-formation"
 
 function clearedGate() {
   const gate = decideSafetyGate(
@@ -19,16 +20,16 @@ function clearedGate() {
   return gate
 }
 
-function request(frameLength: 7 | 9 | 10, includeContinuity: boolean) {
+function request(includeContinuity: boolean) {
   return {
     kind: "PLAN_BETA_GENERATION_REQUEST",
     safetyGate: clearedGate(),
     profile: {
       eventGroup: "MIDDLE_DISTANCE",
       experienceBand: "DEVELOPING",
-      availableTrainingDays: frameLength === 7 ? [1, 3, 5, 7] : [1, 3, 5, 7, 9],
+      availableTrainingDays: [1, 3, 5, 7, 9],
     },
-    requestedFrameLength: frameLength,
+    formation: canonicalFormation(),
     journalSource: { kind: "NO_USABLE_JOURNAL" },
     selectionAuthority: "SELF",
     selectedEnergyIntent: "LT_INTENT",
@@ -56,12 +57,10 @@ function expectGenerated(result: ReturnType<typeof generatePlanCandidates>) {
 }
 
 describe("plan beta continuity context", () => {
-  it.each([7, 9, 10] as const)(
-    "retains aggregate previous-frame context for a %i day successor without progression",
-    (frameLength) => {
+  it("retains aggregate previous-frame context for a canonical successor without progression", () => {
       // Given
-      const withContinuity = request(frameLength, true)
-      const withoutContinuity = request(frameLength, false)
+      const withContinuity = request(true)
+      const withoutContinuity = request(false)
 
       // When
       const nextFrame = expectGenerated(generatePlanCandidates(withContinuity))
@@ -82,13 +81,12 @@ describe("plan beta continuity context", () => {
         expect(candidate.rationaleCodes).toContain("PREVIOUS_FRAME_CONTEXT_RETAINED")
         expect(candidate.sessions).toEqual(baseline.candidates[index]?.sessions)
       }
-    },
-  )
+    })
 
   it("rejects unordered progress-state aggregates without processing them", () => {
     // Given
     const malformed = {
-      ...request(9, true),
+      ...request(true),
       continuity: {
         previousCandidateKind: "CONSERVATIVE",
         progressStateCounts: [

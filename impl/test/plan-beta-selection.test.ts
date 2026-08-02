@@ -25,6 +25,16 @@ function clearedGate() {
 }
 
 function generatedCoachRequiredPlan() {
+  const localDays = Array.from(
+    { length: 10 },
+    (_, index) => `2026-09-${String(index + 1).padStart(2, "0")}`,
+  )
+  const slots = localDays.flatMap((localDayKey, day) => day === 9
+    ? [{ slotIndex: 18, localDayKey, slot: "AM" as const }]
+    : [
+        { slotIndex: day * 2, localDayKey, slot: "AM" as const },
+        { slotIndex: day * 2 + 1, localDayKey, slot: "PM" as const },
+      ])
   const result = generatePlanCandidates({
     kind: "PLAN_BETA_GENERATION_REQUEST",
     safetyGate: clearedGate(),
@@ -34,7 +44,24 @@ function generatedCoachRequiredPlan() {
       availableTrainingDays: [1, 3, 5, 7, 9],
       secondSessionMode: "SINGLE_SESSION_ONLY",
     },
-    requestedFrameLength: 9,
+    formation: {
+      kind: "LOCAL_CIVIL_9_5",
+      slots,
+      exposures: [
+        {
+          exposureId: "coach-main-one",
+          classification: "TRAINING_MAIN",
+          localDayKey: localDays[2],
+          component: { kind: "STANDALONE" },
+        },
+        {
+          exposureId: "coach-main-two",
+          classification: "TRAINING_MAIN",
+          localDayKey: localDays[6],
+          component: { kind: "STANDALONE" },
+        },
+      ],
+    },
     journalSource: {
       kind: "NO_USABLE_JOURNAL",
     },

@@ -1,10 +1,11 @@
 import { assertNever } from "../shared/assert-never"
+import { isRecord, parseSafetyGate } from "./input-values"
 import type {
   BetaActivePlanSnapshot,
+  CanonicalPlanFrame,
   PlanBetaAudit,
   PlanCandidate,
-  PlanFrame,
-  PlanSelectionRequest,
+  PlanGenerationSuccess,
   PlanSelectionResult,
   PlanSession,
 } from "./types"
@@ -20,24 +21,13 @@ function audit(
   })
 }
 
-function copyFrame(frame: PlanFrame): PlanFrame {
-  switch (frame.continuity.kind) {
-    case "SEVEN_DAY_CONTINUITY":
-      return Object.freeze({
-        lengthDays: frame.lengthDays,
-        continuity: Object.freeze({
-          kind: "SEVEN_DAY_CONTINUITY",
-          nextFrameInput: "SELECTED_PLAN_AND_PROGRESS",
-        }),
-      })
-    case "STANDARD_FRAME":
-      return Object.freeze({
-        lengthDays: frame.lengthDays,
-        continuity: Object.freeze({ kind: "STANDARD_FRAME" }),
-      })
-    default:
-      return assertNever(frame.continuity)
-  }
+function copyFrame(frame: CanonicalPlanFrame): CanonicalPlanFrame {
+  return Object.freeze({
+    formationKind: "LOCAL_CIVIL_9_5",
+    lengthDays: frame.lengthDays,
+    slotCount: frame.slotCount,
+    continuity: Object.freeze({ kind: "STANDARD_FRAME" }),
+  })
 }
 
 function copySession(session: PlanSession): PlanSession {
@@ -105,7 +95,13 @@ function blockedSelection(): PlanSelectionResult {
 }
 
 function rejectSelection(
-  code: "COACH_SELECTION_REQUIRED" | "CANDIDATE_NOT_FOUND",
+  code:
+    | "COACH_SELECTION_REQUIRED"
+    | "CANDIDATE_NOT_FOUND"
+    | "INVALID_SELECTION_REQUEST"
+    | "NON_SELECTABLE_PLAN_RESULT"
+    | "STALE_CANDIDATE_FINGERPRINT"
+    | "NONCANONICAL_CANDIDATE_FRAME",
 ): PlanSelectionResult {
   return {
     kind: "rejected",
@@ -114,25 +110,91 @@ function rejectSelection(
   }
 }
 
-export function selectPlanCandidate(request: PlanSelectionRequest): PlanSelectionResult {
-  switch (request.safetyGate.kind) {
+function isPlanCandidate(value: unknown): value is PlanCandidate {
+  return isRecord(value)
+    && typeof value["candidateId"] === "string"
+    && (value["kind"] === "BALANCED" || value["kind"] === "CONSERVATIVE")
+    && isRecord(value["frame"])
+    && isRecord(value["mainExposureLedger"])
+    && Array.isArray(value["sessions"])
+}
+
+function isGeneratedPlan(value: unknown): value is PlanGenerationSuccess {
+  if (!isRecord(value) || value["kind"] !== "generated") {
+    return false
+  }
+
+  const candidates = value["candidates"]
+  return Array.isArray(candidates)
+    && candidates.length === 2
+    && candidates.every(isPlanCandidate)
+}
+
+function generatedPlanGuard(value: unknown):
+  | { readonly kind: "valid"; readonly generatedPlan: PlanGenerationSuccess }
+  | { readonly kind: "rejected"; readonly code: "NON_SELECTABLE_PLAN_RESULT" | "STALE_CANDIDATE_FINGERPRINT" | "NONCANONICAL_CANDIDATE_FRAME" } {
+  if (!isGeneratedPlan(value)) {
+    return { kind: "rejected", code: "NON_SELECTABLE_PLAN_RESULT" }
+  }
+
+  for (const candidate of value.candidates) {
+    const frame = candidate.frame
+    if (frame["formationKind"] !== "LOCAL_CIVIL_9_5" || frame["lengthDays"] !== 9.5 || frame["slotCount"] !== 19) {
+      return { kind: "rejected", code: "NONCANONICAL_CANDIDATE_FRAME" }
+    }
+    const ledger = candidate.mainExposureLedger
+    const countedExposureIds = ledger.countedExposureIds
+    if (!Array.isArray(countedExposureIds) || !countedExposureIds.every((id) => typeof id === "string")) {
+      return { kind: "rejected", code: "STALE_CANDIDATE_FINGERPRINT" }
+    }
+    if ((ledger.mainExposureCount !== 2 && ledger.mainExposureCount !== 3) || ledger.mainExposureCount !== countedExposureIds.length || ledger.fingerprint !== countedExposureIds.join(":")) {
+      return { kind: "rejected", code: "STALE_CANDIDATE_FINGERPRINT" }
+    }
+    if (!candidate.candidateId.includes(countedExposureIds.join("-"))) {
+      return { kind: "rejected", code: "STALE_CANDIDATE_FINGERPRINT" }
+    }
+  }
+
+  return { kind: "valid", generatedPlan: value }
+}
+
+export function selectPlanCandidate(request: unknown): PlanSelectionResult {
+  if (!isRecord(request) || request["kind"] !== "PLAN_BETA_SELECTION_REQUEST") {
+    return rejectSelection("INVALID_SELECTION_REQUEST")
+  }
+
+  const safetyGate = parseSafetyGate(request["safetyGate"])
+  if (safetyGate === undefined) {
+    return rejectSelection("INVALID_SELECTION_REQUEST")
+  }
+  switch (safetyGate.kind) {
     case "blocked":
       return blockedSelection()
     case "passed":
       break
     default:
-      return assertNever(request.safetyGate)
+      return assertNever(safetyGate)
+  }
+
+  const guardedPlan = generatedPlanGuard(request["generatedPlan"])
+  if (guardedPlan.kind === "rejected") {
+    return rejectSelection(guardedPlan.code)
+  }
+  const actor = request["actor"]
+  const selectedCandidateId = request["selectedCandidateId"]
+  if ((actor !== "SELF" && actor !== "COACH") || typeof selectedCandidateId !== "string") {
+    return rejectSelection("INVALID_SELECTION_REQUEST")
   }
 
   if (
-    request.generatedPlan.selectionAuthority === "COACH_REQUIRED" &&
-    request.actor === "SELF"
+    guardedPlan.generatedPlan.selectionAuthority === "COACH_REQUIRED" &&
+    actor === "SELF"
   ) {
     return rejectSelection("COACH_SELECTION_REQUIRED")
   }
 
-  const candidate = request.generatedPlan.candidates.find(
-    (item) => item.candidateId === request.selectedCandidateId,
+  const candidate = guardedPlan.generatedPlan.candidates.find(
+    (item) => item.candidateId === selectedCandidateId,
   )
   if (candidate === undefined) {
     return rejectSelection("CANDIDATE_NOT_FOUND")
@@ -140,7 +202,7 @@ export function selectPlanCandidate(request: PlanSelectionRequest): PlanSelectio
 
   return {
     kind: "selected",
-    activePlan: createActiveSnapshot(candidate, request.actor),
+    activePlan: createActiveSnapshot(candidate, actor),
     audit: audit("PLAN_BETA_SELECTED", []),
   }
 }

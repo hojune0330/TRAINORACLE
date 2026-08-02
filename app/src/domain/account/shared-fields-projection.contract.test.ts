@@ -23,6 +23,16 @@ function assertSharedProjectionBoundary(sql: string): void {
   expect(sql).not.toMatch(/jsonb_object_agg|jsonb_each|unnest\(allowed_fields\)|format\(/iu)
 }
 
+function mutateRequired(
+  sql: string,
+  target: string | RegExp,
+  replacement: string,
+): string {
+  const mutated = sql.replace(target, replacement)
+  expect(mutated).not.toBe(sql)
+  return mutated
+}
+
 describe("supporter shared-fields boundary", () => {
   it("projects a redacted journal DTO on the server from shared_fields", () => {
     assertSharedProjectionBoundary(migration)
@@ -34,7 +44,8 @@ describe("supporter shared-fields boundary", () => {
   })
 
   it("rejects a mutation that restores direct supporter row reads", () => {
-    const mutated = migration.replace(
+    const mutated = mutateRequired(
+      migration,
       "public.account_network_access_allowed(user_id)",
       "public.can_access_shared_athlete_data(user_id)",
     )
@@ -43,21 +54,26 @@ describe("supporter shared-fields boundary", () => {
   })
 
   it("rejects a mutation that skips revoked connections", () => {
-    const mutated = migration.replace("and connection.revoked_at is null", "")
+    const mutated = mutateRequired(migration, "and connection.revoked_at is null", "")
 
     expect(() => assertSharedProjectionBoundary(mutated)).toThrow()
   })
 
   it("rejects a mutation that skips season expiry", () => {
-    const mutated = migration.replace("and connection.season_ends_on >= current_date", "")
+    const mutated = mutateRequired(
+      migration,
+      "and connection.season_ends_on >= current_date",
+      "",
+    )
 
     expect(() => assertSharedProjectionBoundary(mutated)).toThrow()
   })
 
   it("rejects a mutation that returns the raw journal JSON", () => {
-    const mutated = migration.replace(
-      /jsonb_strip_nulls\(jsonb_build_object\([\s\S]+?\n    \)\)\n  from/u,
-      "journal.entry\n  from",
+    const mutated = mutateRequired(
+      migration,
+      /return query[\s\S]+?\n  from public\.journal_entries journal/u,
+      "return query\n  select\n    journal.entry_id,\n    journal.saved_at::text,\n    journal.entry\n  from public.journal_entries journal",
     )
 
     expect(() => assertSharedProjectionBoundary(mutated)).toThrow()
@@ -80,8 +96,9 @@ describe("supporter shared-fields boundary", () => {
   })
 
   it("rejects a mutation that bypasses the athlete lifecycle gate", () => {
-    const mutated = migration.replace(
-      "if not public.athlete_support_access_allowed(target_athlete) then\n    raise exception 'shared journal access denied' using errcode = '42501';\n  end if;\n\n",
+    const mutated = mutateRequired(
+      migration,
+      /\r?\n  if not public\.athlete_support_access_allowed\(target_athlete\) then\r?\n[\s\S]+?\r?\n  end if;\r?\n\r?\n/u,
       "",
     )
 
@@ -89,8 +106,9 @@ describe("supporter shared-fields boundary", () => {
   })
 
   it("rejects a mutation that would return metadata for an empty share scope", () => {
-    const mutated = migration.replace(
-      "if not (allowed_fields && array['TRAINING_RECORD', 'TRAINING_NOTE', 'PAIN', 'MOOD', 'BODY_STATE']::text[]) then\n    return;\n  end if;\n\n",
+    const mutated = mutateRequired(
+      migration,
+      /\r?\n  if not \(allowed_fields && array\['TRAINING_RECORD', 'TRAINING_NOTE', 'PAIN', 'MOOD', 'BODY_STATE'\]::text\[\]\) then\r?\n[\s\S]+?\r?\n  end if;\r?\n\r?\n/u,
       "",
     )
 
@@ -104,7 +122,8 @@ describe("supporter shared-fields boundary", () => {
   })
 
   it("rejects a mutation that would share private-self-only text", () => {
-    const mutated = migration.replace(
+    const mutated = mutateRequired(
+      migration,
       "and journal.entry ->> 'memoPurpose' = 'ANALYZABLE_TRAINING_NOTE'",
       "",
     )
