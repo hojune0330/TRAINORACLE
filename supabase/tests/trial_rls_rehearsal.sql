@@ -5,13 +5,15 @@ set enabled = true,
     change_reason = 'TRIAL_TRANSACTION_ONLY',
     revision = revision + 1,
     updated_at = clock_timestamp()
-where feature_key in ('ACCOUNT', 'SYNC');
+where feature_key in ('ACCOUNT', 'SYNC', 'SHARING');
 
 insert into auth.users (id, aud, role, email, created_at, updated_at)
 values
   ('11111111-1111-4111-8111-111111111111', 'authenticated', 'authenticated', 'trial-a@example.invalid', clock_timestamp(), clock_timestamp()),
   ('22222222-2222-4222-8222-222222222222', 'authenticated', 'authenticated', 'trial-b@example.invalid', clock_timestamp(), clock_timestamp()),
-  ('33333333-3333-4333-8333-333333333333', 'authenticated', 'authenticated', 'trial-child@example.invalid', clock_timestamp(), clock_timestamp());
+  ('33333333-3333-4333-8333-333333333333', 'authenticated', 'authenticated', 'trial-child@example.invalid', clock_timestamp(), clock_timestamp()),
+  ('44444444-4444-4444-8444-444444444444', 'authenticated', 'authenticated', 'trial-supporter@example.invalid', clock_timestamp(), clock_timestamp()),
+  ('55555555-5555-4555-8555-555555555555', 'authenticated', 'authenticated', 'trial-guardian@example.invalid', clock_timestamp(), clock_timestamp());
 
 set local role authenticated;
 
@@ -43,6 +45,18 @@ values (
   'trial-a-entry',
   '{"ciphertext":"synthetic-only"}'::jsonb,
   clock_timestamp()
+);
+
+insert into public.support_invitations (
+  athlete_id,
+  code_hash,
+  season_ends_on,
+  expires_at
+) values (
+  '11111111-1111-4111-8111-111111111111',
+  repeat('a', 64),
+  current_date + 90,
+  clock_timestamp() + interval '1 day'
 );
 
 select set_config('request.jwt.claim.sub', '22222222-2222-4222-8222-222222222222', true);
@@ -83,6 +97,10 @@ begin
     current_date
   ) then
     raise exception 'own adult guardian requirement check failed';
+  end if;
+
+  if public.accept_support_invitation(repeat('a', 64)) is null then
+    raise exception 'adult support invitation acceptance failed';
   end if;
 
   begin
@@ -139,6 +157,107 @@ begin
 end;
 $$;
 
+reset role;
+
+insert into public.support_invitations (
+  athlete_id,
+  code_hash,
+  season_ends_on,
+  expires_at
+) values (
+  '33333333-3333-4333-8333-333333333333',
+  repeat('b', 64),
+  current_date + 90,
+  clock_timestamp() + interval '1 day'
+);
+
+set local role authenticated;
+select set_config('request.jwt.claim.sub', '44444444-4444-4444-8444-444444444444', true);
+select set_config('request.jwt.claims', '{"sub":"44444444-4444-4444-8444-444444444444","role":"authenticated"}', true);
+
+do $$
+declare
+  rejected boolean := false;
+begin
+  begin
+    perform public.accept_support_invitation(repeat('b', 64));
+  exception
+    when others then
+      if sqlerrm = 'athlete network access is blocked' then
+        rejected := true;
+      else
+        raise;
+      end if;
+  end;
+
+  if not rejected then
+    raise exception 'minor support invitation succeeded without guardian confirmation';
+  end if;
+end;
+$$;
+
+reset role;
+
+insert into public.guardian_confirmations (
+  child_user_id,
+  guardian_user_id,
+  scope,
+  confirmed_at,
+  valid_from,
+  valid_until,
+  authority_season_ends_on
+) values
+  (
+    '33333333-3333-4333-8333-333333333333',
+    '55555555-5555-4555-8555-555555555555',
+    'ACCOUNT_SYNC',
+    clock_timestamp(),
+    clock_timestamp() - interval '1 minute',
+    clock_timestamp() + interval '1 year',
+    current_date + 90
+  ),
+  (
+    '33333333-3333-4333-8333-333333333333',
+    '55555555-5555-4555-8555-555555555555',
+    'FIRST_LINK',
+    clock_timestamp(),
+    clock_timestamp() - interval '1 minute',
+    clock_timestamp() + interval '1 year',
+    current_date + 90
+  );
+
+insert into public.support_invitations (
+  athlete_id,
+  code_hash,
+  season_ends_on,
+  expires_at
+) values (
+  '33333333-3333-4333-8333-333333333333',
+  repeat('c', 64),
+  current_date + 90,
+  clock_timestamp() + interval '1 day'
+);
+
+set local role authenticated;
+select set_config('request.jwt.claim.sub', '44444444-4444-4444-8444-444444444444', true);
+select set_config('request.jwt.claims', '{"sub":"44444444-4444-4444-8444-444444444444","role":"authenticated"}', true);
+
+do $$
+begin
+  if public.accept_support_invitation(repeat('c', 64)) is null then
+    raise exception 'minor support invitation failed with valid guardian confirmation';
+  end if;
+
+  if public.first_link_guardian_requirement_met(
+    '33333333-3333-4333-8333-333333333333',
+    null,
+    current_date + 90
+  ) then
+    raise exception 'cross-account minor guardian status leaked after confirmation';
+  end if;
+end;
+$$;
+
 select set_config('request.jwt.claim.sub', '11111111-1111-4111-8111-111111111111', true);
 select set_config('request.jwt.claims', '{"sub":"11111111-1111-4111-8111-111111111111","role":"authenticated"}', true);
 
@@ -185,4 +304,4 @@ $$;
 rollback;
 
 select 'PASS' as trial_rls_rehearsal,
-       'cross-account, guardian boundary, deletion, analytics, rollback' as verified_boundaries;
+       'cross-account, guardian boundary, support invitations, deletion, analytics, rollback' as verified_boundaries;
