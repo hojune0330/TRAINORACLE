@@ -1,0 +1,55 @@
+name: TrainOracle retention cleanup
+
+permissions:
+  contents: read
+
+on:
+  schedule:
+    - cron: "23 18 * * *"
+  workflow_dispatch:
+
+jobs:
+  cleanup:
+    if: ${{ vars.TRAINORACLE_SERVER_OPERATIONS_ENABLED == 'true' }}
+    runs-on: ubuntu-latest
+    env:
+      SUPABASE_URL: ${{ secrets.TRAINORACLE_SUPABASE_URL }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.TRAINORACLE_SUPABASE_SERVICE_ROLE_KEY }}
+    steps:
+      - name: Verify server operations configuration
+        shell: bash
+        run: |
+          test -n "$SUPABASE_URL"
+          test -n "$SUPABASE_SERVICE_ROLE_KEY"
+
+      - name: Run service-only retention cleanup
+        id: cleanup
+        shell: bash
+        run: |
+          RESPONSE="$(curl --fail-with-body --silent --show-error \
+            --request POST \
+            --header "apikey: $SUPABASE_SERVICE_ROLE_KEY" \
+            --header "Authorization: Bearer $SUPABASE_SERVICE_ROLE_KEY" \
+            --header "Content-Type: application/json" \
+            --header "x-trainoracle-workflow-run-id: $GITHUB_RUN_ID" \
+            --data '{}' \
+            "$SUPABASE_URL/rest/v1/rpc/purge_expired_beta_data")"
+          echo "$RESPONSE" | jq -e '
+            type == "array"
+            and length == 1
+            and (.[0].analytics_deleted | type == "number" and . >= 0 and floor == .)
+            and (.[0].accounts_deleted | type == "number" and . >= 0 and floor == .)
+          ' >/dev/null
+          echo "analytics_deleted=$(echo "$RESPONSE" | jq -r '.[0].analytics_deleted')" >> "$GITHUB_OUTPUT"
+          echo "accounts_deleted=$(echo "$RESPONSE" | jq -r '.[0].accounts_deleted')" >> "$GITHUB_OUTPUT"
+
+      - name: Write retention cleanup receipt
+        shell: bash
+        run: |
+          {
+            echo "### retention cleanup receipt"
+            echo "- workflow run: \`${GITHUB_RUN_ID}\`"
+            echo "- expired analytics deleted: \`${{ steps.cleanup.outputs.analytics_deleted }}\`"
+            echo "- due accounts deleted: \`${{ steps.cleanup.outputs.accounts_deleted }}\`"
+            echo "- server receipt: \`public.retention_cleanup_runs\`"
+          } >> "$GITHUB_STEP_SUMMARY"

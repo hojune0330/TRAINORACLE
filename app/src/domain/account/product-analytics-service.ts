@@ -35,7 +35,9 @@ export async function setProductAnalyticsConsent(
   userId: string,
   optedIn: boolean,
 ): Promise<AccountActionResult> {
-  if (!productFeatures().productAnalytics) return { ok: false, message: "사용 흐름 분석 기능이 꺼져 있어요." }
+  if (optedIn && !productFeatures().productAnalytics) {
+    return { ok: false, message: "사용 흐름 분석 기능이 꺼져 있어요." }
+  }
   const client = await supabase()
   if (client === null) return { ok: false, message: "분석 설정을 저장할 수 없어요." }
   const { data: sessionData } = await client.auth.getSession()
