@@ -25,7 +25,6 @@ export function BetaAccountSettings({
   onRequestDeletion = requestServerAccountDeletion,
 }: BetaAccountSettingsProps) {
   const [birthDate, setBirthDate] = React.useState("")
-  const [analyticsOptIn, setAnalyticsOptIn] = React.useState(false)
   const [ageMessage, setAgeMessage] = React.useState<string | null>(null)
   const [notice, setNotice] = React.useState<string | null>(null)
   const [deletionConfirming, setDeletionConfirming] = React.useState(false)
@@ -46,7 +45,7 @@ export function BetaAccountSettings({
       throw error
     }
     setBusy(true)
-    const result = await onSaveProfile({ userId, birthDate, analyticsOptIn })
+    const result = await onSaveProfile({ userId, birthDate })
     setBusy(false)
     setNotice(result.message)
   }
@@ -76,20 +75,6 @@ export function BetaAccountSettings({
       <p style={{ fontFamily: "var(--sans)", fontSize: 11.5, lineHeight: 1.6, color: "var(--ink-3)", margin: 0 }}>
         생년월일은 나이 확인에만 쓰고 코치, 분석, 포인트에는 보내지 않아요.
       </p>
-      <label style={{ display: "flex", alignItems: "flex-start", gap: 10, minHeight: 44 }}>
-        <input
-          type="checkbox"
-          aria-label="익명 사용 흐름 분석에 참여"
-          checked={analyticsOptIn}
-          onChange={(event) => setAnalyticsOptIn(event.target.checked)}
-          style={{ width: 20, height: 20, marginTop: 2 }}
-        />
-        <span style={{ fontFamily: "var(--sans)", fontSize: 13, lineHeight: 1.5 }}>
-          익명 사용 흐름 분석에 참여
-          <br />
-          <small style={{ color: "var(--ink-3)" }}>거절해도 모든 기본 기능을 쓸 수 있어요. 메모와 훈련 내용은 보내지 않아요.</small>
-        </span>
-      </label>
       <button type="button" style={primaryBtn} disabled={busy || birthDate === ""} onClick={() => void save()}>
         계정 정보 저장
       </button>

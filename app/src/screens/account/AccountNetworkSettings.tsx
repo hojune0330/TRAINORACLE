@@ -2,6 +2,7 @@ import { BetaAccountSettings } from "./BetaAccountSettings"
 import { CoachSupportPanel } from "./CoachSupportPanel"
 import { PrivateMemoVault } from "./PrivateMemoVault"
 import { GuardianConfirmationPanel } from "./GuardianConfirmationPanel"
+import { ProductAnalyticsConsentPanel } from "./ProductAnalyticsConsentPanel"
 import { productFeatures } from "../../domain/product-features"
 
 export function AccountNetworkSettings({ userId, today }: {
@@ -12,6 +13,7 @@ export function AccountNetworkSettings({ userId, today }: {
   return (
     <>
       <BetaAccountSettings userId={userId} today={today} />
+      {features.productAnalytics && <ProductAnalyticsConsentPanel userId={userId} />}
       {(features.sync || features.sharing) && <GuardianConfirmationPanel userId={userId} />}
       {features.sync && <PrivateMemoVault />}
       {features.sharing && <CoachSupportPanel userId={userId} today={today} />}

@@ -18,6 +18,10 @@ const analyticsActionMigration = readFileSync(
   join(process.cwd(), "..", "supabase", "migrations", "0010_product_analytics_actions.sql"),
   "utf8",
 )
+const analyticsConsentMigration = readFileSync(
+  join(process.cwd(), "..", "supabase", "migrations", "0011_product_analytics_consent.sql"),
+  "utf8",
+)
 
 describe("beta account database boundaries", () => {
   it("separates birth dates, private ciphertext, relationships, proposals, and analytics", () => {
@@ -79,5 +83,20 @@ describe("beta account database boundaries", () => {
     expect(retentionMigration).toContain("revoke all on function public.purge_expired_beta_data() from public")
     expect(retentionMigration).toContain("grant execute on function public.purge_expired_beta_data() to service_role")
     expect(retentionMigration).not.toContain("grant execute on function public.purge_expired_beta_data() to authenticated")
+  })
+
+  it("changes analytics consent through a separate authenticated action", () => {
+    expect(analyticsConsentMigration).toContain("set_product_analytics_consent")
+    expect(analyticsConsentMigration).toContain("analytics_opt_in = enabled_input")
+    expect(analyticsConsentMigration).toContain("clock_timestamp()")
+    expect(analyticsConsentMigration).toContain("delete from public.product_analytics_events")
+    expect(analyticsConsentMigration).toContain("user_id = auth.uid()")
+    expect(analyticsConsentMigration).toContain("for update")
+    expect(analyticsConsentMigration).toContain("revoke insert on table public.user_private_profiles from authenticated")
+    expect(analyticsConsentMigration).toContain("grant insert (user_id, birth_date) on table public.user_private_profiles to authenticated")
+    expect(analyticsConsentMigration).toContain("revoke update on table public.user_private_profiles from authenticated")
+    expect(analyticsConsentMigration).toContain("grant update (birth_date) on table public.user_private_profiles to authenticated")
+    expect(analyticsConsentMigration).toContain("revoke all on function public.set_product_analytics_consent(boolean) from public")
+    expect(analyticsConsentMigration).toContain("grant execute on function public.set_product_analytics_consent(boolean) to authenticated")
   })
 })
