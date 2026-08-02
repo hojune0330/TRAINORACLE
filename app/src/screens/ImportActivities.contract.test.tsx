@@ -11,9 +11,13 @@ import { cleanup, render, screen, waitFor } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { ImportActivities } from "./ImportActivities"
+import { SavedStage } from "./import-activities/ImportStages"
 import { loadAnalysisEntries, loadEntries } from "../domain/journal-store"
 
-afterEach(cleanup)
+afterEach(() => {
+  cleanup()
+  vi.unstubAllGlobals()
+})
 
 const JOURNAL_KEY = "trainoracle.journal.v1"
 
@@ -98,6 +102,45 @@ describe("ImportActivities — 고르기 단계", () => {
     // Then
     await waitFor(() => expect(screen.getByTestId("import-failure")).toBeVisible())
     expect(screen.getByTestId("import-failure")).toHaveTextContent(/기존 일지는 그대로 있어요/u)
+    expect(window.localStorage.getItem(JOURNAL_KEY)).toBeNull()
+  })
+
+  it("큰 파일은 내용을 읽기 전에 거절하고 같은 파일을 다시 고를 수 있게 한다", async () => {
+    const user = userEvent.setup()
+    render(<ImportActivities />)
+    const file = upload("small body", "oversized.tcx")
+    Object.defineProperty(file, "size", { value: 50 * 1024 * 1024 })
+    const read = vi.spyOn(file, "text")
+
+    await pickFile(user, file)
+
+    expect(await screen.findByTestId("import-failure")).toHaveTextContent(/파일이 너무 커요/u)
+    expect(read).not.toHaveBeenCalled()
+    expect(screen.getByLabelText(/내보낸 활동 파일/u)).toHaveValue("")
+  })
+
+  it("파일을 읽는 중 취소하면 일지를 건드리지 않는다", async () => {
+    class HangingFileReader {
+      result: string | ArrayBuffer | null = null
+      error: DOMException | null = null
+      onload: ((event: ProgressEvent) => void) | null = null
+      onerror: ((event: ProgressEvent) => void) | null = null
+      onabort: ((event: ProgressEvent) => void) | null = null
+
+      readAsText(): void {}
+
+      abort(): void {
+        this.onabort?.(new ProgressEvent("abort"))
+      }
+    }
+    vi.stubGlobal("FileReader", HangingFileReader)
+    const user = userEvent.setup()
+    render(<ImportActivities />)
+
+    await pickFile(user, upload(tcxFile([tcxLap("2026-07-20T06:00:00Z", 10000, 3000)])))
+    await user.click(await screen.findByRole("button", { name: "가져오기 취소" }))
+
+    expect(await screen.findByTestId("import-failure")).toHaveTextContent(/취소했어요/u)
     expect(window.localStorage.getItem(JOURNAL_KEY)).toBeNull()
   })
 })
@@ -223,5 +266,19 @@ describe("ImportActivities — 저장", () => {
     const entry = loadEntries()[0]
     expect(entry?.kind).toBe("post-session")
     expect(entry?.fieldProvenance?.rpe?.provenance).toBe("MISSING")
+  })
+
+  it("한 건도 저장하지 못하면 완료라고 말하지 않는다", () => {
+    render(<SavedStage outcome={{ saved: 0, failed: 2, total: 2 }} onRestart={() => undefined} />)
+
+    expect(screen.getByTestId("import-saved")).toHaveTextContent("가져오기 실패")
+    expect(screen.getByTestId("import-saved")).not.toHaveTextContent("가져오기 완료")
+  })
+
+  it("일부만 저장되면 일부 완료라고 말한다", () => {
+    render(<SavedStage outcome={{ saved: 1, failed: 1, total: 2 }} onRestart={() => undefined} />)
+
+    expect(screen.getByTestId("import-saved")).toHaveTextContent("일부 완료")
+    expect(screen.getByTestId("import-saved")).toHaveTextContent("1건을 일지에 저장했어요")
   })
 })

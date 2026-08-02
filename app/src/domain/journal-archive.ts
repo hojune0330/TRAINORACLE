@@ -8,6 +8,7 @@ import type { JournalEntry } from "./journal-schema"
 import { eligibleMetricValue } from "./trend-analysis"
 import type {
   ArchiveDaySummary,
+  ArchiveEntryShell,
   ArchiveKindCounts,
   ArchiveMonthSummary,
   ArchiveWeekSummary,
@@ -16,6 +17,7 @@ import type {
 
 export type {
   ArchiveDaySummary,
+  ArchiveEntryShell,
   ArchiveKindCounts,
   ArchiveMetrics,
   ArchiveMonthSummary,
@@ -43,6 +45,7 @@ type MutableSummary = {
 type DayGroup = {
   readonly date: string
   readonly summary: MutableSummary
+  readonly entryShells: ArchiveEntryShell[]
 }
 
 type WeekGroup = {
@@ -115,32 +118,6 @@ function hasSummaryCandidate(entry: JournalEntry): boolean {
   return false
 }
 
-function hasNonPrivateArchiveSignal(entry: JournalEntry): boolean {
-  switch (entry.kind) {
-    case "post-session":
-      return selectStructuredJournalInput(entry) !== null
-        || entry.intensityAssessment !== undefined
-    case "evening":
-      return selectStructuredJournalInput(entry) !== null
-        || entry.sleepH > 0
-        || entry.sleepQuality > 0
-        || entry.weightKg.trim() !== ""
-        || entry.restingHr.trim() !== ""
-    case "race":
-      return entry.record.trim() !== ""
-        || entry.rank.trim() !== ""
-        || entry.result.trim() !== ""
-        || entry.tension !== undefined
-        || entry.condition !== undefined
-        || entry.mood !== undefined
-        || entry.goalPace !== undefined
-    default: {
-      const exhaustive: never = entry
-      return exhaustive
-    }
-  }
-}
-
 function addToSummary(
   summary: MutableSummary,
   entry: JournalEntry,
@@ -193,7 +170,11 @@ function finishBase(summary: MutableSummary) {
 }
 
 function finishDay(group: DayGroup): ArchiveDaySummary {
-  return { date: group.date, ...finishBase(group.summary) }
+  return {
+    date: group.date,
+    entryShells: [...group.entryShells],
+    ...finishBase(group.summary),
+  }
 }
 
 function finishWeek(group: WeekGroup): ArchiveWeekSummary {
@@ -223,7 +204,7 @@ export function projectJournalArchive(
   const months = new Map<string, MonthGroup>()
 
   for (const entry of entries) {
-    if (!isValidIsoDate(entry.date) || !hasNonPrivateArchiveSignal(entry)) continue
+    if (!isValidIsoDate(entry.date)) continue
     const monthKey = entry.date.slice(0, 7)
     const weekKey = weekStartOf(entry.date)
     const month = months.get(monthKey) ?? {
@@ -241,8 +222,10 @@ export function projectJournalArchive(
     const day = week.days.get(entry.date) ?? {
       date: entry.date,
       summary: newSummary(),
+      entryShells: [],
     }
     if (!week.days.has(entry.date)) week.days.set(entry.date, day)
+    day.entryShells.push({ id: entry.id, date: entry.date, kind: entry.kind })
 
     const values = eligibleValues(entry)
     const hasEligibleValue = Object.values(values).some((value) => value !== null)

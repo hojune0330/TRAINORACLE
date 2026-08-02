@@ -211,7 +211,7 @@ export function Account({ onBack, onOpenImport, onOpenRestore }: {
         </div>
       )}
 
-      {!loading && <EraseLocalData />}
+      {!loading && <EraseLocalData onOpenRestore={onOpenRestore} />}
     </div>
   )
 }

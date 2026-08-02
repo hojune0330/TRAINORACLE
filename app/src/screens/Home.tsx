@@ -14,7 +14,7 @@ import { TrashBin } from "./home/TrashBin"
 import { EngagementStrip } from "./home/EngagementStrip"
 import { EmptyJournalHome, FirstPage } from "./home/FirstPage"
 import type { JournalEntryType } from "./log-entry/shared"
-import { engagementSummary } from "../domain/engagement"
+import { engagementSummary, toEngagementJournalRef } from "../domain/engagement"
 import { DailyContextTags } from "./home/DailyContextTags"
 import { WeekCell } from "./home/WeekCell"
 
@@ -59,7 +59,10 @@ export function Home({
   const life = lifetimeStats(analysisEntries)
   const isEmpty = all.length === 0
   const engagement = engagementSummary(
-    all.map((entry) => ({ date: entry.date, kind: entry.kind })),
+    all.flatMap((entry) => {
+      const ref = toEngagementJournalRef(entry)
+      return ref === null ? [] : [ref]
+    }),
     today,
   )
 

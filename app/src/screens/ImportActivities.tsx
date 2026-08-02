@@ -6,6 +6,7 @@ import type { ImportDraft, ImportFormat, ImportSaveResult } from "../domain/impo
 import { PickStage, ReviewStage, SavedStage } from "./import-activities/ImportStages"
 import type { ReadFailure } from "./import-activities/ImportStages"
 import { mono, secondaryBtn } from "./import-activities/styles"
+import { ActivityFileReadError, MAX_IMPORT_FILE_BYTES, readActivityFileText } from "./import-activities/read-file"
 
 type Stage =
   | { readonly step: "pick" }
@@ -21,18 +22,33 @@ export function ImportActivities({ onBack, onOpenLog }: {
   const [selected, setSelected] = React.useState<ReadonlySet<number>>(new Set())
   const [busy, setBusy] = React.useState(false)
   const fileInputRef = React.useRef<HTMLInputElement>(null)
+  const readControllerRef = React.useRef<AbortController | null>(null)
+
+  React.useEffect(() => () => readControllerRef.current?.abort(), [])
 
   const handleFile = async (file: File) => {
     setBusy(true)
     setFailure(null)
-    let text: string
-    try {
-      text = await file.text()
-    } catch {
+    if (file.size > MAX_IMPORT_FILE_BYTES) {
       setBusy(false)
-      setFailure("unreadable")
+      setFailure("too-large")
       return
     }
+
+    readControllerRef.current?.abort()
+    const controller = new AbortController()
+    readControllerRef.current = controller
+    let text: string
+    try {
+      text = await readActivityFileText(file, controller.signal)
+    } catch (error) {
+      if (readControllerRef.current === controller) readControllerRef.current = null
+      if (!(error instanceof ActivityFileReadError)) throw error
+      setBusy(false)
+      setFailure(error.kind)
+      return
+    }
+    if (readControllerRef.current === controller) readControllerRef.current = null
 
     const result = parseActivityFile(text)
     setBusy(false)
@@ -48,6 +64,13 @@ export function ImportActivities({ onBack, onOpenLog }: {
       drafts.flatMap((draft, index) => (draft.duplicateOf === null ? [index] : [])),
     ))
     setStage({ step: "review", drafts, result })
+  }
+
+  const cancelRead = () => {
+    readControllerRef.current?.abort()
+    readControllerRef.current = null
+    setBusy(false)
+    setFailure("cancelled")
   }
 
   const toggle = (index: number) => {
@@ -96,6 +119,7 @@ export function ImportActivities({ onBack, onOpenLog }: {
           failure={failure}
           fileInputRef={fileInputRef}
           onFile={handleFile}
+          onCancel={cancelRead}
         />
       )}
 

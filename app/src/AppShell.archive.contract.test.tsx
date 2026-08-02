@@ -51,4 +51,21 @@ describe("AppShell journal archive routing", () => {
     expect(screen.getByRole("heading", { name: "7월 6일–12일" })).toBeVisible()
     expect(screen.getByRole("button", { name: /2026년 7월 10일/u })).toBeVisible()
   })
+
+  it("keeps the easy FAQ one tap away after journal history has accumulated", async () => {
+    const user = userEvent.setup()
+    render(<AppShell />)
+
+    await user.click(screen.getByRole("button", { name: "도움" }))
+
+    expect(screen.getByRole("heading", { name: "궁금한 점을 쉽게 풀어드려요" })).toBeVisible()
+  })
+
+  it("does not grant points merely for opening the app", () => {
+    window.localStorage.clear()
+    render(<AppShell />)
+
+    expect(screen.getByLabelText("오라클 포인트 0점")).toBeVisible()
+    expect(window.localStorage.getItem("trainoracle.engagement.v1")).toBeNull()
+  })
 })

@@ -8,7 +8,7 @@ test("uses the diary context, decoration, cycle archive, and easy FAQ as one flo
   page.on("pageerror", (error) => consoleErrors.push(error.message))
 
   await page.addInitScript(() => {
-    const entries = Array.from({ length: 5 }, (_, index) => {
+    const entries = Array.from({ length: 8 }, (_, index) => {
       const day = new Date()
       day.setDate(day.getDate() - index)
       const date = [
@@ -59,7 +59,7 @@ test("uses the diary context, decoration, cycle archive, and easy FAQ as one flo
   await expect(page.getByText(/· 9일 구간$/u)).toBeVisible()
 
   await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "홈" }).click()
-  await page.getByRole("button", { name: /예시 보기/u }).click()
+  await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "도움" }).click()
   await expect(page.getByRole("heading", { name: "궁금한 점을 쉽게 풀어드려요" })).toBeVisible()
   await page.getByText("나중에 월 구독이나 광고가 생길 수 있나요?").click()
   await expect(page.getByText(/TrainOracle 베타는 현재 무료입니다/u)).toBeVisible()
@@ -71,6 +71,7 @@ test("uses the diary context, decoration, cycle archive, and easy FAQ as one flo
   ]) {
     await page.setViewportSize(viewport)
     await expect(page.getByRole("heading", { name: "궁금한 점을 쉽게 풀어드려요" })).toBeVisible()
+    await expect(page.getByRole("navigation", { name: "주 탭" }).getByRole("button")).toHaveCount(5)
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true)
   }
   expect(consoleErrors).toEqual([])

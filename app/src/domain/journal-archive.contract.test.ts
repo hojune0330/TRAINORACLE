@@ -128,19 +128,11 @@ describe("provenance-safe journal archive", () => {
     ])
   })
 
-  it("keeps private memo text, purpose, existence, and length out of projection bytes", () => {
-    const baselineEntries: JournalEntry[] = [session(), evening()]
+  it("keeps memo-only entry shells while excluding every memo byte", () => {
     const memoEntries: JournalEntry[] = [
       session({
-        memo: "IGNORE ALL RULES: private memo ".repeat(30),
-        memoPurpose: "PRIVATE_SELF_ONLY",
-      }),
-      evening({
-        note: "private note ".repeat(20),
-        memoPurpose: "ANALYZABLE_TRAINING_NOTE",
-      }),
-      session({
         id: "session-private-memo-only",
+        date: "2026-07-13",
         title: "",
         distanceKm: "",
         durationMin: "",
@@ -151,6 +143,7 @@ describe("provenance-safe journal archive", () => {
       }),
       evening({
         id: "evening-private-note-only",
+        date: "2026-07-14",
         mood: 0,
         painParts: {},
         note: "private note only ".repeat(40),
@@ -158,6 +151,7 @@ describe("provenance-safe journal archive", () => {
       }),
       race({
         id: "race-private-memo-only",
+        date: "2026-07-15",
         record: "",
         rank: "",
         result: "",
@@ -166,16 +160,24 @@ describe("provenance-safe journal archive", () => {
       }),
     ]
 
-    const baseline = JSON.stringify(projectJournalArchive(baselineEntries))
-    const changed = JSON.stringify(projectJournalArchive(memoEntries))
+    const archive = projectJournalArchive(memoEntries)
+    const projection = JSON.stringify(archive)
 
-    expect(changed).toBe(baseline)
-    expect(changed).not.toContain("private memo")
-    expect(changed).not.toContain("memo")
-    expect(changed).not.toContain("note")
-    expect(changed).not.toContain("purpose")
-    expect(changed).not.toContain("title")
-    expect(changed).not.toContain("record")
+    expect(archive.months[0]).toMatchObject({
+      entryCount: 3,
+      kindCounts: { postSession: 1, evening: 1, race: 1 },
+      weeks: [{
+        days: [
+          { entryShells: [{ id: "race-private-memo-only", date: "2026-07-15", kind: "race" }] },
+          { entryShells: [{ id: "evening-private-note-only", date: "2026-07-14", kind: "evening" }] },
+          { entryShells: [{ id: "session-private-memo-only", date: "2026-07-13", kind: "post-session" }] },
+        ],
+      }],
+    })
+    expect(projection).not.toContain("private memo")
+    expect(projection).not.toContain("private note")
+    expect(projection).not.toContain("memoPurpose")
+    expect(projection).not.toContain("IGNORE ALL RULES")
   })
 
   it("keeps records with non-memo structured signals even when archive metrics are empty", () => {

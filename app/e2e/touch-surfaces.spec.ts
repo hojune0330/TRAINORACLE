@@ -19,7 +19,7 @@ test("audits empty home and chooser touch actions", async ({ page }, testInfo) =
     { name: "empty-home.plan", locator: page.getByRole("button", { name: /훈련계획 후보 만들기/u }), heightOnly: true },
     { name: "empty-home.first-entry", locator: page.getByRole("button", { name: /첫 일지 쓰기/u }), heightOnly: true },
     { name: "empty-home.other-start", locator: page.getByRole("button", { name: /다른 시작 방법 보기/u }), heightOnly: true },
-    { name: "empty-home.tabs", locator: page.getByRole("navigation", { name: "주 탭" }).getByRole("button"), count: 4 },
+    { name: "empty-home.tabs", locator: page.getByRole("navigation", { name: "주 탭" }).getByRole("button"), count: 5 },
   ])
   await expectNoHorizontalOverflow(page)
   await page.getByRole("button", { name: /첫 일지 쓰기/u }).click()
@@ -42,7 +42,7 @@ test("audits populated home, detail, and trends actions", async ({ page }, testI
     { name: "populated-home.export", locator: page.getByRole("button", { name: /내 일지 데이터 내려받기/u }), heightOnly: true },
     { name: "populated-home.full-export", locator: page.getByRole("button", { name: /메모 포함 파일 내보내기/u }), heightOnly: true },
     { name: "populated-home.entries", locator: entries, count: 5, heightOnly: true },
-    { name: "populated-home.tabs", locator: page.getByRole("navigation", { name: "주 탭" }).getByRole("button"), count: 4 },
+    { name: "populated-home.tabs", locator: page.getByRole("navigation", { name: "주 탭" }).getByRole("button"), count: 5 },
   ])
   await page.getByRole("button", { name: /메모 포함 파일 내보내기/u }).click()
   await auditTouchTargets(page, [
