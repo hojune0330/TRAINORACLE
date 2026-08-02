@@ -3,120 +3,31 @@
 // 안전 원칙:
 //  - 로그인해도 자동 업로드 없음. 사용자가 "동기화 켜기"를 눌러야 시작(옵트인).
 //  - 업로드 기본 페이로드는 safe-export 투영(메모/노트 원문 제거).
-//    "메모도 함께 백업"을 켠 경우에만 원문 포함 — 기본 OFF.
+//    훈련 메모 공유를 켜고 용도가 훈련 메모인 경우에만 그 원문을 포함한다.
 //  - 병합 결과는 스키마 파싱을 통과한 항목만 기록(fail-closed).
 //  - 어떤 실패에서도 로컬 데이터는 손실되지 않는다.
 import { parseJournalEntryList } from "../journal-schema"
 import type { JournalEntry } from "../journal-schema"
 import { loadEntries, replaceAllEntries } from "../journal-store"
-import { toExportJournalEntry } from "../safe-export"
 import { supabase } from "./supabase-client"
+import { loadSessionRecoveryCode } from "./private-note-sync"
+import { pullPrivateJournalEntries, pushPrivateJournalEntries } from "./private-note-remote"
+import {
+  claimSyncBinding,
+  loadSyncConsent,
+  mergeEntries,
+  toUploadPayload,
+} from "./sync-local"
 import { loadTombstones, mergeTombstones, saveTombstones, tombstonedIds } from "./tombstone"
 import type { Tombstone } from "./tombstone"
 
-const CONSENT_KEY = "trainoracle.sync.consent.v1"
-const OWNER_KEY = "trainoracle.sync.owner.v1"
 const TABLE = "journal_entries"
 const TOMBSTONE_TABLE = "journal_tombstones"
 
-export type SyncConsent = {
-  readonly enabled: boolean
-  /** 메모/노트 원문 포함 여부 — 기본 false (안전 기본값) */
-  readonly includeMemos: boolean
-}
+export { loadSyncConsent, mergeEntries, saveSyncConsent, toUploadPayload } from "./sync-local"
+export type { SyncConsent } from "./sync-local"
 
-const DEFAULT_CONSENT: SyncConsent = { enabled: false, includeMemos: false }
-
-function storage(): Storage | null {
-  try {
-    if (typeof window === "undefined") return null
-    return window.localStorage
-  } catch {
-    return null
-  }
-}
-
-export function loadSyncConsent(): SyncConsent {
-  const localStorage = storage()
-  if (localStorage === null) return DEFAULT_CONSENT
-  try {
-    const raw = localStorage.getItem(CONSENT_KEY)
-    if (raw === null) return DEFAULT_CONSENT
-    const parsed: unknown = JSON.parse(raw)
-    if (typeof parsed !== "object" || parsed === null) return DEFAULT_CONSENT
-    const record = parsed as Record<string, unknown>
-    return {
-      enabled: record.enabled === true,
-      includeMemos: record.includeMemos === true,
-    }
-  } catch {
-    return DEFAULT_CONSENT
-  }
-}
-
-export function saveSyncConsent(consent: SyncConsent): boolean {
-  const localStorage = storage()
-  if (localStorage === null) return false
-  try {
-    localStorage.setItem(CONSENT_KEY, JSON.stringify(consent))
-    return true
-  } catch {
-    return false
-  }
-}
-
-function claimSyncOwner(userId: string): boolean {
-  if (userId === "") return false
-  const localStorage = storage()
-  if (localStorage === null) return false
-  try {
-    const owner = localStorage.getItem(OWNER_KEY)
-    if (owner !== null) return owner === userId
-    localStorage.setItem(OWNER_KEY, userId)
-    return localStorage.getItem(OWNER_KEY) === userId
-  } catch {
-    return false
-  }
-}
-
-/**
- * id 기준 LWW 머지 (순수 함수 — 계약 테스트 대상).
- * 같은 id: savedAt 큰 쪽 승리, 동률이면 local 승리.
- * 한쪽에만 있으면 보존. 결과는 date, savedAt 순 정렬.
- *
- * **삭제는 LWW의 예외다.** 사용자가 지운 id(tombstone)는 서버 사본이 더
- * 최신이어도 되살리지 않는다. 그렇게 하지 않으면 지운 일지가 다음 동기화에
- * 말없이 돌아온다 — 삭제권 위반. 되살리고 싶으면 새로 쓰면 된다(새 id).
- */
-export function mergeEntries(
-  local: readonly JournalEntry[],
-  remote: readonly JournalEntry[],
-  deletedIds: ReadonlySet<string> = tombstonedIds(),
-): JournalEntry[] {
-  const byId = new Map<string, JournalEntry>()
-  for (const entry of remote) byId.set(entry.id, entry)
-  for (const entry of local) {
-    const existing = byId.get(entry.id)
-    if (existing === undefined || entry.savedAt >= existing.savedAt) {
-      byId.set(entry.id, entry)
-    }
-  }
-  for (const id of deletedIds) byId.delete(id)
-  return [...byId.values()].sort((a, b) =>
-    a.date === b.date ? a.savedAt.localeCompare(b.savedAt) : a.date.localeCompare(b.date),
-  )
-}
-
-/** 업로드 페이로드 생성 — 동의 설정에 따라 메모 제거/포함 */
-export function toUploadPayload(
-  entry: JournalEntry,
-  consent: SyncConsent,
-): Record<string, unknown> | null {
-  if (consent.includeMemos) return { ...entry }
-  const safe = toExportJournalEntry(entry)
-  if (safe === null) return null
-  return { ...safe }
-}
+export type SyncFailureCode = "NO_AUTH_SESSION" | "SESSION_TARGET_MISMATCH"
 
 export type SyncOutcome = {
   readonly ok: boolean
@@ -126,12 +37,75 @@ export type SyncOutcome = {
   /** 서버에서도 지운 개수 — 삭제가 기기 사이에 전파되었는지 보여준다 */
   readonly deleted: number
   readonly total: number
+  readonly failureCode?: SyncFailureCode
 }
 
-function failed(message: string): SyncOutcome {
+export type SyncPreviewOutcome = {
+  readonly ok: boolean
+  readonly message: string
+  readonly localCount: number
+  readonly remoteJournalCount: number
+  readonly remotePrivateCount: number
+  readonly failureCode?: SyncFailureCode
+}
+
+async function sessionFailureCode(client: Awaited<ReturnType<typeof supabase>>, userId: string): Promise<SyncFailureCode | null> {
+  if (client === null) return "NO_AUTH_SESSION"
+  const { data, error } = await client.auth.getSession()
+  if (error !== null || data.session === null) return "NO_AUTH_SESSION"
+  return userId === "" || data.session.user.id !== userId ? "SESSION_TARGET_MISMATCH" : null
+}
+
+export async function previewSync(userId: string): Promise<SyncPreviewOutcome> {
+  const localCount = loadEntries().length
+  const client = await supabase()
+  if (client === null) {
+    return { ok: false, message: "계정 기능이 꺼져 있어요.", localCount, remoteJournalCount: 0, remotePrivateCount: 0 }
+  }
+  const failureCode = await sessionFailureCode(client, userId)
+  if (failureCode !== null) {
+    return { ok: false, message: "Sync requires the matching signed-in account.", localCount, remoteJournalCount: 0, remotePrivateCount: 0, failureCode }
+  }
+  const previewConsent = loadSyncConsent()
+  if (!previewConsent.enabled) {
+    return { ok: false, message: "동기화를 먼저 켜 주세요.", localCount, remoteJournalCount: 0, remotePrivateCount: 0 }
+  }
+  if (!claimSyncBinding(userId)) {
+    return {
+      ok: false,
+      message: "이 기기의 일지는 다른 계정과 연결되어 있어요.",
+      localCount,
+      remoteJournalCount: 0,
+      remotePrivateCount: 0,
+    }
+  }
+  const [journalResult, privateResult] = await Promise.all([
+    client.from(TABLE).select("entry_id").eq("user_id", userId),
+    client.from("encrypted_private_notes").select("entry_id").eq("user_id", userId),
+  ])
+  if (journalResult.error || privateResult.error) {
+    return {
+      ok: false,
+      message: "계정의 일지 개수를 확인하지 못했어요. 이 기기의 일지는 그대로예요.",
+      localCount,
+      remoteJournalCount: 0,
+      remotePrivateCount: 0,
+    }
+  }
+  return {
+    ok: true,
+    message: "합칠 내용을 확인했어요.",
+    localCount,
+    remoteJournalCount: journalResult.data?.length ?? 0,
+    remotePrivateCount: privateResult.data?.length ?? 0,
+  }
+}
+
+function failed(message: string, failureCode?: SyncFailureCode): SyncOutcome {
   return {
     ok: false, message, pulled: 0, pushed: 0, deleted: 0,
     total: loadEntries().length,
+    failureCode,
   }
 }
 
@@ -139,9 +113,13 @@ function failed(message: string): SyncOutcome {
 export async function syncNow(userId: string): Promise<SyncOutcome> {
   const client = await supabase()
   if (client === null) return failed("계정 기능이 꺼져 있어요.")
+  const failureCode = await sessionFailureCode(client, userId)
+  if (failureCode !== null) {
+    return failed("Sync requires the matching signed-in account.", failureCode)
+  }
   const consent = loadSyncConsent()
   if (!consent.enabled) return failed("동기화가 꺼져 있어요. 먼저 동기화를 켜 주세요.")
-  if (!claimSyncOwner(userId)) {
+  if (!claimSyncBinding(userId)) {
     // 막는 이유는 옳다(다른 사람 계정으로 이 기기의 일지가 올라가면 안 된다).
     // 다만 **빠져나갈 길을 함께 알려야 한다.** 이 잠금은 기기를 넘겨받은
     // 사람에게도 걸리고, 그 사람에게는 "안 된다"만 남는다. 잠금을 푸는
@@ -161,6 +139,10 @@ export async function syncNow(userId: string): Promise<SyncOutcome> {
 
   const remoteRaw = (data ?? []).map((row: { entry: unknown }) => row.entry)
   const remote = parseJournalEntryList(remoteRaw)
+
+  const recoveryCode = loadSessionRecoveryCode()
+  const privatePull = await pullPrivateJournalEntries(client, userId, recoveryCode)
+  if (!privatePull.ok) return failed(privatePull.message)
 
   const { data: tombstoneRows, error: tombstonePullError } = await client
     .from(TOMBSTONE_TABLE)
@@ -183,7 +165,7 @@ export async function syncNow(userId: string): Promise<SyncOutcome> {
     return failed("삭제 기록을 이 기기에 저장하지 못해 동기화를 멈췄어요. 로컬 일지는 그대로예요.")
   }
   const deletedIds = tombstonedIds(tombstones)
-  const merged = mergeEntries(local, remote, deletedIds)
+  const merged = mergeEntries(local, [...remote, ...privatePull.entries], deletedIds)
 
   // 3. 로컬 반영 — 실패해도 기존 로컬은 그대로 남는다
   const replaced = replaceAllEntries(merged)
@@ -231,6 +213,25 @@ export async function syncNow(userId: string): Promise<SyncOutcome> {
         deleted: 0,
         total: merged.length,
       }
+    }
+  }
+
+  const privatePush = await pushPrivateJournalEntries(
+    client,
+    userId,
+    merged,
+    recoveryCode,
+    privatePull.remoteEntryIds,
+    deletedIds,
+  )
+  if (!privatePush.ok) {
+    return {
+      ok: false,
+      message: privatePush.message,
+      pulled: remote.length,
+      pushed: rows.length,
+      deleted: 0,
+      total: merged.length,
     }
   }
 

@@ -30,7 +30,7 @@ describe("past journal revisit forms", () => {
       painParts: { calf: 2 },
       mood: 4,
       note: "몸이 가벼웠다",
-      memoPurpose: "PRIVATE_SELF_ONLY",
+      memoPurpose: "ANALYZABLE_TRAINING_NOTE",
     } satisfies JournalEntry
     expect(replaceAllEntries([entry]).ok).toBe(true)
     render(<LogEntry entryType="evening" initialEntry={entry} />)

@@ -88,6 +88,15 @@ const GPX_TRACK = `<?xml version="1.0" encoding="UTF-8"?>
   </trk>
 </gpx>`
 
+const CSV_ACTIVITIES = `date,name,sport,distanceKm,durationMin
+2026-07-25,템포 러닝,running,8,36
+2026-07-26,회복 조깅,running,5,`
+
+const JSON_ACTIVITIES = JSON.stringify([
+  { date: "2026-07-27", name: "언덕 반복", sport: "running", distanceKm: 6, durationMin: 42 },
+  { date: "bad-date", name: "날짜 오류", sport: "running", distanceKm: 5, durationMin: 30 },
+])
+
 describe("activity file parser", () => {
   it("TCX 한 랩의 거리·시간을 읽고 평균 페이스를 파생한다", () => {
     const result = parseActivityFile(TCX_ONE_LAP)
@@ -145,6 +154,46 @@ describe("activity file parser", () => {
     expect(activity?.durationMin).toBe("10")
     // 위도 0.018° ≈ 2.0km — 반올림 오차 범위로만 검증한다
     expect(Number.parseFloat(activity?.distanceKm ?? "0")).toBeCloseTo(2.0, 1)
+  })
+
+  it("CSV 활동을 미리보기용 구조화 기록으로 읽는다", () => {
+    const result = parseActivityFile(CSV_ACTIVITIES)
+
+    expect(result.format).toBe("csv")
+    expect(result.skipped).toBe(0)
+    expect(result.activities).toEqual([
+      {
+        date: "2026-07-25",
+        name: "템포 러닝",
+        sport: "running",
+        distanceKm: "8.00",
+        durationMin: "36",
+        avgPace: "4:30",
+      },
+      {
+        date: "2026-07-26",
+        name: "회복 조깅",
+        sport: "running",
+        distanceKm: "5.00",
+        durationMin: "",
+        avgPace: "",
+      },
+    ])
+  })
+
+  it("JSON 활동은 잘못된 행을 제외하고 개수를 알린다", () => {
+    const result = parseActivityFile(JSON_ACTIVITIES)
+
+    expect(result.format).toBe("json")
+    expect(result.skipped).toBe(1)
+    expect(result.activities).toEqual([{
+      date: "2026-07-27",
+      name: "언덕 반복",
+      sport: "running",
+      distanceKm: "6.00",
+      durationMin: "42",
+      avgPace: "7:00",
+    }])
   })
 
   it("형식을 알 수 없거나 깨진 파일은 빈 결과를 돌려준다", () => {

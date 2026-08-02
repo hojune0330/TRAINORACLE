@@ -1,7 +1,14 @@
 import React from "react"
 import { SectionLb } from "../../components/JournalPrimitives"
 import { compactDate } from "../../domain/dates"
-import { exportEntriesJSON, recentEntries, safeExportSummary, todayISO } from "../../domain/journal-store"
+import {
+  exportEntriesJSON,
+  loadEntriesWithPrivateMemos,
+  PrivateMemoUnlockRequiredError,
+  recentEntries,
+  safeExportSummary,
+  todayISO,
+} from "../../domain/journal-store"
 import type { JournalEntry } from "../../domain/journal-store"
 import { hasImportedField } from "../../domain/field-provenance"
 
@@ -166,7 +173,7 @@ export function SafeJournalExport({ onOpenRestore }: {
         <FullExportDialog
           onCancel={() => setIsFullExportDialogOpen(false)}
           onConfirm={() => {
-            downloadJournalExport("OWNER_FULL_BACKUP")
+            void downloadJournalExport("OWNER_FULL_BACKUP")
             setIsFullExportDialogOpen(false)
           }}
         />
@@ -176,12 +183,13 @@ export function SafeJournalExport({ onOpenRestore }: {
 }
 
 function downloadSafeJournalExport(): void {
-  downloadJournalExport("SAFE")
+  void downloadJournalExport("SAFE")
 }
 
-function downloadJournalExport(mode: "SAFE" | "OWNER_FULL_BACKUP"): void {
+async function downloadJournalExport(mode: "SAFE" | "OWNER_FULL_BACKUP"): Promise<void> {
   try {
     const isFullBackup = mode === "OWNER_FULL_BACKUP"
+    if (isFullBackup) await loadEntriesWithPrivateMemos()
     const blob = new Blob([exportEntriesJSON({ includeRawMemos: isFullBackup })], { type: "application/json" })
     const url = URL.createObjectURL(blob)
     const anchor = document.createElement("a")
@@ -193,6 +201,10 @@ function downloadJournalExport(mode: "SAFE" | "OWNER_FULL_BACKUP"): void {
     URL.revokeObjectURL(url)
     if (window.location.search.includes("uitest")) console.log("[JEXPORT] ok=true")
   } catch (error) {
+    if (error instanceof PrivateMemoUnlockRequiredError) {
+      window.alert("나만의 메모 복구 코드를 열어야 메모 포함 파일을 만들 수 있어요.")
+      return
+    }
     if (!(error instanceof Error)) throw error
     if (window.location.search.includes("uitest")) console.log("[JEXPORT] ok=false")
     window.alert("내보내기에 실패했어요. 잠시 후 다시 시도해 주세요.")

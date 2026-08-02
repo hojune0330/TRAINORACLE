@@ -183,10 +183,10 @@ export function PlanIntake({
               key={days}
               title={`${days}일 계획${days === 9 ? " · 처음 시작할 때 권장" : ""}`}
               detail={days === 7
-                ? "이번에는 7일만 보고, 끝나면 새 계획 생성"
+                ? "짧게 시험하는 선택 · TrainOracle 기본 9.5일 틀과는 달라요"
                 : days === 9
-                  ? "TrainOracle이 첫 계획에 사용하는 기본 길이"
-                  : "같은 훈련 횟수를 더 긴 기간에 나눠 배치"}
+                  ? "9일·10일을 번갈아 쓰는 9.5일 기본 틀의 짧은 구간"
+                  : "9일·10일을 번갈아 쓰는 9.5일 기본 틀의 긴 구간"}
               selected={draft.requestedFrameLength === days}
               onClick={() => onFrame(days)}
             />

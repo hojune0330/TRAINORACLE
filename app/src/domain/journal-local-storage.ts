@@ -1,6 +1,8 @@
 import type { JournalEntry } from "./journal-schema"
+import { hasPrivateMemoText } from "./private-memo-vault"
+import { JOURNAL_STORAGE_KEY } from "./journal-storage-keys"
 
-export const JOURNAL_STORAGE_KEY = "trainoracle.journal.v1"
+export { JOURNAL_STORAGE_KEY }
 
 export function journalStorage(): Storage | null {
   try {
@@ -16,6 +18,7 @@ export function journalStorage(): Storage | null {
 }
 
 export function writeJournalEntries(localStorage: Storage, entries: readonly JournalEntry[]): boolean {
+  if (entries.some(hasPrivateMemoText)) return false
   try {
     localStorage.setItem(JOURNAL_STORAGE_KEY, JSON.stringify(entries))
     return true

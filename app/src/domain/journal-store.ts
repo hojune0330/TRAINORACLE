@@ -3,8 +3,22 @@ import type { JournalEntry } from "./journal-schema"
 import { toAnalysisJournalEntry, toExportJournalEntry } from "./safe-export"
 import type { AnalysisJournalEntry, SafeJournalEntry } from "./safe-export"
 import { recordTombstone, removeTombstone } from "./account/tombstone"
+import { hasImportedField } from "./field-provenance"
 import { moveToTrash, takeFromTrash } from "./journal-trash"
 import { JOURNAL_STORAGE_KEY, journalStorage, writeJournalEntries } from "./journal-local-storage"
+import {
+  hasPrivateMemoText,
+  isPrivateMemoEntry,
+  privateMemoRecord,
+  removePrivateMemoWithJournalEntries,
+  restorePrivateMemoRecordWithJournalShell,
+  restorePrivateMemo,
+  restorePrivateMemoShell,
+  savePrivateMemoWithJournalShell,
+} from "./private-memo-vault"
+import { loadSessionRecoveryCode } from "./account/private-note-sync"
+
+const privateMemoCache = new Map<string, { readonly recoveryCode: string; readonly memo: string }>()
 
 export type {
   EveningEntry,
@@ -19,6 +33,15 @@ export type {
 
 export type JournalExportOptions = {
   readonly includeRawMemos?: boolean
+}
+
+export class PrivateMemoUnlockRequiredError extends Error {
+  readonly code = "PRIVATE_MEMO_UNLOCK_REQUIRED"
+
+  constructor() {
+    super("PRIVATE_MEMO_UNLOCK_REQUIRED")
+    this.name = "PrivateMemoUnlockRequiredError"
+  }
 }
 
 export function loadEntries(): JournalEntry[] {
@@ -43,11 +66,76 @@ export function saveEntry(entry: unknown): { readonly ok: boolean; readonly tota
   const all = loadEntries()
   const parsedEntry = parseJournalEntryForWrite(entry)
   if (parsedEntry === null) return { ok: false, total: all.length }
+  if (hasPrivateMemoText(parsedEntry)) return { ok: false, total: all.length }
 
   all.push(parsedEntry)
   const localStorage = journalStorage()
   if (localStorage === null) return { ok: false, total: all.length }
   return { ok: writeJournalEntries(localStorage, all), total: all.length }
+}
+
+export async function savePrivateEntry(entry: unknown): Promise<{ readonly ok: boolean; readonly total: number }> {
+  const all = loadEntries()
+  const parsedEntry = parseJournalEntryForWrite(entry)
+  if (parsedEntry === null || !hasPrivateMemoText(parsedEntry)) return { ok: false, total: all.length }
+  const localStorage = journalStorage()
+  const recoveryCode = loadSessionRecoveryCode()
+  if (localStorage === null || recoveryCode === null) return { ok: false, total: all.length }
+
+  const ok = await savePrivateMemoWithJournalShell(localStorage, [...all, parsedEntry], parsedEntry, recoveryCode)
+  if (!ok) return { ok: false, total: all.length }
+  privateMemoCache.set(parsedEntry.id, { recoveryCode, memo: parsedEntry.kind === "evening" ? parsedEntry.note : parsedEntry.memo })
+  return { ok: true, total: all.length + 1 }
+}
+
+export async function updatePrivateEntry(
+  entry: unknown,
+  expectedSavedAt: string,
+): Promise<{ readonly ok: boolean; readonly total: number }> {
+  const entries = loadEntries()
+  const nextEntry = parseJournalEntryForWrite(entry)
+  if (nextEntry === null || !hasPrivateMemoText(nextEntry)) return { ok: false, total: entries.length }
+  const matchingEntries = entries.filter((current) => current.id === nextEntry.id)
+  if (matchingEntries.length !== 1) return { ok: false, total: entries.length }
+  const previous = matchingEntries[0]
+  if (previous === undefined
+    || previous.syncState !== "local"
+    || hasImportedField(previous.fieldProvenance)
+    || previous.savedAt !== expectedSavedAt
+    || previous.kind !== nextEntry.kind
+    || previous.date !== nextEntry.date
+    || !isNewerSavedAt(previous.savedAt, nextEntry.savedAt)) {
+    return { ok: false, total: entries.length }
+  }
+  const localStorage = journalStorage()
+  const recoveryCode = loadSessionRecoveryCode()
+  if (localStorage === null || recoveryCode === null) return { ok: false, total: entries.length }
+
+  const nextEntries = entries.map((current) => current.id === nextEntry.id ? nextEntry : current)
+  const ok = await savePrivateMemoWithJournalShell(localStorage, nextEntries, nextEntry, recoveryCode)
+  if (!ok) return { ok: false, total: entries.length }
+  privateMemoCache.set(nextEntry.id, { recoveryCode, memo: nextEntry.kind === "evening" ? nextEntry.note : nextEntry.memo })
+  return { ok: true, total: entries.length }
+}
+
+export async function loadEntriesWithPrivateMemos(): Promise<JournalEntry[]> {
+  const entries = loadEntries()
+  const localStorage = journalStorage()
+  const recoveryCode = loadSessionRecoveryCode()
+  if (localStorage === null || recoveryCode === null) return entries
+
+  const restored: JournalEntry[] = []
+  for (const entry of entries) {
+    const next = await restorePrivateMemo(localStorage, entry, recoveryCode)
+    if (next !== entry && hasPrivateMemoText(next)) {
+      privateMemoCache.set(entry.id, {
+        recoveryCode,
+        memo: next.kind === "evening" ? next.note : next.memo,
+      })
+    }
+    restored.push(next)
+  }
+  return restored
 }
 
 export function loadAnalysisEntries(): AnalysisJournalEntry[] {
@@ -118,9 +206,12 @@ export function deleteEntry(id: string): DeleteEntryResult {
 
   if (!recordTombstone(id)) return { ok: false, total: all.length, trashed: false }
 
-  const trashed = moveToTrash(target)
+  const record = isPrivateMemoEntry(target) ? privateMemoRecord(localStorage, target.id) : null
+  const trashed = moveToTrash(target, undefined, record ?? undefined)
 
-  const ok = writeJournalEntries(localStorage, remaining)
+  const ok = isPrivateMemoEntry(target)
+    ? removePrivateMemoWithJournalEntries(localStorage, remaining, target.id)
+    : writeJournalEntries(localStorage, remaining)
   if (!ok) {
     // 본문에 그대로 남아 있는데 휴지통에도 있으면 되돌리기가 사본을 하나 더
     // 만든다. 넣었던 것을 빼서 상태를 원래대로 돌린다.
@@ -160,12 +251,15 @@ export function restoreDeletedEntry(id: string): RestoreDeletedResult {
   const next = [...loadEntries(), restored]
   const localStorage = journalStorage()
   if (localStorage === null) {
-    moveToTrash(taken.entry, taken.deletedAt)
+    moveToTrash(taken.entry, taken.deletedAt, taken.privateMemo)
     return { ok: false, restoredId: null, total: next.length - 1 }
   }
-  if (!writeJournalEntries(localStorage, next)) {
+  const ok = taken.privateMemo === undefined
+    ? writeJournalEntries(localStorage, next)
+    : restorePrivateMemoRecordWithJournalShell(localStorage, next, taken.entry.id, restored.id, taken.privateMemo)
+  if (!ok) {
     // 꺼내 놓고 저장에 실패하면 일지가 어디에도 없게 된다. 휴지통에 되돌린다.
-    moveToTrash(taken.entry, taken.deletedAt)
+    moveToTrash(taken.entry, taken.deletedAt, taken.privateMemo)
     return { ok: false, restoredId: null, total: next.length - 1 }
   }
   return { ok: true, restoredId: restored.id, total: next.length }
@@ -179,7 +273,7 @@ export function exportEntriesJSON(options: JournalExportOptions = {}): string {
         format: "trainoracle.journal.full-backup.v1",
         exportMode: "OWNER_FULL_BACKUP",
         exportedAt: new Date().toISOString(),
-        entries: loadEntries(),
+        entries: entriesForOwnerFullBackup(),
       },
       null,
       2,
@@ -201,6 +295,23 @@ export function exportEntriesJSON(options: JournalExportOptions = {}): string {
     null,
     2,
   )
+}
+
+function entriesForOwnerFullBackup(): JournalEntry[] {
+  const recoveryCode = loadSessionRecoveryCode()
+  const entries = loadEntries()
+  if (recoveryCode === null) {
+    if (entries.some(isPrivateMemoEntry)) throw new PrivateMemoUnlockRequiredError()
+    return entries
+  }
+  return entries.map((entry) => {
+    const cached = privateMemoCache.get(entry.id)
+    if (isPrivateMemoEntry(entry) && (cached === undefined || cached.recoveryCode !== recoveryCode)) {
+      throw new PrivateMemoUnlockRequiredError()
+    }
+    if (cached === undefined || cached.recoveryCode !== recoveryCode) return entry
+    return restorePrivateMemoShell(entry, cached.memo)
+  })
 }
 
 export type SafeExportSummary = {
@@ -246,6 +357,12 @@ export function recentEntries(limit = 10): JournalEntry[] {
 
 export function localOnlyCount(): number {
   return loadEntries().filter((entry) => entry.syncState === "local").length
+}
+
+function isNewerSavedAt(previousSavedAt: string, nextSavedAt: string): boolean {
+  const previousTime = Date.parse(previousSavedAt)
+  const nextTime = Date.parse(nextSavedAt)
+  return Number.isFinite(nextTime) && (!Number.isFinite(previousTime) || nextTime > previousTime)
 }
 
 export function newEntryId(): string {

@@ -1,14 +1,15 @@
 import React from "react"
-import { SavedToast, TabBar } from "./components/AppChrome"
-import type { AppTab, ToastPhase } from "./components/AppChrome"
+import type { AppTab } from "./components/AppChrome"
+import { AppShellFrame } from "./components/AppShellFrame"
+import type { ShellToastState } from "./components/AppShellFrame"
 import { Home } from "./screens/Home"
 import { LogEntry } from "./screens/LogEntry"
-import type { EntryType } from "./screens/LogEntry"
 import { LogDetail } from "./screens/LogDetail"
 import { JournalArchive } from "./screens/JournalArchive"
 import { Trends } from "./screens/Trends"
 import { Guide } from "./screens/Guide"
 import { PlanBeta } from "./screens/PlanBeta"
+import { PlanProposalInbox } from "./screens/plan-beta/PlanProposalInbox"
 import { AthleteRecords } from "./screens/AthleteRecords"
 import { Account } from "./screens/Account"
 import { ImportActivities } from "./screens/ImportActivities"
@@ -16,68 +17,41 @@ import { RestoreBackup } from "./screens/RestoreBackup"
 import { accountFeatureEnabled } from "./domain/account/config"
 import { loadEntries, localOnlyCount, todayISO } from "./domain/journal-store"
 import type { JournalEntry } from "./domain/journal-store"
-import type { ArchiveSelection } from "./domain/journal-archive"
 import { createSavedFactReceipt } from "./domain/save-receipt"
-import type { SavedFactReceipt } from "./domain/save-receipt"
 import { dismissFirstVisit, hasDismissedFirstVisit } from "./domain/onboarding-state"
 import { recordDailyVisit } from "./domain/engagement"
-
-interface ViewState {
-  tab: AppTab
-  /** log 탭 내부 단계 */
-  entryType: EntryType
-  /** home에서 연 일지 상세 (날짜) — null이면 홈 목록 */
-  detailDate: string | null
-  /** 계정 화면 (home 탭 위 오버레이 성격) — feature flag ON일 때만 진입 가능 */
-  accountOpen: boolean
-  /** 기기 데이터 가져오기 화면 (기록 탭 위 오버레이) — 계정·승인 불필요 */
-  importOpen: boolean
-  /** 백업 되돌리기 화면 (home 탭 위 오버레이) — 계정·승인 불필요 */
-  restoreOpen: boolean
-  archiveSelection: ArchiveSelection | null
-  journalDraft?: {
-    readonly date: string
-    readonly initialEntry?: JournalEntry
-  }
-}
-
-const INITIAL: ViewState = {
-  tab: "home", entryType: "choose", detailDate: null,
-  accountOpen: false, importOpen: false, restoreOpen: false,
-  archiveSelection: null,
-}
+import { trackProductEvent } from "./domain/account/product-analytics-service"
+import { INITIAL_VIEW_STATE, viewForTab } from "./domain/app-shell-state"
 const TOAST_READABLE_MS = 4000
 const TOAST_EXIT_MS = 150
 
-type SavedToastState = {
-  readonly count: number
-  readonly phase: ToastPhase
-  readonly receipt: SavedFactReceipt
-  readonly reviewMessage?: string
-}
-
 export function AppShell() {
   React.useState(() => recordDailyVisit(todayISO()))
-  const [v, setV] = React.useState<ViewState>(INITIAL)
-  const [savedToast, setSavedToast] = React.useState<SavedToastState | null>(null)
+  const [v, setV] = React.useState(INITIAL_VIEW_STATE)
+  const [savedToast, setSavedToast] = React.useState<ShellToastState | null>(null)
   const [athleteRecordsOpen, setAthleteRecordsOpen] = React.useState(false)
-  const scrollRegionRef = React.useRef<HTMLElement | null>(null)
+  const scrollRegionRef = React.useRef<HTMLElement>(null)
   const [firstVisitActive, setFirstVisitActive] = React.useState(
     () => localOnlyCount() === 0 && !hasDismissedFirstVisit(),
   )
 
+  React.useEffect(() => {
+    void trackProductEvent("APP_OPENED")
+  }, [])
+
   const goHome = () => {
     setAthleteRecordsOpen(false)
-    setV(INITIAL)
+    setV(INITIAL_VIEW_STATE)
   }
   const goHomeAfterSave = (savedEntry: JournalEntry, reviewMessage?: string, detailDate?: string) => {
     const receipt = createSavedFactReceipt(savedEntry)
     setV(detailDate === undefined
-      ? INITIAL
-      : { ...INITIAL, detailDate, archiveSelection: v.archiveSelection })
+      ? INITIAL_VIEW_STATE
+      : { ...INITIAL_VIEW_STATE, detailDate, archiveSelection: v.archiveSelection })
     dismissFirstVisit()
     setFirstVisitActive(false)
     setSavedToast({ count: localOnlyCount(), phase: "enter", receipt, reviewMessage })
+    void trackProductEvent("JOURNAL_SAVED")
   }
 
   React.useEffect(() => {
@@ -109,15 +83,7 @@ export function AppShell() {
   ])
   const goTab = (tab: AppTab) => {
     setAthleteRecordsOpen(false)
-    setV({
-      tab,
-      entryType: "choose",
-      detailDate: null,
-      accountOpen: false,
-      importOpen: false,
-      restoreOpen: false,
-      archiveSelection: null,
-    })
+    setV(viewForTab(tab))
   }
   const goTrendsFromReceipt = () => {
     setSavedToast(null)
@@ -213,18 +179,13 @@ export function AppShell() {
     screen = athleteRecordsOpen ? (
       <AthleteRecords onBack={() => setAthleteRecordsOpen(false)} />
     ) : (
-      <PlanBeta
-        onManageRecords={() => setAthleteRecordsOpen(true)}
-        onWriteLog={(entryType) => setV({
-          tab: "log",
-          entryType: entryType ?? "choose",
-          detailDate: null,
-          accountOpen: false,
-          importOpen: false,
-          restoreOpen: false,
-          archiveSelection: null,
-        })}
-      />
+      <>
+        <PlanProposalInbox />
+        <PlanBeta
+          onManageRecords={() => setAthleteRecordsOpen(true)}
+          onWriteLog={(entryType) => setV(viewForTab("log", entryType))}
+        />
+      </>
     )
   } else if (v.tab === "log" && v.importOpen) {
     screen = (
@@ -259,44 +220,22 @@ export function AppShell() {
   } else if (v.tab === "trends") {
     screen = <Trends onBack={goHome} />
   } else {
-    screen = <Guide onWriteLog={() => setV({
-      tab: "log",
-      entryType: "choose",
-      detailDate: null,
-      accountOpen: false,
-      importOpen: false,
-      restoreOpen: false,
-      archiveSelection: null,
-    })} />
+    screen = <Guide onWriteLog={() => setV(viewForTab("log"))} />
   }
 
   return (
-    <div className="app-shell" style={{
-      height: "100dvh", minHeight: 0, background: "var(--bg)",
-      display: "flex", flexDirection: "column",
-      maxWidth: "var(--app-shell-max-width)", margin: "0 auto",
-    }}>
-      <main ref={scrollRegionRef} className="app-scroll-region">
-        {screen}
-      </main>
-      {savedToast !== null && (
-        <SavedToast
-          count={savedToast.count}
-          phase={savedToast.phase}
-          receipt={savedToast.receipt}
-          reviewMessage={savedToast.reviewMessage}
-          onDismiss={() => setSavedToast(null)}
-          onOpenTrends={goTrendsFromReceipt}
-        />
-      )}
-      <TabBar tab={v.tab} onTab={goTab} />
-    </div>
+    <AppShellFrame
+      scrollRegionRef={scrollRegionRef}
+      savedToast={savedToast}
+      tab={v.tab}
+      onDismissToast={() => setSavedToast(null)}
+      onOpenTrends={goTrendsFromReceipt}
+      onTab={goTab}
+    >
+      {screen}
+    </AppShellFrame>
   )
 }
 
-export function useIsMobileShell(): boolean {
-  const params = typeof window !== "undefined" ? new URLSearchParams(window.location.search) : null
-  return !(params?.has("workspace") ?? false)
-}
-
+export { useIsMobileShell } from "./components/AppShellFrame"
 export { SavedToast } from "./components/AppChrome"

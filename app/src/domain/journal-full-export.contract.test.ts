@@ -1,5 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
-import { exportEntriesJSON, saveEntry, type JournalEntry } from "./journal-store"
+import { exportEntriesJSON, savePrivateEntry, type JournalEntry } from "./journal-store"
+import { createRecoveryCode } from "./account/private-note-crypto"
+import { saveSessionRecoveryCode } from "./account/private-note-sync"
 
 function privateEntry(memo: string): JournalEntry {
   return {
@@ -36,11 +38,12 @@ describe("owner-selected full journal export", () => {
     vi.useRealTimers()
   })
 
-  it("keeps the default export byte-invariant when only private memo text changes", () => {
-    expect(saveEntry(privateEntry("PRIVATE_EXPORT_A")).ok).toBe(true)
+  it("keeps the default export byte-invariant when only private memo text changes", async () => {
+    expect(saveSessionRecoveryCode(createRecoveryCode())).toBe(true)
+    await expect(savePrivateEntry(privateEntry("PRIVATE_EXPORT_A"))).resolves.toEqual({ ok: true, total: 1 })
     const first = exportEntriesJSON()
     window.localStorage.clear()
-    expect(saveEntry(privateEntry("PRIVATE_EXPORT_B")).ok).toBe(true)
+    await expect(savePrivateEntry(privateEntry("PRIVATE_EXPORT_B"))).resolves.toEqual({ ok: true, total: 1 })
     const second = exportEntriesJSON()
 
     expect(first).toBe(second)
@@ -48,8 +51,9 @@ describe("owner-selected full journal export", () => {
     expect(second).not.toContain("PRIVATE_EXPORT_B")
   })
 
-  it("includes raw memo text and purpose only in an explicitly requested full backup", () => {
-    expect(saveEntry(privateEntry("OWNER_EXPORT_ONLY_SECRET")).ok).toBe(true)
+  it("includes raw memo text and purpose only in an explicitly requested full backup", async () => {
+    expect(saveSessionRecoveryCode(createRecoveryCode())).toBe(true)
+    await expect(savePrivateEntry(privateEntry("OWNER_EXPORT_ONLY_SECRET"))).resolves.toEqual({ ok: true, total: 1 })
 
     const safeExport = exportEntriesJSON()
     const fullBackup = exportEntriesJSON({ includeRawMemos: true })

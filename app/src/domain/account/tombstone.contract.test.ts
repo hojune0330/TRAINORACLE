@@ -167,7 +167,7 @@ describe("삭제 기록의 최소 수집", () => {
     // Given
     saveEntry(post("target", "2026-07-20T10:00:00.000Z", {
       memo: "오늘 무릎이 아팠다",
-      memoPurpose: "PRIVATE_SELF_ONLY",
+      memoPurpose: "ANALYZABLE_TRAINING_NOTE",
       distanceKm: "12.5",
     }))
 

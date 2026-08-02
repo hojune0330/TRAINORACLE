@@ -91,6 +91,14 @@ describe("imported activity save", () => {
     expect(hasImportedField(entry.fieldProvenance)).toBe(true)
   })
 
+  it("CSV와 JSON 출처를 서로 구분한다", () => {
+    const csv = toImportedEntry(activity(), "csv")
+    const json = toImportedEntry(activity(), "json")
+
+    expect(csv.fieldProvenance?.distanceKm).toMatchObject({ derivationRuleId: "import:csv" })
+    expect(json.fieldProvenance?.distanceKm).toMatchObject({ derivationRuleId: "import:json" })
+  })
+
   it("파일에 없던 값은 MISSING으로 남기고 출처를 붙이지 않는다", () => {
     const entry = toImportedEntry(activity({ durationMin: "", avgPace: "" }), "tcx")
 

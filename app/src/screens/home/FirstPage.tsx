@@ -64,7 +64,7 @@ export function FirstPage({
       },
       {
         label: "훈련 계획이 궁금해요",
-        detail: "7일 또는 9~10일 후보를 만들어요",
+        detail: "기본 9.5일 틀의 후보를 만들어요",
         icon: CalendarClock,
         action: () => onOpenPlan?.(),
       },

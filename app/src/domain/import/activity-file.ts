@@ -1,5 +1,3 @@
-// 활동 파일(TCX/GPX) 파서 — 가민 커넥트 내보내기 파일 가져오기 (IMP-2).
-//
 // 원칙:
 //  - 파일에 실제로 있는 사실만 읽는다. 없는 값은 계산 가능한 경우(총거리/총시간
 //    → 평균 페이스)에만 파생하고, 그 외 추정·날조 없음.
@@ -22,8 +20,10 @@ export type ImportedActivity = {
 export type ActivityParseResult = {
   readonly activities: readonly ImportedActivity[]
   readonly skipped: number
-  readonly format: "tcx" | "gpx" | "unknown"
+  readonly format: "tcx" | "gpx" | "csv" | "json" | "unknown"
 }
+
+import { parseCsvActivities, parseJsonActivities } from "./structured-activity-file"
 
 const EMPTY: ActivityParseResult = { activities: [], skipped: 0, format: "unknown" }
 
@@ -148,8 +148,13 @@ function parseGpx(doc: Document): ActivityParseResult {
   return { activities, skipped, format: "gpx" }
 }
 
-/** TCX/GPX 텍스트를 파싱한다. 형식 자동 감지. 실패 시 빈 결과. */
 export function parseActivityFile(text: string): ActivityParseResult {
+  const trimmed = text.trimStart()
+  if (trimmed.startsWith("[") || trimmed.startsWith("{")) {
+    return parseJsonActivities(text) ?? EMPTY
+  }
+  const csv = parseCsvActivities(text)
+  if (csv !== null) return csv
   if (typeof DOMParser === "undefined") return EMPTY
   let doc: Document
   try {

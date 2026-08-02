@@ -2,6 +2,8 @@ import { cleanup, render, screen } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { ATHLETE_RECORDS_STORAGE_KEY } from "../domain/athlete-records"
+import { createRecoveryCode } from "../domain/account/private-note-crypto"
+import { saveSessionRecoveryCode } from "../domain/account/private-note-sync"
 import { LogEntry } from "./LogEntry"
 
 afterEach(cleanup)
@@ -74,6 +76,29 @@ describe("race entry purpose-scoped notes", () => {
 
     // Then
     expect(screen.getByText(/분석하지 않아요/u)).toBeVisible()
+  })
+
+  it("stores a private race memo in the encrypted vault from the actual save surface", async () => {
+    // Given
+    const user = userEvent.setup()
+    const onDone = vi.fn()
+    expect(saveSessionRecoveryCode(createRecoveryCode())).toBe(true)
+    render(<LogEntry entryType="race" onDone={onDone} />)
+    await user.type(screen.getByRole("textbox", { name: "경기 메모" }), "PRIVATE-LUNA-731")
+    await user.click(screen.getByRole("radio", { name: "나만의 메모" }))
+
+    // When
+    await user.click(screen.getByRole("button", { name: /^저장/u }))
+
+    // Then
+    await vi.waitFor(() => expect(onDone).toHaveBeenCalledWith("race", expect.objectContaining({ kind: "race" })))
+    const values = [...Array(window.localStorage.length)]
+      .flatMap((_, index) => {
+        const key = window.localStorage.key(index)
+        return key === null ? [] : [window.localStorage.getItem(key) ?? ""]
+      })
+    expect(values.join("\n")).not.toContain("PRIVATE-LUNA-731")
+    expect(window.localStorage.getItem("trainoracle.private-memo.v1")).not.toBeNull()
   })
 
   it("persists structured pace, optional self-checks, and training-note context", async () => {

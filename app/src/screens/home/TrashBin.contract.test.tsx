@@ -23,7 +23,7 @@ function session(id: string, overrides: Partial<JournalEntry> = {}): JournalEntr
     avgPace: "5:30",
     rpe: 4,
     memo: "종아리가 뻐근",
-    memoPurpose: MEMO_PURPOSE.privateSelfOnly,
+    memoPurpose: MEMO_PURPOSE.analyzableTrainingNote,
     ...overrides,
   } as JournalEntry
 }

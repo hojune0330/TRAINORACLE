@@ -12,6 +12,7 @@ type Row = Record<string, unknown>
 
 const server = {
   entries: [] as Row[],
+  privateNotes: [] as Row[],
   tombstones: [] as Row[],
   tombstonePushFails: false,
   tombstonePullFails: false,
@@ -20,6 +21,7 @@ const server = {
 
 function table(name: string) {
   const isTombstone = name === "journal_tombstones"
+  const isPrivateNote = name === "encrypted_private_notes"
   return {
     select() {
       return {
@@ -29,6 +31,7 @@ function table(name: string) {
               ? Promise.resolve({ data: null, error: { message: "relation does not exist" } })
               : Promise.resolve({ data: server.tombstones, error: null })
           }
+          if (isPrivateNote) return Promise.resolve({ data: server.privateNotes, error: null })
           return Promise.resolve({
             data: server.entries.map((row) => ({ entry: row.entry })),
             error: null,
@@ -46,6 +49,10 @@ function table(name: string) {
         }))
         return Promise.resolve({ data: null, error: null })
       }
+      if (isPrivateNote) {
+        server.privateNotes = rows
+        return Promise.resolve({ data: null, error: null })
+      }
       for (const row of rows) {
         const index = server.entries.findIndex((entry) => entry.entry_id === row.entry_id)
         if (index === -1) server.entries.push(row)
@@ -58,6 +65,12 @@ function table(name: string) {
         eq() {
           return {
             in(_column: string, ids: readonly string[]) {
+              if (isPrivateNote) {
+                server.privateNotes = server.privateNotes.filter(
+                  (row) => !ids.includes(row.entry_id as string),
+                )
+                return Promise.resolve({ data: null, error: null })
+              }
               if (!isTombstone && server.entryDeleteFails) {
                 return Promise.resolve({ data: null, error: { message: "permission denied" } })
               }
@@ -74,13 +87,23 @@ function table(name: string) {
 }
 
 vi.mock("./supabase-client", () => ({
-  supabase: () => Promise.resolve({ from: (name: string) => table(name) }),
+  supabase: () => Promise.resolve({
+    auth: {
+      getSession: () => Promise.resolve({
+        data: { session: { user: { id: "user-1" } } },
+        error: null,
+      }),
+    },
+    from: (name: string) => table(name),
+  }),
   __resetSupabaseForTest: () => {},
 }))
 
 import { saveSyncConsent, syncNow } from "./sync"
+import { saveSessionRecoveryCode } from "./private-note-sync"
+import { createRecoveryCode } from "./private-note-crypto"
 import { loadTombstones, recordTombstone } from "./tombstone"
-import { saveEntry } from "../journal-store"
+import { saveEntry, savePrivateEntry } from "../journal-store"
 import type { PostSessionEntry } from "../journal-schema"
 
 const JOURNAL_KEY = "trainoracle.journal.v1"
@@ -113,12 +136,14 @@ function localIds(): string[] {
 
 beforeEach(() => {
   window.localStorage.clear()
+  window.sessionStorage.clear()
   server.entries = []
+  server.privateNotes = []
   server.tombstones = []
   server.tombstonePushFails = false
   server.tombstonePullFails = false
   server.entryDeleteFails = false
-  saveSyncConsent({ enabled: true, includeMemos: false })
+  saveSyncConsent({ enabled: true, shareTrainingNotes: false })
 })
 
 describe("syncNow — 삭제 기록 서버 전파", () => {
@@ -200,7 +225,7 @@ describe("syncNow — 삭제 기록 서버 전파", () => {
     const outcome = await syncNow("user-2")
 
     expect(outcome.ok).toBe(false)
-    expect(outcome.message).toMatch(/다른 계정/u)
+    expect(outcome.message).toContain("matching signed-in account")
     expect(server.entries).toHaveLength(0)
   })
 
@@ -233,5 +258,22 @@ describe("syncNow — 삭제 기록 서버 전파", () => {
 
     expect(outcome.ok).toBe(false)
     expect(outcome.message).toMatch(/메모 제외/u)
+  })
+
+  it("나만의 메모는 복구 코드가 있을 때 암호문으로만 서버에 올린다", async () => {
+    const code = createRecoveryCode()
+    saveSessionRecoveryCode(code)
+    await savePrivateEntry({
+      ...memoOnlyPost("encrypted-private"),
+      memo: "나만 보는 원문",
+      memoPurpose: "PRIVATE_SELF_ONLY",
+    })
+
+    const outcome = await syncNow("user-1")
+
+    expect(outcome.ok).toBe(true)
+    expect(server.privateNotes).toHaveLength(1)
+    expect(JSON.stringify(server.privateNotes)).not.toContain("나만 보는 원문")
+    expect(server.entries).toHaveLength(0)
   })
 })

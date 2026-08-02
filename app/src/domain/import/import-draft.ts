@@ -16,7 +16,7 @@ import { loadEntries, newEntryId, saveEntry } from "../journal-store"
 /** 가져오기 파생 입력 토큰 — 일지 필드가 아니라 "파일에서 왔다"는 표시 */
 export const IMPORT_DERIVED_FROM = ["import:activity-file"] as const
 
-export type ImportFormat = "tcx" | "gpx"
+export type ImportFormat = "tcx" | "gpx" | "csv" | "json"
 
 export type ImportDraft = {
   readonly activity: ImportedActivity

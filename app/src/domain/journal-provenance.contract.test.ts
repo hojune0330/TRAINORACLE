@@ -6,9 +6,12 @@ import {
   loadAnalysisEntries,
   loadEntries,
   saveEntry,
+  savePrivateEntry,
   type JournalEntry,
   type PostSessionEntry,
 } from "./journal-store"
+import { createRecoveryCode } from "./account/private-note-crypto"
+import { saveSessionRecoveryCode } from "./account/private-note-sync"
 
 const STORAGE_KEY = "trainoracle.journal.v1"
 
@@ -72,7 +75,7 @@ describe("journal provenance rollout boundary", () => {
     ])
   })
 
-  it("projects explicit intensity evidence without exposing a private memo", () => {
+  it("projects explicit intensity evidence without exposing a private memo", async () => {
     const secret = "PRIVATE_INTENSITY_NOTE"
     const intensityAssessment = {
       schemaVersion: 1,
@@ -100,7 +103,8 @@ describe("journal provenance rollout boundary", () => {
       },
     } satisfies JournalEntry
 
-    expect(saveEntry(entry).ok).toBe(true)
+    expect(saveSessionRecoveryCode(createRecoveryCode())).toBe(true)
+    await expect(savePrivateEntry(entry)).resolves.toEqual({ ok: true, total: 1 })
     expect(loadAnalysisEntries()).toEqual([
       expect.objectContaining({ id: "explicit-intensity", intensityAssessment }),
     ])

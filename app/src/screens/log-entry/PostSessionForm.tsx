@@ -6,8 +6,10 @@ import {
   newEntryId,
   nextJournalSavedAt,
   saveEntry,
+  savePrivateEntry,
   todayISO,
   updateEntry,
+  updatePrivateEntry,
 } from "../../domain/journal-store"
 import type { JournalEntry } from "../../domain/journal-store"
 import { PurposeScopedMemoField, usePurposeScopedMemo } from "./PurposeScopedMemoField"
@@ -49,7 +51,7 @@ export function PostSessionForm({ onBack, onDone, targetDate, initialEntry }: En
   // 순간 접힌다. 그건 오너가 물리친 동작이다.
   const touchOrder = useSectionTouchOrder()
 
-  const persist = () => {
+  const persist = async () => {
     const memoPreparation = memo.prepareForSave()
     if (!memoPreparation.ready) return
     const entry: JournalEntry = {
@@ -67,7 +69,10 @@ export function PostSessionForm({ onBack, onDone, targetDate, initialEntry }: En
       },
       ...(memo.text.trim() !== "" && memo.purpose !== undefined ? { memoPurpose: memo.purpose } : {}),
     }
-    const result = initial === undefined ? saveEntry(entry) : updateEntry(entry, initial.savedAt)
+    const isPrivateMemo = entry.memoPurpose === "PRIVATE_SELF_ONLY" && entry.memo.trim() !== ""
+    const result = initial === undefined
+      ? isPrivateMemo ? await savePrivateEntry(entry) : saveEntry(entry)
+      : isPrivateMemo ? await updatePrivateEntry(entry, initial.savedAt) : updateEntry(entry, initial.savedAt)
     if (window.location.search.includes("uitest")) console.log(`[JSAVE] kind=post-session ok=${result.ok}`)
     if (!result.ok) { setSaveError(true); return }
     if (memoPreparation.reviewMessage === null) onDone?.("post-session", entry)

@@ -1,6 +1,7 @@
 import { hasImportedField } from "./field-provenance"
 import type { FieldProvenanceMap } from "./field-provenance"
 import { journalStorage, writeJournalEntries } from "./journal-local-storage"
+import { isPrivateMemoEntry, removePrivateMemoWithJournalEntries } from "./private-memo-vault"
 import { parseJournalEntryForWrite } from "./journal-schema"
 import type { JournalEntry } from "./journal-schema"
 import { loadEntries } from "./journal-store"
@@ -122,5 +123,11 @@ export function updateEntry(entry: unknown, expectedSavedAt: string): UpdateEntr
   if (localStorage === null) return { ok: false, total: entries.length }
   const nextEntries = entries.slice()
   nextEntries[entryIndex] = preserveProvenance(previous, nextEntry)
-  return { ok: writeJournalEntries(localStorage, nextEntries), total: entries.length }
+  const nextText = nextEntry.kind === "evening" ? nextEntry.note : nextEntry.memo
+  const removesPrivateMemo = isPrivateMemoEntry(previous)
+    && (!isPrivateMemoEntry(nextEntry) || nextText.trim() === "")
+  const ok = removesPrivateMemo
+    ? removePrivateMemoWithJournalEntries(localStorage, nextEntries, previous.id)
+    : writeJournalEntries(localStorage, nextEntries)
+  return { ok, total: entries.length }
 }

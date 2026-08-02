@@ -15,6 +15,8 @@ import { EngagementStrip } from "./home/EngagementStrip"
 import { EmptyJournalHome, FirstPage } from "./home/FirstPage"
 import type { JournalEntryType } from "./log-entry/shared"
 import { engagementSummary } from "../domain/engagement"
+import { DailyContextTags } from "./home/DailyContextTags"
+import { WeekCell } from "./home/WeekCell"
 
 export type HomeProps = {
   readonly onWriteLog?: (entryType?: JournalEntryType) => void
@@ -93,6 +95,7 @@ export function Home({
           )}
         </div>
       )}
+      {!(isEmpty && firstVisitActive) && <DailyContextTags date={today} />}
       {isEmpty ? (
         firstVisitActive ? (
           <FirstPage
@@ -215,7 +218,7 @@ function DataHome({ all, analysisEntries, onWriteLog, onOpenDay, onOpenArchive, 
           onClick={onOpenPlan}
         >
           <span>훈련계획 후보 만들기</span>
-          <small>일지가 적어도 시작 가능 · 7일 또는 9~10일</small>
+          <small>일지가 적어도 시작 가능 · 기본은 9일과 10일을 번갈아 쓰는 9.5일 틀</small>
         </button>
       </div>
 
@@ -252,28 +255,5 @@ function DataHome({ all, analysisEntries, onWriteLog, onOpenDay, onOpenArchive, 
 
       <SafeJournalExport onOpenRestore={onOpenRestore} />
     </>
-  )
-}
-
-type WeekCellProps = {
-  readonly label: React.ReactNode
-  readonly value: string
-  readonly unit: string
-  readonly right?: boolean
-  readonly border?: boolean
-}
-
-function WeekCell({ label, value, unit, right, border }: WeekCellProps) {
-  return (
-    <div style={{
-      padding: right === true ? "12px 12px 12px 0" : "12px 0 12px 12px",
-      borderRight: right === true ? "1px solid var(--hair)" : 0,
-      borderBottom: border === true ? "1px solid var(--hair)" : 0,
-    }}>
-      <div style={{ fontFamily: "var(--mono)", fontSize: 9.5, color: "var(--ink-3)", letterSpacing: "0.14em", textTransform: "uppercase" }}>{label}</div>
-      <div style={{ fontFamily: "var(--mono)", fontSize: 22, fontWeight: 500, color: "var(--ink)", marginTop: 4 }}>
-        {value}<span style={{ fontSize: 11, color: "var(--ink-3)", fontWeight: 400, marginLeft: 2 }}>{unit}</span>
-      </div>
-    </div>
   )
 }
