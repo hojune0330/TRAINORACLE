@@ -28,5 +28,12 @@ export const INITIAL_VIEW_STATE: AppViewState = {
 }
 
 export function viewForTab(tab: AppTab, entryType: EntryType = "choose"): AppViewState {
-  return { ...INITIAL_VIEW_STATE, tab, entryType }
+  return {
+    ...INITIAL_VIEW_STATE,
+    tab,
+    entryType,
+    archiveSelection: tab === "journal"
+      ? { selectedMonth: null, selectedWeekStart: null }
+      : null,
+  }
 }

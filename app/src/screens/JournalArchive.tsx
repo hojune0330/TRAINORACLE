@@ -24,6 +24,7 @@ export type JournalArchiveProps = {
   readonly onSelectionChange: (selection: ArchiveSelection) => void
   readonly onOpenDay: (date: string) => void
   readonly onBack: () => void
+  readonly initialMode?: "CALENDAR" | "CYCLE"
 }
 
 export function JournalArchive({
@@ -32,8 +33,9 @@ export function JournalArchive({
   onSelectionChange,
   onOpenDay,
   onBack,
+  initialMode = "CALENDAR",
 }: JournalArchiveProps) {
-  const [mode, setMode] = React.useState<"CALENDAR" | "CYCLE">("CALENDAR")
+  const [mode, setMode] = React.useState<"CALENDAR" | "CYCLE">(initialMode)
   const archive = React.useMemo(() => projectJournalArchive(entries), [entries])
   const selectedMonth = archive.months.find((month) => month.month === selection.selectedMonth) ?? null
   const selectedWeek = selectedMonth?.weeks.find(

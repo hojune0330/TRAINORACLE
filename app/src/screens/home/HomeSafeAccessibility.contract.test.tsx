@@ -44,36 +44,27 @@ describe("home journal controls", () => {
     expect(onOpenDay).toHaveBeenCalledWith("2026-07-14")
   })
 
-  it("describes the default export as excluding raw note text", () => {
-    // Given
+  it("presents the user's training as the first-screen identity", () => {
     render(<Home />)
 
-    // When
-    const exportButton = screen.getByRole("button", {
-      name: /내 일지 데이터 내려받기/u,
-      description: /메모 원문.*제외/u,
-    })
-
-    // Then
-    expect(exportButton).toBeVisible()
+    expect(screen.getByRole("heading", { name: "내 훈련" })).toBeVisible()
+    expect(screen.getByText("기록이 계획으로 이어지는 훈련 일지")).toBeVisible()
+    expect(screen.getByRole("button", { name: "오늘 기록하기" })).toBeVisible()
+    expect(screen.getByRole("button", { name: /내 일지.*1일.*1개의 기록/u })).toBeVisible()
+    expect(screen.getByRole("button", { name: /훈련계획/u })).toBeVisible()
+    expect(screen.getByRole("button", { name: /분석/u })).toBeVisible()
+    expect(screen.queryByText("비공개 원문")).toBeNull()
   })
 
-  it("requires an explicit confirmation before creating a memo-inclusive file", async () => {
-    const user = userEvent.setup()
-    render(<Home />)
-
-    await user.click(screen.getByRole("button", { name: /메모 포함 파일 내보내기/u }))
-    expect(screen.getByRole("dialog", { name: "메모까지 포함할까요?" })).toBeVisible()
-    await user.click(screen.getByRole("button", { name: "취소" }))
-    expect(screen.queryByRole("dialog", { name: "메모까지 포함할까요?" })).toBeNull()
-  })
-
-  it("shows the empty-journal decision before optional daily context tags", () => {
+  it("shows the real dashboard instead of a blocking welcome screen when empty", () => {
     window.localStorage.clear()
-    render(<Home firstVisitActive={false} />)
+    render(<Home />)
 
-    const heading = screen.getByRole("heading", { name: "아직 기록이 없어요." })
+    const heading = screen.getByRole("heading", { name: "내 훈련" })
     const context = screen.getByRole("region", { name: "오늘의 기분 몸 상태 날씨" })
     expect(heading.compareDocumentPosition(context) & Node.DOCUMENT_POSITION_FOLLOWING).not.toBe(0)
+    expect(screen.getByText("아직 오늘 기록이 없어요.")).toBeVisible()
+    expect(screen.getByRole("button", { name: /내 일지.*아직 기록이 없어요/u })).toBeVisible()
+    expect(screen.queryByText("오늘 기록을 시작할까요?")).toBeNull()
   })
 })

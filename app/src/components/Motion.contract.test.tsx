@@ -170,7 +170,6 @@ describe("saved toast motion structure", () => {
 
     try {
       render(<AppShell />)
-      fireEvent.click(screen.getByRole("button", { name: "홈 먼저 둘러보기" }))
       const tabBar = screen.getByRole("navigation", { name: "주 탭" })
 
       fireEvent.click(within(tabBar).getByRole("button", { name: /기록/u }))
@@ -198,7 +197,6 @@ describe("saved toast motion structure", () => {
 
     try {
       render(<AppShell />)
-      fireEvent.click(screen.getByRole("button", { name: "홈 먼저 둘러보기" }))
       const tabBar = screen.getByRole("navigation", { name: "주 탭" })
       fireEvent.click(within(tabBar).getByRole("button", { name: /기록/u }))
       fireEvent.click(screen.getByRole("button", { name: /경기/u }))

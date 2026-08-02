@@ -1,14 +1,17 @@
 import { expect, test } from "@playwright/test"
 
-test("keeps the journal-first decision clear on narrow phones", async ({ page }, testInfo) => {
+test("keeps My Training clear and usable on narrow phones", async ({ page }, testInfo) => {
   for (const viewport of [{ width: 320, height: 568 }, { width: 375, height: 667 }]) {
     await page.setViewportSize(viewport)
     await page.goto("/")
 
-    await expect(page.getByRole("heading", { name: "오늘 기록을 시작할까요?" })).toBeVisible()
-    await expect(page.getByRole("navigation", { name: "주 탭" })).toHaveCount(0)
-    for (const name of ["오늘 기록 시작하기", "훈련계획 먼저 보기", "홈 먼저 둘러보기", "백업 불러오기"]) {
-      await expect(page.getByRole("button", { name })).toBeInViewport()
+    await expect(page.getByRole("heading", { name: "내 훈련" })).toBeVisible()
+    await expect(page.getByText("기록이 계획으로 이어지는 훈련 일지")).toBeVisible()
+    await expect(page.getByRole("navigation", { name: "주 탭" })).toBeVisible()
+    await expect(page.getByRole("button", { name: "오늘 기록하기" })).toBeInViewport()
+    const services = page.getByRole("navigation", { name: "내 훈련 서비스" })
+    for (const name of [/^내 일지/u, /^훈련 흐름/u, /^훈련계획/u, /^분석/u]) {
+      await expect(services.getByRole("button", { name })).toBeVisible()
     }
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true)
     await page.screenshot({
@@ -17,12 +20,12 @@ test("keeps the journal-first decision clear on narrow phones", async ({ page },
     })
   }
 
-  await page.getByRole("button", { name: "오늘 기록 시작하기" }).click()
-  const heading = page.getByRole("heading", { name: "무엇을 남길까요?" })
+  await page.getByRole("button", { name: "오늘 기록하기" }).click()
+  const heading = page.getByRole("heading", { name: "어떤 일지를 쓰세요?" })
   await expect(heading).toBeFocused()
-  await expect(page.getByRole("button", { name: /경기를 기록할래요/u })).toBeInViewport()
+  await expect(page.getByRole("button", { name: /경기 직전\/직후/u })).toBeInViewport()
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true)
-  await expect(page.getByRole("button", { name: "홈 둘러보기" })).toBeInViewport()
+  await expect(page.getByRole("button", { name: "← 뒤로" })).toBeInViewport()
   await page.screenshot({ path: testInfo.outputPath("record-choice-375x667.png"), fullPage: true })
 })
 

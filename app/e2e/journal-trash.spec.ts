@@ -202,6 +202,7 @@ test("메모만 쓴 일지가 안전 백업에서 빠진다는 안내가 뜬다"
   await page.reload()
 
   // Then — 빠지는 개수와 포함/전체 개수를 사실대로 알린다
+  await page.getByRole("button", { name: "더보기" }).click()
   const notice = page.getByTestId("safe-export-skipped")
   await expect(notice).toBeVisible()
   await expect(notice).toContainText("2개")

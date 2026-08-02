@@ -40,7 +40,7 @@ test("moves through every main tab by keyboard at 320px", async ({ page }, testI
   await expect(tabs).toHaveCount(5)
   await tabs.first().focus()
 
-  // When: focus moves only with the keyboard to the Help tab.
+  // When: focus moves only with the keyboard to the Analysis tab.
   for (let index = 0; index < 4; index += 1) {
     await expect(tabs.nth(index)).toBeFocused()
     await page.keyboard.press("Tab")
@@ -48,7 +48,7 @@ test("moves through every main tab by keyboard at 320px", async ({ page }, testI
   await expect(tabs.nth(4)).toBeFocused()
   await page.keyboard.press("Enter")
 
-  // Then: the FAQ opens and the viewport remains intact.
-  await expect(page.getByRole("heading", { name: "궁금한 점을 쉽게 풀어드려요" })).toBeVisible()
+  // Then: Analysis opens and the viewport remains intact.
+  await expect(page.getByRole("heading", { name: "추이" })).toBeVisible()
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true)
 })

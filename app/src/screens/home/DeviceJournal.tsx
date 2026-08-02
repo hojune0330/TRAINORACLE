@@ -48,7 +48,7 @@ function entrySub(entry: JournalEntry): string {
 }
 
 export function DeviceJournal({ onOpenDay, onOpenArchive }: DeviceJournalProps) {
-  const entries = React.useMemo(() => recentEntries(5), [])
+  const entries = recentEntries(5)
 
   React.useEffect(() => {
     if (window.location.search.includes("uitest")) {

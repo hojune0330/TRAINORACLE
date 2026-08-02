@@ -16,18 +16,19 @@ test("audits empty home and chooser touch actions", async ({ page }, testInfo) =
   requireTouchProject(testInfo.project.name)
   await page.goto("/")
   await auditTouchTargets(page, [
-    { name: "empty-home.plan", locator: page.getByRole("button", { name: /훈련계획 먼저 보기/u }), heightOnly: true },
-    { name: "empty-home.first-entry", locator: page.getByRole("button", { name: /오늘 기록 시작하기/u }), heightOnly: true },
-    { name: "empty-home.browse", locator: page.getByRole("button", { name: /홈 먼저 둘러보기/u }), heightOnly: true },
+    { name: "empty-home.first-entry", locator: page.getByRole("button", { name: "오늘 기록하기" }), heightOnly: true },
+    { name: "empty-home.journal", locator: page.getByRole("button", { name: /^내 일지/u }), heightOnly: true },
+    { name: "empty-home.plan", locator: page.getByRole("button", { name: /^훈련계획/u }), heightOnly: true },
+    { name: "empty-home.more", locator: page.getByRole("button", { name: "더보기" }) },
   ])
-  await expect(page.getByRole("navigation", { name: "주 탭" })).toHaveCount(0)
+  await expect(page.getByRole("navigation", { name: "주 탭" })).toBeVisible()
   await expectNoHorizontalOverflow(page)
-  await page.getByRole("button", { name: /오늘 기록 시작하기/u }).click()
+  await page.getByRole("button", { name: "오늘 기록하기" }).click()
   await auditTouchTargets(page, [
-    { name: "chooser.back", locator: page.getByRole("button", { name: "이전 화면으로" }) },
-    { name: "chooser.post", locator: page.getByRole("button", { name: /훈련을 기록하고 싶어요/u }), heightOnly: true },
-    { name: "chooser.evening", locator: page.getByRole("button", { name: /하루와 몸 상태를 기록할래요/u }), heightOnly: true },
-    { name: "chooser.race", locator: page.getByRole("button", { name: /경기를 기록할래요/u }), heightOnly: true },
+    { name: "chooser.back", locator: page.getByRole("button", { name: "← 뒤로" }) },
+    { name: "chooser.post", locator: page.getByRole("button", { name: /훈련 후/u }), heightOnly: true },
+    { name: "chooser.evening", locator: page.getByRole("button", { name: /회복 · 하루 마무리/u }), heightOnly: true },
+    { name: "chooser.race", locator: page.getByRole("button", { name: /경기 직전\/직후/u }), heightOnly: true },
   ])
   await expectNoHorizontalOverflow(page)
 })
@@ -38,11 +39,14 @@ test("audits populated home, detail, and trends actions", async ({ page }, testI
   await page.goto("/?app=1")
   const entries = page.getByRole("button", { name: /상세 열기/u })
   await auditTouchTargets(page, [
-    { name: "populated-home.write", locator: page.getByRole("button", { name: /오늘 일지 더 쓰기/u }), heightOnly: true },
-    { name: "populated-home.export", locator: page.getByRole("button", { name: /내 일지 데이터 내려받기/u }), heightOnly: true },
-    { name: "populated-home.full-export", locator: page.getByRole("button", { name: /메모 포함 파일 내보내기/u }), heightOnly: true },
+    { name: "populated-home.write", locator: page.getByRole("button", { name: "오늘 기록하기" }), heightOnly: true },
     { name: "populated-home.entries", locator: entries, count: 5, heightOnly: true },
     { name: "populated-home.tabs", locator: page.getByRole("navigation", { name: "주 탭" }).getByRole("button"), count: 5 },
+  ])
+  await page.getByRole("button", { name: "더보기" }).click()
+  await auditTouchTargets(page, [
+    { name: "more.export", locator: page.getByRole("button", { name: /내 일지 데이터 내려받기/u }), heightOnly: true },
+    { name: "more.full-export", locator: page.getByRole("button", { name: /메모 포함 파일 내보내기/u }), heightOnly: true },
   ])
   await page.getByRole("button", { name: /메모 포함 파일 내보내기/u }).click()
   await auditTouchTargets(page, [
@@ -50,6 +54,7 @@ test("audits populated home, detail, and trends actions", async ({ page }, testI
     { name: "full-export.confirm", locator: page.getByRole("button", { name: "파일 만들기" }) },
   ])
   await page.getByRole("button", { name: "취소" }).click()
+  await page.getByRole("button", { name: "홈으로 돌아가기" }).click()
   await expectNoHorizontalOverflow(page)
   await entries.nth(0).click()
   await auditTouchTargets(page, [
@@ -58,7 +63,7 @@ test("audits populated home, detail, and trends actions", async ({ page }, testI
   ])
   await expectNoHorizontalOverflow(page)
   await page.getByRole("button", { name: "← 뒤로" }).click()
-  await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: /추이/u }).click()
+  await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "분석" }).click()
   const metricButtons = page
     .getByRole("region", { name: "최근 4개월 추이" })
     .getByRole("button")

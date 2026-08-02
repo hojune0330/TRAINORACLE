@@ -43,6 +43,7 @@ test("makes a memo-inclusive backup only after confirmation and without a networ
   page.on("request", (request) => networkRequests.push(request.url()))
   page.on("download", (download) => downloads.push(download.suggestedFilename()))
 
+  await page.getByRole("button", { name: "더보기" }).click()
   await page.getByRole("button", { name: /\uBA54\uBAA8 \uD3EC\uD568 \uD30C\uC77C \uB0B4\uBCF4\uB0B4\uAE30/u }).click()
   await expect(page.getByRole("dialog")).toBeVisible()
   await page.getByRole("button", { name: "\uCDE8\uC18C" }).click()
