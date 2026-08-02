@@ -15,10 +15,10 @@
    - `Project URL` (예: `https://abcdefgh.supabase.co`)
    - `anon public` 키 (공개용 키 — 프론트에 넣어도 안전, RLS가 지킴)
 
-## 2. 마이그레이션 20개 적용
+## 2. 마이그레이션 26개 적용
 
 SQL Editor에 일부 파일만 복사하지 않는다. 저장소 루트에서 Supabase CLI로
-시험 프로젝트를 연결한 뒤 `0001`부터 `0020`까지 순서대로 적용한다.
+시험 프로젝트를 연결한 뒤 `0001`부터 `0026`까지 순서대로 적용한다.
 
 ```bash
 npx supabase login
@@ -27,7 +27,7 @@ npx supabase db push --linked --include-all
 npx supabase migration list --linked
 ```
 
-마지막 명령에서 `0001`~`0020`이 모두 로컬·원격 양쪽에 표시돼야 한다.
+마지막 명령에서 `0001`~`0026`이 모두 로컬·원격 양쪽에 표시돼야 한다.
 명령 시각, 시험 프로젝트 ref, Region, 적용 목록과 성공 결과를
 `reports/operations/`의 시험 영수증에 남긴다. 비밀번호·access token·anon key는
 영수증이나 Git에 기록하지 않는다.
@@ -72,7 +72,9 @@ Google 설정을 건너뛰어도 이메일 코드 로그인은 동작합니다.
           VITE_FEATURE_SHARING: ${{ vars.TRAINORACLE_FEATURE_SHARING }}
           VITE_FEATURE_PLAN_PROPOSALS: ${{ vars.TRAINORACLE_FEATURE_PLAN_PROPOSALS }}
           VITE_FEATURE_PRODUCT_ANALYTICS: ${{ vars.TRAINORACLE_FEATURE_PRODUCT_ANALYTICS }}
+          VITE_FEATURE_FEEDBACK_BOARD: ${{ vars.TRAINORACLE_FEATURE_FEEDBACK_BOARD }}
           VITE_KILL_ACCOUNT: ${{ vars.TRAINORACLE_KILL_ACCOUNT }}
+          VITE_KILL_FEEDBACK_BOARD: ${{ vars.TRAINORACLE_KILL_FEEDBACK_BOARD }}
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
         run: |
@@ -98,7 +100,9 @@ Google 설정을 건너뛰어도 이메일 코드 로그인은 동작합니다.
 | `TRAINORACLE_FEATURE_SHARING` | `false` 또는 미등록 | 동기화 안정화 뒤 별도 결정 |
 | `TRAINORACLE_FEATURE_PLAN_PROPOSALS` | `false` 또는 미등록 | 공유 안정화 뒤 별도 결정 |
 | `TRAINORACLE_FEATURE_PRODUCT_ANALYTICS` | `false` 또는 미등록 | 별도 동의·삭제 시험 뒤 별도 결정 |
+| `TRAINORACLE_FEATURE_FEEDBACK_BOARD` | `false` 또는 미등록 | 문의판 시험 뒤 `true` |
 | `TRAINORACLE_KILL_ACCOUNT` | `false` 또는 미등록 | 계정만 즉시 닫을 때 `true` |
+| `TRAINORACLE_KILL_FEEDBACK_BOARD` | `false` 또는 미등록 | 문의판만 즉시 닫을 때 `true` |
 
 키만 등록한 상태에서는 계정 기능이 노출되지 않습니다. 공개 게이트를 모두
 확인한 뒤 위 변수만 `true`로 바꾸고 main을 다시 배포합니다.
@@ -113,6 +117,28 @@ VITE_SUPABASE_ANON_KEY=eyJ...
 VITE_ACCOUNT_PUBLIC_ENABLED=true
 ```
 
+## 9. 문의 게시판 운영
+
+문의 게시판은 계정 기능과 별개다. 공개 전에는 시험 프로젝트에서 다음을 모두
+확인한다.
+
+- 다른 기기 영수증으로 문의를 읽거나 댓글을 달거나 삭제할 수 없음
+- 같은 요청을 다시 보내도 문의·댓글이 중복 생성되지 않음
+- 운영자 전용 목록·답변·종료·삭제 함수는 `service_role`만 실행 가능
+- 사용자는 자기 문의를 두 번 확인한 뒤 삭제 가능
+- 마지막 활동 후 180일이 지난 문의는 예약 정리에서 삭제
+- 시간당 전체 60건, 하루 전체 300건, 기기 영수증당 하루 10건 제한
+
+시험이 끝나면 서버의 `FEEDBACK_BOARD`를 연 뒤
+`TRAINORACLE_FEATURE_FEEDBACK_BOARD=true`와
+`TRAINORACLE_KILL_FEEDBACK_BOARD=false`로 배포한다. 둘 중 하나라도 닫혀 있으면
+문의 쓰기 화면은 열리지 않는다. 운영자는 서비스 역할로
+`list_feedback_threads_for_operator`, `reply_to_feedback_thread`를 사용한다. 서비스
+역할 키는 브라우저·문서·Git에 넣지 않는다. 예약 정리는
+`TRAINORACLE_SERVER_OPERATIONS_ENABLED=true`일 때만 실행된다.
+운영자 PC에서 문의를 확인하고 답하는 정확한 절차는
+`reports/operations/FEEDBACK_BOARD_OPERATOR_RUNBOOK.md`를 따른다.
+
 ## 끄고 싶을 때
 
 서버의 `ACCOUNT` 스위치를 먼저 끄고 이유를 기록합니다. 그다음
@@ -120,3 +146,7 @@ VITE_ACCOUNT_PUBLIC_ENABLED=true
 `TRAINORACLE_ACCOUNT_PUBLIC_ENABLED=false`를 적용해 재배포합니다. 이미 열린
 앱의 서버 작업을 먼저 차단한 뒤 계정 진입점을 숨기는 순서입니다. 로컬 일지는
 계속 사용할 수 있습니다.
+
+문의판만 문제가 생기면 서버의 `FEEDBACK_BOARD`를 먼저 닫고
+`TRAINORACLE_KILL_FEEDBACK_BOARD=true`로 재배포한다. 이때 로컬 일지와 다른 화면은
+계속 사용할 수 있다.

@@ -8,7 +8,7 @@ service_provider_working_name: aaclub
 service_operator_target: FREE_BETA_UP_TO_200
 service_operator_scope_decision: ACCOUNT_FIRST_SYNC_LATER
 current_status: SELECTED_NOT_ENABLED
-contact_path: GitHub Issues
+contact_path: TrainOracle in-app feedback board
 ```
 
 ## 결정된 방향
@@ -31,7 +31,7 @@ contact_path: GitHub Issues
 | G4 미성년자 | 만 14세 미만 보호자 확인 구현과 실제 시험 | CODE_READY_TEST_OPEN |
 | G5 보유·탈퇴 | 즉시 접근 차단·30일 삭제 경로 구현과 실제 정리 영수증 | CODE_READY_TEST_OPEN |
 | G6 처리업체 | 실제 Supabase 프로젝트 지역과 처리위탁 고지 확정 | OPEN |
-| G7 DB 안전 | 시험 DB에 0001~0020 실행, RLS 활성, 사용자별 정책 실측 | PARTIAL_TRIAL_PASS |
+| G7 DB 안전 | 시험 DB에 0001~0026 실행, RLS 활성, 사용자별 정책 실측 | PARTIAL_TRIAL_PASS |
 | G8 교차 계정 시험 | 두 계정 격리, 두 기기 동기화, 삭제·복구·재로그인 시험 | OPEN |
 | G9 가입 동의 | 가입 전에 방침·약관 링크와 버전 동의를 저장하는 UI·계약 | OPEN |
 | G10 배포 스위치 | G1~G9 증거 검수 후 저장소 변수를 `true`로 변경 | LOCKED |
@@ -62,7 +62,7 @@ G8에는 같은 브라우저에서 계정을 바꿨을 때 이전 사용자의 �
 
 ## 공개 전 실행 순서
 
-1. 운영과 분리된 시험 Supabase에 0001~0020을 적용하고 영수증을 남긴다.
+1. 운영과 분리된 시험 Supabase에 0001~0026을 적용하고 영수증을 남긴다.
 2. 시험 빌드에서 계정만 켜고 이메일·Google 로그인, 보호자 확인, 로그아웃,
    삭제 요청과 실패 경로를 확인한다. 동기화·공유·계획·분석은 계속 끈다.
 3. G1~G6의 실제 운영 정보를 확정하고 공개 문서를 게시한다.

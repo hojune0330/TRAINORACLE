@@ -42,6 +42,15 @@ jobs:
           ' >/dev/null
           echo "analytics_deleted=$(echo "$RESPONSE" | jq -r '.[0].analytics_deleted')" >> "$GITHUB_OUTPUT"
           echo "accounts_deleted=$(echo "$RESPONSE" | jq -r '.[0].accounts_deleted')" >> "$GITHUB_OUTPUT"
+          FEEDBACK_RESPONSE="$(curl --fail-with-body --silent --show-error \
+            --request POST \
+            --header "apikey: $SUPABASE_SERVICE_ROLE_KEY" \
+            --header "Authorization: Bearer $SUPABASE_SERVICE_ROLE_KEY" \
+            --header "Content-Type: application/json" \
+            --data '{}' \
+            "$SUPABASE_URL/rest/v1/rpc/purge_expired_feedback_threads")"
+          echo "$FEEDBACK_RESPONSE" | jq -e 'type == "number" and . >= 0 and floor == .' >/dev/null
+          echo "feedback_deleted=$FEEDBACK_RESPONSE" >> "$GITHUB_OUTPUT"
 
       - name: Write retention cleanup receipt
         shell: bash
@@ -51,5 +60,6 @@ jobs:
             echo "- workflow run: \`${GITHUB_RUN_ID}\`"
             echo "- expired analytics deleted: \`${{ steps.cleanup.outputs.analytics_deleted }}\`"
             echo "- due accounts deleted: \`${{ steps.cleanup.outputs.accounts_deleted }}\`"
+            echo "- expired feedback threads deleted: \`${{ steps.cleanup.outputs.feedback_deleted }}\`"
             echo "- server receipt: \`public.retention_cleanup_runs\`"
           } >> "$GITHUB_STEP_SUMMARY"

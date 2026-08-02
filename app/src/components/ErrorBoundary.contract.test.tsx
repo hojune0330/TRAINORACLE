@@ -58,4 +58,10 @@ describe("ErrorBoundary", () => {
     render(<ErrorBoundary><Boom /></ErrorBoundary>)
     expect(screen.getByText(/기기 밖으로 전송되지 않아요/u)).toBeTruthy()
   })
+
+  it("GitHub 대신 앱 안의 문의 게시판으로 안내한다", () => {
+    render(<ErrorBoundary><Boom /></ErrorBoundary>)
+    const link = screen.getByRole("link", { name: "문의 게시판에 알리기" })
+    expect(link).toHaveAttribute("href", "?feedback=1")
+  })
 })

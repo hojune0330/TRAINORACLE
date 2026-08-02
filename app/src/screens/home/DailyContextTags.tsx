@@ -55,8 +55,8 @@ function TagGroup<T extends string>({
   readonly onSelect: (value: T) => void
 }) {
   return (
-    <fieldset>
-      <legend>{title}</legend>
+    <div className="daily-context__group" role="group" aria-label={title}>
+      <span className="daily-context__label">{title}</span>
       <div>
         {values.map((item) => (
           <button
@@ -70,6 +70,6 @@ function TagGroup<T extends string>({
           </button>
         ))}
       </div>
-    </fieldset>
+    </div>
   )
 }

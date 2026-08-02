@@ -16,6 +16,7 @@ const requiredFeatureVariables = [
   "FEATURE_EXPERIMENTAL_FATIGUE",
   "FEATURE_DECORATION_SHOP",
   "FEATURE_PRODUCT_ANALYTICS",
+  "FEATURE_FEEDBACK_BOARD",
 ] as const
 
 const requiredKillVariables = [
@@ -26,6 +27,7 @@ const requiredKillVariables = [
   "KILL_EXPERIMENTAL_FATIGUE",
   "KILL_DECORATION_SHOP",
   "KILL_PRODUCT_ANALYTICS",
+  "KILL_FEEDBACK_BOARD",
 ] as const
 
 describe("hosted beta feature controls", () => {

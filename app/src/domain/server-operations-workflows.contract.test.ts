@@ -28,6 +28,8 @@ function assertRetentionWorkflow(workflow: string): void {
     "TRAINORACLE_SERVER_OPERATIONS_ENABLED",
     "SUPABASE_SERVICE_ROLE_KEY",
     "/rest/v1/rpc/purge_expired_beta_data",
+    "/rest/v1/rpc/purge_expired_feedback_threads",
+    "feedback_deleted",
     "--fail-with-body",
     "floor == .",
     ". >= 0",

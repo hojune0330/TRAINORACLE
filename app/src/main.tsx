@@ -3,16 +3,19 @@ import ReactDOM from "react-dom/client"
 import App from "./App"
 import { ErrorBoundary } from "./components/ErrorBoundary"
 import { purgeExpiredTrash } from "./domain/journal-trash"
+import { FeedbackBoardRoute } from "./screens/FeedbackBoardRoute"
 
 // 토큰 단일 소스: 저장소 루트 CSS를 직접 import (이중 정의 금지)
 import "../../colors_and_type.css"
 import "../../colors_and_type_journal.css"
 import "./styles/app.css"
+import "./styles/feedback-board.css"
 import "./styles/plan-beta.css"
 import "./styles/athlete-records.css"
 
 const showP3PaceHarness = import.meta.env.DEV
   && new URLSearchParams(window.location.search).get("p3-pace-fixture") === "1"
+const showFeedbackBoard = new URLSearchParams(window.location.search).get("feedback") === "1"
 
 if (import.meta.env.DEV && !showP3PaceHarness) {
   void import("react-grab")
@@ -53,7 +56,9 @@ function renderRoot(content: React.ReactNode): void {
   )
 }
 
-if (showP3PaceHarness) {
+if (showFeedbackBoard) {
+  renderRoot(<FeedbackBoardRoute />)
+} else if (showP3PaceHarness) {
   void import("./testing/P3PaceHarness").then(({ P3PaceHarness }) => {
     renderRoot(<P3PaceHarness />)
   })
