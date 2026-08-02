@@ -1,6 +1,7 @@
 import {
   ArrowRight,
   CalendarDays,
+  CircleHelp,
   House,
   Plus,
   TrendingUp,
@@ -24,6 +25,7 @@ const TAB_ITEMS: readonly TabItem[] = [
   { id: "plan", label: "계획", icon: CalendarDays },
   { id: "log", label: "기록", icon: Plus },
   { id: "trends", label: "추이", icon: TrendingUp },
+  { id: "guide", label: "도움", icon: CircleHelp },
 ] as const
 
 export function TabBar({ tab, onTab }: {

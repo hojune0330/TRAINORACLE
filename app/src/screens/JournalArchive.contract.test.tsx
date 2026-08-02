@@ -148,7 +148,7 @@ describe("journal archive surface", () => {
       />,
     )
 
-    const day = screen.getByRole("button", { name: /2026년 7월 10일.*훈련 후 1건.*6 km.*30분/u })
+    const day = screen.getByRole("button", { name: /2026년 7월 10일.*훈련 후 2건.*6 km.*30분/u })
     expect(day).not.toHaveAccessibleName(expect.stringContaining(SECRET))
     await user.click(day)
     expect(onOpenDay).toHaveBeenCalledWith("2026-07-10")

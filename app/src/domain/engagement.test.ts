@@ -1,9 +1,10 @@
 import { beforeEach, describe, expect, it } from "vitest"
 import {
   engagementSummary,
-  recordDailyVisit,
+  toEngagementJournalRef,
 } from "./engagement"
 import type { EngagementJournalRef } from "./engagement"
+import type { EveningEntry, PostSessionEntry } from "./journal-schema"
 
 const journal = (
   date: string,
@@ -15,19 +16,14 @@ describe("safe local engagement", () => {
     window.localStorage.clear()
   })
 
-  it("awards one daily visit only once", () => {
-    recordDailyVisit("2026-07-24")
-    recordDailyVisit("2026-07-24")
-
+  it("does not award attendance or points for opening the app", () => {
     expect(engagementSummary([], "2026-07-24")).toMatchObject({
-      points: 1,
-      visitDays: 1,
+      points: 0,
       journalDays: 0,
     })
   })
 
   it("counts each journal date once regardless of entry count or kind", () => {
-    recordDailyVisit("2026-07-24")
     const entries = [
       journal("2026-07-24"),
       journal("2026-07-24", "evening"),
@@ -35,8 +31,7 @@ describe("safe local engagement", () => {
     ]
 
     expect(engagementSummary(entries, "2026-07-24")).toMatchObject({
-      points: 9,
-      visitDays: 1,
+      points: 8,
       journalDays: 2,
       recordingStreak: 2,
     })
@@ -52,19 +47,50 @@ describe("safe local engagement", () => {
     expect(engagementSummary(entries, "2026-07-24").recordingStreak).toBe(3)
   })
 
-  it("does not inspect distance, pain, memo, or plan compliance fields", () => {
-    const enrichedJournalRef = {
-      ...journal("2026-07-24"),
-      distanceKm: 999,
-      painParts: { knee: 5 },
+  it("does not count a memo-only entry as attendance", () => {
+    const memoOnly: PostSessionEntry = {
+      id: "memo-only",
+      kind: "post-session",
+      date: "2026-07-24",
+      savedAt: "2026-07-24T12:00:00.000Z",
+      syncState: "local",
+      system: "base",
+      title: "",
+      distanceKm: "",
+      durationMin: "",
+      avgPace: "",
+      rpe: 0,
       memo: "private text",
-      planCompleted: true,
+      memoPurpose: "PRIVATE_SELF_ONLY",
     }
-    const first = engagementSummary([enrichedJournalRef], "2026-07-24")
-    const second = engagementSummary([journal("2026-07-24", "evening")], "2026-07-24")
 
-    expect(first).toEqual(second)
-    expect(JSON.stringify(first)).not.toMatch(/distance|private text|memo|pain|plan/u)
+    expect(toEngagementJournalRef(memoOnly)).toBeNull()
+    expect(engagementSummary([], "2026-07-24")).toMatchObject({ points: 0, journalDays: 0 })
+  })
+
+  it("counts an explicit recovery check without reading its note", () => {
+    const recovery: EveningEntry = {
+      id: "recovery-check",
+      kind: "evening",
+      date: "2026-07-24",
+      savedAt: "2026-07-24T21:00:00.000Z",
+      syncState: "local",
+      sleepH: 0,
+      sleepQuality: 0,
+      weightKg: "",
+      restingHr: "",
+      painParts: { calf: 2 },
+      mood: 0,
+      note: "private text",
+      memoPurpose: "PRIVATE_SELF_ONLY",
+    }
+    const ref = toEngagementJournalRef(recovery)
+
+    expect(ref).toEqual({ date: "2026-07-24", kind: "evening" })
+    expect(engagementSummary(ref === null ? [] : [ref], "2026-07-24")).toMatchObject({
+      points: 4,
+      journalDays: 1,
+    })
   })
 
   it("does not award points for future or calendar-invalid dates", () => {
@@ -87,7 +113,6 @@ describe("safe local engagement", () => {
 
     expect(engagementSummary([], "2026-07-24")).toMatchObject({
       points: 0,
-      visitDays: 0,
     })
   })
 })

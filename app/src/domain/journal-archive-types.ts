@@ -16,8 +16,15 @@ export type ArchiveMetrics = {
   readonly painMax: number | null
 }
 
+export type ArchiveEntryShell = {
+  readonly id: string
+  readonly date: string
+  readonly kind: "post-session" | "evening" | "race"
+}
+
 export type ArchiveDaySummary = {
   readonly date: string
+  readonly entryShells: readonly ArchiveEntryShell[]
   readonly entryCount: number
   readonly kindCounts: ArchiveKindCounts
   readonly metrics: ArchiveMetrics

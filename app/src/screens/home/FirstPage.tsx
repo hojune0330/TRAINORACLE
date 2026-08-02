@@ -121,8 +121,8 @@ export function FirstPage({
         <div className="first-visit__points" aria-label={`오라클 포인트 ${oraclePoints}점`}>
           <Sparkles aria-hidden="true" size={18} strokeWidth={1.7} />
           <span>
-            <strong>오늘 방문으로 {oraclePoints}P가 쌓였어요.</strong>
-            <small>일지를 쓴 날은 +4P · 휴식일과 통증 기록도 포함</small>
+            <strong>첫 기록을 남기면 4P가 쌓여요.</strong>
+            <small>앱을 열기만 해서는 점수가 생기지 않아요 · 휴식일과 통증 기록도 포함</small>
           </span>
         </div>
         <button className="first-visit__primary" type="button" onClick={onOpenPlan}>
@@ -157,7 +157,7 @@ export function EmptyJournalHome({
         <Sparkles aria-hidden="true" size={18} strokeWidth={1.7} />
         <span>
           <strong>{oraclePoints}P</strong>
-          <small>방문 1P · 기록한 날 4P</small>
+          <small>훈련 기록 또는 회복 체크를 남긴 날 4P</small>
         </span>
       </div>
       <button className="first-visit__primary" type="button" onClick={onOpenPlan}>

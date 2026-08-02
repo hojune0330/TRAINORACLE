@@ -34,7 +34,7 @@ export function EngagementStrip({
         </span>
       </div>
       <p>
-        방문 1P · 기록한 날 4P. 쉰 날과 통증 체크도 같은 기록으로 인정해요.
+        훈련 기록 또는 회복 체크를 남긴 날 4P. 쉰 날과 통증 체크도 같은 기록으로 인정해요.
         거리·속도·훈련 완료에는 점수를 주지 않아요.
       </p>
       {summary.recordingStreak === 0 && summary.journalDays > 0 && (

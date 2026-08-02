@@ -84,7 +84,7 @@ input, textarea { font-family: inherit; }
   max-width: var(--app-shell-max-width);
   margin: 0 auto;
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   background: var(--surface);
   border-top: var(--bw-line) solid var(--ink);
   padding-bottom: env(safe-area-inset-bottom, 0px);

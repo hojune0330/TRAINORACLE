@@ -5,13 +5,14 @@ import type { ActivityParseResult } from "../../domain/import/activity-file"
 import type { ImportDraft, ImportSaveResult } from "../../domain/import/import-draft"
 import { mono, primaryBtn, secondaryBtn } from "./styles"
 
-export type ReadFailure = "unreadable" | "empty" | null
+export type ReadFailure = "unreadable" | "empty" | "too-large" | "cancelled" | null
 
-export function PickStage({ busy, failure, fileInputRef, onFile }: {
+export function PickStage({ busy, failure, fileInputRef, onFile, onCancel }: {
   readonly busy: boolean
   readonly failure: ReadFailure
   readonly fileInputRef: React.RefObject<HTMLInputElement>
   readonly onFile: (file: File) => void | Promise<void>
+  readonly onCancel: () => void
 }) {
   return (
     <div style={{ marginTop: 20, display: "flex", flexDirection: "column", gap: 14 }}>
@@ -43,7 +44,8 @@ export function PickStage({ busy, failure, fileInputRef, onFile }: {
         accept=".csv,.json,.tcx,.gpx,text/csv,application/json,application/xml,text/xml"
         disabled={busy}
         onChange={(event) => {
-          const file = event.target.files?.[0]
+          const file = event.currentTarget.files?.[0]
+          event.currentTarget.value = ""
           if (file !== undefined) void onFile(file)
         }}
         style={{
@@ -52,14 +54,25 @@ export function PickStage({ busy, failure, fileInputRef, onFile }: {
           border: "1px dashed var(--line)", background: "var(--surface)", color: "var(--ink)",
         }}
       />
-      {busy && <p role="status" style={{ ...mono, fontSize: 12, color: "var(--ink-3)", margin: 0 }}>읽는 중…</p>}
+      {busy && (
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10 }}>
+          <p role="status" style={{ ...mono, fontSize: 12, color: "var(--ink-3)", margin: 0 }}>읽는 중…</p>
+          <button type="button" onClick={onCancel} style={{ ...secondaryBtn, width: "auto", minHeight: 44 }}>
+            가져오기 취소
+          </button>
+        </div>
+      )}
 
       {failure !== null && (
         <div role="alert" data-testid="import-failure" style={{ border: "1px solid var(--pain-5)", background: "var(--surface)", padding: "10px 13px" }}>
           <div style={{ ...mono, fontSize: 10.5, color: "var(--ink)", lineHeight: 1.6 }}>
             {failure === "empty"
               ? "파일은 읽었지만 일지로 옮길 활동을 찾지 못했어요. 날짜·거리·시간이 비어 있는 파일일 수 있어요."
-              : "이 파일을 읽지 못했어요. .csv, .json, .tcx 또는 .gpx 파일인지 확인해 주세요."}
+              : failure === "too-large"
+                ? "파일이 너무 커요. 10MB 이하 파일로 나누어 다시 골라 주세요."
+                : failure === "cancelled"
+                  ? "가져오기를 취소했어요. 같은 파일도 다시 고를 수 있어요."
+                  : "이 파일을 읽지 못했어요. .csv, .json, .tcx 또는 .gpx 파일인지 확인해 주세요."}
             <br />기존 일지는 그대로 있어요.
           </div>
         </div>
@@ -154,10 +167,15 @@ export function SavedStage({ outcome, onOpenLog, onRestart }: {
   readonly onOpenLog?: () => void
   readonly onRestart: () => void
 }) {
+  const resultLabel = outcome.saved === 0
+    ? "가져오기 실패"
+    : outcome.failed > 0
+      ? "일부 완료"
+      : "가져오기 완료"
   return (
     <div style={{ marginTop: 20, display: "flex", flexDirection: "column", gap: 14 }}>
       <div data-testid="import-saved" style={{ border: "1px solid var(--ink)", background: "var(--surface)", padding: "14px 16px" }}>
-        <div style={{ ...mono, fontSize: 10, color: "var(--ink-3)", letterSpacing: "0.1em" }}>가져오기 완료</div>
+        <div style={{ ...mono, fontSize: 10, color: "var(--ink-3)", letterSpacing: "0.1em" }}>{resultLabel}</div>
         <div style={{ fontFamily: "var(--sans)", fontSize: 16, fontWeight: 500, marginTop: 5 }}>{outcome.saved}건을 일지에 저장했어요</div>
         {outcome.failed > 0 && (
           <div style={{ ...mono, fontSize: 10.5, color: "var(--pain-5)", lineHeight: 1.6, marginTop: 6 }}>

@@ -15,18 +15,16 @@ import { Account } from "./screens/Account"
 import { ImportActivities } from "./screens/ImportActivities"
 import { RestoreBackup } from "./screens/RestoreBackup"
 import { accountFeatureEnabled } from "./domain/account/config"
-import { loadEntries, localOnlyCount, todayISO } from "./domain/journal-store"
+import { loadEntries, localOnlyCount } from "./domain/journal-store"
 import type { JournalEntry } from "./domain/journal-store"
 import { createSavedFactReceipt } from "./domain/save-receipt"
 import { dismissFirstVisit, hasDismissedFirstVisit } from "./domain/onboarding-state"
-import { recordDailyVisit } from "./domain/engagement"
 import { trackProductEvent } from "./domain/account/product-analytics-service"
 import { INITIAL_VIEW_STATE, viewForTab } from "./domain/app-shell-state"
 const TOAST_READABLE_MS = 4000
 const TOAST_EXIT_MS = 150
 
 export function AppShell() {
-  React.useState(() => recordDailyVisit(todayISO()))
   const [v, setV] = React.useState(INITIAL_VIEW_STATE)
   const [savedToast, setSavedToast] = React.useState<ShellToastState | null>(null)
   const [athleteRecordsOpen, setAthleteRecordsOpen] = React.useState(false)

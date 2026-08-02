@@ -8,7 +8,6 @@ describe("engagement status", () => {
   it("explains that a missed streak wilts the plant without removing cumulative rewards", () => {
     render(<EngagementStrip summary={{
       points: 24,
-      visitDays: 4,
       journalDays: 5,
       recordingStreak: 0,
       pointMeaning: "NON_ECONOMIC_LOCAL_BETA",

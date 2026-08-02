@@ -1,9 +1,12 @@
 import React from "react"
 import { SectionLb } from "../../components/JournalPrimitives"
 import { eraseAllLocalData } from "../../domain/erase-local-data"
+import { SafeJournalExport } from "../home/DeviceJournal"
 import { secondaryBtn } from "./styles"
 
-export function EraseLocalData() {
+export function EraseLocalData({ onOpenRestore }: {
+  readonly onOpenRestore?: () => void
+} = {}) {
   const [confirming, setConfirming] = React.useState(false)
   const [done, setDone] = React.useState<string | null>(null)
 
@@ -21,14 +24,23 @@ export function EraseLocalData() {
     <div style={{ marginTop: 28, paddingTop: 18, borderTop: "1px solid var(--line)" }}>
       <SectionLb>이 기기 데이터 지우기</SectionLb>
       <p style={{ fontFamily: "var(--sans)", fontSize: 12.5, lineHeight: 1.6, color: "var(--ink-2)", margin: "8px 0 0" }}>
-        이 기기에 저장된 일지·계획·로그인 정보를 모두 지워요.
+        이 기기에 저장된 일지·계획·포인트·로그인 정보를 모두 지워요.
         <b> 되돌릴 수 없으니 필요하면 먼저 백업을 받아 두세요.</b>
       </p>
 
+      {done === null && <SafeJournalExport onOpenRestore={onOpenRestore} />}
+
       {done !== null ? (
-        <p role="status" data-testid="erase-result" style={{ fontFamily: "var(--mono)", fontSize: 12, color: "var(--ink-2)", margin: "10px 0 0" }}>
-          {done}
-        </p>
+        <div style={{ marginTop: 10 }}>
+          <p role="status" data-testid="erase-result" style={{ fontFamily: "var(--mono)", fontSize: 12, color: "var(--ink-2)", margin: 0 }}>
+            {done}
+          </p>
+          {onOpenRestore && (
+            <button type="button" onClick={onOpenRestore} style={{ ...secondaryBtn, marginTop: 10, minHeight: 44 }}>
+              백업 파일 되돌리기
+            </button>
+          )}
+        </div>
       ) : confirming ? (
         <div style={{ display: "flex", flexDirection: "column", gap: 8, marginTop: 10 }}>
           <p style={{ fontFamily: "var(--sans)", fontSize: 13, fontWeight: 600, margin: 0 }}>
