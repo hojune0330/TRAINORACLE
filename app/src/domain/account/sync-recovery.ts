@@ -2,6 +2,7 @@ import { z } from "zod"
 import { parseJournalEntryList } from "../journal-schema"
 import type { JournalEntry } from "../journal-schema"
 import { loadEntries, replaceAllEntries } from "../journal-store"
+import { SYNC_RECOVERY_STORAGE_KEY } from "../journal-storage-keys"
 import { hasPrivateMemoText } from "../private-memo-vault"
 import { mergeEntries } from "./sync-local"
 import {
@@ -12,7 +13,7 @@ import {
 } from "./tombstone"
 import type { Tombstone } from "./tombstone"
 
-const RECOVERY_KEY = "trainoracle.sync.recovery.v1"
+const RECOVERY_KEY = SYNC_RECOVERY_STORAGE_KEY
 const MAX_RECOVERY_AGE_MS = 7 * 24 * 60 * 60 * 1_000
 const MAX_FUTURE_CLOCK_SKEW_MS = 5 * 60 * 1_000
 

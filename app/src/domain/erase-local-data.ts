@@ -17,6 +17,11 @@
 //  - 로그인 토큰도 지운다. 기기를 넘기는데 계정이 남아 있으면 안 된다.
 //  - 실패를 숨기지 않는다. 지워진 키와 실패한 키를 그대로 돌려준다.
 import { ATHLETE_RECORDS_STORAGE_KEY } from "./athlete-records"
+import {
+  PRIVATE_MEMO_VAULT_STORAGE_KEY,
+  PRIVATE_NOTE_RECOVERY_STORAGE_KEY,
+  SYNC_RECOVERY_STORAGE_KEY,
+} from "./journal-storage-keys"
 
 /** 일지 본문이 담기는 키 — 반드시 지운다 */
 const CONTENT_KEYS = [
@@ -26,7 +31,8 @@ const CONTENT_KEYS = [
   // 30일 동안 기기에 남는다. 기기를 넘기는 상황에서 가장 위험한 누락이다.
   "trainoracle.journal.trash.v1",
   "trainoracle.journal.full-backup.v1",
-  "trainoracle.sync.recovery.v1",
+  SYNC_RECOVERY_STORAGE_KEY,
+  PRIVATE_MEMO_VAULT_STORAGE_KEY,
   ATHLETE_RECORDS_STORAGE_KEY,
   "trainoracle.plan-beta.v1",
   "trainoracle.plan-beta.history.v1",
@@ -34,6 +40,8 @@ const CONTENT_KEYS = [
   "trainoracle.engagement.v1",
   "trainoracle.onboarding.dismissed.v1",
 ] as const
+
+const SESSION_KEYS = [PRIVATE_NOTE_RECOVERY_STORAGE_KEY] as const
 
 /** 계정·동기화 관련 키 — 기기를 넘길 때 남으면 안 된다 */
 const ACCOUNT_KEYS = [
@@ -73,13 +81,37 @@ export type EraseResult = {
   readonly failed: readonly string[]
 }
 
-function storage(): Storage | null {
+function storage(kind: "local" | "session"): Storage | null {
   try {
     if (typeof window === "undefined") return null
-    return window.localStorage
-  } catch {
-    return null
+    return kind === "local" ? window.localStorage : window.sessionStorage
+  } catch (error) {
+    if (error instanceof Error) return null
+    throw error
   }
+}
+
+function clearStorageKeys(
+  target: Storage,
+  keys: readonly string[],
+  failed: string[],
+): number {
+  let cleared = 0
+  for (const key of keys) {
+    try {
+      const existed = target.getItem(key) !== null
+      target.removeItem(key)
+      if (target.getItem(key) !== null) {
+        failed.push(key)
+        continue
+      }
+      if (existed) cleared += 1
+    } catch (error) {
+      if (error instanceof Error) failed.push(key)
+      else throw error
+    }
+  }
+  return cleared
 }
 
 /**
@@ -87,7 +119,7 @@ function storage(): Storage | null {
  * 서버에 올라간 사본은 지우지 않는다 — 그건 동기화(삭제 전파)의 몫이다.
  */
 export function eraseAllLocalData(options: EraseOptions = {}): EraseResult {
-  const localStorage = storage()
+  const localStorage = storage("local")
   if (localStorage === null) return { ok: false, cleared: 0, failed: ["storage-unavailable"] }
 
   const keys: string[] = [...CONTENT_KEYS, ...ACCOUNT_KEYS]
@@ -95,21 +127,13 @@ export function eraseAllLocalData(options: EraseOptions = {}): EraseResult {
     keys.push(DELETION_RECORD_KEY)
   }
 
-  let cleared = 0
   const failed: string[] = []
-  for (const key of keys) {
-    try {
-      const existed = localStorage.getItem(key) !== null
-      localStorage.removeItem(key)
-      // 정말 지워졌는지 확인한다 — removeItem이 조용히 실패하는 환경이 있다
-      if (localStorage.getItem(key) !== null) {
-        failed.push(key)
-        continue
-      }
-      if (existed) cleared += 1
-    } catch {
-      failed.push(key)
-    }
+  let cleared = clearStorageKeys(localStorage, keys, failed)
+  const sessionStorage = storage("session")
+  if (sessionStorage === null) {
+    failed.push("session-storage-unavailable")
+  } else {
+    cleared += clearStorageKeys(sessionStorage, SESSION_KEYS, failed)
   }
 
   return { ok: failed.length === 0, cleared, failed }
@@ -117,7 +141,7 @@ export function eraseAllLocalData(options: EraseOptions = {}): EraseResult {
 
 /** 지워질 대상 키 목록 — UI에서 "무엇이 지워지는지" 보여줄 때 쓴다 */
 export function erasableKeys(options: EraseOptions = {}): readonly string[] {
-  const keys: string[] = [...CONTENT_KEYS, ...ACCOUNT_KEYS]
+  const keys: string[] = [...CONTENT_KEYS, ...ACCOUNT_KEYS, ...SESSION_KEYS]
   if (options.includeDeletionRecord === true) {
     keys.push(DELETION_RECORD_KEY)
   }

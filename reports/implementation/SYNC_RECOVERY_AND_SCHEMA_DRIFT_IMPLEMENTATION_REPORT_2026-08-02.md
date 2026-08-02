@@ -13,7 +13,7 @@ Base main: `44d5dc03c946a1aae2f5b1fe61b98c5cb7670271`
 - A checkpoint from another account, a malformed checkpoint, a checkpoint containing private memo plaintext, or a checkpoint older than seven days is discarded without changing current entries.
 - The checkpoint is cleared only after the full pull, merge, push, and delete propagation sequence succeeds.
 - A private memo pulled from another device is moved into the encrypted local vault before the journal is written; the normal journal keeps only its empty shell and the next sync remains usable.
-- Full-device erase removes the recovery checkpoint, so erased entries cannot return and a new device user is not blocked by an old account checkpoint.
+- Full-device erase removes the sync checkpoint, encrypted private-memo vault, and tab-scoped recovery code, so erased entries cannot return, encrypted notes cannot remain decryptable in the tab, and a new device user is not blocked by an old account checkpoint.
 - The previous monolithic sync module is split into preview, execution, guard, recovery, and result-type modules; every production TypeScript file in this slice stays below 250 pure lines.
 
 ## Privacy boundary
@@ -31,14 +31,14 @@ This migration is committed to the repository only. It has not been applied to a
 - PIN: existing sync characterization `37/37` passed before implementation.
 - RED: missing recovery module, missing migration, old-server acceptance, and interrupted-sync cases failed before implementation.
 - GREEN: focused sync, recovery, schema, session, and panel tests passed.
-- Focused recovery, erase, and private-note regression suite: `52/52` passed.
-- Full app unit suite: `645/645` passed.
+- Focused recovery, erase, and private-note regression suite: `48/48` passed.
+- Full app unit suite: `646/646` passed after the final private-vault/session erase correction.
 - App and browser TypeScript checks passed.
 - Production build passed.
 - Repository contract tests, D9 evaluator, and implementation tests passed.
 - Browser suite: `189` passed, `39` viewport-conditional scenarios skipped, `0` failed across desktop, mobile, 320px, and reduced-motion projects.
 - Hostile schema mutations are rejected for version downgrade, downgrade-guard removal, direct-table access, anonymous action access, and missing authentication.
-- Independent review findings for full-device erase, remote private-note pull, invalid-checkpoint deadlock, stale-checkpoint resurrection, and oversized test structure were reproduced and corrected before merge.
+- Independent review findings for full-device erase, encrypted private-vault/session-code retention, remote private-note pull, invalid-checkpoint deadlock, stale-checkpoint resurrection, and oversized test structure were reproduced and corrected before merge.
 
 ## Honest limit
 

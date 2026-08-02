@@ -18,9 +18,12 @@ const PLAN = "trainoracle.plan-beta.v1"
 const CONSENT = "trainoracle.sync.consent.v1"
 const SYNC_OWNER = "trainoracle.sync.owner.v1"
 const SYNC_RECOVERY = "trainoracle.sync.recovery.v1"
+const PRIVATE_MEMO_VAULT = "trainoracle.private-memo.v1"
+const PRIVATE_NOTE_RECOVERY = "trainoracle.private-note.recovery.v1"
 
 beforeEach(() => {
   window.localStorage.clear()
+  window.sessionStorage.clear()
 })
 
 function seed(): void {
@@ -53,6 +56,11 @@ function seed(): void {
     }],
     tombstones: [],
   }))
+  window.localStorage.setItem(PRIVATE_MEMO_VAULT, JSON.stringify({
+    version: 1,
+    records: { private: { encrypted: { ciphertext: "secret" } } },
+  }))
+  window.sessionStorage.setItem(PRIVATE_NOTE_RECOVERY, "session-secret")
   window.localStorage.setItem(TOMBSTONES, JSON.stringify([{ id: "gone", deletedAt: "2026-07-20T00:00:00.000Z" }]))
 }
 
@@ -114,6 +122,15 @@ describe("eraseAllLocalData", () => {
     seed()
     eraseAllLocalData()
     expect(recoverPendingSync("athlete-b")).toEqual({ ok: true, recovered: false })
+  })
+
+  it("암호화된 개인 메모 보관함과 현재 탭의 복구 코드도 지운다", () => {
+    seed()
+    eraseAllLocalData()
+    expect(erasableKeys()).toContain(PRIVATE_MEMO_VAULT)
+    expect(erasableKeys()).toContain(PRIVATE_NOTE_RECOVERY)
+    expect(window.localStorage.getItem(PRIVATE_MEMO_VAULT)).toBeNull()
+    expect(window.sessionStorage.getItem(PRIVATE_NOTE_RECOVERY)).toBeNull()
   })
 
   it("삭제 기록은 기본으로 **남긴다** — 서버 사본 부활 방지", () => {

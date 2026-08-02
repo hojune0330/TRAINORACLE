@@ -1,6 +1,9 @@
 import { z } from "zod"
 import type { JournalEntry } from "./journal-schema"
-import { JOURNAL_STORAGE_KEY } from "./journal-storage-keys"
+import {
+  JOURNAL_STORAGE_KEY,
+  PRIVATE_MEMO_VAULT_STORAGE_KEY,
+} from "./journal-storage-keys"
 import {
   decryptPrivateNote,
   encryptPrivateNote,
@@ -8,7 +11,7 @@ import {
 } from "./account/private-note-crypto"
 import type { EncryptedPrivateNote } from "./account/private-note-crypto"
 
-export const PRIVATE_MEMO_VAULT_STORAGE_KEY = "trainoracle.private-memo.v1"
+export { PRIVATE_MEMO_VAULT_STORAGE_KEY }
 
 const encryptedRecordSchema: z.ZodType<PrivateMemoRecord> = z.object({
   encrypted: z.object({
