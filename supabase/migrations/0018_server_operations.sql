@@ -164,13 +164,19 @@ language plpgsql
 security definer
 set search_path = public
 as $$
+declare
+  required_feature text := tg_argv[0];
 begin
-  if coalesce(auth.jwt() ->> 'role', '') <> 'service_role'
-    and auth.uid() is not null
-    and not public.service_feature_enabled(tg_argv[0]) then
-    raise exception using
-      errcode = '42501',
-      message = 'SERVER_FEATURE_DISABLED_' || tg_argv[0];
+  if coalesce(auth.jwt() ->> 'role', '') <> 'service_role' and auth.uid() is not null then
+    if required_feature <> 'ACCOUNT'
+      and not public.service_feature_enabled('ACCOUNT') then
+      raise exception 'account feature disabled' using errcode = '42501';
+    end if;
+    if not public.service_feature_enabled(required_feature) then
+      raise exception using
+        errcode = '42501',
+        message = 'SERVER_FEATURE_DISABLED_' || required_feature;
+    end if;
   end if;
   if tg_op = 'DELETE' then
     return old;

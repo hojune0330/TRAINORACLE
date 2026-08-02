@@ -140,6 +140,18 @@ describe("server operations migration", () => {
     expect(() => assertFeatureTrigger(mutated, triggerName, tableName, feature)).toThrow(/wrong trigger feature/u)
   })
 
+  it("treats ACCOUNT as the master gate for every account-backed server write", () => {
+    const migration = loadMigration()
+    const writeGuard = migration.slice(
+      migration.indexOf("create or replace function public.enforce_service_feature_write"),
+      migration.indexOf("revoke all on function public.enforce_service_feature_write"),
+    )
+
+    expect(writeGuard).toContain("required_feature <> 'ACCOUNT'")
+    expect(writeGuard).toContain("not public.service_feature_enabled('ACCOUNT')")
+    expect(writeGuard).toContain("account feature disabled")
+  })
+
   it("gates shared journal reads through sync and current connection authority", () => {
     const migration = loadMigration()
     const sharedJournal = migration.slice(
