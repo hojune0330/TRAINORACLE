@@ -9,7 +9,6 @@ export type AccountActionResult = {
 export type SaveProfileInput = {
   readonly userId: string
   readonly birthDate: string
-  readonly analyticsOptIn: boolean
 }
 
 export async function savePrivateProfile(input: SaveProfileInput): Promise<AccountActionResult> {
@@ -24,7 +23,6 @@ export async function savePrivateProfile(input: SaveProfileInput): Promise<Accou
   const { error } = await client.from("user_private_profiles").upsert({
     user_id: input.userId,
     birth_date: input.birthDate,
-    analytics_opt_in: input.analyticsOptIn,
   }, { onConflict: "user_id" })
   return error === null
     ? { ok: true, message: "계정 정보를 저장했어요." }

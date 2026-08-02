@@ -23,12 +23,11 @@ describe("beta account settings", () => {
     expect(saveProfile).toHaveBeenCalledWith({
       userId: "athlete-a",
       birthDate: "2013-08-02",
-      analyticsOptIn: false,
     })
     expect(screen.getByText(/보호자 확인 전에는 동기화와 공유를 열지 않아요/u)).toBeVisible()
   })
 
-  it("keeps product analytics optional", async () => {
+  it("does not bundle product analytics consent into private profile saving", async () => {
     const saveProfile = vi.fn().mockResolvedValue({ ok: true, message: "저장했어요." })
     render(
       <BetaAccountSettings
@@ -40,10 +39,13 @@ describe("beta account settings", () => {
     )
 
     await userEvent.type(screen.getByLabelText("생년월일"), "2000-01-01")
-    await userEvent.click(screen.getByLabelText("익명 사용 흐름 분석에 참여"))
     await userEvent.click(screen.getByRole("button", { name: "계정 정보 저장" }))
 
-    expect(saveProfile).toHaveBeenCalledWith(expect.objectContaining({ analyticsOptIn: true }))
+    expect(saveProfile).toHaveBeenCalledWith({
+      userId: "athlete-a",
+      birthDate: "2000-01-01",
+    })
+    expect(screen.queryByText(/사용 흐름 분석/u)).not.toBeInTheDocument()
   })
 
   it("requires two clicks before requesting server account deletion", async () => {
