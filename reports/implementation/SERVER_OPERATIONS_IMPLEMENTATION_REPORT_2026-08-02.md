@@ -1,7 +1,7 @@
 # TrainOracle 서버 운영 안전장치 구현 보고서
 
 > 이 문서는 `0018` 구현 당시의 기록이다. 현재 데이터베이스 적용 순서는
-> `docs/SUPABASE_SETUP.md`의 `0001`~`0019`이며, 시험 적용 증거는
+> `docs/SUPABASE_SETUP.md`의 `0001`~`0020`이며, 시험 적용 증거는
 > `reports/operations/SUPABASE_TRIAL_MIGRATION_RECEIPT_2026-08-02.md`에 있다.
 
 ## 한눈에 보기

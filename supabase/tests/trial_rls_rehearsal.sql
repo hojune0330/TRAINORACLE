@@ -69,6 +69,22 @@ begin
     raise exception 'cross-account private-note leak: % rows', visible_private_notes;
   end if;
 
+  if public.first_link_guardian_requirement_met(
+    '11111111-1111-4111-8111-111111111111',
+    null,
+    current_date
+  ) then
+    raise exception 'cross-account guardian age status leaked';
+  end if;
+
+  if not public.first_link_guardian_requirement_met(
+    '22222222-2222-4222-8222-222222222222',
+    null,
+    current_date
+  ) then
+    raise exception 'own adult guardian requirement check failed';
+  end if;
+
   begin
     insert into public.journal_entries (user_id, entry_id, saved_at, entry)
     values (
@@ -167,3 +183,6 @@ end;
 $$;
 
 rollback;
+
+select 'PASS' as trial_rls_rehearsal,
+       'cross-account, guardian boundary, deletion, analytics, rollback' as verified_boundaries;
