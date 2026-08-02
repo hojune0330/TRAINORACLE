@@ -18,6 +18,7 @@ test("does not expose the P3 active-template fixture in a production build", asy
 }) => {
   await page.goto("/?p3-pace-fixture=1")
 
+  await page.getByRole("button", { name: "홈 먼저 둘러보기" }).click()
   await expect(page.getByRole("navigation", { name: "주 탭" })).toBeVisible()
   await expect(
     page.getByRole("heading", { name: "기준 기록을 고르세요" }),

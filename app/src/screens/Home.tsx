@@ -98,13 +98,14 @@ export function Home({
           )}
         </div>
       )}
-      {!(isEmpty && firstVisitActive) && <DailyContextTags date={today} />}
+      {!isEmpty && <DailyContextTags date={today} />}
       {isEmpty ? (
         firstVisitActive ? (
           <FirstPage
             onWriteLog={onWriteLog}
             onOpenPlan={onOpenPlan}
             onDismiss={onDismissFirstVisit}
+            onOpenRestore={onOpenRestore}
             oraclePoints={engagement.points}
           />
         ) : (
@@ -112,7 +113,6 @@ export function Home({
             onWriteLog={onWriteLog}
             onOpenPlan={onOpenPlan}
             onOpenRestore={onOpenRestore}
-            oraclePoints={engagement.points}
           />
         )
       ) : (
@@ -129,6 +129,7 @@ export function Home({
           engagement={engagement}
         />
       )}
+      {isEmpty && !firstVisitActive && <DailyContextTags date={today} />}
 
       {/*
         휴지통은 빈 화면/데이터 화면 **양쪽 바깥**에 둔다.

@@ -263,8 +263,7 @@ export function Guide({ onWriteLog }: { onWriteLog?: () => void }) {
           알려주신 것부터 고쳐요.
         </p>
         <a
-          href="https://github.com/hojune0330/TRAINORACLE/issues"
-          target="_blank" rel="noreferrer"
+          href="?feedback=1"
           data-testid="contact-link"
           style={{
             display: "flex", alignItems: "center", justifyContent: "center",
@@ -274,7 +273,7 @@ export function Guide({ onWriteLog }: { onWriteLog?: () => void }) {
             textDecoration: "none",
           }}
         >
-          의견 남기기 (GitHub Issues)
+          문의 게시판 열기
         </a>
         <p style={{ fontFamily: "var(--mono)", fontSize: 10, color: "var(--ink-4)", lineHeight: 1.65, margin: "8px 0 0" }}>
           일지 내용은 자동으로 전송되지 않아요. 남기실 내용만 직접 적어 주세요.

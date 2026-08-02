@@ -67,4 +67,13 @@ describe("home journal controls", () => {
     await user.click(screen.getByRole("button", { name: "취소" }))
     expect(screen.queryByRole("dialog", { name: "메모까지 포함할까요?" })).toBeNull()
   })
+
+  it("shows the empty-journal decision before optional daily context tags", () => {
+    window.localStorage.clear()
+    render(<Home firstVisitActive={false} />)
+
+    const heading = screen.getByRole("heading", { name: "아직 기록이 없어요." })
+    const context = screen.getByRole("region", { name: "오늘의 기분 몸 상태 날씨" })
+    expect(heading.compareDocumentPosition(context) & Node.DOCUMENT_POSITION_FOLLOWING).not.toBe(0)
+  })
 })

@@ -10,6 +10,7 @@ describe("product feature kill switches", () => {
       experimentalFatigue: false,
       decorationShop: true,
       productAnalytics: false,
+      feedbackBoard: false,
     })
   })
 
@@ -26,5 +27,13 @@ describe("product feature kill switches", () => {
       VITE_FEATURE_SHARING: "true",
       VITE_KILL_SHARING: "true",
     }).sharing).toBe(false)
+  })
+
+  it("opens and closes the feedback board independently from account features", () => {
+    expect(resolveProductFeatures({ VITE_FEATURE_FEEDBACK_BOARD: "true" }).feedbackBoard).toBe(true)
+    expect(resolveProductFeatures({
+      VITE_FEATURE_FEEDBACK_BOARD: "true",
+      VITE_KILL_FEEDBACK_BOARD: "true",
+    }).feedbackBoard).toBe(false)
   })
 })

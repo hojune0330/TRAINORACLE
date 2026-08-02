@@ -132,6 +132,13 @@ export class ErrorBoundary extends React.Component<Props, State> {
           오류 내용은 이 기기 밖으로 전송되지 않아요.
         </p>
 
+        <a
+          href="?feedback=1"
+          style={{ color: "var(--ink, #23201B)", fontSize: 14, minHeight: 44, display: "flex", alignItems: "center" }}
+        >
+          문의 게시판에 알리기
+        </a>
+
         {this.state.detail !== "" && (
           <details style={{ ...mono, fontSize: 10.5, color: "var(--ink-4, #8A8578)" }}>
             <summary style={{ cursor: "pointer", minHeight: 32 }}>기술 정보</summary>

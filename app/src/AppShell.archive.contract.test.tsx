@@ -65,7 +65,8 @@ describe("AppShell journal archive routing", () => {
     window.localStorage.clear()
     render(<AppShell />)
 
-    expect(screen.getByLabelText("오라클 포인트 0점")).toBeVisible()
+    expect(screen.getByRole("button", { name: "오늘 기록 시작하기" })).toBeVisible()
+    expect(screen.queryByLabelText(/오라클 포인트/u)).not.toBeInTheDocument()
     expect(window.localStorage.getItem("trainoracle.engagement.v1")).toBeNull()
   })
 })

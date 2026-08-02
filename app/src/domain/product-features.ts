@@ -5,6 +5,7 @@ export type ProductFeatures = {
   readonly experimentalFatigue: boolean
   readonly decorationShop: boolean
   readonly productAnalytics: boolean
+  readonly feedbackBoard: boolean
 }
 
 const SAFE_DEFAULTS: ProductFeatures = {
@@ -14,6 +15,7 @@ const SAFE_DEFAULTS: ProductFeatures = {
   experimentalFatigue: false,
   decorationShop: true,
   productAnalytics: false,
+  feedbackBoard: false,
 }
 
 function isTrue(env: Readonly<Record<string, unknown>>, key: string): boolean {
@@ -37,6 +39,7 @@ export function resolveProductFeatures(env: Readonly<Record<string, unknown>>): 
     experimentalFatigue: enabled(env, "EXPERIMENTAL_FATIGUE"),
     decorationShop: enabled(env, "DECORATION_SHOP", SAFE_DEFAULTS.decorationShop),
     productAnalytics: enabled(env, "PRODUCT_ANALYTICS"),
+    feedbackBoard: enabled(env, "FEEDBACK_BOARD"),
   }
 }
 

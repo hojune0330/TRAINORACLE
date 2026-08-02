@@ -18,6 +18,7 @@ export function AppShellFrame({
   onDismissToast,
   onOpenTrends,
   onTab,
+  hideTabBar = false,
 }: {
   readonly children: React.ReactNode
   readonly scrollRegionRef: React.RefObject<HTMLElement>
@@ -26,6 +27,7 @@ export function AppShellFrame({
   readonly onDismissToast: () => void
   readonly onOpenTrends: () => void
   readonly onTab: (tab: AppTab) => void
+  readonly hideTabBar?: boolean
 }) {
   return (
     <div className="app-shell" style={{
@@ -46,7 +48,7 @@ export function AppShellFrame({
           onOpenTrends={onOpenTrends}
         />
       )}
-      <TabBar tab={tab} onTab={onTab} />
+      {!hideTabBar && <TabBar tab={tab} onTab={onTab} />}
     </div>
   )
 }

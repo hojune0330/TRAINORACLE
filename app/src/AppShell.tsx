@@ -24,13 +24,17 @@ import { INITIAL_VIEW_STATE, viewForTab } from "./domain/app-shell-state"
 const TOAST_READABLE_MS = 4000
 const TOAST_EXIT_MS = 150
 
+function isExplicitAppEntry(): boolean {
+  return new URLSearchParams(window.location.search).get("app") === "1"
+}
+
 export function AppShell() {
   const [v, setV] = React.useState(INITIAL_VIEW_STATE)
   const [savedToast, setSavedToast] = React.useState<ShellToastState | null>(null)
   const [athleteRecordsOpen, setAthleteRecordsOpen] = React.useState(false)
   const scrollRegionRef = React.useRef<HTMLElement>(null)
   const [firstVisitActive, setFirstVisitActive] = React.useState(
-    () => localOnlyCount() === 0 && !hasDismissedFirstVisit(),
+    () => localOnlyCount() === 0 && !hasDismissedFirstVisit() && !isExplicitAppEntry(),
   )
 
   React.useEffect(() => {
@@ -229,6 +233,7 @@ export function AppShell() {
       onDismissToast={() => setSavedToast(null)}
       onOpenTrends={goTrendsFromReceipt}
       onTab={goTab}
+      hideTabBar={v.tab === "home" && firstVisitActive && v.detailDate === null && !v.restoreOpen}
     >
       {screen}
     </AppShellFrame>

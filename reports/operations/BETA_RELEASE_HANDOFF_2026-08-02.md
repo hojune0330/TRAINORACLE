@@ -38,7 +38,7 @@
 ## 운영 DB 영수증
 
 > 아래 `0001`~`0018` 목록과 실행 순서는 이 문서가 작성된 당시의 역사 기록이다.
-> 현재 실행에는 `docs/SUPABASE_SETUP.md`의 `0001`~`0020` 절차만 사용한다.
+> 현재 실행에는 `docs/SUPABASE_SETUP.md`의 `0001`~`0025` 절차만 사용한다.
 
 저장소에는 `0001_journal_sync.sql`부터 `0018_server_operations.sql`까지 18개 migration이 순서대로 있다.
 

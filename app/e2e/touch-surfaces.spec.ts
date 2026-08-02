@@ -14,20 +14,20 @@ function requireTouchProject(projectName: string) {
 
 test("audits empty home and chooser touch actions", async ({ page }, testInfo) => {
   requireTouchProject(testInfo.project.name)
-  await page.goto("/?app=1")
+  await page.goto("/")
   await auditTouchTargets(page, [
-    { name: "empty-home.plan", locator: page.getByRole("button", { name: /훈련계획 후보 만들기/u }), heightOnly: true },
-    { name: "empty-home.first-entry", locator: page.getByRole("button", { name: /첫 일지 쓰기/u }), heightOnly: true },
-    { name: "empty-home.other-start", locator: page.getByRole("button", { name: /다른 시작 방법 보기/u }), heightOnly: true },
-    { name: "empty-home.tabs", locator: page.getByRole("navigation", { name: "주 탭" }).getByRole("button"), count: 5 },
+    { name: "empty-home.plan", locator: page.getByRole("button", { name: /훈련계획 먼저 보기/u }), heightOnly: true },
+    { name: "empty-home.first-entry", locator: page.getByRole("button", { name: /오늘 기록 시작하기/u }), heightOnly: true },
+    { name: "empty-home.browse", locator: page.getByRole("button", { name: /홈 먼저 둘러보기/u }), heightOnly: true },
   ])
+  await expect(page.getByRole("navigation", { name: "주 탭" })).toHaveCount(0)
   await expectNoHorizontalOverflow(page)
-  await page.getByRole("button", { name: /첫 일지 쓰기/u }).click()
+  await page.getByRole("button", { name: /오늘 기록 시작하기/u }).click()
   await auditTouchTargets(page, [
-    { name: "chooser.back", locator: page.getByRole("button", { name: "← 뒤로" }) },
-    { name: "chooser.post", locator: page.getByRole("button", { name: /훈련 후.*방금 끝낸/u }), heightOnly: true },
-    { name: "chooser.evening", locator: page.getByRole("button", { name: /하루 마무리.*수면/u }), heightOnly: true },
-    { name: "chooser.race", locator: page.getByRole("button", { name: /경기 직전\/직후.*기록/u }), heightOnly: true },
+    { name: "chooser.back", locator: page.getByRole("button", { name: "이전 화면으로" }) },
+    { name: "chooser.post", locator: page.getByRole("button", { name: /훈련을 기록하고 싶어요/u }), heightOnly: true },
+    { name: "chooser.evening", locator: page.getByRole("button", { name: /하루와 몸 상태를 기록할래요/u }), heightOnly: true },
+    { name: "chooser.race", locator: page.getByRole("button", { name: /경기를 기록할래요/u }), heightOnly: true },
   ])
   await expectNoHorizontalOverflow(page)
 })
