@@ -1,5 +1,8 @@
 import { parseJournalEntryList } from "../journal-schema"
+import type { JournalEntry } from "../journal-schema"
+import { journalStorage } from "../journal-local-storage"
 import { loadEntries, replaceAllEntries } from "../journal-store"
+import { savePrivateMemosWithJournalShells } from "../private-memo-vault"
 import { loadSessionRecoveryCode } from "./private-note-sync"
 import { pullPrivateJournalEntries, pushPrivateJournalEntries } from "./private-note-remote"
 import {
@@ -88,8 +91,26 @@ export async function syncNow(userId: string): Promise<SyncOutcome> {
     return failed("삭제 기록을 이 기기에 저장하지 못해 동기화를 멈췄어요. 로컬 일지는 그대로예요.")
   }
   const deletedIds = tombstonedIds(tombstones)
-  const merged = mergeEntries(local, [...remote, ...privatePull.entries], deletedIds)
-  if (!replaceAllEntries(merged).ok) {
+  const mergedBeforePrivateVault = mergeEntries(local, [...remote, ...privatePull.entries], deletedIds)
+  const selectedPrivateEntries = privatePull.entries.filter((pulled) =>
+    mergedBeforePrivateVault.some((entry) =>
+      entry.id === pulled.id && entry.savedAt === pulled.savedAt))
+  let merged: JournalEntry[] = mergedBeforePrivateVault
+  if (selectedPrivateEntries.length > 0) {
+    const localStorage = journalStorage()
+    const persisted = localStorage === null || recoveryCode === null
+      ? null
+      : await savePrivateMemosWithJournalShells(
+        localStorage,
+        mergedBeforePrivateVault,
+        selectedPrivateEntries,
+        recoveryCode,
+      )
+    if (persisted !== null) merged = persisted
+    else {
+      return failed("나만의 메모를 이 기기에 안전하게 저장하지 못해 동기화를 멈췄어요.")
+    }
+  } else if (!replaceAllEntries(merged).ok) {
     return failed("병합 결과를 저장하지 못했어요. 로컬 일지는 그대로예요.")
   }
 

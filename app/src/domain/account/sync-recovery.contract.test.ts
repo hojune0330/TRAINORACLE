@@ -47,14 +47,14 @@ describe("interrupted journal sync recovery", () => {
     expect(window.localStorage.getItem(RECOVERY_KEY)).toBeNull()
   })
 
-  it("does not restore another account's checkpoint", () => {
+  it("discards another account's checkpoint without blocking the current account", () => {
     saveEntry(post("user-1-entry"))
     expect(createSyncRecoveryCheckpoint("user-1", loadEntries(), [])).toBe(true)
     replaceAllEntries([post("user-2-entry")])
 
-    expect(recoverPendingSync("user-2")).toEqual({ ok: false, recovered: false })
+    expect(recoverPendingSync("user-2")).toEqual({ ok: true, recovered: false })
     expect(loadEntries().map((entry) => entry.id)).toEqual(["user-2-entry"])
-    expect(window.localStorage.getItem(RECOVERY_KEY)).not.toBeNull()
+    expect(window.localStorage.getItem(RECOVERY_KEY)).toBeNull()
   })
 
   it("keeps a deletion made after interruption stronger than the checkpoint copy", () => {
@@ -66,12 +66,31 @@ describe("interrupted journal sync recovery", () => {
     expect(loadEntries()).toEqual([])
   })
 
-  it("fails closed when the checkpoint is malformed", () => {
+  it("discards a malformed checkpoint without changing current entries", () => {
     saveEntry(post("safe"))
     window.localStorage.setItem(RECOVERY_KEY, "{broken")
 
-    expect(recoverPendingSync("user-1")).toEqual({ ok: false, recovered: false })
+    expect(recoverPendingSync("user-1")).toEqual({ ok: true, recovered: false })
     expect(loadEntries().map((entry) => entry.id)).toEqual(["safe"])
+    expect(window.localStorage.getItem(RECOVERY_KEY)).toBeNull()
+  })
+
+  it("discards an expired checkpoint instead of resurrecting old entries", () => {
+    saveEntry(post("current"))
+    window.localStorage.setItem(RECOVERY_KEY, JSON.stringify({
+      version: 1,
+      userId: "user-1",
+      startedAt: "2026-07-01T00:00:00.000Z",
+      entries: [post("expired")],
+      tombstones: [],
+    }))
+
+    expect(recoverPendingSync("user-1", Date.parse("2026-08-02T00:00:00.000Z"))).toEqual({
+      ok: true,
+      recovered: false,
+    })
+    expect(loadEntries().map((entry) => entry.id)).toEqual(["current"])
+    expect(window.localStorage.getItem(RECOVERY_KEY)).toBeNull()
   })
 
   it("refuses to checkpoint a private memo plaintext", () => {
@@ -82,6 +101,28 @@ describe("interrupted journal sync recovery", () => {
     }
 
     expect(createSyncRecoveryCheckpoint("user-1", [privateEntry], [])).toBe(false)
+    expect(window.localStorage.getItem(RECOVERY_KEY)).toBeNull()
+  })
+
+  it("discards a tampered checkpoint containing private memo plaintext", () => {
+    saveEntry(post("safe"))
+    window.localStorage.setItem(RECOVERY_KEY, JSON.stringify({
+      version: 1,
+      userId: "user-1",
+      startedAt: "2026-08-02T00:00:00.000Z",
+      entries: [{
+        ...post("private"),
+        memo: "원문 비밀",
+        memoPurpose: "PRIVATE_SELF_ONLY",
+      }],
+      tombstones: [],
+    }))
+
+    expect(recoverPendingSync("user-1", Date.parse("2026-08-02T01:00:00.000Z"))).toEqual({
+      ok: true,
+      recovered: false,
+    })
+    expect(loadEntries().map((entry) => entry.id)).toEqual(["safe"])
     expect(window.localStorage.getItem(RECOVERY_KEY)).toBeNull()
   })
 

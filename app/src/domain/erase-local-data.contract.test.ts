@@ -8,6 +8,7 @@
 //  4) 실패를 숨기지 않는다
 import { beforeEach, describe, expect, it } from "vitest"
 import { ATHLETE_RECORDS_STORAGE_KEY } from "./athlete-records"
+import { recoverPendingSync } from "./account/sync-recovery"
 import { eraseAllLocalData, erasableKeys } from "./erase-local-data"
 
 const JOURNAL = "trainoracle.journal.v1"
@@ -16,6 +17,7 @@ const AUTH = "trainoracle.auth.v1"
 const PLAN = "trainoracle.plan-beta.v1"
 const CONSENT = "trainoracle.sync.consent.v1"
 const SYNC_OWNER = "trainoracle.sync.owner.v1"
+const SYNC_RECOVERY = "trainoracle.sync.recovery.v1"
 
 beforeEach(() => {
   window.localStorage.clear()
@@ -31,6 +33,26 @@ function seed(): void {
   window.localStorage.setItem(AUTH, JSON.stringify({ token: "secret" }))
   window.localStorage.setItem(CONSENT, JSON.stringify({ enabled: true }))
   window.localStorage.setItem(SYNC_OWNER, "athlete-a")
+  window.localStorage.setItem(SYNC_RECOVERY, JSON.stringify({
+    version: 1,
+    userId: "athlete-a",
+    startedAt: "2026-08-02T00:00:00.000Z",
+    entries: [{
+      id: "recoverable-entry",
+      kind: "post-session",
+      date: "2026-08-02",
+      savedAt: "2026-08-02T00:00:00.000Z",
+      syncState: "local",
+      system: "base",
+      title: "recovery",
+      distanceKm: "8",
+      durationMin: "45",
+      avgPace: "5:30",
+      rpe: 4,
+      memo: "",
+    }],
+    tombstones: [],
+  }))
   window.localStorage.setItem(TOMBSTONES, JSON.stringify([{ id: "gone", deletedAt: "2026-07-20T00:00:00.000Z" }]))
 }
 
@@ -77,6 +99,21 @@ describe("eraseAllLocalData", () => {
     eraseAllLocalData()
     // owner 키가 비어 있어야 claimSyncOwner가 새 userId를 받아들인다
     expect(window.localStorage.getItem(SYNC_OWNER)).toBeNull()
+  })
+
+  it("중단된 동기화 복구본도 지운다 — 삭제한 일지가 다시 살아나면 안 된다", () => {
+    seed()
+    eraseAllLocalData()
+    expect(erasableKeys()).toContain(SYNC_RECOVERY)
+    expect(window.localStorage.getItem(SYNC_RECOVERY)).toBeNull()
+    expect(recoverPendingSync("athlete-a")).toEqual({ ok: true, recovered: false })
+    expect(window.localStorage.getItem(JOURNAL)).toBeNull()
+  })
+
+  it("전체 삭제 뒤 새 계정의 동기화를 오래된 복구본이 막지 않는다", () => {
+    seed()
+    eraseAllLocalData()
+    expect(recoverPendingSync("athlete-b")).toEqual({ ok: true, recovered: false })
   })
 
   it("삭제 기록은 기본으로 **남긴다** — 서버 사본 부활 방지", () => {

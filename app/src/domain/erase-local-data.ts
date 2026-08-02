@@ -26,6 +26,7 @@ const CONTENT_KEYS = [
   // 30일 동안 기기에 남는다. 기기를 넘기는 상황에서 가장 위험한 누락이다.
   "trainoracle.journal.trash.v1",
   "trainoracle.journal.full-backup.v1",
+  "trainoracle.sync.recovery.v1",
   ATHLETE_RECORDS_STORAGE_KEY,
   "trainoracle.plan-beta.v1",
   "trainoracle.plan-beta.history.v1",
