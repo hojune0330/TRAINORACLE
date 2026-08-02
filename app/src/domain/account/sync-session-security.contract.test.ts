@@ -27,6 +27,7 @@ vi.mock("./supabase-client", () => ({
         error: null,
       }),
     },
+    rpc: () => Promise.resolve({ data: 17, error: null }),
     from: (name: string) => table(name),
   }),
   __resetSupabaseForTest: () => {},

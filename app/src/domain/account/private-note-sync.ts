@@ -8,8 +8,9 @@ import {
 import type { EncryptedPrivateNote } from "./private-note-crypto"
 import { restorePrivateMemo, rotatePrivateMemoVault } from "../private-memo-vault"
 import { journalStorage } from "../journal-local-storage"
+import { PRIVATE_NOTE_RECOVERY_STORAGE_KEY } from "../journal-storage-keys"
 
-const RECOVERY_KEY = "trainoracle.private-note.recovery.v1"
+const RECOVERY_KEY = PRIVATE_NOTE_RECOVERY_STORAGE_KEY
 
 export async function encryptPrivateJournalEntry(
   entry: JournalEntry,

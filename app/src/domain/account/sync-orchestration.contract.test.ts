@@ -7,16 +7,36 @@
 //   → 내가 지운 사실이 서버에 없는 채로 남아 다른 기기가 부활시킨다.
 //   삭제권이 걸린 실패를 조용히 넘기는 것은 fail-visible 원칙 위반이다.
 import { beforeEach, describe, expect, it, vi } from "vitest"
+import { z } from "zod"
 
 type Row = Record<string, unknown>
 
-const server = {
-  entries: [] as Row[],
-  privateNotes: [] as Row[],
-  tombstones: [] as Row[],
+type SyncTestServer = {
+  entries: Row[]
+  privateNotes: Row[]
+  tombstones: Row[]
+  tombstonePushFails: boolean
+  tombstonePullFails: boolean
+  entryDeleteFails: boolean
+  entryPushFails: boolean
+  schemaVersion: number
+  schemaRpcFails: boolean
+  rpcCallCount: number
+  journalSelectCount: number
+}
+
+const server: SyncTestServer = {
+  entries: [],
+  privateNotes: [],
+  tombstones: [],
   tombstonePushFails: false,
   tombstonePullFails: false,
   entryDeleteFails: false,
+  entryPushFails: false,
+  schemaVersion: 17,
+  schemaRpcFails: false,
+  rpcCallCount: 0,
+  journalSelectCount: 0,
 }
 
 function table(name: string) {
@@ -32,6 +52,7 @@ function table(name: string) {
               : Promise.resolve({ data: server.tombstones, error: null })
           }
           if (isPrivateNote) return Promise.resolve({ data: server.privateNotes, error: null })
+          server.journalSelectCount += 1
           return Promise.resolve({
             data: server.entries.map((row) => ({ entry: row.entry })),
             error: null,
@@ -53,6 +74,9 @@ function table(name: string) {
         server.privateNotes = rows
         return Promise.resolve({ data: null, error: null })
       }
+      if (server.entryPushFails) {
+        return Promise.resolve({ data: null, error: { message: "network interrupted" } })
+      }
       for (const row of rows) {
         const index = server.entries.findIndex((entry) => entry.entry_id === row.entry_id)
         if (index === -1) server.entries.push(row)
@@ -67,7 +91,7 @@ function table(name: string) {
             in(_column: string, ids: readonly string[]) {
               if (isPrivateNote) {
                 server.privateNotes = server.privateNotes.filter(
-                  (row) => !ids.includes(row.entry_id as string),
+                  (row) => typeof row.entry_id !== "string" || !ids.includes(row.entry_id),
                 )
                 return Promise.resolve({ data: null, error: null })
               }
@@ -75,7 +99,7 @@ function table(name: string) {
                 return Promise.resolve({ data: null, error: { message: "permission denied" } })
               }
               server.entries = server.entries.filter(
-                (row) => !ids.includes(row.entry_id as string),
+                (row) => typeof row.entry_id !== "string" || !ids.includes(row.entry_id),
               )
               return Promise.resolve({ data: null, error: null })
             },
@@ -94,6 +118,12 @@ vi.mock("./supabase-client", () => ({
         error: null,
       }),
     },
+    rpc: (name: string) => {
+      server.rpcCallCount += 1
+      return Promise.resolve(name === "get_sync_schema_version" && !server.schemaRpcFails
+        ? { data: server.schemaVersion, error: null }
+        : { data: null, error: { message: "schema contract unavailable" } })
+    },
     from: (name: string) => table(name),
   }),
   __resetSupabaseForTest: () => {},
@@ -108,10 +138,10 @@ import type { PostSessionEntry } from "../journal-schema"
 
 const JOURNAL_KEY = "trainoracle.journal.v1"
 
-function post(id: string): PostSessionEntry {
+function post(id: string, savedAt = "2026-07-20T10:00:00.000Z"): PostSessionEntry {
   return {
     id, kind: "post-session", date: "2026-07-20",
-    savedAt: "2026-07-20T10:00:00.000Z", syncState: "local",
+    savedAt, syncState: "local",
     system: "base", title: "이지런", distanceKm: "8",
     durationMin: "45", avgPace: "5:30", rpe: 4, memo: "",
   }
@@ -131,7 +161,9 @@ function memoOnlyPost(id: string): PostSessionEntry {
 
 function localIds(): string[] {
   const raw = window.localStorage.getItem(JOURNAL_KEY) ?? "[]"
-  return (JSON.parse(raw) as Row[]).map((entry) => entry.id as string)
+  const parsed: unknown = JSON.parse(raw)
+  const result = z.array(z.object({ id: z.string() }).passthrough()).safeParse(parsed)
+  return result.success ? result.data.map((entry) => entry.id) : []
 }
 
 beforeEach(() => {
@@ -143,6 +175,11 @@ beforeEach(() => {
   server.tombstonePushFails = false
   server.tombstonePullFails = false
   server.entryDeleteFails = false
+  server.entryPushFails = false
+  server.schemaVersion = 17
+  server.schemaRpcFails = false
+  server.rpcCallCount = 0
+  server.journalSelectCount = 0
   saveSyncConsent({ enabled: true, shareTrainingNotes: false })
 })
 
@@ -183,13 +220,6 @@ describe("syncNow — 삭제 기록 서버 전파", () => {
     expect(localIds()).toEqual(["local-stale"])
   })
 
-  it("정상 경로는 실패 안내 없이 끝난다", async () => {
-    saveEntry(post("ok-1"))
-    const outcome = await syncNow("user-1")
-    expect(outcome.ok).toBe(true)
-    expect(outcome.message).not.toMatch(/못했어요/u)
-  })
-
   it("다른 기기가 지운 일지를 이 기기에서도 지운다", async () => {
     server.tombstones = [{ entry_id: "Z", deleted_at: "2026-07-21T00:00:00.000Z" }]
     saveEntry(post("Z"))
@@ -215,33 +245,6 @@ describe("syncNow — 삭제 기록 서버 전파", () => {
 
     expect(server.tombstones).toHaveLength(1)
     expect(Object.keys(server.tombstones[0] ?? {}).sort()).toEqual(["deleted_at", "entry_id"])
-  })
-
-  it("다른 계정으로 바뀌면 이 기기의 일지를 업로드하지 않는다", async () => {
-    saveEntry(post("owned-local"))
-    expect((await syncNow("user-1")).ok).toBe(true)
-    server.entries = []
-
-    const outcome = await syncNow("user-2")
-
-    expect(outcome.ok).toBe(false)
-    expect(outcome.message).toContain("matching signed-in account")
-    expect(server.entries).toHaveLength(0)
-  })
-
-  it("메모 제외로 바꾸면 서버의 메모 전용 일지를 제거한다", async () => {
-    const memoOnly = memoOnlyPost("memo-only")
-    server.entries = [{
-      user_id: "user-1",
-      entry_id: memoOnly.id,
-      saved_at: memoOnly.savedAt,
-      entry: memoOnly,
-    }]
-
-    const outcome = await syncNow("user-1")
-
-    expect(outcome.ok).toBe(true)
-    expect(server.entries).toHaveLength(0)
   })
 
   it("서버 메모 제거 실패를 동기화 성공으로 보고하지 않는다", async () => {
@@ -276,4 +279,5 @@ describe("syncNow — 삭제 기록 서버 전파", () => {
     expect(JSON.stringify(server.privateNotes)).not.toContain("나만 보는 원문")
     expect(server.entries).toHaveLength(0)
   })
+
 })

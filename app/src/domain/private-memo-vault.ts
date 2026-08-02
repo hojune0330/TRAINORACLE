@@ -1,6 +1,9 @@
 import { z } from "zod"
 import type { JournalEntry } from "./journal-schema"
-import { JOURNAL_STORAGE_KEY } from "./journal-storage-keys"
+import {
+  JOURNAL_STORAGE_KEY,
+  PRIVATE_MEMO_VAULT_STORAGE_KEY,
+} from "./journal-storage-keys"
 import {
   decryptPrivateNote,
   encryptPrivateNote,
@@ -8,7 +11,7 @@ import {
 } from "./account/private-note-crypto"
 import type { EncryptedPrivateNote } from "./account/private-note-crypto"
 
-export const PRIVATE_MEMO_VAULT_STORAGE_KEY = "trainoracle.private-memo.v1"
+export { PRIVATE_MEMO_VAULT_STORAGE_KEY }
 
 const encryptedRecordSchema: z.ZodType<PrivateMemoRecord> = z.object({
   encrypted: z.object({
@@ -97,22 +100,44 @@ export async function savePrivateMemoWithJournalShell(
   entry: JournalEntry,
   recoveryCode: string,
 ): Promise<boolean> {
-  if (!hasPrivateMemoText(entry) || !isValidRecoveryCode(recoveryCode)) return false
+  return await savePrivateMemosWithJournalShells(storage, entries, [entry], recoveryCode) !== null
+}
+
+export async function savePrivateMemosWithJournalShells(
+  storage: Storage,
+  entries: readonly JournalEntry[],
+  privateEntries: readonly JournalEntry[],
+  recoveryCode: string,
+): Promise<JournalEntry[] | null> {
+  if (privateEntries.length === 0 || !isValidRecoveryCode(recoveryCode)) return null
   const vault = loadPrivateMemoVault(storage)
-  if (vault === null) return false
+  if (vault === null) return null
 
   try {
-    const encrypted = await encryptPrivateNote(privateTextOf(entry), recoveryCode)
+    const records: Record<string, PrivateMemoRecord> = { ...vault.records }
+    let nextEntries = [...entries]
+    for (const entry of privateEntries) {
+      if (!hasPrivateMemoText(entry)) return null
+      const matches = nextEntries.filter(
+        (current) => current.id === entry.id && current.savedAt === entry.savedAt,
+      )
+      if (matches.length !== 1) return null
+      records[entry.id] = {
+        encrypted: await encryptPrivateNote(privateTextOf(entry), recoveryCode),
+      }
+      nextEntries = nextEntries.map((current) =>
+        current.id === entry.id && current.savedAt === entry.savedAt
+          ? privateMemoShell(current)
+          : current)
+    }
     const nextVault: PrivateMemoVault = {
       version: 1,
-      records: { ...vault.records, [entry.id]: { encrypted } },
+      records,
     }
-    const shell = privateMemoShell(entry)
-    const nextEntries = entries.map((current) => current.id === entry.id ? shell : current)
-    if (nextEntries.some(hasPrivateMemoText)) return false
-    return writeVaultAndJournalAtomically(storage, nextVault, nextEntries)
+    if (nextEntries.some(hasPrivateMemoText)) return null
+    return writeVaultAndJournalAtomically(storage, nextVault, nextEntries) ? nextEntries : null
   } catch {
-    return false
+    return null
   }
 }
 
