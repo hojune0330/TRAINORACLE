@@ -1,4 +1,41 @@
 import type { SafetyGateDecision } from "../safety-gate/gate"
+import type {
+  LocalCivilNinePointFiveFormation,
+  PlanReviewConservativeAlternative,
+  PlanReviewReasonCode,
+} from "./formation-types"
+import type { CanonicalPlanFrame, PlanSession } from "./session-types"
+
+export {
+  FORMATION_FRAME_KINDS,
+  MAIN_EXPOSURE_CLASSIFICATIONS,
+} from "./formation-types"
+export { PLAN_SESSION_SLOTS } from "./session-types"
+export type {
+  ExplicitMainExposure,
+  FormationFrameKind,
+  LocalCivilHalfDaySlot,
+  LocalCivilNinePointFiveFormation,
+  MainExposureClassification,
+  MainExposureComponent,
+  PlanReviewConservativeAlternative,
+  PlanReviewReasonCode,
+} from "./formation-types"
+export type {
+  CanonicalPlanFrame,
+  LegacyPlanFrame,
+  PlanFrame,
+  PlanSession,
+  PlanSessionSlot,
+  RpeTimeRange,
+} from "./session-types"
+export type {
+  BetaActivePlanSnapshot,
+  PlanProgressRequest,
+  PlanProgressResult,
+  PlanSelectionRequest,
+  PlanSelectionResult,
+} from "./selection-types"
 
 export const PLAN_EVENT_GROUPS = [
   "MIDDLE_DISTANCE",
@@ -45,10 +82,6 @@ export const SECOND_SESSION_MODES = [
 
 export type SecondSessionMode = (typeof SECOND_SESSION_MODES)[number]
 
-export const PLAN_SESSION_SLOTS = ["AM", "PM"] as const
-
-export type PlanSessionSlot = (typeof PLAN_SESSION_SLOTS)[number]
-
 export type PlanProgressState = "COMPLETED" | "RESTED" | "SKIPPED" | "PAIN_CHECKIN"
 
 export type PlanProgressStateCount = {
@@ -75,8 +108,19 @@ export type PlanBetaCode =
   | "INVALID_AVAILABLE_DAY"
   | "INVALID_JOURNAL_CONTEXT"
   | "INVALID_CONTINUITY_CONTEXT"
+  | "NON_CANONICAL_FRAME_REQUIRES_REVIEW"
+  | "CANONICAL_LEDGER_REQUIRES_VALIDATION"
+  | "NEEDS_COACH_CLARIFICATION"
+  | "INVALID_COMPOSITE_RELATION_REQUIRES_REVIEW"
+  | "COMPETITION_DAY_COLLISION_REQUIRES_COACH_CLARIFICATION"
+  | "MAIN_EXPOSURE_COUNT_REQUIRES_REVIEW"
+  | "MAIN_EXPOSURE_OUTSIDE_AVAILABILITY_REQUIRES_REVIEW"
   | "COACH_SELECTION_REQUIRED"
   | "CANDIDATE_NOT_FOUND"
+  | "INVALID_SELECTION_REQUEST"
+  | "NON_SELECTABLE_PLAN_RESULT"
+  | "STALE_CANDIDATE_FINGERPRINT"
+  | "NONCANONICAL_CANDIDATE_FRAME"
   | "SAFETY_GATE_RECHECK_BLOCKED"
   | "SESSION_DAY_NOT_IN_ACTIVE_PLAN"
   | "SESSION_SLOT_NOT_IN_ACTIVE_PLAN"
@@ -86,61 +130,13 @@ export type PlanBetaAudit = {
     | "PLAN_BETA_GENERATED"
     | "PLAN_BETA_BLOCKED"
     | "PLAN_BETA_REJECTED"
+    | "PLAN_BETA_REVIEW_REQUIRED"
     | "PLAN_BETA_SELECTED"
     | "PLAN_BETA_SELECTION_REJECTED"
     | "PLAN_BETA_PROGRESS_RECORDED"
     | "PLAN_BETA_PROGRESS_REJECTED"
   readonly codes: readonly PlanBetaCode[]
   readonly privacy: "STRUCTURED_CODES_ONLY"
-}
-
-export type RpeTimeRange = {
-  readonly kind: "RPE_TIME_RANGE"
-  readonly rpe: {
-    readonly minimum: number
-    readonly maximum: number
-  }
-  readonly durationMinutes: {
-    readonly minimum: number
-    readonly maximum: number
-  }
-}
-
-export type PlanSession =
-  | {
-      readonly day: number
-      readonly slot: "AM"
-      readonly role: "REST"
-      readonly plannedEnergyIntent: "RECOVERY_INTENT"
-      readonly prescription: {
-        readonly kind: "REST"
-      }
-    }
-  | {
-      readonly day: number
-      readonly slot: PlanSessionSlot
-      readonly role: "EASY"
-      readonly plannedEnergyIntent: EasyEnergyIntent
-      readonly prescription: RpeTimeRange
-    }
-  | {
-      readonly day: number
-      readonly slot: "AM"
-      readonly role: "QUALITY"
-      readonly plannedEnergyIntent: QualityEnergyIntent
-      readonly prescription: RpeTimeRange
-    }
-
-export type PlanFrame = {
-  readonly lengthDays: 7 | 9 | 10
-  readonly continuity:
-    | {
-        readonly kind: "SEVEN_DAY_CONTINUITY"
-        readonly nextFrameInput: "SELECTED_PLAN_AND_PROGRESS"
-      }
-    | {
-        readonly kind: "STANDARD_FRAME"
-      }
 }
 
 export type PlanCandidate = {
@@ -165,7 +161,12 @@ export type PlanCandidate = {
         readonly progressStateCounts: readonly PlanProgressStateCount[]
       }
   readonly selectionAuthority: PlanSelectionAuthority
-  readonly frame: PlanFrame
+  readonly frame: CanonicalPlanFrame
+  readonly mainExposureLedger: {
+    readonly mainExposureCount: 2 | 3
+    readonly fingerprint: string
+    readonly countedExposureIds: readonly string[]
+  }
   readonly rationaleCodes: readonly PlanBetaCode[]
   readonly sessions: readonly PlanSession[]
 }
@@ -197,6 +198,13 @@ export type PlanGenerationRequest = {
   readonly continuity?: PlanContinuityInput
 }
 
+export type CanonicalPlanGenerationRequest = Omit<
+  PlanGenerationRequest,
+  "requestedFrameLength"
+> & {
+  readonly formation: LocalCivilNinePointFiveFormation
+}
+
 export type PlanGenerationSuccess = {
   readonly kind: "generated"
   readonly sourceMode: PlanSourceMode
@@ -207,8 +215,19 @@ export type PlanGenerationSuccess = {
   readonly audit: PlanBetaAudit
 }
 
+export type PlanGenerationReviewResult = {
+  readonly kind: "needs_review_with_reason"
+  readonly status: "NEEDS_REVIEW_WITH_REASON"
+  readonly reasonCodes: readonly PlanReviewReasonCode[]
+  readonly conservativeAlternative: PlanReviewConservativeAlternative
+  readonly reviewNotice: "현재 입력으로는 후보를 만들지 않고, 기존 계획 유지와 회복 안내만 제공합니다."
+  readonly candidates: readonly []
+  readonly audit: PlanBetaAudit
+}
+
 export type PlanGenerationResult =
   | PlanGenerationSuccess
+  | PlanGenerationReviewResult
   | {
       readonly kind: "blocked"
       readonly code: "SAFETY_GATE_ACTIVE" | "SAFETY_GATE_UNKNOWN"
@@ -225,69 +244,5 @@ export type PlanGenerationResult =
         | "INVALID_JOURNAL_CONTEXT"
         | "INVALID_CONTINUITY_CONTEXT"
       readonly candidates: readonly []
-      readonly audit: PlanBetaAudit
-    }
-
-export type BetaActivePlanSnapshot = {
-  readonly kind: "BETA_ACTIVE_PLAN_SNAPSHOT"
-  readonly activationState: "SELECTED_BETA_SNAPSHOT"
-  readonly candidateId: string
-  readonly candidateKind: PlanCandidateKind
-  readonly selectionActor: "SELF" | "COACH"
-  readonly sourceMode: PlanSourceMode
-  readonly selectedEnergyIntent: PlannedEnergyIntent
-  readonly frame: PlanFrame
-  readonly sessions: readonly PlanSession[]
-}
-
-export type PlanSelectionRequest = {
-  readonly kind: "PLAN_BETA_SELECTION_REQUEST"
-  readonly generatedPlan: PlanGenerationSuccess
-  readonly selectedCandidateId: string
-  readonly actor: "SELF" | "COACH"
-  readonly safetyGate: SafetyGateDecision
-}
-
-export type PlanSelectionResult =
-  | {
-      readonly kind: "selected"
-      readonly activePlan: BetaActivePlanSnapshot
-      readonly audit: PlanBetaAudit
-    }
-  | {
-      readonly kind: "blocked"
-      readonly code: "SAFETY_GATE_RECHECK_BLOCKED"
-      readonly audit: PlanBetaAudit
-    }
-  | {
-      readonly kind: "rejected"
-      readonly code: "COACH_SELECTION_REQUIRED" | "CANDIDATE_NOT_FOUND"
-      readonly audit: PlanBetaAudit
-    }
-
-export type PlanProgressRequest = {
-  readonly kind: "PLAN_BETA_PROGRESS_REQUEST"
-  readonly activePlan: BetaActivePlanSnapshot
-  readonly sessionDay: number
-  readonly sessionSlot: PlanSessionSlot
-  readonly state: PlanProgressState
-}
-
-export type PlanProgressResult =
-  | {
-      readonly kind: "recorded"
-      readonly progress: {
-        readonly activePlanCandidateId: string
-        readonly sessionDay: number
-        readonly sessionSlot: PlanSessionSlot
-        readonly state: PlanProgressState
-      }
-      readonly audit: PlanBetaAudit
-    }
-  | {
-      readonly kind: "rejected"
-      readonly code:
-        | "SESSION_DAY_NOT_IN_ACTIVE_PLAN"
-        | "SESSION_SLOT_NOT_IN_ACTIVE_PLAN"
       readonly audit: PlanBetaAudit
     }

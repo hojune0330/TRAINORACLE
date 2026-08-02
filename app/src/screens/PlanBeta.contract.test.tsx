@@ -32,6 +32,16 @@ async function answerMinimumPlanQuestions(
   }))
 }
 
+function expectFormationReview(): void {
+  expect(screen.getByRole("alert")).toHaveTextContent(
+    "현재 입력만으로는 계획 후보를 만들지 않아요",
+  )
+  expect(screen.queryByRole("heading", {
+    name: "두 계획에서 하나를 골라보세요",
+  })).toBeNull()
+  expect(window.localStorage.getItem("trainoracle.plan-beta.v1")).toBeNull()
+}
+
 function savePostSession(
   id: string,
   memo = "",
@@ -130,45 +140,12 @@ describe("plan beta user flow", () => {
     expect(screen.getByText(/앱이 몸속 에너지 시스템을 측정한 결과는 아닙니다/u)).toBeVisible()
   })
 
-  it("creates two profile-only candidates without journal data", async () => {
+  it("keeps a legacy frame as a review-only draft without storing a plan", async () => {
     render(<PlanBeta />)
 
     await answerMinimumPlanQuestions()
 
-    expect(screen.getByRole("heading", {
-      name: "두 계획에서 하나를 골라보세요",
-    })).toBeVisible()
-    expect(screen.getByRole("heading", {
-      name: "지속 페이스 포함",
-    })).toBeVisible()
-    expect(screen.getByRole("heading", {
-      name: "기초 지구력 중심",
-    })).toBeVisible()
-    expect(screen.getByText(
-      "운동 3회 · 기초 지구력 2일 · 지속 페이스 1일 · 완전 휴식 6일",
-    )).toBeVisible()
-    expect(screen.getAllByText(/기초 지구력.*BASE/u).length).toBeGreaterThan(0)
-    expect(screen.getAllByText(/지속 페이스.*LT/u).length).toBeGreaterThan(0)
-
-    const rpeHelp = screen.getAllByRole("button", { name: "RPE 설명 보기" })[0]
-    expect(rpeHelp).toBeDefined()
-    if (rpeHelp !== undefined) {
-      await userEvent.setup().click(rpeHelp)
-      expect(screen.getByText(/1~2는 빨리 걷기/u)).toBeVisible()
-    }
-
-    const guidance = screen.getAllByText("실행 방법 보기")[0]
-    expect(guidance).toBeDefined()
-    if (guidance !== undefined) {
-      await userEvent.setup().click(guidance)
-      const openedGuidance = guidance.closest("details")
-      expect(openedGuidance).not.toBeNull()
-      if (openedGuidance !== null) {
-        expect(within(openedGuidance).getByText(
-          /친구와 대화하거나 전화 통화는 가능한 정도/u,
-        )).toBeVisible()
-      }
-    }
+    expectFormationReview()
   })
 
   it("blocks generation when current risk is present or unclear", async () => {
@@ -232,7 +209,7 @@ describe("plan beta user flow", () => {
     expect(window.localStorage.getItem("trainoracle.plan-beta.v1")).toBeNull()
   })
 
-  it("does not inspect a private memo while checking recent journal risk", async () => {
+  it("does not inspect a private memo while the frame remains review-only", async () => {
     const date = todayISO()
     expect(saveSessionRecoveryCode(createRecoveryCode())).toBe(true)
     await expect(savePrivateEntry({
@@ -254,23 +231,22 @@ describe("plan beta user flow", () => {
 
     await answerMinimumPlanQuestions("clear")
 
-    expect(screen.getByRole("heading", {
-      name: "두 계획에서 하나를 골라보세요",
-    })).toBeVisible()
+    expectFormationReview()
+    expect(screen.queryByText("무릎이 계속 아파요")).toBeNull()
   })
 
-  it("labels journal presence honestly when its values do not alter prescriptions", async () => {
+  it("does not turn recent journals into a plan while the frame remains review-only", async () => {
     savePostSession("recent-session-1")
     savePostSession("recent-session-2")
     render(<PlanBeta />)
 
     await answerMinimumPlanQuestions("clear")
 
-    expect(screen.getByText("최근 일지 확인 · 계획 수치에는 미반영")).toBeVisible()
-    expect(screen.getByText(/일지의 거리, RPE, 메모는 이번 베타 계획/u)).toBeVisible()
+    expectFormationReview()
+    expect(screen.queryByText("최근 일지 확인 · 계획 수치에는 미반영")).toBeNull()
   })
 
-  it("does not label future or calendar-invalid entries as recent journal context", async () => {
+  it("does not let future or invalid journal dates bypass the review-only boundary", async () => {
     savePostSession("future-session-1", "", undefined, "2099-01-01")
     savePostSession("future-session-2", "", undefined, "2099-01-02")
     savePostSession("invalid-session", "", undefined, "2026-02-31")
@@ -278,47 +254,23 @@ describe("plan beta user flow", () => {
 
     await answerMinimumPlanQuestions("clear")
 
-    expect(screen.getByText("사용 정보 6가지 · 베타 계획")).toBeVisible()
+    expectFormationReview()
     expect(screen.queryByText("최근 일지 확인 · 계획 수치에는 미반영")).toBeNull()
   })
 
-  it("selects a candidate, stores it locally, and records progress without points", async () => {
-    const user = userEvent.setup()
+  it("does not offer selection or store an active plan from a review-only frame", async () => {
     render(<PlanBeta />)
     await answerMinimumPlanQuestions()
 
-    await user.click(screen.getByRole("button", {
-      name: "지속 페이스 포함 선택하기",
-    }))
-
-    expect(screen.getByRole("heading", {
-      name: "지속 페이스 포함 9일 계획",
-    })).toBeVisible()
-    const dayOneActions = screen.getByLabelText("DAY 1 오전 진행 기록")
-    await user.click(within(dayOneActions).getByRole("button", { name: "완료" }))
-
-    const stored = window.localStorage.getItem("trainoracle.plan-beta.v1")
-    expect(stored).toContain("\"state\":\"COMPLETED\"")
-    expect(stored).not.toMatch(/point|reward|memo|symptom/u)
+    expectFormationReview()
+    expect(screen.queryByRole("button", { name: /선택하기/u })).toBeNull()
   })
 
-  it("carries structured progress into the next frame without automatic progression", async () => {
-    const user = userEvent.setup()
+  it("does not create a next-frame candidate from a review-only frame", async () => {
     render(<PlanBeta />)
     await answerMinimumPlanQuestions()
-    await user.click(screen.getByRole("button", {
-      name: "기초 지구력 중심 선택하기",
-    }))
-    await user.click(
-      within(screen.getByLabelText("DAY 1 오전 진행 기록"))
-        .getByRole("button", { name: "휴식" }),
-    )
-    await user.click(screen.getByRole("button", { name: "다음 주기 후보 만들기" }))
-    await user.click(screen.getByRole("button", {
-      name: /통증은 없고 몸 상태는 평소와 같아요/u,
-    }))
 
-    expect(screen.getByText(/지난 계획의 선택·진행 집계를 이어받음/u)).toBeVisible()
-    expect(screen.getByText(/자동 강도 상승 없음/u)).toBeVisible()
+    expectFormationReview()
+    expect(screen.queryByRole("button", { name: "다음 주기 후보 만들기" })).toBeNull()
   })
 })

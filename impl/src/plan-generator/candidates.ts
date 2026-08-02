@@ -1,231 +1,28 @@
 import { assertNever } from "../shared/assert-never"
+import { makeCandidateSessions } from "./session-builder"
 import type {
-  ExperienceBand,
+  CanonicalPlanGenerationRequest,
   PlanBetaCode,
   PlanCandidate,
   PlanCandidateKind,
-  PlanGenerationRequest,
-  PlanSession,
-  PlannedEnergyIntent,
-  EasyEnergyIntent,
-  QualityEnergyIntent,
-  RpeTimeRange,
 } from "./types"
+import type { CompiledExposureLedger } from "./exposure-ledger"
 
-type DurationRange = {
-  readonly minimum: number
-  readonly maximum: number
-}
-
-type ExperienceRanges = {
-  readonly easy: DurationRange
-  readonly recoverySupport: DurationRange
-  readonly quality: DurationRange
+export type SelectableExposureLedger = Extract<
+  CompiledExposureLedger,
+  { readonly kind: "valid" }
+> & {
+  readonly mainExposureCount: 2 | 3
 }
 
 type CandidateBuildInput = {
-  readonly request: PlanGenerationRequest
+  readonly request: CanonicalPlanGenerationRequest
+  readonly ledger: SelectableExposureLedger
   readonly kind: PlanCandidateKind
   readonly qualityDays: readonly number[]
 }
 
-function rangesFor(experienceBand: ExperienceBand): ExperienceRanges {
-  switch (experienceBand) {
-    case "NEW_TO_RUNNING":
-      return {
-        easy: { minimum: 20, maximum: 35 },
-        recoverySupport: { minimum: 10, maximum: 20 },
-        quality: { minimum: 20, maximum: 30 },
-      }
-    case "DEVELOPING":
-      return {
-        easy: { minimum: 30, maximum: 45 },
-        recoverySupport: { minimum: 15, maximum: 25 },
-        quality: { minimum: 25, maximum: 40 },
-      }
-    case "EXPERIENCED":
-      return {
-        easy: { minimum: 35, maximum: 60 },
-        recoverySupport: { minimum: 20, maximum: 30 },
-        quality: { minimum: 30, maximum: 50 },
-      }
-    default:
-      return assertNever(experienceBand)
-  }
-}
-
-function freezeRange(range: RpeTimeRange): RpeTimeRange {
-  return Object.freeze({
-    ...range,
-    rpe: Object.freeze({ ...range.rpe }),
-    durationMinutes: Object.freeze({ ...range.durationMinutes }),
-  })
-}
-
-function restSession(day: number): PlanSession {
-  return Object.freeze({
-    day,
-    slot: "AM",
-    role: "REST",
-    plannedEnergyIntent: "RECOVERY_INTENT",
-    prescription: Object.freeze({ kind: "REST" }),
-  })
-}
-
-function rpeForIntent(intent: PlannedEnergyIntent): RpeTimeRange["rpe"] {
-  switch (intent) {
-    case "RECOVERY_INTENT":
-      return { minimum: 1, maximum: 2 }
-    case "BASE_INTENT":
-      return { minimum: 3, maximum: 4 }
-    case "LT_INTENT":
-      return { minimum: 5, maximum: 6 }
-    case "VO2_INTENT":
-    case "GLY_INTENT":
-      return { minimum: 7, maximum: 8 }
-    case "ATP_PC_INTENT":
-      return { minimum: 8, maximum: 9 }
-    case "MIXED_INTENT":
-      return { minimum: 6, maximum: 7 }
-    default:
-      return assertNever(intent)
-  }
-}
-
-function easyIntent(input: CandidateBuildInput): "RECOVERY_INTENT" | "BASE_INTENT" {
-  if (input.request.selectedEnergyIntent === "RECOVERY_INTENT") {
-    return "RECOVERY_INTENT"
-  }
-  if (
-    input.kind === "CONSERVATIVE"
-    && input.request.selectedEnergyIntent === "BASE_INTENT"
-  ) {
-    return "RECOVERY_INTENT"
-  }
-  return "BASE_INTENT"
-}
-
-function restsAvailableRecoveryDays(input: CandidateBuildInput): boolean {
-  return (
-    input.kind === "CONSERVATIVE"
-    && input.request.selectedEnergyIntent === "RECOVERY_INTENT"
-  )
-}
-
-function easyTrainingSession(
-  day: number,
-  slot: "AM" | "PM",
-  durationMinutes: DurationRange,
-  plannedEnergyIntent: EasyEnergyIntent,
-): PlanSession {
-  return Object.freeze({
-    day,
-    slot,
-    role: "EASY",
-    plannedEnergyIntent,
-    prescription: freezeRange({
-      kind: "RPE_TIME_RANGE",
-      rpe: rpeForIntent(plannedEnergyIntent),
-      durationMinutes,
-    }),
-  })
-}
-
-function qualityTrainingSession(
-  day: number,
-  durationMinutes: DurationRange,
-  plannedEnergyIntent: QualityEnergyIntent,
-): PlanSession {
-  return Object.freeze({
-    day,
-    slot: "AM",
-    role: "QUALITY",
-    plannedEnergyIntent,
-    prescription: freezeRange({
-      kind: "RPE_TIME_RANGE",
-      rpe: rpeForIntent(plannedEnergyIntent),
-      durationMinutes,
-    }),
-  })
-}
-
-function recoverySecondSessionDays(input: CandidateBuildInput): readonly number[] {
-  if (
-    input.kind !== "BALANCED"
-    || input.request.profile.secondSessionMode !== "RECOVERY_PM_ALLOWED"
-    || input.request.selectedEnergyIntent === "RECOVERY_INTENT"
-  ) {
-    return Object.freeze([])
-  }
-
-  const qualityDays = new Set(input.qualityDays)
-  const eligibleDays = input.request.profile.availableTrainingDays.filter(
-    (day) => !qualityDays.has(day),
-  )
-  const limit = input.request.requestedFrameLength === 7 ? 1 : 2
-  if (eligibleDays.length <= limit) return Object.freeze([...eligibleDays])
-
-  const selected: number[] = []
-  for (let index = 1; index <= limit; index += 1) {
-    const day = eligibleDays[Math.floor((index * eligibleDays.length) / (limit + 1))]
-    if (day !== undefined) selected.push(day)
-  }
-  return Object.freeze(selected)
-}
-
-function qualityIntentFor(request: PlanGenerationRequest): QualityEnergyIntent {
-  switch (request.selectedEnergyIntent) {
-    case "LT_INTENT":
-    case "VO2_INTENT":
-    case "GLY_INTENT":
-    case "ATP_PC_INTENT":
-    case "MIXED_INTENT":
-      return request.selectedEnergyIntent
-    case "RECOVERY_INTENT":
-    case "BASE_INTENT":
-      throw new Error("A recovery or base intention cannot create a quality session")
-    default:
-      return assertNever(request.selectedEnergyIntent)
-  }
-}
-
-function makeSessions(input: CandidateBuildInput): readonly PlanSession[] {
-  const ranges = rangesFor(input.request.profile.experienceBand)
-  const availableDays = new Set(input.request.profile.availableTrainingDays)
-  const qualityDays = new Set(input.qualityDays)
-  const recoverySecondDays = new Set(recoverySecondSessionDays(input))
-  const sessions: PlanSession[] = []
-
-  for (let day = 1; day <= input.request.requestedFrameLength; day += 1) {
-    if (!availableDays.has(day) || restsAvailableRecoveryDays(input)) {
-      sessions.push(restSession(day))
-      continue
-    }
-
-    if (qualityDays.has(day)) {
-      sessions.push(qualityTrainingSession(
-        day,
-        ranges.quality,
-        qualityIntentFor(input.request),
-      ))
-      continue
-    }
-
-    sessions.push(easyTrainingSession(day, "AM", ranges.easy, easyIntent(input)))
-    if (recoverySecondDays.has(day)) {
-      sessions.push(easyTrainingSession(
-        day,
-        "PM",
-        ranges.recoverySupport,
-        "RECOVERY_INTENT",
-      ))
-    }
-  }
-
-  return Object.freeze(sessions)
-}
-
-function sourceCodes(request: PlanGenerationRequest): readonly PlanBetaCode[] {
+function sourceCodes(request: CanonicalPlanGenerationRequest): readonly PlanBetaCode[] {
   const continuityCode =
     request.continuity === undefined ? [] : ["PREVIOUS_FRAME_CONTEXT_RETAINED" as const]
   switch (request.journalSource.kind) {
@@ -248,29 +45,13 @@ function sourceCodes(request: PlanGenerationRequest): readonly PlanBetaCode[] {
   }
 }
 
-function frameFor(request: PlanGenerationRequest): PlanCandidate["frame"] {
-  switch (request.requestedFrameLength) {
-    case 7:
-      return Object.freeze({
-        lengthDays: 7,
-        continuity: Object.freeze({
-          kind: "SEVEN_DAY_CONTINUITY",
-          nextFrameInput: "SELECTED_PLAN_AND_PROGRESS",
-        }),
-      })
-    case 9:
-      return Object.freeze({
-        lengthDays: 9,
-        continuity: Object.freeze({ kind: "STANDARD_FRAME" }),
-      })
-    case 10:
-      return Object.freeze({
-        lengthDays: 10,
-        continuity: Object.freeze({ kind: "STANDARD_FRAME" }),
-      })
-    default:
-      return assertNever(request.requestedFrameLength)
-  }
+function frameFor(): PlanCandidate["frame"] {
+  return Object.freeze({
+    formationKind: "LOCAL_CIVIL_9_5",
+    lengthDays: 9.5,
+    slotCount: 19,
+    continuity: Object.freeze({ kind: "STANDARD_FRAME" }),
+  })
 }
 
 function candidateId(input: CandidateBuildInput): string {
@@ -281,14 +62,15 @@ function candidateId(input: CandidateBuildInput): string {
     input.request.profile.experienceBand.toLowerCase(),
     input.request.selectedEnergyIntent.toLowerCase(),
     input.request.profile.secondSessionMode.toLowerCase(),
-    input.request.requestedFrameLength,
+    "local-civil-9-5",
+    input.ledger.countedExposureIds.join("-"),
     input.request.profile.availableTrainingDays.join("-"),
     input.request.journalSource.kind.toLowerCase(),
     continuityIdentity(input.request),
   ].join(":")
 }
 
-function continuityIdentity(request: PlanGenerationRequest): string {
+function continuityIdentity(request: CanonicalPlanGenerationRequest): string {
   if (request.continuity === undefined) {
     return "no-continuity"
   }
@@ -300,7 +82,7 @@ function continuityIdentity(request: PlanGenerationRequest): string {
   ].join(":")
 }
 
-function continuityContextFor(request: PlanGenerationRequest): PlanCandidate["continuityContext"] {
+function continuityContextFor(request: CanonicalPlanGenerationRequest): PlanCandidate["continuityContext"] {
   if (request.continuity === undefined) {
     return Object.freeze({ kind: "NO_PREVIOUS_FRAME_CONTEXT" })
   }
@@ -331,13 +113,18 @@ function buildCandidate(input: CandidateBuildInput): PlanCandidate {
     }),
     continuityContext: continuityContextFor(input.request),
     selectionAuthority: input.request.selectionAuthority,
-    frame: frameFor(input.request),
+    frame: frameFor(),
+    mainExposureLedger: Object.freeze({
+      mainExposureCount: input.ledger.mainExposureCount,
+      fingerprint: input.ledger.countedExposureIds.join(":"),
+      countedExposureIds: Object.freeze([...input.ledger.countedExposureIds]),
+    }),
     rationaleCodes: sourceCodes(input.request),
-    sessions: makeSessions(input),
+    sessions: makeCandidateSessions(input),
   })
 }
 
-function balancedQualityDays(request: PlanGenerationRequest): readonly number[] {
+function balancedQualityDays(request: CanonicalPlanGenerationRequest): readonly number[] {
   if (
     request.selectedEnergyIntent === "RECOVERY_INTENT"
     || request.selectedEnergyIntent === "BASE_INTENT"
@@ -351,8 +138,7 @@ function balancedQualityDays(request: PlanGenerationRequest): readonly number[] 
   }
 
   if (
-    request.requestedFrameLength === 7
-    || request.profile.experienceBand === "NEW_TO_RUNNING"
+    request.profile.experienceBand === "NEW_TO_RUNNING"
     || availableDays.length < 4
   ) {
     return Object.freeze([firstQualityDay])
@@ -368,15 +154,18 @@ function balancedQualityDays(request: PlanGenerationRequest): readonly number[] 
 }
 
 export function createDeterministicCandidates(
-  request: PlanGenerationRequest,
+  request: CanonicalPlanGenerationRequest,
+  ledger: SelectableExposureLedger,
 ): readonly [PlanCandidate, PlanCandidate] {
   const balanced = buildCandidate({
     request,
+    ledger,
     kind: "BALANCED",
     qualityDays: balancedQualityDays(request),
   })
   const conservative = buildCandidate({
     request,
+    ledger,
     kind: "CONSERVATIVE",
     qualityDays: Object.freeze([]),
   })

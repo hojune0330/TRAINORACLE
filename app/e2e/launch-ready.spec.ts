@@ -11,6 +11,20 @@ async function answerMinimumPlanQuestions(page: Page): Promise<void> {
   await page.getByRole("button", { name: /통증은 없고 몸 상태는 평소와 같아요/u }).click()
 }
 
+async function expectReviewOnlyPlanBoundary(page: Page): Promise<void> {
+  await expect(page.getByRole("alert")).toContainText(
+    "현재 입력만으로는 계획 후보를 만들지 않아요",
+  )
+  await expect(page.getByRole("heading", {
+    name: "두 계획에서 하나를 골라보세요",
+  })).toHaveCount(0)
+  await expect(page.locator(".plan-candidate")).toHaveCount(0)
+  await expect(page.getByRole("button", { name: /선택하기/u })).toHaveCount(0)
+  await expect.poll(async () => page.evaluate(
+    () => window.localStorage.getItem("trainoracle.plan-beta.v1"),
+  )).toBeNull()
+}
+
 test("keeps plan help inside the narrow scroll region", async ({ page }) => {
   await page.setViewportSize({ width: 320, height: 650 })
   await page.goto("/?app=1")
@@ -54,7 +68,7 @@ test("routes a first visitor from one context choice into the matching journal",
   await expect(page.getByRole("heading", { name: /회복.*하루 마무리/u })).toBeVisible()
 })
 
-test("creates and selects a profile-only beta plan from the first screen", async ({ page }) => {
+test("keeps first-screen legacy plan intake as review-only", async ({ page }) => {
   // Given
   await page.goto("/?app=1")
 
@@ -63,53 +77,13 @@ test("creates and selects a profile-only beta plan from the first screen", async
   await answerMinimumPlanQuestions(page)
 
   // Then
-  await expect(page.getByRole("heading", {
-    name: "두 계획에서 하나를 골라보세요",
-  })).toBeVisible()
-  await expect(page.getByRole("heading", {
-    name: "지속 페이스 포함",
-  })).toBeVisible()
-  await expect(page.getByRole("heading", {
-    name: "기초 지구력 중심",
-  })).toBeVisible()
-  await expect(page.getByText(
-    "운동 3회 · 기초 지구력 2일 · 지속 페이스 1일 · 완전 휴식 6일",
-  )).toBeVisible()
-  await expect(page.locator(".plan-candidate").first().locator(".plan-session-metric").filter({
-    hasText: "RPE 5~6",
-  })).toHaveCount(1)
-  const easySession = page.locator(".plan-session-content").filter({
-    hasText: "기초 지구력 달리기",
-  }).first()
-  await easySession.getByText("실행 방법 보기").click()
-  await expect(easySession.getByText(
-    /대화하거나 전화 통화는 가능한 정도입니다/u,
-  )).toBeVisible()
-  expect(await easySession.locator(".plan-session-metric").evaluate(
-    (element) => window.getComputedStyle(element).wordBreak,
-  )).toBe("keep-all")
+  await expectReviewOnlyPlanBoundary(page)
   expect(await page.evaluate(
     () => document.documentElement.scrollWidth <= window.innerWidth,
   )).toBe(true)
-  const scrollRegion = page.locator(".app-scroll-region")
-  await scrollRegion.evaluate((element) => {
-    element.scrollTop = element.scrollHeight
-  })
-
-  // When
-  await page.getByRole("button", {
-    name: "지속 페이스 포함 선택하기",
-  }).click()
-
-  // Then
-  await expect(page.getByRole("heading", {
-    name: "지속 페이스 포함 9일 계획",
-  })).toBeInViewport()
-  expect(await scrollRegion.evaluate((element) => element.scrollTop)).toBe(0)
-  await expect(page.getByText(/사용 정보 6가지.*베타 계획/u)).toBeVisible()
 })
 
-test("shows an explicit two-a-day choice as AM training plus PM recovery only", async ({ page }) => {
+test("keeps explicit two-a-day legacy intake as review-only", async ({ page }) => {
   await page.goto("/?app=1")
   await page.getByRole("button", { name: "훈련계획 후보 만들기" }).click()
   await page.getByRole("button", { name: /5km/u }).click()
@@ -120,23 +94,7 @@ test("shows an explicit two-a-day choice as AM training plus PM recovery only", 
   await page.getByRole("button", { name: "일부 날은 하루 두 번 운동" }).click()
   await page.getByRole("button", { name: /통증은 없고 몸 상태는 평소와 같아요/u }).click()
 
-  const balanced = page.locator(".plan-candidate").first()
-  await expect(balanced.locator(".plan-session-metric").filter({
-    hasText: "RPE 7~8",
-  })).toHaveCount(2)
-  await expect(balanced.getByText("DAY 4 · 오후")).toBeVisible()
-  await expect(balanced.getByText("DAY 6 · 오후")).toBeVisible()
-  await expect(balanced.getByText("오후 회복 운동")).toHaveCount(2)
-  await expect(balanced.locator(".plan-session-metric").filter({
-    hasText: "RPE 1~2",
-  })).toHaveCount(2)
-
-  await balanced.getByRole("button", { name: /선택하기/u }).click()
-
-  await expect(page.getByText("DAY 4 · 오후")).toBeVisible()
-  await expect(page.getByLabel("DAY 4 오후 진행 기록")).toBeVisible()
-  await page.getByLabel("DAY 4 오후 진행 기록").getByRole("button", { name: "완료" }).click()
-  await expect(page.getByLabel("DAY 4 오후 진행 기록").getByRole("button", { name: "완료" })).toHaveAttribute("aria-pressed", "true")
+  await expectReviewOnlyPlanBoundary(page)
 })
 
 test("reads a detailed training notation without creating a plan", async ({ page }) => {

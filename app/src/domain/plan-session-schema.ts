@@ -121,7 +121,7 @@ export const planSessionSchema = z.discriminatedUnion("role", [
   }),
 ])
 
-export const planFrameSchema = z.object({
+const legacyPlanFrameSchema = z.object({
   lengthDays: frameLengthSchema,
   continuity: z.union([
     z.object({
@@ -131,6 +131,18 @@ export const planFrameSchema = z.object({
     z.object({ kind: z.literal("STANDARD_FRAME") }),
   ]),
 })
+
+const canonicalPlanFrameSchema = z.object({
+  formationKind: z.literal("LOCAL_CIVIL_9_5"),
+  lengthDays: z.literal(9.5),
+  slotCount: z.literal(19),
+  continuity: z.object({ kind: z.literal("STANDARD_FRAME") }),
+})
+
+export const planFrameSchema = z.union([
+  legacyPlanFrameSchema,
+  canonicalPlanFrameSchema,
+])
 
 export const activePlanSchema = z.object({
   kind: z.literal("BETA_ACTIVE_PLAN_SNAPSHOT"),

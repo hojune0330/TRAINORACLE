@@ -1,79 +1,17 @@
-// noqa: SIZE_OK - one table-style contract suite covers the plan-generation boundary.
 import { describe, expect, it } from "vitest"
-import { mapD9ResultToRveSignal } from "../src/rve/signal"
-import { decideSafetyGate } from "../src/safety-gate/gate"
 import { generatePlanCandidates } from "../src/plan-generator/generator"
-import type { SafetyGateDecision } from "../src/safety-gate/gate"
-
-function clearedGate() {
-  const gate = decideSafetyGate(
-    mapD9ResultToRveSignal({
-      disposition: "D9_CLEARED",
-      blocksPlanGeneration: false,
-      reasonCodes: ["D9_CLEARED_NO_COLLOQUIAL_RISK_SIGNAL"],
-      evidence: [],
-    }),
-  )
-
-  if (gate.kind !== "passed") {
-    throw new Error("Expected cleared fixture to pass the Safety Gate")
-  }
-
-  return gate
-}
-
-function activeGate() {
-  return decideSafetyGate(
-    mapD9ResultToRveSignal({
-      disposition: "D9_ACTIVE",
-      blocksPlanGeneration: true,
-      reasonCodes: ["D9_ACTIVE_MANUAL_OR_MEDICAL_HOLD"],
-      evidence: [],
-    }),
-  )
-}
-
-function unknownGate() {
-  return decideSafetyGate(
-    mapD9ResultToRveSignal({
-      disposition: "D9_UNKNOWN",
-      blocksPlanGeneration: true,
-      reasonCodes: ["D9_UNKNOWN_PAIN_WORSENING"],
-      evidence: [],
-    }),
-  )
-}
-
-function baseRequest(frameLength = 9, safetyGate: SafetyGateDecision = clearedGate()) {
-  return {
-    kind: "PLAN_BETA_GENERATION_REQUEST",
-    safetyGate,
-    profile: {
-      eventGroup: "MIDDLE_DISTANCE",
-      experienceBand: "DEVELOPING",
-      availableTrainingDays: frameLength === 7 ? [1, 3, 5, 7] : [1, 3, 5, 7, 9],
-    },
-    requestedFrameLength: frameLength,
-    journalSource: {
-      kind: "NO_USABLE_JOURNAL",
-    },
-    selectionAuthority: "SELF",
-    selectedEnergyIntent: "LT_INTENT",
-  }
-}
-
-function expectGenerated(result: ReturnType<typeof generatePlanCandidates>) {
-  if (result.kind !== "generated") {
-    throw new Error(`Expected generated plan result, received ${result.kind}`)
-  }
-
-  return result
-}
+import {
+  activeGate,
+  baseRequest,
+  clearedGate,
+  expectGenerated,
+  unknownGate,
+} from "./fixtures/plan-beta-request"
 
 describe("plan beta generation contract", () => {
   it("blocks ACTIVE Safety Gate without options, sessions, or progression output", () => {
     // Given
-    const request = baseRequest(9, activeGate())
+    const request = baseRequest(activeGate())
 
     // When
     const result = generatePlanCandidates(request)
@@ -90,7 +28,7 @@ describe("plan beta generation contract", () => {
 
   it("blocks UNKNOWN Safety Gate without a hidden alternative candidate", () => {
     // Given
-    const request = baseRequest(9, unknownGate())
+    const request = baseRequest(unknownGate())
 
     // When
     const result = generatePlanCandidates(request)
@@ -163,23 +101,26 @@ describe("plan beta generation contract", () => {
     expect(second.audit).toEqual(first.audit)
   })
 
-  it.each([7, 9, 10])("respects a %i day frame", (frameLength) => {
+  it("uses the 19-slot local-civil 9.5-day Formation frame", () => {
     // Given
-    const request = baseRequest(frameLength)
+    const request = baseRequest()
 
     // When
     const result = expectGenerated(generatePlanCandidates(request))
 
     // Then
     for (const candidate of result.candidates) {
-      expect(candidate.frame.lengthDays).toBe(frameLength)
-      expect(candidate.sessions).toHaveLength(frameLength)
+      expect(candidate.frame).toMatchObject({
+        formationKind: "LOCAL_CIVIL_9_5",
+        lengthDays: 9.5,
+        slotCount: 19,
+      })
     }
   })
 
-  it("keeps explicit continuity metadata for a requested seven day frame", () => {
+  it("keeps standard-frame metadata for a canonical local-civil frame", () => {
     // Given
-    const request = baseRequest(7)
+    const request = baseRequest()
 
     // When
     const result = expectGenerated(generatePlanCandidates(request))
@@ -187,8 +128,7 @@ describe("plan beta generation contract", () => {
     // Then
     for (const candidate of result.candidates) {
       expect(candidate.frame.continuity).toEqual({
-        kind: "SEVEN_DAY_CONTINUITY",
-        nextFrameInput: "SELECTED_PLAN_AND_PROGRESS",
+        kind: "STANDARD_FRAME",
       })
     }
   })
@@ -224,10 +164,11 @@ describe("plan beta generation contract", () => {
   })
 
   it("limits sparse or beginner profile-only plans to one controlled quality day", () => {
+    const sparseBase = baseRequest(clearedGate(), [4, 7])
     const sparse = {
-      ...baseRequest(),
+      ...sparseBase,
       profile: {
-        ...baseRequest().profile,
+        ...sparseBase.profile,
         availableTrainingDays: [1, 4, 7],
       },
     }
@@ -254,7 +195,7 @@ describe("plan beta generation contract", () => {
   it("journal context cannot override an unsafe gate", () => {
     // Given
     const request = {
-      ...baseRequest(9, activeGate()),
+      ...baseRequest(activeGate()),
       journalSource: {
         kind: "RECENT_JOURNAL_CONTEXT",
         eligibleSessionCount: 4,
