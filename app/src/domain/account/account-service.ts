@@ -11,6 +11,8 @@ export type SaveProfileInput = {
   readonly birthDate: string
 }
 
+const ADMITTED_STATUSES = new Set(["ADMITTED_NEW", "ADMITTED_EXISTING"])
+
 export async function savePrivateProfile(input: SaveProfileInput): Promise<AccountActionResult> {
   const client = await supabase()
   if (client === null) return { ok: false, message: "계정 기능이 꺼져 있어요." }
@@ -20,11 +22,17 @@ export async function savePrivateProfile(input: SaveProfileInput): Promise<Accou
     if (error instanceof RangeError) return { ok: false, message: "생년월일을 확인해 주세요." }
     throw error
   }
-  const { error } = await client.from("user_private_profiles").upsert({
-    user_id: input.userId,
-    birth_date: input.birthDate,
-  }, { onConflict: "user_id" })
-  return error === null
+  const { data, error } = await client.rpc("claim_beta_seat", {
+    birth_date_input: input.birthDate,
+  })
+  if (error !== null) return { ok: false, message: "계정 정보를 저장하지 못했어요." }
+  if (data === "BETA_FULL") {
+    return {
+      ok: false,
+      message: "무료 베타 200명 자리가 모두 찼어요. 기기 일지는 계속 사용할 수 있어요.",
+    }
+  }
+  return typeof data === "string" && ADMITTED_STATUSES.has(data)
     ? { ok: true, message: "계정 정보를 저장했어요." }
     : { ok: false, message: "계정 정보를 저장하지 못했어요." }
 }
