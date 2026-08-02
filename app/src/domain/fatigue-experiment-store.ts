@@ -1,27 +1,29 @@
 import { z } from "zod"
-import { fatigueVector } from "./fatigue-vector"
-import type { FatigueVector } from "./fatigue-vector"
+import { fatigueEvidenceSchema, fatigueVector, fatigueVectorSchema } from "./fatigue-vector"
+import type { FatigueEvidence, FatigueVector } from "./fatigue-vector"
 
 const STORAGE_KEY = "trainoracle.fatigue-experiment.v1"
 const stateSchema = z.object({
   optedIn: z.boolean(),
-  vector: z.object({
-    neural: z.number().min(0).max(10),
-    metabolic: z.number().min(0).max(10),
-    muscular: z.number().min(0).max(10),
-    impact: z.number().min(0).max(10),
-    subjective: z.number().min(0).max(10),
-  }),
+  vector: fatigueVectorSchema,
+  evidence: fatigueEvidenceSchema.nullable(),
 })
+const legacyStateSchema = z.object({
+  optedIn: z.boolean(),
+  vector: fatigueVectorSchema,
+})
+const storedStateSchema = z.union([stateSchema, legacyStateSchema])
 
 export type FatigueExperimentState = {
   readonly optedIn: boolean
   readonly vector: FatigueVector
+  readonly evidence: FatigueEvidence | null
 }
 
 const DEFAULT_STATE: FatigueExperimentState = {
   optedIn: false,
   vector: fatigueVector({ neural: 5, metabolic: 5, muscular: 5, impact: 5, subjective: 5 }),
+  evidence: null,
 }
 
 export function loadFatigueExperiment(): FatigueExperimentState {
@@ -30,8 +32,11 @@ export function loadFatigueExperiment(): FatigueExperimentState {
     const raw = window.localStorage.getItem(STORAGE_KEY)
     if (raw === null) return DEFAULT_STATE
     const parsedJson: unknown = JSON.parse(raw)
-    const parsed = stateSchema.safeParse(parsedJson)
-    return parsed.success ? parsed.data : DEFAULT_STATE
+    const parsed = storedStateSchema.safeParse(parsedJson)
+    if (!parsed.success) return DEFAULT_STATE
+    return "evidence" in parsed.data
+      ? parsed.data
+      : { ...parsed.data, evidence: null }
   } catch (error) {
     if (error instanceof SyntaxError) return DEFAULT_STATE
     throw error
@@ -45,7 +50,8 @@ export function saveFatigueExperiment(state: FatigueExperimentState): boolean {
   try {
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(parsed.data))
     return true
-  } catch {
-    return false
+  } catch (error) {
+    if (error instanceof DOMException) return false
+    throw error
   }
 }
