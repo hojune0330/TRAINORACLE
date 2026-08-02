@@ -115,5 +115,8 @@ VITE_ACCOUNT_PUBLIC_ENABLED=true
 
 ## 끄고 싶을 때
 
-`TRAINORACLE_ACCOUNT_PUBLIC_ENABLED`를 `false`로 바꾸거나 삭제한 뒤
-재배포하면 계정 진입점이 사라지고 로컬 전용 앱으로 돌아갑니다.
+서버의 `ACCOUNT` 스위치를 먼저 끄고 이유를 기록합니다. 그다음
+`TRAINORACLE_KILL_ACCOUNT=true`와
+`TRAINORACLE_ACCOUNT_PUBLIC_ENABLED=false`를 적용해 재배포합니다. 이미 열린
+앱의 서버 작업을 먼저 차단한 뒤 계정 진입점을 숨기는 순서입니다. 로컬 일지는
+계속 사용할 수 있습니다.

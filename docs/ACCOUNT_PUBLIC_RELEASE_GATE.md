@@ -74,6 +74,10 @@ G8에는 같은 브라우저에서 계정을 바꿨을 때 이전 사용자의 �
 
 ## 즉시 끄기
 
-문제가 발견되면 `TRAINORACLE_ACCOUNT_PUBLIC_ENABLED`를 `false`로 바꾸고
-main을 재배포한다. 이 조치는 계정 진입점을 숨기지만, 이미 서버에 저장된
-데이터의 삭제나 보유 정책을 대신하지 않는다.
+문제가 발견되면 서버의 `ACCOUNT` 스위치를 먼저 끄고 이유를 기록한다. 그다음
+`TRAINORACLE_KILL_ACCOUNT=true`와
+`TRAINORACLE_ACCOUNT_PUBLIC_ENABLED=false`를 적용해 main을 재배포한다. 이렇게
+해야 이미 열린 앱도 새 서버 작업을 시작하지 못하고, 새 배포에서는 계정
+진입점도 사라진다. 이 조치는 이미 서버에 저장된 데이터의 삭제나 보유 정책을
+대신하지 않는다. 자세한 순서는
+`reports/operations/BETA_FEATURE_INCIDENT_LOG.md`를 따른다.
