@@ -15,10 +15,10 @@
    - `Project URL` (예: `https://abcdefgh.supabase.co`)
    - `anon public` 키 (공개용 키 — 프론트에 넣어도 안전, RLS가 지킴)
 
-## 2. 마이그레이션 18개 적용
+## 2. 마이그레이션 19개 적용
 
 SQL Editor에 일부 파일만 복사하지 않는다. 저장소 루트에서 Supabase CLI로
-시험 프로젝트를 연결한 뒤 `0001`부터 `0018`까지 순서대로 적용한다.
+시험 프로젝트를 연결한 뒤 `0001`부터 `0019`까지 순서대로 적용한다.
 
 ```bash
 npx supabase login
@@ -27,7 +27,7 @@ npx supabase db push --linked --include-all
 npx supabase migration list --linked
 ```
 
-마지막 명령에서 `0001`~`0018`이 모두 로컬·원격 양쪽에 표시돼야 한다.
+마지막 명령에서 `0001`~`0019`가 모두 로컬·원격 양쪽에 표시돼야 한다.
 명령 시각, 시험 프로젝트 ref, Region, 적용 목록과 성공 결과를
 `reports/operations/`의 시험 영수증에 남긴다. 비밀번호·access token·anon key는
 영수증이나 Git에 기록하지 않는다.
