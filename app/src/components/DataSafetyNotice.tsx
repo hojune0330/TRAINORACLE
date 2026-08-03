@@ -32,7 +32,7 @@ export function DataSafetyNotice({ onOpenAccount }: {
           브라우저 데이터 정리·기기 변경·앱 삭제 때 일지가 지워질 수 있어요.
           {accountOn
             ? " 계정에 연동해 두면 일지와 데이터가 안전하게 보관돼요."
-            : " 홈 아래 '안전한 내보내기'로 사본을 보관해 주세요."}
+            : " 더보기의 백업·복원에서 사본을 보관해 주세요."}
         </div>
         {accountOn && (
           <button

@@ -28,7 +28,7 @@ async function expectReviewOnlyPlanBoundary(page: Page): Promise<void> {
 test("keeps plan help inside the narrow scroll region", async ({ page }) => {
   await page.setViewportSize({ width: 320, height: 650 })
   await page.goto("/?app=1")
-  await page.getByRole("button", { name: "훈련계획 먼저 보기" }).click()
+  await page.getByRole("navigation", { name: "내 훈련 서비스" }).getByRole("button", { name: /^훈련계획/u }).click()
   await page.getByRole("button", { name: "준비 목표 설명 보기" }).click()
 
   const geometry = await page.evaluate(() => {
@@ -60,9 +60,9 @@ test("routes a first visitor from one context choice into the matching journal",
   await page.goto("/")
 
   // When
-  await page.getByRole("button", { name: "오늘 기록 시작하기" }).click()
-  await expect(page.getByRole("button", { name: "이전 화면으로" })).toBeInViewport()
-  await page.getByRole("button", { name: /하루와 몸 상태를 기록할래요/u }).click()
+  await page.getByRole("button", { name: "오늘 기록하기" }).click()
+  await expect(page.getByRole("button", { name: "← 뒤로" })).toBeInViewport()
+  await page.getByRole("button", { name: /회복 · 하루 마무리/u }).click()
 
   // Then
   await expect(page.getByRole("heading", { name: /회복.*하루 마무리/u })).toBeVisible()
@@ -73,7 +73,7 @@ test("keeps first-screen legacy plan intake as review-only", async ({ page }) =>
   await page.goto("/?app=1")
 
   // When
-  await page.getByRole("button", { name: "훈련계획 먼저 보기" }).click()
+  await page.getByRole("navigation", { name: "내 훈련 서비스" }).getByRole("button", { name: /^훈련계획/u }).click()
   await answerMinimumPlanQuestions(page)
 
   // Then
@@ -85,7 +85,7 @@ test("keeps first-screen legacy plan intake as review-only", async ({ page }) =>
 
 test("keeps explicit two-a-day legacy intake as review-only", async ({ page }) => {
   await page.goto("/?app=1")
-  await page.getByRole("button", { name: "훈련계획 먼저 보기" }).click()
+  await page.getByRole("navigation", { name: "내 훈련 서비스" }).getByRole("button", { name: /^훈련계획/u }).click()
   await page.getByRole("button", { name: /5km/u }).click()
   await page.getByRole("button", { name: /훈련 계획에 맞춰 달려 본 경험/u }).click()
   await page.getByRole("button", { name: /반복 인터벌.*VO2/u }).click()
@@ -99,7 +99,7 @@ test("keeps explicit two-a-day legacy intake as review-only", async ({ page }) =
 
 test("reads a detailed training notation without creating a plan", async ({ page }) => {
   await page.goto("/?app=1")
-  await page.getByRole("button", { name: "훈련계획 먼저 보기" }).click()
+  await page.getByRole("navigation", { name: "내 훈련 서비스" }).getByRole("button", { name: /^훈련계획/u }).click()
   await page.getByRole("button", { name: "훈련표 표기 읽기" }).click()
   await page.getByRole("textbox", { name: "훈련표 표기" }).fill(
     "2×(10×400m) @5000m RP · r60″ · R3′",
@@ -141,7 +141,7 @@ test("does not let a favorable current answer override recent high pain", async 
     }]))
   })
   await page.goto("/?app=1")
-  await page.getByRole("button", { name: "훈련계획 후보 만들기" }).click()
+  await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "계획" }).click()
 
   await answerMinimumPlanQuestions(page)
 
@@ -200,8 +200,6 @@ test("uses the real app on desktop and reserves the workspace for an explicit qu
 
   // Given / When
   await page.goto("/")
-  await page.getByRole("button", { name: "홈 먼저 둘러보기" }).click()
-
   // Then
   await expect(page.getByRole("navigation", { name: "주 탭" })).toBeVisible()
   await expect(page.getByText(/app · phase 1 · journal-first/u)).toHaveCount(0)

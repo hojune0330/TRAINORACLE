@@ -5,7 +5,6 @@
 //  - 외부 의존성 없음 — 브라우저/jsdom 내장 DOMParser 사용.
 
 export type ImportedActivity = {
-  /** YYYY-MM-DD (활동 시작 로컬 기준 — 파일의 ISO 타임스탬프에서 날짜부) */
   readonly date: string
   readonly name: string
   readonly sport: string
@@ -27,9 +26,26 @@ import { parseCsvActivities, parseJsonActivities } from "./structured-activity-f
 
 const EMPTY: ActivityParseResult = { activities: [], skipped: 0, format: "unknown" }
 
-function isoDatePart(iso: string): string | null {
-  const match = /^(\d{4}-\d{2}-\d{2})T/.exec(iso.trim())
-  return match?.[1] ?? null
+function localDatePart(iso: string, timeZone: string): string | null {
+  const instant = new Date(iso.trim())
+  if (Number.isNaN(instant.getTime())) return null
+  try {
+    const parts = new Intl.DateTimeFormat("en", {
+      timeZone,
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+    }).formatToParts(instant)
+    const year = parts.find((part) => part.type === "year")?.value
+    const month = parts.find((part) => part.type === "month")?.value
+    const day = parts.find((part) => part.type === "day")?.value
+    return year === undefined || month === undefined || day === undefined
+      ? null
+      : `${year}-${month}-${day}`
+  } catch (error) {
+    if (error instanceof RangeError) return null
+    throw error
+  }
 }
 
 function paceOf(distanceMeters: number, seconds: number): string {
@@ -48,8 +64,9 @@ function toActivity(
   sport: string,
   distanceMeters: number,
   seconds: number,
+  timeZone: string,
 ): ImportedActivity | null {
-  const date = startIso === null ? null : isoDatePart(startIso)
+  const date = startIso === null ? null : localDatePart(startIso, timeZone)
   if (date === null) return null
   if (!(distanceMeters > 0) && !(seconds > 0)) return null
   return {
@@ -72,7 +89,7 @@ function numOf(parent: Element, tag: string): number {
   return Number.isFinite(n) ? n : 0
 }
 
-function parseTcx(doc: Document): ActivityParseResult {
+function parseTcx(doc: Document, timeZone: string): ActivityParseResult {
   const nodes = [...doc.getElementsByTagName("Activity")]
   const activities: ImportedActivity[] = []
   let skipped = 0
@@ -91,6 +108,7 @@ function parseTcx(doc: Document): ActivityParseResult {
       node.getAttribute("Sport") ?? "",
       meters,
       seconds,
+      timeZone,
     )
     if (activity === null) skipped += 1
     else activities.push(activity)
@@ -109,7 +127,7 @@ function haversineMeters(lat1: number, lon1: number, lat2: number, lon2: number)
   return 2 * R * Math.asin(Math.sqrt(a))
 }
 
-function parseGpx(doc: Document): ActivityParseResult {
+function parseGpx(doc: Document, timeZone: string): ActivityParseResult {
   const tracks = [...doc.getElementsByTagName("trk")]
   const activities: ImportedActivity[] = []
   let skipped = 0
@@ -141,6 +159,7 @@ function parseGpx(doc: Document): ActivityParseResult {
       textOf(trk, "type"),
       meters,
       seconds,
+      timeZone,
     )
     if (activity === null) skipped += 1
     else activities.push(activity)
@@ -148,7 +167,10 @@ function parseGpx(doc: Document): ActivityParseResult {
   return { activities, skipped, format: "gpx" }
 }
 
-export function parseActivityFile(text: string): ActivityParseResult {
+export function parseActivityFile(
+  text: string,
+  timeZone: string = Intl.DateTimeFormat().resolvedOptions().timeZone,
+): ActivityParseResult {
   const trimmed = text.trimStart()
   if (trimmed.startsWith("[") || trimmed.startsWith("{")) {
     return parseJsonActivities(text) ?? EMPTY
@@ -164,7 +186,7 @@ export function parseActivityFile(text: string): ActivityParseResult {
   }
   if (doc.getElementsByTagName("parsererror").length > 0) return EMPTY
   const root = doc.documentElement?.tagName ?? ""
-  if (root === "TrainingCenterDatabase") return parseTcx(doc)
-  if (root === "gpx") return parseGpx(doc)
+  if (root === "TrainingCenterDatabase") return parseTcx(doc, timeZone)
+  if (root === "gpx") return parseGpx(doc, timeZone)
   return EMPTY
 }

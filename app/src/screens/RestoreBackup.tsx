@@ -74,9 +74,12 @@ export function RestoreBackup({ onBack, onOpenHome }: {
     setStage({ step: "review", read, plan: buildRestorePlan(read.entries) })
   }
 
-  const handleRestore = () => {
+  const handleRestore = async () => {
     if (stage.step !== "review") return
-    setStage({ step: "done", outcome: restoreEntries(stage.plan, mode) })
+    setBusy(true)
+    const outcome = await restoreEntries(stage.plan, mode)
+    setBusy(false)
+    setStage({ step: "done", outcome })
   }
 
   return (

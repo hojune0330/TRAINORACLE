@@ -98,7 +98,7 @@ test("shows provenance-safe trends without leaking private memo signals", async 
   }, privateText)
 
   await page.goto("/?app=1")
-  await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "추이" }).click()
+  await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "분석" }).click()
 
   const weekly = page.getByRole("region", { name: "최근 4주 거리" })
   await expect(weekly.getByText(/^8$/u)).toBeVisible()

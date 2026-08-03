@@ -5,7 +5,7 @@ const enabledBuild = process.env.FATIGUE_EVIDENCE_BUILD === "true"
 test("keeps experimental fatigue hidden in the default public build", async ({ page }) => {
   test.skip(enabledBuild, "enabled-build scenario runs separately")
   await page.goto("/?app=1&uitest=1")
-  await page.getByRole("button", { name: "추이" }).click()
+  await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "분석" }).click()
 
   await expect(page.getByRole("heading", { name: "피로도 나눠 보기" })).toHaveCount(0)
 })
@@ -13,7 +13,7 @@ test("keeps experimental fatigue hidden in the default public build", async ({ p
 test("records exact self-report evidence before showing the experimental composite", async ({ page }) => {
   test.skip(!enabledBuild, "requires a build with the experimental fatigue flag")
   await page.goto("/?app=1&uitest=1")
-  await page.getByRole("button", { name: "추이" }).click()
+  await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "분석" }).click()
 
   const panel = page.getByRole("region", { name: "피로도 나눠 보기" })
   await expect(panel.getByText(/아직 저장된 피로 기록이 없어요/u)).toBeVisible()

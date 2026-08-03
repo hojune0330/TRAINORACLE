@@ -20,13 +20,13 @@ test("offers a rest-day path without pressuring the athlete to log more", async 
   })
   await page.goto("/?app=1")
 
-  await expect(page.getByText(/쉰 날과 아픈 날도 기록이에요/u)).toBeVisible()
+  await expect(page.getByText("쉰 날은 하루 마무리에서 몸 상태를 짧게 남겨요.")).toBeVisible()
   await expect(page.getByText(/일만 더 쓰면/u)).toHaveCount(0)
 
   await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: /기록/u }).click()
   await expect(page.getByRole("button", { name: /회복 · 하루 마무리.*쉬는 날도 그대로/u })).toBeVisible()
 
-  await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: /추이/u }).click()
+  await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "분석" }).click()
   await expect(page.getByText("집계 가능한 거리 없음")).toBeVisible()
   await expect(page.getByText(/집계 제외 1건/u).first()).toBeVisible()
   await expect(page.getByText(/계획·안전 판정·다음 훈련 결정에는 쓰이지 않아요/u)).toBeVisible()

@@ -26,7 +26,7 @@ describe("DataSafetyNotice", () => {
     render(<DataSafetyNotice onOpenAccount={() => {}} />)
     // 테스트 환경은 VITE_SUPABASE_* 미설정 → flag OFF
     expect(screen.queryByRole("button", { name: /계정 연동/ })).toBeNull()
-    expect(screen.getByTestId("data-safety-notice").textContent).toContain("안전한 내보내기")
+    expect(screen.getByTestId("data-safety-notice").textContent).toContain("더보기의 백업·복원")
   })
 
   it("협박형 문구(손실 임박·카운트다운)를 쓰지 않는다", () => {

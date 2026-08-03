@@ -24,6 +24,12 @@ export type JournalArchiveProps = {
   readonly onSelectionChange: (selection: ArchiveSelection) => void
   readonly onOpenDay: (date: string) => void
   readonly onBack: () => void
+  readonly mode?: "CALENDAR" | "CYCLE"
+  readonly cycleAnchor?: string | null
+  readonly cycleIndex?: number
+  readonly onModeChange?: (mode: "CALENDAR" | "CYCLE") => void
+  readonly onCycleAnchorChange?: (anchor: string) => void
+  readonly onCycleIndexChange?: (index: number) => void
 }
 
 export function JournalArchive({
@@ -32,8 +38,16 @@ export function JournalArchive({
   onSelectionChange,
   onOpenDay,
   onBack,
+  mode,
+  cycleAnchor,
+  cycleIndex,
+  onModeChange,
+  onCycleAnchorChange,
+  onCycleIndexChange,
 }: JournalArchiveProps) {
-  const [mode, setMode] = React.useState<"CALENDAR" | "CYCLE">("CALENDAR")
+  const [internalMode, setInternalMode] = React.useState<"CALENDAR" | "CYCLE">("CALENDAR")
+  const activeMode = mode ?? internalMode
+  const changeMode = onModeChange ?? setInternalMode
   const archive = React.useMemo(() => projectJournalArchive(entries), [entries])
   const selectedMonth = archive.months.find((month) => month.month === selection.selectedMonth) ?? null
   const selectedWeek = selectedMonth?.weeks.find(
@@ -41,8 +55,8 @@ export function JournalArchive({
   ) ?? null
 
   const goBack = () => {
-    if (mode === "CYCLE") {
-      setMode("CALENDAR")
+    if (activeMode === "CYCLE") {
+      changeMode("CALENDAR")
     } else if (selectedWeek !== null) {
       onSelectionChange({
         selectedMonth: selectedMonth?.month ?? null,
@@ -55,7 +69,7 @@ export function JournalArchive({
     }
   }
 
-  const heading = mode === "CYCLE"
+  const heading = activeMode === "CYCLE"
     ? "9.5일 주기 일지"
     : selectedWeek !== null
     ? weekHeading(selectedWeek)
@@ -115,16 +129,23 @@ export function JournalArchive({
       </header>
 
       <div style={{ margin: "14px 20px 0", display: "grid", gridTemplateColumns: "1fr 1fr", border: "1px solid var(--line)" }}>
-        <button type="button" aria-pressed={mode === "CALENDAR"} onClick={() => setMode("CALENDAR")} style={modeButtonStyle(mode === "CALENDAR")}>
+        <button type="button" aria-pressed={activeMode === "CALENDAR"} onClick={() => changeMode("CALENDAR")} style={modeButtonStyle(activeMode === "CALENDAR")}>
           달력·주간
         </button>
-        <button type="button" aria-pressed={mode === "CYCLE"} onClick={() => setMode("CYCLE")} style={modeButtonStyle(mode === "CYCLE")}>
+        <button type="button" aria-pressed={activeMode === "CYCLE"} onClick={() => changeMode("CYCLE")} style={modeButtonStyle(activeMode === "CYCLE")}>
           9.5일 주기
         </button>
       </div>
 
-      {mode === "CYCLE" ? (
-        <CycleArchive entries={entries} onOpenDay={onOpenDay} />
+      {activeMode === "CYCLE" ? (
+        <CycleArchive
+          entries={entries}
+          anchor={cycleAnchor}
+          index={cycleIndex}
+          onAnchorChange={onCycleAnchorChange}
+          onIndexChange={onCycleIndexChange}
+          onOpenDay={onOpenDay}
+        />
       ) : archive.months.length === 0 ? (
         <div style={{ padding: "48px 20px", textAlign: "center" }}>
           <div style={{ fontFamily: "var(--sans)", fontSize: 16, color: "var(--ink)" }}>

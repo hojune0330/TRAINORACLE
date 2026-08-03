@@ -59,7 +59,8 @@ test("uses the diary context, decoration, cycle archive, and easy FAQ as one flo
   await expect(page.getByText(/· 9일 구간$/u)).toBeVisible()
 
   await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "홈" }).click()
-  await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "도움" }).click()
+  await page.getByRole("button", { name: "더보기" }).click()
+  await page.getByRole("button", { name: "쉬운 도움말과 FAQ" }).click()
   await expect(page.getByRole("heading", { name: "궁금한 점을 쉽게 풀어드려요" })).toBeVisible()
   await page.getByText("나중에 월 구독이나 광고가 생길 수 있나요?").click()
   await expect(page.getByText(/TrainOracle 베타는 현재 무료입니다/u)).toBeVisible()

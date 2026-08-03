@@ -52,20 +52,87 @@ describe("AppShell journal archive routing", () => {
     expect(screen.getByRole("button", { name: /2026년 7월 10일/u })).toBeVisible()
   })
 
-  it("keeps the easy FAQ one tap away after journal history has accumulated", async () => {
+  it("returns from editing an archived entry to the same selected week", async () => {
     const user = userEvent.setup()
     render(<AppShell />)
 
-    await user.click(screen.getByRole("button", { name: "도움" }))
+    await user.click(screen.getByRole("button", { name: "전체 보기" }))
+    await user.click(screen.getByRole("button", { name: /2026년 7월/u }))
+    await user.click(screen.getByRole("button", { name: /7월 6일.*7월 12일/u }))
+    await user.click(screen.getByRole("button", { name: /2026년 7월 10일/u }))
+    await user.click(screen.getByRole("button", { name: "훈련 기록 수정" }))
+
+    await user.click(screen.getByRole("button", { name: "← 뒤로" }))
+    expect(screen.getByText("아카이브 복귀 훈련")).toBeVisible()
+    await user.click(screen.getByRole("button", { name: "← 뒤로" }))
+
+    expect(screen.getByRole("heading", { name: "7월 6일–12일" })).toBeVisible()
+    expect(screen.getByRole("button", { name: /2026년 7월 10일/u })).toBeVisible()
+  })
+
+  it("does not reset the archive when the active journal tab is tapped again", async () => {
+    const user = userEvent.setup()
+    render(<AppShell />)
+
+    await user.click(screen.getByRole("button", { name: "일지" }))
+    await user.click(screen.getByRole("button", { name: /2026년 7월/u }))
+    await user.click(screen.getByRole("button", { name: /7월 6일.*7월 12일/u }))
+    await user.click(screen.getByRole("button", { name: "일지" }))
+
+    expect(screen.getByRole("heading", { name: "7월 6일–12일" })).toBeVisible()
+  })
+
+  it("returns a Minji example opened from home back to home", async () => {
+    const user = userEvent.setup()
+    render(<AppShell />)
+
+    await user.click(screen.getByRole("button", { name: /민지의 예시 일지 보기/u }))
+    await user.click(screen.getByRole("button", { name: /돌아가기/u }))
+
+    expect(screen.getByRole("heading", { name: "내 훈련" })).toBeVisible()
+  })
+
+  it("opens the journal archive from the dedicated journal tab", async () => {
+    const user = userEvent.setup()
+    render(<AppShell />)
+
+    await user.click(screen.getByRole("button", { name: "일지" }))
+
+    expect(screen.getByRole("heading", { name: "지난 일지" })).toBeVisible()
+  })
+
+  it("keeps the easy FAQ one tap away through more", async () => {
+    const user = userEvent.setup()
+    render(<AppShell />)
+
+    await user.click(screen.getByRole("button", { name: "더보기" }))
+    await user.click(screen.getByRole("button", { name: "쉬운 도움말과 FAQ" }))
 
     expect(screen.getByRole("heading", { name: "궁금한 점을 쉽게 풀어드려요" })).toBeVisible()
+  })
+
+  it("keeps safe export and confirmed full backup inside more", async () => {
+    const user = userEvent.setup()
+    render(<AppShell />)
+
+    await user.click(screen.getByRole("button", { name: "더보기" }))
+    const exportButton = screen.getByRole("button", {
+      name: /내 일지 데이터 내려받기/u,
+      description: /메모 원문.*제외/u,
+    })
+    expect(exportButton).toBeVisible()
+
+    await user.click(screen.getByRole("button", { name: /메모 포함 파일 내보내기/u }))
+    expect(screen.getByRole("dialog", { name: "메모까지 포함할까요?" })).toBeVisible()
   })
 
   it("does not grant points merely for opening the app", () => {
     window.localStorage.clear()
     render(<AppShell />)
 
-    expect(screen.getByRole("button", { name: "오늘 기록 시작하기" })).toBeVisible()
+    expect(screen.getByRole("heading", { name: "내 훈련" })).toBeVisible()
+    expect(screen.getByRole("button", { name: "오늘 기록하기" })).toBeVisible()
+    expect(screen.getByRole("button", { name: "일지" })).toBeVisible()
     expect(screen.queryByLabelText(/오라클 포인트/u)).not.toBeInTheDocument()
     expect(window.localStorage.getItem("trainoracle.engagement.v1")).toBeNull()
   })

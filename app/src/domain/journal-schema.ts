@@ -179,7 +179,11 @@ const journalEntryWriteSchema = journalEntrySchema.superRefine((entry, context) 
 
 export function parseJournalEntry(value: unknown): JournalEntry | null {
   const result = journalEntrySchema.safeParse(value)
-  return result.success ? result.data : null
+  if (!result.success) return null
+  const entry = result.data
+  if (entry.fieldProvenance === undefined
+    || isValidEntryFieldProvenance(entry.kind, entry.fieldProvenance)) return entry
+  return { ...entry, fieldProvenance: {} }
 }
 
 export function parseJournalEntryForWrite(value: unknown): JournalEntry | null {

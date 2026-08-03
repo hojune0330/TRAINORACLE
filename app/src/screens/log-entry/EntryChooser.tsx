@@ -1,3 +1,4 @@
+import React from "react"
 import { compactDate, dowOf, nowClock } from "../../domain/dates"
 import { entriesForDate, todayISO } from "../../domain/journal-store"
 import { TopBar } from "./shared"
@@ -18,9 +19,14 @@ const ENTRY_OPTIONS = [
 ] as const
 
 export function EntryChooser({ onBack, onPick, onOpenImport, targetDate }: EntryChooserProps) {
+  const headingRef = React.useRef<HTMLHeadingElement>(null)
   const today = todayISO()
   const entryDate = targetDate ?? today
   const isToday = entryDate === today
+  React.useEffect(() => {
+    headingRef.current?.focus()
+  }, [])
+
   return (
     <div style={{ paddingBottom: 30 }}>
       <TopBar onBack={onBack}>새 일지</TopBar>
@@ -28,7 +34,7 @@ export function EntryChooser({ onBack, onPick, onOpenImport, targetDate }: Entry
         <div style={{ fontFamily: "var(--mono)", fontSize: 10, color: "var(--ink-3)", letterSpacing: "0.14em", textTransform: "uppercase" }}>
           {compactDate(entryDate)} {dowOf(entryDate)} · {nowClock()}
         </div>
-        <h1 style={{ fontFamily: "var(--sans)", fontSize: 22, fontWeight: 500, letterSpacing: "-0.02em", margin: "6px 0 0" }}>어떤 일지를 쓰세요?</h1>
+        <h1 ref={headingRef} tabIndex={-1} style={{ fontFamily: "var(--sans)", fontSize: 22, fontWeight: 500, letterSpacing: "-0.02em", margin: "6px 0 0" }}>어떤 일지를 쓰세요?</h1>
       </div>
 
       <div style={{ marginTop: 18 }}>

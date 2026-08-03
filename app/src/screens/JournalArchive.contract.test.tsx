@@ -191,5 +191,6 @@ describe("journal archive surface", () => {
     expect(screen.getByRole("button", { name: /2026년 7월 10일/u })).toBeVisible()
     expect(document.body.textContent).not.toContain(SECRET)
     expect(screen.getByText(/계획을 자동으로 바꾸지 않아요/u)).toBeVisible()
+    expect(screen.getByText(/처방이나 정답 주기가 아니에요/u)).toBeVisible()
   })
 })

@@ -9,7 +9,6 @@ import { LogEntry } from "./screens/LogEntry"
 import { LogDetail } from "./screens/LogDetail"
 import { Trends } from "./screens/Trends"
 import { Guide } from "./screens/Guide"
-import { FirstPage } from "./screens/home/FirstPage"
 import { PlanBeta } from "./screens/PlanBeta"
 import { todayISO } from "./domain/journal-store"
 
@@ -35,20 +34,12 @@ function Workspace() {
         display: "flex", flexWrap: "wrap", gap: 40,
         padding: "0 0 30px", justifyContent: "flex-start",
       }}>
-        <MobileFrame label="FIRST VISIT · WELCOME">
-          <FirstPage initialStep="welcome" onWriteLog={() => {}} onOpenPlan={() => {}} />
-        </MobileFrame>
-
-        <MobileFrame label="FIRST VISIT · ONE CONTEXT">
-          <FirstPage initialStep="context" onWriteLog={() => {}} />
-        </MobileFrame>
-
         <MobileFrame label="PLAN · BETA">
           <PlanBeta onWriteLog={() => {}} />
         </MobileFrame>
 
         <MobileFrame label="HOME · 실데이터">
-          <Home onWriteLog={() => {}} onOpenDay={() => {}} onOpenGuide={() => {}} />
+          <Home onWriteLog={() => {}} onOpenDay={() => {}} onOpenGuide={() => {}} onOpenMore={() => {}} />
         </MobileFrame>
 
         <MobileFrame label="LOG · CHOOSE">

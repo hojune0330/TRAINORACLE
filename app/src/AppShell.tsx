@@ -14,28 +14,28 @@ import { AthleteRecords } from "./screens/AthleteRecords"
 import { Account } from "./screens/Account"
 import { ImportActivities } from "./screens/ImportActivities"
 import { RestoreBackup } from "./screens/RestoreBackup"
+import { More } from "./screens/More"
 import { accountFeatureEnabled } from "./domain/account/config"
 import { loadEntries, localOnlyCount } from "./domain/journal-store"
 import type { JournalEntry } from "./domain/journal-store"
 import { createSavedFactReceipt } from "./domain/save-receipt"
-import { dismissFirstVisit, hasDismissedFirstVisit } from "./domain/onboarding-state"
 import { trackProductEvent } from "./domain/account/product-analytics-service"
-import { INITIAL_VIEW_STATE, viewForTab } from "./domain/app-shell-state"
+import {
+  INITIAL_VIEW_STATE,
+  viewForJournalDraft,
+  viewForJournalReturn,
+  viewForTab,
+} from "./domain/app-shell-state"
 const TOAST_READABLE_MS = 4000
 const TOAST_EXIT_MS = 150
-
-function isExplicitAppEntry(): boolean {
-  return new URLSearchParams(window.location.search).get("app") === "1"
-}
 
 export function AppShell() {
   const [v, setV] = React.useState(INITIAL_VIEW_STATE)
   const [savedToast, setSavedToast] = React.useState<ShellToastState | null>(null)
   const [athleteRecordsOpen, setAthleteRecordsOpen] = React.useState(false)
   const scrollRegionRef = React.useRef<HTMLElement>(null)
-  const [firstVisitActive, setFirstVisitActive] = React.useState(
-    () => localOnlyCount() === 0 && !hasDismissedFirstVisit() && !isExplicitAppEntry(),
-  )
+  const [utilityView, setUtilityView] = React.useState<"more" | "guide" | "minji" | null>(null)
+  const [utilityOrigin, setUtilityOrigin] = React.useState<"home" | "more">("more")
 
   React.useEffect(() => {
     void trackProductEvent("APP_OPENED")
@@ -43,15 +43,13 @@ export function AppShell() {
 
   const goHome = () => {
     setAthleteRecordsOpen(false)
+    setUtilityView(null)
     setV(INITIAL_VIEW_STATE)
   }
   const goHomeAfterSave = (savedEntry: JournalEntry, reviewMessage?: string, detailDate?: string) => {
     const receipt = createSavedFactReceipt(savedEntry)
-    setV(detailDate === undefined
-      ? INITIAL_VIEW_STATE
-      : { ...INITIAL_VIEW_STATE, detailDate, archiveSelection: v.archiveSelection })
-    dismissFirstVisit()
-    setFirstVisitActive(false)
+    setUtilityView(null)
+    setV(detailDate === undefined ? INITIAL_VIEW_STATE : viewForJournalReturn(v))
     setSavedToast({ count: localOnlyCount(), phase: "enter", receipt, reviewMessage })
     void trackProductEvent("JOURNAL_SAVED")
   }
@@ -82,9 +80,12 @@ export function AppShell() {
     v.journalDraft?.date,
     v.journalDraft?.initialEntry?.id,
     athleteRecordsOpen,
+    utilityView,
   ])
   const goTab = (tab: AppTab) => {
+    if (tab === v.tab && utilityView === null && !athleteRecordsOpen) return
     setAthleteRecordsOpen(false)
+    setUtilityView(null)
     setV(viewForTab(tab))
   }
   const goTrendsFromReceipt = () => {
@@ -107,20 +108,8 @@ export function AppShell() {
     <LogDetail
       date={v.detailDate ?? ""}
       onBack={onBack}
-      onAddEntry={(date) => setV(s => ({
-        ...s,
-        tab: "log",
-        entryType: "choose",
-        detailDate: date,
-        journalDraft: { date },
-      }))}
-      onEditEntry={(entry) => setV(s => ({
-        ...s,
-        tab: "log",
-        entryType: entry.kind,
-        detailDate: entry.date,
-        journalDraft: { date: entry.date, initialEntry: entry },
-      }))}
+      onAddEntry={(date) => setV(s => viewForJournalDraft(s, date))}
+      onEditEntry={(entry) => setV(s => viewForJournalDraft(s, entry.date, entry))}
     />
   )
 
@@ -140,43 +129,63 @@ export function AppShell() {
         onOpenRestore={openRestore}
       />
     )
+  } else if (v.tab === "home" && utilityView === "more") {
+    screen = (
+      <More
+        onBack={() => setUtilityView(null)}
+        onOpenMinji={() => { setUtilityOrigin("more"); setUtilityView("minji") }}
+        onOpenGuide={() => { setUtilityOrigin("more"); setUtilityView("guide") }}
+        onOpenAccount={accountEnabled ? () => setV(s => ({ ...s, accountOpen: true })) : undefined}
+        onOpenRestore={() => {
+          setUtilityView(null)
+          openRestore()
+        }}
+      />
+    )
+  } else if (v.tab === "home" && (utilityView === "guide" || utilityView === "minji")) {
+    screen = <Guide
+      initialSection={utilityView}
+      onBack={() => setUtilityView(utilityOrigin === "home" ? null : "more")}
+      onWriteLog={() => { setUtilityView(null); setV(viewForTab("log")) }}
+    />
   } else if (v.tab === "home") {
-    if (v.archiveSelection !== null) {
-      screen = v.detailDate !== null
-        ? detailScreen(() => setV(s => ({ ...s, detailDate: null })))
-        : (
-          <JournalArchive
-            entries={loadEntries()}
-            selection={v.archiveSelection}
-            onSelectionChange={(archiveSelection) => setV(s => ({ ...s, archiveSelection }))}
-            onOpenDay={(detailDate) => setV(s => ({ ...s, detailDate }))}
-            onBack={goHome}
-          />
-        )
-    } else {
-      screen = v.detailDate !== null
-        ? detailScreen(() => setV(s => ({ ...s, detailDate: null })))
-        : (
-          <Home
-            onWriteLog={(entryType) => setV(s => ({ ...s, tab: "log", entryType: entryType ?? "choose" }))}
-            onOpenDay={(date) => setV(s => ({ ...s, detailDate: date }))}
-            onOpenArchive={() => setV(s => ({
-              ...s,
-              detailDate: null,
-              archiveSelection: { selectedMonth: null, selectedWeekStart: null },
-            }))}
-            onOpenGuide={() => setV(s => ({ ...s, tab: "guide" }))}
-            onOpenPlan={() => setV(s => ({ ...s, tab: "plan" }))}
-            onOpenAccount={accountEnabled ? () => setV(s => ({ ...s, accountOpen: true })) : undefined}
-            onOpenRestore={openRestore}
-            firstVisitActive={firstVisitActive}
-            onDismissFirstVisit={() => {
-              dismissFirstVisit()
-              setFirstVisitActive(false)
-            }}
-          />
-        )
-    }
+    screen = v.detailDate !== null
+      ? detailScreen(() => setV(s => ({ ...s, detailDate: null })))
+      : (
+        <Home
+          onWriteLog={(entryType) => setV(s => ({ ...s, tab: "log", entryType: entryType ?? "choose" }))}
+          onOpenDay={(date) => setV(s => ({ ...s, detailDate: date }))}
+          onOpenArchive={() => {
+            setV({ ...viewForTab("journal"), journalMode: "CALENDAR" })
+          }}
+          onOpenCycle={() => {
+            setV({ ...viewForTab("journal"), journalMode: "CYCLE" })
+          }}
+          onOpenGuide={() => { setUtilityOrigin("home"); setUtilityView("minji") }}
+          onOpenPlan={() => setV(viewForTab("plan"))}
+          onOpenTrends={() => setV(viewForTab("trends"))}
+          onOpenMore={() => setUtilityView("more")}
+        />
+      )
+  } else if (v.tab === "journal") {
+    const selection = v.archiveSelection ?? { selectedMonth: null, selectedWeekStart: null }
+    screen = v.detailDate !== null
+      ? detailScreen(() => setV(s => ({ ...s, detailDate: null })))
+      : (
+        <JournalArchive
+          entries={loadEntries()}
+          selection={selection}
+          mode={v.journalMode}
+          cycleAnchor={v.cycleAnchor}
+          cycleIndex={v.cycleIndex}
+          onModeChange={(journalMode) => setV(s => ({ ...s, journalMode }))}
+          onCycleAnchorChange={(cycleAnchor) => setV(s => ({ ...s, cycleAnchor, cycleIndex: 0 }))}
+          onCycleIndexChange={(cycleIndex) => setV(s => ({ ...s, cycleIndex }))}
+          onSelectionChange={(archiveSelection) => setV(s => ({ ...s, archiveSelection }))}
+          onOpenDay={(detailDate) => setV(s => ({ ...s, detailDate }))}
+          onBack={goHome}
+        />
+      )
   } else if (v.tab === "plan") {
     screen = athleteRecordsOpen ? (
       <AthleteRecords onBack={() => setAthleteRecordsOpen(false)} />
@@ -205,9 +214,9 @@ export function AppShell() {
         onBack={v.entryType === "choose"
           ? v.journalDraft === undefined
             ? goHome
-            : () => setV(s => ({ ...s, tab: "home", entryType: "choose", detailDate: s.journalDraft?.date ?? null, journalDraft: undefined }))
+            : () => setV(viewForJournalReturn(v))
           : v.journalDraft?.initialEntry !== undefined
-            ? () => setV(s => ({ ...s, tab: "home", entryType: "choose", detailDate: s.journalDraft?.date ?? null, journalDraft: undefined }))
+            ? () => setV(viewForJournalReturn(v))
             : () => setV(s => ({ ...s, entryType: "choose" }))}
         onOpenImport={() => setV(s => ({ ...s, importOpen: true }))}
         onDone={(picked, savedEntry, reviewMessage) => {
@@ -221,8 +230,6 @@ export function AppShell() {
     )
   } else if (v.tab === "trends") {
     screen = <Trends onBack={goHome} />
-  } else {
-    screen = <Guide onWriteLog={() => setV(viewForTab("log"))} />
   }
 
   return (
@@ -233,7 +240,7 @@ export function AppShell() {
       onDismissToast={() => setSavedToast(null)}
       onOpenTrends={goTrendsFromReceipt}
       onTab={goTab}
-      hideTabBar={v.tab === "home" && firstVisitActive && v.detailDate === null && !v.restoreOpen}
+      hideTabBar={false}
     >
       {screen}
     </AppShellFrame>

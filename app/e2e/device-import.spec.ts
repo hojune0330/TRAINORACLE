@@ -64,7 +64,7 @@ test("imports a watch TCX file into the local journal and marks its source", asy
   })
 })
 
-test("keeps imported numbers visible in the journal but out of home totals", async ({ page }) => {
+test("counts an imported journal without treating its numbers as analysis evidence", async ({ page }) => {
   const today = new Date().toISOString().slice(0, 10)
   await openImport(page)
   await page.getByLabel(/내보낸 활동 파일/u).setInputFiles({
@@ -79,8 +79,9 @@ test("keeps imported numbers visible in the journal but out of home totals", asy
 
   // 일지에는 보이고, 출처 배지가 붙는다.
   await expect(page.getByTestId("imported-chip").first()).toBeVisible()
-  // 직접 확인한 값이 아니므로 합계는 0건으로 남는다.
-  await expect(page.getByText(/일지\s*0건/u)).toBeVisible()
+  const services = page.getByRole("navigation", { name: "내 훈련 서비스" })
+  await expect(services.getByRole("button", { name: /^내 일지/u })).toContainText("1일 · 1개의 기록")
+  await expect(services.getByRole("button", { name: /^분석/u })).toContainText("분석에 쓸 직접 입력 기록이 없어요")
 })
 
 test("shows a duplicate warning unchecked instead of merging silently", async ({ page }) => {
