@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it } from "vitest"
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import {
   archiveAndClearActivePlan,
   loadPlanBetaState,
@@ -15,13 +15,141 @@ describe("plan beta local store", () => {
     window.sessionStorage.clear()
   })
 
+  afterEach(() => {
+    vi.restoreAllMocks()
+  })
+
   it("round-trips a structured active plan without memo fields", () => {
     const state = stateFixture()
 
-    savePlanBetaState(state)
+    expect(savePlanBetaState(state)).toEqual({ ok: true })
 
     expect(loadPlanBetaState()).toEqual(state)
     expect(JSON.stringify(loadPlanBetaState())).not.toMatch(/memo|symptom/u)
+  })
+
+  it("reports a failed active-plan write instead of pretending it was saved", () => {
+    const state = stateFixture()
+    vi.spyOn(Storage.prototype, "setItem").mockImplementation(() => {
+      throw new Error("QuotaExceededError")
+    })
+
+    expect(savePlanBetaState(state)).toEqual({
+      ok: false,
+      code: "PLAN_STORAGE_WRITE_FAILED",
+    })
+    expect(loadPlanBetaState()).toBeNull()
+  })
+
+  it("keeps the active plan when next-frame archiving cannot be saved", () => {
+    const state = stateFixture()
+    expect(savePlanBetaState(state)).toEqual({ ok: true })
+    const realSetItem = Storage.prototype.setItem
+    vi.spyOn(Storage.prototype, "setItem").mockImplementation(function (
+      this: Storage,
+      key: string,
+      value: string,
+    ) {
+      if (key === "trainoracle.plan-beta.history.v1") {
+        throw new Error("QuotaExceededError")
+      }
+      return realSetItem.call(this, key, value)
+    })
+
+    expect(archiveAndClearActivePlan(state)).toEqual({
+      ok: false,
+      code: "PLAN_ARCHIVE_WRITE_FAILED",
+      rollbackComplete: true,
+    })
+    expect(loadPlanBetaState()).toEqual(state)
+    expect(loadPreviousContinuity()).toBeUndefined()
+  })
+
+  it("rolls history back when previous-intake persistence fails", () => {
+    const state = stateFixture()
+    expect(savePlanBetaState(state)).toEqual({ ok: true })
+    const realSetItem = Storage.prototype.setItem
+    vi.spyOn(Storage.prototype, "setItem").mockImplementation(function (
+      this: Storage,
+      key: string,
+      value: string,
+    ) {
+      if (key === "trainoracle.plan-beta.previous-intake.v1") {
+        throw new Error("QuotaExceededError")
+      }
+      return realSetItem.call(this, key, value)
+    })
+
+    expect(archiveAndClearActivePlan(state)).toMatchObject({
+      ok: false,
+      rollbackComplete: true,
+    })
+    expect(loadPlanBetaState()).toEqual(state)
+    expect(loadPreviousContinuity()).toBeUndefined()
+  })
+
+  it("keeps the active plan when staged history is silently not persisted", () => {
+    const state = stateFixture()
+    expect(savePlanBetaState(state)).toEqual({ ok: true })
+    const realSetItem = Storage.prototype.setItem
+    vi.spyOn(Storage.prototype, "setItem").mockImplementation(function (
+      this: Storage,
+      key: string,
+      value: string,
+    ) {
+      if (key === "trainoracle.plan-beta.history.v1") return
+      return realSetItem.call(this, key, value)
+    })
+
+    expect(archiveAndClearActivePlan(state)).toMatchObject({
+      ok: false,
+      rollbackComplete: true,
+    })
+    expect(loadPlanBetaState()).toEqual(state)
+    expect(loadPreviousContinuity()).toBeUndefined()
+  })
+
+  it("keeps the active plan when previous intake is silently not persisted", () => {
+    const state = stateFixture()
+    expect(savePlanBetaState(state)).toEqual({ ok: true })
+    const realSetItem = Storage.prototype.setItem
+    vi.spyOn(Storage.prototype, "setItem").mockImplementation(function (
+      this: Storage,
+      key: string,
+      value: string,
+    ) {
+      if (key === "trainoracle.plan-beta.previous-intake.v1") return
+      return realSetItem.call(this, key, value)
+    })
+
+    expect(archiveAndClearActivePlan(state)).toMatchObject({
+      ok: false,
+      rollbackComplete: true,
+    })
+    expect(loadPlanBetaState()).toEqual(state)
+    expect(loadPreviousContinuity()).toBeUndefined()
+  })
+
+  it("rolls staged history back when active-plan removal fails", () => {
+    const state = stateFixture()
+    expect(savePlanBetaState(state)).toEqual({ ok: true })
+    const realRemoveItem = Storage.prototype.removeItem
+    vi.spyOn(Storage.prototype, "removeItem").mockImplementation(function (
+      this: Storage,
+      key: string,
+    ) {
+      if (key === "trainoracle.plan-beta.v1") {
+        throw new Error("StorageUnavailable")
+      }
+      return realRemoveItem.call(this, key)
+    })
+
+    expect(archiveAndClearActivePlan(state)).toMatchObject({
+      ok: false,
+      rollbackComplete: true,
+    })
+    expect(loadPlanBetaState()).toEqual(state)
+    expect(loadPreviousContinuity()).toBeUndefined()
   })
 
   it("replaces progress for the same session slot", () => {

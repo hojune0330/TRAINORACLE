@@ -24,10 +24,11 @@ export type LogDetailProps = {
   readonly onBack?: () => void
   readonly onAddEntry?: (date: string) => void
   readonly onEditEntry?: (entry: JournalEntry) => void
+  readonly readerControls?: React.ReactNode
 }
 
-export function LogDetail({ date, onBack, onAddEntry, onEditEntry }: LogDetailProps) {
-  return <LogDetailJournal date={date} onBack={onBack} onAddEntry={onAddEntry} onEditEntry={onEditEntry} />
+export function LogDetail(props: LogDetailProps) {
+  return <LogDetailJournal {...props} />
 }
 
 const SYSTEM_META: Record<string, { c: string; n: string; cls: string }> = {
@@ -46,7 +47,7 @@ function savedClock(iso: string): string {
 }
 
 // ───────── A. Journal-page (실데이터) ─────────
-function LogDetailJournal({ date, onBack, onAddEntry, onEditEntry }: LogDetailProps) {
+function LogDetailJournal({ date, onBack, onAddEntry, onEditEntry, readerControls }: LogDetailProps) {
   const [rev, setRev] = React.useState(0)
   // 방금 지운 것 — 되돌리기 버튼을 그 자리에서 띄우기 위해 들고 있는다.
   // 휴지통(30일)에 남아 있으므로 이 상태가 사라져도 복구는 가능하다.
@@ -94,6 +95,8 @@ function LogDetailJournal({ date, onBack, onAddEntry, onEditEntry }: LogDetailPr
   return (
     <div style={{ paddingBottom: 40 }} className="paper-grid">
       <TopBar2 onBack={onBack}>일지</TopBar2>
+      {readerControls}
+      <div key={date} className={readerControls === undefined ? undefined : "journal-reader-page"}>
 
       <div style={{ padding: "14px 20px 0" }}>
         <IndexCard date={cardDate(date)} dow={dowOf(date)} season={seasonOf(date)} />
@@ -255,6 +258,7 @@ function LogDetailJournal({ date, onBack, onAddEntry, onEditEntry }: LogDetailPr
           onConfirm={remove}
         />
       )}
+      </div>
     </div>
   )
 }

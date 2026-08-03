@@ -35,7 +35,7 @@ export function PlanCandidates({
       </div>
       <p className="plan-copy">
         {generated.sourceMode === "PROFILE_ONLY"
-          ? "종목, 경험, 고른 훈련 목적, 가능한 훈련일, 계획 길이만 사용했어요. 개인 페이스와 최근 훈련량은 추정하지 않습니다."
+          ? "종목, 경험, 고른 훈련 목적, 가능한 훈련일과 9.5일 기본 틀만 사용했어요. 개인 페이스와 최근 훈련량은 추정하지 않습니다."
           : "최근 일지가 있는지만 확인했어요. 일지의 거리, RPE, 메모는 이번 베타 계획의 시간이나 강도를 바꾸지 않습니다."}
       </p>
       <div className="plan-source-strip">
