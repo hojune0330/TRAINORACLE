@@ -124,3 +124,11 @@ implementation:
 - minimum within-athlete history and freshness rules for personal baselines.
 
 Until those decisions are accepted, the app shows transparent facts and coverage only.
+
+## Objective Normalization Candidate
+
+The non-runtime candidate contract at
+`specs/reconstruct/OBJECTIVE_FATIGUE_EVIDENCE_CONTRACT.md` narrows which existing objective facts
+could later become within-athlete normalized evidence. It does not activate analysis or UI. In
+particular, current same-event and same-method baselines are required; goals, stale baselines,
+cross-event conversions, and cross-modality aggregation remain forbidden.
