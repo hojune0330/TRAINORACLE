@@ -43,7 +43,6 @@ export function MinjiJournal({ onWriteLog }: { readonly onWriteLog?: () => void 
     if (page === undefined) return null
     return (
       <MinjiPage
-        key={page.id}
         page={page}
         position={selectedIndex + 1}
         headingRef={headingRef}
@@ -108,8 +107,16 @@ type MinjiPageProps = {
 }
 
 function MinjiPage({ page, position, headingRef, onClose, onPrevious, onNext, onWriteLog }: MinjiPageProps) {
-  const [notationOpen, setNotationOpen] = React.useState(false)
-  const [questionOpen, setQuestionOpen] = React.useState(false)
+  const [openNotationPageId, setOpenNotationPageId] = React.useState<MinjiJournalPage["id"] | null>(null)
+  const [openQuestionPageId, setOpenQuestionPageId] = React.useState<MinjiJournalPage["id"] | null>(null)
+  const notationOpen = openNotationPageId === page.id
+  const questionOpen = openQuestionPageId === page.id
+
+  React.useEffect(() => {
+    setOpenNotationPageId(null)
+    setOpenQuestionPageId(null)
+  }, [page.id])
+
   const state = minjiDecorationState(page)
   const decorationNames = [
     state.equipped.themeId,
@@ -143,7 +150,7 @@ function MinjiPage({ page, position, headingRef, onClose, onPrevious, onNext, on
             <div className="minji-page__notation">
               <code>{page.notation.raw}</code>
               <p className="minji-page__notation-warning">민지의 가상 예시이며 따라 하는 훈련계획이 아니에요.</p>
-              <button type="button" aria-expanded={notationOpen} aria-controls={`minji-notation-${page.id}`} onClick={() => setNotationOpen((open) => !open)}>훈련 표시 쉽게 보기</button>
+              <button type="button" aria-expanded={notationOpen} aria-controls={`minji-notation-${page.id}`} onClick={() => setOpenNotationPageId((openPageId) => openPageId === page.id ? null : page.id)}>훈련 표시 쉽게 보기</button>
               {notationOpen && <div id={`minji-notation-${page.id}`}>{page.notation.lines.map((line) => <p key={line}>{line}</p>)}</div>}
             </div>
           )}
@@ -159,7 +166,7 @@ function MinjiPage({ page, position, headingRef, onClose, onPrevious, onNext, on
           </section>
           {page.question !== undefined && (
             <div className="minji-page__question">
-              <button type="button" aria-expanded={questionOpen} onClick={() => setQuestionOpen((open) => !open)}>{page.question.label}</button>
+              <button type="button" aria-expanded={questionOpen} onClick={() => setOpenQuestionPageId((openPageId) => openPageId === page.id ? null : page.id)}>{page.question.label}</button>
               {questionOpen && <p>{page.question.answer}</p>}
             </div>
           )}

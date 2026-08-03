@@ -6,6 +6,14 @@ describe("Minji journal showcase data", () => {
     expect(MINJI_JOURNAL_PAGES).toHaveLength(6)
     expect(new Set(MINJI_JOURNAL_PAGES.map((page) => page.date)).size).toBe(6)
 
+    const decorationSignatures = MINJI_JOURNAL_PAGES.map((page) => JSON.stringify({
+      themeId: page.decorationPreset.themeId,
+      inkId: page.decorationPreset.inkId,
+      avatarId: page.decorationPreset.avatarId,
+      placements: page.decorationPreset.placements,
+    }))
+    expect(new Set(decorationSignatures).size).toBe(MINJI_JOURNAL_PAGES.length)
+
     for (const page of MINJI_JOURNAL_PAGES) {
       expect(page.date).toMatch(/^\d{4}-\d{2}-\d{2}$/u)
       expect(page.mood).not.toHaveLength(0)
