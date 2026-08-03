@@ -31,6 +31,13 @@ const requiredKillVariables = [
 ] as const
 
 describe("hosted beta feature controls", () => {
+  it("allows a fresh deployment after an operator changes feature switches", () => {
+    expect(workflow).toMatch(/on:\s*[\s\S]*?workflow_dispatch:/u)
+    expect(workflow).toContain(
+      "if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && github.ref == 'refs/heads/main'",
+    )
+  })
+
   it("passes every release switch into the hosted build", () => {
     for (const suffix of [...requiredFeatureVariables, ...requiredKillVariables]) {
       expect(workflow).toContain(`VITE_${suffix}: \${{ vars.TRAINORACLE_${suffix} }}`)
