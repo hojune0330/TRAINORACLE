@@ -20,7 +20,7 @@ test("offers a rest-day path without pressuring the athlete to log more", async 
   })
   await page.goto("/?app=1")
 
-  await expect(page.getByText("쉰 날도 짧게 기록할 수 있어요.")).toBeVisible()
+  await expect(page.getByText("쉰 날은 하루 마무리에서 몸 상태를 짧게 남겨요.")).toBeVisible()
   await expect(page.getByText(/일만 더 쓰면/u)).toHaveCount(0)
 
   await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: /기록/u }).click()
