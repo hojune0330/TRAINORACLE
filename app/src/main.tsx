@@ -11,6 +11,7 @@ import "../../colors_and_type_journal.css"
 import "./styles/app.css"
 import "./styles/feedback-board.css"
 import "./styles/plan-beta.css"
+import "./styles/journal-reader.css"
 import "./styles/athlete-records.css"
 
 const showP3PaceHarness = import.meta.env.DEV

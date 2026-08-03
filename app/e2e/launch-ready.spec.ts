@@ -6,20 +6,17 @@ async function answerMinimumPlanQuestions(page: Page): Promise<void> {
   await page.getByRole("button", { name: /훈련 계획에 맞춰 달려 본 경험/u }).click()
   await page.getByRole("button", { name: /지속 페이스.*LT/u }).click()
   await page.getByRole("button", { name: /^3일/u }).click()
-  await page.getByRole("button", { name: /9일 계획.*권장/u }).click()
   await page.getByRole("button", { name: "하루 한 번 운동" }).click()
   await page.getByRole("button", { name: /통증은 없고 몸 상태는 평소와 같아요/u }).click()
 }
 
-async function expectReviewOnlyPlanBoundary(page: Page): Promise<void> {
-  await expect(page.getByRole("alert")).toContainText(
-    "현재 입력만으로는 계획 후보를 만들지 않아요",
-  )
+async function expectCanonicalPlanCandidates(page: Page): Promise<void> {
   await expect(page.getByRole("heading", {
     name: "두 계획에서 하나를 골라보세요",
-  })).toHaveCount(0)
-  await expect(page.locator(".plan-candidate")).toHaveCount(0)
-  await expect(page.getByRole("button", { name: /선택하기/u })).toHaveCount(0)
+  })).toBeVisible()
+  await expect(page.locator(".plan-candidate")).toHaveCount(2)
+  await expect(page.getByRole("button", { name: /선택하기/u })).toHaveCount(2)
+  await expect(page.getByText(/9.5일/u).first()).toBeVisible()
   await expect.poll(async () => page.evaluate(
     () => window.localStorage.getItem("trainoracle.plan-beta.v1"),
   )).toBeNull()
@@ -68,7 +65,7 @@ test("routes a first visitor from one context choice into the matching journal",
   await expect(page.getByRole("heading", { name: /회복.*하루 마무리/u })).toBeVisible()
 })
 
-test("keeps first-screen legacy plan intake as review-only", async ({ page }) => {
+test("generates selectable 9.5-day candidates from first-screen intake", async ({ page }) => {
   // Given
   await page.goto("/?app=1")
 
@@ -77,24 +74,24 @@ test("keeps first-screen legacy plan intake as review-only", async ({ page }) =>
   await answerMinimumPlanQuestions(page)
 
   // Then
-  await expectReviewOnlyPlanBoundary(page)
+  await expectCanonicalPlanCandidates(page)
   expect(await page.evaluate(
     () => document.documentElement.scrollWidth <= window.innerWidth,
   )).toBe(true)
 })
 
-test("keeps explicit two-a-day legacy intake as review-only", async ({ page }) => {
+test("generates a bounded two-a-day 9.5-day candidate", async ({ page }) => {
   await page.goto("/?app=1")
   await page.getByRole("navigation", { name: "내 훈련 서비스" }).getByRole("button", { name: /^훈련계획/u }).click()
   await page.getByRole("button", { name: /5km/u }).click()
   await page.getByRole("button", { name: /훈련 계획에 맞춰 달려 본 경험/u }).click()
   await page.getByRole("button", { name: /반복 인터벌.*VO2/u }).click()
   await page.getByRole("button", { name: "매일" }).click()
-  await page.getByRole("button", { name: /9일 계획.*권장/u }).click()
   await page.getByRole("button", { name: "일부 날은 하루 두 번 운동" }).click()
   await page.getByRole("button", { name: /통증은 없고 몸 상태는 평소와 같아요/u }).click()
 
-  await expectReviewOnlyPlanBoundary(page)
+  await expectCanonicalPlanCandidates(page)
+  await expect(page.getByText(/오후 회복/u).first()).toBeVisible()
 })
 
 test("reads a detailed training notation without creating a plan", async ({ page }) => {

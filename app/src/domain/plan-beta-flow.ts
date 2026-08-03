@@ -26,6 +26,7 @@ import { loadEntries, todayISO } from "./journal-store"
 import {
   loadPreviousContinuity,
 } from "./plan-beta-store"
+import { createPlanFormation } from "./plan-beta-formation"
 import type {
   PlanBetaIntake,
   PlanBetaState,
@@ -91,13 +92,14 @@ export function generatePlanFromDraft(
     profile: {
       eventGroup: intake.eventGroup,
       experienceBand: intake.experienceBand,
-      availableTrainingDays: spreadTrainingDays(
-        intake.requestedFrameLength,
-        intake.availableDayCount,
-      ),
+      availableTrainingDays: spreadTrainingDays(intake.availableDayCount),
       secondSessionMode: intake.secondSessionMode,
     },
-    requestedFrameLength: intake.requestedFrameLength,
+    formation: createPlanFormation(
+      todayISO(),
+      spreadTrainingDays(intake.availableDayCount),
+      intake.experienceBand,
+    ),
     selectedEnergyIntent: intake.trainingFocus,
     journalSource: structuredJournalSource(),
     selectionAuthority: "SELF",
@@ -228,33 +230,16 @@ function structuredJournalSource() {
 }
 
 function spreadTrainingDays(
-  frameLength: 7 | 9 | 10,
   count: PlanBetaIntake["availableDayCount"],
 ): readonly number[] {
   if (count === "EVERY_DAY") {
-    return Object.freeze(
-      Array.from({ length: frameLength }, (_, index) => index + 1),
-    )
+    return Object.freeze(Array.from({ length: 10 }, (_, index) => index + 1))
   }
   const matrix = {
-    7: {
-      3: [1, 3, 5],
-      4: [1, 3, 5, 7],
-      5: [1, 2, 4, 5, 7],
-      6: [1, 2, 3, 4, 6, 7],
-    },
-    9: {
-      3: [1, 4, 7],
-      4: [1, 3, 6, 9],
-      5: [1, 3, 5, 7, 9],
-      6: [1, 3, 4, 6, 7, 9],
-    },
-    10: {
-      3: [1, 5, 9],
-      4: [1, 4, 7, 10],
-      5: [1, 3, 5, 7, 9],
-      6: [1, 3, 5, 6, 8, 10],
-    },
+    3: [1, 5, 9],
+    4: [1, 4, 7, 10],
+    5: [1, 3, 5, 7, 9],
+    6: [1, 3, 5, 6, 8, 10],
   } as const
-  return Object.freeze([...matrix[frameLength][count]])
+  return Object.freeze([...matrix[count]])
 }

@@ -6,8 +6,8 @@ beforeEach(() => {
   window.sessionStorage.clear()
 })
 
-describe("legacy plan intake boundary", () => {
-  it("returns a stable review code instead of generating from a legacy frame request", () => {
+describe("canonical plan intake boundary", () => {
+  it("generates two selectable 9.5-day candidates from the athlete intake", () => {
     // Given
     const draft = {
       eventGroup: "MIDDLE_DISTANCE" as const,
@@ -22,9 +22,18 @@ describe("legacy plan intake boundary", () => {
     const result = generatePlanFromDraft(draft, "NO_KNOWN_RISK")
 
     // Then
-    expect(result).toEqual({
-      kind: "rejected",
-      code: "FORMATION_REVIEW_REQUIRED",
-    })
+    expect(result.kind).toBe("generated")
+    if (result.kind !== "generated") return
+
+    expect(result.generated.candidates).toHaveLength(2)
+    for (const candidate of result.generated.candidates) {
+      expect(candidate.frame).toMatchObject({
+        formationKind: "LOCAL_CIVIL_9_5",
+        lengthDays: 9.5,
+        slotCount: 19,
+      })
+      expect(candidate.mainExposureLedger.mainExposureCount).toBeGreaterThanOrEqual(2)
+      expect(candidate.mainExposureLedger.mainExposureCount).toBeLessThanOrEqual(3)
+    }
   })
 })

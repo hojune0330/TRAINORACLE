@@ -20,7 +20,7 @@ import {
 } from "./labels"
 import { PlanChoice as Choice } from "./PlanChoice"
 
-export type IntakeStep = "goal" | "experience" | "focus" | "days" | "frame" | "two-a-day" | "safety"
+export type IntakeStep = "goal" | "experience" | "focus" | "days" | "two-a-day" | "safety"
 
 type IntakeDraft = Partial<PlanBetaIntake>
 
@@ -32,7 +32,6 @@ type PlanIntakeProps = {
   readonly onExperience: (band: ExperienceBand) => void
   readonly onFocus: (focus: PlannedEnergyIntent) => void
   readonly onDays: (days: PlanBetaIntake["availableDayCount"]) => void
-  readonly onFrame: (days: 7 | 9 | 10) => void
   readonly onSecondSession: (mode: SecondSessionMode) => void
   readonly onManageRecords: () => void
   readonly onOpenNotationReader: () => void
@@ -73,25 +72,18 @@ const STEP_META: Record<IntakeStep, {
     number: 4,
     eyebrow: "AVAILABLE DAYS",
     title: "이번 계획에서 운동할 수 있는 날은 며칠인가요?",
-    copy: "달리기뿐 아니라 걷기, 가벼운 조깅, 자전거 같은 회복 운동을 하는 날도 포함해 골라주세요. 완전히 쉬는 날은 빼세요.",
+    copy: "달리기뿐 아니라 걷기, 가벼운 조깅, 자전거 같은 회복 운동을 하는 날도 포함해 골라주세요. TrainOracle 기본 9.5일 틀에 자동으로 배치해요.",
     helpTerm: "training-days",
   },
-  frame: {
-    number: 5,
-    eyebrow: "FRAME",
-    title: "첫 훈련 계획을 며칠로 만들까요?",
-    copy: "처음이라면 9일을 권장해요. 7일을 고르면 짧게 시작하고, 끝난 뒤에는 이번 선택과 진행 기록을 바탕으로 다음 주기를 이어 만듭니다.",
-    helpTerm: "plan-frame",
-  },
   "two-a-day": {
-    number: 6,
+    number: 5,
     eyebrow: "SECOND SESSION",
     title: "하루에 두 번 운동하는 날도 넣을까요?",
     copy: "선택하면 일부 날에 오전 기본 훈련과 오후 회복 운동을 나눠 보여줘요. 오후 운동은 RPE 1~2이고, 고강도 두 번이나 놓친 운동 보충은 만들지 않아요.",
     helpTerm: "two-a-day",
   },
   safety: {
-    number: 7,
+    number: 6,
     eyebrow: "CURRENT CHECK",
     title: "계획을 만들기 전에 지금 몸 상태를 확인할게요",
     copy: "통증이나 몸 이상이 있으면 계획을 만들지 않아요. 지도자·보호자 또는 의료진과 직접 상의해 주세요. 이 질문은 진단이나 의료 허가가 아닙니다.",
@@ -107,7 +99,6 @@ export function PlanIntake({
   onExperience,
   onFocus,
   onDays,
-  onFrame,
   onSecondSession,
   onManageRecords,
   onOpenNotationReader,
@@ -120,9 +111,9 @@ export function PlanIntake({
         <ArrowLeft aria-hidden="true" size={17} />
         이전
       </button>
-      <div className="plan-progress" aria-label={`계획 질문 ${meta.number}/7`}>
-        <span>{meta.number}/7</span>
-        <i style={{ width: `${meta.number * (100 / 7)}%` }} />
+      <div className="plan-progress" aria-label={`계획 질문 ${meta.number}/6`}>
+        <span>{meta.number}/6</span>
+        <i style={{ width: `${meta.number * (100 / 6)}%` }} />
       </div>
       <div className="plan-eyebrow">{meta.eyebrow}</div>
       <div className="plan-heading-row">
@@ -174,21 +165,6 @@ export function PlanIntake({
                 : `운동 ${days}일 · 고르지 않은 날은 완전 휴식`}
               selected={draft.availableDayCount === days}
               onClick={() => onDays(days)}
-            />
-          ))
-        )}
-        {step === "frame" && (
-          ([9, 10, 7] as const).map((days) => (
-            <Choice
-              key={days}
-              title={`${days}일 계획${days === 9 ? " · 처음 시작할 때 권장" : ""}`}
-              detail={days === 7
-                ? "짧게 시험하는 선택 · TrainOracle 기본 9.5일 틀과는 달라요"
-                : days === 9
-                  ? "9일·10일을 번갈아 쓰는 9.5일 기본 틀의 짧은 구간"
-                  : "9일·10일을 번갈아 쓰는 9.5일 기본 틀의 긴 구간"}
-              selected={draft.requestedFrameLength === days}
-              onClick={() => onFrame(days)}
             />
           ))
         )}

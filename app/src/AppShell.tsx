@@ -6,6 +6,7 @@ import { Home } from "./screens/Home"
 import { LogEntry } from "./screens/LogEntry"
 import { LogDetail } from "./screens/LogDetail"
 import { JournalArchive } from "./screens/JournalArchive"
+import { JournalDayReader } from "./screens/JournalDayReader"
 import { Trends } from "./screens/Trends"
 import { Guide } from "./screens/Guide"
 import { PlanBeta } from "./screens/PlanBeta"
@@ -104,14 +105,21 @@ export function AppShell() {
     archiveSelection: null,
   }))
 
-  const detailScreen = (onBack: () => void) => (
-    <LogDetail
-      date={v.detailDate ?? ""}
-      onBack={onBack}
-      onAddEntry={(date) => setV(s => viewForJournalDraft(s, date))}
-      onEditEntry={(entry) => setV(s => viewForJournalDraft(s, entry.date, entry))}
-    />
-  )
+  const detailScreen = (onBack: () => void, withReader = false) => {
+    const common = {
+      date: v.detailDate ?? "",
+      onBack,
+      onAddEntry: (date: string) => setV(s => viewForJournalDraft(s, date)),
+      onEditEntry: (entry: JournalEntry) => setV(s => viewForJournalDraft(s, entry.date, entry)),
+    }
+    return withReader ? (
+      <JournalDayReader
+        {...common}
+        entries={loadEntries()}
+        onDateChange={(detailDate) => setV(s => ({ ...s, detailDate }))}
+      />
+    ) : <LogDetail {...common} />
+  }
 
   let screen: React.ReactNode
   if (v.tab === "home" && v.restoreOpen) {
@@ -150,7 +158,7 @@ export function AppShell() {
     />
   } else if (v.tab === "home") {
     screen = v.detailDate !== null
-      ? detailScreen(() => setV(s => ({ ...s, detailDate: null })))
+      ? detailScreen(() => setV(s => ({ ...s, detailDate: null })), true)
       : (
         <Home
           onWriteLog={(entryType) => setV(s => ({ ...s, tab: "log", entryType: entryType ?? "choose" }))}
@@ -170,7 +178,7 @@ export function AppShell() {
   } else if (v.tab === "journal") {
     const selection = v.archiveSelection ?? { selectedMonth: null, selectedWeekStart: null }
     screen = v.detailDate !== null
-      ? detailScreen(() => setV(s => ({ ...s, detailDate: null })))
+      ? detailScreen(() => setV(s => ({ ...s, detailDate: null })), true)
       : (
         <JournalArchive
           entries={loadEntries()}

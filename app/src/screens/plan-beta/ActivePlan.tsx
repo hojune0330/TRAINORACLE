@@ -80,7 +80,11 @@ export function ActivePlan({
                 <PlanSessionDetails session={session} />
                 <em>{current === undefined ? "예정" : PROGRESS_LABELS[current]}</em>
               </div>
-              <div className="active-plan__actions" aria-label={`DAY ${session.day} ${sessionSlotLabel(session.slot)} 진행 기록`}>
+              <div
+                className="active-plan__actions"
+                role="group"
+                aria-label={`DAY ${session.day} ${sessionSlotLabel(session.slot)} 진행 기록`}
+              >
                 {actionsForRole(session.role).map(({ state: progressState, icon: Icon }) => (
                   <button
                     type="button"

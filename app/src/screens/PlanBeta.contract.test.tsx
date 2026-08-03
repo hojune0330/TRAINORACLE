@@ -4,6 +4,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { FIELD_PROVENANCE } from "../domain/field-provenance"
 import { MEMO_PURPOSE } from "../domain/journal-schema"
 import { saveEntry, savePrivateEntry, todayISO } from "../domain/journal-store"
+import { savePlanBetaState } from "../domain/plan-beta-store"
+import { stateFixture } from "../domain/plan-beta-store.test-fixture"
 import { createRecoveryCode } from "../domain/account/private-note-crypto"
 import { saveSessionRecoveryCode } from "../domain/account/private-note-sync"
 import { PlanBeta } from "./PlanBeta"
@@ -13,7 +15,10 @@ beforeEach(() => {
   window.sessionStorage.clear()
 })
 
-afterEach(cleanup)
+afterEach(() => {
+  cleanup()
+  vi.restoreAllMocks()
+})
 
 async function answerMinimumPlanQuestions(
   riskAnswer: "clear" | "review" = "clear",
@@ -23,7 +28,6 @@ async function answerMinimumPlanQuestions(
   await user.click(screen.getByRole("button", { name: /훈련 계획에 맞춰 달려 본 경험/u }))
   await user.click(screen.getByRole("button", { name: /지속 페이스.*LT/u }))
   await user.click(screen.getByRole("button", { name: /^3일/u }))
-  await user.click(screen.getByRole("button", { name: /9일 계획.*권장/u }))
   await user.click(screen.getByRole("button", { name: /하루 한 번 운동/u }))
   await user.click(screen.getByRole("button", {
     name: riskAnswer === "clear"
@@ -32,13 +36,11 @@ async function answerMinimumPlanQuestions(
   }))
 }
 
-function expectFormationReview(): void {
-  expect(screen.getByRole("alert")).toHaveTextContent(
-    "현재 입력만으로는 계획 후보를 만들지 않아요",
-  )
-  expect(screen.queryByRole("heading", {
+function expectGeneratedCandidates(): void {
+  expect(screen.getByRole("heading", {
     name: "두 계획에서 하나를 골라보세요",
-  })).toBeNull()
+  })).toBeVisible()
+  expect(screen.getAllByRole("button", { name: /선택하기/u })).toHaveLength(2)
   expect(window.localStorage.getItem("trainoracle.plan-beta.v1")).toBeNull()
 }
 
@@ -102,7 +104,7 @@ describe("plan beta user flow", () => {
     expect(window.localStorage.getItem("trainoracle.plan-beta.v1")).toBeNull()
   })
 
-  it("explains plan availability and frame choices before selection", async () => {
+  it("explains plan availability and applies the 9.5-day frame without a dead-end choice", async () => {
     const user = userEvent.setup()
     render(<PlanBeta />)
 
@@ -118,9 +120,10 @@ describe("plan beta user flow", () => {
     expect(availableDaysHelp).toHaveAttribute("aria-expanded", "true")
 
     await user.click(screen.getByRole("button", { name: /^3일/u }))
-    expect(screen.getByRole("button", {
-      name: "계획 길이 설명 보기",
+    expect(screen.getByRole("heading", {
+      name: "하루에 두 번 운동하는 날도 넣을까요?",
     })).toBeVisible()
+    expect(screen.queryByRole("button", { name: /7일 계획|9일 계획|10일 계획/u })).toBeNull()
   })
 
   it("shows every supported high-intensity intention before generating a plan", async () => {
@@ -140,12 +143,12 @@ describe("plan beta user flow", () => {
     expect(screen.getByText(/앱이 몸속 에너지 시스템을 측정한 결과는 아닙니다/u)).toBeVisible()
   })
 
-  it("keeps a legacy frame as a review-only draft without storing a plan", async () => {
+  it("generates canonical candidates without storing until the athlete selects one", async () => {
     render(<PlanBeta />)
 
     await answerMinimumPlanQuestions()
 
-    expectFormationReview()
+    expectGeneratedCandidates()
   })
 
   it("blocks generation when current risk is present or unclear", async () => {
@@ -209,7 +212,7 @@ describe("plan beta user flow", () => {
     expect(window.localStorage.getItem("trainoracle.plan-beta.v1")).toBeNull()
   })
 
-  it("does not inspect a private memo while the frame remains review-only", async () => {
+  it("does not inspect a private memo while generating candidates", async () => {
     const date = todayISO()
     expect(saveSessionRecoveryCode(createRecoveryCode())).toBe(true)
     await expect(savePrivateEntry({
@@ -231,22 +234,22 @@ describe("plan beta user flow", () => {
 
     await answerMinimumPlanQuestions("clear")
 
-    expectFormationReview()
+    expectGeneratedCandidates()
     expect(screen.queryByText("무릎이 계속 아파요")).toBeNull()
   })
 
-  it("does not turn recent journals into a plan while the frame remains review-only", async () => {
+  it("labels recent journals as context without using their values", async () => {
     savePostSession("recent-session-1")
     savePostSession("recent-session-2")
     render(<PlanBeta />)
 
     await answerMinimumPlanQuestions("clear")
 
-    expectFormationReview()
-    expect(screen.queryByText("최근 일지 확인 · 계획 수치에는 미반영")).toBeNull()
+    expectGeneratedCandidates()
+    expect(screen.getAllByText("최근 일지 확인 · 계획 수치에는 미반영")[0]).toBeVisible()
   })
 
-  it("does not let future or invalid journal dates bypass the review-only boundary", async () => {
+  it("does not count future or invalid journal dates as recent context", async () => {
     savePostSession("future-session-1", "", undefined, "2099-01-01")
     savePostSession("future-session-2", "", undefined, "2099-01-02")
     savePostSession("invalid-session", "", undefined, "2026-02-31")
@@ -254,23 +257,85 @@ describe("plan beta user flow", () => {
 
     await answerMinimumPlanQuestions("clear")
 
-    expectFormationReview()
+    expectGeneratedCandidates()
     expect(screen.queryByText("최근 일지 확인 · 계획 수치에는 미반영")).toBeNull()
   })
 
-  it("does not offer selection or store an active plan from a review-only frame", async () => {
+  it("stores an active plan only after the athlete selects a candidate", async () => {
     render(<PlanBeta />)
     await answerMinimumPlanQuestions()
 
-    expectFormationReview()
-    expect(screen.queryByRole("button", { name: /선택하기/u })).toBeNull()
+    const [firstChoice] = screen.getAllByRole("button", { name: /선택하기/u })
+    expect(firstChoice).toBeDefined()
+    await userEvent.setup().click(firstChoice!)
+
+    expect(screen.getByRole("heading", { name: /9.5일 계획/u })).toBeVisible()
+    expect(window.localStorage.getItem("trainoracle.plan-beta.v1")).not.toBeNull()
   })
 
-  it("does not create a next-frame candidate from a review-only frame", async () => {
+  it("keeps candidate selection visible when the active plan cannot be saved", async () => {
     render(<PlanBeta />)
     await answerMinimumPlanQuestions()
 
-    expectFormationReview()
-    expect(screen.queryByRole("button", { name: "다음 주기 후보 만들기" })).toBeNull()
+    const realSetItem = Storage.prototype.setItem
+    vi.spyOn(Storage.prototype, "setItem").mockImplementation(function (
+      this: Storage,
+      key: string,
+      value: string,
+    ) {
+      if (key === "trainoracle.plan-beta.v1") throw new Error("QuotaExceededError")
+      return realSetItem.call(this, key, value)
+    })
+    const [firstChoice] = screen.getAllByRole("button", { name: /선택하기/u })
+    await userEvent.setup().click(firstChoice!)
+
+    expect(screen.getByRole("alert")).toHaveTextContent("계획을 이 기기에 저장하지 못했어요")
+    expect(screen.getByRole("heading", { name: "두 계획에서 하나를 골라보세요" })).toBeVisible()
+    expect(window.localStorage.getItem("trainoracle.plan-beta.v1")).toBeNull()
+  })
+
+  it("keeps the current plan visible when next-frame archiving fails", async () => {
+    expect(savePlanBetaState(stateFixture())).toEqual({ ok: true })
+    const realSetItem = Storage.prototype.setItem
+    vi.spyOn(Storage.prototype, "setItem").mockImplementation(function (
+      this: Storage,
+      key: string,
+      value: string,
+    ) {
+      if (key === "trainoracle.plan-beta.history.v1") {
+        throw new Error("QuotaExceededError")
+      }
+      return realSetItem.call(this, key, value)
+    })
+    render(<PlanBeta />)
+
+    await userEvent.setup().click(
+      screen.getByRole("button", { name: "다음 주기 후보 만들기" }),
+    )
+
+    expect(screen.getByRole("alert")).toHaveTextContent("지금 계획과 진행 기록은 그대로")
+    expect(screen.getByRole("heading", { name: /9일 계획/u })).toBeVisible()
+    expect(window.localStorage.getItem("trainoracle.plan-beta.v1")).not.toBeNull()
+  })
+
+  it("does not mark progress complete when that update cannot be saved", async () => {
+    expect(savePlanBetaState(stateFixture())).toEqual({ ok: true })
+    render(<PlanBeta />)
+    const realSetItem = Storage.prototype.setItem
+    vi.spyOn(Storage.prototype, "setItem").mockImplementation(function (
+      this: Storage,
+      key: string,
+      value: string,
+    ) {
+      if (key === "trainoracle.plan-beta.v1") throw new Error("QuotaExceededError")
+      return realSetItem.call(this, key, value)
+    })
+
+    const progress = screen.getByLabelText(/DAY 1.*진행 기록/u)
+    await userEvent.setup().click(within(progress).getByRole("button", { name: "완료" }))
+
+    expect(screen.getByRole("alert")).toHaveTextContent("계획을 이 기기에 저장하지 못했어요")
+    expect(screen.getByText("예정")).toBeVisible()
+    expect(screen.queryByText("완료", { selector: "em" })).toBeNull()
   })
 })

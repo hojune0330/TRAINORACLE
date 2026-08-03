@@ -42,7 +42,7 @@ export const planIntakeSchema = z.object({
     z.literal(6),
     z.literal("EVERY_DAY"),
   ]),
-  requestedFrameLength: frameLengthSchema,
+  requestedFrameLength: z.union([frameLengthSchema, z.literal(9.5)]),
   trainingFocus: plannedEnergyIntentSchema.optional().default("MIXED_INTENT"),
   secondSessionMode: secondSessionModeSchema.optional().default("SINGLE_SESSION_ONLY"),
 })

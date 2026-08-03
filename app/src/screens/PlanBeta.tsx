@@ -1,6 +1,5 @@
 import React from "react"
 import { AlertTriangle, RotateCcw } from "lucide-react"
-import { recordPlanProgress } from "@impl/plan-generator/generator"
 import type { PlanGenerationSuccess } from "@impl/plan-generator/types"
 import type { SafetyGateDecision } from "@impl/safety-gate/gate"
 import {
@@ -8,32 +7,22 @@ import {
   selectPlanForActivation,
 } from "../domain/plan-beta-flow"
 import {
-  archiveAndClearActivePlan,
   loadPlanBetaState,
   loadPreviousIntake,
   savePlanBetaState,
-  updateStoredProgress,
 } from "../domain/plan-beta-store"
 import type {
   PlanBetaIntake,
   PlanBetaState,
 } from "../domain/plan-beta-store"
 import type { JournalEntryType } from "./log-entry/shared"
-import { ActivePlan } from "./plan-beta/ActivePlan"
+import { PlanActiveState } from "./plan-beta/PlanActiveState"
 import { PlanCandidates } from "./plan-beta/PlanCandidates"
 import { PlanIntake } from "./plan-beta/PlanIntake"
 import type { IntakeStep } from "./plan-beta/PlanIntake"
 import { NotationReader } from "./plan-beta/NotationReader"
 
-const STEP_ORDER: readonly IntakeStep[] = [
-  "goal",
-  "experience",
-  "focus",
-  "days",
-  "frame",
-  "two-a-day",
-  "safety",
-]
+const STEP_ORDER: readonly IntakeStep[] = ["goal", "experience", "focus", "days", "two-a-day", "safety"]
 
 export function PlanBeta({
   onWriteLog,
@@ -82,23 +71,10 @@ export function PlanBeta({
 
   if (stored !== null) {
     return (
-      <ActivePlan
+      <PlanActiveState
         state={stored}
-        onProgress={(progress) => {
-          const result = recordPlanProgress({
-            kind: "PLAN_BETA_PROGRESS_REQUEST",
-            activePlan: stored.activePlan,
-            sessionDay: progress.sessionDay,
-            sessionSlot: progress.sessionSlot,
-            state: progress.state,
-          })
-          if (result.kind !== "recorded") return
-          const next = updateStoredProgress(stored, progress)
-          savePlanBetaState(next)
-          setStored(next)
-        }}
-        onNextFrame={() => {
-          const intake = archiveAndClearActivePlan(stored)
+        onStateChange={setStored}
+        onArchived={(intake) => {
           setStored(null)
           setDraft(intake)
           setGenerated(null)
@@ -141,24 +117,32 @@ export function PlanBeta({
 
   if (generated !== null && gate !== null) {
     return (
-      <PlanCandidates
-        generated={generated}
-        onBack={() => {
-          setGenerated(null)
-          setGate(null)
-          setStep("frame")
-        }}
-        onSelect={(candidate) => {
-          selectAndStore(
-            candidate,
-            generated,
-            gate,
-            generatedIntake,
-            setStored,
-            setErrorCode,
-          )
-        }}
-      />
+      <>
+        <PlanCandidates
+          generated={generated}
+          onBack={() => {
+            setGenerated(null)
+            setGate(null)
+            setErrorCode(null)
+            setStep("two-a-day")
+          }}
+          onSelect={(candidate) => {
+            selectAndStore(
+              candidate,
+              generated,
+              gate,
+              generatedIntake,
+              setStored,
+              setErrorCode,
+            )
+          }}
+        />
+        {errorCode !== null && (
+          <div className="plan-inline-error" role="alert">
+            {planErrorMessage(errorCode)}
+          </div>
+        )}
+      </>
     )
   }
 
@@ -181,11 +165,11 @@ export function PlanBeta({
           setStep("days")
         }}
         onDays={(availableDayCount) => {
-          setDraft((current) => ({ ...current, availableDayCount }))
-          setStep("frame")
-        }}
-        onFrame={(requestedFrameLength) => {
-          setDraft((current) => ({ ...current, requestedFrameLength }))
+          setDraft((current) => ({
+            ...current,
+            availableDayCount,
+            requestedFrameLength: 9.5,
+          }))
           setStep("two-a-day")
         }}
         onSecondSession={(secondSessionMode) => {
@@ -224,6 +208,8 @@ function planErrorMessage(errorCode: string): string {
   switch (errorCode) {
     case "FORMATION_REVIEW_REQUIRED":
       return "현재 입력만으로는 계획 후보를 만들지 않아요. 훈련 내용을 검토한 뒤 초안으로 이어집니다."
+    case "PLAN_STORAGE_WRITE_FAILED":
+      return "계획을 이 기기에 저장하지 못했어요. 화면은 바뀌지 않았고 다시 시도할 수 있어요."
     default:
       return `계획을 만들지 못했어요 · ${errorCode}`
   }
@@ -251,6 +237,11 @@ function selectAndStore(
     setErrorCode(result.code)
     return
   }
-  savePlanBetaState(result.state)
+  const saveResult = savePlanBetaState(result.state)
+  if (!saveResult.ok) {
+    setErrorCode(saveResult.code)
+    return
+  }
+  setErrorCode(null)
   setStored(result.state)
 }
