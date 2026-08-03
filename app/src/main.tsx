@@ -13,6 +13,9 @@ import "./styles/feedback-board.css"
 import "./styles/plan-beta.css"
 import "./styles/journal-reader.css"
 import "./styles/athlete-records.css"
+import "./styles/journal-decoration.css"
+import "./styles/decoration-studio.css"
+import "./styles/minji-showcase.css"
 
 const showP3PaceHarness = import.meta.env.DEV
   && new URLSearchParams(window.location.search).get("p3-pace-fixture") === "1"

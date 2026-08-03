@@ -17,6 +17,7 @@
 //  - 로그인 토큰도 지운다. 기기를 넘기는데 계정이 남아 있으면 안 된다.
 //  - 실패를 숨기지 않는다. 지워진 키와 실패한 키를 그대로 돌려준다.
 import { ATHLETE_RECORDS_STORAGE_KEY } from "./athlete-records"
+import { DECORATION_STORAGE_KEY_V1, DECORATION_STORAGE_KEY_V2 } from "./decorations"
 import {
   PRIVATE_MEMO_VAULT_STORAGE_KEY,
   PRIVATE_NOTE_RECOVERY_STORAGE_KEY,
@@ -31,6 +32,8 @@ const CONTENT_KEYS = [
   // 30일 동안 기기에 남는다. 기기를 넘기는 상황에서 가장 위험한 누락이다.
   "trainoracle.journal.trash.v1",
   "trainoracle.journal.full-backup.v1",
+  DECORATION_STORAGE_KEY_V1,
+  DECORATION_STORAGE_KEY_V2,
   SYNC_RECOVERY_STORAGE_KEY,
   PRIVATE_MEMO_VAULT_STORAGE_KEY,
   ATHLETE_RECORDS_STORAGE_KEY,

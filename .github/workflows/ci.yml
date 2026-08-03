@@ -42,6 +42,9 @@ jobs:
           node specs/test-packages/validate-advisory-session-recommender.mjs
           node --test specs/test-packages/validate-dependency-security-audit.test.mjs
           node specs/test-packages/validate-dependency-security-audit.mjs
+          node --test specs/test-packages/validate-decoration-assets.test.mjs
+          node specs/test-packages/validate-journal-decoration-contract.mjs
+          node --test specs/test-packages/validate-journal-decoration-contract.test.mjs
 
       - name: Install D9 evaluator dependencies
         working-directory: runtime-evidence/d9-evaluator

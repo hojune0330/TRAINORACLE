@@ -7,13 +7,17 @@
 //  4. 지운 일지는 백업 파일로도 되살아나지 않으며 그 사실이 화면에 보인다.
 //  5. 읽지 못한 항목 수를 숨기지 않는다(fail-visible).
 //  6. 안전 백업(메모 제외)은 메모가 비어 있다는 사실을 알리고, 없는 내용을 만들지 않는다.
-import { cleanup, render, screen, waitFor } from "@testing-library/react"
+import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
-import { afterEach, beforeEach, describe, expect, it } from "vitest"
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { RestoreBackup } from "./RestoreBackup"
 import { loadEntries, saveEntry, deleteEntry } from "../domain/journal-store"
 import { FULL_FORMAT, SAFE_FORMAT } from "../domain/restore/backup-file"
 import type { PostSessionEntry } from "../domain/journal-schema"
+import { loadDecorationState } from "../domain/decoration-store"
+import { JOURNAL_STORAGE_KEY } from "../domain/journal-local-storage"
+import { createRecoveryCode } from "../domain/account/private-note-crypto"
+import { saveSessionRecoveryCode } from "../domain/account/private-note-sync"
 
 afterEach(cleanup)
 
@@ -36,12 +40,14 @@ function backupFile(
   entries: readonly unknown[],
   format: string = FULL_FORMAT,
   name = "trainoracle-full-backup-2026-07-25.json",
+  decorations?: unknown,
 ): File {
   const body = JSON.stringify({
     app: "TRAINORACLE",
     format,
     exportedAt: "2026-07-25T00:00:00.000Z",
     entries,
+    ...(decorations === undefined ? {} : { decorations }),
   })
   return new File([body], name, { type: "application/json" })
 }
@@ -227,5 +233,140 @@ describe("RestoreBackup — 되돌리기 실행", () => {
 
     expect(loadEntries().map((entry) => entry.id)).toEqual(["ok"])
     expect(screen.getByTestId("restore-done").textContent).toMatch(/전에 지운 일지 1건은 되돌리지 않았어요/u)
+  })
+})
+describe("restore backup decorations preview", () => {
+  beforeEach(() => { window.localStorage.clear() })
+
+  it("keeps journal entries separate from decorations in the restore summary for full backups", async () => {
+    const user = userEvent.setup()
+    render(<RestoreBackup />)
+
+    const backup = JSON.stringify({
+      app: "TRAINORACLE",
+      format: FULL_FORMAT,
+      exportedAt: "2026-07-25T00:00:00.000Z",
+      entries: [postSession("journal-only", "2026-07-21")],
+      decorations: loadDecorationState(),
+    })
+
+    await pick(user, new File([backup], "trainoracle-full-backup-2026-07-25.json", { type: "application/json" }))
+
+    await waitFor(() => {
+      expect(screen.getByTestId("restore-decoration-summary").textContent).toContain("꾸미기")
+    })
+  })
+
+  it("전체 백업의 꾸미기 항목과 날짜 배치 수를 저장 전에 보여준다", async () => {
+    const user = userEvent.setup()
+    render(<RestoreBackup />)
+    const decorations = {
+      version: 2,
+      spentPoints: 0,
+      ownedItemIds: ["THEME_TRACK_NOTEBOOK", "INK_NAVY", "STICKER_WEATHER_SUN", "STAMP_REST_DAY", "TAPE_CHECKER"],
+      equipped: { themeId: "THEME_TRACK_NOTEBOOK", inkId: "INK_NAVY", avatarId: null },
+      library: { favoriteItemIds: [], recentItemIds: [] },
+      pagePlacements: [
+        { date: "2026-07-21", slot: "TOP_CORNER", itemId: "STICKER_WEATHER_SUN" },
+      ],
+      pointMeaning: "NON_ECONOMIC_NON_TRANSFERABLE_BETA",
+    }
+
+    await pick(user, backupFile([postSession("a", "2026-07-21")], FULL_FORMAT, undefined, decorations))
+
+    await waitFor(() => {
+      expect(screen.getByTestId("restore-decoration-summary").textContent).toMatch(/꾸미기 항목 5개/u)
+    })
+    expect(screen.getByTestId("restore-decoration-summary").textContent).toMatch(/날짜 배치 1개/u)
+  })
+
+  it("잘못된 꾸미기 구획은 일지와 분리해 경고한다", async () => {
+    const user = userEvent.setup()
+    render(<RestoreBackup />)
+
+    await pick(user, backupFile(
+      [postSession("a", "2026-07-21")],
+      FULL_FORMAT,
+      undefined,
+      { version: 99, pagePlacements: [] },
+    ))
+
+    await waitFor(() => {
+      expect(screen.getByTestId("restore-decoration-invalid").textContent)
+        .toMatch(/꾸미기는 형식이 맞지 않아 제외/u)
+    })
+    expect(screen.getByRole("button", { name: /1건 되돌리기/u })).toBeTruthy()
+  })
+})
+
+describe("restore backup failure boundaries", () => {
+  beforeEach(() => { window.localStorage.clear(); window.sessionStorage.clear() })
+
+  it("does not present a rolled-back full restore as success", async () => {
+    const user = userEvent.setup()
+    const backup = backupFile(
+      [postSession("journal", "2026-07-21")],
+      FULL_FORMAT,
+      undefined,
+      loadDecorationState(),
+    )
+    const setItem = window.localStorage.setItem.bind(window.localStorage)
+    vi.spyOn(Storage.prototype, "setItem").mockImplementation((key, value) => {
+      if (key === JOURNAL_STORAGE_KEY) throw new DOMException("quota")
+      setItem(key, value)
+    })
+    render(<RestoreBackup />)
+
+    await pick(user, backup)
+    await user.click(screen.getByTestId("restore-submit"))
+
+    await waitFor(() => expect(screen.getByTestId("restore-commit-failure")).toBeTruthy())
+    expect(screen.queryByTestId("restore-done")).toBeNull()
+  })
+
+  it("distinguishes a missing recovery code from an unreadable backup", async () => {
+    const user = userEvent.setup()
+    render(<RestoreBackup />)
+    const backup = backupFile([
+      postSession("private", "2026-07-21", {
+        memo: "private backup memo",
+        memoPurpose: "PRIVATE_SELF_ONLY",
+      }),
+    ])
+
+    await pick(user, backup)
+    await user.click(screen.getByTestId("restore-submit"))
+
+    await waitFor(() => {
+      expect(screen.getByTestId("restore-commit-failure").textContent).toMatch(/복구 코드/u)
+    })
+    expect(screen.queryByTestId("restore-failure")).toBeNull()
+  })
+
+  it("locks repeated restore clicks while a private restore is still running", async () => {
+    const user = userEvent.setup()
+    const recoveryCode = createRecoveryCode()
+    expect(saveSessionRecoveryCode(recoveryCode)).toBe(true)
+    render(<RestoreBackup />)
+    const backup = backupFile([
+      postSession("private", "2026-07-21", {
+        memo: "private backup memo",
+        memoPurpose: "PRIVATE_SELF_ONLY",
+      }),
+    ])
+    await pick(user, backup)
+    const setItem = window.localStorage.setItem.bind(window.localStorage)
+    const journalWrites = vi.fn()
+    vi.spyOn(Storage.prototype, "setItem").mockImplementation((key, value) => {
+      if (key === JOURNAL_STORAGE_KEY) journalWrites()
+      setItem(key, value)
+    })
+
+    const submit = screen.getByTestId("restore-submit")
+    fireEvent.click(submit)
+    fireEvent.click(submit)
+
+    await waitFor(() => expect(screen.getByTestId("restore-done")).toBeTruthy())
+    expect(journalWrites).toHaveBeenCalledTimes(1)
   })
 })

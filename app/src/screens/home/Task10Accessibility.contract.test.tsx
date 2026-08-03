@@ -1,0 +1,63 @@
+import { cleanup, render, screen } from "@testing-library/react"
+import { readFileSync } from "node:fs"
+import { afterEach, describe, expect, it } from "vitest"
+import { DailyContextTags } from "./DailyContextTags"
+
+afterEach(cleanup)
+
+const appCss = readFileSync("src/styles/app.css", "utf8")
+const decorationStudioCss = readFileSync("src/styles/decoration-studio.css", "utf8")
+const journalDecorationCss = readFileSync("src/styles/journal-decoration.css", "utf8")
+const mobileStyles = [
+  appCss,
+  decorationStudioCss,
+  journalDecorationCss,
+  readFileSync("src/styles/minji-showcase.css", "utf8"),
+].join("\n")
+
+describe("task 10 mobile accessibility contract", () => {
+  it("keeps mood, body, and weather chips at the 44px touch minimum in every state", () => {
+    // Given
+    render(<DailyContextTags date="2026-08-04" />)
+
+    // When
+    const chips = screen.getAllByRole("button")
+
+    // Then
+    expect(chips).toHaveLength(11)
+    expect(chips.every((chip) => chip.getAttribute("aria-pressed") === "false")).toBe(true)
+    expect(appCss).toMatch(/\.daily-context__group button\s*\{[^}]*min-inline-size:\s*44px;[^}]*min-block-size:\s*44px;/u)
+  })
+
+  it("keeps the review dismissal control from shrinking below the touch minimum", () => {
+    const dismissalRule = appCss.match(/\.saved-toast__heading button\s*\{[^}]*\}/u)?.[0] ?? ""
+
+    expect(dismissalRule).toContain("width: var(--app-touch-min)")
+    expect(dismissalRule).toContain("height: var(--app-touch-min)")
+    expect(dismissalRule).toContain("flex: 0 0 var(--app-touch-min)")
+  })
+
+  it("keeps the decoration studio icon-only close control at the touch minimum", () => {
+    const toggleRule = decorationStudioCss.match(/\.decoration-shop__header > button\s*\{[^}]*\}/u)?.[0] ?? ""
+
+    expect(toggleRule).toContain("min-width: var(--app-touch-min)")
+    expect(toggleRule).toContain("min-height: var(--app-touch-min)")
+  })
+
+  it("keeps decoration layers behind readable journal content", () => {
+    const contentRule = journalDecorationCss.match(/\.decorated-journal-page__content\s*\{[^}]*\}/u)?.[0] ?? ""
+    const decorationRule = journalDecorationCss.match(/\.decorated-journal-page__avatar,[\s\S]*?\.decorated-journal-page__slot\s*\{[^}]*\}/u)?.[0] ?? ""
+
+    // Then
+    expect(contentRule).toContain("z-index: 1")
+    expect(decorationRule).toContain("z-index: 0")
+    expect(decorationRule).toContain("pointer-events: none")
+  })
+
+  it("removes animation and transition motion for reduced-motion users", () => {
+    const reducedMotionRule = mobileStyles.match(/@media \(prefers-reduced-motion: reduce\)[\s\S]*?animation: none !important;[\s\S]*?transition: none !important;/u)?.[0] ?? ""
+
+    // Then
+    expect(reducedMotionRule).not.toBe("")
+  })
+})

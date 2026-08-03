@@ -1250,8 +1250,11 @@ button:not(:disabled):not([aria-disabled="true"]):active {
 }
 
 .saved-toast__heading button {
+  width: var(--app-touch-min);
+  height: var(--app-touch-min);
   min-width: var(--app-touch-min);
   min-height: var(--app-touch-min);
+  flex: 0 0 var(--app-touch-min);
   margin: calc(-1 * var(--space-2));
   padding: 0;
   border: 0;
@@ -1346,6 +1349,21 @@ button:not(:disabled):not([aria-disabled="true"]):active {
   .saved-toast--exit .saved-toast__surface {
     animation-name: ui-fade-out;
     transform: none;
+  }
+}
+
+.daily-context__group button {
+  min-inline-size: 44px;
+  min-block-size: 44px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+    scroll-behavior: auto !important;
   }
 }
 

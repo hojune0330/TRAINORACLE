@@ -17,6 +17,7 @@ import {
   savePrivateMemoWithJournalShell,
 } from "./private-memo-vault"
 import { loadSessionRecoveryCode } from "./account/private-note-sync"
+import { loadDecorationState } from "./decorations"
 
 const privateMemoCache = new Map<string, { readonly recoveryCode: string; readonly memo: string }>()
 
@@ -270,10 +271,11 @@ export function exportEntriesJSON(options: JournalExportOptions = {}): string {
     return JSON.stringify(
       {
         app: "TRAINORACLE",
-        format: "trainoracle.journal.full-backup.v1",
+        format: "trainoracle.journal.full-backup.v2",
         exportMode: "OWNER_FULL_BACKUP",
         exportedAt: new Date().toISOString(),
         entries: entriesForOwnerFullBackup(),
+        decorations: loadDecorationState(),
       },
       null,
       2,
