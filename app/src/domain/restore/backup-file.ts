@@ -18,9 +18,15 @@
 //  - 저장은 기존 쓰기 검증(parseJournalEntryForWrite)을 그대로 통과해야 한다.
 //    검증을 우회하는 복원 경로를 만들지 않는다.
 import { tombstonedIds } from "../account/tombstone"
+import { loadSessionRecoveryCode } from "../account/private-note-sync"
 import { parseJournalEntryForWrite, parseJournalEntryList } from "../journal-schema"
 import type { JournalEntry } from "../journal-schema"
-import { loadEntries, replaceAllEntries, saveEntry } from "../journal-store"
+import { journalStorage } from "../journal-local-storage"
+import {
+  hasPrivateMemoText,
+  savePrivateMemosWithJournalShells,
+} from "../private-memo-vault"
+import { loadEntries, replaceAllEntries } from "../journal-store"
 
 /** 인식하는 내보내기 형식 — journal-store.exportEntriesJSON이 쓰는 값들 */
 export const SAFE_FORMAT = "trainoracle.journal.v1"
@@ -76,7 +82,13 @@ export function readBackupFile(text: string): BackupReadResult {
   if (!Array.isArray(rawEntries)) return { ...UNRECOGNIZED, recognized: true, kind }
 
   const prepared = kind === "safe" ? rawEntries.map(withEmptyTextFields) : rawEntries
-  const entries = parseJournalEntryList(prepared)
+  const parsedEntries = parseJournalEntryList(prepared)
+  const seenIds = new Set<string>()
+  const entries = parsedEntries.filter((entry) => {
+    if (seenIds.has(entry.id)) return false
+    seenIds.add(entry.id)
+    return true
+  })
   return {
     entries,
     skipped: rawEntries.length - entries.length,
@@ -173,14 +185,13 @@ export type RestoreOutcome = {
  * (그렇지 않으면 같은 id가 두 개 생긴다) 검증 통과분으로 목록을 재구성한다.
  * 어떤 실패에서도 이미 있던 일지는 지워지지 않는다.
  */
-export function restoreEntries(
+export async function restoreEntries(
   plan: RestorePlan,
   mode: RestoreMode = "keep-existing",
-): RestoreOutcome {
-  let restored = 0
+): Promise<RestoreOutcome> {
   let keptExisting = 0
   let failed = 0
-  const replacements = new Map<string, JournalEntry>()
+  const accepted: JournalEntry[] = []
 
   for (const item of plan.items) {
     if (item.previouslyDeleted) continue
@@ -206,26 +217,38 @@ export function restoreEntries(
       continue
     }
 
-    if (item.conflictsWithExisting) {
-      // 교체 — append하면 같은 id가 두 개 남는다.
-      replacements.set(candidate.id, candidate)
-      restored += 1
-      continue
-    }
-
-    const result = saveEntry(candidate)
-    if (result.ok) restored += 1
-    else failed += 1
+    accepted.push(candidate)
   }
 
-  if (replacements.size > 0) {
-    const next = loadEntries().map((entry) => replacements.get(entry.id) ?? entry)
-    const written = replaceAllEntries(next)
-    if (!written.ok) {
-      // 교체 실패 — 기존 일지는 그대로다. 교체 시도분만 실패로 센다.
-      failed += replacements.size
-      restored -= replacements.size
+  const privateEntries = accepted.filter(hasPrivateMemoText)
+  const nonPrivateEntries = accepted.filter((entry) => !hasPrivateMemoText(entry))
+  let restored = 0
+
+  if (privateEntries.length > 0) {
+    const storage = journalStorage()
+    const recoveryCode = loadSessionRecoveryCode()
+    if (storage !== null && recoveryCode !== null) {
+      const allAccepted = buildRestoredEntries(loadEntries(), accepted)
+      const written = await savePrivateMemosWithJournalShells(
+        storage,
+        allAccepted,
+        privateEntries,
+        recoveryCode,
+      )
+      if (written !== null) restored = accepted.length
+      else failed += privateEntries.length
+    } else {
+      failed += privateEntries.length
     }
+  }
+
+  if (restored === 0 && nonPrivateEntries.length > 0) {
+    const next = buildRestoredEntries(loadEntries(), nonPrivateEntries)
+    const written = replaceAllEntries(next)
+    if (written.ok) restored = nonPrivateEntries.length
+    else failed += nonPrivateEntries.length
+  } else if (privateEntries.length === 0 && accepted.length === 0) {
+    restored = 0
   }
 
   return {
@@ -235,4 +258,16 @@ export function restoreEntries(
     failed,
     total: plan.items.length,
   }
+}
+
+function buildRestoredEntries(
+  existing: readonly JournalEntry[],
+  accepted: readonly JournalEntry[],
+): JournalEntry[] {
+  const replacements = new Map(accepted.map((entry) => [entry.id, entry]))
+  const existingIds = new Set(existing.map((entry) => entry.id))
+  return [
+    ...existing.map((entry) => replacements.get(entry.id) ?? entry),
+    ...accepted.filter((entry) => !existingIds.has(entry.id)),
+  ]
 }

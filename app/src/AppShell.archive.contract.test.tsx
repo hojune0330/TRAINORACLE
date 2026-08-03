@@ -52,6 +52,46 @@ describe("AppShell journal archive routing", () => {
     expect(screen.getByRole("button", { name: /2026년 7월 10일/u })).toBeVisible()
   })
 
+  it("returns from editing an archived entry to the same selected week", async () => {
+    const user = userEvent.setup()
+    render(<AppShell />)
+
+    await user.click(screen.getByRole("button", { name: "전체 보기" }))
+    await user.click(screen.getByRole("button", { name: /2026년 7월/u }))
+    await user.click(screen.getByRole("button", { name: /7월 6일.*7월 12일/u }))
+    await user.click(screen.getByRole("button", { name: /2026년 7월 10일/u }))
+    await user.click(screen.getByRole("button", { name: "훈련 기록 수정" }))
+
+    await user.click(screen.getByRole("button", { name: "← 뒤로" }))
+    expect(screen.getByText("아카이브 복귀 훈련")).toBeVisible()
+    await user.click(screen.getByRole("button", { name: "← 뒤로" }))
+
+    expect(screen.getByRole("heading", { name: "7월 6일–12일" })).toBeVisible()
+    expect(screen.getByRole("button", { name: /2026년 7월 10일/u })).toBeVisible()
+  })
+
+  it("does not reset the archive when the active journal tab is tapped again", async () => {
+    const user = userEvent.setup()
+    render(<AppShell />)
+
+    await user.click(screen.getByRole("button", { name: "일지" }))
+    await user.click(screen.getByRole("button", { name: /2026년 7월/u }))
+    await user.click(screen.getByRole("button", { name: /7월 6일.*7월 12일/u }))
+    await user.click(screen.getByRole("button", { name: "일지" }))
+
+    expect(screen.getByRole("heading", { name: "7월 6일–12일" })).toBeVisible()
+  })
+
+  it("returns a Minji example opened from home back to home", async () => {
+    const user = userEvent.setup()
+    render(<AppShell />)
+
+    await user.click(screen.getByRole("button", { name: /민지의 예시 일지 보기/u }))
+    await user.click(screen.getByRole("button", { name: /돌아가기/u }))
+
+    expect(screen.getByRole("heading", { name: "내 훈련" })).toBeVisible()
+  })
+
   it("opens the journal archive from the dedicated journal tab", async () => {
     const user = userEvent.setup()
     render(<AppShell />)

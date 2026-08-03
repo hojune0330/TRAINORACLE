@@ -38,6 +38,11 @@ const TCX_TWO_LAPS = `<?xml version="1.0" encoding="UTF-8"?>
   </Activities>
 </TrainingCenterDatabase>`
 
+const TCX_NEAR_MIDNIGHT_UTC = TCX_ONE_LAP.replaceAll(
+  "2026-07-20T06:12:00.000Z",
+  "2026-07-20T23:30:00.000Z",
+)
+
 const TCX_NO_TIMESTAMP = `<?xml version="1.0" encoding="UTF-8"?>
 <TrainingCenterDatabase>
   <Activities>
@@ -119,6 +124,12 @@ describe("activity file parser", () => {
     expect(activity?.distanceKm).toBe("6.00")
     expect(activity?.durationMin).toBe("30")
     expect(activity?.avgPace).toBe("5:00")
+  })
+
+  it("UTC 자정 부근 활동을 사용자가 보는 현지 날짜로 저장한다", () => {
+    const [activity] = parseActivityFile(TCX_NEAR_MIDNIGHT_UTC, "Asia/Seoul").activities
+
+    expect(activity?.date).toBe("2026-07-21")
   })
 
   it("날짜를 읽을 수 없는 활동은 날조하지 않고 skipped로 보고한다", () => {

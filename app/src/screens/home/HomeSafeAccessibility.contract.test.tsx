@@ -22,6 +22,22 @@ const RECENT_ENTRY = {
   memoPurpose: "PRIVATE_SELF_ONLY",
 } satisfies JournalEntry
 
+const PRIVATE_EVENING_ENTRY = {
+  id: "private-evening",
+  kind: "evening",
+  date: "2026-07-15",
+  savedAt: "2026-07-15T21:00:00.000Z",
+  syncState: "local",
+  sleepH: 0,
+  sleepQuality: 0,
+  weightKg: "",
+  restingHr: "",
+  painParts: {},
+  mood: 0,
+  note: "저녁 비공개 원문",
+  memoPurpose: "PRIVATE_SELF_ONLY",
+} satisfies JournalEntry
+
 afterEach(cleanup)
 
 describe("home journal controls", () => {
@@ -54,6 +70,48 @@ describe("home journal controls", () => {
     expect(screen.getByRole("button", { name: /훈련계획/u })).toBeVisible()
     expect(screen.getByRole("button", { name: /분석/u })).toBeVisible()
     expect(screen.queryByText("비공개 원문")).toBeNull()
+  })
+
+  it("never uses a private evening note as visible or accessible recent-entry text", () => {
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify([RECENT_ENTRY, PRIVATE_EVENING_ENTRY]))
+
+    render(<Home />)
+
+    expect(document.body.textContent).not.toContain("저녁 비공개 원문")
+    expect(screen.queryByRole("button", { name: /저녁 비공개 원문/u })).toBeNull()
+  })
+
+  it("shows a pain review only for explicit pain, not imported derived pain", () => {
+    const eveningBase = {
+      ...PRIVATE_EVENING_ENTRY,
+      note: "",
+      memoPurpose: undefined,
+      painParts: { knee: 5 },
+      date: "2099-01-01",
+    } satisfies JournalEntry
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify([{
+      ...eveningBase,
+      id: "derived-pain",
+      fieldProvenance: {
+        painParts: {
+          provenance: "DERIVED",
+          derivedFrom: ["import:activity-file"],
+          derivationRuleId: "import.activity-file.v1",
+        },
+      },
+    } satisfies JournalEntry]))
+
+    const { unmount } = render(<Home />)
+    expect(screen.queryByTestId("home-pain-review")).toBeNull()
+    unmount()
+
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify([{
+      ...eveningBase,
+      id: "explicit-pain",
+      fieldProvenance: { painParts: { provenance: "EXPLICIT" } },
+    } satisfies JournalEntry]))
+    render(<Home />)
+    expect(screen.getByTestId("home-pain-review")).toBeVisible()
   })
 
   it("shows the real dashboard instead of a blocking welcome screen when empty", () => {

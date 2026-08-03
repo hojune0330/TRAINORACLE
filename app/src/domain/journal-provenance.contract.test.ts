@@ -150,6 +150,28 @@ describe("journal provenance rollout boundary", () => {
     expect(loadAnalysisEntries()).toEqual([])
   })
 
+  it("removes persisted provenance text that is not a field or approved import token", () => {
+    const secret = "PRIVATE_MEMO_TEXT_SHOULD_NOT_SURVIVE"
+    const persisted = {
+      ...legacyPostSession("invalid-derived-source"),
+      fieldProvenance: {
+        distanceKm: {
+          provenance: FIELD_PROVENANCE.derived,
+          derivedFrom: [secret],
+          derivationRuleId: "UNREGISTERED",
+        },
+      },
+    }
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify([persisted]))
+
+    expect(loadEntries()[0]).toEqual(expect.objectContaining({
+      id: "invalid-derived-source",
+      fieldProvenance: {},
+    }))
+    expect(exportEntriesJSON()).not.toContain(secret)
+    expect(loadAnalysisEntries()).toEqual([])
+  })
+
   it("rejects new provenance metadata that names a field outside its entry", () => {
     const entry = {
       ...legacyPostSession("unknown-provenance-field"),

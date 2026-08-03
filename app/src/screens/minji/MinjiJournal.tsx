@@ -41,6 +41,7 @@ export function MinjiJournal({ onWriteLog }: { readonly onWriteLog?: () => void 
     if (page === undefined) return null
     return (
       <MinjiPage
+        key={page.id}
         page={page}
         pageNumber={selectedIndex + 1}
         headingRef={headingRef}
@@ -49,10 +50,12 @@ export function MinjiJournal({ onWriteLog }: { readonly onWriteLog?: () => void 
         onClose={closePage}
         onPrevious={selectedIndex === 0 ? undefined : () => {
           setQuestionOpen(false)
+          openerIndexRef.current = selectedIndex - 1
           setSelectedIndex(selectedIndex - 1)
         }}
         onNext={selectedIndex === MINJI_JOURNAL_PAGES.length - 1 ? undefined : () => {
           setQuestionOpen(false)
+          openerIndexRef.current = selectedIndex + 1
           setSelectedIndex(selectedIndex + 1)
         }}
         onWriteLog={onWriteLog}
@@ -107,8 +110,9 @@ function MinjiPage({ page, pageNumber, headingRef, questionOpen, onToggleQuestio
         {page.notation !== undefined && (
           <div className="minji-page__notation">
             <code>{page.notation.raw}</code>
-            <button type="button" aria-expanded={notationOpen} onClick={() => setNotationOpen((open) => !open)}>훈련 표시 쉽게 보기</button>
-            {notationOpen && page.notation.lines.map((line) => <p key={line}>{line}</p>)}
+            <p className="minji-page__notation-warning">민지의 가상 예시이며 따라 하는 훈련계획이 아니에요.</p>
+            <button type="button" aria-expanded={notationOpen} aria-controls={`minji-notation-${page.id}`} onClick={() => setNotationOpen((open) => !open)}>훈련 표시 쉽게 보기</button>
+            {notationOpen && <div id={`minji-notation-${page.id}`}>{page.notation.lines.map((line) => <p key={line}>{line}</p>)}</div>}
           </div>
         )}
         <section className="minji-page__discovery" aria-label="나중에 보인 것">
@@ -126,7 +130,7 @@ function MinjiPage({ page, pageNumber, headingRef, questionOpen, onToggleQuestio
         <button type="button" onClick={onPrevious} disabled={onPrevious === undefined}><ArrowLeft aria-hidden="true" size={18} /><span>이전</span></button>
         {onNext !== undefined
           ? <button type="button" onClick={onNext}><span>다음</span><ArrowRight aria-hidden="true" size={18} /></button>
-          : <button type="button" onClick={onWriteLog}><span>내 첫 페이지 적기</span><ArrowRight aria-hidden="true" size={18} /></button>}
+          : <button type="button" onClick={onWriteLog}><span>오늘 기록 남기기</span><ArrowRight aria-hidden="true" size={18} /></button>}
       </footer>
     </article>
   )

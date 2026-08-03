@@ -46,8 +46,37 @@ describe("training home view model", () => {
   it("does not invent a plan or analysis when there is no evidence", () => {
     const model = buildTrainingHomeViewModel([], [], null, "2026-08-03")
 
-    expect(model.planSummary).toContain("지금 사용 중인 계획 없음")
+    expect(model.planSummary).toBe("저장된 계획 없음 · 계획 후보 만들기")
     expect(model.analysisSummary).toContain("기록이 쌓이면")
-    expect(model.flowSummary).toContain("아직 시작 전")
+    expect(model.flowSummary).toBe("9일·10일로 일지 묶어 보기 · 시작일 직접 선택")
+  })
+
+  it("distinguishes imported journal rows from analysis-ready direct input", () => {
+    const importedEntries = Array.from({ length: 7 }, (_, index) => ({
+      ...entry,
+      id: `imported-${index}`,
+      date: `2026-07-${String(20 + index).padStart(2, "0")}`,
+      fieldProvenance: {
+        distanceKm: {
+          provenance: "DERIVED",
+          derivedFrom: ["import:activity-file"],
+          derivationRuleId: "import.activity-file.v1",
+        },
+      },
+    } satisfies JournalEntry))
+
+    const model = buildTrainingHomeViewModel(importedEntries, [], null, "2026-08-03")
+
+    expect(model.analysisSummary).toBe("분석에 쓸 직접 입력 기록이 없어요")
+    expect(model.showMinjiPrompt).toBe(true)
+  })
+
+  it("does not claim all direct input is missing when it only falls outside this week", () => {
+    const olderEntry = { ...entry, date: "2026-07-01" }
+    const olderAnalysis = { ...analysisEntry, date: "2026-07-01" }
+
+    const model = buildTrainingHomeViewModel([olderEntry], [olderAnalysis], null, "2026-08-03")
+
+    expect(model.analysisSummary).toBe("이번 주 직접 입력 기록이 없어요")
   })
 })

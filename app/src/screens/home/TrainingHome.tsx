@@ -42,7 +42,7 @@ export function TrainingHome({
           <span>오늘 기록하기</span>
           <ChevronRight aria-hidden="true" size={18} />
         </button>
-        <small className="training-home__rest-note">쉰 날도 짧게 기록할 수 있어요.</small>
+        <small className="training-home__rest-note">쉰 날은 하루 마무리에서 몸 상태를 짧게 남겨요.</small>
       </section>
 
       <nav className="training-home__services" aria-label="내 훈련 서비스">

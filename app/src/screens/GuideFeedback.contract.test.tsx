@@ -44,6 +44,7 @@ describe("guide feedback entry", () => {
     render(<Guide />)
 
     await user.click(screen.getByRole("button", { name: /10개월.*같은 훈련, 달라진 느낌/u }))
+    expect(screen.getByText("민지의 가상 예시이며 따라 하는 훈련계획이 아니에요.")).toBeVisible()
     await user.click(screen.getByRole("button", { name: "훈련 표시 쉽게 보기" }))
 
     expect(screen.getByText("1000m를 여섯 번 뛰는 예시예요.")).toBeVisible()

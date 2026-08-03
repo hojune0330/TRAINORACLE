@@ -1,19 +1,19 @@
-import { cleanup, render, screen } from "@testing-library/react"
-import { afterEach, describe, expect, it } from "vitest"
+import { render, screen } from "@testing-library/react"
+import { describe, expect, it } from "vitest"
 import { EngagementStrip } from "./EngagementStrip"
 
-afterEach(cleanup)
-
-describe("engagement status", () => {
-  it("explains that a missed streak wilts the plant without removing cumulative rewards", () => {
+describe("engagement copy", () => {
+  it("names earned points honestly and avoids shame after a missed day", () => {
     render(<EngagementStrip summary={{
-      points: 24,
-      journalDays: 5,
+      points: 8,
       recordingStreak: 0,
+      journalDays: 2,
       pointMeaning: "NON_ECONOMIC_LOCAL_BETA",
     }} />)
 
-    expect(screen.getByText(/식물은 잠시 시들었지만/u)).toBeVisible()
-    expect(screen.getByText(/함께한 날과 포인트는 그대로/u)).toBeVisible()
+    expect(screen.getByText("누적 획득 · BETA")).toBeVisible()
+    expect(screen.getByText(/연속 기록은 쉬어가도/u)).toBeVisible()
+    expect(screen.queryByText(/시들/u)).toBeNull()
+    expect(screen.getByText(/몸 상태·회복 체크/u)).toBeVisible()
   })
 })

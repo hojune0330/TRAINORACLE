@@ -81,7 +81,7 @@ test("counts an imported journal without treating its numbers as analysis eviden
   await expect(page.getByTestId("imported-chip").first()).toBeVisible()
   const services = page.getByRole("navigation", { name: "내 훈련 서비스" })
   await expect(services.getByRole("button", { name: /^내 일지/u })).toContainText("1일 · 1개의 기록")
-  await expect(services.getByRole("button", { name: /^분석/u })).toContainText("기록이 쌓이면")
+  await expect(services.getByRole("button", { name: /^분석/u })).toContainText("분석에 쓸 직접 입력 기록이 없어요")
 })
 
 test("shows a duplicate warning unchecked instead of merging silently", async ({ page }) => {

@@ -31,4 +31,18 @@ describe("easy FAQ", () => {
     expect(screen.getByText(/복구 코드를 가진 사용자만/u)).toBeInTheDocument()
     expect(screen.getByText("만 14세 미만은 왜 보호자 확인이 필요한가요?")).toBeVisible()
   })
+
+  it("describes account, coach sharing, and plan features as closed when they are closed", async () => {
+    const user = userEvent.setup()
+    render(<EasyFaq />)
+
+    await user.click(screen.getByText("코치는 무엇을 볼 수 있나요?"))
+    expect(screen.getAllByText(/코치 연결은 아직 열지 않았어요/u)).toHaveLength(2)
+    await user.click(screen.getByText("훈련계획은 자동으로 바뀌나요?"))
+    expect(screen.getByText(/자동으로 계획을 바꾸는 기능은 열지 않았어요/u)).toBeVisible()
+    await user.click(screen.getByText("계정을 삭제하면 데이터도 없어지나요?"))
+    expect(screen.getByText(/현재는 계정을 사용하지 않아요/u)).toBeVisible()
+    expect(screen.getByText(/정식 문서는.*기능을 열기 전에/u)).toBeVisible()
+    expect(screen.queryByText(/첫 200명/u)).toBeNull()
+  })
 })

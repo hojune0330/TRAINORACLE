@@ -26,7 +26,7 @@ const KIND_META: Record<JournalEntry["kind"], { readonly label: string; readonly
 function entryHeadline(entry: JournalEntry): string {
   if (entry.kind === "post-session") return entry.title || "훈련 기록"
   if (entry.kind === "race") return entry.record ? `기록 ${entry.record}` : "경기 기록"
-  return entry.note || [
+  return [
     entry.sleepH > 0 ? `수면 ${entry.sleepH}h` : null,
     entry.mood > 0 ? `기분 ${entry.mood}/5` : null,
   ].filter(Boolean).join(" · ") || "하루 마무리"

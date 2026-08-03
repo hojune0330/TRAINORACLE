@@ -2,9 +2,9 @@ import React from "react"
 import { TermHelp } from "../components/TermHelp"
 import { buildTrainingHomeViewModel } from "../domain/home-view-model"
 import { loadEntries, todayISO } from "../domain/journal-store"
-import type { JournalEntry } from "../domain/journal-store"
 import { loadPlanBetaState } from "../domain/plan-beta-store"
 import { toAnalysisJournalEntry } from "../domain/safe-export"
+import type { AnalysisJournalEntry } from "../domain/safe-export"
 import { compactDate, isoShift } from "../domain/dates"
 import { engagementSummary, toEngagementJournalRef } from "../domain/engagement"
 import { painLevelsRequireReview } from "../safety/memo-safety"
@@ -54,7 +54,7 @@ export function Home({
     }),
     today,
   )
-  const painReviewDates = recentPainReviewDates(entries, today)
+  const painReviewDates = recentPainReviewDates(analysisEntries, today)
 
   React.useEffect(() => {
     if (!window.location.search.includes("uitest")) return
@@ -95,7 +95,7 @@ export function Home({
   )
 }
 
-function recentPainReviewDates(entries: readonly JournalEntry[], today: string): readonly string[] {
+function recentPainReviewDates(entries: readonly AnalysisJournalEntry[], today: string): readonly string[] {
   const from = isoShift(today, -6)
   const dates = entries
     .filter((entry) => entry.kind === "evening" && entry.date >= from && painLevelsRequireReview(entry.painParts))
