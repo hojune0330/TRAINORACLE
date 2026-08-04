@@ -1,6 +1,6 @@
 // 휴지통 계약 테스트 — "30일 안에는 되돌릴 수 있다"와
 // "되돌린 일지는 동기화에서 다시 지워지지 않는다"를 지킨다.
-import { afterEach, beforeEach, describe, expect, it } from "vitest"
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import {
   TRASH_LIMIT,
   TRASH_RETENTION_DAYS,
@@ -62,11 +62,33 @@ function memoOnly(id: string): JournalEntry {
   } as Partial<JournalEntry>)
 }
 
+/**
+ * 이 파일의 기준 "오늘". 픽스처가 쓰는 삭제 시각(2026-07-20 전후)과 같은 주로
+ * 맞춘다.
+ *
+ * 왜 시계를 고정하는가 — 이 파일은 **시한폭탄이었다.**
+ *  픽스처는 삭제 시각을 `2026-07-20`처럼 고정해 두고, 검증은 `loadTrash()`를
+ *  인자 없이 불렀다. 인자가 없으면 `now = Date.now()`(실제 현재 시각)가 쓰인다.
+ *  휴지통은 `TRASH_RETENTION_DAYS`(30일)가 지난 항목을 빼고 돌려주므로,
+ *  실제 날짜가 2026-08-19를 지나면 픽스처가 **조용히 만료되어** 사라지고
+ *  "정렬 순서", "복원", "개수" 같은 무관한 검증까지 줄줄이 깨진다.
+ *  코드를 한 줄도 바꾸지 않았는데 어느 날 갑자기 CI가 빨간불이 되는 종류다.
+ *  (실제로 `2026-07-01` 픽스처를 쓰던 한 건은 이미 터진 상태로 발견했다.)
+ *
+ *  보관 기간 자체를 검증하는 그룹은 원래부터 기준 시각을 명시해 두었다.
+ *  나머지 그룹도 같은 방식으로 시간에 독립적으로 만든다. 보관 기간을 다루지
+ *  않는 테스트가 달력에 좌우될 이유가 없다.
+ */
+const TEST_NOW = new Date("2026-07-21T00:00:00.000Z")
+
 beforeEach(() => {
   window.localStorage.clear()
+  vi.useFakeTimers()
+  vi.setSystemTime(TEST_NOW)
 })
 
 afterEach(() => {
+  vi.useRealTimers()
   window.localStorage.clear()
 })
 
@@ -94,6 +116,18 @@ describe("휴지통 보관", () => {
     expect(items[0]?.deletedAt).toBe("2026-07-21T10:00:00.000Z")
   })
 
+  /**
+   * 시각을 주입한다 — 이 테스트는 **시한폭탄이었다.**
+   *
+   * 원래는 `2026-07-01`에 지운 항목을 넣고 `loadTrash()`를 인자 없이 불렀다.
+   * 인자가 없으면 `now = Date.now()`(실제 현재 시각)가 쓰이므로,
+   * 실제 날짜가 2026-07-31을 지나는 순간 그 항목이 30일 보관 기간(
+   * `TRASH_RETENTION_DAYS`)을 넘겨 **조용히 사라지고** 정렬 검증이 깨진다.
+   * 코드를 한 줄도 바꾸지 않았는데 CI가 빨간불이 되는 종류의 실패다.
+   *
+   * 정렬 순서를 확인하려는 테스트가 보관 기간에 얽매일 이유가 없다. 같은 파일의
+   * "30일 보관 기간" 그룹처럼 기준 시각을 명시해 시간에 독립적으로 만든다.
+   */
   it("최근에 지운 것이 먼저 온다", () => {
     const now = Date.now()
     moveToTrash(session("old"), new Date(now - 2000).toISOString())

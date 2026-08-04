@@ -1,9 +1,9 @@
 import { parseJournalEntryForWrite, parseJournalEntryList } from "./journal-schema"
 import type { JournalEntry } from "./journal-schema"
-import { toAnalysisJournalEntry, toExportJournalEntry } from "./safe-export"
+import { hasValueExcludedFromAnalysis, toAnalysisJournalEntry, toExportJournalEntry } from "./safe-export"
 import type { AnalysisJournalEntry, SafeJournalEntry } from "./safe-export"
-import { recordTombstone, removeTombstone } from "./account/tombstone"
 import { hasImportedField } from "./field-provenance"
+import { recordTombstone, removeTombstone } from "./account/tombstone"
 import { moveToTrash, takeFromTrash } from "./journal-trash"
 import { JOURNAL_STORAGE_KEY, journalStorage, writeJournalEntries } from "./journal-local-storage"
 import {
@@ -348,6 +348,52 @@ export function safeExportSummary(): SafeExportSummary {
     if (toExportJournalEntry(entry) !== null) included += 1
   }
   return { total: entries.length, included, skipped: entries.length - included }
+}
+
+export type AnalysisExclusionSummary = {
+  /** 이 기기에 있는 일지 전체 개수 */
+  readonly total: number
+  /** 적은 수치가 추이·분석에 실제로 반영되는 일지 개수 */
+  readonly included: number
+  /**
+   * 수치를 적었는데 **가져온 값(DERIVED)이라서** 분석에서 빠진 일지 개수.
+   * 원인이 분명하므로 화면에서 이유까지 말해 줄 수 있다.
+   */
+  readonly excludedImported: number
+  /**
+   * 수치를 적었는데 **출처 정보가 없어서** 분석에서 빠진 일지 개수.
+   *
+   * 왜 따로 세는가: `isEligibleForAnalysis`는 출처 맵이 아예 없으면 false를
+   * 돌려준다. 그래서 출처 기록이 도입되기 **전에 저장된 일지**와, 출처가 빠진
+   * 백업 파일로 복원한 일지도 분석에서 빠진다. 원인이 가져오기와 전혀 다르므로
+   * "가져온 기록이라서 빠졌어요"라고 뭉쳐 말하면 **거짓 설명**이 된다.
+   * 사용자가 할 수 있는 조치도 다르다(가져온 값은 직접 다시 적어야 하고,
+   * 이쪽은 앱이 해결해야 할 몫이다).
+   */
+  readonly excludedNoProvenance: number
+}
+
+/**
+ * 추이 화면에서 무엇이 반영되고 무엇이 빠지는지 센다 (Q1 안내용).
+ *
+ * 계산은 이미 옳다 — 가져온 값은 `loadAnalysisEntries()` 경로에서 제외된다.
+ * 이 함수는 **빠진다는 사실을 화면이 말할 수 있게** 개수를 제공할 뿐이며,
+ * 어떤 수치도 분석에 새로 넣지 않는다.
+ */
+export function analysisExclusionSummary(): AnalysisExclusionSummary {
+  const entries = loadEntries()
+  let included = 0
+  let excludedImported = 0
+  let excludedNoProvenance = 0
+  for (const entry of entries) {
+    if (toAnalysisJournalEntry(entry) !== null) included += 1
+    if (!hasValueExcludedFromAnalysis(entry)) continue
+    // 원인을 뭉치지 않는다. 가져온 필드가 하나라도 있으면 가져오기가 원인이고,
+    // 출처 맵 자체가 없으면 구버전·복원이 원인이다.
+    if (hasImportedField(entry.fieldProvenance)) excludedImported += 1
+    else if (entry.fieldProvenance === undefined) excludedNoProvenance += 1
+  }
+  return { total: entries.length, included, excludedImported, excludedNoProvenance }
 }
 
 export function recentEntries(limit = 10): JournalEntry[] {
