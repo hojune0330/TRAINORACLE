@@ -251,9 +251,10 @@ cd app && npx playwright test  # 브라우저 회귀 (161 passed 유지 기준)
 - [ ] §2-1~§2-4 검증(grep + e2e) 통과
 - [ ] §3-1~§3-3 검증 통과
 - [ ] §4-1~§4-3 검증 통과
-- [ ] §8-4 이동 전 9 Rules(R-2/R-1/R-9 차단, R-3/R-6 경고) 검사 연결 + 진행 중 세션 이동 차단
+- [ ] §8-3 전용 도메인 연산 **`movePlanSession(activePlan, from, to)`** 도입 — `recordPlanProgress` 미사용, 진행 기록 재키잉 **무손실** (검토 판정 V1)
+- [ ] §8-4 이동 전 **화면 단위 안전 검사** 연결: MAIN 셀 이동 · QUALITY→PM · REST 드래그 · PM 훈련 배치 · 진행 기록 좌표 → 모두 **차단** (R-1..R-9 평가기 없음이므로 전체 규칙은 미약속 — V3)
 - [ ] §8-5 드래그 전용이 아닌 **탭→이동→목적지 선택 접근성 경로** 구현
-- [ ] §8-7 검증: sessionDay:sessionSlot 유일성 계약 · e2e 드래그 · 1 화면 핏(가로 오버플로 0)
+- [ ] §8-7 검증: 좌표 (day,slot) 유일성 계약 · 타입 가드(QUALITY/REST 세로 드래그 제외, V2) · e2e 드래그 · 1 화면 핏(가로 오버플로 0, V5) · **오너 결정 §8-10 (A) 기준 구현**
 - [ ] `cd app && npm test` 전체 통과 (기존 338개 유지 또는 갱신 테스트 포함)
 - [ ] 브라우저 회귀(161 passed 기준) 유지
 - [ ] 수정된 계약 테스트가 새 동작을 명시적으로 잠근다 (계약 우선)
@@ -281,24 +282,30 @@ cd app && npx playwright test  # 브라우저 회귀 (161 passed 유지 기준)
 | 진행 기록은 세션을 `sessionDay`+`sessionSlot` 쌍으로 이미 식별 | `PlanActiveState.tsx:33-34` `recordPlanProgress` / `ActivePlan.tsx:44,75,93-96` (`DAY {session.day} · {slot}` 루프) |
 | 조정 수단이 없음 — 계획 화면은 진행 기록 버튼만 | `ActivePlan.tsx:88-102` (role 그룹 버튼뿐, 이동/교환 없음) |
 | 오전/오후 2부제 슬롯 개념은 설계에 있으나 그리드 표현 없음 | `PlanIntake.tsx:11,176-182` `SecondSessionMode` = `SINGLE_SESSION_ONLY` / `RECOVERY_PM_ALLOWED` |
-| 9.5-Cycle 캘린더가 **핵심 차별화** 규정임에도 화면에 없음 | PHILOSOPHY §3.9 "Week / 9.5-Cycle / Timeline. **9.5-Cycle 뷰가 핵심 차별화**. Week만 만들면 일반 트레이닝 앱과 차이 없음" |
+| 9.5-Cycle 캘린더가 **핵심 차별화** 규정임에도 화면에 없음 | PHILOSOPHY §3.9 "Week / 9.5-Cycle / Timeline. **9.5-Cycle 뷰가 핵심 차별화**. Week만 만들면 일반 트레이닝 앱과 차이 없음" · `CycleRail` 컴포넌트는 스펙만 존재(app/src 구현 0건, `COMPONENT_INVENTORY.md:333-337`) |
+| ⚠️ QUALITY·REST 세션은 `slot: "AM"` **리터럴 고정** — PM은 EASY+RECOVERY_INTENT 전용, 최대 2일 | `session-types.ts:24-46` (REST `slot:"AM"` · QUALITY `slot:"AM"` · EASY만 `PlanSessionSlot`) · `session-builder.ts:150-172` (`recoverySecondSessionDays` ≤ 2일, CONSERVATIVE/단일세션/회복초점이면 0일) |
+| ⚠️ 진행 기록 `recordPlanProgress`는 **이동이 아니라 상태 기록** — 타깃 (day,slot)가 활성 계획에 없으면 거부 | `progress.ts:18-42` (`SESSION_DAY_NOT_IN_ACTIVE_PLAN`/`SESSION_SLOT_NOT_IN_ACTIVE_PLAN`) |
+| ⚠️ 9 Rules 런타임 평가기는 **앱 코드에 없음** (스펙·용어집에만 존재) | `grep app/src` → `glossary.ts:110`·`plan-beta-formation.ts:31` 뿐 · `RULE_SPEC_D1_D9.md`/`RVE_RULE_EVALUATOR_BINDING_SPEC.md`는 화면 미연동 |
+| ⚠️ MAIN 셀은 고정 D-5가 아니라 **가용일의 first/last(중간)** — 포메이션 `TRAINING_MAIN` 노출 기준 | `plan-beta-formation.ts:38-55` `selectMainDays` · `:29-34` exposures |
 
-→ **결론: 데이터 모델(sessionDay/sessionSlot)과 규칙(PHILOSOPHY 3.9)은 준비되어 있고, "캘린더 그리드 + 블록을 직접 움직이는 레이어"만 없다.** 이 개선안은 그 빈 레이어를 화면 한정으로 메운다.
+→ **결론: 데이터 모델(sessionDay/sessionSlot)과 규칙(PHILOSOPHY 3.9)은 준비되어 있으나, "이동"이라는 연산은 계약·타입·런타임 어디에도 없다.** 캘린더 그리드는 신규 구현이다. §8은 빈 레이어를 만들되, 위 4가지 실계약 제약을 설계에 그대로 반영한다.
 
 ### 8-3. 할 일
 
 **1) 9.5-Cycle 캘린더 그리드 도입** (PHILOSOPHY §3.9의 "9.5-Cycle 뷰"를 화면으로)
-- 가로축 `DAY 1..9` + 전환 칼럼(`D-.5`), 세로축 **AM / PM 2레인**(`RECOVERY_PM_ALLOWED`일 때; `SINGLE_SESSION_ONLY`면 1레인).
+- 가로축 `DAY 1..10` (사이클 라벨 `D-1`~`D-9` + 전환 `D-.5`), 세로축 **AM / PM 2레인**(`RECOVERY_PM_ALLOWED`일 때; `SINGLE_SESSION_ONLY`면 1레인).
+- ⚠️ 가로축은 **실데이터 기준 DAY 1..10**: 생성기가 `day 1..10` 루프로 세션 생성(`session-builder.ts:197`)하고, 일수 선택도 1..10에 분포한다(`plan-beta-flow.ts spreadTrainingDays`: 3→[1,5,9] · 4→[1,4,7,10] · 5→[1,3,5,7,9] · 6→[1,3,5,6,8,10] · 매일→[1..10]). 사이클 표기 `D-1..D-9 + D-.5`는 PHILOSOPHY §4와 일치하되 **열은 DAY 1..10**로 그린다. ("DAY 1..9"는 오표기)
 - 각 셀에 세션 블록: **에너지 시스템 색 좌측 strip 4–6px + 코드·이름** (Calendar 셀은 T1 Strong 허용 범위 — `VISUALIZATION_SYSTEM.md:86` "Calendar 셀 … 셀 배경 또는 좌측 strip 4–6px"; `:158` "점 위치 (AM/PM)"; `C-7 Cycle rhythm rail (9.5-day) | T1` `:188`).
-- MAIN 셀 = `※` 마커 + 강조 (`COMPONENT_INVENTORY.md:335` "10-cell horizontal rail, MAIN cell (ink bg, ※ marker)").
-- ⚠️ DESIGN_TOKENS §1.4(`:50`) "배경 색 사용 금지"와의 조화: **좌측 strip 4–6px을 기본**으로 쓰고, 9.5-Cycle 캘린더 셀 영역에만 T1 티어 범위의 셀 배경을 예외 허용 — 같은 화면에 T1과 소형 점(T4)을 섞지 않는다(`VISUALIZATION_SYSTEM.md:135`).
+- MAIN 셀 = `※` 마커 + 강조 — 단, MAIN 표기는 **포메이션의 `TRAINING_MAIN` 노출(실제 가용일) 기준**이며 고정 D-5를 가정하지 않는다(`plan-beta-formation.ts:29-34,38-55`) (`COMPONENT_INVENTORY.md:335`).
+- ⚠️ DESIGN_TOKENS §1.4(`:50`) "도트·underline만" 규칙은 **VISUALIZATION_SYSTEM §Q1에서 폐기됨** — Calendar 셀은 T1 Strong 허용(`VISUALIZATION_SYSTEM.md §Q1, :86, :135`). "예외 허용"이라는 애매한 표현 대신 **셀 좌측 strip 4–6px(T1) 또는 셀 배경 wash**를 문법으로 확정한다.
+- ⚠️ **10열 × 터치 44px 모순** (검토 실증): 390px 뷰포트에서 10열 단일행은 열당 ~35px — 터치 미달 + 드래그 곤란. **기본 (A) 5×2 분할행**(반사이클 2행, 열당 ~72px, 1화면 유지, D-.5 전환은 행 경계) 또는 (B) 단일행 + 열당 44px 최소(가로 스크롤 필요 → 스크린샷 1장 깨짐). **기본 (A)**.
 
 **2) 롱프레스 → 드래그 이동 모드**
 - 세션 블록을 **꾹 누르면**(long-press, 300–500ms, 감도는 실측) 이동 모드 진입: 블록이 살짝 떠오르며 드래그 가능 상태임을 알린다 (기능적 피드백이므로 PHILOSOPHY §9-4 "장식 애니메이션 금지"에 걸리지 않음).
-- **가로 드래그** → `sessionDay` 변경 (예: `DAY 4` → `DAY 5`)
-- **세로 드래그** → `sessionSlot` 변경 (예: `AM` → `PM`)
-- 목적지 셀 하이라이트 + **직전 안내 문구**: "D-5 PM로 이동하면 기존 'Z2 base'와 자리가 바뀝니다" 같은 **정직한 결과 예고** (D-03 "거짓 카드 금지" 원칙 동일).
-- 놓기(drop) → §8-4 안전 검사 통과 시에만 `recordPlanProgress` 경로로 반영: `sessionDay`/`sessionSlot`을 교체한 뒤 `updateStoredProgress` → `savePlanBetaState` (`PlanActiveState.tsx:33-41` 재사용 — 새 저장 경로를 만들지 않는다).
+- **가로 드래그** → `sessionDay` 변경 (`DAY 4` → `DAY 5`) — 전 방향 허용.
+- **세로 드래그** → `sessionSlot` 변경 — ⚠️ **범위 제한(검토 판정 V2)**: QUALITY·REST는 타입상 AM 고정이라 PM 이동 불가(`session-types.ts:24-46`). 세로 드래그는 **EASY(BASE)의 AM↔PM 및 PM 회복 ↔ AM 재배치**에만 유효. QUALITY를 PM에 놓으면 거부 + "강도 훈련은 오전 배치" 안내. (전면 AM/PM 양방향은 엔진 타입 확장 필요 — §8-10 오너 결정)
+- 목적지 셀 하이라이트 + **직전 안내 문구**: "DAY 6 오후로 이동하면 기존 '오후 회복 운동'과 자리가 바뀝니다" — **실제 코드 라벨 사용**(`sessionLabel`/`prescriptionLabel` 계승, `labels.ts:139-164`). "Z2 base" 같은 비존재 용어 금지 (D-03 "거짓 카드 금지" 원칙).
+- 놓기(drop) → §8-4 화면 단위 안전 검사 통과 시 **별도 도메인 연산 `movePlanSession(activePlan, from, to)`** 로 반영: 활성 계획 `sessions[]`의 (day,slot) 좌표 교환/이동 + `StoredPlanProgress` 재키잉(소스·타깃 중 진행 기록이 있으면 이동 차단). ⚠️ `recordPlanProgress`는 **종료 후 상태 기록용이지 이동용이 아님** — 재사용 금지. 이유: `progress.ts:18-42`가 계획에 없는 좌표를 거부하고, `plan-beta-store.ts:73-90` upsert가 동일 좌표의 진행 기록을 **덮어써 소실/오배치**시킨다.
 - 데이터 레이어: `MICROCYCLE_AND_CALENDAR_MAPPING_SPEC.md` 네임스페이스 유지 — 표시 라벨 `CYCLE_DAY.D-*`와 규칙 ID `RULE_SPEC_D1_D9.D-*`를 **절대 혼용 금지** (`display-label.ts:11,29`; 매핑 스펙 `:219 sessionSlot: AM|PM|FULL_DAY|UNSPECIFIED`).
 
 ### 8-4. 안전 검증 — 드롭 전 9 Rules 체크 (NORTH_STAR §3 + PHILOSOPHY §4)
@@ -307,38 +314,41 @@ cd app && npx playwright test  # 브라우저 회귀 (161 passed 유지 기준)
 
 | 검사 | 위반 시 동작 |
 |---|---|
-| **R-2** D-5 MAIN 고정 — MAIN을 D-5 ±1일 밖으로 | **차단** + "MAIN은 D-5 ±1일만 허용" (`PHILOSOPHY.md:109`) |
-| **R-1** 회복 우선 — D-1/D-6에 강도 자극 세션 이동 | **차단** + "회복 우선 원칙 — D-1/D-6엔 강도 자극 금지" (`:108`) |
-| **R-9** 대회 D−21 테이퍼 기간으로의 이동 | **차단** + 테이퍼 안내 (`:116`) |
-| **R-3 / R-6** Z1 비율 <20% / VO2 MAIN 볼륨 5–8km 이탈 | **경고(비차단)** — 기존 검증 화면 수준 (`:111,:114`) |
+| **MAIN 셀 이동** — 포메이션 `TRAINING_MAIN` 노출(실제 가용일)인 세션을 다른 DAY로 | **차단** + "주요 훈련(★)은 자리를 바꾸지 않아요" (`plan-beta-formation.ts:29-34` 기준) |
+| **강도 세션을 PM으로** — QUALITY의 `slot:"AM"` 타입 위반 | **차단** + "강도 훈련은 오전 배치" (`session-types.ts:41-46`) |
+| **PM에 훈련 배치** — PM은 EASY+RECOVERY_INTENT 전용 | **차단** + "오후는 RPE 1~2 회복 전용" (`PlanIntake.tsx:82,181` 복사 일치) |
+| **휴식일(REST) 세션을 이동 대상으로** | **차단** — REST 세션(`role:"REST"`)은 드래그 대상 제외 |
 | 대상 셀에 세션이 이미 있음 | **자리교환(swap) 미리보기 + 사용자 승인 후 반영**; 승인 없으면 이동 안 함 |
-| 진행 상태 기록이 이미 남은 세션 이동 | **차단** — 진행된 기록(`recorded` 맵, `ActivePlan.tsx:75`)이 있는 세션은 이동 불가, 진행 전 세션만 |
+| 소스·타깃 좌표에 진행 기록이 있음 | **차단** — 진행된 세션(`ActivePlan.tsx:75` recorded 맵)은 이동 불가, 진행 전 세션만 |
 
 - ⚠️ **D9 게이트 유지**: 차단 상태(`PlanBeta.tsx` blocked view)에서 드래그 진입 자체를 금지 — 차단 화면은 그대로.
-- 규칙 검사는 **새 엔진을 만들지 않고**(§6 비목표 준수) `specs/active/RULE_SPEC_D1_D9.md` + `RVE_RULE_EVALUATOR_BINDING_SPEC.md`에 정의된 판정 표면에 **화면 이동 보정 요청을 연결**한다. 판정 표면이 아직 화면에 연동되어 있지 않다면(엔진 로직) **우선 경고 표면 + 이동 차단**만 화면에서 한다 — 엔진 연동은 별도 작업.
+- ⚠️ **R-1..R-9 런타임 평가기는 앱 코드에 없다**(검토 실증: `app/src` grep → `glossary.ts:110` 용어집·`plan-beta-formation.ts:31` 뿐). 따라서 위 표는 **화면 단위에서 자체 판정 가능한 규칙만** 담는다. `RULE_SPEC_D1_D9.md`+`RVE_RULE_EVALUATOR_BINDING_SPEC.md` 판정 표면 연동은 **별도 대형 작업(비목표)** — 그 전까지 "전체 9 Rules 재검증 후 이동"을 약속하지 않는다 (과장 금지, D-03 원칙).
 
 ### 8-5. 제스처 충돌 · 접근성
 
-- **스크롤과 충돌**: 블록은 **롱프레스 진입 전까지 일반 세로 스크롤을 유지**하고, 롱프레스 후에만 드래그 이동 활성화. 가로 드래그는 수직 스크롤과 자연 분리된다. 롱프레스 인식 전 10px 이내 움직임은 스크롤로 무시(감도 실측).
+- **터치 vs 스크롤 충돌**: 블록은 **롱프레스 진입 전까지 `touch-action: pan-y` 유지**(선례 `journal-reader.css:2`) — 일반 세로 스크롤 그대로 동작. 롱프레스(300–500ms) 인식 시 `touch-action: none`으로 전환해 드래그 이동 활성화. 롱프레스 인식 전 10px 이내 움직임은 스크롤로 무시(감도 실측). **가로 스크롤 층이 없으므로**(§8-6 1화면 핏) 충돌은 세로 스크롤과의 분리가 전부다.
 - **접근성 대안 (필수 — D-09 원칙 계승)**: 드래그만으로는 조작 불가 → **탭 → "이동" 버튼 → 목적지 선택(날짜 옵션 + AM/PM 토글)** 경로를 함께 제공. `aria-label`은 기존 `ActivePlan.tsx:86`의 `DAY n <slot> 진행 기록` 패턴을 계승해 `DAY n <slot> 이동`으로. 드래그 미지원 환경에서도 이동 기능이 완전히 동작해야 한다(키보드/스크린리더).
 
 ### 8-6. 스크린샷 가치 캘린더 스펙
 
 | 요소 | 스펙 | 근거 |
 |---|---|---|
-| 전체 9.5-Cycle이 **1 화면**(가로 스크롤 금지 — 캡처 잘림 방지) | `main.app-scroll-region` 안에 그리드 핏 | D-07 스크롤 원칙 + UX1 §0-A R1 |
+| 전체 9.5-Cycle이 **1 화면**(가로 스크롤 금지 — 캡처 잘림 방지) | **5×2 분할행**(반사이클 2행) 기본 — §8-3(1) (A) | D-07 스크롤 원칙 + UX1 §0-A R1 + 터치 44px 동시 충족 |
+| 열 라벨 | DAY 1..10 + 사이클 라벨 `D-1..D-9`/`D-.5`(표시 전용, `CYCLE_DAY` 네임스페이스) | `session-builder.ts:197` · 매핑 스펙 `:89-101` |
 | AM/PM 레인 라벨 | 오전/오후 + 모노스페이스 슬롯 코드 | `ActivePlan.tsx:79` 슬롯 라벨 계승 |
-| 에너지 색 | **좌측 strip 4–6px** 기본 (셀 배경은 9.5-Cycle T1 예외만) | DESIGN_TOKENS `:50` × VISUALIZATION_SYSTEM `:86` |
-| MAIN | `※` 마커 + ink 강조 | COMPONENT_INVENTORY `:335` |
+| 에너지 색 | **좌측 strip 4–6px(T1)** — DESIGN_TOKENS `:50` 구규칙은 §Q1 폐기, Calendar 셀 T1 허용 | `VISUALIZATION_SYSTEM.md §Q1, :86, :135` |
+| MAIN | `※` 마커 + ink 강조 — **포메이션 TRAINING_MAIN(실제 가용일) 기준** | `plan-beta-formation.ts:29-34` · COMPONENT_INVENTORY `:335` |
 | 형태 | radius 0 · 그림자 없음 · 숫자 `tabular-nums` · Inter/JetBrains Mono | DESIGN_TOKENS §10 체크리스트 `:328-339` |
-| 터치 타깃 | 셀/블록 ≥ 44px | DESIGN_TOKENS `:339` · COMPONENT_INVENTORY `:26` |
+| 터치 타깃 | 블록/셀 ≥ 44px (5×2 분할행으로 충족) | DESIGN_TOKENS `:339` · COMPONENT_INVENTORY `:26` |
 | 동작 피드백 | 드래그 시 블록 추종(기능적)만 · 축하/장식 애니메이션 금지 | PHILOSOPHY §3.10, §9-4 |
+| PM 레인 | `SINGLE_SESSION_ONLY`면 PM 레인 렌더링 안 함(빈 레인 스크린샷 방지) | `PlanIntake.tsx:176-178` · D-03 "거짓 카드 금지" |
 
 ### 8-7. 검증
 
-- **데이터 계약**: 이동 반영 후 `sessionDay:sessionSlot` 쌍 **유일성 유지**(중복 없음) — 컨트랙트 테스트로 잠근다.
-- **e2e(Playwright)**: ① 블록 long-press → 이동 모드 진입 ② 가로 드래그 → DAY 변경 ③ 세로 드래그 → AM/PM 변경 ④ R-2 위반 드롭 → 차단 + 경고, 위치 불변 ⑤ 진행 중인 세션은 드래그 불가 ⑥ 탭→"이동"→목적지 선택 접근성 경로 동작 ⑦ 1 화면 핏(가로 오버플로 0).
-- **토큰 준수**: 그리드 스크린샷에서 에너지 색이 좌측 strip 4–6px(또는 9.5-Cycle 셀 예외) 밖에 쓰이지 않음을 코드 리뷰로 확인.
+- **데이터 계약**: `movePlanSession` 반영 후 `sessions[]` 좌표 (day,slot) **유일성 유지** + 진행 기록 재키잉 무손실 — 컨트랙트 테스트로 잠근다.
+- **타입 가드**: QUALITY/REST는 세로 드래그 대상 아님(`session-types.ts:24-46`) · PM 배치는 EASY+RECOVERY_INTENT 최대 2일 — 컨트랙트 테스트.
+- **e2e(Playwright)**: ① 블록 long-press → 이동 모드 진입 ② 가로 드래그 → DAY 변경 ③ **EASY 세션** 세로 드래그 → AM/PM 변경 ④ **QUALITY 드롭 to PM → 차단 + "강도 훈련은 오전 배치"**, 위치 불변 ⑤ MAIN 셀 드래그 → 차단 ⑥ 진행 중 세션 드래그 불가 ⑦ 탭→"이동"→목적지 선택 접근성 경로 ⑧ 1 화면 핏(가로 오버플로 0) ⑨ `SINGLE_SESSION_ONLY`에서 PM 레인 미노출.
+- **토큰 준수**: 그리드 스크린샷에서 에너지 색이 좌측 strip 4–6px(T1) 밖에 쓰이지 않음을 코드 리뷰로 확인.
 - `grep -c "aria-label" app/src/screens/plan-beta/ActivePlan.tsx` → 기존(세션 버튼용)보다 증가 (이동 버튼·그리드 셀용).
 
 ### 8-8. 이 항목에서 **하지 않는** 것 (비목표 재확인)
@@ -346,9 +356,37 @@ cd app && npx playwright test  # 브라우저 회귀 (161 passed 유지 기준)
 | 안 함 | 근거 |
 |---|---|
 | 계획 생성 엔진·9 Rules 판정 엔진 신규 구현 | §6 — 판정 표면 연동은 별도 대형 작업 |
-| `sessionDay`/`sessionSlot` 스키마 변경 | 기존 `recordPlanProgress` 계약 재사용 |
+| `sessionDay`/`sessionSlot` 스키마 변경 | 기존 계약 유지 — 좌표는 `sessions[]` 안에서만 교환 |
+| **세션 슬롯 타입 확장(QUALITY·REST의 PM 허용)** | `session-types.ts` 변경 = 엔진 타입 작업 — §8-10 오너 결정(B) 전까지 금지 |
+| `recordPlanProgress`로 "이동" 구현 | 상태 기록용 계약에 이동을 재사용 금지 — 이동은 전용 `movePlanSession` |
 | 30개 DRAFT 템플릿 활성화·개인 페이스 처방 | HANDOFF-0730 §4 / NORTH_STAR §6-1 |
 | 장식 애니메이션·포인트·스트릭 | PHILOSOPHY §9-4, §9-9 |
+
+### 8-9. 디자인 최종 검토 판정 (2026-08-04, 실코드 검증)
+
+오너 "디자인 최종 검토 후 개선 진행" 지시에 따라 §8 전체를 실코드로 재검증. **방향(직접 조작 캘린더)은 유지하되, 구현 가능 범위를 실계약에 맞게 정정하는 검토였다.**
+
+| # | 검토 결론 | 근거 (실증) |
+|---|---|---|
+| V1 | **"이동"은 진행 기록과 다른 연산** — §8-3 원문의 `recordPlanProgress` 반영은 범주 오류. 전용 `movePlanSession` 필요 | `progress.ts:18-42` 거부 코드 · `plan-beta-store.ts:73-90` upsert가 좌표 진행 기록을 덮어써 소실/오배치 위험 |
+| V2 | **세로 드래그(AM↔PM)는 타입상 EASY에만 가능** — QUALITY·REST가 AM 고정, PM은 회복 전용 최대 2일. 오너 원문 "오전 오후로 잘 만들어져 보이는" 그림은 현재 엔진이 만들 수 없는 부분을 포함 | `session-types.ts:24-46` · `session-builder.ts:150-172` |
+| V3 | **R-2/R-1/R-9 "차단"은 지금 판정 불가** — 런타임 평가기 없음. 약속하면 거짓. 화면 자체 판정 규칙만 담음 | `app/src` grep → 평가기 0건 · `glossary.ts:110` 용어집뿐 |
+| V4 | **MAIN은 고정 D-5가 아님** — 가용일 first/last(중간). 마커는 포메이션 `TRAINING_MAIN` 기준 | `plan-beta-formation.ts:29-34,38-55` |
+| V5 | **10열 단일행 × 터치 44px 모순** — 기본 (A) 5×2 분할행으로 1화면+44px 동시 충족 | 390px 뷰포트/10열+여백 ≈ 열당 35px |
+| V6 | 에너지색 "배경 금지"는 이미 해소(§Q1 폐기) — strip 4–6px(T1) 문법으로 확정 | `VISUALIZATION_SYSTEM.md §Q1` |
+
+**총평(변호 없음):** 요구의 골격(달력 위 직접 조작, 스크린샷 가치 AM/PM 그리드, 가로=날짜 변경)은 제품 방향과 일치하므로 **유지**. 그러나 §8 원문은 (a) 이동을 진행 기록으로 구현(범주 오류), (b) 존재하지 않는 규칙 차단을 약속(과장), (c) 현재 엔진이 못 만드는 AM/PM 그림을 전역 드래그로 약속(범위 초과) — 이 3가지는 개선 진행 전 반드시 고쳐야 했다. 위 편집에서 모두 정정했다.
+
+### 8-10. 오너 결정 요청 (1건 — 개선 진행 전 필요)
+
+**세로 드래그의 범위** — 아래 하나만 결정하면 구현 시작 가능:
+
+| 경로 | 내용 | 범위 |
+|---|---|---|
+| **A (기본 권장)** | 세로 드래그 = EASY(BASE)의 AM↔PM 및 PM 회복 ↔ AM 재배치만. QUALITY·REST는 오전 고정 표시 | 화면 한정 — 본 지시서 범위 안에서 즉시 가능 |
+| **B** | QUALITY·REST도 PM/자유 슬롯 이동 허용 | `session-types.ts` 확장 = **엔진 타입 작업** — 별도 대형 작업지시서 필요 (본 문서 비목표) |
+
+> 기본값: **A**. 오너가 B를 요청해도 별도 지정이 없으면 진행하지 않고, B 작업지시서를 분리해 제출한다 (NORTH_STAR §3 실패 시 안전한 쪽 — 사용자에게 더 큰 약속을 먼저 받지 않는다).
 
 ---
 
