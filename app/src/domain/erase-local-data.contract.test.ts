@@ -20,6 +20,8 @@ const SYNC_OWNER = "trainoracle.sync.owner.v1"
 const SYNC_RECOVERY = "trainoracle.sync.recovery.v1"
 const PRIVATE_MEMO_VAULT = "trainoracle.private-memo.v1"
 const PRIVATE_NOTE_RECOVERY = "trainoracle.private-note.recovery.v1"
+const DECORATIONS_V1 = "trainoracle.decorations.v1"
+const DECORATIONS_V2 = "trainoracle.decorations.v2"
 
 beforeEach(() => {
   window.localStorage.clear()
@@ -61,6 +63,8 @@ function seed(): void {
     records: { private: { encrypted: { ciphertext: "secret" } } },
   }))
   window.sessionStorage.setItem(PRIVATE_NOTE_RECOVERY, "session-secret")
+  window.localStorage.setItem(DECORATIONS_V1, JSON.stringify({ version: 1 }))
+  window.localStorage.setItem(DECORATIONS_V2, JSON.stringify({ version: 2 }))
   window.localStorage.setItem(TOMBSTONES, JSON.stringify([{ id: "gone", deletedAt: "2026-07-20T00:00:00.000Z" }]))
 }
 
@@ -79,6 +83,16 @@ describe("eraseAllLocalData", () => {
     expect(result.ok).toBe(true)
     expect(erasableKeys()).toContain(ATHLETE_RECORDS_STORAGE_KEY)
     expect(window.localStorage.getItem(ATHLETE_RECORDS_STORAGE_KEY)).toBeNull()
+  })
+
+  it("꾸미기 보유·배치 상태와 이전 형식도 지운다", () => {
+    seed()
+    const result = eraseAllLocalData()
+    expect(result.ok).toBe(true)
+    expect(erasableKeys()).toContain(DECORATIONS_V1)
+    expect(erasableKeys()).toContain(DECORATIONS_V2)
+    expect(window.localStorage.getItem(DECORATIONS_V1)).toBeNull()
+    expect(window.localStorage.getItem(DECORATIONS_V2)).toBeNull()
   })
 
   it("로그인 토큰과 동기화 동의를 지운다 (기기 양도 대비)", () => {

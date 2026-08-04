@@ -21,16 +21,24 @@ import { tombstonedIds } from "../account/tombstone"
 import { loadSessionRecoveryCode } from "../account/private-note-sync"
 import { parseJournalEntryForWrite, parseJournalEntryList } from "../journal-schema"
 import type { JournalEntry } from "../journal-schema"
-import { journalStorage } from "../journal-local-storage"
+import { JOURNAL_STORAGE_KEY, journalStorage } from "../journal-local-storage"
+import { PRIVATE_MEMO_VAULT_STORAGE_KEY } from "../journal-storage-keys"
 import {
   hasPrivateMemoText,
   savePrivateMemosWithJournalShells,
 } from "../private-memo-vault"
 import { loadEntries, replaceAllEntries } from "../journal-store"
+import {
+  decorationStateSchema,
+  DECORATION_STORAGE_KEY_V2,
+  saveDecorationState,
+} from "../decorations"
+import type { DecorationState } from "../decorations"
 
 /** 인식하는 내보내기 형식 — journal-store.exportEntriesJSON이 쓰는 값들 */
 export const SAFE_FORMAT = "trainoracle.journal.v1"
-export const FULL_FORMAT = "trainoracle.journal.full-backup.v1"
+export const FULL_FORMAT = "trainoracle.journal.full-backup.v2"
+export const LEGACY_FULL_FORMAT = "trainoracle.journal.full-backup.v1"
 
 export type BackupKind = "safe" | "full"
 
@@ -45,10 +53,18 @@ export type BackupReadResult = {
   readonly recognized: boolean
   /** 파일에 적힌 내보낸 시각 (있으면 표시용) */
   readonly exportedAt: string | null
+  readonly decorations: DecorationState | null
+  readonly decorationStatus: "included" | "not-included" | "invalid"
+  readonly decorationItemCount: number
+  readonly decorationPlacementCount: number
 }
 
 const UNRECOGNIZED: BackupReadResult = {
   entries: [], skipped: 0, kind: "safe", recognized: false, exportedAt: null,
+  decorations: null,
+  decorationStatus: "not-included",
+  decorationItemCount: 0,
+  decorationPlacementCount: 0,
 }
 
 function asRecord(value: unknown): Record<string, unknown> | null {
@@ -73,7 +89,7 @@ export function readBackupFile(text: string): BackupReadResult {
   if (root.app !== "TRAINORACLE") return UNRECOGNIZED
 
   const format = root.format
-  const kind: BackupKind | null = format === FULL_FORMAT
+  const kind: BackupKind | null = format === FULL_FORMAT || format === LEGACY_FULL_FORMAT
     ? "full"
     : format === SAFE_FORMAT ? "safe" : null
   if (kind === null) return UNRECOGNIZED
@@ -89,13 +105,29 @@ export function readBackupFile(text: string): BackupReadResult {
     seenIds.add(entry.id)
     return true
   })
+  const decoration = readDecorationSection(format, root.decorations)
   return {
     entries,
     skipped: rawEntries.length - entries.length,
     kind,
     recognized: true,
     exportedAt: typeof root.exportedAt === "string" ? root.exportedAt : null,
+    decorations: decoration.state,
+    decorationStatus: decoration.status,
+    decorationItemCount: decoration.state?.ownedItemIds.length ?? 0,
+    decorationPlacementCount: decoration.state?.pagePlacements.length ?? 0,
   }
+}
+
+function readDecorationSection(
+  format: unknown,
+  candidate: unknown,
+): { readonly state: DecorationState | null; readonly status: BackupReadResult["decorationStatus"] } {
+  if (format !== FULL_FORMAT) return { state: null, status: "not-included" }
+  const parsed = decorationStateSchema.safeParse(candidate)
+  return parsed.success
+    ? { state: parsed.data, status: "included" }
+    : { state: null, status: "invalid" }
 }
 
 /**
@@ -175,6 +207,98 @@ export type RestoreOutcome = {
   /** 쓰기 검증을 통과하지 못해 저장하지 못한 개수 */
   readonly failed: number
   readonly total: number
+  readonly decorationRestore: "RESTORED" | "NOT_INCLUDED" | "INVALID_SKIPPED" | "SAVE_FAILED" | "ROLLED_BACK"
+  readonly commit: "COMMITTED" | "FAILED" | "ROLLED_BACK"
+  readonly failureReason: "NONE" | "DECORATION_SAVE_FAILED" | "JOURNAL_SAVE_FAILED" | "RECOVERY_CODE_REQUIRED"
+}
+
+export async function restoreBackupFile(
+  read: BackupReadResult,
+  plan: RestorePlan,
+  mode: RestoreMode = "keep-existing",
+): Promise<RestoreOutcome> {
+  if (read.decorationStatus === "included" && read.decorations !== null) {
+    const snapshot = takeLocalStorageSnapshot()
+    const saved = saveDecorationState(read.decorations)
+    if (!saved.ok) return emptyRestoreOutcome(plan, "SAVE_FAILED", "FAILED", "DECORATION_SAVE_FAILED")
+    const outcome = await restoreEntries(plan, mode)
+    if (outcome.failed > 0 || outcome.restored !== requestedRestoreCount(plan, mode)) {
+      const rolledBack = snapshot !== null && restoreLocalStorageSnapshot(snapshot)
+      return {
+        ...outcome,
+        restored: 0,
+        failed: Math.max(outcome.failed, requestedRestoreCount(plan, mode)),
+        decorationRestore: rolledBack ? "ROLLED_BACK" : "SAVE_FAILED",
+        commit: rolledBack ? "ROLLED_BACK" : "FAILED",
+      }
+    }
+    return { ...outcome, decorationRestore: "RESTORED" }
+  }
+  const outcome = await restoreEntries(plan, mode)
+  return {
+    ...outcome,
+    decorationRestore: read.decorationStatus === "invalid" ? "INVALID_SKIPPED" : "NOT_INCLUDED",
+    commit: outcome.restored === 0 && outcome.failed > 0 ? "FAILED" : outcome.commit,
+  }
+}
+
+function emptyRestoreOutcome(
+  plan: RestorePlan,
+  decorationRestore: RestoreOutcome["decorationRestore"],
+  commit: RestoreOutcome["commit"],
+  failureReason: RestoreOutcome["failureReason"],
+): RestoreOutcome {
+  return {
+    restored: 0,
+    keptExisting: 0,
+    blockedByDeletion: plan.blockedByDeletion,
+    failed: 0,
+    total: plan.items.length,
+    decorationRestore,
+    commit,
+    failureReason,
+  }
+}
+
+const RESTORE_STORAGE_KEYS = Object.freeze([
+  JOURNAL_STORAGE_KEY,
+  PRIVATE_MEMO_VAULT_STORAGE_KEY,
+  DECORATION_STORAGE_KEY_V2,
+])
+
+type LocalStorageSnapshot = readonly (readonly [key: string, value: string | null])[]
+
+function takeLocalStorageSnapshot(): LocalStorageSnapshot | null {
+  const storage = journalStorage()
+  if (storage === null) return null
+  try {
+    return RESTORE_STORAGE_KEYS.map((key) => [key, storage.getItem(key)] as const)
+  } catch {
+    return null
+  }
+}
+
+function restoreLocalStorageSnapshot(snapshot: LocalStorageSnapshot): boolean {
+  const storage = journalStorage()
+  if (storage === null) return false
+  try {
+    for (const [key, value] of snapshot) {
+      if (value === null) storage.removeItem(key)
+      else if (storage.getItem(key) !== value) storage.setItem(key, value)
+    }
+    return storageMatchesSnapshot(storage, snapshot)
+  } catch {
+    return false
+  }
+}
+
+function storageMatchesSnapshot(storage: Storage, snapshot: LocalStorageSnapshot): boolean {
+  return snapshot.every(([key, value]) => storage.getItem(key) === value)
+}
+
+function requestedRestoreCount(plan: RestorePlan, mode: RestoreMode): number {
+  return plan.items.filter((item) => !item.previouslyDeleted
+    && (mode === "overwrite-conflicts" || !item.conflictsWithExisting)).length
 }
 
 /**
@@ -191,6 +315,7 @@ export async function restoreEntries(
 ): Promise<RestoreOutcome> {
   let keptExisting = 0
   let failed = 0
+  let failureReason: RestoreOutcome["failureReason"] = "NONE"
   const accepted: JournalEntry[] = []
 
   for (const item of plan.items) {
@@ -214,6 +339,7 @@ export async function restoreEntries(
     const candidate = parseJournalEntryForWrite({ ...item.entry, syncState: "local" })
     if (candidate === null) {
       failed += 1
+      failureReason = "JOURNAL_SAVE_FAILED"
       continue
     }
 
@@ -236,9 +362,13 @@ export async function restoreEntries(
         recoveryCode,
       )
       if (written !== null) restored = accepted.length
-      else failed += privateEntries.length
+      else {
+        failed += privateEntries.length
+        failureReason = "JOURNAL_SAVE_FAILED"
+      }
     } else {
       failed += privateEntries.length
+      failureReason = recoveryCode === null ? "RECOVERY_CODE_REQUIRED" : "JOURNAL_SAVE_FAILED"
     }
   }
 
@@ -246,7 +376,10 @@ export async function restoreEntries(
     const next = buildRestoredEntries(loadEntries(), nonPrivateEntries)
     const written = replaceAllEntries(next)
     if (written.ok) restored = nonPrivateEntries.length
-    else failed += nonPrivateEntries.length
+    else {
+      failed += nonPrivateEntries.length
+      failureReason = "JOURNAL_SAVE_FAILED"
+    }
   } else if (privateEntries.length === 0 && accepted.length === 0) {
     restored = 0
   }
@@ -257,6 +390,9 @@ export async function restoreEntries(
     blockedByDeletion: plan.blockedByDeletion,
     failed,
     total: plan.items.length,
+    decorationRestore: "NOT_INCLUDED",
+    commit: "COMMITTED",
+    failureReason,
   }
 }
 

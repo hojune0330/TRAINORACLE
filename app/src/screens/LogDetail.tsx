@@ -1,7 +1,3 @@
-// LogDetail — 하루를 펼친 일지 페이지. journal-page 미감.
-// F0-d 실데이터화: 이 화면은 로컬 저장(journal-store)의 해당 날짜 실제 일지만 렌더한다.
-//  - 데모 수치 혼입 금지. 예시 일지는 Guide 화면에만 존재.
-//  - variant B(대시보드)는 디자인 워크스페이스 전용 데모 표면으로 유지 (앱 셸 미사용).
 import React from "react"
 import { IndexCard, MoodStrip, PainDot, SectionLb } from "../components/JournalPrimitives"
 import { JournalConfirmationDialog } from "../components/JournalConfirmationDialog"
@@ -15,6 +11,7 @@ import { cardDate, dowOf, seasonOf } from "../domain/dates"
 import { RaceSelfCheckSummary, SavedMemo } from "./log-entry/SavedEntryContext"
 import { CheckinRow, EntryDeleteRow, ImportedChip, SyncChip, TopBar2 } from "./journal-detail-primitives"
 import { JournalDetailActions } from "./journal-detail-actions"
+import { JournalDecorationSurface } from "./journal/JournalDecorationSurface"
 
 export type LogDetailVariant = "A" | "B"
 
@@ -96,7 +93,7 @@ function LogDetailJournal({ date, onBack, onAddEntry, onEditEntry, readerControl
     <div style={{ paddingBottom: 40 }} className="paper-grid">
       <TopBar2 onBack={onBack}>일지</TopBar2>
       {readerControls}
-      <div key={date} className={readerControls === undefined ? undefined : "journal-reader-page"}>
+      <JournalDecorationSurface key={date} date={date} hasEntries={entries.length > 0}>
 
       <div style={{ padding: "14px 20px 0" }}>
         <IndexCard date={cardDate(date)} dow={dowOf(date)} season={seasonOf(date)} />
@@ -258,7 +255,7 @@ function LogDetailJournal({ date, onBack, onAddEntry, onEditEntry, readerControl
           onConfirm={remove}
         />
       )}
-      </div>
+      </JournalDecorationSurface>
     </div>
   )
 }

@@ -34,6 +34,7 @@ import { parseJournalEntryForWrite } from "./journal-schema"
 import type { JournalEntry } from "./journal-schema"
 import { parsePrivateMemoRecord } from "./private-memo-vault"
 import type { PrivateMemoRecord } from "./private-memo-vault"
+import { pruneUnusedJournalDecorations } from "./journal-decoration-lifecycle"
 
 const KEY = "trainoracle.journal.trash.v1"
 
@@ -139,7 +140,20 @@ export function purgeExpiredTrash(now: number = Date.now()): number {
     }
   })()
   if (before === kept.length) return 0
-  write(kept)
+  if (!write(kept)) return 0
+  const expiredDates: string[] = []
+  try {
+    const parsed: unknown = JSON.parse(raw)
+    if (Array.isArray(parsed)) {
+      for (const candidate of parsed) {
+        const item = parseTrashed(candidate)
+        if (item !== null && isExpired(item.deletedAt, now)) expiredDates.push(item.entry.date)
+      }
+    }
+  } catch {
+    return before - kept.length
+  }
+  pruneUnusedJournalDecorations(expiredDates, kept.map((item) => item.entry.date))
   return before - kept.length
 }
 
@@ -177,13 +191,20 @@ export function takeFromTrash(id: string): TrashedEntry | null {
 /** 휴지통에서 완전히 지운다 — 되돌릴 수 없다 */
 export function dropFromTrash(id: string): boolean {
   const items = loadTrash()
-  if (!items.some((item) => item.entry.id === id)) return false
-  return write(items.filter((item) => item.entry.id !== id))
+  const found = items.find((item) => item.entry.id === id)
+  if (found === undefined) return false
+  const remaining = items.filter((item) => item.entry.id !== id)
+  if (!write(remaining)) return false
+  pruneUnusedJournalDecorations([found.entry.date], remaining.map((item) => item.entry.date))
+  return true
 }
 
 /** 휴지통 비우기 */
 export function emptyTrash(): boolean {
-  return write([])
+  const items = loadTrash()
+  if (!write([])) return false
+  pruneUnusedJournalDecorations(items.map((item) => item.entry.date), [])
+  return true
 }
 
 /** 남은 보관 일수 — 0이면 오늘 지나면 사라진다 */

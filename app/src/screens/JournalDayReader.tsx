@@ -1,5 +1,5 @@
 import React from "react"
-import { ChevronLeft, ChevronRight } from "lucide-react"
+import { JournalPageNavigator } from "../components/JournalPageNavigator"
 import type { JournalEntry } from "../domain/journal-schema"
 import { projectJournalReader } from "../domain/journal-reader"
 import { LogDetail } from "./LogDetail"
@@ -25,7 +25,11 @@ export function JournalDayReader({
     () => projectJournalReader(entries, date),
     [date, entries],
   )
-  const touchStart = React.useRef<{ readonly x: number; readonly y: number } | null>(null)
+  const touchStart = React.useRef<{
+    readonly x: number
+    readonly y: number
+    readonly blocked: boolean
+  } | null>(null)
 
   const openPrevious = React.useCallback(() => {
     if (reader.previousDate !== null) onDateChange(reader.previousDate)
@@ -36,7 +40,7 @@ export function JournalDayReader({
 
   React.useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
-      if (isEditingText(event.target)) return
+      if (isJournalNavigationBlockedTarget(event.target)) return
       if (event.key === "ArrowLeft") openPrevious()
       if (event.key === "ArrowRight") openNext()
     }
@@ -45,20 +49,12 @@ export function JournalDayReader({
   }, [openNext, openPrevious])
 
   const controls = (
-    <nav className="journal-reader-nav" aria-label="날짜별 일지 넘기기">
-      <button type="button" onClick={openPrevious} disabled={reader.previousDate === null}>
-        <ChevronLeft aria-hidden="true" size={18} />
-        <span>이전 일지</span>
-      </button>
-      <div className="journal-reader-position">
-        <strong>오늘의 한 페이지</strong>
-        <span>{reader.position} / {reader.total}</span>
-      </div>
-      <button type="button" onClick={openNext} disabled={reader.nextDate === null}>
-        <span>다음 일지</span>
-        <ChevronRight aria-hidden="true" size={18} />
-      </button>
-    </nav>
+    <JournalPageNavigator
+      position={reader.position}
+      total={reader.total}
+      onPrevious={reader.previousDate === null ? undefined : openPrevious}
+      onNext={reader.nextDate === null ? undefined : openNext}
+    />
   )
 
   return (
@@ -66,18 +62,25 @@ export function JournalDayReader({
       className="journal-day-reader"
       onTouchStart={(event) => {
         const touch = event.changedTouches[0]
-        touchStart.current = touch === undefined ? null : { x: touch.clientX, y: touch.clientY }
+        touchStart.current = touch === undefined ? null : {
+          x: touch.clientX,
+          y: touch.clientY,
+          blocked: isJournalNavigationBlockedTarget(event.target),
+        }
       }}
       onTouchEnd={(event) => {
         const start = touchStart.current
         const touch = event.changedTouches[0]
         touchStart.current = null
-        if (start === null || touch === undefined) return
+        if (start === null || touch === undefined || start.blocked || isJournalNavigationBlockedTarget(event.target)) return
         const deltaX = touch.clientX - start.x
         const deltaY = touch.clientY - start.y
         if (Math.abs(deltaX) < 56 || Math.abs(deltaX) <= Math.abs(deltaY) * 1.2) return
         if (deltaX > 0) openPrevious()
         else openNext()
+      }}
+      onTouchCancel={() => {
+        touchStart.current = null
       }}
     >
       <LogDetail
@@ -91,8 +94,8 @@ export function JournalDayReader({
   )
 }
 
-function isEditingText(target: EventTarget | null): boolean {
-  return target instanceof HTMLInputElement
-    || target instanceof HTMLTextAreaElement
-    || (target instanceof HTMLElement && target.isContentEditable)
+function isJournalNavigationBlockedTarget(target: EventTarget | null): boolean {
+  if (!(target instanceof HTMLElement)) return false
+  if (target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement || target.isContentEditable) return true
+  return target.closest("[data-decoration-interaction='true']") !== null
 }

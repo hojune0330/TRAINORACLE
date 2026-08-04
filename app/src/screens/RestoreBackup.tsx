@@ -14,7 +14,7 @@
 import React from "react"
 import { SectionLb } from "../components/JournalPrimitives"
 import {
-  buildRestorePlan, readBackupFile, restoreEntries,
+  buildRestorePlan, readBackupFile, restoreBackupFile,
 } from "../domain/restore/backup-file"
 import type {
   BackupReadResult, RestoreMode, RestoreOutcome, RestorePlan,
@@ -36,6 +36,7 @@ type Stage =
   | { readonly step: "pick" }
   | { readonly step: "review"; readonly read: BackupReadResult; readonly plan: RestorePlan }
   | { readonly step: "done"; readonly outcome: RestoreOutcome }
+  | { readonly step: "failed"; readonly outcome: RestoreOutcome }
 
 export function RestoreBackup({ onBack, onOpenHome }: {
   readonly onBack?: () => void
@@ -45,27 +46,32 @@ export function RestoreBackup({ onBack, onOpenHome }: {
   const [failure, setFailure] = React.useState<"unreadable" | "empty" | null>(null)
   const [mode, setMode] = React.useState<RestoreMode>("keep-existing")
   const [busy, setBusy] = React.useState(false)
+  const busyRef = React.useRef(false)
 
   const handleFile = async (file: File) => {
+    if (busyRef.current) return
+    busyRef.current = true
     setBusy(true)
     setFailure(null)
     let text: string
     try {
       text = await file.text()
     } catch {
+      busyRef.current = false
       setBusy(false)
       setFailure("unreadable")
       return
     }
 
     const read = readBackupFile(text)
+    busyRef.current = false
     setBusy(false)
     if (!read.recognized) {
       setFailure("unreadable")
       setStage({ step: "pick" })
       return
     }
-    if (read.entries.length === 0) {
+    if (read.entries.length === 0 && read.decorationStatus !== "included") {
       setFailure("empty")
       setStage({ step: "pick" })
       return
@@ -75,11 +81,23 @@ export function RestoreBackup({ onBack, onOpenHome }: {
   }
 
   const handleRestore = async () => {
-    if (stage.step !== "review") return
+    if (busyRef.current || stage.step !== "review") return
+    busyRef.current = true
     setBusy(true)
-    const outcome = await restoreEntries(stage.plan, mode)
+    const outcome = await restoreBackupFile(stage.read, stage.plan, mode)
+    busyRef.current = false
     setBusy(false)
-    setStage({ step: "done", outcome })
+    setStage(outcome.commit === "COMMITTED" ? { step: "done", outcome } : { step: "failed", outcome })
+  }
+
+  const restart = () => {
+    if (busyRef.current) return
+    setStage({ step: "pick" })
+    setFailure(null)
+  }
+
+  const goBack = () => {
+    if (!busyRef.current) onBack?.()
   }
 
   return (
@@ -87,7 +105,7 @@ export function RestoreBackup({ onBack, onOpenHome }: {
       <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
         {onBack && (
           <button
-            type="button" onClick={onBack} aria-label="뒤로"
+            type="button" onClick={goBack} disabled={busy} data-testid="restore-back" aria-label="뒤로"
             style={{ ...secondaryBtn, width: 44, minWidth: 44, minHeight: 44, fontSize: 18 }}
           >←</button>
         )}
@@ -112,7 +130,8 @@ export function RestoreBackup({ onBack, onOpenHome }: {
           mode={mode}
           onModeChange={setMode}
           onRestore={handleRestore}
-          onRestart={() => { setStage({ step: "pick" }); setFailure(null) }}
+          onRestart={restart}
+          busy={busy}
         />
       )}
 
@@ -120,8 +139,13 @@ export function RestoreBackup({ onBack, onOpenHome }: {
         <DoneStage
           outcome={stage.outcome}
           onOpenHome={onOpenHome}
-          onRestart={() => { setStage({ step: "pick" }); setFailure(null) }}
+          onRestart={restart}
+          busy={busy}
         />
+      )}
+
+      {stage.step === "failed" && (
+        <RestoreFailedStage outcome={stage.outcome} onRestart={restart} />
       )}
     </div>
   )
@@ -187,13 +211,14 @@ function PickStage({ busy, failure, onFile }: {
   )
 }
 
-function ReviewStage({ read, plan, mode, onModeChange, onRestore, onRestart }: {
+function ReviewStage({ read, plan, mode, onModeChange, onRestore, onRestart, busy }: {
   readonly read: BackupReadResult
   readonly plan: RestorePlan
   readonly mode: RestoreMode
   readonly onModeChange: (mode: RestoreMode) => void
   readonly onRestore: () => void
   readonly onRestart: () => void
+  readonly busy: boolean
 }) {
   const willRestore = mode === "keep-existing" ? plan.fresh : plan.fresh + plan.conflicts
 
@@ -218,6 +243,26 @@ function ReviewStage({ read, plan, mode, onModeChange, onRestore, onRestart }: {
         </ul>
       </div>
 
+      {read.decorationStatus === "included" && (
+        <div
+          data-testid="restore-decoration-summary"
+          style={{ ...mono, fontSize: 10.5, color: "var(--ink-2)", lineHeight: 1.7, border: "1px solid var(--line)", padding: "10px 12px" }}
+        >
+          <b>꾸미기</b> · 꾸미기 항목 {read.decorationItemCount}개 · 날짜 배치 {read.decorationPlacementCount}개
+          <br />일지와 분리된 꾸미기 구획으로 되돌려요.
+        </div>
+      )}
+
+      {read.decorationStatus === "invalid" && (
+        <div
+          role="alert"
+          data-testid="restore-decoration-invalid"
+          style={{ ...mono, fontSize: 10.5, color: "var(--pain-5)", lineHeight: 1.65, border: "1px solid var(--pain-5)", padding: "10px 12px" }}
+        >
+          꾸미기는 형식이 맞지 않아 제외해요. 읽힌 일지는 따로 확인한 뒤 되돌릴 수 있어요.
+        </div>
+      )}
+
       {read.skipped > 0 && (
         <div data-testid="restore-skipped" style={{ ...mono, fontSize: 10.5, color: "var(--ink-3)", lineHeight: 1.6, border: "1px solid var(--line)", padding: "9px 12px" }}>
           형식이 맞지 않아 읽지 못한 항목 {read.skipped}건은 빠졌어요.
@@ -238,13 +283,13 @@ function ReviewStage({ read, plan, mode, onModeChange, onRestore, onRestart }: {
           <div role="radiogroup" aria-label="겹치는 일지 처리" style={{ display: "grid", gap: 8 }}>
             <ModeChoice
               checked={mode === "keep-existing"}
-              onSelect={() => onModeChange("keep-existing")}
+              onSelect={() => { if (!busy) onModeChange("keep-existing") }}
               title="지금 것을 지켜요"
               detail="이 기기에 있는 일지를 그대로 두고, 겹치지 않는 것만 더해요 (권장)"
             />
             <ModeChoice
               checked={mode === "overwrite-conflicts"}
-              onSelect={() => onModeChange("overwrite-conflicts")}
+              onSelect={() => { if (!busy) onModeChange("overwrite-conflicts") }}
               title="백업 파일 내용으로 바꿔요"
               detail="겹치는 일지를 백업에 있는 내용으로 덮어써요 — 지금 내용은 사라져요"
             />
@@ -252,10 +297,18 @@ function ReviewStage({ read, plan, mode, onModeChange, onRestore, onRestart }: {
         </>
       )}
 
-      <button type="button" style={primaryBtn} disabled={willRestore === 0} onClick={onRestore}>
-        {willRestore === 0 ? "되돌릴 일지가 없어요" : `${willRestore}건 되돌리기`}
+      <button
+        type="button"
+        data-testid="restore-submit"
+        style={primaryBtn}
+        disabled={busy || (willRestore === 0 && read.decorationStatus !== "included")}
+        onClick={onRestore}
+      >
+        {willRestore > 0
+          ? `${willRestore}건 되돌리기`
+          : read.decorationStatus === "included" ? "꾸미기 되돌리기" : "되돌릴 일지가 없어요"}
       </button>
-      <button type="button" style={secondaryBtn} onClick={onRestart}>다른 파일 고르기</button>
+      <button type="button" style={secondaryBtn} disabled={busy} onClick={onRestart}>다른 파일 고르기</button>
     </div>
   )
 }
@@ -285,10 +338,11 @@ function ModeChoice({ checked, onSelect, title, detail }: {
   )
 }
 
-function DoneStage({ outcome, onOpenHome, onRestart }: {
+function DoneStage({ outcome, onOpenHome, onRestart, busy }: {
   readonly outcome: RestoreOutcome
   readonly onOpenHome?: () => void
   readonly onRestart: () => void
+  readonly busy: boolean
 }) {
   return (
     <div style={{ marginTop: 20, display: "flex", flexDirection: "column", gap: 14 }}>
@@ -305,13 +359,39 @@ function DoneStage({ outcome, onOpenHome, onRestart }: {
               {outcome.failed}건은 형식이 맞지 않아 되돌리지 못했어요
             </li>
           )}
+          {outcome.decorationRestore === "RESTORED" && <li>꾸미기도 함께 되돌렸어요</li>}
+          {outcome.decorationRestore === "INVALID_SKIPPED" && (
+            <li style={{ color: "var(--pain-5)" }}>꾸미기는 형식이 맞지 않아 제외했어요</li>
+          )}
+          {outcome.decorationRestore === "SAVE_FAILED" && (
+            <li style={{ color: "var(--pain-5)" }}>꾸미기를 저장하지 못해 일지도 바꾸지 않았어요</li>
+          )}
         </ul>
       </div>
 
       {onOpenHome && (
-        <button type="button" style={primaryBtn} onClick={onOpenHome}>일지에서 확인하기</button>
+        <button type="button" style={primaryBtn} disabled={busy} onClick={onOpenHome}>일지에서 확인하기</button>
       )}
-      <button type="button" style={secondaryBtn} onClick={onRestart}>다른 파일 되돌리기</button>
+      <button type="button" style={secondaryBtn} disabled={busy} onClick={onRestart}>다른 파일 되돌리기</button>
+    </div>
+  )
+}
+
+function RestoreFailedStage({ outcome, onRestart }: {
+  readonly outcome: RestoreOutcome
+  readonly onRestart: () => void
+}) {
+  const message = outcome.failureReason === "RECOVERY_CODE_REQUIRED"
+    ? "비공개 메모를 되돌리려면 먼저 복구 코드를 준비해야 해요. 저장된 일지와 꾸미기는 바꾸지 않았어요."
+    : "저장 공간 문제로 되돌리기를 완료하지 못했어요. 저장된 일지와 꾸미기는 바꾸지 않았어요."
+
+  return (
+    <div style={{ marginTop: 20, display: "flex", flexDirection: "column", gap: 14 }}>
+      <div role="alert" data-testid="restore-commit-failure" style={{ border: "1px solid var(--pain-5)", background: "var(--surface)", padding: "14px 16px" }}>
+        <div style={{ ...mono, fontSize: 10, color: "var(--pain-5)", letterSpacing: "0.1em" }}>되돌리기 실패</div>
+        <div style={{ fontFamily: "var(--sans)", fontSize: 15, fontWeight: 500, marginTop: 5 }}>{message}</div>
+      </div>
+      <button type="button" style={secondaryBtn} onClick={onRestart}>다른 파일 고르기</button>
     </div>
   )
 }
