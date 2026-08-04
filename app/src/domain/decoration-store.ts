@@ -15,7 +15,14 @@ import type { DecorationState } from "./decoration-schema"
 export const DECORATION_STORAGE_KEY_V1 = "trainoracle.decorations.v1"
 export const DECORATION_STORAGE_KEY_V2 = "trainoracle.decorations.v2"
 
-export type DecorationSaveFailureCode = "INVALID_STATE" | "STORAGE_UNAVAILABLE" | "WRITE_FAILED" | "READBACK_MISMATCH"
+export function readDecorationStateSerialized(): string | null {
+  const storage = currentStorage()
+  if (storage === null) return null
+  const result = readStorage(storage, DECORATION_STORAGE_KEY_V2)
+  return result.ok ? result.value : null
+}
+
+export type DecorationSaveFailureCode = "INVALID_STATE" | "STORAGE_UNAVAILABLE" | "STALE_STATE" | "WRITE_FAILED" | "READBACK_MISMATCH" | "ROLLBACK_FAILED"
 export type DecorationSaveResult =
   | { readonly ok: true }
   | { readonly ok: false; readonly code: DecorationSaveFailureCode }
@@ -50,23 +57,56 @@ function readStorage(storage: Storage, key: string): StorageReadResult {
 }
 
 export function saveDecorationState(candidate: unknown): DecorationSaveResult {
+  return saveDecorationStateIfCurrent(candidate, undefined)
+}
+
+export function saveDecorationStateIfCurrent(
+  candidate: unknown,
+  expectedSerialized: string | null | undefined,
+): DecorationSaveResult {
   const parsed = decorationStateSchema.safeParse(candidate)
   if (!parsed.success) return { ok: false, code: "INVALID_STATE" }
   const storage = currentStorage()
   if (storage === null) return { ok: false, code: "STORAGE_UNAVAILABLE" }
   const serialized = JSON.stringify(parsed.data)
+  const previous = readStorage(storage, DECORATION_STORAGE_KEY_V2)
+  if (!previous.ok) return { ok: false, code: "STORAGE_UNAVAILABLE" }
+  if (expectedSerialized !== undefined && previous.value !== expectedSerialized) {
+    return { ok: false, code: "STALE_STATE" }
+  }
+
+  const rollback = (): boolean => restoreStorageValue(storage, previous.value)
 
   try {
     storage.setItem(DECORATION_STORAGE_KEY_V2, serialized)
   } catch (error) {
-    if (error instanceof DOMException || error instanceof Error) return { ok: false, code: "WRITE_FAILED" }
+    if (error instanceof DOMException || error instanceof Error) {
+      return rollback() ? { ok: false, code: "WRITE_FAILED" } : { ok: false, code: "ROLLBACK_FAILED" }
+    }
     throw error
   }
 
   const readback = readStorage(storage, DECORATION_STORAGE_KEY_V2)
-  if (!readback.ok || readback.value !== serialized) return { ok: false, code: "READBACK_MISMATCH" }
+  if (!readback.ok || readback.value !== serialized) {
+    return rollback() ? { ok: false, code: "READBACK_MISMATCH" } : { ok: false, code: "ROLLBACK_FAILED" }
+  }
   const verified = parseStoredDecorationState(readback.value)
-  return verified === null ? { ok: false, code: "READBACK_MISMATCH" } : { ok: true }
+  if (verified !== null) return { ok: true }
+  return rollback() ? { ok: false, code: "READBACK_MISMATCH" } : { ok: false, code: "ROLLBACK_FAILED" }
+}
+
+function restoreStorageValue(storage: Storage, previous: string | null): boolean {
+  const current = readStorage(storage, DECORATION_STORAGE_KEY_V2)
+  if (current.ok && current.value === previous) return true
+  try {
+    if (previous === null) storage.removeItem(DECORATION_STORAGE_KEY_V2)
+    else storage.setItem(DECORATION_STORAGE_KEY_V2, previous)
+    const readback = readStorage(storage, DECORATION_STORAGE_KEY_V2)
+    return readback.ok && readback.value === previous
+  } catch (error) {
+    if (error instanceof DOMException || error instanceof Error) return false
+    throw error
+  }
 }
 
 export function loadDecorationState(): DecorationState {
@@ -113,6 +153,7 @@ export function purchaseDecoration(
   earnedPoints: number,
   state: DecorationState,
   itemId: string,
+  expectedSerialized?: string | null,
 ): DecorationPurchase {
   const item = DECORATION_CATALOG.find((candidate) => candidate.id === itemId)
   const available = Math.max(0, earnedPoints - state.spentPoints)
@@ -130,7 +171,7 @@ export function purchaseDecoration(
     spentPoints: state.spentPoints + item.cost,
     ownedItemIds: [...state.ownedItemIds, itemId],
   })
-  const saved = saveDecorationState(next)
+  const saved = saveDecorationStateIfCurrent(next, expectedSerialized)
   if (!saved.ok) return { kind: "SAVE_FAILED", state, remainingPoints: available, code: saved.code }
   return { kind: "PURCHASED", state: next, remainingPoints: available - item.cost }
 }

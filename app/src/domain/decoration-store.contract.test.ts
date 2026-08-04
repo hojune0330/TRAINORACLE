@@ -6,6 +6,7 @@ import {
   purchaseDecoration,
   rememberDecorationUse,
   saveDecorationState,
+  saveDecorationStateIfCurrent,
   toggleFavoriteDecoration,
 } from "./decorations"
 import type { DecorationState } from "./decorations"
@@ -227,6 +228,35 @@ describe("decoration V2 verified writes", () => {
     const result = saveDecorationState({ ...EMPTY_V2, spentPoints: 1 })
 
     expect(result).toEqual({ ok: false, code: "READBACK_MISMATCH" })
+  })
+
+  it("restores the previous bytes when a write is corrupted before readback", () => {
+    loadDecorationState()
+    const before = window.localStorage.getItem(DECORATION_STORAGE_KEY_V2)
+    const setItem = window.localStorage.setItem.bind(window.localStorage)
+    vi.spyOn(Storage.prototype, "setItem").mockImplementation((key, value) => {
+      if (key === DECORATION_STORAGE_KEY_V2 && value.includes('"spentPoints":1')) {
+        setItem(key, "{corrupted}")
+        return
+      }
+      setItem(key, value)
+    })
+
+    const result = saveDecorationState({ ...EMPTY_V2, spentPoints: 1 })
+
+    expect(result).toEqual({ ok: false, code: "READBACK_MISMATCH" })
+    expect(window.localStorage.getItem(DECORATION_STORAGE_KEY_V2)).toBe(before)
+  })
+
+  it("rejects a stale snapshot instead of overwriting a newer tab state", () => {
+    loadDecorationState()
+    const expected = window.localStorage.getItem(DECORATION_STORAGE_KEY_V2)
+    expect(saveDecorationState({ ...EMPTY_V2, spentPoints: 4 }).ok).toBe(true)
+
+    const result = saveDecorationStateIfCurrent({ ...EMPTY_V2, spentPoints: 8 }, expected)
+
+    expect(result).toEqual({ ok: false, code: "STALE_STATE" })
+    expect(JSON.parse(window.localStorage.getItem(DECORATION_STORAGE_KEY_V2) ?? "null").spentPoints).toBe(4)
   })
 
   it("rejects forbidden journal and symptom fields before writing", () => {

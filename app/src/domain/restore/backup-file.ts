@@ -29,8 +29,8 @@ import {
 } from "../private-memo-vault"
 import { loadEntries, replaceAllEntries } from "../journal-store"
 import {
-  decorationStateSchema,
   DECORATION_STORAGE_KEY_V2,
+  parseStoredDecorationState,
   saveDecorationState,
 } from "../decorations"
 import type { DecorationState } from "../decorations"
@@ -124,10 +124,11 @@ function readDecorationSection(
   candidate: unknown,
 ): { readonly state: DecorationState | null; readonly status: BackupReadResult["decorationStatus"] } {
   if (format !== FULL_FORMAT) return { state: null, status: "not-included" }
-  const parsed = decorationStateSchema.safeParse(candidate)
-  return parsed.success
-    ? { state: parsed.data, status: "included" }
-    : { state: null, status: "invalid" }
+  if (typeof candidate !== "object" || candidate === null) return { state: null, status: "invalid" }
+  const normalized = parseStoredDecorationState(JSON.stringify(candidate))
+  return normalized === null
+    ? { state: null, status: "invalid" }
+    : { state: normalized, status: "included" }
 }
 
 /**
@@ -198,6 +199,8 @@ export type RestoreMode =
   /** 겹치는 항목을 백업 파일 내용으로 바꾼다 (사용자가 명시적으로 선택) */
   | "overwrite-conflicts"
 
+export type DecorationRestoreMode = "keep-existing" | "replace"
+
 export type RestoreOutcome = {
   readonly restored: number
   /** 기존 것을 지키기로 해서 건너뛴 개수 */
@@ -207,7 +210,7 @@ export type RestoreOutcome = {
   /** 쓰기 검증을 통과하지 못해 저장하지 못한 개수 */
   readonly failed: number
   readonly total: number
-  readonly decorationRestore: "RESTORED" | "NOT_INCLUDED" | "INVALID_SKIPPED" | "SAVE_FAILED" | "ROLLED_BACK"
+  readonly decorationRestore: "RESTORED" | "KEPT_EXISTING" | "NOT_INCLUDED" | "INVALID_SKIPPED" | "SAVE_FAILED" | "ROLLED_BACK"
   readonly commit: "COMMITTED" | "FAILED" | "ROLLED_BACK"
   readonly failureReason: "NONE" | "DECORATION_SAVE_FAILED" | "JOURNAL_SAVE_FAILED" | "RECOVERY_CODE_REQUIRED"
 }
@@ -216,8 +219,9 @@ export async function restoreBackupFile(
   read: BackupReadResult,
   plan: RestorePlan,
   mode: RestoreMode = "keep-existing",
+  decorationMode: DecorationRestoreMode = "keep-existing",
 ): Promise<RestoreOutcome> {
-  if (read.decorationStatus === "included" && read.decorations !== null) {
+  if (read.decorationStatus === "included" && read.decorations !== null && decorationMode === "replace") {
     const snapshot = takeLocalStorageSnapshot()
     const saved = saveDecorationState(read.decorations)
     if (!saved.ok) return emptyRestoreOutcome(plan, "SAVE_FAILED", "FAILED", "DECORATION_SAVE_FAILED")
@@ -237,7 +241,9 @@ export async function restoreBackupFile(
   const outcome = await restoreEntries(plan, mode)
   return {
     ...outcome,
-    decorationRestore: read.decorationStatus === "invalid" ? "INVALID_SKIPPED" : "NOT_INCLUDED",
+    decorationRestore: read.decorationStatus === "invalid"
+      ? "INVALID_SKIPPED"
+      : read.decorationStatus === "included" ? "KEPT_EXISTING" : "NOT_INCLUDED",
     commit: outcome.restored === 0 && outcome.failed > 0 ? "FAILED" : outcome.commit,
   }
 }

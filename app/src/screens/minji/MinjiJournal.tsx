@@ -72,12 +72,30 @@ export function MinjiJournal({ onWriteLog }: { readonly onWriteLog?: () => void 
             }}
           >
             <span className="minji-index__when">{page.when}</span>
-            <span><strong>{page.title}</strong><small>{page.preview}</small></span>
+            <span className="minji-index__copy">
+              <strong>{page.title}</strong>
+              <small>{page.preview}</small>
+              <span className="minji-index__signals" aria-label="기분, 몸 상태, 날씨">
+                <span>{page.mood}</span><span>{page.bodyCondition}</span><span>{page.weather}</span>
+              </span>
+            </span>
+            <MinjiIndexDecorationThumbnail page={page} />
             <ChevronRight aria-hidden="true" size={18} />
           </button>
         ))}
       </div>
     </section>
+  )
+}
+
+function MinjiIndexDecorationThumbnail({ page }: { readonly page: MinjiJournalPage }) {
+  const itemId = page.decorationPreset.placements[0]?.itemId ?? page.decorationPreset.themeId
+  const item = decorationCatalogItem(itemId)
+  if (item === undefined) return null
+  return (
+    <span className="minji-index__decoration" aria-label={`${item.name} 꾸미기`}>
+      <img src={`${import.meta.env.BASE_URL}${item.assetPath}`} alt="" loading="lazy" />
+    </span>
   )
 }
 
