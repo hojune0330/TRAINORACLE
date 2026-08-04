@@ -17,7 +17,7 @@ import {
   buildRestorePlan, readBackupFile, restoreBackupFile,
 } from "../domain/restore/backup-file"
 import type {
-  BackupReadResult, RestoreMode, RestoreOutcome, RestorePlan,
+  BackupReadResult, DecorationRestoreMode, RestoreMode, RestoreOutcome, RestorePlan,
 } from "../domain/restore/backup-file"
 
 const mono: React.CSSProperties = { fontFamily: "var(--mono)" }
@@ -45,6 +45,7 @@ export function RestoreBackup({ onBack, onOpenHome }: {
   const [stage, setStage] = React.useState<Stage>({ step: "pick" })
   const [failure, setFailure] = React.useState<"unreadable" | "empty" | null>(null)
   const [mode, setMode] = React.useState<RestoreMode>("keep-existing")
+  const [decorationMode, setDecorationMode] = React.useState<DecorationRestoreMode>("keep-existing")
   const [busy, setBusy] = React.useState(false)
   const busyRef = React.useRef(false)
 
@@ -77,6 +78,7 @@ export function RestoreBackup({ onBack, onOpenHome }: {
       return
     }
     setMode("keep-existing")
+    setDecorationMode("keep-existing")
     setStage({ step: "review", read, plan: buildRestorePlan(read.entries) })
   }
 
@@ -84,7 +86,7 @@ export function RestoreBackup({ onBack, onOpenHome }: {
     if (busyRef.current || stage.step !== "review") return
     busyRef.current = true
     setBusy(true)
-    const outcome = await restoreBackupFile(stage.read, stage.plan, mode)
+    const outcome = await restoreBackupFile(stage.read, stage.plan, mode, decorationMode)
     busyRef.current = false
     setBusy(false)
     setStage(outcome.commit === "COMMITTED" ? { step: "done", outcome } : { step: "failed", outcome })
@@ -129,6 +131,8 @@ export function RestoreBackup({ onBack, onOpenHome }: {
           plan={stage.plan}
           mode={mode}
           onModeChange={setMode}
+          decorationMode={decorationMode}
+          onDecorationModeChange={setDecorationMode}
           onRestore={handleRestore}
           onRestart={restart}
           busy={busy}
@@ -211,11 +215,13 @@ function PickStage({ busy, failure, onFile }: {
   )
 }
 
-function ReviewStage({ read, plan, mode, onModeChange, onRestore, onRestart, busy }: {
+function ReviewStage({ read, plan, mode, onModeChange, decorationMode, onDecorationModeChange, onRestore, onRestart, busy }: {
   readonly read: BackupReadResult
   readonly plan: RestorePlan
   readonly mode: RestoreMode
   readonly onModeChange: (mode: RestoreMode) => void
+  readonly decorationMode: DecorationRestoreMode
+  readonly onDecorationModeChange: (mode: DecorationRestoreMode) => void
   readonly onRestore: () => void
   readonly onRestart: () => void
   readonly busy: boolean
@@ -260,6 +266,24 @@ function ReviewStage({ read, plan, mode, onModeChange, onRestore, onRestart, bus
           style={{ ...mono, fontSize: 10.5, color: "var(--pain-5)", lineHeight: 1.65, border: "1px solid var(--pain-5)", padding: "10px 12px" }}
         >
           꾸미기는 형식이 맞지 않아 제외해요. 읽힌 일지는 따로 확인한 뒤 되돌릴 수 있어요.
+        </div>
+      )}
+
+      {read.decorationStatus === "included" && (
+        <div data-testid="restore-decoration-choice" style={{ ...mono, display: "grid", gap: 8 }}>
+          <strong>Decorations</strong>
+          <ModeChoice
+            checked={decorationMode === "keep-existing"}
+            onSelect={() => { if (!busy) onDecorationModeChange("keep-existing") }}
+            title="Keep current decorations"
+            detail="Recommended. The backup cannot erase what is already on this device."
+          />
+          <ModeChoice
+            checked={decorationMode === "replace"}
+            onSelect={() => { if (!busy) onDecorationModeChange("replace") }}
+            title="Replace with backup decorations"
+            detail="Explicitly replace points, ownership, favorites, and placements with the file."
+          />
         </div>
       )}
 
@@ -360,6 +384,7 @@ function DoneStage({ outcome, onOpenHome, onRestart, busy }: {
             </li>
           )}
           {outcome.decorationRestore === "RESTORED" && <li>꾸미기도 함께 되돌렸어요</li>}
+          {outcome.decorationRestore === "KEPT_EXISTING" && <li>기존 꾸미기는 그대로 두었어요</li>}
           {outcome.decorationRestore === "INVALID_SKIPPED" && (
             <li style={{ color: "var(--pain-5)" }}>꾸미기는 형식이 맞지 않아 제외했어요</li>
           )}

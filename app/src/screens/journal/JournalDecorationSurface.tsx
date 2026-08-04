@@ -3,10 +3,13 @@ import { DecoratedJournalPageFrame } from "../../components/DecoratedJournalPage
 import { JournalConfirmationDialog } from "../../components/JournalConfirmationDialog"
 import {
   DECORATION_CATALOG,
+  isAvatarDecorationId,
+  isInkDecorationId,
   isPlacementDecorationId,
   isThemeDecorationId,
   loadDecorationState,
-  saveDecorationState,
+  readDecorationStateSerialized,
+  saveDecorationStateIfCurrent,
 } from "../../domain/decorations"
 import type { DecorationCatalogItem, DecorationSlot, DecorationState } from "../../domain/decorations"
 import {
@@ -32,6 +35,7 @@ export function JournalDecorationSurface({
   readonly children: React.ReactNode
 }) {
   const [canonical, setCanonical] = React.useState(loadDecorationState)
+  const [storageVersion, setStorageVersion] = React.useState(() => readDecorationStateSerialized())
   const [preview, setPreview] = React.useState<DecorationState | null>(null)
   const [open, setOpen] = React.useState(false)
   const [notice, setNotice] = React.useState("")
@@ -41,23 +45,38 @@ export function JournalDecorationSurface({
   const visible = preview ?? canonical
   const items = DECORATION_CATALOG.filter((item) => (
     isThemeDecorationId(item.id)
+    || (isInkDecorationId(item.id) && canonical.ownedItemIds.includes(item.id))
+    || (isAvatarDecorationId(item.id) && canonical.ownedItemIds.includes(item.id))
     || (hasEntries && isPlacementDecorationId(item.id) && canonical.ownedItemIds.includes(item.id))
   ))
   const activeItemIds = new Set<string>([
     ...canonical.ownedItemIds.map((itemId) => `owned:${itemId}`),
     canonical.equipped.themeId,
+    canonical.equipped.inkId,
+    ...(canonical.equipped.avatarId === null ? [] : [canonical.equipped.avatarId]),
     ...canonical.pagePlacements.filter((placement) => placement.date === date).map((placement) => placement.itemId),
   ])
 
   const commit = (next: DecorationState | null, successMessage: string): boolean => {
-    if (next === null || !saveDecorationState(next).ok) {
+    if (next === null) {
       setPreview(null)
       setPreviewItemId(null)
       setNotice("꾸미기를 저장하지 못했어요. 일지는 그대로예요.")
       return false
     }
+    const saved = saveDecorationStateIfCurrent(next, storageVersion)
+    if (!saved.ok) {
+      if (saved.code === "STALE_STATE") {
+        const latest = loadDecorationState()
+        setCanonical(latest)
+        setStorageVersion(readDecorationStateSerialized())
+        setNotice("다른 화면에서 꾸미기가 바뀌어 최신 상태를 다시 불러왔어요.")
+      } else setNotice("꾸미기를 저장하지 못했어요. 일지는 그대로예요.")
+      return false
+    }
     setUndoState(canonical)
     setCanonical(next)
+    setStorageVersion(JSON.stringify(next))
     setPreview(null)
     setPreviewItemId(null)
     setNotice(successMessage)
@@ -105,8 +124,9 @@ export function JournalDecorationSurface({
         onRemove={(item) => commit(removeJournalDecoration(canonical, item, date), `${item.name}을 제거했어요.`)}
         onUndo={() => {
           const previous = undoState
-          if (previous !== null && saveDecorationState(previous).ok) {
+          if (previous !== null && saveDecorationStateIfCurrent(previous, storageVersion).ok) {
             setCanonical(previous)
+            setStorageVersion(JSON.stringify(previous))
             setPreview(null)
             setUndoState(null)
             setPreviewItemId(null)

@@ -4,6 +4,44 @@
   margin: 18px 0 8px;
 }
 
+.minji-index__copy {
+  min-width: 0;
+  display: grid;
+  gap: 3px;
+}
+
+.minji-index__signals {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  color: var(--ink-3);
+  font-family: var(--mono);
+  font-size: 9px;
+}
+
+.minji-index__signals > span {
+  padding: 2px 5px;
+  border: 1px solid color-mix(in srgb, var(--brand) 18%, transparent);
+  border-radius: 999px;
+}
+
+.minji-index__decoration {
+  width: 34px;
+  height: 34px;
+  flex: 0 0 34px;
+  display: grid;
+  place-items: center;
+  border-radius: 8px;
+  background: var(--surface-2);
+  overflow: hidden;
+}
+
+.minji-index__decoration img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
 .minji-showcase-preview > .decorated-journal-page {
   position: absolute;
   inset-block-start: 12px;

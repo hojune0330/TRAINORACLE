@@ -40,9 +40,11 @@ export {
   DECORATION_STORAGE_KEY_V2,
   decorationItemOwned,
   loadDecorationState,
+  readDecorationStateSerialized,
   purchaseDecoration,
   rememberDecorationUse,
   saveDecorationState,
+  saveDecorationStateIfCurrent,
   toggleFavoriteDecoration,
 } from "./decoration-store"
 export type {
