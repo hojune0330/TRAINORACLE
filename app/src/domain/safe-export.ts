@@ -110,6 +110,46 @@ function hasEligibleAnalysisField(entry: PostSessionEntry | EveningEntry): boole
     .some((fieldName) => isEligibleForAnalysis(fieldName, entry.fieldProvenance))
 }
 
+/**
+ * 이 일지에 **값이 있는데도 분석에 들어가지 못한 수치**가 있는지.
+ *
+ * 왜 필요한가 (Q1):
+ *  `toAnalysisPostSessionEntry`는 분석 부적격 필드를 `""`/`0`으로 비운다.
+ *  그 판단 자체는 옳다 — 기계가 계산한 값과 사람이 적은 값을 같은 줄에
+ *  섞으면 분석이 오염된다. 문제는 **비운다는 사실을 화면이 말하지 않는다**는
+ *  것이다. 워치 기록 10건을 가져온 사용자가 추이 화면을 열면 주간 거리가
+ *  0 km로 나오고, 화면은 "거리를 적으면 그래프가 그려져요"라고 안내한다.
+ *  사용자는 방금 적었는데 안 적었다고 안내받는다 — 정상 동작인데 고장으로 보인다.
+ *
+ *  안전 백업이 같은 상황에서 택한 답(`safeExportSummary`)과 같다: 몰래 빼지
+ *  않고 **빠지는 개수를 세어 알린다.**
+ *
+ * "값이 없어서 빠진 것"은 세지 않는다. 안 적은 칸이 그래프에 없는 것은
+ * 당연하고, 그걸 알리면 안내가 소음이 된다. 오직 **적었는데 빠진 것**만 센다.
+ */
+export function hasValueExcludedFromAnalysis(entry: JournalEntry): boolean {
+  // 대회 기록은 출처 판정을 쓰지 않는다(`toAnalysisJournalEntry` 참고).
+  if (entry.kind === "race") return false
+
+  const excluded = (hasValue: boolean, fieldName: string) =>
+    hasValue && !isEligibleForAnalysis(fieldName, entry.fieldProvenance)
+
+  if (entry.kind === "post-session") {
+    return excluded(entry.distanceKm.trim() !== "", "distanceKm")
+      || excluded(entry.durationMin.trim() !== "", "durationMin")
+      || excluded(entry.avgPace.trim() !== "", "avgPace")
+      || excluded(entry.rpe > 0, "rpe")
+      || excluded(entry.intensityAssessment?.plannedRpe !== undefined, "plannedRpe")
+      || excluded((entry.intensityAssessment?.objectiveComponents.length ?? 0) > 0, "objectiveComponents")
+  }
+  return excluded(entry.sleepH > 0, "sleepH")
+    || excluded(entry.sleepQuality > 0, "sleepQuality")
+    || excluded(entry.weightKg.trim() !== "", "weightKg")
+    || excluded(entry.restingHr.trim() !== "", "restingHr")
+    || excluded(Object.values(entry.painParts).some((level) => level > 0), "painParts")
+    || excluded(entry.mood > 0, "mood")
+}
+
 function toAnalysisPostSessionEntry(entry: PostSessionEntry): AnalysisPostSessionEntry {
   const plannedRpe = isEligibleForAnalysis("plannedRpe", entry.fieldProvenance)
     ? entry.intensityAssessment?.plannedRpe

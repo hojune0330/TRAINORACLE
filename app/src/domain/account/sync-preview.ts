@@ -27,7 +27,8 @@ export async function previewSync(userId: string): Promise<SyncPreviewOutcome> {
   if (!claimSyncBinding(userId)) {
     return {
       ok: false,
-      message: "이 기기의 일지는 다른 계정과 연결되어 있어요.",
+      message: "이 기기의 일지는 다른 계정과 연결되어 있어요. "
+        + "계정 화면의 '다른 계정으로 바꾸기'에서 일지를 지우지 않고 연결만 끊을 수 있어요.",
       localCount,
       remoteJournalCount: 0,
       remotePrivateCount: 0,

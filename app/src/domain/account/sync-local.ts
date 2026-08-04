@@ -64,6 +64,71 @@ export function claimSyncBinding(userId: string): boolean {
   }
 }
 
+/** 이 기기가 묶여 있는 계정 userId — 없으면 null. 화면에서 상태를 보여줄 때 쓴다. */
+export function currentSyncOwner(): string | null {
+  const localStorage = storage()
+  if (localStorage === null) return null
+  try {
+    return localStorage.getItem(BINDING_KEY)
+  } catch {
+    return null
+  }
+}
+
+export type ReleaseOwnerResult = {
+  readonly ok: boolean
+  /** 사용자에게 그대로 보여줄 수 있는 문장 — 실패를 숨기지 않는다 */
+  readonly message: string
+}
+
+/**
+ * 이 기기를 계정 잠금에서 풀어준다 — **일지는 지우지 않는다.** (Q4)
+ *
+ * 왜 필요한가:
+ *  `claimSyncBinding`은 기기 하나를 계정 하나에 묶는다. 그 자체는 반드시 필요하다
+ *  (없으면 내 일지가 남의 계정으로 올라간다). 문제는 이 잠금이 기기를 정당하게
+ *  넘겨받은 사람에게도 걸리고, 잠금을 푸는 유일한 수단이 **전체 삭제**였다는
+ *  것이다. 계정만 바꾸려는 사람에게 "일지를 다 지우세요"는 과한 요구다.
+ *
+ * 왜 잠금 키만 지우는가:
+ *  - 일지·계획: 그대로 둔다. 이 함수의 존재 이유가 그것이다.
+ *  - 삭제 기록(tombstone): 그대로 둔다. 지우면 지웠던 일지가 새 계정에서
+ *    되살아난다. 계정을 바꾸는 것과 삭제를 되돌리는 것은 다른 일이다.
+ *  - 동기화 동의: 그대로 둔다. 새 계정으로 **자동 업로드되면 안 되므로**
+ *    호출하는 쪽에서 동의를 끄고 로그아웃까지 함께 처리한다(화면의 책임).
+ *
+ * 실패를 숨기지 않는다. 지워졌는지 다시 읽어 확인하고, 실패하면 그대로 알린다.
+ * 조용히 성공했다고 말하면 사용자는 잠금이 풀렸다고 믿고 동기화를 눌렀다가
+ * 다시 막힌다.
+ */
+export function releaseSyncOwner(): ReleaseOwnerResult {
+  const localStorage = storage()
+  if (localStorage === null) {
+    return { ok: false, message: "이 기기의 저장 공간을 쓸 수 없어 연결을 끊지 못했어요." }
+  }
+  try {
+    if (localStorage.getItem(BINDING_KEY) === null) {
+      // 이미 풀린 상태 — 실패가 아니다. 같은 결과를 원했고 그 상태다.
+      return { ok: true, message: "이 기기는 이미 어떤 계정과도 연결되어 있지 않아요." }
+    }
+    localStorage.removeItem(BINDING_KEY)
+    if (localStorage.getItem(BINDING_KEY) !== null) {
+      return {
+        ok: false,
+        message: "계정 연결을 끊지 못했어요. 일지는 그대로 있어요. "
+          + "브라우저의 사이트 데이터 삭제로도 풀 수 있어요.",
+      }
+    }
+    return {
+      ok: true,
+      message: "이 기기의 계정 연결을 끊었어요. 일지는 그대로 있어요. "
+        + "다른 계정으로 로그인해서 동기화를 켤 수 있어요.",
+    }
+  } catch {
+    return { ok: false, message: "계정 연결을 끊지 못했어요. 일지는 그대로 있어요." }
+  }
+}
+
 export function mergeEntries(
   local: readonly JournalEntry[],
   remote: readonly JournalEntry[],

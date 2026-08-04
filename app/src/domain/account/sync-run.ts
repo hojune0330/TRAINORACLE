@@ -41,7 +41,7 @@ export async function syncNow(userId: string): Promise<SyncOutcome> {
   if (!claimSyncBinding(userId)) {
     return failed(
       "이 기기의 일지는 다른 계정과 연결되어 있어요. 다른 계정으로 업로드하지 않았어요. "
-        + "이 기기를 새로 쓰려면 계정 화면의 '이 기기 데이터 전부 지우기'를 먼저 해 주세요.",
+        + "계정 화면의 '다른 계정으로 바꾸기'에서 일지를 지우지 않고 연결만 끊을 수 있어요.",
     )
   }
   if (!recoverPendingSync(userId).ok) {

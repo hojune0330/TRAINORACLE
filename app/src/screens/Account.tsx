@@ -12,7 +12,9 @@ import {
   currentUser, onAuthChange, requestEmailOtp, signInWithGoogle, signOut, verifyEmailOtp,
 } from "../domain/account/auth"
 import type { AccountUser } from "../domain/account/auth"
-import { AccountNetworkSettings, AccountSyncPanel, EraseLocalData } from "./account/index"
+import {
+  AccountNetworkSettings, AccountSyncPanel, EraseLocalData, SwitchAccountPanel,
+} from "./account/index"
 import { inputStyle, mono, primaryBtn, secondaryBtn } from "./account/styles"
 
 export function Account({ onBack, onOpenImport, onOpenRestore }: {
@@ -183,6 +185,12 @@ export function Account({ onBack, onOpenImport, onOpenRestore }: {
               시점을 약속할 수 없어요. 연동은 언제나 읽기 전용이에요.
             </p>
           </div>
+
+          {/*
+            로그아웃 위에 둔다. 계정을 바꾸려는 사람이 먼저 만나는 것이
+            '전부 지우기'가 되어서는 안 된다 (Q4).
+          */}
+          <SwitchAccountPanel onSignOut={handleSignOut} onOpenBackup={onOpenRestore} />
 
           <button type="button" style={secondaryBtn} disabled={busy} onClick={() => void handleSignOut()}>
             로그아웃
