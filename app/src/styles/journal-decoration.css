@@ -10,7 +10,7 @@
 }
 
 .journal-reader-nav button {
-  min-width: 0;
+  min-width: var(--app-touch-min);
   min-height: 44px;
   display: inline-flex;
   align-items: center;

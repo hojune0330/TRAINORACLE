@@ -44,6 +44,12 @@ describe("task 10 mobile accessibility contract", () => {
     expect(toggleRule).toContain("min-height: var(--app-touch-min)")
   })
 
+  it("keeps dated journal previous and next controls wide enough at 320px", () => {
+    const navigationRule = journalDecorationCss.match(/\.journal-reader-nav button\s*\{[^}]*\}/u)?.[0] ?? ""
+
+    expect(navigationRule).toContain("min-width: var(--app-touch-min)")
+  })
+
   it("keeps decoration layers behind readable journal content", () => {
     const contentRule = journalDecorationCss.match(/\.decorated-journal-page__content\s*\{[^}]*\}/u)?.[0] ?? ""
     const decorationRule = journalDecorationCss.match(/\.decorated-journal-page__avatar,[\s\S]*?\.decorated-journal-page__slot\s*\{[^}]*\}/u)?.[0] ?? ""
