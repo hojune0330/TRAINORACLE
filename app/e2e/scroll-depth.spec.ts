@@ -59,6 +59,42 @@ const FILLED_LIMIT = {
   "touch-narrow": 1220,
 } as const
 
+/**
+ * 홈 화면. 지금까지 이 검사에는 홈이 **한 줄도 없었다** — 기록 작성 화면만 재고
+ * 있었다. 그런데 실측해 보니 첫 화면인 홈이 내가 이미 줄여 둔 기록 화면보다
+ * 더 길었다: 1727px = 2.58 화면.
+ *
+ * 원인의 절반은 `engagement-strip` 하나였다(688px). 기록이 0건인 첫 실행에서
+ * `0P` / `0일` / `0일` / `사용 가능 0P` 를 성취 점수판 레이아웃에 채워 넣고,
+ * 그 아래 꾸미기 상점(439px)까지 펼쳐 놨다.
+ *
+ * 그건 길이 문제이기 전에 계약 위반이다 —
+ * ANALYSIS_AND_VISUALIZATION_DATA_CONTRACT §17 L546-557:
+ * "Empty and error states should be useful and honest.
+ *  They must not be styled as success."
+ *
+ * 그래서 빈 상태에서는 점수판을 접고 규칙 한 줄만 남겼다. 86px 이 됐다.
+ * 재촉 문구로 채우지 않은 것은 JOURNAL_DELIGHT_AND_DECORATION_SPEC L460
+ * `missed_day_shame_copy: forbidden` 때문이다.
+ *
+ * 아래 before 값은 짐작이 아니다. 이 커밋 직전 상태를 따로 빌드해서 같은
+ * 두 뷰포트로 실측했다. 처음엔 touch-narrow 를 2109 로 어림잡아 적었는데
+ * 실측은 1838 이었다. 틀린 값을 남기면 상한이 헐거워지므로 실측으로 바꿨다.
+ *
+ * mobile-chromium 1727 → 1129px (−598px, 2.58 → 1.68 화면)
+ * touch-narrow    1838 → 1154px (−684px, 3.60 → 2.26 화면)
+ * engagement-strip 단독: 688 → 86px (mobile), 771 → 86px (narrow)
+ */
+const HOME_BEFORE = {
+  "mobile-chromium": 1727,
+  "touch-narrow": 1838,
+} as const
+
+const HOME_LIMIT = {
+  "mobile-chromium": 1200,
+  "touch-narrow": 1250,
+} as const
+
 type TouchProject = keyof typeof LIMIT
 
 function limitsFor(projectName: string) {
@@ -77,6 +113,69 @@ async function scrollHeightPx(page: Page) {
     return region.scrollHeight
   })
 }
+
+test("첫 화면(홈)이 기록 0건에서 성취 점수판을 펼치지 않는다", async ({ page }, testInfo) => {
+  limitsFor(testInfo.project.name)
+  const project = testInfo.project.name as TouchProject
+  await page.goto("/?app=1")
+
+  const strip = page.getByLabel("기록 습관")
+  await expect(strip).toBeVisible()
+
+  // 0 을 성취 UI 에 채워 넣지 않는다 (ANALYSIS §17).
+  await expect(strip.getByText("누적 획득 · BETA")).toHaveCount(0)
+  await expect(strip.getByText("기록 연속")).toHaveCount(0)
+  await expect(strip.getByText("함께한 날")).toHaveCount(0)
+  await expect(page.getByRole("button", { name: "꾸미기 열기" })).toHaveCount(0)
+
+  // 그렇다고 아무 말도 없으면 "useful" 이 아니다. 규칙은 남는다.
+  await expect(strip.getByText(/몸 상태·회복 체크/u)).toBeVisible()
+
+  const height = await scrollHeightPx(page)
+  console.log(`[SCROLL] ${project} home-empty before=${HOME_BEFORE[project]} after=${height} limit=${HOME_LIMIT[project]}`)
+  expect(height).toBeLessThanOrEqual(HOME_LIMIT[project])
+  expect(height).toBeLessThan(HOME_BEFORE[project])
+})
+
+test("기록이 하나 생기면 홈 점수판이 곧바로 돌아온다", async ({ page }, testInfo) => {
+  limitsFor(testInfo.project.name)
+  await page.addInitScript(() => {
+    const day = new Date()
+    const date = [
+      day.getFullYear(),
+      String(day.getMonth() + 1).padStart(2, "0"),
+      String(day.getDate()).padStart(2, "0"),
+    ].join("-")
+    window.localStorage.setItem("trainoracle.journal.v1", JSON.stringify([{
+      id: "home-strip-1",
+      kind: "post-session",
+      date,
+      savedAt: `${date}T09:00:00.000Z`,
+      syncState: "local",
+      system: "base",
+      title: "strip",
+      distanceKm: "5",
+      durationMin: "30",
+      avgPace: "6:00",
+      rpe: 4,
+      memo: "",
+      fieldProvenance: {
+        distanceKm: { provenance: "EXPLICIT" },
+        durationMin: { provenance: "EXPLICIT" },
+        avgPace: { provenance: "EXPLICIT" },
+        rpe: { provenance: "EXPLICIT" },
+      },
+    }]))
+  })
+  await page.goto("/?app=1")
+
+  const strip = page.getByLabel("기록 습관")
+  // 관측 1건으로도 서술은 허용된다 —
+  // FORMATION_LOAD_AND_STATISTICAL_RULES_CONTRACT §10 L222 descriptive_single_observation: allowed.
+  await expect(strip.getByText("누적 획득 · BETA")).toBeVisible()
+  await expect(strip.getByText("함께한 날")).toBeVisible()
+  await expect(page.getByRole("button", { name: "꾸미기 열기" })).toBeVisible()
+})
 
 test("훈련 후 일지가 빈 상태에서 길지 않다", async ({ page }, testInfo) => {
   const { before, limit } = limitsFor(testInfo.project.name)
