@@ -126,6 +126,36 @@ describe("real journal decoration surface", () => {
     expect(screen.queryByTestId("journal-slot-header-tape")).not.toBeInTheDocument()
   })
 
+  it("reloads a saved placement and undo restores it after the next saved change", async () => {
+    // Given
+    const user = userEvent.setup()
+    storeEntries([session("one")])
+    const first = render(<LogDetail date={DATE} />)
+
+    // When
+    await user.click(screen.getByRole("button", { name: "일지 꾸미기 열기" }))
+    await user.click(screen.getByRole("button", { name: "맑은 날 오른쪽 위에 사용" }))
+    first.unmount()
+    render(<LogDetail date={DATE} />)
+
+    // Then
+    expect(loadDecorationState().pagePlacements).toEqual([
+      { date: DATE, slot: "TOP_CORNER", itemId: "STICKER_WEATHER_SUN" },
+    ])
+    expect(screen.getByTestId("journal-slot-top-corner")).toBeVisible()
+
+    // When
+    await user.click(screen.getByRole("button", { name: "일지 꾸미기 열기" }))
+    await user.click(screen.getByRole("button", { name: "맑은 날 제거" }))
+    await user.click(screen.getByRole("button", { name: "꾸미기 되돌리기" }))
+
+    // Then
+    expect(loadDecorationState().pagePlacements).toEqual([
+      { date: DATE, slot: "TOP_CORNER", itemId: "STICKER_WEATHER_SUN" },
+    ])
+    expect(screen.getByTestId("journal-slot-top-corner")).toBeVisible()
+  })
+
   it("allows only global theme preview on a date without a journal entry", async () => {
     // Given
     const user = userEvent.setup()
