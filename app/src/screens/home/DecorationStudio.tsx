@@ -1,9 +1,14 @@
 import { Sparkles } from "lucide-react"
 import React from "react"
+import { JournalConfirmationDialog } from "../../components/JournalConfirmationDialog"
 import {
+  DECORATION_CATALOG,
   decorationItemOwned,
+  isPlacementDecorationId,
   purchaseDecoration,
-  saveDecorationState,
+  loadDecorationState,
+  readDecorationStateSerialized,
+  saveDecorationStateIfCurrent,
   toggleFavoriteDecoration,
 } from "../../domain/decorations"
 import type { DecorationCatalogItem, DecorationState } from "../../domain/decorations"
@@ -29,6 +34,11 @@ type PreviewSelection =
   | { readonly kind: "PRESET"; readonly preset: DecorationPreset }
   | null
 
+type Replacement = {
+  readonly item: DecorationCatalogItem
+  readonly previous: DecorationCatalogItem
+}
+
 export function DecorationStudio({
   date,
   today,
@@ -37,6 +47,9 @@ export function DecorationStudio({
   onStateChange,
   onNotice,
   onDateChange,
+  expectedSerialized,
+  onStorageVersionChange,
+  hasEntriesForDate,
 }: {
   readonly date: string
   readonly today: string
@@ -45,10 +58,14 @@ export function DecorationStudio({
   readonly onStateChange: (state: DecorationState) => void
   readonly onNotice: (notice: string) => void
   readonly onDateChange: (date: string) => void
+  readonly expectedSerialized: string | null
+  readonly onStorageVersionChange: (serialized: string | null) => void
+  readonly hasEntriesForDate: (date: string) => boolean
 }) {
   const [situation, setSituation] = React.useState<SituationTabId>("RECOMMENDED")
   const [type, setType] = React.useState<TypeFilterId>("ALL")
   const [selection, setSelection] = React.useState<PreviewSelection>(null)
+  const [replacement, setReplacement] = React.useState<Replacement | null>(null)
   const previewDate = date
   const base = state
   const previewState = selection?.kind === "ITEM"
@@ -60,21 +77,41 @@ export function DecorationStudio({
   const items = visibleStudioItems(state, situation, type)
 
   const persist = (next: DecorationState | null, success: string) => {
-    if (next === null || !saveDecorationState(next).ok) {
+    if (next === null) {
       onNotice("꾸미기를 저장하지 못했어요. 일지는 그대로예요.")
-      return
+      return false
+    }
+    const result = saveDecorationStateIfCurrent(next, expectedSerialized)
+    if (!result.ok) {
+      if (result.code === "STALE_STATE") {
+        const latest = loadDecorationState()
+        onStateChange(latest)
+        onStorageVersionChange(readDecorationStateSerialized())
+        onNotice("다른 화면에서 꾸미기가 바뀌어 최신 상태를 다시 불러왔어요.")
+        return false
+      }
+      onNotice("꾸미기를 저장하지 못했어요. 일지는 그대로예요.")
+      return false
     }
     onStateChange(next)
+    onStorageVersionChange(JSON.stringify(next))
     onNotice(success)
+    return true
   }
 
   const buy = (item: DecorationCatalogItem) => {
-    const result = purchaseDecoration(earnedPoints, state, item.id)
+    const result = purchaseDecoration(earnedPoints, state, item.id, expectedSerialized)
     if (result.kind === "PURCHASED") {
       onStateChange(result.state)
+      onStorageVersionChange(JSON.stringify(result.state))
       onNotice(`받았어요. ${result.remainingPoints}P가 남았어요.`)
     } else if (result.kind === "SAVE_FAILED") {
-      onNotice("저장하지 못했어요. 다시 시도해 주세요.")
+      if (result.code === "STALE_STATE") {
+        const latest = loadDecorationState()
+        onStateChange(latest)
+        onStorageVersionChange(readDecorationStateSerialized())
+        onNotice("다른 화면에서 꾸미기가 바뀌어 최신 상태를 다시 불러왔어요.")
+      } else onNotice("저장하지 못했어요. 다시 시도해 주세요.")
     } else if (result.kind === "INSUFFICIENT_POINTS") {
       onNotice("포인트가 조금 더 필요해요.")
     } else {
@@ -91,6 +128,23 @@ export function DecorationStudio({
   const changeDate = (nextDate: string) => {
     setSelection(null)
     onDateChange(nextDate)
+  }
+
+  const use = (item: DecorationCatalogItem) => {
+    if (isPlacementDecorationId(item.id) && !hasEntriesForDate(date)) {
+      onNotice("기록이 있는 날짜에만 날짜 장식을 저장할 수 있어요. 지금은 미리보기만 가능해요.")
+      return
+    }
+    if (isPlacementDecorationId(item.id)) {
+      const slot = item.compatibleSlots[0]
+      const current = slot === undefined ? undefined : state.pagePlacements.find((placement) => placement.date === date && placement.slot === slot)
+      const previous = current === undefined ? undefined : DECORATION_CATALOG.find((candidate) => candidate.id === current.itemId)
+      if (previous !== undefined && previous.id !== item.id) {
+        setReplacement({ item, previous })
+        return
+      }
+    }
+    persist(useOwnedDecorationItem(state, item, date), `${item.name}을 사용했어요.`)
   }
 
   return (
@@ -152,13 +206,25 @@ export function DecorationStudio({
               onPreview={() => setSelection({ kind: "ITEM", item })}
               onBuy={() => buy(item)}
               onFavorite={() => favorite(item)}
-              onUse={() => persist(useOwnedDecorationItem(state, item, date), `${item.name}을 사용했어요.`)}
+              onUse={() => use(item)}
               onRemove={() => persist(removeDecorationItem(state, item, date), `${item.name}을 제거했어요.`)}
             />
           )
         })}
       </div>
-
+      {replacement !== null && (
+        <JournalConfirmationDialog
+          title="꾸미기를 바꿀까요?"
+          description={`${replacement.previous.name} 대신 ${replacement.item.name}을 이 칸에 놓아요.`}
+          confirmLabel="바꾸기"
+          onCancel={() => setReplacement(null)}
+          onConfirm={() => {
+            const ok = persist(useOwnedDecorationItem(state, replacement.item, date), `${replacement.item.name}을 사용했어요.`)
+            if (ok) setReplacement(null)
+            return ok
+          }}
+        />
+      )}
     </div>
   )
 }

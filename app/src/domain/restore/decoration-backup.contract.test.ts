@@ -122,11 +122,51 @@ describe("explicit full backup decoration section", () => {
 
     window.localStorage.clear()
     const read = readBackupFile(backup)
-    const outcome = await restoreBackupFile(read, buildRestorePlan(read.entries))
+    const outcome = await restoreBackupFile(read, buildRestorePlan(read.entries), "keep-existing", "replace")
 
     expect(outcome.decorationRestore).toBe("RESTORED")
     expect(loadDecorationState()).toEqual(decoratedState())
     expect(loadEntries().map((entry) => entry.id)).toEqual(["one"])
+  })
+
+  it("keeps current decorations unless replacement is explicitly selected", async () => {
+    const current = decoratedState()
+    expect(saveDecorationState(current).ok).toBe(true)
+    const backup = {
+      ...createEmptyDecorationState(),
+      spentPoints: 20,
+      ownedItemIds: [...createEmptyDecorationState().ownedItemIds, "STICKER_FINISH_LINE"],
+    }
+    const read = readBackupFile(JSON.stringify({
+      app: "TRAINORACLE",
+      format: "trainoracle.journal.full-backup.v2",
+      entries: [post("restore")],
+      decorations: backup,
+    }))
+
+    const outcome = await restoreBackupFile(read, buildRestorePlan(read.entries))
+
+    expect(outcome.decorationRestore).toBe("KEPT_EXISTING")
+    expect(loadDecorationState()).toEqual(current)
+    expect(loadEntries().map((entry) => entry.id)).toEqual(["restore"])
+  })
+
+  it("normalizes unknown decoration ids in a full backup without dropping known items", () => {
+    const state = createEmptyDecorationState()
+    const read = readBackupFile(JSON.stringify({
+      app: "TRAINORACLE",
+      format: "trainoracle.journal.full-backup.v2",
+      entries: [],
+      decorations: {
+        ...state,
+        ownedItemIds: [...state.ownedItemIds, "UNKNOWN_ITEM"],
+        library: { favoriteItemIds: ["UNKNOWN_ITEM"], recentItemIds: ["STICKER_WEATHER_SUN"] },
+      },
+    }))
+
+    expect(read.decorationStatus).toBe("included")
+    expect(read.decorations?.ownedItemIds).toEqual(state.ownedItemIds)
+    expect(read.decorations?.library.favoriteItemIds).toEqual([])
   })
 
   it("skips invalid decoration state while preserving journal restoration", async () => {
@@ -158,7 +198,7 @@ describe("explicit full backup decoration section", () => {
       setItem(key, value)
     })
 
-    const outcome = await restoreBackupFile(read, buildRestorePlan([post("new")]))
+    const outcome = await restoreBackupFile(read, buildRestorePlan([post("new")]), "keep-existing", "replace")
 
     expect(outcome.decorationRestore).toBe("SAVE_FAILED")
     expect(loadEntries().map((entry) => entry.id)).toEqual(["keep"])
@@ -182,7 +222,7 @@ describe("explicit full backup decoration section", () => {
       setItem(key, value)
     })
 
-    const outcome = await restoreBackupFile(read, buildRestorePlan(read.entries))
+    const outcome = await restoreBackupFile(read, buildRestorePlan(read.entries), "keep-existing", "replace")
 
     expect(outcome.commit).toBe("ROLLED_BACK")
     expect(outcome.failureReason).toBe("JOURNAL_SAVE_FAILED")
@@ -212,7 +252,7 @@ describe("explicit full backup decoration section", () => {
       setItem(key, value)
     })
 
-    const outcome = await restoreBackupFile(read, buildRestorePlan(read.entries))
+    const outcome = await restoreBackupFile(read, buildRestorePlan(read.entries), "keep-existing", "replace")
 
     expect(outcome.commit).toBe("ROLLED_BACK")
     expect(window.localStorage.getItem("trainoracle.concurrent-setting")).toBe("newer-value")

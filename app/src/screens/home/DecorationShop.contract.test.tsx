@@ -111,7 +111,7 @@ describe("decoration shop surface", () => {
   })
 
   it("lets a zero-point user apply a starter and keeps favorites and recents after reopening", async () => {
-    const first = render(<DecorationShop earnedPoints={0} />)
+    const first = render(<DecorationShop earnedPoints={0} hasEntriesForDate={() => true} />)
     await userEvent.click(screen.getByRole("button", { name: "꾸미기 열기" }))
     await userEvent.click(screen.getByRole("button", { name: "맑은 날 즐겨찾기" }))
     await userEvent.click(screen.getByRole("button", { name: "맑은 날 바로 사용" }))
@@ -119,7 +119,7 @@ describe("decoration shop surface", () => {
     expect(screen.getByRole("status")).toHaveTextContent("맑은 날을 사용했어요.")
     first.unmount()
 
-    render(<DecorationShop earnedPoints={0} />)
+    render(<DecorationShop earnedPoints={0} hasEntriesForDate={() => true} />)
     await userEvent.click(screen.getByRole("button", { name: "꾸미기 열기" }))
     await userEvent.click(screen.getByRole("tab", { name: "최근 사용" }))
     expect(screen.getByRole("button", { name: "맑은 날 사용 중" })).toBeVisible()
@@ -128,7 +128,7 @@ describe("decoration shop surface", () => {
   })
 
   it("does not claim a starter was applied when verified storage fails", async () => {
-    render(<DecorationShop earnedPoints={0} />)
+    render(<DecorationShop earnedPoints={0} hasEntriesForDate={() => true} />)
     await userEvent.click(screen.getByRole("button", { name: "꾸미기 열기" }))
     vi.spyOn(Storage.prototype, "setItem").mockImplementation(() => undefined)
 
@@ -139,7 +139,7 @@ describe("decoration shop surface", () => {
   })
 
   it("saves a starter only for the explicitly selected previous date", () => {
-    render(<DecorationShop earnedPoints={0} />)
+    render(<DecorationShop earnedPoints={0} hasEntriesForDate={() => true} />)
     const today = todayISO()
     const previousDate = moveDecorationDate(today, -1)
     const before = window.localStorage.getItem(DECORATION_STORAGE_KEY_V2)
@@ -165,5 +165,15 @@ describe("decoration shop surface", () => {
       slot: "TOP_CORNER",
       itemId: "STICKER_WEATHER_SUN",
     })
+  })
+
+  it("does not save a date decoration for an empty date", async () => {
+    render(<DecorationShop earnedPoints={0} />)
+    await userEvent.click(screen.getByRole("button", { name: "꾸미기 열기" }))
+    await userEvent.click(screen.getByRole("button", { name: "맑은 날 미리보기" }))
+    await userEvent.click(screen.getByTestId("decoration-item-use-STICKER_WEATHER_SUN"))
+
+    expect(screen.getByRole("status")).toHaveTextContent("기록이 있는 날짜에만")
+    expect(parseStoredDecorationState(window.localStorage.getItem(DECORATION_STORAGE_KEY_V2) ?? "")?.pagePlacements).toEqual([])
   })
 })
