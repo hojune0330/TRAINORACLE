@@ -1,0 +1,475 @@
+# 작업지시서 UX2 — 코치 홈 + 일지 정직성 (공격 리뷰 후속 개선 기획)
+
+**작성일:** 2026-08-04
+**받는 사람:** 하위 에이전트
+**선행조건:** 없음 — 즉시 착수 가능. 단, 아래 §6 비목표(NON-GOALS)에 걸리는 로직은 건드리지 않는다.
+
+---
+
+## 0. 왜 하는가 — 공격 리뷰가 던진 것
+
+`reports/review/WORK_ORDER_AGGRESSIVE_UXUI_REVIEW_2026-08-04.md` (D-01~D-13)와
+`reports/review/UX_PERSONA_ARMY_45_2026-08-04.md` (45명 페르소나)가 던진 결론:
+
+> **"이 제품은 지금 기록 보관함이다. 코치는 아니다. 약속한 본체가 코드에 없고,
+> 철학이 금지한 포인트·불꽃·스트릭이 코드에 있다."**
+
+이 지시서는 그 리뷰의 **치명 5 + 중대 4 중 코드로 즉시 가능한 것**만
+하위 에이전트 몫으로 잘라낸다. AI 코치 본체(D-01)는 기능 단위로 크므로
+**§2-1은 1단계(정직한 홈 브리핑)까지**로 범위를 한정한다.
+
+### 0-A. 이 지시서의 리뷰 원칙 (UX1 §0-A로부터 계승)
+
+| # | 원칙 | 적용 |
+|---|---|---|
+| R1 | 재는 자와 검사하는 자를 같게 | **스크롤 깊이는 `main.app-scroll-region` 의 `scrollHeight` 하나로만 잰다** (UX1 §0-B) |
+| R2 | 산술적으로 달성 가능한 목표만 | px 상한은 실측 후 결정 (아래 §5-1 검증) |
+| R3 | 금지 규칙이 막는 것의 정확한 범위를 코드로 확인 | PHILOSOPHY §9-9 "포인트·스트릭" 금지 범위 → `EngagementStrip`·`DecorationShop` 삭제/개편 판정 |
+| R4 | "0건"을 요구하기 전에 지금 몇 건인지 실측 | grep 0건 요구 전 `현재 상태`를 밝힘 (선례 P1 D1) |
+| R5 | 없는 경로에 grep 시키지 않기 | 존재하는 파일에만 명령 실행 (선례 P5 D8) |
+
+### 0-B. 이 지시서가 **하지 않는** 일
+
+| 안 함 | 근거 |
+|---|---|
+| 계획 생성 엔진·D9·Safety Gate·RVE 로직 수정 | NORTH_STAR §3 안전 불변식 — 화면 작업 한정 |
+| 숫자 템플릿(30개 DRAFT 카탈로그) 활성화 | `CURRENT_IMPLEMENTATION_HANDOFF_2026-07-30` §4 — 활성화 금지 |
+| 개인 목표 페이스 처방 착수 | NORTH_STAR §6-1 오너 결정 대기 |
+| AI 채팅/인박스 본체 구현 | 별도 대형 작업 — 본 지시서가 아니라 **§2-1의 홈 브리핑 스텁**까지만 |
+| 다른 에이전트가 작업 중인 파일 되감기 | 우선 `git fetch origin --prune` + open PR 확인 (HANDOFF §8) |
+
+---
+
+## 1. 목표 — 이번 UX2가 끝났을 때의 화면 (페르소나 3명 기준)
+
+| 페르소나 | 오늘 | UX2 후 |
+|---|---|---|
+| **A5 효린** (수면 기록) | 슬라이더가 안 잰 상태인데 7h를 가리킴 → 거짓 저널 위험 | "미기록"이 비어 있고, 움직이기 전까지 값이 없다. 저장 시 안 잔 것으로 저장 |
+| **B3 하준** (계획 인테이크) | "가능 일수"를 골라도 어디에 쓰는지 안 보임·9.5 고정 | 위저저 상단에 "지금까지 고른 답"이 축적 요약으로 남고, 고른 날 수가 결과에 반영되는 경로가 보인다 |
+| **A4 성원** (일지 확인) | 홈에 포인트·불꽃·스트릭(게이미피케이션) + 로컬 경고 텍스트뿐 | 홈에 **아침 브리핑**(수면·심박·최근 통증 한 줄)이 뜨고, 포인트/불꽃 UI가 제거·정직한 안내(기록 보존)로 교체 |
+
+---
+
+## 2. 작업 항목 — 치명 (P0)
+
+### §2-1 정직한 홈 브리핑 (D-07, D-12 일부)
+
+**문제:** 홈이 "오늘 N개의 기록"(`home-view-model.ts:30-31`)과 서비스 입구 4줄뿐.
+일간 브리핑·최근 위험 경향이 없고, 통증 4+ 배너는 6일 창 후 사라진다(`Home.tsx:99`).
+
+**할 일:**
+1. `home-view-model.ts`에 `briefing` 필드 추가 — 오늘(또는 어제) 수면·안정시 심박·체중·통증 요약을 한 줄 텍스트로. **값이 없으면 그 항목을 렌더링하지 않는다** (거짓 카드 금지 — D-03 원칙과 동일).
+2. 홈 상단 "오늘"(`TrainingHome.tsx:37-46`) 아래에 해당 요약을 **베타 표시**로 배치.
+3. 통증 4+ 배너를 **6일 창**에서 **지난 14일 + 부위별 지속 여부**로 확장하고, "7일 이상 반복되면 지도자·보호자 상의" 텍스트를 유지.
+   - ⚠️ 이 배너는 **안전 표면**이므로 원래 문구("계속 불편하면 훈련 전에...")를 제거하지 않는다.
+
+**검증:**
+- `grep -n "briefing" app/src/domain/home-view-model.ts` → 1건 이상
+- 빈 데이터(훈련 이력 0건)에서 브리핑 섹션이 **DOM에 아무것도 렌더링하지 않음** (테스트)
+- 통증 4+ 기록이 14일 안에 있으면 배너 표시, 없으면 부재
+
+### §2-2 게이미피케이션 제거·재배치 (D-02)
+
+**문제:** `EngagementStrip`이 포인트(`{points}P`, `EngagementStrip.tsx:39`), 불꽃(`Flame`, :50-51), 스트릭(`recordingStreak`, :46)을 그린다. PHILOSOPHY §1·§9-9 금지.
+
+**할 일 — 오너 결정 필요 없이 확정 가능한 방향:**
+1. **포인트/불꽃/스트릭 지표 3개를 제거**하고, 대신 **"기록 보존" 정보**로 교체:
+   - "이 기기에 N건 저장됨 · 온라인 보관은 계정 연동 후" (클릭 시 `More` → 백업 경로로 이동 가능한 링크로)
+2. `DecorationShop` 진입(홈)을 **제거하거나 숨김** — 포인트 구매 구조(`DecorationShop.tsx:26,39`) 자체가 PHILOSOPHY §9-9 위반이므로, **꾸미기 기능을 "무료 스탬프"로 전환**하는 리디자인을 다음 작업으로 분리하고, **이번엔 홈에서 진입점을 제거**한다.
+3. 계약 테스트 갱신: `EngagementStrip.contract.test.tsx`가 points/streak 표시를 기대한다면 제거에 맞게 수정.
+
+**검증:**
+- `grep -n "points\|recordingStreak\|Flame" app/src/screens/home/EngagementStrip.tsx` → 0건
+- `grep -n "DecorationShop" app/src/screens/home/` → 홈에서 진입 제거 확인. 컴포넌트는 `app/src/screens/home/DecorationShop.tsx`에 존치(삭제 금지 — NORTH_STAR "지우지 마라" 원칙, 재사용 대기)
+
+### §2-3 거짓 기본값 제거 (D-03)
+
+**문제:** `EveningCheckin.tsx:75` `value={sleep > 0 ? sleep : 7}` — 안 잔 상태인데 7h 표시·기록 위험.
+
+**할 일:**
+1. 슬라이더 기본값을 **비어 있음**으로: `value={sleep > 0 ? sleep : undefined}` → range는 undefined를 못 그리므로 **"미기록" 상태를 별도로**: 
+   - 슬라이더를 렌더링할 때 `sleep === 0`이면 **트랙을 비우고 손잡이를 숨긴다** (또는 가장 왼쪽 4h? — 아니다. **손잡이 자체를 안 그림**: 뷰는 "아래로 움직여 기록" 안내 + 빈 트랙)
+   - 첫 `onChange`(= drag/press) 시에만 값이 생긴다.
+2. 체중·심박("비워둬요")과 일관된 라벨 "미기록" 유지.
+3. 저장 시 `sleep === 0`이면 `sleepH: 0`으로 저장(기존 스키마 호환) — **fieldsProvenance `sleepH: explicitOrMissing(sleep > 0)` 는 이미 false 처리**(`EveningCheckin.tsx:48`)이므로 분석 입력에서 제외됨.
+
+**검증:**
+- 빈 상태에서 DOM에 손잡이/값 노출 없음 (e2e: `slider thumb` 커서값 없음)
+- 드래그 전 저장 → `sleepH = 0` 저장, 추이에 반영 안 됨
+- 기존 테스트(`EveningCheckin` 관련) 중 `value=7`을 기대하는 케이스가 있으면 수정 — **있을 수 있으니 grep 먼저**: `grep -rn "value={sleep" app/src --include="*test*"`
+
+### §2-4 "가능 일수" 선택의 의미 배선 + 9.5 표기 정리 (D-04, D-11)
+
+**문제:** `PlanBeta.tsx:171` `requestedFrameLength: 9.5` 고정 ↔ 사용자 `availableDayCount` 관계 미배선. 홈은 "9일·10일"(`home-view-model.ts:36`), 위저드는 "기본 9.5일"(`PlanIntake.tsx:75`) — 3갈래 불일치.
+
+**할 일 (화면·표기 한정, 엔진 로직 무접촉):**
+1. `PlanIntake.tsx` 날짜 단계 복사문을 **고른 날 수가 계획에 어떻게 쓰이는지**로 수정:
+   - 예: "고른 N일을 9.5일 기본 틀의 운동 가능 날짜에 배치합니다. N이 작을수록 계획의 하루 훈련 시간이 늘어날 수 있어요" — **단, 엔진 배선을 이번에 만들지 않고** 표기만 정직하게.
+   - ⚠️ 실제 배선은 엔진 작업이라 비목표. **"선택한 값이 현재 베타에서 결과 표시에 반영되는 범위"를 카피로 솔직하게** 적는다.
+2. 홈의 "9일·10일로 일지 묶어 보기"(`home-view-model.ts:36`)를 **"9.5일 주기로 일지 묶어 보기" 또는 현재 구현의 정확한 표기**로 통일. `.5`의 유무를 **코드와 카피 사이에서 일치**시킨다 (무엇이 맞는지는 엔진 담당자 확인 후 — 이 지시서는 **불일치 제거**만 목표).
+
+**검증:**
+- `grep -rn "9일·10일\|9.5일 틀" app/src` → 표기 1가지로 통일
+- 인테이크 카피에 "고른 날 수는 N대로 배치됩니다"가 아니라 **범위 설명**(정직)으로 표시
+
+---
+
+## 3. 작업 항목 — 중대 (P1)
+
+### §3-1 계획 위저드 답 축적 표시 (D-05)
+
+**문제:** `PlanIntake` 6단계 동안 직전 답이 전혀 남지 않는다(`PlanIntake.tsx:114-123` 진행바 뿐). TAP v1 D2/D3 재발.
+
+**할 일:**
+1. 인테이크 상단에 **"지금까지" 요약 스트립** 추가: 종목 → 경험 → 초점 → 가능 일수 → 2부, **답이 생기면 한 줄씩 접혀 위로 쌓인다** (UX1의 `FormSec` 요약 패턴 재사용 — `summary`가 있으면 접기).
+2. 요약 줄을 탭하면 **해당 단계로 점프** (수정 가능).
+
+**검증:**
+- e2e: 2단계 진행 후 1단계 요약이 화면 상단에 존재, 탭하면 1단계로 복귀
+- 접힌 줄이 답 없이 렌더링되지 않음 (undefined는 미노출 — §2-3 원칙)
+
+### §3-2 수치 입력 정직화: 페이스 포맷 가이드 (D-06)
+
+**문제:** `avgPace` 자유 텍스트(`PostSessionForm.tsx:113`) — "5:30"/"5.30"/"530" 혼입.
+
+**할 일 (파서 철거가 아니라 안내):**
+1. 평균 페이스 입력 아래에 **형식 예시**를 상시 표시: `예: 5'30" 또는 5:30 (분:초)`
+2. 입력 검증: `5:30`·`5'30"`·`5.30` 형식을 받아들이는 **표준화 함수**를 `domain/`에 만들고, 저장 시 정규화+원문 보존.
+   - ⚠️ 단, NORTH_STAR §3 "60m 미만 스프린트 페이스 환산 금지"는 건드리지 않는다 — **형식 표준화만**.
+3. 기존 저장값(비정규화 문자열)은 **조회 시 표시만** 정규화하고 저장 값을 고치지 않는다 (마이그레이션 금지 — 로컬 데이터 무단 수정 금지).
+
+**검증:**
+- 단위 테스트: `normalizePace("5:30") === normalizePace("5'30\"") === normalizePace("530")` → 단일 표준
+- e2e: 형식 안내 문구 표시 확인
+
+### §3-3 일지 종류 선택의 재진입 비용 제거 (D-08)
+
+**문제:** 홈 CTA "오늘 기록하기"가 `EntryChooser` 선택을 매번 통과(`AppShell.tsx:164`).
+
+**할 일:**
+1. 홈 CTA를 **입력 종류 선택 없이 기본값(훈련 후)** 1탭 직행으로: `onWriteLog()`가 `entryType: "post-session"` 기본값.
+   - 단, "하루 마무리"를 자주 쓰는 사용자(쉰 날)를 위해 홈에 **두 번째 경로**(작은 "쉰 날은 하루 마무리에서" 링크, `TrainingHome.tsx:45` — 이미 존재)를 명시적 버튼으로 승격.
+2. `AppShell.tsx`에서 `entryType ?? "choose"` → 홈 진입은 `"post-session"`, More 등 다른 진입은 `"choose"` 유지.
+3. **온보딩(D-08 온보딩 0건)**은 별도 작업으로 분리 — 이번엔 선택 화면의 **설명 한 줄 보강**(`EntryChooser.tsx:89-93`의 기존 안내 활용)까지만.
+
+**검증:**
+- e2e: 홈 CTA 1탭 → 훈련 후 폼 직접 진입
+- 컨트랙트 테스트: `entryType === "choose"` 경로 유지 확인(existing entrance from More)
+
+### §3-4 주간/사이클 표기 정직화 (D-11 잔여)
+
+**할 일:** 홈 흐름 요약 카피를 코드 구현과 일치시키는 것은 §2-4에서 처리. 여기선 **기간 뷰 라벨을 추가하지 않는다** — 비목표(엔진·달력 로직)이다.
+
+---
+
+## 4. 작업 항목 — 접근성·안전 (P2)
+
+### §4-1 상세 화면 접근성 (D-09 전반)
+
+**문제:** `LogDetail.tsx` aria-label 0건.
+
+**할 일:**
+1. `LogDetail.tsx`의 모든 버튼/인터랙티브 요소에 `aria-label`·`role` 부여 (수정/삭제/뒤로/메모 열기).
+2. `MoodStrip`·`BodyDiagram` 등 시각 전용 컴포넌트에 **스크린리더 대안 텍스트**(`aria-label` 또는 숨김 텍스트) 추가 여부를 코드로 확인하고, 없으면 추가.
+   - 참고: `BodyDiagram`은 안전 입력이므로 **키보드 접근**(방향키로 부위 선택)까지 검토 — 이번엔 최소 대안 텍스트.
+3. `--ink-4`(#8F9894) 대비 미달 라벨 사용처를 **`--ink-3`(#5F6965)로 승격**하거나 크기/두께 보강 (단위 라벨 km/min//km 등, `PostSessionForm.tsx:115-116`).
+
+**검증:**
+- `grep -c "aria-label" app/src/screens/LogDetail.tsx` → 이전(0)보다 증가
+- alpine/axe 스캔(있는 도구 사용)에서 LogDetail color-contrast 위반 0건
+
+### §4-2 로컬 데이터 보존 안내를 행동으로 (D-10)
+
+**문제:** `SYNC_UPSELL_NOTICE` 텍스트 반복, 클릭 불가(`AppChrome.tsx:97-101` generic은 actionLabel 없음).
+
+**할 일:**
+1. 저장 토스트의 generic receipt(`AppChrome.tsx:134-137`)에 **"백업 안내 보기" 액션** 추가 → `RestoreBackup`/백업 화면으로 이동.
+2. `RestoreBackup`에 **복원 전 확인 절차**: "복원은 현재 기기의 기록과 합치거나(병합) 덮어씁니다(교체)" 선택 + 확인. **어느 쪽인지 서버·스펙 계약 확인 후 구현** — 스펙 불명이면 **덮어쓰기 방지(병합 기본)로** 안전 쪽 폴백(NORTH_STAR §3 "실패시 안전한 쪽").
+
+**검증:**
+- e2e: generic 저장 후 토스트에 "백업 안내 보기" 존재, 탭하면 백업 화면
+- 복원 전 확인 다이얼로그 존재 (기존 `RestoreBackup.contract.test.tsx` 갱신)
+
+### §4-3 사람 검토 상태를 화면으로 (D-13 1단계)
+
+**문제:** 차단 화면이 "상의해 주세요"만 하고 결과 기록 경로가 없다(`PlanBeta.tsx:96-99`).
+
+**할 일 (1단계 — 화면만):**
+1. 차단 화면에 **"상의 후 상태 기록" 스텁 버튼** 추가: 누르면 **오늘 날짜의 "하루 마무리" 폼으로 이동**(이미 `onWriteLog?.("evening")` 존재, `PlanBeta.tsx:100` — **확인 후 유지·보강**, 이동 버튼 라벨을 "지도자와 상의한 내용을 일지에 남기기"로).
+2. 별도 "보호자 승인" 화면 구현은 **계정 작업(U아직 미계획)** 으로 분리 — 본 지시서는 경로 연결까지만.
+
+**검증:**
+- 차단 화면의 야간 버튼이 하루 마무리 폼으로 연결 (e2e)
+
+---
+
+## 5. 검증 계획
+
+### 5-1 실측 (UX1과 같은 자)
+
+| 화면 | 손대기 전 (실측 예정) | 상한 | 근거 |
+|---|---|---|---|
+| 홈 (빈 상태) | 실측 | **1 화면 이내 + 브리핑 1줄** | D-07 |
+| 훈련 후 (빈 상태) | 1268/1152 (UX1 후) | **회귀 금지** (UX1 수치 유지) | R2 |
+| 하루 마무리 (빈 상태) | 실측 | **UX1 상한 유지** (1300/1350) | D-03이 길이를 늘리면 안 됨 |
+
+### 5-2 grep 검증 (모두 현재 상태를 먼저 출력)
+
+```bash
+# 현재 상태 확인 후 개선
+grep -n "points\|recordingStreak\|Flame" app/src/screens/home/EngagementStrip.tsx   # §2-2: → 0
+grep -rn "value={sleep > 0 ? sleep : 7}" app/src                                  # §2-3: → 0
+grep -rn "9일·10일" app/src                                                        # §2-4: → 0
+grep -rn "requestedFrameLength: 9.5" app/src/screens/PlanBeta.tsx                 # §2-4: 표기 카피 참조로 대체 (로직 유지)
+grep -c "aria-label" app/src/screens/LogDetail.tsx                                # §4-1: 0 → >0
+```
+
+### 5-3 테스트 명령
+
+```bash
+cd app && npm test            # 전체 컨트랙트 (기존 338+ 유지)
+cd app && npx playwright test  # 브라우저 회귀 (161 passed 유지 기준)
+```
+
+---
+
+## 6. 비목표 (NON-GOALS — 건드리면 안 되는 것)
+
+| 금지 | 사유 |
+|---|---|
+| `@impl/plan-generator`·`safety-gate`·`memo-safety` 로직 수정 | NORTH_STAR §3 — 화면 표시 한정 |
+| 30개 DRAFT 템플릿 활성화·표기 변경 | HANDOFF-0730 §4 — 수치 템플릿 비활성 유지 |
+| 개인 목표 페이스 처방·환산 | NORTH_STAR §6-1 오너 대기 |
+| 로컬 저장 데이터 무단 마이그레이션 | D-06 참조 — 기존 값 보존 |
+| `EngagementStrip`·`DecorationShop` 파일 삭제 | NORTH_STAR "지우지 마라" — 제거는 화면 진입, 파일은 존치 |
+| AI 채팅·인박스 본체 구현 | 대형 작업 — §2-1 브리핑 스텁이 한계 |
+| 세션 슬롯 타입 확장(QUALITY·REST의 PM 허용) | **§8-10 오너 B 확정(2026-08-04)으로 비목표 해제** — `session-types.ts`·`session-builder.ts`·`plan-session-schema.ts`·`progress.ts` 바인딩의 **별도 엔진 작업지시서**로만 진행(§8-11·§8-12 계약 준수). `safety-gate`·`memo-safety` 로직은 그대로 금지 |
+
+---
+
+## 7. 완료 판정
+
+- [ ] §2-1~§2-4 검증(grep + e2e) 통과
+- [ ] §3-1~§3-3 검증 통과
+- [ ] §4-1~§4-3 검증 통과
+- [ ] §8-3 전용 도메인 연산 **`movePlanSession(activePlan, from, to)`** 도입 — `recordPlanProgress` 미사용, 진행 기록 재키잉 **무손실** (검토 판정 V1)
+- [ ] §8-4 이동 전 **화면 단위 안전 검사** 연결: MAIN 셀 이동 · 진행 기록 좌표 → **차단**; QUALITY→PM·PM 비회복 훈련 배치는 **§8-10 B 확정**에 따라 타입 확장 머지 후 허용(머지 전 차단 유지) · PM 2부 일수 ≤2 상한 (R-1..R-9 평가기 없음이므로 전체 규칙은 미약속 — V3)
+- [ ] §8-5 드래그 전용이 아닌 **탭→이동→목적지 선택 접근성 경로** 구현
+- [ ] §8-7 검증: 좌표 (day,slot) 유일성 계약 · 타입 가드(V2 — 머지 전 QUALITY/REST 세로 드래그 제외, 머지 후 **§8-11 재계획 검증 필수**) · e2e 드래그 · 1 화면 핏(가로 오버플로 0, V5) · **오너 결정 §8-10 (B) 기준 구현**
+- [ ] §8-10 B 확정 배선: **엔진 작업지시서 분리**(`session-types.ts`·`session-builder.ts`·`plan-session-schema.ts`·`progress.ts`) · 확장 머지 전 기존 차단 유지
+- [ ] §8-11 **이동 후 재계획/재설계 액션**: 이동 = 재계획 대기(즉시 반영 금지) → [재계획 실행]/[취소] · 변경 예고 카드(실세션 라벨) · 진행 기록 좌표 보호(§9 플랜/완료/경험 구분) · 재계획 안전 게이트(D9/consent/스코프 원자 재확인) · 연속성(`PREVIOUS_FRAME_CONTEXT_RETAINED`) · 후보 무효화(stale fingerprint)
+- [ ] §8-12 **스펙 계승 레지스트리** 준수: 변경 전 해당 스펙 조항 인용 · UI는 계약을 소비만(흉내 금지) · 레지스트리 11종 불변식 위반 0건
+- [ ] `cd app && npm test` 전체 통과 (기존 338개 유지 또는 갱신 테스트 포함)
+- [ ] 브라우저 회귀(161 passed 기준) 유지
+- [ ] 수정된 계약 테스트가 새 동작을 명시적으로 잠근다 (계약 우선)
+
+---
+
+---
+
+## 8. 추가 개선안 — 달력 직접 조작 캘린더 (꾹 눌러 드래그) [오너 요청 2026-08-04]
+
+### 8-0. 사용자 요구 원문
+
+> "달력/훈련 계획 생성에서 날짜나 달력에 맞춰서 일정을 조정하고 싶을 때 꾹 눌러서 드래그해서 달력을 시각적으로 옆으로 밀거나 위아래로 옮기는 식의 디자인 구성을 할 수 있을까. 그냥 달력날짜만 수정하는 느낌보다는 달력을 시각적으로 보고, 그 달력에서 직접 움직이게 하는 거지. 선수들이 달력에 훈련 계획이 오전 오후로 잘 만들어져 보이면 항상 스크린샷 캡쳐해서 저장하고 보거든."
+
+### 8-1. 의도 해석 (3가지)
+
+1. **직접 조작(direct manipulation)**: 세션의 날짜/슬롯을 숫자 필드로 고치는 게 아니라, **시각적 캘린더 위에서 세션 블록을 손가락으로 직접 움직여** 배치를 바꾼다.
+2. **2축 드래그**: 가로 드래그 = 날짜(DAY) 변경, 세로 드래그 = 오전/오후(AM/PM) 슬롯 변경.
+3. **스크린샷 가치**: 선수는 AM/PM 배치가 잘 나온 캘린더를 항상 캡처해 저장·공유한다. 즉 이 캘린더는 **"계획의 그림"**이어야 하며, 단순 날짜표가 아니다.
+
+### 8-2. 문제 — 드래그가 사용할 대상은 이미 코드에 있다 (新 D-14)
+
+| 현재 상태 | 근거 |
+|---|---|
+| 진행 기록은 세션을 `sessionDay`+`sessionSlot` 쌍으로 이미 식별 | `PlanActiveState.tsx:33-34` `recordPlanProgress` / `ActivePlan.tsx:44,75,93-96` (`DAY {session.day} · {slot}` 루프) |
+| 조정 수단이 없음 — 계획 화면은 진행 기록 버튼만 | `ActivePlan.tsx:88-102` (role 그룹 버튼뿐, 이동/교환 없음) |
+| 오전/오후 2부제 슬롯 개념은 설계에 있으나 그리드 표현 없음 | `PlanIntake.tsx:11,176-182` `SecondSessionMode` = `SINGLE_SESSION_ONLY` / `RECOVERY_PM_ALLOWED` |
+| 9.5-Cycle 캘린더가 **핵심 차별화** 규정임에도 화면에 없음 | PHILOSOPHY §3.9 "Week / 9.5-Cycle / Timeline. **9.5-Cycle 뷰가 핵심 차별화**. Week만 만들면 일반 트레이닝 앱과 차이 없음" · `CycleRail` 컴포넌트는 스펙만 존재(app/src 구현 0건, `COMPONENT_INVENTORY.md:333-337`) |
+| ⚠️ QUALITY·REST 세션은 `slot: "AM"` **리터럴 고정** — PM은 EASY+RECOVERY_INTENT 전용, 최대 2일 | `session-types.ts:24-46` (REST `slot:"AM"` · QUALITY `slot:"AM"` · EASY만 `PlanSessionSlot`) · `session-builder.ts:150-172` (`recoverySecondSessionDays` ≤ 2일, CONSERVATIVE/단일세션/회복초점이면 0일) |
+| ⚠️ 진행 기록 `recordPlanProgress`는 **이동이 아니라 상태 기록** — 타깃 (day,slot)가 활성 계획에 없으면 거부 | `progress.ts:18-42` (`SESSION_DAY_NOT_IN_ACTIVE_PLAN`/`SESSION_SLOT_NOT_IN_ACTIVE_PLAN`) |
+| ⚠️ 9 Rules 런타임 평가기는 **앱 코드에 없음** (스펙·용어집에만 존재) | `grep app/src` → `glossary.ts:110`·`plan-beta-formation.ts:31` 뿐 · `RULE_SPEC_D1_D9.md`/`RVE_RULE_EVALUATOR_BINDING_SPEC.md`는 화면 미연동 |
+| ⚠️ MAIN 셀은 고정 D-5가 아니라 **가용일의 first/last(중간)** — 포메이션 `TRAINING_MAIN` 노출 기준 | `plan-beta-formation.ts:38-55` `selectMainDays` · `:29-34` exposures |
+
+→ **결론: 데이터 모델(sessionDay/sessionSlot)과 규칙(PHILOSOPHY 3.9)은 준비되어 있으나, "이동"이라는 연산은 계약·타입·런타임 어디에도 없다.** 캘린더 그리드는 신규 구현이다. §8은 빈 레이어를 만들되, 위 4가지 실계약 제약을 설계에 그대로 반영한다.
+
+### 8-3. 할 일
+
+**1) 9.5-Cycle 캘린더 그리드 도입** (PHILOSOPHY §3.9의 "9.5-Cycle 뷰"를 화면으로)
+- 가로축 `DAY 1..10` (사이클 라벨 `D-1`~`D-9` + 전환 `D-.5`), 세로축 **AM / PM 2레인**(`RECOVERY_PM_ALLOWED`일 때; `SINGLE_SESSION_ONLY`면 1레인).
+- ⚠️ 가로축은 **실데이터 기준 DAY 1..10**: 생성기가 `day 1..10` 루프로 세션 생성(`session-builder.ts:197`)하고, 일수 선택도 1..10에 분포한다(`plan-beta-flow.ts spreadTrainingDays`: 3→[1,5,9] · 4→[1,4,7,10] · 5→[1,3,5,7,9] · 6→[1,3,5,6,8,10] · 매일→[1..10]). 사이클 표기 `D-1..D-9 + D-.5`는 PHILOSOPHY §4와 일치하되 **열은 DAY 1..10**로 그린다. ("DAY 1..9"는 오표기)
+- 각 셀에 세션 블록: **에너지 시스템 색 좌측 strip 4–6px + 코드·이름** (Calendar 셀은 T1 Strong 허용 범위 — `VISUALIZATION_SYSTEM.md:86` "Calendar 셀 … 셀 배경 또는 좌측 strip 4–6px"; `:158` "점 위치 (AM/PM)"; `C-7 Cycle rhythm rail (9.5-day) | T1` `:188`).
+- MAIN 셀 = `※` 마커 + 강조 — 단, MAIN 표기는 **포메이션의 `TRAINING_MAIN` 노출(실제 가용일) 기준**이며 고정 D-5를 가정하지 않는다(`plan-beta-formation.ts:29-34,38-55`) (`COMPONENT_INVENTORY.md:335`).
+- ⚠️ DESIGN_TOKENS §1.4(`:50`) "도트·underline만" 규칙은 **VISUALIZATION_SYSTEM §Q1에서 폐기됨** — Calendar 셀은 T1 Strong 허용(`VISUALIZATION_SYSTEM.md §Q1, :86, :135`). "예외 허용"이라는 애매한 표현 대신 **셀 좌측 strip 4–6px(T1) 또는 셀 배경 wash**를 문법으로 확정한다.
+- ⚠️ **10열 × 터치 44px 모순** (검토 실증): 390px 뷰포트에서 10열 단일행은 열당 ~35px — 터치 미달 + 드래그 곤란. **기본 (A) 5×2 분할행**(반사이클 2행, 열당 ~72px, 1화면 유지, D-.5 전환은 행 경계) 또는 (B) 단일행 + 열당 44px 최소(가로 스크롤 필요 → 스크린샷 1장 깨짐). **기본 (A)**.
+
+**2) 롱프레스 → 드래그 이동 모드**
+- 세션 블록을 **꾹 누르면**(long-press, 300–500ms, 감도는 실측) 이동 모드 진입: 블록이 살짝 떠오르며 드래그 가능 상태임을 알린다 (기능적 피드백이므로 PHILOSOPHY §9-4 "장식 애니메이션 금지"에 걸리지 않음).
+- **가로 드래그** → `sessionDay` 변경 (`DAY 4` → `DAY 5`) — 전 방향 허용.
+- **세로 드래그** → `sessionSlot` 변경 — ⚠️ **범위(§8-10 오너 B 확정 반영, 검토 판정 V2)**: **타입 확장 머지 전**엔 EASY(BASE)의 AM↔PM 및 PM 회복 ↔ AM 재배치에만 유효 — QUALITY를 PM에 놓으면 거부 + "강도 훈련은 오전 배치" 안내. **§8-10 B 확정** 후 QUALITY·REST도 PM/자유 슬롯 이동이 가능해지나, 해당 엔진 타입 확장(`session-types.ts`·`session-builder.ts`·`plan-session-schema.ts`·`progress.ts`)이 머지된 뒤에만 UI가 활성화 — 머지 전에는 기존 차단 유지(실패 시 안전한 쪽, NORTH_STAR §3). 확장 후 QUALITY→PM 배치는 **§8-11 재계획 검증 필수**(이동 단독 반영 금지)
+- 목적지 셀 하이라이트 + **직전 안내 문구**: "DAY 6 오후로 이동하면 기존 '오후 회복 운동'과 자리가 바뀝니다" — **실제 코드 라벨 사용**(`sessionLabel`/`prescriptionLabel` 계승, `labels.ts:139-164`). "Z2 base" 같은 비존재 용어 금지 (D-03 "거짓 카드 금지" 원칙).
+- 놓기(drop) → §8-4 화면 단위 안전 검사 통과 시 **별도 도메인 연산 `movePlanSession(activePlan, from, to)`** 로 반영: 활성 계획 `sessions[]`의 (day,slot) 좌표 교환/이동 + `StoredPlanProgress` 재키잉(소스·타깃 중 진행 기록이 있으면 이동 차단). ⚠️ `recordPlanProgress`는 **종료 후 상태 기록용이지 이동용이 아님** — 재사용 금지. 이유: `progress.ts:18-42`가 계획에 없는 좌표를 거부하고, `plan-beta-store.ts:73-90` upsert가 동일 좌표의 진행 기록을 **덮어써 소실/오배치**시킨다.
+- 데이터 레이어: `MICROCYCLE_AND_CALENDAR_MAPPING_SPEC.md` 네임스페이스 유지 — 표시 라벨 `CYCLE_DAY.D-*`와 규칙 ID `RULE_SPEC_D1_D9.D-*`를 **절대 혼용 금지** (`display-label.ts:11,29`; 매핑 스펙 `:219 sessionSlot: AM|PM|FULL_DAY|UNSPECIFIED`).
+
+### 8-4. 안전 검증 — 드롭 전 9 Rules 체크 (NORTH_STAR §3 + PHILOSOPHY §4)
+
+드래그는 계획 배치를 바꾸므로, 반영 전에 PHILOSOPHY의 9 Rules 자동 검증 원리에 따라 검사한다. **위반 시 이동하지 않는다**(폴백: 안전한 쪽 — NORTH_STAR §3 "실패하면 덜 보여준다" `:96,:99`).
+
+| 검사 | 위반 시 동작 |
+|---|---|
+| **MAIN 셀 이동** — 포메이션 `TRAINING_MAIN` 노출(실제 가용일)인 세션을 다른 DAY로 | **차단** + "주요 훈련(★)은 자리를 바꾸지 않아요" (`plan-beta-formation.ts:29-34` 기준) |
+| **강도 세션을 PM으로 — 타입 확장 머지 전** | **차단** + "강도 훈련은 오전 배치" (`session-types.ts:41-46`) — §8-10 B 머지 전까지 유지 |
+| **강도 세션을 PM으로 — 타입 확장 머지 후** | **허용**하되 **§8-11 재계획 검증 필수**(즉시 반영 금지) + PM 2부 일수 ≤2 상한 유지 (`session-builder.ts:150-172` · DOUBLE_SESSION_BETA_SAFETY_CONTRACT) |
+| **PM에 비회복 훈련 배치** | 머지 전 **차단**("오후는 RPE 1~2 회복 전용" — `PlanIntake.tsx:82,181`) · 머지 후 **허용하되 PM 2부 일수 ≤2 위반 시 차단**("오후는 회복 최대 2일") |
+| **휴식일(REST) 세션을 이동 대상으로** | **차단** — REST 세션(`role:"REST"`)은 드래그 대상 제외 |
+| 대상 셀에 세션이 이미 있음 | **자리교환(swap) 미리보기 + 사용자 승인 → §8-11 재계획 대기로 전환**; 승인 없으면 이동 안 함 |
+| 소스·타깃 좌표에 진행 기록이 있음 | **차단** — 진행된 세션(`ActivePlan.tsx:75` recorded 맵)은 이동 불가, 진행 전 세션만(§9 플랜/완료/경험 응답 구분) |
+| **이동으로 인접 배치 연쇄 변경(앞뒤 훈련·일정)** | **즉시 반영 금지 → §8-11 재계획 대기** — "이동하면 DAY 4·6 배치가 바뀝니다. 재계획을 실행할까요?" (FA-TC-014 — fresh validation 전 단독 반영 금지) |
+
+- ⚠️ **D9 게이트 유지**: 차단 상태(`PlanBeta.tsx` blocked view)에서 드래그 진입 자체를 금지 — 차단 화면은 그대로.
+- ⚠️ **R-1..R-9 런타임 평가기는 앱 코드에 없다**(검토 실증: `app/src` grep → `glossary.ts:110` 용어집·`plan-beta-formation.ts:31` 뿐). 따라서 위 표는 **화면 단위에서 자체 판정 가능한 규칙만** 담는다. `RULE_SPEC_D1_D9.md`+`RVE_RULE_EVALUATOR_BINDING_SPEC.md` 판정 표면 연동은 **별도 대형 작업(비목표)** — 그 전까지 "전체 9 Rules 재검증 후 이동"을 약속하지 않는다 (과장 금지, D-03 원칙).
+
+### 8-5. 제스처 충돌 · 접근성
+
+- **터치 vs 스크롤 충돌**: 블록은 **롱프레스 진입 전까지 `touch-action: pan-y` 유지**(선례 `journal-reader.css:2`) — 일반 세로 스크롤 그대로 동작. 롱프레스(300–500ms) 인식 시 `touch-action: none`으로 전환해 드래그 이동 활성화. 롱프레스 인식 전 10px 이내 움직임은 스크롤로 무시(감도 실측). **가로 스크롤 층이 없으므로**(§8-6 1화면 핏) 충돌은 세로 스크롤과의 분리가 전부다.
+- **접근성 대안 (필수 — D-09 원칙 계승)**: 드래그만으로는 조작 불가 → **탭 → "이동" 버튼 → 목적지 선택(날짜 옵션 + AM/PM 토글)** 경로를 함께 제공. `aria-label`은 기존 `ActivePlan.tsx:86`의 `DAY n <slot> 진행 기록` 패턴을 계승해 `DAY n <slot> 이동`으로. 드래그 미지원 환경에서도 이동 기능이 완전히 동작해야 한다(키보드/스크린리더).
+
+### 8-6. 스크린샷 가치 캘린더 스펙
+
+| 요소 | 스펙 | 근거 |
+|---|---|---|
+| 전체 9.5-Cycle이 **1 화면**(가로 스크롤 금지 — 캡처 잘림 방지) | **5×2 분할행**(반사이클 2행) 기본 — §8-3(1) (A) | D-07 스크롤 원칙 + UX1 §0-A R1 + 터치 44px 동시 충족 |
+| 열 라벨 | DAY 1..10 + 사이클 라벨 `D-1..D-9`/`D-.5`(표시 전용, `CYCLE_DAY` 네임스페이스) | `session-builder.ts:197` · 매핑 스펙 `:89-101` |
+| AM/PM 레인 라벨 | 오전/오후 + 모노스페이스 슬롯 코드 | `ActivePlan.tsx:79` 슬롯 라벨 계승 |
+| 에너지 색 | **좌측 strip 4–6px(T1)** — DESIGN_TOKENS `:50` 구규칙은 §Q1 폐기, Calendar 셀 T1 허용 | `VISUALIZATION_SYSTEM.md §Q1, :86, :135` |
+| MAIN | `※` 마커 + ink 강조 — **포메이션 TRAINING_MAIN(실제 가용일) 기준** | `plan-beta-formation.ts:29-34` · COMPONENT_INVENTORY `:335` |
+| 형태 | radius 0 · 그림자 없음 · 숫자 `tabular-nums` · Inter/JetBrains Mono | DESIGN_TOKENS §10 체크리스트 `:328-339` |
+| 터치 타깃 | 블록/셀 ≥ 44px (5×2 분할행으로 충족) | DESIGN_TOKENS `:339` · COMPONENT_INVENTORY `:26` |
+| 동작 피드백 | 드래그 시 블록 추종(기능적)만 · 축하/장식 애니메이션 금지 | PHILOSOPHY §3.10, §9-4 |
+| PM 레인 | `SINGLE_SESSION_ONLY`면 PM 레인 렌더링 안 함(빈 레인 스크린샷 방지) | `PlanIntake.tsx:176-178` · D-03 "거짓 카드 금지" |
+
+### 8-7. 검증
+
+- **데이터 계약**: `movePlanSession` 반영 후 `sessions[]` 좌표 (day,slot) **유일성 유지** + 진행 기록 재키잉 무손실 — 컨트랙트 테스트로 잠근다.
+- **타입 가드**: QUALITY/REST는 세로 드래그 대상 아님(`session-types.ts:24-46`) · PM 배치는 EASY+RECOVERY_INTENT 최대 2일 — 컨트랙트 테스트.
+- **e2e(Playwright)**: ① 블록 long-press → 이동 모드 진입 ② 가로 드래그 → DAY 변경 ③ **EASY 세션** 세로 드래그 → AM/PM 변경 ④ **QUALITY 드롭 to PM → 머지 전 차단 + "강도 훈련은 오전 배치"(위치 불변) · 머지 후 §8-11 재계획 대기 진입 + PM 2일 상한 검사** ⑤ MAIN 셀 드래그 → 차단 ⑥ 진행 중 세션 드래그 불가 ⑦ 탭→"이동"→목적지 선택 접근성 경로 ⑧ 1 화면 핏(가로 오버플로 0) ⑨ `SINGLE_SESSION_ONLY`에서 PM 레인 미노출 ⑩ 이동 드롭 → 재계획 대기 상태 → [재계획 실행] 시 새 버전 승계(기존 버전 불변) · [취소] 시 원복, 진행 기록 좌표 무변경.
+- **토큰 준수**: 그리드 스크린샷에서 에너지 색이 좌측 strip 4–6px(T1) 밖에 쓰이지 않음을 코드 리뷰로 확인.
+- `grep -c "aria-label" app/src/screens/plan-beta/ActivePlan.tsx` → 기존(세션 버튼용)보다 증가 (이동 버튼·그리드 셀용).
+
+### 8-8. 이 항목에서 **하지 않는** 것 (비목표 재확인)
+
+| 안 함 | 근거 |
+|---|---|
+| 계획 생성 엔진·9 Rules 판정 엔진 신규 구현 | §6 — 판정 표면 연동은 별도 대형 작업 |
+| `sessionDay`/`sessionSlot` 스키마 변경 | 기존 계약 유지 — 좌표는 `sessions[]` 안에서만 교환 |
+| **세션 슬롯 타입 확장(QUALITY·REST의 PM 허용) — 본 문서 UI 범위** | **§8-10 오너 B 확정(2026-08-04)으로 비목표 해제** — 확장은 `session-types.ts`·`session-builder.ts`·`plan-session-schema.ts`·`progress.ts` 바인딩의 **별도 엔진 작업지시서**(§8-11·§8-12 계약 준수). 본 문서 UI는 확장 결과를 **소비만**: 머지 전엔 QUALITY/REST 세로 드래그 차단 유지 |
+| `recordPlanProgress`로 "이동" 구현 | 상태 기록용 계약에 이동을 재사용 금지 — 이동은 전용 `movePlanSession` |
+| 30개 DRAFT 템플릿 활성화·개인 페이스 처방 | HANDOFF-0730 §4 / NORTH_STAR §6-1 |
+| 장식 애니메이션·포인트·스트릭 | PHILOSOPHY §9-4, §9-9 |
+
+### 8-9. 디자인 최종 검토 판정 (2026-08-04, 실코드 검증)
+
+오너 "디자인 최종 검토 후 개선 진행" 지시에 따라 §8 전체를 실코드로 재검증. **방향(직접 조작 캘린더)은 유지하되, 구현 가능 범위를 실계약에 맞게 정정하는 검토였다.**
+
+| # | 검토 결론 | 근거 (실증) |
+|---|---|---|
+| V1 | **"이동"은 진행 기록과 다른 연산** — §8-3 원문의 `recordPlanProgress` 반영은 범주 오류. 전용 `movePlanSession` 필요 | `progress.ts:18-42` 거부 코드 · `plan-beta-store.ts:73-90` upsert가 좌표 진행 기록을 덮어써 소실/오배치 위험 |
+| V2 | **세로 드래그(AM↔PM)는 타입상 EASY에만 가능** — QUALITY·REST가 AM 고정, PM은 회복 전용 최대 2일. 오너 원문 "오전 오후로 잘 만들어져 보이는" 그림은 현재 엔진이 만들 수 없는 부분을 포함 | `session-types.ts:24-46` · `session-builder.ts:150-172` |
+| V3 | **R-2/R-1/R-9 "차단"은 지금 판정 불가** — 런타임 평가기 없음. 약속하면 거짓. 화면 자체 판정 규칙만 담음 | `app/src` grep → 평가기 0건 · `glossary.ts:110` 용어집뿐 |
+| V4 | **MAIN은 고정 D-5가 아님** — 가용일 first/last(중간). 마커는 포메이션 `TRAINING_MAIN` 기준 | `plan-beta-formation.ts:29-34,38-55` |
+| V5 | **10열 단일행 × 터치 44px 모순** — 기본 (A) 5×2 분할행으로 1화면+44px 동시 충족 | 390px 뷰포트/10열+여백 ≈ 열당 35px |
+| V6 | 에너지색 "배경 금지"는 이미 해소(§Q1 폐기) — strip 4–6px(T1) 문법으로 확정 | `VISUALIZATION_SYSTEM.md §Q1` |
+
+**총평(변호 없음):** 요구의 골격(달력 위 직접 조작, 스크린샷 가치 AM/PM 그리드, 가로=날짜 변경)은 제품 방향과 일치하므로 **유지**. 그러나 §8 원문은 (a) 이동을 진행 기록으로 구현(범주 오류), (b) 존재하지 않는 규칙 차단을 약속(과장), (c) 현재 엔진이 못 만드는 AM/PM 그림을 전역 드래그로 약속(범위 초과) — 이 3가지는 개선 진행 전 반드시 고쳐야 했다. 위 편집에서 모두 정정했다.
+
+### 8-10. 오너 결정 — 세로 드래그 범위 (2026-08-04 확정: **경로 B**)
+
+오너 지시 "B. 그리고 이동하면 앞뒤 훈련이나 일정 등 여러가지가 바뀌기 때문에…"로 **경로 B가 확정**되었다. 종전 "기본값 A, 별도 지정 없으면 진행하지 않음"은 폐기한다 (NORTH_STAR §3 "실패 시 안전한 쪽" 기본값은 유지하되, 오너 명시 결정이 우선).
+
+| 경로 | 내용 | 범위 · 상태 |
+|---|---|---|
+| ~~A (기본 권장)~~ | ~~세로 드래그 = EASY(BASE)의 AM↔PM 및 PM 회복 ↔ AM 재배치만~~ | ~~화면 한정 즉시 가능~~ — B 확정으로 대체 |
+| **B ✅ 2026-08-04 오너 확정** | QUALITY·REST도 PM/자유 슬롯 이동 허용 | `session-types.ts` 확장 = **엔진 타입 작업** — **별도 엔진 작업지시서로 분리 제출**, 본 문서 UI는 결과 소비만 |
+
+**B 확정에 따른 배선 (4건):**
+
+1. **엔진 작업지시서 분리** — B는 `@impl`/스키마 변경이므로 본 화면 문서 범위 밖. 별도 작업지시서가 아래 바인딩을 소유:
+   - `impl/src/plan-generator/session-types.ts:24-46` — `PlanSession` 판별 유니온 QUALITY/REST `slot` 리터럴 확장
+   - `impl/src/plan-generator/session-builder.ts:150-172` — `recoverySecondSessionDays` (PM ≤2 상한) 재검토 + `makeCandidateSessions` 슬롯 배치
+   - `app/src/domain/plan-session-schema.ts:104,114` — `activePlanSchema` 미러 (QUALITY/REST slot 스키마)
+   - `impl/src/plan-generator/progress.ts:18-42` · `app/src/domain/plan-beta-store.ts:73-90` — 허용 좌표 / (day,slot) upsert
+2. **머지 전 UI**: 확장 머지 전까지 QUALITY/REST 세로 드래그 차단 유지(§8-3(2)·§8-4 반영) — 실패 시 안전한 쪽.
+3. **머지 후에도 "이동 단독 반영" 금지** — QUALITY→PM 배치는 **§8-11 재계획 검증 필수** (FA-TC-014 fresh validation 전 단독 반영 금지).
+4. **스펙 계승 의무** — B 엔진 작업은 §8-12 레지스트리 계약(특히 `DOUBLE_SESSION_BETA_SAFETY_CONTRACT` · `PLAN_SAFETY_GATE_SPEC` · `TRAINING_PLAN_FORMATION_AND_ADAPTATION_SPEC` · `TRAINING_SESSION_PRESCRIPTION_CONTRACT`)을 위반할 수 없다.
+
+### 8-11. 이동 후 재계획 / 재설계 액션 (2026-08-04 오너 요구 — 스펙 계승 필수)
+
+**요구 원문:** "이동하면 앞뒤 훈련이나 일정 등 여러가지가 바뀌기 때문에 **이동 후에 재계획이나 계획 재설계 등의 액션도 고려**할 수 있어야 해. 단순히 넘기고 나면 우리가 설계한 스펙 문서대로의 훈련 설계나 지침이 무너지거든."
+
+**핵심 원리:** 드래그 이동은 세션 하나의 좌표 변경이 아니라 **그 뒤 훈련·일정 전체 배치를 바꾸는 계획 수정**이다. `TRAINING_PLAN_FORMATION_AND_ADAPTATION_SPEC.md`가 정한 계획 수정의 불변식:
+
+| 스펙 조항 | 불변식 | 이 작업에 대한 의미 |
+|---|---|---|
+| §10.1 `:1088-1090` | 재계획/홀드 해제는 **append-only release event** + fresh `GENERATION_ALLOWED` Safety Block ref + `RELEASE_EXECUTION_HOLD` 인가로만 | 이동을 "확정 반영"으로 넘기는 것을 금지 — **재계획 대기**를 거쳐야 함 |
+| §10.1 `:1092-1096` | selection/adaptation은 `aggregateRevision`·`safetyEpoch`·`authorizationRevocationEpoch` **원자 재확인**, stale snapshot 커밋 불가 | 재계획 트리거 시점에 상태를 다시 확인하고, 변경이 있으면 차단 (FA-TC-021 consent 취소 → hard hold) |
+| §10.1 `:1098` | 홀드 활성화/해제는 **승인된 플랜을 절대 변형하지 않음** | 이동 드롭·재계획 대기는 `sessions[]`를 **직접 바꾸지 않는다** |
+| §10.2 `:1254-1263` | 계획 버전·선택·검증·결정은 **append-only** · 플랜 콘텐츠 불변 · 선행 버전 in-place 수정 금지 | "재계획 확정" = 새 버전 승계, 기존 버전 보존. `updateStoredProgress` upsert로 좌표를 덮어쓰는 이동 금지 (V1) |
+| §10.2 `:1328` | 어댑테이션 수용은 **fresh Rule Spec validation** 후에만 | 재계획 결과는 검증 통과 후에만 채택 (FA-TC-014 "optional replan only after fresh validation") |
+| §10.3 `:1353` | 명시적 코치 요청 = "**Exact requested allowed action after validation**" | 이동은 사용자의 명시적 요청 — 그래도 검증 후 반영 |
+| §10.3 `:1356` | Missed MAIN, 명시적 재계획 요청 없음 → 보존, catch-up/압축 없음 | MAIN 이동 재계획은 **요청받은 것만**, 자동으로 뒤따라 옮기지 않음 |
+| FA-TC-014 `:1590` | 선택 후 안전 변경 → **ON_SAFETY_HOLD**, fresh validation 후에만 선택적 재계획 | 재계획 전 safety/auth/consent 재확인 |
+| FA-TC-020 `:1596` | 승인된 후속/재앵커 = typed lineage, **선행 프레임 불변** | 프레임 내용은 불변, 새 버전은 이를 계승 |
+| FA-TC-063 `:1639` | MAIN 이동이 제약 위반 시 infeasible — 후보 생성 전 다차원 타당성 통과 필요 | 재계획 생성 시 MAIN 위치 보존/제약 검사 |
+| FA-TC-001 `:1577` | 안정 순서의 정확히 BALANCED + CONSERVATIVE | 재계획 후보도 결정적 2/3 옵션 유지 (`PLAN_GENERATOR_SPEC` 계승) |
+
+**UI 흐름 (드롭 이후):**
+
+1. **이동 ⇒ "재계획 대기" 상태로 전환** — `sessions[]`·`StoredPlanProgress` **즉시 변경 금지**:
+   - 예고 카드: "DAY 4 오전 → DAY 5 오후로 이동하면 DAY 5·6 배치가 함께 바뀝니다. **재계획을 실행**해 확정하거나 **취소**하세요." (실세션 라벨 사용 — `sessionLabel`/`prescriptionLabel`, 거짓 용어 금지)
+   - 연쇄 변경 대상 명시: 인접 DAY/슬롯, MAIN/QUALITY 위치, PM 2부 일수(`DOUBLE_SESSION_BETA_SAFETY_CONTRACT` ≤2)
+2. **[재계획 실행]** → **fresh 재생성 트리거**:
+   - 생성 입력에 이동 의도 반영(`sessionDay`·`sessionSlot` 포함 가용성 컨텍스트) — `generatePlanCandidates` 재호출 계열 (`plan-beta-flow.ts:88-120`)
+   - **연속성 보존**: `PREVIOUS_FRAME_CONTEXT_RETAINED` (`candidates.ts:27,90` · `types.ts:102,159`) — 프레임 컨텍스트 승계
+   - **후보 무효화**: 이전 선택/옵션셋 stale — `selection.ts:142` stale fingerprint(`NONCANONICAL_CANDIDATE_FRAME`), **재선택 필요**
+3. **재계획 안전 게이트 (FA-TC-014 의미 체계)**:
+   - 트리거 시점 **원자 재확인**: `D9_ACTIVE`/`D9_UNKNOWN`/consent 취소/스코프 불일치 → **ON_SAFETY_HOLD**, 재계획 미제공 (`PLAN_SAFETY_GATE_SPEC`)
+   - 차단 상태(`PlanBeta.tsx` blocked view)에서는 이동→재계획 진입 자체 금지 (§8-4 D9 게이트 유지)
+   - 재계획 결과는 **fresh validation 후에만 채택** — 평가기 부재(V3) 시 "전체 9 Rules 재검증 완료" 표기는 금지, 화면 단위 검사만 표시
+4. **[취소]** → 대기 해제, 드래그 전 계획 그대로(원복), 진행 기록 무변경.
+5. **확정** → 새 버전 승계 기록(append-only 개념을 로컬에서 이행: 기존 활성 계획 보존 + 새 활성 계획 갱신), 좌표 유일성 유지, 진행 기록 좌표 무손실.
+
+> ⚠️ **범위 정직**: 재계획의 **백엔드 어그리게이트(홀드/릴리스/버전 기록) 구현 자체는 본 문서 범위 밖** — `TRAINING_PLAN_FORMATION_AND_ADAPTATION_SPEC.md`가 계약을 정의하며, 본 문서는 그 계약을 **화면 흐름으로 이행(스테이징/대기/승계)** 만 한다. 이 표는 그 계약을 **설계에 강제**하는 근거다.
+
+### 8-12. 스펙 문서 계승 레지스트리 (2026-08-04 오너 요구 — "이번 건 말고도 스펙 문서의 디테일을 꼭 계승")
+
+**요구 원문:** "따라서 이번 건 말고도 스펙 문서의 디테일을 꼭 계승하도록 해."
+
+§8(이동 드래그·재계획) 및 이후 모든 작업은 아래 스펙을 **위반할 수 없고**, 구현은 각 계약의 불변식을 코드로 승계한다. 작업 시작 전 해당 파일을 열어 확인하고, 변경이 계약에 걸리면 §8-11 원칙(불변 + append-only + fresh validation)으로 후퇴한다.
+
+| 스펙 | 위치 | 이 작업이 지켜야 할 핵심 불변식 (실코드 참조) |
+|---|---|---|
+| **TRAINING_PLAN_FORMATION_AND_ADAPTATION_SPEC.md** | `specs/reconstruct/` | 승인 플랜 불변·append-only(:1254-1263) · 재계획은 fresh validation 후(FA-TC-014) · 홀드는 플랜 불변(:1098) · 원자 재확인(:1092-1096) · 명시적 코치 요청 = 검증 후 정확한 동작(:1353) · MAIN 자동 이동·catch-up 금지(FA-TC-063/064) |
+| **PLAN_SAFETY_GATE_SPEC.md** | `specs/reconstruct/` | D9 게이트(D9_ACTIVE/D9_UNKNOWN → blocked) — 차단 중 이동·재계획 진입 금지 (FA-TC-022 stale 게이트 fail-closed) |
+| **DOUBLE_SESSION_BETA_SAFETY_CONTRACT.md** | `specs/reconstruct/` | 2부제 안전 계약 — PM 2부 일수 ≤2 상한(session-builder 개수 유지) · QUALITY/REST PM 이동 시 위반 차단 표시 |
+| **RULE_SPEC_D1_D9.md** | `specs/active/` | 9 Rules 정의 — 런타임 평가기 미존재 시 "전체 규칙 재검증" 약속 금지 (§8-4 V3) |
+| **RVE_RULE_EVALUATOR_BINDING_SPEC.md** | `specs/active/` | 규칙 평가 바인딩 — 화면 표면 연동은 별도 대형 작업 (비목표) |
+| **PLAN_GENERATOR_SPEC.md** | `specs/active/` | BALANCED+CONSERVATIVE 결정적 2/3 옵션(FA-TC-001) · 9.5일/19슬롯 프레임(`candidates.ts:48-55`) · candidate fingerprint(`selection.ts:142`) |
+| **TRAINING_SESSION_PRESCRIPTION_CONTRACT.md** | `specs/reconstruct/` | 세션 처방 계약 — QUALITY/REST 처방 불변·PM 회복 의도 위반 이동 금지 · 정확한 라벨만 표시(D-03) |
+| **FORMATION_COACH_RULESET_AND_EXPOSURE_CONTRACT.md** | `specs/reconstruct/` | TRAINING_MAIN 노출·exposure ledger — MAIN 마커 표기는 이 계약 기준(`plan-beta-formation.ts:29-34,38-55`) |
+| **MICROCYCLE_AND_CALENDAR_MAPPING_SPEC.md** | `specs/reconstruct/` | 네임스페이스 혼용 금지(CYCLE_DAY.* vs RULE_SPEC_D1_D9.*) · sessionSlot AM\|PM\|FULL_DAY\|UNSPECIFIED(`:219`) |
+| **PRODUCT_NORTH_STAR.md** | 루트 (§3) | 실패 시 덜 보여준다 · 화면 표시 한정(§6 NON-GOALS) · 재계획 대기 시 안전 쪽 |
+| **VISUALIZATION_SYSTEM.md / DESIGN_TOKENS.md** | `design-system/` | §Q1(좌측 strip 4–6px T1) · 터치 ≥44px · radius 0 · 색만으로 의미 전달 금지(Q6 3중 인코딩) |
+
+**계승 규칙 (미래 작업 공통):**
+
+1. 이동/재계획/신규 기능이 위 불변식을 건드리면, 그 전에 해당 스펙 조항을 인용해 영향 범위를 밝힌다. **위반은 거부된다.**
+2. UI는 스펙 계약을 **소비**한다 — 계약을 화면 코드로 흉내내지 않는다 (예: upsert로 버전 불변 위반, "이동 완료" 라벨로 검증 생략).
+3. 스펙과 모순되는 화면 문구 금지 — 거짓 카드(D-03), 존재하지 않는 규칙 차단 약속(V3), D-5 고정 MAIN 표기(V4) 모두 금지.
+4. 이 레지스트리는 **§8뿐 아니라 이후 모든 UX 작업의 체크리스트**로 사용한다.
+
+---
+
+*이 지시서는 공격 리뷰의 결함 D-02·D-03·D-04·D-05·D-06·D-07·D-08·D-10·D-12·D-13을 코드로 옮긴다.
+D-01(AI 본체)·D-09 잔여·D-11 엔진 배선은 별도 대형 작업으로 분리되어 있다.
+**§8(달력 직접 조작)은 2026-08-04 오너 요청으로 추가된 별도 개선안이며, 기존 §2~§4 작업과 독립적으로 우선순위를 매긴다.***

@@ -77,6 +77,20 @@
   text-wrap: pretty;
 }
 
+/*
+ * 기록이 없는 첫 화면: 0P / 0일 점수판 대신 규칙 한 줄만.
+ * 성취 UI 형태를 빌리지 않으므로 ANALYSIS §17 "must not be styled as success" 를 지키고,
+ * 재촉 문구가 없으므로 DELIGHT L460 shame copy 금지도 지킨다.
+ */
+.engagement-strip--untouched {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.engagement-strip--untouched p {
+  padding: var(--space-3);
+  border-top: 0;
+}
+
 .daily-context {
   margin: 0 var(--space-5);
   padding: var(--space-3) 0;
