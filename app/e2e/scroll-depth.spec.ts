@@ -172,9 +172,10 @@ test("기록이 하나 생기면 홈 점수판이 곧바로 돌아온다", async
   const strip = page.getByLabel("기록 습관")
   // 관측 1건으로도 서술은 허용된다 —
   // FORMATION_LOAD_AND_STATISTICAL_RULES_CONTRACT §10 L222 descriptive_single_observation: allowed.
-  await expect(strip.getByText("누적 획득 · BETA")).toBeVisible()
-  await expect(strip.getByText("함께한 날")).toBeVisible()
-  await expect(page.getByRole("button", { name: "꾸미기 열기" })).toBeVisible()
+  // WORK_ORDER_UX2 §2-2: 포인트/불꽃/스트릭 대신 "기기 저장 건수 · 백업 안내"를 보여준다.
+  await expect(strip.getByText(/이 기기에 1건 저장됨/u)).toBeVisible()
+  await expect(strip.getByText(/점수를 매기지 않아요/u)).toBeVisible()
+  await expect(page.getByRole("button", { name: "꾸미기 열기" })).toHaveCount(0)
 })
 
 test("훈련 후 일지가 빈 상태에서 길지 않다", async ({ page }, testInfo) => {

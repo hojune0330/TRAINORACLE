@@ -61,6 +61,7 @@ export function SavedToast({
   reviewMessage,
   onDismiss,
   onOpenTrends,
+  onOpenBackup,
 }: {
   readonly count: number
   readonly phase: ToastPhase
@@ -68,10 +69,13 @@ export function SavedToast({
   readonly reviewMessage?: string
   readonly onDismiss?: () => void
   readonly onOpenTrends?: () => void
+  readonly onOpenBackup?: () => void
 }) {
   const presentation = receiptPresentation(receipt)
   const needsReview = reviewMessage !== undefined
   const actionable = !needsReview && presentation.actionLabel !== undefined
+  // generic receipt의 "백업 안내 보기"는 추이가 아니라 백업/복원 화면으로 이동한다 (§4-2)
+  const onAction = receipt.kind === "generic" ? onOpenBackup : onOpenTrends
 
   return (
     <div
@@ -95,7 +99,7 @@ export function SavedToast({
           {needsReview ? `분석 결과를 확인해야 해요. ${reviewMessage}` : presentation.detail}
         </div>
         {actionable && (
-          <button className="saved-toast__action" type="button" onClick={onOpenTrends}>
+          <button className="saved-toast__action" type="button" onClick={onAction}>
             {presentation.actionLabel}
             <ArrowRight aria-hidden="true" size={15} />
           </button>
@@ -135,6 +139,7 @@ function receiptPresentation(receipt: SavedFactReceipt): {
       return {
         title: LOCAL_SAVE_NOTICE,
         detail: SYNC_UPSELL_NOTICE,
+        actionLabel: "백업 안내 보기",
       }
   }
 }

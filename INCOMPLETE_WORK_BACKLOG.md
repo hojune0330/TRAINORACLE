@@ -20,14 +20,14 @@
 
 ## 1. 발굴된 미완수 작업 목록 (우선순위순)
 
-### B-01 🔴 UX2 §2~§4 코드 구현 미착수 (PR #181)
+### B-01 🔴 UX2 §2~§4 코드 구현 (PR #181) — [완료]
 - **출처:** PR #181 `genspark_ai_developer` — UX2 문서 5건만 포함, 코드 0건
-- **상태:** ❌ 미구현 (발굴 시점 실측)
+- **상태:** ✅ 완료 (2026-08-05) — §2~§4 전 구간 구현 + 전체 테스트 901 통과 + typecheck 통과
 - **내용:**
   - §2-1 정직한 홈 브리핑: `home-view-model.ts`에 `briefing` 필드 추가 + 홈 상단 베타 표시 + 통증 4+ 배너 6일 창 → 14일 창 확장
   - §2-2 게이미피케이션 제거: `EngagementStrip.tsx`의 points/Flame/recordingStreak 제거 → "기록 보존" 정보로 교체, 홈에서 `DecorationShop` 진입 제거 (파일 삭제 금지)
-  - §2-3 거짓 기본값 제거: `EveningCheckin.tsx:75` `value={sleep > 0 ? sleep : 7}` → 미기록 상태(손잡이 미노출), 저장 시 `sleepH: 0`
-  - §2-4 "가능 일수" 표기 정직화: `PlanIntake.tsx:75` 카피 + `home-view-model.ts:36` "9일·10일" → 9.5일 표기 통일
+  - §2-3 거짓 기본값 제거: `EveningCheckin.tsx` `value={sleep > 0 ? sleep : 7}` → 미기록 상태(손잡이 미노출), 저장 시 `sleepH: 0`
+  - §2-4 "가능 일수" 표기 정직화: `PlanIntake.tsx` 카피 + `home-view-model.ts` "9일·10일" → 9.5일 표기 통일
   - §3-1 위저드 답 축적 요약 스트립 / §3-2 페이스 포맷 가이드(`normalizePace`) / §3-3 홈 CTA 1탭 직행(post-session) / §4-1 LogDetail aria / §4-2 저장 토스트 "백업 안내 보기" / §4-3 차단 화면 "상의 후 상태 기록" 스텁
 - **완료 조건:** `WORK_ORDER_UX2` §7 검증 (grep + 테스트) 모두 통과
 
@@ -41,9 +41,9 @@
   - `impl/src/plan-generator/progress.ts:18-42` · `app/src/domain/plan-beta-store.ts:73-90` — 허용 좌표 / (day,slot) upsert
 - **완료 조건:** §8-12 레지스트리 11종 불변식 위반 0건 + `movePlanSession(activePlan, from, to)` 전용 연산 컨트랙트 테스트 (V1) + 이동 후 재계획 대기→[실행]/[취소] (V3)
 
-### B-03 🟠 PR #182 본문 명시 "안 된 것" 5건
+### B-03 🟠 PR #182 본문 명시 "안 된 것" 5건 — [완료]
 - **출처:** PR #182 `fable/q1-trends-import-disclosure` 본문 (2026-08-04)
-- **상태:** ❌ 미착수 (PR open, rebase 미완료)
+- **상태:** ✅ 완료 (2026-08-05) — PR #182 main 머지 (`bff68e8`), Q3·Q4 포함
 - **내용:**
   1. **Q3 미착수** — "전부 지우기" 후 삭제 기록(tombstone)이 남는다는 사실 공개. 코드 0줄
   2. **Q4 화면 미착수** — `releaseSyncOwner()` 도메인 함수는 존재하나 **어디서도 호출되지 않음**. "다른 계정으로 바꾸기" 버튼 + 백업 권유 → 동의 끄기 → 잠금 해제 → 로그아웃 흐름 미구현. **사용자가 실제 얻는 개선 아직 0**
@@ -52,9 +52,9 @@
   5. **Q2 별건** — 사용자 승인대로 별건 PR 필요
 - **완료 조건:** 이 PR 머지 전 rebase 완료 + e2e 통과, Q3·Q4 화면 작업 별도 완료
 
-### B-04 🟠 PR #180 decoration-safety-followup 미병합
+### B-04 🟠 PR #180 decoration-safety-followup — [완료]
 - **출처:** PR #180 `codex/decoration-safety-followup` (OPEN)
-- **상태:** ❌ 미병합 — 본문에 검증 완료(전체 853 통과) 명시
+- **상태:** ✅ 완료 (2026-08-05) — PR #180 main 머지 (`d670c23`)
 - **내용:** 꾸미기 저장 읽기 검증·CAS·롤백, 백업 복원 시 현재 꾸미기 보존, 미지 ID 정규화, 날짜 장식 기록 있는 날짜만 저장, WebP 픽셀 검증, 2026-02-30 같은 가짜 날짜 차단
 - **완료 조건:** main 머지
 

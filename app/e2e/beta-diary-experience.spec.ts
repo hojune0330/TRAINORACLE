@@ -48,11 +48,9 @@ test("uses the diary context, decoration, cycle archive, and easy FAQ as one flo
   await expect(page.getByRole("button", { name: "기분 좋음" })).toHaveAttribute("aria-pressed", "true")
   await expect(page.getByText("위치정보를 사용하지 않아요.")).toBeVisible()
 
-  await page.getByRole("button", { name: "꾸미기 열기" }).click()
-  await page.getByRole("button", { name: /하늘 일지 테마 12P로 받기/u }).click()
-  await page.getByRole("button", { name: "하늘 일지 테마 사용하기" }).click()
-  await expect(page.getByRole("button", { name: "하늘 일지 테마 사용 중" })).toBeVisible()
-  await page.getByRole("button", { name: "꾸미기 닫기" }).click()
+  // WORK_ORDER_UX2 §2-2: 꾸미기 상점 진입점은 홈에서 제거됐다(포인트 구조 PHILOSOPHY §9-9 위반).
+  // 상점 리디자인은 후속 작업으로 분리 — 여기선 홈에 진입 버튼이 없음을 확인만 한다.
+  await expect(page.getByRole("button", { name: /꾸미기 열기/u })).toHaveCount(0)
 
   await page.getByRole("button", { name: "전체 보기" }).click()
   await page.getByRole("button", { name: "9.5일 주기" }).click()

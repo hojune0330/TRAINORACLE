@@ -1,9 +1,10 @@
 import { ChevronRight, Ellipsis, PencilLine } from "lucide-react"
 import type { TrainingHomeViewModel } from "../../domain/home-view-model"
+import type { JournalEntryType } from "../log-entry/shared"
 
 type TrainingHomeProps = {
   readonly model: TrainingHomeViewModel
-  readonly onWriteLog?: () => void
+  readonly onWriteLog?: (entryType?: JournalEntryType) => void
   readonly onOpenArchive?: () => void
   readonly onOpenCycle?: () => void
   readonly onOpenPlan?: () => void
@@ -37,12 +38,21 @@ export function TrainingHome({
       <section className="training-home__today" aria-labelledby="training-home-today">
         <div id="training-home-today" className="training-home__label">오늘</div>
         <p>{model.todayMessage}</p>
-        <button className="training-home__primary" type="button" onClick={() => onWriteLog?.()}>
+        <button className="training-home__primary" type="button" onClick={() => onWriteLog?.("post-session")}>
           <PencilLine aria-hidden="true" size={19} />
           <span>오늘 기록하기</span>
           <ChevronRight aria-hidden="true" size={18} />
         </button>
-        <small className="training-home__rest-note">쉰 날은 하루 마무리에서 몸 상태를 짧게 남겨요.</small>
+        <button
+          className="training-home__rest-entry"
+          type="button"
+          onClick={() => onWriteLog?.("evening")}
+        >
+          쉰 날은 하루 마무리에서 몸 상태를 짧게 남겨요
+        </button>
+        {model.briefing !== "" && (
+          <p className="training-home__briefing" aria-label="아침 브리핑">{model.briefing}</p>
+        )}
       </section>
 
       <nav className="training-home__services" aria-label="내 훈련 서비스">

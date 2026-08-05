@@ -59,8 +59,9 @@ export function IndexCard({ date, dow, weather, cycleDay, cycleSuffix, season }:
 // ============== MOOD STRIP (감정 5단계) ==============
 export function MoodStrip({ level = 3, showLabel = false }: { level?: number; showLabel?: boolean }) {
   const labels = ["흐림", "무덤덤", "보통", "좋음", "최고"]
+  const label = labels[level - 1] ?? "알 수 없음"
   return (
-    <span style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
+    <span style={{ display: "inline-flex", alignItems: "center", gap: 8 }} aria-label={`감정 ${label} (${level}/5)`}>
       <span className={`mood-strip m${level}`}>
         <span className="b"></span>
         <span className="b"></span>

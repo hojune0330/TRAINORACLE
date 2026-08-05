@@ -48,7 +48,57 @@ describe("training home view model", () => {
 
     expect(model.planSummary).toBe("저장된 계획 없음 · 계획 후보 만들기")
     expect(model.analysisSummary).toContain("기록이 쌓이면")
-    expect(model.flowSummary).toBe("9일·10일로 일지 묶어 보기 · 시작일 직접 선택")
+    expect(model.flowSummary).toBe("9.5일 주기로 일지 묶어 보기 · 시작일 직접 선택")
+  })
+
+  it("leaves the briefing empty when there is no evening check-in", () => {
+    const model = buildTrainingHomeViewModel([entry], [analysisEntry], null, "2026-08-03")
+
+    expect(model.briefing).toBe("")
+  })
+
+  it("summarizes the latest evening check-in without inventing missing fields", () => {
+    const eveningEntry: JournalEntry = {
+      ...entry,
+      id: "home-evening",
+      kind: "evening",
+      sleepH: 7.5,
+      sleepQuality: 4,
+      weightKg: "62.0",
+      restingHr: "49",
+      painParts: { "오른 무릎": 2 },
+      mood: 4,
+      note: "",
+    }
+    const model = buildTrainingHomeViewModel([eveningEntry], [eveningEntry], null, "2026-08-03")
+
+    expect(model.briefing).toContain("수면 7.5h")
+    expect(model.briefing).toContain("심박 49bpm")
+    expect(model.briefing).toContain("체중 62.0kg")
+    expect(model.briefing).toContain("통증 오른 무릎 2")
+    expect(JSON.stringify(model)).not.toContain(entry.memo)
+  })
+
+  it("uses yesterday's check-in with an explicit date marker when today has none", () => {
+    const yesterdayEvening: JournalEntry = {
+      ...entry,
+      id: "home-evening-yesterday",
+      kind: "evening",
+      date: "2026-08-02",
+      sleepH: 6.5,
+      sleepQuality: 3,
+      weightKg: "",
+      restingHr: "",
+      painParts: {},
+      mood: 0,
+      note: "",
+    }
+    const model = buildTrainingHomeViewModel([], [yesterdayEvening], null, "2026-08-03")
+
+    expect(model.briefing).toContain("어제 기록")
+    expect(model.briefing).toContain("수면 6.5h")
+    expect(model.briefing).not.toContain("심박")
+    expect(model.briefing).not.toContain("체중")
   })
 
   it("distinguishes imported journal rows from analysis-ready direct input", () => {

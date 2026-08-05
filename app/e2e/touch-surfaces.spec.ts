@@ -23,7 +23,15 @@ test("audits empty home and chooser touch actions", async ({ page }, testInfo) =
   ])
   await expect(page.getByRole("navigation", { name: "주 탭" })).toBeVisible()
   await expectNoHorizontalOverflow(page)
+  // home CTA now goes straight to the post-session form (§3-3)
   await page.getByRole("button", { name: "오늘 기록하기" }).click()
+  await auditTouchTargets(page, [
+    { name: "post.back", locator: page.getByRole("button", { name: "← 뒤로" }) },
+    { name: "post.energy", locator: page.getByRole("button", { name: /에너지 시스템/u }).first(), heightOnly: true },
+  ])
+  await expectNoHorizontalOverflow(page)
+  // the chooser is reached via the "기록" tab bar button
+  await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "기록" }).click()
   await auditTouchTargets(page, [
     { name: "chooser.back", locator: page.getByRole("button", { name: "← 뒤로" }) },
     { name: "chooser.post", locator: page.getByRole("button", { name: /훈련 후/u }), heightOnly: true },

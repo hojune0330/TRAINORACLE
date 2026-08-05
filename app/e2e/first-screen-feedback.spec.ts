@@ -21,6 +21,11 @@ test("keeps My Training clear and usable on narrow phones", async ({ page }, tes
   }
 
   await page.getByRole("button", { name: "오늘 기록하기" }).click()
+  await expect(page.getByRole("heading", { name: "훈련 후 · 기록" })).toBeVisible()
+  await expect(page.getByRole("button", { name: "← 뒤로" })).toBeInViewport()
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true)
+  // the chooser is reached via the "기록" tab bar button (§3-3)
+  await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "기록" }).click()
   const heading = page.getByRole("heading", { name: "어떤 일지를 쓰세요?" })
   await expect(heading).toBeFocused()
   await expect(page.getByRole("button", { name: /경기 직전\/직후/u })).toBeInViewport()

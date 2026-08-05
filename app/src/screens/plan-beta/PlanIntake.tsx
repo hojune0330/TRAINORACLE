@@ -1,4 +1,4 @@
-import { ArrowLeft, Medal } from "lucide-react"
+import { ArrowLeft, ChevronRight, Medal } from "lucide-react"
 import {
   EXPERIENCE_BANDS,
   PLAN_EVENT_GROUPS,
@@ -38,6 +38,8 @@ type PlanIntakeProps = {
   readonly onSafety: (
     currentCheck: "NO_KNOWN_RISK" | "REVIEW_REQUIRED",
   ) => void
+  /** "지금까지" 요약 줄을 탭하면 해당 단계로 점프(WORK_ORDER_UX2 §3-1) */
+  readonly onJump?: (step: IntakeStep) => void
 }
 
 const STEP_META: Record<IntakeStep, {
@@ -72,7 +74,7 @@ const STEP_META: Record<IntakeStep, {
     number: 4,
     eyebrow: "AVAILABLE DAYS",
     title: "이번 계획에서 운동할 수 있는 날은 며칠인가요?",
-    copy: "달리기뿐 아니라 걷기, 가벼운 조깅, 자전거 같은 회복 운동을 하는 날도 포함해 골라주세요. TrainOracle 기본 9.5일 틀에 자동으로 배치해요.",
+    copy: "달리기뿐 아니라 걷기, 가벼운 조깅, 자전거 같은 회복 운동을 하는 날도 포함해 골라주세요. 고른 날 수를 9.5일 기본 틀의 운동 가능한 날짜에 배치해요. N이 작을수록 계획의 하루 훈련 시간이 늘어날 수 있고, 현재 베타는 여러 날짜 배치 방식 중 이 기본 배치 하나만 제공해요.",
     helpTerm: "training-days",
   },
   "two-a-day": {
@@ -103,8 +105,10 @@ export function PlanIntake({
   onManageRecords,
   onOpenNotationReader,
   onSafety,
+  onJump,
 }: PlanIntakeProps) {
   const meta = STEP_META[step]
+  const answeredSteps = answeredSummary(draft)
   return (
     <section className="plan-intake" aria-labelledby="plan-intake-title">
       <button className="plan-back" type="button" onClick={onBack}>
@@ -115,6 +119,22 @@ export function PlanIntake({
         <span>{meta.number}/6</span>
         <i style={{ width: `${meta.number * (100 / 6)}%` }} />
       </div>
+      {answeredSteps.length > 0 && (
+        <div className="plan-intake__summary" aria-label="지금까지">
+          <span className="plan-intake__summary-label">지금까지</span>
+          {answeredSteps.map(({ step: answeredStep, label }) => (
+            <button
+              key={answeredStep}
+              type="button"
+              className="plan-intake__summary-line"
+              onClick={() => onJump?.(answeredStep)}
+            >
+              <span>{label}</span>
+              <ChevronRight aria-hidden="true" size={14} />
+            </button>
+          ))}
+        </div>
+      )}
       <div className="plan-eyebrow">{meta.eyebrow}</div>
       <div className="plan-heading-row">
         <h1 id="plan-intake-title">{meta.title}</h1>
@@ -222,4 +242,28 @@ export function PlanIntake({
       )}
     </section>
   )
+}
+
+/**
+ * "지금까지" 요약 스트립(WORK_ORDER_UX2 §3-1): 답이 생긴 단계만 한 줄씩 쌓는다.
+ * 답이 없는 단계는 렌더링하지 않는다(undefined 미노출 — §2-3 원칙).
+ */
+function answeredSummary(draft: IntakeDraft): readonly { readonly step: IntakeStep; readonly label: string }[] {
+  const lines: { readonly step: IntakeStep; readonly label: string }[] = []
+  if (draft.eventGroup !== undefined) lines.push({ step: "goal", label: EVENT_LABELS[draft.eventGroup].title })
+  if (draft.experienceBand !== undefined) lines.push({ step: "experience", label: EXPERIENCE_LABELS[draft.experienceBand].title })
+  if (draft.trainingFocus !== undefined) lines.push({ step: "focus", label: ENERGY_INTENT_LABELS[draft.trainingFocus].title.split(" · ")[0] ?? "" })
+  if (draft.availableDayCount !== undefined) {
+    lines.push({
+      step: "days",
+      label: draft.availableDayCount === "EVERY_DAY" ? "매일" : `${draft.availableDayCount}일`,
+    })
+  }
+  if (draft.secondSessionMode !== undefined) {
+    lines.push({
+      step: "two-a-day",
+      label: draft.secondSessionMode === "SINGLE_SESSION_ONLY" ? "하루 한 번" : "하루 두 번 가능",
+    })
+  }
+  return lines
 }
