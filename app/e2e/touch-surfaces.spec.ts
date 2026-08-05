@@ -27,7 +27,10 @@ test("audits empty home and chooser touch actions", async ({ page }, testInfo) =
   await page.getByRole("button", { name: "오늘 기록하기" }).click()
   await auditTouchTargets(page, [
     { name: "post.back", locator: page.getByRole("button", { name: "← 뒤로" }) },
-    { name: "post.energy", locator: page.getByRole("button", { name: /에너지 시스템/u }).first(), heightOnly: true },
+    // 강도 시스템 버튼의 접근 이름은 `${c} ${n}`(예: "BA BASE")이다
+    // (PostSessionForm.tsx:92). "에너지 시스템"은 용어집 설명문에만 있는 말이라
+    // 버튼 이름으로 쓰면 0건이 잡혀 감사가 헛돈다. 6개 전부를 감사한다.
+    { name: "post.energy", locator: page.getByRole("button", { name: /^(BA BASE|LT LT|V2 VO2|GL GLY|AP ATP|RE REST)$/u }), count: 6, heightOnly: true },
   ])
   await expectNoHorizontalOverflow(page)
   // the chooser is reached via the "기록" tab bar button

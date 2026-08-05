@@ -23,6 +23,7 @@ import { createSavedFactReceipt } from "./domain/save-receipt"
 import { trackProductEvent } from "./domain/account/product-analytics-service"
 import {
   INITIAL_VIEW_STATE,
+  shouldResetTabView,
   viewForJournalDraft,
   viewForJournalReturn,
   viewForTab,
@@ -84,7 +85,7 @@ export function AppShell() {
     utilityView,
   ])
   const goTab = (tab: AppTab) => {
-    if (tab === v.tab && utilityView === null && !athleteRecordsOpen) return
+    if (!shouldResetTabView(v, tab, utilityView !== null || athleteRecordsOpen)) return
     setAthleteRecordsOpen(false)
     setUtilityView(null)
     setV(viewForTab(tab))
