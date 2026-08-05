@@ -31,9 +31,9 @@
   - §3-1 위저드 답 축적 요약 스트립 / §3-2 페이스 포맷 가이드(`normalizePace`) / §3-3 홈 CTA 1탭 직행(post-session) / §4-1 LogDetail aria / §4-2 저장 토스트 "백업 안내 보기" / §4-3 차단 화면 "상의 후 상태 기록" 스텁
 - **완료 조건:** `WORK_ORDER_UX2` §7 검증 (grep + 테스트) 모두 통과
 
-### B-02 🔴 UX2 §8-10 경로 B 확정 ⇒ 별도 엔진 작업지시서 미작성
+### B-02 🔴 UX2 §8-10 경로 B 확정 ⇒ 엔진 타입 확장 구현 (작업지시서 작성 완료)
 - **출처:** `WORK_ORDER_UX2` §8-10, §8-11, §8-12 (2026-08-04 오너 확정)
-- **상태:** ❌ 미작성 — B 확정은 문서로만 반영, **엔진 작업지시서 파일 없음**
+- **상태:** 🟡 작업지시서 `WORK_ORDER_SLOT_TYPE_EXTENSION_B.md` 작성 완료 (2026-08-05, `e7276c1`) · **코드 구현 진행 중**
 - **내용:** QUALITY·REST의 PM/자유 슬롯 이동 허용을 위한 타입 확장. 소유해야 할 바인딩 4종:
   - `impl/src/plan-generator/session-types.ts:24-46` — QUALITY/REST `slot` 리터럴 확장
   - `impl/src/plan-generator/session-builder.ts:150-172` — `recoverySecondSessionDays`(PM ≤2 상한) 재검토 + `makeCandidateSessions` 슬롯 배치

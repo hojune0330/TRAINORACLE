@@ -94,7 +94,7 @@ const rpeTimeRangeSchema = z.object({
 export const planSessionSchema = z.discriminatedUnion("role", [
   z.object({
     day: z.number().int().positive(),
-    slot: z.literal("AM").optional().default("AM"),
+    slot: sessionSlotSchema.optional().default("AM"),
     role: z.literal("REST"),
     plannedEnergyIntent: z.literal("RECOVERY_INTENT").optional().default("RECOVERY_INTENT"),
     prescription: z.object({ kind: z.literal("REST") }),
@@ -108,7 +108,7 @@ export const planSessionSchema = z.discriminatedUnion("role", [
   }),
   z.object({
     day: z.number().int().positive(),
-    slot: z.literal("AM").optional().default("AM"),
+    slot: sessionSlotSchema.optional().default("AM"),
     role: z.literal("QUALITY"),
     plannedEnergyIntent: z.enum([
       "LT_INTENT",
