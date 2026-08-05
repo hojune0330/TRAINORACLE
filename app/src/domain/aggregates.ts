@@ -7,7 +7,11 @@
 import { loadAnalysisEntries, todayISO } from "./journal-store"
 import type { AnalysisJournalEntry, AnalysisPostSessionEntry } from "./safe-export"
 import { isoShift, weekStartOf } from "./dates"
-import { parseDecimalString } from "./numeric-input"
+// 집계에는 `parseDistanceKm`을 쓴다 — `parseDecimalString`은 형식만 보므로
+// 음수와 거대값이 합계에 그대로 섞인다. 실측(수정 전): 8km 일지에
+// 오타 "999999999"가 하나 끼면 주간 거리가 1000000007km가 됐고,
+// "-100"이 끼면 -92km가 됐다.
+import { parseDistanceKm } from "./numeric-input"
 
 export interface WeekStats {
   /** 이번 주(월요일 시작) 훈련 세션 수 */
@@ -40,7 +44,7 @@ export function thisWeekStats(all?: AnalysisJournalEntry[], referenceDate = toda
   let rpeSum = 0
   let rpeN = 0
   for (const s of sessions) {
-    const d = parseDecimalString(s.distanceKm)
+    const d = parseDistanceKm(s.distanceKm)
     if (d !== null) dist += d
     if (Number.isFinite(s.rpe) && s.rpe > 0) { rpeSum += s.rpe; rpeN += 1 }
   }
@@ -71,7 +75,7 @@ export function dailyDistance(nDays: number, all?: AnalysisJournalEntry[]): { la
     let v = 0
     for (const s of src) {
       if (s.date === day) {
-        const d = parseDecimalString(s.distanceKm)
+        const d = parseDistanceKm(s.distanceKm)
         if (d !== null) v += d
       }
     }

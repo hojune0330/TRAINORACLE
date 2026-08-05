@@ -5,7 +5,7 @@ import {
 } from "./field-provenance"
 import type { FieldProvenanceMap } from "./field-provenance"
 import type { JournalEntry } from "./journal-schema"
-import { parseDecimalString, parsePaceText } from "./numeric-input"
+import { parseDistanceKm, parseDurationMin, parsePaceText } from "./numeric-input"
 
 export const PACE_DERIVATION_RULE_ID = "JOURNAL_DISTANCE_DURATION_TO_SECONDS_PER_KM_V1"
 export const PAIN_MAX_DERIVATION_RULE_ID = "JOURNAL_EXPLICIT_PAIN_PARTS_TO_MAX_V1"
@@ -75,9 +75,21 @@ export type StructuredJournalObservation = {
   )[]
 }
 
-function positiveDecimal(value: string): number | null {
-  const parsed = parseDecimalString(value)
-  return parsed !== null && parsed > 0 ? parsed : null
+/**
+ * 관측값으로 받아들일 수 있는 거리(km).
+ *
+ * 상한을 두는 이유: 이 함수의 결과가 추이 그래프와 주간 집계에 그대로
+ * 들어간다. 상한이 없으면 오타 하나("999999999")가 그래프 축을 망가뜨려
+ * 나머지 주가 전부 0처럼 보인다. 상한을 넘는 값은 **거부**한다 —
+ * 잘라내면 사용자가 적지 않은 숫자를 앱이 만든 것이 된다.
+ */
+function positiveDistance(value: string): number | null {
+  return parseDistanceKm(value)
+}
+
+/** 관측값으로 받아들일 수 있는 시간(분). 거리와 같은 이유로 상한을 둔다. */
+function positiveDuration(value: string): number | null {
+  return parseDurationMin(value)
 }
 
 function provenanceOf(fieldName: string, provenance: FieldProvenanceMap | undefined): ObservationProvenance {
@@ -91,8 +103,8 @@ function sourceTrust(provenance: FieldProvenanceMap | undefined): ObservationTru
 }
 
 function hasSessionSignal(entry: Extract<JournalEntry, { readonly kind: "post-session" }>): boolean {
-  return positiveDecimal(entry.distanceKm) !== null
-    || positiveDecimal(entry.durationMin) !== null
+  return positiveDistance(entry.distanceKm) !== null
+    || positiveDuration(entry.durationMin) !== null
     || parsePaceText(entry.avgPace) !== null
     || entry.rpe > 0
 }
@@ -206,8 +218,8 @@ export function projectStructuredJournalObservation(
     }
   }
 
-  const distanceKm = positiveDecimal(input.distanceKm)
-  const durationMin = positiveDecimal(input.durationMin)
+  const distanceKm = positiveDistance(input.distanceKm)
+  const durationMin = positiveDuration(input.durationMin)
   const recordedPace = parsePaceText(input.avgPace)
   const derivedPace = recordedPace === null
     && distanceKm !== null

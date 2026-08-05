@@ -1,6 +1,8 @@
 import { isEligibleForAnalysis } from "./field-provenance"
 import type { JournalEntry } from "./journal-store"
-import { parseDecimalString } from "./numeric-input"
+// 영수증에 보여주는 거리도 범위 검증을 통과한 값만 쓴다 — 화면에
+// "10억 km 저장했어요"가 뜨면 사용자는 앱을 믿지 못한다.
+import { parseDistanceKm } from "./numeric-input"
 
 export type SavedFactReceipt =
   | { readonly kind: "pain"; readonly moodAlsoSaved: boolean }
@@ -20,7 +22,7 @@ export function createSavedFactReceipt(entry: JournalEntry | undefined): SavedFa
       return moodSaved ? { kind: "mood" } : { kind: "generic" }
     }
     case "post-session": {
-      const distanceKm = parseDecimalString(entry.distanceKm)
+      const distanceKm = parseDistanceKm(entry.distanceKm)
       const distanceSaved = isEligibleForAnalysis("distanceKm", entry.fieldProvenance)
         && distanceKm !== null
         && distanceKm > 0
