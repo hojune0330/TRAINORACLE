@@ -62,14 +62,39 @@ function elapsedLabel(months: number): string {
   return remainder === 0 ? `${years}년 전` : `${years}년 ${remainder}개월 전`
 }
 
+// 형식뿐 아니라 실재하는 날짜인지까지 확인한다.
+//
+// 이전에는 정규식만 통과하면 그대로 계산에 넘겼다. 그래서 `2025-13-99`(13월
+// 99일)가 "5개월 전"이라는 확신에 찬 라벨을 만들어 냈다. 읽을 수 없는 날짜에
+// 숫자를 지어내는 것은 North Star §3 폴백 원칙("실패하면 덜 보여준다")에
+// 정면으로 어긋난다.
+//
+// 도달 가능성 — 과장하지 않고 적는다:
+//   현재 저장 경로(`athlete-records.ts`의 `isCalendarDate`)가 이미 달력
+//   왕복 검사를 하므로, localStorage를 거쳐 이런 값이 들어오지는 **않는다.**
+//   즉 지금 사용자에게 보이는 버그는 아니고, 방어 계층의 구멍이다.
+//
+// 그럼에도 고치는 이유:
+//   `seasonWindowLabel`은 이미 `?? "날짜 확인 필요"` 폴백을 갖고 있다. 즉 이
+//   모듈은 "못 읽는 날짜는 확인을 요구한다"고 스스로 선언해 놓고, 월·일이
+//   범위를 벗어난 경우에는 그 폴백에 도달하지 못했다. 선언과 구현이 어긋난
+//   상태였고, 그 폴백은 사실상 죽은 코드였다. 이 수정으로 살아난다.
+//
+// 형제 모듈과 검증 강도를 맞춘다(`athlete-records.ts` `isCalendarDate`와 동일한
+// UTC 왕복 방식). 두 모듈이 서로 다른 엄격도로 날짜를 받는 상태가 위험하다.
 function calendarParts(
   value: string,
 ): { readonly year: number; readonly month: number; readonly day: number } | null {
   const match = /^(\d{4})-(\d{2})-(\d{2})$/u.exec(value)
   if (match === null) return null
-  return {
-    year: Number(match[1]),
-    month: Number(match[2]),
-    day: Number(match[3]),
-  }
+  const year = Number(match[1])
+  const month = Number(match[2])
+  const day = Number(match[3])
+  const probe = new Date(Date.UTC(year, month - 1, day))
+  const exists = (
+    probe.getUTCFullYear() === year
+    && probe.getUTCMonth() === month - 1
+    && probe.getUTCDate() === day
+  )
+  return exists ? { year, month, day } : null
 }
