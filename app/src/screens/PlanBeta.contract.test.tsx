@@ -249,10 +249,22 @@ describe("plan beta user flow", () => {
     expect(screen.getAllByText("최근 일지 확인 · 계획 수치에는 미반영")[0]).toBeVisible()
   })
 
-  it("does not count future or invalid journal dates as recent context", async () => {
+  // 원래 이 테스트는 미래 날짜와 함께 "2026-02-31"(2월 31일)도 심었다.
+  // 이제 그 날짜는 저장 관문(`journal-schema`의 `journalDateSchema`)에서
+  // 막히므로 `saveEntry`로 심을 수 없다.
+  //
+  // 스키마를 우회해 저장소에 직접 심는 방법도 시도해 봤는데, 결함 주입으로
+  // **헛돈다는 걸 확인했다**: `plan-beta-flow`의 `isValidIsoDate` 가드를
+  // 지워도 이 테스트는 통과했다. `loadEntries()`가 스키마 단계에서 이미
+  // 버리기 때문에 깨진 날짜는 flow까지 도달하지 못한다. 그래서 그 형태는
+  // 검증하는 척만 하는 테스트였고, 남기지 않았다.
+  //
+  // 깨진 날짜를 읽을 때 버리는 계약은 저장/읽기 계층에서 고정한다:
+  //   journal-date-validity.contract.test.ts D-1(저장 거부) · D-4(읽기 시 폐기)
+  // 여기서는 이 화면이 실제로 책임지는 것 — 미래 날짜 — 만 고정한다.
+  it("does not count future journal dates as recent context", async () => {
     savePostSession("future-session-1", "", undefined, "2099-01-01")
     savePostSession("future-session-2", "", undefined, "2099-01-02")
-    savePostSession("invalid-session", "", undefined, "2026-02-31")
     render(<PlanBeta />)
 
     await answerMinimumPlanQuestions("clear")

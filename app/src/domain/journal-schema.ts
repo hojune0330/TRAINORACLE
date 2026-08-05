@@ -8,6 +8,7 @@ import type { FieldProvenanceMap } from "./field-provenance"
 import { sessionIntensityAssessmentSchema } from "./intensity-assessment"
 import type { SessionIntensityAssessment } from "./intensity-assessment"
 import { parsePaceText } from "./numeric-input"
+import { isValidIsoDate } from "./dates"
 
 export const MEMO_PURPOSE = {
   privateSelfOnly: "PRIVATE_SELF_ONLY",
@@ -82,9 +83,37 @@ const memoPurposeSchema = z.preprocess(
   z.enum([MEMO_PURPOSE.privateSelfOnly, MEMO_PURPOSE.analyzableTrainingNote]).optional(),
 )
 
+/**
+ * 일지 날짜 — 달력에 실재하는 YYYY-MM-DD만 받는다.
+ *
+ * `z.string().min(1)`이던 시절에는 "2026-13-01"(13월)이나 "2026-02-30"이
+ * 그대로 저장됐다.
+ *
+ * 실측한 피해 (2026-02-30, 50km 일지 하나를 심고 기준일 2026-03-01):
+ *   thisWeekStats  -> 2세션 / 58km / 2일   (8km 일지 하나뿐인데 58km)
+ *   그 일지 없을 때 -> 1세션 /  8km / 1일
+ * `aggregates.entriesBetween`은 날짜를 문자열로만 비교하고
+ * `isValidIsoDate`를 거치지 않는다. "2026-02-30"은 창(窓)
+ * [2026-02-23, 2026-03-01] 안에 사전순으로 들어가므로 합계에 섞인다.
+ *
+ * 반면 `journal-archive.projectJournalArchive`와 `home-view-model`,
+ * `plan-beta-flow`는 `isValidIsoDate`로 걸러낸다. 즉 같은 일지가
+ * 주간 합계에는 있고 아카이브에는 없다 — 화면마다 다른 숫자를 본다.
+ *
+ * 걸러내기를 화면마다 더 붙이는 건 근본 수정이 아니다(빼먹은 화면이
+ * 또 생긴다). 저장 관문에서 막는다.
+ *
+ * 참고: "2026-13-01"(13월)은 사전순으로 어떤 실제 월보다 크기 때문에
+ * 주간 창에 걸리지 않아 합계는 오염시키지 않았다. 그래도 저장은
+ * 막는다 — 우연히 안전한 것에 기대지 않는다.
+ */
+const journalDateSchema = z.string().refine(isValidIsoDate, {
+  message: "달력에 없는 날짜예요",
+})
+
 const baseShape = {
   id: z.string().min(1),
-  date: z.string().min(1),
+  date: journalDateSchema,
   savedAt: z.string().min(1),
   syncState: z.enum(["local", "synced"]),
   fieldProvenance: fieldProvenanceSchema.optional(),
