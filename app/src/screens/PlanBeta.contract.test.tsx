@@ -164,7 +164,7 @@ describe("plan beta user flow", () => {
       name: "지속 페이스 포함",
     })).toBeNull()
     await userEvent.setup().click(
-      screen.getByRole("button", { name: "통증·컨디션 기록하기" }),
+      screen.getByRole("button", { name: "지도자와 상의한 내용을 일지에 남기기" }),
     )
     expect(onWriteLog).toHaveBeenCalledWith("evening")
   })

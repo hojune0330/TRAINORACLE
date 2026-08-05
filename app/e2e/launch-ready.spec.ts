@@ -52,14 +52,17 @@ test("keeps plan help inside the narrow scroll region", async ({ page }) => {
   expect(geometry?.detailWordBreak).toBe("keep-all")
 })
 
-test("routes a first visitor from one context choice into the matching journal", async ({ page }) => {
+test("routes a first visitor from home into the matching journal", async ({ page }) => {
   // Given
   await page.goto("/")
 
-  // When
+  // When — home CTA goes straight to the post-session form
   await page.getByRole("button", { name: "오늘 기록하기" }).click()
-  await expect(page.getByRole("button", { name: "← 뒤로" })).toBeInViewport()
-  await page.getByRole("button", { name: /회복 · 하루 마무리/u }).click()
+  await expect(page.getByRole("heading", { name: "훈련 후 · 기록" })).toBeVisible()
+
+  // back to home via the tab bar, then rest-day entry via the rest-entry button
+  await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "홈" }).click()
+  await page.getByRole("button", { name: /하루 마무리에서 몸 상태를 짧게 남겨요/u }).click()
 
   // Then
   await expect(page.getByRole("heading", { name: /회복.*하루 마무리/u })).toBeVisible()

@@ -98,7 +98,7 @@ export function PlanBeta({
           계획을 만들지 말고 지도자·보호자 또는 의료진과 직접 상의해 주세요.
         </p>
         <button type="button" onClick={() => onWriteLog?.("evening")}>
-          통증·컨디션 기록하기
+          지도자와 상의한 내용을 일지에 남기기
         </button>
         <button
           className="plan-text-action"
@@ -152,6 +152,7 @@ export function PlanBeta({
         step={step}
         draft={draft}
         onBack={() => setStep(previousStep(step))}
+        onJump={(target) => setStep(target)}
         onGoal={(eventGroup) => {
           setDraft((current) => ({ ...current, eventGroup }))
           setStep("experience")

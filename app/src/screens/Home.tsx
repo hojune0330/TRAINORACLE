@@ -75,7 +75,7 @@ export function Home({
 
       <DailyContextTags date={today} />
       {painReviewDates.length > 0 && <PainReview dates={painReviewDates} />}
-      <EngagementStrip summary={engagement} />
+      <EngagementStrip summary={engagement} savedCount={entries.length} onOpenMore={onOpenMore} />
 
       <section className="training-home__recent" aria-label="최근 기록">
         <DeviceJournal onOpenDay={onOpenDay} onOpenArchive={onOpenArchive} />
@@ -96,7 +96,8 @@ export function Home({
 }
 
 function recentPainReviewDates(entries: readonly AnalysisJournalEntry[], today: string): readonly string[] {
-  const from = isoShift(today, -6)
+  // WORK_ORDER_UX2 §2-1: 통증 4+ 배너 창을 6일 → 14일로 확장.
+  const from = isoShift(today, -13)
   const dates = entries
     .filter((entry) => entry.kind === "evening" && entry.date >= from && painLevelsRequireReview(entry.painParts))
     .map((entry) => entry.date)

@@ -112,9 +112,13 @@ export function PostSessionForm({ onBack, onDone, targetDate, initialEntry }: En
           <input aria-label="시간 (분)" type="text" value={durationMin} onChange={(event) => setDurationMin(event.target.value)} style={{ ...inputStyle(), fontFamily: "var(--mono)", textAlign: "right" }} />
           <input aria-label="평균 페이스 (/km)" type="text" value={avgPace} onChange={(event) => setAvgPace(event.target.value)} style={{ ...inputStyle(), fontFamily: "var(--mono)", textAlign: "right" }} />
         </div>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, marginTop: 4, fontFamily: "var(--mono)", fontSize: 9, color: "var(--ink-4)", letterSpacing: "0.06em" }}>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, marginTop: 4, fontFamily: "var(--mono)", fontSize: 9, color: "var(--ink-3)", letterSpacing: "0.06em" }}>
           <span>km</span><span>min</span><span>/km</span>
         </div>
+        {/* WORK_ORDER_UX2 §3-2 (D-06): 페이스 입력 형식 가이드 — 파서 철거가 아니라 안내 */}
+        <p style={{ margin: "6px 0 0", fontFamily: "var(--sans)", fontSize: 11, color: "var(--ink-3)", lineHeight: 1.5 }}>
+          예: 5'30&quot; 또는 5:30 (분:초)
+        </p>
       </FormSec>
 
       {/*

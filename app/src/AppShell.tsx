@@ -247,6 +247,10 @@ export function AppShell() {
       tab={v.tab}
       onDismissToast={() => setSavedToast(null)}
       onOpenTrends={goTrendsFromReceipt}
+      onOpenBackup={() => {
+        setSavedToast(null)
+        openRestore()
+      }}
       onTab={goTab}
       hideTabBar={false}
     >

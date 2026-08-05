@@ -72,9 +72,38 @@ export function EveningCheckin({ onBack, onDone, targetDate, initialEntry }: Ent
       </div>
 
       <FormSec lb={`수면 · ${sleep > 0 ? `${sleep}h` : "미기록 (움직여서 기록)"}`}>
-        <input aria-label="수면 시간" type="range" min="4" max="12" step="0.5" value={sleep > 0 ? sleep : 7}
-          onChange={(event) => setSleep(parseFloat(event.target.value))}
-          style={{ width: "100%", height: 44 }} />
+        <div style={{ position: "relative", height: 44, display: "flex", alignItems: "center" }}>
+          <div aria-hidden="true" style={{
+            position: "absolute", left: 0, right: 0, top: "50%", height: 4,
+            transform: "translateY(-50%)", background: "var(--line)",
+          }}>
+            <div style={{
+              width: sleep > 0 ? `${((sleep - 4) / 8) * 100}%` : "0%",
+              height: 4, background: "var(--ink)",
+            }} />
+          </div>
+          {sleep > 0 && (
+            <div aria-hidden="true" style={{
+              position: "absolute", top: "50%", left: `${((sleep - 4) / 8) * 100}%`,
+              width: 18, height: 18, transform: "translate(-50%, -50%)",
+              borderRadius: 999, background: "var(--ink)", border: "3px solid var(--bg)",
+            }} />
+          )}
+          {sleep === 0 && (
+            <div aria-hidden="true" style={{
+              position: "absolute", left: 6, top: "50%", transform: "translateY(-50%)",
+              fontFamily: "var(--mono)", fontSize: 9.5, color: "var(--ink-4)",
+              letterSpacing: "0.06em", pointerEvents: "none",
+            }}>아래로 움직여 기록</div>
+          )}
+          {/* 실제 인터랙션 표면: 접근성 트리/role(slider)은 그대로 두고,
+              시각은 아래 커스텀 트랙·손잡이가 담당한다. opacity 0이 되면
+              jest-dom toBeVisible이 숨김으로 판정하므로 0.01로 유지한다. */}
+          <input aria-label="수면 시간" type="range" min="4" max="12" step="0.5"
+            value={sleep > 0 ? sleep : 4}
+            onChange={(event) => setSleep(parseFloat(event.target.value))}
+            style={{ position: "absolute", inset: 0, width: "100%", height: 44, margin: 0, opacity: 0.01, cursor: "pointer" }} />
+        </div>
         <div style={{ display: "flex", justifyContent: "space-between", fontFamily: "var(--mono)", fontSize: 9.5, color: "var(--ink-4)", letterSpacing: "0.06em", marginTop: 4 }}>
           <span>4h</span><span>8h</span><span>12h</span>
         </div>

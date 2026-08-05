@@ -117,6 +117,7 @@ function LogDetailJournal({ date, onBack, onAddEntry, onEditEntry, readerControl
               ref={undoRef}
               type="button"
               data-testid="delete-undo-button"
+              aria-label={`${justDeleted.label} 일지 되돌리기`}
               onClick={() => undoRemove(justDeleted.id)}
               style={{
                 minHeight: 44, padding: "0 12px",

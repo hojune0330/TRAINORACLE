@@ -17,6 +17,7 @@ export function AppShellFrame({
   tab,
   onDismissToast,
   onOpenTrends,
+  onOpenBackup,
   onTab,
   hideTabBar = false,
 }: {
@@ -26,6 +27,7 @@ export function AppShellFrame({
   readonly tab: AppTab
   readonly onDismissToast: () => void
   readonly onOpenTrends: () => void
+  readonly onOpenBackup?: () => void
   readonly onTab: (tab: AppTab) => void
   readonly hideTabBar?: boolean
 }) {
@@ -46,6 +48,7 @@ export function AppShellFrame({
           reviewMessage={savedToast.reviewMessage}
           onDismiss={onDismissToast}
           onOpenTrends={onOpenTrends}
+          onOpenBackup={onOpenBackup}
         />
       )}
       {!hideTabBar && <TabBar tab={tab} onTab={onTab} />}

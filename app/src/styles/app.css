@@ -560,6 +560,37 @@ input, textarea { font-family: inherit; }
   font-size: 12px;
   line-height: 1.5;
 }
+
+/* WORK_ORDER_UX2 §3-3: 쉰 날 경로를 명시적 보조 버튼으로 승격.
+ * 홈 CTA(훈련 후 직행)와 별개로 하루 마무리로 바로 들어간다. */
+.training-home__rest-entry {
+  width: 100%;
+  min-height: 44px;
+  margin-top: 8px;
+  padding: 0 4px;
+  display: flex;
+  align-items: center;
+  border: 0;
+  background: transparent;
+  color: var(--ink-3);
+  font-family: var(--sans);
+  font-size: 12px;
+  line-height: 1.5;
+  text-align: left;
+  cursor: pointer;
+}
+
+/* 오늘(또는 어제) 하루 마무리 요약 — 값이 없으면 렌더링 자체를 생략한다
+ * (WORK_ORDER_UX2 §2-1, 거짓 브리핑 금지). */
+.training-home__briefing {
+  margin: 10px 0 0 !important;
+  padding: 2px 0 0;
+  color: var(--ink-2) !important;
+  font-family: var(--sans);
+  font-size: 12.5px !important;
+  line-height: 1.55 !important;
+  border-top: 1px dashed var(--line);
+}
 .training-home__services {
   padding: 12px 20px 0;
 }
