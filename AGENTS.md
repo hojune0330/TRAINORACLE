@@ -43,18 +43,41 @@
 **아래 파일 중 하나라도 열거나 수정하거나 테스트를 쓴다면, 오른쪽 문서를
 먼저 읽는다.**
 
-| 코드 | 반드시 먼저 읽을 스펙 |
+| 코드 | 반드시 먼저 읽을 스펙 | 상태 |
+|---|---|---|
+| `intensity-summary.ts`, `intensity-assessment.ts` | [`specs/active/SESSION_INTENSITY_ASSESSMENT_SPEC.md`](./specs/active/SESSION_INTENSITY_ASSESSMENT_SPEC.md) | ✅ 활성 |
+| `athlete-record-display.ts`, `athlete-records.ts` | [`WORK_ORDER_P1_ATHLETE_RECORDS.md`](./WORK_ORDER_P1_ATHLETE_RECORDS.md) (작업지시·구속력 있음), [`specs/active/ATHLETE_PROFILE_SPEC.md`](./specs/active/ATHLETE_PROFILE_SPEC.md) | ⚠️ 초안 |
+| `pace-target-evidence.ts`, `pace-target-plan.ts` | [`WORK_ORDER_P3_PACE_WIRING.md`](./WORK_ORDER_P3_PACE_WIRING.md), [`DECISION_BRIEFING_PERSONAL_PACE.md`](./DECISION_BRIEFING_PERSONAL_PACE.md) | ⛔ 오너 결정 대기 |
+| `plan-beta-*.ts`, `plan-proposals.ts`, `plan-session-schema.ts` | [`specs/active/PLAN_GENERATOR_SPEC.md`](./specs/active/PLAN_GENERATOR_SPEC.md), [`TRAINING_PLAN_METHOD_DECISION.md`](./TRAINING_PLAN_METHOD_DECISION.md) | ⚠️ 초안 |
+| `objective-fatigue-evidence.ts`, `fatigue-vector.ts` | [`specs/reconstruct/OBJECTIVE_FATIGUE_EVIDENCE_CONTRACT.md`](./specs/reconstruct/OBJECTIVE_FATIGUE_EVIDENCE_CONTRACT.md) | ⚠️ 비런타임 초안 |
+| 위험신호·안전 게이트 관련 무엇이든 | [`specs/active/RULE_SPEC_D1_D9.md`](./specs/active/RULE_SPEC_D1_D9.md) | 🟡 업로드 준비 |
+| `private-memo-vault.ts`, `journal-observation.ts` 등 일지 원문 | [`specs/reconstruct/NOTE_SAFETY_SIGNAL_AND_REVIEW_STATE_CONTRACT.md`](./specs/reconstruct/NOTE_SAFETY_SIGNAL_AND_REVIEW_STATE_CONTRACT.md), [`FORMATION_PRIVACY_GOVERNANCE_DECISION.md`](./FORMATION_PRIVACY_GOVERNANCE_DECISION.md) | ⚠️ 검토 대기 |
+| `field-provenance.ts`, `safe-export.ts` | [`DATA_PROVENANCE_RUNTIME_ADOPTION_DECISION.md`](./DATA_PROVENANCE_RUNTIME_ADOPTION_DECISION.md) | ✅ 결정 완료 |
+| `aggregates.ts`, `weekly-distance.ts`, `trend-analysis.ts` | [`specs/reconstruct/METRIC_ALGORITHM_CONTRACT.md`](./specs/reconstruct/METRIC_ALGORITHM_CONTRACT.md), [`specs/reconstruct/ANALYSIS_AND_VISUALIZATION_DATA_CONTRACT.md`](./specs/reconstruct/ANALYSIS_AND_VISUALIZATION_DATA_CONTRACT.md) | ⚠️ 초안 |
+| 세션 분류 | [`specs/active/SESSION_CLASSIFIER_SPEC.md`](./specs/active/SESSION_CLASSIFIER_SPEC.md) | 🟡 업로드 준비 |
+| 템플릿 | [`specs/active/TEMPLATE_LIBRARY_SPEC.md`](./specs/active/TEMPLATE_LIBRARY_SPEC.md) | ⚠️ 상태 표기 없음 |
+
+### 🔴 `specs/active/` 폴더에 있다고 활성 계약이 아니다
+
+**폴더 이름을 믿지 말고 문서 첫머리 YAML의 `status`를 직접 확인한다.**
+실측(2026-08-05): `specs/active/` 9개 중 `ACTIVE_IMPLEMENTATION_CONTRACT`는
+**단 1개**(`SESSION_INTENSITY_ASSESSMENT_SPEC.md`)뿐이다. 나머지는
+`DRAFT_FOR_REVIEW`, `READY_FOR_UPLOAD`이거나 상태 표기가 아예 없다.
+
+```bash
+grep -m1 "^status:" specs/active/<파일>.md
+```
+
+| status 값 | 이 문서를 근거로 코드를 바꿔도 되는가 |
 |---|---|
-| `intensity-summary.ts`, `intensity-assessment.ts` | [`specs/active/SESSION_INTENSITY_ASSESSMENT_SPEC.md`](./specs/active/SESSION_INTENSITY_ASSESSMENT_SPEC.md) |
-| `athlete-record-display.ts`, `athlete-records.ts` | [`WORK_ORDER_P1_ATHLETE_RECORDS.md`](./WORK_ORDER_P1_ATHLETE_RECORDS.md), [`specs/active/ATHLETE_PROFILE_SPEC.md`](./specs/active/ATHLETE_PROFILE_SPEC.md) |
-| `pace-target-evidence.ts`, `pace-target-plan.ts` | [`WORK_ORDER_P3_PACE_WIRING.md`](./WORK_ORDER_P3_PACE_WIRING.md), [`DECISION_BRIEFING_PERSONAL_PACE.md`](./DECISION_BRIEFING_PERSONAL_PACE.md) |
-| `plan-beta-*.ts`, `plan-proposals.ts`, `plan-session-schema.ts` | [`specs/active/PLAN_GENERATOR_SPEC.md`](./specs/active/PLAN_GENERATOR_SPEC.md), [`TRAINING_PLAN_METHOD_DECISION.md`](./TRAINING_PLAN_METHOD_DECISION.md) |
-| `objective-fatigue-evidence.ts`, `fatigue-vector.ts` | [`specs/reconstruct/OBJECTIVE_FATIGUE_EVIDENCE_CONTRACT.md`](./specs/reconstruct/OBJECTIVE_FATIGUE_EVIDENCE_CONTRACT.md) |
-| 위험신호·안전 게이트 관련 무엇이든 | [`specs/active/RULE_SPEC_D1_D9.md`](./specs/active/RULE_SPEC_D1_D9.md) |
-| `private-memo-vault.ts`, `journal-observation.ts` 등 일지 원문 | [`specs/reconstruct/NOTE_SAFETY_SIGNAL_AND_REVIEW_STATE_CONTRACT.md`](./specs/reconstruct/NOTE_SAFETY_SIGNAL_AND_REVIEW_STATE_CONTRACT.md), [`FORMATION_PRIVACY_GOVERNANCE_DECISION.md`](./FORMATION_PRIVACY_GOVERNANCE_DECISION.md) |
-| `field-provenance.ts`, `safe-export.ts` | [`DATA_PROVENANCE_RUNTIME_ADOPTION_DECISION.md`](./DATA_PROVENANCE_RUNTIME_ADOPTION_DECISION.md) |
-| 세션 분류 | [`specs/active/SESSION_CLASSIFIER_SPEC.md`](./specs/active/SESSION_CLASSIFIER_SPEC.md) |
-| 템플릿 | [`specs/active/TEMPLATE_LIBRARY_SPEC.md`](./specs/active/TEMPLATE_LIBRARY_SPEC.md) |
+| `ACTIVE_IMPLEMENTATION_CONTRACT` | **가능.** 구현이 이 계약을 지켜야 한다 |
+| `READY_FOR_UPLOAD` / 표기 없음 | **현재 동작 파악용으로만.** 바꾸려면 오너 확인 |
+| `DRAFT_FOR_REVIEW`, `DRAFT_NON_RUNTIME_CONTRACT`, `QUALIFIED_REVIEW_PENDING` | **불가.** 초안이다. 특히 `canonical_promotion_allowed: false`면 확정 규칙이 아니다 |
+
+**초안을 근거로 런타임 동작을 바꾸지 않는다.** 초안과 현재 구현이 다르면
+그건 버그가 아니라 **미결정 사항**이다. 고치지 말고 차이를 보고한다.
+초안에 적힌 값을 확정 규칙으로 착각하는 것은 North Star §5 사례 5와
+같은 종류의 실수다.
 
 표에 없는 훈련 관련 파일을 만졌다면:
 
