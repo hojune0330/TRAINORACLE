@@ -148,6 +148,26 @@ npx vitest run 2>&1 | sed 's/\x1b\[[0-9;]*m//g' \
 comm -13 /tmp/base-names.txt /tmp/mine.txt   # 비어 있어야 내 탓이 아니다
 ```
 
+### 도구 자체가 거짓말하는 경우 — `npx tsc` 금지
+
+`impl/`에 `node_modules`가 없는 상태에서 `npx tsc --noEmit`을 돌리면 npm이
+레지스트리에서 **TypeScript와 무관한 `tsc@2.0.4` 패키지**를 받아 실행하고
+**exit 0을 준다.** 이걸 "타입체크 통과"로 읽으면 타입 방어가 전부 사라진 것을
+못 본다. 2026-08-05에 실제로 이 함정에 빠져 "impl 테스트 9건이 헛돈다"는
+잘못된 판정을 냈다.
+
+```bash
+# ✗ 하지 않는다
+cd impl && npx tsc --noEmit
+
+# ✓ 둘 중 하나로 한다
+cd impl && npm ci && npm run typecheck
+cd impl && ./node_modules/.bin/tsc --noEmit
+```
+
+**검증 도구가 통과를 줬을 때, 그 도구가 진짜인지 먼저 의심한다.**
+너무 빨리 끝났거나 오류가 하나도 없으면 도구가 실행되지 않은 쪽을 먼저 본다.
+
 또한 `npm test`는 **UTC와 KST 두 번** 돈다(`vitest.config.kst.ts`).
 `new Date(iso)`는 UTC로, `new Date(y, m-1, d)`는 로컬로 파싱된다 — 이
 차이는 UTC와 KST 양쪽에서 값 비교로는 안 잡힌다. 날짜 함수 테스트는
@@ -175,6 +195,17 @@ comm -13 /tmp/base-names.txt /tmp/mine.txt   # 비어 있어야 내 탓이 아�
 모르면 `판단보류`로 남기고 올린다. 그게 정답이다.
 
 **변호하면서 "괜찮은 것 같다"고 스스로 승인하지 않는다.**
+
+### 슬롯별 강도 배치는 이미 정해져 있다
+
+고강도(QUALITY) 세션의 오전·오후 배치는 오너가 2026-08-06에 결정했다.
+**오전 고정은 금지다.** 훈련 코드를 만지기 전에 반드시 읽는다:
+
+- [`OWNER_DECISION_SESSION_SLOT_INTENSITY_2026_08_06.md`](OWNER_DECISION_SESSION_SLOT_INTENSITY_2026_08_06.md)
+
+`specs/reconstruct/DOUBLE_SESSION_BETA_SAFETY_CONTRACT.md`의 `DSB-INV-002`
+(PM은 회복 전용)와 `DSB-INV-003`(같은 날 quality 짝 금지)은 이 결정에 밀린다.
+**그 초안을 근거로 오후 고강도를 다시 막지 않는다.**
 
 ---
 

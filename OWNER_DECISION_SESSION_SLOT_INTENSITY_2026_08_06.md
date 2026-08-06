@@ -82,7 +82,24 @@ C-7은 딥시크의 잘못이 아니다. 2026-08-05에 **내(OPUS)가 낸 권고
 구현한 것이다. 그 권고는 오너 발화 1이 나온 뒤 **철회**됐으나, 철회 사실이 딥시크에게
 전달되기 전에 구현이 끝났다. 병합 전에 되돌린다.
 
-### 3.2 초안 스펙의 지위 변경
+### 3.2 내(OPUS)가 2026-08-05에 낸 잘못된 판정 2건 — 철회 기록
+
+**철회 1 — "저장 관문이 열렸다."**
+틀렸다. `plan-beta-schema.ts:83-101`의 `superRefine`은 원래부터 PM을 검사하고 있었다.
+내 탐침이 `activePlanSchema.safeParse()`를 직접 호출해 바깥 관문을 건너뛴 것이 원인이다.
+열린 것은 leaf 스키마뿐이었다. 딥시크의 정정이 맞다.
+
+**철회 2 — "impl 테스트 9건은 헛돈다."**
+과했다. 런타임에서 헛도는 것은 사실이나, 그 좌표를 지키는 것은 타입체크이고
+CI(`.github/workflows/ci.yml:61-63`)가 impl `npm run typecheck`를 실제로 돈다.
+타입 확장을 되돌리면 진짜 `tsc`가 `session-builder.ts:65,139`에서 TS2322로 잡는다.
+
+**철회 2가 생긴 원인 — 가짜 tsc.** `impl/node_modules`가 없는 상태에서 `npx tsc --noEmit`을
+돌리면 npm이 무관한 `tsc@2.0.4` 패키지를 받아 실행하고 **exit 0을 준다.** 이것을 타입체크
+통과로 읽었다. 앞으로 impl 타입체크는 반드시 `impl/node_modules/.bin/tsc`를 직접 호출하거나
+`npm ci` 후 `npm run typecheck`로 돌린다. `npx tsc`는 이 저장소에서 신뢰할 수 없다.
+
+### 3.3 초안 스펙의 지위 변경
 
 `specs/reconstruct/DOUBLE_SESSION_BETA_SAFETY_CONTRACT.md`는
 `status: DRAFT_FOR_REVIEW`, `canonical_promotion_allowed: false`인 초안이다.
