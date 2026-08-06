@@ -57,16 +57,19 @@ cd app  && npm ci
 cd ../impl && npm ci
 
 # 3. 🔴 테스트 기준선을 지금 떠 둔다 (나중에 뜨면 내가 만든 실패가 섞인다)
+#    app 은 UTC 패스와 KST 패스가 따로 있다. 둘 다 떠라 (§8.3)
 cd ../app && npx vitest run 2>&1 | sed 's/\x1b\[[0-9;]*m//g' \
-  | grep -E "^ FAIL" | sed 's/^ FAIL  //' | sort -u > /tmp/base.txt
-wc -l /tmp/base.txt          # 이 숫자를 보고서에 적어라
+  | grep -E "^ FAIL" | sed 's/^ FAIL  //' | sort -u > /tmp/base-utc.txt
+cd ../app && npx vitest run -c vitest.config.kst.ts 2>&1 | sed 's/\x1b\[[0-9;]*m//g' \
+  | grep -E "^ FAIL" | sed 's/^ FAIL  //' | sort -u > /tmp/base-kst.txt
+wc -l /tmp/base-utc.txt /tmp/base-kst.txt    # 이 숫자들을 보고서에 적어라
 cd ../impl && npx vitest run  # 착수 시점에 전부 통과해야 정상
 
 # 4. 실체 컴파일러 확인 (npx tsc 아님)
 cd ../impl && ./node_modules/.bin/tsc --noEmit
 ```
 
-**`/tmp/base.txt`는 샌드박스가 리셋되면 사라진다.**
+**`/tmp/base-*.txt`는 샌드박스가 리셋되면 사라진다.**
 그러니 **줄 수와 내용을 보고서에 바로 붙여 놓아라.**
 
 **먼저 읽을 문서 (순서대로, 전부):**
@@ -247,6 +250,54 @@ cd ../impl && ./node_modules/.bin/tsc --noEmit
 > **G-10이 이 작업 전체의 핵심 검증이다.** 나머지가 다 초록이어도 G-10이
 > 실패하면 사용자는 계획을 만들 수 없다.
 
+### 4.6b 🔴 사양 문서(`DOUBLE_SESSION_BETA_SAFETY_CONTRACT.md`)와의 관계
+
+S-3이 지우는 검사들은 **아무 근거 없이 만들어진 게 아니다.**
+`specs/reconstruct/DOUBLE_SESSION_BETA_SAFETY_CONTRACT.md`의 불변식을
+그대로 구현한 것이다. 대응은 이렇다:
+
+| 사양 불변식 | 현재 코드 | S-3 후 |
+|---|---|---|
+| `DSB-INV-002` PM은 `EASY`+`RECOVERY_INTENT`+RPE1-2 전용 | `:83-91` | **폐기** — OD-SLOT-1·2가 우선 |
+| `DSB-INV-003` 같은 날 quality 짝 금지 | `:108-113` | **폐기** — OD-SLOT-2가 우선 |
+| `DSB-INV-001` `RECOVERY_PM_ALLOWED` 없으면 PM 없음 | `:92-94` | **주체 변경** — "PM 있으면"→"하루 2세션이면" |
+| `DSB-INV-004` `(day,slot)` 유일 | `:76-79` | **유지** (S-6이 leaf에도 추가) |
+
+**폐기 근거는 `AGENTS.md:206-207`과 결정 문서 §3에 이미 적혀 있다.**
+오너 결정이 초안 사양보다 우선한다(`FORMATION_LATEST_OWNER_DECISION_BASELINE.md` 10항).
+**네가 새로 판단할 사항이 아니다. 이미 결정됐다.**
+
+**단, 사양 문서를 지우거나 고치지 마라.** 지금 범위가 아니다.
+대신 **보고서에 위 표를 그대로 옮겨 적어라** — 나중에 이 코드를 보는 사람이
+"사양과 다른데?" 하고 되돌리는 것을 막는 유일한 장치다.
+
+#### 🔴 DSB-INV-008은 폐기되지 않았다 — 오후 고강도에도 적용된다
+
+`DSB-INV-008`: *"PM output may show only duration range, RPE range, intent,
+and plain-language guidance. It must not show derived pace, repetitions,
+distance, or recovery intervals."*
+
+이건 오너 결정과 **충돌하지 않는다.** 그리고 현재 코드는 자동으로 만족한다 —
+`qualityTrainingSession()`이 `RPE_TIME_RANGE`만 만들고 페이스·거리·반복은
+아예 넣지 않는다(`session-builder.ts:131-149`).
+
+**즉 S-2에서 처방 모양을 바꾸지 않는 한 저절로 지켜진다.
+처방에 새 필드를 넣지 마라.** 넣어야 할 것 같으면 §9-13에 걸린다.
+
+#### 🔴 사양 §6 표기 요구 — "오후 세션은 회복 세션이라 불러야 한다"
+
+`DOUBLE_SESSION_BETA_SAFETY_CONTRACT.md` §6: *"A PM session must be called an
+afternoon recovery session, not a second workout."*
+
+**오후에 고강도가 갈 수 있게 되면 이 표기 요구는 성립하지 않는다.**
+다행히 화면 구현은 이미 안전하다 — `labels.ts:170-179` `sessionSlotLabel()`은
+`"오전"`/`"오후"`만 돌려주고 역할 설명은 `sessionIntentLabel()`·
+`sessionGuidance()`가 **세션의 실제 의도로부터** 만든다. 슬롯 이름에
+"회복"을 박아 넣은 곳은 없다.
+
+**따라서 S-4에서 `sessionSlotLabel()`을 건드릴 필요가 없다.**
+`"오후"`를 `"오후 회복"` 같은 걸로 바꾸지 마라 — 그게 정확히 거짓말이 된다.
+
 ### 4.7 🔴 fixture 유효성을 먼저 증명해라 — 내가 실제로 틀렸던 부분
 
 저장 관문 테스트를 쓸 때 **fixture가 엉뚱한 이유로 거부되고 있는데
@@ -270,13 +321,28 @@ cd ../impl && ./node_modules/.bin/tsc --noEmit
 
 ## 5. S-4 — 화면 문구 정정 (C-6)
 
-`app/src/screens/plan-beta/PlanIntake.tsx:200-203`:
+**🔴 고칠 곳은 한 곳이 아니라 두 곳이다.** 실측했다.
+
+**(1) `PlanIntake.tsx:200-203`** — 선택지 카드:
 ```
 title="일부 날은 하루 두 번 운동"
 detail="오전 기본 훈련과 오후 RPE 1~2 회복 운동만 나눠 보여줘요"   ← 거짓이 된다
 ```
 
-S-3까지 끝나면 이 문장은 **사실이 아니다.** 오후에 고강도가 갈 수 있고,
+**(2) `PlanIntake.tsx:84`** — 같은 질문의 `STEP_META` 본문. **여기가 더 길고 더 단정적이다:**
+```
+copy: "선택하면 일부 날에 오전 기본 훈련과 오후 회복 운동을 나눠 보여줘요.
+       오후 운동은 RPE 1~2이고, 고강도 두 번이나 놓친 운동 보충은 만들지 않아요."
+```
+
+`:84`를 놓치기 쉽다. `:201`만 고치면 **같은 화면에서 두 문장이 서로 다른 말을 한다.**
+→ **`grep -n "오후" app/src/screens/plan-beta/PlanIntake.tsx` 로 전수 확인부터 해라.**
+
+**`:84`에서 살려야 하는 부분이 있다.** *"놓친 운동 보충은 만들지 않아요"* 는
+`DSB-INV-007`(보충 금지)이고 **여전히 사실이다.** 지우지 마라.
+거짓이 된 것은 *"오전 기본 + 오후 회복"* 과 *"오후 운동은 RPE 1~2"* 뿐이다.
+
+S-3까지 끝나면 이 문장들은 **사실이 아니다.** 오후에 고강도가 갈 수 있고,
 반대 슬롯이 오전일 수도 있다.
 
 ### 문구 방향 (확정 문구는 실제 동작을 보고 정한다)
@@ -285,6 +351,11 @@ S-3까지 끝나면 이 문장은 **사실이 아니다.** 오후에 고강도�
 - 두 번째 세션은 **권장이 가벼운 훈련·휴식**이라고 말하되, **"만"** 이라고 하지 마라 (OD-SLOT-7)
 - `RPE 1~2` 같은 내부 수치를 약속으로 박지 마라. 강도 범위는 계획에서 보여준다
 - **`RECOVERY_PM_ALLOWED` 내부 값은 개명하지 마라.** 저장된 사용자 데이터다
+- **`labels.ts`의 `sessionSlotLabel()`은 건드리지 마라.** 이미 `"오전"`/`"오후"`만
+  돌려주므로 정확하다. 여기에 "회복"을 붙이면 새 거짓말이 된다 (§4.6b)
+- **`glossary.ts`의 `two-a-day` 용어 항목도 확인해라.** `helpTerm="two-a-day"`가
+  가리키는 설명문이 같은 거짓 약속을 반복하고 있을 수 있다.
+  **있으면 고쳐라. 새 용어를 추가하는 건 금지(§9-7), 기존 설명 정정은 범위 안이다**
 
 **S-3 이후에만 해라.** 런타임보다 문구를 먼저 고치면 거짓말의 방향만 바뀐다.
 
@@ -366,6 +437,33 @@ cd app && npm run typecheck && npm run typecheck:e2e
 cd app && npx vitest run                         # 기준선 대비 신규 실패 0건
 ```
 
+#### 🔴 app 테스트는 **두 번** 돈다 — `npx vitest run` 한 번으로 끝내지 마라
+
+`app/package.json`의 `npm test`는 이렇게 정의돼 있다:
+
+```
+"test": "npm run test:unit && npm run test:unit:kst"
+```
+
+두 번째는 `vitest.config.kst.ts`로 **`TZ=Asia/Seoul`에서 다시 돈다.**
+`vitest.config.kst.ts`의 주석이 이유를 적어 놨다 — 날짜 계산 회귀 중에는
+**UTC에서 원리적으로 안 잡히는 것**이 있다. CI(`app-quality` 잡)는 `npm test`를
+돌리므로 **KST 패스도 돈다.**
+
+```bash
+# ✗ 이것만 하면 KST 패스를 건너뛴다. CI에서 처음 터진다.
+cd app && npx vitest run
+
+# ✓ 각 단계 커밋 전에 이걸 해라
+cd app && npm test        # UTC 패스 + KST 패스 둘 다
+```
+
+**S-1은 날짜와 무관해 보이지만 그렇지 않다.** `generatePlanFromDraft`가
+`todayISO()`로 프레임을 만든다(`plan-beta-flow.ts`). 시간대 패스를 건너뛰면
+계획 생성 회귀를 놓칠 수 있다.
+
+**§8.3의 기준선도 두 패스 각각 떠라** (아래 §8.3 참조).
+
 ### 8.2 `npx tsc` 절대 금지
 
 ```bash
@@ -383,11 +481,18 @@ cd impl && ./node_modules/.bin/tsc --noEmit
 
 샌드박스는 Node 20, CI는 Node 24다. 샌드박스에서 원래 실패하는 게 24건 있다.
 
+**두 패스(UTC·KST) 각각 따로 떠라.** 실패 집합이 다를 수 있다.
+
 ```bash
+# UTC 패스
 cd app && npx vitest run 2>&1 | sed 's/\x1b\[[0-9;]*m//g' \
-  | grep -E "^ FAIL" | sed 's/^ FAIL  //' | sort -u > /tmp/mine.txt
-# 착수 직후 같은 명령으로 /tmp/base.txt 를 먼저 떠 둬라
-comm -13 /tmp/base.txt /tmp/mine.txt     # 비어 있어야 한다
+  | grep -E "^ FAIL" | sed 's/^ FAIL  //' | sort -u > /tmp/mine-utc.txt
+# KST 패스
+cd app && npx vitest run -c vitest.config.kst.ts 2>&1 | sed 's/\x1b\[[0-9;]*m//g' \
+  | grep -E "^ FAIL" | sed 's/^ FAIL  //' | sort -u > /tmp/mine-kst.txt
+
+comm -13 /tmp/base-utc.txt /tmp/mine-utc.txt     # 둘 다 비어 있어야 한다
+comm -13 /tmp/base-kst.txt /tmp/mine-kst.txt
 ```
 
 **착수 전에 기준선을 반드시 떠라.** 나중에 만들면 내가 만든 실패가 기준선에 섞인다.
@@ -453,12 +558,14 @@ cd app && npm run dev
 | 10 | `.github/workflows/` 를 고쳐야 할 것 같다 | **쓰기 차단됨.** 토큰 권한 없음 |
 | 11 | 앱과 엔진이 **공용 모듈을 필요로 한다**고 판단된다 | 별도 패키지다. 구조 변경은 별도 결정 |
 | 12 | 어떤 단계든 **되돌릴 수 없는 데이터 변형**이 필요해 보인다 | 멈춰라. 예외 없다 |
+| 13 | 세션 **처방(prescription)에 새 필드**를 넣어야 할 것 같다 | `DSB-INV-008` 위반. §4.6b |
+| 14 | S-2 결과로 **한 프레임의 훈련량이 §3.1 상한을 넘는다** | 훈련 안전 문제. §3.1 |
 
-**8번만 예외다 (부분 정지).** 대상 버튼이 정말 없으면 **전체 작업을 멈추지 마라.**
+**8번만 예외다 (부분 정지).** (1~7·9~14번은 **전체 정지**다.) 대상 버튼이 정말 없으면 **전체 작업을 멈추지 마라.**
 `LogDetail.tsx`에 실제로 있는 요소만 처리하고, 없는 요소는 **만들지 않고**
 보고서에 "UX2 §4-1이 지목한 X·Y는 코드에 존재하지 않는다"로 적은 뒤
 **S-6으로 넘어간다.** 백로그 B-11 정정은 리뷰에서 처리한다.
-(§6-4와 같은 뜻이다. 1~7·9~12번은 **전체 정지**다.)
+(§6-4와 같은 뜻이다.)
 
 **정지가 실패가 아니다.** 추측으로 밀고 나간 결과를 되돌리는 것이 훨씬 비싸다.
 
