@@ -134,6 +134,39 @@
 - **왜 B-02와 분리하나:** B-02는 "없어진 방어벽(DSB-INV-002) 복원 + 이식"이 승인 범위. 이 구멍(DSB-INV-004 leaf refin없음)은 승인 계획이 명시적으로 "이번에 건드리지 않는다"고 한 원래 구멍 중 하나. 열린 채로 두지 않고 백로그에 고정해 추후 별도로 수정한다.
 - **완료 조건:** `sessions: z.array(planSessionSchema)`에 (day,slot) 반복 refine 추가(저장 관문 superRefine의 중복 검사 로직과 동일 의미) + leaf 단독 사용 시 중복 좌표를 거부하는 계약 테스트 + 결함 주입으로 비공허성 확인(refine 제거 시 실패하는 테스트). 저장 관문 검사는 유지(이중 방어).
 
+### B-14 🔴 ㉢-a 생성기 오전 고정 — 오너 결정 미반영 (작업지시서 발행됨)
+- **출처:** `OWNER_DECISION_SESSION_SLOT_INTENSITY_2026_08_06.md` OD-SLOT-1·2 · 작업지시서 `WORK_ORDER_PM_QUALITY_GENERATOR_C3A.md` (2026-08-06 발행)
+- **상태:** ❌ 미착수 — 작업지시서만 발행
+- **실측 근거 (main `e639eae`):**
+  - `impl/src/plan-generator/session-builder.ts:205-211` — `qualityTrainingSession(day, ranges.quality, intent)` slot 인자 없음 → 고강도 **항상 AM** (C-1)
+  - `impl/src/plan-generator/session-builder.ts:216-221` — PM은 `RECOVERY_INTENT` 고정 (C-2)
+  - `impl/src/plan-generator/session-builder.ts:161-164` — `recoverySecondSessionDays()`가 `qualityDays` 제외 → 고강도 날엔 반대 슬롯이 아예 안 생김 (C-3, **OD-SLOT-2 위반**)
+- **제약:** 입력(`PlanIntake` 6문항 / `types.ts:177-178`)이 **훈련 시간대를 묻지 않는다.** 근거 없이 오후로 옮길 수 없다. 이번 작업은 "AM 하드코딩"을 "정보 부족에 따른 기본값"으로 바꾸는 것까지다
+- **완료 조건:** 작업지시서 §6 — T-A~T-F 계약 테스트 + 각각 결함 주입 비공허성 증명 + 실체 tsc(`./node_modules/.bin/tsc`) 0건
+
+### B-15 🟠 ㉢-b 저장 관문 — PM 제약이 오너 결정과 충돌
+- **출처:** 결정 문서 C-4·C-5 · §4.3 · §5 단계 3
+- **상태:** ❌ 미착수 — B-14 완료 후 착수
+- **실측 근거 (main `e639eae`):**
+  - `app/src/domain/plan-beta-schema.ts:83-91` — PM이 `EASY`+`RECOVERY_INTENT`+RPE 1-2 아니면 거부 (C-4)
+  - `app/src/domain/plan-beta-schema.ts:108-113` — 같은 날 PM+QUALITY 공존 거부 (C-5) → **OD-SLOT-2의 주 패턴(오전 고강도+오후 가벼운 훈련)을 막는다**
+- **주의:** 검사를 **없애는 것이 아니라 대상을 바꾸는 것**이다. "PM은 회복만" → "PM은 무엇이든 되지만 하루 고강도 2회는 명시 지정 필요" (결정 문서 §4.3)
+- **완료 조건:** B-14 생성 결과가 저장 관문을 통과 + 하루 2회 고강도가 명시 지정 없이는 거부됨을 고정 + 결함 주입 비공허성
+
+### B-16 🟠 ㉢-c 화면 문구 — 사용자에게 하는 거짓 약속
+- **출처:** 결정 문서 C-6 · §6 · OD-SLOT-7
+- **상태:** ❌ 미착수 — **B-15 완료 후에만 착수** (런타임보다 먼저 고치면 거짓말 방향만 바뀐다)
+- **실측 근거:** `app/src/screens/plan-beta/PlanIntake.tsx:201` — `detail="오전 기본 훈련과 오후 RPE 1~2 회복 운동만 나눠 보여줘요"`
+- **주의:** `secondSessionMode`의 내부 값 `RECOVERY_PM_ALLOWED`는 **개명하지 않는다.** 저장된 사용자 데이터라 마이그레이션 위험. 화면 문구만 고친다
+- **완료 조건:** 실제 생성 동작과 문구가 일치 + 권장(휴식/회복운동)이 강제로 읽히지 않는 표현 + e2e 고정
+
+### B-17 🟠 OD-SLOT-6 계획 수정·최종확정 플로우 — 신규 화면
+- **출처:** 오너 2차 답변 3번 (2026-08-06) · 결정 문서 OD-SLOT-6 · §5 단계 5
+- **상태:** ❌ 미착수 — 별도 작업지시서 필요 (미작성)
+- **내용:** 생성된 계획을 사용자가 나중에 수정하거나 최종 결정하는 화면. **하루 2회 고강도의 "직접 지정"이 이뤄지는 유일한 입구**
+- **범위 경고:** `WORK_ORDER_SLOT_TYPE_EXTENSION_B.md` §6이 비목표로 뺀 `movePlanSession`, `plan-beta-store.ts` upsert, 캘린더 그리드 UI가 전부 여기 들어온다. ㉢과 묶지 않는다
+- **완료 조건:** 미정 — 작업지시서 발행 시 확정
+
 ---
 
 ## 2. 발굴 시점 실측 증거 (2026-08-04)
