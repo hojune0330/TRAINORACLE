@@ -35,15 +35,23 @@
   - §3-1 위저드 답 축적 요약 스트립 / §3-2 페이스 포맷 가이드(`normalizePace`) / §3-3 홈 CTA 1탭 직행(post-session) / §4-1 LogDetail aria / §4-2 저장 토스트 "백업 안내 보기" / §4-3 차단 화면 "상의 후 상태 기록" 스텁
 - **완료 조건:** `WORK_ORDER_UX2` §7 검증 (grep + 테스트) 모두 통과
 
-### B-02 🔴 UX2 §8-10 경로 B 확정 ⇒ 별도 엔진 작업지시서 미작성
-- **출처:** `WORK_ORDER_UX2` §8-10, §8-11, §8-12 (2026-08-04 오너 확정)
-- **상태:** ❌ 미작성 — B 확정은 문서로만 반영, **엔진 작업지시서 파일 없음**
-- **내용:** QUALITY·REST의 PM/자유 슬롯 이동 허용을 위한 타입 확장. 소유해야 할 바인딩 4종:
-  - `impl/src/plan-generator/session-types.ts:24-46` — QUALITY/REST `slot` 리터럴 확장
-  - `impl/src/plan-generator/session-builder.ts:150-172` — `recoverySecondSessionDays`(PM ≤2 상한) 재검토 + `makeCandidateSessions` 슬롯 배치
-  - `app/src/domain/plan-session-schema.ts:104,114` — `activePlanSchema` 미러
-  - `impl/src/plan-generator/progress.ts:18-42` · `app/src/domain/plan-beta-store.ts:73-90` — 허용 좌표 / (day,slot) upsert
-- **완료 조건:** §8-12 레지스트리 11종 불변식 위반 0건 + `movePlanSession(activePlan, from, to)` 전용 연산 컨트랙트 테스트 (V1) + 이동 후 재계획 대기→[실행]/[취소] (V3)
+### B-02 🔴 UX2 §8-10 경로 B 확정 ⇒ 별도 엔진 작업지시서 미작성 — [완료]
+- **출처:** `WORK_ORDER_UX2` §8-10, §8-11, §8-12 (2026-08-04 오너 확정) · `WORK_ORDER_SLOT_TYPE_EXTENSION_B.md` (작업지시서) · `OWNER_DECISION_SESSION_SLOT_INTENSITY_2026_08_06.md` (OD-SLOT, 최신 오너 결정)
+- **상태:** ✅ 완료 (2026-08-06) — 브랜치 `codex/slot-type-extension-b` (main `a29e5f2` 리베이스 완료), 보고서 `reports/review/WORK_ORDER_SLOT_TYPE_EXTENSION_B_REPORT.md`, PR 링크는 해당 보고서/PR 본문 참조
+- **내용 (승인된 B-02 계획 3요소 + 실측 정정 + C-7 철회):**
+  1. **없어진 방어벽(DSB-INV-002) 재설치** — `plan-session-schema.ts` QUALITY 변형에 `refine((s) => s.slot !== "PM")` 추가 (**문 열기와 같은 커밋**). **→ (2026-08-06) C-7 철회:** 오너 결정 OD-SLOT-1(오전 강제 금지, QUALITY는 PM 배치 허용)이 DSB-INV-002를 대체 → **leaf refine 제거**. OD-SLOT-1이 초안 스펙을 이긴다(결정 문서 §3.3).
+  2. **"막는지" 보는 테스트 + 결함 주입 비-공허성 증명** — 벽 제거 시 정확히 1건만 실패 → 복원 GREEN 재확인은 **철회 전 유효성 증명으로 기록**. 철회 후 테스트는 `accepts QUALITY PM (OD-SLOT-1)`로 복원됨.
+  3. **최신 main 위로 이식** — 딥시크 파일 5개(코드 3 + 테스트 2)만. goTab 탭바 결함은 main `386bc6d`가 `shouldResetTabView`로 **이미 해결** → 내 이전 수정/테스트는 폐기(reset --hard origin/main).
+  - **실측 정정 (Opus 보고서 대조):** "저장 관문이 열렸다"는 부정확 — `planBetaStateSchema` superRefine이 **원래부터** PM 세션 검사를 실행(`Invalid PM recovery support.` 등). 열린 건 **leaf 스키마뿐**. Opus가 철회 1 기록으로 정정 인정(결정 문서 §3.2).
+  - **현재 저장 관문(C-4/C-5)은 미변경** — PM = EASY+RECOVERY+RPE1-2만, PM+QUALITY 동일 day 금지. 이건 **㉢-b(진행 순서 3단계)에서** "하루 고강도 1회 기본, 2회는 명시 지정"으로 바꾼다(결정 문서 §4.3). 지금 건드리지 않는다.
+- **바인딩 4종 실측 (2026-08-05, 이식 대상 — 유지분):**
+  - `impl/src/plan-generator/session-types.ts` — QUALITY/REST `slot: "AM"` → `PlanSessionSlot` (EASY는 원래 자유)
+  - `impl/src/plan-generator/session-builder.ts` — `restSession(day, slot = "AM")`, `qualityTrainingSession(day, duration, intent, slot = "AM")` (생성 기본 AM 유지)
+  - `app/src/domain/plan-session-schema.ts` — REST·QUALITY `slot: sessionSlotSchema.optional().default("AM")` (**방어벽 refine은 OD-SLOT-1에 따라 철회**)
+  - `impl/test/plan-beta-selection.test.ts` · `app/src/domain/plan-beta-schema.contract.test.ts` — PM QUALITY 좌표 진행 기록 + 저장 관문 현재 동작 고정(C-4, ㉢-b에서 개정 예정)
+- **완료 조건 대비:** §8-12 레지스트리 중 OD-SLOT과 충돌하는 DSB-INV-002·003은 최신 오너 결정이 우선(위반 아님). 앱 141파일/1046건(UTC+KST) + impl 14파일/127건 + **실체 tsc**(`node_modules/.bin/tsc`) 0건. `movePlanSession` 전용 연산·재계획 흐름(V1/V3)은 **후속 UI 작업지시서(㉢ 단계) 소유**로 명시적 비목표 — 본 작업지시서는 타입 확장까지만.
+- **후속작:** ㉢-a 생성기(C-1~C-3) → ㉢-b 저장 관문(C-4/C-5) → ㉢-c 문구(C-6) → OD-SLOT-6 수정·확정 플로우(별도 작업지시서) (결정 문서 §5)
+- **B-13 분리:** leaf `sessions` 배열의 (day,slot) 유일성 refine 부재 — 아래 B-13 참조 (본 항목과 별개)
 
 ### B-03 🟠 PR #182 본문 명시 "안 된 것" 5건 — [부분 완료]
 - **출처:** PR #182 `fable/q1-trends-import-disclosure` 본문 (2026-08-04)
@@ -114,6 +122,17 @@
 - **왜 중요한가:** 도메인 함수와 계약 테스트가 초록이면 완료처럼 보이지만, 사용자는 이 기능에 **도달할 수 없다**. 기기를 잃은 사용자가 잠금을 못 푸는 상태가 그대로 남아 있다.
 - **내용:** "다른 계정으로 바꾸기" 진입 → 백업 권유 → 동의 끄기 → 잠금 해제 → 로그아웃 흐름
 - **완료 조건:** e2e로 **사용자 경로 전체**를 통과할 것(도메인 단위 테스트만으로는 불충분 — 이 항목이 그 반례다) + 백업 권유를 건너뛸 수 없음을 고정 + 잠금 해제가 일지 데이터를 지우지 않음을 고정
+
+### B-13 🟠 leaf `sessions` 배열의 (day,slot) 유일성 refine 부재 — B-02에서 분리 (이번 범위 밖)
+- **출처:** B-02 구현 중 실측으로 발굴 (2026-08-06) · 승인된 B-02 계획의 "원래부터 있던 구멍 2개는 이번에 건드리지 않는다"
+- **상태:** ❌ 미수정 — 이번 B-02 작업 범위 밖
+- **실측 근거 (2026-08-06, 브랜치 `codex/slot-type-extension-b` 기준 `fc44f97`):**
+  - `app/src/domain/plan-session-schema.ts:160` — `sessions: z.array(planSessionSchema).readonly()` — **배열 refine 0건**
+  - `activePlanSchema` **leaf 단독** 검증 시 (day,slot) 유일성(DSB-INV-004)이 **검사되지 않는다**
+  - (day,slot) 유일성 검사는 **저장 관문** `planBetaStateSchema` superRefine(`plan-beta-schema.ts:76-82` `"Duplicate plan session slot."`)에만 존재
+  - 즉 `loadPlanBetaState`/`savePlanBetaState` 경유(저장 관문)에서는 막히지만, leaf 스키마를 직접 쓰는 다른 경로가 생기면 중복 (day,slot)이 통과할 수 있다
+- **왜 B-02와 분리하나:** B-02는 "없어진 방어벽(DSB-INV-002) 복원 + 이식"이 승인 범위. 이 구멍(DSB-INV-004 leaf refin없음)은 승인 계획이 명시적으로 "이번에 건드리지 않는다"고 한 원래 구멍 중 하나. 열린 채로 두지 않고 백로그에 고정해 추후 별도로 수정한다.
+- **완료 조건:** `sessions: z.array(planSessionSchema)`에 (day,slot) 반복 refine 추가(저장 관문 superRefine의 중복 검사 로직과 동일 의미) + leaf 단독 사용 시 중복 좌표를 거부하는 계약 테스트 + 결함 주입으로 비공허성 확인(refine 제거 시 실패하는 테스트). 저장 관문 검사는 유지(이중 방어).
 
 ---
 

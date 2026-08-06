@@ -23,7 +23,7 @@ export type RpeTimeRange = {
 export type PlanSession =
   | {
       readonly day: number
-      readonly slot: "AM"
+      readonly slot: PlanSessionSlot
       readonly role: "REST"
       readonly plannedEnergyIntent: "RECOVERY_INTENT"
       readonly prescription: {
@@ -39,7 +39,7 @@ export type PlanSession =
     }
   | {
       readonly day: number
-      readonly slot: "AM"
+      readonly slot: PlanSessionSlot
       readonly role: "QUALITY"
       readonly plannedEnergyIntent: QualityEnergyIntent
       readonly prescription: RpeTimeRange
