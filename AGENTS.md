@@ -203,9 +203,29 @@ cd impl && ./node_modules/.bin/tsc --noEmit
 
 - [`OWNER_DECISION_SESSION_SLOT_INTENSITY_2026_08_06.md`](OWNER_DECISION_SESSION_SLOT_INTENSITY_2026_08_06.md)
 
-`specs/reconstruct/DOUBLE_SESSION_BETA_SAFETY_CONTRACT.md`의 `DSB-INV-002`
-(PM은 회복 전용)와 `DSB-INV-003`(같은 날 quality 짝 금지)은 이 결정에 밀린다.
-**그 초안을 근거로 오후 고강도를 다시 막지 않는다.**
+`specs/reconstruct/DOUBLE_SESSION_BETA_SAFETY_CONTRACT.md`는 이 결정을 반영해
+**v0.2로 개정되었다 (2026-08-06).** v0.1의 `DSB-INV-002`(PM은 회복 전용)와
+`DSB-INV-003`(같은 날 quality 짝 금지)은 **은퇴했고 새 규칙으로 대체되었다.**
+원문은 그 문서 §10 변경 이력에만 역사 기록으로 남아 있다.
+**은퇴한 v0.1 문장을 근거로 오후 고강도를 다시 막지 않는다.**
+
+지금 유효한 것:
+
+- `DSB-INV-002` — 두 번째 세션은 REST/EASY/QUALITY 모두 가능. 기본 권장은
+  휴식 또는 가벼운 훈련이지만 **강제가 아니다**(OD-SLOT-7).
+- `DSB-INV-003` — 같은 날 QUALITY는 **기본 1회**. 2회는 사용자가 직접 지정한
+  경우에만, 그리고 `DSB-INV-009`를 만족할 때만.
+- `DSB-INV-009` (신설, OD-SLOT-8) — 하루 2회 고강도 같은 특별한 날은 **화면에서
+  그 사실을 알려주고, 사용자가 검토·수정할 수 있는 흐름이 있을 때만** 허용된다.
+  **현재 구현에는 그 흐름이 없다**(수정 화면 없음, `movePlanSession` 없음) →
+  백로그 `B-17`(OD-SLOT-6)이 나오기 전까지 같은 날 QUALITY 2회는 **열지 않는다.**
+- 그대로 유효: `DSB-INV-001`(명시 동의), `DSB-INV-004`(하루 2세션 상한),
+  `DSB-INV-006`, `DSB-INV-007`(보충 금지), `DSB-INV-008`(RPE 전용).
+
+⚠️ `DSB-INV-*`는 **어떤 CI 검증기·테스트도 확인하지 않는다.** 문서와 코드가
+조용히 어긋날 수 있으니 실제 동작은 `app/src/domain/plan-beta-schema.ts`의
+`planBetaStateSchema` superRefine과 `impl/src/plan-generator/session-builder.ts`를
+직접 읽어 확인한다.
 
 ---
 
