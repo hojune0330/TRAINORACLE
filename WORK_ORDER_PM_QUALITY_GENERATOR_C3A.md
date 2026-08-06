@@ -6,12 +6,13 @@ title: "㉢-a 생성기 — 오전 고정 해제와 반대 슬롯 가벼운 훈�
 issued_by: OWNER_DECISION_SESSION_SLOT_INTENSITY_2026_08_06 (OD-SLOT-1~7)
 issued_date: "2026-08-06"
 status: ABSORBED_INTO_FULL_RUN
-base_commit: "㉢-a0(C3A0) 머지 커밋 — 착수 시점에 확인할 것"
-implementation_branch: codex/pm-quality-generator-c3a
+base_commit: "같은 PR의 S-1 커밋 위 — 별도 PR 머지를 기다리지 않는다"
+implementation_branch: codex/slot-intensity-full-run   # 통합 지시서와 같은 브랜치. 별도 브랜치를 만들지 마라
 scope: engine_only (@impl 생성기)
-prohibited_scope: [저장 관문(㉢-b), 화면 문구(㉢-c), 수정·확정 플로우(OD-SLOT-6), safety-gate, memo-safety]
-required_report: reports/review/WORK_ORDER_PM_QUALITY_GENERATOR_C3A_REPORT.md
-depends_on: WORK_ORDER_TRAINING_TIME_QUESTION_C3A0.md
+prohibited_scope: [저장 관문(S-3), 화면 문구(S-4), 수정·확정 플로우(OD-SLOT-6), safety-gate, memo-safety]
+# ↑ "S-2 커밋 하나 안에서 건드리지 말 범위"를 뜻한다. S-3·S-4는 같은 PR의 다음 커밋에서 진행한다
+required_report: reports/review/WORK_ORDER_SLOT_INTENSITY_FULL_RUN_REPORT.md   # 보고서는 통합 1건으로 쓴다
+depends_on: "S-1 (WORK_ORDER_TRAINING_TIME_QUESTION_C3A0.md) — 같은 PR의 앞 커밋"
 revised_at: "2026-08-06"
 ```
 
@@ -235,16 +236,28 @@ function counterpartSessions(
 ```
 → 같은 날 QUALITY(AM) + EASY(PM)은 **거부된다.** 이게 C-5다.
 
-**이번 작업에서 이 검사를 고치지 마라. ㉢-b의 일이다.**
+**S-2 커밋 안에서는 이 검사를 고치지 마라. S-3 커밋의 일이다.**
+**단, PR은 나누지 않는다** — 통합 지시서 §1 참조.
 
-대신:
+대신 S-2 커밋에서는:
 - 생성기 계약 테스트로 **생성 결과가 OD-SLOT-2를 만족함**을 고정한다 (impl 안에서)
 - 저장 관문에 걸린다는 사실을 **보고서에 명시**한다
-- app 쪽 저장 경로 테스트를 새로 만들지 않는다 (걸릴 것을 알고 있으므로)
+- app 쪽 저장 경로 테스트를 새로 만들지 않는다 (S-3에서 열린 뒤 만든다)
 
-> **왜 한 번에 안 고치나.** 생성기와 저장 관문을 같은 PR에서 바꾸면,
-> 테스트가 통과했을 때 그게 "둘 다 맞아서"인지 "둘 다 같이 틀려서"인지
-> 구분할 수 없다. 생성기를 먼저 고정하고, 그 결과를 근거로 관문을 연다.
+> ## 🔴 2026-08-06 정정 — 여기서 말하는 분리는 **커밋 분리**다
+>
+> 최초 발행 시 이 자리에는 *"생성기와 저장 관문을 같은 PR에서 바꾸지 마라"*가
+> 적혀 있었다. **그 지시는 철회됐다.**
+>
+> 근거는 "같이 바꾸면 테스트 통과가 둘 다 맞아서인지 둘 다 틀려서인지 모른다"였고
+> 검증 논리로는 옳다. 그러나 **배포 결과를 계산하지 않았다.** S-2만 병합하면
+> 생성된 오후 계획이 저장 관문에서 거부되고(`PLAN_STORAGE_WRITE_FAILED`),
+> 사용자는 `"계획을 이 기기에 저장하지 못했어요"`를 본다. `main` push는
+> 자동 배포이므로 **깨진 상태가 그대로 나간다.**
+>
+> **따라서 S-2와 S-3은 커밋을 분리하되 같은 PR에 실린다.**
+> 원래의 검증 의도(원인 분리)는 커밋 경계 + 단계별 테스트로 지킨다.
+> → `OWNER_DECISION_SESSION_SLOT_INTENSITY_2026_08_06.md` §4.9
 
 ---
 

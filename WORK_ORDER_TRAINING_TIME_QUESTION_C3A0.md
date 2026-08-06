@@ -7,11 +7,11 @@ issued_by: 오너 승인 2026-08-06 ("주로 언제 훈련하세요 넣자")
 issued_date: "2026-08-06"
 status: ABSORBED_INTO_FULL_RUN
 base_commit: "main 최신 (착수 시 `git log -1` 로 확인)"
-implementation_branch: codex/training-time-question-c3a0
+implementation_branch: codex/slot-intensity-full-run   # 통합 지시서와 같은 브랜치. 이 문서만을 위해 별도 브랜치를 만들지 마라
 scope: app_intake + engine_profile (생성 로직 변경은 ㉢-a)
 prohibited_scope: [생성기 슬롯 배치(㉢-a), 저장 관문(㉢-b), 화면 문구 C-6(㉢-c), 수정·확정 플로우(B-17), safety-gate, memo-safety]
-required_report: reports/review/WORK_ORDER_TRAINING_TIME_QUESTION_C3A0_REPORT.md
-blocks: WORK_ORDER_PM_QUALITY_GENERATOR_C3A.md
+required_report: reports/review/WORK_ORDER_SLOT_INTENSITY_FULL_RUN_REPORT.md   # 보고서는 통합 1건으로 쓴다
+blocks: "S-2 (WORK_ORDER_PM_QUALITY_GENERATOR_C3A.md)"
 ```
 
 > ## 📦 2026-08-06 — 이 지시서는 통합 지시서에 흡수됐다
@@ -251,14 +251,17 @@ const trainingTimePreferenceSchema = z.enum([
 
 ## 5. 생성기는 아직 이 값을 쓰지 않는다
 
-`impl/src/plan-generator/session-builder.ts`를 **이번에 고치지 마라.**
-`qualitySlotFor()`를 만드는 것도 ㉢-a의 일이다.
+`impl/src/plan-generator/session-builder.ts`를 **S-1 커밋에서는 고치지 마라.**
+`qualitySlotFor()`를 만드는 것은 S-2 커밋의 일이다.
 
-값이 엔진까지 도착하되 아무도 읽지 않는 상태로 끝낸다.
+S-1 커밋은 값이 엔진까지 도착하되 아무도 읽지 않는 상태로 끝낸다.
 **§6 T-F가 "생성 결과가 이전과 동일함"을 고정한다.**
 
-> 이게 낭비처럼 보일 수 있다. 아니다. 입력 경로와 사용 로직을 같은 PR에서
-> 바꾸면, 계획이 달라졌을 때 원인이 입력인지 로직인지 알 수 없다.
+> **분리 단위는 커밋이지 PR이 아니다.** 입력 경로와 사용 로직을 한 커밋에
+> 섞으면 계획이 달라졌을 때 원인이 입력인지 로직인지 알 수 없다. 그래서
+> 커밋을 나눈다. 그러나 **PR은 하나다** — S-1만 배포되면 질문은 하나 늘었는데
+> 계획은 그대로인 상태가 나가고, S-2만 배포되면 저장이 실패한다.
+> 통합 지시서 §1 · 결정 문서 §4.9 참조.
 
 ---
 
