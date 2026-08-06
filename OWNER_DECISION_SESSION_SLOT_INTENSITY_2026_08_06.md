@@ -186,7 +186,8 @@ C-4(`plan-beta-schema.ts:83-91`)를 "PM은 EASY+RECOVERY+RPE1-2만"에서
 
 ## 4.9 🔴 2026-08-06 실측 정정 — 생성기와 저장 관문을 분리하면 앱이 깨진다
 
-**나는 §4.3과 ㉢-a 지시서에 "생성기와 저장 관문을 같은 PR에서 바꾸지 마라"고 썼다.
+**나는 §4.3과 S-2 지시서(`WORK_ORDER_PM_QUALITY_GENERATOR_C3A.md`)에
+"생성기와 저장 관문을 같은 PR에서 바꾸지 마라"고 썼다.
 그 지시는 틀렸다. 여기 정정한다.**
 
 분리 근거는 "같이 바꾸면 테스트 통과가 둘 다 맞아서인지 둘 다 틀려서인지 모른다"였다.
@@ -251,11 +252,18 @@ fixture 유효성은 **대조군(지금 통과해야 정상인 조합) 통과로
 > §4.9 실측(3단계만 병합하면 앱이 깨진다). 단계별 커밋은 분리한다.
 > → [`WORK_ORDER_SLOT_INTENSITY_FULL_RUN.md`](WORK_ORDER_SLOT_INTENSITY_FULL_RUN.md)
 
-> **2번(㉢-a0)은 2026-08-06에 추가됐다.** ㉢-a 작업지시서를 쓰다가,
+> **S-1은 2026-08-06에 추가됐다.** S-2 작업지시서를 쓰다가,
 > 입력 어디에도 "이 선수가 언제 훈련하는지"를 묻지 않는다는 것을 발견했다.
 > 근거 없이 오후를 고르면 그건 추측이다. 오너에게 물었고
 > **"주로 언제 훈련하세요 넣자"**로 승인됐다.
-> → [`WORK_ORDER_TRAINING_TIME_QUESTION_C3A0.md`](WORK_ORDER_TRAINING_TIME_QUESTION_C3A0.md)
+> 상세 좌표 명세는 아래 두 문서가 그대로 유지한다(통합 지시서가 이를 참조한다).
+> → S-1: [`WORK_ORDER_TRAINING_TIME_QUESTION_C3A0.md`](WORK_ORDER_TRAINING_TIME_QUESTION_C3A0.md) (`ABSORBED_INTO_FULL_RUN`)
+> → S-2: [`WORK_ORDER_PM_QUALITY_GENERATOR_C3A.md`](WORK_ORDER_PM_QUALITY_GENERATOR_C3A.md) (`ABSORBED_INTO_FULL_RUN`)
+
+> **같은 PR에 S-5·S-6이 함께 실린다.** 이 두 건은 슬롯·강도 결정과 무관한
+> 별도 백로그(B-11 기록 상세 접근성, B-13 leaf 좌표 유일성)이지만,
+> 오너 지시("최대한 많은 작업")에 따라 같은 연속 수행에 묶었다.
+> 통합 지시서 §5·§6 참조.
 
 **5번(문구)을 4번보다 먼저 하지 않는다.** 문구를 먼저 고치면 거짓말의 방향만 바뀐다.
 
