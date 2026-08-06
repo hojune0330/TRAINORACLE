@@ -25,6 +25,23 @@ required_report: reports/review/WORK_ORDER_SLOT_TYPE_EXTENSION_B_REPORT.md
 UI 작업(롱프레스 드래그·캘린더 그리드)은 본 문서 범위 밖이며, 확장 머지 전까지
 QUALITY/REST 세로 드래그 차단을 유지한다(실패 시 안전한 쪽, NORTH_STAR §3).
 
+> ## ⚠️ 2026-08-06 정정 — 이 문서의 일부는 폐기됐다
+>
+> 오너가 2026-08-06에 **오전 고정 해제**를 결정했다
+> ([`OWNER_DECISION_SESSION_SLOT_INTENSITY_2026_08_06.md`](OWNER_DECISION_SESSION_SLOT_INTENSITY_2026_08_06.md)).
+> 이 문서가 전제하던 **"QUALITY는 PM에 생성 금지"는 더 이상 유효하지 않다.**
+>
+> | 폐기된 부분 | 대체 |
+> |---|---|
+> | §1-2 "leaf 스키마가 `(day,slot)` 유일성을 거부하도록 유지" | **거짓 전제였다.** leaf는 원래 검사한 적 없다 → 백로그 B-13 |
+> | §3 "QUALITY를 PM에 생성하는 신규 후보 생성은 금지, 이동 시에만 허용" | **폐기.** OD-SLOT-1 — 생성 단계부터 PM 배치가 열려야 한다 (㉢-a) |
+> | §4 레지스트리의 `DSB-INV-002`·`DSB-INV-003` | **폐기.** 오너 결정이 초안을 이긴다 (결정 문서 §3.3) |
+> | 문서 말미 "PM 차단 유지를 보증한다" | **폐기.** 보증 대상이 뒤집혔다 |
+>
+> **이 문서를 근거로 오후 고강도를 다시 막지 마라.** 후속 작업(㉢-a)은
+> 이 문서가 아니라 오너 결정 문서 §5를 따른다. 아래 본문은 2026-08-05 시점의
+> 기록으로 보존하되, 위 4개 항목은 실행 지시로 읽지 않는다.
+
 ## 1. 절대 준수 규칙
 
 1. **스펙 계승 (§8-12 레지스트리)**: 아래 나열된 스펙 불변식을 위반하면 작업 무효.
@@ -32,7 +49,11 @@ QUALITY/REST 세로 드래그 차단을 유지한다(실패 시 안전한 쪽, N
    fresh validation)으로 후퇴한다.
 2. **기존 좌표 유일성 유지**: `DSB-INV-004` — "A beta day has at most one AM and one PM
    session. Each `(day, slot)` pair is unique." 확장 후에도 `(day, slot)` 쌍은 유일해야 한다.
-   `plan-session-schema.ts` Zod 스키마가 이를 거부하도록 유지.
+   ~~`plan-session-schema.ts` Zod 스키마가 이를 거부하도록 유지.~~
+   **[2026-08-06 정정]** 거짓 전제였다. leaf `planSessionSchema`는 `(day,slot)` 유일성을
+   검사한 적이 **없다**. 실제 검사는 저장 관문 `plan-beta-schema.ts:76-79`
+   (`"Duplicate plan session slot."`)에만 있다. leaf의 구멍은 **백로그 B-13**으로 분리했다.
+   불변식 자체(유일성)는 유효하나, 이 문서가 지목한 강제 지점이 틀렸다.
 3. **QUALITY→PM 단독 반영 금지**: QUALITY·REST의 PM 배치는 엔진 타입 허용으로 **열리되**,
    실제 "이동" 반영은 §8-11 **재계획 검증 필수** (FA-TC-014 `:1590` — "Safety changes after
    selection: Immediate `ON_SAFETY_HOLD`; optional replan only after fresh validation").
@@ -78,10 +99,16 @@ QUALITY/REST 세로 드래그 차단을 유지한다(실패 시 안전한 쪽, N
 
 **할 일:**
 1. `qualityTrainingSession`(`:132-148`)의 `slot: "AM"` 고정을 파라미터화:
-   시그니처에 `slot: "AM" | "PM"` 추가. **기본 생성은 AM 유지** — 확장 후에도 후보 생성은
-   AM 우선(변경 최소화, `DOUBLE_SESSION_BETA_SAFETY_CONTRACT` `DSB-INV-002` PM 형태:
-   "PM is `EASY` plus `RECOVERY_INTENT`, with RPE 1-2 only" — QUALITY를 PM에 생성하는
-   신규 후보 생성은 **금지**, 이동 시에만 허용).
+   시그니처에 `slot: "AM" | "PM"` 추가. **본 작업지시서 범위에서는 기본 생성 AM 유지**
+   (타입만 여는 것이 이 문서의 범위이기 때문이다).
+
+   > **[2026-08-06 정정]** 원문에는 `DSB-INV-002`를 근거로
+   > "QUALITY를 PM에 생성하는 신규 후보 생성은 **금지**, 이동 시에만 허용"이라고
+   > 적혀 있었다. **이 금지는 폐기됐다.** 오너 결정 OD-SLOT-1이 오전 고정을 해제했다.
+   >
+   > 여기서 AM 기본을 유지하는 이유는 "PM 생성이 금지라서"가 **아니라**,
+   > 이 작업지시서의 범위가 타입 확장까지이기 때문이다. 생성기가 실제로 오후 고강도를
+   > 만들게 하는 것은 **㉢-a**의 일이다 (결정 문서 §5 단계 2).
 2. `recoverySecondSessionDays`의 `limit = 2` 상한은 **유지** (재계획 검증 시 PM 2부 일수 ≤2
    검사에 사용 — `:163`).
 3. `restSession`(`:63-71`)의 `slot: "AM"` 고정은 타입과 함께 `PlanSessionSlot`로 확장하되,
@@ -142,12 +169,13 @@ QUALITY/REST 세로 드래그 차단을 유지한다(실패 시 안전한 쪽, N
 
 | 스펙 | 위치 | 본 작업이 지키는 불변식 |
 |---|---|---|
-| `DOUBLE_SESSION_BETA_SAFETY_CONTRACT.md` | `specs/reconstruct/` | `DSB-INV-002`(PM은 EASY+RECOVERY_INTENT RPE 1-2만 — QUALITY PM 신규 생성 금지), `DSB-INV-003`(QUALITY와 PM 동일 day 배치 금지), `DSB-INV-004`((day,slot) 유일) |
+| `DOUBLE_SESSION_BETA_SAFETY_CONTRACT.md` | `specs/reconstruct/` | ~~`DSB-INV-002`(PM은 EASY+RECOVERY_INTENT RPE 1-2만 — QUALITY PM 신규 생성 금지)~~ **폐기 — OD-SLOT-1** · ~~`DSB-INV-003`(QUALITY와 PM 동일 day 배치 금지)~~ **폐기 — OD-SLOT-2** · `DSB-INV-004`((day,slot) 유일) **유효, 단 강제 지점은 저장 관문 (B-13 참조)** |
+| `OWNER_DECISION_SESSION_SLOT_INTENSITY_2026_08_06.md` | 루트 | **OD-SLOT-1~7. 위 초안 스펙보다 우선한다.** 오전 고정 금지 · 반대 슬롯은 가벼운 훈련/능동적 휴식 · 하루 고강도 1회 기본 · 새 role 만들지 않음 · RPE 범위 현행 유지 · 권장은 강제가 아님 |
 | `PLAN_SAFETY_GATE_SPEC.md` | `specs/reconstruct/` | `:274` ACTIVE→BLOCK, `:275` UNKNOWN→BLOCK_OR_HUMAN_REVIEW, `:281` BLOCK_OR_HUMAN_REVIEW도 `planGenerationAllowed: false` |
 | `TRAINING_PLAN_FORMATION_AND_ADAPTATION_SPEC.md` | `specs/reconstruct/` | FA-TC-001/014/020/063 (`:1577/:1590/:1596/:1639`) — 이동 단독 반영 금지 |
 | `TRAINING_SESSION_PRESCRIPTION_CONTRACT.md` | `specs/reconstruct/` | QUALITY/REST 처방 불변 · 정확한 라벨만 표시 (거짓 라벨 금지) |
 | `MICROCYCLE_AND_CALENDAR_MAPPING_SPEC.md` | `specs/reconstruct/` | `:219` sessionSlot AM\|PM\|FULL_DAY\|UNSPECIFIED — 네임스페이스 혼용 금지 |
-| `PRODUCT_NORTH_STAR.md` | 루트 §3 | 실패 시 안전한 쪽 — 타입 확장 전 차단 유지 |
+| `PRODUCT_NORTH_STAR.md` | 루트 §3 | 실패 시 안전한 쪽. **단 "안전한 쪽"이 곧 "차단"은 아니다** — 오너 결정(OD-SLOT-1)이 오후 고강도를 정상 훈련 관행으로 확인했으므로, 이를 막는 것은 안전이 아니라 거짓 제약이다 |
 
 ## 5. 구현 시나리오 (타입 확장 후 최소 소비 예 — 후속 UI를 위한 준비)
 
@@ -171,7 +199,11 @@ QUALITY/REST 세로 드래그 차단을 유지한다(실패 시 안전한 쪽, N
 ---
 
 *이 지시서는 UX2 §8-10 경로 B 확정의 엔진 절반이다. UI 절반(§8-3~§8-7, §8-11)은
-별도 후속 작업지시서로 분리되며, 이 문서가 **타입 확장 머지 전 기존 QUALITY/REST
-PM 차단 유지**를 보증한다.*
+별도 후속 작업지시서로 분리된다.*
+
+*~~이 문서가 타입 확장 머지 전 기존 QUALITY/REST PM 차단 유지를 보증한다.~~*
+***[2026-08-06 정정]** 이 보증은 폐기됐다. 오너 결정 OD-SLOT-1이 PM 차단 자체를
+없앴다. 이 문서가 실제로 보증하는 것은 **"타입만 열고 생성기 동작은 바꾸지 않았다"**
+뿐이다. 생성기는 ㉢-a에서 바꾼다.*
 
 [구현 완료 2026-08-06 — 리뷰 대기 · 보고서: reports/review/WORK_ORDER_SLOT_TYPE_EXTENSION_B_REPORT.md]
