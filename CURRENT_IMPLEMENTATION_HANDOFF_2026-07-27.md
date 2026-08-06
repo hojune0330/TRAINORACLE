@@ -1,5 +1,13 @@
 # CURRENT_IMPLEMENTATION_HANDOFF_2026-07-27.md
 
+> ⚠️ **2026-08-06 사양 갱신 안내 (본문은 당시 기록이므로 고치지 않았다).**
+> 이 문서가 인용한 `DSB-INV-002`(PM은 회복 전용)와 `DSB-INV-003`(같은 날 quality 짝 금지)은
+> `specs/reconstruct/DOUBLE_SESSION_BETA_SAFETY_CONTRACT.md` **v0.2에서 은퇴하고 새 규칙으로
+> 교체됐다.** 은퇴 원문은 그 문서 §10 변경 이력에 보존돼 있다.
+> 아래 본문의 해당 인용은 **당시 시점의 판단 기록**으로 읽고, 현재 지침으로 쓰지 마라.
+> 지금 유효한 규칙: 새 `DSB-INV-002`·`DSB-INV-003`·신설 `DSB-INV-009`(OD-SLOT-8).
+> 근거: `OWNER_DECISION_SESSION_SLOT_INTENSITY_2026_08_06.md` §3.3, §4.10.
+
 ```yaml
 handoff_metadata:
   doc_id: trainoracle-current-implementation-handoff-2026-07-27
