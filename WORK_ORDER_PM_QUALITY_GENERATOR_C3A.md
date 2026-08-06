@@ -5,13 +5,27 @@ doc_id: TRAINORACLE_WORK_ORDER_PM_QUALITY_GENERATOR_C3A
 title: "㉢-a 생성기 — 오전 고정 해제와 반대 슬롯 가벼운 훈련"
 issued_by: OWNER_DECISION_SESSION_SLOT_INTENSITY_2026_08_06 (OD-SLOT-1~7)
 issued_date: "2026-08-06"
-status: ISSUED
-base_commit: e639eae
+status: BLOCKED_BY_DEPENDENCY
+base_commit: "㉢-a0(C3A0) 머지 커밋 — 착수 시점에 확인할 것"
 implementation_branch: codex/pm-quality-generator-c3a
 scope: engine_only (@impl 생성기)
 prohibited_scope: [저장 관문(㉢-b), 화면 문구(㉢-c), 수정·확정 플로우(OD-SLOT-6), safety-gate, memo-safety]
 required_report: reports/review/WORK_ORDER_PM_QUALITY_GENERATOR_C3A_REPORT.md
+depends_on: WORK_ORDER_TRAINING_TIME_QUESTION_C3A0.md
+revised_at: "2026-08-06"
 ```
+
+> ## ⚠️ 2026-08-06 개정 — 이 문서의 §3이 바뀌었다
+>
+> 최초 발행 시 이 지시서의 §3은 **"입력에 훈련 시간대 정보가 없으므로
+> 생성기는 오후를 고를 수 없다"**를 전제로 했다.
+>
+> 오너가 **"주로 언제 훈련하세요 넣자"**로 시간대 문항 추가를 승인했다
+> ([`WORK_ORDER_TRAINING_TIME_QUESTION_C3A0.md`](WORK_ORDER_TRAINING_TIME_QUESTION_C3A0.md)).
+> **그 전제는 폐기됐다.** `qualitySlotFor()`는 이제 실제로 슬롯을 결정한다.
+>
+> **㉢-a0이 머지되기 전에는 이 작업을 시작하지 마라.** 시작하면
+> `profile.trainingTimePreference`가 존재하지 않아 타입 오류가 난다.
 
 > **먼저 읽을 것 (순서대로).**
 > 1. [`OWNER_DECISION_SESSION_SLOT_INTENSITY_2026_08_06.md`](OWNER_DECISION_SESSION_SLOT_INTENSITY_2026_08_06.md) — 전부
@@ -42,36 +56,43 @@ required_report: reports/review/WORK_ORDER_PM_QUALITY_GENERATOR_C3A_REPORT.md
 
 ---
 
-## 3. ⚠️ 먼저 결정해야 할 것 — 착수 전 반드시 읽기
+## 3. 선행 작업이 넘겨주는 것 — 착수 전 반드시 읽기
 
-**입력 어디에도 "이 선수가 언제 훈련하는지"를 묻지 않는다.** 실측했다.
+㉢-a0(C3A0)이 끝나면 `PlanProfile`에 아래 필드가 들어온다.
 
-`impl/src/plan-generator/types.ts:177-178`:
+`impl/src/plan-generator/types.ts`:
 ```ts
-readonly availableTrainingDays: readonly number[]   // 며칠에 하는지만
-readonly secondSessionMode: SecondSessionMode        // 하루 1번/2번만
+readonly availableTrainingDays: readonly number[]      // 며칠에 하는지
+readonly secondSessionMode: SecondSessionMode           // 하루 1번/2번
+readonly trainingTimePreference: TrainingTimePreference // ← 신규. "MORNING" | "EVENING" | "VARIES"
 ```
 
-`app/src/screens/plan-beta/PlanIntake.tsx` 6문항 — 종목 / 경험 / 강도의도 / 가능일수 /
-하루 몇 번 / 통증여부. **시간대를 묻는 질문이 없다.**
+**착수 전 확인:** `impl/src/plan-generator/types.ts`에 `trainingTimePreference`가
+실제로 있는지 눈으로 봐라. 없으면 ㉢-a0이 아직 안 끝난 것이다. **멈춰라.**
 
-즉 생성기는 "이 선수가 오후에 훈련한다"는 정보를 **가지고 있지 않다.**
-결정적(deterministic) 생성이라는 제약도 있어서 임의로 섞을 수도 없다.
+### 값 → 슬롯 대응 규칙
 
-### 그래서 이 작업의 정확한 범위
+| `trainingTimePreference` | 고강도 슬롯 | 근거 |
+|---|---|---|
+| `MORNING` | `AM` | 선수가 오전에 훈련한다고 답했다 |
+| `EVENING` | `PM` | **OD-SLOT-1.** 오후 고강도는 이 종목의 정상 관행이다 |
+| `VARIES` | `AM` | 아래 설명 |
 
-| 할 수 있는 것 | 할 수 없는 것 |
+**`VARIES`가 `AM`인 이유 (오너 확인 대기 항목).**
+"그때그때 다르다"는 **오후를 원한다는 뜻이 아니다.** 정보가 없다는 뜻이다.
+정보가 없을 때 현행 동작(AM)을 유지하는 것은 변경 폭을 줄인다.
+사용자가 오후를 원하면 `EVENING`을 고르거나, 나중에 수정 플로우(OD-SLOT-6)에서 옮긴다.
+
+> 이 한 줄은 오너에게 확인 중이다. **바꾸라는 지시가 오면 이 함수 한 곳만 고치면 된다.**
+> 임의로 다른 규칙(예: 홀수날 AM / 짝수날 PM)을 넣지 마라.
+
+### 이 작업의 범위
+
+| 함 | 안 함 |
 |---|---|
-| 고강도가 **오후에 놓일 수 있는 구조**를 만든다 | 어느 선수의 고강도를 오후로 **결정**한다 |
-| 슬롯을 결정하는 **함수 1개**를 분리해 만든다 | 그 함수가 입력 없이 오후를 고르게 한다 |
-| 고강도 날의 반대 슬롯에 가벼운 훈련을 붙인다 | 시간대 질문을 새로 만든다 (범위 밖) |
-
-**핵심:** 이번 작업 후에도 기본 생성 결과는 여전히 고강도가 AM일 수 있다.
-그건 실패가 아니다. **"AM으로 하드코딩돼 있음"과 "AM으로 결정됨"은 다르다.**
-전자를 후자로 바꾸는 것이 이 작업이다.
-
-> **판단 보류 후보:** 시간대를 묻는 질문(7번째 문항)을 추가할지는 오너 결정이다.
-> 이 작업지시서에 포함하지 않았다. 필요하다고 판단되면 **구현하지 말고 보고**하라.
+| `trainingTimePreference`를 읽어 고강도 슬롯을 **결정**한다 | 그 값을 입력받는 화면·스키마 (㉢-a0에서 끝났다) |
+| 고강도 날의 반대 슬롯에 가벼운 훈련을 붙인다 | 저장 관문 수정 (㉢-b) |
+| `EVENING` 사용자에게 실제로 PM 고강도를 만든다 | 하루 2회 고강도 (§5) |
 
 ---
 
@@ -98,17 +119,30 @@ readonly secondSessionMode: SecondSessionMode        // 하루 1번/2번만
  * 고강도 세션을 어느 슬롯에 둘지 정한다.
  *
  * OD-SLOT-1: 오전 고정은 금지다. 오후 고강도는 이 종목의 정상 관행이다.
- * 다만 현재 입력(PlanIntake 6문항)은 선수의 훈련 시간대를 묻지 않는다.
- * 근거 없이 오후로 옮기면 그건 결정이 아니라 추측이다.
+ * 선수가 계획 질문에서 답한 훈련 시간대(㉢-a0에서 추가)를 그대로 따른다.
  *
- * 그래서 지금은 AM을 돌려준다. 하드코딩이 아니라 "정보가 없어서 내린 기본값"이다.
- * 시간대 입력이 생기거나(오너 결정 대기) 사용자가 수정 플로우(OD-SLOT-6)에서
- * 직접 옮기면, 이 함수 하나만 고치면 된다.
+ * VARIES(그때그때 다름)는 "오후를 원한다"가 아니라 "정보가 없다"이므로
+ * 현행 동작인 AM을 유지한다. 사용자는 수정 플로우(OD-SLOT-6)에서 옮길 수 있다.
+ *
+ * 규칙을 바꿔야 하면 이 함수 하나만 고친다. 호출부에 조건을 흩뿌리지 마라.
  */
 function qualitySlotFor(input: CandidateSessionBuildInput, day: number): PlanSessionSlot {
-  return "AM"
+  switch (input.request.profile.trainingTimePreference) {
+    case "EVENING":
+      return "PM"
+    case "MORNING":
+    case "VARIES":
+      return "AM"
+  }
 }
 ```
+
+> **`default:`를 쓰지 마라.** 위처럼 모든 경우를 나열하면, 나중에 값이
+> 하나 더 늘었을 때 **타입체커가 여기서 잡아준다.** `default`를 넣으면
+> 조용히 AM으로 처리되고 아무도 모른다.
+>
+> **`day` 인자를 슬롯 결정에 쓰지 마라.** 날짜로 슬롯을 흔드는 것은
+> 선수가 요청하지 않은 배치다. 인자는 향후 확장을 위해 받아만 둔다.
 
 호출부:
 ```ts
@@ -122,9 +156,8 @@ function qualitySlotFor(input: CandidateSessionBuildInput, day: number): PlanSes
     }
 ```
 
-**이 함수가 지금 `"AM"`을 돌려준다고 해서 작업이 무의미한 것이 아니다.**
-지금은 `PlanSession` 리터럴 안에 박혀 있어서 바꿀 지점이 없다.
-분리하면 바꿀 지점이 생긴다. 그게 이번 작업의 산출물이다.
+이 작업 후 **`EVENING`을 고른 사용자는 실제로 오후 고강도를 받는다.**
+그게 눈에 보이는 동작 변경이다. `MORNING`·`VARIES` 사용자의 결과는 현행과 같다.
 
 ### 4.2 고강도 날의 반대 슬롯에 가벼운 훈련을 붙인다 (C-2·C-3)
 
@@ -224,12 +257,19 @@ OD-SLOT-3은 "사용자가 직접 지정하지 않는 한 하루 1회"다.
 
 | 테스트 | 고정할 것 |
 |---|---|
-| T-A | 고강도 세션의 슬롯이 `qualitySlotFor()`가 돌려준 값과 같다 (리터럴 하드코딩이 아님) |
+| T-A 🔴 | `trainingTimePreference: "EVENING"`이면 고강도 세션의 슬롯이 `PM`이다 (OD-SLOT-1) |
+| T-A2 | `"MORNING"`이면 `AM`, `"VARIES"`면 `AM` |
 | T-B | `RECOVERY_PM_ALLOWED`일 때, 고강도 날에 반대 슬롯 `EASY` 세션이 생긴다 (OD-SLOT-2) |
+| T-B2 🔴 | `EVENING` + `RECOVERY_PM_ALLOWED`이면 반대 슬롯이 `AM`이다 (`PM` 고정이 아님) |
 | T-C | `SINGLE_SESSION_ONLY`일 때, 고강도 날에 반대 슬롯 세션이 생기지 **않는다** |
 | T-D | 반대 슬롯 세션의 RPE가 `rpeForIntent("RECOVERY_INTENT")`와 같다 (숫자 직접 비교 금지) |
 | T-E | 같은 `(day, slot)` 쌍이 중복 생성되지 않는다 (DSB-INV-004는 유효) |
 | T-F | 하루에 `QUALITY`가 2개 생기지 않는다 (OD-SLOT-3 기본값) |
+| T-G | `MORNING`/`VARIES` 사용자의 생성 결과가 ㉢-a0 시점과 동일하다 (회귀 없음) |
+
+> **T-B2가 왜 🔴인가.** `counterpartSessions()`에서 `"PM"`을 리터럴로 쓰기
+> 쉽다. 그러면 `EVENING` 사용자는 PM에 고강도와 회복이 겹쳐 쌓인다.
+> 반드시 `qualitySlot`의 반대편을 계산해서 써라.
 
 ### 6.2 비공허성 증명 — 결함 주입 (AGENTS.md §5)
 
@@ -277,14 +317,14 @@ app 스위트는 샌드박스(Node 20)에서 24건이 원래 실패한다. **개
 2. `./node_modules/.bin/tsc` 출력 (`npx tsc` 결과는 인정하지 않는다)
 3. impl/app 테스트 수치
 4. **생성 결과가 현재 저장 관문에 걸리는 지점** — C-5 재현 로그
-5. `qualitySlotFor()`가 여전히 `"AM"`을 돌려준다는 사실과 그 이유
+5. `EVENING` 사용자에게 실제로 PM 고강도가 생긴 생성 결과 실물
 6. 판단 보류 항목 (있으면)
 
 ---
 
 ## 8. 커밋 규칙
 
-- 브랜치 `codex/pm-quality-generator-c3a`, 베이스 `e639eae`
+- 브랜치 `codex/pm-quality-generator-c3a`, 베이스는 **㉢-a0 머지 후의 `main`**
 - **커밋마다 푸시.** 샌드박스가 리셋되면 잃는다
 - PR 본문에 §7 보고서 요약
 - `main` 직접 푸시 금지
@@ -295,7 +335,11 @@ app 스위트는 샌드박스(Node 20)에서 24건이 원래 실패한다. **개
 
 | 실수 | 왜 문제인가 |
 |---|---|
-| `qualitySlotFor()`가 `day % 2`처럼 임의로 오후를 고르게 함 | 근거 없는 배치다. 입력에 시간대 정보가 없다 |
+| `qualitySlotFor()`가 `day % 2`처럼 임의로 오후를 고르게 함 | 선수가 요청하지 않은 배치다. `trainingTimePreference`만 근거다 |
+| `qualitySlotFor()`에 `default:` 절을 넣음 | 값이 늘었을 때 타입체커가 못 잡는다 (§4.1) |
+| `counterpartSessions()`에서 `"PM"`을 리터럴로 씀 | `EVENING` 사용자는 PM에 고강도+회복이 겹친다 (T-B2) |
+| `VARIES`를 `PM`으로 처리 | "정보 없음"을 "오후 원함"으로 바꿔 읽은 것 |
+| ㉢-a0 머지 전에 착수 | `trainingTimePreference`가 없어 타입 오류 |
 | RPE를 `{ minimum: 1, maximum: 2 }`로 직접 씀 | OD-SLOT-5 위반 위험. `rpeForIntent()`를 거쳐라 |
 | "능동적 휴식"을 위해 새 role 추가 | **OD-SLOT-4 정면 위반** |
 | 저장 관문 C-5를 같이 고침 | ㉢-b 범위. 섞으면 검증이 흐려진다 |

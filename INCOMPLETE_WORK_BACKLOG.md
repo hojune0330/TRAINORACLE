@@ -134,15 +134,27 @@
 - **왜 B-02와 분리하나:** B-02는 "없어진 방어벽(DSB-INV-002) 복원 + 이식"이 승인 범위. 이 구멍(DSB-INV-004 leaf refin없음)은 승인 계획이 명시적으로 "이번에 건드리지 않는다"고 한 원래 구멍 중 하나. 열린 채로 두지 않고 백로그에 고정해 추후 별도로 수정한다.
 - **완료 조건:** `sessions: z.array(planSessionSchema)`에 (day,slot) 반복 refine 추가(저장 관문 superRefine의 중복 검사 로직과 동일 의미) + leaf 단독 사용 시 중복 좌표를 거부하는 계약 테스트 + 결함 주입으로 비공허성 확인(refine 제거 시 실패하는 테스트). 저장 관문 검사는 유지(이중 방어).
 
-### B-14 🔴 ㉢-a 생성기 오전 고정 — 오너 결정 미반영 (작업지시서 발행됨)
+### B-18 🔴 ㉢-a0 훈련 시간대 질문 없음 — 생성기가 오후를 고를 근거가 없다 (작업지시서 발행됨)
+- **출처:** 오너 승인 2026-08-06 (`"주로 언제 훈련하세요 넣자"`) · `OWNER_DECISION_SESSION_SLOT_INTENSITY_2026_08_06.md` §5 단계 2 · 작업지시서 `WORK_ORDER_TRAINING_TIME_QUESTION_C3A0.md`
+- **상태:** ❌ 미착수 — 작업지시서만 발행 (`cee1445`)
+- **왜 필요한가:** OD-SLOT-1이 "오후 고강도를 열어라"인데, **시스템이 선수의 훈련 시간대를 모른다.** 정보가 없으면 생성기는 오후를 고를 수 없고, 근거 없이 고르면 추측이다. B-14를 의미 있게 만들기 위한 선행 작업이다
+- **실측 근거 (main `9ca0994`):**
+  - `app/src/screens/plan-beta/PlanIntake.tsx:23` — `IntakeStep`이 6개. 시간대 문항 없음
+  - `impl/src/plan-generator/types.ts:173-179` — `PlanProfile`에 `availableTrainingDays`·`secondSessionMode`만. 시간대 필드 없음
+  - `app/src/domain/plan-beta-schema.ts:35-48` — `planIntakeSchema`에 시간대 필드 없음
+- **🔴 최대 위험:** `planIntakeSchema`에 `.optional().default("VARIES")`를 빠뜨리면 `parsePlanBetaState()`가 기존 저장 데이터에 대해 `null`을 돌려준다 → **기존 사용자의 계획이 전부 사라진다.** `trainingFocus`(`:46`)·`secondSessionMode`(`:47`)가 쓴 패턴을 그대로 따를 것
+- **함정 2:** `plan-beta-flow.ts:155-190` `completeIntake()`는 모든 필드를 `undefined` 검사한다. 여기서 조용히 기본값을 채우면 문항을 건너뛰어도 티가 안 난다. **필수 검사를 유지**해야 한다
+- **완료 조건:** 작업지시서 §6 — T-A~T-G + 각각 결함 주입 비공허성 + 실체 tsc 0건 + **T-D 하위호환 증명** + **T-F 생성 결과 불변 증명**(이 작업만으로는 계획 내용이 달라지면 안 된다)
+
+### B-14 🔴 ㉢-a 생성기 오전 고정 — 오너 결정 미반영 (작업지시서 발행됨, B-18 선행 필요)
 - **출처:** `OWNER_DECISION_SESSION_SLOT_INTENSITY_2026_08_06.md` OD-SLOT-1·2 · 작업지시서 `WORK_ORDER_PM_QUALITY_GENERATOR_C3A.md` (2026-08-06 발행)
-- **상태:** ❌ 미착수 — 작업지시서만 발행
+- **상태:** ❌ 미착수 — **B-18 완료 전에는 착수 불가.** `profile.trainingTimePreference`가 없어 타입 오류가 난다
 - **실측 근거 (main `e639eae`):**
   - `impl/src/plan-generator/session-builder.ts:205-211` — `qualityTrainingSession(day, ranges.quality, intent)` slot 인자 없음 → 고강도 **항상 AM** (C-1)
   - `impl/src/plan-generator/session-builder.ts:216-221` — PM은 `RECOVERY_INTENT` 고정 (C-2)
   - `impl/src/plan-generator/session-builder.ts:161-164` — `recoverySecondSessionDays()`가 `qualityDays` 제외 → 고강도 날엔 반대 슬롯이 아예 안 생김 (C-3, **OD-SLOT-2 위반**)
-- **제약:** 입력(`PlanIntake` 6문항 / `types.ts:177-178`)이 **훈련 시간대를 묻지 않는다.** 근거 없이 오후로 옮길 수 없다. 이번 작업은 "AM 하드코딩"을 "정보 부족에 따른 기본값"으로 바꾸는 것까지다
-- **완료 조건:** 작업지시서 §6 — T-A~T-F 계약 테스트 + 각각 결함 주입 비공허성 증명 + 실체 tsc(`./node_modules/.bin/tsc`) 0건
+- **2026-08-06 개정:** 최초 발행 시 "입력에 시간대 정보가 없으므로 오후를 고를 수 없다"를 전제로 했다. 오너가 시간대 문항을 승인해 **그 전제는 폐기됐다.** `qualitySlotFor()`는 이제 `trainingTimePreference`를 읽어 실제로 슬롯을 결정한다 (`EVENING`→`PM`, `MORNING`/`VARIES`→`AM`)
+- **완료 조건:** 개정된 작업지시서 §6 — T-A~T-G 계약 테스트 + 각각 결함 주입 비공허성 증명 + 실체 tsc(`./node_modules/.bin/tsc`) 0건
 
 ### B-15 🟠 ㉢-b 저장 관문 — PM 제약이 오너 결정과 충돌
 - **출처:** 결정 문서 C-4·C-5 · §4.3 · §5 단계 3

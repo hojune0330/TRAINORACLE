@@ -6,7 +6,7 @@ title: "㉢-a0 훈련 시간대 질문 추가 — 생성기가 오후를 알 수
 issued_by: 오너 승인 2026-08-06 ("주로 언제 훈련하세요 넣자")
 issued_date: "2026-08-06"
 status: ISSUED
-base_commit: 9ca0994
+base_commit: "main 최신 (착수 시 `git log -1` 로 확인)"
 implementation_branch: codex/training-time-question-c3a0
 scope: app_intake + engine_profile (생성 로직 변경은 ㉢-a)
 prohibited_scope: [생성기 슬롯 배치(㉢-a), 저장 관문(㉢-b), 화면 문구 C-6(㉢-c), 수정·확정 플로우(B-17), safety-gate, memo-safety]
@@ -318,7 +318,7 @@ cd app  && npm run build && npx playwright test   # dist 먼저 빌드할 것
 
 ## 8. 커밋 규칙
 
-- 브랜치 `codex/training-time-question-c3a0`, 베이스 `9ca0994`
+- 브랜치 `codex/training-time-question-c3a0`, 베이스는 **`main` 최신**
 - **커밋마다 푸시.** 샌드박스가 리셋되면 잃는다
 - `main` 직접 푸시 금지
 - PR 본문에 §7 요약
@@ -345,7 +345,8 @@ cd app  && npm run build && npx playwright test   # dist 먼저 빌드할 것
 
 - `helpTerm`에 새 용어가 필요하다고 판단되면 → `glossary.ts` 수정 범위가 생긴다. 보고하라
 - 시간대를 `VARIES`로 고른 사용자에게 ㉢-a가 무엇을 해야 하는지 → **이 작업 범위 아님.**
-  ㉢-a 작업지시서 갱신 시 오너에게 물을 것이다
+  ㉢-a 작업지시서 §3에 잠정 규칙(`VARIES`→`AM`)을 적어 두었고 오너 확인 대기 중이다.
+  **이 작업에서는 어떤 슬롯 규칙도 구현하지 마라**
 - 기존 사용자에게 "새 질문이 생겼으니 다시 답해달라"고 안내할지 → 별도 결정
 
 ---
