@@ -57,7 +57,7 @@
 - **출처:** `WORK_ORDER_UX2` §8-10, §8-11, §8-12 (2026-08-04 오너 확정) · `WORK_ORDER_SLOT_TYPE_EXTENSION_B.md` (작업지시서) · `OWNER_DECISION_SESSION_SLOT_INTENSITY_2026_08_06.md` (OD-SLOT, 최신 오너 결정)
 - **상태:** ✅ 완료 (2026-08-06) — 브랜치 `codex/slot-type-extension-b` (main `a29e5f2` 리베이스 완료), 보고서 `reports/review/WORK_ORDER_SLOT_TYPE_EXTENSION_B_REPORT.md`, PR 링크는 해당 보고서/PR 본문 참조
 - **내용 (승인된 B-02 계획 3요소 + 실측 정정 + C-7 철회):**
-  1. **없어진 방어벽(DSB-INV-002) 재설치** — `plan-session-schema.ts` QUALITY 변형에 `refine((s) => s.slot !== "PM")` 추가 (**문 열기와 같은 커밋**). **→ (2026-08-06) C-7 철회:** 오너 결정 OD-SLOT-1(오전 강제 금지, QUALITY는 PM 배치 허용)이 DSB-INV-002를 대체 → **leaf refine 제거**. OD-SLOT-1이 초안 스펙을 이긴다(결정 문서 §3.3).
+  1. **없어진 방어벽(DSB-INV-002) 재설치** ⚠️ *(2026-08-06: v0.1 DSB-INV-002 자체가 은퇴했다. 아래 C-7 철회가 최종이다.)* — `plan-session-schema.ts` QUALITY 변형에 `refine((s) => s.slot !== "PM")` 추가 (**문 열기와 같은 커밋**). **→ (2026-08-06) C-7 철회:** 오너 결정 OD-SLOT-1(오전 강제 금지, QUALITY는 PM 배치 허용)이 DSB-INV-002를 대체 → **leaf refine 제거**. OD-SLOT-1이 초안 스펙을 이긴다(결정 문서 §3.3).
   2. **"막는지" 보는 테스트 + 결함 주입 비-공허성 증명** — 벽 제거 시 정확히 1건만 실패 → 복원 GREEN 재확인은 **철회 전 유효성 증명으로 기록**. 철회 후 테스트는 `accepts QUALITY PM (OD-SLOT-1)`로 복원됨.
   3. **최신 main 위로 이식** — 딥시크 파일 5개(코드 3 + 테스트 2)만. goTab 탭바 결함은 main `386bc6d`가 `shouldResetTabView`로 **이미 해결** → 내 이전 수정/테스트는 폐기(reset --hard origin/main).
   - **실측 정정 (Opus 보고서 대조):** "저장 관문이 열렸다"는 부정확 — `planBetaStateSchema` superRefine이 **원래부터** PM 세션 검사를 실행(`Invalid PM recovery support.` 등). 열린 건 **leaf 스키마뿐**. Opus가 철회 1 기록으로 정정 인정(결정 문서 §3.2).
@@ -67,7 +67,7 @@
   - `impl/src/plan-generator/session-builder.ts` — `restSession(day, slot = "AM")`, `qualityTrainingSession(day, duration, intent, slot = "AM")` (생성 기본 AM 유지)
   - `app/src/domain/plan-session-schema.ts` — REST·QUALITY `slot: sessionSlotSchema.optional().default("AM")` (**방어벽 refine은 OD-SLOT-1에 따라 철회**)
   - `impl/test/plan-beta-selection.test.ts` · `app/src/domain/plan-beta-schema.contract.test.ts` — PM QUALITY 좌표 진행 기록 + 저장 관문 현재 동작 고정(C-4, ㉢-b에서 개정 예정)
-- **완료 조건 대비:** §8-12 레지스트리 중 OD-SLOT과 충돌하는 DSB-INV-002·003은 최신 오너 결정이 우선(위반 아님). 앱 141파일/1046건(UTC+KST) + impl 14파일/127건 + **실체 tsc**(`node_modules/.bin/tsc`) 0건. `movePlanSession` 전용 연산·재계획 흐름(V1/V3)은 **후속 UI 작업지시서(㉢ 단계) 소유**로 명시적 비목표 — 본 작업지시서는 타입 확장까지만.
+- **완료 조건 대비:** §8-12 레지스트리 중 OD-SLOT과 충돌하던 DSB-INV-002·003은 **2026-08-06에 사양 v0.2로 은퇴·교체됐다**(원문은 `DOUBLE_SESSION_BETA_SAFETY_CONTRACT.md` §10 변경 이력에 보존). 이제 사양과 코드가 반대말을 하지 않는다. 앱 141파일/1046건(UTC+KST) + impl 14파일/127건 + **실체 tsc**(`node_modules/.bin/tsc`) 0건. `movePlanSession` 전용 연산·재계획 흐름(V1/V3)은 **후속 UI 작업지시서(㉢ 단계) 소유**로 명시적 비목표 — 본 작업지시서는 타입 확장까지만.
 - **후속작:** ㉢-a 생성기(C-1~C-3) → ㉢-b 저장 관문(C-4/C-5) → ㉢-c 문구(C-6) → OD-SLOT-6 수정·확정 플로우(별도 작업지시서) (결정 문서 §5)
 - **B-13 분리:** leaf `sessions` 배열의 (day,slot) 유일성 refine 부재 — 아래 B-13 참조 (본 항목과 별개)
 
@@ -202,6 +202,7 @@
 - **출처:** 오너 2차 답변 3번 (2026-08-06) · 결정 문서 OD-SLOT-6 · §5 단계 6
 - **상태:** ❌ 미착수 — 별도 작업지시서 필요 (미작성). 통합 지시서 §12에서 명시적으로 범위 밖으로 배제했다 — 오너의 설계 결정이 먼저 필요하다
 - **내용:** 생성된 계획을 사용자가 나중에 수정하거나 최종 결정하는 화면. **하루 2회 고강도의 "직접 지정"이 이뤄지는 유일한 입구**
+- 🔴 **2026-08-06 승격 — 이제 사양상 전제 조건이다.** 오너 결정 OD-SLOT-8과 사양 v0.2 `DSB-INV-009`는 특별한 날(하루 고강도 2회·경기 2회)을 **(a) 화면 고지 + (b) 사용자 검토·수정 흐름이 있을 때만** 허용한다. 실측(2026-08-06): 수정 화면 없음, `grep -rn "movePlanSession|editSession" app/src` **0건** → **(b)가 없다.** 따라서 이 항목이 나오기 전까지 하루 `QUALITY` 2회는 **저장 관문에서 계속 거부해야 한다.** B-17 없이 "명시 지정" 입구를 만들면 OD-SLOT-8 자체를 위반한다.
 - **범위 경고:** `WORK_ORDER_SLOT_TYPE_EXTENSION_B.md` §6이 비목표로 뺀 `movePlanSession`, `plan-beta-store.ts` upsert, 캘린더 그리드 UI가 전부 여기 들어온다. ㉢과 묶지 않는다
 - **완료 조건:** 미정 — 작업지시서 발행 시 확정
 
