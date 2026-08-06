@@ -5,7 +5,7 @@ doc_id: TRAINORACLE_WORK_ORDER_PM_QUALITY_GENERATOR_C3A
 title: "㉢-a 생성기 — 오전 고정 해제와 반대 슬롯 가벼운 훈련"
 issued_by: OWNER_DECISION_SESSION_SLOT_INTENSITY_2026_08_06 (OD-SLOT-1~7)
 issued_date: "2026-08-06"
-status: BLOCKED_BY_DEPENDENCY
+status: ABSORBED_INTO_FULL_RUN
 base_commit: "㉢-a0(C3A0) 머지 커밋 — 착수 시점에 확인할 것"
 implementation_branch: codex/pm-quality-generator-c3a
 scope: engine_only (@impl 생성기)
@@ -26,6 +26,18 @@ revised_at: "2026-08-06"
 >
 > **㉢-a0이 머지되기 전에는 이 작업을 시작하지 마라.** 시작하면
 > `profile.trainingTimePreference`가 존재하지 않아 타입 오류가 난다.
+
+> ## 📦 2026-08-06 — 이 지시서는 통합 지시서에 흡수됐다
+>
+> 오너가 **중간 리뷰 없이 연속 수행**을 지시해
+> [`WORK_ORDER_SLOT_INTENSITY_FULL_RUN.md`](WORK_ORDER_SLOT_INTENSITY_FULL_RUN.md)
+> **S-2단계**로 흡수됐다.
+>
+> **작업자는 통합 지시서를 먼저 읽어라.** 이 문서는 **세부 좌표·코드 예시의
+> 참조용**으로 계속 유효하다. 다만 **순서·경계·정지 조건은 통합 지시서가 이긴다.**
+> 이 문서를 단독으로 수행하지 마라.
+
+---
 
 > **먼저 읽을 것 (순서대로).**
 > 1. [`OWNER_DECISION_SESSION_SLOT_INTENSITY_2026_08_06.md`](OWNER_DECISION_SESSION_SLOT_INTENSITY_2026_08_06.md) — 전부

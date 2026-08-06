@@ -5,7 +5,7 @@ doc_id: TRAINORACLE_WORK_ORDER_TRAINING_TIME_QUESTION_C3A0
 title: "㉢-a0 훈련 시간대 질문 추가 — 생성기가 오후를 알 수 있게"
 issued_by: 오너 승인 2026-08-06 ("주로 언제 훈련하세요 넣자")
 issued_date: "2026-08-06"
-status: ISSUED
+status: ABSORBED_INTO_FULL_RUN
 base_commit: "main 최신 (착수 시 `git log -1` 로 확인)"
 implementation_branch: codex/training-time-question-c3a0
 scope: app_intake + engine_profile (생성 로직 변경은 ㉢-a)
@@ -13,6 +13,18 @@ prohibited_scope: [생성기 슬롯 배치(㉢-a), 저장 관문(㉢-b), 화면 
 required_report: reports/review/WORK_ORDER_TRAINING_TIME_QUESTION_C3A0_REPORT.md
 blocks: WORK_ORDER_PM_QUALITY_GENERATOR_C3A.md
 ```
+
+> ## 📦 2026-08-06 — 이 지시서는 통합 지시서에 흡수됐다
+>
+> 오너가 **중간 리뷰 없이 연속 수행**을 지시해
+> [`WORK_ORDER_SLOT_INTENSITY_FULL_RUN.md`](WORK_ORDER_SLOT_INTENSITY_FULL_RUN.md)
+> **S-1단계**로 흡수됐다.
+>
+> **작업자는 통합 지시서를 먼저 읽어라.** 이 문서는 **세부 좌표·코드 예시의
+> 참조용**으로 계속 유효하다. 다만 **순서·경계·정지 조건은 통합 지시서가 이긴다.**
+> 이 문서를 단독으로 수행하지 마라.
+
+---
 
 > **먼저 읽을 것 (순서대로).**
 > 1. [`OWNER_DECISION_SESSION_SLOT_INTENSITY_2026_08_06.md`](OWNER_DECISION_SESSION_SLOT_INTENSITY_2026_08_06.md) — 전부
