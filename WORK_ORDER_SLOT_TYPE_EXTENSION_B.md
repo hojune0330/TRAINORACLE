@@ -5,7 +5,7 @@ doc_id: TRAINORACLE_WORK_ORDER_SLOT_TYPE_EXTENSION_B
 title: "B 확장 엔진 작업지시서 — 세션 슬롯 타입 확장 (QUALITY·REST PM 허용)"
 issued_by: UX2 §8-10 오너 결정 (2026-08-04 확정: 경로 B)
 issued_date: "2026-08-05"
-status: ISSUED — 구현 전 바인딩 4종 실측 완료 (2026-08-05)
+status: 구현 완료 — C-7 철회 적용 후 리뷰 대기 (2026-08-06, 브랜치 codex/slot-type-extension-b, main a29e5f2 리베이스, 보고서 reports/review/WORK_ORDER_SLOT_TYPE_EXTENSION_B_REPORT.md)
 implementation_branch: codex/slot-type-extension-b
 scope: engine_only (@impl + app 스키마 미러)
 prohibited_scope: [safety-gate, memo-safety, 화면 UI 소비(본 문서 범위 밖)]
@@ -174,4 +174,4 @@ QUALITY/REST 세로 드래그 차단을 유지한다(실패 시 안전한 쪽, N
 별도 후속 작업지시서로 분리되며, 이 문서가 **타입 확장 머지 전 기존 QUALITY/REST
 PM 차단 유지**를 보증한다.*
 
-[ISSUED — 바인딩 4종 실측 완료 2026-08-05]
+[구현 완료 2026-08-06 — 리뷰 대기 · 보고서: reports/review/WORK_ORDER_SLOT_TYPE_EXTENSION_B_REPORT.md]

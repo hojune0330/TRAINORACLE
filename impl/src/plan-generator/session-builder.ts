@@ -6,6 +6,7 @@ import type {
   PlanCandidateKind,
   PlannedEnergyIntent,
   PlanSession,
+  PlanSessionSlot,
   QualityEnergyIntent,
   RpeTimeRange,
 } from "./types"
@@ -60,10 +61,10 @@ function freezeRange(range: RpeTimeRange): RpeTimeRange {
   })
 }
 
-function restSession(day: number): PlanSession {
+function restSession(day: number, slot: PlanSessionSlot = "AM"): PlanSession {
   return Object.freeze({
     day,
-    slot: "AM",
+    slot,
     role: "REST",
     plannedEnergyIntent: "RECOVERY_INTENT",
     prescription: Object.freeze({ kind: "REST" }),
@@ -133,10 +134,11 @@ function qualityTrainingSession(
   day: number,
   durationMinutes: DurationRange,
   plannedEnergyIntent: QualityEnergyIntent,
+  slot: PlanSessionSlot = "AM",
 ): PlanSession {
   return Object.freeze({
     day,
-    slot: "AM",
+    slot,
     role: "QUALITY",
     plannedEnergyIntent,
     prescription: freezeRange({
