@@ -127,7 +127,17 @@ export type PlanProfile = {
 
 ### 4.2 저장 스키마 — `app/src/domain/plan-beta-schema.ts`
 
-`planIntakeSchema`(`:35-48`)에 추가. **`secondSessionMode`(`:47`)와 똑같은 패턴을 따른다:**
+먼저 `secondSessionModeSchema`(`:20-23`) 옆에 열거 스키마를 선언한다:
+
+```ts
+const trainingTimePreferenceSchema = z.enum([
+  "MORNING",
+  "EVENING",
+  "VARIES",
+])
+```
+
+그리고 `planIntakeSchema`(`:35-48`)에 추가. **`secondSessionMode`(`:47`)와 똑같은 패턴을 따른다:**
 
 ```ts
   trainingTimePreference: trainingTimePreferenceSchema
@@ -135,17 +145,22 @@ export type PlanProfile = {
     .default("VARIES"),
 ```
 
+> **엔진 쪽 `TRAINING_TIME_PREFERENCES`(§4.1)와 값이 어긋나지 않게 하라.**
+> 두 곳에 같은 문자열이 존재하는 것은 `secondSessionMode`가 이미 쓰는 방식이다.
+> 새로 공용 모듈을 만들지 마라 — app과 impl은 별도 패키지다.
+
 > **🔴 하위호환이 이 작업의 최대 위험이다.**
 > 이미 사용자 기기에 저장된 계획에는 이 필드가 없다. `.optional().default()`가
 > 없으면 **기존 사용자의 계획이 통째로 사라진다** (`parsePlanBetaState`가
 > `null`을 돌려주고 `loadPlanBetaState`가 빈 상태를 준다).
 > §6 T-D가 이걸 고정한다. **반드시 통과시켜라.**
 
-### 4.3 앱 도메인 타입 — `app/src/domain/plan-beta-store.ts`
+### 4.3 앱 도메인 타입 — 건드릴 것이 없다 (확인만)
 
-`PlanBetaIntake`는 `z.infer<typeof planIntakeSchema>`에서 파생된다.
-스키마를 고치면 자동으로 따라온다. **직접 손대지 마라.**
-(파일 안에서 별도 선언이 있으면 그때만 맞춘다.)
+`PlanBetaIntake`는 `app/src/domain/plan-beta-schema.ts:128`에서
+`z.infer<typeof planIntakeSchema>`로 파생된다. §4.2를 고치면 **자동으로 따라온다.**
+
+**별도 타입 선언을 새로 만들지 마라.** 두 벌이 되면 반드시 어긋난다.
 
 ### 4.4 화면 — `app/src/screens/plan-beta/PlanIntake.tsx`
 
