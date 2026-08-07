@@ -45,6 +45,8 @@ verdict_authority: NONE
 | `OI-SC-*` (SESSION_CLASSIFIER) | 다수 | SC-SPORT-TYPE-EXPANSION-001, SC-EPOC-BAND-THRESHOLD-001… |
 | `OI-MTC-*`, `OI-RHR-*`, `OI-TEST-DATA-ANONYMIZATION-*` 등 | 다수 | reconstruct 문서군 |
 
+> ⚠️ 재현 주의 (2026-08-07 Round 3 종결 점검): 위 표의 `OI-TEST-DATA-ANONYMIZATION-*`는 **이 보고서가 예시로 쓴 토큰이며 저장소 어디에도 실존하지 않는다** — `git grep` 전역 OI 카운트(§3 기준 224)를 오염시키므로, 기준값 재현 시 `git grep ... HEAD -- '*.md' ':!reports/review/deepseek-audit/*'`로 자기 산출물을 제외해야 한다 (2026-08-07 실측: 제외 시 OI=224 정확 일치).
+
 **주의:** 이름공간이 스펙 자기 소속(`OI-AIB-*`라면 APP_IMPLEMENTATION_BRIDGE가 소속)이라면 미표기 OI는 해당 스펙 본문에 `| YES/NO | OPEN |` 형태 표 없이 나열만 된 것. D-20의 신고값 대조와 연결해 D-20 보고서에서 심화 확인.
 
 ### 2-4. 등장 문서 수 상위 (교차 참조 밀도)
