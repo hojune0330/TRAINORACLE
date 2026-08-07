@@ -9,8 +9,9 @@ executor: DeepSeek
 mode: READ_ONLY_AUDIT
 verdict_authority: NONE
 expected_files: 24   # D-01 .. D-24
-status: EMPTY_AWAITING_EXECUTION
+status: COMPLETE_24_OF_24_AWAITING_OWNER_REVIEW
 created_at: "2026-08-06"
+completed_at: "2026-08-07"
 ```
 
 ## 여기에 들어오는 것
