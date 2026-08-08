@@ -149,7 +149,35 @@ function qualityTrainingSession(
   })
 }
 
-function recoverySecondSessionDays(input: CandidateSessionBuildInput): readonly number[] {
+function qualitySlotFor(input: CandidateSessionBuildInput): "AM" | "PM" {
+  switch (input.request.profile.trainingTimePreference) {
+    case "EVENING":
+      return "PM"
+    case "MORNING":
+    case "VARIES":
+      return "AM"
+    default:
+      return assertNever(input.request.profile.trainingTimePreference)
+  }
+}
+
+function recoverySupportLimit(frameLengthDays: number): number {
+  switch (frameLengthDays) {
+    case 7:
+      return 1
+    case 9:
+    case 9.5:
+    case 10:
+      return 2
+    default:
+      return 0
+  }
+}
+
+function recoverySecondSessionDays(
+  input: CandidateSessionBuildInput,
+  reservedRecoverySupportCount: number,
+): readonly number[] {
   if (
     input.kind !== "BALANCED"
     || input.request.profile.secondSessionMode !== "RECOVERY_PM_ALLOWED"
@@ -162,7 +190,11 @@ function recoverySecondSessionDays(input: CandidateSessionBuildInput): readonly 
   const eligibleDays = input.request.profile.availableTrainingDays.filter(
     (day) => !qualityDays.has(day),
   )
-  const limit = 2
+  const limit = Math.max(
+    0,
+    recoverySupportLimit(9.5) - reservedRecoverySupportCount,
+  )
+  if (limit === 0) return Object.freeze([])
   if (eligibleDays.length <= limit) return Object.freeze([...eligibleDays])
 
   const selected: number[] = []
@@ -193,7 +225,16 @@ export function makeCandidateSessions(input: CandidateSessionBuildInput): readon
   const ranges = rangesFor(input.request.profile.experienceBand)
   const availableDays = new Set(input.request.profile.availableTrainingDays)
   const qualityDays = new Set(input.qualityDays)
-  const recoverySecondDays = new Set(recoverySecondSessionDays(input))
+  const qualitySlot = qualitySlotFor(input)
+  const recoveryCounterpartSlot = qualitySlot === "AM" ? "PM" : "AM"
+  const reservedRecoverySupportCount =
+    input.kind === "BALANCED"
+    && input.request.profile.secondSessionMode === "RECOVERY_PM_ALLOWED"
+      ? input.qualityDays.length
+      : 0
+  const recoverySecondDays = new Set(
+    recoverySecondSessionDays(input, reservedRecoverySupportCount),
+  )
   const sessions: PlanSession[] = []
 
   for (let day = 1; day <= 10; day += 1) {
@@ -203,10 +244,22 @@ export function makeCandidateSessions(input: CandidateSessionBuildInput): readon
     }
 
     if (qualityDays.has(day)) {
+      if (
+        input.kind === "BALANCED"
+        && input.request.profile.secondSessionMode === "RECOVERY_PM_ALLOWED"
+      ) {
+        sessions.push(easyTrainingSession(
+          day,
+          recoveryCounterpartSlot,
+          ranges.recoverySupport,
+          "RECOVERY_INTENT",
+        ))
+      }
       sessions.push(qualityTrainingSession(
         day,
         ranges.quality,
         qualityIntentFor(input.request),
+        qualitySlot,
       ))
       continue
     }

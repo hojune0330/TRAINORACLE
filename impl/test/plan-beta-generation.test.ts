@@ -163,6 +163,55 @@ describe("plan beta generation contract", () => {
     }
   })
 
+  it("places quality in PM and keeps the counterpart in AM for an evening athlete", () => {
+    // Given
+    const request = {
+      ...baseRequest(),
+      profile: {
+        ...baseRequest().profile,
+        trainingTimePreference: "EVENING",
+        secondSessionMode: "RECOVERY_PM_ALLOWED",
+      },
+    }
+
+    // When
+    const result = expectGenerated(generatePlanCandidates(request))
+    const balanced = result.candidates[0]
+
+    // Then
+    const quality = balanced.sessions.find((session) => session.role === "QUALITY")
+    expect(quality?.slot).toBe("PM")
+    expect(quality === undefined ? [] : balanced.sessions.filter(
+      (session) => session.day === quality.day && session.role === "EASY",
+    )).toHaveLength(1)
+    expect(quality === undefined ? undefined : balanced.sessions.find(
+      (session) => session.day === quality.day && session.role === "EASY",
+    )?.slot).toBe("AM")
+  })
+
+  it("shares the recovery-support budget between quality counterparts and extra recovery sessions", () => {
+    // Given
+    const request = {
+      ...baseRequest(clearedGate(), [4, 7]),
+      profile: {
+        ...baseRequest(clearedGate(), [4, 7]).profile,
+        availableTrainingDays: [1, 4, 7, 10],
+        secondSessionMode: "RECOVERY_PM_ALLOWED",
+      },
+    }
+
+    // When
+    const result = expectGenerated(generatePlanCandidates(request))
+    const balanced = result.candidates[0]
+
+    // Then
+    const recoverySupport = balanced.sessions.filter(
+      (session) => session.plannedEnergyIntent === "RECOVERY_INTENT" && session.role === "EASY",
+    )
+    expect(recoverySupport).toHaveLength(2)
+    expect(new Set(recoverySupport.map((session) => session.day)).size).toBe(2)
+  })
+
   it("limits sparse or beginner profile-only plans to one controlled quality day", () => {
     const sparseBase = baseRequest(clearedGate(), [4, 7])
     const sparse = {

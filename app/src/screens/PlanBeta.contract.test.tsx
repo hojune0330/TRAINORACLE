@@ -28,6 +28,7 @@ async function answerMinimumPlanQuestions(
   await user.click(screen.getByRole("button", { name: /훈련 계획에 맞춰 달려 본 경험/u }))
   await user.click(screen.getByRole("button", { name: /지속 페이스.*LT/u }))
   await user.click(screen.getByRole("button", { name: /^3일/u }))
+  await user.click(screen.getByRole("button", { name: /날마다 달라요/u }))
   await user.click(screen.getByRole("button", { name: /하루 한 번 운동/u }))
   await user.click(screen.getByRole("button", {
     name: riskAnswer === "clear"
@@ -120,6 +121,7 @@ describe("plan beta user flow", () => {
     expect(availableDaysHelp).toHaveAttribute("aria-expanded", "true")
 
     await user.click(screen.getByRole("button", { name: /^3일/u }))
+    await user.click(screen.getByRole("button", { name: /날마다 달라요/u }))
     expect(screen.getByRole("heading", {
       name: "하루에 두 번 운동하는 날도 넣을까요?",
     })).toBeVisible()

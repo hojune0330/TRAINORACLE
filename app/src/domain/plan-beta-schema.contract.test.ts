@@ -19,6 +19,39 @@ describe("plan history frame compatibility", () => {
     // Then
     expect(result.success).toBe(true)
   })
+
+  it("defaults a legacy intake without training time to VARIES", () => {
+    // Given
+    const legacy = {
+      version: 1,
+      intake: {
+        eventGroup: "FIVE_K",
+        experienceBand: "DEVELOPING",
+        availableDayCount: 4,
+        requestedFrameLength: 9,
+        trainingFocus: "LT_INTENT",
+        secondSessionMode: "SINGLE_SESSION_ONLY",
+      },
+      activePlan: {
+        kind: "BETA_ACTIVE_PLAN_SNAPSHOT",
+        activationState: "SELECTED_BETA_SNAPSHOT",
+        candidateId: "legacy",
+        candidateKind: "BALANCED",
+        selectionActor: "SELF",
+        sourceMode: "PROFILE_ONLY",
+        frame: { lengthDays: 9, continuity: { kind: "STANDARD_FRAME" } },
+        sessions: [],
+      },
+      progress: [],
+      generatedAt: "2026-08-08T00:00:00.000Z",
+    }
+
+    // When
+    const result = parsePlanBetaState(legacy)
+
+    // Then
+    expect(result?.intake.trainingTimePreference).toBe("VARIES")
+  })
 })
 
 describe("B-3 activePlanSchema slot extension (경로 B)", () => {
@@ -95,14 +128,7 @@ describe("B-3 activePlanSchema slot extension (경로 B)", () => {
   })
 })
 
-describe("B-3 storage gate current behavior (C-4 — ㉢-b에서 개정 예정)", () => {
-  // The storage gate (planBetaStateSchema → parsePlanBetaState) is the gate that
-  // reads a saved plan back (loadPlanBetaState) and re-validates on save
-  // (savePlanBetaState). These fix the CURRENT C-4 behavior: a PM session must
-  // be EASY + RECOVERY_INTENT (RPE 1-2) and a PM may not follow QUALITY (C-5).
-  // OD-SLOT-1/7 supersede this for generation, but the storage gate itself is
-  // reworked only in ㉢-b (진행 순서 step 3) — until then C-4 is current and
-  // these tests stay green. C-7 (leaf refine)는 OD-SLOT-1에 따라 철회됨.
+describe("B-3 storage gate session placement rules", () => {
   const pmState = (session: object) => ({
     version: 1,
     intake: {
@@ -128,7 +154,7 @@ describe("B-3 storage gate current behavior (C-4 — ㉢-b에서 개정 예정)"
     generatedAt: "2026-07-24T00:00:00.000Z",
   })
 
-  it("rejects a stored plan whose PM session is QUALITY", () => {
+  it("accepts a stored plan whose only session is PM QUALITY", () => {
     const result = parsePlanBetaState(pmState({
       day: 1,
       slot: "PM",
@@ -140,10 +166,10 @@ describe("B-3 storage gate current behavior (C-4 — ㉢-b에서 개정 예정)"
         durationMinutes: { minimum: 25, maximum: 40 },
       },
     }))
-    expect(result).toBeNull()
+    expect(result).not.toBeNull()
   })
 
-  it("rejects a stored plan whose PM session is REST (PM is EASY+RECOVERY only)", () => {
+  it("accepts a stored plan whose only session is PM REST", () => {
     const result = parsePlanBetaState(pmState({
       day: 1,
       slot: "PM",
@@ -151,10 +177,10 @@ describe("B-3 storage gate current behavior (C-4 — ㉢-b에서 개정 예정)"
       plannedEnergyIntent: "RECOVERY_INTENT",
       prescription: { kind: "REST" },
     }))
-    expect(result).toBeNull()
+    expect(result).not.toBeNull()
   })
 
-  it("rejects a stored plan whose PM EASY session is not RECOVERY intent", () => {
+  it("accepts a stored plan whose only PM EASY session is BASE intent", () => {
     const result = parsePlanBetaState(pmState({
       day: 1,
       slot: "PM",
@@ -166,6 +192,118 @@ describe("B-3 storage gate current behavior (C-4 — ㉢-b에서 개정 예정)"
         durationMinutes: { minimum: 20, maximum: 30 },
       },
     }))
+    expect(result).not.toBeNull()
+  })
+
+  it("accepts a PM QUALITY plus AM EASY pair with explicit two-a-day consent", () => {
+    const state = pmState({
+      day: 1,
+      slot: "PM",
+      role: "QUALITY",
+      plannedEnergyIntent: "LT_INTENT",
+      prescription: {
+        kind: "RPE_TIME_RANGE",
+        rpe: { minimum: 5, maximum: 6 },
+        durationMinutes: { minimum: 25, maximum: 40 },
+      },
+    })
+    const result = parsePlanBetaState({
+      ...state,
+      activePlan: {
+        ...state.activePlan,
+        sessions: [
+          {
+            day: 1,
+            slot: "AM",
+            role: "EASY",
+            plannedEnergyIntent: "RECOVERY_INTENT",
+            prescription: {
+              kind: "RPE_TIME_RANGE",
+              rpe: { minimum: 1, maximum: 2 },
+              durationMinutes: { minimum: 15, maximum: 25 },
+            },
+          },
+          state.activePlan.sessions[0],
+        ],
+      },
+    })
+
+    expect(result).not.toBeNull()
+  })
+
+  it("rejects a second session when explicit two-a-day consent is absent", () => {
+    const state = pmState({
+      day: 1,
+      slot: "PM",
+      role: "QUALITY",
+      plannedEnergyIntent: "LT_INTENT",
+      prescription: {
+        kind: "RPE_TIME_RANGE",
+        rpe: { minimum: 5, maximum: 6 },
+        durationMinutes: { minimum: 25, maximum: 40 },
+      },
+    })
+    const result = parsePlanBetaState({
+      ...state,
+      intake: {
+        ...state.intake,
+        secondSessionMode: "SINGLE_SESSION_ONLY",
+      },
+      activePlan: {
+        ...state.activePlan,
+        sessions: [
+          {
+            day: 1,
+            slot: "AM",
+            role: "EASY",
+            plannedEnergyIntent: "RECOVERY_INTENT",
+            prescription: {
+              kind: "RPE_TIME_RANGE",
+              rpe: { minimum: 1, maximum: 2 },
+              durationMinutes: { minimum: 15, maximum: 25 },
+            },
+          },
+          state.activePlan.sessions[0],
+        ],
+      },
+    })
+
+    expect(result).toBeNull()
+  })
+
+  it("rejects two QUALITY sessions on one day until the explicit review flow exists", () => {
+    const state = pmState({
+      day: 1,
+      slot: "PM",
+      role: "QUALITY",
+      plannedEnergyIntent: "LT_INTENT",
+      prescription: {
+        kind: "RPE_TIME_RANGE",
+        rpe: { minimum: 5, maximum: 6 },
+        durationMinutes: { minimum: 25, maximum: 40 },
+      },
+    })
+    const result = parsePlanBetaState({
+      ...state,
+      activePlan: {
+        ...state.activePlan,
+        sessions: [
+          ...state.activePlan.sessions,
+          {
+            day: 1,
+            slot: "AM",
+            role: "QUALITY",
+            plannedEnergyIntent: "VO2_INTENT",
+            prescription: {
+              kind: "RPE_TIME_RANGE",
+              rpe: { minimum: 7, maximum: 8 },
+              durationMinutes: { minimum: 20, maximum: 30 },
+            },
+          },
+        ],
+      },
+    })
+
     expect(result).toBeNull()
   })
 })

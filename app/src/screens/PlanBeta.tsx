@@ -1,6 +1,9 @@
 import React from "react"
 import { AlertTriangle, RotateCcw } from "lucide-react"
-import type { PlanGenerationSuccess } from "@impl/plan-generator/types"
+import type {
+  PlanGenerationSuccess,
+  TrainingTimePreference,
+} from "@impl/plan-generator/types"
 import type { SafetyGateDecision } from "@impl/safety-gate/gate"
 import {
   generatePlanFromDraft,
@@ -22,7 +25,15 @@ import { PlanIntake } from "./plan-beta/PlanIntake"
 import type { IntakeStep } from "./plan-beta/PlanIntake"
 import { NotationReader } from "./plan-beta/NotationReader"
 
-const STEP_ORDER: readonly IntakeStep[] = ["goal", "experience", "focus", "days", "two-a-day", "safety"]
+const STEP_ORDER: readonly IntakeStep[] = [
+  "goal",
+  "experience",
+  "focus",
+  "days",
+  "training-time",
+  "two-a-day",
+  "safety",
+]
 
 export function PlanBeta({
   onWriteLog,
@@ -171,6 +182,10 @@ export function PlanBeta({
             availableDayCount,
             requestedFrameLength: 9.5,
           }))
+          setStep("training-time")
+        }}
+        onTrainingTime={(trainingTimePreference: TrainingTimePreference) => {
+          setDraft((current) => ({ ...current, trainingTimePreference }))
           setStep("two-a-day")
         }}
         onSecondSession={(secondSessionMode) => {

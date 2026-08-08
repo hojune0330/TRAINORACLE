@@ -82,6 +82,10 @@ export const SECOND_SESSION_MODES = [
 
 export type SecondSessionMode = (typeof SECOND_SESSION_MODES)[number]
 
+export const TRAINING_TIME_PREFERENCES = ["MORNING", "EVENING", "VARIES"] as const
+
+export type TrainingTimePreference = (typeof TRAINING_TIME_PREFERENCES)[number]
+
 export type PlanProgressState = "COMPLETED" | "RESTED" | "SKIPPED" | "PAIN_CHECKIN"
 
 export type PlanProgressStateCount = {
@@ -176,6 +180,7 @@ export type PlanProfile = {
   readonly experienceBand: ExperienceBand
   readonly availableTrainingDays: readonly number[]
   readonly secondSessionMode: SecondSessionMode
+  readonly trainingTimePreference: TrainingTimePreference
 }
 
 export type JournalSource =

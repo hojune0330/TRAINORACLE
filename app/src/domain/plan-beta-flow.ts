@@ -94,6 +94,7 @@ export function generatePlanFromDraft(
       experienceBand: intake.experienceBand,
       availableTrainingDays: spreadTrainingDays(intake.availableDayCount),
       secondSessionMode: intake.secondSessionMode,
+      trainingTimePreference: intake.trainingTimePreference,
     },
     formation: createPlanFormation(
       todayISO(),
@@ -163,6 +164,7 @@ function completeIntake(
     requestedFrameLength,
     trainingFocus,
     secondSessionMode,
+    trainingTimePreference,
   } = draft
   if (
     eventGroup === undefined
@@ -171,6 +173,7 @@ function completeIntake(
     || requestedFrameLength === undefined
     || trainingFocus === undefined
     || secondSessionMode === undefined
+    || trainingTimePreference === undefined
   ) {
     return null
   }
@@ -181,6 +184,7 @@ function completeIntake(
     requestedFrameLength,
     trainingFocus,
     secondSessionMode,
+    trainingTimePreference,
   }
 }
 
