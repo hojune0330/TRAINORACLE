@@ -37,6 +37,7 @@ function legacyQualityOnlyRequest(frameLength: 9 | 10): PlanGenerationRequest {
       experienceBand: "DEVELOPING",
       availableTrainingDays: [1, 3, 5, 7, 9],
       secondSessionMode: "SINGLE_SESSION_ONLY",
+      trainingTimePreference: "VARIES",
     },
     requestedFrameLength: frameLength,
     journalSource: { kind: "NO_USABLE_JOURNAL" },

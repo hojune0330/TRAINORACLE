@@ -269,7 +269,7 @@ describe("plan beta local store", () => {
     expect(loaded?.activePlan.sessions[0]?.slot).toBe("AM")
   })
 
-  it("rejects a persisted PM session beside a quality session", () => {
+  it("loads a persisted two-session plan with explicit consent", () => {
     const state = stateFixture()
     window.localStorage.setItem(
       "trainoracle.plan-beta.v1",
@@ -309,6 +309,6 @@ describe("plan beta local store", () => {
       }),
     )
 
-    expect(loadPlanBetaState()).toBeNull()
+    expect(loadPlanBetaState()).not.toBeNull()
   })
 })

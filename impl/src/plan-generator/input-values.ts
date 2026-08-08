@@ -7,6 +7,7 @@ import type {
   PlanSelectionAuthority,
   PlannedEnergyIntent,
   SecondSessionMode,
+  TrainingTimePreference,
 } from "./types"
 
 export type ParsedJournalSource =
@@ -187,6 +188,20 @@ function parseSecondSessionMode(value: unknown): SecondSessionMode | undefined {
   }
 }
 
+function parseTrainingTimePreference(value: unknown): TrainingTimePreference | undefined {
+  if (value === undefined) return "VARIES"
+  switch (value) {
+    case "MORNING":
+      return "MORNING"
+    case "EVENING":
+      return "EVENING"
+    case "VARIES":
+      return "VARIES"
+    default:
+      return undefined
+  }
+}
+
 export function parseProfile(value: unknown): PlanProfile | undefined {
   if (!isRecord(value)) {
     return undefined
@@ -196,11 +211,13 @@ export function parseProfile(value: unknown): PlanProfile | undefined {
   const experienceBand = parseExperienceBand(value["experienceBand"])
   const availableTrainingDays = parseTrainingDays(value["availableTrainingDays"])
   const secondSessionMode = parseSecondSessionMode(value["secondSessionMode"])
+  const trainingTimePreference = parseTrainingTimePreference(value["trainingTimePreference"])
   if (
     eventGroup === undefined ||
     experienceBand === undefined ||
     availableTrainingDays === undefined ||
-    secondSessionMode === undefined
+    secondSessionMode === undefined ||
+    trainingTimePreference === undefined
   ) {
     return undefined
   }
@@ -210,6 +227,7 @@ export function parseProfile(value: unknown): PlanProfile | undefined {
     experienceBand,
     availableTrainingDays,
     secondSessionMode,
+    trainingTimePreference,
   }
 }
 

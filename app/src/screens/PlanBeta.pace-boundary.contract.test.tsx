@@ -22,6 +22,7 @@ async function answerMinimumPlanQuestions(): Promise<void> {
   }))
   await user.click(screen.getByRole("button", { name: /지속 페이스.*LT/u }))
   await user.click(screen.getByRole("button", { name: /^3일/u }))
+  await user.click(screen.getByRole("button", { name: /날마다 달라요/u }))
   await user.click(screen.getByRole("button", { name: /하루 한 번 운동/u }))
   await user.click(screen.getByRole("button", {
     name: /통증은 없고 몸 상태는 평소와 같아요/u,

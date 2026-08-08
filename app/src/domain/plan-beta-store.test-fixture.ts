@@ -10,6 +10,7 @@ export function stateFixture(): PlanBetaState {
       requestedFrameLength: 9,
       trainingFocus: "LT_INTENT",
       secondSessionMode: "SINGLE_SESSION_ONLY",
+      trainingTimePreference: "VARIES",
     },
     activePlan: {
       kind: "BETA_ACTIVE_PLAN_SNAPSHOT",
