@@ -6,6 +6,7 @@ async function answerMinimumPlanQuestions(page: Page): Promise<void> {
   await page.getByRole("button", { name: /훈련 계획에 맞춰 달려 본 경험/u }).click()
   await page.getByRole("button", { name: /지속 페이스.*LT/u }).click()
   await page.getByRole("button", { name: /^3일/u }).click()
+  await page.getByRole("button", { name: /날마다 달라요/u }).click()
   await page.getByRole("button", { name: "하루 한 번 운동" }).click()
   await page.getByRole("button", { name: /통증은 없고 몸 상태는 평소와 같아요/u }).click()
 }
@@ -90,6 +91,7 @@ test("generates a bounded two-a-day 9.5-day candidate", async ({ page }) => {
   await page.getByRole("button", { name: /훈련 계획에 맞춰 달려 본 경험/u }).click()
   await page.getByRole("button", { name: /반복 인터벌.*VO2/u }).click()
   await page.getByRole("button", { name: "매일" }).click()
+  await page.getByRole("button", { name: /날마다 달라요/u }).click()
   await page.getByRole("button", { name: "일부 날은 하루 두 번 운동" }).click()
   await page.getByRole("button", { name: /통증은 없고 몸 상태는 평소와 같아요/u }).click()
 
