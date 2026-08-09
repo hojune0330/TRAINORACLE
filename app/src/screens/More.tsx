@@ -1,5 +1,6 @@
 import { ArrowLeft, BookOpen, CircleHelp, MessageSquareText } from "lucide-react"
 import { DataSafetyNotice } from "../components/DataSafetyNotice"
+import { feedbackConfig } from "../domain/feedback/feedback-config"
 import { SafeJournalExport } from "./home/DeviceJournal"
 
 export type MoreProps = {
@@ -8,9 +9,17 @@ export type MoreProps = {
   readonly onOpenGuide: () => void
   readonly onOpenAccount?: () => void
   readonly onOpenRestore?: () => void
+  readonly feedbackAvailable?: boolean
 }
 
-export function More({ onBack, onOpenMinji, onOpenGuide, onOpenAccount, onOpenRestore }: MoreProps) {
+export function More({
+  onBack,
+  onOpenMinji,
+  onOpenGuide,
+  onOpenAccount,
+  onOpenRestore,
+  feedbackAvailable = feedbackConfig() !== null,
+}: MoreProps) {
   return (
     <div className="more-screen">
       <header className="utility-header">
@@ -28,7 +37,7 @@ export function More({ onBack, onOpenMinji, onOpenGuide, onOpenAccount, onOpenRe
         <UtilityRow icon={CircleHelp} label="쉬운 도움말과 FAQ" detail="무료 이용·메모·계획을 쉬운 말로 확인해요" onClick={onOpenGuide} />
         <a className="more-screen__row" href="?feedback=1">
           <MessageSquareText aria-hidden="true" size={19} />
-          <span><strong>의견 게시판</strong><small>불편한 점을 일지 내용 없이 남겨요</small></span>
+          <span><strong>의견 게시판</strong><small>{feedbackAvailable ? "불편한 점을 일지 내용 없이 남겨요" : "지금은 준비 중이에요. 열리면 앱 안에서 알려드려요"}</small></span>
         </a>
       </div>
 
