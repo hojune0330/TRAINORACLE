@@ -19,6 +19,13 @@ describe("decoration shop surface", () => {
     expect(screen.getByText("일지 꾸미기 · 사용 가능 0P")).toBeVisible()
   })
 
+  it("keeps the first-record entry compact until a journal page exists", () => {
+    render(<DecorationShop earnedPoints={0} showPreview={false} />)
+
+    expect(screen.getByRole("button", { name: "꾸미기 열기" })).toBeVisible()
+    expect(screen.queryByRole("region", { name: "꾸미기 미리보기" })).toBeNull()
+  })
+
   it("shows eight visual previews including five starter items and never suggests cash value", () => {
     const { container } = render(<DecorationShop earnedPoints={20} />)
     fireEvent.click(screen.getByRole("button", { name: "꾸미기 열기" }))

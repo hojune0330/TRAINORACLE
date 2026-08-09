@@ -114,7 +114,7 @@ async function scrollHeightPx(page: Page) {
   })
 }
 
-test("첫 화면(홈)이 기록 0건에서 성취 점수판을 펼치지 않는다", async ({ page }, testInfo) => {
+test("첫 화면(홈)은 기록 0건에서도 꾸미기를 보여 주되 성취 점수판은 만들지 않는다", async ({ page }, testInfo) => {
   limitsFor(testInfo.project.name)
   const project = testInfo.project.name as TouchProject
   await page.goto("/?app=1")
@@ -126,7 +126,8 @@ test("첫 화면(홈)이 기록 0건에서 성취 점수판을 펼치지 않는�
   await expect(strip.getByText("누적 획득 · BETA")).toHaveCount(0)
   await expect(strip.getByText("기록 연속")).toHaveCount(0)
   await expect(strip.getByText("함께한 날")).toHaveCount(0)
-  await expect(page.getByRole("button", { name: "꾸미기 열기" })).toHaveCount(0)
+  await expect(page.getByRole("heading", { name: "일지 꾸미기 · 사용 가능 0P" })).toBeVisible()
+  await expect(page.getByRole("button", { name: "꾸미기 열기" })).toBeVisible()
 
   // 그렇다고 아무 말도 없으면 "useful" 이 아니다. 규칙은 남는다.
   await expect(strip.getByText(/몸 상태·회복 체크/u)).toBeVisible()
@@ -137,7 +138,7 @@ test("첫 화면(홈)이 기록 0건에서 성취 점수판을 펼치지 않는�
   expect(height).toBeLessThan(HOME_BEFORE[project])
 })
 
-test("기록이 하나 생기면 홈 점수판이 곧바로 돌아온다", async ({ page }, testInfo) => {
+test("기록이 하나 생기면 홈 일지 정원과 꾸미기 포인트가 보인다", async ({ page }, testInfo) => {
   limitsFor(testInfo.project.name)
   await page.addInitScript(() => {
     const day = new Date()
@@ -170,12 +171,12 @@ test("기록이 하나 생기면 홈 점수판이 곧바로 돌아온다", async
   await page.goto("/?app=1")
 
   const strip = page.getByLabel("기록 습관")
-  // 관측 1건으로도 서술은 허용된다 —
-  // FORMATION_LOAD_AND_STATISTICAL_RULES_CONTRACT §10 L222 descriptive_single_observation: allowed.
-  // WORK_ORDER_UX2 §2-2: 포인트/불꽃/스트릭 대신 "기기 저장 건수 · 백업 안내"를 보여준다.
   await expect(strip.getByText(/이 기기에 1건 저장됨/u)).toBeVisible()
-  await expect(strip.getByText(/점수를 매기지 않아요/u)).toBeVisible()
-  await expect(page.getByRole("button", { name: "꾸미기 열기" })).toHaveCount(0)
+  await expect(strip.getByLabel("식물 상태: 새싹이 자라고 있어요")).toBeVisible()
+  await expect(strip.getByText("함께한 날")).toBeVisible()
+  await expect(strip.getByText("1일 · 4P")).toBeVisible()
+  await expect(page.getByRole("heading", { name: "일지 꾸미기 · 사용 가능 4P" })).toBeVisible()
+  await expect(page.getByRole("button", { name: "꾸미기 열기" })).toBeVisible()
 })
 
 test("훈련 후 일지가 빈 상태에서 길지 않다", async ({ page }, testInfo) => {

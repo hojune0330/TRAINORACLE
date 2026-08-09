@@ -5,9 +5,10 @@ import { loadEntries, todayISO } from "../../domain/journal-store"
 import { DecorationStudio } from "./DecorationStudio"
 import { DecorationStudioPreview } from "./DecorationStudioPreview"
 
-export function DecorationShop({ earnedPoints, hasEntriesForDate: hasEntriesForDateProp }: {
+export function DecorationShop({ earnedPoints, hasEntriesForDate: hasEntriesForDateProp, showPreview = true }: {
   readonly earnedPoints: number
   readonly hasEntriesForDate?: (date: string) => boolean
+  readonly showPreview?: boolean
 }) {
   const [state, setState] = React.useState(loadDecorationState)
   const [storageVersion, setStorageVersion] = React.useState(() => readDecorationStateSerialized())
@@ -16,6 +17,7 @@ export function DecorationShop({ earnedPoints, hasEntriesForDate: hasEntriesForD
   const [selectedDate, setSelectedDate] = React.useState(todayISO)
   const available = Math.max(0, earnedPoints - state.spentPoints)
   const today = todayISO()
+  const isCompact = !open && !showPreview
   const defaultHasEntriesForDate = React.useCallback((date: string) => loadEntries().some((entry) => entry.date === date), [])
   const hasEntriesForDate = hasEntriesForDateProp ?? defaultHasEntriesForDate
 
@@ -26,9 +28,9 @@ export function DecorationShop({ earnedPoints, hasEntriesForDate: hasEntriesForD
 
   return (
     <section className="decoration-shop" aria-labelledby="decoration-shop-title">
-      <header className="decoration-shop__header">
+      <header className={`decoration-shop__header${isCompact ? " decoration-shop__header--compact" : ""}`}>
         <span>
-          <small>{open ? "꾸미기" : "보기"}</small>
+          <small>{open ? "꾸미기" : showPreview ? "보기" : "첫 기록 뒤 시작"}</small>
           <h3 id="decoration-shop-title">일지 꾸미기 · 사용 가능 {available}P</h3>
         </span>
         {open ? (
@@ -42,7 +44,7 @@ export function DecorationShop({ earnedPoints, hasEntriesForDate: hasEntriesForD
           </button>
         )}
       </header>
-      <p>베타 포인트는 꾸미기에만 써요. 현금으로 바꾸거나 다른 사람에게 보낼 수 없어요.</p>
+      {(open || showPreview) && <p>베타 포인트는 꾸미기에만 써요. 현금으로 바꾸거나 다른 사람에게 보낼 수 없어요.</p>}
       {open ? (
         <DecorationStudio
           date={selectedDate}
@@ -56,9 +58,9 @@ export function DecorationShop({ earnedPoints, hasEntriesForDate: hasEntriesForD
           onStorageVersionChange={setStorageVersion}
           hasEntriesForDate={hasEntriesForDate}
         />
-      ) : (
+      ) : showPreview ? (
         <DecorationStudioPreview date={selectedDate} today={today} state={state} previewName={null} />
-      )}
+      ) : null}
       {notice !== null && <p role="status">{notice}</p>}
     </section>
   )
