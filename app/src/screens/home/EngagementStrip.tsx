@@ -1,18 +1,20 @@
 import type { EngagementSummary } from "../../domain/engagement"
 
-/**
- * 기록이 하나도 없으면 저장 건수마저 0 으로 채우지 않는다.
- *
- * ANALYSIS_AND_VISUALIZATION_DATA_CONTRACT §17: "Empty and error states should be
- * useful and honest. They must not be styled as success." 숫자 칸을 그대로 두고 0 을
- * 채우면 성취 UI 의 형태를 빌려 성취가 없음을 표시하는 것이라 §17 위반이다.
- *
- * 같은 이유로 포인트/불꽃/연속 기록 지표는 그리지 않는다 — PHILOSOPHY §9-9 가
- * 점수·스트릭·불꽃 게이미피케이션을 금지한다. 기록은 "이 기기에 보존됨"이라는
- * 사실만 정직하게 전한다 (WORK_ORDER_UX2 §2-2).
- */
 function isUntouched(summary: EngagementSummary) {
   return summary.journalDays === 0
+}
+
+type PlantState = {
+  readonly emoji: string
+  readonly label: string
+  readonly name: string
+}
+
+function plantState(recordingStreak: number): PlantState {
+  if (recordingStreak === 0) return { emoji: "🍂", label: "천천히 다시 시작해요", name: "쉬는 중" }
+  if (recordingStreak <= 2) return { emoji: "🌱", label: "새싹이 자라고 있어요", name: "새싹" }
+  if (recordingStreak <= 6) return { emoji: "🌿", label: "잎이 자라고 있어요", name: "자라는 중" }
+  return { emoji: "🌳", label: "튼튼하게 자랐어요", name: "무성함" }
 }
 
 export function EngagementStrip({
@@ -28,15 +30,36 @@ export function EngagementStrip({
     return (
       <section className="engagement-strip engagement-strip--untouched" aria-label="기록 습관">
         <p>
-          훈련 기록 또는 몸 상태·회복 체크를 남긴 날이 이 기기에 기록으로 남아요.
-          거리·속도·훈련 완료에는 점수를 매기지 않아요.
+          첫 기록을 남기면 일지를 꾸밀 수 있어요. 훈련 기록 또는 몸 상태·회복 체크를 남긴 날마다 4P가 쌓여요.
+          거리·속도·훈련 강도에는 점수를 매기지 않아요.
         </p>
       </section>
     )
   }
 
+  const plant = plantState(summary.recordingStreak)
+
   return (
     <section className="engagement-strip" aria-label="기록 습관">
+      <div className="engagement-strip__metric" aria-label={`식물 상태: ${plant.label}`}>
+        <span aria-hidden="true">{plant.emoji}</span>
+        <span>
+          <small>일지 정원</small>
+          <strong>{plant.name}</strong>
+        </span>
+      </div>
+      <div className="engagement-strip__metric">
+        <span>
+          <small>함께한 날</small>
+          <strong>{summary.journalDays}일</strong>
+        </span>
+      </div>
+      <div className="engagement-strip__metric">
+        <span>
+          <small>기록 연속</small>
+          <strong>{summary.recordingStreak}일 · {summary.points}P</strong>
+        </span>
+      </div>
       <p className="engagement-strip__preservation">
         이 기기에 {savedCount}건 저장됨 · 온라인 보관은 계정 연동 후
         {onOpenMore !== undefined && (
@@ -46,8 +69,8 @@ export function EngagementStrip({
         )}
       </p>
       <p>
-        훈련 기록 또는 몸 상태·회복 체크를 남긴 날이 이 기기에 기록으로 남아요.
-        거리·속도·훈련 완료에는 점수를 매기지 않아요.
+        훈련 기록 또는 몸 상태·회복 체크를 남긴 날마다 4P가 쌓여요.
+        거리·속도·훈련 강도에는 점수를 매기지 않아요.
       </p>
     </section>
   )

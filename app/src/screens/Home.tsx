@@ -10,6 +10,7 @@ import { engagementSummary, toEngagementJournalRef } from "../domain/engagement"
 import { painLevelsRequireReview } from "../safety/memo-safety"
 import { DailyContextTags } from "./home/DailyContextTags"
 import { DeviceJournal } from "./home/DeviceJournal"
+import { DecorationShop } from "./home/DecorationShop"
 import { EngagementStrip } from "./home/EngagementStrip"
 import { TrainingHome } from "./home/TrainingHome"
 import { TrashBin } from "./home/TrashBin"
@@ -73,6 +74,7 @@ export function Home({
       <DailyContextTags date={today} />
       {painReviewDates.length > 0 && <PainReview dates={painReviewDates} />}
       <EngagementStrip summary={engagement} savedCount={entries.length} onOpenMore={onOpenMore} />
+      <DecorationShop earnedPoints={engagement.points} />
 
       <section className="training-home__recent" aria-label="최근 기록">
         <DeviceJournal onOpenDay={onOpenDay} onOpenArchive={onOpenArchive} />

@@ -70,6 +70,7 @@ describe("home journal controls", () => {
     expect(screen.getByRole("button", { name: /내 일지.*1일.*1개의 기록/u })).toBeVisible()
     expect(screen.getByRole("button", { name: /훈련 계획/u })).toBeVisible()
     expect(screen.getByRole("button", { name: /분석/u })).toBeVisible()
+    expect(screen.getByText("일지 꾸미기 · 사용 가능 4P")).toBeVisible()
     const serviceChoices = within(screen.getByRole("navigation", { name: "내 기록 살펴보기" })).getAllByRole("button")
     expect(serviceChoices).toHaveLength(3)
     expect(screen.queryByRole("button", { name: /훈련 흐름/u })).toBeNull()
