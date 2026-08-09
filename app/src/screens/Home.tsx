@@ -19,7 +19,6 @@ export type HomeProps = {
   readonly onWriteLog?: (entryType?: JournalEntryType) => void
   readonly onOpenDay?: (date: string) => void
   readonly onOpenArchive?: () => void
-  readonly onOpenCycle?: () => void
   readonly onOpenGuide?: () => void
   readonly onOpenPlan?: () => void
   readonly onOpenTrends?: () => void
@@ -30,7 +29,6 @@ export function Home({
   onWriteLog,
   onOpenDay,
   onOpenArchive,
-  onOpenCycle,
   onOpenGuide,
   onOpenPlan,
   onOpenTrends,
@@ -67,7 +65,6 @@ export function Home({
         model={model}
         onWriteLog={onWriteLog}
         onOpenArchive={onOpenArchive}
-        onOpenCycle={onOpenCycle}
         onOpenPlan={onOpenPlan}
         onOpenTrends={onOpenTrends}
         onOpenMore={onOpenMore}

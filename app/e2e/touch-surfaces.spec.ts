@@ -18,7 +18,7 @@ test("audits empty home and chooser touch actions", async ({ page }, testInfo) =
   await auditTouchTargets(page, [
     { name: "empty-home.first-entry", locator: page.getByRole("button", { name: "오늘 기록하기" }), heightOnly: true },
     { name: "empty-home.journal", locator: page.getByRole("button", { name: /^내 일지/u }), heightOnly: true },
-    { name: "empty-home.plan", locator: page.getByRole("button", { name: /^훈련계획/u }), heightOnly: true },
+    { name: "empty-home.plan", locator: page.getByRole("button", { name: /^훈련 계획/u }), heightOnly: true },
     { name: "empty-home.more", locator: page.getByRole("button", { name: "더보기" }) },
   ])
   await expect(page.getByRole("navigation", { name: "주 탭" })).toBeVisible()

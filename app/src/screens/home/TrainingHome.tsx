@@ -6,7 +6,6 @@ type TrainingHomeProps = {
   readonly model: TrainingHomeViewModel
   readonly onWriteLog?: (entryType?: JournalEntryType) => void
   readonly onOpenArchive?: () => void
-  readonly onOpenCycle?: () => void
   readonly onOpenPlan?: () => void
   readonly onOpenTrends?: () => void
   readonly onOpenMore?: () => void
@@ -16,7 +15,6 @@ export function TrainingHome({
   model,
   onWriteLog,
   onOpenArchive,
-  onOpenCycle,
   onOpenPlan,
   onOpenTrends,
   onOpenMore,
@@ -31,8 +29,8 @@ export function TrainingHome({
       </header>
 
       <section className="training-home__intro" aria-labelledby="training-home-title">
-        <h1 id="training-home-title">내 훈련</h1>
-        <p>기록이 계획으로 이어지는 훈련 일지</p>
+        <h1 id="training-home-title">내 기록</h1>
+        <p>오늘을 남기고, 필요할 때 훈련을 더 자세히 봐요.</p>
       </section>
 
       <section className="training-home__today" aria-labelledby="training-home-today">
@@ -48,17 +46,16 @@ export function TrainingHome({
           type="button"
           onClick={() => onWriteLog?.("evening")}
         >
-          쉰 날은 하루 마무리에서 몸 상태를 짧게 남겨요
+          하루 마무리 기록하기
         </button>
         {model.briefing !== "" && (
           <p className="training-home__briefing" aria-label="아침 브리핑">{model.briefing}</p>
         )}
       </section>
 
-      <nav className="training-home__services" aria-label="내 훈련 서비스">
-        <ServiceRow label="내 일지" detail={model.journalSummary} onClick={onOpenArchive} />
-        <ServiceRow label="훈련 흐름" detail={model.flowSummary} onClick={onOpenCycle} />
-        <ServiceRow label="훈련계획" detail={model.planSummary} onClick={onOpenPlan} />
+      <nav className="training-home__services" aria-label="내 기록 살펴보기">
+        <ServiceRow label="내 일지" detail={`${model.journalSummary} · 달력 · 9.5일 · 하루 기록`} onClick={onOpenArchive} />
+        <ServiceRow label="훈련 계획" detail={model.planSummary} onClick={onOpenPlan} />
         <ServiceRow label="분석" detail={model.analysisSummary} onClick={onOpenTrends} />
       </nav>
     </>

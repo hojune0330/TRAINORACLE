@@ -20,14 +20,11 @@ test("offers a rest-day path without pressuring the athlete to log more", async 
   })
   await page.goto("/?app=1")
 
-  // 이 문구는 §3-3(작업지시서 151행)에서 "작은 링크 → 명시적 버튼"으로 승격됐다.
-  // 그래서 getByText가 아니라 role=button으로 찾는다. 문구가 화면에 있는지만
-  // 보면 승격을 되돌려도 통과해 버린다. 마침표는 승격 때 사라졌다.
-  await expect(page.getByRole("button", { name: "쉰 날은 하루 마무리에서 몸 상태를 짧게 남겨요" })).toBeVisible()
+  await expect(page.getByRole("button", { name: "하루 마무리 기록하기" })).toBeVisible()
   await expect(page.getByText(/일만 더 쓰면/u)).toHaveCount(0)
 
   // 승격의 핵심은 "누를 수 있다"는 것이다. 보이는 것만 확인하면 절반이다.
-  await page.getByRole("button", { name: "쉰 날은 하루 마무리에서 몸 상태를 짧게 남겨요" }).click()
+  await page.getByRole("button", { name: "하루 마무리 기록하기" }).click()
   await expect(page.getByRole("heading", { name: "회복 · 하루 마무리" })).toBeVisible()
 
   // 하루 마무리 폼에서 탭바 "기록"을 누르면 종류 선택으로 돌아온다(§3-3).

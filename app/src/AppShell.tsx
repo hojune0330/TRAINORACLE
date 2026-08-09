@@ -167,9 +167,6 @@ export function AppShell() {
           onOpenArchive={() => {
             setV({ ...viewForTab("journal"), journalMode: "CALENDAR" })
           }}
-          onOpenCycle={() => {
-            setV({ ...viewForTab("journal"), journalMode: "CYCLE" })
-          }}
           onOpenGuide={() => { setUtilityOrigin("home"); setUtilityView("minji") }}
           onOpenPlan={() => setV(viewForTab("plan"))}
           onOpenTrends={() => setV(viewForTab("trends"))}

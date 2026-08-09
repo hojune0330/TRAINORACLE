@@ -1,18 +1,19 @@
 import { expect, test } from "@playwright/test"
 
-test("keeps My Training clear and usable on narrow phones", async ({ page }, testInfo) => {
+test("keeps My Records clear and usable on narrow phones", async ({ page }, testInfo) => {
   for (const viewport of [{ width: 320, height: 568 }, { width: 375, height: 667 }]) {
     await page.setViewportSize(viewport)
     await page.goto("/")
 
-    await expect(page.getByRole("heading", { name: "내 훈련" })).toBeVisible()
-    await expect(page.getByText("기록이 계획으로 이어지는 훈련 일지")).toBeVisible()
+    await expect(page.getByRole("heading", { name: "내 기록" })).toBeVisible()
+    await expect(page.getByText("오늘을 남기고, 필요할 때 훈련을 더 자세히 봐요.")).toBeVisible()
     await expect(page.getByRole("navigation", { name: "주 탭" })).toBeVisible()
     await expect(page.getByRole("button", { name: "오늘 기록하기" })).toBeInViewport()
-    const services = page.getByRole("navigation", { name: "내 훈련 서비스" })
-    for (const name of [/^내 일지/u, /^훈련 흐름/u, /^훈련계획/u, /^분석/u]) {
+    const services = page.getByRole("navigation", { name: "내 기록 살펴보기" })
+    for (const name of [/^내 일지/u, /^훈련 계획/u, /^분석/u]) {
       await expect(services.getByRole("button", { name })).toBeVisible()
     }
+    await expect(services.getByRole("button")).toHaveCount(3)
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true)
     await page.screenshot({
       path: testInfo.outputPath(`first-screen-${viewport.width}x${viewport.height}.png`),
