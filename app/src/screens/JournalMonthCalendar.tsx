@@ -31,6 +31,14 @@ export function JournalMonthCalendar({ month, onOpenDay }: JournalMonthCalendarP
         <strong>기록이 있는 날짜를 눌러 일지를 열어요</strong>
         <span>{activeDays}일 · {month.entryCount}개 기록</span>
       </div>
+      <div className="journal-month-calendar__legend">
+        <span className="journal-month-calendar__legend-dots" aria-hidden="true">
+          <i data-kind="training" />
+          <i data-kind="daily" />
+          <i data-kind="race" />
+        </span>
+        <p>색 점: 훈련 후 · 하루 마무리 · 경기</p>
+      </div>
       <div className="journal-month-calendar__weekdays" aria-hidden="true">
         {WEEKDAYS.map((weekday) => <span key={weekday}>{weekday}</span>)}
       </div>

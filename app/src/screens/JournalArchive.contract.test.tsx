@@ -137,6 +137,7 @@ describe("journal archive surface", () => {
     )
 
     expect(screen.getByRole("grid", { name: "2026년 7월 달력" })).toBeVisible()
+    expect(screen.getByText("색 점: 훈련 후 · 하루 마무리 · 경기")).toBeVisible()
     const day = screen.getByRole("button", { name: /2026년 7월 10일.*훈련 후 2건/u })
     expect(day).not.toHaveAccessibleName(expect.stringContaining(SECRET))
     await user.click(day)

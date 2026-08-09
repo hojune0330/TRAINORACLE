@@ -29,6 +29,35 @@
   white-space: nowrap;
 }
 
+.journal-month-calendar__legend {
+  margin: -5px 20px 13px;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--ink-3);
+  font-family: var(--sans);
+  font-size: 11px;
+  line-height: 1.4;
+}
+
+.journal-month-calendar__legend p { margin: 0; }
+
+.journal-month-calendar__legend-dots {
+  display: inline-flex;
+  gap: 3px;
+}
+
+.journal-month-calendar__legend-dots i {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  box-shadow: inset 0 -1px 0 rgba(0, 0, 0, 0.12);
+}
+
+.journal-month-calendar__legend-dots i[data-kind="training"] { background: #f28c53; }
+.journal-month-calendar__legend-dots i[data-kind="daily"] { background: #75b8dc; }
+.journal-month-calendar__legend-dots i[data-kind="race"] { background: #f2cc4d; }
+
 .journal-month-calendar__weekdays,
 .journal-month-calendar__grid {
   width: min(calc(100% - 12px), 440px);
@@ -138,6 +167,7 @@
 @media (max-width: 350px) {
   .journal-month-calendar__summary { margin-inline: 12px; }
   .journal-month-calendar__summary strong { font-size: 12px; }
+  .journal-month-calendar__legend { margin-inline: 12px; }
   .journal-month-calendar__cell--empty,
   .journal-month-calendar__cell--recorded button { padding-inline: 5px; }
 }
