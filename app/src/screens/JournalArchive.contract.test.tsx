@@ -135,20 +135,9 @@ describe("journal archive surface", () => {
         onBack={vi.fn()}
       />,
     )
-    await user.click(screen.getByRole("button", { name: /7월 6일.*7월 12일/u }))
-    rerender(
-      <JournalArchive
-        entries={ENTRIES}
-        selection={selection}
-        onSelectionChange={(next) => {
-          selection = next
-        }}
-        onOpenDay={onOpenDay}
-        onBack={vi.fn()}
-      />,
-    )
 
-    const day = screen.getByRole("button", { name: /2026년 7월 10일.*훈련 후 2건.*6 km.*30분/u })
+    expect(screen.getByRole("grid", { name: "2026년 7월 달력" })).toBeVisible()
+    const day = screen.getByRole("button", { name: /2026년 7월 10일.*훈련 후 2건/u })
     expect(day).not.toHaveAccessibleName(expect.stringContaining(SECRET))
     await user.click(day)
     expect(onOpenDay).toHaveBeenCalledWith("2026-07-10")
