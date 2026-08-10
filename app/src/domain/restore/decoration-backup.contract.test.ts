@@ -272,6 +272,7 @@ describe("decoration state has no analysis, plan, D9, or coach authority", () =>
       requestedFrameLength: 9 as const,
       trainingFocus: "LT_INTENT" as const,
       secondSessionMode: "SINGLE_SESSION_ONLY" as const,
+      trainingTimePreference: "VARIES" as const,
       startDate: "2026-08-03",
       paceEvidence: { kind: "RPE_ONLY" as const },
     }

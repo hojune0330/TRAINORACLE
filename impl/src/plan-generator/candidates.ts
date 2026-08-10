@@ -62,6 +62,7 @@ function candidateId(input: CandidateBuildInput): string {
     input.request.profile.experienceBand.toLowerCase(),
     input.request.selectedEnergyIntent.toLowerCase(),
     input.request.profile.secondSessionMode.toLowerCase(),
+    input.request.profile.trainingTimePreference.toLowerCase(),
     "local-civil-9-5",
     input.ledger.countedExposureIds.join("-"),
     input.request.profile.availableTrainingDays.join("-"),

@@ -6,6 +6,7 @@ async function answerMinimumPlanQuestions(page: Page): Promise<void> {
   await page.getByRole("button", { name: /훈련 계획에 맞춰 달려 본 경험/u }).click()
   await page.getByRole("button", { name: /지속 페이스.*LT/u }).click()
   await page.getByRole("button", { name: /^3일/u }).click()
+  await page.getByRole("button", { name: /날마다 달라요/u }).click()
   await page.getByRole("button", { name: "하루 한 번 운동" }).click()
   await page.getByRole("button", { name: /통증은 없고 몸 상태는 평소와 같아요/u }).click()
 }
@@ -90,11 +91,61 @@ test("generates a bounded two-a-day 9.5-day candidate", async ({ page }) => {
   await page.getByRole("button", { name: /훈련 계획에 맞춰 달려 본 경험/u }).click()
   await page.getByRole("button", { name: /반복 인터벌.*VO2/u }).click()
   await page.getByRole("button", { name: "매일" }).click()
+  await page.getByRole("button", { name: /날마다 달라요/u }).click()
   await page.getByRole("button", { name: "일부 날은 하루 두 번 운동" }).click()
   await page.getByRole("button", { name: /통증은 없고 몸 상태는 평소와 같아요/u }).click()
 
   await expectCanonicalPlanCandidates(page)
   await expect(page.getByText(/오후 회복/u).first()).toBeVisible()
+})
+
+test("keeps an evening two-a-day plan after selection and reload", async ({ page }) => {
+  // Given
+  await page.goto("/?app=1")
+  await page.getByRole("navigation", { name: "내 기록 살펴보기" }).getByRole("button", { name: /^훈련 계획/u }).click()
+  await page.getByRole("button", { name: /5km/u }).click()
+  await page.getByRole("button", { name: /훈련 계획에 맞춰 달려 본 경험/u }).click()
+  await page.getByRole("button", { name: /반복 인터벌.*VO2/u }).click()
+  await page.getByRole("button", { name: "매일" }).click()
+  await page.getByRole("button", { name: /저녁에 운동해요/u }).click()
+  await page.getByRole("button", { name: "일부 날은 하루 두 번 운동" }).click()
+  await page.getByRole("button", { name: /통증은 없고 몸 상태는 평소와 같아요/u }).click()
+
+  // When
+  await page.getByRole("button", { name: /선택하기/u }).first().click()
+
+  // Then
+  await expect(page.getByRole("heading", { name: /9\.5일 계획/u })).toBeVisible()
+  await expect(page.locator(".active-plan__session").filter({
+    hasText: "오후",
+  }).filter({
+    hasText: "반복 인터벌",
+  })).not.toHaveCount(0)
+  await expect.poll(async () => page.evaluate(() => {
+    const stored = window.localStorage.getItem("trainoracle.plan-beta.v1")
+    if (stored === null) return false
+    const plan: unknown = JSON.parse(stored)
+    if (typeof plan !== "object" || plan === null || !("activePlan" in plan)) return false
+    const activePlan = plan.activePlan
+    if (typeof activePlan !== "object" || activePlan === null || !("sessions" in activePlan)) return false
+    const sessions = activePlan.sessions
+    if (!Array.isArray(sessions)) return false
+    return sessions.some((session) => (
+      typeof session === "object"
+      && session !== null
+      && "role" in session
+      && "slot" in session
+      && session.role === "QUALITY"
+      && session.slot === "PM"
+    ))
+  })).toBe(true)
+
+  await page.reload()
+  await expect(page.getByRole("navigation", { name: "내 기록 살펴보기" }).getByRole("button", {
+    name: /훈련 계획 저장된 계획/u,
+  })).toBeVisible()
+  await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "계획" }).click()
+  await expect(page.getByRole("heading", { name: /9\.5일 계획/u })).toBeVisible()
 })
 
 test("reads a detailed training notation without creating a plan", async ({ page }) => {

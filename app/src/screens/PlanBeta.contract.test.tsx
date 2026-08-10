@@ -28,6 +28,7 @@ async function answerMinimumPlanQuestions(
   await user.click(screen.getByRole("button", { name: /훈련 계획에 맞춰 달려 본 경험/u }))
   await user.click(screen.getByRole("button", { name: /지속 페이스.*LT/u }))
   await user.click(screen.getByRole("button", { name: /^3일/u }))
+  await user.click(screen.getByRole("button", { name: /날마다 달라요/u }))
   await user.click(screen.getByRole("button", { name: /하루 한 번 운동/u }))
   await user.click(screen.getByRole("button", {
     name: riskAnswer === "clear"
@@ -120,9 +121,14 @@ describe("plan beta user flow", () => {
     expect(availableDaysHelp).toHaveAttribute("aria-expanded", "true")
 
     await user.click(screen.getByRole("button", { name: /^3일/u }))
+    await user.click(screen.getByRole("button", { name: /날마다 달라요/u }))
     expect(screen.getByRole("heading", {
       name: "하루에 두 번 운동하는 날도 넣을까요?",
     })).toBeVisible()
+    expect(screen.getByText(
+      "일부 날에 오전과 오후 두 칸을 나눠 보여줘요. 집중 훈련은 고른 시간대에, 다른 칸은 가벼운 훈련이나 회복으로 안내해요.",
+    )).toBeVisible()
+    expect(screen.queryByText(/오후 RPE 1~2 회복 운동만/u)).toBeNull()
     expect(screen.queryByRole("button", { name: /7일 계획|9일 계획|10일 계획/u })).toBeNull()
   })
 
