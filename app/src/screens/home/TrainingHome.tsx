@@ -1,4 +1,5 @@
 import { ChevronRight, Ellipsis, PencilLine } from "lucide-react"
+import type { ReactNode } from "react"
 import type { TrainingHomeViewModel } from "../../domain/home-view-model"
 import type { JournalEntryType } from "../log-entry/shared"
 
@@ -9,6 +10,7 @@ type TrainingHomeProps = {
   readonly onOpenPlan?: () => void
   readonly onOpenTrends?: () => void
   readonly onOpenMore?: () => void
+  readonly recentJournal?: ReactNode
 }
 
 export function TrainingHome({
@@ -18,6 +20,7 @@ export function TrainingHome({
   onOpenPlan,
   onOpenTrends,
   onOpenMore,
+  recentJournal,
 }: TrainingHomeProps) {
   return (
     <>
@@ -52,6 +55,8 @@ export function TrainingHome({
           <p className="training-home__briefing" aria-label="아침 브리핑">{model.briefing}</p>
         )}
       </section>
+
+      {recentJournal}
 
       <nav className="training-home__services" aria-label="내 기록 살펴보기">
         <ServiceRow label="내 일지" detail={`${model.journalSummary} · 달력 · 9.5일 · 하루 기록`} onClick={onOpenArchive} />

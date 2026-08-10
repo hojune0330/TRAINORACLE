@@ -51,6 +51,46 @@ test("keeps My Records clear and usable on narrow phones", async ({ page }, test
   await page.screenshot({ path: testInfo.outputPath("record-choice-375x667.png"), fullPage: true })
 })
 
+test("shows a returning athlete's latest entry before the decoration studio", async ({ page }, testInfo) => {
+  // Given: a returning athlete has one local post-session journal entry.
+  await page.addInitScript(() => {
+    localStorage.setItem("trainoracle.journal.v1", JSON.stringify([{
+      id: "home-order-entry",
+      kind: "post-session",
+      date: "2026-08-10",
+      savedAt: "2026-08-10T09:00:00.000Z",
+      syncState: "local",
+      system: "lt",
+      title: "아침 템포런",
+      distanceKm: "8",
+      durationMin: "40",
+      avgPace: "5:00",
+      rpe: 6,
+      memo: "",
+      memoPurpose: "PRIVATE_SELF_ONLY",
+    }]))
+  })
+  await page.setViewportSize({ width: 320, height: 568 })
+  await page.goto("/")
+  const recentEntry = page.getByRole("button", { name: /훈련 후.*아침 템포런.*상세/u })
+  const services = page.getByRole("navigation", { name: "내 기록 살펴보기" })
+  const decorationEntry = page.getByText("일지 꾸미기 · 사용 가능 4P")
+
+  // When: the athlete opens the first home screen.
+  await expect(recentEntry).toBeVisible()
+  await expect(page.getByText("8월 10일")).toBeVisible()
+  await expect(decorationEntry).toBeVisible()
+
+  // Then: the latest journal appears before decoration, with no horizontal overflow.
+  const recentTop = await recentEntry.evaluate((element) => element.getBoundingClientRect().top)
+  const servicesTop = await services.evaluate((element) => element.getBoundingClientRect().top)
+  const decorationTop = await decorationEntry.evaluate((element) => element.getBoundingClientRect().top)
+  expect(recentTop).toBeLessThan(servicesTop)
+  expect(recentTop).toBeLessThan(decorationTop)
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true)
+  await page.screenshot({ path: testInfo.outputPath("returning-home-record-first-320x568.png"), fullPage: true })
+})
+
 test("shows a truthful closed feedback screen when its release switch is off", async ({ page }) => {
   await page.goto("/?feedback=1")
   await expect(page.getByRole("heading", { name: "문의 게시판", exact: true })).toBeVisible()

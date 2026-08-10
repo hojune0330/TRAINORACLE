@@ -60,6 +60,19 @@ describe("home journal controls", () => {
     expect(onOpenDay).toHaveBeenCalledWith("2026-07-14")
   })
 
+  it("uses a diary-friendly date on a recent entry while keeping its full date accessible", () => {
+    // Given
+    render(<Home />)
+    const recentEntry = screen.getByRole("button", { name: /훈련 후.*시드 템포런.*상세/u })
+
+    // When
+    const visibleDate = screen.getByText("7월 14일")
+
+    // Then
+    expect(visibleDate).toBeVisible()
+    expect(recentEntry).toHaveAccessibleName(/2026년 7월 14일.*훈련 후.*시드 템포런/u)
+  })
+
   it("centers the first screen on the user's records and keeps service choices to three", () => {
     render(<Home />)
 
@@ -75,6 +88,22 @@ describe("home journal controls", () => {
     expect(serviceChoices).toHaveLength(3)
     expect(screen.queryByRole("button", { name: /훈련 흐름/u })).toBeNull()
     expect(screen.queryByText("비공개 원문")).toBeNull()
+  })
+
+  it("places a recent journal entry before services and decoration so returning athletes can continue reading first", () => {
+    // Given
+    render(<Home />)
+    const recentEntry = screen.getByRole("button", { name: /훈련 후.*시드 템포런.*상세/u })
+    const services = screen.getByRole("navigation", { name: "내 기록 살펴보기" })
+    const decorationEntry = screen.getByText("일지 꾸미기 · 사용 가능 4P")
+
+    // When
+    const servicesPosition = recentEntry.compareDocumentPosition(services)
+    const decorationPosition = recentEntry.compareDocumentPosition(decorationEntry)
+
+    // Then
+    expect(servicesPosition & Node.DOCUMENT_POSITION_FOLLOWING).not.toBe(0)
+    expect(decorationPosition & Node.DOCUMENT_POSITION_FOLLOWING).not.toBe(0)
   })
 
   it("never uses a private evening note as visible or accessible recent-entry text", () => {

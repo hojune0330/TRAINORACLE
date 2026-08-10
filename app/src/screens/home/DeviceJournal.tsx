@@ -1,6 +1,5 @@
 import React from "react"
 import { SectionLb } from "../../components/JournalPrimitives"
-import { compactDate } from "../../domain/dates"
 import {
   exportEntriesJSON,
   loadEntriesWithPrivateMemos,
@@ -21,6 +20,16 @@ const KIND_META: Record<JournalEntry["kind"], { readonly label: string; readonly
   "post-session": { label: "훈련 후", mark: "↻" },
   evening: { label: "하루 마무리", mark: "☾" },
   race: { label: "경기", mark: "▲" },
+}
+
+function journalDateLabel(iso: string): string {
+  const [, month = "", day = ""] = iso.split("-")
+  return `${Number(month)}월 ${Number(day)}일`
+}
+
+function journalDateAriaLabel(iso: string): string {
+  const [year = ""] = iso.split("-")
+  return `${year}년 ${journalDateLabel(iso)}`
 }
 
 function entryHeadline(entry: JournalEntry): string {
@@ -71,7 +80,7 @@ export function DeviceJournal({ onOpenDay, onOpenArchive }: DeviceJournalProps) 
               type="button"
               key={entry.id}
               onClick={() => onOpenDay?.(entry.date)}
-              aria-label={`${compactDate(entry.date)} ${meta.label} ${headline} 상세 열기`}
+              aria-label={`${journalDateAriaLabel(entry.date)} ${meta.label} ${headline} 상세 열기`}
               style={{
                 width: "100%", padding: "12px 0", border: 0,
                 borderBottom: index < entries.length - 1 ? "1px dashed var(--hair)" : 0,
@@ -83,7 +92,7 @@ export function DeviceJournal({ onOpenDay, onOpenArchive }: DeviceJournalProps) 
               <span aria-hidden="true" style={{ fontFamily: "var(--mono)", fontSize: 15, color: "var(--brand)", lineHeight: 1 }}>{meta.mark}</span>
               <span style={{ minWidth: 0 }}>
                 <span style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
-                  <span style={{ fontFamily: "var(--mono)", fontSize: 10, color: "var(--ink-3)", letterSpacing: "0.1em" }}>{compactDate(entry.date)}</span>
+                  <span style={{ fontFamily: "var(--mono)", fontSize: 10, color: "var(--ink-3)", letterSpacing: "0.04em" }}>{journalDateLabel(entry.date)}</span>
                   <span style={{ fontFamily: "var(--mono)", fontSize: 9.5, color: "var(--ink-4)", letterSpacing: "0.08em" }}>{meta.label}</span>
                 </span>
                 <span style={{
