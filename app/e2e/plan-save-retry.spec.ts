@@ -1,0 +1,49 @@
+import { expect, test } from "@playwright/test"
+import type { Page } from "@playwright/test"
+
+test.use({ serviceWorkers: "block" })
+
+async function answerMinimumPlanQuestions(page: Page): Promise<void> {
+  await page.getByRole("button", { name: /800m.*1500m/u }).click()
+  await page.getByRole("button", { name: /훈련 계획에 맞춰 달려 본 경험/u }).click()
+  await page.getByRole("button", { name: /지속 페이스.*LT/u }).click()
+  await page.getByRole("button", { name: /^3일/u }).click()
+  await page.getByRole("button", { name: "하루 한 번 운동" }).click()
+  await page.getByRole("button", { name: /통증은 없고 몸 상태는 평소와 같아요/u }).click()
+}
+
+test("retries a selected plan save and keeps the plan after reload", async ({ page }) => {
+  // Given: the first plan storage write fails in the real browser surface.
+  await page.addInitScript(() => {
+    const originalSetItem = Storage.prototype.setItem
+    let failedPlanSave = false
+    Storage.prototype.setItem = function (key: string, value: string): void {
+      if (key === "trainoracle.plan-beta.v1" && !failedPlanSave) {
+        failedPlanSave = true
+        throw new DOMException("Storage is full", "QuotaExceededError")
+      }
+      originalSetItem.call(this, key, value)
+    }
+  })
+  await page.goto("/?app=1")
+  await page.getByRole("navigation", { name: "내 훈련 서비스" }).getByRole("button", { name: /^훈련계획/u }).click()
+  await answerMinimumPlanQuestions(page)
+
+  // When: the athlete selects a candidate, retries, and returns after a reload.
+  await page.getByRole("button", { name: /선택하기/u }).first().click()
+  await expect(page.getByRole("alert")).toContainText("계획을 이 기기에 저장하지 못했어요")
+  await page.getByRole("button", { name: "계획 다시 저장하기" }).click()
+  await expect(page.getByRole("heading", { name: /9.5일 계획/u })).toBeVisible()
+  await expect.poll(() => page.evaluate(
+    () => window.localStorage.getItem("trainoracle.plan-beta.v1"),
+  )).not.toBeNull()
+  await page.reload()
+
+  // Then: the selected plan is still the active plan, not a candidate-only screen.
+  await expect.poll(() => page.evaluate(
+    () => window.localStorage.getItem("trainoracle.plan-beta.v1"),
+  )).not.toBeNull()
+  await page.getByRole("navigation", { name: "내 훈련 서비스" }).getByRole("button", { name: /^훈련계획/u }).click()
+  await expect(page.getByRole("heading", { name: /9.5일 계획/u })).toBeVisible()
+  await expect(page.getByRole("button", { name: "다음 주기 후보 만들기" })).toBeVisible()
+})

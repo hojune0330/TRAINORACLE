@@ -1,18 +1,17 @@
 import React from "react"
 import { AlertTriangle, RotateCcw } from "lucide-react"
 import type {
+  PlanCandidate,
   PlanGenerationSuccess,
   TrainingTimePreference,
 } from "@impl/plan-generator/types"
 import type { SafetyGateDecision } from "@impl/safety-gate/gate"
 import {
   generatePlanFromDraft,
-  selectPlanForActivation,
 } from "../domain/plan-beta-flow"
 import {
   loadPlanBetaState,
   loadPreviousIntake,
-  savePlanBetaState,
 } from "../domain/plan-beta-store"
 import type {
   PlanBetaIntake,
@@ -24,6 +23,7 @@ import { PlanCandidates } from "./plan-beta/PlanCandidates"
 import { PlanIntake } from "./plan-beta/PlanIntake"
 import type { IntakeStep } from "./plan-beta/PlanIntake"
 import { NotationReader } from "./plan-beta/NotationReader"
+import { saveSelectedPlanCandidate } from "./plan-beta/plan-selection"
 
 const STEP_ORDER: readonly IntakeStep[] = [
   "goal",
@@ -60,6 +60,7 @@ export function PlanBeta({
   const [gate, setGate] = React.useState<SafetyGateDecision | null>(null)
   const [blocked, setBlocked] = React.useState(false)
   const [errorCode, setErrorCode] = React.useState<string | null>(null)
+  const [retryCandidate, setRetryCandidate] = React.useState<PlanCandidate | null>(null)
   const [notationReaderOpen, setNotationReaderOpen] = React.useState(false)
   const viewKey = notationReaderOpen
     ? "notation-reader"
@@ -75,6 +76,25 @@ export function PlanBeta({
     const scrollRegion = document.querySelector<HTMLElement>(".app-scroll-region")
     if (scrollRegion !== null) scrollRegion.scrollTop = 0
   }, [viewKey])
+
+  const saveCandidate = (
+    candidate: PlanCandidate,
+    activeGenerated: PlanGenerationSuccess,
+    activeGate: SafetyGateDecision,
+  ) => {
+    const result = saveSelectedPlanCandidate(candidate, activeGenerated, activeGate, generatedIntake)
+    switch (result.kind) {
+      case "saved":
+        setErrorCode(null)
+        setRetryCandidate(null)
+        setStored(result.state)
+        return
+      case "rejected":
+        setErrorCode(result.code)
+        setRetryCandidate(result.code === "PLAN_STORAGE_WRITE_FAILED" ? candidate : null)
+        return
+    }
+  }
 
   if (notationReaderOpen) {
     return <NotationReader onBack={() => setNotationReaderOpen(false)} />
@@ -135,23 +155,28 @@ export function PlanBeta({
             setGenerated(null)
             setGate(null)
             setErrorCode(null)
+            setRetryCandidate(null)
             setStep("two-a-day")
           }}
           onSelect={(candidate) => {
-            selectAndStore(
-              candidate,
-              generated,
-              gate,
-              generatedIntake,
-              setStored,
-              setErrorCode,
-            )
+            saveCandidate(candidate, generated, gate)
           }}
         />
         {errorCode !== null && (
           <div className="plan-inline-error" role="alert">
             {planErrorMessage(errorCode)}
           </div>
+        )}
+        {errorCode === "PLAN_STORAGE_WRITE_FAILED" && retryCandidate !== null && (
+          <button
+            className="plan-text-action"
+            type="button"
+            onClick={() => {
+              saveCandidate(retryCandidate, generated, gate)
+            }}
+          >
+            계획 다시 저장하기
+          </button>
         )}
       </>
     )
@@ -234,30 +259,4 @@ function planErrorMessage(errorCode: string): string {
 function previousStep(step: IntakeStep): IntakeStep {
   const index = STEP_ORDER.indexOf(step)
   return index <= 0 ? "goal" : STEP_ORDER[index - 1] ?? "goal"
-}
-
-function selectAndStore(
-  candidate: Parameters<typeof selectPlanForActivation>[0],
-  generated: PlanGenerationSuccess,
-  gate: SafetyGateDecision,
-  intake: PlanBetaIntake | null,
-  setStored: React.Dispatch<React.SetStateAction<PlanBetaState | null>>,
-  setErrorCode: React.Dispatch<React.SetStateAction<string | null>>,
-): void {
-  if (intake === null) {
-    setErrorCode("MINIMUM_PROFILE_INCOMPLETE")
-    return
-  }
-  const result = selectPlanForActivation(candidate, generated, gate, intake)
-  if (result.kind !== "selected") {
-    setErrorCode(result.code)
-    return
-  }
-  const saveResult = savePlanBetaState(result.state)
-  if (!saveResult.ok) {
-    setErrorCode(saveResult.code)
-    return
-  }
-  setErrorCode(null)
-  setStored(result.state)
 }
