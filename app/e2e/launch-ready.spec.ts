@@ -25,7 +25,7 @@ async function expectCanonicalPlanCandidates(page: Page): Promise<void> {
 test("keeps plan help inside the narrow scroll region", async ({ page }) => {
   await page.setViewportSize({ width: 320, height: 650 })
   await page.goto("/?app=1")
-  await page.getByRole("navigation", { name: "내 훈련 서비스" }).getByRole("button", { name: /^훈련계획/u }).click()
+  await page.getByRole("navigation", { name: "내 기록 살펴보기" }).getByRole("button", { name: /^훈련 계획/u }).click()
   await page.getByRole("button", { name: "준비 목표 설명 보기" }).click()
 
   const geometry = await page.evaluate(() => {
@@ -62,7 +62,7 @@ test("routes a first visitor from home into the matching journal", async ({ page
 
   // back to home via the tab bar, then rest-day entry via the rest-entry button
   await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "홈" }).click()
-  await page.getByRole("button", { name: /하루 마무리에서 몸 상태를 짧게 남겨요/u }).click()
+  await page.getByRole("button", { name: "하루 마무리 기록하기" }).click()
 
   // Then
   await expect(page.getByRole("heading", { name: /회복.*하루 마무리/u })).toBeVisible()
@@ -73,7 +73,7 @@ test("generates selectable 9.5-day candidates from first-screen intake", async (
   await page.goto("/?app=1")
 
   // When
-  await page.getByRole("navigation", { name: "내 훈련 서비스" }).getByRole("button", { name: /^훈련계획/u }).click()
+  await page.getByRole("navigation", { name: "내 기록 살펴보기" }).getByRole("button", { name: /^훈련 계획/u }).click()
   await answerMinimumPlanQuestions(page)
 
   // Then
@@ -85,7 +85,7 @@ test("generates selectable 9.5-day candidates from first-screen intake", async (
 
 test("generates a bounded two-a-day 9.5-day candidate", async ({ page }) => {
   await page.goto("/?app=1")
-  await page.getByRole("navigation", { name: "내 훈련 서비스" }).getByRole("button", { name: /^훈련계획/u }).click()
+  await page.getByRole("navigation", { name: "내 기록 살펴보기" }).getByRole("button", { name: /^훈련 계획/u }).click()
   await page.getByRole("button", { name: /5km/u }).click()
   await page.getByRole("button", { name: /훈련 계획에 맞춰 달려 본 경험/u }).click()
   await page.getByRole("button", { name: /반복 인터벌.*VO2/u }).click()
@@ -99,7 +99,7 @@ test("generates a bounded two-a-day 9.5-day candidate", async ({ page }) => {
 
 test("reads a detailed training notation without creating a plan", async ({ page }) => {
   await page.goto("/?app=1")
-  await page.getByRole("navigation", { name: "내 훈련 서비스" }).getByRole("button", { name: /^훈련계획/u }).click()
+  await page.getByRole("navigation", { name: "내 기록 살펴보기" }).getByRole("button", { name: /^훈련 계획/u }).click()
   await page.getByRole("button", { name: "훈련표 표기 읽기" }).click()
   await page.getByRole("textbox", { name: "훈련표 표기" }).fill(
     "2×(10×400m) @5000m RP · r60″ · R3′",

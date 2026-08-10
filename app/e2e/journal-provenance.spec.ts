@@ -45,7 +45,7 @@ test("shows a legacy journal entry without allowing it into home totals or trend
   await page.goto("/?app=1")
 
   await expect(page.getByRole("button", { name: /훈련 후.*legacy tempo/u })).toBeVisible()
-  const services = page.getByRole("navigation", { name: "내 훈련 서비스" })
+  const services = page.getByRole("navigation", { name: "내 기록 살펴보기" })
   await expect(services.getByRole("button", { name: /^내 일지/u })).toContainText("1일 · 1개의 기록")
   await expect(services.getByRole("button", { name: /^분석/u })).toContainText("분석에 쓸 직접 입력 기록이 없어요")
   await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "분석" }).click()

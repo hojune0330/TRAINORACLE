@@ -1,4 +1,4 @@
-import { cleanup, render, screen } from "@testing-library/react"
+import { cleanup, render, screen, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import type { JournalEntry } from "../../domain/journal-store"
@@ -60,15 +60,20 @@ describe("home journal controls", () => {
     expect(onOpenDay).toHaveBeenCalledWith("2026-07-14")
   })
 
-  it("presents the user's training as the first-screen identity", () => {
+  it("centers the first screen on the user's records and keeps service choices to three", () => {
     render(<Home />)
 
-    expect(screen.getByRole("heading", { name: "내 훈련" })).toBeVisible()
-    expect(screen.getByText("기록이 계획으로 이어지는 훈련 일지")).toBeVisible()
+    expect(screen.getByRole("heading", { name: "내 기록" })).toBeVisible()
+    expect(screen.getByText("오늘을 남기고, 필요할 때 훈련을 더 자세히 봐요.")).toBeVisible()
     expect(screen.getByRole("button", { name: "오늘 기록하기" })).toBeVisible()
+    expect(screen.getByRole("button", { name: "하루 마무리 기록하기" })).toBeVisible()
     expect(screen.getByRole("button", { name: /내 일지.*1일.*1개의 기록/u })).toBeVisible()
-    expect(screen.getByRole("button", { name: /훈련계획/u })).toBeVisible()
+    expect(screen.getByRole("button", { name: /훈련 계획/u })).toBeVisible()
     expect(screen.getByRole("button", { name: /분석/u })).toBeVisible()
+    expect(screen.getByText("일지 꾸미기 · 사용 가능 4P")).toBeVisible()
+    const serviceChoices = within(screen.getByRole("navigation", { name: "내 기록 살펴보기" })).getAllByRole("button")
+    expect(serviceChoices).toHaveLength(3)
+    expect(screen.queryByRole("button", { name: /훈련 흐름/u })).toBeNull()
     expect(screen.queryByText("비공개 원문")).toBeNull()
   })
 
@@ -118,7 +123,7 @@ describe("home journal controls", () => {
     window.localStorage.clear()
     render(<Home />)
 
-    const heading = screen.getByRole("heading", { name: "내 훈련" })
+    const heading = screen.getByRole("heading", { name: "내 기록" })
     const context = screen.getByRole("region", { name: "오늘의 기분 몸 상태 날씨" })
     expect(heading.compareDocumentPosition(context) & Node.DOCUMENT_POSITION_FOLLOWING).not.toBe(0)
     expect(screen.getByText("아직 오늘 기록이 없어요.")).toBeVisible()

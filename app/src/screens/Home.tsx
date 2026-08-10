@@ -10,6 +10,7 @@ import { engagementSummary, toEngagementJournalRef } from "../domain/engagement"
 import { painLevelsRequireReview } from "../safety/memo-safety"
 import { DailyContextTags } from "./home/DailyContextTags"
 import { DeviceJournal } from "./home/DeviceJournal"
+import { DecorationShop } from "./home/DecorationShop"
 import { EngagementStrip } from "./home/EngagementStrip"
 import { TrainingHome } from "./home/TrainingHome"
 import { TrashBin } from "./home/TrashBin"
@@ -19,7 +20,6 @@ export type HomeProps = {
   readonly onWriteLog?: (entryType?: JournalEntryType) => void
   readonly onOpenDay?: (date: string) => void
   readonly onOpenArchive?: () => void
-  readonly onOpenCycle?: () => void
   readonly onOpenGuide?: () => void
   readonly onOpenPlan?: () => void
   readonly onOpenTrends?: () => void
@@ -30,7 +30,6 @@ export function Home({
   onWriteLog,
   onOpenDay,
   onOpenArchive,
-  onOpenCycle,
   onOpenGuide,
   onOpenPlan,
   onOpenTrends,
@@ -67,7 +66,6 @@ export function Home({
         model={model}
         onWriteLog={onWriteLog}
         onOpenArchive={onOpenArchive}
-        onOpenCycle={onOpenCycle}
         onOpenPlan={onOpenPlan}
         onOpenTrends={onOpenTrends}
         onOpenMore={onOpenMore}
@@ -76,6 +74,7 @@ export function Home({
       <DailyContextTags date={today} />
       {painReviewDates.length > 0 && <PainReview dates={painReviewDates} />}
       <EngagementStrip summary={engagement} savedCount={entries.length} onOpenMore={onOpenMore} />
+      <DecorationShop earnedPoints={engagement.points} showPreview={entries.length > 0} />
 
       <section className="training-home__recent" aria-label="최근 기록">
         <DeviceJournal onOpenDay={onOpenDay} onOpenArchive={onOpenArchive} />

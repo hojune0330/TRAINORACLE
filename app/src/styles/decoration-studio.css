@@ -18,6 +18,11 @@
   gap: var(--space-3);
 }
 
+.decoration-shop__header--compact {
+  min-height: var(--app-touch-min);
+  padding: var(--space-1) var(--space-3);
+}
+
 .decoration-shop__header > span { min-width: 0; display: grid; gap: 2px; }
 .decoration-shop__header small { color: var(--ink-3); font-size: var(--fs-caption); }
 .decoration-shop__header h3 { margin: 0; color: var(--ink); font-size: var(--fs-body); font-weight: 600; letter-spacing: 0; }

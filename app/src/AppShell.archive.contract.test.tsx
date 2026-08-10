@@ -89,7 +89,7 @@ describe("AppShell journal archive routing", () => {
     await user.click(screen.getByRole("button", { name: /민지의 예시 일지 보기/u }))
     await user.click(screen.getByRole("button", { name: /돌아가기/u }))
 
-    expect(screen.getByRole("heading", { name: "내 훈련" })).toBeVisible()
+    expect(screen.getByRole("heading", { name: "내 기록" })).toBeVisible()
   })
 
   it("opens the journal archive from the dedicated journal tab", async () => {
@@ -130,7 +130,7 @@ describe("AppShell journal archive routing", () => {
     window.localStorage.clear()
     render(<AppShell />)
 
-    expect(screen.getByRole("heading", { name: "내 훈련" })).toBeVisible()
+    expect(screen.getByRole("heading", { name: "내 기록" })).toBeVisible()
     expect(screen.getByRole("button", { name: "오늘 기록하기" })).toBeVisible()
     expect(screen.getByRole("button", { name: "일지" })).toBeVisible()
     expect(screen.queryByLabelText(/오라클 포인트/u)).not.toBeInTheDocument()
