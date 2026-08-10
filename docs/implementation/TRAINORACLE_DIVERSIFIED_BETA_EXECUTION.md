@@ -108,6 +108,17 @@ No plan-engine code is changed solely because an older branch contains a
 similar change. The next change starts with a visual/wording regression test
 for the candidate contrast, then changes only that candidate surface.
 
+### Reliability closure: 2026-08-10
+
+- PR #197 retains each archived frame when the same plan candidate is selected
+  again; the five-frame cap still applies.
+- Candidate selection now has direct regression coverage for fast double taps,
+  a cleared start date, thrown storage writes, and storage calls that appear to
+  succeed but retain nothing.
+- The actual mobile browser journey covers selection, reload, two next-frame
+  archives, and re-generation. It keeps the active plan plus two archived
+  frames without horizontal overflow at 320px.
+
 ## Experience rules by audience
 
 | Audience | Always visible | Only when requested |
