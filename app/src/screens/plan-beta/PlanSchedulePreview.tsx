@@ -1,6 +1,7 @@
 import type { ReactNode } from "react"
 import type { PlanSession } from "@impl/plan-generator/types"
 import { isValidIsoDate, isoShift, isoToDate } from "../../domain/dates"
+import { todayISO } from "../../domain/journal-store"
 import { PlanSessionDetails } from "./PlanSessionDetails"
 import { sessionSlotLabel } from "./labels"
 
@@ -28,7 +29,7 @@ export function PlanSchedulePreview({
   const days = buildScheduleDays(startDate, sessions)
   return (
     <>
-      <PlanScheduleCalendar days={days} />
+      <PlanScheduleCalendar days={days} today={todayISO()} />
       <ol className="plan-schedule-preview" aria-label="날짜별 계획 미리보기">
       {days.map(({ date, day, sessions: daySessions }) => {
         const label = `${calendarDateLabel(date)} · ${daySummary(daySessions)}`
@@ -61,7 +62,13 @@ export function PlanSchedulePreview({
   )
 }
 
-function PlanScheduleCalendar({ days }: { readonly days: readonly ScheduleDay[] }) {
+function PlanScheduleCalendar({
+  days,
+  today,
+}: {
+  readonly days: readonly ScheduleDay[]
+  readonly today: string
+}) {
   const first = days[0]
   if (first === undefined) return null
   const leadingBlankCount = (isoToDate(first.date).getDay() + 6) % 7
@@ -79,22 +86,28 @@ function PlanScheduleCalendar({ days }: { readonly days: readonly ScheduleDay[] 
         {Array.from({ length: leadingBlankCount }, (_, index) => (
           <li key={`blank-${index}`} aria-hidden="true" />
         ))}
-        {days.map((day) => (
-          <li
-            key={day.date}
-            data-session-count={day.sessions.length}
-            aria-label={`${calendarDateLabel(day.date)} · ${daySummary(day.sessions)}`}
-          >
-            <time dateTime={day.date}>{isoToDate(day.date).getDate()}</time>
-            {day.sessions.length > 0 && (
-              <span className="plan-schedule-calendar__slots">
-                {day.sessions.map((session) => (
-                  <span key={`${session.day}-${session.slot}`}>{sessionSlotLabel(session.slot)}</span>
-                ))}
-              </span>
-            )}
-          </li>
-        ))}
+        {days.map((day) => {
+          const isToday = day.date === today
+          return (
+            <li
+              key={day.date}
+              data-current-date={isToday ? "true" : undefined}
+              data-session-count={day.sessions.length}
+              aria-current={isToday ? "date" : undefined}
+              aria-label={`${calendarDateLabel(day.date)} · ${daySummary(day.sessions)}`}
+            >
+              <time dateTime={day.date}>{isoToDate(day.date).getDate()}</time>
+              {isToday && <span className="plan-schedule-calendar__today">오늘</span>}
+              {day.sessions.length > 0 && (
+                <span className="plan-schedule-calendar__slots">
+                  {day.sessions.map((session) => (
+                    <span key={`${session.day}-${session.slot}`}>{sessionSlotLabel(session.slot)}</span>
+                  ))}
+                </span>
+              )}
+            </li>
+          )
+        })}
       </ol>
     </section>
   )

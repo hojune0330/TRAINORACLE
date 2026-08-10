@@ -1,5 +1,5 @@
 import { cleanup, render, screen } from "@testing-library/react"
-import { afterEach, describe, expect, it } from "vitest"
+import { afterEach, describe, expect, it, vi } from "vitest"
 import type { PlanSession } from "@impl/plan-generator/types"
 import { PlanSchedulePreview } from "./PlanSchedulePreview"
 
@@ -36,6 +36,7 @@ const sessions: readonly PlanSession[] = [
 ]
 
 afterEach(cleanup)
+afterEach(() => vi.useRealTimers())
 
 describe("plan schedule preview", () => {
   it("shows a chosen date as two separate same-day training slots", () => {
@@ -60,5 +61,20 @@ describe("plan schedule preview", () => {
     expect(screen.getByRole("group", {
       name: "8월 18일 화요일 · 휴식",
     })).toHaveTextContent("휴식일")
+  })
+
+  it("marks only today's date while the frame is being followed", () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date("2026-08-17T12:00:00"))
+    render(<PlanSchedulePreview startDate="2026-08-17" sessions={sessions} />)
+
+    const today = screen.getByRole("listitem", {
+      name: "8월 17일 월요일 · 훈련 2개",
+    })
+    expect(today).toHaveAttribute("aria-current", "date")
+    expect(today).toHaveTextContent("오늘")
+    expect(screen.getByRole("listitem", {
+      name: "8월 24일 월요일 · 비움",
+    })).not.toHaveAttribute("aria-current")
   })
 })
