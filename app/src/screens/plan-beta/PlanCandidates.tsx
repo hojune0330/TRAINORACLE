@@ -12,6 +12,7 @@ import {
   ENERGY_INTENT_LABELS,
   EVENT_LABELS,
 } from "./labels"
+import { candidatePurposeStatus } from "./candidate-purpose-status"
 import { PlanSchedulePreview } from "./PlanSchedulePreview"
 import type { CandidateSelection } from "./plan-selection"
 
@@ -114,6 +115,7 @@ function CandidateSection({
   readonly onSelect: () => void
 }) {
   const label = candidateLabel(candidate.kind, candidate.selectedEnergyIntent)
+  const purposeStatus = candidatePurposeStatus(candidate.kind)
   const optionNumber = candidate.kind === "BALANCED" ? 1 : 2
   return (
     <article className="plan-candidate" aria-labelledby={`candidate-${candidate.candidateId}`}>
@@ -121,6 +123,10 @@ function CandidateSection({
         <span>계획 {optionNumber}</span>
         <h2 id={`candidate-${candidate.candidateId}`}>{label.title}</h2>
         <p>{label.detail}</p>
+        <p className={`plan-candidate-purpose plan-candidate-purpose--${purposeStatus.tone}`}>
+          <strong>{purposeStatus.label}</strong>
+          <span>{purposeStatus.detail}</span>
+        </p>
         <strong className="plan-candidate-summary">
           {candidateSessionSummary(candidate)}
         </strong>
