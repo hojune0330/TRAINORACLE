@@ -1,7 +1,6 @@
 import React from "react"
 import { AlertTriangle, RotateCcw } from "lucide-react"
 import type {
-  PlanCandidate,
   PlanGenerationSuccess,
   TrainingTimePreference,
 } from "@impl/plan-generator/types"
@@ -23,17 +22,12 @@ import { PlanCandidates } from "./plan-beta/PlanCandidates"
 import { PlanIntake } from "./plan-beta/PlanIntake"
 import type { IntakeStep } from "./plan-beta/PlanIntake"
 import { NotationReader } from "./plan-beta/NotationReader"
-import { saveSelectedPlanCandidate } from "./plan-beta/plan-selection"
-
-const STEP_ORDER: readonly IntakeStep[] = [
-  "goal",
-  "experience",
-  "focus",
-  "days",
-  "training-time",
-  "two-a-day",
-  "safety",
-]
+import {
+  saveSelectedPlanCandidate,
+} from "./plan-beta/plan-selection"
+import type { CandidateSelection } from "./plan-beta/plan-selection"
+import { planErrorMessage } from "./plan-beta/plan-feedback"
+import { previousIntakeStep } from "./plan-beta/plan-intake-navigation"
 
 export function PlanBeta({
   onWriteLog,
@@ -60,7 +54,7 @@ export function PlanBeta({
   const [gate, setGate] = React.useState<SafetyGateDecision | null>(null)
   const [blocked, setBlocked] = React.useState(false)
   const [errorCode, setErrorCode] = React.useState<string | null>(null)
-  const [retryCandidate, setRetryCandidate] = React.useState<PlanCandidate | null>(null)
+  const [retrySelection, setRetrySelection] = React.useState<CandidateSelection | null>(null)
   const [notationReaderOpen, setNotationReaderOpen] = React.useState(false)
   const viewKey = notationReaderOpen
     ? "notation-reader"
@@ -78,20 +72,20 @@ export function PlanBeta({
   }, [viewKey])
 
   const saveCandidate = (
-    candidate: PlanCandidate,
+    selection: CandidateSelection,
     activeGenerated: PlanGenerationSuccess,
     activeGate: SafetyGateDecision,
   ) => {
-    const result = saveSelectedPlanCandidate(candidate, activeGenerated, activeGate, generatedIntake)
+    const result = saveSelectedPlanCandidate(selection, activeGenerated, activeGate, generatedIntake)
     switch (result.kind) {
       case "saved":
         setErrorCode(null)
-        setRetryCandidate(null)
+        setRetrySelection(null)
         setStored(result.state)
         return
       case "rejected":
         setErrorCode(result.code)
-        setRetryCandidate(result.code === "PLAN_STORAGE_WRITE_FAILED" ? candidate : null)
+        setRetrySelection(result.code === "PLAN_STORAGE_WRITE_FAILED" ? selection : null)
         return
     }
   }
@@ -155,11 +149,11 @@ export function PlanBeta({
             setGenerated(null)
             setGate(null)
             setErrorCode(null)
-            setRetryCandidate(null)
+            setRetrySelection(null)
             setStep("two-a-day")
           }}
-          onSelect={(candidate) => {
-            saveCandidate(candidate, generated, gate)
+          onSelect={(selection) => {
+            saveCandidate(selection, generated, gate)
           }}
         />
         {errorCode !== null && (
@@ -167,12 +161,12 @@ export function PlanBeta({
             {planErrorMessage(errorCode)}
           </div>
         )}
-        {errorCode === "PLAN_STORAGE_WRITE_FAILED" && retryCandidate !== null && (
+        {errorCode === "PLAN_STORAGE_WRITE_FAILED" && retrySelection !== null && (
           <button
             className="plan-text-action"
             type="button"
             onClick={() => {
-              saveCandidate(retryCandidate, generated, gate)
+              saveCandidate(retrySelection, generated, gate)
             }}
           >
             계획 다시 저장하기
@@ -187,7 +181,7 @@ export function PlanBeta({
       <PlanIntake
         step={step}
         draft={draft}
-        onBack={() => setStep(previousStep(step))}
+        onBack={() => setStep(previousIntakeStep(step))}
         onJump={(target) => setStep(target)}
         onGoal={(eventGroup) => {
           setDraft((current) => ({ ...current, eventGroup }))
@@ -243,20 +237,4 @@ export function PlanBeta({
       )}
     </>
   )
-}
-
-function planErrorMessage(errorCode: string): string {
-  switch (errorCode) {
-    case "FORMATION_REVIEW_REQUIRED":
-      return "현재 입력만으로는 계획 후보를 만들지 않아요. 훈련 내용을 검토한 뒤 초안으로 이어집니다."
-    case "PLAN_STORAGE_WRITE_FAILED":
-      return "계획을 이 기기에 저장하지 못했어요. 화면은 바뀌지 않았고 다시 시도할 수 있어요."
-    default:
-      return `계획을 만들지 못했어요 · ${errorCode}`
-  }
-}
-
-function previousStep(step: IntakeStep): IntakeStep {
-  const index = STEP_ORDER.indexOf(step)
-  return index <= 0 ? "goal" : STEP_ORDER[index - 1] ?? "goal"
 }

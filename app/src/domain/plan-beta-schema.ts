@@ -5,6 +5,7 @@ import {
   plannedEnergyIntentSchema,
   sessionSlotSchema,
 } from "./plan-session-schema"
+import { isValidIsoDate } from "./dates"
 
 const planEventGroupSchema = z.enum([
   "MIDDLE_DISTANCE",
@@ -32,6 +33,9 @@ const storedFrameLengthSchema = z.union([
   frameLengthSchema,
   z.literal(9.5),
 ])
+const selectedStartDateSchema = z.string().refine(isValidIsoDate, {
+  message: "Plan start date must use a real YYYY-MM-DD calendar date.",
+})
 
 export const planIntakeSchema = z.object({
   eventGroup: planEventGroupSchema,
@@ -47,6 +51,7 @@ export const planIntakeSchema = z.object({
   trainingFocus: plannedEnergyIntentSchema.optional().default("MIXED_INTENT"),
   secondSessionMode: secondSessionModeSchema.optional().default("SINGLE_SESSION_ONLY"),
   trainingTimePreference: trainingTimePreferenceSchema.optional().default("VARIES"),
+  startDate: selectedStartDateSchema.optional(),
 })
 
 export const progressSchema = z.object({

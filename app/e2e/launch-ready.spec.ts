@@ -116,7 +116,7 @@ test("keeps an evening two-a-day plan after selection and reload", async ({ page
 
   // Then
   await expect(page.getByRole("heading", { name: /9\.5일 계획/u })).toBeVisible()
-  await expect(page.locator(".active-plan__session").filter({
+  await expect(page.getByRole("group").filter({
     hasText: "오후",
   }).filter({
     hasText: "반복 인터벌",

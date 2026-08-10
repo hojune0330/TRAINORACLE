@@ -9,27 +9,36 @@ import type {
   PlanGenerationSuccess,
 } from "@impl/plan-generator/types"
 import type { SafetyGateDecision } from "@impl/safety-gate/gate"
+import { isValidIsoDate } from "../../domain/dates"
+
+export type CandidateSelection = {
+  readonly candidate: PlanCandidate
+  readonly startDate: string
+}
 
 export type CandidateSaveResult =
   | { readonly kind: "saved"; readonly state: PlanBetaState }
   | { readonly kind: "rejected"; readonly code: string }
 
 export function saveSelectedPlanCandidate(
-  candidate: PlanCandidate,
+  selection: CandidateSelection,
   generated: PlanGenerationSuccess,
   gate: SafetyGateDecision,
   intake: PlanBetaIntake | null,
 ): CandidateSaveResult {
-  if (intake === null) {
+  if (intake === null || !isValidIsoDate(selection.startDate)) {
     return { kind: "rejected", code: "MINIMUM_PROFILE_INCOMPLETE" }
   }
-  const selection = selectPlanForActivation(candidate, generated, gate, intake)
-  if (selection.kind !== "selected") {
-    return { kind: "rejected", code: selection.code }
+  const selected = selectPlanForActivation(selection.candidate, generated, gate, {
+    ...intake,
+    startDate: selection.startDate,
+  })
+  if (selected.kind !== "selected") {
+    return { kind: "rejected", code: selected.code }
   }
-  const saved = savePlanBetaState(selection.state)
+  const saved = savePlanBetaState(selected.state)
   if (!saved.ok) {
     return { kind: "rejected", code: saved.code }
   }
-  return { kind: "saved", state: selection.state }
+  return { kind: "saved", state: selected.state }
 }

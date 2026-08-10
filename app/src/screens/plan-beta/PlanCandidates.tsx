@@ -1,17 +1,19 @@
+import React from "react"
 import { ArrowLeft, Check, ShieldCheck } from "lucide-react"
 import type {
-  PlanCandidate,
   PlanGenerationSuccess,
 } from "@impl/plan-generator/types"
 import { TermHelp } from "../../components/TermHelp"
+import { isValidIsoDate } from "../../domain/dates"
+import { todayISO } from "../../domain/journal-store"
 import {
   candidateSessionSummary,
   candidateLabel,
   ENERGY_INTENT_LABELS,
   EVENT_LABELS,
-  sessionSlotLabel,
 } from "./labels"
-import { PlanSessionDetails } from "./PlanSessionDetails"
+import { PlanSchedulePreview } from "./PlanSchedulePreview"
+import type { CandidateSelection } from "./plan-selection"
 
 export function PlanCandidates({
   generated,
@@ -20,8 +22,11 @@ export function PlanCandidates({
 }: {
   readonly generated: PlanGenerationSuccess
   readonly onBack: () => void
-  readonly onSelect: (candidate: PlanCandidate) => void
+  readonly onSelect: (selection: CandidateSelection) => void
 }) {
+  const [startDate, setStartDate] = React.useState(todayISO)
+  const canSelect = isValidIsoDate(startDate)
+
   return (
     <section className="plan-candidates" aria-labelledby="plan-candidates-title">
       <button className="plan-back" type="button" onClick={onBack}>
@@ -58,12 +63,38 @@ export function PlanCandidates({
           )}
         </span>
       </div>
+      <label className="plan-start-date" htmlFor="plan-start-date">
+        <span>계획 시작 날짜</span>
+        <input
+          id="plan-start-date"
+          type="date"
+          value={startDate}
+          aria-label="계획 시작 날짜"
+          aria-describedby="plan-start-date-help"
+          onChange={(event) => setStartDate(event.target.value)}
+        />
+        <small id="plan-start-date-help">
+          고른 날짜부터 실제 달력에 맞춰 보여드려요.
+        </small>
+      </label>
+      {!canSelect && (
+        <>
+          <p className="plan-start-date-error" role="alert">
+            실제 날짜를 고른 뒤 계획을 선택해 주세요.
+          </p>
+          <p className="plan-schedule-unavailable" role="status">
+            시작 날짜를 고르면 실제 날짜에 맞춘 계획을 보여드려요.
+          </p>
+        </>
+      )}
       <div className="plan-candidate-list">
         {generated.candidates.map((candidate) => (
           <CandidateSection
             key={candidate.candidateId}
             candidate={candidate}
-            onSelect={() => onSelect(candidate)}
+            startDate={startDate}
+            canSelect={canSelect}
+            onSelect={() => onSelect({ candidate, startDate })}
           />
         ))}
       </div>
@@ -73,9 +104,13 @@ export function PlanCandidates({
 
 function CandidateSection({
   candidate,
+  startDate,
+  canSelect,
   onSelect,
 }: {
-  readonly candidate: PlanCandidate
+  readonly candidate: PlanGenerationSuccess["candidates"][number]
+  readonly startDate: string
+  readonly canSelect: boolean
   readonly onSelect: () => void
 }) {
   const label = candidateLabel(candidate.kind, candidate.selectedEnergyIntent)
@@ -102,15 +137,13 @@ function CandidateSection({
           <span>상세 수치 미지정<TermHelp term="quality-session" /></span>
         </div>
       </header>
-      <ol className="plan-session-list">
-        {candidate.sessions.map((session) => (
-          <li key={`${session.day}-${session.slot}`}>
-            <span>DAY {session.day} · {sessionSlotLabel(session.slot)}</span>
-            <PlanSessionDetails session={session} />
-          </li>
-        ))}
-      </ol>
-      <button className="plan-select-action" type="button" onClick={onSelect}>
+      {canSelect && <PlanSchedulePreview startDate={startDate} sessions={candidate.sessions} />}
+      <button
+        className="plan-select-action"
+        type="button"
+        disabled={!canSelect}
+        onClick={onSelect}
+      >
         <Check aria-hidden="true" size={18} />
         {label.title} 선택하기
       </button>
