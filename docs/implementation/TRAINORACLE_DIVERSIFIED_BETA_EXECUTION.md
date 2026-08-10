@@ -119,6 +119,28 @@ for the candidate contrast, then changes only that candidate surface.
   archives, and re-generation. It keeps the active plan plus two archived
   frames without horizontal overflow at 320px.
 
+### Current delivery inventory: 2026-08-10
+
+This inventory is anchored to `origin/main` at `59c5ee4`. It prevents a
+historical branch or a specification from being mistaken for a missing runtime
+feature.
+
+| Area | Current status | Evidence | Next rule |
+| --- | --- | --- | --- |
+| Record-first home | IMPLEMENTED | PR #195 | Keep the first screen to today's record and three next actions. |
+| Diary reader and decoration | IMPLEMENTED | PR #178 | Repair only a reproduced save, reload, undo, or layout fault. |
+| Repeated plan-frame history | IMPLEMENTED | PR #197 | Keep the five-frame cap and never remove earlier frames by candidate ID. |
+| Candidate storage edge cases | IMPLEMENTED_TESTS | PR #198 | Retain double-tap, cleared-date, throw, and silent no-op regression coverage. |
+| Automatic numeric prescription | DEFERRED | Product boundary | Do not turn evidence into an automatic instruction. |
+| Active 30-template catalog | DEFERRED | Product boundary | Keep every template inactive until a later product decision. |
+| Account sync and sharing | CLOSED_BY_CONFIG | Account feature configuration | Do not publish without the required account environment configuration. |
+| Direct Garmin connection | DEFERRED | Product boundary | CSV/JSON preview is the only import scope. |
+| Billing, advertising, coach credentials | DEFERRED | Product boundary | Keep outside the free beta runtime. |
+
+At the `59c5ee4` checkpoint, there were no open feature pull requests. New
+work starts from the then-current `origin/main`, proves a current user-visible
+fault, and keeps runtime changes separate from this inventory document.
+
 ## Experience rules by audience
 
 | Audience | Always visible | Only when requested |
