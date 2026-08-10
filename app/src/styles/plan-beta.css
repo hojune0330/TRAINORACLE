@@ -899,6 +899,29 @@
   text-wrap: pretty;
 }
 
+.plan-candidate header .plan-candidate-purpose {
+  display: grid;
+  gap: 3px;
+  margin-top: var(--space-3);
+  padding: 0 0 0 var(--space-3);
+  border-left: 3px solid var(--brand);
+  color: var(--ink);
+  font-size: var(--fs-body-sm);
+  line-height: 1.55;
+}
+
+.plan-candidate-purpose strong {
+  font-size: var(--fs-body-sm);
+}
+
+.plan-candidate-purpose span {
+  color: var(--ink-2);
+}
+
+.plan-candidate header .plan-candidate-purpose--conservative {
+  border-left-color: var(--ink-3);
+}
+
 .plan-candidate-summary {
   display: block;
   margin-top: var(--space-3);
