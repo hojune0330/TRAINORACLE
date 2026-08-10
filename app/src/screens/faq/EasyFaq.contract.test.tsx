@@ -32,6 +32,15 @@ describe("easy FAQ", () => {
     expect(screen.getByText("만 14세 미만은 왜 보호자 확인이 필요한가요?")).toBeVisible()
   })
 
+  it("explains the first 200 free beta places while account features stay closed", async () => {
+    const user = userEvent.setup()
+    render(<EasyFaq />)
+
+    await user.click(screen.getByText("지금 무료인가요?"))
+    expect(screen.getByText(/첫 200명에게 열리는 무료 베타/u)).toBeVisible()
+    expect(screen.getByText(/지금은 로그인 없이 이 기기에서 일지를 쓸 수 있어요/u)).toBeVisible()
+  })
+
   it("describes account, coach sharing, and plan features as closed when they are closed", async () => {
     const user = userEvent.setup()
     render(<EasyFaq />)
@@ -43,6 +52,5 @@ describe("easy FAQ", () => {
     await user.click(screen.getByText("계정을 삭제하면 데이터도 없어지나요?"))
     expect(screen.getByText(/현재는 계정을 사용하지 않아요/u)).toBeVisible()
     expect(screen.getByText(/정식 문서는.*기능을 열기 전에/u)).toBeVisible()
-    expect(screen.queryByText(/첫 200명/u)).toBeNull()
   })
 })

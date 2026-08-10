@@ -2,6 +2,20 @@ import { expect, test } from "@playwright/test"
 
 test.use({ serviceWorkers: "block" })
 
+test("explains the first free beta places without implying that account sync is open", async ({ page }) => {
+  // Given: a new athlete is using the public local-journal app.
+  await page.goto("/")
+  await page.getByRole("button", { name: "더보기" }).click()
+
+  // When: the athlete opens the plain-language FAQ and expands the free-beta answer.
+  await page.getByRole("button", { name: "쉬운 도움말과 FAQ" }).click()
+  await page.getByText("지금 무료인가요?").click()
+
+  // Then: capacity and the current local-only boundary are both visible.
+  await expect(page.getByText(/첫 200명에게 열리는 무료 베타/u)).toBeVisible()
+  await expect(page.getByText(/지금은 로그인 없이 이 기기에서 일지를 쓸 수 있어요/u)).toBeVisible()
+})
+
 test("keeps My Records clear and usable on narrow phones", async ({ page }, testInfo) => {
   for (const viewport of [{ width: 320, height: 568 }, { width: 375, height: 667 }]) {
     await page.setViewportSize(viewport)
