@@ -27,7 +27,7 @@ test("retries a selected plan save and keeps the plan after reload", async ({ pa
     }
   })
   await page.goto("/?app=1")
-  await page.getByRole("navigation", { name: "내 훈련 서비스" }).getByRole("button", { name: /^훈련계획/u }).click()
+  await page.getByRole("navigation", { name: "내 기록 살펴보기" }).getByRole("button", { name: /^훈련 계획/u }).click()
   await answerMinimumPlanQuestions(page)
 
   // When: the athlete selects a candidate, retries, and returns after a reload.
@@ -44,7 +44,7 @@ test("retries a selected plan save and keeps the plan after reload", async ({ pa
   await expect.poll(() => page.evaluate(
     () => window.localStorage.getItem("trainoracle.plan-beta.v1"),
   )).not.toBeNull()
-  await page.getByRole("navigation", { name: "내 훈련 서비스" }).getByRole("button", { name: /^훈련계획/u }).click()
+  await page.getByRole("navigation", { name: "내 기록 살펴보기" }).getByRole("button", { name: /^훈련 계획/u }).click()
   await expect(page.getByRole("heading", { name: /9.5일 계획/u })).toBeVisible()
   await expect(page.getByRole("button", { name: "다음 주기 후보 만들기" })).toBeVisible()
 })

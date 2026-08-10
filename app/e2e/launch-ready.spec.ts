@@ -102,7 +102,7 @@ test("generates a bounded two-a-day 9.5-day candidate", async ({ page }) => {
 test("keeps an evening two-a-day plan after selection and reload", async ({ page }) => {
   // Given
   await page.goto("/?app=1")
-  await page.getByRole("navigation", { name: "내 훈련 서비스" }).getByRole("button", { name: /^훈련계획/u }).click()
+  await page.getByRole("navigation", { name: "내 기록 살펴보기" }).getByRole("button", { name: /^훈련 계획/u }).click()
   await page.getByRole("button", { name: /5km/u }).click()
   await page.getByRole("button", { name: /훈련 계획에 맞춰 달려 본 경험/u }).click()
   await page.getByRole("button", { name: /반복 인터벌.*VO2/u }).click()
@@ -141,8 +141,8 @@ test("keeps an evening two-a-day plan after selection and reload", async ({ page
   })).toBe(true)
 
   await page.reload()
-  await expect(page.getByRole("navigation", { name: "내 훈련 서비스" }).getByRole("button", {
-    name: /훈련계획 저장된 계획/u,
+  await expect(page.getByRole("navigation", { name: "내 기록 살펴보기" }).getByRole("button", {
+    name: /훈련 계획 저장된 계획/u,
   })).toBeVisible()
   await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "계획" }).click()
   await expect(page.getByRole("heading", { name: /9\.5일 계획/u })).toBeVisible()
