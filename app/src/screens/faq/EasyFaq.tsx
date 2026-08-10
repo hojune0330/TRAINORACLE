@@ -13,7 +13,7 @@ function faqItems(): readonly FaqItem[] {
   return [
   {
     question: "지금 무료인가요?",
-    answer: "네. 현재 공개 베타는 무료로 사용할 수 있어요.",
+    answer: "네. 지금은 로그인 없이 이 기기에서 일지를 쓸 수 있어요. 계정 기능을 열 때는 첫 200명에게 열리는 무료 베타로 시작할 예정이에요.",
   },
   {
     question: "나중에도 계속 무료인가요?",
