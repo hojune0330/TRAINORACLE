@@ -1,11 +1,18 @@
 import type { ReactNode } from "react"
 import type { PlanSession } from "@impl/plan-generator/types"
-import { isoShift, isoToDate } from "../../domain/dates"
+import { isValidIsoDate, isoShift, isoToDate } from "../../domain/dates"
 import { PlanSessionDetails } from "./PlanSessionDetails"
 import { sessionSlotLabel } from "./labels"
 
 const WEEKDAYS = ["일요일", "월요일", "화요일", "수요일", "목요일", "금요일", "토요일"] as const
+const CALENDAR_WEEKDAYS = ["월", "화", "수", "목", "금", "토", "일"] as const
 const PLAN_DAY_COUNT = 10
+
+type ScheduleDay = {
+  readonly date: string
+  readonly day: number
+  readonly sessions: readonly PlanSession[]
+}
 
 export function PlanSchedulePreview({
   startDate,
@@ -16,11 +23,14 @@ export function PlanSchedulePreview({
   readonly sessions: readonly PlanSession[]
   readonly renderSessionFooter?: (session: PlanSession) => ReactNode
 }) {
+  if (!isValidIsoDate(startDate)) return null
+
+  const days = buildScheduleDays(startDate, sessions)
   return (
-    <ol className="plan-schedule-preview" aria-label="날짜별 계획 미리보기">
-      {Array.from({ length: PLAN_DAY_COUNT }, (_, index) => index + 1).map((day) => {
-        const date = isoShift(startDate, day - 1)
-        const daySessions = sessions.filter((session) => session.day === day)
+    <>
+      <PlanScheduleCalendar days={days} />
+      <ol className="plan-schedule-preview" aria-label="날짜별 계획 미리보기">
+      {days.map(({ date, day, sessions: daySessions }) => {
         const label = `${calendarDateLabel(date)} · ${daySummary(daySessions)}`
         return (
           <li key={date} role="group" aria-label={label}>
@@ -46,8 +56,59 @@ export function PlanSchedulePreview({
           </li>
         )
       })}
-    </ol>
+      </ol>
+    </>
   )
+}
+
+function PlanScheduleCalendar({ days }: { readonly days: readonly ScheduleDay[] }) {
+  const first = days[0]
+  if (first === undefined) return null
+  const leadingBlankCount = (isoToDate(first.date).getDay() + 6) % 7
+
+  return (
+    <section className="plan-schedule-calendar" aria-label="9.5일 달력 요약">
+      <header>
+        <strong>한눈에 보는 9.5일</strong>
+        <span>날짜를 따라 확인하세요</span>
+      </header>
+      <div className="plan-schedule-calendar__weekdays" aria-hidden="true">
+        {CALENDAR_WEEKDAYS.map((weekday) => <span key={weekday}>{weekday}</span>)}
+      </div>
+      <ol className="plan-schedule-calendar__days">
+        {Array.from({ length: leadingBlankCount }, (_, index) => (
+          <li key={`blank-${index}`} aria-hidden="true" />
+        ))}
+        {days.map((day) => (
+          <li
+            key={day.date}
+            data-session-count={day.sessions.length}
+            aria-label={`${calendarDateLabel(day.date)} · ${daySummary(day.sessions)}`}
+          >
+            <time dateTime={day.date}>{isoToDate(day.date).getDate()}</time>
+            {day.sessions.length > 0 && (
+              <span className="plan-schedule-calendar__slots">
+                {day.sessions.map((session) => (
+                  <span key={`${session.day}-${session.slot}`}>{sessionSlotLabel(session.slot)}</span>
+                ))}
+              </span>
+            )}
+          </li>
+        ))}
+      </ol>
+    </section>
+  )
+}
+
+function buildScheduleDays(startDate: string, sessions: readonly PlanSession[]): readonly ScheduleDay[] {
+  return Array.from({ length: PLAN_DAY_COUNT }, (_, index) => {
+    const day = index + 1
+    return {
+      date: isoShift(startDate, index),
+      day,
+      sessions: sessions.filter((session) => session.day === day),
+    }
+  })
 }
 
 function calendarDateLabel(iso: string): string {

@@ -21,6 +21,13 @@ test("shows a dated AM and PM plan before selection and after reload", async ({ 
   await page.getByLabel("계획 시작 날짜").fill("2026-08-17")
 
   // When
+  const overview = page.getByLabel("9.5일 달력 요약").first()
+  await expect(overview.getByRole("listitem", {
+    name: "8월 25일 화요일 · 훈련 2개",
+  })).toContainText("오전")
+  await expect(overview.getByRole("listitem", {
+    name: "8월 25일 화요일 · 훈련 2개",
+  })).toContainText("오후")
   const candidateDay = page.getByRole("group", {
     name: "8월 25일 화요일 · 훈련 2개",
   }).first()

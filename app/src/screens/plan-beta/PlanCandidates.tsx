@@ -78,9 +78,14 @@ export function PlanCandidates({
         </small>
       </label>
       {!canSelect && (
-        <p className="plan-start-date-error" role="alert">
-          실제 날짜를 고른 뒤 계획을 선택해 주세요.
-        </p>
+        <>
+          <p className="plan-start-date-error" role="alert">
+            실제 날짜를 고른 뒤 계획을 선택해 주세요.
+          </p>
+          <p className="plan-schedule-unavailable" role="status">
+            시작 날짜를 고르면 실제 날짜에 맞춘 계획을 보여드려요.
+          </p>
+        </>
       )}
       <div className="plan-candidate-list">
         {generated.candidates.map((candidate) => (
@@ -132,7 +137,7 @@ function CandidateSection({
           <span>상세 수치 미지정<TermHelp term="quality-session" /></span>
         </div>
       </header>
-      <PlanSchedulePreview startDate={startDate} sessions={candidate.sessions} />
+      {canSelect && <PlanSchedulePreview startDate={startDate} sessions={candidate.sessions} />}
       <button
         className="plan-select-action"
         type="button"

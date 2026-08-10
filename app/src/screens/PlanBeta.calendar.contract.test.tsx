@@ -14,6 +14,27 @@ afterEach(() => {
 })
 
 describe("plan calendar selection", () => {
+  it("does not invent calendar dates while the start date is empty", async () => {
+    const user = userEvent.setup()
+    render(<PlanBeta />)
+
+    await user.click(screen.getByRole("button", { name: /800m.*1500m/u }))
+    await user.click(screen.getByRole("button", { name: /훈련 계획에 맞춰 달려 본 경험/u }))
+    await user.click(screen.getByRole("button", { name: /지속 페이스.*LT/u }))
+    await user.click(screen.getByRole("button", { name: /^3일/u }))
+    await user.click(screen.getByRole("button", { name: /아침에 운동해요/u }))
+    await user.click(screen.getByRole("button", { name: /일부 날은 하루 두 번 운동/u }))
+    await user.click(screen.getByRole("button", { name: /통증은 없고 몸 상태는 평소와 같아요/u }))
+
+    const startDate = screen.getByLabelText("계획 시작 날짜")
+    await user.clear(startDate)
+
+    expect(screen.getByRole("alert")).toHaveTextContent("실제 날짜를 고른 뒤 계획을 선택해 주세요")
+    expect(screen.getByRole("status")).toHaveTextContent("시작 날짜를 고르면 실제 날짜에 맞춘 계획을 보여드려요")
+    expect(screen.queryByLabelText("9.5일 달력 요약")).not.toBeInTheDocument()
+    expect(screen.getAllByRole("button", { name: /선택하기/u })[0]).toBeDisabled()
+  })
+
   it("keeps a chosen date and two daily sessions when the athlete activates a plan", async () => {
     const user = userEvent.setup()
     render(<PlanBeta />)
