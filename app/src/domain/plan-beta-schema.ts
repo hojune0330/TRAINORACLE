@@ -21,6 +21,7 @@ const secondSessionModeSchema = z.enum([
   "SINGLE_SESSION_ONLY",
   "RECOVERY_PM_ALLOWED",
 ])
+const trainingTimePreferenceSchema = z.enum(["MORNING", "EVENING", "VARIES"])
 const progressStateSchema = z.enum([
   "COMPLETED",
   "RESTED",
@@ -45,6 +46,7 @@ export const planIntakeSchema = z.object({
   requestedFrameLength: z.union([frameLengthSchema, z.literal(9.5)]),
   trainingFocus: plannedEnergyIntentSchema.optional().default("MIXED_INTENT"),
   secondSessionMode: secondSessionModeSchema.optional().default("SINGLE_SESSION_ONLY"),
+  trainingTimePreference: trainingTimePreferenceSchema.optional().default("VARIES"),
 })
 
 export const progressSchema = z.object({
@@ -80,25 +82,6 @@ const planBetaStateSchema = z.object({
     const daySessions = sessionsByDay.get(session.day) ?? []
     sessionsByDay.set(session.day, [...daySessions, session])
 
-    if (session.slot === "PM") {
-      const isRecoverySupport = session.role === "EASY"
-        && session.plannedEnergyIntent === "RECOVERY_INTENT"
-        && session.prescription.kind === "RPE_TIME_RANGE"
-        && session.prescription.rpe.minimum === 1
-        && session.prescription.rpe.maximum === 2
-      if (!isRecoverySupport) {
-        addIssue(context, ["activePlan", "sessions"], "Invalid PM recovery support.")
-      }
-      if (state.intake.secondSessionMode !== "RECOVERY_PM_ALLOWED") {
-        addIssue(context, ["intake", "secondSessionMode"], "PM consent is missing.")
-      }
-      if (
-        state.activePlan.candidateKind !== "BALANCED"
-        || state.activePlan.selectedEnergyIntent === "RECOVERY_INTENT"
-      ) {
-        addIssue(context, ["activePlan", "sessions"], "PM plan authority is invalid.")
-      }
-    }
   }
 
   for (const sessions of sessionsByDay.values()) {
@@ -106,10 +89,13 @@ const planBetaStateSchema = z.object({
       addIssue(context, ["activePlan", "sessions"], "Too many sessions in one day.")
     }
     if (
-      sessions.some((session) => session.slot === "PM")
-      && sessions.some((session) => session.role === "QUALITY")
+      sessions.length === 2
+      && state.intake.secondSessionMode !== "RECOVERY_PM_ALLOWED"
     ) {
-      addIssue(context, ["activePlan", "sessions"], "PM recovery cannot follow quality.")
+      addIssue(context, ["intake", "secondSessionMode"], "Two sessions require explicit consent.")
+    }
+    if (sessions.filter((session) => session.role === "QUALITY").length > 1) {
+      addIssue(context, ["activePlan", "sessions"], "Two QUALITY sessions require the review flow.")
     }
   }
 

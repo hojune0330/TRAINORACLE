@@ -3,13 +3,16 @@ import {
   EXPERIENCE_BANDS,
   PLAN_EVENT_GROUPS,
   PLANNED_ENERGY_INTENTS,
+  TRAINING_TIME_PREFERENCES,
 } from "@impl/plan-generator/types"
 import type {
   ExperienceBand,
   PlanEventGroup,
   PlannedEnergyIntent,
   SecondSessionMode,
+  TrainingTimePreference,
 } from "@impl/plan-generator/types"
+import { assertNever } from "@impl/shared/assert-never"
 import { TermHelp } from "../../components/TermHelp"
 import type { TermId } from "../../domain/glossary"
 import type { PlanBetaIntake } from "../../domain/plan-beta-store"
@@ -20,7 +23,7 @@ import {
 } from "./labels"
 import { PlanChoice as Choice } from "./PlanChoice"
 
-export type IntakeStep = "goal" | "experience" | "focus" | "days" | "two-a-day" | "safety"
+export type IntakeStep = "goal" | "experience" | "focus" | "days" | "training-time" | "two-a-day" | "safety"
 
 type IntakeDraft = Partial<PlanBetaIntake>
 
@@ -32,6 +35,7 @@ type PlanIntakeProps = {
   readonly onExperience: (band: ExperienceBand) => void
   readonly onFocus: (focus: PlannedEnergyIntent) => void
   readonly onDays: (days: PlanBetaIntake["availableDayCount"]) => void
+  readonly onTrainingTime: (preference: TrainingTimePreference) => void
   readonly onSecondSession: (mode: SecondSessionMode) => void
   readonly onManageRecords: () => void
   readonly onOpenNotationReader: () => void
@@ -77,15 +81,22 @@ const STEP_META: Record<IntakeStep, {
     copy: "달리기뿐 아니라 걷기, 가벼운 조깅, 자전거 같은 회복 운동을 하는 날도 포함해 골라주세요. 고른 날 수를 9.5일 기본 틀의 운동 가능한 날짜에 배치해요. N이 작을수록 계획의 하루 훈련 시간이 늘어날 수 있고, 현재 베타는 여러 날짜 배치 방식 중 이 기본 배치 하나만 제공해요.",
     helpTerm: "training-days",
   },
-  "two-a-day": {
+  "training-time": {
     number: 5,
+    eyebrow: "TRAINING TIME",
+    title: "주로 언제 운동하나요?",
+    copy: "품질 훈련을 보기 편한 시간대에 놓는 데만 사용해요. 운동 능력을 평가하거나 훈련 강도를 바꾸지 않아요.",
+    helpTerm: "training-days",
+  },
+  "two-a-day": {
+    number: 6,
     eyebrow: "SECOND SESSION",
     title: "하루에 두 번 운동하는 날도 넣을까요?",
-    copy: "선택하면 일부 날에 오전 기본 훈련과 오후 회복 운동을 나눠 보여줘요. 오후 운동은 RPE 1~2이고, 고강도 두 번이나 놓친 운동 보충은 만들지 않아요.",
+    copy: "일부 날에 오전과 오후 두 칸을 나눠 보여줘요. 집중 훈련은 고른 시간대에, 다른 칸은 가벼운 훈련이나 회복으로 안내해요.",
     helpTerm: "two-a-day",
   },
   safety: {
-    number: 6,
+    number: 7,
     eyebrow: "CURRENT CHECK",
     title: "계획을 만들기 전에 지금 몸 상태를 확인할게요",
     copy: "통증이나 몸 이상이 있으면 계획을 만들지 않아요. 지도자·보호자 또는 의료진과 직접 상의해 주세요. 이 질문은 진단이나 의료 허가가 아닙니다.",
@@ -101,6 +112,7 @@ export function PlanIntake({
   onExperience,
   onFocus,
   onDays,
+  onTrainingTime,
   onSecondSession,
   onManageRecords,
   onOpenNotationReader,
@@ -115,9 +127,9 @@ export function PlanIntake({
         <ArrowLeft aria-hidden="true" size={17} />
         이전
       </button>
-      <div className="plan-progress" aria-label={`계획 질문 ${meta.number}/6`}>
-        <span>{meta.number}/6</span>
-        <i style={{ width: `${meta.number * (100 / 6)}%` }} />
+      <div className="plan-progress" aria-label={`계획 질문 ${meta.number}/7`}>
+        <span>{meta.number}/7</span>
+        <i style={{ width: `${meta.number * (100 / 7)}%` }} />
       </div>
       {answeredSteps.length > 0 && (
         <div className="plan-intake__summary" aria-label="지금까지">
@@ -188,6 +200,17 @@ export function PlanIntake({
             />
           ))
         )}
+        {step === "training-time" && (
+          TRAINING_TIME_PREFERENCES.map((preference) => (
+            <Choice
+              key={preference}
+              title={trainingTimeLabel(preference).title}
+              detail={trainingTimeLabel(preference).detail}
+              selected={draft.trainingTimePreference === preference}
+              onClick={() => onTrainingTime(preference)}
+            />
+          ))
+        )}
         {step === "two-a-day" && (
           <>
             <Choice
@@ -198,7 +221,7 @@ export function PlanIntake({
             />
             <Choice
               title="일부 날은 하루 두 번 운동"
-              detail="오전 기본 훈련과 오후 RPE 1~2 회복 운동만 나눠 보여줘요"
+              detail="오전과 오후를 나눠 보여줘요 · 집중 훈련은 고른 시간대에 배치"
               selected={draft.secondSessionMode === "RECOVERY_PM_ALLOWED"}
               onClick={() => onSecondSession("RECOVERY_PM_ALLOWED")}
             />
@@ -259,6 +282,12 @@ function answeredSummary(draft: IntakeDraft): readonly { readonly step: IntakeSt
       label: draft.availableDayCount === "EVERY_DAY" ? "매일" : `${draft.availableDayCount}일`,
     })
   }
+  if (draft.trainingTimePreference !== undefined) {
+    lines.push({
+      step: "training-time",
+      label: trainingTimeLabel(draft.trainingTimePreference).title,
+    })
+  }
   if (draft.secondSessionMode !== undefined) {
     lines.push({
       step: "two-a-day",
@@ -266,4 +295,20 @@ function answeredSummary(draft: IntakeDraft): readonly { readonly step: IntakeSt
     })
   }
   return lines
+}
+
+function trainingTimeLabel(preference: TrainingTimePreference): {
+  readonly title: string
+  readonly detail: string
+} {
+  switch (preference) {
+    case "MORNING":
+      return { title: "아침에 운동해요", detail: "품질 훈련을 오전에 먼저 보여줘요" }
+    case "EVENING":
+      return { title: "저녁에 운동해요", detail: "품질 훈련을 오후에 먼저 보여줘요" }
+    case "VARIES":
+      return { title: "날마다 달라요", detail: "품질 훈련을 오전에 기본으로 보여줘요" }
+    default:
+      return assertNever(preference)
+  }
 }
