@@ -36,29 +36,28 @@ describe("AppShell journal archive routing", () => {
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify([ENTRY]))
   })
 
-  it("returns from a day detail to the same selected week", async () => {
+  it("returns from a day detail to the same selected month", async () => {
     const user = userEvent.setup()
     render(<AppShell />)
 
     await user.click(screen.getByRole("button", { name: "전체 보기" }))
     await user.click(screen.getByRole("button", { name: /2026년 7월/u }))
-    await user.click(screen.getByRole("button", { name: /7월 6일.*7월 12일/u }))
     await user.click(screen.getByRole("button", { name: /2026년 7월 10일/u }))
 
     expect(screen.getByText("아카이브 복귀 훈련")).toBeVisible()
     await user.click(screen.getByRole("button", { name: "← 뒤로" }))
 
-    expect(screen.getByRole("heading", { name: "7월 6일–12일" })).toBeVisible()
+    expect(screen.getByRole("heading", { name: "2026년 7월" })).toBeVisible()
+    expect(screen.getByRole("grid", { name: "2026년 7월 달력" })).toBeVisible()
     expect(screen.getByRole("button", { name: /2026년 7월 10일/u })).toBeVisible()
   })
 
-  it("returns from editing an archived entry to the same selected week", async () => {
+  it("returns from editing an archived entry to the same selected month", async () => {
     const user = userEvent.setup()
     render(<AppShell />)
 
     await user.click(screen.getByRole("button", { name: "전체 보기" }))
     await user.click(screen.getByRole("button", { name: /2026년 7월/u }))
-    await user.click(screen.getByRole("button", { name: /7월 6일.*7월 12일/u }))
     await user.click(screen.getByRole("button", { name: /2026년 7월 10일/u }))
     await user.click(screen.getByRole("button", { name: "훈련 기록 수정" }))
 
@@ -66,7 +65,8 @@ describe("AppShell journal archive routing", () => {
     expect(screen.getByText("아카이브 복귀 훈련")).toBeVisible()
     await user.click(screen.getByRole("button", { name: "← 뒤로" }))
 
-    expect(screen.getByRole("heading", { name: "7월 6일–12일" })).toBeVisible()
+    expect(screen.getByRole("heading", { name: "2026년 7월" })).toBeVisible()
+    expect(screen.getByRole("grid", { name: "2026년 7월 달력" })).toBeVisible()
     expect(screen.getByRole("button", { name: /2026년 7월 10일/u })).toBeVisible()
   })
 
@@ -76,10 +76,10 @@ describe("AppShell journal archive routing", () => {
 
     await user.click(screen.getByRole("button", { name: "일지" }))
     await user.click(screen.getByRole("button", { name: /2026년 7월/u }))
-    await user.click(screen.getByRole("button", { name: /7월 6일.*7월 12일/u }))
     await user.click(screen.getByRole("button", { name: "일지" }))
 
-    expect(screen.getByRole("heading", { name: "7월 6일–12일" })).toBeVisible()
+    expect(screen.getByRole("heading", { name: "2026년 7월" })).toBeVisible()
+    expect(screen.getByRole("grid", { name: "2026년 7월 달력" })).toBeVisible()
   })
 
   it("returns a Minji example opened from home back to home", async () => {

@@ -1,0 +1,173 @@
+.journal-month-calendar {
+  padding-top: 22px;
+}
+
+.journal-month-calendar__summary {
+  margin: 0 20px 13px;
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 12px;
+  border-bottom: 1px solid var(--hair);
+  padding-bottom: 10px;
+}
+
+.journal-month-calendar__summary strong {
+  min-width: 0;
+  color: var(--ink);
+  font-family: var(--sans);
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.journal-month-calendar__summary span {
+  flex: 0 0 auto;
+  color: var(--ink-3);
+  font-family: var(--mono);
+  font-size: 9px;
+  line-height: 1.4;
+  white-space: nowrap;
+}
+
+.journal-month-calendar__legend {
+  margin: -5px 20px 13px;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--ink-3);
+  font-family: var(--sans);
+  font-size: 11px;
+  line-height: 1.4;
+}
+
+.journal-month-calendar__legend p { margin: 0; }
+
+.journal-month-calendar__legend-dots {
+  display: inline-flex;
+  gap: 3px;
+}
+
+.journal-month-calendar__legend-dots i {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  box-shadow: inset 0 -1px 0 rgba(0, 0, 0, 0.12);
+}
+
+.journal-month-calendar__legend-dots i[data-kind="training"] { background: #f28c53; }
+.journal-month-calendar__legend-dots i[data-kind="daily"] { background: #75b8dc; }
+.journal-month-calendar__legend-dots i[data-kind="race"] { background: #f2cc4d; }
+
+.journal-month-calendar__weekdays,
+.journal-month-calendar__grid {
+  width: min(calc(100% - 12px), 440px);
+  margin-inline: auto;
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+}
+
+.journal-month-calendar__weekdays {
+  margin-bottom: 4px;
+}
+
+.journal-month-calendar__weekdays span {
+  color: var(--ink-4);
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 0;
+  text-align: center;
+}
+
+.journal-month-calendar__weekdays span:first-child { color: #e07171; }
+.journal-month-calendar__weekdays span:last-child { color: #5c82bb; }
+
+.journal-month-calendar__grid {
+  border-top: 1px solid var(--line);
+  border-left: 1px solid var(--line);
+}
+
+.journal-month-calendar__cell {
+  position: relative;
+  min-width: 0;
+  min-height: 44px;
+  border-right: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+  box-sizing: border-box;
+}
+
+.journal-month-calendar__cell--outside { background: color-mix(in srgb, var(--surface-2) 45%, transparent); }
+
+.journal-month-calendar__cell--empty {
+  display: grid;
+  align-content: start;
+  padding: 6px 7px;
+  color: var(--ink-4);
+  font-family: var(--mono);
+  font-size: 10px;
+}
+
+.journal-month-calendar__cell--recorded button {
+  position: relative;
+  display: grid;
+  grid-template-rows: auto 1fr;
+  width: 100%;
+  min-height: 44px;
+  padding: 6px 7px;
+  border: 0;
+  background: color-mix(in srgb, var(--brand) 7%, var(--surface));
+  color: var(--ink);
+  cursor: pointer;
+  text-align: left;
+}
+
+.journal-month-calendar__cell--recorded button:hover { background: color-mix(in srgb, var(--brand) 14%, var(--surface)); }
+.journal-month-calendar__cell--recorded button:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: -2px; }
+
+.journal-month-calendar__date {
+  font-family: var(--mono);
+  font-size: 10px;
+  line-height: 1;
+}
+
+.journal-month-calendar__marks {
+  align-self: end;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  min-height: 10px;
+}
+
+.journal-month-calendar__marks i {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  box-shadow: inset 0 -1px 0 rgba(0, 0, 0, 0.12);
+}
+
+.journal-month-calendar__marks i[data-kind="training"] { background: #f28c53; }
+.journal-month-calendar__marks i[data-kind="daily"] { background: #75b8dc; }
+.journal-month-calendar__marks i[data-kind="race"] { background: #f2cc4d; }
+
+.journal-month-calendar__count {
+  position: absolute;
+  right: 6px;
+  bottom: 5px;
+  display: grid;
+  min-width: 13px;
+  height: 13px;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--ink);
+  color: var(--bg);
+  font-family: var(--mono);
+  font-size: 8px;
+  line-height: 1;
+}
+
+@media (max-width: 350px) {
+  .journal-month-calendar__summary { margin-inline: 12px; }
+  .journal-month-calendar__summary strong { font-size: 12px; }
+  .journal-month-calendar__legend { margin-inline: 12px; }
+  .journal-month-calendar__cell--empty,
+  .journal-month-calendar__cell--recorded button { padding-inline: 5px; }
+}

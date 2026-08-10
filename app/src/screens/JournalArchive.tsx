@@ -17,6 +17,7 @@ import {
   weekHeading,
 } from "./JournalArchiveSummary"
 import { CycleArchive } from "./CycleArchive"
+import { JournalMonthCalendar } from "./JournalMonthCalendar"
 
 export type JournalArchiveProps = {
   readonly entries: readonly JournalEntry[]
@@ -130,7 +131,7 @@ export function JournalArchive({
 
       <div style={{ margin: "14px 20px 0", display: "grid", gridTemplateColumns: "1fr 1fr", border: "1px solid var(--line)" }}>
         <button type="button" aria-pressed={activeMode === "CALENDAR"} onClick={() => changeMode("CALENDAR")} style={modeButtonStyle(activeMode === "CALENDAR")}>
-          달력·주간
+          월간 달력
         </button>
         <button type="button" aria-pressed={activeMode === "CYCLE"} onClick={() => changeMode("CYCLE")} style={modeButtonStyle(activeMode === "CYCLE")}>
           9.5일 주기
@@ -167,22 +168,7 @@ export function JournalArchive({
           )}
         />
       ) : selectedMonth !== null ? (
-        <SummaryList
-          label={`${monthLabel(selectedMonth.month)} 주별 기록`}
-          items={selectedMonth.weeks}
-          itemKey={(week) => week.weekStart}
-          renderItem={(week) => (
-            <SummaryButton
-              heading={weekButtonLabel(week)}
-              summary={week}
-              ariaLabel={`${weekButtonLabel(week)} ${summaryText(week)}`}
-              onClick={() => onSelectionChange({
-                selectedMonth: selectedMonth.month,
-                selectedWeekStart: week.weekStart,
-              })}
-            />
-          )}
-        />
+        <JournalMonthCalendar month={selectedMonth} onOpenDay={onOpenDay} />
       ) : (
         <SummaryList
           label="월별 기록"

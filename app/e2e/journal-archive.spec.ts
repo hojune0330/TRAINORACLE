@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test"
 
-test("drills month to week to day with provenance-safe summaries and return state", async ({ page }) => {
+test("opens a day from the monthly calendar with provenance-safe summaries and return state", async ({ page }) => {
   const secret = "ARCHIVE_PRIVATE_MEMO_MUST_NOT_RENDER"
   const consoleErrors: string[] = []
   page.on("console", (message) => {
@@ -127,10 +127,10 @@ test("drills month to week to day with provenance-safe summaries and return stat
   expect((await archive.ariaSnapshot()).includes(secret)).toBe(false)
 
   await month.click()
-  await archive.getByRole("button", { name: /7월 6일.*7월 12일/u }).click()
-  await expect(archive.getByRole("heading", { name: "7월 6일–12일" })).toBeVisible()
-  await expect(archive.getByRole("button", { name: /2026년 7월 9일.*훈련 후 1건/u })).toBeVisible()
-  await archive.getByRole("button", { name: /2026년 7월 10일.*훈련 후 1건.*6 km.*30분/u }).click()
+  const calendar = archive.getByRole("grid", { name: "2026년 7월 달력" })
+  await expect(calendar).toBeVisible()
+  await expect(calendar.getByRole("button", { name: /2026년 7월 9일.*훈련 후 1건/u })).toBeVisible()
+  await calendar.getByRole("button", { name: /2026년 7월 10일.*훈련 후 1건.*하루 마무리 1건/u }).click()
   await expect(page.getByText("archive session")).toBeVisible()
   const reader = page.getByRole("navigation", { name: "날짜별 일지 넘기기" })
   await expect(reader.getByText("2 / 4")).toBeVisible()
@@ -142,7 +142,8 @@ test("drills month to week to day with provenance-safe summaries and return stat
   await expect(reader.getByText("2 / 4")).toBeVisible()
   await page.getByRole("button", { name: "뒤로" }).click()
 
-  await expect(archive.getByRole("heading", { name: "7월 6일–12일" })).toBeVisible()
+  await expect(archive.getByRole("heading", { name: "2026년 7월" })).toBeVisible()
+  await expect(archive.getByRole("grid", { name: "2026년 7월 달력" })).toBeVisible()
   await expect(archive.getByRole("button", { name: /2026년 7월 10일/u })).toBeVisible()
   await expect(archive.getByText(secret, { exact: false })).toHaveCount(0)
   for (const viewport of [
@@ -151,7 +152,7 @@ test("drills month to week to day with provenance-safe summaries and return stat
     { width: 320, height: 568 },
   ]) {
     await page.setViewportSize(viewport)
-    await expect(archive.getByRole("heading", { name: "7월 6일–12일" })).toBeVisible()
+    await expect(archive.getByRole("grid", { name: "2026년 7월 달력" })).toBeVisible()
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true)
   }
   expect(consoleErrors).toEqual([])
