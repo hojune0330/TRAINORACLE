@@ -60,6 +60,19 @@ describe("home journal controls", () => {
     expect(onOpenDay).toHaveBeenCalledWith("2026-07-14")
   })
 
+  it("uses a diary-friendly date on a recent entry while keeping its full date accessible", () => {
+    // Given
+    render(<Home />)
+    const recentEntry = screen.getByRole("button", { name: /훈련 후.*시드 템포런.*상세/u })
+
+    // When
+    const visibleDate = screen.getByText("7월 14일")
+
+    // Then
+    expect(visibleDate).toBeVisible()
+    expect(recentEntry).toHaveAccessibleName(/2026년 7월 14일.*훈련 후.*시드 템포런/u)
+  })
+
   it("centers the first screen on the user's records and keeps service choices to three", () => {
     render(<Home />)
 

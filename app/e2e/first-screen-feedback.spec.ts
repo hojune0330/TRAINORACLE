@@ -78,6 +78,7 @@ test("shows a returning athlete's latest entry before the decoration studio", as
 
   // When: the athlete opens the first home screen.
   await expect(recentEntry).toBeVisible()
+  await expect(page.getByText("8월 10일")).toBeVisible()
   await expect(decorationEntry).toBeVisible()
 
   // Then: the latest journal appears before decoration, with no horizontal overflow.
