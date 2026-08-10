@@ -17,7 +17,7 @@ import {
   PROGRESS_LABELS,
   sessionSlotLabel,
 } from "./labels"
-import { PlanSessionDetails } from "./PlanSessionDetails"
+import { PlanSchedulePreview } from "./PlanSchedulePreview"
 
 const PROGRESS_ACTIONS: readonly {
   readonly state: PlanProgressState
@@ -70,16 +70,16 @@ export function ActivePlan({
           <small>이 계획과 진행 상태는 이 브라우저에만 저장 · 의료 판단 아님</small>
         </span>
       </div>
-      <ol className="active-plan__days">
-        {activePlan.sessions.map((session) => {
+      <PlanSchedulePreview
+        startDate={state.intake.startDate ?? state.generatedAt.slice(0, 10)}
+        sessions={activePlan.sessions}
+        renderSessionFooter={(session) => {
           const current = recorded.get(`${session.day}:${session.slot}`)
           return (
-            <li key={`${session.day}-${session.slot}`}>
-              <div className="active-plan__session">
-                <span>DAY {session.day} · {sessionSlotLabel(session.slot)}</span>
-                <PlanSessionDetails session={session} />
-                <em>{current === undefined ? "예정" : PROGRESS_LABELS[current]}</em>
-              </div>
+            <>
+              <em className="active-plan__status">
+                {current === undefined ? "예정" : PROGRESS_LABELS[current]}
+              </em>
               <div
                 className="active-plan__actions"
                 role="group"
@@ -101,10 +101,10 @@ export function ActivePlan({
                   </button>
                 ))}
               </div>
-            </li>
+            </>
           )
-        })}
-      </ol>
+        }}
+      />
       <div className="active-plan__continuity">
         <strong>다음 계획에 이어지는 정보</strong>
         <p>

@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest"
 import { parsePlanBetaState, planHistoryListSchema } from "./plan-beta-schema"
 import { activePlanSchema } from "./plan-session-schema"
+import { stateFixture } from "./plan-beta-store.test-fixture"
 
 describe("plan history frame compatibility", () => {
   it("preserves a canonical 9.5-day frame length in history", () => {
@@ -51,6 +52,32 @@ describe("plan history frame compatibility", () => {
 
     // Then
     expect(result?.intake.trainingTimePreference).toBe("VARIES")
+  })
+
+  it("preserves a valid selected calendar date and rejects a malformed one", () => {
+    // Given
+    const selected = {
+      ...stateFixture(),
+      intake: {
+        ...stateFixture().intake,
+        startDate: "2026-08-17",
+      },
+    }
+    const malformed = {
+      ...selected,
+      intake: {
+        ...selected.intake,
+        startDate: "2026-02-31",
+      },
+    }
+
+    // When
+    const accepted = parsePlanBetaState(selected)
+    const rejected = parsePlanBetaState(malformed)
+
+    // Then
+    expect(accepted?.intake.startDate).toBe("2026-08-17")
+    expect(rejected).toBeNull()
   })
 })
 
