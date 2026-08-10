@@ -1,5 +1,7 @@
 import { expect, test } from "@playwright/test"
 
+test.use({ serviceWorkers: "block" })
+
 test("keeps My Records clear and usable on narrow phones", async ({ page }, testInfo) => {
   for (const viewport of [{ width: 320, height: 568 }, { width: 375, height: 667 }]) {
     await page.setViewportSize(viewport)
@@ -40,4 +42,14 @@ test("shows a truthful closed feedback screen when its release switch is off", a
   await expect(page.getByRole("heading", { name: "문의 게시판", exact: true })).toBeVisible()
   await expect(page.getByText("문의 게시판을 지금 사용할 수 없어요.")).toBeVisible()
   await expect(page.getByText(/GitHub/u)).toHaveCount(0)
+})
+
+test("opens the closed feedback state from the More entry", async ({ page }) => {
+  await page.goto("/")
+
+  await page.getByRole("button", { name: "더보기" }).click()
+  await expect(page.getByText("지금은 준비 중이에요. 열리면 앱 안에서 알려드려요")).toBeVisible()
+
+  await page.getByRole("link", { name: "의견 게시판" }).click()
+  await expect(page.getByText("문의 게시판을 지금 사용할 수 없어요.")).toBeVisible()
 })

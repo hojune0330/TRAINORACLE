@@ -7,11 +7,18 @@ afterEach(cleanup)
 
 describe("guide feedback entry", () => {
   it("keeps error and feedback reports inside TrainOracle", () => {
-    render(<Guide />)
+    render(<Guide feedbackAvailable />)
 
     const link = screen.getByRole("link", { name: "문의 게시판 열기" })
     expect(link).toHaveAttribute("href", "?feedback=1")
     expect(screen.queryByText(/GitHub Issues/u)).toBeNull()
+  })
+
+  it("tells a reader when the feedback board is not accepting posts", () => {
+    render(<Guide />)
+
+    expect(screen.getByText("문의 게시판은 지금 준비 중이에요. 열리면 앱 안에서 알려드릴게요.")).toBeVisible()
+    expect(screen.getByRole("link", { name: "문의 게시판 상태 보기" })).toHaveAttribute("href", "?feedback=1")
   })
 
   it("lets a reader open and close Minji's diary pages in plain language", async () => {
