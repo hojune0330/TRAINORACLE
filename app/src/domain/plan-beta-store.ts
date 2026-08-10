@@ -110,9 +110,7 @@ export function archiveAndClearActivePlan(state: PlanBetaState): PlanArchiveResu
   const oldActive = window.localStorage.getItem(STORAGE_KEY)
 
   try {
-    const previous = loadPlanHistory().filter(
-      (item) => item.candidateId !== history.candidateId,
-    )
+    const previous = loadPlanHistory()
     const stagedHistory = JSON.stringify([history, ...previous].slice(0, 5))
     const stagedIntake = JSON.stringify(state.intake)
     window.localStorage.setItem(HISTORY_KEY, stagedHistory)
