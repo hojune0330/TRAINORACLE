@@ -175,7 +175,13 @@ export function Account({ onBack, onOpenImport, onOpenRestore }: {
             )}
           </div>
 
-          <AccountNetworkSettings userId={user.id} today={new Date().toISOString().slice(0, 10)} legalDocuments={config} />
+          <AccountNetworkSettings
+            userId={user.id}
+            today={new Date().toISOString().slice(0, 10)}
+            legalDocuments={config}
+            initialPrivacyAcknowledged={privacyAcknowledged}
+            initialTermsAcknowledged={termsAcknowledged}
+          />
 
           <AccountSyncPanel userId={user.id} />
 

@@ -19,6 +19,8 @@ type BetaAccountSettingsProps = {
     readonly privacyPolicy: AccountLegalDocument
     readonly termsOfService: AccountLegalDocument
   }
+  readonly initialPrivacyAcknowledged?: boolean
+  readonly initialTermsAcknowledged?: boolean
   readonly onSaveProfile?: (input: SaveProfileInput) => Promise<AccountActionResult>
   readonly onRequestDeletion?: (userId: string) => Promise<AccountActionResult>
 }
@@ -27,6 +29,8 @@ export function BetaAccountSettings({
   userId,
   today,
   legalDocuments,
+  initialPrivacyAcknowledged = false,
+  initialTermsAcknowledged = false,
   onSaveProfile = savePrivateProfile,
   onRequestDeletion = requestServerAccountDeletion,
 }: BetaAccountSettingsProps) {
@@ -35,8 +39,8 @@ export function BetaAccountSettings({
   const [notice, setNotice] = React.useState<string | null>(null)
   const [deletionConfirming, setDeletionConfirming] = React.useState(false)
   const [busy, setBusy] = React.useState(false)
-  const [privacyAcknowledged, setPrivacyAcknowledged] = React.useState(false)
-  const [termsAcknowledged, setTermsAcknowledged] = React.useState(false)
+  const [privacyAcknowledged, setPrivacyAcknowledged] = React.useState(initialPrivacyAcknowledged)
+  const [termsAcknowledged, setTermsAcknowledged] = React.useState(initialTermsAcknowledged)
 
   const save = async () => {
     setNotice(null)

@@ -110,4 +110,30 @@ describe("beta account settings", () => {
       termsOfServiceVersion: "2026-08-12",
     })
   })
+
+  it("uses an acknowledgement already made during the same sign-up flow", async () => {
+    const saveProfile = vi.fn().mockResolvedValue({ ok: true, message: "저장했어요." })
+    render(
+      <BetaAccountSettings
+        userId="athlete-a"
+        today="2026-08-01"
+        legalDocuments={legalDocuments}
+        initialPrivacyAcknowledged
+        initialTermsAcknowledged
+        onSaveProfile={saveProfile}
+        onRequestDeletion={vi.fn()}
+      />,
+    )
+
+    await userEvent.type(screen.getByLabelText("생년월일"), "2000-01-01")
+    expect(screen.getByRole("button", { name: "계정 정보 저장" })).toBeEnabled()
+    await userEvent.click(screen.getByRole("button", { name: "계정 정보 저장" }))
+
+    expect(saveProfile).toHaveBeenCalledWith({
+      userId: "athlete-a",
+      birthDate: "2000-01-01",
+      privacyPolicyVersion: "2026-08-12",
+      termsOfServiceVersion: "2026-08-12",
+    })
+  })
 })
