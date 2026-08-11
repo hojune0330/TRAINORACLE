@@ -61,7 +61,7 @@ export const STEP_META: Record<IntakeStep, {
     number: 6,
     eyebrow: "SECOND SESSION",
     title: "하루에 두 번 운동하는 날도 넣을까요?",
-    copy: "일부 날에 오전과 오후 두 칸을 나눠 보여줘요. 집중 훈련은 고른 시간대에, 다른 칸은 가벼운 훈련이나 회복으로 안내해요.",
+    copy: "고른 모든 훈련일을 오전과 오후 두 칸으로 나눠 보여줘요. 집중 훈련은 고른 시간대에, 다른 칸은 가벼운 훈련이나 회복으로 안내해요.",
     helpTerm: "two-a-day",
   },
   safety: {

@@ -23,7 +23,7 @@ describe("plan calendar selection", () => {
     await user.click(screen.getByRole("button", { name: /지속 페이스.*LT/u }))
     await user.click(screen.getByRole("button", { name: /^3일/u }))
     await user.click(screen.getByRole("button", { name: /아침에 운동해요/u }))
-    await user.click(screen.getByRole("button", { name: /일부 날은 하루 두 번 운동/u }))
+    await user.click(screen.getByRole("button", { name: /하루 두 번 운동할게요/u }))
     await user.click(screen.getByRole("button", { name: /통증은 없고 몸 상태는 평소와 같아요/u }))
 
     const startDate = screen.getByLabelText("계획 시작 날짜")
@@ -44,22 +44,26 @@ describe("plan calendar selection", () => {
     await user.click(screen.getByRole("button", { name: /지속 페이스.*LT/u }))
     await user.click(screen.getByRole("button", { name: /^3일/u }))
     await user.click(screen.getByRole("button", { name: /아침에 운동해요/u }))
-    await user.click(screen.getByRole("button", { name: /일부 날은 하루 두 번 운동/u }))
+    await user.click(screen.getByRole("button", { name: /하루 두 번 운동할게요/u }))
     await user.click(screen.getByRole("button", { name: /통증은 없고 몸 상태는 평소와 같아요/u }))
 
     const startDate = screen.getByLabelText("계획 시작 날짜")
     await user.clear(startDate)
     await user.type(startDate, "2026-08-17")
 
-    expect(screen.getByRole("group", {
+    expect(screen.getAllByRole("group", { name: /훈련 2개/u })).toHaveLength(6)
+    const lastDayPreviews = screen.getAllByRole("group", {
       name: "8월 25일 화요일 · 훈련 2개",
-    })).toHaveTextContent("오후")
+    })
+    expect(lastDayPreviews).toHaveLength(2)
+    expect(lastDayPreviews[0]).toHaveTextContent("오후")
 
     await user.click(screen.getAllByRole("button", { name: /선택하기/u })[0]!)
 
     expect(screen.getByRole("group", {
       name: "8월 25일 화요일 · 훈련 2개",
     })).toBeVisible()
+    expect(screen.getAllByRole("group", { name: /훈련 2개/u })).toHaveLength(3)
     expect(JSON.parse(window.localStorage.getItem("trainoracle.plan-beta.v1") ?? "{}")).toMatchObject({
       intake: { startDate: "2026-08-17" },
     })
@@ -74,7 +78,7 @@ describe("plan calendar selection", () => {
     await user.click(screen.getByRole("button", { name: /지속 페이스.*LT/u }))
     await user.click(screen.getByRole("button", { name: /^3일/u }))
     await user.click(screen.getByRole("button", { name: /아침에 운동해요/u }))
-    await user.click(screen.getByRole("button", { name: /일부 날은 하루 두 번 운동/u }))
+    await user.click(screen.getByRole("button", { name: /하루 두 번 운동할게요/u }))
     await user.click(screen.getByRole("button", { name: /통증은 없고 몸 상태는 평소와 같아요/u }))
 
     const startDate = screen.getByLabelText("계획 시작 날짜")

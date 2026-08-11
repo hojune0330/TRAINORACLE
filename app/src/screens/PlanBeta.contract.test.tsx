@@ -126,7 +126,7 @@ describe("plan beta user flow", () => {
       name: "하루에 두 번 운동하는 날도 넣을까요?",
     })).toBeVisible()
     expect(screen.getByText(
-      "일부 날에 오전과 오후 두 칸을 나눠 보여줘요. 집중 훈련은 고른 시간대에, 다른 칸은 가벼운 훈련이나 회복으로 안내해요.",
+      "고른 모든 훈련일을 오전과 오후 두 칸으로 나눠 보여줘요. 집중 훈련은 고른 시간대에, 다른 칸은 가벼운 훈련이나 회복으로 안내해요.",
     )).toBeVisible()
     expect(screen.queryByText(/오후 RPE 1~2 회복 운동만/u)).toBeNull()
     expect(screen.queryByRole("button", { name: /7일 계획|9일 계획|10일 계획/u })).toBeNull()

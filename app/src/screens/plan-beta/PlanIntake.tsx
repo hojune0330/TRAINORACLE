@@ -170,8 +170,8 @@ export function PlanIntake({
               onClick={() => onSecondSession("SINGLE_SESSION_ONLY")}
             />
             <Choice
-              title="일부 날은 하루 두 번 운동"
-              detail="오전과 오후를 나눠 보여줘요 · 집중 훈련은 고른 시간대에 배치"
+              title="하루 두 번 운동할게요"
+              detail="고른 모든 훈련일을 오전·오후로 나눠 보여줘요"
               selected={draft.secondSessionMode === "RECOVERY_PM_ALLOWED"}
               onClick={() => onSecondSession("RECOVERY_PM_ALLOWED")}
             />
