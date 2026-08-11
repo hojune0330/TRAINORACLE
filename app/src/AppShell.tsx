@@ -4,18 +4,7 @@ import { AppShellFrame } from "./components/AppShellFrame"
 import type { ShellToastState } from "./components/AppShellFrame"
 import { Home } from "./screens/Home"
 import { LogEntry } from "./screens/LogEntry"
-import { LogDetail } from "./screens/LogDetail"
-import { JournalArchive } from "./screens/JournalArchive"
-import { JournalDayReader } from "./screens/JournalDayReader"
-import { Trends } from "./screens/Trends"
-import { Guide } from "./screens/Guide"
-import { PlanBeta } from "./screens/PlanBeta"
-import { PlanProposalInbox } from "./screens/plan-beta/PlanProposalInbox"
-import { AthleteRecords } from "./screens/AthleteRecords"
-import { Account } from "./screens/Account"
-import { ImportActivities } from "./screens/ImportActivities"
-import { RestoreBackup } from "./screens/RestoreBackup"
-import { More } from "./screens/More"
+import { DeferredMobileScreens } from "./DeferredMobileScreens"
 import { accountFeatureEnabled } from "./domain/account/config"
 import { loadEntries, localOnlyCount } from "./domain/journal-store"
 import type { JournalEntry } from "./domain/journal-store"
@@ -28,6 +17,7 @@ import {
   viewForJournalReturn,
   viewForTab,
 } from "./domain/app-shell-state"
+
 const TOAST_READABLE_MS = 4000
 const TOAST_EXIT_MS = 150
 
@@ -114,25 +104,25 @@ export function AppShell() {
       onEditEntry: (entry: JournalEntry) => setV(s => viewForJournalDraft(s, entry.date, entry)),
     }
     return withReader ? (
-      <JournalDayReader
+      <DeferredMobileScreens.JournalDayReader
         {...common}
         entries={loadEntries()}
         onDateChange={(detailDate) => setV(s => ({ ...s, detailDate }))}
       />
-    ) : <LogDetail {...common} />
+    ) : <DeferredMobileScreens.LogDetail {...common} />
   }
 
   let screen: React.ReactNode
   if (v.tab === "home" && v.restoreOpen) {
     screen = (
-      <RestoreBackup
+      <DeferredMobileScreens.RestoreBackup
         onBack={() => setV(s => ({ ...s, restoreOpen: false }))}
         onOpenHome={goHome}
       />
     )
   } else if (v.tab === "home" && v.accountOpen && accountEnabled) {
     screen = (
-      <Account
+      <DeferredMobileScreens.Account
         onBack={() => setV(s => ({ ...s, accountOpen: false }))}
         onOpenImport={() => setV(s => ({ ...s, tab: "log", accountOpen: false, importOpen: true }))}
         onOpenRestore={openRestore}
@@ -140,7 +130,7 @@ export function AppShell() {
     )
   } else if (v.tab === "home" && utilityView === "more") {
     screen = (
-      <More
+      <DeferredMobileScreens.More
         onBack={() => setUtilityView(null)}
         onOpenMinji={() => { setUtilityOrigin("more"); setUtilityView("minji") }}
         onOpenGuide={() => { setUtilityOrigin("more"); setUtilityView("guide") }}
@@ -152,7 +142,7 @@ export function AppShell() {
       />
     )
   } else if (v.tab === "home" && (utilityView === "guide" || utilityView === "minji")) {
-    screen = <Guide
+    screen = <DeferredMobileScreens.Guide
       initialSection={utilityView}
       onBack={() => setUtilityView(utilityOrigin === "home" ? null : "more")}
       onWriteLog={() => { setUtilityView(null); setV(viewForTab("log")) }}
@@ -178,7 +168,7 @@ export function AppShell() {
     screen = v.detailDate !== null
       ? detailScreen(() => setV(s => ({ ...s, detailDate: null })), true)
       : (
-        <JournalArchive
+        <DeferredMobileScreens.JournalArchive
           entries={loadEntries()}
           selection={selection}
           mode={v.journalMode}
@@ -194,11 +184,11 @@ export function AppShell() {
       )
   } else if (v.tab === "plan") {
     screen = athleteRecordsOpen ? (
-      <AthleteRecords onBack={() => setAthleteRecordsOpen(false)} />
+      <DeferredMobileScreens.AthleteRecords onBack={() => setAthleteRecordsOpen(false)} />
     ) : (
       <>
-        <PlanProposalInbox />
-        <PlanBeta
+        <DeferredMobileScreens.PlanProposalInbox />
+        <DeferredMobileScreens.PlanBeta
           onManageRecords={() => setAthleteRecordsOpen(true)}
           onWriteLog={(entryType) => setV(viewForTab("log", entryType))}
         />
@@ -206,7 +196,7 @@ export function AppShell() {
     )
   } else if (v.tab === "log" && v.importOpen) {
     screen = (
-      <ImportActivities
+      <DeferredMobileScreens.ImportActivities
         onBack={() => setV(s => ({ ...s, importOpen: false }))}
         onOpenLog={goHome}
       />
@@ -235,7 +225,7 @@ export function AppShell() {
       />
     )
   } else if (v.tab === "trends") {
-    screen = <Trends onBack={goHome} />
+    screen = <DeferredMobileScreens.Trends onBack={goHome} />
   }
 
   return (
@@ -252,7 +242,9 @@ export function AppShell() {
       onTab={goTab}
       hideTabBar={false}
     >
-      {screen}
+      <React.Suspense fallback={<p role="status">화면을 불러오는 중이에요.</p>}>
+        {screen}
+      </React.Suspense>
     </AppShellFrame>
   )
 }
