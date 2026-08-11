@@ -26,12 +26,12 @@ export function DataSafetyNotice({ onOpenAccount }: {
         }}
       >
         <div style={{ fontFamily: "var(--mono)", fontSize: 9.5, fontWeight: 600, color: "var(--ink-3)", letterSpacing: "0.14em" }}>
-          내 일지는 지금 이 기기에만 있어요
+          내 일지는 이 기기에 먼저 저장돼요
         </div>
         <div style={{ marginTop: 5, fontFamily: "var(--mono)", fontSize: 10, color: "var(--ink-2)", lineHeight: 1.65 }}>
           브라우저 데이터 정리·기기 변경·앱 삭제 때 일지가 지워질 수 있어요.
           {accountOn
-            ? " 계정에 연동해 두면 일지와 데이터가 안전하게 보관돼요."
+            ? " 계정에 연동해 두면 다른 기기와 합치고 사본을 보관할 수 있어요."
             : " 더보기의 백업·복원에서 사본을 보관해 주세요."}
         </div>
         {accountOn && (
