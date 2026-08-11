@@ -48,3 +48,37 @@ test("retries a selected plan save and keeps the plan after reload", async ({ pa
   await expect(page.getByRole("heading", { name: /9.5일 계획/u })).toBeVisible()
   await expect(page.getByRole("button", { name: "다음 주기 후보 만들기" })).toBeVisible()
 })
+
+test("retries a completed-session save without losing the active plan", async ({ page }) => {
+  // Given: selecting the plan succeeds, but its first progress update cannot reach local storage.
+  await page.addInitScript(() => {
+    const originalSetItem = Storage.prototype.setItem
+    let planWriteCount = 0
+    Storage.prototype.setItem = function (key: string, value: string): void {
+      if (key === "trainoracle.plan-beta.v1") {
+        planWriteCount += 1
+        if (planWriteCount === 2) {
+          throw new DOMException("Storage is full", "QuotaExceededError")
+        }
+      }
+      originalSetItem.call(this, key, value)
+    }
+  })
+  await page.goto("/?app=1")
+  await page.getByRole("navigation", { name: "내 기록 살펴보기" }).getByRole("button", { name: /^훈련 계획/u }).click()
+  await answerMinimumPlanQuestions(page)
+  await page.getByRole("button", { name: /선택하기/u }).first().click()
+
+  // When: the athlete records completion, sees the save failure, and retries the same change.
+  await page.getByRole("button", { name: "완료" }).first().click()
+  await expect(page.getByRole("alert")).toContainText("계획을 이 기기에 저장하지 못했어요")
+  await page.getByRole("button", { name: "진행 상태 다시 저장하기" }).click()
+
+  // Then: the selected plan remains active and its original completion is persisted after reload.
+  await expect.poll(() => page.evaluate(
+    () => window.localStorage.getItem("trainoracle.plan-beta.v1"),
+  )).toContain("COMPLETED")
+  await page.reload()
+  await page.getByRole("navigation", { name: "내 기록 살펴보기" }).getByRole("button", { name: /^훈련 계획/u }).click()
+  await expect(page.getByLabel("DAY 1 오전 진행 기록").getByRole("button", { name: "완료" })).toHaveAttribute("aria-pressed", "true")
+})
