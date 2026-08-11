@@ -219,9 +219,8 @@ export function candidateSessionSummary(candidate: {
       easy: current.easy + (session.role === "EASY" ? 1 : 0),
       quality: current.quality + (session.role === "QUALITY" ? 1 : 0),
       rest: current.rest + (session.role === "REST" ? 1 : 0),
-      afternoonRecovery: current.afternoonRecovery + (session.slot === "PM" ? 1 : 0),
     }),
-    { training: 0, easy: 0, quality: 0, rest: 0, afternoonRecovery: 0 },
+    { training: 0, easy: 0, quality: 0, rest: 0 },
   )
 
   const intentionCounts = candidate.sessions.reduce<Record<PlannedEnergyIntent, number>>(
@@ -248,8 +247,25 @@ export function candidateSessionSummary(candidate: {
     ? "고강도 0일"
     : `${ENERGY_INTENT_LABELS[qualityIntent].title.split(" · ")[0]} ${intentionCounts[qualityIntent]}일`
 
-  const secondSession = counts.afternoonRecovery === 0
+  const twoADayTrainingDays = twoADayTrainingDayCount(candidate.sessions)
+  const secondSession = twoADayTrainingDays === 0
     ? ""
-    : ` · 하루 2회 ${counts.afternoonRecovery}일`
+    : ` · 하루 2회 훈련 ${twoADayTrainingDays}일`
   return `운동 ${counts.training}회 · 기초 지구력 ${intentionCounts.BASE_INTENT}일 · ${qualityLabel} · 완전 휴식 ${counts.rest}일${secondSession}`
+}
+
+export function twoADayTrainingDayCount(sessions: readonly PlanSession[]): number {
+  const trainingSessionsByDay = new Map<number, number>()
+
+  for (const session of sessions) {
+    if (session.role === "REST") {
+      continue
+    }
+    trainingSessionsByDay.set(
+      session.day,
+      (trainingSessionsByDay.get(session.day) ?? 0) + 1,
+    )
+  }
+
+  return [...trainingSessionsByDay.values()].filter((count) => count >= 2).length
 }
