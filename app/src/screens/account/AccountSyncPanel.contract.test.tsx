@@ -15,10 +15,17 @@ describe("sync feature switch", () => {
   })
 
   it("shows purpose-aware controls when sync is open", () => {
-    render(<AccountSyncPanel userId="athlete-a" enabled />)
+    render(<AccountSyncPanel userId="athlete-a" enabled sharingEnabled />)
 
     expect(screen.getByText(/훈련 메모를 계정과 코치에게 공유/u)).toBeVisible()
     expect(screen.getByText(/나만의 메모는 이 설정과 관계없이/u)).toBeVisible()
+  })
+
+  it("does not promise coach sharing while that feature is closed", () => {
+    render(<AccountSyncPanel userId="athlete-a" enabled sharingEnabled={false} />)
+
+    expect(screen.getByText(/훈련 메모를 계정에 백업/u)).toBeVisible()
+    expect(screen.queryByText(/코치에게 공유/u)).not.toBeInTheDocument()
   })
 
   it("shows a server preview before it allows the merge", async () => {

@@ -9,11 +9,13 @@ import { mono, primaryBtn } from "./styles"
 export function AccountSyncPanel({
   userId,
   enabled = productFeatures().sync,
+  sharingEnabled = productFeatures().sharing,
   onPreview = previewSync,
   onSync = syncNow,
 }: {
   readonly userId: string
   readonly enabled?: boolean
+  readonly sharingEnabled?: boolean
   readonly onPreview?: (userId: string) => Promise<SyncPreviewOutcome>
   readonly onSync?: (userId: string) => Promise<SyncOutcome>
 }) {
@@ -85,9 +87,13 @@ export function AccountSyncPanel({
           style={{ width: 20, height: 20, marginTop: 2 }}
         />
         <span style={{ fontFamily: "var(--sans)", fontSize: 13, lineHeight: 1.5 }}>
-          훈련 메모를 계정과 코치에게 공유
+          {sharingEnabled ? "훈련 메모를 계정과 코치에게 공유" : "훈련 메모를 계정에 백업"}
           <br />
-          <small style={{ ...mono, color: "var(--ink-4)" }}>나만의 메모는 이 설정과 관계없이 원문을 보내지 않아요.</small>
+          <small style={{ ...mono, color: "var(--ink-4)" }}>
+            {sharingEnabled
+              ? "나만의 메모는 이 설정과 관계없이 원문을 보내지 않아요."
+              : "코치 연결은 아직 열지 않았어요. 나만의 메모 원문은 보내지 않아요."}
+          </small>
         </span>
       </label>
       {preview === null ? (
