@@ -89,7 +89,8 @@ export function loadPrivateMemoVault(storage: Storage): PrivateMemoVault | null 
 function parsePrivateMemoVault(raw: string | null): PrivateMemoVault | null {
   if (raw === null) return { version: 1, records: {} }
   try {
-    const result = privateMemoVaultSchema.safeParse(JSON.parse(raw) as unknown)
+    const parsed: unknown = JSON.parse(raw)
+    const result = privateMemoVaultSchema.safeParse(parsed)
     return result.success ? result.data : null
   } catch {
     return null
@@ -110,8 +111,15 @@ export async function savePrivateMemoWithJournalShell(
   entries: readonly JournalEntry[],
   entry: JournalEntry,
   recoveryCode: string,
+  expectedJournal: string | null | undefined = undefined,
 ): Promise<boolean> {
-  return await savePrivateMemosWithJournalShells(storage, entries, [entry], recoveryCode) !== null
+  return await savePrivateMemosWithJournalShells(
+    storage,
+    entries,
+    [entry],
+    recoveryCode,
+    expectedJournal,
+  ) !== null
 }
 
 export async function savePrivateMemosWithJournalShells(
@@ -119,10 +127,12 @@ export async function savePrivateMemosWithJournalShells(
   entries: readonly JournalEntry[],
   privateEntries: readonly JournalEntry[],
   recoveryCode: string,
+  expectedJournal: string | null | undefined = undefined,
 ): Promise<JournalEntry[] | null> {
   if (privateEntries.length === 0 || !isValidRecoveryCode(recoveryCode)) return null
   const snapshot = readVaultJournalStorageSnapshot(storage)
   if (snapshot === null) return null
+  if (expectedJournal !== undefined && snapshot.journal !== expectedJournal) return null
   const vault = parsePrivateMemoVault(snapshot.vault)
   if (vault === null) return null
 
@@ -210,12 +220,15 @@ export function removePrivateMemoWithJournalEntries(
   storage: Storage,
   entries: readonly JournalEntry[],
   entryId: string,
+  expectedJournal: string | null | undefined = undefined,
 ): boolean {
-  const vault = loadPrivateMemoVault(storage)
+  const snapshot = readVaultJournalStorageSnapshot(storage)
+  if (snapshot === null || (expectedJournal !== undefined && snapshot.journal !== expectedJournal)) return false
+  const vault = parsePrivateMemoVault(snapshot.vault)
   if (vault === null) return false
   const { [entryId]: _removed, ...remainingRecords } = vault.records
   const nextVault: PrivateMemoVault = { version: 1, records: remainingRecords }
-  return writeVaultAndJournalAtomically(storage, nextVault, entries)
+  return writeVaultAndJournalAtomically(storage, nextVault, entries, snapshot)
 }
 
 export function restorePrivateMemoRecordWithJournalShell(
@@ -224,13 +237,16 @@ export function restorePrivateMemoRecordWithJournalShell(
   deletedEntryId: string,
   restoredEntryId: string,
   record: PrivateMemoRecord,
+  expectedJournal: string | null | undefined = undefined,
 ): boolean {
-  const vault = loadPrivateMemoVault(storage)
+  const snapshot = readVaultJournalStorageSnapshot(storage)
+  if (snapshot === null || (expectedJournal !== undefined && snapshot.journal !== expectedJournal)) return false
+  const vault = parsePrivateMemoVault(snapshot.vault)
   if (vault === null) return false
   const { [deletedEntryId]: _removed, ...remainingRecords } = vault.records
   const nextVault: PrivateMemoVault = {
     version: 1,
     records: { ...remainingRecords, [restoredEntryId]: record },
   }
-  return writeVaultAndJournalAtomically(storage, nextVault, entries)
+  return writeVaultAndJournalAtomically(storage, nextVault, entries, snapshot)
 }

@@ -4,7 +4,7 @@ import { journalStorage, writeJournalEntries } from "./journal-local-storage"
 import { isPrivateMemoEntry, removePrivateMemoWithJournalEntries } from "./private-memo-vault"
 import { parseJournalEntryForWrite } from "./journal-schema"
 import type { JournalEntry } from "./journal-schema"
-import { loadEntries } from "./journal-store"
+import { loadJournalEntriesSnapshot } from "./journal-store"
 
 export type UpdateEntryResult = {
   readonly ok: boolean
@@ -101,7 +101,8 @@ export function nextJournalSavedAt(previousSavedAt?: string): string {
 }
 
 export function updateEntry(entry: unknown, expectedSavedAt: string): UpdateEntryResult {
-  const entries = loadEntries()
+  const snapshot = loadJournalEntriesSnapshot()
+  const entries = snapshot.entries
   const nextEntry = parseJournalEntryForWrite(entry)
   if (nextEntry === null) return { ok: false, total: entries.length }
 
@@ -127,7 +128,7 @@ export function updateEntry(entry: unknown, expectedSavedAt: string): UpdateEntr
   const removesPrivateMemo = isPrivateMemoEntry(previous)
     && (!isPrivateMemoEntry(nextEntry) || nextText.trim() === "")
   const ok = removesPrivateMemo
-    ? removePrivateMemoWithJournalEntries(localStorage, nextEntries, previous.id)
-    : writeJournalEntries(localStorage, nextEntries)
+    ? removePrivateMemoWithJournalEntries(localStorage, nextEntries, previous.id, snapshot.raw)
+    : writeJournalEntries(localStorage, nextEntries, snapshot.raw)
   return { ok, total: entries.length }
 }
