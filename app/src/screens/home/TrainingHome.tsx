@@ -1,6 +1,7 @@
 import { ChevronRight, Ellipsis, PencilLine } from "lucide-react"
 import type { ReactNode } from "react"
 import type { TrainingHomeViewModel } from "../../domain/home-view-model"
+import { prescriptionLabel, sessionLabel, sessionSlotLabel } from "../plan-beta/labels"
 import type { JournalEntryType } from "../log-entry/shared"
 
 type TrainingHomeProps = {
@@ -56,6 +57,26 @@ export function TrainingHome({
         )}
       </section>
 
+      {model.nextTraining !== null && (
+        <section className="training-home__next" aria-labelledby="training-home-next">
+          <div id="training-home-next" className="training-home__label">다음 훈련</div>
+          <button
+            className="training-home__next-button"
+            type="button"
+            onClick={onOpenPlan}
+            aria-label={`다음 훈련 · ${sessionLabel(model.nextTraining.session)} · ${nextTrainingDateLabel(model.nextTraining.date)} · ${sessionSlotLabel(model.nextTraining.session.slot)} · ${prescriptionLabel(model.nextTraining.session)}`}
+          >
+            <span>
+              <strong>{sessionLabel(model.nextTraining.session)}</strong>
+              <small>
+                {nextTrainingDateLabel(model.nextTraining.date)} · {sessionSlotLabel(model.nextTraining.session.slot)} · {prescriptionLabel(model.nextTraining.session)}
+              </small>
+            </span>
+            <ChevronRight aria-hidden="true" size={18} />
+          </button>
+        </section>
+      )}
+
       {recentJournal}
 
       <nav className="training-home__services" aria-label="내 기록 살펴보기">
@@ -65,6 +86,11 @@ export function TrainingHome({
       </nav>
     </>
   )
+}
+
+function nextTrainingDateLabel(iso: string): string {
+  const [, month, day] = iso.split("-")
+  return `${Number(month)}월 ${Number(day)}일`
 }
 
 function ServiceRow({ label, detail, onClick }: {

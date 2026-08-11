@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest"
 import { buildTrainingHomeViewModel } from "./home-view-model"
 import type { JournalEntry } from "./journal-schema"
 import type { AnalysisJournalEntry } from "./safe-export"
+import type { PlanBetaState } from "./plan-beta-store"
 
 const entry: JournalEntry = {
   id: "home-1",
@@ -33,6 +34,57 @@ const analysisEntry: AnalysisJournalEntry = {
   rpe: entry.rpe,
 }
 
+const activePlan = {
+  version: 1,
+  intake: {
+    eventGroup: "MIDDLE_DISTANCE",
+    experienceBand: "DEVELOPING",
+    availableDayCount: 3,
+    requestedFrameLength: 9,
+    trainingFocus: "LT_INTENT",
+    secondSessionMode: "RECOVERY_PM_ALLOWED",
+    trainingTimePreference: "EVENING",
+    startDate: "2026-08-17",
+  },
+  activePlan: {
+    kind: "BETA_ACTIVE_PLAN_SNAPSHOT",
+    activationState: "SELECTED_BETA_SNAPSHOT",
+    candidateId: "home-next-session",
+    candidateKind: "BALANCED",
+    selectionActor: "SELF",
+    sourceMode: "PROFILE_ONLY",
+    selectedEnergyIntent: "LT_INTENT",
+    frame: {
+      formationKind: "LOCAL_CIVIL_9_5",
+      lengthDays: 9.5,
+      slotCount: 19,
+      continuity: { kind: "STANDARD_FRAME" },
+    },
+    sessions: [
+      {
+        day: 1,
+        slot: "AM",
+        role: "REST",
+        plannedEnergyIntent: "RECOVERY_INTENT",
+        prescription: { kind: "REST" },
+      },
+      {
+        day: 2,
+        slot: "PM",
+        role: "QUALITY",
+        plannedEnergyIntent: "LT_INTENT",
+        prescription: {
+          kind: "RPE_TIME_RANGE",
+          rpe: { minimum: 5, maximum: 6 },
+          durationMinutes: { minimum: 25, maximum: 40 },
+        },
+      },
+    ],
+  },
+  progress: [],
+  generatedAt: "2026-08-17T09:00:00.000Z",
+} satisfies PlanBetaState
+
 describe("training home view model", () => {
   it("summarizes entry shells and safe analysis without exposing memo text", () => {
     const model = buildTrainingHomeViewModel([entry], [analysisEntry], null, "2026-08-03")
@@ -49,6 +101,44 @@ describe("training home view model", () => {
     expect(model.planSummary).toBe("저장된 계획 없음 · 계획 후보 만들기")
     expect(model.analysisSummary).toContain("기록이 쌓이면")
     expect(model.flowSummary).toBe("9.5일 주기로 일지 묶어 보기 · 시작일 직접 선택")
+  })
+
+  it("shows the next saved training without inventing a pace or a plan", () => {
+    // Given
+    const today = "2026-08-18"
+
+    // When
+    const model = buildTrainingHomeViewModel([], [], activePlan, today)
+
+    // Then
+    expect(model.nextTraining).toMatchObject({
+      date: today,
+      session: {
+        slot: "PM",
+        role: "QUALITY",
+        plannedEnergyIntent: "LT_INTENT",
+        prescription: {
+          kind: "RPE_TIME_RANGE",
+          rpe: { minimum: 5, maximum: 6 },
+          durationMinutes: { minimum: 25, maximum: 40 },
+        },
+      },
+    })
+  })
+
+  it("does not invent a next training when an older saved plan has no start date", () => {
+    // Given
+    const { startDate: _startDate, ...intakeWithoutStartDate } = activePlan.intake
+    const legacyPlan = {
+      ...activePlan,
+      intake: intakeWithoutStartDate,
+    } satisfies PlanBetaState
+
+    // When
+    const model = buildTrainingHomeViewModel([], [], legacyPlan, "2026-08-18")
+
+    // Then
+    expect(model.nextTraining).toBeNull()
   })
 
   it("leaves the briefing empty when there is no evening check-in", () => {
