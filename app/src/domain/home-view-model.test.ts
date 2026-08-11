@@ -126,6 +126,46 @@ describe("training home view model", () => {
     })
   })
 
+  it("shows the morning session first when a saved day has two training sessions", () => {
+    const twoSessionPlan = {
+      ...activePlan,
+      activePlan: {
+        ...activePlan.activePlan,
+        sessions: [
+          {
+            day: 2,
+            slot: "AM",
+            role: "EASY",
+            plannedEnergyIntent: "BASE_INTENT",
+            prescription: {
+              kind: "RPE_TIME_RANGE",
+              rpe: { minimum: 3, maximum: 4 },
+              durationMinutes: { minimum: 30, maximum: 45 },
+            },
+          },
+          {
+            day: 2,
+            slot: "PM",
+            role: "QUALITY",
+            plannedEnergyIntent: "LT_INTENT",
+            prescription: {
+              kind: "RPE_TIME_RANGE",
+              rpe: { minimum: 5, maximum: 6 },
+              durationMinutes: { minimum: 25, maximum: 40 },
+            },
+          },
+        ],
+      },
+    } satisfies PlanBetaState
+
+    const model = buildTrainingHomeViewModel([], [], twoSessionPlan, "2026-08-18")
+
+    expect(model.nextTraining).toMatchObject({
+      date: "2026-08-18",
+      session: { slot: "AM", role: "EASY" },
+    })
+  })
+
   it("does not invent a next training when an older saved plan has no start date", () => {
     // Given
     const { startDate: _startDate, ...intakeWithoutStartDate } = activePlan.intake
