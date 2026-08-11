@@ -12,6 +12,7 @@ import {
   currentUser, onAuthChange, requestEmailOtp, signInWithGoogle, signOut, verifyEmailOtp,
 } from "../domain/account/auth"
 import type { AccountUser } from "../domain/account/auth"
+import { accountConfig } from "../domain/account/config"
 import {
   AccountNetworkSettings, AccountSyncPanel, EraseLocalData, SwitchAccountPanel,
 } from "./account/index"
@@ -31,6 +32,8 @@ export function Account({ onBack, onOpenImport, onOpenRestore }: {
   const [code, setCode] = React.useState("")
   const [busy, setBusy] = React.useState(false)
   const [notice, setNotice] = React.useState<string | null>(null)
+  const [privacyAcknowledged, setPrivacyAcknowledged] = React.useState(false)
+  const [termsAcknowledged, setTermsAcknowledged] = React.useState(false)
 
   React.useEffect(() => {
     let mounted = true
@@ -64,6 +67,10 @@ export function Account({ onBack, onOpenImport, onOpenRestore }: {
     setBusy(false); setStep("email"); setCode("")
   }
 
+  const config = accountConfig()
+  if (config === null) return null
+  const legalAcknowledged = privacyAcknowledged && termsAcknowledged
+
   return (
     <div style={{ padding: "18px 20px 90px" }}>
       <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
@@ -96,6 +103,20 @@ export function Account({ onBack, onOpenImport, onOpenRestore }: {
             로그인해도 <b>일지가 자동으로 올라가지 않아요</b> — 동기화는 직접 켜야 시작돼요.
           </p>
 
+          <div style={{ display: "flex", flexDirection: "column", gap: 8, border: "1px solid var(--line)", borderRadius: 8, padding: "12px 14px" }}>
+            <p style={{ fontFamily: "var(--sans)", fontSize: 12, lineHeight: 1.55, color: "var(--ink-2)", margin: 0 }}>
+              가입하기 전에 아래 안내를 읽고 확인해 주세요.
+            </p>
+            <label style={{ display: "flex", alignItems: "flex-start", gap: 8, fontFamily: "var(--sans)", fontSize: 12, lineHeight: 1.55, color: "var(--ink-2)" }}>
+              <input type="checkbox" checked={privacyAcknowledged} onChange={(event) => setPrivacyAcknowledged(event.target.checked)} />
+              <span><a href={config.privacyPolicy.url} target="_blank" rel="noreferrer">개인정보 처리방침</a>을 읽었어요.</span>
+            </label>
+            <label style={{ display: "flex", alignItems: "flex-start", gap: 8, fontFamily: "var(--sans)", fontSize: 12, lineHeight: 1.55, color: "var(--ink-2)" }}>
+              <input type="checkbox" checked={termsAcknowledged} onChange={(event) => setTermsAcknowledged(event.target.checked)} />
+              <span><a href={config.termsOfService.url} target="_blank" rel="noreferrer">이용약관</a>을 읽었어요.</span>
+            </label>
+          </div>
+
           {step === "email" ? (
             <>
               <label style={{ ...mono, fontSize: 11, color: "var(--ink-3)" }} htmlFor="account-email">이메일</label>
@@ -104,7 +125,7 @@ export function Account({ onBack, onOpenImport, onOpenRestore }: {
                 value={email} onChange={(e) => setEmail(e.target.value)}
                 placeholder="you@example.com" style={inputStyle}
               />
-              <button type="button" style={primaryBtn} disabled={busy} onClick={() => void handleSendOtp()}>
+              <button type="button" style={primaryBtn} disabled={busy || !legalAcknowledged} onClick={() => void handleSendOtp()}>
                 {busy ? "보내는 중…" : "인증 코드 받기"}
               </button>
             </>
@@ -118,7 +139,7 @@ export function Account({ onBack, onOpenImport, onOpenRestore }: {
                 value={code} onChange={(e) => setCode(e.target.value)}
                 placeholder="000000" style={inputStyle}
               />
-              <button type="button" style={primaryBtn} disabled={busy} onClick={() => void handleVerify()}>
+              <button type="button" style={primaryBtn} disabled={busy || !legalAcknowledged} onClick={() => void handleVerify()}>
                 {busy ? "확인 중…" : "코드 확인하고 로그인"}
               </button>
               <button type="button" style={secondaryBtn} disabled={busy} onClick={() => { setStep("email"); setCode("") }}>
@@ -132,7 +153,7 @@ export function Account({ onBack, onOpenImport, onOpenRestore }: {
             <span style={{ ...mono, fontSize: 10, color: "var(--ink-4)" }}>또는</span>
             <div style={{ flex: 1, height: 1, background: "var(--line)" }} />
           </div>
-          <button type="button" style={secondaryBtn} disabled={busy} onClick={() => void handleGoogle()}>
+          <button type="button" style={secondaryBtn} disabled={busy || !legalAcknowledged} onClick={() => void handleGoogle()}>
             Google로 계속하기
           </button>
 
@@ -154,7 +175,7 @@ export function Account({ onBack, onOpenImport, onOpenRestore }: {
             )}
           </div>
 
-          <AccountNetworkSettings userId={user.id} today={new Date().toISOString().slice(0, 10)} />
+          <AccountNetworkSettings userId={user.id} today={new Date().toISOString().slice(0, 10)} legalDocuments={config} />
 
           <AccountSyncPanel userId={user.id} />
 

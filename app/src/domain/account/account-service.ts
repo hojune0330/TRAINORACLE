@@ -9,6 +9,8 @@ export type AccountActionResult = {
 export type SaveProfileInput = {
   readonly userId: string
   readonly birthDate: string
+  readonly privacyPolicyVersion: string
+  readonly termsOfServiceVersion: string
 }
 
 const ADMITTED_STATUSES = new Set(["ADMITTED_NEW", "ADMITTED_EXISTING"])
@@ -24,6 +26,8 @@ export async function savePrivateProfile(input: SaveProfileInput): Promise<Accou
   }
   const { data, error } = await client.rpc("claim_beta_seat", {
     birth_date_input: input.birthDate,
+    privacy_policy_version_input: input.privacyPolicyVersion,
+    terms_of_service_version_input: input.termsOfServiceVersion,
   })
   if (error !== null) return { ok: false, message: "계정 정보를 저장하지 못했어요." }
   if (data === "BETA_FULL") {

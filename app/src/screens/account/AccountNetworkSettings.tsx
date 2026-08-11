@@ -4,15 +4,20 @@ import { PrivateMemoVault } from "./PrivateMemoVault"
 import { GuardianConfirmationPanel } from "./GuardianConfirmationPanel"
 import { ProductAnalyticsConsentPanel } from "./ProductAnalyticsConsentPanel"
 import { productFeatures } from "../../domain/product-features"
+import type { AccountLegalDocument } from "../../domain/account/config"
 
-export function AccountNetworkSettings({ userId, today }: {
+export function AccountNetworkSettings({ userId, today, legalDocuments }: {
   readonly userId: string
   readonly today: string
+  readonly legalDocuments: {
+    readonly privacyPolicy: AccountLegalDocument
+    readonly termsOfService: AccountLegalDocument
+  }
 }) {
   const features = productFeatures()
   return (
     <>
-      <BetaAccountSettings userId={userId} today={today} />
+      <BetaAccountSettings userId={userId} today={today} legalDocuments={legalDocuments} />
       {features.productAnalytics && <ProductAnalyticsConsentPanel userId={userId} />}
       {(features.sync || features.sharing) && <GuardianConfirmationPanel userId={userId} />}
       {features.sync && <PrivateMemoVault />}
