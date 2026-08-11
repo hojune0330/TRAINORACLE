@@ -53,4 +53,17 @@ describe("easy FAQ", () => {
     expect(screen.getByText(/현재는 계정을 사용하지 않아요/u)).toBeVisible()
     expect(screen.getByText(/정식 문서는.*기능을 열기 전에/u)).toBeVisible()
   })
+
+  it("explains that a problem closes only the affected feature", async () => {
+    // Given
+    const user = userEvent.setup()
+    render(<EasyFaq />)
+
+    // When
+    await user.click(screen.getByText("문제가 생기면 앱 전체가 멈추나요?"))
+
+    // Then
+    expect(screen.getByText(/문제가 난 기능만 잠시 닫고/u)).toBeVisible()
+    expect(screen.getByText(/이 기기에서 쓴 일지는 그대로 남아요/u)).toBeVisible()
+  })
 })
