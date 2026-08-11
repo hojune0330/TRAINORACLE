@@ -44,6 +44,21 @@ describe("hosted beta feature controls", () => {
     }
   })
 
+  it("checks hosted release settings after secrets are available and before building Pages", () => {
+    const hostedBuild = workflow.slice(
+      workflow.indexOf("- name: Build hosted app"),
+      workflow.indexOf("- name: Publish verified build to gh-pages"),
+    )
+
+    const install = hostedBuild.indexOf("npm ci")
+    const releaseCheck = hostedBuild.indexOf("node scripts/validate-hosted-release-env.mjs")
+    const build = hostedBuild.indexOf("npm run build")
+
+    expect(install).toBeGreaterThan(-1)
+    expect(releaseCheck).toBeGreaterThan(install)
+    expect(build).toBeGreaterThan(releaseCheck)
+  })
+
   it("documents every switch without putting credentials in source control", () => {
     for (const suffix of [...requiredFeatureVariables, ...requiredKillVariables]) {
       expect(exampleEnvironment).toContain(`VITE_${suffix}=`)
