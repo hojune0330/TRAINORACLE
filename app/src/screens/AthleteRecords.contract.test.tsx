@@ -37,6 +37,7 @@ describe("athlete record entry surface", () => {
     const user = userEvent.setup()
     render(<AthleteRecords onBack={() => undefined} />)
 
+    expect(screen.getByText("내 경기 기록", { selector: ".plan-eyebrow" })).toBeVisible()
     await user.selectOptions(screen.getByRole("combobox", { name: "기록 역할" }), "PERSONAL_BEST")
     await user.selectOptions(screen.getByRole("combobox", { name: "종목 거리" }), "5000")
     await fillTime("18", "30")

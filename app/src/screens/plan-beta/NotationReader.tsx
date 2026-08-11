@@ -52,7 +52,7 @@ export function NotationReader({ onBack }: { readonly onBack: () => void }) {
         <ArrowLeft aria-hidden="true" size={17} />
         계획 시작으로 돌아가기
       </button>
-      <div className="plan-eyebrow">NOTATION READER</div>
+      <div className="plan-eyebrow">훈련 표기 읽기</div>
       <div className="plan-heading-row">
         <h1 id="notation-reader-title">훈련표 표기 읽기</h1>
         <TermHelp term="training-notation" />

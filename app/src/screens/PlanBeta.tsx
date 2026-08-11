@@ -115,7 +115,7 @@ export function PlanBeta({
     return (
       <section className="plan-blocked" aria-labelledby="plan-blocked-title">
         <AlertTriangle aria-hidden="true" size={28} />
-        <div className="plan-eyebrow">PLAN NOT GENERATED</div>
+        <div className="plan-eyebrow">계획을 만들 수 없음</div>
         <h1 id="plan-blocked-title">지금은 계획을 멈췄어요</h1>
         <p>
           이 앱은 사람에게 자동으로 연결하거나 몸 상태를 확인할 수 없어요.

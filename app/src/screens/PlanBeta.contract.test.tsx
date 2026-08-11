@@ -74,6 +74,7 @@ describe("plan beta user flow", () => {
     render(<PlanBeta />)
 
     // Then
+    expect(screen.getByText("목표 종목", { selector: ".plan-eyebrow" })).toBeVisible()
     expect(screen.getByText(
       "경기 기록을 저장해도 지금 계획의 페이스·거리·반복은 자동으로 바뀌지 않아요.",
     )).toBeVisible()
@@ -85,6 +86,7 @@ describe("plan beta user flow", () => {
 
     await user.click(screen.getByRole("button", { name: "훈련표 표기 읽기" }))
     expect(screen.getByRole("heading", { name: "훈련표 표기 읽기" })).toBeVisible()
+    expect(screen.getByText("훈련 표기 읽기", { selector: ".plan-eyebrow" })).toBeVisible()
 
     await user.type(
       screen.getByRole("textbox", { name: "훈련표 표기" }),
@@ -173,6 +175,7 @@ describe("plan beta user flow", () => {
 
     await answerMinimumPlanQuestions("review")
 
+    expect(screen.getByText("계획을 만들 수 없음", { selector: ".plan-eyebrow" })).toBeVisible()
     expect(screen.getByRole("heading", { name: "지금은 계획을 멈췄어요" })).toBeVisible()
     expect(screen.getByText(/앱은 사람에게 자동으로 연결하거나 몸 상태를 확인할 수 없어요/u)).toBeVisible()
     expect(screen.getByText(/지도자·보호자 또는 의료진과 직접 상의해 주세요/u)).toBeVisible()
