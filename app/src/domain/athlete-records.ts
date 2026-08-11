@@ -176,8 +176,11 @@ export function saveAthleteRecord(
   }
   const next = [...current.records, record]
   try {
-    localStorage.setItem(ATHLETE_RECORDS_STORAGE_KEY, JSON.stringify(next))
-    return { ok: true, total: next.length }
+    const serialized = JSON.stringify(next)
+    localStorage.setItem(ATHLETE_RECORDS_STORAGE_KEY, serialized)
+    return localStorage.getItem(ATHLETE_RECORDS_STORAGE_KEY) === serialized
+      ? { ok: true, total: next.length }
+      : { ok: false, total: current.records.length }
   } catch {
     return { ok: false, total: current.records.length }
   }

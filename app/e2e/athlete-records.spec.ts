@@ -135,3 +135,25 @@ test("rejects invalid records and never migrates a legacy race note", async ({
     })
   }
 })
+
+test("reports a record save failure when the browser silently drops the write", async ({ page }) => {
+  await page.addInitScript(() => {
+    const originalSetItem = Storage.prototype.setItem
+    Storage.prototype.setItem = function (this: Storage, key: string, value: string): void {
+      if (key === "trainoracle.athlete-records.v1") return
+      originalSetItem.call(this, key, value)
+    }
+  })
+  await openAthleteRecords(page)
+
+  await page.getByRole("textbox", { name: "기록 분" }).fill("18")
+  await page.getByRole("textbox", { name: "기록 초" }).fill("30")
+  await page.getByRole("textbox", { name: "달성일" }).fill("2024-03-10")
+  await page.getByRole("button", { name: "기록 저장" }).click()
+
+  await expect(page.getByRole("alert")).toContainText("기록을 저장하지 못했어요")
+  await expect(page.getByText("저장한 기록이 아직 없어요.")).toBeVisible()
+  await expect.poll(() => page.evaluate(
+    () => window.localStorage.getItem("trainoracle.athlete-records.v1"),
+  )).toBeNull()
+})

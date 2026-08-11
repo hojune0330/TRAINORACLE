@@ -194,6 +194,13 @@ describe("athlete record schema and storage", () => {
     expect(saveAthleteRecord(personalBest(), TODAY)).toEqual({ ok: false, total: 0 })
   })
 
+  it("returns failure when localStorage accepts a write but does not persist it", () => {
+    vi.spyOn(Storage.prototype, "setItem").mockImplementation(() => undefined)
+
+    expect(saveAthleteRecord(personalBest(), TODAY)).toEqual({ ok: false, total: 0 })
+    expect(loadAthleteRecords(TODAY)).toEqual([])
+  })
+
   it("reads a valid schema-v1 stored record without migration", () => {
     window.localStorage.setItem(
       ATHLETE_RECORDS_STORAGE_KEY,
