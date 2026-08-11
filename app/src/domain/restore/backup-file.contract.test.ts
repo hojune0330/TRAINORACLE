@@ -8,7 +8,7 @@
 //  5. 복원도 기존 쓰기 검증을 통과해야 한다 (우회 없음).
 //  6. 겹치는 항목을 바꿀 때 같은 id가 두 개 생기지 않는다.
 import { beforeEach, describe, expect, it } from "vitest"
-import type { PostSessionEntry } from "../journal-schema"
+import type { EveningEntry, PostSessionEntry } from "../journal-schema"
 import {
   exportEntriesJSON,
   deleteEntry,
@@ -20,6 +20,7 @@ import {
 } from "../journal-store"
 import { createRecoveryCode } from "../account/private-note-crypto"
 import { saveSessionRecoveryCode } from "../account/private-note-sync"
+import { toUploadPayload } from "../account/sync-local"
 import {
   FULL_FORMAT, SAFE_FORMAT, buildRestorePlan, readBackupFile, restoreEntries,
 } from "./backup-file"
@@ -38,6 +39,24 @@ function post(id: string, overrides: Partial<PostSessionEntry> = {}): PostSessio
     avgPace: "5:30",
     rpe: 4,
     memo: "",
+    ...overrides,
+  }
+}
+
+function evening(id: string, overrides: Partial<EveningEntry> = {}): EveningEntry {
+  return {
+    id,
+    kind: "evening",
+    date: "2026-07-20",
+    savedAt: "2026-07-20T10:00:00.000Z",
+    syncState: "local",
+    sleepH: 8,
+    sleepQuality: 4,
+    weightKg: "",
+    restingHr: "",
+    painParts: {},
+    mood: 4,
+    note: "",
     ...overrides,
   }
 }
@@ -276,6 +295,34 @@ describe("전체 왕복 — 내보내고 지우고 되돌린다", () => {
     const restored = loadEntries()[0] as PostSessionEntry
     expect(restored.memo).toBe("")
     expect(restored.memoPurpose).toBeUndefined()
+  })
+
+  it("안전 백업에 주입한 메모 원문과 목적 태그는 읽기 전부에서 지운다", async () => {
+    const rawMemo = "SAFE_BACKUP_RAW_MEMO_SENTINEL"
+    const rawNote = "SAFE_BACKUP_RAW_NOTE_SENTINEL"
+    const hostile = backupOf([
+      { ...post("hostile-post"), memo: rawMemo, note: rawNote, memoPurpose: "ANALYZABLE_TRAINING_NOTE" },
+      { ...evening("hostile-evening"), memo: rawMemo, note: rawNote, memoPurpose: "ANALYZABLE_TRAINING_NOTE" },
+    ])
+
+    const read = readBackupFile(hostile)
+
+    expect(read.kind).toBe("safe")
+    expect(JSON.stringify(read.entries)).not.toContain(rawMemo)
+    expect(JSON.stringify(read.entries)).not.toContain(rawNote)
+    expect(read.entries.every((entry) => entry.memoPurpose === undefined)).toBe(true)
+
+    await restoreEntries(buildRestorePlan(read.entries))
+
+    const restored = JSON.stringify(loadEntries())
+    expect(restored).not.toContain(rawMemo)
+    expect(restored).not.toContain(rawNote)
+    expect(restored).not.toContain("ANALYZABLE_TRAINING_NOTE")
+    expect(JSON.stringify(loadAnalysisEntries())).not.toContain(rawMemo)
+    expect(JSON.stringify(exportEntriesJSON({ includeRawMemos: true }))).not.toContain(rawMemo)
+    expect(JSON.stringify(
+      loadEntries().map((entry) => toUploadPayload(entry, { enabled: true, shareTrainingNotes: true })),
+    )).not.toContain(rawMemo)
   })
 
   it("메모 포함 백업 형식 상수가 내보내기 출력과 일치한다", () => {

@@ -189,6 +189,22 @@ describe("RestoreBackup — 되돌리기 실행", () => {
     expect(loadEntries().map((entry) => entry.id).sort()).toEqual(["a", "b"])
   })
 
+  it("메모 제외 파일에 주입한 문구는 저장 전에 지운다", async () => {
+    const user = userEvent.setup()
+    const rawMemo = "RESTORE_SCREEN_SAFE_MEMO_SENTINEL"
+    render(<RestoreBackup />)
+
+    await pick(user, backupFile([
+      { ...postSession("safe-injected", "2026-07-21", { memo: rawMemo, memoPurpose: "ANALYZABLE_TRAINING_NOTE" }), note: rawMemo },
+    ], SAFE_FORMAT, "trainoracle-journal-2026-07-25.json"))
+    await waitFor(() => screen.getByRole("button", { name: /1건 되돌리기/u }))
+    await user.click(screen.getByRole("button", { name: /1건 되돌리기/u }))
+
+    expect(screen.getByTestId("restore-done").textContent).toMatch(/1건을 일지에 되돌렸어요/u)
+    expect(JSON.stringify(loadEntries())).not.toContain(rawMemo)
+    expect(loadEntries()[0]?.memoPurpose).toBeUndefined()
+  })
+
   it("기본값에서는 겹치는 일지의 지금 내용이 그대로 남는다", async () => {
     const user = userEvent.setup()
     saveEntry(postSession("dup", "2026-07-20", { title: "이 기기 제목" }))

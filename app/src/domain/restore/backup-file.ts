@@ -139,17 +139,17 @@ function readDecorationSection(
  * 파일은 그대로는 스키마 검증을 통과하지 못하고, 복원이 **전부 실패**했다.
  * 앱이 첫 번째로 권하는 백업 파일이 되돌릴 수 없는 파일이었던 셈이다.
  *
- * 여기서 하는 일은 "빠진 텍스트 자리를 빈 문자열로 되돌리는 것"뿐이다.
- * 파일에 메모가 없으니 복원된 일지의 메모도 비어 있다 — 없는 내용을 만들어
- * 채우지 않는다. 숫자·날짜·강도 같은 값은 절대 손대지 않는다. 이미 값이 있는
- * 필드도 덮어쓰지 않는다.
+ * 여기서 하는 일은 메모·목적 태그를 지우고 필수 텍스트 자리를 빈 문자열로
+ * 되돌리는 것뿐이다. 안전 형식은 메모가 없는 파일이라는 약속이므로, 사람이
+ * 파일에 텍스트를 나중에 넣어도 복원 경로에서 신뢰하지 않는다. 숫자·날짜·강도
+ * 같은 값은 절대 손대지 않는다.
  */
 function withEmptyTextFields(raw: unknown): unknown {
   const record = asRecord(raw)
   if (record === null) return raw
   const textField = record.kind === "evening" ? "note" : "memo"
-  if (typeof record[textField] === "string") return raw
-  return { ...record, [textField]: "" }
+  const { memo: _memo, note: _note, memoPurpose: _memoPurpose, ...withoutMemoFields } = record
+  return { ...withoutMemoFields, [textField]: "" }
 }
 
 export type RestorePlanItem = {
