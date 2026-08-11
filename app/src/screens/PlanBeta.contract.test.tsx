@@ -262,7 +262,7 @@ describe("plan beta user flow", () => {
     await answerMinimumPlanQuestions("clear")
 
     expectGeneratedCandidates()
-    expect(screen.getAllByText("최근 일지 확인 · 계획 수치에는 미반영")[0]).toBeVisible()
+    expect(screen.getAllByText("내가 고른 조건으로 만든 계획 · 최근 기록 있음")[0]).toBeVisible()
   })
 
   // 원래 이 테스트는 미래 날짜와 함께 "2026-02-31"(2월 31일)도 심었다.
@@ -298,6 +298,8 @@ describe("plan beta user flow", () => {
     await userEvent.setup().click(firstChoice!)
 
     expect(screen.getByRole("heading", { name: /9.5일 계획/u })).toBeVisible()
+    expect(screen.getByText("내 훈련 일정")).toBeVisible()
+    expect(screen.queryByText("ACTIVE · LOCAL BETA")).toBeNull()
     expect(window.localStorage.getItem("trainoracle.plan-beta.v1")).not.toBeNull()
   })
 

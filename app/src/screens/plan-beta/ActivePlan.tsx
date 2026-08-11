@@ -52,7 +52,7 @@ export function ActivePlan({
 
   return (
     <section className="active-plan" aria-labelledby="active-plan-title">
-      <div className="plan-eyebrow">ACTIVE · LOCAL BETA</div>
+      <div className="plan-eyebrow">내 훈련 일정</div>
       <h1 id="active-plan-title">{label.title} {activePlan.frame.lengthDays}일 계획</h1>
       <p className="plan-copy">
         오늘 할 훈련의 총 시간, RPE, 훈련 목적을 확인하세요.
