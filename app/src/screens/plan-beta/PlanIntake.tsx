@@ -171,7 +171,7 @@ export function PlanIntake({
             />
             <Choice
               title="하루 두 번 운동할게요"
-              detail="고른 모든 훈련일에 오전 주 훈련과 오후 회복 움직임을 보여줘요"
+              detail="고른 모든 훈련일에 오전 주 훈련과 오후 회복 움직임을 보여줘요. 고강도 두 개를 자동으로 넣지는 않아요"
               selected={draft.secondSessionMode === "RECOVERY_PM_ALLOWED"}
               onClick={() => onSecondSession("RECOVERY_PM_ALLOWED")}
             />
