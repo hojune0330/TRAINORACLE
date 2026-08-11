@@ -25,6 +25,8 @@ export function TrainingHome({
   todayContext,
   recentJournal,
 }: TrainingHomeProps) {
+  const laterSameDaySession = model.nextTraining?.laterSameDaySession ?? null
+
   return (
     <>
       <header className="training-home__header">
@@ -67,13 +69,18 @@ export function TrainingHome({
             className="training-home__next-button"
             type="button"
             onClick={onOpenPlan}
-            aria-label={`다음 훈련 · ${sessionLabel(model.nextTraining.session)} · ${nextTrainingDateLabel(model.nextTraining.date)} · ${sessionSlotLabel(model.nextTraining.session.slot)} · ${prescriptionLabel(model.nextTraining.session)}`}
+            aria-label={`다음 훈련 · ${sessionLabel(model.nextTraining.session)} · ${nextTrainingDateLabel(model.nextTraining.date)} · ${sessionSlotLabel(model.nextTraining.session.slot)} · ${prescriptionLabel(model.nextTraining.session)}${laterSameDaySession === null ? "" : ` · 같은 날 ${sessionSlotLabel(laterSameDaySession.slot)} ${sessionLabel(laterSameDaySession)}도 예정`}`}
           >
             <span>
               <strong>{sessionLabel(model.nextTraining.session)}</strong>
               <small>
                 {nextTrainingDateLabel(model.nextTraining.date)} · {sessionSlotLabel(model.nextTraining.session.slot)} · {prescriptionLabel(model.nextTraining.session)}
               </small>
+              {laterSameDaySession !== null && (
+                <small className="training-home__next-follow-up">
+                  같은 날 {sessionSlotLabel(laterSameDaySession.slot)} · {sessionLabel(laterSameDaySession)}도 예정
+                </small>
+              )}
             </span>
             <ChevronRight aria-hidden="true" size={18} />
           </button>

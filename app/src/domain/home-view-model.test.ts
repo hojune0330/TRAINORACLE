@@ -163,6 +163,7 @@ describe("training home view model", () => {
     expect(model.nextTraining).toMatchObject({
       date: "2026-08-18",
       session: { slot: "AM", role: "EASY" },
+      laterSameDaySession: { slot: "PM", role: "QUALITY" },
     })
   })
 
