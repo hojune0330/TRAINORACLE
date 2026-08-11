@@ -17,6 +17,11 @@ test("explains the first free beta places without implying that account sync is 
   // Then: capacity and the current local-only boundary are both visible.
   await expect(page.getByText(/첫 200명에게 열리는 무료 베타/u)).toBeVisible()
   await expect(page.getByText(/지금은 로그인 없이 이 기기에서 일지를 쓸 수 있어요/u)).toBeVisible()
+
+  await page.getByText("지금 무엇을 할 수 있나요?").click()
+  await expect(page.getByText(/오늘의 일지, 달력과 9.5일 보기, 지난 일지, 백업·복원, 꾸미기를 사용할 수 있어요/u)).toBeVisible()
+  await page.getByText("아직 준비 중인 기능은 무엇인가요?").click()
+  await expect(page.getByText(/계정 동기화, 코치 연결, 문의 게시판, 자동 훈련 처방은 아직 열지 않았어요/u)).toBeVisible()
 })
 
 test("keeps My Records clear and usable on narrow phones", async ({ page }, testInfo) => {

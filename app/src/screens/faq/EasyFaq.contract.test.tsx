@@ -55,6 +55,18 @@ describe("easy FAQ", () => {
     expect(screen.getByText(/지금은 로그인 없이 이 기기에서 일지를 쓸 수 있어요/u)).toBeVisible()
   })
 
+  it("separates what a free beta reader can use today from features still being prepared", async () => {
+    const user = userEvent.setup()
+    render(<EasyFaq />)
+
+    await user.click(screen.getByText("지금 무엇을 할 수 있나요?"))
+    expect(screen.getByText(/오늘의 일지, 달력과 9.5일 보기, 지난 일지, 백업·복원, 꾸미기를 사용할 수 있어요/u)).toBeVisible()
+
+    await user.click(screen.getByText("아직 준비 중인 기능은 무엇인가요?"))
+    expect(screen.getByText(/계정 동기화, 코치 연결, 문의 게시판, 자동 훈련 처방은 아직 열지 않았어요/u)).toBeVisible()
+    expect(screen.getByText(/준비가 끝나고 열기 전에 앱에서 먼저 알려드려요/u)).toBeVisible()
+  })
+
   it("describes account, coach sharing, and plan features as closed when they are closed", async () => {
     const user = userEvent.setup()
     render(<EasyFaq />)
