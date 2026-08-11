@@ -9,9 +9,10 @@
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
     "typecheck:e2e": "tsc --noEmit -p tsconfig.e2e.json",
-    "test": "npm run test:unit && npm run test:unit:kst",
+    "test": "npm run test:unit && npm run test:unit:kst && npm run test:release-env",
     "test:unit": "vitest run",
     "test:unit:kst": "vitest run -c vitest.config.kst.ts",
+    "test:release-env": "node --test scripts/validate-hosted-release-env.test.mjs",
     "test:watch": "vitest",
     "test:e2e": "npm run build && playwright test"
   },
