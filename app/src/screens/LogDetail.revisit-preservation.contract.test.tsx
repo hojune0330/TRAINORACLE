@@ -131,6 +131,7 @@ describe("past journal preservation before revisit work", () => {
 
   it("hides ambiguous edit actions when stored entries share an id", () => {
     // Given
+    const consoleError = vi.spyOn(console, "error").mockImplementation(() => undefined)
     const first = {
       id: "duplicate-entry",
       kind: "post-session" as const,
@@ -152,5 +153,8 @@ describe("past journal preservation before revisit work", () => {
 
     // Then
     expect(screen.queryByTestId("journal-edit-duplicate-entry")).not.toBeInTheDocument()
+    expect(screen.getByText("First duplicate")).toBeVisible()
+    expect(screen.getByText("Second duplicate")).toBeVisible()
+    expect(consoleError.mock.calls.flat().join(" ")).not.toContain("Encountered two children with the same key")
   })
 })

@@ -74,3 +74,38 @@ test("revisits a past journal without duplicating it and adds a same-date check-
   await expect(page.getByRole("button", { name: "훈련 기록 수정" })).toBeVisible()
   await expect(page.getByRole("button", { name: "하루 마무리 수정" })).toBeVisible()
 })
+
+test("shows each legacy duplicate journal item without a rendering warning", async ({ page }) => {
+  const consoleErrors: string[] = []
+  page.on("console", (message) => {
+    if (message.type() === "error") consoleErrors.push(message.text())
+  })
+  page.on("pageerror", (error) => consoleErrors.push(error.message))
+
+  await page.addInitScript(() => {
+    const first = {
+      id: "duplicate-revisit-entry",
+      kind: "post-session",
+      date: "2026-07-20",
+      savedAt: "2026-07-20T09:00:00.000Z",
+      syncState: "local",
+      system: "base",
+      title: "First legacy duplicate",
+      distanceKm: "5",
+      durationMin: "25",
+      avgPace: "5:00",
+      rpe: 6,
+      memo: "",
+    }
+    window.localStorage.setItem("trainoracle.journal.v1", JSON.stringify([
+      first,
+      { ...first, savedAt: "2026-07-20T18:00:00.000Z", title: "Second legacy duplicate" },
+    ]))
+  })
+
+  await page.goto("/?app=1")
+
+  await expect(page.getByText("First legacy duplicate")).toBeVisible()
+  await expect(page.getByText("Second legacy duplicate")).toBeVisible()
+  expect(consoleErrors).toEqual([])
+})

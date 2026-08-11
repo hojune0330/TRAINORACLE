@@ -112,7 +112,7 @@
 }
 
 .engagement-strip--untouched p {
-  padding: var(--space-3);
+  padding: calc(var(--space-3) - 2px) var(--space-3);
   border-top: 0;
 }
 

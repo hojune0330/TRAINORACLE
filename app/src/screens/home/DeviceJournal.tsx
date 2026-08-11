@@ -78,7 +78,7 @@ export function DeviceJournal({ onOpenDay, onOpenArchive }: DeviceJournalProps) 
           return (
             <button
               type="button"
-              key={entry.id}
+              key={`${entry.kind}-${entry.id}-${index}`}
               onClick={() => onOpenDay?.(entry.date)}
               aria-label={`${journalDateAriaLabel(entry.date)} ${meta.label} ${headline} 상세 열기`}
               style={{

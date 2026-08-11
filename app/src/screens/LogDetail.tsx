@@ -143,10 +143,10 @@ function LogDetailJournal({ date, onBack, onAddEntry, onEditEntry, readerControl
       )}
 
       {/* 훈련 세션 (실데이터) */}
-      {sessions.map((s) => {
+      {sessions.map((s, index) => {
         const meta = SYSTEM_META[s.system] ?? { c: "??", n: s.system, cls: "rest" }
         return (
-          <div key={s.id} style={{ padding: "24px 20px 0" }}>
+          <div key={`post-session-${s.id}-${index}`} style={{ padding: "24px 20px 0" }}>
             <SectionLb action={savedClock(s.savedAt)}>— TRAINING SESSION</SectionLb>
             <div style={{ background: "var(--surface)", border: "1px solid var(--ink)", padding: "14px 16px" }}>
               <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
@@ -178,8 +178,8 @@ function LogDetailJournal({ date, onBack, onAddEntry, onEditEntry, readerControl
       })}
 
       {/* 경기 (실데이터) */}
-      {races.map((r) => (
-        <div key={r.id} style={{ padding: "24px 20px 0" }}>
+      {races.map((r, index) => (
+        <div key={`race-${r.id}-${index}`} style={{ padding: "24px 20px 0" }}>
           <SectionLb action={savedClock(r.savedAt)}>— RACE · {r.stage === "pre" ? "직전" : "직후"}</SectionLb>
           <div style={{ border: "2px solid var(--ink-blue)", background: "var(--paper)", padding: "14px 16px" }}>
             <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between" }}>
@@ -202,11 +202,11 @@ function LogDetailJournal({ date, onBack, onAddEntry, onEditEntry, readerControl
       ))}
 
       {/* 하루 마무리 (실데이터) */}
-      {evenings.map((ev) => {
+      {evenings.map((ev, index) => {
         const pains = Object.entries(ev.painParts ?? {}).filter(([, lv]) => lv > 0)
         const needsReview = painLevelsRequireReview(ev.painParts ?? {})
         return (
-          <div key={ev.id} style={{ padding: "24px 20px 0" }}>
+          <div key={`evening-${ev.id}-${index}`} style={{ padding: "24px 20px 0" }}>
             <SectionLb action={savedClock(ev.savedAt)}>— EVENING CHECK-IN</SectionLb>
             <div style={{ background: "var(--surface)", border: "1px solid var(--line)" }}>
               <CheckinRow lb="수면" v={ev.sleepH > 0 ? `${ev.sleepH} h · ${["", "나쁨", "부족", "보통", "좋음", "최고"][ev.sleepQuality] ?? "—"}` : "미기록"} />
