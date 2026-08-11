@@ -20,8 +20,18 @@ export function journalStorage(): Storage | null {
 export function writeJournalEntries(localStorage: Storage, entries: readonly JournalEntry[]): boolean {
   if (entries.some(hasPrivateMemoText)) return false
   try {
-    localStorage.setItem(JOURNAL_STORAGE_KEY, JSON.stringify(entries))
-    return true
+    const serialized = JSON.stringify(entries)
+    const previous = localStorage.getItem(JOURNAL_STORAGE_KEY)
+    try {
+      localStorage.setItem(JOURNAL_STORAGE_KEY, serialized)
+      if (localStorage.getItem(JOURNAL_STORAGE_KEY) === serialized) return true
+    } catch {}
+
+    try {
+      if (previous === null) localStorage.removeItem(JOURNAL_STORAGE_KEY)
+      else localStorage.setItem(JOURNAL_STORAGE_KEY, previous)
+    } catch {}
+    return false
   } catch {
     return false
   }

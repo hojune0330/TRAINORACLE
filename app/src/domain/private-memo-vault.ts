@@ -10,6 +10,11 @@ import {
   isValidRecoveryCode,
 } from "./account/private-note-crypto"
 import type { EncryptedPrivateNote } from "./account/private-note-crypto"
+import {
+  readVaultJournalStorageSnapshot,
+  writeStorageValueWithReadback,
+  writeVaultAndJournalAtomically,
+} from "./private-memo-vault-storage"
 
 export { PRIVATE_MEMO_VAULT_STORAGE_KEY }
 
@@ -74,11 +79,17 @@ export function restorePrivateMemoShell(entry: JournalEntry, memo: string): Jour
 }
 
 export function loadPrivateMemoVault(storage: Storage): PrivateMemoVault | null {
-  const raw = storage.getItem(PRIVATE_MEMO_VAULT_STORAGE_KEY)
+  try {
+    return parsePrivateMemoVault(storage.getItem(PRIVATE_MEMO_VAULT_STORAGE_KEY))
+  } catch {
+    return null
+  }
+}
+
+function parsePrivateMemoVault(raw: string | null): PrivateMemoVault | null {
   if (raw === null) return { version: 1, records: {} }
   try {
-    const parsed: unknown = JSON.parse(raw)
-    const result = privateMemoVaultSchema.safeParse(parsed)
+    const result = privateMemoVaultSchema.safeParse(JSON.parse(raw) as unknown)
     return result.success ? result.data : null
   } catch {
     return null
@@ -110,7 +121,9 @@ export async function savePrivateMemosWithJournalShells(
   recoveryCode: string,
 ): Promise<JournalEntry[] | null> {
   if (privateEntries.length === 0 || !isValidRecoveryCode(recoveryCode)) return null
-  const vault = loadPrivateMemoVault(storage)
+  const snapshot = readVaultJournalStorageSnapshot(storage)
+  if (snapshot === null) return null
+  const vault = parsePrivateMemoVault(snapshot.vault)
   if (vault === null) return null
 
   try {
@@ -135,7 +148,7 @@ export async function savePrivateMemosWithJournalShells(
       records,
     }
     if (nextEntries.some(hasPrivateMemoText)) return null
-    return writeVaultAndJournalAtomically(storage, nextVault, nextEntries) ? nextEntries : null
+    return writeVaultAndJournalAtomically(storage, nextVault, nextEntries, snapshot) ? nextEntries : null
   } catch {
     return null
   }
@@ -163,7 +176,13 @@ export async function rotatePrivateMemoVault(
   storage: Storage = window.localStorage,
 ): Promise<{ readonly ok: boolean }> {
   if (!isValidRecoveryCode(previousRecoveryCode) || !isValidRecoveryCode(nextRecoveryCode)) return { ok: false }
-  const vault = loadPrivateMemoVault(storage)
+  let previousVault: string | null
+  try {
+    previousVault = storage.getItem(PRIVATE_MEMO_VAULT_STORAGE_KEY)
+  } catch {
+    return { ok: false }
+  }
+  const vault = parsePrivateMemoVault(previousVault)
   if (vault === null) return { ok: false }
 
   try {
@@ -173,8 +192,15 @@ export async function rotatePrivateMemoVault(
       rotatedRecords[entryId] = { encrypted: await encryptPrivateNote(plaintext, nextRecoveryCode) }
     }
     const nextVault: PrivateMemoVault = { version: 1, records: rotatedRecords }
-    storage.setItem(PRIVATE_MEMO_VAULT_STORAGE_KEY, JSON.stringify(nextVault))
-    return { ok: true }
+    if (storage.getItem(PRIVATE_MEMO_VAULT_STORAGE_KEY) !== previousVault) return { ok: false }
+    return {
+      ok: writeStorageValueWithReadback(
+        storage,
+        PRIVATE_MEMO_VAULT_STORAGE_KEY,
+        JSON.stringify(nextVault),
+        previousVault,
+      ),
+    }
   } catch {
     return { ok: false }
   }
@@ -207,34 +233,4 @@ export function restorePrivateMemoRecordWithJournalShell(
     records: { ...remainingRecords, [restoredEntryId]: record },
   }
   return writeVaultAndJournalAtomically(storage, nextVault, entries)
-}
-
-function writeVaultAndJournalAtomically(
-  storage: Storage,
-  vault: PrivateMemoVault,
-  entries: readonly JournalEntry[],
-): boolean {
-  const previousVault = storage.getItem(PRIVATE_MEMO_VAULT_STORAGE_KEY)
-  const previousJournal = storage.getItem(JOURNAL_STORAGE_KEY)
-  const nextVault = JSON.stringify(vault)
-  const nextJournal = JSON.stringify(entries)
-
-  try {
-    storage.setItem(PRIVATE_MEMO_VAULT_STORAGE_KEY, nextVault)
-    storage.setItem(JOURNAL_STORAGE_KEY, nextJournal)
-    return true
-  } catch {
-    restoreStorageValue(storage, PRIVATE_MEMO_VAULT_STORAGE_KEY, previousVault)
-    restoreStorageValue(storage, JOURNAL_STORAGE_KEY, previousJournal)
-    return false
-  }
-}
-
-function restoreStorageValue(storage: Storage, key: string, previous: string | null): void {
-  try {
-    if (previous === null) storage.removeItem(key)
-    else storage.setItem(key, previous)
-  } catch {
-    return
-  }
 }

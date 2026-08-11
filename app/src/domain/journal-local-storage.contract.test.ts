@@ -181,6 +181,82 @@ describe("writeJournalEntries — 나만의 메모 평문은 디스크에 닿지
     expect(threw).toBe(false)
     expect(result).toBe(false)
   })
+
+  it("restores the prior journal when a new write is only partially persisted", () => {
+    const originalEntries = [postSession("original", "5km", MEMO_PURPOSE.analyzableTrainingNote)]
+    expect(writeJournalEntries(window.localStorage, originalEntries)).toBe(true)
+    const originalRaw = window.localStorage.getItem(JOURNAL_STORAGE_KEY)
+    const real = Storage.prototype.setItem
+    vi.spyOn(Storage.prototype, "setItem").mockImplementation(function (
+      this: Storage,
+      key: string,
+      value: string,
+    ) {
+      if (key === JOURNAL_STORAGE_KEY && value !== originalRaw) {
+        real.call(this, key, "{partial")
+        return
+      }
+      real.call(this, key, value)
+    })
+
+    expect(writeJournalEntries(window.localStorage, [
+      ...originalEntries,
+      postSession("new", "6km", MEMO_PURPOSE.analyzableTrainingNote),
+    ])).toBe(false)
+    expect(window.localStorage.getItem(JOURNAL_STORAGE_KEY)).toBe(originalRaw)
+  })
+
+  it("restores the prior journal when the readback check throws after writing", () => {
+    const originalEntries = [postSession("original", "5km", MEMO_PURPOSE.analyzableTrainingNote)]
+    expect(writeJournalEntries(window.localStorage, originalEntries)).toBe(true)
+    const originalRaw = window.localStorage.getItem(JOURNAL_STORAGE_KEY)
+    const realSet = Storage.prototype.setItem
+    const realGet = Storage.prototype.getItem
+    let throwDuringReadback = false
+    vi.spyOn(Storage.prototype, "setItem").mockImplementation(function (
+      this: Storage,
+      key: string,
+      value: string,
+    ) {
+      realSet.call(this, key, value)
+      if (key === JOURNAL_STORAGE_KEY && value !== originalRaw) throwDuringReadback = true
+    })
+    vi.spyOn(Storage.prototype, "getItem").mockImplementation(function (this: Storage, key: string) {
+      if (key === JOURNAL_STORAGE_KEY && throwDuringReadback) {
+        throwDuringReadback = false
+        throw new Error("ReadbackError")
+      }
+      return realGet.call(this, key)
+    })
+
+    expect(writeJournalEntries(window.localStorage, [
+      ...originalEntries,
+      postSession("new", "6km", MEMO_PURPOSE.analyzableTrainingNote),
+    ])).toBe(false)
+    expect(window.localStorage.getItem(JOURNAL_STORAGE_KEY)).toBe(originalRaw)
+  })
+
+  it("removes a dropped first write and accepts a later retry", () => {
+    const entries = [postSession("new", "6km", MEMO_PURPOSE.analyzableTrainingNote)]
+    const real = Storage.prototype.setItem
+    let dropNextJournalWrite = true
+    vi.spyOn(Storage.prototype, "setItem").mockImplementation(function (
+      this: Storage,
+      key: string,
+      value: string,
+    ) {
+      if (key === JOURNAL_STORAGE_KEY && dropNextJournalWrite) {
+        dropNextJournalWrite = false
+        return
+      }
+      real.call(this, key, value)
+    })
+
+    expect(writeJournalEntries(window.localStorage, entries)).toBe(false)
+    expect(window.localStorage.getItem(JOURNAL_STORAGE_KEY)).toBeNull()
+    expect(writeJournalEntries(window.localStorage, entries)).toBe(true)
+    expect(window.localStorage.getItem(JOURNAL_STORAGE_KEY)).toContain('"id":"new"')
+  })
 })
 
 describe("journalStorage — 쓸 수 있을 때만 저장소를 내준다", () => {
