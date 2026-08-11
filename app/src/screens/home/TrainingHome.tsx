@@ -11,6 +11,7 @@ type TrainingHomeProps = {
   readonly onOpenPlan?: () => void
   readonly onOpenTrends?: () => void
   readonly onOpenMore?: () => void
+  readonly todayContext?: ReactNode
   readonly recentJournal?: ReactNode
 }
 
@@ -21,6 +22,7 @@ export function TrainingHome({
   onOpenPlan,
   onOpenTrends,
   onOpenMore,
+  todayContext,
   recentJournal,
 }: TrainingHomeProps) {
   return (
@@ -52,6 +54,7 @@ export function TrainingHome({
         >
           하루 마무리 기록하기
         </button>
+        {todayContext}
         {model.briefing !== "" && (
           <p className="training-home__briefing" aria-label="아침 브리핑">{model.briefing}</p>
         )}

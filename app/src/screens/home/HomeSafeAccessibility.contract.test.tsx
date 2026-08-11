@@ -200,4 +200,35 @@ describe("home journal controls", () => {
     expect(screen.getByRole("button", { name: /내 일지.*아직 기록이 없어요/u })).toBeVisible()
     expect(screen.queryByText("오늘 기록을 시작할까요?")).toBeNull()
   })
+
+  it("keeps today context available from the first home screen", async () => {
+    // Given
+    const user = userEvent.setup()
+    window.localStorage.clear()
+    render(<Home />)
+
+    // When
+    await user.click(screen.getByRole("button", { name: "날씨 맑음" }))
+
+    // Then
+    expect(screen.getByRole("button", { name: "날씨 맑음" })).toHaveAttribute("aria-pressed", "true")
+    expect(screen.getByRole("region", { name: "오늘의 기분 몸 상태 날씨" })).toHaveTextContent("위치정보를 사용하지 않아요")
+  })
+
+  it("places today context inside the today journal before all secondary sections", () => {
+    // Given
+    window.localStorage.clear()
+    render(<Home />)
+    const todayJournal = screen.getByLabelText("오늘")
+    const context = screen.getByRole("region", { name: "오늘의 기분 몸 상태 날씨" })
+    const services = screen.getByRole("navigation", { name: "내 기록 살펴보기" })
+
+    // When
+    const contextInTodayJournal = todayJournal.contains(context)
+    const contextBeforeServices = context.compareDocumentPosition(services)
+
+    // Then
+    expect(contextInTodayJournal).toBe(true)
+    expect(contextBeforeServices & Node.DOCUMENT_POSITION_FOLLOWING).not.toBe(0)
+  })
 })

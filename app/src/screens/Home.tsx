@@ -69,6 +69,7 @@ export function Home({
         onOpenPlan={onOpenPlan}
         onOpenTrends={onOpenTrends}
         onOpenMore={onOpenMore}
+        todayContext={<DailyContextTags date={today} />}
         recentJournal={(
           <section className="training-home__recent" aria-label="최근 기록">
             <DeviceJournal onOpenDay={onOpenDay} onOpenArchive={onOpenArchive} />
@@ -76,7 +77,6 @@ export function Home({
         )}
       />
 
-      <DailyContextTags date={today} />
       {painReviewDates.length > 0 && <PainReview dates={painReviewDates} />}
       <EngagementStrip summary={engagement} savedCount={entries.length} onOpenMore={onOpenMore} />
       <DecorationShop earnedPoints={engagement.points} showPreview={entries.length > 0} />
