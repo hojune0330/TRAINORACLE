@@ -11,11 +11,14 @@
 이 절은 위의 2026-08-02 공개 준비 기록을 지우지 않는다. 아래 내용만 현재
 공개 사이트의 실제 상태로 갱신한다.
 
-- 현재 main: `2892a213e79847af05808ae01f736a66c1be50fe`
-- 현재 Pages 배포 영수증:
-  `https://hojune0330.github.io/TRAINORACLE/trainoracle-deploy-receipt.json`
-- 현재 CI 실행:
+- 이 표의 공개 기능을 실제 사용 흐름까지 확인한 기준 main:
+  `2892a213e79847af05808ae01f736a66c1be50fe`
+- 이 표를 마지막으로 기능 검증한 CI 실행:
   `https://github.com/hojune0330/TRAINORACLE/actions/runs/31502871325`
+- **지금 배포된 정확한 main SHA와 Pages 실행은** 아래 실시간 배포 영수증에서
+  확인한다. 문서·잠금 파일처럼 공개 기능을 바꾸지 않는 병합은 이 표의 기능
+  경계를 새로 정하지 않는다.
+  `https://hojune0330.github.io/TRAINORACLE/trainoracle-deploy-receipt.json`
 
 | 기능 | 현재 공개 상태 | 현재 경계 |
 |---|---|---|
