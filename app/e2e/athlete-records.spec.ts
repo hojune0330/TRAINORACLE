@@ -135,3 +135,84 @@ test("rejects invalid records and never migrates a legacy race note", async ({
     })
   }
 })
+
+test("reports a record save failure when the browser silently drops the write", async ({ page }) => {
+  await page.addInitScript(() => {
+    const originalSetItem = Storage.prototype.setItem
+    Storage.prototype.setItem = function (this: Storage, key: string, value: string): void {
+      if (key === "trainoracle.athlete-records.v1") return
+      originalSetItem.call(this, key, value)
+    }
+  })
+  await openAthleteRecords(page)
+
+  await page.getByRole("textbox", { name: "기록 분" }).fill("18")
+  await page.getByRole("textbox", { name: "기록 초" }).fill("30")
+  await page.getByRole("textbox", { name: "달성일" }).fill("2024-03-10")
+  await page.getByRole("button", { name: "기록 저장" }).click()
+
+  await expect(page.getByRole("alert")).toContainText("기록을 저장하지 못했어요")
+  await expect(page.getByText("저장한 기록이 아직 없어요.")).toBeVisible()
+  await expect.poll(() => page.evaluate(
+    () => window.localStorage.getItem("trainoracle.athlete-records.v1"),
+  )).toBeNull()
+})
+
+test("keeps an existing record after a partial save and allows a later retry", async ({ page }) => {
+  await page.addInitScript(() => {
+    const recordKey = "trainoracle.athlete-records.v1"
+    const mutationKey = "trainoracle.test.partial-athlete-record-write"
+    const originalSetItem = Storage.prototype.setItem
+    if (window.localStorage.getItem(recordKey) === null) {
+      originalSetItem.call(window.localStorage, recordKey, JSON.stringify([{
+        schemaVersion: 1,
+        id: "existing-pb",
+        purpose: "PERSONAL_BEST",
+        eventDistanceM: 5000,
+        performanceSeconds: 1110,
+        achievedOn: "2024-03-10",
+        seasonId: null,
+        enteredBy: "ATHLETE",
+        verificationState: "SELF_REPORTED",
+        sourceRef: "athlete-record:existing-pb",
+        savedAt: "2026-07-27T03:00:00.000Z",
+      }]))
+    }
+    Storage.prototype.setItem = function (this: Storage, key: string, value: string): void {
+      if (key === recordKey && window.localStorage.getItem(mutationKey) === null) {
+        originalSetItem.call(window.localStorage, mutationKey, "used")
+        originalSetItem.call(this, key, "{partial")
+        return
+      }
+      originalSetItem.call(this, key, value)
+    }
+  })
+  await openAthleteRecords(page)
+
+  await page.locator(".athlete-record-form input").nth(0).fill("17")
+  await page.locator(".athlete-record-form input").nth(1).fill("30")
+  await page.locator(".athlete-record-form input").nth(2).fill("2024-03-10")
+  await page.locator(".athlete-record-save").click()
+
+  await expect(page.locator(".athlete-record-error")).toBeVisible()
+  await expect.poll(() => page.evaluate(() => JSON.parse(
+    window.localStorage.getItem("trainoracle.athlete-records.v1") ?? "[]",
+  ).map((record: { id: string }) => record.id))).toEqual(["existing-pb"])
+
+  await page.reload()
+  await openAthleteRecords(page)
+  await expect.poll(() => page.evaluate(() => JSON.parse(
+    window.localStorage.getItem("trainoracle.athlete-records.v1") ?? "[]",
+  ).map((record: { id: string }) => record.id))).toEqual(["existing-pb"])
+
+  await page.locator(".athlete-record-form input").nth(0).fill("17")
+  await page.locator(".athlete-record-form input").nth(1).fill("30")
+  await page.locator(".athlete-record-form input").nth(2).fill("2024-03-10")
+  await page.locator(".athlete-record-save").click()
+  await expect.poll(() => page.evaluate(() => JSON.parse(
+    window.localStorage.getItem("trainoracle.athlete-records.v1") ?? "[]",
+  ).map((record: { purpose: string }) => record.purpose))).toEqual([
+    "PERSONAL_BEST",
+    "PERSONAL_BEST",
+  ])
+})

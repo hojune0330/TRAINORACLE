@@ -194,6 +194,34 @@ describe("athlete record schema and storage", () => {
     expect(saveAthleteRecord(personalBest(), TODAY)).toEqual({ ok: false, total: 0 })
   })
 
+  it("returns failure when localStorage accepts a write but does not persist it", () => {
+    vi.spyOn(Storage.prototype, "setItem").mockImplementation(() => undefined)
+
+    expect(saveAthleteRecord(personalBest(), TODAY)).toEqual({ ok: false, total: 0 })
+    expect(loadAthleteRecords(TODAY)).toEqual([])
+  })
+
+  it("restores existing records when a new write is only partially persisted", () => {
+    expect(saveAthleteRecord(personalBest(), TODAY)).toEqual({ ok: true, total: 1 })
+    const originalRaw = window.localStorage.getItem(ATHLETE_RECORDS_STORAGE_KEY)
+    const originalSetItem = Storage.prototype.setItem
+    vi.spyOn(Storage.prototype, "setItem").mockImplementation(function (
+      this: Storage,
+      key,
+      value,
+    ) {
+      if (key === ATHLETE_RECORDS_STORAGE_KEY && value !== originalRaw) {
+        originalSetItem.call(this, key, "{partial")
+        return
+      }
+      originalSetItem.call(this, key, value)
+    })
+
+    expect(saveAthleteRecord(raceGoal(), TODAY)).toEqual({ ok: false, total: 1 })
+    expect(window.localStorage.getItem(ATHLETE_RECORDS_STORAGE_KEY)).toBe(originalRaw)
+    expect(loadAthleteRecords(TODAY).map((record) => record.id)).toEqual(["pb-5000"])
+  })
+
   it("reads a valid schema-v1 stored record without migration", () => {
     window.localStorage.setItem(
       ATHLETE_RECORDS_STORAGE_KEY,
