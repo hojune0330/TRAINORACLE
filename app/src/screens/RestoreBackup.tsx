@@ -271,18 +271,18 @@ function ReviewStage({ read, plan, mode, onModeChange, decorationMode, onDecorat
 
       {read.decorationStatus === "included" && (
         <div data-testid="restore-decoration-choice" style={{ ...mono, display: "grid", gap: 8 }}>
-          <strong>Decorations</strong>
+          <strong>꾸미기는 어떻게 할까요?</strong>
           <ModeChoice
             checked={decorationMode === "keep-existing"}
             onSelect={() => { if (!busy) onDecorationModeChange("keep-existing") }}
-            title="Keep current decorations"
-            detail="Recommended. The backup cannot erase what is already on this device."
+            title="이 기기 꾸미기를 지켜요"
+            detail="권장 · 이 기기에 있는 스티커와 테마는 그대로 둬요."
           />
           <ModeChoice
             checked={decorationMode === "replace"}
             onSelect={() => { if (!busy) onDecorationModeChange("replace") }}
-            title="Replace with backup decorations"
-            detail="Explicitly replace points, ownership, favorites, and placements with the file."
+            title="백업의 꾸미기로 바꿔요"
+            detail="포인트, 가진 꾸미기, 즐겨찾기, 날짜별 배치를 백업 파일 내용으로 바꿔요."
           />
         </div>
       )}

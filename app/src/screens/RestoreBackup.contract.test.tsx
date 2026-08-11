@@ -296,6 +296,20 @@ describe("restore backup decorations preview", () => {
     expect(screen.getByTestId("restore-decoration-summary").textContent).toMatch(/날짜 배치 1개/u)
   })
 
+  it("꾸미기 되돌리기 선택을 쉬운 한국어로 보여준다", async () => {
+    const user = userEvent.setup()
+    render(<RestoreBackup />)
+
+    await pick(user, backupFile([postSession("a", "2026-07-21")], FULL_FORMAT, undefined, loadDecorationState()))
+
+    await waitFor(() => {
+      expect(screen.getByText("꾸미기는 어떻게 할까요?")).toBeVisible()
+    })
+    expect(screen.getByRole("radio", { name: /이 기기 꾸미기를 지켜요/u })).toBeVisible()
+    expect(screen.getByRole("radio", { name: /백업의 꾸미기로 바꿔요/u })).toBeVisible()
+    expect(screen.queryByText("Decorations")).toBeNull()
+  })
+
   it("잘못된 꾸미기 구획은 일지와 분리해 경고한다", async () => {
     const user = userEvent.setup()
     render(<RestoreBackup />)
