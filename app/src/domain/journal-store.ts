@@ -46,25 +46,35 @@ export class PrivateMemoUnlockRequiredError extends Error {
 }
 
 export function loadEntries(): JournalEntry[] {
+  return loadJournalEntriesSnapshot().entries
+}
+
+export type JournalEntriesStorageSnapshot = {
+  readonly entries: JournalEntry[]
+  readonly raw: string | null
+}
+
+export function loadJournalEntriesSnapshot(): JournalEntriesStorageSnapshot {
   const localStorage = journalStorage()
-  if (localStorage === null) return []
+  if (localStorage === null) return { entries: [], raw: null }
 
   try {
     const raw = localStorage.getItem(JOURNAL_STORAGE_KEY)
-    if (raw === null) return []
+    if (raw === null) return { entries: [], raw }
     const parsed: unknown = JSON.parse(raw)
     const entries = parseJournalEntryList(parsed)
     if (window.location.search.includes("uitest") && Array.isArray(parsed) && parsed.length > entries.length) {
       console.warn(`[JSTORE] dropped=${parsed.length - entries.length} loaded=${entries.length}`)
     }
-    return entries
+    return { entries, raw }
   } catch {
-    return []
+    return { entries: [], raw: null }
   }
 }
 
 export function saveEntry(entry: unknown): { readonly ok: boolean; readonly total: number } {
-  const all = loadEntries()
+  const snapshot = loadJournalEntriesSnapshot()
+  const all = snapshot.entries
   const parsedEntry = parseJournalEntryForWrite(entry)
   if (parsedEntry === null) return { ok: false, total: all.length }
   if (hasPrivateMemoText(parsedEntry)) return { ok: false, total: all.length }
@@ -72,18 +82,25 @@ export function saveEntry(entry: unknown): { readonly ok: boolean; readonly tota
   all.push(parsedEntry)
   const localStorage = journalStorage()
   if (localStorage === null) return { ok: false, total: all.length }
-  return { ok: writeJournalEntries(localStorage, all), total: all.length }
+  return { ok: writeJournalEntries(localStorage, all, snapshot.raw), total: all.length }
 }
 
 export async function savePrivateEntry(entry: unknown): Promise<{ readonly ok: boolean; readonly total: number }> {
-  const all = loadEntries()
+  const snapshot = loadJournalEntriesSnapshot()
+  const all = snapshot.entries
   const parsedEntry = parseJournalEntryForWrite(entry)
   if (parsedEntry === null || !hasPrivateMemoText(parsedEntry)) return { ok: false, total: all.length }
   const localStorage = journalStorage()
   const recoveryCode = loadSessionRecoveryCode()
   if (localStorage === null || recoveryCode === null) return { ok: false, total: all.length }
 
-  const ok = await savePrivateMemoWithJournalShell(localStorage, [...all, parsedEntry], parsedEntry, recoveryCode)
+  const ok = await savePrivateMemoWithJournalShell(
+    localStorage,
+    [...all, parsedEntry],
+    parsedEntry,
+    recoveryCode,
+    snapshot.raw,
+  )
   if (!ok) return { ok: false, total: all.length }
   privateMemoCache.set(parsedEntry.id, { recoveryCode, memo: parsedEntry.kind === "evening" ? parsedEntry.note : parsedEntry.memo })
   return { ok: true, total: all.length + 1 }
@@ -93,7 +110,8 @@ export async function updatePrivateEntry(
   entry: unknown,
   expectedSavedAt: string,
 ): Promise<{ readonly ok: boolean; readonly total: number }> {
-  const entries = loadEntries()
+  const snapshot = loadJournalEntriesSnapshot()
+  const entries = snapshot.entries
   const nextEntry = parseJournalEntryForWrite(entry)
   if (nextEntry === null || !hasPrivateMemoText(nextEntry)) return { ok: false, total: entries.length }
   const matchingEntries = entries.filter((current) => current.id === nextEntry.id)
@@ -113,7 +131,13 @@ export async function updatePrivateEntry(
   if (localStorage === null || recoveryCode === null) return { ok: false, total: entries.length }
 
   const nextEntries = entries.map((current) => current.id === nextEntry.id ? nextEntry : current)
-  const ok = await savePrivateMemoWithJournalShell(localStorage, nextEntries, nextEntry, recoveryCode)
+  const ok = await savePrivateMemoWithJournalShell(
+    localStorage,
+    nextEntries,
+    nextEntry,
+    recoveryCode,
+    snapshot.raw,
+  )
   if (!ok) return { ok: false, total: entries.length }
   privateMemoCache.set(nextEntry.id, { recoveryCode, memo: nextEntry.kind === "evening" ? nextEntry.note : nextEntry.memo })
   return { ok: true, total: entries.length }
@@ -159,10 +183,11 @@ export function entriesForDate(date: string): JournalEntry[] {
  */
 export function replaceAllEntries(entries: readonly unknown[]): { readonly ok: boolean; readonly total: number } {
   const parsed = parseJournalEntryList(entries)
+  const snapshot = loadJournalEntriesSnapshot()
   const localStorage = journalStorage()
-  if (localStorage === null) return { ok: false, total: loadEntries().length }
-  const ok = writeJournalEntries(localStorage, parsed)
-  return { ok, total: ok ? parsed.length : loadEntries().length }
+  if (localStorage === null) return { ok: false, total: snapshot.entries.length }
+  const ok = writeJournalEntries(localStorage, parsed, snapshot.raw)
+  return { ok, total: ok ? parsed.length : snapshot.entries.length }
 }
 
 export type DeleteEntryResult = {
@@ -195,7 +220,8 @@ export type DeleteEntryResult = {
  * `trashed: false`를 실어 보내 UI가 사실대로 말하게 한다.
  */
 export function deleteEntry(id: string): DeleteEntryResult {
-  const all = loadEntries()
+  const snapshot = loadJournalEntriesSnapshot()
+  const all = snapshot.entries
   const matches = all.filter((entry) => entry.id === id)
   if (matches.length !== 1) return { ok: false, total: all.length, trashed: false }
   const [target] = matches
@@ -211,8 +237,8 @@ export function deleteEntry(id: string): DeleteEntryResult {
   const trashed = moveToTrash(target, undefined, record ?? undefined)
 
   const ok = isPrivateMemoEntry(target)
-    ? removePrivateMemoWithJournalEntries(localStorage, remaining, target.id)
-    : writeJournalEntries(localStorage, remaining)
+    ? removePrivateMemoWithJournalEntries(localStorage, remaining, target.id, snapshot.raw)
+    : writeJournalEntries(localStorage, remaining, snapshot.raw)
   if (!ok) {
     // 본문에 그대로 남아 있는데 휴지통에도 있으면 되돌리기가 사본을 하나 더
     // 만든다. 넣었던 것을 빼서 상태를 원래대로 돌린다.
@@ -248,16 +274,24 @@ export function restoreDeletedEntry(id: string): RestoreDeletedResult {
   const taken = takeFromTrash(id)
   if (taken === null) return { ok: false, restoredId: null, total: loadEntries().length }
 
+  const snapshot = loadJournalEntriesSnapshot()
   const restored = { ...taken.entry, id: newEntryId(), syncState: "local" as const }
-  const next = [...loadEntries(), restored]
+  const next = [...snapshot.entries, restored]
   const localStorage = journalStorage()
   if (localStorage === null) {
     moveToTrash(taken.entry, taken.deletedAt, taken.privateMemo)
     return { ok: false, restoredId: null, total: next.length - 1 }
   }
   const ok = taken.privateMemo === undefined
-    ? writeJournalEntries(localStorage, next)
-    : restorePrivateMemoRecordWithJournalShell(localStorage, next, taken.entry.id, restored.id, taken.privateMemo)
+    ? writeJournalEntries(localStorage, next, snapshot.raw)
+    : restorePrivateMemoRecordWithJournalShell(
+      localStorage,
+      next,
+      taken.entry.id,
+      restored.id,
+      taken.privateMemo,
+      snapshot.raw,
+    )
   if (!ok) {
     // 꺼내 놓고 저장에 실패하면 일지가 어디에도 없게 된다. 휴지통에 되돌린다.
     moveToTrash(taken.entry, taken.deletedAt, taken.privateMemo)

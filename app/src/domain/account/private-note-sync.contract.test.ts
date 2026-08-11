@@ -90,4 +90,120 @@ describe("private memo encrypted sync", () => {
     expect(loadSessionRecoveryCode()).toBe(previousCode)
     await expect(loadEntriesWithPrivateMemos()).resolves.toEqual([privateEntry])
   })
+
+  it("restores the old session code after a partial rotated-code write", async () => {
+    const previousCode = createRecoveryCode()
+    const nextCode = createRecoveryCode()
+    expect(saveSessionRecoveryCode(previousCode)).toBe(true)
+    await expect(savePrivateEntry(privateEntry)).resolves.toEqual({ ok: true, total: 1 })
+    const realSetItem = Storage.prototype.setItem
+    vi.spyOn(Storage.prototype, "setItem").mockImplementation(function (
+      this: Storage,
+      key: string,
+      value: string,
+    ) {
+      if (this === window.sessionStorage && key === "trainoracle.private-note.recovery.v1" && value === nextCode) {
+        realSetItem.call(this, key, "partial")
+        return
+      }
+      realSetItem.call(this, key, value)
+    })
+
+    await expect(rotateSessionRecoveryCode(previousCode, nextCode)).resolves.toEqual({ ok: false })
+
+    expect(loadSessionRecoveryCode()).toBe(previousCode)
+    await expect(loadEntriesWithPrivateMemos()).resolves.toEqual([privateEntry])
+  })
+
+  it("clears the session code when a failed vault rotation cannot restore the old code", async () => {
+    const previousCode = createRecoveryCode()
+    const nextCode = createRecoveryCode()
+    expect(saveSessionRecoveryCode(previousCode)).toBe(true)
+    await expect(savePrivateEntry(privateEntry)).resolves.toEqual({ ok: true, total: 1 })
+    const previousVault = window.localStorage.getItem("trainoracle.private-memo.v1")
+    const realSetItem = Storage.prototype.setItem
+    let vaultWriteCount = 0
+    vi.spyOn(Storage.prototype, "setItem").mockImplementation(function (
+      this: Storage,
+      key: string,
+      value: string,
+    ) {
+      if (this === window.localStorage && key === "trainoracle.private-memo.v1" && vaultWriteCount++ === 0) {
+        realSetItem.call(this, key, "partial-vault")
+        return
+      }
+      if (this === window.sessionStorage && key === "trainoracle.private-note.recovery.v1" && value === previousCode) {
+        realSetItem.call(this, key, "partial-rollback")
+        return
+      }
+      realSetItem.call(this, key, value)
+    })
+
+    await expect(rotateSessionRecoveryCode(previousCode, nextCode)).resolves.toEqual({ ok: false })
+
+    expect(loadSessionRecoveryCode()).toBeNull()
+    expect(window.localStorage.getItem("trainoracle.private-memo.v1")).toBe(previousVault)
+  })
+
+  it("clears a stale session code after the vault rejects it during rotation", async () => {
+    const vaultCode = createRecoveryCode()
+    const staleCode = createRecoveryCode()
+    const nextCode = createRecoveryCode()
+    expect(saveSessionRecoveryCode(vaultCode)).toBe(true)
+    await expect(savePrivateEntry(privateEntry)).resolves.toEqual({ ok: true, total: 1 })
+    expect(saveSessionRecoveryCode(staleCode)).toBe(true)
+    const previousVault = window.localStorage.getItem("trainoracle.private-memo.v1")
+
+    await expect(rotateSessionRecoveryCode(staleCode, nextCode)).resolves.toEqual({ ok: false })
+
+    expect(loadSessionRecoveryCode()).toBeNull()
+    expect(window.localStorage.getItem("trainoracle.private-memo.v1")).toBe(previousVault)
+  })
+
+  it("does not retain a stale recovery code when clearing the failed rotation is denied", async () => {
+    const vaultCode = createRecoveryCode()
+    const staleCode = createRecoveryCode()
+    const nextCode = createRecoveryCode()
+    expect(saveSessionRecoveryCode(vaultCode)).toBe(true)
+    await expect(savePrivateEntry(privateEntry)).resolves.toEqual({ ok: true, total: 1 })
+    expect(saveSessionRecoveryCode(staleCode)).toBe(true)
+    const realRemoveItem = Storage.prototype.removeItem
+    vi.spyOn(Storage.prototype, "removeItem").mockImplementation(function (this: Storage, key: string) {
+      if (this === window.sessionStorage && key === "trainoracle.private-note.recovery.v1") {
+        throw new DOMException("Injected session remove failure", "QuotaExceededError")
+      }
+      realRemoveItem.call(this, key)
+    })
+
+    await expect(rotateSessionRecoveryCode(staleCode, nextCode)).resolves.toEqual({ ok: false })
+
+    expect(loadSessionRecoveryCode()).toBeNull()
+    expect(window.sessionStorage.getItem("trainoracle.private-note.recovery.v1")).not.toBe(staleCode)
+    expect(window.sessionStorage.getItem("trainoracle.private-note.recovery.v1")).not.toBe(nextCode)
+  })
+
+  it("removes an unverified rotation code when invalidation storage is denied", async () => {
+    const vaultCode = createRecoveryCode()
+    const staleCode = createRecoveryCode()
+    const nextCode = createRecoveryCode()
+    expect(saveSessionRecoveryCode(vaultCode)).toBe(true)
+    await expect(savePrivateEntry(privateEntry)).resolves.toEqual({ ok: true, total: 1 })
+    expect(saveSessionRecoveryCode(staleCode)).toBe(true)
+    const realSetItem = Storage.prototype.setItem
+    vi.spyOn(Storage.prototype, "setItem").mockImplementation(function (this: Storage, key: string, value: string) {
+      if (this === window.sessionStorage
+        && key === "trainoracle.private-note.recovery.v1"
+        && value === "recovery-code-cleared") {
+        throw new DOMException("Injected invalidation write failure", "QuotaExceededError")
+      }
+      realSetItem.call(this, key, value)
+    })
+
+    await expect(rotateSessionRecoveryCode(staleCode, nextCode)).resolves.toEqual({ ok: false })
+    expect(window.sessionStorage.getItem("trainoracle.private-note.recovery.v1")).toBeNull()
+
+    vi.resetModules()
+    const reloadedSync = await import("./private-note-sync")
+    expect(reloadedSync.loadSessionRecoveryCode()).toBeNull()
+  })
 })
