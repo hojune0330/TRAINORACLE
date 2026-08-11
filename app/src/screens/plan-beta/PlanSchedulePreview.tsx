@@ -101,7 +101,9 @@ function PlanScheduleCalendar({
               {day.sessions.length > 0 && (
                 <span className="plan-schedule-calendar__slots">
                   {day.sessions.map((session) => (
-                    <span key={`${session.day}-${session.slot}`}>{sessionSlotLabel(session.slot)}</span>
+                    <span key={`${session.day}-${session.slot}`}>
+                      {session.role === "REST" ? "휴식" : sessionSlotLabel(session.slot)}
+                    </span>
                   ))}
                 </span>
               )}
