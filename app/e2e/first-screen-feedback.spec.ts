@@ -104,6 +104,6 @@ test("opens the closed feedback state from the More entry", async ({ page }) => 
   await page.getByRole("button", { name: "더보기" }).click()
   await expect(page.getByText("지금은 준비 중이에요. 열리면 앱 안에서 알려드려요")).toBeVisible()
 
-  await page.getByRole("link", { name: "의견 게시판" }).click()
+  await page.getByRole("link", { name: /^문의 게시판/u }).click()
   await expect(page.getByText("문의 게시판을 지금 사용할 수 없어요.")).toBeVisible()
 })
