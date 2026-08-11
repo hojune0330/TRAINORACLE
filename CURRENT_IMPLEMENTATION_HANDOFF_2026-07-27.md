@@ -1,5 +1,12 @@
 # CURRENT_IMPLEMENTATION_HANDOFF_2026-07-27.md
 
+> ⚠️ **이 문서는 2026-07-27 당시의 상세 구현 인계 기록입니다. 현재 공개 상태를
+> 판단하는 문서가 아닙니다.** 현재 공개 기능, 닫힌 서버 기능, 최신 `main` 배포
+> 영수증은 [`BETA_RELEASE_HANDOFF_2026-08-02.md`](./reports/operations/BETA_RELEASE_HANDOFF_2026-08-02.md)의
+> `현재 배포 상태 갱신` 절에서 확인하십시오. 아래의 커밋·CI·AM/PM 설명은 당시
+> 구현을 재현하는 근거로만 보존합니다. 이 문서만으로 기능 공개 여부를 추론하지
+> 마십시오.
+
 > ⚠️ **2026-08-06 사양 갱신 안내 (본문은 당시 기록이므로 고치지 않았다).**
 > 이 문서가 인용한 `DSB-INV-002`(PM은 회복 전용)와 `DSB-INV-003`(같은 날 quality 짝 금지)은
 > `specs/reconstruct/DOUBLE_SESSION_BETA_SAFETY_CONTRACT.md` **v0.2에서 은퇴하고 새 규칙으로
@@ -25,10 +32,11 @@ handoff_metadata:
 
 ## 1. First Read: What This Document Is
 
-This is the current product-implementation handoff for the next worker. It
-describes the public plan beta that is actually merged into `main`, the owner
+This is a detailed product-implementation handoff recorded on 2026-07-27. It
+describes the public plan beta that was merged into `main` at that time, the
 decisions that shaped it, its verified local behavior, and the exact point at
-which the next worker must stop.
+which the next worker had to stop. Read the linked beta release handoff above
+before treating any part of this historical record as current state.
 
 It does not replace the formal SPEC layer. It does not promote a draft SPEC,
 close a safety issue, authorize numeric personal prescriptions, or convert a

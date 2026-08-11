@@ -2,6 +2,11 @@
 
 이 지도는 git 경로, 파일명, 수정 이력으로 만든 기계적 색인입니다. 문서의 승인·정본·폐기 여부를 새로 판정하지 않습니다.
 
+이 색인의 기준일은 2026-07-29입니다. **현재 공개 상태와 최신 배포 영수증은**
+[`reports/operations/BETA_RELEASE_HANDOFF_2026-08-02.md`](./reports/operations/BETA_RELEASE_HANDOFF_2026-08-02.md)의
+`현재 배포 상태 갱신` 절에서 확인합니다. 이 지도 안의 `현재-인계` 분류는
+작성 당시의 색인 분류이며, 기능 공개 여부를 뜻하지 않습니다.
+
 - 작성 기준 main SHA: 7d9958aad66859de2125ade4023436a09cb0da00
 - 작성일: 2026-07-29
 - 대상 문서 수: 252
@@ -14,8 +19,9 @@
 |---:|---|---|
 | 1 | PRODUCT_NORTH_STAR.md | 제품 최고 지침 |
 | 2 | README.md | 저장소 안내 |
-| 3 | CURRENT_IMPLEMENTATION_HANDOFF_2026-07-27.md | 현재 상태와 다음 작업 |
-| 4 | TRAINORACLE_SPEC_INDEX.md | 스펙 색인 |
+| 3 | reports/operations/BETA_RELEASE_HANDOFF_2026-08-02.md | 현재 공개 상태와 최신 배포 영수증 |
+| 4 | CURRENT_IMPLEMENTATION_HANDOFF_2026-07-27.md | 2026-07-27 상세 구현 기록 |
+| 5 | TRAINORACLE_SPEC_INDEX.md | 스펙 색인 |
 
 ## 상태별 개수
 
