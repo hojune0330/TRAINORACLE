@@ -20,9 +20,14 @@
 > 강도·기록·계획·안전 코드를 만지기 전에 **어느 스펙 문서를 먼저 읽어야
 > 하는지**를 모듈별 표로 정리해 둔 파일입니다.
 
-## 훈련계획 베타 공개 중
+## 현재 공개 상태
 
 **현재 공개 앱: [TrainOracle 베타 열기](https://hojune0330.github.io/TRAINORACLE/)**
+
+현재 공개·닫힘 범위와 최신 배포 영수증은
+[`무료 베타 공개 인계`](./reports/operations/BETA_RELEASE_HANDOFF_2026-08-02.md)의
+`현재 배포 상태 갱신` 절이 기준입니다. 과거 구현 인계서나 연구 문서만 보고
+계정·동기화·공유 같은 기능이 열려 있다고 판단하지 마십시오.
 
 훈련계획 베타는 2026-07-24 공개 앱에 배포되었습니다. 회원가입 없이 훈련계획 후보를 만들고, 원하는 후보를 선택해 진행 상태를 남길 수 있습니다. 현재 계획과 기록은 사용 중인 브라우저와 기기에만 저장됩니다.
 
@@ -50,7 +55,8 @@ TrainOracle의 핵심은 예쁜 훈련 일지 화면만이 아니라, **선수 �
 - 쉬운 전체 설명: [`SPEC_OVERVIEW_FOR_HOJUNE.md`](./SPEC_OVERVIEW_FOR_HOJUNE.md)
 - Fable·Codex 공동 기획 기준선: [`FABLE_CODEX_JOINT_PLANNING_BRIEF.md`](./FABLE_CODEX_JOINT_PLANNING_BRIEF.md)
 - 9.5일 훈련계획 소유자 결정 기록: [`TRAINING_PLAN_METHOD_DECISION.md`](./TRAINING_PLAN_METHOD_DECISION.md)
-- **현재 구현·배포·다음 작업 인계서:** [`CURRENT_IMPLEMENTATION_HANDOFF_2026-07-27.md`](./CURRENT_IMPLEMENTATION_HANDOFF_2026-07-27.md). 과거 work-harness 인계와 달리, 현재 `main`의 공개 훈련계획 베타와 AM/PM 회복 운동 경계를 설명합니다.
+- **현재 공개 범위·배포·운영 인계:** [`BETA_RELEASE_HANDOFF_2026-08-02.md`](./reports/operations/BETA_RELEASE_HANDOFF_2026-08-02.md). 현재 배포 상태 갱신 절부터 읽습니다.
+- **2026-07-27 상세 훈련계획 구현 기록:** [`CURRENT_IMPLEMENTATION_HANDOFF_2026-07-27.md`](./CURRENT_IMPLEMENTATION_HANDOFF_2026-07-27.md). 당시 공개 훈련계획 베타와 AM/PM 경계를 재현할 때만 참조합니다.
 - 실제 공개 훈련계획 베타 구현·검증 상태: [`PLAN_BETA_PUBLIC_IMPLEMENTATION_REPORT_2026-07-24.md`](./reports/implementation/PLAN_BETA_PUBLIC_IMPLEMENTATION_REPORT_2026-07-24.md)
 - 9개 관점 청사진 검증·시각화: [`TRAINING_PLAN_BLUEPRINT_MULTIPERSPECTIVE_REVIEW.md`](./TRAINING_PLAN_BLUEPRINT_MULTIPERSPECTIVE_REVIEW.md)
 - 정확한 파일 목록과 상태: [`TRAINORACLE_SPEC_INDEX.md`](./TRAINORACLE_SPEC_INDEX.md)
