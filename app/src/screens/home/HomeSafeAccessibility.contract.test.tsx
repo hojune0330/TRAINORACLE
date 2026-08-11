@@ -2,7 +2,9 @@ import { cleanup, render, screen, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import type { JournalEntry } from "../../domain/journal-store"
+import type { TrainingHomeViewModel } from "../../domain/home-view-model"
 import { Home } from "../Home"
+import { TrainingHome } from "./TrainingHome"
 
 const STORAGE_KEY = "trainoracle.journal.v1"
 
@@ -37,6 +39,30 @@ const PRIVATE_EVENING_ENTRY = {
   note: "저녁 비공개 원문",
   memoPurpose: "PRIVATE_SELF_ONLY",
 } satisfies JournalEntry
+
+const HOME_MODEL_WITH_NEXT_TRAINING = {
+  todayMessage: "아직 오늘 기록이 없어요.",
+  journalSummary: "아직 기록이 없어요",
+  flowSummary: "9.5일 주기로 일지 묶어 보기 · 시작일 직접 선택",
+  planSummary: "저장된 계획 · 3개 일정",
+  analysisSummary: "기록이 쌓이면 변화를 볼 수 있어요",
+  showMinjiPrompt: true,
+  briefing: "",
+  nextTraining: {
+    date: "2026-07-14",
+    session: {
+      day: 1,
+      slot: "PM",
+      role: "QUALITY",
+      plannedEnergyIntent: "LT_INTENT",
+      prescription: {
+        kind: "RPE_TIME_RANGE",
+        rpe: { minimum: 5, maximum: 6 },
+        durationMinutes: { minimum: 25, maximum: 40 },
+      },
+    },
+  },
+} satisfies TrainingHomeViewModel
 
 afterEach(cleanup)
 
@@ -88,6 +114,21 @@ describe("home journal controls", () => {
     expect(serviceChoices).toHaveLength(3)
     expect(screen.queryByRole("button", { name: /훈련 흐름/u })).toBeNull()
     expect(screen.queryByText("비공개 원문")).toBeNull()
+  })
+
+  it("shows the nearest saved training as a separate route without adding another service choice", async () => {
+    const user = userEvent.setup()
+    const onOpenPlan = vi.fn()
+    render(<TrainingHome model={HOME_MODEL_WITH_NEXT_TRAINING} onOpenPlan={onOpenPlan} />)
+
+    const nextTraining = screen.getByRole("button", { name: /다음 훈련.*지속 페이스.*오후/u })
+    expect(nextTraining).toHaveTextContent("7월 14일")
+    expect(nextTraining).toHaveTextContent("총 25~40분 · RPE 5~6")
+    expect(within(screen.getByRole("navigation", { name: "내 기록 살펴보기" })).getAllByRole("button")).toHaveLength(3)
+
+    await user.click(nextTraining)
+
+    expect(onOpenPlan).toHaveBeenCalledTimes(1)
   })
 
   it("places a recent journal entry before services and decoration so returning athletes can continue reading first", () => {

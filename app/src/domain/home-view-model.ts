@@ -2,7 +2,13 @@ import { thisWeekStats } from "./aggregates"
 import type { JournalEntry } from "./journal-schema"
 import type { AnalysisJournalEntry } from "./safe-export"
 import type { PlanBetaState } from "./plan-beta-store"
+import type { StoredPlanSession } from "./plan-session-schema"
 import { isoShift, isValidIsoDate } from "./dates"
+
+export type NextTraining = {
+  readonly date: string
+  readonly session: Exclude<StoredPlanSession, { readonly role: "REST" }>
+}
 
 export type TrainingHomeViewModel = {
   readonly todayMessage: string
@@ -11,6 +17,7 @@ export type TrainingHomeViewModel = {
   readonly planSummary: string
   readonly analysisSummary: string
   readonly showMinjiPrompt: boolean
+  readonly nextTraining: NextTraining | null
   /** 오늘(또는 어제) 수면·심박·체중·통증 한 줄 요약. 값이 없으면 빈 문자열 — 거짓 브리핑 금지(WORK_ORDER_UX2 §2-1). */
   readonly briefing: string
 }
@@ -50,8 +57,27 @@ export function buildTrainingHomeViewModel(
         ? `이번 주 ${week.sessions}회 · ${week.distanceKm}km`
         : `이번 주 ${week.sessions}회 · 입력된 거리 없음`,
     showMinjiPrompt: analysisDays < 7,
+    nextTraining: nextTrainingFor(plan, today),
     briefing,
   }
+}
+
+function nextTrainingFor(plan: PlanBetaState | null, today: string): NextTraining | null {
+  const startDate = plan?.intake.startDate
+  if (plan === null || startDate === undefined || !isValidIsoDate(startDate)) return null
+
+  const planned = plan.activePlan.sessions
+    .flatMap((session) => session.role === "REST"
+      ? []
+      : [{ date: isoShift(startDate, session.day - 1), session }])
+    .filter((entry) => entry.date >= today)
+    .sort((left, right) => {
+      const dateOrder = left.date.localeCompare(right.date)
+      if (dateOrder !== 0) return dateOrder
+      return left.session.slot.localeCompare(right.session.slot)
+    })
+
+  return planned[0] ?? null
 }
 
 /**

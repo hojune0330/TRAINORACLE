@@ -591,6 +591,48 @@ input, textarea { font-family: inherit; }
   line-height: 1.55 !important;
   border-top: 1px dashed var(--line);
 }
+
+.training-home__next {
+  padding: 14px 20px 12px;
+  border-bottom: 1px solid var(--line);
+}
+
+.training-home__next-button {
+  width: 100%;
+  min-height: 58px;
+  margin-top: 8px;
+  padding: 10px 2px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 24px;
+  gap: 12px;
+  align-items: center;
+  border: 0;
+  background: transparent;
+  color: var(--ink);
+  text-align: left;
+  cursor: pointer;
+}
+
+.training-home__next-button > span {
+  min-width: 0;
+  display: grid;
+  gap: 4px;
+}
+
+.training-home__next-button strong {
+  font-family: var(--sans);
+  font-size: 15px;
+  font-weight: 650;
+}
+
+.training-home__next-button small {
+  font-family: var(--sans);
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--ink-3);
+  overflow-wrap: anywhere;
+}
+
 .training-home__services {
   padding: 12px 20px 0;
 }
