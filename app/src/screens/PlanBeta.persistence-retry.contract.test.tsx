@@ -1,9 +1,11 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { cleanup, render, screen, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
+import * as planStore from "../domain/plan-beta-store"
 import { savePlanBetaState } from "../domain/plan-beta-store"
 import { stateFixture } from "../domain/plan-beta-store.test-fixture"
 import { PlanBeta } from "./PlanBeta"
+import { PlanActiveState } from "./plan-beta/PlanActiveState"
 
 describe("active plan persistence retry", () => {
   beforeEach(() => {
@@ -81,5 +83,31 @@ describe("active plan persistence retry", () => {
 
     expect(screen.getByRole("button", { name: /통증은 없고 몸 상태는 평소와 같아요/u })).toBeVisible()
     expect(window.localStorage.getItem("trainoracle.plan-beta.v1")).toBeNull()
+  })
+
+  it("does not offer an archive retry when rollback itself could not restore the active plan", async () => {
+    // Given: the storage transaction failed and the store cannot confirm its rollback.
+    const onArchived = vi.fn()
+    vi.spyOn(planStore, "archiveAndClearActivePlan").mockReturnValue({
+      ok: false,
+      code: "PLAN_ARCHIVE_WRITE_FAILED",
+      rollbackComplete: false,
+    })
+    const user = userEvent.setup()
+    render(
+      <PlanActiveState
+        state={stateFixture()}
+        onStateChange={vi.fn()}
+        onArchived={onArchived}
+      />,
+    )
+
+    // When: the athlete starts a next-frame archive with an unknown rollback result.
+    await user.click(screen.getByRole("button", { name: "다음 주기 후보 만들기" }))
+
+    // Then: retry is withheld because it could duplicate a partially archived plan.
+    expect(screen.getByRole("alert")).toHaveTextContent("저장 상태도 확인하지 못했어요")
+    expect(screen.queryByRole("button", { name: "다음 주기 다시 만들기" })).not.toBeInTheDocument()
+    expect(onArchived).not.toHaveBeenCalled()
   })
 })

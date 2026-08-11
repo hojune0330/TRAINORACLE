@@ -55,7 +55,7 @@ export function PlanActiveState({
       setError(result.rollbackComplete
         ? "다음 주기로 넘기지 못했어요. 지금 계획과 진행 기록은 그대로 두었어요."
         : "다음 주기로 넘기지 못했고 저장 상태도 확인하지 못했어요. 이 화면에서 계획을 다시 확인해 주세요.")
-      setRetry({ kind: "next-frame" })
+      setRetry(result.rollbackComplete ? { kind: "next-frame" } : null)
       return
     }
     setError(null)
