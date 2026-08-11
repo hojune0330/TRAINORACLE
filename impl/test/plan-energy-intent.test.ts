@@ -87,6 +87,37 @@ describe("personal plan energy intention contract", () => {
     ]))
   })
 
+  it("keeps two recovery sessions on every selected day when an athlete explicitly chooses two-a-day recovery", () => {
+    // Given
+    const result = generatePlanCandidates({
+      kind: "PLAN_BETA_GENERATION_REQUEST",
+      safetyGate: clearedGate(),
+      profile: {
+        eventGroup: "FIVE_K",
+        experienceBand: "DEVELOPING",
+        availableTrainingDays: [1, 2, 3, 4, 5, 6, 7, 8, 9],
+        secondSessionMode: "RECOVERY_PM_ALLOWED",
+      },
+      formation: canonicalFormation(),
+      journalSource: { kind: "NO_USABLE_JOURNAL" },
+      selectionAuthority: "SELF",
+      selectedEnergyIntent: "RECOVERY_INTENT",
+    })
+
+    // When
+    const balanced = expectGenerated(result).candidates[0]
+
+    // Then
+    const pmSessions = balanced.sessions.filter((session) => session.slot === "PM")
+    expect(pmSessions).toHaveLength(9)
+    expect(new Set(pmSessions.map((session) => session.day))).toEqual(
+      new Set([1, 2, 3, 4, 5, 6, 7, 8, 9]),
+    )
+    expect(balanced.sessions).not.toEqual(expect.arrayContaining([
+      expect.objectContaining({ role: "QUALITY" }),
+    ]))
+  })
+
   it("adds a separate PM recovery session on every selected training day when an athlete chooses two-a-day training", () => {
     // Given
     const result = generatePlanCandidates({

@@ -166,7 +166,6 @@ function recoverySecondSessionDays(
 ): readonly number[] {
   if (
     input.request.profile.secondSessionMode !== "RECOVERY_PM_ALLOWED"
-    || input.request.selectedEnergyIntent === "RECOVERY_INTENT"
   ) {
     return Object.freeze([])
   }
