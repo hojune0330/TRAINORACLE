@@ -2,11 +2,15 @@ import { describe, expect, it } from "vitest"
 import type { PlanSession } from "@impl/plan-generator/types"
 import { twoADayTrainingDayCount } from "./labels"
 
-function session(day: number, slot: PlanSession["slot"]): PlanSession {
+function session(
+  day: number,
+  slot: PlanSession["slot"],
+  role: PlanSession["role"] = "EASY",
+): PlanSession {
   return {
     day,
     slot,
-    role: "EASY",
+    role,
     plannedEnergyIntent: "BASE_INTENT",
     prescription: {
       kind: "RPE_TIME_RANGE",
@@ -27,5 +31,12 @@ describe("two-a-day plan summary", () => {
       session(4, "PM"),
       session(7, "PM"),
     ])).toBe(1)
+  })
+
+  it("does not count a rest slot as the second training session", () => {
+    expect(twoADayTrainingDayCount([
+      session(4, "AM", "REST"),
+      session(4, "PM"),
+    ])).toBe(0)
   })
 })
