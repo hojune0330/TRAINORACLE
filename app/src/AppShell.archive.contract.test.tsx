@@ -41,13 +41,13 @@ describe("AppShell journal archive routing", () => {
     render(<AppShell />)
 
     await user.click(screen.getByRole("button", { name: "전체 보기" }))
-    await user.click(screen.getByRole("button", { name: /2026년 7월/u }))
-    await user.click(screen.getByRole("button", { name: /2026년 7월 10일/u }))
+    await user.click(await screen.findByRole("button", { name: /2026년 7월/u }))
+    await user.click(await screen.findByRole("button", { name: /2026년 7월 10일/u }))
 
-    expect(screen.getByText("아카이브 복귀 훈련")).toBeVisible()
+    expect(await screen.findByText("아카이브 복귀 훈련")).toBeVisible()
     await user.click(screen.getByRole("button", { name: "← 뒤로" }))
 
-    expect(screen.getByRole("heading", { name: "2026년 7월" })).toBeVisible()
+    expect(await screen.findByRole("heading", { name: "2026년 7월" })).toBeVisible()
     expect(screen.getByRole("grid", { name: "2026년 7월 달력" })).toBeVisible()
     expect(screen.getByRole("button", { name: /2026년 7월 10일/u })).toBeVisible()
   })
@@ -57,15 +57,15 @@ describe("AppShell journal archive routing", () => {
     render(<AppShell />)
 
     await user.click(screen.getByRole("button", { name: "전체 보기" }))
-    await user.click(screen.getByRole("button", { name: /2026년 7월/u }))
-    await user.click(screen.getByRole("button", { name: /2026년 7월 10일/u }))
-    await user.click(screen.getByRole("button", { name: "훈련 기록 수정" }))
+    await user.click(await screen.findByRole("button", { name: /2026년 7월/u }))
+    await user.click(await screen.findByRole("button", { name: /2026년 7월 10일/u }))
+    await user.click(await screen.findByRole("button", { name: "훈련 기록 수정" }))
 
     await user.click(screen.getByRole("button", { name: "← 뒤로" }))
-    expect(screen.getByText("아카이브 복귀 훈련")).toBeVisible()
+    expect(await screen.findByText("아카이브 복귀 훈련")).toBeVisible()
     await user.click(screen.getByRole("button", { name: "← 뒤로" }))
 
-    expect(screen.getByRole("heading", { name: "2026년 7월" })).toBeVisible()
+    expect(await screen.findByRole("heading", { name: "2026년 7월" })).toBeVisible()
     expect(screen.getByRole("grid", { name: "2026년 7월 달력" })).toBeVisible()
     expect(screen.getByRole("button", { name: /2026년 7월 10일/u })).toBeVisible()
   })
@@ -75,10 +75,10 @@ describe("AppShell journal archive routing", () => {
     render(<AppShell />)
 
     await user.click(screen.getByRole("button", { name: "일지" }))
-    await user.click(screen.getByRole("button", { name: /2026년 7월/u }))
+    await user.click(await screen.findByRole("button", { name: /2026년 7월/u }))
     await user.click(screen.getByRole("button", { name: "일지" }))
 
-    expect(screen.getByRole("heading", { name: "2026년 7월" })).toBeVisible()
+    expect(await screen.findByRole("heading", { name: "2026년 7월" })).toBeVisible()
     expect(screen.getByRole("grid", { name: "2026년 7월 달력" })).toBeVisible()
   })
 
@@ -87,7 +87,7 @@ describe("AppShell journal archive routing", () => {
     render(<AppShell />)
 
     await user.click(screen.getByRole("button", { name: /민지의 예시 일지 보기/u }))
-    await user.click(screen.getByRole("button", { name: /돌아가기/u }))
+    await user.click(await screen.findByRole("button", { name: /돌아가기/u }))
 
     expect(screen.getByRole("heading", { name: "내 기록" })).toBeVisible()
   })
@@ -98,7 +98,7 @@ describe("AppShell journal archive routing", () => {
 
     await user.click(screen.getByRole("button", { name: "일지" }))
 
-    expect(screen.getByRole("heading", { name: "지난 일지" })).toBeVisible()
+    expect(await screen.findByRole("heading", { name: "지난 일지" })).toBeVisible()
   })
 
   it("keeps the easy FAQ one tap away through more", async () => {
@@ -106,9 +106,9 @@ describe("AppShell journal archive routing", () => {
     render(<AppShell />)
 
     await user.click(screen.getByRole("button", { name: "더보기" }))
-    await user.click(screen.getByRole("button", { name: "쉬운 도움말과 FAQ" }))
+    await user.click(await screen.findByRole("button", { name: "쉬운 도움말과 FAQ" }))
 
-    expect(screen.getByRole("heading", { name: "궁금한 점을 쉽게 풀어드려요" })).toBeVisible()
+    expect(await screen.findByRole("heading", { name: "궁금한 점을 쉽게 풀어드려요" })).toBeVisible()
   })
 
   it("keeps safe export and confirmed full backup inside more", async () => {
@@ -116,14 +116,14 @@ describe("AppShell journal archive routing", () => {
     render(<AppShell />)
 
     await user.click(screen.getByRole("button", { name: "더보기" }))
-    const exportButton = screen.getByRole("button", {
+    const exportButton = await screen.findByRole("button", {
       name: /내 일지 데이터 내려받기/u,
       description: /메모 원문.*제외/u,
     })
     expect(exportButton).toBeVisible()
 
-    await user.click(screen.getByRole("button", { name: /메모 포함 파일 내보내기/u }))
-    expect(screen.getByRole("dialog", { name: "메모까지 포함할까요?" })).toBeVisible()
+    await user.click(await screen.findByRole("button", { name: /메모 포함 파일 내보내기/u }))
+    expect(await screen.findByRole("dialog", { name: "메모까지 포함할까요?" })).toBeVisible()
   })
 
   it("does not grant points merely for opening the app", () => {

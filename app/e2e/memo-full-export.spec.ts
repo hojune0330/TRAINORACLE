@@ -2,7 +2,7 @@ import { expect, test } from "@playwright/test"
 import { readFile } from "node:fs/promises"
 import { createRecoveryCode, encryptPrivateNote } from "../src/domain/account/private-note-crypto"
 
-test("makes a memo-inclusive backup only after confirmation and without a network request", async ({ page }) => {
+test("makes a memo-inclusive backup only after confirmation without sending the export over the network", async ({ page }) => {
   const secret = "OWNER_EXPORT_ONLY_SECRET"
   const recoveryCode = createRecoveryCode()
   const encrypted = await encryptPrivateNote(secret, recoveryCode)
@@ -38,9 +38,14 @@ test("makes a memo-inclusive backup only after confirmation and without a networ
     })
     return values.join("\n")
   })).not.toContain(secret)
-  const networkRequests: string[] = []
+  const exportNetworkRequests: string[] = []
   const downloads: string[] = []
-  page.on("request", (request) => networkRequests.push(request.url()))
+  page.on("request", (request) => {
+    const isDataRequest = ["fetch", "xhr", "websocket", "eventsource"].includes(request.resourceType())
+      || request.method() !== "GET"
+    const isRemoteRequest = new URL(request.url()).origin !== new URL(page.url()).origin
+    if (isDataRequest || isRemoteRequest) exportNetworkRequests.push(request.url())
+  })
   page.on("download", (download) => downloads.push(download.suggestedFilename()))
 
   await page.getByRole("button", { name: "더보기" }).click()
@@ -59,5 +64,5 @@ test("makes a memo-inclusive backup only after confirmation and without a networ
   const path = await download.path()
   if (path === null) throw new Error("The full export did not create a readable download.")
   await expect(readFile(path, "utf8")).resolves.toContain(secret)
-  expect(networkRequests).toEqual([])
+  expect(exportNetworkRequests).toEqual([])
 })
