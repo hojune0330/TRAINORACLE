@@ -69,6 +69,16 @@ function savePostSession(
 }
 
 describe("plan beta user flow", () => {
+  it("explains that managing race records does not automatically change this beta plan", () => {
+    // Given
+    render(<PlanBeta />)
+
+    // Then
+    expect(screen.getByText(
+      "경기 기록을 저장해도 지금 계획의 페이스·거리·반복은 자동으로 바뀌지 않아요.",
+    )).toBeVisible()
+  })
+
   it("reads a detailed notation without storing or creating a plan", async () => {
     const user = userEvent.setup()
     render(<PlanBeta />)

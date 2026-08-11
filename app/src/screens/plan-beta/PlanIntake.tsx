@@ -204,23 +204,28 @@ export function PlanIntake({
         </button>
       )}
       {step === "goal" && (
-        <div className="plan-support-actions">
-          <button
-            className="plan-text-action plan-records-entry"
-            type="button"
-            onClick={onManageRecords}
-          >
-            <Medal aria-hidden="true" size={17} />
-            내 경기 기록 관리
-          </button>
-          <button
-            className="plan-text-action plan-notation-entry"
-            type="button"
-            onClick={onOpenNotationReader}
-          >
-            훈련표 표기 읽기
-          </button>
-        </div>
+        <>
+          <div className="plan-support-actions">
+            <button
+              className="plan-text-action plan-records-entry"
+              type="button"
+              onClick={onManageRecords}
+            >
+              <Medal aria-hidden="true" size={17} />
+              내 경기 기록 관리
+            </button>
+            <button
+              className="plan-text-action plan-notation-entry"
+              type="button"
+              onClick={onOpenNotationReader}
+            >
+              훈련표 표기 읽기
+            </button>
+          </div>
+          <p className="plan-records-note">
+            경기 기록을 저장해도 지금 계획의 페이스·거리·반복은 자동으로 바뀌지 않아요.
+          </p>
+        </>
       )}
     </section>
   )

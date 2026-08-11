@@ -723,6 +723,15 @@
   margin-top: var(--space-3);
 }
 
+.plan-records-note {
+  margin: var(--space-3) 0 0;
+  color: var(--ink-3);
+  font-family: var(--sans);
+  font-size: var(--fs-body-sm);
+  line-height: 1.55;
+  text-wrap: pretty;
+}
+
 .plan-notation-error {
   margin: var(--space-4) 0 0;
   padding: var(--space-3);
