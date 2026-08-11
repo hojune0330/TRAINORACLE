@@ -13,6 +13,13 @@ vi.mock("../domain/feedback/feedback-config", () => ({
 afterEach(cleanup)
 
 describe("more feedback entry", () => {
+  it("uses the same inquiry-board name as the comment-style board", () => {
+    render(<More onBack={vi.fn()} onOpenMinji={vi.fn()} onOpenGuide={vi.fn()} feedbackAvailable />)
+
+    expect(screen.getByRole("link", { name: /^문의 게시판/u })).toBeVisible()
+    expect(screen.queryByRole("link", { name: /^의견 게시판/u })).not.toBeInTheDocument()
+  })
+
   it("describes a board as closed when its switch is on but its connection is incomplete", () => {
     render(<More onBack={vi.fn()} onOpenMinji={vi.fn()} onOpenGuide={vi.fn()} />)
 

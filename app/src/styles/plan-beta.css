@@ -124,6 +124,13 @@
   gap: var(--space-3);
 }
 
+.training-home__today .daily-context {
+  margin: var(--space-3) 0 0;
+  padding: var(--space-3) 0 0;
+  border-bottom: 0;
+  border-top-style: dashed;
+}
+
 .daily-context__group {
   min-width: 0;
   margin: 0;
