@@ -52,6 +52,19 @@ describe("plan history frame compatibility", () => {
 
     // Then
     expect(result?.intake.trainingTimePreference).toBe("VARIES")
+    expect(result?.intake.competitionDivision).toBe("NOT_PROVIDED")
+  })
+
+  it("preserves the athlete-selected competition division as context", () => {
+    const selected = {
+      ...stateFixture(),
+      intake: {
+        ...stateFixture().intake,
+        competitionDivision: "HIGH_SCHOOL",
+      },
+    }
+
+    expect(parsePlanBetaState(selected)?.intake.competitionDivision).toBe("HIGH_SCHOOL")
   })
 
   it("preserves a valid selected calendar date and rejects a malformed one", () => {

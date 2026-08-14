@@ -18,6 +18,17 @@ const experienceBandSchema = z.enum([
   "DEVELOPING",
   "EXPERIENCED",
 ])
+export const COMPETITION_DIVISIONS = [
+  "ELEMENTARY",
+  "MIDDLE_SCHOOL",
+  "HIGH_SCHOOL",
+  "COLLEGE",
+  "OPEN",
+  "MASTERS",
+  "NO_REGISTERED_DIVISION",
+  "NOT_PROVIDED",
+] as const
+const competitionDivisionSchema = z.enum(COMPETITION_DIVISIONS)
 const secondSessionModeSchema = z.enum([
   "SINGLE_SESSION_ONLY",
   "RECOVERY_PM_ALLOWED",
@@ -39,6 +50,7 @@ const selectedStartDateSchema = z.string().refine(isValidIsoDate, {
 
 export const planIntakeSchema = z.object({
   eventGroup: planEventGroupSchema,
+  competitionDivision: competitionDivisionSchema.optional().default("NOT_PROVIDED"),
   experienceBand: experienceBandSchema,
   availableDayCount: z.union([
     z.literal(3),
@@ -117,6 +129,7 @@ const planBetaStateSchema = z.object({
 export const planHistoryListSchema = z.array(planHistorySchema).max(5)
 
 export type PlanBetaIntake = z.infer<typeof planIntakeSchema>
+export type CompetitionDivision = PlanBetaIntake["competitionDivision"]
 export type StoredPlanProgress = z.infer<typeof progressSchema>
 export type PlanBetaState = z.infer<typeof planBetaStateSchema>
 export type StoredPlanHistory = z.infer<typeof planHistorySchema>

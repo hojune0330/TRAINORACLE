@@ -2,6 +2,7 @@ import type { IntakeStep } from "./PlanIntake"
 
 const STEP_ORDER: readonly IntakeStep[] = [
   "goal",
+  "division",
   "experience",
   "focus",
   "days",

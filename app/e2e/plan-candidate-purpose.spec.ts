@@ -9,6 +9,7 @@ test("explains why the conservative plan has no selected-purpose session", async
     .getByRole("button", { name: /^훈련 계획/ })
     .click()
   await page.getByRole("button", { name: /800m.*1500m/u }).click()
+  await page.getByRole("button", { name: /고등부/u }).click()
   await page.getByRole("button", { name: /훈련 계획에 맞춰 달려 본 경험이 있어요/u }).click()
   await page.getByRole("button", { name: /지속 페이스.*LT/u }).click()
   await page.getByRole("button", { name: /^3일/u }).click()

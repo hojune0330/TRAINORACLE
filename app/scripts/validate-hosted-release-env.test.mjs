@@ -11,6 +11,13 @@ const connection = {
   VITE_SUPABASE_ANON_KEY: "public-anon-key",
 }
 
+const legalDocuments = {
+  VITE_PRIVACY_POLICY_URL: "https://trainoracle.example/privacy",
+  VITE_PRIVACY_POLICY_VERSION: "2026-08-14",
+  VITE_TERMS_OF_SERVICE_URL: "https://trainoracle.example/terms",
+  VITE_TERMS_OF_SERVICE_VERSION: "2026-08-14",
+}
+
 test("keeps the local-only release valid when every network feature is closed", () => {
   assert.deepEqual(validateHostedReleaseEnvironment({}), [])
 })
@@ -18,7 +25,17 @@ test("keeps the local-only release valid when every network feature is closed", 
 test("requires a public client connection before opening accounts", () => {
   assert.deepEqual(validateHostedReleaseEnvironment({
     VITE_ACCOUNT_PUBLIC_ENABLED: "true",
-  }), ["ACCOUNT_REQUIRES_PUBLIC_CONNECTION"])
+  }), [
+    "ACCOUNT_REQUIRES_PUBLIC_CONNECTION",
+    "ACCOUNT_REQUIRES_PUBLIC_LEGAL_DOCUMENTS",
+  ])
+})
+
+test("requires public legal documents and versions before opening accounts", () => {
+  assert.deepEqual(validateHostedReleaseEnvironment({
+    ...connection,
+    VITE_ACCOUNT_PUBLIC_ENABLED: "true",
+  }), ["ACCOUNT_REQUIRES_PUBLIC_LEGAL_DOCUMENTS"])
 })
 
 test("requires the account gate before opening account-backed features", () => {
@@ -60,6 +77,7 @@ test("uses the account emergency switch instead of inventing an account-public s
 test("accepts a staged account and sync release without exposing configuration values", () => {
   const errors = validateHostedReleaseEnvironment({
     ...connection,
+    ...legalDocuments,
     VITE_ACCOUNT_PUBLIC_ENABLED: "true",
     VITE_FEATURE_SYNC: "true",
   })

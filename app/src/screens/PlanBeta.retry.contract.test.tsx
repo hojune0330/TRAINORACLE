@@ -16,6 +16,7 @@ afterEach(() => {
 async function generatePlanCandidates(): Promise<void> {
   const user = userEvent.setup()
   await user.click(screen.getByRole("button", { name: /800m.*1500m/u }))
+  await user.click(screen.getByRole("button", { name: /고등부/u }))
   await user.click(screen.getByRole("button", { name: /훈련 계획에 맞춰 달려 본 경험/u }))
   await user.click(screen.getByRole("button", { name: /지속 페이스.*LT/u }))
   await user.click(screen.getByRole("button", { name: /^3일/u }))

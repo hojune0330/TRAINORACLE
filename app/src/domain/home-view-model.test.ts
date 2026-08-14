@@ -38,6 +38,7 @@ const activePlan = {
   version: 1,
   intake: {
     eventGroup: "MIDDLE_DISTANCE",
+    competitionDivision: "OPEN",
     experienceBand: "DEVELOPING",
     availableDayCount: 3,
     requestedFrameLength: 9,

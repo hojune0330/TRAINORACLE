@@ -18,6 +18,7 @@ import {
   sessionSlotLabel,
 } from "./labels"
 import { PlanSchedulePreview } from "./PlanSchedulePreview"
+import { DIVISION_LABELS } from "./plan-intake-meta"
 
 const PROGRESS_ACTIONS: readonly {
   readonly state: PlanProgressState
@@ -63,11 +64,14 @@ export function ActivePlan({
         <span>
           <strong>
             {activePlan.sourceMode === "PROFILE_ONLY"
-              ? "사용 정보 7가지 · 베타 계획"
+              ? "내가 고른 조건 · 베타 계획"
               : "최근 일지 확인 · 계획 수치에는 미반영"}
             <TermHelp term="plan-beta-basis" />
           </strong>
           <small>이 계획과 진행 상태는 이 브라우저에만 저장 · 의료 판단 아님</small>
+          <small>
+            참가 부문: {DIVISION_LABELS[state.intake.competitionDivision].title} · 표시용 정보이며 훈련 강도와 안전 판정에는 미사용
+          </small>
         </span>
       </div>
       <PlanSchedulePreview
