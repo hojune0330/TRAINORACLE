@@ -60,9 +60,11 @@ export function PlanCandidates({
           <small>
             시간·RPE와 고른 훈련 목적만 안내 · 반복·거리·페이스·회복은 아직 미지정
           </small>
-          <small>
-            참가 부문: {DIVISION_LABELS[intake.competitionDivision].title} · 표시용 정보이며 훈련 강도와 안전 판정에는 미사용
-          </small>
+          {intake.competitionDivision !== "NOT_PROVIDED" && (
+            <small>
+              참가 부문: {DIVISION_LABELS[intake.competitionDivision].title} · 표시용 정보이며 훈련 강도와 안전 판정에는 미사용
+            </small>
+          )}
           {generated.candidates[0].continuityContext.kind ===
             "PREVIOUS_FRAME_CONTEXT_RETAINED" && (
             <small>
@@ -95,6 +97,23 @@ export function PlanCandidates({
           </p>
         </>
       )}
+      <section className="plan-candidate-comparison" aria-label="두 계획 핵심 비교">
+        <h2>먼저 핵심만 비교</h2>
+        <div>
+          {generated.candidates.map((candidate) => {
+            const label = candidateLabel(candidate.kind, candidate.selectedEnergyIntent)
+            const purposeStatus = candidatePurposeStatus(candidate.kind)
+            return (
+              <article key={candidate.candidateId}>
+                <span>계획 {candidate.kind === "BALANCED" ? 1 : 2}</span>
+                <strong>{label.title}</strong>
+                <p>{purposeStatus.label}</p>
+                <small>{candidateSessionSummary(candidate)}</small>
+              </article>
+            )
+          })}
+        </div>
+      </section>
       <div className="plan-candidate-list">
         {generated.candidates.map((candidate) => (
           <CandidateSection
@@ -124,6 +143,7 @@ function CandidateSection({
   const label = candidateLabel(candidate.kind, candidate.selectedEnergyIntent)
   const purposeStatus = candidatePurposeStatus(candidate.kind)
   const optionNumber = candidate.kind === "BALANCED" ? 1 : 2
+  const frameLengthDays = candidate.frame.projectionLengthDays ?? candidate.frame.lengthDays
   return (
     <article className="plan-candidate" aria-labelledby={`candidate-${candidate.candidateId}`}>
       <header>
@@ -138,7 +158,7 @@ function CandidateSection({
           {candidateSessionSummary(candidate)}
         </strong>
         <small>
-          {EVENT_LABELS[candidate.eventGroup].title} · {candidate.frame.lengthDays}일
+          {EVENT_LABELS[candidate.eventGroup].title} · {frameLengthDays}일
           {" · "}훈련일마다 총 시간·RPE·훈련 목적 표시
         </small>
         <div className="plan-session-legend" aria-label="훈련 수치와 의도 설명">
@@ -150,7 +170,13 @@ function CandidateSection({
           <span>상세 수치 미지정<TermHelp term="quality-session" /></span>
         </div>
       </header>
-      {canSelect && <PlanSchedulePreview startDate={startDate} sessions={candidate.sessions} />}
+      {canSelect && (
+        <PlanSchedulePreview
+          startDate={startDate}
+          frameLengthDays={frameLengthDays}
+          sessions={candidate.sessions}
+        />
+      )}
       <button
         className="plan-select-action"
         type="button"

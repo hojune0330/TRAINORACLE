@@ -45,12 +45,18 @@ function sourceCodes(request: CanonicalPlanGenerationRequest): readonly PlanBeta
   }
 }
 
-function frameFor(): PlanCandidate["frame"] {
+function frameFor(request: CanonicalPlanGenerationRequest): PlanCandidate["frame"] {
   return Object.freeze({
     formationKind: "LOCAL_CIVIL_9_5",
     lengthDays: 9.5,
     slotCount: 19,
-    continuity: Object.freeze({ kind: "STANDARD_FRAME" }),
+    projectionLengthDays: request.requestedFrameLength,
+    continuity: request.requestedFrameLength === 7
+      ? Object.freeze({
+          kind: "SEVEN_DAY_CONTINUITY",
+          nextFrameInput: "SELECTED_PLAN_AND_PROGRESS",
+        })
+      : Object.freeze({ kind: "STANDARD_FRAME" }),
   })
 }
 
@@ -63,6 +69,7 @@ function candidateId(input: CandidateBuildInput): string {
     input.request.selectedEnergyIntent.toLowerCase(),
     input.request.profile.secondSessionMode.toLowerCase(),
     input.request.profile.trainingTimePreference.toLowerCase(),
+    `projection-${input.request.requestedFrameLength}`,
     "local-civil-9-5",
     input.ledger.countedExposureIds.join("-"),
     input.request.profile.availableTrainingDays.join("-"),
@@ -114,7 +121,7 @@ function buildCandidate(input: CandidateBuildInput): PlanCandidate {
     }),
     continuityContext: continuityContextFor(input.request),
     selectionAuthority: input.request.selectionAuthority,
-    frame: frameFor(),
+    frame: frameFor(input.request),
     mainExposureLedger: Object.freeze({
       mainExposureCount: input.ledger.mainExposureCount,
       fingerprint: input.ledger.countedExposureIds.join(":"),
@@ -168,7 +175,7 @@ export function createDeterministicCandidates(
     request,
     ledger,
     kind: "CONSERVATIVE",
-    qualityDays: Object.freeze([]),
+    qualityDays: balancedQualityDays(request),
   })
   return Object.freeze([balanced, conservative])
 }

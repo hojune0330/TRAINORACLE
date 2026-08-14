@@ -75,6 +75,23 @@ function canonicalProfileDayError(profile: PlanProfile): ParseRejectionCode | un
   return undefined
 }
 
+function parseProjectionLength(value: unknown): 7 | 9 | 9.5 | 10 | undefined {
+  switch (value) {
+    case 7:
+      return 7
+    case 9:
+      return 9
+    case 9.5:
+      return 9.5
+    case 10:
+      return 10
+    case undefined:
+      return 9.5
+    default:
+      return undefined
+  }
+}
+
 export function parsePlanGenerationRequest(input: unknown): ParsedPlanRequest {
   if (!isRecord(input) || input["kind"] !== "PLAN_BETA_GENERATION_REQUEST") {
     return reject("MALFORMED_INPUT")
@@ -103,10 +120,6 @@ export function parsePlanGenerationRequest(input: unknown): ParsedPlanRequest {
 
   const formationValue = input["formation"]
   const legacyFrameValue = input["requestedFrameLength"]
-  if (formationValue !== undefined && legacyFrameValue !== undefined) {
-    return reject("MALFORMED_INPUT")
-  }
-
   if (formationValue === undefined) {
     const requestedFrameLength = parseFrameLength(legacyFrameValue)
     if (requestedFrameLength === undefined) {
@@ -121,7 +134,8 @@ export function parsePlanGenerationRequest(input: unknown): ParsedPlanRequest {
   }
 
   const formation = parseFormation(formationValue)
-  if (formation === undefined) {
+  const requestedFrameLength = parseProjectionLength(legacyFrameValue)
+  if (formation === undefined || requestedFrameLength === undefined) {
     return reject("MALFORMED_INPUT")
   }
 
@@ -135,6 +149,7 @@ export function parsePlanGenerationRequest(input: unknown): ParsedPlanRequest {
     safetyGate,
     profile,
     formation,
+    requestedFrameLength,
     journalSource: journal.journalSource,
     selectionAuthority,
     selectedEnergyIntent,

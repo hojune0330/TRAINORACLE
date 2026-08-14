@@ -22,12 +22,20 @@ function audit(
 }
 
 function copyFrame(frame: CanonicalPlanFrame): CanonicalPlanFrame {
-  return Object.freeze({
+  const base: CanonicalPlanFrame = {
     formationKind: "LOCAL_CIVIL_9_5",
     lengthDays: frame.lengthDays,
     slotCount: frame.slotCount,
-    continuity: Object.freeze({ kind: "STANDARD_FRAME" }),
-  })
+    continuity: frame.continuity.kind === "SEVEN_DAY_CONTINUITY"
+      ? Object.freeze({
+          kind: "SEVEN_DAY_CONTINUITY" as const,
+          nextFrameInput: "SELECTED_PLAN_AND_PROGRESS" as const,
+        })
+      : Object.freeze({ kind: "STANDARD_FRAME" as const }),
+  }
+  return frame.projectionLengthDays === undefined
+    ? Object.freeze(base)
+    : Object.freeze({ ...base, projectionLengthDays: frame.projectionLengthDays })
 }
 
 function copySession(session: PlanSession): PlanSession {

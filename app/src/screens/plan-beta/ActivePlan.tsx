@@ -50,11 +50,14 @@ export function ActivePlan({
     activePlan.candidateKind,
     activePlan.selectedEnergyIntent,
   )
+  const frameLengthDays = "projectionLengthDays" in activePlan.frame
+    ? activePlan.frame.projectionLengthDays ?? activePlan.frame.lengthDays
+    : activePlan.frame.lengthDays
 
   return (
     <section className="active-plan" aria-labelledby="active-plan-title">
       <div className="plan-eyebrow">내 훈련 일정</div>
-      <h1 id="active-plan-title">{label.title} {activePlan.frame.lengthDays}일 계획</h1>
+      <h1 id="active-plan-title">{label.title} {frameLengthDays}일 계획</h1>
       <p className="plan-copy">
         오늘 할 훈련의 총 시간, RPE, 훈련 목적을 확인하세요.
         완료하지 못한 날을 다음 날에 몰아서 하지 마세요.
@@ -69,13 +72,16 @@ export function ActivePlan({
             <TermHelp term="plan-beta-basis" />
           </strong>
           <small>이 계획과 진행 상태는 이 브라우저에만 저장 · 의료 판단 아님</small>
-          <small>
-            참가 부문: {DIVISION_LABELS[state.intake.competitionDivision].title} · 표시용 정보이며 훈련 강도와 안전 판정에는 미사용
-          </small>
+          {state.intake.competitionDivision !== "NOT_PROVIDED" && (
+            <small>
+              참가 부문: {DIVISION_LABELS[state.intake.competitionDivision].title} · 표시용 정보이며 훈련 강도와 안전 판정에는 미사용
+            </small>
+          )}
         </span>
       </div>
       <PlanSchedulePreview
         startDate={state.intake.startDate ?? state.generatedAt.slice(0, 10)}
+        frameLengthDays={frameLengthDays}
         sessions={activePlan.sessions}
         renderSessionFooter={(session) => {
           const current = recorded.get(`${session.day}:${session.slot}`)

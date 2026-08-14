@@ -101,13 +101,13 @@ export function candidateLabel(
   if (kind === "CONSERVATIVE") {
     if (selectedEnergyIntent === "RECOVERY_INTENT") {
       return {
-        title: "완전 휴식 우선",
-        detail: "가벼운 회복 움직임 대신, 가능한 날도 휴식으로 남깁니다.",
+        title: "회복 목적 · 부담 낮춤",
+        detail: "고른 회복 목적은 유지하고, 움직임 양을 줄이거나 쉬는 날을 늘립니다.",
       }
     }
     return {
-      title: "기초 지구력 중심",
-      detail: "고른 훈련 목적은 이번 후보에 넣지 않고, RPE 3~4 기본 유산소만 배치합니다.",
+      title: `${ENERGY_INTENT_LABELS[selectedEnergyIntent].title.split(" · ")[0]} · 부담 낮춤`,
+      detail: `고른 ${ENERGY_INTENT_LABELS[selectedEnergyIntent].title} 목적은 유지하고, 훈련량을 줄이거나 회복 여유를 늘립니다.`,
     }
   }
 
@@ -191,6 +191,38 @@ export function sessionGuidance(session: PlanSession): string {
   }
 }
 
+export function sessionExecution(session: PlanSession): string {
+  switch (session.role) {
+    case "REST":
+      return "달리기 일정은 없습니다. 쉬거나 일상 수준으로 가볍게 움직이세요."
+    case "EASY":
+      return session.plannedEnergyIntent === "RECOVERY_INTENT"
+        ? "표시된 시간 동안 숨이 편한 걷기·가벼운 조깅·느린 자전거 중 하나로 움직이세요."
+        : "표시된 시간 동안 친구와 대화할 수 있는 정도로 편하게 달리세요."
+    case "QUALITY":
+      return qualityExecution(session.plannedEnergyIntent)
+  }
+}
+
+function qualityExecution(intent: PlannedEnergyIntent): string {
+  switch (intent) {
+    case "LT_INTENT":
+      return "숨은 차지만 속도를 크게 바꾸지 않고 표시된 시간 동안 이어 가세요."
+    case "VO2_INTENT":
+    case "GLY_INTENT":
+      return "말하기는 어렵지만 한 번에 완전히 지쳐 멈추지 않도록 힘을 조절하세요."
+    case "ATP_PC_INTENT":
+      return "짧고 빠르게 움직이되, 매번 전력질주가 되지 않도록 충분히 조절하세요."
+    case "MIXED_INTENT":
+      return "한 가지 강도에 고정하지 말고 표시된 RPE 범위 안에서 힘을 조절하세요."
+    case "RECOVERY_INTENT":
+    case "BASE_INTENT":
+      return "표시된 RPE 범위 안에서 힘을 조절하며 움직이세요."
+    default:
+      return intent satisfies never
+  }
+}
+
 function qualityGuidance(intent: PlannedEnergyIntent): string {
   switch (intent) {
     case "LT_INTENT":
@@ -212,8 +244,13 @@ function qualityGuidance(intent: PlannedEnergyIntent): string {
 
 export function candidateSessionSummary(candidate: {
   readonly sessions: readonly PlanSession[]
+  readonly frame?: { readonly projectionLengthDays?: 7 | 9 | 9.5 | 10 }
 }): string {
-  const counts = candidate.sessions.reduce(
+  const projectionLengthDays = candidate.frame?.projectionLengthDays
+  const visibleSessions = projectionLengthDays === undefined
+    ? candidate.sessions
+    : candidate.sessions.filter((session) => session.day <= projectionLengthDays)
+  const counts = visibleSessions.reduce(
     (current, session) => ({
       training: current.training + (session.role === "REST" ? 0 : 1),
       easy: current.easy + (session.role === "EASY" ? 1 : 0),
@@ -223,7 +260,7 @@ export function candidateSessionSummary(candidate: {
     { training: 0, easy: 0, quality: 0, rest: 0 },
   )
 
-  const intentionCounts = candidate.sessions.reduce<Record<PlannedEnergyIntent, number>>(
+  const intentionCounts = visibleSessions.reduce<Record<PlannedEnergyIntent, number>>(
     (current, session) => ({
       ...current,
       [session.plannedEnergyIntent]: current[session.plannedEnergyIntent] + 1,
@@ -247,7 +284,7 @@ export function candidateSessionSummary(candidate: {
     ? "고강도 0일"
     : `${ENERGY_INTENT_LABELS[qualityIntent].title.split(" · ")[0]} ${intentionCounts[qualityIntent]}일`
 
-  const twoADayTrainingDays = twoADayTrainingDayCount(candidate.sessions)
+  const twoADayTrainingDays = twoADayTrainingDayCount(visibleSessions)
   const secondSession = twoADayTrainingDays === 0
     ? ""
     : ` · 하루 2회 훈련 ${twoADayTrainingDays}일`

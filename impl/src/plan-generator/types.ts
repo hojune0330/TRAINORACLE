@@ -203,10 +203,8 @@ export type PlanGenerationRequest = {
   readonly continuity?: PlanContinuityInput
 }
 
-export type CanonicalPlanGenerationRequest = Omit<
-  PlanGenerationRequest,
-  "requestedFrameLength"
-> & {
+export type CanonicalPlanGenerationRequest = Omit<PlanGenerationRequest, "requestedFrameLength"> & {
+  readonly requestedFrameLength: 7 | 9 | 9.5 | 10
   readonly formation: LocalCivilNinePointFiveFormation
 }
 

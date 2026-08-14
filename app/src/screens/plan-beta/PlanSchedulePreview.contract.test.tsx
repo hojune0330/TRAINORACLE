@@ -1,4 +1,5 @@
 import { cleanup, render, screen } from "@testing-library/react"
+import userEvent from "@testing-library/user-event"
 import { afterEach, describe, expect, it, vi } from "vitest"
 import type { PlanSession } from "@impl/plan-generator/types"
 import { PlanSchedulePreview } from "./PlanSchedulePreview"
@@ -61,12 +62,28 @@ describe("plan schedule preview", () => {
     })
     expect(firstDay).toHaveTextContent("오전")
     expect(firstDay).toHaveTextContent("오후")
+    expect(screen.getByRole("group", { name: "8월 17일 월요일 오전 세션" })).toBeVisible()
+    expect(screen.getByRole("group", { name: "8월 17일 월요일 오후 세션" })).toBeVisible()
     expect(firstDay).toHaveTextContent("지속 페이스")
     expect(firstDay).toHaveTextContent("오후 회복 운동")
 
     expect(screen.getByRole("group", {
       name: "8월 18일 화요일 · 휴식",
     })).toHaveTextContent("휴식일")
+  })
+
+  it("presents notation, plain execution, and optional RPE detail in order", async () => {
+    const user = userEvent.setup()
+    render(<PlanSchedulePreview startDate="2026-08-17" sessions={sessions.slice(0, 1)} />)
+
+    const session = screen.getByRole("group", { name: "8월 17일 월요일 오전 세션" })
+    expect(session).toHaveTextContent("25~40분 · RPE 5~6")
+    expect(session).toHaveTextContent(/숨은 차지만.*이어 갈/u)
+
+    const rpeHelp = screen.getByRole("button", { name: "RPE 설명 보기" })
+    await user.click(rpeHelp)
+    expect(screen.getByText(/1~2는 빨리 걷기.*3~4는.*기본 유산소.*10은 최대 노력/u)).toBeVisible()
+    expect(screen.getByText(/의료 판단이 아닙니다/u)).toBeVisible()
   })
 
   it("marks only today's date while the frame is being followed", () => {

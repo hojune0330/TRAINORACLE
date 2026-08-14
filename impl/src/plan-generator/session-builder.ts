@@ -95,20 +95,16 @@ function easyIntent(input: CandidateSessionBuildInput): "RECOVERY_INTENT" | "BAS
   if (input.request.selectedEnergyIntent === "RECOVERY_INTENT") {
     return "RECOVERY_INTENT"
   }
-  if (
-    input.kind === "CONSERVATIVE"
-    && input.request.selectedEnergyIntent === "BASE_INTENT"
-  ) {
-    return "RECOVERY_INTENT"
-  }
   return "BASE_INTENT"
 }
 
-function restsAvailableRecoveryDays(input: CandidateSessionBuildInput): boolean {
-  return (
-    input.kind === "CONSERVATIVE"
-    && input.request.selectedEnergyIntent === "RECOVERY_INTENT"
-  )
+function durationForCandidate(
+  range: DurationRange,
+  kind: PlanCandidateKind,
+): DurationRange {
+  return kind === "CONSERVATIVE"
+    ? { minimum: range.minimum, maximum: range.minimum }
+    : range
 }
 
 function easyTrainingSession(
@@ -200,7 +196,7 @@ export function makeCandidateSessions(input: CandidateSessionBuildInput): readon
   const sessions: PlanSession[] = []
 
   for (let day = 1; day <= 10; day += 1) {
-    if (!availableDays.has(day) || restsAvailableRecoveryDays(input)) {
+    if (!availableDays.has(day)) {
       sessions.push(restSession(day))
       continue
     }
@@ -210,29 +206,37 @@ export function makeCandidateSessions(input: CandidateSessionBuildInput): readon
         sessions.push(easyTrainingSession(
           day,
           recoveryCounterpartSlot,
-          ranges.recoverySupport,
+          durationForCandidate(ranges.recoverySupport, input.kind),
           "RECOVERY_INTENT",
         ))
       }
       sessions.push(qualityTrainingSession(
         day,
-        ranges.quality,
+        durationForCandidate(ranges.quality, input.kind),
         qualityIntentFor(input.request),
         qualitySlot,
       ))
       continue
     }
 
-    sessions.push(easyTrainingSession(day, "AM", ranges.easy, easyIntent(input)))
+    sessions.push(easyTrainingSession(
+      day,
+      "AM",
+      durationForCandidate(ranges.easy, input.kind),
+      easyIntent(input),
+    ))
     if (recoverySecondDays.has(day)) {
       sessions.push(easyTrainingSession(
         day,
         "PM",
-        ranges.recoverySupport,
+        durationForCandidate(ranges.recoverySupport, input.kind),
         "RECOVERY_INTENT",
       ))
     }
   }
 
-  return Object.freeze(sessions)
+  const projectionEndDay = input.request.requestedFrameLength === 9.5
+    ? 10
+    : input.request.requestedFrameLength
+  return Object.freeze(sessions.filter((session) => session.day <= projectionEndDay))
 }

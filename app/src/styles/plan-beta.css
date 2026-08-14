@@ -469,13 +469,17 @@
 
 .plan-schedule-preview__sessions > section {
   min-width: 0;
-  padding: var(--space-3);
-  border: var(--bw-line) solid var(--line);
-  background: var(--surface);
+  padding: var(--space-3) 0;
+  border-block: var(--bw-line) solid var(--line);
 }
 
 .active-plan .plan-schedule-preview__sessions > section {
   border-color: var(--ink);
+}
+
+.plan-schedule-preview__sessions[data-session-count="2"] > section + section {
+  padding-left: var(--space-3);
+  border-left: var(--bw-line) solid var(--line);
 }
 
 .plan-schedule-preview__slot {
@@ -525,6 +529,11 @@
 @media (max-width: 420px) {
   .plan-schedule-preview__sessions[data-session-count="2"] {
     grid-template-columns: 1fr;
+  }
+
+  .plan-schedule-preview__sessions[data-session-count="2"] > section + section {
+    padding-left: 0;
+    border-left: 0;
   }
 
   .plan-schedule-calendar > header span {
@@ -888,6 +897,66 @@
   border-top: var(--bw-line) solid var(--ink);
 }
 
+.plan-candidate-comparison {
+  margin-top: var(--space-5);
+  padding-block: var(--space-4);
+  border-block: var(--bw-line) solid var(--ink);
+}
+
+.plan-candidate-comparison h2 {
+  margin: 0 0 var(--space-3);
+  font-family: var(--sans);
+  font-size: var(--fs-app-section-title);
+  letter-spacing: 0;
+}
+
+.plan-candidate-comparison > div {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.plan-candidate-comparison article {
+  min-width: 0;
+  padding: 0 var(--space-3);
+}
+
+.plan-candidate-comparison article:first-child {
+  padding-left: 0;
+  border-right: var(--bw-line) solid var(--hair);
+}
+
+.plan-candidate-comparison article:last-child {
+  padding-right: 0;
+}
+
+.plan-candidate-comparison article > span,
+.plan-candidate-comparison article > small {
+  display: block;
+  color: var(--ink-3);
+  font-family: var(--mono);
+  font-size: var(--fs-mono-xs);
+  line-height: 1.45;
+  overflow-wrap: break-word;
+}
+
+.plan-candidate-comparison article > strong {
+  display: block;
+  margin-top: var(--space-1);
+  font-family: var(--sans);
+  font-size: var(--fs-body);
+  line-height: 1.4;
+  overflow-wrap: break-word;
+}
+
+.plan-candidate-comparison article > p {
+  margin: var(--space-2) 0;
+  color: var(--ink-2);
+  font-family: var(--sans);
+  font-size: var(--fs-body-sm);
+  line-height: 1.45;
+  word-break: keep-all;
+}
+
 .plan-candidate {
   padding: var(--space-5) 0;
   border-bottom: var(--bw-line) solid var(--ink);
@@ -975,6 +1044,35 @@
   align-items: center;
 }
 
+.plan-rpe-guide {
+  margin-top: var(--space-4);
+  padding-block: var(--space-3);
+  border-block: var(--bw-line) solid var(--hair);
+  display: grid;
+  gap: var(--space-1);
+  font-family: var(--sans);
+}
+
+.plan-rpe-guide strong {
+  min-height: var(--app-touch-min);
+  display: inline-flex;
+  align-items: center;
+  font-size: var(--fs-body-sm);
+}
+
+.plan-rpe-guide span,
+.plan-rpe-guide small {
+  color: var(--ink-2);
+  font-size: var(--fs-body-sm);
+  line-height: 1.55;
+  word-break: keep-all;
+  overflow-wrap: break-word;
+}
+
+.plan-rpe-guide small {
+  color: var(--ink-3);
+}
+
 .plan-session-list,
 .active-plan__days {
   margin: var(--space-4) 0 0;
@@ -1017,8 +1115,21 @@
 }
 
 .plan-session-content .plan-session-metric {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
   font-family: var(--mono);
   font-size: var(--fs-mono-xs);
+  word-break: keep-all;
+  overflow-wrap: break-word;
+}
+
+.plan-session-execution {
+  margin: var(--space-1) 0 0;
+  color: var(--ink);
+  font-family: var(--sans);
+  font-size: var(--fs-body-sm);
+  line-height: 1.55;
   word-break: keep-all;
   overflow-wrap: break-word;
 }
@@ -1067,6 +1178,26 @@
   word-break: keep-all;
   overflow-wrap: break-word;
   text-wrap: pretty;
+}
+
+@media (max-width: 420px) {
+  .plan-candidate-comparison > div {
+    grid-template-columns: 1fr;
+  }
+
+  .plan-candidate-comparison article {
+    padding: var(--space-3) 0;
+  }
+
+  .plan-candidate-comparison article:first-child {
+    padding-top: 0;
+    border-right: 0;
+    border-bottom: var(--bw-line) solid var(--hair);
+  }
+
+  .plan-candidate-comparison article:last-child {
+    padding-bottom: 0;
+  }
 }
 
 .plan-select-action,

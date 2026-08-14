@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest"
 import { STEP_META } from "./plan-intake-meta"
+import {
+  divisionForGoal,
+  visibleIntakeSteps,
+} from "./plan-intake-navigation"
 
 describe("plan intake wording", () => {
   it("uses short Korean labels for every question step", () => {
@@ -13,5 +17,17 @@ describe("plan intake wording", () => {
       "하루 두 번 훈련",
       "지금 몸 상태",
     ])
+  })
+})
+
+describe("conditional competition division", () => {
+  it("skips division for general endurance and stores the valid omitted value", () => {
+    expect(divisionForGoal("GENERAL_ENDURANCE")).toBe("NOT_PROVIDED")
+    expect(visibleIntakeSteps("GENERAL_ENDURANCE")).not.toContain("division")
+  })
+
+  it("keeps division for competition-oriented goals", () => {
+    expect(divisionForGoal("MIDDLE_DISTANCE")).toBeUndefined()
+    expect(visibleIntakeSteps("MIDDLE_DISTANCE")).toContain("division")
   })
 })

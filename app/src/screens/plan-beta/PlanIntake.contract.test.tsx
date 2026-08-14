@@ -16,6 +16,7 @@ describe("two-a-day intake", () => {
         onExperience={vi.fn()}
         onFocus={vi.fn()}
         onDays={vi.fn()}
+        onFrameLength={vi.fn()}
         onTrainingTime={vi.fn()}
         onSecondSession={vi.fn()}
         onManageRecords={vi.fn()}
@@ -42,6 +43,7 @@ describe("competition division intake", () => {
         onExperience={vi.fn()}
         onFocus={vi.fn()}
         onDays={vi.fn()}
+        onFrameLength={vi.fn()}
         onTrainingTime={vi.fn()}
         onSecondSession={vi.fn()}
         onManageRecords={vi.fn()}
@@ -53,5 +55,35 @@ describe("competition division intake", () => {
     expect(screen.getByText(/나이·성숙도.*의료 판단에 사용하지 않아요/u)).toBeVisible()
     await screen.getByRole("button", { name: /고등부/u }).click()
     expect(onDivision).toHaveBeenCalledWith("HIGH_SCHOOL")
+  })
+})
+
+describe("plan length intake", () => {
+  it("explains the continuing 7-day choice and keeps 9/10 wording factual", () => {
+    render(
+      <PlanIntake
+        step="frame-length"
+        draft={{}}
+        onBack={vi.fn()}
+        onGoal={vi.fn()}
+        onDivision={vi.fn()}
+        onExperience={vi.fn()}
+        onFocus={vi.fn()}
+        onDays={vi.fn()}
+        onFrameLength={vi.fn()}
+        onTrainingTime={vi.fn()}
+        onSecondSession={vi.fn()}
+        onManageRecords={vi.fn()}
+        onOpenNotationReader={vi.fn()}
+        onSafety={vi.fn()}
+      />,
+    )
+
+    expect(screen.getByRole("button", { name: /7일만 먼저 받기/u }))
+      .toHaveTextContent("다음 계획으로 이어서")
+    expect(screen.getByRole("button", { name: /9일 계획 받기/u }))
+      .toHaveTextContent("9일 분량")
+    expect(screen.getByRole("button", { name: /10일 계획 받기/u }))
+      .toHaveTextContent("10일 분량")
   })
 })

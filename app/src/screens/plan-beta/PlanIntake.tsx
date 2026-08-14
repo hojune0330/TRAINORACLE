@@ -24,9 +24,10 @@ import {
 } from "./labels"
 import { PlanChoice as Choice } from "./PlanChoice"
 import { answeredSummary, DIVISION_LABELS, STEP_META, trainingTimeLabel } from "./plan-intake-meta"
-import type { IntakeStep } from "./plan-intake-meta"
+import type { IntakeStep as MetaIntakeStep } from "./plan-intake-meta"
+import { visibleIntakeSteps } from "./plan-intake-navigation"
 
-export type { IntakeStep } from "./plan-intake-meta"
+export type IntakeStep = MetaIntakeStep | "frame-length"
 
 type IntakeDraft = Partial<PlanBetaIntake>
 
@@ -39,6 +40,7 @@ type PlanIntakeProps = {
   readonly onExperience: (band: ExperienceBand) => void
   readonly onFocus: (focus: PlannedEnergyIntent) => void
   readonly onDays: (days: PlanBetaIntake["availableDayCount"]) => void
+  readonly onFrameLength: (length: PlanBetaIntake["requestedFrameLength"]) => void
   readonly onTrainingTime: (preference: TrainingTimePreference) => void
   readonly onSecondSession: (mode: SecondSessionMode) => void
   readonly onManageRecords: () => void
@@ -58,6 +60,7 @@ export function PlanIntake({
   onExperience,
   onFocus,
   onDays,
+  onFrameLength,
   onTrainingTime,
   onSecondSession,
   onManageRecords,
@@ -65,8 +68,27 @@ export function PlanIntake({
   onSafety,
   onJump,
 }: PlanIntakeProps) {
-  const meta = STEP_META[step]
-  const answeredSteps = answeredSummary(draft)
+  const meta = step === "frame-length"
+    ? {
+        eyebrow: "계획 길이",
+        title: "이번에 며칠 계획을 받을까요?",
+        copy: "7일은 먼저 7일만 받고 다음 계획으로 이어집니다. 9일과 10일은 고른 날짜 수만큼 한 번에 받습니다.",
+        helpTerm: "plan-option" as const,
+      }
+    : STEP_META[step]
+  const visibleSteps = visibleIntakeSteps(draft.eventGroup)
+  const currentStepIndex = visibleSteps.indexOf(step)
+  const stepNumber = currentStepIndex < 0 ? 1 : currentStepIndex + 1
+  const summaryLabels = new Map<IntakeStep, string>(
+    answeredSummary(draft).map(({ step: answeredStep, label }) => [answeredStep, label]),
+  )
+  if (draft.requestedFrameLength !== undefined) {
+    summaryLabels.set("frame-length", `${draft.requestedFrameLength}일 계획`)
+  }
+  const answeredSteps = visibleSteps.flatMap((answeredStep) => {
+    const label = summaryLabels.get(answeredStep)
+    return label === undefined ? [] : [{ step: answeredStep, label }]
+  })
   const [showTenKm, setShowTenKm] = useState(false)
   const eventGroups = showTenKm
     ? PLAN_EVENT_GROUPS
@@ -77,9 +99,9 @@ export function PlanIntake({
         <ArrowLeft aria-hidden="true" size={17} />
         이전
       </button>
-      <div className="plan-progress" aria-label={`계획 질문 ${meta.number}/8`}>
-        <span>{meta.number}/8</span>
-        <i style={{ width: `${meta.number * (100 / 8)}%` }} />
+      <div className="plan-progress" aria-label={`계획 질문 ${stepNumber}/${visibleSteps.length}`}>
+        <span>{stepNumber}/{visibleSteps.length}</span>
+        <i style={{ width: `${stepNumber * (100 / visibleSteps.length)}%` }} />
       </div>
       {answeredSteps.length > 0 && (
         <div className="plan-intake__summary" aria-label="지금까지">
@@ -162,6 +184,19 @@ export function PlanIntake({
                 : `운동 ${days}일 · 고르지 않은 날은 완전 휴식`}
               selected={draft.availableDayCount === days}
               onClick={() => onDays(days)}
+            />
+          ))
+        )}
+        {step === "frame-length" && (
+          ([7, 9, 10] as const).map((length) => (
+            <Choice
+              key={length}
+              title={length === 7 ? "7일만 먼저 받기" : `${length}일 계획 받기`}
+              detail={length === 7
+                ? "첫 7일을 받고, 끝나면 다음 계획으로 이어서 받아요"
+                : `${length}일 분량을 한 번에 받아요`}
+              selected={draft.requestedFrameLength === length}
+              onClick={() => onFrameLength(length)}
             />
           ))
         )}
