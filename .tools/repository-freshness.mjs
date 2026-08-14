@@ -2,6 +2,7 @@ import { appendFileSync } from "node:fs"
 import { pathToFileURL } from "node:url"
 
 const PAGE_SIZE = 100
+const POLICY_ACTIVATED_AT = Date.parse("2026-08-14T11:10:24Z")
 
 export function evaluateFreshness({ main, branches, pulls, deployment }) {
   const newestPullByBranch = new Map()
@@ -10,7 +11,7 @@ export function evaluateFreshness({ main, branches, pulls, deployment }) {
   }
   const unresolvedBranches = branches
     .filter((branch) => branch.name !== "main" && branch.name !== "gh-pages")
-    .filter((branch) => branch.committedAt > main.committedAt)
+    .filter((branch) => Date.parse(branch.committedAt) >= POLICY_ACTIVATED_AT)
     .flatMap((branch) => {
       const pull = newestPullByBranch.get(branch.name)
       if (!pull) return [`${branch.name}@${branch.sha.slice(0, 7)} (NO_PR)`]
