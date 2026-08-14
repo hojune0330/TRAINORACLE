@@ -63,6 +63,32 @@ describe("personal plan energy intention contract", () => {
     )
   })
 
+  it("preserves recovery-support duration while Candidate B reduces non-recovery dose", () => {
+    const generated = expectGenerated(generatePlanCandidates({
+      kind: "PLAN_BETA_GENERATION_REQUEST",
+      safetyGate: clearedGate(),
+      profile: {
+        eventGroup: "FIVE_K",
+        experienceBand: "EXPERIENCED",
+        availableTrainingDays: [1, 3, 5, 7, 9],
+        secondSessionMode: "RECOVERY_PM_ALLOWED",
+      },
+      formation: canonicalFormation(),
+      journalSource: { kind: "NO_USABLE_JOURNAL" },
+      selectionAuthority: "SELF",
+      selectedEnergyIntent: "VO2_INTENT",
+    }))
+    const [balanced, conservative] = generated.candidates
+    const balancedRecovery = balanced.sessions.find(
+      (session) => session.role === "EASY" && session.plannedEnergyIntent === "RECOVERY_INTENT",
+    )
+    const conservativeRecovery = conservative.sessions.find(
+      (session) => session.role === "EASY" && session.plannedEnergyIntent === "RECOVERY_INTENT",
+    )
+
+    expect(balancedRecovery?.prescription).toEqual(conservativeRecovery?.prescription)
+  })
+
   it("keeps at most one QUALITY session per day and companion RPE within 1-3", () => {
     // Given
     const generated = expectGenerated(generatePlanCandidates({

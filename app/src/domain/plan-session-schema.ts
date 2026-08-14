@@ -149,7 +149,22 @@ const canonicalPlanFrameSchema = z.object({
 export const planFrameSchema = z.union([
   legacyPlanFrameSchema,
   canonicalPlanFrameSchema,
-])
+]).superRefine((frame, context) => {
+  const projectionLengthDays = "formationKind" in frame
+    ? frame.projectionLengthDays ?? frame.lengthDays
+    : frame.lengthDays
+  const expectedContinuityKind = projectionLengthDays === 7
+    ? "SEVEN_DAY_CONTINUITY"
+    : "STANDARD_FRAME"
+
+  if (frame.continuity.kind !== expectedContinuityKind) {
+    context.addIssue({
+      code: "custom",
+      path: ["continuity", "kind"],
+      message: `Projection ${projectionLengthDays} requires ${expectedContinuityKind}`,
+    })
+  }
+})
 
 export const activePlanSchema = z.object({
   kind: z.literal("BETA_ACTIVE_PLAN_SNAPSHOT"),

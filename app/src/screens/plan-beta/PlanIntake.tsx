@@ -142,7 +142,7 @@ export function PlanIntake({
           ))
         )}
         {step === "division" && (
-          COMPETITION_DIVISIONS.filter((value) => value !== "NOT_PROVIDED").map((value) => (
+          COMPETITION_DIVISIONS.map((value) => (
             <Choice
               key={value}
               title={DIVISION_LABELS[value].title}

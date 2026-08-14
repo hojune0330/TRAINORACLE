@@ -206,7 +206,7 @@ export function makeCandidateSessions(input: CandidateSessionBuildInput): readon
         sessions.push(easyTrainingSession(
           day,
           recoveryCounterpartSlot,
-          durationForCandidate(ranges.recoverySupport, input.kind),
+          ranges.recoverySupport,
           "RECOVERY_INTENT",
         ))
       }
@@ -229,14 +229,11 @@ export function makeCandidateSessions(input: CandidateSessionBuildInput): readon
       sessions.push(easyTrainingSession(
         day,
         "PM",
-        durationForCandidate(ranges.recoverySupport, input.kind),
+        ranges.recoverySupport,
         "RECOVERY_INTENT",
       ))
     }
   }
 
-  const projectionEndDay = input.request.requestedFrameLength === 9.5
-    ? 10
-    : input.request.requestedFrameLength
-  return Object.freeze(sessions.filter((session) => session.day <= projectionEndDay))
+  return Object.freeze(sessions)
 }

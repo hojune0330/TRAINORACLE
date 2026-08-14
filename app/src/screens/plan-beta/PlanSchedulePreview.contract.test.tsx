@@ -40,6 +40,32 @@ afterEach(cleanup)
 afterEach(() => vi.useRealTimers())
 
 describe("plan schedule preview", () => {
+  it("projects only days 1-7 from a full canonical session list", () => {
+    const dayEightSession: PlanSession = {
+      day: 8,
+      slot: "AM",
+      role: "EASY",
+      plannedEnergyIntent: "BASE_INTENT",
+      prescription: {
+        kind: "RPE_TIME_RANGE",
+        rpe: { minimum: 3, maximum: 4 },
+        durationMinutes: { minimum: 30, maximum: 45 },
+      },
+    }
+
+    render(
+      <PlanSchedulePreview
+        startDate="2026-08-17"
+        frameLengthDays={7}
+        sessions={[...sessions, dayEightSession]}
+      />,
+    )
+
+    expect(screen.getByLabelText("7일 달력 요약")).toBeVisible()
+    expect(screen.getByRole("group", { name: /8월 23일 일요일/u })).toBeVisible()
+    expect(screen.queryByRole("group", { name: /8월 24일 월요일/u })).not.toBeInTheDocument()
+  })
+
   it("shows a chosen date as two separate same-day training slots", () => {
     render(<PlanSchedulePreview startDate="2026-08-17" sessions={sessions} />)
 

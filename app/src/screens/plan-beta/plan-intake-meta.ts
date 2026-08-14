@@ -27,7 +27,7 @@ export const DIVISION_LABELS: Record<CompetitionDivision, {
   OPEN: { title: "일반부", detail: "현재 대회에서 일반부로 참가하거나 준비 중" },
   MASTERS: { title: "생활체육·마스터즈", detail: "연령대·동호인 부문 대회를 준비 중" },
   NO_REGISTERED_DIVISION: { title: "정해진 참가 부문이 없어요", detail: "대회 등록 없이 혼자 훈련하거나 아직 부문을 정하지 않음" },
-  NOT_PROVIDED: { title: "참가 부문 미기록", detail: "이전 계획에는 참가 부문을 기록하지 않았어요" },
+  NOT_PROVIDED: { title: "선택하지 않음/나중에 입력", detail: "지금 정하지 않고 계획을 계속 만들어요" },
 }
 
 export const STEP_META: Record<IntakeStep, {

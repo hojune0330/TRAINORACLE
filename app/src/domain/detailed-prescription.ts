@@ -7,7 +7,10 @@ import type {
   StructuredPrescription,
 } from "@impl/prescription/types"
 import type { SafetyGateDecision } from "@impl/safety-gate/gate"
-import type { DetailedPrescriptionApprovalRecord } from "./detailed-prescription-approvals"
+import {
+  DETAILED_PRESCRIPTION_APPROVALS,
+  type DetailedPrescriptionApprovalRecord,
+} from "./detailed-prescription-approvals"
 
 type DetailedPrescriptionInput = {
   readonly detailedPrescriptionEnabled: boolean
@@ -49,10 +52,11 @@ function isCompleteApproval(
 
 export function prepareDetailedPrescription(
   input: DetailedPrescriptionInput,
-  approvals: readonly DetailedPrescriptionApprovalRecord[],
 ): DetailedPrescription | null {
   if (!input.detailedPrescriptionEnabled) return null
-  const approval = approvals.find((candidate) => candidate.templateId === input.templateId)
+  const approval = DETAILED_PRESCRIPTION_APPROVALS.find(
+    (candidate) => candidate.templateId === input.templateId,
+  )
   if (approval === undefined || !isCompleteApproval(approval, input)) return null
 
   const prepared = preparePrescriptionRuntime({

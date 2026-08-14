@@ -53,8 +53,9 @@ describe("competition division intake", () => {
     )
 
     expect(screen.getByText(/나이·성숙도.*의료 판단에 사용하지 않아요/u)).toBeVisible()
-    await screen.getByRole("button", { name: /고등부/u }).click()
-    expect(onDivision).toHaveBeenCalledWith("HIGH_SCHOOL")
+    expect(screen.getByRole("button", { name: /고등부/u })).toBeVisible()
+    await screen.getByRole("button", { name: /선택하지 않음.*나중에 입력/u }).click()
+    expect(onDivision).toHaveBeenCalledWith("NOT_PROVIDED")
   })
 })
 

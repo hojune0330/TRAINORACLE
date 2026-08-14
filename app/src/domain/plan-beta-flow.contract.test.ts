@@ -4,6 +4,7 @@ import {
   selectPlanForActivation,
 } from "./plan-beta-flow"
 import { parsePlanBetaState } from "./plan-beta-schema"
+import { loadPlanBetaState, savePlanBetaState } from "./plan-beta-store"
 
 beforeEach(() => {
   window.localStorage.clear()
@@ -65,7 +66,11 @@ describe("canonical plan intake boundary", () => {
           nextFrameInput: "SELECTED_PLAN_AND_PROGRESS",
         },
       })
-      expect(candidate.sessions.every((session) => session.day <= 7)).toBe(true)
+      expect(new Set(candidate.sessions.map((session) => session.day))).toEqual(
+        new Set([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]),
+      )
+      expect(new Set(candidate.sessions.map((session) => `${session.day}:${session.slot}`)).size)
+        .toBe(candidate.sessions.length)
       expect(candidate.mainExposureLedger.countedExposureIds).toContain("app-main-day-9")
     }
     const candidate = result.generated.candidates[0]
@@ -76,6 +81,16 @@ describe("canonical plan intake boundary", () => {
       projectionLengthDays: 7,
       continuity: { kind: "SEVEN_DAY_CONTINUITY" },
     })
+    const selectedSessionKeys = selection.state.activePlan.sessions.map(
+      (session) => `${session.day}:${session.slot}`,
+    )
+    expect(selectedSessionKeys).toEqual(
+      candidate.sessions.map((session) => `${session.day}:${session.slot}`),
+    )
+    expect(savePlanBetaState(selection.state)).toEqual({ ok: true })
+    expect(loadPlanBetaState()?.activePlan.sessions.map(
+      (session) => `${session.day}:${session.slot}`,
+    )).toEqual(selectedSessionKeys)
   })
 
   it("generates two selectable 9.5-day candidates from the athlete intake", () => {

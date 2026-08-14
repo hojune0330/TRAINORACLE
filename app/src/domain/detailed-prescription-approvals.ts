@@ -18,5 +18,5 @@ export type DetailedPrescriptionApprovalRecord = TemplateRuntimeStatus & {
   readonly youthReview: ApprovalReview | null
 }
 
-export const DETAILED_PRESCRIPTION_APPROVALS = [] as const satisfies
-  readonly DetailedPrescriptionApprovalRecord[]
+export const DETAILED_PRESCRIPTION_APPROVALS: readonly DetailedPrescriptionApprovalRecord[] =
+  Object.freeze([])
