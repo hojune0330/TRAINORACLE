@@ -16,12 +16,20 @@ function faqItems(): readonly FaqItem[] {
     answer: "네. 지금은 로그인 없이 이 기기에서 일지를 쓸 수 있어요. 계정 기능을 열 때는 첫 200명에게 열리는 무료 베타로 시작할 예정이에요.",
   },
   {
+    question: "지금 무엇을 할 수 있나요?",
+    answer: "오늘의 일지, 달력과 9.5일 보기, 지난 일지, 백업·복원, 꾸미기를 사용할 수 있어요. 기록은 지금 이 기기에 저장돼요.",
+  },
+  {
+    question: "아직 준비 중인 기능은 무엇인가요?",
+    answer: "계정 동기화, 코치 연결, 문의 게시판, 자동 훈련 처방은 아직 열지 않았어요. 준비가 끝나고 열기 전에 앱에서 먼저 알려드려요.",
+  },
+  {
     question: "나중에도 계속 무료인가요?",
     answer: "기본 무료 기능을 이어 가는 방향이지만, 운영 상황에 따라 상품 구성이 바뀔 수 있어요. 바뀌기 전에는 앱에서 먼저 알려드려요.",
   },
   {
     question: "나중에 월 구독이나 광고가 생길 수 있나요?",
-    answer: "TrainOracle 베타는 현재 무료입니다. 서비스 운영을 위해 나중에 월 구독이나 광고가 포함된 선택 상품이 생길 수 있습니다. 가격이나 무료 기능이 바뀌기 전에는 앱에서 먼저 알려드립니다.",
+    answer: "위 안내처럼 지금은 무료 베타예요. 구독·광고형 선택 상품이나 가격 변경이 정해지면 적용 전에 앱 안에서 먼저 알려드려요.",
   },
   {
     question: "무료 기능이 갑자기 사라지나요?",
@@ -91,8 +99,22 @@ export function EasyFaq() {
       <h2 id="easy-faq-title" style={{ fontFamily: "var(--sans)", fontSize: 20, fontWeight: 600, margin: "6px 0 0" }}>
         궁금한 점을 쉽게 풀어드려요
       </h2>
+      <p
+        data-testid="beta-price-notice"
+        style={{
+          border: "1px solid var(--line)",
+          borderRadius: 8,
+          fontFamily: "var(--sans)",
+          fontSize: 13,
+          lineHeight: 1.7,
+          margin: "14px 0 0",
+          padding: "12px 14px",
+        }}
+      >
+        TrainOracle 베타는 현재 무료입니다. 서비스 운영을 위해 나중에 월 구독이나 광고가 포함된 선택 상품이 생길 수 있습니다. 가격이나 무료 기능이 바뀌기 전에는 앱에서 먼저 알려드립니다.
+      </p>
       <p style={{ fontFamily: "var(--sans)", fontSize: 12, lineHeight: 1.65, color: "var(--ink-3)", margin: "8px 0 16px" }}>
-        이 페이지는 쉬운 설명이에요. 개인정보 처리방침과 이용 안내 같은 정식 문서는 계정·공유 기능을 열기 전에 함께 제공해요.
+        이 페이지는 쉬운 설명이에요. 개인정보 처리방침이나 이용 약관을 대신하지 않아요. 정식 문서는 계정·공유 기능을 열기 전에 함께 제공해요.
       </p>
       <div style={{ borderTop: "1px solid var(--line)" }}>
         {faqItems().map((item) => (
