@@ -6,6 +6,9 @@ async function openAthleteRecords(page: Page): Promise<void> {
   await page.getByRole("navigation", { name: "주 탭" })
     .getByRole("button", { name: "계획" })
     .click()
+  await expect(page.getByText(
+    "경기 기록을 저장해도 지금 계획의 페이스·거리·반복은 자동으로 바뀌지 않아요.",
+  )).toBeVisible()
   await page.getByRole("button", { name: "내 경기 기록 관리" }).click()
   await expect(page.getByRole("heading", { name: "내 경기 기록" })).toBeVisible()
 }

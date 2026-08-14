@@ -5,7 +5,7 @@ document_metadata:
   doc_id: trainoracle-spec-035-double-session-beta-safety
   spec_id: DOUBLE_SESSION_BETA_SAFETY_CONTRACT
   title: TrainOracle Double Session Beta Safety Contract
-  version: "0.2"
+  version: "0.3"
   round: RT1_OWNER_APPROVED_LOCAL_BETA_BOUNDARY
   status: DRAFT_FOR_REVIEW
   owner: COACH_HOJUNE
@@ -19,8 +19,9 @@ document_metadata:
   final_marker_required: "[DRAFT_COMPLETE]"
   machine_validated: false
   machine_validation_note: "No CI validator, test, or lint rule enforces any DSB-INV-* rule."
-  governing_owner_decision: OWNER_DECISION_SESSION_SLOT_INTENSITY_2026_08_06.md
-  governing_owner_decision_date: "2026-08-06"
+  governing_owner_decision: OWNER_DECISION_FULL_TWO_A_DAY_2026_08_12.md
+  prior_owner_decision: OWNER_DECISION_SESSION_SLOT_INTENSITY_2026_08_06.md
+  governing_owner_decision_date: "2026-08-12"
   change_history_section: "10"
 ```
 
@@ -40,8 +41,11 @@ document_metadata:
 - **이 문서보다 나중 날짜의 소유자 결정이 항상 우선합니다**
   (`FORMATION_LATEST_OWNER_DECISION_BASELINE.md` 10항).
 - 현재 반영된 최신 소유자 결정:
-  `OWNER_DECISION_SESSION_SLOT_INTENSITY_2026_08_06.md` (OD-SLOT-1 ~ OD-SLOT-8).
-  v0.2는 그 결정을 본문에 **반영 완료**한 상태입니다.
+  `OWNER_DECISION_FULL_TWO_A_DAY_2026_08_12.md`. 이 결정은 사용자가 직접
+  하루 두 번을 고른 경우, 고른 모든 훈련일에 오전·오후 슬롯을 만드는 현재
+  공개 베타 동작을 기록한다. 이전의 슬롯·강도 결정
+  `OWNER_DECISION_SESSION_SLOT_INTENSITY_2026_08_06.md`는 이 범위에서
+  계속 보조 근거로 남는다.
 - v0.1에서 **은퇴한 규칙의 원문**은 §10 변경 이력에 그대로 남겨 두었습니다.
   과거 보고서·작업지시서가 옛 규칙을 인용한 부분을 해석할 때 §10을 참고하세요.
   옛 규칙을 "지금도 유효한 지침"으로 읽으면 안 됩니다.
@@ -59,9 +63,10 @@ projection, a medical recovery decision, or an individualized numeric
 prescription.
 
 A second session on a beta day exists only when the athlete explicitly selects
-`RECOVERY_PM_ALLOWED`. The default is `SINGLE_SESSION_ONLY`. The stored value
-name is retained for backwards compatibility; since v0.2 the second session is
-not restricted to recovery intensity (`DSB-INV-002`).
+`RECOVERY_PM_ALLOWED`. The default is `SINGLE_SESSION_ONLY`. When explicitly
+selected, every available training day receives two distinct slots. The stored
+value name is retained for backwards compatibility; it does not mean that the
+PM slot is the only recovery slot or that it is a hidden catch-up session.
 
 ## 2. Scope And Non-Purpose
 
@@ -93,10 +98,9 @@ This draft does not:
 second_session_mode:
   SINGLE_SESSION_ONLY: "default; one session at most on each beta day"
   RECOVERY_PM_ALLOWED: >-
-    explicit athlete selection; permits a constrained second session in the
-    other half of the day. Name retained for stored-data backwards
-    compatibility; the second session is no longer restricted to recovery
-    intensity. See DSB-INV-002.
+    explicit athlete selection; creates a morning and afternoon slot on every
+    available training day. Name retained for stored-data backwards
+    compatibility; it does not promise an individualized recovery prescription.
 
 session_slot:
   AM: "first half of a beta day: a session, or complete rest"
@@ -132,7 +136,7 @@ from the original draft.
 | `DSB-INV-002` | Second-session shape | The second session may be `REST`, `EASY`, or `QUALITY`. It is **not** restricted to `RECOVERY_INTENT` or `RPE 1-2`. The recommended default for the PM half is rest or light aerobic work, and the generator should prefer that, but recovery is a recommendation and not a constraint. | OD-SLOT-1, OD-SLOT-2, OD-SLOT-7 (2026-08-06) — replaces v0.1 `DSB-INV-002` |
 | `DSB-INV-003` | Same-day quality count | **Default: at most one `QUALITY` session per beta day.** Two `QUALITY` sessions on one beta day are permitted only when the athlete explicitly designates that day, and only when `DSB-INV-009` is satisfied. The generator must never produce two same-day `QUALITY` sessions on its own. | OD-SLOT-2, OD-SLOT-3 (2026-08-06) — replaces v0.1 `DSB-INV-003` |
 | `DSB-INV-004` | Daily cap | A beta day has at most one AM and one PM session, so at most two sessions per day. Each `(day, slot)` pair is unique. | v0.1 (unchanged) |
-| `DSB-INV-005` | Recovery-session frame cap | The Balanced candidate may show at most **one** PM session whose intent is `RECOVERY_INTENT` in a 7-day frame, and at most **two** in a 9-, 9.5-, or 10-day frame. The Conservative candidate shows none. **Scope:** the cap counts PM sessions whose `plannedEnergyIntent` is `RECOVERY_INTENT`, from every source — including a counterpart session placed opposite a quality session, if that counterpart is built with `RECOVERY_INTENT`. **Unit:** a count of sessions, not of two-a-day days. **This cap is unchanged by any owner decision and remains binding.** Measured 2026-08-06: as currently designed the planned S-2 counterpart change would push 300 of 420 Balanced combinations (71%) to 3-4 such sessions, over the cap of 2. A conforming implementation must budget the counterpart and the pure recovery PM against one shared cap. | v0.1 rule kept; scope and unit clarified, and cap-breach measurement recorded, 2026-08-06 (see §8 `OI-DSB-FRAME-LOAD-CAP-001`) |
+| `DSB-INV-005` | Full two-a-day selection | When an athlete explicitly selects `RECOVERY_PM_ALLOWED`, every available training day has two distinct slots. There is no separate PM `RECOVERY_INTENT` count cap for this user-selected full schedule. This does **not** create a numeric prescription, a second automatic `QUALITY` session, a catch-up session, or a medical clearance. | `OWNER_DECISION_FULL_TWO_A_DAY_2026_08_12.md` — replaces v0.1 recovery-session frame cap for the explicit full two-a-day schedule |
 | `DSB-INV-006` | Availability meaning | An available day includes recovery movement. `EVERY_DAY` does not create extra quality days; existing quality-day rules remain unchanged. | v0.1 (unchanged) |
 | `DSB-INV-007` | No compensation | A skipped or incomplete AM/PM session is not moved, duplicated, or added to a later day. A second session is never created to make up for a missed one. | v0.1 (unchanged) |
 | `DSB-INV-008` | RPE-only boundary | Any beta session, AM or PM, may show only duration range, RPE range, intent, and plain-language guidance. It must not show derived pace, repetitions, distance, or recovery intervals. | v0.1; subject widened from "PM output" to "any beta session" 2026-08-06 |
@@ -207,8 +211,8 @@ retain these regression vectors:
 |---:|---|---|---|
 | V-1 | single-session profile | no second session on any day | `DSB-INV-001` |
 | V-2 | **control (must pass):** explicit AM/PM profile, 9.5-day frame, Balanced, non-recovery intent | the snapshot is **accepted** by the storage loader | `DSB-INV-001` |
-| V-3 | explicit AM/PM profile, 9.5-day LT candidate | at most two PM `RECOVERY_INTENT` sessions; PM quality is **not** rejected on shape grounds | `DSB-INV-002`, `DSB-INV-005` |
-| V-4 | 7-day explicit AM/PM profile | at most one PM `RECOVERY_INTENT` session | `DSB-INV-005` |
+| V-3 | explicit AM/PM profile, 9.5-day LT candidate | every available training day has one AM and one PM slot; PM shape is not rejected merely for being PM | `DSB-INV-001`, `DSB-INV-005` |
+| V-4 | explicit AM/PM profile | no unrequested second slot appears on a non-available or single-session day | `DSB-INV-001`, `DSB-INV-005` |
 | V-5 | every-day availability, explicit AM/PM | up to 10 two-a-day days are accepted; never 3+ sessions on one day | `DSB-INV-004` |
 | V-6 | every-day availability | quality-session count is unchanged by availability alone | `DSB-INV-006` |
 | V-7 | persisted AM and PM progress | progress for `n:AM` and `n:PM` coexist and update independently | — |
@@ -235,7 +239,7 @@ vectors** (see §0).
 | `OI-DSB-CALENDAR-CROSSWALK-001` | OPEN | yes | Accepted mapping of local AM/PM beta slots to `DOUBLE`/`FLEX`, calendar identity, and projection fixtures. |
 | `OI-DSB-SAFETY-HOLD-INTEGRATION-001` | OPEN | yes | Accepted hold and recheck behavior for a real dated double-session calendar flow. |
 | `OI-DSB-TEMPLATE-ELIGIBILITY-001` | OPEN | yes | Accepted template, event, experience, youth-policy, source, and anchor bindings before any numeric PM prescription. |
-| `OI-DSB-FRAME-LOAD-CAP-001` | OPEN | no | An accepted total-training-load ceiling per frame, and confirmation of how the S-2 counterpart session is budgeted against `DSB-INV-005`. Measured 2026-08-06 through `generatePlanFromDraft` (Balanced, `RECOVERY_PM_ALLOWED`, 9.5-day frame, all 420 profile combinations): the plan currently produces 2 PM `RECOVERY_INTENT` sessions and 2 two-a-day days; adding one `RECOVERY_INTENT` counterpart per quality day would produce 3-4 such sessions in **300 of 420 combinations (71%)**, breaching the cap of 2. Minutes measured on `MIDDLE_DISTANCE`/`LT_INTENT` (upper bound of each duration range): NEW_TO_RUNNING 4 days 175 → 195 (+11%); DEVELOPING 4 days 220 → 270 (+23%); EXPERIENCED 4 days 280 → 340 (+21%); every-day cases +5~10%. `DSB-INV-005` bounds recovery-session **count**, not minutes, so no ceiling on minutes exists. This is **not** a canonical blocker, but the 71% cap breach must be resolved inside the S-2 implementation before it ships. |
+| `OI-DSB-FRAME-LOAD-CAP-001` | OPEN | no | An accepted total-training-load ceiling per frame. The previous PM recovery-session count calculation is historical only: the latest user decision deliberately creates two slots on every available training day when that mode is selected. This decision does not establish a total-minute ceiling or individualized load target. |
 
 ## 9. Source Relationships
 
@@ -264,6 +268,24 @@ its upstream specs, not against them.
 각 판에서 무엇이 바뀌었는지와, **은퇴한 규칙의 v0.1 원문**을 남겨 둡니다.
 과거 보고서·작업지시서가 옛 규칙을 인용한 부분을 해석할 때만 쓰세요. 아래
 "은퇴 원문"은 **현재 유효한 지침이 아닙니다.**
+
+### v0.3 — 2026-08-12
+
+근거: `OWNER_DECISION_FULL_TWO_A_DAY_2026_08_12.md`. 사용자가 직접
+하루 두 번을 고른 경우, 고른 모든 훈련일에 두 슬롯을 만들도록 현재
+베타 동작과 계약을 맞췄다.
+
+| 위치 | 변경 |
+|---|---|
+| metadata / §0 | 최신 결정 포인터를 추가했다. |
+| §1 / §3 | 명시적 두 번 선택은 모든 가용일의 두 슬롯을 만든다고 명확히 했다. |
+| `DSB-INV-005` | 예전 PM 회복 건수 상한을 전체 두 번 일정에 적용하지 않도록 교체했다. |
+| §7 / §8 | 검증 벡터와 열린 총 부하 질문을 현재 경계에 맞췄다. |
+
+**은퇴한 v0.2 `DSB-INV-005`의 범위:** "9.5일 프레임에서 PM
+`RECOVERY_INTENT`를 최대 두 건"이라는 상한은 일부 회복 지원을 추가하던
+이전 동작을 위한 것이었다. 사용자가 직접 고른 전체 두 번 일정에는 더 이상
+적용하지 않는다. 과거 결과를 해석할 때만 참고한다.
 
 ### v0.2 — 2026-08-06
 

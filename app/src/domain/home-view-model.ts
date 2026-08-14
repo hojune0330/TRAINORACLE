@@ -8,6 +8,7 @@ import { isoShift, isValidIsoDate } from "./dates"
 export type NextTraining = {
   readonly date: string
   readonly session: Exclude<StoredPlanSession, { readonly role: "REST" }>
+  readonly laterSameDaySession: Exclude<StoredPlanSession, { readonly role: "REST" }> | null
 }
 
 export type TrainingHomeViewModel = {
@@ -77,7 +78,12 @@ function nextTrainingFor(plan: PlanBetaState | null, today: string): NextTrainin
       return left.session.slot.localeCompare(right.session.slot)
     })
 
-  return planned[0] ?? null
+  const next = planned[0]
+  if (next === undefined) return null
+  const laterSameDaySession = planned.find(
+    (entry, index) => index > 0 && entry.date === next.date,
+  )?.session ?? null
+  return { ...next, laterSameDaySession }
 }
 
 /**

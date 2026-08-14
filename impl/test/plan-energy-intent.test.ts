@@ -87,7 +87,38 @@ describe("personal plan energy intention contract", () => {
     ]))
   })
 
-  it("adds only optional PM recovery support when a self-selecting athlete allows two-a-day training", () => {
+  it("keeps two recovery sessions on every selected day when an athlete explicitly chooses two-a-day recovery", () => {
+    // Given
+    const result = generatePlanCandidates({
+      kind: "PLAN_BETA_GENERATION_REQUEST",
+      safetyGate: clearedGate(),
+      profile: {
+        eventGroup: "FIVE_K",
+        experienceBand: "DEVELOPING",
+        availableTrainingDays: [1, 2, 3, 4, 5, 6, 7, 8, 9],
+        secondSessionMode: "RECOVERY_PM_ALLOWED",
+      },
+      formation: canonicalFormation(),
+      journalSource: { kind: "NO_USABLE_JOURNAL" },
+      selectionAuthority: "SELF",
+      selectedEnergyIntent: "RECOVERY_INTENT",
+    })
+
+    // When
+    const balanced = expectGenerated(result).candidates[0]
+
+    // Then
+    const pmSessions = balanced.sessions.filter((session) => session.slot === "PM")
+    expect(pmSessions).toHaveLength(9)
+    expect(new Set(pmSessions.map((session) => session.day))).toEqual(
+      new Set([1, 2, 3, 4, 5, 6, 7, 8, 9]),
+    )
+    expect(balanced.sessions).not.toEqual(expect.arrayContaining([
+      expect.objectContaining({ role: "QUALITY" }),
+    ]))
+  })
+
+  it("adds a separate PM recovery session on every selected training day when an athlete chooses two-a-day training", () => {
     // Given
     const result = generatePlanCandidates({
       kind: "PLAN_BETA_GENERATION_REQUEST",
@@ -113,7 +144,7 @@ describe("personal plan energy intention contract", () => {
     )) ?? []
 
     // Then
-    expect(pmSessions).toHaveLength(2)
+    expect(pmSessions).toHaveLength(9)
     expect(pmSessions).toEqual(expect.arrayContaining([
       expect.objectContaining({
         role: "EASY",
@@ -131,7 +162,7 @@ describe("personal plan energy intention contract", () => {
     ).toBe(pmSessions.length)
     expect(
       conservative?.sessions.filter((session) => "slot" in session && session.slot === "PM"),
-    ).toEqual([])
+    ).toHaveLength(9)
   })
 
   it("does not add extra quality sessions when an athlete can move every day", () => {
@@ -155,6 +186,6 @@ describe("personal plan energy intention contract", () => {
 
     expect(qualitySessions).toHaveLength(2)
     expect(qualitySessions.every((session) => session.slot === "AM")).toBe(true)
-    expect(balanced.sessions.filter((session) => session.slot === "PM")).toHaveLength(2)
+    expect(balanced.sessions.filter((session) => session.slot === "PM")).toHaveLength(9)
   })
 })

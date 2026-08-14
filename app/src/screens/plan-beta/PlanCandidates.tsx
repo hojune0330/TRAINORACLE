@@ -49,8 +49,8 @@ export function PlanCandidates({
         <span>
           <strong>
             {generated.sourceMode === "PROFILE_ONLY"
-              ? "사용 정보 7가지 · 베타 계획"
-              : "최근 일지 확인 · 계획 수치에는 미반영"}
+              ? "내가 고른 조건으로 만든 계획"
+              : "내가 고른 조건으로 만든 계획 · 최근 기록 있음"}
             <TermHelp term="plan-beta-basis" />
           </strong>
           <small>

@@ -50,6 +50,7 @@ const HOME_MODEL_WITH_NEXT_TRAINING = {
   briefing: "",
   nextTraining: {
     date: "2026-07-14",
+    laterSameDaySession: null,
     session: {
       day: 1,
       slot: "PM",
@@ -129,6 +130,45 @@ describe("home journal controls", () => {
     await user.click(nextTraining)
 
     expect(onOpenPlan).toHaveBeenCalledTimes(1)
+  })
+
+  it("shows a later same-day session without adding another service choice", () => {
+    const modelWithFollowUp = {
+      ...HOME_MODEL_WITH_NEXT_TRAINING,
+      nextTraining: {
+        ...HOME_MODEL_WITH_NEXT_TRAINING.nextTraining,
+        session: {
+          ...HOME_MODEL_WITH_NEXT_TRAINING.nextTraining.session,
+          slot: "AM",
+          role: "EASY",
+          plannedEnergyIntent: "BASE_INTENT",
+          prescription: {
+            kind: "RPE_TIME_RANGE",
+            rpe: { minimum: 3, maximum: 4 },
+            durationMinutes: { minimum: 30, maximum: 45 },
+          },
+        },
+        laterSameDaySession: {
+          day: 1,
+          slot: "PM",
+          role: "EASY",
+          plannedEnergyIntent: "RECOVERY_INTENT",
+          prescription: {
+            kind: "RPE_TIME_RANGE",
+            rpe: { minimum: 1, maximum: 2 },
+            durationMinutes: { minimum: 15, maximum: 25 },
+          },
+        },
+      },
+    } satisfies TrainingHomeViewModel
+
+    render(<TrainingHome model={modelWithFollowUp} />)
+
+    const nextTraining = screen.getByRole("button", {
+      name: /다음 훈련.*같은 날 오후.*오후 회복 운동/u,
+    })
+    expect(nextTraining).toHaveTextContent("같은 날 오후 · 오후 회복 운동도 예정")
+    expect(within(screen.getByRole("navigation", { name: "내 기록 살펴보기" })).getAllByRole("button")).toHaveLength(3)
   })
 
   it("places a recent journal entry before services and decoration so returning athletes can continue reading first", () => {

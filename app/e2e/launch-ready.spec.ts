@@ -92,7 +92,7 @@ test("generates a bounded two-a-day 9.5-day candidate", async ({ page }) => {
   await page.getByRole("button", { name: /반복 인터벌.*VO2/u }).click()
   await page.getByRole("button", { name: "매일" }).click()
   await page.getByRole("button", { name: /날마다 달라요/u }).click()
-  await page.getByRole("button", { name: "일부 날은 하루 두 번 운동" }).click()
+  await page.getByRole("button", { name: "하루 두 번 운동할게요" }).click()
   await page.getByRole("button", { name: /통증은 없고 몸 상태는 평소와 같아요/u }).click()
 
   await expectCanonicalPlanCandidates(page)
@@ -108,7 +108,7 @@ test("keeps an evening two-a-day plan after selection and reload", async ({ page
   await page.getByRole("button", { name: /반복 인터벌.*VO2/u }).click()
   await page.getByRole("button", { name: "매일" }).click()
   await page.getByRole("button", { name: /저녁에 운동해요/u }).click()
-  await page.getByRole("button", { name: "일부 날은 하루 두 번 운동" }).click()
+  await page.getByRole("button", { name: "하루 두 번 운동할게요" }).click()
   await page.getByRole("button", { name: /통증은 없고 몸 상태는 평소와 같아요/u }).click()
 
   // When

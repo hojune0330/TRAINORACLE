@@ -69,12 +69,24 @@ function savePostSession(
 }
 
 describe("plan beta user flow", () => {
+  it("explains that managing race records does not automatically change this beta plan", () => {
+    // Given
+    render(<PlanBeta />)
+
+    // Then
+    expect(screen.getByText("목표 종목", { selector: ".plan-eyebrow" })).toBeVisible()
+    expect(screen.getByText(
+      "경기 기록을 저장해도 지금 계획의 페이스·거리·반복은 자동으로 바뀌지 않아요.",
+    )).toBeVisible()
+  })
+
   it("reads a detailed notation without storing or creating a plan", async () => {
     const user = userEvent.setup()
     render(<PlanBeta />)
 
     await user.click(screen.getByRole("button", { name: "훈련표 표기 읽기" }))
     expect(screen.getByRole("heading", { name: "훈련표 표기 읽기" })).toBeVisible()
+    expect(screen.getByText("훈련 표기 읽기", { selector: ".plan-eyebrow" })).toBeVisible()
 
     await user.type(
       screen.getByRole("textbox", { name: "훈련표 표기" }),
@@ -126,7 +138,7 @@ describe("plan beta user flow", () => {
       name: "하루에 두 번 운동하는 날도 넣을까요?",
     })).toBeVisible()
     expect(screen.getByText(
-      "일부 날에 오전과 오후 두 칸을 나눠 보여줘요. 집중 훈련은 고른 시간대에, 다른 칸은 가벼운 훈련이나 회복으로 안내해요.",
+      "고른 모든 훈련일을 오전과 오후 두 칸으로 나눠 보여줘요. 집중 훈련은 고른 시간대에, 다른 칸은 가벼운 훈련이나 회복으로 안내해요.",
     )).toBeVisible()
     expect(screen.queryByText(/오후 RPE 1~2 회복 운동만/u)).toBeNull()
     expect(screen.queryByRole("button", { name: /7일 계획|9일 계획|10일 계획/u })).toBeNull()
@@ -163,6 +175,7 @@ describe("plan beta user flow", () => {
 
     await answerMinimumPlanQuestions("review")
 
+    expect(screen.getByText("계획을 만들 수 없음", { selector: ".plan-eyebrow" })).toBeVisible()
     expect(screen.getByRole("heading", { name: "지금은 계획을 멈췄어요" })).toBeVisible()
     expect(screen.getByText(/앱은 사람에게 자동으로 연결하거나 몸 상태를 확인할 수 없어요/u)).toBeVisible()
     expect(screen.getByText(/지도자·보호자 또는 의료진과 직접 상의해 주세요/u)).toBeVisible()
@@ -252,7 +265,7 @@ describe("plan beta user flow", () => {
     await answerMinimumPlanQuestions("clear")
 
     expectGeneratedCandidates()
-    expect(screen.getAllByText("최근 일지 확인 · 계획 수치에는 미반영")[0]).toBeVisible()
+    expect(screen.getAllByText("내가 고른 조건으로 만든 계획 · 최근 기록 있음")[0]).toBeVisible()
   })
 
   // 원래 이 테스트는 미래 날짜와 함께 "2026-02-31"(2월 31일)도 심었다.
@@ -288,6 +301,8 @@ describe("plan beta user flow", () => {
     await userEvent.setup().click(firstChoice!)
 
     expect(screen.getByRole("heading", { name: /9.5일 계획/u })).toBeVisible()
+    expect(screen.getByText("내 훈련 일정")).toBeVisible()
+    expect(screen.queryByText("ACTIVE · LOCAL BETA")).toBeNull()
     expect(window.localStorage.getItem("trainoracle.plan-beta.v1")).not.toBeNull()
   })
 

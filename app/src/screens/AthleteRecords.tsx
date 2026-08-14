@@ -109,7 +109,7 @@ export function AthleteRecords({ onBack }: { readonly onBack: () => void }) {
           <ArrowLeft aria-hidden="true" size={17} />
           계획으로
         </button>
-        <div className="plan-eyebrow">RACE RECORDS</div>
+        <div className="plan-eyebrow">내 경기 기록</div>
         <h1 id="athlete-records-title">내 경기 기록</h1>
         <p>실제 경기 기록과 앞으로의 목표를 서로 다른 역할로 보관해요.</p>
       </header>

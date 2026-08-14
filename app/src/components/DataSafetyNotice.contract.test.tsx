@@ -13,7 +13,8 @@ describe("DataSafetyNotice", () => {
   it("기기 저장의 한계를 사실대로 고지한다", () => {
     render(<DataSafetyNotice />)
     const notice = screen.getByTestId("data-safety-notice")
-    expect(notice.textContent).toContain("이 기기에만 있어요")
+    expect(notice.textContent).toContain("이 기기에 먼저 저장돼요")
+    expect(notice.textContent).not.toContain("이 기기에만 있어요")
     expect(notice.textContent).toContain("지워질 수 있어요")
   })
 

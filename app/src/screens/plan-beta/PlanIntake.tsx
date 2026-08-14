@@ -170,8 +170,8 @@ export function PlanIntake({
               onClick={() => onSecondSession("SINGLE_SESSION_ONLY")}
             />
             <Choice
-              title="일부 날은 하루 두 번 운동"
-              detail="오전과 오후를 나눠 보여줘요 · 집중 훈련은 고른 시간대에 배치"
+              title="하루 두 번 운동할게요"
+              detail="고른 모든 훈련일에 오전 주 훈련과 오후 회복 움직임을 보여줘요. 고강도 두 개를 자동으로 넣지는 않아요"
               selected={draft.secondSessionMode === "RECOVERY_PM_ALLOWED"}
               onClick={() => onSecondSession("RECOVERY_PM_ALLOWED")}
             />
@@ -204,23 +204,28 @@ export function PlanIntake({
         </button>
       )}
       {step === "goal" && (
-        <div className="plan-support-actions">
-          <button
-            className="plan-text-action plan-records-entry"
-            type="button"
-            onClick={onManageRecords}
-          >
-            <Medal aria-hidden="true" size={17} />
-            내 경기 기록 관리
-          </button>
-          <button
-            className="plan-text-action plan-notation-entry"
-            type="button"
-            onClick={onOpenNotationReader}
-          >
-            훈련표 표기 읽기
-          </button>
-        </div>
+        <>
+          <div className="plan-support-actions">
+            <button
+              className="plan-text-action plan-records-entry"
+              type="button"
+              onClick={onManageRecords}
+            >
+              <Medal aria-hidden="true" size={17} />
+              내 경기 기록 관리
+            </button>
+            <button
+              className="plan-text-action plan-notation-entry"
+              type="button"
+              onClick={onOpenNotationReader}
+            >
+              훈련표 표기 읽기
+            </button>
+          </div>
+          <p className="plan-records-note">
+            경기 기록을 저장해도 지금 계획의 페이스·거리·반복은 자동으로 바뀌지 않아요.
+          </p>
+        </>
       )}
     </section>
   )
