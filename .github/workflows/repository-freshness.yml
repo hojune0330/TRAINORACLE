@@ -1,0 +1,22 @@
+name: TrainOracle repository freshness
+
+permissions:
+  contents: read
+  pull-requests: read
+
+on:
+  schedule:
+    - cron: "15 0 * * *"
+  workflow_dispatch:
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v7
+
+      - name: Verify main, branches, PRs, and Pages
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: node .tools/repository-freshness.mjs
