@@ -25,6 +25,13 @@ function hasPublicConnection(environment) {
     && textValue(environment, "VITE_SUPABASE_ANON_KEY") !== ""
 }
 
+function hasPublicLegalDocuments(environment) {
+  return textValue(environment, "VITE_PRIVACY_POLICY_URL").startsWith("https://")
+    && textValue(environment, "VITE_PRIVACY_POLICY_VERSION") !== ""
+    && textValue(environment, "VITE_TERMS_OF_SERVICE_URL").startsWith("https://")
+    && textValue(environment, "VITE_TERMS_OF_SERVICE_VERSION") !== ""
+}
+
 export function validateHostedReleaseEnvironment(environment) {
   const errors = []
   const accountOpen = isAccountEnabled(environment)
@@ -32,6 +39,9 @@ export function validateHostedReleaseEnvironment(environment) {
 
   if (accountOpen && !connectionReady) {
     errors.push("ACCOUNT_REQUIRES_PUBLIC_CONNECTION")
+  }
+  if (accountOpen && !hasPublicLegalDocuments(environment)) {
+    errors.push("ACCOUNT_REQUIRES_PUBLIC_LEGAL_DOCUMENTS")
   }
 
   for (const feature of ACCOUNT_BACKED_FEATURES) {

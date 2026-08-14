@@ -77,6 +77,10 @@ Google 설정을 건너뛰어도 이메일 코드 로그인은 동작합니다.
           VITE_KILL_FEEDBACK_BOARD: ${{ vars.TRAINORACLE_KILL_FEEDBACK_BOARD }}
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+          VITE_PRIVACY_POLICY_URL: ${{ vars.TRAINORACLE_PRIVACY_POLICY_URL }}
+          VITE_PRIVACY_POLICY_VERSION: ${{ vars.TRAINORACLE_PRIVACY_POLICY_VERSION }}
+          VITE_TERMS_OF_SERVICE_URL: ${{ vars.TRAINORACLE_TERMS_OF_SERVICE_URL }}
+          VITE_TERMS_OF_SERVICE_VERSION: ${{ vars.TRAINORACLE_TERMS_OF_SERVICE_VERSION }}
         run: |
           npm ci
           npm run build
@@ -96,6 +100,10 @@ Google 설정을 건너뛰어도 이메일 코드 로그인은 동작합니다.
 | 이름 | 준비 중 값 | 공개 승인 후 값 |
 |---|---|---|
 | `TRAINORACLE_ACCOUNT_PUBLIC_ENABLED` | `false` 또는 미등록 | `true` |
+| `TRAINORACLE_PRIVACY_POLICY_URL` | 미등록 | 공개 HTTPS 개인정보 처리방침 URL |
+| `TRAINORACLE_PRIVACY_POLICY_VERSION` | 미등록 | 실제 게시본 버전 |
+| `TRAINORACLE_TERMS_OF_SERVICE_URL` | 미등록 | 공개 HTTPS 이용약관 URL |
+| `TRAINORACLE_TERMS_OF_SERVICE_VERSION` | 미등록 | 실제 게시본 버전 |
 | `TRAINORACLE_FEATURE_SYNC` | `false` 또는 미등록 | 계정 안정화 뒤 별도 결정 |
 | `TRAINORACLE_FEATURE_SHARING` | `false` 또는 미등록 | 동기화 안정화 뒤 별도 결정 |
 | `TRAINORACLE_FEATURE_PLAN_PROPOSALS` | `false` 또는 미등록 | 공유 안정화 뒤 별도 결정 |

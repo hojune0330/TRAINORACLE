@@ -7,8 +7,10 @@ product: TrainOracle
 service_provider_working_name: aaclub
 service_operator_target: FREE_BETA_UP_TO_200
 service_operator_scope_decision: ACCOUNT_FIRST_SYNC_LATER
-current_status: SELECTED_NOT_ENABLED
+current_status: OWNER_APPROVED_PREPARATION_GATES_OPEN
 contact_path: TrainOracle in-app feedback board
+owner_preparation_approved_at: 2026-08-14
+legal_clearance_claimed: false
 ```
 
 ## 결정된 방향
@@ -21,6 +23,13 @@ contact_path: TrainOracle in-app feedback board
 이 문서는 공개 승인서가 아니다. 아래 게이트가 모두 실제 증거로 확인되기
 전에는 `TRAINORACLE_ACCOUNT_PUBLIC_ENABLED=true`를 설정하지 않는다.
 
+## 2026-08-14 소유자 승인 기록
+
+소유자는 계정 공개를 위한 법률·운영 준비 작업의 진행을 승인했다. 이 승인은
+누락된 운영자 사실이나 실제 시험 증거를 대신하지 않으며, 변호사 검토 완료나
+법률 준수 확정으로 기록하지 않는다. 따라서 공개 문서 초안·배포 연결·시험은
+진행하되 G1~G9가 실제 증거로 닫히기 전까지 계정 공개 스위치는 계속 잠근다.
+
 ## 필수 게이트
 
 | Gate | 완료 조건 | 현재 |
@@ -28,17 +37,22 @@ contact_path: TrainOracle in-app feedback board
 | G1 개인정보처리방침 | 공개 URL, 수집 항목·목적·보유 기간·삭제·문의 절차 확정 | OPEN |
 | G2 이용약관 | 공개 URL과 적용 버전 확정 | OPEN |
 | G3 운영자 정보 | aaclub의 법적 표기, 주소, 개인정보 문의 연락처 확정 | OPEN |
-| G4 미성년자 | 만 14세 미만 보호자 확인 구현과 실제 시험 | CODE_READY_TEST_OPEN |
+| G4 미성년자 | 만 14세 미만 사용자의 계정 생성 전 법정대리인 동의와 실제 시험 | BLOCKED_PRE_AUTH_GUARDIAN_FLOW |
 | G5 보유·탈퇴 | 즉시 접근 차단·30일 삭제 경로 구현과 실제 정리 영수증 | CODE_READY_TEST_OPEN |
 | G6 처리업체 | 실제 Supabase 프로젝트 지역과 처리위탁 고지 확정 | OPEN |
 | G7 DB 안전 | 시험 DB에 0001~0026 실행, RLS 활성, 사용자별 정책 실측 | PARTIAL_TRIAL_PASS |
 | G8 교차 계정 시험 | 두 계정 격리, 두 기기 동기화, 삭제·복구·재로그인 시험 | OPEN |
-| G9 가입 동의 | 가입 전에 방침·약관 링크와 버전 동의를 저장하는 UI·계약 | OPEN |
+| G9 가입 동의 | 가입 전에 방침·약관 링크와 버전 동의를 저장하는 UI·계약 | PARTIAL_CODE_TEST_OPEN |
 | G10 배포 스위치 | G1~G9 증거 검수 후 저장소 변수를 `true`로 변경 | LOCKED |
 
 G8에는 같은 브라우저에서 계정을 바꿨을 때 이전 사용자의 로컬 일지가 보이지
 않고 새 계정으로 업로드되지 않는 시험을 반드시 포함한다. 현재는 잘못된
 계정으로의 업로드만 차단됐고, 로컬 화면 격리는 아직 OPEN이다.
+
+G4는 현재 가입 후 프로필 화면에서 나이 구간을 판정하는 코드만 있다. 만 14세
+미만 사용자의 이메일 계정과 생년월일을 처리하기 전에 법정대리인 동의를 확인하는
+흐름은 아직 없으므로 공개 적격으로 보지 않는다. G9도 문서 링크·버전 저장 코드는
+있지만 실제 공개 문서, 가입 전 표시 순서, 운영 DB 실행 증거가 없어 닫지 않는다.
 
 ## 현재 확인된 데이터 범위
 
@@ -66,6 +80,9 @@ G8에는 같은 브라우저에서 계정을 바꿨을 때 이전 사용자의 �
 2. 시험 빌드에서 계정만 켜고 이메일·Google 로그인, 보호자 확인, 로그아웃,
    삭제 요청과 실패 경로를 확인한다. 동기화·공유·계획·분석은 계속 끈다.
 3. G1~G6의 실제 운영 정보를 확정하고 공개 문서를 게시한다.
+   공개 배포 변수 `TRAINORACLE_PRIVACY_POLICY_URL`,
+   `TRAINORACLE_PRIVACY_POLICY_VERSION`, `TRAINORACLE_TERMS_OF_SERVICE_URL`,
+   `TRAINORACLE_TERMS_OF_SERVICE_VERSION`도 같은 승인본으로 등록한다.
 4. 서비스 운영자가 시험 결과와 정확한 배포 SHA를 확인한 뒤 계정 변수만
    `true`로 바꾼다.
 5. 계정 공개가 안정된 뒤 서로 다른 두 계정과 두 브라우저로 동기화 G8을
