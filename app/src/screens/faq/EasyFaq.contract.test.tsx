@@ -6,6 +6,20 @@ import { EasyFaq } from "./EasyFaq"
 afterEach(cleanup)
 
 describe("easy FAQ", () => {
+  it("shows the approved beta pricing notice before a reader opens a question", () => {
+    render(<EasyFaq />)
+
+    expect(screen.getByTestId("beta-price-notice")).toHaveTextContent(
+      "TrainOracle 베타는 현재 무료입니다. 서비스 운영을 위해 나중에 월 구독이나 광고가 포함된 선택 상품이 생길 수 있습니다. 가격이나 무료 기능이 바뀌기 전에는 앱에서 먼저 알려드립니다.",
+    )
+  })
+
+  it("keeps the easy FAQ separate from the formal privacy and terms documents", () => {
+    render(<EasyFaq />)
+
+    expect(screen.getByText(/개인정보 처리방침이나 이용 약관을 대신하지 않아요/u)).toBeVisible()
+  })
+
   it("explains the free beta and possible future paid or ad-supported choices", async () => {
     render(<EasyFaq />)
 
@@ -13,7 +27,7 @@ describe("easy FAQ", () => {
     expect(screen.getByText("지금 무료인가요?")).toBeVisible()
     expect(screen.getByText("나중에 월 구독이나 광고가 생길 수 있나요?")).toBeVisible()
     await userEvent.click(screen.getByText("나중에 월 구독이나 광고가 생길 수 있나요?"))
-    expect(screen.getByText(/월 구독이나 광고가 포함된 선택 상품/u)).toBeVisible()
+    expect(screen.getByText(/무료 베타예요/u)).toBeVisible()
   })
 
   it("uses user roles instead of exposing an Owner role", () => {
@@ -39,6 +53,18 @@ describe("easy FAQ", () => {
     await user.click(screen.getByText("지금 무료인가요?"))
     expect(screen.getByText(/첫 200명에게 열리는 무료 베타/u)).toBeVisible()
     expect(screen.getByText(/지금은 로그인 없이 이 기기에서 일지를 쓸 수 있어요/u)).toBeVisible()
+  })
+
+  it("separates what a free beta reader can use today from features still being prepared", async () => {
+    const user = userEvent.setup()
+    render(<EasyFaq />)
+
+    await user.click(screen.getByText("지금 무엇을 할 수 있나요?"))
+    expect(screen.getByText(/오늘의 일지, 달력과 9.5일 보기, 지난 일지, 백업·복원, 꾸미기를 사용할 수 있어요/u)).toBeVisible()
+
+    await user.click(screen.getByText("아직 준비 중인 기능은 무엇인가요?"))
+    expect(screen.getByText(/계정 동기화, 코치 연결, 문의 게시판, 자동 훈련 처방은 아직 열지 않았어요/u)).toBeVisible()
+    expect(screen.getByText(/준비가 끝나고 열기 전에 앱에서 먼저 알려드려요/u)).toBeVisible()
   })
 
   it("describes account, coach sharing, and plan features as closed when they are closed", async () => {
