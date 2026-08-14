@@ -6,7 +6,16 @@ afterEach(cleanup)
 
 describe("account network settings feature boundaries", () => {
   it("keeps product analytics consent hidden while its feature flag is off", () => {
-    render(<AccountNetworkSettings userId="athlete-a" today="2026-08-02" />)
+    render(
+      <AccountNetworkSettings
+        userId="athlete-a"
+        today="2026-08-02"
+        legalDocuments={{
+          privacyPolicy: { url: "https://trainoracle.example/privacy", version: "2026-08-12" },
+          termsOfService: { url: "https://trainoracle.example/terms", version: "2026-08-12" },
+        }}
+      />,
+    )
 
     expect(screen.queryByRole("checkbox", { name: "선택 사용 흐름 분석 허용" })).not.toBeInTheDocument()
     expect(screen.queryByText(/사용 흐름 분석/u)).not.toBeInTheDocument()

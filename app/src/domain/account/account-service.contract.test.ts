@@ -17,9 +17,15 @@ describe("beta account admission service", () => {
     await expect(savePrivateProfile({
       userId: "athlete-a",
       birthDate: "2000-01-01",
+      privacyPolicyVersion: "2026-08-12",
+      termsOfServiceVersion: "2026-08-12",
     })).resolves.toEqual({ ok: true, message: "계정 정보를 저장했어요." })
 
-    expect(rpc).toHaveBeenCalledWith("claim_beta_seat", { birth_date_input: "2000-01-01" })
+    expect(rpc).toHaveBeenCalledWith("claim_beta_seat", {
+      birth_date_input: "2000-01-01",
+      privacy_policy_version_input: "2026-08-12",
+      terms_of_service_version_input: "2026-08-12",
+    })
     expect(from).not.toHaveBeenCalled()
   })
 
@@ -30,6 +36,8 @@ describe("beta account admission service", () => {
     await expect(savePrivateProfile({
       userId: "athlete-201",
       birthDate: "2000-01-01",
+      privacyPolicyVersion: "2026-08-12",
+      termsOfServiceVersion: "2026-08-12",
     })).resolves.toEqual({
       ok: false,
       message: "무료 베타 200명 자리가 모두 찼어요. 기기 일지는 계속 사용할 수 있어요.",
@@ -43,6 +51,8 @@ describe("beta account admission service", () => {
     await expect(savePrivateProfile({
       userId: "athlete-a",
       birthDate: "2000-01-01",
+      privacyPolicyVersion: "2026-08-12",
+      termsOfServiceVersion: "2026-08-12",
     })).resolves.toEqual({
       ok: false,
       message: "계정 정보를 저장하지 못했어요.",
