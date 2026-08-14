@@ -9,11 +9,19 @@ test("explains the first free beta places without implying that account sync is 
 
   // When: the athlete opens the plain-language FAQ and expands the free-beta answer.
   await page.getByRole("button", { name: "쉬운 도움말과 FAQ" }).click()
+  await expect(page.getByTestId("beta-price-notice")).toHaveText(
+    "TrainOracle 베타는 현재 무료입니다. 서비스 운영을 위해 나중에 월 구독이나 광고가 포함된 선택 상품이 생길 수 있습니다. 가격이나 무료 기능이 바뀌기 전에는 앱에서 먼저 알려드립니다.",
+  )
   await page.getByText("지금 무료인가요?").click()
 
   // Then: capacity and the current local-only boundary are both visible.
   await expect(page.getByText(/첫 200명에게 열리는 무료 베타/u)).toBeVisible()
   await expect(page.getByText(/지금은 로그인 없이 이 기기에서 일지를 쓸 수 있어요/u)).toBeVisible()
+
+  await page.getByText("지금 무엇을 할 수 있나요?").click()
+  await expect(page.getByText(/오늘의 일지, 달력과 9.5일 보기, 지난 일지, 백업·복원, 꾸미기를 사용할 수 있어요/u)).toBeVisible()
+  await page.getByText("아직 준비 중인 기능은 무엇인가요?").click()
+  await expect(page.getByText(/계정 동기화, 코치 연결, 문의 게시판, 자동 훈련 처방은 아직 열지 않았어요/u)).toBeVisible()
 })
 
 test("keeps My Records clear and usable on narrow phones", async ({ page }, testInfo) => {
