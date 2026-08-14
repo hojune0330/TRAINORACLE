@@ -282,13 +282,29 @@ export function candidateSessionSummary(candidate: {
   ))
   const qualityLabel = qualityIntent === undefined
     ? "고강도 0일"
-    : `${ENERGY_INTENT_LABELS[qualityIntent].title.split(" · ")[0]} ${intentionCounts[qualityIntent]}일`
+    : `${ENERGY_INTENT_LABELS[qualityIntent].title} ${intentionCounts[qualityIntent]}일`
+
+  const plannedDuration = visibleSessions.reduce(
+    (current, session) => {
+      if (session.prescription.kind === "REST") {
+        return current
+      }
+      return {
+        minimum: current.minimum + session.prescription.durationMinutes.minimum,
+        maximum: current.maximum + session.prescription.durationMinutes.maximum,
+      }
+    },
+    { minimum: 0, maximum: 0 },
+  )
+  const durationLabel = plannedDuration.minimum === plannedDuration.maximum
+    ? `${plannedDuration.minimum}분`
+    : `${plannedDuration.minimum}~${plannedDuration.maximum}분`
 
   const twoADayTrainingDays = twoADayTrainingDayCount(visibleSessions)
   const secondSession = twoADayTrainingDays === 0
     ? ""
     : ` · 하루 2회 훈련 ${twoADayTrainingDays}일`
-  return `운동 ${counts.training}회 · 기초 지구력 ${intentionCounts.BASE_INTENT}일 · ${qualityLabel} · 완전 휴식 ${counts.rest}일${secondSession}`
+  return `운동 ${counts.training}회 · 기초 지구력 ${intentionCounts.BASE_INTENT}일 · ${qualityLabel} · 완전 휴식 ${counts.rest}일 · 총 계획 시간 ${durationLabel}${secondSession}`
 }
 
 export function twoADayTrainingDayCount(sessions: readonly PlanSession[]): number {
