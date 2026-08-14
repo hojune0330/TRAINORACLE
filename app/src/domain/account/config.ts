@@ -5,6 +5,13 @@
 export type AccountConfig = {
   readonly url: string
   readonly anonKey: string
+  readonly privacyPolicy: AccountLegalDocument
+  readonly termsOfService: AccountLegalDocument
+}
+
+export type AccountLegalDocument = {
+  readonly url: string
+  readonly version: string
 }
 
 function textValue(env: Readonly<Record<string, unknown>>, name: string): string {
@@ -18,9 +25,22 @@ export function resolveAccountConfig(env: Readonly<Record<string, unknown>>): Ac
 
   const url = textValue(env, "VITE_SUPABASE_URL")
   const anonKey = textValue(env, "VITE_SUPABASE_ANON_KEY")
-  if (url === "" || anonKey === "") return null
+  const privacyPolicy = {
+    url: textValue(env, "VITE_PRIVACY_POLICY_URL"),
+    version: textValue(env, "VITE_PRIVACY_POLICY_VERSION"),
+  }
+  const termsOfService = {
+    url: textValue(env, "VITE_TERMS_OF_SERVICE_URL"),
+    version: textValue(env, "VITE_TERMS_OF_SERVICE_VERSION"),
+  }
+  if (
+    url === "" || anonKey === ""
+    || privacyPolicy.url === "" || privacyPolicy.version === ""
+    || termsOfService.url === "" || termsOfService.version === ""
+  ) return null
   if (!url.startsWith("https://")) return null
-  return { url, anonKey }
+  if (!privacyPolicy.url.startsWith("https://") || !termsOfService.url.startsWith("https://")) return null
+  return { url, anonKey, privacyPolicy, termsOfService }
 }
 
 export function accountConfig(): AccountConfig | null {

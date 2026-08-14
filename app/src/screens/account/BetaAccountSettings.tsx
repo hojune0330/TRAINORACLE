@@ -9,11 +9,18 @@ import type {
   SaveProfileInput,
 } from "../../domain/account/account-service"
 import { profileFromBirthDate } from "../../domain/account/profile"
+import type { AccountLegalDocument } from "../../domain/account/config"
 import { inputStyle, primaryBtn, secondaryBtn } from "./styles"
 
 type BetaAccountSettingsProps = {
   readonly userId: string
   readonly today: string
+  readonly legalDocuments: {
+    readonly privacyPolicy: AccountLegalDocument
+    readonly termsOfService: AccountLegalDocument
+  }
+  readonly initialPrivacyAcknowledged?: boolean
+  readonly initialTermsAcknowledged?: boolean
   readonly onSaveProfile?: (input: SaveProfileInput) => Promise<AccountActionResult>
   readonly onRequestDeletion?: (userId: string) => Promise<AccountActionResult>
 }
@@ -21,6 +28,9 @@ type BetaAccountSettingsProps = {
 export function BetaAccountSettings({
   userId,
   today,
+  legalDocuments,
+  initialPrivacyAcknowledged = false,
+  initialTermsAcknowledged = false,
   onSaveProfile = savePrivateProfile,
   onRequestDeletion = requestServerAccountDeletion,
 }: BetaAccountSettingsProps) {
@@ -29,6 +39,8 @@ export function BetaAccountSettings({
   const [notice, setNotice] = React.useState<string | null>(null)
   const [deletionConfirming, setDeletionConfirming] = React.useState(false)
   const [busy, setBusy] = React.useState(false)
+  const [privacyAcknowledged, setPrivacyAcknowledged] = React.useState(initialPrivacyAcknowledged)
+  const [termsAcknowledged, setTermsAcknowledged] = React.useState(initialTermsAcknowledged)
 
   const save = async () => {
     setNotice(null)
@@ -45,7 +57,12 @@ export function BetaAccountSettings({
       throw error
     }
     setBusy(true)
-    const result = await onSaveProfile({ userId, birthDate })
+    const result = await onSaveProfile({
+      userId,
+      birthDate,
+      privacyPolicyVersion: legalDocuments.privacyPolicy.version,
+      termsOfServiceVersion: legalDocuments.termsOfService.version,
+    })
     setBusy(false)
     setNotice(result.message)
   }
@@ -75,7 +92,32 @@ export function BetaAccountSettings({
       <p style={{ fontFamily: "var(--sans)", fontSize: 11.5, lineHeight: 1.6, color: "var(--ink-3)", margin: 0 }}>
         생년월일은 나이 확인에만 쓰고 코치, 분석, 포인트에는 보내지 않아요.
       </p>
-      <button type="button" style={primaryBtn} disabled={busy || birthDate === ""} onClick={() => void save()}>
+      <label style={{ display: "flex", alignItems: "flex-start", gap: 8, fontFamily: "var(--sans)", fontSize: 12, lineHeight: 1.55, color: "var(--ink-2)" }}>
+        <input
+          type="checkbox"
+          checked={privacyAcknowledged}
+          onChange={(event) => setPrivacyAcknowledged(event.target.checked)}
+        />
+        <span>
+          <a href={legalDocuments.privacyPolicy.url} target="_blank" rel="noreferrer">개인정보 처리방침</a>을 읽었어요.
+        </span>
+      </label>
+      <label style={{ display: "flex", alignItems: "flex-start", gap: 8, fontFamily: "var(--sans)", fontSize: 12, lineHeight: 1.55, color: "var(--ink-2)" }}>
+        <input
+          type="checkbox"
+          checked={termsAcknowledged}
+          onChange={(event) => setTermsAcknowledged(event.target.checked)}
+        />
+        <span>
+          <a href={legalDocuments.termsOfService.url} target="_blank" rel="noreferrer">이용약관</a>을 읽었어요.
+        </span>
+      </label>
+      <button
+        type="button"
+        style={primaryBtn}
+        disabled={busy || birthDate === "" || !privacyAcknowledged || !termsAcknowledged}
+        onClick={() => void save()}
+      >
         계정 정보 저장
       </button>
       {ageMessage !== null && <p role="status" style={{ fontFamily: "var(--sans)", fontSize: 12.5, lineHeight: 1.6, margin: 0 }}>{ageMessage}</p>}
