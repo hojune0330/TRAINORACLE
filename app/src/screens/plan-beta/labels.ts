@@ -249,7 +249,7 @@ export function candidateSessionSummary(candidate: {
   const projectionLengthDays = candidate.frame?.projectionLengthDays
   const visibleSessions = projectionLengthDays === undefined
     ? candidate.sessions
-    : candidate.sessions.filter((session) => session.day <= projectionLengthDays)
+    : candidate.sessions.filter((session) => session.day <= Math.ceil(projectionLengthDays))
   const counts = visibleSessions.reduce(
     (current, session) => ({
       training: current.training + (session.role === "REST" ? 0 : 1),

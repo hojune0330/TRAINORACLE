@@ -2,6 +2,20 @@ import { describe, expect, it } from "vitest"
 import { planFrameSchema } from "./plan-session-schema"
 
 describe("stored plan frame compatibility", () => {
+  it("accepts the legacy 7-day standard frame", () => {
+    // Given
+    const legacyFrame = {
+      lengthDays: 7,
+      continuity: { kind: "STANDARD_FRAME" },
+    }
+
+    // When
+    const result = planFrameSchema.safeParse(legacyFrame)
+
+    // Then
+    expect(result.success).toBe(true)
+  })
+
   it("accepts a canonical local-civil 9.5-day frame without treating it as a legacy frame", () => {
     // Given
     const canonicalFrame = {

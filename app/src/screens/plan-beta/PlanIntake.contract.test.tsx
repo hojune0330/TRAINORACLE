@@ -26,7 +26,7 @@ describe("two-a-day intake", () => {
     )
 
     expect(screen.getByRole("button", { name: /하루 두 번 운동할게요/u }))
-      .toHaveTextContent("고른 모든 훈련일에 오전 주 훈련과 오후 회복 움직임을 보여줘요. 고강도 두 개를 자동으로 넣지는 않아요")
+      .toHaveTextContent("고른 선호 시간에 주 훈련·품질 세션을 배치하고, 다른 시간에는 쉬운 훈련이나 회복 움직임을 보여줘요. 고강도 두 개를 자동으로 넣지는 않아요")
   })
 })
 

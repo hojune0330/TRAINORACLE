@@ -150,9 +150,9 @@ export const planFrameSchema = z.union([
   legacyPlanFrameSchema,
   canonicalPlanFrameSchema,
 ]).superRefine((frame, context) => {
-  const projectionLengthDays = "formationKind" in frame
-    ? frame.projectionLengthDays ?? frame.lengthDays
-    : frame.lengthDays
+  if (!("formationKind" in frame)) return
+
+  const projectionLengthDays = frame.projectionLengthDays ?? frame.lengthDays
   const expectedContinuityKind = projectionLengthDays === 7
     ? "SEVEN_DAY_CONTINUITY"
     : "STANDARD_FRAME"
