@@ -15,6 +15,7 @@ describe("canonical plan intake boundary", () => {
     // Given
     const draft = {
       eventGroup: "MIDDLE_DISTANCE" as const,
+      competitionDivision: "HIGH_SCHOOL" as const,
       experienceBand: "DEVELOPING" as const,
       availableDayCount: 3 as const,
       requestedFrameLength: 9 as const,
@@ -46,6 +47,7 @@ describe("canonical plan intake boundary", () => {
     // Given
     const draft = {
       eventGroup: "MIDDLE_DISTANCE" as const,
+      competitionDivision: "HIGH_SCHOOL" as const,
       experienceBand: "DEVELOPING" as const,
       availableDayCount: 4 as const,
       requestedFrameLength: 9 as const,
@@ -70,6 +72,7 @@ describe("canonical plan intake boundary", () => {
     // Given
     const draft = {
       eventGroup: "FIVE_K" as const,
+      competitionDivision: "OPEN" as const,
       experienceBand: "EXPERIENCED" as const,
       availableDayCount: "EVERY_DAY" as const,
       requestedFrameLength: 9.5 as const,

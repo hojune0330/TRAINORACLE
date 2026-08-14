@@ -25,6 +25,7 @@ async function answerMinimumPlanQuestions(
 ): Promise<void> {
   const user = userEvent.setup()
   await user.click(screen.getByRole("button", { name: /800m.*1500m/u }))
+  await user.click(screen.getByRole("button", { name: /고등부/u }))
   await user.click(screen.getByRole("button", { name: /훈련 계획에 맞춰 달려 본 경험/u }))
   await user.click(screen.getByRole("button", { name: /지속 페이스.*LT/u }))
   await user.click(screen.getByRole("button", { name: /^3일/u }))
@@ -69,6 +70,25 @@ function savePostSession(
 }
 
 describe("plan beta user flow", () => {
+  it("asks a returning athlete only for the newly required division before safety", async () => {
+    const user = userEvent.setup()
+    const { competitionDivision: _omitted, ...legacyIntake } = stateFixture().intake
+    window.sessionStorage.setItem(
+      "trainoracle.plan-beta.previous-intake.v1",
+      JSON.stringify(legacyIntake),
+    )
+
+    render(<PlanBeta />)
+
+    expect(screen.getByRole("heading", {
+      name: "현재 참가하거나 준비 중인 부문이 있나요?",
+    })).toBeVisible()
+    await user.click(screen.getByRole("button", { name: /고등부/u }))
+    expect(screen.getByRole("heading", {
+      name: "계획을 만들기 전에 지금 몸 상태를 확인할게요",
+    })).toBeVisible()
+  })
+
   it("explains that managing race records does not automatically change this beta plan", () => {
     // Given
     render(<PlanBeta />)
@@ -122,6 +142,7 @@ describe("plan beta user flow", () => {
     render(<PlanBeta />)
 
     await user.click(screen.getByRole("button", { name: /800m.*1500m/u }))
+    await user.click(screen.getByRole("button", { name: /고등부/u }))
     await user.click(screen.getByRole("button", { name: /훈련 계획에 맞춰 달려 본 경험/u }))
     await user.click(screen.getByRole("button", { name: /지속 페이스.*LT/u }))
 
@@ -149,6 +170,7 @@ describe("plan beta user flow", () => {
     render(<PlanBeta />)
 
     await user.click(screen.getByRole("button", { name: /800m.*1500m/u }))
+    await user.click(screen.getByRole("button", { name: /고등부/u }))
     await user.click(screen.getByRole("button", { name: /훈련 계획에 맞춰 달려 본 경험/u }))
 
     expect(screen.getByRole("button", { name: /지속 페이스.*LT/u })).toBeVisible()

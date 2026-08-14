@@ -28,6 +28,7 @@ export type TermId =
   | "lap"
   | "zone2"
   | "plan-goal"
+  | "competition-division"
   | "plan-experience"
   | "training-days"
   | "plan-frame"
@@ -123,6 +124,11 @@ export const GLOSSARY: Record<TermId, GlossaryEntry> = {
     short: "이번 계획에서 준비하고 싶은 달리기 종류예요. 선택한 목표는 계획에 준비 종목을 표시하고 결과를 구분하는 데 사용합니다.",
     detail: "현재 베타는 종목별 세부 훈련, 목표 기록, 개인 페이스를 계산하지 않아요. 목표를 고른 것만으로 특정 경기 성적을 보장하지도 않습니다.",
   },
+  "competition-division": {
+    label: "현재 참가 부문",
+    short: "지금 참가하거나 준비 중인 대회에서 사용하는 초등부·중등부·고등부·대학부·일반부 같은 구분이에요.",
+    detail: "대회마다 이름과 참가 기준이 달라서 실제 자격은 해당 대회 요강을 확인해야 합니다. TrainOracle은 이 값을 계획 화면의 맥락 표시에만 쓰며, 나이·성숙도·미성년 여부·훈련 강도·안전 상태를 추정하지 않습니다.",
+  },
   "plan-experience": {
     label: "훈련 경험",
     short: "실력 점수가 아니라, 지금까지 계획에 맞춰 달려 본 정도를 묻는 질문이에요.",
@@ -146,7 +152,7 @@ export const GLOSSARY: Record<TermId, GlossaryEntry> = {
   "plan-beta-basis": {
     label: "베타 계획의 근거",
     short: "현재 베타는 준비 목표, 훈련 경험, 고른 훈련 목적, 운동 가능 일수, 하루 두 번 운동 선택, 훈련 시간대와 현재 안전 확인만 사용합니다.",
-    detail: "최근 일지는 있는지만 확인하며 거리, RPE, 메모를 계획 수치에 반영하지 않습니다. 개인 페이스나 최근 훈련량을 추정하지 않고, 반복 수·거리·회복·목표 페이스도 아직 정하지 않습니다.",
+    detail: "참가 부문은 화면에 구분을 표시할 뿐 계획 수치에는 사용하지 않습니다. 최근 일지는 있는지만 확인하며 거리, RPE, 메모를 계획 수치에 반영하지 않습니다. 개인 페이스나 최근 훈련량을 추정하지 않고, 반복 수·거리·회복·목표 페이스도 아직 정하지 않습니다.",
   },
   "plan-option": {
     label: "계획 후보",

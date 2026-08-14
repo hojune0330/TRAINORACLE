@@ -3,6 +3,7 @@ import type { Page } from "@playwright/test"
 
 async function answerMinimumPlanQuestions(page: Page): Promise<void> {
   await page.getByRole("button", { name: /800m.*1500m/u }).click()
+  await page.getByRole("button", { name: /고등부/u }).click()
   await page.getByRole("button", { name: /훈련 계획에 맞춰 달려 본 경험/u }).click()
   await page.getByRole("button", { name: /지속 페이스.*LT/u }).click()
   await page.getByRole("button", { name: /^3일/u }).click()
@@ -88,6 +89,7 @@ test("generates a bounded two-a-day 9.5-day candidate", async ({ page }) => {
   await page.goto("/?app=1")
   await page.getByRole("navigation", { name: "내 기록 살펴보기" }).getByRole("button", { name: /^훈련 계획/u }).click()
   await page.getByRole("button", { name: /5km/u }).click()
+  await page.getByRole("button", { name: /고등부/u }).click()
   await page.getByRole("button", { name: /훈련 계획에 맞춰 달려 본 경험/u }).click()
   await page.getByRole("button", { name: /반복 인터벌.*VO2/u }).click()
   await page.getByRole("button", { name: "매일" }).click()
@@ -104,6 +106,7 @@ test("keeps an evening two-a-day plan after selection and reload", async ({ page
   await page.goto("/?app=1")
   await page.getByRole("navigation", { name: "내 기록 살펴보기" }).getByRole("button", { name: /^훈련 계획/u }).click()
   await page.getByRole("button", { name: /5km/u }).click()
+  await page.getByRole("button", { name: /고등부/u }).click()
   await page.getByRole("button", { name: /훈련 계획에 맞춰 달려 본 경험/u }).click()
   await page.getByRole("button", { name: /반복 인터벌.*VO2/u }).click()
   await page.getByRole("button", { name: "매일" }).click()

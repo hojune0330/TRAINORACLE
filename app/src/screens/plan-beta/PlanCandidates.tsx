@@ -6,6 +6,7 @@ import type {
 import { TermHelp } from "../../components/TermHelp"
 import { isValidIsoDate } from "../../domain/dates"
 import { todayISO } from "../../domain/journal-store"
+import type { PlanBetaIntake } from "../../domain/plan-beta-store"
 import {
   candidateSessionSummary,
   candidateLabel,
@@ -13,15 +14,18 @@ import {
   EVENT_LABELS,
 } from "./labels"
 import { candidatePurposeStatus } from "./candidate-purpose-status"
+import { DIVISION_LABELS } from "./plan-intake-meta"
 import { PlanSchedulePreview } from "./PlanSchedulePreview"
 import type { CandidateSelection } from "./plan-selection"
 
 export function PlanCandidates({
   generated,
+  intake,
   onBack,
   onSelect,
 }: {
   readonly generated: PlanGenerationSuccess
+  readonly intake: PlanBetaIntake
   readonly onBack: () => void
   readonly onSelect: (selection: CandidateSelection) => void
 }) {
@@ -55,6 +59,9 @@ export function PlanCandidates({
           </strong>
           <small>
             시간·RPE와 고른 훈련 목적만 안내 · 반복·거리·페이스·회복은 아직 미지정
+          </small>
+          <small>
+            참가 부문: {DIVISION_LABELS[intake.competitionDivision].title} · 표시용 정보이며 훈련 강도와 안전 판정에는 미사용
           </small>
           {generated.candidates[0].continuityContext.kind ===
             "PREVIOUS_FRAME_CONTEXT_RETAINED" && (

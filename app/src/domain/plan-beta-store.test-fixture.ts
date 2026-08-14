@@ -5,6 +5,7 @@ export function stateFixture(): PlanBetaState {
     version: 1,
     intake: {
       eventGroup: "FIVE_K",
+      competitionDivision: "OPEN",
       experienceBand: "DEVELOPING",
       availableDayCount: 4,
       requestedFrameLength: 9,

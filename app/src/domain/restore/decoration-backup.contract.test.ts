@@ -267,6 +267,7 @@ describe("decoration state has no analysis, plan, D9, or coach authority", () =>
     const consent = { enabled: true, shareTrainingNotes: true }
     const planDraft = {
       eventGroup: "MIDDLE_DISTANCE" as const,
+      competitionDivision: "OPEN" as const,
       experienceBand: "DEVELOPING" as const,
       availableDayCount: 3 as const,
       requestedFrameLength: 9 as const,

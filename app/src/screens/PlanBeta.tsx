@@ -44,7 +44,11 @@ export function PlanBeta({
     previousIntake ?? {},
   )
   const [step, setStep] = React.useState<IntakeStep>(
-    previousIntake === null ? "goal" : "safety",
+    previousIntake === null
+      ? "goal"
+      : previousIntake.competitionDivision === "NOT_PROVIDED"
+        ? "division"
+        : "safety",
   )
   const [generated, setGenerated] = React.useState<PlanGenerationSuccess | null>(
     null,
@@ -140,11 +144,12 @@ export function PlanBeta({
     )
   }
 
-  if (generated !== null && gate !== null) {
+  if (generated !== null && gate !== null && generatedIntake !== null) {
     return (
       <>
         <PlanCandidates
           generated={generated}
+          intake={generatedIntake}
           onBack={() => {
             setGenerated(null)
             setGate(null)
@@ -185,7 +190,11 @@ export function PlanBeta({
         onJump={(target) => setStep(target)}
         onGoal={(eventGroup) => {
           setDraft((current) => ({ ...current, eventGroup }))
-          setStep("experience")
+          setStep("division")
+        }}
+        onDivision={(competitionDivision) => {
+          setDraft((current) => ({ ...current, competitionDivision }))
+          setStep(previousIntake === null ? "experience" : "safety")
         }}
         onExperience={(experienceBand) => {
           setDraft((current) => ({ ...current, experienceBand }))

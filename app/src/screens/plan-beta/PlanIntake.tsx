@@ -14,6 +14,8 @@ import type {
   TrainingTimePreference,
 } from "@impl/plan-generator/types"
 import { TermHelp } from "../../components/TermHelp"
+import { COMPETITION_DIVISIONS } from "../../domain/plan-beta-schema"
+import type { CompetitionDivision } from "../../domain/plan-beta-schema"
 import type { PlanBetaIntake } from "../../domain/plan-beta-store"
 import {
   ENERGY_INTENT_LABELS,
@@ -21,7 +23,7 @@ import {
   EXPERIENCE_LABELS,
 } from "./labels"
 import { PlanChoice as Choice } from "./PlanChoice"
-import { answeredSummary, STEP_META, trainingTimeLabel } from "./plan-intake-meta"
+import { answeredSummary, DIVISION_LABELS, STEP_META, trainingTimeLabel } from "./plan-intake-meta"
 import type { IntakeStep } from "./plan-intake-meta"
 
 export type { IntakeStep } from "./plan-intake-meta"
@@ -33,6 +35,7 @@ type PlanIntakeProps = {
   readonly draft: IntakeDraft
   readonly onBack: () => void
   readonly onGoal: (goal: PlanEventGroup) => void
+  readonly onDivision: (division: CompetitionDivision) => void
   readonly onExperience: (band: ExperienceBand) => void
   readonly onFocus: (focus: PlannedEnergyIntent) => void
   readonly onDays: (days: PlanBetaIntake["availableDayCount"]) => void
@@ -51,6 +54,7 @@ export function PlanIntake({
   draft,
   onBack,
   onGoal,
+  onDivision,
   onExperience,
   onFocus,
   onDays,
@@ -73,9 +77,9 @@ export function PlanIntake({
         <ArrowLeft aria-hidden="true" size={17} />
         이전
       </button>
-      <div className="plan-progress" aria-label={`계획 질문 ${meta.number}/7`}>
-        <span>{meta.number}/7</span>
-        <i style={{ width: `${meta.number * (100 / 7)}%` }} />
+      <div className="plan-progress" aria-label={`계획 질문 ${meta.number}/8`}>
+        <span>{meta.number}/8</span>
+        <i style={{ width: `${meta.number * (100 / 8)}%` }} />
       </div>
       {answeredSteps.length > 0 && (
         <div className="plan-intake__summary" aria-label="지금까지">
@@ -112,6 +116,17 @@ export function PlanIntake({
               detail={EVENT_LABELS[value].detail}
               selected={draft.eventGroup === value}
               onClick={() => onGoal(value)}
+            />
+          ))
+        )}
+        {step === "division" && (
+          COMPETITION_DIVISIONS.filter((value) => value !== "NOT_PROVIDED").map((value) => (
+            <Choice
+              key={value}
+              title={DIVISION_LABELS[value].title}
+              detail={DIVISION_LABELS[value].detail}
+              selected={draft.competitionDivision === value}
+              onClick={() => onDivision(value)}
             />
           ))
         )}
