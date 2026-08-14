@@ -4,9 +4,6 @@
    기존 colors_and_type.css 위에 얹어서 사용.
    ============================================================ */
 
-/* 손글씨 폰트 — 영문 Caveat, 한글 Gowun Dodum (Google Fonts) */
-@import url('https://fonts.googleapis.com/css2?family=Caveat:wght@400;500;600&family=Gowun+Dodum&display=swap');
-
 :root {
   /* ---- Paper tones (warmer than --bg, for journal areas) ---- */
   --paper:        #F7F3E8;  /* warm cream — journal page bg */
@@ -68,14 +65,14 @@
 /* ============== HANDWRITTEN CLASSES ============== */
 
 .hand {
-  font-family: 'Caveat', 'Gowun Dodum', cursive;
+  font-family: "Segoe Print", "Nanum Pen Script", cursive;
   font-weight: 500;
   letter-spacing: 0.01em;
   color: var(--ink-blue);
 }
 
 .hand-pencil {
-  font-family: 'Gowun Dodum', 'Caveat', cursive;
+  font-family: "Nanum Pen Script", "Segoe Print", cursive;
   font-weight: 400;
   color: var(--pencil);
 }

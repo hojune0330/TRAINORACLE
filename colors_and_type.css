@@ -6,10 +6,6 @@
    직각 박스, hairline border, 색은 정보 전달용으로만.
    ============================================================ */
 
-/* ---- Fonts: Google Fonts + Pretendard CDN ---- */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
-@import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css');
-
 :root {
   /* ============== COLORS ============== */
 
@@ -56,8 +52,8 @@
   --e-rest-strong: #4A4A45; --e-rest-mid: #7A7A70; --e-rest-text: #5A5A55; --e-rest-wash: #EFEEEA;
 
   /* ============== TYPOGRAPHY ============== */
-  --sans: "Inter", "Pretendard Variable", ui-sans-serif, system-ui, sans-serif;
-  --mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+  --sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", "Noto Sans KR", sans-serif;
+  --mono: ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", monospace;
   /* NO serif. Instrument Serif removed in v2. */
 
   /* ============== SPACING (4px base) ============== */
