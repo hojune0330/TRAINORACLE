@@ -27,7 +27,7 @@ import { answeredSummary, DIVISION_LABELS, STEP_META, trainingTimeLabel } from "
 import type { IntakeStep as MetaIntakeStep } from "./plan-intake-meta"
 import { visibleIntakeSteps } from "./plan-intake-navigation"
 
-export type IntakeStep = MetaIntakeStep | "frame-length"
+export type IntakeStep = MetaIntakeStep | "frame-length" | "preview"
 
 type IntakeDraft = Partial<PlanBetaIntake>
 
@@ -48,6 +48,7 @@ type PlanIntakeProps = {
   readonly onSafety: (
     currentCheck: "NO_KNOWN_RISK" | "REVIEW_REQUIRED",
   ) => void
+  readonly onContinue: () => void
   /** "지금까지" 요약 줄을 탭하면 해당 단계로 점프(WORK_ORDER_UX2 §3-1) */
   readonly onJump?: (step: IntakeStep) => void
 }
@@ -66,9 +67,17 @@ export function PlanIntake({
   onManageRecords,
   onOpenNotationReader,
   onSafety,
+  onContinue,
   onJump,
 }: PlanIntakeProps) {
-  const meta = step === "frame-length"
+  const meta = step === "preview"
+    ? {
+        eyebrow: "방향 확인",
+        title: "계획 형태 미리보기",
+        copy: "선택한 종목과 훈련 경험으로 어떤 정보를 더 정할지 먼저 보여드려요. 일정이나 훈련 처방은 아직 만들지 않았어요.",
+        helpTerm: null,
+      }
+    : step === "frame-length"
     ? {
         eyebrow: "계획 길이",
         title: "이번에 며칠 계획을 받을까요?",
@@ -77,7 +86,7 @@ export function PlanIntake({
       }
     : STEP_META[step]
   const visibleSteps = visibleIntakeSteps(draft.eventGroup)
-  const currentStepIndex = visibleSteps.indexOf(step)
+  const currentStepIndex = visibleSteps.indexOf(step === "preview" ? "safety" : step)
   const stepNumber = currentStepIndex < 0 ? 1 : currentStepIndex + 1
   const summaryLabels = new Map<IntakeStep, string>(
     answeredSummary(draft).map(({ step: answeredStep, label }) => [answeredStep, label]),
@@ -122,14 +131,60 @@ export function PlanIntake({
       <div className="plan-eyebrow">{meta.eyebrow}</div>
       <div className="plan-heading-row">
         <h1 id="plan-intake-title">{meta.title}</h1>
-        <TermHelp term={meta.helpTerm} />
+        {meta.helpTerm !== null && <TermHelp term={meta.helpTerm} />}
       </div>
       <p className="plan-copy">{meta.copy}</p>
-      <div
-        className="plan-choice-list"
-        role={step === "goal" ? "group" : undefined}
-        aria-label={step === "goal" ? "계획 종목 선택" : undefined}
-      >
+      {step === "preview" && (
+        <>
+          <dl className="plan-shape-preview" aria-label="미리보기 기준">
+            <div>
+              <dt>준비 종목</dt>
+              <dd>
+                {draft.eventGroup === undefined
+                  ? "아직 선택되지 않음"
+                  : EVENT_LABELS[draft.eventGroup].title}
+              </dd>
+            </div>
+            <div>
+              <dt>훈련 경험</dt>
+              <dd>
+                {draft.experienceBand === undefined
+                  ? "아직 선택되지 않음"
+                  : EXPERIENCE_LABELS[draft.experienceBand].title}
+              </dd>
+            </div>
+            <div>
+              <dt>비교 방식</dt>
+              <dd>부담이 다른 후보 A와 B를 나란히 비교</dd>
+            </div>
+          </dl>
+          <div className="plan-preview-boundary">
+            <strong>아직 계획이 아니에요.</strong>
+            <p>
+              실제 후보를 만들려면 훈련일, 첫 계획 길이 7·9·10일, 훈련 목적,
+              주로 하는 시간, 하루 한 번/두 번 선택이 더 필요해요.
+            </p>
+            <small>
+              이 미리보기는 저장되지 않으며 실제 후보를 만들 때 안전 확인을 다시 적용해요.
+            </small>
+          </div>
+          <button
+            className="plan-select-action plan-preview-action"
+            type="button"
+            disabled={draft.eventGroup === undefined || draft.experienceBand === undefined}
+            onClick={onContinue}
+          >
+            내 계획 완성하기
+            <ChevronRight aria-hidden="true" size={18} />
+          </button>
+        </>
+      )}
+      {step !== "preview" && (
+        <div
+          className="plan-choice-list"
+          role={step === "goal" ? "group" : undefined}
+          aria-label={step === "goal" ? "계획 종목 선택" : undefined}
+        >
         {step === "goal" && (
           eventGroups.map((value) => (
             <Choice
@@ -243,7 +298,8 @@ export function PlanIntake({
             />
           </>
         )}
-      </div>
+        </div>
+      )}
       {step === "goal" && !showTenKm && (
         <button
           className="plan-text-action"

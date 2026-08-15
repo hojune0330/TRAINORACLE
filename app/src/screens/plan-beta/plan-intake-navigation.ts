@@ -6,12 +6,12 @@ const STEP_ORDER = [
   "goal",
   "division",
   "experience",
+  "safety",
   "focus",
   "days",
   "frame-length",
   "training-time",
   "two-a-day",
-  "safety",
 ] as const satisfies readonly IntakeStep[]
 
 export function divisionForGoal(
@@ -32,6 +32,7 @@ export function previousIntakeStep(
   step: IntakeStep,
   eventGroup: PlanEventGroup | undefined,
 ): IntakeStep {
+  if (step === "preview") return "safety"
   const steps = visibleIntakeSteps(eventGroup)
   const index = steps.indexOf(step)
   return index <= 0 ? "goal" : steps[index - 1] ?? "goal"

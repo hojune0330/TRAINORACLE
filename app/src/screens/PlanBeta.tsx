@@ -6,8 +6,10 @@ import type {
 } from "@impl/plan-generator/types"
 import type { SafetyGateDecision } from "@impl/safety-gate/gate"
 import {
+  evaluatePlanSafety,
   generatePlanFromDraft,
 } from "../domain/plan-beta-flow"
+import type { PlanCurrentCheck } from "../domain/plan-beta-flow"
 import {
   loadPlanBetaState,
   loadPreviousIntake,
@@ -61,6 +63,7 @@ export function PlanBeta({
     React.useState<PlanBetaIntake | null>(null)
   const [gate, setGate] = React.useState<SafetyGateDecision | null>(null)
   const [blocked, setBlocked] = React.useState(false)
+  const [currentCheck, setCurrentCheck] = React.useState<PlanCurrentCheck | null>(null)
   const [errorCode, setErrorCode] = React.useState<string | null>(null)
   const [retrySelection, setRetrySelection] = React.useState<CandidateSelection | null>(null)
   const [notationReaderOpen, setNotationReaderOpen] = React.useState(false)
@@ -113,6 +116,7 @@ export function PlanBeta({
           setGenerated(null)
           setGate(null)
           setBlocked(false)
+          setCurrentCheck(null)
           setStep("safety")
         }}
       />
@@ -205,7 +209,7 @@ export function PlanBeta({
         }}
         onExperience={(experienceBand) => {
           setDraft((current) => ({ ...current, experienceBand }))
-          setStep("focus")
+          setStep("safety")
         }}
         onFocus={(trainingFocus) => {
           setDraft((current) => ({ ...current, trainingFocus }))
@@ -224,15 +228,17 @@ export function PlanBeta({
           setStep("two-a-day")
         }}
         onSecondSession={(secondSessionMode) => {
-          setDraft((current) => ({ ...current, secondSessionMode }))
-          setStep("safety")
-        }}
-        onManageRecords={() => onManageRecords?.()}
-        onOpenNotationReader={() => setNotationReaderOpen(true)}
-        onSafety={(currentCheck) => {
-          const result = generatePlanFromDraft(draft, currentCheck)
+          const nextDraft = { ...draft, secondSessionMode }
+          setDraft(nextDraft)
+          if (currentCheck === null) {
+            setErrorCode(null)
+            setStep("safety")
+            return
+          }
+          const result = generatePlanFromDraft(nextDraft, currentCheck)
           if (result.kind === "blocked") {
             setErrorCode(null)
+            setCurrentCheck(null)
             setBlocked(true)
             return
           }
@@ -245,6 +251,21 @@ export function PlanBeta({
           setGenerated(result.generated)
           setGeneratedIntake(result.intake)
         }}
+        onManageRecords={() => onManageRecords?.()}
+        onOpenNotationReader={() => setNotationReaderOpen(true)}
+        onSafety={(nextCurrentCheck) => {
+          const safety = evaluatePlanSafety(nextCurrentCheck)
+          if (safety.kind === "blocked") {
+            setErrorCode(null)
+            setCurrentCheck(null)
+            setBlocked(true)
+            return
+          }
+          setErrorCode(null)
+          setCurrentCheck(nextCurrentCheck)
+          setStep("preview")
+        }}
+        onContinue={() => setStep("focus")}
       />
       {errorCode !== null && (
         <div className="plan-inline-error" role="alert">

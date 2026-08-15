@@ -38,6 +38,16 @@ import {
 
 export type PlanCurrentCheck = "NO_KNOWN_RISK" | "REVIEW_REQUIRED"
 
+export type PlanSafetyEvaluation =
+  | {
+      readonly kind: "passed"
+      readonly gate: Extract<SafetyGateDecision, { readonly kind: "passed" }>
+    }
+  | {
+      readonly kind: "blocked"
+      readonly code: "RECENT_JOURNAL_REQUIRES_REVIEW" | "CURRENT_CHECK_REQUIRES_REVIEW"
+    }
+
 const CURRENT_CHECK_TEXT: Readonly<Record<PlanCurrentCheck, string>> = {
   NO_KNOWN_RISK: "통증은 없고 몸 상태는 평소와 같아요",
   REVIEW_REQUIRED: "통증·부상·몸 이상이 있거나 잘 모르겠어요",
@@ -78,14 +88,9 @@ export function generatePlanFromDraft(
     return { kind: "rejected", code: "MINIMUM_PROFILE_INCOMPLETE" }
   }
 
-  if (recentJournalRequiresReview()) {
-    return { kind: "blocked", code: "RECENT_JOURNAL_REQUIRES_REVIEW" }
-  }
-
-  const safetyGate = currentCheckGate(currentCheck)
-  if (safetyGate.kind === "blocked") {
-    return { kind: "blocked", code: "CURRENT_CHECK_REQUIRES_REVIEW" }
-  }
+  const safety = evaluatePlanSafety(currentCheck)
+  if (safety.kind === "blocked") return safety
+  const safetyGate = safety.gate
   const result = generatePlanCandidates({
     kind: "PLAN_BETA_GENERATION_REQUEST",
     safetyGate,
@@ -124,6 +129,19 @@ export function generatePlanFromDraft(
     default:
       return assertNever(result)
   }
+}
+
+export function evaluatePlanSafety(
+  currentCheck: PlanCurrentCheck,
+): PlanSafetyEvaluation {
+  if (recentJournalRequiresReview()) {
+    return { kind: "blocked", code: "RECENT_JOURNAL_REQUIRES_REVIEW" }
+  }
+
+  const gate = currentCheckGate(currentCheck)
+  return gate.kind === "blocked"
+    ? { kind: "blocked", code: "CURRENT_CHECK_REQUIRES_REVIEW" }
+    : { kind: "passed", gate }
 }
 
 export function selectPlanForActivation(

@@ -112,16 +112,18 @@ Max content width is 1440px. Breakpoints: single column under 760px, two columns
 ### Plan Intake Step
 - Structure: one decision question, contextual help trigger, two to four full-width Choice Rows, progress label, back action.
 - Surface: unframed page band using `--surface`, `--line`, and existing action tokens.
-- States: goal, experience, training focus, available days, frame length, current-risk check.
+- States: goal, experience, current-risk check, non-selectable plan-shape preview, training focus, available days, frame length, training time, session count.
+- Preview rule: after explicit event, experience, and clear current-risk answers, show only the selected direction and the future A/B comparison shape. Label it `계획 형태 미리보기`, state that it is not a plan, list every remaining required choice, and persist nothing. Review-required, D9 ACTIVE, and D9 UNKNOWN states show no preview.
 - Content rule: the training-focus step shows recovery, base, LT, VO2, speed-endurance, and short acceleration intentions in plain Korean. It states what the answer changes in the generator and discloses important limits such as no personal-pace calculation.
-- Accessibility: one question per screen; current selection is exposed with `aria-pressed`; no hidden required fields.
+- Accessibility: one question per screen; current selection is exposed with `aria-pressed`; the preview has no selection control or generated-plan semantics; no hidden required fields.
 
 ### Plan Candidate Comparison
-- Structure: source/confidence strip, candidate name, factual training/easy/quality/rest day counts, ordered session list, select action.
+- Structure: compact A/B summary before source/confidence and date details, candidate name, factual training/easy/quality/rest day counts, ordered session list, select action.
 - Variants: `BALANCED`, `CONSERVATIVE`.
 - Surface: candidates are adjacent bordered sections, not cards inside a card.
+- Disclosure rule: candidate A's schedule is expanded initially and B's is collapsed. One local expanded-candidate ID allows expanding either schedule, collapses the other, and allows both to be collapsed without changing either candidate's data.
 - Content rule: each training day shows total duration, RPE range, planned training intention, and an execution disclosure. The public beta may show a selected LT/VO2/speed-endurance/short-acceleration *intention*, but never presents it as a measured physiological state. Sparse-data candidates never invent exact pace, interval distance, repetition count, recovery duration, readiness, medical clearance, or training history. Exact numeric sessions appear only after a reviewed source-backed template and athlete-specific gate are active.
-- Accessibility: each candidate has a heading, a complete difference description, and one unique selection button.
+- Accessibility: each candidate has a heading, a complete difference description, one unique selection button, and a semantic schedule button with an honest accessible name plus `aria-expanded`/`aria-controls`.
 
 ### Context Help Trigger
 - Structure: the existing 44px `TermHelp` trigger immediately follows the question or term it explains.

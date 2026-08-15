@@ -27,11 +27,29 @@ async function answerMinimumPlanQuestions(
   await user.click(screen.getByRole("button", { name: /800m.*1500m/u }))
   await user.click(screen.getByRole("button", { name: /고등부/u }))
   await user.click(screen.getByRole("button", { name: /훈련 계획에 맞춰 달려 본 경험/u }))
+  await user.click(screen.getByRole("button", {
+    name: riskAnswer === "clear"
+      ? /통증은 없고 몸 상태는 평소와 같아요/u
+      : /통증.*부상.*몸 이상이 있거나 잘 모르겠어요/u,
+  }))
+  if (riskAnswer === "review") return
+  const continueButton = screen.queryByRole("button", { name: "내 계획 완성하기" })
+  if (continueButton === null) return
+  await user.click(continueButton)
   await user.click(screen.getByRole("button", { name: /지속 페이스.*LT/u }))
   await user.click(screen.getByRole("button", { name: /^3일/u }))
   await user.click(screen.getByRole("button", { name: /9일 계획 받기/u }))
   await user.click(screen.getByRole("button", { name: /날마다 달라요/u }))
   await user.click(screen.getByRole("button", { name: /하루 한 번 운동/u }))
+}
+
+async function answerPreviewDecisions(
+  riskAnswer: "clear" | "review",
+): Promise<void> {
+  const user = userEvent.setup()
+  await user.click(screen.getByRole("button", { name: /800m.*1500m/u }))
+  await user.click(screen.getByRole("button", { name: /고등부/u }))
+  await user.click(screen.getByRole("button", { name: /훈련 계획에 맞춰 달려 본 경험/u }))
   await user.click(screen.getByRole("button", {
     name: riskAnswer === "clear"
       ? /통증은 없고 몸 상태는 평소와 같아요/u
@@ -71,6 +89,79 @@ function savePostSession(
 }
 
 describe("plan beta user flow", () => {
+  it("shows a non-selectable plan-shape preview after three clear decisions", async () => {
+    render(<PlanBeta />)
+
+    await answerPreviewDecisions("clear")
+
+    expect(screen.getByRole("heading", { name: "계획 형태 미리보기" })).toBeVisible()
+    expect(screen.getByText(
+      /훈련일.*첫 계획 길이.*7.*9.*10.*훈련 목적.*시간.*하루 한 번.*두 번/u,
+    )).toBeVisible()
+    expect(screen.queryByRole("button", { name: /선택하기/u })).not.toBeInTheDocument()
+    expect(screen.queryByRole("heading", { name: "두 계획에서 하나를 골라보세요" }))
+      .not.toBeInTheDocument()
+    expect(window.localStorage.getItem("trainoracle.plan-beta.v1")).toBeNull()
+
+    await userEvent.setup().click(screen.getByRole("button", { name: "내 계획 완성하기" }))
+    expect(screen.getByRole("heading", {
+      name: "이번 주기에 어떤 훈련을 더 넣고 싶나요?",
+    })).toBeVisible()
+  })
+
+  it("shows no preview or candidates when the three-decision risk answer needs review", async () => {
+    render(<PlanBeta />)
+
+    await answerPreviewDecisions("review")
+
+    expect(screen.getByRole("heading", { name: "지금은 계획을 멈췄어요" })).toBeVisible()
+    expect(screen.queryByRole("heading", { name: "계획 형태 미리보기" }))
+      .not.toBeInTheDocument()
+    expect(screen.queryByRole("heading", { name: "두 계획에서 하나를 골라보세요" }))
+      .not.toBeInTheDocument()
+    expect(screen.queryByRole("button", { name: /선택하기/u })).not.toBeInTheDocument()
+    expect(window.localStorage.getItem("trainoracle.plan-beta.v1")).toBeNull()
+  })
+
+  it("rechecks recent journal safety after preview before generating candidates", async () => {
+    const user = userEvent.setup()
+    render(<PlanBeta />)
+
+    await answerPreviewDecisions("clear")
+    expect(screen.getByRole("heading", { name: "계획 형태 미리보기" })).toBeVisible()
+    await user.click(screen.getByRole("button", { name: "내 계획 완성하기" }))
+
+    const date = todayISO()
+    expect(saveEntry({
+      id: "risk-added-during-refinement",
+      kind: "evening",
+      date,
+      savedAt: `${date}T09:00:00.000Z`,
+      syncState: "local",
+      sleepH: 0,
+      sleepQuality: 0,
+      weightKg: "",
+      restingHr: "",
+      painParts: { knee: 5 },
+      mood: 0,
+      note: "",
+      fieldProvenance: {
+        painParts: { provenance: FIELD_PROVENANCE.explicit },
+      },
+    }).ok).toBe(true)
+
+    await user.click(screen.getByRole("button", { name: /지속 페이스.*LT/u }))
+    await user.click(screen.getByRole("button", { name: /^3일/u }))
+    await user.click(screen.getByRole("button", { name: /9일 계획 받기/u }))
+    await user.click(screen.getByRole("button", { name: /날마다 달라요/u }))
+    await user.click(screen.getByRole("button", { name: /하루 한 번 운동/u }))
+
+    expect(screen.getByRole("heading", { name: "지금은 계획을 멈췄어요" })).toBeVisible()
+    expect(screen.queryByRole("heading", { name: "두 계획에서 하나를 골라보세요" }))
+      .not.toBeInTheDocument()
+    expect(window.localStorage.getItem("trainoracle.plan-beta.v1")).toBeNull()
+  })
+
   it("asks a returning athlete only for the newly required division before safety", async () => {
     const user = userEvent.setup()
     const { competitionDivision: _omitted, ...legacyIntake } = stateFixture().intake
@@ -145,6 +236,8 @@ describe("plan beta user flow", () => {
     await user.click(screen.getByRole("button", { name: /800m.*1500m/u }))
     await user.click(screen.getByRole("button", { name: /고등부/u }))
     await user.click(screen.getByRole("button", { name: /훈련 계획에 맞춰 달려 본 경험/u }))
+    await user.click(screen.getByRole("button", { name: /통증은 없고 몸 상태는 평소와 같아요/u }))
+    await user.click(screen.getByRole("button", { name: "내 계획 완성하기" }))
     await user.click(screen.getByRole("button", { name: /지속 페이스.*LT/u }))
 
     const availableDaysHelp = screen.getByRole("button", {
@@ -186,6 +279,8 @@ describe("plan beta user flow", () => {
     await user.click(screen.getByRole("button", { name: /800m.*1500m/u }))
     await user.click(screen.getByRole("button", { name: /고등부/u }))
     await user.click(screen.getByRole("button", { name: /훈련 계획에 맞춰 달려 본 경험/u }))
+    await user.click(screen.getByRole("button", { name: /통증은 없고 몸 상태는 평소와 같아요/u }))
+    await user.click(screen.getByRole("button", { name: "내 계획 완성하기" }))
 
     expect(screen.getByRole("button", { name: /지속 페이스.*LT/u })).toBeVisible()
     expect(screen.getByRole("button", { name: /반복 인터벌.*VO2/u })).toBeVisible()
@@ -248,6 +343,8 @@ describe("plan beta user flow", () => {
     await answerMinimumPlanQuestions("clear")
 
     expect(screen.getByRole("heading", { name: "지금은 계획을 멈췄어요" })).toBeVisible()
+    expect(screen.queryByRole("heading", { name: "계획 형태 미리보기" }))
+      .not.toBeInTheDocument()
     expect(screen.queryByRole("heading", {
       name: "지속 페이스 포함",
     })).toBeNull()
@@ -264,6 +361,8 @@ describe("plan beta user flow", () => {
     await answerMinimumPlanQuestions("clear")
 
     expect(screen.getByRole("heading", { name: "지금은 계획을 멈췄어요" })).toBeVisible()
+    expect(screen.queryByRole("heading", { name: "계획 형태 미리보기" }))
+      .not.toBeInTheDocument()
     expect(window.localStorage.getItem("trainoracle.plan-beta.v1")).toBeNull()
   })
 

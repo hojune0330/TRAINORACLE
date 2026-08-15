@@ -22,6 +22,7 @@ describe("two-a-day intake", () => {
         onManageRecords={vi.fn()}
         onOpenNotationReader={vi.fn()}
         onSafety={vi.fn()}
+        onContinue={vi.fn()}
       />,
     )
 
@@ -49,6 +50,7 @@ describe("competition division intake", () => {
         onManageRecords={vi.fn()}
         onOpenNotationReader={vi.fn()}
         onSafety={vi.fn()}
+        onContinue={vi.fn()}
       />,
     )
 
@@ -77,6 +79,7 @@ describe("plan length intake", () => {
         onManageRecords={vi.fn()}
         onOpenNotationReader={vi.fn()}
         onSafety={vi.fn()}
+        onContinue={vi.fn()}
       />,
     )
 

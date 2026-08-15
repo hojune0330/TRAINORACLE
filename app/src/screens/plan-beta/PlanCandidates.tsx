@@ -1,5 +1,5 @@
 import React from "react"
-import { ArrowLeft, Check, ShieldCheck } from "lucide-react"
+import { ArrowLeft, Check, ChevronDown, ShieldCheck } from "lucide-react"
 import type {
   PlanGenerationSuccess,
 } from "@impl/plan-generator/types"
@@ -30,6 +30,9 @@ export function PlanCandidates({
   readonly onSelect: (selection: CandidateSelection) => void
 }) {
   const [startDate, setStartDate] = React.useState(todayISO)
+  const [expandedCandidateId, setExpandedCandidateId] = React.useState<string | null>(
+    generated.candidates[0]?.candidateId ?? null,
+  )
   const canSelect = isValidIsoDate(startDate)
 
   return (
@@ -48,6 +51,23 @@ export function PlanCandidates({
           ? "종목, 경험, 고른 훈련 목적, 가능한 훈련일과 9.5일 기본 틀만 사용했어요. 개인 페이스와 최근 훈련량은 추정하지 않습니다."
           : "최근 일지가 있는지만 확인했어요. 일지의 거리, RPE, 메모는 이번 베타 계획의 시간이나 강도를 바꾸지 않습니다."}
       </p>
+      <section className="plan-candidate-comparison" aria-label="두 계획 핵심 비교">
+        <h2>먼저 핵심만 비교</h2>
+        <div>
+          {generated.candidates.map((candidate) => {
+            const label = candidateLabel(candidate.kind, candidate.selectedEnergyIntent)
+            const purposeStatus = candidatePurposeStatus(candidate.kind)
+            return (
+              <article key={candidate.candidateId}>
+                <span>후보 {candidate.kind === "BALANCED" ? "A" : "B"}</span>
+                <strong>{label.title}</strong>
+                <p>{purposeStatus.label}</p>
+                <small>{candidateSessionSummary(candidate)}</small>
+              </article>
+            )
+          })}
+        </div>
+      </section>
       <div className="plan-source-strip">
         <ShieldCheck aria-hidden="true" size={17} />
         <span>
@@ -97,23 +117,6 @@ export function PlanCandidates({
           </p>
         </>
       )}
-      <section className="plan-candidate-comparison" aria-label="두 계획 핵심 비교">
-        <h2>먼저 핵심만 비교</h2>
-        <div>
-          {generated.candidates.map((candidate) => {
-            const label = candidateLabel(candidate.kind, candidate.selectedEnergyIntent)
-            const purposeStatus = candidatePurposeStatus(candidate.kind)
-            return (
-              <article key={candidate.candidateId}>
-                <span>계획 {candidate.kind === "BALANCED" ? 1 : 2}</span>
-                <strong>{label.title}</strong>
-                <p>{purposeStatus.label}</p>
-                <small>{candidateSessionSummary(candidate)}</small>
-              </article>
-            )
-          })}
-        </div>
-      </section>
       <div className="plan-candidate-list">
         {generated.candidates.map((candidate) => (
           <CandidateSection
@@ -121,6 +124,9 @@ export function PlanCandidates({
             candidate={candidate}
             startDate={startDate}
             canSelect={canSelect}
+            expanded={expandedCandidateId === candidate.candidateId}
+            onToggleSchedule={() => setExpandedCandidateId((current) =>
+              current === candidate.candidateId ? null : candidate.candidateId)}
             onSelect={() => onSelect({ candidate, startDate })}
           />
         ))}
@@ -133,21 +139,26 @@ function CandidateSection({
   candidate,
   startDate,
   canSelect,
+  expanded,
+  onToggleSchedule,
   onSelect,
 }: {
   readonly candidate: PlanGenerationSuccess["candidates"][number]
   readonly startDate: string
   readonly canSelect: boolean
+  readonly expanded: boolean
+  readonly onToggleSchedule: () => void
   readonly onSelect: () => void
 }) {
   const label = candidateLabel(candidate.kind, candidate.selectedEnergyIntent)
   const purposeStatus = candidatePurposeStatus(candidate.kind)
-  const optionNumber = candidate.kind === "BALANCED" ? 1 : 2
+  const optionLetter = candidate.kind === "BALANCED" ? "A" : "B"
   const frameLengthDays = candidate.frame.projectionLengthDays ?? candidate.frame.lengthDays
+  const scheduleId = `candidate-schedule-${candidate.candidateId}`
   return (
     <article className="plan-candidate" aria-labelledby={`candidate-${candidate.candidateId}`}>
       <header>
-        <span>계획 {optionNumber}</span>
+        <span>후보 {optionLetter}</span>
         <h2 id={`candidate-${candidate.candidateId}`}>{label.title}</h2>
         <p>{label.detail}</p>
         <p className={`plan-candidate-purpose plan-candidate-purpose--${purposeStatus.tone}`}>
@@ -171,11 +182,26 @@ function CandidateSection({
         </div>
       </header>
       {canSelect && (
-        <PlanSchedulePreview
-          startDate={startDate}
-          frameLengthDays={frameLengthDays}
-          sessions={candidate.sessions}
-        />
+        <>
+          <button
+            className="plan-candidate-schedule-toggle"
+            type="button"
+            aria-label={`후보 ${optionLetter} 일정 ${expanded ? "접기" : "펼치기"}`}
+            aria-expanded={expanded}
+            aria-controls={scheduleId}
+            onClick={onToggleSchedule}
+          >
+            일정 {expanded ? "접기" : "펼치기"}
+            <ChevronDown aria-hidden="true" size={18} />
+          </button>
+          <div id={scheduleId} hidden={!expanded}>
+            <PlanSchedulePreview
+              startDate={startDate}
+              frameLengthDays={frameLengthDays}
+              sessions={candidate.sessions}
+            />
+          </div>
+        </>
       )}
       <button
         className="plan-select-action"
