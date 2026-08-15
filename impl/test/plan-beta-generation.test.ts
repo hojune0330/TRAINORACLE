@@ -1,17 +1,23 @@
 import { describe, expect, it } from "vitest"
+import { evaluateD9ColloquialLayer } from "../src/d9/evaluator"
 import { generatePlanCandidates } from "../src/plan-generator/generator"
+import { mapD9ResultToRveSignal } from "../src/rve/signal"
+import { decideSafetyGate } from "../src/safety-gate/gate"
 import {
-  activeGate,
   baseRequest,
   clearedGate,
   expectGenerated,
   unknownGate,
 } from "./fixtures/plan-beta-request"
 
+const canonicalActiveGate = decideSafetyGate(
+  mapD9ResultToRveSignal(evaluateD9ColloquialLayer("종아리 뚝 했고 절뚝거려요")),
+)
+
 describe("plan beta generation contract", () => {
   it("blocks ACTIVE Safety Gate without options, sessions, or progression output", () => {
     // Given
-    const request = baseRequest(activeGate())
+    const request = baseRequest(canonicalActiveGate)
 
     // When
     const result = generatePlanCandidates(request)
@@ -244,7 +250,7 @@ describe("plan beta generation contract", () => {
   it("journal context cannot override an unsafe gate", () => {
     // Given
     const request = {
-      ...baseRequest(activeGate()),
+      ...baseRequest(canonicalActiveGate),
       journalSource: {
         kind: "RECENT_JOURNAL_CONTEXT",
         eligibleSessionCount: 4,
