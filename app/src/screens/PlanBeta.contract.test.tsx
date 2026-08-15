@@ -287,30 +287,27 @@ describe("plan beta user flow", () => {
     })).not.toBeInTheDocument()
   })
 
-  it("asks for a missing stored focus after a fresh safety check without generating candidates", async () => {
+  it("routes a missing stored focus to candidates without repeating saved refinements", async () => {
     const user = userEvent.setup()
     const state = stateFixture()
     const { trainingFocus: _focus, ...partialIntake } = state.intake
-    window.localStorage.setItem(
-      "trainoracle.plan-beta.v1",
-      JSON.stringify({ ...state, intake: partialIntake }),
+    window.sessionStorage.setItem(
+      "trainoracle.plan-beta.previous-intake.v1",
+      JSON.stringify(partialIntake),
     )
 
     render(<PlanBeta />)
-
-    await user.click(screen.getByRole("button", { name: "다음 주기 후보 만들기" }))
     await user.click(screen.getByRole("button", { name: /통증은 없고 몸 상태는 평소와 같아요/u }))
     expect(screen.getByText(/남은 선택 1개/u)).toHaveTextContent("훈련 목적")
     expect(screen.queryByText(/훈련일.*첫 계획 길이.*주로 하는 시간.*하루 한 번/u))
       .not.toBeInTheDocument()
     await user.click(screen.getByRole("button", { name: "내 계획 완성하기" }))
+    await user.click(screen.getByRole("button", { name: /지속 페이스.*LT/u }))
 
-    expect(screen.getByRole("heading", {
-      name: "이번 주기에 어떤 훈련을 더 넣고 싶나요?",
-    })).toBeVisible()
-    expect(screen.queryByRole("heading", { name: "두 계획에서 하나를 골라보세요" }))
-      .not.toBeInTheDocument()
-    expect(loadPreviousIntake()?.trainingFocus).toBeUndefined()
+    expectGeneratedCandidates()
+    expect(screen.queryAllByRole("heading", {
+      name: /이번 계획에서 운동할 수 있는 날|이번에 며칠 계획|주로 언제 운동|하루에 두 번 운동/u,
+    })).toHaveLength(0)
   })
 
   it("preserves every explicit answer through the real saved-plan next-cycle path", async () => {

@@ -252,8 +252,14 @@ export function PlanBeta({
           setStep("safety")
         }}
         onFocus={(trainingFocus) => {
-          setDraft((current) => ({ ...current, trainingFocus }))
-          setStep("days")
+          const nextDraft = { ...draft, trainingFocus }
+          setDraft(nextDraft)
+          const nextRefinement = firstUnansweredRefinement(nextDraft)
+          if (nextRefinement !== null) {
+            setStep(nextRefinement)
+            return
+          }
+          generateCandidates(nextDraft)
         }}
         onDays={(availableDayCount) => {
           setDraft((current) => ({ ...current, availableDayCount }))
