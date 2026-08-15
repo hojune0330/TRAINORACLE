@@ -50,7 +50,7 @@ const selectedStartDateSchema = z.string().refine(isValidIsoDate, {
 
 export const planIntakeSchema = z.object({
   eventGroup: planEventGroupSchema,
-  competitionDivision: competitionDivisionSchema.optional().default("NOT_PROVIDED"),
+  competitionDivision: competitionDivisionSchema,
   experienceBand: experienceBandSchema,
   availableDayCount: z.union([
     z.literal(3),
@@ -60,9 +60,27 @@ export const planIntakeSchema = z.object({
     z.literal("EVERY_DAY"),
   ]),
   requestedFrameLength: z.union([frameLengthSchema, z.literal(9.5)]),
-  trainingFocus: plannedEnergyIntentSchema.optional().default("MIXED_INTENT"),
-  secondSessionMode: secondSessionModeSchema.optional().default("SINGLE_SESSION_ONLY"),
-  trainingTimePreference: trainingTimePreferenceSchema.optional().default("VARIES"),
+  trainingFocus: plannedEnergyIntentSchema,
+  secondSessionMode: secondSessionModeSchema,
+  trainingTimePreference: trainingTimePreferenceSchema,
+  startDate: selectedStartDateSchema.optional(),
+})
+
+export const storedPlanIntakeSchema = z.object({
+  eventGroup: planEventGroupSchema,
+  competitionDivision: competitionDivisionSchema.optional(),
+  experienceBand: experienceBandSchema,
+  availableDayCount: z.union([
+    z.literal(3),
+    z.literal(4),
+    z.literal(5),
+    z.literal(6),
+    z.literal("EVERY_DAY"),
+  ]).optional(),
+  requestedFrameLength: z.union([frameLengthSchema, z.literal(9.5)]).optional(),
+  trainingFocus: plannedEnergyIntentSchema.optional(),
+  secondSessionMode: secondSessionModeSchema.optional(),
+  trainingTimePreference: trainingTimePreferenceSchema.optional(),
   startDate: selectedStartDateSchema.optional(),
 })
 
@@ -82,7 +100,7 @@ export const planHistorySchema = z.object({
 
 const planBetaStateSchema = z.object({
   version: z.literal(1),
-  intake: planIntakeSchema,
+  intake: storedPlanIntakeSchema,
   activePlan: activePlanSchema,
   progress: z.array(progressSchema),
   generatedAt: z.string().datetime(),
@@ -136,6 +154,7 @@ const planBetaStateSchema = z.object({
 export const planHistoryListSchema = z.array(planHistorySchema).max(5)
 
 export type PlanBetaIntake = z.infer<typeof planIntakeSchema>
+export type StoredPlanBetaIntake = z.infer<typeof storedPlanIntakeSchema>
 export type CompetitionDivision = PlanBetaIntake["competitionDivision"]
 export type StoredPlanProgress = z.infer<typeof progressSchema>
 export type PlanBetaState = z.infer<typeof planBetaStateSchema>

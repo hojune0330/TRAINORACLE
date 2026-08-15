@@ -5,6 +5,7 @@ import {
   selectPlanCandidate,
 } from "@impl/plan-generator/generator"
 import type {
+  JournalSource,
   PlanCandidate,
   PlanGenerationSuccess,
 } from "@impl/plan-generator/types"
@@ -22,10 +23,11 @@ import type {
   JournalEntry,
   PostSessionEntry,
 } from "./journal-schema"
-import { loadEntries, todayISO } from "./journal-store"
+import { loadEntriesForPlanSafety, todayISO } from "./journal-store"
 import {
   loadPreviousContinuity,
 } from "./plan-beta-store"
+import { divisionForGoal } from "../screens/plan-beta/plan-intake-navigation"
 import { createPlanFormation } from "./plan-beta-formation"
 import type {
   PlanBetaIntake,
@@ -37,6 +39,17 @@ import {
 } from "../safety/memo-safety"
 
 export type PlanCurrentCheck = "NO_KNOWN_RISK" | "REVIEW_REQUIRED"
+
+export type PlanSafetyEvaluation =
+  | {
+      readonly kind: "passed"
+      readonly gate: Extract<SafetyGateDecision, { readonly kind: "passed" }>
+      readonly journalSource: JournalSource
+    }
+  | {
+      readonly kind: "blocked"
+      readonly code: "RECENT_JOURNAL_REQUIRES_REVIEW" | "CURRENT_CHECK_REQUIRES_REVIEW"
+    }
 
 const CURRENT_CHECK_TEXT: Readonly<Record<PlanCurrentCheck, string>> = {
   NO_KNOWN_RISK: "통증은 없고 몸 상태는 평소와 같아요",
@@ -78,14 +91,9 @@ export function generatePlanFromDraft(
     return { kind: "rejected", code: "MINIMUM_PROFILE_INCOMPLETE" }
   }
 
-  if (recentJournalRequiresReview()) {
-    return { kind: "blocked", code: "RECENT_JOURNAL_REQUIRES_REVIEW" }
-  }
-
-  const safetyGate = currentCheckGate(currentCheck)
-  if (safetyGate.kind === "blocked") {
-    return { kind: "blocked", code: "CURRENT_CHECK_REQUIRES_REVIEW" }
-  }
+  const safety = evaluatePlanSafety(currentCheck)
+  if (safety.kind === "blocked") return safety
+  const safetyGate = safety.gate
   const result = generatePlanCandidates({
     kind: "PLAN_BETA_GENERATION_REQUEST",
     safetyGate,
@@ -103,7 +111,7 @@ export function generatePlanFromDraft(
     ),
     requestedFrameLength: intake.requestedFrameLength,
     selectedEnergyIntent: intake.trainingFocus,
-    journalSource: structuredJournalSource(),
+    journalSource: safety.journalSource,
     selectionAuthority: "SELF",
     continuity: loadPreviousContinuity(),
   })
@@ -124,6 +132,24 @@ export function generatePlanFromDraft(
     default:
       return assertNever(result)
   }
+}
+
+export function evaluatePlanSafety(
+  currentCheck: PlanCurrentCheck,
+): PlanSafetyEvaluation {
+  const journal = loadEntriesForPlanSafety()
+  if (journal.status === "uncertain" || recentJournalRequiresReview(journal.entries)) {
+    return { kind: "blocked", code: "RECENT_JOURNAL_REQUIRES_REVIEW" }
+  }
+
+  const gate = currentCheckGate(currentCheck)
+  return gate.kind === "blocked"
+    ? { kind: "blocked", code: "CURRENT_CHECK_REQUIRES_REVIEW" }
+    : {
+        kind: "passed",
+        gate,
+        journalSource: structuredJournalSource(journal.entries),
+      }
 }
 
 export function selectPlanForActivation(
@@ -160,6 +186,7 @@ function completeIntake(
 ): PlanBetaIntake | null {
   const {
     eventGroup,
+    competitionDivision,
     experienceBand,
     availableDayCount,
     requestedFrameLength,
@@ -178,9 +205,11 @@ function completeIntake(
   ) {
     return null
   }
+  const normalizedCompetitionDivision = divisionForGoal(eventGroup) ?? competitionDivision
+  if (normalizedCompetitionDivision === undefined) return null
   return {
     eventGroup,
-    competitionDivision: draft.competitionDivision ?? "NOT_PROVIDED",
+    competitionDivision: normalizedCompetitionDivision,
     experienceBand,
     availableDayCount,
     requestedFrameLength,
@@ -199,10 +228,10 @@ function currentCheckGate(currentCheck: PlanCurrentCheck): SafetyGateDecision {
   }
 }
 
-function recentJournalRequiresReview(): boolean {
+function recentJournalRequiresReview(entries: readonly JournalEntry[]): boolean {
   const today = todayISO()
   const from = isoShift(today, -13)
-  return loadEntries()
+  return entries
     .filter((entry) => entry.date >= from && entry.date <= today)
     .some(entryRequiresReview)
 }
@@ -217,10 +246,10 @@ function entryRequiresReview(entry: JournalEntry): boolean {
     ?.blocksPlanGeneration === true
 }
 
-function structuredJournalSource() {
+function structuredJournalSource(entries: readonly JournalEntry[]): JournalSource {
   const today = todayISO()
   const from = isoShift(today, -13)
-  const sessions = loadEntries().filter(
+  const sessions = entries.filter(
     (entry): entry is PostSessionEntry =>
       entry.kind === "post-session"
       && isValidIsoDate(entry.date)

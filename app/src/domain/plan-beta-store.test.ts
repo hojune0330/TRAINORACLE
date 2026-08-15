@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import {
   archiveAndClearActivePlan,
   loadPlanBetaState,
+  loadPreviousIntake,
   loadPreviousContinuity,
   savePlanBetaState,
   updateStoredProgress,
@@ -26,6 +27,50 @@ describe("plan beta local store", () => {
 
     expect(loadPlanBetaState()).toEqual(state)
     expect(JSON.stringify(loadPlanBetaState())).not.toMatch(/memo|symptom/u)
+  })
+
+  it.each([
+    "trainingFocus",
+    "availableDayCount",
+    "requestedFrameLength",
+    "trainingTimePreference",
+    "secondSessionMode",
+  ] as const)("preserves a missing stored %s answer instead of inventing one", (field) => {
+    const state = stateFixture()
+    const intake = Object.fromEntries(
+      Object.entries(state.intake).filter(([key]) => key !== field),
+    )
+    window.localStorage.setItem(
+      "trainoracle.plan-beta.v1",
+      JSON.stringify({ ...state, intake }),
+    )
+
+    const loaded = loadPlanBetaState()
+
+    expect(loaded).not.toBeNull()
+    expect(loaded?.intake).not.toHaveProperty(field)
+  })
+
+  it.each([
+    "trainingFocus",
+    "availableDayCount",
+    "requestedFrameLength",
+    "trainingTimePreference",
+    "secondSessionMode",
+  ] as const)("preserves a missing previous %s answer instead of inventing one", (field) => {
+    const state = stateFixture()
+    const intake = Object.fromEntries(
+      Object.entries(state.intake).filter(([key]) => key !== field),
+    )
+    window.sessionStorage.setItem(
+      "trainoracle.plan-beta.previous-intake.v1",
+      JSON.stringify(intake),
+    )
+
+    const loaded = loadPreviousIntake()
+
+    expect(loaded).not.toBeNull()
+    expect(loaded).not.toHaveProperty(field)
   })
 
   it("reports a failed active-plan write instead of pretending it was saved", () => {
@@ -178,6 +223,15 @@ describe("plan beta local store", () => {
     expect(loadPlanBetaState()).toBeNull()
   })
 
+  it("ignores malformed previous intake data", () => {
+    window.sessionStorage.setItem(
+      "trainoracle.plan-beta.previous-intake.v1",
+      JSON.stringify({ ...stateFixture().intake, availableDayCount: "WEEKLY" }),
+    )
+
+    expect(loadPreviousIntake()).toBeNull()
+  })
+
   it("retains only structured progress as next-frame continuity", () => {
     const state = updateStoredProgress(
       updateStoredProgress(stateFixture(), {
@@ -250,7 +304,7 @@ describe("plan beta local store", () => {
     ])
   })
 
-  it("loads an older single-session snapshot as AM-only", () => {
+  it("loads an older single-session snapshot as AM-only without inventing consent", () => {
     const state = stateFixture()
     const { secondSessionMode: _secondSessionMode, ...legacyIntake } = state.intake
     const legacySessions = state.activePlan.sessions.map(({ slot: _slot, ...session }) => session)
@@ -265,8 +319,16 @@ describe("plan beta local store", () => {
 
     const loaded = loadPlanBetaState()
 
-    expect(loaded?.intake.secondSessionMode).toBe("SINGLE_SESSION_ONLY")
+    expect(loaded?.intake.secondSessionMode).toBeUndefined()
     expect(loaded?.activePlan.sessions[0]?.slot).toBe("AM")
+  })
+
+  it("round-trips every explicit refinement through next-frame intake storage", () => {
+    const state = stateFixture()
+
+    expect(archiveAndClearActivePlan(state)).toMatchObject({ ok: true })
+
+    expect(loadPreviousIntake()).toEqual(state.intake)
   })
 
   it("keeps an existing legacy 7-day standard frame visible", () => {

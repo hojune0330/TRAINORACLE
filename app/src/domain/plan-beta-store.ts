@@ -5,17 +5,19 @@ import type {
 import {
   parsePlanBetaState,
   planHistoryListSchema,
-  planIntakeSchema,
+  storedPlanIntakeSchema,
 } from "./plan-beta-schema"
 import type {
   PlanBetaIntake,
   PlanBetaState,
+  StoredPlanBetaIntake,
   StoredPlanHistory,
   StoredPlanProgress,
 } from "./plan-beta-schema"
 export type {
   PlanBetaIntake,
   PlanBetaState,
+  StoredPlanBetaIntake,
   StoredPlanHistory,
   StoredPlanProgress,
 } from "./plan-beta-schema"
@@ -30,7 +32,7 @@ export type PlanStorageResult =
   | { readonly ok: false; readonly code: "PLAN_STORAGE_WRITE_FAILED" }
 
 export type PlanArchiveResult =
-  | { readonly ok: true; readonly intake: PlanBetaIntake }
+  | { readonly ok: true; readonly intake: StoredPlanBetaIntake }
   | {
       readonly ok: false
       readonly code: "PLAN_ARCHIVE_WRITE_FAILED"
@@ -136,14 +138,14 @@ export function archiveAndClearActivePlan(state: PlanBetaState): PlanArchiveResu
   }
 }
 
-export function loadPreviousIntake(): PlanBetaIntake | null {
+export function loadPreviousIntake(): StoredPlanBetaIntake | null {
   if (typeof window === "undefined") return null
   const raw = window.sessionStorage.getItem(PREVIOUS_INTAKE_KEY)
   if (raw === null) return null
 
   try {
     const json: unknown = JSON.parse(raw)
-    const parsed = planIntakeSchema.safeParse(json)
+    const parsed = storedPlanIntakeSchema.safeParse(json)
     return parsed.success ? parsed.data : null
   } catch (error) {
     if (!(error instanceof SyntaxError)) throw error

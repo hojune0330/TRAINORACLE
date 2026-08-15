@@ -21,7 +21,7 @@ describe("plan history frame compatibility", () => {
     expect(result.success).toBe(true)
   })
 
-  it("defaults a legacy intake without training time to VARIES", () => {
+  it("preserves missing legacy refinement answers without inventing values", () => {
     // Given
     const legacy = {
       version: 1,
@@ -51,8 +51,8 @@ describe("plan history frame compatibility", () => {
     const result = parsePlanBetaState(legacy)
 
     // Then
-    expect(result?.intake.trainingTimePreference).toBe("VARIES")
-    expect(result?.intake.competitionDivision).toBe("NOT_PROVIDED")
+    expect(result?.intake.trainingTimePreference).toBeUndefined()
+    expect(result?.intake.competitionDivision).toBeUndefined()
   })
 
   it("preserves the athlete-selected competition division as context", () => {

@@ -16,13 +16,21 @@
 // =============================================================================
 
 import { evaluateD9ColloquialLayer } from "@impl/d9/evaluator"
+import { mapD9ResultToRveSignal } from "@impl/rve/signal"
 import type { D9Disposition } from "@impl/d9/evaluator"
+import type { RveStoredStatus } from "@impl/rve/signal"
 
 export interface TransientMemoAssessment {
   readonly disposition: D9Disposition
   readonly blocksPlanGeneration: boolean
   /** 비민감 reason code만 — 원문 조각 없음 */
   readonly reasonCodes: readonly string[]
+}
+
+const D9_DISPOSITION_BY_RVE_STATUS: Readonly<Record<RveStoredStatus, D9Disposition>> = {
+  ACTIVE: "D9_ACTIVE",
+  UNKNOWN: "D9_UNKNOWN",
+  CLEARED: "D9_CLEARED",
 }
 
 /**
@@ -32,11 +40,11 @@ export interface TransientMemoAssessment {
  */
 export function assessMemoTransient(rawText: string): TransientMemoAssessment {
   try {
-    const result = evaluateD9ColloquialLayer(rawText)
+    const rve = mapD9ResultToRveSignal(evaluateD9ColloquialLayer(rawText))
     return {
-      disposition: result.disposition,
-      blocksPlanGeneration: result.blocksPlanGeneration,
-      reasonCodes: result.reasonCodes,
+      disposition: D9_DISPOSITION_BY_RVE_STATUS[rve.storedStatus],
+      blocksPlanGeneration: rve.blocksPlanGeneration,
+      reasonCodes: rve.nonSensitiveReasonCodes,
     }
   } catch {
     // 평가기 실패 → UNKNOWN fail-safe (스펙 불변식)

@@ -6,8 +6,10 @@ import type {
 } from "@impl/plan-generator/types"
 import type { SafetyGateDecision } from "@impl/safety-gate/gate"
 import {
+  evaluatePlanSafety,
   generatePlanFromDraft,
 } from "../domain/plan-beta-flow"
+import type { PlanCurrentCheck } from "../domain/plan-beta-flow"
 import {
   loadPlanBetaState,
   loadPreviousIntake,
@@ -29,6 +31,7 @@ import type { CandidateSelection } from "./plan-beta/plan-selection"
 import { planErrorMessage } from "./plan-beta/plan-feedback"
 import {
   divisionForGoal,
+  firstUnansweredRefinement,
   previousIntakeStep,
 } from "./plan-beta/plan-intake-navigation"
 
@@ -49,7 +52,7 @@ export function PlanBeta({
   const [step, setStep] = React.useState<IntakeStep>(
     previousIntake === null
       ? "goal"
-      : previousIntake.competitionDivision === "NOT_PROVIDED"
+      : previousIntake.competitionDivision === undefined
         && previousIntake.eventGroup !== "GENERAL_ENDURANCE"
         ? "division"
         : "safety",
@@ -61,6 +64,7 @@ export function PlanBeta({
     React.useState<PlanBetaIntake | null>(null)
   const [gate, setGate] = React.useState<SafetyGateDecision | null>(null)
   const [blocked, setBlocked] = React.useState(false)
+  const [currentCheck, setCurrentCheck] = React.useState<PlanCurrentCheck | null>(null)
   const [errorCode, setErrorCode] = React.useState<string | null>(null)
   const [retrySelection, setRetrySelection] = React.useState<CandidateSelection | null>(null)
   const [notationReaderOpen, setNotationReaderOpen] = React.useState(false)
@@ -79,12 +83,56 @@ export function PlanBeta({
     if (scrollRegion !== null) scrollRegion.scrollTop = 0
   }, [viewKey])
 
+  const generateCandidates = (nextDraft: Partial<PlanBetaIntake>) => {
+    if (currentCheck === null) {
+      setErrorCode(null)
+      setStep("safety")
+      return
+    }
+    const result = generatePlanFromDraft(nextDraft, currentCheck)
+    switch (result.kind) {
+      case "blocked":
+        setErrorCode(null)
+        setCurrentCheck(null)
+        setBlocked(true)
+        return
+      case "rejected":
+        setErrorCode(result.code)
+        return
+      case "generated":
+        setErrorCode(null)
+        setGate(result.gate)
+        setGenerated(result.generated)
+        setGeneratedIntake(result.intake)
+        return
+    }
+  }
+
+  const continueAfterRefinement = (nextDraft: Partial<PlanBetaIntake>) => {
+    setDraft(nextDraft)
+    const nextRefinement = firstUnansweredRefinement(nextDraft)
+    if (nextRefinement !== null) {
+      setStep(nextRefinement)
+      return
+    }
+    generateCandidates(nextDraft)
+  }
+
   const saveCandidate = (
     selection: CandidateSelection,
     activeGenerated: PlanGenerationSuccess,
-    activeGate: SafetyGateDecision,
   ) => {
-    const result = saveSelectedPlanCandidate(selection, activeGenerated, activeGate, generatedIntake)
+    const safety = currentCheck === null ? null : evaluatePlanSafety(currentCheck)
+    if (safety === null || safety.kind === "blocked") {
+      setGenerated(null)
+      setGate(null)
+      setCurrentCheck(null)
+      setErrorCode(null)
+      setRetrySelection(null)
+      setBlocked(true)
+      return
+    }
+    const result = saveSelectedPlanCandidate(selection, activeGenerated, safety.gate, generatedIntake)
     switch (result.kind) {
       case "saved":
         setErrorCode(null)
@@ -113,7 +161,13 @@ export function PlanBeta({
           setGenerated(null)
           setGate(null)
           setBlocked(false)
-          setStep("safety")
+          setCurrentCheck(null)
+          setStep(
+            intake.competitionDivision === undefined
+              && intake.eventGroup !== "GENERAL_ENDURANCE"
+              ? "division"
+              : "safety",
+          )
         }}
       />
     )
@@ -162,7 +216,7 @@ export function PlanBeta({
             setStep("two-a-day")
           }}
           onSelect={(selection) => {
-            saveCandidate(selection, generated, gate)
+            saveCandidate(selection, generated)
           }}
         />
         {errorCode !== null && (
@@ -175,7 +229,7 @@ export function PlanBeta({
             className="plan-text-action"
             type="button"
             onClick={() => {
-              saveCandidate(retrySelection, generated, gate)
+              saveCandidate(retrySelection, generated)
             }}
           >
             계획 다시 저장하기
@@ -195,55 +249,53 @@ export function PlanBeta({
         onGoal={(eventGroup) => {
           const competitionDivision = divisionForGoal(eventGroup)
           setDraft((current) => competitionDivision === undefined
-            ? { ...current, eventGroup }
+            ? { ...current, eventGroup, competitionDivision: undefined }
             : { ...current, eventGroup, competitionDivision })
           setStep(competitionDivision === undefined ? "division" : "experience")
         }}
         onDivision={(competitionDivision) => {
           setDraft((current) => ({ ...current, competitionDivision }))
-          setStep(previousIntake === null ? "experience" : "safety")
+          setStep(draft.experienceBand === undefined ? "experience" : "safety")
         }}
         onExperience={(experienceBand) => {
           setDraft((current) => ({ ...current, experienceBand }))
-          setStep("focus")
-        }}
-        onFocus={(trainingFocus) => {
-          setDraft((current) => ({ ...current, trainingFocus }))
-          setStep("days")
-        }}
-        onDays={(availableDayCount) => {
-          setDraft((current) => ({ ...current, availableDayCount }))
-          setStep("frame-length")
-        }}
-        onFrameLength={(requestedFrameLength) => {
-          setDraft((current) => ({ ...current, requestedFrameLength }))
-          setStep("training-time")
-        }}
-        onTrainingTime={(trainingTimePreference: TrainingTimePreference) => {
-          setDraft((current) => ({ ...current, trainingTimePreference }))
-          setStep("two-a-day")
-        }}
-        onSecondSession={(secondSessionMode) => {
-          setDraft((current) => ({ ...current, secondSessionMode }))
           setStep("safety")
         }}
+        onFocus={(trainingFocus) => continueAfterRefinement({ ...draft, trainingFocus })}
+        onDays={(availableDayCount) => continueAfterRefinement({ ...draft, availableDayCount })}
+        onFrameLength={(requestedFrameLength) => continueAfterRefinement({ ...draft, requestedFrameLength })}
+        onTrainingTime={(trainingTimePreference: TrainingTimePreference) => continueAfterRefinement({ ...draft, trainingTimePreference })}
+        onSecondSession={(secondSessionMode) => continueAfterRefinement({ ...draft, secondSessionMode })}
         onManageRecords={() => onManageRecords?.()}
         onOpenNotationReader={() => setNotationReaderOpen(true)}
-        onSafety={(currentCheck) => {
-          const result = generatePlanFromDraft(draft, currentCheck)
-          if (result.kind === "blocked") {
+        onSafety={(nextCurrentCheck) => {
+          if (
+            draft.eventGroup !== undefined
+            && divisionForGoal(draft.eventGroup) === undefined
+            && draft.competitionDivision === undefined
+          ) {
+            setCurrentCheck(null)
+            setStep("division")
+            return
+          }
+          const safety = evaluatePlanSafety(nextCurrentCheck)
+          if (safety.kind === "blocked") {
             setErrorCode(null)
+            setCurrentCheck(null)
             setBlocked(true)
             return
           }
-          if (result.kind === "rejected") {
-            setErrorCode(result.code)
+          setErrorCode(null)
+          setCurrentCheck(nextCurrentCheck)
+          setStep("preview")
+        }}
+        onContinue={() => {
+          const nextRefinement = firstUnansweredRefinement(draft)
+          if (nextRefinement !== null) {
+            setStep(nextRefinement)
             return
           }
-          setErrorCode(null)
-          setGate(result.gate)
-          setGenerated(result.generated)
-          setGeneratedIntake(result.intake)
+          generateCandidates(draft)
         }}
       />
       {errorCode !== null && (

@@ -52,23 +52,41 @@ export function loadEntries(): JournalEntry[] {
 export type JournalEntriesStorageSnapshot = {
   readonly entries: JournalEntry[]
   readonly raw: string | null
+  readonly readStatus: "complete" | "uncertain"
+}
+
+export type PlanSafetyJournalRead =
+  | { readonly status: "complete"; readonly entries: readonly JournalEntry[] }
+  | { readonly status: "uncertain" }
+
+export function loadEntriesForPlanSafety(): PlanSafetyJournalRead {
+  const snapshot = loadJournalEntriesSnapshot()
+  return snapshot.readStatus === "complete"
+    ? { status: "complete", entries: snapshot.entries }
+    : { status: "uncertain" }
 }
 
 export function loadJournalEntriesSnapshot(): JournalEntriesStorageSnapshot {
   const localStorage = journalStorage()
-  if (localStorage === null) return { entries: [], raw: null }
+  if (localStorage === null) return { entries: [], raw: null, readStatus: "uncertain" }
 
   try {
     const raw = localStorage.getItem(JOURNAL_STORAGE_KEY)
-    if (raw === null) return { entries: [], raw }
+    if (raw === null) return { entries: [], raw, readStatus: "complete" }
     const parsed: unknown = JSON.parse(raw)
     const entries = parseJournalEntryList(parsed)
     if (window.location.search.includes("uitest") && Array.isArray(parsed) && parsed.length > entries.length) {
       console.warn(`[JSTORE] dropped=${parsed.length - entries.length} loaded=${entries.length}`)
     }
-    return { entries, raw }
+    return {
+      entries,
+      raw,
+      readStatus: Array.isArray(parsed) && parsed.length === entries.length
+        ? "complete"
+        : "uncertain",
+    }
   } catch {
-    return { entries: [], raw: null }
+    return { entries: [], raw: null, readStatus: "uncertain" }
   }
 }
 

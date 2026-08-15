@@ -15,15 +15,40 @@ async function generateCandidates(purpose: RegExp): Promise<void> {
   await user.click(screen.getByRole("button", { name: /800m.*1500m/u }))
   await user.click(screen.getByRole("button", { name: /고등부/u }))
   await user.click(screen.getByRole("button", { name: /훈련 계획에 맞춰 달려 본 경험이 있어요/u }))
+  await user.click(screen.getByRole("button", { name: /통증은 없고 몸 상태는 평소와 같아요/u }))
+  await user.click(screen.getByRole("button", { name: "내 계획 완성하기" }))
   await user.click(screen.getByRole("button", { name: purpose }))
   await user.click(screen.getByRole("button", { name: /^3일/u }))
   await user.click(screen.getByRole("button", { name: /9일 계획 받기/u }))
   await user.click(screen.getByRole("button", { name: /아침에 운동해요/u }))
   await user.click(screen.getByRole("button", { name: /하루 한 번 운동/u }))
-  await user.click(screen.getByRole("button", { name: /통증은 없고 몸 상태는 평소와 같아요/u }))
 }
 
 describe("plan candidate purpose contrast", () => {
+  it("keeps one candidate schedule expanded and allows both to collapse", async () => {
+    render(<PlanBeta />)
+
+    await generateCandidates(/지속 페이스.*LT/u)
+
+    const user = userEvent.setup()
+    const candidateA = screen.getByRole("button", { name: "후보 A 일정 접기" })
+    const candidateB = screen.getByRole("button", { name: "후보 B 일정 펼치기" })
+    expect(candidateA).toHaveAttribute("aria-expanded", "true")
+    expect(candidateB).toHaveAttribute("aria-expanded", "false")
+    expect(screen.getAllByRole("list", { name: "날짜별 계획 미리보기" })).toHaveLength(1)
+
+    await user.click(candidateB)
+    expect(screen.getByRole("button", { name: "후보 A 일정 펼치기" }))
+      .toHaveAttribute("aria-expanded", "false")
+    expect(screen.getByRole("button", { name: "후보 B 일정 접기" }))
+      .toHaveAttribute("aria-expanded", "true")
+    expect(screen.getAllByRole("list", { name: "날짜별 계획 미리보기" })).toHaveLength(1)
+
+    await user.click(screen.getByRole("button", { name: "후보 B 일정 접기" }))
+    expect(screen.queryByRole("list", { name: "날짜별 계획 미리보기" }))
+      .not.toBeInTheDocument()
+  })
+
   it("explains the selected-purpose plan and the conservative alternative before selection", async () => {
     // Given: an athlete chose LT as the purpose for a new 9.5-day plan.
     render(<PlanBeta />)

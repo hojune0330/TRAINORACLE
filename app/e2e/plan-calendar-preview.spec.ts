@@ -8,12 +8,13 @@ async function answerTwoSessionPlanQuestions(page: Page): Promise<void> {
   await page.getByRole("button", { name: /800m.*1500m/u }).click()
   await page.getByRole("button", { name: /고등부/u }).click()
   await page.getByRole("button", { name: /훈련 계획에 맞춰 달려 본 경험/u }).click()
+  await page.getByRole("button", { name: /통증은 없고 몸 상태는 평소와 같아요/u }).click()
+  await page.getByRole("button", { name: "내 계획 완성하기" }).click()
   await page.getByRole("button", { name: /지속 페이스.*LT/u }).click()
   await page.getByRole("button", { name: /^3일/u }).click()
   await selectNineDayProjection(page)
   await page.getByRole("button", { name: /아침에 운동해요/u }).click()
   await page.getByRole("button", { name: /하루 두 번 운동할게요/u }).click()
-  await page.getByRole("button", { name: /통증은 없고 몸 상태는 평소와 같아요/u }).click()
 }
 
 test("shows a dated AM and PM plan before selection and after reload", async ({ page }) => {
@@ -24,7 +25,7 @@ test("shows a dated AM and PM plan before selection and after reload", async ({ 
   await page.getByLabel("계획 시작 날짜").fill("2026-08-17")
 
   // When
-  await expect(page.getByRole("group", { name: /훈련 2개/u })).toHaveCount(6)
+  await expect(page.getByRole("group", { name: /훈련 2개/u })).toHaveCount(3)
   const overview = page.getByLabel("9일 달력 요약").first()
   await expect(overview.getByRole("listitem", {
     name: "8월 25일 화요일 · 훈련 2개",
