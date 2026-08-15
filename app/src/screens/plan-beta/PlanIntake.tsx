@@ -25,11 +25,26 @@ import {
 import { PlanChoice as Choice } from "./PlanChoice"
 import { answeredSummary, DIVISION_LABELS, STEP_META, trainingTimeLabel } from "./plan-intake-meta"
 import type { IntakeStep as MetaIntakeStep } from "./plan-intake-meta"
-import { visibleIntakeSteps } from "./plan-intake-navigation"
+import {
+  unansweredRefinements,
+  visibleIntakeSteps,
+} from "./plan-intake-navigation"
+import type { RefinementStep } from "./plan-intake-navigation"
 
 export type IntakeStep = MetaIntakeStep | "frame-length" | "preview"
 
 type IntakeDraft = Partial<PlanBetaIntake>
+
+const PREVIEW_REFINEMENTS: readonly {
+  readonly step: RefinementStep
+  readonly label: string
+}[] = [
+  { step: "days", label: "훈련일" },
+  { step: "frame-length", label: "첫 계획 길이 7·9·10일" },
+  { step: "focus", label: "훈련 목적" },
+  { step: "training-time", label: "주로 하는 시간" },
+  { step: "two-a-day", label: "하루 한 번/두 번 선택" },
+]
 
 type PlanIntakeProps = {
   readonly step: IntakeStep
@@ -86,6 +101,10 @@ export function PlanIntake({
       }
     : STEP_META[step]
   const visibleSteps = visibleIntakeSteps(draft.eventGroup)
+  const unanswered = unansweredRefinements(draft)
+  const remainingRefinements = PREVIEW_REFINEMENTS.filter(({ step: refinementStep }) => (
+    unanswered.includes(refinementStep)
+  ))
   const currentStepIndex = visibleSteps.indexOf(step === "preview" ? "safety" : step)
   const stepNumber = currentStepIndex < 0 ? 1 : currentStepIndex + 1
   const summaryLabels = new Map<IntakeStep, string>(
@@ -161,8 +180,11 @@ export function PlanIntake({
           <div className="plan-preview-boundary">
             <strong>아직 계획이 아니에요.</strong>
             <p>
-              실제 후보를 만들려면 훈련일, 첫 계획 길이 7·9·10일, 훈련 목적,
-              주로 하는 시간, 하루 한 번/두 번 선택이 더 필요해요.
+              {remainingRefinements.length === 0
+                ? "남은 선택 0개 · 저장된 선택을 그대로 다시 사용할 수 있어요. 후보는 아직 만들지 않았어요."
+                : `남은 선택 ${remainingRefinements.length}개 · ${remainingRefinements
+                    .map(({ label }) => label)
+                    .join(" · ")}`}
             </p>
             <small>
               이 미리보기는 저장되지 않으며 실제 후보를 만들 때 안전 확인을 다시 적용해요.
@@ -174,7 +196,7 @@ export function PlanIntake({
             disabled={draft.eventGroup === undefined || draft.experienceBand === undefined}
             onClick={onContinue}
           >
-            내 계획 완성하기
+            {remainingRefinements.length === 0 ? "계획 후보 만들기" : "내 계획 완성하기"}
             <ChevronRight aria-hidden="true" size={18} />
           </button>
         </>

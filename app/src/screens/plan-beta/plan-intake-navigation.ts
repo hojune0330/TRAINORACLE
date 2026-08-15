@@ -15,6 +15,11 @@ const STEP_ORDER = [
   "two-a-day",
 ] as const satisfies readonly IntakeStep[]
 
+export type RefinementStep = Exclude<
+  IntakeStep,
+  "goal" | "division" | "experience" | "safety" | "preview"
+>
+
 export function divisionForGoal(
   eventGroup: PlanEventGroup,
 ): CompetitionDivision | undefined {
@@ -31,13 +36,20 @@ export function visibleIntakeSteps(
 
 export function firstUnansweredRefinement(
   draft: Partial<PlanBetaIntake>,
-): Exclude<IntakeStep, "goal" | "division" | "experience" | "safety" | "preview"> | null {
-  if (draft.trainingFocus === undefined) return "focus"
-  if (draft.availableDayCount === undefined) return "days"
-  if (draft.requestedFrameLength === undefined) return "frame-length"
-  if (draft.trainingTimePreference === undefined) return "training-time"
-  if (draft.secondSessionMode === undefined) return "two-a-day"
-  return null
+): RefinementStep | null {
+  return unansweredRefinements(draft)[0] ?? null
+}
+
+export function unansweredRefinements(
+  draft: Partial<PlanBetaIntake>,
+): readonly RefinementStep[] {
+  const steps: RefinementStep[] = []
+  if (draft.trainingFocus === undefined) steps.push("focus")
+  if (draft.availableDayCount === undefined) steps.push("days")
+  if (draft.requestedFrameLength === undefined) steps.push("frame-length")
+  if (draft.trainingTimePreference === undefined) steps.push("training-time")
+  if (draft.secondSessionMode === undefined) steps.push("two-a-day")
+  return steps
 }
 
 export function previousIntakeStep(

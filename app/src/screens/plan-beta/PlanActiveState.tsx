@@ -6,8 +6,8 @@ import {
   updateStoredProgress,
 } from "../../domain/plan-beta-store"
 import type {
-  PlanBetaIntake,
   PlanBetaState,
+  StoredPlanBetaIntake,
   StoredPlanProgress,
 } from "../../domain/plan-beta-store"
 import { ActivePlan } from "./ActivePlan"
@@ -23,7 +23,7 @@ export function PlanActiveState({
 }: {
   readonly state: PlanBetaState
   readonly onStateChange: (state: PlanBetaState) => void
-  readonly onArchived: (intake: PlanBetaIntake) => void
+  readonly onArchived: (intake: StoredPlanBetaIntake) => void
 }) {
   const [error, setError] = React.useState<string | null>(null)
   const [retry, setRetry] = React.useState<PersistenceRetry | null>(null)

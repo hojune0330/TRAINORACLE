@@ -52,7 +52,7 @@ export function PlanBeta({
   const [step, setStep] = React.useState<IntakeStep>(
     previousIntake === null
       ? "goal"
-      : previousIntake.competitionDivision === "NOT_PROVIDED"
+      : previousIntake.competitionDivision === undefined
         && previousIntake.eventGroup !== "GENERAL_ENDURANCE"
         ? "division"
         : "safety",
@@ -83,12 +83,46 @@ export function PlanBeta({
     if (scrollRegion !== null) scrollRegion.scrollTop = 0
   }, [viewKey])
 
+  const generateCandidates = (nextDraft: Partial<PlanBetaIntake>) => {
+    if (currentCheck === null) {
+      setErrorCode(null)
+      setStep("safety")
+      return
+    }
+    const result = generatePlanFromDraft(nextDraft, currentCheck)
+    switch (result.kind) {
+      case "blocked":
+        setErrorCode(null)
+        setCurrentCheck(null)
+        setBlocked(true)
+        return
+      case "rejected":
+        setErrorCode(result.code)
+        return
+      case "generated":
+        setErrorCode(null)
+        setGate(result.gate)
+        setGenerated(result.generated)
+        setGeneratedIntake(result.intake)
+        return
+    }
+  }
+
   const saveCandidate = (
     selection: CandidateSelection,
     activeGenerated: PlanGenerationSuccess,
-    activeGate: SafetyGateDecision,
   ) => {
-    const result = saveSelectedPlanCandidate(selection, activeGenerated, activeGate, generatedIntake)
+    const safety = currentCheck === null ? null : evaluatePlanSafety(currentCheck)
+    if (safety === null || safety.kind === "blocked") {
+      setGenerated(null)
+      setGate(null)
+      setCurrentCheck(null)
+      setErrorCode(null)
+      setRetrySelection(null)
+      setBlocked(true)
+      return
+    }
+    const result = saveSelectedPlanCandidate(selection, activeGenerated, safety.gate, generatedIntake)
     switch (result.kind) {
       case "saved":
         setErrorCode(null)
@@ -118,7 +152,12 @@ export function PlanBeta({
           setGate(null)
           setBlocked(false)
           setCurrentCheck(null)
-          setStep("safety")
+          setStep(
+            intake.competitionDivision === undefined
+              && intake.eventGroup !== "GENERAL_ENDURANCE"
+              ? "division"
+              : "safety",
+          )
         }}
       />
     )
@@ -167,7 +206,7 @@ export function PlanBeta({
             setStep("two-a-day")
           }}
           onSelect={(selection) => {
-            saveCandidate(selection, generated, gate)
+            saveCandidate(selection, generated)
           }}
         />
         {errorCode !== null && (
@@ -180,7 +219,7 @@ export function PlanBeta({
             className="plan-text-action"
             type="button"
             onClick={() => {
-              saveCandidate(retrySelection, generated, gate)
+              saveCandidate(retrySelection, generated)
             }}
           >
             계획 다시 저장하기
@@ -231,26 +270,7 @@ export function PlanBeta({
         onSecondSession={(secondSessionMode) => {
           const nextDraft = { ...draft, secondSessionMode }
           setDraft(nextDraft)
-          if (currentCheck === null) {
-            setErrorCode(null)
-            setStep("safety")
-            return
-          }
-          const result = generatePlanFromDraft(nextDraft, currentCheck)
-          if (result.kind === "blocked") {
-            setErrorCode(null)
-            setCurrentCheck(null)
-            setBlocked(true)
-            return
-          }
-          if (result.kind === "rejected") {
-            setErrorCode(result.code)
-            return
-          }
-          setErrorCode(null)
-          setGate(result.gate)
-          setGenerated(result.generated)
-          setGeneratedIntake(result.intake)
+          generateCandidates(nextDraft)
         }}
         onManageRecords={() => onManageRecords?.()}
         onOpenNotationReader={() => setNotationReaderOpen(true)}
@@ -272,25 +292,7 @@ export function PlanBeta({
             setStep(nextRefinement)
             return
           }
-          if (currentCheck === null) {
-            setStep("safety")
-            return
-          }
-          const result = generatePlanFromDraft(draft, currentCheck)
-          if (result.kind === "blocked") {
-            setErrorCode(null)
-            setCurrentCheck(null)
-            setBlocked(true)
-            return
-          }
-          if (result.kind === "rejected") {
-            setErrorCode(result.code)
-            return
-          }
-          setErrorCode(null)
-          setGate(result.gate)
-          setGenerated(result.generated)
-          setGeneratedIntake(result.intake)
+          generateCandidates(draft)
         }}
       />
       {errorCode !== null && (

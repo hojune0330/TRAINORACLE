@@ -72,7 +72,8 @@ export function ActivePlan({
             <TermHelp term="plan-beta-basis" />
           </strong>
           <small>이 계획과 진행 상태는 이 브라우저에만 저장 · 의료 판단 아님</small>
-          {state.intake.competitionDivision !== "NOT_PROVIDED" && (
+          {state.intake.competitionDivision !== undefined
+            && state.intake.competitionDivision !== "NOT_PROVIDED" && (
             <small>
               참가 부문: {DIVISION_LABELS[state.intake.competitionDivision].title} · 표시용 정보이며 훈련 강도와 안전 판정에는 미사용
             </small>

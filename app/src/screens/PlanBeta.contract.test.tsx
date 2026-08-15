@@ -4,7 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { FIELD_PROVENANCE } from "../domain/field-provenance"
 import { MEMO_PURPOSE } from "../domain/journal-schema"
 import { saveEntry, savePrivateEntry, todayISO } from "../domain/journal-store"
-import { savePlanBetaState } from "../domain/plan-beta-store"
+import { loadPreviousIntake, savePlanBetaState } from "../domain/plan-beta-store"
 import { stateFixture } from "../domain/plan-beta-store.test-fixture"
 import { createRecoveryCode } from "../domain/account/private-note-crypto"
 import { saveSessionRecoveryCode } from "../domain/account/private-note-sync"
@@ -198,7 +198,9 @@ describe("plan beta user flow", () => {
     render(<PlanBeta />)
 
     await user.click(screen.getByRole("button", { name: /통증은 없고 몸 상태는 평소와 같아요/u }))
-    await user.click(screen.getByRole("button", { name: "내 계획 완성하기" }))
+    expect(screen.getByText(/남은 선택 0개/u)).toHaveTextContent("저장된 선택을 그대로 다시 사용할 수 있어요")
+    expect(screen.getByText(/남은 선택 0개/u)).toHaveTextContent("후보는 아직 만들지 않았어요")
+    await user.click(screen.getByRole("button", { name: "계획 후보 만들기" }))
 
     expect(screen.getByRole("heading", { name: "두 계획에서 하나를 골라보세요" })).toBeVisible()
     expect(screen.getAllByText(/5km.*10일/u)).not.toHaveLength(0)
@@ -211,25 +213,60 @@ describe("plan beta user flow", () => {
     })).not.toBeInTheDocument()
   })
 
-  it("reuses a legacy complete intake after the existing migration defaults it", async () => {
+  it("asks for a missing stored focus after a fresh safety check without generating candidates", async () => {
     const user = userEvent.setup()
-    const {
-      trainingFocus: _focus,
-      trainingTimePreference: _time,
-      secondSessionMode: _twoADay,
-      ...legacyIntake
-    } = stateFixture().intake
-    window.sessionStorage.setItem(
-      "trainoracle.plan-beta.previous-intake.v1",
-      JSON.stringify(legacyIntake),
+    const state = stateFixture()
+    const { trainingFocus: _focus, ...partialIntake } = state.intake
+    window.localStorage.setItem(
+      "trainoracle.plan-beta.v1",
+      JSON.stringify({ ...state, intake: partialIntake }),
     )
 
     render(<PlanBeta />)
 
+    await user.click(screen.getByRole("button", { name: "다음 주기 후보 만들기" }))
     await user.click(screen.getByRole("button", { name: /통증은 없고 몸 상태는 평소와 같아요/u }))
+    expect(screen.getByText(/남은 선택 1개/u)).toHaveTextContent("훈련 목적")
+    expect(screen.queryByText(/훈련일.*첫 계획 길이.*주로 하는 시간.*하루 한 번/u))
+      .not.toBeInTheDocument()
     await user.click(screen.getByRole("button", { name: "내 계획 완성하기" }))
 
-    expect(screen.getByRole("heading", { name: "두 계획에서 하나를 골라보세요" })).toBeVisible()
+    expect(screen.getByRole("heading", {
+      name: "이번 주기에 어떤 훈련을 더 넣고 싶나요?",
+    })).toBeVisible()
+    expect(screen.queryByRole("heading", { name: "두 계획에서 하나를 골라보세요" }))
+      .not.toBeInTheDocument()
+    expect(loadPreviousIntake()?.trainingFocus).toBeUndefined()
+  })
+
+  it("preserves every explicit answer through the real saved-plan next-cycle path", async () => {
+    const user = userEvent.setup()
+    render(<PlanBeta />)
+
+    await answerPreviewDecisions("clear")
+    await user.click(screen.getByRole("button", { name: "내 계획 완성하기" }))
+    await user.click(screen.getByRole("button", { name: /반복 인터벌.*VO2/u }))
+    await user.click(screen.getByRole("button", { name: /^6일/u }))
+    await user.click(screen.getByRole("button", { name: /10일 계획 받기/u }))
+    await user.click(screen.getByRole("button", { name: /저녁에 운동해요/u }))
+    await user.click(screen.getByRole("button", { name: /하루 두 번 운동할게요/u }))
+    const [choice] = screen.getAllByRole("button", { name: /선택하기/u })
+    if (choice === undefined) throw new Error("Expected a generated plan choice")
+    await user.click(choice)
+    await user.click(screen.getByRole("button", { name: "다음 주기 후보 만들기" }))
+
+    expect(loadPreviousIntake()).toMatchObject({
+      trainingFocus: "VO2_INTENT",
+      availableDayCount: 6,
+      requestedFrameLength: 10,
+      trainingTimePreference: "EVENING",
+      secondSessionMode: "RECOVERY_PM_ALLOWED",
+    })
+    await user.click(screen.getByRole("button", { name: /통증은 없고 몸 상태는 평소와 같아요/u }))
+    expect(screen.getByText(/남은 선택 0개/u)).toBeVisible()
+    await user.click(screen.getByRole("button", { name: "계획 후보 만들기" }))
+
+    expectGeneratedCandidates()
     expect(screen.queryByRole("heading", {
       name: "이번 주기에 어떤 훈련을 더 넣고 싶나요?",
     })).not.toBeInTheDocument()
@@ -352,6 +389,43 @@ describe("plan beta user flow", () => {
     await answerMinimumPlanQuestions()
 
     expectGeneratedCandidates()
+  })
+
+  it("blocks candidate selection when same-day structured pain appears after candidates render", async () => {
+    // Given: candidates rendered under a clear current check, then explicit pain 5 is saved today.
+    const user = userEvent.setup()
+    render(<PlanBeta />)
+    await answerMinimumPlanQuestions()
+    expectGeneratedCandidates()
+    const date = todayISO()
+    expect(saveEntry({
+      id: "risk-added-after-candidates",
+      kind: "evening",
+      date,
+      savedAt: `${date}T10:00:00.000Z`,
+      syncState: "local",
+      sleepH: 0,
+      sleepQuality: 0,
+      weightKg: "",
+      restingHr: "",
+      painParts: { knee: 5 },
+      mood: 0,
+      note: "",
+      fieldProvenance: {
+        painParts: { provenance: FIELD_PROVENANCE.explicit },
+      },
+    }).ok).toBe(true)
+    const [choice] = screen.getAllByRole("button", { name: /선택하기/u })
+    if (choice === undefined) throw new Error("Expected a generated plan choice")
+
+    // When: the athlete selects a now-stale candidate.
+    await user.click(choice)
+
+    // Then: PlanBeta fails safe before activation or persistence.
+    expect(screen.getByRole("heading", { name: "지금은 계획을 멈췄어요" })).toBeVisible()
+    expect(screen.queryByRole("heading", { name: "두 계획에서 하나를 골라보세요" }))
+      .not.toBeInTheDocument()
+    expect(window.localStorage.getItem("trainoracle.plan-beta.v1")).toBeNull()
   })
 
   it("blocks generation when current risk is present or unclear", async () => {
@@ -486,8 +560,8 @@ describe("plan beta user flow", () => {
     await answerMinimumPlanQuestions()
 
     const [firstChoice] = screen.getAllByRole("button", { name: /선택하기/u })
-    expect(firstChoice).toBeDefined()
-    await userEvent.setup().click(firstChoice!)
+    if (!firstChoice) throw new Error("Expected at least one candidate choice")
+    await userEvent.setup().click(firstChoice)
 
     expect(screen.getByRole("heading", { name: /9일 계획/u })).toBeVisible()
     expect(screen.getByText("내 훈련 일정")).toBeVisible()
@@ -509,11 +583,53 @@ describe("plan beta user flow", () => {
       return realSetItem.call(this, key, value)
     })
     const [firstChoice] = screen.getAllByRole("button", { name: /선택하기/u })
-    await userEvent.setup().click(firstChoice!)
+    if (!firstChoice) throw new Error("Expected at least one candidate choice")
+    await userEvent.setup().click(firstChoice)
 
     expect(screen.getByRole("alert")).toHaveTextContent("계획을 이 기기에 저장하지 못했어요")
     expect(screen.getByRole("heading", { name: "두 계획에서 하나를 골라보세요" })).toBeVisible()
     expect(window.localStorage.getItem("trainoracle.plan-beta.v1")).toBeNull()
+  })
+
+  it("blocks save retry when analyzable D9 risk appears after the first write fails", async () => {
+    // Given: the first plan write fails, then a local analyzable safety memo is saved.
+    const user = userEvent.setup()
+    render(<PlanBeta />)
+    await answerMinimumPlanQuestions()
+    const realSetItem = Storage.prototype.setItem
+    let planWriteCount = 0
+    vi.spyOn(Storage.prototype, "setItem").mockImplementation(function (
+      this: Storage,
+      key: string,
+      value: string,
+    ) {
+      if (key === "trainoracle.plan-beta.v1") {
+        planWriteCount += 1
+        if (planWriteCount === 1) throw new Error("QuotaExceededError")
+      }
+      return realSetItem.call(this, key, value)
+    })
+    const [choice] = screen.getAllByRole("button", { name: /선택하기/u })
+    if (choice === undefined) throw new Error("Expected a generated plan choice")
+    await user.click(choice)
+    expect(screen.getByRole("button", { name: "계획 다시 저장하기" })).toBeVisible()
+    const rawRiskMemo = "무릎이 계속 아파요"
+    savePostSession(
+      "risk-added-before-save-retry",
+      rawRiskMemo,
+      MEMO_PURPOSE.analyzableTrainingNote,
+    )
+
+    // When: the athlete retries the stale selection.
+    await user.click(screen.getByRole("button", { name: "계획 다시 저장하기" }))
+
+    // Then: fresh D9 risk blocks before another write and raw memo text stays private.
+    expect(screen.getByRole("heading", { name: "지금은 계획을 멈췄어요" })).toBeVisible()
+    expect(screen.queryByRole("button", { name: "계획 다시 저장하기" }))
+      .not.toBeInTheDocument()
+    expect(planWriteCount).toBe(1)
+    expect(window.localStorage.getItem("trainoracle.plan-beta.v1")).toBeNull()
+    expect(screen.queryByText(rawRiskMemo)).not.toBeInTheDocument()
   })
 
   it("keeps the current plan visible when next-frame archiving fails", async () => {

@@ -42,6 +42,54 @@ test("shows an unsaved, non-selectable preview after the required direction answ
   })).toBeVisible()
 })
 
+test("asks only for a missing returning focus after fresh safety", async ({ page }) => {
+  await page.addInitScript(() => {
+    window.sessionStorage.setItem("trainoracle.plan-beta.previous-intake.v1", JSON.stringify({
+      eventGroup: "FIVE_K",
+      competitionDivision: "OPEN",
+      experienceBand: "DEVELOPING",
+      availableDayCount: 6,
+      requestedFrameLength: 10,
+      trainingTimePreference: "EVENING",
+      secondSessionMode: "RECOVERY_PM_ALLOWED",
+    }))
+  })
+  await openPlan(page)
+
+  await page.getByRole("button", { name: /통증은 없고 몸 상태는 평소와 같아요/u }).click()
+  await expect(page.getByText(/남은 선택 1개/u)).toContainText("훈련 목적")
+  await page.getByRole("button", { name: "내 계획 완성하기" }).click()
+
+  await expect(page.getByRole("heading", {
+    name: "이번 주기에 어떤 훈련을 더 넣고 싶나요?",
+  })).toBeVisible()
+  await expect(page.locator(".plan-candidate")).toHaveCount(0)
+})
+
+test("reuses a fully explicit returning intake to create two candidates", async ({ page }) => {
+  await page.addInitScript(() => {
+    window.sessionStorage.setItem("trainoracle.plan-beta.previous-intake.v1", JSON.stringify({
+      eventGroup: "FIVE_K",
+      competitionDivision: "OPEN",
+      experienceBand: "DEVELOPING",
+      trainingFocus: "VO2_INTENT",
+      availableDayCount: 6,
+      requestedFrameLength: 10,
+      trainingTimePreference: "EVENING",
+      secondSessionMode: "RECOVERY_PM_ALLOWED",
+    }))
+  })
+  await openPlan(page)
+
+  await page.getByRole("button", { name: /통증은 없고 몸 상태는 평소와 같아요/u }).click()
+  await expect(page.getByText(/남은 선택 0개/u)).toContainText("저장된 선택을 그대로 다시 사용할 수 있어요")
+  await expect(page.getByText(/남은 선택 0개/u)).toContainText("후보는 아직 만들지 않았어요")
+  await page.getByRole("button", { name: "계획 후보 만들기" }).click()
+
+  await expect(page.locator(".plan-candidate")).toHaveCount(2)
+  await expect(page.getByRole("heading", { name: "두 계획에서 하나를 골라보세요" })).toBeVisible()
+})
+
 test("blocks review-risk before any preview or candidates", async ({ page }) => {
   await openPlan(page)
   await answerFirstThree(page, true)

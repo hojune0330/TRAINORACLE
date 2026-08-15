@@ -1,8 +1,27 @@
 import { cleanup, render, screen } from "@testing-library/react"
 import { afterEach, describe, expect, it, vi } from "vitest"
+import { stateFixture } from "../../domain/plan-beta-store.test-fixture"
 import { PlanIntake } from "./PlanIntake"
+import { firstUnansweredRefinement } from "./plan-intake-navigation"
 
 afterEach(cleanup)
+
+describe("returning intake navigation", () => {
+  it("maps each missing refinement to its first canonical question", () => {
+    const intake = stateFixture().intake
+    const { trainingFocus: _focus, ...withoutFocus } = intake
+    const { availableDayCount: _days, ...withoutDays } = intake
+    const { requestedFrameLength: _frame, ...withoutFrame } = intake
+    const { trainingTimePreference: _time, ...withoutTime } = intake
+    const { secondSessionMode: _sessions, ...withoutSessions } = intake
+
+    expect(firstUnansweredRefinement(withoutFocus)).toBe("focus")
+    expect(firstUnansweredRefinement(withoutDays)).toBe("days")
+    expect(firstUnansweredRefinement(withoutFrame)).toBe("frame-length")
+    expect(firstUnansweredRefinement(withoutTime)).toBe("training-time")
+    expect(firstUnansweredRefinement(withoutSessions)).toBe("two-a-day")
+  })
+})
 
 describe("two-a-day intake", () => {
   it("explains the current two-session option before it is chosen", () => {

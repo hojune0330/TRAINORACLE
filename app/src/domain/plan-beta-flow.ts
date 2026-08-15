@@ -178,6 +178,7 @@ function completeIntake(
 ): PlanBetaIntake | null {
   const {
     eventGroup,
+    competitionDivision,
     experienceBand,
     availableDayCount,
     requestedFrameLength,
@@ -187,6 +188,7 @@ function completeIntake(
   } = draft
   if (
     eventGroup === undefined
+    || competitionDivision === undefined
     || experienceBand === undefined
     || availableDayCount === undefined
     || requestedFrameLength === undefined
@@ -198,7 +200,7 @@ function completeIntake(
   }
   return {
     eventGroup,
-    competitionDivision: draft.competitionDivision ?? "NOT_PROVIDED",
+    competitionDivision,
     experienceBand,
     availableDayCount,
     requestedFrameLength,
