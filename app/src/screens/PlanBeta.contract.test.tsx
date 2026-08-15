@@ -181,6 +181,79 @@ describe("plan beta user flow", () => {
     })).toBeVisible()
   })
 
+  it("normalizes a legacy general-endurance previous intake before generating candidates", async () => {
+    const user = userEvent.setup()
+    const { competitionDivision: _division, ...legacyIntake } = {
+      ...stateFixture().intake,
+      eventGroup: "GENERAL_ENDURANCE" as const,
+    }
+    window.sessionStorage.setItem(
+      "trainoracle.plan-beta.previous-intake.v1",
+      JSON.stringify(legacyIntake),
+    )
+
+    render(<PlanBeta />)
+
+    await user.click(screen.getByRole("button", { name: /통증은 없고 몸 상태는 평소와 같아요/u }))
+    await user.click(screen.getByRole("button", { name: "계획 후보 만들기" }))
+
+    expectGeneratedCandidates()
+  })
+
+  it("normalizes an archived general-endurance plan with no division before generating candidates", async () => {
+    const user = userEvent.setup()
+    const state = stateFixture()
+    const { competitionDivision: _division, ...legacyIntake } = state.intake
+    expect(savePlanBetaState({
+      ...state,
+      intake: { ...legacyIntake, eventGroup: "GENERAL_ENDURANCE" },
+    })).toEqual({ ok: true })
+
+    render(<PlanBeta />)
+
+    await user.click(screen.getByRole("button", { name: "다음 주기 후보 만들기" }))
+    await user.click(screen.getByRole("button", { name: /통증은 없고 몸 상태는 평소와 같아요/u }))
+    await user.click(screen.getByRole("button", { name: "계획 후보 만들기" }))
+
+    expectGeneratedCandidates()
+  })
+
+  it("clears a stale omitted division and requires the current division before preview", async () => {
+    const user = userEvent.setup()
+    render(<PlanBeta />)
+
+    await user.click(screen.getByRole("button", { name: /기초 지구력.*경기 날짜 없이/u }))
+    await user.click(screen.getByRole("button", { name: /훈련 계획에 맞춰 달려 본 경험/u }))
+    await user.click(screen.getByRole("button", { name: "기초 지구력" }))
+    await user.click(screen.getByRole("button", { name: /800m.*1500m/u }))
+
+    expect(screen.getByRole("heading", {
+      name: "현재 참가하거나 준비 중인 부문이 있나요?",
+    })).toBeVisible()
+    expect(screen.getByRole("button", { name: /선택하지 않음.*나중에 입력/u }))
+      .toHaveAttribute("aria-pressed", "false")
+
+    await user.click(screen.getByRole("button", { name: /훈련 계획에 맞춰 달려 본 경험/u }))
+    const experienceChoices = screen.getAllByRole("button", {
+      name: /훈련 계획에 맞춰 달려 본 경험/u,
+    })
+    const experienceChoice = experienceChoices.at(-1)
+    if (experienceChoice === undefined) throw new Error("Expected the experience choice")
+    await user.click(experienceChoice)
+    await user.click(screen.getByRole("button", { name: /통증은 없고 몸 상태는 평소와 같아요/u }))
+
+    expect(screen.getByRole("heading", {
+      name: "현재 참가하거나 준비 중인 부문이 있나요?",
+    })).toBeVisible()
+    expect(screen.queryByRole("heading", { name: "계획 형태 미리보기" }))
+      .not.toBeInTheDocument()
+
+    await user.click(screen.getByRole("button", { name: /고등부/u }))
+    expect(screen.getByRole("heading", {
+      name: "계획을 만들기 전에 지금 몸 상태를 확인할게요",
+    })).toBeVisible()
+  })
+
   it("reuses every explicit saved refinement after the returning preview", async () => {
     const user = userEvent.setup()
     window.sessionStorage.setItem(

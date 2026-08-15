@@ -26,6 +26,7 @@ import { loadEntries, todayISO } from "./journal-store"
 import {
   loadPreviousContinuity,
 } from "./plan-beta-store"
+import { divisionForGoal } from "../screens/plan-beta/plan-intake-navigation"
 import { createPlanFormation } from "./plan-beta-formation"
 import type {
   PlanBetaIntake,
@@ -188,7 +189,6 @@ function completeIntake(
   } = draft
   if (
     eventGroup === undefined
-    || competitionDivision === undefined
     || experienceBand === undefined
     || availableDayCount === undefined
     || requestedFrameLength === undefined
@@ -198,9 +198,11 @@ function completeIntake(
   ) {
     return null
   }
+  const normalizedCompetitionDivision = divisionForGoal(eventGroup) ?? competitionDivision
+  if (normalizedCompetitionDivision === undefined) return null
   return {
     eventGroup,
-    competitionDivision,
+    competitionDivision: normalizedCompetitionDivision,
     experienceBand,
     availableDayCount,
     requestedFrameLength,

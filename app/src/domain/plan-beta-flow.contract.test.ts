@@ -38,10 +38,11 @@ describe("canonical plan intake boundary", () => {
   )
 
   it("projects seven requested days from the continuing 9.5-day formation", () => {
-    // Given
-    const draft = {
-      eventGroup: "MIDDLE_DISTANCE" as const,
-      experienceBand: "EXPERIENCED" as const,
+      // Given
+      const draft = {
+        eventGroup: "MIDDLE_DISTANCE" as const,
+        competitionDivision: "OPEN" as const,
+        experienceBand: "EXPERIENCED" as const,
       availableDayCount: 5 as const,
       requestedFrameLength: 7 as const,
       trainingFocus: "LT_INTENT" as const,

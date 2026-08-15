@@ -16,13 +16,104 @@
 // =============================================================================
 
 import { evaluateD9ColloquialLayer } from "@impl/d9/evaluator"
-import type { D9Disposition } from "@impl/d9/evaluator"
+import { mapD9ResultToRveSignal } from "@impl/rve/signal"
+import type { D9Disposition, D9Result } from "@impl/d9/evaluator"
+import type { RveRuleEvaluatorSignal } from "@impl/rve/signal"
 
 export interface TransientMemoAssessment {
   readonly disposition: D9Disposition
   readonly blocksPlanGeneration: boolean
   /** 비민감 reason code만 — 원문 조각 없음 */
   readonly reasonCodes: readonly string[]
+}
+
+const D9_RESULT_KEYS = [
+  "disposition",
+  "blocksPlanGeneration",
+  "reasonCodes",
+  "evidence",
+] as const
+const D9_EVIDENCE_KEYS = [
+  "ruleId",
+  "family",
+  "route",
+  "reasonCode",
+  "clauseIndex",
+  "clause",
+  "matchedBy",
+] as const
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value)
+}
+
+function hasOnlyKeys(value: Record<string, unknown>, keys: readonly string[]): boolean {
+  return Object.keys(value).every((key) => keys.includes(key))
+}
+
+function isD9Disposition(value: unknown): value is D9Disposition {
+  return value === "D9_ACTIVE" || value === "D9_UNKNOWN" || value === "D9_CLEARED"
+}
+
+function isNonEmptyStringArray(value: unknown): value is string[] {
+  return Array.isArray(value)
+    && value.length > 0
+    && value.every((item) => typeof item === "string" && item.length > 0)
+}
+
+function isD9Evidence(value: unknown): boolean {
+  if (!isRecord(value) || !hasOnlyKeys(value, D9_EVIDENCE_KEYS)) return false
+
+  const route = value["route"]
+  const clauseIndex = value["clauseIndex"]
+  return typeof value["ruleId"] === "string"
+    && typeof value["family"] === "string"
+    && (route === "ACTIVE" || route === "UNKNOWN" || route === "ADVISORY")
+    && typeof value["reasonCode"] === "string"
+    && typeof clauseIndex === "number"
+    && Number.isInteger(clauseIndex)
+    && clauseIndex >= 0
+    && typeof value["clause"] === "string"
+    && isNonEmptyStringArray(value["matchedBy"])
+}
+
+function isD9Result(value: unknown): value is D9Result {
+  if (!isRecord(value) || !hasOnlyKeys(value, D9_RESULT_KEYS)) return false
+
+  const disposition = value["disposition"]
+  const blocksPlanGeneration = value["blocksPlanGeneration"]
+  return isD9Disposition(disposition)
+    && typeof blocksPlanGeneration === "boolean"
+    && blocksPlanGeneration === (disposition !== "D9_CLEARED")
+    && isNonEmptyStringArray(value["reasonCodes"])
+    && Array.isArray(value["evidence"])
+    && value["evidence"].every(isD9Evidence)
+}
+
+function isCanonicalRveSignal(value: unknown): value is RveRuleEvaluatorSignal {
+  if (!isRecord(value)) return false
+
+  const storedStatus = value["storedStatus"]
+  const isBlockingStatus = storedStatus === "ACTIVE" || storedStatus === "UNKNOWN"
+  const isClearedStatus = storedStatus === "CLEARED"
+  const audit = value["audit"]
+
+  return (isBlockingStatus || isClearedStatus)
+    && value["ruleRef"] === "RULE_SPEC_D1_D9.D-9"
+    && value["blocksPlanGeneration"] === isBlockingStatus
+    && value["requiresHumanReview"] === isBlockingStatus
+    && isNonEmptyStringArray(value["nonSensitiveReasonCodes"])
+    && isRecord(audit)
+    && audit["event"] === "RVE_SIGNAL_CREATED"
+    && audit["privacy"] === "REASON_CODES_ONLY"
+}
+
+function evaluatorShapeFailsafe(): TransientMemoAssessment {
+  return {
+    disposition: "D9_UNKNOWN",
+    blocksPlanGeneration: true,
+    reasonCodes: ["RVE_D9_INVALID_INPUT_SHAPE"],
+  }
 }
 
 /**
@@ -32,11 +123,16 @@ export interface TransientMemoAssessment {
  */
 export function assessMemoTransient(rawText: string): TransientMemoAssessment {
   try {
-    const result = evaluateD9ColloquialLayer(rawText)
+    const result: unknown = evaluateD9ColloquialLayer(rawText)
+    if (!isD9Result(result)) return evaluatorShapeFailsafe()
+
+    const rve = mapD9ResultToRveSignal(result)
+    if (!isCanonicalRveSignal(rve)) return evaluatorShapeFailsafe()
+
     return {
       disposition: result.disposition,
-      blocksPlanGeneration: result.blocksPlanGeneration,
-      reasonCodes: result.reasonCodes,
+      blocksPlanGeneration: rve.blocksPlanGeneration,
+      reasonCodes: rve.nonSensitiveReasonCodes,
     }
   } catch {
     // 평가기 실패 → UNKNOWN fail-safe (스펙 불변식)

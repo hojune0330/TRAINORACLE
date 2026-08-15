@@ -239,13 +239,13 @@ export function PlanBeta({
         onGoal={(eventGroup) => {
           const competitionDivision = divisionForGoal(eventGroup)
           setDraft((current) => competitionDivision === undefined
-            ? { ...current, eventGroup }
+            ? { ...current, eventGroup, competitionDivision: undefined }
             : { ...current, eventGroup, competitionDivision })
           setStep(competitionDivision === undefined ? "division" : "experience")
         }}
         onDivision={(competitionDivision) => {
           setDraft((current) => ({ ...current, competitionDivision }))
-          setStep(previousIntake === null ? "experience" : "safety")
+          setStep(draft.experienceBand === undefined ? "experience" : "safety")
         }}
         onExperience={(experienceBand) => {
           setDraft((current) => ({ ...current, experienceBand }))
@@ -275,6 +275,15 @@ export function PlanBeta({
         onManageRecords={() => onManageRecords?.()}
         onOpenNotationReader={() => setNotationReaderOpen(true)}
         onSafety={(nextCurrentCheck) => {
+          if (
+            draft.eventGroup !== undefined
+            && divisionForGoal(draft.eventGroup) === undefined
+            && draft.competitionDivision === undefined
+          ) {
+            setCurrentCheck(null)
+            setStep("division")
+            return
+          }
           const safety = evaluatePlanSafety(nextCurrentCheck)
           if (safety.kind === "blocked") {
             setErrorCode(null)
