@@ -1,14 +1,70 @@
-import { beforeEach, describe, expect, it } from "vitest"
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import {
   generatePlanFromDraft,
   selectPlanForActivation,
 } from "./plan-beta-flow"
+import { JOURNAL_STORAGE_KEY } from "./journal-local-storage"
 import { parsePlanBetaState } from "./plan-beta-schema"
 import { loadPlanBetaState, savePlanBetaState } from "./plan-beta-store"
 
 beforeEach(() => {
   window.localStorage.clear()
   window.sessionStorage.clear()
+})
+
+const COMPLETE_DRAFT = {
+  eventGroup: "MIDDLE_DISTANCE" as const,
+  competitionDivision: "OPEN" as const,
+  experienceBand: "DEVELOPING" as const,
+  availableDayCount: 3 as const,
+  requestedFrameLength: 9 as const,
+  trainingFocus: "LT_INTENT" as const,
+  secondSessionMode: "SINGLE_SESSION_ONLY" as const,
+  trainingTimePreference: "VARIES" as const,
+}
+
+afterEach(() => {
+  vi.restoreAllMocks()
+})
+
+describe("plan journal safety read boundary", () => {
+  it.each([
+    ["corrupt JSON", "{"],
+    ["a dropped malformed entry", JSON.stringify([{}])],
+  ])("blocks generation when journal storage contains %s", (_label, raw) => {
+    // Given
+    window.localStorage.setItem(JOURNAL_STORAGE_KEY, raw)
+
+    // When
+    const result = generatePlanFromDraft(COMPLETE_DRAFT, "NO_KNOWN_RISK")
+
+    // Then
+    expect(result).toEqual({
+      kind: "blocked",
+      code: "RECENT_JOURNAL_REQUIRES_REVIEW",
+    })
+  })
+
+  it("blocks generation when reading journal storage throws", () => {
+    // Given
+    const realGetItem = Storage.prototype.getItem
+    vi.spyOn(Storage.prototype, "getItem").mockImplementation(function (
+      this: Storage,
+      key: string,
+    ) {
+      if (key === JOURNAL_STORAGE_KEY) throw new Error("journal read failed")
+      return realGetItem.call(this, key)
+    })
+
+    // When
+    const result = generatePlanFromDraft(COMPLETE_DRAFT, "NO_KNOWN_RISK")
+
+    // Then
+    expect(result).toEqual({
+      kind: "blocked",
+      code: "RECENT_JOURNAL_REQUIRES_REVIEW",
+    })
+  })
 })
 
 describe("canonical plan intake boundary", () => {

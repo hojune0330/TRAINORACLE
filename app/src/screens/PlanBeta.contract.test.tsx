@@ -2,6 +2,7 @@ import { cleanup, render, screen, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { FIELD_PROVENANCE } from "../domain/field-provenance"
+import { JOURNAL_STORAGE_KEY } from "../domain/journal-local-storage"
 import { MEMO_PURPOSE } from "../domain/journal-schema"
 import { saveEntry, savePrivateEntry, todayISO } from "../domain/journal-store"
 import { loadPreviousIntake, savePlanBetaState } from "../domain/plan-beta-store"
@@ -642,6 +643,23 @@ describe("plan beta user flow", () => {
     expect(window.localStorage.getItem("trainoracle.plan-beta.v1")).not.toBeNull()
   })
 
+  it("blocks candidate save when journal JSON becomes corrupt after generation", async () => {
+    // Given
+    const user = userEvent.setup()
+    render(<PlanBeta />)
+    await answerMinimumPlanQuestions()
+    window.localStorage.setItem(JOURNAL_STORAGE_KEY, "{")
+    const [choice] = screen.getAllByRole("button", { name: /선택하기/u })
+    if (choice === undefined) throw new Error("Expected a generated plan choice")
+
+    // When
+    await user.click(choice)
+
+    // Then
+    expect(screen.getByRole("heading", { name: "지금은 계획을 멈췄어요" })).toBeVisible()
+    expect(window.localStorage.getItem("trainoracle.plan-beta.v1")).toBeNull()
+  })
+
   it("keeps candidate selection visible when the active plan cannot be saved", async () => {
     render(<PlanBeta />)
     await answerMinimumPlanQuestions()
@@ -703,6 +721,46 @@ describe("plan beta user flow", () => {
     expect(planWriteCount).toBe(1)
     expect(window.localStorage.getItem("trainoracle.plan-beta.v1")).toBeNull()
     expect(screen.queryByText(rawRiskMemo)).not.toBeInTheDocument()
+  })
+
+  it("blocks save retry when reading journal storage throws", async () => {
+    // Given
+    const user = userEvent.setup()
+    render(<PlanBeta />)
+    await answerMinimumPlanQuestions()
+    const realSetItem = Storage.prototype.setItem
+    let planWriteCount = 0
+    vi.spyOn(Storage.prototype, "setItem").mockImplementation(function (
+      this: Storage,
+      key: string,
+      value: string,
+    ) {
+      if (key === "trainoracle.plan-beta.v1") {
+        planWriteCount += 1
+        if (planWriteCount === 1) throw new Error("QuotaExceededError")
+      }
+      return realSetItem.call(this, key, value)
+    })
+    const [choice] = screen.getAllByRole("button", { name: /선택하기/u })
+    if (choice === undefined) throw new Error("Expected a generated plan choice")
+    await user.click(choice)
+    expect(screen.getByRole("button", { name: "계획 다시 저장하기" })).toBeVisible()
+    const realGetItem = Storage.prototype.getItem
+    vi.spyOn(Storage.prototype, "getItem").mockImplementation(function (
+      this: Storage,
+      key: string,
+    ) {
+      if (key === JOURNAL_STORAGE_KEY) throw new Error("journal read failed")
+      return realGetItem.call(this, key)
+    })
+
+    // When
+    await user.click(screen.getByRole("button", { name: "계획 다시 저장하기" }))
+
+    // Then
+    expect(screen.getByRole("heading", { name: "지금은 계획을 멈췄어요" })).toBeVisible()
+    expect(planWriteCount).toBe(1)
+    expect(window.localStorage.getItem("trainoracle.plan-beta.v1")).toBeNull()
   })
 
   it("keeps the current plan visible when next-frame archiving fails", async () => {

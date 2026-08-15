@@ -8,10 +8,16 @@ vi.mock("@impl/d9/evaluator", () => ({
   evaluateD9ColloquialLayer: evaluatorMock,
 }))
 
+const VALID_REASON_CODES: Readonly<Record<D9Disposition, string>> = {
+  D9_ACTIVE: "D9_ACTIVE_MEDICAL_RED_FLAG_SYMPTOM",
+  D9_UNKNOWN: "D9_UNKNOWN_PAIN_WORSENING",
+  D9_CLEARED: "D9_CLEARED_NO_COLLOQUIAL_RISK_SIGNAL",
+}
+
 function d9Result(
   disposition: D9Disposition,
   blocksPlanGeneration: boolean,
-  reasonCodes: readonly string[] = [disposition],
+  reasonCodes: readonly string[] = [VALID_REASON_CODES[disposition]],
 ) {
   return {
     disposition,
@@ -61,6 +67,47 @@ const MALFORMED_RESULTS: readonly [string, unknown][] = [
     evidence: [{}],
   }],
   ["invalid RVE status field", { ...d9Result("D9_CLEARED", false), storedStatus: "UNKNOWN" }],
+  ["CLEARED with ACTIVE evidence", {
+    ...d9Result("D9_CLEARED", false),
+    evidence: [{
+      ruleId: "CONTRADICTORY_ACTIVE",
+      family: "test",
+      route: "ACTIVE",
+      reasonCode: "D9_ACTIVE_MEDICAL_RED_FLAG_SYMPTOM",
+      clauseIndex: 0,
+      clause: "raw active evidence",
+      matchedBy: ["test"],
+    }],
+  }],
+  ["CLEARED with UNKNOWN evidence", {
+    ...d9Result("D9_CLEARED", false),
+    evidence: [{
+      ruleId: "CONTRADICTORY_UNKNOWN",
+      family: "test",
+      route: "UNKNOWN",
+      reasonCode: "D9_UNKNOWN_PAIN_WORSENING",
+      clauseIndex: 0,
+      clause: "raw unknown evidence",
+      matchedBy: ["test"],
+    }],
+  }],
+  ["UNKNOWN with ACTIVE evidence", {
+    ...d9Result("D9_UNKNOWN", true),
+    evidence: [{
+      ruleId: "CONTRADICTORY_ACTIVE",
+      family: "test",
+      route: "ACTIVE",
+      reasonCode: "D9_ACTIVE_MEDICAL_RED_FLAG_SYMPTOM",
+      clauseIndex: 0,
+      clause: "raw active evidence",
+      matchedBy: ["test"],
+    }],
+  }],
+  ["arbitrary reason code", d9Result(
+    "D9_CLEARED",
+    false,
+    ["PRIVATE_MEMO_TEXT_must_not_cross_the_boundary"],
+  )],
 ]
 
 describe("assessPurposeScopedMemo", () => {
@@ -114,12 +161,12 @@ describe("assessPurposeScopedMemo", () => {
     // Given
     const trainingNote = "가볍게 뻐근하지만 괜찮아요"
     evaluatorMock.mockReturnValueOnce({
-      ...d9Result("D9_CLEARED", false, ["D9_CLEARED_WITH_NON_BLOCKING_ADVISORY", "D9_ADVISORY"]),
+      ...d9Result("D9_CLEARED", false, ["D9_CLEARED_WITH_NON_BLOCKING_ADVISORY", "D9_ADVISORY_UNLOCALIZED_DISCOMFORT"]),
       evidence: [{
         ruleId: "BODY_WITH_WEAK_PAIN_ADVISORY",
         family: "mild_training_response",
         route: "ADVISORY",
-        reasonCode: "D9_ADVISORY",
+        reasonCode: "D9_ADVISORY_UNLOCALIZED_DISCOMFORT",
         clauseIndex: 0,
         clause: "raw evaluator evidence must not escape",
         matchedBy: ["painWeak"],
@@ -135,7 +182,7 @@ describe("assessPurposeScopedMemo", () => {
     expect(assessment).toEqual({
       disposition: "D9_CLEARED",
       blocksPlanGeneration: false,
-      reasonCodes: ["D9_CLEARED_WITH_NON_BLOCKING_ADVISORY", "D9_ADVISORY"],
+      reasonCodes: ["D9_CLEARED_WITH_NON_BLOCKING_ADVISORY", "D9_ADVISORY_UNLOCALIZED_DISCOMFORT"],
     })
     expect(JSON.stringify(assessment)).not.toContain(trainingNote)
     expect(JSON.stringify(assessment)).not.toContain("raw evaluator evidence")

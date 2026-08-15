@@ -4,11 +4,17 @@ import { mapD9ResultToRveSignal } from "../src/rve/signal"
 import { preparePrescriptionRuntime } from "../src/prescription/runtime"
 
 function gateFor(disposition: "D9_CLEARED" | "D9_ACTIVE" | "D9_UNKNOWN") {
+  const reasonCode = {
+    D9_CLEARED: "D9_CLEARED_NO_COLLOQUIAL_RISK_SIGNAL",
+    D9_ACTIVE: "D9_ACTIVE_MANUAL_OR_MEDICAL_HOLD",
+    D9_UNKNOWN: "D9_UNKNOWN_PAIN_WORSENING",
+  }[disposition]
+
   return decideSafetyGate(
     mapD9ResultToRveSignal({
       disposition,
       blocksPlanGeneration: disposition !== "D9_CLEARED",
-      reasonCodes: [disposition],
+      reasonCodes: [reasonCode],
       evidence: [],
     }),
   )

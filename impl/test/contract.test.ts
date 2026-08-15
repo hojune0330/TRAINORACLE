@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest"
 import { evaluateD9ColloquialLayer } from "../src/d9/evaluator"
+import type { D9Result } from "../src/d9/evaluator"
 import {
   createEvaluatorFailureSignal,
   mapD9ResultToRveSignal,
@@ -73,6 +74,94 @@ describe("D9 -> RVE -> Safety Gate contract slice", () => {
       kind: "plan_draft",
       source: "BETA_PLAN_ENGINE",
     })
+  })
+
+  it.each([
+    [
+      "CLEARED with ACTIVE evidence",
+      "D9_CLEARED",
+      "D9_CLEARED_NO_COLLOQUIAL_RISK_SIGNAL",
+      "ACTIVE",
+      "D9_ACTIVE_MEDICAL_RED_FLAG_SYMPTOM",
+    ],
+    [
+      "CLEARED with UNKNOWN evidence",
+      "D9_CLEARED",
+      "D9_CLEARED_NO_COLLOQUIAL_RISK_SIGNAL",
+      "UNKNOWN",
+      "D9_UNKNOWN_PAIN_WORSENING",
+    ],
+    [
+      "UNKNOWN with ACTIVE evidence",
+      "D9_UNKNOWN",
+      "D9_UNKNOWN_PAIN_WORSENING",
+      "ACTIVE",
+      "D9_ACTIVE_MEDICAL_RED_FLAG_SYMPTOM",
+    ],
+  ] as const)("fails closed for %s", (
+    _label,
+    disposition,
+    resultReasonCode,
+    route,
+    evidenceReasonCode,
+  ) => {
+    // Given
+    const contradictory: D9Result = {
+      disposition,
+      blocksPlanGeneration: disposition !== "D9_CLEARED",
+      reasonCodes: [resultReasonCode],
+      evidence: [{
+        ruleId: "CONTRADICTORY_EVIDENCE",
+        family: "test",
+        route,
+        reasonCode: evidenceReasonCode,
+        clauseIndex: 0,
+        clause: "raw evidence must not escape",
+        matchedBy: ["test"],
+      }],
+    }
+
+    // When
+    const rve = mapD9ResultToRveSignal(contradictory)
+    const gate = decideSafetyGate(rve)
+
+    // Then
+    expect(rve).toMatchObject({
+      storedStatus: "UNKNOWN",
+      blocksPlanGeneration: true,
+      requiresHumanReview: true,
+      nonSensitiveReasonCodes: ["RVE_D9_INVALID_INPUT_SHAPE"],
+    })
+    expect(gate).toMatchObject({
+      kind: "blocked",
+      action: "BLOCK_OR_HUMAN_REVIEW",
+      planGenerationAllowed: false,
+    })
+  })
+
+  it("rejects an arbitrary evaluator reason code without returning memo text", () => {
+    // Given
+    const rawMemo = "PRIVATE_MEMO_TEXT_must_not_cross_the_boundary"
+    const malformed: D9Result = {
+      disposition: "D9_CLEARED",
+      blocksPlanGeneration: false,
+      reasonCodes: [rawMemo],
+      evidence: [],
+    }
+
+    // When
+    const rve = mapD9ResultToRveSignal(malformed)
+    const gate = decideSafetyGate(rve)
+
+    // Then
+    expect(rve).toMatchObject({
+      storedStatus: "UNKNOWN",
+      blocksPlanGeneration: true,
+      requiresHumanReview: true,
+      nonSensitiveReasonCodes: ["RVE_D9_INVALID_INPUT_SHAPE"],
+    })
+    expect(gate.planGenerationAllowed).toBe(false)
+    expect(JSON.stringify({ rve, gate })).not.toContain(rawMemo)
   })
 
   it.each([
