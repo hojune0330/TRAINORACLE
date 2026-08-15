@@ -1,5 +1,6 @@
 import type { PlanEventGroup } from "@impl/plan-generator/types"
 import type { CompetitionDivision } from "../../domain/plan-beta-schema"
+import type { PlanBetaIntake } from "../../domain/plan-beta-store"
 import type { IntakeStep } from "./PlanIntake"
 
 const STEP_ORDER = [
@@ -26,6 +27,17 @@ export function visibleIntakeSteps(
   return eventGroup === "GENERAL_ENDURANCE"
     ? STEP_ORDER.filter((step) => step !== "division")
     : STEP_ORDER
+}
+
+export function firstUnansweredRefinement(
+  draft: Partial<PlanBetaIntake>,
+): Exclude<IntakeStep, "goal" | "division" | "experience" | "safety" | "preview"> | null {
+  if (draft.trainingFocus === undefined) return "focus"
+  if (draft.availableDayCount === undefined) return "days"
+  if (draft.requestedFrameLength === undefined) return "frame-length"
+  if (draft.trainingTimePreference === undefined) return "training-time"
+  if (draft.secondSessionMode === undefined) return "two-a-day"
+  return null
 }
 
 export function previousIntakeStep(

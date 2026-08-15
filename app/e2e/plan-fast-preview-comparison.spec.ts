@@ -22,7 +22,7 @@ async function answerFirstThree(page: Page, review = false): Promise<void> {
   }).click()
 }
 
-test("shows an unsaved, non-selectable preview after three clear decisions", async ({ page }) => {
+test("shows an unsaved, non-selectable preview after the required direction answers and a clear current-risk answer", async ({ page }) => {
   await openPlan(page)
   await answerFirstThree(page)
 

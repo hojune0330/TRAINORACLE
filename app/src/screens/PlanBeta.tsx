@@ -31,6 +31,7 @@ import type { CandidateSelection } from "./plan-beta/plan-selection"
 import { planErrorMessage } from "./plan-beta/plan-feedback"
 import {
   divisionForGoal,
+  firstUnansweredRefinement,
   previousIntakeStep,
 } from "./plan-beta/plan-intake-navigation"
 
@@ -265,7 +266,32 @@ export function PlanBeta({
           setCurrentCheck(nextCurrentCheck)
           setStep("preview")
         }}
-        onContinue={() => setStep("focus")}
+        onContinue={() => {
+          const nextRefinement = firstUnansweredRefinement(draft)
+          if (nextRefinement !== null) {
+            setStep(nextRefinement)
+            return
+          }
+          if (currentCheck === null) {
+            setStep("safety")
+            return
+          }
+          const result = generatePlanFromDraft(draft, currentCheck)
+          if (result.kind === "blocked") {
+            setErrorCode(null)
+            setCurrentCheck(null)
+            setBlocked(true)
+            return
+          }
+          if (result.kind === "rejected") {
+            setErrorCode(result.code)
+            return
+          }
+          setErrorCode(null)
+          setGate(result.gate)
+          setGenerated(result.generated)
+          setGeneratedIntake(result.intake)
+        }}
       />
       {errorCode !== null && (
         <div className="plan-inline-error" role="alert">

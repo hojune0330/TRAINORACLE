@@ -89,7 +89,7 @@ function savePostSession(
 }
 
 describe("plan beta user flow", () => {
-  it("shows a non-selectable plan-shape preview after three clear decisions", async () => {
+  it("shows a non-selectable plan-shape preview after the required direction answers and a clear current-risk answer", async () => {
     render(<PlanBeta />)
 
     await answerPreviewDecisions("clear")
@@ -109,7 +109,7 @@ describe("plan beta user flow", () => {
     })).toBeVisible()
   })
 
-  it("shows no preview or candidates when the three-decision risk answer needs review", async () => {
+  it("shows no preview or candidates when the current-risk answer needs review after the required direction answers", async () => {
     render(<PlanBeta />)
 
     await answerPreviewDecisions("review")
@@ -179,6 +179,60 @@ describe("plan beta user flow", () => {
     expect(screen.getByRole("heading", {
       name: "계획을 만들기 전에 지금 몸 상태를 확인할게요",
     })).toBeVisible()
+  })
+
+  it("reuses every explicit saved refinement after the returning preview", async () => {
+    const user = userEvent.setup()
+    window.sessionStorage.setItem(
+      "trainoracle.plan-beta.previous-intake.v1",
+      JSON.stringify({
+        ...stateFixture().intake,
+        availableDayCount: 6,
+        requestedFrameLength: 10,
+        trainingFocus: "VO2_INTENT",
+        trainingTimePreference: "EVENING",
+        secondSessionMode: "RECOVERY_PM_ALLOWED",
+      }),
+    )
+
+    render(<PlanBeta />)
+
+    await user.click(screen.getByRole("button", { name: /통증은 없고 몸 상태는 평소와 같아요/u }))
+    await user.click(screen.getByRole("button", { name: "내 계획 완성하기" }))
+
+    expect(screen.getByRole("heading", { name: "두 계획에서 하나를 골라보세요" })).toBeVisible()
+    expect(screen.getAllByText(/5km.*10일/u)).not.toHaveLength(0)
+    expect(screen.getAllByText(/반복 인터벌.*VO2/u)).not.toHaveLength(0)
+    expect(screen.queryByRole("heading", {
+      name: "이번 주기에 어떤 훈련을 더 넣고 싶나요?",
+    })).not.toBeInTheDocument()
+    expect(screen.queryByRole("heading", {
+      name: "이번 계획에서 운동할 수 있는 날은 며칠인가요?",
+    })).not.toBeInTheDocument()
+  })
+
+  it("reuses a legacy complete intake after the existing migration defaults it", async () => {
+    const user = userEvent.setup()
+    const {
+      trainingFocus: _focus,
+      trainingTimePreference: _time,
+      secondSessionMode: _twoADay,
+      ...legacyIntake
+    } = stateFixture().intake
+    window.sessionStorage.setItem(
+      "trainoracle.plan-beta.previous-intake.v1",
+      JSON.stringify(legacyIntake),
+    )
+
+    render(<PlanBeta />)
+
+    await user.click(screen.getByRole("button", { name: /통증은 없고 몸 상태는 평소와 같아요/u }))
+    await user.click(screen.getByRole("button", { name: "내 계획 완성하기" }))
+
+    expect(screen.getByRole("heading", { name: "두 계획에서 하나를 골라보세요" })).toBeVisible()
+    expect(screen.queryByRole("heading", {
+      name: "이번 주기에 어떤 훈련을 더 넣고 싶나요?",
+    })).not.toBeInTheDocument()
   })
 
   it("explains that managing race records does not automatically change this beta plan", () => {
