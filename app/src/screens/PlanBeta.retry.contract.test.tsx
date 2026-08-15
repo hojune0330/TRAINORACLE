@@ -20,6 +20,7 @@ async function generatePlanCandidates(): Promise<void> {
   await user.click(screen.getByRole("button", { name: /훈련 계획에 맞춰 달려 본 경험/u }))
   await user.click(screen.getByRole("button", { name: /지속 페이스.*LT/u }))
   await user.click(screen.getByRole("button", { name: /^3일/u }))
+  await user.click(screen.getByRole("button", { name: /9일 계획 받기/u }))
   await user.click(screen.getByRole("button", { name: /날마다 달라요/u }))
   await user.click(screen.getByRole("button", { name: /하루 한 번 운동/u }))
   await user.click(screen.getByRole("button", { name: /통증은 없고 몸 상태는 평소와 같아요/u }))
@@ -80,7 +81,7 @@ describe("plan candidate save retry", () => {
 
     // Then: the local snapshot exists and the active plan is shown.
     expect(window.localStorage.getItem("trainoracle.plan-beta.v1")).not.toBeNull()
-    expect(screen.getByRole("heading", { name: /9.5일 계획/u })).toBeVisible()
+    expect(screen.getByRole("heading", { name: /9일 계획/u })).toBeVisible()
   })
 
   it("stores one plan when an athlete taps a candidate twice quickly", async () => {
@@ -106,7 +107,7 @@ describe("plan candidate save retry", () => {
     // Then: one active plan is stored and the candidate screen is gone.
     expect(activePlanWrites).toBe(1)
     expect(window.localStorage.getItem("trainoracle.plan-beta.v1")).not.toBeNull()
-    expect(screen.getByRole("heading", { name: /9.5일 계획/u })).toBeVisible()
+    expect(screen.getByRole("heading", { name: /9일 계획/u })).toBeVisible()
   })
 
   it("keeps a generated candidate unsaved when its start date is cleared", async () => {

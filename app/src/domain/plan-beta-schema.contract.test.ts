@@ -346,4 +346,44 @@ describe("B-3 storage gate session placement rules", () => {
 
     expect(result).toBeNull()
   })
+
+  it("rejects a companion above RPE 3 on a QUALITY day", () => {
+    // Given
+    const state = pmState({
+      day: 1,
+      slot: "PM",
+      role: "QUALITY",
+      plannedEnergyIntent: "LT_INTENT",
+      prescription: {
+        kind: "RPE_TIME_RANGE",
+        rpe: { minimum: 5, maximum: 6 },
+        durationMinutes: { minimum: 25, maximum: 40 },
+      },
+    })
+
+    // When
+    const result = parsePlanBetaState({
+      ...state,
+      activePlan: {
+        ...state.activePlan,
+        sessions: [
+          {
+            day: 1,
+            slot: "AM",
+            role: "EASY",
+            plannedEnergyIntent: "BASE_INTENT",
+            prescription: {
+              kind: "RPE_TIME_RANGE",
+              rpe: { minimum: 3, maximum: 4 },
+              durationMinutes: { minimum: 20, maximum: 30 },
+            },
+          },
+          state.activePlan.sessions[0],
+        ],
+      },
+    })
+
+    // Then
+    expect(result).toBeNull()
+  })
 })

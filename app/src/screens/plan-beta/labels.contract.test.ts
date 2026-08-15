@@ -1,8 +1,15 @@
-import { describe, expect, it } from "vitest"
+import { cleanup, render, screen } from "@testing-library/react"
+import { createElement } from "react"
+import { afterEach, describe, expect, it } from "vitest"
 import type { PlanSession } from "@impl/plan-generator/types"
-import { twoADayTrainingDayCount } from "./labels"
+import { PlanSchedulePreview } from "./PlanSchedulePreview"
+import { candidateSessionSummary, twoADayTrainingDayCount } from "./labels"
 
-function session(day: number, slot: PlanSession["slot"]): PlanSession {
+function session(
+  day: number,
+  slot: PlanSession["slot"],
+  durationMinutes = { minimum: 30, maximum: 45 },
+): PlanSession {
   return {
     day,
     slot,
@@ -11,7 +18,7 @@ function session(day: number, slot: PlanSession["slot"]): PlanSession {
     prescription: {
       kind: "RPE_TIME_RANGE",
       rpe: { minimum: 3, maximum: 4 },
-      durationMinutes: { minimum: 30, maximum: 45 },
+      durationMinutes,
     },
   }
 }
@@ -27,6 +34,35 @@ function restSession(day: number, slot: PlanSession["slot"]): PlanSession {
 }
 
 describe("two-a-day plan summary", () => {
+  afterEach(cleanup)
+
+  it("matches the 9.5-day preview total when day 10 has two sessions", () => {
+    const sessions: readonly PlanSession[] = [
+      session(1, "AM"),
+      session(10, "AM", { minimum: 20, maximum: 30 }),
+      session(10, "PM", { minimum: 15, maximum: 25 }),
+      session(11, "AM"),
+    ]
+
+    render(
+      createElement(PlanSchedulePreview, {
+        startDate: "2026-08-17",
+        frameLengthDays: 9.5,
+        sessions,
+      }),
+    )
+
+    expect(screen.getByRole("group", { name: "8월 26일 수요일 · 훈련 2개" }))
+      .toHaveTextContent("20~30분")
+    expect(screen.getByRole("group", { name: "8월 26일 수요일 · 훈련 2개" }))
+      .toHaveTextContent("15~25분")
+    expect(screen.queryByRole("group", { name: /8월 27일/u })).not.toBeInTheDocument()
+    expect(candidateSessionSummary({
+      sessions,
+      frame: { projectionLengthDays: 9.5 },
+    })).toContain("총 계획 시간 65~100분")
+  })
+
   it("does not count a single evening session as two-a-day training", () => {
     expect(twoADayTrainingDayCount([session(4, "PM")])).toBe(0)
   })

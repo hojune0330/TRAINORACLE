@@ -45,6 +45,83 @@ function expectGenerated(result: ReturnType<typeof generatePlanCandidates>) {
 }
 
 describe("personal plan energy intention contract", () => {
+  it("keeps the selected quality focus in both candidates and reduces Candidate B duration dose", () => {
+    // Given
+    const generated = expectGenerated(generateFor("VO2_INTENT"))
+
+    // When
+    const [balanced, conservative] = generated.candidates
+    const balancedQuality = balanced.sessions.find((session) => session.role === "QUALITY")
+    const conservativeQuality = conservative.sessions.find((session) => session.role === "QUALITY")
+
+    // Then
+    expect(balancedQuality?.plannedEnergyIntent).toBe("VO2_INTENT")
+    expect(conservativeQuality?.plannedEnergyIntent).toBe("VO2_INTENT")
+    if (balancedQuality?.role !== "QUALITY" || conservativeQuality?.role !== "QUALITY") return
+    expect(conservativeQuality.prescription.durationMinutes.maximum).toBeLessThan(
+      balancedQuality.prescription.durationMinutes.maximum,
+    )
+  })
+
+  it("preserves recovery-support duration while Candidate B reduces non-recovery dose", () => {
+    const generated = expectGenerated(generatePlanCandidates({
+      kind: "PLAN_BETA_GENERATION_REQUEST",
+      safetyGate: clearedGate(),
+      profile: {
+        eventGroup: "FIVE_K",
+        experienceBand: "EXPERIENCED",
+        availableTrainingDays: [1, 3, 5, 7, 9],
+        secondSessionMode: "RECOVERY_PM_ALLOWED",
+      },
+      formation: canonicalFormation(),
+      journalSource: { kind: "NO_USABLE_JOURNAL" },
+      selectionAuthority: "SELF",
+      selectedEnergyIntent: "VO2_INTENT",
+    }))
+    const [balanced, conservative] = generated.candidates
+    const balancedRecovery = balanced.sessions.find(
+      (session) => session.role === "EASY" && session.plannedEnergyIntent === "RECOVERY_INTENT",
+    )
+    const conservativeRecovery = conservative.sessions.find(
+      (session) => session.role === "EASY" && session.plannedEnergyIntent === "RECOVERY_INTENT",
+    )
+
+    expect(balancedRecovery?.prescription).toEqual(conservativeRecovery?.prescription)
+  })
+
+  it("keeps at most one QUALITY session per day and companion RPE within 1-3", () => {
+    // Given
+    const generated = expectGenerated(generatePlanCandidates({
+      kind: "PLAN_BETA_GENERATION_REQUEST",
+      safetyGate: clearedGate(),
+      profile: {
+        eventGroup: "FIVE_K",
+        experienceBand: "EXPERIENCED",
+        availableTrainingDays: [1, 2, 3, 4, 5, 6, 7, 8, 9],
+        secondSessionMode: "RECOVERY_PM_ALLOWED",
+        trainingTimePreference: "EVENING",
+      },
+      formation: canonicalFormation(),
+      journalSource: { kind: "NO_USABLE_JOURNAL" },
+      selectionAuthority: "SELF",
+      selectedEnergyIntent: "VO2_INTENT",
+    }))
+
+    for (const candidate of generated.candidates) {
+      for (let day = 1; day <= 10; day += 1) {
+        const sessions = candidate.sessions.filter((session) => session.day === day)
+        expect(sessions.filter((session) => session.role === "QUALITY")).toHaveLength(
+          sessions.some((session) => session.role === "QUALITY") ? 1 : 0,
+        )
+        for (const companion of sessions.filter((session) => session.role === "EASY")) {
+          if (!sessions.some((session) => session.role === "QUALITY")) continue
+          expect(companion.prescription.rpe.minimum).toBeGreaterThanOrEqual(1)
+          expect(companion.prescription.rpe.maximum).toBeLessThanOrEqual(3)
+        }
+      }
+    }
+  })
+
   it.each([
     ["LT_INTENT", { minimum: 5, maximum: 6 }],
     ["VO2_INTENT", { minimum: 7, maximum: 8 }],

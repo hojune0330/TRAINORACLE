@@ -1,5 +1,6 @@
 import { expect, test } from "@playwright/test"
 import type { Page } from "@playwright/test"
+import { selectNineDayProjection } from "./plan-flow"
 
 test.use({ serviceWorkers: "block" })
 
@@ -9,6 +10,7 @@ async function answerPlanQuestions(page: Page): Promise<void> {
   await page.getByRole("button", { name: /훈련 계획에 맞춰 달려 본 경험/u }).click()
   await page.getByRole("button", { name: /지속 페이스.*LT/u }).click()
   await page.getByRole("button", { name: /^3일/u }).click()
+  await selectNineDayProjection(page)
   await page.getByRole("button", { name: /날마다 달라요/u }).click()
   await page.getByRole("button", { name: "하루 한 번 운동" }).click()
   await page.getByRole("button", { name: /통증은 없고 몸 상태는 평소와 같아요/u }).click()
@@ -27,5 +29,5 @@ test("shows a saved upcoming training on home and opens its existing plan", asyn
   await expect(nextTraining).toContainText("RPE")
   await expect(nextTraining).not.toContainText("목표 페이스")
   await nextTraining.getByRole("button", { name: /^다음 훈련/u }).click()
-  await expect(page.getByRole("heading", { name: /9.5일 계획/u })).toBeVisible()
+  await expect(page.getByRole("heading", { name: /9일 계획/u })).toBeVisible()
 })

@@ -132,6 +132,42 @@ describe("plan beta selection and progress contract", () => {
     expect(Object.isFrozen(result.activePlan.sessions)).toBe(true)
   })
 
+  it.each([
+    [7, { kind: "STANDARD_FRAME" }],
+    [9, { kind: "SEVEN_DAY_CONTINUITY", nextFrameInput: "SELECTED_PLAN_AND_PROGRESS" }],
+    [10, { kind: "SEVEN_DAY_CONTINUITY", nextFrameInput: "SELECTED_PLAN_AND_PROGRESS" }],
+  ] as const)("rejects projection %s with an impossible continuity at selection", (projectionLengthDays, continuity) => {
+    const generatedPlan = generatedCoachRequiredPlan()
+    const [selectedCandidate, siblingCandidate] = generatedPlan.candidates
+    const forgedPlan = {
+      ...generatedPlan,
+      candidates: [
+        {
+          ...selectedCandidate,
+          frame: {
+            ...selectedCandidate.frame,
+            projectionLengthDays,
+            continuity,
+          },
+        },
+        siblingCandidate,
+      ],
+    }
+
+    const result = selectPlanCandidate({
+      kind: "PLAN_BETA_SELECTION_REQUEST",
+      generatedPlan: forgedPlan,
+      selectedCandidateId: selectedCandidate.candidateId,
+      actor: "COACH",
+      safetyGate: clearedGate(),
+    })
+
+    expect(result).toMatchObject({
+      kind: "rejected",
+      code: "NONCANONICAL_CANDIDATE_FRAME",
+    })
+  })
+
   it.each(["COMPLETED", "RESTED", "SKIPPED", "PAIN_CHECKIN"] as const)(
     "records %s with structured audit only and no reward output",
     (state) => {

@@ -49,7 +49,13 @@ export type CanonicalPlanFrame = {
   readonly formationKind: "LOCAL_CIVIL_9_5"
   readonly lengthDays: 9.5
   readonly slotCount: 19
-  readonly continuity: { readonly kind: "STANDARD_FRAME" }
+  readonly projectionLengthDays?: 7 | 9 | 9.5 | 10
+  readonly continuity:
+    | {
+        readonly kind: "SEVEN_DAY_CONTINUITY"
+        readonly nextFrameInput: "SELECTED_PLAN_AND_PROGRESS"
+      }
+    | { readonly kind: "STANDARD_FRAME" }
 }
 
 export type LegacyPlanFrame = {

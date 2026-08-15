@@ -12,14 +12,14 @@ export function candidatePurposeStatus(kind: PlanCandidateKind): CandidatePurpos
     case "BALANCED":
       return {
         tone: "included",
-        label: "고른 목적을 이 계획에 넣었어요.",
-        detail: "고른 목적에 맞춘 훈련과 가벼운 훈련을 함께 보여줘요.",
+        label: "고른 목적을 표준 용량으로 넣었어요.",
+        detail: "고른 목적은 유지하고, 집중 훈련과 가벼운 훈련을 표준 구성으로 보여줘요.",
       }
     case "CONSERVATIVE":
       return {
         tone: "conservative",
-        label: "고른 목적을 덜어 낸 대안이에요.",
-        detail: "고른 목적의 집중 부분은 이번 주기에 넣지 않고, 더 보수적으로 구성해요.",
+        label: "같은 목적을 더 낮은 부담으로 넣었어요.",
+        detail: "고른 목적은 유지하고, 훈련량을 줄이거나 회복 여유를 더 둬요.",
       }
     default:
       return assertNever(kind)

@@ -101,6 +101,7 @@ export function generatePlanFromDraft(
       spreadTrainingDays(intake.availableDayCount),
       intake.experienceBand,
     ),
+    requestedFrameLength: intake.requestedFrameLength,
     selectedEnergyIntent: intake.trainingFocus,
     journalSource: structuredJournalSource(),
     selectionAuthority: "SELF",
@@ -159,7 +160,6 @@ function completeIntake(
 ): PlanBetaIntake | null {
   const {
     eventGroup,
-    competitionDivision,
     experienceBand,
     availableDayCount,
     requestedFrameLength,
@@ -169,8 +169,6 @@ function completeIntake(
   } = draft
   if (
     eventGroup === undefined
-    || competitionDivision === undefined
-    || competitionDivision === "NOT_PROVIDED"
     || experienceBand === undefined
     || availableDayCount === undefined
     || requestedFrameLength === undefined
@@ -182,7 +180,7 @@ function completeIntake(
   }
   return {
     eventGroup,
-    competitionDivision,
+    competitionDivision: draft.competitionDivision ?? "NOT_PROVIDED",
     experienceBand,
     availableDayCount,
     requestedFrameLength,

@@ -29,6 +29,7 @@ async function answerMinimumPlanQuestions(
   await user.click(screen.getByRole("button", { name: /훈련 계획에 맞춰 달려 본 경험/u }))
   await user.click(screen.getByRole("button", { name: /지속 페이스.*LT/u }))
   await user.click(screen.getByRole("button", { name: /^3일/u }))
+  await user.click(screen.getByRole("button", { name: /9일 계획 받기/u }))
   await user.click(screen.getByRole("button", { name: /날마다 달라요/u }))
   await user.click(screen.getByRole("button", { name: /하루 한 번 운동/u }))
   await user.click(screen.getByRole("button", {
@@ -154,6 +155,9 @@ describe("plan beta user flow", () => {
     expect(availableDaysHelp).toHaveAttribute("aria-expanded", "true")
 
     await user.click(screen.getByRole("button", { name: /^3일/u }))
+    expect(screen.getByRole("heading", { name: "이번에 며칠 계획을 받을까요?" })).toBeVisible()
+    expect(screen.getByRole("button", { name: /7일만 먼저 받기/u })).toHaveTextContent("다음 계획으로 이어서")
+    await user.click(screen.getByRole("button", { name: /9일 계획 받기/u }))
     await user.click(screen.getByRole("button", { name: /날마다 달라요/u }))
     expect(screen.getByRole("heading", {
       name: "하루에 두 번 운동하는 날도 넣을까요?",
@@ -162,7 +166,17 @@ describe("plan beta user flow", () => {
       "고른 모든 훈련일을 오전과 오후 두 칸으로 나눠 보여줘요. 집중 훈련은 고른 시간대에, 다른 칸은 가벼운 훈련이나 회복으로 안내해요.",
     )).toBeVisible()
     expect(screen.queryByText(/오후 RPE 1~2 회복 운동만/u)).toBeNull()
-    expect(screen.queryByRole("button", { name: /7일 계획|9일 계획|10일 계획/u })).toBeNull()
+    expect(screen.queryByRole("button", { name: /7일만 먼저 받기|9일 계획 받기|10일 계획 받기/u })).toBeNull()
+  })
+
+  it("skips competition division when the athlete chooses general endurance", async () => {
+    const user = userEvent.setup()
+    render(<PlanBeta />)
+
+    await user.click(screen.getByRole("button", { name: /기초 지구력.*경기 날짜 없이/u }))
+
+    expect(screen.getByRole("heading", { name: "지금까지 어떤 방식으로 달려왔나요?" })).toBeVisible()
+    expect(screen.queryByRole("heading", { name: /참가하거나 준비 중인 부문/u })).toBeNull()
   })
 
   it("shows every supported high-intensity intention before generating a plan", async () => {
@@ -322,7 +336,7 @@ describe("plan beta user flow", () => {
     expect(firstChoice).toBeDefined()
     await userEvent.setup().click(firstChoice!)
 
-    expect(screen.getByRole("heading", { name: /9.5일 계획/u })).toBeVisible()
+    expect(screen.getByRole("heading", { name: /9일 계획/u })).toBeVisible()
     expect(screen.getByText("내 훈련 일정")).toBeVisible()
     expect(screen.queryByText("ACTIVE · LOCAL BETA")).toBeNull()
     expect(window.localStorage.getItem("trainoracle.plan-beta.v1")).not.toBeNull()

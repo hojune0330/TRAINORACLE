@@ -114,6 +114,13 @@ const planBetaStateSchema = z.object({
     if (sessions.filter((session) => session.role === "QUALITY").length > 1) {
       addIssue(context, ["activePlan", "sessions"], "Two QUALITY sessions require the review flow.")
     }
+    if (sessions.some((session) => session.role === "QUALITY")) {
+      for (const companion of sessions.filter((session) => session.role === "EASY")) {
+        if (companion.prescription.rpe.minimum < 1 || companion.prescription.rpe.maximum > 3) {
+          addIssue(context, ["activePlan", "sessions"], "A QUALITY companion must stay within RPE 1-3.")
+        }
+      }
+    }
   }
 
   const progressKeys = new Set<string>()
@@ -141,7 +148,7 @@ export function parsePlanBetaState(candidate: unknown): PlanBetaState | null {
 
 function addIssue(
   context: z.RefinementCtx,
-  path: readonly PropertyKey[],
+  path: readonly (string | number)[],
   message: string,
 ): void {
   context.addIssue({

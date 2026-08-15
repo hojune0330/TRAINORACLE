@@ -136,13 +136,35 @@ const canonicalPlanFrameSchema = z.object({
   formationKind: z.literal("LOCAL_CIVIL_9_5"),
   lengthDays: z.literal(9.5),
   slotCount: z.literal(19),
-  continuity: z.object({ kind: z.literal("STANDARD_FRAME") }),
+  projectionLengthDays: z.union([frameLengthSchema, z.literal(9.5)]).optional(),
+  continuity: z.union([
+    z.object({
+      kind: z.literal("SEVEN_DAY_CONTINUITY"),
+      nextFrameInput: z.literal("SELECTED_PLAN_AND_PROGRESS"),
+    }),
+    z.object({ kind: z.literal("STANDARD_FRAME") }),
+  ]),
 })
 
 export const planFrameSchema = z.union([
   legacyPlanFrameSchema,
   canonicalPlanFrameSchema,
-])
+]).superRefine((frame, context) => {
+  if (!("formationKind" in frame)) return
+
+  const projectionLengthDays = frame.projectionLengthDays ?? frame.lengthDays
+  const expectedContinuityKind = projectionLengthDays === 7
+    ? "SEVEN_DAY_CONTINUITY"
+    : "STANDARD_FRAME"
+
+  if (frame.continuity.kind !== expectedContinuityKind) {
+    context.addIssue({
+      code: "custom",
+      path: ["continuity", "kind"],
+      message: `Projection ${projectionLengthDays} requires ${expectedContinuityKind}`,
+    })
+  }
+})
 
 export const activePlanSchema = z.object({
   kind: z.literal("BETA_ACTIVE_PLAN_SNAPSHOT"),

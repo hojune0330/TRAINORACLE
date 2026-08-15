@@ -22,12 +22,20 @@ function audit(
 }
 
 function copyFrame(frame: CanonicalPlanFrame): CanonicalPlanFrame {
-  return Object.freeze({
+  const base: CanonicalPlanFrame = {
     formationKind: "LOCAL_CIVIL_9_5",
     lengthDays: frame.lengthDays,
     slotCount: frame.slotCount,
-    continuity: Object.freeze({ kind: "STANDARD_FRAME" }),
-  })
+    continuity: frame.continuity.kind === "SEVEN_DAY_CONTINUITY"
+      ? Object.freeze({
+          kind: "SEVEN_DAY_CONTINUITY" as const,
+          nextFrameInput: "SELECTED_PLAN_AND_PROGRESS" as const,
+        })
+      : Object.freeze({ kind: "STANDARD_FRAME" as const }),
+  }
+  return frame.projectionLengthDays === undefined
+    ? Object.freeze(base)
+    : Object.freeze({ ...base, projectionLengthDays: frame.projectionLengthDays })
 }
 
 function copySession(session: PlanSession): PlanSession {
@@ -130,6 +138,24 @@ function isGeneratedPlan(value: unknown): value is PlanGenerationSuccess {
     && candidates.every(isPlanCandidate)
 }
 
+function hasCanonicalProjectionContinuity(frame: Record<string, unknown>): boolean {
+  const projectionLengthDays = frame["projectionLengthDays"]
+  const continuity = frame["continuity"]
+  if (!isRecord(continuity)) return false
+
+  if (projectionLengthDays === 7) {
+    return continuity["kind"] === "SEVEN_DAY_CONTINUITY"
+      && continuity["nextFrameInput"] === "SELECTED_PLAN_AND_PROGRESS"
+  }
+
+  return (
+    projectionLengthDays === undefined
+    || projectionLengthDays === 9
+    || projectionLengthDays === 9.5
+    || projectionLengthDays === 10
+  ) && continuity["kind"] === "STANDARD_FRAME"
+}
+
 function generatedPlanGuard(value: unknown):
   | { readonly kind: "valid"; readonly generatedPlan: PlanGenerationSuccess }
   | { readonly kind: "rejected"; readonly code: "NON_SELECTABLE_PLAN_RESULT" | "STALE_CANDIDATE_FINGERPRINT" | "NONCANONICAL_CANDIDATE_FRAME" } {
@@ -139,7 +165,12 @@ function generatedPlanGuard(value: unknown):
 
   for (const candidate of value.candidates) {
     const frame = candidate.frame
-    if (frame["formationKind"] !== "LOCAL_CIVIL_9_5" || frame["lengthDays"] !== 9.5 || frame["slotCount"] !== 19) {
+    if (
+      frame["formationKind"] !== "LOCAL_CIVIL_9_5"
+      || frame["lengthDays"] !== 9.5
+      || frame["slotCount"] !== 19
+      || !hasCanonicalProjectionContinuity(frame)
+    ) {
       return { kind: "rejected", code: "NONCANONICAL_CANDIDATE_FRAME" }
     }
     const ledger = candidate.mainExposureLedger

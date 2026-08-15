@@ -27,7 +27,10 @@ import {
 } from "./plan-beta/plan-selection"
 import type { CandidateSelection } from "./plan-beta/plan-selection"
 import { planErrorMessage } from "./plan-beta/plan-feedback"
-import { previousIntakeStep } from "./plan-beta/plan-intake-navigation"
+import {
+  divisionForGoal,
+  previousIntakeStep,
+} from "./plan-beta/plan-intake-navigation"
 
 export function PlanBeta({
   onWriteLog,
@@ -47,6 +50,7 @@ export function PlanBeta({
     previousIntake === null
       ? "goal"
       : previousIntake.competitionDivision === "NOT_PROVIDED"
+        && previousIntake.eventGroup !== "GENERAL_ENDURANCE"
         ? "division"
         : "safety",
   )
@@ -186,11 +190,14 @@ export function PlanBeta({
       <PlanIntake
         step={step}
         draft={draft}
-        onBack={() => setStep(previousIntakeStep(step))}
+        onBack={() => setStep(previousIntakeStep(step, draft.eventGroup))}
         onJump={(target) => setStep(target)}
         onGoal={(eventGroup) => {
-          setDraft((current) => ({ ...current, eventGroup }))
-          setStep("division")
+          const competitionDivision = divisionForGoal(eventGroup)
+          setDraft((current) => competitionDivision === undefined
+            ? { ...current, eventGroup }
+            : { ...current, eventGroup, competitionDivision })
+          setStep(competitionDivision === undefined ? "division" : "experience")
         }}
         onDivision={(competitionDivision) => {
           setDraft((current) => ({ ...current, competitionDivision }))
@@ -205,11 +212,11 @@ export function PlanBeta({
           setStep("days")
         }}
         onDays={(availableDayCount) => {
-          setDraft((current) => ({
-            ...current,
-            availableDayCount,
-            requestedFrameLength: 9.5,
-          }))
+          setDraft((current) => ({ ...current, availableDayCount }))
+          setStep("frame-length")
+        }}
+        onFrameLength={(requestedFrameLength) => {
+          setDraft((current) => ({ ...current, requestedFrameLength }))
           setStep("training-time")
         }}
         onTrainingTime={(trainingTimePreference: TrainingTimePreference) => {

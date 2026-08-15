@@ -269,6 +269,27 @@ describe("plan beta local store", () => {
     expect(loaded?.activePlan.sessions[0]?.slot).toBe("AM")
   })
 
+  it("keeps an existing legacy 7-day standard frame visible", () => {
+    const state = stateFixture()
+    window.localStorage.setItem(
+      "trainoracle.plan-beta.v1",
+      JSON.stringify({
+        ...state,
+        activePlan: {
+          ...state.activePlan,
+          frame: { lengthDays: 7, continuity: { kind: "STANDARD_FRAME" } },
+        },
+      }),
+    )
+
+    const loaded = loadPlanBetaState()
+
+    expect(loaded?.activePlan.frame).toEqual({
+      lengthDays: 7,
+      continuity: { kind: "STANDARD_FRAME" },
+    })
+  })
+
   it("loads a persisted two-session plan with explicit consent", () => {
     const state = stateFixture()
     window.localStorage.setItem(
