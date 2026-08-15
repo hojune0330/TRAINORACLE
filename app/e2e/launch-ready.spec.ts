@@ -1,5 +1,6 @@
 import { expect, test } from "@playwright/test"
 import type { Page } from "@playwright/test"
+import { selectNineDayProjection } from "./plan-flow"
 
 async function answerMinimumPlanQuestions(page: Page): Promise<void> {
   await page.getByRole("button", { name: /800m.*1500m/u }).click()
@@ -7,6 +8,7 @@ async function answerMinimumPlanQuestions(page: Page): Promise<void> {
   await page.getByRole("button", { name: /훈련 계획에 맞춰 달려 본 경험/u }).click()
   await page.getByRole("button", { name: /지속 페이스.*LT/u }).click()
   await page.getByRole("button", { name: /^3일/u }).click()
+  await selectNineDayProjection(page)
   await page.getByRole("button", { name: /날마다 달라요/u }).click()
   await page.getByRole("button", { name: "하루 한 번 운동" }).click()
   await page.getByRole("button", { name: /통증은 없고 몸 상태는 평소와 같아요/u }).click()
@@ -18,7 +20,7 @@ async function expectCanonicalPlanCandidates(page: Page): Promise<void> {
   })).toBeVisible()
   await expect(page.locator(".plan-candidate")).toHaveCount(2)
   await expect(page.getByRole("button", { name: /선택하기/u })).toHaveCount(2)
-  await expect(page.getByText(/9.5일/u).first()).toBeVisible()
+  await expect(page.getByText(/9일/u).first()).toBeVisible()
   await expect.poll(async () => page.evaluate(
     () => window.localStorage.getItem("trainoracle.plan-beta.v1"),
   )).toBeNull()
@@ -70,7 +72,7 @@ test("routes a first visitor from home into the matching journal", async ({ page
   await expect(page.getByRole("heading", { name: /회복.*하루 마무리/u })).toBeVisible()
 })
 
-test("generates selectable 9.5-day candidates from first-screen intake", async ({ page }) => {
+test("generates selectable 9-day candidates from first-screen intake", async ({ page }) => {
   // Given
   await page.goto("/?app=1")
 
@@ -85,7 +87,7 @@ test("generates selectable 9.5-day candidates from first-screen intake", async (
   )).toBe(true)
 })
 
-test("generates a bounded two-a-day 9.5-day candidate", async ({ page }) => {
+test("generates a bounded two-a-day 9-day candidate", async ({ page }) => {
   await page.goto("/?app=1")
   await page.getByRole("navigation", { name: "내 기록 살펴보기" }).getByRole("button", { name: /^훈련 계획/u }).click()
   await page.getByRole("button", { name: /5km/u }).click()
@@ -93,6 +95,7 @@ test("generates a bounded two-a-day 9.5-day candidate", async ({ page }) => {
   await page.getByRole("button", { name: /훈련 계획에 맞춰 달려 본 경험/u }).click()
   await page.getByRole("button", { name: /반복 인터벌.*VO2/u }).click()
   await page.getByRole("button", { name: "매일" }).click()
+  await selectNineDayProjection(page)
   await page.getByRole("button", { name: /날마다 달라요/u }).click()
   await page.getByRole("button", { name: "하루 두 번 운동할게요" }).click()
   await page.getByRole("button", { name: /통증은 없고 몸 상태는 평소와 같아요/u }).click()
@@ -110,6 +113,7 @@ test("keeps an evening two-a-day plan after selection and reload", async ({ page
   await page.getByRole("button", { name: /훈련 계획에 맞춰 달려 본 경험/u }).click()
   await page.getByRole("button", { name: /반복 인터벌.*VO2/u }).click()
   await page.getByRole("button", { name: "매일" }).click()
+  await selectNineDayProjection(page)
   await page.getByRole("button", { name: /저녁에 운동해요/u }).click()
   await page.getByRole("button", { name: "하루 두 번 운동할게요" }).click()
   await page.getByRole("button", { name: /통증은 없고 몸 상태는 평소와 같아요/u }).click()
@@ -118,7 +122,7 @@ test("keeps an evening two-a-day plan after selection and reload", async ({ page
   await page.getByRole("button", { name: /선택하기/u }).first().click()
 
   // Then
-  await expect(page.getByRole("heading", { name: /9\.5일 계획/u })).toBeVisible()
+  await expect(page.getByRole("heading", { name: /9일 계획/u })).toBeVisible()
   await expect(page.getByRole("group").filter({
     hasText: "오후",
   }).filter({
@@ -148,7 +152,7 @@ test("keeps an evening two-a-day plan after selection and reload", async ({ page
     name: /훈련 계획 저장된 계획/u,
   })).toBeVisible()
   await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "계획" }).click()
-  await expect(page.getByRole("heading", { name: /9\.5일 계획/u })).toBeVisible()
+  await expect(page.getByRole("heading", { name: /9일 계획/u })).toBeVisible()
 })
 
 test("reads a detailed training notation without creating a plan", async ({ page }) => {

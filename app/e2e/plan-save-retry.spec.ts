@@ -1,5 +1,6 @@
 import { expect, test } from "@playwright/test"
 import type { Page } from "@playwright/test"
+import { selectNineDayProjection } from "./plan-flow"
 
 test.use({ serviceWorkers: "block" })
 
@@ -9,6 +10,7 @@ async function answerMinimumPlanQuestions(page: Page): Promise<void> {
   await page.getByRole("button", { name: /훈련 계획에 맞춰 달려 본 경험/u }).click()
   await page.getByRole("button", { name: /지속 페이스.*LT/u }).click()
   await page.getByRole("button", { name: /^3일/u }).click()
+  await selectNineDayProjection(page)
   await page.getByRole("button", { name: /날마다 달라요/u }).click()
   await page.getByRole("button", { name: "하루 한 번 운동" }).click()
   await page.getByRole("button", { name: /통증은 없고 몸 상태는 평소와 같아요/u }).click()
@@ -35,7 +37,7 @@ test("retries a selected plan save and keeps the plan after reload", async ({ pa
   await page.getByRole("button", { name: /선택하기/u }).first().click()
   await expect(page.getByRole("alert")).toContainText("계획을 이 기기에 저장하지 못했어요")
   await page.getByRole("button", { name: "계획 다시 저장하기" }).click()
-  await expect(page.getByRole("heading", { name: /9.5일 계획/u })).toBeVisible()
+  await expect(page.getByRole("heading", { name: /9일 계획/u })).toBeVisible()
   await expect.poll(() => page.evaluate(
     () => window.localStorage.getItem("trainoracle.plan-beta.v1"),
   )).not.toBeNull()
@@ -46,7 +48,7 @@ test("retries a selected plan save and keeps the plan after reload", async ({ pa
     () => window.localStorage.getItem("trainoracle.plan-beta.v1"),
   )).not.toBeNull()
   await page.getByRole("navigation", { name: "내 기록 살펴보기" }).getByRole("button", { name: /^훈련 계획/u }).click()
-  await expect(page.getByRole("heading", { name: /9.5일 계획/u })).toBeVisible()
+  await expect(page.getByRole("heading", { name: /9일 계획/u })).toBeVisible()
   await expect(page.getByRole("button", { name: "다음 주기 후보 만들기" })).toBeVisible()
 })
 
