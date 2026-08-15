@@ -805,3 +805,59 @@ describe("plan beta user flow", () => {
     expect(screen.queryByText("완료", { selector: "em" })).toBeNull()
   })
 })
+
+function firstUnpressedChoice(): HTMLButtonElement {
+  const choice = screen.getAllByRole("button").find(
+    (button) => button.getAttribute("aria-pressed") === "false",
+  )
+  if (choice === undefined) throw new Error("Expected an unanswered choice")
+  return choice as HTMLButtonElement
+}
+
+async function answerReturningPreview(
+  user: ReturnType<typeof userEvent.setup>,
+): Promise<void> {
+  await user.click(firstUnpressedChoice())
+  const continueButton = document.querySelector<HTMLButtonElement>(".plan-preview-action")
+  if (continueButton === null) throw new Error("Expected the preview continuation")
+  await user.click(continueButton)
+}
+
+  it("routes a missing stored days answer to candidates", async () => {
+    const user = userEvent.setup()
+    const { availableDayCount: _days, ...partialIntake } = stateFixture().intake
+    window.sessionStorage.setItem(
+      "trainoracle.plan-beta.previous-intake.v1",
+      JSON.stringify(partialIntake),
+    )
+    render(<PlanBeta />)
+    await answerReturningPreview(user)
+    await user.click(firstUnpressedChoice())
+    expectGeneratedCandidates()
+  })
+
+  it("routes a missing stored frame length to candidates", async () => {
+    const user = userEvent.setup()
+    const { requestedFrameLength: _frame, ...partialIntake } = stateFixture().intake
+    window.sessionStorage.setItem(
+      "trainoracle.plan-beta.previous-intake.v1",
+      JSON.stringify(partialIntake),
+    )
+    render(<PlanBeta />)
+    await answerReturningPreview(user)
+    await user.click(firstUnpressedChoice())
+    expectGeneratedCandidates()
+  })
+
+  it("routes a missing stored training time to candidates", async () => {
+    const user = userEvent.setup()
+    const { trainingTimePreference: _time, ...partialIntake } = stateFixture().intake
+    window.sessionStorage.setItem(
+      "trainoracle.plan-beta.previous-intake.v1",
+      JSON.stringify(partialIntake),
+    )
+    render(<PlanBeta />)
+    await answerReturningPreview(user)
+    await user.click(firstUnpressedChoice())
+    expectGeneratedCandidates()
+  })

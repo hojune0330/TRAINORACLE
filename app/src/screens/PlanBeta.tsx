@@ -108,6 +108,16 @@ export function PlanBeta({
     }
   }
 
+  const continueAfterRefinement = (nextDraft: Partial<PlanBetaIntake>) => {
+    setDraft(nextDraft)
+    const nextRefinement = firstUnansweredRefinement(nextDraft)
+    if (nextRefinement !== null) {
+      setStep(nextRefinement)
+      return
+    }
+    generateCandidates(nextDraft)
+  }
+
   const saveCandidate = (
     selection: CandidateSelection,
     activeGenerated: PlanGenerationSuccess,
@@ -251,33 +261,11 @@ export function PlanBeta({
           setDraft((current) => ({ ...current, experienceBand }))
           setStep("safety")
         }}
-        onFocus={(trainingFocus) => {
-          const nextDraft = { ...draft, trainingFocus }
-          setDraft(nextDraft)
-          const nextRefinement = firstUnansweredRefinement(nextDraft)
-          if (nextRefinement !== null) {
-            setStep(nextRefinement)
-            return
-          }
-          generateCandidates(nextDraft)
-        }}
-        onDays={(availableDayCount) => {
-          setDraft((current) => ({ ...current, availableDayCount }))
-          setStep("frame-length")
-        }}
-        onFrameLength={(requestedFrameLength) => {
-          setDraft((current) => ({ ...current, requestedFrameLength }))
-          setStep("training-time")
-        }}
-        onTrainingTime={(trainingTimePreference: TrainingTimePreference) => {
-          setDraft((current) => ({ ...current, trainingTimePreference }))
-          setStep("two-a-day")
-        }}
-        onSecondSession={(secondSessionMode) => {
-          const nextDraft = { ...draft, secondSessionMode }
-          setDraft(nextDraft)
-          generateCandidates(nextDraft)
-        }}
+        onFocus={(trainingFocus) => continueAfterRefinement({ ...draft, trainingFocus })}
+        onDays={(availableDayCount) => continueAfterRefinement({ ...draft, availableDayCount })}
+        onFrameLength={(requestedFrameLength) => continueAfterRefinement({ ...draft, requestedFrameLength })}
+        onTrainingTime={(trainingTimePreference: TrainingTimePreference) => continueAfterRefinement({ ...draft, trainingTimePreference })}
+        onSecondSession={(secondSessionMode) => continueAfterRefinement({ ...draft, secondSessionMode })}
         onManageRecords={() => onManageRecords?.()}
         onOpenNotationReader={() => setNotationReaderOpen(true)}
         onSafety={(nextCurrentCheck) => {
