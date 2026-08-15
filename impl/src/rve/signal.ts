@@ -74,8 +74,34 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value)
 }
 
-function hasOnlyKeys(value: Record<string, unknown>, keys: readonly string[]): boolean {
-  return Object.keys(value).every((key) => keys.includes(key))
+function hasOnlyDataProperties(value: Record<string, unknown>, keys: readonly string[]): boolean {
+  if (Object.getPrototypeOf(value) !== Object.prototype) return false
+
+  const ownKeys = Reflect.ownKeys(value)
+  return ownKeys.length === keys.length
+    && ownKeys.every((key) => typeof key === "string" && keys.includes(key))
+    && keys.every((key) => {
+      const descriptor = Object.getOwnPropertyDescriptor(value, key)
+      return descriptor !== undefined
+        && "value" in descriptor
+        && descriptor.enumerable
+    })
+}
+
+function isDensePlainArray(value: unknown): value is unknown[] {
+  if (!Array.isArray(value) || Object.getPrototypeOf(value) !== Array.prototype) return false
+
+  const lengthDescriptor = Object.getOwnPropertyDescriptor(value, "length")
+  if (lengthDescriptor === undefined || !("value" in lengthDescriptor)
+    || typeof lengthDescriptor.value !== "number" || Reflect.ownKeys(value).length !== lengthDescriptor.value + 1) return false
+
+  for (let index = 0; index < lengthDescriptor.value; index += 1) {
+    const descriptor = Object.getOwnPropertyDescriptor(value, String(index))
+    if (descriptor === undefined || !("value" in descriptor) || !descriptor.enumerable) {
+      return false
+    }
+  }
+  return true
 }
 
 function isD9Disposition(value: unknown): value is D9Disposition {
@@ -83,13 +109,13 @@ function isD9Disposition(value: unknown): value is D9Disposition {
 }
 
 function isNonEmptyStringArray(value: unknown): value is string[] {
-  return Array.isArray(value)
+  return isDensePlainArray(value)
     && value.length > 0
     && value.every((item) => typeof item === "string" && item.length > 0)
 }
 
 function isD9Evidence(value: unknown): value is D9Result["evidence"][number] {
-  if (!isRecord(value) || !hasOnlyKeys(value, D9_EVIDENCE_KEYS)) return false
+  if (!isRecord(value) || !hasOnlyDataProperties(value, D9_EVIDENCE_KEYS)) return false
 
   const route = value["route"]
   const clauseIndex = value["clauseIndex"]
@@ -105,16 +131,17 @@ function isD9Evidence(value: unknown): value is D9Result["evidence"][number] {
 }
 
 function isD9ResultShape(value: unknown): value is D9Result {
-  if (!isRecord(value) || !hasOnlyKeys(value, D9_RESULT_KEYS)) return false
+  if (!isRecord(value) || !hasOnlyDataProperties(value, D9_RESULT_KEYS)) return false
 
   const disposition = value["disposition"]
   const blocksPlanGeneration = value["blocksPlanGeneration"]
+  const evidence = value["evidence"]
   return isD9Disposition(disposition)
     && typeof blocksPlanGeneration === "boolean"
     && blocksPlanGeneration === (disposition !== "D9_CLEARED")
     && isNonEmptyStringArray(value["reasonCodes"])
-    && Array.isArray(value["evidence"])
-    && value["evidence"].every(isD9Evidence)
+    && isDensePlainArray(evidence)
+    && evidence.every(isD9Evidence)
 }
 
 function reasonCodesMatch(
@@ -196,10 +223,11 @@ function freezeD9Result(result: D9Result): void {
 
 export function mapD9ResultToRveSignal(result: unknown): RveRuleEvaluatorSignal {
   try {
-    const snapshot = structuredClone(result)
-    if (!isTrustedD9Result(snapshot)) {
+    if (!isTrustedD9Result(result)) {
       return createRveSignal("UNKNOWN", true, true, ["RVE_D9_INVALID_INPUT_SHAPE"])
     }
+
+    const snapshot = structuredClone(result)
     freezeD9Result(snapshot)
 
     switch (snapshot.disposition) {
