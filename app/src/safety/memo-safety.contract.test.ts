@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest"
-import type { D9Disposition } from "@impl/d9/evaluator"
+import type { D9Disposition, D9Result } from "@impl/d9/evaluator"
 import { assessPurposeScopedMemo } from "./memo-safety"
 
 const evaluatorMock = vi.hoisted(() => vi.fn<(rawText?: string) => unknown>())
@@ -8,22 +8,24 @@ vi.mock("@impl/d9/evaluator", () => ({
   evaluateD9ColloquialLayer: evaluatorMock,
 }))
 
-const VALID_REASON_CODES: Readonly<Record<D9Disposition, string>> = {
-  D9_ACTIVE: "D9_ACTIVE_MEDICAL_RED_FLAG_SYMPTOM",
-  D9_UNKNOWN: "D9_UNKNOWN_PAIN_WORSENING",
-  D9_CLEARED: "D9_CLEARED_NO_COLLOQUIAL_RISK_SIGNAL",
-}
+const actualEvaluator = await vi.importActual<typeof import("@impl/d9/evaluator")>(
+  "@impl/d9/evaluator",
+)
+const VALID_RESULTS = {
+  D9_ACTIVE: actualEvaluator.evaluateD9ColloquialLayer("종아리 뚝 했고 절뚝거려요"),
+  D9_UNKNOWN: actualEvaluator.evaluateD9ColloquialLayer("뛸수록 정강이가 아파요"),
+  D9_CLEARED: actualEvaluator.evaluateD9ColloquialLayer("첫 바퀴는 침착하게"),
+} satisfies Readonly<Record<D9Disposition, D9Result>>
 
 function d9Result(
   disposition: D9Disposition,
   blocksPlanGeneration: boolean,
-  reasonCodes: readonly string[] = [VALID_REASON_CODES[disposition]],
+  reasonCodes: readonly string[] = VALID_RESULTS[disposition].reasonCodes,
 ) {
   return {
-    disposition,
+    ...VALID_RESULTS[disposition],
     blocksPlanGeneration,
     reasonCodes: [...reasonCodes],
-    evidence: [],
   }
 }
 

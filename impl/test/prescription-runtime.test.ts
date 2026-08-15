@@ -1,22 +1,18 @@
 import { describe, expect, it } from "vitest"
+import { evaluateD9ColloquialLayer } from "../src/d9/evaluator"
 import { decideSafetyGate } from "../src/safety-gate/gate"
 import { mapD9ResultToRveSignal } from "../src/rve/signal"
 import { preparePrescriptionRuntime } from "../src/prescription/runtime"
 
 function gateFor(disposition: "D9_CLEARED" | "D9_ACTIVE" | "D9_UNKNOWN") {
-  const reasonCode = {
-    D9_CLEARED: "D9_CLEARED_NO_COLLOQUIAL_RISK_SIGNAL",
-    D9_ACTIVE: "D9_ACTIVE_MANUAL_OR_MEDICAL_HOLD",
-    D9_UNKNOWN: "D9_UNKNOWN_PAIN_WORSENING",
+  const evaluatorText = {
+    D9_CLEARED: "첫 바퀴는 침착하게",
+    D9_ACTIVE: "종아리 뚝 했고 절뚝거려요",
+    D9_UNKNOWN: "뛸수록 정강이가 아파요",
   }[disposition]
 
   return decideSafetyGate(
-    mapD9ResultToRveSignal({
-      disposition,
-      blocksPlanGeneration: disposition !== "D9_CLEARED",
-      reasonCodes: [reasonCode],
-      evidence: [],
-    }),
+    mapD9ResultToRveSignal(evaluateD9ColloquialLayer(evaluatorText)),
   )
 }
 

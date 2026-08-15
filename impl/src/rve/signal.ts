@@ -1,6 +1,8 @@
 import type { D9Disposition, D9Result } from "../d9/evaluator"
 import { assertNever } from "../shared/assert-never"
 
+declare const structuredClone: <T>(value: T) => T
+
 export type RveStoredStatus = "ACTIVE" | "UNKNOWN" | "CLEARED"
 
 export type EvaluatorFailureKind = "timeout" | "exception" | "stale_version"
@@ -115,23 +117,47 @@ function isD9ResultShape(value: unknown): value is D9Result {
     && value["evidence"].every(isD9Evidence)
 }
 
-function hasAllowedResultReasonCodes(result: D9Result): boolean {
+function reasonCodesMatch(
+  actual: readonly string[],
+  expected: readonly string[],
+): boolean {
+  return actual.length === expected.length
+    && actual.every((code, index) => code === expected[index])
+}
+
+function hasCanonicalResultCorrespondence(result: D9Result): boolean {
+  let evidenceRoute: "ACTIVE" | "UNKNOWN"
+
   switch (result.disposition) {
     case "D9_ACTIVE":
-      return result.reasonCodes.every((code) => ACTIVE_REASON_CODES.has(code))
+      evidenceRoute = "ACTIVE"
+      break
     case "D9_UNKNOWN":
-      return result.reasonCodes.every((code) => UNKNOWN_REASON_CODES.has(code))
+      evidenceRoute = "UNKNOWN"
+      break
     case "D9_CLEARED": {
-      const [firstCode, ...rest] = result.reasonCodes
-      if (firstCode === undefined) return false
-      if (CLEARED_REASON_CODES.has(firstCode)) return rest.length === 0
-      return firstCode === CLEARED_ADVISORY_CODE
-        && rest.length > 0
-        && rest.every((code) => ADVISORY_REASON_CODES.has(code))
+      if (result.evidence.length === 0) {
+        const [reasonCode] = result.reasonCodes
+        return result.reasonCodes.length === 1
+          && reasonCode !== undefined
+          && CLEARED_REASON_CODES.has(reasonCode)
+      }
+      return reasonCodesMatch(result.reasonCodes, [
+        CLEARED_ADVISORY_CODE,
+        ...new Set(result.evidence.map((evidence) => evidence.reasonCode)),
+      ])
     }
     default:
       return assertNever(result.disposition)
   }
+
+  return reasonCodesMatch(result.reasonCodes, [
+    ...new Set(
+      result.evidence
+        .filter((evidence) => evidence.route === evidenceRoute)
+        .map((evidence) => evidence.reasonCode),
+    ),
+  ])
 }
 
 function isEvidenceCompatible(
@@ -152,27 +178,39 @@ function isEvidenceCompatible(
 
 function isTrustedD9Result(value: unknown): value is D9Result {
   return isD9ResultShape(value)
-    && hasAllowedResultReasonCodes(value)
     && value.evidence.every((evidence) =>
       EVIDENCE_REASON_CODES[evidence.route].has(evidence.reasonCode)
       && isEvidenceCompatible(value.disposition, evidence.route))
+    && hasCanonicalResultCorrespondence(value)
+}
+
+function freezeD9Result(result: D9Result): void {
+  Object.freeze(result.reasonCodes)
+  for (const evidence of result.evidence) {
+    Object.freeze(evidence.matchedBy)
+    Object.freeze(evidence)
+  }
+  Object.freeze(result.evidence)
+  Object.freeze(result)
 }
 
 export function mapD9ResultToRveSignal(result: unknown): RveRuleEvaluatorSignal {
   try {
-    if (!isTrustedD9Result(result)) {
+    const snapshot = structuredClone(result)
+    if (!isTrustedD9Result(snapshot)) {
       return createRveSignal("UNKNOWN", true, true, ["RVE_D9_INVALID_INPUT_SHAPE"])
     }
+    freezeD9Result(snapshot)
 
-    switch (result.disposition) {
+    switch (snapshot.disposition) {
       case "D9_ACTIVE":
-        return createRveSignal("ACTIVE", true, true, result.reasonCodes)
+        return createRveSignal("ACTIVE", true, true, snapshot.reasonCodes)
       case "D9_UNKNOWN":
-        return createRveSignal("UNKNOWN", true, true, result.reasonCodes)
+        return createRveSignal("UNKNOWN", true, true, snapshot.reasonCodes)
       case "D9_CLEARED":
-        return createRveSignal("CLEARED", false, false, result.reasonCodes)
+        return createRveSignal("CLEARED", false, false, snapshot.reasonCodes)
       default:
-        return assertNever(result.disposition)
+        return assertNever(snapshot.disposition)
     }
   } catch {
     return createRveSignal("UNKNOWN", true, true, ["RVE_D9_INVALID_INPUT_SHAPE"])

@@ -76,6 +76,66 @@ describe("D9 -> RVE -> Safety Gate contract slice", () => {
     })
   })
 
+  it("captures a hostile changing reason-code getter once before mapping", () => {
+    // Given
+    const rawMemo = "PRIVATE_MEMO_TEXT_must_not_cross_the_boundary"
+    let reasonCodeReads = 0
+    const reasonCodes = [""]
+    Object.defineProperty(reasonCodes, 0, {
+      enumerable: true,
+      get() {
+        reasonCodeReads += 1
+        return reasonCodeReads > 2
+          ? rawMemo
+          : "D9_CLEARED_NO_COLLOQUIAL_RISK_SIGNAL"
+      },
+    })
+
+    // When
+    const rve = mapD9ResultToRveSignal({
+      disposition: "D9_CLEARED",
+      blocksPlanGeneration: false,
+      reasonCodes,
+      evidence: [],
+    })
+
+    // Then
+    expect(rve).toMatchObject({
+      storedStatus: "CLEARED",
+      blocksPlanGeneration: false,
+      requiresHumanReview: false,
+      nonSensitiveReasonCodes: ["D9_CLEARED_NO_COLLOQUIAL_RISK_SIGNAL"],
+    })
+    expect(JSON.stringify(rve)).not.toContain(rawMemo)
+    expect(reasonCodeReads).toBe(1)
+    expect(Object.isFrozen(rve.nonSensitiveReasonCodes)).toBe(true)
+  })
+
+  it.each([
+    ["getter", Object.defineProperty({
+      blocksPlanGeneration: false,
+      reasonCodes: ["D9_CLEARED_NO_COLLOQUIAL_RISK_SIGNAL"],
+      evidence: [],
+    }, "disposition", {
+      enumerable: true,
+      get() {
+        throw new Error("hostile getter")
+      },
+    })],
+    ["proxy", new Proxy({}, {
+      ownKeys() {
+        throw new Error("hostile proxy")
+      },
+    })],
+  ])("fails closed when an evaluator %s throws", (_label, hostileResult) => {
+    expect(mapD9ResultToRveSignal(hostileResult)).toMatchObject({
+      storedStatus: "UNKNOWN",
+      blocksPlanGeneration: true,
+      requiresHumanReview: true,
+      nonSensitiveReasonCodes: ["RVE_D9_INVALID_INPUT_SHAPE"],
+    })
+  })
+
   it.each([
     [
       "CLEARED with ACTIVE evidence",
@@ -123,6 +183,55 @@ describe("D9 -> RVE -> Safety Gate contract slice", () => {
 
     // When
     const rve = mapD9ResultToRveSignal(contradictory)
+    const gate = decideSafetyGate(rve)
+
+    // Then
+    expect(rve).toMatchObject({
+      storedStatus: "UNKNOWN",
+      blocksPlanGeneration: true,
+      requiresHumanReview: true,
+      nonSensitiveReasonCodes: ["RVE_D9_INVALID_INPUT_SHAPE"],
+    })
+    expect(gate).toMatchObject({
+      kind: "blocked",
+      action: "BLOCK_OR_HUMAN_REVIEW",
+      planGenerationAllowed: false,
+    })
+  })
+
+  it.each([
+    [
+      "ordinary CLEARED carrying advisory evidence",
+      {
+        disposition: "D9_CLEARED",
+        blocksPlanGeneration: false,
+        reasonCodes: ["D9_CLEARED_NO_COLLOQUIAL_RISK_SIGNAL"],
+        evidence: [{
+          ruleId: "WEAK_PAIN_NO_BODYPART_ADVISORY",
+          family: "mild_training_response",
+          route: "ADVISORY",
+          reasonCode: "D9_ADVISORY_UNLOCALIZED_DISCOMFORT",
+          clauseIndex: 0,
+          clause: "raw evaluator evidence must not escape",
+          matchedBy: ["painWeak"],
+        }],
+      },
+    ],
+    [
+      "advisory CLEARED missing advisory evidence",
+      {
+        disposition: "D9_CLEARED",
+        blocksPlanGeneration: false,
+        reasonCodes: [
+          "D9_CLEARED_WITH_NON_BLOCKING_ADVISORY",
+          "D9_ADVISORY_UNLOCALIZED_DISCOMFORT",
+        ],
+        evidence: [],
+      },
+    ],
+  ] as const)("fails closed for %s", (_label, malformed) => {
+    // When
+    const rve = mapD9ResultToRveSignal(malformed)
     const gate = decideSafetyGate(rve)
 
     // Then
