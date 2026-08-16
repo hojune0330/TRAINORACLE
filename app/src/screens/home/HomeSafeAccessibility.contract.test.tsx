@@ -124,7 +124,7 @@ describe("home journal controls", () => {
 
     const nextTraining = screen.getByRole("button", { name: /다음 훈련.*지속 페이스.*오후/u })
     expect(nextTraining).toHaveTextContent("7월 14일")
-    expect(nextTraining).toHaveTextContent("오늘 25분 · RPE 5~6")
+    expect(nextTraining).toHaveTextContent("총 25~40분 · RPE 5~6")
     expect(within(screen.getByRole("navigation", { name: "내 기록 살펴보기" })).getAllByRole("button")).toHaveLength(3)
 
     await user.click(nextTraining)

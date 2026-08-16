@@ -178,7 +178,7 @@ function CandidateSection({
             {ENERGY_INTENT_LABELS[candidate.selectedEnergyIntent].title}
             <TermHelp term={ENERGY_INTENT_LABELS[candidate.selectedEnergyIntent].term} />
           </span>
-          <span>타이머로 실행 가능<TermHelp term="quality-session" /></span>
+          <span>RPE 기준 실행 안내<TermHelp term="quality-session" /></span>
         </div>
       </header>
       {canSelect && (

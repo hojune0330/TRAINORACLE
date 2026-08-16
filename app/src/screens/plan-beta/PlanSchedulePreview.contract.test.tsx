@@ -103,8 +103,8 @@ describe("plan schedule preview", () => {
     render(<PlanSchedulePreview startDate="2026-08-17" sessions={sessions.slice(0, 1)} />)
 
     const session = screen.getByRole("group", { name: "8월 17일 월요일 오전 세션" })
-    expect(session).toHaveTextContent("오늘 25분 · RPE 5~6")
-    expect(session).toHaveTextContent("본운동 10분")
+    expect(session).toHaveTextContent("총 25~40분 · RPE 5~6")
+    expect(session).toHaveTextContent("본운동")
     expect(session).toHaveTextContent(/숨은 차지만.*짧은 문장/u)
 
     const rpeHelp = screen.getByRole("button", { name: "RPE 설명 보기" })

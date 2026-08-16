@@ -1294,7 +1294,7 @@
   text-wrap: pretty;
 }
 
-@media (max-width: 340px) {
+@media (max-width: 420px) {
   .plan-candidate-comparison > div {
     grid-template-columns: 1fr;
   }

@@ -161,7 +161,7 @@ export function prescriptionLabel(session: PlanSession): string {
   if (session.role === "EASY") {
     return `총 ${duration} · ${rpe} · ${intent}`
   }
-  return `오늘 ${session.prescription.durationMinutes.minimum}분 · ${rpe} · ${intent} · 거리·목표 페이스는 지정하지 않음`
+  return `총 ${duration} · ${rpe} · ${intent} · 거리·목표 페이스는 지정하지 않음`
 }
 
 export function sessionIntentLabel(session: PlanSession): string {
@@ -213,23 +213,18 @@ export type SessionExecutionStep = {
 export function sessionExecutionSteps(session: PlanSession): readonly SessionExecutionStep[] {
   if (session.role !== "QUALITY") return []
 
-  const total = session.prescription.durationMinutes.minimum
-  const warmup = Math.min(15, Math.max(5, Math.round(total * 0.3 / 5) * 5))
-  const cooldown = Math.min(10, Math.max(5, Math.round(total * 0.2 / 5) * 5))
-  const main = total - warmup - cooldown
-
   return [
     {
-      title: `준비 ${warmup}분`,
-      detail: "RPE 2~3으로 걷거나 천천히 달린 뒤, 몸이 부드럽게 움직이는지 확인하세요.",
+      title: "준비",
+      detail: "표시된 총 시간 안에서 걷거나 천천히 달리며 몸이 부드럽게 움직이는지 확인하세요.",
     },
     {
-      title: `본운동 ${main}분`,
+      title: "본운동",
       detail: qualityExecution(session.plannedEnergyIntent),
     },
     {
-      title: `정리 ${cooldown}분`,
-      detail: "RPE 1~2로 천천히 달리거나 걸으세요. 통증·어지럼·자세 무너짐이 생기면 남은 시간을 채우지 말고 중단하세요.",
+      title: "정리",
+      detail: "남은 총 시간은 천천히 달리거나 걸으세요. 통증·어지럼·자세 무너짐이 생기면 시간을 채우지 말고 중단하세요.",
     },
   ]
 }
@@ -239,13 +234,13 @@ function qualityExecution(intent: PlannedEnergyIntent): string {
     case "LT_INTENT":
       return "RPE 5~6으로 일정하게 달리세요. 숨은 차지만 짧은 문장으로 말할 수 있고, 속도를 크게 바꾸지 않는 수준입니다."
     case "VO2_INTENT":
-      return "RPE 7~8 빠른 구간과 RPE 1~2 회복 구간을 번갈아 하세요. 숨이 가라앉아 짧게 말할 수 있으면 다음 빠른 구간을 시작하고, 자세가 무너지면 본운동을 끝내세요."
+      return "RPE 7~8 빠른 구간과 천천히 움직이는 회복 구간을 번갈아 하세요. 빠른 구간은 자세나 속도를 유지할 수 없기 전에 끝내고, 다시 짧게 말할 수 있을 만큼 숨이 가라앉으면 다음 구간을 시작하세요. 같은 강도로 한 번 더 달릴 여유가 없으면 본운동을 끝내세요."
     case "GLY_INTENT":
-      return "RPE 7~8 빠른 구간 뒤에 숨이 충분히 가라앉을 때까지 RPE 1~2로 회복하세요. 빠른 구간의 자세와 속도를 유지하지 못하면 횟수를 더하지 마세요."
+      return "RPE 7~8 빠른 구간 뒤에 숨이 충분히 가라앉을 때까지 천천히 움직이세요. 빠른 구간의 자세와 속도를 유지하지 못하거나 같은 강도로 한 번 더 달릴 여유가 없으면 본운동을 끝내세요."
     case "ATP_PC_INTENT":
       return "RPE 8~9로 짧게 가속한 뒤 숨과 다리가 편해질 때까지 걷거나 천천히 움직이세요. 전력질주하지 말고, 가속 자세가 흐트러지면 끝내세요."
     case "MIXED_INTENT":
-      return "RPE 6~7 구간과 RPE 2~3 회복 구간을 번갈아 하세요. 한 번에 완전히 지치지 않도록 힘을 남기세요."
+      return "RPE 6~7 구간과 천천히 움직이는 회복 구간을 번갈아 하세요. 짧게 말할 수 있을 만큼 숨이 가라앉은 뒤 다음 구간을 시작하고, 한 번에 완전히 지치지 않도록 힘을 남기세요."
     case "RECOVERY_INTENT":
     case "BASE_INTENT":
       return "표시된 RPE 범위 안에서 힘을 조절하며 움직이세요."
