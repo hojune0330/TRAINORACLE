@@ -158,9 +158,10 @@ export function prescriptionLabel(session: PlanSession): string {
   const duration = `${session.prescription.durationMinutes.minimum}~${session.prescription.durationMinutes.maximum}분`
   const rpe = `RPE ${session.prescription.rpe.minimum}~${session.prescription.rpe.maximum}`
   const intent = ENERGY_INTENT_LABELS[session.plannedEnergyIntent].title
-  return session.role === "EASY"
-    ? `총 ${duration} · ${rpe} · ${intent}`
-    : `총 ${duration} · ${rpe} · ${intent} · 반복·거리·페이스 미지정`
+  if (session.role === "EASY") {
+    return `총 ${duration} · ${rpe} · ${intent}`
+  }
+  return `총 ${duration} · ${rpe} · ${intent} · 거리\u2060·\u2060목표\u00a0페이스는 지정하지 않음`
 }
 
 export function sessionIntentLabel(session: PlanSession): string {
@@ -200,24 +201,50 @@ export function sessionExecution(session: PlanSession): string {
         ? "표시된 시간 동안 숨이 편한 걷기·가벼운 조깅·느린 자전거 중 하나로 움직이세요."
         : "표시된 시간 동안 친구와 대화할 수 있는 정도로 편하게 달리세요."
     case "QUALITY":
-      return qualityExecution(session.plannedEnergyIntent)
+      return "준비·본운동·정리 순서대로 타이머를 맞춰 진행하세요."
   }
 }
 
-function qualityExecution(intent: PlannedEnergyIntent): string {
+export type SessionExecutionStep = {
+  readonly title: string
+  readonly detail: string
+}
+
+export function sessionExecutionSteps(session: PlanSession): readonly SessionExecutionStep[] {
+  if (session.role !== "QUALITY") return []
+
+  return [
+    {
+      title: "준비",
+      detail: "표시된 총 시간 안에서 걷거나 천천히 달리며 몸이 부드럽게 움직이는지 확인하세요.",
+    },
+    {
+      title: "본운동",
+      detail: qualityExecution(session.plannedEnergyIntent, session.prescription.rpe),
+    },
+    {
+      title: "정리",
+      detail: "남은 총 시간은 천천히 달리거나 걸으세요. 통증\u2060·\u2060어지럼\u2060·\u2060자세\u00a0무너짐이 생기면 시간을 채우지 말고 중단하세요.",
+    },
+  ]
+}
+
+function qualityExecution(
+  intent: Extract<PlanSession, { readonly role: "QUALITY" }>["plannedEnergyIntent"],
+  rpe: Extract<PlanSession, { readonly role: "QUALITY" }>["prescription"]["rpe"],
+): string {
+  const effort = `RPE ${rpe.minimum}~${rpe.maximum}`
   switch (intent) {
     case "LT_INTENT":
-      return "숨은 차지만 속도를 크게 바꾸지 않고 표시된 시간 동안 이어 가세요."
+      return `${effort}으로 일정하게 달리세요. 숨은 차지만 짧은 문장이 가능하고, 속도를 크게 바꾸지 않는 수준입니다.`
     case "VO2_INTENT":
+      return `${effort} 빠른\u00a0구간과 천천히 움직이는 회복 구간을 번갈아\u00a0하세요. 자세나 속도가 흐트러지기 전에 빠른\u00a0구간을 끝내세요. 짧은 말이 가능할 만큼 숨이\u00a0가라앉으면 다음 구간을 시작하세요. 같은 강도로 한 번 더 달릴\u00a0여유가 없으면 본운동을 끝내세요.`
     case "GLY_INTENT":
-      return "말하기는 어렵지만 한 번에 완전히 지쳐 멈추지 않도록 힘을 조절하세요."
+      return `${effort}으로 달리다가 자세나 속도가 흐트러지기 전에 빠른\u00a0구간을 끝내세요. 그 뒤에는 천천히 움직이세요. 짧은 말이 가능할 만큼 숨이\u00a0가라앉으면 다음\u00a0빠른\u00a0구간을 시작하세요. 같은 강도로 한 번 더 달릴\u00a0여유가 없으면 본운동을 끝내세요.`
     case "ATP_PC_INTENT":
-      return "짧고 빠르게 움직이되, 매번 전력질주가 되지 않도록 충분히 조절하세요."
+      return `${effort}에 닿으면 더 세게 밀지 말고 한\u00a0번의\u00a0가속\u00a0구간을 끝내세요. 그 뒤에는 걷거나 천천히 움직이세요. 숨과 다리가 편해지면 다음 가속을 시작하고, 전력질주가 되거나 가속 자세가 흐트러지면 본운동을 끝내세요.`
     case "MIXED_INTENT":
-      return "한 가지 강도에 고정하지 말고 표시된 RPE 범위 안에서 힘을 조절하세요."
-    case "RECOVERY_INTENT":
-    case "BASE_INTENT":
-      return "표시된 RPE 범위 안에서 힘을 조절하며 움직이세요."
+      return `${effort} 구간과 천천히 움직이는 회복 구간을 번갈아 하세요. 짧은 말이 가능할 만큼 숨이 가라앉은 뒤 다음 구간을 시작하고, 한 번에 완전히 지치지 않도록 힘을 남기세요.`
     default:
       return intent satisfies never
   }
@@ -226,12 +253,12 @@ function qualityExecution(intent: PlannedEnergyIntent): string {
 function qualityGuidance(intent: PlannedEnergyIntent): string {
   switch (intent) {
     case "LT_INTENT":
-      return "표시된 총 시간 동안 RPE 5~6으로 달리세요. 숨은 차지만 일정하게 이어 갈 수 있는 느낌입니다. 반복 횟수·거리·회복 시간·목표 페이스는 아직 정하지 않은 베타 훈련입니다."
+      return "오늘 시간은 준비·본운동·정리를 모두 합친 값입니다. 목표 페이스는 추정하지 않으며, RPE와 말하기 정도로 강도를 조절합니다."
     case "VO2_INTENT":
     case "GLY_INTENT":
-      return "표시된 총 시간 동안 RPE 7~8로 달리세요. 말하기는 어렵지만, 한 번에 완전히 지쳐 멈추는 전력질주가 되지 않게 조절합니다. 반복 횟수·거리·회복 시간·목표 페이스는 아직 정하지 않은 베타 훈련입니다."
+      return "오늘 시간은 준비·빠른 구간·회복 구간·정리를 모두 합친 값입니다. 고강도 총시간 전체를 계속 달리는 뜻이 아니며, 거리\u2060·\u2060목표\u00a0페이스·고정 횟수는 추정하지 않습니다."
     case "ATP_PC_INTENT":
-      return "표시된 총 시간 동안 RPE 8~9의 짧고 빠른 가속 의도로 움직입니다. 전용 스프린트 계획이나 반복 수·거리·회복 시간은 아직 정하지 않은 베타 훈련입니다."
+      return "오늘 시간은 준비·짧은 가속·충분한 회복·정리를 모두 합친 값입니다. 100·200·400m 전용 스프린트 처방이나 목표 기록은 만들지 않습니다."
     case "MIXED_INTENT":
       return "표시된 총 시간 동안 RPE 6~7로 달리세요. 한 가지 에너지 목적의 상세 처방이 아니라 섞어 하는 강도 안내이며, 반복·거리·페이스는 아직 정하지 않았습니다."
     case "RECOVERY_INTENT":
@@ -304,7 +331,7 @@ export function candidateSessionSummary(candidate: {
   const secondSession = twoADayTrainingDays === 0
     ? ""
     : ` · 하루 2회 훈련 ${twoADayTrainingDays}일`
-  return `운동 ${counts.training}회 · 기초 지구력 ${intentionCounts.BASE_INTENT}일 · ${qualityLabel} · 완전 휴식 ${counts.rest}일 · 총 계획 시간 ${durationLabel}${secondSession}`
+  return `운동 ${counts.training}회 · 기초 지구력 ${intentionCounts.BASE_INTENT}일 · ${qualityLabel} · 휴식 ${counts.rest}일 · 총 계획 시간 ${durationLabel}${secondSession}`
 }
 
 export function twoADayTrainingDayCount(sessions: readonly PlanSession[]): number {

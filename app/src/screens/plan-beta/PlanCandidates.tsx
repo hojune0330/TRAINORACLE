@@ -78,7 +78,7 @@ export function PlanCandidates({
             <TermHelp term="plan-beta-basis" />
           </strong>
           <small>
-            시간·RPE와 고른 훈련 목적만 안내 · 반복·거리·페이스·회복은 아직 미지정
+            시간·RPE 기반 실행 순서 제공 · 거리{`\u2060`}·{`\u2060`}목표{`\u00a0`}페이스는 추정하지 않음
           </small>
           {intake.competitionDivision !== "NOT_PROVIDED" && (
             <small>
@@ -178,7 +178,7 @@ function CandidateSection({
             {ENERGY_INTENT_LABELS[candidate.selectedEnergyIntent].title}
             <TermHelp term={ENERGY_INTENT_LABELS[candidate.selectedEnergyIntent].term} />
           </span>
-          <span>상세 수치 미지정<TermHelp term="quality-session" /></span>
+          <span>RPE 기준 실행 안내<TermHelp term="quality-session" /></span>
         </div>
       </header>
       {canSelect && (

@@ -128,6 +128,10 @@ test("keeps an evening two-a-day plan after selection and reload", async ({ page
 
   // Then
   await expect(page.getByRole("heading", { name: /9일 계획/u })).toBeVisible()
+  await expect(page.getByRole("list", { name: "훈련 실행 순서" }).first()).toContainText("준비")
+  await expect(page.getByRole("list", { name: "훈련 실행 순서" }).first()).toContainText("본운동")
+  await expect(page.getByText(/빠른\s구간과 천천히 움직이는 회복 구간을 번갈아\s하세요/u).first()).toBeVisible()
+  await expect(page.getByRole("list", { name: "훈련 실행 순서" }).first()).toContainText("정리")
   await expect(page.getByRole("group").filter({
     hasText: "오후",
   }).filter({
@@ -158,6 +162,8 @@ test("keeps an evening two-a-day plan after selection and reload", async ({ page
   })).toBeVisible()
   await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "계획" }).click()
   await expect(page.getByRole("heading", { name: /9일 계획/u })).toBeVisible()
+  await expect(page.getByText(/거리\u2060·\u2060목표\s페이스는 지정하지 않음/u).first()).toBeVisible()
+  await expect(page.getByRole("list", { name: "훈련 실행 순서" }).first()).toBeVisible()
 })
 
 test("reads a detailed training notation without creating a plan", async ({ page }) => {
