@@ -599,7 +599,9 @@ describe("plan beta user flow", () => {
     await answerMinimumPlanQuestions("clear")
 
     expectGeneratedCandidates()
-    expect(screen.getAllByText("내가 고른 조건으로 만든 계획 · 최근 기록 있음")[0]).toBeVisible()
+    expect(screen.getByText(
+      "경기 기록 0개 · 최근 일지 2개 연결",
+    )).toBeVisible()
   })
 
   // 원래 이 테스트는 미래 날짜와 함께 "2026-02-31"(2월 31일)도 심었다.

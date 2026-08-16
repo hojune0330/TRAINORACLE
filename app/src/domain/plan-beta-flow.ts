@@ -15,6 +15,7 @@ import {
 } from "@impl/rve/signal"
 import { decideSafetyGate } from "@impl/safety-gate/gate"
 import type { SafetyGateDecision } from "@impl/safety-gate/gate"
+import { loadAthleteRecords } from "./athlete-records"
 import {
   isoShift,
   isValidIsoDate,
@@ -40,6 +41,12 @@ import {
 
 export type PlanCurrentCheck = "NO_KNOWN_RISK" | "REVIEW_REQUIRED"
 
+export type PlanAthleteEvidence = {
+  readonly storedRecordCount: number
+  readonly goalRecordCount: number
+  readonly recentJournalSessionCount: number
+}
+
 export type PlanSafetyEvaluation =
   | {
       readonly kind: "passed"
@@ -62,6 +69,7 @@ export type PlanDraftGeneration =
       readonly generated: PlanGenerationSuccess
       readonly gate: SafetyGateDecision
       readonly intake: PlanBetaIntake
+      readonly athleteEvidence: PlanAthleteEvidence
     }
   | {
       readonly kind: "rejected"
@@ -94,19 +102,24 @@ export function generatePlanFromDraft(
   const safety = evaluatePlanSafety(currentCheck)
   if (safety.kind === "blocked") return safety
   const safetyGate = safety.gate
+  const availableTrainingDays = spreadTrainingDays(
+    intake.availableDayCount,
+    intake.requestedFrameLength,
+  )
+  const athleteEvidence = summarizeAthleteEvidence(safety.journalSource)
   const result = generatePlanCandidates({
     kind: "PLAN_BETA_GENERATION_REQUEST",
     safetyGate,
     profile: {
       eventGroup: intake.eventGroup,
       experienceBand: intake.experienceBand,
-      availableTrainingDays: spreadTrainingDays(intake.availableDayCount),
+      availableTrainingDays,
       secondSessionMode: intake.secondSessionMode,
       trainingTimePreference: intake.trainingTimePreference,
     },
     formation: createPlanFormation(
       todayISO(),
-      spreadTrainingDays(intake.availableDayCount),
+      availableTrainingDays,
       intake.experienceBand,
     ),
     requestedFrameLength: intake.requestedFrameLength,
@@ -123,6 +136,7 @@ export function generatePlanFromDraft(
         generated: result,
         gate: safetyGate,
         intake,
+        athleteEvidence,
       }
     case "needs_review_with_reason":
       return { kind: "rejected", code: "FORMATION_REVIEW_REQUIRED" }
@@ -157,6 +171,11 @@ export function selectPlanForActivation(
   generated: PlanGenerationSuccess,
   gate: SafetyGateDecision,
   intake: PlanBetaIntake,
+  athleteEvidence: PlanAthleteEvidence = {
+    storedRecordCount: 0,
+    goalRecordCount: 0,
+    recentJournalSessionCount: 0,
+  },
 ): PlanSelection {
   const result = selectPlanCandidate({
     kind: "PLAN_BETA_SELECTION_REQUEST",
@@ -177,6 +196,7 @@ export function selectPlanForActivation(
       activePlan: result.activePlan,
       progress: [],
       generatedAt: new Date().toISOString(),
+      athleteEvidence,
     },
   }
 }
@@ -264,11 +284,24 @@ function structuredJournalSource(entries: readonly JournalEntry[]): JournalSourc
   } as const
 }
 
+function summarizeAthleteEvidence(journalSource: JournalSource): PlanAthleteEvidence {
+  const records = loadAthleteRecords()
+  return {
+    storedRecordCount: records.length,
+    goalRecordCount: records.filter((record) => record.purpose === "RACE_GOAL").length,
+    recentJournalSessionCount: journalSource.kind === "RECENT_JOURNAL_CONTEXT"
+      ? journalSource.eligibleSessionCount
+      : 0,
+  }
+}
+
 function spreadTrainingDays(
   count: PlanBetaIntake["availableDayCount"],
+  requestedFrameLength: PlanBetaIntake["requestedFrameLength"],
 ): readonly number[] {
+  const visibleDays = Math.ceil(requestedFrameLength)
   if (count === "EVERY_DAY") {
-    return Object.freeze(Array.from({ length: 10 }, (_, index) => index + 1))
+    return Object.freeze(Array.from({ length: visibleDays }, (_, index) => index + 1))
   }
   const matrix = {
     3: [1, 5, 9],
@@ -276,5 +309,10 @@ function spreadTrainingDays(
     5: [1, 3, 5, 7, 9],
     6: [1, 3, 5, 6, 8, 10],
   } as const
-  return Object.freeze([...matrix[count]])
+  if (visibleDays === 10) return Object.freeze([...matrix[count]])
+
+  return Object.freeze(Array.from(
+    { length: count },
+    (_, index) => Math.round(1 + (index * (visibleDays - 1)) / (count - 1)),
+  ))
 }

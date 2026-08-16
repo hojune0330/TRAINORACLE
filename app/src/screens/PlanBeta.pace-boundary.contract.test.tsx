@@ -54,6 +54,9 @@ describe("plan beta pace authority boundary", () => {
     render(<PlanBeta />)
     await answerMinimumPlanQuestions()
 
+    expect(screen.getByText(
+      /경기 기록 1개 · 최근 일지 0개 연결/u,
+    )).toBeInTheDocument()
     expect(screen.queryByText(/3:42/u)).toBeNull()
     expect(screen.queryByText(/오늘 반복 목표/u)).toBeNull()
   })

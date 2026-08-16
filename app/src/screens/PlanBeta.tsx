@@ -9,7 +9,10 @@ import {
   evaluatePlanSafety,
   generatePlanFromDraft,
 } from "../domain/plan-beta-flow"
-import type { PlanCurrentCheck } from "../domain/plan-beta-flow"
+import type {
+  PlanAthleteEvidence,
+  PlanCurrentCheck,
+} from "../domain/plan-beta-flow"
 import {
   loadPlanBetaState,
   loadPreviousIntake,
@@ -63,6 +66,7 @@ export function PlanBeta({
   const [generatedIntake, setGeneratedIntake] =
     React.useState<PlanBetaIntake | null>(null)
   const [gate, setGate] = React.useState<SafetyGateDecision | null>(null)
+  const [generatedEvidence, setGeneratedEvidence] = React.useState<PlanAthleteEvidence | null>(null)
   const [blocked, setBlocked] = React.useState(false)
   const [currentCheck, setCurrentCheck] = React.useState<PlanCurrentCheck | null>(null)
   const [errorCode, setErrorCode] = React.useState<string | null>(null)
@@ -104,6 +108,7 @@ export function PlanBeta({
         setGate(result.gate)
         setGenerated(result.generated)
         setGeneratedIntake(result.intake)
+        setGeneratedEvidence(result.athleteEvidence)
         return
     }
   }
@@ -132,7 +137,17 @@ export function PlanBeta({
       setBlocked(true)
       return
     }
-    const result = saveSelectedPlanCandidate(selection, activeGenerated, safety.gate, generatedIntake)
+    if (generatedEvidence === null) {
+      setErrorCode("MINIMUM_PROFILE_INCOMPLETE")
+      return
+    }
+    const result = saveSelectedPlanCandidate(
+      selection,
+      activeGenerated,
+      safety.gate,
+      generatedIntake,
+      generatedEvidence,
+    )
     switch (result.kind) {
       case "saved":
         setErrorCode(null)
@@ -202,12 +217,13 @@ export function PlanBeta({
     )
   }
 
-  if (generated !== null && gate !== null && generatedIntake !== null) {
+  if (generated !== null && gate !== null && generatedIntake !== null && generatedEvidence !== null) {
     return (
       <>
         <PlanCandidates
           generated={generated}
           intake={generatedIntake}
+          athleteEvidence={generatedEvidence}
           onBack={() => {
             setGenerated(null)
             setGate(null)

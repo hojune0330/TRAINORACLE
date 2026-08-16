@@ -72,6 +72,13 @@ export function ActivePlan({
             <TermHelp term="plan-beta-basis" />
           </strong>
           <small>이 계획과 진행 상태는 이 브라우저에만 저장 · 의료 판단 아님</small>
+          {state.athleteEvidence !== undefined && (
+            <small>
+              저장된 경기 기록 {state.athleteEvidence.storedRecordCount}개
+              {" · "}최근 구조화 일지 {state.athleteEvidence.recentJournalSessionCount}개 연결
+              {" · "}개인 페이스·훈련 시간·RPE 계산에는 아직 미사용
+            </small>
+          )}
           {state.intake.competitionDivision !== undefined
             && state.intake.competitionDivision !== "NOT_PROVIDED" && (
             <small>

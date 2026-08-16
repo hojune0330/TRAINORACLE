@@ -1,4 +1,5 @@
 import { selectPlanForActivation } from "../../domain/plan-beta-flow"
+import type { PlanAthleteEvidence } from "../../domain/plan-beta-flow"
 import { savePlanBetaState } from "../../domain/plan-beta-store"
 import type {
   PlanBetaIntake,
@@ -25,6 +26,7 @@ export function saveSelectedPlanCandidate(
   generated: PlanGenerationSuccess,
   gate: SafetyGateDecision,
   intake: PlanBetaIntake | null,
+  athleteEvidence: PlanAthleteEvidence,
 ): CandidateSaveResult {
   if (intake === null || !isValidIsoDate(selection.startDate)) {
     return { kind: "rejected", code: "MINIMUM_PROFILE_INCOMPLETE" }
@@ -32,7 +34,7 @@ export function saveSelectedPlanCandidate(
   const selected = selectPlanForActivation(selection.candidate, generated, gate, {
     ...intake,
     startDate: selection.startDate,
-  })
+  }, athleteEvidence)
   if (selected.kind !== "selected") {
     return { kind: "rejected", code: selected.code }
   }

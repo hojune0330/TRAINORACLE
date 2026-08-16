@@ -6,6 +6,10 @@ import {
 import { JOURNAL_STORAGE_KEY } from "./journal-local-storage"
 import { parsePlanBetaState } from "./plan-beta-schema"
 import { loadPlanBetaState, savePlanBetaState } from "./plan-beta-store"
+import {
+  createSelfReportedAthleteRecord,
+  saveAthleteRecord,
+} from "./athlete-records"
 
 beforeEach(() => {
   window.localStorage.clear()
@@ -128,7 +132,12 @@ describe("canonical plan intake boundary", () => {
       )
       expect(new Set(candidate.sessions.map((session) => `${session.day}:${session.slot}`)).size)
         .toBe(candidate.sessions.length)
-      expect(candidate.mainExposureLedger.countedExposureIds).toContain("app-main-day-9")
+      expect(candidate.sessions.filter(
+        (session) => session.day <= 7 && session.role !== "REST",
+      )).toHaveLength(5)
+      expect(candidate.sessions.filter(
+        (session) => session.day <= 7 && session.role === "QUALITY",
+      )).toHaveLength(2)
     }
     const candidate = result.generated.candidates[0]
     const selection = selectPlanForActivation(candidate, result.generated, result.gate, result.intake)
@@ -148,6 +157,63 @@ describe("canonical plan intake boundary", () => {
     expect(loadPlanBetaState()?.activePlan.sessions.map(
       (session) => `${session.day}:${session.slot}`,
     )).toEqual(selectedSessionKeys)
+  })
+
+  it.each([
+    [7, 6, 6],
+    [9, "EVERY_DAY", 9],
+    [9.5, "EVERY_DAY", 10],
+  ] as const)(
+    "keeps %s-day availability and both quality exposures inside the visible frame",
+    (requestedFrameLength, availableDayCount, expectedTrainingDays) => {
+      const result = generatePlanFromDraft({
+        ...COMPLETE_DRAFT,
+        experienceBand: "EXPERIENCED",
+        availableDayCount,
+        requestedFrameLength,
+        trainingFocus: "VO2_INTENT",
+      }, "NO_KNOWN_RISK")
+
+      expect(result.kind).toBe("generated")
+      if (result.kind !== "generated") return
+      const visibleThrough = Math.ceil(requestedFrameLength)
+
+      for (const candidate of result.generated.candidates) {
+        expect(new Set(candidate.sessions
+          .filter((session) => session.day <= visibleThrough && session.role !== "REST")
+          .map((session) => session.day))).toHaveLength(expectedTrainingDays)
+        expect(candidate.sessions.filter(
+          (session) => session.day <= visibleThrough && session.role === "QUALITY",
+        )).toHaveLength(2)
+      }
+    },
+  )
+
+  it("connects only structured athlete evidence counts to a generated plan", () => {
+    const now = new Date()
+    const record = createSelfReportedAthleteRecord({
+      id: "plan-evidence-5000m",
+      purpose: "PERSONAL_BEST",
+      eventDistanceM: 5000,
+      performanceSeconds: 1110,
+      achievedOn: now.toISOString().slice(0, 10),
+      seasonId: null,
+    }, now)
+    expect(record).not.toBeNull()
+    if (record === null) return
+    expect(saveAthleteRecord(record, now).ok).toBe(true)
+
+    const result = generatePlanFromDraft(COMPLETE_DRAFT, "NO_KNOWN_RISK")
+
+    expect(result.kind).toBe("generated")
+    if (result.kind !== "generated") return
+    expect(result.athleteEvidence).toEqual({
+      storedRecordCount: 1,
+      goalRecordCount: 0,
+      recentJournalSessionCount: 0,
+    })
+    expect(JSON.stringify(result.athleteEvidence)).not.toContain(record.id)
+    expect(JSON.stringify(result.athleteEvidence)).not.toContain(String(record.performanceSeconds))
   })
 
   it("generates two selectable 9.5-day candidates from the athlete intake", () => {

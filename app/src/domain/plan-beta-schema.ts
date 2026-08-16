@@ -98,12 +98,19 @@ export const planHistorySchema = z.object({
   archivedAt: z.string().datetime(),
 })
 
+const planAthleteEvidenceSchema = z.object({
+  storedRecordCount: z.number().int().nonnegative(),
+  goalRecordCount: z.number().int().nonnegative(),
+  recentJournalSessionCount: z.number().int().nonnegative(),
+}).strict()
+
 const planBetaStateSchema = z.object({
   version: z.literal(1),
   intake: storedPlanIntakeSchema,
   activePlan: activePlanSchema,
   progress: z.array(progressSchema),
   generatedAt: z.string().datetime(),
+  athleteEvidence: planAthleteEvidenceSchema.optional(),
 }).superRefine((state, context) => {
   const sessionsByDay = new Map<number, typeof state.activePlan.sessions>()
   const sessionKeys = new Set<string>()

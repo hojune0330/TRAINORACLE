@@ -7,6 +7,7 @@ import { TermHelp } from "../../components/TermHelp"
 import { isValidIsoDate } from "../../domain/dates"
 import { todayISO } from "../../domain/journal-store"
 import type { PlanBetaIntake } from "../../domain/plan-beta-store"
+import type { PlanAthleteEvidence } from "../../domain/plan-beta-flow"
 import {
   candidateSessionSummary,
   candidateLabel,
@@ -21,11 +22,13 @@ import type { CandidateSelection } from "./plan-selection"
 export function PlanCandidates({
   generated,
   intake,
+  athleteEvidence,
   onBack,
   onSelect,
 }: {
   readonly generated: PlanGenerationSuccess
   readonly intake: PlanBetaIntake
+  readonly athleteEvidence: PlanAthleteEvidence
   readonly onBack: () => void
   readonly onSelect: (selection: CandidateSelection) => void
 }) {
@@ -72,14 +75,21 @@ export function PlanCandidates({
         <ShieldCheck aria-hidden="true" size={17} />
         <span>
           <strong>
-            {generated.sourceMode === "PROFILE_ONLY"
-              ? "내가 고른 조건으로 만든 계획"
-              : "내가 고른 조건으로 만든 계획 · 최근 기록 있음"}
+            {athleteEvidence.storedRecordCount + athleteEvidence.recentJournalSessionCount === 0
+              ? "기록 없이 시작한 베타 계획"
+              : "경기 기록 "
+                + athleteEvidence.storedRecordCount
+                + "개 · 최근 일지 "
+                + athleteEvidence.recentJournalSessionCount
+                + "개 연결"}
             <TermHelp term="plan-beta-basis" />
           </strong>
           <small>
-            시간·RPE 기반 실행 순서 제공 · 거리{`\u2060`}·{`\u2060`}목표{`\u00a0`}페이스는 추정하지 않음
+            기록값과 구조화 일지는 존재 여부만 확인 · 개인 페이스·훈련 시간·RPE 계산에는 아직 미사용
           </small>
+          {athleteEvidence.goalRecordCount > 0 && (
+            <small>목표 기록 {athleteEvidence.goalRecordCount}개 포함 · 현재는 수치 계산에 미사용</small>
+          )}
           {intake.competitionDivision !== "NOT_PROVIDED" && (
             <small>
               참가 부문: {DIVISION_LABELS[intake.competitionDivision].title} · 표시용 정보이며 훈련 강도와 안전 판정에는 미사용
