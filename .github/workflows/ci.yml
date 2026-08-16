@@ -38,6 +38,8 @@ jobs:
           node specs/test-packages/test-wo016-gate-verifier.mjs
           node --test specs/test-packages/validate-detailed-prescription-catalog.test.mjs
           node specs/test-packages/validate-detailed-prescription-catalog.mjs
+          node --test specs/test-packages/validate-v2-seed-05-activation-packet.test.mjs
+          node specs/test-packages/validate-v2-seed-05-activation-packet.mjs
           node --test specs/test-packages/validate-advisory-session-recommender.test.mjs
           node specs/test-packages/validate-advisory-session-recommender.mjs
           node --test specs/test-packages/validate-dependency-security-audit.test.mjs

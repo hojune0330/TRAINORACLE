@@ -86,3 +86,19 @@ test("rejects a nonempty manifest hidden behind an empty-assignment string liter
   assert.notEqual(approvals, value.approvals)
   assert.throws(() => validateActivationPacket({ ...value, approvals }))
 })
+
+test("rejects an active duplicate even when an exact draft block is hidden in a comment", async () => {
+  const value = await inputs()
+  const catalog = `${value.catalog}\n<!-- exact reviewed catalog retained above -->\n- templateId: V2-SEED-05\n  lifecycleStatus: ACTIVE\n  eligibilityStatus: ELIGIBLE\n`
+  assert.throws(() => validateActivationPacket({ ...value, catalog }))
+})
+
+test("accepts the same reviewed artifacts with LF line endings", async () => {
+  const value = await inputs()
+  const lf = (text) => text.replace(/\r\n/g, "\n")
+  assert.doesNotThrow(() => validateActivationPacket({
+    packet: lf(value.packet),
+    catalog: lf(value.catalog),
+    approvals: lf(value.approvals),
+  }))
+})

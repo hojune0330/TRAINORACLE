@@ -7,26 +7,22 @@ function invariant(condition, message) {
   if (!condition) throw new Error(message)
 }
 
-const EXPECTED_PACKET_SHA256 = "9aac6ef3cc08cbd087f5d724308a08a62d171af6c99c5cf09fe3e2ff71aa7983"
-const EXPECTED_CATALOG_TEMPLATE_SHA256 = "c41704e7461b1d007dad4d5019de3cd680e4cfe15b9813c77f245c8eeced0b80"
-const EXPECTED_APPROVALS_SHA256 = "b506b1098ffc29ade4536cc49d3f0ae0db66cc04cf7a1081dfb9b3c33e5d201c"
+const EXPECTED_PACKET_SHA256 = "f1aa080002178517f03a96c641c586ef49f99537df83505670695ecb88bb306b"
+const EXPECTED_CATALOG_SHA256 = "32ddeff1bf6f3f9727ef8014eb667694131f85d8e5dfebf95d885d94af5e4f10"
+const EXPECTED_APPROVALS_SHA256 = "bd7f70a488e1916f18ca9fce213202a7e770153057f61061996244a758c0bf90"
 
 function sha256(value) {
-  return createHash("sha256").update(value).digest("hex")
+  return createHash("sha256").update(value.replace(/\r\n/g, "\n")).digest("hex")
 }
 
 export function validateActivationPacket({ packet, catalog, approvals }) {
-  const start = catalog.indexOf("- templateId: V2-SEED-05")
-  const end = catalog.indexOf("```", start)
-  invariant(start >= 0 && end > start, "V2-SEED-05 catalog block missing")
-  const template = catalog.slice(start, end)
   const hashes = Object.freeze({
     packet: sha256(packet),
-    catalogTemplate: sha256(template),
+    catalog: sha256(catalog),
     approvals: sha256(approvals),
   })
   invariant(hashes.packet === EXPECTED_PACKET_SHA256, "review packet content changed")
-  invariant(hashes.catalogTemplate === EXPECTED_CATALOG_TEMPLATE_SHA256, "V2-SEED-05 catalog content changed")
+  invariant(hashes.catalog === EXPECTED_CATALOG_SHA256, "detailed prescription catalog content changed")
   invariant(hashes.approvals === EXPECTED_APPROVALS_SHA256, "runtime approval manifest content changed")
   return Object.freeze({ templateId: "V2-SEED-05", activation: "FORBIDDEN", hashes })
 }
@@ -42,7 +38,7 @@ async function main() {
   process.stdout.write([
     `PASS ${result.templateId}: runtime activation ${result.activation}`,
     `packet_sha256=${result.hashes.packet}`,
-    `catalog_template_sha256=${result.hashes.catalogTemplate}`,
+    `catalog_sha256=${result.hashes.catalog}`,
     `approvals_sha256=${result.hashes.approvals}`,
     "",
   ].join("\n"))
