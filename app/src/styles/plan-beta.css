@@ -464,7 +464,7 @@
 }
 
 .plan-schedule-preview__sessions[data-session-count="2"] {
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: 1fr;
 }
 
 .plan-schedule-preview__sessions > section {
@@ -478,8 +478,8 @@
 }
 
 .plan-schedule-preview__sessions[data-session-count="2"] > section + section {
-  padding-left: var(--space-3);
-  border-left: var(--bw-line) solid var(--line);
+  padding-left: 0;
+  border-left: 0;
 }
 
 .plan-schedule-preview__slot {
@@ -527,15 +527,6 @@
 }
 
 @media (max-width: 420px) {
-  .plan-schedule-preview__sessions[data-session-count="2"] {
-    grid-template-columns: 1fr;
-  }
-
-  .plan-schedule-preview__sessions[data-session-count="2"] > section + section {
-    padding-left: 0;
-    border-left: 0;
-  }
-
   .plan-schedule-calendar > header span {
     display: none;
   }
@@ -1218,6 +1209,43 @@
   line-height: 1.55;
   word-break: keep-all;
   overflow-wrap: break-word;
+}
+
+.plan-session-steps {
+  margin: var(--space-2) 0 0;
+  padding: 0;
+  list-style: none;
+  border-top: var(--bw-line) solid var(--hair);
+}
+
+.plan-session-steps li {
+  display: grid;
+  grid-template-columns: minmax(5.25rem, max-content) minmax(0, 1fr);
+  gap: var(--space-2);
+  padding: var(--space-2) 0;
+  border-bottom: var(--bw-line) solid var(--hair);
+  font-family: var(--sans);
+  font-size: var(--fs-body-sm);
+  line-height: 1.5;
+}
+
+.plan-session-steps strong {
+  color: var(--ink);
+}
+
+.plan-session-steps span {
+  min-width: 0;
+  color: var(--ink-2);
+  word-break: keep-all;
+  overflow-wrap: break-word;
+  text-wrap: pretty;
+}
+
+@media (max-width: 420px) {
+  .plan-session-steps li {
+    grid-template-columns: 1fr;
+    gap: 2px;
+  }
 }
 
 .plan-session-intent {

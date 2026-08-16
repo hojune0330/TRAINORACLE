@@ -33,6 +33,20 @@ function restSession(day: number, slot: PlanSession["slot"]): PlanSession {
   }
 }
 
+function qualitySession(): PlanSession {
+  return {
+    day: 1,
+    slot: "AM",
+    role: "QUALITY",
+    plannedEnergyIntent: "VO2_INTENT",
+    prescription: {
+      kind: "RPE_TIME_RANGE",
+      rpe: { minimum: 7, maximum: 8 },
+      durationMinutes: { minimum: 30, maximum: 50 },
+    },
+  }
+}
+
 describe("two-a-day plan summary", () => {
   afterEach(cleanup)
 
@@ -80,5 +94,24 @@ describe("two-a-day plan summary", () => {
       restSession(4, "AM"),
       session(4, "PM"),
     ])).toBe(0)
+  })
+
+  it("renders an executable high-intensity session without inventing pace or distance", () => {
+    render(
+      createElement(PlanSchedulePreview, {
+        startDate: "2026-08-17",
+        frameLengthDays: 7,
+        sessions: [qualitySession()],
+      }),
+    )
+
+    const firstDay = screen.getByRole("group", { name: "8월 17일 월요일 · 훈련 1개" })
+    expect(firstDay).toHaveTextContent("오늘 30분 · RPE 7~8")
+    expect(firstDay).toHaveTextContent("준비 10분")
+    expect(firstDay).toHaveTextContent("본운동 15분")
+    expect(firstDay).toHaveTextContent("빠른 구간과 RPE 1~2 회복 구간을 번갈아")
+    expect(firstDay).toHaveTextContent("정리 5분")
+    expect(firstDay).toHaveTextContent("거리·목표 페이스는 지정하지 않음")
+    expect(firstDay).not.toHaveTextContent("총 30~50분 동안 RPE 7~8")
   })
 })

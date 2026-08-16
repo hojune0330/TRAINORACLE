@@ -7,6 +7,7 @@ import {
   ENERGY_INTENT_LABELS,
   prescriptionLabel,
   sessionExecution,
+  sessionExecutionSteps,
   sessionGuidance,
   sessionIntentLabel,
   sessionLabel,
@@ -76,6 +77,16 @@ export function PlanSchedulePreview({
                       {prescriptionLabel(session)}
                     </small>
                     <p className="plan-session-execution">{sessionExecution(session)}</p>
+                    {sessionExecutionSteps(session).length > 0 && (
+                      <ol className="plan-session-steps" aria-label="훈련 실행 순서">
+                        {sessionExecutionSteps(session).map((step) => (
+                          <li key={step.title}>
+                            <strong>{step.title}</strong>
+                            <span>{step.detail}</span>
+                          </li>
+                        ))}
+                      </ol>
+                    )}
                     <details className="plan-session-guidance">
                       <summary>목적·수치 설명 보기</summary>
                       <p>
