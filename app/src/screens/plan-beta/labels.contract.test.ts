@@ -118,7 +118,7 @@ describe("two-a-day plan summary", () => {
     expect(firstDay).toHaveTextContent("본운동")
     expect(firstDay).toHaveTextContent("빠른 구간과 천천히 움직이는 회복 구간을 번갈아")
     expect(firstDay).toHaveTextContent("정리")
-    expect(firstDay).toHaveTextContent("거리·목표 페이스는 지정하지 않음")
+    expect(firstDay).toHaveTextContent("거리\u2060·\u2060목표 페이스는 지정하지 않음")
     expect(firstDay).toHaveTextContent("같은 강도로 한 번 더 달릴 여유가 없으면 본운동을 끝내세요")
   })
 

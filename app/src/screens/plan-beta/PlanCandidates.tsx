@@ -78,7 +78,7 @@ export function PlanCandidates({
             <TermHelp term="plan-beta-basis" />
           </strong>
           <small>
-            시간·RPE 기반 실행 순서 제공 · 거리·목표 페이스는 추정하지 않음
+            시간·RPE 기반 실행 순서 제공 · 거리{`\u2060`}·{`\u2060`}목표{`\u00a0`}페이스는 추정하지 않음
           </small>
           {intake.competitionDivision !== "NOT_PROVIDED" && (
             <small>

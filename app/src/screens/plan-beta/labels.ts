@@ -161,7 +161,7 @@ export function prescriptionLabel(session: PlanSession): string {
   if (session.role === "EASY") {
     return `총 ${duration} · ${rpe} · ${intent}`
   }
-  return `총 ${duration} · ${rpe} · ${intent} · 거리·목표\u00a0페이스는 지정하지 않음`
+  return `총 ${duration} · ${rpe} · ${intent} · 거리\u2060·\u2060목표\u00a0페이스는 지정하지 않음`
 }
 
 export function sessionIntentLabel(session: PlanSession): string {
@@ -224,7 +224,7 @@ export function sessionExecutionSteps(session: PlanSession): readonly SessionExe
     },
     {
       title: "정리",
-      detail: "남은 총 시간은 천천히 달리거나 걸으세요. 통증·어지럼·자세 무너짐이 생기면 시간을 채우지 말고 중단하세요.",
+      detail: "남은 총 시간은 천천히 달리거나 걸으세요. 통증\u2060·\u2060어지럼\u2060·\u2060자세\u00a0무너짐이 생기면 시간을 채우지 말고 중단하세요.",
     },
   ]
 }
@@ -256,7 +256,7 @@ function qualityGuidance(intent: PlannedEnergyIntent): string {
       return "오늘 시간은 준비·본운동·정리를 모두 합친 값입니다. 목표 페이스는 추정하지 않으며, RPE와 말하기 정도로 강도를 조절합니다."
     case "VO2_INTENT":
     case "GLY_INTENT":
-      return "오늘 시간은 준비·빠른 구간·회복 구간·정리를 모두 합친 값입니다. 고강도 총시간 전체를 계속 달리는 뜻이 아니며, 거리·목표 페이스·고정 횟수는 추정하지 않습니다."
+      return "오늘 시간은 준비·빠른 구간·회복 구간·정리를 모두 합친 값입니다. 고강도 총시간 전체를 계속 달리는 뜻이 아니며, 거리\u2060·\u2060목표\u00a0페이스·고정 횟수는 추정하지 않습니다."
     case "ATP_PC_INTENT":
       return "오늘 시간은 준비·짧은 가속·충분한 회복·정리를 모두 합친 값입니다. 100·200·400m 전용 스프린트 처방이나 목표 기록은 만들지 않습니다."
     case "MIXED_INTENT":
