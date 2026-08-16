@@ -16,11 +16,6 @@ export type DetailedPrescriptionApprovalRecord = TemplateRuntimeStatus & {
   readonly coachReview: ApprovalReview | null
   readonly sportsScienceReview: ApprovalReview | null
   readonly youthReview: ApprovalReview | null
-  readonly minorAllowed: boolean
-  readonly warmupComponentRef: string
-  readonly cooldownComponentRef: string
-  readonly downshiftOptionRefs: readonly string[]
-  readonly stopConditionCodes: readonly string[]
 }
 
 export const DETAILED_PRESCRIPTION_APPROVALS: readonly DetailedPrescriptionApprovalRecord[] =

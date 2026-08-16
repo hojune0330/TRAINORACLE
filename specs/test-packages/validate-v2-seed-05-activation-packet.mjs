@@ -12,23 +12,61 @@ function includesAll(value, required, label) {
   }
 }
 
+function scalar(value, key, label) {
+  const match = value.match(new RegExp(`^${key}:\\s*([^\\r\\n]+)$`, "m"))
+  invariant(match !== null, `${label} missing: ${key}`)
+  return match[1].trim()
+}
+
+function pendingReviews(packet) {
+  const match = packet.match(/## 6\. 사람 검토 기록[\s\S]*?```yaml\s*\r?\nreview_decisions:\s*\r?\n([\s\S]*?)```/)
+  invariant(match !== null, "structured review decisions missing")
+  const decisions = Object.fromEntries(
+    match[1].split(/\r?\n/).filter((line) => line.trim().length > 0).map((line) => {
+      const entry = line.match(/^\s{2}([a-z_]+):\s*([A-Z_]+)\s*$/)
+      invariant(entry !== null, `invalid review decision line: ${line}`)
+      return [entry[1], entry[2]]
+    }),
+  )
+  const roles = ["owner_review", "coach_review", "sports_science_review", "youth_review"]
+  invariant(Object.keys(decisions).length === roles.length, "review decisions must contain four roles only")
+  for (const role of roles) invariant(decisions[role] === "PENDING", `${role} must remain PENDING`)
+}
+
+function emptyApprovalManifest(approvals) {
+  const source = approvals
+    .replace(/\/\*[\s\S]*?\*\//g, "")
+    .replace(/\/\/.*$/gm, "")
+  const assignment = source.match(
+    /export const DETAILED_PRESCRIPTION_APPROVALS:[^=]+\=\s*Object\.freeze\(\s*\[\s*\]\s*\)/g,
+  )
+  invariant(assignment?.length === 1, "runtime approval manifest must be one empty array assignment")
+}
+
 export function validateActivationPacket({ packet, catalog, approvals }) {
   const marker = "[DRAFT_COMPLETE]"
   invariant(packet.split(marker).length === 2, "packet must contain one completion marker")
   invariant(packet.trimEnd().endsWith(marker), "completion marker must be final")
+  invariant(scalar(packet, "status", "packet") === "REVIEW_INPUT_PACKET_READY_RUNTIME_GATE_BLOCKED", "packet status changed")
+  invariant(scalar(packet, "template_id", "packet") === "V2-SEED-05", "packet template changed")
+  invariant(scalar(packet, "template_version", "packet") === '"0.1"', "packet version changed")
+  invariant(scalar(packet, "runtime_activation", "packet") === "FORBIDDEN", "runtime activation must remain forbidden")
+  invariant(scalar(packet, "approval_manifest_entries", "packet") === "0", "packet approval count must remain zero")
+  pendingReviews(packet)
   includesAll(packet, [
-    "status: HUMAN_REVIEW_PACKET_READY",
-    "template_id: V2-SEED-05",
-    "runtime_activation: FORBIDDEN",
     "approval_manifest_entries: 0",
-    "owner_review: PENDING",
-    "coach_review: PENDING",
-    "sports_science_review: PENDING",
-    "youth_review: PENDING",
     "BLOCK-WARMUP",
     "BLOCK-COOLDOWN",
     "BLOCK-RECOVERY-MODE",
     "BLOCK-MINOR-POLICY",
+    "BLOCK-REVIEW-AUTHORITY",
+    "BLOCK-COMPONENT-RESOLUTION",
+    "BLOCK-AGE-AUTHORITY",
+    "anchor_provenance_required:",
+    "verification_state: [VERIFIED, SELF_REPORTED]",
+    "`150 sec JOG`",
+    "`REDUCE_REPETITIONS`, `RPE_ONLY_CONTROLLED`",
+    "`STOP_IF_D9_BLOCKED_OR_UNKNOWN`, `STOP_IF_ANCHOR_EVENT_MISMATCH`, `STOP_IF_REQUIRED_WARMUP_OR_ANCHOR_IS_MISSING`",
   ], "packet")
 
   const start = catalog.indexOf("- templateId: V2-SEED-05")
@@ -43,10 +81,7 @@ export function validateActivationPacket({ packet, catalog, approvals }) {
     "allowedExperienceBands: []",
     "minorAllowed: false",
   ], "catalog template")
-  invariant(
-    approvals.includes("Object.freeze([])"),
-    "runtime approval manifest must remain empty",
-  )
+  emptyApprovalManifest(approvals)
   return Object.freeze({ templateId: "V2-SEED-05", activation: "FORBIDDEN" })
 }
 

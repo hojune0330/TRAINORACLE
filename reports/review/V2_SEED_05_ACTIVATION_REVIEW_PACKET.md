@@ -2,8 +2,9 @@
 
 ```yaml
 packet_id: TO-V2-SEED-05-ACTIVATION-REVIEW-2026-08-16
-status: HUMAN_REVIEW_PACKET_READY
+status: REVIEW_INPUT_PACKET_READY_RUNTIME_GATE_BLOCKED
 template_id: V2-SEED-05
+template_version: "0.1"
 runtime_activation: FORBIDDEN
 canonical_promotion: false
 issue_closure: false
@@ -18,7 +19,9 @@ source_reopened_at: 2026-08-16
 비스프린트 후보다. 그러나 출처는 `5×1000m @5000m RP · r150″`를 모든
 선수에게 그대로 적용하라고 승인하지 않으며, 준비운동·정리운동·청소년 정책과
 사람 검토도 아직 비어 있다. 따라서 이 패킷은 검토를 시작할 수 있게 사실과
-결정 항목을 한곳에 모으지만, 템플릿을 활성화하지 않는다.
+결정 항목을 한곳에 모으지만, 템플릿을 활성화하지 않는다. 현재 런타임 승인
+자료형도 적격 검토자·검토 대상 내용·실재 구성요소를 증명하지 못하므로 활성화
+구현의 기반으로 승인하지 않는다.
 
 ## 2. 현재 파일에서 확인한 고정 사실
 
@@ -26,7 +29,11 @@ source_reopened_at: 2026-08-16
 |---|---|---|
 | 원문 표기 | `5×1000m @5K RP · r2′30″` | `ENERGY_SYSTEM_SESSION_TEMPLATE_CATALOG.md` `V2-SEED-05` |
 | 기계 표기 | `5×1000m @5000m RP · r150″` | 같은 항목의 `machineNotation` |
+| 템플릿 버전 | `0.1` | 같은 항목의 `version` |
 | 구조 합계 | 1세트, 5회, 질주 5,000m, 반복 회복 4회·총 600초 | 카탈로그와 파서 계약 |
+| 반복 회복 | `150 sec JOG` | 같은 항목의 `repetitionRecovery` |
+| 감량 선택지 | `REDUCE_REPETITIONS`, `RPE_ONLY_CONTROLLED` | 같은 항목의 `downshiftOptions` |
+| 중단조건 | `STOP_IF_D9_BLOCKED_OR_UNKNOWN`, `STOP_IF_ANCHOR_EVENT_MISMATCH`, `STOP_IF_REQUIRED_WARMUP_OR_ANCHOR_IS_MISSING` | 같은 항목의 `stopConditionCodes` |
 | 현재 상태 | `DRAFT` / `REVIEW_REQUIRED` | 카탈로그 |
 | 런타임 승인 레코드 | 0개 | `detailed-prescription-approvals.ts` |
 | 자동 연결 | 금지 | 카탈로그 공통 불변조건 |
@@ -68,6 +75,12 @@ proposed_scope:
   anchor_event_distance_m: 5000
   anchor_freshness: CURRENT
   anchor_purpose: [CURRENT_CAPABILITY, SEASON_CONTEXT]
+  anchor_provenance_required:
+    anchor_id: NON_EMPTY
+    achieved_at: REQUIRED
+    source_ref: NON_EMPTY
+    entered_by: [ATHLETE, COACH, VERIFIED_IMPORT]
+    verification_state: [VERIFIED, SELF_REPORTED]
   goal_as_current_capability: FORBIDDEN
   cross_event_conversion: FORBIDDEN
   minor_policy: PENDING_YOUTH_REVIEW_AND_ATHLETE_SPECIFIC_CONFIRMATION
@@ -88,6 +101,9 @@ proposed_scope:
 | `BLOCK-MINOR-POLICY` | 카탈로그는 `minorAllowed: false`; 현재 계획 입력은 미성년 여부와 개별 동의를 처방 게이트에 전달하지 않음 | 청소년 검토 + 보호자 동의 + 지정 사람 확인을 모두 실패 폐쇄로 검증 |
 | `BLOCK-EVENT-MAPPING` | 연구 카탈로그 종목명과 앱 `FIVE_K`가 아직 수용된 매핑으로 고정되지 않음 | 명시적 매핑 결정 |
 | `BLOCK-HUMAN-REVIEWS` | 네 검토 기록이 모두 비어 있음 | 아래 네 검토의 이름·근거·결정 |
+| `BLOCK-REVIEW-AUTHORITY` | 현재 승인 자료형은 이름과 임의 문자열만으로 검토를 표현하며, 적격성·역할 분리·검토 대상 버전을 증명하지 못함 | 적격 검토자 레지스트리와 템플릿 ID·버전·범위·구성요소에 묶인 불변 검토 증거 |
+| `BLOCK-COMPONENT-RESOLUTION` | 준비·정리운동 참조와 감량·중단 코드를 실제 실행 가능한 구성요소로 조회하는 레지스트리가 없음 | 모든 참조가 승인된 구성요소로 해석되고 누락 시 차단되는 테스트 |
+| `BLOCK-AGE-AUTHORITY` | 클라이언트가 전달한 미성년 여부나 동의 불리언은 신뢰 가능한 권한 증거가 아님 | 서버에서 검증된 연령대·보호자 권한·철회 상태를 실행 직전에 재검사하는 계약과 테스트 |
 
 ## 6. 사람 검토 기록
 
@@ -108,7 +124,9 @@ review_decisions:
 | 스포츠과학 | 출처가 지지하는 범위와 TrainOracle이 추가한 적응값을 분리했고 성인·경험자 전이 한계를 과장하지 않았는가 |
 | 청소년 | 미성년 허용 범위, 보호자 동의, 지정 사람 확인, 성장·훈련연령에 따른 제외·감량 규칙이 충분한가 |
 
-검토 기록은 `reviewerName`, `evidenceRef`, `decision: APPROVED`를 포함해야 한다.
+검토 기록은 검토자 ID·역할·자격 근거·검토 증거와 검토한 템플릿 ID·버전·범위·
+구성요소의 불변 식별자를 포함해야 한다. 네 역할을 같은 합성 레코드로 채우거나
+`reviewerName`, `evidenceRef`의 임의 문자열만으로 승인해서는 안 된다.
 AI 초안 검토는 사람 자격 검토를 대신하지 않는다.
 
 ## 7. 활성화 체크리스트
@@ -119,6 +137,9 @@ AI 초안 검토는 사람 자격 검토를 대신하지 않는다.
 - [ ] `BLOCK-RECOVERY-MODE` 해결
 - [ ] `BLOCK-MINOR-POLICY` 해결
 - [ ] `BLOCK-EVENT-MAPPING` 해결
+- [ ] `BLOCK-REVIEW-AUTHORITY` 해결
+- [ ] `BLOCK-COMPONENT-RESOLUTION` 해결
+- [ ] `BLOCK-AGE-AUTHORITY` 해결
 - [ ] 오너 검토 승인
 - [ ] 코치 검토 승인
 - [ ] 스포츠과학 검토 승인
@@ -133,15 +154,16 @@ AI 초안 검토는 사람 자격 검토를 대신하지 않는다.
 
 ## 8. 승인 후 구현 순서
 
-1. 승인된 준비운동·정리운동 구성요소와 조깅 회복 방식을 구조화한다.
-2. 계획 입력에 미성년 여부와 개별 확인 상태를 민감정보 최소화 방식으로 전달한다.
-3. 승인 레지스트리에 `V2-SEED-05` 한 건만 별도 PR로 추가한다.
-4. `FIVE_K`·`EXPERIENCED`·같은 종목 `CURRENT` 앵커에만 후보를 결합한다.
-5. 후보 화면에 5회, 1000m, 개인 목표 반복 시간, 150초 조깅, 근거 기록,
+1. 적격 검토자와 검토 대상 내용을 묶는 승인 계약을 먼저 수용한다.
+2. 승인된 준비운동·정리운동 구성요소와 조깅 회복 방식을 구조화한다.
+3. 서버가 검증한 연령·보호자 권한과 철회 상태를 실행 직전에 재검사한다.
+4. 승인 레지스트리에 `V2-SEED-05` 한 건만 별도 PR로 추가한다.
+5. `FIVE_K`·`EXPERIENCED`·같은 종목 `CURRENT` 앵커에만 후보를 결합한다.
+6. 후보 화면에 5회, 1000m, 개인 목표 반복 시간, 150초 조깅, 근거 기록,
    준비운동·정리운동·감량·중단조건을 함께 표시한다.
-6. 저장·재열기·다음 주기 연속성까지 같은 버전과 근거를 보존한다.
+7. 저장·재열기·다음 주기 연속성까지 같은 버전과 근거를 보존한다.
 
-이 패킷의 병합만으로 3번 이후를 실행하지 않는다.
+이 패킷의 병합만으로 4번 이후를 실행하지 않는다.
 
 ## 9. 기계 검증
 

@@ -49,3 +49,23 @@ test("rejects a nonempty runtime approval manifest", async () => {
     approvals: value.approvals.replace("Object.freeze([])", "Object.freeze([{ templateId: \"V2-SEED-05\" }])"),
   }))
 })
+
+test("rejects a nonempty manifest even when an empty manifest appears in a comment", async () => {
+  const value = await inputs()
+  const approvals = value.approvals.replace(
+    "Object.freeze([])",
+    "/* Object.freeze([]) */ Object.freeze([{ templateId: \"V2-SEED-05\" }])",
+  )
+  assert.notEqual(approvals, value.approvals)
+  assert.throws(() => validateActivationPacket({ ...value, approvals }))
+})
+
+test("rejects an approved review even when PENDING appears in a comment", async () => {
+  const value = await inputs()
+  const packet = value.packet.replace(
+    "  owner_review: PENDING",
+    "  owner_review: APPROVED\n<!-- owner_review: PENDING -->",
+  )
+  assert.notEqual(packet, value.packet)
+  assert.throws(() => validateActivationPacket({ ...value, packet }))
+})
