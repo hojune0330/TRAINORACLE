@@ -125,18 +125,21 @@ describe("two-a-day plan summary", () => {
   it.each([
     {
       intent: "GLY_INTENT" as const,
-      cue: "숨이 가라앉으면 다음 빠른 구간을 시작하세요",
+      endpoint: "자세나 속도가 흐트러지기 전에 빠른 구간을 끝내세요",
+      restart: "숨이 가라앉으면 다음 빠른 구간을 시작하세요",
     },
     {
       intent: "ATP_PC_INTENT" as const,
-      cue: "숨과 다리가 편해지면 다음 가속을 시작",
+      endpoint: "한 번의 가속 구간을 끝내세요",
+      restart: "숨과 다리가 편해지면 다음 가속을 시작",
     },
-  ])("uses stored RPE and a recovery transition for $intent", ({ intent, cue }) => {
+  ])("uses stored RPE and complete transitions for $intent", ({ intent, endpoint, restart }) => {
     const steps = sessionExecutionSteps(qualitySession(intent, { minimum: 6, maximum: 7 }))
     const main = steps.find((step) => step.title === "본운동")
 
     expect(main?.detail).toContain("RPE 6~7")
-    expect(main?.detail).toContain(cue)
+    expect(main?.detail).toContain(endpoint)
+    expect(main?.detail).toContain(restart)
     expect(main?.detail).not.toContain("RPE 7~8")
   })
 })

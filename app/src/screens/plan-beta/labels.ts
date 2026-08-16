@@ -236,15 +236,15 @@ function qualityExecution(
   const effort = `RPE ${rpe.minimum}~${rpe.maximum}`
   switch (intent) {
     case "LT_INTENT":
-      return `${effort}으로 일정하게 달리세요. 숨은 차지만 짧은 문장으로 말할 수 있고, 속도를 크게 바꾸지 않는 수준입니다.`
+      return `${effort}으로 일정하게 달리세요. 숨은 차지만 짧은 문장이 가능하고, 속도를 크게 바꾸지 않는 수준입니다.`
     case "VO2_INTENT":
-      return `${effort} 빠른 구간과 천천히 움직이는 회복 구간을 번갈아 하세요. 빠른 구간은 자세나 속도를 유지할 수 없기 전에 끝내고, 다시 짧게 말할 수 있을 만큼 숨이 가라앉으면 다음 구간을 시작하세요. 같은 강도로 한 번 더 달릴 여유가 없으면 본운동을 끝내세요.`
+      return `${effort} 빠른 구간과 천천히 움직이는 회복 구간을 번갈아 하세요. 자세나 속도가 흐트러지기 전에 빠른 구간을 끝내세요. 짧은 말이 가능할 만큼 숨이 가라앉으면 다음 구간을 시작하세요. 같은 강도로 한 번 더 달릴 여유가 없으면 본운동을 끝내세요.`
     case "GLY_INTENT":
-      return `${effort} 빠른 구간 뒤에 천천히 움직이세요. 짧게 말할 수 있을 만큼 숨이 가라앉으면 다음 빠른 구간을 시작하세요. 자세와 속도를 유지하지 못하거나 같은 강도로 한 번 더 달릴 여유가 없으면 본운동을 끝내세요.`
+      return `${effort}으로 달리다가 자세나 속도가 흐트러지기 전에 빠른 구간을 끝내세요. 그 뒤에는 천천히 움직이세요. 짧은 말이 가능할 만큼 숨이 가라앉으면 다음 빠른 구간을 시작하세요. 같은 강도로 한 번 더 달릴 여유가 없으면 본운동을 끝내세요.`
     case "ATP_PC_INTENT":
-      return `${effort}로 짧게 가속한 뒤 걷거나 천천히 움직이세요. 숨과 다리가 편해지면 다음 가속을 시작하고, 전력질주가 되거나 가속 자세가 흐트러지면 본운동을 끝내세요.`
+      return `${effort}에 닿으면 더 세게 밀지 말고 한 번의 가속 구간을 끝내세요. 그 뒤에는 걷거나 천천히 움직이세요. 숨과 다리가 편해지면 다음 가속을 시작하고, 전력질주가 되거나 가속 자세가 흐트러지면 본운동을 끝내세요.`
     case "MIXED_INTENT":
-      return `${effort} 구간과 천천히 움직이는 회복 구간을 번갈아 하세요. 짧게 말할 수 있을 만큼 숨이 가라앉은 뒤 다음 구간을 시작하고, 한 번에 완전히 지치지 않도록 힘을 남기세요.`
+      return `${effort} 구간과 천천히 움직이는 회복 구간을 번갈아 하세요. 짧은 말이 가능할 만큼 숨이 가라앉은 뒤 다음 구간을 시작하고, 한 번에 완전히 지치지 않도록 힘을 남기세요.`
     default:
       return intent satisfies never
   }
@@ -331,7 +331,7 @@ export function candidateSessionSummary(candidate: {
   const secondSession = twoADayTrainingDays === 0
     ? ""
     : ` · 하루 2회 훈련 ${twoADayTrainingDays}일`
-  return `운동 ${counts.training}회 · 기초 지구력 ${intentionCounts.BASE_INTENT}일 · ${qualityLabel} · 완전 휴식 ${counts.rest}일 · 총 계획 시간 ${durationLabel}${secondSession}`
+  return `운동 ${counts.training}회 · 기초 지구력 ${intentionCounts.BASE_INTENT}일 · ${qualityLabel} · 휴식 ${counts.rest}일 · 총 계획 시간 ${durationLabel}${secondSession}`
 }
 
 export function twoADayTrainingDayCount(sessions: readonly PlanSession[]): number {
