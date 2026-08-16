@@ -69,3 +69,20 @@ test("rejects an approved review even when PENDING appears in a comment", async 
   assert.notEqual(packet, value.packet)
   assert.throws(() => validateActivationPacket({ ...value, packet }))
 })
+
+test("rejects a real approved review hidden behind a full commented PENDING section", async () => {
+  const value = await inputs()
+  const decoy = "<!-- ## 6. 사람 검토 기록\n```yaml\nreview_decisions:\n  owner_review: PENDING\n  coach_review: PENDING\n  sports_science_review: PENDING\n  youth_review: PENDING\n```\n-->\n"
+  const packet = `${decoy}${value.packet.replace("  owner_review: PENDING", "  owner_review: APPROVED")}`
+  assert.throws(() => validateActivationPacket({ ...value, packet }))
+})
+
+test("rejects a nonempty manifest hidden behind an empty-assignment string literal", async () => {
+  const value = await inputs()
+  const approvals = value.approvals.replace(
+    "Object.freeze([])",
+    "\"export const DETAILED_PRESCRIPTION_APPROVALS: never = Object.freeze([])\"; Object.freeze([{ templateId: \"V2-SEED-05\" }])",
+  )
+  assert.notEqual(approvals, value.approvals)
+  assert.throws(() => validateActivationPacket({ ...value, approvals }))
+})
