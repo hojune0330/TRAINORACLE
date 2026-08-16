@@ -44,7 +44,7 @@ export function PlanSchedulePreview({
       <div className="plan-rpe-guide">
         <strong>RPE 기준<TermHelp term="rpe" /></strong>
         <span>
-          1~2는 회복 움직임 · 3~4는 대화 가능한 쉬운 유산소 · 5~6은 꾸준히 힘든 수준 · 7~8은 말하기 어려운 고강도 · 9는 매우 강한 짧은 노력 · 10은 최대 노력에 가까운 느낌
+          1~2는 회복 움직임 · 3~4는 대화 가능한 쉬운 유산소 · 5~6은 꾸준히 힘든 수준 · 7~8은 말하기 어려운 고강도 · 9는 매우 강한 짧은 노력 · 10은 최대{`\u00a0`}노력에 가까운{`\u00a0`}느낌
         </span>
         <small>몸의 느낌을 설명하는 기준이며 의료 판단이 아닙니다.</small>
       </div>

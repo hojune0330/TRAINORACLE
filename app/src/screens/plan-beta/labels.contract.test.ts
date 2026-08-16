@@ -126,11 +126,11 @@ describe("two-a-day plan summary", () => {
     {
       intent: "GLY_INTENT" as const,
       endpoint: "자세나 속도가 흐트러지기 전에 빠른 구간을 끝내세요",
-      restart: "숨이 가라앉으면 다음 빠른 구간을 시작하세요",
+      restart: "숨이\u00a0가라앉으면 다음\u00a0빠른\u00a0구간을 시작하세요",
     },
     {
       intent: "ATP_PC_INTENT" as const,
-      endpoint: "한 번의 가속 구간을 끝내세요",
+      endpoint: "한 번의 가속\u00a0구간을 끝내세요",
       restart: "숨과 다리가 편해지면 다음 가속을 시작",
     },
   ])("uses stored RPE and complete transitions for $intent", ({ intent, endpoint, restart }) => {
