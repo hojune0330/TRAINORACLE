@@ -20,11 +20,27 @@ type DetailedPrescriptionInput = {
   readonly anchor: PaceAnchorRecord
   readonly displayRoundingPolicyVersion: string
   readonly safetyGate: SafetyGateDecision
+  readonly athleteIsMinor: boolean
+  readonly guardianConsentConfirmed: boolean
+  readonly designatedHumanReviewConfirmed: boolean
+}
+
+type ActivatedStructuredPrescription = Omit<
+  StructuredPrescription,
+  | "warmupComponentRef"
+  | "cooldownComponentRef"
+  | "downshiftOptionRefs"
+  | "stopConditionCodes"
+> & {
+  readonly warmupComponentRef: string
+  readonly cooldownComponentRef: string
+  readonly downshiftOptionRefs: readonly string[]
+  readonly stopConditionCodes: readonly string[]
 }
 
 export type DetailedPrescription = {
   readonly notation: string
-  readonly prescription: StructuredPrescription
+  readonly prescription: ActivatedStructuredPrescription
   readonly totals: PrescriptionDerivedTotals
   readonly pace: Extract<RacePaceCalculationResult, { readonly kind: "calculated" }>
 }
@@ -35,10 +51,22 @@ function hasReview(review: DetailedPrescriptionApprovalRecord["ownerReview"]): b
     && review.evidenceRef.trim().length > 0
 }
 
-function isCompleteApproval(
+export function isDetailedPrescriptionApprovalComplete(
   approval: DetailedPrescriptionApprovalRecord,
-  input: DetailedPrescriptionInput,
+  input: Pick<
+    DetailedPrescriptionInput,
+    | "athleteEventGroup"
+    | "athleteExperienceBand"
+    | "athleteIsMinor"
+    | "guardianConsentConfirmed"
+    | "designatedHumanReviewConfirmed"
+  >,
 ): boolean {
+  const minorEligible = !input.athleteIsMinor || (
+    approval.minorAllowed
+    && input.guardianConsentConfirmed
+    && input.designatedHumanReviewConfirmed
+  )
   return approval.lifecycleStatus === "ACTIVE"
     && approval.eligibilityStatus === "ELIGIBLE"
     && approval.notation.trim().length > 0
@@ -48,6 +76,11 @@ function isCompleteApproval(
     && hasReview(approval.coachReview)
     && hasReview(approval.sportsScienceReview)
     && hasReview(approval.youthReview)
+    && approval.warmupComponentRef.trim().length > 0
+    && approval.cooldownComponentRef.trim().length > 0
+    && approval.downshiftOptionRefs.length > 0
+    && approval.stopConditionCodes.length > 0
+    && minorEligible
 }
 
 export function prepareDetailedPrescription(
@@ -57,7 +90,10 @@ export function prepareDetailedPrescription(
   const approval = DETAILED_PRESCRIPTION_APPROVALS.find(
     (candidate) => candidate.templateId === input.templateId,
   )
-  if (approval === undefined || !isCompleteApproval(approval, input)) return null
+  if (
+    approval === undefined
+    || !isDetailedPrescriptionApprovalComplete(approval, input)
+  ) return null
 
   const prepared = preparePrescriptionRuntime({
     notation: approval.notation,
@@ -70,7 +106,13 @@ export function prepareDetailedPrescription(
 
   return Object.freeze({
     notation: approval.notation,
-    prescription: prepared.prescription,
+    prescription: Object.freeze({
+      ...prepared.prescription,
+      warmupComponentRef: approval.warmupComponentRef,
+      cooldownComponentRef: approval.cooldownComponentRef,
+      downshiftOptionRefs: Object.freeze([...approval.downshiftOptionRefs]),
+      stopConditionCodes: Object.freeze([...approval.stopConditionCodes]),
+    }),
     totals: prepared.totals,
     pace: prepared.pace,
   })

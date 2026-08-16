@@ -2,8 +2,14 @@ import { describe, expect, it } from "vitest"
 import { decideSafetyGate } from "@impl/safety-gate/gate"
 import { mapD9ResultToRveSignal } from "@impl/rve/signal"
 import type { PaceAnchorRecord } from "@impl/prescription/types"
-import { DETAILED_PRESCRIPTION_APPROVALS } from "./detailed-prescription-approvals"
-import { prepareDetailedPrescription } from "./detailed-prescription"
+import {
+  DETAILED_PRESCRIPTION_APPROVALS,
+  type DetailedPrescriptionApprovalRecord,
+} from "./detailed-prescription-approvals"
+import {
+  isDetailedPrescriptionApprovalComplete,
+  prepareDetailedPrescription,
+} from "./detailed-prescription"
 
 const ANCHOR: PaceAnchorRecord = {
   anchorId: "race:5000:current",
@@ -36,7 +42,12 @@ const FORGED_APPROVAL = {
   coachReview: REVIEW,
   sportsScienceReview: REVIEW,
   youthReview: REVIEW,
-}
+  minorAllowed: true,
+  warmupComponentRef: "WU-QUALITY-001",
+  cooldownComponentRef: "CD-QUALITY-001",
+  downshiftOptionRefs: ["REDUCE_REPETITIONS"],
+  stopConditionCodes: ["STOP_IF_D9_BLOCKED_OR_UNKNOWN"],
+} satisfies DetailedPrescriptionApprovalRecord
 
 function clearedGate() {
   return decideSafetyGate(mapD9ResultToRveSignal({
@@ -56,10 +67,75 @@ function input(templateId: string, detailedPrescriptionEnabled: boolean) {
     anchor: ANCHOR,
     displayRoundingPolicyVersion: "seconds-v1",
     safetyGate: clearedGate(),
+    athleteIsMinor: false,
+    guardianConsentConfirmed: false,
+    designatedHumanReviewConfirmed: false,
   }
 }
 
 describe("detailed prescription application boundary", () => {
+  it("rejects an approval that omits required execution and stop references", () => {
+    // Given: every human review is present but the execution references are empty.
+    const approval = {
+      ...FORGED_APPROVAL,
+      warmupComponentRef: "",
+      cooldownComponentRef: "",
+      downshiftOptionRefs: [],
+      stopConditionCodes: [],
+    }
+
+    // When: the canonical approval gate evaluates it for an adult athlete.
+    const complete = isDetailedPrescriptionApprovalComplete(approval, {
+      athleteEventGroup: "FIVE_K",
+      athleteExperienceBand: "EXPERIENCED",
+      athleteIsMinor: false,
+      guardianConsentConfirmed: false,
+      designatedHumanReviewConfirmed: false,
+    })
+
+    // Then: status labels and signatures alone cannot activate the dose.
+    expect(complete).toBe(false)
+  })
+
+  it("requires minor eligibility, guardian consent, and designated-human confirmation", () => {
+    // Given: a fully reviewed template permits minors.
+    const approval = FORGED_APPROVAL
+
+    // When / Then: missing either athlete-specific confirmation remains ineligible.
+    expect(isDetailedPrescriptionApprovalComplete(approval, {
+      athleteEventGroup: "FIVE_K",
+      athleteExperienceBand: "EXPERIENCED",
+      athleteIsMinor: true,
+      guardianConsentConfirmed: false,
+      designatedHumanReviewConfirmed: true,
+    })).toBe(false)
+    expect(isDetailedPrescriptionApprovalComplete(approval, {
+      athleteEventGroup: "FIVE_K",
+      athleteExperienceBand: "EXPERIENCED",
+      athleteIsMinor: true,
+      guardianConsentConfirmed: true,
+      designatedHumanReviewConfirmed: false,
+    })).toBe(false)
+  })
+
+  it("accepts a complete reviewed approval only inside its athlete scope", () => {
+    // Given: every approval field and athlete-specific minor confirmation is present.
+    const eligibility = {
+      athleteEventGroup: "FIVE_K" as const,
+      athleteExperienceBand: "EXPERIENCED" as const,
+      athleteIsMinor: true,
+      guardianConsentConfirmed: true,
+      designatedHumanReviewConfirmed: true,
+    }
+
+    // When / Then: the exact reviewed scope passes, while another event does not.
+    expect(isDetailedPrescriptionApprovalComplete(FORGED_APPROVAL, eligibility)).toBe(true)
+    expect(isDetailedPrescriptionApprovalComplete(FORGED_APPROVAL, {
+      ...eligibility,
+      athleteEventGroup: "TEN_K",
+    })).toBe(false)
+  })
+
   it("returns no prescription while the explicit product flag is off", () => {
     const result = prepareDetailedPrescription(input("FORGED-UNLISTED-TEMPLATE", false))
 
