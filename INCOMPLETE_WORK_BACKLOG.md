@@ -134,6 +134,8 @@
 - **상태:** ⛔ 활성화 금지 유지 — `canonical_promotion_allowed: false`, `numeric_template_activation_authorized: false`
 - **내용:** 30개 카탈로그는 전부 `DRAFT`·`REVIEW_REQUIRED`. 활성화는 소스 추출·이벤트/경험 범위·청소년 정책·성과 앵커 provenance/freshness·준비 운동·감속·중단 조건·적격 검토 증거·오너 결정 포함 패킷 필요
 - **완료 조건:** 오너 명시 결정 + §7.2 패킷 조건 모두 충족
+- **2026-08-16 진행:** `reports/review/V2_SEED_05_ACTIVATION_REVIEW_PACKET.md`에 첫 비스프린트 후보의 출처 재확인, 제안 범위, 7개 차단 항목과 4개 사람 검토 자리를 모았다. 패킷 상태는 `HUMAN_REVIEW_PACKET_READY`이며 활성화 권한은 계속 없다.
+- **런타임 보호:** `detailed-prescription.ts`의 승인 게이트는 준비운동·정리운동·감량·중단조건과 미성년자별 보호자 동의·지정 사람 확인이 없으면 실패 폐쇄한다. 승인 레지스트리는 0개다.
 
 ### B-10 🟡 Formation 보호 대상 목록 (게이트 대기)
 - **출처:** `FORMATION_DEFERRED_GOALS.md` (10행 전부)
