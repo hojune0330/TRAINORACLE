@@ -220,7 +220,7 @@ export function sessionExecutionSteps(session: PlanSession): readonly SessionExe
     },
     {
       title: "본운동",
-      detail: qualityExecution(session.plannedEnergyIntent),
+      detail: qualityExecution(session.plannedEnergyIntent, session.prescription.rpe),
     },
     {
       title: "정리",
@@ -229,21 +229,22 @@ export function sessionExecutionSteps(session: PlanSession): readonly SessionExe
   ]
 }
 
-function qualityExecution(intent: PlannedEnergyIntent): string {
+function qualityExecution(
+  intent: Extract<PlanSession, { readonly role: "QUALITY" }>["plannedEnergyIntent"],
+  rpe: Extract<PlanSession, { readonly role: "QUALITY" }>["prescription"]["rpe"],
+): string {
+  const effort = `RPE ${rpe.minimum}~${rpe.maximum}`
   switch (intent) {
     case "LT_INTENT":
-      return "RPE 5~6으로 일정하게 달리세요. 숨은 차지만 짧은 문장으로 말할 수 있고, 속도를 크게 바꾸지 않는 수준입니다."
+      return `${effort}으로 일정하게 달리세요. 숨은 차지만 짧은 문장으로 말할 수 있고, 속도를 크게 바꾸지 않는 수준입니다.`
     case "VO2_INTENT":
-      return "RPE 7~8 빠른 구간과 천천히 움직이는 회복 구간을 번갈아 하세요. 빠른 구간은 자세나 속도를 유지할 수 없기 전에 끝내고, 다시 짧게 말할 수 있을 만큼 숨이 가라앉으면 다음 구간을 시작하세요. 같은 강도로 한 번 더 달릴 여유가 없으면 본운동을 끝내세요."
+      return `${effort} 빠른 구간과 천천히 움직이는 회복 구간을 번갈아 하세요. 빠른 구간은 자세나 속도를 유지할 수 없기 전에 끝내고, 다시 짧게 말할 수 있을 만큼 숨이 가라앉으면 다음 구간을 시작하세요. 같은 강도로 한 번 더 달릴 여유가 없으면 본운동을 끝내세요.`
     case "GLY_INTENT":
-      return "RPE 7~8 빠른 구간 뒤에 숨이 충분히 가라앉을 때까지 천천히 움직이세요. 빠른 구간의 자세와 속도를 유지하지 못하거나 같은 강도로 한 번 더 달릴 여유가 없으면 본운동을 끝내세요."
+      return `${effort} 빠른 구간 뒤에 천천히 움직이세요. 짧게 말할 수 있을 만큼 숨이 가라앉으면 다음 빠른 구간을 시작하세요. 자세와 속도를 유지하지 못하거나 같은 강도로 한 번 더 달릴 여유가 없으면 본운동을 끝내세요.`
     case "ATP_PC_INTENT":
-      return "RPE 8~9로 짧게 가속한 뒤 숨과 다리가 편해질 때까지 걷거나 천천히 움직이세요. 전력질주하지 말고, 가속 자세가 흐트러지면 끝내세요."
+      return `${effort}로 짧게 가속한 뒤 걷거나 천천히 움직이세요. 숨과 다리가 편해지면 다음 가속을 시작하고, 전력질주가 되거나 가속 자세가 흐트러지면 본운동을 끝내세요.`
     case "MIXED_INTENT":
-      return "RPE 6~7 구간과 천천히 움직이는 회복 구간을 번갈아 하세요. 짧게 말할 수 있을 만큼 숨이 가라앉은 뒤 다음 구간을 시작하고, 한 번에 완전히 지치지 않도록 힘을 남기세요."
-    case "RECOVERY_INTENT":
-    case "BASE_INTENT":
-      return "표시된 RPE 범위 안에서 힘을 조절하며 움직이세요."
+      return `${effort} 구간과 천천히 움직이는 회복 구간을 번갈아 하세요. 짧게 말할 수 있을 만큼 숨이 가라앉은 뒤 다음 구간을 시작하고, 한 번에 완전히 지치지 않도록 힘을 남기세요.`
     default:
       return intent satisfies never
   }

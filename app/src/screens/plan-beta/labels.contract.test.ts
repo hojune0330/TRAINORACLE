@@ -3,7 +3,11 @@ import { createElement } from "react"
 import { afterEach, describe, expect, it } from "vitest"
 import type { PlanSession } from "@impl/plan-generator/types"
 import { PlanSchedulePreview } from "./PlanSchedulePreview"
-import { candidateSessionSummary, twoADayTrainingDayCount } from "./labels"
+import {
+  candidateSessionSummary,
+  sessionExecutionSteps,
+  twoADayTrainingDayCount,
+} from "./labels"
 
 function session(
   day: number,
@@ -33,15 +37,18 @@ function restSession(day: number, slot: PlanSession["slot"]): PlanSession {
   }
 }
 
-function qualitySession(): PlanSession {
+function qualitySession(
+  plannedEnergyIntent: Extract<PlanSession, { role: "QUALITY" }>["plannedEnergyIntent"] = "VO2_INTENT",
+  rpe = { minimum: 7, maximum: 8 },
+): PlanSession {
   return {
     day: 1,
     slot: "AM",
     role: "QUALITY",
-    plannedEnergyIntent: "VO2_INTENT",
+    plannedEnergyIntent,
     prescription: {
       kind: "RPE_TIME_RANGE",
-      rpe: { minimum: 7, maximum: 8 },
+      rpe,
       durationMinutes: { minimum: 30, maximum: 50 },
     },
   }
@@ -113,5 +120,23 @@ describe("two-a-day plan summary", () => {
     expect(firstDay).toHaveTextContent("정리")
     expect(firstDay).toHaveTextContent("거리·목표 페이스는 지정하지 않음")
     expect(firstDay).toHaveTextContent("같은 강도로 한 번 더 달릴 여유가 없으면 본운동을 끝내세요")
+  })
+
+  it.each([
+    {
+      intent: "GLY_INTENT" as const,
+      cue: "숨이 가라앉으면 다음 빠른 구간을 시작하세요",
+    },
+    {
+      intent: "ATP_PC_INTENT" as const,
+      cue: "숨과 다리가 편해지면 다음 가속을 시작",
+    },
+  ])("uses stored RPE and a recovery transition for $intent", ({ intent, cue }) => {
+    const steps = sessionExecutionSteps(qualitySession(intent, { minimum: 6, maximum: 7 }))
+    const main = steps.find((step) => step.title === "본운동")
+
+    expect(main?.detail).toContain("RPE 6~7")
+    expect(main?.detail).toContain(cue)
+    expect(main?.detail).not.toContain("RPE 7~8")
   })
 })
