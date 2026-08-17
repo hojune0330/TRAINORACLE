@@ -1,0 +1,129 @@
+{
+  "schemaVersion": 3,
+  "event": "task-evidence-final-follow-up",
+  "task": "Todo 2 trusted versioned detailed-prescription manifest",
+  "artifactTimestamp": "2026-08-17T10:47:19.8144614+09:00",
+  "headAtEvidenceCapture": "6f0e33829d96a450b7ee45b3576aa641aca3e794",
+  "red": {
+    "fabricatedReviewers": {
+      "command": "npm --prefix app run test:unit -- detailed-prescription",
+      "exitCode": 1,
+      "output": [
+        "❯ src/domain/detailed-prescription-manifest.contract.test.ts (24 tests | 1 failed) 17ms",
+        "× rejects four fabricated reviewers with valid-looking qualification fields 7ms",
+        "AssertionError: expected true to be false // Object.is equality",
+        "Test Files  1 failed | 1 passed (2)",
+        "Tests  1 failed | 26 passed (27)",
+        "Start at  10:35:26",
+        "Duration  9.68s (transform 452ms, setup 1.83s, import 414ms, tests 22ms, environment 16.12s)"
+      ]
+    },
+    "concatenatedTemplateId": {
+      "command": "node --test specs/test-packages/validate-v2-seed-05-activation-packet.test.mjs",
+      "exitCode": 1,
+      "output": [
+        "✖ rejects a concatenated V2-SEED-05 template ID expression (2.9801ms)",
+        "AssertionError [ERR_ASSERTION]: Missing expected exception.",
+        "ℹ tests 12",
+        "ℹ pass 11",
+        "ℹ fail 1",
+        "ℹ duration_ms 122.7761"
+      ]
+    }
+  },
+  "green": {
+    "detailedPrescription": {
+      "command": "npm --prefix app run test:unit -- detailed-prescription",
+      "exitCode": 0,
+      "output": [
+        "Test Files  2 passed (2)",
+        "Tests  28 passed (28)",
+        "Start at  10:46:43",
+        "Duration  2.89s (transform 256ms, setup 486ms, import 449ms, tests 20ms, environment 4.21s)"
+      ]
+    },
+    "paceTarget": {
+      "command": "npm --prefix app run test:unit -- pace-target",
+      "exitCode": 0,
+      "output": [
+        "Test Files  2 passed (2)",
+        "Tests  15 passed (15)",
+        "Start at  10:46:49",
+        "Duration  2.75s (transform 237ms, setup 485ms, import 269ms, tests 15ms, environment 4.16s)"
+      ]
+    },
+    "typecheck": {
+      "command": "npm --prefix app run typecheck",
+      "exitCode": 0,
+      "output": [
+        "> trainoracle-app@0.1.0 typecheck",
+        "> tsc --noEmit"
+      ]
+    },
+    "historicalActivationTest": {
+      "command": "node --test specs/test-packages/validate-v2-seed-05-activation-packet.test.mjs",
+      "exitCode": 0,
+      "output": [
+        "✔ rejects a parsed ACTIVE and ELIGIBLE V2-SEED-05 manifest entry (2.789ms)",
+        "✔ rejects executable template ID concatenation because the manifest is JSON (1.6872ms)",
+        "✔ rejects malformed manifest boundary shape (2.8814ms)",
+        "ℹ tests 11",
+        "ℹ pass 11",
+        "ℹ fail 0",
+        "ℹ duration_ms 125.6357"
+      ]
+    },
+    "historicalActivationValidator": {
+      "command": "node specs/test-packages/validate-v2-seed-05-activation-packet.mjs",
+      "exitCode": 0,
+      "output": [
+        "PASS V2-SEED-05: runtime activation FORBIDDEN",
+        "manifest_authority=EMPTY",
+        "packet_sha256=f1aa080002178517f03a96c641c586ef49f99537df83505670695ecb88bb306b",
+        "catalog_sha256=32ddeff1bf6f3f9727ef8014eb667694131f85d8e5dfebf95d885d94af5e4f10",
+        "packet_recorded_approvals_sha256=bd7f70a488e1916f18ca9fce213202a7e770153057f61061996244a758c0bf90",
+        "manifest_current_sha256=824641c0fc883011f7c44045d0087be1bc741bba5704981b0a79f821ddf2c494"
+      ]
+    }
+  },
+  "rootFixes": {
+    "singleManifest": "app/src/domain/detailed-prescription-manifest.json is the sole source for trusted authorities and approvals",
+    "productionAuthority": "resolver closes over strictly parsed and deeply frozen compiled manifest constants",
+    "reviewerLookup": "reviewer role, ID and qualification authority/decision/evidence binding must match a trusted manifest authority",
+    "semanticHistoricalGate": "validator parses JSON and rejects parsed ACTIVE/ELIGIBLE V2-SEED-05 approvals without source regexes"
+  },
+  "manifest": {
+    "schemaVersion": 1,
+    "trustedReviewerAuthorityCount": 0,
+    "approvalCount": 0,
+    "v2Seed05Activated": false,
+    "ageOrYouthGatePresent": false
+  },
+  "adversarial": {
+    "fabricatedReviewer": "rejected by trusted authority lookup and manifest boundary parser",
+    "duplicateOrWrongRole": "role-key and distinct reviewer constraints remain tested",
+    "notationHash": "runtime canonical equality and Node SHA-256 build contract remain tested",
+    "malformedJsonShape": "strict Zod boundary returns no authority",
+    "insertedSemanticV2Active": "parsed literal entry rejects",
+    "executableExpression": "invalid JSON rejects before semantic evaluation",
+    "staleHash": "packet and catalog stay hash-pinned; evolving manifest is semantically checked",
+    "dirtyWorktree": "unrelated edits preserved",
+    "misleadingOutput": "mutations assert changed inputs before expected rejection"
+  },
+  "finalFileHashes": {
+    "app/src/domain/detailed-prescription-manifest.json": "824641c0fc883011f7c44045d0087be1bc741bba5704981b0a79f821ddf2c494",
+    "app/src/domain/detailed-prescription-approvals.ts": "e39f06c6610ce473695211bc846584a1668b20e18424559be000109c658c2b86",
+    "app/src/domain/detailed-prescription.ts": "015e07c501ffb133d095f3c10f6edfa54de2d58e775c0faa20bf097a27e4c5d3",
+    "app/src/domain/detailed-prescription.contract.test.ts": "a3a7691d3a56d0b85158a52a67d24e0df81241c3284412a4eafa69f725fb70e2",
+    "app/src/domain/detailed-prescription-manifest.contract.test.ts": "29d515182182bf0500a0e2c5ba4578dddd30813a15fd7857af1befee32b68faf",
+    "specs/test-packages/validate-v2-seed-05-activation-packet.mjs": "7edb263c01738adc9a1a10e552de117fd87d3e975b55ec296f47f5207ff07297",
+    "specs/test-packages/validate-v2-seed-05-activation-packet.test.mjs": "4a59e8123d7d5d1712684c9511d0bc1616618ff68662a57ba9163a80d6601afa"
+  },
+  "cleanup": {
+    "runtimeResourcesSpawned": false,
+    "serverStarted": false,
+    "temporaryDirectoriesCreated": false,
+    "staged": false,
+    "committed": false
+  }
+}

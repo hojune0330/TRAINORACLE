@@ -79,7 +79,7 @@ Your next move: start work. Full execution detail follows below.
   QA scenarios (name the exact tool + invocation): Node mutation test changes a youth athlete to adult with identical readiness and proves the same training-eligibility result; a separate mutation removes required guardian authorization from sensitive server processing and must still fail. Evidence `<attemptDir>/task-1-personalized-auto-prescription.json`.
   Commit: Y | `docs(prescription): separate youth training eligibility from data authorization`
 
-- [ ] 2. Replace the forgeable approval array with a trusted template manifest
+- [x] 2. Replace the forgeable approval array with a trusted template manifest
   What to do / Must NOT do: Extend the existing approval record rather than creating a second registry. Bind template ID, version, canonical content hash, eligible event/experience scope, population-applicability evidence, component version/hash set, source/decision IDs, reviewer role/qualification, decision timestamp, expiry/revocation status and manifest version. Remove unconditional `youthReview`; youth evidence belongs in population applicability and does not become an age gate. Production callers may only look up immutable records from this manifest; caller-supplied lifecycle/eligibility flags never grant authority.
   Parallelization: Wave 1 | Blocked by: 1 | Blocks: 3, 5, 9
   References (executor has NO interview context - be exhaustive): `app/src/domain/detailed-prescription-approvals.ts`; `app/src/domain/detailed-prescription.ts:24-55`; `app/src/domain/pace-target-plan.ts`; `impl/src/prescription/types.ts`; `impl/src/prescription/runtime.ts`; `reports/review/V2_SEED_05_ACTIVATION_REVIEW_PACKET.md:91-110,129-170`; `PRODUCT_NORTH_STAR.md:197`.
