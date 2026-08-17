@@ -38,6 +38,10 @@ import {
   assessPurposeScopedMemo,
   painLevelsRequireReview,
 } from "../safety/memo-safety"
+import {
+  bindDetailedPrescriptionCandidates,
+  type CandidatePrescriptionBinding,
+} from "./plan-candidate-prescription"
 
 export type PlanCurrentCheck = "NO_KNOWN_RISK" | "REVIEW_REQUIRED"
 
@@ -67,6 +71,7 @@ export type PlanDraftGeneration =
   | {
       readonly kind: "generated"
       readonly generated: PlanGenerationSuccess
+      readonly prescriptionBinding: Omit<CandidatePrescriptionBinding, "generated">
       readonly gate: SafetyGateDecision
       readonly intake: PlanBetaIntake
       readonly athleteEvidence: PlanAthleteEvidence
@@ -93,20 +98,22 @@ export type PlanSelection =
 export function generatePlanFromDraft(
   draft: Partial<PlanBetaIntake>,
   currentCheck: PlanCurrentCheck,
+  prescriptionSelection?: unknown,
 ): PlanDraftGeneration {
+  const evaluatedAt = new Date()
   const intake = completeIntake(draft)
   if (intake === null) {
     return { kind: "rejected", code: "MINIMUM_PROFILE_INCOMPLETE" }
   }
 
-  const safety = evaluatePlanSafety(currentCheck)
+  const safety = evaluatePlanSafety(currentCheck, evaluatedAt)
   if (safety.kind === "blocked") return safety
   const safetyGate = safety.gate
   const availableTrainingDays = spreadTrainingDays(
     intake.availableDayCount,
     intake.requestedFrameLength,
   )
-  const athleteEvidence = summarizeAthleteEvidence(safety.journalSource)
+  const athleteEvidence = summarizeAthleteEvidence(safety.journalSource, evaluatedAt)
   const result = generatePlanCandidates({
     kind: "PLAN_BETA_GENERATION_REQUEST",
     safetyGate,
@@ -118,7 +125,7 @@ export function generatePlanFromDraft(
       trainingTimePreference: intake.trainingTimePreference,
     },
     formation: createPlanFormation(
-      todayISO(),
+      todayISO(evaluatedAt),
       availableTrainingDays,
       intake.experienceBand,
     ),
@@ -131,12 +138,22 @@ export function generatePlanFromDraft(
 
   switch (result.kind) {
     case "generated":
+      {
+        const binding = bindDetailedPrescriptionCandidates(
+          result,
+          intake,
+          safetyGate,
+          prescriptionSelection,
+          evaluatedAt,
+        )
       return {
         kind: "generated",
-        generated: result,
+        generated: binding.generated,
+        prescriptionBinding: { kind: binding.kind, code: binding.code },
         gate: safetyGate,
         intake,
         athleteEvidence,
+      }
       }
     case "needs_review_with_reason":
       return { kind: "rejected", code: "FORMATION_REVIEW_REQUIRED" }
@@ -150,9 +167,13 @@ export function generatePlanFromDraft(
 
 export function evaluatePlanSafety(
   currentCheck: PlanCurrentCheck,
+  evaluatedAt: Date = new Date(),
 ): PlanSafetyEvaluation {
   const journal = loadEntriesForPlanSafety()
-  if (journal.status === "uncertain" || recentJournalRequiresReview(journal.entries)) {
+  if (
+    journal.status === "uncertain"
+    || recentJournalRequiresReview(journal.entries, evaluatedAt)
+  ) {
     return { kind: "blocked", code: "RECENT_JOURNAL_REQUIRES_REVIEW" }
   }
 
@@ -162,7 +183,7 @@ export function evaluatePlanSafety(
     : {
         kind: "passed",
         gate,
-        journalSource: structuredJournalSource(journal.entries),
+        journalSource: structuredJournalSource(journal.entries, evaluatedAt),
       }
 }
 
@@ -191,7 +212,7 @@ export function selectPlanForActivation(
   return {
     kind: "selected",
     state: {
-      version: 1,
+      version: 2,
       intake,
       activePlan: result.activePlan,
       progress: [],
@@ -248,8 +269,11 @@ function currentCheckGate(currentCheck: PlanCurrentCheck): SafetyGateDecision {
   }
 }
 
-function recentJournalRequiresReview(entries: readonly JournalEntry[]): boolean {
-  const today = todayISO()
+function recentJournalRequiresReview(
+  entries: readonly JournalEntry[],
+  evaluatedAt: Date,
+): boolean {
+  const today = todayISO(evaluatedAt)
   const from = isoShift(today, -13)
   return entries
     .filter((entry) => entry.date >= from && entry.date <= today)
@@ -266,8 +290,11 @@ function entryRequiresReview(entry: JournalEntry): boolean {
     ?.blocksPlanGeneration === true
 }
 
-function structuredJournalSource(entries: readonly JournalEntry[]): JournalSource {
-  const today = todayISO()
+function structuredJournalSource(
+  entries: readonly JournalEntry[],
+  evaluatedAt: Date,
+): JournalSource {
+  const today = todayISO(evaluatedAt)
   const from = isoShift(today, -13)
   const sessions = entries.filter(
     (entry): entry is PostSessionEntry =>
@@ -284,8 +311,11 @@ function structuredJournalSource(entries: readonly JournalEntry[]): JournalSourc
   } as const
 }
 
-function summarizeAthleteEvidence(journalSource: JournalSource): PlanAthleteEvidence {
-  const records = loadAthleteRecords()
+function summarizeAthleteEvidence(
+  journalSource: JournalSource,
+  evaluatedAt: Date,
+): PlanAthleteEvidence {
+  const records = loadAthleteRecords(evaluatedAt)
   return {
     storedRecordCount: records.length,
     goalRecordCount: records.filter((record) => record.purpose === "RACE_GOAL").length,

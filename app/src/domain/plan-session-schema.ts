@@ -61,31 +61,31 @@ const componentRefSchema = z.object({
   componentFingerprint: fingerprintSchema,
 }).strict()
 const warmupSchema = z.object({
-  componentRef: z.string().min(1),
-  componentVersion: z.string().min(1),
+  componentRef: z.literal("WU-V2-5K-01"),
+  componentVersion: z.literal("1.0.0"),
   authority: z.literal("OWNER_OPERATIONAL_ADAPTATION"),
-  easyDurationMinutes: z.number().int().positive(),
-  rpeMin: z.number().int().min(1).max(10),
-  rpeMax: z.number().int().min(1).max(10),
+  easyDurationMinutes: z.literal(15),
+  rpeMin: z.literal(2),
+  rpeMax: z.literal(3),
   strides: z.object({
-    repetitions: z.number().int().positive(),
-    durationSeconds: z.number().int().positive(),
-    recoverySeconds: z.number().int().positive(),
+    repetitions: z.literal(4),
+    durationSeconds: z.literal(20),
+    recoverySeconds: z.literal(40),
     recoveryMode: z.literal("WALK_OR_JOG"),
     progression: z.literal("PROGRESSIVE"),
   }).strict(),
 }).strict()
 const cooldownSchema = z.object({
-  componentRef: z.string().min(1),
-  componentVersion: z.string().min(1),
+  componentRef: z.literal("CD-V2-5K-01"),
+  componentVersion: z.literal("1.0.0"),
   authority: z.literal("OWNER_OPERATIONAL_ADAPTATION"),
-  easyDurationMinutes: z.number().int().positive(),
-  rpeMin: z.number().int().min(1).max(10),
-  rpeMax: z.number().int().min(1).max(10),
+  easyDurationMinutes: z.literal(10),
+  rpeMin: z.literal(1),
+  rpeMax: z.literal(2),
 }).strict()
 const fallbackSchema = z.object({
-  componentRef: z.string().min(1),
-  componentVersion: z.string().min(1),
+  componentRef: z.literal("RPE-ONLY-CONTROLLED-01"),
+  componentVersion: z.literal("1.0.0"),
   code: z.literal("RPE_ONLY_CONTROLLED"),
   behavior: z.literal("DELEGATE_TO_EXISTING_RPE_CANDIDATE"),
   numericRepetitionVariant: z.null(),
@@ -97,8 +97,8 @@ const stopCodeSchema = z.enum([
   "STOP_LOSS_OF_CONTROLLED_FORM",
 ])
 const stopConditionsSchema = z.object({
-  componentRef: z.string().min(1),
-  componentVersion: z.string().min(1),
+  componentRef: z.literal("STOP-V2-5K-01"),
+  componentVersion: z.literal("1.0.0"),
   authority: z.literal("OWNER_PRECAUTIONARY_OPERATIONAL_RULE"),
   diagnosticClaim: z.literal(false),
   codes: z.array(stopCodeSchema).length(4).readonly(),
@@ -119,7 +119,12 @@ const totalsSchema = z.object({
   setRecoveryTotalSeconds: z.number().int().nonnegative(),
   plannedRecoverySeconds: z.number().int().nonnegative(),
   mainSessionTotalExcludingWarmupCooldown: z.number().int().positive().nullable(),
-  uncomputableReasonCodes: z.array(z.string().min(1)).readonly(),
+  uncomputableReasonCodes: z.array(z.enum([
+    "QUALITY_DISTANCE_UNAVAILABLE",
+    "WORK_DURATION_UNAVAILABLE",
+    "REPETITION_RECOVERY_UNAVAILABLE",
+    "SET_RECOVERY_UNAVAILABLE",
+  ])).readonly(),
 }).strict()
 const evidenceIdentitySchema = z.object({
   evidenceId: z.string().min(1),

@@ -198,7 +198,7 @@ export type CompetitionDivision = PlanBetaIntake["competitionDivision"]
 export type StoredPlanProgress = z.infer<typeof progressSchema>
 export type LegacyPlanBetaState = z.infer<typeof planBetaStateV1Schema>
 export type PlanBetaStateV2 = z.infer<typeof planBetaStateV2Schema>
-export type PlanBetaState = Omit<LegacyPlanBetaState, "version"> & {
+export type PlanBetaState = Omit<PlanBetaStateV2, "version"> & {
   readonly version: 1 | 2
 }
 export type StoredPlanHistory = z.infer<typeof planHistorySchema>

@@ -7,6 +7,7 @@ import type {
   PlanCandidateKind,
 } from "./types"
 import type { CompiledExposureLedger } from "./exposure-ledger"
+import type { PaceTargetPlanPrescription } from "./session-types"
 
 export type SelectableExposureLedger = Extract<
   CompiledExposureLedger,
@@ -119,6 +120,7 @@ function buildCandidate(input: CandidateBuildInput): PlanCandidate {
       prescriptionBasis: "DURATION_RPE_ONLY",
       formationMethodClaim: "NOT_UNIVERSAL",
     }),
+    detailedPrescriptionFingerprint: null,
     continuityContext: continuityContextFor(input.request),
     selectionAuthority: input.request.selectionAuthority,
     frame: frameFor(input.request),
@@ -129,6 +131,38 @@ function buildCandidate(input: CandidateBuildInput): PlanCandidate {
     }),
     rationaleCodes: sourceCodes(input.request),
     sessions: makeCandidateSessions(input),
+  })
+}
+
+export function bindOneDetailedPrescriptionCandidate(
+  candidate: PlanCandidate,
+  prescription: PaceTargetPlanPrescription,
+): PlanCandidate | null {
+  const qualityIndex = candidate.sessions.findIndex((session) => (
+    session.role === "QUALITY" && session.prescription.kind === "RPE_TIME_RANGE"
+  ))
+  if (qualityIndex < 0) return null
+
+  const sessions = candidate.sessions.map((session, index) => {
+    if (index !== qualityIndex || session.role !== "QUALITY") return session
+    return Object.freeze({
+      ...session,
+      prescription,
+    })
+  })
+  return Object.freeze({
+    ...candidate,
+    candidateId: `${candidate.candidateId}:pace-target:${prescription.prescriptionFingerprint}`,
+    beta: Object.freeze({
+      ...candidate.beta,
+      prescriptionBasis: "ONE_TRUSTED_DETAILED_SESSION" as const,
+    }),
+    detailedPrescriptionFingerprint: prescription.prescriptionFingerprint,
+    rationaleCodes: Object.freeze([
+      ...candidate.rationaleCodes.filter((code) => code !== "BETA_DURATION_RPE_ONLY"),
+      "PACE_TARGET_BOUND" as const,
+    ]),
+    sessions: Object.freeze(sessions),
   })
 }
 

@@ -8,6 +8,7 @@ import type {
 import type { SafetyGateDecision } from "@impl/safety-gate/gate"
 import {
   resolveDetailedPrescriptionApproval,
+  type DetailedPrescriptionApprovalRecord,
   type DetailedPrescriptionApprovalRequest,
 } from "./detailed-prescription-approvals"
 
@@ -19,6 +20,7 @@ type DetailedPrescriptionInput = DetailedPrescriptionApprovalRequest & {
 }
 
 export type DetailedPrescription = {
+  readonly approval: DetailedPrescriptionApprovalRecord
   readonly notation: string
   readonly prescription: StructuredPrescription
   readonly totals: PrescriptionDerivedTotals
@@ -43,6 +45,7 @@ export function prepareDetailedPrescription(
   if (prepared.kind === "rejected") return null
 
   return Object.freeze({
+    approval,
     notation: approval.notation,
     prescription: prepared.prescription,
     totals: prepared.totals,

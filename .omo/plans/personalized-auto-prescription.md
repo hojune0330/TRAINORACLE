@@ -103,12 +103,12 @@ Your next move: start work. Full execution detail follows below.
   QA scenarios (name the exact tool + invocation): focused Vitest storage/migration tests including v1 fixture, v2 fixture, corrupt fixture, revoked fixture and D9 mutation. Evidence `<attemptDir>/task-4-personalized-auto-prescription.txt`.
   Commit: Y | `feat(plan-storage): persist versioned detailed prescriptions`
 
-- [ ] 5. Bind one exact prescription into production candidates atomically
+- [x] 5. Bind one exact prescription into production candidates atomically
   What to do / Must NOT do: Reuse the current record/currentness conversion and detailed-prescription runtime. At generation time, resolve one explicit CURRENT 5000 m anchor and replace exactly one already-generated eligible QUALITY session in both BALANCED and CONSERVATIVE candidates. Add the prescription fingerprint to candidate identity. If anchor, authorization, manifest, component, event, experience or safety validation fails for either candidate, return both original RPE candidates with an explicit fallback code. Do not alter quality-day frequency in this task.
   Parallelization: Wave 2 | Blocked by: 2, 3, 4 | Blocks: 6, 7
   References (executor has NO interview context - be exhaustive): `impl/src/plan-generator/candidates.ts`; `impl/src/plan-generator/session-builder.ts`; `impl/src/plan-generator/types.ts`; `app/src/domain/pace-target-plan.ts`; `app/src/domain/detailed-prescription.ts`; `app/src/domain/athlete-records.ts`; `app/src/domain/pace-target-evidence.ts`; `app/src/screens/plan-beta/PaceEvidenceFlow.tsx`.
-  Acceptance criteria (agent-executable): exact same inputs are deterministic; a valid 5000 m CURRENT anchor creates detailed prescriptions in both candidates; stale/unknown/cross-event/missing/revoked/D9 cases leave both candidates RPE-only; never one detailed and one RPE candidate.
-  QA scenarios (name the exact tool + invocation): focused impl/app Vitest contract cases for valid, stale, 1500m cross-event, forged status, revoked manifest and D9 ACTIVE/UNKNOWN. Evidence `<attemptDir>/task-5-personalized-auto-prescription.json`.
+  Acceptance criteria (agent-executable): exact same inputs are deterministic; a valid 5000 m CURRENT anchor creates detailed prescriptions in both candidates; stale/unknown/cross-event/missing/revoked cases leave both candidates RPE-only; never one detailed and one RPE candidate. `D9_ACTIVE` and `D9_UNKNOWN` keep the stronger global invariant: production plan generation is blocked before candidates are exposed, while the lower-level binder remains atomic if exercised directly.
+  QA scenarios (name the exact tool + invocation): focused impl/app Vitest contract cases for valid, stale, 1500m cross-event, forged status, revoked manifest, binder-level D9 atomicity, and production-level D9 ACTIVE/UNKNOWN zero-candidate blocking. Evidence `<attemptDir>/task-5-personalized-auto-prescription.json`.
   Commit: Y | `feat(plan-generator): bind atomic same-event pace prescription`
 
 - [ ] 6. Put explicit record choice and detailed instructions in the athlete flow

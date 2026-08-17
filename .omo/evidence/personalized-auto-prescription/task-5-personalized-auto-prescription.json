@@ -1,0 +1,82 @@
+{
+  "schemaVersion": 2,
+  "event": "task-evidence-follow-up",
+  "task": "Todo 5 bind one exact prescription into production candidates atomically",
+  "artifactTimestamp": "2026-08-17T14:17:29+09:00",
+  "headAtEvidenceCapture": "2fffe384e42f32f981145c5bcc618d2258589141",
+  "correctsArtifactSha256": "f2fdae58eedcae1fef254c8de0c23e6e5fe28fa66398b35dd00373737965707c",
+  "originalRed": {
+    "command": "npm --prefix app run test:unit -- plan-beta-detailed-candidates",
+    "exitCode": 1,
+    "output": ["Test Files 1 failed (1)", "Tests 1 failed | 1 passed (2)", "valid CURRENT 5000m evidence expected prescriptionBinding PACE_TARGET_BOUND and received undefined", "Duration 8.48s"]
+  },
+  "followUpRed": {
+    "command": "npm --prefix app run test:unit -- plan-beta-detailed-candidates",
+    "exitCode": 1,
+    "output": ["Test Files 1 failed (1)", "Tests 9 failed | 8 passed (17)", "valid record-ID-only selection received PACE_TARGET_FALLBACK_INVALID_SELECTION", "old achievedOn expected PACE_TARGET_FALLBACK_ANCHOR_NOT_CURRENT and received PACE_TARGET_FALLBACK_INVALID_SELECTION", "Duration 2.61s"],
+    "reason": "The production boundary still required caller-selected freshness plus separate today and evaluatedAt clocks."
+  },
+  "green": {
+    "focusedCandidateBinding": {"command": "npm --prefix app run test:unit -- plan-beta-detailed-candidates", "exitCode": 0, "output": ["Test Files 1 passed (1)", "Tests 17 passed (17)", "Duration 2.76s"]},
+    "planFlow": {"command": "npm --prefix app run test:unit -- plan-beta-flow", "exitCode": 0, "output": ["Test Files 1 passed (1)", "Tests 13 passed (13)", "Duration 2.77s"]},
+    "planBetaConsumers": {"command": "npm --prefix app run test:unit -- PlanBeta", "exitCode": 0, "output": ["Test Files 7 passed (7)", "Tests 48 passed (48)", "Duration 24.13s"]},
+    "detailedPrescription": {"command": "npm --prefix app run test:unit -- detailed-prescription", "exitCode": 0, "output": ["Test Files 2 passed (2)", "Tests 15 passed (15)", "Duration 2.28s"]},
+    "paceTarget": {"command": "npm --prefix app run test:unit -- pace-target", "exitCode": 0, "output": ["Test Files 2 passed (2)", "Tests 15 passed (15)", "Duration 2.29s"]},
+    "implAll": {"command": "npm --prefix impl test", "exitCode": 0, "output": ["Test Files 14 passed (14)", "Tests 161 passed (161)", "Duration 1.58s"]},
+    "appTypecheck": {"command": "npm --prefix app run typecheck", "exitCode": 0, "output": ["> tsc --noEmit"]},
+    "implTypecheck": {"command": "npm --prefix impl run typecheck", "exitCode": 0, "output": ["> tsc --noEmit"]}
+  },
+  "clockAndCurrentnessDesign": {
+    "selectionBoundaryFields": ["selectedRecordId"],
+    "callerFreshnessAccepted": false,
+    "callerTodayAccepted": false,
+    "callerEvaluatedAtAccepted": false,
+    "authoritativeInstantSource": "generatePlanFromDraft captures new Date() once internally",
+    "authoritativeInstantConsumers": ["journal safety date window", "plan formation date", "athlete record parsing", "record currentness", "manifest decision and expiry evaluation"],
+    "currentnessSourceFields": ["achievedOn"],
+    "currentnessConversion": "elapsedSinceAchieved with SEASON_WINDOW_MONTHS",
+    "currentWindowMonthsInclusive": 18,
+    "old2024ResultAt2026Evaluation": "STALE"
+  },
+  "d9Semantics": {
+    "binderLevel": "A direct binder call with D9 ACTIVE or UNKNOWN returns both untouched original RPE candidates with PACE_TARGET_FALLBACK_SAFETY_GATE.",
+    "productionLevel": "generatePlanFromDraft returns top-level blocked before candidate generation for D9 ACTIVE or UNKNOWN.",
+    "productionCandidateCountWhenBlocked": 0,
+    "productionRpePairClaim": false
+  },
+  "adversarial": {
+    "oldAchievedOn": {"result": "PASS", "mutation": "2026-08-10 to 2024-08-10", "targetExistsAndChanges": true, "fallback": "PACE_TARGET_FALLBACK_ANCHOR_NOT_CURRENT", "bothOriginalRpeCandidates": true},
+    "attemptedCurrentLabel": {"result": "PASS", "fieldRemovedFromApi": true, "strictBoundaryResult": "PACE_TARGET_FALLBACK_INVALID_SELECTION"},
+    "splitClock": {"result": "PASS", "attemptedFields": ["today", "evaluatedAt"], "strictBoundaryResult": "PACE_TARGET_FALLBACK_INVALID_SELECTION"},
+    "authorityExpiryFromInternalClock": {"result": "PASS", "evaluationInstant": "2027-08-17T03:00:00.000Z", "fallback": "PACE_TARGET_FALLBACK_AUTHORITY_OR_COMPONENT", "bothOriginalRpeCandidates": true},
+    "d9ActiveUnknownProduction": {"result": "PASS", "topLevelBlocked": true, "candidatesExposed": false},
+    "d9ActiveUnknownBinder": {"result": "PASS", "atomicUntouchedRpePair": true},
+    "crossEvent": {"result": "PASS", "bothOriginalRpeCandidates": true},
+    "manifestUnavailable": {"result": "PASS", "bothOriginalRpeCandidates": true},
+    "dirtyWorktree": {"result": "PASS", "unrelatedPlanEditPreserved": true},
+    "misleadingSuccessOutput": {"result": "PASS", "mutationTargetsAssertedBeforeFallback": true}
+  },
+  "hashes": {
+    "detailedPrescriptionSha256": "49a03bbc8dee540c6975d205c407cfdf68819d7da3ea4cc7abc84aaca901f7c9",
+    "homeViewModelSha256": "97b5634d14786d2c6904b17e5991e38eee8a6c0d3d1f989a4c64077af9725101",
+    "journalStoreSha256": "b3022fe9edcd987de7b936c5ae0357b6473dd6bcfda4463419ec55531a70996f",
+    "paceTargetEvidenceSha256": "07a514f8d13cff9c5c689dc2fbab19cfaf639daf3348d9c38b912bd94694d317",
+    "candidateBindingTestSha256": "1017c0ea1e83264703eb6c41940cf46d7ffdd18c894e093ee1cae94cc03949f7",
+    "planBetaFlowSha256": "3f26f7e6e2fd4fe5166772ed843105e10cfca22201a4a84b29d0680854ceb126",
+    "planBetaSchemaSha256": "802e13211d6264c75eb3780bf6ac6dec2c241b6608e8e963d130fcbfe58b3c80",
+    "candidateBindingSha256": "42a245449a47fbd871e1305e81bb6c794dd35750fe9b6aad1644c5769c3cda69",
+    "planSessionSchemaSha256": "dd1aefccf499b38cb5b63fad27f12a40d9cf11cdad1ebe63f8bb62e86b02a254",
+    "labelsSha256": "ab5d39f36aaa3afa34cfdd4c840b929939d16ea841c505a216784aed6e31ca1a",
+    "implCandidatesSha256": "dc27f5051a71bcb1583a5ab52e1cdbb3df697024234f502587e4e199df43ccc9",
+    "implSelectionSha256": "c28187e058e8e52004cb0a168c247ec2d01a43c9e3d5176d7a849c161fe6fdbf",
+    "implSessionTypesSha256": "0bbe6843c4b1248397cade632f6f94f0627b696b93b6161af05876eb7c4fba9b",
+    "implTypesSha256": "c62ed71cfe9808ddd83bf3dd7516313fc437960c99f647c87e0b194ab86fde91",
+    "implGenerationTestSha256": "263c50d52c97a5271f4a5adf957589758a453b4feb7ef973ba62cf8021bcc80e",
+    "implEnergyTestSha256": "37c9bd11ec8eb02975594f500dbb971b9110d748a74f7c1ae2e202bd529338a0"
+  },
+  "cleanup": {"runtimeResourcesSpawned": false, "serverStarted": false, "temporaryDirectoriesCreated": false, "staged": false, "committed": false},
+  "risks": [
+    "The detached PaceEvidenceFlow still has its earlier explicit confirmation UX; Todo 6 must integrate UI selection without reintroducing caller authority at the production binding boundary.",
+    "The 18-month currentness conversion reuses the existing athlete-record elapsed-month window; changing that product policy must update the shared conversion and this regression together."
+  ]
+}

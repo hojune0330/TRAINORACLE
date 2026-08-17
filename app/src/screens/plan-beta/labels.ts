@@ -6,6 +6,7 @@ import type {
   PlanSession,
   PlanSessionSlot,
   PlannedEnergyIntent,
+  RpeTimeRange,
 } from "@impl/plan-generator/types"
 import { PLANNED_ENERGY_INTENTS } from "@impl/plan-generator/types"
 
@@ -155,6 +156,9 @@ export function prescriptionLabel(session: PlanSession): string {
   if (session.prescription.kind === "REST") {
     return "달리기 일정 없음"
   }
+  if (session.prescription.kind === "PACE_TARGET") {
+    return ENERGY_INTENT_LABELS[session.plannedEnergyIntent].title
+  }
   const duration = `${session.prescription.durationMinutes.minimum}~${session.prescription.durationMinutes.maximum}분`
   const rpe = `RPE ${session.prescription.rpe.minimum}~${session.prescription.rpe.maximum}`
   const intent = ENERGY_INTENT_LABELS[session.plannedEnergyIntent].title
@@ -211,7 +215,7 @@ export type SessionExecutionStep = {
 }
 
 export function sessionExecutionSteps(session: PlanSession): readonly SessionExecutionStep[] {
-  if (session.role !== "QUALITY") return []
+  if (session.role !== "QUALITY" || session.prescription.kind !== "RPE_TIME_RANGE") return []
 
   return [
     {
@@ -231,7 +235,7 @@ export function sessionExecutionSteps(session: PlanSession): readonly SessionExe
 
 function qualityExecution(
   intent: Extract<PlanSession, { readonly role: "QUALITY" }>["plannedEnergyIntent"],
-  rpe: Extract<PlanSession, { readonly role: "QUALITY" }>["prescription"]["rpe"],
+  rpe: RpeTimeRange["rpe"],
 ): string {
   const effort = `RPE ${rpe.minimum}~${rpe.maximum}`
   switch (intent) {
@@ -314,6 +318,9 @@ export function candidateSessionSummary(candidate: {
   const plannedDuration = visibleSessions.reduce(
     (current, session) => {
       if (session.prescription.kind === "REST") {
+        return current
+      }
+      if (session.prescription.kind === "PACE_TARGET") {
         return current
       }
       return {

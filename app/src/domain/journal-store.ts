@@ -473,8 +473,7 @@ export function newEntryId(): string {
   }
 }
 
-export function todayISO(): string {
-  const date = new Date()
+export function todayISO(date: Date = new Date()): string {
   const padded = (value: number) => String(value).padStart(2, "0")
   return `${date.getFullYear()}-${padded(date.getMonth() + 1)}-${padded(date.getDate())}`
 }
