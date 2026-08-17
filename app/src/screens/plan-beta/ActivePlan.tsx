@@ -19,6 +19,8 @@ import {
 } from "./labels"
 import { PlanSchedulePreview } from "./PlanSchedulePreview"
 import { DIVISION_LABELS } from "./plan-intake-meta"
+import type { PlanCurrentCheck } from "../../domain/plan-beta-flow"
+import type { StoredPaceTargetPrescription } from "../../domain/plan-session-schema"
 
 const PROGRESS_ACTIONS: readonly {
   readonly state: PlanProgressState
@@ -34,10 +36,16 @@ export function ActivePlan({
   state,
   onProgress,
   onNextFrame,
+  onCheckDetailedExecution,
 }: {
   readonly state: PlanBetaState
   readonly onProgress: (progress: StoredPlanProgress) => void
   readonly onNextFrame: () => void
+  readonly onCheckDetailedExecution: (
+    prescription: StoredPaceTargetPrescription,
+    operation: "START" | "RESTART",
+    currentCheck: PlanCurrentCheck,
+  ) => void
 }) {
   const { activePlan } = state
   const recorded = new Map(
@@ -53,6 +61,9 @@ export function ActivePlan({
   const frameLengthDays = "projectionLengthDays" in activePlan.frame
     ? activePlan.frame.projectionLengthDays ?? activePlan.frame.lengthDays
     : activePlan.frame.lengthDays
+  const hasDetailedPrescription = activePlan.sessions.some(
+    (session) => session.prescription.kind === "PACE_TARGET",
+  )
 
   return (
     <section className="active-plan" aria-labelledby="active-plan-title">
@@ -66,9 +77,11 @@ export function ActivePlan({
         <AlertTriangle aria-hidden="true" size={17} />
         <span>
           <strong>
-            {activePlan.sourceMode === "PROFILE_ONLY"
-              ? "내가 고른 조건 · 베타 계획"
-              : "최근 일지 확인 · 계획 수치에는 미반영"}
+            <span className="plan-source-strip__title">
+              {activePlan.sourceMode === "PROFILE_ONLY"
+                ? "내가 고른 조건 · 베타 계획"
+                : "최근 일지 확인 · 계획 수치에는 미반영"}
+            </span>
             <TermHelp term="plan-beta-basis" />
           </strong>
           <small>이 계획과 진행 상태는 이 브라우저에만 저장 · 의료 판단 아님</small>
@@ -76,7 +89,9 @@ export function ActivePlan({
             <small>
               저장된 경기 기록 {state.athleteEvidence.storedRecordCount}개
               {" · "}최근 구조화 일지 {state.athleteEvidence.recentJournalSessionCount}개 연결
-              {" · "}개인 페이스·훈련 시간·RPE 계산에는 아직 미사용
+              {" · "}{hasDetailedPrescription
+                ? "확인한 5km 기록은 상세 세션 페이스에 사용 · 일지 값은 시간·RPE 계산에 미사용"
+                : "개인 페이스·훈련 시간·RPE 계산에는 미사용"}
             </small>
           )}
           {state.intake.competitionDivision !== undefined
@@ -93,8 +108,47 @@ export function ActivePlan({
         sessions={activePlan.sessions}
         renderSessionFooter={(session) => {
           const current = recorded.get(`${session.day}:${session.slot}`)
+          const detailedPrescription = session.prescription.kind === "PACE_TARGET"
+            ? session.prescription
+            : null
           return (
             <>
+              {detailedPrescription !== null && (
+                <details className="active-plan__execution-check">
+                  <summary>시작·다시 시작 전 확인</summary>
+                  <p>누를 때마다 현재 몸 상태와 저장된 처방의 승인·만료·철회 상태를 다시 확인합니다.</p>
+                  <button
+                    type="button"
+                    onClick={() => onCheckDetailedExecution(
+                      detailedPrescription,
+                      "START",
+                      "NO_KNOWN_RISK",
+                    )}
+                  >
+                    통증 없고 평소와 같음 · 시작 확인
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => onCheckDetailedExecution(
+                      detailedPrescription,
+                      "RESTART",
+                      "NO_KNOWN_RISK",
+                    )}
+                  >
+                    통증 없고 평소와 같음 · 다시 시작 확인
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => onCheckDetailedExecution(
+                      detailedPrescription,
+                      "START",
+                      "REVIEW_REQUIRED",
+                    )}
+                  >
+                    통증·이상 또는 잘 모르겠음
+                  </button>
+                </details>
+              )}
               <em className="active-plan__status">
                 {current === undefined ? "예정" : PROGRESS_LABELS[current]}
               </em>

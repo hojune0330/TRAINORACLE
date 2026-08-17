@@ -925,15 +925,156 @@
   gap: var(--space-2);
 }
 
-.plan-source-strip span {
+.pace-evidence-flow {
+  margin-top: var(--space-5);
+  padding-block: var(--space-4);
+  border-block: var(--bw-line) solid var(--line);
+  display: grid;
+  gap: var(--space-3);
+}
+
+.pace-evidence-flow header {
+  display: grid;
+  gap: var(--space-1);
+}
+
+.pace-evidence-flow header > span {
+  color: var(--ink-3);
+  font-family: var(--mono);
+  font-size: var(--fs-mono-xs);
+}
+
+.pace-evidence-flow h2,
+.pace-evidence-flow p {
+  margin: 0;
+}
+
+.pace-evidence-flow header p,
+.pace-evidence-confirmation span,
+.pace-evidence-confirmation p {
+  color: var(--ink-2);
+  font-size: var(--fs-body-sm);
+  line-height: 1.55;
+  word-break: keep-all;
+}
+
+.pace-evidence-confirmation {
+  padding-top: var(--space-3);
+  border-top: var(--bw-line) solid var(--hair);
+  display: grid;
+  gap: var(--space-2);
+}
+
+.pace-evidence-confirmation details summary,
+.plan-detailed-prescription details summary {
+  min-height: var(--app-touch-min);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  color: var(--ink-3);
+  font-size: var(--fs-body-sm);
+  text-decoration: underline;
+  text-underline-offset: var(--space-1);
+}
+
+.pace-evidence-status,
+.pace-evidence-fallback {
+  min-height: var(--app-touch-min);
+  padding: var(--space-2) 0;
+  border-top: var(--bw-line) solid var(--hair);
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--ink-2);
+  font-size: var(--fs-body-sm);
+  line-height: 1.5;
+}
+
+.plan-detailed-prescription {
+  margin-top: var(--space-2);
+  padding-block: var(--space-2);
+  border-block: var(--bw-line) solid var(--line);
+  display: grid;
+  gap: var(--space-1);
+}
+
+.plan-detailed-prescription > p {
+  margin: 0;
+  padding: var(--space-2) 0;
+  border-bottom: var(--bw-line) solid var(--hair);
+  display: grid;
+  grid-template-columns: minmax(5.5rem, max-content) minmax(0, 1fr);
+  gap: var(--space-2);
+  font-size: var(--fs-body-sm);
+  line-height: 1.5;
+}
+
+.plan-detailed-prescription__notation {
+  display: flex !important;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.plan-detailed-prescription code {
+  min-width: 0;
+  font-family: var(--mono);
+  overflow-wrap: anywhere;
+}
+
+.plan-detailed-prescription details div {
+  padding-left: var(--space-3);
+  border-left: var(--bw-line) solid var(--line);
+  color: var(--ink-2);
+  font-size: var(--fs-body-sm);
+}
+
+.plan-detailed-prescription details p {
+  margin: 0 0 var(--space-2);
+}
+
+.plan-detailed-prescription details ul {
+  margin: 0 0 var(--space-2);
+  padding-left: var(--space-5);
+}
+
+@media (max-width: 420px) {
+  .plan-detailed-prescription > p {
+    grid-template-columns: 1fr;
+    gap: var(--space-1);
+  }
+}
+
+.plan-source-strip > span {
   display: grid;
   gap: var(--space-1);
 }
 
 .plan-source-strip strong {
+  position: relative;
+  box-sizing: border-box;
+  width: 100%;
+  min-height: var(--app-touch-min);
+  padding-right: calc(var(--app-touch-min) + var(--space-1));
   font-family: var(--sans);
   font-size: var(--fs-body-sm);
   line-height: 1.45;
+}
+
+.plan-source-strip__title {
+  display: block;
+  min-width: 0;
+  word-break: keep-all;
+}
+
+.plan-source-strip strong > span:last-child {
+  position: absolute !important;
+  top: 0;
+  right: 0;
+  width: var(--app-touch-min);
+}
+
+.plan-source-strip strong button {
+  margin: 0 !important;
 }
 
 .plan-source-strip small {
@@ -1264,6 +1405,10 @@
   white-space: nowrap;
 }
 
+.pace-evidence-copy {
+  word-break: keep-all;
+}
+
 .plan-session-guidance {
   margin-top: var(--space-1);
 }
@@ -1389,6 +1534,54 @@
   margin-top: var(--space-6);
   padding-block: var(--space-4);
   border-block: var(--bw-line) solid var(--line);
+}
+
+.active-plan__execution-check {
+  grid-column: 1 / -1;
+  margin-top: var(--space-2);
+}
+
+.active-plan__execution-check summary {
+  min-height: var(--app-touch-min);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  color: var(--ink-3);
+  font-size: var(--fs-body-sm);
+  text-decoration: underline;
+  text-underline-offset: var(--space-1);
+}
+
+.active-plan__execution-check p {
+  margin: 0 0 var(--space-2);
+  color: var(--ink-2);
+  font-size: var(--fs-body-sm);
+  line-height: 1.5;
+}
+
+.active-plan__execution-check button {
+  width: 100%;
+  min-height: var(--app-touch-min);
+  padding: var(--space-2);
+  border: var(--bw-line) solid var(--line);
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.active-plan__execution-check button + button {
+  border-top: 0;
+}
+
+.plan-execution-status {
+  margin-top: var(--space-3);
+  padding: var(--space-3);
+  border: var(--bw-line) solid var(--line);
+  color: var(--ink-2);
+  font-size: var(--fs-body-sm);
+  line-height: 1.5;
 }
 
 .active-plan__continuity > strong {

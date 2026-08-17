@@ -109,7 +109,7 @@ describe("plan schedule preview", () => {
 
     const rpeHelp = screen.getByRole("button", { name: "RPE 설명 보기" })
     await user.click(rpeHelp)
-    expect(screen.getByText(/1~2는 빨리 걷기.*3~4는.*기본 유산소.*10은 최대 노력/u)).toBeVisible()
+    expect(screen.getByText(/1~2는 빨리 걷기.*3~4는 대화.*5는 꾸준한 노력.*10은 최대 노력/u)).toBeVisible()
     expect(screen.getByText(/의료 판단이 아닙니다/u)).toBeVisible()
   })
 

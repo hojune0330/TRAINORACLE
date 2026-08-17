@@ -43,15 +43,7 @@ export type PlanArchiveResult =
 
 export function loadPlanBetaState(): PlanBetaState | null {
   const parsed = loadVersionedPlanBetaState()
-  if (
-    parsed === null
-    || parsed.activePlan.sessions.some(
-      (session) => session.role === "QUALITY" && session.prescription.kind === "PACE_TARGET",
-    )
-  ) {
-    return null
-  }
-  return parsed as PlanBetaState
+  return parsed
 }
 
 export function loadVersionedPlanBetaState(): PlanBetaStateV2 | null {

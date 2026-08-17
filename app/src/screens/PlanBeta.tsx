@@ -32,6 +32,8 @@ import {
 } from "./plan-beta/plan-selection"
 import type { CandidateSelection } from "./plan-beta/plan-selection"
 import { planErrorMessage } from "./plan-beta/plan-feedback"
+import { loadAthleteRecords } from "../domain/athlete-records"
+import type { CandidatePrescriptionBinding } from "../domain/plan-candidate-prescription"
 import {
   divisionForGoal,
   firstUnansweredRefinement,
@@ -72,6 +74,13 @@ export function PlanBeta({
   const [errorCode, setErrorCode] = React.useState<string | null>(null)
   const [retrySelection, setRetrySelection] = React.useState<CandidateSelection | null>(null)
   const [notationReaderOpen, setNotationReaderOpen] = React.useState(false)
+  const [athleteRecords] = React.useState(() => loadAthleteRecords())
+  const [selectedRecordId, setSelectedRecordId] = React.useState<string | null>(null)
+  const [comparisonRecordId, setComparisonRecordId] = React.useState<string | null>(null)
+  const [recordConfirmationPending, setRecordConfirmationPending] = React.useState(false)
+  const [prescriptionBinding, setPrescriptionBinding] = React.useState<
+    Omit<CandidatePrescriptionBinding, "generated">
+  >({ kind: "fallback", code: "PACE_TARGET_FALLBACK_NO_EXPLICIT_ANCHOR" })
   const viewKey = notationReaderOpen
     ? "notation-reader"
     : stored !== null
@@ -87,13 +96,20 @@ export function PlanBeta({
     if (scrollRegion !== null) scrollRegion.scrollTop = 0
   }, [viewKey])
 
-  const generateCandidates = (nextDraft: Partial<PlanBetaIntake>) => {
+  const generateCandidates = (
+    nextDraft: Partial<PlanBetaIntake>,
+    recordId: string | null = null,
+  ) => {
     if (currentCheck === null) {
       setErrorCode(null)
       setStep("safety")
       return
     }
-    const result = generatePlanFromDraft(nextDraft, currentCheck)
+    const result = generatePlanFromDraft(
+      nextDraft,
+      currentCheck,
+      recordId === null ? undefined : { selectedRecordId: recordId },
+    )
     switch (result.kind) {
       case "blocked":
         setErrorCode(null)
@@ -109,6 +125,7 @@ export function PlanBeta({
         setGenerated(result.generated)
         setGeneratedIntake(result.intake)
         setGeneratedEvidence(result.athleteEvidence)
+        setPrescriptionBinding(result.prescriptionBinding)
         return
     }
   }
@@ -121,6 +138,14 @@ export function PlanBeta({
       return
     }
     generateCandidates(nextDraft)
+  }
+
+  const selectRecord = (recordId: string) => {
+    if (recordId === selectedRecordId) return
+    setSelectedRecordId(recordId)
+    setComparisonRecordId(null)
+    setRecordConfirmationPending(true)
+    if (generatedIntake !== null) generateCandidates(generatedIntake)
   }
 
   const saveCandidate = (
@@ -224,11 +249,27 @@ export function PlanBeta({
           generated={generated}
           intake={generatedIntake}
           athleteEvidence={generatedEvidence}
+          athleteRecords={athleteRecords}
+          selectedRecordId={selectedRecordId}
+          comparisonRecordId={comparisonRecordId}
+          prescriptionBinding={prescriptionBinding}
+          recordConfirmationPending={recordConfirmationPending}
+          onSelectRecord={selectRecord}
+          onCompareRecord={setComparisonRecordId}
+          onConfirmRecord={() => {
+            if (selectedRecordId !== null) {
+              setRecordConfirmationPending(false)
+              generateCandidates(generatedIntake, selectedRecordId)
+            }
+          }}
           onBack={() => {
             setGenerated(null)
             setGate(null)
             setErrorCode(null)
             setRetrySelection(null)
+            setSelectedRecordId(null)
+            setComparisonRecordId(null)
+            setRecordConfirmationPending(false)
             setStep("two-a-day")
           }}
           onSelect={(selection) => {

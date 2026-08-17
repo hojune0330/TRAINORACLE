@@ -157,7 +157,7 @@ export function prescriptionLabel(session: PlanSession): string {
     return "달리기 일정 없음"
   }
   if (session.prescription.kind === "PACE_TARGET") {
-    return ENERGY_INTENT_LABELS[session.plannedEnergyIntent].title
+    return `총 ${session.prescription.totals.totalRepetitions}회 · 품질 거리 ${session.prescription.totals.qualityDistanceM}m · 1000m ${formatTargetSeconds(session.prescription.targetRepSeconds)}`
   }
   const duration = `${session.prescription.durationMinutes.minimum}~${session.prescription.durationMinutes.maximum}분`
   const rpe = `RPE ${session.prescription.rpe.minimum}~${session.prescription.rpe.maximum}`
@@ -197,6 +197,9 @@ export function sessionGuidance(session: PlanSession): string {
 }
 
 export function sessionExecution(session: PlanSession): string {
+  if (session.prescription.kind === "PACE_TARGET") {
+    return "준비, 5회 본운동과 4번의 사이 회복, 정리 순서로 진행하세요."
+  }
   switch (session.role) {
     case "REST":
       return "달리기 일정은 없습니다. 쉬거나 일상 수준으로 가볍게 움직이세요."
@@ -207,6 +210,11 @@ export function sessionExecution(session: PlanSession): string {
     case "QUALITY":
       return "준비·본운동·정리 순서대로 타이머를 맞춰 진행하세요."
   }
+}
+
+function formatTargetSeconds(value: number): string {
+  const rounded = Math.round(value)
+  return `${Math.floor(rounded / 60)}분 ${String(rounded % 60).padStart(2, "0")}초`
 }
 
 export type SessionExecutionStep = {
@@ -338,7 +346,13 @@ export function candidateSessionSummary(candidate: {
   const secondSession = twoADayTrainingDays === 0
     ? ""
     : ` · 하루 2회 훈련 ${twoADayTrainingDays}일`
-  return `운동 ${counts.training}회 · 기초 지구력 ${intentionCounts.BASE_INTENT}일 · ${qualityLabel} · 휴식 ${counts.rest}일 · 총 계획 시간 ${durationLabel}${secondSession}`
+  const hasDetailedPrescription = candidate.sessions.some(
+    (session) => session.prescription.kind === "PACE_TARGET",
+  )
+  const timeLabel = hasDetailedPrescription
+    ? `RPE 세션 시간 ${durationLabel} · 상세 페이스 세션 별도 표시`
+    : `총 계획 시간 ${durationLabel}`
+  return `운동 ${counts.training}회 · 기초 지구력 ${intentionCounts.BASE_INTENT}일 · ${qualityLabel} · 휴식 ${counts.rest}일 · ${timeLabel}${secondSession}`
 }
 
 export function twoADayTrainingDayCount(sessions: readonly PlanSession[]): number {

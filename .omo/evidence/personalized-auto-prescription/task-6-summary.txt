@@ -1,0 +1,9 @@
+Todo 6 personalized auto prescription UI closure
+HEAD before task commit: 3b9257b6168d835ef5390e587b839549df7a4fc2
+Evidence: task-6-personalized-auto-prescription.json
+Evidence SHA256: 7774a292260b03eddd6065dd1f1ed50d83abf12ecdd1c4fbc3c5508432aa1023
+
+PASS: app and E2E typechecks; full KST 1274/1274; release environment 9/9; focused prescription 7/7; standard production build twice consecutively; isolated Playwright 6/6; diff check.
+Behavior: confirmed-record-only 5K binding, exact 5×1000m prescription, candidate selection and reload persistence, record replacement reconfirmation, stale/missing RPE fallback, and D9 pre-candidate block.
+Independent review: visual APPROVE after Korean wrapping fix; integrity APPROVE after build, hash, safety and narrow-diff recheck.
+Cleanup: port 4177 stopped. Local repeat builds retain unreferenced hashed assets; clean CI deployment does not.

@@ -111,7 +111,7 @@ Your next move: start work. Full execution detail follows below.
   QA scenarios (name the exact tool + invocation): focused impl/app Vitest contract cases for valid, stale, 1500m cross-event, forged status, revoked manifest, binder-level D9 atomicity, and production-level D9 ACTIVE/UNKNOWN zero-candidate blocking. Evidence `<attemptDir>/task-5-personalized-auto-prescription.json`.
   Commit: Y | `feat(plan-generator): bind atomic same-event pace prescription`
 
-- [ ] 6. Put explicit record choice and detailed instructions in the athlete flow
+- [x] 6. Put explicit record choice and detailed instructions in the athlete flow
   What to do / Must NOT do: Integrate the existing PaceEvidenceFlow into real plan creation. The athlete selects PB/SB/recent result, confirms CURRENT, sees which result produced the pace, and may compare another current result without changing the chosen anchor. Candidate and active-plan views show notation plus plain Korean: total reps/distance, target time per rep, JOG recovery, warm-up, cooldown, RPE explanation, downshift and stop rules. Use accessible help icons/tooltips and semantic disclosure controls. Never auto-select fastest, imply medical clearance, or hide an RPE fallback.
   Parallelization: Wave 2 | Blocked by: 4, 5 | Blocks: 7
   References (executor has NO interview context - be exhaustive): `app/src/screens/plan-beta/PaceEvidenceFlow.tsx`; `app/src/screens/plan-beta/PlanCandidates.tsx`; `app/src/screens/plan-beta/ActivePlanCalendar.tsx`; `app/src/screens/PlanBeta.tsx`; `app/src/screens/plan-beta/labels.ts`; `app/src/domain/athlete-records.ts`; `app/src/domain/pace-target-evidence.ts`; `app/e2e/plan-beta.spec.ts`; frontend skill and existing visual conventions.

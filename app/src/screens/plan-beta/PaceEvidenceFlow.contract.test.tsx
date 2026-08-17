@@ -1,10 +1,8 @@
-import { cleanup, render, screen } from "@testing-library/react"
+import React from "react"
+import { cleanup, render, screen, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
-import { afterEach, describe, expect, it } from "vitest"
-import { decideSafetyGate } from "@impl/safety-gate/gate"
-import { mapD9ResultToRveSignal } from "@impl/rve/signal"
+import { afterEach, describe, expect, it, vi } from "vitest"
 import type { AthleteRecord } from "../../domain/athlete-records"
-import { DETAILED_PRESCRIPTION_APPROVALS } from "../../domain/detailed-prescription-approvals"
 import { PaceEvidenceFlow } from "./PaceEvidenceFlow"
 
 afterEach(cleanup)
@@ -21,100 +19,68 @@ const RECORDS: readonly AthleteRecord[] = [
     enteredBy: "ATHLETE",
     verificationState: "SELF_REPORTED",
     sourceRef: "athlete-record:pb-5000-1110",
-    savedAt: "2026-07-30T00:00:00.000Z",
+    savedAt: "2026-05-10T00:00:00.000Z",
   },
   {
     schemaVersion: 1,
-    id: "goal-5000-1050",
-    purpose: "RACE_GOAL",
+    id: "sb-5000-1140",
+    purpose: "SEASON_BEST",
     eventDistanceM: 5000,
-    performanceSeconds: 1050,
-    achievedOn: null,
-    seasonId: null,
+    performanceSeconds: 1140,
+    achievedOn: "2026-04-20",
+    seasonId: "2026",
     enteredBy: "ATHLETE",
     verificationState: "SELF_REPORTED",
-    sourceRef: "athlete-record:goal-5000-1050",
-    savedAt: "2026-07-30T00:00:00.000Z",
+    sourceRef: "athlete-record:sb-5000-1140",
+    savedAt: "2026-04-20T00:00:00.000Z",
   },
 ]
-const V2_APPROVAL = DETAILED_PRESCRIPTION_APPROVALS.find(
-  (approval) => approval.templateId === "V2-SEED-05" && approval.templateVersion === "1.0.0",
-)
-if (V2_APPROVAL === undefined) throw new TypeError("Trusted V2-SEED-05 approval is missing")
-const OPERATIONAL_COMPONENTS = V2_APPROVAL.canonicalTemplateContent.operationalComponents
 
-function clearedGate() {
-  return decideSafetyGate(mapD9ResultToRveSignal({
-    disposition: "D9_CLEARED",
-    blocksPlanGeneration: false,
-    reasonCodes: ["D9_CLEARED_NO_COLLOQUIAL_RISK_SIGNAL"],
-    evidence: [],
-  }))
-}
-
-function renderFlow() {
-  render(
+function ControlledFlow({ onConfirm }: { readonly onConfirm: () => void }) {
+  const [selected, setSelected] = React.useState<string | null>(null)
+  const [comparison, setComparison] = React.useState<string | null>(null)
+  return (
     <PaceEvidenceFlow
       records={RECORDS}
-      notation="5×1000m @5000m RP · r150″ JOG"
-      template={{ lifecycleStatus: "ACTIVE", eligibilityStatus: "ELIGIBLE" }}
-      safetyGate={clearedGate()}
-      operationalComponents={OPERATIONAL_COMPONENTS}
-      today={new Date("2026-07-30T12:00:00.000Z")}
-    />,
+      selectedRecordId={selected}
+      comparisonRecordId={comparison}
+      binding={{ kind: "fallback", code: "PACE_TARGET_FALLBACK_NO_EXPLICIT_ANCHOR" }}
+      onSelectRecord={setSelected}
+      onCompareRecord={setComparison}
+      onConfirm={onConfirm}
+    />
   )
 }
 
-describe("P3 explicit pace evidence flow", () => {
-  it("starts with no selected record and no numeric target", () => {
-    renderFlow()
+describe("explicit pace evidence selection", () => {
+  it("does not auto-select even one stored result", () => {
+    render(<PaceEvidenceFlow
+      records={RECORDS.slice(0, 1)}
+      selectedRecordId={null}
+      comparisonRecordId={null}
+      binding={{ kind: "fallback", code: "PACE_TARGET_FALLBACK_NO_EXPLICIT_ANCHOR" }}
+      onSelectRecord={() => undefined}
+      onCompareRecord={() => undefined}
+      onConfirm={() => undefined}
+    />)
 
-    expect(screen.getByRole("heading", { name: "기준 기록을 고르세요" })).toBeVisible()
-    expect(screen.queryByText(/3분 42초/u)).toBeNull()
-    expect(screen.queryByText(/3분 30초/u)).toBeNull()
+    expect(screen.getByRole("button", { name: /개인 최고.*18분 30초/u })).toHaveAttribute("aria-pressed", "false")
+    expect(screen.queryByRole("button", { name: "이 기록으로 개인 페이스 적용" })).toBeNull()
   })
 
-  it("requires a separate currentness confirmation before showing numbers", async () => {
+  it("keeps comparison separate and confirms only the selected record", async () => {
+    const onConfirm = vi.fn()
     const user = userEvent.setup()
-    renderFlow()
+    render(<ControlledFlow onConfirm={onConfirm} />)
+    const flow = screen.getByRole("region", { name: "개인 페이스 기준 기록" })
 
-    await user.click(screen.getByRole("button", {
-      name: /개인 최고.*5000m.*18분 30초/u,
-    }))
-    expect(screen.getByRole("heading", {
-      name: "이 기록이 지금 실력을 나타내나요?",
-    })).toBeVisible()
-    expect(screen.queryByText(/3분 42초/u)).toBeNull()
+    await user.click(within(flow).getByRole("button", { name: /개인 최고.*18분 30초/u }))
+    await user.click(within(flow).getByText("다른 같은 종목 기록과 비교"))
+    await user.click(within(flow).getByRole("button", { name: /비교 기록.*시즌 최고.*19분/u }))
 
-    await user.click(screen.getByRole("button", {
-      name: /^현재 실력으로 사용/u,
-    }))
-
-    expect(screen.getByText("오늘 반복 목표")).toBeVisible()
-    expect(screen.getByText("3분 42초")).toBeVisible()
-    expect(screen.getByText("목표 기록 기준")).toBeVisible()
-    expect(screen.getByText(/3분 30초.*참고용/u)).toBeVisible()
-    expect(screen.getByText("목표 기록은 오늘 지시가 아니에요.")).toBeVisible()
-    expect(screen.getByText(/직접 입력.*자기 보고/u)).toBeVisible()
-  })
-
-  it.each([
-    ["참고 기록으로만 보기", "이 기록은 참고용으로 선택됐어요."],
-    ["아직 모르겠어요", "현재 실력인지 확인이 필요해요."],
-  ] as const)("removes numeric targets for %s", async (choice, message) => {
-    const user = userEvent.setup()
-    renderFlow()
-    await user.click(screen.getByRole("button", {
-      name: /개인 최고.*5000m.*18분 30초/u,
-    }))
-
-    await user.click(screen.getByRole("button", {
-      name: new RegExp(`^${choice}`, "u"),
-    }))
-
-    expect(screen.getByText(message)).toBeVisible()
-    expect(screen.getByText("숫자 페이스 대신 체감강도로 안내합니다.")).toBeVisible()
-    expect(screen.queryByText(/3분 42초/u)).toBeNull()
-    expect(screen.queryByText(/3분 30초/u)).toBeNull()
+    expect(within(flow).getByText(/기준 기록.*18분 30초/u)).toBeVisible()
+    expect(within(flow).getByText(/비교만.*19분/u)).toBeVisible()
+    await user.click(within(flow).getByRole("button", { name: "이 기록으로 개인 페이스 적용" }))
+    expect(onConfirm).toHaveBeenCalledOnce()
   })
 })
