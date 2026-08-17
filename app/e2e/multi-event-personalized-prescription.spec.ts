@@ -6,10 +6,10 @@ test.use({ serviceWorkers: "block" })
 const appPath = process.env.PLAYWRIGHT_APP_PATH ?? "/"
 
 const records = [
-  [800, 120],
-  [1500, 240],
-  [3000, 600],
-  [5000, 1110],
+  [800, 122],
+  [1500, 245],
+  [3000, 611],
+  [5000, 1111],
 ].map(([eventDistanceM, performanceSeconds]) => ({
   schemaVersion: 1,
   id: `e2e-current-${eventDistanceM}`,
@@ -28,19 +28,25 @@ const cases = [
   {
     eventDistanceM: 800,
     notation: /10×200m @800m RP.*r60.*STAND/u,
-    work: "200m를 0분 30초 목표로 10회 · 품질 거리 2000m",
+    summary: "총 10회 · 품질 거리 2000m · 200m 31초",
+    execution: "준비, 10회 본운동과 9번의 사이 회복, 정리 순서로 진행하세요.",
+    work: "200m를 31초 목표로 10회 · 품질 거리 2000m",
     recovery: "9번 · 매번 60초 서서 쉬기 · 총 540초",
   },
   {
     eventDistanceM: 1500,
     notation: /3×500m @1500m RP.*r180.*STAND/u,
-    work: "500m를 1분 20초 목표로 3회 · 품질 거리 1500m",
+    summary: "총 3회 · 품질 거리 1500m · 500m 1분 22초",
+    execution: "준비, 3회 본운동과 2번의 사이 회복, 정리 순서로 진행하세요.",
+    work: "500m를 1분 22초 목표로 3회 · 품질 거리 1500m",
     recovery: "2번 · 매번 180초 서서 쉬기 · 총 360초",
   },
   {
     eventDistanceM: 3000,
     notation: /4×800m @3000m RP.*r180.*WALK/u,
-    work: "800m를 2분 40초 목표로 4회 · 품질 거리 3200m",
+    summary: "총 4회 · 품질 거리 3200m · 800m 2분 43초",
+    execution: "준비, 4회 본운동과 3번의 사이 회복, 정리 순서로 진행하세요.",
+    work: "800m를 2분 43초 목표로 4회 · 품질 거리 3200m",
     recovery: "3번 · 매번 180초 걷기 · 총 540초",
   },
 ] as const
@@ -96,6 +102,8 @@ for (const fixture of cases) {
 
     await expect(page.getByText(fixture.notation).first()).toBeVisible()
     await page.getByRole("button", { name: /반복 인터벌 포함 선택하기/u }).click()
+    await expect(page.getByText(fixture.summary).first()).toBeVisible()
+    await expect(page.getByText(fixture.execution).first()).toBeVisible()
     await expect(page.getByText(fixture.work).first()).toBeVisible()
     await expect(page.getByText(fixture.recovery).first()).toBeVisible()
     await expect(page.getByText(fixture.notation).first()).toBeVisible()

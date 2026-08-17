@@ -10,7 +10,7 @@ const RECORDS = [
     id: "pb-5k-current",
     purpose: "PERSONAL_BEST",
     eventDistanceM: 5000,
-    performanceSeconds: 1110,
+    performanceSeconds: 1111,
     achievedOn: "2026-05-10",
     seasonId: null,
     enteredBy: "ATHLETE",
@@ -62,9 +62,9 @@ describe("production detailed prescription experience", () => {
     await reachCandidates()
 
     const picker = screen.getByRole("region", { name: "개인 페이스 기준 기록" })
-    await user.click(within(picker).getByRole("button", { name: /개인 최고.*18분 30초/u }))
+    await user.click(within(picker).getByRole("button", { name: /개인 최고.*18분 31초/u }))
     await user.click(within(picker).getByRole("button", { name: /비교 기록.*시즌 최고.*19분/u }))
-    expect(within(picker).getByText(/기준 기록.*18분 30초/u)).toBeVisible()
+    expect(within(picker).getByText(/기준 기록.*18분 31초/u)).toBeVisible()
     expect(within(picker).getByText(/비교만.*19분/u)).toBeVisible()
 
     await user.click(within(picker).getByRole("button", { name: "이 기록으로 개인 페이스 적용" }))
@@ -72,10 +72,11 @@ describe("production detailed prescription experience", () => {
     const schedule = screen.getAllByRole("list", { name: "날짜별 계획 미리보기" })[0]
     if (schedule === undefined) throw new Error("Expected an expanded candidate schedule")
     expect(within(schedule).getByText(/5×1000m @5000m RP.*r150.*JOG/u)).toBeVisible()
+    expect(within(schedule).getByText("총 5회 · 품질 거리 5000m · 1000m 3분 42초")).toBeVisible()
     expect(within(schedule).getAllByText(/5회.*5000m/u)).not.toHaveLength(0)
     expect(within(schedule).getByText(/4번.*150초.*조깅.*600초/u)).toBeVisible()
     await user.click(within(schedule).getByText("기준 기록·중단·낮춤 규칙 보기"))
-    expect(within(schedule).getByText(/5000m.*18분 30초.*2026-05-10/u)).toBeVisible()
+    expect(within(schedule).getByText(/5000m.*18분 31초.*2026-05-10/u)).toBeVisible()
 
     await user.click(screen.getByRole("button", { name: /반복 인터벌 포함 선택하기/u }))
     expect(screen.getByRole("heading", { name: /반복 인터벌 포함 9일 계획/u })).toBeVisible()
@@ -90,7 +91,7 @@ describe("production detailed prescription experience", () => {
     render(<PlanBeta />)
     expect(screen.getByText(/5×1000m @5000m RP.*r150.*JOG/u)).toBeVisible()
     await user.click(screen.getByText("기준 기록·중단·낮춤 규칙 보기"))
-    expect(screen.getByText(/5000m.*18분 30초.*2026-05-10/u)).toBeVisible()
+    expect(screen.getByText(/5000m.*18분 31초.*2026-05-10/u)).toBeVisible()
   })
 
   it("requires reconfirmation after replacing a confirmed record", async () => {
@@ -99,7 +100,7 @@ describe("production detailed prescription experience", () => {
     await reachCandidates()
 
     const picker = screen.getByRole("region", { name: "개인 페이스 기준 기록" })
-    await user.click(within(picker).getByRole("button", { name: /개인 최고.*18분 30초/u }))
+    await user.click(within(picker).getByRole("button", { name: /개인 최고.*18분 31초/u }))
     await user.click(within(picker).getByRole("button", { name: "이 기록으로 개인 페이스 적용" }))
     expect(screen.getAllByText(/5×1000m @5000m RP.*r150.*JOG/u)).not.toHaveLength(0)
 
@@ -119,7 +120,7 @@ describe("production detailed prescription experience", () => {
     await reachCandidates()
 
     const picker = screen.getByRole("region", { name: "개인 페이스 기준 기록" })
-    await user.click(within(picker).getByRole("button", { name: /개인 최고.*18분 30초/u }))
+    await user.click(within(picker).getByRole("button", { name: /개인 최고.*18분 31초/u }))
     await user.click(within(picker).getByRole("button", { name: "이 기록으로 개인 페이스 적용" }))
 
     expect(within(picker).getByText(/기록일이 현재 기준 범위를 벗어났어요/u)).toBeVisible()

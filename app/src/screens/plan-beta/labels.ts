@@ -157,7 +157,7 @@ export function prescriptionLabel(session: PlanSession): string {
     return "달리기 일정 없음"
   }
   if (session.prescription.kind === "PACE_TARGET") {
-    return `총 ${session.prescription.totals.totalRepetitions}회 · 품질 거리 ${session.prescription.totals.qualityDistanceM}m · 1000m ${formatTargetSeconds(session.prescription.targetRepSeconds)}`
+    return `총 ${session.prescription.totals.totalRepetitions}회 · 품질 거리 ${session.prescription.totals.qualityDistanceM}m · ${session.prescription.repetitionDistanceM}m ${formatTrainingSeconds(session.prescription.targetRepSeconds)}`
   }
   const duration = `${session.prescription.durationMinutes.minimum}~${session.prescription.durationMinutes.maximum}분`
   const rpe = `RPE ${session.prescription.rpe.minimum}~${session.prescription.rpe.maximum}`
@@ -198,7 +198,7 @@ export function sessionGuidance(session: PlanSession): string {
 
 export function sessionExecution(session: PlanSession): string {
   if (session.prescription.kind === "PACE_TARGET") {
-    return "준비, 5회 본운동과 4번의 사이 회복, 정리 순서로 진행하세요."
+    return `준비, ${session.prescription.totals.totalRepetitions}회 본운동과 ${session.prescription.totals.repetitionRecoveryOccurrences}번의 사이 회복, 정리 순서로 진행하세요.`
   }
   switch (session.role) {
     case "REST":
@@ -212,9 +212,12 @@ export function sessionExecution(session: PlanSession): string {
   }
 }
 
-function formatTargetSeconds(value: number): string {
+export function formatTrainingSeconds(value: number): string {
   const rounded = Math.round(value)
-  return `${Math.floor(rounded / 60)}분 ${String(rounded % 60).padStart(2, "0")}초`
+  if (rounded < 60) return `${rounded}초`
+  const minutes = Math.floor(rounded / 60)
+  const seconds = rounded % 60
+  return seconds === 0 ? `${minutes}분` : `${minutes}분 ${seconds}초`
 }
 
 export type SessionExecutionStep = {
