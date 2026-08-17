@@ -4,6 +4,8 @@ import path from "node:path"
 import { selectNineDayProjection } from "./plan-flow"
 
 test.use({ serviceWorkers: "block" })
+const appPath = process.env.PLAYWRIGHT_APP_PATH ?? "/"
+
 
 const evidenceDir = path.resolve(
   process.cwd(),
@@ -46,7 +48,7 @@ async function seedRecords(page: Page, records: unknown): Promise<void> {
 }
 
 async function openPlan(page: Page): Promise<void> {
-  await page.goto("/?app=1")
+  await page.goto(`${appPath}?app=1`)
   await page.getByRole("navigation", { name: "주 탭" })
     .getByRole("button", { name: "계획" })
     .click()

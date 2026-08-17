@@ -119,7 +119,7 @@ Your next move: start work. Full execution detail follows below.
   QA scenarios (name the exact tool + invocation): Playwright Chromium at 375×667 and 1440×900 for valid 5K, missing record, stale record and D9 block; screenshots and accessibility assertions saved to `<attemptDir>/task-6-personalized-auto-prescription/`.
   Commit: Y | `feat(plan-ui): show evidence-backed detailed sessions`
 
-- [ ] 7. Prove and release the complete 5000 m personalized path
+- [x] 7. Prove and release the complete 5000 m personalized path
   What to do / Must NOT do: Add one end-to-end scenario from new/local athlete record through candidate generation, selection, persistence, reload and session start/restart authority checks. Exercise youth and adult division labels with identical readiness inputs and prove identical training eligibility/dose. Keep privacy/account guardian scenarios separate. Build and deploy only after all local and CI gates pass; capture source SHA and Pages deployment receipt.
   Parallelization: Wave 3 | Blocked by: 3, 4, 5, 6 | Blocks: 9, 10 | Can parallelize with: 8
   References (executor has NO interview context - be exhaustive): `.github/workflows/ci.yml`; `app/e2e/plan-beta.spec.ts`; `app/scripts/validate-hosted-release-env.mjs`; `runtime-evidence/d9-evaluator`; public URL `https://hojune0330.github.io/TRAINORACLE/`.
