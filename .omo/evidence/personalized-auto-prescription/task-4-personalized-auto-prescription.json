@@ -1,0 +1,169 @@
+{
+  "schemaVersion": 2,
+  "event": "task-evidence-follow-up",
+  "task": "Todo 4 versioned detailed-prescription storage and non-destructive migration",
+  "artifactTimestamp": "2026-08-17T13:22:44.2669871+09:00",
+  "headAtEvidenceCapture": "06a51f3a38b2e484675369e8925ae000d9b9b0e3",
+  "correction": {
+    "priorClaim": "Raw narrative fields were rejected by the persisted state boundary.",
+    "observedDefect": "Enclosing non-strict Zod objects stripped unknown fields and allowed save/load to succeed.",
+    "corrected": true
+  },
+  "characterization": {
+    "command": "npm --prefix app run test:unit -- plan-beta-pace-storage",
+    "exitCode": 0,
+    "output": [
+      "Test Files 1 passed (1)",
+      "Tests 5 passed (5)",
+      "Duration 3.72s"
+    ],
+    "observed": [
+      "v1 REST/RPE repeated load preserved session bytes",
+      "PACE_TARGET was rejected by the pre-Todo4 stored-plan schema"
+    ]
+  },
+  "originalRed": {
+    "command": "npm --prefix app run test:unit -- plan-beta-pace-storage",
+    "exitCode": 1,
+    "output": [
+      "Test Files 1 failed (1)",
+      "Tests 9 failed | 1 passed (10)",
+      "v1 migration expected version 2 and received version 1",
+      "createStoredPaceTargetPrescription is not a function",
+      "Duration 2.80s"
+    ],
+    "failureClass": "missing versioned storage, migration, detailed fingerprint, and execution-authority contract"
+  },
+  "strictBoundaryRed": {
+    "command": "npm --prefix app run test:unit -- plan-beta-pace-storage",
+    "exitCode": 1,
+    "output": [
+      "Test Files 1 failed (1)",
+      "Tests 7 failed | 10 passed (17)",
+      "root rawMemo, intake symptomNarrative, active-plan medicalNarrative, frame coachNarrative, session guardianNarrative, RPE prescription rawMemo, and root benign extraKey each returned ok true",
+      "Duration 3.07s"
+    ],
+    "failureClass": "unknown fields stripped before storage instead of rejecting the whole payload"
+  },
+  "green": {
+    "storage": {
+      "command": "npm --prefix app run test:unit -- plan-beta-pace-storage",
+      "exitCode": 0,
+      "output": ["Test Files 1 passed (1)", "Tests 17 passed (17)", "Duration 11.54s"]
+    },
+    "store": {
+      "command": "npm --prefix app run test:unit -- plan-beta-store",
+      "exitCode": 0,
+      "output": ["Test Files 1 passed (1)", "Tests 26 passed (26)", "Duration 11.93s"]
+    },
+    "planSchema": {
+      "command": "npm --prefix app run test:unit -- plan-beta-schema",
+      "exitCode": 0,
+      "output": ["Test Files 1 passed (1)", "Tests 14 passed (14)", "Duration 10.06s"]
+    },
+    "sessionSchema": {
+      "command": "npm --prefix app run test:unit -- plan-session-schema",
+      "exitCode": 0,
+      "output": ["Test Files 1 passed (1)", "Tests 8 passed (8)", "Duration 9.34s"]
+    },
+    "detailedPrescription": {
+      "command": "npm --prefix app run test:unit -- detailed-prescription",
+      "exitCode": 0,
+      "output": ["Test Files 2 passed (2)", "Tests 15 passed (15)", "Duration 11.64s"]
+    },
+    "activePlanConsumer": {
+      "command": "npm --prefix app run test:unit -- PlanBeta.contract",
+      "exitCode": 0,
+      "output": ["Test Files 1 passed (1)", "Tests 34 passed (34)", "Duration 22.52s"]
+    },
+    "activePlanPersistenceRetry": {
+      "command": "npm --prefix app run test:unit -- PlanBeta.persistence-retry",
+      "exitCode": 0,
+      "output": ["Test Files 1 passed (1)", "Tests 3 passed (3)", "Duration 18.80s"]
+    },
+    "history": {
+      "command": "npm --prefix app run test:unit -- plan-beta-history",
+      "exitCode": 0,
+      "output": ["Test Files 1 passed (1)", "Tests 1 passed (1)", "Duration 3.80s"]
+    },
+    "flow": {
+      "command": "npm --prefix app run test:unit -- plan-beta-flow",
+      "exitCode": 0,
+      "output": ["Test Files 1 passed (1)", "Tests 13 passed (13)", "Duration 4.35s"]
+    },
+    "typecheck": {
+      "command": "npm --prefix app run typecheck",
+      "exitCode": 0,
+      "output": ["> tsc --noEmit"]
+    },
+    "diffCheck": {
+      "command": "git diff --check",
+      "exitCode": 0,
+      "output": ["line-ending warnings only; no whitespace errors"]
+    }
+  },
+  "coverageRouting": {
+    "requestedLiteralCommand": "npm --prefix app run test:unit -- active-plan",
+    "exitCode": 1,
+    "output": ["No test files found, exiting with code 1", "filter: active-plan"],
+    "resolution": "The repository has no active-plan-named test file; actual ActivePlan consumers passed PlanBeta.contract and PlanBeta.persistence-retry."
+  },
+  "manualScenario": {
+    "adapter": "plan-beta-store using jsdom window.localStorage",
+    "unknownSaveReturnsSafeError": true,
+    "rejectedSavePreservesExistingBytes": true,
+    "unknownLoadReturnsUnavailable": true,
+    "rejectedLoadPreservesUnknownBytes": true,
+    "v1WriteLoadMigrate": true,
+    "v1SessionIdentityPreserved": true,
+    "repeatedMigrationIdempotent": true,
+    "v2WriteReload": true,
+    "d9UnknownStartBlocked": true,
+    "revokedRestartBlocked": true,
+    "blockedSnapshotPreserved": true,
+    "malformedSnapshotPreserved": true,
+    "tamperedSnapshotPreserved": true
+  },
+  "adversarial": {
+    "malformedPayload": {"result": "PASS", "storedBytesPreserved": true},
+    "prescriptionFingerprintMutation": {"result": "PASS", "targetExistenceAndChangeAsserted": true, "storedBytesPreserved": true},
+    "componentFingerprintMutation": {"result": "PASS", "targetExistenceAndChangeAsserted": true, "storedBytesPreserved": true},
+    "staleTemplateFingerprint": {"result": "PASS", "executionPermitted": false},
+    "expiredAuthority": {"result": "PASS", "startPermitted": false, "storedBytesPreserved": true},
+    "revokedAuthority": {"result": "PASS", "restartPermitted": false, "storedBytesPreserved": true},
+    "d9Active": {"result": "PASS", "startPermitted": false, "storedBytesPreserved": true},
+    "d9Unknown": {"result": "PASS", "startPermitted": false, "storedBytesPreserved": true},
+    "repeatedMigration": {"result": "PASS", "idempotent": true, "sourceBytesRewritten": false},
+    "rootRawMemo": {"result": "PASS", "accepted": false, "targetExistenceAndChangeAsserted": true},
+    "intakeSymptomNarrative": {"result": "PASS", "accepted": false, "targetExistenceAndChangeAsserted": true},
+    "activePlanMedicalNarrative": {"result": "PASS", "accepted": false, "targetExistenceAndChangeAsserted": true},
+    "frameCoachNarrative": {"result": "PASS", "accepted": false, "targetExistenceAndChangeAsserted": true},
+    "sessionGuardianNarrative": {"result": "PASS", "accepted": false, "targetExistenceAndChangeAsserted": true},
+    "rpePrescriptionRawMemo": {"result": "PASS", "accepted": false, "targetExistenceAndChangeAsserted": true},
+    "benignExtraKey": {"result": "PASS", "accepted": false, "targetExistenceAndChangeAsserted": true},
+    "dirtyWorktree": {"result": "PASS", "detail": "Existing edits were preserved; no reset, stage, or commit."},
+    "misleadingSuccessOutput": {"result": "PASS", "detail": "Mutation helpers require targets and the tests assert serialized bytes changed before expected rejection."},
+    "promptInjection": {"result": "N/A", "reason": "No prompt-processing surface is in Todo 4."},
+    "concurrency": {"result": "N/A", "reason": "The local storage adapter and authority recheck are synchronous and pure at this boundary."}
+  },
+  "hashes": {
+    "planSessionSchemaSha256": "df4af88aae76740e80050f685e8ff6f3cd2fc5adb20ee4f4a2999ab2f5fa5662",
+    "planBetaSchemaSha256": "a82495c0f66028b72ad667d88a73204154d26ceda645a7893e43f9fa004fd238",
+    "planBetaStoreSha256": "2b1fb1b3ece776b4fcd2949e8d61acc8de7c1bfec384d685248adeae1d204775",
+    "storageContractTestSha256": "926048a7ca44966ca4c9da5873a8ea2434a462bc8d6074420e3011cc4228a52f",
+    "storeTestSha256": "2bc807ca72c46fc58da88b906c9758fe6e82533fe38b392e2b4afb2191a73416"
+  },
+  "cleanup": {
+    "runtimeResourcesSpawned": false,
+    "serverStarted": false,
+    "temporaryDirectoriesCreated": false,
+    "staged": false,
+    "committed": false
+  },
+  "risks": [
+    "The strict storage boundary rejects all undeclared fields, including benign forward additions; schema evolution must explicitly version and declare new fields.",
+    "The legacy UI-facing loader intentionally returns unavailable for a valid stored detailed session; the versioned loader retains and reloads it until later UI binding work.",
+    "The stored prescription fingerprint is a deterministic canonical-content binding for tamper detection, while execution authority is independently rechecked against the compiled trusted manifest at an explicit evaluation time.",
+    "D9 CLEARED is treated only as the current training safety-gate state, not medical clearance."
+  ]
+}

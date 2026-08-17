@@ -10,6 +10,7 @@ import {
 import type {
   PlanBetaIntake,
   PlanBetaState,
+  PlanBetaStateV2,
   StoredPlanBetaIntake,
   StoredPlanHistory,
   StoredPlanProgress,
@@ -17,6 +18,7 @@ import type {
 export type {
   PlanBetaIntake,
   PlanBetaState,
+  PlanBetaStateV2,
   StoredPlanBetaIntake,
   StoredPlanHistory,
   StoredPlanProgress,
@@ -40,6 +42,19 @@ export type PlanArchiveResult =
     }
 
 export function loadPlanBetaState(): PlanBetaState | null {
+  const parsed = loadVersionedPlanBetaState()
+  if (
+    parsed === null
+    || parsed.activePlan.sessions.some(
+      (session) => session.role === "QUALITY" && session.prescription.kind === "PACE_TARGET",
+    )
+  ) {
+    return null
+  }
+  return parsed as PlanBetaState
+}
+
+export function loadVersionedPlanBetaState(): PlanBetaStateV2 | null {
   if (typeof window === "undefined") return null
   const raw = window.localStorage.getItem(STORAGE_KEY)
   if (raw === null) return null
@@ -53,7 +68,9 @@ export function loadPlanBetaState(): PlanBetaState | null {
   }
 }
 
-export function savePlanBetaState(state: PlanBetaState): PlanStorageResult {
+export function savePlanBetaState(
+  state: unknown,
+): PlanStorageResult {
   if (typeof window === "undefined") {
     return { ok: false, code: "PLAN_STORAGE_WRITE_FAILED" }
   }

@@ -95,7 +95,7 @@ Your next move: start work. Full execution detail follows below.
   QA scenarios (name the exact tool + invocation): run detailed-catalog validators, `npm --prefix impl test`, and mutations for JOG→STAND, 5→4 reps, 150→120 seconds, missing warm-up/cooldown and missing stop code. Evidence `<attemptDir>/task-3-personalized-auto-prescription.json`.
   Commit: Y | `feat(prescription): resolve the exact 5k interval template`
 
-- [ ] 4. Add versioned detailed-prescription plan storage and migration
+- [x] 4. Add versioned detailed-prescription plan storage and migration
   What to do / Must NOT do: Promote the detached PACE_TARGET evidence shape into the QUALITY-session prescription union with template/component versions, manifest/evidence IDs, anchor provenance, rounding policy, recovery modes, totals, stop/downshift codes and fingerprint. Add a non-destructive v1→v2 migration for stored active plans. A stored snapshot is display state, not current authority; start/restart must recheck D9 and manifest revocation. Preserve existing plans and reject malformed/tampered payloads.
   Parallelization: Wave 2 | Blocked by: 1 | Blocks: 5, 6, 7 | Can parallelize with: 3
   References (executor has NO interview context - be exhaustive): `app/src/domain/plan-session-schema.ts:24-82`; `app/src/domain/plan-beta-schema.ts:108`; `app/src/domain/plan-beta-pace-storage.contract.test.ts`; `app/src/domain/active-plan-storage.ts`; `app/src/domain/pace-target-plan.ts:48-75`; `app/src/domain/pace-target-evidence.ts`.
