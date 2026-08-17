@@ -127,7 +127,7 @@ Your next move: start work. Full execution detail follows below.
   QA scenarios (name the exact tool + invocation): run all CI-equivalent commands locally, then browser-control or Playwright against the public URL for youth/adult equivalence, stale fallback, revoked manifest and D9 blocking. Evidence `<attemptDir>/task-7-personalized-auto-prescription/`.
   Commit: Y | `test(release): prove personalized 5k prescription end to end`
 
-- [ ] 8. Build exact source-adoption packets for 800, 1500 and 3000 m
+- [x] 8. Build exact source-adoption packets for 800, 1500 and 3000 m
   What to do / Must NOT do: Recount current catalog and research materials, then use primary/official sources to define one same-event CURRENT-capability session per event with exact reps, distance, recovery mode/time, warm-up, cooldown, downshift, stop rules, population scope and transfer limitations. Separate observed/source protocol from TrainOracle adaptation. Update catalog entries and validators only after a source decision is explicit. Do not infer event formulas from VDOT/cross-event models and do not activate a template whose exact dose remains a range or coach-context placeholder.
   Parallelization: Wave 3 | Blocked by: 1 | Blocks: 9 | Can parallelize with: 7
   References (executor has NO interview context - be exhaustive): `specs/reconstruct/ENERGY_SYSTEM_SESSION_TEMPLATE_CATALOG.md`; `reports/research/README_TRAINING_SCHEDULE_RESEARCH.md`; `reports/research/TRAINING_SCHEDULE_SOURCE_INDEX_2026-07.md`; `.ultra/docs/research/TRAINING_SCHEDULE_PUBLIC_SOURCES_2026-07.md` if present locally; `reports/review/DETAILED_PRESCRIPTION_PR_RECONCILIATION_RESULT.md`; `reports/review/PLAN_PRESCRIPTION_DETAIL_GAP_2026-07-26.md`; World Athletics and peer-reviewed primary sources.
