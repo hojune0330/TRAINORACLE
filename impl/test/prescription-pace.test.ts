@@ -6,7 +6,27 @@ import {
 import { parsePrescriptionNotation } from "../src/prescription/notation"
 import type { PaceAnchorRecord } from "../src/prescription/types"
 
-const notationText = "2×(10×400m) @5000m RP · r60″ · R3′"
+const notationText = "2×(10×400m) @5000m RP · r60″ STAND · R3′ STAND"
+const operationalComponents = {
+  warmup: {
+    componentRef: "WU-V2-5K-01", componentVersion: "1.0.0", authority: "OWNER_OPERATIONAL_ADAPTATION",
+    easyDurationMinutes: 15, rpeMin: 2, rpeMax: 3,
+    strides: { repetitions: 4, durationSeconds: 20, recoverySeconds: 40, recoveryMode: "WALK_OR_JOG", progression: "PROGRESSIVE" },
+  },
+  cooldown: {
+    componentRef: "CD-V2-5K-01", componentVersion: "1.0.0", authority: "OWNER_OPERATIONAL_ADAPTATION",
+    easyDurationMinutes: 10, rpeMin: 1, rpeMax: 2,
+  },
+  fallback: {
+    componentRef: "RPE-ONLY-CONTROLLED-01", componentVersion: "1.0.0", code: "RPE_ONLY_CONTROLLED",
+    behavior: "DELEGATE_TO_EXISTING_RPE_CANDIDATE", numericRepetitionVariant: null,
+  },
+  stopConditions: {
+    componentRef: "STOP-V2-5K-01", componentVersion: "1.0.0", authority: "OWNER_PRECAUTIONARY_OPERATIONAL_RULE",
+    diagnosticClaim: false,
+    codes: ["STOP_NEW_OR_WORSENING_PAIN", "STOP_DIZZINESS_OR_FAINTNESS", "STOP_CHEST_PAIN_OR_UNUSUAL_BREATHING", "STOP_LOSS_OF_CONTROLLED_FORM"],
+  },
+} as const
 
 function parsedNotation() {
   const result = parsePrescriptionNotation(notationText)
@@ -37,6 +57,7 @@ function boundPrescription() {
     notation: parsedNotation(),
     anchor: currentFiveKAnchor(),
     displayRoundingPolicyVersion: "seconds-v1",
+    operationalComponents,
   })
   if (result.kind !== "created") {
     throw new Error(`Expected structured prescription, received ${result.code}`)
@@ -84,6 +105,7 @@ describe("same-event race-pace calculation", () => {
       notation: parsedNotation(),
       anchor,
       displayRoundingPolicyVersion: "seconds-v1",
+      operationalComponents,
     })
 
     // When
@@ -108,6 +130,7 @@ describe("same-event race-pace calculation", () => {
       notation: parsedNotation(),
       anchor,
       displayRoundingPolicyVersion: "seconds-v1",
+      operationalComponents,
     })
 
     // Then
@@ -128,6 +151,7 @@ describe("same-event race-pace calculation", () => {
       notation: parsedNotation(),
       anchor,
       displayRoundingPolicyVersion: "seconds-v1",
+      operationalComponents,
     })
 
     // Then
@@ -153,6 +177,7 @@ describe("same-event race-pace calculation", () => {
       notation: notation.notation,
       anchor,
       displayRoundingPolicyVersion: "seconds-v1",
+      operationalComponents,
     })
 
     // Then
@@ -178,6 +203,7 @@ describe("same-event race-pace calculation", () => {
       notation: notation.notation,
       anchor,
       displayRoundingPolicyVersion: "seconds-v1",
+      operationalComponents,
     })
 
     // Then
@@ -202,7 +228,7 @@ describe("same-event race-pace calculation", () => {
 
   it("rejects 30m sprint race-pace conversion", () => {
     // Given
-    const sprintNotation = parsePrescriptionNotation("3×30m @30m RP · r120″")
+    const sprintNotation = parsePrescriptionNotation("3×30m @30m RP · r120″ STAND")
     if (sprintNotation.kind !== "parsed") {
       throw new Error(`Expected parsed notation, received ${sprintNotation.code}`)
     }
@@ -216,6 +242,7 @@ describe("same-event race-pace calculation", () => {
       notation: sprintNotation.notation,
       anchor,
       displayRoundingPolicyVersion: "seconds-v1",
+      operationalComponents,
     })
 
     // When

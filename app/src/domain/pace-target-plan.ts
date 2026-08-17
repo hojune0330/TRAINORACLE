@@ -4,6 +4,7 @@ import {
 } from "@impl/prescription/runtime"
 import type {
   PaceAnchorRecord,
+  PrescriptionOperationalComponents,
   PrescriptionErrorCode,
   TemplateRuntimeStatus,
 } from "@impl/prescription/types"
@@ -87,6 +88,7 @@ type PaceTargetPlanBuildInput = {
   readonly displayRoundingPolicyVersion: string
   readonly template: TemplateRuntimeStatus
   readonly safetyGate: SafetyGateDecision
+  readonly operationalComponents: PrescriptionOperationalComponents
   readonly today: Date
 }
 
@@ -103,6 +105,7 @@ export function buildPaceTargetPlanItem(
     displayRoundingPolicyVersion: input.displayRoundingPolicyVersion,
     template: input.template,
     safetyGate: input.safetyGate,
+    operationalComponents: input.operationalComponents,
   })
   if (prepared.kind === "rejected") {
     return prepared.code === "SAFETY_GATE_BLOCKED"
@@ -158,6 +161,7 @@ function buildComparison(
     displayRoundingPolicyVersion: input.displayRoundingPolicyVersion,
     template: input.template,
     safetyGate: input.safetyGate,
+    operationalComponents: input.operationalComponents,
   })
   const snapshot = toCurrentSnapshot(
     input.comparison.record,

@@ -3,7 +3,7 @@ import type {
   UnboundPrescriptionNotation,
 } from "./types"
 
-const notationPattern = /^(?:(?<setCount>[1-9]\d*)\s*×\s*\(\s*)?(?<repetitions>[1-9]\d*)\s*×\s*(?<work>[1-9]\d*)\s*(?<unit>m|s)(?:\s*\))?\s*@\s*(?<target>[1-9]\d*)\s*m\s*RP(?:\s*·\s*r(?<repetitionRecovery>[1-9]\d*)\s*(?:″|"))?(?:\s*·\s*R(?<setRecovery>[1-9]\d*)\s*(?:′|'))?$/u
+const notationPattern = /^(?:(?<setCount>[1-9]\d*)\s*×\s*\(\s*)?(?<repetitions>[1-9]\d*)\s*×\s*(?<work>[1-9]\d*)\s*(?<unit>m|s)(?:\s*\))?\s*@\s*(?<target>[1-9]\d*)\s*m\s*RP(?:\s*·\s*r(?<repetitionRecovery>[1-9]\d*)\s*(?:″|")\s+(?<repetitionRecoveryMode>WALK|JOG|STAND))?(?:\s*·\s*R(?<setRecovery>[1-9]\d*)\s*(?:′|')\s+(?<setRecoveryMode>WALK|JOG|STAND))?$/u
 
 function positiveNumber(value: string | undefined): number | undefined {
   if (value === undefined) {
@@ -11,6 +11,10 @@ function positiveNumber(value: string | undefined): number | undefined {
   }
   const parsed = Number(value)
   return Number.isSafeInteger(parsed) && parsed > 0 ? parsed : undefined
+}
+
+function recoveryMode(value: string | undefined): "WALK" | "JOG" | "STAND" | undefined {
+  return value === "WALK" || value === "JOG" || value === "STAND" ? value : undefined
 }
 
 function reject(): PrescriptionNotationResult {
@@ -47,12 +51,16 @@ function isValidRecoveryStructure(input: {
   readonly repetitionsPerSet: number
   readonly setCount: number
   readonly repetitionRecoverySeconds: number | undefined
+  readonly repetitionRecoveryMode: "WALK" | "JOG" | "STAND" | undefined
   readonly setRecoverySeconds: number | undefined
+  readonly setRecoveryMode: "WALK" | "JOG" | "STAND" | undefined
 }): boolean {
   const repetitionRecoveryRequired = input.repetitionsPerSet > 1
   const setRecoveryRequired = input.setCount > 1
   return repetitionRecoveryRequired === (input.repetitionRecoverySeconds !== undefined)
+    && repetitionRecoveryRequired === (input.repetitionRecoveryMode !== undefined)
     && setRecoveryRequired === (input.setRecoverySeconds !== undefined)
+    && setRecoveryRequired === (input.setRecoveryMode !== undefined)
 }
 
 export function parsePrescriptionNotation(input: string): PrescriptionNotationResult {
@@ -67,10 +75,12 @@ export function parsePrescriptionNotation(input: string): PrescriptionNotationRe
   const paceTargetEventDistanceM = positiveNumber(match.groups["target"])
   const setCount = positiveNumber(match.groups["setCount"]) ?? 1
   const repetitionRecoverySeconds = positiveNumber(match.groups["repetitionRecovery"])
+  const repetitionRecoveryMode = recoveryMode(match.groups["repetitionRecoveryMode"])
   const setRecoveryMinutes = positiveNumber(match.groups["setRecovery"])
   const setRecoverySeconds = setRecoveryMinutes === undefined
     ? undefined
     : setRecoveryMinutes * 60
+  const setRecoveryMode = recoveryMode(match.groups["setRecoveryMode"])
   const unit = match.groups["unit"]
   if (
     repetitionsPerSet === undefined
@@ -82,9 +92,20 @@ export function parsePrescriptionNotation(input: string): PrescriptionNotationRe
       repetitionsPerSet,
       setCount,
       repetitionRecoverySeconds,
+      repetitionRecoveryMode,
       setRecoverySeconds,
+      setRecoveryMode,
     })
   ) {
+    return reject()
+  }
+  const parsedRepetitionRecoveryMode = repetitionRecoverySeconds === undefined
+    ? "NOT_APPLICABLE"
+    : repetitionRecoveryMode
+  const parsedSetRecoveryMode = setRecoverySeconds === undefined
+    ? "NOT_APPLICABLE"
+    : setRecoveryMode
+  if (parsedRepetitionRecoveryMode === undefined || parsedSetRecoveryMode === undefined) {
     return reject()
   }
 
@@ -99,9 +120,9 @@ export function parsePrescriptionNotation(input: string): PrescriptionNotationRe
       paceTargetKind: "RACE_PACE",
       paceTargetEventDistanceM,
       repetitionRecoverySeconds: repetitionRecoverySeconds ?? null,
-      repetitionRecoveryMode: repetitionRecoverySeconds === undefined ? "NOT_APPLICABLE" : "STAND",
+      repetitionRecoveryMode: parsedRepetitionRecoveryMode,
       setRecoverySeconds: setRecoverySeconds ?? null,
-      setRecoveryMode: setRecoverySeconds === undefined ? "NOT_APPLICABLE" : "STAND",
+      setRecoveryMode: parsedSetRecoveryMode,
     }),
   }
 }
@@ -113,9 +134,9 @@ export function formatPrescriptionNotation(notation: UnboundPrescriptionNotation
   const setWork = notation.setCount === 1 ? work : `${notation.setCount}×(${work})`
   const recovery = notation.repetitionRecoverySeconds === null
     ? []
-    : [`r${notation.repetitionRecoverySeconds}″`]
+    : [`r${notation.repetitionRecoverySeconds}″ ${notation.repetitionRecoveryMode}`]
   const setRecovery = notation.setRecoverySeconds === null
     ? []
-    : [`R${notation.setRecoverySeconds / 60}′`]
+    : [`R${notation.setRecoverySeconds / 60}′ ${notation.setRecoveryMode}`]
   return `${setWork} @${notation.paceTargetEventDistanceM}m RP${[...recovery, ...setRecovery].map((value) => ` · ${value}`).join("")}`
 }

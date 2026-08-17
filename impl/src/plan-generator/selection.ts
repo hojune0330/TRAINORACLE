@@ -61,6 +61,15 @@ function copySession(session: PlanSession): PlanSession {
         }),
       })
     case "QUALITY":
+      if (session.prescription.kind === "PACE_TARGET") {
+        return Object.freeze({
+          day: session.day,
+          slot: session.slot,
+          role: "QUALITY",
+          plannedEnergyIntent: session.plannedEnergyIntent,
+          prescription: session.prescription,
+        })
+      }
       return Object.freeze({
         day: session.day,
         slot: session.slot,
@@ -182,6 +191,12 @@ function generatedPlanGuard(value: unknown):
       return { kind: "rejected", code: "STALE_CANDIDATE_FINGERPRINT" }
     }
     if (!candidate.candidateId.includes(countedExposureIds.join("-"))) {
+      return { kind: "rejected", code: "STALE_CANDIDATE_FINGERPRINT" }
+    }
+    if (
+      candidate.detailedPrescriptionFingerprint !== null
+      && !candidate.candidateId.includes(candidate.detailedPrescriptionFingerprint)
+    ) {
       return { kind: "rejected", code: "STALE_CANDIDATE_FINGERPRINT" }
     }
   }

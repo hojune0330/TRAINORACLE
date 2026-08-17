@@ -2,6 +2,7 @@ import { z } from "zod"
 import {
   activePlanSchema,
   frameLengthSchema,
+  legacyActivePlanSchema,
   plannedEnergyIntentSchema,
   sessionSlotSchema,
 } from "./plan-session-schema"
@@ -64,7 +65,7 @@ export const planIntakeSchema = z.object({
   secondSessionMode: secondSessionModeSchema,
   trainingTimePreference: trainingTimePreferenceSchema,
   startDate: selectedStartDateSchema.optional(),
-})
+}).strict()
 
 export const storedPlanIntakeSchema = z.object({
   eventGroup: planEventGroupSchema,
@@ -82,13 +83,13 @@ export const storedPlanIntakeSchema = z.object({
   secondSessionMode: secondSessionModeSchema.optional(),
   trainingTimePreference: trainingTimePreferenceSchema.optional(),
   startDate: selectedStartDateSchema.optional(),
-})
+}).strict()
 
 export const progressSchema = z.object({
   sessionDay: z.number().int().positive(),
   sessionSlot: sessionSlotSchema.optional().default("AM"),
   state: progressStateSchema,
-})
+}).strict()
 
 export const planHistorySchema = z.object({
   candidateId: z.string().min(1),
@@ -96,7 +97,7 @@ export const planHistorySchema = z.object({
   frameLengthDays: storedFrameLengthSchema,
   progress: z.array(progressSchema),
   archivedAt: z.string().datetime(),
-})
+}).strict()
 
 const planAthleteEvidenceSchema = z.object({
   storedRecordCount: z.number().int().nonnegative(),
@@ -104,14 +105,31 @@ const planAthleteEvidenceSchema = z.object({
   recentJournalSessionCount: z.number().int().nonnegative(),
 }).strict()
 
-const planBetaStateSchema = z.object({
-  version: z.literal(1),
+const planBetaStateCommonShape = {
   intake: storedPlanIntakeSchema,
-  activePlan: activePlanSchema,
   progress: z.array(progressSchema),
   generatedAt: z.string().datetime(),
   athleteEvidence: planAthleteEvidenceSchema.optional(),
-}).superRefine((state, context) => {
+}
+const planBetaStateV1BaseSchema = z.object({
+  version: z.literal(1),
+  ...planBetaStateCommonShape,
+  activePlan: legacyActivePlanSchema,
+}).strict()
+const planBetaStateV2BaseSchema = z.object({
+  version: z.literal(2),
+  ...planBetaStateCommonShape,
+  activePlan: activePlanSchema,
+}).strict()
+type ValidatedPlanBetaState = Omit<
+  z.infer<typeof planBetaStateV2BaseSchema>,
+  "version"
+> & { readonly version: 1 | 2 }
+
+function validatePlanBetaState(
+  state: ValidatedPlanBetaState,
+  context: z.RefinementCtx,
+): void {
   const sessionsByDay = new Map<number, typeof state.activePlan.sessions>()
   const sessionKeys = new Set<string>()
 
@@ -156,7 +174,21 @@ const planBetaStateSchema = z.object({
     }
     progressKeys.add(progressKey)
   }
-})
+}
+
+const planBetaStateV1Schema = planBetaStateV1BaseSchema.superRefine(
+  validatePlanBetaState,
+)
+const planBetaStateV2Schema = planBetaStateV2BaseSchema.superRefine(
+  validatePlanBetaState,
+)
+const planBetaStateSchema = z.union([
+  planBetaStateV2Schema,
+  planBetaStateV1Schema.transform((state) => ({
+    ...state,
+    version: 2 as const,
+  })),
+])
 
 export const planHistoryListSchema = z.array(planHistorySchema).max(5)
 
@@ -164,10 +196,14 @@ export type PlanBetaIntake = z.infer<typeof planIntakeSchema>
 export type StoredPlanBetaIntake = z.infer<typeof storedPlanIntakeSchema>
 export type CompetitionDivision = PlanBetaIntake["competitionDivision"]
 export type StoredPlanProgress = z.infer<typeof progressSchema>
-export type PlanBetaState = z.infer<typeof planBetaStateSchema>
+export type LegacyPlanBetaState = z.infer<typeof planBetaStateV1Schema>
+export type PlanBetaStateV2 = z.infer<typeof planBetaStateV2Schema>
+export type PlanBetaState = Omit<PlanBetaStateV2, "version"> & {
+  readonly version: 1 | 2
+}
 export type StoredPlanHistory = z.infer<typeof planHistorySchema>
 
-export function parsePlanBetaState(candidate: unknown): PlanBetaState | null {
+export function parsePlanBetaState(candidate: unknown): PlanBetaStateV2 | null {
   const parsed = planBetaStateSchema.safeParse(candidate)
   return parsed.success ? parsed.data : null
 }

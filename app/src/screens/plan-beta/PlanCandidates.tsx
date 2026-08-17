@@ -1,5 +1,5 @@
 import React from "react"
-import { ArrowLeft, Check, ChevronDown, ShieldCheck } from "lucide-react"
+import { ArrowLeft, ShieldCheck } from "lucide-react"
 import type {
   PlanGenerationSuccess,
 } from "@impl/plan-generator/types"
@@ -8,27 +8,44 @@ import { isValidIsoDate } from "../../domain/dates"
 import { todayISO } from "../../domain/journal-store"
 import type { PlanBetaIntake } from "../../domain/plan-beta-store"
 import type { PlanAthleteEvidence } from "../../domain/plan-beta-flow"
+import type { AthleteRecord } from "../../domain/athlete-records"
+import type { CandidatePrescriptionBinding } from "../../domain/plan-candidate-prescription"
 import {
   candidateSessionSummary,
   candidateLabel,
-  ENERGY_INTENT_LABELS,
-  EVENT_LABELS,
 } from "./labels"
 import { candidatePurposeStatus } from "./candidate-purpose-status"
 import { DIVISION_LABELS } from "./plan-intake-meta"
-import { PlanSchedulePreview } from "./PlanSchedulePreview"
+import { CandidateSection } from "./CandidateSection"
 import type { CandidateSelection } from "./plan-selection"
+import { PaceEvidenceFlow } from "./PaceEvidenceFlow"
 
 export function PlanCandidates({
   generated,
   intake,
   athleteEvidence,
+  athleteRecords,
+  selectedRecordId,
+  comparisonRecordId,
+  prescriptionBinding,
+  recordConfirmationPending,
+  onSelectRecord,
+  onCompareRecord,
+  onConfirmRecord,
   onBack,
   onSelect,
 }: {
   readonly generated: PlanGenerationSuccess
   readonly intake: PlanBetaIntake
   readonly athleteEvidence: PlanAthleteEvidence
+  readonly athleteRecords: readonly AthleteRecord[]
+  readonly selectedRecordId: string | null
+  readonly comparisonRecordId: string | null
+  readonly prescriptionBinding: Omit<CandidatePrescriptionBinding, "generated">
+  readonly recordConfirmationPending: boolean
+  readonly onSelectRecord: (recordId: string) => void
+  readonly onCompareRecord: (recordId: string | null) => void
+  readonly onConfirmRecord: () => void
   readonly onBack: () => void
   readonly onSelect: (selection: CandidateSelection) => void
 }) {
@@ -36,7 +53,11 @@ export function PlanCandidates({
   const [expandedCandidateId, setExpandedCandidateId] = React.useState<string | null>(
     generated.candidates[0]?.candidateId ?? null,
   )
-  const canSelect = isValidIsoDate(startDate)
+  React.useEffect(() => {
+    setExpandedCandidateId(generated.candidates[0]?.candidateId ?? null)
+  }, [generated])
+  const hasValidStartDate = isValidIsoDate(startDate)
+  const canSelect = hasValidStartDate && !recordConfirmationPending
 
   return (
     <section className="plan-candidates" aria-labelledby="plan-candidates-title">
@@ -50,42 +71,43 @@ export function PlanCandidates({
         <TermHelp term="plan-option" />
       </div>
       <p className="plan-copy">
-        {generated.sourceMode === "PROFILE_ONLY"
+        {prescriptionBinding.kind === "bound"
+          ? "직접 고르고 확인한 현재 5km 기록으로 한 강도 세션의 상세 페이스를 계산했어요. 다른 훈련과 일지 값은 시간이나 RPE를 바꾸지 않습니다."
+          : generated.sourceMode === "PROFILE_ONLY"
           ? "종목, 경험, 고른 훈련 목적, 가능한 훈련일과 9.5일 기본 틀만 사용했어요. 개인 페이스와 최근 훈련량은 추정하지 않습니다."
           : "최근 일지가 있는지만 확인했어요. 일지의 거리, RPE, 메모는 이번 베타 계획의 시간이나 강도를 바꾸지 않습니다."}
       </p>
-      <section className="plan-candidate-comparison" aria-label="두 계획 핵심 비교">
-        <h2>먼저 핵심만 비교</h2>
-        <div>
-          {generated.candidates.map((candidate) => {
-            const label = candidateLabel(candidate.kind, candidate.selectedEnergyIntent)
-            const purposeStatus = candidatePurposeStatus(candidate.kind)
-            return (
-              <article key={candidate.candidateId}>
-                <span>후보 {candidate.kind === "BALANCED" ? "A" : "B"}</span>
-                <strong>{label.title}</strong>
-                <p>{purposeStatus.label}</p>
-                <small>{candidateSessionSummary(candidate)}</small>
-              </article>
-            )
-          })}
-        </div>
-      </section>
+      <CandidateComparison candidates={generated.candidates} />
+      {intake.eventGroup === "FIVE_K" && intake.experienceBand === "EXPERIENCED" && (
+        <PaceEvidenceFlow
+          records={athleteRecords}
+          selectedRecordId={selectedRecordId}
+          comparisonRecordId={comparisonRecordId}
+          binding={prescriptionBinding}
+          onSelectRecord={onSelectRecord}
+          onCompareRecord={onCompareRecord}
+          onConfirm={onConfirmRecord}
+        />
+      )}
       <div className="plan-source-strip">
         <ShieldCheck aria-hidden="true" size={17} />
         <span>
           <strong>
-            {athleteEvidence.storedRecordCount + athleteEvidence.recentJournalSessionCount === 0
-              ? "기록 없이 시작한 베타 계획"
-              : "경기 기록 "
-                + athleteEvidence.storedRecordCount
-                + "개 · 최근 일지 "
-                + athleteEvidence.recentJournalSessionCount
-                + "개 연결"}
+            <span className="plan-source-strip__title">
+              {athleteEvidence.storedRecordCount + athleteEvidence.recentJournalSessionCount === 0
+                ? "기록 없이 시작한 베타 계획"
+                : "경기 기록 "
+                  + athleteEvidence.storedRecordCount
+                  + "개 · 최근 일지 "
+                  + athleteEvidence.recentJournalSessionCount
+                  + "개 연결"}
+            </span>
             <TermHelp term="plan-beta-basis" />
           </strong>
           <small>
-            기록값과 구조화 일지는 존재 여부만 확인 · 개인 페이스·훈련 시간·RPE 계산에는 아직 미사용
+            {prescriptionBinding.kind === "bound"
+              ? "선택하고 확인한 5km 기록만 상세 페이스 계산에 사용 · 일지 값은 시간·RPE 계산에 미사용"
+              : "확인한 기준 기록이 없으면 기록값과 구조화 일지는 시간·RPE 계산에 미사용"}
           </small>
           {athleteEvidence.goalRecordCount > 0 && (
             <small>목표 기록 {athleteEvidence.goalRecordCount}개 포함 · 현재는 수치 계산에 미사용</small>
@@ -117,7 +139,7 @@ export function PlanCandidates({
           고른 날짜부터 실제 달력에 맞춰 보여드려요.
         </small>
       </label>
-      {!canSelect && (
+      {!hasValidStartDate && (
         <>
           <p className="plan-start-date-error" role="alert">
             실제 날짜를 고른 뒤 계획을 선택해 주세요.
@@ -126,6 +148,11 @@ export function PlanCandidates({
             시작 날짜를 고르면 실제 날짜에 맞춘 계획을 보여드려요.
           </p>
         </>
+      )}
+      {recordConfirmationPending && (
+        <p className="plan-start-date-error" role="alert">
+          새로 고른 기준 기록을 확인한 뒤 계획을 선택해 주세요.
+        </p>
       )}
       <div className="plan-candidate-list">
         {generated.candidates.map((candidate) => (
@@ -145,83 +172,28 @@ export function PlanCandidates({
   )
 }
 
-function CandidateSection({
-  candidate,
-  startDate,
-  canSelect,
-  expanded,
-  onToggleSchedule,
-  onSelect,
+function CandidateComparison({
+  candidates,
 }: {
-  readonly candidate: PlanGenerationSuccess["candidates"][number]
-  readonly startDate: string
-  readonly canSelect: boolean
-  readonly expanded: boolean
-  readonly onToggleSchedule: () => void
-  readonly onSelect: () => void
+  readonly candidates: PlanGenerationSuccess["candidates"]
 }) {
-  const label = candidateLabel(candidate.kind, candidate.selectedEnergyIntent)
-  const purposeStatus = candidatePurposeStatus(candidate.kind)
-  const optionLetter = candidate.kind === "BALANCED" ? "A" : "B"
-  const frameLengthDays = candidate.frame.projectionLengthDays ?? candidate.frame.lengthDays
-  const scheduleId = `candidate-schedule-${candidate.candidateId}`
   return (
-    <article className="plan-candidate" aria-labelledby={`candidate-${candidate.candidateId}`}>
-      <header>
-        <span>후보 {optionLetter}</span>
-        <h2 id={`candidate-${candidate.candidateId}`}>{label.title}</h2>
-        <p>{label.detail}</p>
-        <p className={`plan-candidate-purpose plan-candidate-purpose--${purposeStatus.tone}`}>
-          <strong>{purposeStatus.label}</strong>
-          <span>{purposeStatus.detail}</span>
-        </p>
-        <strong className="plan-candidate-summary">
-          {candidateSessionSummary(candidate)}
-        </strong>
-        <small>
-          {EVENT_LABELS[candidate.eventGroup].title} · {frameLengthDays}일
-          {" · "}훈련일마다 총 시간·RPE·훈련 목적 표시
-        </small>
-        <div className="plan-session-legend" aria-label="훈련 수치와 의도 설명">
-          <span>RPE<TermHelp term="rpe" /></span>
-          <span>
-            {ENERGY_INTENT_LABELS[candidate.selectedEnergyIntent].title}
-            <TermHelp term={ENERGY_INTENT_LABELS[candidate.selectedEnergyIntent].term} />
-          </span>
-          <span>RPE 기준 실행 안내<TermHelp term="quality-session" /></span>
-        </div>
-      </header>
-      {canSelect && (
-        <>
-          <button
-            className="plan-candidate-schedule-toggle"
-            type="button"
-            aria-label={`후보 ${optionLetter} 일정 ${expanded ? "접기" : "펼치기"}`}
-            aria-expanded={expanded}
-            aria-controls={scheduleId}
-            onClick={onToggleSchedule}
-          >
-            일정 {expanded ? "접기" : "펼치기"}
-            <ChevronDown aria-hidden="true" size={18} />
-          </button>
-          <div id={scheduleId} hidden={!expanded}>
-            <PlanSchedulePreview
-              startDate={startDate}
-              frameLengthDays={frameLengthDays}
-              sessions={candidate.sessions}
-            />
-          </div>
-        </>
-      )}
-      <button
-        className="plan-select-action"
-        type="button"
-        disabled={!canSelect}
-        onClick={onSelect}
-      >
-        <Check aria-hidden="true" size={18} />
-        {label.title} 선택하기
-      </button>
-    </article>
+    <section className="plan-candidate-comparison" aria-label="두 계획 핵심 비교">
+      <h2>먼저 핵심만 비교</h2>
+      <div>
+        {candidates.map((candidate) => {
+          const label = candidateLabel(candidate.kind, candidate.selectedEnergyIntent)
+          const purposeStatus = candidatePurposeStatus(candidate.kind)
+          return (
+            <article key={candidate.candidateId}>
+              <span>후보 {candidate.kind === "BALANCED" ? "A" : "B"}</span>
+              <strong>{label.title}</strong>
+              <p>{purposeStatus.label}</p>
+              <small>{candidateSessionSummary(candidate)}</small>
+            </article>
+          )
+        })}
+      </div>
+    </section>
   )
 }

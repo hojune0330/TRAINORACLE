@@ -10,6 +10,10 @@ import {
 import type { PlanBetaState } from "./plan-beta-store"
 import { stateFixture } from "./plan-beta-store.test-fixture"
 
+function migratedState(state: PlanBetaState): PlanBetaState {
+  return { ...state, version: 2 }
+}
+
 describe("plan beta local store", () => {
   beforeEach(() => {
     window.localStorage.clear()
@@ -25,7 +29,7 @@ describe("plan beta local store", () => {
 
     expect(savePlanBetaState(state)).toEqual({ ok: true })
 
-    expect(loadPlanBetaState()).toEqual(state)
+    expect(loadPlanBetaState()).toEqual(migratedState(state))
     expect(JSON.stringify(loadPlanBetaState())).not.toMatch(/memo|symptom/u)
   })
 
@@ -106,7 +110,7 @@ describe("plan beta local store", () => {
       code: "PLAN_ARCHIVE_WRITE_FAILED",
       rollbackComplete: true,
     })
-    expect(loadPlanBetaState()).toEqual(state)
+    expect(loadPlanBetaState()).toEqual(migratedState(state))
     expect(loadPreviousContinuity()).toBeUndefined()
   })
 
@@ -129,7 +133,7 @@ describe("plan beta local store", () => {
       ok: false,
       rollbackComplete: true,
     })
-    expect(loadPlanBetaState()).toEqual(state)
+    expect(loadPlanBetaState()).toEqual(migratedState(state))
     expect(loadPreviousContinuity()).toBeUndefined()
   })
 
@@ -150,7 +154,7 @@ describe("plan beta local store", () => {
       ok: false,
       rollbackComplete: true,
     })
-    expect(loadPlanBetaState()).toEqual(state)
+    expect(loadPlanBetaState()).toEqual(migratedState(state))
     expect(loadPreviousContinuity()).toBeUndefined()
   })
 
@@ -171,7 +175,7 @@ describe("plan beta local store", () => {
       ok: false,
       rollbackComplete: true,
     })
-    expect(loadPlanBetaState()).toEqual(state)
+    expect(loadPlanBetaState()).toEqual(migratedState(state))
     expect(loadPreviousContinuity()).toBeUndefined()
   })
 
@@ -193,7 +197,7 @@ describe("plan beta local store", () => {
       ok: false,
       rollbackComplete: true,
     })
-    expect(loadPlanBetaState()).toEqual(state)
+    expect(loadPlanBetaState()).toEqual(migratedState(state))
     expect(loadPreviousContinuity()).toBeUndefined()
   })
 

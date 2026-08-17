@@ -2,13 +2,13 @@ import { thisWeekStats } from "./aggregates"
 import type { JournalEntry } from "./journal-schema"
 import type { AnalysisJournalEntry } from "./safe-export"
 import type { PlanBetaState } from "./plan-beta-store"
-import type { StoredPlanSession } from "./plan-session-schema"
+import type { VersionedStoredPlanSession } from "./plan-session-schema"
 import { isoShift, isValidIsoDate } from "./dates"
 
 export type NextTraining = {
   readonly date: string
-  readonly session: Exclude<StoredPlanSession, { readonly role: "REST" }>
-  readonly laterSameDaySession: Exclude<StoredPlanSession, { readonly role: "REST" }> | null
+  readonly session: Exclude<VersionedStoredPlanSession, { readonly role: "REST" }>
+  readonly laterSameDaySession: Exclude<VersionedStoredPlanSession, { readonly role: "REST" }> | null
 }
 
 export type TrainingHomeViewModel = {

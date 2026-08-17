@@ -1,11 +1,23 @@
 import type { PaceAnchorRecord } from "@impl/prescription/types"
 import type { AthleteRecord } from "./athlete-records"
-import { elapsedSinceAchieved } from "./athlete-record-display"
+import {
+  elapsedSinceAchieved,
+  SEASON_WINDOW_MONTHS,
+} from "./athlete-record-display"
 import type {
   GoalReferenceEvidenceSnapshot,
   PaceAnchorEvidenceSnapshot,
   PaceSelectionFreshness,
 } from "./pace-target-plan"
+
+export function deriveRecordCurrentness(
+  record: AthleteRecord,
+  evaluatedAt: Date,
+): PaceSelectionFreshness {
+  const elapsed = elapsedSinceAchieved(record, evaluatedAt)
+  if (elapsed === null) return "UNKNOWN"
+  return elapsed.months <= SEASON_WINDOW_MONTHS ? "CURRENT" : "STALE"
+}
 
 export function toRuntimeAnchor(
   record: AthleteRecord,

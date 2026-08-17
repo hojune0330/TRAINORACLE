@@ -11,6 +11,11 @@ import type {
   StoredPlanProgress,
 } from "../../domain/plan-beta-store"
 import { ActivePlan } from "./ActivePlan"
+import { evaluatePlanSafety, type PlanCurrentCheck } from "../../domain/plan-beta-flow"
+import {
+  recheckStoredDetailedPrescriptionAuthority,
+  type StoredPaceTargetPrescription,
+} from "../../domain/plan-session-schema"
 
 type PersistenceRetry =
   | { readonly kind: "progress"; readonly progress: StoredPlanProgress }
@@ -27,6 +32,7 @@ export function PlanActiveState({
 }) {
   const [error, setError] = React.useState<string | null>(null)
   const [retry, setRetry] = React.useState<PersistenceRetry | null>(null)
+  const [executionMessage, setExecutionMessage] = React.useState<string | null>(null)
 
   const saveProgress = (progress: StoredPlanProgress) => {
     const result = recordPlanProgress({
@@ -75,13 +81,39 @@ export function PlanActiveState({
     }
   }
 
+  const checkDetailedExecution = (
+    prescription: StoredPaceTargetPrescription,
+    operation: "START" | "RESTART",
+    currentCheck: PlanCurrentCheck,
+  ) => {
+    const evaluatedAt = new Date()
+    const safety = evaluatePlanSafety(currentCheck, evaluatedAt)
+    if (safety.kind === "blocked") {
+      setExecutionMessage("지금은 상세 세션을 시작하지 않아요. 몸 상태를 먼저 직접 확인해 주세요.")
+      return
+    }
+    const authority = recheckStoredDetailedPrescriptionAuthority({
+      operation,
+      prescription,
+      evaluatedAt: evaluatedAt.toISOString(),
+      safetyGate: safety.gate,
+    })
+    setExecutionMessage(authority.kind === "permitted"
+      ? `현재 안전 상태와 승인 상태를 다시 확인했어요. ${operation === "START" ? "시작" : "다시 시작"}할 수 있어요. 의료 판단은 아닙니다.`
+      : "현재 승인 상태에서 상세 세션을 시작하지 않아요. 저장된 계획은 그대로 유지됩니다.")
+  }
+
   return (
     <>
       <ActivePlan
         state={state}
         onProgress={saveProgress}
         onNextFrame={startNextFrame}
+        onCheckDetailedExecution={checkDetailedExecution}
       />
+      {executionMessage !== null && (
+        <div className="plan-execution-status" role="status">{executionMessage}</div>
+      )}
       {error !== null && (
         <div className="plan-inline-error" role="alert">{error}</div>
       )}

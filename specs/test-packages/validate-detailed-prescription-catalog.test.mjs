@@ -46,11 +46,11 @@ async function validateWith({ catalogReplacement, contractReplacement }) {
   }
 }
 
-test("Given the draft catalog and contract, when validated, then all 30 entries remain inert", () => {
+test("Given the adopted catalog and contract, when validated, then exactly V2-SEED-05 is active", () => {
   const result = spawnSync(process.execPath, [validator], { cwd: root, encoding: "utf8" });
 
   assert.equal(result.status, 0, result.stderr);
-  assert.match(result.stdout, /detailed prescription validation passed: 30\/30 inert draft entries/u);
+  assert.match(result.stdout, /detailed prescription validation passed: 1 active, 29 draft, 30 total/u);
 });
 
 test("Given a ranged interval seed, when it is documented, then context keeps volume and recovery unfixed", async () => {
@@ -74,7 +74,7 @@ test("Given goal and recent results may compare across events, when validated, t
   assert.match(result.stderr, /same_event_comparison_only: true/u);
 });
 
-test("Given one catalog event group becomes eligible, when validated, then it fails closed", async () => {
+test("Given a second catalog event group becomes eligible, when validated, then it fails closed", async () => {
   const result = await validateWith({
     catalogReplacement: { from: "allowedEventGroups: []", to: "allowedEventGroups: [SPRINT]" },
   });
@@ -83,7 +83,7 @@ test("Given one catalog event group becomes eligible, when validated, then it fa
   assert.match(result.stderr, /must keep allowedEventGroups empty/u);
 });
 
-test("Given one catalog lifecycle becomes active, when validated, then it fails closed", async () => {
+test("Given a second catalog lifecycle becomes active, when validated, then it fails closed", async () => {
   const result = await validateWith({
     catalogReplacement: { from: "  lifecycleStatus: DRAFT", to: "  lifecycleStatus: ACTIVE" },
   });
@@ -244,15 +244,16 @@ test("Given contract text follows the final marker, when validated, then it fail
 });
 
 for (const machineNotationMutation of [
-  { name: "V2 parser-ready repetition count changes", from: 'machineNotation: "5×1000m @5000m RP · r150″"', to: 'machineNotation: "4×1000m @5000m RP · r150″"', expected: /V2-SEED-05 must keep its exact parser-ready machineNotation/u },
-  { name: "V2 parser-ready repetition distance changes", from: 'machineNotation: "5×1000m @5000m RP · r150″"', to: 'machineNotation: "5×100m @5000m RP · r150″"', expected: /V2-SEED-05 must keep its exact parser-ready machineNotation/u },
-  { name: "V2 parser-ready race-pace event changes", from: 'machineNotation: "5×1000m @5000m RP · r150″"', to: 'machineNotation: "5×1000m @1500m RP · r150″"', expected: /V2-SEED-05 must keep its exact parser-ready machineNotation/u },
-  { name: "V2 parser-ready machine notation becomes null", from: 'machineNotation: "5×1000m @5000m RP · r150″"', to: "machineNotation: null", expected: /V2-SEED-05 parser-ready machineNotation must not be null/u },
-  { name: "V2 machine notation receives a pending-state string", from: 'machineNotation: "5×1000m @5000m RP · r150″"', to: "machineNotation: PENDING_OWNER_RANGE_DECISION", expected: /V2-SEED-05 must keep its exact parser-ready machineNotation/u },
+  { name: "V2 parser-ready repetition count changes", from: 'machineNotation: "5×1000m @5000m RP · r150″ JOG"', to: 'machineNotation: "4×1000m @5000m RP · r150″ JOG"', expected: /V2-SEED-05 must keep its exact parser-ready machineNotation/u },
+  { name: "V2 parser-ready repetition distance changes", from: 'machineNotation: "5×1000m @5000m RP · r150″ JOG"', to: 'machineNotation: "5×100m @5000m RP · r150″ JOG"', expected: /V2-SEED-05 must keep its exact parser-ready machineNotation/u },
+  { name: "V2 parser-ready race-pace event changes", from: 'machineNotation: "5×1000m @5000m RP · r150″ JOG"', to: 'machineNotation: "5×1000m @1500m RP · r150″ JOG"', expected: /V2-SEED-05 must keep its exact parser-ready machineNotation/u },
+  { name: "V2 parser-ready recovery mode changes", from: 'machineNotation: "5×1000m @5000m RP · r150″ JOG"', to: 'machineNotation: "5×1000m @5000m RP · r150″ STAND"', expected: /V2-SEED-05 must keep its exact parser-ready machineNotation/u },
+  { name: "V2 parser-ready machine notation becomes null", from: 'machineNotation: "5×1000m @5000m RP · r150″ JOG"', to: "machineNotation: null", expected: /V2-SEED-05 parser-ready machineNotation must not be null/u },
+  { name: "V2 machine notation receives a pending-state string", from: 'machineNotation: "5×1000m @5000m RP · r150″ JOG"', to: "machineNotation: PENDING_OWNER_RANGE_DECISION", expected: /V2-SEED-05 must keep its exact parser-ready machineNotation/u },
   {
-    name: "V2 parser-ready recovery changes from 150 seconds to one second",
-    from: 'machineNotation: "5×1000m @5000m RP · r150″"',
-    to: 'machineNotation: "5×1000m @5000m RP · r1″"',
+    name: "V2 parser-ready recovery changes from 150 seconds to 120 seconds",
+    from: 'machineNotation: "5×1000m @5000m RP · r150″ JOG"',
+    to: 'machineNotation: "5×1000m @5000m RP · r120″ JOG"',
     expected: /V2-SEED-05 must keep its exact parser-ready machineNotation/u,
   },
   {
@@ -287,3 +288,26 @@ for (const machineNotationMutation of [
     assert.match(result.stderr, machineNotationMutation.expected);
   });
 }
+
+for (const componentMutation of [
+  { name: "warm-up", from: "WU-V2-5K-01@1.0.0", to: "WU-MISSING" },
+  { name: "cooldown", from: "CD-V2-5K-01@1.0.0", to: "CD-MISSING" },
+  { name: "stop code", from: "STOP_LOSS_OF_CONTROLLED_FORM", to: "STOP_MISSING" },
+  { name: "age-neutral population rule", from: "populationApplicability: YOUTH_AND_ADULT_SAME_CRITERIA_NO_AGE_DOSE_BRANCH", to: "populationApplicability: YOUTH_REDUCED_DOSE" },
+]) {
+  test(`Given the V2 ${componentMutation.name} contract changes, when validated, then it fails closed`, async () => {
+    const result = await validateWith({ catalogReplacement: componentMutation });
+    assert.notEqual(result.status, 0);
+  });
+}
+
+test("Given a second seed is activated, when validated, then it fails closed", async () => {
+  const result = await validateWith({
+    catalogReplacement: {
+      from: /(- templateId: BA-SEED-01\r?\n  version: "0.1"\r?\n  lifecycleStatus:) DRAFT/u,
+      to: "$1 ACTIVE",
+    },
+  });
+  assert.notEqual(result.status, 0);
+  assert.match(result.stderr, /BA-SEED-01 must remain DRAFT/u);
+});

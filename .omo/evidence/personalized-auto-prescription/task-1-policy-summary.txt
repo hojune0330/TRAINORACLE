@@ -1,0 +1,6 @@
+trainingEligibility.ageOnlyReject=false;
+trainingEligibility.ageOnlyDoseMultiplier=false;
+processingAuthorization.guardianSensitiveProcessingGuard=true;
+systemTemplate.athleteSelfSelectionAfterAllGates=true;
+cleanup.noRuntimeResourcesSpawned=true;
+cleanup.tempDirectoryExistsAfterRemoval=false;

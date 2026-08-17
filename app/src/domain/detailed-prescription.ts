@@ -1,4 +1,3 @@
-import type { ExperienceBand, PlanEventGroup } from "@impl/plan-generator/types"
 import { preparePrescriptionRuntime } from "@impl/prescription/runtime"
 import type {
   PaceAnchorRecord,
@@ -8,56 +7,32 @@ import type {
 } from "@impl/prescription/types"
 import type { SafetyGateDecision } from "@impl/safety-gate/gate"
 import {
-  DETAILED_PRESCRIPTION_APPROVALS,
+  resolveDetailedPrescriptionApproval,
   type DetailedPrescriptionApprovalRecord,
+  type DetailedPrescriptionApprovalRequest,
 } from "./detailed-prescription-approvals"
 
-type DetailedPrescriptionInput = {
+type DetailedPrescriptionInput = DetailedPrescriptionApprovalRequest & {
   readonly detailedPrescriptionEnabled: boolean
-  readonly templateId: string
-  readonly athleteEventGroup: PlanEventGroup
-  readonly athleteExperienceBand: ExperienceBand
   readonly anchor: PaceAnchorRecord
   readonly displayRoundingPolicyVersion: string
   readonly safetyGate: SafetyGateDecision
 }
 
 export type DetailedPrescription = {
+  readonly approval: DetailedPrescriptionApprovalRecord
   readonly notation: string
   readonly prescription: StructuredPrescription
   readonly totals: PrescriptionDerivedTotals
   readonly pace: Extract<RacePaceCalculationResult, { readonly kind: "calculated" }>
 }
 
-function hasReview(review: DetailedPrescriptionApprovalRecord["ownerReview"]): boolean {
-  return review !== null
-    && review.reviewerName.trim().length > 0
-    && review.evidenceRef.trim().length > 0
-}
-
-function isCompleteApproval(
-  approval: DetailedPrescriptionApprovalRecord,
-  input: DetailedPrescriptionInput,
-): boolean {
-  return approval.lifecycleStatus === "ACTIVE"
-    && approval.eligibilityStatus === "ELIGIBLE"
-    && approval.notation.trim().length > 0
-    && approval.eligibleEventGroups.includes(input.athleteEventGroup)
-    && approval.eligibleExperienceBands.includes(input.athleteExperienceBand)
-    && hasReview(approval.ownerReview)
-    && hasReview(approval.coachReview)
-    && hasReview(approval.sportsScienceReview)
-    && hasReview(approval.youthReview)
-}
-
 export function prepareDetailedPrescription(
   input: DetailedPrescriptionInput,
 ): DetailedPrescription | null {
   if (!input.detailedPrescriptionEnabled) return null
-  const approval = DETAILED_PRESCRIPTION_APPROVALS.find(
-    (candidate) => candidate.templateId === input.templateId,
-  )
-  if (approval === undefined || !isCompleteApproval(approval, input)) return null
+  const approval = resolveDetailedPrescriptionApproval(input)
+  if (approval === undefined) return null
 
   const prepared = preparePrescriptionRuntime({
     notation: approval.notation,
@@ -65,10 +40,12 @@ export function prepareDetailedPrescription(
     displayRoundingPolicyVersion: input.displayRoundingPolicyVersion,
     template: approval,
     safetyGate: input.safetyGate,
+    operationalComponents: approval.canonicalTemplateContent.operationalComponents,
   })
   if (prepared.kind === "rejected") return null
 
   return Object.freeze({
+    approval,
     notation: approval.notation,
     prescription: prepared.prescription,
     totals: prepared.totals,

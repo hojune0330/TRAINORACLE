@@ -364,7 +364,7 @@ describe("plan beta user flow", () => {
 
     await user.type(
       screen.getByRole("textbox", { name: "훈련표 표기" }),
-      "2×(10×400m) @5000m RP · r60″ · R3′",
+      "2×(10×400m) @5000m RP · r60″ STAND · R3′ STAND",
     )
     await user.click(screen.getByRole("button", { name: "표기 풀어보기" }))
 

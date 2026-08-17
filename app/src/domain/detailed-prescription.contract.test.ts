@@ -1,84 +1,83 @@
 import { describe, expect, it } from "vitest"
-import { decideSafetyGate } from "@impl/safety-gate/gate"
-import { mapD9ResultToRveSignal } from "@impl/rve/signal"
 import type { PaceAnchorRecord } from "@impl/prescription/types"
+import { mapD9ResultToRveSignal } from "@impl/rve/signal"
+import { decideSafetyGate } from "@impl/safety-gate/gate"
 import { DETAILED_PRESCRIPTION_APPROVALS } from "./detailed-prescription-approvals"
 import { prepareDetailedPrescription } from "./detailed-prescription"
 
-const ANCHOR: PaceAnchorRecord = {
-  anchorId: "race:5000:current",
-  kind: "RECENT_RESULT",
-  eventDistanceM: 5000,
-  performanceSeconds: 1000,
-  achievedAt: "2026-07-20",
-  seasonId: null,
-  enteredBy: "ATHLETE",
-  sourceRef: "athlete-record:race:5000:current",
-  verificationState: "SELF_REPORTED",
-  freshnessState: "CURRENT",
-  purpose: "CURRENT_CAPABILITY",
+const anchor: PaceAnchorRecord = {
+  anchorId: "race:5000:current", kind: "RECENT_RESULT", eventDistanceM: 5000,
+  performanceSeconds: 1000, achievedAt: "2026-07-20", seasonId: null,
+  enteredBy: "ATHLETE", sourceRef: "athlete-record:race:5000:current",
+  verificationState: "SELF_REPORTED", freshnessState: "CURRENT", purpose: "CURRENT_CAPABILITY",
 }
 
-const REVIEW = {
-  reviewerName: "synthetic-test-reviewer",
-  evidenceRef: "test-only:evidence",
-  decision: "APPROVED" as const,
-}
+const approval = (() => {
+  const value = DETAILED_PRESCRIPTION_APPROVALS[0]
+  if (value === undefined) throw new TypeError("V2-SEED-05 approval is missing")
+  return value
+})()
 
-const FORGED_APPROVAL = {
-  templateId: "FORGED-UNLISTED-TEMPLATE",
-  notation: "5×1000m @5000m RP · r150″",
-  lifecycleStatus: "ACTIVE",
-  eligibilityStatus: "ELIGIBLE",
-  eligibleEventGroups: ["FIVE_K"],
-  eligibleExperienceBands: ["EXPERIENCED"],
-  ownerReview: REVIEW,
-  coachReview: REVIEW,
-  sportsScienceReview: REVIEW,
-  youthReview: REVIEW,
-}
-
-function clearedGate() {
-  return decideSafetyGate(mapD9ResultToRveSignal({
-    disposition: "D9_CLEARED",
-    blocksPlanGeneration: false,
-    reasonCodes: ["D9_CLEARED_NO_COLLOQUIAL_RISK_SIGNAL"],
-    evidence: [],
-  }))
-}
-
-function input(templateId: string, detailedPrescriptionEnabled: boolean) {
+function input(detailedPrescriptionEnabled = true) {
   return {
     detailedPrescriptionEnabled,
-    templateId,
+    templateId: approval.templateId,
+    templateVersion: approval.templateVersion,
+    templateContentFingerprint: approval.templateContentFingerprint,
     athleteEventGroup: "FIVE_K" as const,
     athleteExperienceBand: "EXPERIENCED" as const,
-    anchor: ANCHOR,
+    eventScopeEvidenceFingerprint: approval.eventScopeEvidence.evidenceFingerprint,
+    experienceScopeEvidenceFingerprint: approval.experienceScopeEvidence.evidenceFingerprint,
+    sportsScienceEvidenceFingerprint: approval.sportsScienceEvidence.canonicalEvidenceFingerprint,
+    populationApplicability: "YOUTH_AND_ADULT" as const,
+    populationEvidenceFingerprint: approval.populationApplicabilityEvidence.canonicalEvidenceFingerprint,
+    componentRefs: approval.componentRefs,
+    evaluatedAt: "2026-08-17T03:00:00.000Z",
+    anchor,
     displayRoundingPolicyVersion: "seconds-v1",
-    safetyGate: clearedGate(),
+    safetyGate: decideSafetyGate(mapD9ResultToRveSignal({
+      disposition: "D9_CLEARED", blocksPlanGeneration: false,
+      reasonCodes: ["D9_CLEARED_NO_COLLOQUIAL_RISK_SIGNAL"], evidence: [],
+    })),
   }
 }
 
 describe("detailed prescription application boundary", () => {
   it("returns no prescription while the explicit product flag is off", () => {
-    const result = prepareDetailedPrescription(input("FORGED-UNLISTED-TEMPLATE", false))
-
-    expect(result).toBeNull()
+    expect(prepareDetailedPrescription(input(false))).toBeNull()
   })
 
-  it("keeps an unlisted template unavailable through the canonical manifest", () => {
-    const result = prepareDetailedPrescription(input("UNLISTED-TEMPLATE", true))
+  it("prepares the exact active V2-SEED-05 prescription from compiled authority", () => {
+    const result = prepareDetailedPrescription(input())
 
-    expect(DETAILED_PRESCRIPTION_APPROVALS).toHaveLength(0)
-    expect(result).toBeNull()
+    expect(result).not.toBeNull()
+    expect(result?.prescription.repetitionRecoveryMode).toBe("JOG")
+    expect(result?.prescription.warmupComponent.componentRef).toBe("WU-V2-5K-01")
+    expect(result?.prescription.cooldownComponent.componentRef).toBe("CD-V2-5K-01")
+    expect(result?.prescription.fallbackComponent.numericRepetitionVariant).toBeNull()
+    expect(result?.totals).toMatchObject({ totalRepetitions: 5, qualityDistanceM: 5000, repetitionRecoveryTotalSeconds: 600 })
   })
 
-  it("ignores a forged caller-supplied approval record", () => {
-    const result = Reflect.apply(prepareDetailedPrescription, undefined, [
-      input(FORGED_APPROVAL.templateId, true),
-      [FORGED_APPROVAL],
-    ])
+  it("rejects changed evidence and caller-forged lifecycle flags", () => {
+    const changedEvidence = {
+      ...input(),
+      sportsScienceEvidenceFingerprint: `sha256:${"a".repeat(64)}`,
+      lifecycleStatus: "ACTIVE",
+      eligibilityStatus: "ELIGIBLE",
+    }
 
-    expect(result).toBeNull()
+    expect(prepareDetailedPrescription(changedEvidence)).toBeNull()
+  })
+
+  it("rejects D9 ACTIVE without exposing a partial prescription", () => {
+    const blocked = {
+      ...input(),
+      safetyGate: decideSafetyGate(mapD9ResultToRveSignal({
+        disposition: "D9_ACTIVE", blocksPlanGeneration: true,
+        reasonCodes: ["D9_ACTIVE_COLLOQUIAL_RISK_SIGNAL"], evidence: [],
+      })),
+    }
+
+    expect(prepareDetailedPrescription(blocked)).toBeNull()
   })
 })

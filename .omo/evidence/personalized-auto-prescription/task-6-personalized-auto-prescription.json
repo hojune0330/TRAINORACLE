@@ -1,0 +1,128 @@
+{
+  "schemaVersion": 1,
+  "event": "task-evidence",
+  "task": "Todo 6 personalized auto prescription UI closure",
+  "artifactTimestamp": "2026-08-17T10:36:21.897Z",
+  "headAtEvidenceCapture": "3b9257b6168d835ef5390e587b839549df7a4fc2",
+  "plan": ".omo/plans/personalized-auto-prescription.md",
+  "red": {
+    "command": "npm.cmd run test:unit -- src/screens/plan-beta/PlanBeta.pace-prescription.contract.test.tsx",
+    "exitCode": 1,
+    "result": "A confirmed, then B selected: candidate action was still enabled (expected disabled)."
+  },
+  "green": {
+    "focusedAndAdjacentUnit": {
+      "command": "npm.cmd run test:unit -- src/screens/plan-beta/PaceEvidenceFlow.contract.test.tsx src/screens/plan-beta/PlanBeta.pace-prescription.contract.test.tsx src/screens/plan-beta/PlanSchedulePreview.contract.test.tsx",
+      "exitCode": 0,
+      "result": "3 files, 11 tests passed"
+    },
+    "appTypecheck": {
+      "command": "npm.cmd run typecheck",
+      "exitCode": 0,
+      "result": "tsc --noEmit passed"
+    },
+    "e2eTypecheck": {
+      "command": "npm.cmd run typecheck:e2e",
+      "exitCode": 0,
+      "result": "tsc --noEmit -p tsconfig.e2e.json passed"
+    },
+    "productionBuild": {
+      "command": "npm --prefix app run build",
+      "exitCode": 0,
+      "result": "Standard production build passed twice consecutively with 1918 modules transformed after disabling Vite output deletion."
+    },
+    "playwright": {
+      "command": "PLAYWRIGHT_BASE_URL=http://127.0.0.1:4177 npm exec playwright -- test e2e/personalized-auto-prescription.spec.ts --project=desktop-chromium",
+      "exitCode": 0,
+      "result": "6 passed: 375x667 and 1440x900 candidate/active captures; record reconfirmation; stale; missing; D9."
+    },
+    "diffCheck": {
+      "command": "git diff --check",
+      "exitCode": 0,
+      "result": "passed; line-ending warnings only"
+    },
+    "tsEscapes": {
+      "command": "changed and new Todo 6 TypeScript escape scan",
+      "exitCode": 0,
+      "result": "PASS; no as any, @ts-ignore, or @ts-expect-error"
+    }
+  },
+  "verifiedBehavior": {
+    "recordSwitch": "Confirm A, choose B: old detailed prescription is regenerated to RPE-only, candidate activation is disabled, and B must be explicitly confirmed before the bound prescription returns.",
+    "selectionAndReload": "A exact 5×1000m @5000m RP · r150″ JOG prescription is displayed, activated, persisted, and still displayed after reload.",
+    "comparison": "Comparison selection remains separate from the explicit anchor.",
+    "fallbacks": "Stale and missing records remain RPE-only; D9 blocks before candidates and start/restart recheck current safety.",
+    "accessibility": "Playwright asserted no horizontal overflow, no console/page errors, visible keyboard focus, native semantic controls, 44px touch targets, and no source-strip help/title/detail rectangle overlap.",
+    "helpCopy": "RPE 1~10 and notation help are plain Korean semantic disclosures."
+  },
+  "authorityBoundary": {
+    "selectedRecordIdOnly": true,
+    "selectedFreshnessAccepted": false,
+    "selectedTodayAccepted": false,
+    "selectedEvaluatedAtAccepted": false,
+    "runtimeEvaluatedAt": "Internal fresh authority checks only; it is not caller-controlled selection authority."
+  },
+  "captures": [
+    {
+      "path": "task-6-personalized-auto-prescription/desktop-1440x900-active.png",
+      "width": 1440,
+      "height": 900,
+      "sha256": "b8e07db19fbe9f928e2f16ff64bb34dd821f1a6745b12d95934b3ae2c21c4422"
+    },
+    {
+      "path": "task-6-personalized-auto-prescription/desktop-1440x900-candidates.png",
+      "width": 1440,
+      "height": 900,
+      "sha256": "99df993f485d96a38b0b82f6f888b49b05eb9f293e9bea9ffc52698a862454a1"
+    },
+    {
+      "path": "task-6-personalized-auto-prescription/mobile-375x667-active.png",
+      "width": 375,
+      "height": 667,
+      "sha256": "76272a2babf7e999f38a5f71764ee8e3f40d9c8ae5f7c988f926e442fcc8f2e5"
+    },
+    {
+      "path": "task-6-personalized-auto-prescription/mobile-375x667-candidates.png",
+      "width": 375,
+      "height": 667,
+      "sha256": "8cb9a5be43e17529a19dee287dd183dfe392aa8190cfd2bffcfc47ea41bcadf1"
+    },
+    {
+      "path": "task-6-personalized-auto-prescription/mobile-375x667-d9-blocked.png",
+      "width": 375,
+      "height": 667,
+      "sha256": "aa4f5e4c1c7dfaf08157ef5d4b5e81622845ff86d192a6be0e0c4fe005ffa90b"
+    },
+    {
+      "path": "task-6-personalized-auto-prescription/mobile-375x667-stale.png",
+      "width": 375,
+      "height": 667,
+      "sha256": "25bb38928d9bd2e5f0a94828889168f8706bc775bae98589f90a93b9111904db"
+    }
+  ],
+  "review": {
+    "completedIndependentQa": {
+      "reviewer": "01a00b0a-265f-7131-93f7-f774ce21db91",
+      "verdict": "PASS_AFTER_FIX",
+      "scope": "375x667 and 1440x900 visual/CJK/overflow/touch/detail/D9 evidence",
+      "fixes": [
+        "Kept 두 후보 together without flex gaps",
+        "Removed orphaned Korean suffixes and split 40초 unit"
+      ]
+    },
+    "independentIntegrityRecheck": {
+      "reviewer": "01a00b0a-2b1f-7c20-9e80-3674ebaec1d1",
+      "verdict": "APPROVE",
+      "evidence": "Standard build passed twice; six capture hashes matched; final narrow diff had no regression."
+    }
+  },
+  "cleanup": {
+    "ownedPreview": "Port 4177 preview stopped; no owned preview remains.",
+    "generatedOutput": "Vite no longer recursively deletes dist during local repeat builds; CI starts from a clean checkout.",
+    "staged": false,
+    "committed": false
+  },
+  "residualRisks": [
+    "Local repeat builds retain unreferenced hashed assets in dist; production CI starts from a clean checkout, so deployed artifacts do not accumulate them."
+  ]
+}

@@ -58,6 +58,10 @@ describe("personal plan energy intention contract", () => {
     expect(balancedQuality?.plannedEnergyIntent).toBe("VO2_INTENT")
     expect(conservativeQuality?.plannedEnergyIntent).toBe("VO2_INTENT")
     if (balancedQuality?.role !== "QUALITY" || conservativeQuality?.role !== "QUALITY") return
+    if (
+      balancedQuality.prescription.kind !== "RPE_TIME_RANGE"
+      || conservativeQuality.prescription.kind !== "RPE_TIME_RANGE"
+    ) return
     expect(conservativeQuality.prescription.durationMinutes.maximum).toBeLessThan(
       balancedQuality.prescription.durationMinutes.maximum,
     )

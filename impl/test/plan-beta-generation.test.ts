@@ -65,6 +65,12 @@ describe("plan beta generation contract", () => {
     ])
     expect(result.candidates[0]?.candidateId).not.toBe(result.candidates[1]?.candidateId)
     expect(result.candidates[0]?.sessions).not.toEqual(result.candidates[1]?.sessions)
+    for (const candidate of result.candidates) {
+      expect(candidate.detailedPrescriptionFingerprint).toBeNull()
+      expect(candidate.sessions.every((session) => (
+        session.role !== "QUALITY" || session.prescription.kind === "RPE_TIME_RANGE"
+      ))).toBe(true)
+    }
   })
 
   it.each(["MIDDLE_DISTANCE", "FIVE_K", "TEN_K", "GENERAL_ENDURANCE"])(

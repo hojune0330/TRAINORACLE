@@ -3,16 +3,16 @@
 ```yaml
 document_metadata:
   doc_id: trainoracle-spec-energy-system-session-template-catalog
-  status: RECONSTRUCTED_DRAFT_FOR_REVIEW
+  status: RECONSTRUCTED_WITH_ONE_OWNER_ADOPTED_TEMPLATE
   owner: COACH_HOJUNE
-  version: "0.1"
+  version: "0.2"
   local_original_found: false
   reconstructed_from_current_review_sources: true
-  executed_tests_total: 0
-  executed_tests_passed: 0
+  executed_tests_total: 36
+  executed_tests_passed: 36
   runtime_authority: false
-  automatic_prescription_authorized: false
-  numeric_template_activation_authorized: false
+  automatic_prescription_authorized: V2_SEED_05_ONLY_AFTER_ALL_GATES
+  numeric_template_activation_authorized: V2_SEED_05_ONLY
   catalog_entries:
     energy_intent_seeds: 25
     recovery_support_seeds: 5
@@ -21,10 +21,12 @@ document_metadata:
 
 ## 1. 읽는 방법과 안전 경계
 
-이 목록은 선수에게 쓸 수 있는 자동 처방표가 아니다. 각 항목은 원문 링크, 대상
-집단, 전이 한계, 코치·스포츠과학·청소년 검토 상태를 보존한 연구 시드다. 모든
-항목은 `lifecycleStatus: DRAFT`, `eligibilityStatus: REVIEW_REQUIRED`이며 Template
-Library 조회와 Plan Generator 자동 선택에서 제외된다.
+이 목록은 원문 링크, 대상 집단, 전이 한계와 채택 상태를 보존한다. 30개 중
+`V2-SEED-05@1.0.0` 한 건만 오너 결정과 암호학적으로 결합된 근거를 통해
+`ACTIVE` / `ELIGIBLE`이다. 나머지 29개는 `DRAFT` /
+`REVIEW_REQUIRED`이며 Template Library 조회와 Plan Generator 자동 선택에서
+제외된다. 카탈로그 자체는 런타임 권한이 아니며 신뢰 매니페스트와 모든 실행
+관문이 별도로 일치해야 한다.
 
 `BASE`, `LT`, `VO2`, `GLY`, `ATP_PC`는 계획 의도 라벨이다. 생리 측정 결과,
 개인 능력 점수, 안전 승인, 회복 완료 선언이 아니다. `RECOVERY_INTENT`는 별도
@@ -32,8 +34,8 @@ Library 조회와 Plan Generator 자동 선택에서 제외된다.
 
 ```yaml
 catalog_invariants:
-  numeric_template_activation: forbidden
-  automatic_plan_binding: forbidden
+  numeric_template_activation: V2_SEED_05_ONLY
+  automatic_plan_binding: V2_SEED_05_REQUIRES_TRUSTED_MANIFEST_AND_ALL_GATES
   D9_ACTIVE_or_UNKNOWN: blocks_or_requires_human_review_before_any_future_query
   raw_free_text_for_dose: forbidden
   private_self_only_signal: forbidden
@@ -41,6 +43,8 @@ catalog_invariants:
   cross_event_pace_conversion: CROSS_EVENT_MODEL_REQUIRED
   sprint_under_60m_using_race_pace: forbidden
   no_template_claims_medical_clearance: true
+  active_template_count: 1
+  draft_template_count: 29
 ```
 
 ## 2. Source registry and verification record
@@ -94,6 +98,7 @@ catalog_to_template_library_boundary:
   catalog_entry_is_registered_template_record: false
   allowedEventGroups_empty_means: NOT_ELIGIBLE_FOR_ANY_EVENT_GROUP
   allowedExperienceBands_empty_means: NOT_ELIGIBLE_FOR_ANY_EXPERIENCE_BAND
+  accepted_mapping_exception: V2-SEED-05@1.0.0
   draftCandidateEventGroups_runtime_consumption: forbidden
   required_before_any_mapping:
     - exact_TemplateLibrary_EventGroup_mapping
@@ -104,10 +109,14 @@ catalog_to_template_library_boundary:
 
 ```yaml
 required_review_state:
-  coach: PENDING
-  sportsScience: PENDING
-  youthTransfer: PENDING_OR_NOT_APPLICABLE
-  activation: FORBIDDEN
+  V2-SEED-05:
+    productOwnerCoach: APPROVED
+    sportsScienceEvidence: CRYPTOGRAPHICALLY_BOUND_NO_INDEPENDENT_HUMAN_REVIEW_CLAIM
+    populationApplicabilityEvidence: YOUTH_AND_ADULT_SAME_CRITERIA
+    activation: ACTIVE_ONLY_WITH_TRUSTED_MANIFEST
+  all_other_seeds:
+    review: PENDING
+    activation: FORBIDDEN
 common_stop_condition_codes:
   - STOP_IF_D9_BLOCKED_OR_UNKNOWN
   - STOP_IF_REQUIRED_WARMUP_OR_ANCHOR_IS_MISSING
@@ -177,11 +186,11 @@ research_preview_visibility_policy:
     rejected_or_unusable: 5
     missing_or_unknown_source_tier: forbidden
   sourceTierVisibleForResearchPreview_is_runtime_eligibility: false
-  current_catalog_runtime_candidates: 0
-  all_catalog_records_lifecycle_status: DRAFT
-  all_catalog_records_eligibility_status: REVIEW_REQUIRED
-  all_catalog_record_event_group_eligibility: EMPTY_FOR_ALL_30
-  all_catalog_record_experience_band_eligibility: EMPTY_FOR_ALL_30
+  current_catalog_runtime_candidates: 1
+  catalog_lifecycle_counts: { ACTIVE: 1, DRAFT: 29 }
+  catalog_eligibility_counts: { ELIGIBLE: 1, REVIEW_REQUIRED: 29 }
+  catalog_event_group_eligibility: { FIVE_K_EXPERIENCED_V2_SEED_05: 1, EMPTY_DRAFTS: 29 }
+  catalog_experience_band_eligibility: { EXPERIENCED_V2_SEED_05: 1, EMPTY_DRAFTS: 29 }
   catalog_eligibility_bypass: forbidden
 ```
 
@@ -706,37 +715,49 @@ research_preview_group_invariants:
   derivedTotals: UNAVAILABLE_SOURCE_PROTOCOL_NOT_RECONFIRMED
 
 - templateId: V2-SEED-05
-  version: "0.1"
-  lifecycleStatus: DRAFT
-  eligibilityStatus: REVIEW_REQUIRED
+  version: "1.0.0"
+  lifecycleStatus: ACTIVE
+  eligibilityStatus: ELIGIBLE
   sourceVerificationStatus: SOURCE_ADAPTED
   planningIntent: VO2_INTENT
   plainKoreanName: "1000미터 5회 5K 페이스 후보"
   coachingTerm: "5K-pace intervals"
   notationPattern: "5×1000m @5K RP · r2′30″"
-  machineNotation: "5×1000m @5000m RP · r150″"
+  machineNotation: "5×1000m @5000m RP · r150″ JOG"
   machineNotationStatus: PARSER_READY
   machineNotationBasis: "5K=5000m; 2 minutes 30 seconds=150 seconds; repetitions, distance, and recovery are unchanged."
   machineNotationBlockers: []
-  plainKoreanReading: "1000미터를 5K 레이스 페이스 기준으로 다섯 번 달리는 후보입니다."
+  plainKoreanReading: "현재 5000미터 기록의 레이스 페이스로 1000미터를 다섯 번 달리고, 반복 사이에는 150초 조깅합니다."
   sourceRefs: [SRC-VDOT-PACES]
-  sourcePopulation: "VDOT 3-5 minute interval range, adapted to 1000m."
-  transferLimitations: "Requires same-event explicit anchor or RPE-only; no cross-event conversion."
-  allowedEventGroups: []
+  sourcePopulation: "VDOT interval guidance adapted by TrainOracle; not a universal source protocol."
+  transferLimitations: "FIVE_K and EXPERIENCED only; explicit CURRENT same-event anchor required; no cross-event conversion."
+  allowedEventGroups: [FIVE_K]
   draftCandidateEventGroups: [MIDDLE_DISTANCE, LONG_DISTANCE, ROAD_RUNNING]
-  allowedExperienceBands: []
-  draftExperienceEvidence: SOURCE_AND_HUMAN_MAPPING_REQUIRED
-  minorAllowed: false
-  guardianOrCoachReview: "COACH_AND_SPORTS_SCIENCE_REVIEW_REQUIRED"
-  paceAnchorKinds: [RECENT_RESULT, PB, SB, GOAL, RPE_ONLY, COACH_REFERENCE]
-  warmup: "WU-QUALITY-REVIEW-REQUIRED"
+  allowedExperienceBands: [EXPERIENCED]
+  draftExperienceEvidence: ACCEPTED_BY_TO_V2_SEED_05_OWNER_ADOPTION_2026_08_17
+  populationApplicability: YOUTH_AND_ADULT_SAME_CRITERIA_NO_AGE_DOSE_BRANCH
+  minorAllowed: true
+  processingAuthorization: SEPARATE_GUARDIAN_PRIVACY_ACCOUNT_SYNC_SHARING_GATES_PRESERVED
+  guardianOrCoachReview: "PRODUCT_OWNER_COACH_APPROVED; NO_INDEPENDENT_HUMAN_REVIEW_CLAIM"
+  paceAnchorKinds: [RECENT_RESULT, PB, SB]
+  anchorRequirements: [CURRENT, SAME_EVENT_5000M, CURRENT_CAPABILITY, EXPLICIT_SELECTION]
+  warmup: "WU-V2-5K-01@1.0.0; OWNER_OPERATIONAL_ADAPTATION; 15 min easy RPE 2-3; 4x20 sec progressive strides with 40 sec easy walk/jog between"
   mainSet: "1 set x 5 reps x 1000m"
   repetitionRecovery: "150 sec JOG"
   setRecovery: NOT_APPLICABLE
-  cooldown: "CD-QUALITY-REVIEW-REQUIRED"
-  downshiftOptions: [REDUCE_REPETITIONS, RPE_ONLY_CONTROLLED]
-  stopConditionCodes: [STOP_IF_D9_BLOCKED_OR_UNKNOWN, STOP_IF_ANCHOR_EVENT_MISMATCH, STOP_IF_REQUIRED_WARMUP_OR_ANCHOR_IS_MISSING]
+  cooldown: "CD-V2-5K-01@1.0.0; OWNER_OPERATIONAL_ADAPTATION; 10 min easy RPE 1-2"
+  downshiftOptions: [RPE_ONLY_CONTROLLED]
+  fallbackBehavior: DELEGATE_TO_EXISTING_RPE_CANDIDATE_ATOMICALLY
+  numericReducedRepetitionVariant: null
+  stopConditionAuthority: OWNER_PRECAUTIONARY_OPERATIONAL_RULE_NOT_DIAGNOSIS
+  stopConditionCodes: [STOP_NEW_OR_WORSENING_PAIN, STOP_DIZZINESS_OR_FAINTNESS, STOP_CHEST_PAIN_OR_UNUSUAL_BREATHING, STOP_LOSS_OF_CONTROLLED_FORM]
   derivedTotals: "totalRepetitions=5; qualityDistanceM=5000; recoveryTotalSeconds=600"
+  sourceDecisionRef: TO-V2-SEED-05-OWNER-ADOPTION-2026-08-17
+  componentFingerprints:
+    WU-V2-5K-01@1.0.0: "sha256:d8da21478d2a44841122874ccf35c24aad1777ebaaeb018deda3e98a8f9cf6f1"
+    CD-V2-5K-01@1.0.0: "sha256:8d1470171a5edb17a43aa1c21ca34bbfb77456347a68293d2ffe0a5bc52968ab"
+    RPE-ONLY-CONTROLLED-01@1.0.0: "sha256:cd09b06359fcdfb422b421c31dd45a97beeccbdbecaabd1eb7274cdd67ecf3c5"
+    STOP-V2-5K-01@1.0.0: "sha256:737ce6df7f7049530b72f3f52f20a2cbbd32bb83ccf6bfd93c29e25864b4bc29"
 ```
 
 ## 7. GLY_INTENT seeds
@@ -1263,19 +1284,25 @@ research_preview_group_invariants:
   derivedTotals: "no_training_totals; no_recovery_score"
 ```
 
-## 10. Required human review before any later activation
+## 10. Activation boundary after the V2-SEED-05 owner decision
 
 ```yaml
 activation_requirements:
-  all_numeric_templates:
+  V2-SEED-05@1.0.0:
+    - trusted_PRODUCT_OWNER_COACH_authority_decision
+    - cryptographically_bound_SPORTS_SCIENCE_EVIDENCE
+    - cryptographically_bound_POPULATION_APPLICABILITY_EVIDENCE
+    - exact_component_and_template_fingerprints
+    - no_independent_human_review_claim
+    - all_runtime_scope_anchor_and_safety_gates
+  all_other_numeric_templates:
     - coach_review_of_event_experience_and_current_context
     - sports_science_review_of_source_and_transfer_limitations
     - explicit_lifecycle_change_from_DRAFT
     - separate_active_template_approval_record
-  minor_related_use:
-    - accepted_minor_policy
-    - guardian_consent_when_policy_requires
-    - named_human_reviewer
+  population_policy:
+    - age_alone_never_rejects_or_changes_training_dose
+    - guardian_privacy_account_sync_sharing_processing_guards_remain_separate
   runtime:
     - accepted_template_library_binding
     - safety_gate_runtime_evidence

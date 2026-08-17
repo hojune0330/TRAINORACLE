@@ -1,0 +1,16 @@
+manifest.schemaVersion1=true;
+manifest.trustedReviewerAuthoritiesEmpty=true;
+manifest.approvalsEmpty=true;
+manifest.deepFrozen=true;
+fabricatedReviewers.applicable=false;
+duplicateReviewerId.applicable=false;
+wrongReviewerRole.applicable=false;
+notationHash.bound=true;
+malformedManifest.authority=false;
+executableTemplateExpression.validJson=false;
+semanticV2Active.allowed=false;
+historicalPacketHash.preserved=true;
+historicalCatalogHash.preserved=true;
+runtimeActivation.forbidden=true;
+ageOrYouthGate.present=false;
+cleanup.noRuntimeResourcesSpawned=true;

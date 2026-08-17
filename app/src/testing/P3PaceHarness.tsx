@@ -1,5 +1,4 @@
-import { decideSafetyGate } from "@impl/safety-gate/gate"
-import { mapD9ResultToRveSignal } from "@impl/rve/signal"
+import React from "react"
 import type { AthleteRecord } from "../domain/athlete-records"
 import { PaceEvidenceFlow } from "../screens/plan-beta/PaceEvidenceFlow"
 import "./p3-pace-harness.css"
@@ -33,25 +32,18 @@ const RECORDS: readonly AthleteRecord[] = [
   },
 ]
 
-const CLEARED_GATE = decideSafetyGate(mapD9ResultToRveSignal({
-  disposition: "D9_CLEARED",
-  blocksPlanGeneration: false,
-  reasonCodes: ["D9_CLEARED_NO_COLLOQUIAL_RISK_SIGNAL"],
-  evidence: [],
-}))
-
 export function P3PaceHarness() {
+  const [selectedRecordId, setSelectedRecordId] = React.useState<string | null>(null)
   return (
     <main className="p3-pace-harness">
       <PaceEvidenceFlow
         records={RECORDS}
-        notation="5×1000m @5000m RP · r150″"
-        template={{
-          lifecycleStatus: "ACTIVE",
-          eligibilityStatus: "ELIGIBLE",
-        }}
-        safetyGate={CLEARED_GATE}
-        today={new Date("2026-07-30T12:00:00.000Z")}
+        selectedRecordId={selectedRecordId}
+        comparisonRecordId={null}
+        binding={{ kind: "fallback", code: "PACE_TARGET_FALLBACK_NO_EXPLICIT_ANCHOR" }}
+        onSelectRecord={setSelectedRecordId}
+        onCompareRecord={() => undefined}
+        onConfirm={() => undefined}
       />
     </main>
   )

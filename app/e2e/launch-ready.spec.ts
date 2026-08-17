@@ -171,7 +171,7 @@ test("reads a detailed training notation without creating a plan", async ({ page
   await page.getByRole("navigation", { name: "내 기록 살펴보기" }).getByRole("button", { name: /^훈련 계획/u }).click()
   await page.getByRole("button", { name: "훈련표 표기 읽기" }).click()
   await page.getByRole("textbox", { name: "훈련표 표기" }).fill(
-    "2×(10×400m) @5000m RP · r60″ · R3′",
+    "2×(10×400m) @5000m RP · r60″ STAND · R3′ STAND",
   )
   await page.getByRole("button", { name: "표기 풀어보기" }).click()
 

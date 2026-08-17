@@ -2,11 +2,17 @@ import { describe, expect, it } from "vitest"
 import { decideSafetyGate } from "@impl/safety-gate/gate"
 import { mapD9ResultToRveSignal } from "@impl/rve/signal"
 import type { AthleteRecord } from "./athlete-records"
+import { DETAILED_PRESCRIPTION_APPROVALS } from "./detailed-prescription-approvals"
 import { buildPaceTargetPlanItem } from "./pace-target-plan"
 
 type AchievedRecord = Exclude<AthleteRecord, { readonly purpose: "RACE_GOAL" }>
 
 const TODAY = new Date("2026-07-30T12:00:00.000Z")
+const V2_APPROVAL = DETAILED_PRESCRIPTION_APPROVALS.find(
+  (approval) => approval.templateId === "V2-SEED-05" && approval.templateVersion === "1.0.0",
+)
+if (V2_APPROVAL === undefined) throw new TypeError("Trusted V2-SEED-05 approval is missing")
+const OPERATIONAL_COMPONENTS = V2_APPROVAL.canonicalTemplateContent.operationalComponents
 
 function clearedGate() {
   return decideSafetyGate(mapD9ResultToRveSignal({
@@ -78,10 +84,11 @@ function baseInput() {
     selectedFreshness: "CURRENT" as const,
     comparison: null,
     goalRecord: goalRecord(),
-    notation: "5×1000m @5000m RP · r150″",
+    notation: "5×1000m @5000m RP · r150″ JOG",
     displayRoundingPolicyVersion: "seconds-v1",
     template: ACTIVE_FIXTURE,
     safetyGate: clearedGate(),
+    operationalComponents: OPERATIONAL_COMPONENTS,
     today: TODAY,
   }
 }
@@ -179,7 +186,7 @@ describe("P3 pace-target plan builder", () => {
   it("requires the selected record to match the notation event", () => {
     const result = buildPaceTargetPlanItem({
       ...baseInput(),
-      notation: "5×1000m @1500m RP · r150″",
+      notation: "5×1000m @1500m RP · r150″ JOG",
     })
 
     expect(result).toEqual({

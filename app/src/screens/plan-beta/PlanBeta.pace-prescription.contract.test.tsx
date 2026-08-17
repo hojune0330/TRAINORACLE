@@ -1,0 +1,150 @@
+import { cleanup, render, screen, within } from "@testing-library/react"
+import userEvent from "@testing-library/user-event"
+import { afterEach, beforeEach, describe, expect, it } from "vitest"
+import { ATHLETE_RECORDS_STORAGE_KEY } from "../../domain/athlete-records"
+import { PlanBeta } from "../PlanBeta"
+
+const RECORDS = [
+  {
+    schemaVersion: 1,
+    id: "pb-5k-current",
+    purpose: "PERSONAL_BEST",
+    eventDistanceM: 5000,
+    performanceSeconds: 1110,
+    achievedOn: "2026-05-10",
+    seasonId: null,
+    enteredBy: "ATHLETE",
+    verificationState: "SELF_REPORTED",
+    sourceRef: "athlete-record:pb-5k-current",
+    savedAt: "2026-05-10T12:00:00.000Z",
+  },
+  {
+    schemaVersion: 1,
+    id: "sb-5k-current",
+    purpose: "SEASON_BEST",
+    eventDistanceM: 5000,
+    performanceSeconds: 1140,
+    achievedOn: "2026-04-20",
+    seasonId: "2026",
+    enteredBy: "ATHLETE",
+    verificationState: "SELF_REPORTED",
+    sourceRef: "athlete-record:sb-5k-current",
+    savedAt: "2026-04-20T12:00:00.000Z",
+  },
+] as const
+
+beforeEach(() => {
+  window.localStorage.clear()
+  window.sessionStorage.clear()
+  window.localStorage.setItem(ATHLETE_RECORDS_STORAGE_KEY, JSON.stringify(RECORDS))
+})
+
+afterEach(cleanup)
+
+async function reachCandidates(): Promise<void> {
+  const user = userEvent.setup()
+  await user.click(screen.getByRole("button", { name: /5km/u }))
+  await user.click(screen.getByRole("button", { name: /일반부/u }))
+  await user.click(screen.getByRole("button", { name: /구조화된 훈련과 경기 경험이 많아요/u }))
+  await user.click(screen.getByRole("button", { name: /통증은 없고 몸 상태는 평소와 같아요/u }))
+  await user.click(screen.getByRole("button", { name: "내 계획 완성하기" }))
+  await user.click(screen.getByRole("button", { name: /반복 인터벌.*VO2/u }))
+  await user.click(screen.getByRole("button", { name: /^3일/u }))
+  await user.click(screen.getByRole("button", { name: /9일 계획 받기/u }))
+  await user.click(screen.getByRole("button", { name: /아침에 운동해요/u }))
+  await user.click(screen.getByRole("button", { name: /하루 한 번 운동/u }))
+}
+
+describe("production detailed prescription experience", () => {
+  it("binds only the confirmed record and preserves the exact prescription after reload", async () => {
+    const user = userEvent.setup()
+    const firstRender = render(<PlanBeta />)
+    await reachCandidates()
+
+    const picker = screen.getByRole("region", { name: "개인 페이스 기준 기록" })
+    await user.click(within(picker).getByRole("button", { name: /개인 최고.*18분 30초/u }))
+    await user.click(within(picker).getByRole("button", { name: /비교 기록.*시즌 최고.*19분/u }))
+    expect(within(picker).getByText(/기준 기록.*18분 30초/u)).toBeVisible()
+    expect(within(picker).getByText(/비교만.*19분/u)).toBeVisible()
+
+    await user.click(within(picker).getByRole("button", { name: "이 기록으로 개인 페이스 적용" }))
+
+    const schedule = screen.getAllByRole("list", { name: "날짜별 계획 미리보기" })[0]
+    if (schedule === undefined) throw new Error("Expected an expanded candidate schedule")
+    expect(within(schedule).getByText(/5×1000m @5000m RP.*r150.*JOG/u)).toBeVisible()
+    expect(within(schedule).getAllByText(/5회.*5000m/u)).not.toHaveLength(0)
+    expect(within(schedule).getByText(/4번.*150초.*조깅.*600초/u)).toBeVisible()
+    await user.click(within(schedule).getByText("기준 기록·중단·낮춤 규칙 보기"))
+    expect(within(schedule).getByText(/5000m.*18분 30초.*2026-05-10/u)).toBeVisible()
+
+    await user.click(screen.getByRole("button", { name: /반복 인터벌 포함 선택하기/u }))
+    expect(screen.getByRole("heading", { name: /반복 인터벌 포함 9일 계획/u })).toBeVisible()
+    expect(screen.getByText(/5×1000m @5000m RP.*r150.*JOG/u)).toBeVisible()
+    await user.click(screen.getByText("시작·다시 시작 전 확인"))
+    await user.click(screen.getByRole("button", { name: "통증 없고 평소와 같음 · 시작 확인" }))
+    expect(screen.getByRole("status")).toHaveTextContent("시작할 수 있어요")
+    await user.click(screen.getByRole("button", { name: "통증 없고 평소와 같음 · 다시 시작 확인" }))
+    expect(screen.getByRole("status")).toHaveTextContent("다시 시작할 수 있어요")
+
+    firstRender.unmount()
+    render(<PlanBeta />)
+    expect(screen.getByText(/5×1000m @5000m RP.*r150.*JOG/u)).toBeVisible()
+    await user.click(screen.getByText("기준 기록·중단·낮춤 규칙 보기"))
+    expect(screen.getByText(/5000m.*18분 30초.*2026-05-10/u)).toBeVisible()
+  })
+
+  it("requires reconfirmation after replacing a confirmed record", async () => {
+    const user = userEvent.setup()
+    render(<PlanBeta />)
+    await reachCandidates()
+
+    const picker = screen.getByRole("region", { name: "개인 페이스 기준 기록" })
+    await user.click(within(picker).getByRole("button", { name: /개인 최고.*18분 30초/u }))
+    await user.click(within(picker).getByRole("button", { name: "이 기록으로 개인 페이스 적용" }))
+    expect(screen.getAllByText(/5×1000m @5000m RP.*r150.*JOG/u)).not.toHaveLength(0)
+
+    await user.click(within(picker).getByRole("button", { name: /^시즌 최고.*19분/u }))
+    expect(screen.getByRole("button", { name: /반복 인터벌 포함 선택하기/u })).toBeDisabled()
+    expect(screen.queryByText(/5×1000m @5000m RP.*r150.*JOG/u)).toBeNull()
+
+    await user.click(within(picker).getByRole("button", { name: "이 기록으로 개인 페이스 적용" }))
+    expect(screen.getByRole("button", { name: /반복 인터벌 포함 선택하기/u })).toBeEnabled()
+    expect(screen.getAllByText(/5000m.*19분.*2026-04-20/u)).not.toHaveLength(0)
+  })
+  it("keeps both candidates RPE-only when the confirmed record is stale", async () => {
+    const stale = [{ ...RECORDS[0], id: "pb-5k-stale", achievedOn: "2024-01-01", sourceRef: "athlete-record:pb-5k-stale" }]
+    window.localStorage.setItem(ATHLETE_RECORDS_STORAGE_KEY, JSON.stringify(stale))
+    const user = userEvent.setup()
+    render(<PlanBeta />)
+    await reachCandidates()
+
+    const picker = screen.getByRole("region", { name: "개인 페이스 기준 기록" })
+    await user.click(within(picker).getByRole("button", { name: /개인 최고.*18분 30초/u }))
+    await user.click(within(picker).getByRole("button", { name: "이 기록으로 개인 페이스 적용" }))
+
+    expect(within(picker).getByText(/기록일이 현재 기준 범위를 벗어났어요/u)).toBeVisible()
+    expect(screen.queryByText(/5×1000m @5000m RP/u)).toBeNull()
+    expect(screen.getAllByText(/거리.*목표.*페이스는 지정하지 않음/u)).not.toHaveLength(0)
+  })
+
+  it("shows a plain RPE fallback when no record exists", async () => {
+    window.localStorage.removeItem(ATHLETE_RECORDS_STORAGE_KEY)
+    render(<PlanBeta />)
+    await reachCandidates()
+
+    expect(screen.getByText(/사용할 수 있는 경기 기록이 없어 RPE 계획/u)).toBeVisible()
+    expect(screen.queryByText(/5×1000m @5000m RP/u)).toBeNull()
+  })
+
+  it("blocks at D9 before producing candidates", async () => {
+    const user = userEvent.setup()
+    render(<PlanBeta />)
+    await user.click(screen.getByRole("button", { name: /5km/u }))
+    await user.click(screen.getByRole("button", { name: /일반부/u }))
+    await user.click(screen.getByRole("button", { name: /구조화된 훈련과 경기 경험이 많아요/u }))
+    await user.click(screen.getByRole("button", { name: /통증.*부상.*몸 이상/u }))
+
+    expect(screen.getByRole("heading", { name: "지금은 계획을 멈췄어요" })).toBeVisible()
+    expect(screen.queryByText("선택 가능한 계획 2가지")).toBeNull()
+  })
+})

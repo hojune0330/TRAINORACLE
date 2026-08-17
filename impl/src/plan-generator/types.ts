@@ -28,6 +28,7 @@ export type {
   PlanSession,
   PlanSessionSlot,
   RpeTimeRange,
+  PaceTargetPlanPrescription,
 } from "./session-types"
 export type {
   BetaActivePlanSnapshot,
@@ -102,6 +103,7 @@ export type PlanBetaCode =
   | "PROFILE_ONLY_LIMITED_CONTEXT"
   | "RECENT_JOURNAL_CONTEXT_PRESENT"
   | "BETA_DURATION_RPE_ONLY"
+  | "PACE_TARGET_BOUND"
   | "BETA_NON_UNIVERSAL_FORMATION_SCOPE"
   | "PREVIOUS_FRAME_CONTEXT_RETAINED"
   | "SAFETY_GATE_ACTIVE"
@@ -152,9 +154,10 @@ export type PlanCandidate = {
   readonly confidence: "LIMITED"
   readonly beta: {
     readonly designation: "BETA"
-    readonly prescriptionBasis: "DURATION_RPE_ONLY"
+    readonly prescriptionBasis: "DURATION_RPE_ONLY" | "ONE_TRUSTED_DETAILED_SESSION"
     readonly formationMethodClaim: "NOT_UNIVERSAL"
   }
+  readonly detailedPrescriptionFingerprint: string | null
   readonly continuityContext:
     | {
         readonly kind: "NO_PREVIOUS_FRAME_CONTEXT"
