@@ -1581,6 +1581,16 @@
   font-weight: 700;
 }
 
+.active-plan__execution-check .active-plan__execution-note {
+  margin: 0 0 var(--space-2);
+  padding: var(--space-2);
+  border: var(--bw-line) solid var(--line);
+  background: var(--surface-2);
+  color: var(--ink-2);
+  font-size: var(--fs-body-sm);
+  line-height: 1.5;
+}
+
 .active-plan__execution-check .active-plan__execution-review {
   display: flex;
   align-items: center;

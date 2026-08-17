@@ -35,6 +35,7 @@ export function PlanActiveState({
   const [executionMessage, setExecutionMessage] = React.useState<string | null>(null)
 
   const saveProgress = (progress: StoredPlanProgress) => {
+    setExecutionMessage(null)
     const result = recordPlanProgress({
       kind: "PLAN_BETA_PROGRESS_REQUEST",
       activePlan: state.activePlan,
@@ -56,6 +57,7 @@ export function PlanActiveState({
   }
 
   const startNextFrame = () => {
+    setExecutionMessage(null)
     const result = archiveAndClearActivePlan(state)
     if (!result.ok) {
       setError(result.rollbackComplete

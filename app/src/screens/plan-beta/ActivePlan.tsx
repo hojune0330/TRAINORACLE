@@ -123,10 +123,10 @@ export function ActivePlan({
                       ? "시작 전 확인"
                       : current === "PAIN_CHECKIN"
                         ? "통증 기록 후 확인"
-                        : "다시 시작 전 확인"}
+                        : "기록 후 몸 상태 확인"}
                   </summary>
                   <p>누를 때마다 몸 상태와 저장된 처방의 승인·만료·철회 여부를 다시 확인해요.</p>
-                  {current === undefined && (
+                  {current === undefined ? (
                     <button
                       className="active-plan__execution-primary"
                       type="button"
@@ -138,19 +138,10 @@ export function ActivePlan({
                     >
                       통증 없고 평소와 같음 · 시작 확인
                     </button>
-                  )}
-                  {current !== undefined && current !== "PAIN_CHECKIN" && (
-                    <button
-                      className="active-plan__execution-primary"
-                      type="button"
-                      onClick={() => onCheckDetailedExecution(
-                        detailedPrescription,
-                        "RESTART",
-                        "NO_KNOWN_RISK",
-                      )}
-                    >
-                      통증 없고 평소와 같음 · 다시 시작 확인
-                    </button>
+                  ) : (
+                    <p className="active-plan__execution-note">
+                      이미 결과를 기록한 세션은 다시 시작하지 않아요. 몸 상태가 이상하면 아래에서 확인해 주세요.
+                    </p>
                   )}
                   <button
                     className="active-plan__execution-review"

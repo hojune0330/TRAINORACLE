@@ -187,11 +187,12 @@ for (const viewport of [
       .getByRole("button", { name: "계획" })
       .click()
     await expect(page.getByText(/5×1000m @5000m RP.*r150.*JOG/u)).toBeVisible()
-    await page.getByText("시작·다시 시작 전 확인").click()
+    await page.getByText("시작 전 확인").click()
+    await expect(page.getByRole("button", {
+      name: "통증 없고 평소와 같음 · 다시 시작 확인",
+    })).toHaveCount(0)
     await page.getByRole("button", { name: "통증 없고 평소와 같음 · 시작 확인" }).click()
     await expect(page.getByRole("status")).toContainText("시작할 수 있어요")
-    await page.getByRole("button", { name: "통증 없고 평소와 같음 · 다시 시작 확인" }).click()
-    await expect(page.getByRole("status")).toContainText("다시 시작할 수 있어요")
     await page.getByRole("button", { name: "통증·이상 또는 잘 모르겠음" }).click()
     await expect(page.getByRole("status")).toContainText("상세 세션을 시작하지 않아요")
     await assertViewportIntegrity(page)

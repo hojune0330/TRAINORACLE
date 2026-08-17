@@ -141,15 +141,27 @@ for (const fixture of cases) {
       .locator("xpath=ancestor::section[@role='group'][1]")
     await activeSession.getByRole("button", { name: "완료" }).click()
     await expect(page.getByRole("button", {
-      name: "통증 없고 평소와 같음 · 시작 확인",
+      name: /통증 없고 평소와 같음 · (시작|다시 시작) 확인/u,
     })).toHaveCount(0)
+    await expect(page.getByRole("status")).toHaveCount(0)
+    await expect(page.getByText(/이미 결과를 기록한 세션은 다시 시작하지 않아요/u).first())
+      .toBeVisible()
+    await activeSession.getByRole("button", { name: "휴식" }).click()
     await expect(page.getByRole("button", {
-      name: "통증 없고 평소와 같음 · 다시 시작 확인",
-    })).toBeVisible()
+      name: /통증 없고 평소와 같음 · (시작|다시 시작) 확인/u,
+    })).toHaveCount(0)
+    await expect(page.getByRole("status")).toHaveCount(0)
+    await activeSession.getByRole("button", { name: "건너뜀" }).click()
+    await expect(page.getByRole("button", {
+      name: /통증 없고 평소와 같음 · (시작|다시 시작) 확인/u,
+    })).toHaveCount(0)
+    await expect(page.getByRole("status")).toHaveCount(0)
     await activeSession.getByRole("button", { name: "통증 체크" }).click()
     await expect(page.getByRole("button", {
       name: /통증 없고 평소와 같음 · (시작|다시 시작) 확인/u,
     })).toHaveCount(0)
+    await expect(page.getByRole("status")).toHaveCount(0)
+    await expect(page.getByText("통증 기록 후 확인")).toBeVisible()
     await expect(page.getByRole("button", {
       name: "통증·이상 또는 잘 모르겠음",
     })).toBeVisible()
