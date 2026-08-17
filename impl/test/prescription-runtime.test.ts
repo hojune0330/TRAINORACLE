@@ -17,7 +17,7 @@ function gateFor(disposition: "D9_CLEARED" | "D9_ACTIVE" | "D9_UNKNOWN") {
 }
 
 const runtimeInput = {
-  notation: "2×(10×400m) @5000m RP · r60″ · R3′",
+  notation: "2×(10×400m) @5000m RP · r60″ STAND · R3′ STAND",
   anchor: {
     anchorId: "race:5000:current",
     kind: "RECENT_RESULT",
@@ -35,6 +35,50 @@ const runtimeInput = {
   template: {
     lifecycleStatus: "DRAFT",
     eligibilityStatus: "REVIEW_REQUIRED",
+  },
+  operationalComponents: {
+    warmup: {
+      componentRef: "WU-V2-5K-01",
+      componentVersion: "1.0.0",
+      authority: "OWNER_OPERATIONAL_ADAPTATION",
+      easyDurationMinutes: 15,
+      rpeMin: 2,
+      rpeMax: 3,
+      strides: {
+        repetitions: 4,
+        durationSeconds: 20,
+        recoverySeconds: 40,
+        recoveryMode: "WALK_OR_JOG",
+        progression: "PROGRESSIVE",
+      },
+    },
+    cooldown: {
+      componentRef: "CD-V2-5K-01",
+      componentVersion: "1.0.0",
+      authority: "OWNER_OPERATIONAL_ADAPTATION",
+      easyDurationMinutes: 10,
+      rpeMin: 1,
+      rpeMax: 2,
+    },
+    fallback: {
+      componentRef: "RPE-ONLY-CONTROLLED-01",
+      componentVersion: "1.0.0",
+      code: "RPE_ONLY_CONTROLLED",
+      behavior: "DELEGATE_TO_EXISTING_RPE_CANDIDATE",
+      numericRepetitionVariant: null,
+    },
+    stopConditions: {
+      componentRef: "STOP-V2-5K-01",
+      componentVersion: "1.0.0",
+      authority: "OWNER_PRECAUTIONARY_OPERATIONAL_RULE",
+      diagnosticClaim: false,
+      codes: [
+        "STOP_NEW_OR_WORSENING_PAIN",
+        "STOP_DIZZINESS_OR_FAINTNESS",
+        "STOP_CHEST_PAIN_OR_UNUSUAL_BREATHING",
+        "STOP_LOSS_OF_CONTROLLED_FORM",
+      ],
+    },
   },
 }
 
@@ -108,5 +152,71 @@ describe("prescription runtime safety boundary", () => {
     expect(result.kind).toBe("prepared")
     expect(JSON.stringify(result)).not.toContain(rawMemo)
     expect(JSON.stringify(result)).not.toContain("private")
+  })
+
+  it("prepares the exact V2-SEED-05 JOG session with complete operational components", () => {
+    const input = {
+      ...runtimeInput,
+      notation: "5×1000m @5000m RP · r150″ JOG",
+      template: {
+        lifecycleStatus: "ACTIVE" as const,
+        eligibilityStatus: "ELIGIBLE" as const,
+      },
+      safetyGate: gateFor("D9_CLEARED"),
+    }
+
+    const result = preparePrescriptionRuntime(input)
+
+    expect(result.kind).toBe("prepared")
+    if (result.kind !== "prepared") throw new TypeError("Expected V2-SEED-05 to prepare")
+    expect(result.prescription.repetitionRecoveryMode).toBe("JOG")
+    expect(result.prescription.warmupComponent).toEqual(runtimeInput.operationalComponents.warmup)
+    expect(result.prescription.cooldownComponent).toEqual(runtimeInput.operationalComponents.cooldown)
+    expect(result.prescription.fallbackComponent).toEqual(runtimeInput.operationalComponents.fallback)
+    expect(result.prescription.stopConditionComponent).toEqual(runtimeInput.operationalComponents.stopConditions)
+    expect(result.totals.totalRepetitions).toBe(5)
+    expect(result.totals.qualityDistanceM).toBe(5000)
+    expect(result.totals.repetitionRecoveryOccurrences).toBe(4)
+    expect(result.totals.repetitionRecoveryTotalSeconds).toBe(600)
+  })
+
+  it.each(["warmup", "cooldown", "fallback", "stopConditions"] as const)(
+    "rejects atomically when the %s operational component is missing",
+    (component) => {
+      const operationalComponents = { ...runtimeInput.operationalComponents }
+      expect(Reflect.deleteProperty(operationalComponents, component)).toBe(true)
+      expect(operationalComponents).not.toHaveProperty(component)
+
+      const result = preparePrescriptionRuntime({
+        ...runtimeInput,
+        notation: "5×1000m @5000m RP · r150″ JOG",
+        template: { lifecycleStatus: "ACTIVE", eligibilityStatus: "ELIGIBLE" },
+        operationalComponents,
+        safetyGate: gateFor("D9_CLEARED"),
+      })
+
+      expect(result).toEqual({ kind: "rejected", code: "MALFORMED_RUNTIME_INPUT" })
+    },
+  )
+
+  it("rejects a numeric repetition downshift instead of doing runtime dose arithmetic", () => {
+    const numericFallback = {
+      ...runtimeInput.operationalComponents.fallback,
+      numericRepetitionVariant: 4,
+    }
+    expect(numericFallback.numericRepetitionVariant).not.toBeNull()
+
+    const result = preparePrescriptionRuntime({
+      ...runtimeInput,
+      notation: "5×1000m @5000m RP · r150″ JOG",
+      template: { lifecycleStatus: "ACTIVE", eligibilityStatus: "ELIGIBLE" },
+      operationalComponents: {
+        ...runtimeInput.operationalComponents,
+        fallback: numericFallback,
+      },
+      safetyGate: gateFor("D9_CLEARED"),
+    })
+
+    expect(result).toEqual({ kind: "rejected", code: "MALFORMED_RUNTIME_INPUT" })
   })
 })

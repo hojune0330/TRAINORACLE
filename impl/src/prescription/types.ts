@@ -9,6 +9,63 @@ export const RECOVERY_MODES = [
 
 export type RecoveryMode = (typeof RECOVERY_MODES)[number]
 
+export const V2_SEED_05_STOP_CONDITION_CODES = [
+  "STOP_NEW_OR_WORSENING_PAIN",
+  "STOP_DIZZINESS_OR_FAINTNESS",
+  "STOP_CHEST_PAIN_OR_UNUSUAL_BREATHING",
+  "STOP_LOSS_OF_CONTROLLED_FORM",
+] as const
+
+export type V2Seed05StopConditionCode = (typeof V2_SEED_05_STOP_CONDITION_CODES)[number]
+
+export type PrescriptionWarmupComponent = {
+  readonly componentRef: "WU-V2-5K-01"
+  readonly componentVersion: "1.0.0"
+  readonly authority: "OWNER_OPERATIONAL_ADAPTATION"
+  readonly easyDurationMinutes: 15
+  readonly rpeMin: 2
+  readonly rpeMax: 3
+  readonly strides: {
+    readonly repetitions: 4
+    readonly durationSeconds: 20
+    readonly recoverySeconds: 40
+    readonly recoveryMode: "WALK_OR_JOG"
+    readonly progression: "PROGRESSIVE"
+  }
+}
+
+export type PrescriptionCooldownComponent = {
+  readonly componentRef: "CD-V2-5K-01"
+  readonly componentVersion: "1.0.0"
+  readonly authority: "OWNER_OPERATIONAL_ADAPTATION"
+  readonly easyDurationMinutes: 10
+  readonly rpeMin: 1
+  readonly rpeMax: 2
+}
+
+export type PrescriptionFallbackComponent = {
+  readonly componentRef: "RPE-ONLY-CONTROLLED-01"
+  readonly componentVersion: "1.0.0"
+  readonly code: "RPE_ONLY_CONTROLLED"
+  readonly behavior: "DELEGATE_TO_EXISTING_RPE_CANDIDATE"
+  readonly numericRepetitionVariant: null
+}
+
+export type PrescriptionStopConditionComponent = {
+  readonly componentRef: "STOP-V2-5K-01"
+  readonly componentVersion: "1.0.0"
+  readonly authority: "OWNER_PRECAUTIONARY_OPERATIONAL_RULE"
+  readonly diagnosticClaim: false
+  readonly codes: readonly V2Seed05StopConditionCode[]
+}
+
+export type PrescriptionOperationalComponents = {
+  readonly warmup: PrescriptionWarmupComponent
+  readonly cooldown: PrescriptionCooldownComponent
+  readonly fallback: PrescriptionFallbackComponent
+  readonly stopConditions: PrescriptionStopConditionComponent
+}
+
 export type PaceTargetKind = "RACE_PACE" | "EFFORT_GUIDANCE" | "SPRINT_REFERENCE"
 
 export type PaceAnchorRecord = {
@@ -59,9 +116,9 @@ export type UnboundPrescriptionNotation = {
   readonly paceTargetKind: "RACE_PACE"
   readonly paceTargetEventDistanceM: number
   readonly repetitionRecoverySeconds: number | null
-  readonly repetitionRecoveryMode: "STAND" | "NOT_APPLICABLE"
+  readonly repetitionRecoveryMode: "WALK" | "JOG" | "STAND" | "NOT_APPLICABLE"
   readonly setRecoverySeconds: number | null
-  readonly setRecoveryMode: "STAND" | "NOT_APPLICABLE"
+  readonly setRecoveryMode: "WALK" | "JOG" | "STAND" | "NOT_APPLICABLE"
 }
 
 export type StructuredPrescription = {
@@ -75,13 +132,13 @@ export type StructuredPrescription = {
   readonly paceTargetEventDistanceM: number
   readonly displayRoundingPolicyVersion: string
   readonly repetitionRecoverySeconds: number | null
-  readonly repetitionRecoveryMode: "STAND" | "NOT_APPLICABLE"
+  readonly repetitionRecoveryMode: "WALK" | "JOG" | "STAND" | "NOT_APPLICABLE"
   readonly setRecoverySeconds: number | null
-  readonly setRecoveryMode: "STAND" | "NOT_APPLICABLE"
-  readonly warmupComponentRef: null
-  readonly cooldownComponentRef: null
-  readonly downshiftOptionRefs: readonly string[]
-  readonly stopConditionCodes: readonly string[]
+  readonly setRecoveryMode: "WALK" | "JOG" | "STAND" | "NOT_APPLICABLE"
+  readonly warmupComponent: PrescriptionWarmupComponent
+  readonly cooldownComponent: PrescriptionCooldownComponent
+  readonly fallbackComponent: PrescriptionFallbackComponent
+  readonly stopConditionComponent: PrescriptionStopConditionComponent
 }
 
 export type PrescriptionDerivedTotals = {

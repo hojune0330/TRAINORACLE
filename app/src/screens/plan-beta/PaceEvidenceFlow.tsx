@@ -1,5 +1,8 @@
 import React from "react"
-import type { TemplateRuntimeStatus } from "@impl/prescription/types"
+import type {
+  PrescriptionOperationalComponents,
+  TemplateRuntimeStatus,
+} from "@impl/prescription/types"
 import type { SafetyGateDecision } from "@impl/safety-gate/gate"
 import type { AthleteRecord } from "../../domain/athlete-records"
 import {
@@ -19,6 +22,7 @@ type PaceEvidenceFlowProps = {
   readonly notation: string
   readonly template: TemplateRuntimeStatus
   readonly safetyGate: SafetyGateDecision
+  readonly operationalComponents: PrescriptionOperationalComponents
   readonly today: Date
 }
 
@@ -27,6 +31,7 @@ export function PaceEvidenceFlow({
   notation,
   template,
   safetyGate,
+  operationalComponents,
   today,
 }: PaceEvidenceFlowProps) {
   const eligibleRecords = records.filter(
@@ -113,6 +118,7 @@ export function PaceEvidenceFlow({
     displayRoundingPolicyVersion: "seconds-v1",
     template,
     safetyGate,
+    operationalComponents,
     today,
   })
 

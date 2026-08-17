@@ -36,7 +36,7 @@ describe("catalog machine notation", () => {
         paceTargetKind: "RACE_PACE",
         paceTargetEventDistanceM: 5000,
         repetitionRecoverySeconds: 150,
-        repetitionRecoveryMode: "STAND",
+        repetitionRecoveryMode: "JOG",
         setRecoverySeconds: null,
         setRecoveryMode: "NOT_APPLICABLE",
       },

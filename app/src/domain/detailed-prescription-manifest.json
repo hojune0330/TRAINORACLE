@@ -1,5 +1,132 @@
 {
   "schemaVersion": 1,
-  "trustedReviewerAuthorities": [],
-  "approvals": []
+  "trustedReviewerAuthorities": [
+    {
+      "reviewerId": "COACH_HOJUNE",
+      "role": "PRODUCT_OWNER_COACH",
+      "authorityDecisionId": "TO-V2-SEED-05-OWNER-ADOPTION-2026-08-17",
+      "authorityEvidenceRef": "reports/review/V2_SEED_05_OWNER_ADOPTION_DECISION_2026-08-17.md",
+      "authorityEvidenceCanonical": {
+        "decisionId": "TO-V2-SEED-05-OWNER-ADOPTION-2026-08-17",
+        "ownerId": "COACH_HOJUNE",
+        "approvedScope": "V2-SEED-05@1.0.0"
+      },
+      "authorityEvidenceFingerprint": "sha256:f96b4538082478fc85dd70d7838563039a9e08c4b106b25ea06aaec8e643084a"
+    }
+  ],
+  "approvals": [
+    {
+      "manifestVersion": "1",
+      "templateId": "V2-SEED-05",
+      "templateVersion": "1.0.0",
+      "templateContentFingerprint": "sha256:ad4a8c436a5a6e7a9c81342d79b359d84b1b8ea1034f9589141429eea8d0e42a",
+      "canonicalTemplateContent": {
+        "notation": "5×1000m @5000m RP · r150″ JOG",
+        "operationalComponents": {
+          "warmup": {
+            "componentRef": "WU-V2-5K-01",
+            "componentVersion": "1.0.0",
+            "authority": "OWNER_OPERATIONAL_ADAPTATION",
+            "easyDurationMinutes": 15,
+            "rpeMin": 2,
+            "rpeMax": 3,
+            "strides": {
+              "repetitions": 4,
+              "durationSeconds": 20,
+              "recoverySeconds": 40,
+              "recoveryMode": "WALK_OR_JOG",
+              "progression": "PROGRESSIVE"
+            }
+          },
+          "cooldown": {
+            "componentRef": "CD-V2-5K-01",
+            "componentVersion": "1.0.0",
+            "authority": "OWNER_OPERATIONAL_ADAPTATION",
+            "easyDurationMinutes": 10,
+            "rpeMin": 1,
+            "rpeMax": 2
+          },
+          "fallback": {
+            "componentRef": "RPE-ONLY-CONTROLLED-01",
+            "componentVersion": "1.0.0",
+            "code": "RPE_ONLY_CONTROLLED",
+            "behavior": "DELEGATE_TO_EXISTING_RPE_CANDIDATE",
+            "numericRepetitionVariant": null
+          },
+          "stopConditions": {
+            "componentRef": "STOP-V2-5K-01",
+            "componentVersion": "1.0.0",
+            "authority": "OWNER_PRECAUTIONARY_OPERATIONAL_RULE",
+            "diagnosticClaim": false,
+            "codes": [
+              "STOP_NEW_OR_WORSENING_PAIN",
+              "STOP_DIZZINESS_OR_FAINTNESS",
+              "STOP_CHEST_PAIN_OR_UNUSUAL_BREATHING",
+              "STOP_LOSS_OF_CONTROLLED_FORM"
+            ]
+          }
+        }
+      },
+      "notation": "5×1000m @5000m RP · r150″ JOG",
+      "lifecycleStatus": "ACTIVE",
+      "eligibilityStatus": "ELIGIBLE",
+      "eligibleEventGroups": ["FIVE_K"],
+      "eventScopeEvidence": {
+        "decisionId": "TO-V2-SEED-05-OWNER-ADOPTION-2026-08-17",
+        "evidenceRef": "reports/review/V2_SEED_05_OWNER_ADOPTION_DECISION_2026-08-17.md#scope",
+        "evidenceFingerprint": "sha256:43f39eea01053d1cf11afbdac90adc0c6331cd4b36355c16b660b6970d62cbed"
+      },
+      "eligibleExperienceBands": ["EXPERIENCED"],
+      "experienceScopeEvidence": {
+        "decisionId": "TO-V2-SEED-05-OWNER-ADOPTION-2026-08-17",
+        "evidenceRef": "reports/review/V2_SEED_05_OWNER_ADOPTION_DECISION_2026-08-17.md#scope",
+        "evidenceFingerprint": "sha256:dddff17cc298cd32ce7cbd6c2ccff6e38034b7e0ff5dd114e40b3893d55b4517"
+      },
+      "populationApplicability": { "scope": "YOUTH_AND_ADULT" },
+      "sportsScienceEvidence": {
+        "evidenceId": "V2-SEED-05-SPORTS-SCIENCE-EVIDENCE-2026-08-17",
+        "decisionRef": "TO-V2-SEED-05-OWNER-ADOPTION-2026-08-17",
+        "sourceRefs": ["SRC-VDOT-PACES"],
+        "canonicalEvidence": {
+          "classification": "TRAINORACLE_ADAPTATION",
+          "sourceSupports": ["INTERVAL_GUIDANCE", "JOG_RECOVERY_GUIDANCE"],
+          "sourceDoesNotPrescribe": ["EXACT_FIVE_REPETITIONS", "EXACT_150_SECOND_RECOVERY", "WARMUP_OR_COOLDOWN", "YOUTH_SPECIFIC_DOSE"]
+        },
+        "canonicalEvidenceFingerprint": "sha256:43f39eea01053d1cf11afbdac90adc0c6331cd4b36355c16b660b6970d62cbed"
+      },
+      "populationApplicabilityEvidence": {
+        "evidenceId": "V2-SEED-05-POPULATION-EVIDENCE-2026-08-17",
+        "decisionRef": "TO-V2-SEED-05-OWNER-ADOPTION-2026-08-17",
+        "sourceRefs": ["TO-YOUTH-TRAINING-ELIGIBILITY-2026-08-17"],
+        "canonicalEvidence": {
+          "scope": "YOUTH_AND_ADULT",
+          "sameEligibilityCriteria": ["FIVE_K", "EXPERIENCED", "CURRENT_SAME_EVENT_ANCHOR"],
+          "ageOnlyReject": false,
+          "ageOnlyDoseMultiplier": false
+        },
+        "canonicalEvidenceFingerprint": "sha256:dddff17cc298cd32ce7cbd6c2ccff6e38034b7e0ff5dd114e40b3893d55b4517"
+      },
+      "componentRefs": [
+        { "componentType": "WARMUP", "componentRef": "WU-V2-5K-01", "componentVersion": "1.0.0", "componentFingerprint": "sha256:d8da21478d2a44841122874ccf35c24aad1777ebaaeb018deda3e98a8f9cf6f1" },
+        { "componentType": "COOLDOWN", "componentRef": "CD-V2-5K-01", "componentVersion": "1.0.0", "componentFingerprint": "sha256:8d1470171a5edb17a43aa1c21ca34bbfb77456347a68293d2ffe0a5bc52968ab" },
+        { "componentType": "DOWNSHIFT", "componentRef": "RPE-ONLY-CONTROLLED-01", "componentVersion": "1.0.0", "componentFingerprint": "sha256:cd09b06359fcdfb422b421c31dd45a97beeccbdbecaabd1eb7274cdd67ecf3c5" },
+        { "componentType": "STOP_CONDITIONS", "componentRef": "STOP-V2-5K-01", "componentVersion": "1.0.0", "componentFingerprint": "sha256:737ce6df7f7049530b72f3f52f20a2cbbd32bb83ccf6bfd93c29e25864b4bc29" }
+      ],
+      "sourceDecisionId": "TO-V2-SEED-05-OWNER-ADOPTION-2026-08-17",
+      "sourceEvidenceRef": "reports/review/V2_SEED_05_OWNER_ADOPTION_DECISION_2026-08-17.md",
+      "approvalDecisionId": "TO-V2-SEED-05-OWNER-ADOPTION-2026-08-17",
+      "decidedAt": "2026-08-17T02:00:00.000Z",
+      "expiresAt": "2027-08-17T02:00:00.000Z",
+      "revokedAt": null,
+      "ownerDecision": {
+        "reviewerId": "COACH_HOJUNE",
+        "role": "PRODUCT_OWNER_COACH",
+        "authorityDecisionId": "TO-V2-SEED-05-OWNER-ADOPTION-2026-08-17",
+        "authorityEvidenceRef": "reports/review/V2_SEED_05_OWNER_ADOPTION_DECISION_2026-08-17.md",
+        "authorityEvidenceFingerprint": "sha256:f96b4538082478fc85dd70d7838563039a9e08c4b106b25ea06aaec8e643084a",
+        "decision": "APPROVED",
+        "independentReviewClaimed": false
+      }
+    }
+  ]
 }

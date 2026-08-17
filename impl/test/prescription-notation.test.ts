@@ -5,7 +5,7 @@ import {
 } from "../src/prescription/notation"
 import { derivePrescriptionTotals } from "../src/prescription/totals"
 
-const ownerNotation = "2×(10×400m) @5000m RP · r60″ · R3′"
+const ownerNotation = "2×(10×400m) @5000m RP · r60″ STAND · R3′ STAND"
 
 function parsedOwnerNotation() {
   const result = parsePrescriptionNotation(ownerNotation)
@@ -16,6 +16,17 @@ function parsedOwnerNotation() {
 }
 
 describe("prescription notation", () => {
+  it.each([
+    "5×1000m @5000m RP · r150″",
+    "2×(10×400m) @5000m RP · r60″ STAND · R3′",
+  ])("rejects timed recovery without an explicit mode: %s", (notation) => {
+    expect(notation).toMatch(/[rR]\d/u)
+    expect(parsePrescriptionNotation(notation)).toEqual({
+      kind: "rejected",
+      code: "MALFORMED_NOTATION",
+    })
+  })
+
   it("parses the owner fixture into its exact structured work and recovery fields", () => {
     // Given
     const notation = ownerNotation
@@ -52,6 +63,26 @@ describe("prescription notation", () => {
 
     // Then
     expect(reparsed).toEqual({ kind: "parsed", notation })
+  })
+
+  it.each(["WALK", "JOG", "STAND"] as const)(
+    "preserves the explicitly written repetition recovery mode %s",
+    (mode) => {
+      const result = parsePrescriptionNotation(`5×1000m @5000m RP · r150″ ${mode}`)
+      expect(result).toMatchObject({
+        kind: "parsed",
+        notation: { repetitionRecoveryMode: mode },
+      })
+    },
+  )
+
+  it("rejects an unknown recovery mode", () => {
+    const notation = "5×1000m @5000m RP · r150″ FLOAT"
+    expect(notation).toContain("FLOAT")
+    expect(parsePrescriptionNotation(notation)).toEqual({
+      kind: "rejected",
+      code: "MALFORMED_NOTATION",
+    })
   })
 
   it("counts repetitions, work distance, and both recovery layers without double counting", () => {
@@ -97,11 +128,11 @@ describe("prescription notation", () => {
   // `×`(U+00D7)는 일반 키보드에 없고, 모바일 자동 교정은 `"`/`'`를 둥근 따옴표로 바꾼다.
   // 이걸 거부하면 표기를 정확히 옮겨 적은 사용자가 자기 입력이 틀렸다고 생각한다.
   it.each([
-    ["곱셈 x", "2x(10x400m) @5000m RP · r60\u2033 · R3\u2032"],
-    ["곱셈 X", "2X(10X400m) @5000m RP · r60\u2033 · R3\u2032"],
-    ["곱셈 *", "2*(10*400m) @5000m RP · r60\u2033 · R3\u2032"],
-    ["ASCII 따옴표", "2\u00d7(10\u00d7400m) @5000m RP · r60\" · R3'"],
-    ["자동 교정 둥근 따옴표", "2\u00d7(10\u00d7400m) @5000m RP · r60\u201d · R3\u2019"],
+    ["곱셈 x", "2x(10x400m) @5000m RP · r60\u2033 STAND · R3\u2032 STAND"],
+    ["곱셈 X", "2X(10X400m) @5000m RP · r60\u2033 STAND · R3\u2032 STAND"],
+    ["곱셈 *", "2*(10*400m) @5000m RP · r60\u2033 STAND · R3\u2032 STAND"],
+    ["ASCII 따옴표", "2\u00d7(10\u00d7400m) @5000m RP · r60\" STAND · R3' STAND"],
+    ["자동 교정 둥근 따옴표", "2\u00d7(10\u00d7400m) @5000m RP · r60\u201d STAND · R3\u2019 STAND"],
   ])("accepts a keyboard-typable alias and yields the owner fixture exactly: %s", (_label, input) => {
     // Given
     const expected = parsedOwnerNotation()
@@ -118,7 +149,7 @@ describe("prescription notation", () => {
 
   it("does not let alias normalization invent a structure that was never typed", () => {
     // Given — 곱셈 기호만 있고 반복/거리 숫자가 없는 입력
-    const input = "x(x400m) @5000m RP · r60\u2033 · R3\u2032"
+    const input = "x(x400m) @5000m RP · r60\u2033 STAND · R3\u2032 STAND"
 
     // When
     const result = parsePrescriptionNotation(input)

@@ -1,0 +1,199 @@
+{
+  "schemaVersion": 2,
+  "event": "task-evidence-follow-up",
+  "task": "Todo 3 exact V2-SEED-05 components and owner/evidence activation",
+  "artifactTimestamp": "2026-08-17T12:22:01.7152101+09:00",
+  "headAtEvidenceCapture": "04f7ddc260219bcff514f7f8c8dce2b97f2d9936",
+  "red": {
+    "explicitRecoveryMode": {
+      "command": "npm --prefix impl test -- prescription-notation",
+      "exitCode": 1,
+      "output": [
+        "Test Files 1 failed (1)",
+        "Tests 2 failed | 15 passed (17)",
+        "mode-less r150 seconds parsed with repetitionRecoveryMode STAND",
+        "mode-less R3 minutes parsed with setRecoveryMode STAND",
+        "both expected MALFORMED_NOTATION"
+      ]
+    },
+    "implComponentsAndJog": {
+      "command": "npm --prefix impl test -- catalog-machine-notation prescription-runtime",
+      "exitCode": 1,
+      "output": [
+        "Test Files 2 failed",
+        "Tests 7 failed | 33 passed",
+        "catalog expected JOG and received STAND",
+        "exact V2 runtime expected prepared and received rejected",
+        "missing warmup, cooldown, fallback, and stop-condition mutations expected MALFORMED_RUNTIME_INPUT and received MALFORMED_NOTATION",
+        "numeric downshift mutation expected MALFORMED_RUNTIME_INPUT and received MALFORMED_NOTATION"
+      ]
+    },
+    "appOwnerEvidence": {
+      "command": "npm --prefix app run test:unit -- detailed-prescription",
+      "exitCode": 1,
+      "output": [
+        "Test Files 1 failed",
+        "Tests 1 failed | 28 passed",
+        "manifest expected one trusted authority and current manifest contained zero"
+      ]
+    },
+    "catalogActivation": {
+      "command": "node --test specs/test-packages/validate-detailed-prescription-catalog.test.mjs",
+      "exitCode": 1,
+      "output": [
+        "Tests 1 failed | 29 passed",
+        "expected 1 active, 29 draft, 30 total and received 30/30 inert draft entries"
+      ]
+    },
+    "historicalCurrentSplit": {
+      "command": "node --test specs/test-packages/validate-v2-seed-05-activation-packet.test.mjs",
+      "exitCode": 1,
+      "output": [
+        "Tests 1 failed | 11 passed",
+        "historical/current split test failed because detailed prescription catalog content changed"
+      ]
+    },
+    "paceIntegration": {
+      "command": "npm --prefix app run test:unit -- pace-target",
+      "exitCode": 1,
+      "output": [
+        "Test Files 2 failed (2)",
+        "Tests 14 failed | 1 passed (15)",
+        "runtime returned MALFORMED_RUNTIME_INPUT because the detached helper omitted operationalComponents"
+      ]
+    }
+  },
+  "green": {
+    "catalogTests": {
+      "command": "node --test specs/test-packages/validate-detailed-prescription-catalog.test.mjs",
+      "exitCode": 0,
+      "output": ["tests 36", "pass 36", "fail 0", "duration_ms 2629.2463"]
+    },
+    "catalogValidator": {
+      "command": "node specs/test-packages/validate-detailed-prescription-catalog.mjs",
+      "exitCode": 0,
+      "output": ["detailed prescription validation passed: 1 active, 29 draft, 30 total"]
+    },
+    "historicalTests": {
+      "command": "node --test specs/test-packages/validate-v2-seed-05-activation-packet.test.mjs",
+      "exitCode": 0,
+      "output": ["tests 4", "pass 4", "fail 0", "duration_ms 361.8352"]
+    },
+    "historicalValidator": {
+      "command": "node specs/test-packages/validate-v2-seed-05-activation-packet.mjs",
+      "exitCode": 0,
+      "output": [
+        "PASS V2-SEED-05: historical runtime activation FORBIDDEN_AT_PACKET_TIME",
+        "current_activation_authority=SUPERSEDED_NOT_EVALUATED",
+        "historical_catalog_commit=04f7ddc260219bcff514f7f8c8dce2b97f2d9936",
+        "packet_sha256=f1aa080002178517f03a96c641c586ef49f99537df83505670695ecb88bb306b",
+        "historical_catalog_sha256=32ddeff1bf6f3f9727ef8014eb667694131f85d8e5dfebf95d885d94af5e4f10"
+      ]
+    },
+    "ownerActivationTests": {
+      "command": "node --test specs/test-packages/validate-v2-seed-05-owner-activation.test.mjs",
+      "exitCode": 0,
+      "output": ["tests 15", "pass 15", "fail 0", "duration_ms 139.1351"]
+    },
+    "ownerActivationValidator": {
+      "command": "node specs/test-packages/validate-v2-seed-05-owner-activation.mjs",
+      "exitCode": 0,
+      "output": [
+        "PASS V2-SEED-05@1.0.0: current owner activation valid",
+        "active_templates=1",
+        "draft_templates=29",
+        "trusted_authorities=1",
+        "approvals=1",
+        "template_content_fingerprint=sha256:ad4a8c436a5a6e7a9c81342d79b359d84b1b8ea1034f9589141429eea8d0e42a"
+      ]
+    },
+    "implTests": {
+      "command": "npm --prefix impl test",
+      "exitCode": 0,
+      "output": ["Test Files 14 passed (14)", "Tests 161 passed (161)", "Duration 1.31s"]
+    },
+    "implTypecheck": {
+      "command": "npm --prefix impl run typecheck",
+      "exitCode": 0,
+      "output": ["> tsc --noEmit"]
+    },
+    "detailedPrescriptionTests": {
+      "command": "npm --prefix app run test:unit -- detailed-prescription",
+      "exitCode": 0,
+      "output": ["Test Files 2 passed (2)", "Tests 15 passed (15)", "Duration 3.02s"]
+    },
+    "paceTargetTests": {
+      "command": "npm --prefix app run test:unit -- pace-target",
+      "exitCode": 0,
+      "output": ["Test Files 2 passed (2)", "Tests 15 passed (15)", "Duration 3.18s"]
+    },
+    "appTypecheck": {
+      "command": "npm --prefix app run typecheck",
+      "exitCode": 0,
+      "output": ["> tsc --noEmit"]
+    },
+    "diffCheck": {
+      "command": "git diff --check",
+      "exitCode": 0,
+      "output": ["line-ending warnings only; no whitespace errors"]
+    }
+  },
+  "adversarial": {
+    "missingRepetitionRecoveryMode": {"result": "PASS", "targetExistenceAndChangeAsserted": true, "rejectionCode": "MALFORMED_NOTATION"},
+    "missingSetRecoveryMode": {"result": "PASS", "targetExistenceAndChangeAsserted": true, "rejectionCode": "MALFORMED_NOTATION"},
+    "unknownRecoveryMode": {"result": "PASS", "targetExistenceAndChangeAsserted": true, "rejectionCode": "MALFORMED_NOTATION"},
+    "jogToStand": {"result": "PASS", "targetExistenceAndChangeAsserted": true},
+    "fiveToFourRepetitions": {"result": "PASS", "targetExistenceAndChangeAsserted": true},
+    "recovery150To120": {"result": "PASS", "targetExistenceAndChangeAsserted": true},
+    "missingWarmup": {"result": "PASS", "targetExistenceAndChangeAsserted": true},
+    "missingCooldown": {"result": "PASS", "targetExistenceAndChangeAsserted": true},
+    "missingStopConditions": {"result": "PASS", "targetExistenceAndChangeAsserted": true},
+    "changedEvidenceHash": {"result": "PASS", "targetExistenceAndChangeAsserted": true},
+    "inventedOwnerAuthority": {"result": "PASS", "targetExistenceAndChangeAsserted": true},
+    "claimedIndependentReview": {"result": "PASS", "targetExistenceAndChangeAsserted": true},
+    "numericDownshift": {"result": "PASS", "targetExistenceAndChangeAsserted": true},
+    "secondActiveSeed": {"result": "PASS", "targetExistenceAndChangeAsserted": true},
+    "youthAdultDoseDifference": {"result": "PASS", "targetExistenceAndChangeAsserted": true},
+    "staleHistoricalCurrentConfusion": {"result": "PASS", "targetExistenceAndChangeAsserted": true},
+    "missingRuntimeComponent": {"result": "PASS", "targetExistenceAndChangeAsserted": true},
+    "dirtyWorktree": {"result": "PASS", "detail": "Unrelated edits preserved; no reset, stage, or commit."},
+    "misleadingSuccessOutput": {"result": "PASS", "detail": "Mutation tests assert targets exist and change before expected rejection."},
+    "promptInjection": {"result": "N/A", "reason": "No prompt-processing surface was exercised."},
+    "cancelResume": {"result": "PASS", "detail": "Interrupted work resumed from durable files without rerunning completed RED discovery."},
+    "hungOrFlaky": {"result": "N/A", "reason": "All final commands completed within bounded waits."}
+  },
+  "hashes": {
+    "manifestSha256": "ae36ee38ef400569dd8604ab3cb82a7122afcf8449599f1944fa2d759b479e76",
+    "approvalParserSha256": "4ca1a99d95db5d938903d2f3b214b829a28e010deab01b7f398ecd7ebd079d5a",
+    "runtimeSha256": "bffcffe20f312f447ee7756ceee0032b182139d4127fda4be70f0592a2ba303e",
+    "notationSha256": "58d8e08e15924c8eaa72bde50d8e1e834a907ee7b64217f4df03d70d1d06d623",
+    "typesSha256": "d2458f9436bdcf51bfc46ee43904a583c3a75d56e655a210a2d385b3cdb632a6",
+    "paceTargetHelperSha256": "a9a7b3125cafda67a0bc2d115fc6b7a969420748e04fb6de7d1ad1651339c099",
+    "catalogSha256": "a99862b9649208e4dbb8b8e5a9f80b75b865315284d0e8ba66386f40b37baa54",
+    "contractSha256": "3e65bae72fd26a4c4ab40c09c8b457baaa0453c5ab290aab66d196f3eb071623",
+    "decisionReportSha256": "de3378c4182117d877be89b00e093f8bb6fbc0a2828d6cc38152e3df7cb5ac82",
+    "currentActivationValidatorSha256": "4d60c8c12e413c84c80d88ad2217471759d528b8b79b26f1f7d63aaac73a9261",
+    "currentActivationTestSha256": "041abc1a717606fe4ba5b7d54686a2ff98f0f817edd684016c5ebd1156129fb2",
+    "catalogValidatorSha256": "28f0bc6aaa800eb40f83c2d2042e3804f684506461cdc51be88e51266a40c008",
+    "notationTestSha256": "03cf673826e2b730e4b0676925e2dbcfbe16481ddb3b5555b796b44c852dab16"
+  },
+  "historicalPacket": {
+    "modified": false,
+    "proofCommand": "git diff --exit-code -- reports/review/V2_SEED_05_ACTIVATION_REVIEW_PACKET.md",
+    "proofExitCode": 0,
+    "validatorCanonicalSha256": "f1aa080002178517f03a96c641c586ef49f99537df83505670695ecb88bb306b"
+  },
+  "cleanup": {
+    "runtimeResourcesSpawned": false,
+    "serverStarted": false,
+    "temporaryDirectoriesCreated": false,
+    "staged": false,
+    "committed": false
+  },
+  "risks": [
+    "The detailed prescription is intentionally restricted to FIVE_K plus EXPERIENCED plus an explicit CURRENT same-event anchor and all existing gates.",
+    "Warm-up, cooldown, fallback, and stop rules are owner operational adaptations, not claims about the direct source protocol.",
+    "The pace evidence helper now requires explicit components; its development harness binds the compiled trusted manifest, while later production-plan binding remains outside Todo 3."
+    ,"Timed repetition and set recovery now require an explicit WALK, JOG, or STAND token; no recovery mode is inferred."
+  ]
+}

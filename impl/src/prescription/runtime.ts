@@ -6,6 +6,7 @@ import { calculateRacePaceSeconds } from "./race-pace"
 import { derivePrescriptionTotals } from "./totals"
 import type {
   PaceAnchorRecord,
+  PrescriptionOperationalComponents,
   PrescriptionErrorCode,
   RacePaceCalculationResult,
   StructuredPrescription,
@@ -18,6 +19,7 @@ type StructuredPrescriptionInput = {
   readonly notation: UnboundPrescriptionNotation
   readonly anchor: PaceAnchorRecord
   readonly displayRoundingPolicyVersion: string
+  readonly operationalComponents: PrescriptionOperationalComponents
 }
 
 type RuntimePreparationResult =
@@ -52,6 +54,74 @@ function parseNullablePositiveNumber(value: unknown): number | null | undefined 
   return value === null || (typeof value === "number" && Number.isFinite(value) && value > 0)
     ? value
     : undefined
+}
+
+const STOP_CODES = [
+  "STOP_NEW_OR_WORSENING_PAIN",
+  "STOP_DIZZINESS_OR_FAINTNESS",
+  "STOP_CHEST_PAIN_OR_UNUSUAL_BREATHING",
+  "STOP_LOSS_OF_CONTROLLED_FORM",
+] as const
+
+function parseOperationalComponents(value: unknown): PrescriptionOperationalComponents | undefined {
+  if (!isRecord(value)) return undefined
+  const warmup = value["warmup"]
+  const cooldown = value["cooldown"]
+  const fallback = value["fallback"]
+  const stopConditions = value["stopConditions"]
+  if (!isRecord(warmup) || !isRecord(warmup["strides"]) || !isRecord(cooldown) || !isRecord(fallback) || !isRecord(stopConditions)) return undefined
+  const strides = warmup["strides"]
+  const codes = stopConditions["codes"]
+  if (
+    warmup["componentRef"] !== "WU-V2-5K-01"
+    || warmup["componentVersion"] !== "1.0.0"
+    || warmup["authority"] !== "OWNER_OPERATIONAL_ADAPTATION"
+    || warmup["easyDurationMinutes"] !== 15
+    || warmup["rpeMin"] !== 2
+    || warmup["rpeMax"] !== 3
+    || strides["repetitions"] !== 4
+    || strides["durationSeconds"] !== 20
+    || strides["recoverySeconds"] !== 40
+    || strides["recoveryMode"] !== "WALK_OR_JOG"
+    || strides["progression"] !== "PROGRESSIVE"
+    || cooldown["componentRef"] !== "CD-V2-5K-01"
+    || cooldown["componentVersion"] !== "1.0.0"
+    || cooldown["authority"] !== "OWNER_OPERATIONAL_ADAPTATION"
+    || cooldown["easyDurationMinutes"] !== 10
+    || cooldown["rpeMin"] !== 1
+    || cooldown["rpeMax"] !== 2
+    || fallback["componentRef"] !== "RPE-ONLY-CONTROLLED-01"
+    || fallback["componentVersion"] !== "1.0.0"
+    || fallback["code"] !== "RPE_ONLY_CONTROLLED"
+    || fallback["behavior"] !== "DELEGATE_TO_EXISTING_RPE_CANDIDATE"
+    || fallback["numericRepetitionVariant"] !== null
+    || stopConditions["componentRef"] !== "STOP-V2-5K-01"
+    || stopConditions["componentVersion"] !== "1.0.0"
+    || stopConditions["authority"] !== "OWNER_PRECAUTIONARY_OPERATIONAL_RULE"
+    || stopConditions["diagnosticClaim"] !== false
+    || !Array.isArray(codes)
+    || codes.length !== STOP_CODES.length
+    || !STOP_CODES.every((code, index) => codes[index] === code)
+  ) return undefined
+  return Object.freeze({
+    warmup: Object.freeze({
+      componentRef: "WU-V2-5K-01", componentVersion: "1.0.0", authority: "OWNER_OPERATIONAL_ADAPTATION",
+      easyDurationMinutes: 15, rpeMin: 2, rpeMax: 3,
+      strides: Object.freeze({ repetitions: 4, durationSeconds: 20, recoverySeconds: 40, recoveryMode: "WALK_OR_JOG", progression: "PROGRESSIVE" }),
+    }),
+    cooldown: Object.freeze({
+      componentRef: "CD-V2-5K-01", componentVersion: "1.0.0", authority: "OWNER_OPERATIONAL_ADAPTATION",
+      easyDurationMinutes: 10, rpeMin: 1, rpeMax: 2,
+    }),
+    fallback: Object.freeze({
+      componentRef: "RPE-ONLY-CONTROLLED-01", componentVersion: "1.0.0", code: "RPE_ONLY_CONTROLLED",
+      behavior: "DELEGATE_TO_EXISTING_RPE_CANDIDATE", numericRepetitionVariant: null,
+    }),
+    stopConditions: Object.freeze({
+      componentRef: "STOP-V2-5K-01", componentVersion: "1.0.0", authority: "OWNER_PRECAUTIONARY_OPERATIONAL_RULE",
+      diagnosticClaim: false, codes: Object.freeze([...STOP_CODES]),
+    }),
+  })
 }
 
 function parsePaceAnchor(value: unknown): PaceAnchorRecord | undefined {
@@ -122,6 +192,7 @@ function parseRuntimeRequest(input: unknown): {
   readonly displayRoundingPolicyVersion: string
   readonly template: TemplateRuntimeStatus
   readonly safetyGate: SafetyGateDecision
+  readonly operationalComponents: PrescriptionOperationalComponents
 } | undefined {
   if (!isRecord(input)) return undefined
   const notation = parseString(input["notation"])
@@ -129,16 +200,18 @@ function parseRuntimeRequest(input: unknown): {
   const displayRoundingPolicyVersion = parseString(input["displayRoundingPolicyVersion"])
   const template = parseTemplateStatus(input["template"])
   const safetyGate = parseSafetyGate(input["safetyGate"])
+  const operationalComponents = parseOperationalComponents(input["operationalComponents"])
   if (
     notation === undefined
     || anchor === undefined
     || displayRoundingPolicyVersion === undefined
     || template === undefined
     || safetyGate === undefined
+    || operationalComponents === undefined
   ) {
     return undefined
   }
-  return Object.freeze({ notation, anchor, displayRoundingPolicyVersion, template, safetyGate })
+  return Object.freeze({ notation, anchor, displayRoundingPolicyVersion, template, safetyGate, operationalComponents })
 }
 
 export function createStructuredPrescription(
@@ -167,10 +240,10 @@ export function createStructuredPrescription(
       repetitionRecoveryMode: input.notation.repetitionRecoveryMode,
       setRecoverySeconds: input.notation.setRecoverySeconds,
       setRecoveryMode: input.notation.setRecoveryMode,
-      warmupComponentRef: null,
-      cooldownComponentRef: null,
-      downshiftOptionRefs: Object.freeze([]),
-      stopConditionCodes: Object.freeze([]),
+      warmupComponent: input.operationalComponents.warmup,
+      cooldownComponent: input.operationalComponents.cooldown,
+      fallbackComponent: input.operationalComponents.fallback,
+      stopConditionComponent: input.operationalComponents.stopConditions,
     }),
   }
 }
@@ -210,6 +283,7 @@ export function preparePrescriptionRuntime(input: unknown): RuntimePreparationRe
     notation: parsed.notation,
     anchor: request.anchor,
     displayRoundingPolicyVersion: request.displayRoundingPolicyVersion,
+    operationalComponents: request.operationalComponents,
   })
   if (created.kind === "rejected") return reject(created.code)
   const pace = calculateSameEventRacePace({ prescription: created.prescription, anchor: request.anchor })

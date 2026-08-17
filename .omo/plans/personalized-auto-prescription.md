@@ -87,7 +87,7 @@ Your next move: start work. Full execution detail follows below.
   QA scenarios (name the exact tool + invocation): `npm --prefix app run test:unit -- detailed-prescription` plus mutation fixtures for tampered notation and revoked manifest. Evidence `<attemptDir>/task-2-personalized-auto-prescription.txt`.
   Commit: Y | `feat(prescription): bind activation to a trusted versioned manifest`
 
-- [ ] 3. Close V2-SEED-05 component and semantic gaps
+- [x] 3. Close V2-SEED-05 component and semantic gaps
   What to do / Must NOT do: Adopt one exact V2-SEED-05 version for `FIVE_K` and the recounted eligible experience scope. Preserve `5×1000m @5000m RP`, one set, five reps, 150-second JOG recovery and exact totals. Resolve versioned warm-up, cooldown, downshift variants and stop conditions from existing specs/research; missing components reject atomically. Do not invent a universal reduced repetition count at runtime and do not claim 5×1000 is appropriate for every experience band.
   Parallelization: Wave 1 | Blocked by: 1, 2 | Blocks: 5, 7 | Can parallelize with: 4
   References (executor has NO interview context - be exhaustive): `specs/reconstruct/ENERGY_SYSTEM_SESSION_TEMPLATE_CATALOG.md:708-739`; `specs/reconstruct/TRAINING_SESSION_PRESCRIPTION_CONTRACT.md`; `reports/review/V2_SEED_05_ACTIVATION_REVIEW_PACKET.md:28-110`; `impl/src/prescription/runtime.ts`; `impl/src/prescription/types.ts`; `impl/test/catalog-machine-notation.contract.test.ts`; `impl/test/prescription-runtime.test.ts`; `specs/test-packages/validate-detailed-prescription-catalog.mjs`.

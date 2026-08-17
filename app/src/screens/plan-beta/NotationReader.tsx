@@ -10,7 +10,7 @@ import type {
 } from "@impl/index"
 import { TermHelp } from "../../components/TermHelp"
 
-const EXAMPLE_NOTATION = "2×(10×400m) @5000m RP · r60″ · R3′"
+const EXAMPLE_NOTATION = "2×(10×400m) @5000m RP · r60″ STAND · R3′ STAND"
 
 type ParsedNotation = {
   readonly notation: UnboundPrescriptionNotation

@@ -2,11 +2,17 @@ import { describe, expect, it } from "vitest"
 import { mapD9ResultToRveSignal } from "@impl/rve/signal"
 import { decideSafetyGate } from "@impl/safety-gate/gate"
 import type { AthleteRecord } from "./athlete-records"
+import { DETAILED_PRESCRIPTION_APPROVALS } from "./detailed-prescription-approvals"
 import { buildPaceTargetPlanItem } from "./pace-target-plan"
 
 type AchievedRecord = Exclude<AthleteRecord, { readonly purpose: "RACE_GOAL" }>
 
 const TODAY = new Date("2026-07-30T12:00:00.000Z")
+const V2_APPROVAL = DETAILED_PRESCRIPTION_APPROVALS.find(
+  (approval) => approval.templateId === "V2-SEED-05" && approval.templateVersion === "1.0.0",
+)
+if (V2_APPROVAL === undefined) throw new TypeError("Trusted V2-SEED-05 approval is missing")
+const OPERATIONAL_COMPONENTS = V2_APPROVAL.canonicalTemplateContent.operationalComponents
 const ACTIVE_FIXTURE = {
   lifecycleStatus: "ACTIVE" as const,
   eligibilityStatus: "ELIGIBLE" as const,
@@ -54,10 +60,11 @@ describe("P3 comparison sign", () => {
           ? null
           : { record: comparisonRecord, freshness: "CURRENT" },
         goalRecord: null,
-        notation: "5×1000m @5000m RP · r150″",
+        notation: "5×1000m @5000m RP · r150″ JOG",
         displayRoundingPolicyVersion: "seconds-v1",
         template: ACTIVE_FIXTURE,
         safetyGate: CLEARED_GATE,
+        operationalComponents: OPERATIONAL_COMPONENTS,
         today: TODAY,
       })
 

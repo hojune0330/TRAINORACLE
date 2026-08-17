@@ -38,6 +38,7 @@ export function prepareDetailedPrescription(
     displayRoundingPolicyVersion: input.displayRoundingPolicyVersion,
     template: approval,
     safetyGate: input.safetyGate,
+    operationalComponents: approval.canonicalTemplateContent.operationalComponents,
   })
   if (prepared.kind === "rejected") return null
 

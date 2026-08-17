@@ -69,7 +69,7 @@ const expectedNotationPatterns = new Map([
   ["RE-SUPPORT-04", "walk only"],
   ["RE-SUPPORT-05", "REVIEW_REQUIRED"],
 ]);
-const parserReadyNotation = "5\u00d71000m @5000m RP \u00b7 r150\u2033";
+const parserReadyNotation = "5\u00d71000m @5000m RP \u00b7 r150\u2033 JOG";
 const parserReadyBasis = "5K=5000m; 2 minutes 30 seconds=150 seconds; repetitions, distance, and recovery are unchanged.";
 const pendingCoachContextBlockers = [
   "Coach context must select the 3-to-4 repetition range from session objective, target distance, speed anchor, and current context; no fixed default is authorized.",
@@ -105,12 +105,30 @@ for (const block of blocks) {
   const machineNotationBlockers = block.match(/^\s+machineNotationBlockers:\r?\n((?:\s+- "[^\r\n]+"\r?\n)*)/mu)?.[1] ?? "missing";
   const machineNotationBlockerValues = [...machineNotationBlockers.matchAll(/^\s+- "([^\r\n]+)"$/gmu)].map((match) => match[1]);
 
-  requireEntryMarker("lifecycleStatus: DRAFT", "must remain DRAFT");
-  requireEntryMarker("eligibilityStatus: REVIEW_REQUIRED", "must require review");
-  requireEntryMarker("allowedEventGroups: []", "must keep allowedEventGroups empty");
-  requireEntryMarker("allowedExperienceBands: []", "must keep allowedExperienceBands empty");
+  if (id === "V2-SEED-05") {
+    requireEntryMarker("version: \"1.0.0\"", "must use adopted version 1.0.0");
+    requireEntryMarker("lifecycleStatus: ACTIVE", "must be the active template");
+    requireEntryMarker("eligibilityStatus: ELIGIBLE", "must be eligible");
+    requireEntryMarker("allowedEventGroups: [FIVE_K]", "must remain FIVE_K-only");
+    requireEntryMarker("allowedExperienceBands: [EXPERIENCED]", "must remain EXPERIENCED-only");
+    requireEntryMarker("populationApplicability: YOUTH_AND_ADULT_SAME_CRITERIA_NO_AGE_DOSE_BRANCH", "must remain age-neutral");
+    requireEntryMarker("numericReducedRepetitionVariant: null", "must not define a numeric downshift");
+    requireEntryMarker("fallbackBehavior: DELEGATE_TO_EXISTING_RPE_CANDIDATE_ATOMICALLY", "must preserve atomic RPE fallback");
+    for (const marker of [
+      'warmup: "WU-V2-5K-01@1.0.0; OWNER_OPERATIONAL_ADAPTATION; 15 min easy RPE 2-3; 4x20 sec progressive strides with 40 sec easy walk/jog between"',
+      'cooldown: "CD-V2-5K-01@1.0.0; OWNER_OPERATIONAL_ADAPTATION; 10 min easy RPE 1-2"',
+      "150 sec JOG",
+      "STOP_NEW_OR_WORSENING_PAIN", "STOP_DIZZINESS_OR_FAINTNESS",
+      "STOP_CHEST_PAIN_OR_UNUSUAL_BREATHING", "STOP_LOSS_OF_CONTROLLED_FORM",
+    ]) requireEntryMarker(marker, `must preserve ${marker}`);
+  } else {
+    requireEntryMarker("lifecycleStatus: DRAFT", "must remain DRAFT");
+    requireEntryMarker("eligibilityStatus: REVIEW_REQUIRED", "must require review");
+    requireEntryMarker("allowedEventGroups: []", "must keep allowedEventGroups empty");
+    requireEntryMarker("allowedExperienceBands: []", "must keep allowedExperienceBands empty");
+  }
   requireEntryMarker("draftCandidateEventGroups:", "must preserve research-only candidate groups");
-  requireEntryMarker("draftExperienceEvidence: SOURCE_AND_HUMAN_MAPPING_REQUIRED", "must require human mapping");
+  if (id !== "V2-SEED-05") requireEntryMarker("draftExperienceEvidence: SOURCE_AND_HUMAN_MAPPING_REQUIRED", "must require human mapping");
   failUnless(!/^\s+eligibility:/mu.test(block), `${id} must not contain a TemplateLibrary eligibility object`);
   failUnless(!templateIds.has(id), `${id} templateId must be unique`);
   templateIds.add(id);
@@ -140,6 +158,7 @@ for (const block of blocks) {
   if (id === "V2-SEED-05") {
     failUnless(machineNotation === `"${parserReadyNotation}"`, "V2-SEED-05 must keep its exact parser-ready machineNotation");
     failUnless(machineNotationBasis === `"${parserReadyBasis}"`, "V2-SEED-05 must keep its parser-ready basis");
+    failUnless(!block.includes("REDUCE_REPETITIONS"), "V2-SEED-05 must not contain a numeric reduced-repetition variant");
   }
   if (id === "GL-SEED-01") {
     failUnless(machineNotationStatus === "PENDING_COACH_CONTEXT", "GL-SEED-01 must require coach context instead of a fixed range");
@@ -176,8 +195,8 @@ for (const marker of [
   "allowedEventGroups_empty_means: NOT_ELIGIBLE_FOR_ANY_EVENT_GROUP",
   "allowedExperienceBands_empty_means: NOT_ELIGIBLE_FOR_ANY_EXPERIENCE_BAND",
   "draftCandidateEventGroups_runtime_consumption: forbidden",
-  "automatic_plan_binding: forbidden",
-  "automatic_prescription_authorized: false",
+  "automatic_plan_binding: V2_SEED_05_REQUIRES_TRUSTED_MANIFEST_AND_ALL_GATES",
+  "automatic_prescription_authorized: V2_SEED_05_ONLY_AFTER_ALL_GATES",
   "notationPattern_is_canonical: true",
   "machineNotation_requires_status: PARSER_READY",
   "non_parser_ready_machineNotation_must_be_null: true",
@@ -209,7 +228,9 @@ for (const [marker, message] of [
   ["fixture_stage: UNBOUND_NOTATION_PARSE_ONLY", "unbound notation fixture stage"],
   ["numericPaceOutput: UNAVAILABLE_ANCHOR_INCOMPLETE", "unbound fixture output guard"],
   ["fullStructuredPrescriptionCreation: forbidden_until_explicit_anchor_is_selected", "unbound fixture creation guard"],
-  ["active_numeric_template_exists_in_this_document: false", "active numeric-template guard"],
+  ["active_numeric_template_exists_in_this_document: V2-SEED-05@1.0.0_ONLY", "single active numeric-template guard"],
+  ["missing_required_component_or_fingerprint: REJECT_ATOMICALLY", "atomic component guard"],
+  ["runtime_repetition_arithmetic_for_downshift: forbidden", "runtime repetition arithmetic guard"],
 ]) {
   failUnless(contract.includes(marker), `contract missing ${message}`);
 }
@@ -220,7 +241,7 @@ const ownerFixture = contract.match(
 failUnless(ownerFixture.length > 0, "contract missing OWNER-NOTATION-001 fixture");
 
 for (const [marker, message] of [
-  ['notation: "2×(10×400m) @5000m RP · r60″ · R3′"', "owner notation"],
+  ['notation: "2×(10×400m) @5000m RP · r60″ STAND · R3′ STAND"', "owner notation"],
   ["setCount: 2", "set count"],
   ["repetitionsPerSet: 10", "repetitions per set"],
   ["totalRepetitions: 20", "total repetitions"],
@@ -240,5 +261,5 @@ if (failures.length > 0) {
   for (const failure of failures) console.error(`FAIL ${failure}`);
   process.exitCode = 1;
 } else {
-  console.log(`detailed prescription validation passed: ${blocks.length}/30 inert draft entries`);
+  console.log(`detailed prescription validation passed: 1 active, 29 draft, ${blocks.length} total`);
 }

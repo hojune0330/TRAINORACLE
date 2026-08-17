@@ -3,15 +3,15 @@
 ```yaml
 document_metadata:
   doc_id: trainoracle-spec-training-session-prescription
-  status: RECONSTRUCTED_DRAFT_FOR_REVIEW
+  status: RECONSTRUCTED_WITH_OWNER_ADOPTED_V2_SEED_05
   owner: COACH_HOJUNE
-  version: "0.1"
+  version: "0.2"
   local_original_found: false
   reconstructed_from_current_product_and_review_sources: true
   restored_original: false
   prior_approved_version_restored: false
-  executed_tests_total: 0
-  executed_tests_passed: 0
+  executed_tests_total: 36
+  executed_tests_passed: 36
   runtime_authority: false
   template_activation_authority: false
   automatic_prescription_authority: false
@@ -21,8 +21,9 @@ document_metadata:
 ## 1. 목적과 경계
 
 이 계약은 상세 훈련을 한 줄의 문자열이 아니라 세트, 반복, 앵커, 회복, 준비,
-하향 조정, 중단 조건으로 보존하는 초안이다. 숫자가 존재하는 것만으로 선수에게
-배정하거나 안전·의학적 허가를 뜻하지 않는다.
+하향 조정, 중단 조건으로 보존한다. `V2-SEED-05@1.0.0`만 별도 오너 결정과
+신뢰 매니페스트에 의해 채택되었다. 숫자가 존재하는 것만으로 선수에게 배정하거나
+안전·의학적 허가를 뜻하지 않는다.
 
 이 계약은 다음을 하지 않는다.
 
@@ -124,10 +125,10 @@ interface StructuredPrescription {
   repetitionRecoveryMode: RecoveryMode;
   setRecoverySeconds: number | null;
   setRecoveryMode: RecoveryMode;
-  warmupComponentRef: string | null;
-  cooldownComponentRef: string | null;
-  downshiftOptionRefs: string[];
-  stopConditionCodes: string[];
+  warmupComponent: PrescriptionWarmupComponent;
+  cooldownComponent: PrescriptionCooldownComponent;
+  fallbackComponent: PrescriptionFallbackComponent;
+  stopConditionComponent: PrescriptionStopConditionComponent;
 }
 ```
 
@@ -175,6 +176,10 @@ prescription_invariants:
   set_end_rule: set_recovery_replaces_repetition_recovery
   warmup_and_cooldown_excluded_from_quality_totals: true
   quality_and_sprint_templates_require_warmup_cooldown_downshift_stop_refs: true
+  missing_required_component_or_fingerprint: REJECT_ATOMICALLY
+  runtime_repetition_arithmetic_for_downshift: forbidden
+  RPE_ONLY_CONTROLLED: DELEGATE_TO_EXISTING_RPE_CANDIDATE_ATOMICALLY
+  age_only_training_rejection_or_dose_change: forbidden
   sprint_under_60m:
     allowed_anchor_kinds: [SPRINT_BENCHMARK, COACH_REFERENCE, RPE_ONLY]
     race_pace_conversion_forbidden: true
@@ -198,7 +203,7 @@ prescription_invariants:
 The record stores `uncomputableReasonCodes: string[]`; it never fills unavailable
 values with zero merely to produce a total.
 
-### 5.2 Same-event RP calculation, for a later implementation only
+### 5.2 Same-event RP calculation
 
 ```text
 targetRepSeconds =
@@ -210,11 +215,46 @@ This formula is allowed only when `paceTargetKind=RACE_PACE` and
 not rounded. A future display must retain `displayRoundingPolicyVersion`. Different
 events return `CROSS_EVENT_MODEL_REQUIRED`; this draft does not supply such a model.
 
-## 6. Example fixture: notation parse, not an active template or prescription
+## 6. Fixtures
+
+### 6.1 Adopted V2-SEED-05 prescription
+
+```yaml
+fixture_id: V2-SEED-05@1.0.0
+authority: TO-V2-SEED-05-OWNER-ADOPTION-2026-08-17
+scope: { event: FIVE_K, experience: EXPERIENCED, population: YOUTH_AND_ADULT }
+anchor: { eventDistanceM: 5000, freshnessState: CURRENT, purpose: CURRENT_CAPABILITY }
+notation: "5×1000m @5000m RP · r150″ JOG"
+main: { setCount: 1, repetitionsPerSet: 5, repetitionDistanceM: 1000 }
+recovery: { occurrences: 4, secondsEach: 150, mode: JOG, totalSeconds: 600 }
+qualityDistanceM: 5000
+warmup:
+  ref: WU-V2-5K-01@1.0.0
+  authority: OWNER_OPERATIONAL_ADAPTATION
+  content: "15 min easy RPE 2-3; 4x20 sec progressive strides; 40 sec easy walk/jog between"
+cooldown:
+  ref: CD-V2-5K-01@1.0.0
+  authority: OWNER_OPERATIONAL_ADAPTATION
+  content: "10 min easy RPE 1-2"
+fallback:
+  code: RPE_ONLY_CONTROLLED
+  behavior: DELEGATE_TO_EXISTING_RPE_CANDIDATE_ATOMICALLY
+  numericRepetitionVariant: null
+stopConditionAuthority: OWNER_PRECAUTIONARY_OPERATIONAL_RULE_NOT_DIAGNOSIS
+stopConditionCodes:
+  - STOP_NEW_OR_WORSENING_PAIN
+  - STOP_DIZZINESS_OR_FAINTNESS
+  - STOP_CHEST_PAIN_OR_UNUSUAL_BREATHING
+  - STOP_LOSS_OF_CONTROLLED_FORM
+ageOnlyReject: false
+ageOnlyDoseMultiplier: false
+```
+
+### 6.2 Notation-parser regression fixture
 
 ```yaml
 fixture_id: OWNER-NOTATION-001
-notation: "2×(10×400m) @5000m RP · r60″ · R3′"
+notation: "2×(10×400m) @5000m RP · r60″ STAND · R3′ STAND"
 fixture_stage: UNBOUND_NOTATION_PARSE_ONLY
 setCount: 2
 repetitionsPerSet: 10
@@ -269,7 +309,7 @@ later_runtime_requirements:
   D9_UNKNOWN: BLOCK_OR_HUMAN_REVIEW
   safety_gate_cleared_is_medical_clearance: false
   private_note_analysis: forbidden
-  active_numeric_template_exists_in_this_document: false
+  active_numeric_template_exists_in_this_document: V2-SEED-05@1.0.0_ONLY
 ```
 
 No `DRAFT` entry in the companion catalogue is queryable by a future Plan Generator.

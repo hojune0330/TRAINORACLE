@@ -1,6 +1,7 @@
 import { decideSafetyGate } from "@impl/safety-gate/gate"
 import { mapD9ResultToRveSignal } from "@impl/rve/signal"
 import type { AthleteRecord } from "../domain/athlete-records"
+import { DETAILED_PRESCRIPTION_APPROVALS } from "../domain/detailed-prescription-approvals"
 import { PaceEvidenceFlow } from "../screens/plan-beta/PaceEvidenceFlow"
 import "./p3-pace-harness.css"
 
@@ -39,18 +40,24 @@ const CLEARED_GATE = decideSafetyGate(mapD9ResultToRveSignal({
   reasonCodes: ["D9_CLEARED_NO_COLLOQUIAL_RISK_SIGNAL"],
   evidence: [],
 }))
+const V2_APPROVAL = DETAILED_PRESCRIPTION_APPROVALS.find(
+  (approval) => approval.templateId === "V2-SEED-05" && approval.templateVersion === "1.0.0",
+)
+if (V2_APPROVAL === undefined) throw new TypeError("Trusted V2-SEED-05 approval is missing")
+const OPERATIONAL_COMPONENTS = V2_APPROVAL.canonicalTemplateContent.operationalComponents
 
 export function P3PaceHarness() {
   return (
     <main className="p3-pace-harness">
       <PaceEvidenceFlow
         records={RECORDS}
-        notation="5×1000m @5000m RP · r150″"
+        notation="5×1000m @5000m RP · r150″ JOG"
         template={{
           lifecycleStatus: "ACTIVE",
           eligibilityStatus: "ELIGIBLE",
         }}
         safetyGate={CLEARED_GATE}
+        operationalComponents={OPERATIONAL_COMPONENTS}
         today={new Date("2026-07-30T12:00:00.000Z")}
       />
     </main>
