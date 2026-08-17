@@ -25,6 +25,7 @@ function input(detailedPrescriptionEnabled = true) {
     templateVersion: approval.templateVersion,
     templateContentFingerprint: approval.templateContentFingerprint,
     athleteEventGroup: "FIVE_K" as const,
+    targetEventDistanceM: approval.targetEventDistanceM,
     athleteExperienceBand: "EXPERIENCED" as const,
     eventScopeEvidenceFingerprint: approval.eventScopeEvidence.evidenceFingerprint,
     experienceScopeEvidenceFingerprint: approval.experienceScopeEvidence.evidenceFingerprint,

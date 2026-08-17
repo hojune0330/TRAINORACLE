@@ -1,0 +1,47 @@
+{
+  "schemaVersion": 1,
+  "event": "task-evidence",
+  "task": "Todo 9 middle-distance runtime activation",
+  "artifactTimestamp": "2026-08-18T02:30:00+09:00",
+  "headAtEvidenceCapture": "20cc94bff42b4adfea2fd30158609d109a03ebb3",
+  "plan": ".omo/plans/personalized-auto-prescription.md",
+  "status": "LOCAL_IMPLEMENTATION_VERIFIED_AWAITING_CI",
+  "red": {
+    "command": "npm --prefix app run test:unit -- multi-event-prescription",
+    "result": "1 passed, 5 failed before implementation because supported events returned PACE_TARGET_FALLBACK_EVENT_SCOPE."
+  },
+  "green": {
+    "focusedAppTests": "26/26 passed",
+    "appQuality": "unit tests, typecheck, e2e typecheck and production build exited 0",
+    "impl": "14 files, 161/161 passed; typecheck exited 0",
+    "d9Evaluator": "11/11 passed",
+    "contractValidators": "28/28 passed",
+    "fiveKActivationValidator": "15/15 passed after authority lookup was bound by exact fingerprint",
+    "focusedBrowser": "800/1500/3000 on mobile and desktop: 6/6 passed",
+    "fullBrowser": "328 executed passed, 48 configured skips, 0 assertion failures; local Playwright workers hung during shutdown and the owned runner was terminated before a clean exit",
+    "diffCheck": "passed"
+  },
+  "activatedTemplates": [
+    "MD-800-01: 10x200m @800m RP, r60s STAND",
+    "MD-1500-01: 3x500m @1500m RP, r180s STAND",
+    "MD-3000-01: 4x800m @3000m RP, r180s WALK",
+    "V2-SEED-05: 5x1000m @5000m RP, r150s JOG"
+  ],
+  "boundaries": {
+    "allowedExperienceBands": ["EXPERIENCED"],
+    "sameEventCurrentAnchorRequired": true,
+    "crossEventConversion": false,
+    "ageDoseBranch": false,
+    "d9ActiveUnknownBlock": true,
+    "dedicated100To400PlansDeferred": true,
+    "rawMemoInput": false,
+    "openIssuesClosed": 0
+  },
+  "manualQa": {
+    "performedBy": "primary Codex session only",
+    "independentAgentReview": false,
+    "reason": "Owner explicitly requested no additional sessions.",
+    "viewports": ["375x667", "1440x900"],
+    "observed": "Exact notation, repetition target, recovery mode and total, warm-up and cooldown rendered without overlap."
+  }
+}

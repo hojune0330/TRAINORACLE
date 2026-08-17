@@ -29,6 +29,9 @@ export function CandidateSection({
   const purposeStatus = candidatePurposeStatus(candidate.kind)
   const optionLetter = candidate.kind === "BALANCED" ? "A" : "B"
   const frameLengthDays = candidate.frame.projectionLengthDays ?? candidate.frame.lengthDays
+  const hasDetailedPrescription = candidate.sessions.some(
+    (session) => session.prescription.kind === "PACE_TARGET",
+  )
   const scheduleId = `candidate-schedule-${candidate.candidateId}`
   return (
     <article className="plan-candidate" aria-labelledby={`candidate-${candidate.candidateId}`}>
@@ -53,7 +56,10 @@ export function CandidateSection({
             {ENERGY_INTENT_LABELS[candidate.selectedEnergyIntent].title}
             <TermHelp term={ENERGY_INTENT_LABELS[candidate.selectedEnergyIntent].term} />
           </span>
-          <span>RPE 기준 실행 안내<TermHelp term="quality-session" /></span>
+          <span>
+            {hasDetailedPrescription ? "개인 페이스 상세 훈련 포함" : "RPE 기준 실행 안내"}
+            <TermHelp term="quality-session" />
+          </span>
         </div>
       </header>
       {canSelect && (

@@ -15,8 +15,8 @@ export const EVENT_LABELS: Record<PlanEventGroup, {
   readonly detail: string
 }> = {
   MIDDLE_DISTANCE: {
-    title: "800m · 1500m",
-    detail: "빠른 달리기와 회복을 나눠 중거리 경기 준비",
+    title: "800m · 1500m · 3000m",
+    detail: "저장한 같은 종목 기록으로 빠른 달리기와 회복을 구체적으로 준비",
   },
   FIVE_K: {
     title: "5km",

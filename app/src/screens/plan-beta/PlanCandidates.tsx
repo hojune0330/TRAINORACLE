@@ -58,6 +58,10 @@ export function PlanCandidates({
   }, [generated])
   const hasValidStartDate = isValidIsoDate(startDate)
   const canSelect = hasValidStartDate && !recordConfirmationPending
+  const selectedRecord = athleteRecords.find((record) => record.id === selectedRecordId)
+  const selectedEventLabel = selectedRecord === undefined
+    ? "선택한 종목"
+    : `${selectedRecord.eventDistanceM}m`
 
   return (
     <section className="plan-candidates" aria-labelledby="plan-candidates-title">
@@ -72,15 +76,18 @@ export function PlanCandidates({
       </div>
       <p className="plan-copy">
         {prescriptionBinding.kind === "bound"
-          ? "직접 고르고 확인한 현재 5km 기록으로 한 강도 세션의 상세 페이스를 계산했어요. 다른 훈련과 일지 값은 시간이나 RPE를 바꾸지 않습니다."
+          ? `직접 고르고 확인한 현재 ${selectedEventLabel} 기록으로 한 강도 세션의 상세 페이스를 계산했어요. 다른 훈련과 일지 값은 시간이나 RPE를 바꾸지 않습니다.`
           : generated.sourceMode === "PROFILE_ONLY"
           ? "종목, 경험, 고른 훈련 목적, 가능한 훈련일과 9.5일 기본 틀만 사용했어요. 개인 페이스와 최근 훈련량은 추정하지 않습니다."
           : "최근 일지가 있는지만 확인했어요. 일지의 거리, RPE, 메모는 이번 베타 계획의 시간이나 강도를 바꾸지 않습니다."}
       </p>
       <CandidateComparison candidates={generated.candidates} />
-      {intake.eventGroup === "FIVE_K" && intake.experienceBand === "EXPERIENCED" && (
+      {(intake.eventGroup === "FIVE_K" || intake.eventGroup === "MIDDLE_DISTANCE")
+        && intake.experienceBand === "EXPERIENCED"
+        && (
         <PaceEvidenceFlow
           records={athleteRecords}
+          eventGroup={intake.eventGroup}
           selectedRecordId={selectedRecordId}
           comparisonRecordId={comparisonRecordId}
           binding={prescriptionBinding}
@@ -106,7 +113,7 @@ export function PlanCandidates({
           </strong>
           <small>
             {prescriptionBinding.kind === "bound"
-              ? "선택하고 확인한 5km 기록만 상세 페이스 계산에 사용 · 일지 값은 시간·RPE 계산에 미사용"
+              ? `선택하고 확인한 ${selectedEventLabel} 기록만 상세 페이스 계산에 사용 · 일지 값은 시간·RPE 계산에 미사용`
               : "확인한 기준 기록이 없으면 기록값과 구조화 일지는 시간·RPE 계산에 미사용"}
           </small>
           {athleteEvidence.goalRecordCount > 0 && (

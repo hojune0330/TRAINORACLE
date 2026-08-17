@@ -6,10 +6,12 @@ import {
   recordPurposeLabel,
 } from "../../domain/athlete-record-display"
 import type { CandidatePrescriptionBinding } from "../../domain/plan-candidate-prescription"
+import type { PlanEventGroup } from "@impl/plan-generator/types"
 import { PlanChoice } from "./PlanChoice"
 
 type Props = {
   readonly records: readonly AthleteRecord[]
+  readonly eventGroup: Extract<PlanEventGroup, "FIVE_K" | "MIDDLE_DISTANCE">
   readonly selectedRecordId: string | null
   readonly comparisonRecordId: string | null
   readonly binding: Omit<CandidatePrescriptionBinding, "generated">
@@ -20,6 +22,7 @@ type Props = {
 
 export function PaceEvidenceFlow({
   records,
+  eventGroup,
   selectedRecordId,
   comparisonRecordId,
   binding,
@@ -27,7 +30,12 @@ export function PaceEvidenceFlow({
   onCompareRecord,
   onConfirm,
 }: Props) {
-  const usable = records.filter((record) => record.purpose !== "RACE_GOAL")
+  const supportedDistances = eventGroup === "FIVE_K"
+    ? [5000]
+    : [800, 1500, 3000]
+  const usable = records.filter((record) => (
+    record.purpose !== "RACE_GOAL" && supportedDistances.includes(record.eventDistanceM)
+  ))
   const selected = usable.find((record) => record.id === selectedRecordId)
   const comparison = usable.find((record) => record.id === comparisonRecordId)
   const comparisonOptions = selected === undefined
@@ -112,7 +120,7 @@ function BindingStatus({ binding }: { readonly binding: Omit<CandidatePrescripti
 
 function fallbackMessage(code: string): string {
   if (code === "PACE_TARGET_FALLBACK_ANCHOR_NOT_CURRENT") return "선택한 기록일이 현재 기준 범위를 벗어났어요."
-  if (code === "PACE_TARGET_FALLBACK_EVENT_SCOPE") return "선택한 기록은 현재 5km 처방과 같은 종목이 아니에요."
+  if (code === "PACE_TARGET_FALLBACK_EVENT_SCOPE") return "선택한 기록은 현재 지원하는 동일 종목 상세 처방 범위가 아니에요."
   if (code === "PACE_TARGET_FALLBACK_ANCHOR_UNAVAILABLE") return "선택한 기록을 저장소에서 다시 확인할 수 없어요."
   return "현재 승인 범위에서 상세 처방을 적용할 수 없어요."
 }

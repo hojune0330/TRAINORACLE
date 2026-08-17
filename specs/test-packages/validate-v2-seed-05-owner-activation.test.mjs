@@ -26,9 +26,9 @@ function mutateManifest(manifest, mutate) {
   return after
 }
 
-test("accepts exactly one current owner-adopted V2-SEED-05 activation", async () => {
+test("accepts exactly one V2-SEED-05 activation beside other approved templates", async () => {
   const result = validateCurrentActivation(await inputs())
-  assert.deepEqual({ active: result.activeCount, draft: result.draftCount, authorities: result.authorityCount, approvals: result.approvalCount }, { active: 1, draft: 29, authorities: 1, approvals: 1 })
+  assert.deepEqual({ active: result.activeCount, draft: result.draftCount, authorities: result.authorityCount, approvals: result.approvalCount }, { active: 1, draft: 29, authorities: 2, approvals: 4 })
 })
 
 for (const mutation of [
@@ -54,7 +54,15 @@ for (const mutation of [
 
 test("rejects an invented owner authority", async () => {
   const value = await inputs()
-  const manifest = mutateManifest(value.manifest, (parsed) => { parsed.trustedReviewerAuthorities[0].reviewerId = "INVENTED_OWNER" })
+  const manifest = mutateManifest(value.manifest, (parsed) => {
+    const approval = parsed.approvals.find((candidate) => candidate.templateId === "V2-SEED-05")
+    assert.ok(approval, "V2-SEED-05 approval must exist before mutation")
+    const authority = parsed.trustedReviewerAuthorities.find((candidate) => (
+      candidate.authorityEvidenceFingerprint === approval.ownerDecision.authorityEvidenceFingerprint
+    ))
+    assert.ok(authority, "V2-SEED-05 owner authority must exist before mutation")
+    authority.reviewerId = "INVENTED_OWNER"
+  })
   assert.throws(() => validateCurrentActivation({ ...value, manifest }), /invented owner authority/u)
 })
 

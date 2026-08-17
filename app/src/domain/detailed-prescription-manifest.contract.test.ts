@@ -23,6 +23,7 @@ const request: DetailedPrescriptionApprovalRequest = {
   templateId: approval.templateId,
   templateVersion: approval.templateVersion,
   templateContentFingerprint: approval.templateContentFingerprint,
+  targetEventDistanceM: approval.targetEventDistanceM,
   athleteEventGroup: "FIVE_K",
   athleteExperienceBand: "EXPERIENCED",
   eventScopeEvidenceFingerprint: approval.eventScopeEvidence.evidenceFingerprint,
@@ -35,10 +36,17 @@ const request: DetailedPrescriptionApprovalRequest = {
 }
 
 describe("trusted detailed prescription manifest record", () => {
-  it("contains only the honest owner authority and V2-SEED-05 approval", () => {
-    expect(TRUSTED_REVIEWER_AUTHORITIES).toHaveLength(1)
-    expect(DETAILED_PRESCRIPTION_APPROVALS).toHaveLength(1)
-    expect(TRUSTED_REVIEWER_AUTHORITIES[0]?.role).toBe("PRODUCT_OWNER_COACH")
+  it("contains only the owner-approved exact runtime templates", () => {
+    expect(TRUSTED_REVIEWER_AUTHORITIES).toHaveLength(2)
+    expect(DETAILED_PRESCRIPTION_APPROVALS.map((record) => record.templateId)).toEqual([
+      "V2-SEED-05",
+      "MD-800-01",
+      "MD-1500-01",
+      "MD-3000-01",
+    ])
+    expect(TRUSTED_REVIEWER_AUTHORITIES.every((record) => (
+      record.role === "PRODUCT_OWNER_COACH"
+    ))).toBe(true)
     expect(approval).toMatchObject({
       templateId: "V2-SEED-05",
       templateVersion: "1.0.0",
@@ -49,21 +57,43 @@ describe("trusted detailed prescription manifest record", () => {
       populationApplicability: { scope: "YOUTH_AND_ADULT" },
       ownerDecision: { decision: "APPROVED", independentReviewClaimed: false },
     })
-    expect(approval).not.toHaveProperty("reviews")
+    expect(DETAILED_PRESCRIPTION_APPROVALS.every((record) => (
+      !Object.hasOwn(record, "reviews")
+    ))).toBe(true)
   })
 
-  it("cryptographically binds canonical authority, evidence, template, and components", () => {
-    const authority = TRUSTED_REVIEWER_AUTHORITIES[0]
-    if (authority === undefined) throw new TypeError("Trusted owner authority is missing")
-    expect(sha256(authority.authorityEvidenceCanonical)).toBe(authority.authorityEvidenceFingerprint)
-    expect(`sha256:${createHash("sha256").update(canonicalizeDetailedPrescriptionTemplateContent(approval.canonicalTemplateContent)).digest("hex")}`).toBe(approval.templateContentFingerprint)
-    expect(sha256(approval.sportsScienceEvidence.canonicalEvidence)).toBe(approval.sportsScienceEvidence.canonicalEvidenceFingerprint)
-    expect(sha256(approval.populationApplicabilityEvidence.canonicalEvidence)).toBe(approval.populationApplicabilityEvidence.canonicalEvidenceFingerprint)
-
-    const components = approval.canonicalTemplateContent.operationalComponents
-    expect(approval.componentRefs.map((component) => component.componentFingerprint)).toEqual([
-      sha256(components.warmup), sha256(components.cooldown), sha256(components.fallback), sha256(components.stopConditions),
-    ])
+  it("cryptographically binds every authority, evidence, template, and component", () => {
+    for (const authority of TRUSTED_REVIEWER_AUTHORITIES) {
+      expect(sha256(authority.authorityEvidenceCanonical)).toBe(
+        authority.authorityEvidenceFingerprint,
+      )
+    }
+    for (const approvedTemplate of DETAILED_PRESCRIPTION_APPROVALS) {
+      expect(
+        `sha256:${createHash("sha256")
+          .update(canonicalizeDetailedPrescriptionTemplateContent(
+            approvedTemplate.canonicalTemplateContent,
+          ))
+          .digest("hex")}`,
+      ).toBe(approvedTemplate.templateContentFingerprint)
+      expect(sha256(approvedTemplate.sportsScienceEvidence.canonicalEvidence)).toBe(
+        approvedTemplate.sportsScienceEvidence.canonicalEvidenceFingerprint,
+      )
+      expect(sha256(
+        approvedTemplate.populationApplicabilityEvidence.canonicalEvidence,
+      )).toBe(
+        approvedTemplate.populationApplicabilityEvidence.canonicalEvidenceFingerprint,
+      )
+      const components = approvedTemplate.canonicalTemplateContent.operationalComponents
+      expect(approvedTemplate.componentRefs.map(
+        (component) => component.componentFingerprint,
+      )).toEqual([
+        sha256(components.warmup),
+        sha256(components.cooldown),
+        sha256(components.fallback),
+        sha256(components.stopConditions),
+      ])
+    }
   })
 
   it("resolves production authority only for the exact trusted request", () => {
@@ -76,6 +106,7 @@ describe("trusted detailed prescription manifest record", () => {
     ["population evidence hash", { populationEvidenceFingerprint: `sha256:${"c".repeat(64)}` }],
     ["event scope", { athleteEventGroup: "TEN_K" as const }],
     ["experience scope", { athleteExperienceBand: "DEVELOPING" as const }],
+    ["target distance", { targetEventDistanceM: 1500 }],
   ])("rejects a changed %s", (_name, mutation) => {
     expect(mutation).not.toEqual({})
     expect(resolveDetailedPrescriptionApproval({ ...request, ...mutation })).toBeUndefined()

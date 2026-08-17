@@ -41,6 +41,7 @@ function ControlledFlow({ onConfirm }: { readonly onConfirm: () => void }) {
   const [comparison, setComparison] = React.useState<string | null>(null)
   return (
     <PaceEvidenceFlow
+      eventGroup="FIVE_K"
       records={RECORDS}
       selectedRecordId={selected}
       comparisonRecordId={comparison}
@@ -55,6 +56,7 @@ function ControlledFlow({ onConfirm }: { readonly onConfirm: () => void }) {
 describe("explicit pace evidence selection", () => {
   it("does not auto-select even one stored result", () => {
     render(<PaceEvidenceFlow
+      eventGroup="FIVE_K"
       records={RECORDS.slice(0, 1)}
       selectedRecordId={null}
       comparisonRecordId={null}

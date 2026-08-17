@@ -41,7 +41,7 @@ export const STEP_META: Record<IntakeStep, {
     number: 1,
     eyebrow: "목표 종목",
     title: "준비할 달리기를 골라주세요",
-    copy: "고른 목표는 계획에 준비 종목을 표시하는 데 사용해요. 이번 베타는 종목별 세부 훈련이나 개인 페이스를 계산하지 않아요.",
+    copy: "고른 종목은 계획 방향과 상세 훈련 제공 범위를 정해요. 훈련 경험이 많고 같은 종목의 현재 기록을 고르면 800m·1500m·3000m·5km는 한 번의 주요 훈련에 개인 페이스를 계산하고, 그 밖에는 RPE 기준 계획을 보여드려요.",
     helpTerm: "plan-goal",
   },
   division: {
@@ -62,7 +62,7 @@ export const STEP_META: Record<IntakeStep, {
     number: 5,
     eyebrow: "이번 목표",
     title: "이번 주기에 어떤 훈련을 더 넣고 싶나요?",
-    copy: "고른 목적은 고강도 날의 종류와 RPE 안내를 정해요. 반복 횟수·거리·페이스·회복 시간은 아직 정하지 않아요.",
+    copy: "고른 목적은 고강도 날의 종류와 RPE 안내를 정해요. 지원 조건이 맞으면 한 번의 주요 훈련에 반복 횟수·거리·페이스·회복 시간도 보여드려요.",
     helpTerm: "energy-system",
   },
   days: {

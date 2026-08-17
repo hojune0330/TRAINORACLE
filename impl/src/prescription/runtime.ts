@@ -72,9 +72,16 @@ function parseOperationalComponents(value: unknown): PrescriptionOperationalComp
   if (!isRecord(warmup) || !isRecord(warmup["strides"]) || !isRecord(cooldown) || !isRecord(fallback) || !isRecord(stopConditions)) return undefined
   const strides = warmup["strides"]
   const codes = stopConditions["codes"]
+  const usesFiveKilometreComponents = warmup["componentRef"] === "WU-V2-5K-01"
+    && cooldown["componentRef"] === "CD-V2-5K-01"
+    && stopConditions["componentRef"] === "STOP-V2-5K-01"
+  const usesMiddleDistanceComponents = warmup["componentRef"] === "WU-MD-01"
+    && cooldown["componentRef"] === "CD-MD-01"
+    && stopConditions["componentRef"] === "STOP-MD-01"
+  if (!usesFiveKilometreComponents && !usesMiddleDistanceComponents) return undefined
+
   if (
-    warmup["componentRef"] !== "WU-V2-5K-01"
-    || warmup["componentVersion"] !== "1.0.0"
+    warmup["componentVersion"] !== "1.0.0"
     || warmup["authority"] !== "OWNER_OPERATIONAL_ADAPTATION"
     || warmup["easyDurationMinutes"] !== 15
     || warmup["rpeMin"] !== 2
@@ -84,7 +91,6 @@ function parseOperationalComponents(value: unknown): PrescriptionOperationalComp
     || strides["recoverySeconds"] !== 40
     || strides["recoveryMode"] !== "WALK_OR_JOG"
     || strides["progression"] !== "PROGRESSIVE"
-    || cooldown["componentRef"] !== "CD-V2-5K-01"
     || cooldown["componentVersion"] !== "1.0.0"
     || cooldown["authority"] !== "OWNER_OPERATIONAL_ADAPTATION"
     || cooldown["easyDurationMinutes"] !== 10
@@ -95,7 +101,6 @@ function parseOperationalComponents(value: unknown): PrescriptionOperationalComp
     || fallback["code"] !== "RPE_ONLY_CONTROLLED"
     || fallback["behavior"] !== "DELEGATE_TO_EXISTING_RPE_CANDIDATE"
     || fallback["numericRepetitionVariant"] !== null
-    || stopConditions["componentRef"] !== "STOP-V2-5K-01"
     || stopConditions["componentVersion"] !== "1.0.0"
     || stopConditions["authority"] !== "OWNER_PRECAUTIONARY_OPERATIONAL_RULE"
     || stopConditions["diagnosticClaim"] !== false
@@ -105,12 +110,12 @@ function parseOperationalComponents(value: unknown): PrescriptionOperationalComp
   ) return undefined
   return Object.freeze({
     warmup: Object.freeze({
-      componentRef: "WU-V2-5K-01", componentVersion: "1.0.0", authority: "OWNER_OPERATIONAL_ADAPTATION",
+      componentRef: usesFiveKilometreComponents ? "WU-V2-5K-01" : "WU-MD-01", componentVersion: "1.0.0", authority: "OWNER_OPERATIONAL_ADAPTATION",
       easyDurationMinutes: 15, rpeMin: 2, rpeMax: 3,
       strides: Object.freeze({ repetitions: 4, durationSeconds: 20, recoverySeconds: 40, recoveryMode: "WALK_OR_JOG", progression: "PROGRESSIVE" }),
     }),
     cooldown: Object.freeze({
-      componentRef: "CD-V2-5K-01", componentVersion: "1.0.0", authority: "OWNER_OPERATIONAL_ADAPTATION",
+      componentRef: usesFiveKilometreComponents ? "CD-V2-5K-01" : "CD-MD-01", componentVersion: "1.0.0", authority: "OWNER_OPERATIONAL_ADAPTATION",
       easyDurationMinutes: 10, rpeMin: 1, rpeMax: 2,
     }),
     fallback: Object.freeze({
@@ -118,7 +123,7 @@ function parseOperationalComponents(value: unknown): PrescriptionOperationalComp
       behavior: "DELEGATE_TO_EXISTING_RPE_CANDIDATE", numericRepetitionVariant: null,
     }),
     stopConditions: Object.freeze({
-      componentRef: "STOP-V2-5K-01", componentVersion: "1.0.0", authority: "OWNER_PRECAUTIONARY_OPERATIONAL_RULE",
+      componentRef: usesFiveKilometreComponents ? "STOP-V2-5K-01" : "STOP-MD-01", componentVersion: "1.0.0", authority: "OWNER_PRECAUTIONARY_OPERATIONAL_RULE",
       diagnosticClaim: false, codes: Object.freeze([...STOP_CODES]),
     }),
   })

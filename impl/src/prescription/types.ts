@@ -19,7 +19,7 @@ export const V2_SEED_05_STOP_CONDITION_CODES = [
 export type V2Seed05StopConditionCode = (typeof V2_SEED_05_STOP_CONDITION_CODES)[number]
 
 export type PrescriptionWarmupComponent = {
-  readonly componentRef: "WU-V2-5K-01"
+  readonly componentRef: "WU-V2-5K-01" | "WU-MD-01"
   readonly componentVersion: "1.0.0"
   readonly authority: "OWNER_OPERATIONAL_ADAPTATION"
   readonly easyDurationMinutes: 15
@@ -35,7 +35,7 @@ export type PrescriptionWarmupComponent = {
 }
 
 export type PrescriptionCooldownComponent = {
-  readonly componentRef: "CD-V2-5K-01"
+  readonly componentRef: "CD-V2-5K-01" | "CD-MD-01"
   readonly componentVersion: "1.0.0"
   readonly authority: "OWNER_OPERATIONAL_ADAPTATION"
   readonly easyDurationMinutes: 10
@@ -52,7 +52,7 @@ export type PrescriptionFallbackComponent = {
 }
 
 export type PrescriptionStopConditionComponent = {
-  readonly componentRef: "STOP-V2-5K-01"
+  readonly componentRef: "STOP-V2-5K-01" | "STOP-MD-01"
   readonly componentVersion: "1.0.0"
   readonly authority: "OWNER_PRECAUTIONARY_OPERATIONAL_RULE"
   readonly diagnosticClaim: false

@@ -35,11 +35,19 @@ export function validateCurrentActivation({ catalog, contract, report, manifest 
     throw new Error("current manifest must be valid JSON")
   }
   invariant(isObject(parsed) && parsed.schemaVersion === 1, "current manifest schema mismatch")
-  exactArray(parsed.trustedReviewerAuthorities?.map((authority) => authority.role), ["PRODUCT_OWNER_COACH"], "trusted owner authority roles")
-  invariant(parsed.trustedReviewerAuthorities[0].reviewerId === "COACH_HOJUNE", "invented owner authority")
-  exactArray(parsed.approvals?.map((approval) => approval.templateId), ["V2-SEED-05"], "active approval IDs")
+  invariant(
+    parsed.trustedReviewerAuthorities?.every((authority) => authority.role === "PRODUCT_OWNER_COACH"),
+    "trusted owner authority roles mismatch",
+  )
+  const matchingApprovals = parsed.approvals?.filter((candidate) => candidate.templateId === "V2-SEED-05")
+  invariant(matchingApprovals?.length === 1, "V2-SEED-05 approval count mismatch")
 
-  const approval = parsed.approvals[0]
+  const [approval] = matchingApprovals
+  const ownerAuthority = parsed.trustedReviewerAuthorities.find((authority) => (
+    authority.authorityEvidenceFingerprint
+      === approval.ownerDecision?.authorityEvidenceFingerprint
+  ))
+  invariant(ownerAuthority?.reviewerId === "COACH_HOJUNE", "invented owner authority")
   invariant(approval.templateVersion === "1.0.0", "template version mismatch")
   invariant(approval.lifecycleStatus === "ACTIVE" && approval.eligibilityStatus === "ELIGIBLE", "V2-SEED-05 must be ACTIVE and ELIGIBLE")
   exactArray(approval.eligibleEventGroups, ["FIVE_K"], "event scope")
@@ -67,12 +75,12 @@ export function validateCurrentActivation({ catalog, contract, report, manifest 
   invariant(approval.populationApplicabilityEvidence.canonicalEvidence.ageOnlyReject === false, "age-only rejection forbidden")
   invariant(approval.populationApplicabilityEvidence.canonicalEvidence.ageOnlyDoseMultiplier === false, "age-only dose multiplier forbidden")
   invariant(sha256(approval.populationApplicabilityEvidence?.canonicalEvidence) === approval.populationApplicabilityEvidence?.canonicalEvidenceFingerprint, "population evidence fingerprint mismatch")
-  invariant(sha256(parsed.trustedReviewerAuthorities[0].authorityEvidenceCanonical) === parsed.trustedReviewerAuthorities[0].authorityEvidenceFingerprint, "owner authority evidence fingerprint mismatch")
+  invariant(sha256(ownerAuthority.authorityEvidenceCanonical) === ownerAuthority.authorityEvidenceFingerprint, "owner authority evidence fingerprint mismatch")
 
   const blocks = catalog.split(/\n(?=- templateId: )/u).filter((block) => block.startsWith("- templateId: "))
   invariant(blocks.length === 30, "catalog must contain 30 records")
   const active = blocks.filter((block) => block.includes("lifecycleStatus: ACTIVE") || block.includes("eligibilityStatus: ELIGIBLE"))
-  invariant(active.length === 1 && active[0].startsWith("- templateId: V2-SEED-05\n"), "only V2-SEED-05 may be active")
+  invariant(active.length === 1 && /^- templateId: V2-SEED-05\r?$/mu.test(active[0]), "only V2-SEED-05 may be active")
   for (const marker of ["version: \"1.0.0\"", "allowedEventGroups: [FIVE_K]", "allowedExperienceBands: [EXPERIENCED]", "repetitionRecovery: \"150 sec JOG\"", "numericReducedRepetitionVariant: null", ...STOP_CODES]) invariant(active[0].includes(marker), `catalog V2 entry missing ${marker}`)
   invariant(contract.includes("active_numeric_template_exists_in_this_document: V2-SEED-05@1.0.0_ONLY"), "contract current activation mismatch")
   invariant(contract.includes("runtime_repetition_arithmetic_for_downshift: forbidden"), "contract runtime arithmetic guard missing")
