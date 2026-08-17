@@ -1,8 +1,9 @@
 # 다음 작업자 인계서
 
 > **현재 공개 제품·구현 인계는 이 문서가 아닙니다.** 먼저
-> [`CURRENT_IMPLEMENTATION_HANDOFF_2026-07-27.md`](../../CURRENT_IMPLEMENTATION_HANDOFF_2026-07-27.md)를
-> 읽으세요. 이 파일은 2026-07-20 전후의 제한된 formal-SPEC work harness 기록을 보존합니다.
+> [`PERSONALIZED_PRESCRIPTION_RELEASE_2026-08-18.md`](../implementation/PERSONALIZED_PRESCRIPTION_RELEASE_2026-08-18.md)를
+> 읽으세요. 그 다음 현재 운영 경계는 [`BETA_RELEASE_HANDOFF_2026-08-02.md`](../operations/BETA_RELEASE_HANDOFF_2026-08-02.md)에서 확인합니다.
+> 이 파일은 2026-07-20 전후의 제한된 formal-SPEC work harness 기록을 보존합니다.
 
 ## 지금 상태
 
@@ -12,7 +13,7 @@
 - 현재 새로 실행할 3단계 작업은 없다. 승인이나 사람 검토가 필요한 일을 임의로 시작하지 않는다.
 - PR #95는 병합됐다. WO012 책임자 답변의 기록은 `reports/review/WO012_COACH_DECISION_RESPONSE_TEMPLATE.md`에, 각 답변의 스펙 연결은 `reports/review/WO012_SPEC_LINKAGE_MATRIX.md`에 있다.
 - 이 기록은 규칙 채택·정본 패치·과학 또는 개인정보 검토 완료·런타임 권한을 뜻하지 않는다. 빈 답변이나 미확정 사항을 추정으로 채우지 않는다.
-- 자동 처방과 런타임 권한은 계속 `false`다.
+- 이 역사 구간의 Formation 자동 처방 권한은 `false`였다. 현재 공개된 동일 종목 상세 훈련의 범위와 근거는 위 2026-08-18 인계서가 우선한다.
 
 ## WO012 이후의 안전한 범위
 

@@ -105,6 +105,7 @@ This table records files found in the repository at the time of this index updat
 
 | Document / area | Repository path | Status | Treatment |
 |---|---|---|---|
+| Personalized prescription release | `reports/implementation/PERSONALIZED_PRESCRIPTION_RELEASE_2026-08-18.md` | IMPLEMENTED / PR #229 MERGED | Plain-language live support matrix for exact 800/1500/3000/5000 same-event prescriptions; not universal adaptive coaching or canonical SPEC promotion. |
 | `CODEX_WORK_ORDER_001.md` | root | ISSUED / completed by PR sequence | Historical work order for Wave D patches, impl skeleton, CI, and dashboard. |
 | `CODEX_WORK_ORDER_002.md` | root | COMPLETED | Work order for screen/SPEC traceability, Round 3 review prep, doc quality, and dashboard data sync; PR #14-#17 merged. |
 | `CODEX_WORK_ORDER_003.md` | root | COMPLETED / MERGED | Work order for GAP_SPEC draft contracts and Round 3 follow-up binding; PR #22-#25 merged. |
