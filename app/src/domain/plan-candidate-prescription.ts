@@ -74,7 +74,12 @@ export function bindDetailedPrescriptionCandidates(
   if (freshness !== "CURRENT") {
     return fallback(generated, "PACE_TARGET_FALLBACK_ANCHOR_NOT_CURRENT")
   }
-  if (intake.eventGroup !== "FIVE_K" || record.eventDistanceM !== 5000) {
+  const supportedTarget = (
+    intake.eventGroup === "FIVE_K" && record.eventDistanceM === 5000
+  ) || (
+    intake.eventGroup === "MIDDLE_DISTANCE" && [800, 1500, 3000].includes(record.eventDistanceM)
+  )
+  if (!supportedTarget) {
     return fallback(generated, "PACE_TARGET_FALLBACK_EVENT_SCOPE")
   }
   if (intake.experienceBand !== "EXPERIENCED") {
@@ -82,7 +87,8 @@ export function bindDetailedPrescriptionCandidates(
   }
 
   const approval = DETAILED_PRESCRIPTION_APPROVALS.find((candidate) => (
-    candidate.templateId === "V2-SEED-05" && candidate.templateVersion === "1.0.0"
+    candidate.targetEventDistanceM === record.eventDistanceM
+    && candidate.eligibleEventGroups.includes(intake.eventGroup)
   ))
   if (approval === undefined || approval.populationApplicability.scope !== "YOUTH_AND_ADULT") {
     return fallback(generated, "PACE_TARGET_FALLBACK_AUTHORITY_OR_COMPONENT")
@@ -98,6 +104,7 @@ export function bindDetailedPrescriptionCandidates(
     templateVersion: approval.templateVersion,
     templateContentFingerprint: approval.templateContentFingerprint,
     athleteEventGroup: intake.eventGroup,
+    targetEventDistanceM: approval.targetEventDistanceM,
     athleteExperienceBand: intake.experienceBand,
     eventScopeEvidenceFingerprint: approval.eventScopeEvidence.evidenceFingerprint,
     experienceScopeEvidenceFingerprint: approval.experienceScopeEvidence.evidenceFingerprint,
@@ -141,7 +148,7 @@ export function bindDetailedPrescriptionCandidates(
       fingerprint: trusted.populationApplicabilityEvidence.canonicalEvidenceFingerprint,
     },
     scope: {
-      eventGroup: "FIVE_K",
+      eventGroup: intake.eventGroup,
       experienceBand: "EXPERIENCED",
       population: "YOUTH_AND_ADULT",
       eventEvidenceFingerprint: trusted.eventScopeEvidence.evidenceFingerprint,

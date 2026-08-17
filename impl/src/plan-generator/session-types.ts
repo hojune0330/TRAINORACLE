@@ -46,7 +46,7 @@ export type PaceTargetPlanPrescription = {
     readonly fingerprint: string
   }
   readonly scope: {
-    readonly eventGroup: "FIVE_K"
+    readonly eventGroup: "FIVE_K" | "MIDDLE_DISTANCE"
     readonly experienceBand: "EXPERIENCED"
     readonly population: "YOUTH_AND_ADULT"
     readonly eventEvidenceFingerprint: string

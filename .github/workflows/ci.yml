@@ -34,6 +34,12 @@ jobs:
           node --test specs/test-packages/reasoning-tier-harness.test.mjs
           node specs/test-packages/reasoning-tier-harness.mjs validate
           node specs/test-packages/validate-formal-approval-foundation.mjs
+          node --test specs/test-packages/validate-personalized-prescription-policy.test.mjs
+          node specs/test-packages/validate-personalized-prescription-policy.mjs
+          node --test specs/test-packages/validate-v2-seed-05-owner-activation.test.mjs
+          node specs/test-packages/validate-v2-seed-05-owner-activation.mjs
+          node --test specs/test-packages/validate-middle-distance-source-adoption.test.mjs
+          node specs/test-packages/validate-middle-distance-source-adoption.mjs
           node specs/test-packages/validate-formation-p1-target-plans.mjs
           node specs/test-packages/test-wo016-gate-verifier.mjs
           node --test specs/test-packages/validate-detailed-prescription-catalog.test.mjs

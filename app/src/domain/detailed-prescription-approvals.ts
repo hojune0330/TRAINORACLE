@@ -64,7 +64,7 @@ type PopulationApplicabilityEvidence = {
   readonly sourceRefs: readonly string[]
   readonly canonicalEvidence: {
     readonly scope: "YOUTH_AND_ADULT"
-    readonly sameEligibilityCriteria: readonly ["FIVE_K", "EXPERIENCED", "CURRENT_SAME_EVENT_ANCHOR"]
+    readonly sameEligibilityCriteria: readonly [PlanEventGroup, "EXPERIENCED", "CURRENT_SAME_EVENT_ANCHOR"]
     readonly ageOnlyReject: false
     readonly ageOnlyDoseMultiplier: false
   }
@@ -78,6 +78,7 @@ export type DetailedPrescriptionApprovalRecord = {
   readonly templateContentFingerprint: string
   readonly canonicalTemplateContent: DetailedPrescriptionTemplateContent
   readonly notation: string
+  readonly targetEventDistanceM: number
   readonly lifecycleStatus: "ACTIVE"
   readonly eligibilityStatus: "ELIGIBLE"
   readonly eligibleEventGroups: readonly PlanEventGroup[]
@@ -111,6 +112,7 @@ export type DetailedPrescriptionApprovalRequest = {
   readonly templateVersion: string
   readonly templateContentFingerprint: string
   readonly athleteEventGroup: PlanEventGroup
+  readonly targetEventDistanceM: number
   readonly athleteExperienceBand: ExperienceBand
   readonly eventScopeEvidenceFingerprint: string
   readonly experienceScopeEvidenceFingerprint: string
@@ -147,13 +149,13 @@ const ownerDecisionSchema = authoritySchema.omit({ authorityEvidenceCanonical: t
   independentReviewClaimed: z.literal(false),
 }).strict()
 const warmupSchema = z.object({
-  componentRef: z.literal("WU-V2-5K-01"), componentVersion: z.literal("1.0.0"),
+  componentRef: z.union([z.literal("WU-V2-5K-01"), z.literal("WU-MD-01")]), componentVersion: z.literal("1.0.0"),
   authority: z.literal("OWNER_OPERATIONAL_ADAPTATION"), easyDurationMinutes: z.literal(15),
   rpeMin: z.literal(2), rpeMax: z.literal(3),
   strides: z.object({ repetitions: z.literal(4), durationSeconds: z.literal(20), recoverySeconds: z.literal(40), recoveryMode: z.literal("WALK_OR_JOG"), progression: z.literal("PROGRESSIVE") }).strict(),
 }).strict()
 const cooldownSchema = z.object({
-  componentRef: z.literal("CD-V2-5K-01"), componentVersion: z.literal("1.0.0"),
+  componentRef: z.union([z.literal("CD-V2-5K-01"), z.literal("CD-MD-01")]), componentVersion: z.literal("1.0.0"),
   authority: z.literal("OWNER_OPERATIONAL_ADAPTATION"), easyDurationMinutes: z.literal(10),
   rpeMin: z.literal(1), rpeMax: z.literal(2),
 }).strict()
@@ -163,7 +165,7 @@ const fallbackSchema = z.object({
   numericRepetitionVariant: z.null(),
 }).strict()
 const stopSchema = z.object({
-  componentRef: z.literal("STOP-V2-5K-01"), componentVersion: z.literal("1.0.0"),
+  componentRef: z.union([z.literal("STOP-V2-5K-01"), z.literal("STOP-MD-01")]), componentVersion: z.literal("1.0.0"),
   authority: z.literal("OWNER_PRECAUTIONARY_OPERATIONAL_RULE"), diagnosticClaim: z.literal(false),
   codes: z.tuple([
     z.literal("STOP_NEW_OR_WORSENING_PAIN"), z.literal("STOP_DIZZINESS_OR_FAINTNESS"),
@@ -179,14 +181,14 @@ const sportsScienceEvidenceSchema = z.object({
 }).strict()
 const populationEvidenceSchema = z.object({
   evidenceId: nonemptyString, decisionRef: nonemptyString, sourceRefs: z.array(nonemptyString).min(1),
-  canonicalEvidence: z.object({ scope: z.literal("YOUTH_AND_ADULT"), sameEligibilityCriteria: z.tuple([z.literal("FIVE_K"), z.literal("EXPERIENCED"), z.literal("CURRENT_SAME_EVENT_ANCHOR")]), ageOnlyReject: z.literal(false), ageOnlyDoseMultiplier: z.literal(false) }).strict(),
+  canonicalEvidence: z.object({ scope: z.literal("YOUTH_AND_ADULT"), sameEligibilityCriteria: z.tuple([z.enum(PLAN_EVENT_GROUPS), z.literal("EXPERIENCED"), z.literal("CURRENT_SAME_EVENT_ANCHOR")]), ageOnlyReject: z.literal(false), ageOnlyDoseMultiplier: z.literal(false) }).strict(),
   canonicalEvidenceFingerprint: fingerprint,
 }).strict()
 const approvalSchema = z.object({
   manifestVersion: z.literal("1"), templateId: nonemptyString, templateVersion: nonemptyString,
   templateContentFingerprint: fingerprint,
   canonicalTemplateContent: z.object({ notation: nonemptyString, operationalComponents: operationalComponentsSchema }).strict(),
-  notation: nonemptyString, lifecycleStatus: z.literal("ACTIVE"), eligibilityStatus: z.literal("ELIGIBLE"),
+  notation: nonemptyString, targetEventDistanceM: z.number().int().positive(), lifecycleStatus: z.literal("ACTIVE"), eligibilityStatus: z.literal("ELIGIBLE"),
   eligibleEventGroups: z.array(z.enum(PLAN_EVENT_GROUPS)).min(1), eventScopeEvidence: evidenceSchema,
   eligibleExperienceBands: z.array(z.enum(EXPERIENCE_BANDS)).min(1), experienceScopeEvidence: evidenceSchema,
   populationApplicability: z.object({ scope: z.enum(POPULATION_SCOPES) }).strict(),
@@ -221,7 +223,10 @@ function freezeApproval(record: DetailedPrescriptionApprovalRecord): DetailedPre
     eligibleExperienceBands: Object.freeze([...record.eligibleExperienceBands]), experienceScopeEvidence: Object.freeze({ ...record.experienceScopeEvidence }),
     populationApplicability: Object.freeze({ ...record.populationApplicability }),
     sportsScienceEvidence: Object.freeze({ ...record.sportsScienceEvidence, sourceRefs: Object.freeze([...record.sportsScienceEvidence.sourceRefs]), canonicalEvidence: Object.freeze({ ...record.sportsScienceEvidence.canonicalEvidence, sourceSupports: Object.freeze([...record.sportsScienceEvidence.canonicalEvidence.sourceSupports]), sourceDoesNotPrescribe: Object.freeze([...record.sportsScienceEvidence.canonicalEvidence.sourceDoesNotPrescribe]) }) }),
-    populationApplicabilityEvidence: Object.freeze({ ...record.populationApplicabilityEvidence, sourceRefs: Object.freeze([...record.populationApplicabilityEvidence.sourceRefs]), canonicalEvidence: Object.freeze({ ...record.populationApplicabilityEvidence.canonicalEvidence, sameEligibilityCriteria: Object.freeze(["FIVE_K", "EXPERIENCED", "CURRENT_SAME_EVENT_ANCHOR"] as const) }) }),
+    populationApplicabilityEvidence: Object.freeze({ ...record.populationApplicabilityEvidence, sourceRefs: Object.freeze([...record.populationApplicabilityEvidence.sourceRefs]), canonicalEvidence: Object.freeze({
+      ...record.populationApplicabilityEvidence.canonicalEvidence,
+      sameEligibilityCriteria: Object.freeze([...record.populationApplicabilityEvidence.canonicalEvidence.sameEligibilityCriteria] as const),
+    }) }),
     componentRefs: Object.freeze(record.componentRefs.map((component) => Object.freeze({ ...component }))), ownerDecision: Object.freeze({ ...record.ownerDecision }),
   })
 }
@@ -263,6 +268,7 @@ export function isDetailedPrescriptionApprovalApplicable(value: unknown, request
     && record.sportsScienceEvidence.canonicalEvidenceFingerprint === request.sportsScienceEvidenceFingerprint
     && record.populationApplicability.scope === request.populationApplicability
     && record.populationApplicabilityEvidence.canonicalEvidenceFingerprint === request.populationEvidenceFingerprint
+    && record.targetEventDistanceM === request.targetEventDistanceM
     && componentsMatch(record.componentRefs, request.componentRefs)
     && Date.parse(record.decidedAt) <= Date.parse(request.evaluatedAt) && Date.parse(request.evaluatedAt) < Date.parse(record.expiresAt)
     && Date.parse(record.decidedAt) < Date.parse(record.expiresAt) && record.revokedAt === null

@@ -12,6 +12,18 @@
         "approvedScope": "V2-SEED-05@1.0.0"
       },
       "authorityEvidenceFingerprint": "sha256:f96b4538082478fc85dd70d7838563039a9e08c4b106b25ea06aaec8e643084a"
+    },
+    {
+      "reviewerId": "COACH_HOJUNE",
+      "role": "PRODUCT_OWNER_COACH",
+      "authorityDecisionId": "TO-MD-RUNTIME-ACTIVATION-2026-08-17",
+      "authorityEvidenceRef": "reports/review/MIDDLE_DISTANCE_RUNTIME_ACTIVATION_DECISION_2026-08-17.md",
+      "authorityEvidenceCanonical": {
+        "decisionId": "TO-MD-RUNTIME-ACTIVATION-2026-08-17",
+        "ownerId": "COACH_HOJUNE",
+        "approvedScope": "MD-800-01@1.0.0|MD-1500-01@1.0.0|MD-3000-01@1.0.0"
+      },
+      "authorityEvidenceFingerprint": "sha256:985f8cada6cf64ea15d3ebf856c13a7e4f5c84dab7f02691d36ae24362dc4a4a"
     }
   ],
   "approvals": [
@@ -70,47 +82,89 @@
       "notation": "5×1000m @5000m RP · r150″ JOG",
       "lifecycleStatus": "ACTIVE",
       "eligibilityStatus": "ELIGIBLE",
-      "eligibleEventGroups": ["FIVE_K"],
+      "eligibleEventGroups": [
+        "FIVE_K"
+      ],
       "eventScopeEvidence": {
         "decisionId": "TO-V2-SEED-05-OWNER-ADOPTION-2026-08-17",
         "evidenceRef": "reports/review/V2_SEED_05_OWNER_ADOPTION_DECISION_2026-08-17.md#scope",
         "evidenceFingerprint": "sha256:43f39eea01053d1cf11afbdac90adc0c6331cd4b36355c16b660b6970d62cbed"
       },
-      "eligibleExperienceBands": ["EXPERIENCED"],
+      "eligibleExperienceBands": [
+        "EXPERIENCED"
+      ],
       "experienceScopeEvidence": {
         "decisionId": "TO-V2-SEED-05-OWNER-ADOPTION-2026-08-17",
         "evidenceRef": "reports/review/V2_SEED_05_OWNER_ADOPTION_DECISION_2026-08-17.md#scope",
         "evidenceFingerprint": "sha256:dddff17cc298cd32ce7cbd6c2ccff6e38034b7e0ff5dd114e40b3893d55b4517"
       },
-      "populationApplicability": { "scope": "YOUTH_AND_ADULT" },
+      "populationApplicability": {
+        "scope": "YOUTH_AND_ADULT"
+      },
       "sportsScienceEvidence": {
         "evidenceId": "V2-SEED-05-SPORTS-SCIENCE-EVIDENCE-2026-08-17",
         "decisionRef": "TO-V2-SEED-05-OWNER-ADOPTION-2026-08-17",
-        "sourceRefs": ["SRC-VDOT-PACES"],
+        "sourceRefs": [
+          "SRC-VDOT-PACES"
+        ],
         "canonicalEvidence": {
           "classification": "TRAINORACLE_ADAPTATION",
-          "sourceSupports": ["INTERVAL_GUIDANCE", "JOG_RECOVERY_GUIDANCE"],
-          "sourceDoesNotPrescribe": ["EXACT_FIVE_REPETITIONS", "EXACT_150_SECOND_RECOVERY", "WARMUP_OR_COOLDOWN", "YOUTH_SPECIFIC_DOSE"]
+          "sourceSupports": [
+            "INTERVAL_GUIDANCE",
+            "JOG_RECOVERY_GUIDANCE"
+          ],
+          "sourceDoesNotPrescribe": [
+            "EXACT_FIVE_REPETITIONS",
+            "EXACT_150_SECOND_RECOVERY",
+            "WARMUP_OR_COOLDOWN",
+            "YOUTH_SPECIFIC_DOSE"
+          ]
         },
         "canonicalEvidenceFingerprint": "sha256:43f39eea01053d1cf11afbdac90adc0c6331cd4b36355c16b660b6970d62cbed"
       },
       "populationApplicabilityEvidence": {
         "evidenceId": "V2-SEED-05-POPULATION-EVIDENCE-2026-08-17",
         "decisionRef": "TO-V2-SEED-05-OWNER-ADOPTION-2026-08-17",
-        "sourceRefs": ["TO-YOUTH-TRAINING-ELIGIBILITY-2026-08-17"],
+        "sourceRefs": [
+          "TO-YOUTH-TRAINING-ELIGIBILITY-2026-08-17"
+        ],
         "canonicalEvidence": {
           "scope": "YOUTH_AND_ADULT",
-          "sameEligibilityCriteria": ["FIVE_K", "EXPERIENCED", "CURRENT_SAME_EVENT_ANCHOR"],
+          "sameEligibilityCriteria": [
+            "FIVE_K",
+            "EXPERIENCED",
+            "CURRENT_SAME_EVENT_ANCHOR"
+          ],
           "ageOnlyReject": false,
           "ageOnlyDoseMultiplier": false
         },
         "canonicalEvidenceFingerprint": "sha256:dddff17cc298cd32ce7cbd6c2ccff6e38034b7e0ff5dd114e40b3893d55b4517"
       },
       "componentRefs": [
-        { "componentType": "WARMUP", "componentRef": "WU-V2-5K-01", "componentVersion": "1.0.0", "componentFingerprint": "sha256:d8da21478d2a44841122874ccf35c24aad1777ebaaeb018deda3e98a8f9cf6f1" },
-        { "componentType": "COOLDOWN", "componentRef": "CD-V2-5K-01", "componentVersion": "1.0.0", "componentFingerprint": "sha256:8d1470171a5edb17a43aa1c21ca34bbfb77456347a68293d2ffe0a5bc52968ab" },
-        { "componentType": "DOWNSHIFT", "componentRef": "RPE-ONLY-CONTROLLED-01", "componentVersion": "1.0.0", "componentFingerprint": "sha256:cd09b06359fcdfb422b421c31dd45a97beeccbdbecaabd1eb7274cdd67ecf3c5" },
-        { "componentType": "STOP_CONDITIONS", "componentRef": "STOP-V2-5K-01", "componentVersion": "1.0.0", "componentFingerprint": "sha256:737ce6df7f7049530b72f3f52f20a2cbbd32bb83ccf6bfd93c29e25864b4bc29" }
+        {
+          "componentType": "WARMUP",
+          "componentRef": "WU-V2-5K-01",
+          "componentVersion": "1.0.0",
+          "componentFingerprint": "sha256:d8da21478d2a44841122874ccf35c24aad1777ebaaeb018deda3e98a8f9cf6f1"
+        },
+        {
+          "componentType": "COOLDOWN",
+          "componentRef": "CD-V2-5K-01",
+          "componentVersion": "1.0.0",
+          "componentFingerprint": "sha256:8d1470171a5edb17a43aa1c21ca34bbfb77456347a68293d2ffe0a5bc52968ab"
+        },
+        {
+          "componentType": "DOWNSHIFT",
+          "componentRef": "RPE-ONLY-CONTROLLED-01",
+          "componentVersion": "1.0.0",
+          "componentFingerprint": "sha256:cd09b06359fcdfb422b421c31dd45a97beeccbdbecaabd1eb7274cdd67ecf3c5"
+        },
+        {
+          "componentType": "STOP_CONDITIONS",
+          "componentRef": "STOP-V2-5K-01",
+          "componentVersion": "1.0.0",
+          "componentFingerprint": "sha256:737ce6df7f7049530b72f3f52f20a2cbbd32bb83ccf6bfd93c29e25864b4bc29"
+        }
       ],
       "sourceDecisionId": "TO-V2-SEED-05-OWNER-ADOPTION-2026-08-17",
       "sourceEvidenceRef": "reports/review/V2_SEED_05_OWNER_ADOPTION_DECISION_2026-08-17.md",
@@ -124,6 +178,472 @@
         "authorityDecisionId": "TO-V2-SEED-05-OWNER-ADOPTION-2026-08-17",
         "authorityEvidenceRef": "reports/review/V2_SEED_05_OWNER_ADOPTION_DECISION_2026-08-17.md",
         "authorityEvidenceFingerprint": "sha256:f96b4538082478fc85dd70d7838563039a9e08c4b106b25ea06aaec8e643084a",
+        "decision": "APPROVED",
+        "independentReviewClaimed": false
+      },
+      "targetEventDistanceM": 5000
+    },
+    {
+      "manifestVersion": "1",
+      "templateId": "MD-800-01",
+      "templateVersion": "1.0.0",
+      "templateContentFingerprint": "sha256:8aa917947277883df94a9de665accd59a028b6753cec22d8fecf06795d28b149",
+      "canonicalTemplateContent": {
+        "notation": "10×200m @800m RP · r60″ STAND",
+        "operationalComponents": {
+          "warmup": {
+            "componentRef": "WU-MD-01",
+            "componentVersion": "1.0.0",
+            "authority": "OWNER_OPERATIONAL_ADAPTATION",
+            "easyDurationMinutes": 15,
+            "rpeMin": 2,
+            "rpeMax": 3,
+            "strides": {
+              "repetitions": 4,
+              "durationSeconds": 20,
+              "recoverySeconds": 40,
+              "recoveryMode": "WALK_OR_JOG",
+              "progression": "PROGRESSIVE"
+            }
+          },
+          "cooldown": {
+            "componentRef": "CD-MD-01",
+            "componentVersion": "1.0.0",
+            "authority": "OWNER_OPERATIONAL_ADAPTATION",
+            "easyDurationMinutes": 10,
+            "rpeMin": 1,
+            "rpeMax": 2
+          },
+          "fallback": {
+            "componentRef": "RPE-ONLY-CONTROLLED-01",
+            "componentVersion": "1.0.0",
+            "code": "RPE_ONLY_CONTROLLED",
+            "behavior": "DELEGATE_TO_EXISTING_RPE_CANDIDATE",
+            "numericRepetitionVariant": null
+          },
+          "stopConditions": {
+            "componentRef": "STOP-MD-01",
+            "componentVersion": "1.0.0",
+            "authority": "OWNER_PRECAUTIONARY_OPERATIONAL_RULE",
+            "diagnosticClaim": false,
+            "codes": [
+              "STOP_NEW_OR_WORSENING_PAIN",
+              "STOP_DIZZINESS_OR_FAINTNESS",
+              "STOP_CHEST_PAIN_OR_UNUSUAL_BREATHING",
+              "STOP_LOSS_OF_CONTROLLED_FORM"
+            ]
+          }
+        }
+      },
+      "notation": "10×200m @800m RP · r60″ STAND",
+      "targetEventDistanceM": 800,
+      "lifecycleStatus": "ACTIVE",
+      "eligibilityStatus": "ELIGIBLE",
+      "eligibleEventGroups": [
+        "MIDDLE_DISTANCE"
+      ],
+      "eventScopeEvidence": {
+        "decisionId": "TO-MD-RUNTIME-ACTIVATION-2026-08-17",
+        "evidenceRef": "reports/review/MIDDLE_DISTANCE_RUNTIME_ACTIVATION_DECISION_2026-08-17.md#approved-scope",
+        "evidenceFingerprint": "sha256:15f0364506a6325828b68c7320bad090ebc718552d693af025d0e5b86117a01a"
+      },
+      "eligibleExperienceBands": [
+        "EXPERIENCED"
+      ],
+      "experienceScopeEvidence": {
+        "decisionId": "TO-MD-RUNTIME-ACTIVATION-2026-08-17",
+        "evidenceRef": "reports/review/MIDDLE_DISTANCE_RUNTIME_ACTIVATION_DECISION_2026-08-17.md#approved-scope",
+        "evidenceFingerprint": "sha256:5113008167054deeb83f6519021273f477257a8ba379b95916f4139f6468a5c3"
+      },
+      "populationApplicability": {
+        "scope": "YOUTH_AND_ADULT"
+      },
+      "sportsScienceEvidence": {
+        "evidenceId": "MD-800-01-SPORTS-SCIENCE-EVIDENCE-2026-08-17",
+        "decisionRef": "TO-MD-RUNTIME-ACTIVATION-2026-08-17",
+        "sourceRefs": [
+          "https://pmc.ncbi.nlm.nih.gov/articles/PMC8363530/"
+        ],
+        "canonicalEvidence": {
+          "classification": "TRAINORACLE_ADAPTATION",
+          "sourceSupports": [
+            "10_TO_16_X_200M_AT_800_TO_1500M_RACE_PACE",
+            "ONE_MINUTE_RECOVERY"
+          ],
+          "sourceDoesNotPrescribe": [
+            "EXACT_TEN_REPETITIONS_FOR_ALL",
+            "STAND_RECOVERY_MODE",
+            "YOUTH_SPECIFIC_DOSE"
+          ]
+        },
+        "canonicalEvidenceFingerprint": "sha256:b7b1d282bc14a968fd4d7ca056e501ae2b9870be666a2b50e0c6311892205165"
+      },
+      "populationApplicabilityEvidence": {
+        "evidenceId": "MD-800-01-POPULATION-EVIDENCE-2026-08-17",
+        "decisionRef": "TO-MD-RUNTIME-ACTIVATION-2026-08-17",
+        "sourceRefs": [
+          "TO-YOUTH-TRAINING-ELIGIBILITY-2026-08-17"
+        ],
+        "canonicalEvidence": {
+          "scope": "YOUTH_AND_ADULT",
+          "sameEligibilityCriteria": [
+            "MIDDLE_DISTANCE",
+            "EXPERIENCED",
+            "CURRENT_SAME_EVENT_ANCHOR"
+          ],
+          "ageOnlyReject": false,
+          "ageOnlyDoseMultiplier": false
+        },
+        "canonicalEvidenceFingerprint": "sha256:db90564affefb2723de747e3c52a406463cf9d9964d4143c1c85fa4083fa6c94"
+      },
+      "componentRefs": [
+        {
+          "componentType": "WARMUP",
+          "componentRef": "WU-MD-01",
+          "componentVersion": "1.0.0",
+          "componentFingerprint": "sha256:a0aafebf7c1021f56a32cd1c4330609b5d4861ac7a138a0236a3282480d1bb28"
+        },
+        {
+          "componentType": "COOLDOWN",
+          "componentRef": "CD-MD-01",
+          "componentVersion": "1.0.0",
+          "componentFingerprint": "sha256:3b94b71b4b529fca8841b83f9d355f023fe9178e22a80288c8c043b23d655850"
+        },
+        {
+          "componentType": "DOWNSHIFT",
+          "componentRef": "RPE-ONLY-CONTROLLED-01",
+          "componentVersion": "1.0.0",
+          "componentFingerprint": "sha256:cd09b06359fcdfb422b421c31dd45a97beeccbdbecaabd1eb7274cdd67ecf3c5"
+        },
+        {
+          "componentType": "STOP_CONDITIONS",
+          "componentRef": "STOP-MD-01",
+          "componentVersion": "1.0.0",
+          "componentFingerprint": "sha256:d2d0370db17e7caeb11f7aab144b263bef4d63bf91df170175c910133193208e"
+        }
+      ],
+      "sourceDecisionId": "MIDDLE_DISTANCE_SOURCE_ADOPTION_PACKET_2026-08-17",
+      "sourceEvidenceRef": "reports/review/MIDDLE_DISTANCE_SOURCE_ADOPTION_PACKET_2026-08-17.md",
+      "approvalDecisionId": "TO-MD-RUNTIME-ACTIVATION-2026-08-17",
+      "decidedAt": "2026-08-17T02:00:00.000Z",
+      "expiresAt": "2027-08-17T02:00:00.000Z",
+      "revokedAt": null,
+      "ownerDecision": {
+        "reviewerId": "COACH_HOJUNE",
+        "role": "PRODUCT_OWNER_COACH",
+        "authorityDecisionId": "TO-MD-RUNTIME-ACTIVATION-2026-08-17",
+        "authorityEvidenceRef": "reports/review/MIDDLE_DISTANCE_RUNTIME_ACTIVATION_DECISION_2026-08-17.md",
+        "authorityEvidenceFingerprint": "sha256:985f8cada6cf64ea15d3ebf856c13a7e4f5c84dab7f02691d36ae24362dc4a4a",
+        "decision": "APPROVED",
+        "independentReviewClaimed": false
+      }
+    },
+    {
+      "manifestVersion": "1",
+      "templateId": "MD-1500-01",
+      "templateVersion": "1.0.0",
+      "templateContentFingerprint": "sha256:dd82bb01baa7b34e163f9148b76eae3956285dc5d1bd7e5217cd39373d966fab",
+      "canonicalTemplateContent": {
+        "notation": "3×500m @1500m RP · r180″ STAND",
+        "operationalComponents": {
+          "warmup": {
+            "componentRef": "WU-MD-01",
+            "componentVersion": "1.0.0",
+            "authority": "OWNER_OPERATIONAL_ADAPTATION",
+            "easyDurationMinutes": 15,
+            "rpeMin": 2,
+            "rpeMax": 3,
+            "strides": {
+              "repetitions": 4,
+              "durationSeconds": 20,
+              "recoverySeconds": 40,
+              "recoveryMode": "WALK_OR_JOG",
+              "progression": "PROGRESSIVE"
+            }
+          },
+          "cooldown": {
+            "componentRef": "CD-MD-01",
+            "componentVersion": "1.0.0",
+            "authority": "OWNER_OPERATIONAL_ADAPTATION",
+            "easyDurationMinutes": 10,
+            "rpeMin": 1,
+            "rpeMax": 2
+          },
+          "fallback": {
+            "componentRef": "RPE-ONLY-CONTROLLED-01",
+            "componentVersion": "1.0.0",
+            "code": "RPE_ONLY_CONTROLLED",
+            "behavior": "DELEGATE_TO_EXISTING_RPE_CANDIDATE",
+            "numericRepetitionVariant": null
+          },
+          "stopConditions": {
+            "componentRef": "STOP-MD-01",
+            "componentVersion": "1.0.0",
+            "authority": "OWNER_PRECAUTIONARY_OPERATIONAL_RULE",
+            "diagnosticClaim": false,
+            "codes": [
+              "STOP_NEW_OR_WORSENING_PAIN",
+              "STOP_DIZZINESS_OR_FAINTNESS",
+              "STOP_CHEST_PAIN_OR_UNUSUAL_BREATHING",
+              "STOP_LOSS_OF_CONTROLLED_FORM"
+            ]
+          }
+        }
+      },
+      "notation": "3×500m @1500m RP · r180″ STAND",
+      "targetEventDistanceM": 1500,
+      "lifecycleStatus": "ACTIVE",
+      "eligibilityStatus": "ELIGIBLE",
+      "eligibleEventGroups": [
+        "MIDDLE_DISTANCE"
+      ],
+      "eventScopeEvidence": {
+        "decisionId": "TO-MD-RUNTIME-ACTIVATION-2026-08-17",
+        "evidenceRef": "reports/review/MIDDLE_DISTANCE_RUNTIME_ACTIVATION_DECISION_2026-08-17.md#approved-scope",
+        "evidenceFingerprint": "sha256:1aa88001839a9fa0202e290c36b50a309a98bff8fbd8abc61903d9277a644082"
+      },
+      "eligibleExperienceBands": [
+        "EXPERIENCED"
+      ],
+      "experienceScopeEvidence": {
+        "decisionId": "TO-MD-RUNTIME-ACTIVATION-2026-08-17",
+        "evidenceRef": "reports/review/MIDDLE_DISTANCE_RUNTIME_ACTIVATION_DECISION_2026-08-17.md#approved-scope",
+        "evidenceFingerprint": "sha256:5113008167054deeb83f6519021273f477257a8ba379b95916f4139f6468a5c3"
+      },
+      "populationApplicability": {
+        "scope": "YOUTH_AND_ADULT"
+      },
+      "sportsScienceEvidence": {
+        "evidenceId": "MD-1500-01-SPORTS-SCIENCE-EVIDENCE-2026-08-17",
+        "decisionRef": "TO-MD-RUNTIME-ACTIVATION-2026-08-17",
+        "sourceRefs": [
+          "https://worldathletics.org/personal-best/performance/speed-training-endurance-runners-benefits-limits"
+        ],
+        "canonicalEvidence": {
+          "classification": "TRAINORACLE_ADAPTATION",
+          "sourceSupports": [
+            "THREE_TO_FOUR_X_500M_AT_1500M_PACE",
+            "TWO_TO_THREE_MINUTE_RECOVERY"
+          ],
+          "sourceDoesNotPrescribe": [
+            "CURRENT_CAPABILITY_SUBSTITUTION",
+            "STAND_RECOVERY_MODE",
+            "YOUTH_SPECIFIC_DOSE"
+          ]
+        },
+        "canonicalEvidenceFingerprint": "sha256:e7897160a160364a7143f7c5dce9154a42ce0eea7dae11acb6876ea9721e93e0"
+      },
+      "populationApplicabilityEvidence": {
+        "evidenceId": "MD-1500-01-POPULATION-EVIDENCE-2026-08-17",
+        "decisionRef": "TO-MD-RUNTIME-ACTIVATION-2026-08-17",
+        "sourceRefs": [
+          "TO-YOUTH-TRAINING-ELIGIBILITY-2026-08-17"
+        ],
+        "canonicalEvidence": {
+          "scope": "YOUTH_AND_ADULT",
+          "sameEligibilityCriteria": [
+            "MIDDLE_DISTANCE",
+            "EXPERIENCED",
+            "CURRENT_SAME_EVENT_ANCHOR"
+          ],
+          "ageOnlyReject": false,
+          "ageOnlyDoseMultiplier": false
+        },
+        "canonicalEvidenceFingerprint": "sha256:db90564affefb2723de747e3c52a406463cf9d9964d4143c1c85fa4083fa6c94"
+      },
+      "componentRefs": [
+        {
+          "componentType": "WARMUP",
+          "componentRef": "WU-MD-01",
+          "componentVersion": "1.0.0",
+          "componentFingerprint": "sha256:a0aafebf7c1021f56a32cd1c4330609b5d4861ac7a138a0236a3282480d1bb28"
+        },
+        {
+          "componentType": "COOLDOWN",
+          "componentRef": "CD-MD-01",
+          "componentVersion": "1.0.0",
+          "componentFingerprint": "sha256:3b94b71b4b529fca8841b83f9d355f023fe9178e22a80288c8c043b23d655850"
+        },
+        {
+          "componentType": "DOWNSHIFT",
+          "componentRef": "RPE-ONLY-CONTROLLED-01",
+          "componentVersion": "1.0.0",
+          "componentFingerprint": "sha256:cd09b06359fcdfb422b421c31dd45a97beeccbdbecaabd1eb7274cdd67ecf3c5"
+        },
+        {
+          "componentType": "STOP_CONDITIONS",
+          "componentRef": "STOP-MD-01",
+          "componentVersion": "1.0.0",
+          "componentFingerprint": "sha256:d2d0370db17e7caeb11f7aab144b263bef4d63bf91df170175c910133193208e"
+        }
+      ],
+      "sourceDecisionId": "MIDDLE_DISTANCE_SOURCE_ADOPTION_PACKET_2026-08-17",
+      "sourceEvidenceRef": "reports/review/MIDDLE_DISTANCE_SOURCE_ADOPTION_PACKET_2026-08-17.md",
+      "approvalDecisionId": "TO-MD-RUNTIME-ACTIVATION-2026-08-17",
+      "decidedAt": "2026-08-17T02:00:00.000Z",
+      "expiresAt": "2027-08-17T02:00:00.000Z",
+      "revokedAt": null,
+      "ownerDecision": {
+        "reviewerId": "COACH_HOJUNE",
+        "role": "PRODUCT_OWNER_COACH",
+        "authorityDecisionId": "TO-MD-RUNTIME-ACTIVATION-2026-08-17",
+        "authorityEvidenceRef": "reports/review/MIDDLE_DISTANCE_RUNTIME_ACTIVATION_DECISION_2026-08-17.md",
+        "authorityEvidenceFingerprint": "sha256:985f8cada6cf64ea15d3ebf856c13a7e4f5c84dab7f02691d36ae24362dc4a4a",
+        "decision": "APPROVED",
+        "independentReviewClaimed": false
+      }
+    },
+    {
+      "manifestVersion": "1",
+      "templateId": "MD-3000-01",
+      "templateVersion": "1.0.0",
+      "templateContentFingerprint": "sha256:a69b24eccf72be076865b091d6a4ee408da6444512c09a788d717d99adc7a455",
+      "canonicalTemplateContent": {
+        "notation": "4×800m @3000m RP · r180″ WALK",
+        "operationalComponents": {
+          "warmup": {
+            "componentRef": "WU-MD-01",
+            "componentVersion": "1.0.0",
+            "authority": "OWNER_OPERATIONAL_ADAPTATION",
+            "easyDurationMinutes": 15,
+            "rpeMin": 2,
+            "rpeMax": 3,
+            "strides": {
+              "repetitions": 4,
+              "durationSeconds": 20,
+              "recoverySeconds": 40,
+              "recoveryMode": "WALK_OR_JOG",
+              "progression": "PROGRESSIVE"
+            }
+          },
+          "cooldown": {
+            "componentRef": "CD-MD-01",
+            "componentVersion": "1.0.0",
+            "authority": "OWNER_OPERATIONAL_ADAPTATION",
+            "easyDurationMinutes": 10,
+            "rpeMin": 1,
+            "rpeMax": 2
+          },
+          "fallback": {
+            "componentRef": "RPE-ONLY-CONTROLLED-01",
+            "componentVersion": "1.0.0",
+            "code": "RPE_ONLY_CONTROLLED",
+            "behavior": "DELEGATE_TO_EXISTING_RPE_CANDIDATE",
+            "numericRepetitionVariant": null
+          },
+          "stopConditions": {
+            "componentRef": "STOP-MD-01",
+            "componentVersion": "1.0.0",
+            "authority": "OWNER_PRECAUTIONARY_OPERATIONAL_RULE",
+            "diagnosticClaim": false,
+            "codes": [
+              "STOP_NEW_OR_WORSENING_PAIN",
+              "STOP_DIZZINESS_OR_FAINTNESS",
+              "STOP_CHEST_PAIN_OR_UNUSUAL_BREATHING",
+              "STOP_LOSS_OF_CONTROLLED_FORM"
+            ]
+          }
+        }
+      },
+      "notation": "4×800m @3000m RP · r180″ WALK",
+      "targetEventDistanceM": 3000,
+      "lifecycleStatus": "ACTIVE",
+      "eligibilityStatus": "ELIGIBLE",
+      "eligibleEventGroups": [
+        "MIDDLE_DISTANCE"
+      ],
+      "eventScopeEvidence": {
+        "decisionId": "TO-MD-RUNTIME-ACTIVATION-2026-08-17",
+        "evidenceRef": "reports/review/MIDDLE_DISTANCE_RUNTIME_ACTIVATION_DECISION_2026-08-17.md#approved-scope",
+        "evidenceFingerprint": "sha256:fb0bc61a1848f424a00510c4d8bbea23be4528d0e89045c68a26ab8d730436e8"
+      },
+      "eligibleExperienceBands": [
+        "EXPERIENCED"
+      ],
+      "experienceScopeEvidence": {
+        "decisionId": "TO-MD-RUNTIME-ACTIVATION-2026-08-17",
+        "evidenceRef": "reports/review/MIDDLE_DISTANCE_RUNTIME_ACTIVATION_DECISION_2026-08-17.md#approved-scope",
+        "evidenceFingerprint": "sha256:5113008167054deeb83f6519021273f477257a8ba379b95916f4139f6468a5c3"
+      },
+      "populationApplicability": {
+        "scope": "YOUTH_AND_ADULT"
+      },
+      "sportsScienceEvidence": {
+        "evidenceId": "MD-3000-01-SPORTS-SCIENCE-EVIDENCE-2026-08-17",
+        "decisionRef": "TO-MD-RUNTIME-ACTIVATION-2026-08-17",
+        "sourceRefs": [
+          "https://pmc.ncbi.nlm.nih.gov/articles/PMC8363530/"
+        ],
+        "canonicalEvidence": {
+          "classification": "TRAINORACLE_ADAPTATION",
+          "sourceSupports": [
+            "FOUR_TO_SEVEN_X_800_TO_1000M_AT_3_TO_10K_PACE",
+            "TWO_TO_THREE_MINUTE_RECOVERY"
+          ],
+          "sourceDoesNotPrescribe": [
+            "EXACT_3000M_SAME_EVENT_DOSE_FOR_ALL",
+            "WALK_RECOVERY_MODE",
+            "YOUTH_SPECIFIC_DOSE"
+          ]
+        },
+        "canonicalEvidenceFingerprint": "sha256:fc3ca228cd6615470775b2a1c768e5bfa4f9e658938893674340b16cad5462fe"
+      },
+      "populationApplicabilityEvidence": {
+        "evidenceId": "MD-3000-01-POPULATION-EVIDENCE-2026-08-17",
+        "decisionRef": "TO-MD-RUNTIME-ACTIVATION-2026-08-17",
+        "sourceRefs": [
+          "TO-YOUTH-TRAINING-ELIGIBILITY-2026-08-17"
+        ],
+        "canonicalEvidence": {
+          "scope": "YOUTH_AND_ADULT",
+          "sameEligibilityCriteria": [
+            "MIDDLE_DISTANCE",
+            "EXPERIENCED",
+            "CURRENT_SAME_EVENT_ANCHOR"
+          ],
+          "ageOnlyReject": false,
+          "ageOnlyDoseMultiplier": false
+        },
+        "canonicalEvidenceFingerprint": "sha256:db90564affefb2723de747e3c52a406463cf9d9964d4143c1c85fa4083fa6c94"
+      },
+      "componentRefs": [
+        {
+          "componentType": "WARMUP",
+          "componentRef": "WU-MD-01",
+          "componentVersion": "1.0.0",
+          "componentFingerprint": "sha256:a0aafebf7c1021f56a32cd1c4330609b5d4861ac7a138a0236a3282480d1bb28"
+        },
+        {
+          "componentType": "COOLDOWN",
+          "componentRef": "CD-MD-01",
+          "componentVersion": "1.0.0",
+          "componentFingerprint": "sha256:3b94b71b4b529fca8841b83f9d355f023fe9178e22a80288c8c043b23d655850"
+        },
+        {
+          "componentType": "DOWNSHIFT",
+          "componentRef": "RPE-ONLY-CONTROLLED-01",
+          "componentVersion": "1.0.0",
+          "componentFingerprint": "sha256:cd09b06359fcdfb422b421c31dd45a97beeccbdbecaabd1eb7274cdd67ecf3c5"
+        },
+        {
+          "componentType": "STOP_CONDITIONS",
+          "componentRef": "STOP-MD-01",
+          "componentVersion": "1.0.0",
+          "componentFingerprint": "sha256:d2d0370db17e7caeb11f7aab144b263bef4d63bf91df170175c910133193208e"
+        }
+      ],
+      "sourceDecisionId": "MIDDLE_DISTANCE_SOURCE_ADOPTION_PACKET_2026-08-17",
+      "sourceEvidenceRef": "reports/review/MIDDLE_DISTANCE_SOURCE_ADOPTION_PACKET_2026-08-17.md",
+      "approvalDecisionId": "TO-MD-RUNTIME-ACTIVATION-2026-08-17",
+      "decidedAt": "2026-08-17T02:00:00.000Z",
+      "expiresAt": "2027-08-17T02:00:00.000Z",
+      "revokedAt": null,
+      "ownerDecision": {
+        "reviewerId": "COACH_HOJUNE",
+        "role": "PRODUCT_OWNER_COACH",
+        "authorityDecisionId": "TO-MD-RUNTIME-ACTIVATION-2026-08-17",
+        "authorityEvidenceRef": "reports/review/MIDDLE_DISTANCE_RUNTIME_ACTIVATION_DECISION_2026-08-17.md",
+        "authorityEvidenceFingerprint": "sha256:985f8cada6cf64ea15d3ebf856c13a7e4f5c84dab7f02691d36ae24362dc4a4a",
         "decision": "APPROVED",
         "independentReviewClaimed": false
       }

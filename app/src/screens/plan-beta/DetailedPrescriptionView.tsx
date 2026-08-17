@@ -18,13 +18,35 @@ export function DetailedPrescriptionView({ prescription }: { readonly prescripti
       <p>
         <strong>본운동</strong>
         <span>
-          1000m를 {formatDuration(prescription.targetRepSeconds)} 목표로 5회 · 총 5000m
+          {prescription.setCount > 1 && `${prescription.setCount}세트 · 세트마다 `}
+          {prescription.repetitionDistanceM}m를 {formatDuration(prescription.targetRepSeconds)} 목표로
+          {" "}{prescription.repetitionsPerSet}회
+          {prescription.setCount > 1 && ` · 총 ${prescription.totals.totalRepetitions}회`}
+          {" · "}품질 거리 {prescription.totals.qualityDistanceM}m
         </span>
       </p>
-      <p>
-        <strong>반복 사이 회복</strong>
-        <span>4번 · 매번 150초 조깅(JOG) · 총 600초</span>
-      </p>
+      {prescription.repetitionRecoverySeconds !== null && (
+        <p>
+          <strong>반복 사이 회복</strong>
+          <span>
+            {prescription.totals.repetitionRecoveryOccurrences}번 · 매번
+            {" "}{prescription.repetitionRecoverySeconds}초
+            {" "}{recoveryModeLabel(prescription.repetitionRecoveryMode)}
+            {" · "}총 {prescription.totals.repetitionRecoveryTotalSeconds}초
+          </span>
+        </p>
+      )}
+      {prescription.setRecoverySeconds !== null && (
+        <p>
+          <strong>세트 사이 회복</strong>
+          <span>
+            {prescription.totals.setRecoveryOccurrences}번 · 매번
+            {" "}{prescription.setRecoverySeconds}초
+            {" "}{recoveryModeLabel(prescription.setRecoveryMode)}
+            {" · "}총 {prescription.totals.setRecoveryTotalSeconds}초
+          </span>
+        </p>
+      )}
       <p>
         <strong>준비</strong>
         <span>
@@ -56,6 +78,19 @@ export function DetailedPrescriptionView({ prescription }: { readonly prescripti
 function formatDuration(seconds: number): string {
   const rounded = Math.round(seconds)
   return `${Math.floor(rounded / 60)}분 ${String(rounded % 60).padStart(2, "0")}초`
+}
+
+function recoveryModeLabel(mode: Detailed["repetitionRecoveryMode"]): string {
+  switch (mode) {
+    case "WALK":
+      return "걷기"
+    case "JOG":
+      return "조깅"
+    case "STAND":
+      return "서서 쉬기"
+    case "NOT_APPLICABLE":
+      return ""
+  }
 }
 
 function shortFingerprint(value: string): string {

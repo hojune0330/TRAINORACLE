@@ -61,7 +61,7 @@ const componentRefSchema = z.object({
   componentFingerprint: fingerprintSchema,
 }).strict()
 const warmupSchema = z.object({
-  componentRef: z.literal("WU-V2-5K-01"),
+  componentRef: z.union([z.literal("WU-V2-5K-01"), z.literal("WU-MD-01")]),
   componentVersion: z.literal("1.0.0"),
   authority: z.literal("OWNER_OPERATIONAL_ADAPTATION"),
   easyDurationMinutes: z.literal(15),
@@ -76,7 +76,7 @@ const warmupSchema = z.object({
   }).strict(),
 }).strict()
 const cooldownSchema = z.object({
-  componentRef: z.literal("CD-V2-5K-01"),
+  componentRef: z.union([z.literal("CD-V2-5K-01"), z.literal("CD-MD-01")]),
   componentVersion: z.literal("1.0.0"),
   authority: z.literal("OWNER_OPERATIONAL_ADAPTATION"),
   easyDurationMinutes: z.literal(10),
@@ -97,7 +97,7 @@ const stopCodeSchema = z.enum([
   "STOP_LOSS_OF_CONTROLLED_FORM",
 ])
 const stopConditionsSchema = z.object({
-  componentRef: z.literal("STOP-V2-5K-01"),
+  componentRef: z.union([z.literal("STOP-V2-5K-01"), z.literal("STOP-MD-01")]),
   componentVersion: z.literal("1.0.0"),
   authority: z.literal("OWNER_PRECAUTIONARY_OPERATIONAL_RULE"),
   diagnosticClaim: z.literal(false),
@@ -145,7 +145,7 @@ const paceTargetContentShape = {
   sportsScienceEvidence: evidenceIdentitySchema,
   populationApplicabilityEvidence: evidenceIdentitySchema,
   scope: z.object({
-    eventGroup: z.literal("FIVE_K"),
+    eventGroup: z.union([z.literal("FIVE_K"), z.literal("MIDDLE_DISTANCE")]),
     experienceBand: z.literal("EXPERIENCED"),
     population: z.literal("YOUTH_AND_ADULT"),
     eventEvidenceFingerprint: fingerprintSchema,
@@ -319,6 +319,7 @@ export function recheckStoredDetailedPrescriptionAuthority(
     templateId: prescription.templateId,
     templateVersion: prescription.templateVersion,
     templateContentFingerprint: prescription.templateContentFingerprint,
+    targetEventDistanceM: prescription.targetEventDistanceM,
     athleteEventGroup: prescription.scope.eventGroup,
     athleteExperienceBand: prescription.scope.experienceBand,
     eventScopeEvidenceFingerprint: prescription.scope.eventEvidenceFingerprint,
@@ -346,6 +347,7 @@ function approvalMatchesStoredPrescription(
   if (parsedNotation.kind !== "parsed") return false
   const totals = derivePrescriptionTotals(parsedNotation.notation)
   return approval.manifestVersion === prescription.manifestVersion
+    && approval.targetEventDistanceM === prescription.targetEventDistanceM
     && approval.notation === prescription.notation
     && approval.sourceDecisionId === prescription.sourceDecisionId
     && approval.sourceEvidenceRef === prescription.sourceEvidenceRef

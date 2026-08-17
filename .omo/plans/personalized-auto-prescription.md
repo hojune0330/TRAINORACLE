@@ -135,7 +135,7 @@ Your next move: start work. Full execution detail follows below.
   QA scenarios (name the exact tool + invocation): source URL/DOI reachability check, catalog parser tests, per-event notation mutations, count/hash validation and final-marker validation. Evidence `<attemptDir>/task-8-personalized-auto-prescription.json`.
   Commit: Y | `docs(prescription): adopt same-event templates for 800 to 3000m`
 
-- [ ] 9. Activate accepted 800/1500/3000 templates through the same runtime
+- [x] 9. Activate accepted 800/1500/3000 templates through the same runtime
   What to do / Must NOT do: Add only templates that passed Todo 8 to the trusted manifest and route them through the same anchor, safety, component, storage and UI path as 5000 m. Template eligibility chooses an approved version by event and experience; age/sex/school division never changes the dose. If multiple dose versions are needed, each is a separate approved template version. Do not add event-specific parallel engines or activate unsupported research seeds.
   Parallelization: Wave 4 | Blocked by: 2, 4, 7, 8 | Blocks: 10
   References (executor has NO interview context - be exhaustive): outputs of Todos 2, 4, 7, 8; `app/src/domain/detailed-prescription-approvals.ts`; `app/src/domain/detailed-prescription.ts`; `app/src/domain/pace-target-plan.ts`; `impl/src/plan-generator/candidates.ts`; `app/src/domain/plan-session-schema.ts`.

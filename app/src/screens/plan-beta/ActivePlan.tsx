@@ -61,9 +61,12 @@ export function ActivePlan({
   const frameLengthDays = "projectionLengthDays" in activePlan.frame
     ? activePlan.frame.projectionLengthDays ?? activePlan.frame.lengthDays
     : activePlan.frame.lengthDays
-  const hasDetailedPrescription = activePlan.sessions.some(
-    (session) => session.prescription.kind === "PACE_TARGET",
-  )
+  const detailedPrescription = activePlan.sessions
+    .map((session) => session.prescription)
+    .find((prescription): prescription is StoredPaceTargetPrescription => (
+      prescription.kind === "PACE_TARGET"
+    ))
+  const hasDetailedPrescription = detailedPrescription !== undefined
 
   return (
     <section className="active-plan" aria-labelledby="active-plan-title">
@@ -90,7 +93,7 @@ export function ActivePlan({
               저장된 경기 기록 {state.athleteEvidence.storedRecordCount}개
               {" · "}최근 구조화 일지 {state.athleteEvidence.recentJournalSessionCount}개 연결
               {" · "}{hasDetailedPrescription
-                ? "확인한 5km 기록은 상세 세션 페이스에 사용 · 일지 값은 시간·RPE 계산에 미사용"
+                  ? `확인한 ${detailedPrescription.targetEventDistanceM}m 기록은 상세 세션 페이스에 사용 · 일지 값은 시간·RPE 계산에 미사용`
                 : "개인 페이스·훈련 시간·RPE 계산에는 미사용"}
             </small>
           )}
@@ -116,7 +119,7 @@ export function ActivePlan({
               {detailedPrescription !== null && (
                 <details className="active-plan__execution-check">
                   <summary>시작·다시 시작 전 확인</summary>
-                  <p>누를 때마다 현재 몸 상태와 저장된 처방의 승인·만료·철회 상태를 다시 확인합니다.</p>
+                  <p>누를 때마다 몸 상태와 저장된 처방의 승인·만료·철회 여부를 다시 확인해요.</p>
                   <button
                     type="button"
                     onClick={() => onCheckDetailedExecution(
