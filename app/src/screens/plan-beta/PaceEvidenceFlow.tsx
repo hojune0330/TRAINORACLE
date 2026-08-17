@@ -1,3 +1,4 @@
+import React from "react"
 import { Check, RefreshCw } from "lucide-react"
 import type { AthleteRecord } from "../../domain/athlete-records"
 import {
@@ -30,6 +31,13 @@ export function PaceEvidenceFlow({
   onCompareRecord,
   onConfirm,
 }: Props) {
+  const shouldFocusResult = React.useRef(false)
+  const statusRef = React.useRef<HTMLParagraphElement>(null)
+  React.useEffect(() => {
+    if (!shouldFocusResult.current || binding.code === "PACE_TARGET_FALLBACK_NO_EXPLICIT_ANCHOR") return
+    statusRef.current?.focus()
+    shouldFocusResult.current = false
+  }, [binding])
   const supportedDistances = eventGroup === "FIVE_K"
     ? [5000]
     : [800, 1500, 3000]
@@ -92,7 +100,14 @@ export function PaceEvidenceFlow({
               {comparison !== undefined && (
                 <p>비교만 · {recordTitle(comparison)} · {comparison.achievedOn}</p>
               )}
-              <button className="plan-select-action" type="button" onClick={onConfirm}>
+              <button
+                className="plan-select-action"
+                type="button"
+                onClick={() => {
+                  shouldFocusResult.current = true
+                  onConfirm()
+                }}
+              >
                 <Check aria-hidden="true" size={18} />
                 이 기록으로 개인 페이스 적용
               </button>
@@ -100,18 +115,24 @@ export function PaceEvidenceFlow({
           )}
         </>
       )}
-      <BindingStatus binding={binding} />
+      <BindingStatus binding={binding} statusRef={statusRef} />
     </section>
   )
 }
 
-function BindingStatus({ binding }: { readonly binding: Omit<CandidatePrescriptionBinding, "generated"> }) {
+function BindingStatus({
+  binding,
+  statusRef,
+}: {
+  readonly binding: Omit<CandidatePrescriptionBinding, "generated">
+  readonly statusRef: React.RefObject<HTMLParagraphElement>
+}) {
   if (binding.kind === "bound") {
-    return <p className="pace-evidence-status"><Check aria-hidden="true" size={16} /><span className="pace-evidence-copy">선택한 기록으로 두 후보에 같은 상세 처방을 적용했어요.</span></p>
+    return <p ref={statusRef} className="pace-evidence-status" role="status" tabIndex={-1}><Check aria-hidden="true" size={16} /><span className="pace-evidence-copy">선택한 기록으로 두 후보에 같은 상세 처방을 적용했어요.</span></p>
   }
   if (binding.code === "PACE_TARGET_FALLBACK_NO_EXPLICIT_ANCHOR") return null
   return (
-    <p className="pace-evidence-fallback" role="status">
+    <p ref={statusRef} className="pace-evidence-fallback" role="status" tabIndex={-1}>
       <RefreshCw aria-hidden="true" size={16} />
       <span className="pace-evidence-copy">{fallbackMessage(binding.code)} 두 후보 모두 원래 RPE 계획을 유지합니다.</span>
     </p>
@@ -119,10 +140,15 @@ function BindingStatus({ binding }: { readonly binding: Omit<CandidatePrescripti
 }
 
 function fallbackMessage(code: string): string {
+  if (code === "PACE_TARGET_FALLBACK_INVALID_SELECTION") return "고른 기록 정보를 확인하지 못했어요. 기록을 다시 골라 주세요."
   if (code === "PACE_TARGET_FALLBACK_ANCHOR_NOT_CURRENT") return "선택한 기록일이 현재 기준 범위를 벗어났어요."
   if (code === "PACE_TARGET_FALLBACK_EVENT_SCOPE") return "선택한 기록은 현재 지원하는 동일 종목 상세 처방 범위가 아니에요."
   if (code === "PACE_TARGET_FALLBACK_ANCHOR_UNAVAILABLE") return "선택한 기록을 저장소에서 다시 확인할 수 없어요."
-  return "현재 승인 범위에서 상세 처방을 적용할 수 없어요."
+  if (code === "PACE_TARGET_FALLBACK_EXPERIENCE_SCOPE") return "현재 선택한 훈련 경험 단계에서는 상세 페이스를 적용하지 않아요."
+  if (code === "PACE_TARGET_FALLBACK_SAFETY_GATE") return "현재 몸 상태 확인 결과 상세 페이스를 적용하지 않아요."
+  if (code === "PACE_TARGET_FALLBACK_NO_ELIGIBLE_QUALITY") return "이번 두 후보에는 상세 페이스를 넣을 고강도 세션이 없어요."
+  if (code === "PACE_TARGET_FALLBACK_AUTHORITY_OR_COMPONENT") return "선택한 기록에는 문제가 없어요. 상세 처방을 연결하는 중 문제가 생겨 안전하게 되돌렸어요."
+  return "기준 기록을 확인한 뒤 상세 페이스를 적용할 수 있어요."
 }
 
 function recordTitle(record: AthleteRecord): string {

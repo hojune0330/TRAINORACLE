@@ -121,6 +121,7 @@ export function ActivePlan({
                   <summary>시작·다시 시작 전 확인</summary>
                   <p>누를 때마다 몸 상태와 저장된 처방의 승인·만료·철회 여부를 다시 확인해요.</p>
                   <button
+                    className="active-plan__execution-primary"
                     type="button"
                     onClick={() => onCheckDetailedExecution(
                       detailedPrescription,
@@ -131,6 +132,7 @@ export function ActivePlan({
                     통증 없고 평소와 같음 · 시작 확인
                   </button>
                   <button
+                    className="active-plan__execution-secondary"
                     type="button"
                     onClick={() => onCheckDetailedExecution(
                       detailedPrescription,
@@ -141,6 +143,7 @@ export function ActivePlan({
                     통증 없고 평소와 같음 · 다시 시작 확인
                   </button>
                   <button
+                    className="active-plan__execution-review"
                     type="button"
                     onClick={() => onCheckDetailedExecution(
                       detailedPrescription,
@@ -148,6 +151,7 @@ export function ActivePlan({
                       "REVIEW_REQUIRED",
                     )}
                   >
+                    <AlertTriangle aria-hidden="true" size={16} />
                     통증·이상 또는 잘 모르겠음
                   </button>
                 </details>

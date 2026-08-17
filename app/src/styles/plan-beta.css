@@ -1575,6 +1575,26 @@
   border-top: 0;
 }
 
+.active-plan__execution-check .active-plan__execution-primary {
+  background: var(--ink);
+  color: var(--surface);
+  font-weight: 700;
+}
+
+.active-plan__execution-check .active-plan__execution-secondary {
+  color: var(--ink-2);
+}
+
+.active-plan__execution-check .active-plan__execution-review {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-top: var(--space-2);
+  border-top: var(--bw-line) solid var(--line);
+  background: var(--surface-2);
+  color: var(--ink-2);
+}
+
 .plan-execution-status {
   margin-top: var(--space-3);
   padding: var(--space-3);

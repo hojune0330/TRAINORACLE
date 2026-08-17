@@ -88,6 +88,10 @@ for (const fixture of cases) {
     await reachMiddleDistanceCandidates(page)
 
     const picker = page.getByRole("region", { name: "개인 페이스 기준 기록" })
+    const comparison = page.getByRole("region", { name: "두 계획 핵심 비교" })
+    const pickerBox = await picker.boundingBox()
+    const comparisonBox = await comparison.boundingBox()
+    expect(pickerBox?.y).toBeLessThan(comparisonBox?.y ?? 0)
     await expect(picker.getByRole("button", { name: /800m/u })).toBeVisible()
     await expect(picker.getByRole("button", { name: /1500m/u })).toBeVisible()
     await expect(picker.getByRole("button", { name: /3000m/u })).toBeVisible()
@@ -99,8 +103,15 @@ for (const fixture of cases) {
     await picker.getByRole("button", {
       name: "이 기록으로 개인 페이스 적용",
     }).click()
+    await expect(picker.getByRole("status")).toBeFocused()
 
     await expect(page.getByText(fixture.notation).first()).toBeVisible()
+    if (process.env.CAPTURE_PLAN_QA === "1") {
+      await picker.scrollIntoViewIfNeeded()
+      await page.screenshot({
+        path: testInfo.outputPath(`candidate-${fixture.eventDistanceM}m.png`),
+      })
+    }
     await page.getByRole("button", { name: /반복 인터벌 포함 선택하기/u }).click()
     await expect(page.getByText(fixture.summary).first()).toBeVisible()
     await expect(page.getByText(fixture.execution).first()).toBeVisible()
@@ -114,6 +125,11 @@ for (const fixture of cases) {
       .click()
     await expect(page.getByText(fixture.notation).first()).toBeVisible()
     await page.getByText("시작·다시 시작 전 확인").click()
+    if (process.env.CAPTURE_PLAN_QA === "1") {
+      await page.locator(".active-plan__execution-check").first().screenshot({
+        path: testInfo.outputPath(`execution-check-${fixture.eventDistanceM}m.png`),
+      })
+    }
     await page.getByRole("button", {
       name: "통증 없고 평소와 같음 · 시작 확인",
     }).click()
