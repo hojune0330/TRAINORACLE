@@ -143,7 +143,7 @@ Your next move: start work. Full execution detail follows below.
   QA scenarios (name the exact tool + invocation): table-driven Vitest tests across 800/1500/3000/5000, youth/adult labels, eligible/ineligible experience, cross-event and D9 states; Playwright smoke per event. Evidence `<attemptDir>/task-9-personalized-auto-prescription/`.
   Commit: Y | `feat(prescription): extend same-event plans to 800 1500 and 3000m`
 
-- [ ] 10. Final multi-event release, documentation and handoff
+- [x] 10. Final multi-event release, documentation and handoff
   What to do / Must NOT do: Update README/product overview, spec index, implementation report and durable handoff with a plain-language support matrix: which events, records, experience scopes and template versions are live; what falls back to RPE; what remains deferred. Recompute all issue/count tables from files. Run all verification and deploy the reviewed main SHA. Do not claim universal coaching, medical clearance, unsupported events or closed issues without evidence.
   Parallelization: Wave 4 | Blocked by: 7, 9 | Blocks: final wave
   References (executor has NO interview context - be exhaustive): `README.md`; `PRODUCT_NORTH_STAR.md`; spec/document indexes; `reports/work-harness/NEXT_WORKER_HANDOFF.md`; `.github/workflows/ci.yml`; outputs/evidence from Todos 1-9.
@@ -153,10 +153,10 @@ Your next move: start work. Full execution detail follows below.
 
 ## Final verification wave
 > Runs in parallel after ALL todos. ALL must APPROVE. Surface results and wait for the user's explicit okay before declaring complete.
-- [ ] F1. Plan compliance audit: verify every Must have/Must NOT have against the exact final SHA and evidence ledger; reject unsupported claims or missing event gates.
-- [ ] F2. Code quality/security review: inspect trust boundaries, manifest tampering, migration, raw-text exclusion, deterministic output and fail-closed branches.
-- [ ] F3. Real manual QA: independently execute public mobile/desktop plan creation, record replacement, candidate selection, reload, fallback and D9 block for every supported event.
-- [ ] F4. Scope fidelity: confirm privacy/guardian/legal protections were not weakened, 100-400 m stayed deferred, historical reports stayed immutable and no unsupported template became ACTIVE.
+- [x] F1. Plan compliance audit: verify every Must have/Must NOT have against the exact final SHA and evidence ledger; reject unsupported claims or missing event gates.
+- [x] F2. Code quality/security review: inspect trust boundaries, manifest tampering, migration, raw-text exclusion, deterministic output and fail-closed branches.
+- [x] F3. Real manual QA: independently execute public mobile/desktop plan creation, record replacement, candidate selection, reload, fallback and D9 block for every supported event.
+- [x] F4. Scope fidelity: confirm privacy/guardian/legal protections were not weakened, 100-400 m stayed deferred, historical reports stayed immutable and no unsupported template became ACTIVE.
 
 ## Commit strategy
 - Keep documentation policy, manifest/runtime, storage, generator, UI, source adoption, multi-event activation and release evidence in separate reviewable commits as listed above.

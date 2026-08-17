@@ -1,0 +1,51 @@
+{
+  "schemaVersion": 1,
+  "event": "task-evidence",
+  "task": "Todo 10 final multi-event release and handoff",
+  "artifactTimestamp": "2026-08-18T03:10:00+09:00",
+  "featureMergeSha": "bf8672494022e8b8e3cba0d47053782df8d04a72",
+  "deployedMainSha": "f638ed3f639e495ff420d76c50e24e11fd4bd765",
+  "deploymentReceipt": {
+    "workflowRunId": "32052722050",
+    "sourceShaMatches": true,
+    "pagesJob": "success",
+    "publicHttpStatus": 200
+  },
+  "supportMatrix": {
+    "manifestApprovals": 4,
+    "documentedRows": 4,
+    "match": true,
+    "eventsM": [800, 1500, 3000, 5000],
+    "experienceBands": ["EXPERIENCED"]
+  },
+  "publicBrowser": {
+    "baseUrl": "https://hojune0330.github.io/TRAINORACLE/",
+    "projects": ["desktop-chromium", "mobile-chromium"],
+    "passed": 20,
+    "failed": 0,
+    "consoleOrPageErrors": 0,
+    "coverage": [
+      "exact 800/1500/3000/5000 generation",
+      "candidate selection, persistence and reload",
+      "record replacement reconfirmation",
+      "stale and missing evidence fallback",
+      "D9 blocking",
+      "youth/adult identical eligibility and dose"
+    ]
+  },
+  "finalAudits": {
+    "F1PlanCompliance": "PASS",
+    "F2CodeAndTrustBoundaries": "PASS",
+    "F3PublicManualQa": "PASS",
+    "F4ScopeFidelity": "PASS",
+    "report": "reports/review/PERSONALIZED_MULTI_EVENT_FINAL_AUDIT_2026-08-18.md"
+  },
+  "boundaries": {
+    "ageOrSexDoseBranches": 0,
+    "active100To400Approvals": 0,
+    "rawTextPrescriptionInputs": 0,
+    "crossEventConversion": false,
+    "universalAdaptiveCoachingClaim": false,
+    "independentAgentReviewClaim": false
+  }
+}
