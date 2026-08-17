@@ -187,15 +187,25 @@ failUnless(blocks.length === 30, `catalog must contain exactly 30 entries, got $
 
 const sourceCounts = new Map([...expectedSourceCounts.keys()].map((tier) => [tier, 0]));
 const recordsById = new Map();
+let runtimeCandidateCount = 0;
 for (const block of blocks) {
   const templateId = block.match(/^- templateId: ([^\r\n]+)/mu)?.[1] ?? "MISSING";
   const sourceTier = getField(block, "sourceVerificationStatus");
   failUnless(expectedSourceCounts.has(sourceTier), `${templateId} has unknown source tier ${sourceTier}`);
   if (sourceCounts.has(sourceTier)) sourceCounts.set(sourceTier, sourceCounts.get(sourceTier) + 1);
-  failUnless(getField(block, "lifecycleStatus") === "DRAFT", `${templateId} must remain DRAFT`);
-  failUnless(getField(block, "eligibilityStatus") === "REVIEW_REQUIRED", `${templateId} must require review`);
-  failUnless(block.includes("allowedEventGroups: []"), `${templateId} event eligibility must remain empty`);
-  failUnless(block.includes("allowedExperienceBands: []"), `${templateId} experience eligibility must remain empty`);
+  if (templateId === "V2-SEED-05") {
+    failUnless(getField(block, "version") === '"1.0.0"', `${templateId} version must remain 1.0.0`);
+    failUnless(getField(block, "lifecycleStatus") === "ACTIVE", `${templateId} must remain ACTIVE`);
+    failUnless(getField(block, "eligibilityStatus") === "ELIGIBLE", `${templateId} must remain ELIGIBLE`);
+    failUnless(block.includes("allowedEventGroups: [FIVE_K]"), `${templateId} event eligibility must remain FIVE_K`);
+    failUnless(block.includes("allowedExperienceBands: [EXPERIENCED]"), `${templateId} experience eligibility must remain EXPERIENCED`);
+    runtimeCandidateCount += 1;
+  } else {
+    failUnless(getField(block, "lifecycleStatus") === "DRAFT", `${templateId} must remain DRAFT`);
+    failUnless(getField(block, "eligibilityStatus") === "REVIEW_REQUIRED", `${templateId} must require review`);
+    failUnless(block.includes("allowedEventGroups: []"), `${templateId} event eligibility must remain empty`);
+    failUnless(block.includes("allowedExperienceBands: []"), `${templateId} experience eligibility must remain empty`);
+  }
   const notation = getField(block, "notationPattern");
   if (notation.includes("~")) {
     failUnless(getField(block, "machineNotation") === "null", `${templateId} ranged notation must remain unresolved`);
@@ -206,6 +216,9 @@ for (const block of blocks) {
 for (const [tier, expectedCount] of expectedSourceCounts) {
   failUnless(sourceCounts.get(tier) === expectedCount, `${tier} must contain exactly ${expectedCount} entries`);
 }
+failUnless(runtimeCandidateCount === 1, `catalog must contain exactly one runtime candidate, got ${runtimeCandidateCount}`);
+failUnless(catalog.includes("activation: ACTIVE_ONLY_WITH_TRUSTED_MANIFEST"), "V2-SEED-05 trusted manifest boundary is missing");
+failUnless(catalog.includes("automatic_plan_binding: V2_SEED_05_REQUIRES_TRUSTED_MANIFEST_AND_ALL_GATES"), "V2-SEED-05 runtime gate boundary is missing");
 
 const previewSection = catalog.match(/research_preview_groups:\r?\n([\s\S]*?)research_preview_group_invariants:/u)?.[1] ?? "";
 const previewIds = [...previewSection.matchAll(/templateIds: \[([^\]]+)\]/gu)]
@@ -222,7 +235,7 @@ for (const marker of ["RESEARCH-PREVIEW-LT-001", "RESEARCH-PREVIEW-VO2-001", "RE
 
 for (const marker of [
   "source_visible_research_records: 15",
-  "current_catalog_runtime_candidates: 0",
+  "current_catalog_runtime_candidates: 1",
   "catalog_eligibility_bypass: forbidden",
   "runtime_candidates_from_preview_groups: 0",
 ]) {
@@ -266,7 +279,7 @@ if (failures.length > 0) {
 } else {
   console.log(
     "advisory recommender validation passed: "
-      + "currentCatalogState=INSUFFICIENT_ELIGIBLE_CANDIDATES "
-      + "candidates=0 sourceVisible=15 runtimeAuthority=false",
+      + "currentCatalogRuntimeCandidates=1 advisoryCandidates=0 "
+      + "sourceVisible=15 runtimeAuthority=false",
   );
 }

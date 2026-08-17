@@ -1,0 +1,57 @@
+{
+  "schemaVersion": 1,
+  "event": "task-evidence",
+  "task": "Todo 7 local 5000 m personalized release proof",
+  "artifactTimestamp": "2026-08-17T20:55:35+09:00",
+  "headAtEvidenceCapture": "b3db38af28e2cebc88e6e3807117b0a823661b7a",
+  "plan": ".omo/plans/personalized-auto-prescription.md",
+  "status": "LOCAL_GATES_PASSED_AWAITING_REVIEWED_MAIN_DEPLOYMENT",
+  "red": {
+    "fullBrowserRun": {
+      "command": "PLAYWRIGHT_PORT=4177 npm run test:e2e",
+      "result": "312 passed, 48 skipped, 4 failed because the legacy notation-reader fixture omitted both explicit recovery modes."
+    },
+    "runtimeObservation": "The current UI returned the intentional fail-closed error for 2×(10×400m) @5000m RP · r60″ · R3′.",
+    "rootCause": "Timed recoveries require WALK, JOG, or STAND; the browser fixture predated that explicit-mode contract."
+  },
+  "green": {
+    "fixtureCorrection": "The notation-reader E2E now uses the owner-approved explicit form: 2×(10×400m) @5000m RP · r60″ STAND · R3′ STAND.",
+    "focusedBrowser": {
+      "command": "PLAYWRIGHT_PORT=4177 npx playwright test e2e/launch-ready.spec.ts --grep 'reads a detailed training notation without creating a plan'",
+      "result": "4/4 projects passed."
+    },
+    "fullBrowser": {
+      "command": "PLAYWRIGHT_PORT=4177 npm run test:e2e",
+      "result": "316 passed, 48 intentionally skipped, 0 failed; production build transformed 1918 modules."
+    },
+    "personalizedBrowser": {
+      "result": "Exact 5K create/select/reload/recheck, youth-adult dose identity, record replacement, stale, missing, and D9 scenarios passed in the full browser matrix."
+    },
+    "contractValidators": {
+      "result": "All CI contract validators passed locally; advisory validator mutation suite passed 45/45."
+    },
+    "runtimeAndUnits": {
+      "result": "D9 evaluator, impl typecheck/tests, app unit/KST/release tests, app typecheck, E2E typecheck, and production build exited 0."
+    },
+    "diffCheck": {
+      "command": "git diff --check",
+      "result": "passed"
+    }
+  },
+  "verifiedBehavior": {
+    "youthAdultIdentity": "Middle-school and adult labels with the same current 5K record and readiness produce the same energy intent, frame, and sessions.",
+    "exactSession": "5×1000m @5000m RP · r150″ JOG persists and reloads with exact totals, warm-up, cooldown, downshift, stop rules, fingerprint, and provenance.",
+    "failurePaths": "Stale or missing evidence remains RPE-only; D9 blocks before candidates; trusted-manifest mutations fail closed.",
+    "notationReader": "Ambiguous timed recovery modes remain rejected rather than silently guessed."
+  },
+  "releaseBoundary": {
+    "publicDeploymentVerified": false,
+    "sourceShaReceiptVerified": false,
+    "reason": "These checks require the reviewed branch to merge to main and GitHub Pages to deploy that merge SHA."
+  },
+  "cleanup": {
+    "ownedPreviewPort4177": "stopped and LISTENING check returned empty",
+    "generatedLegacyScreenshots": "restored from HEAD",
+    "temporaryFailureScreenshots": "removed"
+  }
+}

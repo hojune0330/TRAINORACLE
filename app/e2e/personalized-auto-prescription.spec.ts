@@ -52,9 +52,12 @@ async function openPlan(page: Page): Promise<void> {
     .click()
 }
 
-async function reachExperiencedFiveKCandidates(page: Page): Promise<void> {
+async function reachExperiencedFiveKCandidates(
+  page: Page,
+  divisionName: RegExp = /일반부/u,
+): Promise<void> {
   await page.getByRole("button", { name: /5km/u }).click()
-  await page.getByRole("button", { name: /일반부/u }).click()
+  await page.getByRole("button", { name: divisionName }).click()
   await page.getByRole("button", { name: /구조화된 훈련과 경기 경험이 많아요/u }).click()
   await page.getByRole("button", { name: /통증은 없고 몸 상태는 평소와 같아요/u }).click()
   await page.getByRole("button", { name: "내 계획 완성하기" }).click()
@@ -198,6 +201,49 @@ for (const viewport of [
     expect(browserErrors).toEqual([])
   })
 }
+
+test("keeps youth and adult 5K eligibility and dose identical", async ({ browser }) => {
+  const storedDoses: unknown[] = []
+
+  for (const divisionName of [/중등부/u, /일반부/u]) {
+    const context = await browser.newContext({ serviceWorkers: "block" })
+    const page = await context.newPage()
+    await seedRecords(page, currentRecords)
+    await openPlan(page)
+    await reachExperiencedFiveKCandidates(page, divisionName)
+    await expect(page.getByText(new RegExp(`참가 부문: ${divisionName.source}`, "u"))).toBeVisible()
+    await bindFirstRecord(page)
+    await expect(page.getByText(/5×1000m @5000m RP.*r150.*JOG/u).first()).toBeVisible()
+    await page.getByRole("button", { name: /반복 인터벌 포함 선택하기/u }).click()
+
+    storedDoses.push(await page.evaluate(() => {
+      const raw = window.localStorage.getItem("trainoracle.plan-beta.v1")
+      if (raw === null) throw new Error("Expected an active plan snapshot")
+      const stored = JSON.parse(raw) as {
+        readonly activePlan: {
+          readonly selectedEnergyIntent: string
+          readonly frame: unknown
+          readonly sessions: unknown
+        }
+      }
+      return {
+        selectedEnergyIntent: stored.activePlan.selectedEnergyIntent,
+        frame: stored.activePlan.frame,
+        sessions: stored.activePlan.sessions,
+      }
+    }))
+
+    await page.reload()
+    await page.getByRole("navigation", { name: "주 탭" })
+      .getByRole("button", { name: "계획" })
+      .click()
+    await expect(page.getByText(/5×1000m @5000m RP.*r150.*JOG/u)).toBeVisible()
+    await context.close()
+  }
+
+  expect(storedDoses).toHaveLength(2)
+  expect(storedDoses[0]).toEqual(storedDoses[1])
+})
 
 test("requires reconfirmation after replacing the selected record", async ({ page }) => {
   await page.setViewportSize({ width: 375, height: 667 })

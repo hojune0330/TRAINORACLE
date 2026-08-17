@@ -130,12 +130,12 @@ async function assertInvalid(fixture, expected) {
   assert.match(result.stderr, expected);
 }
 
-test("current production catalog stays insufficient and non-executable", () => {
+test("one trusted runtime template stays outside the inert advisory path", () => {
   const result = spawnSync(process.execPath, [validator], { cwd: root, encoding: "utf8" });
   assert.equal(result.status, 0, result.stderr);
   assert.match(
     result.stdout,
-    /currentCatalogState=INSUFFICIENT_ELIGIBLE_CANDIDATES candidates=0 sourceVisible=15 runtimeAuthority=false/u,
+    /currentCatalogRuntimeCandidates=1 advisoryCandidates=0 sourceVisible=15 runtimeAuthority=false/u,
   );
 });
 
@@ -273,4 +273,22 @@ test("an absent hostile replacement makes the test itself fail", async () => {
 test("a duplicated research preview id fails closed", async () => {
   const result = await validateWith({ catalogReplacement: { from: "templateIds: [LT-SEED-01, LT-SEED-02]", to: "templateIds: [LT-SEED-01, LT-SEED-01]" } });
   assert.notEqual(result.status, 0); assert.match(result.stderr, /catalog preview ids must be unique/u);
+});
+
+test("a second active catalog template fails closed", async () => {
+  const result = await validateWith({ catalogReplacement: { from: "  lifecycleStatus: DRAFT", to: "  lifecycleStatus: ACTIVE" } });
+  assert.notEqual(result.status, 0);
+  assert.match(result.stderr, /BA-SEED-01 must remain DRAFT/u);
+});
+
+test("deactivating the trusted V2 seed fails closed", async () => {
+  const result = await validateWith({ catalogReplacement: { from: "  lifecycleStatus: ACTIVE", to: "  lifecycleStatus: DRAFT" } });
+  assert.notEqual(result.status, 0);
+  assert.match(result.stderr, /V2-SEED-05 must remain ACTIVE/u);
+});
+
+test("broadening the trusted V2 seed event scope fails closed", async () => {
+  const result = await validateWith({ catalogReplacement: { from: "  allowedEventGroups: [FIVE_K]", to: "  allowedEventGroups: [FIVE_K, ROAD_RUNNING]" } });
+  assert.notEqual(result.status, 0);
+  assert.match(result.stderr, /V2-SEED-05 event eligibility must remain FIVE_K/u);
 });
