@@ -5,7 +5,7 @@
   "artifactTimestamp": "2026-08-17T20:55:35+09:00",
   "headAtEvidenceCapture": "b3db38af28e2cebc88e6e3807117b0a823661b7a",
   "plan": ".omo/plans/personalized-auto-prescription.md",
-  "status": "LOCAL_GATES_PASSED_AWAITING_REVIEWED_MAIN_DEPLOYMENT",
+  "status": "DEPLOYED_AND_PUBLICLY_VERIFIED",
   "red": {
     "fullBrowserRun": {
       "command": "PLAYWRIGHT_PORT=4177 npm run test:e2e",
@@ -45,9 +45,15 @@
     "notationReader": "Ambiguous timed recovery modes remain rejected rather than silently guessed."
   },
   "releaseBoundary": {
-    "publicDeploymentVerified": false,
-    "sourceShaReceiptVerified": false,
-    "reason": "These checks require the reviewed branch to merge to main and GitHub Pages to deploy that merge SHA."
+    "publicDeploymentVerified": true,
+    "sourceShaReceiptVerified": true,
+    "sourceSha": "8f3ac17566ded63f5634d364682a8ae6a295486f",
+    "workflowRunId": "32028177668",
+    "deployedAt": "2026-08-17T12:14:43.954Z",
+    "publicBrowser": {
+      "command": "MSYS_NO_PATHCONV=1 PLAYWRIGHT_BASE_URL=https://hojune0330.github.io PLAYWRIGHT_APP_PATH=/TRAINORACLE/ PLAYWRIGHT_PORT=4177 npx playwright test e2e/personalized-auto-prescription.spec.ts --project=desktop-chromium",
+      "result": "7/7 passed against the public GitHub Pages deployment."
+    }
   },
   "cleanup": {
     "ownedPreviewPort4177": "stopped and LISTENING check returned empty",
