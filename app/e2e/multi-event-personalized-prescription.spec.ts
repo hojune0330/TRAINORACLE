@@ -124,7 +124,10 @@ for (const fixture of cases) {
       .getByRole("button", { name: "계획" })
       .click()
     await expect(page.getByText(fixture.notation).first()).toBeVisible()
-    await page.getByText("시작·다시 시작 전 확인").click()
+    await page.getByText("시작 전 확인").click()
+    await expect(page.getByRole("button", {
+      name: "통증 없고 평소와 같음 · 다시 시작 확인",
+    })).toHaveCount(0)
     if (process.env.CAPTURE_PLAN_QA === "1") {
       await page.locator(".active-plan__execution-check").first().screenshot({
         path: testInfo.outputPath(`execution-check-${fixture.eventDistanceM}m.png`),
@@ -134,6 +137,22 @@ for (const fixture of cases) {
       name: "통증 없고 평소와 같음 · 시작 확인",
     }).click()
     await expect(page.getByRole("status")).toContainText("시작할 수 있어요")
+    const activeSession = page.getByText(fixture.notation).first()
+      .locator("xpath=ancestor::section[@role='group'][1]")
+    await activeSession.getByRole("button", { name: "완료" }).click()
+    await expect(page.getByRole("button", {
+      name: "통증 없고 평소와 같음 · 시작 확인",
+    })).toHaveCount(0)
+    await expect(page.getByRole("button", {
+      name: "통증 없고 평소와 같음 · 다시 시작 확인",
+    })).toBeVisible()
+    await activeSession.getByRole("button", { name: "통증 체크" }).click()
+    await expect(page.getByRole("button", {
+      name: /통증 없고 평소와 같음 · (시작|다시 시작) 확인/u,
+    })).toHaveCount(0)
+    await expect(page.getByRole("button", {
+      name: "통증·이상 또는 잘 모르겠음",
+    })).toBeVisible()
     expect(browserErrors).toEqual([])
     if (process.env.CAPTURE_PLAN_QA === "1") {
       await page.getByText(fixture.notation).first().scrollIntoViewIfNeeded()

@@ -13,6 +13,7 @@ import { decideSafetyGate } from "@impl/safety-gate/gate"
 import { mapD9ResultToRveSignal } from "@impl/rve/signal"
 import * as d9Module from "@impl/d9/evaluator"
 import * as approvalModule from "./detailed-prescription-approvals"
+import * as planSessionSchemaModule from "./plan-session-schema"
 import {
   loadVersionedPlanBetaState,
   savePlanBetaState,
@@ -301,6 +302,18 @@ describe("production candidate detailed-prescription binding", () => {
       generatePlanFromDraft(DRAFT, "NO_KNOWN_RISK", bindingInput()),
       baseline,
       "PACE_TARGET_FALLBACK_AUTHORITY_OR_COMPONENT",
+    )
+  })
+
+  it("reports a stored-schema rejection separately from authority failure", () => {
+    saveCurrentFiveKilometreRecord()
+    const baseline = expectGeneratedBaseline()
+    vi.spyOn(planSessionSchemaModule, "createStoredPaceTargetPrescription").mockReturnValue(null)
+
+    expectAtomicFallback(
+      generatePlanFromDraft(DRAFT, "NO_KNOWN_RISK", bindingInput()),
+      baseline,
+      "PACE_TARGET_FALLBACK_STORED_SCHEMA",
     )
   })
 

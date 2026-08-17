@@ -1581,10 +1581,6 @@
   font-weight: 700;
 }
 
-.active-plan__execution-check .active-plan__execution-secondary {
-  color: var(--ink-2);
-}
-
 .active-plan__execution-check .active-plan__execution-review {
   display: flex;
   align-items: center;

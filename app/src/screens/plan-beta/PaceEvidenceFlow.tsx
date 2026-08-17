@@ -148,6 +148,7 @@ function fallbackMessage(code: string): string {
   if (code === "PACE_TARGET_FALLBACK_SAFETY_GATE") return "현재 몸 상태 확인 결과 상세 페이스를 적용하지 않아요."
   if (code === "PACE_TARGET_FALLBACK_NO_ELIGIBLE_QUALITY") return "이번 두 후보에는 상세 페이스를 넣을 고강도 세션이 없어요."
   if (code === "PACE_TARGET_FALLBACK_AUTHORITY_OR_COMPONENT") return "선택한 기록에는 문제가 없어요. 상세 처방을 연결하는 중 문제가 생겨 안전하게 되돌렸어요."
+  if (code === "PACE_TARGET_FALLBACK_STORED_SCHEMA") return "선택한 기록에는 문제가 없어요. 계산 결과를 계획 형식으로 저장하는 중 문제가 생겨 안전하게 되돌렸어요."
   return "기준 기록을 확인한 뒤 상세 페이스를 적용할 수 있어요."
 }
 

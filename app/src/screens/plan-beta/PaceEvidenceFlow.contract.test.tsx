@@ -120,7 +120,7 @@ describe("explicit pace evidence selection", () => {
   })
 
   it("identifies an internal binding failure without blaming the athlete's record", () => {
-    render(<PaceEvidenceFlow
+    const { rerender } = render(<PaceEvidenceFlow
       eventGroup="FIVE_K"
       records={RECORDS}
       selectedRecordId={RECORDS[0]?.id ?? null}
@@ -135,5 +135,17 @@ describe("explicit pace evidence selection", () => {
     expect(status).toHaveTextContent("선택한 기록에는 문제가 없어요")
     expect(status).toHaveTextContent("상세 처방을 연결하는 중 문제가 생겨")
     expect(status).not.toHaveTextContent("현재 승인 범위")
+
+    rerender(<PaceEvidenceFlow
+      eventGroup="FIVE_K"
+      records={RECORDS}
+      selectedRecordId={RECORDS[0]?.id ?? null}
+      comparisonRecordId={null}
+      binding={{ kind: "fallback", code: "PACE_TARGET_FALLBACK_STORED_SCHEMA" }}
+      onSelectRecord={() => undefined}
+      onCompareRecord={() => undefined}
+      onConfirm={() => undefined}
+    />)
+    expect(screen.getByRole("status")).toHaveTextContent("계산 결과를 계획 형식으로 저장하는 중 문제가 생겨")
   })
 })

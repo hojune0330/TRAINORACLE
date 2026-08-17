@@ -161,6 +161,26 @@ describe("multi-event same-event detailed prescriptions", () => {
     },
   )
 
+  it("keeps a decimal electronic result as the exact pace anchor", () => {
+    const selectedRecordId = saveCurrentRecord(800, 121.5)
+    const result = generatePlanFromDraft(
+      BASE_DRAFT,
+      "NO_KNOWN_RISK",
+      { selectedRecordId },
+    )
+
+    expect(result.kind).toBe("generated")
+    if (result.kind !== "generated") return
+    expect(result.prescriptionBinding).toEqual({ kind: "bound", code: "PACE_TARGET_BOUND" })
+    const detailed = result.generated.candidates[0].sessions.find((session) => (
+      session.role === "QUALITY" && session.prescription.kind === "PACE_TARGET"
+    ))
+    expect(detailed?.prescription).toMatchObject({
+      targetEventDistanceM: 800,
+      targetRepSeconds: 30.375,
+    })
+  })
+
   it("keeps an unsupported same-group distance RPE-only", () => {
     const selectedRecordId = saveCurrentRecord(1000, 150)
     const baseline = generatePlanFromDraft(BASE_DRAFT, "NO_KNOWN_RISK")
