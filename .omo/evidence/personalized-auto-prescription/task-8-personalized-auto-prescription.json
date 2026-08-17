@@ -1,0 +1,45 @@
+{
+  "schemaVersion": 1,
+  "event": "task-evidence",
+  "task": "Todo 8 middle-distance source adoption",
+  "artifactTimestamp": "2026-08-17T21:45:00+09:00",
+  "headAtEvidenceCapture": "5fab63c",
+  "plan": ".omo/plans/personalized-auto-prescription.md",
+  "status": "SOURCE_ACCEPTED_NOT_RUNTIME_ACTIVE",
+  "red": {
+    "command": "node --test specs/test-packages/validate-middle-distance-source-adoption.test.mjs",
+    "result": "1 passed, 6 failed against the explicit incomplete RED fixture; validator reported zero templates."
+  },
+  "green": {
+    "directValidator": "3 source-accepted drafts, 0 runtime-active",
+    "mutationTests": "7/7 passed",
+    "protectedMutations": [
+      "800 notation",
+      "1500 recovery total",
+      "3000 quality distance",
+      "runtime activation",
+      "shared youth/adult no-age-dose policy",
+      "final marker"
+    ],
+    "sourceReachability": {
+      "PMC8363530": 200,
+      "WorldAthletics": 200,
+      "PubMed22868404": 203
+    },
+    "diffCheck": "passed"
+  },
+  "acceptedDrafts": [
+    "MD-800-01: 10×200m @800m RP · r60″ STAND",
+    "MD-1500-01: 3×500m @1500m RP · r180″ STAND",
+    "MD-3000-01: 4×800m @3000m RP · r180″ WALK"
+  ],
+  "boundaries": {
+    "runtimeActivationAuthorized": false,
+    "allowedExperienceBands": ["EXPERIENCED"],
+    "ageDoseBranch": false,
+    "sameEventCurrentAnchorRequired": true,
+    "d9ActiveUnknownBlock": true,
+    "dedicated100To400PlansDeferred": true,
+    "openIssuesClosed": 0
+  }
+}
