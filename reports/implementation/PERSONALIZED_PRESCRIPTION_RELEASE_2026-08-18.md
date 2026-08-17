@@ -57,6 +57,10 @@ TrainOracle 공개 베타는 현재 동일 종목 기록을 직접 고른 숙련
 - CI: `contract-tests`, `app-quality`, `app-browser` 성공
 - 로컬: 앱 집중 테스트 26/26, 구현 테스트 161/161, D9 11/11
 - 이벤트별 Playwright: 800m/1500m/3000m x 모바일/데스크톱 6/6
+- 공개 문서 병합·배포 SHA: `f638ed3f639e495ff420d76c50e24e11fd4bd765`
+- Pages CI 실행: `32052722050`
+- 배포 영수증 `sourceSha`: `f638ed3f639e495ff420d76c50e24e11fd4bd765` 일치
+- 공개 모바일·데스크톱 전체 지원 경로: 20/20 통과, 콘솔·페이지 오류 0건
 - 상세 증거: `.omo/evidence/personalized-auto-prescription/task-9-personalized-auto-prescription.json`
 
 정확한 현재 배포 SHA는 공개 앱의
