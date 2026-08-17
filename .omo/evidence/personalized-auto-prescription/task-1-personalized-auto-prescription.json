@@ -1,0 +1,176 @@
+{
+  "schemaVersion": 1,
+  "event": "task-evidence",
+  "task": "Todo 1 personalized auto-prescription policy split",
+  "artifactTimestamp": "2026-08-17T09:28:09.3380926+09:00",
+  "head": "285fda79faadaa58841c6859067c497647d56d0b",
+  "chronology": [
+    "originalRed",
+    "baselineRedReproduction",
+    "green",
+    "cleanup"
+  ],
+  "originalRed": {
+    "timestamp": null,
+    "timestampNote": "The original run timestamp was not captured; no timestamp has been inferred.",
+    "command": "node --test specs/test-packages/validate-personalized-prescription-policy.test.mjs",
+    "exitCode": 1,
+    "reportedOutput": [
+      "✔ characterizes the existing guardian privacy and legal processing guards (3.1773ms)",
+      "✖ accepts the approved age-neutral policy split and scoped selection authority (2.5417ms)",
+      "ℹ tests 2",
+      "ℹ suites 0",
+      "ℹ pass 1",
+      "ℹ fail 1",
+      "Actual failure: TEMPLATE_LIBRARY_SPEC.md missing machine policy block"
+    ],
+    "preservationNote": "These are the exact original RED result lines previously reported; omitted runner stack lines were not reconstructed."
+  },
+  "baselineRedReproduction": {
+    "source": "immutable git HEAD documents",
+    "extractionCommands": [
+      "git show HEAD:specs/active/TEMPLATE_LIBRARY_SPEC.md",
+      "git show HEAD:specs/active/PLAN_GENERATOR_SPEC.md"
+    ],
+    "assertions": {
+      "targetsExist": true,
+      "targetsNonempty": true,
+      "machinePolicyMarkerAbsent": true,
+      "expectedFailureMatched": true,
+      "syntaxOrPathFailure": false
+    },
+    "headBlobVerification": {
+      "templateHeadBlob": "f1ddaadb79c909aa9fdee301710ce23331500698",
+      "templateTempBlob": "f1ddaadb79c909aa9fdee301710ce23331500698",
+      "planHeadBlob": "84f00e0e32aeef65857f3073a389c45351adee5c",
+      "planTempBlob": "84f00e0e32aeef65857f3073a389c45351adee5c"
+    },
+    "command": "node specs/test-packages/validate-personalized-prescription-policy.mjs --template .omo/evidence/personalized-auto-prescription/.tmp-task-1-baseline-red/TEMPLATE_LIBRARY_SPEC.md --plan .omo/evidence/personalized-auto-prescription/.tmp-task-1-baseline-red/PLAN_GENERATOR_SPEC.md",
+    "exitCode": 1,
+    "output": "PERSONALIZED_PRESCRIPTION_POLICY_INVALID TEMPLATE_LIBRARY_SPEC.md missing machine policy block"
+  },
+  "green": {
+    "policyTest": {
+      "command": "node --test specs/test-packages/validate-personalized-prescription-policy.test.mjs",
+      "exitCode": 0,
+      "output": [
+        "✔ characterizes the existing guardian privacy and legal processing guards (2.3693ms)",
+        "✔ accepts the approved age-neutral policy split and scoped selection authority (3.3ms)",
+        "✔ gives youth and adult athletes identical eligibility and dose with identical allowed gates (0.2321ms)",
+        "✔ rejects removal of every machine policy field through the validator process (3445.6817ms)",
+        "✔ rejects removal of the existing guardian processing guard through the validator process (85.107ms)",
+        "✔ keeps the historical V2-SEED-05 packet byte-bound activation gate green (68.2349ms)",
+        "ℹ tests 6",
+        "ℹ suites 0",
+        "ℹ pass 6",
+        "ℹ fail 0",
+        "ℹ cancelled 0",
+        "ℹ skipped 0",
+        "ℹ todo 0",
+        "ℹ duration_ms 3705.4036"
+      ]
+    },
+    "policyValidator": {
+      "command": "node specs/test-packages/validate-personalized-prescription-policy.mjs",
+      "exitCode": 0,
+      "output": [
+        "trainingEligibility.ageOnlyReject=false;",
+        "trainingEligibility.ageOnlyDoseMultiplier=false;",
+        "processingAuthorization.guardianSensitiveProcessingGuard=true;",
+        "systemTemplate.athleteSelfSelectionAfterAllGates=true;"
+      ]
+    },
+    "historicalPacketTest": {
+      "command": "node --test specs/test-packages/validate-v2-seed-05-activation-packet.test.mjs",
+      "exitCode": 0,
+      "output": [
+        "✔ accepts the pending review packet while runtime authority remains closed (6.6635ms)",
+        "✔ rejects a packet with content after the completion marker (2.0239ms)",
+        "✔ rejects catalog activation before the review decisions exist (1.8857ms)",
+        "✔ rejects a nonempty runtime approval manifest (2.3331ms)",
+        "✔ rejects a nonempty manifest even when an empty manifest appears in a comment (1.4655ms)",
+        "✔ rejects an approved review even when PENDING appears in a comment (1.6709ms)",
+        "✔ rejects a real approved review hidden behind a full commented PENDING section (1.7427ms)",
+        "✔ rejects a nonempty manifest hidden behind an empty-assignment string literal (1.2334ms)",
+        "✔ rejects an active duplicate even when an exact draft block is hidden in a comment (1.2398ms)",
+        "✔ accepts the same reviewed artifacts with LF line endings (2.5975ms)",
+        "ℹ tests 10",
+        "ℹ suites 0",
+        "ℹ pass 10",
+        "ℹ fail 0",
+        "ℹ cancelled 0",
+        "ℹ skipped 0",
+        "ℹ todo 0",
+        "ℹ duration_ms 115.0182"
+      ]
+    },
+    "historicalPacketValidator": {
+      "command": "node specs/test-packages/validate-v2-seed-05-activation-packet.mjs",
+      "exitCode": 0,
+      "output": [
+        "PASS V2-SEED-05: runtime activation FORBIDDEN",
+        "packet_sha256=f1aa080002178517f03a96c641c586ef49f99537df83505670695ecb88bb306b",
+        "catalog_sha256=32ddeff1bf6f3f9727ef8014eb667694131f85d8e5dfebf95d885d94af5e4f10",
+        "approvals_sha256=bd7f70a488e1916f18ca9fce213202a7e770153057f61061996244a758c0bf90"
+      ]
+    }
+  },
+  "mutationChecks": {
+    "machinePolicyLeafRemoval": "PASS: every mutation target was asserted present and changed before validator exit 1 was accepted",
+    "guardianProcessingGuardRemoval": "PASS: target was asserted present and changed before validator exit 1 was accepted",
+    "historicalActivationGate": "PASS: V2-SEED-05 remains byte-bound and runtime FORBIDDEN"
+  },
+  "finalFileHashes": [
+    {
+      "path": "specs/active/TEMPLATE_LIBRARY_SPEC.md",
+      "sha256": "165682b998c026196c42aaf4f18f25f68c9c8250b8920066814aebd92690b8f6"
+    },
+    {
+      "path": "specs/active/PLAN_GENERATOR_SPEC.md",
+      "sha256": "b012c3204289823671a4544e2b4029d7710f76d4539677964bbf2e253e982914"
+    },
+    {
+      "path": "reports/review/PERSONALIZED_AUTO_PRESCRIPTION_YOUTH_TRAINING_DECISION_2026-08-17.md",
+      "sha256": "10f1d0c773e696bb776975a061a48766981a60d43c0823fb9a47303dda83ce11"
+    },
+    {
+      "path": "specs/test-packages/validate-personalized-prescription-policy.mjs",
+      "sha256": "1c63c416dca2c53ed54c2661e6845a9a4d1c06ba6d30d26b1ef6929256ac9a85"
+    },
+    {
+      "path": "specs/test-packages/validate-personalized-prescription-policy.test.mjs",
+      "sha256": "80b52500a8e80f64ba29c527f681ebaa9320f013cbbc4577b7353c90608d79b3"
+    }
+  ],
+  "cleanup": {
+    "tempPath": ".omo/evidence/personalized-auto-prescription/.tmp-task-1-baseline-red",
+    "tempFilesRemoved": true,
+    "tempDirectoryRemoved": true,
+    "tempDirectoryExistsAfterRemoval": false,
+    "runtimeResourcesSpawned": false,
+    "serverStarted": false,
+    "staged": false,
+    "committed": false
+  },
+  "scope": {
+    "productSpecValidatorTestBehaviorChangedByFollowUp": false,
+    "evidenceOnly": true
+  },
+  "finalVerification": {
+    "artifactJsonParse": "PASS",
+    "ledgerLastLineJsonParse": "PASS",
+    "currentPolicyValidatorExitCode": 0,
+    "deliverableHashesUnchangedAfterFollowUp": true,
+    "stagedFiles": [],
+    "gitDiffCheck": {
+      "command": "git diff --check",
+      "exitCode": 0,
+      "output": [
+        "warning: in the working copy of '.omo/boulder.json', LF will be replaced by CRLF the next time Git touches it",
+        "warning: in the working copy of '.omo/start-work/ledger.jsonl', LF will be replaced by CRLF the next time Git touches it",
+        "warning: in the working copy of 'specs/active/PLAN_GENERATOR_SPEC.md', LF will be replaced by CRLF the next time Git touches it",
+        "warning: in the working copy of 'specs/active/TEMPLATE_LIBRARY_SPEC.md', LF will be replaced by CRLF the next time Git touches it"
+      ]
+    }
+  }
+}

@@ -5,8 +5,9 @@ document_metadata:
   doc_id: trainoracle-spec-008-template-library
   spec_id: TEMPLATE_LIBRARY_SPEC
   title: TrainOracle Template Library Spec
-  version: "1.0"
-  round: RT1
+  version: "1.1"
+  round: RT2
+  revision: RT2_AGE_NEUTRAL_TRAINING_ELIGIBILITY_AND_AUTHORIZATION_SPLIT
   status: DRAFT_FOR_REVIEW
   owner: COACH_HOJUNE
   target_downstream_document: PLAN_GENERATOR_SPEC.md
@@ -18,8 +19,8 @@ document_metadata:
   executed_tests_total: 0
   executed_tests_passed: 0
 
-  self_check_items_total: 36
-  self_check_items_satisfied: 36
+  self_check_items_total: 41
+  self_check_items_satisfied: 41
 
 count_policy:
   executed_tests_total: "실제 코드 실행 또는 런타임 테스트만 집계한다."
@@ -84,8 +85,7 @@ upstream_references:
     consumed_for:
       - athlete_level_band
       - event_group
-      - age_group
-      - minor_status
+      - processing_authorization_reference_only
 
   - document: APP_IMPLEMENTATION_BRIDGE.md
     expected_version: ">=1.1"
@@ -137,15 +137,69 @@ hard_constraints:
   - no_session_classifier_redefinition
   - no_private_free_text_storage
   - no_medical_rehab_auto_prescription
-  - coach_final_selection_required
+  - owner_scoped_explicit_selection_required
+  - no_age_or_school_division_only_training_rejection
+  - no_age_sex_or_school_division_only_dose_multiplier
+  - training_eligibility_separate_from_processing_authorization
 ```
 
 설명:
 
 - 템플릿 라이브러리는 안전 게이트를 우회할 수 없다.
 - 템플릿이 존재한다고 해서 선수에게 적용 가능하다는 뜻은 아니다.
-- 템플릿은 후보를 제공할 뿐, 최종 훈련 처방은 코치 검토를 거쳐야 한다.
+- 템플릿은 후보를 제공할 뿐이며 자동 선택되지 않는다. 승인된 `SYSTEM` 템플릿은
+  모든 관문을 통과한 뒤 선수가 명시적으로 선택할 수 있다. `TENANT`와 `COACH`
+  템플릿은 기존 범위와 코치 capability를 유지한다.
 - 템플릿은 선수의 민감한 자유서술 원문을 저장하지 않는다.
+
+<!-- MACHINE_POLICY:PERSONALIZED_PRESCRIPTION_V1:START -->
+```json
+{
+  "schemaVersion": 1,
+  "trainingEligibility": {
+    "ageOnlyReject": false,
+    "schoolDivisionOnlyReject": false,
+    "ageOnlyDoseMultiplier": false,
+    "sexOnlyDoseMultiplier": false,
+    "schoolDivisionOnlyDoseMultiplier": false,
+    "allowedGateInputs": [
+      "READINESS",
+      "SOURCE_TEMPLATE_SCOPE",
+      "CURRENT_RECORD",
+      "RECENT_LOAD",
+      "D9",
+      "RECOVERY"
+    ]
+  },
+  "processingAuthorization": {
+    "guardianSensitiveProcessingGuard": true,
+    "sensitiveServerProcessingFailClosed": true,
+    "accountSyncSharingGuardsPreserved": true,
+    "baseServiceAvailableWithoutSensitiveConsent": true,
+    "legalConclusion": false
+  },
+  "selectionAuthority": {
+    "systemTemplate": {
+      "athleteSelfSelectionAfterAllGates": true,
+      "lifecycleMustBeActive": true,
+      "trainingEligibilityMustPass": true,
+      "processingAuthorizationMustPass": true,
+      "safetyGateMustPass": true
+    },
+    "tenantTemplate": {
+      "athleteSelfSelectionAllowed": false,
+      "scopedCoachCapabilityRequired": true,
+      "tenantScopeRequired": true
+    },
+    "coachTemplate": {
+      "athleteSelfSelectionAllowed": false,
+      "scopedCoachCapabilityRequired": true,
+      "ownerCoachScopeRequired": true
+    }
+  }
+}
+```
+<!-- MACHINE_POLICY:PERSONALIZED_PRESCRIPTION_V1:END -->
 
 ---
 
@@ -337,11 +391,22 @@ export interface TemplateScope {
   crossTenantAllowed: false;
 }
 
-export interface TemplateEligibility {
+export interface TrainingEligibility {
   allowedEventGroups: EventGroup[];
   allowedLevelBands: AthleteLevelBand[];
-  minorAllowed: boolean;
-  guardianConsentRequiredForMinor: boolean;
+  ageOnlyReject: false;
+  schoolDivisionOnlyReject: false;
+  ageOnlyDoseMultiplier: false;
+  sexOnlyDoseMultiplier: false;
+  schoolDivisionOnlyDoseMultiplier: false;
+}
+
+export interface ProcessingAuthorization {
+  guardianSensitiveProcessingGuard: true;
+  sensitiveServerProcessingFailClosed: true;
+  accountSyncSharingGuardsPreserved: true;
+  baseServiceAvailableWithoutSensitiveConsent: true;
+  legalConclusion: false;
 }
 
 export interface TemplateSafetyTags {
@@ -359,21 +424,34 @@ export interface SessionTemplateRecord {
   owner: TemplateOwner;
   scope: TemplateScope;
   lifecycleStatus: TemplateLifecycleStatus;
-  eligibility: TemplateEligibility;
+  trainingEligibility: TrainingEligibility;
   safetyTags: TemplateSafetyTags;
   prohibitedUseCases: string[];
   createdAt: string;
   updatedAt: string;
 }
 
-export interface TemplateEligibilityRequest {
+export interface TrainingEligibilityRequest {
   tenantId: TenantId;
-  coachId: CoachId;
   athleteLevelBand: AthleteLevelBand;
   eventGroup: EventGroup;
+  readinessStatus: string;
+  sourceTemplateScopeStatus: string;
+  currentRecordStatus: string;
+  recentLoadStatus: string;
+  recoveryStatus: string;
+  safetyGateStatus: "CLEARED" | "UNKNOWN" | "ACTIVE";
+}
+
+export interface ProcessingAuthorizationRequest {
+  tenantId: TenantId;
+  athleteId: string;
   isMinor: boolean;
   guardianConsentAvailable: boolean;
-  safetyGateStatus: "CLEARED" | "UNKNOWN" | "ACTIVE";
+  sensitiveProcessingRequested: boolean;
+  serverProcessingRequested: boolean;
+  accountSyncRequested: boolean;
+  sharingRequested: boolean;
 }
 
 export interface TemplateEligibilityResult {
@@ -397,7 +475,6 @@ filtering_order:
   - session_classifier_label_check
   - event_group_check
   - athlete_level_band_check
-  - minor_guardian_policy_check
   - safety_gate_status_check
   - prohibited_use_case_check
 ```
@@ -409,6 +486,10 @@ filtering_order:
 3. D9 Safety Gate 상태가 `ACTIVE` 또는 `UNKNOWN`이면 훈련 템플릿 자동 추천을 막는다.
 4. `REVIEW_REQUIRED`는 자동 적용이 아니라 사람 검토 대상이다.
 5. 템플릿 라이브러리는 안전 판단을 직접 하지 않고, 안전 상태를 소비만 한다.
+6. 연령 또는 학교 구분만으로 `INELIGIBLE`을 반환하거나 훈련량을 바꾸지 않는다.
+7. 성별만으로 훈련량을 바꾸지 않는다.
+8. `processingAuthorization`은 별도 관문이다. 실패하면 민감정보 처리·서버 처리·
+   동기화·공유를 실패 폐쇄하지만 `trainingEligibility` 결과나 훈련량을 재작성하지 않는다.
 
 ---
 
@@ -446,9 +527,22 @@ Plan Generator는 다음 조건을 만족할 때만 Template Library를 조회�
 ```yaml
 plan_generator_may_query_template_library_if:
   - safety_gate_status_allows_generation
-  - coach_has_capability
   - tenant_scope_is_valid
   - athlete_profile_minimum_fields_available
+  - template_lifecycle_is_ACTIVE
+  - training_eligibility_is_ELIGIBLE
+  - processing_authorization_allows_requested_processing
+
+selection_authority:
+  SYSTEM:
+    athlete_explicit_selection_allowed_after_all_gates: true
+    coach_capability_required_for_athlete_selection: false
+  TENANT:
+    scoped_coach_capability_required: true
+    tenant_scope_required: true
+  COACH:
+    scoped_coach_capability_required: true
+    owner_coach_scope_required: true
 ```
 
 Plan Generator는 다음을 해서는 안 된다.
@@ -460,6 +554,7 @@ plan_generator_must_not:
   - bypass_tenant_scope
   - bypass_safety_gate
   - auto_select_review_required_template
+  - auto_select_any_template_without_explicit_actor_action
   - infer_medical_clearance_from_template
 ```
 
@@ -504,17 +599,39 @@ allowed_storage:
 
 ---
 
-## 15. Minor and Guardian Policy
+## 15. Training Eligibility and Processing Authorization
 
 ```yaml
-minor_policy:
-  if_athlete_is_minor:
-    guardian_consent_required_if_template_has_minor_restriction: true
-    default_when_guardian_status_unknown: REVIEW_REQUIRED
-    auto_apply_template_without_guardian_context: false
+training_eligibility:
+  age_alone_may_reject: false
+  school_division_alone_may_reject: false
+  age_alone_may_change_dose: false
+  sex_alone_may_change_dose: false
+  school_division_alone_may_change_dose: false
+  allowed_gate_inputs:
+    - readiness
+    - source_and_template_scope
+    - current_record
+    - recent_load
+    - D9
+    - recovery
+
+processing_authorization:
+  separate_from_training_eligibility: true
+  guardian_consent_for_minor_sensitive_processing: REQUIRED
+  unknown_expired_or_revoked_guardian_status: BLOCKED_FOR_SENSITIVE_PROCESSING
+  sensitive_server_processing_without_required_consent: BLOCKED
+  account_sync_and_sharing_constraints_preserved: true
+  sensitive_consent_must_not_gate_base_service_access: true
+  may_change_training_dose: false
+  legal_conclusion: false
 ```
 
-미성년 선수에 대한 템플릿 적용은 더 보수적으로 처리한다.
+이 분리는 훈련 적격성과 데이터 처리 권한을 같은 불리언으로 표현하지 않기 위한
+계약이다. 미성년이라는 사실만으로 훈련을 거부하거나 감량하지 않는다. 동시에
+민감정보·생리정보·서버 처리·계정·동기화·공유에 적용되는 기존 보호자 동의와
+법률 검토 관문은 그대로 실패 폐쇄한다. 처리 권한이 없으면 민감 개인화 경로를
+중단하되, APP Implementation Bridge가 보장하는 기본 서비스 접근은 유지한다.
 
 ---
 
@@ -560,7 +677,8 @@ api_draft:
     path: /template-library/templates/evaluate-eligibility
     constraints:
       - no_raw_free_text_input
-      - consumes_safety_gate_status_only
+      - consumes_training_eligibility_fields_only
+      - processing_authorization_is_separate
 ```
 
 ---
@@ -627,7 +745,8 @@ self_check_annotation:
     plan_generator_consumption: 5
     api_and_audit: 4
     downstream_delta_and_closure: 4
-  total: 36
+    policy_separation: 5
+  total: 41
 ```
 
 | ID | Group | Check | Status |
@@ -647,7 +766,7 @@ self_check_annotation:
 | SC-TL-013 | eligibility_filtering | Initial template family seed exists | SATISFIED |
 | SC-TL-014 | eligibility_filtering | Session labels are consumed, not redefined | SATISFIED |
 | SC-TL-015 | eligibility_filtering | Event and level filters are defined | SATISFIED |
-| SC-TL-016 | eligibility_filtering | Minor and guardian filters are defined | SATISFIED |
+| SC-TL-016 | eligibility_filtering | Training eligibility and processing authorization are separate | SATISFIED |
 | SC-TL-017 | eligibility_filtering | Eligibility statuses are limited to allowed values | SATISFIED |
 | SC-TL-018 | safety_and_privacy | Safety gate check precedes template use | SATISFIED |
 | SC-TL-019 | safety_and_privacy | Safety tags cannot override D9/RVE | SATISFIED |
@@ -668,6 +787,11 @@ self_check_annotation:
 | SC-TL-034 | downstream_delta_and_closure | Canonical blocking count is 0 and matches table | SATISFIED |
 | SC-TL-035 | downstream_delta_and_closure | Downstream delta applies only to target document | SATISFIED |
 | SC-TL-036 | downstream_delta_and_closure | This document’s own delta remains 0 | SATISFIED |
+| SC-TL-037 | policy_separation | Age or school division alone cannot reject training | SATISFIED |
+| SC-TL-038 | policy_separation | Age, sex, or school division alone cannot modify dose | SATISFIED |
+| SC-TL-039 | policy_separation | Guardian and sensitive-processing guards remain fail-closed | SATISFIED |
+| SC-TL-040 | policy_separation | Approved SYSTEM templates permit athlete selection only after all gates | SATISFIED |
+| SC-TL-041 | policy_separation | TENANT and COACH templates retain scoped coach capability | SATISFIED |
 
 ---
 
@@ -687,7 +811,12 @@ self_validation:
   open_issues_total_matches_rows: SATISFIED
   canonical_blocking_count_matches_rows: SATISFIED
   self_check_item_total_matches_annotations: SATISFIED
-  self_check_item_table_rows_36: SATISFIED
+  training_eligibility_processing_authorization_split: SATISFIED
+  age_and_school_division_not_training_rejection: SATISFIED
+  age_sex_school_division_not_dose_multiplier: SATISFIED
+  guardian_privacy_account_sync_sharing_guards_preserved: SATISFIED
+  owner_scoped_selection_authority_present: SATISFIED
+  self_check_item_table_rows_41: SATISFIED
   executed_tests_not_claimed: SATISFIED
   storage_header_footer: SATISFIED
 ```

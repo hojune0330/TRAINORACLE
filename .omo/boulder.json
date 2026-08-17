@@ -1,6 +1,6 @@
 {
   "schema_version": 2,
-  "active_work_id": "trainoracle-formation-latest-decision-spec-reconciliation",
+  "active_work_id": "trainoracle-personalized-auto-prescription",
   "works": {
     "trainoracle-feasible-recovery-formation-sequencing": {
       "work_id": "trainoracle-feasible-recovery-formation-sequencing",
@@ -61,6 +61,16 @@
       ],
       "status": "owner_direction_binding_preparation_pass",
       "worktree_path": "C:\\Users\\SAMSUNG\\.codex\\worktrees\\TRAINORACLE-formation-spec-reconciliation"
+    },
+    "trainoracle-personalized-auto-prescription": {
+      "work_id": "trainoracle-personalized-auto-prescription",
+      "active_plan": ".omo/plans/personalized-auto-prescription.md",
+      "plan_name": "personalized-auto-prescription",
+      "session_ids": [
+        "codex:019ef850-bb65-7082-ad74-7dc718b3f8e8"
+      ],
+      "status": "active",
+      "worktree_path": "D:\\admin\\Documents\\트레인 오라클 진도\\publish-plan-athlete-link"
     }
   }
 }

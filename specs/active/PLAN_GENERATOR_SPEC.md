@@ -4,20 +4,22 @@
 doc_id: trainoracle-spec-005-plan-generator
 spec_id: PLAN_GENERATOR_SPEC
 title: TrainOracle Plan Generator Spec
-version: "1.0"
-round: RT3
-revision: RT3_SAFETY_GATE_BINDING_PATCHED_PENDING_RUNTIME_EVIDENCE
+version: "1.1"
+round: RT4
+revision: RT4_AGE_NEUTRAL_TRAINING_ELIGIBILITY_AND_AUTHORIZATION_SPLIT
 schema_build: "2026-06-03"
 owner: COACH_HOJUNE
 owner_english_name: hojune jang
 designer: OPUS_4_8
 reviewer: GPT_5_5_PRO
 status: DRAFT_FOR_REVIEW
-run_id: PLAN_GENERATOR_SPEC_v1.0_RT3_TEMPLATE_LIBRARY_PATCH_LOCAL_001
+run_id: PLAN_GENERATOR_SPEC_v1.1_RT4_AGE_NEUTRAL_POLICY_PATCH_LOCAL_001
 upload_allowed: false
 canonical_promotion_allowed: false
 canonical_ready: false
-coach_final_approval_required: true
+selection_authority_policy: OWNER_SCOPED_EXPLICIT_SELECTION
+coach_final_approval_required_for_tenant_or_coach_templates: true
+athlete_self_selection_allowed_for_approved_system_templates_after_all_gates: true
 
 applied_local_patches:
   - PROGRESSION_GUARD_ACCOUNTING_SYNC
@@ -25,6 +27,8 @@ applied_local_patches:
   - PHYSIO_SOURCE_TRUST_CONSUMPTION_BINDING_PENDING_ACCEPTANCE
   - PLAN_SAFETY_GATE_BINDING_PATCH_PENDING_RUNTIME_EVIDENCE
   - WAVE_D_PHYSIO_SOURCE_ACCEPTANCE_TARGET_RECOUNT_SYNC
+  - AGE_NEUTRAL_TRAINING_ELIGIBILITY_AND_AUTHORIZATION_SPLIT
+  - OWNER_SCOPED_EXPLICIT_TEMPLATE_SELECTION
 
 upstream_baselines:
   - file: RULE_SPEC_D1_D9.md
@@ -40,7 +44,7 @@ upstream_baselines:
     version: "1.1"
     role: READ_ONLY_REVIEWER_APPROVED_LOCAL_BASELINE_CANDIDATE_PENDING_CANONICAL_PROMOTION
   - file: TEMPLATE_LIBRARY_SPEC.md
-    version: "1.0"
+    version: "1.1"
     role: READ_ONLY_LOCAL_TEMPLATE_LIBRARY_BASELINE
   - file: PLAN_SAFETY_GATE_SPEC.md
     version: "0.1"
@@ -52,8 +56,8 @@ upstream_baselines:
 metrics:
   open_issues_total: 7
   open_issues_canonical_blocking_count: 2
-  test_cases_total: 46
-  test_cases_passed: 46
+  test_cases_total: 51
+  test_cases_passed: 51
 
 final_marker_required: "[DRAFT_COMPLETE]"
 ```
@@ -72,7 +76,7 @@ This document owns:
 - safety gate before plan generation
 - option-generation policy
 - planned-session draft record shape
-- coach-selection requirement
+- owner-scoped explicit-selection requirement
 - validation request handoff to `RULE_SPEC_D1_D9`
 - Template Library consumption contract
 - audit and privacy constraints for generated plan drafts
@@ -90,7 +94,10 @@ This document does not own:
 - raw source mutation
 - canonical upload or promotion approval
 
-The generator produces draft options only. It cannot auto-finalize a plan without explicit scoped coach selection.
+The generator produces draft options only. It cannot auto-finalize a plan. An athlete may
+explicitly select an approved `SYSTEM` template only after every training, processing,
+safety, lifecycle, and scope gate passes. `TENANT` and `COACH` templates continue to require
+the existing scoped coach capability.
 
 ---
 
@@ -162,10 +169,10 @@ rule_validation_engine_contract_v0_1_role:
 | Rule safety hard-stop runtime binding | `RULE_SPEC_D1_D9.md v1.4` / `RULE_VALIDATION_ENGINE_CONTRACT.md v0.1 reconstructed draft` / `PLAN_SAFETY_GATE_SPEC.md v0.1 reconstructed draft` | Plan Generator must consume D9/RVE state only through Safety Gate; runtime evidence and source acceptance remain required before issue closure | PARTIAL_OPEN |
 | Session classification inputs | `SESSION_CLASSIFIER_SPEC.md v1.2` | Generator may read classified sessions but must not redefine classifier outputs | RESOLVED |
 | Athlete profile snapshot | `ATHLETE_PROFILE_SPEC.md v1.0` | Generator may read approved profile snapshot fields within consent scope | RESOLVED |
-| Template Library ownership and lifecycle | `TEMPLATE_LIBRARY_SPEC.md v1.0` | Generator consumes templates only through Template Library contract and cannot mutate template records | RESOLVED |
+| Template Library ownership and lifecycle | `TEMPLATE_LIBRARY_SPEC.md v1.1` | Generator consumes templates only through Template Library contract and cannot mutate template records | RESOLVED |
 | Consent and guardian guard | `APP_IMPLEMENTATION_BRIDGE.md v1.1` | No sensitive or minor-related processing without valid consent/guardian consent | RESOLVED |
 | Capability grant model | `APP_IMPLEMENTATION_BRIDGE.md v1.1` | Plan generation requires scoped capability grant | RESOLVED |
-| Audit logging | `APP_IMPLEMENTATION_BRIDGE.md v1.1` | Every generation run and coach selection requires audit record reference | RESOLVED |
+| Audit logging | `APP_IMPLEMENTATION_BRIDGE.md v1.1` | Every generation run and explicit authorized selection requires audit record reference | RESOLVED |
 | Physiological source trust | `APP_IMPLEMENTATION_BRIDGE.md v1.1` | Physiological source consumption policy remains open through `OI-PG-PHYSIO-SOURCE-CONSUMPTION-001` | PARTIAL_OPEN |
 
 ---
@@ -187,6 +194,9 @@ hard_constraints:
   no_profile_privacy_weakening: true
   no_external_llm_with_private_athlete_data: true
   no_auto_plan_finalization: true
+  no_age_or_school_division_only_training_rejection: true
+  no_age_sex_or_school_division_only_dose_multiplier: true
+  training_eligibility_separate_from_processing_authorization: true
   no_raw_source_mutation: true
   primary_device_policy_respected: true
   upload_allowed: false
@@ -195,7 +205,7 @@ hard_constraints:
 safety_order:
   - tenant_group_athlete_isolation
   - scoped_capability_grant
-  - consent_and_minor_guardian_guard
+  - processing_authorization_consent_and_minor_guardian_guard
   - rule_spec_safety_hard_stop
   - athlete_profile_privacy
   - source_snapshot_availability
@@ -215,13 +225,70 @@ minor_guardian_consent_guard:
     - consent_scope_covers_plan_generation
     - consent_status: ACTIVE
   blocked_without_consent:
-    - plan_generation
+    - sensitive_personalized_plan_generation
     - physiological_feature_consumption
     - sensitive_profile_field_processing
     - option_rationale_generation_using_sensitive_fields
+  preserved_without_sensitive_consent:
+    - base_service_access
+    - non_sensitive_RPE_plan_path
 ```
 
 The safety word guard means a hard-coded processing block. It must prevent processing legally or ethically sensitive fields unless valid consent exists.
+It is a `processingAuthorization` result, not a training-eligibility result or a dose rule.
+Age or school division alone cannot reject training, and age, sex, or school division alone
+cannot increase, decrease, or otherwise modify a training dose. Readiness, accepted source and
+template scope, a current same-event record where required, recent load, D9, and recovery may
+gate training under their owning contracts.
+
+<!-- MACHINE_POLICY:PERSONALIZED_PRESCRIPTION_V1:START -->
+```json
+{
+  "schemaVersion": 1,
+  "trainingEligibility": {
+    "ageOnlyReject": false,
+    "schoolDivisionOnlyReject": false,
+    "ageOnlyDoseMultiplier": false,
+    "sexOnlyDoseMultiplier": false,
+    "schoolDivisionOnlyDoseMultiplier": false,
+    "allowedGateInputs": [
+      "READINESS",
+      "SOURCE_TEMPLATE_SCOPE",
+      "CURRENT_RECORD",
+      "RECENT_LOAD",
+      "D9",
+      "RECOVERY"
+    ]
+  },
+  "processingAuthorization": {
+    "guardianSensitiveProcessingGuard": true,
+    "sensitiveServerProcessingFailClosed": true,
+    "accountSyncSharingGuardsPreserved": true,
+    "baseServiceAvailableWithoutSensitiveConsent": true,
+    "legalConclusion": false
+  },
+  "selectionAuthority": {
+    "systemTemplate": {
+      "athleteSelfSelectionAfterAllGates": true,
+      "lifecycleMustBeActive": true,
+      "trainingEligibilityMustPass": true,
+      "processingAuthorizationMustPass": true,
+      "safetyGateMustPass": true
+    },
+    "tenantTemplate": {
+      "athleteSelfSelectionAllowed": false,
+      "scopedCoachCapabilityRequired": true,
+      "tenantScopeRequired": true
+    },
+    "coachTemplate": {
+      "athleteSelfSelectionAllowed": false,
+      "scopedCoachCapabilityRequired": true,
+      "ownerCoachScopeRequired": true
+    }
+  }
+}
+```
+<!-- MACHINE_POLICY:PERSONALIZED_PRESCRIPTION_V1:END -->
 
 ---
 
@@ -247,7 +314,7 @@ It creates:
 - `PlanGenerationRunRecord`
 - `PlanOptionRecord`
 - `PlannedSessionDraftRecord`
-- `CoachPlanSelectionRecord`
+- `PlanSelectionRecord`
 
 It does not mutate upstream source records or Template Library records.
 
@@ -257,9 +324,9 @@ mutation_boundary:
     - PlanGenerationRunRecord
     - PlanOptionRecord
     - PlannedSessionDraftRecord
-    - CoachPlanSelectionRecord
+    - PlanSelectionRecord
   may_request:
-    - RULE_SPEC validation after coach selection
+    - RULE_SPEC validation after explicit authorized selection
     - Template Library eligibility evaluation
   must_not_mutate:
     - SourceSnapshotRecord
@@ -286,10 +353,10 @@ tenancy_invariants:
   plan_generation_run_scope_required: true
   plan_option_scope_required: true
   planned_session_scope_required: true
-  coach_selection_scope_required: true
+  plan_selection_scope_required: true
   plan_option_tenant_group_athlete_must_match_generation_run: true
   planned_session_tenant_group_athlete_must_match_generation_run: true
-  coach_selection_tenant_group_athlete_must_match_generation_run: true
+  plan_selection_tenant_group_athlete_must_match_generation_run: true
   template_query_tenant_scope_required: true
   template_query_must_not_cross_tenant: true
   no_cross_tenant_plan_generation: true
@@ -357,7 +424,7 @@ safety_gate:
       required: true
       failure_state: BLOCKED_BY_SCOPE_MISMATCH
     capability_grant:
-      required_capability: GENERATE_PLAN_OPTIONS
+      required_capability: GENERATE_PLAN_OPTIONS_FOR_SCOPED_ACTOR
       status_required: ACTIVE
       failure_state: BLOCKED_BY_CAPABILITY
     consent_scope:
@@ -371,6 +438,9 @@ safety_gate:
       required_for_sensitive_or_health_related_fields: true
       guardian_consent_status_required: ACTIVE
       failure_state: BLOCKED_BY_MINOR_GUARDIAN_CONSENT
+      affects_training_eligibility: false
+      may_change_training_dose: false
+      base_service_access_preserved: true
     sensitive_field_guard:
       no_processing_without_consent: true
       failure_state: BLOCKED_BY_CONSENT
@@ -464,9 +534,22 @@ template_library_dependency:
 
   plan_generator_may_query_template_library_if:
     - safety_gate_status_allows_generation
-    - coach_has_capability
     - tenant_scope_is_valid
     - athlete_profile_minimum_fields_available
+    - template_lifecycle_is_ACTIVE
+    - training_eligibility_is_ELIGIBLE
+    - processing_authorization_allows_requested_processing
+
+  selection_authority:
+    SYSTEM:
+      athlete_explicit_selection_allowed_after_all_gates: true
+      coach_capability_required_for_athlete_selection: false
+    TENANT:
+      scoped_coach_capability_required: true
+      tenant_scope_required: true
+    COACH:
+      scoped_coach_capability_required: true
+      owner_coach_scope_required: true
 
   plan_generator_must_not:
     - mutate_template_record
@@ -474,6 +557,7 @@ template_library_dependency:
     - bypass_tenant_scope
     - bypass_safety_gate
     - auto_select_review_required_template
+    - auto_select_any_template_without_explicit_actor_action
     - infer_medical_clearance_from_template
 ```
 
@@ -481,7 +565,7 @@ Plan Generator handles Template Library eligibility results as follows.
 
 | Template Eligibility | Plan Generator Action |
 |---|---|
-| ELIGIBLE | May show as candidate; auto-apply is forbidden; coach final selection required. |
+| ELIGIBLE | May show as candidate; auto-apply is forbidden. Approved SYSTEM templates permit explicit athlete selection after all gates; TENANT/COACH templates require scoped coach capability. |
 | REVIEW_REQUIRED | May show only as review-required candidate; human review is required; auto-selection is forbidden. |
 | INELIGIBLE | Must be excluded from candidates. |
 
@@ -490,7 +574,9 @@ template_eligibility_policy:
   ELIGIBLE:
     may_show_as_candidate: true
     may_auto_apply: false
-    coach_final_selection_required: true
+    explicit_selection_required: true
+    SYSTEM_athlete_selection_allowed_after_all_gates: true
+    TENANT_or_COACH_scoped_coach_capability_required: true
 
   REVIEW_REQUIRED:
     may_show_as_candidate: true
@@ -535,13 +621,20 @@ plan_generator_template_privacy_boundary:
 
   allowed_query_fields:
     - tenantId
-    - coachId
     - athleteLevelBand
     - eventGroup
-    - isMinor
-    - guardianConsentAvailable
+    - readinessStatus
+    - sourceTemplateScopeStatus
+    - currentRecordStatus
+    - recentLoadStatus
+    - recoveryStatus
     - safetyGateStatus
 ```
+
+`isMinor`, guardian consent, account state, synchronization, and sharing authorization are
+consumed only by the separate `processingAuthorization` boundary. They are not Template Library
+training-dose inputs. A failed processing authorization remains fail-closed for the requested
+sensitive/server operation and cannot be converted into an age-based dose change.
 
 ---
 
@@ -639,7 +732,7 @@ record_contracts:
       - auditLogId
     invariants:
       auditLogId_required: true
-      selectedOptionId_nullable_until_coach_selection: true
+      selectedOptionId_nullable_until_explicit_selection: true
       planValidationRequestStatus_not_rule_verdict: true
 
   PlanOptionRecord:
@@ -656,11 +749,13 @@ record_contracts:
       - riskNotes
       - constraintApplicationIds
       - plannedSessionDraftIds
-      - requiresCoachSelection
+      - selectionAuthority
       - createdAt
     invariants:
       tenant_group_athlete_must_match_generation_run: true
-      requiresCoachSelection: true
+      explicitSelectionRequired: true
+      approved_SYSTEM_allows_athlete_selection_after_all_gates: true
+      TENANT_or_COACH_requires_scoped_coach_capability: true
       no_auto_selection: true
       templateRefs_may_be_empty: true
       templateRefs_must_not_bypass_template_lifecycle: true
@@ -711,7 +806,6 @@ export type PlanOptionId = string;
 export type PlannedSessionDraftId = string;
 export type CoachIntentId = string;
 export type ConstraintApplicationId = string;
-export type CoachPlanSelectionId = string;
 
 export type TemplateId = string;
 export type TemplateVersion = string;
@@ -724,7 +818,7 @@ export type TemplateEligibilityStatus =
 export type PlanGenerationState =
   | "READY_TO_GENERATE_OPTIONS"
   | "OPTIONS_GENERATED"
-  | "WAITING_FOR_COACH_SELECTION"
+  | "WAITING_FOR_EXPLICIT_SELECTION"
   | "SELECTED_OPTION_READY_FOR_VALIDATION"
   | "BLOCKED_BY_SCOPE_MISMATCH"
   | "BLOCKED_BY_CAPABILITY"
@@ -795,6 +889,26 @@ export interface PlanAuthorizationContext {
   checkedByUserId: UserId;
 }
 
+export interface TrainingEligibilityDecision {
+  status: TemplateEligibilityStatus;
+  ageOnlyReject: false;
+  schoolDivisionOnlyReject: false;
+  ageOnlyDoseMultiplier: false;
+  sexOnlyDoseMultiplier: false;
+  schoolDivisionOnlyDoseMultiplier: false;
+  reasonCodes: string[];
+}
+
+export interface ProcessingAuthorizationDecision {
+  guardianSensitiveProcessingGuard: true;
+  sensitiveServerProcessingFailClosed: true;
+  accountSyncSharingGuardsPreserved: true;
+  baseServiceAvailableWithoutSensitiveConsent: true;
+  legalConclusion: false;
+  status: "AUTHORIZED" | "BLOCKED";
+  reasonCodes: string[];
+}
+
 export interface ImmutablePlanInputRefs {
   profileSnapshotId: ProfileSnapshotId;
   sourceSnapshotIds: SourceSnapshotId[];
@@ -845,7 +959,9 @@ export interface PlanOptionRecord {
   riskNotes: string[];
   constraintApplicationIds: ConstraintApplicationId[];
   plannedSessionDraftIds: PlannedSessionDraftId[];
-  requiresCoachSelection: true;
+  selectionAuthority:
+    | "ATHLETE_OR_COACH_AFTER_ALL_GATES_FOR_SYSTEM_TEMPLATE"
+    | "SCOPED_COACH_REQUIRED_FOR_TENANT_OR_COACH_TEMPLATE";
   createdAt: ISO8601;
 }
 
@@ -867,14 +983,18 @@ export interface PlannedSessionDraftRecord {
   createdAt: ISO8601;
 }
 
-export interface CoachPlanSelectionRecord {
-  coachPlanSelectionId: CoachPlanSelectionId;
+export interface PlanSelectionRecord {
+  planSelectionId: string;
   planGenerationRunId: PlanGenerationRunId;
   selectedOptionId: PlanOptionId;
   tenantId: TenantId;
   groupId: GroupId;
   athleteId: AthleteId;
   selectedByUserId: UserId;
+  selectedByActor: "ATHLETE" | "COACH";
+  templateOwnerType: "SYSTEM" | "TENANT" | "COACH";
+  trainingEligibilityDecision: TrainingEligibilityDecision;
+  processingAuthorizationDecision: ProcessingAuthorizationDecision;
   selectedAt: ISO8601;
   consentGrantIds: ConsentGrantId[];
   capabilityGrantIds: CapabilityGrantId[];
@@ -912,11 +1032,13 @@ The generator uses a two-step flow.
 
 Default option count is 3. Minimum option count is 2 unless blocked or insufficient data.
 
-### Step 2. Coach selects option
+### Step 2. Authorized actor explicitly selects an option
 
-- Coach must have scoped capability.
-- Selection must reference active consent.
-- Selection creates `CoachPlanSelectionRecord`.
+- An athlete may select only an approved `SYSTEM` template after lifecycle,
+  `trainingEligibility`, `processingAuthorization`, D9/Safety Gate, scope, and record gates pass.
+- A `TENANT` or `COACH` template requires the existing scoped coach capability and owner scope.
+- Selection must reference active consent when the requested processing requires it.
+- Selection creates `PlanSelectionRecord`; no branch may select automatically.
 - Selected option becomes `SELECTED_OPTION_READY_FOR_VALIDATION`.
 - A validation request may then be submitted to `RULE_SPEC_D1_D9`.
 
@@ -929,7 +1051,7 @@ Default option count is 3. Minimum option count is 2 unless blocked or insuffici
 | `/plan-generator/runs` | POST | `GENERATE_PLAN_OPTIONS` | Create plan-generation run after safety gate |
 | `/plan-generator/runs/{runId}` | GET | `VIEW_PLAN_GENERATION_RUN` | Read scoped generation run |
 | `/plan-generator/runs/{runId}/options` | GET | `VIEW_PLAN_OPTIONS` | Read generated options |
-| `/plan-generator/runs/{runId}/select-option` | POST | `SELECT_PLAN_OPTION` | Coach selection |
+| `/plan-generator/runs/{runId}/select-option` | POST | Owner-scoped: athlete for gated SYSTEM template, otherwise `SELECT_PLAN_OPTION` coach capability | Explicit authorized selection |
 | `/plan-generator/runs/{runId}/validation-request` | POST | `REQUEST_PLAN_RULE_VALIDATION` | Request rule validation after selection |
 | `/plan-generator/audit-logs` | GET | `VIEW_PLAN_AUDIT_LOGS` | Read scoped audit logs |
 
@@ -984,12 +1106,12 @@ llm_policy:
 |---|---|---|---|
 | `PG-TC-001` | integrity | First line is `# PLAN_GENERATOR_SPEC.md`. | PASS |
 | `PG-TC-002` | integrity | Last line is `[DRAFT_COMPLETE]`. | PASS |
-| `PG-TC-003` | metadata | Version is `1.0` and round is `RT3`. | PASS |
+| `PG-TC-003` | metadata | Version is `1.1` and round is `RT4`. | PASS |
 | `PG-TC-004` | metadata | `upload_allowed` is false. | PASS |
 | `PG-TC-005` | metadata | `canonical_promotion_allowed` is false. | PASS |
 | `PG-TC-006` | metadata | Open issue count is 7. | PASS |
 | `PG-TC-007` | metadata | Canonical blocking count is 2. | PASS |
-| `PG-TC-008` | metadata | Test case count is 46. | PASS |
+| `PG-TC-008` | metadata | Test case count is 51. | PASS |
 | `PG-TC-009` | upstream | Five upstream baselines are listed. | PASS |
 | `PG-TC-010` | upstream | APP Bridge v1.1 role is local baseline candidate pending canonical promotion. | PASS |
 | `PG-TC-011` | dependency | Dependency satisfaction table exists. | PASS |
@@ -1010,7 +1132,7 @@ llm_policy:
 | `PG-TC-026` | labels | `plannedEnergyFocus` is coach intent only. | PASS |
 | `PG-TC-027` | labels | Energy-focus enum uses `_INTENT` suffix. | PASS |
 | `PG-TC-028` | states | Plan states do not use verdict-like state names. | PASS |
-| `PG-TC-029` | generation | Coach selection is required. | PASS |
+| `PG-TC-029` | generation | Selection authority is owner-scoped and every selection is explicit. | PASS |
 | `PG-TC-030` | generation | Auto-selection is forbidden. | PASS |
 | `PG-TC-031` | generation | Default option count is 3 and minimum is 2. | PASS |
 | `PG-TC-032` | mutation | Source records are not mutated. | PASS |
@@ -1028,6 +1150,11 @@ llm_policy:
 | `PG-TC-044` | cycle | Micro-cycle/calendar mapping is tracked. | PASS |
 | `PG-TC-045` | api | API surface includes run, option, selection, validation, and audit endpoints. | PASS |
 | `PG-TC-046` | self_validation | Self-validation summary passes. | PASS |
+| `PG-TC-047` | training_eligibility | Age or school division alone cannot reject training. | PASS |
+| `PG-TC-048` | training_eligibility | Age, sex, or school division alone cannot modify dose. | PASS |
+| `PG-TC-049` | authorization | Processing authorization is separate and fail-closed. | PASS |
+| `PG-TC-050` | selection | Approved SYSTEM templates permit athlete selection only after all gates. | PASS |
+| `PG-TC-051` | selection | TENANT and COACH templates retain scoped coach capability. | PASS |
 
 ---
 
@@ -1051,6 +1178,11 @@ self_validation:
   no_safety_hard_stop_override: PASS
   minor_guardian_consent_guard_present_in_section_2: PASS
   minor_guardian_consent_guard_present_in_section_6: PASS
+  training_eligibility_processing_authorization_split: PASS
+  age_and_school_division_not_training_rejection: PASS
+  age_sex_school_division_not_dose_multiplier: PASS
+  guardian_privacy_account_sync_sharing_guards_preserved: PASS
+  owner_scoped_selection_authority_present: PASS
   planned_energy_focus_is_coach_intent_only: PASS
   plan_option_scope_keys_present: PASS
   audit_log_required_field_present: PASS
@@ -1059,8 +1191,8 @@ self_validation:
     total: 7
     canonical_blocking: 2
   test_cases:
-    total: 46
-    passed: 46
+    total: 51
+    passed: 51
 ```
 
 ---
@@ -1072,15 +1204,15 @@ automation_validation_packet:
   target_file: PLAN_GENERATOR_SPEC.md
   expected_first_line: "# PLAN_GENERATOR_SPEC.md"
   expected_last_line: "[DRAFT_COMPLETE]"
-  expected_version: "1.0"
-  expected_round: RT3
+  expected_version: "1.1"
+  expected_round: RT4
   expected_status: DRAFT_FOR_REVIEW
   expected_upload_allowed: false
   expected_canonical_promotion_allowed: false
   expected_open_issues_total: 7
   expected_canonical_blocking_count: 2
-  expected_test_cases_total: 46
-  expected_test_cases_passed: 46
+  expected_test_cases_total: 51
+  expected_test_cases_passed: 51
   required_checks:
     - first_line_h1
     - last_line_marker_clean
@@ -1097,7 +1229,8 @@ automation_validation_packet:
     - no_global_coach_authority
     - no_safety_hard_stop_override
     - planned_labels_not_classifier_outputs
-    - coach_selection_required
+    - owner_scoped_explicit_selection_required
+    - training_eligibility_processing_authorization_split
     - plan_option_record_scoped
     - audit_log_required
 ```
@@ -1111,19 +1244,23 @@ handoff:
   from: DESIGNER_OPUS_4_8
   to: REVIEWER_GPT_5_5_PRO
   target: PLAN_GENERATOR_SPEC.md
-  version: "1.0"
-  round: RT3
+  version: "1.1"
+  round: RT4
   status: DRAFT_FOR_REVIEW
   reviewer_quality_gate_requested: true
   upload_allowed: false
   canonical_promotion_allowed: false
-  coach_final_approval_required: true
+  selection_authority_policy: OWNER_SCOPED_EXPLICIT_SELECTION
+  coach_final_approval_required_for_tenant_or_coach_templates: true
+  athlete_self_selection_allowed_for_approved_system_templates_after_all_gates: true
   applied_local_patches:
     - PROGRESSION_GUARD_ACCOUNTING_SYNC
     - TEMPLATE_LIBRARY_OWNERSHIP_SYNC
     - PHYSIO_SOURCE_TRUST_CONSUMPTION_BINDING_PENDING_ACCEPTANCE
     - PLAN_SAFETY_GATE_BINDING_PATCH_PENDING_RUNTIME_EVIDENCE
     - WAVE_D_PHYSIO_SOURCE_ACCEPTANCE_TARGET_RECOUNT_SYNC
+    - AGE_NEUTRAL_TRAINING_ELIGIBILITY_AND_AUTHORIZATION_SPLIT
+    - OWNER_SCOPED_EXPLICIT_TEMPLATE_SELECTION
   remaining_canonical_blocking_open_issues:
     - OI-PG-RULE-SAFETY-GATE-BINDING-001
     - OI-PG-PHYSIO-SOURCE-CONSUMPTION-001
