@@ -147,6 +147,10 @@ Max content width is 1440px. Breakpoints: single column under 760px, two columns
 - Structure: frame identity, source/confidence state, ordered day rows, one progress action per planned session, next-frame continuity note.
 - Progress states: planned, completed, rested, skipped, pain check-in.
 - Safety: progress never clears a Safety Gate state and never grants a training-load reward.
+- Active-frame integrity: PB/SB, completion, RPE, attendance, streaks, points, and journal aggregates never rewrite active-frame rows. Recovery/availability actions may only maintain, reduce, rest, or move not-yet-due flexible work.
+- Next-frame proposal: show the unchanged active frame beside at most one explicit `INTENSITY`, `VOLUME`, or `FREQUENCY` before/after delta drawn from approved values. Do not show percentages or a free numeric editor.
+- Authority: `SELF_SERVICE` shows athlete selection and `COACH_AUTHORED` shows coach-required review; youth status alone does not suppress self-selection.
+- Blocked state: D9 `ACTIVE`/`UNKNOWN`, stale safety, or an active hold removes selection controls and shows a generic non-selectable status without raw memo, note, or symptom text.
 - Accessibility: state is always text plus icon; color is secondary.
 
 ### Oracle Points Strip

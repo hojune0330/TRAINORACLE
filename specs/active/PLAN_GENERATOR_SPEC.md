@@ -29,6 +29,7 @@ applied_local_patches:
   - WAVE_D_PHYSIO_SOURCE_ACCEPTANCE_TARGET_RECOUNT_SYNC
   - AGE_NEUTRAL_TRAINING_ELIGIBILITY_AND_AUTHORIZATION_SPLIT
   - OWNER_SCOPED_EXPLICIT_TEMPLATE_SELECTION
+  - BOUNDED_NEXT_FRAME_ADAPTIVE_REPLANNING_POLICY
 
 upstream_baselines:
   - file: RULE_SPEC_D1_D9.md
@@ -194,6 +195,9 @@ hard_constraints:
   no_profile_privacy_weakening: true
   no_external_llm_with_private_athlete_data: true
   no_auto_plan_finalization: true
+  no_active_frame_signal_driven_mutation: true
+  no_automatic_dose_progression: true
+  no_missed_MAIN_catch_up: true
   no_age_or_school_division_only_training_rejection: true
   no_age_sex_or_school_division_only_dose_multiplier: true
   training_eligibility_separate_from_processing_authorization: true
@@ -289,6 +293,54 @@ gate training under their owning contracts.
 }
 ```
 <!-- MACHINE_POLICY:PERSONALIZED_PRESCRIPTION_V1:END -->
+
+<!-- MACHINE_POLICY:ADAPTIVE_REPLANNING_V1:START -->
+```json
+{
+  "schemaVersion": 1,
+  "supportedEvents": ["800M", "1500M", "3000M", "5000M"],
+  "deferredEvents": ["100M", "200M", "400M"],
+  "activeFrame": {
+    "immutableFrom": ["PB_SB", "COMPLETION", "RPE", "ATTENDANCE", "STREAKS", "POINTS", "JOURNAL_AGGREGATES"],
+    "recoveryAvailabilityActions": ["MAINTAIN", "REDUCE", "REST", "MOVE_NOT_YET_DUE_FLEXIBLE_WORK"],
+    "missedMainCatchUp": false
+  },
+  "nextFrameTriggers": {
+    "sameEventPbSb": {"sameEventRequired": true, "achievedAfterActivePlanStart": true},
+    "explicitRequestActors": ["ATHLETE", "COACH"]
+  },
+  "proposal": {
+    "origins": ["SELF_SERVICE", "COACH_AUTHORED"],
+    "selectionAuthorityByOrigin": {"SELF_SERVICE": "SELF", "COACH_AUTHORED": "COACH_REQUIRED"},
+    "changeDimensions": ["INTENSITY", "VOLUME", "FREQUENCY"],
+    "maxChangedDimensions": 1,
+    "approvedValuesOnly": true,
+    "percentagesAllowed": false,
+    "freeNumericEditorAllowed": false,
+    "automaticProgressionAllowed": false
+  },
+  "selectionBlock": {
+    "d9States": ["ACTIVE", "UNKNOWN"],
+    "staleSafety": true,
+    "activeHold": true,
+    "selectableProposalAllowed": false
+  },
+  "privacy": {
+    "rawMemoNoteSymptomTextAllowed": false
+  }
+}
+```
+<!-- MACHINE_POLICY:ADAPTIVE_REPLANNING_V1:END -->
+
+This proposed downstream policy does not activate a template or grant canonical
+authority. PB/SB, completion, RPE, attendance, streaks, points, and journal aggregates
+never mutate the active frame. A same-event PB/SB achieved after active-plan start or
+an explicit athlete/coach request may produce only a `NEXT_FRAME` proposal. The
+proposal changes at most one of `INTENSITY | VOLUME | FREQUENCY` using existing
+approved values; percentages, a free numeric editor, and automatic progression are
+forbidden. `SELF_SERVICE -> SELF`; `COACH_AUTHORED -> COACH_REQUIRED`. D9 `ACTIVE` or
+`UNKNOWN`, stale safety, or an active hold yields no selectable proposal. Raw memo,
+note, and symptom text is not an input. Events 100-400 m remain deferred.
 
 ---
 

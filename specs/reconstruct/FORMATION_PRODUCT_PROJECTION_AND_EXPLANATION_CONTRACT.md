@@ -32,7 +32,8 @@ authority_class:
   DESCRIPTIVE_ANALYSIS: noncausal_description_only
   SHADOW_CANDIDATE: comparison_only_never_executing
   HUMAN_REVIEW: review_state_never_silent_mutation
-  ACCEPTED_REAL_PLAN: linked_coach_accepted_plan_fact
+  ACCEPTED_REAL_PLAN: origin_authorized_explicitly_selected_plan_fact
+  NEXT_FRAME_PROPOSAL: nonexecuting_one_dimension_delta
 
 action_state:
   VIEW_ONLY: no_mutation
@@ -40,20 +41,38 @@ action_state:
   PAUSE_OR_WITHDRAW_SHADOW: athlete_optional_participation_control
   CHOOSE_POLICY_ALLOWED_SHARE: explicit_recipient_and_scope_required
   LINKED_COACH_REVIEW_ONLY: review_record_or_correction_proposal_only
+  SELF_SELECT_NEXT_FRAME_PROPOSAL: SELF_SERVICE_origin_only_after_fresh_gates
+  COACH_SELECT_NEXT_FRAME_PROPOSAL: COACH_AUTHORED_origin_only_after_fresh_gates
   GUARDIAN_VIEW_WITHIN_SCOPE: no_default_notification_or_edit
   NO_FORMATION_ACTION: formation_unavailable
 ```
 
 | Audience | Allowed authority classes | Allowed action states | Forbidden implication |
 |---|---|---|---|
-| `ATHLETE` | all five, subject to privacy | `VIEW_ONLY`, `CORRECT_OWN_JOURNAL_FACT`, `PAUSE_OR_WITHDRAW_SHADOW`, `CHOOSE_POLICY_ALLOWED_SHARE` | Athlete correction never edits a shadow candidate or accepted real plan. |
-| `LINKED_COACH` | all five, governance-eligible fields only | `VIEW_ONLY`, `LINKED_COACH_REVIEW_ONLY` | A review or correction proposal is not a silent plan edit or acceptance. |
+| `ATHLETE` | all six, subject to privacy | `VIEW_ONLY`, `CORRECT_OWN_JOURNAL_FACT`, `PAUSE_OR_WITHDRAW_SHADOW`, `CHOOSE_POLICY_ALLOWED_SHARE`, `SELF_SELECT_NEXT_FRAME_PROPOSAL` | Athlete correction never edits a shadow candidate or accepted real plan; self-selection is limited to `SELF_SERVICE`. |
+| `LINKED_COACH` | all six, governance-eligible fields only | `VIEW_ONLY`, `LINKED_COACH_REVIEW_ONLY`, `COACH_SELECT_NEXT_FRAME_PROPOSAL` | A review or correction proposal is not a silent plan edit or acceptance; selection is limited to `COACH_AUTHORED`. |
 | `GUARDIAN_SCOPE_ALLOWED` | only separately authorized classes/fields | `GUARDIAN_VIEW_WITHIN_SCOPE` | No inferred access, default notification, private note, or edit right. |
 | `JOURNAL_ONLY` | `JOURNAL_FACT` outside Formation only | `NO_FORMATION_ACTION` | No shadow, analysis, review, or plan surface. |
 
 An invalid audience/authority/action combination is rejected rather than hidden or
 downgraded. Athlete correction means editing an eligible own journal fact or submitting a
 correction request. It never mutates a source snapshot, candidate, review, or real plan.
+
+## Next-Frame Proposal Projection
+
+A next-frame proposal displays the unchanged active-frame identity, `proposalOrigin`,
+derived `selectionAuthority`, and at most one delta labeled `INTENSITY`, `VOLUME`, or
+`FREQUENCY`. It displays only existing approved before/after values and never offers a
+percentage or free numeric editor. `SELF_SERVICE` exposes athlete selection;
+`COACH_AUTHORED` exposes coach-required selection. Youth status alone does not hide the
+athlete action. D9 `ACTIVE`/`UNKNOWN`, stale safety, or an active hold replaces every
+selection action with a generic non-selectable blocked state.
+
+PB/SB, completion, RPE, attendance, streaks, points, and journal aggregates never
+display as changes to the active frame. A same-event PB/SB is proposal-eligible only
+when achieved after active-plan start; an explicit athlete/coach request is a separate
+eligible trigger. Raw memo, note, or symptom text and derived excerpts never appear. Supported
+proposal events are 800/1500/3000/5000 m; 100-400 m remains deferred.
 
 ## Five Explanation Levels
 

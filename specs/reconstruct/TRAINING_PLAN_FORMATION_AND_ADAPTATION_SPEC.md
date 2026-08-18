@@ -14,7 +14,7 @@ document_metadata:
   pilot_scope: ONE_COACH_LINKED_1500M_ATHLETE
   open_issues_total: 11
   canonical_blocking_count: 10
-  contract_vectors_total: 104
+  contract_vectors_total: 109
   executed_tests_total: 0
   executed_tests_passed: 0
   production_execution_allowed: false
@@ -95,7 +95,7 @@ owner_confirmed_method_boundary:
   composite_sessions_allowed: true
   candidate_count: TWO_OR_THREE
   candidate_generation: DETERMINISTIC
-  coach_final_selection_required: true
+  next_frame_selection_authority: DERIVED_FROM_PROPOSAL_ORIGIN
 ```
 
 `BALANCED`, `CONSERVATIVE`, `RECOVERY_FOCUSED`, and `COMPETITION_PREP` are a
@@ -134,7 +134,7 @@ decision_authority_classes:
     meaning: deterministic proposal whose owning target contract has not accepted it
     executable: false
   COACH_DECISION_SUPPORT:
-    meaning: deterministic proposal with visible inputs, uncertainty, and reason codes
+    meaning: deterministic COACH_AUTHORED proposal with visible inputs, uncertainty, and reason codes
     coach_selection_required: true
   HOLD_INSUFFICIENT_EVIDENCE:
     meaning: structure may be recorded but cannot influence a candidate
@@ -237,7 +237,7 @@ RecordGovernanceEnvelope:
 
 FormationAuthorizationDecisionRecord:
   authorizationDecisionId: string
-  operation: GENERATE_PLAN_OPTIONS | SELECT_PLAN_OPTION | CREATE_ADAPTATION | ACCEPT_ADAPTATION | REJECT_ADAPTATION | RELEASE_EXECUTION_HOLD
+  operation: GENERATE_PLAN_OPTIONS | SELECT_PLAN_OPTION | CREATE_ADAPTATION | ACCEPT_ADAPTATION | REJECT_ADAPTATION | APPLY_CURRENT_FRAME_ADJUSTMENT | RELEASE_EXECUTION_HOLD
   tenantId: string
   groupId: string
   athleteId: string
@@ -377,12 +377,15 @@ Authorization invariants:
   `CREATE_ADAPTATION -> CREATE_ADAPTATION`,
   `ACCEPT_ADAPTATION -> ACCEPT_ADAPTATION`, and
   `REJECT_ADAPTATION -> REJECT_ADAPTATION`, and
+  `APPLY_CURRENT_FRAME_ADJUSTMENT -> APPLY_CURRENT_FRAME_ADJUSTMENT`, and
   `RELEASE_EXECUTION_HOLD -> RELEASE_EXECUTION_HOLD`.
 - Every capability and consent grant must match tenant, group, athlete, operation
   purpose, actor, active status, grant version, revocation epoch, and `checkedAt`;
   null expiry is allowed only when the owning contract permits it, and expiry is denied.
-- Selection and acceptance require a verified same-group linked-coach decision whose
-  linked user equals the acting user. Generic capability alone is insufficient.
+- Selection and acceptance authority is derived from the proposal origin. `SELF_SERVICE`
+  requires the same scoped athlete actor; `COACH_AUTHORED` requires a verified same-group
+  linked-coach decision whose linked user equals the acting user. Generic capability alone
+  is insufficient for `COACH_AUTHORED`.
 - Guardian satisfaction is required when the athlete contract requires it and must
   bind verified guardian and subject identity, exact operation, data categories,
   status, grant version, revocation epoch, expiry, and immutable content.
@@ -789,7 +792,7 @@ candidate_formation_flow:
   5_validate_exactly_two_or_three_MAIN_exposure_events: PROPOSED_PENDING_OWNER_ACCEPTANCE
   6_preserve_components_measures_and_uncertainty: PROPOSED_PENDING_OWNER_ACCEPTANCE
   7_generate_and_arbitrate_distinct_candidates: PROPOSED_PENDING_OWNER_ACCEPTANCE
-  8_require_atomic_authorization_safety_recheck_and_coach_selection: PROPOSED_PENDING_OWNER_ACCEPTANCE
+  8_require_atomic_authorization_safety_recheck_and_origin_scoped_selection: PROPOSED_PENDING_OWNER_ACCEPTANCE
   9_request_RULE_SPEC_validation_after_selection: PROPOSED_PENDING_OWNER_ACCEPTANCE
 ```
 
@@ -962,6 +965,10 @@ Outcome invariants:
   provenance refs, and capture time to be null or empty.
 - Stale, excluded, cross-version, or post-cutoff response/readiness refs cannot
   influence an adaptation proposal.
+- The active frame never changes because of PB/SB, completion, RPE, attendance,
+  streaks, points, or journal aggregates. Current-frame recovery or availability may
+  only maintain, reduce, rest, or move not-yet-due flexible work; it cannot increase
+  demand or move fixed or already-due work.
 - A missed MAIN remains a planned MAIN but is not a completed exposure. It never
   triggers automatic catch-up, compression, back-to-back placement, or movement to
   preserve the planned count. Rescheduling requires a new coach-reviewed class,
@@ -977,6 +984,47 @@ erase external load, mechanical impact, neuromuscular demand, pain, or missingne
 ---
 
 ## 10. Safety Hold, Plan Versions, And Adaptation
+
+<!-- MACHINE_POLICY:ADAPTIVE_REPLANNING_V1:START -->
+```json
+{
+  "schemaVersion": 1,
+  "supportedEvents": ["800M", "1500M", "3000M", "5000M"],
+  "deferredEvents": ["100M", "200M", "400M"],
+  "activeFrame": {
+    "immutableFrom": ["PB_SB", "COMPLETION", "RPE", "ATTENDANCE", "STREAKS", "POINTS", "JOURNAL_AGGREGATES"],
+    "recoveryAvailabilityActions": ["MAINTAIN", "REDUCE", "REST", "MOVE_NOT_YET_DUE_FLEXIBLE_WORK"],
+    "missedMainCatchUp": false
+  },
+  "nextFrameTriggers": {
+    "sameEventPbSb": {"sameEventRequired": true, "achievedAfterActivePlanStart": true},
+    "explicitRequestActors": ["ATHLETE", "COACH"]
+  },
+  "proposal": {
+    "origins": ["SELF_SERVICE", "COACH_AUTHORED"],
+    "selectionAuthorityByOrigin": {"SELF_SERVICE": "SELF", "COACH_AUTHORED": "COACH_REQUIRED"},
+    "changeDimensions": ["INTENSITY", "VOLUME", "FREQUENCY"],
+    "maxChangedDimensions": 1,
+    "approvedValuesOnly": true,
+    "percentagesAllowed": false,
+    "freeNumericEditorAllowed": false,
+    "automaticProgressionAllowed": false
+  },
+  "selectionBlock": {
+    "d9States": ["ACTIVE", "UNKNOWN"],
+    "staleSafety": true,
+    "activeHold": true,
+    "selectableProposalAllowed": false
+  },
+  "privacy": {
+    "rawMemoNoteSymptomTextAllowed": false
+  }
+}
+```
+<!-- MACHINE_POLICY:ADAPTIVE_REPLANNING_V1:END -->
+
+The policy block is a proposed target contract only. It neither activates runtime
+behavior nor promotes this draft canonically.
 
 ### 10.1 Immediate execution hold
 
@@ -1130,14 +1178,15 @@ PlanOptionSetRecord:
   contentHash: CanonicalContentHash
   governanceEnvelopeRef: RecordGovernanceEnvelopeRefId
 
-CoachPlanSelectionRecord:
+PlanSelectionRecord:
   selectionId: string
   optionSetId: string
   optionSetRevision: integer
   selectedOptionId: string
   selectedCandidateFingerprint: CanonicalContentHash
-  linkedCoachDecisionRef: string
-  selectedByLinkedCoachUserId: string
+  selectedByActor: ATHLETE | COACH
+  linkedCoachDecisionRef: string_or_null
+  selectedByLinkedCoachUserId: string_or_null
   expectedAggregateRevision: integer
   expectedSafetyEpoch: integer
   authorizationDecisionRef: FormationAuthorizationDecisionId
@@ -1194,30 +1243,57 @@ PlanAdaptationProposal:
   athleteId: string
   basePlanVersionId: string
   baseContentHash: CanonicalContentHash
+  targetFrame: NEXT_FRAME
+  proposalOrigin: SELF_SERVICE | COACH_AUTHORED
+  selectionAuthority: SELF | COACH_REQUIRED
+  trigger: SAME_EVENT_PB_SB_AFTER_ACTIVE_PLAN_START | EXPLICIT_REQUEST
+  changeDimension: INTENSITY | VOLUME | FREQUENCY | null
+  approvedBeforeValueRef: string_or_null
+  approvedAfterValueRef: string_or_null
   proposedPlanVersionId: string
   proposedContentHash: CanonicalContentHash
-  initialStatus: DRAFT | WAITING_FOR_COACH
+  initialStatus: DRAFT | WAITING_FOR_SELF | WAITING_FOR_COACH
   evaluationTriggerRefs: FormationSourceRefId[]
   creationAuthorizationDecisionRef: FormationAuthorizationDecisionId
   safetyBlockRefId: SafetyBlockRefId
-  proposedActions: AdaptationAction[]
   reasonCodeRefs: FormationReasonCodeRef[]
   sourceRefIds: FormationSourceRefId[]
   uncertaintyCodes: string[]
-  requiresCoachSelection: true
   createdAt: ISO_DATETIME
   createdByUserId: string
   auditLogId: string
   idempotency: IdempotencyEnvelope
   governanceEnvelopeRef: RecordGovernanceEnvelopeRefId
 
-AdaptationAction:
-  action: KEEP | SHIFT_FLEXIBLE_SESSION | REDUCE_SUPPORTING_DEMAND | REPLACE_WITH_RECOVERY_OR_REST | REBUILD_REMAINDER | BLOCK_AND_REVIEW
+CurrentFrameAdjustmentRecord:
+  adjustmentId: string
+  tenantId: string
+  groupId: string
+  athleteId: string
+  activePlanVersionId: string
+  targetFrame: CURRENT_FRAME
+  trigger: RECOVERY_CHANGE | AVAILABILITY_CHANGE
+  action: MAINTAIN | REDUCE | REST | MOVE_NOT_YET_DUE_FLEXIBLE_WORK
+  expectedAggregateRevision: integer
+  expectedSafetyEpoch: integer
+  adjustmentAuthorizationDecisionRef: FormationAuthorizationDecisionId
+  freshSafetyBlockRefId: SafetyBlockRefId
+  expectedActiveHoldState: NONE
   targetBlockOrSessionIds: string[]
   beforeRefs: string[]
-  proposedAfterRefs: string[]
+  adjustedAfterRefs: string[]
   constraintRefs: FormationSourceRefId[]
   reasonCodeRefs: FormationReasonCodeRef[]
+  increasesDemand: false
+  movesFixedOrAlreadyDueWork: false
+  mutatesPlanVersionContent: false
+  createsNextFrameProposal: false
+  coachOverrideAllowed: false
+  createdAt: ISO_DATETIME
+  createdByUserId: string
+  auditLogId: string
+  idempotency: IdempotencyEnvelope
+  governanceEnvelopeRef: RecordGovernanceEnvelopeRefId
 
 PlanAdaptationDecisionRecord:
   adaptationDecisionId: string
@@ -1261,7 +1337,10 @@ Version invariants:
   calendar. The predecessor record is never updated in place.
 - Plan content and `PlanVersionRecord` never mutate. Current execution state is a
   projection of append-only hold activation/release records.
-- Proposal status (`DRAFT | WAITING_FOR_COACH | ACCEPTED | REJECTED | SUPERSEDED |
+- A `CurrentFrameAdjustmentRecord` is a separate append-only execution overlay. It
+  never creates or accepts a `PlanAdaptationProposal`, reserves a successor version,
+  mutates plan-version content, increases demand, or moves fixed/already-due work.
+- Proposal status (`DRAFT | WAITING_FOR_SELF | WAITING_FOR_COACH | ACCEPTED | REJECTED | SUPERSEDED |
   INVALIDATED_BY_SAFETY_OR_AUTH | INVALIDATED_BY_RULE_VALIDATION`) is a projection of append-only creation,
   lifecycle, and decision records; status changes never overwrite source facts.
 - One accepted successor is allowed per predecessor plan version. Every proposal has
@@ -1295,14 +1374,19 @@ Version invariants:
 - Consent, capability, guardian consent, scope, and Safety Gate are checked at both
   proposal creation and acceptance.
 - Selection, proposal, and acceptance actors must hold the purpose-specific
-  capability and a verified linked-coach identity in the same group as the athlete.
+  capability. `SELF_SERVICE -> SELF` additionally requires the same scoped athlete;
+  `COACH_AUTHORED -> COACH_REQUIRED` additionally requires a verified linked-coach
+  identity in the same group. Youth status alone does not change this authority map.
   These proposed capability names require downstream registry adoption under
   `OI-FA-PLAN-VERSION-BINDING-001`.
 - Fixed race anchors cannot move automatically.
-- The first pilot cannot automatically increase demand.
+- A next-frame proposal changes at most one declared dimension using existing approved
+  values. A null dimension requires both approved value refs to be null. Percentages,
+  free numeric editing, automatic progression, and automatic
+  demand increases are forbidden.
 
 Initial selection is one target-owned atomic transaction: preflight idempotency,
-recheck linked-coach authorization/guardian/consent/safety/no-active-hold, CAS the
+recheck origin-scoped selection authorization/guardian/consent/safety/no-active-hold, CAS the
 shared aggregate and complete option-set revision, enforce one selection and one
 initial version per run, then append selection, `SELECTED_PENDING_VALIDATION` plan
 version, aggregate event, audit, outbox, and idempotency result. Any failure exposes
@@ -1313,7 +1397,7 @@ idempotency records atomically. Validation rejection creates `VALIDATION_REJECTE
 never `VALIDATED_ACCEPTED`; replay returns the one committed result.
 
 Adaptation rejection is a target-owned atomic non-execution transaction: preflight
-idempotency, recheck scope, verified linked coach, `REJECT_ADAPTATION` authorization,
+idempotency, recheck scope, origin-derived selection authority, `REJECT_ADAPTATION` authorization,
 guardian/consent grant versions and revocation epochs, CAS the proposal's open terminal
 state, then append the `REJECT` decision, aggregate/audit/outbox, and idempotency result
 together. An active hold does not prevent proposal rejection, but remains unchanged.
@@ -1322,8 +1406,8 @@ returns the committed result and any other loser rolls back.
 
 Adaptation acceptance is one target-owned atomic transaction:
 
-1. run idempotency preflight and, for a new request, recheck scope, linked-coach
-   `ACCEPT_ADAPTATION` authorization, guardian/consent grant versions and revocation
+1. run idempotency preflight and, for a new request, recheck scope, origin-derived
+   `ACCEPT_ADAPTATION` authority, guardian/consent grant versions and revocation
    epochs, fresh target-bound `GENERATION_ALLOWED` safety, and no active hold;
 2. run fresh Rule Spec validation on the exact reviewed proposed content and exposure
    ledger under the current rule version, with one terminal validation constraint;
@@ -1344,23 +1428,57 @@ atomic `CREATE_ADAPTATION` authorization, safety, hold, idempotency, append, aud
 and outbox transaction. Frame/lineage, option-set formation, selection, hold
 activation/release, and adaptation use the same no-partial-visibility rule.
 
-### 10.3 Deterministic adaptation action mapping
+Current-frame adjustment is one target-owned atomic transaction. Idempotency
+preflight authenticates the scoped namespace and compares the request hash. For a new
+request, the transaction rechecks exact `APPLY_CURRENT_FRAME_ADJUSTMENT` authorization,
+consent/guardian grants, tenant/group/athlete and active-plan scope, a fresh target-bound
+`GENERATION_ALLOWED` safety ref, D9 neither `ACTIVE` nor `UNKNOWN`, and no active hold.
+It then CAS-checks aggregate revision, safety epoch, authorization revocation epoch,
+accepted active-plan version, and `expectedActiveHoldState: NONE`; validates the
+bounded trigger/action and not-yet-due flexible target when applicable; and atomically
+appends the `CurrentFrameAdjustmentRecord`, aggregate event, audit, outbox, and durable
+idempotency result. Any failed or stale check rolls back the entire transaction, so
+the adjustment is neither appended nor applied. D9 `ACTIVE`/`UNKNOWN`, stale safety,
+or an active hold cannot be overridden by a coach or any other actor. An exact
+committed replay returns the prior result without a second append; reuse with a
+different request hash is rejected.
 
-| Trigger | Action |
+### 10.3 Deterministic and disjoint action mapping
+
+Safety blocking is separate from both record types:
+
+| Trigger | Record/action |
 |---|---|
-| Safety/auth/scope stop | Immediate `PlanExecutionHoldActivation`; no selectable proposal |
-| Accepted race, availability, or immovable-anchor change | `REBUILD_REMAINDER` |
-| Explicit scoped coach request | Exact requested allowed action after validation |
-| Provenance invalidation of a required source | `BLOCK_AND_REVIEW` |
-| Missing required source that invalidates the remainder | `REBUILD_REMAINDER` |
-| Missed MAIN without an explicit coach reschedule request | Preserve plan/outcome; no catch-up or compression |
-| Planned/experienced difference before thresholds are accepted | No automatic action; `NOT_COMPARABLE` |
+| Safety/auth/scope stop | Immediate `PlanExecutionHoldActivation`; no adjustment or selectable proposal |
+| D9 `ACTIVE`/`UNKNOWN`, stale Safety Gate, or active hold | No adjustment or selectable proposal |
 
-When several non-safety triggers exist, priority is
-`PROVENANCE_INVALIDATION > ANCHOR_CHANGE > EXPLICIT_COACH_REQUEST > MISSING_SOURCE`.
-Safety/auth/scope stops always preempt this table. A registered coach rule may later
-propose `SHIFT_FLEXIBLE_SESSION`, `REDUCE_SUPPORTING_DEMAND`, or
-`REPLACE_WITH_RECOVERY_OR_REST`; coach acceptance remains required.
+Only these triggers may create `PlanAdaptationProposal`:
+
+| Trigger | Record/action |
+|---|---|
+| Same-event PB/SB achieved after active-plan start | At-most-one-dimension `NEXT_FRAME` `PlanAdaptationProposal` only |
+| Explicit scoped athlete/coach request | At-most-one-dimension `NEXT_FRAME` `PlanAdaptationProposal` only |
+
+Only these triggers may create `CurrentFrameAdjustmentRecord`:
+
+| Trigger | Record/action |
+|---|---|
+| Current-frame recovery change | `MAINTAIN`, `REDUCE`, `REST`, or `MOVE_NOT_YET_DUE_FLEXIBLE_WORK` only |
+| Current-frame availability change | `MAINTAIN`, `REDUCE`, `REST`, or `MOVE_NOT_YET_DUE_FLEXIBLE_WORK` only |
+
+Every other event is explicitly non-proposal:
+
+| Event | Record/action |
+|---|---|
+| Accepted race or immovable-anchor change | `NO_ADAPTIVE_PROPOSAL`; use only the owning re-anchor/rebuild contract |
+| Provenance invalidation of a required source | `NO_ADAPTIVE_PROPOSAL`; invalidate or block through the owning provenance/hold contract |
+| Missing required source that invalidates the remainder | `NO_ADAPTIVE_PROPOSAL`; fail closed through the owning source contract |
+| Missed MAIN with or without a reschedule request | `NO_ADAPTIVE_PROPOSAL`; preserve plan/outcome with no catch-up or compression |
+| Planned/experienced difference before thresholds are accepted | `NO_ADAPTIVE_PROPOSAL`; `NOT_COMPARABLE` |
+
+Safety/auth/scope stops preempt every table. Race/anchor, provenance, missing-source,
+completion, RPE, attendance, streak, point, and journal-aggregate events cannot be
+relabelled as `EXPLICIT_REQUEST` or otherwise enter `PlanAdaptationProposal`.
 
 Private memo content or metadata can never trigger adaptation. Raw analyzable-note
 text can never enter it.
@@ -1399,14 +1517,14 @@ Reason codes are non-sensitive system states, not medical or note-derived catego
 | `FA_MEASURE_NOT_AGGREGATED` | Measure aggregation was unsafe or undefined. |
 | `FA_MAPPING_SCHEMA_BLOCKED` | Projection contract cannot preserve identity. |
 | `FA_STATS_SUPPRESSED` | Longitudinal output is unavailable pending policy. |
-| `FA_ADAPTATION_PROPOSED` | Coach-reviewed change proposal created. |
+| `FA_ADAPTATION_PROPOSED` | Origin-authorized next-frame change proposal created. |
 | `FA_SHADOW_ACTIVE` | Disclosed non-executing comparison is active; real training remains coach-governed. |
 | `FA_SHADOW_PAUSED` | Comparison needs review or eligible structured data; the athlete is not blamed. |
 | `FA_SHADOW_COMPLETE` | Accepted comparison protocol finished; no safety, efficacy, or performance claim is implied. |
 
 | ruleId | authorityClass | owner / version | applicability | requiredInputs | missingInputBehavior | output | reasonCodeRefs | evidenceSourceRefs | counterexampleOrFailureState | contractTestIds |
 |---|---|---|---|---|---|---|---|---|---|---|
-| `FA-R-001` | `PROPOSED_PENDING_OWNER_ACCEPTANCE` | AB + PSG / 0.3 | Every formation mutation; non-execution rejection uses the hold exception in FA-R-009 | scoped linked-coach identity, operation auth, consent/guardian versions, operation-scoped safety/hold state | block | eligible mutation or generic block | `FA_SCOPE_OR_SAFETY_BLOCK` | AB, PSG | mismatched scope, link, grant, purpose, epoch, expiry, stale gate, or active hold on an execution-enabling operation | 001-004, 021-023, 035-040, 067-069, 075-076, 081-083, 096 |
+| `FA-R-001` | `PROPOSED_PENDING_OWNER_ACCEPTANCE` | AB + PSG / 0.3 | Every formation mutation; non-execution rejection uses the hold exception in FA-R-009 | origin-scoped actor identity, operation auth, consent/guardian versions, operation-scoped safety/hold state | block | eligible mutation or generic block | `FA_SCOPE_OR_SAFETY_BLOCK` | AB, PSG | mismatched scope, authority, grant, purpose, epoch, expiry, stale gate, or active hold on an execution-enabling operation | 001-004, 021-023, 035-040, 067-069, 075-076, 081-083, 096 |
 | `FA-R-002` | `PROPOSED_PENDING_OWNER_ACCEPTANCE` | MCM + Formation / 0.3 | Eligible pilot frame | timezone DB, resolved boundaries, frame-head CAS, anchor | clarification | immutable local-civil frame and lineage event | `FA_FRAME_CREATED` | DEC-001, MCM | ambiguous boundary, UTC 228-hour assumption, fork, or carry-over ambiguity | 019-020, 048-050, 073-074 |
 | `FA-R-003` | `PROPOSED_PENDING_OWNER_ACCEPTANCE` | DLC + AB + PSG / 0.3 | Every source, safety, eligibility, reason, and governance ref | scope/content-hash-bound ancestry and governance graph | reject | privacy-eligible source or opaque safety-only ref | `FA_SOURCE_REJECTED` | DLC, WO009A, AB, PSG | private/raw-text laundering, substitution, detailed reason, missing governance, or cycle | 011-012, 017-018, 031-034, 055-057, 080, 084-086 |
 | `FA-R-004` | `PROPOSED_PENDING_OWNER_ACCEPTANCE` | RS + SC + PG / 0.3 | Competition planning/accounting | plan kind, role, demand, classifier label, exposure ledger | reject | one competition exposure without label rewrite | `FA_COMPETITION_EXPOSURE` | DEC-001, SC, RS | rewrite COMPETITION, invent RACE, omit from D1/D2, or double count | 005, 007, 024, 065-066 |
@@ -1414,14 +1532,14 @@ Reason codes are non-sensitive system states, not medical or note-derived catego
 | `FA-R-006` | `COACH_DECISION_SUPPORT` | Coach Hojune / 0.3 | After coach rule-set acceptance | fixed anchors, exposure classes, multidimensional intervening load, response, intent | clarification | canonical base schedule | `FA_PLACEMENT_REVIEW` | DEC-001, evidence ledger | elapsed-only clearance, unsafe catch-up, or unaccepted feasibility rule | 008, 025, 055, 063-064 |
 | `FA-R-007` | `PROPOSED_PENDING_OWNER_ACCEPTANCE` | Formation + PG / 0.3 | Accepted taxonomy and canonical base | canonical base, registered transforms, contextual triggers, hash envelope | clarification | ordered 2-or-3 option set and stable fingerprints/IDs | `FA_CANDIDATE_SET_CREATED` | DEC-001, PG | missing conservative, collision, duplicate, label-only transform, or fewer than 2 feasible | 001, 009, 026-027, 052, 054, 061-063, 078, 093 |
 | `FA-R-008` | `PROPOSED_PENDING_OWNER_ACCEPTANCE` | Formation + PG / 0.3 | Every option set | normalized options and total comparator | reject duplicate/collision | meaningful difference set | `FA_DUPLICATE_OPTION` | PG | label/rationale-only difference or input-order tie | 009, 052, 062 |
-| `FA-R-009` | `PROPOSED_PENDING_OWNER_ACCEPTANCE` | PG + AB + PSG / 0.3 | Selection, proposal, validation, and acceptance; `REJECT_ADAPTATION` rechecks authority but may execute while preserving an active hold | linked-coach auth, consent/guardian, scope, safety epoch, operation-scoped hold rule, and aggregate revisions | hard hold except for non-execution rejection | allowed operation or scoped hold | `FA_SELECTION_BLOCKED` | PG, AB, PSG | stale aggregate, wrong-purpose, cross-scope, revoked/expired grant, or active hold on an execution-enabling operation | 021-023, 035-043, 051, 067-076, 081-083, 096 |
+| `FA-R-009` | `PROPOSED_PENDING_OWNER_ACCEPTANCE` | PG + AB + PSG / 0.3 | Selection, proposal, validation, and acceptance; `REJECT_ADAPTATION` rechecks authority but may execute while preserving an active hold | origin-derived auth, consent/guardian, scope, safety epoch, operation-scoped hold rule, and aggregate revisions | hard hold except for non-execution rejection | allowed operation or scoped hold | `FA_SELECTION_BLOCKED` | PG, AB, PSG | stale aggregate, wrong-purpose, cross-scope, authority mismatch, revoked/expired grant, or active hold on an execution-enabling operation | 021-023, 035-043, 051, 067-076, 081-083, 096 |
 | `FA-R-010` | `PROPOSED_PENDING_OWNER_ACCEPTANCE` | PG + DLC / 0.3 | Session outcome ingestion | accepted plan version, completion and response refs, cutoff | retain missing/reject stale | immutable paired facts | `FA_OUTCOME_RECORDED` | DLC, evidence ledger | null completed ref, future response, stale ref, overwrite, or catch-up | 010, 013, 058-060, 064 |
 | `FA-R-011` | `PROPOSED_PENDING_OWNER_ACCEPTANCE` | PSG + PG + AB / 0.3 | Any post-generation safety/auth change | shared aggregate, sequenced causes, target-bound block refs | hard hold | append-only multi-cause hold projection | `FA_PLAN_ON_HOLD` | PSG, PG, AB | coach override, lost cause, stale release, or unheld executable version | 014, 021-023, 039-043, 069-070, 083-084 |
-| `FA-R-012` | `PROPOSED_PENDING_OWNER_ACCEPTANCE` | PG + AB + PSG / 0.3 | Selection, proposal, validation, rejection, and acceptance | canonical hashes, aggregate/base revisions, scope, linked auth, operation-scoped safety/hold inputs, idempotency | reject/rollback | one terminal decision and at most one validated append-only origin-bound version; rejection preserves any hold | `FA_ADAPTATION_ACCEPTED` | PG, AB, PSG | ID substitution, replay, altered payload, validation/decision race, fork, stale hash, partial commit, cross-scope ref, or rejection that releases/bypasses hold | 028-030, 044-047, 053, 069, 071-079, 082-083, 091-096 |
+| `FA-R-012` | `PROPOSED_PENDING_OWNER_ACCEPTANCE` | PG + AB + PSG / 0.3 | Selection, proposal, validation, rejection, and acceptance | canonical hashes, aggregate/base revisions, scope, origin-derived auth, operation-scoped safety/hold inputs, idempotency | reject/rollback | one terminal decision and at most one validated append-only origin-bound version; rejection preserves any hold | `FA_ADAPTATION_ACCEPTED` | PG, AB, PSG | ID substitution, replay, altered payload, validation/decision race, fork, stale hash, partial commit, cross-scope ref, or rejection that releases/bypasses hold | 028-030, 044-047, 053, 069, 071-079, 082-083, 091-096 |
 | `FA-R-013` | `PROPOSED_PENDING_OWNER_ACCEPTANCE` | PG + Formation / 0.3 | Component/measure preservation and aggregation | scope, parent, key, semantics, fraction | no aggregation | deduplicated typed component/measure set | `FA_MEASURE_NOT_AGGREGATED` | DEC-001 | parent/component copied total or unaccepted load feasibility | 006, 016, 054, 063 |
 | `FA-R-014` | `PROPOSED_PENDING_OWNER_ACCEPTANCE` | MCM + product projection owner / 0.3 | Seven-day and audience projection after schema patch | frame/block/version/session identity, resolved boundaries, audience, action state, visual grammar | block projection binding | identity-preserving accessible projection | `FA_MAPPING_SCHEMA_BLOCKED` | MCM | fixed D-5, missing version, slot mismatch, color/hover-only meaning, or composite collapse | 015, 050, 071-072, 074, 087-090 |
 | `FA-R-015` | `HOLD_INSUFFICIENT_EVIDENCE` | Research and privacy target owners / 0.3 | Longitudinal context | accepted sample/privacy/redaction/retention policies | suppress | null counts/statistics, empty refs, no influence | `FA_STATS_SUPPRESSED` | evidence ledger | count, source list, percentile, or unaccepted Physio result influences candidate | 025, 056-057 |
-| `FA-R-016` | `COACH_DECISION_SUPPORT` | Coach Hojune / 0.3 | Non-safety adaptation trigger | valid outcome, current accepted plan, accepted coach rules | review | deterministic proposal action | `FA_ADAPTATION_PROPOSED` | DEC-001, PG | threshold invented, stale response, or missed MAIN compressed | 010, 013, 028, 058-060, 064 |
+| `FA-R-016` | `COACH_DECISION_SUPPORT` | Coach Hojune / 0.4 | `COACH_AUTHORED` next-frame proposal only | same-event post-start PB/SB or explicit coach request, current accepted plan, accepted coach rules | review | at-most-one-dimension next-frame proposal from existing approved values | `FA_ADAPTATION_PROPOSED` | DEC-001, PG | active-frame mutation, threshold invented, stale response, automatic dose change, multiple dimensions, or missed MAIN compressed | 010, 013, 028, 058-060, 064 |
 | `FA-R-017` | `PROPOSED_PENDING_OWNER_ACCEPTANCE` | Product + AB + JDD + AVD / 0.4 | Shadow enrollment, generation, progress, pause, completion, and withdrawal | separate consent, immutable source/frame state, non-executing candidate result, linked-coach review, privacy-safe progress refs | block or show paused state | athlete-visible non-executing status plus safe progress projection | `FA_SHADOW_ACTIVE`, `FA_SHADOW_PAUSED`, `FA_SHADOW_COMPLETE` | DEC-SHADOW, AB, DLC, JDD, AVD | hidden operation, bundled consent, real-plan mutation, private-note signal, fake completion, coercive reward, inaccessible progress, or withdrawal penalty | 097-104 |
 
 ---
@@ -1567,7 +1685,7 @@ or efficacy.
 
 ## 13. Contract Test Vectors
 
-These are future contract tests, not executed runtime evidence. All 104 vectors test
+These are future contract tests, not executed runtime evidence. All 109 vectors test
 policy, data, privacy, authorization, identity, deterministic arbitration, and
 fail-closed mechanics. They do not validate physiological efficacy, recovery
 adequacy, performance benefit, injury-risk reduction, or safety.
@@ -1626,7 +1744,7 @@ adequacy, performance benefit, injury-risk reduction, or safety.
 | `FA-TC-050` | Re-anchor creates a gap or overlap | Lineage event records relation, effective boundary, disposition, and governing successor |
 | `FA-TC-051` | Consent is revoked after options but before any plan version exists | Run-target hold activation invalidates option set |
 | `FA-TC-052` | Competition-prep transform duplicates conservative option | Duplicate discarded; next feasible contextual option tried, otherwise exactly two |
-| `FA-TC-053` | Accepted adaptation content differs from coach-reviewed proposed hash | CAS/content binding rejects the transaction |
+| `FA-TC-053` | Accepted adaptation content differs from the origin-authorized proposed hash | CAS/content binding rejects the transaction |
 | `FA-TC-054` | Conservative transform changes only overview demand label | Transform rejected until typed component/measure change is registered |
 | `FA-TC-055` | Prior MAIN or intervening history is silently unavailable | Typed `ABSENT`, `STALE`, or `EXCLUDED` state is required and fails closed pending policy |
 | `FA-TC-056` | Unaccepted Physio Source Trust result is supplied | Source kind rejected until Formation acceptance and version guard exist |
@@ -1640,11 +1758,11 @@ adequacy, performance benefit, injury-risk reduction, or safety.
 | `FA-TC-064` | A planned MAIN is missed before the next MAIN | Record MISSED; no automatic catch-up, compression, or back-to-back move |
 | `FA-TC-065` | Competition is counted before exposure-class registry acceptance | Counts once with null/pending class; `RACE` is not invented |
 | `FA-TC-066` | Competition reaches Rule D1/D2 validation | Target binding must consume normalized exposure ledger or remain blocked; race cannot disappear |
-| `FA-TC-067` | Selector has capability but no verified linked-coach decision | Selection denied |
-| `FA-TC-068` | Same-group non-linked actor has generic selection capability | Selection denied without leaking plan payload |
+| `FA-TC-067` | `SELF_SERVICE` selector is not the scoped athlete, or `COACH_AUTHORED` selector lacks a verified linked-coach decision | Selection denied |
+| `FA-TC-068` | Proposal origin and selection authority do not map `SELF_SERVICE -> SELF` or `COACH_AUTHORED -> COACH_REQUIRED` | Selection denied without leaking plan payload |
 | `FA-TC-069` | Selection and safety revocation cross a deterministic barrier | Shared aggregate CAS permits only a held/non-executable outcome or a selection preceding a recorded hold; never executable-unheld |
 | `FA-TC-070` | Simultaneous, duplicate, late, and independently released hold causes arrive | One sequenced stream deduplicates sources; target stays held while any cause is active |
-| `FA-TC-071` | Coach selects a complete option set | Initial version is `SELECTED_PENDING_VALIDATION` and cannot execute/project |
+| `FA-TC-071` | Origin-authorized actor selects a complete option set | Initial version is `SELECTED_PENDING_VALIDATION` and cannot execute/project |
 | `FA-TC-072` | Rule validation rejects selected content | `VALIDATION_REJECTED`; no accepted/executable version exists |
 | `FA-TC-073` | Two re-anchors race from one frame-head revision | Unique successor/head CAS allows one; loser rolls back without partial lineage |
 | `FA-TC-074` | Re-anchor occurs at a DST fold with displaced sessions | Resolved effective boundary equals successor start and every displaced session has explicit disposition |
@@ -1664,7 +1782,7 @@ adequacy, performance benefit, injury-risk reduction, or safety.
 | `FA-TC-088` | Meaning is available only by color or hover | Projection rejected; icon/code/text and touch/print/screen-reader equivalents required |
 | `FA-TC-089` | Composite run+plyometric+strength session is collapsed to one dominant system or multiple sessions | Projection rejected; one session with ordered typed components preserved |
 | `FA-TC-090` | Audience requests explanation levels 1-5 | Only authorized level/fields project; athlete plain language and technical trace remain distinct |
-| `FA-TC-091` | Coach accepts an adaptation whose exact proposed content fails fresh Rule Spec validation | Append validation rejection and proposal invalidation only; no successor or sibling supersession |
+| `FA-TC-091` | Origin-authorized actor accepts an adaptation whose exact proposed content fails fresh Rule Spec validation | Append validation rejection and proposal invalidation only; no successor or sibling supersession |
 | `FA-TC-092` | Rule Spec version or exposure-ledger hash changes between adaptation review and commit | Stale acceptance rejected; fresh exact validation required |
 | `FA-TC-093` | Two runtimes derive planOptionId from the same run ID and candidate fingerprint golden fixture | Exact `PlanOptionIdHashEnvelope` preimage bytes and SHA-256 digest match |
 | `FA-TC-094` | Concurrent validation ACCEPT/REJECT callbacks and duplicate replay target one reserved version | Shared aggregate/unique terminal constraint commits one result; exact replay returns it without duplicate transition |
@@ -1678,6 +1796,11 @@ adequacy, performance benefit, injury-risk reduction, or safety.
 | `FA-TC-102` | Identical structured sources are compared with no memo versus a `PRIVATE_SELF_ONLY` memo | Shadow candidate, analysis, progress, reward, telemetry, and audit outputs are byte-identical |
 | `FA-TC-103` | Athlete withdraws during frame 2 | No new shadow processing; real plan and base journal continue; no shame/penalty/clawback; accepted retention/deletion policy governs existing records |
 | `FA-TC-104` | Progress is viewed on touch, grayscale/print, and screen reader | Frame number, text state, check label, dates, simulation status, and exit remain perceivable without color or hover |
+| `FA-TC-105` | Current-frame adjustment lacks scoped `APPLY_CURRENT_FRAME_ADJUSTMENT` authorization or capability | Transaction rejects; no adjustment, aggregate event, audit, outbox, or idempotency result is appended |
+| `FA-TC-106` | Current-frame adjustment observes D9 `ACTIVE` or `UNKNOWN` at atomic recheck | Transaction rolls back; no adjustment is appended or applied and no coach override exists |
+| `FA-TC-107` | Current-frame adjustment presents stale, wrong-target, or wrong-scope safety state/ref | Transaction rolls back without adjustment or payload disclosure |
+| `FA-TC-108` | An active hold exists or activates before current-frame adjustment CAS | `expectedActiveHoldState: NONE` fails; no adjustment is appended or applied and the hold remains active |
+| `FA-TC-109` | Exact current-frame adjustment request is replayed, or its idempotency key is reused with altered payload | Exact replay returns the durable prior result without a second append; altered request hash is rejected |
 
 ---
 
@@ -1696,9 +1819,9 @@ After owner acceptance, `PLAN_GENERATOR_SPEC.md` must be patched to:
 - use `SELECTED_PENDING_VALIDATION -> VALIDATED_ACCEPTED | VALIDATION_REJECTED`;
   selection alone cannot execute
 - adopt the domain-separated hash envelope, durable idempotency result, hold stream,
-  linked-coach binding, governance envelope, and no-partial-visibility transactions
+  origin-derived selection-authority binding, governance envelope, and no-partial-visibility transactions
 - add `NEEDS_COACH_CLARIFICATION` for missing formation context
-- keep coach selection, Safety Gate, Rule Spec validation, and audit ownership
+- keep origin-scoped explicit selection, Safety Gate, Rule Spec validation, and audit ownership
 
 `RULE_SPEC_D1_D9` must consume a target-accepted `MainExposureLedgerRecord` or exact
 adapter for D1/D2. Both training MAIN and competition exposure must be visible without
@@ -1740,7 +1863,7 @@ memo metadata reaches plan records. Daily Log must also bind planned-session fac
 the accepted plan-version lineage.
 
 Product projection remains blocked pending a target-owned contract for audience,
-linked-coach action state, youth/plain-language glossary, five explanation levels,
+origin-scoped action state, youth/plain-language glossary, five explanation levels,
 fatigue-first paired facts without a single readiness scalar, composite encoding,
 planned/completed/experienced separation, accessible non-color/hover-only meaning,
 and privacy copy. Existing design files that prescribe fixed D-5, color/hover-only
@@ -1790,7 +1913,7 @@ No downstream patch is authorized by this draft alone.
 | Calendar identity claim is blocked pending schema patch | PASS |
 | Evidence types and one-athlete safety/efficacy limits are explicit | PASS |
 | Athlete-visible shadow operation is disclosed, non-executing, withdrawable, and separated from coercive reward | PASS |
-| All 104 vectors are labeled policy mechanics rather than physiology validation | PASS |
+| All 109 vectors are labeled policy mechanics rather than physiology validation | PASS |
 | No production, app, canonical, or runtime claim is made | PASS |
 | Open issue count is 11 and canonical blocker count is 10 | PASS |
 | Final marker is the final line | PASS |
