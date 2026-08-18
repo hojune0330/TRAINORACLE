@@ -26,6 +26,7 @@ export type CandidatePrescriptionFallbackCode =
   | "PACE_TARGET_FALLBACK_EXPERIENCE_SCOPE"
   | "PACE_TARGET_FALLBACK_SAFETY_GATE"
   | "PACE_TARGET_FALLBACK_AUTHORITY_OR_COMPONENT"
+  | "PACE_TARGET_FALLBACK_STORED_SCHEMA"
   | "PACE_TARGET_FALLBACK_NO_ELIGIBLE_QUALITY"
 
 export type CandidatePrescriptionBinding =
@@ -172,7 +173,7 @@ export function bindDetailedPrescriptionCandidates(
     fallbackCode: "RPE_ONLY_CONTROLLED",
   })
   if (stored === null) {
-    return fallback(generated, "PACE_TARGET_FALLBACK_AUTHORITY_OR_COMPONENT")
+    return fallback(generated, "PACE_TARGET_FALLBACK_STORED_SCHEMA")
   }
 
   const balanced = bindOneDetailedPrescriptionCandidate(generated.candidates[0], stored)

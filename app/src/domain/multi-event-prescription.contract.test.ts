@@ -21,11 +21,11 @@ const BASE_DRAFT = {
 const CASES = [
   {
     eventDistanceM: 800,
-    performanceSeconds: 120,
+    performanceSeconds: 122,
     notation: "10×200m @800m RP · r60″ STAND",
     repetitionsPerSet: 10,
     repetitionDistanceM: 200,
-    targetRepSeconds: 30,
+    targetRepSeconds: 30.5,
     recoverySeconds: 60,
     recoveryMode: "STAND",
     qualityDistanceM: 2000,
@@ -35,11 +35,11 @@ const CASES = [
   },
   {
     eventDistanceM: 1500,
-    performanceSeconds: 240,
+    performanceSeconds: 245,
     notation: "3×500m @1500m RP · r180″ STAND",
     repetitionsPerSet: 3,
     repetitionDistanceM: 500,
-    targetRepSeconds: 80,
+    targetRepSeconds: 245 * 500 / 1500,
     recoverySeconds: 180,
     recoveryMode: "STAND",
     qualityDistanceM: 1500,
@@ -49,11 +49,11 @@ const CASES = [
   },
   {
     eventDistanceM: 3000,
-    performanceSeconds: 600,
+    performanceSeconds: 611,
     notation: "4×800m @3000m RP · r180″ WALK",
     repetitionsPerSet: 4,
     repetitionDistanceM: 800,
-    targetRepSeconds: 160,
+    targetRepSeconds: 611 * 800 / 3000,
     recoverySeconds: 180,
     recoveryMode: "WALK",
     qualityDistanceM: 3200,
@@ -160,6 +160,26 @@ describe("multi-event same-event detailed prescriptions", () => {
       })
     },
   )
+
+  it("keeps a decimal electronic result as the exact pace anchor", () => {
+    const selectedRecordId = saveCurrentRecord(800, 121.5)
+    const result = generatePlanFromDraft(
+      BASE_DRAFT,
+      "NO_KNOWN_RISK",
+      { selectedRecordId },
+    )
+
+    expect(result.kind).toBe("generated")
+    if (result.kind !== "generated") return
+    expect(result.prescriptionBinding).toEqual({ kind: "bound", code: "PACE_TARGET_BOUND" })
+    const detailed = result.generated.candidates[0].sessions.find((session) => (
+      session.role === "QUALITY" && session.prescription.kind === "PACE_TARGET"
+    ))
+    expect(detailed?.prescription).toMatchObject({
+      targetEventDistanceM: 800,
+      targetRepSeconds: 30.375,
+    })
+  })
 
   it("keeps an unsupported same-group distance RPE-only", () => {
     const selectedRecordId = saveCurrentRecord(1000, 150)

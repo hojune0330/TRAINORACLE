@@ -10,7 +10,7 @@ const RECORDS = [
     id: "pb-5k-current",
     purpose: "PERSONAL_BEST",
     eventDistanceM: 5000,
-    performanceSeconds: 1110,
+    performanceSeconds: 1111,
     achievedOn: "2026-05-10",
     seasonId: null,
     enteredBy: "ATHLETE",
@@ -62,9 +62,12 @@ describe("production detailed prescription experience", () => {
     await reachCandidates()
 
     const picker = screen.getByRole("region", { name: "개인 페이스 기준 기록" })
-    await user.click(within(picker).getByRole("button", { name: /개인 최고.*18분 30초/u }))
+    const comparison = screen.getByRole("region", { name: "두 계획 핵심 비교" })
+    expect(picker.compareDocumentPosition(comparison))
+      .toBe(Node.DOCUMENT_POSITION_FOLLOWING)
+    await user.click(within(picker).getByRole("button", { name: /개인 최고.*18분 31초/u }))
     await user.click(within(picker).getByRole("button", { name: /비교 기록.*시즌 최고.*19분/u }))
-    expect(within(picker).getByText(/기준 기록.*18분 30초/u)).toBeVisible()
+    expect(within(picker).getByText(/기준 기록.*18분 31초/u)).toBeVisible()
     expect(within(picker).getByText(/비교만.*19분/u)).toBeVisible()
 
     await user.click(within(picker).getByRole("button", { name: "이 기록으로 개인 페이스 적용" }))
@@ -72,25 +75,86 @@ describe("production detailed prescription experience", () => {
     const schedule = screen.getAllByRole("list", { name: "날짜별 계획 미리보기" })[0]
     if (schedule === undefined) throw new Error("Expected an expanded candidate schedule")
     expect(within(schedule).getByText(/5×1000m @5000m RP.*r150.*JOG/u)).toBeVisible()
+    expect(within(schedule).getByText("총 5회 · 품질 거리 5000m · 1000m 3분 42초")).toBeVisible()
     expect(within(schedule).getAllByText(/5회.*5000m/u)).not.toHaveLength(0)
     expect(within(schedule).getByText(/4번.*150초.*조깅.*600초/u)).toBeVisible()
     await user.click(within(schedule).getByText("기준 기록·중단·낮춤 규칙 보기"))
-    expect(within(schedule).getByText(/5000m.*18분 30초.*2026-05-10/u)).toBeVisible()
+    expect(within(schedule).getByText(/5000m.*18분 31초.*2026-05-10/u)).toBeVisible()
 
     await user.click(screen.getByRole("button", { name: /반복 인터벌 포함 선택하기/u }))
     expect(screen.getByRole("heading", { name: /반복 인터벌 포함 9일 계획/u })).toBeVisible()
-    expect(screen.getByText(/5×1000m @5000m RP.*r150.*JOG/u)).toBeVisible()
-    await user.click(screen.getByText("시작·다시 시작 전 확인"))
-    await user.click(screen.getByRole("button", { name: "통증 없고 평소와 같음 · 시작 확인" }))
+    const activeNotation = screen.getByText(/5×1000m @5000m RP.*r150.*JOG/u)
+    expect(activeNotation).toBeVisible()
+    const activeSession = activeNotation.closest("section[role='group']")
+    if (!(activeSession instanceof HTMLElement)) throw new Error("Expected the detailed active session")
+    await user.click(screen.getByText("시작 전 확인"))
+    const startButton = screen.getByRole("button", { name: "통증 없고 평소와 같음 · 시작 확인" })
+    const reviewButton = screen.getByRole("button", { name: "통증·이상 또는 잘 모르겠음" })
+    expect(startButton).toHaveClass("active-plan__execution-primary")
+    expect(screen.queryByRole("button", { name: "통증 없고 평소와 같음 · 다시 시작 확인" })).toBeNull()
+    expect(reviewButton).toHaveClass("active-plan__execution-review")
+    await user.click(startButton)
     expect(screen.getByRole("status")).toHaveTextContent("시작할 수 있어요")
-    await user.click(screen.getByRole("button", { name: "통증 없고 평소와 같음 · 다시 시작 확인" }))
-    expect(screen.getByRole("status")).toHaveTextContent("다시 시작할 수 있어요")
+
+    const completedButton = within(activeSession).getByRole("button", { name: "완료" })
+    await user.click(completedButton)
+    expect(screen.queryByRole("button", { name: "통증 없고 평소와 같음 · 시작 확인" })).toBeNull()
+    expect(screen.queryByRole("button", { name: "통증 없고 평소와 같음 · 다시 시작 확인" })).toBeNull()
+    expect(screen.queryByRole("status")).toBeNull()
+    expect(screen.getByText(/이미 결과를 기록한 세션은 다시 시작하지 않아요/u)).toBeVisible()
+    expect(screen.getByRole("button", { name: "통증·이상 또는 잘 모르겠음" })).toBeVisible()
+
+    const painButton = within(activeSession).getByRole("button", { name: "통증 체크" })
+    await user.click(painButton)
+    expect(screen.queryByRole("button", { name: "통증 없고 평소와 같음 · 시작 확인" })).toBeNull()
+    expect(screen.queryByRole("button", { name: "통증 없고 평소와 같음 · 다시 시작 확인" })).toBeNull()
+    expect(screen.queryByRole("status")).toBeNull()
+    expect(screen.getByRole("button", { name: "통증·이상 또는 잘 모르겠음" })).toBeVisible()
 
     firstRender.unmount()
     render(<PlanBeta />)
     expect(screen.getByText(/5×1000m @5000m RP.*r150.*JOG/u)).toBeVisible()
     await user.click(screen.getByText("기준 기록·중단·낮춤 규칙 보기"))
-    expect(screen.getByText(/5000m.*18분 30초.*2026-05-10/u)).toBeVisible()
+    expect(screen.getByText(/5000m.*18분 31초.*2026-05-10/u)).toBeVisible()
+  })
+
+  it("clears the execution allowance message on every recorded outcome", async () => {
+    const user = userEvent.setup()
+    render(<PlanBeta />)
+    await reachCandidates()
+
+    const picker = screen.getByRole("region", { name: "개인 페이스 기준 기록" })
+    await user.click(within(picker).getByRole("button", { name: /개인 최고.*18분 31초/u }))
+    await user.click(within(picker).getByRole("button", { name: "이 기록으로 개인 페이스 적용" }))
+    await user.click(screen.getByRole("button", { name: /반복 인터벌 포함 선택하기/u }))
+
+    const activeNotation = screen.getByText(/5×1000m @5000m RP.*r150.*JOG/u)
+    const activeSession = activeNotation.closest("section[role='group']")
+    if (!(activeSession instanceof HTMLElement)) throw new Error("Expected the detailed active session")
+
+    // RESTED clears the START allowance message and removes start/restart
+    await user.click(screen.getByText("시작 전 확인"))
+    await user.click(screen.getByRole("button", { name: "통증 없고 평소와 같음 · 시작 확인" }))
+    expect(screen.getByRole("status")).toHaveTextContent("시작할 수 있어요")
+    await user.click(within(activeSession).getByRole("button", { name: "휴식" }))
+    expect(screen.queryByRole("status")).toBeNull()
+    expect(screen.queryByRole("button", { name: /통증 없고 평소와 같음 · (시작|다시 시작) 확인/u })).toBeNull()
+
+    // SKIPPED clears a review message raised after the outcome
+    await user.click(screen.getByRole("button", { name: "통증·이상 또는 잘 모르겠음" }))
+    expect(screen.getByRole("status")).toHaveTextContent("지금은 상세 세션을 시작하지 않아요")
+    await user.click(within(activeSession).getByRole("button", { name: "건너뜀" }))
+    expect(screen.queryByRole("status")).toBeNull()
+    expect(screen.queryByRole("button", { name: /통증 없고 평소와 같음 · (시작|다시 시작) 확인/u })).toBeNull()
+
+    // PAIN_CHECKIN clears any remaining message and keeps only the review path
+    await user.click(screen.getByRole("button", { name: "통증·이상 또는 잘 모르겠음" }))
+    expect(screen.getByRole("status")).toBeVisible()
+    await user.click(within(activeSession).getByRole("button", { name: "통증 체크" }))
+    expect(screen.queryByRole("status")).toBeNull()
+    expect(screen.getByText("통증 기록 후 확인")).toBeVisible()
+    expect(screen.queryByRole("button", { name: /통증 없고 평소와 같음 · (시작|다시 시작) 확인/u })).toBeNull()
+    expect(screen.getByRole("button", { name: "통증·이상 또는 잘 모르겠음" })).toBeVisible()
   })
 
   it("requires reconfirmation after replacing a confirmed record", async () => {
@@ -99,7 +163,7 @@ describe("production detailed prescription experience", () => {
     await reachCandidates()
 
     const picker = screen.getByRole("region", { name: "개인 페이스 기준 기록" })
-    await user.click(within(picker).getByRole("button", { name: /개인 최고.*18분 30초/u }))
+    await user.click(within(picker).getByRole("button", { name: /개인 최고.*18분 31초/u }))
     await user.click(within(picker).getByRole("button", { name: "이 기록으로 개인 페이스 적용" }))
     expect(screen.getAllByText(/5×1000m @5000m RP.*r150.*JOG/u)).not.toHaveLength(0)
 
@@ -119,7 +183,7 @@ describe("production detailed prescription experience", () => {
     await reachCandidates()
 
     const picker = screen.getByRole("region", { name: "개인 페이스 기준 기록" })
-    await user.click(within(picker).getByRole("button", { name: /개인 최고.*18분 30초/u }))
+    await user.click(within(picker).getByRole("button", { name: /개인 최고.*18분 31초/u }))
     await user.click(within(picker).getByRole("button", { name: "이 기록으로 개인 페이스 적용" }))
 
     expect(within(picker).getByText(/기록일이 현재 기준 범위를 벗어났어요/u)).toBeVisible()

@@ -1,6 +1,7 @@
 import type { PlanSession } from "@impl/plan-generator/types"
 import { TermHelp } from "../../components/TermHelp"
 import { formatRecordTime } from "../../domain/athlete-record-display"
+import { formatTrainingSeconds } from "./labels"
 
 type Detailed = Extract<PlanSession["prescription"], { readonly kind: "PACE_TARGET" }>
 
@@ -19,7 +20,7 @@ export function DetailedPrescriptionView({ prescription }: { readonly prescripti
         <strong>본운동</strong>
         <span>
           {prescription.setCount > 1 && `${prescription.setCount}세트 · 세트마다 `}
-          {prescription.repetitionDistanceM}m를 {formatDuration(prescription.targetRepSeconds)} 목표로
+          {prescription.repetitionDistanceM}m를 {formatTrainingSeconds(prescription.targetRepSeconds)} 목표로
           {" "}{prescription.repetitionsPerSet}회
           {prescription.setCount > 1 && ` · 총 ${prescription.totals.totalRepetitions}회`}
           {" · "}품질 거리 {prescription.totals.qualityDistanceM}m
@@ -68,16 +69,11 @@ export function DetailedPrescriptionView({ prescription }: { readonly prescripti
           <ul>
             {prescription.stopCodes.map((code) => <li key={code}>{stopLabel(code)}</li>)}
           </ul>
-          <small>처방 지문 · {shortFingerprint(prescription.prescriptionFingerprint)}</small>
+          <small>처방 무결성 · 확인됨</small>
         </div>
       </details>
     </div>
   )
-}
-
-function formatDuration(seconds: number): string {
-  const rounded = Math.round(seconds)
-  return `${Math.floor(rounded / 60)}분 ${String(rounded % 60).padStart(2, "0")}초`
 }
 
 function recoveryModeLabel(mode: Detailed["repetitionRecoveryMode"]): string {
@@ -91,10 +87,6 @@ function recoveryModeLabel(mode: Detailed["repetitionRecoveryMode"]): string {
     case "NOT_APPLICABLE":
       return ""
   }
-}
-
-function shortFingerprint(value: string): string {
-  return value.length <= 28 ? value : `${value.slice(0, 14)}…${value.slice(-10)}`
 }
 
 function stopLabel(code: Detailed["stopCodes"][number]): string {

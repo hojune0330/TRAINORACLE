@@ -81,7 +81,6 @@ export function PlanCandidates({
           ? "종목, 경험, 고른 훈련 목적, 가능한 훈련일과 9.5일 기본 틀만 사용했어요. 개인 페이스와 최근 훈련량은 추정하지 않습니다."
           : "최근 일지가 있는지만 확인했어요. 일지의 거리, RPE, 메모는 이번 베타 계획의 시간이나 강도를 바꾸지 않습니다."}
       </p>
-      <CandidateComparison candidates={generated.candidates} />
       {(intake.eventGroup === "FIVE_K" || intake.eventGroup === "MIDDLE_DISTANCE")
         && intake.experienceBand === "EXPERIENCED"
         && (
@@ -96,6 +95,7 @@ export function PlanCandidates({
           onConfirm={onConfirmRecord}
         />
       )}
+      <CandidateComparison candidates={generated.candidates} />
       <div className="plan-source-strip">
         <ShieldCheck aria-hidden="true" size={17} />
         <span>

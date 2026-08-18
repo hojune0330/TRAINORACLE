@@ -247,10 +247,10 @@ function validateStoredPaceTargetContent(
   }
   if (
     value.selectedAnchor.eventDistanceM !== value.targetEventDistanceM
-    || Math.round(
+    || (
       value.selectedAnchor.performanceSeconds
       * value.repetitionDistanceM
-      / value.targetEventDistanceM,
+      / value.targetEventDistanceM
     ) !== value.targetRepSeconds
   ) {
     addStoredIssue(context, ["selectedAnchor"], "Stored anchor does not reproduce the pace target.")
