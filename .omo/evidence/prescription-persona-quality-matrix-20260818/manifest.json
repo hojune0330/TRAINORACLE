@@ -1,80 +1,122 @@
 {
-  "schemaVersion": 1,
-  "baselineCommit": "edd7151e60c00b8a4c2b58722f39d021f7f5477a",
-  "status": "DONE_CLAIM_READY",
-  "changedSourceFiles": [
-    "app/src/domain/prescription-quality-matrix-cases.ts",
-    "app/src/domain/prescription-quality-matrix.contract.test.ts",
-    "impl/src/plan-generator/session-builder.ts",
-    "impl/test/plan-beta-generation.test.ts"
+  "schemaVersion": 2,
+  "reviewBaseCommit": "e18f09998f9f4619a375909e338848c3c9310864",
+  "sourceCommit": "e6bf8b6c2c110abe9d6329a5fad57f07338f90e5",
+  "status": "READY_FOR_INDEPENDENT_RE_REVIEW",
+  "reviewChangedSourceFiles": [
+    {
+      "path": "app/src/domain/prescription-quality-matrix-cases.ts",
+      "change": "DELETED"
+    },
+    {
+      "path": "app/src/domain/prescription-quality-matrix.test-fixtures.ts",
+      "change": "ADDED_TEST_ONLY"
+    },
+    {
+      "path": "app/src/domain/prescription-quality-matrix.contract.test.ts",
+      "change": "MODIFIED"
+    }
   ],
+  "productionCodeChangedByReview": false,
+  "preservedProductionFix": "impl/src/plan-generator/session-builder.ts from review base e18f09998f9f4619a375909e338848c3c9310864",
+  "verification": {
+    "matrix": {
+      "filesPassed": 1,
+      "testsPassed": 14
+    },
+    "appFocused": {
+      "filesPassed": 5,
+      "testsPassed": 60
+    },
+    "implFocused": {
+      "filesPassed": 4,
+      "testsPassed": 78
+    },
+    "day10RemovalMutation": {
+      "testExit": 1,
+      "expectedNonzero": true,
+      "namedFailures": [
+        "5000-current-10d-daily-double-morning",
+        "5000-current-10d-daily-double-evening"
+      ],
+      "restored": true
+    },
+    "typechecks": {
+      "app": "PASS",
+      "e2e": "PASS",
+      "impl": "PASS"
+    },
+    "gitDiffCheck": "PASS",
+    "fullSuitesRerun": false,
+    "buildRerun": false,
+    "chromiumQaRerun": false,
+    "nonRerunReason": "Review changes are tests and evidence only; the already-reviewed production slot fix was not changed."
+  },
   "acceptanceEvidence": [
     {
       "path": "prescription-quality-matrix.json",
-      "sha256": "5da28625331e900b7ff91325d16c5590bed4d2e018e94392fcd16ab314f3ba89",
-      "observable": "Machine-readable supported, fallback, blocked, privacy, persona, and unsupported matrix"
-    },
-    {
-      "path": "matrix-red-two-paths.log",
-      "sha256": "5109ffb2abbdea19a360254e6dc8063efe0eedec4337d018261efd9390a168dd",
-      "observable": "2 failed and 11 passed; invalid day-ten PM recovery and quality sessions"
+      "sha256": "1b4d200f32406227dd86d8d7b0b08ba4eab328f08e1f9873d4707bfc0b411f95",
+      "observable": "Machine-readable runtime cases, sampled review metadata, observed selection/privacy, population contract, blocks, and unsupported combinations"
     },
     {
       "path": "matrix-green-final.log",
-      "sha256": "c6ccc8f2a0b4f98dc816a78d29751cbe065babc0518edec25336e63c34f64114",
-      "observable": "13 passed"
+      "sha256": "a4ca9d400a9f271063abb4fa2f46614c283622993207d561e459eed1593f3394",
+      "observable": "Matrix 14/14 passed"
     },
     {
-      "path": "app-full-test.log",
-      "sha256": "bb2926c6b9129a2ac4c2c7e6f0a4eef3c17a87e43de6d753f1b58dbe39fd97d2",
-      "observable": "1299 UTC, 1299 KST, and 9 release-env tests passed"
+      "path": "matrix-day10-removal-mutation.log",
+      "sha256": "ed84e24c406e87d89e91e9ea16d518d4f759e138af32bb29faf36f4d55cfe32a",
+      "observable": "Day-10 QUALITY removal exited 1 and named both daily 5000 failures"
     },
     {
-      "path": "impl-full-test.log",
-      "sha256": "76717012673ecdbf4cef81352d1be651ab473eb9687cc4cf1b57cfb314b8e2c5",
-      "observable": "161 passed"
+      "path": "app-focused-final.log",
+      "sha256": "7c65bbdf274a51850c634ea4b0f35a5ad5a7e34ab2b705f92c6dd701d4c904f7",
+      "observable": "Focused app 60/60 passed"
     },
     {
-      "path": "app-build.log",
-      "sha256": "bcf34421fac249e23f2bd42397fd32d042e15f5864c8afc516813c4500c89678",
-      "observable": "1918 modules transformed; build succeeded"
+      "path": "impl-focused-final.log",
+      "sha256": "aaaaa2911d060cc1c1a7b4185dfdb325b48d81f8637f1b67316be268cdc7e10c",
+      "observable": "Focused impl 78/78 passed"
     },
     {
-      "path": "playwright-isolated-multi-event-green.log",
-      "sha256": "17249ff96398f43c27048a178b26466a000e1fbce328a9d1bc0fc1d8a31238ac",
-      "observable": "3 isolated current-worktree Chromium flows passed"
+      "path": "app-typecheck-final.log",
+      "sha256": "25a1033835841f8122395e04c2c8f55dda3b52802c9485ff327f458212cd2304",
+      "observable": "App TypeScript passed"
+    },
+    {
+      "path": "e2e-typecheck-final.log",
+      "sha256": "4ed0e3b4ea4ecb8d76faebcdd938227000d9fd8e49989d10265727f41de07e1e",
+      "observable": "E2E TypeScript passed"
+    },
+    {
+      "path": "impl-typecheck-final.log",
+      "sha256": "10f0e280d104b9803fed4b79d8141b96c090e59d1a60cb20069ce4e80f2434c5",
+      "observable": "Impl TypeScript passed"
     },
     {
       "path": "final-git-audit.log",
-      "sha256": "063c85c38d361e7059b9baf5deb9a86eac112b5d72d19d319e28d8b807542c13",
-      "observable": "git diff --check passed; only task source and evidence present"
+      "sha256": "1f582810c55c637239d807c71b31e2339a59ea8b205c40200bbd465d0db46e17",
+      "observable": "No review-only production binding diff; task source/evidence status and diff check recorded"
     }
   ],
-  "invalidQaAttempts": {
-    "logs": [
-      "playwright-multi-event.log",
-      "playwright-youth-adult.log"
-    ],
-    "reason": "Playwright reused an unrelated existing preview on port 4173; these attempts are diagnostic only and are excluded from acceptance."
-  },
   "receipts": [
     {
       "path": "DoneClaim.md",
-      "sha256": "82355e5679f2c7a475827bbe9db17cbce60254b14b9b41ec054eddeec4bb358c"
+      "sha256": "7f22c28344a6532112568cd0a5b2acc207cb50bd9c406f38e854138bd5ca27ab"
     },
     {
       "path": "cleanup-receipt.log",
-      "sha256": "bc69e82be2e142a1d455d30e444aff811bda36879ca80c8be02449f8560cf4aa"
+      "sha256": "f6cdddec85544097095eee351edabbf404454acad4efb16067650f6d31fcc21e"
     }
   ],
   "cleanup": {
-    "removed": [
-      "app/dist",
-      "impl/dist",
-      "app/test-results"
+    "invalidQaArtifactsRemoved": [
+      "matrix-before-fix.json",
+      "playwright-stale-fixture-context.md",
+      "playwright-stale-fixture-trace.zip",
+      "playwright-stale-fixture.png"
     ],
-    "isolatedPort4174Listener": false,
-    "unrelatedPort4173ProcessTouched": false,
-    "pushOrMergePerformed": false
+    "temporaryMutationRestored": true,
+    "pushMergeCommitResetCleanPerformed": false
   }
 }

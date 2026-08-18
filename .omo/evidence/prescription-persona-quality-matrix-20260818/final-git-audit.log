@@ -1,13 +1,36 @@
-warning: in the working copy of 'impl/src/plan-generator/session-builder.ts', LF will be replaced by CRLF the next time Git touches it
-warning: in the working copy of 'impl/test/plan-beta-generation.test.ts', LF will be replaced by CRLF the next time Git touches it
-git diff --check: PASS
- M impl/src/plan-generator/session-builder.ts
- M impl/test/plan-beta-generation.test.ts
-?? .omo/evidence/prescription-persona-quality-matrix-20260818/
-?? app/src/domain/prescription-quality-matrix-cases.ts
-?? app/src/domain/prescription-quality-matrix.contract.test.ts
-warning: in the working copy of 'impl/src/plan-generator/session-builder.ts', LF will be replaced by CRLF the next time Git touches it
-warning: in the working copy of 'impl/test/plan-beta-generation.test.ts', LF will be replaced by CRLF the next time Git touches it
- impl/src/plan-generator/session-builder.ts | 40 ++++++++++++++++++++----------
- impl/test/plan-beta-generation.test.ts     |  6 ++---
- 2 files changed, 30 insertions(+), 16 deletions(-)
+REVIEW_BASE=e18f09998f9f4619a375909e338848c3c9310864
+SOURCE_COMMIT=e6bf8b6c2c110abe9d6329a5fad57f07338f90e5
+GIT_DIFF_CHECK_EXIT=0
+warning: in the working copy of '.omo/evidence/prescription-persona-quality-matrix-20260818/DoneClaim.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of '.omo/evidence/prescription-persona-quality-matrix-20260818/cleanup-receipt.log', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of '.omo/evidence/prescription-persona-quality-matrix-20260818/manifest.json', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of '.omo/evidence/prescription-persona-quality-matrix-20260818/matrix-green-final.log', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of '.omo/evidence/prescription-persona-quality-matrix-20260818/prescription-quality-matrix.json', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'app/src/domain/prescription-quality-matrix.contract.test.ts', LF will be replaced by CRLF the next time Git touches it
+CANDIDATES_BINDING_WORK_DIFF=NONE
+SESSION_BUILDER_WORK_DIFF=NONE
+INVALID_QA_ARTIFACTS_PRESENT=0
+CACHED_DIFF_BEGIN
+NONE
+CACHED_DIFF_END
+WORKTREE_DIFF_BEGIN
+M	.omo/evidence/prescription-persona-quality-matrix-20260818/DoneClaim.md
+M	.omo/evidence/prescription-persona-quality-matrix-20260818/cleanup-receipt.log
+M	.omo/evidence/prescription-persona-quality-matrix-20260818/final-git-audit.log
+M	.omo/evidence/prescription-persona-quality-matrix-20260818/manifest.json
+M	.omo/evidence/prescription-persona-quality-matrix-20260818/matrix-green-final.log
+M	.omo/evidence/prescription-persona-quality-matrix-20260818/prescription-quality-matrix.json
+D	app/src/domain/prescription-quality-matrix-cases.ts
+M	app/src/domain/prescription-quality-matrix.contract.test.ts
+WORKTREE_DIFF_END
+WORKTREE_STATUS_BEGIN
+ M .omo/evidence/prescription-persona-quality-matrix-20260818/DoneClaim.md
+ M .omo/evidence/prescription-persona-quality-matrix-20260818/cleanup-receipt.log
+ M .omo/evidence/prescription-persona-quality-matrix-20260818/final-git-audit.log
+ M .omo/evidence/prescription-persona-quality-matrix-20260818/manifest.json
+ M .omo/evidence/prescription-persona-quality-matrix-20260818/matrix-green-final.log
+ M .omo/evidence/prescription-persona-quality-matrix-20260818/prescription-quality-matrix.json
+ D app/src/domain/prescription-quality-matrix-cases.ts
+ M app/src/domain/prescription-quality-matrix.contract.test.ts
+?? app/src/domain/prescription-quality-matrix.test-fixtures.ts
+WORKTREE_STATUS_END

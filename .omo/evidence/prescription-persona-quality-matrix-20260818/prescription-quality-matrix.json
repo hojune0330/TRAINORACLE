@@ -1,8 +1,9 @@
 {
-  "schemaVersion": 1,
-  "baselineCommit": "edd7151e60c00b8a4c2b58722f39d021f7f5477a",
+  "schemaVersion": 2,
+  "reviewBaseCommit": "e18f09998f9f4619a375909e338848c3c9310864",
+  "sourceCommit": "PARENT_TO_FILL_AFTER_CODE_TEST_COMMIT",
   "evaluatedAt": "2026-08-17T03:00:00.000Z",
-  "modeledInputs": [
+  "executedRuntimeInputs": [
     "event",
     "experienceBand",
     "recordEvidence",
@@ -12,54 +13,55 @@
     "trainingTimePreference",
     "D9"
   ],
-  "reportOnlyPersonaDimensions": [
+  "sampledReviewMetadataFields": [
+    "divisionLabel",
     "reportedSex",
-    "performanceTier",
-    "competitionDivision"
+    "performanceTier"
   ],
-  "personaCoverage": [
+  "sampledReviewMetadataNotice": "These labels are not passed as dose inputs and are not Cartesian executable coverage.",
+  "sampledReviewMetadata": [
     {
-      "competitionDivision": "HIGH_SCHOOL",
+      "divisionLabel": "HIGH_SCHOOL",
       "reportedSex": "MALE",
       "performanceTier": "HIGH"
     },
     {
-      "competitionDivision": "HIGH_SCHOOL",
+      "divisionLabel": "HIGH_SCHOOL",
       "reportedSex": "MALE",
       "performanceTier": "MID"
     },
     {
-      "competitionDivision": "HIGH_SCHOOL",
+      "divisionLabel": "HIGH_SCHOOL",
       "reportedSex": "MALE",
       "performanceTier": "LOW"
     },
     {
-      "competitionDivision": "HIGH_SCHOOL",
+      "divisionLabel": "HIGH_SCHOOL",
       "reportedSex": "FEMALE",
       "performanceTier": "HIGH"
     },
     {
-      "competitionDivision": "HIGH_SCHOOL",
+      "divisionLabel": "HIGH_SCHOOL",
       "reportedSex": "FEMALE",
       "performanceTier": "MID"
     },
     {
-      "competitionDivision": "HIGH_SCHOOL",
+      "divisionLabel": "HIGH_SCHOOL",
       "reportedSex": "FEMALE",
       "performanceTier": "LOW"
     },
     {
-      "competitionDivision": "COLLEGE",
+      "divisionLabel": "COLLEGE",
       "reportedSex": null,
       "performanceTier": null
     },
     {
-      "competitionDivision": "OPEN",
+      "divisionLabel": "OPEN",
       "reportedSex": null,
       "performanceTier": null
     }
   ],
-  "evidenceCoverage": [
+  "evidenceSamples": [
     {
       "state": "NONE",
       "caseId": "no-record",
@@ -72,20 +74,17 @@
     },
     {
       "state": "CURRENT_SAME_EVENT_WITH_SUFFICIENT_JOURNAL",
-      "caseId": "5000-open-female-high-10d-daily-double",
+      "caseId": "5000-current-10d-daily-double-evening",
       "runtimeMeaning": "A selected CURRENT same-event anchor plus two usable recent journal sessions."
     }
   ],
-  "supportedGenerationCases": [
+  "executedGenerationCases": [
     {
-      "caseId": "800-hs-male-high-7d",
+      "caseId": "800-current-7d",
       "eventDistanceM": 800,
       "eventGroup": "MIDDLE_DISTANCE",
       "performanceSeconds": 122,
       "targetRepSeconds": 30.5,
-      "competitionDivision": "HIGH_SCHOOL",
-      "reportedSex": "MALE",
-      "performanceTier": "HIGH",
       "requestedFrameLength": 7,
       "availableDayCount": 3,
       "secondSessionMode": "SINGLE_SESSION_ONLY",
@@ -93,14 +92,11 @@
       "withRecentJournal": false
     },
     {
-      "caseId": "1500-hs-female-mid-9d-double",
+      "caseId": "1500-current-9d-double",
       "eventDistanceM": 1500,
       "eventGroup": "MIDDLE_DISTANCE",
       "performanceSeconds": 245,
       "targetRepSeconds": 81.66666666666667,
-      "competitionDivision": "HIGH_SCHOOL",
-      "reportedSex": "FEMALE",
-      "performanceTier": "MID",
       "requestedFrameLength": 9,
       "availableDayCount": 4,
       "secondSessionMode": "RECOVERY_PM_ALLOWED",
@@ -108,14 +104,11 @@
       "withRecentJournal": false
     },
     {
-      "caseId": "3000-college-male-low-10d",
+      "caseId": "3000-current-10d",
       "eventDistanceM": 3000,
       "eventGroup": "MIDDLE_DISTANCE",
       "performanceSeconds": 611,
       "targetRepSeconds": 162.93333333333334,
-      "competitionDivision": "COLLEGE",
-      "reportedSex": "MALE",
-      "performanceTier": "LOW",
       "requestedFrameLength": 10,
       "availableDayCount": 6,
       "secondSessionMode": "SINGLE_SESSION_ONLY",
@@ -123,14 +116,11 @@
       "withRecentJournal": false
     },
     {
-      "caseId": "5000-open-female-high-10d-daily-double-morning",
+      "caseId": "5000-current-10d-daily-double-morning",
       "eventDistanceM": 5000,
       "eventGroup": "FIVE_K",
       "performanceSeconds": 1110,
       "targetRepSeconds": 222,
-      "competitionDivision": "OPEN",
-      "reportedSex": "FEMALE",
-      "performanceTier": "HIGH",
       "requestedFrameLength": 10,
       "availableDayCount": "EVERY_DAY",
       "secondSessionMode": "RECOVERY_PM_ALLOWED",
@@ -138,14 +128,11 @@
       "withRecentJournal": false
     },
     {
-      "caseId": "5000-open-female-high-10d-daily-double",
+      "caseId": "5000-current-10d-daily-double-evening",
       "eventDistanceM": 5000,
       "eventGroup": "FIVE_K",
       "performanceSeconds": 1110,
       "targetRepSeconds": 222,
-      "competitionDivision": "OPEN",
-      "reportedSex": "FEMALE",
-      "performanceTier": "HIGH",
       "requestedFrameLength": 10,
       "availableDayCount": "EVERY_DAY",
       "secondSessionMode": "RECOVERY_PM_ALLOWED",
@@ -153,9 +140,23 @@
       "withRecentJournal": true
     }
   ],
+  "populationContractObservations": [
+    {
+      "reviewLabels": [
+        "YOUTH_REVIEW",
+        "ADULT_REVIEW"
+      ],
+      "labelsPassedToRuntime": false,
+      "runtimeInputsIdentical": true,
+      "prescriptionsEqual": true,
+      "populationScopes": [
+        "YOUTH_AND_ADULT"
+      ]
+    }
+  ],
   "observations": [
     {
-      "caseId": "800-hs-male-high-7d",
+      "caseId": "800-current-7d",
       "outcome": "DETAILED",
       "code": "PACE_TARGET_BOUND",
       "candidateCount": 2,
@@ -163,7 +164,7 @@
       "rawFreeTextRetained": false
     },
     {
-      "caseId": "1500-hs-female-mid-9d-double",
+      "caseId": "1500-current-9d-double",
       "outcome": "DETAILED",
       "code": "PACE_TARGET_BOUND",
       "candidateCount": 2,
@@ -171,7 +172,7 @@
       "rawFreeTextRetained": false
     },
     {
-      "caseId": "3000-college-male-low-10d",
+      "caseId": "3000-current-10d",
       "outcome": "DETAILED",
       "code": "PACE_TARGET_BOUND",
       "candidateCount": 2,
@@ -179,7 +180,7 @@
       "rawFreeTextRetained": false
     },
     {
-      "caseId": "5000-open-female-high-10d-daily-double-morning",
+      "caseId": "5000-current-10d-daily-double-morning",
       "outcome": "DETAILED",
       "code": "PACE_TARGET_BOUND",
       "candidateCount": 2,
@@ -187,7 +188,7 @@
       "rawFreeTextRetained": false
     },
     {
-      "caseId": "5000-open-female-high-10d-daily-double",
+      "caseId": "5000-current-10d-daily-double-evening",
       "outcome": "DETAILED",
       "code": "PACE_TARGET_BOUND",
       "candidateCount": 2,
@@ -195,7 +196,7 @@
       "rawFreeTextRetained": false
     },
     {
-      "caseId": "no-record",
+      "caseId": "no-record-with-raw-memo",
       "outcome": "RPE_FALLBACK",
       "code": "PACE_TARGET_FALLBACK_NO_EXPLICIT_ANCHOR",
       "candidateCount": 2,
@@ -253,14 +254,19 @@
   ],
   "unsupportedCombinations": [
     {
-      "combination": "sex-specific prescription",
-      "status": "UNMODELED",
-      "reason": "Sex is not a runtime input and cannot alter dose."
+      "combination": "age- or sex-specific prescription",
+      "status": "NOT_A_RUNTIME_DOSE_AXIS",
+      "reason": "Age and sex are not passed as runtime dose inputs."
     },
     {
       "combination": "high/mid/low performance-tier prescription",
-      "status": "UNMODELED",
-      "reason": "Experience band is explicitly not a skill score; no approved tier mapping exists."
+      "status": "SAMPLED_REVIEW_METADATA_ONLY",
+      "reason": "No approved performance-tier runtime mapping exists."
+    },
+    {
+      "combination": "division-specific prescription",
+      "status": "SAMPLED_REVIEW_METADATA_ONLY",
+      "reason": "Division labels are not evaluated as a dose axis."
     },
     {
       "combination": "100-400m detailed prescription",

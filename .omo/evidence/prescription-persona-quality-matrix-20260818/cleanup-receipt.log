@@ -1,13 +1,11 @@
-HEAD=edd7151e60c00b8a4c2b58722f39d021f7f5477a
-TEMP_REMOVED app/dist
-TEMP_REMOVED impl/dist
-TEMP_REMOVED app/test-results
-PORT_4174_LISTENER=NONE
-warning: in the working copy of 'impl/src/plan-generator/session-builder.ts', LF will be replaced by CRLF the next time Git touches it
-warning: in the working copy of 'impl/test/plan-beta-generation.test.ts', LF will be replaced by CRLF the next time Git touches it
-git diff --check: PASS
- M impl/src/plan-generator/session-builder.ts
- M impl/test/plan-beta-generation.test.ts
-?? .omo/evidence/prescription-persona-quality-matrix-20260818/
-?? app/src/domain/prescription-quality-matrix-cases.ts
-?? app/src/domain/prescription-quality-matrix.contract.test.ts
+REVIEW_BASE=e18f09998f9f4619a375909e338848c3c9310864
+SOURCE_COMMIT=e6bf8b6c2c110abe9d6329a5fad57f07338f90e5
+STATUS=READY_FOR_INDEPENDENT_RE_REVIEW
+INVALID_QA_ARTIFACTS_REMOVED=matrix-before-fix.json,playwright-stale-fixture-context.md,playwright-stale-fixture-trace.zip,playwright-stale-fixture.png
+TEMP_DAY10_MUTATION_RESTORED=YES
+PRODUCTION_BINDING_CHANGE_RETAINED=NO
+FULL_SUITES_RERUN=NO
+BUILD_RERUN=NO
+CHROMIUM_QA_RERUN=NO
+GIT_DIFF_CHECK=PASS
+PUSH_MERGE_COMMIT_RESET_CLEAN=NONE

@@ -1,0 +1,3 @@
+
+> trainoracle-app@0.1.0 typecheck:e2e
+> tsc --noEmit -p tsconfig.e2e.json
