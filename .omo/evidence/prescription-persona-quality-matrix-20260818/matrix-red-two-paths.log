@@ -1,0 +1,104 @@
+
+> trainoracle-app@0.1.0 test:unit
+> vitest run src/domain/prescription-quality-matrix.contract.test.ts --reporter=verbose
+
+
+[1m[30m[46m RUN [49m[39m[22m [36mv4.1.10 [39m[90mD:/admin/Documents/트레인 오라클 진도/.worktrees/persona-prescription-quality-matrix/app[39m
+
+ [32m✓[39m src/domain/prescription-quality-matrix.contract.test.ts[2m > [22mathlete persona prescription quality matrix[2m > [22mbinds approved detail for '800-hs-male-high-7d'[32m 27[2mms[22m[39m
+ [32m✓[39m src/domain/prescription-quality-matrix.contract.test.ts[2m > [22mathlete persona prescription quality matrix[2m > [22mbinds approved detail for '1500-hs-female-mid-9d-double'[32m 8[2mms[22m[39m
+ [32m✓[39m src/domain/prescription-quality-matrix.contract.test.ts[2m > [22mathlete persona prescription quality matrix[2m > [22mbinds approved detail for '3000-college-male-low-10d'[32m 7[2mms[22m[39m
+ [31m×[39m src/domain/prescription-quality-matrix.contract.test.ts[2m > [22mathlete persona prescription quality matrix[2m > [22mbinds approved detail for '5000-open-female-high-10d-daily-doubl…'[32m 13[2mms[22m[39m
+[31m   → expected [ { day: 10, slot: 'PM', …(3) } ] to deeply equal [][39m
+ [31m×[39m src/domain/prescription-quality-matrix.contract.test.ts[2m > [22mathlete persona prescription quality matrix[2m > [22mbinds approved detail for '5000-open-female-high-10d-daily-double'[32m 12[2mms[22m[39m
+[31m   → expected [ { day: 10, slot: 'PM', …(3) } ] to deeply equal [][39m
+ [32m✓[39m src/domain/prescription-quality-matrix.contract.test.ts[2m > [22mathlete persona prescription quality matrix[2m > [22mreports truthful RPE fallback for no-record[32m 1[2mms[22m[39m
+ [32m✓[39m src/domain/prescription-quality-matrix.contract.test.ts[2m > [22mathlete persona prescription quality matrix[2m > [22mreports truthful RPE fallback for stored-unselected[32m 4[2mms[22m[39m
+ [32m✓[39m src/domain/prescription-quality-matrix.contract.test.ts[2m > [22mathlete persona prescription quality matrix[2m > [22mreports truthful RPE fallback for developing-current[32m 5[2mms[22m[39m
+ [32m✓[39m src/domain/prescription-quality-matrix.contract.test.ts[2m > [22mathlete persona prescription quality matrix[2m > [22mreports truthful RPE fallback for deferred-100m[32m 5[2mms[22m[39m
+ [32m✓[39m src/domain/prescription-quality-matrix.contract.test.ts[2m > [22mathlete persona prescription quality matrix[2m > [22mreports truthful RPE fallback for deferred-400m[32m 7[2mms[22m[39m
+ [32m✓[39m src/domain/prescription-quality-matrix.contract.test.ts[2m > [22mathlete persona prescription quality matrix[2m > [22mblocks D9_ACTIVE before candidates[32m 2[2mms[22m[39m
+ [32m✓[39m src/domain/prescription-quality-matrix.contract.test.ts[2m > [22mathlete persona prescription quality matrix[2m > [22mblocks D9_UNKNOWN before candidates[32m 2[2mms[22m[39m
+ [32m✓[39m src/domain/prescription-quality-matrix.contract.test.ts[2m > [22mathlete persona prescription quality matrix[2m > [22mcovers every requested matrix axis without treating persona labels as dose inputs[32m 1[2mms[22m[39m
+
+[31m⎯⎯⎯⎯⎯⎯⎯[39m[1m[41m Failed Tests 2 [49m[22m[31m⎯⎯⎯⎯⎯⎯⎯[39m
+
+[41m[1m FAIL [22m[49m src/domain/prescription-quality-matrix.contract.test.ts[2m > [22mathlete persona prescription quality matrix[2m > [22mbinds approved detail for '5000-open-female-high-10d-daily-doubl…'
+[31m[1mAssertionError[22m: expected [ { day: 10, slot: 'PM', …(3) } ] to deeply equal [][39m
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- [][39m
+[31m+ [[39m
+[31m+   {[39m
+[31m+     "day": 10,[39m
+[31m+     "plannedEnergyIntent": "RECOVERY_INTENT",[39m
+[31m+     "prescription": {[39m
+[31m+       "durationMinutes": {[39m
+[31m+         "maximum": 30,[39m
+[31m+         "minimum": 20,[39m
+[31m+       },[39m
+[31m+       "kind": "RPE_TIME_RANGE",[39m
+[31m+       "rpe": {[39m
+[31m+         "maximum": 2,[39m
+[31m+         "minimum": 1,[39m
+[31m+       },[39m
+[31m+     },[39m
+[31m+     "role": "EASY",[39m
+[31m+     "slot": "PM",[39m
+[31m+   },[39m
+[31m+ ][39m
+
+[36m [2m❯[22m src/domain/prescription-quality-matrix.contract.test.ts:[2m167:10[22m[39m
+    [90m165|[39m       [34mexpect[39m(candidate[33m.[39msessions[33m.[39m[34mfilter[39m(
+    [90m166|[39m         (session) [33m=>[39m session[33m.[39mday [33m===[39m [34m10[39m [33m&&[39m session[33m.[39mslot [33m===[39m [32m"PM"[39m[33m,[39m
+    [90m167|[39m       ))[33m.[39m[34mtoEqual[39m([])
+    [90m   |[39m          [31m^[39m
+    [90m168|[39m       expect(candidate.frame.projectionLengthDays).toBe(fixture.reques…
+    [90m169|[39m       const detailed = candidate.sessions.filter((session) => session.…
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m src/domain/prescription-quality-matrix.contract.test.ts[2m > [22mathlete persona prescription quality matrix[2m > [22mbinds approved detail for '5000-open-female-high-10d-daily-double'
+[31m[1mAssertionError[22m: expected [ { day: 10, slot: 'PM', …(3) } ] to deeply equal [][39m
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- [][39m
+[31m+ [[39m
+[31m+   {[39m
+[31m+     "day": 10,[39m
+[31m+     "plannedEnergyIntent": "VO2_INTENT",[39m
+[31m+     "prescription": {[39m
+[31m+       "durationMinutes": {[39m
+[31m+         "maximum": 50,[39m
+[31m+         "minimum": 30,[39m
+[31m+       },[39m
+[31m+       "kind": "RPE_TIME_RANGE",[39m
+[31m+       "rpe": {[39m
+[31m+         "maximum": 8,[39m
+[31m+         "minimum": 7,[39m
+[31m+       },[39m
+[31m+     },[39m
+[31m+     "role": "QUALITY",[39m
+[31m+     "slot": "PM",[39m
+[31m+   },[39m
+[31m+ ][39m
+
+[36m [2m❯[22m src/domain/prescription-quality-matrix.contract.test.ts:[2m167:10[22m[39m
+    [90m165|[39m       [34mexpect[39m(candidate[33m.[39msessions[33m.[39m[34mfilter[39m(
+    [90m166|[39m         (session) [33m=>[39m session[33m.[39mday [33m===[39m [34m10[39m [33m&&[39m session[33m.[39mslot [33m===[39m [32m"PM"[39m[33m,[39m
+    [90m167|[39m       ))[33m.[39m[34mtoEqual[39m([])
+    [90m   |[39m          [31m^[39m
+    [90m168|[39m       expect(candidate.frame.projectionLengthDays).toBe(fixture.reques…
+    [90m169|[39m       const detailed = candidate.sessions.filter((session) => session.…
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯[22m[39m
+
+
+[2m Test Files [22m [1m[31m1 failed[39m[22m[90m (1)[39m
+[2m      Tests [22m [1m[31m2 failed[39m[22m[2m | [22m[1m[32m11 passed[39m[22m[90m (13)[39m
+[2m   Start at [22m 11:35:08
+[2m   Duration [22m 2.80s[2m (transform 478ms, setup 190ms, import 658ms, tests 97ms, environment 1.62s)[22m

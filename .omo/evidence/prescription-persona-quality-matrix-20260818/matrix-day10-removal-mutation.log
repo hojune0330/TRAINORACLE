@@ -1,0 +1,65 @@
+
+> trainoracle-app@0.1.0 test:unit
+> vitest run src/domain/prescription-quality-matrix.contract.test.ts --reporter=verbose
+
+
+ RUN  v4.1.10 D:/admin/Documents/트레인 오라클 진도/.worktrees/persona-prescription-quality-matrix/app
+
+ ✓ src/domain/prescription-quality-matrix.contract.test.ts > athlete persona prescription quality matrix > binds approved detail for '800-current-7d' 27ms
+ ✓ src/domain/prescription-quality-matrix.contract.test.ts > athlete persona prescription quality matrix > binds approved detail for '1500-current-9d-double' 8ms
+ ✓ src/domain/prescription-quality-matrix.contract.test.ts > athlete persona prescription quality matrix > binds approved detail for '3000-current-10d' 6ms
+ × src/domain/prescription-quality-matrix.contract.test.ts > athlete persona prescription quality matrix > binds approved detail for '5000-current-10d-daily-double-morning' 12ms
+   → expected { day: 10, slot: 'AM', …(3) } to match object { day: 10, slot: 'AM', …(2) }
+(4 matching properties omitted from actual)
+ × src/domain/prescription-quality-matrix.contract.test.ts > athlete persona prescription quality matrix > binds approved detail for '5000-current-10d-daily-double-evening' 10ms
+   → expected { day: 10, slot: 'AM', …(3) } to match object { day: 10, slot: 'AM', …(2) }
+(4 matching properties omitted from actual)
+ ✓ src/domain/prescription-quality-matrix.contract.test.ts > athlete persona prescription quality matrix > reports truthful RPE fallback for no-record-with-raw-memo 2ms
+ ✓ src/domain/prescription-quality-matrix.contract.test.ts > athlete persona prescription quality matrix > reports truthful RPE fallback for stored-unselected 3ms
+ ✓ src/domain/prescription-quality-matrix.contract.test.ts > athlete persona prescription quality matrix > reports truthful RPE fallback for developing-current 4ms
+ ✓ src/domain/prescription-quality-matrix.contract.test.ts > athlete persona prescription quality matrix > reports truthful RPE fallback for deferred-100m 4ms
+ ✓ src/domain/prescription-quality-matrix.contract.test.ts > athlete persona prescription quality matrix > reports truthful RPE fallback for deferred-400m 4ms
+ ✓ src/domain/prescription-quality-matrix.contract.test.ts > athlete persona prescription quality matrix > blocks D9_ACTIVE before candidates 1ms
+ ✓ src/domain/prescription-quality-matrix.contract.test.ts > athlete persona prescription quality matrix > blocks D9_UNKNOWN before candidates 1ms
+ ✓ src/domain/prescription-quality-matrix.contract.test.ts > athlete persona prescription quality matrix > keeps the prescription identical across external youth and adult review labels 9ms
+ ✓ src/domain/prescription-quality-matrix.contract.test.ts > athlete persona prescription quality matrix > records sampled review metadata without treating labels as executable dose axes 1ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/domain/prescription-quality-matrix.contract.test.ts > athlete persona prescription quality matrix > binds approved detail for '5000-current-10d-daily-double-morning'
+ FAIL  src/domain/prescription-quality-matrix.contract.test.ts > athlete persona prescription quality matrix > binds approved detail for '5000-current-10d-daily-double-evening'
+AssertionError: expected { day: 10, slot: 'AM', …(3) } to match object { day: 10, slot: 'AM', …(2) }
+(4 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "day": 10,
+-   "plannedEnergyIntent": "VO2_INTENT",
+-   "role": "QUALITY",
++   "plannedEnergyIntent": "BASE_INTENT",
++   "role": "EASY",
+    "slot": "AM",
+  }
+
+ ❯ src/domain/prescription-quality-matrix.contract.test.ts:84:27
+     82|         const dayTen = candidate.sessions.filter((session) => session.…
+     83|         expect(dayTen).toHaveLength(1)
+     84|         expect(dayTen[0]).toMatchObject({
+       |                           ^
+     85|           day: 10,
+     86|           slot: "AM",
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 12 passed (14)
+   Start at  12:33:47
+   Duration  2.76s (transform 458ms, setup 179ms, import 636ms, tests 95ms, environment 1.57s)
+
+
+MUTATION=qualityDays.has(day) && day !== 10
+TEST_EXIT=1
+EXPECTED_NONZERO=true

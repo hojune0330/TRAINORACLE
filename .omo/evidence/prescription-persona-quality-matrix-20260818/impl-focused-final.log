@@ -1,0 +1,90 @@
+
+> trainoracle-impl-skeleton@0.1.0 test
+> vitest run --reporter=verbose test/plan-beta-generation.test.ts test/plan-beta-selection.test.ts test/prescription-runtime.test.ts test/prescription-pace.test.ts
+
+
+ RUN  v4.1.10 D:/admin/Documents/트레인 오라클 진도/.worktrees/persona-prescription-quality-matrix/impl
+
+ ✓ test/prescription-pace.test.ts > same-event race-pace calculation > calculates a 400m target from an explicitly selected current 5000m anchor 4ms
+ ✓ test/prescription-pace.test.ts > same-event race-pace calculation > rejects a different-event anchor instead of converting across events 1ms
+ ✓ test/prescription-pace.test.ts > same-event race-pace calculation > rejects a GOAL anchor as current capability 0ms
+ ✓ test/prescription-pace.test.ts > same-event race-pace calculation > rejects a stale PB instead of treating it as current capability 0ms
+ ✓ test/prescription-pace.test.ts > same-event race-pace calculation > rejects an SB without its season provenance 0ms
+ ✓ test/prescription-pace.test.ts > same-event race-pace calculation > rejects a 59m same-event anchor as sprint pace 1ms
+ ✓ test/prescription-pace.test.ts > same-event race-pace calculation > calculates a 60m same-event anchor without sprint rejection 1ms
+ ✓ test/prescription-pace.test.ts > same-event race-pace calculation > rejects 30m sprint race-pace conversion 0ms
+ ✓ test/prescription-runtime.test.ts > prescription runtime safety boundary > rejects draft template BA-SEED-01 before it can become a plan prescription 7ms
+ ✓ test/prescription-runtime.test.ts > prescription runtime safety boundary > rejects draft template BA-SEED-02 before it can become a plan prescription 2ms
+ ✓ test/prescription-runtime.test.ts > prescription runtime safety boundary > rejects draft template BA-SEED-03 before it can become a plan prescription 1ms
+ ✓ test/prescription-runtime.test.ts > prescription runtime safety boundary > rejects draft template BA-SEED-04 before it can become a plan prescription 0ms
+ ✓ test/prescription-runtime.test.ts > prescription runtime safety boundary > rejects draft template BA-SEED-05 before it can become a plan prescription 0ms
+ ✓ test/prescription-runtime.test.ts > prescription runtime safety boundary > rejects draft template LT-SEED-01 before it can become a plan prescription 0ms
+ ✓ test/prescription-runtime.test.ts > prescription runtime safety boundary > rejects draft template LT-SEED-02 before it can become a plan prescription 0ms
+ ✓ test/prescription-runtime.test.ts > prescription runtime safety boundary > rejects draft template LT-SEED-03 before it can become a plan prescription 0ms
+ ✓ test/prescription-runtime.test.ts > prescription runtime safety boundary > rejects draft template LT-SEED-04 before it can become a plan prescription 0ms
+ ✓ test/prescription-runtime.test.ts > prescription runtime safety boundary > rejects draft template LT-SEED-05 before it can become a plan prescription 1ms
+ ✓ test/prescription-runtime.test.ts > prescription runtime safety boundary > rejects draft template V2-SEED-01 before it can become a plan prescription 0ms
+ ✓ test/prescription-runtime.test.ts > prescription runtime safety boundary > rejects draft template V2-SEED-02 before it can become a plan prescription 0ms
+ ✓ test/prescription-runtime.test.ts > prescription runtime safety boundary > rejects draft template V2-SEED-03 before it can become a plan prescription 0ms
+ ✓ test/prescription-runtime.test.ts > prescription runtime safety boundary > rejects draft template V2-SEED-04 before it can become a plan prescription 0ms
+ ✓ test/prescription-runtime.test.ts > prescription runtime safety boundary > rejects draft template V2-SEED-05 before it can become a plan prescription 0ms
+ ✓ test/prescription-runtime.test.ts > prescription runtime safety boundary > rejects draft template GL-SEED-01 before it can become a plan prescription 0ms
+ ✓ test/prescription-runtime.test.ts > prescription runtime safety boundary > rejects draft template GL-SEED-02 before it can become a plan prescription 0ms
+ ✓ test/prescription-runtime.test.ts > prescription runtime safety boundary > rejects draft template GL-SEED-03 before it can become a plan prescription 0ms
+ ✓ test/prescription-runtime.test.ts > prescription runtime safety boundary > rejects draft template GL-SEED-04 before it can become a plan prescription 0ms
+ ✓ test/prescription-runtime.test.ts > prescription runtime safety boundary > rejects draft template GL-SEED-05 before it can become a plan prescription 0ms
+ ✓ test/prescription-runtime.test.ts > prescription runtime safety boundary > rejects draft template AP-SEED-01 before it can become a plan prescription 0ms
+ ✓ test/prescription-runtime.test.ts > prescription runtime safety boundary > rejects draft template AP-SEED-02 before it can become a plan prescription 0ms
+ ✓ test/prescription-runtime.test.ts > prescription runtime safety boundary > rejects draft template AP-SEED-03 before it can become a plan prescription 0ms
+ ✓ test/prescription-runtime.test.ts > prescription runtime safety boundary > rejects draft template AP-SEED-04 before it can become a plan prescription 0ms
+ ✓ test/prescription-runtime.test.ts > prescription runtime safety boundary > rejects draft template AP-SEED-05 before it can become a plan prescription 0ms
+ ✓ test/prescription-runtime.test.ts > prescription runtime safety boundary > rejects draft template RE-SUPPORT-01 before it can become a plan prescription 0ms
+ ✓ test/prescription-runtime.test.ts > prescription runtime safety boundary > rejects draft template RE-SUPPORT-02 before it can become a plan prescription 0ms
+ ✓ test/prescription-runtime.test.ts > prescription runtime safety boundary > rejects draft template RE-SUPPORT-03 before it can become a plan prescription 0ms
+ ✓ test/prescription-runtime.test.ts > prescription runtime safety boundary > rejects draft template RE-SUPPORT-04 before it can become a plan prescription 0ms
+ ✓ test/prescription-runtime.test.ts > prescription runtime safety boundary > rejects draft template RE-SUPPORT-05 before it can become a plan prescription 0ms
+ ✓ test/prescription-runtime.test.ts > prescription runtime safety boundary > rejects D9_ACTIVE before notation or anchor values can produce a prescription 1ms
+ ✓ test/prescription-runtime.test.ts > prescription runtime safety boundary > rejects D9_UNKNOWN before notation or anchor values can produce a prescription 1ms
+ ✓ test/prescription-runtime.test.ts > prescription runtime safety boundary > does not retain raw memo or private signal fields in its structured result 2ms
+ ✓ test/prescription-runtime.test.ts > prescription runtime safety boundary > prepares the exact V2-SEED-05 JOG session with complete operational components 1ms
+ ✓ test/prescription-runtime.test.ts > prescription runtime safety boundary > rejects atomically when the warmup operational component is missing 1ms
+ ✓ test/prescription-runtime.test.ts > prescription runtime safety boundary > rejects atomically when the cooldown operational component is missing 0ms
+ ✓ test/prescription-runtime.test.ts > prescription runtime safety boundary > rejects atomically when the fallback operational component is missing 0ms
+ ✓ test/prescription-runtime.test.ts > prescription runtime safety boundary > rejects atomically when the stopConditions operational component is missing 0ms
+ ✓ test/prescription-runtime.test.ts > prescription runtime safety boundary > rejects a numeric repetition downshift instead of doing runtime dose arithmetic 0ms
+ ✓ test/plan-beta-selection.test.ts > plan beta selection and progress contract > rejects self selection when a coach selection is required 7ms
+ ✓ test/plan-beta-selection.test.ts > plan beta selection and progress contract > creates an immutable active-plan snapshot when the coach selects a candidate 1ms
+ ✓ test/plan-beta-selection.test.ts > plan beta selection and progress contract > rejects projection 7 with an impossible continuity at selection 1ms
+ ✓ test/plan-beta-selection.test.ts > plan beta selection and progress contract > rejects projection 9 with an impossible continuity at selection 1ms
+ ✓ test/plan-beta-selection.test.ts > plan beta selection and progress contract > rejects projection 10 with an impossible continuity at selection 1ms
+ ✓ test/plan-beta-selection.test.ts > plan beta selection and progress contract > records COMPLETED with structured audit only and no reward output 1ms
+ ✓ test/plan-beta-selection.test.ts > plan beta selection and progress contract > records RESTED with structured audit only and no reward output 1ms
+ ✓ test/plan-beta-selection.test.ts > plan beta selection and progress contract > records SKIPPED with structured audit only and no reward output 1ms
+ ✓ test/plan-beta-selection.test.ts > plan beta selection and progress contract > records PAIN_CHECKIN with structured audit only and no reward output 1ms
+ ✓ test/plan-beta-selection.test.ts > plan beta selection and progress contract > rejects a progress record for a slot that the selected plan does not contain 1ms
+ ✓ test/plan-beta-selection.test.ts > plan beta selection and progress contract > records progress for a QUALITY session placed in the PM slot (경로 B 확장 좌표) 1ms
+ ✓ test/plan-beta-selection.test.ts > plan beta selection and progress contract > rejects a progress record for a slot the extended plan does not contain 0ms
+ ✓ test/plan-beta-generation.test.ts > plan beta generation contract > blocks ACTIVE Safety Gate without options, sessions, or progression output 7ms
+ ✓ test/plan-beta-generation.test.ts > plan beta generation contract > blocks UNKNOWN Safety Gate without a hidden alternative candidate 1ms
+ ✓ test/plan-beta-generation.test.ts > plan beta generation contract > creates two stable, distinct PROFILE_ONLY candidates with limited confidence 4ms
+ ✓ test/plan-beta-generation.test.ts > plan beta generation contract > keeps MIDDLE_DISTANCE in an explicit non-universal beta scope 1ms
+ ✓ test/plan-beta-generation.test.ts > plan beta generation contract > keeps FIVE_K in an explicit non-universal beta scope 1ms
+ ✓ test/plan-beta-generation.test.ts > plan beta generation contract > keeps TEN_K in an explicit non-universal beta scope 1ms
+ ✓ test/plan-beta-generation.test.ts > plan beta generation contract > keeps GENERAL_ENDURANCE in an explicit non-universal beta scope 1ms
+ ✓ test/plan-beta-generation.test.ts > plan beta generation contract > returns identical candidate content and order for identical canonical input 2ms
+ ✓ test/plan-beta-generation.test.ts > plan beta generation contract > uses the 19-slot local-civil 9.5-day Formation frame 1ms
+ ✓ test/plan-beta-generation.test.ts > plan beta generation contract > keeps standard-frame metadata for a canonical local-civil frame 1ms
+ ✓ test/plan-beta-generation.test.ts > plan beta generation contract > keeps sessions inside available days and separates quality sessions 3ms
+ ✓ test/plan-beta-generation.test.ts > plan beta generation contract > places quality in PM and keeps the counterpart in AM for an evening athlete 1ms
+ ✓ test/plan-beta-generation.test.ts > plan beta generation contract > adds recovery counterparts only where the formation has a PM slot 0ms
+ ✓ test/plan-beta-generation.test.ts > plan beta generation contract > limits sparse or beginner profile-only plans to one controlled quality day 1ms
+ ✓ test/plan-beta-generation.test.ts > plan beta generation contract > journal context cannot override an unsafe gate 0ms
+ ✓ test/plan-beta-generation.test.ts > plan beta generation contract > labels recent journal presence as context-only without changing prescriptions 1ms
+ ✓ test/plan-beta-generation.test.ts > plan beta generation contract > does not invent pace or retain raw free text in plans or audits 1ms
+ ✓ test/plan-beta-generation.test.ts > plan beta generation contract > returns a typed rejection for malformed or out-of-range input 1ms
+ ✓ test/plan-beta-generation.test.ts > plan beta generation contract > rejects an out-of-range recent journal context with a stable code 0ms
+
+ Test Files  4 passed (4)
+      Tests  78 passed (78)
+   Start at  12:34:25
+   Duration  625ms (transform 541ms, setup 0ms, import 878ms, tests 85ms, environment 1ms)

@@ -1,0 +1,287 @@
+{
+  "schemaVersion": 2,
+  "reviewBaseCommit": "e18f09998f9f4619a375909e338848c3c9310864",
+  "sourceCommit": "31e0db12222c8f88086d6be1b2556ded320ab967",
+  "evaluatedAt": "2026-08-17T03:00:00.000Z",
+  "executedRuntimeInputs": [
+    "event",
+    "experienceBand",
+    "recordEvidence",
+    "frameLength",
+    "trainingDays",
+    "secondSessionMode",
+    "trainingTimePreference",
+    "D9"
+  ],
+  "sampledReviewMetadataFields": [
+    "divisionLabel",
+    "reportedSex",
+    "performanceTier"
+  ],
+  "sampledReviewMetadataNotice": "These labels are not passed as dose inputs and are not Cartesian executable coverage.",
+  "sampledReviewMetadata": [
+    {
+      "divisionLabel": "HIGH_SCHOOL",
+      "reportedSex": "MALE",
+      "performanceTier": "HIGH"
+    },
+    {
+      "divisionLabel": "HIGH_SCHOOL",
+      "reportedSex": "MALE",
+      "performanceTier": "MID"
+    },
+    {
+      "divisionLabel": "HIGH_SCHOOL",
+      "reportedSex": "MALE",
+      "performanceTier": "LOW"
+    },
+    {
+      "divisionLabel": "HIGH_SCHOOL",
+      "reportedSex": "FEMALE",
+      "performanceTier": "HIGH"
+    },
+    {
+      "divisionLabel": "HIGH_SCHOOL",
+      "reportedSex": "FEMALE",
+      "performanceTier": "MID"
+    },
+    {
+      "divisionLabel": "HIGH_SCHOOL",
+      "reportedSex": "FEMALE",
+      "performanceTier": "LOW"
+    },
+    {
+      "divisionLabel": "COLLEGE",
+      "reportedSex": null,
+      "performanceTier": null
+    },
+    {
+      "divisionLabel": "OPEN",
+      "reportedSex": null,
+      "performanceTier": null
+    }
+  ],
+  "evidenceSamples": [
+    {
+      "state": "NONE",
+      "caseId": "no-record",
+      "runtimeMeaning": "No stored record and no selected anchor."
+    },
+    {
+      "state": "SPARSE",
+      "caseId": "stored-unselected",
+      "runtimeMeaning": "A stored record without an explicitly selected CURRENT same-event anchor."
+    },
+    {
+      "state": "CURRENT_SAME_EVENT_WITH_SUFFICIENT_JOURNAL",
+      "caseId": "5000-current-10d-daily-double-evening",
+      "runtimeMeaning": "A selected CURRENT same-event anchor plus two usable recent journal sessions."
+    }
+  ],
+  "executedGenerationCases": [
+    {
+      "caseId": "800-current-7d",
+      "eventDistanceM": 800,
+      "eventGroup": "MIDDLE_DISTANCE",
+      "performanceSeconds": 122,
+      "targetRepSeconds": 30.5,
+      "requestedFrameLength": 7,
+      "availableDayCount": 3,
+      "secondSessionMode": "SINGLE_SESSION_ONLY",
+      "trainingTimePreference": "MORNING",
+      "withRecentJournal": false
+    },
+    {
+      "caseId": "1500-current-9d-double",
+      "eventDistanceM": 1500,
+      "eventGroup": "MIDDLE_DISTANCE",
+      "performanceSeconds": 245,
+      "targetRepSeconds": 81.66666666666667,
+      "requestedFrameLength": 9,
+      "availableDayCount": 4,
+      "secondSessionMode": "RECOVERY_PM_ALLOWED",
+      "trainingTimePreference": "EVENING",
+      "withRecentJournal": false
+    },
+    {
+      "caseId": "3000-current-10d",
+      "eventDistanceM": 3000,
+      "eventGroup": "MIDDLE_DISTANCE",
+      "performanceSeconds": 611,
+      "targetRepSeconds": 162.93333333333334,
+      "requestedFrameLength": 10,
+      "availableDayCount": 6,
+      "secondSessionMode": "SINGLE_SESSION_ONLY",
+      "trainingTimePreference": "VARIES",
+      "withRecentJournal": false
+    },
+    {
+      "caseId": "5000-current-10d-daily-double-morning",
+      "eventDistanceM": 5000,
+      "eventGroup": "FIVE_K",
+      "performanceSeconds": 1110,
+      "targetRepSeconds": 222,
+      "requestedFrameLength": 10,
+      "availableDayCount": "EVERY_DAY",
+      "secondSessionMode": "RECOVERY_PM_ALLOWED",
+      "trainingTimePreference": "MORNING",
+      "withRecentJournal": false
+    },
+    {
+      "caseId": "5000-current-10d-daily-double-evening",
+      "eventDistanceM": 5000,
+      "eventGroup": "FIVE_K",
+      "performanceSeconds": 1110,
+      "targetRepSeconds": 222,
+      "requestedFrameLength": 10,
+      "availableDayCount": "EVERY_DAY",
+      "secondSessionMode": "RECOVERY_PM_ALLOWED",
+      "trainingTimePreference": "EVENING",
+      "withRecentJournal": true
+    }
+  ],
+  "populationContractObservations": [
+    {
+      "reviewLabels": [
+        "YOUTH_REVIEW",
+        "ADULT_REVIEW"
+      ],
+      "labelsPassedToRuntime": false,
+      "runtimeInputsIdentical": true,
+      "prescriptionsEqual": true,
+      "populationScopes": [
+        "YOUTH_AND_ADULT"
+      ]
+    }
+  ],
+  "observations": [
+    {
+      "caseId": "800-current-7d",
+      "outcome": "DETAILED",
+      "code": "PACE_TARGET_BOUND",
+      "candidateCount": 2,
+      "selfSelectionAllowed": true,
+      "rawFreeTextRetained": false
+    },
+    {
+      "caseId": "1500-current-9d-double",
+      "outcome": "DETAILED",
+      "code": "PACE_TARGET_BOUND",
+      "candidateCount": 2,
+      "selfSelectionAllowed": true,
+      "rawFreeTextRetained": false
+    },
+    {
+      "caseId": "3000-current-10d",
+      "outcome": "DETAILED",
+      "code": "PACE_TARGET_BOUND",
+      "candidateCount": 2,
+      "selfSelectionAllowed": true,
+      "rawFreeTextRetained": false
+    },
+    {
+      "caseId": "5000-current-10d-daily-double-morning",
+      "outcome": "DETAILED",
+      "code": "PACE_TARGET_BOUND",
+      "candidateCount": 2,
+      "selfSelectionAllowed": true,
+      "rawFreeTextRetained": false
+    },
+    {
+      "caseId": "5000-current-10d-daily-double-evening",
+      "outcome": "DETAILED",
+      "code": "PACE_TARGET_BOUND",
+      "candidateCount": 2,
+      "selfSelectionAllowed": true,
+      "rawFreeTextRetained": false
+    },
+    {
+      "caseId": "no-record-with-raw-memo",
+      "outcome": "RPE_FALLBACK",
+      "code": "PACE_TARGET_FALLBACK_NO_EXPLICIT_ANCHOR",
+      "candidateCount": 2,
+      "selfSelectionAllowed": true,
+      "rawFreeTextRetained": false
+    },
+    {
+      "caseId": "stored-unselected",
+      "outcome": "RPE_FALLBACK",
+      "code": "PACE_TARGET_FALLBACK_NO_EXPLICIT_ANCHOR",
+      "candidateCount": 2,
+      "selfSelectionAllowed": true,
+      "rawFreeTextRetained": false
+    },
+    {
+      "caseId": "developing-current",
+      "outcome": "RPE_FALLBACK",
+      "code": "PACE_TARGET_FALLBACK_EXPERIENCE_SCOPE",
+      "candidateCount": 2,
+      "selfSelectionAllowed": true,
+      "rawFreeTextRetained": false
+    },
+    {
+      "caseId": "deferred-100m",
+      "outcome": "RPE_FALLBACK",
+      "code": "PACE_TARGET_FALLBACK_EVENT_SCOPE",
+      "candidateCount": 2,
+      "selfSelectionAllowed": true,
+      "rawFreeTextRetained": false
+    },
+    {
+      "caseId": "deferred-400m",
+      "outcome": "RPE_FALLBACK",
+      "code": "PACE_TARGET_FALLBACK_EVENT_SCOPE",
+      "candidateCount": 2,
+      "selfSelectionAllowed": true,
+      "rawFreeTextRetained": false
+    },
+    {
+      "caseId": "D9_ACTIVE",
+      "outcome": "BLOCKED",
+      "code": "CURRENT_CHECK_REQUIRES_REVIEW",
+      "candidateCount": 0,
+      "selfSelectionAllowed": false,
+      "rawFreeTextRetained": false
+    },
+    {
+      "caseId": "D9_UNKNOWN",
+      "outcome": "BLOCKED",
+      "code": "CURRENT_CHECK_REQUIRES_REVIEW",
+      "candidateCount": 0,
+      "selfSelectionAllowed": false,
+      "rawFreeTextRetained": false
+    }
+  ],
+  "unsupportedCombinations": [
+    {
+      "combination": "age- or sex-specific prescription",
+      "status": "NOT_A_RUNTIME_DOSE_AXIS",
+      "reason": "Age and sex are not passed as runtime dose inputs."
+    },
+    {
+      "combination": "high/mid/low performance-tier prescription",
+      "status": "SAMPLED_REVIEW_METADATA_ONLY",
+      "reason": "No approved performance-tier runtime mapping exists."
+    },
+    {
+      "combination": "division-specific prescription",
+      "status": "SAMPLED_REVIEW_METADATA_ONLY",
+      "reason": "Division labels are not evaluated as a dose axis."
+    },
+    {
+      "combination": "100-400m detailed prescription",
+      "status": "DEFERRED_RPE_FALLBACK",
+      "reason": "No approved detailed template is active in this scope."
+    },
+    {
+      "combination": "DEVELOPING or NEW_TO_RUNNING detailed prescription",
+      "status": "RPE_FALLBACK",
+      "reason": "Active detailed approvals are scoped to EXPERIENCED."
+    },
+    {
+      "combination": "missing or unselected record evidence",
+      "status": "RPE_FALLBACK",
+      "reason": "An explicit CURRENT same-event anchor is required."
+    }
+  ]
+}

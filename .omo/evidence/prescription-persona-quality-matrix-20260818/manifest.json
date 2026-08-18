@@ -1,0 +1,122 @@
+{
+  "schemaVersion": 2,
+  "reviewBaseCommit": "e18f09998f9f4619a375909e338848c3c9310864",
+  "sourceCommit": "31e0db12222c8f88086d6be1b2556ded320ab967",
+  "status": "READY_FOR_FINAL_INDEPENDENT_RE_REVIEW",
+  "reviewChangedSourceFiles": [
+    {
+      "path": "app/src/domain/prescription-quality-matrix-cases.ts",
+      "change": "DELETED"
+    },
+    {
+      "path": "app/src/domain/prescription-quality-matrix.test-fixtures.ts",
+      "change": "ADDED_TEST_ONLY"
+    },
+    {
+      "path": "app/src/domain/prescription-quality-matrix.contract.test.ts",
+      "change": "MODIFIED"
+    }
+  ],
+  "productionCodeChangedByReview": false,
+  "preservedProductionFix": "impl/src/plan-generator/session-builder.ts from review base e18f09998f9f4619a375909e338848c3c9310864",
+  "verification": {
+    "matrix": {
+      "filesPassed": 1,
+      "testsPassed": 16
+    },
+    "appFocused": {
+      "filesPassed": 5,
+      "testsPassed": 60
+    },
+    "implFocused": {
+      "filesPassed": 4,
+      "testsPassed": 78
+    },
+    "day10RemovalMutation": {
+      "testExit": 1,
+      "expectedNonzero": true,
+      "namedFailures": [
+        "5000-current-10d-daily-double-morning",
+        "5000-current-10d-daily-double-evening"
+      ],
+      "restored": true
+    },
+    "typechecks": {
+      "app": "PASS",
+      "e2e": "PASS",
+      "impl": "PASS"
+    },
+    "gitDiffCheck": "PASS",
+    "fullSuitesRerun": false,
+    "buildRerun": false,
+    "chromiumQaRerun": false,
+    "nonRerunReason": "Review changes are tests and evidence only; the already-reviewed production slot fix was not changed."
+  },
+  "acceptanceEvidence": [
+    {
+      "path": "prescription-quality-matrix.json",
+      "sha256": "54ee31ced40adfd95077a8eb5b6b123ab8776c926a25c3e62f762ff655f9b646",
+      "observable": "Machine-readable runtime cases, sampled review metadata, observed selection/privacy, population contract, blocks, and unsupported combinations"
+    },
+    {
+      "path": "matrix-green-final.log",
+      "sha256": "6d977893a178d69a1c2fff4f647c239587a865ccebb44331282c4891af5d0ef3",
+      "observable": "Matrix 16/16 passed with exact source commit provenance"
+    },
+    {
+      "path": "matrix-day10-removal-mutation.log",
+      "sha256": "ed84e24c406e87d89e91e9ea16d518d4f759e138af32bb29faf36f4d55cfe32a",
+      "observable": "Day-10 QUALITY removal exited 1 and named both daily 5000 failures"
+    },
+    {
+      "path": "app-focused-final.log",
+      "sha256": "7c65bbdf274a51850c634ea4b0f35a5ad5a7e34ab2b705f92c6dd701d4c904f7",
+      "observable": "Focused app 60/60 passed"
+    },
+    {
+      "path": "impl-focused-final.log",
+      "sha256": "aaaaa2911d060cc1c1a7b4185dfdb325b48d81f8637f1b67316be268cdc7e10c",
+      "observable": "Focused impl 78/78 passed"
+    },
+    {
+      "path": "app-typecheck-final.log",
+      "sha256": "25a1033835841f8122395e04c2c8f55dda3b52802c9485ff327f458212cd2304",
+      "observable": "App TypeScript passed"
+    },
+    {
+      "path": "e2e-typecheck-final.log",
+      "sha256": "4ed0e3b4ea4ecb8d76faebcdd938227000d9fd8e49989d10265727f41de07e1e",
+      "observable": "E2E TypeScript passed"
+    },
+    {
+      "path": "impl-typecheck-final.log",
+      "sha256": "10f0e280d104b9803fed4b79d8141b96c090e59d1a60cb20069ce4e80f2434c5",
+      "observable": "Impl TypeScript passed"
+    },
+    {
+      "path": "final-git-audit.log",
+      "sha256": "0189f1ecd5364e5edd36ac9fb894b822bc27f81cef7aa8171b1f3f9484346c89",
+      "observable": "No review-only production binding diff; task source/evidence status and diff check recorded"
+    }
+  ],
+  "receipts": [
+    {
+      "path": "DoneClaim.md",
+      "sha256": "af739cce586edaed8b330791124d028b793e1853a7cc8d5ac3941e56cc467b0b"
+    },
+    {
+      "path": "cleanup-receipt.log",
+      "sha256": "c9761e361fc88f7d3029e0eb8dff1552e77cdc3f7194d9bfaba01c834f43690a"
+    }
+  ],
+  "cleanup": {
+    "invalidQaArtifactsRemoved": [
+      "matrix-before-fix.json",
+      "playwright-stale-fixture-context.md",
+      "playwright-stale-fixture-trace.zip",
+      "playwright-stale-fixture.png"
+    ],
+    "temporaryMutationRestored": true,
+    "pushMergeCommitResetCleanPerformed": false
+  }
+}

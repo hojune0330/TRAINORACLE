@@ -1,0 +1,984 @@
+
+> trainoracle-app@0.1.0 test
+> npm run test:unit && npm run test:unit:kst && npm run test:release-env
+
+
+> trainoracle-app@0.1.0 test:unit
+> vitest run
+
+
+[1m[30m[46m RUN [49m[39m[22m [36mv4.1.10 [39m[90mD:/admin/Documents/트레인 오라클 진도/.worktrees/persona-prescription-quality-matrix/app[39m
+
+ [32m✓[39m src/domain/intensity-summary.contract.test.ts [2m([22m[2m18 tests[22m[2m)[22m[32m 15[2mms[22m[39m
+ [32m✓[39m src/domain/athlete-record-display.contract.test.ts [2m([22m[2m32 tests[22m[2m)[22m[32m 13[2mms[22m[39m
+ [32m✓[39m src/domain/plan-beta-store.test.ts [2m([22m[2m26 tests[22m[2m)[22m[32m 60[2mms[22m[39m
+ [32m✓[39m src/domain/plan-beta-pace-storage.contract.test.ts [2m([22m[2m17 tests[22m[2m)[22m[32m 103[2mms[22m[39m
+ [32m✓[39m src/domain/plan-beta-detailed-candidates.contract.test.ts [2m([22m[2m18 tests[22m[2m)[22m[32m 209[2mms[22m[39m
+ [32m✓[39m src/domain/restore/backup-file.contract.test.ts [2m([22m[2m21 tests[22m[2m)[22m[33m 407[2mms[22m[39m
+     [33m[2m✓[22m[39m 나만의 메모를 평문 저장소에 남기지 않고 암호화해 복원한다 [33m 350[2mms[22m[39m
+ [32m✓[39m src/domain/journal-trash.contract.test.ts [2m([22m[2m31 tests[22m[2m)[22m[33m 477[2mms[22m[39m
+     [33m[2m✓[22m[39m 상한을 넘으면 오래된 것부터 버린다 [33m 396[2mms[22m[39m
+ [32m✓[39m src/domain/account/server-operations-migration.contract.test.ts [2m([22m[2m43 tests[22m[2m)[22m[32m 109[2mms[22m[39m
+ [32m✓[39m src/domain/restore/decoration-backup.contract.test.ts [2m([22m[2m11 tests[22m[2m)[22m[32m 81[2mms[22m[39m
+ [32m✓[39m src/domain/account/tombstone.contract.test.ts [2m([22m[2m20 tests[22m[2m)[22m[32m 167[2mms[22m[39m
+ [32m✓[39m src/screens/AthleteRecords.p1-boundary.contract.test.tsx [2m([22m[2m15 tests[22m[2m)[22m[33m 357[2mms[22m[39m
+ [32m✓[39m src/domain/journal-local-storage.contract.test.ts [2m([22m[2m14 tests[22m[2m)[22m[32m 12[2mms[22m[39m
+ [32m✓[39m src/domain/decoration-store.contract.test.ts [2m([22m[2m15 tests[22m[2m)[22m[32m 63[2mms[22m[39m
+ [32m✓[39m src/domain/dates.contract.test.ts [2m([22m[2m14 tests[22m[2m)[22m[32m 93[2mms[22m[39m
+ [32m✓[39m src/screens/log-entry/FormSec.contract.test.tsx [2m([22m[2m19 tests[22m[2m)[22m[33m 1491[2mms[22m[39m
+     [33m[2m✓[22m[39m 닫혀 있어도 children 이 DOM 에 남아 입력값이 살아 있다 [33m 302[2mms[22m[39m
+ [32m✓[39m src/screens/ImportActivities.contract.test.tsx [2m([22m[2m14 tests[22m[2m)[22m[33m 2127[2mms[22m[39m
+     [33m[2m✓[22m[39m CSV와 JSON 파일을 선택할 수 있고 저장 전 미리보기를 보여준다 [33m 350[2mms[22m[39m
+     [33m[2m✓[22m[39m 중복으로 보이는 활동은 기본 해제 상태로 둔다 [33m 349[2mms[22m[39m
+     [33m[2m✓[22m[39m 고른 활동만 이 기기 일지에 저장하고 분석에서는 제외한다 [33m 315[2mms[22m[39m
+ [32m✓[39m src/screens/RestoreBackup.contract.test.tsx [2m([22m[2m21 tests[22m[2m)[22m[33m 2691[2mms[22m[39m
+ [32m✓[39m src/domain/plan-beta-flow.contract.test.ts [2m([22m[2m13 tests[22m[2m)[22m[32m 72[2mms[22m[39m
+ [32m✓[39m src/domain/prescription-quality-matrix.contract.test.ts [2m([22m[2m13 tests[22m[2m)[22m[32m 180[2mms[22m[39m
+ [32m✓[39m src/screens/home/HomeSafeAccessibility.contract.test.tsx [2m([22m[2m11 tests[22m[2m)[22m[33m 1469[2mms[22m[39m
+     [33m[2m✓[22m[39m opens a recent journal entry through a semantic labeled button [33m 495[2mms[22m[39m
+ [32m✓[39m src/domain/account/sync-orchestration.contract.test.ts [2m([22m[2m7 tests[22m[2m)[22m[33m 452[2mms[22m[39m
+     [33m[2m✓[22m[39m 나만의 메모는 복구 코드가 있을 때 암호문으로만 서버에 올린다 [33m 415[2mms[22m[39m
+ [32m✓[39m src/domain/journal-store.contract.test.ts [2m([22m[2m20 tests[22m[2m)[22m[33m 481[2mms[22m[39m
+ [32m✓[39m src/domain/erase-local-data.contract.test.ts [2m([22m[2m16 tests[22m[2m)[22m[32m 34[2mms[22m[39m
+ [32m✓[39m src/domain/athlete-records.contract.test.ts [2m([22m[2m36 tests[22m[2m)[22m[32m 149[2mms[22m[39m
+ [32m✓[39m src/screens/LogEntry.contract.test.tsx [2m([22m[2m12 tests[22m[2m)[22m[33m 8157[2mms[22m[39m
+     [33m[2m✓[22m[39m requires an explicit purpose before saving nonempty free text [33m 1011[2mms[22m[39m
+     [33m[2m✓[22m[39m stores a private race memo in the encrypted vault from the actual save surface [33m 775[2mms[22m[39m
+     [33m[2m✓[22m[39m persists structured pace, optional self-checks, and training-note context [33m 1206[2mms[22m[39m
+     [33m[2m✓[22m[39m saves and carries D9_ACTIVE review attention to the next screen [33m 628[2mms[22m[39m
+     [33m[2m✓[22m[39m saves and carries D9_UNKNOWN review attention to the next screen [33m 382[2mms[22m[39m
+     [33m[2m✓[22m[39m still saves a post-session entry [33m 323[2mms[22m[39m
+     [33m[2m✓[22m[39m captures a planned subjective intensity before saving [33m 519[2mms[22m[39m
+     [33m[2m✓[22m[39m saves an interval component beside subjective intensity [33m 1116[2mms[22m[39m
+     [33m[2m✓[22m[39m does not silently drop malformed optional objective inputs [33m 1712[2mms[22m[39m
+ [32m✓[39m src/screens/home/DecorationShop.contract.test.tsx [2m([22m[2m12 tests[22m[2m)[22m[33m 2901[2mms[22m[39m
+     [33m[2m✓[22m[39m shows eight visual previews including five starter items and never suggests cash value [33m 370[2mms[22m[39m
+     [33m[2m✓[22m[39m keeps a purchased item after reopening the shop [33m 456[2mms[22m[39m
+     [33m[2m✓[22m[39m tries an unowned item without changing storage and restores the page when closed [33m 309[2mms[22m[39m
+     [33m[2m✓[22m[39m lets a zero-point user apply a starter and keeps favorites and recents after reopening [33m 538[2mms[22m[39m
+ [32m✓[39m src/domain/account/private-note-sync.contract.test.ts [2m([22m[2m10 tests[22m[2m)[22m[33m 2759[2mms[22m[39m
+     [33m[2m✓[22m[39m encrypts and restores the complete private journal entry [33m 308[2mms[22m[39m
+     [33m[2m✓[22m[39m rotates the session recovery code and keeps a real private memo decryptable [33m 571[2mms[22m[39m
+     [33m[2m✓[22m[39m clears the session code when a failed vault rotation cannot restore the old code [33m 423[2mms[22m[39m
+     [33m[2m✓[22m[39m clears a stale session code after the vault rejects it during rotation [33m 305[2mms[22m[39m
+ [32m✓[39m src/components/Motion.contract.test.tsx [2m([22m[2m14 tests[22m[2m)[22m[33m 1423[2mms[22m[39m
+     [33m[2m✓[22m[39m shows the exit phase before unmounting after a save [33m 664[2mms[22m[39m
+     [33m[2m✓[22m[39m keeps review attention until the athlete dismisses it [33m 418[2mms[22m[39m
+ [32m✓[39m src/domain/journal-trash-failure.contract.test.ts [2m([22m[2m6 tests[22m[2m)[22m[32m 46[2mms[22m[39m
+ [32m✓[39m src/screens/plan-beta/PlanBeta.pace-prescription.contract.test.tsx [2m([22m[2m6 tests[22m[2m)[22m[33m 11053[2mms[22m[39m
+     [33m[2m✓[22m[39m binds only the confirmed record and preserves the exact prescription after reload [33m 3983[2mms[22m[39m
+     [33m[2m✓[22m[39m clears the execution allowance message on every recorded outcome [33m 2816[2mms[22m[39m
+     [33m[2m✓[22m[39m requires reconfirmation after replacing a confirmed record [33m 1872[2mms[22m[39m
+     [33m[2m✓[22m[39m keeps both candidates RPE-only when the confirmed record is stale [33m 1167[2mms[22m[39m
+     [33m[2m✓[22m[39m shows a plain RPE fallback when no record exists [33m 912[2mms[22m[39m
+     [33m[2m✓[22m[39m blocks at D9 before producing candidates [32m 300[2mms[22m[39m
+ [32m✓[39m src/screens/account/SwitchAccountPanel.contract.test.tsx [2m([22m[2m12 tests[22m[2m)[22m[33m 1260[2mms[22m[39m
+ [32m✓[39m src/domain/account/sync-schema-recovery-orchestration.contract.test.ts [2m([22m[2m10 tests[22m[2m)[22m[33m 1331[2mms[22m[39m
+     [33m[2m✓[22m[39m keeps syncing after pulling an encrypted private memo [33m 1270[2mms[22m[39m
+ [32m✓[39m src/domain/journal-delete-failure.contract.test.ts [2m([22m[2m7 tests[22m[2m)[22m[32m 34[2mms[22m[39m
+ [32m✓[39m src/domain/home-view-model.test.ts [2m([22m[2m10 tests[22m[2m)[22m[32m 33[2mms[22m[39m
+ [32m✓[39m src/domain/account/sync.contract.test.ts [2m([22m[2m19 tests[22m[2m)[22m[32m 45[2mms[22m[39m
+ [32m✓[39m src/screens/LogDetail.decoration.contract.test.tsx [2m([22m[2m7 tests[22m[2m)[22m[33m 2285[2mms[22m[39m
+     [33m[2m✓[22m[39m adds a free page decoration and undoes the exact saved change [33m 692[2mms[22m[39m
+     [33m[2m✓[22m[39m names both items before replacing an occupied slot [33m 304[2mms[22m[39m
+     [33m[2m✓[22m[39m reloads a saved placement and undo restores it after the next saved change [33m 467[2mms[22m[39m
+ [32m✓[39m src/domain/aggregates.date-integrity.test.ts [2m([22m[2m12 tests[22m[2m)[22m[32m 19[2mms[22m[39m
+ [32m✓[39m src/screens/home/TrashBin.contract.test.tsx [2m([22m[2m15 tests[22m[2m)[22m[33m 969[2mms[22m[39m
+ [32m✓[39m src/domain/trend-analysis.contract.test.ts [2m([22m[2m7 tests[22m[2m)[22m[32m 29[2mms[22m[39m
+ [32m✓[39m src/domain/analysis-exclusion-summary.contract.test.ts [2m([22m[2m9 tests[22m[2m)[22m[32m 29[2mms[22m[39m
+ [32m✓[39m src/domain/pace-target-plan.contract.test.ts [2m([22m[2m11 tests[22m[2m)[22m[32m 18[2mms[22m[39m
+ [32m✓[39m src/safety/memo-safety.contract.test.ts [2m([22m[2m27 tests[22m[2m)[22m[32m 18[2mms[22m[39m
+ [32m✓[39m src/domain/private-memo-vault.persistence.contract.test.ts [2m([22m[2m5 tests[22m[2m)[22m[33m 1505[2mms[22m[39m
+     [33m[2m✓[22m[39m restores the prior encrypted vault and journal shell after a partial journal write [33m 305[2mms[22m[39m
+     [33m[2m✓[22m[39m restores both records when 'vault' confirmation throws [33m 305[2mms[22m[39m
+     [33m[2m✓[22m[39m does not overwrite a vault and journal changed while encrypting a new private memo [33m 441[2mms[22m[39m
+ [32m✓[39m src/domain/private-memo-vault.rotation.contract.test.ts [2m([22m[2m6 tests[22m[2m)[22m[33m 4151[2mms[22m[39m
+     [33m[2m✓[22m[39m keeps all entries decryptable with the old code when the second rotation write fails [33m 1712[2mms[22m[39m
+     [33m[2m✓[22m[39m restores the prior vault after a partial rotation write and allows a retry [33m 666[2mms[22m[39m
+     [33m[2m✓[22m[39m restores the prior vault when rotation confirmation throws [33m 429[2mms[22m[39m
+     [33m[2m✓[22m[39m does not overwrite a vault changed while rotating a recovery code [33m 761[2mms[22m[39m
+     [33m[2m✓[22m[39m never writes a journal record while rotating a vault [33m 437[2mms[22m[39m
+ [32m✓[39m src/domain/account/sync-owner-release.contract.test.ts [2m([22m[2m12 tests[22m[2m)[22m[32m 27[2mms[22m[39m
+ [32m✓[39m src/domain/import/activity-file.contract.test.ts [2m([22m[2m10 tests[22m[2m)[22m[32m 121[2mms[22m[39m
+ [32m✓[39m src/domain/detailed-prescription-manifest.contract.test.ts [2m([22m[2m12 tests[22m[2m)[22m[32m 50[2mms[22m[39m
+ [32m✓[39m src/domain/journal-provenance.contract.test.ts [2m([22m[2m8 tests[22m[2m)[22m[32m 231[2mms[22m[39m
+ [32m✓[39m src/screens/trends/TrendsExclusionNotice.contract.test.tsx [2m([22m[2m7 tests[22m[2m)[22m[33m 517[2mms[22m[39m
+ [32m✓[39m src/domain/multi-event-prescription.contract.test.ts [2m([22m[2m7 tests[22m[2m)[22m[32m 150[2mms[22m[39m
+ [32m✓[39m src/domain/plan-beta-schema.contract.test.ts [2m([22m[2m14 tests[22m[2m)[22m[32m 27[2mms[22m[39m
+ [32m✓[39m src/domain/journal-observation.contract.test.ts [2m([22m[2m6 tests[22m[2m)[22m[32m 17[2mms[22m[39m
+ [32m✓[39m src/domain/journal-update-safety.contract.test.ts [2m([22m[2m7 tests[22m[2m)[22m[32m 44[2mms[22m[39m
+ [32m✓[39m src/domain/journal-archive.contract.test.ts [2m([22m[2m4 tests[22m[2m)[22m[32m 35[2mms[22m[39m
+ [32m✓[39m src/screens/PlanBeta.contract.test.tsx [2m([22m[2m34 tests[22m[2m)[22m[33m 25833[2mms[22m[39m
+     [33m[2m✓[22m[39m shows a non-selectable plan-shape preview after the required direction answers and a clear current-risk answer [33m 951[2mms[22m[39m
+     [33m[2m✓[22m[39m shows no preview or candidates when the current-risk answer needs review after the required direction answers [33m 414[2mms[22m[39m
+     [33m[2m✓[22m[39m rechecks recent journal safety after preview before generating candidates [33m 889[2mms[22m[39m
+     [33m[2m✓[22m[39m normalizes a legacy general-endurance previous intake before generating candidates [33m 593[2mms[22m[39m
+     [33m[2m✓[22m[39m normalizes an archived general-endurance plan with no division before generating candidates [33m 728[2mms[22m[39m
+     [33m[2m✓[22m[39m clears a stale omitted division and requires the current division before preview [33m 634[2mms[22m[39m
+     [33m[2m✓[22m[39m reuses every explicit saved refinement after the returning preview [33m 456[2mms[22m[39m
+     [33m[2m✓[22m[39m routes a missing stored focus to candidates without repeating saved refinements [33m 630[2mms[22m[39m
+     [33m[2m✓[22m[39m preserves every explicit answer through the real saved-plan next-cycle path [33m 2327[2mms[22m[39m
+     [33m[2m✓[22m[39m reads a detailed notation without storing or creating a plan [33m 956[2mms[22m[39m
+     [33m[2m✓[22m[39m shows an error for an incomplete notation without creating a plan [33m 310[2mms[22m[39m
+     [33m[2m✓[22m[39m explains plan availability and applies the 9.5-day frame without a dead-end choice [33m 863[2mms[22m[39m
+     [33m[2m✓[22m[39m shows every supported high-intensity intention before generating a plan [33m 479[2mms[22m[39m
+     [33m[2m✓[22m[39m generates canonical candidates without storing until the athlete selects one [33m 1063[2mms[22m[39m
+     [33m[2m✓[22m[39m blocks candidate selection when same-day structured pain appears after candidates render [33m 1192[2mms[22m[39m
+     [33m[2m✓[22m[39m blocks generation when current risk is present or unclear [33m 369[2mms[22m[39m
+     [33m[2m✓[22m[39m does not let a favorable answer override recent structured high pain [33m 327[2mms[22m[39m
+     [33m[2m✓[22m[39m blocks on a recent analyzable memo without retaining its raw text [33m 354[2mms[22m[39m
+     [33m[2m✓[22m[39m does not inspect a private memo while generating candidates [33m 1224[2mms[22m[39m
+     [33m[2m✓[22m[39m labels recent journals as context without using their values [33m 1106[2mms[22m[39m
+     [33m[2m✓[22m[39m does not count future journal dates as recent context [33m 1074[2mms[22m[39m
+     [33m[2m✓[22m[39m stores an active plan only after the athlete selects a candidate [33m 1230[2mms[22m[39m
+     [33m[2m✓[22m[39m blocks candidate save when journal JSON becomes corrupt after generation [33m 1306[2mms[22m[39m
+     [33m[2m✓[22m[39m keeps candidate selection visible when the active plan cannot be saved [33m 1321[2mms[22m[39m
+     [33m[2m✓[22m[39m blocks save retry when analyzable D9 risk appears after the first write fails [33m 1640[2mms[22m[39m
+     [33m[2m✓[22m[39m blocks save retry when reading journal storage throws [33m 1428[2mms[22m[39m
+   [33m[2m✓[22m[39m routes a missing stored days answer to candidates [33m 572[2mms[22m[39m
+   [33m[2m✓[22m[39m routes a missing stored frame length to candidates [33m 458[2mms[22m[39m
+   [33m[2m✓[22m[39m routes a missing stored training time to candidates [33m 514[2mms[22m[39m
+ [32m✓[39m src/domain/decorations.contract.test.ts [2m([22m[2m8 tests[22m[2m)[22m[32m 24[2mms[22m[39m
+ [32m✓[39m src/domain/account/relationships.contract.test.ts [2m([22m[2m8 tests[22m[2m)[22m[32m 16[2mms[22m[39m
+ [32m✓[39m src/domain/account/migration.contract.test.ts [2m([22m[2m9 tests[22m[2m)[22m[32m 13[2mms[22m[39m
+ [32m✓[39m src/screens/trends/TrendsProvenance.contract.test.tsx [2m([22m[2m4 tests[22m[2m)[22m[33m 1021[2mms[22m[39m
+     [33m[2m✓[22m[39m shows only verified weekly distance and explains excluded records [33m 407[2mms[22m[39m
+     [33m[2m✓[22m[39m switches among four-month descriptive metrics without judgment copy [33m 445[2mms[22m[39m
+ [32m✓[39m src/domain/import/import-draft.contract.test.ts [2m([22m[2m12 tests[22m[2m)[22m[32m 43[2mms[22m[39m
+ [32m✓[39m src/screens/plan-beta/PaceEvidenceFlow.contract.test.tsx [2m([22m[2m4 tests[22m[2m)[22m[33m 859[2mms[22m[39m
+     [33m[2m✓[22m[39m does not auto-select even one stored result [33m 312[2mms[22m[39m
+     [33m[2m✓[22m[39m keeps comparison separate and confirms only the selected record [33m 345[2mms[22m[39m
+ [32m✓[39m src/domain/numeric-input.contract.test.ts [2m([22m[2m16 tests[22m[2m)[22m[32m 17[2mms[22m[39m
+ [32m✓[39m src/screens/PlanBeta.retry.contract.test.tsx [2m([22m[2m5 tests[22m[2m)[22m[33m 7688[2mms[22m[39m
+     [33m[2m✓[22m[39m offers a direct retry when the selected plan cannot be stored [33m 2024[2mms[22m[39m
+     [33m[2m✓[22m[39m stores the selected plan when the direct retry succeeds [33m 1569[2mms[22m[39m
+     [33m[2m✓[22m[39m stores one plan when an athlete taps a candidate twice quickly [33m 1359[2mms[22m[39m
+     [33m[2m✓[22m[39m keeps a generated candidate unsaved when its start date is cleared [33m 1145[2mms[22m[39m
+     [33m[2m✓[22m[39m shows retry when local storage silently ignores a selected plan [33m 1588[2mms[22m[39m
+ [32m✓[39m src/screens/JournalArchive.contract.test.tsx [2m([22m[2m3 tests[22m[2m)[22m[33m 914[2mms[22m[39m
+     [33m[2m✓[22m[39m drills from month to week to day without exposing private text [33m 556[2mms[22m[39m
+ [32m✓[39m src/domain/private-memo-vault.contract.test.ts [2m([22m[2m7 tests[22m[2m)[22m[33m 1539[2mms[22m[39m
+     [33m[2m✓[22m[39m removes private text from local storage and restores it only with the session code [33m 501[2mms[22m[39m
+     [33m[2m✓[22m[39m hydrates a fresh session before creating an explicit full private backup [33m 311[2mms[22m[39m
+ [32m✓[39m src/domain/feedback-board-migration.contract.test.ts [2m([22m[2m12 tests[22m[2m)[22m[32m 21[2mms[22m[39m
+ [32m✓[39m src/screens/log-entry/AutoCollapse.contract.test.tsx [2m([22m[2m7 tests[22m[2m)[22m[33m 5011[2mms[22m[39m
+     [33m[2m✓[22m[39m RPE 를 고른 직후에는 접히지 않는다 — 누른 값을 확인할 시간을 준다 [33m 975[2mms[22m[39m
+     [33m[2m✓[22m[39m 다음 구획(예상 강도)을 건드리면 RPE 가 접히고 값이 한 줄로 남는다 [33m 728[2mms[22m[39m
+     [33m[2m✓[22m[39m 예상 강도를 먼저 채운 뒤 RPE 를 눌러도 RPE 는 펼쳐진 채다 [33m 638[2mms[22m[39m
+     [33m[2m✓[22m[39m RPE 를 안 고르고 다음으로 넘어가면 접지 않는다 [33m 486[2mms[22m[39m
+     [33m[2m✓[22m[39m 접힌 RPE 를 다시 펼쳐 고칠 수 있고, 고치는 중에 다시 접히지 않는다 [33m 998[2mms[22m[39m
+     [33m[2m✓[22m[39m 접힌 상태로 저장해도 RPE 가 그대로 저장된다 [33m 622[2mms[22m[39m
+     [33m[2m✓[22m[39m 접힌 줄에 판정 문구가 없다 [33m 562[2mms[22m[39m
+ [32m✓[39m src/screens/PlanBeta.calendar.contract.test.tsx [2m([22m[2m3 tests[22m[2m)[22m[33m 5979[2mms[22m[39m
+     [33m[2m✓[22m[39m does not invent calendar dates while the start date is empty [33m 1732[2mms[22m[39m
+     [33m[2m✓[22m[39m keeps a chosen date and two daily sessions when the athlete activates a plan [33m 2113[2mms[22m[39m
+     [33m[2m✓[22m[39m keeps the chosen date when the first plan save fails and the athlete retries [33m 2131[2mms[22m[39m
+ [32m✓[39m src/domain/account/shared-fields-projection.contract.test.ts [2m([22m[2m12 tests[22m[2m)[22m[32m 20[2mms[22m[39m
+ [32m✓[39m src/domain/journal-date-validity.contract.test.ts [2m([22m[2m7 tests[22m[2m)[22m[32m 40[2mms[22m[39m
+ [32m✓[39m src/screens/LogEntry.revisit.contract.test.tsx [2m([22m[2m5 tests[22m[2m)[22m[33m 1822[2mms[22m[39m
+     [33m[2m✓[22m[39m prefills and replaces an evening check-in without changing its identity [33m 935[2mms[22m[39m
+     [33m[2m✓[22m[39m reopens a post-race record in its recorded stage and replaces it in place [33m 381[2mms[22m[39m
+     [33m[2m✓[22m[39m resets the form when another entry of the same kind is selected [33m 379[2mms[22m[39m
+ [32m✓[39m src/screens/account/BetaAccountSettings.contract.test.tsx [2m([22m[2m5 tests[22m[2m)[22m[33m 2005[2mms[22m[39m
+     [33m[2m✓[22m[39m explains the guardian gate after an under-14 birth date is saved [33m 762[2mms[22m[39m
+     [33m[2m✓[22m[39m does not bundle product analytics consent into private profile saving [33m 429[2mms[22m[39m
+     [33m[2m✓[22m[39m requires a checked privacy and terms acknowledgement before profile data can be saved [33m 417[2mms[22m[39m
+ [32m✓[39m src/AppShell.archive.contract.test.tsx [2m([22m[2m8 tests[22m[2m)[22m[33m 4298[2mms[22m[39m
+     [33m[2m✓[22m[39m returns from a day detail to the same selected month [33m 1360[2mms[22m[39m
+     [33m[2m✓[22m[39m returns from editing an archived entry to the same selected month [33m 1161[2mms[22m[39m
+     [33m[2m✓[22m[39m does not reset the archive when the active journal tab is tapped again [33m 335[2mms[22m[39m
+     [33m[2m✓[22m[39m returns a Minji example opened from home back to home [33m 525[2mms[22m[39m
+     [33m[2m✓[22m[39m keeps the easy FAQ one tap away through more [33m 364[2mms[22m[39m
+     [33m[2m✓[22m[39m keeps safe export and confirmed full backup inside more [33m 306[2mms[22m[39m
+ [32m✓[39m src/screens/LogDetail.revisit-preservation.contract.test.tsx [2m([22m[2m4 tests[22m[2m)[22m[33m 995[2mms[22m[39m
+     [33m[2m✓[22m[39m keeps the current app confirmation, trash, and tombstone behavior [33m 723[2mms[22m[39m
+ [32m✓[39m src/domain/journal-update.contract.test.ts [2m([22m[2m4 tests[22m[2m)[22m[32m 22[2mms[22m[39m
+ [32m✓[39m src/domain/objective-fatigue-evidence.test.ts [2m([22m[2m10 tests[22m[2m)[22m[32m 11[2mms[22m[39m
+ [32m✓[39m src/domain/account/sync-recovery.contract.test.ts [2m([22m[2m8 tests[22m[2m)[22m[32m 52[2mms[22m[39m
+ [32m✓[39m src/screens/PlanBeta.persistence-retry.contract.test.tsx [2m([22m[2m3 tests[22m[2m)[22m[33m 1130[2mms[22m[39m
+     [33m[2m✓[22m[39m retries a failed completed-session save without losing the selected progress [33m 624[2mms[22m[39m
+     [33m[2m✓[22m[39m retries a failed next-frame archive without clearing the active plan early [33m 343[2mms[22m[39m
+ [32m✓[39m src/screens/AthleteRecords.contract.test.tsx [2m([22m[2m4 tests[22m[2m)[22m[33m 2784[2mms[22m[39m
+     [33m[2m✓[22m[39m opens from the plan flow without creating a record [33m 375[2mms[22m[39m
+     [33m[2m✓[22m[39m keeps a 5000m PB distinct from a 5000m race goal [33m 1219[2mms[22m[39m
+     [33m[2m✓[22m[39m shows exact errors for a 59m event and a future achieved date [33m 1172[2mms[22m[39m
+ [32m✓[39m src/screens/plan-beta/labels.contract.test.ts [2m([22m[2m7 tests[22m[2m)[22m[33m 393[2mms[22m[39m
+     [33m[2m✓[22m[39m matches the 9.5-day preview total when day 10 has two sessions [33m 336[2mms[22m[39m
+ [32m✓[39m src/screens/faq/EasyFaq.contract.test.tsx [2m([22m[2m9 tests[22m[2m)[22m[33m 1078[2mms[22m[39m
+ [32m✓[39m src/screens/plan-beta/PlanSchedulePreview.contract.test.tsx [2m([22m[2m4 tests[22m[2m)[22m[33m 784[2mms[22m[39m
+     [33m[2m✓[22m[39m projects only days 1-7 from a full canonical session list [33m 319[2mms[22m[39m
+ [32m✓[39m src/domain/account/plan-proposal-atomic.contract.test.ts [2m([22m[2m5 tests[22m[2m)[22m[32m 28[2mms[22m[39m
+ [32m✓[39m src/domain/app-shell-state.test.ts [2m([22m[2m9 tests[22m[2m)[22m[32m 8[2mms[22m[39m
+ [32m✓[39m src/screens/FeedbackBoard.contract.test.tsx [2m([22m[2m5 tests[22m[2m)[22m[33m 2246[2mms[22m[39m
+     [33m[2m✓[22m[39m accepts only the text the user explicitly writes [33m 1071[2mms[22m[39m
+     [33m[2m✓[22m[39m does not claim delivery and keeps typed text when sending fails [33m 676[2mms[22m[39m
+ [32m✓[39m src/screens/home/EngagementStrip.contract.test.tsx [2m([22m[2m7 tests[22m[2m)[22m[33m 369[2mms[22m[39m
+ [32m✓[39m src/screens/plan-beta/PlanIntake.contract.test.tsx [2m([22m[2m4 tests[22m[2m)[22m[33m 561[2mms[22m[39m
+     [33m[2m✓[22m[39m explains the current two-session option before it is chosen [33m 341[2mms[22m[39m
+ [32m✓[39m src/domain/server-operations-workflows.contract.test.ts [2m([22m[2m9 tests[22m[2m)[22m[32m 37[2mms[22m[39m
+ [32m✓[39m src/domain/private-memo-vault.concurrency.contract.test.ts [2m([22m[2m2 tests[22m[2m)[22m[33m 570[2mms[22m[39m
+ [32m✓[39m src/screens/plan-beta/PlanCandidates.purpose.contract.test.tsx [2m([22m[2m3 tests[22m[2m)[22m[33m 4231[2mms[22m[39m
+     [33m[2m✓[22m[39m keeps one candidate schedule expanded and allows both to collapse [33m 2291[2mms[22m[39m
+     [33m[2m✓[22m[39m explains the selected-purpose plan and the conservative alternative before selection [33m 980[2mms[22m[39m
+     [33m[2m✓[22m[39m shows each VO2 candidate's total prescribed minutes in its headline summary [33m 957[2mms[22m[39m
+ [32m✓[39m src/domain/detailed-prescription.contract.test.ts [2m([22m[2m4 tests[22m[2m)[22m[32m 17[2mms[22m[39m
+ [32m✓[39m src/screens/trends/FatigueExperimentPanel.contract.test.tsx [2m([22m[2m3 tests[22m[2m)[22m[33m 665[2mms[22m[39m
+     [33m[2m✓[22m[39m shows a composite only after the user explicitly records sourced evidence [33m 319[2mms[22m[39m
+ [32m✓[39m src/domain/account/beta-capacity-migration.contract.test.ts [2m([22m[2m7 tests[22m[2m)[22m[32m 13[2mms[22m[39m
+ [32m✓[39m src/domain/account/guardian-invitation-migration.contract.test.ts [2m([22m[2m8 tests[22m[2m)[22m[32m 11[2mms[22m[39m
+ [32m✓[39m src/screens/JournalDayReader.contract.test.tsx [2m([22m[2m3 tests[22m[2m)[22m[33m 553[2mms[22m[39m
+     [33m[2m✓[22m[39m moves only the selected journal date and keeps boundary controls honest [33m 469[2mms[22m[39m
+ [32m✓[39m src/screens/account/EraseLocalData.contract.test.tsx [2m([22m[2m6 tests[22m[2m)[22m[33m 598[2mms[22m[39m
+     [33m[2m✓[22m[39m offers a real backup action and explains the deletion scope before confirmation [33m 314[2mms[22m[39m
+ [32m✓[39m src/domain/engagement.test.ts [2m([22m[2m7 tests[22m[2m)[22m[32m 13[2mms[22m[39m
+ [32m✓[39m src/domain/journal-decoration-lifecycle.contract.test.ts [2m([22m[2m5 tests[22m[2m)[22m[32m 36[2mms[22m[39m
+ [32m✓[39m src/screens/plan-beta/PlanProposalInbox.contract.test.tsx [2m([22m[2m3 tests[22m[2m)[22m[33m 807[2mms[22m[39m
+     [33m[2m✓[22m[39m requires a recorded warning review before a separate atomic activation [33m 700[2mms[22m[39m
+ [32m✓[39m src/screens/account/PrivateMemoVault.contract.test.tsx [2m([22m[2m4 tests[22m[2m)[22m[33m 1403[2mms[22m[39m
+     [33m[2m✓[22m[39m creates a recovery code and explains that the service operator cannot recover it [33m 356[2mms[22m[39m
+     [33m[2m✓[22m[39m accepts an existing code for this browser session [33m 726[2mms[22m[39m
+ [32m✓[39m src/domain/intensity-assessment.test.ts [2m([22m[2m7 tests[22m[2m)[22m[32m 24[2mms[22m[39m
+ [32m✓[39m src/domain/account/profile.contract.test.ts [2m([22m[2m5 tests[22m[2m)[22m[32m 14[2mms[22m[39m
+ [32m✓[39m src/domain/pace-target-comparison.contract.test.ts [2m([22m[2m4 tests[22m[2m)[22m[32m 13[2mms[22m[39m
+ [32m✓[39m src/domain/account/product-analytics-service.contract.test.ts [2m([22m[2m4 tests[22m[2m)[22m[32m 21[2mms[22m[39m
+ [32m✓[39m src/screens/log-entry/SafeAccessibility.contract.test.tsx [2m([22m[2m6 tests[22m[2m)[22m[33m 1482[2mms[22m[39m
+     [33m[2m✓[22m[39m names each adjacent post-session input [33m 553[2mms[22m[39m
+     [33m[2m✓[22m[39m exposes the selected energy system and RPE as pressed [33m 566[2mms[22m[39m
+ [32m✓[39m src/screens/home/Task10Accessibility.contract.test.tsx [2m([22m[2m6 tests[22m[2m)[22m[32m 279[2mms[22m[39m
+ [32m✓[39m src/domain/private-memo-vault-storage.concurrency.contract.test.ts [2m([22m[2m1 test[22m[2m)[22m[32m 13[2mms[22m[39m
+ [32m✓[39m src/domain/journal-schema.test.ts [2m([22m[2m10 tests[22m[2m)[22m[32m 15[2mms[22m[39m
+ [32m✓[39m src/domain/account/sync-session-security.contract.test.ts [2m([22m[2m5 tests[22m[2m)[22m[32m 10[2mms[22m[39m
+ [32m✓[39m src/components/JournalConfirmationDialog.contract.test.tsx [2m([22m[2m3 tests[22m[2m)[22m[33m 669[2mms[22m[39m
+     [33m[2m✓[22m[39m keeps keyboard focus inside and returns it after Escape [33m 514[2mms[22m[39m
+ [32m✓[39m src/components/JournalPageFrame.contract.test.tsx [2m([22m[2m2 tests[22m[2m)[22m[33m 448[2mms[22m[39m
+Error: 의도적 렌더 실패
+    at Boom (D:/admin/Documents/트레인 오라클 진도/.worktrees/persona-prescription-quality-matrix/app/src/components/ErrorBoundary.contract.test.tsx:12:9)
+    at renderWithHooks (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\react-dom\cjs\react-dom.development.js:15486:18)
+    at mountIndeterminateComponent (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\react-dom\cjs\react-dom.development.js:20103:13)
+    at beginWork (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\react-dom\cjs\react-dom.development.js:21626:16)
+    at HTMLUnknownElement.callCallback (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\react-dom\cjs\react-dom.development.js:4164:14)
+    at HTMLUnknownElement.callTheUserObjectsOperation (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\jsdom\lib\generated\idl\EventListener.js:26:30)
+    at innerInvokeEventListeners (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\jsdom\lib\jsdom\living\events\EventTarget-impl.js:360:16)
+    at invokeEventListeners (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\jsdom\lib\jsdom\living\events\EventTarget-impl.js:296:3)
+    at HTMLUnknownElementImpl._dispatch (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\jsdom\lib\jsdom\living\events\EventTarget-impl.js:243:9)
+    at HTMLUnknownElementImpl.dispatchEvent (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\jsdom\lib\jsdom\living\events\EventTarget-impl.js:114:17)
+Error: 의도적 렌더 실패
+    at Boom (D:/admin/Documents/트레인 오라클 진도/.worktrees/persona-prescription-quality-matrix/app/src/components/ErrorBoundary.contract.test.tsx:12:9)
+    at renderWithHooks (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\react-dom\cjs\react-dom.development.js:15486:18)
+    at mountIndeterminateComponent (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\react-dom\cjs\react-dom.development.js:20103:13)
+    at beginWork (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\react-dom\cjs\react-dom.development.js:21626:16)
+    at HTMLUnknownElement.callCallback (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\react-dom\cjs\react-dom.development.js:4164:14)
+    at HTMLUnknownElement.callTheUserObjectsOperation (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\jsdom\lib\generated\idl\EventListener.js:26:30)
+    at innerInvokeEventListeners (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\jsdom\lib\jsdom\living\events\EventTarget-impl.js:360:16)
+    at invokeEventListeners (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\jsdom\lib\jsdom\living\events\EventTarget-impl.js:296:3)
+    at HTMLUnknownElementImpl._dispatch (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\jsdom\lib\jsdom\living\events\EventTarget-impl.js:243:9)
+    at HTMLUnknownElementImpl.dispatchEvent (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\jsdom\lib\jsdom\living\events\EventTarget-impl.js:114:17)
+Error: 의도적 렌더 실패
+    at Boom (D:/admin/Documents/트레인 오라클 진도/.worktrees/persona-prescription-quality-matrix/app/src/components/ErrorBoundary.contract.test.tsx:12:9)
+    at renderWithHooks (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\react-dom\cjs\react-dom.development.js:15486:18)
+    at mountIndeterminateComponent (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\react-dom\cjs\react-dom.development.js:20103:13)
+    at beginWork (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\react-dom\cjs\react-dom.development.js:21626:16)
+    at HTMLUnknownElement.callCallback (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\react-dom\cjs\react-dom.development.js:4164:14)
+    at HTMLUnknownElement.callTheUserObjectsOperation (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\jsdom\lib\generated\idl\EventListener.js:26:30)
+    at innerInvokeEventListeners (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\jsdom\lib\jsdom\living\events\EventTarget-impl.js:360:16)
+    at invokeEventListeners (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\jsdom\lib\jsdom\living\events\EventTarget-impl.js:296:3)
+    at HTMLUnknownElementImpl._dispatch (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\jsdom\lib\jsdom\living\events\EventTarget-impl.js:243:9)
+    at HTMLUnknownElementImpl.dispatchEvent (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\jsdom\lib\jsdom\living\events\EventTarget-impl.js:114:17)
+Error: 의도적 렌더 실패
+    at Boom (D:/admin/Documents/트레인 오라클 진도/.worktrees/persona-prescription-quality-matrix/app/src/components/ErrorBoundary.contract.test.tsx:12:9)
+    at renderWithHooks (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\react-dom\cjs\react-dom.development.js:15486:18)
+    at mountIndeterminateComponent (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\react-dom\cjs\react-dom.development.js:20103:13)
+    at beginWork (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\react-dom\cjs\react-dom.development.js:21626:16)
+    at HTMLUnknownElement.callCallback (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\react-dom\cjs\react-dom.development.js:4164:14)
+    at HTMLUnknownElement.callTheUserObjectsOperation (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\jsdom\lib\generated\idl\EventListener.js:26:30)
+    at innerInvokeEventListeners (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\jsdom\lib\jsdom\living\events\EventTarget-impl.js:360:16)
+    at invokeEventListeners (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\jsdom\lib\jsdom\living\events\EventTarget-impl.js:296:3)
+    at HTMLUnknownElementImpl._dispatch (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\jsdom\lib\jsdom\living\events\EventTarget-impl.js:243:9)
+    at HTMLUnknownElementImpl.dispatchEvent (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\jsdom\lib\jsdom\living\events\EventTarget-impl.js:114:17)
+ [32m✓[39m src/screens/trends/TrendsSafeAccessibility.contract.test.tsx [2m([22m[2m1 test[22m[2m)[22m[33m 909[2mms[22m[39m
+     [33m[2m✓[22m[39m offers a readable table for every rendered chart [33m 907[2mms[22m[39m
+Error: 의도적 렌더 실패
+    at Boom (D:/admin/Documents/트레인 오라클 진도/.worktrees/persona-prescription-quality-matrix/app/src/components/ErrorBoundary.contract.test.tsx:12:9)
+    at renderWithHooks (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\react-dom\cjs\react-dom.development.js:15486:18)
+    at mountIndeterminateComponent (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\react-dom\cjs\react-dom.development.js:20103:13)
+    at beginWork (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\react-dom\cjs\react-dom.development.js:21626:16)
+    at HTMLUnknownElement.callCallback (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\react-dom\cjs\react-dom.development.js:4164:14)
+    at HTMLUnknownElement.callTheUserObjectsOperation (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\jsdom\lib\generated\idl\EventListener.js:26:30)
+    at innerInvokeEventListeners (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\jsdom\lib\jsdom\living\events\EventTarget-impl.js:360:16)
+    at invokeEventListeners (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\jsdom\lib\jsdom\living\events\EventTarget-impl.js:296:3)
+    at HTMLUnknownElementImpl._dispatch (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\jsdom\lib\jsdom\living\events\EventTarget-impl.js:243:9)
+    at HTMLUnknownElementImpl.dispatchEvent (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\jsdom\lib\jsdom\living\events\EventTarget-impl.js:114:17)
+Error: 의도적 렌더 실패
+    at Boom (D:/admin/Documents/트레인 오라클 진도/.worktrees/persona-prescription-quality-matrix/app/src/components/ErrorBoundary.contract.test.tsx:12:9)
+    at renderWithHooks (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\react-dom\cjs\react-dom.development.js:15486:18)
+    at mountIndeterminateComponent (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\react-dom\cjs\react-dom.development.js:20103:13)
+    at beginWork (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\react-dom\cjs\react-dom.development.js:21626:16)
+    at HTMLUnknownElement.callCallback (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\react-dom\cjs\react-dom.development.js:4164:14)
+    at HTMLUnknownElement.callTheUserObjectsOperation (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\jsdom\lib\generated\idl\EventListener.js:26:30)
+    at innerInvokeEventListeners (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\jsdom\lib\jsdom\living\events\EventTarget-impl.js:360:16)
+    at invokeEventListeners (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\jsdom\lib\jsdom\living\events\EventTarget-impl.js:296:3)
+    at HTMLUnknownElementImpl._dispatch (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\jsdom\lib\jsdom\living\events\EventTarget-impl.js:243:9)
+    at HTMLUnknownElementImpl.dispatchEvent (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\jsdom\lib\jsdom\living\events\EventTarget-impl.js:114:17)
+Error: 의도적 렌더 실패
+    at Boom (D:/admin/Documents/트레인 오라클 진도/.worktrees/persona-prescription-quality-matrix/app/src/components/ErrorBoundary.contract.test.tsx:12:9)
+    at renderWithHooks (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\react-dom\cjs\react-dom.development.js:15486:18)
+    at mountIndeterminateComponent (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\react-dom\cjs\react-dom.development.js:20103:13)
+    at beginWork (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\react-dom\cjs\react-dom.development.js:21626:16)
+    at HTMLUnknownElement.callCallback (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\react-dom\cjs\react-dom.development.js:4164:14)
+    at HTMLUnknownElement.callTheUserObjectsOperation (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\jsdom\lib\generated\idl\EventListener.js:26:30)
+    at innerInvokeEventListeners (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\jsdom\lib\jsdom\living\events\EventTarget-impl.js:360:16)
+    at invokeEventListeners (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\jsdom\lib\jsdom\living\events\EventTarget-impl.js:296:3)
+    at HTMLUnknownElementImpl._dispatch (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\jsdom\lib\jsdom\living\events\EventTarget-impl.js:243:9)
+    at HTMLUnknownElementImpl.dispatchEvent (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\jsdom\lib\jsdom\living\events\EventTarget-impl.js:114:17)
+Error: 의도적 렌더 실패
+    at Boom (D:/admin/Documents/트레인 오라클 진도/.worktrees/persona-prescription-quality-matrix/app/src/components/ErrorBoundary.contract.test.tsx:12:9)
+    at renderWithHooks (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\react-dom\cjs\react-dom.development.js:15486:18)
+    at mountIndeterminateComponent (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\react-dom\cjs\react-dom.development.js:20103:13)
+    at beginWork (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\react-dom\cjs\react-dom.development.js:21626:16)
+    at HTMLUnknownElement.callCallback (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\react-dom\cjs\react-dom.development.js:4164:14)
+    at HTMLUnknownElement.callTheUserObjectsOperation (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\jsdom\lib\generated\idl\EventListener.js:26:30)
+    at innerInvokeEventListeners (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\jsdom\lib\jsdom\living\events\EventTarget-impl.js:360:16)
+    at invokeEventListeners (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\jsdom\lib\jsdom\living\events\EventTarget-impl.js:296:3)
+    at HTMLUnknownElementImpl._dispatch (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\jsdom\lib\jsdom\living\events\EventTarget-impl.js:243:9)
+    at HTMLUnknownElementImpl.dispatchEvent (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\jsdom\lib\jsdom\living\events\EventTarget-impl.js:114:17)
+Error: 의도적 렌더 실패
+    at Boom (D:/admin/Documents/트레인 오라클 진도/.worktrees/persona-prescription-quality-matrix/app/src/components/ErrorBoundary.contract.test.tsx:12:9)
+    at renderWithHooks (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\react-dom\cjs\react-dom.development.js:15486:18)
+    at mountIndeterminateComponent (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\react-dom\cjs\react-dom.development.js:20103:13)
+    at beginWork (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\react-dom\cjs\react-dom.development.js:21626:16)
+    at HTMLUnknownElement.callCallback (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\react-dom\cjs\react-dom.development.js:4164:14)
+    at HTMLUnknownElement.callTheUserObjectsOperation (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\jsdom\lib\generated\idl\EventListener.js:26:30)
+    at innerInvokeEventListeners (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\jsdom\lib\jsdom\living\events\EventTarget-impl.js:360:16)
+    at invokeEventListeners (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\jsdom\lib\jsdom\living\events\EventTarget-impl.js:296:3)
+    at HTMLUnknownElementImpl._dispatch (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\jsdom\lib\jsdom\living\events\EventTarget-impl.js:243:9)
+    at HTMLUnknownElementImpl.dispatchEvent (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\jsdom\lib\jsdom\living\events\EventTarget-impl.js:114:17)
+Error: 의도적 렌더 실패
+    at Boom (D:/admin/Documents/트레인 오라클 진도/.worktrees/persona-prescription-quality-matrix/app/src/components/ErrorBoundary.contract.test.tsx:12:9)
+    at renderWithHooks (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\react-dom\cjs\react-dom.development.js:15486:18)
+    at mountIndeterminateComponent (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\react-dom\cjs\react-dom.development.js:20103:13)
+    at beginWork (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\react-dom\cjs\react-dom.development.js:21626:16)
+    at HTMLUnknownElement.callCallback (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\react-dom\cjs\react-dom.development.js:4164:14)
+    at HTMLUnknownElement.callTheUserObjectsOperation (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\jsdom\lib\generated\idl\EventListener.js:26:30)
+    at innerInvokeEventListeners (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\jsdom\lib\jsdom\living\events\EventTarget-impl.js:360:16)
+    at invokeEventListeners (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\jsdom\lib\jsdom\living\events\EventTarget-impl.js:296:3)
+    at HTMLUnknownElementImpl._dispatch (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\jsdom\lib\jsdom\living\events\EventTarget-impl.js:243:9)
+    at HTMLUnknownElementImpl.dispatchEvent (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\jsdom\lib\jsdom\living\events\EventTarget-impl.js:114:17)
+Error: 의도적 렌더 실패
+    at Boom (D:/admin/Documents/트레인 오라클 진도/.worktrees/persona-prescription-quality-matrix/app/src/components/ErrorBoundary.contract.test.tsx:12:9)
+    at renderWithHooks (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\react-dom\cjs\react-dom.development.js:15486:18)
+    at mountIndeterminateComponent (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\react-dom\cjs\react-dom.development.js:20103:13)
+    at beginWork (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\react-dom\cjs\react-dom.development.js:21626:16)
+    at HTMLUnknownElement.callCallback (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\react-dom\cjs\react-dom.development.js:4164:14)
+    at HTMLUnknownElement.callTheUserObjectsOperation (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\jsdom\lib\generated\idl\EventListener.js:26:30)
+    at innerInvokeEventListeners (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\jsdom\lib\jsdom\living\events\EventTarget-impl.js:360:16)
+    at invokeEventListeners (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\jsdom\lib\jsdom\living\events\EventTarget-impl.js:296:3)
+    at HTMLUnknownElementImpl._dispatch (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\jsdom\lib\jsdom\living\events\EventTarget-impl.js:243:9)
+    at HTMLUnknownElementImpl.dispatchEvent (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\jsdom\lib\jsdom\living\events\EventTarget-impl.js:114:17)
+Error: 의도적 렌더 실패
+    at Boom (D:/admin/Documents/트레인 오라클 진도/.worktrees/persona-prescription-quality-matrix/app/src/components/ErrorBoundary.contract.test.tsx:12:9)
+    at renderWithHooks (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\react-dom\cjs\react-dom.development.js:15486:18)
+    at mountIndeterminateComponent (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\react-dom\cjs\react-dom.development.js:20103:13)
+    at beginWork (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\react-dom\cjs\react-dom.development.js:21626:16)
+    at HTMLUnknownElement.callCallback (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\react-dom\cjs\react-dom.development.js:4164:14)
+    at HTMLUnknownElement.callTheUserObjectsOperation (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\jsdom\lib\generated\idl\EventListener.js:26:30)
+    at innerInvokeEventListeners (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\jsdom\lib\jsdom\living\events\EventTarget-impl.js:360:16)
+    at invokeEventListeners (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\jsdom\lib\jsdom\living\events\EventTarget-impl.js:296:3)
+    at HTMLUnknownElementImpl._dispatch (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\jsdom\lib\jsdom\living\events\EventTarget-impl.js:243:9)
+    at HTMLUnknownElementImpl.dispatchEvent (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\jsdom\lib\jsdom\living\events\EventTarget-impl.js:114:17)
+ [32m✓[39m src/components/ErrorBoundary.contract.test.tsx [2m([22m[2m7 tests[22m[2m)[22m[33m 516[2mms[22m[39m
+ [32m✓[39m src/domain/account/sync-schema-migration.contract.test.ts [2m([22m[2m6 tests[22m[2m)[22m[32m 27[2mms[22m[39m
+ [32m✓[39m src/domain/account/config.contract.test.ts [2m([22m[2m7 tests[22m[2m)[22m[32m 9[2mms[22m[39m
+ [32m✓[39m src/domain/save-receipt.test.ts [2m([22m[2m3 tests[22m[2m)[22m[32m 7[2mms[22m[39m
+ [32m✓[39m src/screens/GuideFeedback.contract.test.tsx [2m([22m[2m5 tests[22m[2m)[22m[33m 1266[2mms[22m[39m
+     [33m[2m✓[22m[39m keeps error and feedback reports inside TrainOracle [33m 336[2mms[22m[39m
+     [33m[2m✓[22m[39m lets a reader open and close Minji's diary pages in plain language [33m 392[2mms[22m[39m
+ [32m✓[39m src/domain/deployment-config.contract.test.ts [2m([22m[2m4 tests[22m[2m)[22m[32m 12[2mms[22m[39m
+ [32m✓[39m src/screens/account/AccountSyncPanel.contract.test.tsx [2m([22m[2m4 tests[22m[2m)[22m[33m 516[2mms[22m[39m
+ [32m✓[39m src/domain/journal-full-export.contract.test.ts [2m([22m[2m2 tests[22m[2m)[22m[33m 458[2mms[22m[39m
+     [33m[2m✓[22m[39m keeps the default export byte-invariant when only private memo text changes [33m 310[2mms[22m[39m
+ [32m✓[39m src/screens/account/ProductAnalyticsConsentPanel.contract.test.tsx [2m([22m[2m2 tests[22m[2m)[22m[33m 474[2mms[22m[39m
+     [33m[2m✓[22m[39m explains the account-linked 30-day boundary and saves consent separately [33m 351[2mms[22m[39m
+ [32m✓[39m src/domain/account/account-service.contract.test.ts [2m([22m[2m3 tests[22m[2m)[22m[32m 14[2mms[22m[39m
+ [32m✓[39m src/domain/journal-local-storage.concurrency.contract.test.ts [2m([22m[2m2 tests[22m[2m)[22m[32m 15[2mms[22m[39m
+ [32m✓[39m src/domain/account/plan-proposal-migration.contract.test.ts [2m([22m[2m4 tests[22m[2m)[22m[32m 8[2mms[22m[39m
+ [32m✓[39m src/domain/account/function-execute-privilege-migration.contract.test.ts [2m([22m[2m3 tests[22m[2m)[22m[32m 9[2mms[22m[39m
+ [32m✓[39m src/domain/account/guardian-invitations.contract.test.ts [2m([22m[2m3 tests[22m[2m)[22m[32m 17[2mms[22m[39m
+ [32m✓[39m src/screens/PlanBeta.pace-boundary.contract.test.tsx [2m([22m[2m1 test[22m[2m)[22m[33m 1537[2mms[22m[39m
+     [33m[2m✓[22m[39m does not automatically select a matching current record [33m 1535[2mms[22m[39m
+ [32m✓[39m src/domain/plan-session-schema.contract.test.ts [2m([22m[2m8 tests[22m[2m)[22m[32m 11[2mms[22m[39m
+ [32m✓[39m src/screens/minji/MinjiJournal.contract.test.tsx [2m([22m[2m2 tests[22m[2m)[22m[33m 904[2mms[22m[39m
+     [33m[2m✓[22m[39m resets page-only disclosure state when the selected diary changes [33m 670[2mms[22m[39m
+ [32m✓[39m src/domain/fatigue-experiment-store.contract.test.ts [2m([22m[2m3 tests[22m[2m)[22m[32m 13[2mms[22m[39m
+ [32m✓[39m src/domain/fatigue-vector.contract.test.ts [2m([22m[2m3 tests[22m[2m)[22m[32m 13[2mms[22m[39m
+ [32m✓[39m src/domain/numeric-input.test.ts [2m([22m[2m6 tests[22m[2m)[22m[32m 7[2mms[22m[39m
+ [32m✓[39m src/components/DataSafetyNotice.contract.test.tsx [2m([22m[2m4 tests[22m[2m)[22m[32m 98[2mms[22m[39m
+ [32m✓[39m src/domain/weekly-distance.contract.test.ts [2m([22m[2m1 test[22m[2m)[22m[32m 7[2mms[22m[39m
+ [32m✓[39m src/domain/journal-calendar.contract.test.ts [2m([22m[2m2 tests[22m[2m)[22m[32m 11[2mms[22m[39m
+ [32m✓[39m src/domain/plan-proposals.contract.test.ts [2m([22m[2m2 tests[22m[2m)[22m[32m 7[2mms[22m[39m
+ [32m✓[39m src/domain/server-feature-runbook.contract.test.ts [2m([22m[2m2 tests[22m[2m)[22m[32m 20[2mms[22m[39m
+ [32m✓[39m src/domain/account/beta-capacity.contract.test.ts [2m([22m[2m2 tests[22m[2m)[22m[32m 31[2mms[22m[39m
+ [32m✓[39m src/screens/account/CoachSupportPanel.contract.test.tsx [2m([22m[2m2 tests[22m[2m)[22m[33m 907[2mms[22m[39m
+     [33m[2m✓[22m[39m labels invitees as qualification unverified and creates a season invitation [33m 560[2mms[22m[39m
+     [33m[2m✓[22m[39m accepts a code without asking for qualification claims [33m 344[2mms[22m[39m
+ [32m✓[39m src/screens/minji/minji-journal-data.contract.test.ts [2m([22m[2m2 tests[22m[2m)[22m[32m 12[2mms[22m[39m
+ [32m✓[39m src/domain/account/guardian-helper-rpc-hardening-migration.contract.test.ts [2m([22m[2m3 tests[22m[2m)[22m[32m 8[2mms[22m[39m
+ [32m✓[39m src/domain/plan-beta-history.contract.test.ts [2m([22m[2m1 test[22m[2m)[22m[32m 22[2mms[22m[39m
+ [32m✓[39m src/domain/account/support-invitation-migration.contract.test.ts [2m([22m[2m4 tests[22m[2m)[22m[32m 7[2mms[22m[39m
+ [32m✓[39m src/domain/field-provenance.contract.test.ts [2m([22m[2m2 tests[22m[2m)[22m[32m 6[2mms[22m[39m
+ [32m✓[39m src/domain/aggregates.numeric-boundary.test.ts [2m([22m[2m6 tests[22m[2m)[22m[32m 10[2mms[22m[39m
+ [32m✓[39m src/screens/home/DeviceJournal.duplicate-id.contract.test.tsx [2m([22m[2m1 test[22m[2m)[22m[32m 295[2mms[22m[39m
+ [32m✓[39m src/domain/account/private-note-crypto.contract.test.ts [2m([22m[2m4 tests[22m[2m)[22m[33m 580[2mms[22m[39m
+ [32m✓[39m src/domain/feedback/feedback-idempotency.contract.test.ts [2m([22m[2m3 tests[22m[2m)[22m[32m 13[2mms[22m[39m
+ [32m✓[39m src/domain/product-features.contract.test.ts [2m([22m[2m4 tests[22m[2m)[22m[32m 9[2mms[22m[39m
+ [32m✓[39m src/screens/More.feedback.contract.test.tsx [2m([22m[2m3 tests[22m[2m)[22m[33m 376[2mms[22m[39m
+     [33m[2m✓[22m[39m uses the same inquiry-board name as the comment-style board [33m 303[2mms[22m[39m
+ [32m✓[39m src/App.startup-loading.contract.test.ts [2m([22m[2m3 tests[22m[2m)[22m[32m 7[2mms[22m[39m
+ [32m✓[39m src/domain/account/plan-proposal-service.contract.test.ts [2m([22m[2m2 tests[22m[2m)[22m[32m 11[2mms[22m[39m
+ [32m✓[39m src/screens/account/GuardianConfirmationPanel.contract.test.tsx [2m([22m[2m1 test[22m[2m)[22m[33m 725[2mms[22m[39m
+     [33m[2m✓[22m[39m keeps child-code creation and guardian acceptance explicit [33m 723[2mms[22m[39m
+ [32m✓[39m src/screens/plan-beta/plan-intake-meta.contract.test.ts [2m([22m[2m3 tests[22m[2m)[22m[32m 8[2mms[22m[39m
+ [32m✓[39m src/domain/account/legal-consent-migration.contract.test.ts [2m([22m[2m2 tests[22m[2m)[22m[32m 7[2mms[22m[39m
+ [32m✓[39m src/domain/account/guardian-invitation-expiry-migration.contract.test.ts [2m([22m[2m2 tests[22m[2m)[22m[32m 6[2mms[22m[39m
+ [32m✓[39m src/components/TermHelp.contract.test.tsx [2m([22m[2m2 tests[22m[2m)[22m[33m 421[2mms[22m[39m
+     [33m[2m✓[22m[39m explains that an explicitly selected PM slot can contain the main session [33m 323[2mms[22m[39m
+ [32m✓[39m src/screens/PlanBeta.goal.contract.test.tsx [2m([22m[2m1 test[22m[2m)[22m[33m 430[2mms[22m[39m
+     [33m[2m✓[22m[39m keeps the first plan question to three choices until the athlete asks for 10 km [33m 427[2mms[22m[39m
+ [32m✓[39m src/domain/feedback/feedback-config.contract.test.ts [2m([22m[2m3 tests[22m[2m)[22m[32m 7[2mms[22m[39m
+ [32m✓[39m src/screens/home/DailyContextTags.contract.test.tsx [2m([22m[2m1 test[22m[2m)[22m[33m 455[2mms[22m[39m
+     [33m[2m✓[22m[39m lets the user choose weather without requesting location [33m 453[2mms[22m[39m
+ [32m✓[39m src/domain/account/support-invitations.contract.test.ts [2m([22m[2m3 tests[22m[2m)[22m[32m 14[2mms[22m[39m
+ [32m✓[39m src/screens/account/AccountNetworkSettings.contract.test.tsx [2m([22m[2m1 test[22m[2m)[22m[32m 286[2mms[22m[39m
+ [32m✓[39m src/domain/daily-context.contract.test.ts [2m([22m[2m2 tests[22m[2m)[22m[32m 10[2mms[22m[39m
+Error: feedback chunk unavailable
+    at load (D:/admin/Documents/트레인 오라클 진도/.worktrees/persona-prescription-quality-matrix/app/src/screens/FeedbackBoardRoute.contract.test.tsx:17:45)
+    at D:/admin/Documents/트레인 오라클 진도/.worktrees/persona-prescription-quality-matrix/app/src/screens/FeedbackBoardRoute.tsx:14:28
+    at lazyInitializer (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\react\cjs\react.development.js:1357:20)
+    at mountLazyComponent (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\react-dom\cjs\react-dom.development.js:19973:19)
+    at beginWork (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\react-dom\cjs\react-dom.development.js:21632:16)
+    at beginWork$1 (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\react-dom\cjs\react-dom.development.js:27465:14)
+    at performUnitOfWork (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\react-dom\cjs\react-dom.development.js:26599:12)
+    at workLoopSync (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\react-dom\cjs\react-dom.development.js:26505:5)
+    at renderRootSync (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\react-dom\cjs\react-dom.development.js:26473:7)
+    at performConcurrentWorkOnRoot (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\react-dom\cjs\react-dom.development.js:25777:74)
+Error: feedback chunk unavailable
+    at load (D:/admin/Documents/트레인 오라클 진도/.worktrees/persona-prescription-quality-matrix/app/src/screens/FeedbackBoardRoute.contract.test.tsx:17:45)
+    at D:/admin/Documents/트레인 오라클 진도/.worktrees/persona-prescription-quality-matrix/app/src/screens/FeedbackBoardRoute.tsx:14:28
+    at lazyInitializer (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\react\cjs\react.development.js:1357:20)
+    at mountLazyComponent (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\react-dom\cjs\react-dom.development.js:19973:19)
+    at beginWork (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\react-dom\cjs\react-dom.development.js:21632:16)
+    at beginWork$1 (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\react-dom\cjs\react-dom.development.js:27465:14)
+    at performUnitOfWork (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\react-dom\cjs\react-dom.development.js:26599:12)
+    at workLoopSync (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\react-dom\cjs\react-dom.development.js:26505:5)
+    at renderRootSync (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\react-dom\cjs\react-dom.development.js:26473:7)
+    at performConcurrentWorkOnRoot (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\react-dom\cjs\react-dom.development.js:25777:74)
+ [32m✓[39m src/screens/FeedbackBoardRoute.contract.test.tsx [2m([22m[2m1 test[22m[2m)[22m[32m 229[2mms[22m[39m
+ [32m✓[39m src/domain/account/product-analytics.contract.test.ts [2m([22m[2m3 tests[22m[2m)[22m[32m 6[2mms[22m[39m
+ [32m✓[39m src/domain/training-cycle-window.contract.test.ts [2m([22m[2m1 test[22m[2m)[22m[32m 5[2mms[22m[39m
+ [32m✓[39m src/domain/journal-reader.contract.test.ts [2m([22m[2m1 test[22m[2m)[22m[32m 4[2mms[22m[39m
+ [32m✓[39m src/domain/account/account-deletion.contract.test.ts [2m([22m[2m1 test[22m[2m)[22m[32m 4[2mms[22m[39m
+ [32m✓[39m src/screens/PlanBeta.p1-boundary.contract.test.tsx [2m([22m[2m1 test[22m[2m)[22m[32m 140[2mms[22m[39m
+
+[2m Test Files [22m [1m[32m169 passed[39m[22m[90m (169)[39m
+[2m      Tests [22m [1m[32m1299 passed[39m[22m[90m (1299)[39m
+[2m   Start at [22m 11:45:45
+[2m   Duration [22m 95.88s[2m (transform 12.60s, setup 69.28s, import 107.91s, tests 142.09s, environment 637.56s)[22m
+
+
+> trainoracle-app@0.1.0 test:unit:kst
+> vitest run -c vitest.config.kst.ts
+
+
+[1m[30m[46m RUN [49m[39m[22m [36mv4.1.10 [39m[90mD:/admin/Documents/트레인 오라클 진도/.worktrees/persona-prescription-quality-matrix/app[39m
+
+ [32m✓[39m src/screens/home/DecorationShop.contract.test.tsx [2m([22m[2m12 tests[22m[2m)[22m[33m 3122[2mms[22m[39m
+     [33m[2m✓[22m[39m keeps a purchased item after reopening the shop [33m 482[2mms[22m[39m
+     [33m[2m✓[22m[39m tries an unowned item without changing storage and restores the page when closed [33m 332[2mms[22m[39m
+     [33m[2m✓[22m[39m lets a zero-point user apply a starter and keeps favorites and recents after reopening [33m 638[2mms[22m[39m
+ [32m✓[39m src/screens/AthleteRecords.contract.test.tsx [2m([22m[2m4 tests[22m[2m)[22m[33m 3221[2mms[22m[39m
+     [33m[2m✓[22m[39m opens from the plan flow without creating a record [33m 567[2mms[22m[39m
+     [33m[2m✓[22m[39m keeps a 5000m PB distinct from a 5000m race goal [33m 1411[2mms[22m[39m
+     [33m[2m✓[22m[39m shows exact errors for a 59m event and a future achieved date [33m 1225[2mms[22m[39m
+ [32m✓[39m src/domain/private-memo-vault.rotation.contract.test.ts [2m([22m[2m6 tests[22m[2m)[22m[33m 4449[2mms[22m[39m
+     [33m[2m✓[22m[39m keeps all entries decryptable with the old code when the second rotation write fails [33m 1778[2mms[22m[39m
+     [33m[2m✓[22m[39m restores the prior vault after a partial rotation write and allows a retry [33m 761[2mms[22m[39m
+     [33m[2m✓[22m[39m restores the prior vault when rotation confirmation throws [33m 544[2mms[22m[39m
+     [33m[2m✓[22m[39m does not overwrite a vault changed while rotating a recovery code [33m 784[2mms[22m[39m
+     [33m[2m✓[22m[39m never writes a journal record while rotating a vault [33m 433[2mms[22m[39m
+ [32m✓[39m src/screens/plan-beta/PlanCandidates.purpose.contract.test.tsx [2m([22m[2m3 tests[22m[2m)[22m[33m 5152[2mms[22m[39m
+     [33m[2m✓[22m[39m keeps one candidate schedule expanded and allows both to collapse [33m 2732[2mms[22m[39m
+     [33m[2m✓[22m[39m explains the selected-purpose plan and the conservative alternative before selection [33m 1169[2mms[22m[39m
+     [33m[2m✓[22m[39m shows each VO2 candidate's total prescribed minutes in its headline summary [33m 1248[2mms[22m[39m
+ [32m✓[39m src/screens/log-entry/AutoCollapse.contract.test.tsx [2m([22m[2m7 tests[22m[2m)[22m[33m 5795[2mms[22m[39m
+     [33m[2m✓[22m[39m RPE 를 고른 직후에는 접히지 않는다 — 누른 값을 확인할 시간을 준다 [33m 1078[2mms[22m[39m
+     [33m[2m✓[22m[39m 다음 구획(예상 강도)을 건드리면 RPE 가 접히고 값이 한 줄로 남는다 [33m 858[2mms[22m[39m
+     [33m[2m✓[22m[39m 예상 강도를 먼저 채운 뒤 RPE 를 눌러도 RPE 는 펼쳐진 채다 [33m 749[2mms[22m[39m
+     [33m[2m✓[22m[39m RPE 를 안 고르고 다음으로 넘어가면 접지 않는다 [33m 447[2mms[22m[39m
+     [33m[2m✓[22m[39m 접힌 RPE 를 다시 펼쳐 고칠 수 있고, 고치는 중에 다시 접히지 않는다 [33m 1237[2mms[22m[39m
+     [33m[2m✓[22m[39m 접힌 상태로 저장해도 RPE 가 그대로 저장된다 [33m 765[2mms[22m[39m
+     [33m[2m✓[22m[39m 접힌 줄에 판정 문구가 없다 [33m 659[2mms[22m[39m
+ [32m✓[39m src/AppShell.archive.contract.test.tsx [2m([22m[2m8 tests[22m[2m)[22m[33m 5532[2mms[22m[39m
+     [33m[2m✓[22m[39m returns from a day detail to the same selected month [33m 2185[2mms[22m[39m
+     [33m[2m✓[22m[39m returns from editing an archived entry to the same selected month [33m 1227[2mms[22m[39m
+     [33m[2m✓[22m[39m does not reset the archive when the active journal tab is tapped again [33m 372[2mms[22m[39m
+     [33m[2m✓[22m[39m returns a Minji example opened from home back to home [33m 683[2mms[22m[39m
+     [33m[2m✓[22m[39m keeps the easy FAQ one tap away through more [33m 456[2mms[22m[39m
+     [33m[2m✓[22m[39m keeps safe export and confirmed full backup inside more [33m 326[2mms[22m[39m
+ [32m✓[39m src/screens/PlanBeta.calendar.contract.test.tsx [2m([22m[2m3 tests[22m[2m)[22m[33m 6627[2mms[22m[39m
+     [33m[2m✓[22m[39m does not invent calendar dates while the start date is empty [33m 2146[2mms[22m[39m
+     [33m[2m✓[22m[39m keeps a chosen date and two daily sessions when the athlete activates a plan [33m 2208[2mms[22m[39m
+     [33m[2m✓[22m[39m keeps the chosen date when the first plan save fails and the athlete retries [33m 2271[2mms[22m[39m
+ [32m✓[39m src/screens/LogEntry.contract.test.tsx [2m([22m[2m12 tests[22m[2m)[22m[33m 8401[2mms[22m[39m
+     [33m[2m✓[22m[39m requires an explicit purpose before saving nonempty free text [33m 821[2mms[22m[39m
+     [33m[2m✓[22m[39m stores a private race memo in the encrypted vault from the actual save surface [33m 872[2mms[22m[39m
+     [33m[2m✓[22m[39m persists structured pace, optional self-checks, and training-note context [33m 1228[2mms[22m[39m
+     [33m[2m✓[22m[39m saves and carries D9_ACTIVE review attention to the next screen [33m 711[2mms[22m[39m
+     [33m[2m✓[22m[39m saves and carries D9_UNKNOWN review attention to the next screen [33m 532[2mms[22m[39m
+     [33m[2m✓[22m[39m still saves a post-session entry [33m 320[2mms[22m[39m
+     [33m[2m✓[22m[39m captures a planned subjective intensity before saving [33m 605[2mms[22m[39m
+     [33m[2m✓[22m[39m saves an interval component beside subjective intensity [33m 1192[2mms[22m[39m
+     [33m[2m✓[22m[39m does not silently drop malformed optional objective inputs [33m 1517[2mms[22m[39m
+ [32m✓[39m src/screens/PlanBeta.retry.contract.test.tsx [2m([22m[2m5 tests[22m[2m)[22m[33m 8138[2mms[22m[39m
+     [33m[2m✓[22m[39m offers a direct retry when the selected plan cannot be stored [33m 2441[2mms[22m[39m
+     [33m[2m✓[22m[39m stores the selected plan when the direct retry succeeds [33m 1765[2mms[22m[39m
+     [33m[2m✓[22m[39m stores one plan when an athlete taps a candidate twice quickly [33m 1523[2mms[22m[39m
+     [33m[2m✓[22m[39m keeps a generated candidate unsaved when its start date is cleared [33m 996[2mms[22m[39m
+     [33m[2m✓[22m[39m shows retry when local storage silently ignores a selected plan [33m 1410[2mms[22m[39m
+ [32m✓[39m src/domain/account/private-note-sync.contract.test.ts [2m([22m[2m10 tests[22m[2m)[22m[33m 2730[2mms[22m[39m
+     [33m[2m✓[22m[39m rotates the session recovery code and keeps a real private memo decryptable [33m 579[2mms[22m[39m
+     [33m[2m✓[22m[39m clears the session code when a failed vault rotation cannot restore the old code [33m 433[2mms[22m[39m
+ [32m✓[39m src/screens/RestoreBackup.contract.test.tsx [2m([22m[2m21 tests[22m[2m)[22m[33m 2605[2mms[22m[39m
+ [32m✓[39m src/screens/LogDetail.decoration.contract.test.tsx [2m([22m[2m7 tests[22m[2m)[22m[33m 2533[2mms[22m[39m
+     [33m[2m✓[22m[39m adds a free page decoration and undoes the exact saved change [33m 752[2mms[22m[39m
+     [33m[2m✓[22m[39m names both items before replacing an occupied slot [33m 396[2mms[22m[39m
+     [33m[2m✓[22m[39m reloads a saved placement and undo restores it after the next saved change [33m 561[2mms[22m[39m
+ [32m✓[39m src/screens/plan-beta/PlanBeta.pace-prescription.contract.test.tsx [2m([22m[2m6 tests[22m[2m)[22m[33m 11820[2mms[22m[39m
+     [33m[2m✓[22m[39m binds only the confirmed record and preserves the exact prescription after reload [33m 4485[2mms[22m[39m
+     [33m[2m✓[22m[39m clears the execution allowance message on every recorded outcome [33m 3037[2mms[22m[39m
+     [33m[2m✓[22m[39m requires reconfirmation after replacing a confirmed record [33m 1855[2mms[22m[39m
+     [33m[2m✓[22m[39m keeps both candidates RPE-only when the confirmed record is stale [33m 1238[2mms[22m[39m
+     [33m[2m✓[22m[39m shows a plain RPE fallback when no record exists [33m 932[2mms[22m[39m
+ [32m✓[39m src/screens/ImportActivities.contract.test.tsx [2m([22m[2m14 tests[22m[2m)[22m[33m 1825[2mms[22m[39m
+ [32m✓[39m src/screens/account/BetaAccountSettings.contract.test.tsx [2m([22m[2m5 tests[22m[2m)[22m[33m 2007[2mms[22m[39m
+     [33m[2m✓[22m[39m explains the guardian gate after an under-14 birth date is saved [33m 702[2mms[22m[39m
+     [33m[2m✓[22m[39m does not bundle product analytics consent into private profile saving [33m 409[2mms[22m[39m
+     [33m[2m✓[22m[39m requires a checked privacy and terms acknowledgement before profile data can be saved [33m 437[2mms[22m[39m
+ [32m✓[39m src/screens/FeedbackBoard.contract.test.tsx [2m([22m[2m5 tests[22m[2m)[22m[33m 2274[2mms[22m[39m
+     [33m[2m✓[22m[39m accepts only the text the user explicitly writes [33m 1088[2mms[22m[39m
+     [33m[2m✓[22m[39m does not claim delivery and keeps typed text when sending fails [33m 654[2mms[22m[39m
+ [32m✓[39m src/screens/LogEntry.revisit.contract.test.tsx [2m([22m[2m5 tests[22m[2m)[22m[33m 1789[2mms[22m[39m
+     [33m[2m✓[22m[39m prefills and replaces an evening check-in without changing its identity [33m 909[2mms[22m[39m
+     [33m[2m✓[22m[39m reopens a post-race record in its recorded stage and replaces it in place [33m 442[2mms[22m[39m
+     [33m[2m✓[22m[39m resets the form when another entry of the same kind is selected [33m 319[2mms[22m[39m
+ [32m✓[39m src/domain/private-memo-vault.contract.test.ts [2m([22m[2m7 tests[22m[2m)[22m[33m 1539[2mms[22m[39m
+     [33m[2m✓[22m[39m removes private text from local storage and restores it only with the session code [33m 473[2mms[22m[39m
+     [33m[2m✓[22m[39m hydrates a fresh session before creating an explicit full private backup [33m 320[2mms[22m[39m
+ [32m✓[39m src/screens/PlanBeta.pace-boundary.contract.test.tsx [2m([22m[2m1 test[22m[2m)[22m[33m 1568[2mms[22m[39m
+     [33m[2m✓[22m[39m does not automatically select a matching current record [33m 1566[2mms[22m[39m
+ [32m✓[39m src/domain/private-memo-vault.persistence.contract.test.ts [2m([22m[2m5 tests[22m[2m)[22m[33m 1584[2mms[22m[39m
+     [33m[2m✓[22m[39m restores the prior encrypted vault and journal shell after a partial journal write [33m 312[2mms[22m[39m
+     [33m[2m✓[22m[39m restores both records when 'vault' confirmation throws [33m 307[2mms[22m[39m
+     [33m[2m✓[22m[39m restores both records when 'journal' confirmation throws [33m 324[2mms[22m[39m
+     [33m[2m✓[22m[39m does not overwrite a vault and journal changed while encrypting a new private memo [33m 495[2mms[22m[39m
+ [32m✓[39m src/screens/log-entry/FormSec.contract.test.tsx [2m([22m[2m19 tests[22m[2m)[22m[33m 2013[2mms[22m[39m
+     [33m[2m✓[22m[39m 닫혀 있어도 children 이 DOM 에 남아 입력값이 살아 있다 [33m 440[2mms[22m[39m
+ [32m✓[39m src/screens/log-entry/SafeAccessibility.contract.test.tsx [2m([22m[2m6 tests[22m[2m)[22m[33m 2374[2mms[22m[39m
+     [33m[2m✓[22m[39m names each adjacent post-session input [33m 1139[2mms[22m[39m
+     [33m[2m✓[22m[39m exposes the selected energy system and RPE as pressed [33m 757[2mms[22m[39m
+ [32m✓[39m src/domain/account/sync-schema-recovery-orchestration.contract.test.ts [2m([22m[2m10 tests[22m[2m)[22m[33m 1467[2mms[22m[39m
+     [33m[2m✓[22m[39m keeps syncing after pulling an encrypted private memo [33m 1389[2mms[22m[39m
+ [32m✓[39m src/screens/home/HomeSafeAccessibility.contract.test.tsx [2m([22m[2m11 tests[22m[2m)[22m[33m 1506[2mms[22m[39m
+     [33m[2m✓[22m[39m opens a recent journal entry through a semantic labeled button [33m 512[2mms[22m[39m
+ [32m✓[39m src/components/Motion.contract.test.tsx [2m([22m[2m14 tests[22m[2m)[22m[33m 1785[2mms[22m[39m
+     [33m[2m✓[22m[39m shows the exit phase before unmounting after a save [33m 777[2mms[22m[39m
+     [33m[2m✓[22m[39m keeps review attention until the athlete dismisses it [33m 570[2mms[22m[39m
+ [32m✓[39m src/screens/account/PrivateMemoVault.contract.test.tsx [2m([22m[2m4 tests[22m[2m)[22m[33m 1551[2mms[22m[39m
+     [33m[2m✓[22m[39m creates a recovery code and explains that the service operator cannot recover it [33m 449[2mms[22m[39m
+     [33m[2m✓[22m[39m accepts an existing code for this browser session [33m 758[2mms[22m[39m
+ [32m✓[39m src/screens/GuideFeedback.contract.test.tsx [2m([22m[2m5 tests[22m[2m)[22m[33m 1329[2mms[22m[39m
+     [33m[2m✓[22m[39m keeps error and feedback reports inside TrainOracle [33m 343[2mms[22m[39m
+     [33m[2m✓[22m[39m lets a reader open and close Minji's diary pages in plain language [33m 463[2mms[22m[39m
+ [32m✓[39m src/screens/account/SwitchAccountPanel.contract.test.tsx [2m([22m[2m12 tests[22m[2m)[22m[33m 1480[2mms[22m[39m
+ [32m✓[39m src/screens/faq/EasyFaq.contract.test.tsx [2m([22m[2m9 tests[22m[2m)[22m[33m 1165[2mms[22m[39m
+ [32m✓[39m src/screens/PlanBeta.persistence-retry.contract.test.tsx [2m([22m[2m3 tests[22m[2m)[22m[33m 1280[2mms[22m[39m
+     [33m[2m✓[22m[39m retries a failed completed-session save without losing the selected progress [33m 779[2mms[22m[39m
+     [33m[2m✓[22m[39m retries a failed next-frame archive without clearing the active plan early [33m 339[2mms[22m[39m
+ [32m✓[39m src/screens/trends/TrendsProvenance.contract.test.tsx [2m([22m[2m4 tests[22m[2m)[22m[33m 963[2mms[22m[39m
+     [33m[2m✓[22m[39m shows only verified weekly distance and explains excluded records [33m 388[2mms[22m[39m
+     [33m[2m✓[22m[39m switches among four-month descriptive metrics without judgment copy [33m 344[2mms[22m[39m
+ [32m✓[39m src/screens/LogDetail.revisit-preservation.contract.test.tsx [2m([22m[2m4 tests[22m[2m)[22m[33m 1347[2mms[22m[39m
+     [33m[2m✓[22m[39m keeps the current app confirmation, trash, and tombstone behavior [33m 947[2mms[22m[39m
+ [32m✓[39m src/screens/PlanBeta.contract.test.tsx [2m([22m[2m34 tests[22m[2m)[22m[33m 28018[2mms[22m[39m
+     [33m[2m✓[22m[39m shows a non-selectable plan-shape preview after the required direction answers and a clear current-risk answer [33m 1051[2mms[22m[39m
+     [33m[2m✓[22m[39m shows no preview or candidates when the current-risk answer needs review after the required direction answers [33m 503[2mms[22m[39m
+     [33m[2m✓[22m[39m rechecks recent journal safety after preview before generating candidates [33m 971[2mms[22m[39m
+     [33m[2m✓[22m[39m normalizes a legacy general-endurance previous intake before generating candidates [33m 636[2mms[22m[39m
+     [33m[2m✓[22m[39m normalizes an archived general-endurance plan with no division before generating candidates [33m 762[2mms[22m[39m
+     [33m[2m✓[22m[39m clears a stale omitted division and requires the current division before preview [33m 749[2mms[22m[39m
+     [33m[2m✓[22m[39m reuses every explicit saved refinement after the returning preview [33m 522[2mms[22m[39m
+     [33m[2m✓[22m[39m routes a missing stored focus to candidates without repeating saved refinements [33m 723[2mms[22m[39m
+     [33m[2m✓[22m[39m preserves every explicit answer through the real saved-plan next-cycle path [33m 2357[2mms[22m[39m
+     [33m[2m✓[22m[39m reads a detailed notation without storing or creating a plan [33m 953[2mms[22m[39m
+     [33m[2m✓[22m[39m shows an error for an incomplete notation without creating a plan [33m 339[2mms[22m[39m
+     [33m[2m✓[22m[39m explains plan availability and applies the 9.5-day frame without a dead-end choice [33m 883[2mms[22m[39m
+     [33m[2m✓[22m[39m shows every supported high-intensity intention before generating a plan [33m 473[2mms[22m[39m
+     [33m[2m✓[22m[39m generates canonical candidates without storing until the athlete selects one [33m 1172[2mms[22m[39m
+     [33m[2m✓[22m[39m blocks candidate selection when same-day structured pain appears after candidates render [33m 1178[2mms[22m[39m
+     [33m[2m✓[22m[39m blocks generation when current risk is present or unclear [33m 346[2mms[22m[39m
+     [33m[2m✓[22m[39m does not let a favorable answer override recent structured high pain [33m 331[2mms[22m[39m
+     [33m[2m✓[22m[39m blocks on a recent analyzable memo without retaining its raw text [33m 351[2mms[22m[39m
+     [33m[2m✓[22m[39m does not inspect a private memo while generating candidates [33m 1461[2mms[22m[39m
+     [33m[2m✓[22m[39m labels recent journals as context without using their values [33m 1464[2mms[22m[39m
+     [33m[2m✓[22m[39m does not count future journal dates as recent context [33m 1382[2mms[22m[39m
+     [33m[2m✓[22m[39m stores an active plan only after the athlete selects a candidate [33m 1464[2mms[22m[39m
+     [33m[2m✓[22m[39m blocks candidate save when journal JSON becomes corrupt after generation [33m 1311[2mms[22m[39m
+     [33m[2m✓[22m[39m keeps candidate selection visible when the active plan cannot be saved [33m 1284[2mms[22m[39m
+     [33m[2m✓[22m[39m blocks save retry when analyzable D9 risk appears after the first write fails [33m 1570[2mms[22m[39m
+     [33m[2m✓[22m[39m blocks save retry when reading journal storage throws [33m 1593[2mms[22m[39m
+   [33m[2m✓[22m[39m routes a missing stored days answer to candidates [33m 618[2mms[22m[39m
+   [33m[2m✓[22m[39m routes a missing stored frame length to candidates [33m 517[2mms[22m[39m
+   [33m[2m✓[22m[39m routes a missing stored training time to candidates [33m 590[2mms[22m[39m
+ [32m✓[39m src/screens/home/TrashBin.contract.test.tsx [2m([22m[2m15 tests[22m[2m)[22m[33m 1021[2mms[22m[39m
+ [32m✓[39m src/screens/JournalArchive.contract.test.tsx [2m([22m[2m3 tests[22m[2m)[22m[33m 1057[2mms[22m[39m
+     [33m[2m✓[22m[39m drills from month to week to day without exposing private text [33m 658[2mms[22m[39m
+ [32m✓[39m src/screens/trends/TrendsSafeAccessibility.contract.test.tsx [2m([22m[2m1 test[22m[2m)[22m[33m 1117[2mms[22m[39m
+     [33m[2m✓[22m[39m offers a readable table for every rendered chart [33m 1114[2mms[22m[39m
+ [32m✓[39m src/screens/account/CoachSupportPanel.contract.test.tsx [2m([22m[2m2 tests[22m[2m)[22m[33m 1093[2mms[22m[39m
+     [33m[2m✓[22m[39m labels invitees as qualification unverified and creates a season invitation [33m 695[2mms[22m[39m
+     [33m[2m✓[22m[39m accepts a code without asking for qualification claims [33m 396[2mms[22m[39m
+ [32m✓[39m src/screens/minji/MinjiJournal.contract.test.tsx [2m([22m[2m2 tests[22m[2m)[22m[33m 1160[2mms[22m[39m
+     [33m[2m✓[22m[39m resets page-only disclosure state when the selected diary changes [33m 861[2mms[22m[39m
+ [32m✓[39m src/screens/plan-beta/PaceEvidenceFlow.contract.test.tsx [2m([22m[2m4 tests[22m[2m)[22m[33m 856[2mms[22m[39m
+     [33m[2m✓[22m[39m keeps comparison separate and confirms only the selected record [33m 395[2mms[22m[39m
+ [32m✓[39m src/screens/plan-beta/PlanProposalInbox.contract.test.tsx [2m([22m[2m3 tests[22m[2m)[22m[33m 840[2mms[22m[39m
+     [33m[2m✓[22m[39m requires a recorded warning review before a separate atomic activation [33m 746[2mms[22m[39m
+ [32m✓[39m src/screens/plan-beta/PlanSchedulePreview.contract.test.tsx [2m([22m[2m4 tests[22m[2m)[22m[33m 777[2mms[22m[39m
+     [33m[2m✓[22m[39m projects only days 1-7 from a full canonical session list [33m 365[2mms[22m[39m
+ [32m✓[39m src/screens/account/GuardianConfirmationPanel.contract.test.tsx [2m([22m[2m1 test[22m[2m)[22m[33m 659[2mms[22m[39m
+     [33m[2m✓[22m[39m keeps child-code creation and guardian acceptance explicit [33m 657[2mms[22m[39m
+ [32m✓[39m src/components/JournalConfirmationDialog.contract.test.tsx [2m([22m[2m3 tests[22m[2m)[22m[33m 625[2mms[22m[39m
+     [33m[2m✓[22m[39m keeps keyboard focus inside and returns it after Escape [33m 455[2mms[22m[39m
+ [32m✓[39m src/domain/account/private-note-crypto.contract.test.ts [2m([22m[2m4 tests[22m[2m)[22m[33m 623[2mms[22m[39m
+     [33m[2m✓[22m[39m round-trips a private memo with the user recovery code [33m 304[2mms[22m[39m
+     [33m[2m✓[22m[39m cannot decrypt with a different recovery code [33m 314[2mms[22m[39m
+ [32m✓[39m src/domain/private-memo-vault.concurrency.contract.test.ts [2m([22m[2m2 tests[22m[2m)[22m[33m 623[2mms[22m[39m
+     [33m[2m✓[22m[39m does not delete a private record from a journal changed after the caller snapshot [33m 324[2mms[22m[39m
+ [32m✓[39m src/screens/trends/FatigueExperimentPanel.contract.test.tsx [2m([22m[2m3 tests[22m[2m)[22m[33m 703[2mms[22m[39m
+     [33m[2m✓[22m[39m shows a composite only after the user explicitly records sourced evidence [33m 332[2mms[22m[39m
+ [32m✓[39m src/screens/account/EraseLocalData.contract.test.tsx [2m([22m[2m6 tests[22m[2m)[22m[33m 636[2mms[22m[39m
+     [33m[2m✓[22m[39m offers a real backup action and explains the deletion scope before confirmation [33m 354[2mms[22m[39m
+ [32m✓[39m src/screens/plan-beta/PlanIntake.contract.test.tsx [2m([22m[2m4 tests[22m[2m)[22m[33m 536[2mms[22m[39m
+     [33m[2m✓[22m[39m explains the current two-session option before it is chosen [33m 335[2mms[22m[39m
+ [32m✓[39m src/screens/JournalDayReader.contract.test.tsx [2m([22m[2m3 tests[22m[2m)[22m[33m 539[2mms[22m[39m
+     [33m[2m✓[22m[39m moves only the selected journal date and keeps boundary controls honest [33m 460[2mms[22m[39m
+ [32m✓[39m src/screens/trends/TrendsExclusionNotice.contract.test.tsx [2m([22m[2m7 tests[22m[2m)[22m[33m 462[2mms[22m[39m
+Error: 의도적 렌더 실패
+    at Boom (D:/admin/Documents/트레인 오라클 진도/.worktrees/persona-prescription-quality-matrix/app/src/components/ErrorBoundary.contract.test.tsx:12:9)
+    at renderWithHooks (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\react-dom\cjs\react-dom.development.js:15486:18)
+    at mountIndeterminateComponent (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\react-dom\cjs\react-dom.development.js:20103:13)
+    at beginWork (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\react-dom\cjs\react-dom.development.js:21626:16)
+    at HTMLUnknownElement.callCallback (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\react-dom\cjs\react-dom.development.js:4164:14)
+    at HTMLUnknownElement.callTheUserObjectsOperation (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\jsdom\lib\generated\idl\EventListener.js:26:30)
+    at innerInvokeEventListeners (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\jsdom\lib\jsdom\living\events\EventTarget-impl.js:360:16)
+    at invokeEventListeners (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\jsdom\lib\jsdom\living\events\EventTarget-impl.js:296:3)
+    at HTMLUnknownElementImpl._dispatch (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\jsdom\lib\jsdom\living\events\EventTarget-impl.js:243:9)
+    at HTMLUnknownElementImpl.dispatchEvent (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\jsdom\lib\jsdom\living\events\EventTarget-impl.js:114:17)
+Error: 의도적 렌더 실패
+    at Boom (D:/admin/Documents/트레인 오라클 진도/.worktrees/persona-prescription-quality-matrix/app/src/components/ErrorBoundary.contract.test.tsx:12:9)
+    at renderWithHooks (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\react-dom\cjs\react-dom.development.js:15486:18)
+    at mountIndeterminateComponent (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\react-dom\cjs\react-dom.development.js:20103:13)
+    at beginWork (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\react-dom\cjs\react-dom.development.js:21626:16)
+    at HTMLUnknownElement.callCallback (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\react-dom\cjs\react-dom.development.js:4164:14)
+    at HTMLUnknownElement.callTheUserObjectsOperation (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\jsdom\lib\generated\idl\EventListener.js:26:30)
+    at innerInvokeEventListeners (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\jsdom\lib\jsdom\living\events\EventTarget-impl.js:360:16)
+    at invokeEventListeners (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\jsdom\lib\jsdom\living\events\EventTarget-impl.js:296:3)
+    at HTMLUnknownElementImpl._dispatch (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\jsdom\lib\jsdom\living\events\EventTarget-impl.js:243:9)
+    at HTMLUnknownElementImpl.dispatchEvent (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\jsdom\lib\jsdom\living\events\EventTarget-impl.js:114:17)
+Error: 의도적 렌더 실패
+    at Boom (D:/admin/Documents/트레인 오라클 진도/.worktrees/persona-prescription-quality-matrix/app/src/components/ErrorBoundary.contract.test.tsx:12:9)
+    at renderWithHooks (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\react-dom\cjs\react-dom.development.js:15486:18)
+    at mountIndeterminateComponent (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\react-dom\cjs\react-dom.development.js:20103:13)
+    at beginWork (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\react-dom\cjs\react-dom.development.js:21626:16)
+    at HTMLUnknownElement.callCallback (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\react-dom\cjs\react-dom.development.js:4164:14)
+    at HTMLUnknownElement.callTheUserObjectsOperation (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\jsdom\lib\generated\idl\EventListener.js:26:30)
+    at innerInvokeEventListeners (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\jsdom\lib\jsdom\living\events\EventTarget-impl.js:360:16)
+    at invokeEventListeners (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\jsdom\lib\jsdom\living\events\EventTarget-impl.js:296:3)
+    at HTMLUnknownElementImpl._dispatch (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\jsdom\lib\jsdom\living\events\EventTarget-impl.js:243:9)
+    at HTMLUnknownElementImpl.dispatchEvent (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\jsdom\lib\jsdom\living\events\EventTarget-impl.js:114:17)
+Error: 의도적 렌더 실패
+    at Boom (D:/admin/Documents/트레인 오라클 진도/.worktrees/persona-prescription-quality-matrix/app/src/components/ErrorBoundary.contract.test.tsx:12:9)
+    at renderWithHooks (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\react-dom\cjs\react-dom.development.js:15486:18)
+    at mountIndeterminateComponent (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\react-dom\cjs\react-dom.development.js:20103:13)
+    at beginWork (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\react-dom\cjs\react-dom.development.js:21626:16)
+    at HTMLUnknownElement.callCallback (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\react-dom\cjs\react-dom.development.js:4164:14)
+    at HTMLUnknownElement.callTheUserObjectsOperation (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\jsdom\lib\generated\idl\EventListener.js:26:30)
+    at innerInvokeEventListeners (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\jsdom\lib\jsdom\living\events\EventTarget-impl.js:360:16)
+    at invokeEventListeners (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\jsdom\lib\jsdom\living\events\EventTarget-impl.js:296:3)
+    at HTMLUnknownElementImpl._dispatch (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\jsdom\lib\jsdom\living\events\EventTarget-impl.js:243:9)
+    at HTMLUnknownElementImpl.dispatchEvent (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\jsdom\lib\jsdom\living\events\EventTarget-impl.js:114:17)
+Error: 의도적 렌더 실패
+    at Boom (D:/admin/Documents/트레인 오라클 진도/.worktrees/persona-prescription-quality-matrix/app/src/components/ErrorBoundary.contract.test.tsx:12:9)
+    at renderWithHooks (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\react-dom\cjs\react-dom.development.js:15486:18)
+    at mountIndeterminateComponent (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\react-dom\cjs\react-dom.development.js:20103:13)
+    at beginWork (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\react-dom\cjs\react-dom.development.js:21626:16)
+    at HTMLUnknownElement.callCallback (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\react-dom\cjs\react-dom.development.js:4164:14)
+    at HTMLUnknownElement.callTheUserObjectsOperation (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\jsdom\lib\generated\idl\EventListener.js:26:30)
+    at innerInvokeEventListeners (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\jsdom\lib\jsdom\living\events\EventTarget-impl.js:360:16)
+    at invokeEventListeners (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\jsdom\lib\jsdom\living\events\EventTarget-impl.js:296:3)
+    at HTMLUnknownElementImpl._dispatch (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\jsdom\lib\jsdom\living\events\EventTarget-impl.js:243:9)
+    at HTMLUnknownElementImpl.dispatchEvent (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\jsdom\lib\jsdom\living\events\EventTarget-impl.js:114:17)
+Error: 의도적 렌더 실패
+    at Boom (D:/admin/Documents/트레인 오라클 진도/.worktrees/persona-prescription-quality-matrix/app/src/components/ErrorBoundary.contract.test.tsx:12:9)
+    at renderWithHooks (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\react-dom\cjs\react-dom.development.js:15486:18)
+    at mountIndeterminateComponent (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\react-dom\cjs\react-dom.development.js:20103:13)
+    at beginWork (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\react-dom\cjs\react-dom.development.js:21626:16)
+    at HTMLUnknownElement.callCallback (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\react-dom\cjs\react-dom.development.js:4164:14)
+    at HTMLUnknownElement.callTheUserObjectsOperation (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\jsdom\lib\generated\idl\EventListener.js:26:30)
+    at innerInvokeEventListeners (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\jsdom\lib\jsdom\living\events\EventTarget-impl.js:360:16)
+    at invokeEventListeners (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\jsdom\lib\jsdom\living\events\EventTarget-impl.js:296:3)
+    at HTMLUnknownElementImpl._dispatch (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\jsdom\lib\jsdom\living\events\EventTarget-impl.js:243:9)
+    at HTMLUnknownElementImpl.dispatchEvent (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\jsdom\lib\jsdom\living\events\EventTarget-impl.js:114:17)
+Error: 의도적 렌더 실패
+    at Boom (D:/admin/Documents/트레인 오라클 진도/.worktrees/persona-prescription-quality-matrix/app/src/components/ErrorBoundary.contract.test.tsx:12:9)
+    at renderWithHooks (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\react-dom\cjs\react-dom.development.js:15486:18)
+    at mountIndeterminateComponent (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\react-dom\cjs\react-dom.development.js:20103:13)
+    at beginWork (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\react-dom\cjs\react-dom.development.js:21626:16)
+    at HTMLUnknownElement.callCallback (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\react-dom\cjs\react-dom.development.js:4164:14)
+    at HTMLUnknownElement.callTheUserObjectsOperation (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\jsdom\lib\generated\idl\EventListener.js:26:30)
+    at innerInvokeEventListeners (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\jsdom\lib\jsdom\living\events\EventTarget-impl.js:360:16)
+    at invokeEventListeners (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\jsdom\lib\jsdom\living\events\EventTarget-impl.js:296:3)
+    at HTMLUnknownElementImpl._dispatch (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\jsdom\lib\jsdom\living\events\EventTarget-impl.js:243:9)
+    at HTMLUnknownElementImpl.dispatchEvent (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\jsdom\lib\jsdom\living\events\EventTarget-impl.js:114:17)
+Error: 의도적 렌더 실패
+    at Boom (D:/admin/Documents/트레인 오라클 진도/.worktrees/persona-prescription-quality-matrix/app/src/components/ErrorBoundary.contract.test.tsx:12:9)
+    at renderWithHooks (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\react-dom\cjs\react-dom.development.js:15486:18)
+    at mountIndeterminateComponent (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\react-dom\cjs\react-dom.development.js:20103:13)
+    at beginWork (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\react-dom\cjs\react-dom.development.js:21626:16)
+    at HTMLUnknownElement.callCallback (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\react-dom\cjs\react-dom.development.js:4164:14)
+    at HTMLUnknownElement.callTheUserObjectsOperation (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\jsdom\lib\generated\idl\EventListener.js:26:30)
+    at innerInvokeEventListeners (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\jsdom\lib\jsdom\living\events\EventTarget-impl.js:360:16)
+    at invokeEventListeners (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\jsdom\lib\jsdom\living\events\EventTarget-impl.js:296:3)
+    at HTMLUnknownElementImpl._dispatch (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\jsdom\lib\jsdom\living\events\EventTarget-impl.js:243:9)
+    at HTMLUnknownElementImpl.dispatchEvent (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\jsdom\lib\jsdom\living\events\EventTarget-impl.js:114:17)
+Error: 의도적 렌더 실패
+    at Boom (D:/admin/Documents/트레인 오라클 진도/.worktrees/persona-prescription-quality-matrix/app/src/components/ErrorBoundary.contract.test.tsx:12:9)
+    at renderWithHooks (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\react-dom\cjs\react-dom.development.js:15486:18)
+    at mountIndeterminateComponent (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\react-dom\cjs\react-dom.development.js:20103:13)
+    at beginWork (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\react-dom\cjs\react-dom.development.js:21626:16)
+    at HTMLUnknownElement.callCallback (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\react-dom\cjs\react-dom.development.js:4164:14)
+    at HTMLUnknownElement.callTheUserObjectsOperation (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\jsdom\lib\generated\idl\EventListener.js:26:30)
+    at innerInvokeEventListeners (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\jsdom\lib\jsdom\living\events\EventTarget-impl.js:360:16)
+    at invokeEventListeners (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\jsdom\lib\jsdom\living\events\EventTarget-impl.js:296:3)
+    at HTMLUnknownElementImpl._dispatch (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\jsdom\lib\jsdom\living\events\EventTarget-impl.js:243:9)
+    at HTMLUnknownElementImpl.dispatchEvent (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\jsdom\lib\jsdom\living\events\EventTarget-impl.js:114:17)
+Error: 의도적 렌더 실패
+    at Boom (D:/admin/Documents/트레인 오라클 진도/.worktrees/persona-prescription-quality-matrix/app/src/components/ErrorBoundary.contract.test.tsx:12:9)
+    at renderWithHooks (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\react-dom\cjs\react-dom.development.js:15486:18)
+    at mountIndeterminateComponent (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\react-dom\cjs\react-dom.development.js:20103:13)
+    at beginWork (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\react-dom\cjs\react-dom.development.js:21626:16)
+    at HTMLUnknownElement.callCallback (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\react-dom\cjs\react-dom.development.js:4164:14)
+    at HTMLUnknownElement.callTheUserObjectsOperation (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\jsdom\lib\generated\idl\EventListener.js:26:30)
+    at innerInvokeEventListeners (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\jsdom\lib\jsdom\living\events\EventTarget-impl.js:360:16)
+    at invokeEventListeners (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\jsdom\lib\jsdom\living\events\EventTarget-impl.js:296:3)
+    at HTMLUnknownElementImpl._dispatch (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\jsdom\lib\jsdom\living\events\EventTarget-impl.js:243:9)
+    at HTMLUnknownElementImpl.dispatchEvent (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\jsdom\lib\jsdom\living\events\EventTarget-impl.js:114:17)
+Error: 의도적 렌더 실패
+    at Boom (D:/admin/Documents/트레인 오라클 진도/.worktrees/persona-prescription-quality-matrix/app/src/components/ErrorBoundary.contract.test.tsx:12:9)
+    at renderWithHooks (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\react-dom\cjs\react-dom.development.js:15486:18)
+    at mountIndeterminateComponent (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\react-dom\cjs\react-dom.development.js:20103:13)
+    at beginWork (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\react-dom\cjs\react-dom.development.js:21626:16)
+    at HTMLUnknownElement.callCallback (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\react-dom\cjs\react-dom.development.js:4164:14)
+    at HTMLUnknownElement.callTheUserObjectsOperation (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\jsdom\lib\generated\idl\EventListener.js:26:30)
+    at innerInvokeEventListeners (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\jsdom\lib\jsdom\living\events\EventTarget-impl.js:360:16)
+    at invokeEventListeners (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\jsdom\lib\jsdom\living\events\EventTarget-impl.js:296:3)
+    at HTMLUnknownElementImpl._dispatch (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\jsdom\lib\jsdom\living\events\EventTarget-impl.js:243:9)
+    at HTMLUnknownElementImpl.dispatchEvent (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\jsdom\lib\jsdom\living\events\EventTarget-impl.js:114:17)
+Error: 의도적 렌더 실패
+    at Boom (D:/admin/Documents/트레인 오라클 진도/.worktrees/persona-prescription-quality-matrix/app/src/components/ErrorBoundary.contract.test.tsx:12:9)
+    at renderWithHooks (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\react-dom\cjs\react-dom.development.js:15486:18)
+    at mountIndeterminateComponent (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\react-dom\cjs\react-dom.development.js:20103:13)
+    at beginWork (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\react-dom\cjs\react-dom.development.js:21626:16)
+    at HTMLUnknownElement.callCallback (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\react-dom\cjs\react-dom.development.js:4164:14)
+    at HTMLUnknownElement.callTheUserObjectsOperation (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\jsdom\lib\generated\idl\EventListener.js:26:30)
+    at innerInvokeEventListeners (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\jsdom\lib\jsdom\living\events\EventTarget-impl.js:360:16)
+    at invokeEventListeners (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\jsdom\lib\jsdom\living\events\EventTarget-impl.js:296:3)
+    at HTMLUnknownElementImpl._dispatch (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\jsdom\lib\jsdom\living\events\EventTarget-impl.js:243:9)
+    at HTMLUnknownElementImpl.dispatchEvent (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\jsdom\lib\jsdom\living\events\EventTarget-impl.js:114:17)
+ [32m✓[39m src/components/ErrorBoundary.contract.test.tsx [2m([22m[2m7 tests[22m[2m)[22m[33m 404[2mms[22m[39m
+ [32m✓[39m src/screens/account/AccountSyncPanel.contract.test.tsx [2m([22m[2m4 tests[22m[2m)[22m[33m 558[2mms[22m[39m
+ [32m✓[39m src/domain/journal-store.contract.test.ts [2m([22m[2m20 tests[22m[2m)[22m[33m 490[2mms[22m[39m
+ [32m✓[39m src/domain/journal-trash.contract.test.ts [2m([22m[2m31 tests[22m[2m)[22m[33m 505[2mms[22m[39m
+     [33m[2m✓[22m[39m 상한을 넘으면 오래된 것부터 버린다 [33m 415[2mms[22m[39m
+ [32m✓[39m src/domain/journal-full-export.contract.test.ts [2m([22m[2m2 tests[22m[2m)[22m[33m 490[2mms[22m[39m
+     [33m[2m✓[22m[39m keeps the default export byte-invariant when only private memo text changes [33m 332[2mms[22m[39m
+ [32m✓[39m src/domain/account/sync-orchestration.contract.test.ts [2m([22m[2m7 tests[22m[2m)[22m[33m 489[2mms[22m[39m
+     [33m[2m✓[22m[39m 나만의 메모는 복구 코드가 있을 때 암호문으로만 서버에 올린다 [33m 452[2mms[22m[39m
+ [32m✓[39m src/screens/account/ProductAnalyticsConsentPanel.contract.test.tsx [2m([22m[2m2 tests[22m[2m)[22m[33m 589[2mms[22m[39m
+     [33m[2m✓[22m[39m explains the account-linked 30-day boundary and saves consent separately [33m 433[2mms[22m[39m
+ [32m✓[39m src/screens/home/DailyContextTags.contract.test.tsx [2m([22m[2m1 test[22m[2m)[22m[33m 438[2mms[22m[39m
+     [33m[2m✓[22m[39m lets the user choose weather without requesting location [33m 436[2mms[22m[39m
+ [32m✓[39m src/components/JournalPageFrame.contract.test.tsx [2m([22m[2m2 tests[22m[2m)[22m[33m 423[2mms[22m[39m
+ [32m✓[39m src/components/TermHelp.contract.test.tsx [2m([22m[2m2 tests[22m[2m)[22m[33m 422[2mms[22m[39m
+     [33m[2m✓[22m[39m explains that an explicitly selected PM slot can contain the main session [33m 322[2mms[22m[39m
+ [32m✓[39m src/screens/PlanBeta.goal.contract.test.tsx [2m([22m[2m1 test[22m[2m)[22m[33m 389[2mms[22m[39m
+     [33m[2m✓[22m[39m keeps the first plan question to three choices until the athlete asks for 10 km [33m 387[2mms[22m[39m
+ [32m✓[39m src/domain/restore/backup-file.contract.test.ts [2m([22m[2m21 tests[22m[2m)[22m[33m 497[2mms[22m[39m
+     [33m[2m✓[22m[39m 나만의 메모를 평문 저장소에 남기지 않고 암호화해 복원한다 [33m 428[2mms[22m[39m
+ [32m✓[39m src/screens/plan-beta/labels.contract.test.ts [2m([22m[2m7 tests[22m[2m)[22m[33m 419[2mms[22m[39m
+     [33m[2m✓[22m[39m matches the 9.5-day preview total when day 10 has two sessions [33m 344[2mms[22m[39m
+ [32m✓[39m src/screens/More.feedback.contract.test.tsx [2m([22m[2m3 tests[22m[2m)[22m[33m 327[2mms[22m[39m
+ [32m✓[39m src/screens/home/EngagementStrip.contract.test.tsx [2m([22m[2m7 tests[22m[2m)[22m[33m 303[2mms[22m[39m
+ [32m✓[39m src/screens/AthleteRecords.p1-boundary.contract.test.tsx [2m([22m[2m15 tests[22m[2m)[22m[33m 417[2mms[22m[39m
+ [32m✓[39m src/screens/home/DeviceJournal.duplicate-id.contract.test.tsx [2m([22m[2m1 test[22m[2m)[22m[33m 324[2mms[22m[39m
+     [33m[2m✓[22m[39m renders each legacy duplicate without a React key collision [33m 321[2mms[22m[39m
+ [32m✓[39m src/domain/journal-provenance.contract.test.ts [2m([22m[2m8 tests[22m[2m)[22m[32m 194[2mms[22m[39m
+ [32m✓[39m src/screens/account/AccountNetworkSettings.contract.test.tsx [2m([22m[2m1 test[22m[2m)[22m[33m 322[2mms[22m[39m
+     [33m[2m✓[22m[39m keeps product analytics consent hidden while its feature flag is off [33m 320[2mms[22m[39m
+ [32m✓[39m src/screens/home/Task10Accessibility.contract.test.tsx [2m([22m[2m6 tests[22m[2m)[22m[32m 275[2mms[22m[39m
+Error: feedback chunk unavailable
+    at load (D:/admin/Documents/트레인 오라클 진도/.worktrees/persona-prescription-quality-matrix/app/src/screens/FeedbackBoardRoute.contract.test.tsx:17:45)
+    at D:/admin/Documents/트레인 오라클 진도/.worktrees/persona-prescription-quality-matrix/app/src/screens/FeedbackBoardRoute.tsx:14:28
+    at lazyInitializer (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\react\cjs\react.development.js:1357:20)
+    at mountLazyComponent (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\react-dom\cjs\react-dom.development.js:19973:19)
+    at beginWork (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\react-dom\cjs\react-dom.development.js:21632:16)
+    at beginWork$1 (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\react-dom\cjs\react-dom.development.js:27465:14)
+    at performUnitOfWork (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\react-dom\cjs\react-dom.development.js:26599:12)
+    at workLoopSync (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\react-dom\cjs\react-dom.development.js:26505:5)
+    at renderRootSync (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\react-dom\cjs\react-dom.development.js:26473:7)
+    at performConcurrentWorkOnRoot (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\react-dom\cjs\react-dom.development.js:25777:74)
+Error: feedback chunk unavailable
+    at load (D:/admin/Documents/트레인 오라클 진도/.worktrees/persona-prescription-quality-matrix/app/src/screens/FeedbackBoardRoute.contract.test.tsx:17:45)
+    at D:/admin/Documents/트레인 오라클 진도/.worktrees/persona-prescription-quality-matrix/app/src/screens/FeedbackBoardRoute.tsx:14:28
+    at lazyInitializer (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\react\cjs\react.development.js:1357:20)
+    at mountLazyComponent (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\react-dom\cjs\react-dom.development.js:19973:19)
+    at beginWork (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\react-dom\cjs\react-dom.development.js:21632:16)
+    at beginWork$1 (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\react-dom\cjs\react-dom.development.js:27465:14)
+    at performUnitOfWork (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\react-dom\cjs\react-dom.development.js:26599:12)
+    at workLoopSync (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\react-dom\cjs\react-dom.development.js:26505:5)
+    at renderRootSync (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\react-dom\cjs\react-dom.development.js:26473:7)
+    at performConcurrentWorkOnRoot (D:\admin\Documents\트레인 오라클 진도\.worktrees\persona-prescription-quality-matrix\app\node_modules\react-dom\cjs\react-dom.development.js:25777:74)
+ [32m✓[39m src/screens/FeedbackBoardRoute.contract.test.tsx [2m([22m[2m1 test[22m[2m)[22m[32m 278[2mms[22m[39m
+ [32m✓[39m src/domain/prescription-quality-matrix.contract.test.ts [2m([22m[2m13 tests[22m[2m)[22m[32m 164[2mms[22m[39m
+ [32m✓[39m src/domain/plan-beta-detailed-candidates.contract.test.ts [2m([22m[2m18 tests[22m[2m)[22m[32m 288[2mms[22m[39m
+ [32m✓[39m src/domain/account/tombstone.contract.test.ts [2m([22m[2m20 tests[22m[2m)[22m[32m 229[2mms[22m[39m
+ [32m✓[39m src/domain/athlete-records.contract.test.ts [2m([22m[2m36 tests[22m[2m)[22m[32m 149[2mms[22m[39m
+ [32m✓[39m src/domain/multi-event-prescription.contract.test.ts [2m([22m[2m7 tests[22m[2m)[22m[32m 137[2mms[22m[39m
+ [32m✓[39m src/domain/account/server-operations-migration.contract.test.ts [2m([22m[2m43 tests[22m[2m)[22m[32m 117[2mms[22m[39m
+ [32m✓[39m src/domain/import/activity-file.contract.test.ts [2m([22m[2m10 tests[22m[2m)[22m[32m 79[2mms[22m[39m
+ [32m✓[39m src/domain/plan-beta-pace-storage.contract.test.ts [2m([22m[2m17 tests[22m[2m)[22m[32m 88[2mms[22m[39m
+ [32m✓[39m src/components/DataSafetyNotice.contract.test.tsx [2m([22m[2m4 tests[22m[2m)[22m[32m 81[2mms[22m[39m
+ [32m✓[39m src/screens/PlanBeta.p1-boundary.contract.test.tsx [2m([22m[2m1 test[22m[2m)[22m[32m 246[2mms[22m[39m
+ [32m✓[39m src/domain/dates.contract.test.ts [2m([22m[2m14 tests[22m[2m)[22m[32m 81[2mms[22m[39m
+ [32m✓[39m src/domain/restore/decoration-backup.contract.test.ts [2m([22m[2m11 tests[22m[2m)[22m[32m 89[2mms[22m[39m
+ [32m✓[39m src/domain/plan-beta-flow.contract.test.ts [2m([22m[2m13 tests[22m[2m)[22m[32m 69[2mms[22m[39m
+ [32m✓[39m src/domain/decoration-store.contract.test.ts [2m([22m[2m15 tests[22m[2m)[22m[32m 41[2mms[22m[39m
+ [32m✓[39m src/domain/plan-beta-store.test.ts [2m([22m[2m26 tests[22m[2m)[22m[32m 64[2mms[22m[39m
+ [32m✓[39m src/domain/account/sync-recovery.contract.test.ts [2m([22m[2m8 tests[22m[2m)[22m[32m 48[2mms[22m[39m
+ [32m✓[39m src/domain/detailed-prescription-manifest.contract.test.ts [2m([22m[2m12 tests[22m[2m)[22m[32m 29[2mms[22m[39m
+ [32m✓[39m src/domain/journal-trash-failure.contract.test.ts [2m([22m[2m6 tests[22m[2m)[22m[32m 45[2mms[22m[39m
+ [32m✓[39m src/domain/journal-update-safety.contract.test.ts [2m([22m[2m7 tests[22m[2m)[22m[32m 30[2mms[22m[39m
+ [32m✓[39m src/domain/account/sync.contract.test.ts [2m([22m[2m19 tests[22m[2m)[22m[32m 66[2mms[22m[39m
+ [32m✓[39m src/domain/import/import-draft.contract.test.ts [2m([22m[2m12 tests[22m[2m)[22m[32m 37[2mms[22m[39m
+ [32m✓[39m src/domain/journal-date-validity.contract.test.ts [2m([22m[2m7 tests[22m[2m)[22m[32m 43[2mms[22m[39m
+ [32m✓[39m src/domain/server-operations-workflows.contract.test.ts [2m([22m[2m9 tests[22m[2m)[22m[32m 25[2mms[22m[39m
+ [32m✓[39m src/domain/journal-decoration-lifecycle.contract.test.ts [2m([22m[2m5 tests[22m[2m)[22m[32m 36[2mms[22m[39m
+ [32m✓[39m src/domain/journal-archive.contract.test.ts [2m([22m[2m4 tests[22m[2m)[22m[32m 38[2mms[22m[39m
+ [32m✓[39m src/domain/journal-delete-failure.contract.test.ts [2m([22m[2m7 tests[22m[2m)[22m[32m 32[2mms[22m[39m
+ [32m✓[39m src/domain/erase-local-data.contract.test.ts [2m([22m[2m16 tests[22m[2m)[22m[32m 25[2mms[22m[39m
+ [32m✓[39m src/domain/home-view-model.test.ts [2m([22m[2m10 tests[22m[2m)[22m[32m 35[2mms[22m[39m
+ [32m✓[39m src/domain/account/beta-capacity.contract.test.ts [2m([22m[2m2 tests[22m[2m)[22m[32m 33[2mms[22m[39m
+ [32m✓[39m src/domain/trend-analysis.contract.test.ts [2m([22m[2m7 tests[22m[2m)[22m[32m 14[2mms[22m[39m
+ [32m✓[39m src/domain/account/plan-proposal-atomic.contract.test.ts [2m([22m[2m5 tests[22m[2m)[22m[32m 47[2mms[22m[39m
+ [32m✓[39m src/domain/analysis-exclusion-summary.contract.test.ts [2m([22m[2m9 tests[22m[2m)[22m[32m 35[2mms[22m[39m
+ [32m✓[39m src/domain/account/sync-schema-migration.contract.test.ts [2m([22m[2m6 tests[22m[2m)[22m[32m 19[2mms[22m[39m
+ [32m✓[39m src/domain/account/sync-owner-release.contract.test.ts [2m([22m[2m12 tests[22m[2m)[22m[32m 24[2mms[22m[39m
+ [32m✓[39m src/domain/plan-beta-schema.contract.test.ts [2m([22m[2m14 tests[22m[2m)[22m[32m 33[2mms[22m[39m
+ [32m✓[39m src/domain/decorations.contract.test.ts [2m([22m[2m8 tests[22m[2m)[22m[32m 26[2mms[22m[39m
+ [32m✓[39m src/domain/intensity-assessment.test.ts [2m([22m[2m7 tests[22m[2m)[22m[32m 21[2mms[22m[39m
+ [32m✓[39m src/domain/plan-beta-history.contract.test.ts [2m([22m[2m1 test[22m[2m)[22m[32m 23[2mms[22m[39m
+ [32m✓[39m src/domain/feedback-board-migration.contract.test.ts [2m([22m[2m12 tests[22m[2m)[22m[32m 13[2mms[22m[39m
+ [32m✓[39m src/domain/journal-update.contract.test.ts [2m([22m[2m4 tests[22m[2m)[22m[32m 24[2mms[22m[39m
+ [32m✓[39m src/domain/server-feature-runbook.contract.test.ts [2m([22m[2m2 tests[22m[2m)[22m[32m 13[2mms[22m[39m
+ [32m✓[39m src/domain/account/shared-fields-projection.contract.test.ts [2m([22m[2m12 tests[22m[2m)[22m[32m 19[2mms[22m[39m
+ [32m✓[39m src/domain/account/product-analytics-service.contract.test.ts [2m([22m[2m4 tests[22m[2m)[22m[32m 19[2mms[22m[39m
+ [32m✓[39m src/domain/aggregates.date-integrity.test.ts [2m([22m[2m12 tests[22m[2m)[22m[32m 25[2mms[22m[39m
+ [32m✓[39m src/domain/pace-target-plan.contract.test.ts [2m([22m[2m11 tests[22m[2m)[22m[32m 21[2mms[22m[39m
+ [32m✓[39m src/safety/memo-safety.contract.test.ts [2m([22m[2m27 tests[22m[2m)[22m[32m 21[2mms[22m[39m
+ [32m✓[39m src/domain/account/guardian-invitations.contract.test.ts [2m([22m[2m3 tests[22m[2m)[22m[32m 14[2mms[22m[39m
+ [32m✓[39m src/domain/numeric-input.contract.test.ts [2m([22m[2m16 tests[22m[2m)[22m[32m 15[2mms[22m[39m
+ [32m✓[39m src/domain/detailed-prescription.contract.test.ts [2m([22m[2m4 tests[22m[2m)[22m[32m 15[2mms[22m[39m
+ [32m✓[39m src/domain/journal-observation.contract.test.ts [2m([22m[2m6 tests[22m[2m)[22m[32m 17[2mms[22m[39m
+ [32m✓[39m src/domain/account/relationships.contract.test.ts [2m([22m[2m8 tests[22m[2m)[22m[32m 18[2mms[22m[39m
+ [32m✓[39m src/domain/intensity-summary.contract.test.ts [2m([22m[2m18 tests[22m[2m)[22m[32m 21[2mms[22m[39m
+ [32m✓[39m src/domain/journal-local-storage.concurrency.contract.test.ts [2m([22m[2m2 tests[22m[2m)[22m[32m 16[2mms[22m[39m
+ [32m✓[39m src/domain/journal-schema.test.ts [2m([22m[2m10 tests[22m[2m)[22m[32m 21[2mms[22m[39m
+ [32m✓[39m src/domain/account/profile.contract.test.ts [2m([22m[2m5 tests[22m[2m)[22m[32m 16[2mms[22m[39m
+ [32m✓[39m src/domain/account/support-invitations.contract.test.ts [2m([22m[2m3 tests[22m[2m)[22m[32m 15[2mms[22m[39m
+ [32m✓[39m src/domain/account/account-service.contract.test.ts [2m([22m[2m3 tests[22m[2m)[22m[32m 13[2mms[22m[39m
+ [32m✓[39m src/domain/private-memo-vault-storage.concurrency.contract.test.ts [2m([22m[2m1 test[22m[2m)[22m[32m 15[2mms[22m[39m
+ [32m✓[39m src/domain/athlete-record-display.contract.test.ts [2m([22m[2m32 tests[22m[2m)[22m[32m 16[2mms[22m[39m
+ [32m✓[39m src/domain/engagement.test.ts [2m([22m[2m7 tests[22m[2m)[22m[32m 16[2mms[22m[39m
+ [32m✓[39m src/domain/account/beta-capacity-migration.contract.test.ts [2m([22m[2m7 tests[22m[2m)[22m[32m 8[2mms[22m[39m
+ [32m✓[39m src/domain/feedback/feedback-idempotency.contract.test.ts [2m([22m[2m3 tests[22m[2m)[22m[32m 17[2mms[22m[39m
+ [32m✓[39m src/domain/fatigue-vector.contract.test.ts [2m([22m[2m3 tests[22m[2m)[22m[32m 18[2mms[22m[39m
+ [32m✓[39m src/domain/fatigue-experiment-store.contract.test.ts [2m([22m[2m3 tests[22m[2m)[22m[32m 15[2mms[22m[39m
+ [32m✓[39m src/domain/pace-target-comparison.contract.test.ts [2m([22m[2m4 tests[22m[2m)[22m[32m 19[2mms[22m[39m
+ [32m✓[39m src/domain/account/migration.contract.test.ts [2m([22m[2m9 tests[22m[2m)[22m[32m 9[2mms[22m[39m
+ [32m✓[39m src/domain/deployment-config.contract.test.ts [2m([22m[2m4 tests[22m[2m)[22m[32m 8[2mms[22m[39m
+ [32m✓[39m src/domain/journal-local-storage.contract.test.ts [2m([22m[2m14 tests[22m[2m)[22m[32m 22[2mms[22m[39m
+ [32m✓[39m src/screens/minji/minji-journal-data.contract.test.ts [2m([22m[2m2 tests[22m[2m)[22m[32m 15[2mms[22m[39m
+ [32m✓[39m src/domain/objective-fatigue-evidence.test.ts [2m([22m[2m10 tests[22m[2m)[22m[32m 13[2mms[22m[39m
+ [32m✓[39m src/domain/journal-calendar.contract.test.ts [2m([22m[2m2 tests[22m[2m)[22m[32m 10[2mms[22m[39m
+ [32m✓[39m src/domain/account/guardian-invitation-migration.contract.test.ts [2m([22m[2m8 tests[22m[2m)[22m[32m 14[2mms[22m[39m
+ [32m✓[39m src/domain/plan-session-schema.contract.test.ts [2m([22m[2m8 tests[22m[2m)[22m[32m 12[2mms[22m[39m
+ [32m✓[39m src/domain/daily-context.contract.test.ts [2m([22m[2m2 tests[22m[2m)[22m[32m 12[2mms[22m[39m
+ [32m✓[39m src/domain/account/plan-proposal-service.contract.test.ts [2m([22m[2m2 tests[22m[2m)[22m[32m 13[2mms[22m[39m
+ [32m✓[39m src/domain/aggregates.numeric-boundary.test.ts [2m([22m[2m6 tests[22m[2m)[22m[32m 12[2mms[22m[39m
+ [32m✓[39m src/domain/account/sync-session-security.contract.test.ts [2m([22m[2m5 tests[22m[2m)[22m[32m 10[2mms[22m[39m
+ [32m✓[39m src/domain/account/config.contract.test.ts [2m([22m[2m7 tests[22m[2m)[22m[32m 10[2mms[22m[39m
+ [32m✓[39m src/domain/account/function-execute-privilege-migration.contract.test.ts [2m([22m[2m3 tests[22m[2m)[22m[32m 8[2mms[22m[39m
+ [32m✓[39m src/domain/product-features.contract.test.ts [2m([22m[2m4 tests[22m[2m)[22m[32m 9[2mms[22m[39m
+ [32m✓[39m src/domain/account/guardian-helper-rpc-hardening-migration.contract.test.ts [2m([22m[2m3 tests[22m[2m)[22m[32m 9[2mms[22m[39m
+ [32m✓[39m src/domain/app-shell-state.test.ts [2m([22m[2m9 tests[22m[2m)[22m[32m 9[2mms[22m[39m
+ [32m✓[39m src/screens/plan-beta/plan-intake-meta.contract.test.ts [2m([22m[2m3 tests[22m[2m)[22m[32m 8[2mms[22m[39m
+ [32m✓[39m src/domain/account/plan-proposal-migration.contract.test.ts [2m([22m[2m4 tests[22m[2m)[22m[32m 12[2mms[22m[39m
+ [32m✓[39m src/App.startup-loading.contract.test.ts [2m([22m[2m3 tests[22m[2m)[22m[32m 11[2mms[22m[39m
+ [32m✓[39m src/domain/account/support-invitation-migration.contract.test.ts [2m([22m[2m4 tests[22m[2m)[22m[32m 8[2mms[22m[39m
+ [32m✓[39m src/domain/save-receipt.test.ts [2m([22m[2m3 tests[22m[2m)[22m[32m 9[2mms[22m[39m
+ [32m✓[39m src/domain/feedback/feedback-config.contract.test.ts [2m([22m[2m3 tests[22m[2m)[22m[32m 7[2mms[22m[39m
+ [32m✓[39m src/domain/plan-proposals.contract.test.ts [2m([22m[2m2 tests[22m[2m)[22m[32m 7[2mms[22m[39m
+ [32m✓[39m src/domain/numeric-input.test.ts [2m([22m[2m6 tests[22m[2m)[22m[32m 12[2mms[22m[39m
+ [32m✓[39m src/domain/weekly-distance.contract.test.ts [2m([22m[2m1 test[22m[2m)[22m[32m 5[2mms[22m[39m
+ [32m✓[39m src/domain/account/legal-consent-migration.contract.test.ts [2m([22m[2m2 tests[22m[2m)[22m[32m 5[2mms[22m[39m
+ [32m✓[39m src/domain/account/guardian-invitation-expiry-migration.contract.test.ts [2m([22m[2m2 tests[22m[2m)[22m[32m 5[2mms[22m[39m
+ [32m✓[39m src/domain/account/product-analytics.contract.test.ts [2m([22m[2m3 tests[22m[2m)[22m[32m 6[2mms[22m[39m
+ [32m✓[39m src/domain/field-provenance.contract.test.ts [2m([22m[2m2 tests[22m[2m)[22m[32m 4[2mms[22m[39m
+ [32m✓[39m src/domain/training-cycle-window.contract.test.ts [2m([22m[2m1 test[22m[2m)[22m[32m 5[2mms[22m[39m
+ [32m✓[39m src/domain/account/account-deletion.contract.test.ts [2m([22m[2m1 test[22m[2m)[22m[32m 4[2mms[22m[39m
+ [32m✓[39m src/domain/journal-reader.contract.test.ts [2m([22m[2m1 test[22m[2m)[22m[32m 3[2mms[22m[39m
+
+[2m Test Files [22m [1m[32m169 passed[39m[22m[90m (169)[39m
+[2m      Tests [22m [1m[32m1299 passed[39m[22m[90m (1299)[39m
+[2m   Start at [22m 11:47:22
+[2m   Duration [22m 97.06s[2m (transform 11.30s, setup 72.66s, import 81.01s, tests 154.32s, environment 661.94s)[22m
+
+
+> trainoracle-app@0.1.0 test:release-env
+> node --test scripts/validate-hosted-release-env.test.mjs
+
+✔ keeps the local-only release valid when every network feature is closed (1.9287ms)
+✔ requires a public client connection before opening accounts (0.2247ms)
+✔ requires public legal documents and versions before opening accounts (0.1248ms)
+✔ requires the account gate before opening account-backed features (0.1379ms)
+✔ allows an independently released feedback board with a valid public connection (0.193ms)
+✔ lets an emergency kill switch close a feature without blocking deployment (0.1194ms)
+✔ uses the account emergency switch instead of inventing an account-public switch (0.1844ms)
+✔ accepts a staged account and sync release without exposing configuration values (0.17ms)
+✔ fails the executable deployment check without echoing a configured key (56.7414ms)
+ℹ tests 9
+ℹ suites 0
+ℹ pass 9
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 168.406
