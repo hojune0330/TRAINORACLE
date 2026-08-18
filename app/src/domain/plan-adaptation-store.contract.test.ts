@@ -122,6 +122,46 @@ async function requestFixture() {
   }
 }
 
+async function coachRequestFixture() {
+  const input = await requestFixture()
+  const proposalResult = await createPlanAdaptationProposal({
+    kind: "PLAN_ADAPTATION_PROPOSAL_REQUEST",
+    scope: { athleteId: "athlete-1", eventDistanceM: 1500 },
+    activePlanStartedAt: input.predecessorState.generatedAt,
+    baseCandidate: input.proposal.baseCandidate,
+    proposedCandidate: input.proposal.successorCandidate,
+    baseContentHash: await hashPlanCandidate(input.proposal.baseCandidate),
+    proposalOrigin: "COACH_AUTHORED",
+    trigger: {
+      kind: "EXPLICIT_REQUEST",
+      requestedBy: "COACH",
+      sourceRef: "coach-request:athlete-1:req-1",
+    },
+    changeDimension: "VOLUME",
+    safetyGate: input.safetyGate,
+    safetyEvaluatedAt: input.safetyEvaluatedAt,
+    safetyValidUntil: input.safetyValidUntil,
+    activeHold: false,
+    createdAt: "2026-08-18T00:05:00.000Z",
+    idempotencyKey: "coach-proposal-create-1",
+  })
+  if (proposalResult.kind !== "proposed") {
+    throw new Error(`coach proposal fixture failed: ${JSON.stringify(proposalResult)}`)
+  }
+  return {
+    ...input,
+    proposal: proposalResult.proposal,
+    successorState: {
+      ...input.successorState,
+      activePlan: {
+        ...input.successorState.activePlan,
+        selectionActor: "COACH" as const,
+      },
+    },
+    actor: "COACH" as const,
+  }
+}
+
 describe("local immutable next-frame adaptation contract", () => {
   beforeEach(() => {
     window.localStorage.clear()
@@ -159,14 +199,6 @@ describe("local immutable next-frame adaptation contract", () => {
   })
 
   it.each([
-    ["actor", (input: Awaited<ReturnType<typeof requestFixture>>) => ({
-      ...input,
-      actor: "COACH" as const,
-    })],
-    ["safety", (input: Awaited<ReturnType<typeof requestFixture>>) => ({
-      ...input,
-      safetyGate: activeGate(),
-    })],
     ["successor state", (input: Awaited<ReturnType<typeof requestFixture>>) => ({
       ...input,
       successorState: {
@@ -189,6 +221,50 @@ describe("local immutable next-frame adaptation contract", () => {
       kind: "rejected",
       code: "REPLAY_MISMATCH",
     })
+  })
+
+  it("denies caller-asserted coach acceptance without writing a local decision", async () => {
+    const input = await coachRequestFixture()
+    expect(savePlanBetaState(input.predecessorState)).toEqual({ ok: true })
+    const writes: string[] = []
+    const realSet = Storage.prototype.setItem
+    vi.spyOn(Storage.prototype, "setItem").mockImplementation(function (this: Storage, key, value) {
+      if (key === ADAPTATION_KEY) writes.push(value)
+      return realSet.call(this, key, value)
+    })
+
+    expect(await acceptNextFrameProposal(input)).toEqual({
+      kind: "rejected",
+      code: "UNAUTHORIZED",
+    })
+    expect(writes).toEqual([])
+    expect(loadPendingNextFrameSuccessor()).toBeNull()
+  })
+
+  it.each([
+    ["D9", (input: Awaited<ReturnType<typeof requestFixture>>) => ({
+      ...input,
+      safetyGate: activeGate(),
+    }), { kind: "blocked", code: "SAFETY_BLOCKED" }],
+    ["stale safety", (input: Awaited<ReturnType<typeof requestFixture>>) => ({
+      ...input,
+      acceptedAt: "2026-08-18T00:11:00.001Z",
+    }), { kind: "blocked", code: "STALE_SAFETY" }],
+    ["active hold", (input: Awaited<ReturnType<typeof requestFixture>>) => ({
+      ...input,
+      activeHold: true,
+    }), { kind: "blocked", code: "ACTIVE_HOLD" }],
+    ["caller authority", (input: Awaited<ReturnType<typeof requestFixture>>) => ({
+      ...input,
+      actor: "COACH" as const,
+    }), { kind: "rejected", code: "UNAUTHORIZED" }],
+  ])("rechecks current %s before returning an accepted replay", async (_label, alter, expected) => {
+    const input = await requestFixture()
+    expect(savePlanBetaState(input.predecessorState)).toEqual({ ok: true })
+    expect(await acceptNextFrameProposal(input)).toMatchObject({ kind: "accepted", replay: false })
+
+    expect(await acceptNextFrameProposal(alter(input))).toEqual(expected)
+    expect(await acceptNextFrameProposal(input)).toMatchObject({ kind: "accepted", replay: true })
   })
 
   it("rejects forged hashes, cross-event state scope, and successor content", async () => {

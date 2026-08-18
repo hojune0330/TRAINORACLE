@@ -77,12 +77,10 @@ async function acceptNextFrameProposalUnchecked(candidate: unknown): Promise<Ada
   if (!parsed.success) return { kind: "rejected", code: "MALFORMED_INPUT" }
   const request = parsed.data
   if (!await verifyPlanAdaptationProposal(request.proposal)) return { kind: "rejected", code: "FORGED_PROPOSAL" }
-  const requestHash = await canonicalJsonSha256("trainoracle.plan-adaptation-acceptance.v1", request)
-  const existing = loadEnvelope()
-  if (existing !== null) {
-    if (existing.decision.idempotencyKey !== request.idempotencyKey) return { kind: "rejected", code: "STALE_BASE" }
-    if (existing.decision.requestHash !== requestHash || existing.decision.proposalId !== request.proposal.proposalId) return { kind: "rejected", code: "REPLAY_MISMATCH" }
-    return { kind: "accepted", pending: existing.pending, replay: true }
+  if (request.actor !== "SELF"
+      || request.proposal.proposalOrigin !== "SELF_SERVICE"
+      || request.proposal.selectionAuthority !== "SELF") {
+    return { kind: "rejected", code: "UNAUTHORIZED" }
   }
   switch (request.safetyGate.kind) {
     case "blocked": return { kind: "blocked", code: "SAFETY_BLOCKED" }
@@ -90,8 +88,6 @@ async function acceptNextFrameProposalUnchecked(candidate: unknown): Promise<Ada
   }
   if (!validSafetyTimes(request)) return { kind: "blocked", code: "STALE_SAFETY" }
   if (request.activeHold) return { kind: "blocked", code: "ACTIVE_HOLD" }
-  const expectedActor = request.proposal.selectionAuthority === "SELF" ? "SELF" : "COACH"
-  if (request.actor !== expectedActor) return { kind: "rejected", code: "UNAUTHORIZED" }
 
   const active = loadActiveState()
   if (active === null) return { kind: "rejected", code: "STALE_BASE" }
@@ -101,6 +97,14 @@ async function acceptNextFrameProposalUnchecked(candidate: unknown): Promise<Ada
   if (!candidateMatchesActivePlan(request.proposal.baseCandidate, request.predecessorState.activePlan, request.predecessorState.activePlan.selectionActor)
       || !candidateMatchesActivePlan(request.proposal.successorCandidate, request.successorState.activePlan, request.actor)
       || request.successorState.progress.length !== 0) return { kind: "rejected", code: "SUCCESSOR_MISMATCH" }
+
+  const requestHash = await canonicalJsonSha256("trainoracle.plan-adaptation-acceptance.v1", request)
+  const existing = loadEnvelope()
+  if (existing !== null) {
+    if (existing.decision.idempotencyKey !== request.idempotencyKey) return { kind: "rejected", code: "STALE_BASE" }
+    if (existing.decision.requestHash !== requestHash || existing.decision.proposalId !== request.proposal.proposalId) return { kind: "rejected", code: "REPLAY_MISMATCH" }
+    return { kind: "accepted", pending: existing.pending, replay: true }
+  }
 
   const decisionIdHash = await canonicalJsonSha256("trainoracle.plan-adaptation-decision.v1", { proposalId: request.proposal.proposalId, requestHash })
   const decisionId = `adaptation-decision:${decisionIdHash.slice("sha256:".length)}`
