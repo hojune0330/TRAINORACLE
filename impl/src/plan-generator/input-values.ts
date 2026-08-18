@@ -208,12 +208,18 @@ export function parseProfile(value: unknown): PlanProfile | undefined {
   }
 
   const eventGroup = parseEventGroup(value["eventGroup"])
+  const rawEventDistanceM = value["eventDistanceM"]
+  const eventDistanceM = rawEventDistanceM === undefined
+    ? undefined
+    : parseSupportedEventDistance(rawEventDistanceM)
   const experienceBand = parseExperienceBand(value["experienceBand"])
   const availableTrainingDays = parseTrainingDays(value["availableTrainingDays"])
   const secondSessionMode = parseSecondSessionMode(value["secondSessionMode"])
   const trainingTimePreference = parseTrainingTimePreference(value["trainingTimePreference"])
   if (
     eventGroup === undefined ||
+    (rawEventDistanceM !== undefined && eventDistanceM === undefined) ||
+    (eventDistanceM !== undefined && !eventDistanceMatchesGroup(eventDistanceM, eventGroup)) ||
     experienceBand === undefined ||
     availableTrainingDays === undefined ||
     secondSessionMode === undefined ||
@@ -224,11 +230,24 @@ export function parseProfile(value: unknown): PlanProfile | undefined {
 
   return {
     eventGroup,
+    ...(eventDistanceM === undefined ? {} : { eventDistanceM }),
     experienceBand,
     availableTrainingDays,
     secondSessionMode,
     trainingTimePreference,
   }
+}
+
+function parseSupportedEventDistance(value: unknown): 800 | 1500 | 3000 | 5000 | undefined {
+  return value === 800 || value === 1500 || value === 3000 || value === 5000 ? value : undefined
+}
+
+function eventDistanceMatchesGroup(
+  distance: 800 | 1500 | 3000 | 5000,
+  eventGroup: PlanEventGroup,
+): boolean {
+  return eventGroup === "FIVE_K" ? distance === 5000
+    : eventGroup === "MIDDLE_DISTANCE" && (distance === 800 || distance === 1500 || distance === 3000)
 }
 
 export function parseJournalSource(value: unknown): ParsedJournalSource {

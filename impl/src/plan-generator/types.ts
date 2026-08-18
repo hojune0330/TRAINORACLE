@@ -75,6 +75,7 @@ export type PlanSourceMode = "PROFILE_ONLY" | "JOURNAL_CONTEXT_ONLY"
 export type PlanSelectionAuthority = "SELF" | "COACH_REQUIRED"
 
 export type PlanCandidateKind = "BALANCED" | "CONSERVATIVE"
+export type SupportedPlanEventDistanceM = 800 | 1500 | 3000 | 5000
 
 export const SECOND_SESSION_MODES = [
   "SINGLE_SESSION_ONLY",
@@ -149,6 +150,7 @@ export type PlanCandidate = {
   readonly candidateId: string
   readonly kind: PlanCandidateKind
   readonly eventGroup: PlanEventGroup
+  readonly eventDistanceM: SupportedPlanEventDistanceM | null
   readonly selectedEnergyIntent: PlannedEnergyIntent
   readonly sourceMode: PlanSourceMode
   readonly confidence: "LIMITED"
@@ -180,6 +182,7 @@ export type PlanCandidate = {
 
 export type PlanProfile = {
   readonly eventGroup: PlanEventGroup
+  readonly eventDistanceM?: SupportedPlanEventDistanceM
   readonly experienceBand: ExperienceBand
   readonly availableTrainingDays: readonly number[]
   readonly secondSessionMode: SecondSessionMode

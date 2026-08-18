@@ -15,6 +15,14 @@ export {
 export { derivePrescriptionTotals } from "./prescription/totals"
 export { recordPlanProgress } from "./plan-generator/progress"
 export { selectPlanCandidate } from "./plan-generator/selection"
+export {
+  canonicalJson,
+  canonicalJsonSha256,
+  createPlanAdaptationProposal,
+  hashPlanCandidate,
+  validateApprovedAdaptationTransform,
+  verifyPlanAdaptationProposal,
+} from "./plan-generator/adaptation"
 export type { D9Disposition, D9Result } from "./d9/evaluator"
 export type {
   EvaluatorFailureKind,
@@ -69,6 +77,15 @@ export type {
   PlanSourceMode,
   RpeTimeRange,
 } from "./plan-generator/types"
+export type {
+  AdaptationDimension,
+  AdaptationProposalOrigin,
+  AdaptationTrigger,
+  PlanAdaptationProposal,
+  PlanAdaptationProposalRequest,
+  PlanAdaptationProposalResult,
+  SupportedAdaptationEvent,
+} from "./plan-generator/adaptation"
 export type {
   CompiledExposureLedger,
   MainExposureLedgerEntry,

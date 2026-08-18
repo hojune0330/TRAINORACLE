@@ -55,6 +55,7 @@ export function baseRequest(
     safetyGate,
     profile: {
       eventGroup: "MIDDLE_DISTANCE",
+      eventDistanceM: 1500,
       experienceBand: "DEVELOPING",
       availableTrainingDays: [1, 3, 5, 7, 9],
     },

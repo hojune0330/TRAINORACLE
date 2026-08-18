@@ -95,6 +95,7 @@ function createActiveSnapshot(
     activationState: "SELECTED_BETA_SNAPSHOT",
     candidateId: candidate.candidateId,
     candidateKind: candidate.kind,
+    eventDistanceM: candidate.eventDistanceM,
     selectionActor: actor,
     sourceMode: candidate.sourceMode,
     selectedEnergyIntent: candidate.selectedEnergyIntent,
@@ -131,6 +132,9 @@ function isPlanCandidate(value: unknown): value is PlanCandidate {
   return isRecord(value)
     && typeof value["candidateId"] === "string"
     && (value["kind"] === "BALANCED" || value["kind"] === "CONSERVATIVE")
+    && (value["eventDistanceM"] === null || value["eventDistanceM"] === 800 || value["eventDistanceM"] === 1500 || value["eventDistanceM"] === 3000 || value["eventDistanceM"] === 5000)
+    && typeof value["candidateId"] === "string"
+    && value["candidateId"].includes(`:event-${value["eventDistanceM"] ?? "unbound"}:`)
     && isRecord(value["frame"])
     && isRecord(value["mainExposureLedger"])
     && Array.isArray(value["sessions"])

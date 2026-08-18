@@ -3,6 +3,7 @@ import {
   activePlanSchema,
   frameLengthSchema,
   legacyActivePlanSchema,
+  planSessionSchema,
   plannedEnergyIntentSchema,
   sessionSlotSchema,
 } from "./plan-session-schema"
@@ -105,11 +106,17 @@ const planAthleteEvidenceSchema = z.object({
   recentJournalSessionCount: z.number().int().nonnegative(),
 }).strict()
 
+const adaptationScopeSchema = z.object({
+  athleteId: z.string().min(1).max(128),
+  eventDistanceM: z.union([z.literal(800), z.literal(1500), z.literal(3000), z.literal(5000)]),
+}).strict()
+
 const planBetaStateCommonShape = {
   intake: storedPlanIntakeSchema,
   progress: z.array(progressSchema),
   generatedAt: z.string().datetime(),
   athleteEvidence: planAthleteEvidenceSchema.optional(),
+  adaptationScope: adaptationScopeSchema.optional(),
 }
 const planBetaStateV1BaseSchema = z.object({
   version: z.literal(1),
@@ -179,7 +186,7 @@ function validatePlanBetaState(
 const planBetaStateV1Schema = planBetaStateV1BaseSchema.superRefine(
   validatePlanBetaState,
 )
-const planBetaStateV2Schema = planBetaStateV2BaseSchema.superRefine(
+export const planBetaStateV2Schema = planBetaStateV2BaseSchema.superRefine(
   validatePlanBetaState,
 )
 const planBetaStateSchema = z.union([
@@ -189,6 +196,88 @@ const planBetaStateSchema = z.union([
     version: 2 as const,
   })),
 ])
+
+const hashSchema = z.string().regex(/^sha256:[a-f0-9]{64}$/u)
+const candidateFrameSchema = z.object({
+  formationKind: z.literal("LOCAL_CIVIL_9_5"),
+  lengthDays: z.literal(9.5),
+  slotCount: z.literal(19),
+  projectionLengthDays: z.union([z.literal(7), z.literal(9), z.literal(9.5), z.literal(10)]).optional(),
+  continuity: z.union([
+    z.object({ kind: z.literal("STANDARD_FRAME") }).strict(),
+    z.object({ kind: z.literal("SEVEN_DAY_CONTINUITY"), nextFrameInput: z.literal("SELECTED_PLAN_AND_PROGRESS") }).strict(),
+  ]),
+}).strict()
+const planCandidateSchema = z.object({
+  candidateId: z.string().min(1),
+  kind: z.enum(["BALANCED", "CONSERVATIVE"]),
+  eventGroup: z.enum(["MIDDLE_DISTANCE", "FIVE_K"]),
+  eventDistanceM: z.union([
+    adaptationScopeSchema.shape.eventDistanceM,
+    z.null(),
+  ]),
+  selectedEnergyIntent: plannedEnergyIntentSchema,
+  sourceMode: z.enum(["PROFILE_ONLY", "JOURNAL_CONTEXT_ONLY"]),
+  confidence: z.literal("LIMITED"),
+  beta: z.object({ designation: z.literal("BETA"), prescriptionBasis: z.enum(["DURATION_RPE_ONLY", "ONE_TRUSTED_DETAILED_SESSION"]), formationMethodClaim: z.literal("NOT_UNIVERSAL") }).strict(),
+  detailedPrescriptionFingerprint: z.string().min(1).nullable(),
+  continuityContext: z.union([
+    z.object({ kind: z.literal("NO_PREVIOUS_FRAME_CONTEXT") }).strict(),
+    z.object({ kind: z.literal("PREVIOUS_FRAME_CONTEXT_RETAINED"), previousCandidateKind: z.enum(["BALANCED", "CONSERVATIVE"]), progressStateCounts: z.array(z.object({ state: progressStateSchema, count: z.number().int().nonnegative() }).strict()).readonly() }).strict(),
+  ]),
+  selectionAuthority: z.enum(["SELF", "COACH_REQUIRED"]),
+  frame: candidateFrameSchema,
+  mainExposureLedger: z.object({ mainExposureCount: z.union([z.literal(2), z.literal(3)]), fingerprint: z.string().min(1), countedExposureIds: z.array(z.string().min(1)).readonly() }).strict(),
+  rationaleCodes: z.array(z.string().min(1)).readonly(),
+  sessions: z.array(planSessionSchema).readonly(),
+}).strict()
+
+export const planAdaptationProposalSchema = z.object({
+  proposalId: z.string().regex(/^adaptation:[a-f0-9]{64}$/u),
+  proposalHash: hashSchema,
+  targetFrame: z.literal("NEXT_FRAME"),
+  athleteId: z.string().min(1).max(128),
+  eventDistanceM: adaptationScopeSchema.shape.eventDistanceM,
+  proposalOrigin: z.enum(["SELF_SERVICE", "COACH_AUTHORED"]),
+  selectionAuthority: z.enum(["SELF", "COACH_REQUIRED"]),
+  trigger: z.enum(["SAME_EVENT_PB_SB_AFTER_ACTIVE_PLAN_START", "EXPLICIT_REQUEST"]),
+  changeDimension: z.enum(["INTENSITY", "VOLUME", "FREQUENCY"]),
+  baseCandidateId: z.string().min(1),
+  baseContentHash: hashSchema,
+  proposedContentHash: hashSchema,
+  approvedBeforeValueRef: hashSchema,
+  approvedAfterValueRef: hashSchema,
+  baseCandidate: planCandidateSchema,
+  successorCandidate: planCandidateSchema,
+  createdAt: z.string().datetime(),
+  idempotencyKey: z.string().min(1),
+}).strict().superRefine((proposal, context) => {
+  const expectedAuthority = proposal.proposalOrigin === "SELF_SERVICE" ? "SELF" : "COACH_REQUIRED"
+  if (proposal.selectionAuthority !== expectedAuthority) addIssue(context, ["selectionAuthority"], "Selection authority must follow proposal origin.")
+  if (proposal.baseCandidateId !== proposal.baseCandidate.candidateId) addIssue(context, ["baseCandidateId"], "Base candidate identity mismatch.")
+})
+
+export const pendingNextFrameSuccessorSchema = z.object({
+  version: z.literal(1), proposalId: z.string().min(1), targetFrame: z.literal("NEXT_FRAME"),
+  proposalOrigin: z.enum(["SELF_SERVICE", "COACH_AUTHORED"]), selectionAuthority: z.enum(["SELF", "COACH_REQUIRED"]),
+  trigger: z.enum(["SAME_EVENT_PB_SB_AFTER_ACTIVE_PLAN_START", "EXPLICIT_REQUEST"]), changeDimension: z.enum(["INTENSITY", "VOLUME", "FREQUENCY"]),
+  athleteId: z.string().min(1).max(128), eventDistanceM: adaptationScopeSchema.shape.eventDistanceM,
+  baseCandidateId: z.string().min(1), baseContentHash: hashSchema, proposedContentHash: hashSchema, predecessorStateHash: hashSchema,
+  successorState: planBetaStateV2BaseSchema, acceptedAt: z.string().datetime(), decisionId: z.string().min(1), idempotencyKey: z.string().min(1), requestHash: hashSchema,
+}).strict().superRefine((record, context) => {
+  if (record.successorState.activePlan.candidateId === record.baseCandidateId) addIssue(context, ["successorState", "activePlan", "candidateId"], "Successor must differ from predecessor.")
+  const expectedAuthority = record.proposalOrigin === "SELF_SERVICE" ? "SELF" : "COACH_REQUIRED"
+  if (record.selectionAuthority !== expectedAuthority) addIssue(context, ["selectionAuthority"], "Selection authority must follow proposal origin.")
+})
+
+export const planAdaptationDecisionSchema = z.object({
+  version: z.literal(1), decisionId: z.string().min(1), proposalId: z.string().min(1), decision: z.literal("ACCEPT"),
+  predecessorStateHash: hashSchema, proposedContentHash: hashSchema, decidedAt: z.string().datetime(), idempotencyKey: z.string().min(1), requestHash: hashSchema,
+}).strict()
+
+export const planAdaptationEnvelopeSchema = z.object({ version: z.literal(1), pending: pendingNextFrameSuccessorSchema, decision: planAdaptationDecisionSchema }).strict().superRefine((envelope, context) => {
+  if (envelope.pending.proposalId !== envelope.decision.proposalId || envelope.pending.decisionId !== envelope.decision.decisionId || envelope.pending.requestHash !== envelope.decision.requestHash) addIssue(context, ["decision"], "Decision and pending successor linkage mismatch.")
+})
 
 export const planHistoryListSchema = z.array(planHistorySchema).max(5)
 
@@ -202,6 +291,9 @@ export type PlanBetaState = Omit<PlanBetaStateV2, "version"> & {
   readonly version: 1 | 2
 }
 export type StoredPlanHistory = z.infer<typeof planHistorySchema>
+export type PendingNextFrameSuccessor = z.infer<typeof pendingNextFrameSuccessorSchema>
+export type PlanAdaptationDecision = z.infer<typeof planAdaptationDecisionSchema>
+export type PlanAdaptationEnvelope = z.infer<typeof planAdaptationEnvelopeSchema>
 
 export function parsePlanBetaState(candidate: unknown): PlanBetaStateV2 | null {
   const parsed = planBetaStateSchema.safeParse(candidate)

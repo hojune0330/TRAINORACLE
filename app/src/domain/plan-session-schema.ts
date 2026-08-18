@@ -479,6 +479,13 @@ const activePlanShape = {
   activationState: z.literal("SELECTED_BETA_SNAPSHOT"),
   candidateId: z.string().min(1),
   candidateKind: z.enum(["BALANCED", "CONSERVATIVE"]),
+  eventDistanceM: z.union([
+    z.literal(800),
+    z.literal(1500),
+    z.literal(3000),
+    z.literal(5000),
+    z.null(),
+  ]).optional(),
   selectionActor: z.enum(["SELF", "COACH"]),
   sourceMode: z.enum(["PROFILE_ONLY", "JOURNAL_CONTEXT_ONLY"]),
   selectedEnergyIntent: plannedEnergyIntentSchema.optional().default("MIXED_INTENT"),
