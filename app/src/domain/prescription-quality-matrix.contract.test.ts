@@ -32,11 +32,24 @@ beforeEach(() => {
 afterEach(() => {
   vi.useRealTimers()
   vi.restoreAllMocks()
+  vi.unstubAllEnvs()
 })
 
 afterAll(() => writeMatrixReport(observations, populationContractObservations))
 
 describe("athlete persona prescription quality matrix", () => {
+  it.each([
+    { label: "missing", sourceCommit: undefined },
+    { label: "invalid", sourceCommit: "not-a-commit-sha" },
+  ] as const)("rejects report generation with a $label source commit", ({ sourceCommit }) => {
+    vi.stubEnv("PRESCRIPTION_MATRIX_REPORT", ".")
+    vi.stubEnv("PRESCRIPTION_MATRIX_SOURCE_COMMIT", sourceCommit)
+
+    expect(() => writeMatrixReport([], [])).toThrow(
+      "PRESCRIPTION_MATRIX_SOURCE_COMMIT must be exactly 40 hexadecimal characters",
+    )
+  })
+
   it.each(RUNTIME_CASES)("binds approved detail for $caseId", (fixture) => {
     const selectedRecordId = saveCurrentRecord(
       fixture.eventDistanceM,

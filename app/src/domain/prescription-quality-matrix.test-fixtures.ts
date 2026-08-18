@@ -7,6 +7,7 @@ import { saveEntry } from "./journal-store"
 
 export const TODAY = new Date("2026-08-17T03:00:00.000Z")
 export const RAW_MARKER = "MATRIX_RAW_FREE_TEXT_9f86d081"
+const SOURCE_COMMIT_PATTERN = /^[0-9a-f]{40}$/iu
 
 export type MatrixCase = {
   readonly caseId: string
@@ -117,10 +118,16 @@ export function writeMatrixReport(
 ): void {
   const reportPath = process.env.PRESCRIPTION_MATRIX_REPORT
   if (reportPath === undefined) return
+  const sourceCommit = process.env.PRESCRIPTION_MATRIX_SOURCE_COMMIT
+  if (sourceCommit === undefined || !SOURCE_COMMIT_PATTERN.test(sourceCommit)) {
+    throw new TypeError(
+      "PRESCRIPTION_MATRIX_SOURCE_COMMIT must be exactly 40 hexadecimal characters",
+    )
+  }
   writeFileSync(reportPath, `${JSON.stringify({
     schemaVersion: 2,
     reviewBaseCommit: "e18f09998f9f4619a375909e338848c3c9310864",
-    sourceCommit: "PARENT_TO_FILL_AFTER_CODE_TEST_COMMIT",
+    sourceCommit,
     evaluatedAt: TODAY.toISOString(),
     executedRuntimeInputs: ["event", "experienceBand", "recordEvidence", "frameLength", "trainingDays", "secondSessionMode", "trainingTimePreference", "D9"],
     sampledReviewMetadataFields: ["divisionLabel", "reportedSex", "performanceTier"],
