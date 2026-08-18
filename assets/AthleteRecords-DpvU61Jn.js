@@ -1,4 +1,4 @@
-import{c as _,j as e,R as n}from"./index-D3xtoLXg.js";import{l as R,a as y,c as I,s as L}from"./athlete-records-TIz2djcv.js";import{e as w,s as U,f as B,r as P,a as Y}from"./athlete-record-display-DiEyWLAa.js";import{A as k}from"./arrow-left-CAKhHwe3.js";/**
+import{c as _,j as e,R as n}from"./index-CxQewU4m.js";import{l as R,a as y,c as I,s as L}from"./athlete-records-vI9dKZvj.js";import{e as w,s as U,f as B,r as P,a as Y}from"./athlete-record-display-DiEyWLAa.js";import{A as k}from"./arrow-left-0kiWMdSP.js";/**
  * @license lucide-react v0.468.0 - ISC
  *
  * This source code is licensed under the ISC license.
