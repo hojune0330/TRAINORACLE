@@ -145,16 +145,28 @@ function qualityTrainingSession(
   })
 }
 
-function qualitySlotFor(input: CandidateSessionBuildInput): "AM" | "PM" {
-  switch (input.request.profile.trainingTimePreference) {
-    case "EVENING":
-      return "PM"
-    case "MORNING":
-    case "VARIES":
-      return "AM"
-    default:
-      return assertNever(input.request.profile.trainingTimePreference)
-  }
+function formationHasSlot(
+  input: CandidateSessionBuildInput,
+  day: number,
+  slot: PlanSessionSlot,
+): boolean {
+  const slotIndex = (day - 1) * 2 + (slot === "PM" ? 1 : 0)
+  return input.request.formation.slots[slotIndex]?.slot === slot
+}
+
+function qualitySlotFor(input: CandidateSessionBuildInput, day: number): "AM" | "PM" {
+  const preferredSlot = (() => {
+    switch (input.request.profile.trainingTimePreference) {
+      case "EVENING":
+        return "PM"
+      case "MORNING":
+      case "VARIES":
+        return "AM"
+      default:
+        return assertNever(input.request.profile.trainingTimePreference)
+    }
+  })()
+  return formationHasSlot(input, day, preferredSlot) ? preferredSlot : "AM"
 }
 
 function recoverySecondSessionDays(
@@ -165,7 +177,9 @@ function recoverySecondSessionDays(
   ) {
     return Object.freeze([])
   }
-  return Object.freeze([...input.request.profile.availableTrainingDays])
+  return Object.freeze(input.request.profile.availableTrainingDays.filter(
+    (day) => formationHasSlot(input, day, "PM"),
+  ))
 }
 
 function qualityIntentFor(request: CanonicalPlanGenerationRequest): QualityEnergyIntent {
@@ -188,8 +202,6 @@ export function makeCandidateSessions(input: CandidateSessionBuildInput): readon
   const ranges = rangesFor(input.request.profile.experienceBand)
   const availableDays = new Set(input.request.profile.availableTrainingDays)
   const qualityDays = new Set(input.qualityDays)
-  const qualitySlot = qualitySlotFor(input)
-  const recoveryCounterpartSlot = qualitySlot === "AM" ? "PM" : "AM"
   const recoverySecondDays = new Set(
     recoverySecondSessionDays(input),
   )
@@ -202,6 +214,8 @@ export function makeCandidateSessions(input: CandidateSessionBuildInput): readon
     }
 
     if (qualityDays.has(day)) {
+      const qualitySlot = qualitySlotFor(input, day)
+      const recoveryCounterpartSlot = qualitySlot === "AM" ? "PM" : "AM"
       if (recoverySecondDays.has(day)) {
         sessions.push(easyTrainingSession(
           day,

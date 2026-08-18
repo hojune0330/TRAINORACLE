@@ -1,0 +1,80 @@
+{
+  "schemaVersion": 1,
+  "baselineCommit": "edd7151e60c00b8a4c2b58722f39d021f7f5477a",
+  "status": "DONE_CLAIM_READY",
+  "changedSourceFiles": [
+    "app/src/domain/prescription-quality-matrix-cases.ts",
+    "app/src/domain/prescription-quality-matrix.contract.test.ts",
+    "impl/src/plan-generator/session-builder.ts",
+    "impl/test/plan-beta-generation.test.ts"
+  ],
+  "acceptanceEvidence": [
+    {
+      "path": "prescription-quality-matrix.json",
+      "sha256": "5da28625331e900b7ff91325d16c5590bed4d2e018e94392fcd16ab314f3ba89",
+      "observable": "Machine-readable supported, fallback, blocked, privacy, persona, and unsupported matrix"
+    },
+    {
+      "path": "matrix-red-two-paths.log",
+      "sha256": "5109ffb2abbdea19a360254e6dc8063efe0eedec4337d018261efd9390a168dd",
+      "observable": "2 failed and 11 passed; invalid day-ten PM recovery and quality sessions"
+    },
+    {
+      "path": "matrix-green-final.log",
+      "sha256": "c6ccc8f2a0b4f98dc816a78d29751cbe065babc0518edec25336e63c34f64114",
+      "observable": "13 passed"
+    },
+    {
+      "path": "app-full-test.log",
+      "sha256": "bb2926c6b9129a2ac4c2c7e6f0a4eef3c17a87e43de6d753f1b58dbe39fd97d2",
+      "observable": "1299 UTC, 1299 KST, and 9 release-env tests passed"
+    },
+    {
+      "path": "impl-full-test.log",
+      "sha256": "76717012673ecdbf4cef81352d1be651ab473eb9687cc4cf1b57cfb314b8e2c5",
+      "observable": "161 passed"
+    },
+    {
+      "path": "app-build.log",
+      "sha256": "bcf34421fac249e23f2bd42397fd32d042e15f5864c8afc516813c4500c89678",
+      "observable": "1918 modules transformed; build succeeded"
+    },
+    {
+      "path": "playwright-isolated-multi-event-green.log",
+      "sha256": "17249ff96398f43c27048a178b26466a000e1fbce328a9d1bc0fc1d8a31238ac",
+      "observable": "3 isolated current-worktree Chromium flows passed"
+    },
+    {
+      "path": "final-git-audit.log",
+      "sha256": "063c85c38d361e7059b9baf5deb9a86eac112b5d72d19d319e28d8b807542c13",
+      "observable": "git diff --check passed; only task source and evidence present"
+    }
+  ],
+  "invalidQaAttempts": {
+    "logs": [
+      "playwright-multi-event.log",
+      "playwright-youth-adult.log"
+    ],
+    "reason": "Playwright reused an unrelated existing preview on port 4173; these attempts are diagnostic only and are excluded from acceptance."
+  },
+  "receipts": [
+    {
+      "path": "DoneClaim.md",
+      "sha256": "82355e5679f2c7a475827bbe9db17cbce60254b14b9b41ec054eddeec4bb358c"
+    },
+    {
+      "path": "cleanup-receipt.log",
+      "sha256": "bc69e82be2e142a1d455d30e444aff811bda36879ca80c8be02449f8560cf4aa"
+    }
+  ],
+  "cleanup": {
+    "removed": [
+      "app/dist",
+      "impl/dist",
+      "app/test-results"
+    ],
+    "isolatedPort4174Listener": false,
+    "unrelatedPort4173ProcessTouched": false,
+    "pushOrMergePerformed": false
+  }
+}

@@ -1,0 +1,25 @@
+
+> trainoracle-app@0.1.0 test:unit
+> vitest run src/domain/prescription-quality-matrix.contract.test.ts --reporter=verbose
+
+
+[1m[30m[46m RUN [49m[39m[22m [36mv4.1.10 [39m[90mD:/admin/Documents/트레인 오라클 진도/.worktrees/persona-prescription-quality-matrix/app[39m
+
+ [32m✓[39m src/domain/prescription-quality-matrix.contract.test.ts[2m > [22mathlete persona prescription quality matrix[2m > [22mbinds approved detail for '800-hs-male-high-7d'[32m 28[2mms[22m[39m
+ [32m✓[39m src/domain/prescription-quality-matrix.contract.test.ts[2m > [22mathlete persona prescription quality matrix[2m > [22mbinds approved detail for '1500-hs-female-mid-9d-double'[32m 8[2mms[22m[39m
+ [32m✓[39m src/domain/prescription-quality-matrix.contract.test.ts[2m > [22mathlete persona prescription quality matrix[2m > [22mbinds approved detail for '3000-college-male-low-10d'[32m 6[2mms[22m[39m
+ [32m✓[39m src/domain/prescription-quality-matrix.contract.test.ts[2m > [22mathlete persona prescription quality matrix[2m > [22mbinds approved detail for '5000-open-female-high-10d-daily-doubl…'[32m 6[2mms[22m[39m
+ [32m✓[39m src/domain/prescription-quality-matrix.contract.test.ts[2m > [22mathlete persona prescription quality matrix[2m > [22mbinds approved detail for '5000-open-female-high-10d-daily-double'[32m 10[2mms[22m[39m
+ [32m✓[39m src/domain/prescription-quality-matrix.contract.test.ts[2m > [22mathlete persona prescription quality matrix[2m > [22mreports truthful RPE fallback for no-record[32m 1[2mms[22m[39m
+ [32m✓[39m src/domain/prescription-quality-matrix.contract.test.ts[2m > [22mathlete persona prescription quality matrix[2m > [22mreports truthful RPE fallback for stored-unselected[32m 3[2mms[22m[39m
+ [32m✓[39m src/domain/prescription-quality-matrix.contract.test.ts[2m > [22mathlete persona prescription quality matrix[2m > [22mreports truthful RPE fallback for developing-current[32m 4[2mms[22m[39m
+ [32m✓[39m src/domain/prescription-quality-matrix.contract.test.ts[2m > [22mathlete persona prescription quality matrix[2m > [22mreports truthful RPE fallback for deferred-100m[32m 4[2mms[22m[39m
+ [32m✓[39m src/domain/prescription-quality-matrix.contract.test.ts[2m > [22mathlete persona prescription quality matrix[2m > [22mreports truthful RPE fallback for deferred-400m[32m 4[2mms[22m[39m
+ [32m✓[39m src/domain/prescription-quality-matrix.contract.test.ts[2m > [22mathlete persona prescription quality matrix[2m > [22mblocks D9_ACTIVE before candidates[32m 1[2mms[22m[39m
+ [32m✓[39m src/domain/prescription-quality-matrix.contract.test.ts[2m > [22mathlete persona prescription quality matrix[2m > [22mblocks D9_UNKNOWN before candidates[32m 1[2mms[22m[39m
+ [32m✓[39m src/domain/prescription-quality-matrix.contract.test.ts[2m > [22mathlete persona prescription quality matrix[2m > [22mcovers every requested matrix axis without treating persona labels as dose inputs[32m 1[2mms[22m[39m
+
+[2m Test Files [22m [1m[32m1 passed[39m[22m[90m (1)[39m
+[2m      Tests [22m [1m[32m13 passed[39m[22m[90m (13)[39m
+[2m   Start at [22m 11:43:00
+[2m   Duration [22m 30.57s[2m (transform 668ms, setup 3.13s, import 1.58s, tests 79ms, environment 25.05s)[22m

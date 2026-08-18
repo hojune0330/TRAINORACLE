@@ -1,0 +1,8 @@
+
+Running 3 tests using 1 worker
+
+  ok 1 [desktop-chromium] › e2e\multi-event-personalized-prescription.spec.ts:78:3 › creates and reloads the exact 800m prescription (3.5s)
+  ok 2 [desktop-chromium] › e2e\multi-event-personalized-prescription.spec.ts:78:3 › creates and reloads the exact 1500m prescription (3.3s)
+  ok 3 [desktop-chromium] › e2e\multi-event-personalized-prescription.spec.ts:78:3 › creates and reloads the exact 3000m prescription (3.2s)
+
+  3 passed (12.4s)

@@ -1,0 +1,13 @@
+warning: in the working copy of 'impl/src/plan-generator/session-builder.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'impl/test/plan-beta-generation.test.ts', LF will be replaced by CRLF the next time Git touches it
+git diff --check: PASS
+ M impl/src/plan-generator/session-builder.ts
+ M impl/test/plan-beta-generation.test.ts
+?? .omo/evidence/prescription-persona-quality-matrix-20260818/
+?? app/src/domain/prescription-quality-matrix-cases.ts
+?? app/src/domain/prescription-quality-matrix.contract.test.ts
+warning: in the working copy of 'impl/src/plan-generator/session-builder.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'impl/test/plan-beta-generation.test.ts', LF will be replaced by CRLF the next time Git touches it
+ impl/src/plan-generator/session-builder.ts | 40 ++++++++++++++++++++----------
+ impl/test/plan-beta-generation.test.ts     |  6 ++---
+ 2 files changed, 30 insertions(+), 16 deletions(-)

@@ -1,0 +1,173 @@
+
+> trainoracle-impl-skeleton@0.1.0 test
+> vitest run --reporter=verbose
+
+
+[1m[30m[46m RUN [49m[39m[22m [36mv4.1.10 [39m[90mD:/admin/Documents/트레인 오라클 진도/.worktrees/persona-prescription-quality-matrix/impl[39m
+
+ [32m✓[39m test/exposure-ledger.contract.test.ts[2m > [22mtyped MAIN exposure ledger[2m > [22mcounts a composite parent once while retaining every component[32m 5[2mms[22m[39m
+ [32m✓[39m test/exposure-ledger.contract.test.ts[2m > [22mtyped MAIN exposure ledger[2m > [22mcounts every competition day once but returns review for a planned MAIN collision[32m 1[2mms[22m[39m
+ [32m✓[39m test/exposure-ledger.contract.test.ts[2m > [22mtyped MAIN exposure ledger[2m > [22mcounts separate competition records on one local day as one MAIN exposure[32m 1[2mms[22m[39m
+ [32m✓[39m test/exposure-ledger.contract.test.ts[2m > [22mtyped MAIN exposure ledger[2m > [22mfails closed for a dangling composite leaf[32m 0[2mms[22m[39m
+ [32m✓[39m test/exposure-ledger.contract.test.ts[2m > [22mtyped MAIN exposure ledger[2m > [22mdoes not infer MAIN from omitted or generic QUALITY-like detail[32m 0[2mms[22m[39m
+ [32m✓[39m test/prescription-notation.test.ts[2m > [22mprescription notation[2m > [22mrejects timed recovery without an explicit mode: 5×1000m @5000m RP · r150″[32m 4[2mms[22m[39m
+ [32m✓[39m test/prescription-notation.test.ts[2m > [22mprescription notation[2m > [22mrejects timed recovery without an explicit mode: 2×(10×400m) @5000m RP · r60″ STAND · R3′[32m 1[2mms[22m[39m
+ [32m✓[39m test/prescription-notation.test.ts[2m > [22mprescription notation[2m > [22mparses the owner fixture into its exact structured work and recovery fields[32m 1[2mms[22m[39m
+ [32m✓[39m test/prescription-notation.test.ts[2m > [22mprescription notation[2m > [22mformats parsed notation canonically without changing its meaning[32m 1[2mms[22m[39m
+ [32m✓[39m test/prescription-notation.test.ts[2m > [22mprescription notation[2m > [22mpreserves the explicitly written repetition recovery mode WALK[32m 1[2mms[22m[39m
+ [32m✓[39m test/prescription-notation.test.ts[2m > [22mprescription notation[2m > [22mpreserves the explicitly written repetition recovery mode JOG[32m 0[2mms[22m[39m
+ [32m✓[39m test/prescription-notation.test.ts[2m > [22mprescription notation[2m > [22mpreserves the explicitly written repetition recovery mode STAND[32m 0[2mms[22m[39m
+ [32m✓[39m test/prescription-notation.test.ts[2m > [22mprescription notation[2m > [22mrejects an unknown recovery mode[32m 1[2mms[22m[39m
+ [32m✓[39m test/prescription-notation.test.ts[2m > [22mprescription notation[2m > [22mcounts repetitions, work distance, and both recovery layers without double counting[32m 1[2mms[22m[39m
+ [32m✓[39m test/prescription-notation.test.ts[2m > [22mprescription notation[2m > [22mrejects malformed or structurally inconsistent notation: 0×(10×400m) @5000m RP · r60″ · R3′[32m 0[2mms[22m[39m
+ [32m✓[39m test/prescription-notation.test.ts[2m > [22mprescription notation[2m > [22mrejects malformed or structurally inconsistent notation: 2×(10×0m) @5000m RP · r60″ · R3′[32m 0[2mms[22m[39m
+ [32m✓[39m test/prescription-notation.test.ts[2m > [22mprescription notation[2m > [22mrejects malformed or structurally inconsistent notation: 2×(10×400m) @5000m RP · r60 · R3′[32m 0[2mms[22m[39m
+ [32m✓[39m test/prescription-notation.test.ts[2m > [22mprescription notation[2m > [22mrejects malformed or structurally inconsistent notation: 2×(10×400m) @5000m RP · R60″ · r3′[32m 0[2mms[22m[39m
+ [32m✓[39m test/prescription-notation.test.ts[2m > [22mprescription notation[2m > [22mrejects malformed or structurally inconsistent notation: 2×(10×400m @5000m RP · r60″ · R3′[32m 0[2mms[22m[39m
+ [32m✓[39m test/prescription-notation.test.ts[2m > [22mprescription notation[2m > [22mrejects malformed or structurally inconsistent notation: 2×(10×400m) @5000m RP · r60″[32m 0[2mms[22m[39m
+ [32m✓[39m test/prescription-notation.test.ts[2m > [22mprescription notation[2m > [22maccepts a keyboard-typable alias and yields the owner fixture exactly: 곱셈 x[32m 1[2mms[22m[39m
+ [32m✓[39m test/prescription-notation.test.ts[2m > [22mprescription notation[2m > [22maccepts a keyboard-typable alias and yields the owner fixture exactly: 곱셈 X[32m 0[2mms[22m[39m
+ [32m✓[39m test/prescription-notation.test.ts[2m > [22mprescription notation[2m > [22maccepts a keyboard-typable alias and yields the owner fixture exactly: 곱셈 *[32m 0[2mms[22m[39m
+ [32m✓[39m test/prescription-notation.test.ts[2m > [22mprescription notation[2m > [22maccepts a keyboard-typable alias and yields the owner fixture exactly: ASCII 따옴표[32m 1[2mms[22m[39m
+ [32m✓[39m test/prescription-notation.test.ts[2m > [22mprescription notation[2m > [22maccepts a keyboard-typable alias and yields the owner fixture exactly: 자동 교정 둥근 따옴표[32m 0[2mms[22m[39m
+ [32m✓[39m test/prescription-notation.test.ts[2m > [22mprescription notation[2m > [22mdoes not let alias normalization invent a structure that was never typed[32m 0[2mms[22m[39m
+ [32m✓[39m test/prescription-pace.test.ts[2m > [22msame-event race-pace calculation[2m > [22mcalculates a 400m target from an explicitly selected current 5000m anchor[32m 5[2mms[22m[39m
+ [32m✓[39m test/prescription-pace.test.ts[2m > [22msame-event race-pace calculation[2m > [22mrejects a different-event anchor instead of converting across events[32m 1[2mms[22m[39m
+ [32m✓[39m test/prescription-pace.test.ts[2m > [22msame-event race-pace calculation[2m > [22mrejects a GOAL anchor as current capability[32m 0[2mms[22m[39m
+ [32m✓[39m test/prescription-pace.test.ts[2m > [22msame-event race-pace calculation[2m > [22mrejects a stale PB instead of treating it as current capability[32m 0[2mms[22m[39m
+ [32m✓[39m test/prescription-pace.test.ts[2m > [22msame-event race-pace calculation[2m > [22mrejects an SB without its season provenance[32m 0[2mms[22m[39m
+ [32m✓[39m test/prescription-pace.test.ts[2m > [22msame-event race-pace calculation[2m > [22mrejects a 59m same-event anchor as sprint pace[32m 1[2mms[22m[39m
+ [32m✓[39m test/prescription-pace.test.ts[2m > [22msame-event race-pace calculation[2m > [22mcalculates a 60m same-event anchor without sprint rejection[32m 1[2mms[22m[39m
+ [32m✓[39m test/prescription-pace.test.ts[2m > [22msame-event race-pace calculation[2m > [22mrejects 30m sprint race-pace conversion[32m 0[2mms[22m[39m
+ [32m✓[39m test/prescription-runtime.test.ts[2m > [22mprescription runtime safety boundary[2m > [22mrejects draft template BA-SEED-01 before it can become a plan prescription[32m 8[2mms[22m[39m
+ [32m✓[39m test/prescription-runtime.test.ts[2m > [22mprescription runtime safety boundary[2m > [22mrejects draft template BA-SEED-02 before it can become a plan prescription[32m 2[2mms[22m[39m
+ [32m✓[39m test/prescription-runtime.test.ts[2m > [22mprescription runtime safety boundary[2m > [22mrejects draft template BA-SEED-03 before it can become a plan prescription[32m 0[2mms[22m[39m
+ [32m✓[39m test/prescription-runtime.test.ts[2m > [22mprescription runtime safety boundary[2m > [22mrejects draft template BA-SEED-04 before it can become a plan prescription[32m 0[2mms[22m[39m
+ [32m✓[39m test/prescription-runtime.test.ts[2m > [22mprescription runtime safety boundary[2m > [22mrejects draft template BA-SEED-05 before it can become a plan prescription[32m 0[2mms[22m[39m
+ [32m✓[39m test/prescription-runtime.test.ts[2m > [22mprescription runtime safety boundary[2m > [22mrejects draft template LT-SEED-01 before it can become a plan prescription[32m 0[2mms[22m[39m
+ [32m✓[39m test/prescription-runtime.test.ts[2m > [22mprescription runtime safety boundary[2m > [22mrejects draft template LT-SEED-02 before it can become a plan prescription[32m 0[2mms[22m[39m
+ [32m✓[39m test/prescription-runtime.test.ts[2m > [22mprescription runtime safety boundary[2m > [22mrejects draft template LT-SEED-03 before it can become a plan prescription[32m 0[2mms[22m[39m
+ [32m✓[39m test/prescription-runtime.test.ts[2m > [22mprescription runtime safety boundary[2m > [22mrejects draft template LT-SEED-04 before it can become a plan prescription[32m 0[2mms[22m[39m
+ [32m✓[39m test/prescription-runtime.test.ts[2m > [22mprescription runtime safety boundary[2m > [22mrejects draft template LT-SEED-05 before it can become a plan prescription[32m 0[2mms[22m[39m
+ [32m✓[39m test/prescription-runtime.test.ts[2m > [22mprescription runtime safety boundary[2m > [22mrejects draft template V2-SEED-01 before it can become a plan prescription[32m 0[2mms[22m[39m
+ [32m✓[39m test/prescription-runtime.test.ts[2m > [22mprescription runtime safety boundary[2m > [22mrejects draft template V2-SEED-02 before it can become a plan prescription[32m 0[2mms[22m[39m
+ [32m✓[39m test/prescription-runtime.test.ts[2m > [22mprescription runtime safety boundary[2m > [22mrejects draft template V2-SEED-03 before it can become a plan prescription[32m 0[2mms[22m[39m
+ [32m✓[39m test/prescription-runtime.test.ts[2m > [22mprescription runtime safety boundary[2m > [22mrejects draft template V2-SEED-04 before it can become a plan prescription[32m 0[2mms[22m[39m
+ [32m✓[39m test/prescription-runtime.test.ts[2m > [22mprescription runtime safety boundary[2m > [22mrejects draft template V2-SEED-05 before it can become a plan prescription[32m 0[2mms[22m[39m
+ [32m✓[39m test/prescription-runtime.test.ts[2m > [22mprescription runtime safety boundary[2m > [22mrejects draft template GL-SEED-01 before it can become a plan prescription[32m 0[2mms[22m[39m
+ [32m✓[39m test/prescription-runtime.test.ts[2m > [22mprescription runtime safety boundary[2m > [22mrejects draft template GL-SEED-02 before it can become a plan prescription[32m 0[2mms[22m[39m
+ [32m✓[39m test/prescription-runtime.test.ts[2m > [22mprescription runtime safety boundary[2m > [22mrejects draft template GL-SEED-03 before it can become a plan prescription[32m 0[2mms[22m[39m
+ [32m✓[39m test/prescription-runtime.test.ts[2m > [22mprescription runtime safety boundary[2m > [22mrejects draft template GL-SEED-04 before it can become a plan prescription[32m 0[2mms[22m[39m
+ [32m✓[39m test/prescription-runtime.test.ts[2m > [22mprescription runtime safety boundary[2m > [22mrejects draft template GL-SEED-05 before it can become a plan prescription[32m 0[2mms[22m[39m
+ [32m✓[39m test/prescription-runtime.test.ts[2m > [22mprescription runtime safety boundary[2m > [22mrejects draft template AP-SEED-01 before it can become a plan prescription[32m 0[2mms[22m[39m
+ [32m✓[39m test/prescription-runtime.test.ts[2m > [22mprescription runtime safety boundary[2m > [22mrejects draft template AP-SEED-02 before it can become a plan prescription[32m 0[2mms[22m[39m
+ [32m✓[39m test/prescription-runtime.test.ts[2m > [22mprescription runtime safety boundary[2m > [22mrejects draft template AP-SEED-03 before it can become a plan prescription[32m 0[2mms[22m[39m
+ [32m✓[39m test/prescription-runtime.test.ts[2m > [22mprescription runtime safety boundary[2m > [22mrejects draft template AP-SEED-04 before it can become a plan prescription[32m 0[2mms[22m[39m
+ [32m✓[39m test/prescription-runtime.test.ts[2m > [22mprescription runtime safety boundary[2m > [22mrejects draft template AP-SEED-05 before it can become a plan prescription[32m 0[2mms[22m[39m
+ [32m✓[39m test/prescription-runtime.test.ts[2m > [22mprescription runtime safety boundary[2m > [22mrejects draft template RE-SUPPORT-01 before it can become a plan prescription[32m 0[2mms[22m[39m
+ [32m✓[39m test/prescription-runtime.test.ts[2m > [22mprescription runtime safety boundary[2m > [22mrejects draft template RE-SUPPORT-02 before it can become a plan prescription[32m 0[2mms[22m[39m
+ [32m✓[39m test/prescription-runtime.test.ts[2m > [22mprescription runtime safety boundary[2m > [22mrejects draft template RE-SUPPORT-03 before it can become a plan prescription[32m 0[2mms[22m[39m
+ [32m✓[39m test/prescription-runtime.test.ts[2m > [22mprescription runtime safety boundary[2m > [22mrejects draft template RE-SUPPORT-04 before it can become a plan prescription[32m 0[2mms[22m[39m
+ [32m✓[39m test/prescription-runtime.test.ts[2m > [22mprescription runtime safety boundary[2m > [22mrejects draft template RE-SUPPORT-05 before it can become a plan prescription[32m 0[2mms[22m[39m
+ [32m✓[39m test/prescription-runtime.test.ts[2m > [22mprescription runtime safety boundary[2m > [22mrejects D9_ACTIVE before notation or anchor values can produce a prescription[32m 1[2mms[22m[39m
+ [32m✓[39m test/prescription-runtime.test.ts[2m > [22mprescription runtime safety boundary[2m > [22mrejects D9_UNKNOWN before notation or anchor values can produce a prescription[32m 1[2mms[22m[39m
+ [32m✓[39m test/prescription-runtime.test.ts[2m > [22mprescription runtime safety boundary[2m > [22mdoes not retain raw memo or private signal fields in its structured result[32m 2[2mms[22m[39m
+ [32m✓[39m test/prescription-runtime.test.ts[2m > [22mprescription runtime safety boundary[2m > [22mprepares the exact V2-SEED-05 JOG session with complete operational components[32m 1[2mms[22m[39m
+ [32m✓[39m test/prescription-runtime.test.ts[2m > [22mprescription runtime safety boundary[2m > [22mrejects atomically when the warmup operational component is missing[32m 1[2mms[22m[39m
+ [32m✓[39m test/prescription-runtime.test.ts[2m > [22mprescription runtime safety boundary[2m > [22mrejects atomically when the cooldown operational component is missing[32m 0[2mms[22m[39m
+ [32m✓[39m test/prescription-runtime.test.ts[2m > [22mprescription runtime safety boundary[2m > [22mrejects atomically when the fallback operational component is missing[32m 0[2mms[22m[39m
+ [32m✓[39m test/prescription-runtime.test.ts[2m > [22mprescription runtime safety boundary[2m > [22mrejects atomically when the stopConditions operational component is missing[32m 0[2mms[22m[39m
+ [32m✓[39m test/prescription-runtime.test.ts[2m > [22mprescription runtime safety boundary[2m > [22mrejects a numeric repetition downshift instead of doing runtime dose arithmetic[32m 0[2mms[22m[39m
+ [32m✓[39m test/plan-selection-guard.contract.test.ts[2m > [22mplan selection runtime guard[2m > [22mpermits a genuine canonical generated result without activating a plan[32m 8[2mms[22m[39m
+ [32m✓[39m test/plan-selection-guard.contract.test.ts[2m > [22mplan selection runtime guard[2m > [22mrejects a review-shaped result supplied as an unknown selection request[32m 1[2mms[22m[39m
+ [32m✓[39m test/plan-selection-guard.contract.test.ts[2m > [22mplan selection runtime guard[2m > [22mrejects a generated-shaped request with a stale fingerprint[32m 1[2mms[22m[39m
+ [32m✓[39m test/plan-selection-guard.contract.test.ts[2m > [22mplan selection runtime guard[2m > [22mrejects a generated-shaped request with a noncanonical frame[32m 1[2mms[22m[39m
+ [32m✓[39m test/plan-beta-selection.test.ts[2m > [22mplan beta selection and progress contract[2m > [22mrejects self selection when a coach selection is required[32m 9[2mms[22m[39m
+ [32m✓[39m test/plan-beta-selection.test.ts[2m > [22mplan beta selection and progress contract[2m > [22mcreates an immutable active-plan snapshot when the coach selects a candidate[32m 1[2mms[22m[39m
+ [32m✓[39m test/plan-beta-selection.test.ts[2m > [22mplan beta selection and progress contract[2m > [22mrejects projection 7 with an impossible continuity at selection[32m 1[2mms[22m[39m
+ [32m✓[39m test/plan-beta-selection.test.ts[2m > [22mplan beta selection and progress contract[2m > [22mrejects projection 9 with an impossible continuity at selection[32m 1[2mms[22m[39m
+ [32m✓[39m test/plan-beta-selection.test.ts[2m > [22mplan beta selection and progress contract[2m > [22mrejects projection 10 with an impossible continuity at selection[32m 1[2mms[22m[39m
+ [32m✓[39m test/plan-beta-selection.test.ts[2m > [22mplan beta selection and progress contract[2m > [22mrecords COMPLETED with structured audit only and no reward output[32m 1[2mms[22m[39m
+ [32m✓[39m test/plan-beta-selection.test.ts[2m > [22mplan beta selection and progress contract[2m > [22mrecords RESTED with structured audit only and no reward output[32m 1[2mms[22m[39m
+ [32m✓[39m test/plan-beta-selection.test.ts[2m > [22mplan beta selection and progress contract[2m > [22mrecords SKIPPED with structured audit only and no reward output[32m 1[2mms[22m[39m
+ [32m✓[39m test/plan-beta-selection.test.ts[2m > [22mplan beta selection and progress contract[2m > [22mrecords PAIN_CHECKIN with structured audit only and no reward output[32m 1[2mms[22m[39m
+ [32m✓[39m test/plan-beta-selection.test.ts[2m > [22mplan beta selection and progress contract[2m > [22mrejects a progress record for a slot that the selected plan does not contain[32m 1[2mms[22m[39m
+ [32m✓[39m test/plan-beta-selection.test.ts[2m > [22mplan beta selection and progress contract[2m > [22mrecords progress for a QUALITY session placed in the PM slot (경로 B 확장 좌표)[32m 0[2mms[22m[39m
+ [32m✓[39m test/plan-beta-selection.test.ts[2m > [22mplan beta selection and progress contract[2m > [22mrejects a progress record for a slot the extended plan does not contain[32m 0[2mms[22m[39m
+ [32m✓[39m test/contract.test.ts[2m > [22mD9 -> RVE -> Safety Gate contract slice[2m > [22mmaps ACTIVE to RVE ACTIVE and blocks plan generation[32m 9[2mms[22m[39m
+ [32m✓[39m test/contract.test.ts[2m > [22mD9 -> RVE -> Safety Gate contract slice[2m > [22mmaps UNKNOWN to human review and prevents plan generation[32m 2[2mms[22m[39m
+ [32m✓[39m test/contract.test.ts[2m > [22mD9 -> RVE -> Safety Gate contract slice[2m > [22mmaps CLEARED advisory to non-blocking CLEARED with reason codes preserved[32m 2[2mms[22m[39m
+ [32m✓[39m test/contract.test.ts[2m > [22mD9 -> RVE -> Safety Gate contract slice[2m > [22mfails closed for a hostile changing reason-code getter[32m 1[2mms[22m[39m
+ [32m✓[39m test/contract.test.ts[2m > [22mD9 -> RVE -> Safety Gate contract slice[2m > [22mfails closed for a sparse reasonCodes array[32m 0[2mms[22m[39m
+ [32m✓[39m test/contract.test.ts[2m > [22mD9 -> RVE -> Safety Gate contract slice[2m > [22mfails closed for a sparse evidence array[32m 0[2mms[22m[39m
+ [32m✓[39m test/contract.test.ts[2m > [22mD9 -> RVE -> Safety Gate contract slice[2m > [22mfails closed for a sparse evidence.matchedBy array[32m 0[2mms[22m[39m
+ [32m✓[39m test/contract.test.ts[2m > [22mD9 -> RVE -> Safety Gate contract slice[2m > [22mrejects non-index array properties and returns clean reason codes[32m 1[2mms[22m[39m
+ [32m✓[39m test/contract.test.ts[2m > [22mD9 -> RVE -> Safety Gate contract slice[2m > [22mfails closed when an evaluator getter throws[32m 0[2mms[22m[39m
+ [32m✓[39m test/contract.test.ts[2m > [22mD9 -> RVE -> Safety Gate contract slice[2m > [22mfails closed when an evaluator proxy throws[32m 0[2mms[22m[39m
+ [32m✓[39m test/contract.test.ts[2m > [22mD9 -> RVE -> Safety Gate contract slice[2m > [22mfails closed for CLEARED with ACTIVE evidence[32m 0[2mms[22m[39m
+ [32m✓[39m test/contract.test.ts[2m > [22mD9 -> RVE -> Safety Gate contract slice[2m > [22mfails closed for CLEARED with UNKNOWN evidence[32m 0[2mms[22m[39m
+ [32m✓[39m test/contract.test.ts[2m > [22mD9 -> RVE -> Safety Gate contract slice[2m > [22mfails closed for UNKNOWN with ACTIVE evidence[32m 0[2mms[22m[39m
+ [32m✓[39m test/contract.test.ts[2m > [22mD9 -> RVE -> Safety Gate contract slice[2m > [22mfails closed for ordinary CLEARED carrying advisory evidence[32m 0[2mms[22m[39m
+ [32m✓[39m test/contract.test.ts[2m > [22mD9 -> RVE -> Safety Gate contract slice[2m > [22mfails closed for advisory CLEARED missing advisory evidence[32m 0[2mms[22m[39m
+ [32m✓[39m test/contract.test.ts[2m > [22mD9 -> RVE -> Safety Gate contract slice[2m > [22mrejects an arbitrary evaluator reason code without returning memo text[32m 0[2mms[22m[39m
+ [32m✓[39m test/contract.test.ts[2m > [22mD9 -> RVE -> Safety Gate contract slice[2m > [22mfails safe to UNKNOWN when evaluator failure is timeout[32m 0[2mms[22m[39m
+ [32m✓[39m test/contract.test.ts[2m > [22mD9 -> RVE -> Safety Gate contract slice[2m > [22mfails safe to UNKNOWN when evaluator failure is exception[32m 0[2mms[22m[39m
+ [32m✓[39m test/contract.test.ts[2m > [22mD9 -> RVE -> Safety Gate contract slice[2m > [22mfails safe to UNKNOWN when evaluator failure is stale_version[32m 0[2mms[22m[39m
+ [32m✓[39m test/contract.test.ts[2m > [22mD9 -> RVE -> Safety Gate contract slice[2m > [22mdoes not include raw athlete text in RVE signal, Safety Gate output, or audit object[32m 1[2mms[22m[39m
+ [32m✓[39m test/main-exposure-ledger.contract.test.ts[2m > [22mMAIN exposure-ledger contract[2m > [22mkeeps legacy request vocabulary separate from the canonical MAIN ledger[32m 6[2mms[22m[39m
+ [32m✓[39m test/main-exposure-ledger.contract.test.ts[2m > [22mMAIN exposure-ledger contract[2m > [22mdoes not yield a selectable canonical 9.5 candidate from a generic QUALITY-only legacy 9-day request[32m 1[2mms[22m[39m
+ [32m✓[39m test/main-exposure-ledger.contract.test.ts[2m > [22mMAIN exposure-ledger contract[2m > [22mdoes not yield a selectable canonical 9.5 candidate from a generic QUALITY-only legacy 10-day request[32m 0[2mms[22m[39m
+ [32m✓[39m test/main-exposure-ledger.contract.test.ts[2m > [22mMAIN exposure-ledger contract[2m > [22mreturns a non-selectable review when the canonical ledger has zero MAIN exposures[32m 2[2mms[22m[39m
+ [32m✓[39m test/main-exposure-ledger.contract.test.ts[2m > [22mMAIN exposure-ledger contract[2m > [22mcreates selectable candidates only when the explicit canonical ledger has two MAIN exposures[32m 4[2mms[22m[39m
+ [32m✓[39m test/main-exposure-ledger.contract.test.ts[2m > [22mMAIN exposure-ledger contract[2m > [22malso permits exactly three explicit MAIN exposures[32m 1[2mms[22m[39m
+ [32m✓[39m test/main-exposure-ledger.contract.test.ts[2m > [22mMAIN exposure-ledger contract[2m > [22mreturns a non-selectable review for 1 MAIN exposures[32m 1[2mms[22m[39m
+ [32m✓[39m test/main-exposure-ledger.contract.test.ts[2m > [22mMAIN exposure-ledger contract[2m > [22mreturns a non-selectable review for 4 MAIN exposures[32m 1[2mms[22m[39m
+ [32m✓[39m test/main-exposure-ledger.contract.test.ts[2m > [22mMAIN exposure-ledger contract[2m > [22mrejects a canonical formation with a free-text reason field instead of retaining it[32m 1[2mms[22m[39m
+ [32m✓[39m test/main-exposure-ledger.contract.test.ts[2m > [22mMAIN exposure-ledger contract[2m > [22mrejects an eighteen-slot frame without a selectable candidate[32m 1[2mms[22m[39m
+ [32m✓[39m test/main-exposure-ledger.contract.test.ts[2m > [22mMAIN exposure-ledger contract[2m > [22mrejects an exposure without explicit classification without a selectable candidate[32m 0[2mms[22m[39m
+ [32m✓[39m test/main-exposure-ledger.contract.test.ts[2m > [22mMAIN exposure-ledger contract[2m > [22mrejects duplicate exposure identity without a selectable candidate[32m 0[2mms[22m[39m
+ [32m✓[39m test/plan-beta-continuity.test.ts[2m > [22mplan beta continuity context[2m > [22mretains aggregate previous-frame context for a canonical successor without progression[32m 11[2mms[22m[39m
+ [32m✓[39m test/plan-beta-continuity.test.ts[2m > [22mplan beta continuity context[2m > [22mrejects unordered progress-state aggregates without processing them[32m 1[2mms[22m[39m
+ [32m✓[39m test/plan-energy-intent.test.ts[2m > [22mpersonal plan energy intention contract[2m > [22mkeeps the selected quality focus in both candidates and reduces Candidate B duration dose[32m 8[2mms[22m[39m
+ [32m✓[39m test/plan-energy-intent.test.ts[2m > [22mpersonal plan energy intention contract[2m > [22mpreserves recovery-support duration while Candidate B reduces non-recovery dose[32m 2[2mms[22m[39m
+ [32m✓[39m test/plan-energy-intent.test.ts[2m > [22mpersonal plan energy intention contract[2m > [22mkeeps at most one QUALITY session per day and companion RPE within 1-3[32m 5[2mms[22m[39m
+ [32m✓[39m test/plan-energy-intent.test.ts[2m > [22mpersonal plan energy intention contract[2m > [22mkeeps LT_INTENT visible to a self-selecting athlete with RPE-only detail[32m 2[2mms[22m[39m
+ [32m✓[39m test/plan-energy-intent.test.ts[2m > [22mpersonal plan energy intention contract[2m > [22mkeeps VO2_INTENT visible to a self-selecting athlete with RPE-only detail[32m 1[2mms[22m[39m
+ [32m✓[39m test/plan-energy-intent.test.ts[2m > [22mpersonal plan energy intention contract[2m > [22mkeeps GLY_INTENT visible to a self-selecting athlete with RPE-only detail[32m 1[2mms[22m[39m
+ [32m✓[39m test/plan-energy-intent.test.ts[2m > [22mpersonal plan energy intention contract[2m > [22mkeeps ATP_PC_INTENT visible to a self-selecting athlete with RPE-only detail[32m 1[2mms[22m[39m
+ [32m✓[39m test/plan-energy-intent.test.ts[2m > [22mpersonal plan energy intention contract[2m > [22muses RPE 1-2 recovery guidance without turning recovery into a hidden quality day[32m 1[2mms[22m[39m
+ [32m✓[39m test/plan-energy-intent.test.ts[2m > [22mpersonal plan energy intention contract[2m > [22mkeeps two recovery sessions on every selected day when an athlete explicitly chooses two-a-day recovery[32m 1[2mms[22m[39m
+ [32m✓[39m test/plan-energy-intent.test.ts[2m > [22mpersonal plan energy intention contract[2m > [22madds a separate PM recovery session on every selected training day when an athlete chooses two-a-day training[32m 1[2mms[22m[39m
+ [32m✓[39m test/plan-energy-intent.test.ts[2m > [22mpersonal plan energy intention contract[2m > [22mdoes not add extra quality sessions when an athlete can move every day[32m 1[2mms[22m[39m
+ [32m✓[39m test/plan-beta-generation.test.ts[2m > [22mplan beta generation contract[2m > [22mblocks ACTIVE Safety Gate without options, sessions, or progression output[32m 6[2mms[22m[39m
+ [32m✓[39m test/plan-beta-generation.test.ts[2m > [22mplan beta generation contract[2m > [22mblocks UNKNOWN Safety Gate without a hidden alternative candidate[32m 1[2mms[22m[39m
+ [32m✓[39m test/plan-beta-generation.test.ts[2m > [22mplan beta generation contract[2m > [22mcreates two stable, distinct PROFILE_ONLY candidates with limited confidence[32m 4[2mms[22m[39m
+ [32m✓[39m test/plan-beta-generation.test.ts[2m > [22mplan beta generation contract[2m > [22mkeeps MIDDLE_DISTANCE in an explicit non-universal beta scope[32m 2[2mms[22m[39m
+ [32m✓[39m test/plan-beta-generation.test.ts[2m > [22mplan beta generation contract[2m > [22mkeeps FIVE_K in an explicit non-universal beta scope[32m 1[2mms[22m[39m
+ [32m✓[39m test/plan-beta-generation.test.ts[2m > [22mplan beta generation contract[2m > [22mkeeps TEN_K in an explicit non-universal beta scope[32m 1[2mms[22m[39m
+ [32m✓[39m test/plan-beta-generation.test.ts[2m > [22mplan beta generation contract[2m > [22mkeeps GENERAL_ENDURANCE in an explicit non-universal beta scope[32m 1[2mms[22m[39m
+ [32m✓[39m test/plan-beta-generation.test.ts[2m > [22mplan beta generation contract[2m > [22mreturns identical candidate content and order for identical canonical input[32m 1[2mms[22m[39m
+ [32m✓[39m test/plan-beta-generation.test.ts[2m > [22mplan beta generation contract[2m > [22muses the 19-slot local-civil 9.5-day Formation frame[32m 1[2mms[22m[39m
+ [32m✓[39m test/plan-beta-generation.test.ts[2m > [22mplan beta generation contract[2m > [22mkeeps standard-frame metadata for a canonical local-civil frame[32m 1[2mms[22m[39m
+ [32m✓[39m test/plan-beta-generation.test.ts[2m > [22mplan beta generation contract[2m > [22mkeeps sessions inside available days and separates quality sessions[32m 2[2mms[22m[39m
+ [32m✓[39m test/plan-beta-generation.test.ts[2m > [22mplan beta generation contract[2m > [22mplaces quality in PM and keeps the counterpart in AM for an evening athlete[32m 1[2mms[22m[39m
+ [32m✓[39m test/plan-beta-generation.test.ts[2m > [22mplan beta generation contract[2m > [22madds recovery counterparts only where the formation has a PM slot[32m 0[2mms[22m[39m
+ [32m✓[39m test/plan-beta-generation.test.ts[2m > [22mplan beta generation contract[2m > [22mlimits sparse or beginner profile-only plans to one controlled quality day[32m 1[2mms[22m[39m
+ [32m✓[39m test/plan-beta-generation.test.ts[2m > [22mplan beta generation contract[2m > [22mjournal context cannot override an unsafe gate[32m 0[2mms[22m[39m
+ [32m✓[39m test/plan-beta-generation.test.ts[2m > [22mplan beta generation contract[2m > [22mlabels recent journal presence as context-only without changing prescriptions[32m 1[2mms[22m[39m
+ [32m✓[39m test/plan-beta-generation.test.ts[2m > [22mplan beta generation contract[2m > [22mdoes not invent pace or retain raw free text in plans or audits[32m 1[2mms[22m[39m
+ [32m✓[39m test/plan-beta-generation.test.ts[2m > [22mplan beta generation contract[2m > [22mreturns a typed rejection for malformed or out-of-range input[32m 0[2mms[22m[39m
+ [32m✓[39m test/plan-beta-generation.test.ts[2m > [22mplan beta generation contract[2m > [22mrejects an out-of-range recent journal context with a stable code[32m 0[2mms[22m[39m
+ [32m✓[39m test/prescription-goal-pace.test.ts[2m > [22mdisplay-only goal race-pace calculation[2m > [22mcalculates 210 seconds from a same-event 1050-second goal[32m 2[2mms[22m[39m
+ [32m✓[39m test/prescription-goal-pace.test.ts[2m > [22mdisplay-only goal race-pace calculation[2m > [22mrejects invalid runtime enteredBy provenance[32m 0[2mms[22m[39m
+ [32m✓[39m test/prescription-goal-pace.test.ts[2m > [22mdisplay-only goal race-pace calculation[2m > [22mrejects invalid runtime verificationState provenance[32m 0[2mms[22m[39m
+ [32m✓[39m test/prescription-goal-pace.test.ts[2m > [22mdisplay-only goal race-pace calculation[2m > [22mrejects invalid runtime freshnessState provenance[32m 0[2mms[22m[39m
+ [32m✓[39m test/prescription-goal-pace.test.ts[2m > [22mdisplay-only goal race-pace calculation[2m > [22mrejects incomplete provenance[32m 0[2mms[22m[39m
+ [32m✓[39m test/prescription-goal-pace.test.ts[2m > [22mdisplay-only goal race-pace calculation[2m > [22mrejects cross-event conversion[32m 0[2mms[22m[39m
+ [32m✓[39m test/catalog-machine-notation.contract.test.ts[2m > [22mcatalog machine notation[2m > [22mpreserves V2-SEED-05 work and recovery semantics when its parser-ready notation is parsed[32m 3[2mms[22m[39m
+ [32m✓[39m test/public-ledger-exports.contract.test.ts[2m > [22mpublic typed MAIN ledger boundary[2m > [22mexports the ledger compiler as a data-only helper beside candidate generation[32m 2[2mms[22m[39m
+
+[2m Test Files [22m [1m[32m14 passed[39m[22m[90m (14)[39m
+[2m      Tests [22m [1m[32m161 passed[39m[22m[90m (161)[39m
+[2m   Start at [22m 11:49:02
+[2m   Duration [22m 1.20s[2m (transform 1.85s, setup 0ms, import 3.13s, tests 221ms, environment 2ms)[22m

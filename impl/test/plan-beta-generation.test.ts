@@ -201,7 +201,7 @@ describe("plan beta generation contract", () => {
     )?.slot).toBe("AM")
   })
 
-  it("adds one recovery counterpart on every selected training day for a two-a-day athlete", () => {
+  it("adds recovery counterparts only where the formation has a PM slot", () => {
     // Given
     const request = {
       ...baseRequest(clearedGate(), [4, 7]),
@@ -220,8 +220,8 @@ describe("plan beta generation contract", () => {
     const recoverySupport = balanced.sessions.filter(
       (session) => session.plannedEnergyIntent === "RECOVERY_INTENT" && session.role === "EASY",
     )
-    expect(recoverySupport).toHaveLength(4)
-    expect(new Set(recoverySupport.map((session) => session.day)).size).toBe(4)
+    expect(recoverySupport.map((session) => session.day)).toEqual([1, 4, 7])
+    expect(recoverySupport.every((session) => session.slot === "PM")).toBe(true)
   })
 
   it("limits sparse or beginner profile-only plans to one controlled quality day", () => {
