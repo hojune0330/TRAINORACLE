@@ -72,6 +72,7 @@ function canonicalJsonValue(value: unknown, ancestors: Set<object>): string {
     return JSON.stringify(value)
   }
   if (Array.isArray(value)) {
+    if (!isDenseArray(value)) throw new TypeError("Canonical JSON rejects sparse arrays")
     if (ancestors.has(value)) throw new TypeError("Canonical JSON rejects cyclic input")
     ancestors.add(value)
     const result = `[${value.map((item) => canonicalJsonValue(item, ancestors)).join(",")}]`
@@ -225,18 +226,22 @@ function parsePlanCandidate(value: unknown): PlanCandidate | null {
 }
 
 function isPlanCandidate(value: unknown): value is PlanCandidate {
-  if (!isRecord(value) || !hasExactKeys(value, CANDIDATE_KEYS) || !Array.isArray(value["sessions"]) || !value["sessions"].every(isPlanSession)
-      || typeof value["candidateId"] !== "string" || (value["kind"] !== "BALANCED" && value["kind"] !== "CONSERVATIVE")
+  if (!isRecord(value) || !hasExactKeys(value, CANDIDATE_KEYS) || !Array.isArray(value["sessions"])
+      || !isDenseArray(value["sessions"]) || !value["sessions"].every(isPlanSession)
+      || typeof value["candidateId"] !== "string" || value["candidateId"].length === 0
+      || (value["kind"] !== "BALANCED" && value["kind"] !== "CONSERVATIVE")
       || (value["eventGroup"] !== "MIDDLE_DISTANCE" && value["eventGroup"] !== "FIVE_K")
       || !(value["eventDistanceM"] === null || parseSupportedEvent(value["eventDistanceM"]) !== null)
       || !isPlannedEnergyIntent(value["selectedEnergyIntent"])
       || (value["sourceMode"] !== "PROFILE_ONLY" && value["sourceMode"] !== "JOURNAL_CONTEXT_ONLY")
       || value["confidence"] !== "LIMITED" || !isCandidateBeta(value["beta"])
-      || !(value["detailedPrescriptionFingerprint"] === null || typeof value["detailedPrescriptionFingerprint"] === "string")
+      || !(value["detailedPrescriptionFingerprint"] === null || (typeof value["detailedPrescriptionFingerprint"] === "string" && value["detailedPrescriptionFingerprint"].length > 0))
       || !isContinuityContext(value["continuityContext"])
       || (value["selectionAuthority"] !== "SELF" && value["selectionAuthority"] !== "COACH_REQUIRED")
       || !isCandidateFrame(value["frame"]) || !isExposureLedger(value["mainExposureLedger"])
-      || !Array.isArray(value["rationaleCodes"]) || !value["rationaleCodes"].every((code) => typeof code === "string")) return false
+      || !Array.isArray(value["rationaleCodes"]) || !isDenseArray(value["rationaleCodes"])
+      || !value["rationaleCodes"].every((code) => typeof code === "string" && code.length > 0)
+      || !hasValidSessionLayout(value["sessions"])) return false
   const eventIdentity = `:event-${value["eventDistanceM"] ?? "unbound"}:`
   return value["candidateId"].includes(eventIdentity)
     && value["sessions"].every((session) => session.prescription.kind !== "PACE_TARGET"
@@ -244,7 +249,7 @@ function isPlanCandidate(value: unknown): value is PlanCandidate {
 }
 
 function isPlanSession(value: unknown): value is PlanSession {
-  if (!isRecord(value) || typeof value["day"] !== "number" || !Number.isInteger(value["day"]) || (value["slot"] !== "AM" && value["slot"] !== "PM") || !isRecord(value["prescription"])) return false
+  if (!isRecord(value) || typeof value["day"] !== "number" || !Number.isInteger(value["day"]) || value["day"] <= 0 || (value["slot"] !== "AM" && value["slot"] !== "PM") || !isRecord(value["prescription"])) return false
   switch (value["role"]) {
     case "REST": return hasExactKeys(value, ["day", "slot", "role", "plannedEnergyIntent", "prescription"]) && value["slot"] === "AM" && value["plannedEnergyIntent"] === "RECOVERY_INTENT" && hasExactKeys(value["prescription"], ["kind"]) && value["prescription"]["kind"] === "REST"
     case "EASY": return (value["plannedEnergyIntent"] === "RECOVERY_INTENT" || value["plannedEnergyIntent"] === "BASE_INTENT") && hasRpePrescription(value)
@@ -277,6 +282,7 @@ function isContinuityContext(value: unknown): boolean {
     && hasExactKeys(value, ["kind", "previousCandidateKind", "progressStateCounts"])
     && (value["previousCandidateKind"] === "BALANCED" || value["previousCandidateKind"] === "CONSERVATIVE")
     && Array.isArray(value["progressStateCounts"])
+    && isDenseArray(value["progressStateCounts"])
     && value["progressStateCounts"].every((item) => isRecord(item) && hasExactKeys(item, ["state", "count"])
       && (item["state"] === "COMPLETED" || item["state"] === "RESTED" || item["state"] === "SKIPPED" || item["state"] === "PAIN_CHECKIN")
       && typeof item["count"] === "number" && Number.isInteger(item["count"]) && item["count"] >= 0)
@@ -297,9 +303,35 @@ function isCandidateFrame(value: unknown): boolean {
 function isExposureLedger(value: unknown): boolean {
   return isRecord(value) && hasExactKeys(value, ["mainExposureCount", "fingerprint", "countedExposureIds"])
     && (value["mainExposureCount"] === 2 || value["mainExposureCount"] === 3)
-    && typeof value["fingerprint"] === "string" && Array.isArray(value["countedExposureIds"])
+    && typeof value["fingerprint"] === "string" && value["fingerprint"].length > 0 && Array.isArray(value["countedExposureIds"])
+    && isDenseArray(value["countedExposureIds"])
     && value["countedExposureIds"].length === value["mainExposureCount"]
-    && value["countedExposureIds"].every((id) => typeof id === "string")
+    && value["countedExposureIds"].every((id) => typeof id === "string" && id.length > 0)
+}
+
+function isDenseArray(value: readonly unknown[]): boolean {
+  for (let index = 0; index < value.length; index += 1) {
+    if (!Object.hasOwn(value, index)) return false
+  }
+  return true
+}
+
+function hasValidSessionLayout(sessions: readonly PlanSession[]): boolean {
+  const identities = new Set<string>()
+  const qualityDays = new Set<number>()
+  for (const session of sessions) {
+    const identity = `${session.day}:${session.slot}`
+    if (identities.has(identity)) return false
+    identities.add(identity)
+    if (session.role === "QUALITY") {
+      if (qualityDays.has(session.day)) return false
+      qualityDays.add(session.day)
+    }
+  }
+  return sessions.every((session) => {
+    if (session.role !== "EASY" || !qualityDays.has(session.day)) return true
+    return session.prescription.rpe.minimum >= 1 && session.prescription.rpe.maximum <= 3
+  })
 }
 
 const PACE_TARGET_KEYS = ["kind", "manifestVersion", "templateId", "templateVersion", "templateContentFingerprint", "notation", "sourceDecisionId", "sourceEvidenceRef", "approvalDecisionId", "ownerAuthorityDecisionId", "sportsScienceEvidence", "populationApplicabilityEvidence", "scope", "componentRefs", "operationalComponents", "setCount", "repetitionsPerSet", "repetitionDistanceM", "targetEventDistanceM", "targetRepSeconds", "selectedAnchor", "displayRoundingPolicyVersion", "repetitionRecoverySeconds", "repetitionRecoveryMode", "setRecoverySeconds", "setRecoveryMode", "totals", "stopCodes", "fallbackCode", "prescriptionFingerprint"] as const
@@ -308,35 +340,41 @@ function isPaceTargetPrescription(value: Record<string, unknown>): boolean {
   if (!hasExactKeys(value, PACE_TARGET_KEYS)) return false
   const strings = ["manifestVersion", "templateId", "templateVersion", "templateContentFingerprint", "notation", "sourceDecisionId", "sourceEvidenceRef", "approvalDecisionId", "ownerAuthorityDecisionId", "displayRoundingPolicyVersion", "prescriptionFingerprint"]
   if (!strings.every((key) => typeof value[key] === "string" && value[key].length > 0)
+      || typeof value["templateContentFingerprint"] !== "string" || !SHA256_PATTERN.test(value["templateContentFingerprint"])
       || !isEvidenceIdentity(value["sportsScienceEvidence"]) || !isEvidenceIdentity(value["populationApplicabilityEvidence"])
       || !isPaceScope(value["scope"]) || !isComponentRefs(value["componentRefs"]) || !isOperationalComponents(value["operationalComponents"])
       || !isPositiveInteger(value["setCount"]) || !isPositiveInteger(value["repetitionsPerSet"]) || !isPositiveInteger(value["repetitionDistanceM"])
       || !isPositiveInteger(value["targetEventDistanceM"]) || !isPositiveNumber(value["targetRepSeconds"])
       || !isCurrentAnchor(value["selectedAnchor"]) || !isRecovery(value["repetitionRecoverySeconds"], value["repetitionRecoveryMode"])
       || !isRecovery(value["setRecoverySeconds"], value["setRecoveryMode"]) || !isTotals(value["totals"])
-      || !Array.isArray(value["stopCodes"]) || value["stopCodes"].length !== 4 || !value["stopCodes"].every(isStopCode)
+      || !Array.isArray(value["stopCodes"]) || !isDenseArray(value["stopCodes"])
+      || value["stopCodes"].length !== 4 || !value["stopCodes"].every(isStopCode)
       || value["fallbackCode"] !== "RPE_ONLY_CONTROLLED") return false
   const anchor = value["selectedAnchor"]
   return isRecord(anchor) && anchor["eventDistanceM"] === value["targetEventDistanceM"]
+    && isConsistentPaceTarget(value)
 }
 
 function isEvidenceIdentity(value: unknown): boolean {
   return isRecord(value) && hasExactKeys(value, ["evidenceId", "decisionRef", "fingerprint"])
-    && ["evidenceId", "decisionRef", "fingerprint"].every((key) => typeof value[key] === "string" && value[key].length > 0)
+    && ["evidenceId", "decisionRef"].every((key) => typeof value[key] === "string" && value[key].length > 0)
+    && typeof value["fingerprint"] === "string" && SHA256_PATTERN.test(value["fingerprint"])
 }
 
 function isPaceScope(value: unknown): boolean {
   return isRecord(value) && hasExactKeys(value, ["eventGroup", "experienceBand", "population", "eventEvidenceFingerprint", "experienceEvidenceFingerprint"])
     && (value["eventGroup"] === "MIDDLE_DISTANCE" || value["eventGroup"] === "FIVE_K")
     && value["experienceBand"] === "EXPERIENCED" && value["population"] === "YOUTH_AND_ADULT"
-    && typeof value["eventEvidenceFingerprint"] === "string" && typeof value["experienceEvidenceFingerprint"] === "string"
+    && typeof value["eventEvidenceFingerprint"] === "string" && SHA256_PATTERN.test(value["eventEvidenceFingerprint"])
+    && typeof value["experienceEvidenceFingerprint"] === "string" && SHA256_PATTERN.test(value["experienceEvidenceFingerprint"])
 }
 
 function isComponentRefs(value: unknown): boolean {
-  return Array.isArray(value) && value.length === 4 && value.every((item) =>
+  return Array.isArray(value) && isDenseArray(value) && value.length === 4 && value.every((item) =>
     isRecord(item) && hasExactKeys(item, ["componentType", "componentRef", "componentVersion", "componentFingerprint"])
     && (item["componentType"] === "WARMUP" || item["componentType"] === "COOLDOWN" || item["componentType"] === "DOWNSHIFT" || item["componentType"] === "STOP_CONDITIONS")
-    && ["componentRef", "componentVersion", "componentFingerprint"].every((key) => typeof item[key] === "string" && item[key].length > 0))
+    && ["componentRef", "componentVersion"].every((key) => typeof item[key] === "string" && item[key].length > 0)
+    && typeof item["componentFingerprint"] === "string" && SHA256_PATTERN.test(item["componentFingerprint"]))
 }
 
 function isOperationalComponents(value: unknown): boolean {
@@ -347,15 +385,16 @@ function isOperationalComponents(value: unknown): boolean {
     && isRecord(warmup["strides"]) && hasExactKeys(warmup["strides"], ["repetitions", "durationSeconds", "recoverySeconds", "recoveryMode", "progression"]) && warmup["strides"]["repetitions"] === 4 && warmup["strides"]["durationSeconds"] === 20 && warmup["strides"]["recoverySeconds"] === 40 && warmup["strides"]["recoveryMode"] === "WALK_OR_JOG" && warmup["strides"]["progression"] === "PROGRESSIVE"
     && isRecord(cooldown) && hasExactKeys(cooldown, ["componentRef", "componentVersion", "authority", "easyDurationMinutes", "rpeMin", "rpeMax"]) && (cooldown["componentRef"] === "CD-V2-5K-01" || cooldown["componentRef"] === "CD-MD-01") && cooldown["componentVersion"] === "1.0.0" && cooldown["authority"] === "OWNER_OPERATIONAL_ADAPTATION" && cooldown["easyDurationMinutes"] === 10 && cooldown["rpeMin"] === 1 && cooldown["rpeMax"] === 2
     && isRecord(fallback) && hasExactKeys(fallback, ["componentRef", "componentVersion", "code", "behavior", "numericRepetitionVariant"]) && fallback["componentRef"] === "RPE-ONLY-CONTROLLED-01" && fallback["componentVersion"] === "1.0.0" && fallback["code"] === "RPE_ONLY_CONTROLLED" && fallback["behavior"] === "DELEGATE_TO_EXISTING_RPE_CANDIDATE" && fallback["numericRepetitionVariant"] === null
-    && isRecord(stop) && hasExactKeys(stop, ["componentRef", "componentVersion", "authority", "diagnosticClaim", "codes"]) && (stop["componentRef"] === "STOP-V2-5K-01" || stop["componentRef"] === "STOP-MD-01") && stop["componentVersion"] === "1.0.0" && stop["authority"] === "OWNER_PRECAUTIONARY_OPERATIONAL_RULE" && stop["diagnosticClaim"] === false && Array.isArray(stop["codes"]) && stop["codes"].length === 4 && stop["codes"].every(isStopCode)
+    && isRecord(stop) && hasExactKeys(stop, ["componentRef", "componentVersion", "authority", "diagnosticClaim", "codes"]) && (stop["componentRef"] === "STOP-V2-5K-01" || stop["componentRef"] === "STOP-MD-01") && stop["componentVersion"] === "1.0.0" && stop["authority"] === "OWNER_PRECAUTIONARY_OPERATIONAL_RULE" && stop["diagnosticClaim"] === false && Array.isArray(stop["codes"]) && isDenseArray(stop["codes"]) && stop["codes"].length === 4 && stop["codes"].every(isStopCode)
 }
 
 function isCurrentAnchor(value: unknown): boolean {
   if (!isRecord(value) || !hasExactKeys(value, ["anchorId", "eventDistanceM", "performanceSeconds", "achievedAt", "enteredBy", "verificationState", "freshnessState", "sourceRef", "elapsedLabel", "kind", "purpose", "seasonId"])) return false
-  return typeof value["anchorId"] === "string" && isPositiveNumber(value["eventDistanceM"]) && isPositiveNumber(value["performanceSeconds"])
-    && typeof value["achievedAt"] === "string" && (value["enteredBy"] === "ATHLETE" || value["enteredBy"] === "COACH" || value["enteredBy"] === "VERIFIED_IMPORT")
+  return typeof value["anchorId"] === "string" && value["anchorId"].length > 0 && isPositiveNumber(value["eventDistanceM"]) && value["eventDistanceM"] >= 60 && isPositiveNumber(value["performanceSeconds"])
+    && typeof value["achievedAt"] === "string" && value["achievedAt"].length > 0 && (value["enteredBy"] === "ATHLETE" || value["enteredBy"] === "COACH" || value["enteredBy"] === "VERIFIED_IMPORT")
     && (value["verificationState"] === "VERIFIED" || value["verificationState"] === "SELF_REPORTED" || value["verificationState"] === "UNVERIFIED")
-    && value["freshnessState"] === "CURRENT" && typeof value["sourceRef"] === "string" && typeof value["elapsedLabel"] === "string"
+    && value["freshnessState"] === "CURRENT" && typeof value["sourceRef"] === "string" && value["sourceRef"].length > 0
+    && typeof value["elapsedLabel"] === "string" && value["elapsedLabel"].length > 0
     && ((value["kind"] === "SB" && value["purpose"] === "SEASON_CONTEXT" && typeof value["seasonId"] === "string" && value["seasonId"].length > 0)
       || ((value["kind"] === "PB" || value["kind"] === "RECENT_RESULT") && value["purpose"] === "CURRENT_CAPABILITY" && value["seasonId"] === null))
 }
@@ -371,7 +410,70 @@ function isTotals(value: unknown): boolean {
     && (value["qualityDurationSeconds"] === null || isPositiveInteger(value["qualityDurationSeconds"]))
     && ["repetitionRecoveryOccurrences", "repetitionRecoveryTotalSeconds", "setRecoveryOccurrences", "setRecoveryTotalSeconds", "plannedRecoverySeconds"].every((key) => typeof value[key] === "number" && Number.isInteger(value[key]) && value[key] >= 0)
     && (value["mainSessionTotalExcludingWarmupCooldown"] === null || isPositiveInteger(value["mainSessionTotalExcludingWarmupCooldown"]))
-    && Array.isArray(value["uncomputableReasonCodes"]) && value["uncomputableReasonCodes"].every((code) => typeof code === "string")
+    && Array.isArray(value["uncomputableReasonCodes"]) && isDenseArray(value["uncomputableReasonCodes"])
+    && value["uncomputableReasonCodes"].every((code) =>
+      code === "QUALITY_DISTANCE_UNAVAILABLE" || code === "WORK_DURATION_UNAVAILABLE"
+      || code === "REPETITION_RECOVERY_UNAVAILABLE" || code === "SET_RECOVERY_UNAVAILABLE")
+}
+
+function isConsistentPaceTarget(value: Record<string, unknown>): boolean {
+  const refs = value["componentRefs"]
+  const components = value["operationalComponents"]
+  const totals = value["totals"]
+  const anchor = value["selectedAnchor"]
+  if (!Array.isArray(refs) || !isRecord(components) || !isRecord(totals) || !isRecord(anchor)) return false
+
+  const expectedComponents = [
+    ["WARMUP", components["warmup"]],
+    ["COOLDOWN", components["cooldown"]],
+    ["DOWNSHIFT", components["fallback"]],
+    ["STOP_CONDITIONS", components["stopConditions"]],
+  ] as const
+  if (new Set(refs.map((item) => isRecord(item) ? item["componentType"] : null)).size !== 4) return false
+  for (const [componentType, component] of expectedComponents) {
+    if (!isRecord(component)) return false
+    const ref = refs.find((item) => isRecord(item) && item["componentType"] === componentType)
+    if (!isRecord(ref) || ref["componentRef"] !== component["componentRef"] || ref["componentVersion"] !== component["componentVersion"]) return false
+  }
+
+  const stopConditions = components["stopConditions"]
+  const fallback = components["fallback"]
+  if (!isRecord(stopConditions) || !isRecord(fallback)
+      || JSON.stringify(value["stopCodes"]) !== JSON.stringify(stopConditions["codes"])
+      || value["fallbackCode"] !== fallback["code"]) return false
+
+  const setCount = value["setCount"]
+  const repetitionsPerSet = value["repetitionsPerSet"]
+  const repetitionDistanceM = value["repetitionDistanceM"]
+  const repetitionRecoverySeconds = value["repetitionRecoverySeconds"]
+  const setRecoverySeconds = value["setRecoverySeconds"]
+  const targetEventDistanceM = value["targetEventDistanceM"]
+  if (!isPositiveInteger(setCount) || !isPositiveInteger(repetitionsPerSet) || !isPositiveInteger(repetitionDistanceM)
+      || !isPositiveInteger(targetEventDistanceM)) return false
+  const repetitionRecoveryOccurrences = setCount * Math.max(0, repetitionsPerSet - 1)
+  const setRecoveryOccurrences = Math.max(0, setCount - 1)
+  const expectedTotals = {
+    totalRepetitions: setCount * repetitionsPerSet,
+    qualityDistanceM: setCount * repetitionsPerSet * repetitionDistanceM,
+    repetitionRecoveryOccurrences,
+    repetitionRecoveryTotalSeconds: repetitionRecoveryOccurrences * (typeof repetitionRecoverySeconds === "number" ? repetitionRecoverySeconds : 0),
+    setRecoveryOccurrences,
+    setRecoveryTotalSeconds: setRecoveryOccurrences * (typeof setRecoverySeconds === "number" ? setRecoverySeconds : 0),
+  }
+  for (const [key, expected] of Object.entries(expectedTotals)) {
+    if (totals[key] !== expected) return false
+  }
+  if (totals["plannedRecoverySeconds"] !== expectedTotals.repetitionRecoveryTotalSeconds + expectedTotals.setRecoveryTotalSeconds
+      || (repetitionRecoverySeconds === null) !== (value["repetitionRecoveryMode"] === "NOT_APPLICABLE")
+      || (setRecoverySeconds === null) !== (value["setRecoveryMode"] === "NOT_APPLICABLE")) return false
+
+  const targetRepSeconds = value["targetRepSeconds"]
+  if (!isPositiveNumber(targetRepSeconds) || !isPositiveNumber(anchor["performanceSeconds"])
+      || anchor["eventDistanceM"] !== targetEventDistanceM
+      || anchor["performanceSeconds"] * repetitionDistanceM / targetEventDistanceM !== targetRepSeconds) return false
+
+  const { prescriptionFingerprint, ...content } = value
+  return prescriptionFingerprint === `canonical-json-v1:${JSON.stringify(content)}`
 }
 
 function isStopCode(value: unknown): boolean {
@@ -470,4 +572,4 @@ function containsPrivateKey(value: unknown, seen = new Set<object>()): boolean {
   seen.add(value)
   return Object.entries(value).some(([key, child]) => PRIVATE_KEY.test(key) || containsPrivateKey(child, seen))
 }
-function isJsonValue(value: unknown): boolean { return value === null || typeof value === "string" || typeof value === "boolean" || (typeof value === "number" && Number.isFinite(value)) || (Array.isArray(value) ? value.every(isJsonValue) : isRecord(value) && Object.values(value).every(isJsonValue)) }
+function isJsonValue(value: unknown): boolean { return value === null || typeof value === "string" || typeof value === "boolean" || (typeof value === "number" && Number.isFinite(value)) || (Array.isArray(value) ? isDenseArray(value) && value.every(isJsonValue) : isRecord(value) && Object.values(value).every(isJsonValue)) }

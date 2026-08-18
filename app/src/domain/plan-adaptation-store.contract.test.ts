@@ -22,7 +22,10 @@ import type { PlanBetaStateV2 } from "./plan-beta-schema"
 const ACTIVE_KEY = "trainoracle.plan-beta.v1"
 const ADAPTATION_KEY = "trainoracle.plan-beta.adaptation.v1"
 
-async function requestFixture() {
+async function requestFixture(
+  selectedEnergyIntent: "LT_INTENT" | "VO2_INTENT" = "LT_INTENT",
+  fixtureId = "1",
+) {
   const gate = clearedGate()
   const generated = expectGenerated(generatePlanCandidates({
     kind: "PLAN_BETA_GENERATION_REQUEST",
@@ -36,7 +39,7 @@ async function requestFixture() {
     formation: canonicalFormation([3, 7]),
     journalSource: { kind: "NO_USABLE_JOURNAL" },
     selectionAuthority: "SELF",
-    selectedEnergyIntent: "LT_INTENT",
+    selectedEnergyIntent,
   }))
   const [baseCandidate, successorCandidate] = generated.candidates
   const proposalResult = await createPlanAdaptationProposal({
@@ -58,7 +61,7 @@ async function requestFixture() {
     safetyValidUntil: "2026-08-18T00:10:00.000Z",
     activeHold: false,
     createdAt: "2026-08-18T00:05:00.000Z",
-    idempotencyKey: "proposal-create-1",
+    idempotencyKey: `proposal-create-${fixtureId}`,
   })
   if (proposalResult.kind !== "proposed") {
     throw new Error(`proposal fixture failed: ${JSON.stringify(proposalResult)}`)
@@ -88,7 +91,7 @@ async function requestFixture() {
       experienceBand: "DEVELOPING" as const,
       availableDayCount: 5 as const,
       requestedFrameLength: 9.5 as const,
-      trainingFocus: "LT_INTENT" as const,
+      trainingFocus: selectedEnergyIntent,
       secondSessionMode: "SINGLE_SESSION_ONLY" as const,
       trainingTimePreference: "VARIES" as const,
     },
@@ -118,7 +121,7 @@ async function requestFixture() {
     safetyValidUntil: "2026-08-18T00:10:00.000Z",
     activeHold: false,
     acceptedAt: "2026-08-18T00:06:00.000Z",
-    idempotencyKey: "accept-1",
+    idempotencyKey: `accept-${fixtureId}`,
   }
 }
 
@@ -195,6 +198,110 @@ describe("local immutable next-frame adaptation contract", () => {
           selectionActor: "SELF",
         },
       }
+    })
+  })
+
+  it("replaces an old-base pending envelope after the active plan switches", async () => {
+    const planA = await requestFixture("LT_INTENT", "a")
+    expect(savePlanBetaState(planA.predecessorState)).toEqual({ ok: true })
+    expect(await acceptNextFrameProposal(planA)).toMatchObject({ kind: "accepted", replay: false })
+
+    const planB = await requestFixture("VO2_INTENT", "b")
+    expect(planB.predecessorState.activePlan.candidateId)
+      .not.toBe(planA.predecessorState.activePlan.candidateId)
+    expect(savePlanBetaState(planB.predecessorState)).toEqual({ ok: true })
+    const activeBytes = window.localStorage.getItem(ACTIVE_KEY)
+
+    const result = await acceptNextFrameProposal(planB)
+
+    expect(result).toMatchObject({ kind: "accepted", replay: false })
+    expect(window.localStorage.getItem(ACTIVE_KEY)).toBe(activeBytes)
+    expect(loadPendingNextFrameSuccessor()).toMatchObject({
+      proposalId: planB.proposal.proposalId,
+      baseCandidateId: planB.predecessorState.activePlan.candidateId,
+      successorState: {
+        activePlan: { candidateId: planB.proposal.successorCandidate.candidateId },
+      },
+    })
+  })
+
+  it("replaces a pending envelope when a later frame reuses the same candidate ID", async () => {
+    const planA = await requestFixture()
+    expect(savePlanBetaState(planA.predecessorState)).toEqual({ ok: true })
+    expect(await acceptNextFrameProposal(planA)).toMatchObject({ kind: "accepted", replay: false })
+    const oldPending = loadPendingNextFrameSuccessor()
+    if (oldPending === null) throw new TypeError("Expected the first pending successor")
+
+    const laterFrame = {
+      ...planA,
+      predecessorState: {
+        ...planA.predecessorState,
+        generatedAt: "2026-08-18T00:07:00.000Z",
+      },
+      successorState: {
+        ...planA.successorState,
+        generatedAt: "2026-08-18T00:07:00.000Z",
+      },
+      acceptedAt: "2026-08-18T00:08:00.000Z",
+      idempotencyKey: "accept-later-frame",
+    }
+    expect(laterFrame.predecessorState.activePlan.candidateId)
+      .toBe(planA.predecessorState.activePlan.candidateId)
+    expect(savePlanBetaState(laterFrame.predecessorState)).toEqual({ ok: true })
+    const activeBytes = window.localStorage.getItem(ACTIVE_KEY)
+
+    expect(await acceptNextFrameProposal(laterFrame)).toMatchObject({
+      kind: "accepted",
+      replay: false,
+    })
+    expect(window.localStorage.getItem(ACTIVE_KEY)).toBe(activeBytes)
+    expect(loadPendingNextFrameSuccessor()).toMatchObject({
+      baseCandidateId: planA.proposal.baseCandidateId,
+      acceptedAt: laterFrame.acceptedAt,
+      successorState: { generatedAt: laterFrame.successorState.generatedAt },
+    })
+    expect(loadPendingNextFrameSuccessor()?.predecessorStateHash)
+      .not.toBe(oldPending.predecessorStateHash)
+  })
+
+  it("keeps a same-frame idempotency conflict when the candidate ID is unchanged", async () => {
+    const input = await requestFixture()
+    expect(savePlanBetaState(input.predecessorState)).toEqual({ ok: true })
+    expect(await acceptNextFrameProposal(input)).toMatchObject({ kind: "accepted", replay: false })
+    const pendingBefore = loadPendingNextFrameSuccessor()
+
+    expect(await acceptNextFrameProposal({
+      ...input,
+      idempotencyKey: "accept-same-frame-conflict",
+    })).toEqual({ kind: "rejected", code: "STALE_BASE" })
+    expect(loadPendingNextFrameSuccessor()).toEqual(pendingBefore)
+  })
+
+  it("keeps the old-base envelope intact when its atomic replacement fails", async () => {
+    const planA = await requestFixture("LT_INTENT", "a")
+    expect(savePlanBetaState(planA.predecessorState)).toEqual({ ok: true })
+    expect(await acceptNextFrameProposal(planA)).toMatchObject({ kind: "accepted", replay: false })
+    const oldEnvelopeBytes = window.localStorage.getItem(ADAPTATION_KEY)
+
+    const planB = await requestFixture("VO2_INTENT", "b")
+    expect(savePlanBetaState(planB.predecessorState)).toEqual({ ok: true })
+    const activeBytes = window.localStorage.getItem(ACTIVE_KEY)
+    const realSet = Storage.prototype.setItem
+    vi.spyOn(Storage.prototype, "setItem").mockImplementation(function (this: Storage, key, value) {
+      if (key === ADAPTATION_KEY) throw new Error("QuotaExceededError")
+      return realSet.call(this, key, value)
+    })
+
+    expect(await acceptNextFrameProposal(planB)).toEqual({
+      kind: "failed",
+      code: "ADAPTATION_STORAGE_WRITE_FAILED",
+      rollbackComplete: true,
+    })
+    expect(window.localStorage.getItem(ADAPTATION_KEY)).toBe(oldEnvelopeBytes)
+    expect(window.localStorage.getItem(ACTIVE_KEY)).toBe(activeBytes)
+    expect(loadPendingNextFrameSuccessor()).toMatchObject({
+      proposalId: planA.proposal.proposalId,
+      baseCandidateId: planA.proposal.baseCandidateId,
     })
   })
 

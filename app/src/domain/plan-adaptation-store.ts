@@ -106,7 +106,10 @@ async function acceptNextFrameProposalUnchecked(candidate: unknown): Promise<Ada
 
   const requestHash = await canonicalJsonSha256("trainoracle.plan-adaptation-acceptance.v1", request)
   const existing = loadEnvelope()
-  if (existing !== null) {
+  const sameFrame = existing !== null
+    && existing.pending.baseCandidateId === request.proposal.baseCandidateId
+    && existing.pending.predecessorStateHash === predecessorStateHash
+  if (sameFrame) {
     if (existing.decision.idempotencyKey !== request.idempotencyKey) return { kind: "rejected", code: "STALE_BASE" }
     if (existing.decision.requestHash !== requestHash || existing.decision.proposalId !== request.proposal.proposalId) return { kind: "rejected", code: "REPLAY_MISMATCH" }
     return { kind: "accepted", pending: existing.pending, replay: true }
