@@ -21,6 +21,7 @@ import { PlanSchedulePreview } from "./PlanSchedulePreview"
 import { DIVISION_LABELS } from "./plan-intake-meta"
 import type { PlanCurrentCheck } from "../../domain/plan-beta-flow"
 import type { StoredPaceTargetPrescription } from "../../domain/plan-session-schema"
+import { PlanAdaptationFlow } from "./PlanAdaptationFlow"
 
 const PROGRESS_ACTIONS: readonly {
   readonly state: PlanProgressState
@@ -105,6 +106,7 @@ export function ActivePlan({
           )}
         </span>
       </div>
+      <PlanAdaptationFlow state={state} />
       <PlanSchedulePreview
         startDate={state.intake.startDate ?? state.generatedAt.slice(0, 10)}
         frameLengthDays={frameLengthDays}
