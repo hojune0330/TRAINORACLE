@@ -9,7 +9,7 @@ const expectedAsset = process.env.PLAYWRIGHT_EXPECTED_PLAN_BETA_ASSET
 const expectedPort = process.env.PLAYWRIGHT_EXPECTED_PORT
 const evidenceDir = path.resolve(
   process.cwd(),
-  "../../../.omo/evidence/trainoracle-adaptive-replanning/task-3",
+  "../../../.omo/evidence/trainoracle-adaptive-replanning/task-4/ui-lifecycle",
 )
 
 const records = [{
@@ -79,11 +79,50 @@ for (const viewport of [
     await page.getByRole("button", { name: "다음 계획 조정하기" }).click()
     await expect(page.getByRole("status")).toContainText("다음 주기에 사용할 보수적인 계획")
     expect(await page.evaluate(() => window.localStorage.getItem("trainoracle.plan-beta.v1"))).toBe(activeBefore)
+
+    await page.getByRole("button", { name: "현재 계획으로 돌아가기" }).click()
+    const candidateBefore = await activeCandidateId(page)
+    await page.getByLabel("DAY 1 오전 진행 기록")
+      .getByRole("button", { name: "완료" })
+      .click()
+    const laterActiveBytes = await page.evaluate(() => window.localStorage.getItem("trainoracle.plan-beta.v1"))
+    expect(laterActiveBytes).not.toBe(activeBefore)
+    expect(await activeCandidateId(page)).toBe(candidateBefore)
+
+    await page.getByRole("button", { name: "다음 계획 조정하기" }).click()
+    await expect(page.getByRole("heading", { name: "조정 이유를 선택해 주세요" })).toBeVisible()
+    await expect(page.getByText("다음 주기에 사용할 보수적인 계획")).toHaveCount(0)
+    await page.getByRole("button", { name: /다음 계획을 조정하고 싶어요/u }).click()
+    await page.getByRole("button", { name: /통증은 없고 몸 상태는 평소와 같아요/u }).click()
+    await page.getByRole("button", { name: /훈련량을 조금 줄인 다음 계획/u }).click()
+    await page.getByRole("button", { name: "이 다음 계획 선택하기" }).click()
+    await expect(page.getByRole("status")).toContainText("현재 활성 계획과 진행 기록은 바뀌지 않았습니다")
+    expect(await page.evaluate(() => window.localStorage.getItem("trainoracle.plan-beta.v1"))).toBe(laterActiveBytes)
+
+    await page.reload()
+    await page.getByRole("navigation", { name: "주 탭" })
+      .getByRole("button", { name: "계획" })
+      .click()
+    await page.getByRole("button", { name: "다음 계획 조정하기" }).click()
+    await expect(page.getByRole("status")).toContainText("다음 주기에 사용할 보수적인 계획")
+    expect(await page.evaluate(() => window.localStorage.getItem("trainoracle.plan-beta.v1"))).toBe(laterActiveBytes)
     await assertNoHorizontalOverflow(page)
     await page.screenshot({
       path: path.join(evidenceDir, `${viewport.name}-final-pending.png`),
       fullPage: true,
     })
+  })
+}
+
+async function activeCandidateId(page: Page): Promise<string | null> {
+  return page.evaluate(() => {
+    const stored = window.localStorage.getItem("trainoracle.plan-beta.v1")
+    if (stored === null) return null
+    const parsed: unknown = JSON.parse(stored)
+    if (typeof parsed !== "object" || parsed === null || !("activePlan" in parsed)) return null
+    const activePlan = parsed.activePlan
+    if (typeof activePlan !== "object" || activePlan === null || !("candidateId" in activePlan)) return null
+    return typeof activePlan.candidateId === "string" ? activePlan.candidateId : null
   })
 }
 

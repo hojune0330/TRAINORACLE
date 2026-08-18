@@ -31,7 +31,7 @@ type PlanAdaptationFlowProps = {
   readonly onPrepare?: typeof prepareNextFrameAdaptation
   readonly onAccept?: typeof acceptPreparedNextFrameAdaptation
   readonly onLoadRecords?: () => readonly AthleteRecord[]
-  readonly onLoadPending?: (state: PlanBetaState) => PendingNextFrameSuccessor | null
+  readonly onLoadPending?: typeof loadMatchingPendingSuccessor
   readonly onEvaluateSafety?: typeof evaluateActivePlanAdaptationSafety
 }
 
@@ -50,11 +50,34 @@ export function PlanAdaptationFlow({
   const [prepared, setPrepared] = React.useState<PreparedNextFrameAdaptation | null>(null)
   const [message, setMessage] = React.useState<string | null>(null)
   const [busy, setBusy] = React.useState(false)
-  const [pending, setPending] = React.useState(() => onLoadPending(state))
+  const [pending, setPending] = React.useState<PendingNextFrameSuccessor | null>(null)
+  const [pendingState, setPendingState] = React.useState<PlanBetaState | null>(null)
+  const pendingReady = pendingState === state
+  const matchingPending = pendingReady ? pending : null
   const records = React.useMemo(
     () => eligiblePbSbRecords(state, onLoadRecords()),
     [onLoadRecords, state],
   )
+
+  React.useEffect(() => {
+    let current = true
+    const loadPending = async () => {
+      try {
+        const loaded = await onLoadPending(state)
+        if (!current) return
+        setPending(loaded)
+        setPendingState(state)
+      } catch {
+        if (!current) return
+        setPending(null)
+        setPendingState(state)
+      }
+    }
+    void loadPending()
+    return () => {
+      current = false
+    }
+  }, [onLoadPending, state])
 
   const chooseReason = (nextReason: Reason) => {
     setReason(nextReason)
@@ -91,6 +114,7 @@ export function PlanAdaptationFlow({
       operationAt: operationAt.toISOString(),
     })
     setBusy(false)
+    if (result.kind === "accepted") setPendingState(state)
     handleAccepted(result, setPending, setMessage, setStep)
   }
 
@@ -110,12 +134,14 @@ export function PlanAdaptationFlow({
         type="button"
         aria-label="다음 계획 조정하기"
         aria-expanded={step !== "closed"}
-        onClick={() => setStep(pending === null ? "reason" : "pending")}
+        aria-busy={!pendingReady}
+        disabled={!pendingReady}
+        onClick={() => setStep(matchingPending === null ? "reason" : "pending")}
       >
         <SlidersHorizontal aria-hidden="true" size={18} />
         <span>
           <strong>다음 계획 조정하기</strong>
-          <small>{pending === null ? "현재 계획은 바꾸지 않고 다음 주기 후보만 확인" : "선택해 둔 다음 계획 확인"}</small>
+          <small>{matchingPending === null ? "현재 계획은 바꾸지 않고 다음 주기 후보만 확인" : "선택해 둔 다음 계획 확인"}</small>
         </span>
       </button>
 
@@ -216,7 +242,7 @@ export function PlanAdaptationFlow({
             <PlanAdaptationResult message={message ?? "다음 계획 후보를 만들지 못했어요. 현재 계획은 그대로예요."} onClose={reset} />
           )}
 
-          {step === "pending" && pending !== null && (
+          {step === "pending" && matchingPending !== null && (
             <PlanAdaptationResult
               message="다음 주기에 사용할 보수적인 계획을 이 기기에 저장했어요. 현재 활성 계획과 진행 기록은 바뀌지 않았습니다."
               onClose={reset}

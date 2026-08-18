@@ -11,6 +11,7 @@ import type {
 import type { AthleteRecord } from "./athlete-records"
 import {
   acceptNextFrameProposal,
+  hashPlanBetaState,
   loadPendingNextFrameSuccessor,
 } from "./plan-adaptation-store"
 import type { AdaptationAcceptanceResult } from "./plan-adaptation-store"
@@ -169,11 +170,13 @@ export async function acceptPreparedNextFrameAdaptation(input: {
   })
 }
 
-export function loadMatchingPendingSuccessor(
+export async function loadMatchingPendingSuccessor(
   state: PlanBetaState,
-): PendingNextFrameSuccessor | null {
+): Promise<PendingNextFrameSuccessor | null> {
   const pending = loadPendingNextFrameSuccessor()
-  return pending?.baseCandidateId === state.activePlan.candidateId ? pending : null
+  if (pending?.baseCandidateId !== state.activePlan.candidateId) return null
+  const activeStateHash = await hashPlanBetaState(state)
+  return pending.predecessorStateHash === activeStateHash ? pending : null
 }
 
 function triggerFor(

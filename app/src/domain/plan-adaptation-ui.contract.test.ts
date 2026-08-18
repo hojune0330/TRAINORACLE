@@ -100,9 +100,17 @@ describe("next-frame adaptation UI adapter", () => {
     })
     expect(accepted.kind).toBe("accepted")
     expect(window.localStorage.getItem(ACTIVE_KEY)).toBe(activeBefore)
-    const reloaded = loadMatchingPendingSuccessor(saved.state)
+    const reloaded = await loadMatchingPendingSuccessor(saved.state)
     expect(reloaded?.baseCandidateId).toBe(saved.state.activePlan.candidateId)
     expect(reloaded?.successorState.activePlan.candidateId).not.toBe(saved.state.activePlan.candidateId)
+
+    const laterFrame = {
+      ...saved.state,
+      generatedAt: "2026-08-19T00:00:00.000Z",
+    }
+    expect(laterFrame.activePlan.candidateId).toBe(saved.state.activePlan.candidateId)
+    expect(savePlanBetaState(laterFrame)).toEqual({ ok: true })
+    expect(await loadMatchingPendingSuccessor(laterFrame)).toBeNull()
   })
 
   it("consumes real blocked, stale, and held active-plan safety contexts", async () => {
@@ -211,7 +219,7 @@ describe("next-frame adaptation UI adapter", () => {
 
     expect(unavailable).toEqual({ kind: "unavailable", code: "COACH_CONNECTION_REQUIRED" })
     expect(accepted).toEqual({ kind: "rejected", code: "UNAUTHORIZED" })
-    expect(loadMatchingPendingSuccessor(fixture.state)).toBeNull()
+    expect(await loadMatchingPendingSuccessor(fixture.state)).toBeNull()
   })
 
   it("offers only same-event PB/SB records strictly after the active plan timestamp", () => {

@@ -1,4 +1,4 @@
-import { cleanup, render, screen, within } from "@testing-library/react"
+import { cleanup, render, screen, waitFor, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
 import type { AthleteRecord } from "../../domain/athlete-records"
@@ -7,7 +7,10 @@ import {
   saveAthleteRecord,
 } from "../../domain/athlete-records"
 import { generatePlanFromDraft } from "../../domain/plan-beta-flow"
-import type { PlanBetaState } from "../../domain/plan-beta-store"
+import {
+  savePlanBetaState,
+  type PlanBetaState,
+} from "../../domain/plan-beta-store"
 import {
   savePlanAdaptationContext,
 } from "../../domain/plan-adaptation-ui"
@@ -26,7 +29,7 @@ describe("next-frame adaptation flow", () => {
     const { state } = createBoundActivePlan()
     render(<PlanAdaptationFlow state={state} />)
 
-    await user.click(screen.getByRole("button", { name: "다음 계획 조정하기" }))
+    await openAdaptation(user)
     expect(screen.getByRole("heading", { name: "조정 이유를 선택해 주세요" })).toBeVisible()
     expect(screen.queryByText("훈련량을 조금 줄인 다음 계획")).not.toBeInTheDocument()
     expect(screen.queryByRole("textbox")).not.toBeInTheDocument()
@@ -55,7 +58,7 @@ describe("next-frame adaptation flow", () => {
     ]
     render(<PlanAdaptationFlow state={scopedState} onLoadRecords={() => records} />)
 
-    await user.click(screen.getByRole("button", { name: "다음 계획 조정하기" }))
+    await openAdaptation(user)
     await user.click(screen.getByRole("button", { name: /최근 기록이 좋아졌어요/u }))
 
     expect(screen.getByRole("button", { name: /5000m.*2026-08-11/u })).toBeVisible()
@@ -73,7 +76,7 @@ describe("next-frame adaptation flow", () => {
     const { state } = createBoundActivePlan()
     render(<PlanAdaptationFlow state={state} />)
 
-    await user.click(screen.getByRole("button", { name: "다음 계획 조정하기" }))
+    await openAdaptation(user)
     await user.click(screen.getByRole("button", { name: /다음 계획을 조정하고 싶어요/u }))
     await user.click(screen.getByRole("button", { name: /통증은 없고 몸 상태는 평소와 같아요/u }))
     await user.click(screen.getByRole("button", { name: /훈련량을 조금 줄인 다음 계획/u }))
@@ -108,7 +111,7 @@ describe("next-frame adaptation flow", () => {
       />,
     )
 
-    await user.click(screen.getByRole("button", { name: "다음 계획 조정하기" }))
+    await openAdaptation(user)
     await user.click(screen.getByRole("button", { name: /다음 계획을 조정하고 싶어요/u }))
     await user.click(screen.getByRole("button", { name: /통증은 없고 몸 상태는 평소와 같아요/u }))
     await user.click(screen.getByRole("button", { name: /훈련량을 조금 줄인 다음 계획/u }))
@@ -132,14 +135,14 @@ describe("next-frame adaptation flow", () => {
     }
     const firstRender = render(<PlanAdaptationFlow state={state} />)
 
-    await user.click(screen.getByRole("button", { name: "다음 계획 조정하기" }))
+    await openAdaptation(user)
     await user.click(screen.getByRole("button", { name: /다음 계획을 조정하고 싶어요/u }))
     await user.click(screen.getByRole("button", { name: /통증·부상·몸 이상이 있거나 잘 모르겠어요/u }))
 
     expect(await screen.findByRole("status")).toHaveTextContent("현재 안전 상태를 먼저 확인해야 해서")
     firstRender.unmount()
     render(<PlanAdaptationFlow state={heldState} />)
-    await user.click(screen.getByRole("button", { name: "다음 계획 조정하기" }))
+    await openAdaptation(user)
     await user.click(screen.getByRole("button", { name: /다음 계획을 조정하고 싶어요/u }))
     await user.click(screen.getByRole("button", { name: /통증은 없고 몸 상태는 평소와 같아요/u }))
     await user.click(screen.getByRole("button", { name: /훈련량을 조금 줄인 다음 계획/u }))
@@ -147,7 +150,57 @@ describe("next-frame adaptation flow", () => {
     expect(await screen.findByRole("status")).toHaveTextContent("안전 상태를 다시 확인해야 해서")
     expect(screen.queryByRole("button", { name: "이 다음 계획 선택하기" })).not.toBeInTheDocument()
   })
+
+  it("ignores an old pending envelope when a later frame reuses the candidate ID", async () => {
+    const user = userEvent.setup()
+    const fixture = createBoundActivePlan()
+    const stateA = { ...fixture.state, generatedAt: "2026-08-01T00:00:00.000Z" }
+    expect(savePlanBetaState(stateA)).toEqual({ ok: true })
+    const firstRender = render(<PlanAdaptationFlow state={stateA} />)
+
+    await openAdaptation(user)
+    await chooseAndAcceptReduction(user)
+    expect(await screen.findByRole("status")).toHaveTextContent("현재 활성 계획과 진행 기록은 바뀌지 않았습니다")
+    firstRender.unmount()
+
+    const sameFrameReload = render(<PlanAdaptationFlow state={stateA} />)
+    await openAdaptation(user)
+    expect(await screen.findByRole("status")).toHaveTextContent("다음 주기에 사용할 보수적인 계획")
+    sameFrameReload.unmount()
+
+    const laterFrame = { ...stateA, generatedAt: "2026-08-02T00:00:00.000Z" }
+    expect(laterFrame.activePlan.candidateId).toBe(stateA.activePlan.candidateId)
+    expect(savePlanBetaState(laterFrame)).toEqual({ ok: true })
+    const activeBytes = window.localStorage.getItem("trainoracle.plan-beta.v1")
+    const laterRender = render(<PlanAdaptationFlow state={laterFrame} />)
+
+    await openAdaptation(user)
+    expect(screen.getByRole("heading", { name: "조정 이유를 선택해 주세요" })).toBeVisible()
+    expect(screen.queryByText("다음 주기에 사용할 보수적인 계획")).not.toBeInTheDocument()
+    await chooseAndAcceptReduction(user)
+    expect(await screen.findByRole("status")).toHaveTextContent("현재 활성 계획과 진행 기록은 바뀌지 않았습니다")
+    expect(window.localStorage.getItem("trainoracle.plan-beta.v1")).toBe(activeBytes)
+    laterRender.unmount()
+
+    render(<PlanAdaptationFlow state={laterFrame} />)
+    await openAdaptation(user)
+    expect(await screen.findByRole("status")).toHaveTextContent("다음 주기에 사용할 보수적인 계획")
+    expect(window.localStorage.getItem("trainoracle.plan-beta.v1")).toBe(activeBytes)
+  })
 })
+
+async function openAdaptation(user: ReturnType<typeof userEvent.setup>): Promise<void> {
+  const action = screen.getByRole("button", { name: "다음 계획 조정하기" })
+  await waitFor(() => expect(action).toBeEnabled())
+  await user.click(action)
+}
+
+async function chooseAndAcceptReduction(user: ReturnType<typeof userEvent.setup>): Promise<void> {
+  await user.click(screen.getByRole("button", { name: /다음 계획을 조정하고 싶어요/u }))
+  await user.click(screen.getByRole("button", { name: /통증은 없고 몸 상태는 평소와 같아요/u }))
+  await user.click(screen.getByRole("button", { name: /훈련량을 조금 줄인 다음 계획/u }))
+  await user.click(await screen.findByRole("button", { name: "이 다음 계획 선택하기" }))
+}
 
 function createBoundActivePlan(): { readonly state: PlanBetaState } {
   const now = new Date()
