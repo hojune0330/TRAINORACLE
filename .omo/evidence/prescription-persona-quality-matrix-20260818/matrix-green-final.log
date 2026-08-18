@@ -5,22 +5,24 @@
 
  RUN  v4.1.10 D:/admin/Documents/트레인 오라클 진도/.worktrees/persona-prescription-quality-matrix/app
 
- ✓ src/domain/prescription-quality-matrix.contract.test.ts > athlete persona prescription quality matrix > binds approved detail for '800-current-7d' 30ms
- ✓ src/domain/prescription-quality-matrix.contract.test.ts > athlete persona prescription quality matrix > binds approved detail for '1500-current-9d-double' 8ms
- ✓ src/domain/prescription-quality-matrix.contract.test.ts > athlete persona prescription quality matrix > binds approved detail for '3000-current-10d' 7ms
- ✓ src/domain/prescription-quality-matrix.contract.test.ts > athlete persona prescription quality matrix > binds approved detail for '5000-current-10d-daily-double-morning' 7ms
- ✓ src/domain/prescription-quality-matrix.contract.test.ts > athlete persona prescription quality matrix > binds approved detail for '5000-current-10d-daily-double-evening' 10ms
+ ✓ src/domain/prescription-quality-matrix.contract.test.ts > athlete persona prescription quality matrix > rejects report generation with a 'missing' source commit 4ms
+ ✓ src/domain/prescription-quality-matrix.contract.test.ts > athlete persona prescription quality matrix > rejects report generation with a 'invalid' source commit 1ms
+ ✓ src/domain/prescription-quality-matrix.contract.test.ts > athlete persona prescription quality matrix > binds approved detail for '800-current-7d' 22ms
+ ✓ src/domain/prescription-quality-matrix.contract.test.ts > athlete persona prescription quality matrix > binds approved detail for '1500-current-9d-double' 9ms
+ ✓ src/domain/prescription-quality-matrix.contract.test.ts > athlete persona prescription quality matrix > binds approved detail for '3000-current-10d' 6ms
+ ✓ src/domain/prescription-quality-matrix.contract.test.ts > athlete persona prescription quality matrix > binds approved detail for '5000-current-10d-daily-double-morning' 6ms
+ ✓ src/domain/prescription-quality-matrix.contract.test.ts > athlete persona prescription quality matrix > binds approved detail for '5000-current-10d-daily-double-evening' 9ms
  ✓ src/domain/prescription-quality-matrix.contract.test.ts > athlete persona prescription quality matrix > reports truthful RPE fallback for no-record-with-raw-memo 2ms
  ✓ src/domain/prescription-quality-matrix.contract.test.ts > athlete persona prescription quality matrix > reports truthful RPE fallback for stored-unselected 4ms
- ✓ src/domain/prescription-quality-matrix.contract.test.ts > athlete persona prescription quality matrix > reports truthful RPE fallback for developing-current 5ms
- ✓ src/domain/prescription-quality-matrix.contract.test.ts > athlete persona prescription quality matrix > reports truthful RPE fallback for deferred-100m 5ms
- ✓ src/domain/prescription-quality-matrix.contract.test.ts > athlete persona prescription quality matrix > reports truthful RPE fallback for deferred-400m 5ms
+ ✓ src/domain/prescription-quality-matrix.contract.test.ts > athlete persona prescription quality matrix > reports truthful RPE fallback for developing-current 4ms
+ ✓ src/domain/prescription-quality-matrix.contract.test.ts > athlete persona prescription quality matrix > reports truthful RPE fallback for deferred-100m 4ms
+ ✓ src/domain/prescription-quality-matrix.contract.test.ts > athlete persona prescription quality matrix > reports truthful RPE fallback for deferred-400m 4ms
  ✓ src/domain/prescription-quality-matrix.contract.test.ts > athlete persona prescription quality matrix > blocks D9_ACTIVE before candidates 1ms
  ✓ src/domain/prescription-quality-matrix.contract.test.ts > athlete persona prescription quality matrix > blocks D9_UNKNOWN before candidates 1ms
- ✓ src/domain/prescription-quality-matrix.contract.test.ts > athlete persona prescription quality matrix > keeps the prescription identical across external youth and adult review labels 9ms
+ ✓ src/domain/prescription-quality-matrix.contract.test.ts > athlete persona prescription quality matrix > keeps the prescription identical across external youth and adult review labels 8ms
  ✓ src/domain/prescription-quality-matrix.contract.test.ts > athlete persona prescription quality matrix > records sampled review metadata without treating labels as executable dose axes 1ms
 
  Test Files  1 passed (1)
-      Tests  14 passed (14)
-   Start at  12:34:10
-   Duration  2.73s (transform 465ms, setup 178ms, import 643ms, tests 99ms, environment 1.57s)
+      Tests  16 passed (16)
+   Start at  12:51:15
+   Duration  2.61s (transform 449ms, setup 177ms, import 625ms, tests 88ms, environment 1.46s)

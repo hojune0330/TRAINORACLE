@@ -1,5 +1,5 @@
 REVIEW_BASE=e18f09998f9f4619a375909e338848c3c9310864
-SOURCE_COMMIT=e6bf8b6c2c110abe9d6329a5fad57f07338f90e5
+SOURCE_COMMIT=31e0db12222c8f88086d6be1b2556ded320ab967
 GIT_DIFF_CHECK_EXIT=0
 warning: in the working copy of '.omo/evidence/prescription-persona-quality-matrix-20260818/DoneClaim.md', LF will be replaced by CRLF the next time Git touches it
 warning: in the working copy of '.omo/evidence/prescription-persona-quality-matrix-20260818/cleanup-receipt.log', LF will be replaced by CRLF the next time Git touches it

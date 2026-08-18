@@ -1,8 +1,8 @@
 {
   "schemaVersion": 2,
   "reviewBaseCommit": "e18f09998f9f4619a375909e338848c3c9310864",
-  "sourceCommit": "e6bf8b6c2c110abe9d6329a5fad57f07338f90e5",
-  "status": "READY_FOR_INDEPENDENT_RE_REVIEW",
+  "sourceCommit": "31e0db12222c8f88086d6be1b2556ded320ab967",
+  "status": "READY_FOR_FINAL_INDEPENDENT_RE_REVIEW",
   "reviewChangedSourceFiles": [
     {
       "path": "app/src/domain/prescription-quality-matrix-cases.ts",
@@ -22,7 +22,7 @@
   "verification": {
     "matrix": {
       "filesPassed": 1,
-      "testsPassed": 14
+      "testsPassed": 16
     },
     "appFocused": {
       "filesPassed": 5,
@@ -55,13 +55,13 @@
   "acceptanceEvidence": [
     {
       "path": "prescription-quality-matrix.json",
-      "sha256": "1b4d200f32406227dd86d8d7b0b08ba4eab328f08e1f9873d4707bfc0b411f95",
+      "sha256": "54ee31ced40adfd95077a8eb5b6b123ab8776c926a25c3e62f762ff655f9b646",
       "observable": "Machine-readable runtime cases, sampled review metadata, observed selection/privacy, population contract, blocks, and unsupported combinations"
     },
     {
       "path": "matrix-green-final.log",
-      "sha256": "a4ca9d400a9f271063abb4fa2f46614c283622993207d561e459eed1593f3394",
-      "observable": "Matrix 14/14 passed"
+      "sha256": "6d977893a178d69a1c2fff4f647c239587a865ccebb44331282c4891af5d0ef3",
+      "observable": "Matrix 16/16 passed with exact source commit provenance"
     },
     {
       "path": "matrix-day10-removal-mutation.log",
@@ -95,18 +95,18 @@
     },
     {
       "path": "final-git-audit.log",
-      "sha256": "1f582810c55c637239d807c71b31e2339a59ea8b205c40200bbd465d0db46e17",
+      "sha256": "0189f1ecd5364e5edd36ac9fb894b822bc27f81cef7aa8171b1f3f9484346c89",
       "observable": "No review-only production binding diff; task source/evidence status and diff check recorded"
     }
   ],
   "receipts": [
     {
       "path": "DoneClaim.md",
-      "sha256": "7f22c28344a6532112568cd0a5b2acc207cb50bd9c406f38e854138bd5ca27ab"
+      "sha256": "af739cce586edaed8b330791124d028b793e1853a7cc8d5ac3941e56cc467b0b"
     },
     {
       "path": "cleanup-receipt.log",
-      "sha256": "f6cdddec85544097095eee351edabbf404454acad4efb16067650f6d31fcc21e"
+      "sha256": "c9761e361fc88f7d3029e0eb8dff1552e77cdc3f7194d9bfaba01c834f43690a"
     }
   ],
   "cleanup": {
