@@ -1,86 +1,26 @@
-import { writeFileSync } from "node:fs"
 import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import * as d9Module from "@impl/d9/evaluator"
-import type { PlanBetaIntake } from "./plan-beta-schema"
-import {
-  createSelfReportedAthleteRecord,
-  saveAthleteRecord,
-} from "./athlete-records"
-import { MEMO_PURPOSE } from "./journal-schema"
-import { saveEntry } from "./journal-store"
 import {
   generatePlanFromDraft,
   selectPlanForActivation,
 } from "./plan-beta-flow"
 import {
-  EVIDENCE_COVERAGE,
-  PERSONA_COVERAGE,
-  SUPPORTED_CASES,
-  type MatrixCase,
-} from "./prescription-quality-matrix-cases"
-
-const TODAY = new Date("2026-08-17T03:00:00.000Z")
-const RAW_MARKER = "MATRIX_RAW_FREE_TEXT_9f86d081"
-
-type MatrixObservation = {
-  readonly caseId: string
-  readonly outcome: "DETAILED" | "RPE_FALLBACK" | "BLOCKED"
-  readonly code: string
-  readonly candidateCount: number
-  readonly selfSelectionAllowed: boolean
-  readonly rawFreeTextRetained: boolean
-}
+  EVIDENCE_SAMPLES,
+  EXTERNAL_POPULATION_REVIEW_LABELS,
+  RAW_MARKER,
+  RUNTIME_CASES,
+  SAMPLED_REVIEW_METADATA,
+  TODAY,
+  draftFor,
+  saveCurrentRecord,
+  saveRecentJournalContext,
+  writeMatrixReport,
+  type MatrixObservation,
+  type PopulationContractObservation,
+} from "./prescription-quality-matrix.test-fixtures"
 
 const observations: MatrixObservation[] = []
-
-function draftFor(fixture: MatrixCase): PlanBetaIntake {
-  return {
-    eventGroup: fixture.eventGroup,
-    competitionDivision: fixture.competitionDivision,
-    experienceBand: "EXPERIENCED",
-    availableDayCount: fixture.availableDayCount,
-    requestedFrameLength: fixture.requestedFrameLength,
-    trainingFocus: "VO2_INTENT",
-    secondSessionMode: fixture.secondSessionMode,
-    trainingTimePreference: fixture.trainingTimePreference,
-  }
-}
-
-function saveCurrentRecord(eventDistanceM: number, performanceSeconds: number): string {
-  const id = `matrix-current-${eventDistanceM}`
-  const record = createSelfReportedAthleteRecord({
-    id,
-    purpose: "RECENT_RESULT",
-    eventDistanceM,
-    performanceSeconds,
-    achievedOn: "2026-08-10",
-    seasonId: null,
-  }, TODAY)
-  if (record === null) throw new TypeError("Matrix record fixture is invalid")
-  expect(saveAthleteRecord(record, TODAY)).toEqual({ ok: true, total: 1 })
-  return id
-}
-
-function saveRecentJournalContext(): void {
-  for (const [index, date] of ["2026-08-15", "2026-08-16"].entries()) {
-    const saved = saveEntry({
-      id: `matrix-session-${index}`,
-      kind: "post-session",
-      date,
-      savedAt: `${date}T10:00:00.000Z`,
-      syncState: "local",
-      system: "base",
-      title: "Matrix context",
-      distanceKm: "8",
-      durationMin: "45",
-      avgPace: "5:30",
-      rpe: 4,
-      memo: RAW_MARKER,
-      memoPurpose: MEMO_PURPOSE.analyzableTrainingNote,
-    })
-    if (!saved.ok) throw new TypeError("Matrix journal fixture is invalid")
-  }
-}
+const populationContractObservations: PopulationContractObservation[] = []
 
 beforeEach(() => {
   vi.useFakeTimers()
@@ -94,31 +34,10 @@ afterEach(() => {
   vi.restoreAllMocks()
 })
 
-afterAll(() => {
-  const reportPath = process.env.PRESCRIPTION_MATRIX_REPORT
-  if (reportPath === undefined) return
-  writeFileSync(reportPath, `${JSON.stringify({
-    schemaVersion: 1,
-    baselineCommit: "edd7151e60c00b8a4c2b58722f39d021f7f5477a",
-    evaluatedAt: TODAY.toISOString(),
-    modeledInputs: ["event", "experienceBand", "recordEvidence", "frameLength", "trainingDays", "secondSessionMode", "trainingTimePreference", "D9"],
-    reportOnlyPersonaDimensions: ["reportedSex", "performanceTier", "competitionDivision"],
-    personaCoverage: PERSONA_COVERAGE,
-    evidenceCoverage: EVIDENCE_COVERAGE,
-    supportedGenerationCases: SUPPORTED_CASES,
-    observations,
-    unsupportedCombinations: [
-      { combination: "sex-specific prescription", status: "UNMODELED", reason: "Sex is not a runtime input and cannot alter dose." },
-      { combination: "high/mid/low performance-tier prescription", status: "UNMODELED", reason: "Experience band is explicitly not a skill score; no approved tier mapping exists." },
-      { combination: "100-400m detailed prescription", status: "DEFERRED_RPE_FALLBACK", reason: "No approved detailed template is active in this scope." },
-      { combination: "DEVELOPING or NEW_TO_RUNNING detailed prescription", status: "RPE_FALLBACK", reason: "Active detailed approvals are scoped to EXPERIENCED." },
-      { combination: "missing or unselected record evidence", status: "RPE_FALLBACK", reason: "An explicit CURRENT same-event anchor is required." },
-    ],
-  }, null, 2)}\n`)
-})
+afterAll(() => writeMatrixReport(observations, populationContractObservations))
 
 describe("athlete persona prescription quality matrix", () => {
-  it.each(SUPPORTED_CASES)("binds approved detail for $caseId", (fixture) => {
+  it.each(RUNTIME_CASES)("binds approved detail for $caseId", (fixture) => {
     const selectedRecordId = saveCurrentRecord(
       fixture.eventDistanceM,
       fixture.performanceSeconds,
@@ -136,9 +55,9 @@ describe("athlete persona prescription quality matrix", () => {
     expect(result.prescriptionBinding).toEqual({ kind: "bound", code: "PACE_TARGET_BOUND" })
     expect(result.generated.selectionAuthority).toBe("SELF")
     expect(result.generated.candidates).toHaveLength(2)
+    expect(Object.hasOwn(result.intake, "age")).toBe(false)
     expect(Object.hasOwn(result.intake, "sex")).toBe(false)
     expect(Object.hasOwn(result.intake, "performanceTier")).toBe(false)
-    expect(JSON.stringify(result)).not.toContain(RAW_MARKER)
     if (fixture.withRecentJournal) {
       expect(result.athleteEvidence.recentJournalSessionCount).toBe(2)
       expect(result.generated.sourceMode).toBe("JOURNAL_CONTEXT_ONLY")
@@ -157,7 +76,18 @@ describe("athlete persona prescription quality matrix", () => {
         kind: "PACE_TARGET",
         targetEventDistanceM: fixture.eventDistanceM,
         targetRepSeconds: fixture.targetRepSeconds,
+        scope: { population: "YOUTH_AND_ADULT" },
       })
+      if (fixture.availableDayCount === "EVERY_DAY") {
+        const dayTen = candidate.sessions.filter((session) => session.day === 10)
+        expect(dayTen).toHaveLength(1)
+        expect(dayTen[0]).toMatchObject({
+          day: 10,
+          slot: "AM",
+          role: "QUALITY",
+          plannedEnergyIntent: "VO2_INTENT",
+        })
+      }
     }
 
     const selection = selectPlanForActivation(
@@ -168,20 +98,26 @@ describe("athlete persona prescription quality matrix", () => {
       result.athleteEvidence,
     )
     expect(selection.kind).toBe("selected")
-    observations.push({ caseId: fixture.caseId, outcome: "DETAILED", code: result.prescriptionBinding.code, candidateCount: 2, selfSelectionAllowed: selection.kind === "selected", rawFreeTextRetained: false })
+    const serializedResult = JSON.stringify({ result, selection })
+    const selfSelectionAllowed = selection.kind === "selected"
+    const rawFreeTextRetained = serializedResult.includes(RAW_MARKER)
+    expect(selfSelectionAllowed).toBe(true)
+    expect(rawFreeTextRetained).toBe(false)
+    observations.push({ caseId: fixture.caseId, outcome: "DETAILED", code: result.prescriptionBinding.code, candidateCount: result.generated.candidates.length, selfSelectionAllowed, rawFreeTextRetained })
   })
 
   it.each([
-    ["no-record", "NONE", undefined, "EXPERIENCED", "PACE_TARGET_FALLBACK_NO_EXPLICIT_ANCHOR"],
-    ["stored-unselected", "CURRENT", undefined, "EXPERIENCED", "PACE_TARGET_FALLBACK_NO_EXPLICIT_ANCHOR"],
-    ["developing-current", "CURRENT", "select", "DEVELOPING", "PACE_TARGET_FALLBACK_EXPERIENCE_SCOPE"],
-    ["deferred-100m", 100, "select", "EXPERIENCED", "PACE_TARGET_FALLBACK_EVENT_SCOPE"],
-    ["deferred-400m", 400, "select", "EXPERIENCED", "PACE_TARGET_FALLBACK_EVENT_SCOPE"],
-  ] as const)("reports truthful RPE fallback for %s", (caseId, recordState, selectionState, experienceBand, expectedCode) => {
+    ["no-record-with-raw-memo", "NONE", undefined, "EXPERIENCED", "PACE_TARGET_FALLBACK_NO_EXPLICIT_ANCHOR", true],
+    ["stored-unselected", "CURRENT", undefined, "EXPERIENCED", "PACE_TARGET_FALLBACK_NO_EXPLICIT_ANCHOR", false],
+    ["developing-current", "CURRENT", "select", "DEVELOPING", "PACE_TARGET_FALLBACK_EXPERIENCE_SCOPE", false],
+    ["deferred-100m", 100, "select", "EXPERIENCED", "PACE_TARGET_FALLBACK_EVENT_SCOPE", false],
+    ["deferred-400m", 400, "select", "EXPERIENCED", "PACE_TARGET_FALLBACK_EVENT_SCOPE", false],
+  ] as const)("reports truthful RPE fallback for %s", (caseId, recordState, selectionState, experienceBand, expectedCode, withRawMemo) => {
     const recordDistance = typeof recordState === "number" ? recordState : 1500
     const selectedRecordId = recordState === "NONE" ? undefined : saveCurrentRecord(recordDistance, 245)
+    if (withRawMemo) saveRecentJournalContext()
     const result = generatePlanFromDraft({
-      ...draftFor(SUPPORTED_CASES[1]),
+      ...draftFor(RUNTIME_CASES[1]),
       experienceBand,
     }, "NO_KNOWN_RISK", selectionState === "select" ? { selectedRecordId } : undefined)
 
@@ -191,7 +127,20 @@ describe("athlete persona prescription quality matrix", () => {
     expect(result.generated.candidates.every((candidate) => candidate.sessions.every(
       (session) => session.prescription.kind !== "PACE_TARGET",
     ))).toBe(true)
-    observations.push({ caseId, outcome: "RPE_FALLBACK", code: expectedCode, candidateCount: 2, selfSelectionAllowed: true, rawFreeTextRetained: false })
+    if (withRawMemo) expect(result.athleteEvidence.recentJournalSessionCount).toBe(2)
+    const selection = selectPlanForActivation(
+      result.generated.candidates[0],
+      result.generated,
+      result.gate,
+      result.intake,
+      result.athleteEvidence,
+    )
+    const serializedResult = JSON.stringify({ result, selection })
+    const selfSelectionAllowed = selection.kind === "selected"
+    const rawFreeTextRetained = serializedResult.includes(RAW_MARKER)
+    expect(selfSelectionAllowed).toBe(true)
+    expect(rawFreeTextRetained).toBe(false)
+    observations.push({ caseId, outcome: "RPE_FALLBACK", code: expectedCode, candidateCount: result.generated.candidates.length, selfSelectionAllowed, rawFreeTextRetained })
   })
 
   it.each(["D9_ACTIVE", "D9_UNKNOWN"] as const)("blocks %s before candidates", (disposition) => {
@@ -201,26 +150,58 @@ describe("athlete persona prescription quality matrix", () => {
       })
     }
     const result = generatePlanFromDraft(
-      draftFor(SUPPORTED_CASES[0]),
+      draftFor(RUNTIME_CASES[0]),
       disposition === "D9_ACTIVE" ? "REVIEW_REQUIRED" : "NO_KNOWN_RISK",
     )
     expect(result).toEqual({ kind: "blocked", code: "CURRENT_CHECK_REQUIRES_REVIEW" })
     if (result.kind !== "blocked") throw new TypeError("D9 matrix case was not blocked")
-    observations.push({ caseId: disposition, outcome: "BLOCKED", code: result.code, candidateCount: 0, selfSelectionAllowed: false, rawFreeTextRetained: false })
+    observations.push({ caseId: disposition, outcome: "BLOCKED", code: result.code, candidateCount: 0, selfSelectionAllowed: false, rawFreeTextRetained: JSON.stringify(result).includes(RAW_MARKER) })
   })
 
-  it("covers every requested matrix axis without treating persona labels as dose inputs", () => {
-    expect(PERSONA_COVERAGE).toHaveLength(8)
-    expect(EVIDENCE_COVERAGE.map((item) => item.state)).toEqual([
+  it("keeps the prescription identical across external youth and adult review labels", () => {
+    const fixture = RUNTIME_CASES[4]
+    const selectedRecordId = saveCurrentRecord(fixture.eventDistanceM, fixture.performanceSeconds)
+    const runtimeInput = draftFor(fixture)
+    const serializedRuntimeInput = JSON.stringify(runtimeInput)
+    const labelsPassedToRuntime = EXTERNAL_POPULATION_REVIEW_LABELS.some((label) => serializedRuntimeInput.includes(label))
+    const prescriptions = EXTERNAL_POPULATION_REVIEW_LABELS.map(() => {
+      const result = generatePlanFromDraft(runtimeInput, "NO_KNOWN_RISK", { selectedRecordId })
+      expect(result.kind).toBe("generated")
+      if (result.kind !== "generated") throw new TypeError("Population contract case did not generate")
+      return result.generated.candidates.map((candidate) => {
+        const session = candidate.sessions.find((item) => item.prescription.kind === "PACE_TARGET")
+        if (session?.prescription.kind !== "PACE_TARGET") throw new TypeError("Population contract case was not bound")
+        return session.prescription
+      })
+    })
+    const prescriptionsEqual = JSON.stringify(prescriptions[0]) === JSON.stringify(prescriptions[1])
+    const populationScopes = [...new Set(prescriptions.flat().map((prescription) => prescription.scope.population))]
+
+    expect(labelsPassedToRuntime).toBe(false)
+    expect(prescriptionsEqual).toBe(true)
+    expect(populationScopes).toEqual(["YOUTH_AND_ADULT"])
+    populationContractObservations.push({
+      reviewLabels: EXTERNAL_POPULATION_REVIEW_LABELS,
+      labelsPassedToRuntime,
+      runtimeInputsIdentical: true,
+      prescriptionsEqual,
+      populationScopes,
+    })
+  })
+
+  it("records sampled review metadata without treating labels as executable dose axes", () => {
+    expect(SAMPLED_REVIEW_METADATA).toHaveLength(8)
+    expect(SAMPLED_REVIEW_METADATA.filter((item) => item.divisionLabel === "HIGH_SCHOOL").map(
+      (item) => `${item.reportedSex}:${item.performanceTier}`,
+    )).toEqual(["MALE:HIGH", "MALE:MID", "MALE:LOW", "FEMALE:HIGH", "FEMALE:MID", "FEMALE:LOW"])
+    expect(EVIDENCE_SAMPLES.map((item) => item.state)).toEqual([
       "NONE",
       "SPARSE",
       "CURRENT_SAME_EVENT_WITH_SUFFICIENT_JOURNAL",
     ])
-    expect(new Set(SUPPORTED_CASES.map((fixture) => fixture.eventDistanceM))).toEqual(new Set([800, 1500, 3000, 5000]))
-    expect(new Set(SUPPORTED_CASES.map((fixture) => fixture.requestedFrameLength))).toEqual(new Set([7, 9, 10]))
-    expect(SUPPORTED_CASES.some((fixture) => fixture.availableDayCount === "EVERY_DAY")).toBe(true)
-    expect(new Set(SUPPORTED_CASES.map((fixture) => fixture.secondSessionMode))).toEqual(new Set(["SINGLE_SESSION_ONLY", "RECOVERY_PM_ALLOWED"]))
-    expect(new Set(SUPPORTED_CASES.map((fixture) => fixture.reportedSex))).toEqual(new Set(["MALE", "FEMALE"]))
-    expect(new Set(SUPPORTED_CASES.map((fixture) => fixture.performanceTier))).toEqual(new Set(["HIGH", "MID", "LOW"]))
+    expect(new Set(RUNTIME_CASES.map((fixture) => fixture.eventDistanceM))).toEqual(new Set([800, 1500, 3000, 5000]))
+    expect(new Set(RUNTIME_CASES.map((fixture) => fixture.requestedFrameLength))).toEqual(new Set([7, 9, 10]))
+    expect(RUNTIME_CASES.some((fixture) => fixture.availableDayCount === "EVERY_DAY")).toBe(true)
+    expect(new Set(RUNTIME_CASES.map((fixture) => fixture.secondSessionMode))).toEqual(new Set(["SINGLE_SESSION_ONLY", "RECOVERY_PM_ALLOWED"]))
   })
 })
