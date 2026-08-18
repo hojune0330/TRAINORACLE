@@ -15,6 +15,8 @@ const JOURNAL = "trainoracle.journal.v1"
 const TOMBSTONES = "trainoracle.sync.tombstones.v1"
 const AUTH = "trainoracle.auth.v1"
 const PLAN = "trainoracle.plan-beta.v1"
+const PLAN_ADAPTATION = "trainoracle.plan-beta.adaptation.v1"
+const PLAN_ADAPTATION_CONTEXT = "trainoracle.plan-adaptation-context.v1"
 const CONSENT = "trainoracle.sync.consent.v1"
 const SYNC_OWNER = "trainoracle.sync.owner.v1"
 const SYNC_RECOVERY = "trainoracle.sync.recovery.v1"
@@ -35,6 +37,8 @@ function seed(): void {
     JSON.stringify([{ id: "pb-5000" }]),
   )
   window.localStorage.setItem(PLAN, JSON.stringify({ picked: "x" }))
+  window.localStorage.setItem(PLAN_ADAPTATION, JSON.stringify({ pending: "next-frame" }))
+  window.localStorage.setItem(PLAN_ADAPTATION_CONTEXT, JSON.stringify({ candidates: [] }))
   window.localStorage.setItem(AUTH, JSON.stringify({ token: "secret" }))
   window.localStorage.setItem(CONSENT, JSON.stringify({ enabled: true }))
   window.localStorage.setItem(SYNC_OWNER, "athlete-a")
@@ -75,6 +79,16 @@ describe("eraseAllLocalData", () => {
     expect(result.ok).toBe(true)
     expect(window.localStorage.getItem(JOURNAL)).toBeNull()
     expect(window.localStorage.getItem(PLAN)).toBeNull()
+  })
+
+  it("다음 계획 조정 결정과 후보 컨텍스트도 지운다", () => {
+    seed()
+    const result = eraseAllLocalData()
+    expect(result.ok).toBe(true)
+    expect(erasableKeys()).toContain(PLAN_ADAPTATION)
+    expect(erasableKeys()).toContain(PLAN_ADAPTATION_CONTEXT)
+    expect(window.localStorage.getItem(PLAN_ADAPTATION)).toBeNull()
+    expect(window.localStorage.getItem(PLAN_ADAPTATION_CONTEXT)).toBeNull()
   })
 
   it("구조화 선수 기록도 지운다", () => {

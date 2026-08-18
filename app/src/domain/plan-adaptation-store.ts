@@ -63,6 +63,11 @@ export function hashPlanBetaState(state: PlanBetaState): Promise<string> {
   return canonicalJsonSha256("trainoracle.plan-beta-state.v1", state)
 }
 
+/**
+ * INTERNAL LOCAL CONSISTENCY boundary. This validates device-local content and
+ * SELF mode; it does not authenticate an account or coach. Product UI must enter
+ * through acceptPreparedNextFrameAdaptation with evaluated safety and hold context.
+ */
 export async function acceptNextFrameProposal(candidate: unknown): Promise<AdaptationAcceptanceResult> {
   try {
     return await acceptNextFrameProposalUnchecked(candidate)
@@ -71,6 +76,7 @@ export async function acceptNextFrameProposal(candidate: unknown): Promise<Adapt
   }
 }
 
+/** Parsed implementation of the internal local-consistency boundary, not authorization. */
 async function acceptNextFrameProposalUnchecked(candidate: unknown): Promise<AdaptationAcceptanceResult> {
   if (typeof window === "undefined" || containsPrivateKey(candidate)) return { kind: "rejected", code: "MALFORMED_INPUT" }
   const parsed = acceptanceRequestSchema.safeParse(candidate)

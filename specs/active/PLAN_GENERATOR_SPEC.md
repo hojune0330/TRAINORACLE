@@ -342,6 +342,13 @@ forbidden. `SELF_SERVICE -> SELF`; `COACH_AUTHORED -> COACH_REQUIRED`. D9 `ACTIV
 `UNKNOWN`, stale safety, or an active hold yields no selectable proposal. Raw memo,
 note, and symptom text is not an input. Events 100-400 m remain deferred.
 
+Local-beta threat-model scope: an anonymous, one-browser-profile implementation may
+persist a self-service next-frame successor on that device only. Its lower local store
+boundary enforces content/mode consistency, not account or coach authentication, and
+must be reached by the product path only with current evaluator and hold context.
+Account sync and coach acceptance require the future authenticated server boundary;
+until then `COACH_REQUIRED` is read-only and local adaptation is not synchronized.
+
 ---
 
 ## 3. Implementation Boundary

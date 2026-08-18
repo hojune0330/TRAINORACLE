@@ -254,7 +254,7 @@ describe("local immutable next-frame adaptation contract", () => {
       ...input,
       activeHold: true,
     }), { kind: "blocked", code: "ACTIVE_HOLD" }],
-    ["caller authority", (input: Awaited<ReturnType<typeof requestFixture>>) => ({
+    ["actor/mode mismatch", (input: Awaited<ReturnType<typeof requestFixture>>) => ({
       ...input,
       actor: "COACH" as const,
     }), { kind: "rejected", code: "UNAUTHORIZED" }],

@@ -1026,6 +1026,14 @@ erase external load, mechanical impact, neuromuscular demand, pain, or missingne
 The policy block is a proposed target contract only. It neither activates runtime
 behavior nor promotes this draft canonically.
 
+Local-beta threat-model scope is narrower than this future target contract. An
+anonymous, one-browser-profile store may preserve a self-service next-frame successor
+only as device-local state. Store-level hash, actor, and mode checks are internal
+consistency checks, not authentication or authorization evidence; the product path
+must still supply current evaluator and hold context. Account synchronization and
+coach acceptance remain server/account requirements. Until that authenticated
+boundary exists, `COACH_REQUIRED` is read-only and local adaptation is not synced.
+
 ### 10.1 Immediate execution hold
 
 A safety or authorization stop is not an ordinary coach-selectable adaptation.
