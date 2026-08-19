@@ -154,6 +154,37 @@ type ValidatedPlanBetaState = Omit<
   "version"
 > & { readonly version: 1 | 2 }
 
+export function hasCanonicalArrayTree(
+  value: unknown,
+  ancestors = new Set<object>(),
+): boolean {
+  if (typeof value !== "object" || value === null) return true
+  if (ancestors.has(value)) return false
+  ancestors.add(value)
+  if (Array.isArray(value)) {
+    let index = 0
+    for (const key of Reflect.ownKeys(value)) {
+      const descriptor = Object.getOwnPropertyDescriptor(value, key)
+      if (descriptor?.enumerable !== true) continue
+      if (typeof key !== "string" || key !== String(index)) return false
+      index += 1
+    }
+    if (index !== value.length) return false
+  }
+  for (const key of Reflect.ownKeys(value)) {
+    const descriptor = Object.getOwnPropertyDescriptor(value, key)
+    if (descriptor?.enumerable === true
+      && "value" in descriptor
+      && !hasCanonicalArrayTree(descriptor.value, ancestors)) return false
+  }
+  ancestors.delete(value)
+  return true
+}
+
+const canonicalArrayTreeSchema = z.unknown().refine(hasCanonicalArrayTree, {
+  message: "Arrays must contain only canonical dense indices.",
+})
+
 function validatePlanBetaState(
   state: ValidatedPlanBetaState,
   context: z.RefinementCtx,
@@ -204,11 +235,11 @@ function validatePlanBetaState(
   }
 }
 
-const planBetaStateV1Schema = planBetaStateV1BaseSchema.superRefine(
-  validatePlanBetaState,
+const planBetaStateV1Schema = canonicalArrayTreeSchema.pipe(
+  planBetaStateV1BaseSchema.superRefine(validatePlanBetaState),
 )
-export const planBetaStateV2Schema = planBetaStateV2BaseSchema.superRefine(
-  validatePlanBetaState,
+export const planBetaStateV2Schema = canonicalArrayTreeSchema.pipe(
+  planBetaStateV2BaseSchema.superRefine(validatePlanBetaState),
 )
 const planBetaStateSchema = z.union([
   planBetaStateV2Schema,
@@ -242,7 +273,7 @@ const candidateFrameSchema = z.object({
     z.object({ kind: z.literal("SEVEN_DAY_CONTINUITY"), nextFrameInput: z.literal("SELECTED_PLAN_AND_PROGRESS") }).strict(),
   ]),
 }).strict()
-const planCandidateSchema = z.object({
+const planCandidateObjectSchema = z.object({
   candidateId: adaptationCandidateIdSchema,
   kind: z.enum(["BALANCED", "CONSERVATIVE"]),
   eventGroup: z.enum(["MIDDLE_DISTANCE", "FIVE_K"]),
@@ -264,10 +295,27 @@ const planCandidateSchema = z.object({
   mainExposureLedger: z.object({ mainExposureCount: z.union([z.literal(2), z.literal(3)]), fingerprint: z.string(), countedExposureIds: z.array(adaptationExposureIdSchema).readonly() }).strict(),
   rationaleCodes: z.array(planBetaCodeSchema).readonly(),
   sessions: z.array(planSessionSchema).readonly(),
-}).strict().superRefine((candidate, context) => {
+}).strict()
+const planCandidateSchema = canonicalArrayTreeSchema.pipe(planCandidateObjectSchema).superRefine((candidate, context) => {
   const marker = ":pace-target:"
   const markerIndex = candidate.candidateId.indexOf(marker)
-  if (candidate.detailedPrescriptionFingerprint === null ? markerIndex >= 0 : candidate.candidateId.slice(markerIndex + marker.length) !== candidate.detailedPrescriptionFingerprint) {
+  const detailedFingerprints = candidate.sessions.flatMap((session) => (
+    session.prescription.kind === "PACE_TARGET"
+      ? [session.prescription.prescriptionFingerprint]
+      : []
+  ))
+  const expectedDetailedFingerprint = detailedFingerprints.length === 1
+    ? detailedFingerprints[0]
+    : null
+  const expectedBasis = expectedDetailedFingerprint === null
+    ? "DURATION_RPE_ONLY"
+    : "ONE_TRUSTED_DETAILED_SESSION"
+  if (detailedFingerprints.length > 1
+    || candidate.detailedPrescriptionFingerprint !== expectedDetailedFingerprint
+    || candidate.beta.prescriptionBasis !== expectedBasis
+    || (expectedDetailedFingerprint === null
+      ? markerIndex >= 0
+      : candidate.candidateId.slice(markerIndex + marker.length) !== expectedDetailedFingerprint)) {
     addIssue(context, ["candidateId"], "Detailed prescription identity mismatch.")
   }
   if (candidate.mainExposureLedger.fingerprint !== candidate.mainExposureLedger.countedExposureIds.join(":")) {
@@ -354,7 +402,7 @@ export const pendingNextFrameSuccessorSchema = z.object({
   trigger: z.enum(["SAME_EVENT_PB_SB_AFTER_ACTIVE_PLAN_START", "EXPLICIT_REQUEST"]), changeDimension: z.enum(["INTENSITY", "VOLUME", "FREQUENCY"]),
   athleteId: opaqueAthleteIdSchema, eventDistanceM: adaptationScopeSchema.shape.eventDistanceM,
   baseCandidateId: adaptationCandidateIdSchema, baseContentHash: hashSchema, proposedContentHash: hashSchema, predecessorStateHash: hashSchema,
-  successorState: planBetaStateV2BaseSchema, acceptedAt: z.string().datetime(), decisionId: z.string().regex(/^adaptation-decision:[a-f0-9]{64}$/u), idempotencyKey: hashSchema, requestHash: hashSchema,
+  successorState: canonicalArrayTreeSchema.pipe(planBetaStateV2BaseSchema), acceptedAt: z.string().datetime(), decisionId: z.string().regex(/^adaptation-decision:[a-f0-9]{64}$/u), idempotencyKey: hashSchema, requestHash: hashSchema,
 }).strict().superRefine((record, context) => {
   if (record.successorState.activePlan.candidateId === record.baseCandidateId) addIssue(context, ["successorState", "activePlan", "candidateId"], "Successor must differ from predecessor.")
   if (!adaptationCandidateIdSchema.safeParse(record.successorState.activePlan.candidateId).success) addIssue(context, ["successorState", "activePlan", "candidateId"], "Successor candidate identity is invalid.")

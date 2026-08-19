@@ -6,6 +6,7 @@ import {
 } from "@impl/plan-generator/adaptation"
 import { RVE_NON_SENSITIVE_REASON_CODES } from "@impl/rve/signal"
 import {
+  hasCanonicalArrayTree,
   parsePlanBetaState,
   planAdaptationEnvelopeSchema,
   planAdaptationProposalSchema,
@@ -80,7 +81,9 @@ export async function acceptNextFrameProposal(candidate: unknown): Promise<Adapt
 
 /** Parsed implementation of the internal local-consistency boundary, not authorization. */
 async function acceptNextFrameProposalUnchecked(candidate: unknown): Promise<AdaptationAcceptanceResult> {
-  if (typeof window === "undefined" || containsPrivateKey(candidate)) return { kind: "rejected", code: "MALFORMED_INPUT" }
+  if (typeof window === "undefined"
+      || containsPrivateKey(candidate)
+      || !hasCanonicalArrayTree(candidate)) return { kind: "rejected", code: "MALFORMED_INPUT" }
   const parsed = acceptanceRequestSchema.safeParse(candidate)
   if (!parsed.success) return { kind: "rejected", code: "MALFORMED_INPUT" }
   const request = parsed.data

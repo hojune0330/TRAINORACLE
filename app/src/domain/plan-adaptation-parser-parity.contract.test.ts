@@ -125,6 +125,15 @@ function sparseCopy<T>(values: readonly T[]): T[] {
   return sparse
 }
 
+function withEnumerableArrayProperty<T>(values: readonly T[]): T[] {
+  const copy = [...values]
+  Object.defineProperty(copy, "evidenceText", {
+    value: "raw symptom: chest pain after training",
+    enumerable: true,
+  })
+  return copy
+}
+
 function sparseRationaleCodes(candidate: PlanCandidate): unknown {
   return { ...candidate, rationaleCodes: sparseCopy(candidate.rationaleCodes) }
 }
@@ -296,6 +305,24 @@ describe("impl/app adaptation candidate parser parity", () => {
 
     expect(appAcceptsCandidate(baseCandidate)).toBe(true)
     expect(await proposalFor(baseCandidate, proposedCandidate)).toMatchObject({ kind: "proposed" })
+  })
+
+  it("rejects a rehashed RPE-only candidate with a raw detailed fingerprint suffix at both boundaries", async () => {
+    const generated = expectGenerated(generatePlanCandidates(baseRequest()))
+    const [baseCandidate, proposedCandidate] = generated.candidates
+    const rawFingerprint = "raw-symptom-chest-pain-after-training-1"
+    const attachFingerprint = (candidate: PlanCandidate) => ({
+      ...candidate,
+      candidateId: `${candidate.candidateId}:pace-target:${rawFingerprint}`,
+      detailedPrescriptionFingerprint: rawFingerprint,
+    })
+    const malformedBase = attachFingerprint(baseCandidate)
+    const malformedProposed = attachFingerprint(proposedCandidate)
+
+    expect(appAcceptsCandidate(malformedBase)).toBe(false)
+    const result = await proposalFor(malformedBase, malformedProposed)
+    expect(result).toEqual({ kind: "rejected", code: "MALFORMED_INPUT" })
+    expect(JSON.stringify(result)).not.toContain(rawFingerprint)
   })
 
   it.each([
@@ -615,6 +642,55 @@ describe("impl/app adaptation candidate parser parity", () => {
     const [baseCandidate, proposedCandidate] = generated.generated.candidates
     const malformedBase = mutate(baseCandidate)
     const malformedProposed = mutate(proposedCandidate)
+
+    expect(appAcceptsCandidate(malformedBase)).toBe(false)
+    expect(await proposalFor(malformedBase, malformedProposed))
+      .not.toMatchObject({ kind: "proposed" })
+  })
+
+  it.each([
+    ["component references", (prescription: Record<string, unknown>) => ({
+      ...prescription,
+      componentRefs: withEnumerableArrayProperty(prescription.componentRefs as readonly unknown[]),
+    })],
+    ["top-level stop codes", (prescription: Record<string, unknown>) => ({
+      ...prescription,
+      stopCodes: withEnumerableArrayProperty(prescription.stopCodes as readonly unknown[]),
+    })],
+    ["operational stop-condition codes", (prescription: Record<string, unknown>) => {
+      const operational = prescription.operationalComponents as Record<string, unknown>
+      const stop = operational.stopConditions as Record<string, unknown>
+      return {
+        ...prescription,
+        operationalComponents: {
+          ...operational,
+          stopConditions: {
+            ...stop,
+            codes: withEnumerableArrayProperty(stop.codes as readonly unknown[]),
+          },
+        },
+      }
+    }],
+    ["uncomputable reason codes", (prescription: Record<string, unknown>) => {
+      const totals = prescription.totals as Record<string, unknown>
+      return {
+        ...prescription,
+        totals: {
+          ...totals,
+          uncomputableReasonCodes: withEnumerableArrayProperty(
+            totals.uncomputableReasonCodes as readonly unknown[],
+          ),
+        },
+      }
+    }],
+  ] as const)("rejects extra enumerable data on detailed PACE_TARGET %s", async (_label, mutate) => {
+    const fixture = RUNTIME_CASES[1]
+    const selectedRecordId = saveCurrentRecord(fixture.eventDistanceM, fixture.performanceSeconds)
+    const generated = generatePlanFromDraft(draftFor(fixture), "NO_KNOWN_RISK", { selectedRecordId })
+    if (generated.kind !== "generated") throw new TypeError("Detailed fixture did not generate")
+    const [baseCandidate, proposedCandidate] = generated.generated.candidates
+    const malformedBase = mutateDetailedPrescription(baseCandidate, mutate)
+    const malformedProposed = mutateDetailedPrescription(proposedCandidate, mutate)
 
     expect(appAcceptsCandidate(malformedBase)).toBe(false)
     expect(await proposalFor(malformedBase, malformedProposed))

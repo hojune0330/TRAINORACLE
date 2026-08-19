@@ -226,6 +226,25 @@ describe("local immutable next-frame adaptation contract", () => {
     expect(window.localStorage.getItem(ADAPTATION_KEY)).toBe(previousEnvelope)
   })
 
+  it("rejects extra enumerable data on safety reason codes without writing", async () => {
+    const input = await requestFixture("LT_INTENT", "reason-extra")
+    expect(savePlanBetaState(input.predecessorState)).toEqual({ ok: true })
+    const nonSensitiveReasonCodes = [...input.safetyGate.nonSensitiveReasonCodes]
+    Object.defineProperty(nonSensitiveReasonCodes, "evidenceText", {
+      value: "raw symptom: chest pain after training",
+      enumerable: true,
+    })
+    const setItem = vi.spyOn(Storage.prototype, "setItem")
+    setItem.mockClear()
+
+    expect(await acceptNextFrameProposal({
+      ...input,
+      safetyGate: { ...input.safetyGate, nonSensitiveReasonCodes },
+    })).toEqual({ kind: "rejected", code: "MALFORMED_INPUT" })
+    expect(setItem).not.toHaveBeenCalledWith(ADAPTATION_KEY, expect.any(String))
+    expect(window.localStorage.getItem(ADAPTATION_KEY)).toBeNull()
+  })
+
   it("keeps the acceptance boundary in exact parity with every RVE reason code", async () => {
     for (const [index, reasonCode] of RVE_NON_SENSITIVE_REASON_CODES.entries()) {
       window.localStorage.clear()

@@ -3,7 +3,10 @@ import type { PlanCandidate } from "@impl/plan-generator/types"
 import type { SafetyGatePassed } from "@impl/safety-gate/gate"
 import { RVE_NON_SENSITIVE_REASON_CODES } from "@impl/rve/signal"
 import type { AthleteRecord } from "./athlete-records"
-import { planAdaptationProposalSchema } from "./plan-beta-schema"
+import {
+  hasCanonicalArrayTree,
+  planAdaptationProposalSchema,
+} from "./plan-beta-schema"
 import type { PlanBetaState } from "./plan-beta-schema"
 import {
   evaluatePlanSafety,
@@ -91,6 +94,7 @@ export function evaluateActivePlanAdaptationSafety(
 export function parseActivePlanAdaptationSafety(
   value: unknown,
 ): ActivePlanAdaptationSafety | null {
+  if (!hasCanonicalArrayTree(value)) return null
   const parsed = activePlanAdaptationSafetySchema.safeParse(value)
   return parsed.success ? parsed.data : null
 }
@@ -107,7 +111,9 @@ export function savePlanAdaptationContext(
   activeCandidateId: string,
 ): boolean {
   if (typeof window === "undefined") return false
-  const parsed = contextSchema.safeParse({ version: 1, activeCandidateId, candidates })
+  const input = { version: 1, activeCandidateId, candidates }
+  if (!hasCanonicalArrayTree(input)) return false
+  const parsed = contextSchema.safeParse(input)
   if (!parsed.success) return false
   try {
     window.localStorage.setItem(
@@ -125,7 +131,9 @@ export function loadPlanAdaptationContext(activeCandidateId: string) {
   try {
     const raw = window.localStorage.getItem(PLAN_ADAPTATION_CONTEXT_STORAGE_KEY)
     if (raw === null) return null
-    const parsed = contextSchema.safeParse(JSON.parse(raw) as unknown)
+    const input: unknown = JSON.parse(raw)
+    if (!hasCanonicalArrayTree(input)) return null
+    const parsed = contextSchema.safeParse(input)
     return parsed.success && parsed.data.activeCandidateId === activeCandidateId
       ? parsed.data
       : null

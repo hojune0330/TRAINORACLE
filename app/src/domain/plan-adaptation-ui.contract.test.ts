@@ -42,6 +42,26 @@ beforeEach(() => {
 })
 
 describe("next-frame adaptation UI adapter", () => {
+  it("rejects extra enumerable data on the candidate tuple", () => {
+    const fixture = createCoachRequiredFixture(new Date("2026-08-18T12:00:00.000Z"))
+    const candidates: [PlanCandidate, PlanCandidate] = [
+      fixture.baseCandidate,
+      fixture.proposedCandidate,
+    ]
+    Object.defineProperty(candidates, "evidenceText", {
+      value: "raw symptom: chest pain after training",
+      enumerable: true,
+    })
+    const setItem = vi.spyOn(Storage.prototype, "setItem")
+    setItem.mockClear()
+
+    expect(savePlanAdaptationContext(
+      candidates,
+      fixture.baseCandidate.candidateId,
+    )).toBe(false)
+    expect(setItem).not.toHaveBeenCalled()
+  })
+
   it("rejects a raw active candidate selector without changing saved context bytes", () => {
     const fixture = createCoachRequiredFixture(new Date("2026-08-18T12:00:00.000Z"))
     const candidates = [fixture.baseCandidate, fixture.proposedCandidate] as const

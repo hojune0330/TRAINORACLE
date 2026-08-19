@@ -1,5 +1,6 @@
 import { assertNever } from "../shared/assert-never"
-import { isRecord, parseSafetyGate } from "./input-values"
+import { RVE_NON_SENSITIVE_REASON_CODES } from "../rve/signal"
+import { isRecord } from "./input-values"
 import type { SafetyGateDecision } from "../safety-gate/gate"
 import type { PlanCandidate, PlanSelectionAuthority, PlanSession } from "./types"
 
@@ -81,6 +82,7 @@ const PLAN_BETA_CODES = new Set([
   "NON_SELECTABLE_PLAN_RESULT", "STALE_CANDIDATE_FINGERPRINT", "NONCANONICAL_CANDIDATE_FRAME",
   "SAFETY_GATE_RECHECK_BLOCKED", "SESSION_DAY_NOT_IN_ACTIVE_PLAN", "SESSION_SLOT_NOT_IN_ACTIVE_PLAN",
 ])
+const SAFETY_REASON_CODES: ReadonlySet<string> = new Set(RVE_NON_SENSITIVE_REASON_CODES)
 
 export function canonicalJson(value: unknown): string {
   return canonicalJsonValue(value, new Set<object>())
@@ -239,10 +241,32 @@ function parseTrigger(value: unknown): AdaptationTrigger | null {
 }
 
 function parseStrictSafetyGate(value: unknown): SafetyGateDecision | null {
-  if (!isRecord(value)) return null
-  const expected = value["kind"] === "passed" ? ["kind", "action", "planGenerationAllowed", "nonSensitiveReasonCodes", "audit"] : ["kind", "action", "planGenerationAllowed", "requiredNextAction", "nonSensitiveReasonCodes", "audit"]
-  if (!hasExactKeys(value, expected) || !isRecord(value["audit"])) return null
-  return parseSafetyGate(value) ?? null
+  if (!isRecord(value) || !isRecord(value["audit"]) || !hasExactKeys(value["audit"], ["event", "privacy"])) return null
+  const reasonCodes = value["nonSensitiveReasonCodes"]
+  if (!Array.isArray(reasonCodes) || !isDenseArray(reasonCodes)
+      || !reasonCodes.every((code) => typeof code === "string" && SAFETY_REASON_CODES.has(code))) return null
+  const audit = value["audit"]
+  if (audit["privacy"] !== "REASON_CODES_ONLY") return null
+  switch (value["kind"]) {
+    case "passed":
+      return hasExactKeys(value, ["kind", "action", "planGenerationAllowed", "nonSensitiveReasonCodes", "audit"])
+        && value["action"] === "CONTINUE_WITH_OTHER_GATES"
+        && value["planGenerationAllowed"] === true
+        && audit["event"] === "PLAN_SAFETY_GATE_PASSED"
+        ? { kind: "passed", action: "CONTINUE_WITH_OTHER_GATES", planGenerationAllowed: true, nonSensitiveReasonCodes: reasonCodes, audit: { event: "PLAN_SAFETY_GATE_PASSED", privacy: "REASON_CODES_ONLY" } }
+        : null
+    case "blocked":
+      if (!hasExactKeys(value, ["kind", "action", "planGenerationAllowed", "requiredNextAction", "nonSensitiveReasonCodes", "audit"])
+          || value["planGenerationAllowed"] !== false || audit["event"] !== "PLAN_SAFETY_GATE_BLOCKED") return null
+      if (value["action"] === "BLOCK" && value["requiredNextAction"] === "HUMAN_REVIEW") {
+        return { kind: "blocked", action: "BLOCK", planGenerationAllowed: false, requiredNextAction: "HUMAN_REVIEW", nonSensitiveReasonCodes: reasonCodes, audit: { event: "PLAN_SAFETY_GATE_BLOCKED", privacy: "REASON_CODES_ONLY" } }
+      }
+      return value["action"] === "BLOCK_OR_HUMAN_REVIEW" && value["requiredNextAction"] === "MORE_INFO_OR_HUMAN_REVIEW"
+        ? { kind: "blocked", action: "BLOCK_OR_HUMAN_REVIEW", planGenerationAllowed: false, requiredNextAction: "MORE_INFO_OR_HUMAN_REVIEW", nonSensitiveReasonCodes: reasonCodes, audit: { event: "PLAN_SAFETY_GATE_BLOCKED", privacy: "REASON_CODES_ONLY" } }
+        : null
+    default:
+      return null
+  }
 }
 
 function parsePlanCandidate(value: unknown): PlanCandidate | null {
@@ -253,20 +277,33 @@ function parsePlanCandidate(value: unknown): PlanCandidate | null {
 function isPlanCandidate(value: unknown): value is PlanCandidate {
   if (!isRecord(value) || !hasExactKeys(value, CANDIDATE_KEYS) || !Array.isArray(value["sessions"])
       || !isDenseArray(value["sessions"]) || !value["sessions"].every(isPlanSession)
-      || !isCandidateId(value["candidateId"], value["detailedPrescriptionFingerprint"])
       || (value["kind"] !== "BALANCED" && value["kind"] !== "CONSERVATIVE")
       || (value["eventGroup"] !== "MIDDLE_DISTANCE" && value["eventGroup"] !== "FIVE_K")
       || !(value["eventDistanceM"] === null || parseSupportedEvent(value["eventDistanceM"]) !== null)
       || !isPlannedEnergyIntent(value["selectedEnergyIntent"])
       || (value["sourceMode"] !== "PROFILE_ONLY" && value["sourceMode"] !== "JOURNAL_CONTEXT_ONLY")
       || value["confidence"] !== "LIMITED" || !isCandidateBeta(value["beta"])
-      || !(value["detailedPrescriptionFingerprint"] === null || (typeof value["detailedPrescriptionFingerprint"] === "string" && value["detailedPrescriptionFingerprint"].length > 0))
       || !isContinuityContext(value["continuityContext"])
       || (value["selectionAuthority"] !== "SELF" && value["selectionAuthority"] !== "COACH_REQUIRED")
       || !isCandidateFrame(value["frame"]) || !isExposureLedger(value["mainExposureLedger"])
       || !Array.isArray(value["rationaleCodes"]) || !isDenseArray(value["rationaleCodes"])
       || !value["rationaleCodes"].every((code) => typeof code === "string" && PLAN_BETA_CODES.has(code))
       || !hasValidSessionLayout(value["sessions"])) return false
+  const detailedFingerprints = value["sessions"].flatMap((session) => (
+    session.prescription.kind === "PACE_TARGET"
+      ? [session.prescription.prescriptionFingerprint]
+      : []
+  ))
+  const expectedDetailedFingerprint = detailedFingerprints.length === 1
+    ? detailedFingerprints[0]
+    : null
+  if (detailedFingerprints.length > 1
+      || value["detailedPrescriptionFingerprint"] !== expectedDetailedFingerprint
+      || !isCandidateId(value["candidateId"], expectedDetailedFingerprint)
+      || !isRecord(value["beta"])
+      || value["beta"]["prescriptionBasis"] !== (expectedDetailedFingerprint === null
+        ? "DURATION_RPE_ONLY"
+        : "ONE_TRUSTED_DETAILED_SESSION")) return false
   const eventIdentity = `:event-${value["eventDistanceM"] ?? "unbound"}:`
   const ledger = value["mainExposureLedger"]
   if (!isExposureLedger(ledger)) return false
@@ -340,10 +377,14 @@ function isExposureLedger(value: unknown): value is PlanCandidate["mainExposureL
 }
 
 function isDenseArray(value: readonly unknown[]): boolean {
-  for (let index = 0; index < value.length; index += 1) {
-    if (!Object.hasOwn(value, index)) return false
+  let index = 0
+  for (const key of Reflect.ownKeys(value)) {
+    const descriptor = Object.getOwnPropertyDescriptor(value, key)
+    if (descriptor?.enumerable !== true) continue
+    if (typeof key !== "string" || key !== String(index)) return false
+    index += 1
   }
-  return true
+  return index === value.length
 }
 
 function hasValidSessionLayout(sessions: readonly PlanSession[]): boolean {

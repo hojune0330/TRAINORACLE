@@ -6,6 +6,7 @@ import {
   verifyPlanAdaptationProposal,
 } from "../src/plan-generator/adaptation"
 import { generatePlanCandidates } from "../src/plan-generator/generator"
+import { RVE_NON_SENSITIVE_REASON_CODES } from "../src/rve/signal"
 import { baseRequest, clearedGate, expectGenerated } from "./fixtures/plan-beta-request"
 import { activeGate, unknownGate } from "./fixtures/plan-beta-request"
 
@@ -33,6 +34,18 @@ async function fixtureRequest() {
     createdAt: "2026-08-18T00:05:00.000Z",
     idempotencyKey: `sha256:${"1".repeat(64)}`,
   }
+}
+
+function withEnumerableArrayProperty<T>(
+  values: readonly T[],
+  key: PropertyKey = "evidenceText",
+): T[] {
+  const copy = [...values]
+  Object.defineProperty(copy, key, {
+    value: "raw symptom: chest pain after training",
+    enumerable: true,
+  })
+  return copy
 }
 
 describe("next-frame plan adaptation", () => {
@@ -321,6 +334,168 @@ describe("next-frame plan adaptation", () => {
       proposedCandidate,
       baseContentHash: await hashPlanCandidate(baseCandidate),
     })).toEqual({ kind: "rejected", code: "MALFORMED_INPUT" })
+  })
+
+  it("rejects a rehashed RPE-only candidate with a raw detailed fingerprint suffix", async () => {
+    const input = await fixtureRequest()
+    const rawFingerprint = "raw-symptom-chest-pain-after-training-1"
+    const attachFingerprint = (candidate: typeof input.baseCandidate) => ({
+      ...candidate,
+      candidateId: `${candidate.candidateId}:pace-target:${rawFingerprint}`,
+      detailedPrescriptionFingerprint: rawFingerprint,
+    })
+    const baseCandidate = attachFingerprint(input.baseCandidate)
+    const proposedCandidate = attachFingerprint(input.proposedCandidate)
+
+    const result = await createPlanAdaptationProposal({
+      ...input,
+      baseCandidate,
+      proposedCandidate,
+      baseContentHash: await hashPlanCandidate(baseCandidate),
+    })
+
+    expect(result).toEqual({ kind: "rejected", code: "MALFORMED_INPUT" })
+    expect(JSON.stringify(result)).not.toContain(rawFingerprint)
+  })
+
+  it("rejects a raw safety reason code without serializing it", async () => {
+    const input = await fixtureRequest()
+    const rawReasonCode = "raw-symptom-chest-pain-after-training-1"
+
+    const result = await createPlanAdaptationProposal({
+      ...input,
+      safetyGate: {
+        ...input.safetyGate,
+        nonSensitiveReasonCodes: [rawReasonCode],
+      },
+    })
+
+    expect(result).toEqual({ kind: "rejected", code: "MALFORMED_INPUT" })
+    expect(JSON.stringify(result)).not.toContain(rawReasonCode)
+  })
+
+  it.each([
+    ["string property", "evidenceText"],
+    ["symbol property", Symbol("evidenceText")],
+  ] as const)("rejects a safety reason-code array with an extra enumerable %s", async (_label, key) => {
+    const input = await fixtureRequest()
+    const nonSensitiveReasonCodes = withEnumerableArrayProperty(
+      input.safetyGate.nonSensitiveReasonCodes,
+      key,
+    )
+
+    expect(await createPlanAdaptationProposal({
+      ...input,
+      safetyGate: { ...input.safetyGate, nonSensitiveReasonCodes },
+    })).toEqual({ kind: "rejected", code: "MALFORMED_INPUT" })
+  })
+
+  it("rejects a candidate rationale-code array with an extra enumerable property", async () => {
+    const input = await fixtureRequest()
+    const mutate = (candidate: typeof input.baseCandidate) => ({
+      ...candidate,
+      rationaleCodes: withEnumerableArrayProperty(candidate.rationaleCodes),
+    })
+    const baseCandidate = mutate(input.baseCandidate)
+    const proposedCandidate = mutate(input.proposedCandidate)
+
+    expect(await createPlanAdaptationProposal({
+      ...input,
+      baseCandidate,
+      proposedCandidate,
+      baseContentHash: input.baseContentHash,
+    })).toEqual({ kind: "rejected", code: "MALFORMED_INPUT" })
+  })
+
+  it.each([
+    ["raw audit event", (input: Awaited<ReturnType<typeof fixtureRequest>>) => ({
+      ...input.safetyGate,
+      audit: { ...input.safetyGate.audit, event: "raw-symptom-chest-pain-after-training-1" },
+    })],
+    ["raw audit privacy", (input: Awaited<ReturnType<typeof fixtureRequest>>) => ({
+      ...input.safetyGate,
+      audit: { ...input.safetyGate.audit, privacy: "raw_symptom_chest_pain_after_training_1" },
+    })],
+    ["extra audit evidence text", (input: Awaited<ReturnType<typeof fixtureRequest>>) => ({
+      ...input.safetyGate,
+      audit: { ...input.safetyGate.audit, evidenceText: "raw symptom: chest pain after training" },
+    })],
+    ["raw passed action", (input: Awaited<ReturnType<typeof fixtureRequest>>) => ({
+      ...input.safetyGate,
+      action: "raw-symptom-chest-pain-after-training-1",
+    })],
+    ["passed action inconsistent with status", (input: Awaited<ReturnType<typeof fixtureRequest>>) => ({
+      ...input.safetyGate,
+      action: "BLOCK",
+    })],
+    ["blocked action inconsistent with required next action", (_input: Awaited<ReturnType<typeof fixtureRequest>>) => ({
+      ...activeGate(),
+      action: "BLOCK",
+      requiredNextAction: "MORE_INFO_OR_HUMAN_REVIEW",
+    })],
+    ["unknown gate key", (input: Awaited<ReturnType<typeof fixtureRequest>>) => ({
+      ...input.safetyGate,
+      unknownKey: "raw-symptom-chest-pain-after-training-1",
+    })],
+    ["ignored status key", (input: Awaited<ReturnType<typeof fixtureRequest>>) => ({
+      ...input.safetyGate,
+      status: "CLEARED",
+    })],
+    ["ignored disposition key", (input: Awaited<ReturnType<typeof fixtureRequest>>) => ({
+      ...input.safetyGate,
+      disposition: "D9_CLEARED",
+    })],
+  ] as const)("rejects %s at the adaptation safety gate boundary", async (_label, makeSafetyGate) => {
+    const input = await fixtureRequest()
+
+    const result = await createPlanAdaptationProposal({
+      ...input,
+      safetyGate: makeSafetyGate(input),
+    })
+
+    expect(result).toEqual({ kind: "rejected", code: "MALFORMED_INPUT" })
+    expect(result.kind).not.toBe("proposed")
+  })
+
+  it("accepts every closed safety reason code and an empty reason list", async () => {
+    const input = await fixtureRequest()
+    const reasonLists = [
+      [],
+      ...RVE_NON_SENSITIVE_REASON_CODES.map((reasonCode) => [reasonCode]),
+    ]
+
+    for (const nonSensitiveReasonCodes of reasonLists) {
+      expect(await createPlanAdaptationProposal({
+        ...input,
+        safetyGate: { ...input.safetyGate, nonSensitiveReasonCodes },
+      })).toMatchObject({ kind: "proposed" })
+    }
+  })
+
+  it.each([
+    ["D9 ACTIVE", {
+      kind: "blocked", action: "BLOCK", planGenerationAllowed: false, requiredNextAction: "HUMAN_REVIEW",
+      nonSensitiveReasonCodes: ["D9_ACTIVE_MANUAL_OR_MEDICAL_HOLD"],
+      audit: { event: "PLAN_SAFETY_GATE_BLOCKED", privacy: "REASON_CODES_ONLY" },
+    }, "blocked"],
+    ["D9 UNKNOWN", {
+      kind: "blocked", action: "BLOCK_OR_HUMAN_REVIEW", planGenerationAllowed: false, requiredNextAction: "MORE_INFO_OR_HUMAN_REVIEW",
+      nonSensitiveReasonCodes: ["D9_UNKNOWN_PAIN_WORSENING"],
+      audit: { event: "PLAN_SAFETY_GATE_BLOCKED", privacy: "REASON_CODES_ONLY" },
+    }, "blocked"],
+    ["D9 CLEARED", {
+      kind: "passed", action: "CONTINUE_WITH_OTHER_GATES", planGenerationAllowed: true,
+      nonSensitiveReasonCodes: ["D9_CLEARED_NO_COLLOQUIAL_RISK_SIGNAL"],
+      audit: { event: "PLAN_SAFETY_GATE_PASSED", privacy: "REASON_CODES_ONLY" },
+    }, "proposed"],
+    ["D9 CLEARED advisory", {
+      kind: "passed", action: "CONTINUE_WITH_OTHER_GATES", planGenerationAllowed: true,
+      nonSensitiveReasonCodes: ["D9_CLEARED_WITH_NON_BLOCKING_ADVISORY", "D9_ADVISORY_UNLOCALIZED_DISCOMFORT"],
+      audit: { event: "PLAN_SAFETY_GATE_PASSED", privacy: "REASON_CODES_ONLY" },
+    }, "proposed"],
+  ] as const)("preserves the authoritative %s safety gate variant", async (_label, safetyGate, expectedKind) => {
+    const result = await createPlanAdaptationProposal({ ...await fixtureRequest(), safetyGate })
+    expect(result.kind).toBe(expectedKind)
   })
 
   it("rejects a rehashed serialized proposal containing a raw idempotency value", async () => {
