@@ -62,6 +62,25 @@ describe("training home modes", () => {
     expect(titleRule).toContain("overflow-wrap: break-word")
   })
 
+  it("keeps briefing and home metadata on Korean word boundaries", () => {
+    const rules = [
+      appCss.match(/\.training-home__briefing\s*\{[^}]*\}/u)?.[0] ?? "",
+      appCss.match(/\.training-home__next-button small\s*\{[^}]*\}/u)?.[0] ?? "",
+      appCss.match(/\.training-home__service small\s*\{[^}]*\}/u)?.[0] ?? "",
+    ]
+    const anywhereSelectors = [...appCss.matchAll(/([^{}]+)\{[^}]*overflow-wrap:\s*anywhere;?[^}]*\}/gu)]
+      .map(([, selectors]) => selectors)
+
+    expect(rules).not.toContain("")
+    for (const rule of rules) {
+      expect(rule).toContain("word-break: keep-all")
+      expect(rule).toContain("overflow-wrap: break-word")
+      expect(rule).not.toContain("overflow-wrap: anywhere")
+    }
+
+    expect(anywhereSelectors.join("\n")).not.toMatch(/\.training-home__(?:briefing|next-button small|service small)/u)
+  })
+
   it("preserves the welcome heading name while grouping its semantic phrases", () => {
     render(<TrainingHome model={WELCOME_MODEL} />)
 

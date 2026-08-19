@@ -619,6 +619,8 @@ input, textarea { font-family: inherit; }
   font-size: 12.5px !important;
   line-height: 1.55 !important;
   border-top: 1px dashed var(--line);
+  word-break: keep-all;
+  overflow-wrap: break-word;
 }
 
 .training-home__next {
@@ -659,7 +661,8 @@ input, textarea { font-family: inherit; }
   font-size: 12px;
   line-height: 1.45;
   color: var(--ink-3);
-  overflow-wrap: anywhere;
+  word-break: keep-all;
+  overflow-wrap: break-word;
 }
 
 .training-home__services {
@@ -705,6 +708,15 @@ input, textarea { font-family: inherit; }
   font-size: 12px;
   line-height: 1.45;
   color: var(--ink-3);
+}
+
+.training-home__service small {
+  word-break: keep-all;
+  overflow-wrap: break-word;
+}
+
+.more-screen__row small,
+.minji-index__stack small {
   overflow-wrap: anywhere;
 }
 
