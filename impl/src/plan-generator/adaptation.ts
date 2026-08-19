@@ -60,6 +60,27 @@ const REQUEST_KEYS = ["kind", "scope", "activePlanStartedAt", "baseCandidate", "
 const CANDIDATE_KEYS = ["candidateId", "kind", "eventGroup", "eventDistanceM", "selectedEnergyIntent", "sourceMode", "confidence", "beta", "detailedPrescriptionFingerprint", "continuityContext", "selectionAuthority", "frame", "mainExposureLedger", "rationaleCodes", "sessions"] as const
 const PRIVATE_KEY = /(?:memo|note|symptom)/iu
 const SHA256_PATTERN = /^sha256:[a-f0-9]{64}$/u
+const ISO_DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/u
+const CURRENT_ELAPSED_LABELS = new Set(
+  Array.from({ length: 19 }, (_, months) => formatElapsedMonths(months)),
+)
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/iu
+const LOCAL_RECORD_ID_PATTERN = /^local-\d+-[a-z0-9]+$/u
+const EXPOSURE_ID_PATTERN = /^(?:app-main-day-(?:[1-9]|10)|fixture-main-[1-3])$/u
+const CANDIDATE_ID_PATTERN = /^beta:(?:balanced|conservative):(?:middle_distance|five_k):event-(?:800|1500|3000|5000):(?:new_to_running|developing|experienced):(?:recovery_intent|base_intent|lt_intent|vo2_intent|gly_intent|atp_pc_intent|mixed_intent):(?:single_session_only|recovery_pm_allowed):(?:morning|evening|varies):projection-(?:7|9|9\.5|10):local-civil-9-5:[a-z0-9-]+:\d+(?:-\d+)*:(?:no_usable_journal|recent_journal_context):(?:no-continuity|(?:balanced|conservative):(?:completed|rested|skipped|pain_checkin)-\d+(?:-(?:completed|rested|skipped|pain_checkin)-\d+)*)$/u
+const PLAN_BETA_CODES = new Set([
+  "PROFILE_ONLY_LIMITED_CONTEXT", "RECENT_JOURNAL_CONTEXT_PRESENT", "BETA_DURATION_RPE_ONLY",
+  "PACE_TARGET_BOUND", "BETA_NON_UNIVERSAL_FORMATION_SCOPE", "PREVIOUS_FRAME_CONTEXT_RETAINED",
+  "SAFETY_GATE_ACTIVE", "SAFETY_GATE_UNKNOWN", "MALFORMED_INPUT", "UNSUPPORTED_FRAME_LENGTH",
+  "INSUFFICIENT_AVAILABLE_DAYS", "INVALID_AVAILABLE_DAY", "INVALID_JOURNAL_CONTEXT",
+  "INVALID_CONTINUITY_CONTEXT", "NON_CANONICAL_FRAME_REQUIRES_REVIEW",
+  "CANONICAL_LEDGER_REQUIRES_VALIDATION", "NEEDS_COACH_CLARIFICATION",
+  "INVALID_COMPOSITE_RELATION_REQUIRES_REVIEW", "COMPETITION_DAY_COLLISION_REQUIRES_COACH_CLARIFICATION",
+  "MAIN_EXPOSURE_COUNT_REQUIRES_REVIEW", "MAIN_EXPOSURE_OUTSIDE_AVAILABILITY_REQUIRES_REVIEW",
+  "COACH_SELECTION_REQUIRED", "CANDIDATE_NOT_FOUND", "INVALID_SELECTION_REQUEST",
+  "NON_SELECTABLE_PLAN_RESULT", "STALE_CANDIDATE_FINGERPRINT", "NONCANONICAL_CANDIDATE_FRAME",
+  "SAFETY_GATE_RECHECK_BLOCKED", "SESSION_DAY_NOT_IN_ACTIVE_PLAN", "SESSION_SLOT_NOT_IN_ACTIVE_PLAN",
+])
 
 export function canonicalJson(value: unknown): string {
   return canonicalJsonValue(value, new Set<object>())
@@ -116,6 +137,9 @@ export async function verifyPlanAdaptationProposal(proposal: unknown): Promise<b
   const [baseHash, proposedHash] = await Promise.all([hashPlanCandidate(baseCandidate), hashPlanCandidate(successorCandidate)])
   return proposalHash === expectedProposalHash
     && proposalId === `adaptation:${expectedProposalHash.slice("sha256:".length)}`
+    && isAthleteId(proposal["athleteId"])
+    && typeof proposal["idempotencyKey"] === "string" && SHA256_PATTERN.test(proposal["idempotencyKey"])
+    && isIsoTimestamp(proposal["createdAt"])
     && proposal["baseCandidateId"] === baseCandidate.candidateId
     && proposal["baseContentHash"] === baseHash && proposal["proposedContentHash"] === proposedHash
     && proposal["approvedBeforeValueRef"] === baseHash && proposal["approvedAfterValueRef"] === proposedHash
@@ -176,7 +200,7 @@ function parseAdaptationRequest(value: unknown): PlanAdaptationProposalRequest |
   const scope = value["scope"]
   const trigger = parseTrigger(value["trigger"])
   const safetyGate = parseStrictSafetyGate(value["safetyGate"])
-  if (!isRecord(scope) || !hasExactKeys(scope, ["athleteId", "eventDistanceM"]) || typeof scope["athleteId"] !== "string") return null
+  if (!isRecord(scope) || !hasExactKeys(scope, ["athleteId", "eventDistanceM"]) || !isAthleteId(scope["athleteId"])) return null
   const eventDistanceM = parseSupportedEvent(scope["eventDistanceM"])
   const baseCandidate = parsePlanCandidate(value["baseCandidate"])
   const proposedCandidate = parsePlanCandidate(value["proposedCandidate"])
@@ -186,12 +210,13 @@ function parseAdaptationRequest(value: unknown): PlanAdaptationProposalRequest |
       || (proposalOrigin !== "SELF_SERVICE" && proposalOrigin !== "COACH_AUTHORED")
       || (changeDimension !== "INTENSITY" && changeDimension !== "VOLUME" && changeDimension !== "FREQUENCY")
       || typeof value["baseContentHash"] !== "string" || !SHA256_PATTERN.test(value["baseContentHash"])
-      || typeof value["activeHold"] !== "boolean" || typeof value["idempotencyKey"] !== "string" || value["idempotencyKey"].length === 0) return null
+      || typeof value["activeHold"] !== "boolean" || typeof value["idempotencyKey"] !== "string" || !SHA256_PATTERN.test(value["idempotencyKey"])) return null
   const activePlanStartedAt = value["activePlanStartedAt"]
   const safetyEvaluatedAt = value["safetyEvaluatedAt"]
   const safetyValidUntil = value["safetyValidUntil"]
   const createdAt = value["createdAt"]
   if (!isIsoTimestamp(activePlanStartedAt) || !isIsoTimestamp(safetyEvaluatedAt) || !isIsoTimestamp(safetyValidUntil) || !isIsoTimestamp(createdAt)) return null
+  if (!candidateAnchorLabelsMatch(baseCandidate, createdAt) || !candidateAnchorLabelsMatch(proposedCandidate, createdAt)) return null
   return { kind: "PLAN_ADAPTATION_PROPOSAL_REQUEST", scope: { athleteId: scope["athleteId"], eventDistanceM }, activePlanStartedAt, baseCandidate, proposedCandidate, baseContentHash: value["baseContentHash"], proposalOrigin, trigger, changeDimension, safetyGate, safetyEvaluatedAt, safetyValidUntil, activeHold: value["activeHold"], createdAt, idempotencyKey: value["idempotencyKey"] }
 }
 
@@ -199,14 +224,14 @@ function parseTrigger(value: unknown): AdaptationTrigger | null {
   if (!isRecord(value)) return null
   switch (value["kind"]) {
     case "EXPLICIT_REQUEST":
-      return hasExactKeys(value, ["kind", "requestedBy", "sourceRef"]) && (value["requestedBy"] === "ATHLETE" || value["requestedBy"] === "COACH") && typeof value["sourceRef"] === "string"
+      return hasExactKeys(value, ["kind", "requestedBy", "sourceRef"]) && (value["requestedBy"] === "ATHLETE" || value["requestedBy"] === "COACH") && isExplicitRequestSource(value["sourceRef"])
         ? { kind: "EXPLICIT_REQUEST", requestedBy: value["requestedBy"], sourceRef: value["sourceRef"] } : null
     case "SAME_EVENT_PB_SB_AFTER_ACTIVE_PLAN_START": {
       const eventDistanceM = parseSupportedEvent(value["eventDistanceM"])
       if (!hasExactKeys(value, ["kind", "explicitlyConfirmed", "recordId", "purpose", "eventDistanceM", "achievedAt", "sourceRef", "historicalOrBackfilled"])
           || value["explicitlyConfirmed"] !== true || typeof value["historicalOrBackfilled"] !== "boolean" || eventDistanceM === null
-          || typeof value["recordId"] !== "string" || (value["purpose"] !== "PERSONAL_BEST" && value["purpose"] !== "SEASON_BEST")
-          || !isIsoTimestamp(value["achievedAt"]) || typeof value["sourceRef"] !== "string") return null
+          || !isRecordId(value["recordId"]) || (value["purpose"] !== "PERSONAL_BEST" && value["purpose"] !== "SEASON_BEST")
+          || !isIsoTimestamp(value["achievedAt"]) || value["sourceRef"] !== `athlete-record:${value["recordId"]}`) return null
       return { kind: "SAME_EVENT_PB_SB_AFTER_ACTIVE_PLAN_START", explicitlyConfirmed: true, recordId: value["recordId"], purpose: value["purpose"], eventDistanceM, achievedAt: value["achievedAt"], sourceRef: value["sourceRef"], historicalOrBackfilled: value["historicalOrBackfilled"] }
     }
     default: return null
@@ -228,7 +253,7 @@ function parsePlanCandidate(value: unknown): PlanCandidate | null {
 function isPlanCandidate(value: unknown): value is PlanCandidate {
   if (!isRecord(value) || !hasExactKeys(value, CANDIDATE_KEYS) || !Array.isArray(value["sessions"])
       || !isDenseArray(value["sessions"]) || !value["sessions"].every(isPlanSession)
-      || typeof value["candidateId"] !== "string" || value["candidateId"].length === 0
+      || !isCandidateId(value["candidateId"], value["detailedPrescriptionFingerprint"])
       || (value["kind"] !== "BALANCED" && value["kind"] !== "CONSERVATIVE")
       || (value["eventGroup"] !== "MIDDLE_DISTANCE" && value["eventGroup"] !== "FIVE_K")
       || !(value["eventDistanceM"] === null || parseSupportedEvent(value["eventDistanceM"]) !== null)
@@ -240,10 +265,14 @@ function isPlanCandidate(value: unknown): value is PlanCandidate {
       || (value["selectionAuthority"] !== "SELF" && value["selectionAuthority"] !== "COACH_REQUIRED")
       || !isCandidateFrame(value["frame"]) || !isExposureLedger(value["mainExposureLedger"])
       || !Array.isArray(value["rationaleCodes"]) || !isDenseArray(value["rationaleCodes"])
-      || !value["rationaleCodes"].every((code) => typeof code === "string" && code.length > 0)
+      || !value["rationaleCodes"].every((code) => typeof code === "string" && PLAN_BETA_CODES.has(code))
       || !hasValidSessionLayout(value["sessions"])) return false
   const eventIdentity = `:event-${value["eventDistanceM"] ?? "unbound"}:`
+  const ledger = value["mainExposureLedger"]
+  if (!isExposureLedger(ledger)) return false
+  const exposureIdentity = `:${ledger.countedExposureIds.join("-")}:`
   return value["candidateId"].includes(eventIdentity)
+    && value["candidateId"].includes(exposureIdentity)
     && value["sessions"].every((session) => session.prescription.kind !== "PACE_TARGET"
     || session.prescription.scope.eventGroup === value["eventGroup"])
 }
@@ -300,13 +329,14 @@ function isCandidateFrame(value: unknown): boolean {
       || (continuity["kind"] === "SEVEN_DAY_CONTINUITY" && continuity["nextFrameInput"] === "SELECTED_PLAN_AND_PROGRESS" && hasExactKeys(continuity, ["kind", "nextFrameInput"])))
 }
 
-function isExposureLedger(value: unknown): boolean {
+function isExposureLedger(value: unknown): value is PlanCandidate["mainExposureLedger"] {
   return isRecord(value) && hasExactKeys(value, ["mainExposureCount", "fingerprint", "countedExposureIds"])
     && (value["mainExposureCount"] === 2 || value["mainExposureCount"] === 3)
-    && typeof value["fingerprint"] === "string" && value["fingerprint"].length > 0 && Array.isArray(value["countedExposureIds"])
+    && typeof value["fingerprint"] === "string" && Array.isArray(value["countedExposureIds"])
     && isDenseArray(value["countedExposureIds"])
     && value["countedExposureIds"].length === value["mainExposureCount"]
-    && value["countedExposureIds"].every((id) => typeof id === "string" && id.length > 0)
+    && value["countedExposureIds"].every(isExposureId)
+    && value["fingerprint"] === value["countedExposureIds"].join(":")
 }
 
 function isDenseArray(value: readonly unknown[]): boolean {
@@ -336,6 +366,19 @@ function hasValidSessionLayout(sessions: readonly PlanSession[]): boolean {
 
 const PACE_TARGET_KEYS = ["kind", "manifestVersion", "templateId", "templateVersion", "templateContentFingerprint", "notation", "sourceDecisionId", "sourceEvidenceRef", "approvalDecisionId", "ownerAuthorityDecisionId", "sportsScienceEvidence", "populationApplicabilityEvidence", "scope", "componentRefs", "operationalComponents", "setCount", "repetitionsPerSet", "repetitionDistanceM", "targetEventDistanceM", "targetRepSeconds", "selectedAnchor", "displayRoundingPolicyVersion", "repetitionRecoverySeconds", "repetitionRecoveryMode", "setRecoverySeconds", "setRecoveryMode", "totals", "stopCodes", "fallbackCode", "prescriptionFingerprint"] as const
 
+const MD_COMPONENT_REFS = [
+  { componentType: "WARMUP", componentRef: "WU-MD-01", componentVersion: "1.0.0", componentFingerprint: "sha256:a0aafebf7c1021f56a32cd1c4330609b5d4861ac7a138a0236a3282480d1bb28" },
+  { componentType: "COOLDOWN", componentRef: "CD-MD-01", componentVersion: "1.0.0", componentFingerprint: "sha256:3b94b71b4b529fca8841b83f9d355f023fe9178e22a80288c8c043b23d655850" },
+  { componentType: "DOWNSHIFT", componentRef: "RPE-ONLY-CONTROLLED-01", componentVersion: "1.0.0", componentFingerprint: "sha256:cd09b06359fcdfb422b421c31dd45a97beeccbdbecaabd1eb7274cdd67ecf3c5" },
+  { componentType: "STOP_CONDITIONS", componentRef: "STOP-MD-01", componentVersion: "1.0.0", componentFingerprint: "sha256:d2d0370db17e7caeb11f7aab144b263bef4d63bf91df170175c910133193208e" },
+] as const
+const FIVE_K_COMPONENT_REFS = [
+  { componentType: "WARMUP", componentRef: "WU-V2-5K-01", componentVersion: "1.0.0", componentFingerprint: "sha256:d8da21478d2a44841122874ccf35c24aad1777ebaaeb018deda3e98a8f9cf6f1" },
+  { componentType: "COOLDOWN", componentRef: "CD-V2-5K-01", componentVersion: "1.0.0", componentFingerprint: "sha256:8d1470171a5edb17a43aa1c21ca34bbfb77456347a68293d2ffe0a5bc52968ab" },
+  { componentType: "DOWNSHIFT", componentRef: "RPE-ONLY-CONTROLLED-01", componentVersion: "1.0.0", componentFingerprint: "sha256:cd09b06359fcdfb422b421c31dd45a97beeccbdbecaabd1eb7274cdd67ecf3c5" },
+  { componentType: "STOP_CONDITIONS", componentRef: "STOP-V2-5K-01", componentVersion: "1.0.0", componentFingerprint: "sha256:737ce6df7f7049530b72f3f52f20a2cbbd32bb83ccf6bfd93c29e25864b4bc29" },
+] as const
+
 function isPaceTargetPrescription(value: Record<string, unknown>): boolean {
   if (!hasExactKeys(value, PACE_TARGET_KEYS)) return false
   const strings = ["manifestVersion", "templateId", "templateVersion", "templateContentFingerprint", "notation", "sourceDecisionId", "sourceEvidenceRef", "approvalDecisionId", "ownerAuthorityDecisionId", "displayRoundingPolicyVersion", "prescriptionFingerprint"]
@@ -352,13 +395,69 @@ function isPaceTargetPrescription(value: Record<string, unknown>): boolean {
       || value["fallbackCode"] !== "RPE_ONLY_CONTROLLED") return false
   const anchor = value["selectedAnchor"]
   return isRecord(anchor) && anchor["eventDistanceM"] === value["targetEventDistanceM"]
+    && hasApprovedPrescriptionReferenceBinding(value)
     && isConsistentPaceTarget(value)
 }
 
 function isEvidenceIdentity(value: unknown): boolean {
   return isRecord(value) && hasExactKeys(value, ["evidenceId", "decisionRef", "fingerprint"])
-    && ["evidenceId", "decisionRef"].every((key) => typeof value[key] === "string" && value[key].length > 0)
+    && typeof value["evidenceId"] === "string" && typeof value["decisionRef"] === "string"
     && typeof value["fingerprint"] === "string" && SHA256_PATTERN.test(value["fingerprint"])
+}
+
+function hasApprovedPrescriptionReferenceBinding(value: Record<string, unknown>): boolean {
+  const distance = value["targetEventDistanceM"]
+  if (distance !== 800 && distance !== 1500 && distance !== 3000 && distance !== 5000) return false
+  const templateId = distance === 5000 ? "V2-SEED-05" : `MD-${distance}-01`
+  const approved = distance === 5000
+    ? { fingerprint: "sha256:ad4a8c436a5a6e7a9c81342d79b359d84b1b8ea1034f9589141429eea8d0e42a", notation: "5×1000m @5000m RP · r150″ JOG", eventGroup: "FIVE_K", eventFingerprint: "sha256:43f39eea01053d1cf11afbdac90adc0c6331cd4b36355c16b660b6970d62cbed", experienceFingerprint: "sha256:dddff17cc298cd32ce7cbd6c2ccff6e38034b7e0ff5dd114e40b3893d55b4517", sportsFingerprint: "sha256:43f39eea01053d1cf11afbdac90adc0c6331cd4b36355c16b660b6970d62cbed", populationFingerprint: "sha256:dddff17cc298cd32ce7cbd6c2ccff6e38034b7e0ff5dd114e40b3893d55b4517", componentRefs: FIVE_K_COMPONENT_REFS }
+    : {
+        fingerprint: distance === 800 ? "sha256:8aa917947277883df94a9de665accd59a028b6753cec22d8fecf06795d28b149" : distance === 1500 ? "sha256:dd82bb01baa7b34e163f9148b76eae3956285dc5d1bd7e5217cd39373d966fab" : "sha256:a69b24eccf72be076865b091d6a4ee408da6444512c09a788d717d99adc7a455",
+        notation: distance === 800 ? "10×200m @800m RP · r60″ STAND" : distance === 1500 ? "3×500m @1500m RP · r180″ STAND" : "4×800m @3000m RP · r180″ WALK",
+        eventGroup: "MIDDLE_DISTANCE",
+        eventFingerprint: distance === 800 ? "sha256:15f0364506a6325828b68c7320bad090ebc718552d693af025d0e5b86117a01a" : distance === 1500 ? "sha256:1aa88001839a9fa0202e290c36b50a309a98bff8fbd8abc61903d9277a644082" : "sha256:fb0bc61a1848f424a00510c4d8bbea23be4528d0e89045c68a26ab8d730436e8",
+        experienceFingerprint: "sha256:5113008167054deeb83f6519021273f477257a8ba379b95916f4139f6468a5c3",
+        sportsFingerprint: distance === 800 ? "sha256:b7b1d282bc14a968fd4d7ca056e501ae2b9870be666a2b50e0c6311892205165" : distance === 1500 ? "sha256:e7897160a160364a7143f7c5dce9154a42ce0eea7dae11acb6876ea9721e93e0" : "sha256:fc3ca228cd6615470775b2a1c768e5bfa4f9e658938893674340b16cad5462fe",
+        populationFingerprint: "sha256:db90564affefb2723de747e3c52a406463cf9d9964d4143c1c85fa4083fa6c94",
+        componentRefs: MD_COMPONENT_REFS,
+      }
+  const sourceDecisionId = distance === 5000
+    ? "TO-V2-SEED-05-OWNER-ADOPTION-2026-08-17"
+    : "MIDDLE_DISTANCE_SOURCE_ADOPTION_PACKET_2026-08-17"
+  const approvalDecisionId = distance === 5000
+    ? "TO-V2-SEED-05-OWNER-ADOPTION-2026-08-17"
+    : "TO-MD-RUNTIME-ACTIVATION-2026-08-17"
+  const sourceEvidenceRef = distance === 5000
+    ? "reports/review/V2_SEED_05_OWNER_ADOPTION_DECISION_2026-08-17.md"
+    : "reports/review/MIDDLE_DISTANCE_SOURCE_ADOPTION_PACKET_2026-08-17.md"
+  const sports = value["sportsScienceEvidence"]
+  const population = value["populationApplicabilityEvidence"]
+  const scope = value["scope"]
+  return value["manifestVersion"] === "1"
+    && value["templateId"] === templateId
+    && value["templateVersion"] === "1.0.0"
+    && value["templateContentFingerprint"] === approved.fingerprint
+    && value["notation"] === approved.notation
+    && value["displayRoundingPolicyVersion"] === "seconds-v1"
+    && value["sourceDecisionId"] === sourceDecisionId
+    && value["sourceEvidenceRef"] === sourceEvidenceRef
+    && value["approvalDecisionId"] === approvalDecisionId
+    && value["ownerAuthorityDecisionId"] === approvalDecisionId
+    && isRecord(sports)
+    && sports["evidenceId"] === `${templateId}-SPORTS-SCIENCE-EVIDENCE-2026-08-17`
+    && sports["decisionRef"] === approvalDecisionId
+    && sports["fingerprint"] === approved.sportsFingerprint
+    && isRecord(population)
+    && population["evidenceId"] === `${templateId}-POPULATION-EVIDENCE-2026-08-17`
+    && population["decisionRef"] === approvalDecisionId
+    && population["fingerprint"] === approved.populationFingerprint
+    && isRecord(scope)
+    && scope["eventGroup"] === approved.eventGroup
+    && scope["experienceBand"] === "EXPERIENCED"
+    && scope["population"] === "YOUTH_AND_ADULT"
+    && scope["eventEvidenceFingerprint"] === approved.eventFingerprint
+    && scope["experienceEvidenceFingerprint"] === approved.experienceFingerprint
+    && canonicalJson(value["componentRefs"]) === canonicalJson(approved.componentRefs)
 }
 
 function isPaceScope(value: unknown): boolean {
@@ -373,7 +472,7 @@ function isComponentRefs(value: unknown): boolean {
   return Array.isArray(value) && isDenseArray(value) && value.length === 4 && value.every((item) =>
     isRecord(item) && hasExactKeys(item, ["componentType", "componentRef", "componentVersion", "componentFingerprint"])
     && (item["componentType"] === "WARMUP" || item["componentType"] === "COOLDOWN" || item["componentType"] === "DOWNSHIFT" || item["componentType"] === "STOP_CONDITIONS")
-    && ["componentRef", "componentVersion"].every((key) => typeof item[key] === "string" && item[key].length > 0)
+    && typeof item["componentRef"] === "string" && typeof item["componentVersion"] === "string" && item["componentVersion"].length > 0
     && typeof item["componentFingerprint"] === "string" && SHA256_PATTERN.test(item["componentFingerprint"]))
 }
 
@@ -390,12 +489,12 @@ function isOperationalComponents(value: unknown): boolean {
 
 function isCurrentAnchor(value: unknown): boolean {
   if (!isRecord(value) || !hasExactKeys(value, ["anchorId", "eventDistanceM", "performanceSeconds", "achievedAt", "enteredBy", "verificationState", "freshnessState", "sourceRef", "elapsedLabel", "kind", "purpose", "seasonId"])) return false
-  return typeof value["anchorId"] === "string" && value["anchorId"].length > 0 && isPositiveNumber(value["eventDistanceM"]) && value["eventDistanceM"] >= 60 && isPositiveNumber(value["performanceSeconds"])
-    && typeof value["achievedAt"] === "string" && value["achievedAt"].length > 0 && (value["enteredBy"] === "ATHLETE" || value["enteredBy"] === "COACH" || value["enteredBy"] === "VERIFIED_IMPORT")
+  return isRecordId(value["anchorId"]) && isPositiveNumber(value["eventDistanceM"]) && value["eventDistanceM"] >= 60 && isPositiveNumber(value["performanceSeconds"])
+    && isIsoDate(value["achievedAt"]) && (value["enteredBy"] === "ATHLETE" || value["enteredBy"] === "COACH" || value["enteredBy"] === "VERIFIED_IMPORT")
     && (value["verificationState"] === "VERIFIED" || value["verificationState"] === "SELF_REPORTED" || value["verificationState"] === "UNVERIFIED")
-    && value["freshnessState"] === "CURRENT" && typeof value["sourceRef"] === "string" && value["sourceRef"].length > 0
-    && typeof value["elapsedLabel"] === "string" && value["elapsedLabel"].length > 0
-    && ((value["kind"] === "SB" && value["purpose"] === "SEASON_CONTEXT" && typeof value["seasonId"] === "string" && value["seasonId"].length > 0)
+    && value["freshnessState"] === "CURRENT" && value["sourceRef"] === `athlete-record:${value["anchorId"]}`
+    && typeof value["elapsedLabel"] === "string" && CURRENT_ELAPSED_LABELS.has(value["elapsedLabel"])
+    && ((value["kind"] === "SB" && value["purpose"] === "SEASON_CONTEXT" && value["seasonId"] === value["achievedAt"].slice(0, 4))
       || ((value["kind"] === "PB" || value["kind"] === "RECENT_RESULT") && value["purpose"] === "CURRENT_CAPABILITY" && value["seasonId"] === null))
 }
 
@@ -533,7 +632,10 @@ function triggerAllowed(request: PlanAdaptationProposalRequest): boolean {
   switch (request.trigger.kind) {
     case "EXPLICIT_REQUEST": {
       const actor = request.proposalOrigin === "SELF_SERVICE" ? "ATHLETE" : "COACH"
-      return request.trigger.requestedBy === actor && request.trigger.sourceRef.startsWith(`${actor.toLowerCase()}-request:${request.scope.athleteId}:`)
+      const prefix = `${actor.toLowerCase()}-request:${request.scope.athleteId}:`
+      return request.trigger.requestedBy === actor
+        && request.trigger.sourceRef.startsWith(prefix)
+        && /^(?:req-\d+|v\d+)$/u.test(request.trigger.sourceRef.slice(prefix.length))
     }
     case "SAME_EVENT_PB_SB_AFTER_ACTIVE_PLAN_START": return !request.trigger.historicalOrBackfilled && request.trigger.eventDistanceM === request.scope.eventDistanceM && request.trigger.sourceRef === `athlete-record:${request.trigger.recordId}` && Date.parse(request.trigger.achievedAt) > Date.parse(request.activePlanStartedAt)
     default: return assertNever(request.trigger)
@@ -565,6 +667,59 @@ function candidateEligibleForExactEvent(value: unknown, candidate: PlanCandidate
   )
 }
 function isIsoTimestamp(value: unknown): value is string { return typeof value === "string" && Number.isFinite(Date.parse(value)) && new Date(value).toISOString() === value }
+function isIsoDate(value: unknown): value is string {
+  if (typeof value !== "string") return false
+  const match = ISO_DATE_PATTERN.exec(value)
+  if (match === null) return false
+  const year = Number(match[0].slice(0, 4))
+  const month = Number(match[0].slice(5, 7))
+  const day = Number(match[0].slice(8, 10))
+  const parsed = new Date(Date.UTC(year, month - 1, day))
+  return parsed.getUTCFullYear() === year && parsed.getUTCMonth() === month - 1 && parsed.getUTCDate() === day
+}
+function formatElapsedMonths(months: number): string {
+  if (months === 0) return "이번 달"
+  if (months < 12) return `${months}개월 전`
+  const years = Math.floor(months / 12)
+  const remainingMonths = months % 12
+  return remainingMonths === 0 ? `${years}년 전` : `${years}년 ${remainingMonths}개월 전`
+}
+function candidateAnchorLabelsMatch(candidate: PlanCandidate, evaluatedAt: string): boolean {
+  const evaluated = new Date(evaluatedAt)
+  return candidate.sessions.every((session) => {
+    if (session.prescription.kind !== "PACE_TARGET") return true
+    const achievedAt = session.prescription.selectedAnchor.achievedAt
+    if (!isIsoDate(achievedAt)) return false
+    const year = Number(achievedAt.slice(0, 4))
+    const month = Number(achievedAt.slice(5, 7))
+    const day = Number(achievedAt.slice(8, 10))
+    let months = (evaluated.getUTCFullYear() - year) * 12 + evaluated.getUTCMonth() - (month - 1)
+    if (evaluated.getUTCDate() < day) months -= 1
+    return months >= 0 && months <= 18
+      && session.prescription.selectedAnchor.elapsedLabel === formatElapsedMonths(months)
+  })
+}
+function isAthleteId(value: unknown): value is string { return typeof value === "string" && (value === "local-athlete" || /^athlete-\d+$/u.test(value) || UUID_PATTERN.test(value)) }
+function isRecordId(value: unknown): value is string { return typeof value === "string" && (UUID_PATTERN.test(value) || LOCAL_RECORD_ID_PATTERN.test(value)) }
+function isExposureId(value: unknown): value is string { return typeof value === "string" && EXPOSURE_ID_PATTERN.test(value) }
+function isCandidateId(value: unknown, detailedFingerprint: unknown): value is string {
+  if (typeof value !== "string") return false
+  const marker = ":pace-target:"
+  const markerIndex = value.indexOf(marker)
+  const baseId = markerIndex < 0 ? value : value.slice(0, markerIndex)
+  if (!CANDIDATE_ID_PATTERN.test(baseId)) return false
+  return detailedFingerprint === null
+    ? markerIndex < 0
+    : typeof detailedFingerprint === "string" && value === `${baseId}${marker}${detailedFingerprint}`
+}
+function isExplicitRequestSource(value: unknown): value is string {
+  if (typeof value !== "string") return false
+  const parts = value.split(":")
+  return parts.length === 3
+    && (parts[0] === "athlete-request" || parts[0] === "coach-request")
+    && isAthleteId(parts[1])
+    && /^(?:req-\d+|v\d+)$/u.test(parts[2] ?? "")
+}
 function hasExactKeys(value: Record<string, unknown>, keys: readonly string[]): boolean { return canonicalJson(Object.keys(value).sort()) === canonicalJson([...keys].sort()) }
 function containsPrivateKey(value: unknown, seen = new Set<object>()): boolean {
   if (typeof value !== "object" || value === null) return false

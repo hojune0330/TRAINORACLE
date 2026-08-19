@@ -1,7 +1,9 @@
 import { describe, expect, it } from "vitest"
 import {
+  canonicalJsonSha256,
   createPlanAdaptationProposal,
   hashPlanCandidate,
+  verifyPlanAdaptationProposal,
 } from "../src/plan-generator/adaptation"
 import { generatePlanCandidates } from "../src/plan-generator/generator"
 import { baseRequest, clearedGate, expectGenerated } from "./fixtures/plan-beta-request"
@@ -29,7 +31,7 @@ async function fixtureRequest() {
     safetyValidUntil: "2026-08-18T00:10:00.000Z",
     activeHold: false,
     createdAt: "2026-08-18T00:05:00.000Z",
-    idempotencyKey: "adaptation-1",
+    idempotencyKey: `sha256:${"1".repeat(64)}`,
   }
 }
 
@@ -75,11 +77,11 @@ describe("next-frame plan adaptation", () => {
       trigger: {
         kind: "SAME_EVENT_PB_SB_AFTER_ACTIVE_PLAN_START",
         explicitlyConfirmed: true,
-        recordId: "record-1",
+        recordId: "00000000-0000-4000-8000-000000000001",
         purpose: "PERSONAL_BEST",
         eventDistanceM: 1500,
         achievedAt: "2026-08-12T00:00:00.000Z",
-        sourceRef: "athlete-record:record-1",
+        sourceRef: "athlete-record:00000000-0000-4000-8000-000000000001",
         historicalOrBackfilled: false,
       },
     })
@@ -90,11 +92,11 @@ describe("next-frame plan adaptation", () => {
       trigger: {
         kind: "SAME_EVENT_PB_SB_AFTER_ACTIVE_PLAN_START",
         explicitlyConfirmed: true,
-        recordId: "record-old",
+        recordId: "00000000-0000-4000-8000-000000000002",
         purpose: "SEASON_BEST",
         eventDistanceM: 1500,
         achievedAt: "2026-07-01T00:00:00.000Z",
-        sourceRef: "athlete-record:record-old",
+        sourceRef: "athlete-record:00000000-0000-4000-8000-000000000002",
         historicalOrBackfilled: false,
       },
     })).toEqual({ kind: "rejected", code: "INELIGIBLE_TRIGGER" })
@@ -103,11 +105,11 @@ describe("next-frame plan adaptation", () => {
       trigger: {
         kind: "SAME_EVENT_PB_SB_AFTER_ACTIVE_PLAN_START",
         explicitlyConfirmed: true,
-        recordId: "record-backfill",
+        recordId: "00000000-0000-4000-8000-000000000003",
         purpose: "PERSONAL_BEST",
         eventDistanceM: 1500,
         achievedAt: "2026-08-12T00:00:00.000Z",
-        sourceRef: "athlete-record:record-backfill",
+        sourceRef: "athlete-record:00000000-0000-4000-8000-000000000003",
         historicalOrBackfilled: true,
       },
     })).toEqual({ kind: "rejected", code: "INELIGIBLE_TRIGGER" })
@@ -122,11 +124,11 @@ describe("next-frame plan adaptation", () => {
       trigger: {
         kind: "SAME_EVENT_PB_SB_AFTER_ACTIVE_PLAN_START",
         explicitlyConfirmed: true,
-        recordId: "record-before-start",
+        recordId: "00000000-0000-4000-8000-000000000004",
         purpose: "PERSONAL_BEST",
         eventDistanceM: 1500,
         achievedAt: "2026-08-12T11:59:59.999Z",
-        sourceRef: "athlete-record:record-before-start",
+        sourceRef: "athlete-record:00000000-0000-4000-8000-000000000004",
         historicalOrBackfilled: false,
       },
     })
@@ -142,11 +144,11 @@ describe("next-frame plan adaptation", () => {
       trigger: {
         kind: "SAME_EVENT_PB_SB_AFTER_ACTIVE_PLAN_START",
         explicitlyConfirmed: true,
-        recordId: "record-at-start",
+        recordId: "00000000-0000-4000-8000-000000000005",
         purpose: "PERSONAL_BEST",
         eventDistanceM: 1500,
         achievedAt: "2026-08-12T12:00:00.000Z",
-        sourceRef: "athlete-record:record-at-start",
+        sourceRef: "athlete-record:00000000-0000-4000-8000-000000000005",
         historicalOrBackfilled: false,
       },
     })
@@ -179,7 +181,7 @@ describe("next-frame plan adaptation", () => {
       scope: { ...input.scope, eventDistanceM: 800 },
       baseCandidate,
       proposedCandidate,
-      baseContentHash: await hashPlanCandidate(baseCandidate),
+      baseContentHash: await canonicalJsonSha256("trainoracle.plan-candidate.v1", baseCandidate),
     })).toEqual({ kind: "rejected", code: "MALFORMED_INPUT" })
   })
 
@@ -238,7 +240,7 @@ describe("next-frame plan adaptation", () => {
     const input = await fixtureRequest()
     expect(await createPlanAdaptationProposal({
       ...input,
-      trigger: { ...input.trigger, sourceRef: "athlete-request:other:req-1" },
+      trigger: { ...input.trigger, sourceRef: "athlete-request:athlete-2:req-1" },
     })).toEqual({ kind: "rejected", code: "INELIGIBLE_TRIGGER" })
     expect(await createPlanAdaptationProposal({
       ...input,
@@ -246,6 +248,99 @@ describe("next-frame plan adaptation", () => {
     } as typeof input)).toEqual({ kind: "rejected", code: "MALFORMED_INPUT" })
     expect(await createPlanAdaptationProposal({ kind: "PLAN_ADAPTATION_PROPOSAL_REQUEST" }))
       .toEqual({ kind: "rejected", code: "MALFORMED_INPUT" })
+  })
+
+  it.each([
+    ["idempotency key", (input: Awaited<ReturnType<typeof fixtureRequest>>, value: string) => ({ ...input, idempotencyKey: value })],
+    ["athlete identity", (input: Awaited<ReturnType<typeof fixtureRequest>>, value: string) => ({ ...input, scope: { ...input.scope, athleteId: value } })],
+    ["explicit request source", (input: Awaited<ReturnType<typeof fixtureRequest>>, value: string) => ({
+      ...input,
+      trigger: { ...input.trigger, sourceRef: `athlete-request:athlete-1:${value}` },
+    })],
+  ] as const)("rejects raw prose in the %s", async (_label, mutate) => {
+    const input = await fixtureRequest()
+    for (const value of [
+      "raw symptom: chest pain after training",
+      "raw_symptom_chest_pain_after_training",
+      "raw-symptom-chest-pain-after-training",
+    ]) {
+      expect(await createPlanAdaptationProposal(mutate(input, value)))
+        .toEqual({ kind: "rejected", code: "MALFORMED_INPUT" })
+    }
+  })
+
+  it.each([
+    "raw symptom: chest pain after training",
+    "raw_symptom_chest_pain_after_training",
+    "raw-symptom-chest-pain-after-training",
+  ])("rejects raw prose in PB/SB record identity and source reference: %s", async (recordId) => {
+    const input = await fixtureRequest()
+    expect(await createPlanAdaptationProposal({
+      ...input,
+      trigger: {
+        kind: "SAME_EVENT_PB_SB_AFTER_ACTIVE_PLAN_START",
+        explicitlyConfirmed: true,
+        recordId,
+        purpose: "PERSONAL_BEST",
+        eventDistanceM: 1500,
+        achievedAt: "2026-08-12T00:00:00.000Z",
+        sourceRef: `athlete-record:${recordId}`,
+        historicalOrBackfilled: false,
+      },
+    })).toEqual({ kind: "rejected", code: "MALFORMED_INPUT" })
+  })
+
+  it("rejects raw prose smuggled through serialized candidate references", async () => {
+    const input = await fixtureRequest()
+    const rationaleCodes = ["raw_symptom_chest_pain_after_training"]
+    const baseCandidate = { ...input.baseCandidate, rationaleCodes }
+    const proposedCandidate = { ...input.proposedCandidate, rationaleCodes }
+
+    expect(await createPlanAdaptationProposal({
+      ...input,
+      baseCandidate,
+      proposedCandidate,
+      baseContentHash: await canonicalJsonSha256("trainoracle.plan-candidate.v1", baseCandidate),
+    })).toEqual({ kind: "rejected", code: "MALFORMED_INPUT" })
+  })
+
+  it("rejects raw prose smuggled through a candidate identity", async () => {
+    const input = await fixtureRequest()
+    const baseCandidate = {
+      ...input.baseCandidate,
+      candidateId: "beta:balanced:raw-symptom-chest-pain:event-1500:developing:lt_intent:single_session_only:varies:projection-9.5:local-civil-9-5:fixture-main-1-fixture-main-2:1-3-5-7-9:no_usable_journal:no-continuity",
+    }
+    const proposedCandidate = {
+      ...input.proposedCandidate,
+      candidateId: baseCandidate.candidateId.replace("beta:balanced:", "beta:conservative:"),
+    }
+
+    expect(await createPlanAdaptationProposal({
+      ...input,
+      baseCandidate,
+      proposedCandidate,
+      baseContentHash: await hashPlanCandidate(baseCandidate),
+    })).toEqual({ kind: "rejected", code: "MALFORMED_INPUT" })
+  })
+
+  it("rejects a rehashed serialized proposal containing a raw idempotency value", async () => {
+    const result = await createPlanAdaptationProposal(await fixtureRequest())
+    if (result.kind !== "proposed") throw new TypeError("Expected a valid proposal fixture")
+    const { proposalId: _proposalId, proposalHash: _proposalHash, ...content } = result.proposal
+    const tamperedContent = {
+      ...content,
+      idempotencyKey: "raw symptom: chest pain after training",
+    }
+    const proposalHash = await canonicalJsonSha256(
+      "trainoracle.plan-adaptation-proposal.v1",
+      tamperedContent,
+    )
+
+    expect(await verifyPlanAdaptationProposal({
+      proposalId: `adaptation:${proposalHash.slice("sha256:".length)}`,
+      proposalHash,
+      ...tamperedContent,
+    })).toBe(false)
   })
 
   it("rejects malformed PACE_TARGET and cyclic candidate input without throwing", async () => {

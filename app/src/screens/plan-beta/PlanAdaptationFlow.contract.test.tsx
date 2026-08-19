@@ -204,7 +204,7 @@ async function chooseAndAcceptReduction(user: ReturnType<typeof userEvent.setup>
 
 function createBoundActivePlan(): { readonly state: PlanBetaState } {
   const now = new Date()
-  const anchor = athleteRecord("flow-anchor", 5000, "2026-08-01", now)
+  const anchor = athleteRecord("00000000-0000-4000-8000-000000000010", 5000, "2026-08-01", now)
   saveAthleteRecord(anchor, now)
   const generated = generatePlanFromDraft({
     eventGroup: "FIVE_K",

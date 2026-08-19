@@ -6,6 +6,7 @@ import {
 } from "@impl/plan-generator/adaptation"
 import { generatePlanCandidates } from "@impl/plan-generator/generator"
 import { selectPlanCandidate } from "@impl/plan-generator/selection"
+import { RVE_NON_SENSITIVE_REASON_CODES } from "@impl/rve/signal"
 import {
   activeGate,
   clearedGate,
@@ -18,6 +19,7 @@ import {
 } from "./plan-adaptation-store"
 import { savePlanBetaState } from "./plan-beta-store"
 import type { PlanBetaStateV2 } from "./plan-beta-schema"
+import { planAdaptationEnvelopeSchema } from "./plan-beta-schema"
 
 const ACTIVE_KEY = "trainoracle.plan-beta.v1"
 const ADAPTATION_KEY = "trainoracle.plan-beta.adaptation.v1"
@@ -61,7 +63,7 @@ async function requestFixture(
     safetyValidUntil: "2026-08-18T00:10:00.000Z",
     activeHold: false,
     createdAt: "2026-08-18T00:05:00.000Z",
-    idempotencyKey: `proposal-create-${fixtureId}`,
+    idempotencyKey: await canonicalJsonSha256("trainoracle.test.proposal-key.v1", fixtureId),
   })
   if (proposalResult.kind !== "proposed") {
     throw new Error(`proposal fixture failed: ${JSON.stringify(proposalResult)}`)
@@ -121,7 +123,7 @@ async function requestFixture(
     safetyValidUntil: "2026-08-18T00:10:00.000Z",
     activeHold: false,
     acceptedAt: "2026-08-18T00:06:00.000Z",
-    idempotencyKey: `accept-${fixtureId}`,
+    idempotencyKey: await canonicalJsonSha256("trainoracle.test.accept-key.v1", fixtureId),
   }
 }
 
@@ -146,7 +148,7 @@ async function coachRequestFixture() {
     safetyValidUntil: input.safetyValidUntil,
     activeHold: false,
     createdAt: "2026-08-18T00:05:00.000Z",
-    idempotencyKey: "coach-proposal-create-1",
+    idempotencyKey: await canonicalJsonSha256("trainoracle.test.coach-proposal-key.v1", "1"),
   })
   if (proposalResult.kind !== "proposed") {
     throw new Error(`coach proposal fixture failed: ${JSON.stringify(proposalResult)}`)
@@ -201,6 +203,65 @@ describe("local immutable next-frame adaptation contract", () => {
     })
   })
 
+  it("rejects a raw reason code without replacing the previous pending envelope", async () => {
+    const planA = await requestFixture("LT_INTENT", "reason-a")
+    expect(savePlanBetaState(planA.predecessorState)).toEqual({ ok: true })
+    expect(await acceptNextFrameProposal(planA)).toMatchObject({ kind: "accepted" })
+    const previousEnvelope = window.localStorage.getItem(ADAPTATION_KEY)
+
+    const planB = await requestFixture("VO2_INTENT", "reason-b")
+    expect(savePlanBetaState(planB.predecessorState)).toEqual({ ok: true })
+    const setItem = vi.spyOn(Storage.prototype, "setItem")
+    setItem.mockClear()
+    const result = await acceptNextFrameProposal({
+      ...planB,
+      safetyGate: {
+        ...planB.safetyGate,
+        nonSensitiveReasonCodes: ["raw-symptom-chest-pain-after-training-1"],
+      },
+    })
+
+    expect(result).toEqual({ kind: "rejected", code: "MALFORMED_INPUT" })
+    expect(setItem).not.toHaveBeenCalledWith(ADAPTATION_KEY, expect.any(String))
+    expect(window.localStorage.getItem(ADAPTATION_KEY)).toBe(previousEnvelope)
+  })
+
+  it("keeps the acceptance boundary in exact parity with every RVE reason code", async () => {
+    for (const [index, reasonCode] of RVE_NON_SENSITIVE_REASON_CODES.entries()) {
+      window.localStorage.clear()
+      const input = await requestFixture("LT_INTENT", "reason-" + index)
+      expect(savePlanBetaState(input.predecessorState)).toEqual({ ok: true })
+      const safetyGate = reasonCode.startsWith("D9_ACTIVE_")
+        ? {
+            kind: "blocked" as const,
+            action: "BLOCK" as const,
+            planGenerationAllowed: false as const,
+            requiredNextAction: "HUMAN_REVIEW" as const,
+            nonSensitiveReasonCodes: [reasonCode],
+            audit: { event: "PLAN_SAFETY_GATE_BLOCKED" as const, privacy: "REASON_CODES_ONLY" as const },
+          }
+        : reasonCode.startsWith("D9_UNKNOWN_") || reasonCode.startsWith("RVE_")
+          ? {
+              kind: "blocked" as const,
+              action: "BLOCK_OR_HUMAN_REVIEW" as const,
+              planGenerationAllowed: false as const,
+              requiredNextAction: "MORE_INFO_OR_HUMAN_REVIEW" as const,
+              nonSensitiveReasonCodes: [reasonCode],
+              audit: { event: "PLAN_SAFETY_GATE_BLOCKED" as const, privacy: "REASON_CODES_ONLY" as const },
+            }
+          : {
+              kind: "passed" as const,
+              action: "CONTINUE_WITH_OTHER_GATES" as const,
+              planGenerationAllowed: true as const,
+              nonSensitiveReasonCodes: [reasonCode],
+              audit: { event: "PLAN_SAFETY_GATE_PASSED" as const, privacy: "REASON_CODES_ONLY" as const },
+            }
+
+      const result = await acceptNextFrameProposal({ ...input, safetyGate })
+      expect(result, reasonCode).not.toMatchObject({ kind: "rejected", code: "MALFORMED_INPUT" })
+    }
+  })
+
   it("replaces an old-base pending envelope after the active plan switches", async () => {
     const planA = await requestFixture("LT_INTENT", "a")
     expect(savePlanBetaState(planA.predecessorState)).toEqual({ ok: true })
@@ -243,7 +304,7 @@ describe("local immutable next-frame adaptation contract", () => {
         generatedAt: "2026-08-18T00:07:00.000Z",
       },
       acceptedAt: "2026-08-18T00:08:00.000Z",
-      idempotencyKey: "accept-later-frame",
+      idempotencyKey: `sha256:${"b".repeat(64)}`,
     }
     expect(laterFrame.predecessorState.activePlan.candidateId)
       .toBe(planA.predecessorState.activePlan.candidateId)
@@ -272,7 +333,7 @@ describe("local immutable next-frame adaptation contract", () => {
 
     expect(await acceptNextFrameProposal({
       ...input,
-      idempotencyKey: "accept-same-frame-conflict",
+      idempotencyKey: `sha256:${"c".repeat(64)}`,
     })).toEqual({ kind: "rejected", code: "STALE_BASE" })
     expect(loadPendingNextFrameSuccessor()).toEqual(pendingBefore)
   })
@@ -501,6 +562,59 @@ describe("local immutable next-frame adaptation contract", () => {
     })).toEqual({ kind: "rejected", code: "MALFORMED_INPUT" })
   })
 
+  it.each([
+    "raw symptom: chest pain after training",
+    "raw_symptom_chest_pain_after_training",
+    "raw-symptom-chest-pain-after-training",
+  ])("rejects raw prose in the persisted acceptance idempotency key: %s", async (idempotencyKey) => {
+    const input = await requestFixture()
+    expect(savePlanBetaState(input.predecessorState)).toEqual({ ok: true })
+
+    expect(await acceptNextFrameProposal({ ...input, idempotencyKey }))
+      .toEqual({ kind: "rejected", code: "MALFORMED_INPUT" })
+    expect(window.localStorage.getItem(ADAPTATION_KEY)).toBeNull()
+  })
+
+  it("rejects a stored envelope tampered with raw prose identifiers", async () => {
+    const input = await requestFixture()
+    expect(savePlanBetaState(input.predecessorState)).toEqual({ ok: true })
+    expect(await acceptNextFrameProposal(input)).toMatchObject({ kind: "accepted" })
+    const raw = window.localStorage.getItem(ADAPTATION_KEY)
+    if (raw === null) throw new TypeError("Expected a persisted adaptation envelope")
+    const envelope = planAdaptationEnvelopeSchema.parse(JSON.parse(raw))
+    const prose = "raw_symptom_chest_pain_after_training"
+    const tamperedEnvelopes = [
+      {
+        ...envelope,
+        pending: { ...envelope.pending, athleteId: prose },
+      },
+      {
+        ...envelope,
+        pending: { ...envelope.pending, baseCandidateId: prose },
+      },
+      {
+        ...envelope,
+        pending: { ...envelope.pending, idempotencyKey: prose },
+        decision: { ...envelope.decision, idempotencyKey: prose },
+      },
+      {
+        ...envelope,
+        pending: { ...envelope.pending, decisionId: prose },
+        decision: { ...envelope.decision, decisionId: prose },
+      },
+      {
+        ...envelope,
+        pending: { ...envelope.pending, proposalId: prose },
+        decision: { ...envelope.decision, proposalId: prose },
+      },
+    ]
+
+    for (const tampered of tamperedEnvelopes) {
+      window.localStorage.setItem(ADAPTATION_KEY, JSON.stringify(tampered))
+      expect(loadPendingNextFrameSuccessor()).toBeNull()
+    }
+  })
+
   it("rejects same-day PB evidence achieved before the active-plan start timestamp", async () => {
     const input = await requestFixture()
     expect(await createPlanAdaptationProposal({
@@ -514,11 +628,11 @@ describe("local immutable next-frame adaptation contract", () => {
       trigger: {
         kind: "SAME_EVENT_PB_SB_AFTER_ACTIVE_PLAN_START",
         explicitlyConfirmed: true,
-        recordId: "record-before-start",
+        recordId: "00000000-0000-4000-8000-000000000006",
         purpose: "PERSONAL_BEST",
         eventDistanceM: 1500,
         achievedAt: "2026-08-12T11:59:59.999Z",
-        sourceRef: "athlete-record:record-before-start",
+        sourceRef: "athlete-record:00000000-0000-4000-8000-000000000006",
         historicalOrBackfilled: false,
       },
       changeDimension: "VOLUME",
@@ -527,7 +641,7 @@ describe("local immutable next-frame adaptation contract", () => {
       safetyValidUntil: "2026-08-18T00:10:00.000Z",
       activeHold: false,
       createdAt: "2026-08-18T00:05:00.000Z",
-      idempotencyKey: "same-day-before-start",
+      idempotencyKey: `sha256:${"d".repeat(64)}`,
     })).toEqual({ kind: "rejected", code: "INELIGIBLE_TRIGGER" })
   })
 

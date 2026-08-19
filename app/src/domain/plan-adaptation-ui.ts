@@ -100,6 +100,15 @@ export async function prepareNextFrameAdaptation(
     "trainoracle.plan-candidate.v1",
     baseCandidate,
   )
+  const idempotencyKey = await canonicalJsonSha256(
+    "trainoracle.plan-adaptation-request.v1",
+    {
+      athleteId: scope.athleteId,
+      baseCandidateId: baseCandidate.candidateId,
+      reason: input.reason,
+      recordId: input.record?.id ?? null,
+    },
+  )
   const result = await createPlanAdaptationProposal({
     kind: "PLAN_ADAPTATION_PROPOSAL_REQUEST",
     scope,
@@ -115,7 +124,7 @@ export async function prepareNextFrameAdaptation(
     safetyValidUntil: safety.safetyValidUntil,
     activeHold: safety.activeHold,
     createdAt,
-    idempotencyKey: `adaptive-ui:${baseCandidate.candidateId}:${input.reason}:${input.record?.id ?? "request"}`,
+    idempotencyKey,
   })
   if (result.kind === "blocked") return { kind: "blocked", code: result.code }
   if (result.kind === "rejected") return { kind: "unavailable", code: result.code }
@@ -188,7 +197,7 @@ function triggerFor(
     return {
       kind: "EXPLICIT_REQUEST" as const,
       requestedBy: "ATHLETE" as const,
-      sourceRef: `athlete-request:${athleteId}:next-frame-volume`,
+      sourceRef: `athlete-request:${athleteId}:v1`,
     }
   }
   if (record === null || record.achievedOn === null) return null

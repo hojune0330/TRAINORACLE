@@ -86,7 +86,7 @@ function prescriptionContent() {
       uncomputableReasonCodes: ["WORK_DURATION_UNAVAILABLE"],
     },
     selectedAnchor: {
-      anchorId: "race:5000:current",
+      anchorId: "local-1721433600000-abc123",
       kind: "RECENT_RESULT" as const,
       purpose: "CURRENT_CAPABILITY" as const,
       eventDistanceM: 5000,
@@ -96,8 +96,8 @@ function prescriptionContent() {
       enteredBy: "ATHLETE" as const,
       verificationState: "SELF_REPORTED" as const,
       freshnessState: "CURRENT" as const,
-      sourceRef: "athlete-record:race:5000:2026-07-20",
-      elapsedLabel: "CURRENT",
+      sourceRef: "athlete-record:local-1721433600000-abc123",
+      elapsedLabel: "1개월 전",
     },
     displayRoundingPolicyVersion: "seconds-v1",
     stopCodes: approval.canonicalTemplateContent.operationalComponents.stopConditions.codes,
@@ -322,13 +322,16 @@ describe("versioned detailed prescription storage", () => {
       safetyGate: safetyGate("D9_CLEARED"),
     })).toEqual({ kind: "permitted", operation: "START" })
 
-    const stale = detailedPrescription({ templateContentFingerprint: `sha256:${"b".repeat(64)}` })
+    const stale = {
+      ...detailedPrescription(),
+      templateContentFingerprint: `sha256:${"b".repeat(64)}`,
+    }
     expect(recheckStoredDetailedPrescriptionAuthority({
       operation: "RESTART",
       prescription: stale,
       evaluatedAt: "2026-08-17T03:00:00.000Z",
       safetyGate: safetyGate("D9_CLEARED"),
-    })).toMatchObject({ kind: "blocked", code: "TRUSTED_APPROVAL_UNAVAILABLE" })
+    })).toMatchObject({ kind: "blocked", code: "STORED_PRESCRIPTION_INVALID" })
   })
 
   it("fails closed on a stored raw narrative field", () => {

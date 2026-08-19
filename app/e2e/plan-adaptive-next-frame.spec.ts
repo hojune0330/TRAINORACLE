@@ -18,7 +18,7 @@ const evidenceDir = path.resolve(
 
 const records = [{
   schemaVersion: 1,
-  id: "adaptive-e2e-5k",
+  id: "00000000-0000-4000-8000-000000005000",
   purpose: "PERSONAL_BEST",
   eventDistanceM: 5000,
   performanceSeconds: 1_110,
@@ -26,7 +26,7 @@ const records = [{
   seasonId: null,
   enteredBy: "ATHLETE",
   verificationState: "SELF_REPORTED",
-  sourceRef: "athlete-record:adaptive-e2e-5k",
+  sourceRef: "athlete-record:00000000-0000-4000-8000-000000005000",
   savedAt: "2026-08-01T12:00:00.000Z",
 }] as const
 

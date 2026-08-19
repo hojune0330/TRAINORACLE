@@ -104,7 +104,9 @@ function snapshot(
     eventDistanceM: record.eventDistanceM,
     performanceSeconds: record.performanceSeconds,
     achievedAt: record.achievedOn,
-    seasonId: record.seasonId,
+    seasonId: record.purpose === "SEASON_BEST"
+      ? record.achievedOn.slice(0, 4)
+      : null,
     enteredBy: record.enteredBy,
     verificationState: record.verificationState,
     freshnessState: "CURRENT",

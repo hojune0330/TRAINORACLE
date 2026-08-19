@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it } from "vitest"
+import { beforeEach, describe, expect, it, vi } from "vitest"
 import {
   createPlanAdaptationProposal,
   hashPlanCandidate,
@@ -29,6 +29,10 @@ import {
 import { createPlanFormation } from "./plan-beta-formation"
 import type { PlanBetaStateV2 } from "./plan-beta-schema"
 import { saveSelectedPlanCandidate } from "../screens/plan-beta/plan-selection"
+import {
+  loadPlanAdaptationContext,
+  PLAN_ADAPTATION_CONTEXT_STORAGE_KEY,
+} from "./plan-adaptation-ui-context"
 
 const ACTIVE_KEY = "trainoracle.plan-beta.v1"
 
@@ -38,9 +42,43 @@ beforeEach(() => {
 })
 
 describe("next-frame adaptation UI adapter", () => {
+  it("rejects a raw active candidate selector without changing saved context bytes", () => {
+    const fixture = createCoachRequiredFixture(new Date("2026-08-18T12:00:00.000Z"))
+    const candidates = [fixture.baseCandidate, fixture.proposedCandidate] as const
+    const previousBytes = window.localStorage.getItem(PLAN_ADAPTATION_CONTEXT_STORAGE_KEY)
+    expect(previousBytes).not.toBeNull()
+    const setItem = vi.spyOn(Storage.prototype, "setItem")
+    setItem.mockClear()
+
+    expect(savePlanAdaptationContext(
+      candidates,
+      "raw-symptom-chest-pain-after-training-1",
+    )).toBe(false)
+    expect(setItem).not.toHaveBeenCalled()
+    expect(window.localStorage.getItem(PLAN_ADAPTATION_CONTEXT_STORAGE_KEY)).toBe(previousBytes)
+  })
+
+  it("does not load a stored context whose selector is unrelated to its candidates", () => {
+    const fixture = createCoachRequiredFixture(new Date("2026-08-18T12:00:00.000Z"))
+    const raw = window.localStorage.getItem(PLAN_ADAPTATION_CONTEXT_STORAGE_KEY)
+    if (raw === null) throw new TypeError("Expected a saved adaptation context")
+    const context: unknown = JSON.parse(raw)
+    if (typeof context !== "object" || context === null || Array.isArray(context)) {
+      throw new TypeError("Expected an object adaptation context")
+    }
+    const unrelated = "raw-symptom-chest-pain-after-training-1"
+    window.localStorage.setItem(
+      PLAN_ADAPTATION_CONTEXT_STORAGE_KEY,
+      JSON.stringify({ ...context, activeCandidateId: unrelated }),
+    )
+
+    expect(loadPlanAdaptationContext(unrelated)).toBeNull()
+    expect(loadPlanAdaptationContext(fixture.baseCandidate.candidateId)).toBeNull()
+  })
+
   it("accepts one real conservative successor, survives reload, and preserves active bytes", async () => {
     const now = new Date()
-    const anchor = athleteRecord("anchor-5000", 5000, "2026-08-01", now)
+    const anchor = athleteRecord("00000000-0000-4000-8000-000000005001", 5000, "2026-08-01", now)
     expect(saveAthleteRecord(anchor, now).ok).toBe(true)
     const generated = generatePlanFromDraft({
       eventGroup: "FIVE_K",
@@ -184,7 +222,7 @@ describe("next-frame adaptation UI adapter", () => {
       trigger: {
         kind: "EXPLICIT_REQUEST",
         requestedBy: "COACH",
-        sourceRef: "coach-request:local-athlete:next-frame-volume",
+        sourceRef: "coach-request:local-athlete:v1",
       },
       changeDimension: "VOLUME",
       safetyGate: safety.safetyGate,
@@ -192,7 +230,7 @@ describe("next-frame adaptation UI adapter", () => {
       safetyValidUntil: safety.safetyValidUntil,
       activeHold: safety.activeHold,
       createdAt: checkedAt.toISOString(),
-      idempotencyKey: "coach-authored-read-only",
+      idempotencyKey: `sha256:${"f".repeat(64)}`,
     })
     if (proposal.kind !== "proposed") throw new Error(`Expected coach proposal, got ${proposal.code}`)
     const prepared = {
@@ -258,7 +296,7 @@ describe("next-frame adaptation UI adapter", () => {
 
 function createBoundState(): PlanBetaState {
   const now = new Date()
-  const anchor = athleteRecord("safety-anchor-5000", 5000, "2026-08-01", now)
+  const anchor = athleteRecord("00000000-0000-4000-8000-000000005002", 5000, "2026-08-01", now)
   expect(saveAthleteRecord(anchor, now).ok).toBe(true)
   const generated = generatePlanFromDraft({
     eventGroup: "FIVE_K",

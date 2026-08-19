@@ -8,6 +8,8 @@ import {
   sessionSlotSchema,
 } from "./plan-session-schema"
 import { isValidIsoDate } from "./dates"
+import { DETAILED_PRESCRIPTION_APPROVALS } from "./detailed-prescription-approvals"
+import { formatElapsedMonths, SEASON_WINDOW_MONTHS } from "./athlete-record-display"
 
 const planEventGroupSchema = z.enum([
   "MIDDLE_DISTANCE",
@@ -106,8 +108,27 @@ const planAthleteEvidenceSchema = z.object({
   recentJournalSessionCount: z.number().int().nonnegative(),
 }).strict()
 
+const opaqueAthleteIdSchema = z.string().refine(
+  (value) => value === "local-athlete"
+    || /^athlete-\d+$/u.test(value)
+    || /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/iu.test(value),
+)
+const adaptationExposureIdSchema = z.string().regex(/^(?:app-main-day-(?:[1-9]|10)|fixture-main-[1-3])$/u)
+const adaptationRecordIdSchema = z.string().refine((value) => (
+  /^local-\d+-[a-z0-9]+$/u.test(value)
+  || /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/iu.test(value)
+))
+const currentElapsedLabels = new Set(
+  Array.from({ length: SEASON_WINDOW_MONTHS + 1 }, (_, months) => formatElapsedMonths(months)),
+)
+const adaptationCandidateIdSchema = z.string().refine((value) => {
+  const markerIndex = value.indexOf(":pace-target:")
+  const baseId = markerIndex < 0 ? value : value.slice(0, markerIndex)
+  return /^beta:(?:balanced|conservative):(?:middle_distance|five_k):event-(?:800|1500|3000|5000):(?:new_to_running|developing|experienced):(?:recovery_intent|base_intent|lt_intent|vo2_intent|gly_intent|atp_pc_intent|mixed_intent):(?:single_session_only|recovery_pm_allowed):(?:morning|evening|varies):projection-(?:7|9|9\.5|10):local-civil-9-5:[a-z0-9-]+:\d+(?:-\d+)*:(?:no_usable_journal|recent_journal_context):(?:no-continuity|(?:balanced|conservative):(?:completed|rested|skipped|pain_checkin)-\d+(?:-(?:completed|rested|skipped|pain_checkin)-\d+)*)$/u.test(baseId)
+})
+
 const adaptationScopeSchema = z.object({
-  athleteId: z.string().min(1).max(128),
+  athleteId: opaqueAthleteIdSchema,
   eventDistanceM: z.union([z.literal(800), z.literal(1500), z.literal(3000), z.literal(5000)]),
 }).strict()
 
@@ -198,6 +219,19 @@ const planBetaStateSchema = z.union([
 ])
 
 const hashSchema = z.string().regex(/^sha256:[a-f0-9]{64}$/u)
+const planBetaCodeSchema = z.enum([
+  "PROFILE_ONLY_LIMITED_CONTEXT", "RECENT_JOURNAL_CONTEXT_PRESENT", "BETA_DURATION_RPE_ONLY",
+  "PACE_TARGET_BOUND", "BETA_NON_UNIVERSAL_FORMATION_SCOPE", "PREVIOUS_FRAME_CONTEXT_RETAINED",
+  "SAFETY_GATE_ACTIVE", "SAFETY_GATE_UNKNOWN", "MALFORMED_INPUT", "UNSUPPORTED_FRAME_LENGTH",
+  "INSUFFICIENT_AVAILABLE_DAYS", "INVALID_AVAILABLE_DAY", "INVALID_JOURNAL_CONTEXT",
+  "INVALID_CONTINUITY_CONTEXT", "NON_CANONICAL_FRAME_REQUIRES_REVIEW", "CANONICAL_LEDGER_REQUIRES_VALIDATION",
+  "NEEDS_COACH_CLARIFICATION", "INVALID_COMPOSITE_RELATION_REQUIRES_REVIEW",
+  "COMPETITION_DAY_COLLISION_REQUIRES_COACH_CLARIFICATION", "MAIN_EXPOSURE_COUNT_REQUIRES_REVIEW",
+  "MAIN_EXPOSURE_OUTSIDE_AVAILABILITY_REQUIRES_REVIEW", "COACH_SELECTION_REQUIRED", "CANDIDATE_NOT_FOUND",
+  "INVALID_SELECTION_REQUEST", "NON_SELECTABLE_PLAN_RESULT", "STALE_CANDIDATE_FINGERPRINT",
+  "NONCANONICAL_CANDIDATE_FRAME", "SAFETY_GATE_RECHECK_BLOCKED", "SESSION_DAY_NOT_IN_ACTIVE_PLAN",
+  "SESSION_SLOT_NOT_IN_ACTIVE_PLAN",
+])
 const candidateFrameSchema = z.object({
   formationKind: z.literal("LOCAL_CIVIL_9_5"),
   lengthDays: z.literal(9.5),
@@ -209,7 +243,7 @@ const candidateFrameSchema = z.object({
   ]),
 }).strict()
 const planCandidateSchema = z.object({
-  candidateId: z.string().min(1),
+  candidateId: adaptationCandidateIdSchema,
   kind: z.enum(["BALANCED", "CONSERVATIVE"]),
   eventGroup: z.enum(["MIDDLE_DISTANCE", "FIVE_K"]),
   eventDistanceM: z.union([
@@ -227,22 +261,79 @@ const planCandidateSchema = z.object({
   ]),
   selectionAuthority: z.enum(["SELF", "COACH_REQUIRED"]),
   frame: candidateFrameSchema,
-  mainExposureLedger: z.object({ mainExposureCount: z.union([z.literal(2), z.literal(3)]), fingerprint: z.string().min(1), countedExposureIds: z.array(z.string().min(1)).readonly() }).strict(),
-  rationaleCodes: z.array(z.string().min(1)).readonly(),
+  mainExposureLedger: z.object({ mainExposureCount: z.union([z.literal(2), z.literal(3)]), fingerprint: z.string(), countedExposureIds: z.array(adaptationExposureIdSchema).readonly() }).strict(),
+  rationaleCodes: z.array(planBetaCodeSchema).readonly(),
   sessions: z.array(planSessionSchema).readonly(),
-}).strict()
+}).strict().superRefine((candidate, context) => {
+  const marker = ":pace-target:"
+  const markerIndex = candidate.candidateId.indexOf(marker)
+  if (candidate.detailedPrescriptionFingerprint === null ? markerIndex >= 0 : candidate.candidateId.slice(markerIndex + marker.length) !== candidate.detailedPrescriptionFingerprint) {
+    addIssue(context, ["candidateId"], "Detailed prescription identity mismatch.")
+  }
+  if (candidate.mainExposureLedger.fingerprint !== candidate.mainExposureLedger.countedExposureIds.join(":")) {
+    addIssue(context, ["mainExposureLedger", "fingerprint"], "Exposure identity mismatch.")
+  }
+  if (!candidate.candidateId.includes(`:${candidate.mainExposureLedger.countedExposureIds.join("-")}:`)) {
+    addIssue(context, ["candidateId"], "Candidate exposure identity mismatch.")
+  }
+  for (const [index, session] of candidate.sessions.entries()) {
+    if (session.prescription.kind !== "PACE_TARGET") continue
+    const prescription = session.prescription
+    const approval = DETAILED_PRESCRIPTION_APPROVALS.find((item) => (
+      item.templateId === prescription.templateId
+      && item.templateVersion === prescription.templateVersion
+      && item.targetEventDistanceM === prescription.targetEventDistanceM
+    ))
+    if (approval === undefined
+      || prescription.manifestVersion !== approval.manifestVersion
+      || prescription.templateContentFingerprint !== approval.templateContentFingerprint
+      || prescription.notation !== approval.notation
+      || prescription.sourceDecisionId !== approval.sourceDecisionId
+      || prescription.sourceEvidenceRef !== approval.sourceEvidenceRef
+      || prescription.approvalDecisionId !== approval.approvalDecisionId
+      || prescription.ownerAuthorityDecisionId !== approval.ownerDecision.authorityDecisionId
+      || prescription.sportsScienceEvidence.evidenceId !== approval.sportsScienceEvidence.evidenceId
+      || prescription.sportsScienceEvidence.decisionRef !== approval.sportsScienceEvidence.decisionRef
+      || prescription.sportsScienceEvidence.fingerprint !== approval.sportsScienceEvidence.canonicalEvidenceFingerprint
+      || prescription.populationApplicabilityEvidence.evidenceId !== approval.populationApplicabilityEvidence.evidenceId
+      || prescription.populationApplicabilityEvidence.decisionRef !== approval.populationApplicabilityEvidence.decisionRef
+      || prescription.populationApplicabilityEvidence.fingerprint !== approval.populationApplicabilityEvidence.canonicalEvidenceFingerprint
+      || prescription.scope.eventEvidenceFingerprint !== approval.eventScopeEvidence.evidenceFingerprint
+      || prescription.scope.experienceEvidenceFingerprint !== approval.experienceScopeEvidence.evidenceFingerprint
+      || !approval.eligibleEventGroups.includes(prescription.scope.eventGroup)
+      || !approval.eligibleExperienceBands.includes(prescription.scope.experienceBand)
+      || prescription.scope.population !== approval.populationApplicability.scope
+      || JSON.stringify(prescription.componentRefs) !== JSON.stringify(approval.componentRefs)
+      || JSON.stringify(prescription.operationalComponents) !== JSON.stringify(approval.canonicalTemplateContent.operationalComponents)
+      || prescription.displayRoundingPolicyVersion !== "seconds-v1") {
+      addIssue(context, ["sessions", index, "prescription"], "Prescription references must match an approved manifest entry.")
+    }
+    if (!adaptationRecordIdSchema.safeParse(prescription.selectedAnchor.anchorId).success) {
+      addIssue(context, ["sessions", index, "prescription", "selectedAnchor", "anchorId"], "Anchor identity must be a generated athlete record ID.")
+    }
+    if (prescription.selectedAnchor.sourceRef !== `athlete-record:${prescription.selectedAnchor.anchorId}`) {
+      addIssue(context, ["sessions", index, "prescription", "selectedAnchor", "sourceRef"], "Anchor source identity mismatch.")
+    }
+    const anchor = prescription.selectedAnchor
+    if (!isValidIsoDate(anchor.achievedAt)
+      || !currentElapsedLabels.has(anchor.elapsedLabel)
+      || (anchor.kind === "SB" && anchor.seasonId !== anchor.achievedAt.slice(0, 4))) {
+      addIssue(context, ["sessions", index, "prescription", "selectedAnchor"], "Anchor display metadata must be deterministically derived.")
+    }
+  }
+})
 
 export const planAdaptationProposalSchema = z.object({
   proposalId: z.string().regex(/^adaptation:[a-f0-9]{64}$/u),
   proposalHash: hashSchema,
   targetFrame: z.literal("NEXT_FRAME"),
-  athleteId: z.string().min(1).max(128),
+  athleteId: opaqueAthleteIdSchema,
   eventDistanceM: adaptationScopeSchema.shape.eventDistanceM,
   proposalOrigin: z.enum(["SELF_SERVICE", "COACH_AUTHORED"]),
   selectionAuthority: z.enum(["SELF", "COACH_REQUIRED"]),
   trigger: z.enum(["SAME_EVENT_PB_SB_AFTER_ACTIVE_PLAN_START", "EXPLICIT_REQUEST"]),
   changeDimension: z.enum(["INTENSITY", "VOLUME", "FREQUENCY"]),
-  baseCandidateId: z.string().min(1),
+  baseCandidateId: adaptationCandidateIdSchema,
   baseContentHash: hashSchema,
   proposedContentHash: hashSchema,
   approvedBeforeValueRef: hashSchema,
@@ -250,7 +341,7 @@ export const planAdaptationProposalSchema = z.object({
   baseCandidate: planCandidateSchema,
   successorCandidate: planCandidateSchema,
   createdAt: z.string().datetime(),
-  idempotencyKey: z.string().min(1),
+  idempotencyKey: hashSchema,
 }).strict().superRefine((proposal, context) => {
   const expectedAuthority = proposal.proposalOrigin === "SELF_SERVICE" ? "SELF" : "COACH_REQUIRED"
   if (proposal.selectionAuthority !== expectedAuthority) addIssue(context, ["selectionAuthority"], "Selection authority must follow proposal origin.")
@@ -258,21 +349,22 @@ export const planAdaptationProposalSchema = z.object({
 })
 
 export const pendingNextFrameSuccessorSchema = z.object({
-  version: z.literal(1), proposalId: z.string().min(1), targetFrame: z.literal("NEXT_FRAME"),
+  version: z.literal(1), proposalId: z.string().regex(/^adaptation:[a-f0-9]{64}$/u), targetFrame: z.literal("NEXT_FRAME"),
   proposalOrigin: z.enum(["SELF_SERVICE", "COACH_AUTHORED"]), selectionAuthority: z.enum(["SELF", "COACH_REQUIRED"]),
   trigger: z.enum(["SAME_EVENT_PB_SB_AFTER_ACTIVE_PLAN_START", "EXPLICIT_REQUEST"]), changeDimension: z.enum(["INTENSITY", "VOLUME", "FREQUENCY"]),
-  athleteId: z.string().min(1).max(128), eventDistanceM: adaptationScopeSchema.shape.eventDistanceM,
-  baseCandidateId: z.string().min(1), baseContentHash: hashSchema, proposedContentHash: hashSchema, predecessorStateHash: hashSchema,
-  successorState: planBetaStateV2BaseSchema, acceptedAt: z.string().datetime(), decisionId: z.string().min(1), idempotencyKey: z.string().min(1), requestHash: hashSchema,
+  athleteId: opaqueAthleteIdSchema, eventDistanceM: adaptationScopeSchema.shape.eventDistanceM,
+  baseCandidateId: adaptationCandidateIdSchema, baseContentHash: hashSchema, proposedContentHash: hashSchema, predecessorStateHash: hashSchema,
+  successorState: planBetaStateV2BaseSchema, acceptedAt: z.string().datetime(), decisionId: z.string().regex(/^adaptation-decision:[a-f0-9]{64}$/u), idempotencyKey: hashSchema, requestHash: hashSchema,
 }).strict().superRefine((record, context) => {
   if (record.successorState.activePlan.candidateId === record.baseCandidateId) addIssue(context, ["successorState", "activePlan", "candidateId"], "Successor must differ from predecessor.")
+  if (!adaptationCandidateIdSchema.safeParse(record.successorState.activePlan.candidateId).success) addIssue(context, ["successorState", "activePlan", "candidateId"], "Successor candidate identity is invalid.")
   const expectedAuthority = record.proposalOrigin === "SELF_SERVICE" ? "SELF" : "COACH_REQUIRED"
   if (record.selectionAuthority !== expectedAuthority) addIssue(context, ["selectionAuthority"], "Selection authority must follow proposal origin.")
 })
 
 export const planAdaptationDecisionSchema = z.object({
-  version: z.literal(1), decisionId: z.string().min(1), proposalId: z.string().min(1), decision: z.literal("ACCEPT"),
-  predecessorStateHash: hashSchema, proposedContentHash: hashSchema, decidedAt: z.string().datetime(), idempotencyKey: z.string().min(1), requestHash: hashSchema,
+  version: z.literal(1), decisionId: z.string().regex(/^adaptation-decision:[a-f0-9]{64}$/u), proposalId: z.string().regex(/^adaptation:[a-f0-9]{64}$/u), decision: z.literal("ACCEPT"),
+  predecessorStateHash: hashSchema, proposedContentHash: hashSchema, decidedAt: z.string().datetime(), idempotencyKey: hashSchema, requestHash: hashSchema,
 }).strict()
 
 export const planAdaptationEnvelopeSchema = z.object({ version: z.literal(1), pending: pendingNextFrameSuccessorSchema, decision: planAdaptationDecisionSchema }).strict().superRefine((envelope, context) => {

@@ -4,6 +4,7 @@ import {
   canonicalJsonSha256,
   verifyPlanAdaptationProposal,
 } from "@impl/plan-generator/adaptation"
+import { RVE_NON_SENSITIVE_REASON_CODES } from "@impl/rve/signal"
 import {
   parsePlanBetaState,
   planAdaptationEnvelopeSchema,
@@ -20,12 +21,13 @@ import type {
 const ACTIVE_KEY = "trainoracle.plan-beta.v1"
 const ADAPTATION_KEY = "trainoracle.plan-beta.adaptation.v1"
 const PRIVATE_KEY = /(?:memo|note|symptom)/iu
+const safetyReasonCodeSchema = z.enum(RVE_NON_SENSITIVE_REASON_CODES)
 
 const passedSafetyGateSchema = z.object({
   kind: z.literal("passed"),
   action: z.literal("CONTINUE_WITH_OTHER_GATES"),
   planGenerationAllowed: z.literal(true),
-  nonSensitiveReasonCodes: z.array(z.string()).readonly(),
+  nonSensitiveReasonCodes: z.array(safetyReasonCodeSchema).readonly(),
   audit: z.object({ event: z.literal("PLAN_SAFETY_GATE_PASSED"), privacy: z.literal("REASON_CODES_ONLY") }).strict(),
 }).strict()
 const blockedSafetyGateSchema = z.object({
@@ -33,7 +35,7 @@ const blockedSafetyGateSchema = z.object({
   action: z.enum(["BLOCK", "BLOCK_OR_HUMAN_REVIEW"]),
   planGenerationAllowed: z.literal(false),
   requiredNextAction: z.enum(["HUMAN_REVIEW", "MORE_INFO_OR_HUMAN_REVIEW"]),
-  nonSensitiveReasonCodes: z.array(z.string()).readonly(),
+  nonSensitiveReasonCodes: z.array(safetyReasonCodeSchema).readonly(),
   audit: z.object({ event: z.literal("PLAN_SAFETY_GATE_BLOCKED"), privacy: z.literal("REASON_CODES_ONLY") }).strict(),
 }).strict().superRefine((gate, context) => {
   const expected = gate.action === "BLOCK" ? "HUMAN_REVIEW" : "MORE_INFO_OR_HUMAN_REVIEW"
@@ -49,7 +51,7 @@ const acceptanceRequestSchema = z.object({
   safetyValidUntil: z.string().datetime(),
   activeHold: z.boolean(),
   acceptedAt: z.string().datetime(),
-  idempotencyKey: z.string().min(1),
+  idempotencyKey: z.string().regex(/^sha256:[a-f0-9]{64}$/u),
 }).strict()
 type AcceptanceRequest = z.infer<typeof acceptanceRequestSchema>
 

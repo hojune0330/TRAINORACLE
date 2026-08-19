@@ -1,6 +1,7 @@
 import { z } from "zod"
 import type { PlanCandidate } from "@impl/plan-generator/types"
 import type { SafetyGatePassed } from "@impl/safety-gate/gate"
+import { RVE_NON_SENSITIVE_REASON_CODES } from "@impl/rve/signal"
 import type { AthleteRecord } from "./athlete-records"
 import { planAdaptationProposalSchema } from "./plan-beta-schema"
 import type { PlanBetaState } from "./plan-beta-schema"
@@ -25,13 +26,21 @@ const contextSchema = z.object({
     planAdaptationProposalSchema.shape.baseCandidate,
     planAdaptationProposalSchema.shape.baseCandidate,
   ]),
-}).strict()
+}).strict().superRefine((context, refinement) => {
+  if (!context.candidates.some((candidate) => candidate.candidateId === context.activeCandidateId)) {
+    refinement.addIssue({
+      code: "custom",
+      path: ["activeCandidateId"],
+      message: "Active candidate must reference one candidate in this context.",
+    })
+  }
+})
 
 const passedSafetyGateSchema = z.object({
   kind: z.literal("passed"),
   action: z.literal("CONTINUE_WITH_OTHER_GATES"),
   planGenerationAllowed: z.literal(true),
-  nonSensitiveReasonCodes: z.array(z.string()).readonly(),
+  nonSensitiveReasonCodes: z.array(z.enum(RVE_NON_SENSITIVE_REASON_CODES)).readonly(),
   audit: z.object({
     event: z.literal("PLAN_SAFETY_GATE_PASSED"),
     privacy: z.literal("REASON_CODES_ONLY"),
