@@ -87,6 +87,47 @@ const activePlan = {
 } satisfies PlanBetaState
 
 describe("training home view model", () => {
+  it.each([
+    {
+      label: "an empty journal without a plan",
+      entries: [],
+      plan: null,
+      today: "2026-08-03",
+      expected: "WELCOME",
+    },
+    {
+      label: "journal records without a plan",
+      entries: [entry],
+      plan: null,
+      today: "2026-08-03",
+      expected: "JOURNAL",
+    },
+    {
+      label: "an active plan with a next training",
+      entries: [],
+      plan: activePlan,
+      today: "2026-08-18",
+      expected: "TRAINING",
+    },
+    {
+      label: "an active plan with no remaining training",
+      entries: [],
+      plan: activePlan,
+      today: "2026-08-30",
+      expected: "JOURNAL",
+    },
+  ] satisfies ReadonlyArray<{
+    readonly label: string
+    readonly entries: readonly JournalEntry[]
+    readonly plan: PlanBetaState | null
+    readonly today: string
+    readonly expected: "WELCOME" | "TRAINING" | "JOURNAL"
+  }>)("derives $expected for $label", ({ entries, plan, today, expected }) => {
+    const model = buildTrainingHomeViewModel(entries, [], plan, today)
+
+    expect(model).toHaveProperty("homeMode", expected)
+  })
+
   it("summarizes entry shells and safe analysis without exposing memo text", () => {
     const model = buildTrainingHomeViewModel([entry], [analysisEntry], null, "2026-08-03")
 

@@ -521,6 +521,21 @@ input, textarea { font-family: inherit; }
 }
 
 .training-home__intro p { font-size: 13.5px; }
+.training-home__intro .training-home__trust {
+  color: var(--ink-3);
+  font-size: var(--fs-body-sm);
+}
+
+.training-home__welcome-actions {
+  display: grid;
+  gap: var(--space-2);
+  padding: var(--space-4) var(--space-5) 0;
+}
+
+.training-home__welcome-actions .training-home__primary {
+  min-height: var(--app-action-height);
+  margin-top: 0;
+}
 
 .training-home__today {
   margin-top: 22px;
@@ -697,6 +712,17 @@ input, textarea { font-family: inherit; }
 }
 .training-home__example span { font-family: var(--sans); font-size: 12px; }
 .training-home__example strong { font-family: var(--sans); font-size: 13px; color: var(--ink); }
+.training-home__example--welcome {
+  padding: var(--space-4) var(--space-5) 0;
+}
+.training-home__example--welcome button {
+  min-height: var(--app-touch-min);
+  margin-top: var(--space-2);
+  padding: var(--space-3);
+  grid-template-columns: minmax(0, 1fr) var(--space-6);
+  gap: var(--space-3);
+  align-items: center;
+}
 
 .training-home__pain {
   margin: 16px 20px 0;

@@ -1,0 +1,132 @@
+import { cleanup, render, screen } from "@testing-library/react"
+import { afterEach, describe, expect, it } from "vitest"
+import type { TrainingHomeViewModel } from "../../domain/home-view-model"
+import { TrainingHome } from "./TrainingHome"
+
+const WELCOME_MODEL = {
+  homeMode: "WELCOME",
+  todayMessage: "아직 오늘 기록이 없어요.",
+  journalSummary: "아직 기록이 없어요",
+  flowSummary: "9.5일 주기로 일지 묶어 보기 · 시작일 직접 선택",
+  planSummary: "저장된 계획 없음 · 계획 후보 만들기",
+  analysisSummary: "기록이 쌓이면 변화를 볼 수 있어요",
+  showMinjiPrompt: true,
+  nextTraining: null,
+  briefing: "",
+} satisfies TrainingHomeViewModel
+
+const JOURNAL_MODEL = {
+  ...WELCOME_MODEL,
+  homeMode: "JOURNAL",
+  todayMessage: "오늘 1개의 기록이 있어요.",
+  journalSummary: "1일 · 1개의 기록",
+} satisfies TrainingHomeViewModel
+
+const TRAINING_MODEL = {
+  ...WELCOME_MODEL,
+  homeMode: "TRAINING",
+  planSummary: "저장된 계획 · 2개 일정",
+  nextTraining: {
+    date: "2026-08-20",
+    laterSameDaySession: null,
+    session: {
+      day: 2,
+      slot: "PM",
+      role: "QUALITY",
+      plannedEnergyIntent: "LT_INTENT",
+      prescription: {
+        kind: "RPE_TIME_RANGE",
+        rpe: { minimum: 5, maximum: 6 },
+        durationMinutes: { minimum: 25, maximum: 40 },
+      },
+    },
+  },
+} satisfies TrainingHomeViewModel
+
+afterEach(cleanup)
+
+describe("training home modes", () => {
+  it("places the unchanged next-training section before today in training mode", () => {
+    const { container } = render(
+      <TrainingHome
+        model={TRAINING_MODEL}
+        todayContext={<div>오늘 상태</div>}
+        recentJournal={recentJournal()}
+      />,
+    )
+
+    const contentSections = [...container.querySelectorAll("section:not(.training-home__intro)")]
+
+    expect(contentSections[0]).toHaveClass("training-home__next")
+    expect(contentSections[1]).toHaveClass("training-home__today")
+    expect(contentSections[2]).toHaveClass("training-home__recent")
+    expect(screen.getByRole("button", {
+      name: /다음 훈련.*지속 페이스.*LT 훈련.*8월 20일.*오후.*총 25~40분.*RPE 5~6.*목표.*페이스는 지정하지 않음/u,
+    })).toBeVisible()
+  })
+
+  it("preserves intro, today, recent journal, and services order in journal mode", () => {
+    render(
+      <TrainingHome
+        model={JOURNAL_MODEL}
+        todayContext={<div>오늘 상태</div>}
+        recentJournal={recentJournal()}
+      />,
+    )
+
+    const intro = screen.getByRole("region", { name: "내 기록" })
+    const today = screen.getByLabelText("오늘")
+    const recent = screen.getByRole("region", { name: "최근 기록" })
+    const services = screen.getByRole("navigation", { name: "내 기록 살펴보기" })
+
+    expect(intro.compareDocumentPosition(today) & Node.DOCUMENT_POSITION_FOLLOWING).not.toBe(0)
+    expect(today.compareDocumentPosition(recent) & Node.DOCUMENT_POSITION_FOLLOWING).not.toBe(0)
+    expect(recent.compareDocumentPosition(services) & Node.DOCUMENT_POSITION_FOLLOWING).not.toBe(0)
+    expect(screen.queryByText("다음 훈련")).toBeNull()
+  })
+
+  it.each([
+    { label: "JOURNAL", model: JOURNAL_MODEL },
+    { label: "TRAINING", model: TRAINING_MODEL },
+  ])("does not render a false briefing in $label mode", ({ model }) => {
+    render(<TrainingHome model={model} />)
+
+    expect(screen.queryByLabelText("아침 브리핑")).toBeNull()
+  })
+
+  it("recomposes welcome as journal after the first-record model rerender", () => {
+    const view = render(
+      <TrainingHome
+        model={WELCOME_MODEL}
+        todayContext={<div>숨겨질 오늘 상태</div>}
+        recentJournal={recentJournal()}
+      />,
+    )
+
+    expect(screen.getByRole("heading", {
+      name: "달리기 일지를 남기고, 내 기록으로 훈련 계획을 받아요.",
+    })).toBeVisible()
+    expect(screen.queryByLabelText("오늘")).toBeNull()
+
+    view.rerender(
+      <TrainingHome
+        model={JOURNAL_MODEL}
+        todayContext={<div>오늘 상태</div>}
+        recentJournal={recentJournal()}
+      />,
+    )
+
+    expect(screen.getByRole("heading", { name: "내 기록" })).toBeVisible()
+    expect(screen.queryByText("달리기 일지를 남기고, 내 기록으로 훈련 계획을 받아요.")).toBeNull()
+    expect(screen.getByLabelText("오늘")).toBeVisible()
+    expect(screen.getByRole("region", { name: "최근 기록" })).toBeVisible()
+  })
+})
+
+function recentJournal() {
+  return (
+    <section className="training-home__recent" aria-label="최근 기록">
+      <p>최근 일지 한 건</p>
+    </section>
+  )
+}
