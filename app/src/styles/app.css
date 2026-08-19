@@ -492,6 +492,15 @@ input, textarea { font-family: inherit; }
   cursor: pointer;
 }
 
+.training-home__welcome-fold {
+  min-block-size: calc(100dvh - var(--app-shell-tab-bar-height));
+}
+
+.training-home__welcome-title {
+  word-break: keep-all;
+  overflow-wrap: break-word;
+}
+
 .training-home__intro {
   padding: 8px 20px 0;
 }

@@ -117,7 +117,7 @@ function buildBriefing(
   if (evening.weightKg.trim() !== "") parts.push(`체중 ${evening.weightKg}kg`)
   const painParts = Object.entries(evening.painParts)
     .filter(([, level]) => level > 0)
-    .map(([part, level]) => `${part} ${level}`)
+    .map(([part, level]) => `${part.replaceAll(" ", "\u00a0")} ${level}`)
   if (painParts.length > 0) parts.push(`통증 ${painParts.join(", ")}`)
   if (parts.length === 0) return ""
 

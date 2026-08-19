@@ -77,53 +77,57 @@ export function TrainingHome({
 
   return (
     <>
-      <header className="training-home__header">
-        <div className="training-home__brand">TRAINORACLE</div>
-        <button className="training-home__more" type="button" onClick={onOpenMore} aria-label="더보기" title="더보기">
-          <Ellipsis aria-hidden="true" size={21} />
-        </button>
-      </header>
+      <div className={model.homeMode === "WELCOME" ? "training-home__welcome-fold" : undefined}>
+        <header className="training-home__header">
+          <div className="training-home__brand">TRAINORACLE</div>
+          <button className="training-home__more" type="button" onClick={onOpenMore} aria-label="더보기" title="더보기">
+            <Ellipsis aria-hidden="true" size={21} />
+          </button>
+        </header>
 
-      <section className="training-home__intro" aria-labelledby="training-home-title">
-        {model.homeMode === "WELCOME" ? (
+        <section className="training-home__intro" aria-labelledby="training-home-title">
+          {model.homeMode === "WELCOME" ? (
+            <>
+              <h1 id="training-home-title" className="training-home__welcome-title">
+                달리기 일지를 남기고, 내 기록으로 훈련 계획을 받아요.
+              </h1>
+              <p className="training-home__trust">모든 데이터는 이 기기에만 저장돼요.</p>
+            </>
+          ) : (
+            <>
+              <h1 id="training-home-title">내 기록</h1>
+              <p>오늘을 남기고, 필요할 때 훈련을 더 자세히 봐요.</p>
+            </>
+          )}
+        </section>
+
+        {model.homeMode === "WELCOME" && (
           <>
-            <h1 id="training-home-title">달리기 일지를 남기고, 내 기록으로 훈련 계획을 받아요.</h1>
-            <p className="training-home__trust">모든 데이터는 이 기기에만 저장돼요.</p>
-          </>
-        ) : (
-          <>
-            <h1 id="training-home-title">내 기록</h1>
-            <p>오늘을 남기고, 필요할 때 훈련을 더 자세히 봐요.</p>
+            <div className="training-home__welcome-actions">
+              <button className="training-home__primary" type="button" onClick={() => onWriteLog?.("post-session")}>
+                <PencilLine aria-hidden="true" size={19} />
+                <span>오늘 기록 남기기</span>
+                <ChevronRight aria-hidden="true" size={18} />
+              </button>
+              <button className="training-home__primary" type="button" onClick={onOpenPlan}>
+                <CalendarPlus aria-hidden="true" size={19} />
+                <span>훈련 계획 만들기</span>
+                <ChevronRight aria-hidden="true" size={18} />
+              </button>
+            </div>
+            <section
+              className="training-home__example training-home__example--welcome"
+              aria-labelledby="training-home-example"
+            >
+              <div id="training-home-example" className="training-home__label">이렇게 쓰여요</div>
+              <button type="button" onClick={onOpenGuide}>
+                <strong>민지의 예시 일지 보기</strong>
+                <ChevronRight aria-hidden="true" size={18} />
+              </button>
+            </section>
           </>
         )}
-      </section>
-
-      {model.homeMode === "WELCOME" && (
-        <>
-          <div className="training-home__welcome-actions">
-            <button className="training-home__primary" type="button" onClick={() => onWriteLog?.("post-session")}>
-              <PencilLine aria-hidden="true" size={19} />
-              <span>오늘 기록 남기기</span>
-              <ChevronRight aria-hidden="true" size={18} />
-            </button>
-            <button className="training-home__primary" type="button" onClick={onOpenPlan}>
-              <CalendarPlus aria-hidden="true" size={19} />
-              <span>훈련 계획 만들기</span>
-              <ChevronRight aria-hidden="true" size={18} />
-            </button>
-          </div>
-          <section
-            className="training-home__example training-home__example--welcome"
-            aria-labelledby="training-home-example"
-          >
-            <div id="training-home-example" className="training-home__label">이렇게 쓰여요</div>
-            <button type="button" onClick={onOpenGuide}>
-              <strong>민지의 예시 일지 보기</strong>
-              <ChevronRight aria-hidden="true" size={18} />
-            </button>
-          </section>
-        </>
-      )}
+      </div>
 
       {model.homeMode === "TRAINING" && nextTrainingSection}
       {model.homeMode !== "WELCOME" && todaySection}

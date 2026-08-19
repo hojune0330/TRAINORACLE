@@ -1,7 +1,10 @@
+import { readFileSync } from "node:fs"
 import { cleanup, render, screen } from "@testing-library/react"
 import { afterEach, describe, expect, it } from "vitest"
 import type { TrainingHomeViewModel } from "../../domain/home-view-model"
 import { TrainingHome } from "./TrainingHome"
+
+const appCss = readFileSync("src/styles/app.css", "utf8")
 
 const WELCOME_MODEL = {
   homeMode: "WELCOME",
@@ -46,6 +49,42 @@ const TRAINING_MODEL = {
 afterEach(cleanup)
 
 describe("training home modes", () => {
+  it("marks the welcome title for Korean word-preserving wrapping", () => {
+    render(<TrainingHome model={WELCOME_MODEL} />)
+
+    const title = screen.getByRole("heading", {
+      name: "달리기 일지를 남기고, 내 기록으로 훈련 계획을 받아요.",
+    })
+    const titleRule = appCss.match(/\.training-home__welcome-title\s*\{[^}]*\}/u)?.[0] ?? ""
+
+    expect(title).toHaveClass("training-home__welcome-title")
+    expect(titleRule).toContain("word-break: keep-all")
+    expect(titleRule).toContain("overflow-wrap: break-word")
+  })
+
+  it("groups every welcome lead surface in one token-sized visible fold before services", () => {
+    const { container } = render(<TrainingHome model={WELCOME_MODEL} />)
+
+    const fold = container.querySelector(".training-home__welcome-fold")
+    const foldRule = appCss.match(/\.training-home__welcome-fold\s*\{[^}]*\}/u)?.[0] ?? ""
+    const services = screen.getByRole("navigation", { name: "내 기록 살펴보기" })
+
+    expect(fold).toBeInstanceOf(HTMLElement)
+    if (!(fold instanceof HTMLElement)) return
+
+    expect(fold).toContainElement(screen.getByRole("banner"))
+    expect(fold).toContainElement(screen.getByRole("heading", {
+      name: "달리기 일지를 남기고, 내 기록으로 훈련 계획을 받아요.",
+    }))
+    expect(fold).toContainElement(screen.getByRole("button", { name: "오늘 기록 남기기" }))
+    expect(fold).toContainElement(screen.getByRole("button", { name: "훈련 계획 만들기" }))
+    expect(fold).toContainElement(screen.getByRole("button", { name: "민지의 예시 일지 보기" }))
+    expect(fold.compareDocumentPosition(services) & Node.DOCUMENT_POSITION_FOLLOWING).not.toBe(0)
+    expect(foldRule).toContain(
+      "min-block-size: calc(100dvh - var(--app-shell-tab-bar-height))",
+    )
+  })
+
   it("places the unchanged next-training section before today in training mode", () => {
     const { container } = render(
       <TrainingHome

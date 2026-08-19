@@ -230,7 +230,7 @@ describe("training home view model", () => {
     expect(model.briefing).toBe("")
   })
 
-  it("summarizes the latest evening check-in without inventing missing fields", () => {
+  it("summarizes the latest evening check-in and keeps its pain body-part label together", () => {
     const eveningEntry: JournalEntry = {
       ...entry,
       id: "home-evening",
@@ -248,7 +248,7 @@ describe("training home view model", () => {
     expect(model.briefing).toContain("수면 7.5h")
     expect(model.briefing).toContain("심박 49bpm")
     expect(model.briefing).toContain("체중 62.0kg")
-    expect(model.briefing).toContain("통증 오른 무릎 2")
+    expect(model.briefing).toContain("통증 오른\u00a0무릎 2")
     expect(JSON.stringify(model)).not.toContain(entry.memo)
   })
 
