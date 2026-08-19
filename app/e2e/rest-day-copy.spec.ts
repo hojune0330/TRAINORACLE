@@ -27,8 +27,8 @@ test("offers a rest-day path without pressuring the athlete to log more", async 
   await page.getByRole("button", { name: "하루 마무리 기록하기" }).click()
   await expect(page.getByRole("heading", { name: "회복 · 하루 마무리" })).toBeVisible()
 
-  // 하루 마무리 폼에서 탭바 "기록"을 누르면 종류 선택으로 돌아온다(§3-3).
-  await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: /기록/u }).click()
+  // 하루 마무리 폼에서 탭바 "경기기록"을 누르면 종류 선택으로 돌아온다(§3-3).
+  await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "경기기록" }).click()
   await expect(page.getByRole("button", { name: /회복 · 하루 마무리.*쉬는 날도 그대로/u })).toBeVisible()
 
   await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "분석" }).click()

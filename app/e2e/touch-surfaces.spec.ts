@@ -33,8 +33,8 @@ test("audits empty home and chooser touch actions", async ({ page }, testInfo) =
     { name: "post.energy", locator: page.getByRole("button", { name: /^(BA BASE|LT LT|V2 VO2|GL GLY|AP ATP|RE REST)$/u }), count: 6, heightOnly: true },
   ])
   await expectNoHorizontalOverflow(page)
-  // the chooser is reached via the "기록" tab bar button
-  await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "기록" }).click()
+  // the chooser is reached via the "경기기록" tab bar button
+  await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "경기기록" }).click()
   await auditTouchTargets(page, [
     { name: "chooser.back", locator: page.getByRole("button", { name: "← 뒤로" }) },
     { name: "chooser.post", locator: page.getByRole("button", { name: /훈련 후/u }), heightOnly: true },
