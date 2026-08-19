@@ -7,6 +7,10 @@ test.use({ serviceWorkers: "block" })
 const appPath = process.env.PLAYWRIGHT_APP_PATH ?? "/"
 const expectedAsset = process.env.PLAYWRIGHT_EXPECTED_PLAN_BETA_ASSET
 const expectedPort = process.env.PLAYWRIGHT_EXPECTED_PORT
+test.skip(
+  expectedAsset === undefined && expectedPort === undefined,
+  "requires the isolated adaptive next-frame runner",
+)
 const evidenceDir = path.resolve(
   process.cwd(),
   "../../../.omo/evidence/trainoracle-adaptive-replanning/task-4/ui-lifecycle",

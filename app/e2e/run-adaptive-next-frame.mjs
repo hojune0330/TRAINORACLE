@@ -51,6 +51,7 @@ try {
     cwd: appDirectory,
     env: {
       ...process.env,
+      PLAYWRIGHT_EXTERNAL_SERVER: "1",
       PLAYWRIGHT_BASE_URL: `http://127.0.0.1:${port}`,
       PLAYWRIGHT_PORT: String(port),
       PLAYWRIGHT_EXPECTED_PORT: String(port),
