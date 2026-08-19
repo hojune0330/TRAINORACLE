@@ -1087,6 +1087,159 @@
   text-wrap: pretty;
 }
 
+.plan-adaptation {
+  margin-top: var(--space-4);
+  border-block: var(--bw-line) solid var(--ink);
+}
+
+.plan-adaptation__entry {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: var(--app-action-height);
+  padding: var(--space-3) var(--space-2);
+  border: 0;
+  background: var(--surface);
+  color: var(--ink);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  text-align: left;
+}
+
+.plan-adaptation__entry span {
+  min-width: 0;
+  display: grid;
+  gap: var(--space-1);
+}
+
+.plan-adaptation__entry strong,
+.plan-adaptation__entry small {
+  font-family: var(--sans);
+  overflow-wrap: break-word;
+  word-break: keep-all;
+}
+
+.plan-adaptation__entry strong {
+  font-size: var(--fs-body);
+}
+
+.plan-adaptation__entry small {
+  color: var(--ink-3);
+  font-size: var(--fs-body-sm);
+  line-height: 1.45;
+}
+
+.plan-adaptation__panel {
+  padding: var(--space-4) 0;
+  border-top: var(--bw-line) solid var(--hair);
+}
+
+.plan-adaptation__step-head {
+  display: grid;
+  grid-template-columns: var(--app-touch-min) minmax(0, 1fr);
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.plan-adaptation__step-head h2,
+.plan-adaptation__review h3,
+.plan-adaptation__result h2 {
+  margin: 0;
+  font-family: var(--sans);
+  letter-spacing: 0;
+}
+
+.plan-adaptation__step-head h2,
+.plan-adaptation__result h2 {
+  font-size: var(--fs-app-section-title);
+}
+
+.plan-adaptation__back {
+  width: var(--app-touch-min);
+  height: var(--app-touch-min);
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--ink);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.plan-adaptation__notice,
+.plan-adaptation__review p,
+.plan-adaptation__result p {
+  margin: var(--space-3) 0 0;
+  color: var(--ink-2);
+  font-family: var(--sans);
+  font-size: var(--fs-body-sm);
+  line-height: 1.55;
+  overflow-wrap: break-word;
+  word-break: keep-all;
+}
+
+.plan-adaptation__review > section {
+  padding: var(--space-4) 0;
+  border-bottom: var(--bw-line) solid var(--hair);
+}
+
+.plan-adaptation__review h3 {
+  font-size: var(--fs-body);
+}
+
+.plan-adaptation__changes {
+  margin: var(--space-2) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.plan-adaptation__changes li {
+  padding: var(--space-2) 0;
+  border-top: var(--bw-line) solid var(--hair);
+  display: grid;
+  gap: var(--space-1);
+  font-family: var(--sans);
+  font-size: var(--fs-body-sm);
+  line-height: 1.5;
+}
+
+.plan-adaptation__change-copy {
+  color: var(--ink-3);
+  overflow-wrap: anywhere;
+}
+
+.plan-adaptation__metadata-token {
+  white-space: nowrap;
+}
+
+.plan-adaptation__accept,
+.plan-adaptation__close {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: var(--app-action-height);
+  margin-top: var(--space-4);
+  padding: var(--space-2) var(--space-3);
+  border: var(--bw-line) solid var(--ink);
+  background: var(--ink);
+  color: var(--bg);
+  cursor: pointer;
+  font-family: var(--sans);
+  font-size: var(--fs-body);
+  font-weight: 700;
+}
+
+.plan-adaptation__accept:disabled {
+  cursor: wait;
+  opacity: 0.6;
+}
+
+.plan-adaptation :focus-visible {
+  outline: 2px solid var(--brand);
+  outline-offset: 2px;
+}
+
 .plan-candidate-list {
   margin-top: var(--space-6);
   border-top: var(--bw-line) solid var(--ink);

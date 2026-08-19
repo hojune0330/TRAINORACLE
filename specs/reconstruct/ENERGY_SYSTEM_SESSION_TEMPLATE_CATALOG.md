@@ -45,6 +45,10 @@ catalog_invariants:
   no_template_claims_medical_clearance: true
   active_template_count: 1
   draft_template_count: 29
+
+research_acceptance_boundary:
+  automatic_prescription_authorized: false
+  numeric_template_activation_authorized: false
 ```
 
 ## 2. Source registry and verification record

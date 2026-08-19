@@ -66,6 +66,8 @@ describe("plan beta generation contract", () => {
     expect(result.candidates[0]?.candidateId).not.toBe(result.candidates[1]?.candidateId)
     expect(result.candidates[0]?.sessions).not.toEqual(result.candidates[1]?.sessions)
     for (const candidate of result.candidates) {
+      expect(candidate.eventDistanceM).toBe(1500)
+      expect(candidate.candidateId).toContain(":event-1500:")
       expect(candidate.detailedPrescriptionFingerprint).toBeNull()
       expect(candidate.sessions.every((session) => (
         session.role !== "QUALITY" || session.prescription.kind === "RPE_TIME_RANGE"
@@ -77,11 +79,16 @@ describe("plan beta generation contract", () => {
     "keeps %s in an explicit non-universal beta scope",
     (eventGroup) => {
       // Given
+      const { eventDistanceM: _eventDistanceM, ...baseProfile } = baseRequest().profile
+      const exactEvent = eventGroup === "MIDDLE_DISTANCE" ? { eventDistanceM: 1500 as const }
+        : eventGroup === "FIVE_K" ? { eventDistanceM: 5000 as const }
+        : {}
       const request = {
         ...baseRequest(),
         profile: {
-          ...baseRequest().profile,
+          ...baseProfile,
           eventGroup,
+          ...exactEvent,
         },
       }
 

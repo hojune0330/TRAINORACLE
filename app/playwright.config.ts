@@ -2,6 +2,7 @@ import { defineConfig, devices } from "@playwright/test"
 
 const previewPort = Number(process.env.PLAYWRIGHT_PORT ?? "4173")
 const previewUrl = process.env.PLAYWRIGHT_BASE_URL ?? `http://127.0.0.1:${previewPort}`
+const usesExternalServer = process.env.PLAYWRIGHT_EXTERNAL_SERVER === "1"
 export default defineConfig({
   testDir: "./e2e",
   outputDir: "./test-results",
@@ -17,7 +18,7 @@ export default defineConfig({
     trace: "retain-on-failure",
     video: "retain-on-failure",
   },
-  webServer: {
+  webServer: usesExternalServer ? undefined : {
     command: `npm run preview -- --host 127.0.0.1 --port ${previewPort}`,
     port: previewPort,
     reuseExistingServer: !process.env.CI,

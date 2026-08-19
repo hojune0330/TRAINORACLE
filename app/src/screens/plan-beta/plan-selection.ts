@@ -11,6 +11,10 @@ import type {
 } from "@impl/plan-generator/types"
 import type { SafetyGateDecision } from "@impl/safety-gate/gate"
 import { isValidIsoDate } from "../../domain/dates"
+import {
+  adaptationScopeForCandidate,
+  savePlanAdaptationContext,
+} from "../../domain/plan-adaptation-ui"
 
 export type CandidateSelection = {
   readonly candidate: PlanCandidate
@@ -38,9 +42,16 @@ export function saveSelectedPlanCandidate(
   if (selected.kind !== "selected") {
     return { kind: "rejected", code: selected.code }
   }
-  const saved = savePlanBetaState(selected.state)
+  const adaptationScope = adaptationScopeForCandidate(selection.candidate)
+  const state = adaptationScope === null
+    ? selected.state
+    : { ...selected.state, adaptationScope }
+  const saved = savePlanBetaState(state)
   if (!saved.ok) {
     return { kind: "rejected", code: saved.code }
   }
-  return { kind: "saved", state: selected.state }
+  if (adaptationScope !== null) {
+    savePlanAdaptationContext(generated.candidates, selection.candidate.candidateId)
+  }
+  return { kind: "saved", state }
 }

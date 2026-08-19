@@ -3,10 +3,13 @@ import type { SafetyGateDecision } from "@impl/safety-gate/gate"
 import { parsePrescriptionNotation } from "@impl/prescription/notation"
 import { derivePrescriptionTotals } from "@impl/prescription/totals"
 import {
+  DETAILED_PRESCRIPTION_APPROVALS,
   resolveDetailedPrescriptionApproval,
   type DetailedPrescriptionApprovalRecord,
   type DetailedPrescriptionApprovalRequest,
 } from "./detailed-prescription-approvals"
+import { formatElapsedMonths, SEASON_WINDOW_MONTHS } from "./athlete-record-display"
+import { isValidIsoDate } from "./dates"
 
 export const plannedEnergyIntentSchema = z.enum([
   "RECOVERY_INTENT",
@@ -193,6 +196,24 @@ function validateStoredPaceTargetContent(
   value: StoredPaceTargetContent,
   context: z.RefinementCtx,
 ): void {
+  const approval = DETAILED_PRESCRIPTION_APPROVALS.find((candidate) => (
+    candidate.templateId === value.templateId
+    && candidate.templateVersion === value.templateVersion
+    && candidate.targetEventDistanceM === value.targetEventDistanceM
+  ))
+  if (approval === undefined || !approvalMatchesStoredPrescription(approval, value)) {
+    addStoredIssue(context, [], "Stored prescription metadata must match an approved manifest entry.")
+  }
+  const anchor = value.selectedAnchor
+  const elapsedLabels = new Set(
+    Array.from({ length: SEASON_WINDOW_MONTHS + 1 }, (_, months) => formatElapsedMonths(months)),
+  )
+  if (!isValidIsoDate(anchor.achievedAt)
+      || anchor.sourceRef !== `athlete-record:${anchor.anchorId}`
+      || !elapsedLabels.has(anchor.elapsedLabel)
+      || (anchor.kind === "SB" && anchor.seasonId !== anchor.achievedAt.slice(0, 4))) {
+    addStoredIssue(context, ["selectedAnchor"], "Stored anchor metadata must be deterministically derived.")
+  }
   const componentTypes = value.componentRefs.map((component) => component.componentType)
   if (new Set(componentTypes).size !== 4) {
     addStoredIssue(context, ["componentRefs"], "Stored component identities must be unique.")
@@ -341,12 +362,15 @@ export function recheckStoredDetailedPrescriptionAuthority(
 
 function approvalMatchesStoredPrescription(
   approval: DetailedPrescriptionApprovalRecord,
-  prescription: StoredPaceTargetPrescription,
+  prescription: StoredPaceTargetContent,
 ): boolean {
   const parsedNotation = parsePrescriptionNotation(approval.notation)
   if (parsedNotation.kind !== "parsed") return false
   const totals = derivePrescriptionTotals(parsedNotation.notation)
   return approval.manifestVersion === prescription.manifestVersion
+    && approval.templateId === prescription.templateId
+    && approval.templateVersion === prescription.templateVersion
+    && approval.templateContentFingerprint === prescription.templateContentFingerprint
     && approval.targetEventDistanceM === prescription.targetEventDistanceM
     && approval.notation === prescription.notation
     && approval.sourceDecisionId === prescription.sourceDecisionId
@@ -355,10 +379,18 @@ function approvalMatchesStoredPrescription(
     && approval.ownerDecision.authorityDecisionId === prescription.ownerAuthorityDecisionId
     && approval.sportsScienceEvidence.evidenceId === prescription.sportsScienceEvidence.evidenceId
     && approval.sportsScienceEvidence.decisionRef === prescription.sportsScienceEvidence.decisionRef
+    && approval.sportsScienceEvidence.canonicalEvidenceFingerprint === prescription.sportsScienceEvidence.fingerprint
     && approval.populationApplicabilityEvidence.evidenceId === prescription.populationApplicabilityEvidence.evidenceId
     && approval.populationApplicabilityEvidence.decisionRef === prescription.populationApplicabilityEvidence.decisionRef
+    && approval.populationApplicabilityEvidence.canonicalEvidenceFingerprint === prescription.populationApplicabilityEvidence.fingerprint
+    && approval.eligibleEventGroups.includes(prescription.scope.eventGroup)
+    && approval.eventScopeEvidence.evidenceFingerprint === prescription.scope.eventEvidenceFingerprint
+    && approval.eligibleExperienceBands.includes(prescription.scope.experienceBand)
+    && approval.experienceScopeEvidence.evidenceFingerprint === prescription.scope.experienceEvidenceFingerprint
+    && approval.populationApplicability.scope === prescription.scope.population
     && JSON.stringify(approval.componentRefs) === JSON.stringify(prescription.componentRefs)
     && JSON.stringify(approval.canonicalTemplateContent.operationalComponents) === JSON.stringify(prescription.operationalComponents)
+    && prescription.displayRoundingPolicyVersion === "seconds-v1"
     && parsedNotation.notation.setCount === prescription.setCount
     && parsedNotation.notation.repetitionsPerSet === prescription.repetitionsPerSet
     && parsedNotation.notation.repetitionDistanceM === prescription.repetitionDistanceM
@@ -479,6 +511,13 @@ const activePlanShape = {
   activationState: z.literal("SELECTED_BETA_SNAPSHOT"),
   candidateId: z.string().min(1),
   candidateKind: z.enum(["BALANCED", "CONSERVATIVE"]),
+  eventDistanceM: z.union([
+    z.literal(800),
+    z.literal(1500),
+    z.literal(3000),
+    z.literal(5000),
+    z.null(),
+  ]).optional(),
   selectionActor: z.enum(["SELF", "COACH"]),
   sourceMode: z.enum(["PROFILE_ONLY", "JOURNAL_CONTEXT_ONLY"]),
   selectedEnergyIntent: plannedEnergyIntentSchema.optional().default("MIXED_INTENT"),

@@ -16,7 +16,7 @@ export function elapsedSinceAchieved(
   )
   if (today.getDate() < achieved.day) months -= 1
   const safeMonths = Math.max(0, months)
-  return { months: safeMonths, label: elapsedLabel(safeMonths) }
+  return { months: safeMonths, label: formatElapsedMonths(safeMonths) }
 }
 
 export function seasonWindowLabel(
@@ -54,7 +54,7 @@ export function athleteRecordAuthorityCopy(record: AthleteRecord): string {
   return "검증 상태를 확인할 기록"
 }
 
-function elapsedLabel(months: number): string {
+export function formatElapsedMonths(months: number): string {
   if (months === 0) return "이번 달"
   if (months < 12) return `${months}개월 전`
   const years = Math.floor(months / 12)

@@ -66,6 +66,7 @@ function candidateId(input: CandidateBuildInput): string {
     "beta",
     input.kind.toLowerCase(),
     input.request.profile.eventGroup.toLowerCase(),
+    `event-${candidateEventDistance(input.request) ?? "unbound"}`,
     input.request.profile.experienceBand.toLowerCase(),
     input.request.selectedEnergyIntent.toLowerCase(),
     input.request.profile.secondSessionMode.toLowerCase(),
@@ -109,6 +110,7 @@ function buildCandidate(input: CandidateBuildInput): PlanCandidate {
     candidateId: candidateId(input),
     kind: input.kind,
     eventGroup: input.request.profile.eventGroup,
+    eventDistanceM: candidateEventDistance(input.request),
     selectedEnergyIntent: input.request.selectedEnergyIntent,
     sourceMode:
       input.request.journalSource.kind === "NO_USABLE_JOURNAL"
@@ -134,6 +136,13 @@ function buildCandidate(input: CandidateBuildInput): PlanCandidate {
   })
 }
 
+function candidateEventDistance(
+  request: CanonicalPlanGenerationRequest,
+): PlanCandidate["eventDistanceM"] {
+  return request.profile.eventDistanceM
+    ?? (request.profile.eventGroup === "FIVE_K" ? 5000 : null)
+}
+
 export function bindOneDetailedPrescriptionCandidate(
   candidate: PlanCandidate,
   prescription: PaceTargetPlanPrescription,
@@ -142,6 +151,10 @@ export function bindOneDetailedPrescriptionCandidate(
     session.role === "QUALITY" && session.prescription.kind === "RPE_TIME_RANGE"
   ))
   if (qualityIndex < 0) return null
+  const eventDistanceM = supportedEventDistance(prescription.targetEventDistanceM)
+  if (eventDistanceM === null) return null
+  if (candidate.eventDistanceM !== null
+      && candidate.eventDistanceM !== eventDistanceM) return null
 
   const sessions = candidate.sessions.map((session, index) => {
     if (index !== qualityIndex || session.role !== "QUALITY") return session
@@ -152,7 +165,11 @@ export function bindOneDetailedPrescriptionCandidate(
   })
   return Object.freeze({
     ...candidate,
-    candidateId: `${candidate.candidateId}:pace-target:${prescription.prescriptionFingerprint}`,
+    candidateId: `${candidate.candidateId.replace(
+      ":event-unbound:",
+      `:event-${eventDistanceM}:`,
+    )}:pace-target:${prescription.prescriptionFingerprint}`,
+    eventDistanceM,
     beta: Object.freeze({
       ...candidate.beta,
       prescriptionBasis: "ONE_TRUSTED_DETAILED_SESSION" as const,
@@ -164,6 +181,12 @@ export function bindOneDetailedPrescriptionCandidate(
     ]),
     sessions: Object.freeze(sessions),
   })
+}
+
+function supportedEventDistance(value: number): PlanCandidate["eventDistanceM"] {
+  return value === 800 || value === 1500 || value === 3000 || value === 5000
+    ? value
+    : null
 }
 
 function balancedQualityDays(request: CanonicalPlanGenerationRequest): readonly number[] {

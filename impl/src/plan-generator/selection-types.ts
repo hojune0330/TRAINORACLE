@@ -13,6 +13,7 @@ export type BetaActivePlanSnapshot = {
   readonly activationState: "SELECTED_BETA_SNAPSHOT"
   readonly candidateId: string
   readonly candidateKind: PlanCandidateKind
+  readonly eventDistanceM?: import("./types").SupportedPlanEventDistanceM | null
   readonly selectionActor: "SELF" | "COACH"
   readonly sourceMode: PlanSourceMode
   readonly selectedEnergyIntent: PlannedEnergyIntent

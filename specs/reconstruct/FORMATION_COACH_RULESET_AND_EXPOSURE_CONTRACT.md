@@ -9,6 +9,7 @@ source_commit: 5c4673fc968d3e8b8ae22f50837eded7678594f0
 runtime_authority: false
 scientific_fact_authority: false
 ruleset_accepted: false
+proposal_contract_scope: COACH_AUTHORED_ONLY
 ```
 
 ## 1. Authority Boundary
@@ -16,6 +17,10 @@ ruleset_accepted: false
 This document makes fail-closed pilot mechanics reviewable. It does not accept the
 ruleset, activate Formation, prescribe training, or claim that 9.5 days, two or three
 MAIN exposures, or approximately 72 hours is scientifically optimal or safe.
+
+This ruleset applies only to `proposalOrigin: COACH_AUTHORED`, which derives
+`selectionAuthority: COACH_REQUIRED`. It does not replace the separate
+`SELF_SERVICE -> SELF` path, and youth status alone does not change either mapping.
 
 ## 2. Pilot Registry
 
@@ -110,6 +115,16 @@ The only planning roles are `MAIN | SUPPORT | RECOVERY | REST`, matching
 | Re-anchor | Requires explicit local-civil boundary resolution and disposition of every displaced session as `RETAIN_PREDECESSOR`, `MOVE_TO_SUCCESSOR`, `CANCEL_BY_COACH`, or `NEEDS_COACH_CLARIFICATION`. |
 | Carry-over | No planned or missed MAIN is automatically carried into the successor count. Completed predecessor exposures may be shown as descriptive spacing context only. |
 | Unknown exception | Fail closed with `NEEDS_COACH_CLARIFICATION`; no default transform or silent fallback. |
+
+Every coach-authored successor is a `NEXT_FRAME` proposal changing at most one of
+`INTENSITY | VOLUME | FREQUENCY` through existing approved values. Percentages, free
+numeric editing, automatic progression, and active-frame mutation from PB/SB,
+completion, RPE, attendance, streaks, points, or journal aggregates are forbidden.
+Same-event PB/SB must be achieved after active-plan start; an explicit coach request
+is a separate trigger. D9 `ACTIVE`/`UNKNOWN`, stale safety, or an active hold emits no
+selectable proposal. Current-frame recovery/availability remains bounded to maintain,
+reduce, rest, or move not-yet-due flexible work. This contract supports
+800/1500/3000/5000 m only; 100-400 m remains deferred.
 
 ## 6. Non-Overridable Precedence
 
