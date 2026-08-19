@@ -59,19 +59,27 @@ test("keeps plan help inside the narrow scroll region", async ({ page }) => {
   expect(geometry?.detailWordBreak).toBe("keep-all")
 })
 
-test("routes a first visitor from home into the matching journal", async ({ page }) => {
-  // Given
+test("moves a first visitor from WELCOME to JOURNAL after a real first save", async ({ page }) => {
   await page.goto("/")
+  await expect(page.getByRole("heading", {
+    name: "달리기 일지를 남기고, 내 기록으로 훈련 계획을 받아요.",
+  })).toBeVisible()
 
-  // When — home CTA goes straight to the post-session form
-  await page.getByRole("button", { name: "오늘 기록하기" }).click()
+  await page.getByRole("button", { name: "오늘 기록 남기기" }).click()
   await expect(page.getByRole("heading", { name: "훈련 후 · 기록" })).toBeVisible()
+  await page.getByRole("button", { name: /^저장/u }).click()
 
-  // back to home via the tab bar, then rest-day entry via the rest-entry button
-  await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "홈" }).click()
-  await page.getByRole("button", { name: "하루 마무리 기록하기" }).click()
+  await expect.poll(async () => page.evaluate(() => {
+    const stored = localStorage.getItem("trainoracle.journal.v1")
+    if (stored === null) return 0
+    const parsed: unknown = JSON.parse(stored)
+    return Array.isArray(parsed) ? parsed.length : -1
+  })).toBe(1)
+  await expect(page.getByRole("heading", { name: "내 기록" })).toBeVisible()
 
-  // Then
+  const eveningEntry = page.getByRole("button", { name: "하루 마무리 기록하기" })
+  await expect(eveningEntry).toBeVisible()
+  await eveningEntry.click()
   await expect(page.getByRole("heading", { name: /회복.*하루 마무리/u })).toBeVisible()
 })
 

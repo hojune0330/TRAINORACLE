@@ -15,16 +15,18 @@ function requireTouchProject(projectName: string) {
 test("audits empty home and chooser touch actions", async ({ page }, testInfo) => {
   requireTouchProject(testInfo.project.name)
   await page.goto("/")
+  const services = page.getByRole("navigation", { name: "내 기록 살펴보기" })
   await auditTouchTargets(page, [
-    { name: "empty-home.first-entry", locator: page.getByRole("button", { name: "오늘 기록하기" }), heightOnly: true },
-    { name: "empty-home.journal", locator: page.getByRole("button", { name: /^내 일지/u }), heightOnly: true },
-    { name: "empty-home.plan", locator: page.getByRole("button", { name: /^훈련 계획/u }), heightOnly: true },
+    { name: "empty-home.first-entry", locator: page.getByRole("button", { name: "오늘 기록 남기기" }), heightOnly: true },
+    { name: "empty-home.create-plan", locator: page.getByRole("button", { name: "훈련 계획 만들기" }), heightOnly: true },
+    { name: "empty-home.journal", locator: services.getByRole("button", { name: /^내 일지/u }), heightOnly: true },
+    { name: "empty-home.plan", locator: services.getByRole("button", { name: /^훈련 계획/u }), heightOnly: true },
     { name: "empty-home.more", locator: page.getByRole("button", { name: "더보기" }) },
   ])
   await expect(page.getByRole("navigation", { name: "주 탭" })).toBeVisible()
   await expectNoHorizontalOverflow(page)
   // home CTA now goes straight to the post-session form (§3-3)
-  await page.getByRole("button", { name: "오늘 기록하기" }).click()
+  await page.getByRole("button", { name: "오늘 기록 남기기" }).click()
   await auditTouchTargets(page, [
     { name: "post.back", locator: page.getByRole("button", { name: "← 뒤로" }) },
     // 강도 시스템 버튼의 접근 이름은 `${c} ${n}`(예: "BA BASE")이다

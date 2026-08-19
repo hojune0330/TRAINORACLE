@@ -134,7 +134,6 @@ export function TrainingHome({
 
       {model.homeMode === "TRAINING" && nextTrainingSection}
       {model.homeMode !== "WELCOME" && todaySection}
-      {model.homeMode === "JOURNAL" && nextTrainingSection}
       {model.homeMode !== "WELCOME" && recentJournal}
 
       <nav className="training-home__services" aria-label="내 기록 살펴보기">
