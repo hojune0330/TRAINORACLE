@@ -117,8 +117,8 @@ function buildBriefing(
   if (evening.weightKg.trim() !== "") parts.push(`체중 ${evening.weightKg}kg`)
   const painParts = Object.entries(evening.painParts)
     .filter(([, level]) => level > 0)
-    .map(([part, level]) => `${part.replaceAll(" ", "\u00a0")} ${level}`)
-  if (painParts.length > 0) parts.push(`통증 ${painParts.join(", ")}`)
+    .map(([part, level]) => `통증\u00a0${part.replaceAll(" ", "\u00a0")}\u00a0${level}`)
+  if (painParts.length > 0) parts.push(painParts.join(", "))
   if (parts.length === 0) return ""
 
   const where = evening.date === today ? "오늘" : "어제"

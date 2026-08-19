@@ -248,7 +248,9 @@ describe("training home view model", () => {
     expect(model.briefing).toContain("수면 7.5h")
     expect(model.briefing).toContain("심박 49bpm")
     expect(model.briefing).toContain("체중 62.0kg")
-    expect(model.briefing).toContain("통증 오른\u00a0무릎 2")
+    expect(model.briefing).toBe(
+      "오늘 기록 · 수면 7.5h · 심박 49bpm · 체중 62.0kg · 통증\u00a0오른\u00a0무릎\u00a02",
+    )
     expect(JSON.stringify(model)).not.toContain(entry.memo)
   })
 
