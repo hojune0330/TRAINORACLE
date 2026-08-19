@@ -154,35 +154,52 @@ type ValidatedPlanBetaState = Omit<
   "version"
 > & { readonly version: 1 | 2 }
 
-export function hasCanonicalArrayTree(
+export function hasCanonicalJsonTree(
   value: unknown,
-  ancestors = new Set<object>(),
 ): boolean {
-  if (typeof value !== "object" || value === null) return true
-  if (ancestors.has(value)) return false
-  ancestors.add(value)
-  if (Array.isArray(value)) {
-    let index = 0
-    for (const key of Reflect.ownKeys(value)) {
-      const descriptor = Object.getOwnPropertyDescriptor(value, key)
-      if (descriptor?.enumerable !== true) continue
-      if (typeof key !== "string" || key !== String(index)) return false
-      index += 1
-    }
-    if (index !== value.length) return false
+  try {
+    return hasCanonicalJsonTreeUnchecked(value, new Set<object>())
+  } catch {
+    return false
   }
+}
+
+function hasCanonicalJsonTreeUnchecked(
+  value: unknown,
+  ancestors: Set<object>,
+): boolean {
+  if (value === null || typeof value === "string" || typeof value === "boolean") return true
+  if (typeof value === "number") return Number.isFinite(value)
+  if (typeof value !== "object" || ancestors.has(value)) return false
+
+  const prototype = Object.getPrototypeOf(value)
+  if (Array.isArray(value)) {
+    if (prototype !== Array.prototype) return false
+    const keys = Reflect.ownKeys(value)
+    if (keys.length !== value.length + 1 || keys[value.length] !== "length") return false
+    for (let index = 0; index < value.length; index += 1) {
+      if (keys[index] !== String(index)) return false
+      const descriptor = Object.getOwnPropertyDescriptor(value, String(index))
+      if (descriptor?.enumerable !== true || !("value" in descriptor)) return false
+    }
+  } else if (prototype !== Object.prototype && prototype !== null) {
+    return false
+  }
+
+  ancestors.add(value)
   for (const key of Reflect.ownKeys(value)) {
+    if (Array.isArray(value) && key === "length") continue
+    if (typeof key !== "string") return false
     const descriptor = Object.getOwnPropertyDescriptor(value, key)
-    if (descriptor?.enumerable === true
-      && "value" in descriptor
-      && !hasCanonicalArrayTree(descriptor.value, ancestors)) return false
+    if (descriptor?.enumerable !== true || !("value" in descriptor)
+      || !hasCanonicalJsonTreeUnchecked(descriptor.value, ancestors)) return false
   }
   ancestors.delete(value)
   return true
 }
 
-const canonicalArrayTreeSchema = z.unknown().refine(hasCanonicalArrayTree, {
-  message: "Arrays must contain only canonical dense indices.",
+const canonicalJsonTreeSchema = z.unknown().refine(hasCanonicalJsonTree, {
+  message: "Input must be a canonical plain JSON tree.",
 })
 
 function validatePlanBetaState(
@@ -235,10 +252,10 @@ function validatePlanBetaState(
   }
 }
 
-const planBetaStateV1Schema = canonicalArrayTreeSchema.pipe(
+const planBetaStateV1Schema = canonicalJsonTreeSchema.pipe(
   planBetaStateV1BaseSchema.superRefine(validatePlanBetaState),
 )
-export const planBetaStateV2Schema = canonicalArrayTreeSchema.pipe(
+export const planBetaStateV2Schema = canonicalJsonTreeSchema.pipe(
   planBetaStateV2BaseSchema.superRefine(validatePlanBetaState),
 )
 const planBetaStateSchema = z.union([
@@ -296,7 +313,7 @@ const planCandidateObjectSchema = z.object({
   rationaleCodes: z.array(planBetaCodeSchema).readonly(),
   sessions: z.array(planSessionSchema).readonly(),
 }).strict()
-const planCandidateSchema = canonicalArrayTreeSchema.pipe(planCandidateObjectSchema).superRefine((candidate, context) => {
+export const planAdaptationCandidateSchema = canonicalJsonTreeSchema.pipe(planCandidateObjectSchema).superRefine((candidate, context) => {
   const marker = ":pace-target:"
   const markerIndex = candidate.candidateId.indexOf(marker)
   const detailedFingerprints = candidate.sessions.flatMap((session) => (
@@ -371,7 +388,7 @@ const planCandidateSchema = canonicalArrayTreeSchema.pipe(planCandidateObjectSch
   }
 })
 
-export const planAdaptationProposalSchema = z.object({
+const planAdaptationProposalObjectSchema = z.object({
   proposalId: z.string().regex(/^adaptation:[a-f0-9]{64}$/u),
   proposalHash: hashSchema,
   targetFrame: z.literal("NEXT_FRAME"),
@@ -386,8 +403,8 @@ export const planAdaptationProposalSchema = z.object({
   proposedContentHash: hashSchema,
   approvedBeforeValueRef: hashSchema,
   approvedAfterValueRef: hashSchema,
-  baseCandidate: planCandidateSchema,
-  successorCandidate: planCandidateSchema,
+  baseCandidate: planAdaptationCandidateSchema,
+  successorCandidate: planAdaptationCandidateSchema,
   createdAt: z.string().datetime(),
   idempotencyKey: hashSchema,
 }).strict().superRefine((proposal, context) => {
@@ -395,29 +412,32 @@ export const planAdaptationProposalSchema = z.object({
   if (proposal.selectionAuthority !== expectedAuthority) addIssue(context, ["selectionAuthority"], "Selection authority must follow proposal origin.")
   if (proposal.baseCandidateId !== proposal.baseCandidate.candidateId) addIssue(context, ["baseCandidateId"], "Base candidate identity mismatch.")
 })
+export const planAdaptationProposalSchema = canonicalJsonTreeSchema.pipe(planAdaptationProposalObjectSchema)
 
-export const pendingNextFrameSuccessorSchema = z.object({
+const pendingNextFrameSuccessorObjectSchema = z.object({
   version: z.literal(1), proposalId: z.string().regex(/^adaptation:[a-f0-9]{64}$/u), targetFrame: z.literal("NEXT_FRAME"),
   proposalOrigin: z.enum(["SELF_SERVICE", "COACH_AUTHORED"]), selectionAuthority: z.enum(["SELF", "COACH_REQUIRED"]),
   trigger: z.enum(["SAME_EVENT_PB_SB_AFTER_ACTIVE_PLAN_START", "EXPLICIT_REQUEST"]), changeDimension: z.enum(["INTENSITY", "VOLUME", "FREQUENCY"]),
   athleteId: opaqueAthleteIdSchema, eventDistanceM: adaptationScopeSchema.shape.eventDistanceM,
   baseCandidateId: adaptationCandidateIdSchema, baseContentHash: hashSchema, proposedContentHash: hashSchema, predecessorStateHash: hashSchema,
-  successorState: canonicalArrayTreeSchema.pipe(planBetaStateV2BaseSchema), acceptedAt: z.string().datetime(), decisionId: z.string().regex(/^adaptation-decision:[a-f0-9]{64}$/u), idempotencyKey: hashSchema, requestHash: hashSchema,
+  successorState: canonicalJsonTreeSchema.pipe(planBetaStateV2BaseSchema), acceptedAt: z.string().datetime(), decisionId: z.string().regex(/^adaptation-decision:[a-f0-9]{64}$/u), idempotencyKey: hashSchema, requestHash: hashSchema,
 }).strict().superRefine((record, context) => {
   if (record.successorState.activePlan.candidateId === record.baseCandidateId) addIssue(context, ["successorState", "activePlan", "candidateId"], "Successor must differ from predecessor.")
   if (!adaptationCandidateIdSchema.safeParse(record.successorState.activePlan.candidateId).success) addIssue(context, ["successorState", "activePlan", "candidateId"], "Successor candidate identity is invalid.")
   const expectedAuthority = record.proposalOrigin === "SELF_SERVICE" ? "SELF" : "COACH_REQUIRED"
   if (record.selectionAuthority !== expectedAuthority) addIssue(context, ["selectionAuthority"], "Selection authority must follow proposal origin.")
 })
+export const pendingNextFrameSuccessorSchema = canonicalJsonTreeSchema.pipe(pendingNextFrameSuccessorObjectSchema)
 
 export const planAdaptationDecisionSchema = z.object({
   version: z.literal(1), decisionId: z.string().regex(/^adaptation-decision:[a-f0-9]{64}$/u), proposalId: z.string().regex(/^adaptation:[a-f0-9]{64}$/u), decision: z.literal("ACCEPT"),
   predecessorStateHash: hashSchema, proposedContentHash: hashSchema, decidedAt: z.string().datetime(), idempotencyKey: hashSchema, requestHash: hashSchema,
 }).strict()
 
-export const planAdaptationEnvelopeSchema = z.object({ version: z.literal(1), pending: pendingNextFrameSuccessorSchema, decision: planAdaptationDecisionSchema }).strict().superRefine((envelope, context) => {
+const planAdaptationEnvelopeObjectSchema = z.object({ version: z.literal(1), pending: pendingNextFrameSuccessorSchema, decision: planAdaptationDecisionSchema }).strict().superRefine((envelope, context) => {
   if (envelope.pending.proposalId !== envelope.decision.proposalId || envelope.pending.decisionId !== envelope.decision.decisionId || envelope.pending.requestHash !== envelope.decision.requestHash) addIssue(context, ["decision"], "Decision and pending successor linkage mismatch.")
 })
+export const planAdaptationEnvelopeSchema = canonicalJsonTreeSchema.pipe(planAdaptationEnvelopeObjectSchema)
 
 export const planHistoryListSchema = z.array(planHistorySchema).max(5)
 

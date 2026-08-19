@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest"
 import {
   canonicalJsonSha256,
   createPlanAdaptationProposal,
+  verifyPlanAdaptationProposal,
 } from "@impl/plan-generator/adaptation"
 import { generatePlanCandidates } from "@impl/plan-generator/generator"
 import type { PlanCandidate } from "@impl/plan-generator/types"
@@ -12,6 +13,7 @@ import {
 } from "../../../impl/test/fixtures/plan-beta-request"
 import {
   planAdaptationProposalSchema,
+  planAdaptationCandidateSchema,
   planBetaStateV2Schema,
 } from "./plan-beta-schema"
 import { generatePlanFromDraft } from "./plan-beta-flow"
@@ -28,7 +30,7 @@ import {
 
 type CandidateMutation = (candidate: PlanCandidate) => unknown
 
-const candidateSchema = planAdaptationProposalSchema.shape.baseCandidate
+const candidateSchema = planAdaptationCandidateSchema
 
 beforeEach(() => {
   vi.useFakeTimers()
@@ -132,6 +134,19 @@ function withEnumerableArrayProperty<T>(values: readonly T[]): T[] {
     enumerable: true,
   })
   return copy
+}
+
+function withOwnPayload<T extends object>(
+  value: T,
+  key: PropertyKey,
+  enumerable: boolean,
+): T {
+  Object.defineProperty(value, key, {
+    value: "raw symptom: chest pain after training",
+    enumerable,
+    configurable: true,
+  })
+  return value
 }
 
 function sparseRationaleCodes(candidate: PlanCandidate): unknown {
@@ -296,6 +311,87 @@ function replaceAtPath(value: unknown, path: ValuePath, replacement: string): un
 }
 
 describe("impl/app adaptation candidate parser parity", () => {
+  it.each([
+    ["Date", new Date("2026-08-18T00:00:00.000Z")],
+    ["Map", new Map([["evidenceText", "raw symptom: chest pain after training"]])],
+  ])("rejects unsupported %s candidates before normalization", (_label, candidate) => {
+    expect(candidateSchema.safeParse(candidate).success).toBe(false)
+  })
+
+  it.each([
+    ["proposal symbol", (proposal: object) => {
+      Object.defineProperty(proposal, Symbol("evidenceText"), {
+        value: "raw symptom: chest pain after training",
+        enumerable: true,
+      })
+      return proposal
+    }],
+    ["proposal hidden property", (proposal: object) => {
+      Object.defineProperty(proposal, "evidenceText", {
+        value: "raw symptom: chest pain after training",
+        enumerable: false,
+      })
+      return proposal
+    }],
+    ["proposal accessor", (proposal: object) => {
+      Object.defineProperty(proposal, "targetFrame", {
+        get: () => "NEXT_FRAME",
+        enumerable: true,
+        configurable: true,
+      })
+      return proposal
+    }],
+    ["proposal custom prototype", (proposal: object) => (
+      Object.setPrototypeOf(proposal, { evidenceText: "raw symptom: chest pain after training" })
+    )],
+    ["proposal hidden cycle", (proposal: object) => {
+      Object.defineProperty(proposal, "self", { value: proposal, enumerable: false })
+      return proposal
+    }],
+  ] as const)("rejects non-canonical %s before app parsing or impl verification", async (_label, mutate) => {
+    const generated = expectGenerated(generatePlanCandidates(baseRequest()))
+    const [baseCandidate, proposedCandidate] = generated.candidates
+    const result = await proposalFor(baseCandidate, proposedCandidate)
+    if (result.kind !== "proposed") throw new TypeError("Expected proposal fixture")
+    const proposal = mutate({ ...result.proposal })
+
+    expect(planAdaptationProposalSchema.safeParse(proposal).success).toBe(false)
+    expect(await verifyPlanAdaptationProposal(proposal)).toBe(false)
+  })
+
+  it.each([
+    ["enumerable symbol", (candidate: PlanCandidate) => withOwnPayload({ ...candidate }, Symbol("evidenceText"), true)],
+    ["non-enumerable symbol", (candidate: PlanCandidate) => withOwnPayload({ ...candidate }, Symbol("evidenceText"), false)],
+    ["non-enumerable string", (candidate: PlanCandidate) => withOwnPayload({ ...candidate }, "evidenceText", false)],
+    ["accessor", (candidate: PlanCandidate) => {
+      const copy = { ...candidate }
+      Object.defineProperty(copy, "kind", { get: () => candidate.kind, enumerable: true, configurable: true })
+      return copy
+    }],
+    ["custom prototype", (candidate: PlanCandidate) => Object.setPrototypeOf({ ...candidate }, { evidenceText: "raw symptom: chest pain after training" })],
+    ["hidden cycle", (candidate: PlanCandidate) => {
+      const copy = { ...candidate }
+      Object.defineProperty(copy, "self", { value: copy, enumerable: false, configurable: true })
+      return copy
+    }],
+    ["session symbol", (candidate: PlanCandidate) => {
+      const first = candidate.sessions[0]
+      if (first === undefined) throw new TypeError("Expected a candidate session")
+      return {
+        ...candidate,
+        sessions: [withOwnPayload({ ...first }, Symbol("evidenceText"), true), ...candidate.sessions.slice(1)],
+      }
+    }],
+  ] as const)("rejects non-canonical candidate %s at both boundaries", async (_label, mutate) => {
+    const generated = expectGenerated(generatePlanCandidates(baseRequest()))
+    const [baseCandidate, proposedCandidate] = generated.candidates
+    const malformedBase = mutate(baseCandidate)
+
+    expect(appAcceptsCandidate(malformedBase)).toBe(false)
+    expect(await proposalFor(malformedBase, proposedCandidate))
+      .toEqual({ kind: "rejected", code: "MALFORMED_INPUT" })
+  })
+
   it("accepts the generated same-event detailed candidate at both boundaries", async () => {
     const fixture = RUNTIME_CASES[1]
     const selectedRecordId = saveCurrentRecord(fixture.eventDistanceM, fixture.performanceSeconds)

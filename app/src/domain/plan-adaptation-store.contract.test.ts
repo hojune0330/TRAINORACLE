@@ -582,6 +582,95 @@ describe("local immutable next-frame adaptation contract", () => {
   })
 
   it.each([
+    ["safety symbol", (safety: object) => {
+      Object.defineProperty(safety, Symbol("evidenceText"), {
+        value: "raw symptom: chest pain after training",
+        enumerable: true,
+      })
+      return safety
+    }],
+    ["safety hidden property", (safety: object) => {
+      Object.defineProperty(safety, "evidenceText", {
+        value: "raw symptom: chest pain after training",
+        enumerable: false,
+      })
+      return safety
+    }],
+    ["safety accessor", (safety: object) => {
+      Object.defineProperty(safety, "kind", {
+        get: () => "passed",
+        enumerable: true,
+        configurable: true,
+      })
+      return safety
+    }],
+  ] as const)("rejects non-canonical acceptance %s without writing", async (_label, mutate) => {
+    const input = await requestFixture()
+    expect(savePlanBetaState(input.predecessorState)).toEqual({ ok: true })
+    const setItem = vi.spyOn(Storage.prototype, "setItem")
+
+    expect(await acceptNextFrameProposal({
+      ...input,
+      safetyGate: mutate({ ...input.safetyGate }),
+    })).toEqual({ kind: "rejected", code: "MALFORMED_INPUT" })
+    expect(setItem).not.toHaveBeenCalledWith(ADAPTATION_KEY, expect.any(String))
+  })
+
+  it.each([
+    ["envelope symbol", (envelope: object) => {
+      Object.defineProperty(envelope, Symbol("evidenceText"), {
+        value: "raw symptom: chest pain after training",
+        enumerable: true,
+      })
+      return envelope
+    }],
+    ["pending hidden property", (envelope: object) => {
+      const pending = "pending" in envelope ? envelope.pending : undefined
+      if (typeof pending !== "object" || pending === null) throw new TypeError("Expected pending fixture")
+      Object.defineProperty(pending, "evidenceText", {
+        value: "raw symptom: chest pain after training",
+        enumerable: false,
+      })
+      return envelope
+    }],
+    ["pending accessor", (envelope: object) => {
+      const pending = "pending" in envelope ? envelope.pending : undefined
+      if (typeof pending !== "object" || pending === null) throw new TypeError("Expected pending fixture")
+      Object.defineProperty(pending, "targetFrame", {
+        get: () => "NEXT_FRAME",
+        enumerable: true,
+        configurable: true,
+      })
+      return envelope
+    }],
+    ["pending custom prototype", (envelope: object) => {
+      const pending = "pending" in envelope ? envelope.pending : undefined
+      if (typeof pending !== "object" || pending === null) throw new TypeError("Expected pending fixture")
+      Object.setPrototypeOf(pending, { evidenceText: "raw symptom: chest pain after training" })
+      return envelope
+    }],
+    ["pending hidden cycle", (envelope: object) => {
+      const pending = "pending" in envelope ? envelope.pending : undefined
+      if (typeof pending !== "object" || pending === null) throw new TypeError("Expected pending fixture")
+      Object.defineProperty(pending, "self", { value: pending, enumerable: false })
+      return envelope
+    }],
+  ] as const)("rejects a non-canonical %s before pending-envelope normalization", async (_label, mutate) => {
+    const input = await requestFixture()
+    expect(savePlanBetaState(input.predecessorState)).toEqual({ ok: true })
+    expect(await acceptNextFrameProposal(input)).toMatchObject({ kind: "accepted" })
+    const raw = window.localStorage.getItem(ADAPTATION_KEY)
+    if (raw === null) throw new TypeError("Expected an adaptation envelope")
+    const parsed: unknown = JSON.parse(raw)
+    if (typeof parsed !== "object" || parsed === null || Array.isArray(parsed)) {
+      throw new TypeError("Expected an object adaptation envelope")
+    }
+    const envelope = mutate(parsed)
+
+    expect(planAdaptationEnvelopeSchema.safeParse(envelope).success).toBe(false)
+  })
+
+  it.each([
     "raw symptom: chest pain after training",
     "raw_symptom_chest_pain_after_training",
     "raw-symptom-chest-pain-after-training",

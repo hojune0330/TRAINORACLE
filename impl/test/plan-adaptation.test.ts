@@ -48,6 +48,21 @@ function withEnumerableArrayProperty<T>(
   return copy
 }
 
+const RAW_PRIVATE_TEXT = "raw symptom: chest pain after training"
+
+function withOwnPayload<T extends object>(
+  value: T,
+  key: PropertyKey,
+  enumerable: boolean,
+): T {
+  Object.defineProperty(value, key, {
+    value: RAW_PRIVATE_TEXT,
+    enumerable,
+    configurable: true,
+  })
+  return value
+}
+
 describe("next-frame plan adaptation", () => {
   it("creates one volume proposal from an explicit athlete request without mutating the base", async () => {
     const input = await fixtureRequest()
@@ -405,6 +420,125 @@ describe("next-frame plan adaptation", () => {
       proposedCandidate,
       baseContentHash: input.baseContentHash,
     })).toEqual({ kind: "rejected", code: "MALFORMED_INPUT" })
+  })
+
+  it.each([
+    ["request enumerable symbol", (input: Awaited<ReturnType<typeof fixtureRequest>>) => (
+      withOwnPayload({ ...input }, Symbol("evidenceText"), true)
+    )],
+    ["request non-enumerable symbol", (input: Awaited<ReturnType<typeof fixtureRequest>>) => (
+      withOwnPayload({ ...input }, Symbol("evidenceText"), false)
+    )],
+    ["request non-enumerable string", (input: Awaited<ReturnType<typeof fixtureRequest>>) => (
+      withOwnPayload({ ...input }, "evidenceText", false)
+    )],
+    ["request accessor", (input: Awaited<ReturnType<typeof fixtureRequest>>) => {
+      const request = { ...input }
+      Object.defineProperty(request, "activeHold", {
+        get: () => false,
+        enumerable: true,
+        configurable: true,
+      })
+      return request
+    }],
+    ["request custom prototype", (input: Awaited<ReturnType<typeof fixtureRequest>>) => (
+      Object.setPrototypeOf({ ...input }, { evidenceText: RAW_PRIVATE_TEXT })
+    )],
+    ["candidate enumerable symbol", (input: Awaited<ReturnType<typeof fixtureRequest>>) => ({
+      ...input,
+      baseCandidate: withOwnPayload(
+        { ...input.baseCandidate },
+        Symbol("evidenceText"),
+        true,
+      ),
+    })],
+    ["candidate non-enumerable string", (input: Awaited<ReturnType<typeof fixtureRequest>>) => ({
+      ...input,
+      baseCandidate: withOwnPayload(
+        { ...input.baseCandidate },
+        "evidenceText",
+        false,
+      ),
+    })],
+    ["session enumerable symbol", (input: Awaited<ReturnType<typeof fixtureRequest>>) => {
+      const first = input.baseCandidate.sessions[0]
+      if (first === undefined) throw new TypeError("Expected a candidate session")
+      const session = withOwnPayload({ ...first }, Symbol("evidenceText"), true)
+      return {
+        ...input,
+        baseCandidate: {
+          ...input.baseCandidate,
+          sessions: [session, ...input.baseCandidate.sessions.slice(1)],
+        },
+      }
+    }],
+    ["safety enumerable symbol", (input: Awaited<ReturnType<typeof fixtureRequest>>) => ({
+      ...input,
+      safetyGate: withOwnPayload(
+        { ...input.safetyGate },
+        Symbol("evidenceText"),
+        true,
+      ),
+    })],
+    ["hidden cycle", (input: Awaited<ReturnType<typeof fixtureRequest>>) => {
+      const request = { ...input }
+      Object.defineProperty(request, "self", {
+        value: request,
+        enumerable: false,
+        configurable: true,
+      })
+      return request
+    }],
+    ["Date", (input: Awaited<ReturnType<typeof fixtureRequest>>) => ({
+      ...input,
+      scope: new Date("2026-08-18T00:00:00.000Z"),
+    })],
+    ["Map", (input: Awaited<ReturnType<typeof fixtureRequest>>) => ({
+      ...input,
+      scope: new Map([["athleteId", "athlete-1"]]),
+    })],
+  ] as const)("rejects non-canonical plain-JSON %s input without returning raw text", async (_label, mutate) => {
+    const result = await createPlanAdaptationProposal(mutate(await fixtureRequest()))
+
+    expect(result).toEqual({ kind: "rejected", code: "MALFORMED_INPUT" })
+    expect(Reflect.ownKeys(result)).toEqual(["kind", "code"])
+  })
+
+  it.each([
+    ["enumerable symbol", (proposal: object) => (
+      withOwnPayload(proposal, Symbol("evidenceText"), true)
+    )],
+    ["non-enumerable symbol", (proposal: object) => (
+      withOwnPayload(proposal, Symbol("evidenceText"), false)
+    )],
+    ["non-enumerable string", (proposal: object) => (
+      withOwnPayload(proposal, "evidenceText", false)
+    )],
+    ["accessor", (proposal: object) => {
+      Object.defineProperty(proposal, "targetFrame", {
+        get: () => "NEXT_FRAME",
+        enumerable: true,
+        configurable: true,
+      })
+      return proposal
+    }],
+    ["custom prototype", (proposal: object) => (
+      Object.setPrototypeOf(proposal, { evidenceText: RAW_PRIVATE_TEXT })
+    )],
+    ["hidden cycle", (proposal: object) => {
+      Object.defineProperty(proposal, "self", {
+        value: proposal,
+        enumerable: false,
+        configurable: true,
+      })
+      return proposal
+    }],
+  ] as const)("does not verify a proposal carrying a non-canonical %s", async (_label, mutate) => {
+    const result = await createPlanAdaptationProposal(await fixtureRequest())
+    if (result.kind !== "proposed") throw new TypeError("Expected proposal fixture")
+    const proposal = { ...result.proposal }
+
+    expect(await verifyPlanAdaptationProposal(mutate(proposal))).toBe(false)
   })
 
   it.each([

@@ -42,6 +42,51 @@ beforeEach(() => {
 })
 
 describe("next-frame adaptation UI adapter", () => {
+  it.each([
+    ["candidate symbol", (candidate: PlanCandidate) => {
+      const copy = { ...candidate }
+      Object.defineProperty(copy, Symbol("evidenceText"), {
+        value: "raw symptom: chest pain after training",
+        enumerable: true,
+      })
+      return copy
+    }],
+    ["candidate hidden payload", (candidate: PlanCandidate) => {
+      const copy = { ...candidate }
+      Object.defineProperty(copy, "evidenceText", {
+        value: "raw symptom: chest pain after training",
+        enumerable: false,
+      })
+      return copy
+    }],
+    ["candidate accessor", (candidate: PlanCandidate) => {
+      const copy = { ...candidate }
+      Object.defineProperty(copy, "kind", {
+        get: () => candidate.kind,
+        enumerable: true,
+      })
+      return copy
+    }],
+    ["candidate custom prototype", (candidate: PlanCandidate) => (
+      Object.setPrototypeOf({ ...candidate }, { evidenceText: "raw symptom: chest pain after training" })
+    )],
+    ["candidate hidden cycle", (candidate: PlanCandidate) => {
+      const copy = { ...candidate }
+      Object.defineProperty(copy, "self", { value: copy, enumerable: false })
+      return copy
+    }],
+  ] as const)("does not save a context containing a non-canonical %s", (_label, mutate) => {
+    const fixture = createCoachRequiredFixture(new Date("2026-08-18T12:00:00.000Z"))
+    const candidates = [
+      mutate(fixture.baseCandidate),
+      fixture.proposedCandidate,
+    ] as [PlanCandidate, PlanCandidate]
+    const setItem = vi.spyOn(Storage.prototype, "setItem")
+
+    expect(savePlanAdaptationContext(candidates, fixture.baseCandidate.candidateId)).toBe(false)
+    expect(setItem).not.toHaveBeenCalled()
+  })
+
   it("rejects extra enumerable data on the candidate tuple", () => {
     const fixture = createCoachRequiredFixture(new Date("2026-08-18T12:00:00.000Z"))
     const candidates: [PlanCandidate, PlanCandidate] = [

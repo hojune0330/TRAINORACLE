@@ -85,6 +85,9 @@ const PLAN_BETA_CODES = new Set([
 const SAFETY_REASON_CODES: ReadonlySet<string> = new Set(RVE_NON_SENSITIVE_REASON_CODES)
 
 export function canonicalJson(value: unknown): string {
+  if (!isCanonicalJsonTree(value)) {
+    throw new TypeError("Canonical JSON supports plain JSON values only")
+  }
   return canonicalJsonValue(value, new Set<object>())
 }
 
@@ -130,6 +133,7 @@ export function hashPlanCandidate(candidate: PlanCandidate): Promise<string> {
 
 export async function verifyPlanAdaptationProposal(proposal: unknown): Promise<boolean> {
   try {
+  if (!isCanonicalJsonTree(proposal)) return false
   if (!isRecord(proposal) || !hasExactKeys(proposal, ["proposalId", "proposalHash", "targetFrame", "athleteId", "eventDistanceM", "proposalOrigin", "selectionAuthority", "trigger", "changeDimension", "baseCandidateId", "baseContentHash", "proposedContentHash", "approvedBeforeValueRef", "approvedAfterValueRef", "baseCandidate", "successorCandidate", "createdAt", "idempotencyKey"])) return false
   const baseCandidate = parsePlanCandidate(proposal["baseCandidate"])
   const successorCandidate = parsePlanCandidate(proposal["successorCandidate"])
@@ -157,6 +161,7 @@ export async function verifyPlanAdaptationProposal(proposal: unknown): Promise<b
 
 export async function createPlanAdaptationProposal(candidate: unknown): Promise<PlanAdaptationProposalResult> {
   try {
+    if (!isCanonicalJsonTree(candidate)) return { kind: "rejected", code: "MALFORMED_INPUT" }
     return await createPlanAdaptationProposalUnchecked(candidate)
   } catch {
     return { kind: "rejected", code: "MALFORMED_INPUT" }
@@ -377,14 +382,47 @@ function isExposureLedger(value: unknown): value is PlanCandidate["mainExposureL
 }
 
 function isDenseArray(value: readonly unknown[]): boolean {
-  let index = 0
-  for (const key of Reflect.ownKeys(value)) {
-    const descriptor = Object.getOwnPropertyDescriptor(value, key)
-    if (descriptor?.enumerable !== true) continue
-    if (typeof key !== "string" || key !== String(index)) return false
-    index += 1
+  if (Object.getPrototypeOf(value) !== Array.prototype) return false
+  const keys = Reflect.ownKeys(value)
+  if (keys.length !== value.length + 1 || keys[value.length] !== "length") return false
+  for (let index = 0; index < value.length; index += 1) {
+    if (keys[index] !== String(index)) return false
+    const descriptor = Object.getOwnPropertyDescriptor(value, String(index))
+    if (descriptor?.enumerable !== true || !("value" in descriptor)) return false
   }
-  return index === value.length
+  const lengthDescriptor = Object.getOwnPropertyDescriptor(value, "length")
+  return lengthDescriptor !== undefined
+    && "value" in lengthDescriptor
+    && lengthDescriptor.value === value.length
+    && lengthDescriptor.enumerable === false
+}
+
+function isCanonicalJsonTree(
+  value: unknown,
+  ancestors = new Set<object>(),
+): boolean {
+  if (value === null || typeof value === "string" || typeof value === "boolean") return true
+  if (typeof value === "number") return Number.isFinite(value)
+  if (typeof value !== "object" || ancestors.has(value)) return false
+
+  const prototype = Object.getPrototypeOf(value)
+  if (Array.isArray(value)) {
+    if (prototype !== Array.prototype || !isDenseArray(value)) return false
+  } else if (prototype !== Object.prototype && prototype !== null) {
+    return false
+  }
+
+  ancestors.add(value)
+  const keys = Reflect.ownKeys(value)
+  for (const key of keys) {
+    if (Array.isArray(value) && key === "length") continue
+    if (typeof key !== "string") return false
+    const descriptor = Object.getOwnPropertyDescriptor(value, key)
+    if (descriptor?.enumerable !== true || !("value" in descriptor)
+      || !isCanonicalJsonTree(descriptor.value, ancestors)) return false
+  }
+  ancestors.delete(value)
+  return true
 }
 
 function hasValidSessionLayout(sessions: readonly PlanSession[]): boolean {
@@ -768,4 +806,4 @@ function containsPrivateKey(value: unknown, seen = new Set<object>()): boolean {
   seen.add(value)
   return Object.entries(value).some(([key, child]) => PRIVATE_KEY.test(key) || containsPrivateKey(child, seen))
 }
-function isJsonValue(value: unknown): boolean { return value === null || typeof value === "string" || typeof value === "boolean" || (typeof value === "number" && Number.isFinite(value)) || (Array.isArray(value) ? isDenseArray(value) && value.every(isJsonValue) : isRecord(value) && Object.values(value).every(isJsonValue)) }
+function isJsonValue(value: unknown): boolean { return isCanonicalJsonTree(value) }
