@@ -501,6 +501,10 @@ input, textarea { font-family: inherit; }
   overflow-wrap: break-word;
 }
 
+.training-home__welcome-title-phrase {
+  white-space: nowrap;
+}
+
 .training-home__intro {
   padding: 8px 20px 0;
 }

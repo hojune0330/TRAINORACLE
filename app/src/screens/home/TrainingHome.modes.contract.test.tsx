@@ -62,6 +62,28 @@ describe("training home modes", () => {
     expect(titleRule).toContain("overflow-wrap: break-word")
   })
 
+  it("preserves the welcome heading name while grouping its semantic phrases", () => {
+    render(<TrainingHome model={WELCOME_MODEL} />)
+
+    const title = screen.getByRole("heading", {
+      name: "달리기 일지를 남기고, 내 기록으로 훈련 계획을 받아요.",
+    })
+    const phraseRule = appCss.match(/\.training-home__welcome-title-phrase\s*\{[^}]*\}/u)?.[0] ?? ""
+    const phraseTexts = [...title.querySelectorAll(".training-home__welcome-title-phrase")]
+      .map((phrase) => phrase.textContent)
+
+    expect(title).toHaveAccessibleName(
+      "달리기 일지를 남기고, 내 기록으로 훈련 계획을 받아요.",
+    )
+    expect(phraseTexts).toEqual([
+      "달리기 일지를",
+      "남기고,",
+      "내 기록으로",
+      "훈련 계획을 받아요.",
+    ])
+    expect(phraseRule).toContain("white-space: nowrap")
+  })
+
   it("groups every welcome lead surface in one token-sized visible fold before services", () => {
     const { container } = render(<TrainingHome model={WELCOME_MODEL} />)
 

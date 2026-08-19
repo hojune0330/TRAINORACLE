@@ -89,7 +89,10 @@ export function TrainingHome({
           {model.homeMode === "WELCOME" ? (
             <>
               <h1 id="training-home-title" className="training-home__welcome-title">
-                달리기 일지를 남기고, 내 기록으로 훈련 계획을 받아요.
+                <span className="training-home__welcome-title-phrase">달리기 일지를</span>{" "}
+                <span className="training-home__welcome-title-phrase">남기고,</span>{" "}
+                <span className="training-home__welcome-title-phrase">내 기록으로</span>{" "}
+                <span className="training-home__welcome-title-phrase">훈련 계획을 받아요.</span>
               </h1>
               <p className="training-home__trust">모든 데이터는 이 기기에만 저장돼요.</p>
             </>
