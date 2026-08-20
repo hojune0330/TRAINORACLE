@@ -41,7 +41,7 @@ export function GuardianConfirmationPanel({
       <SectionLb>만 14세 미만 보호자 확인</SectionLb>
       <p style={{ fontFamily: "var(--sans)", fontSize: 12, lineHeight: 1.6, color: "var(--ink-2)", margin: 0 }}>
         아이 계정에서 코드를 만든 뒤, 보호자가 <b>다른 사람의 계정으로 로그인</b>해서 아래에 입력해요.
-        확인 전에는 아이 계정의 동기화와 공유가 열리지 않아요.
+        확인 전에는 아이 계정의 동기화와 일지 데이터 공유가 열리지 않아요.
       </p>
       <button type="button" style={primaryBtn} disabled={busy} onClick={() => void create()}>
         보호자 확인 코드 만들기

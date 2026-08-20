@@ -156,9 +156,10 @@ describe("popover motion structure", () => {
 
 describe("saved toast motion structure", () => {
   it("announces immediately and remains mounted for its exit phase", () => {
-    const view = render(<SavedToast count={2} phase="enter" />)
+    const view = render(<SavedToast count={2} phase="enter" rewardMessage="오늘 기록한 날 +4P가 반영됐어요." />)
 
     expect(screen.getByRole("status")).toHaveClass("saved-toast", "saved-toast--enter")
+    expect(screen.getByRole("status")).toHaveTextContent("오늘 기록한 날 +4P가 반영됐어요.")
 
     view.rerender(<SavedToast count={2} phase="exit" />)
     expect(screen.getByRole("status")).toHaveClass("saved-toast", "saved-toast--exit")
@@ -172,7 +173,7 @@ describe("saved toast motion structure", () => {
       render(<AppShell />)
       const tabBar = screen.getByRole("navigation", { name: "주 탭" })
 
-      fireEvent.click(within(tabBar).getByRole("button", { name: /기록/u }))
+      fireEvent.click(within(tabBar).getByRole("button", { name: "경기기록" }))
       fireEvent.click(screen.getByRole("button", { name: /훈련 후/u }))
       fireEvent.click(screen.getByRole("button", { name: /^저장/u }))
 
@@ -198,8 +199,8 @@ describe("saved toast motion structure", () => {
     try {
       render(<AppShell />)
       const tabBar = screen.getByRole("navigation", { name: "주 탭" })
-      fireEvent.click(within(tabBar).getByRole("button", { name: /기록/u }))
-      fireEvent.click(screen.getByRole("button", { name: /경기/u }))
+      fireEvent.click(within(tabBar).getByRole("button", { name: "경기기록" }))
+      fireEvent.click(screen.getByRole("button", { name: new RegExp("경기 직전/직후", "u") }))
       fireEvent.change(screen.getByRole("textbox", { name: "경기 메모" }), { target: { value: "무릎이 아파" } })
       fireEvent.click(screen.getByRole("radio", { name: "훈련 메모" }))
       fireEvent.click(screen.getByRole("button", { name: /^저장/u }))

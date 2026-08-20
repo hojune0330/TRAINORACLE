@@ -5,10 +5,16 @@ import { loadEntries, todayISO } from "../../domain/journal-store"
 import { DecorationStudio } from "./DecorationStudio"
 import { DecorationStudioPreview } from "./DecorationStudioPreview"
 
-export function DecorationShop({ earnedPoints, hasEntriesForDate: hasEntriesForDateProp, showPreview = true }: {
+export function DecorationShop({
+  earnedPoints,
+  hasEntriesForDate: hasEntriesForDateProp,
+  showPreview = true,
+  onSpentPointsChange,
+}: {
   readonly earnedPoints: number
   readonly hasEntriesForDate?: (date: string) => boolean
   readonly showPreview?: boolean
+  readonly onSpentPointsChange?: (spentPoints: number) => void
 }) {
   const [state, setState] = React.useState(loadDecorationState)
   const [storageVersion, setStorageVersion] = React.useState(() => readDecorationStateSerialized())
@@ -20,6 +26,10 @@ export function DecorationShop({ earnedPoints, hasEntriesForDate: hasEntriesForD
   const isCompact = !open && !showPreview
   const defaultHasEntriesForDate = React.useCallback((date: string) => loadEntries().some((entry) => entry.date === date), [])
   const hasEntriesForDate = hasEntriesForDateProp ?? defaultHasEntriesForDate
+
+  React.useEffect(() => {
+    onSpentPointsChange?.(state.spentPoints)
+  }, [onSpentPointsChange, state.spentPoints])
 
   const close = () => {
     setOpen(false)

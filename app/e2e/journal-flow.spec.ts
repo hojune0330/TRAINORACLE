@@ -6,8 +6,8 @@ test("saves a structured race note, carries review attention, and reopens the re
   if (testInfo.project.name === "reduced-motion") {
     await expect.poll(() => page.evaluate(() => matchMedia("(prefers-reduced-motion: reduce)").matches)).toBe(true)
   }
-  await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: /기록/u }).click()
-  await page.getByRole("button", { name: /경기/u }).click()
+  await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "경기기록" }).click()
+  await page.getByRole("button", { name: new RegExp("경기 직전/직후", "u") }).click()
   await page.getByRole("button", { name: "긴장도 7" }).click()
   await page.getByRole("button", { name: "컨디션 4" }).click()
   await page.getByRole("spinbutton", { name: "목표 페이스 분" }).fill("3")

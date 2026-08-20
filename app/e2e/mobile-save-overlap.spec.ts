@@ -3,8 +3,8 @@ import { expect, test } from "@playwright/test"
 test("keeps the race save action above the bottom navigation on mobile", async ({ page }) => {
   // Given
   await page.goto("/?app=1")
-  await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: /기록/u }).click()
-  await page.getByRole("button", { name: /경기/u }).click()
+  await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "경기기록" }).click()
+  await page.getByRole("button", { name: new RegExp("경기 직전/직후", "u") }).click()
   const paceMinutes = page.getByRole("spinbutton", { name: "목표 페이스 분" })
   await paceMinutes.fill("3")
   await page.getByRole("spinbutton", { name: "목표 페이스 초" }).fill("60")

@@ -16,7 +16,7 @@ test("keeps the local diary usable after the network goes offline", async ({ con
   // When: the athlete loses the network and records a completed session.
   await context.setOffline(true)
   await page.reload({ waitUntil: "domcontentloaded" })
-  await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: /기록/u }).click()
+  await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "경기기록" }).click()
   await page.getByRole("button", { name: /훈련 후/u }).click()
   await page.getByRole("textbox", { name: "거리 (km)" }).fill("3.2")
   await page.getByRole("textbox", { name: "시간 (분)" }).fill("18")

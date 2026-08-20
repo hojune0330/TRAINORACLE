@@ -8,6 +8,7 @@ export type ShellToastState = {
   readonly phase: ToastPhase
   readonly receipt: SavedFactReceipt
   readonly reviewMessage?: string
+  readonly rewardMessage?: string
 }
 
 export function AppShellFrame({
@@ -46,6 +47,7 @@ export function AppShellFrame({
           phase={savedToast.phase}
           receipt={savedToast.receipt}
           reviewMessage={savedToast.reviewMessage}
+          rewardMessage={savedToast.rewardMessage}
           onDismiss={onDismissToast}
           onOpenTrends={onOpenTrends}
           onOpenBackup={onOpenBackup}

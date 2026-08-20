@@ -23,7 +23,7 @@ type TabItem = {
 const TAB_ITEMS: readonly TabItem[] = [
   { id: "home", label: "홈", icon: House },
   { id: "journal", label: "일지", icon: BookOpen },
-  { id: "log", label: "기록", icon: Plus },
+  { id: "log", label: "경기기록", icon: Plus },
   { id: "plan", label: "계획", icon: CalendarDays },
   { id: "trends", label: "분석", icon: TrendingUp },
 ] as const
@@ -59,6 +59,7 @@ export function SavedToast({
   phase,
   receipt = { kind: "generic" },
   reviewMessage,
+  rewardMessage,
   onDismiss,
   onOpenTrends,
   onOpenBackup,
@@ -67,6 +68,7 @@ export function SavedToast({
   readonly phase: ToastPhase
   readonly receipt?: SavedFactReceipt
   readonly reviewMessage?: string
+  readonly rewardMessage?: string
   readonly onDismiss?: () => void
   readonly onOpenTrends?: () => void
   readonly onOpenBackup?: () => void
@@ -87,7 +89,7 @@ export function SavedToast({
         <div className="saved-toast__heading">
           <strong>
             {needsReview ? LOCAL_SAVE_NOTICE : presentation.title}
-            {count > 0 ? ` · 이 기기에 ${count}건` : ""}
+            {count > 0 ? ` · 총 ${count}건` : ""}
           </strong>
           {needsReview && (
             <button type="button" aria-label="검토 안내 닫기" title="닫기" onClick={onDismiss}>
@@ -98,6 +100,7 @@ export function SavedToast({
         <div className="saved-toast__detail">
           {needsReview ? `분석 결과를 확인해야 해요. ${reviewMessage}` : presentation.detail}
         </div>
+        {rewardMessage !== undefined && <div className="saved-toast__reward">{rewardMessage}</div>}
         {actionable && (
           <button className="saved-toast__action" type="button" onClick={onAction}>
             {presentation.actionLabel}

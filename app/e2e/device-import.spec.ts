@@ -22,7 +22,7 @@ function tcxFor(date: string): string {
 
 async function openImport(page: import("@playwright/test").Page) {
   await page.goto("/?app=1")
-  await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: /기록/u }).click()
+  await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "경기기록" }).click()
   await page.getByTestId("open-import").click()
   await expect(page.getByTestId("import-privacy-notice")).toBeVisible()
 }

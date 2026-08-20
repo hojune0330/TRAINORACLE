@@ -12,6 +12,7 @@ export type NextTraining = {
 }
 
 export type TrainingHomeViewModel = {
+  readonly homeMode: "WELCOME" | "TRAINING" | "JOURNAL"
   readonly todayMessage: string
   readonly journalSummary: string
   readonly flowSummary: string
@@ -36,8 +37,15 @@ export function buildTrainingHomeViewModel(
   const analysisDays = new Set(visibleAnalysis.map((entry) => entry.date)).size
   const week = thisWeekStats([...visibleAnalysis], today)
   const briefing = buildBriefing(visibleAnalysis, today)
+  const nextTraining = nextTrainingFor(plan, today)
+  const homeMode = entries.length === 0 && plan === null
+    ? "WELCOME"
+    : plan !== null && nextTraining !== null
+      ? "TRAINING"
+      : "JOURNAL"
 
   return {
+    homeMode,
     todayMessage: todayCount === 0
       ? "아직 오늘 기록이 없어요."
       : `오늘 ${todayCount}개의 기록이 있어요.`,
@@ -58,7 +66,7 @@ export function buildTrainingHomeViewModel(
         ? `이번 주 ${week.sessions}회 · ${week.distanceKm}km`
         : `이번 주 ${week.sessions}회 · 입력된 거리 없음`,
     showMinjiPrompt: analysisDays < 7,
-    nextTraining: nextTrainingFor(plan, today),
+    nextTraining,
     briefing,
   }
 }
@@ -109,8 +117,8 @@ function buildBriefing(
   if (evening.weightKg.trim() !== "") parts.push(`체중 ${evening.weightKg}kg`)
   const painParts = Object.entries(evening.painParts)
     .filter(([, level]) => level > 0)
-    .map(([part, level]) => `${part} ${level}`)
-  if (painParts.length > 0) parts.push(`통증 ${painParts.join(", ")}`)
+    .map(([part, level]) => `통증\u00a0${part.replaceAll(" ", "\u00a0")}\u00a0${level}`)
+  if (painParts.length > 0) parts.push(painParts.join(", "))
   if (parts.length === 0) return ""
 
   const where = evening.date === today ? "오늘" : "어제"

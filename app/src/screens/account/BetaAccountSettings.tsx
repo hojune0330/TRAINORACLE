@@ -47,8 +47,8 @@ export function BetaAccountSettings({
     try {
       const profile = profileFromBirthDate(birthDate, today)
       setAgeMessage(profile.ageBand === "UNDER_14"
-        ? "만 14세 미만이에요. 보호자 확인 전에는 동기화와 공유를 열지 않아요."
-        : "계정 동기화와 공유를 사용할 수 있는 나이예요.")
+        ? "만 14세 미만이에요. 보호자 확인 전에는 계정 동기화와 일지 데이터 공유를 열지 않아요."
+        : "계정 동기화와 일지 데이터 공유를 사용할 수 있는 나이예요.")
     } catch (error) {
       if (error instanceof RangeError) {
         setNotice("생년월일을 확인해 주세요.")
