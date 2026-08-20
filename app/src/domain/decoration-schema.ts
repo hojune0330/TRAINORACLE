@@ -70,6 +70,13 @@ export const decorationStateSchema = z.object({
   for (const starterId of STARTER_DECORATION_IDS) {
     if (!owned.has(starterId)) context.addIssue({ code: "custom", message: `missing starter ${starterId}` })
   }
+  const minimumSpentPoints = state.ownedItemIds.reduce(
+    (total, itemId) => total + (decorationCatalogItem(itemId)?.cost ?? 0),
+    0,
+  )
+  if (state.spentPoints < minimumSpentPoints) {
+    context.addIssue({ code: "custom", message: "paid ownership exceeds spent points" })
+  }
 
   const referenced = [
     state.equipped.themeId,
