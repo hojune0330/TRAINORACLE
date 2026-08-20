@@ -10,6 +10,7 @@ import { beforeEach, describe, expect, it } from "vitest"
 import { ATHLETE_RECORDS_STORAGE_KEY } from "./athlete-records"
 import { recoverPendingSync } from "./account/sync-recovery"
 import { eraseAllLocalData, erasableKeys } from "./erase-local-data"
+import { ENGAGEMENT_STORAGE_KEY } from "./engagement"
 
 const JOURNAL = "trainoracle.journal.v1"
 const TOMBSTONES = "trainoracle.sync.tombstones.v1"
@@ -96,6 +97,7 @@ describe("eraseAllLocalData", () => {
     const result = eraseAllLocalData()
     expect(result.ok).toBe(true)
     expect(erasableKeys()).toContain(ATHLETE_RECORDS_STORAGE_KEY)
+    expect(erasableKeys()).toContain(ENGAGEMENT_STORAGE_KEY)
     expect(window.localStorage.getItem(ATHLETE_RECORDS_STORAGE_KEY)).toBeNull()
   })
 

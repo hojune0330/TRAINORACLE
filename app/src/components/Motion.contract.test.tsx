@@ -156,9 +156,10 @@ describe("popover motion structure", () => {
 
 describe("saved toast motion structure", () => {
   it("announces immediately and remains mounted for its exit phase", () => {
-    const view = render(<SavedToast count={2} phase="enter" />)
+    const view = render(<SavedToast count={2} phase="enter" rewardMessage="오늘 기록한 날 +4P가 반영됐어요." />)
 
     expect(screen.getByRole("status")).toHaveClass("saved-toast", "saved-toast--enter")
+    expect(screen.getByRole("status")).toHaveTextContent("오늘 기록한 날 +4P가 반영됐어요.")
 
     view.rerender(<SavedToast count={2} phase="exit" />)
     expect(screen.getByRole("status")).toHaveClass("saved-toast", "saved-toast--exit")

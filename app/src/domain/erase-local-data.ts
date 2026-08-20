@@ -18,6 +18,7 @@
 //  - 실패를 숨기지 않는다. 지워진 키와 실패한 키를 그대로 돌려준다.
 import { ATHLETE_RECORDS_STORAGE_KEY } from "./athlete-records"
 import { DECORATION_STORAGE_KEY_V1, DECORATION_STORAGE_KEY_V2 } from "./decorations"
+import { ENGAGEMENT_STORAGE_KEY } from "./engagement"
 import {
   PRIVATE_MEMO_VAULT_STORAGE_KEY,
   PRIVATE_NOTE_RECOVERY_STORAGE_KEY,
@@ -43,6 +44,7 @@ const CONTENT_KEYS = [
   "trainoracle.plan-beta.adaptation.v1",
   "trainoracle.plan-adaptation-context.v1",
   "trainoracle.engagement.v1",
+  ENGAGEMENT_STORAGE_KEY,
   "trainoracle.onboarding.dismissed.v1",
 ] as const
 

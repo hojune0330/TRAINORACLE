@@ -34,7 +34,7 @@ describe("beta account settings", () => {
       privacyPolicyVersion: "2026-08-12",
       termsOfServiceVersion: "2026-08-12",
     })
-    expect(screen.getByText(/보호자 확인 전에는 동기화와 공유를 열지 않아요/u)).toBeVisible()
+    expect(screen.getByText(/보호자 확인 전에는 계정 동기화와 일지 데이터 공유를 열지 않아요/u)).toBeVisible()
   })
 
   it("does not bundle product analytics consent into private profile saving", async () => {

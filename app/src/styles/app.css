@@ -1101,6 +1101,15 @@ button:not(:disabled):not([aria-disabled="true"]):active {
   opacity: 0.78;
 }
 
+.saved-toast__reward {
+  padding-top: var(--space-1);
+  color: var(--bg);
+  font-family: var(--mono);
+  font-size: var(--fs-mono-xs);
+  font-weight: 600;
+  letter-spacing: 0;
+}
+
 .saved-toast__action {
   min-height: var(--app-touch-min);
   margin-top: var(--space-1);
