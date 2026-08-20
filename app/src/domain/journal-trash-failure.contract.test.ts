@@ -36,6 +36,7 @@ import type { JournalEntry } from "./journal-schema"
 import { saveEntry } from "./journal-store"
 
 const TRASH_KEY = "trainoracle.journal.trash.v1"
+const TEST_NOW = new Date("2026-07-23T00:00:00.000Z")
 
 function session(id: string, overrides: Partial<JournalEntry> = {}): JournalEntry {
   return {
@@ -97,10 +98,13 @@ function seedTrash(items: readonly { entry: JournalEntry; deletedAt: string }[])
 
 beforeEach(() => {
   window.localStorage.clear()
+  vi.useFakeTimers()
+  vi.setSystemTime(TEST_NOW)
 })
 
 afterEach(() => {
   vi.restoreAllMocks()
+  vi.useRealTimers()
   window.localStorage.clear()
 })
 
