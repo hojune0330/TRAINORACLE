@@ -24,15 +24,17 @@ test("explains the first free beta places without implying that account sync is 
   await expect(page.getByText(/계정 동기화, 코치 연결, 문의 게시판, 자동 훈련 처방은 아직 열지 않았어요/u)).toBeVisible()
 })
 
-test("keeps My Records clear and usable on narrow phones", async ({ page }, testInfo) => {
+test("keeps the welcome home clear and usable on narrow phones", async ({ page }, testInfo) => {
   for (const viewport of [{ width: 320, height: 568 }, { width: 375, height: 667 }]) {
     await page.setViewportSize(viewport)
     await page.goto("/")
 
-    await expect(page.getByRole("heading", { name: "내 기록" })).toBeVisible()
-    await expect(page.getByText("오늘을 남기고, 필요할 때 훈련을 더 자세히 봐요.")).toBeVisible()
+    await expect(page.getByRole("heading", {
+      name: "달리기 일지를 남기고, 내 기록으로 훈련 계획을 받아요.",
+    })).toBeVisible()
+    await expect(page.getByText("모든 데이터는 이 기기에만 저장돼요.")).toBeVisible()
     await expect(page.getByRole("navigation", { name: "주 탭" })).toBeVisible()
-    await expect(page.getByRole("button", { name: "오늘 기록하기" })).toBeInViewport()
+    await expect(page.getByRole("button", { name: "오늘 기록 남기기" })).toBeInViewport()
     const services = page.getByRole("navigation", { name: "내 기록 살펴보기" })
     for (const name of [/^내 일지/u, /^훈련 계획/u, /^분석/u]) {
       await expect(services.getByRole("button", { name })).toBeVisible()
@@ -45,12 +47,12 @@ test("keeps My Records clear and usable on narrow phones", async ({ page }, test
     })
   }
 
-  await page.getByRole("button", { name: "오늘 기록하기" }).click()
+  await page.getByRole("button", { name: "오늘 기록 남기기" }).click()
   await expect(page.getByRole("heading", { name: "훈련 후 · 기록" })).toBeVisible()
   await expect(page.getByRole("button", { name: "← 뒤로" })).toBeInViewport()
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true)
-  // the chooser is reached via the "기록" tab bar button (§3-3)
-  await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "기록" }).click()
+  // the chooser is reached via the "경기기록" tab bar button (§3-3)
+  await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "경기기록" }).click()
   const heading = page.getByRole("heading", { name: "어떤 일지를 쓰세요?" })
   await expect(heading).toBeFocused()
   await expect(page.getByRole("button", { name: /경기 직전\/직후/u })).toBeInViewport()

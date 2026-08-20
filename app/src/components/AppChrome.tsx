@@ -23,7 +23,7 @@ type TabItem = {
 const TAB_ITEMS: readonly TabItem[] = [
   { id: "home", label: "홈", icon: House },
   { id: "journal", label: "일지", icon: BookOpen },
-  { id: "log", label: "기록", icon: Plus },
+  { id: "log", label: "경기기록", icon: Plus },
   { id: "plan", label: "계획", icon: CalendarDays },
   { id: "trends", label: "분석", icon: TrendingUp },
 ] as const

@@ -87,6 +87,47 @@ const activePlan = {
 } satisfies PlanBetaState
 
 describe("training home view model", () => {
+  it.each([
+    {
+      label: "an empty journal without a plan",
+      entries: [],
+      plan: null,
+      today: "2026-08-03",
+      expected: "WELCOME",
+    },
+    {
+      label: "journal records without a plan",
+      entries: [entry],
+      plan: null,
+      today: "2026-08-03",
+      expected: "JOURNAL",
+    },
+    {
+      label: "an active plan with a next training",
+      entries: [],
+      plan: activePlan,
+      today: "2026-08-18",
+      expected: "TRAINING",
+    },
+    {
+      label: "an active plan with no remaining training",
+      entries: [],
+      plan: activePlan,
+      today: "2026-08-30",
+      expected: "JOURNAL",
+    },
+  ] satisfies ReadonlyArray<{
+    readonly label: string
+    readonly entries: readonly JournalEntry[]
+    readonly plan: PlanBetaState | null
+    readonly today: string
+    readonly expected: "WELCOME" | "TRAINING" | "JOURNAL"
+  }>)("derives $expected for $label", ({ entries, plan, today, expected }) => {
+    const model = buildTrainingHomeViewModel(entries, [], plan, today)
+
+    expect(model).toHaveProperty("homeMode", expected)
+  })
+
   it("summarizes entry shells and safe analysis without exposing memo text", () => {
     const model = buildTrainingHomeViewModel([entry], [analysisEntry], null, "2026-08-03")
 
@@ -189,7 +230,7 @@ describe("training home view model", () => {
     expect(model.briefing).toBe("")
   })
 
-  it("summarizes the latest evening check-in without inventing missing fields", () => {
+  it("summarizes the latest evening check-in and keeps its pain body-part label together", () => {
     const eveningEntry: JournalEntry = {
       ...entry,
       id: "home-evening",
@@ -207,7 +248,9 @@ describe("training home view model", () => {
     expect(model.briefing).toContain("수면 7.5h")
     expect(model.briefing).toContain("심박 49bpm")
     expect(model.briefing).toContain("체중 62.0kg")
-    expect(model.briefing).toContain("통증 오른 무릎 2")
+    expect(model.briefing).toBe(
+      "오늘 기록 · 수면 7.5h · 심박 49bpm · 체중 62.0kg · 통증\u00a0오른\u00a0무릎\u00a02",
+    )
     expect(JSON.stringify(model)).not.toContain(entry.memo)
   })
 
