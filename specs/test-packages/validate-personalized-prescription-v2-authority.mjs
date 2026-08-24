@@ -261,9 +261,10 @@ export function validateRetentionAuthority(authority, options = {}) {
 
 function validateAudit(document, root) {
   cleanFinalMarker(document, "promotion audit")
+  const normalizedDocument = document.replace(/\r\n?/gu, "\n")
   const auditStatusLines = document.split(/\r?\n/u).filter((line) => line.startsWith("Status: "))
   invariant(auditStatusLines.length === 1 && auditStatusLines[0] === "Status: NON_CANONICAL_AUDIT", "promotion audit human status line is not exact")
-  invariant(document.split(AUDIT_HUMAN_AUTHORITY_BOUNDARY).length - 1 === 1, "promotion audit human authority boundary is missing or changed")
+  invariant(normalizedDocument.split(AUDIT_HUMAN_AUTHORITY_BOUNDARY).length - 1 === 1, "promotion audit human authority boundary is missing or changed")
   for (const contradiction of [
     /canonical(?: specification)? promotion(?: is|:)?\s*(?:approved|allowed|true)/iu,
     /(?:OPEN\s+)?issues?\s+(?:are\s+)?closed/iu,
@@ -318,7 +319,7 @@ export function validateRuntime(root) {
   const active = manifest.approvals.filter((row) => row.lifecycleStatus === "ACTIVE" && row.eligibilityStatus === "ELIGIBLE").map((row) => row.templateId)
   exactValue(active, ["V2-SEED-05", "MD-800-01", "MD-1500-01", "MD-3000-01"], "active detailed templates")
 
-  const registry = readFileSync(resolve(root, "impl/src/plan-generator/adaptation-transform-registry.ts"), "utf8")
+  const registry = readFileSync(resolve(root, "impl/src/plan-generator/adaptation-transform-registry.ts"), "utf8").replace(/\r\n?/gu, "\n")
   const activeStart = registry.indexOf("  activeEdges: [")
   const activeEnd = registry.indexOf("  ] as const,\n  inactiveFamilies:", activeStart)
   invariant(activeStart >= 0 && activeEnd > activeStart, "active adaptation registry block is absent")

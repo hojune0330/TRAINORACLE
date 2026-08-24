@@ -48,6 +48,16 @@ function sha256(value) {
   return createHash("sha256").update(value).digest("hex")
 }
 
+function normalizeTextTransport(value) {
+  return value.replace(/\r\n?/gu, "\n")
+}
+
+function matchesTextTransportDigest(value, expectedDigest) {
+  const normalized = normalizeTextTransport(value)
+  return sha256(normalized) === expectedDigest
+    || sha256(normalized.replace(/\n/gu, "\r\n")) === expectedDigest
+}
+
 function canonicalize(value) {
   if (Array.isArray(value)) return value.map(canonicalize)
   if (value && typeof value === "object") {
@@ -73,9 +83,9 @@ function validateSources(registry, sourceRoot) {
     assertExactKeys(row, ["evidenceId", "path", "fileSha256", "lineStart", "lineEnd", "fragmentSha256", "extraction"], `source ${evidenceId}`)
     invariant(row.evidenceId === evidenceId && row.path === path && row.lineStart === lineStart && row.lineEnd === lineEnd, `source identity mismatch: ${evidenceId}`)
     invariant(row.extraction === "LF_NORMALIZED_ID_PATH_LINE_RANGE_FRAGMENT", `source extraction mismatch: ${evidenceId}`)
-    const bytes = readFileSync(resolve(sourceRoot, path))
-    invariant(sha256(bytes) === fileDigest && row.fileSha256 === `sha256:${fileDigest}`, `source file changed: ${evidenceId}`)
-    const lines = bytes.toString("utf8").replace(/\r\n?/gu, "\n").split("\n")
+    const sourceText = readFileSync(resolve(sourceRoot, path), "utf8")
+    invariant(matchesTextTransportDigest(sourceText, fileDigest) && row.fileSha256 === `sha256:${fileDigest}`, `source file changed: ${evidenceId}`)
+    const lines = normalizeTextTransport(sourceText).split("\n")
     const fragment = lines.slice(lineStart - 1, lineEnd).join("\n")
     const computed = sha256(`${evidenceId}\n${path}\n${lineStart}\n${lineEnd}\n${fragment}`)
     invariant(computed === fragmentDigest && row.fragmentSha256 === `sha256:${computed}`, `source fragment changed: ${evidenceId}`)

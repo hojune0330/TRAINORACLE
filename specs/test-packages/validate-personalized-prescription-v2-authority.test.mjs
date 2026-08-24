@@ -30,7 +30,7 @@ function withArtifactMutation(path, target, replacement, assertion) {
       copyFileSync(resolve(root, artifactPath), destination)
     }
     const targetPath = join(temp, path)
-    const source = readFileSync(targetPath, "utf8")
+    const source = readFileSync(targetPath, "utf8").replace(/\r\n?/gu, "\n")
     assert.equal(source.split(target).length - 1, 1, `mutation target must occur once: ${target}`)
     writeFileSync(targetPath, source.replace(target, replacement), "utf8")
     assertion(() => validateRepository(temp, root))
@@ -38,6 +38,23 @@ function withArtifactMutation(path, target, replacement, assertion) {
     rmSync(temp, { recursive: true, force: true })
   }
 }
+
+test("promotion audit accepts CRLF transport without changing authority", () => {
+  const temp = mkdtempSync(join(tmpdir(), "trainoracle-pv2-crlf-test-"))
+  try {
+    for (const artifactPath of artifactPaths) {
+      const destination = join(temp, artifactPath)
+      mkdirSync(dirname(destination), { recursive: true })
+      copyFileSync(resolve(root, artifactPath), destination)
+    }
+    const auditPath = join(temp, "reports/review/SPEC_PROMOTION_CANDIDATE_AUDIT_2026-08-23.md")
+    const audit = readFileSync(auditPath, "utf8").replace(/\r?\n/gu, "\r\n")
+    writeFileSync(auditPath, audit, "utf8")
+    assert.doesNotThrow(() => validateRepository(temp, root))
+  } finally {
+    rmSync(temp, { recursive: true, force: true })
+  }
+})
 
 const runtimePaths = [
   "app/src/domain/detailed-prescription-manifest.json",

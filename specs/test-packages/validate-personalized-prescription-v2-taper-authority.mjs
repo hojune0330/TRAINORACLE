@@ -9,9 +9,9 @@ const SOURCE_GATE_PATH = ".omo/reports/personalized-prescription-source-gate-202
 const SOURCE_GATE_SHA256 = "82061a918835ef9e73d663b8a3e27fbf3ec543f70e964ebfb6980b36041e7f41"
 const SUPPLEMENTAL_EVIDENCE_ID = "SUPP-PMID-12165889-SUBGROUPS"
 const SUPPLEMENTAL_EVIDENCE_PATH = ".omo/evidence/formation-research-v2/competition-anchor-primary-research.md"
-const SUPPLEMENTAL_FILE_SHA256 = "e79358ed2752bc46c017a12c2e9875b92a6449e78988b5e676b4f215c8ae2c39"
+const SUPPLEMENTAL_FILE_SHA256 = "2ecfff924f7af37aa4c0192ff0ee7c465652122addbbc0cf79e880ec4072308b"
 const SUPPLEMENTAL_FRAGMENT_SHA256 = "c8455c9de891aee3788d5ad08da25c556c04908a8fda6601b01b48d07dfe72d1"
-const EXPECTED_MATRIX_SHA256 = "6aab468766651ed5a9eb5a19c3f466598affe488fd7337e15ad998cb00e44c4d"
+const EXPECTED_MATRIX_SHA256 = "2aa964b3f307c3d90414c8258b1ad2540dc81c0fbbd2d5d4b58b9c8c3d9849cf"
 const EXPECTED_OBSERVATIONS_SHA256 = "fb3b80169e943844bec2ce59d3dedd890b207fd91688cafbe6c4d66719c856d6"
 const EXPECTED_FIELDS_SHA256 = "b1652c727722c77d194cbdb898bf6750e48cc9c057f9054e0b7005d5ab418739"
 const EXPECTED_REQUESTS_SHA256 = "b9d5984ce04a15e17b77fa9a9294d55029233bc529f537a32243f9837440618f"
@@ -171,10 +171,10 @@ function validateSupplementalEvidence(matrix, sourceRoot) {
     "supplemental evidence identity mismatch",
   )
 
-  const sourceBuffer = readFileSync(resolve(sourceRoot, SUPPLEMENTAL_EVIDENCE_PATH))
-  invariant(sha256(sourceBuffer) === SUPPLEMENTAL_FILE_SHA256, "supplemental evidence file changed")
+  const sourceText = readFileSync(resolve(sourceRoot, SUPPLEMENTAL_EVIDENCE_PATH), "utf8").replace(/\r\n?/gu, "\n")
+  invariant(sha256(sourceText) === SUPPLEMENTAL_FILE_SHA256, "supplemental evidence file changed")
   invariant(evidence.fileSha256 === `sha256:${SUPPLEMENTAL_FILE_SHA256}`, "supplemental evidence file digest mismatch")
-  const lines = sourceBuffer.toString("utf8").replace(/\r\n?/gu, "\n").split("\n")
+  const lines = sourceText.split("\n")
   const fragment = lines.slice(evidence.lineStart - 1, evidence.lineEnd).join("\n")
   const computed = sha256(`${evidence.path}\n${evidence.lineStart}\n${evidence.lineEnd}\n${fragment}`)
   invariant(computed === SUPPLEMENTAL_FRAGMENT_SHA256, "supplemental evidence fragment changed")
@@ -288,8 +288,8 @@ function validateOpenAuthority(sourceRoot) {
 export function validateRepository(artifactRoot = resolve(import.meta.dirname, "../.."), sourceRoot = artifactRoot) {
   const matrixSource = readFileSync(resolve(artifactRoot, MATRIX_PATH), "utf8")
   const { matrix } = parseMatrixDocument(matrixSource)
-  const sourceGateBuffer = readFileSync(resolve(sourceRoot, SOURCE_GATE_PATH))
-  invariant(sha256(sourceGateBuffer) === SOURCE_GATE_SHA256, "fixed source gate digest mismatch")
+  const sourceGateText = readFileSync(resolve(sourceRoot, SOURCE_GATE_PATH), "utf8").replace(/\r\n?/gu, "\n")
+  invariant(sha256(sourceGateText) === SOURCE_GATE_SHA256, "fixed source gate digest mismatch")
 
   invariant(findForbiddenKey(matrix) === null, `operative taper key is forbidden: ${findForbiddenKey(matrix)}`)
   assertExactKeys(matrix, [
@@ -317,7 +317,7 @@ export function validateRepository(artifactRoot = resolve(import.meta.dirname, "
   invariant(matrix.numericTaperAuthority === "NOT_GRANTED" && matrix.runtimeAuthority === false && matrix.formulaAuthority === false, "matrix must grant no numeric or runtime authority")
   invariant(!JSON.stringify(matrix).includes('"numericTaperAuthority":"GRANTED"'), "active numeric taper authority is forbidden")
 
-  validateInventory(matrix, sourceGateBuffer.toString("utf8"))
+  validateInventory(matrix, sourceGateText)
   validateSupplementalEvidence(matrix, sourceRoot)
   validateRows(matrix)
   validateRequests(matrix)

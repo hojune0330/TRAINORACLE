@@ -9,6 +9,10 @@ import {
 } from "./validate-personalized-prescription-v2-race-placement.mjs"
 
 const root = resolve(import.meta.dirname, "../..")
+const sourcePaths = [
+  ".omo/reports/personalized-prescription-source-gate-2026-08-23.md",
+  "reports/research/FORMATION_COMPETITION_ANCHOR_EVIDENCE_SUPPLEMENT.md",
+]
 
 function withMutation(mutate, run) {
   const temporaryRoot = mkdtempSync(join(tmpdir(), "trainoracle-race-placement-"))
@@ -29,6 +33,23 @@ test("accepts the exact zero-authority race-placement registry", () => {
   assert.equal(result.activeRowCount, 0)
   assert.equal(result.reviewedCellCount, 12)
   assert.deepEqual(result.statusCounts, { DO_NOT_APPROVE: 12, NOT_FOUND: 0 })
+})
+
+test("accepts LF and CRLF source transport without changing evidence", () => {
+  for (const lineEnding of ["\n", "\r\n"]) {
+    const temporaryRoot = mkdtempSync(join(tmpdir(), "trainoracle-race-placement-transport-"))
+    try {
+      for (const sourcePath of sourcePaths) {
+        const source = readFileSync(resolve(root, sourcePath), "utf8").replace(/\r\n?/gu, "\n")
+        const output = resolve(temporaryRoot, sourcePath)
+        mkdirSync(dirname(output), { recursive: true })
+        writeFileSync(output, source.replace(/\n/gu, lineEnding), "utf8")
+      }
+      assert.doesNotThrow(() => validateRacePlacementAuthority({ registryRoot: root, sourceRoot: temporaryRoot }))
+    } finally {
+      rmSync(temporaryRoot, { recursive: true, force: true })
+    }
+  }
 })
 
 test("rejects active rows, missing cells, operative dose, reviewer drift, and row digest mutation", () => {
