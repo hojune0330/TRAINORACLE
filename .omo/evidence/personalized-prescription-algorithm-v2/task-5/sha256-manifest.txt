@@ -1,0 +1,15 @@
+472ab4e5d040d60d559aeb8b6955c3a26d599c358942d0ed3d371c40ab383c5c *.omo/plans/personalized-prescription-algorithm-v2.md
+82061a918835ef9e73d663b8a3e27fbf3ec543f70e964ebfb6980b36041e7f41 *.omo/reports/personalized-prescription-source-gate-2026-08-23.md
+e79358ed2752bc46c017a12c2e9875b92a6449e78988b5e676b4f215c8ae2c39 *.omo/evidence/formation-research-v2/competition-anchor-primary-research.md
+a3193118c84e17ad4d2c320c165d17d98a2661eaa45296e8b86301ecffea616c *reports/review/TAPER_EVIDENCE_AUTHORITY_MATRIX_V1_2026-08-23.md
+784e8bb7860bf9876ddac0d40da356ff848a076eccf5c9245635fcc211751309 *specs/test-packages/validate-personalized-prescription-v2-taper-authority.mjs
+74338c993dd7b505263b0c994f96e9f29a11b491b25223291de880822b0ddd9d *specs/test-packages/validate-personalized-prescription-v2-taper-authority.test.mjs
+ec924152a3890ab99d4bd861fda1834a37a618ddc5cde38b688f09f718230fd4 *.omo/evidence/personalized-prescription-algorithm-v2/task-5/RED.md
+e42cc153375882b6740746dae7a7dda69df8199946a5af44a720e71a12f10478 *.omo/evidence/personalized-prescription-algorithm-v2/task-5/GREEN.md
+7ccafee4a80b717944bab93c23b51b202a05867953809b736fa7cf1594b87a8f *.omo/evidence/personalized-prescription-algorithm-v2/task-5/manual-mutation-qa.mjs
+9545ade3222ff39e3ef1ba237fed3bcdcf76d1cdaf7098f417a5ee0a1371d66b *.omo/evidence/personalized-prescription-algorithm-v2/task-5/manual-results.json
+1682ae7621b196002831938c1adcc368c15f57f16c555c4876757af81cc1c888 *.omo/evidence/personalized-prescription-algorithm-v2/task-5/provenance.json
+13de0dc0dec32bf0915008caff5e03451c24e9a40d7d4150cb395b7401217019 *.omo/evidence/personalized-prescription-algorithm-v2/task-5/cleanup-receipt.md
+f2bc21d912457fda8e5ac6b2bbfaceb7856f7ea8f85cd987720d83ffe26c8ffd *.omo/evidence/personalized-prescription-algorithm-v2/task-5/REPORT.md
+a434bd1286a5d1fb30adbf9e40420dccb73ef6b1a50af2954f92a81d8ff02885 *.omo/evidence/personalized-prescription-algorithm-v2/task-5/DoneClaim.md
+4f33cb710ddfa3d2b735d512548b56a1ccae7758e6bb3c22528ae2705d8befbe *.omo/evidence/personalized-prescription-algorithm-v2/task-5/reviewed.diff

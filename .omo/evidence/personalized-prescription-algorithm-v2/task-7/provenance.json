@@ -1,0 +1,15 @@
+{
+  "schemaVersion": "trainoracle.todo7-provenance.v1",
+  "baseHead": "5ea2eed9fce0f0ddb314358d57c0b2fc538b9daa",
+  "planSha256": "71d92dd6378db4ec4ec464ebe04497bfd56a4caf55ab7ec804d1ba9e78423e4f",
+  "ownerDecisionSha256": "a5cf9f874a37a1a813a0bcd07dde8bf60d1dc27bc3fff7400f55948fd4a8b2dc",
+  "currentInputHashListSha256": "7af466eb827e2f8bbc710369d83b5af138ee7d657cc3e56cc691bb535a2d5e0b",
+  "sourceState": "UNCOMMITTED_SHARED_WORKTREE",
+  "scope": "TODO_7_ONLY",
+  "notes": [
+    "Current tracked diff also contains preserved Todo 1-6 work.",
+    "reviewed.diff is restricted to Todo 7 affected runtime and test paths, but tracked files may contain cumulative prerequisite edits relative to base HEAD.",
+    "No specs, owner decisions, templates, training values, or UI copy were edited by Todo 7."
+  ]
+}
+

@@ -1,0 +1,26 @@
+{
+  "schemaVersion": 1,
+  "command": "npx vitest run src/domain/.task4-production-matrix.contract.test.ts --disableConsoleIntercept --pool=threads --maxWorkers=1 --no-file-parallelism",
+  "productionImports": [
+    "app/src/domain/athlete-records.ts",
+    "app/src/domain/detailed-prescription-approvals.ts",
+    "app/src/domain/plan-beta-flow.ts"
+  ],
+  "result": {
+    "exitCode": 0,
+    "testFilesPassed": 1,
+    "testsPassed": 1
+  },
+  "rows": [
+    { "eventDistanceM": 800, "templateId": "MD-800-01", "selectedIntent": "GLY_INTENT", "resultKind": "generated", "bindingKind": "bound", "paceTargetCandidateCount": 2 },
+    { "eventDistanceM": 1500, "templateId": "MD-1500-01", "selectedIntent": "MIXED_INTENT", "resultKind": "generated", "bindingKind": "bound", "paceTargetCandidateCount": 2 },
+    { "eventDistanceM": 3000, "templateId": "MD-3000-01", "selectedIntent": "VO2_INTENT", "resultKind": "generated", "bindingKind": "bound", "paceTargetCandidateCount": 2 },
+    { "eventDistanceM": 5000, "templateId": "V2-SEED-05", "selectedIntent": "VO2_INTENT", "resultKind": "generated", "bindingKind": "bound", "paceTargetCandidateCount": 2 },
+    { "caseId": "CROSS_EVENT_TEMPLATE", "eventDistanceM": 1500, "templateId": "MD-800-01", "selectedIntent": "MIXED_INTENT", "resultKind": "generated", "bindingKind": "fallback", "bindingCode": "PACE_TARGET_FALLBACK_AUTHORITY_OR_COMPONENT", "selectedTemplateRetained": false, "paceTargetCandidateCount": 0 },
+    { "caseId": "ATP_PC_INTENT", "eventDistanceM": 5000, "templateId": "V2-SEED-05", "selectedIntent": "ATP_PC_INTENT", "resultKind": "generated", "bindingKind": "fallback", "bindingCode": "PACE_TARGET_FALLBACK_AUTHORITY_OR_COMPONENT", "selectedTemplateRetained": false, "paceTargetCandidateCount": 0 },
+    { "caseId": "MISSING_TEMPLATE_ID", "eventDistanceM": 800, "resultKind": "generated", "bindingKind": "fallback", "bindingCode": "PACE_TARGET_FALLBACK_INCOMPLETE_TEMPLATE_REF", "selectedTemplateRetained": false, "paceTargetCandidateCount": 0 },
+    { "caseId": "MISSING_TEMPLATE_VERSION", "eventDistanceM": 800, "resultKind": "generated", "bindingKind": "fallback", "bindingCode": "PACE_TARGET_FALLBACK_INCOMPLETE_TEMPLATE_REF", "selectedTemplateRetained": false, "paceTargetCandidateCount": 0 },
+    { "caseId": "MISSING_TEMPLATE_FINGERPRINT", "eventDistanceM": 800, "resultKind": "generated", "bindingKind": "fallback", "bindingCode": "PACE_TARGET_FALLBACK_INCOMPLETE_TEMPLATE_REF", "selectedTemplateRetained": false, "paceTargetCandidateCount": 0 }
+  ],
+  "cleanup": "The temporary production-import test was deleted after the run."
+}

@@ -1,0 +1,124 @@
+{
+  "schemaVersion": 1,
+  "sourceGate": {
+    "path": ".omo/reports/personalized-prescription-source-gate-2026-08-23.md",
+    "rawBytesSha256": "82061a918835ef9e73d663b8a3e27fbf3ec543f70e964ebfb6980b36041e7f41"
+  },
+  "localDigests": {
+    "boullosa800Lead": {
+      "extractionKind": "LF_NORMALIZED_EXACT_MARKDOWN_TABLE_ROW_WITH_FINAL_LF",
+      "sha256": "f09abd9dbb7f886d301822e8ff9b9785ccc6e5c85a25475ed32ad8c9059f8876"
+    },
+    "fentaw5000Lead": {
+      "extractionKind": "LF_NORMALIZED_EXACT_MARKDOWN_TABLE_ROW_WITH_FINAL_LF",
+      "sha256": "99f8632ce538467552ee345a34dcc65cffe6fb7f6bbf21fed131899c28b7ced7"
+    },
+    "V2-SEED-03": {
+      "extractionKind": "LF_NORMALIZED_TEMPLATE_BLOCK_WITH_TRAILING_BLANKS_REMOVED_AND_FINAL_LF",
+      "sha256": "045ebe81916434238fead19faf3ac5c42ea23ab0a08b228f4cbf1c8e77416401"
+    },
+    "V2-SEED-04": {
+      "extractionKind": "LF_NORMALIZED_TEMPLATE_BLOCK_WITH_TRAILING_BLANKS_REMOVED_AND_FINAL_LF",
+      "sha256": "d5c0283ecb1b875993c024a2e1eaf7a114b2f85452b2dcb368253db0ea6373db"
+    },
+    "GL-SEED-02": {
+      "extractionKind": "LF_NORMALIZED_TEMPLATE_BLOCK_WITH_TRAILING_BLANKS_REMOVED_AND_FINAL_LF",
+      "sha256": "5c019b922db064952375675084bbe095bd85881319e6eceb5e028dc1403739fc"
+    }
+  },
+  "reviews": [
+    {
+      "lane": "COACHING_APPLICABILITY",
+      "reviewerId": "01a00a34-088f-75a0-95d0-3b7813f38e8e",
+      "verdict": "DO_NOT_APPROVE",
+      "additionsAuthorized": 0,
+      "strongestCandidates": [
+        {
+          "eventDistanceM": 800,
+          "candidate": "BOULLOSA_800_LEAD",
+          "registeredTemplate": false,
+          "localDigest": "f09abd9dbb7f886d301822e8ff9b9785ccc6e5c85a25475ed32ad8c9059f8876"
+        },
+        {
+          "eventDistanceM": 1500,
+          "candidate": "GL-SEED-02",
+          "registeredTemplate": true,
+          "localDigest": "5c019b922db064952375675084bbe095bd85881319e6eceb5e028dc1403739fc"
+        },
+        {
+          "eventDistanceM": 3000,
+          "candidate": "V2-SEED-03",
+          "registeredTemplate": true,
+          "localDigest": "045ebe81916434238fead19faf3ac5c42ea23ab0a08b228f4cbf1c8e77416401"
+        },
+        {
+          "eventDistanceM": 5000,
+          "candidate": "FENTAW_5000_LEAD",
+          "registeredTemplate": false,
+          "localDigest": "99f8632ce538467552ee345a34dcc65cffe6fb7f6bbf21fed131899c28b7ced7"
+        }
+      ]
+    },
+    {
+      "lane": "SPORTS_SCIENCE_TRANSFER",
+      "reviewerId": "01a00a34-0f37-7d43-bcc5-4b2c0cb3dd2e",
+      "verdict": "DO_NOT_APPROVE",
+      "additionsAuthorized": 0,
+      "youthTransfer": "DO_NOT_APPROVE",
+      "femaleSexTransfer": "DO_NOT_APPROVE",
+      "strongestCandidates": [
+        {
+          "eventDistanceM": 800,
+          "candidate": "V2-SEED-04",
+          "registeredTemplate": true,
+          "localDigest": "d5c0283ecb1b875993c024a2e1eaf7a114b2f85452b2dcb368253db0ea6373db"
+        },
+        {
+          "eventDistanceM": 1500,
+          "candidate": "GL-SEED-02",
+          "registeredTemplate": true,
+          "localDigest": "5c019b922db064952375675084bbe095bd85881319e6eceb5e028dc1403739fc"
+        },
+        {
+          "eventDistanceM": 3000,
+          "candidate": null,
+          "registeredTemplate": false,
+          "localDigest": null
+        },
+        {
+          "eventDistanceM": 5000,
+          "candidate": "V2-SEED-03",
+          "registeredTemplate": true,
+          "localDigest": "045ebe81916434238fead19faf3ac5c42ea23ab0a08b228f4cbf1c8e77416401"
+        }
+      ]
+    }
+  ],
+  "receiptComparison": {
+    "sameCandidateIdentityByEvent": {
+      "800": false,
+      "1500": true,
+      "3000": false,
+      "5000": false
+    },
+    "independentReceiptDigestMatch": false,
+    "note": "The independent receipt digests were non-matching, including the 1500m catalog selection. No truncated or untrusted receipt digest was copied; local full digests above are independently recomputed by this script."
+  },
+  "outcome": {
+    "status": "DO_NOT_APPROVE",
+    "additionsAuthorized": 0,
+    "retainedTemplateIds": [
+      "V2-SEED-05",
+      "MD-800-01",
+      "MD-1500-01",
+      "MD-3000-01"
+    ],
+    "openGaps": [
+      "NO_DUAL_MATCHING_UNCONDITIONAL_RECEIPTS",
+      "YOUTH_TRANSFER_NOT_APPROVED_FOR_ADDITIONS",
+      "FEMALE_SEX_TRANSFER_NOT_APPROVED_FOR_ADDITIONS",
+      "UNREGISTERED_CANDIDATE_SOURCE_FOR_800_OR_5000_COACHING_LEADS",
+      "NO_REGISTERED_3000_SPORTS_SCIENCE_CANDIDATE"
+    ]
+  }
+}

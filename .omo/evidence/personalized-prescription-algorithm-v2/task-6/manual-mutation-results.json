@@ -1,0 +1,22 @@
+{
+  "schemaVersion": 1,
+  "results": [
+    {
+      "name": "target-present-status-mutation",
+      "validatorExit": 1,
+      "error": "row must remain DO_NOT_APPROVE: RACE-PLACEMENT-800-H7"
+    },
+    {
+      "name": "target-present-source-fragment-mutation",
+      "validatorExit": 1,
+      "error": "source file changed: SOURCE_GATE_EVENT_800"
+    },
+    {
+      "name": "target-absent-guard",
+      "guard": "failed-before-validator",
+      "error": "mutation target absent before validator"
+    }
+  ],
+  "originalValidatorExit": 0,
+  "mutatedCopiesRemoved": true
+}

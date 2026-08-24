@@ -64,10 +64,12 @@ async function reachExperiencedFiveKCandidates(
   await page.getByRole("button", { name: /통증은 없고 몸 상태는 평소와 같아요/u }).click()
   await page.getByRole("button", { name: "내 계획 완성하기" }).click()
   await page.getByRole("button", { name: /반복 인터벌.*VO2/u }).click()
+  await page.getByRole("button", { name: /5000m 경기 페이스 상세 훈련 포함/u }).click()
   await page.getByRole("button", { name: /^3일/u }).click()
   await selectNineDayProjection(page)
   await page.getByRole("button", { name: /아침에 운동해요/u }).click()
   await page.getByRole("button", { name: /하루 한 번 운동/u }).click()
+  await page.getByRole("button", { name: "날짜 없이 계획 후보 보기" }).click()
 }
 
 async function assertViewportIntegrity(page: Page): Promise<void> {
@@ -180,8 +182,8 @@ for (const viewport of [
       fullPage: true,
     })
 
-    await page.getByRole("button", { name: /반복 인터벌 포함 선택하기/u }).click()
-    await expect(page.getByRole("heading", { name: /반복 인터벌 포함 9일 계획/u })).toBeVisible()
+    await page.getByRole("button", { name: /기본 보조훈련 선택하기/u }).click()
+    await expect(page.getByRole("heading", { name: /기본 보조훈련 9일 계획/u })).toBeVisible()
     await page.reload()
     await page.getByRole("navigation", { name: "주 탭" })
       .getByRole("button", { name: "계획" })
@@ -192,9 +194,9 @@ for (const viewport of [
       name: "통증 없고 평소와 같음 · 다시 시작 확인",
     })).toHaveCount(0)
     await page.getByRole("button", { name: "통증 없고 평소와 같음 · 시작 확인" }).click()
-    await expect(page.getByRole("status")).toContainText("시작할 수 있어요")
+    await expect(page.locator(".plan-execution-status")).toContainText("시작할 수 있어요")
     await page.getByRole("button", { name: "통증·이상 또는 잘 모르겠음" }).click()
-    await expect(page.getByRole("status")).toContainText("상세 세션을 시작하지 않아요")
+    await expect(page.locator(".plan-execution-status")).toContainText("상세 세션을 시작하지 않아요")
     await assertViewportIntegrity(page)
     await assertTouchTargets(page)
     await page.screenshot({
@@ -217,7 +219,7 @@ test("keeps youth and adult 5K eligibility and dose identical", async ({ browser
     await expect(page.getByText(new RegExp(`참가 부문: ${divisionName.source}`, "u"))).toBeVisible()
     await bindFirstRecord(page)
     await expect(page.getByText(/5×1000m @5000m RP.*r150.*JOG/u).first()).toBeVisible()
-    await page.getByRole("button", { name: /반복 인터벌 포함 선택하기/u }).click()
+    await page.getByRole("button", { name: /기본 보조훈련 선택하기/u }).click()
 
     storedDoses.push(await page.evaluate(() => {
       const raw = window.localStorage.getItem("trainoracle.plan-beta.v1")
@@ -259,12 +261,12 @@ test("requires reconfirmation after replacing the selected record", async ({ pag
   await expect(page.getByText(/5×1000m @5000m RP.*r150.*JOG/u).first()).toBeVisible()
 
   await picker.getByRole("button", { name: /^시즌 최고.*19분/u }).click()
-  await expect(page.getByRole("button", { name: /반복 인터벌 포함 선택하기/u })).toBeDisabled()
+  await expect(page.getByRole("button", { name: /기본 보조훈련 선택하기/u })).toBeDisabled()
   await expect(page.getByText(/5×1000m @5000m RP/u)).toHaveCount(0)
   await expect(page.getByText("새로 고른 기준 기록을 확인한 뒤 계획을 선택해 주세요.")).toBeVisible()
 
   await picker.getByRole("button", { name: "이 기록으로 개인 페이스 적용" }).click()
-  await expect(page.getByRole("button", { name: /반복 인터벌 포함 선택하기/u })).toBeEnabled()
+  await expect(page.getByRole("button", { name: /기본 보조훈련 선택하기/u })).toBeEnabled()
   await page.getByText("기준 기록·중단·낮춤 규칙 보기").first().click()
   await expect(page.getByText(/기준 기록.*5000m.*19분.*2026-04-20/u).first()).toBeVisible()
 })

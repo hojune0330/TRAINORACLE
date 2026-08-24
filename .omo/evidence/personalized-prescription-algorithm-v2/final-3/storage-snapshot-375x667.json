@@ -1,0 +1,954 @@
+{
+  "kind": "TRAINORACLE_PLAN_STORAGE_SNAPSHOT",
+  "privacy": "STRUCTURED_PLAN_FIELDS_ONLY_NO_RAW_TEXT",
+  "viewport": {
+    "width": 375,
+    "height": 667
+  },
+  "activePlan": {
+    "version": 3,
+    "intake": {
+      "eventGroup": "FIVE_K",
+      "eventDistanceM": 5000,
+      "competitionDivision": "OPEN",
+      "experienceBand": "EXPERIENCED",
+      "availableDayCount": 3,
+      "requestedFrameLength": 9,
+      "trainingFocus": "VO2_INTENT",
+      "secondSessionMode": "SINGLE_SESSION_ONLY",
+      "trainingTimePreference": "MORNING",
+      "selectedDetailedTemplateRef": {
+        "templateId": "V2-SEED-05",
+        "version": "1.0.0",
+        "fingerprint": "sha256:ad4a8c436a5a6e7a9c81342d79b359d84b1b8ea1034f9589141429eea8d0e42a"
+      },
+      "startDate": "2026-08-24"
+    },
+    "progress": [],
+    "generatedAt": "2026-08-24T12:37:25.594Z",
+    "athleteEvidence": {
+      "storedRecordCount": 1,
+      "goalRecordCount": 0,
+      "recentJournalSessionCount": 0
+    },
+    "adaptationScope": {
+      "athleteId": "local-athlete",
+      "eventDistanceM": 5000,
+      "pairId": "plan-pair:v3:5000:v2-seed-05.1.0.0.ad4a8c436a5a6e7a9c81342d79b359d84b1b8ea1034f9589141429eea8d0e42a:vo2_intent:app-main-day-1-app-main-day-9:1-5-9:no-continuity:pair-sha256-a96b266dcddcf4c348a2c58601594f47f2418aa01b36003dac5cff075248d7d3",
+      "selectedDetailedTemplateRef": {
+        "templateId": "V2-SEED-05",
+        "version": "1.0.0",
+        "fingerprint": "sha256:ad4a8c436a5a6e7a9c81342d79b359d84b1b8ea1034f9589141429eea8d0e42a"
+      }
+    },
+    "activePlan": {
+      "kind": "BETA_ACTIVE_PLAN_SNAPSHOT",
+      "activationState": "SELECTED_BETA_SNAPSHOT",
+      "candidateId": "beta:conservative:five_k:event-5000:experienced:vo2_intent:single_session_only:morning:projection-9:local-civil-9-5:app-main-day-1-app-main-day-9:1-5-9:no_usable_journal:no-continuity:template-v2-seed-05.1.0.0.ad4a8c436a5a6e7a9c81342d79b359d84b1b8ea1034f9589141429eea8d0e42a:candidate-sha256-f686a70fd3891bb03a14190bcf34081962b5988f8fb74e3c252a290bcf8cac1f:pace-target:canonical-json-v1:{\"kind\":\"PACE_TARGET\",\"manifestVersion\":\"1\",\"templateId\":\"V2-SEED-05\",\"templateVersion\":\"1.0.0\",\"templateContentFingerprint\":\"sha256:ad4a8c436a5a6e7a9c81342d79b359d84b1b8ea1034f9589141429eea8d0e42a\",\"notation\":\"5×1000m @5000m RP · r150″ JOG\",\"sourceDecisionId\":\"TO-V2-SEED-05-OWNER-ADOPTION-2026-08-17\",\"sourceEvidenceRef\":\"reports/review/V2_SEED_05_OWNER_ADOPTION_DECISION_2026-08-17.md\",\"approvalDecisionId\":\"TO-V2-SEED-05-OWNER-ADOPTION-2026-08-17\",\"ownerAuthorityDecisionId\":\"TO-V2-SEED-05-OWNER-ADOPTION-2026-08-17\",\"sportsScienceEvidence\":{\"evidenceId\":\"V2-SEED-05-SPORTS-SCIENCE-EVIDENCE-2026-08-17\",\"decisionRef\":\"TO-V2-SEED-05-OWNER-ADOPTION-2026-08-17\",\"fingerprint\":\"sha256:43f39eea01053d1cf11afbdac90adc0c6331cd4b36355c16b660b6970d62cbed\"},\"populationApplicabilityEvidence\":{\"evidenceId\":\"V2-SEED-05-POPULATION-EVIDENCE-2026-08-17\",\"decisionRef\":\"TO-V2-SEED-05-OWNER-ADOPTION-2026-08-17\",\"fingerprint\":\"sha256:dddff17cc298cd32ce7cbd6c2ccff6e38034b7e0ff5dd114e40b3893d55b4517\"},\"scope\":{\"eventGroup\":\"FIVE_K\",\"experienceBand\":\"EXPERIENCED\",\"population\":\"YOUTH_AND_ADULT\",\"eventEvidenceFingerprint\":\"sha256:43f39eea01053d1cf11afbdac90adc0c6331cd4b36355c16b660b6970d62cbed\",\"experienceEvidenceFingerprint\":\"sha256:dddff17cc298cd32ce7cbd6c2ccff6e38034b7e0ff5dd114e40b3893d55b4517\"},\"componentRefs\":[{\"componentType\":\"WARMUP\",\"componentRef\":\"WU-V2-5K-01\",\"componentVersion\":\"1.0.0\",\"componentFingerprint\":\"sha256:d8da21478d2a44841122874ccf35c24aad1777ebaaeb018deda3e98a8f9cf6f1\"},{\"componentType\":\"COOLDOWN\",\"componentRef\":\"CD-V2-5K-01\",\"componentVersion\":\"1.0.0\",\"componentFingerprint\":\"sha256:8d1470171a5edb17a43aa1c21ca34bbfb77456347a68293d2ffe0a5bc52968ab\"},{\"componentType\":\"DOWNSHIFT\",\"componentRef\":\"RPE-ONLY-CONTROLLED-01\",\"componentVersion\":\"1.0.0\",\"componentFingerprint\":\"sha256:cd09b06359fcdfb422b421c31dd45a97beeccbdbecaabd1eb7274cdd67ecf3c5\"},{\"componentType\":\"STOP_CONDITIONS\",\"componentRef\":\"STOP-V2-5K-01\",\"componentVersion\":\"1.0.0\",\"componentFingerprint\":\"sha256:737ce6df7f7049530b72f3f52f20a2cbbd32bb83ccf6bfd93c29e25864b4bc29\"}],\"operationalComponents\":{\"warmup\":{\"componentRef\":\"WU-V2-5K-01\",\"componentVersion\":\"1.0.0\",\"authority\":\"OWNER_OPERATIONAL_ADAPTATION\",\"easyDurationMinutes\":15,\"rpeMin\":2,\"rpeMax\":3,\"strides\":{\"repetitions\":4,\"durationSeconds\":20,\"recoverySeconds\":40,\"recoveryMode\":\"WALK_OR_JOG\",\"progression\":\"PROGRESSIVE\"}},\"cooldown\":{\"componentRef\":\"CD-V2-5K-01\",\"componentVersion\":\"1.0.0\",\"authority\":\"OWNER_OPERATIONAL_ADAPTATION\",\"easyDurationMinutes\":10,\"rpeMin\":1,\"rpeMax\":2},\"fallback\":{\"componentRef\":\"RPE-ONLY-CONTROLLED-01\",\"componentVersion\":\"1.0.0\",\"code\":\"RPE_ONLY_CONTROLLED\",\"behavior\":\"DELEGATE_TO_EXISTING_RPE_CANDIDATE\",\"numericRepetitionVariant\":null},\"stopConditions\":{\"componentRef\":\"STOP-V2-5K-01\",\"componentVersion\":\"1.0.0\",\"authority\":\"OWNER_PRECAUTIONARY_OPERATIONAL_RULE\",\"diagnosticClaim\":false,\"codes\":[\"STOP_NEW_OR_WORSENING_PAIN\",\"STOP_DIZZINESS_OR_FAINTNESS\",\"STOP_CHEST_PAIN_OR_UNUSUAL_BREATHING\",\"STOP_LOSS_OF_CONTROLLED_FORM\"]}},\"setCount\":1,\"repetitionsPerSet\":5,\"repetitionDistanceM\":1000,\"targetEventDistanceM\":5000,\"targetRepSeconds\":222,\"selectedAnchor\":{\"anchorId\":\"00000000-0000-4000-8000-000000005000\",\"eventDistanceM\":5000,\"performanceSeconds\":1110,\"achievedAt\":\"2026-08-01\",\"enteredBy\":\"ATHLETE\",\"verificationState\":\"SELF_REPORTED\",\"freshnessState\":\"CURRENT\",\"sourceRef\":\"athlete-record:00000000-0000-4000-8000-000000005000\",\"elapsedLabel\":\"이번 달\",\"kind\":\"PB\",\"purpose\":\"CURRENT_CAPABILITY\",\"seasonId\":null},\"displayRoundingPolicyVersion\":\"seconds-v1\",\"repetitionRecoverySeconds\":150,\"repetitionRecoveryMode\":\"JOG\",\"setRecoverySeconds\":null,\"setRecoveryMode\":\"NOT_APPLICABLE\",\"totals\":{\"totalRepetitions\":5,\"qualityDistanceM\":5000,\"qualityDurationSeconds\":null,\"repetitionRecoveryOccurrences\":4,\"repetitionRecoveryTotalSeconds\":600,\"setRecoveryOccurrences\":0,\"setRecoveryTotalSeconds\":0,\"plannedRecoverySeconds\":600,\"mainSessionTotalExcludingWarmupCooldown\":null,\"uncomputableReasonCodes\":[\"WORK_DURATION_UNAVAILABLE\"]},\"stopCodes\":[\"STOP_NEW_OR_WORSENING_PAIN\",\"STOP_DIZZINESS_OR_FAINTNESS\",\"STOP_CHEST_PAIN_OR_UNUSUAL_BREATHING\",\"STOP_LOSS_OF_CONTROLLED_FORM\"],\"fallbackCode\":\"RPE_ONLY_CONTROLLED\"}",
+      "candidateKind": "CONSERVATIVE",
+      "eventDistanceM": 5000,
+      "selectionActor": "SELF",
+      "sourceMode": "PROFILE_ONLY",
+      "selectedEnergyIntent": "VO2_INTENT",
+      "frame": {
+        "formationKind": "LOCAL_CIVIL_9_5",
+        "lengthDays": 9.5,
+        "slotCount": 19,
+        "projectionLengthDays": 9,
+        "continuity": {
+          "kind": "STANDARD_FRAME"
+        }
+      },
+      "sessions": [
+        {
+          "day": 1,
+          "slot": "AM",
+          "role": "EASY",
+          "plannedEnergyIntent": "BASE_INTENT",
+          "prescription": {
+            "kind": "RPE_TIME_RANGE",
+            "rpe": {
+              "minimum": 3,
+              "maximum": 4
+            },
+            "durationMinutes": {
+              "minimum": 35,
+              "maximum": 35
+            }
+          }
+        },
+        {
+          "day": 2,
+          "slot": "AM",
+          "role": "REST",
+          "plannedEnergyIntent": "RECOVERY_INTENT",
+          "prescription": {
+            "kind": "REST"
+          }
+        },
+        {
+          "day": 3,
+          "slot": "AM",
+          "role": "REST",
+          "plannedEnergyIntent": "RECOVERY_INTENT",
+          "prescription": {
+            "kind": "REST"
+          }
+        },
+        {
+          "day": 4,
+          "slot": "AM",
+          "role": "REST",
+          "plannedEnergyIntent": "RECOVERY_INTENT",
+          "prescription": {
+            "kind": "REST"
+          }
+        },
+        {
+          "day": 5,
+          "slot": "AM",
+          "role": "QUALITY",
+          "plannedEnergyIntent": "VO2_INTENT",
+          "prescription": {
+            "kind": "PACE_TARGET",
+            "manifestVersion": "1",
+            "templateId": "V2-SEED-05",
+            "templateVersion": "1.0.0",
+            "templateContentFingerprint": "sha256:ad4a8c436a5a6e7a9c81342d79b359d84b1b8ea1034f9589141429eea8d0e42a",
+            "notation": "5×1000m @5000m RP · r150″ JOG",
+            "sourceDecisionId": "TO-V2-SEED-05-OWNER-ADOPTION-2026-08-17",
+            "sourceEvidenceRef": "reports/review/V2_SEED_05_OWNER_ADOPTION_DECISION_2026-08-17.md",
+            "approvalDecisionId": "TO-V2-SEED-05-OWNER-ADOPTION-2026-08-17",
+            "ownerAuthorityDecisionId": "TO-V2-SEED-05-OWNER-ADOPTION-2026-08-17",
+            "sportsScienceEvidence": {
+              "evidenceId": "V2-SEED-05-SPORTS-SCIENCE-EVIDENCE-2026-08-17",
+              "decisionRef": "TO-V2-SEED-05-OWNER-ADOPTION-2026-08-17",
+              "fingerprint": "sha256:43f39eea01053d1cf11afbdac90adc0c6331cd4b36355c16b660b6970d62cbed"
+            },
+            "populationApplicabilityEvidence": {
+              "evidenceId": "V2-SEED-05-POPULATION-EVIDENCE-2026-08-17",
+              "decisionRef": "TO-V2-SEED-05-OWNER-ADOPTION-2026-08-17",
+              "fingerprint": "sha256:dddff17cc298cd32ce7cbd6c2ccff6e38034b7e0ff5dd114e40b3893d55b4517"
+            },
+            "scope": {
+              "eventGroup": "FIVE_K",
+              "experienceBand": "EXPERIENCED",
+              "population": "YOUTH_AND_ADULT",
+              "eventEvidenceFingerprint": "sha256:43f39eea01053d1cf11afbdac90adc0c6331cd4b36355c16b660b6970d62cbed",
+              "experienceEvidenceFingerprint": "sha256:dddff17cc298cd32ce7cbd6c2ccff6e38034b7e0ff5dd114e40b3893d55b4517"
+            },
+            "componentRefs": [
+              {
+                "componentType": "WARMUP",
+                "componentRef": "WU-V2-5K-01",
+                "componentVersion": "1.0.0",
+                "componentFingerprint": "sha256:d8da21478d2a44841122874ccf35c24aad1777ebaaeb018deda3e98a8f9cf6f1"
+              },
+              {
+                "componentType": "COOLDOWN",
+                "componentRef": "CD-V2-5K-01",
+                "componentVersion": "1.0.0",
+                "componentFingerprint": "sha256:8d1470171a5edb17a43aa1c21ca34bbfb77456347a68293d2ffe0a5bc52968ab"
+              },
+              {
+                "componentType": "DOWNSHIFT",
+                "componentRef": "RPE-ONLY-CONTROLLED-01",
+                "componentVersion": "1.0.0",
+                "componentFingerprint": "sha256:cd09b06359fcdfb422b421c31dd45a97beeccbdbecaabd1eb7274cdd67ecf3c5"
+              },
+              {
+                "componentType": "STOP_CONDITIONS",
+                "componentRef": "STOP-V2-5K-01",
+                "componentVersion": "1.0.0",
+                "componentFingerprint": "sha256:737ce6df7f7049530b72f3f52f20a2cbbd32bb83ccf6bfd93c29e25864b4bc29"
+              }
+            ],
+            "operationalComponents": {
+              "warmup": {
+                "componentRef": "WU-V2-5K-01",
+                "componentVersion": "1.0.0",
+                "authority": "OWNER_OPERATIONAL_ADAPTATION",
+                "easyDurationMinutes": 15,
+                "rpeMin": 2,
+                "rpeMax": 3,
+                "strides": {
+                  "repetitions": 4,
+                  "durationSeconds": 20,
+                  "recoverySeconds": 40,
+                  "recoveryMode": "WALK_OR_JOG",
+                  "progression": "PROGRESSIVE"
+                }
+              },
+              "cooldown": {
+                "componentRef": "CD-V2-5K-01",
+                "componentVersion": "1.0.0",
+                "authority": "OWNER_OPERATIONAL_ADAPTATION",
+                "easyDurationMinutes": 10,
+                "rpeMin": 1,
+                "rpeMax": 2
+              },
+              "fallback": {
+                "componentRef": "RPE-ONLY-CONTROLLED-01",
+                "componentVersion": "1.0.0",
+                "code": "RPE_ONLY_CONTROLLED",
+                "behavior": "DELEGATE_TO_EXISTING_RPE_CANDIDATE",
+                "numericRepetitionVariant": null
+              },
+              "stopConditions": {
+                "componentRef": "STOP-V2-5K-01",
+                "componentVersion": "1.0.0",
+                "authority": "OWNER_PRECAUTIONARY_OPERATIONAL_RULE",
+                "diagnosticClaim": false,
+                "codes": [
+                  "STOP_NEW_OR_WORSENING_PAIN",
+                  "STOP_DIZZINESS_OR_FAINTNESS",
+                  "STOP_CHEST_PAIN_OR_UNUSUAL_BREATHING",
+                  "STOP_LOSS_OF_CONTROLLED_FORM"
+                ]
+              }
+            },
+            "setCount": 1,
+            "repetitionsPerSet": 5,
+            "repetitionDistanceM": 1000,
+            "targetEventDistanceM": 5000,
+            "targetRepSeconds": 222,
+            "selectedAnchor": {
+              "anchorId": "00000000-0000-4000-8000-000000005000",
+              "eventDistanceM": 5000,
+              "performanceSeconds": 1110,
+              "achievedAt": "2026-08-01",
+              "enteredBy": "ATHLETE",
+              "verificationState": "SELF_REPORTED",
+              "freshnessState": "CURRENT",
+              "sourceRef": "athlete-record:00000000-0000-4000-8000-000000005000",
+              "elapsedLabel": "이번 달",
+              "kind": "PB",
+              "purpose": "CURRENT_CAPABILITY",
+              "seasonId": null
+            },
+            "displayRoundingPolicyVersion": "seconds-v1",
+            "repetitionRecoverySeconds": 150,
+            "repetitionRecoveryMode": "JOG",
+            "setRecoverySeconds": null,
+            "setRecoveryMode": "NOT_APPLICABLE",
+            "totals": {
+              "totalRepetitions": 5,
+              "qualityDistanceM": 5000,
+              "qualityDurationSeconds": null,
+              "repetitionRecoveryOccurrences": 4,
+              "repetitionRecoveryTotalSeconds": 600,
+              "setRecoveryOccurrences": 0,
+              "setRecoveryTotalSeconds": 0,
+              "plannedRecoverySeconds": 600,
+              "mainSessionTotalExcludingWarmupCooldown": null,
+              "uncomputableReasonCodes": [
+                "WORK_DURATION_UNAVAILABLE"
+              ]
+            },
+            "stopCodes": [
+              "STOP_NEW_OR_WORSENING_PAIN",
+              "STOP_DIZZINESS_OR_FAINTNESS",
+              "STOP_CHEST_PAIN_OR_UNUSUAL_BREATHING",
+              "STOP_LOSS_OF_CONTROLLED_FORM"
+            ],
+            "fallbackCode": "RPE_ONLY_CONTROLLED",
+            "prescriptionFingerprint": "canonical-json-v1:{\"kind\":\"PACE_TARGET\",\"manifestVersion\":\"1\",\"templateId\":\"V2-SEED-05\",\"templateVersion\":\"1.0.0\",\"templateContentFingerprint\":\"sha256:ad4a8c436a5a6e7a9c81342d79b359d84b1b8ea1034f9589141429eea8d0e42a\",\"notation\":\"5×1000m @5000m RP · r150″ JOG\",\"sourceDecisionId\":\"TO-V2-SEED-05-OWNER-ADOPTION-2026-08-17\",\"sourceEvidenceRef\":\"reports/review/V2_SEED_05_OWNER_ADOPTION_DECISION_2026-08-17.md\",\"approvalDecisionId\":\"TO-V2-SEED-05-OWNER-ADOPTION-2026-08-17\",\"ownerAuthorityDecisionId\":\"TO-V2-SEED-05-OWNER-ADOPTION-2026-08-17\",\"sportsScienceEvidence\":{\"evidenceId\":\"V2-SEED-05-SPORTS-SCIENCE-EVIDENCE-2026-08-17\",\"decisionRef\":\"TO-V2-SEED-05-OWNER-ADOPTION-2026-08-17\",\"fingerprint\":\"sha256:43f39eea01053d1cf11afbdac90adc0c6331cd4b36355c16b660b6970d62cbed\"},\"populationApplicabilityEvidence\":{\"evidenceId\":\"V2-SEED-05-POPULATION-EVIDENCE-2026-08-17\",\"decisionRef\":\"TO-V2-SEED-05-OWNER-ADOPTION-2026-08-17\",\"fingerprint\":\"sha256:dddff17cc298cd32ce7cbd6c2ccff6e38034b7e0ff5dd114e40b3893d55b4517\"},\"scope\":{\"eventGroup\":\"FIVE_K\",\"experienceBand\":\"EXPERIENCED\",\"population\":\"YOUTH_AND_ADULT\",\"eventEvidenceFingerprint\":\"sha256:43f39eea01053d1cf11afbdac90adc0c6331cd4b36355c16b660b6970d62cbed\",\"experienceEvidenceFingerprint\":\"sha256:dddff17cc298cd32ce7cbd6c2ccff6e38034b7e0ff5dd114e40b3893d55b4517\"},\"componentRefs\":[{\"componentType\":\"WARMUP\",\"componentRef\":\"WU-V2-5K-01\",\"componentVersion\":\"1.0.0\",\"componentFingerprint\":\"sha256:d8da21478d2a44841122874ccf35c24aad1777ebaaeb018deda3e98a8f9cf6f1\"},{\"componentType\":\"COOLDOWN\",\"componentRef\":\"CD-V2-5K-01\",\"componentVersion\":\"1.0.0\",\"componentFingerprint\":\"sha256:8d1470171a5edb17a43aa1c21ca34bbfb77456347a68293d2ffe0a5bc52968ab\"},{\"componentType\":\"DOWNSHIFT\",\"componentRef\":\"RPE-ONLY-CONTROLLED-01\",\"componentVersion\":\"1.0.0\",\"componentFingerprint\":\"sha256:cd09b06359fcdfb422b421c31dd45a97beeccbdbecaabd1eb7274cdd67ecf3c5\"},{\"componentType\":\"STOP_CONDITIONS\",\"componentRef\":\"STOP-V2-5K-01\",\"componentVersion\":\"1.0.0\",\"componentFingerprint\":\"sha256:737ce6df7f7049530b72f3f52f20a2cbbd32bb83ccf6bfd93c29e25864b4bc29\"}],\"operationalComponents\":{\"warmup\":{\"componentRef\":\"WU-V2-5K-01\",\"componentVersion\":\"1.0.0\",\"authority\":\"OWNER_OPERATIONAL_ADAPTATION\",\"easyDurationMinutes\":15,\"rpeMin\":2,\"rpeMax\":3,\"strides\":{\"repetitions\":4,\"durationSeconds\":20,\"recoverySeconds\":40,\"recoveryMode\":\"WALK_OR_JOG\",\"progression\":\"PROGRESSIVE\"}},\"cooldown\":{\"componentRef\":\"CD-V2-5K-01\",\"componentVersion\":\"1.0.0\",\"authority\":\"OWNER_OPERATIONAL_ADAPTATION\",\"easyDurationMinutes\":10,\"rpeMin\":1,\"rpeMax\":2},\"fallback\":{\"componentRef\":\"RPE-ONLY-CONTROLLED-01\",\"componentVersion\":\"1.0.0\",\"code\":\"RPE_ONLY_CONTROLLED\",\"behavior\":\"DELEGATE_TO_EXISTING_RPE_CANDIDATE\",\"numericRepetitionVariant\":null},\"stopConditions\":{\"componentRef\":\"STOP-V2-5K-01\",\"componentVersion\":\"1.0.0\",\"authority\":\"OWNER_PRECAUTIONARY_OPERATIONAL_RULE\",\"diagnosticClaim\":false,\"codes\":[\"STOP_NEW_OR_WORSENING_PAIN\",\"STOP_DIZZINESS_OR_FAINTNESS\",\"STOP_CHEST_PAIN_OR_UNUSUAL_BREATHING\",\"STOP_LOSS_OF_CONTROLLED_FORM\"]}},\"setCount\":1,\"repetitionsPerSet\":5,\"repetitionDistanceM\":1000,\"targetEventDistanceM\":5000,\"targetRepSeconds\":222,\"selectedAnchor\":{\"anchorId\":\"00000000-0000-4000-8000-000000005000\",\"eventDistanceM\":5000,\"performanceSeconds\":1110,\"achievedAt\":\"2026-08-01\",\"enteredBy\":\"ATHLETE\",\"verificationState\":\"SELF_REPORTED\",\"freshnessState\":\"CURRENT\",\"sourceRef\":\"athlete-record:00000000-0000-4000-8000-000000005000\",\"elapsedLabel\":\"이번 달\",\"kind\":\"PB\",\"purpose\":\"CURRENT_CAPABILITY\",\"seasonId\":null},\"displayRoundingPolicyVersion\":\"seconds-v1\",\"repetitionRecoverySeconds\":150,\"repetitionRecoveryMode\":\"JOG\",\"setRecoverySeconds\":null,\"setRecoveryMode\":\"NOT_APPLICABLE\",\"totals\":{\"totalRepetitions\":5,\"qualityDistanceM\":5000,\"qualityDurationSeconds\":null,\"repetitionRecoveryOccurrences\":4,\"repetitionRecoveryTotalSeconds\":600,\"setRecoveryOccurrences\":0,\"setRecoveryTotalSeconds\":0,\"plannedRecoverySeconds\":600,\"mainSessionTotalExcludingWarmupCooldown\":null,\"uncomputableReasonCodes\":[\"WORK_DURATION_UNAVAILABLE\"]},\"stopCodes\":[\"STOP_NEW_OR_WORSENING_PAIN\",\"STOP_DIZZINESS_OR_FAINTNESS\",\"STOP_CHEST_PAIN_OR_UNUSUAL_BREATHING\",\"STOP_LOSS_OF_CONTROLLED_FORM\"],\"fallbackCode\":\"RPE_ONLY_CONTROLLED\"}"
+          }
+        },
+        {
+          "day": 6,
+          "slot": "AM",
+          "role": "REST",
+          "plannedEnergyIntent": "RECOVERY_INTENT",
+          "prescription": {
+            "kind": "REST"
+          }
+        },
+        {
+          "day": 7,
+          "slot": "AM",
+          "role": "REST",
+          "plannedEnergyIntent": "RECOVERY_INTENT",
+          "prescription": {
+            "kind": "REST"
+          }
+        },
+        {
+          "day": 8,
+          "slot": "AM",
+          "role": "REST",
+          "plannedEnergyIntent": "RECOVERY_INTENT",
+          "prescription": {
+            "kind": "REST"
+          }
+        },
+        {
+          "day": 9,
+          "slot": "AM",
+          "role": "EASY",
+          "plannedEnergyIntent": "BASE_INTENT",
+          "prescription": {
+            "kind": "RPE_TIME_RANGE",
+            "rpe": {
+              "minimum": 3,
+              "maximum": 4
+            },
+            "durationMinutes": {
+              "minimum": 35,
+              "maximum": 35
+            }
+          }
+        },
+        {
+          "day": 10,
+          "slot": "AM",
+          "role": "REST",
+          "plannedEnergyIntent": "RECOVERY_INTENT",
+          "prescription": {
+            "kind": "REST"
+          }
+        }
+      ],
+      "pairId": "plan-pair:v3:5000:v2-seed-05.1.0.0.ad4a8c436a5a6e7a9c81342d79b359d84b1b8ea1034f9589141429eea8d0e42a:vo2_intent:app-main-day-1-app-main-day-9:1-5-9:no-continuity:pair-sha256-a96b266dcddcf4c348a2c58601594f47f2418aa01b36003dac5cff075248d7d3",
+      "selectedDetailedTemplateRef": {
+        "templateId": "V2-SEED-05",
+        "version": "1.0.0",
+        "fingerprint": "sha256:ad4a8c436a5a6e7a9c81342d79b359d84b1b8ea1034f9589141429eea8d0e42a"
+      }
+    }
+  },
+  "adaptationContext": {
+    "version": 1,
+    "activeCandidateId": "beta:conservative:five_k:event-5000:experienced:vo2_intent:single_session_only:morning:projection-9:local-civil-9-5:app-main-day-1-app-main-day-9:1-5-9:no_usable_journal:no-continuity:template-v2-seed-05.1.0.0.ad4a8c436a5a6e7a9c81342d79b359d84b1b8ea1034f9589141429eea8d0e42a:candidate-sha256-f686a70fd3891bb03a14190bcf34081962b5988f8fb74e3c252a290bcf8cac1f:pace-target:canonical-json-v1:{\"kind\":\"PACE_TARGET\",\"manifestVersion\":\"1\",\"templateId\":\"V2-SEED-05\",\"templateVersion\":\"1.0.0\",\"templateContentFingerprint\":\"sha256:ad4a8c436a5a6e7a9c81342d79b359d84b1b8ea1034f9589141429eea8d0e42a\",\"notation\":\"5×1000m @5000m RP · r150″ JOG\",\"sourceDecisionId\":\"TO-V2-SEED-05-OWNER-ADOPTION-2026-08-17\",\"sourceEvidenceRef\":\"reports/review/V2_SEED_05_OWNER_ADOPTION_DECISION_2026-08-17.md\",\"approvalDecisionId\":\"TO-V2-SEED-05-OWNER-ADOPTION-2026-08-17\",\"ownerAuthorityDecisionId\":\"TO-V2-SEED-05-OWNER-ADOPTION-2026-08-17\",\"sportsScienceEvidence\":{\"evidenceId\":\"V2-SEED-05-SPORTS-SCIENCE-EVIDENCE-2026-08-17\",\"decisionRef\":\"TO-V2-SEED-05-OWNER-ADOPTION-2026-08-17\",\"fingerprint\":\"sha256:43f39eea01053d1cf11afbdac90adc0c6331cd4b36355c16b660b6970d62cbed\"},\"populationApplicabilityEvidence\":{\"evidenceId\":\"V2-SEED-05-POPULATION-EVIDENCE-2026-08-17\",\"decisionRef\":\"TO-V2-SEED-05-OWNER-ADOPTION-2026-08-17\",\"fingerprint\":\"sha256:dddff17cc298cd32ce7cbd6c2ccff6e38034b7e0ff5dd114e40b3893d55b4517\"},\"scope\":{\"eventGroup\":\"FIVE_K\",\"experienceBand\":\"EXPERIENCED\",\"population\":\"YOUTH_AND_ADULT\",\"eventEvidenceFingerprint\":\"sha256:43f39eea01053d1cf11afbdac90adc0c6331cd4b36355c16b660b6970d62cbed\",\"experienceEvidenceFingerprint\":\"sha256:dddff17cc298cd32ce7cbd6c2ccff6e38034b7e0ff5dd114e40b3893d55b4517\"},\"componentRefs\":[{\"componentType\":\"WARMUP\",\"componentRef\":\"WU-V2-5K-01\",\"componentVersion\":\"1.0.0\",\"componentFingerprint\":\"sha256:d8da21478d2a44841122874ccf35c24aad1777ebaaeb018deda3e98a8f9cf6f1\"},{\"componentType\":\"COOLDOWN\",\"componentRef\":\"CD-V2-5K-01\",\"componentVersion\":\"1.0.0\",\"componentFingerprint\":\"sha256:8d1470171a5edb17a43aa1c21ca34bbfb77456347a68293d2ffe0a5bc52968ab\"},{\"componentType\":\"DOWNSHIFT\",\"componentRef\":\"RPE-ONLY-CONTROLLED-01\",\"componentVersion\":\"1.0.0\",\"componentFingerprint\":\"sha256:cd09b06359fcdfb422b421c31dd45a97beeccbdbecaabd1eb7274cdd67ecf3c5\"},{\"componentType\":\"STOP_CONDITIONS\",\"componentRef\":\"STOP-V2-5K-01\",\"componentVersion\":\"1.0.0\",\"componentFingerprint\":\"sha256:737ce6df7f7049530b72f3f52f20a2cbbd32bb83ccf6bfd93c29e25864b4bc29\"}],\"operationalComponents\":{\"warmup\":{\"componentRef\":\"WU-V2-5K-01\",\"componentVersion\":\"1.0.0\",\"authority\":\"OWNER_OPERATIONAL_ADAPTATION\",\"easyDurationMinutes\":15,\"rpeMin\":2,\"rpeMax\":3,\"strides\":{\"repetitions\":4,\"durationSeconds\":20,\"recoverySeconds\":40,\"recoveryMode\":\"WALK_OR_JOG\",\"progression\":\"PROGRESSIVE\"}},\"cooldown\":{\"componentRef\":\"CD-V2-5K-01\",\"componentVersion\":\"1.0.0\",\"authority\":\"OWNER_OPERATIONAL_ADAPTATION\",\"easyDurationMinutes\":10,\"rpeMin\":1,\"rpeMax\":2},\"fallback\":{\"componentRef\":\"RPE-ONLY-CONTROLLED-01\",\"componentVersion\":\"1.0.0\",\"code\":\"RPE_ONLY_CONTROLLED\",\"behavior\":\"DELEGATE_TO_EXISTING_RPE_CANDIDATE\",\"numericRepetitionVariant\":null},\"stopConditions\":{\"componentRef\":\"STOP-V2-5K-01\",\"componentVersion\":\"1.0.0\",\"authority\":\"OWNER_PRECAUTIONARY_OPERATIONAL_RULE\",\"diagnosticClaim\":false,\"codes\":[\"STOP_NEW_OR_WORSENING_PAIN\",\"STOP_DIZZINESS_OR_FAINTNESS\",\"STOP_CHEST_PAIN_OR_UNUSUAL_BREATHING\",\"STOP_LOSS_OF_CONTROLLED_FORM\"]}},\"setCount\":1,\"repetitionsPerSet\":5,\"repetitionDistanceM\":1000,\"targetEventDistanceM\":5000,\"targetRepSeconds\":222,\"selectedAnchor\":{\"anchorId\":\"00000000-0000-4000-8000-000000005000\",\"eventDistanceM\":5000,\"performanceSeconds\":1110,\"achievedAt\":\"2026-08-01\",\"enteredBy\":\"ATHLETE\",\"verificationState\":\"SELF_REPORTED\",\"freshnessState\":\"CURRENT\",\"sourceRef\":\"athlete-record:00000000-0000-4000-8000-000000005000\",\"elapsedLabel\":\"이번 달\",\"kind\":\"PB\",\"purpose\":\"CURRENT_CAPABILITY\",\"seasonId\":null},\"displayRoundingPolicyVersion\":\"seconds-v1\",\"repetitionRecoverySeconds\":150,\"repetitionRecoveryMode\":\"JOG\",\"setRecoverySeconds\":null,\"setRecoveryMode\":\"NOT_APPLICABLE\",\"totals\":{\"totalRepetitions\":5,\"qualityDistanceM\":5000,\"qualityDurationSeconds\":null,\"repetitionRecoveryOccurrences\":4,\"repetitionRecoveryTotalSeconds\":600,\"setRecoveryOccurrences\":0,\"setRecoveryTotalSeconds\":0,\"plannedRecoverySeconds\":600,\"mainSessionTotalExcludingWarmupCooldown\":null,\"uncomputableReasonCodes\":[\"WORK_DURATION_UNAVAILABLE\"]},\"stopCodes\":[\"STOP_NEW_OR_WORSENING_PAIN\",\"STOP_DIZZINESS_OR_FAINTNESS\",\"STOP_CHEST_PAIN_OR_UNUSUAL_BREATHING\",\"STOP_LOSS_OF_CONTROLLED_FORM\"],\"fallbackCode\":\"RPE_ONLY_CONTROLLED\"}",
+    "candidates": [
+      {
+        "candidateId": "beta:balanced:five_k:event-5000:experienced:vo2_intent:single_session_only:morning:projection-9:local-civil-9-5:app-main-day-1-app-main-day-9:1-5-9:no_usable_journal:no-continuity:template-v2-seed-05.1.0.0.ad4a8c436a5a6e7a9c81342d79b359d84b1b8ea1034f9589141429eea8d0e42a:candidate-sha256-23927685bdbf703705d1d6c92caf10bdfc56a7c5f3ca4e8c3acc54ebc8719ccd:pace-target:canonical-json-v1:{\"kind\":\"PACE_TARGET\",\"manifestVersion\":\"1\",\"templateId\":\"V2-SEED-05\",\"templateVersion\":\"1.0.0\",\"templateContentFingerprint\":\"sha256:ad4a8c436a5a6e7a9c81342d79b359d84b1b8ea1034f9589141429eea8d0e42a\",\"notation\":\"5×1000m @5000m RP · r150″ JOG\",\"sourceDecisionId\":\"TO-V2-SEED-05-OWNER-ADOPTION-2026-08-17\",\"sourceEvidenceRef\":\"reports/review/V2_SEED_05_OWNER_ADOPTION_DECISION_2026-08-17.md\",\"approvalDecisionId\":\"TO-V2-SEED-05-OWNER-ADOPTION-2026-08-17\",\"ownerAuthorityDecisionId\":\"TO-V2-SEED-05-OWNER-ADOPTION-2026-08-17\",\"sportsScienceEvidence\":{\"evidenceId\":\"V2-SEED-05-SPORTS-SCIENCE-EVIDENCE-2026-08-17\",\"decisionRef\":\"TO-V2-SEED-05-OWNER-ADOPTION-2026-08-17\",\"fingerprint\":\"sha256:43f39eea01053d1cf11afbdac90adc0c6331cd4b36355c16b660b6970d62cbed\"},\"populationApplicabilityEvidence\":{\"evidenceId\":\"V2-SEED-05-POPULATION-EVIDENCE-2026-08-17\",\"decisionRef\":\"TO-V2-SEED-05-OWNER-ADOPTION-2026-08-17\",\"fingerprint\":\"sha256:dddff17cc298cd32ce7cbd6c2ccff6e38034b7e0ff5dd114e40b3893d55b4517\"},\"scope\":{\"eventGroup\":\"FIVE_K\",\"experienceBand\":\"EXPERIENCED\",\"population\":\"YOUTH_AND_ADULT\",\"eventEvidenceFingerprint\":\"sha256:43f39eea01053d1cf11afbdac90adc0c6331cd4b36355c16b660b6970d62cbed\",\"experienceEvidenceFingerprint\":\"sha256:dddff17cc298cd32ce7cbd6c2ccff6e38034b7e0ff5dd114e40b3893d55b4517\"},\"componentRefs\":[{\"componentType\":\"WARMUP\",\"componentRef\":\"WU-V2-5K-01\",\"componentVersion\":\"1.0.0\",\"componentFingerprint\":\"sha256:d8da21478d2a44841122874ccf35c24aad1777ebaaeb018deda3e98a8f9cf6f1\"},{\"componentType\":\"COOLDOWN\",\"componentRef\":\"CD-V2-5K-01\",\"componentVersion\":\"1.0.0\",\"componentFingerprint\":\"sha256:8d1470171a5edb17a43aa1c21ca34bbfb77456347a68293d2ffe0a5bc52968ab\"},{\"componentType\":\"DOWNSHIFT\",\"componentRef\":\"RPE-ONLY-CONTROLLED-01\",\"componentVersion\":\"1.0.0\",\"componentFingerprint\":\"sha256:cd09b06359fcdfb422b421c31dd45a97beeccbdbecaabd1eb7274cdd67ecf3c5\"},{\"componentType\":\"STOP_CONDITIONS\",\"componentRef\":\"STOP-V2-5K-01\",\"componentVersion\":\"1.0.0\",\"componentFingerprint\":\"sha256:737ce6df7f7049530b72f3f52f20a2cbbd32bb83ccf6bfd93c29e25864b4bc29\"}],\"operationalComponents\":{\"warmup\":{\"componentRef\":\"WU-V2-5K-01\",\"componentVersion\":\"1.0.0\",\"authority\":\"OWNER_OPERATIONAL_ADAPTATION\",\"easyDurationMinutes\":15,\"rpeMin\":2,\"rpeMax\":3,\"strides\":{\"repetitions\":4,\"durationSeconds\":20,\"recoverySeconds\":40,\"recoveryMode\":\"WALK_OR_JOG\",\"progression\":\"PROGRESSIVE\"}},\"cooldown\":{\"componentRef\":\"CD-V2-5K-01\",\"componentVersion\":\"1.0.0\",\"authority\":\"OWNER_OPERATIONAL_ADAPTATION\",\"easyDurationMinutes\":10,\"rpeMin\":1,\"rpeMax\":2},\"fallback\":{\"componentRef\":\"RPE-ONLY-CONTROLLED-01\",\"componentVersion\":\"1.0.0\",\"code\":\"RPE_ONLY_CONTROLLED\",\"behavior\":\"DELEGATE_TO_EXISTING_RPE_CANDIDATE\",\"numericRepetitionVariant\":null},\"stopConditions\":{\"componentRef\":\"STOP-V2-5K-01\",\"componentVersion\":\"1.0.0\",\"authority\":\"OWNER_PRECAUTIONARY_OPERATIONAL_RULE\",\"diagnosticClaim\":false,\"codes\":[\"STOP_NEW_OR_WORSENING_PAIN\",\"STOP_DIZZINESS_OR_FAINTNESS\",\"STOP_CHEST_PAIN_OR_UNUSUAL_BREATHING\",\"STOP_LOSS_OF_CONTROLLED_FORM\"]}},\"setCount\":1,\"repetitionsPerSet\":5,\"repetitionDistanceM\":1000,\"targetEventDistanceM\":5000,\"targetRepSeconds\":222,\"selectedAnchor\":{\"anchorId\":\"00000000-0000-4000-8000-000000005000\",\"eventDistanceM\":5000,\"performanceSeconds\":1110,\"achievedAt\":\"2026-08-01\",\"enteredBy\":\"ATHLETE\",\"verificationState\":\"SELF_REPORTED\",\"freshnessState\":\"CURRENT\",\"sourceRef\":\"athlete-record:00000000-0000-4000-8000-000000005000\",\"elapsedLabel\":\"이번 달\",\"kind\":\"PB\",\"purpose\":\"CURRENT_CAPABILITY\",\"seasonId\":null},\"displayRoundingPolicyVersion\":\"seconds-v1\",\"repetitionRecoverySeconds\":150,\"repetitionRecoveryMode\":\"JOG\",\"setRecoverySeconds\":null,\"setRecoveryMode\":\"NOT_APPLICABLE\",\"totals\":{\"totalRepetitions\":5,\"qualityDistanceM\":5000,\"qualityDurationSeconds\":null,\"repetitionRecoveryOccurrences\":4,\"repetitionRecoveryTotalSeconds\":600,\"setRecoveryOccurrences\":0,\"setRecoveryTotalSeconds\":0,\"plannedRecoverySeconds\":600,\"mainSessionTotalExcludingWarmupCooldown\":null,\"uncomputableReasonCodes\":[\"WORK_DURATION_UNAVAILABLE\"]},\"stopCodes\":[\"STOP_NEW_OR_WORSENING_PAIN\",\"STOP_DIZZINESS_OR_FAINTNESS\",\"STOP_CHEST_PAIN_OR_UNUSUAL_BREATHING\",\"STOP_LOSS_OF_CONTROLLED_FORM\"],\"fallbackCode\":\"RPE_ONLY_CONTROLLED\"}",
+        "pairId": "plan-pair:v3:5000:v2-seed-05.1.0.0.ad4a8c436a5a6e7a9c81342d79b359d84b1b8ea1034f9589141429eea8d0e42a:vo2_intent:app-main-day-1-app-main-day-9:1-5-9:no-continuity:pair-sha256-a96b266dcddcf4c348a2c58601594f47f2418aa01b36003dac5cff075248d7d3",
+        "kind": "BALANCED",
+        "eventGroup": "FIVE_K",
+        "eventDistanceM": 5000,
+        "selectedDetailedTemplateRef": {
+          "templateId": "V2-SEED-05",
+          "version": "1.0.0",
+          "fingerprint": "sha256:ad4a8c436a5a6e7a9c81342d79b359d84b1b8ea1034f9589141429eea8d0e42a"
+        },
+        "selectedEnergyIntent": "VO2_INTENT",
+        "sourceMode": "PROFILE_ONLY",
+        "confidence": "LIMITED",
+        "beta": {
+          "designation": "BETA",
+          "prescriptionBasis": "ONE_TRUSTED_DETAILED_SESSION",
+          "formationMethodClaim": "NOT_UNIVERSAL"
+        },
+        "detailedPrescriptionFingerprint": "canonical-json-v1:{\"kind\":\"PACE_TARGET\",\"manifestVersion\":\"1\",\"templateId\":\"V2-SEED-05\",\"templateVersion\":\"1.0.0\",\"templateContentFingerprint\":\"sha256:ad4a8c436a5a6e7a9c81342d79b359d84b1b8ea1034f9589141429eea8d0e42a\",\"notation\":\"5×1000m @5000m RP · r150″ JOG\",\"sourceDecisionId\":\"TO-V2-SEED-05-OWNER-ADOPTION-2026-08-17\",\"sourceEvidenceRef\":\"reports/review/V2_SEED_05_OWNER_ADOPTION_DECISION_2026-08-17.md\",\"approvalDecisionId\":\"TO-V2-SEED-05-OWNER-ADOPTION-2026-08-17\",\"ownerAuthorityDecisionId\":\"TO-V2-SEED-05-OWNER-ADOPTION-2026-08-17\",\"sportsScienceEvidence\":{\"evidenceId\":\"V2-SEED-05-SPORTS-SCIENCE-EVIDENCE-2026-08-17\",\"decisionRef\":\"TO-V2-SEED-05-OWNER-ADOPTION-2026-08-17\",\"fingerprint\":\"sha256:43f39eea01053d1cf11afbdac90adc0c6331cd4b36355c16b660b6970d62cbed\"},\"populationApplicabilityEvidence\":{\"evidenceId\":\"V2-SEED-05-POPULATION-EVIDENCE-2026-08-17\",\"decisionRef\":\"TO-V2-SEED-05-OWNER-ADOPTION-2026-08-17\",\"fingerprint\":\"sha256:dddff17cc298cd32ce7cbd6c2ccff6e38034b7e0ff5dd114e40b3893d55b4517\"},\"scope\":{\"eventGroup\":\"FIVE_K\",\"experienceBand\":\"EXPERIENCED\",\"population\":\"YOUTH_AND_ADULT\",\"eventEvidenceFingerprint\":\"sha256:43f39eea01053d1cf11afbdac90adc0c6331cd4b36355c16b660b6970d62cbed\",\"experienceEvidenceFingerprint\":\"sha256:dddff17cc298cd32ce7cbd6c2ccff6e38034b7e0ff5dd114e40b3893d55b4517\"},\"componentRefs\":[{\"componentType\":\"WARMUP\",\"componentRef\":\"WU-V2-5K-01\",\"componentVersion\":\"1.0.0\",\"componentFingerprint\":\"sha256:d8da21478d2a44841122874ccf35c24aad1777ebaaeb018deda3e98a8f9cf6f1\"},{\"componentType\":\"COOLDOWN\",\"componentRef\":\"CD-V2-5K-01\",\"componentVersion\":\"1.0.0\",\"componentFingerprint\":\"sha256:8d1470171a5edb17a43aa1c21ca34bbfb77456347a68293d2ffe0a5bc52968ab\"},{\"componentType\":\"DOWNSHIFT\",\"componentRef\":\"RPE-ONLY-CONTROLLED-01\",\"componentVersion\":\"1.0.0\",\"componentFingerprint\":\"sha256:cd09b06359fcdfb422b421c31dd45a97beeccbdbecaabd1eb7274cdd67ecf3c5\"},{\"componentType\":\"STOP_CONDITIONS\",\"componentRef\":\"STOP-V2-5K-01\",\"componentVersion\":\"1.0.0\",\"componentFingerprint\":\"sha256:737ce6df7f7049530b72f3f52f20a2cbbd32bb83ccf6bfd93c29e25864b4bc29\"}],\"operationalComponents\":{\"warmup\":{\"componentRef\":\"WU-V2-5K-01\",\"componentVersion\":\"1.0.0\",\"authority\":\"OWNER_OPERATIONAL_ADAPTATION\",\"easyDurationMinutes\":15,\"rpeMin\":2,\"rpeMax\":3,\"strides\":{\"repetitions\":4,\"durationSeconds\":20,\"recoverySeconds\":40,\"recoveryMode\":\"WALK_OR_JOG\",\"progression\":\"PROGRESSIVE\"}},\"cooldown\":{\"componentRef\":\"CD-V2-5K-01\",\"componentVersion\":\"1.0.0\",\"authority\":\"OWNER_OPERATIONAL_ADAPTATION\",\"easyDurationMinutes\":10,\"rpeMin\":1,\"rpeMax\":2},\"fallback\":{\"componentRef\":\"RPE-ONLY-CONTROLLED-01\",\"componentVersion\":\"1.0.0\",\"code\":\"RPE_ONLY_CONTROLLED\",\"behavior\":\"DELEGATE_TO_EXISTING_RPE_CANDIDATE\",\"numericRepetitionVariant\":null},\"stopConditions\":{\"componentRef\":\"STOP-V2-5K-01\",\"componentVersion\":\"1.0.0\",\"authority\":\"OWNER_PRECAUTIONARY_OPERATIONAL_RULE\",\"diagnosticClaim\":false,\"codes\":[\"STOP_NEW_OR_WORSENING_PAIN\",\"STOP_DIZZINESS_OR_FAINTNESS\",\"STOP_CHEST_PAIN_OR_UNUSUAL_BREATHING\",\"STOP_LOSS_OF_CONTROLLED_FORM\"]}},\"setCount\":1,\"repetitionsPerSet\":5,\"repetitionDistanceM\":1000,\"targetEventDistanceM\":5000,\"targetRepSeconds\":222,\"selectedAnchor\":{\"anchorId\":\"00000000-0000-4000-8000-000000005000\",\"eventDistanceM\":5000,\"performanceSeconds\":1110,\"achievedAt\":\"2026-08-01\",\"enteredBy\":\"ATHLETE\",\"verificationState\":\"SELF_REPORTED\",\"freshnessState\":\"CURRENT\",\"sourceRef\":\"athlete-record:00000000-0000-4000-8000-000000005000\",\"elapsedLabel\":\"이번 달\",\"kind\":\"PB\",\"purpose\":\"CURRENT_CAPABILITY\",\"seasonId\":null},\"displayRoundingPolicyVersion\":\"seconds-v1\",\"repetitionRecoverySeconds\":150,\"repetitionRecoveryMode\":\"JOG\",\"setRecoverySeconds\":null,\"setRecoveryMode\":\"NOT_APPLICABLE\",\"totals\":{\"totalRepetitions\":5,\"qualityDistanceM\":5000,\"qualityDurationSeconds\":null,\"repetitionRecoveryOccurrences\":4,\"repetitionRecoveryTotalSeconds\":600,\"setRecoveryOccurrences\":0,\"setRecoveryTotalSeconds\":0,\"plannedRecoverySeconds\":600,\"mainSessionTotalExcludingWarmupCooldown\":null,\"uncomputableReasonCodes\":[\"WORK_DURATION_UNAVAILABLE\"]},\"stopCodes\":[\"STOP_NEW_OR_WORSENING_PAIN\",\"STOP_DIZZINESS_OR_FAINTNESS\",\"STOP_CHEST_PAIN_OR_UNUSUAL_BREATHING\",\"STOP_LOSS_OF_CONTROLLED_FORM\"],\"fallbackCode\":\"RPE_ONLY_CONTROLLED\"}",
+        "continuityContext": {
+          "kind": "NO_PREVIOUS_FRAME_CONTEXT"
+        },
+        "selectionAuthority": "SELF",
+        "frame": {
+          "formationKind": "LOCAL_CIVIL_9_5",
+          "lengthDays": 9.5,
+          "slotCount": 19,
+          "projectionLengthDays": 9,
+          "continuity": {
+            "kind": "STANDARD_FRAME"
+          }
+        },
+        "mainExposureLedger": {
+          "mainExposureCount": 2,
+          "fingerprint": "app-main-day-1:app-main-day-9",
+          "countedExposureIds": [
+            "app-main-day-1",
+            "app-main-day-9"
+          ]
+        },
+        "rationaleCodes": [
+          "PROFILE_ONLY_LIMITED_CONTEXT",
+          "BETA_NON_UNIVERSAL_FORMATION_SCOPE",
+          "PACE_TARGET_BOUND"
+        ],
+        "sessions": [
+          {
+            "day": 1,
+            "slot": "AM",
+            "role": "EASY",
+            "plannedEnergyIntent": "BASE_INTENT",
+            "prescription": {
+              "kind": "RPE_TIME_RANGE",
+              "rpe": {
+                "minimum": 3,
+                "maximum": 4
+              },
+              "durationMinutes": {
+                "minimum": 35,
+                "maximum": 60
+              }
+            }
+          },
+          {
+            "day": 2,
+            "slot": "AM",
+            "role": "REST",
+            "plannedEnergyIntent": "RECOVERY_INTENT",
+            "prescription": {
+              "kind": "REST"
+            }
+          },
+          {
+            "day": 3,
+            "slot": "AM",
+            "role": "REST",
+            "plannedEnergyIntent": "RECOVERY_INTENT",
+            "prescription": {
+              "kind": "REST"
+            }
+          },
+          {
+            "day": 4,
+            "slot": "AM",
+            "role": "REST",
+            "plannedEnergyIntent": "RECOVERY_INTENT",
+            "prescription": {
+              "kind": "REST"
+            }
+          },
+          {
+            "day": 5,
+            "slot": "AM",
+            "role": "QUALITY",
+            "plannedEnergyIntent": "VO2_INTENT",
+            "prescription": {
+              "kind": "PACE_TARGET",
+              "manifestVersion": "1",
+              "templateId": "V2-SEED-05",
+              "templateVersion": "1.0.0",
+              "templateContentFingerprint": "sha256:ad4a8c436a5a6e7a9c81342d79b359d84b1b8ea1034f9589141429eea8d0e42a",
+              "notation": "5×1000m @5000m RP · r150″ JOG",
+              "sourceDecisionId": "TO-V2-SEED-05-OWNER-ADOPTION-2026-08-17",
+              "sourceEvidenceRef": "reports/review/V2_SEED_05_OWNER_ADOPTION_DECISION_2026-08-17.md",
+              "approvalDecisionId": "TO-V2-SEED-05-OWNER-ADOPTION-2026-08-17",
+              "ownerAuthorityDecisionId": "TO-V2-SEED-05-OWNER-ADOPTION-2026-08-17",
+              "sportsScienceEvidence": {
+                "evidenceId": "V2-SEED-05-SPORTS-SCIENCE-EVIDENCE-2026-08-17",
+                "decisionRef": "TO-V2-SEED-05-OWNER-ADOPTION-2026-08-17",
+                "fingerprint": "sha256:43f39eea01053d1cf11afbdac90adc0c6331cd4b36355c16b660b6970d62cbed"
+              },
+              "populationApplicabilityEvidence": {
+                "evidenceId": "V2-SEED-05-POPULATION-EVIDENCE-2026-08-17",
+                "decisionRef": "TO-V2-SEED-05-OWNER-ADOPTION-2026-08-17",
+                "fingerprint": "sha256:dddff17cc298cd32ce7cbd6c2ccff6e38034b7e0ff5dd114e40b3893d55b4517"
+              },
+              "scope": {
+                "eventGroup": "FIVE_K",
+                "experienceBand": "EXPERIENCED",
+                "population": "YOUTH_AND_ADULT",
+                "eventEvidenceFingerprint": "sha256:43f39eea01053d1cf11afbdac90adc0c6331cd4b36355c16b660b6970d62cbed",
+                "experienceEvidenceFingerprint": "sha256:dddff17cc298cd32ce7cbd6c2ccff6e38034b7e0ff5dd114e40b3893d55b4517"
+              },
+              "componentRefs": [
+                {
+                  "componentType": "WARMUP",
+                  "componentRef": "WU-V2-5K-01",
+                  "componentVersion": "1.0.0",
+                  "componentFingerprint": "sha256:d8da21478d2a44841122874ccf35c24aad1777ebaaeb018deda3e98a8f9cf6f1"
+                },
+                {
+                  "componentType": "COOLDOWN",
+                  "componentRef": "CD-V2-5K-01",
+                  "componentVersion": "1.0.0",
+                  "componentFingerprint": "sha256:8d1470171a5edb17a43aa1c21ca34bbfb77456347a68293d2ffe0a5bc52968ab"
+                },
+                {
+                  "componentType": "DOWNSHIFT",
+                  "componentRef": "RPE-ONLY-CONTROLLED-01",
+                  "componentVersion": "1.0.0",
+                  "componentFingerprint": "sha256:cd09b06359fcdfb422b421c31dd45a97beeccbdbecaabd1eb7274cdd67ecf3c5"
+                },
+                {
+                  "componentType": "STOP_CONDITIONS",
+                  "componentRef": "STOP-V2-5K-01",
+                  "componentVersion": "1.0.0",
+                  "componentFingerprint": "sha256:737ce6df7f7049530b72f3f52f20a2cbbd32bb83ccf6bfd93c29e25864b4bc29"
+                }
+              ],
+              "operationalComponents": {
+                "warmup": {
+                  "componentRef": "WU-V2-5K-01",
+                  "componentVersion": "1.0.0",
+                  "authority": "OWNER_OPERATIONAL_ADAPTATION",
+                  "easyDurationMinutes": 15,
+                  "rpeMin": 2,
+                  "rpeMax": 3,
+                  "strides": {
+                    "repetitions": 4,
+                    "durationSeconds": 20,
+                    "recoverySeconds": 40,
+                    "recoveryMode": "WALK_OR_JOG",
+                    "progression": "PROGRESSIVE"
+                  }
+                },
+                "cooldown": {
+                  "componentRef": "CD-V2-5K-01",
+                  "componentVersion": "1.0.0",
+                  "authority": "OWNER_OPERATIONAL_ADAPTATION",
+                  "easyDurationMinutes": 10,
+                  "rpeMin": 1,
+                  "rpeMax": 2
+                },
+                "fallback": {
+                  "componentRef": "RPE-ONLY-CONTROLLED-01",
+                  "componentVersion": "1.0.0",
+                  "code": "RPE_ONLY_CONTROLLED",
+                  "behavior": "DELEGATE_TO_EXISTING_RPE_CANDIDATE",
+                  "numericRepetitionVariant": null
+                },
+                "stopConditions": {
+                  "componentRef": "STOP-V2-5K-01",
+                  "componentVersion": "1.0.0",
+                  "authority": "OWNER_PRECAUTIONARY_OPERATIONAL_RULE",
+                  "diagnosticClaim": false,
+                  "codes": [
+                    "STOP_NEW_OR_WORSENING_PAIN",
+                    "STOP_DIZZINESS_OR_FAINTNESS",
+                    "STOP_CHEST_PAIN_OR_UNUSUAL_BREATHING",
+                    "STOP_LOSS_OF_CONTROLLED_FORM"
+                  ]
+                }
+              },
+              "setCount": 1,
+              "repetitionsPerSet": 5,
+              "repetitionDistanceM": 1000,
+              "targetEventDistanceM": 5000,
+              "targetRepSeconds": 222,
+              "selectedAnchor": {
+                "anchorId": "00000000-0000-4000-8000-000000005000",
+                "eventDistanceM": 5000,
+                "performanceSeconds": 1110,
+                "achievedAt": "2026-08-01",
+                "enteredBy": "ATHLETE",
+                "verificationState": "SELF_REPORTED",
+                "freshnessState": "CURRENT",
+                "sourceRef": "athlete-record:00000000-0000-4000-8000-000000005000",
+                "elapsedLabel": "이번 달",
+                "kind": "PB",
+                "purpose": "CURRENT_CAPABILITY",
+                "seasonId": null
+              },
+              "displayRoundingPolicyVersion": "seconds-v1",
+              "repetitionRecoverySeconds": 150,
+              "repetitionRecoveryMode": "JOG",
+              "setRecoverySeconds": null,
+              "setRecoveryMode": "NOT_APPLICABLE",
+              "totals": {
+                "totalRepetitions": 5,
+                "qualityDistanceM": 5000,
+                "qualityDurationSeconds": null,
+                "repetitionRecoveryOccurrences": 4,
+                "repetitionRecoveryTotalSeconds": 600,
+                "setRecoveryOccurrences": 0,
+                "setRecoveryTotalSeconds": 0,
+                "plannedRecoverySeconds": 600,
+                "mainSessionTotalExcludingWarmupCooldown": null,
+                "uncomputableReasonCodes": [
+                  "WORK_DURATION_UNAVAILABLE"
+                ]
+              },
+              "stopCodes": [
+                "STOP_NEW_OR_WORSENING_PAIN",
+                "STOP_DIZZINESS_OR_FAINTNESS",
+                "STOP_CHEST_PAIN_OR_UNUSUAL_BREATHING",
+                "STOP_LOSS_OF_CONTROLLED_FORM"
+              ],
+              "fallbackCode": "RPE_ONLY_CONTROLLED",
+              "prescriptionFingerprint": "canonical-json-v1:{\"kind\":\"PACE_TARGET\",\"manifestVersion\":\"1\",\"templateId\":\"V2-SEED-05\",\"templateVersion\":\"1.0.0\",\"templateContentFingerprint\":\"sha256:ad4a8c436a5a6e7a9c81342d79b359d84b1b8ea1034f9589141429eea8d0e42a\",\"notation\":\"5×1000m @5000m RP · r150″ JOG\",\"sourceDecisionId\":\"TO-V2-SEED-05-OWNER-ADOPTION-2026-08-17\",\"sourceEvidenceRef\":\"reports/review/V2_SEED_05_OWNER_ADOPTION_DECISION_2026-08-17.md\",\"approvalDecisionId\":\"TO-V2-SEED-05-OWNER-ADOPTION-2026-08-17\",\"ownerAuthorityDecisionId\":\"TO-V2-SEED-05-OWNER-ADOPTION-2026-08-17\",\"sportsScienceEvidence\":{\"evidenceId\":\"V2-SEED-05-SPORTS-SCIENCE-EVIDENCE-2026-08-17\",\"decisionRef\":\"TO-V2-SEED-05-OWNER-ADOPTION-2026-08-17\",\"fingerprint\":\"sha256:43f39eea01053d1cf11afbdac90adc0c6331cd4b36355c16b660b6970d62cbed\"},\"populationApplicabilityEvidence\":{\"evidenceId\":\"V2-SEED-05-POPULATION-EVIDENCE-2026-08-17\",\"decisionRef\":\"TO-V2-SEED-05-OWNER-ADOPTION-2026-08-17\",\"fingerprint\":\"sha256:dddff17cc298cd32ce7cbd6c2ccff6e38034b7e0ff5dd114e40b3893d55b4517\"},\"scope\":{\"eventGroup\":\"FIVE_K\",\"experienceBand\":\"EXPERIENCED\",\"population\":\"YOUTH_AND_ADULT\",\"eventEvidenceFingerprint\":\"sha256:43f39eea01053d1cf11afbdac90adc0c6331cd4b36355c16b660b6970d62cbed\",\"experienceEvidenceFingerprint\":\"sha256:dddff17cc298cd32ce7cbd6c2ccff6e38034b7e0ff5dd114e40b3893d55b4517\"},\"componentRefs\":[{\"componentType\":\"WARMUP\",\"componentRef\":\"WU-V2-5K-01\",\"componentVersion\":\"1.0.0\",\"componentFingerprint\":\"sha256:d8da21478d2a44841122874ccf35c24aad1777ebaaeb018deda3e98a8f9cf6f1\"},{\"componentType\":\"COOLDOWN\",\"componentRef\":\"CD-V2-5K-01\",\"componentVersion\":\"1.0.0\",\"componentFingerprint\":\"sha256:8d1470171a5edb17a43aa1c21ca34bbfb77456347a68293d2ffe0a5bc52968ab\"},{\"componentType\":\"DOWNSHIFT\",\"componentRef\":\"RPE-ONLY-CONTROLLED-01\",\"componentVersion\":\"1.0.0\",\"componentFingerprint\":\"sha256:cd09b06359fcdfb422b421c31dd45a97beeccbdbecaabd1eb7274cdd67ecf3c5\"},{\"componentType\":\"STOP_CONDITIONS\",\"componentRef\":\"STOP-V2-5K-01\",\"componentVersion\":\"1.0.0\",\"componentFingerprint\":\"sha256:737ce6df7f7049530b72f3f52f20a2cbbd32bb83ccf6bfd93c29e25864b4bc29\"}],\"operationalComponents\":{\"warmup\":{\"componentRef\":\"WU-V2-5K-01\",\"componentVersion\":\"1.0.0\",\"authority\":\"OWNER_OPERATIONAL_ADAPTATION\",\"easyDurationMinutes\":15,\"rpeMin\":2,\"rpeMax\":3,\"strides\":{\"repetitions\":4,\"durationSeconds\":20,\"recoverySeconds\":40,\"recoveryMode\":\"WALK_OR_JOG\",\"progression\":\"PROGRESSIVE\"}},\"cooldown\":{\"componentRef\":\"CD-V2-5K-01\",\"componentVersion\":\"1.0.0\",\"authority\":\"OWNER_OPERATIONAL_ADAPTATION\",\"easyDurationMinutes\":10,\"rpeMin\":1,\"rpeMax\":2},\"fallback\":{\"componentRef\":\"RPE-ONLY-CONTROLLED-01\",\"componentVersion\":\"1.0.0\",\"code\":\"RPE_ONLY_CONTROLLED\",\"behavior\":\"DELEGATE_TO_EXISTING_RPE_CANDIDATE\",\"numericRepetitionVariant\":null},\"stopConditions\":{\"componentRef\":\"STOP-V2-5K-01\",\"componentVersion\":\"1.0.0\",\"authority\":\"OWNER_PRECAUTIONARY_OPERATIONAL_RULE\",\"diagnosticClaim\":false,\"codes\":[\"STOP_NEW_OR_WORSENING_PAIN\",\"STOP_DIZZINESS_OR_FAINTNESS\",\"STOP_CHEST_PAIN_OR_UNUSUAL_BREATHING\",\"STOP_LOSS_OF_CONTROLLED_FORM\"]}},\"setCount\":1,\"repetitionsPerSet\":5,\"repetitionDistanceM\":1000,\"targetEventDistanceM\":5000,\"targetRepSeconds\":222,\"selectedAnchor\":{\"anchorId\":\"00000000-0000-4000-8000-000000005000\",\"eventDistanceM\":5000,\"performanceSeconds\":1110,\"achievedAt\":\"2026-08-01\",\"enteredBy\":\"ATHLETE\",\"verificationState\":\"SELF_REPORTED\",\"freshnessState\":\"CURRENT\",\"sourceRef\":\"athlete-record:00000000-0000-4000-8000-000000005000\",\"elapsedLabel\":\"이번 달\",\"kind\":\"PB\",\"purpose\":\"CURRENT_CAPABILITY\",\"seasonId\":null},\"displayRoundingPolicyVersion\":\"seconds-v1\",\"repetitionRecoverySeconds\":150,\"repetitionRecoveryMode\":\"JOG\",\"setRecoverySeconds\":null,\"setRecoveryMode\":\"NOT_APPLICABLE\",\"totals\":{\"totalRepetitions\":5,\"qualityDistanceM\":5000,\"qualityDurationSeconds\":null,\"repetitionRecoveryOccurrences\":4,\"repetitionRecoveryTotalSeconds\":600,\"setRecoveryOccurrences\":0,\"setRecoveryTotalSeconds\":0,\"plannedRecoverySeconds\":600,\"mainSessionTotalExcludingWarmupCooldown\":null,\"uncomputableReasonCodes\":[\"WORK_DURATION_UNAVAILABLE\"]},\"stopCodes\":[\"STOP_NEW_OR_WORSENING_PAIN\",\"STOP_DIZZINESS_OR_FAINTNESS\",\"STOP_CHEST_PAIN_OR_UNUSUAL_BREATHING\",\"STOP_LOSS_OF_CONTROLLED_FORM\"],\"fallbackCode\":\"RPE_ONLY_CONTROLLED\"}"
+            }
+          },
+          {
+            "day": 6,
+            "slot": "AM",
+            "role": "REST",
+            "plannedEnergyIntent": "RECOVERY_INTENT",
+            "prescription": {
+              "kind": "REST"
+            }
+          },
+          {
+            "day": 7,
+            "slot": "AM",
+            "role": "REST",
+            "plannedEnergyIntent": "RECOVERY_INTENT",
+            "prescription": {
+              "kind": "REST"
+            }
+          },
+          {
+            "day": 8,
+            "slot": "AM",
+            "role": "REST",
+            "plannedEnergyIntent": "RECOVERY_INTENT",
+            "prescription": {
+              "kind": "REST"
+            }
+          },
+          {
+            "day": 9,
+            "slot": "AM",
+            "role": "EASY",
+            "plannedEnergyIntent": "BASE_INTENT",
+            "prescription": {
+              "kind": "RPE_TIME_RANGE",
+              "rpe": {
+                "minimum": 3,
+                "maximum": 4
+              },
+              "durationMinutes": {
+                "minimum": 35,
+                "maximum": 60
+              }
+            }
+          },
+          {
+            "day": 10,
+            "slot": "AM",
+            "role": "REST",
+            "plannedEnergyIntent": "RECOVERY_INTENT",
+            "prescription": {
+              "kind": "REST"
+            }
+          }
+        ]
+      },
+      {
+        "candidateId": "beta:conservative:five_k:event-5000:experienced:vo2_intent:single_session_only:morning:projection-9:local-civil-9-5:app-main-day-1-app-main-day-9:1-5-9:no_usable_journal:no-continuity:template-v2-seed-05.1.0.0.ad4a8c436a5a6e7a9c81342d79b359d84b1b8ea1034f9589141429eea8d0e42a:candidate-sha256-f686a70fd3891bb03a14190bcf34081962b5988f8fb74e3c252a290bcf8cac1f:pace-target:canonical-json-v1:{\"kind\":\"PACE_TARGET\",\"manifestVersion\":\"1\",\"templateId\":\"V2-SEED-05\",\"templateVersion\":\"1.0.0\",\"templateContentFingerprint\":\"sha256:ad4a8c436a5a6e7a9c81342d79b359d84b1b8ea1034f9589141429eea8d0e42a\",\"notation\":\"5×1000m @5000m RP · r150″ JOG\",\"sourceDecisionId\":\"TO-V2-SEED-05-OWNER-ADOPTION-2026-08-17\",\"sourceEvidenceRef\":\"reports/review/V2_SEED_05_OWNER_ADOPTION_DECISION_2026-08-17.md\",\"approvalDecisionId\":\"TO-V2-SEED-05-OWNER-ADOPTION-2026-08-17\",\"ownerAuthorityDecisionId\":\"TO-V2-SEED-05-OWNER-ADOPTION-2026-08-17\",\"sportsScienceEvidence\":{\"evidenceId\":\"V2-SEED-05-SPORTS-SCIENCE-EVIDENCE-2026-08-17\",\"decisionRef\":\"TO-V2-SEED-05-OWNER-ADOPTION-2026-08-17\",\"fingerprint\":\"sha256:43f39eea01053d1cf11afbdac90adc0c6331cd4b36355c16b660b6970d62cbed\"},\"populationApplicabilityEvidence\":{\"evidenceId\":\"V2-SEED-05-POPULATION-EVIDENCE-2026-08-17\",\"decisionRef\":\"TO-V2-SEED-05-OWNER-ADOPTION-2026-08-17\",\"fingerprint\":\"sha256:dddff17cc298cd32ce7cbd6c2ccff6e38034b7e0ff5dd114e40b3893d55b4517\"},\"scope\":{\"eventGroup\":\"FIVE_K\",\"experienceBand\":\"EXPERIENCED\",\"population\":\"YOUTH_AND_ADULT\",\"eventEvidenceFingerprint\":\"sha256:43f39eea01053d1cf11afbdac90adc0c6331cd4b36355c16b660b6970d62cbed\",\"experienceEvidenceFingerprint\":\"sha256:dddff17cc298cd32ce7cbd6c2ccff6e38034b7e0ff5dd114e40b3893d55b4517\"},\"componentRefs\":[{\"componentType\":\"WARMUP\",\"componentRef\":\"WU-V2-5K-01\",\"componentVersion\":\"1.0.0\",\"componentFingerprint\":\"sha256:d8da21478d2a44841122874ccf35c24aad1777ebaaeb018deda3e98a8f9cf6f1\"},{\"componentType\":\"COOLDOWN\",\"componentRef\":\"CD-V2-5K-01\",\"componentVersion\":\"1.0.0\",\"componentFingerprint\":\"sha256:8d1470171a5edb17a43aa1c21ca34bbfb77456347a68293d2ffe0a5bc52968ab\"},{\"componentType\":\"DOWNSHIFT\",\"componentRef\":\"RPE-ONLY-CONTROLLED-01\",\"componentVersion\":\"1.0.0\",\"componentFingerprint\":\"sha256:cd09b06359fcdfb422b421c31dd45a97beeccbdbecaabd1eb7274cdd67ecf3c5\"},{\"componentType\":\"STOP_CONDITIONS\",\"componentRef\":\"STOP-V2-5K-01\",\"componentVersion\":\"1.0.0\",\"componentFingerprint\":\"sha256:737ce6df7f7049530b72f3f52f20a2cbbd32bb83ccf6bfd93c29e25864b4bc29\"}],\"operationalComponents\":{\"warmup\":{\"componentRef\":\"WU-V2-5K-01\",\"componentVersion\":\"1.0.0\",\"authority\":\"OWNER_OPERATIONAL_ADAPTATION\",\"easyDurationMinutes\":15,\"rpeMin\":2,\"rpeMax\":3,\"strides\":{\"repetitions\":4,\"durationSeconds\":20,\"recoverySeconds\":40,\"recoveryMode\":\"WALK_OR_JOG\",\"progression\":\"PROGRESSIVE\"}},\"cooldown\":{\"componentRef\":\"CD-V2-5K-01\",\"componentVersion\":\"1.0.0\",\"authority\":\"OWNER_OPERATIONAL_ADAPTATION\",\"easyDurationMinutes\":10,\"rpeMin\":1,\"rpeMax\":2},\"fallback\":{\"componentRef\":\"RPE-ONLY-CONTROLLED-01\",\"componentVersion\":\"1.0.0\",\"code\":\"RPE_ONLY_CONTROLLED\",\"behavior\":\"DELEGATE_TO_EXISTING_RPE_CANDIDATE\",\"numericRepetitionVariant\":null},\"stopConditions\":{\"componentRef\":\"STOP-V2-5K-01\",\"componentVersion\":\"1.0.0\",\"authority\":\"OWNER_PRECAUTIONARY_OPERATIONAL_RULE\",\"diagnosticClaim\":false,\"codes\":[\"STOP_NEW_OR_WORSENING_PAIN\",\"STOP_DIZZINESS_OR_FAINTNESS\",\"STOP_CHEST_PAIN_OR_UNUSUAL_BREATHING\",\"STOP_LOSS_OF_CONTROLLED_FORM\"]}},\"setCount\":1,\"repetitionsPerSet\":5,\"repetitionDistanceM\":1000,\"targetEventDistanceM\":5000,\"targetRepSeconds\":222,\"selectedAnchor\":{\"anchorId\":\"00000000-0000-4000-8000-000000005000\",\"eventDistanceM\":5000,\"performanceSeconds\":1110,\"achievedAt\":\"2026-08-01\",\"enteredBy\":\"ATHLETE\",\"verificationState\":\"SELF_REPORTED\",\"freshnessState\":\"CURRENT\",\"sourceRef\":\"athlete-record:00000000-0000-4000-8000-000000005000\",\"elapsedLabel\":\"이번 달\",\"kind\":\"PB\",\"purpose\":\"CURRENT_CAPABILITY\",\"seasonId\":null},\"displayRoundingPolicyVersion\":\"seconds-v1\",\"repetitionRecoverySeconds\":150,\"repetitionRecoveryMode\":\"JOG\",\"setRecoverySeconds\":null,\"setRecoveryMode\":\"NOT_APPLICABLE\",\"totals\":{\"totalRepetitions\":5,\"qualityDistanceM\":5000,\"qualityDurationSeconds\":null,\"repetitionRecoveryOccurrences\":4,\"repetitionRecoveryTotalSeconds\":600,\"setRecoveryOccurrences\":0,\"setRecoveryTotalSeconds\":0,\"plannedRecoverySeconds\":600,\"mainSessionTotalExcludingWarmupCooldown\":null,\"uncomputableReasonCodes\":[\"WORK_DURATION_UNAVAILABLE\"]},\"stopCodes\":[\"STOP_NEW_OR_WORSENING_PAIN\",\"STOP_DIZZINESS_OR_FAINTNESS\",\"STOP_CHEST_PAIN_OR_UNUSUAL_BREATHING\",\"STOP_LOSS_OF_CONTROLLED_FORM\"],\"fallbackCode\":\"RPE_ONLY_CONTROLLED\"}",
+        "pairId": "plan-pair:v3:5000:v2-seed-05.1.0.0.ad4a8c436a5a6e7a9c81342d79b359d84b1b8ea1034f9589141429eea8d0e42a:vo2_intent:app-main-day-1-app-main-day-9:1-5-9:no-continuity:pair-sha256-a96b266dcddcf4c348a2c58601594f47f2418aa01b36003dac5cff075248d7d3",
+        "kind": "CONSERVATIVE",
+        "eventGroup": "FIVE_K",
+        "eventDistanceM": 5000,
+        "selectedDetailedTemplateRef": {
+          "templateId": "V2-SEED-05",
+          "version": "1.0.0",
+          "fingerprint": "sha256:ad4a8c436a5a6e7a9c81342d79b359d84b1b8ea1034f9589141429eea8d0e42a"
+        },
+        "selectedEnergyIntent": "VO2_INTENT",
+        "sourceMode": "PROFILE_ONLY",
+        "confidence": "LIMITED",
+        "beta": {
+          "designation": "BETA",
+          "prescriptionBasis": "ONE_TRUSTED_DETAILED_SESSION",
+          "formationMethodClaim": "NOT_UNIVERSAL"
+        },
+        "detailedPrescriptionFingerprint": "canonical-json-v1:{\"kind\":\"PACE_TARGET\",\"manifestVersion\":\"1\",\"templateId\":\"V2-SEED-05\",\"templateVersion\":\"1.0.0\",\"templateContentFingerprint\":\"sha256:ad4a8c436a5a6e7a9c81342d79b359d84b1b8ea1034f9589141429eea8d0e42a\",\"notation\":\"5×1000m @5000m RP · r150″ JOG\",\"sourceDecisionId\":\"TO-V2-SEED-05-OWNER-ADOPTION-2026-08-17\",\"sourceEvidenceRef\":\"reports/review/V2_SEED_05_OWNER_ADOPTION_DECISION_2026-08-17.md\",\"approvalDecisionId\":\"TO-V2-SEED-05-OWNER-ADOPTION-2026-08-17\",\"ownerAuthorityDecisionId\":\"TO-V2-SEED-05-OWNER-ADOPTION-2026-08-17\",\"sportsScienceEvidence\":{\"evidenceId\":\"V2-SEED-05-SPORTS-SCIENCE-EVIDENCE-2026-08-17\",\"decisionRef\":\"TO-V2-SEED-05-OWNER-ADOPTION-2026-08-17\",\"fingerprint\":\"sha256:43f39eea01053d1cf11afbdac90adc0c6331cd4b36355c16b660b6970d62cbed\"},\"populationApplicabilityEvidence\":{\"evidenceId\":\"V2-SEED-05-POPULATION-EVIDENCE-2026-08-17\",\"decisionRef\":\"TO-V2-SEED-05-OWNER-ADOPTION-2026-08-17\",\"fingerprint\":\"sha256:dddff17cc298cd32ce7cbd6c2ccff6e38034b7e0ff5dd114e40b3893d55b4517\"},\"scope\":{\"eventGroup\":\"FIVE_K\",\"experienceBand\":\"EXPERIENCED\",\"population\":\"YOUTH_AND_ADULT\",\"eventEvidenceFingerprint\":\"sha256:43f39eea01053d1cf11afbdac90adc0c6331cd4b36355c16b660b6970d62cbed\",\"experienceEvidenceFingerprint\":\"sha256:dddff17cc298cd32ce7cbd6c2ccff6e38034b7e0ff5dd114e40b3893d55b4517\"},\"componentRefs\":[{\"componentType\":\"WARMUP\",\"componentRef\":\"WU-V2-5K-01\",\"componentVersion\":\"1.0.0\",\"componentFingerprint\":\"sha256:d8da21478d2a44841122874ccf35c24aad1777ebaaeb018deda3e98a8f9cf6f1\"},{\"componentType\":\"COOLDOWN\",\"componentRef\":\"CD-V2-5K-01\",\"componentVersion\":\"1.0.0\",\"componentFingerprint\":\"sha256:8d1470171a5edb17a43aa1c21ca34bbfb77456347a68293d2ffe0a5bc52968ab\"},{\"componentType\":\"DOWNSHIFT\",\"componentRef\":\"RPE-ONLY-CONTROLLED-01\",\"componentVersion\":\"1.0.0\",\"componentFingerprint\":\"sha256:cd09b06359fcdfb422b421c31dd45a97beeccbdbecaabd1eb7274cdd67ecf3c5\"},{\"componentType\":\"STOP_CONDITIONS\",\"componentRef\":\"STOP-V2-5K-01\",\"componentVersion\":\"1.0.0\",\"componentFingerprint\":\"sha256:737ce6df7f7049530b72f3f52f20a2cbbd32bb83ccf6bfd93c29e25864b4bc29\"}],\"operationalComponents\":{\"warmup\":{\"componentRef\":\"WU-V2-5K-01\",\"componentVersion\":\"1.0.0\",\"authority\":\"OWNER_OPERATIONAL_ADAPTATION\",\"easyDurationMinutes\":15,\"rpeMin\":2,\"rpeMax\":3,\"strides\":{\"repetitions\":4,\"durationSeconds\":20,\"recoverySeconds\":40,\"recoveryMode\":\"WALK_OR_JOG\",\"progression\":\"PROGRESSIVE\"}},\"cooldown\":{\"componentRef\":\"CD-V2-5K-01\",\"componentVersion\":\"1.0.0\",\"authority\":\"OWNER_OPERATIONAL_ADAPTATION\",\"easyDurationMinutes\":10,\"rpeMin\":1,\"rpeMax\":2},\"fallback\":{\"componentRef\":\"RPE-ONLY-CONTROLLED-01\",\"componentVersion\":\"1.0.0\",\"code\":\"RPE_ONLY_CONTROLLED\",\"behavior\":\"DELEGATE_TO_EXISTING_RPE_CANDIDATE\",\"numericRepetitionVariant\":null},\"stopConditions\":{\"componentRef\":\"STOP-V2-5K-01\",\"componentVersion\":\"1.0.0\",\"authority\":\"OWNER_PRECAUTIONARY_OPERATIONAL_RULE\",\"diagnosticClaim\":false,\"codes\":[\"STOP_NEW_OR_WORSENING_PAIN\",\"STOP_DIZZINESS_OR_FAINTNESS\",\"STOP_CHEST_PAIN_OR_UNUSUAL_BREATHING\",\"STOP_LOSS_OF_CONTROLLED_FORM\"]}},\"setCount\":1,\"repetitionsPerSet\":5,\"repetitionDistanceM\":1000,\"targetEventDistanceM\":5000,\"targetRepSeconds\":222,\"selectedAnchor\":{\"anchorId\":\"00000000-0000-4000-8000-000000005000\",\"eventDistanceM\":5000,\"performanceSeconds\":1110,\"achievedAt\":\"2026-08-01\",\"enteredBy\":\"ATHLETE\",\"verificationState\":\"SELF_REPORTED\",\"freshnessState\":\"CURRENT\",\"sourceRef\":\"athlete-record:00000000-0000-4000-8000-000000005000\",\"elapsedLabel\":\"이번 달\",\"kind\":\"PB\",\"purpose\":\"CURRENT_CAPABILITY\",\"seasonId\":null},\"displayRoundingPolicyVersion\":\"seconds-v1\",\"repetitionRecoverySeconds\":150,\"repetitionRecoveryMode\":\"JOG\",\"setRecoverySeconds\":null,\"setRecoveryMode\":\"NOT_APPLICABLE\",\"totals\":{\"totalRepetitions\":5,\"qualityDistanceM\":5000,\"qualityDurationSeconds\":null,\"repetitionRecoveryOccurrences\":4,\"repetitionRecoveryTotalSeconds\":600,\"setRecoveryOccurrences\":0,\"setRecoveryTotalSeconds\":0,\"plannedRecoverySeconds\":600,\"mainSessionTotalExcludingWarmupCooldown\":null,\"uncomputableReasonCodes\":[\"WORK_DURATION_UNAVAILABLE\"]},\"stopCodes\":[\"STOP_NEW_OR_WORSENING_PAIN\",\"STOP_DIZZINESS_OR_FAINTNESS\",\"STOP_CHEST_PAIN_OR_UNUSUAL_BREATHING\",\"STOP_LOSS_OF_CONTROLLED_FORM\"],\"fallbackCode\":\"RPE_ONLY_CONTROLLED\"}",
+        "continuityContext": {
+          "kind": "NO_PREVIOUS_FRAME_CONTEXT"
+        },
+        "selectionAuthority": "SELF",
+        "frame": {
+          "formationKind": "LOCAL_CIVIL_9_5",
+          "lengthDays": 9.5,
+          "slotCount": 19,
+          "projectionLengthDays": 9,
+          "continuity": {
+            "kind": "STANDARD_FRAME"
+          }
+        },
+        "mainExposureLedger": {
+          "mainExposureCount": 2,
+          "fingerprint": "app-main-day-1:app-main-day-9",
+          "countedExposureIds": [
+            "app-main-day-1",
+            "app-main-day-9"
+          ]
+        },
+        "rationaleCodes": [
+          "PROFILE_ONLY_LIMITED_CONTEXT",
+          "BETA_NON_UNIVERSAL_FORMATION_SCOPE",
+          "PACE_TARGET_BOUND"
+        ],
+        "sessions": [
+          {
+            "day": 1,
+            "slot": "AM",
+            "role": "EASY",
+            "plannedEnergyIntent": "BASE_INTENT",
+            "prescription": {
+              "kind": "RPE_TIME_RANGE",
+              "rpe": {
+                "minimum": 3,
+                "maximum": 4
+              },
+              "durationMinutes": {
+                "minimum": 35,
+                "maximum": 35
+              }
+            }
+          },
+          {
+            "day": 2,
+            "slot": "AM",
+            "role": "REST",
+            "plannedEnergyIntent": "RECOVERY_INTENT",
+            "prescription": {
+              "kind": "REST"
+            }
+          },
+          {
+            "day": 3,
+            "slot": "AM",
+            "role": "REST",
+            "plannedEnergyIntent": "RECOVERY_INTENT",
+            "prescription": {
+              "kind": "REST"
+            }
+          },
+          {
+            "day": 4,
+            "slot": "AM",
+            "role": "REST",
+            "plannedEnergyIntent": "RECOVERY_INTENT",
+            "prescription": {
+              "kind": "REST"
+            }
+          },
+          {
+            "day": 5,
+            "slot": "AM",
+            "role": "QUALITY",
+            "plannedEnergyIntent": "VO2_INTENT",
+            "prescription": {
+              "kind": "PACE_TARGET",
+              "manifestVersion": "1",
+              "templateId": "V2-SEED-05",
+              "templateVersion": "1.0.0",
+              "templateContentFingerprint": "sha256:ad4a8c436a5a6e7a9c81342d79b359d84b1b8ea1034f9589141429eea8d0e42a",
+              "notation": "5×1000m @5000m RP · r150″ JOG",
+              "sourceDecisionId": "TO-V2-SEED-05-OWNER-ADOPTION-2026-08-17",
+              "sourceEvidenceRef": "reports/review/V2_SEED_05_OWNER_ADOPTION_DECISION_2026-08-17.md",
+              "approvalDecisionId": "TO-V2-SEED-05-OWNER-ADOPTION-2026-08-17",
+              "ownerAuthorityDecisionId": "TO-V2-SEED-05-OWNER-ADOPTION-2026-08-17",
+              "sportsScienceEvidence": {
+                "evidenceId": "V2-SEED-05-SPORTS-SCIENCE-EVIDENCE-2026-08-17",
+                "decisionRef": "TO-V2-SEED-05-OWNER-ADOPTION-2026-08-17",
+                "fingerprint": "sha256:43f39eea01053d1cf11afbdac90adc0c6331cd4b36355c16b660b6970d62cbed"
+              },
+              "populationApplicabilityEvidence": {
+                "evidenceId": "V2-SEED-05-POPULATION-EVIDENCE-2026-08-17",
+                "decisionRef": "TO-V2-SEED-05-OWNER-ADOPTION-2026-08-17",
+                "fingerprint": "sha256:dddff17cc298cd32ce7cbd6c2ccff6e38034b7e0ff5dd114e40b3893d55b4517"
+              },
+              "scope": {
+                "eventGroup": "FIVE_K",
+                "experienceBand": "EXPERIENCED",
+                "population": "YOUTH_AND_ADULT",
+                "eventEvidenceFingerprint": "sha256:43f39eea01053d1cf11afbdac90adc0c6331cd4b36355c16b660b6970d62cbed",
+                "experienceEvidenceFingerprint": "sha256:dddff17cc298cd32ce7cbd6c2ccff6e38034b7e0ff5dd114e40b3893d55b4517"
+              },
+              "componentRefs": [
+                {
+                  "componentType": "WARMUP",
+                  "componentRef": "WU-V2-5K-01",
+                  "componentVersion": "1.0.0",
+                  "componentFingerprint": "sha256:d8da21478d2a44841122874ccf35c24aad1777ebaaeb018deda3e98a8f9cf6f1"
+                },
+                {
+                  "componentType": "COOLDOWN",
+                  "componentRef": "CD-V2-5K-01",
+                  "componentVersion": "1.0.0",
+                  "componentFingerprint": "sha256:8d1470171a5edb17a43aa1c21ca34bbfb77456347a68293d2ffe0a5bc52968ab"
+                },
+                {
+                  "componentType": "DOWNSHIFT",
+                  "componentRef": "RPE-ONLY-CONTROLLED-01",
+                  "componentVersion": "1.0.0",
+                  "componentFingerprint": "sha256:cd09b06359fcdfb422b421c31dd45a97beeccbdbecaabd1eb7274cdd67ecf3c5"
+                },
+                {
+                  "componentType": "STOP_CONDITIONS",
+                  "componentRef": "STOP-V2-5K-01",
+                  "componentVersion": "1.0.0",
+                  "componentFingerprint": "sha256:737ce6df7f7049530b72f3f52f20a2cbbd32bb83ccf6bfd93c29e25864b4bc29"
+                }
+              ],
+              "operationalComponents": {
+                "warmup": {
+                  "componentRef": "WU-V2-5K-01",
+                  "componentVersion": "1.0.0",
+                  "authority": "OWNER_OPERATIONAL_ADAPTATION",
+                  "easyDurationMinutes": 15,
+                  "rpeMin": 2,
+                  "rpeMax": 3,
+                  "strides": {
+                    "repetitions": 4,
+                    "durationSeconds": 20,
+                    "recoverySeconds": 40,
+                    "recoveryMode": "WALK_OR_JOG",
+                    "progression": "PROGRESSIVE"
+                  }
+                },
+                "cooldown": {
+                  "componentRef": "CD-V2-5K-01",
+                  "componentVersion": "1.0.0",
+                  "authority": "OWNER_OPERATIONAL_ADAPTATION",
+                  "easyDurationMinutes": 10,
+                  "rpeMin": 1,
+                  "rpeMax": 2
+                },
+                "fallback": {
+                  "componentRef": "RPE-ONLY-CONTROLLED-01",
+                  "componentVersion": "1.0.0",
+                  "code": "RPE_ONLY_CONTROLLED",
+                  "behavior": "DELEGATE_TO_EXISTING_RPE_CANDIDATE",
+                  "numericRepetitionVariant": null
+                },
+                "stopConditions": {
+                  "componentRef": "STOP-V2-5K-01",
+                  "componentVersion": "1.0.0",
+                  "authority": "OWNER_PRECAUTIONARY_OPERATIONAL_RULE",
+                  "diagnosticClaim": false,
+                  "codes": [
+                    "STOP_NEW_OR_WORSENING_PAIN",
+                    "STOP_DIZZINESS_OR_FAINTNESS",
+                    "STOP_CHEST_PAIN_OR_UNUSUAL_BREATHING",
+                    "STOP_LOSS_OF_CONTROLLED_FORM"
+                  ]
+                }
+              },
+              "setCount": 1,
+              "repetitionsPerSet": 5,
+              "repetitionDistanceM": 1000,
+              "targetEventDistanceM": 5000,
+              "targetRepSeconds": 222,
+              "selectedAnchor": {
+                "anchorId": "00000000-0000-4000-8000-000000005000",
+                "eventDistanceM": 5000,
+                "performanceSeconds": 1110,
+                "achievedAt": "2026-08-01",
+                "enteredBy": "ATHLETE",
+                "verificationState": "SELF_REPORTED",
+                "freshnessState": "CURRENT",
+                "sourceRef": "athlete-record:00000000-0000-4000-8000-000000005000",
+                "elapsedLabel": "이번 달",
+                "kind": "PB",
+                "purpose": "CURRENT_CAPABILITY",
+                "seasonId": null
+              },
+              "displayRoundingPolicyVersion": "seconds-v1",
+              "repetitionRecoverySeconds": 150,
+              "repetitionRecoveryMode": "JOG",
+              "setRecoverySeconds": null,
+              "setRecoveryMode": "NOT_APPLICABLE",
+              "totals": {
+                "totalRepetitions": 5,
+                "qualityDistanceM": 5000,
+                "qualityDurationSeconds": null,
+                "repetitionRecoveryOccurrences": 4,
+                "repetitionRecoveryTotalSeconds": 600,
+                "setRecoveryOccurrences": 0,
+                "setRecoveryTotalSeconds": 0,
+                "plannedRecoverySeconds": 600,
+                "mainSessionTotalExcludingWarmupCooldown": null,
+                "uncomputableReasonCodes": [
+                  "WORK_DURATION_UNAVAILABLE"
+                ]
+              },
+              "stopCodes": [
+                "STOP_NEW_OR_WORSENING_PAIN",
+                "STOP_DIZZINESS_OR_FAINTNESS",
+                "STOP_CHEST_PAIN_OR_UNUSUAL_BREATHING",
+                "STOP_LOSS_OF_CONTROLLED_FORM"
+              ],
+              "fallbackCode": "RPE_ONLY_CONTROLLED",
+              "prescriptionFingerprint": "canonical-json-v1:{\"kind\":\"PACE_TARGET\",\"manifestVersion\":\"1\",\"templateId\":\"V2-SEED-05\",\"templateVersion\":\"1.0.0\",\"templateContentFingerprint\":\"sha256:ad4a8c436a5a6e7a9c81342d79b359d84b1b8ea1034f9589141429eea8d0e42a\",\"notation\":\"5×1000m @5000m RP · r150″ JOG\",\"sourceDecisionId\":\"TO-V2-SEED-05-OWNER-ADOPTION-2026-08-17\",\"sourceEvidenceRef\":\"reports/review/V2_SEED_05_OWNER_ADOPTION_DECISION_2026-08-17.md\",\"approvalDecisionId\":\"TO-V2-SEED-05-OWNER-ADOPTION-2026-08-17\",\"ownerAuthorityDecisionId\":\"TO-V2-SEED-05-OWNER-ADOPTION-2026-08-17\",\"sportsScienceEvidence\":{\"evidenceId\":\"V2-SEED-05-SPORTS-SCIENCE-EVIDENCE-2026-08-17\",\"decisionRef\":\"TO-V2-SEED-05-OWNER-ADOPTION-2026-08-17\",\"fingerprint\":\"sha256:43f39eea01053d1cf11afbdac90adc0c6331cd4b36355c16b660b6970d62cbed\"},\"populationApplicabilityEvidence\":{\"evidenceId\":\"V2-SEED-05-POPULATION-EVIDENCE-2026-08-17\",\"decisionRef\":\"TO-V2-SEED-05-OWNER-ADOPTION-2026-08-17\",\"fingerprint\":\"sha256:dddff17cc298cd32ce7cbd6c2ccff6e38034b7e0ff5dd114e40b3893d55b4517\"},\"scope\":{\"eventGroup\":\"FIVE_K\",\"experienceBand\":\"EXPERIENCED\",\"population\":\"YOUTH_AND_ADULT\",\"eventEvidenceFingerprint\":\"sha256:43f39eea01053d1cf11afbdac90adc0c6331cd4b36355c16b660b6970d62cbed\",\"experienceEvidenceFingerprint\":\"sha256:dddff17cc298cd32ce7cbd6c2ccff6e38034b7e0ff5dd114e40b3893d55b4517\"},\"componentRefs\":[{\"componentType\":\"WARMUP\",\"componentRef\":\"WU-V2-5K-01\",\"componentVersion\":\"1.0.0\",\"componentFingerprint\":\"sha256:d8da21478d2a44841122874ccf35c24aad1777ebaaeb018deda3e98a8f9cf6f1\"},{\"componentType\":\"COOLDOWN\",\"componentRef\":\"CD-V2-5K-01\",\"componentVersion\":\"1.0.0\",\"componentFingerprint\":\"sha256:8d1470171a5edb17a43aa1c21ca34bbfb77456347a68293d2ffe0a5bc52968ab\"},{\"componentType\":\"DOWNSHIFT\",\"componentRef\":\"RPE-ONLY-CONTROLLED-01\",\"componentVersion\":\"1.0.0\",\"componentFingerprint\":\"sha256:cd09b06359fcdfb422b421c31dd45a97beeccbdbecaabd1eb7274cdd67ecf3c5\"},{\"componentType\":\"STOP_CONDITIONS\",\"componentRef\":\"STOP-V2-5K-01\",\"componentVersion\":\"1.0.0\",\"componentFingerprint\":\"sha256:737ce6df7f7049530b72f3f52f20a2cbbd32bb83ccf6bfd93c29e25864b4bc29\"}],\"operationalComponents\":{\"warmup\":{\"componentRef\":\"WU-V2-5K-01\",\"componentVersion\":\"1.0.0\",\"authority\":\"OWNER_OPERATIONAL_ADAPTATION\",\"easyDurationMinutes\":15,\"rpeMin\":2,\"rpeMax\":3,\"strides\":{\"repetitions\":4,\"durationSeconds\":20,\"recoverySeconds\":40,\"recoveryMode\":\"WALK_OR_JOG\",\"progression\":\"PROGRESSIVE\"}},\"cooldown\":{\"componentRef\":\"CD-V2-5K-01\",\"componentVersion\":\"1.0.0\",\"authority\":\"OWNER_OPERATIONAL_ADAPTATION\",\"easyDurationMinutes\":10,\"rpeMin\":1,\"rpeMax\":2},\"fallback\":{\"componentRef\":\"RPE-ONLY-CONTROLLED-01\",\"componentVersion\":\"1.0.0\",\"code\":\"RPE_ONLY_CONTROLLED\",\"behavior\":\"DELEGATE_TO_EXISTING_RPE_CANDIDATE\",\"numericRepetitionVariant\":null},\"stopConditions\":{\"componentRef\":\"STOP-V2-5K-01\",\"componentVersion\":\"1.0.0\",\"authority\":\"OWNER_PRECAUTIONARY_OPERATIONAL_RULE\",\"diagnosticClaim\":false,\"codes\":[\"STOP_NEW_OR_WORSENING_PAIN\",\"STOP_DIZZINESS_OR_FAINTNESS\",\"STOP_CHEST_PAIN_OR_UNUSUAL_BREATHING\",\"STOP_LOSS_OF_CONTROLLED_FORM\"]}},\"setCount\":1,\"repetitionsPerSet\":5,\"repetitionDistanceM\":1000,\"targetEventDistanceM\":5000,\"targetRepSeconds\":222,\"selectedAnchor\":{\"anchorId\":\"00000000-0000-4000-8000-000000005000\",\"eventDistanceM\":5000,\"performanceSeconds\":1110,\"achievedAt\":\"2026-08-01\",\"enteredBy\":\"ATHLETE\",\"verificationState\":\"SELF_REPORTED\",\"freshnessState\":\"CURRENT\",\"sourceRef\":\"athlete-record:00000000-0000-4000-8000-000000005000\",\"elapsedLabel\":\"이번 달\",\"kind\":\"PB\",\"purpose\":\"CURRENT_CAPABILITY\",\"seasonId\":null},\"displayRoundingPolicyVersion\":\"seconds-v1\",\"repetitionRecoverySeconds\":150,\"repetitionRecoveryMode\":\"JOG\",\"setRecoverySeconds\":null,\"setRecoveryMode\":\"NOT_APPLICABLE\",\"totals\":{\"totalRepetitions\":5,\"qualityDistanceM\":5000,\"qualityDurationSeconds\":null,\"repetitionRecoveryOccurrences\":4,\"repetitionRecoveryTotalSeconds\":600,\"setRecoveryOccurrences\":0,\"setRecoveryTotalSeconds\":0,\"plannedRecoverySeconds\":600,\"mainSessionTotalExcludingWarmupCooldown\":null,\"uncomputableReasonCodes\":[\"WORK_DURATION_UNAVAILABLE\"]},\"stopCodes\":[\"STOP_NEW_OR_WORSENING_PAIN\",\"STOP_DIZZINESS_OR_FAINTNESS\",\"STOP_CHEST_PAIN_OR_UNUSUAL_BREATHING\",\"STOP_LOSS_OF_CONTROLLED_FORM\"],\"fallbackCode\":\"RPE_ONLY_CONTROLLED\"}"
+            }
+          },
+          {
+            "day": 6,
+            "slot": "AM",
+            "role": "REST",
+            "plannedEnergyIntent": "RECOVERY_INTENT",
+            "prescription": {
+              "kind": "REST"
+            }
+          },
+          {
+            "day": 7,
+            "slot": "AM",
+            "role": "REST",
+            "plannedEnergyIntent": "RECOVERY_INTENT",
+            "prescription": {
+              "kind": "REST"
+            }
+          },
+          {
+            "day": 8,
+            "slot": "AM",
+            "role": "REST",
+            "plannedEnergyIntent": "RECOVERY_INTENT",
+            "prescription": {
+              "kind": "REST"
+            }
+          },
+          {
+            "day": 9,
+            "slot": "AM",
+            "role": "EASY",
+            "plannedEnergyIntent": "BASE_INTENT",
+            "prescription": {
+              "kind": "RPE_TIME_RANGE",
+              "rpe": {
+                "minimum": 3,
+                "maximum": 4
+              },
+              "durationMinutes": {
+                "minimum": 35,
+                "maximum": 35
+              }
+            }
+          },
+          {
+            "day": 10,
+            "slot": "AM",
+            "role": "REST",
+            "plannedEnergyIntent": "RECOVERY_INTENT",
+            "prescription": {
+              "kind": "REST"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "pendingSuccessor": null,
+  "history": [
+    {
+      "version": 3,
+      "candidateId": "beta:balanced:five_k:event-5000:experienced:vo2_intent:single_session_only:morning:projection-9:local-civil-9-5:app-main-day-1-app-main-day-9:1-5-9:no_usable_journal:no-continuity:template-v2-seed-05.1.0.0.ad4a8c436a5a6e7a9c81342d79b359d84b1b8ea1034f9589141429eea8d0e42a:candidate-sha256-23927685bdbf703705d1d6c92caf10bdfc56a7c5f3ca4e8c3acc54ebc8719ccd:pace-target:canonical-json-v1:{\"kind\":\"PACE_TARGET\",\"manifestVersion\":\"1\",\"templateId\":\"V2-SEED-05\",\"templateVersion\":\"1.0.0\",\"templateContentFingerprint\":\"sha256:ad4a8c436a5a6e7a9c81342d79b359d84b1b8ea1034f9589141429eea8d0e42a\",\"notation\":\"5×1000m @5000m RP · r150″ JOG\",\"sourceDecisionId\":\"TO-V2-SEED-05-OWNER-ADOPTION-2026-08-17\",\"sourceEvidenceRef\":\"reports/review/V2_SEED_05_OWNER_ADOPTION_DECISION_2026-08-17.md\",\"approvalDecisionId\":\"TO-V2-SEED-05-OWNER-ADOPTION-2026-08-17\",\"ownerAuthorityDecisionId\":\"TO-V2-SEED-05-OWNER-ADOPTION-2026-08-17\",\"sportsScienceEvidence\":{\"evidenceId\":\"V2-SEED-05-SPORTS-SCIENCE-EVIDENCE-2026-08-17\",\"decisionRef\":\"TO-V2-SEED-05-OWNER-ADOPTION-2026-08-17\",\"fingerprint\":\"sha256:43f39eea01053d1cf11afbdac90adc0c6331cd4b36355c16b660b6970d62cbed\"},\"populationApplicabilityEvidence\":{\"evidenceId\":\"V2-SEED-05-POPULATION-EVIDENCE-2026-08-17\",\"decisionRef\":\"TO-V2-SEED-05-OWNER-ADOPTION-2026-08-17\",\"fingerprint\":\"sha256:dddff17cc298cd32ce7cbd6c2ccff6e38034b7e0ff5dd114e40b3893d55b4517\"},\"scope\":{\"eventGroup\":\"FIVE_K\",\"experienceBand\":\"EXPERIENCED\",\"population\":\"YOUTH_AND_ADULT\",\"eventEvidenceFingerprint\":\"sha256:43f39eea01053d1cf11afbdac90adc0c6331cd4b36355c16b660b6970d62cbed\",\"experienceEvidenceFingerprint\":\"sha256:dddff17cc298cd32ce7cbd6c2ccff6e38034b7e0ff5dd114e40b3893d55b4517\"},\"componentRefs\":[{\"componentType\":\"WARMUP\",\"componentRef\":\"WU-V2-5K-01\",\"componentVersion\":\"1.0.0\",\"componentFingerprint\":\"sha256:d8da21478d2a44841122874ccf35c24aad1777ebaaeb018deda3e98a8f9cf6f1\"},{\"componentType\":\"COOLDOWN\",\"componentRef\":\"CD-V2-5K-01\",\"componentVersion\":\"1.0.0\",\"componentFingerprint\":\"sha256:8d1470171a5edb17a43aa1c21ca34bbfb77456347a68293d2ffe0a5bc52968ab\"},{\"componentType\":\"DOWNSHIFT\",\"componentRef\":\"RPE-ONLY-CONTROLLED-01\",\"componentVersion\":\"1.0.0\",\"componentFingerprint\":\"sha256:cd09b06359fcdfb422b421c31dd45a97beeccbdbecaabd1eb7274cdd67ecf3c5\"},{\"componentType\":\"STOP_CONDITIONS\",\"componentRef\":\"STOP-V2-5K-01\",\"componentVersion\":\"1.0.0\",\"componentFingerprint\":\"sha256:737ce6df7f7049530b72f3f52f20a2cbbd32bb83ccf6bfd93c29e25864b4bc29\"}],\"operationalComponents\":{\"warmup\":{\"componentRef\":\"WU-V2-5K-01\",\"componentVersion\":\"1.0.0\",\"authority\":\"OWNER_OPERATIONAL_ADAPTATION\",\"easyDurationMinutes\":15,\"rpeMin\":2,\"rpeMax\":3,\"strides\":{\"repetitions\":4,\"durationSeconds\":20,\"recoverySeconds\":40,\"recoveryMode\":\"WALK_OR_JOG\",\"progression\":\"PROGRESSIVE\"}},\"cooldown\":{\"componentRef\":\"CD-V2-5K-01\",\"componentVersion\":\"1.0.0\",\"authority\":\"OWNER_OPERATIONAL_ADAPTATION\",\"easyDurationMinutes\":10,\"rpeMin\":1,\"rpeMax\":2},\"fallback\":{\"componentRef\":\"RPE-ONLY-CONTROLLED-01\",\"componentVersion\":\"1.0.0\",\"code\":\"RPE_ONLY_CONTROLLED\",\"behavior\":\"DELEGATE_TO_EXISTING_RPE_CANDIDATE\",\"numericRepetitionVariant\":null},\"stopConditions\":{\"componentRef\":\"STOP-V2-5K-01\",\"componentVersion\":\"1.0.0\",\"authority\":\"OWNER_PRECAUTIONARY_OPERATIONAL_RULE\",\"diagnosticClaim\":false,\"codes\":[\"STOP_NEW_OR_WORSENING_PAIN\",\"STOP_DIZZINESS_OR_FAINTNESS\",\"STOP_CHEST_PAIN_OR_UNUSUAL_BREATHING\",\"STOP_LOSS_OF_CONTROLLED_FORM\"]}},\"setCount\":1,\"repetitionsPerSet\":5,\"repetitionDistanceM\":1000,\"targetEventDistanceM\":5000,\"targetRepSeconds\":222,\"selectedAnchor\":{\"anchorId\":\"00000000-0000-4000-8000-000000005000\",\"eventDistanceM\":5000,\"performanceSeconds\":1110,\"achievedAt\":\"2026-08-01\",\"enteredBy\":\"ATHLETE\",\"verificationState\":\"SELF_REPORTED\",\"freshnessState\":\"CURRENT\",\"sourceRef\":\"athlete-record:00000000-0000-4000-8000-000000005000\",\"elapsedLabel\":\"이번 달\",\"kind\":\"PB\",\"purpose\":\"CURRENT_CAPABILITY\",\"seasonId\":null},\"displayRoundingPolicyVersion\":\"seconds-v1\",\"repetitionRecoverySeconds\":150,\"repetitionRecoveryMode\":\"JOG\",\"setRecoverySeconds\":null,\"setRecoveryMode\":\"NOT_APPLICABLE\",\"totals\":{\"totalRepetitions\":5,\"qualityDistanceM\":5000,\"qualityDurationSeconds\":null,\"repetitionRecoveryOccurrences\":4,\"repetitionRecoveryTotalSeconds\":600,\"setRecoveryOccurrences\":0,\"setRecoveryTotalSeconds\":0,\"plannedRecoverySeconds\":600,\"mainSessionTotalExcludingWarmupCooldown\":null,\"uncomputableReasonCodes\":[\"WORK_DURATION_UNAVAILABLE\"]},\"stopCodes\":[\"STOP_NEW_OR_WORSENING_PAIN\",\"STOP_DIZZINESS_OR_FAINTNESS\",\"STOP_CHEST_PAIN_OR_UNUSUAL_BREATHING\",\"STOP_LOSS_OF_CONTROLLED_FORM\"],\"fallbackCode\":\"RPE_ONLY_CONTROLLED\"}",
+      "pairId": "plan-pair:v3:5000:v2-seed-05.1.0.0.ad4a8c436a5a6e7a9c81342d79b359d84b1b8ea1034f9589141429eea8d0e42a:vo2_intent:app-main-day-1-app-main-day-9:1-5-9:no-continuity:pair-sha256-a96b266dcddcf4c348a2c58601594f47f2418aa01b36003dac5cff075248d7d3",
+      "candidateKind": "BALANCED",
+      "eventDistanceM": 5000,
+      "selectedDetailedTemplateRef": {
+        "templateId": "V2-SEED-05",
+        "version": "1.0.0",
+        "fingerprint": "sha256:ad4a8c436a5a6e7a9c81342d79b359d84b1b8ea1034f9589141429eea8d0e42a"
+      },
+      "frameLengthDays": 9.5,
+      "progress": [
+        {
+          "sessionDay": 1,
+          "sessionSlot": "AM",
+          "state": "RESTED"
+        },
+        {
+          "sessionDay": 5,
+          "sessionSlot": "AM",
+          "state": "COMPLETED"
+        },
+        {
+          "sessionDay": 9,
+          "sessionSlot": "AM",
+          "state": "COMPLETED"
+        }
+      ],
+      "archivedAt": "2026-08-24T12:37:25.594Z"
+    }
+  ]
+}

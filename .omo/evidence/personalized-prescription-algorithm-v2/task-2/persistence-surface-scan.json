@@ -1,0 +1,19 @@
+{
+  "kind": "TRAINORACLE_TODO2_RACE_DATE_PERSISTENCE_SURFACE_SCAN",
+  "classificationRule": "Only observed code or runtime surfaces are named; absent surfaces are classified as not present in the reviewed path.",
+  "surfaces": [
+    { "surface": "localStorage", "classification": "OBSERVED_ZERO_WRITE", "evidence": "KST 00:30 matrix rejected the same local date and returned the next date only as preview; key count remained 0; v3 schema rejects an added targetRaceDate before save" },
+    { "surface": "sessionStorage", "classification": "OBSERVED_ZERO_WRITE", "evidence": "KST 00:30 matrix key count remained 0; previous-intake schema has no race field" },
+    { "surface": "IndexedDB", "classification": "NO_RACE_DATE_SURFACE_IN_REVIEWED_PATH", "evidence": "no indexedDB reference in plan flow, plan store, schema, generator, selection, or adaptation paths" },
+    { "surface": "URL/query/hash", "classification": "OBSERVED_UNCHANGED", "evidence": "window.location.href unchanged in the KST local-date matrix; strict draft rejects URL-style extra keys" },
+    { "surface": "history.state", "classification": "OBSERVED_UNCHANGED", "evidence": "serialized history.state unchanged in the KST local-date matrix" },
+    { "surface": "active plan", "classification": "SCHEMA_EXCLUDED_AND_ZERO_WRITE", "evidence": "v3 active schema has no race field; preview has no candidate; save rejects an injected field" },
+    { "surface": "plan history", "classification": "SCHEMA_EXCLUDED", "evidence": "v3 history schema carries target/template/pair identity but no race date or placement metadata" },
+    { "surface": "export", "classification": "NO_DIRECT_RACE_DATE_FIELD", "evidence": "reviewed plan path exposes no export object; upstream backups can only see persisted stores, which receive zero race bytes" },
+    { "surface": "backup", "classification": "NO_DIRECT_RACE_DATE_FIELD", "evidence": "reviewed plan path exposes no backup field; no race bytes reach source storage" },
+    { "surface": "audit", "classification": "NO_SURVIVING_DATE", "evidence": "preview audit uses closed reason codes; the date exists only in the in-memory preview object" },
+    { "surface": "log", "classification": "NO_PRODUCT_LOG_SURFACE", "evidence": "no console/logger write in reviewed production preview path; manual evidence intentionally records only result kinds" },
+    { "surface": "telemetry", "classification": "NO_SURFACE_FOUND", "evidence": "no telemetry or sendBeacon call in reviewed production paths" },
+    { "surface": "network", "classification": "OBSERVED_ZERO_CALL", "evidence": "KST local-date matrix fetch spy observed 0 calls and no fetch/XMLHttpRequest call exists in reviewed production paths" }
+  ]
+}

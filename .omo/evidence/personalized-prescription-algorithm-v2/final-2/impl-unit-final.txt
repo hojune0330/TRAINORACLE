@@ -1,0 +1,646 @@
+
+> trainoracle-impl-skeleton@0.1.0 test
+> vitest run --reporter=verbose
+
+
+ RUN  v4.1.10 D:/admin/Documents/ChatGPT/트레인 오라클/TRAINORACLE/impl
+
+ ✓ test/prescription-runtime.test.ts > prescription runtime safety boundary > rejects draft template BA-SEED-01 before it can become a plan prescription 6ms
+ ✓ test/prescription-runtime.test.ts > prescription runtime safety boundary > rejects draft template BA-SEED-02 before it can become a plan prescription 1ms
+ ✓ test/prescription-runtime.test.ts > prescription runtime safety boundary > rejects draft template BA-SEED-03 before it can become a plan prescription 0ms
+ ✓ test/prescription-runtime.test.ts > prescription runtime safety boundary > rejects draft template BA-SEED-04 before it can become a plan prescription 0ms
+ ✓ test/prescription-runtime.test.ts > prescription runtime safety boundary > rejects draft template BA-SEED-05 before it can become a plan prescription 0ms
+ ✓ test/prescription-runtime.test.ts > prescription runtime safety boundary > rejects draft template LT-SEED-01 before it can become a plan prescription 0ms
+ ✓ test/prescription-runtime.test.ts > prescription runtime safety boundary > rejects draft template LT-SEED-02 before it can become a plan prescription 0ms
+ ✓ test/prescription-runtime.test.ts > prescription runtime safety boundary > rejects draft template LT-SEED-03 before it can become a plan prescription 0ms
+ ✓ test/prescription-runtime.test.ts > prescription runtime safety boundary > rejects draft template LT-SEED-04 before it can become a plan prescription 0ms
+ ✓ test/prescription-runtime.test.ts > prescription runtime safety boundary > rejects draft template LT-SEED-05 before it can become a plan prescription 0ms
+ ✓ test/prescription-runtime.test.ts > prescription runtime safety boundary > rejects draft template V2-SEED-01 before it can become a plan prescription 0ms
+ ✓ test/prescription-runtime.test.ts > prescription runtime safety boundary > rejects draft template V2-SEED-02 before it can become a plan prescription 0ms
+ ✓ test/prescription-runtime.test.ts > prescription runtime safety boundary > rejects draft template V2-SEED-03 before it can become a plan prescription 0ms
+ ✓ test/prescription-runtime.test.ts > prescription runtime safety boundary > rejects draft template V2-SEED-04 before it can become a plan prescription 0ms
+ ✓ test/prescription-runtime.test.ts > prescription runtime safety boundary > rejects draft template V2-SEED-05 before it can become a plan prescription 0ms
+ ✓ test/prescription-runtime.test.ts > prescription runtime safety boundary > rejects draft template GL-SEED-01 before it can become a plan prescription 0ms
+ ✓ test/prescription-runtime.test.ts > prescription runtime safety boundary > rejects draft template GL-SEED-02 before it can become a plan prescription 0ms
+ ✓ test/prescription-runtime.test.ts > prescription runtime safety boundary > rejects draft template GL-SEED-03 before it can become a plan prescription 0ms
+ ✓ test/prescription-runtime.test.ts > prescription runtime safety boundary > rejects draft template GL-SEED-04 before it can become a plan prescription 0ms
+ ✓ test/prescription-runtime.test.ts > prescription runtime safety boundary > rejects draft template GL-SEED-05 before it can become a plan prescription 0ms
+ ✓ test/prescription-runtime.test.ts > prescription runtime safety boundary > rejects draft template AP-SEED-01 before it can become a plan prescription 0ms
+ ✓ test/prescription-runtime.test.ts > prescription runtime safety boundary > rejects draft template AP-SEED-02 before it can become a plan prescription 0ms
+ ✓ test/prescription-runtime.test.ts > prescription runtime safety boundary > rejects draft template AP-SEED-03 before it can become a plan prescription 0ms
+ ✓ test/prescription-runtime.test.ts > prescription runtime safety boundary > rejects draft template AP-SEED-04 before it can become a plan prescription 0ms
+ ✓ test/prescription-runtime.test.ts > prescription runtime safety boundary > rejects draft template AP-SEED-05 before it can become a plan prescription 0ms
+ ✓ test/prescription-runtime.test.ts > prescription runtime safety boundary > rejects draft template RE-SUPPORT-01 before it can become a plan prescription 0ms
+ ✓ test/prescription-runtime.test.ts > prescription runtime safety boundary > rejects draft template RE-SUPPORT-02 before it can become a plan prescription 0ms
+ ✓ test/prescription-runtime.test.ts > prescription runtime safety boundary > rejects draft template RE-SUPPORT-03 before it can become a plan prescription 0ms
+ ✓ test/prescription-runtime.test.ts > prescription runtime safety boundary > rejects draft template RE-SUPPORT-04 before it can become a plan prescription 0ms
+ ✓ test/prescription-runtime.test.ts > prescription runtime safety boundary > rejects draft template RE-SUPPORT-05 before it can become a plan prescription 0ms
+ ✓ test/prescription-runtime.test.ts > prescription runtime safety boundary > rejects D9_ACTIVE before notation or anchor values can produce a prescription 1ms
+ ✓ test/prescription-runtime.test.ts > prescription runtime safety boundary > rejects D9_UNKNOWN before notation or anchor values can produce a prescription 1ms
+ ✓ test/prescription-runtime.test.ts > prescription runtime safety boundary > does not retain raw memo or private signal fields in its structured result 1ms
+ ✓ test/prescription-runtime.test.ts > prescription runtime safety boundary > returns a typed rejection for hostile nested safety-code arrays 1ms
+ ✓ test/prescription-runtime.test.ts > prescription runtime safety boundary > prepares the exact V2-SEED-05 JOG session with complete operational components 1ms
+ ✓ test/prescription-runtime.test.ts > prescription runtime safety boundary > rejects atomically when the warmup operational component is missing 1ms
+ ✓ test/prescription-runtime.test.ts > prescription runtime safety boundary > rejects atomically when the cooldown operational component is missing 1ms
+ ✓ test/prescription-runtime.test.ts > prescription runtime safety boundary > rejects atomically when the fallback operational component is missing 0ms
+ ✓ test/prescription-runtime.test.ts > prescription runtime safety boundary > rejects atomically when the stopConditions operational component is missing 0ms
+ ✓ test/prescription-runtime.test.ts > prescription runtime safety boundary > rejects a numeric repetition downshift instead of doing runtime dose arithmetic 0ms
+ ✓ test/main-exposure-ledger.contract.test.ts > MAIN exposure-ledger contract > keeps legacy request vocabulary separate from the canonical MAIN ledger 14ms
+ ✓ test/main-exposure-ledger.contract.test.ts > MAIN exposure-ledger contract > does not yield a selectable canonical 9.5 candidate from a generic QUALITY-only legacy 9-day request 1ms
+ ✓ test/main-exposure-ledger.contract.test.ts > MAIN exposure-ledger contract > does not yield a selectable canonical 9.5 candidate from a generic QUALITY-only legacy 10-day request 0ms
+ ✓ test/main-exposure-ledger.contract.test.ts > MAIN exposure-ledger contract > returns a non-selectable review when the canonical ledger has zero MAIN exposures 2ms
+ ✓ test/main-exposure-ledger.contract.test.ts > MAIN exposure-ledger contract > creates selectable candidates only when the explicit canonical ledger has two MAIN exposures 7ms
+ ✓ test/main-exposure-ledger.contract.test.ts > MAIN exposure-ledger contract > also permits exactly three explicit MAIN exposures 12ms
+ ✓ test/main-exposure-ledger.contract.test.ts > MAIN exposure-ledger contract > returns a non-selectable review for 1 MAIN exposures 1ms
+ ✓ test/main-exposure-ledger.contract.test.ts > MAIN exposure-ledger contract > returns a non-selectable review for 4 MAIN exposures 2ms
+ ✓ test/main-exposure-ledger.contract.test.ts > MAIN exposure-ledger contract > rejects a canonical formation with a free-text reason field instead of retaining it 1ms
+ ✓ test/main-exposure-ledger.contract.test.ts > MAIN exposure-ledger contract > rejects an eighteen-slot frame without a selectable candidate 1ms
+ ✓ test/main-exposure-ledger.contract.test.ts > MAIN exposure-ledger contract > rejects an exposure without explicit classification without a selectable candidate 1ms
+ ✓ test/main-exposure-ledger.contract.test.ts > MAIN exposure-ledger contract > rejects duplicate exposure identity without a selectable candidate 1ms
+ ✓ test/plan-energy-intent.test.ts > personal plan energy intention contract > keeps Candidate B QUALITY equal while collapsing BASE support maxima 13ms
+ ✓ test/plan-energy-intent.test.ts > personal plan energy intention contract > preserves recovery-support duration while Candidate B reduces non-recovery dose 3ms
+ ✓ test/plan-energy-intent.test.ts > personal plan energy intention contract > keeps at most one QUALITY session per day and companion RPE within 1-3 7ms
+ ✓ test/plan-energy-intent.test.ts > personal plan energy intention contract > keeps LT_INTENT visible to a self-selecting athlete with RPE-only detail 2ms
+ ✓ test/plan-energy-intent.test.ts > personal plan energy intention contract > keeps VO2_INTENT visible to a self-selecting athlete with RPE-only detail 2ms
+ ✓ test/plan-energy-intent.test.ts > personal plan energy intention contract > keeps GLY_INTENT visible to a self-selecting athlete with RPE-only detail 1ms
+ ✓ test/plan-energy-intent.test.ts > personal plan energy intention contract > keeps ATP_PC_INTENT visible to a self-selecting athlete with RPE-only detail 1ms
+ ✓ test/plan-energy-intent.test.ts > personal plan energy intention contract > uses RPE 1-2 recovery guidance without turning recovery into a hidden quality day 1ms
+ ✓ test/plan-energy-intent.test.ts > personal plan energy intention contract > keeps two recovery sessions on every selected day when an athlete explicitly chooses two-a-day recovery 10ms
+ ✓ test/plan-energy-intent.test.ts > personal plan energy intention contract > adds a separate PM recovery session on every selected training day when an athlete chooses two-a-day training 3ms
+ ✓ test/plan-energy-intent.test.ts > personal plan energy intention contract > does not add extra quality sessions when an athlete can move every day 4ms
+ ✓ test/plan-adaptation-baseline.test.ts > plan adaptation baseline > does not mutate active plan bytes when progress is recorded 31ms
+ ✓ test/plan-selection-guard.contract.test.ts > plan selection runtime guard > rejects an incomplete passed safety gate instead of reconstructing it 13ms
+ ✓ test/plan-selection-guard.contract.test.ts > plan selection runtime guard > returns a typed rejection for hostile nested safety-code arrays 3ms
+ ✓ test/plan-selection-guard.contract.test.ts > plan selection runtime guard > does not trust an overridden candidate-array every method 3ms
+ ✓ test/plan-selection-guard.contract.test.ts > plan selection runtime guard > rejects a hostile sparse candidate array without throwing 10ms
+ ✓ test/plan-selection-guard.contract.test.ts > plan selection runtime guard > rejects a hostile proxy candidate array without throwing 2ms
+ ✓ test/plan-selection-guard.contract.test.ts > plan selection runtime guard > rejects a wrapper authority that disagrees with its candidates 8ms
+ ✓ test/plan-selection-guard.contract.test.ts > plan selection runtime guard > binds candidate authority into the candidate fingerprint 3ms
+ ✓ test/plan-selection-guard.contract.test.ts > plan selection runtime guard > permits a genuine canonical generated result without activating a plan 32ms
+ ✓ test/plan-selection-guard.contract.test.ts > plan selection runtime guard > rejects a review-shaped result supplied as an unknown selection request 1ms
+ ✓ test/plan-selection-guard.contract.test.ts > plan selection runtime guard > rejects a generated-shaped request with a stale fingerprint 20ms
+ ✓ test/plan-selection-guard.contract.test.ts > plan selection runtime guard > rejects a generated-shaped request with a noncanonical frame 4ms
+ ✓ test/plan-beta-generation.test.ts > plan beta generation contract > blocks ACTIVE Safety Gate without options, sessions, or progression output 14ms
+ ✓ test/plan-beta-generation.test.ts > plan beta generation contract > blocks UNKNOWN Safety Gate without a hidden alternative candidate 1ms
+ ✓ test/plan-beta-generation.test.ts > plan beta generation contract > creates two stable, distinct PROFILE_ONLY candidates with limited confidence 7ms
+ ✓ test/plan-beta-generation.test.ts > plan beta generation contract > keeps MIDDLE_DISTANCE in an explicit non-universal beta scope 5ms
+ ✓ test/plan-beta-generation.test.ts > plan beta generation contract > keeps FIVE_K in an explicit non-universal beta scope 4ms
+ ✓ test/plan-beta-generation.test.ts > plan beta generation contract > rejects unsupported TEN_K requests without an exact target event 1ms
+ ✓ test/plan-beta-generation.test.ts > plan beta generation contract > rejects unsupported GENERAL_ENDURANCE requests without an exact target event 0ms
+ ✓ test/plan-beta-generation.test.ts > plan beta generation contract > returns identical candidate content and order for identical canonical input 3ms
+ ✓ test/plan-beta-generation.test.ts > plan beta generation contract > uses the 19-slot local-civil 9.5-day Formation frame 2ms
+ ✓ test/plan-beta-generation.test.ts > plan beta generation contract > keeps standard-frame metadata for a canonical local-civil frame 2ms
+ ✓ test/plan-beta-generation.test.ts > plan beta generation contract > keeps sessions inside available days and separates quality sessions 3ms
+ ✓ test/plan-beta-generation.test.ts > plan beta generation contract > places quality in PM and keeps the counterpart in AM for an evening athlete 2ms
+ ✓ test/plan-beta-generation.test.ts > plan beta generation contract > adds recovery counterparts only where the formation has a PM slot 3ms
+ ✓ test/plan-beta-generation.test.ts > plan beta generation contract > limits sparse or beginner profile-only plans to one controlled quality day 23ms
+ ✓ test/plan-beta-generation.test.ts > plan beta generation contract > journal context cannot override an unsafe gate 1ms
+ ✓ test/plan-beta-generation.test.ts > plan beta generation contract > labels recent journal presence as context-only without changing prescriptions 3ms
+ ✓ test/plan-beta-generation.test.ts > plan beta generation contract > rejects raw free text at the generation boundary 0ms
+ ✓ test/plan-beta-generation.test.ts > plan beta generation contract > returns a typed rejection for malformed or out-of-range input 0ms
+ ✓ test/plan-beta-generation.test.ts > plan beta generation contract > returns a typed rejection for a hostile custom prototype generation request 2ms
+ ✓ test/plan-beta-generation.test.ts > plan beta generation contract > returns a typed rejection for a hostile accessor generation request 1ms
+ ✓ test/plan-beta-generation.test.ts > plan beta generation contract > returns a typed rejection for a hostile throwing proxy generation request 1ms
+ ✓ test/plan-beta-generation.test.ts > plan beta generation contract > rejects an out-of-range recent journal context with a stable code 0ms
+ ✓ test/plan-beta-selection.test.ts > plan beta selection and progress contract > rejects self selection when a coach selection is required 36ms
+ ✓ test/plan-beta-selection.test.ts > plan beta selection and progress contract > creates an immutable active-plan snapshot when the coach selects a candidate 11ms
+ ✓ test/plan-beta-selection.test.ts > plan beta selection and progress contract > rejects projection 7 with an impossible continuity at selection 9ms
+ ✓ test/plan-beta-selection.test.ts > plan beta selection and progress contract > rejects projection 9 with an impossible continuity at selection 1ms
+ ✓ test/plan-beta-selection.test.ts > plan beta selection and progress contract > rejects projection 10 with an impossible continuity at selection 1ms
+ ✓ test/plan-beta-selection.test.ts > plan beta selection and progress contract > records COMPLETED with structured audit only and no reward output 8ms
+ ✓ test/plan-beta-selection.test.ts > plan beta selection and progress contract > records RESTED with structured audit only and no reward output 8ms
+ ✓ test/plan-beta-selection.test.ts > plan beta selection and progress contract > records SKIPPED with structured audit only and no reward output 6ms
+ ✓ test/plan-beta-selection.test.ts > plan beta selection and progress contract > records PAIN_CHECKIN with structured audit only and no reward output 8ms
+ ✓ test/plan-beta-selection.test.ts > plan beta selection and progress contract > rejects a progress record for a slot that the selected plan does not contain 8ms
+ ✓ test/plan-beta-selection.test.ts > plan beta selection and progress contract > records progress for a QUALITY session placed in the PM slot (경로 B 확장 좌표) 0ms
+ ✓ test/plan-beta-selection.test.ts > plan beta selection and progress contract > rejects a progress record for a slot the extended plan does not contain 2ms
+ ✓ test/plan-adaptation-registry.contract.test.ts > versioned adaptation transform registry > contains exactly two active VOLUME edges and inactive unauthorized families 5ms
+ ✓ test/plan-adaptation-registry.contract.test.ts > versioned adaptation transform registry > rejects deleted edge registry mutation 1ms
+ ✓ test/plan-adaptation-registry.contract.test.ts > versioned adaptation transform registry > rejects deactivated edge registry mutation 1ms
+ ✓ test/plan-adaptation-registry.contract.test.ts > versioned adaptation transform registry > rejects exchanged edge IDs registry mutation 1ms
+ ✓ test/plan-adaptation-registry.contract.test.ts > versioned adaptation transform registry > rejects active frequency registry mutation 0ms
+ ✓ test/plan-adaptation-registry.contract.test.ts > versioned adaptation transform registry > rejects active intensity registry mutation 0ms
+ ✓ test/plan-adaptation-registry.contract.test.ts > versioned adaptation transform registry > rejects revoked edge registry mutation 0ms
+ ✓ test/plan-adaptation-registry.contract.test.ts > versioned adaptation transform registry > rejects invented edge expiry registry mutation 1ms
+ ✓ test/plan-adaptation.test.ts > next-frame plan adaptation > rejects a candidate with RPE below one 13ms
+ ✓ test/plan-adaptation.test.ts > next-frame plan adaptation > rejects a candidate with RPE above ten 2ms
+ ✓ test/plan-adaptation.test.ts > next-frame plan adaptation > rejects a candidate with negative duration 2ms
+ ✓ test/plan-adaptation.test.ts > next-frame plan adaptation > rejects a candidate with reversed duration 8ms
+ ✓ test/plan-adaptation.test.ts > next-frame plan adaptation > creates one volume proposal from an explicit athlete request without mutating the base 53ms
+ ✓ test/plan-adaptation.test.ts > next-frame plan adaptation > maps coach-authored requests to coach-required selection 26ms
+ ✓ test/race-placement.contract.test.ts > race placement authority boundary > exposes the complete closed state vocabulary 4ms
+ ✓ test/race-placement.contract.test.ts > race placement authority boundary > keeps 800m H7 on generic no-authority placement without a target race 9ms
+ ✓ test/race-placement.contract.test.ts > race placement authority boundary > keeps 800m H9 on generic no-authority placement without a target race 2ms
+ ✓ test/race-placement.contract.test.ts > race placement authority boundary > keeps 800m H10 on generic no-authority placement without a target race 9ms
+ ✓ test/race-placement.contract.test.ts > race placement authority boundary > keeps 1500m H7 on generic no-authority placement without a target race 2ms
+ ✓ test/race-placement.contract.test.ts > race placement authority boundary > keeps 1500m H9 on generic no-authority placement without a target race 2ms
+ ✓ test/race-placement.contract.test.ts > race placement authority boundary > keeps 1500m H10 on generic no-authority placement without a target race 2ms
+ ✓ test/race-placement.contract.test.ts > race placement authority boundary > keeps 3000m H7 on generic no-authority placement without a target race 2ms
+ ✓ test/race-placement.contract.test.ts > race placement authority boundary > keeps 3000m H9 on generic no-authority placement without a target race 2ms
+ ✓ test/race-placement.contract.test.ts > race placement authority boundary > keeps 3000m H10 on generic no-authority placement without a target race 2ms
+ ✓ test/race-placement.contract.test.ts > race placement authority boundary > keeps 5000m H7 on generic no-authority placement without a target race 2ms
+ ✓ test/race-placement.contract.test.ts > race placement authority boundary > keeps 5000m H9 on generic no-authority placement without a target race 2ms
+ ✓ test/race-placement.contract.test.ts > race placement authority boundary > keeps 5000m H10 on generic no-authority placement without a target race 1ms
+ ✓ test/race-placement.contract.test.ts > race placement authority boundary > rejects caller-supplied placement authority without creating candidates 1ms
+ ✓ test/race-placement.contract.test.ts > race placement authority boundary > labels generic generation with no target race and no numeric taper authority 2ms
+ ✓ test/race-placement.contract.test.ts > race placement authority boundary > keeps a future date in preview memory while retention and placement are unauthorized 4ms
+ ✓ test/race-placement.contract.test.ts > race placement authority boundary > validates a dormant coordinate-only fixture without activating it 30ms
+ ✓ test/race-placement.contract.test.ts > race placement authority boundary > rejects boundary crossing, coordinate loss, fixed-anchor movement, spacing loss, and content change 8ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 800 m, 'NEW_TO_RUNNING', '3 days', 'SINGLE_SESSION_ONLY', projection 7 15ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 800 m, 'NEW_TO_RUNNING', '3 days', 'SINGLE_SESSION_ONLY', projection 9 3ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 800 m, 'NEW_TO_RUNNING', '3 days', 'SINGLE_SESSION_ONLY', projection 10 2ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 800 m, 'NEW_TO_RUNNING', '3 days', 'RECOVERY_PM_ALLOWED', projection 7 5ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 800 m, 'NEW_TO_RUNNING', '3 days', 'RECOVERY_PM_ALLOWED', projection 9 3ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 800 m, 'NEW_TO_RUNNING', '3 days', 'RECOVERY_PM_ALLOWED', projection 10 3ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 800 m, 'NEW_TO_RUNNING', '4 days', 'SINGLE_SESSION_ONLY', projection 7 3ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 800 m, 'NEW_TO_RUNNING', '4 days', 'SINGLE_SESSION_ONLY', projection 9 2ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 800 m, 'NEW_TO_RUNNING', '4 days', 'SINGLE_SESSION_ONLY', projection 10 2ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 800 m, 'NEW_TO_RUNNING', '4 days', 'RECOVERY_PM_ALLOWED', projection 7 3ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 800 m, 'NEW_TO_RUNNING', '4 days', 'RECOVERY_PM_ALLOWED', projection 9 3ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 800 m, 'NEW_TO_RUNNING', '4 days', 'RECOVERY_PM_ALLOWED', projection 10 7ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 800 m, 'NEW_TO_RUNNING', '5 days', 'SINGLE_SESSION_ONLY', projection 7 2ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 800 m, 'NEW_TO_RUNNING', '5 days', 'SINGLE_SESSION_ONLY', projection 9 2ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 800 m, 'NEW_TO_RUNNING', '5 days', 'SINGLE_SESSION_ONLY', projection 10 16ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 800 m, 'NEW_TO_RUNNING', '5 days', 'RECOVERY_PM_ALLOWED', projection 7 3ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 800 m, 'NEW_TO_RUNNING', '5 days', 'RECOVERY_PM_ALLOWED', projection 9 5ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 800 m, 'NEW_TO_RUNNING', '5 days', 'RECOVERY_PM_ALLOWED', projection 10 5ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 800 m, 'NEW_TO_RUNNING', '6 days', 'SINGLE_SESSION_ONLY', projection 7 2ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 800 m, 'NEW_TO_RUNNING', '6 days', 'SINGLE_SESSION_ONLY', projection 9 2ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 800 m, 'NEW_TO_RUNNING', '6 days', 'SINGLE_SESSION_ONLY', projection 10 2ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 800 m, 'NEW_TO_RUNNING', '6 days', 'RECOVERY_PM_ALLOWED', projection 7 2ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 800 m, 'NEW_TO_RUNNING', '6 days', 'RECOVERY_PM_ALLOWED', projection 9 2ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 800 m, 'NEW_TO_RUNNING', '6 days', 'RECOVERY_PM_ALLOWED', projection 10 3ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 800 m, 'NEW_TO_RUNNING', 'every day', 'SINGLE_SESSION_ONLY', projection 7 2ms
+ ✓ test/plan-adaptation.test.ts > next-frame plan adaptation > rejects proposal creation when origin authority disagrees with either candidate 24ms
+ ✓ test/plan-adaptation.test.ts > next-frame plan adaptation > accepts only an explicitly confirmed, current same-event PB/SB 14ms
+ ✓ test/plan-adaptation.test.ts > next-frame plan adaptation > rejects same-day PB evidence achieved before the active plan start timestamp 4ms
+ ✓ test/plan-adaptation.test.ts > next-frame plan adaptation > rejects PB evidence exactly equal to the active plan start timestamp 4ms
+ ✓ test/plan-adaptation.test.ts > next-frame plan adaptation > rejects an exact middle-distance eligibility mismatch 10ms
+ ✓ test/plan-adaptation.test.ts > next-frame plan adaptation > rejects when both legacy caller-controlled event values are changed together 5ms
+ ✓ test/plan-adaptation.test.ts > next-frame plan adaptation > rejects a candidate event mutation that was not regenerated from its profile 14ms
+ ✓ test/plan-adaptation.test.ts > next-frame plan adaptation > blocks D9 ACTIVE with no selectable successor 4ms
+ ✓ test/plan-adaptation.test.ts > next-frame plan adaptation > blocks D9 UNKNOWN with no selectable successor 14ms
+ ✓ test/plan-adaptation.test.ts > next-frame plan adaptation > blocks stale safety with no selectable successor 5ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 800 m, 'NEW_TO_RUNNING', 'every day', 'SINGLE_SESSION_ONLY', projection 9 2ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 800 m, 'NEW_TO_RUNNING', 'every day', 'SINGLE_SESSION_ONLY', projection 10 2ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 800 m, 'NEW_TO_RUNNING', 'every day', 'RECOVERY_PM_ALLOWED', projection 7 3ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 800 m, 'NEW_TO_RUNNING', 'every day', 'RECOVERY_PM_ALLOWED', projection 9 3ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 800 m, 'NEW_TO_RUNNING', 'every day', 'RECOVERY_PM_ALLOWED', projection 10 3ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 800 m, 'DEVELOPING', '3 days', 'SINGLE_SESSION_ONLY', projection 7 2ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 800 m, 'DEVELOPING', '3 days', 'SINGLE_SESSION_ONLY', projection 9 2ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 800 m, 'DEVELOPING', '3 days', 'SINGLE_SESSION_ONLY', projection 10 1ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 800 m, 'DEVELOPING', '3 days', 'RECOVERY_PM_ALLOWED', projection 7 15ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 800 m, 'DEVELOPING', '3 days', 'RECOVERY_PM_ALLOWED', projection 9 2ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 800 m, 'DEVELOPING', '3 days', 'RECOVERY_PM_ALLOWED', projection 10 2ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 800 m, 'DEVELOPING', '4 days', 'SINGLE_SESSION_ONLY', projection 7 1ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 800 m, 'DEVELOPING', '4 days', 'SINGLE_SESSION_ONLY', projection 9 1ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 800 m, 'DEVELOPING', '4 days', 'SINGLE_SESSION_ONLY', projection 10 1ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 800 m, 'DEVELOPING', '4 days', 'RECOVERY_PM_ALLOWED', projection 7 2ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 800 m, 'DEVELOPING', '4 days', 'RECOVERY_PM_ALLOWED', projection 9 2ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 800 m, 'DEVELOPING', '4 days', 'RECOVERY_PM_ALLOWED', projection 10 2ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 800 m, 'DEVELOPING', '5 days', 'SINGLE_SESSION_ONLY', projection 7 1ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 800 m, 'DEVELOPING', '5 days', 'SINGLE_SESSION_ONLY', projection 9 1ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 800 m, 'DEVELOPING', '5 days', 'SINGLE_SESSION_ONLY', projection 10 1ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 800 m, 'DEVELOPING', '5 days', 'RECOVERY_PM_ALLOWED', projection 7 2ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 800 m, 'DEVELOPING', '5 days', 'RECOVERY_PM_ALLOWED', projection 9 2ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 800 m, 'DEVELOPING', '5 days', 'RECOVERY_PM_ALLOWED', projection 10 3ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 800 m, 'DEVELOPING', '6 days', 'SINGLE_SESSION_ONLY', projection 7 4ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 800 m, 'DEVELOPING', '6 days', 'SINGLE_SESSION_ONLY', projection 9 4ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 800 m, 'DEVELOPING', '6 days', 'SINGLE_SESSION_ONLY', projection 10 2ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 800 m, 'DEVELOPING', '6 days', 'RECOVERY_PM_ALLOWED', projection 7 2ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 800 m, 'DEVELOPING', '6 days', 'RECOVERY_PM_ALLOWED', projection 9 2ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 800 m, 'DEVELOPING', '6 days', 'RECOVERY_PM_ALLOWED', projection 10 2ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 800 m, 'DEVELOPING', 'every day', 'SINGLE_SESSION_ONLY', projection 7 2ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 800 m, 'DEVELOPING', 'every day', 'SINGLE_SESSION_ONLY', projection 9 2ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 800 m, 'DEVELOPING', 'every day', 'SINGLE_SESSION_ONLY', projection 10 2ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 800 m, 'DEVELOPING', 'every day', 'RECOVERY_PM_ALLOWED', projection 7 4ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 800 m, 'DEVELOPING', 'every day', 'RECOVERY_PM_ALLOWED', projection 9 4ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 800 m, 'DEVELOPING', 'every day', 'RECOVERY_PM_ALLOWED', projection 10 4ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 800 m, 'EXPERIENCED', '3 days', 'SINGLE_SESSION_ONLY', projection 7 1ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 800 m, 'EXPERIENCED', '3 days', 'SINGLE_SESSION_ONLY', projection 9 1ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 800 m, 'EXPERIENCED', '3 days', 'SINGLE_SESSION_ONLY', projection 10 1ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 800 m, 'EXPERIENCED', '3 days', 'RECOVERY_PM_ALLOWED', projection 7 2ms
+ ✓ test/plan-adaptation-registry.contract.test.ts > versioned adaptation transform registry > binds both sibling-only VOLUME directions to registry and provenance 115ms
+ ✓ test/plan-adaptation.test.ts > next-frame plan adaptation > blocks active hold with no selectable successor 5ms
+ ✓ test/plan-adaptation.test.ts > next-frame plan adaptation > rejects unsupported, cross-event, stale-base, no-op and multi-dimension requests 30ms
+ ✓ test/plan-adaptation.test.ts > next-frame plan adaptation > rejects malformed provenance and raw private keys 12ms
+ ✓ test/plan-adaptation.test.ts > next-frame plan adaptation > rejects raw prose in the idempotency key 10ms
+ ✓ test/plan-adaptation.test.ts > next-frame plan adaptation > rejects raw prose in the athlete identity 2ms
+ ✓ test/plan-adaptation.test.ts > next-frame plan adaptation > rejects raw prose in the explicit request source 7ms
+ ✓ test/plan-adaptation.test.ts > next-frame plan adaptation > rejects raw prose in PB/SB record identity and source reference: raw symptom: chest pain after training 4ms
+ ✓ test/plan-adaptation.test.ts > next-frame plan adaptation > rejects raw prose in PB/SB record identity and source reference: raw_symptom_chest_pain_after_training 8ms
+ ✓ test/plan-adaptation.test.ts > next-frame plan adaptation > rejects raw prose in PB/SB record identity and source reference: raw-symptom-chest-pain-after-training 4ms
+ ✓ test/plan-adaptation.test.ts > next-frame plan adaptation > rejects raw prose smuggled through serialized candidate references 11ms
+ ✓ test/plan-adaptation.test.ts > next-frame plan adaptation > rejects raw prose smuggled through a candidate identity 10ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 800 m, 'EXPERIENCED', '3 days', 'RECOVERY_PM_ALLOWED', projection 9 8ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 800 m, 'EXPERIENCED', '3 days', 'RECOVERY_PM_ALLOWED', projection 10 2ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 800 m, 'EXPERIENCED', '4 days', 'SINGLE_SESSION_ONLY', projection 7 1ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 800 m, 'EXPERIENCED', '4 days', 'SINGLE_SESSION_ONLY', projection 9 2ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 800 m, 'EXPERIENCED', '4 days', 'SINGLE_SESSION_ONLY', projection 10 2ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 800 m, 'EXPERIENCED', '4 days', 'RECOVERY_PM_ALLOWED', projection 7 2ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 800 m, 'EXPERIENCED', '4 days', 'RECOVERY_PM_ALLOWED', projection 9 2ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 800 m, 'EXPERIENCED', '4 days', 'RECOVERY_PM_ALLOWED', projection 10 10ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 800 m, 'EXPERIENCED', '5 days', 'SINGLE_SESSION_ONLY', projection 7 6ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 800 m, 'EXPERIENCED', '5 days', 'SINGLE_SESSION_ONLY', projection 9 1ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 800 m, 'EXPERIENCED', '5 days', 'SINGLE_SESSION_ONLY', projection 10 1ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 800 m, 'EXPERIENCED', '5 days', 'RECOVERY_PM_ALLOWED', projection 7 2ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 800 m, 'EXPERIENCED', '5 days', 'RECOVERY_PM_ALLOWED', projection 9 2ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 800 m, 'EXPERIENCED', '5 days', 'RECOVERY_PM_ALLOWED', projection 10 3ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 800 m, 'EXPERIENCED', '6 days', 'SINGLE_SESSION_ONLY', projection 7 2ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 800 m, 'EXPERIENCED', '6 days', 'SINGLE_SESSION_ONLY', projection 9 2ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 800 m, 'EXPERIENCED', '6 days', 'SINGLE_SESSION_ONLY', projection 10 2ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 800 m, 'EXPERIENCED', '6 days', 'RECOVERY_PM_ALLOWED', projection 7 2ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 800 m, 'EXPERIENCED', '6 days', 'RECOVERY_PM_ALLOWED', projection 9 3ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 800 m, 'EXPERIENCED', '6 days', 'RECOVERY_PM_ALLOWED', projection 10 3ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 800 m, 'EXPERIENCED', 'every day', 'SINGLE_SESSION_ONLY', projection 7 2ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 800 m, 'EXPERIENCED', 'every day', 'SINGLE_SESSION_ONLY', projection 9 2ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 800 m, 'EXPERIENCED', 'every day', 'SINGLE_SESSION_ONLY', projection 10 2ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 800 m, 'EXPERIENCED', 'every day', 'RECOVERY_PM_ALLOWED', projection 7 3ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 800 m, 'EXPERIENCED', 'every day', 'RECOVERY_PM_ALLOWED', projection 9 3ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 800 m, 'EXPERIENCED', 'every day', 'RECOVERY_PM_ALLOWED', projection 10 3ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 1500 m, 'NEW_TO_RUNNING', '3 days', 'SINGLE_SESSION_ONLY', projection 7 1ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 1500 m, 'NEW_TO_RUNNING', '3 days', 'SINGLE_SESSION_ONLY', projection 9 1ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 1500 m, 'NEW_TO_RUNNING', '3 days', 'SINGLE_SESSION_ONLY', projection 10 1ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 1500 m, 'NEW_TO_RUNNING', '3 days', 'RECOVERY_PM_ALLOWED', projection 7 6ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 1500 m, 'NEW_TO_RUNNING', '3 days', 'RECOVERY_PM_ALLOWED', projection 9 2ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 1500 m, 'NEW_TO_RUNNING', '3 days', 'RECOVERY_PM_ALLOWED', projection 10 2ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 1500 m, 'NEW_TO_RUNNING', '4 days', 'SINGLE_SESSION_ONLY', projection 7 1ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 1500 m, 'NEW_TO_RUNNING', '4 days', 'SINGLE_SESSION_ONLY', projection 9 1ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 1500 m, 'NEW_TO_RUNNING', '4 days', 'SINGLE_SESSION_ONLY', projection 10 2ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 1500 m, 'NEW_TO_RUNNING', '4 days', 'RECOVERY_PM_ALLOWED', projection 7 3ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 1500 m, 'NEW_TO_RUNNING', '4 days', 'RECOVERY_PM_ALLOWED', projection 9 2ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 1500 m, 'NEW_TO_RUNNING', '4 days', 'RECOVERY_PM_ALLOWED', projection 10 2ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 1500 m, 'NEW_TO_RUNNING', '5 days', 'SINGLE_SESSION_ONLY', projection 7 2ms
+ ✓ test/plan-adaptation-registry.contract.test.ts > versioned adaptation transform registry > rejects registry metadata mutation even after recomputing the outer hash 262ms
+ ✓ test/plan-adaptation-registry.contract.test.ts > versioned adaptation transform registry > does not use a PB/SB trigger for the reduction compatibility edge 18ms
+ ✓ test/plan-adaptation.test.ts > next-frame plan adaptation > rejects a rehashed RPE-only candidate with a raw detailed fingerprint suffix 21ms
+ ✓ test/plan-adaptation.test.ts > next-frame plan adaptation > rejects a raw safety reason code without serializing it 4ms
+ ✓ test/plan-adaptation.test.ts > next-frame plan adaptation > rejects a safety reason-code array with an extra enumerable string property 2ms
+ ✓ test/plan-adaptation.test.ts > next-frame plan adaptation > rejects a safety reason-code array with an extra enumerable symbol property 2ms
+ ✓ test/plan-adaptation.test.ts > next-frame plan adaptation > rejects a candidate rationale-code array with an extra enumerable property 2ms
+ ✓ test/plan-adaptation.test.ts > next-frame plan adaptation > rejects non-canonical plain-JSON request enumerable symbol input without returning raw text 2ms
+ ✓ test/plan-adaptation.test.ts > next-frame plan adaptation > rejects non-canonical plain-JSON request non-enumerable symbol input without returning raw text 2ms
+ ✓ test/plan-adaptation.test.ts > next-frame plan adaptation > rejects non-canonical plain-JSON request non-enumerable string input without returning raw text 1ms
+ ✓ test/plan-adaptation.test.ts > next-frame plan adaptation > rejects non-canonical plain-JSON request accessor input without returning raw text 4ms
+ ✓ test/plan-adaptation.test.ts > next-frame plan adaptation > rejects non-canonical plain-JSON request custom prototype input without returning raw text 2ms
+ ✓ test/plan-adaptation.test.ts > next-frame plan adaptation > rejects non-canonical plain-JSON candidate enumerable symbol input without returning raw text 2ms
+ ✓ test/plan-adaptation.test.ts > next-frame plan adaptation > rejects non-canonical plain-JSON candidate non-enumerable string input without returning raw text 6ms
+ ✓ test/plan-adaptation.test.ts > next-frame plan adaptation > rejects non-canonical plain-JSON session enumerable symbol input without returning raw text 5ms
+ ✓ test/plan-adaptation.test.ts > next-frame plan adaptation > rejects non-canonical plain-JSON safety enumerable symbol input without returning raw text 3ms
+ ✓ test/plan-adaptation.test.ts > next-frame plan adaptation > rejects non-canonical plain-JSON hidden cycle input without returning raw text 5ms
+ ✓ test/plan-adaptation.test.ts > next-frame plan adaptation > rejects non-canonical plain-JSON Date input without returning raw text 5ms
+ ✓ test/plan-adaptation.test.ts > next-frame plan adaptation > rejects non-canonical plain-JSON Map input without returning raw text 3ms
+ ✓ test/plan-adaptation.test.ts > next-frame plan adaptation > does not verify a proposal carrying a non-canonical enumerable symbol 21ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 1500 m, 'NEW_TO_RUNNING', '5 days', 'SINGLE_SESSION_ONLY', projection 9 2ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 1500 m, 'NEW_TO_RUNNING', '5 days', 'SINGLE_SESSION_ONLY', projection 10 2ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 1500 m, 'NEW_TO_RUNNING', '5 days', 'RECOVERY_PM_ALLOWED', projection 7 16ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 1500 m, 'NEW_TO_RUNNING', '5 days', 'RECOVERY_PM_ALLOWED', projection 9 2ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 1500 m, 'NEW_TO_RUNNING', '5 days', 'RECOVERY_PM_ALLOWED', projection 10 2ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 1500 m, 'NEW_TO_RUNNING', '6 days', 'SINGLE_SESSION_ONLY', projection 7 2ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 1500 m, 'NEW_TO_RUNNING', '6 days', 'SINGLE_SESSION_ONLY', projection 9 2ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 1500 m, 'NEW_TO_RUNNING', '6 days', 'SINGLE_SESSION_ONLY', projection 10 6ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 1500 m, 'NEW_TO_RUNNING', '6 days', 'RECOVERY_PM_ALLOWED', projection 7 2ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 1500 m, 'NEW_TO_RUNNING', '6 days', 'RECOVERY_PM_ALLOWED', projection 9 2ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 1500 m, 'NEW_TO_RUNNING', '6 days', 'RECOVERY_PM_ALLOWED', projection 10 2ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 1500 m, 'NEW_TO_RUNNING', 'every day', 'SINGLE_SESSION_ONLY', projection 7 2ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 1500 m, 'NEW_TO_RUNNING', 'every day', 'SINGLE_SESSION_ONLY', projection 9 2ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 1500 m, 'NEW_TO_RUNNING', 'every day', 'SINGLE_SESSION_ONLY', projection 10 2ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 1500 m, 'NEW_TO_RUNNING', 'every day', 'RECOVERY_PM_ALLOWED', projection 7 3ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 1500 m, 'NEW_TO_RUNNING', 'every day', 'RECOVERY_PM_ALLOWED', projection 9 4ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 1500 m, 'NEW_TO_RUNNING', 'every day', 'RECOVERY_PM_ALLOWED', projection 10 5ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 1500 m, 'DEVELOPING', '3 days', 'SINGLE_SESSION_ONLY', projection 7 1ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 1500 m, 'DEVELOPING', '3 days', 'SINGLE_SESSION_ONLY', projection 9 1ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 1500 m, 'DEVELOPING', '3 days', 'SINGLE_SESSION_ONLY', projection 10 1ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 1500 m, 'DEVELOPING', '3 days', 'RECOVERY_PM_ALLOWED', projection 7 2ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 1500 m, 'DEVELOPING', '3 days', 'RECOVERY_PM_ALLOWED', projection 9 2ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 1500 m, 'DEVELOPING', '3 days', 'RECOVERY_PM_ALLOWED', projection 10 2ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 1500 m, 'DEVELOPING', '4 days', 'SINGLE_SESSION_ONLY', projection 7 2ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 1500 m, 'DEVELOPING', '4 days', 'SINGLE_SESSION_ONLY', projection 9 1ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 1500 m, 'DEVELOPING', '4 days', 'SINGLE_SESSION_ONLY', projection 10 1ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 1500 m, 'DEVELOPING', '4 days', 'RECOVERY_PM_ALLOWED', projection 7 2ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 1500 m, 'DEVELOPING', '4 days', 'RECOVERY_PM_ALLOWED', projection 9 2ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 1500 m, 'DEVELOPING', '4 days', 'RECOVERY_PM_ALLOWED', projection 10 2ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 1500 m, 'DEVELOPING', '5 days', 'SINGLE_SESSION_ONLY', projection 7 4ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 1500 m, 'DEVELOPING', '5 days', 'SINGLE_SESSION_ONLY', projection 9 1ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 1500 m, 'DEVELOPING', '5 days', 'SINGLE_SESSION_ONLY', projection 10 1ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 1500 m, 'DEVELOPING', '5 days', 'RECOVERY_PM_ALLOWED', projection 7 2ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 1500 m, 'DEVELOPING', '5 days', 'RECOVERY_PM_ALLOWED', projection 9 2ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 1500 m, 'DEVELOPING', '5 days', 'RECOVERY_PM_ALLOWED', projection 10 2ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 1500 m, 'DEVELOPING', '6 days', 'SINGLE_SESSION_ONLY', projection 7 1ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 1500 m, 'DEVELOPING', '6 days', 'SINGLE_SESSION_ONLY', projection 9 2ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 1500 m, 'DEVELOPING', '6 days', 'SINGLE_SESSION_ONLY', projection 10 2ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 1500 m, 'DEVELOPING', '6 days', 'RECOVERY_PM_ALLOWED', projection 7 4ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 1500 m, 'DEVELOPING', '6 days', 'RECOVERY_PM_ALLOWED', projection 9 2ms
+ ✓ test/plan-adaptation.test.ts > next-frame plan adaptation > does not verify a proposal carrying a non-canonical non-enumerable symbol 10ms
+ ✓ test/plan-adaptation.test.ts > next-frame plan adaptation > does not verify a proposal carrying a non-canonical non-enumerable string 8ms
+ ✓ test/plan-adaptation.test.ts > next-frame plan adaptation > does not verify a proposal carrying a non-canonical accessor 26ms
+ ✓ test/plan-adaptation.test.ts > next-frame plan adaptation > does not verify a proposal carrying a non-canonical custom prototype 10ms
+ ✓ test/plan-adaptation.test.ts > next-frame plan adaptation > does not verify a proposal carrying a non-canonical hidden cycle 14ms
+ ✓ test/plan-adaptation.test.ts > next-frame plan adaptation > rejects raw audit event at the adaptation safety gate boundary 6ms
+ ✓ test/plan-adaptation.test.ts > next-frame plan adaptation > rejects raw audit privacy at the adaptation safety gate boundary 4ms
+ ✓ test/plan-adaptation.test.ts > next-frame plan adaptation > rejects extra audit evidence text at the adaptation safety gate boundary 6ms
+ ✓ test/plan-adaptation.test.ts > next-frame plan adaptation > rejects raw passed action at the adaptation safety gate boundary 5ms
+ ✓ test/plan-adaptation.test.ts > next-frame plan adaptation > rejects passed action inconsistent with status at the adaptation safety gate boundary 7ms
+ ✓ test/plan-adaptation.test.ts > next-frame plan adaptation > rejects blocked action inconsistent with required next action at the adaptation safety gate boundary 4ms
+ ✓ test/plan-adaptation.test.ts > next-frame plan adaptation > rejects unknown gate key at the adaptation safety gate boundary 5ms
+ ✓ test/plan-adaptation.test.ts > next-frame plan adaptation > rejects ignored status key at the adaptation safety gate boundary 5ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 1500 m, 'DEVELOPING', '6 days', 'RECOVERY_PM_ALLOWED', projection 10 4ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 1500 m, 'DEVELOPING', 'every day', 'SINGLE_SESSION_ONLY', projection 7 3ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 1500 m, 'DEVELOPING', 'every day', 'SINGLE_SESSION_ONLY', projection 9 2ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 1500 m, 'DEVELOPING', 'every day', 'SINGLE_SESSION_ONLY', projection 10 2ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 1500 m, 'DEVELOPING', 'every day', 'RECOVERY_PM_ALLOWED', projection 7 3ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 1500 m, 'DEVELOPING', 'every day', 'RECOVERY_PM_ALLOWED', projection 9 3ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 1500 m, 'DEVELOPING', 'every day', 'RECOVERY_PM_ALLOWED', projection 10 3ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 1500 m, 'EXPERIENCED', '3 days', 'SINGLE_SESSION_ONLY', projection 7 2ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 1500 m, 'EXPERIENCED', '3 days', 'SINGLE_SESSION_ONLY', projection 9 1ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 1500 m, 'EXPERIENCED', '3 days', 'SINGLE_SESSION_ONLY', projection 10 1ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 1500 m, 'EXPERIENCED', '3 days', 'RECOVERY_PM_ALLOWED', projection 7 2ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 1500 m, 'EXPERIENCED', '3 days', 'RECOVERY_PM_ALLOWED', projection 9 2ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 1500 m, 'EXPERIENCED', '3 days', 'RECOVERY_PM_ALLOWED', projection 10 2ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 1500 m, 'EXPERIENCED', '4 days', 'SINGLE_SESSION_ONLY', projection 7 2ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 1500 m, 'EXPERIENCED', '4 days', 'SINGLE_SESSION_ONLY', projection 9 1ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 1500 m, 'EXPERIENCED', '4 days', 'SINGLE_SESSION_ONLY', projection 10 1ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 1500 m, 'EXPERIENCED', '4 days', 'RECOVERY_PM_ALLOWED', projection 7 2ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 1500 m, 'EXPERIENCED', '4 days', 'RECOVERY_PM_ALLOWED', projection 9 2ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 1500 m, 'EXPERIENCED', '4 days', 'RECOVERY_PM_ALLOWED', projection 10 3ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 1500 m, 'EXPERIENCED', '5 days', 'SINGLE_SESSION_ONLY', projection 7 2ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 1500 m, 'EXPERIENCED', '5 days', 'SINGLE_SESSION_ONLY', projection 9 2ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 1500 m, 'EXPERIENCED', '5 days', 'SINGLE_SESSION_ONLY', projection 10 2ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 1500 m, 'EXPERIENCED', '5 days', 'RECOVERY_PM_ALLOWED', projection 7 3ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 1500 m, 'EXPERIENCED', '5 days', 'RECOVERY_PM_ALLOWED', projection 9 2ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 1500 m, 'EXPERIENCED', '5 days', 'RECOVERY_PM_ALLOWED', projection 10 2ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 1500 m, 'EXPERIENCED', '6 days', 'SINGLE_SESSION_ONLY', projection 7 1ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 1500 m, 'EXPERIENCED', '6 days', 'SINGLE_SESSION_ONLY', projection 9 2ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 1500 m, 'EXPERIENCED', '6 days', 'SINGLE_SESSION_ONLY', projection 10 2ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 1500 m, 'EXPERIENCED', '6 days', 'RECOVERY_PM_ALLOWED', projection 7 2ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 1500 m, 'EXPERIENCED', '6 days', 'RECOVERY_PM_ALLOWED', projection 9 2ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 1500 m, 'EXPERIENCED', '6 days', 'RECOVERY_PM_ALLOWED', projection 10 3ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 1500 m, 'EXPERIENCED', 'every day', 'SINGLE_SESSION_ONLY', projection 7 4ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 1500 m, 'EXPERIENCED', 'every day', 'SINGLE_SESSION_ONLY', projection 9 2ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 1500 m, 'EXPERIENCED', 'every day', 'SINGLE_SESSION_ONLY', projection 10 2ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 1500 m, 'EXPERIENCED', 'every day', 'RECOVERY_PM_ALLOWED', projection 7 3ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 1500 m, 'EXPERIENCED', 'every day', 'RECOVERY_PM_ALLOWED', projection 9 4ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 1500 m, 'EXPERIENCED', 'every day', 'RECOVERY_PM_ALLOWED', projection 10 3ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 3000 m, 'NEW_TO_RUNNING', '3 days', 'SINGLE_SESSION_ONLY', projection 7 6ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 3000 m, 'NEW_TO_RUNNING', '3 days', 'SINGLE_SESSION_ONLY', projection 9 2ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 3000 m, 'NEW_TO_RUNNING', '3 days', 'SINGLE_SESSION_ONLY', projection 10 1ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 3000 m, 'NEW_TO_RUNNING', '3 days', 'RECOVERY_PM_ALLOWED', projection 7 2ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 3000 m, 'NEW_TO_RUNNING', '3 days', 'RECOVERY_PM_ALLOWED', projection 9 1ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 3000 m, 'NEW_TO_RUNNING', '3 days', 'RECOVERY_PM_ALLOWED', projection 10 2ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 3000 m, 'NEW_TO_RUNNING', '4 days', 'SINGLE_SESSION_ONLY', projection 7 1ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 3000 m, 'NEW_TO_RUNNING', '4 days', 'SINGLE_SESSION_ONLY', projection 9 1ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 3000 m, 'NEW_TO_RUNNING', '4 days', 'SINGLE_SESSION_ONLY', projection 10 1ms
+ ✓ test/prescription-pace.test.ts > same-event race-pace calculation > calculates a 400m target from an explicitly selected current 5000m anchor 5ms
+ ✓ test/prescription-pace.test.ts > same-event race-pace calculation > rejects a different-event anchor instead of converting across events 1ms
+ ✓ test/prescription-pace.test.ts > same-event race-pace calculation > rejects a GOAL anchor as current capability 1ms
+ ✓ test/prescription-pace.test.ts > same-event race-pace calculation > rejects a stale PB instead of treating it as current capability 0ms
+ ✓ test/prescription-pace.test.ts > same-event race-pace calculation > rejects an SB without its season provenance 0ms
+ ✓ test/prescription-pace.test.ts > same-event race-pace calculation > rejects a 59m same-event anchor as sprint pace 1ms
+ ✓ test/prescription-pace.test.ts > same-event race-pace calculation > calculates a 60m same-event anchor without sprint rejection 1ms
+ ✓ test/prescription-pace.test.ts > same-event race-pace calculation > rejects 30m sprint race-pace conversion 0ms
+ ✓ test/plan-adaptation.test.ts > next-frame plan adaptation > rejects ignored disposition key at the adaptation safety gate boundary 4ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 3000 m, 'NEW_TO_RUNNING', '4 days', 'RECOVERY_PM_ALLOWED', projection 7 2ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 3000 m, 'NEW_TO_RUNNING', '4 days', 'RECOVERY_PM_ALLOWED', projection 9 2ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 3000 m, 'NEW_TO_RUNNING', '4 days', 'RECOVERY_PM_ALLOWED', projection 10 2ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 3000 m, 'NEW_TO_RUNNING', '5 days', 'SINGLE_SESSION_ONLY', projection 7 1ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 3000 m, 'NEW_TO_RUNNING', '5 days', 'SINGLE_SESSION_ONLY', projection 9 4ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 3000 m, 'NEW_TO_RUNNING', '5 days', 'SINGLE_SESSION_ONLY', projection 10 2ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 3000 m, 'NEW_TO_RUNNING', '5 days', 'RECOVERY_PM_ALLOWED', projection 7 4ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 3000 m, 'NEW_TO_RUNNING', '5 days', 'RECOVERY_PM_ALLOWED', projection 9 2ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 3000 m, 'NEW_TO_RUNNING', '5 days', 'RECOVERY_PM_ALLOWED', projection 10 2ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 3000 m, 'NEW_TO_RUNNING', '6 days', 'SINGLE_SESSION_ONLY', projection 7 2ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 3000 m, 'NEW_TO_RUNNING', '6 days', 'SINGLE_SESSION_ONLY', projection 9 1ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 3000 m, 'NEW_TO_RUNNING', '6 days', 'SINGLE_SESSION_ONLY', projection 10 2ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 3000 m, 'NEW_TO_RUNNING', '6 days', 'RECOVERY_PM_ALLOWED', projection 7 2ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 3000 m, 'NEW_TO_RUNNING', '6 days', 'RECOVERY_PM_ALLOWED', projection 9 2ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 3000 m, 'NEW_TO_RUNNING', '6 days', 'RECOVERY_PM_ALLOWED', projection 10 2ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 3000 m, 'NEW_TO_RUNNING', 'every day', 'SINGLE_SESSION_ONLY', projection 7 2ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 3000 m, 'NEW_TO_RUNNING', 'every day', 'SINGLE_SESSION_ONLY', projection 9 2ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 3000 m, 'NEW_TO_RUNNING', 'every day', 'SINGLE_SESSION_ONLY', projection 10 2ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 3000 m, 'NEW_TO_RUNNING', 'every day', 'RECOVERY_PM_ALLOWED', projection 7 6ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 3000 m, 'NEW_TO_RUNNING', 'every day', 'RECOVERY_PM_ALLOWED', projection 9 2ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 3000 m, 'NEW_TO_RUNNING', 'every day', 'RECOVERY_PM_ALLOWED', projection 10 4ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 3000 m, 'DEVELOPING', '3 days', 'SINGLE_SESSION_ONLY', projection 7 1ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 3000 m, 'DEVELOPING', '3 days', 'SINGLE_SESSION_ONLY', projection 9 1ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 3000 m, 'DEVELOPING', '3 days', 'SINGLE_SESSION_ONLY', projection 10 1ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 3000 m, 'DEVELOPING', '3 days', 'RECOVERY_PM_ALLOWED', projection 7 2ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 3000 m, 'DEVELOPING', '3 days', 'RECOVERY_PM_ALLOWED', projection 9 2ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 3000 m, 'DEVELOPING', '3 days', 'RECOVERY_PM_ALLOWED', projection 10 2ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 3000 m, 'DEVELOPING', '4 days', 'SINGLE_SESSION_ONLY', projection 7 1ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 3000 m, 'DEVELOPING', '4 days', 'SINGLE_SESSION_ONLY', projection 9 1ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 3000 m, 'DEVELOPING', '4 days', 'SINGLE_SESSION_ONLY', projection 10 1ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 3000 m, 'DEVELOPING', '4 days', 'RECOVERY_PM_ALLOWED', projection 7 2ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 3000 m, 'DEVELOPING', '4 days', 'RECOVERY_PM_ALLOWED', projection 9 2ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 3000 m, 'DEVELOPING', '4 days', 'RECOVERY_PM_ALLOWED', projection 10 2ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 3000 m, 'DEVELOPING', '5 days', 'SINGLE_SESSION_ONLY', projection 7 1ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 3000 m, 'DEVELOPING', '5 days', 'SINGLE_SESSION_ONLY', projection 9 2ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 3000 m, 'DEVELOPING', '5 days', 'SINGLE_SESSION_ONLY', projection 10 1ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 3000 m, 'DEVELOPING', '5 days', 'RECOVERY_PM_ALLOWED', projection 7 2ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 3000 m, 'DEVELOPING', '5 days', 'RECOVERY_PM_ALLOWED', projection 9 2ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 3000 m, 'DEVELOPING', '5 days', 'RECOVERY_PM_ALLOWED', projection 10 2ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 3000 m, 'DEVELOPING', '6 days', 'SINGLE_SESSION_ONLY', projection 7 1ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 3000 m, 'DEVELOPING', '6 days', 'SINGLE_SESSION_ONLY', projection 9 1ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 3000 m, 'DEVELOPING', '6 days', 'SINGLE_SESSION_ONLY', projection 10 1ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 3000 m, 'DEVELOPING', '6 days', 'RECOVERY_PM_ALLOWED', projection 7 2ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 3000 m, 'DEVELOPING', '6 days', 'RECOVERY_PM_ALLOWED', projection 9 3ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 3000 m, 'DEVELOPING', '6 days', 'RECOVERY_PM_ALLOWED', projection 10 2ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 3000 m, 'DEVELOPING', 'every day', 'SINGLE_SESSION_ONLY', projection 7 2ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 3000 m, 'DEVELOPING', 'every day', 'SINGLE_SESSION_ONLY', projection 9 2ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 3000 m, 'DEVELOPING', 'every day', 'SINGLE_SESSION_ONLY', projection 10 2ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 3000 m, 'DEVELOPING', 'every day', 'RECOVERY_PM_ALLOWED', projection 7 3ms
+ ✓ test/prescription-notation.test.ts > prescription notation > rejects timed recovery without an explicit mode: 5×1000m @5000m RP · r150″ 4ms
+ ✓ test/prescription-notation.test.ts > prescription notation > rejects timed recovery without an explicit mode: 2×(10×400m) @5000m RP · r60″ STAND · R3′ 1ms
+ ✓ test/prescription-notation.test.ts > prescription notation > parses the owner fixture into its exact structured work and recovery fields 1ms
+ ✓ test/prescription-notation.test.ts > prescription notation > formats parsed notation canonically without changing its meaning 1ms
+ ✓ test/prescription-notation.test.ts > prescription notation > preserves the explicitly written repetition recovery mode WALK 1ms
+ ✓ test/prescription-notation.test.ts > prescription notation > preserves the explicitly written repetition recovery mode JOG 0ms
+ ✓ test/prescription-notation.test.ts > prescription notation > preserves the explicitly written repetition recovery mode STAND 0ms
+ ✓ test/prescription-notation.test.ts > prescription notation > rejects an unknown recovery mode 1ms
+ ✓ test/prescription-notation.test.ts > prescription notation > counts repetitions, work distance, and both recovery layers without double counting 1ms
+ ✓ test/prescription-notation.test.ts > prescription notation > rejects malformed or structurally inconsistent notation: 0×(10×400m) @5000m RP · r60″ · R3′ 1ms
+ ✓ test/prescription-notation.test.ts > prescription notation > rejects malformed or structurally inconsistent notation: 2×(10×0m) @5000m RP · r60″ · R3′ 0ms
+ ✓ test/prescription-notation.test.ts > prescription notation > rejects malformed or structurally inconsistent notation: 2×(10×400m) @5000m RP · r60 · R3′ 0ms
+ ✓ test/prescription-notation.test.ts > prescription notation > rejects malformed or structurally inconsistent notation: 2×(10×400m) @5000m RP · R60″ · r3′ 0ms
+ ✓ test/prescription-notation.test.ts > prescription notation > rejects malformed or structurally inconsistent notation: 2×(10×400m @5000m RP · r60″ · R3′ 0ms
+ ✓ test/prescription-notation.test.ts > prescription notation > rejects malformed or structurally inconsistent notation: 2×(10×400m) @5000m RP · r60″ 0ms
+ ✓ test/prescription-notation.test.ts > prescription notation > accepts a keyboard-typable alias and yields the owner fixture exactly: 곱셈 x 0ms
+ ✓ test/prescription-notation.test.ts > prescription notation > accepts a keyboard-typable alias and yields the owner fixture exactly: 곱셈 X 0ms
+ ✓ test/prescription-notation.test.ts > prescription notation > accepts a keyboard-typable alias and yields the owner fixture exactly: 곱셈 * 0ms
+ ✓ test/prescription-notation.test.ts > prescription notation > accepts a keyboard-typable alias and yields the owner fixture exactly: ASCII 따옴표 1ms
+ ✓ test/prescription-notation.test.ts > prescription notation > accepts a keyboard-typable alias and yields the owner fixture exactly: 자동 교정 둥근 따옴표 0ms
+ ✓ test/prescription-notation.test.ts > prescription notation > does not let alias normalization invent a structure that was never typed 0ms
+ ✓ test/contract.test.ts > D9 -> RVE -> Safety Gate contract slice > maps ACTIVE to RVE ACTIVE and blocks plan generation 9ms
+ ✓ test/contract.test.ts > D9 -> RVE -> Safety Gate contract slice > maps UNKNOWN to human review and prevents plan generation 3ms
+ ✓ test/contract.test.ts > D9 -> RVE -> Safety Gate contract slice > maps CLEARED advisory to non-blocking CLEARED with reason codes preserved 2ms
+ ✓ test/contract.test.ts > D9 -> RVE -> Safety Gate contract slice > fails closed for a hostile changing reason-code getter 1ms
+ ✓ test/contract.test.ts > D9 -> RVE -> Safety Gate contract slice > fails closed for a sparse reasonCodes array 0ms
+ ✓ test/contract.test.ts > D9 -> RVE -> Safety Gate contract slice > fails closed for a sparse evidence array 0ms
+ ✓ test/contract.test.ts > D9 -> RVE -> Safety Gate contract slice > fails closed for a sparse evidence.matchedBy array 0ms
+ ✓ test/contract.test.ts > D9 -> RVE -> Safety Gate contract slice > rejects non-index array properties and returns clean reason codes 1ms
+ ✓ test/contract.test.ts > D9 -> RVE -> Safety Gate contract slice > fails closed when an evaluator getter throws 0ms
+ ✓ test/contract.test.ts > D9 -> RVE -> Safety Gate contract slice > fails closed when an evaluator proxy throws 0ms
+ ✓ test/contract.test.ts > D9 -> RVE -> Safety Gate contract slice > fails closed for CLEARED with ACTIVE evidence 0ms
+ ✓ test/contract.test.ts > D9 -> RVE -> Safety Gate contract slice > fails closed for CLEARED with UNKNOWN evidence 0ms
+ ✓ test/contract.test.ts > D9 -> RVE -> Safety Gate contract slice > fails closed for UNKNOWN with ACTIVE evidence 0ms
+ ✓ test/contract.test.ts > D9 -> RVE -> Safety Gate contract slice > fails closed for ordinary CLEARED carrying advisory evidence 0ms
+ ✓ test/contract.test.ts > D9 -> RVE -> Safety Gate contract slice > fails closed for advisory CLEARED missing advisory evidence 0ms
+ ✓ test/contract.test.ts > D9 -> RVE -> Safety Gate contract slice > rejects an arbitrary evaluator reason code without returning memo text 0ms
+ ✓ test/contract.test.ts > D9 -> RVE -> Safety Gate contract slice > fails safe to UNKNOWN when evaluator failure is timeout 0ms
+ ✓ test/contract.test.ts > D9 -> RVE -> Safety Gate contract slice > fails safe to UNKNOWN when evaluator failure is exception 0ms
+ ✓ test/contract.test.ts > D9 -> RVE -> Safety Gate contract slice > fails safe to UNKNOWN when evaluator failure is stale_version 0ms
+ ✓ test/contract.test.ts > D9 -> RVE -> Safety Gate contract slice > does not include raw athlete text in RVE signal, Safety Gate output, or audit object 1ms
+ ✓ test/exposure-ledger.contract.test.ts > typed MAIN exposure ledger > counts a composite parent once while retaining every component 5ms
+ ✓ test/exposure-ledger.contract.test.ts > typed MAIN exposure ledger > counts every competition day once but returns review for a planned MAIN collision 1ms
+ ✓ test/exposure-ledger.contract.test.ts > typed MAIN exposure ledger > counts separate competition records on one local day as one MAIN exposure 1ms
+ ✓ test/exposure-ledger.contract.test.ts > typed MAIN exposure ledger > fails closed for a dangling composite leaf 0ms
+ ✓ test/exposure-ledger.contract.test.ts > typed MAIN exposure ledger > does not infer MAIN from omitted or generic QUALITY-like detail 0ms
+ ✓ test/plan-beta-continuity.test.ts > plan beta continuity context > retains aggregate previous-frame context for a canonical successor without progression 22ms
+ ✓ test/plan-beta-continuity.test.ts > plan beta continuity context > rejects unordered progress-state aggregates without processing them 1ms
+ ✓ test/prescription-goal-pace.test.ts > display-only goal race-pace calculation > calculates 210 seconds from a same-event 1050-second goal 3ms
+ ✓ test/prescription-goal-pace.test.ts > display-only goal race-pace calculation > rejects invalid runtime enteredBy provenance 0ms
+ ✓ test/prescription-goal-pace.test.ts > display-only goal race-pace calculation > rejects invalid runtime verificationState provenance 0ms
+ ✓ test/prescription-goal-pace.test.ts > display-only goal race-pace calculation > rejects invalid runtime freshnessState provenance 0ms
+ ✓ test/prescription-goal-pace.test.ts > display-only goal race-pace calculation > rejects incomplete provenance 0ms
+ ✓ test/prescription-goal-pace.test.ts > display-only goal race-pace calculation > rejects cross-event conversion 0ms
+ ✓ test/catalog-machine-notation.contract.test.ts > catalog machine notation > preserves V2-SEED-05 work and recovery semantics when its parser-ready notation is parsed 3ms
+ ✓ test/plan-adaptation.test.ts > next-frame plan adaptation > accepts every closed safety reason code and an empty reason list 208ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 3000 m, 'DEVELOPING', 'every day', 'RECOVERY_PM_ALLOWED', projection 9 3ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 3000 m, 'DEVELOPING', 'every day', 'RECOVERY_PM_ALLOWED', projection 10 3ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 3000 m, 'EXPERIENCED', '3 days', 'SINGLE_SESSION_ONLY', projection 7 1ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 3000 m, 'EXPERIENCED', '3 days', 'SINGLE_SESSION_ONLY', projection 9 1ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 3000 m, 'EXPERIENCED', '3 days', 'SINGLE_SESSION_ONLY', projection 10 2ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 3000 m, 'EXPERIENCED', '3 days', 'RECOVERY_PM_ALLOWED', projection 7 2ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 3000 m, 'EXPERIENCED', '3 days', 'RECOVERY_PM_ALLOWED', projection 9 2ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 3000 m, 'EXPERIENCED', '3 days', 'RECOVERY_PM_ALLOWED', projection 10 2ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 3000 m, 'EXPERIENCED', '4 days', 'SINGLE_SESSION_ONLY', projection 7 5ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 3000 m, 'EXPERIENCED', '4 days', 'SINGLE_SESSION_ONLY', projection 9 2ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 3000 m, 'EXPERIENCED', '4 days', 'SINGLE_SESSION_ONLY', projection 10 4ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 3000 m, 'EXPERIENCED', '4 days', 'RECOVERY_PM_ALLOWED', projection 7 2ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 3000 m, 'EXPERIENCED', '4 days', 'RECOVERY_PM_ALLOWED', projection 9 2ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 3000 m, 'EXPERIENCED', '4 days', 'RECOVERY_PM_ALLOWED', projection 10 2ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 3000 m, 'EXPERIENCED', '5 days', 'SINGLE_SESSION_ONLY', projection 7 1ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 3000 m, 'EXPERIENCED', '5 days', 'SINGLE_SESSION_ONLY', projection 9 1ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 3000 m, 'EXPERIENCED', '5 days', 'SINGLE_SESSION_ONLY', projection 10 1ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 3000 m, 'EXPERIENCED', '5 days', 'RECOVERY_PM_ALLOWED', projection 7 3ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 3000 m, 'EXPERIENCED', '5 days', 'RECOVERY_PM_ALLOWED', projection 9 2ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 3000 m, 'EXPERIENCED', '5 days', 'RECOVERY_PM_ALLOWED', projection 10 3ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 3000 m, 'EXPERIENCED', '6 days', 'SINGLE_SESSION_ONLY', projection 7 1ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 3000 m, 'EXPERIENCED', '6 days', 'SINGLE_SESSION_ONLY', projection 9 1ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 3000 m, 'EXPERIENCED', '6 days', 'SINGLE_SESSION_ONLY', projection 10 1ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 3000 m, 'EXPERIENCED', '6 days', 'RECOVERY_PM_ALLOWED', projection 7 3ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 3000 m, 'EXPERIENCED', '6 days', 'RECOVERY_PM_ALLOWED', projection 9 2ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 3000 m, 'EXPERIENCED', '6 days', 'RECOVERY_PM_ALLOWED', projection 10 2ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 3000 m, 'EXPERIENCED', 'every day', 'SINGLE_SESSION_ONLY', projection 7 2ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 3000 m, 'EXPERIENCED', 'every day', 'SINGLE_SESSION_ONLY', projection 9 2ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 3000 m, 'EXPERIENCED', 'every day', 'SINGLE_SESSION_ONLY', projection 10 2ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 3000 m, 'EXPERIENCED', 'every day', 'RECOVERY_PM_ALLOWED', projection 7 2ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 3000 m, 'EXPERIENCED', 'every day', 'RECOVERY_PM_ALLOWED', projection 9 2ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 3000 m, 'EXPERIENCED', 'every day', 'RECOVERY_PM_ALLOWED', projection 10 4ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 5000 m, 'NEW_TO_RUNNING', '3 days', 'SINGLE_SESSION_ONLY', projection 7 1ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 5000 m, 'NEW_TO_RUNNING', '3 days', 'SINGLE_SESSION_ONLY', projection 9 2ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 5000 m, 'NEW_TO_RUNNING', '3 days', 'SINGLE_SESSION_ONLY', projection 10 1ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 5000 m, 'NEW_TO_RUNNING', '3 days', 'RECOVERY_PM_ALLOWED', projection 7 1ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 5000 m, 'NEW_TO_RUNNING', '3 days', 'RECOVERY_PM_ALLOWED', projection 9 1ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 5000 m, 'NEW_TO_RUNNING', '3 days', 'RECOVERY_PM_ALLOWED', projection 10 2ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 5000 m, 'NEW_TO_RUNNING', '4 days', 'SINGLE_SESSION_ONLY', projection 7 1ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 5000 m, 'NEW_TO_RUNNING', '4 days', 'SINGLE_SESSION_ONLY', projection 9 1ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 5000 m, 'NEW_TO_RUNNING', '4 days', 'SINGLE_SESSION_ONLY', projection 10 1ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 5000 m, 'NEW_TO_RUNNING', '4 days', 'RECOVERY_PM_ALLOWED', projection 7 1ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 5000 m, 'NEW_TO_RUNNING', '4 days', 'RECOVERY_PM_ALLOWED', projection 9 1ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 5000 m, 'NEW_TO_RUNNING', '4 days', 'RECOVERY_PM_ALLOWED', projection 10 1ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 5000 m, 'NEW_TO_RUNNING', '5 days', 'SINGLE_SESSION_ONLY', projection 7 1ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 5000 m, 'NEW_TO_RUNNING', '5 days', 'SINGLE_SESSION_ONLY', projection 9 1ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 5000 m, 'NEW_TO_RUNNING', '5 days', 'SINGLE_SESSION_ONLY', projection 10 1ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 5000 m, 'NEW_TO_RUNNING', '5 days', 'RECOVERY_PM_ALLOWED', projection 7 1ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 5000 m, 'NEW_TO_RUNNING', '5 days', 'RECOVERY_PM_ALLOWED', projection 9 1ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 5000 m, 'NEW_TO_RUNNING', '5 days', 'RECOVERY_PM_ALLOWED', projection 10 1ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 5000 m, 'NEW_TO_RUNNING', '6 days', 'SINGLE_SESSION_ONLY', projection 7 1ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 5000 m, 'NEW_TO_RUNNING', '6 days', 'SINGLE_SESSION_ONLY', projection 9 1ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 5000 m, 'NEW_TO_RUNNING', '6 days', 'SINGLE_SESSION_ONLY', projection 10 1ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 5000 m, 'NEW_TO_RUNNING', '6 days', 'RECOVERY_PM_ALLOWED', projection 7 1ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 5000 m, 'NEW_TO_RUNNING', '6 days', 'RECOVERY_PM_ALLOWED', projection 9 1ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 5000 m, 'NEW_TO_RUNNING', '6 days', 'RECOVERY_PM_ALLOWED', projection 10 1ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 5000 m, 'NEW_TO_RUNNING', 'every day', 'SINGLE_SESSION_ONLY', projection 7 2ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 5000 m, 'NEW_TO_RUNNING', 'every day', 'SINGLE_SESSION_ONLY', projection 9 2ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 5000 m, 'NEW_TO_RUNNING', 'every day', 'SINGLE_SESSION_ONLY', projection 10 1ms
+ ✓ test/plan-adaptation.test.ts > next-frame plan adaptation > preserves the authoritative D9 ACTIVE safety gate variant 3ms
+ ✓ test/plan-adaptation.test.ts > next-frame plan adaptation > preserves the authoritative D9 UNKNOWN safety gate variant 4ms
+ ✓ test/plan-adaptation.test.ts > next-frame plan adaptation > preserves the authoritative D9 CLEARED safety gate variant 5ms
+ ✓ test/plan-adaptation.test.ts > next-frame plan adaptation > preserves the authoritative D9 CLEARED advisory safety gate variant 5ms
+ ✓ test/plan-adaptation.test.ts > next-frame plan adaptation > rejects a rehashed serialized proposal containing a raw idempotency value 5ms
+ ✓ test/plan-adaptation.test.ts > next-frame plan adaptation > rejects malformed PACE_TARGET and cyclic candidate input without throwing 2ms
+ ✓ test/public-ledger-exports.contract.test.ts > public typed MAIN ledger boundary > exports the ledger compiler as a data-only helper beside candidate generation 2ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 5000 m, 'NEW_TO_RUNNING', 'every day', 'RECOVERY_PM_ALLOWED', projection 7 3ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 5000 m, 'NEW_TO_RUNNING', 'every day', 'RECOVERY_PM_ALLOWED', projection 9 2ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 5000 m, 'NEW_TO_RUNNING', 'every day', 'RECOVERY_PM_ALLOWED', projection 10 3ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 5000 m, 'DEVELOPING', '3 days', 'SINGLE_SESSION_ONLY', projection 7 1ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 5000 m, 'DEVELOPING', '3 days', 'SINGLE_SESSION_ONLY', projection 9 1ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 5000 m, 'DEVELOPING', '3 days', 'SINGLE_SESSION_ONLY', projection 10 1ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 5000 m, 'DEVELOPING', '3 days', 'RECOVERY_PM_ALLOWED', projection 7 1ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 5000 m, 'DEVELOPING', '3 days', 'RECOVERY_PM_ALLOWED', projection 9 1ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 5000 m, 'DEVELOPING', '3 days', 'RECOVERY_PM_ALLOWED', projection 10 1ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 5000 m, 'DEVELOPING', '4 days', 'SINGLE_SESSION_ONLY', projection 7 1ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 5000 m, 'DEVELOPING', '4 days', 'SINGLE_SESSION_ONLY', projection 9 1ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 5000 m, 'DEVELOPING', '4 days', 'SINGLE_SESSION_ONLY', projection 10 1ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 5000 m, 'DEVELOPING', '4 days', 'RECOVERY_PM_ALLOWED', projection 7 1ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 5000 m, 'DEVELOPING', '4 days', 'RECOVERY_PM_ALLOWED', projection 9 1ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 5000 m, 'DEVELOPING', '4 days', 'RECOVERY_PM_ALLOWED', projection 10 1ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 5000 m, 'DEVELOPING', '5 days', 'SINGLE_SESSION_ONLY', projection 7 1ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 5000 m, 'DEVELOPING', '5 days', 'SINGLE_SESSION_ONLY', projection 9 1ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 5000 m, 'DEVELOPING', '5 days', 'SINGLE_SESSION_ONLY', projection 10 1ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 5000 m, 'DEVELOPING', '5 days', 'RECOVERY_PM_ALLOWED', projection 7 1ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 5000 m, 'DEVELOPING', '5 days', 'RECOVERY_PM_ALLOWED', projection 9 1ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 5000 m, 'DEVELOPING', '5 days', 'RECOVERY_PM_ALLOWED', projection 10 1ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 5000 m, 'DEVELOPING', '6 days', 'SINGLE_SESSION_ONLY', projection 7 1ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 5000 m, 'DEVELOPING', '6 days', 'SINGLE_SESSION_ONLY', projection 9 1ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 5000 m, 'DEVELOPING', '6 days', 'SINGLE_SESSION_ONLY', projection 10 1ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 5000 m, 'DEVELOPING', '6 days', 'RECOVERY_PM_ALLOWED', projection 7 2ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 5000 m, 'DEVELOPING', '6 days', 'RECOVERY_PM_ALLOWED', projection 9 2ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 5000 m, 'DEVELOPING', '6 days', 'RECOVERY_PM_ALLOWED', projection 10 2ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 5000 m, 'DEVELOPING', 'every day', 'SINGLE_SESSION_ONLY', projection 7 1ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 5000 m, 'DEVELOPING', 'every day', 'SINGLE_SESSION_ONLY', projection 9 1ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 5000 m, 'DEVELOPING', 'every day', 'SINGLE_SESSION_ONLY', projection 10 1ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 5000 m, 'DEVELOPING', 'every day', 'RECOVERY_PM_ALLOWED', projection 7 1ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 5000 m, 'DEVELOPING', 'every day', 'RECOVERY_PM_ALLOWED', projection 9 1ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 5000 m, 'DEVELOPING', 'every day', 'RECOVERY_PM_ALLOWED', projection 10 1ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 5000 m, 'EXPERIENCED', '3 days', 'SINGLE_SESSION_ONLY', projection 7 1ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 5000 m, 'EXPERIENCED', '3 days', 'SINGLE_SESSION_ONLY', projection 9 1ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 5000 m, 'EXPERIENCED', '3 days', 'SINGLE_SESSION_ONLY', projection 10 1ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 5000 m, 'EXPERIENCED', '3 days', 'RECOVERY_PM_ALLOWED', projection 7 1ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 5000 m, 'EXPERIENCED', '3 days', 'RECOVERY_PM_ALLOWED', projection 9 1ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 5000 m, 'EXPERIENCED', '3 days', 'RECOVERY_PM_ALLOWED', projection 10 1ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 5000 m, 'EXPERIENCED', '4 days', 'SINGLE_SESSION_ONLY', projection 7 1ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 5000 m, 'EXPERIENCED', '4 days', 'SINGLE_SESSION_ONLY', projection 9 1ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 5000 m, 'EXPERIENCED', '4 days', 'SINGLE_SESSION_ONLY', projection 10 1ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 5000 m, 'EXPERIENCED', '4 days', 'RECOVERY_PM_ALLOWED', projection 7 1ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 5000 m, 'EXPERIENCED', '4 days', 'RECOVERY_PM_ALLOWED', projection 9 1ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 5000 m, 'EXPERIENCED', '4 days', 'RECOVERY_PM_ALLOWED', projection 10 1ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 5000 m, 'EXPERIENCED', '5 days', 'SINGLE_SESSION_ONLY', projection 7 1ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 5000 m, 'EXPERIENCED', '5 days', 'SINGLE_SESSION_ONLY', projection 9 1ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 5000 m, 'EXPERIENCED', '5 days', 'SINGLE_SESSION_ONLY', projection 10 1ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 5000 m, 'EXPERIENCED', '5 days', 'RECOVERY_PM_ALLOWED', projection 7 1ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 5000 m, 'EXPERIENCED', '5 days', 'RECOVERY_PM_ALLOWED', projection 9 1ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 5000 m, 'EXPERIENCED', '5 days', 'RECOVERY_PM_ALLOWED', projection 10 1ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 5000 m, 'EXPERIENCED', '6 days', 'SINGLE_SESSION_ONLY', projection 7 1ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 5000 m, 'EXPERIENCED', '6 days', 'SINGLE_SESSION_ONLY', projection 9 1ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 5000 m, 'EXPERIENCED', '6 days', 'SINGLE_SESSION_ONLY', projection 10 1ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 5000 m, 'EXPERIENCED', '6 days', 'RECOVERY_PM_ALLOWED', projection 7 1ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 5000 m, 'EXPERIENCED', '6 days', 'RECOVERY_PM_ALLOWED', projection 9 1ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 5000 m, 'EXPERIENCED', '6 days', 'RECOVERY_PM_ALLOWED', projection 10 1ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 5000 m, 'EXPERIENCED', 'every day', 'SINGLE_SESSION_ONLY', projection 7 1ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 5000 m, 'EXPERIENCED', 'every day', 'SINGLE_SESSION_ONLY', projection 9 1ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 5000 m, 'EXPERIENCED', 'every day', 'SINGLE_SESSION_ONLY', projection 10 1ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 5000 m, 'EXPERIENCED', 'every day', 'RECOVERY_PM_ALLOWED', projection 7 1ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 5000 m, 'EXPERIENCED', 'every day', 'RECOVERY_PM_ALLOWED', projection 9 1ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > keeps topology and QUALITY identical for 5000 m, 'EXPERIENCED', 'every day', 'RECOVERY_PM_ALLOWED', projection 10 1ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > rejects a QUALITY-duration mutation at the retained identity boundary 7ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > rejects coordinated support-duration forgery with retained candidate and pair identities 2ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > rejects coordinated QUALITY forgery with retained candidate and pair identities 2ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > rejects topology, stale identity, and coordinated MAIN-link mutations at selection 4ms
+ ✓ test/support-only-candidate-pair.contract.test.ts > support-only candidate pair > binds the derived candidate hash and rejects an altered proposal under the stale hash 11ms
+
+ Test Files  19 passed (19)
+      Tests  633 passed (633)
+   Start at  21:50:48
+   Duration  1.61s (transform 1.92s, setup 0ms, import 4.13s, tests 2.58s, environment 4ms)
+
