@@ -1,4 +1,5 @@
 import { cleanup, render, screen } from "@testing-library/react"
+import userEvent from "@testing-library/user-event"
 import { afterEach, describe, expect, it, vi } from "vitest"
 import { stateFixture } from "../../domain/plan-beta-store.test-fixture"
 import { PlanIntake } from "./PlanIntake"
@@ -34,6 +35,7 @@ describe("two-a-day intake", () => {
         onDivision={vi.fn()}
         onExperience={vi.fn()}
         onFocus={vi.fn()}
+        onTemplate={vi.fn()}
         onDays={vi.fn()}
         onFrameLength={vi.fn()}
         onTrainingTime={vi.fn()}
@@ -62,6 +64,7 @@ describe("competition division intake", () => {
         onDivision={onDivision}
         onExperience={vi.fn()}
         onFocus={vi.fn()}
+        onTemplate={vi.fn()}
         onDays={vi.fn()}
         onFrameLength={vi.fn()}
         onTrainingTime={vi.fn()}
@@ -91,6 +94,7 @@ describe("plan length intake", () => {
         onDivision={vi.fn()}
         onExperience={vi.fn()}
         onFocus={vi.fn()}
+        onTemplate={vi.fn()}
         onDays={vi.fn()}
         onFrameLength={vi.fn()}
         onTrainingTime={vi.fn()}
@@ -108,5 +112,133 @@ describe("plan length intake", () => {
       .toHaveTextContent("9일 분량")
     expect(screen.getByRole("button", { name: /10일 계획 받기/u }))
       .toHaveTextContent("10일 분량")
+  })
+})
+
+describe("optional target race date", () => {
+  it("allows a no-date plan and enables preview only for a valid future date", async () => {
+    const user = userEvent.setup()
+    const onRaceDate = vi.fn()
+    const onTargetRaceDateChange = vi.fn()
+    const { rerender } = render(
+      <PlanIntake
+        step="race-date"
+        draft={{}}
+        targetRaceDate=""
+        onTargetRaceDateChange={onTargetRaceDateChange}
+        onRaceDate={onRaceDate}
+        onBack={vi.fn()}
+        onGoal={vi.fn()}
+        onDivision={vi.fn()}
+        onExperience={vi.fn()}
+        onFocus={vi.fn()}
+        onTemplate={vi.fn()}
+        onDays={vi.fn()}
+        onFrameLength={vi.fn()}
+        onTrainingTime={vi.fn()}
+        onSecondSession={vi.fn()}
+        onManageRecords={vi.fn()}
+        onOpenNotationReader={vi.fn()}
+        onSafety={vi.fn()}
+        onContinue={vi.fn()}
+      />,
+    )
+
+    expect(screen.getByRole("button", { name: "날짜 없이 계획 후보 보기" })).toBeEnabled()
+    expect(screen.getByRole("button", { name: "이 날짜로 배치 미리보기" })).toBeDisabled()
+    expect(screen.getByLabelText("목표 경기 날짜")).toHaveAttribute("aria-invalid", "false")
+    await user.click(screen.getByRole("button", { name: "날짜 없이 계획 후보 보기" }))
+    expect(onRaceDate).toHaveBeenCalledWith()
+
+    rerender(
+      <PlanIntake
+        step="race-date"
+        draft={{}}
+        targetRaceDate="2099-08-23"
+        onTargetRaceDateChange={onTargetRaceDateChange}
+        onRaceDate={onRaceDate}
+        onBack={vi.fn()}
+        onGoal={vi.fn()}
+        onDivision={vi.fn()}
+        onExperience={vi.fn()}
+        onFocus={vi.fn()}
+        onTemplate={vi.fn()}
+        onDays={vi.fn()}
+        onFrameLength={vi.fn()}
+        onTrainingTime={vi.fn()}
+        onSecondSession={vi.fn()}
+        onManageRecords={vi.fn()}
+        onOpenNotationReader={vi.fn()}
+        onSafety={vi.fn()}
+        onContinue={vi.fn()}
+      />,
+    )
+
+    await user.click(screen.getByRole("button", { name: "이 날짜로 배치 미리보기" }))
+    expect(onRaceDate).toHaveBeenLastCalledWith("2099-08-23")
+    expect(screen.getByLabelText("목표 경기 날짜")).toHaveAttribute("aria-invalid", "false")
+  })
+})
+
+describe("exact event and explicit detail selection", () => {
+  it("offers only the four supported exact events", async () => {
+    const user = userEvent.setup()
+    const onGoal = vi.fn()
+    render(
+      <PlanIntake
+        step="goal"
+        draft={{}}
+        onBack={vi.fn()}
+        onGoal={onGoal}
+        onDivision={vi.fn()}
+        onExperience={vi.fn()}
+        onFocus={vi.fn()}
+        onTemplate={vi.fn()}
+        onDays={vi.fn()}
+        onFrameLength={vi.fn()}
+        onTrainingTime={vi.fn()}
+        onSecondSession={vi.fn()}
+        onManageRecords={vi.fn()}
+        onOpenNotationReader={vi.fn()}
+        onSafety={vi.fn()}
+        onContinue={vi.fn()}
+      />,
+    )
+
+    expect(screen.getAllByRole("button", { name: /^(800m|1500m|3000m|5000m)/u })).toHaveLength(4)
+    expect(screen.queryByRole("button", { name: /10km/u })).toBeNull()
+    await user.click(screen.getByRole("button", { name: /^1500m/u }))
+    expect(onGoal).toHaveBeenCalledWith(1500)
+  })
+
+  it("requires an explicit RPE or authorized detailed-template choice", async () => {
+    const user = userEvent.setup()
+    const onTemplate = vi.fn()
+    render(
+      <PlanIntake
+        step="template"
+        draft={{ eventGroup: "MIDDLE_DISTANCE", eventDistanceM: 1500, trainingFocus: "MIXED_INTENT" }}
+        onBack={vi.fn()}
+        onGoal={vi.fn()}
+        onDivision={vi.fn()}
+        onExperience={vi.fn()}
+        onFocus={vi.fn()}
+        onTemplate={onTemplate}
+        onDays={vi.fn()}
+        onFrameLength={vi.fn()}
+        onTrainingTime={vi.fn()}
+        onSecondSession={vi.fn()}
+        onManageRecords={vi.fn()}
+        onOpenNotationReader={vi.fn()}
+        onSafety={vi.fn()}
+        onContinue={vi.fn()}
+      />,
+    )
+
+    expect(screen.getByRole("button", { name: /RPE 기준으로 받기/u })).toBeVisible()
+    const detailed = screen.getByRole("button", { name: /1500m 경기 페이스 상세 훈련 포함/u })
+    expect(detailed).toHaveTextContent("3×500m @1500m RP · r180″ STAND")
+    await user.click(detailed)
+    expect(onTemplate).toHaveBeenCalledWith(expect.objectContaining({ templateId: "MD-1500-01" }))
   })
 })

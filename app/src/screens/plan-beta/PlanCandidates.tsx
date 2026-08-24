@@ -19,6 +19,7 @@ import { DIVISION_LABELS } from "./plan-intake-meta"
 import { CandidateSection } from "./CandidateSection"
 import type { CandidateSelection } from "./plan-selection"
 import { PaceEvidenceFlow } from "./PaceEvidenceFlow"
+import { RacePlacementNotice } from "./RacePlacementNotice"
 
 export function PlanCandidates({
   generated,
@@ -57,7 +58,9 @@ export function PlanCandidates({
     setExpandedCandidateId(generated.candidates[0]?.candidateId ?? null)
   }, [generated])
   const hasValidStartDate = isValidIsoDate(startDate)
-  const canSelect = hasValidStartDate && !recordConfirmationPending
+  const detailedEvidencePending = intake.selectedDetailedTemplateRef !== null
+    && prescriptionBinding.kind !== "bound"
+  const canSelect = hasValidStartDate && !recordConfirmationPending && !detailedEvidencePending
   const selectedRecord = athleteRecords.find((record) => record.id === selectedRecordId)
   const selectedEventLabel = selectedRecord === undefined
     ? "선택한 종목"
@@ -81,12 +84,14 @@ export function PlanCandidates({
           ? "종목, 경험, 고른 훈련 목적, 가능한 훈련일과 9.5일 기본 틀만 사용했어요. 개인 페이스와 최근 훈련량은 추정하지 않습니다."
           : "최근 일지가 있는지만 확인했어요. 일지의 거리, RPE, 메모는 이번 베타 계획의 시간이나 강도를 바꾸지 않습니다."}
       </p>
-      {(intake.eventGroup === "FIVE_K" || intake.eventGroup === "MIDDLE_DISTANCE")
+      <RacePlacementNotice state={generated.racePlacement} />
+      {intake.selectedDetailedTemplateRef !== null
+        && (intake.eventGroup === "FIVE_K" || intake.eventGroup === "MIDDLE_DISTANCE")
         && intake.experienceBand === "EXPERIENCED"
         && (
         <PaceEvidenceFlow
           records={athleteRecords}
-          eventGroup={intake.eventGroup}
+          eventDistanceM={intake.eventDistanceM}
           selectedRecordId={selectedRecordId}
           comparisonRecordId={comparisonRecordId}
           binding={prescriptionBinding}
@@ -161,6 +166,11 @@ export function PlanCandidates({
           새로 고른 기준 기록을 확인한 뒤 계획을 선택해 주세요.
         </p>
       )}
+      {detailedEvidencePending && !recordConfirmationPending && (
+        <p className="plan-start-date-error" role="alert">
+          상세 훈련을 선택했어요. 위에서 같은 종목의 현재 기록을 고르고 확인하거나, 질문으로 돌아가 RPE 기준을 골라 주세요.
+        </p>
+      )}
       <div className="plan-candidate-list">
         {generated.candidates.map((candidate) => (
           <CandidateSection
@@ -171,7 +181,7 @@ export function PlanCandidates({
             expanded={expandedCandidateId === candidate.candidateId}
             onToggleSchedule={() => setExpandedCandidateId((current) =>
               current === candidate.candidateId ? null : candidate.candidateId)}
-            onSelect={() => onSelect({ candidate, startDate })}
+            onSelect={() => onSelect({ candidateId: candidate.candidateId, startDate })}
           />
         ))}
       </div>

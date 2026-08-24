@@ -9,6 +9,8 @@ import type {
   PlanCandidate,
   PlanGenerationSuccess,
 } from "@impl/plan-generator/types"
+import type { RacePlacementState } from "@impl/plan-generator/race-placement"
+import raceDateRetentionAuthority from "../../../reports/review/RACE_DATE_RETENTION_AUTHORITY.json"
 import {
   createEvaluatorFailureSignal,
   mapD9ResultToRveSignal,
@@ -34,6 +36,12 @@ import type {
   PlanBetaIntake,
   PlanBetaState,
 } from "./plan-beta-store"
+import {
+  detailedTemplateRefSchema,
+  hasCanonicalJsonTree,
+  planIntakeSchema,
+} from "./plan-beta-schema"
+import { resolveDetailedPrescriptionRuntimeAuthority } from "./detailed-prescription-runtime-authority"
 import {
   assessPurposeScopedMemo,
   painLevelsRequireReview,
@@ -77,6 +85,16 @@ export type PlanDraftGeneration =
       readonly athleteEvidence: PlanAthleteEvidence
     }
   | {
+      readonly kind: "preview_only"
+      readonly code: "RACE_DATE_PERSISTENCE_NOT_AUTHORIZED"
+      readonly racePlacement: Extract<RacePlacementState, { readonly kind: "TARGET_RACE_PREVIEW_ONLY_RETENTION_BLOCKED" }>
+      readonly preview: {
+        readonly eventDistanceM: 800 | 1500 | 3000 | 5000
+        readonly targetRaceDate: string
+      }
+      readonly candidates: readonly []
+    }
+  | {
       readonly kind: "rejected"
       readonly code: string
     }
@@ -95,42 +113,76 @@ export type PlanSelection =
       readonly code: string
     }
 
+type PlanDraftInput = Omit<Partial<PlanBetaIntake>, "selectedDetailedTemplateRef"> & {
+  readonly selectedDetailedTemplateRef?: unknown
+  readonly targetRaceDate?: unknown
+}
+
 export function generatePlanFromDraft(
-  draft: Partial<PlanBetaIntake>,
+  draft: PlanDraftInput,
   currentCheck: PlanCurrentCheck,
   prescriptionSelection?: unknown,
 ): PlanDraftGeneration {
+  const draftKeys = new Set([
+    "eventGroup", "eventDistanceM", "competitionDivision", "experienceBand",
+    "availableDayCount", "requestedFrameLength", "trainingFocus", "secondSessionMode",
+    "trainingTimePreference", "selectedDetailedTemplateRef", "startDate", "targetRaceDate",
+  ])
+  if (!hasCanonicalJsonTree(draft)
+      || !Reflect.ownKeys(draft).every((key) => typeof key === "string" && draftKeys.has(key))) {
+    return { kind: "rejected", code: "MALFORMED_INPUT" }
+  }
+  const normalizedTemplateRef = normalizeDraftTemplateRef(draft.selectedDetailedTemplateRef)
+  if (normalizedTemplateRef.kind === "malformed") {
+    return { kind: "rejected", code: "MINIMUM_PROFILE_INCOMPLETE" }
+  }
   const evaluatedAt = new Date()
-  const intake = completeIntake(draft)
+  const intake = completeIntake({
+    ...draft,
+    selectedDetailedTemplateRef: normalizedTemplateRef.value,
+  })
   if (intake === null) {
     return { kind: "rejected", code: "MINIMUM_PROFILE_INCOMPLETE" }
   }
-
   const safety = evaluatePlanSafety(currentCheck, evaluatedAt)
   if (safety.kind === "blocked") return safety
   const safetyGate = safety.gate
+  const authority = resolveDetailedPrescriptionRuntimeAuthority({
+    selectedTemplateRef: intake.selectedDetailedTemplateRef,
+    targetEventDistanceM: intake.eventDistanceM,
+    selectedEnergyIntent: intake.trainingFocus,
+    evaluatedAt: evaluatedAt.toISOString(),
+  })
+  const authorityFallback = intake.selectedDetailedTemplateRef !== null
+    && authority.kind === "fallback"
+  const effectiveIntake = authorityFallback
+    ? { ...intake, selectedDetailedTemplateRef: null }
+    : intake
   const availableTrainingDays = spreadTrainingDays(
-    intake.availableDayCount,
-    intake.requestedFrameLength,
+    effectiveIntake.availableDayCount,
+    effectiveIntake.requestedFrameLength,
   )
   const athleteEvidence = summarizeAthleteEvidence(safety.journalSource, evaluatedAt)
   const result = generatePlanCandidates({
     kind: "PLAN_BETA_GENERATION_REQUEST",
     safetyGate,
     profile: {
-      eventGroup: intake.eventGroup,
-      experienceBand: intake.experienceBand,
+      eventGroup: effectiveIntake.eventGroup,
+      eventDistanceM: effectiveIntake.eventDistanceM,
+      experienceBand: effectiveIntake.experienceBand,
       availableTrainingDays,
-      secondSessionMode: intake.secondSessionMode,
-      trainingTimePreference: intake.trainingTimePreference,
+      secondSessionMode: effectiveIntake.secondSessionMode,
+      trainingTimePreference: effectiveIntake.trainingTimePreference,
     },
     formation: createPlanFormation(
       todayISO(evaluatedAt),
       availableTrainingDays,
-      intake.experienceBand,
+      effectiveIntake.experienceBand,
     ),
-    requestedFrameLength: intake.requestedFrameLength,
-    selectedEnergyIntent: intake.trainingFocus,
+    requestedFrameLength: effectiveIntake.requestedFrameLength,
+    selectedEnergyIntent: effectiveIntake.trainingFocus,
+    selectedDetailedTemplateRef: effectiveIntake.selectedDetailedTemplateRef,
+    ...(draft.targetRaceDate === undefined ? {} : { targetRaceDate: draft.targetRaceDate }),
     journalSource: safety.journalSource,
     selectionAuthority: "SELF",
     continuity: loadPreviousContinuity(),
@@ -139,24 +191,47 @@ export function generatePlanFromDraft(
   switch (result.kind) {
     case "generated":
       {
-        const binding = bindDetailedPrescriptionCandidates(
-          result,
-          intake,
-          safetyGate,
-          prescriptionSelection,
-          evaluatedAt,
-        )
+        const binding = normalizedTemplateRef.kind === "incomplete"
+          ? {
+              kind: "fallback" as const,
+              code: "PACE_TARGET_FALLBACK_INCOMPLETE_TEMPLATE_REF" as const,
+              generated: result,
+            }
+          : authorityFallback
+          ? {
+              kind: "fallback" as const,
+              code: "PACE_TARGET_FALLBACK_AUTHORITY_OR_COMPONENT" as const,
+              generated: result,
+            }
+          : bindDetailedPrescriptionCandidates(
+              result,
+              effectiveIntake,
+              safetyGate,
+              prescriptionSelection,
+              evaluatedAt,
+            )
       return {
         kind: "generated",
         generated: binding.generated,
         prescriptionBinding: { kind: binding.kind, code: binding.code },
         gate: safetyGate,
-        intake,
+        intake: effectiveIntake,
         athleteEvidence,
       }
       }
     case "needs_review_with_reason":
       return { kind: "rejected", code: "FORMATION_REVIEW_REQUIRED" }
+    case "preview_only":
+      if (!raceDatePersistenceIsDisabled()) {
+        return { kind: "rejected", code: "RACE_DATE_AUTHORITY_NOT_IMPLEMENTED" }
+      }
+      return {
+        kind: "preview_only",
+        code: result.code,
+        racePlacement: result.racePlacement,
+        preview: result.preview,
+        candidates: result.candidates,
+      }
     case "blocked":
     case "rejected":
       return { kind: "rejected", code: result.code }
@@ -188,7 +263,7 @@ export function evaluatePlanSafety(
 }
 
 export function selectPlanForActivation(
-  candidate: PlanCandidate,
+  candidateId: string,
   generated: PlanGenerationSuccess,
   gate: SafetyGateDecision,
   intake: PlanBetaIntake,
@@ -197,11 +272,12 @@ export function selectPlanForActivation(
     goalRecordCount: 0,
     recentJournalSessionCount: 0,
   },
+  evaluatedAt: Date = new Date(),
 ): PlanSelection {
   const result = selectPlanCandidate({
     kind: "PLAN_BETA_SELECTION_REQUEST",
     generatedPlan: generated,
-    selectedCandidateId: candidate.candidateId,
+    selectedCandidateId: candidateId,
     actor: "SELF",
     safetyGate: gate,
   })
@@ -209,10 +285,28 @@ export function selectPlanForActivation(
     return { kind: "rejected", code: result.code }
   }
 
+  const canonicalCandidate = generated.candidates.find(
+    (candidate) => candidate.candidateId === result.activePlan.candidateId,
+  )
+  if (canonicalCandidate === undefined) {
+    return { kind: "rejected", code: "CANDIDATE_NOT_FOUND" }
+  }
+  if (canonicalCandidate.selectedDetailedTemplateRef !== null) {
+    const authority = resolveDetailedPrescriptionRuntimeAuthority({
+      selectedTemplateRef: canonicalCandidate.selectedDetailedTemplateRef,
+      targetEventDistanceM: canonicalCandidate.eventDistanceM,
+      selectedEnergyIntent: canonicalCandidate.selectedEnergyIntent,
+      evaluatedAt: evaluatedAt.toISOString(),
+    })
+    if (authority.kind !== "authorized") {
+      return { kind: "rejected", code: "DETAILED_TEMPLATE_AUTHORITY_UNAVAILABLE" }
+    }
+  }
+
   return {
     kind: "selected",
     state: {
-      version: 2,
+      version: 3,
       intake,
       activePlan: result.activePlan,
       progress: [],
@@ -227,6 +321,7 @@ function completeIntake(
 ): PlanBetaIntake | null {
   const {
     eventGroup,
+    eventDistanceM,
     competitionDivision,
     experienceBand,
     availableDayCount,
@@ -234,9 +329,11 @@ function completeIntake(
     trainingFocus,
     secondSessionMode,
     trainingTimePreference,
+    selectedDetailedTemplateRef,
   } = draft
   if (
     eventGroup === undefined
+    || eventDistanceM === undefined
     || experienceBand === undefined
     || availableDayCount === undefined
     || requestedFrameLength === undefined
@@ -248,8 +345,9 @@ function completeIntake(
   }
   const normalizedCompetitionDivision = divisionForGoal(eventGroup) ?? competitionDivision
   if (normalizedCompetitionDivision === undefined) return null
-  return {
+  const parsed = planIntakeSchema.safeParse({
     eventGroup,
+    eventDistanceM,
     competitionDivision: normalizedCompetitionDivision,
     experienceBand,
     availableDayCount,
@@ -257,7 +355,35 @@ function completeIntake(
     trainingFocus,
     secondSessionMode,
     trainingTimePreference,
+    selectedDetailedTemplateRef: selectedDetailedTemplateRef ?? null,
+  })
+  return parsed.success ? parsed.data : null
+}
+
+function normalizeDraftTemplateRef(value: unknown):
+  | { readonly kind: "complete"; readonly value: PlanBetaIntake["selectedDetailedTemplateRef"] }
+  | { readonly kind: "incomplete"; readonly value: null }
+  | { readonly kind: "malformed" } {
+  if (value === undefined || value === null) return { kind: "complete", value: null }
+  if (typeof value !== "object" || Array.isArray(value)) return { kind: "malformed" }
+  const keys = Reflect.ownKeys(value)
+  const allowedKeys = new Set(["templateId", "version", "fingerprint"])
+  if (!keys.every((key) => typeof key === "string" && allowedKeys.has(key))) {
+    return { kind: "malformed" }
   }
+  if (keys.length < allowedKeys.size) return { kind: "incomplete", value: null }
+  const parsed = detailedTemplateRefSchema.safeParse(value)
+  return parsed.success
+    ? { kind: "complete", value: parsed.data }
+    : { kind: "malformed" }
+}
+
+function raceDatePersistenceIsDisabled(): boolean {
+  return raceDateRetentionAuthority.schemaVersion === 1
+    && raceDateRetentionAuthority.kind === "TRAINORACLE_RACE_DATE_RETENTION_AUTHORITY"
+    && raceDateRetentionAuthority.status === "NOT_AUTHORIZED"
+    && raceDateRetentionAuthority.policy === "RACE_DATE_PERSISTENCE_DISABLED_UNTIL_GOVERNANCE_RECEIPT"
+    && raceDateRetentionAuthority.receipt === null
 }
 
 function currentCheckGate(currentCheck: PlanCurrentCheck): SafetyGateDecision {

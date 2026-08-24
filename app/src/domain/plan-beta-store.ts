@@ -2,15 +2,23 @@ import type {
   PlanContinuityInput,
   PlanProgressState,
 } from "@impl/plan-generator/types"
+import { recordPlanProgress } from "@impl/plan-generator/generator"
 import {
   parsePlanBetaState,
+  planBetaStateV3Schema,
   planHistoryListSchema,
+  planIntakeSchema,
   storedPlanIntakeSchema,
 } from "./plan-beta-schema"
+import {
+  getPlanMutationLockManager,
+  PLAN_BETA_MUTATION_LOCK_NAME,
+} from "./plan-mutation-lock"
 import type {
   PlanBetaIntake,
   PlanBetaState,
   PlanBetaStateV2,
+  PlanBetaStateV3,
   StoredPlanBetaIntake,
   StoredPlanHistory,
   StoredPlanProgress,
@@ -19,19 +27,47 @@ export type {
   PlanBetaIntake,
   PlanBetaState,
   PlanBetaStateV2,
+  PlanBetaStateV3,
   StoredPlanBetaIntake,
   StoredPlanHistory,
   StoredPlanProgress,
 } from "./plan-beta-schema"
 export type { StoredActivePlan } from "./plan-session-schema"
 
-const STORAGE_KEY = "trainoracle.plan-beta.v1"
+export const PLAN_BETA_STORAGE_KEY = "trainoracle.plan-beta.v1"
 const HISTORY_KEY = "trainoracle.plan-beta.history.v1"
 const PREVIOUS_INTAKE_KEY = "trainoracle.plan-beta.previous-intake.v1"
 
 export type PlanStorageResult =
   | { readonly ok: true }
-  | { readonly ok: false; readonly code: "PLAN_STORAGE_WRITE_FAILED" }
+  | {
+      readonly ok: false
+      readonly code: "PLAN_STORAGE_WRITE_FAILED"
+      readonly rollbackComplete: boolean
+    }
+
+export type PlanBetaStateReadResult =
+  | { readonly kind: "loaded"; readonly state: PlanBetaState }
+  | { readonly kind: "missing" }
+  | { readonly kind: "invalid" }
+  | { readonly kind: "storage_error" }
+
+export type PlanProgressStorageResult =
+  | { readonly kind: "saved"; readonly state: PlanBetaStateV3 }
+  | {
+      readonly kind: "rejected"
+      readonly code:
+        | "MUTATION_LOCK_UNAVAILABLE"
+        | "STALE_BASE"
+        | "INVALID_STORED_PLAN"
+        | "PLAN_STORAGE_STATE_UNCERTAIN"
+        | "INVALID_PROGRESS"
+    }
+  | {
+      readonly kind: "failed"
+      readonly code: "PLAN_STORAGE_WRITE_FAILED"
+      readonly rollbackComplete: boolean
+    }
 
 export type PlanArchiveResult =
   | { readonly ok: true; readonly intake: StoredPlanBetaIntake }
@@ -41,22 +77,48 @@ export type PlanArchiveResult =
       readonly rollbackComplete: boolean
     }
 
+export type LockedPlanArchiveResult =
+  | { readonly kind: "archived"; readonly intake: StoredPlanBetaIntake }
+  | {
+      readonly kind: "rejected"
+      readonly code:
+        | "MUTATION_LOCK_UNAVAILABLE"
+        | "STALE_BASE"
+        | "INVALID_STORED_PLAN"
+        | "PLAN_STORAGE_STATE_UNCERTAIN"
+    }
+  | {
+      readonly kind: "failed"
+      readonly code: "PLAN_ARCHIVE_WRITE_FAILED"
+      readonly rollbackComplete: boolean
+    }
+
 export function loadPlanBetaState(): PlanBetaState | null {
   const parsed = loadVersionedPlanBetaState()
   return parsed
 }
 
-export function loadVersionedPlanBetaState(): PlanBetaStateV2 | null {
-  if (typeof window === "undefined") return null
-  const raw = window.localStorage.getItem(STORAGE_KEY)
-  if (raw === null) return null
+export function loadVersionedPlanBetaState(): PlanBetaState | null {
+  const result = readPlanBetaStateFromStorage()
+  return result.kind === "loaded" ? result.state : null
+}
+
+export function readPlanBetaStateFromStorage(): PlanBetaStateReadResult {
+  if (typeof window === "undefined") return { kind: "storage_error" }
+  let raw: string | null
+  try {
+    raw = window.localStorage.getItem(PLAN_BETA_STORAGE_KEY)
+  } catch {
+    return { kind: "storage_error" }
+  }
+  if (raw === null) return { kind: "missing" }
 
   try {
     const json: unknown = JSON.parse(raw)
-    return parsePlanBetaState(json)
-  } catch (error) {
-    if (!(error instanceof SyntaxError)) throw error
-    return null
+    const state = parsePlanBetaState(json)
+    return state === null ? { kind: "invalid" } : { kind: "loaded", state }
+  } catch {
+    return { kind: "invalid" }
   }
 }
 
@@ -64,23 +126,98 @@ export function savePlanBetaState(
   state: unknown,
 ): PlanStorageResult {
   if (typeof window === "undefined") {
-    return { ok: false, code: "PLAN_STORAGE_WRITE_FAILED" }
+    return { ok: false, code: "PLAN_STORAGE_WRITE_FAILED", rollbackComplete: false }
   }
-  const parsed = parsePlanBetaState(state)
-  if (parsed === null) return { ok: false, code: "PLAN_STORAGE_WRITE_FAILED" }
+  const parsed = planBetaStateV3Schema.safeParse(state)
+  if (!parsed.success) {
+    return { ok: false, code: "PLAN_STORAGE_WRITE_FAILED", rollbackComplete: true }
+  }
 
+  let previous: string | null = null
+  let previousCaptured = false
   try {
-    const serialized = JSON.stringify(parsed)
-    window.localStorage.setItem(STORAGE_KEY, serialized)
-    if (window.localStorage.getItem(STORAGE_KEY) !== serialized) {
-      return { ok: false, code: "PLAN_STORAGE_WRITE_FAILED" }
+    previous = window.localStorage.getItem(PLAN_BETA_STORAGE_KEY)
+    previousCaptured = true
+    const serialized = JSON.stringify(parsed.data)
+    window.localStorage.setItem(PLAN_BETA_STORAGE_KEY, serialized)
+    if (window.localStorage.getItem(PLAN_BETA_STORAGE_KEY) !== serialized) {
+      const rollbackComplete = restoreStorageValue(
+        window.localStorage,
+        PLAN_BETA_STORAGE_KEY,
+        previous,
+      )
+      return { ok: false, code: "PLAN_STORAGE_WRITE_FAILED", rollbackComplete }
     }
+
     return { ok: true }
   } catch {
-    return { ok: false, code: "PLAN_STORAGE_WRITE_FAILED" }
+    const rollbackComplete = previousCaptured
+      && restoreStorageValue(window.localStorage, PLAN_BETA_STORAGE_KEY, previous)
+    return { ok: false, code: "PLAN_STORAGE_WRITE_FAILED", rollbackComplete }
   }
 }
 
+export async function savePlanProgressWithLock(
+  expectedCandidateId: string,
+  progress: StoredPlanProgress,
+): Promise<PlanProgressStorageResult> {
+  const locks = getPlanMutationLockManager()
+  if (locks === null) return { kind: "rejected", code: "MUTATION_LOCK_UNAVAILABLE" }
+
+  try {
+    return await locks.request(
+      PLAN_BETA_MUTATION_LOCK_NAME,
+      { mode: "exclusive", ifAvailable: true },
+      async (lock) => {
+        if (lock === null) return { kind: "rejected", code: "MUTATION_LOCK_UNAVAILABLE" } as const
+        const currentRead = readPlanBetaStateFromStorage()
+        if (currentRead.kind === "storage_error") {
+          return { kind: "rejected", code: "PLAN_STORAGE_STATE_UNCERTAIN" } as const
+        }
+        if (currentRead.kind === "invalid") {
+          return { kind: "rejected", code: "INVALID_STORED_PLAN" } as const
+        }
+        if (currentRead.kind === "missing") {
+          return { kind: "rejected", code: "STALE_BASE" } as const
+        }
+        const current = currentRead.state
+        if (current.version !== 3 || current.activePlan.candidateId !== expectedCandidateId) {
+          return { kind: "rejected", code: "STALE_BASE" } as const
+        }
+        const recorded = recordPlanProgress({
+          kind: "PLAN_BETA_PROGRESS_REQUEST",
+          activePlan: current.activePlan,
+          sessionDay: progress.sessionDay,
+          sessionSlot: progress.sessionSlot,
+          state: progress.state,
+        })
+        if (recorded.kind !== "recorded") {
+          return { kind: "rejected", code: "INVALID_PROGRESS" } as const
+        }
+        const next = updateStoredProgress(current, progress)
+        const saved = savePlanBetaState(next)
+        return saved.ok
+          ? { kind: "saved", state: next } as const
+          : {
+              kind: "failed",
+              code: saved.code,
+              rollbackComplete: saved.rollbackComplete,
+            } as const
+      },
+    )
+  } catch {
+    return { kind: "rejected", code: "MUTATION_LOCK_UNAVAILABLE" }
+  }
+}
+
+export function updateStoredProgress(
+  state: PlanBetaStateV3,
+  progress: StoredPlanProgress,
+): PlanBetaStateV3
+export function updateStoredProgress(
+  state: PlanBetaState,
+  progress: StoredPlanProgress,
+): PlanBetaState
 export function updateStoredProgress(
   state: PlanBetaState,
   progress: StoredPlanProgress,
@@ -108,19 +245,35 @@ export function archiveAndClearActivePlan(state: PlanBetaState): PlanArchiveResu
       rollbackComplete: false,
     }
   }
+  if (state.version !== 3) {
+    return {
+      ok: false,
+      code: "PLAN_ARCHIVE_WRITE_FAILED",
+      rollbackComplete: true,
+    }
+  }
 
   const history: StoredPlanHistory = {
+    version: 3,
     candidateId: state.activePlan.candidateId,
+    pairId: state.activePlan.pairId,
     candidateKind: state.activePlan.candidateKind,
+    eventDistanceM: state.activePlan.eventDistanceM,
+    selectedDetailedTemplateRef: state.activePlan.selectedDetailedTemplateRef,
     frameLengthDays: state.activePlan.frame.lengthDays,
     progress: state.progress,
     archivedAt: new Date().toISOString(),
   }
-  const oldHistory = window.localStorage.getItem(HISTORY_KEY)
-  const oldIntake = window.sessionStorage.getItem(PREVIOUS_INTAKE_KEY)
-  const oldActive = window.localStorage.getItem(STORAGE_KEY)
+  let oldHistory: string | null = null
+  let oldIntake: string | null = null
+  let oldActive: string | null = null
+  let snapshotsCaptured = false
 
   try {
+    oldHistory = window.localStorage.getItem(HISTORY_KEY)
+    oldIntake = window.sessionStorage.getItem(PREVIOUS_INTAKE_KEY)
+    oldActive = window.localStorage.getItem(PLAN_BETA_STORAGE_KEY)
+    snapshotsCaptured = true
     const previous = loadPlanHistory()
     const stagedHistory = JSON.stringify([history, ...previous].slice(0, 5))
     const stagedIntake = JSON.stringify(state.intake)
@@ -132,32 +285,75 @@ export function archiveAndClearActivePlan(state: PlanBetaState): PlanArchiveResu
     if (window.sessionStorage.getItem(PREVIOUS_INTAKE_KEY) !== stagedIntake) {
       throw new Error("Previous intake was not persisted")
     }
-    window.localStorage.removeItem(STORAGE_KEY)
-    if (window.localStorage.getItem(STORAGE_KEY) !== null) {
+    window.localStorage.removeItem(PLAN_BETA_STORAGE_KEY)
+    if (window.localStorage.getItem(PLAN_BETA_STORAGE_KEY) !== null) {
       throw new Error("Active plan was not cleared")
     }
     return { ok: true, intake: state.intake }
   } catch {
-    const rollbackComplete = [
+    const rollbackComplete = snapshotsCaptured && [
       restoreStorageValue(window.localStorage, HISTORY_KEY, oldHistory),
       restoreStorageValue(window.sessionStorage, PREVIOUS_INTAKE_KEY, oldIntake),
-      restoreStorageValue(window.localStorage, STORAGE_KEY, oldActive),
+      restoreStorageValue(window.localStorage, PLAN_BETA_STORAGE_KEY, oldActive),
     ].every(Boolean)
     return { ok: false, code: "PLAN_ARCHIVE_WRITE_FAILED", rollbackComplete }
   }
 }
 
-export function loadPreviousIntake(): StoredPlanBetaIntake | null {
-  if (typeof window === "undefined") return null
-  const raw = window.sessionStorage.getItem(PREVIOUS_INTAKE_KEY)
-  if (raw === null) return null
+export async function archiveAndClearActivePlanWithLock(
+  expectedCandidateId: string,
+): Promise<LockedPlanArchiveResult> {
+  const locks = getPlanMutationLockManager()
+  if (locks === null) return { kind: "rejected", code: "MUTATION_LOCK_UNAVAILABLE" }
 
   try {
+    return await locks.request(
+      PLAN_BETA_MUTATION_LOCK_NAME,
+      { mode: "exclusive", ifAvailable: true },
+      async (lock) => {
+        if (lock === null) {
+          return { kind: "rejected", code: "MUTATION_LOCK_UNAVAILABLE" } as const
+        }
+        const currentRead = readPlanBetaStateFromStorage()
+        if (currentRead.kind === "storage_error") {
+          return { kind: "rejected", code: "PLAN_STORAGE_STATE_UNCERTAIN" } as const
+        }
+        if (currentRead.kind === "invalid") {
+          return { kind: "rejected", code: "INVALID_STORED_PLAN" } as const
+        }
+        if (currentRead.kind === "missing") {
+          return { kind: "rejected", code: "STALE_BASE" } as const
+        }
+        const current = currentRead.state
+        if (current.version !== 3 || current.activePlan.candidateId !== expectedCandidateId) {
+          return { kind: "rejected", code: "STALE_BASE" } as const
+        }
+        const archived = archiveAndClearActivePlan(current)
+        return archived.ok
+          ? { kind: "archived", intake: archived.intake } as const
+          : {
+              kind: "failed",
+              code: archived.code,
+              rollbackComplete: archived.rollbackComplete,
+            } as const
+      },
+    )
+  } catch {
+    return { kind: "rejected", code: "MUTATION_LOCK_UNAVAILABLE" }
+  }
+}
+
+export function loadPreviousIntake(): StoredPlanBetaIntake | null {
+  if (typeof window === "undefined") return null
+  try {
+    const raw = window.sessionStorage.getItem(PREVIOUS_INTAKE_KEY)
+    if (raw === null) return null
     const json: unknown = JSON.parse(raw)
-    const parsed = storedPlanIntakeSchema.safeParse(json)
-    return parsed.success ? parsed.data : null
-  } catch (error) {
-    if (!(error instanceof SyntaxError)) throw error
+    const current = planIntakeSchema.safeParse(json)
+    if (current.success) return current.data
+    const legacy = storedPlanIntakeSchema.safeParse(json)
+    return legacy.success ? legacy.data : null
+  } catch {
     return null
   }
 }
@@ -183,15 +379,13 @@ export function loadPreviousContinuity(): PlanContinuityInput | undefined {
 
 function loadPlanHistory(): readonly StoredPlanHistory[] {
   if (typeof window === "undefined") return []
-  const raw = window.localStorage.getItem(HISTORY_KEY)
-  if (raw === null) return []
-
   try {
+    const raw = window.localStorage.getItem(HISTORY_KEY)
+    if (raw === null) return []
     const json: unknown = JSON.parse(raw)
     const parsed = planHistoryListSchema.safeParse(json)
     return parsed.success ? parsed.data : []
-  } catch (error) {
-    if (!(error instanceof SyntaxError)) throw error
+  } catch {
     return []
   }
 }

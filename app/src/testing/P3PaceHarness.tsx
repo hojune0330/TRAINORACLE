@@ -37,7 +37,7 @@ export function P3PaceHarness() {
   return (
     <main className="p3-pace-harness">
       <PaceEvidenceFlow
-        eventGroup="FIVE_K"
+        eventDistanceM={5000}
         records={RECORDS}
         selectedRecordId={selectedRecordId}
         comparisonRecordId={null}

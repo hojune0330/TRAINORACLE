@@ -3,6 +3,7 @@ import { assertNever } from "../shared/assert-never"
 import { createDeterministicCandidates } from "./candidates"
 import { compileExposureLedger } from "./exposure-ledger"
 import { parsePlanGenerationRequest } from "./parser"
+import { noTargetRacePlacement, previewOnlyRacePlacement } from "./race-placement"
 import type { SelectableExposureLedger } from "./candidates"
 import type {
   CanonicalPlanGenerationRequest,
@@ -57,16 +58,38 @@ function generatedResult(
   request: CanonicalPlanGenerationRequest,
   ledger: SelectableExposureLedger,
 ): PlanGenerationResult {
+  const candidates = createDeterministicCandidates(request, ledger)
   return {
     kind: "generated",
+    racePlacement: noTargetRacePlacement(),
+    pairId: candidates[0].pairId,
     sourceMode: request.journalSource.kind === "NO_USABLE_JOURNAL"
       ? "PROFILE_ONLY"
       : "JOURNAL_CONTEXT_ONLY",
     selectedEnergyIntent: request.selectedEnergyIntent,
     confidence: "LIMITED",
     selectionAuthority: request.selectionAuthority,
-    candidates: createDeterministicCandidates(request, ledger),
+    candidates,
     audit: audit("PLAN_BETA_GENERATED", ["BETA_DURATION_RPE_ONLY"]),
+  }
+}
+
+function previewOnlyResult(request: CanonicalPlanGenerationRequest): PlanGenerationResult {
+  if (request.targetRaceDate === undefined) throw new TypeError("Race preview date is required")
+  return {
+    kind: "preview_only",
+    code: "RACE_DATE_PERSISTENCE_NOT_AUTHORIZED",
+    racePlacement: previewOnlyRacePlacement(
+      request.profile.eventDistanceM,
+      request.requestedFrameLength === 9.5 ? 10 : request.requestedFrameLength,
+      request.targetRaceDate,
+    ),
+    preview: Object.freeze({
+      eventDistanceM: request.profile.eventDistanceM,
+      targetRaceDate: request.targetRaceDate,
+    }),
+    candidates: noCandidates(),
+    audit: audit("PLAN_BETA_REJECTED", []),
   }
 }
 
@@ -120,6 +143,14 @@ function rejectedResult(
 }
 
 export function generatePlanCandidates(input: unknown): PlanGenerationResult {
+  try {
+    return generatePlanCandidatesUnchecked(input)
+  } catch {
+    return rejectedResult("MALFORMED_INPUT")
+  }
+}
+
+function generatePlanCandidatesUnchecked(input: unknown): PlanGenerationResult {
   const parsed = parsePlanGenerationRequest(input)
   switch (parsed.kind) {
     case "rejected":
@@ -129,6 +160,9 @@ export function generatePlanCandidates(input: unknown): PlanGenerationResult {
     case "parsed":
       switch (parsed.request.safetyGate.kind) {
         case "passed": {
+          if (parsed.request.targetRaceDate !== undefined) {
+            return previewOnlyResult(parsed.request)
+          }
           const ledger = compileExposureLedger(parsed.request.formation)
           if (ledger.kind === "needs_review") {
             return reviewResult(parsed.request, ledger.reasonCodes)

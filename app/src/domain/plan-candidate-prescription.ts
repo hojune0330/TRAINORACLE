@@ -1,10 +1,11 @@
 import { z } from "zod"
 import { bindOneDetailedPrescriptionCandidate } from "@impl/plan-generator/candidates"
+import { rebindCandidatePairIdentity } from "@impl/plan-generator/candidate-identity"
 import type { PlanGenerationSuccess } from "@impl/plan-generator/types"
 import type { SafetyGateDecision } from "@impl/safety-gate/gate"
 import { loadAthleteRecords } from "./athlete-records"
-import { DETAILED_PRESCRIPTION_APPROVALS } from "./detailed-prescription-approvals"
 import { prepareDetailedPrescription } from "./detailed-prescription"
+import { resolveDetailedPrescriptionRuntimeAuthority } from "./detailed-prescription-runtime-authority"
 import type { PlanBetaIntake } from "./plan-beta-schema"
 import { createStoredPaceTargetPrescription } from "./plan-session-schema"
 import {
@@ -19,6 +20,7 @@ const selectionSchema = z.object({
 
 export type CandidatePrescriptionFallbackCode =
   | "PACE_TARGET_FALLBACK_NO_EXPLICIT_ANCHOR"
+  | "PACE_TARGET_FALLBACK_NO_EXPLICIT_TEMPLATE"
   | "PACE_TARGET_FALLBACK_INVALID_SELECTION"
   | "PACE_TARGET_FALLBACK_ANCHOR_UNAVAILABLE"
   | "PACE_TARGET_FALLBACK_ANCHOR_NOT_CURRENT"
@@ -26,6 +28,7 @@ export type CandidatePrescriptionFallbackCode =
   | "PACE_TARGET_FALLBACK_EXPERIENCE_SCOPE"
   | "PACE_TARGET_FALLBACK_SAFETY_GATE"
   | "PACE_TARGET_FALLBACK_AUTHORITY_OR_COMPONENT"
+  | "PACE_TARGET_FALLBACK_INCOMPLETE_TEMPLATE_REF"
   | "PACE_TARGET_FALLBACK_STORED_SCHEMA"
   | "PACE_TARGET_FALLBACK_NO_ELIGIBLE_QUALITY"
 
@@ -58,6 +61,10 @@ export function bindDetailedPrescriptionCandidates(
   if (safetyGate.kind === "blocked") {
     return fallback(generated, "PACE_TARGET_FALLBACK_SAFETY_GATE")
   }
+  const selectedTemplate = intake.selectedDetailedTemplateRef
+  if (selectedTemplate === null) {
+    return fallback(generated, "PACE_TARGET_FALLBACK_NO_EXPLICIT_TEMPLATE")
+  }
   if (selection === undefined) {
     return fallback(generated, "PACE_TARGET_FALLBACK_NO_EXPLICIT_ANCHOR")
   }
@@ -75,11 +82,7 @@ export function bindDetailedPrescriptionCandidates(
   if (freshness !== "CURRENT") {
     return fallback(generated, "PACE_TARGET_FALLBACK_ANCHOR_NOT_CURRENT")
   }
-  const supportedTarget = (
-    intake.eventGroup === "FIVE_K" && record.eventDistanceM === 5000
-  ) || (
-    intake.eventGroup === "MIDDLE_DISTANCE" && [800, 1500, 3000].includes(record.eventDistanceM)
-  )
+  const supportedTarget = record.eventDistanceM === intake.eventDistanceM
   if (!supportedTarget) {
     return fallback(generated, "PACE_TARGET_FALLBACK_EVENT_SCOPE")
   }
@@ -87,11 +90,18 @@ export function bindDetailedPrescriptionCandidates(
     return fallback(generated, "PACE_TARGET_FALLBACK_EXPERIENCE_SCOPE")
   }
 
-  const approval = DETAILED_PRESCRIPTION_APPROVALS.find((candidate) => (
-    candidate.targetEventDistanceM === record.eventDistanceM
-    && candidate.eligibleEventGroups.includes(intake.eventGroup)
-  ))
-  if (approval === undefined || approval.populationApplicability.scope !== "YOUTH_AND_ADULT") {
+  const authority = resolveDetailedPrescriptionRuntimeAuthority({
+    selectedTemplateRef: selectedTemplate,
+    targetEventDistanceM: intake.eventDistanceM,
+    selectedEnergyIntent: intake.trainingFocus,
+    evaluatedAt: evaluatedAt.toISOString(),
+  })
+  if (authority.kind === "fallback") {
+    return fallback(generated, "PACE_TARGET_FALLBACK_AUTHORITY_OR_COMPONENT")
+  }
+  const approval = authority.approval
+  if (!approval.eligibleEventGroups.includes(intake.eventGroup)
+      || approval.populationApplicability.scope !== "YOUTH_AND_ADULT") {
     return fallback(generated, "PACE_TARGET_FALLBACK_AUTHORITY_OR_COMPONENT")
   }
   const anchor = toRuntimeAnchor(record, freshness)
@@ -101,6 +111,7 @@ export function bindDetailedPrescriptionCandidates(
   }
   const detailed = prepareDetailedPrescription({
     detailedPrescriptionEnabled: true,
+    selectedEnergyIntent: intake.trainingFocus,
     templateId: approval.templateId,
     templateVersion: approval.templateVersion,
     templateContentFingerprint: approval.templateContentFingerprint,
@@ -181,12 +192,14 @@ export function bindDetailedPrescriptionCandidates(
   if (balanced === null || conservative === null) {
     return fallback(generated, "PACE_TARGET_FALLBACK_NO_ELIGIBLE_QUALITY")
   }
+  const candidates = rebindCandidatePairIdentity([balanced, conservative])
   return Object.freeze({
     kind: "bound",
     code: "PACE_TARGET_BOUND",
     generated: Object.freeze({
       ...generated,
-      candidates: Object.freeze([balanced, conservative] as const),
+      pairId: candidates[0].pairId,
+      candidates,
       audit: Object.freeze({
         ...generated.audit,
         codes: Object.freeze([

@@ -1,0 +1,41 @@
+{
+  "schemaVersion": 1,
+  "kind": "TODO6_PRODUCTION_IMPORT_RACE_PLACEMENT_MATRIX",
+  "events": [800, 1500, 3000, 5000],
+  "projections": [7, 9, 10],
+  "matrixRowCount": 12,
+  "rows": [
+    { "eventDistanceM": 800, "projectionH": 7 },
+    { "eventDistanceM": 800, "projectionH": 9 },
+    { "eventDistanceM": 800, "projectionH": 10 },
+    { "eventDistanceM": 1500, "projectionH": 7 },
+    { "eventDistanceM": 1500, "projectionH": 9 },
+    { "eventDistanceM": 1500, "projectionH": 10 },
+    { "eventDistanceM": 3000, "projectionH": 7 },
+    { "eventDistanceM": 3000, "projectionH": 9 },
+    { "eventDistanceM": 3000, "projectionH": 10 },
+    { "eventDistanceM": 5000, "projectionH": 7 },
+    { "eventDistanceM": 5000, "projectionH": 9 },
+    { "eventDistanceM": 5000, "projectionH": 10 }
+  ],
+  "observedForEveryRow": {
+    "withoutTargetRace": "NO_TARGET_RACE",
+    "withValidFutureTargetRace": "TARGET_RACE_PREVIEW_ONLY_RETENTION_BLOCKED",
+    "placementFallback": "GENERIC_PLACEMENT_NO_AUTHORITY",
+    "placementReasonCode": "NO_ACTIVE_RACE_PLACEMENT_ROWS",
+    "numericTaperAuthority": "NOT_GRANTED",
+    "previewCandidateCount": 0
+  },
+  "rejected": {
+    "pastOrSameLocalDate": "MALFORMED_INPUT",
+    "callerSuppliedPlacementAuthority": "MALFORMED_INPUT"
+  },
+  "persistence": {
+    "localStorageKeys": 0,
+    "sessionStorageKeys": 0,
+    "indexedDbSurface": "NOT_PRESENT_IN_TEST_RUNTIME",
+    "urlUnchanged": true,
+    "historyUnchanged": true,
+    "networkCalls": 0
+  }
+}

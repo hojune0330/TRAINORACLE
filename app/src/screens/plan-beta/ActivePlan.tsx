@@ -1,3 +1,4 @@
+import React from "react"
 import {
   AlertTriangle,
   Check,
@@ -22,6 +23,8 @@ import { DIVISION_LABELS } from "./plan-intake-meta"
 import type { PlanCurrentCheck } from "../../domain/plan-beta-flow"
 import type { StoredPaceTargetPrescription } from "../../domain/plan-session-schema"
 import { PlanAdaptationFlow } from "./PlanAdaptationFlow"
+import { todayISO } from "../../domain/journal-store"
+import { isPlanFrameCompletionEligible } from "../../domain/plan-successor-activation"
 
 const PROGRESS_ACTIONS: readonly {
   readonly state: PlanProgressState
@@ -37,17 +40,21 @@ export function ActivePlan({
   state,
   onProgress,
   onNextFrame,
+  onActivateNextFrame,
   onCheckDetailedExecution,
 }: {
   readonly state: PlanBetaState
   readonly onProgress: (progress: StoredPlanProgress) => void
   readonly onNextFrame: () => void
+  readonly onActivateNextFrame: (currentCheck: PlanCurrentCheck) => void
   readonly onCheckDetailedExecution: (
     prescription: StoredPaceTargetPrescription,
     operation: "START" | "RESTART",
     currentCheck: PlanCurrentCheck,
   ) => void
 }) {
+  const [hasPendingSuccessor, setHasPendingSuccessor] = React.useState(false)
+  const [showActivationCheck, setShowActivationCheck] = React.useState(false)
   const { activePlan } = state
   const recorded = new Map(
     state.progress.map((progress) => [
@@ -68,6 +75,7 @@ export function ActivePlan({
       prescription.kind === "PACE_TARGET"
     ))
   const hasDetailedPrescription = detailedPrescription !== undefined
+  const frameComplete = isPlanFrameCompletionEligible(state, todayISO())
 
   return (
     <section className="active-plan" aria-labelledby="active-plan-title">
@@ -106,7 +114,13 @@ export function ActivePlan({
           )}
         </span>
       </div>
-      <PlanAdaptationFlow state={state} />
+      {frameComplete ? (
+        <PlanAdaptationFlow state={state} onPendingChange={setHasPendingSuccessor} />
+      ) : (
+        <div className="plan-adaptation__notice" role="status">
+          보이는 훈련을 완료·휴식·건너뜀·통증 확인 중 하나로 기록하면 다음 계획 후보를 고를 수 있어요.
+        </div>
+      )}
       <PlanSchedulePreview
         startDate={state.intake.startDate ?? state.generatedAt.slice(0, 10)}
         frameLengthDays={frameLengthDays}
@@ -194,9 +208,32 @@ export function ActivePlan({
           이번 훈련의 거리·페이스·메모는 넘기지 않고 강도도 자동으로 올리지 않습니다.
           새 계획을 만들기 전에 몸 상태를 다시 확인합니다.
         </p>
-        <button type="button" onClick={onNextFrame}>
-          다음 주기 후보 만들기
-        </button>
+        {frameComplete && hasPendingSuccessor ? (
+          <>
+            <button type="button" onClick={() => setShowActivationCheck(true)}>
+              선택한 다음 계획 시작하기
+            </button>
+            {showActivationCheck && (
+              <div
+                className="plan-adaptation__panel"
+                role="group"
+                aria-label="다음 계획 시작 전 몸 상태 확인"
+              >
+                <strong>지금 몸 상태를 다시 확인해 주세요</strong>
+                <button type="button" onClick={() => onActivateNextFrame("NO_KNOWN_RISK")}>
+                  통증 없고 몸 상태는 평소와 같아요
+                </button>
+                <button type="button" onClick={() => onActivateNextFrame("REVIEW_REQUIRED")}>
+                  통증·부상·몸 이상이 있거나 잘 모르겠어요
+                </button>
+              </div>
+            )}
+          </>
+        ) : (
+          <button type="button" disabled={!frameComplete} onClick={onNextFrame}>
+            {frameComplete ? "현재 기준으로 다음 후보 만들기" : "현재 계획을 먼저 기록해 주세요"}
+          </button>
+        )}
       </div>
     </section>
   )

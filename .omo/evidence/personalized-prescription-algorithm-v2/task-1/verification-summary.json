@@ -1,0 +1,84 @@
+{
+  "kind": "TRAINORACLE_PERSONALIZED_PRESCRIPTION_V2_TODO1_VERIFICATION",
+  "status": "PASS",
+  "red": { "tests": 8, "passed": 7, "failed": 1, "expectedFailure": "REQUIRED_OWNER_DECISION_ARTIFACT_ABSENT" },
+  "green": { "tests": 8, "passed": 8, "failed": 0, "exitCode": 0 },
+  "independentGateFix": {
+    "red": { "tests": 10, "passed": 8, "failed": 2, "expectedFailures": ["UNRELATED_AUDIT_EVIDENCE_ACCEPTED", "DEPLOYMENT_PROVENANCE_MUTATIONS_ACCEPTED"] },
+    "green": { "tests": 10, "passed": 10, "failed": 0, "exitCode": 0 },
+    "auditEvidenceIdentityBound": true,
+    "deploymentReceiptPathBound": true,
+    "deploymentPagesCommitBound": true,
+    "deploymentProofBoundaryBound": true
+  },
+  "secondIndependentGateFix": {
+    "red": { "tests": 12, "passed": 10, "failed": 2, "expectedFailures": ["DEPLOYMENT_OBJECT_NOT_CLOSED", "HANDOFF_IMPLEMENTATION_FACTS_NOT_BOUND"] },
+    "green": { "tests": 12, "passed": 12, "failed": 0, "exitCode": 0 },
+    "deploymentKeysAndValuesBound": true,
+    "workflowRunAndDeployedAtReceiptBound": true,
+    "todoOwnershipLedgerBound": true,
+    "activeDetailedTemplateCount": 4
+  },
+  "finalSemanticMatrixFix": {
+    "red": { "tests": 15, "passed": 12, "failed": 3, "expectedFailures": ["RECORDED_AT_NOT_EXACT", "HUMAN_AUTHORITY_BOUNDARY_UNVALIDATED", "RUNTIME_BOUNDARY_UNVALIDATED"] },
+    "green": { "tests": 15, "passed": 15, "failed": 0, "exitCode": 0 },
+    "recordedAt": "2026-08-23T03:32:21+09:00",
+    "humanAuthorityBoundaryBound": true,
+    "contradictoryAuthorityWordingRejected": true,
+    "runtimeBoundaryBound": true,
+    "reverseAdaptationEdgeState": "APPROVED_FOR_IMPLEMENTATION_NOT_ACTIVE"
+  },
+  "closureStatusLineFix": {
+    "red": { "tests": 17, "passed": 15, "failed": 2, "expectedFailures": ["AUDIT_HUMAN_STATUS_UNBOUND", "HANDOFF_HUMAN_STATUS_UNBOUND"] },
+    "green": { "tests": 17, "passed": 17, "failed": 0, "exitCode": 0 },
+    "auditHumanStatus": "NON_CANONICAL_AUDIT",
+    "handoffHumanStatus": "TODO_1_PREPARED"
+  },
+  "validator": {
+    "exitCode": 0,
+    "ownerTokens": ["1A", "2A", "3A", "B"],
+    "auditRows": 10,
+    "auditClassifications": {
+      "ALREADY_SPEC_BOUND": 4,
+      "WORKING_SPEC_AMENDMENT_REQUIRED": 3,
+      "RESEARCH_OR_RECEIPT_ONLY": 1,
+      "CANONICAL_PROMOTION_BLOCKED": 2
+    },
+    "retentionStatus": "NOT_AUTHORIZED",
+    "raceDatePersistenceEnabled": false,
+    "activeTemplateCount": 4,
+    "planBetaWriteVersion": 2,
+    "activeAdaptationEdges": 1
+  },
+  "manualProbes": {
+    "approvedToken": "REJECTED",
+    "finalMarkerTail": "REJECTED",
+    "auditClassification": "REJECTED",
+    "unrelatedAuditEvidencePath": "REJECTED",
+    "malformedJson": "REJECTED",
+    "staleMain": "REJECTED",
+    "deploymentReceiptPath": "REJECTED",
+    "deploymentPagesCommit": "REJECTED",
+    "deploymentProofBoundary": "REJECTED",
+    "deploymentWorkflowRun": "REJECTED",
+    "deploymentTimestamp": "REJECTED",
+    "deploymentMissingWorkflowRun": "REJECTED",
+    "deploymentExtraClaim": "REJECTED",
+    "todoOneOwnershipSubstitution": "REJECTED",
+    "activeTemplateCountMutation": "REJECTED",
+    "sameDateRecordedAtMutation": "REJECTED",
+    "humanDisclaimerReplacement": "REJECTED",
+    "appendedAuthorityContradiction": "REJECTED",
+    "reverseRuntimeEdgeActivation": "REJECTED",
+    "auditCanonicalHumanStatus": "REJECTED",
+    "handoffProductionHumanStatus": "REJECTED",
+    "missingSource": "REJECTED",
+    "absentMutationTarget": "STOPPED_BEFORE_VALIDATOR",
+    "misleadingSuccessOutput": "NONZERO_EXIT_PRESERVED"
+  },
+  "jsonParse": "PASS",
+  "gitDiffCheck": "PASS",
+  "temporaryAssetsRemoved": true,
+  "serversStarted": 0,
+  "portsOpened": 0
+}

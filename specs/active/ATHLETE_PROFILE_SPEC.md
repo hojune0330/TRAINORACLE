@@ -626,6 +626,36 @@ export interface ProfileAuditRecord {
 }
 ```
 
+## Section Z1. Current Beta Plan-Intake Projection Boundary
+
+The current beta asks for an exact target event while building a plan. This is a
+plan-intake projection and does not silently extend the durable athlete-profile schema.
+
+```yaml
+beta_plan_intake_projection:
+  target_event_distance_m:
+    allowed: [800, 1500, 3000, 5000]
+    required_for_personalized_plan: true
+    durable_profile_field_authorized_here: false
+  competition_division:
+    optional: true
+    purpose: DISPLAY_AND_CONTEXT_ONLY
+    may_change_dose: false
+    may_change_safety: false
+    may_change_eligibility: false
+  detailed_pace_anchor:
+    selection: EXPLICIT
+    freshness: CURRENT_ONLY
+    event_match: EXACT_SAME_EVENT_ONLY
+    allowed_purposes: [PERSONAL_BEST, SEASON_BEST, RECENT_RESULT]
+    race_goal_as_current_capability: FORBIDDEN
+    absent_or_ineligible: RPE_CONTROLLED_FALLBACK
+```
+
+Persistence, consent, retention, and synchronization remain owned by the App
+Implementation Bridge and their existing open issues. This runtime projection closes
+none of the Section AA issues.
+
 ## Section AA. Open Issues
 
 ```yaml

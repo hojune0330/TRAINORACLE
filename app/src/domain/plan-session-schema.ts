@@ -402,16 +402,30 @@ function approvalMatchesStoredPrescription(
     && JSON.stringify(totals) === JSON.stringify(prescription.totals)
 }
 
+const rpeRangeSchema = z.object({
+  minimum: z.number().min(1).max(10),
+  maximum: z.number().min(1).max(10),
+}).strict().superRefine((range, context) => {
+  if (range.minimum > range.maximum) context.addIssue({
+    code: z.ZodIssueCode.custom,
+    path: ["maximum"],
+    message: "RPE range is reversed.",
+  })
+})
+const durationRangeSchema = z.object({
+  minimum: z.number().positive(),
+  maximum: z.number().positive(),
+}).strict().superRefine((range, context) => {
+  if (range.minimum > range.maximum) context.addIssue({
+    code: z.ZodIssueCode.custom,
+    path: ["maximum"],
+    message: "Duration range is reversed.",
+  })
+})
 const rpeTimeRangeSchema = z.object({
   kind: z.literal("RPE_TIME_RANGE"),
-  rpe: z.object({
-    minimum: z.number(),
-    maximum: z.number(),
-  }).strict(),
-  durationMinutes: z.object({
-    minimum: z.number(),
-    maximum: z.number(),
-  }).strict(),
+  rpe: rpeRangeSchema,
+  durationMinutes: durationRangeSchema,
 }).strict()
 
 const restSessionSchema = z.object({

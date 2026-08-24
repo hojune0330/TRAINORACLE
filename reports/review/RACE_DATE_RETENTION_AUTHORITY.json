@@ -1,0 +1,7 @@
+{
+  "schemaVersion": 1,
+  "kind": "TRAINORACLE_RACE_DATE_RETENTION_AUTHORITY",
+  "status": "NOT_AUTHORIZED",
+  "policy": "RACE_DATE_PERSISTENCE_DISABLED_UNTIL_GOVERNANCE_RECEIPT",
+  "receipt": null
+}

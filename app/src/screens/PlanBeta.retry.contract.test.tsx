@@ -15,16 +15,18 @@ afterEach(() => {
 
 async function generatePlanCandidates(): Promise<void> {
   const user = userEvent.setup()
-  await user.click(screen.getByRole("button", { name: /800m.*1500m/u }))
+  await user.click(screen.getByRole("button", { name: /^1500m/u }))
   await user.click(screen.getByRole("button", { name: /고등부/u }))
   await user.click(screen.getByRole("button", { name: /훈련 계획에 맞춰 달려 본 경험/u }))
   await user.click(screen.getByRole("button", { name: /통증은 없고 몸 상태는 평소와 같아요/u }))
   await user.click(screen.getByRole("button", { name: "내 계획 완성하기" }))
   await user.click(screen.getByRole("button", { name: /지속 페이스.*LT/u }))
+  await user.click(screen.getByRole("button", { name: /RPE 기준으로 받기/u }))
   await user.click(screen.getByRole("button", { name: /^3일/u }))
   await user.click(screen.getByRole("button", { name: /9일 계획 받기/u }))
   await user.click(screen.getByRole("button", { name: /날마다 달라요/u }))
   await user.click(screen.getByRole("button", { name: /하루 한 번 운동/u }))
+  await user.click(screen.getByRole("button", { name: "날짜 없이 계획 후보 보기" }))
 }
 
 describe("plan candidate save retry", () => {
@@ -151,5 +153,57 @@ describe("plan candidate save retry", () => {
     expect(screen.getByRole("alert")).toHaveTextContent("계획을 이 기기에 저장하지 못했어요")
     expect(screen.getByRole("button", { name: "계획 다시 저장하기" })).toBeVisible()
     expect(window.localStorage.getItem("trainoracle.plan-beta.v1")).toBeNull()
+  })
+
+  it("withholds selection retry when a failed rollback leaves storage uncertain", async () => {
+    render(<PlanBeta />)
+    await generatePlanCandidates()
+    const realSetItem = Storage.prototype.setItem
+    const realRemoveItem = Storage.prototype.removeItem
+    vi.spyOn(Storage.prototype, "setItem").mockImplementation(function (
+      this: Storage,
+      key: string,
+      value: string,
+    ) {
+      if (key === "trainoracle.plan-beta.v1") {
+        return realSetItem.call(this, key, "{\"corrupt\":true}")
+      }
+      return realSetItem.call(this, key, value)
+    })
+    vi.spyOn(Storage.prototype, "removeItem").mockImplementation(function (
+      this: Storage,
+      key: string,
+    ) {
+      if (key === "trainoracle.plan-beta.v1") throw new Error("SecurityError")
+      return realRemoveItem.call(this, key)
+    })
+    const [choice] = screen.getAllByRole("button", { name: /선택하기/u })
+    if (choice === undefined) throw new Error("Expected a generated plan choice")
+
+    await userEvent.setup().click(choice)
+
+    expect(screen.getByRole("alert")).toHaveTextContent("계획 저장을 되돌렸는지 확인할 수 없어요")
+    expect(screen.queryByRole("button", { name: "계획 다시 저장하기" })).not.toBeInTheDocument()
+    expect(window.localStorage.getItem("trainoracle.plan-beta.v1")).toBe("{\"corrupt\":true}")
+  })
+
+  it("withholds selection retry when the active-plan preflight read fails", async () => {
+    render(<PlanBeta />)
+    await generatePlanCandidates()
+    const realGetItem = Storage.prototype.getItem
+    vi.spyOn(Storage.prototype, "getItem").mockImplementation(function (
+      this: Storage,
+      key: string,
+    ) {
+      if (key === "trainoracle.plan-beta.v1") throw new Error("SecurityError")
+      return realGetItem.call(this, key)
+    })
+    const [choice] = screen.getAllByRole("button", { name: /선택하기/u })
+    if (choice === undefined) throw new Error("Expected a generated plan choice")
+
+    await userEvent.setup().click(choice)
+
+    expect(screen.getByRole("alert")).toHaveTextContent("현재 계획을 확인해 주세요")
+    expect(screen.queryByRole("button", { name: "계획 다시 저장하기" })).not.toBeInTheDocument()
   })
 })

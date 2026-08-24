@@ -36,6 +36,11 @@ import type { JournalEntry } from "./journal-schema"
 import { saveEntry } from "./journal-store"
 
 const TRASH_KEY = "trainoracle.journal.trash.v1"
+const ONE_DAY_MS = 24 * 60 * 60 * 1000
+
+function recentDeletedAt(): string {
+  return new Date(Date.now() - ONE_DAY_MS).toISOString()
+}
 
 function session(id: string, overrides: Partial<JournalEntry> = {}): JournalEntry {
   return {
@@ -127,7 +132,7 @@ describe("journal-trash — 쓰기 실패를 숨기지 않는다", () => {
 
   it("T-2 takeFromTrash 저장이 실패하면 null을 주고 항목은 휴지통에 그대로 남는다", () => {
     const entry = assertStorable(session("a"))
-    seedTrash([{ entry, deletedAt: "2026-07-21T00:00:00.000Z" }])
+    seedTrash([{ entry, deletedAt: recentDeletedAt() }])
     expect(loadTrash()).toHaveLength(1)
 
     failWritesTo(TRASH_KEY)
@@ -144,7 +149,7 @@ describe("journal-trash — 쓰기 실패를 숨기지 않는다", () => {
 
   it("T-3 dropFromTrash 저장이 실패하면 false를 주고 항목은 살아남는다", () => {
     const entry = assertStorable(session("a"))
-    seedTrash([{ entry, deletedAt: "2026-07-21T00:00:00.000Z" }])
+    seedTrash([{ entry, deletedAt: recentDeletedAt() }])
 
     failWritesTo(TRASH_KEY)
     const dropped = dropFromTrash("a")
@@ -158,9 +163,10 @@ describe("journal-trash — 쓰기 실패를 숨기지 않는다", () => {
   it("T-4 emptyTrash 저장이 실패하면 false를 주고 항목 전부 살아남는다", () => {
     const a = assertStorable(session("a"))
     const b = assertStorable(session("b", { id: "b" }))
+    const recent = Date.now() - ONE_DAY_MS
     seedTrash([
-      { entry: a, deletedAt: "2026-07-21T00:00:00.000Z" },
-      { entry: b, deletedAt: "2026-07-22T00:00:00.000Z" },
+      { entry: a, deletedAt: new Date(recent - 1000).toISOString() },
+      { entry: b, deletedAt: new Date(recent).toISOString() },
     ])
     expect(loadTrash()).toHaveLength(2)
 
@@ -192,7 +198,8 @@ describe("journal-trash — 쓰기 실패를 숨기지 않는다", () => {
 
   it("T-6 저장 실패 시 꾸미기 정리를 돌리지 않는다 — 되돌린 일지의 겉모습이 달라지면 안 된다", () => {
     const entry = assertStorable(session("a"))
-    seedTrash([{ entry, deletedAt: "2026-07-21T00:00:00.000Z" }])
+    seedTrash([{ entry, deletedAt: recentDeletedAt() }])
+    expect(loadTrash()).toHaveLength(1)
 
     // 꾸미기 정리는 별도 키에 쓴다. 그 키에 쓰기가 일어났는지로
     // "정리가 돌았는가"를 관찰한다.

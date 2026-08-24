@@ -1,0 +1,18 @@
+{
+  "kind": "TRAINORACLE_PERSONALIZED_PRESCRIPTION_V2_TODO1_PROVENANCE",
+  "authoritativeMainSha": "5ea2eed9fce0f0ddb314358d57c0b2fc538b9daa",
+  "taskBranch": "codex/personalized-prescription-algorithm-v2-20260823",
+  "planSha256": "3f081ebbd8d8fa456ff33f01a037942e618cf13f9e549ff3feb83789df590d6b",
+  "deploymentReceiptSha256": "ec46f39288608973448e7be6380003d274f29d5088a2c5385365d9002c9840df",
+  "sourceFiles": [
+    { "path": "CURRENT_IMPLEMENTATION_HANDOFF_2026-08-23.md", "sha256": "c9a42342037fe195513b9570d5d080fc34d0b99a14b3b3b4ca4fbe04703bbb5b" },
+    { "path": "reports/review/OWNER_DECISION_PERSONALIZED_PRESCRIPTION_ALGORITHM_V2_2026-08-23.json", "sha256": "a5cf9f874a37a1a813a0bcd07dde8bf60d1dc27bc3fff7400f55948fd4a8b2dc" },
+    { "path": "reports/review/RACE_DATE_RETENTION_AUTHORITY.json", "sha256": "ca787ef6bd63605a6ce7797a21c0eb08f42234f7501f65ee9a43b3ab7aaa077f" },
+    { "path": "reports/review/SPEC_PROMOTION_CANDIDATE_AUDIT_2026-08-23.md", "sha256": "15f5b5c2d594555b13f36823c08aad416b0b4dd69ebec4f0aa95431c4a852648" },
+    { "path": "specs/test-packages/validate-personalized-prescription-v2-authority.mjs", "sha256": "677c683497b269813c724c7a45590383e7f23bcd940cd5af6709b4cefa8961ea" },
+    { "path": "specs/test-packages/validate-personalized-prescription-v2-authority.test.mjs", "sha256": "74161518a4520f020a72f8f4e7a7242b4d289418876cb99ab0912101f1ccb1dc" }
+  ],
+  "unrelatedPreExistingPaths": [
+    { "path": ".omo/plans/personalized-prescription-algorithm-v2.md", "preserved": true }
+  ]
+}

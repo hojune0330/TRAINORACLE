@@ -1,0 +1,10 @@
+Todo 4 cleanup receipt
+
+- No browser, dev server, network listener, or external service was started.
+- Temporary app/src/domain/.task4-production-matrix.contract.test.ts: removed and absence verified.
+- Temporary debug-journal.md created for the hypothesis loop: removed after its red/green conclusions were transferred to REPORT.md.
+- app/node_modules junction: verified LinkType=Junction and target D:\admin\Documents\트레인 오라클 진도\.worktrees\prescription-integrity-hardening\app\node_modules, then removed with System.IO.Directory.Delete.
+- impl/node_modules junction: verified LinkType=Junction and target D:\admin\Documents\트레인 오라클 진도\.worktrees\prescription-integrity-hardening\impl\node_modules, then removed with System.IO.Directory.Delete.
+- Both real dependency targets still exist after junction removal.
+- No source-gate mutation copy remains.
+- Generated Vite dist output was left as the repository build output; it is ignored and was not deleted because the build uses --emptyOutDir=false.

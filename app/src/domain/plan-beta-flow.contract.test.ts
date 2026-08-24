@@ -18,6 +18,7 @@ beforeEach(() => {
 
 const COMPLETE_DRAFT = {
   eventGroup: "MIDDLE_DISTANCE" as const,
+  eventDistanceM: 1500 as const,
   competitionDivision: "OPEN" as const,
   experienceBand: "DEVELOPING" as const,
   availableDayCount: 3 as const,
@@ -25,6 +26,7 @@ const COMPLETE_DRAFT = {
   trainingFocus: "LT_INTENT" as const,
   secondSessionMode: "SINGLE_SESSION_ONLY" as const,
   trainingTimePreference: "VARIES" as const,
+  selectedDetailedTemplateRef: null,
 }
 
 afterEach(() => {
@@ -72,12 +74,16 @@ describe("plan journal safety read boundary", () => {
 })
 
 describe("canonical plan intake boundary", () => {
-  it.each([undefined, "NOT_PROVIDED" as const])(
-    "generates without a competition division when the intake uses %s",
-    (competitionDivision) => {
+  it.each([
+    [undefined, "MALFORMED_INPUT"],
+    ["NOT_PROVIDED" as const, "MINIMUM_PROFILE_INCOMPLETE"],
+  ] as const)(
+    "rejects unsupported general endurance even when division uses %s",
+    (competitionDivision, expectedCode) => {
       // Given
       const draft = {
         eventGroup: "GENERAL_ENDURANCE" as const,
+        eventDistanceM: 5000 as const,
         competitionDivision,
         experienceBand: "DEVELOPING" as const,
         availableDayCount: 4 as const,
@@ -85,15 +91,17 @@ describe("canonical plan intake boundary", () => {
         trainingFocus: "BASE_INTENT" as const,
         secondSessionMode: "SINGLE_SESSION_ONLY" as const,
         trainingTimePreference: "VARIES" as const,
+        selectedDetailedTemplateRef: null,
       }
 
       // When
       const result = generatePlanFromDraft(draft, "NO_KNOWN_RISK")
 
       // Then
-      expect(result.kind).toBe("generated")
-      if (result.kind !== "generated") return
-      expect(result.intake.competitionDivision).toBe("NOT_PROVIDED")
+      expect(result).toEqual({
+        kind: "rejected",
+        code: expectedCode,
+      })
     },
   )
 
@@ -101,6 +109,7 @@ describe("canonical plan intake boundary", () => {
       // Given
       const draft = {
         eventGroup: "MIDDLE_DISTANCE" as const,
+        eventDistanceM: 1500 as const,
         competitionDivision: "OPEN" as const,
         experienceBand: "EXPERIENCED" as const,
       availableDayCount: 5 as const,
@@ -108,6 +117,7 @@ describe("canonical plan intake boundary", () => {
       trainingFocus: "LT_INTENT" as const,
       secondSessionMode: "SINGLE_SESSION_ONLY" as const,
       trainingTimePreference: "VARIES" as const,
+      selectedDetailedTemplateRef: null,
     }
 
     // When
@@ -140,7 +150,7 @@ describe("canonical plan intake boundary", () => {
       )).toHaveLength(2)
     }
     const candidate = result.generated.candidates[0]
-    const selection = selectPlanForActivation(candidate, result.generated, result.gate, result.intake)
+    const selection = selectPlanForActivation(candidate.candidateId, result.generated, result.gate, result.intake)
     expect(selection.kind).toBe("selected")
     if (selection.kind !== "selected") return
     expect(parsePlanBetaState(selection.state)?.activePlan.frame).toMatchObject({
@@ -220,6 +230,7 @@ describe("canonical plan intake boundary", () => {
     // Given
     const draft = {
       eventGroup: "MIDDLE_DISTANCE" as const,
+      eventDistanceM: 1500 as const,
       competitionDivision: "HIGH_SCHOOL" as const,
       experienceBand: "DEVELOPING" as const,
       availableDayCount: 3 as const,
@@ -227,6 +238,7 @@ describe("canonical plan intake boundary", () => {
       trainingFocus: "LT_INTENT" as const,
       secondSessionMode: "SINGLE_SESSION_ONLY" as const,
       trainingTimePreference: "VARIES" as const,
+      selectedDetailedTemplateRef: null,
     }
 
     // When
@@ -252,6 +264,7 @@ describe("canonical plan intake boundary", () => {
     // Given
     const draft = {
       eventGroup: "MIDDLE_DISTANCE" as const,
+      eventDistanceM: 1500 as const,
       competitionDivision: "HIGH_SCHOOL" as const,
       experienceBand: "DEVELOPING" as const,
       availableDayCount: 4 as const,
@@ -259,6 +272,7 @@ describe("canonical plan intake boundary", () => {
       trainingFocus: "LT_INTENT" as const,
       secondSessionMode: "RECOVERY_PM_ALLOWED" as const,
       trainingTimePreference: "EVENING" as const,
+      selectedDetailedTemplateRef: null,
     }
 
     // When
@@ -277,6 +291,7 @@ describe("canonical plan intake boundary", () => {
     // Given
     const draft = {
       eventGroup: "FIVE_K" as const,
+      eventDistanceM: 5000 as const,
       competitionDivision: "OPEN" as const,
       experienceBand: "EXPERIENCED" as const,
       availableDayCount: "EVERY_DAY" as const,
@@ -284,6 +299,7 @@ describe("canonical plan intake boundary", () => {
       trainingFocus: "VO2_INTENT" as const,
       secondSessionMode: "RECOVERY_PM_ALLOWED" as const,
       trainingTimePreference: "EVENING" as const,
+      selectedDetailedTemplateRef: null,
     }
     const generated = generatePlanFromDraft(draft, "NO_KNOWN_RISK")
     expect(generated.kind).toBe("generated")
@@ -294,7 +310,7 @@ describe("canonical plan intake boundary", () => {
 
     // When
     const selection = selectPlanForActivation(
-      candidate,
+      candidate.candidateId,
       generated.generated,
       generated.gate,
       generated.intake,

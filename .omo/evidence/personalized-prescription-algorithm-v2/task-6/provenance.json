@@ -1,0 +1,25 @@
+{
+  "schemaVersion": 1,
+  "task": "personalized-prescription-algorithm-v2-todo-6",
+  "head": "5ea2eed9fce0f0ddb314358d57c0b2fc538b9daa",
+  "headTree": "75be83e824a105862b319949cbde436f88242456",
+  "worktreeDirty": true,
+  "dirtyScopeNote": "Todo 1-5 runtime, test, authority, plan, ledger, and evidence changes pre-existed and were preserved.",
+  "planSha256": "90fe99b98b673ae28c905041be55099df1c373ff877bed30d6fb92a3ddff30dd",
+  "sourceGateSha256": "82061a918835ef9e73d663b8a3e27fbf3ec543f70e964ebfb6980b36041e7f41",
+  "formationEvidenceSha256": "8155fffb8c05f504476eb28baa47ed21723205785596c9665866fca366d85b86",
+  "registrySha256": "5f8d41dd6ab8b1d4eed6532e95d40f0ee61aada79fa20ca87e25924da2a8954f",
+  "registrySourceSetSha256": "bc6577c23d06b5ab2fc4d29dbcc5f57ae951a52827774a1d2b7ec877d97d4954",
+  "registryCellSetSha256": "0e02b9e2d911a1a8e34e2a78a403c67165f864c98976321a127cd66ec534f16b",
+  "todo6FileAggregateSha256": "35d146fa408a1f769a172e332c5d7e0e040e09644d48c8546bd71acebf3c952b",
+  "reviewedCellCount": 12,
+  "activeRowCount": 0,
+  "doNotApproveCount": 12,
+  "notFoundCount": 0,
+  "numericTaperAuthority": "NOT_GRANTED",
+  "retentionAuthority": "NOT_AUTHORIZED",
+  "reviewerIds": [
+    "01a00a34-088f-75a0-95d0-3b7813f38e8e",
+    "01a00a34-0f37-7d43-bcc5-4b2c0cb3dd2e"
+  ]
+}

@@ -20,8 +20,19 @@ import {
 } from "./plan-beta-store"
 
 const TODAY = new Date("2026-08-17T03:00:00.000Z")
+const APPROVAL_5000 = approvalModule.DETAILED_PRESCRIPTION_APPROVALS.find(
+  (approval) => approval.targetEventDistanceM === 5000,
+)
+if (APPROVAL_5000 === undefined) throw new TypeError("Expected approved 5000m fixture")
+const TEMPLATE_5000 = {
+  templateId: APPROVAL_5000.templateId,
+  version: APPROVAL_5000.templateVersion,
+  fingerprint: APPROVAL_5000.templateContentFingerprint,
+} as const
+const CURRENT_RECORD_ID = "pb-5k-current"
 const DRAFT = {
   eventGroup: "FIVE_K" as const,
+  eventDistanceM: 5000 as const,
   competitionDivision: "OPEN" as const,
   experienceBand: "EXPERIENCED" as const,
   availableDayCount: 5 as const,
@@ -29,11 +40,12 @@ const DRAFT = {
   trainingFocus: "VO2_INTENT" as const,
   secondSessionMode: "SINGLE_SESSION_ONLY" as const,
   trainingTimePreference: "VARIES" as const,
+  selectedDetailedTemplateRef: TEMPLATE_5000,
 }
 
 function saveCurrentFiveKilometreRecord(): void {
   const record = createSelfReportedAthleteRecord({
-    id: "current-5000",
+    id: CURRENT_RECORD_ID,
     purpose: "RECENT_RESULT",
     eventDistanceM: 5000,
     performanceSeconds: 1110,
@@ -46,7 +58,7 @@ function saveCurrentFiveKilometreRecord(): void {
 
 function bindingInput() {
   return {
-    selectedRecordId: "current-5000",
+    selectedRecordId: CURRENT_RECORD_ID,
   }
 }
 
@@ -193,6 +205,8 @@ describe("production candidate detailed-prescription binding", () => {
         .map((session) => `${session.day}:${session.slot}`)
       expect(afterQualityDays).toStrictEqual(beforeQualityDays)
     }
+    expect(result.generated.candidates[1].sessions.filter((session) => session.role === "QUALITY"))
+      .toStrictEqual(result.generated.candidates[0].sessions.filter((session) => session.role === "QUALITY"))
     expect(JSON.stringify(result.generated)).not.toMatch(
       /rawMemo|symptomNarrative|guardianNarrative|medicalNarrative/u,
     )
@@ -253,8 +267,12 @@ describe("production candidate detailed-prescription binding", () => {
 
   it("falls back both candidates when trusted authority is expired or unavailable", () => {
     saveCurrentFiveKilometreRecord()
-    const baseline = expectGeneratedBaseline()
     vi.setSystemTime(new Date("2027-08-17T03:00:00.000Z"))
+    const baseline = generatePlanFromDraft(
+      { ...DRAFT, selectedDetailedTemplateRef: null },
+      "NO_KNOWN_RISK",
+    )
+    if (baseline.kind !== "generated") throw new TypeError("Expired authority baseline was not generated")
 
     expectAtomicFallback(
       generatePlanFromDraft(DRAFT, "NO_KNOWN_RISK", bindingInput()),
@@ -265,8 +283,12 @@ describe("production candidate detailed-prescription binding", () => {
 
   it("falls back both candidates before the trusted authority decision time", () => {
     saveCurrentFiveKilometreRecord()
-    const baseline = expectGeneratedBaseline()
     vi.setSystemTime(new Date("2026-08-17T01:59:59.000Z"))
+    const baseline = generatePlanFromDraft(
+      { ...DRAFT, selectedDetailedTemplateRef: null },
+      "NO_KNOWN_RISK",
+    )
+    if (baseline.kind !== "generated") throw new TypeError("Pre-decision baseline was not generated")
 
     expectAtomicFallback(
       generatePlanFromDraft(DRAFT, "NO_KNOWN_RISK", bindingInput()),
@@ -277,8 +299,12 @@ describe("production candidate detailed-prescription binding", () => {
 
   it("rejects a split-clock attempt instead of backdating authority evaluation", () => {
     saveCurrentFiveKilometreRecord()
-    const baseline = expectGeneratedBaseline()
     vi.setSystemTime(new Date("2027-08-17T03:00:00.000Z"))
+    const baseline = generatePlanFromDraft(
+      { ...DRAFT, selectedDetailedTemplateRef: null },
+      "NO_KNOWN_RISK",
+    )
+    if (baseline.kind !== "generated") throw new TypeError("Split-clock baseline was not generated")
     const splitClock = {
       ...bindingInput(),
       evaluatedAt: "2026-08-17T03:00:00.000Z",
@@ -289,7 +315,7 @@ describe("production candidate detailed-prescription binding", () => {
     expectAtomicFallback(
       generatePlanFromDraft(DRAFT, "NO_KNOWN_RISK", splitClock),
       baseline,
-      "PACE_TARGET_FALLBACK_INVALID_SELECTION",
+      "PACE_TARGET_FALLBACK_AUTHORITY_OR_COMPONENT",
     )
   })
 
@@ -403,13 +429,13 @@ describe("production candidate detailed-prescription binding", () => {
     )
   })
 
-  it("selects and stores a bound candidate as a strict version-2 snapshot", () => {
+  it("selects and stores a bound candidate as a strict version-3 snapshot", () => {
     saveCurrentFiveKilometreRecord()
     const result = generatePlanFromDraft(DRAFT, "NO_KNOWN_RISK", bindingInput())
     if (result.kind !== "generated") throw new TypeError("Detailed candidates were not generated")
     const candidate = result.generated.candidates[0]
     const selected = selectPlanForActivation(
-      candidate,
+      candidate.candidateId,
       result.generated,
       result.gate,
       result.intake,
@@ -417,11 +443,31 @@ describe("production candidate detailed-prescription binding", () => {
     )
     expect(selected.kind).toBe("selected")
     if (selected.kind !== "selected") return
-    expect(selected.state.version).toBe(2)
+    expect(selected.state.version).toBe(3)
     expect(selected.state.activePlan.sessions.some((session) => (
       session.role === "QUALITY" && session.prescription.kind === "PACE_TARGET"
     ))).toBe(true)
     expect(savePlanBetaState(selected.state)).toEqual({ ok: true })
     expect(loadVersionedPlanBetaState()).toStrictEqual(selected.state)
+  })
+
+  it("rechecks detailed-template authority at selection time", () => {
+    saveCurrentFiveKilometreRecord()
+    const result = generatePlanFromDraft(DRAFT, "NO_KNOWN_RISK", bindingInput())
+    if (result.kind !== "generated") throw new TypeError("Detailed candidates were not generated")
+
+    const selected = selectPlanForActivation(
+      result.generated.candidates[0].candidateId,
+      result.generated,
+      result.gate,
+      result.intake,
+      result.athleteEvidence,
+      new Date("2028-08-18T00:00:00.000Z"),
+    )
+
+    expect(selected).toEqual({
+      kind: "rejected",
+      code: "DETAILED_TEMPLATE_AUTHORITY_UNAVAILABLE",
+    })
   })
 })

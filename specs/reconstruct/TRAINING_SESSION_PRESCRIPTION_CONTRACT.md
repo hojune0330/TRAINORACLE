@@ -309,10 +309,43 @@ later_runtime_requirements:
   D9_UNKNOWN: BLOCK_OR_HUMAN_REVIEW
   safety_gate_cleared_is_medical_clearance: false
   private_note_analysis: forbidden
-  active_numeric_template_exists_in_this_document: V2-SEED-05@1.0.0_ONLY
+  active_numeric_template_allowlist:
+    - V2-SEED-05@1.0.0
+    - MD-800-01@1.0.0
+    - MD-1500-01@1.0.0
+    - MD-3000-01@1.0.0
 ```
 
-No `DRAFT` entry in the companion catalogue is queryable by a future Plan Generator.
-This document supplies neither runtime evidence nor issue closure.
+No other `DRAFT` entry in the companion catalogue is queryable by the beta Plan
+Generator. The allowlist supplies neither canonical promotion nor issue closure.
+
+## 9. 2026-08-24 Beta Runtime Synchronization
+
+```yaml
+runtime_sync:
+  exact_event_template_pairs:
+    - { eventDistanceM: 800, template: MD-800-01@1.0.0, intent: GLY_INTENT }
+    - { eventDistanceM: 1500, template: MD-1500-01@1.0.0, intent: MIXED_INTENT }
+    - { eventDistanceM: 3000, template: MD-3000-01@1.0.0, intent: VO2_INTENT }
+    - { eventDistanceM: 5000, template: V2-SEED-05@1.0.0, intent: VO2_INTENT }
+  authority_requirements:
+    exact_template_identity_and_fingerprint: REQUIRED
+    athlete_experience: EXPERIENCED_ONLY
+    explicitly_selected_record: REQUIRED
+    record_freshness: CURRENT_ONLY
+    record_event_match: EXACT_SAME_EVENT_ONLY
+    race_goal_anchor: FORBIDDEN
+    cross_event_conversion: FORBIDDEN
+  numeric_pace_storage:
+    retain_unrounded_internal_value: true
+    display_rounding_separate: true
+  failure_behavior:
+    partial_numeric_prescription: FORBIDDEN
+    fallback: ATOMIC_RPE_ONLY_CONTROLLED
+```
+
+`OWNER-NOTATION-001` remains an unbound parser regression fixture. Its notation must
+not be mistaken for an activated athlete prescription, even though a different exact
+5000 m template identity is allowlisted above.
 
 [DRAFT_COMPLETE]

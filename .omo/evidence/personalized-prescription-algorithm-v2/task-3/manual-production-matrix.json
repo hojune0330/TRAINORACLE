@@ -1,0 +1,46 @@
+{
+  "status": "PASS",
+  "source": "production imports via temporary Vitest test",
+  "rows": [
+    {
+      "eventDistanceM": 800,
+      "resultKind": "generated",
+      "identityBound": true,
+      "selectionKind": "selected",
+      "qualityEqual": true,
+      "topologyEqual": true,
+      "shortenedSupportSessions": 3,
+      "pairId": "plan-pair:v3:800:rpe-only:gly_intent:fixture-main-1-fixture-main-2:1-3-5-7-9:no-continuity:pair-sha256-de570a70747b87c2918ae17c9f27ebca2f8579eafa834fda2247b04a300b894c"
+    },
+    {
+      "eventDistanceM": 1500,
+      "resultKind": "generated",
+      "identityBound": true,
+      "selectionKind": "selected",
+      "qualityEqual": true,
+      "topologyEqual": true,
+      "shortenedSupportSessions": 3,
+      "pairId": "plan-pair:v3:1500:rpe-only:mixed_intent:fixture-main-1-fixture-main-2:1-3-5-7-9:no-continuity:pair-sha256-8fc9c239182cd506cafd5bb62fcfc3e33a870261e5ff90ecc3fbed4c95c14428"
+    },
+    {
+      "eventDistanceM": 3000,
+      "resultKind": "generated",
+      "identityBound": true,
+      "selectionKind": "selected",
+      "qualityEqual": true,
+      "topologyEqual": true,
+      "shortenedSupportSessions": 3,
+      "pairId": "plan-pair:v3:3000:rpe-only:vo2_intent:fixture-main-1-fixture-main-2:1-3-5-7-9:no-continuity:pair-sha256-6c4d1537b269becfb42ac8f60de334ca2a65e6d62e9c9cc719f2b351f84137b2"
+    },
+    {
+      "eventDistanceM": 5000,
+      "resultKind": "generated",
+      "identityBound": true,
+      "selectionKind": "selected",
+      "qualityEqual": true,
+      "topologyEqual": true,
+      "shortenedSupportSessions": 3,
+      "pairId": "plan-pair:v3:5000:rpe-only:vo2_intent:fixture-main-1-fixture-main-2:1-3-5-7-9:no-continuity:pair-sha256-d3a53e882d4d44a01318b923e91580e1d6ec6f0aa7180b72051b5bace017cf7b"
+    }
+  ]
+}

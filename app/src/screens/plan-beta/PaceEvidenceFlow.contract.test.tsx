@@ -34,6 +34,19 @@ const RECORDS: readonly AthleteRecord[] = [
     sourceRef: "athlete-record:sb-5000-1140",
     savedAt: "2026-04-20T00:00:00.000Z",
   },
+  {
+    schemaVersion: 1,
+    id: "pb-3000-620",
+    purpose: "PERSONAL_BEST",
+    eventDistanceM: 3000,
+    performanceSeconds: 620,
+    achievedOn: "2026-03-15",
+    seasonId: null,
+    enteredBy: "ATHLETE",
+    verificationState: "SELF_REPORTED",
+    sourceRef: "athlete-record:pb-3000-620",
+    savedAt: "2026-03-15T00:00:00.000Z",
+  },
 ]
 
 function ControlledFlow({ onConfirm }: { readonly onConfirm: () => void }) {
@@ -41,7 +54,7 @@ function ControlledFlow({ onConfirm }: { readonly onConfirm: () => void }) {
   const [comparison, setComparison] = React.useState<string | null>(null)
   return (
     <PaceEvidenceFlow
-      eventGroup="FIVE_K"
+      eventDistanceM={5000}
       records={RECORDS}
       selectedRecordId={selected}
       comparisonRecordId={comparison}
@@ -61,7 +74,7 @@ function ConfirmingFlow() {
   >({ kind: "fallback", code: "PACE_TARGET_FALLBACK_NO_EXPLICIT_ANCHOR" })
   return (
     <PaceEvidenceFlow
-      eventGroup="FIVE_K"
+      eventDistanceM={5000}
       records={RECORDS}
       selectedRecordId={selected}
       comparisonRecordId={null}
@@ -76,7 +89,7 @@ function ConfirmingFlow() {
 describe("explicit pace evidence selection", () => {
   it("does not auto-select even one stored result", () => {
     render(<PaceEvidenceFlow
-      eventGroup="FIVE_K"
+      eventDistanceM={5000}
       records={RECORDS.slice(0, 1)}
       selectedRecordId={null}
       comparisonRecordId={null}
@@ -90,14 +103,32 @@ describe("explicit pace evidence selection", () => {
     expect(screen.queryByRole("button", { name: "이 기록으로 개인 페이스 적용" })).toBeNull()
   })
 
+  it("shows only records from the exact selected event", () => {
+    render(<PaceEvidenceFlow
+      eventDistanceM={3000}
+      records={RECORDS}
+      selectedRecordId={null}
+      comparisonRecordId={null}
+      binding={{ kind: "fallback", code: "PACE_TARGET_FALLBACK_NO_EXPLICIT_ANCHOR" }}
+      onSelectRecord={() => undefined}
+      onCompareRecord={() => undefined}
+      onConfirm={() => undefined}
+    />)
+
+    expect(screen.getByRole("button", { name: /3000m.*10분 20초/u })).toBeVisible()
+    expect(screen.queryByRole("button", { name: /5000m/u })).toBeNull()
+  })
+
   it("keeps comparison separate and confirms only the selected record", async () => {
     const onConfirm = vi.fn()
     const user = userEvent.setup()
     render(<ControlledFlow onConfirm={onConfirm} />)
     const flow = screen.getByRole("region", { name: "개인 페이스 기준 기록" })
+    expect(within(flow).getByRole("group", { name: "기준 기록 선택" })).toBeVisible()
 
     await user.click(within(flow).getByRole("button", { name: /개인 최고.*18분 30초/u }))
     await user.click(within(flow).getByText("다른 같은 종목 기록과 비교"))
+    expect(within(flow).getByRole("group", { name: "비교 기록 선택" })).toBeVisible()
     await user.click(within(flow).getByRole("button", { name: /비교 기록.*시즌 최고.*19분/u }))
 
     expect(within(flow).getByText(/기준 기록.*18분 30초/u)).toBeVisible()
@@ -121,7 +152,7 @@ describe("explicit pace evidence selection", () => {
 
   it("identifies an internal binding failure without blaming the athlete's record", () => {
     const { rerender } = render(<PaceEvidenceFlow
-      eventGroup="FIVE_K"
+      eventDistanceM={5000}
       records={RECORDS}
       selectedRecordId={RECORDS[0]?.id ?? null}
       comparisonRecordId={null}
@@ -137,7 +168,7 @@ describe("explicit pace evidence selection", () => {
     expect(status).not.toHaveTextContent("현재 승인 범위")
 
     rerender(<PaceEvidenceFlow
-      eventGroup="FIVE_K"
+      eventDistanceM={5000}
       records={RECORDS}
       selectedRecordId={RECORDS[0]?.id ?? null}
       comparisonRecordId={null}

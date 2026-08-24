@@ -104,7 +104,7 @@ describe("athlete persona prescription quality matrix", () => {
     }
 
     const selection = selectPlanForActivation(
-      result.generated.candidates[0],
+      result.generated.candidates[0].candidateId,
       result.generated,
       result.gate,
       result.intake,
@@ -142,7 +142,7 @@ describe("athlete persona prescription quality matrix", () => {
     ))).toBe(true)
     if (withRawMemo) expect(result.athleteEvidence.recentJournalSessionCount).toBe(2)
     const selection = selectPlanForActivation(
-      result.generated.candidates[0],
+      result.generated.candidates[0].candidateId,
       result.generated,
       result.gate,
       result.intake,

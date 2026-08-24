@@ -1,0 +1,13 @@
+{
+  "kind": "TRAINORACLE_TODO2_PROVENANCE",
+  "baseHead": "5ea2eed9fce0f0ddb314358d57c0b2fc538b9daa",
+  "reviewedPlanSha256": "3f081ebbd8d8fa456ff33f01a037942e618cf13f9e549ff3feb83789df590d6b",
+  "currentPlanFileSha256": "653f2711006e6226cf35108c0091ecbd40bec2b60694d75a53f6c159efae4f37",
+  "planDriftExplanation": "The shared worktree already contained Todo 1 checkpoint edits; Todo 2 did not edit the plan.",
+  "sourceFileCount": 32,
+  "lfNormalizedReviewedDiffSha256": "d9b3db0715ff4fa70d3f1a7a7fc4c1e97f276a64c4a9be3eb7a8e70bfe2909f3",
+  "reviewedDiffComposition": "git diff --binary for tracked app/impl paths plus the untracked app/src/domain/plan-beta-v3.contract.test.ts creation patch, LF-normalized",
+  "workingTree": "dirty by Todo 1, shared ledger, Todo 2 source/tests, and evidence; no unrelated bytes were reverted",
+  "commitCreated": false,
+  "pushPerformed": false
+}

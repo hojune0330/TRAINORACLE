@@ -41,6 +41,7 @@ const CONTENT_KEYS = [
   "trainoracle.plan-beta.history.v1",
   "trainoracle.plan-beta.previous-intake.v1",
   "trainoracle.plan-beta.adaptation.v1",
+  "trainoracle.plan-beta.adaptation-activation.v1",
   "trainoracle.plan-adaptation-context.v1",
   "trainoracle.engagement.v1",
   "trainoracle.onboarding.dismissed.v1",

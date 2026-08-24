@@ -1,0 +1,18 @@
+{
+  "task": "personalized-prescription-algorithm-v2/todo-3",
+  "status": "DONE_CLAIM_READY",
+  "baseHead": "5ea2eed9fce0f0ddb314358d57c0b2fc538b9daa",
+  "planSha256": "cfab1b6a33f14a0d0baa98e111e1169fdb52d069bcfe2bd66b70ac823eb3e8a7",
+  "reviewedDiffSha256": "930ffc4fa6567dd6799840b5ebe2b0ac036dfe83c7cbb22d20ed279adc16815b",
+  "reviewedRuntimeAndTestFileCount": 40,
+  "manualMatrixSha256": "f5656e56ca4376151c5472066d11896d1b31776dd9e63eaab4bdc17bc3e615c5",
+  "matrixGeneratedPairs": 360,
+  "matrixMutationCoverage": [
+    "COORDINATED_SUPPORT_RETAINED_IDS",
+    "COORDINATED_QUALITY_RETAINED_IDS",
+    "STORED_SESSION_RETAINED_ID",
+    "ADAPTATION_SUCCESSOR_RETAINED_ID"
+  ],
+  "commitCreated": false,
+  "pushPerformed": false
+}

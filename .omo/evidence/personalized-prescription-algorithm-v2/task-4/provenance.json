@@ -1,0 +1,28 @@
+{
+  "schemaVersion": 1,
+  "head": "5ea2eed9fce0f0ddb314358d57c0b2fc538b9daa",
+  "branch": "codex/personalized-prescription-algorithm-v2-20260823",
+  "reviewedPlanSha256": "3f081ebbd8d8fa456ff33f01a037942e618cf13f9e549ff3feb83789df590d6b",
+  "currentPlanCopySha256": "09ec587a01bbe2f20347c448dd4c6df9a0a1463f00d100faaf28a8ee8fc7743d",
+  "sourceGateSha256": "82061a918835ef9e73d663b8a3e27fbf3ec543f70e964ebfb6980b36041e7f41",
+  "reviewedDiffSha256": "19c676ab267617c272655c6b54f7b9a7cd5da81ad6d43c14a5eff5206a1ee9d8",
+  "task4SourceAggregateAlgorithm": "SHA256_UTF8_JSON_STRINGIFY_ORDERED_FILES_MAP",
+  "task4SourceAggregateSha256": "c01db9504aa869c2872f4889a03164894ad3124412691522eedc1f4ecc7ec2ab",
+  "manifestActiveEligibleCount": 4,
+  "delegatedActiveCount": 0,
+  "files": {
+    "app/src/domain/detailed-prescription-runtime-authority.ts": "a906bd8d11869ff956c71b8efe6dfb3fc942926038e4485d1347081fe71b36cb",
+    "app/src/domain/detailed-prescription-runtime-authority.contract.test.ts": "524d5e1be2005501ab77212e7a9562c394aef781c27be2815d330531db7eb6a0",
+    "app/src/domain/detailed-prescription.ts": "31ba55bb1c6c5b7feeebb5c3d1c68aeddacbf0598f53663e8fcb139b6406a5ec",
+    "app/src/domain/detailed-prescription.contract.test.ts": "b2fac8909ea809b27b630e5f79d5d2c2296e45a1b96bd3cb7422457d02d9bda9",
+    "app/src/domain/plan-candidate-prescription.ts": "a04859fa8d5f81f7bcbd535f55f79e25013d20c1da62a8870f6a6ef1244580c6",
+    "app/src/domain/plan-beta-flow.ts": "93ac9e4b19a9e03e806c333c941f6365dba218d2699112324e91904f5d1ff465",
+    "app/src/domain/multi-event-prescription.contract.test.ts": "52338ebf291b5a6f6f1c0a5604b7de8b4a6ff3756ed28d005e5f7142c5ab0c17",
+    "app/src/domain/plan-beta-detailed-candidates.contract.test.ts": "c64f4b175e08672bc5847aaf2f0677e5725b34cac21c6d944e6740d00579f26f",
+    "app/src/domain/plan-beta-v3.contract.test.ts": "e2b34f3b00723acbfa7502ce9710eb87d9f76344ce1feb173ac9f893d81e9c61",
+    "app/src/domain/prescription-quality-matrix.test-fixtures.ts": "df5e5af07b4b7b7b6d127a8f01168f6a7b8bf8432654d52ab301d45aedd9a98c",
+    "impl/src/plan-generator/candidate-identity.ts": "f7ab2f3da41c27d5c629e929c1be7d711548d3a2f5839978963d9c0c8e6d9c58",
+    "app/src/domain/detailed-prescription-manifest.json": "24cc169f64bfe3088577766fca575da6dea188d19cec491386687affffa580fe",
+    ".omo/reports/personalized-prescription-source-gate-2026-08-23.md": "82061a918835ef9e73d663b8a3e27fbf3ec543f70e964ebfb6980b36041e7f41"
+  }
+}

@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it } from "vitest"
+import { deriveCandidateId, derivePairId } from "@impl/plan-generator/candidate-identity"
 import { decideSafetyGate } from "@impl/safety-gate/gate"
 import { mapD9ResultToRveSignal } from "@impl/rve/signal"
 import { DETAILED_PRESCRIPTION_APPROVALS } from "./detailed-prescription-approvals"
@@ -21,6 +22,11 @@ const approval = (() => {
   if (found === undefined) throw new TypeError("Trusted V2-SEED-05 approval is missing")
   return found
 })()
+const selectedTemplateRef = {
+  templateId: approval.templateId,
+  version: approval.templateVersion,
+  fingerprint: approval.templateContentFingerprint,
+} as const
 
 function safetyGate(disposition: "D9_CLEARED" | "D9_ACTIVE" | "D9_UNKNOWN") {
   return decideSafetyGate(mapD9ResultToRveSignal({
@@ -112,13 +118,18 @@ function detailedPrescription(overrides: Record<string, unknown> = {}) {
 }
 
 function v1RestRpeState() {
-  const legacy = stateFixture()
+  const current = stateFixture()
+  if (current.version !== 3) throw new TypeError("Expected current v3 fixture")
+  const { eventDistanceM: _event, selectedDetailedTemplateRef: _template, ...intake } = current.intake
+  const { pairId: _pair, selectedDetailedTemplateRef: _activeTemplate, ...activePlan } = current.activePlan
   return {
-    ...legacy,
+    ...current,
+    version: 1 as const,
+    intake,
     activePlan: {
-      ...legacy.activePlan,
+      ...activePlan,
       sessions: [
-        ...legacy.activePlan.sessions,
+        ...activePlan.sessions,
         {
           day: 2,
           slot: "AM" as const,
@@ -131,22 +142,47 @@ function v1RestRpeState() {
   }
 }
 
-function v2DetailedState() {
-  const legacy = stateFixture()
+function v3DetailedState() {
+  const current = stateFixture()
+  if (current.version !== 3) throw new TypeError("Expected current v3 fixture")
+  if (!("formationKind" in current.activePlan.frame)) throw new TypeError("Expected canonical v3 frame")
+  const templateIdentity = `${approval.templateId.toLowerCase()}.${approval.templateVersion}.${approval.templateContentFingerprint.slice("sha256:".length)}`
+  const prescription = detailedPrescription()
+  const candidateBaseId = `beta:balanced:five_k:event-5000:experienced:vo2_intent:single_session_only:varies:projection-9:local-civil-9-5:fixture-main-1-fixture-main-2:1-5-9:no_usable_journal:no-continuity:template-${templateIdentity}`
+  const pairBaseId = `plan-pair:v3:5000:${templateIdentity}:vo2_intent:fixture-main-1-fixture-main-2:1-5-9:no-continuity`
+  const sessions = [{
+    day: 1,
+    slot: "AM" as const,
+    role: "QUALITY" as const,
+    plannedEnergyIntent: "VO2_INTENT" as const,
+    prescription,
+  }]
+  const projection = {
+    kind: "BALANCED" as const,
+    eventDistanceM: 5000 as const,
+    selectedDetailedTemplateRef: selectedTemplateRef,
+    selectedEnergyIntent: "VO2_INTENT" as const,
+    sourceMode: current.activePlan.sourceMode,
+    selectionAuthority: "SELF" as const,
+    frame: current.activePlan.frame,
+    sessions,
+  }
+  const candidateId = deriveCandidateId(candidateBaseId, projection)
+  const conservativeId = deriveCandidateId(
+    candidateBaseId.replace("beta:balanced:", "beta:conservative:"),
+    { ...projection, kind: "CONSERVATIVE" },
+  )
+  const pairId = derivePairId(pairBaseId, candidateId, conservativeId)
   return {
-    ...legacy,
-    version: 2 as const,
-    intake: { ...legacy.intake, experienceBand: "EXPERIENCED" as const },
+    ...current,
+    intake: { ...current.intake, experienceBand: "EXPERIENCED" as const, trainingFocus: "VO2_INTENT" as const, selectedDetailedTemplateRef: selectedTemplateRef },
     activePlan: {
-      ...legacy.activePlan,
+      ...current.activePlan,
+      candidateId,
+      pairId,
+      selectedDetailedTemplateRef: selectedTemplateRef,
       selectedEnergyIntent: "VO2_INTENT" as const,
-      sessions: [{
-        day: 1,
-        slot: "AM" as const,
-        role: "QUALITY" as const,
-        plannedEnergyIntent: "VO2_INTENT" as const,
-        prescription: detailedPrescription(),
-      }],
+      sessions,
     },
   }
 }
@@ -238,10 +274,10 @@ describe("versioned detailed prescription storage", () => {
     expect(window.localStorage.getItem(STORAGE_KEY)).toBe(raw)
   })
 
-  it("roundtrips a valid v2 detailed QUALITY prescription", () => {
-    const state = v2DetailedState()
+  it("roundtrips a valid v3 detailed QUALITY prescription", () => {
+    const state = v3DetailedState()
     expect(savePlanBetaState(state)).toEqual({ ok: true })
-    expect(JSON.parse(window.localStorage.getItem(STORAGE_KEY) ?? "{}").version).toBe(2)
+    expect(JSON.parse(window.localStorage.getItem(STORAGE_KEY) ?? "{}").version).toBe(3)
     expect(loadVersionedPlanBetaState()).toStrictEqual(state)
   })
 
@@ -249,7 +285,7 @@ describe("versioned detailed prescription storage", () => {
     ["prescription fingerprint", tamperPrescriptionFingerprint],
     ["component fingerprint", tamperComponentFingerprint],
   ])("rejects a tampered %s without deleting or repairing storage", (_name, mutate) => {
-    const state = v2DetailedState()
+    const state = v3DetailedState()
     expect(savePlanBetaState(state)).toEqual({ ok: true })
     const parsed = JSON.parse(window.localStorage.getItem(STORAGE_KEY) ?? "{}")
     const before = JSON.stringify(parsed)
@@ -272,7 +308,7 @@ describe("versioned detailed prescription storage", () => {
   it.each(["D9_ACTIVE", "D9_UNKNOWN"] as const)(
     "blocks START under %s without deleting the stored snapshot",
     (disposition) => {
-      const state = v2DetailedState()
+      const state = v3DetailedState()
       expect(savePlanBetaState(state)).toEqual({ ok: true })
       const raw = window.localStorage.getItem(STORAGE_KEY)
       expect(recheckStoredDetailedPrescriptionAuthority({
@@ -290,7 +326,7 @@ describe("versioned detailed prescription storage", () => {
   )
 
   it("blocks expired authority at START and revoked authority at RESTART without deletion", () => {
-    const state = v2DetailedState()
+    const state = v3DetailedState()
     expect(savePlanBetaState(state)).toEqual({ ok: true })
     const raw = window.localStorage.getItem(STORAGE_KEY)
 
@@ -350,7 +386,7 @@ describe("versioned detailed prescription storage", () => {
     ["RPE prescription rawMemo", (stored: unknown) => addUnknownField(stored, ["activePlan", "firstSession", "prescription"], "rawMemo")],
     ["root benign extraKey", (stored: unknown) => addUnknownField(stored, [], "extraKey")],
   ])("rejects unknown %s atomically on save and load", (_name, mutate) => {
-    const existing = v2DetailedState()
+    const existing = v3DetailedState()
     expect(savePlanBetaState(existing)).toEqual({ ok: true })
     const existingRaw = window.localStorage.getItem(STORAGE_KEY)
     const candidate: unknown = JSON.parse(JSON.stringify(v1RestRpeState()))
@@ -362,6 +398,7 @@ describe("versioned detailed prescription storage", () => {
     expect(savePlanBetaState(candidate)).toEqual({
       ok: false,
       code: "PLAN_STORAGE_WRITE_FAILED",
+      rollbackComplete: true,
     })
     expect(window.localStorage.getItem(STORAGE_KEY)).toBe(existingRaw)
 

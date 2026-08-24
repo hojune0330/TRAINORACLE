@@ -14,7 +14,7 @@ import {
 import {
   planAdaptationProposalSchema,
   planAdaptationCandidateSchema,
-  planBetaStateV2Schema,
+  planBetaStateV3Schema,
 } from "./plan-beta-schema"
 import { generatePlanFromDraft } from "./plan-beta-flow"
 import {
@@ -41,10 +41,11 @@ beforeEach(() => {
 function appAcceptsCandidate(candidate: unknown): boolean {
   const parsed = candidateSchema.safeParse(candidate)
   if (!parsed.success || parsed.data.eventDistanceM === null) return false
-  return planBetaStateV2Schema.safeParse({
-    version: 2,
+  return planBetaStateV3Schema.safeParse({
+    version: 3,
     intake: {
       eventGroup: parsed.data.eventGroup,
+      eventDistanceM: parsed.data.eventDistanceM,
       competitionDivision: "OPEN",
       experienceBand: "EXPERIENCED",
       availableDayCount: 5,
@@ -52,19 +53,24 @@ function appAcceptsCandidate(candidate: unknown): boolean {
       trainingFocus: parsed.data.selectedEnergyIntent,
       secondSessionMode: "RECOVERY_PM_ALLOWED",
       trainingTimePreference: "VARIES",
+      selectedDetailedTemplateRef: parsed.data.selectedDetailedTemplateRef,
     },
     progress: [],
     generatedAt: "2026-08-01T00:00:00.000Z",
     adaptationScope: {
       athleteId: "athlete-1",
       eventDistanceM: parsed.data.eventDistanceM,
+      pairId: parsed.data.pairId,
+      selectedDetailedTemplateRef: parsed.data.selectedDetailedTemplateRef,
     },
     activePlan: {
       kind: "BETA_ACTIVE_PLAN_SNAPSHOT",
       activationState: "SELECTED_BETA_SNAPSHOT",
       candidateId: parsed.data.candidateId,
+      pairId: parsed.data.pairId,
       candidateKind: parsed.data.kind,
       eventDistanceM: parsed.data.eventDistanceM,
+      selectedDetailedTemplateRef: parsed.data.selectedDetailedTemplateRef,
       selectionActor: "SELF",
       sourceMode: parsed.data.sourceMode,
       selectedEnergyIntent: parsed.data.selectedEnergyIntent,
@@ -84,9 +90,18 @@ async function proposalFor(baseCandidate: unknown, proposedCandidate: unknown) {
   } catch {
     // Malformed sparse values cannot have a canonical contract hash.
   }
+  const parsedBase = candidateSchema.safeParse(baseCandidate)
+  const scopeCandidate = parsedBase.success
+    ? parsedBase.data
+    : expectGenerated(generatePlanCandidates(baseRequest())).candidates[0]
   return createPlanAdaptationProposal({
     kind: "PLAN_ADAPTATION_PROPOSAL_REQUEST",
-    scope: { athleteId: "athlete-1", eventDistanceM: 1500 },
+    scope: {
+      athleteId: "athlete-1",
+      eventDistanceM: scopeCandidate.eventDistanceM,
+      pairId: scopeCandidate.pairId,
+      selectedDetailedTemplateRef: scopeCandidate.selectedDetailedTemplateRef,
+    },
     activePlanStartedAt: "2026-08-01T00:00:00.000Z",
     baseCandidate,
     proposedCandidate,

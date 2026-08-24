@@ -53,6 +53,12 @@ jobs:
           node --test specs/test-packages/validate-decoration-assets.test.mjs
           node specs/test-packages/validate-journal-decoration-contract.mjs
           node --test specs/test-packages/validate-journal-decoration-contract.test.mjs
+          node --test specs/test-packages/validate-personalized-prescription-v2-authority.test.mjs
+          node specs/test-packages/validate-personalized-prescription-v2-authority.mjs
+          node --test specs/test-packages/validate-personalized-prescription-v2-taper-authority.test.mjs
+          node specs/test-packages/validate-personalized-prescription-v2-taper-authority.mjs
+          node --test specs/test-packages/validate-personalized-prescription-v2-race-placement.test.mjs
+          node specs/test-packages/validate-personalized-prescription-v2-race-placement.mjs
 
       - name: Install D9 evaluator dependencies
         working-directory: runtime-evidence/d9-evaluator

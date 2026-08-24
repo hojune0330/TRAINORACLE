@@ -1,0 +1,49 @@
+{
+  "schemaVersion": "trainoracle.todo7-manual-matrix.v1",
+  "executedAt": "2026-08-23T23:32:03+09:00",
+  "productionImports": [
+    "impl/src/plan-generator/generator.ts",
+    "impl/src/plan-generator/adaptation.ts"
+  ],
+  "rows": [
+    {
+      "scenario": "REDUCE_EXPLICIT",
+      "result": "proposed",
+      "edge": "BALANCED_TO_CONSERVATIVE_EXISTING_SIBLING_ONLY",
+      "trigger": "EXPLICIT_REQUEST",
+      "expiresAt": "2026-08-21T00:05:00.000Z"
+    },
+    {
+      "scenario": "INCREASE_EXPLICIT",
+      "result": "proposed",
+      "edge": "CONSERVATIVE_TO_BALANCED_EXISTING_SIBLING_ONLY",
+      "trigger": "EXPLICIT_REQUEST",
+      "expiresAt": "2026-08-21T00:05:00.000Z"
+    },
+    {
+      "scenario": "INCREASE_PB_SB",
+      "result": "proposed",
+      "edge": "CONSERVATIVE_TO_BALANCED_EXISTING_SIBLING_ONLY",
+      "trigger": "SAME_EVENT_PB_SB_AFTER_ACTIVE_PLAN_START",
+      "expiresAt": "2026-08-21T00:05:00.000Z"
+    },
+    {
+      "scenario": "REDUCE_PB_SB",
+      "result": "rejected",
+      "code": "UNAPPROVED_TRANSFORM"
+    },
+    {
+      "scenario": "D9_ACTIVE",
+      "result": "blocked",
+      "code": "SAFETY_BLOCKED"
+    },
+    {
+      "scenario": "ACTIVE_HOLD",
+      "result": "blocked",
+      "code": "ACTIVE_HOLD"
+    }
+  ],
+  "temporaryTest": "removed",
+  "privateAthleteData": false
+}
+

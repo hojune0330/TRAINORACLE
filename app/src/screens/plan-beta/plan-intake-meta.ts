@@ -10,11 +10,11 @@ import type { CompetitionDivision } from "../../domain/plan-beta-schema"
 import type { TermId } from "../../domain/glossary"
 import {
   ENERGY_INTENT_LABELS,
-  EVENT_LABELS,
   EXPERIENCE_LABELS,
 } from "./labels"
+import { eventDistanceLabel } from "./plan-intake-navigation"
 
-export type IntakeStep = "goal" | "division" | "experience" | "focus" | "days" | "training-time" | "two-a-day" | "safety"
+export type IntakeStep = "goal" | "division" | "experience" | "focus" | "template" | "days" | "training-time" | "two-a-day" | "safety"
 
 export const DIVISION_LABELS: Record<CompetitionDivision, {
   readonly title: string
@@ -65,22 +65,29 @@ export const STEP_META: Record<IntakeStep, {
     copy: "고른 목적은 고강도 날의 종류와 RPE 안내를 정해요. 지원 조건이 맞으면 한 번의 주요 훈련에 반복 횟수·거리·페이스·회복 시간도 보여드려요.",
     helpTerm: "energy-system",
   },
-  days: {
+  template: {
     number: 6,
+    eyebrow: "훈련 상세 방식",
+    title: "훈련 강도를 어떻게 안내받을까요?",
+    copy: "RPE 기준은 기록 없이도 시작할 수 있어요. 상세 훈련은 현재 종목·목적에 승인된 훈련표를 직접 고르고, 같은 종목의 현재 기록을 확인해야 반복 페이스를 계산합니다.",
+    helpTerm: "training-notation",
+  },
+  days: {
+    number: 7,
     eyebrow: "가능한 날",
     title: "이번 계획에서 운동할 수 있는 날은 며칠인가요?",
     copy: "달리기뿐 아니라 걷기, 가벼운 조깅, 자전거 같은 회복 운동을 하는 날도 포함해 골라주세요. 고른 날 수를 9.5일 기본 틀의 운동 가능한 날짜에 배치해요. N이 작을수록 계획의 하루 훈련 시간이 늘어날 수 있고, 현재 베타는 여러 날짜 배치 방식 중 이 기본 배치 하나만 제공해요.",
     helpTerm: "training-days",
   },
   "training-time": {
-    number: 7,
+    number: 8,
     eyebrow: "주로 하는 시간",
     title: "주로 언제 운동하나요?",
     copy: "품질 훈련을 보기 편한 시간대에 놓는 데만 사용해요. 운동 능력을 평가하거나 훈련 강도를 바꾸지 않아요.",
     helpTerm: "training-days",
   },
   "two-a-day": {
-    number: 8,
+    number: 9,
     eyebrow: "하루 두 번 훈련",
     title: "하루에 두 번 운동하는 날도 넣을까요?",
     copy: "고른 모든 훈련일을 오전과 오후 두 칸으로 나눠 보여줘요. 집중 훈련은 고른 시간대에, 다른 칸은 가벼운 훈련이나 회복으로 안내해요.",
@@ -99,12 +106,18 @@ export function answeredSummary(
   draft: Partial<PlanBetaIntake>,
 ): readonly { readonly step: IntakeStep; readonly label: string }[] {
   const lines: { readonly step: IntakeStep; readonly label: string }[] = []
-  if (draft.eventGroup !== undefined) lines.push({ step: "goal", label: EVENT_LABELS[draft.eventGroup].title })
+  if (draft.eventDistanceM !== undefined) lines.push({ step: "goal", label: eventDistanceLabel(draft.eventDistanceM) })
   if (draft.competitionDivision !== undefined && draft.competitionDivision !== "NOT_PROVIDED") {
     lines.push({ step: "division", label: DIVISION_LABELS[draft.competitionDivision].title })
   }
   if (draft.experienceBand !== undefined) lines.push({ step: "experience", label: EXPERIENCE_LABELS[draft.experienceBand].title })
   if (draft.trainingFocus !== undefined) lines.push({ step: "focus", label: ENERGY_INTENT_LABELS[draft.trainingFocus].title.split(" · ")[0] ?? "" })
+  if (draft.selectedDetailedTemplateRef !== undefined) {
+    lines.push({
+      step: "template",
+      label: draft.selectedDetailedTemplateRef === null ? "RPE 기준" : "상세 훈련 선택",
+    })
+  }
   if (draft.availableDayCount !== undefined) {
     lines.push({
       step: "days",
