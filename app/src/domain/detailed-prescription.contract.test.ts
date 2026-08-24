@@ -21,6 +21,7 @@ const approval = (() => {
 function input(detailedPrescriptionEnabled = true) {
   return {
     detailedPrescriptionEnabled,
+    selectedEnergyIntent: "VO2_INTENT" as const,
     templateId: approval.templateId,
     templateVersion: approval.templateVersion,
     templateContentFingerprint: approval.templateContentFingerprint,

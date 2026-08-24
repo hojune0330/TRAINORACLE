@@ -3,6 +3,7 @@ import {
   createSelfReportedAthleteRecord,
   saveAthleteRecord,
 } from "./athlete-records"
+import { DETAILED_PRESCRIPTION_APPROVALS } from "./detailed-prescription-approvals"
 import { generatePlanFromDraft } from "./plan-beta-flow"
 
 const TODAY = new Date("2026-08-17T03:00:00.000Z")
@@ -32,6 +33,7 @@ const CASES = [
     recoveryOccurrences: 9,
     recoveryTotalSeconds: 540,
     templateId: "MD-800-01",
+    trainingFocus: "GLY_INTENT",
   },
   {
     eventDistanceM: 1500,
@@ -46,6 +48,7 @@ const CASES = [
     recoveryOccurrences: 2,
     recoveryTotalSeconds: 360,
     templateId: "MD-1500-01",
+    trainingFocus: "MIXED_INTENT",
   },
   {
     eventDistanceM: 3000,
@@ -60,8 +63,26 @@ const CASES = [
     recoveryOccurrences: 3,
     recoveryTotalSeconds: 540,
     templateId: "MD-3000-01",
+    trainingFocus: "VO2_INTENT",
   },
 ] as const
+
+function draftFor(fixture: (typeof CASES)[number]) {
+  const approval = DETAILED_PRESCRIPTION_APPROVALS.find((candidate) => (
+    candidate.templateId === fixture.templateId
+  ))
+  if (approval === undefined) throw new TypeError("Exact event approval fixture is missing")
+  return {
+    ...BASE_DRAFT,
+    eventDistanceM: fixture.eventDistanceM,
+    trainingFocus: fixture.trainingFocus,
+    selectedDetailedTemplateRef: {
+      templateId: approval.templateId,
+      version: approval.templateVersion,
+      fingerprint: approval.templateContentFingerprint,
+    },
+  }
+}
 
 function saveCurrentRecord(eventDistanceM: number, performanceSeconds: number): string {
   const id = `current-${eventDistanceM}`
@@ -94,7 +115,7 @@ describe("multi-event same-event detailed prescriptions", () => {
       )
 
       const result = generatePlanFromDraft(
-        BASE_DRAFT,
+        draftFor(fixture),
         "NO_KNOWN_RISK",
         { selectedRecordId },
       )
@@ -145,7 +166,7 @@ describe("multi-event same-event detailed prescriptions", () => {
     (competitionDivision) => {
       const selectedRecordId = saveCurrentRecord(1500, 240)
       const result = generatePlanFromDraft(
-        { ...BASE_DRAFT, competitionDivision },
+        { ...draftFor(CASES[1]), competitionDivision },
         "NO_KNOWN_RISK",
         { selectedRecordId },
       )
@@ -164,7 +185,7 @@ describe("multi-event same-event detailed prescriptions", () => {
   it("keeps a decimal electronic result as the exact pace anchor", () => {
     const selectedRecordId = saveCurrentRecord(800, 121.5)
     const result = generatePlanFromDraft(
-      BASE_DRAFT,
+      draftFor(CASES[0]),
       "NO_KNOWN_RISK",
       { selectedRecordId },
     )
@@ -181,11 +202,11 @@ describe("multi-event same-event detailed prescriptions", () => {
     })
   })
 
-  it("keeps an unsupported same-group distance RPE-only", () => {
-    const selectedRecordId = saveCurrentRecord(1000, 150)
-    const baseline = generatePlanFromDraft(BASE_DRAFT, "NO_KNOWN_RISK")
+  it("keeps cross-event evidence RPE-only", () => {
+    const selectedRecordId = saveCurrentRecord(800, 122)
+    const baseline = generatePlanFromDraft(draftFor(CASES[1]), "NO_KNOWN_RISK")
     const result = generatePlanFromDraft(
-      BASE_DRAFT,
+      draftFor(CASES[1]),
       "NO_KNOWN_RISK",
       { selectedRecordId },
     )

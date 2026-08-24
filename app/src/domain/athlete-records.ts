@@ -66,7 +66,15 @@ export type SaveAthleteRecordResult = {
   readonly total: number
 }
 
-const idSchema = z.string().min(1).max(128).regex(/^[A-Za-z0-9][A-Za-z0-9._:-]*$/u)
+const privateRecordIdToken = /(?:memo|note|symptom)/iu
+export const athleteRecordIdSchema = z.string()
+  .min(1)
+  .max(128)
+  .regex(/^[A-Za-z0-9][A-Za-z0-9._:-]*$/u)
+  .refine(
+    (value) => !privateRecordIdToken.test(value),
+    "record ID must not contain private-text field names",
+  )
 const enteredBySchema = z.enum(["ATHLETE", "COACH", "VERIFIED_IMPORT"])
 const verificationSchema = z.enum(["VERIFIED", "SELF_REPORTED", "UNVERIFIED"])
 
@@ -80,7 +88,7 @@ function recordSchema(today: Date) {
   )
   const base = {
     schemaVersion: z.literal(1),
-    id: idSchema,
+    id: athleteRecordIdSchema,
     eventDistanceM: z.number().finite().min(60),
     performanceSeconds: z.number().finite().positive(),
     enteredBy: enteredBySchema,

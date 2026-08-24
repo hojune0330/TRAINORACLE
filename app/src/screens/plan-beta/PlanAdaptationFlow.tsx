@@ -33,6 +33,7 @@ type PlanAdaptationFlowProps = {
   readonly onLoadRecords?: () => readonly AthleteRecord[]
   readonly onLoadPending?: typeof loadMatchingPendingSuccessor
   readonly onEvaluateSafety?: typeof evaluateActivePlanAdaptationSafety
+  readonly onPendingChange?: (hasPending: boolean) => void
 }
 
 export function PlanAdaptationFlow({
@@ -42,6 +43,7 @@ export function PlanAdaptationFlow({
   onLoadRecords = loadAthleteRecords,
   onLoadPending = loadMatchingPendingSuccessor,
   onEvaluateSafety = evaluateActivePlanAdaptationSafety,
+  onPendingChange,
 }: PlanAdaptationFlowProps) {
   const [step, setStep] = React.useState<Step>("closed")
   const [reason, setReason] = React.useState<Reason | null>(null)
@@ -63,10 +65,16 @@ export function PlanAdaptationFlow({
     let current = true
     const loadPending = async () => {
       try {
+        if (state.version !== 3) {
+          setPending(null)
+          setPendingState(state)
+          return
+        }
         const loaded = await onLoadPending(state)
         if (!current) return
         setPending(loaded)
         setPendingState(state)
+        onPendingChange?.(loaded !== null)
       } catch {
         if (!current) return
         setPending(null)
@@ -77,7 +85,7 @@ export function PlanAdaptationFlow({
     return () => {
       current = false
     }
-  }, [onLoadPending, state])
+  }, [onLoadPending, onPendingChange, state])
 
   const chooseReason = (nextReason: Reason) => {
     setReason(nextReason)
@@ -104,6 +112,11 @@ export function PlanAdaptationFlow({
 
   const accept = async () => {
     if (prepared === null || currentCheck === null) return
+    if (state.version !== 3) {
+      setMessage("이전 계획은 다음 계획 조정을 지원하지 않아요.")
+      setStep("result")
+      return
+    }
     const operationAt = new Date()
     const safety = onEvaluateSafety(state, currentCheck, operationAt)
     setBusy(true)
@@ -114,7 +127,10 @@ export function PlanAdaptationFlow({
       operationAt: operationAt.toISOString(),
     })
     setBusy(false)
-    if (result.kind === "accepted") setPendingState(state)
+    if (result.kind === "accepted") {
+      setPendingState(state)
+      onPendingChange?.(true)
+    }
     handleAccepted(result, setPending, setMessage, setStep)
   }
 

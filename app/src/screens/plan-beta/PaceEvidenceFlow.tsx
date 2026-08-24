@@ -7,12 +7,12 @@ import {
   recordPurposeLabel,
 } from "../../domain/athlete-record-display"
 import type { CandidatePrescriptionBinding } from "../../domain/plan-candidate-prescription"
-import type { PlanEventGroup } from "@impl/plan-generator/types"
+import type { PlanBetaIntake } from "../../domain/plan-beta-store"
 import { PlanChoice } from "./PlanChoice"
 
 type Props = {
   readonly records: readonly AthleteRecord[]
-  readonly eventGroup: Extract<PlanEventGroup, "FIVE_K" | "MIDDLE_DISTANCE">
+  readonly eventDistanceM: PlanBetaIntake["eventDistanceM"]
   readonly selectedRecordId: string | null
   readonly comparisonRecordId: string | null
   readonly binding: Omit<CandidatePrescriptionBinding, "generated">
@@ -23,7 +23,7 @@ type Props = {
 
 export function PaceEvidenceFlow({
   records,
-  eventGroup,
+  eventDistanceM,
   selectedRecordId,
   comparisonRecordId,
   binding,
@@ -38,11 +38,8 @@ export function PaceEvidenceFlow({
     statusRef.current?.focus()
     shouldFocusResult.current = false
   }, [binding])
-  const supportedDistances = eventGroup === "FIVE_K"
-    ? [5000]
-    : [800, 1500, 3000]
   const usable = records.filter((record) => (
-    record.purpose !== "RACE_GOAL" && supportedDistances.includes(record.eventDistanceM)
+    record.purpose !== "RACE_GOAL" && record.eventDistanceM === eventDistanceM
   ))
   const selected = usable.find((record) => record.id === selectedRecordId)
   const comparison = usable.find((record) => record.id === comparisonRecordId)
@@ -63,7 +60,7 @@ export function PaceEvidenceFlow({
         <p className="pace-evidence-fallback">사용할 수 있는 경기 기록이 없어 RPE 계획을 그대로 보여드려요.</p>
       ) : (
         <>
-          <div className="plan-choice-list" aria-label="기준 기록 선택">
+          <div className="plan-choice-list" role="group" aria-label="기준 기록 선택">
             {usable.map((record) => (
               <PlanChoice
                 key={record.id}
@@ -84,7 +81,7 @@ export function PaceEvidenceFlow({
               {comparisonOptions.length > 0 && (
                 <details>
                   <summary>다른 같은 종목 기록과 비교</summary>
-                  <div className="plan-choice-list" aria-label="비교 기록 선택">
+                  <div className="plan-choice-list" role="group" aria-label="비교 기록 선택">
                     {comparisonOptions.map((record) => (
                       <PlanChoice
                         key={record.id}

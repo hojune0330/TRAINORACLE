@@ -4,50 +4,34 @@ import {
   canonicalJsonSha256,
   verifyPlanAdaptationProposal,
 } from "@impl/plan-generator/adaptation"
-import { RVE_NON_SENSITIVE_REASON_CODES } from "@impl/rve/signal"
 import {
+  adaptationSafetyGateSchema,
   hasCanonicalJsonTree,
   parsePlanBetaState,
   planAdaptationEnvelopeSchema,
   planAdaptationProposalSchema,
-  planBetaStateV2Schema,
+  planBetaStateV3Schema,
 } from "./plan-beta-schema"
 import type {
   PendingNextFrameSuccessor,
   PlanAdaptationEnvelope,
   PlanBetaState,
-  PlanBetaStateV2,
+  PlanBetaStateV3,
 } from "./plan-beta-schema"
+import {
+  getPlanMutationLockManager,
+  PLAN_BETA_MUTATION_LOCK_NAME,
+} from "./plan-mutation-lock"
 
 const ACTIVE_KEY = "trainoracle.plan-beta.v1"
 const ADAPTATION_KEY = "trainoracle.plan-beta.adaptation.v1"
 const PRIVATE_KEY = /(?:memo|note|symptom)/iu
-const safetyReasonCodeSchema = z.enum(RVE_NON_SENSITIVE_REASON_CODES)
-
-const passedSafetyGateSchema = z.object({
-  kind: z.literal("passed"),
-  action: z.literal("CONTINUE_WITH_OTHER_GATES"),
-  planGenerationAllowed: z.literal(true),
-  nonSensitiveReasonCodes: z.array(safetyReasonCodeSchema).readonly(),
-  audit: z.object({ event: z.literal("PLAN_SAFETY_GATE_PASSED"), privacy: z.literal("REASON_CODES_ONLY") }).strict(),
-}).strict()
-const blockedSafetyGateSchema = z.object({
-  kind: z.literal("blocked"),
-  action: z.enum(["BLOCK", "BLOCK_OR_HUMAN_REVIEW"]),
-  planGenerationAllowed: z.literal(false),
-  requiredNextAction: z.enum(["HUMAN_REVIEW", "MORE_INFO_OR_HUMAN_REVIEW"]),
-  nonSensitiveReasonCodes: z.array(safetyReasonCodeSchema).readonly(),
-  audit: z.object({ event: z.literal("PLAN_SAFETY_GATE_BLOCKED"), privacy: z.literal("REASON_CODES_ONLY") }).strict(),
-}).strict().superRefine((gate, context) => {
-  const expected = gate.action === "BLOCK" ? "HUMAN_REVIEW" : "MORE_INFO_OR_HUMAN_REVIEW"
-  if (gate.requiredNextAction !== expected) context.addIssue({ code: "custom", path: ["requiredNextAction"], message: "Safety action mismatch." })
-})
 const acceptanceRequestSchema = z.object({
   proposal: planAdaptationProposalSchema,
-  predecessorState: planBetaStateV2Schema,
-  successorState: planBetaStateV2Schema,
+  predecessorState: planBetaStateV3Schema,
+  successorState: planBetaStateV3Schema,
   actor: z.enum(["SELF", "COACH"]),
-  safetyGate: z.union([passedSafetyGateSchema, blockedSafetyGateSchema]),
+  safetyGate: adaptationSafetyGateSchema,
   safetyEvaluatedAt: z.string().datetime(),
   safetyValidUntil: z.string().datetime(),
   activeHold: z.boolean(),
@@ -59,8 +43,8 @@ type AcceptanceRequest = z.infer<typeof acceptanceRequestSchema>
 export type AdaptationAcceptanceResult =
   | { readonly kind: "accepted"; readonly pending: PendingNextFrameSuccessor; readonly replay: boolean }
   | { readonly kind: "blocked"; readonly code: "SAFETY_BLOCKED" | "STALE_SAFETY" | "ACTIVE_HOLD" }
-  | { readonly kind: "rejected"; readonly code: "MALFORMED_INPUT" | "FORGED_PROPOSAL" | "UNAUTHORIZED" | "STALE_BASE" | "REPLAY_MISMATCH" | "SCOPE_MISMATCH" | "SUCCESSOR_MISMATCH" }
-  | { readonly kind: "failed"; readonly code: "ADAPTATION_STORAGE_WRITE_FAILED"; readonly rollbackComplete: true }
+  | { readonly kind: "rejected"; readonly code: "MUTATION_LOCK_UNAVAILABLE" | "MALFORMED_INPUT" | "FORGED_PROPOSAL" | "UNAUTHORIZED" | "STALE_BASE" | "REPLAY_MISMATCH" | "SCOPE_MISMATCH" | "SUCCESSOR_MISMATCH" | "EXPIRED_PROPOSAL" | "SAFETY_SNAPSHOT_MISMATCH" }
+  | { readonly kind: "failed"; readonly code: "ADAPTATION_STORAGE_WRITE_FAILED"; readonly rollbackComplete: boolean }
 
 export function hashPlanBetaState(state: PlanBetaState): Promise<string> {
   return canonicalJsonSha256("trainoracle.plan-beta-state.v1", state)
@@ -72,10 +56,18 @@ export function hashPlanBetaState(state: PlanBetaState): Promise<string> {
  * through acceptPreparedNextFrameAdaptation with evaluated safety and hold context.
  */
 export async function acceptNextFrameProposal(candidate: unknown): Promise<AdaptationAcceptanceResult> {
+  const locks = getPlanMutationLockManager()
+  if (locks === null) return { kind: "rejected", code: "MUTATION_LOCK_UNAVAILABLE" }
   try {
-    return await acceptNextFrameProposalUnchecked(candidate)
+    return await locks.request(
+      PLAN_BETA_MUTATION_LOCK_NAME,
+      { mode: "exclusive", ifAvailable: true },
+      async (lock) => lock === null
+        ? { kind: "rejected", code: "MUTATION_LOCK_UNAVAILABLE" } as const
+        : acceptNextFrameProposalUnchecked(candidate),
+    )
   } catch {
-    return { kind: "rejected", code: "MALFORMED_INPUT" }
+    return { kind: "rejected", code: "MUTATION_LOCK_UNAVAILABLE" }
   }
 }
 
@@ -99,12 +91,26 @@ async function acceptNextFrameProposalUnchecked(candidate: unknown): Promise<Ada
   }
   if (!validSafetyTimes(request)) return { kind: "blocked", code: "STALE_SAFETY" }
   if (request.activeHold) return { kind: "blocked", code: "ACTIVE_HOLD" }
+  const currentSafetySnapshotHash = await canonicalJsonSha256(
+    "trainoracle.plan-adaptation-safety-snapshot.v1",
+    { safetyGate: request.safetyGate, activeHold: request.activeHold },
+  )
+  if (currentSafetySnapshotHash !== request.proposal.safetySnapshotHash) {
+    return { kind: "rejected", code: "SAFETY_SNAPSHOT_MISMATCH" }
+  }
+  if (Date.parse(request.acceptedAt) < Date.parse(request.proposal.createdAt)
+      || Date.parse(request.acceptedAt) >= Date.parse(request.proposal.expiresAt)) {
+    return { kind: "rejected", code: "EXPIRED_PROPOSAL" }
+  }
 
   const active = loadActiveState()
   if (active === null) return { kind: "rejected", code: "STALE_BASE" }
   const [activeHash, predecessorStateHash] = await Promise.all([hashPlanBetaState(active), hashPlanBetaState(request.predecessorState)])
   if (activeHash !== predecessorStateHash) return { kind: "rejected", code: "STALE_BASE" }
-  if (!scopeMatches(request)) return { kind: "rejected", code: "SCOPE_MISMATCH" }
+  if (!scopeMatches(request)
+      || request.predecessorState.generatedAt !== request.proposal.activePlanStartedAt) {
+    return { kind: "rejected", code: "SCOPE_MISMATCH" }
+  }
   if (!candidateMatchesActivePlan(request.proposal.baseCandidate, request.predecessorState.activePlan, request.predecessorState.activePlan.selectionActor)
       || !candidateMatchesActivePlan(request.proposal.successorCandidate, request.successorState.activePlan, request.actor)
       || request.successorState.progress.length !== 0) return { kind: "rejected", code: "SUCCESSOR_MISMATCH" }
@@ -129,14 +135,40 @@ async function acceptNextFrameProposalUnchecked(candidate: unknown): Promise<Ada
     proposalOrigin: request.proposal.proposalOrigin,
     selectionAuthority: request.proposal.selectionAuthority,
     trigger: request.proposal.trigger,
+    triggerSnapshot: request.proposal.triggerSnapshot,
+    triggerSnapshotHash: request.proposal.triggerSnapshotHash,
     changeDimension: request.proposal.changeDimension,
+    transformRegistryVersion: request.proposal.transformRegistryVersion,
+    transformRegistryFingerprint: request.proposal.transformRegistryFingerprint,
+    transformEdgeId: request.proposal.transformEdgeId,
+    transformPolicyVersion: request.proposal.transformPolicyVersion,
+    transformDirection: request.proposal.transformDirection,
+    predecessorPairFingerprint: request.proposal.predecessorPairFingerprint,
+    sourceCandidateId: request.proposal.sourceCandidateId,
+    sourceCandidateContentHash: request.proposal.sourceCandidateContentHash,
+    allowedJsonPointers: request.proposal.allowedJsonPointers,
+    activePlanStartedAt: request.proposal.activePlanStartedAt,
+    successorProvenanceHash: request.proposal.successorProvenanceHash,
+    safetyGate: request.proposal.safetyGate,
+    safetySnapshotHash: request.proposal.safetySnapshotHash,
+    safetyEvaluatedAt: request.proposal.safetyEvaluatedAt,
+    safetyValidUntil: request.proposal.safetyValidUntil,
+    activeHold: request.proposal.activeHold,
+    evaluatedAt: request.proposal.evaluatedAt,
+    expiresAt: request.proposal.expiresAt,
+    edgeExpiresAt: request.proposal.edgeExpiresAt,
+    edgeRevoked: request.proposal.edgeRevoked,
     athleteId: request.proposal.athleteId,
     eventDistanceM: request.proposal.eventDistanceM,
+    pairId: request.proposal.pairId,
+    selectedDetailedTemplateRef: request.proposal.selectedDetailedTemplateRef,
     baseCandidateId: request.proposal.baseCandidateId,
     baseContentHash: request.proposal.baseContentHash,
     proposedContentHash: request.proposal.proposedContentHash,
     predecessorStateHash,
     successorState: request.successorState,
+    acceptanceSafetyEvaluatedAt: request.safetyEvaluatedAt,
+    acceptanceSafetyValidUntil: request.safetyValidUntil,
     acceptedAt: request.acceptedAt,
     decisionId,
     idempotencyKey: request.idempotencyKey,
@@ -148,12 +180,24 @@ async function acceptNextFrameProposalUnchecked(candidate: unknown): Promise<Ada
     decision: { version: 1, decisionId, proposalId: request.proposal.proposalId, decision: "ACCEPT", predecessorStateHash, proposedContentHash: request.proposal.proposedContentHash, decidedAt: request.acceptedAt, idempotencyKey: request.idempotencyKey, requestHash },
   })
   if (!envelope.success) return { kind: "rejected", code: "MALFORMED_INPUT" }
+  let previous: string | null = null
+  let previousCaptured = false
   try {
-    window.localStorage.setItem(ADAPTATION_KEY, JSON.stringify(envelope.data))
+    previous = window.localStorage.getItem(ADAPTATION_KEY)
+    previousCaptured = true
+    const serialized = JSON.stringify(envelope.data)
+    window.localStorage.setItem(ADAPTATION_KEY, serialized)
+    if (window.localStorage.getItem(ADAPTATION_KEY) !== serialized) {
+      throw new Error("Adaptation envelope was not persisted")
+    }
     return { kind: "accepted", pending: envelope.data.pending, replay: false }
-  } catch (error) {
-    if (error instanceof Error) return { kind: "failed", code: "ADAPTATION_STORAGE_WRITE_FAILED", rollbackComplete: true }
-    throw error
+  } catch {
+    return {
+      kind: "failed",
+      code: "ADAPTATION_STORAGE_WRITE_FAILED",
+      rollbackComplete: previousCaptured
+        && restoreStorageValue(window.localStorage, ADAPTATION_KEY, previous),
+    }
   }
 }
 
@@ -175,12 +219,13 @@ function loadEnvelope(): PlanAdaptationEnvelope | null {
   }
 }
 
-function loadActiveState(): PlanBetaStateV2 | null {
+function loadActiveState(): PlanBetaStateV3 | null {
   try {
     const raw = window.localStorage.getItem(ACTIVE_KEY)
     if (raw === null) return null
     const json: unknown = JSON.parse(raw)
-    return parsePlanBetaState(json)
+    const parsed = parsePlanBetaState(json)
+    return parsed?.version === 3 ? parsed : null
   } catch (error) {
     if (error instanceof Error) return null
     throw error
@@ -194,18 +239,25 @@ function validSafetyTimes(request: AcceptanceRequest): boolean {
 
 function scopeMatches(request: AcceptanceRequest): boolean {
   if (request.predecessorState.adaptationScope === undefined || request.successorState.adaptationScope === undefined) return false
-  const expected = { athleteId: request.proposal.athleteId, eventDistanceM: request.proposal.eventDistanceM }
+  const expected = {
+    athleteId: request.proposal.athleteId,
+    eventDistanceM: request.proposal.eventDistanceM,
+    pairId: request.proposal.pairId,
+    selectedDetailedTemplateRef: request.proposal.selectedDetailedTemplateRef,
+  }
   return canonicalJson(request.predecessorState.adaptationScope) === canonicalJson(expected)
     && canonicalJson(request.successorState.adaptationScope) === canonicalJson(expected)
 }
 
-function candidateMatchesActivePlan(candidate: AcceptanceRequest["proposal"]["baseCandidate"], activePlan: PlanBetaStateV2["activePlan"], selectionActor: "SELF" | "COACH"): boolean {
+function candidateMatchesActivePlan(candidate: AcceptanceRequest["proposal"]["baseCandidate"], activePlan: PlanBetaStateV3["activePlan"], selectionActor: "SELF" | "COACH"): boolean {
   const expected = {
     kind: "BETA_ACTIVE_PLAN_SNAPSHOT",
     activationState: "SELECTED_BETA_SNAPSHOT",
     candidateId: candidate.candidateId,
+    pairId: candidate.pairId,
     candidateKind: candidate.kind,
     eventDistanceM: candidate.eventDistanceM,
+    selectedDetailedTemplateRef: candidate.selectedDetailedTemplateRef,
     selectionActor,
     sourceMode: candidate.sourceMode,
     selectedEnergyIntent: candidate.selectedEnergyIntent,
@@ -222,4 +274,19 @@ function containsPrivateKey(value: unknown, seen = new Set<object>()): boolean {
   return Object.entries(value).some(([key, child]) =>
     PRIVATE_KEY.test(key) || containsPrivateKey(child, seen),
   )
+}
+
+function restoreStorageValue(
+  storage: Storage,
+  key: string,
+  value: string | null,
+): boolean {
+  try {
+    if (storage.getItem(key) === value) return true
+    if (value === null) storage.removeItem(key)
+    else storage.setItem(key, value)
+    return storage.getItem(key) === value
+  } catch {
+    return false
+  }
 }

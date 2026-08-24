@@ -7,11 +7,16 @@ afterEach(cleanup)
 
 describe("active plan adaptation entry", () => {
   it("shows the next-plan adjustment action before the full timeline", () => {
+    const state = stateFixture()
     render(
       <ActivePlan
-        state={stateFixture()}
+        state={{
+          ...state,
+          progress: [{ sessionDay: 1, sessionSlot: "AM", state: "COMPLETED" }],
+        }}
         onProgress={vi.fn()}
         onNextFrame={vi.fn()}
+        onActivateNextFrame={vi.fn()}
         onCheckDetailedExecution={vi.fn()}
       />,
     )

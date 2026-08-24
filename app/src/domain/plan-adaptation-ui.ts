@@ -18,7 +18,7 @@ import type { AdaptationAcceptanceResult } from "./plan-adaptation-store"
 import type {
   PendingNextFrameSuccessor,
   PlanBetaState,
-  PlanBetaStateV2,
+  PlanBetaStateV3,
 } from "./plan-beta-schema"
 import {
   loadPlanAdaptationContext,
@@ -43,7 +43,7 @@ export type ChangedSession = {
 
 export type PreparedNextFrameAdaptation = {
   readonly proposal: PlanAdaptationProposal
-  readonly successorState: PlanBetaStateV2
+  readonly successorState: PlanBetaStateV3
   readonly changedSessions: readonly ChangedSession[]
   readonly reason: AdaptationReason
   readonly record: AthleteRecord | null
@@ -73,6 +73,9 @@ export async function prepareNextFrameAdaptation(
   if (!validOperationTimestamp(input.operationAt)) {
     return { kind: "blocked", code: "SAFETY_CONTEXT_UNAVAILABLE" }
   }
+  if (input.state.version !== 3) {
+    return { kind: "unavailable", code: "ADAPTATION_CONTEXT_UNAVAILABLE" }
+  }
   const scope = input.state.adaptationScope
   const context = loadPlanAdaptationContext(input.state.activePlan.candidateId)
   if (scope === undefined || context === null) {
@@ -82,7 +85,7 @@ export async function prepareNextFrameAdaptation(
     (candidate) => candidate.candidateId === context.activeCandidateId,
   )
   const proposedCandidate = context.candidates.find(
-    (candidate) => candidate.kind === "CONSERVATIVE",
+    (candidate) => candidate.kind !== baseCandidate?.kind,
   )
   if (baseCandidate === undefined || proposedCandidate === undefined) {
     return { kind: "unavailable", code: "ADAPTATION_CONTEXT_UNAVAILABLE" }
@@ -150,7 +153,7 @@ export async function prepareNextFrameAdaptation(
 
 export async function acceptPreparedNextFrameAdaptation(input: {
   readonly prepared: PreparedNextFrameAdaptation
-  readonly predecessorState: PlanBetaState
+  readonly predecessorState: PlanBetaStateV3
   readonly safety: ActivePlanAdaptationSafety
   readonly operationAt: string
 }): Promise<AdaptationAcceptanceResult> {
@@ -180,7 +183,7 @@ export async function acceptPreparedNextFrameAdaptation(input: {
 }
 
 export async function loadMatchingPendingSuccessor(
-  state: PlanBetaState,
+  state: PlanBetaStateV3,
 ): Promise<PendingNextFrameSuccessor | null> {
   const pending = loadPendingNextFrameSuccessor()
   if (pending?.baseCandidateId !== state.activePlan.candidateId) return null
@@ -208,6 +211,7 @@ function triggerFor(
     recordId: record.id,
     purpose: record.purpose,
     eventDistanceM: record.eventDistanceM,
+    performanceSeconds: record.performanceSeconds,
     achievedAt: `${record.achievedOn}T00:00:00.000Z`,
     sourceRef: record.sourceRef,
     historicalOrBackfilled: false,
@@ -215,20 +219,22 @@ function triggerFor(
 }
 
 function successorStateFor(
-  state: PlanBetaState,
+  state: PlanBetaStateV3,
   candidate: PlanCandidate,
   generatedAt: string,
-): PlanBetaStateV2 {
+): PlanBetaStateV3 {
   const selectionActor = candidate.selectionAuthority === "SELF" ? "SELF" as const : "COACH" as const
   return {
-    version: 2,
+    version: 3,
     intake: state.intake,
     activePlan: {
       kind: "BETA_ACTIVE_PLAN_SNAPSHOT",
       activationState: "SELECTED_BETA_SNAPSHOT",
       candidateId: candidate.candidateId,
+      pairId: candidate.pairId,
       candidateKind: candidate.kind,
       eventDistanceM: candidate.eventDistanceM,
+      selectedDetailedTemplateRef: candidate.selectedDetailedTemplateRef,
       selectionActor,
       sourceMode: candidate.sourceMode,
       selectedEnergyIntent: candidate.selectedEnergyIntent,

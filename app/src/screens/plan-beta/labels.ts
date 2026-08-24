@@ -87,7 +87,7 @@ export const ENERGY_INTENT_LABELS: Record<PlannedEnergyIntent, {
   },
   MIXED_INTENT: {
     title: "섞어 하는 강도 · MIXED",
-    detail: "한 가지 목적만 고정하지 않은 강도 안내예요. 현재 새 계획에서는 직접 고르지 않아요.",
+    detail: "한 가지 목적만 고정하지 않고 여러 강도 구간을 함께 다루는 목적이에요. 상세 반복과 회복은 직접 고른 훈련표가 있을 때만 안내해요.",
     term: "energy-system",
   },
 }
@@ -100,33 +100,14 @@ export function candidateLabel(
   readonly detail: string
 } {
   if (kind === "CONSERVATIVE") {
-    if (selectedEnergyIntent === "RECOVERY_INTENT") {
-      return {
-        title: "회복 목적 · 부담 낮춤",
-        detail: "고른 회복 목적은 유지하고, 움직임 양을 줄이거나 쉬는 날을 늘립니다.",
-      }
-    }
     return {
-      title: `${ENERGY_INTENT_LABELS[selectedEnergyIntent].title.split(" · ")[0]} · 부담 낮춤`,
-      detail: `고른 ${ENERGY_INTENT_LABELS[selectedEnergyIntent].title} 목적은 유지하고, 훈련량을 줄이거나 회복 여유를 늘립니다.`,
-    }
-  }
-
-  if (selectedEnergyIntent === "RECOVERY_INTENT") {
-    return {
-      title: "가벼운 회복 움직임",
-      detail: "가능한 날에 RPE 1~2 회복 움직임을 배치합니다.",
-    }
-  }
-  if (selectedEnergyIntent === "BASE_INTENT") {
-    return {
-      title: "기초 지구력 중심",
-      detail: "가능한 날에 RPE 3~4 기본 유산소 달리기를 배치합니다.",
+      title: "보조훈련 짧게",
+      detail: `고른 ${ENERGY_INTENT_LABELS[selectedEnergyIntent].title} 목적의 고강도 훈련과 훈련 횟수는 후보 A와 같고, 적용 가능한 보조 훈련 시간만 범위의 최솟값으로 줄입니다.`,
     }
   }
   return {
-    title: `${ENERGY_INTENT_LABELS[selectedEnergyIntent].title.split(" · ")[0]} 포함`,
-    detail: `기초 지구력 날 사이에 ${ENERGY_INTENT_LABELS[selectedEnergyIntent].title} 목적의 RPE 안내를 배치합니다.`,
+    title: "기본 보조훈련",
+    detail: `고른 ${ENERGY_INTENT_LABELS[selectedEnergyIntent].title} 목적의 고강도 훈련과 훈련 횟수는 후보 B와 같고, 적용 가능한 보조 훈련 시간은 현재 범위를 유지합니다.`,
   }
 }
 
