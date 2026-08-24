@@ -53,6 +53,17 @@ test("Given the adopted catalog and contract, when validated, then exactly V2-SE
   assert.match(result.stdout, /detailed prescription validation passed: 1 active, 29 draft, 30 total/u);
 });
 
+test("Given the runtime allowlist loses or gains a template, when validated, then it fails closed", async () => {
+  for (const contractReplacement of [
+    { from: /    - MD-3000-01@1\.0\.0\r?\n/u, to: "" },
+    { from: /    - MD-3000-01@1\.0\.0\r?\n/u, to: "    - MD-3000-01@1.0.0\n    - UNAPPROVED-01@1.0.0\n" },
+  ]) {
+    const result = await validateWith({ contractReplacement });
+    assert.notEqual(result.status, 0);
+    assert.match(result.stderr, /active numeric-template allowlist must remain exact/u);
+  }
+});
+
 test("Given a ranged interval seed, when it is documented, then context keeps volume and recovery unfixed", async () => {
   const catalogText = await readFile(catalog, "utf8");
 

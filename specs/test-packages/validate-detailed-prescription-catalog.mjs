@@ -228,12 +228,25 @@ for (const [marker, message] of [
   ["fixture_stage: UNBOUND_NOTATION_PARSE_ONLY", "unbound notation fixture stage"],
   ["numericPaceOutput: UNAVAILABLE_ANCHOR_INCOMPLETE", "unbound fixture output guard"],
   ["fullStructuredPrescriptionCreation: forbidden_until_explicit_anchor_is_selected", "unbound fixture creation guard"],
-  ["active_numeric_template_exists_in_this_document: V2-SEED-05@1.0.0_ONLY", "single active numeric-template guard"],
+  ["active_numeric_template_allowlist:", "active numeric-template allowlist guard"],
   ["missing_required_component_or_fingerprint: REJECT_ATOMICALLY", "atomic component guard"],
   ["runtime_repetition_arithmetic_for_downshift: forbidden", "runtime repetition arithmetic guard"],
 ]) {
   failUnless(contract.includes(marker), `contract missing ${message}`);
 }
+
+const activeNumericAllowlist = [...(
+  contract.match(/^\s+active_numeric_template_allowlist:\r?\n((?:\s+- [^\r\n]+\r?\n)+)/mu)?.[1] ?? ""
+).matchAll(/^\s+- ([^\r\n]+)$/gmu)].map((match) => match[1]);
+failUnless(
+  activeNumericAllowlist.join("\u0000") === [
+    "V2-SEED-05@1.0.0",
+    "MD-800-01@1.0.0",
+    "MD-1500-01@1.0.0",
+    "MD-3000-01@1.0.0",
+  ].join("\u0000"),
+  "contract active numeric-template allowlist must remain exact",
+);
 
 const ownerFixture = contract.match(
   /^fixture_id: OWNER-NOTATION-001\r?\n[\s\S]*?(?=^```$)/mu,
