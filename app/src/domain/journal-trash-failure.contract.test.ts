@@ -96,10 +96,17 @@ function seedTrash(items: readonly { entry: JournalEntry; deletedAt: string }[])
 }
 
 beforeEach(() => {
-  window.localStorage.clear()
+  // 이 파일의 픽스처 deletedAt은 "2026년 7월" 같은 절대 날짜였다. 휴지통은
+  // 읽는 순간 30일이 지난 항목을 버리므로, 실제 시간이 흘러 deletedAt이
+  // 30일 전보 오래되면 loadTrash()가 항목을 조용히 비워버려 T-2~T-4가
+  // 2026-08-20부터 깨지기 시작했다(시간 경과로 썩는 테스트). 시계를
+  // 고정하고 픽스처를 그 기준 상대값으로 계산해 재발을 막는다.
+  vi.useFakeTimers()
+  vi.setSystemTime(new Date("2026-08-01T00:00:00.000Z"))
 })
 
 afterEach(() => {
+  vi.useRealTimers()
   vi.restoreAllMocks()
   window.localStorage.clear()
 })
