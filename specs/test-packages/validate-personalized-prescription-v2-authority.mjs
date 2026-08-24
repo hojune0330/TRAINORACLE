@@ -363,18 +363,18 @@ function validateDeployment(root, handoff) {
 
 function resolveDeploymentSource(root) {
   try {
-    execFileSync("git", ["rev-parse", "--verify", "origin/gh-pages"], { cwd: root, stdio: "ignore" })
-    return Object.freeze({ cwd: root, ref: "origin/gh-pages" })
+    execFileSync("git", ["cat-file", "-e", `${EXPECTED_DEPLOYMENT.pagesCommit}^{commit}`], { cwd: root, stdio: "ignore" })
+    return Object.freeze({ cwd: root, ref: EXPECTED_DEPLOYMENT.pagesCommit })
   } catch {
     const originUrl = execFileSync("git", ["remote", "get-url", "origin"], { cwd: root, encoding: "utf8" }).trim()
     const localOrigin = resolve(root, originUrl)
-    invariant(existsSync(localOrigin), "origin/gh-pages deployment evidence is unavailable")
+    invariant(existsSync(localOrigin), "pinned deployment evidence is unavailable")
     try {
-      execFileSync("git", ["-c", `safe.directory=${localOrigin.replaceAll("\\", "/")}`, "-C", localOrigin, "rev-parse", "--verify", "origin/gh-pages"], { stdio: "ignore" })
+      execFileSync("git", ["-c", `safe.directory=${localOrigin.replaceAll("\\", "/")}`, "-C", localOrigin, "cat-file", "-e", `${EXPECTED_DEPLOYMENT.pagesCommit}^{commit}`], { stdio: "ignore" })
     } catch (error) {
-      throw new Error("origin/gh-pages deployment evidence is unavailable", { cause: error })
+      throw new Error("pinned deployment evidence is unavailable", { cause: error })
     }
-    return Object.freeze({ cwd: localOrigin, ref: "origin/gh-pages" })
+    return Object.freeze({ cwd: localOrigin, ref: EXPECTED_DEPLOYMENT.pagesCommit })
   }
 }
 
