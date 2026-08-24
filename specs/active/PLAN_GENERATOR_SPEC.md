@@ -1145,6 +1145,51 @@ llm_policy:
 
 ---
 
+## 10A. 2026-08-24 Beta Runtime Projection Boundary
+
+This section records the currently implemented beta slice. It does not canonical-promote
+this document, close an open issue, or authorize behavior outside the exact scope below.
+
+```yaml
+beta_runtime_projection:
+  supported_target_events_m: [800, 1500, 3000, 5000]
+  supported_projection_lengths_days: [7, 9, 10]
+  detailed_template_allowlist:
+    - V2-SEED-05@1.0.0
+    - MD-800-01@1.0.0
+    - MD-1500-01@1.0.0
+    - MD-3000-01@1.0.0
+  detailed_pace_anchor:
+    selection: EXPLICIT_BY_ATHLETE
+    freshness: CURRENT_ONLY
+    event_match: EXACT_SAME_EVENT_ONLY
+    allowed_purposes: [PERSONAL_BEST, SEASON_BEST, RECENT_RESULT]
+    forbidden_purposes: [RACE_GOAL]
+    cross_event_conversion: FORBIDDEN
+  missing_or_ineligible_anchor:
+    behavior: ATOMIC_RPE_CONTROLLED_FALLBACK
+    may_invent_numeric_pace: false
+  race_date:
+    optional: true
+    persistence: FORBIDDEN_BY_CURRENT_RETENTION_AUTHORITY
+    active_states:
+      - NO_TARGET_RACE
+      - TARGET_RACE_PREVIEW_ONLY_RETENTION_BLOCKED
+    preview_may_create_or_select_candidates: false
+    preview_may_change_quantity_intensity_or_frequency: false
+    numeric_taper_authority: NOT_GRANTED
+  successor_adaptation:
+    activation: EXACTLY_ONCE_AFTER_ACCEPTED_FRAME_COMPLETION
+    transform_scope: ONE_REGISTERED_DIMENSION_ONLY
+    arbitrary_load_increase: FORBIDDEN
+```
+
+The remaining three race-placement vocabulary states are not active authority rows in
+the current runtime. A target race date therefore cannot silently alter a plan or be
+stored for later. All Section 11 issues remain OPEN.
+
+---
+
 ## 11. Open Issues
 
 | ID | Priority | Canonical blocking | Status | Summary | Resolution needed |

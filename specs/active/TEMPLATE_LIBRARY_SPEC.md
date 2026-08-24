@@ -683,6 +683,38 @@ api_draft:
 
 ---
 
+## 16A. 2026-08-24 Beta Runtime Allowlist
+
+The beta runtime may query only the following exact template identities in the
+personalized-prescription lane:
+
+| Template identity | Exact event | Energy-system intent | Runtime status |
+|---|---:|---|---|
+| `V2-SEED-05@1.0.0` | 5000 m | `VO2_INTENT` | allowlisted baseline |
+| `MD-800-01@1.0.0` | 800 m | `GLY_INTENT` | allowlisted baseline |
+| `MD-1500-01@1.0.0` | 1500 m | `MIXED_INTENT` | allowlisted baseline |
+| `MD-3000-01@1.0.0` | 3000 m | `VO2_INTENT` | allowlisted baseline |
+
+```yaml
+beta_runtime_allowlist_boundary:
+  identity_match: EXACT_TEMPLATE_ID_AND_VERSION
+  fingerprint_match: REQUIRED
+  athlete_experience: EXPERIENCED_ONLY
+  pace_anchor: CURRENT_SAME_EVENT_ONLY
+  cross_event_conversion: FORBIDDEN
+  automatic_progression_from_catalogue: FORBIDDEN
+  youth_multiplier: FORBIDDEN
+  sex_multiplier: FORBIDDEN
+  source_scope_only: true
+  other_catalogue_entries_queryable: false
+```
+
+This allowlist is a narrow runtime baseline, not acceptance of the whole catalogue and
+not a canonical promotion. Every other `DRAFT` or `REVIEW_REQUIRED` catalogue entry
+remains inert. Section 17 issue counts and statuses are unchanged.
+
+---
+
 ## 17. Open Issues
 
 ```yaml

@@ -1882,6 +1882,52 @@ No downstream patch is authorized by this draft alone.
 
 ---
 
+## 14A. 2026-08-24 Implemented Beta Projection Boundary
+
+The following is a narrow implementation synchronization note, not acceptance of the
+full reconstructed formation model:
+
+```yaml
+implemented_beta_projection:
+  exact_target_events_m: [800, 1500, 3000, 5000]
+  visible_projection_lengths_days: [7, 9, 10]
+  detailed_prescription:
+    template_allowlist:
+      - V2-SEED-05@1.0.0
+      - MD-800-01@1.0.0
+      - MD-1500-01@1.0.0
+      - MD-3000-01@1.0.0
+    anchor: EXPLICIT_CURRENT_SAME_EVENT_ONLY
+    cross_event_conversion: FORBIDDEN
+  accepted_frame_completion:
+    successor_activation: EXACTLY_ONCE
+    transform_registry: VERSIONED_ONE_DIMENSION_ONLY
+    arbitrary_quantity_intensity_frequency_increase: FORBIDDEN
+    activation_clock:
+      source: RUNTIME_OBSERVED_CLOCK
+      maximum_future_skew_seconds: 300
+      beyond_boundary: MALFORMED_INPUT_NO_WRITE
+  race_placement_vocabulary:
+    - NO_TARGET_RACE
+    - TARGET_RACE_PREVIEW_ONLY_RETENTION_BLOCKED
+    - TARGET_RACE_STORED_FOR_LATER
+    - RACE_PLACEMENT_ONLY
+    - GENERIC_PLACEMENT_NO_AUTHORITY
+  active_race_placement_states:
+    - NO_TARGET_RACE
+    - TARGET_RACE_PREVIEW_ONLY_RETENTION_BLOCKED
+  compiled_race_placement_rows: 0
+  race_date_persistence: NOT_AUTHORIZED
+  numeric_taper_authority: NOT_GRANTED
+```
+
+The three remaining race-placement states are typed future vocabulary only. The
+current preview cannot create candidates, write a calendar, or change session content,
+quantity, intensity, or frequency. Existing open issues remain OPEN because this slice
+does not settle the full formation, governance, safety, calendar, or production model.
+
+---
+
 ## 15. Open Issues
 
 | ID | Priority | Canonical blocking | Status | Summary | Resolution needed |
@@ -1896,7 +1942,7 @@ No downstream patch is authorized by this draft alone.
 | `OI-FA-RULE-CLASSIFIER-EXPOSURE-BINDING-001` | P1 | YES | OPEN | Formation counts competition as MAIN exposure while Rule D1/D2 consume MAIN-only semantics and Session Classifier preserves COMPETITION. | Bind Rule D1/D2 to a normalized exposure ledger/adapter without rewriting classifier labels. |
 | `OI-FA-PRODUCT-PROJECTION-001` | P1 | YES | OPEN | Authority/action state, five explanation levels, fatigue-first paired facts, composite sessions, accessibility, and current design conflicts are unresolved. | Product/design owners accept an audience-aware projection contract and replace fixed D-5, color/hover-only, dominant-MIXED, and AI-coach conflicts. |
 | `OI-FA-RECORD-GOVERNANCE-001` | P1 | YES | OPEN | Source/safety/plan/hold/adaptation/audit records lack accepted access, retention, youth age-out/deletion, revocation, legal-hold, key-erasure, and minimization policy. | Accept governance envelopes and enforcement tests before persistence. |
-| `OI-FA-RUNTIME-EVIDENCE-001` | P2 | NO | OPEN | No implementation or CI evidence exists. | Implement only after acceptance, then run contract/security tests. |
+| `OI-FA-RUNTIME-EVIDENCE-001` | P2 | NO | OPEN | Narrow beta implementation evidence exists for exact-event templates, projection lengths, one-dimension successor activation, and preview-only race-date handling; it does not cover the full reconstructed formation contract or production governance. | Preserve the scoped evidence, complete remaining accepted bindings, then run full contract, concurrency, security, privacy, and production tests before closure. |
 
 ---
 
@@ -1922,7 +1968,8 @@ No downstream patch is authorized by this draft alone.
 | Evidence types and one-athlete safety/efficacy limits are explicit | PASS |
 | Athlete-visible shadow operation is disclosed, non-executing, withdrawable, and separated from coercive reward | PASS |
 | All 109 vectors are labeled policy mechanics rather than physiology validation | PASS |
-| No production, app, canonical, or runtime claim is made | PASS |
+| Runtime claims are confined to Section 14A; no canonical or production authority claim is made | PASS |
+| Successor activation rejects caller timestamps over five minutes ahead of the observed runtime clock without writing state | PASS |
 | Open issue count is 11 and canonical blocker count is 10 | PASS |
 | Final marker is the final line | PASS |
 
