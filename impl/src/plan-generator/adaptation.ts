@@ -439,10 +439,9 @@ function isPlanCandidate(value: unknown): value is PlanCandidate {
   const candidateSegments = baseCandidateId?.split(":") ?? []
   const expectedContinuityIdentity = continuityContext.kind === "NO_PREVIOUS_FRAME_CONTEXT"
     ? "no-continuity"
-    : [
-        continuityContext.previousCandidateKind.toLowerCase(),
-        ...continuityContext.progressStateCounts.flatMap((entry) => [entry.state.toLowerCase(), String(entry.count)]),
-      ].join("-")
+    : `${continuityContext.previousCandidateKind.toLowerCase()}:${continuityContext.progressStateCounts
+        .map((entry) => `${entry.state.toLowerCase()}-${entry.count}`)
+        .join("-")}`
   const expectedPairId = [
     "plan-pair", "v3", value["eventDistanceM"], templateIdentity,
     selectedEnergyIntent.toLowerCase(), candidateSegments[10], candidateSegments[11],
