@@ -3,6 +3,7 @@ import {
   canonicalJsonSha256,
   createPlanAdaptationProposal,
   hashPlanCandidate,
+  isVerifiedPlanCandidate,
   verifyPlanAdaptationProposal,
 } from "../src/plan-generator/adaptation"
 import { generatePlanCandidates } from "../src/plan-generator/generator"
@@ -10,12 +11,20 @@ import { RVE_NON_SENSITIVE_REASON_CODES } from "../src/rve/signal"
 import { baseRequest, clearedGate, expectGenerated } from "./fixtures/plan-beta-request"
 import { activeGate, unknownGate } from "./fixtures/plan-beta-request"
 
-async function fixtureRequest() {
-  const generated = expectGenerated(generatePlanCandidates(baseRequest()))
+async function fixtureRequest(selectionAuthority: "SELF" | "COACH_REQUIRED" = "SELF") {
+  const generated = expectGenerated(generatePlanCandidates({
+    ...baseRequest(),
+    selectionAuthority,
+  }))
   const [baseCandidate, proposedCandidate] = generated.candidates
   return {
     kind: "PLAN_ADAPTATION_PROPOSAL_REQUEST" as const,
-    scope: { athleteId: "athlete-1", eventDistanceM: 1500 },
+    scope: {
+      athleteId: "athlete-1",
+      eventDistanceM: 1500,
+      pairId: baseCandidate.pairId,
+      selectedDetailedTemplateRef: baseCandidate.selectedDetailedTemplateRef,
+    },
     activePlanStartedAt: "2026-08-01T00:00:00.000Z",
     baseCandidate,
     proposedCandidate,
@@ -64,6 +73,22 @@ function withOwnPayload<T extends object>(
 }
 
 describe("next-frame plan adaptation", () => {
+  it.each([
+    ["RPE below one", { minimum: 0, maximum: 3 }, { minimum: 20, maximum: 30 }],
+    ["RPE above ten", { minimum: 2, maximum: 100 }, { minimum: 20, maximum: 30 }],
+    ["negative duration", { minimum: 2, maximum: 3 }, { minimum: -1, maximum: 30 }],
+    ["reversed duration", { minimum: 2, maximum: 3 }, { minimum: 40, maximum: 30 }],
+  ])("rejects a candidate with %s", (_label, rpe, durationMinutes) => {
+    const candidate = expectGenerated(generatePlanCandidates(baseRequest())).candidates[0]
+    const sessionIndex = candidate.sessions.findIndex((session) => session.prescription.kind === "RPE_TIME_RANGE")
+    if (sessionIndex < 0) throw new Error("Expected RPE fixture")
+    const sessions = candidate.sessions.map((session, index) => index === sessionIndex
+      ? { ...session, prescription: { kind: "RPE_TIME_RANGE" as const, rpe, durationMinutes } }
+      : session)
+
+    expect(isVerifiedPlanCandidate({ ...candidate, sessions })).toBe(false)
+  })
+
   it("creates one volume proposal from an explicit athlete request without mutating the base", async () => {
     const input = await fixtureRequest()
     const { baseCandidate, proposedCandidate } = input
@@ -82,7 +107,7 @@ describe("next-frame plan adaptation", () => {
   })
 
   it("maps coach-authored requests to coach-required selection", async () => {
-    const input = await fixtureRequest()
+    const input = await fixtureRequest("COACH_REQUIRED")
     const result = await createPlanAdaptationProposal({
       ...input,
       proposalOrigin: "COACH_AUTHORED",
@@ -98,16 +123,33 @@ describe("next-frame plan adaptation", () => {
     })
   })
 
+  it("rejects proposal creation when origin authority disagrees with either candidate", async () => {
+    const input = await fixtureRequest()
+    await expect(createPlanAdaptationProposal({
+      ...input,
+      proposalOrigin: "COACH_AUTHORED",
+      trigger: {
+        kind: "EXPLICIT_REQUEST",
+        requestedBy: "COACH",
+        sourceRef: "coach-request:athlete-1:req-3",
+      },
+    })).resolves.toEqual({ kind: "rejected", code: "CROSS_SCOPE_PROVENANCE" })
+  })
+
   it("accepts only an explicitly confirmed, current same-event PB/SB", async () => {
     const input = await fixtureRequest()
     const result = await createPlanAdaptationProposal({
       ...input,
+      baseCandidate: input.proposedCandidate,
+      proposedCandidate: input.baseCandidate,
+      baseContentHash: await hashPlanCandidate(input.proposedCandidate),
       trigger: {
         kind: "SAME_EVENT_PB_SB_AFTER_ACTIVE_PLAN_START",
         explicitlyConfirmed: true,
         recordId: "00000000-0000-4000-8000-000000000001",
         purpose: "PERSONAL_BEST",
         eventDistanceM: 1500,
+        performanceSeconds: 245,
         achievedAt: "2026-08-12T00:00:00.000Z",
         sourceRef: "athlete-record:00000000-0000-4000-8000-000000000001",
         historicalOrBackfilled: false,
@@ -123,6 +165,7 @@ describe("next-frame plan adaptation", () => {
         recordId: "00000000-0000-4000-8000-000000000002",
         purpose: "SEASON_BEST",
         eventDistanceM: 1500,
+        performanceSeconds: 246,
         achievedAt: "2026-07-01T00:00:00.000Z",
         sourceRef: "athlete-record:00000000-0000-4000-8000-000000000002",
         historicalOrBackfilled: false,
@@ -136,6 +179,7 @@ describe("next-frame plan adaptation", () => {
         recordId: "00000000-0000-4000-8000-000000000003",
         purpose: "PERSONAL_BEST",
         eventDistanceM: 1500,
+        performanceSeconds: 245,
         achievedAt: "2026-08-12T00:00:00.000Z",
         sourceRef: "athlete-record:00000000-0000-4000-8000-000000000003",
         historicalOrBackfilled: true,
@@ -155,6 +199,7 @@ describe("next-frame plan adaptation", () => {
         recordId: "00000000-0000-4000-8000-000000000004",
         purpose: "PERSONAL_BEST",
         eventDistanceM: 1500,
+        performanceSeconds: 245,
         achievedAt: "2026-08-12T11:59:59.999Z",
         sourceRef: "athlete-record:00000000-0000-4000-8000-000000000004",
         historicalOrBackfilled: false,
@@ -175,6 +220,7 @@ describe("next-frame plan adaptation", () => {
         recordId: "00000000-0000-4000-8000-000000000005",
         purpose: "PERSONAL_BEST",
         eventDistanceM: 1500,
+        performanceSeconds: 245,
         achievedAt: "2026-08-12T12:00:00.000Z",
         sourceRef: "athlete-record:00000000-0000-4000-8000-000000000005",
         historicalOrBackfilled: false,
@@ -244,7 +290,7 @@ describe("next-frame plan adaptation", () => {
         ...input.proposedCandidate,
         selectedEnergyIntent: "VO2_INTENT",
       },
-    })).toEqual({ kind: "rejected", code: "MULTIPLE_DIMENSIONS" })
+    })).toEqual({ kind: "rejected", code: "MALFORMED_INPUT" })
     const firstRpeIndex = input.proposedCandidate.sessions.findIndex(
       (session) => session.prescription.kind === "RPE_TIME_RANGE",
     )
@@ -261,7 +307,7 @@ describe("next-frame plan adaptation", () => {
     expect(await createPlanAdaptationProposal({
       ...input,
       proposedCandidate: { ...input.proposedCandidate, sessions: arbitrarySessions },
-    })).toEqual({ kind: "rejected", code: "UNAPPROVED_TRANSFORM" })
+    })).toEqual({ kind: "rejected", code: "MALFORMED_INPUT" })
   })
 
   it("rejects malformed provenance and raw private keys", async () => {
@@ -311,6 +357,7 @@ describe("next-frame plan adaptation", () => {
         recordId,
         purpose: "PERSONAL_BEST",
         eventDistanceM: 1500,
+        performanceSeconds: 245,
         achievedAt: "2026-08-12T00:00:00.000Z",
         sourceRef: `athlete-record:${recordId}`,
         historicalOrBackfilled: false,

@@ -75,7 +75,7 @@ describe("plan beta generation contract", () => {
     }
   })
 
-  it.each(["MIDDLE_DISTANCE", "FIVE_K", "TEN_K", "GENERAL_ENDURANCE"])(
+  it.each(["MIDDLE_DISTANCE", "FIVE_K"])(
     "keeps %s in an explicit non-universal beta scope",
     (eventGroup) => {
       // Given
@@ -104,6 +104,20 @@ describe("plan beta generation contract", () => {
           formationMethodClaim: "NOT_UNIVERSAL",
         })
       }
+    },
+  )
+
+  it.each(["TEN_K", "GENERAL_ENDURANCE"])(
+    "rejects unsupported %s requests without an exact target event",
+    (eventGroup) => {
+      const { eventDistanceM: _eventDistanceM, ...baseProfile } = baseRequest().profile
+
+      const result = generatePlanCandidates({
+        ...baseRequest(),
+        profile: { ...baseProfile, eventGroup },
+      })
+
+      expect(result).toMatchObject({ kind: "rejected", code: "MALFORMED_INPUT" })
     },
   )
 
@@ -305,7 +319,7 @@ describe("plan beta generation contract", () => {
     )
   })
 
-  it("does not invent pace or retain raw free text in plans or audits", () => {
+  it("rejects raw free text at the generation boundary", () => {
     // Given
     const rawMemo = "free text must never cross the plan boundary"
     const request = {
@@ -314,18 +328,11 @@ describe("plan beta generation contract", () => {
     }
 
     // When
-    const result = expectGenerated(generatePlanCandidates(request))
+    const result = generatePlanCandidates(request)
 
     // Then
+    expect(result).toMatchObject({ kind: "rejected", code: "MALFORMED_INPUT" })
     expect(JSON.stringify(result)).not.toContain(rawMemo)
-    expect(JSON.stringify(result)).not.toContain("pace")
-    for (const candidate of result.candidates) {
-      for (const session of candidate.sessions) {
-        if (session.role !== "REST") {
-          expect(session.prescription.kind).toBe("RPE_TIME_RANGE")
-        }
-      }
-    }
   })
 
   it("returns a typed rejection for malformed or out-of-range input", () => {
@@ -344,6 +351,29 @@ describe("plan beta generation contract", () => {
     // Then
     expect(result).toMatchObject({
       kind: "rejected",
+      candidates: [],
+    })
+  })
+
+  it.each([
+    ["custom prototype", () => Object.setPrototypeOf({ ...baseRequest() }, { kind: "PLAN_BETA_GENERATION_REQUEST" })],
+    ["accessor", () => {
+      const request = { ...baseRequest() }
+      Object.defineProperty(request, "kind", {
+        enumerable: true,
+        configurable: true,
+        get: () => "PLAN_BETA_GENERATION_REQUEST",
+      })
+      return request
+    }],
+    ["throwing proxy", () => new Proxy(baseRequest(), {
+      getPrototypeOf: () => { throw new Error("hostile prototype trap") },
+    })],
+  ] as const)("returns a typed rejection for a hostile %s generation request", (_label, fixture) => {
+    expect(() => generatePlanCandidates(fixture())).not.toThrow()
+    expect(generatePlanCandidates(fixture())).toMatchObject({
+      kind: "rejected",
+      code: "MALFORMED_INPUT",
       candidates: [],
     })
   })

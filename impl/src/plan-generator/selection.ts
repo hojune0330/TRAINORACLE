@@ -1,5 +1,7 @@
 import { assertNever } from "../shared/assert-never"
 import { isRecord, parseSafetyGate } from "./input-values"
+import { isVerifiedPlanCandidate } from "./adaptation"
+import { isSupportOnlyCandidatePair } from "./support-only-candidate-pair"
 import type {
   BetaActivePlanSnapshot,
   CanonicalPlanFrame,
@@ -94,8 +96,10 @@ function createActiveSnapshot(
     kind: "BETA_ACTIVE_PLAN_SNAPSHOT",
     activationState: "SELECTED_BETA_SNAPSHOT",
     candidateId: candidate.candidateId,
+    pairId: candidate.pairId,
     candidateKind: candidate.kind,
     eventDistanceM: candidate.eventDistanceM,
+    selectedDetailedTemplateRef: candidate.selectedDetailedTemplateRef,
     selectionActor: actor,
     sourceMode: candidate.sourceMode,
     selectedEnergyIntent: candidate.selectedEnergyIntent,
@@ -128,27 +132,37 @@ function rejectSelection(
   }
 }
 
-function isPlanCandidate(value: unknown): value is PlanCandidate {
-  return isRecord(value)
-    && typeof value["candidateId"] === "string"
-    && (value["kind"] === "BALANCED" || value["kind"] === "CONSERVATIVE")
-    && (value["eventDistanceM"] === null || value["eventDistanceM"] === 800 || value["eventDistanceM"] === 1500 || value["eventDistanceM"] === 3000 || value["eventDistanceM"] === 5000)
-    && typeof value["candidateId"] === "string"
-    && value["candidateId"].includes(`:event-${value["eventDistanceM"] ?? "unbound"}:`)
-    && isRecord(value["frame"])
-    && isRecord(value["mainExposureLedger"])
-    && Array.isArray(value["sessions"])
-}
-
 function isGeneratedPlan(value: unknown): value is PlanGenerationSuccess {
-  if (!isRecord(value) || value["kind"] !== "generated") {
+  try {
+    if (!isRecord(value) || value["kind"] !== "generated") return false
+
+    const candidates = value["candidates"]
+    const pairId = value["pairId"]
+    const selectionAuthority = value["selectionAuthority"]
+    if (typeof pairId !== "string"
+        || !/^plan-pair:v3:/u.test(pairId)
+        || (selectionAuthority !== "SELF" && selectionAuthority !== "COACH_REQUIRED")
+        || !Array.isArray(candidates)
+        || candidates.length !== 2
+        || !Object.prototype.hasOwnProperty.call(candidates, 0)
+        || !Object.prototype.hasOwnProperty.call(candidates, 1)) {
+      return false
+    }
+
+    const first: unknown = candidates[0]
+    const second: unknown = candidates[1]
+    return isVerifiedPlanCandidate(first)
+      && isVerifiedPlanCandidate(second)
+      && first.pairId === pairId
+      && second.pairId === pairId
+      && first.selectionAuthority === selectionAuthority
+      && second.selectionAuthority === selectionAuthority
+      && first.kind === "BALANCED"
+      && second.kind === "CONSERVATIVE"
+      && first.candidateId !== second.candidateId
+  } catch {
     return false
   }
-
-  const candidates = value["candidates"]
-  return Array.isArray(candidates)
-    && candidates.length === 2
-    && candidates.every(isPlanCandidate)
 }
 
 function hasCanonicalProjectionContinuity(frame: Record<string, unknown>): boolean {
@@ -172,6 +186,36 @@ function hasCanonicalProjectionContinuity(frame: Record<string, unknown>): boole
 function generatedPlanGuard(value: unknown):
   | { readonly kind: "valid"; readonly generatedPlan: PlanGenerationSuccess }
   | { readonly kind: "rejected"; readonly code: "NON_SELECTABLE_PLAN_RESULT" | "STALE_CANDIDATE_FINGERPRINT" | "NONCANONICAL_CANDIDATE_FRAME" } {
+  if (isRecord(value) && Array.isArray(value["candidates"])) {
+    for (const candidate of value["candidates"]) {
+      if (!isRecord(candidate) || !isRecord(candidate["frame"])) continue
+      const frame = candidate["frame"]
+      if (
+        frame["formationKind"] !== "LOCAL_CIVIL_9_5"
+        || frame["lengthDays"] !== 9.5
+        || frame["slotCount"] !== 19
+        || !hasCanonicalProjectionContinuity(frame)
+      ) {
+        return { kind: "rejected", code: "NONCANONICAL_CANDIDATE_FRAME" }
+      }
+    }
+  }
+  if (
+    isRecord(value)
+    && value["kind"] === "generated"
+    && typeof value["pairId"] === "string"
+    && /^plan-pair:v3:/u.test(value["pairId"])
+    && Array.isArray(value["candidates"])
+    && value["candidates"].length === 2
+    && value["candidates"].every((candidate) => (
+      isRecord(candidate)
+      && typeof candidate["candidateId"] === "string"
+      && typeof candidate["pairId"] === "string"
+    ))
+    && !value["candidates"].every(isVerifiedPlanCandidate)
+  ) {
+    return { kind: "rejected", code: "STALE_CANDIDATE_FINGERPRINT" }
+  }
   if (!isGeneratedPlan(value)) {
     return { kind: "rejected", code: "NON_SELECTABLE_PLAN_RESULT" }
   }
@@ -205,10 +249,22 @@ function generatedPlanGuard(value: unknown):
     }
   }
 
+  if (!isSupportOnlyCandidatePair(value.candidates[0], value.candidates[1])) {
+    return { kind: "rejected", code: "STALE_CANDIDATE_FINGERPRINT" }
+  }
+
   return { kind: "valid", generatedPlan: value }
 }
 
 export function selectPlanCandidate(request: unknown): PlanSelectionResult {
+  try {
+    return selectPlanCandidateUnchecked(request)
+  } catch {
+    return rejectSelection("INVALID_SELECTION_REQUEST")
+  }
+}
+
+function selectPlanCandidateUnchecked(request: unknown): PlanSelectionResult {
   if (!isRecord(request) || request["kind"] !== "PLAN_BETA_SELECTION_REQUEST") {
     return rejectSelection("INVALID_SELECTION_REQUEST")
   }

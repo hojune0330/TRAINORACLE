@@ -1,4 +1,5 @@
 import type {
+  DetailedTemplateRef,
   PlanBetaAudit,
   PlanCandidateKind,
   PlanProgressState,
@@ -12,8 +13,10 @@ export type BetaActivePlanSnapshot = {
   readonly kind: "BETA_ACTIVE_PLAN_SNAPSHOT"
   readonly activationState: "SELECTED_BETA_SNAPSHOT"
   readonly candidateId: string
+  readonly pairId: string
   readonly candidateKind: PlanCandidateKind
-  readonly eventDistanceM?: import("./types").SupportedPlanEventDistanceM | null
+  readonly eventDistanceM: import("./types").SupportedPlanEventDistanceM
+  readonly selectedDetailedTemplateRef: DetailedTemplateRef | null
   readonly selectionActor: "SELF" | "COACH"
   readonly sourceMode: PlanSourceMode
   readonly selectedEnergyIntent: PlannedEnergyIntent

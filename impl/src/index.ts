@@ -4,6 +4,13 @@ export { decideSafetyGate } from "./safety-gate/gate"
 export { createPlanDraft, generatePlanCandidates } from "./plan-generator/generator"
 export { compileExposureLedger } from "./plan-generator/exposure-ledger"
 export {
+  COMPILED_RACE_PLACEMENT_ROWS,
+  RACE_PLACEMENT_STATES,
+  noTargetRacePlacement,
+  previewOnlyRacePlacement,
+  validateDormantRacePlacementRow,
+} from "./plan-generator/race-placement"
+export {
   formatPrescriptionNotation,
   parsePrescriptionNotation,
 } from "./prescription/notation"
@@ -23,6 +30,14 @@ export {
   validateApprovedAdaptationTransform,
   verifyPlanAdaptationProposal,
 } from "./plan-generator/adaptation"
+export {
+  ADAPTATION_SUCCESSOR_POLICY_VERSION,
+  ADAPTATION_TRANSFORM_REGISTRY,
+  ADAPTATION_TRANSFORM_REGISTRY_FINGERPRINT,
+  ADAPTATION_TRANSFORM_REGISTRY_VERSION,
+  resolveRegisteredAdaptationTransform,
+  validateAdaptationTransformRegistry,
+} from "./plan-generator/adaptation-transform-registry"
 export type { D9Disposition, D9Result } from "./d9/evaluator"
 export type {
   EvaluatorFailureKind,
@@ -90,3 +105,9 @@ export type {
   CompiledExposureLedger,
   MainExposureLedgerEntry,
 } from "./plan-generator/exposure-ledger"
+export type {
+  DormantRacePlacementRow,
+  DormantRacePlacementValidation,
+  RacePlacementProjection,
+  RacePlacementState,
+} from "./plan-generator/race-placement"

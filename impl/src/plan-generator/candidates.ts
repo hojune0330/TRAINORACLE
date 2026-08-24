@@ -1,10 +1,12 @@
 import { assertNever } from "../shared/assert-never"
+import { rebindCandidatePairIdentity } from "./candidate-identity"
 import { makeCandidateSessions } from "./session-builder"
 import type {
   CanonicalPlanGenerationRequest,
   PlanBetaCode,
   PlanCandidate,
   PlanCandidateKind,
+  SupportedPlanEventDistanceM,
 } from "./types"
 import type { CompiledExposureLedger } from "./exposure-ledger"
 import type { PaceTargetPlanPrescription } from "./session-types"
@@ -77,6 +79,26 @@ function candidateId(input: CandidateBuildInput): string {
     input.request.profile.availableTrainingDays.join("-"),
     input.request.journalSource.kind.toLowerCase(),
     continuityIdentity(input.request),
+    `template-${templateIdentity(input.request)}`,
+  ].join(":")
+}
+
+function templateIdentity(request: CanonicalPlanGenerationRequest): string {
+  const reference = request.selectedDetailedTemplateRef
+  return reference === null
+    ? "rpe-only"
+    : `${reference.templateId.toLowerCase()}.${reference.version}.${reference.fingerprint.slice("sha256:".length)}`
+}
+
+export function planPairId(
+  request: CanonicalPlanGenerationRequest,
+  ledger: SelectableExposureLedger,
+): string {
+  return [
+    "plan-pair", "v3", request.profile.eventDistanceM,
+    templateIdentity(request), request.selectedEnergyIntent.toLowerCase(),
+    ledger.countedExposureIds.join("-"), request.profile.availableTrainingDays.join("-"),
+    continuityIdentity(request),
   ].join(":")
 }
 
@@ -106,11 +128,14 @@ function continuityContextFor(request: CanonicalPlanGenerationRequest): PlanCand
 }
 
 function buildCandidate(input: CandidateBuildInput): PlanCandidate {
+  const pairId = planPairId(input.request, input.ledger)
   return Object.freeze({
     candidateId: candidateId(input),
+    pairId,
     kind: input.kind,
     eventGroup: input.request.profile.eventGroup,
     eventDistanceM: candidateEventDistance(input.request),
+    selectedDetailedTemplateRef: input.request.selectedDetailedTemplateRef,
     selectedEnergyIntent: input.request.selectedEnergyIntent,
     sourceMode:
       input.request.journalSource.kind === "NO_USABLE_JOURNAL"
@@ -140,7 +165,6 @@ function candidateEventDistance(
   request: CanonicalPlanGenerationRequest,
 ): PlanCandidate["eventDistanceM"] {
   return request.profile.eventDistanceM
-    ?? (request.profile.eventGroup === "FIVE_K" ? 5000 : null)
 }
 
 export function bindOneDetailedPrescriptionCandidate(
@@ -155,6 +179,10 @@ export function bindOneDetailedPrescriptionCandidate(
   if (eventDistanceM === null) return null
   if (candidate.eventDistanceM !== null
       && candidate.eventDistanceM !== eventDistanceM) return null
+  if (candidate.selectedDetailedTemplateRef === null
+      || candidate.selectedDetailedTemplateRef.templateId !== prescription.templateId
+      || candidate.selectedDetailedTemplateRef.version !== prescription.templateVersion
+      || candidate.selectedDetailedTemplateRef.fingerprint !== prescription.templateContentFingerprint) return null
 
   const sessions = candidate.sessions.map((session, index) => {
     if (index !== qualityIndex || session.role !== "QUALITY") return session
@@ -183,7 +211,7 @@ export function bindOneDetailedPrescriptionCandidate(
   })
 }
 
-function supportedEventDistance(value: number): PlanCandidate["eventDistanceM"] {
+function supportedEventDistance(value: number): SupportedPlanEventDistanceM | null {
   return value === 800 || value === 1500 || value === 3000 || value === 5000
     ? value
     : null
@@ -234,5 +262,5 @@ export function createDeterministicCandidates(
     kind: "CONSERVATIVE",
     qualityDays: balancedQualityDays(request),
   })
-  return Object.freeze([balanced, conservative])
+  return rebindCandidatePairIdentity([balanced, conservative])
 }

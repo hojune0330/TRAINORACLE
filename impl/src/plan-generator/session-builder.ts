@@ -226,7 +226,7 @@ export function makeCandidateSessions(input: CandidateSessionBuildInput): readon
       }
       sessions.push(qualityTrainingSession(
         day,
-        durationForCandidate(ranges.quality, input.kind),
+        ranges.quality,
         qualityIntentFor(input.request),
         qualitySlot,
       ))
