@@ -170,6 +170,28 @@ export function projectPlanCandidate(candidate: PlanCandidate): PlanCandidateIde
   }
 }
 
+export function continuityContextIdentity(
+  context: PlanCandidate["continuityContext"],
+): string {
+  if (context.kind === "NO_PREVIOUS_FRAME_CONTEXT") return "no-continuity"
+  return `${context.previousCandidateKind.toLowerCase()}:${context.progressStateCounts
+    .map((entry) => `${entry.state.toLowerCase()}-${entry.count}`)
+    .join("-")}`
+}
+
+export function continuityIdentityFromCandidateId(candidateId: string): string | null {
+  const segments = candidateBaseId(candidateId).split(":")
+  const templateIndex = segments.findIndex(
+    (segment, index) => index > 12 && segment.startsWith("template-"),
+  )
+  if (templateIndex < 0) return null
+  const identity = segments.slice(13, templateIndex).join(":")
+  if (identity === "no-continuity") return identity
+  return /^(?:balanced|conservative):(?:completed|rested|skipped|pain_checkin)-\d+(?:-(?:completed|rested|skipped|pain_checkin)-\d+)*$/u.test(identity)
+    ? identity
+    : null
+}
+
 export function deriveCandidateId(
   candidateId: string,
   projection: PlanCandidateIdentityProjection,

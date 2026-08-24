@@ -21,6 +21,7 @@ import {
   loadVersionedPlanBetaState,
   savePlanBetaState,
 } from "./plan-beta-store"
+import { savePlanAdaptationContext } from "./plan-adaptation-ui-context"
 
 const TODAY = new Date("2026-08-17T03:00:00.000Z")
 const APPROVAL_5000 = approvalModule.DETAILED_PRESCRIPTION_APPROVALS.find(
@@ -486,6 +487,13 @@ describe("production candidate detailed-prescription binding", () => {
       successor.athleteEvidence,
     )
     expect(selected.kind).toBe("selected")
+    if (selected.kind !== "selected") return
+    expect(savePlanBetaState(selected.state)).toEqual({ ok: true })
+    expect(savePlanAdaptationContext(
+      successor.generated.candidates,
+      selected.state.activePlan.candidateId,
+    )).toEqual({ ok: true })
+    expect(loadVersionedPlanBetaState()).toStrictEqual(selected.state)
   })
 
   it("rechecks detailed-template authority at selection time", () => {
