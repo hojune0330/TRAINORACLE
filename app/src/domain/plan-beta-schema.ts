@@ -1,5 +1,7 @@
 import { z } from "zod"
 import {
+  continuityContextIdentity,
+  continuityIdentityFromCandidateId,
   hasValidCandidateIdentity,
   hasValidCandidatePairIdentity,
   pairIdHasBase,
@@ -237,10 +239,13 @@ const planBetaStateV3BaseSchema = z.object({
     ? "rpe-only"
     : `${reference.templateId.toLowerCase()}.${reference.version}.${reference.fingerprint.slice("sha256:".length)}`
   const candidateSegments = state.activePlan.candidateId.split(":pace-target:")[0]?.split(":") ?? []
+  const activeContinuityIdentity = continuityIdentityFromCandidateId(
+    state.activePlan.candidateId,
+  )
   const expectedPairId = [
     "plan-pair", "v3", state.activePlan.eventDistanceM, templateIdentity,
     state.activePlan.selectedEnergyIntent.toLowerCase(), candidateSegments[10], candidateSegments[11],
-    candidateSegments[13],
+    activeContinuityIdentity,
   ].join(":")
   const activeIdentityMatches = "formationKind" in state.activePlan.frame
     && hasValidCandidateIdentity(state.activePlan.candidateId, {
@@ -255,6 +260,7 @@ const planBetaStateV3BaseSchema = z.object({
     })
   if (!state.activePlan.candidateId.includes(`:event-${state.activePlan.eventDistanceM}:`)
       || !state.activePlan.candidateId.includes(`:template-${templateIdentity}`)
+      || activeContinuityIdentity === null
       || !pairIdHasBase(state.activePlan.pairId, expectedPairId)
       || !activeIdentityMatches) {
     addIssue(context, ["activePlan", "candidateId"], "Active candidate identity must bind target event and template selection.")
@@ -454,18 +460,14 @@ export const planAdaptationCandidateSchema = canonicalJsonTreeSchema.pipe(planCa
     ? "rpe-only"
     : `${reference.templateId.toLowerCase()}.${reference.version}.${reference.fingerprint.slice("sha256:".length)}`
   const candidateSegments = candidate.candidateId.split(marker)[0]?.split(":") ?? []
-  const continuityIdentity = candidate.continuityContext.kind === "NO_PREVIOUS_FRAME_CONTEXT"
-    ? "no-continuity"
-    : [
-        candidate.continuityContext.previousCandidateKind.toLowerCase(),
-        ...candidate.continuityContext.progressStateCounts.flatMap((entry) => [entry.state.toLowerCase(), String(entry.count)]),
-      ].join("-")
+  const continuityIdentity = continuityContextIdentity(candidate.continuityContext)
   const expectedPairId = [
     "plan-pair", "v3", candidate.eventDistanceM, templateIdentity,
     candidate.selectedEnergyIntent.toLowerCase(), candidateSegments[10], candidateSegments[11],
     continuityIdentity,
   ].join(":")
   if (!candidate.candidateId.includes(`:template-${templateIdentity}`)
+      || continuityIdentityFromCandidateId(candidate.candidateId) !== continuityIdentity
       || !pairIdHasBase(candidate.pairId, expectedPairId)
       || !hasValidCandidateIdentity(candidate.candidateId, projectPlanCandidate(candidate))) {
     addIssue(context, ["pairId"], "Template selection must bind candidate and pair identity.")

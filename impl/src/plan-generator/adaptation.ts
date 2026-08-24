@@ -1,5 +1,7 @@
 import { assertNever } from "../shared/assert-never"
 import {
+  continuityContextIdentity,
+  continuityIdentityFromCandidateId,
   hasValidCandidateIdentity,
   pairIdHasBase,
   projectPlanCandidate,
@@ -437,11 +439,7 @@ function isPlanCandidate(value: unknown): value is PlanCandidate {
     : `${reference.templateId.toLowerCase()}.${reference.version}.${reference.fingerprint.slice("sha256:".length)}`
   const baseCandidateId = value["candidateId"].split(":pace-target:")[0]
   const candidateSegments = baseCandidateId?.split(":") ?? []
-  const expectedContinuityIdentity = continuityContext.kind === "NO_PREVIOUS_FRAME_CONTEXT"
-    ? "no-continuity"
-    : `${continuityContext.previousCandidateKind.toLowerCase()}:${continuityContext.progressStateCounts
-        .map((entry) => `${entry.state.toLowerCase()}-${entry.count}`)
-        .join("-")}`
+  const expectedContinuityIdentity = continuityContextIdentity(continuityContext)
   const expectedPairId = [
     "plan-pair", "v3", value["eventDistanceM"], templateIdentity,
     selectedEnergyIntent.toLowerCase(), candidateSegments[10], candidateSegments[11],
@@ -455,6 +453,7 @@ function isPlanCandidate(value: unknown): value is PlanCandidate {
   return value["candidateId"].includes(eventIdentity)
     && value["candidateId"].includes(exposureIdentity)
     && value["candidateId"].includes(`:template-${templateIdentity}`)
+    && continuityIdentityFromCandidateId(value["candidateId"]) === expectedContinuityIdentity
     && pairIdHasBase(value["pairId"], expectedPairId)
     && hasValidCandidateIdentity(value["candidateId"], projectPlanCandidate(value as PlanCandidate))
     && (reference === null || selectedEnergyIntent === expectedDetailedIntent)

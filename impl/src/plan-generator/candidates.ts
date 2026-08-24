@@ -1,5 +1,8 @@
 import { assertNever } from "../shared/assert-never"
-import { rebindCandidatePairIdentity } from "./candidate-identity"
+import {
+  continuityContextIdentity,
+  rebindCandidatePairIdentity,
+} from "./candidate-identity"
 import { makeCandidateSessions } from "./session-builder"
 import type {
   CanonicalPlanGenerationRequest,
@@ -103,15 +106,7 @@ export function planPairId(
 }
 
 function continuityIdentity(request: CanonicalPlanGenerationRequest): string {
-  if (request.continuity === undefined) {
-    return "no-continuity"
-  }
-  return [
-    request.continuity.previousCandidateKind.toLowerCase(),
-    request.continuity.progressStateCounts
-      .map((entry) => `${entry.state.toLowerCase()}-${entry.count}`)
-      .join("-"),
-  ].join(":")
+  return continuityContextIdentity(continuityContextFor(request))
 }
 
 function continuityContextFor(request: CanonicalPlanGenerationRequest): PlanCandidate["continuityContext"] {
