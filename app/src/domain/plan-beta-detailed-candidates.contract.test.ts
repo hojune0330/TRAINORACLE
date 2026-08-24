@@ -14,7 +14,10 @@ import { mapD9ResultToRveSignal } from "@impl/rve/signal"
 import * as d9Module from "@impl/d9/evaluator"
 import * as approvalModule from "./detailed-prescription-approvals"
 import * as planSessionSchemaModule from "./plan-session-schema"
+import { isVerifiedPlanCandidate } from "@impl/plan-generator/adaptation"
+import { isSupportOnlyCandidatePair } from "@impl/plan-generator/support-only-candidate-pair"
 import {
+  archiveAndClearActivePlan,
   loadVersionedPlanBetaState,
   savePlanBetaState,
 } from "./plan-beta-store"
@@ -35,10 +38,10 @@ const DRAFT = {
   eventDistanceM: 5000 as const,
   competitionDivision: "OPEN" as const,
   experienceBand: "EXPERIENCED" as const,
-  availableDayCount: 5 as const,
+  availableDayCount: "EVERY_DAY" as const,
   requestedFrameLength: 9 as const,
   trainingFocus: "VO2_INTENT" as const,
-  secondSessionMode: "SINGLE_SESSION_ONLY" as const,
+  secondSessionMode: "RECOVERY_PM_ALLOWED" as const,
   trainingTimePreference: "VARIES" as const,
   selectedDetailedTemplateRef: TEMPLATE_5000,
 }
@@ -46,10 +49,10 @@ const DRAFT = {
 function saveCurrentFiveKilometreRecord(): void {
   const record = createSelfReportedAthleteRecord({
     id: CURRENT_RECORD_ID,
-    purpose: "RECENT_RESULT",
+    purpose: "PERSONAL_BEST",
     eventDistanceM: 5000,
-    performanceSeconds: 1110,
-    achievedOn: "2026-08-10",
+    performanceSeconds: 1111,
+    achievedOn: "2026-07-01",
     seasonId: null,
   }, TODAY)
   if (record === null) throw new TypeError("Current 5000m fixture is invalid")
@@ -174,7 +177,7 @@ describe("production candidate detailed-prescription binding", () => {
         repetitionsPerSet: 5,
         repetitionDistanceM: 1000,
         targetEventDistanceM: 5000,
-        targetRepSeconds: 222,
+        targetRepSeconds: 222.2,
         repetitionRecoverySeconds: 150,
         repetitionRecoveryMode: "JOG",
         totals: {
@@ -449,6 +452,40 @@ describe("production candidate detailed-prescription binding", () => {
     ))).toBe(true)
     expect(savePlanBetaState(selected.state)).toEqual({ ok: true })
     expect(loadVersionedPlanBetaState()).toStrictEqual(selected.state)
+  })
+
+  it("selects a non-divisible bound record after retaining previous-frame continuity", () => {
+    saveCurrentFiveKilometreRecord()
+    const first = generatePlanFromDraft(DRAFT, "NO_KNOWN_RISK", bindingInput())
+    if (first.kind !== "generated") throw new TypeError("First detailed candidates were not generated")
+    const firstSelection = selectPlanForActivation(
+      first.generated.candidates[1].candidateId,
+      first.generated,
+      first.gate,
+      first.intake,
+      first.athleteEvidence,
+    )
+    if (firstSelection.kind !== "selected") throw new TypeError("First candidate was not selected")
+    expect(archiveAndClearActivePlan(firstSelection.state)).toMatchObject({ ok: true })
+
+    const rpeSuccessor = generatePlanFromDraft(DRAFT, "NO_KNOWN_RISK")
+    if (rpeSuccessor.kind !== "generated") throw new TypeError("RPE successor candidates were not generated")
+    expect(rpeSuccessor.generated.candidates.map(isVerifiedPlanCandidate)).toEqual([true, true])
+
+    const successor = generatePlanFromDraft(DRAFT, "NO_KNOWN_RISK", bindingInput())
+    if (successor.kind !== "generated") throw new TypeError("Successor candidates were not generated")
+    expect(successor.generated.candidates[0].continuityContext.kind)
+      .toBe("PREVIOUS_FRAME_CONTEXT_RETAINED")
+    expect(successor.generated.candidates.map(isVerifiedPlanCandidate)).toEqual([true, true])
+    expect(isSupportOnlyCandidatePair(...successor.generated.candidates)).toBe(true)
+    const selected = selectPlanForActivation(
+      successor.generated.candidates[1].candidateId,
+      successor.generated,
+      successor.gate,
+      successor.intake,
+      successor.athleteEvidence,
+    )
+    expect(selected.kind).toBe("selected")
   })
 
   it("rechecks detailed-template authority at selection time", () => {
