@@ -15,7 +15,7 @@ import { koreaServiceDate } from "../domain/account/service-date"
 import { loadPrivateProfileSetupStatus } from "../domain/account/account-service"
 import { accountConfig } from "../domain/account/config"
 import {
-  AccountNetworkSettings, AccountSyncPanel, DeviceJournalOwnershipPanel, EraseLocalData, SwitchAccountPanel,
+  AccountNetworkSettings, AccountSyncPanel, DeviceJournalOwnershipPanel, DeviceTrainingDataPanel, EraseLocalData, SwitchAccountPanel,
 } from "./account/index"
 import { AccountAuthGateway } from "./account/AccountAuthGateway"
 import { mono, primaryBtn, secondaryBtn } from "./account/styles"
@@ -206,6 +206,7 @@ export function Account({ onBack, onOpenImport, onOpenRestore }: {
             profileSetupComplete={profileSetupComplete}
           />
           <DeviceJournalOwnershipPanel userId={user.id} />
+          <DeviceTrainingDataPanel userId={user.id} />
           <AccountSyncPanel userId={user.id} />
 
           <SectionLb>기기 데이터 가져오기</SectionLb>

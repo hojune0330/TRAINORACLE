@@ -1,7 +1,7 @@
 import { selectPlanForActivation } from "../../domain/plan-beta-flow"
 import type { PlanAthleteEvidence } from "../../domain/plan-beta-flow"
 import {
-  PLAN_BETA_STORAGE_KEY,
+  activePlanBetaStorageKey,
   readPlanBetaStateFromStorage,
   savePlanBetaState,
 } from "../../domain/plan-beta-store"
@@ -20,6 +20,10 @@ import {
   getPlanMutationLockManager,
   PLAN_BETA_MUTATION_LOCK_NAME,
 } from "../../domain/plan-mutation-lock"
+import {
+  localAccountScopeIsCurrent,
+  localAccountScopeSnapshot,
+} from "../../domain/account/local-account-scope"
 
 export type CandidateSelection = {
   readonly candidateId: string
@@ -57,6 +61,7 @@ export async function saveSelectedPlanCandidate(
   const state = adaptationScope === null
     ? selected.state
     : { ...selected.state, adaptationScope }
+  const accountScope = localAccountScopeSnapshot()
   const locks = getPlanMutationLockManager()
   if (locks === null) return { kind: "rejected", code: "MUTATION_LOCK_UNAVAILABLE" }
 
@@ -67,6 +72,9 @@ export async function saveSelectedPlanCandidate(
       async (lock) => {
         if (lock === null) {
           return { kind: "rejected", code: "MUTATION_LOCK_UNAVAILABLE" } as const
+        }
+        if (!localAccountScopeIsCurrent(accountScope)) {
+          return { kind: "rejected", code: "PLAN_STORAGE_STATE_UNCERTAIN" } as const
         }
         if (typeof window === "undefined") {
           return { kind: "rejected", code: "PLAN_STORAGE_WRITE_FAILED" } as const
@@ -97,7 +105,7 @@ export async function saveSelectedPlanCandidate(
         if (!contextSaved.ok) {
           const rollbackComplete = restoreStorageValue(
             window.localStorage,
-            PLAN_BETA_STORAGE_KEY,
+            activePlanBetaStorageKey(),
             previousActive,
           ) && contextSaved.rollbackComplete
           return {

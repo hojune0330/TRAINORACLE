@@ -9,11 +9,16 @@ import type { EncryptedPrivateNote } from "./private-note-crypto"
 import { restorePrivateMemo, rotatePrivateMemoVault } from "../private-memo-vault"
 import { journalStorage } from "../journal-local-storage"
 import { PRIVATE_NOTE_RECOVERY_STORAGE_KEY } from "../journal-storage-keys"
+import { accountScopedStorageKey } from "./local-account-scope"
 
 const RECOVERY_KEY = PRIVATE_NOTE_RECOVERY_STORAGE_KEY
 const INVALIDATED_RECOVERY_CODE = "recovery-code-cleared"
 
-let recoveryCodeInvalidated = false
+const invalidatedRecoveryKeys = new Set<string>()
+
+function activeRecoveryKey(): string {
+  return accountScopedStorageKey(RECOVERY_KEY)
+}
 
 export async function encryptPrivateJournalEntry(
   entry: JournalEntry,
@@ -44,27 +49,28 @@ export async function decryptPrivateJournalEntry(
 export function saveSessionRecoveryCode(recoveryCode: string): boolean {
   if (typeof window === "undefined") return false
   if (!isValidRecoveryCode(recoveryCode)) return false
+  const recoveryKey = activeRecoveryKey()
   try {
-    const previous = window.sessionStorage.getItem(RECOVERY_KEY)
+    const previous = window.sessionStorage.getItem(recoveryKey)
     try {
-      window.sessionStorage.setItem(RECOVERY_KEY, recoveryCode)
-      if (window.sessionStorage.getItem(RECOVERY_KEY) === recoveryCode) {
-        recoveryCodeInvalidated = false
+      window.sessionStorage.setItem(recoveryKey, recoveryCode)
+      if (window.sessionStorage.getItem(recoveryKey) === recoveryCode) {
+        invalidatedRecoveryKeys.delete(recoveryKey)
         return true
       }
     } catch {
-      return restoreSessionRecoveryCode(previous)
+      return restoreSessionRecoveryCode(recoveryKey, previous)
     }
-    return restoreSessionRecoveryCode(previous)
+    return restoreSessionRecoveryCode(recoveryKey, previous)
   } catch {
     return false
   }
 }
 
-function restoreSessionRecoveryCode(previous: string | null): false {
+function restoreSessionRecoveryCode(recoveryKey: string, previous: string | null): false {
   try {
-    if (previous === null) window.sessionStorage.removeItem(RECOVERY_KEY)
-    else window.sessionStorage.setItem(RECOVERY_KEY, previous)
+    if (previous === null) window.sessionStorage.removeItem(recoveryKey)
+    else window.sessionStorage.setItem(recoveryKey, previous)
   } catch {
     return false
   }
@@ -73,13 +79,14 @@ function restoreSessionRecoveryCode(previous: string | null): false {
 
 export function loadSessionRecoveryCode(): string | null {
   if (typeof window === "undefined") return null
+  const recoveryKey = activeRecoveryKey()
   try {
-    const recoveryCode = window.sessionStorage.getItem(RECOVERY_KEY)
+    const recoveryCode = window.sessionStorage.getItem(recoveryKey)
     if (recoveryCode === null) {
-      recoveryCodeInvalidated = false
+      invalidatedRecoveryKeys.delete(recoveryKey)
       return null
     }
-    if (recoveryCodeInvalidated) return null
+    if (invalidatedRecoveryKeys.has(recoveryKey)) return null
     return isValidRecoveryCode(recoveryCode) ? recoveryCode : null
   } catch {
     return null
@@ -101,19 +108,20 @@ export { rotatePrivateMemoVault }
 
 export function clearSessionRecoveryCode(): void {
   if (typeof window === "undefined") return
-  recoveryCodeInvalidated = true
+  const recoveryKey = activeRecoveryKey()
+  invalidatedRecoveryKeys.add(recoveryKey)
   try {
-    window.sessionStorage.setItem(RECOVERY_KEY, INVALIDATED_RECOVERY_CODE)
+    window.sessionStorage.setItem(recoveryKey, INVALIDATED_RECOVERY_CODE)
   } catch {
-    removeStoredRecoveryCode()
+    removeStoredRecoveryCode(recoveryKey)
     return
   }
-  removeStoredRecoveryCode()
+  removeStoredRecoveryCode(recoveryKey)
 }
 
-function removeStoredRecoveryCode(): void {
+function removeStoredRecoveryCode(recoveryKey: string): void {
   try {
-    window.sessionStorage.removeItem(RECOVERY_KEY)
+    window.sessionStorage.removeItem(recoveryKey)
   } catch {
     return
   }

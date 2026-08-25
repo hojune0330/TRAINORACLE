@@ -44,7 +44,7 @@ export async function syncNow(userId: string): Promise<SyncOutcome> {
   if (failureCode !== null) {
     return failed("Sync requires the matching signed-in account.", failureCode)
   }
-  const consent = loadSyncConsent()
+  const consent = loadSyncConsent(userId)
   if (!consent.enabled) return failed("동기화가 꺼져 있어요. 먼저 동기화를 켜 주세요.")
   if (!claimSyncBinding(userId)) {
     return failed(
@@ -204,7 +204,7 @@ export async function syncNow(userId: string): Promise<SyncOutcome> {
     deleted = toDelete.length
   }
 
-  if (!clearSyncRecoveryCheckpoint()) {
+  if (!clearSyncRecoveryCheckpoint(userId)) {
     return {
       ok: false,
       message: "동기화는 끝났지만 복구 기록을 정리하지 못했어요. 다시 동기화해 주세요.",

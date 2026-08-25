@@ -38,6 +38,8 @@ export type { DecorationPagePlacement, DecorationState } from "./decoration-sche
 export {
   DECORATION_STORAGE_KEY_V1,
   DECORATION_STORAGE_KEY_V2,
+  activeDecorationStorageKeyV1,
+  activeDecorationStorageKeyV2,
   decorationItemOwned,
   loadDecorationState,
   readDecorationStateSerialized,

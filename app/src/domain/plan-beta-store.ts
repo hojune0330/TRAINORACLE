@@ -14,6 +14,12 @@ import {
   getPlanMutationLockManager,
   PLAN_BETA_MUTATION_LOCK_NAME,
 } from "./plan-mutation-lock"
+import {
+  accountScopedStorageKey,
+  accountScopedStorageKeyFor,
+  localAccountScopeIsCurrent,
+  localAccountScopeSnapshot,
+} from "./account/local-account-scope"
 import type {
   PlanBetaIntake,
   PlanBetaState,
@@ -37,6 +43,10 @@ export type { StoredActivePlan } from "./plan-session-schema"
 export const PLAN_BETA_STORAGE_KEY = "trainoracle.plan-beta.v1"
 const HISTORY_KEY = "trainoracle.plan-beta.history.v1"
 const PREVIOUS_INTAKE_KEY = "trainoracle.plan-beta.previous-intake.v1"
+
+export function activePlanBetaStorageKey(): string {
+  return accountScopedStorageKey(PLAN_BETA_STORAGE_KEY)
+}
 
 export type PlanStorageResult =
   | { readonly ok: true }
@@ -104,10 +114,17 @@ export function loadVersionedPlanBetaState(): PlanBetaState | null {
 }
 
 export function readPlanBetaStateFromStorage(): PlanBetaStateReadResult {
+  return readPlanBetaStateForAccount(localAccountScopeSnapshot())
+}
+
+export function readPlanBetaStateForAccount(
+  accountScope: string | null,
+): PlanBetaStateReadResult {
   if (typeof window === "undefined") return { kind: "storage_error" }
+  const storageKey = accountScopedStorageKeyFor(PLAN_BETA_STORAGE_KEY, accountScope)
   let raw: string | null
   try {
-    raw = window.localStorage.getItem(PLAN_BETA_STORAGE_KEY)
+    raw = window.localStorage.getItem(storageKey)
   } catch {
     return { kind: "storage_error" }
   }
@@ -135,15 +152,16 @@ export function savePlanBetaState(
 
   let previous: string | null = null
   let previousCaptured = false
+  const storageKey = activePlanBetaStorageKey()
   try {
-    previous = window.localStorage.getItem(PLAN_BETA_STORAGE_KEY)
+    previous = window.localStorage.getItem(storageKey)
     previousCaptured = true
     const serialized = JSON.stringify(parsed.data)
-    window.localStorage.setItem(PLAN_BETA_STORAGE_KEY, serialized)
-    if (window.localStorage.getItem(PLAN_BETA_STORAGE_KEY) !== serialized) {
+    window.localStorage.setItem(storageKey, serialized)
+    if (window.localStorage.getItem(storageKey) !== serialized) {
       const rollbackComplete = restoreStorageValue(
         window.localStorage,
-        PLAN_BETA_STORAGE_KEY,
+        storageKey,
         previous,
       )
       return { ok: false, code: "PLAN_STORAGE_WRITE_FAILED", rollbackComplete }
@@ -152,7 +170,7 @@ export function savePlanBetaState(
     return { ok: true }
   } catch {
     const rollbackComplete = previousCaptured
-      && restoreStorageValue(window.localStorage, PLAN_BETA_STORAGE_KEY, previous)
+      && restoreStorageValue(window.localStorage, storageKey, previous)
     return { ok: false, code: "PLAN_STORAGE_WRITE_FAILED", rollbackComplete }
   }
 }
@@ -161,6 +179,7 @@ export async function savePlanProgressWithLock(
   expectedCandidateId: string,
   progress: StoredPlanProgress,
 ): Promise<PlanProgressStorageResult> {
+  const accountScope = localAccountScopeSnapshot()
   const locks = getPlanMutationLockManager()
   if (locks === null) return { kind: "rejected", code: "MUTATION_LOCK_UNAVAILABLE" }
 
@@ -170,6 +189,9 @@ export async function savePlanProgressWithLock(
       { mode: "exclusive", ifAvailable: true },
       async (lock) => {
         if (lock === null) return { kind: "rejected", code: "MUTATION_LOCK_UNAVAILABLE" } as const
+        if (!localAccountScopeIsCurrent(accountScope)) {
+          return { kind: "rejected", code: "PLAN_STORAGE_STATE_UNCERTAIN" } as const
+        }
         const currentRead = readPlanBetaStateFromStorage()
         if (currentRead.kind === "storage_error") {
           return { kind: "rejected", code: "PLAN_STORAGE_STATE_UNCERTAIN" } as const
@@ -268,33 +290,36 @@ export function archiveAndClearActivePlan(state: PlanBetaState): PlanArchiveResu
   let oldIntake: string | null = null
   let oldActive: string | null = null
   let snapshotsCaptured = false
+  const historyKey = accountScopedStorageKey(HISTORY_KEY)
+  const previousIntakeKey = accountScopedStorageKey(PREVIOUS_INTAKE_KEY)
+  const activeKey = activePlanBetaStorageKey()
 
   try {
-    oldHistory = window.localStorage.getItem(HISTORY_KEY)
-    oldIntake = window.sessionStorage.getItem(PREVIOUS_INTAKE_KEY)
-    oldActive = window.localStorage.getItem(PLAN_BETA_STORAGE_KEY)
+    oldHistory = window.localStorage.getItem(historyKey)
+    oldIntake = window.sessionStorage.getItem(previousIntakeKey)
+    oldActive = window.localStorage.getItem(activeKey)
     snapshotsCaptured = true
     const previous = loadPlanHistory()
     const stagedHistory = JSON.stringify([history, ...previous].slice(0, 5))
     const stagedIntake = JSON.stringify(state.intake)
-    window.localStorage.setItem(HISTORY_KEY, stagedHistory)
-    if (window.localStorage.getItem(HISTORY_KEY) !== stagedHistory) {
+    window.localStorage.setItem(historyKey, stagedHistory)
+    if (window.localStorage.getItem(historyKey) !== stagedHistory) {
       throw new Error("Plan history was not persisted")
     }
-    window.sessionStorage.setItem(PREVIOUS_INTAKE_KEY, stagedIntake)
-    if (window.sessionStorage.getItem(PREVIOUS_INTAKE_KEY) !== stagedIntake) {
+    window.sessionStorage.setItem(previousIntakeKey, stagedIntake)
+    if (window.sessionStorage.getItem(previousIntakeKey) !== stagedIntake) {
       throw new Error("Previous intake was not persisted")
     }
-    window.localStorage.removeItem(PLAN_BETA_STORAGE_KEY)
-    if (window.localStorage.getItem(PLAN_BETA_STORAGE_KEY) !== null) {
+    window.localStorage.removeItem(activeKey)
+    if (window.localStorage.getItem(activeKey) !== null) {
       throw new Error("Active plan was not cleared")
     }
     return { ok: true, intake: state.intake }
   } catch {
     const rollbackComplete = snapshotsCaptured && [
-      restoreStorageValue(window.localStorage, HISTORY_KEY, oldHistory),
-      restoreStorageValue(window.sessionStorage, PREVIOUS_INTAKE_KEY, oldIntake),
-      restoreStorageValue(window.localStorage, PLAN_BETA_STORAGE_KEY, oldActive),
+      restoreStorageValue(window.localStorage, historyKey, oldHistory),
+      restoreStorageValue(window.sessionStorage, previousIntakeKey, oldIntake),
+      restoreStorageValue(window.localStorage, activeKey, oldActive),
     ].every(Boolean)
     return { ok: false, code: "PLAN_ARCHIVE_WRITE_FAILED", rollbackComplete }
   }
@@ -303,6 +328,7 @@ export function archiveAndClearActivePlan(state: PlanBetaState): PlanArchiveResu
 export async function archiveAndClearActivePlanWithLock(
   expectedCandidateId: string,
 ): Promise<LockedPlanArchiveResult> {
+  const accountScope = localAccountScopeSnapshot()
   const locks = getPlanMutationLockManager()
   if (locks === null) return { kind: "rejected", code: "MUTATION_LOCK_UNAVAILABLE" }
 
@@ -313,6 +339,9 @@ export async function archiveAndClearActivePlanWithLock(
       async (lock) => {
         if (lock === null) {
           return { kind: "rejected", code: "MUTATION_LOCK_UNAVAILABLE" } as const
+        }
+        if (!localAccountScopeIsCurrent(accountScope)) {
+          return { kind: "rejected", code: "PLAN_STORAGE_STATE_UNCERTAIN" } as const
         }
         const currentRead = readPlanBetaStateFromStorage()
         if (currentRead.kind === "storage_error") {
@@ -346,7 +375,7 @@ export async function archiveAndClearActivePlanWithLock(
 export function loadPreviousIntake(): StoredPlanBetaIntake | null {
   if (typeof window === "undefined") return null
   try {
-    const raw = window.sessionStorage.getItem(PREVIOUS_INTAKE_KEY)
+    const raw = window.sessionStorage.getItem(accountScopedStorageKey(PREVIOUS_INTAKE_KEY))
     if (raw === null) return null
     const json: unknown = JSON.parse(raw)
     const current = planIntakeSchema.safeParse(json)
@@ -380,7 +409,7 @@ export function loadPreviousContinuity(): PlanContinuityInput | undefined {
 function loadPlanHistory(): readonly StoredPlanHistory[] {
   if (typeof window === "undefined") return []
   try {
-    const raw = window.localStorage.getItem(HISTORY_KEY)
+    const raw = window.localStorage.getItem(accountScopedStorageKey(HISTORY_KEY))
     if (raw === null) return []
     const json: unknown = JSON.parse(raw)
     const parsed = planHistoryListSchema.safeParse(json)

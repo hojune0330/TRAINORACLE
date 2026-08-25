@@ -27,7 +27,7 @@ const TOAST_READABLE_MS = 4000
 const TOAST_EXIT_MS = 150
 
 export function AppShell() {
-  const [, setJournalScopeRevision] = React.useState(0)
+  const [accountScopeRevision, setAccountScopeRevision] = React.useState(0)
   const [v, setV] = React.useState(() => {
     if (!accountFeatureEnabled() || typeof window === "undefined") return INITIAL_VIEW_STATE
     return new URLSearchParams(window.location.search).get("account") === "1"
@@ -47,7 +47,7 @@ export function AppShell() {
     }
     let mounted = true
     let authEventSeen = false
-    const refresh = () => setJournalScopeRevision((value) => value + 1)
+    const refresh = () => setAccountScopeRevision((value) => value + 1)
     const unsubscribeScope = onLocalJournalScopeChange(refresh)
     void currentUser().then((user) => {
       if (mounted && !authEventSeen) setActiveLocalAccount(user?.id ?? null)
@@ -282,7 +282,9 @@ export function AppShell() {
       hideTabBar={false}
     >
       <React.Suspense fallback={<p role="status">화면을 불러오는 중이에요.</p>}>
-        {screen}
+        <React.Fragment key={`account-scope-${accountScopeRevision}`}>
+          {screen}
+        </React.Fragment>
       </React.Suspense>
     </AppShellFrame>
   )
