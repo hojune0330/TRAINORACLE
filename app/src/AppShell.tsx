@@ -10,6 +10,11 @@ import { loadEntries, localOnlyCount } from "./domain/journal-store"
 import type { JournalEntry } from "./domain/journal-store"
 import { createSavedFactReceipt } from "./domain/save-receipt"
 import { trackProductEvent } from "./domain/account/product-analytics-service"
+import { currentUser, onAuthChange } from "./domain/account/auth"
+import {
+  onLocalJournalScopeChange,
+  setActiveLocalAccount,
+} from "./domain/account/local-journal-ownership"
 import {
   INITIAL_VIEW_STATE,
   shouldResetTabView,
@@ -22,6 +27,7 @@ const TOAST_READABLE_MS = 4000
 const TOAST_EXIT_MS = 150
 
 export function AppShell() {
+  const [, setJournalScopeRevision] = React.useState(0)
   const [v, setV] = React.useState(() => {
     if (!accountFeatureEnabled() || typeof window === "undefined") return INITIAL_VIEW_STATE
     return new URLSearchParams(window.location.search).get("account") === "1"
@@ -33,6 +39,29 @@ export function AppShell() {
   const scrollRegionRef = React.useRef<HTMLElement>(null)
   const [utilityView, setUtilityView] = React.useState<"more" | "guide" | "minji" | null>(null)
   const [utilityOrigin, setUtilityOrigin] = React.useState<"home" | "more">("more")
+
+  React.useEffect(() => {
+    if (!accountFeatureEnabled()) {
+      setActiveLocalAccount(null)
+      return
+    }
+    let mounted = true
+    let authEventSeen = false
+    const refresh = () => setJournalScopeRevision((value) => value + 1)
+    const unsubscribeScope = onLocalJournalScopeChange(refresh)
+    void currentUser().then((user) => {
+      if (mounted && !authEventSeen) setActiveLocalAccount(user?.id ?? null)
+    })
+    const unsubscribeAuth = onAuthChange((user) => {
+      authEventSeen = true
+      setActiveLocalAccount(user?.id ?? null)
+    })
+    return () => {
+      mounted = false
+      unsubscribeScope()
+      unsubscribeAuth()
+    }
+  }, [])
 
   React.useEffect(() => {
     void trackProductEvent("APP_OPENED")

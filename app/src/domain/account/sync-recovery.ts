@@ -1,14 +1,14 @@
 import { z } from "zod"
 import { parseJournalEntryList } from "../journal-schema"
 import type { JournalEntry } from "../journal-schema"
-import { loadEntries, replaceAllEntries } from "../journal-store"
+import { loadEntriesOwnedBy, replaceEntriesOwnedBy } from "../journal-store"
 import { SYNC_RECOVERY_STORAGE_KEY } from "../journal-storage-keys"
 import { hasPrivateMemoText } from "../private-memo-vault"
 import { mergeEntries } from "./sync-local"
 import {
-  loadTombstones,
+  loadTombstonesOwnedBy,
   mergeTombstones,
-  saveTombstones,
+  saveTombstonesOwnedBy,
   tombstonedIds,
 } from "./tombstone"
 import type { Tombstone } from "./tombstone"
@@ -124,10 +124,10 @@ export function recoverPendingSync(userId: string, nowMs = Date.now()): Recovery
   const checkpointEntries = validEntries(parsed.data.entries)
   if (checkpointEntries === null) return discardCheckpoint()
 
-  const tombstones = mergeTombstones(parsed.data.tombstones, loadTombstones())
-  const entries = mergeEntries(loadEntries(), checkpointEntries, tombstonedIds(tombstones))
-  if (!saveTombstones(tombstones)) return { ok: false, recovered: false }
-  if (!replaceAllEntries(entries).ok) return { ok: false, recovered: false }
+  const tombstones = mergeTombstones(parsed.data.tombstones, loadTombstonesOwnedBy(userId))
+  const entries = mergeEntries(loadEntriesOwnedBy(userId), checkpointEntries, tombstonedIds(tombstones))
+  if (!saveTombstonesOwnedBy(userId, tombstones)) return { ok: false, recovered: false }
+  if (!replaceEntriesOwnedBy(userId, entries).ok) return { ok: false, recovered: false }
   if (!clearSyncRecoveryCheckpoint()) return { ok: false, recovered: false }
   return { ok: true, recovered: true }
 }

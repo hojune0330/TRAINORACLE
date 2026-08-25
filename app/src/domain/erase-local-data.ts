@@ -23,6 +23,11 @@ import {
   PRIVATE_NOTE_RECOVERY_STORAGE_KEY,
   SYNC_RECOVERY_STORAGE_KEY,
 } from "./journal-storage-keys"
+import {
+  LOCAL_JOURNAL_OWNERSHIP_KEY,
+  retainJournalOwnershipForIds,
+} from "./account/local-journal-ownership"
+import { loadTombstones } from "./account/tombstone"
 
 /** 일지 본문이 담기는 키 — 반드시 지운다 */
 const CONTENT_KEYS = [
@@ -128,6 +133,9 @@ export function eraseAllLocalData(options: EraseOptions = {}): EraseResult {
   const localStorage = storage("local")
   if (localStorage === null) return { ok: false, cleared: 0, failed: ["storage-unavailable"] }
 
+  const retainedTombstoneIds = options.includeDeletionRecord === true
+    ? []
+    : loadTombstones().map((tombstone) => tombstone.id)
   const keys: string[] = [...CONTENT_KEYS, ...ACCOUNT_KEYS]
   if (options.includeDeletionRecord === true) {
     keys.push(DELETION_RECORD_KEY)
@@ -135,6 +143,9 @@ export function eraseAllLocalData(options: EraseOptions = {}): EraseResult {
 
   const failed: string[] = []
   let cleared = clearStorageKeys(localStorage, keys, failed)
+  const ownershipResult = retainJournalOwnershipForIds(retainedTombstoneIds)
+  if (ownershipResult === "removed") cleared += 1
+  else if (ownershipResult === "failed") failed.push(LOCAL_JOURNAL_OWNERSHIP_KEY)
   const sessionStorage = storage("session")
   if (sessionStorage === null) {
     failed.push("session-storage-unavailable")
@@ -150,6 +161,7 @@ export function erasableKeys(options: EraseOptions = {}): readonly string[] {
   const keys: string[] = [...CONTENT_KEYS, ...ACCOUNT_KEYS, ...SESSION_KEYS]
   if (options.includeDeletionRecord === true) {
     keys.push(DELETION_RECORD_KEY)
+    keys.push(LOCAL_JOURNAL_OWNERSHIP_KEY)
   }
   return keys
 }

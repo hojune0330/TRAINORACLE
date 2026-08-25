@@ -47,9 +47,9 @@ export function EraseLocalData({ onOpenRestore }: {
         data-testid="erase-deletion-record-notice"
         style={{ fontFamily: "var(--mono)", fontSize: 10.5, lineHeight: 1.7, color: "var(--ink-4)", margin: "8px 0 0" }}
       >
-        한 가지는 남아요 — <b>어떤 일지를 지웠는지에 대한 표시</b>예요. 일지 내용이
-        아니라 "지웠다"는 사실만 남아요. 이걸 지우면 나중에 다시 로그인해 동기화할 때
-        지운 일지가 서버에서 되살아나기 때문에 남겨 둬요.
+        한 가지는 남아요 — <b>어느 계정에서 어떤 일지를 지웠는지에 대한 표시</b>예요.
+        일지 내용이 아니라 계정 식별자·일지 ID·삭제 시각만 남고, 날짜·수치·메모는 남지 않아요.
+        이걸 지우면 나중에 다시 로그인해 동기화할 때 지운 일지가 서버에서 되살아나기 때문에 남겨 둬요.
       </p>
 
       {done === null && <SafeJournalExport onOpenRestore={onOpenRestore} />}

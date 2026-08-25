@@ -1,5 +1,6 @@
 export { AccountNetworkSettings } from "./AccountNetworkSettings"
 export { AccountSyncPanel } from "./AccountSyncPanel"
+export { DeviceJournalOwnershipPanel } from "./DeviceJournalOwnershipPanel"
 export { EraseLocalData } from "./EraseLocalData"
 export { GuardianConfirmationPanel } from "./GuardianConfirmationPanel"
 export { ProductAnalyticsConsentPanel } from "./ProductAnalyticsConsentPanel"

@@ -35,10 +35,16 @@ vi.mock("./supabase-client", () => ({
 
 vi.mock("../journal-store", () => ({
   loadEntries: () => [],
+  loadEntriesOwnedBy: () => [],
   replaceAllEntries: () => {
     localReplacementCount += 1
     return { ok: true, total: 0 }
   },
+  replaceEntriesOwnedBy: () => {
+    localReplacementCount += 1
+    return { ok: true, total: 0 }
+  },
+  replaceEntriesOwnedByWithPrivateMemos: () => Promise.resolve({ ok: true, total: 0 }),
 }))
 
 import { previewSync, saveSyncConsent, syncNow } from "./sync"

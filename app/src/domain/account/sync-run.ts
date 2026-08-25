@@ -1,8 +1,11 @@
 import { parseJournalEntryList } from "../journal-schema"
 import type { JournalEntry } from "../journal-schema"
-import { journalStorage } from "../journal-local-storage"
-import { loadEntries, replaceAllEntries } from "../journal-store"
-import { savePrivateMemosWithJournalShells } from "../private-memo-vault"
+import {
+  loadEntriesOwnedBy,
+  replaceEntriesOwnedBy,
+  replaceEntriesOwnedByWithPrivateMemos,
+} from "../journal-store"
+import { assignJournalsToAccount } from "./local-journal-ownership"
 import { loadSessionRecoveryCode } from "./private-note-sync"
 import { pullPrivateJournalEntries, pushPrivateJournalEntries } from "./private-note-remote"
 import {
@@ -13,7 +16,12 @@ import {
 import { failed, hasSupportedSyncSchema, sessionFailureCode } from "./sync-guard"
 import { claimSyncBinding, loadSyncConsent, mergeEntries, toUploadPayload } from "./sync-local"
 import { supabase } from "./supabase-client"
-import { loadTombstones, mergeTombstones, saveTombstones, tombstonedIds } from "./tombstone"
+import {
+  loadTombstonesOwnedBy,
+  mergeTombstones,
+  saveTombstonesOwnedBy,
+  tombstonedIds,
+} from "./tombstone"
 import type { Tombstone } from "./tombstone"
 import type { SyncOutcome } from "./sync-types"
 
@@ -78,8 +86,8 @@ export async function syncNow(userId: string): Promise<SyncOutcome> {
     .map((row: { entry_id: string; deleted_at: string }) =>
       ({ id: row.entry_id, deletedAt: row.deleted_at }))
 
-  const local = loadEntries()
-  const localTombstones = loadTombstones()
+  const local = loadEntriesOwnedBy(userId)
+  const localTombstones = loadTombstonesOwnedBy(userId)
   const tombstones = mergeTombstones(localTombstones, remoteTombstones)
   if (!createSyncRecoveryCheckpoint(userId, local, localTombstones)) {
     return failed(
@@ -87,7 +95,8 @@ export async function syncNow(userId: string): Promise<SyncOutcome> {
       "SYNC_RECOVERY_FAILED",
     )
   }
-  if (!saveTombstones(tombstones)) {
+  if (!assignJournalsToAccount(remoteTombstones.map((tombstone) => tombstone.id), userId)
+    || !saveTombstonesOwnedBy(userId, tombstones)) {
     return failed("삭제 기록을 이 기기에 저장하지 못해 동기화를 멈췄어요. 로컬 일지는 그대로예요.")
   }
   const deletedIds = tombstonedIds(tombstones)
@@ -97,20 +106,19 @@ export async function syncNow(userId: string): Promise<SyncOutcome> {
       entry.id === pulled.id && entry.savedAt === pulled.savedAt))
   let merged: JournalEntry[] = mergedBeforePrivateVault
   if (selectedPrivateEntries.length > 0) {
-    const localStorage = journalStorage()
-    const persisted = localStorage === null || recoveryCode === null
-      ? null
-      : await savePrivateMemosWithJournalShells(
-        localStorage,
+    const persisted = recoveryCode === null
+      ? { ok: false }
+      : await replaceEntriesOwnedByWithPrivateMemos(
+        userId,
         mergedBeforePrivateVault,
         selectedPrivateEntries,
         recoveryCode,
       )
-    if (persisted !== null) merged = persisted
+    if (persisted.ok) merged = mergedBeforePrivateVault
     else {
       return failed("나만의 메모를 이 기기에 안전하게 저장하지 못해 동기화를 멈췄어요.")
     }
-  } else if (!replaceAllEntries(merged).ok) {
+  } else if (!replaceEntriesOwnedBy(userId, merged).ok) {
     return failed("병합 결과를 저장하지 못했어요. 로컬 일지는 그대로예요.")
   }
 
