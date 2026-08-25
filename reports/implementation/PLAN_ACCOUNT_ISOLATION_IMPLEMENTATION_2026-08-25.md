@@ -2,12 +2,13 @@
 
 ```yaml
 doc_id: TRAINORACLE-PLAN-ACCOUNT-ISOLATION-IMPLEMENTATION-2026-08-25
-status: IMPLEMENTED_VERIFIED_READY_TO_PUSH
+status: IMPLEMENTED_VERIFIED_PUSHED
 owner: Codex
 branch: codex/account-local-journal-isolation
 base_head_before_work: 2f09528de9817008a6d3adfd0a6144f5f6ee8624
-commit_created: pending_this_change_set
-remote_pushed: pending_this_change_set
+implementation_commit: 62f17458a2059a0fac049b164a391893f7ec5fef
+commit_created: true
+remote_pushed: true
 ```
 
 ## 1. 목적
