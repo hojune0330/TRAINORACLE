@@ -22,7 +22,12 @@ const TOAST_READABLE_MS = 4000
 const TOAST_EXIT_MS = 150
 
 export function AppShell() {
-  const [v, setV] = React.useState(INITIAL_VIEW_STATE)
+  const [v, setV] = React.useState(() => {
+    if (!accountFeatureEnabled() || typeof window === "undefined") return INITIAL_VIEW_STATE
+    return new URLSearchParams(window.location.search).get("account") === "1"
+      ? { ...INITIAL_VIEW_STATE, accountOpen: true }
+      : INITIAL_VIEW_STATE
+  })
   const [savedToast, setSavedToast] = React.useState<ShellToastState | null>(null)
   const [athleteRecordsOpen, setAthleteRecordsOpen] = React.useState(false)
   const scrollRegionRef = React.useRef<HTMLElement>(null)
@@ -31,6 +36,11 @@ export function AppShell() {
 
   React.useEffect(() => {
     void trackProductEvent("APP_OPENED")
+    const url = new URL(window.location.href)
+    if (url.searchParams.get("account") === "1") {
+      url.searchParams.delete("account")
+      window.history.replaceState(null, "", url)
+    }
   }, [])
 
   const goHome = () => {

@@ -38,12 +38,13 @@ describe("easy FAQ", () => {
     expect(screen.queryByText(/Owner/u)).not.toBeInTheDocument()
   })
 
-  it("states private memo and guardian boundaries in plain Korean", () => {
+  it("states private memo and under-14 local-use boundaries in plain Korean", () => {
     render(<EasyFaq />)
 
     expect(screen.getByText("나만의 메모는 서비스 운영자도 볼 수 없나요?")).toBeVisible()
     expect(screen.getByText(/복구 코드를 가진 사용자만/u)).toBeInTheDocument()
-    expect(screen.getByText("만 14세 미만은 왜 보호자 확인이 필요한가요?")).toBeVisible()
+    expect(screen.getByText("만 14세 미만도 사용할 수 있나요?")).toBeVisible()
+    expect(screen.getByText(/계정 없이 이 기기에서 일지를 쓰고 훈련 계획을 만들 수 있어요/u)).toBeInTheDocument()
   })
 
   it("explains the first 200 free beta places while account features stay closed", async () => {

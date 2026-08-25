@@ -104,7 +104,8 @@ canonical_promotion_allowed: false
 | `COMPOSITION_BALANCE_BASELINE_CONTRACT.md` | 구성 균형 기준을 데모/초안 상태로 안전하게 다루기 위해 | 최종 범위 승인 전에는 기준값을 `기준: 데모`로 표시하고 안전 판단에 쓰지 않는다. |
 | `JOURNAL_DELIGHT_AND_DECORATION_SPEC.md` | 선수가 일지만 쓰러 들어와도 재미를 느끼게 하기 위해 | 꾸미기/스티커/스트릭은 훈련량 보상이 아니며 휴식/부상 기록도 유지 행동으로 인정한다. |
 | `LOCAL_FIRST_SYNC_AND_PROMOTION_CONTRACT.md` | 기기 로컬 일지를 계정 연동 후 서버로 승격하는 경계를 정하기 위해 | Raw memo 서버 저장은 아직 미결이며 구조화 필드/동기화 상태/충돌 처리를 분리한다. |
-| `FEDERATED_ACCOUNT_SSO_CONTRACT.md` | "AthleteTime으로 계속하기" 계정 연동을 TrainOracle 안전 경계와 분리하기 위해 | AthleteTime은 identity provider이고 TrainOracle의 안전/저장/코칭 권한을 대신하지 않는다. |
+| `ACCOUNT_AUTHENTICATION_AND_IDENTITY_LINKING_SPEC.md` | 카카오·Google·이메일 OTP의 현재 간편가입 경계를 정하기 위해 | Supabase Auth, 가입 전 나이·약관, 14세 미만 로컬 사용, 동기화 별도 선택을 묶는다. |
+| `FEDERATED_ACCOUNT_SSO_CONTRACT.md` | 향후 "AthleteTime으로 계속하기" 연동을 TrainOracle 안전 경계와 분리하기 위해 | 첫 출시 인증원이 아닌 미래 선택 제공자 참고 초안으로만 사용한다. |
 | `ACCOUNT_FEDERATION_DECISION.md` | 계정 연동 방향의 owner-level 결정을 남기기 위해 | SSO/동기화/백엔드 작업 전에 결정 맥락으로 읽되 runtime evidence로 쓰지 않는다. |
 | `ATHLETETIME_INTEGRATION_REVIEW.md` | AthleteTime 연동 가능성과 경계 검토를 남기기 위해 | 외부 API/약관/권한 확인 전 구현을 시작하지 않는다. |
 | `LAUNCH_BACKEND_AND_ACCOUNT_PLAN.md` | 출시 전 백엔드와 계정 작업 순서를 잡기 위해 | F2 backend/account work의 planning context로 쓰며 issue closure 근거로 쓰지 않는다. |
@@ -124,7 +125,8 @@ canonical_promotion_allowed: false
 | `COMPOSITION_BALANCE_BASELINE_CONTRACT.md` | Productization SPEC draft | 구성 균형 기준/placeholder/demo badge를 안전하게 표현 | Draft created and merged to main; owner-approved baseline, literature validation, runtime evidence는 아직 없음 |
 | `JOURNAL_DELIGHT_AND_DECORATION_SPEC.md` | Productization SPEC draft | 일지만 쓰는 사용자 모드와 꾸미기/스트릭/스탬프 체계 | Draft created and merged to main; final asset catalog, safe unlock thresholds, monetization decision은 아직 없음 |
 | `LOCAL_FIRST_SYNC_AND_PROMOTION_CONTRACT.md` | Productization SPEC draft | 로컬 일지를 계정 연동 후 서버 저장으로 승격하는 규칙 | Draft created and merged to main; backend, raw memo policy, encryption, deletion/export UX는 아직 없음 |
-| `FEDERATED_ACCOUNT_SSO_CONTRACT.md` | Productization SPEC draft | AthleteTime SSO를 identity boundary로만 연결하는 계약 | Draft created and merged to main; OAuth endpoints, redirect registry, guardian consent, revocation evidence는 아직 없음 |
+| `ACCOUNT_AUTHENTICATION_AND_IDENTITY_LINKING_SPEC.md` | Productization SPEC draft | 카카오·Google·이메일 OTP의 1차 가입과 나이·약관 경계 | Draft created; provider console, 운영 DB, 공개 URL, 실제 OAuth 증거는 아직 없음 |
+| `FEDERATED_ACCOUNT_SSO_CONTRACT.md` | Future productization SPEC draft | AthleteTime SSO를 선택 identity boundary로 연결하는 계약 | 첫 출시 차단 아님; OAuth endpoints, redirect registry, revocation evidence는 아직 없음 |
 | App implementation DB/API schemas | Implementation contract | SPEC를 실제 앱 저장소와 API로 내리는 단계 | Core SPEC acceptance와 privacy review |
 | D9 runtime evidence report | Runtime evidence | 기존 11-case D9 실행 로그와 RVE/Safety Gate/Formation coverage gap | tracked 로그를 평가하고 필요한 추가 실행 증거 확보 |
 

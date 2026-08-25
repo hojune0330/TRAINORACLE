@@ -1,6 +1,9 @@
-// 인증 래퍼 — 이메일 OTP(비밀번호 없는 간편 가입/로그인) + Google OAuth.
+// 인증 래퍼 — 이메일 OTP(비밀번호 없는 간편 가입/로그인) + 소셜 OAuth.
 // 모든 함수는 feature flag OFF(클라이언트 null)일 때 안전한 실패값을 돌려준다.
 import { supabase } from "./supabase-client"
+
+export const socialAuthProviders = ["kakao", "google"] as const
+export type SocialAuthProvider = typeof socialAuthProviders[number]
 
 export type AccountUser = {
   readonly id: string
@@ -54,19 +57,32 @@ export async function verifyEmailOtp(email: string, code: string): Promise<AuthR
   return { ok: true, message: "로그인되었어요." }
 }
 
-/** Google 간편 로그인 (리다이렉트) */
-export async function signInWithGoogle(): Promise<AuthResult> {
+export function authReturnUrl(href?: string): string | undefined {
+  const source = href ?? (typeof window !== "undefined" ? window.location.href : undefined)
+  if (source === undefined) return undefined
+  const url = new URL(source)
+  url.searchParams.set("account", "1")
+  url.hash = ""
+  return url.toString()
+}
+
+/** 카카오·Google 간편 로그인 (Supabase OAuth 리다이렉트) */
+export async function signInWithProvider(provider: SocialAuthProvider): Promise<AuthResult> {
   const client = await supabase()
   if (client === null) return { ok: false, message: "계정 기능이 꺼져 있어요." }
-  const redirectTo = typeof window !== "undefined"
-    ? window.location.origin + window.location.pathname
-    : undefined
+  const redirectTo = authReturnUrl()
   const { error } = await client.auth.signInWithOAuth({
-    provider: "google",
+    provider,
     options: { redirectTo },
   })
-  if (error) return { ok: false, message: "Google 로그인을 시작하지 못했어요." }
-  return { ok: true, message: "Google로 이동해요." }
+  const label = provider === "kakao" ? "카카오" : "Google"
+  if (error) return { ok: false, message: `${label} 로그인을 시작하지 못했어요.` }
+  return { ok: true, message: `${label}로 이동해요.` }
+}
+
+/** 이전 호출부와 외부 계약을 위한 호환 래퍼. */
+export async function signInWithGoogle(): Promise<AuthResult> {
+  return signInWithProvider("google")
 }
 
 export async function signOut(): Promise<AuthResult> {

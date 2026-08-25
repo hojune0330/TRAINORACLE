@@ -11,7 +11,7 @@ const legalDocuments = {
 }
 
 describe("beta account settings", () => {
-  it("explains the guardian gate after an under-14 birth date is saved", async () => {
+  it("does not save an under-14 online profile", async () => {
     const saveProfile = vi.fn().mockResolvedValue({ ok: true, message: "저장했어요." })
     render(
       <BetaAccountSettings
@@ -28,13 +28,8 @@ describe("beta account settings", () => {
     await userEvent.click(screen.getByRole("checkbox", { name: /이용약관/u }))
     await userEvent.click(screen.getByRole("button", { name: "계정 정보 저장" }))
 
-    expect(saveProfile).toHaveBeenCalledWith({
-      userId: "athlete-a",
-      birthDate: "2013-08-02",
-      privacyPolicyVersion: "2026-08-12",
-      termsOfServiceVersion: "2026-08-12",
-    })
-    expect(screen.getByText(/보호자 확인 전에는 동기화와 공유를 열지 않아요/u)).toBeVisible()
+    expect(saveProfile).not.toHaveBeenCalled()
+    expect(screen.getByText(/온라인 계정은 만 14세부터/u)).toBeVisible()
   })
 
   it("does not bundle product analytics consent into private profile saving", async () => {
