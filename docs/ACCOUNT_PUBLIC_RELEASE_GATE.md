@@ -24,6 +24,8 @@ legal_clearance_claimed: false
 TrainOracle은 비밀번호를 만들거나 저장하지 않는다. 만 14세 미만에게는 온라인
 계정을 제공하지 않으며, 계정 없이 로컬 일지와 훈련 계획을 계속 사용할 수 있다.
 전화·문자, 토스, 네이버, Apple, AthleteTime SSO는 이번 공개의 선행조건이 아니다.
+휴대전화 OTP 화면과 코드는 별도 닫힌 게이트로 준비하지만, SMS 공급자·CAPTCHA·
+비용 경보를 실측하기 전에는 공개 버튼이 나타나지 않는다.
 
 이 문서는 공개 승인서가 아니다. 아래 게이트가 모두 실제 증거로 확인되기
 전에는 `TRAINORACLE_ACCOUNT_PUBLIC_ENABLED=true`를 설정하지 않는다.
@@ -49,6 +51,7 @@ TrainOracle은 비밀번호를 만들거나 저장하지 않는다. 만 14세 �
 | G8 교차 계정 시험 | 두 계정 격리, 두 기기 동기화, 삭제·복구·재로그인 시험 | OPEN |
 | G9 가입 동의 | 가입 전에 방침·약관 링크와 버전 동의를 저장하는 UI·계약 | PARTIAL_CODE_TEST_OPEN |
 | G10 배포 스위치 | G1~G9 증거 검수 후 저장소 변수를 `true`로 변경 | LOCKED |
+| G11 휴대전화 선택 출시 | SMS 공급자·한국 발신 조건·CAPTCHA·요율 제한·비용 경보·실수신 왕복 | CODE_READY_PROVIDER_OPEN |
 
 G8에는 같은 브라우저에서 계정을 바꿨을 때 이전 사용자의 로컬 일지가 보이지
 않고 새 계정으로 업로드되지 않는 시험을 반드시 포함한다. 현재는 잘못된
@@ -95,6 +98,11 @@ G4의 현재 제품 결정은 보호자 동의 계정이 아니라 만 14세 미
    별도 시험하고, 그 결과를 확인한 뒤 동기화를 연다.
 6. main 배포 후 로그인·삭제·로그아웃을 실서비스에서 다시 확인한다.
 
+휴대전화 로그인은 위 계정 공개 순서와 별개로 G11을 통과한 뒤
+`TRAINORACLE_PHONE_AUTH_ENABLED=true`와
+`TRAINORACLE_PHONE_AUTH_OPERATIONS_APPROVED=true`를 함께 설정한다. 둘 중 하나라도
+없으면 버튼은 보이지 않는다.
+
 ## 즉시 끄기
 
 문제가 발견되면 서버의 `ACCOUNT` 스위치를 먼저 끄고 이유를 기록한다. 그다음
@@ -104,3 +112,5 @@ G4의 현재 제품 결정은 보호자 동의 계정이 아니라 만 14세 미
 진입점도 사라진다. 이 조치는 이미 서버에 저장된 데이터의 삭제나 보유 정책을
 대신하지 않는다. 자세한 순서는
 `reports/operations/BETA_FEATURE_INCIDENT_LOG.md`를 따른다.
+SMS만 문제가 생기면 `TRAINORACLE_KILL_PHONE_AUTH=true`로 전화 버튼만 닫고 카카오,
+Google, 이메일 경로는 유지한다.

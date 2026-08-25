@@ -5,12 +5,12 @@ document_metadata:
   doc_id: trainoracle-account-authentication-identity-linking-spec
   spec_id: ACCOUNT_AUTHENTICATION_AND_IDENTITY_LINKING_SPEC
   title: TrainOracle 간편 인증 및 향후 계정 연결 계약
-  version: 0.1
-  round: RT1_OWNER_APPROVED_IMPLEMENTATION_DRAFT
+  version: 0.2
+  round: RT2_PHONE_OTP_AND_PROVIDER_OPERATIONS_DRAFT
   status: DRAFT_FOR_REVIEW
   owner: COACH_HOJUNE
   service_provider_working_name: aaclub
-  open_issues_total: 6
+  open_issues_total: 8
   canonical_blocking_count: 4
   executed_tests_total: 0
   runtime_evidence: none
@@ -40,7 +40,7 @@ first_wave_authentication:
   password_login: FORBIDDEN
   custom_auth_server: FORBIDDEN
   custom_cross_provider_account_merge: FORBIDDEN
-  phone_sms: DEFERRED
+  phone_sms: IMPLEMENTED_BEHIND_SEPARATE_CLOSED_GATE
   toss_identity_or_login: DEFERRED
   naver_login: DEFERRED
   apple_login: DEFERRED_UNTIL_APP_STORE_PHASE
@@ -50,6 +50,32 @@ first_wave_authentication:
 카카오·Google·이메일 버튼은 같은 계정 화면에서 제공한다. 화면에 보이는 제공자는
 공개 전에 실제 제공자 콘솔과 Supabase에서 모두 활성화하고 실측해야 한다. 설정되지
 않은 제공자 버튼을 공개한 채 사용자에게 내부 오류를 보여주면 안 된다.
+
+### 2.1 휴대전화 OTP 후속 경로
+
+휴대전화 로그인은 국내 `010` 번호를 `+8210...` E.164 형식으로 정규화한 뒤
+Supabase Phone OTP를 사용한다. 같은 번호의 하이픈·공백·국가번호 표기는 하나의
+식별자로 취급한다. 전체 번호는 계정 화면이나 제품 분석 이벤트에 노출하지 않고
+마지막 네 자리만 마스킹해 보여준다.
+
+이 경로는 코드가 준비돼도 아래 두 배포 값과 서버 제공자 설정이 모두 확인될
+때까지 버튼을 보여주지 않는다.
+
+```yaml
+phone_auth_release_gate:
+  VITE_PHONE_AUTH_ENABLED: true
+  VITE_PHONE_AUTH_OPERATIONS_APPROVED: true
+  VITE_KILL_PHONE_AUTH: false
+  sms_provider_configured: required
+  captcha_or_equivalent_abuse_control: required
+  rate_limit_and_cost_alert: required
+  korean_sender_compliance_review: required
+  first_public_release_dependency: false
+```
+
+SMS 공급자는 신원 확인 코드 전달만 담당한다. 전화번호를 훈련 분석, 코치 공유,
+마케팅 동의 또는 계정 자동 병합 근거로 사용하지 않는다. 60초 이내 재발송을 막고,
+실패 문구로 기존 계정 존재 여부를 구분해 주지 않는다.
 
 ## 3. 사용자 흐름
 
@@ -131,6 +157,18 @@ AthleteTime은 첫 출시의 identity root가 아니다. 향후 선택 제공자
 TrainOracle 자체 사용자 ID, 동의, 삭제, 일지, 안전 데이터 경계는 독립적으로
 유지한다. `FEDERATED_ACCOUNT_SSO_CONTRACT.md`는 그 미래 경로의 참고 초안이다.
 
+### 7.1 같은 기기에서 계정을 바꾸는 경우
+
+로그인 전 만든 일지는 특정 계정 소유로 추정하지 않고 `UNBOUND_DEVICE_DATA`로
+취급한다. 사용자가 동기화 대상을 명시적으로 선택하기 전에는 어느 계정에도
+자동 업로드하지 않는다. 한 계정에 귀속된 로컬 일지는 다른 계정 세션의 화면,
+분석 입력 또는 업로드 큐에 나타나면 안 된다.
+
+계정 전환을 이유로 일지·휴지통·삭제 기록을 자동 삭제하지 않는다. 대신 원래
+계정으로 다시 로그인, 소유자 백업, 명시적 기기 데이터 가져오기 중 하나로
+복구할 수 있어야 한다. 이 구획과 복구 경로가 구현되지 않은 현재 상태에서는
+서버 RLS 시험이 통과해도 `TWO_ACCOUNT_LOCAL_DATA_ISOLATION`을 충족하지 않는다.
+
 ## 8. 실패와 복구
 
 - 제공자 시작 실패: 선택 화면으로 돌아가며 로컬 데이터가 안전하다고 알린다.
@@ -147,6 +185,7 @@ required_release_evidence:
   - KAKAO_NEW_AND_RETURNING_LOGIN
   - GOOGLE_NEW_AND_RETURNING_LOGIN
   - EMAIL_OTP_NEW_AND_RETURNING_LOGIN
+  - PHONE_OTP_NEW_AND_RETURNING_LOGIN_WHEN_RELEASED
   - OAUTH_RETURN_TO_ACCOUNT_SCREEN
   - EXACT_14TH_BIRTHDAY_BOUNDARY
   - UNDER_14_NO_EXTERNAL_AUTH_REQUEST
@@ -170,10 +209,13 @@ required_release_evidence:
 | OI-AAIL-CROSS-ACCOUNT-ISOLATION-001 | 두 계정·두 기기 격리 실측 없음 | OPEN | YES | G8과 연결 |
 | OI-AAIL-IDENTITY-LINKING-001 | 제공자 간 동일 사용자 연결 정책 미수용 | OPEN | NO | 임의 병합 금지 유지 |
 | OI-AAIL-ATHLETETIME-FUTURE-001 | AthleteTime 선택 연동 시점·프로토콜 미확정 | OPEN | NO | 첫 공개 차단 아님 |
+| OI-AAIL-PHONE-PROVIDER-001 | 한국 수신 가능한 SMS 공급자·발신자·비용 미확정 | OPEN | NO | 전화 로그인 공개 때만 차단 |
+| OI-AAIL-PHONE-ABUSE-001 | CAPTCHA·재전송 제한·비용 경보 실측 없음 | OPEN | NO | 운영 승인 값은 계속 false |
 
 ## 11. Non-Claims
 
-이 문서는 카카오·Google 운영 설정 완료, Supabase 운영 마이그레이션 적용, 공개 계정
-출시, 런타임 OAuth PASS, canonical 승격 또는 open issue 종결을 주장하지 않는다.
+이 문서는 카카오·Google·휴대전화 운영 설정 완료, Supabase 운영 마이그레이션 적용,
+공개 계정 출시, 런타임 OAuth/OTP PASS, canonical 승격 또는 open issue 종결을
+주장하지 않는다.
 
 [DRAFT_COMPLETE]

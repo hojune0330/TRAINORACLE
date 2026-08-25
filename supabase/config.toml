@@ -8,3 +8,26 @@ enabled = true
 
 [db.seed]
 enabled = false
+
+[auth]
+site_url = "http://127.0.0.1:4173"
+additional_redirect_urls = [
+  "http://localhost:4173",
+  "http://127.0.0.1:4173",
+  "http://localhost:5173",
+  "http://127.0.0.1:5173",
+]
+
+[auth.email]
+otp_length = 6
+otp_expiry = 600
+max_frequency = "1m"
+
+[auth.email.template.magic_link]
+subject = "TrainOracle 로그인 인증번호"
+content_path = "./supabase/templates/magic-link.html"
+
+# 실제 SMS 공급자와 CAPTCHA 검증 전에는 로컬 Supabase도 전화 가입을 열지 않는다.
+[auth.sms]
+enable_signup = false
+enable_confirmations = true
