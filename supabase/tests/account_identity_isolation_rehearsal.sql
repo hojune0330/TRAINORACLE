@@ -77,13 +77,19 @@ begin
     raise exception 'account B can read account A journal';
   end if;
 
-  update public.user_private_profiles
-  set analytics_opt_in = true
-  where user_id = 'a1111111-1111-4111-8111-111111111111';
-  get diagnostics changed_rows = row_count;
-  if changed_rows <> 0 then
-    raise exception 'account B updated account A profile';
-  end if;
+  begin
+    update public.user_private_profiles
+    set analytics_opt_in = true
+    where user_id = 'a1111111-1111-4111-8111-111111111111';
+    get diagnostics changed_rows = row_count;
+    if changed_rows <> 0 then
+      raise exception 'account B updated account A profile';
+    end if;
+  exception
+    -- Direct profile writes are currently revoked. If that boundary changes,
+    -- the RLS path above must still reject cross-account updates with zero rows.
+    when insufficient_privilege then null;
+  end;
 
   begin
     insert into public.journal_entries (user_id, entry_id, saved_at, entry)

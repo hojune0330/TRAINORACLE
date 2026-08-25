@@ -32,6 +32,9 @@ describe("auth provider operations packet", () => {
     expect(isolationRehearsal).toContain("account B can read account A journal")
     expect(isolationRehearsal).toContain("account A can read account B journal")
     expect(isolationRehearsal).toContain("account B inserted as account A")
+    expect(isolationRehearsal).toMatch(
+      /update public\.user_private_profiles[\s\S]+when insufficient_privilege then null/iu,
+    )
     expect(isolationRehearsal).toContain("under-14 online profile was not blocked")
     expect(isolationRehearsal.trimEnd()).toMatch(/verified_boundaries;$/u)
     expect(isolationRehearsal.match(/\brollback;/giu)).toHaveLength(1)
