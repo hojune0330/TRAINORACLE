@@ -6,6 +6,7 @@ import { AccountAuthGateway } from "./AccountAuthGateway"
 const config = {
   url: "https://example.supabase.co",
   anonKey: "public-anon-key",
+  kakaoAuthEnabled: true,
   phoneAuthEnabled: false,
   privacyPolicy: { url: "https://trainoracle.example/privacy", version: "2026-08-25" },
   termsOfService: { url: "https://trainoracle.example/terms", version: "2026-08-25" },
@@ -23,6 +24,14 @@ describe("mobile-first account authentication gateway", () => {
     expect(screen.getByRole("button", { name: "이메일로 계속하기" })).toBeVisible()
     expect(screen.queryByRole("button", { name: "휴대전화로 계속하기" })).not.toBeInTheDocument()
     expect(screen.getByRole("button", { name: "계정 없이 계속 사용" })).toBeVisible()
+  })
+
+  it("hides Kakao when the provider has not been released", () => {
+    render(<AccountAuthGateway config={{ ...config, kakaoAuthEnabled: false }} today="2026-08-25" onLocalContinue={vi.fn()} />)
+
+    expect(screen.queryByRole("button", { name: "카카오로 계속하기" })).not.toBeInTheDocument()
+    expect(screen.getByRole("button", { name: "Google로 계속하기" })).toBeVisible()
+    expect(screen.getByRole("button", { name: "이메일로 계속하기" })).toBeVisible()
   })
 
   it("uses Korean phone OTP only when the separately gated method is enabled", async () => {

@@ -184,7 +184,9 @@ export function AccountAuthGateway({
             <p>계정이 없어도 일지와 훈련 계획은 계속 쓸 수 있어요. 로그인하면 기기를 바꿀 때 데이터를 지킬 준비를 할 수 있어요.</p>
           </div>
           <div className="account-auth__methods" aria-label="로그인 방법 선택">
-            <MethodButton className="account-auth__method--kakao" mark="K" label="카카오로 계속하기" onClick={() => chooseMethod("kakao")} />
+            {config.kakaoAuthEnabled && (
+              <MethodButton className="account-auth__method--kakao" mark="K" label="카카오로 계속하기" onClick={() => chooseMethod("kakao")} />
+            )}
             <MethodButton mark="G" label="Google로 계속하기" onClick={() => chooseMethod("google")} />
             <MethodButton icon={<Mail aria-hidden="true" size={19} />} label="이메일로 계속하기" onClick={() => chooseMethod("email")} />
             {config.phoneAuthEnabled && (

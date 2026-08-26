@@ -30,6 +30,7 @@ describe("account public release gate", () => {
     })).toEqual({
       url: credentials.VITE_SUPABASE_URL,
       anonKey: credentials.VITE_SUPABASE_ANON_KEY,
+      kakaoAuthEnabled: false,
       phoneAuthEnabled: false,
       privacyPolicy: {
         url: legalDocuments.VITE_PRIVACY_POLICY_URL,
@@ -40,6 +41,22 @@ describe("account public release gate", () => {
         version: legalDocuments.VITE_TERMS_OF_SERVICE_VERSION,
       },
     })
+  })
+
+  it("keeps Kakao hidden until its provider is separately released", () => {
+    expect(resolveAccountConfig({
+      ...credentials,
+      ...legalDocuments,
+      VITE_ACCOUNT_PUBLIC_ENABLED: "true",
+      VITE_KAKAO_AUTH_ENABLED: "true",
+    })?.kakaoAuthEnabled).toBe(true)
+    expect(resolveAccountConfig({
+      ...credentials,
+      ...legalDocuments,
+      VITE_ACCOUNT_PUBLIC_ENABLED: "true",
+      VITE_KAKAO_AUTH_ENABLED: "true",
+      VITE_KILL_KAKAO_AUTH: "true",
+    })?.kakaoAuthEnabled).toBe(false)
   })
 
   it("keeps phone login behind its own exact release flag", () => {

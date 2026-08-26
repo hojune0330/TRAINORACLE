@@ -13,6 +13,7 @@ import { koreaServiceDate } from "./service-date"
 const config = {
   url: "https://example.supabase.co",
   anonKey: "public-anon-key",
+  kakaoAuthEnabled: false,
   phoneAuthEnabled: false,
   privacyPolicy: { url: "https://trainoracle.example/privacy", version: "2026-08-25" },
   termsOfService: { url: "https://trainoracle.example/terms", version: "2026-08-25" },
