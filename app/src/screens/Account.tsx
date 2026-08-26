@@ -3,7 +3,7 @@
 import React from "react"
 import { ArrowLeft } from "lucide-react"
 import { SectionLb } from "../components/JournalPrimitives"
-import { currentUser, onAuthChange, signOut } from "../domain/account/auth"
+import { currentUser, maskPhoneNumber, onAuthChange, signOut } from "../domain/account/auth"
 import type { AccountUser } from "../domain/account/auth"
 import {
   finalizePendingAccountSetup,
@@ -15,7 +15,7 @@ import { koreaServiceDate } from "../domain/account/service-date"
 import { loadPrivateProfileSetupStatus } from "../domain/account/account-service"
 import { accountConfig } from "../domain/account/config"
 import {
-  AccountNetworkSettings, AccountSyncPanel, EraseLocalData, SwitchAccountPanel,
+  AccountNetworkSettings, AccountSyncPanel, DeviceJournalOwnershipPanel, DeviceTrainingDataPanel, EraseLocalData, SwitchAccountPanel,
 } from "./account/index"
 import { AccountAuthGateway } from "./account/AccountAuthGateway"
 import { mono, primaryBtn, secondaryBtn } from "./account/styles"
@@ -182,11 +182,17 @@ export function Account({ onBack, onOpenImport, onOpenRestore }: {
           <div style={{ border: "1px solid var(--line)", borderRadius: 4, padding: "14px 16px" }}>
             <div style={{ ...mono, fontSize: 10, color: "var(--ink-3)", letterSpacing: 0 }}>로그인됨</div>
             <div style={{ fontFamily: "var(--sans)", fontSize: 15, fontWeight: 600, marginTop: 4, letterSpacing: 0 }}>
-              {user.email ?? "이메일 미공개"}
+              {user.email ?? (user.phone ? maskPhoneNumber(user.phone) : "연락처 미공개")}
             </div>
             {user.provider && (
               <div style={{ ...mono, fontSize: 10, color: "var(--ink-4)", marginTop: 2, letterSpacing: 0 }}>
-                {user.provider === "kakao" ? "카카오 간편 로그인" : user.provider === "google" ? "Google 간편 로그인" : "이메일 인증"}
+                {user.provider === "kakao"
+                  ? "카카오 간편 로그인"
+                  : user.provider === "google"
+                    ? "Google 간편 로그인"
+                    : user.provider === "phone"
+                      ? "휴대전화 문자 인증"
+                      : "이메일 인증"}
               </div>
             )}
           </div>
@@ -199,6 +205,8 @@ export function Account({ onBack, onOpenImport, onOpenRestore }: {
             legalDocuments={config}
             profileSetupComplete={profileSetupComplete}
           />
+          <DeviceJournalOwnershipPanel userId={user.id} />
+          <DeviceTrainingDataPanel userId={user.id} />
           <AccountSyncPanel userId={user.id} />
 
           <SectionLb>기기 데이터 가져오기</SectionLb>

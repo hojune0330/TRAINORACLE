@@ -4,7 +4,7 @@ import type { AccountActionResult, SaveProfileInput } from "./account-service"
 import { ageBandOn } from "./profile"
 import type { SocialAuthProvider } from "./auth"
 
-export type AuthMethod = SocialAuthProvider | "email"
+export type AuthMethod = SocialAuthProvider | "email" | "phone"
 
 export type PendingAccountSetup = {
   readonly schemaVersion: 1
@@ -62,7 +62,10 @@ export function readPendingAccountSetup(
   if (raw === null) return null
   try {
     const parsed = JSON.parse(raw) as Partial<PendingAccountSetup>
-    const methodValid = parsed.method === "kakao" || parsed.method === "google" || parsed.method === "email"
+    const methodValid = parsed.method === "kakao"
+      || parsed.method === "google"
+      || parsed.method === "email"
+      || parsed.method === "phone"
     const valid = parsed.schemaVersion === 1
       && methodValid
       && typeof parsed.birthDate === "string"

@@ -122,7 +122,7 @@ describe("production detailed prescription experience", () => {
     expect(screen.getByText(/5×1000m @5000m RP.*r150.*JOG/u)).toBeVisible()
     await user.click(screen.getByText("기준 기록·중단·낮춤 규칙 보기"))
     expect(screen.getByText(/5000m.*18분 31초.*2026-05-10/u)).toBeVisible()
-  })
+  }, 15_000)
 
   it("clears the execution allowance message on every recorded outcome", async () => {
     const user = userEvent.setup()

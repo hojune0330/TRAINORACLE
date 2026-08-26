@@ -175,7 +175,9 @@ describe("next-frame adaptation flow", () => {
     await user.click(screen.getByRole("button", { name: /통증은 없고 몸 상태는 평소와 같아요/u }))
     await user.click(screen.getByRole("button", { name: /훈련량을 조금 줄인 다음 계획/u }))
 
-    expect(await screen.findByRole("status")).toHaveTextContent("안전 상태를 다시 확인해야 해서")
+    await waitFor(() => {
+      expect(screen.getByRole("status")).toHaveTextContent("안전 상태를 다시 확인해야 해서")
+    })
     expect(screen.queryByRole("button", { name: "이 다음 계획 선택하기" })).not.toBeInTheDocument()
   })
 

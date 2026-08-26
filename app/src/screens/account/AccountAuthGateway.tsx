@@ -1,10 +1,14 @@
 import React from "react"
-import { ArrowLeft, ChevronRight, Mail, ShieldCheck } from "lucide-react"
+import { ArrowLeft, ChevronRight, Mail, Phone, ShieldCheck } from "lucide-react"
 import type { AuthResult, SocialAuthProvider } from "../../domain/account/auth"
 import {
+  maskPhoneNumber,
+  PHONE_OTP_RESEND_SECONDS,
   requestEmailOtp,
+  requestPhoneOtp,
   signInWithProvider,
   verifyEmailOtp,
+  verifyPhoneOtp,
 } from "../../domain/account/auth"
 import type { AccountConfig } from "../../domain/account/config"
 import {
@@ -15,7 +19,7 @@ import {
 } from "../../domain/account/auth-onboarding"
 import type { AuthMethod } from "../../domain/account/auth-onboarding"
 
-type GatewayStep = "method" | "eligibility" | "email" | "code" | "under14"
+type GatewayStep = "method" | "eligibility" | "email" | "code" | "phone" | "phone-code" | "under14"
 
 export type AccountAuthGatewayProps = {
   readonly config: AccountConfig
@@ -24,6 +28,8 @@ export type AccountAuthGatewayProps = {
   readonly onSocialSignIn?: (provider: SocialAuthProvider) => Promise<AuthResult>
   readonly onRequestEmailOtp?: (email: string) => Promise<AuthResult>
   readonly onVerifyEmailOtp?: (email: string, code: string) => Promise<AuthResult>
+  readonly onRequestPhoneOtp?: (phone: string) => Promise<AuthResult>
+  readonly onVerifyPhoneOtp?: (phone: string, code: string) => Promise<AuthResult>
 }
 
 export function AccountAuthGateway({
@@ -33,6 +39,8 @@ export function AccountAuthGateway({
   onSocialSignIn = signInWithProvider,
   onRequestEmailOtp: sendEmailOtp = requestEmailOtp,
   onVerifyEmailOtp: checkEmailOtp = verifyEmailOtp,
+  onRequestPhoneOtp: sendPhoneOtp = requestPhoneOtp,
+  onVerifyPhoneOtp: checkPhoneOtp = verifyPhoneOtp,
 }: AccountAuthGatewayProps) {
   const [step, setStep] = React.useState<GatewayStep>("method")
   const [method, setMethod] = React.useState<AuthMethod | null>(null)
@@ -40,8 +48,19 @@ export function AccountAuthGateway({
   const [legalAcknowledged, setLegalAcknowledged] = React.useState(false)
   const [email, setEmail] = React.useState("")
   const [code, setCode] = React.useState("")
+  const [phone, setPhone] = React.useState("")
+  const [phoneCode, setPhoneCode] = React.useState("")
+  const [phoneResendSeconds, setPhoneResendSeconds] = React.useState(0)
   const [busy, setBusy] = React.useState(false)
   const [notice, setNotice] = React.useState<string | null>(null)
+
+  React.useEffect(() => {
+    if (phoneResendSeconds <= 0) return
+    const timer = window.setTimeout(() => {
+      setPhoneResendSeconds(value => Math.max(0, value - 1))
+    }, 1000)
+    return () => window.clearTimeout(timer)
+  }, [phoneResendSeconds])
 
   const chooseMethod = (nextMethod: AuthMethod) => {
     setMethod(nextMethod)
@@ -77,6 +96,11 @@ export function AccountAuthGateway({
     writePendingAccountSetup(createPendingAccountSetup({ method, birthDate, config }))
     if (method === "email") {
       setStep("email")
+      setNotice(null)
+      return
+    }
+    if (method === "phone") {
+      setStep("phone")
       setNotice(null)
       return
     }
@@ -119,6 +143,37 @@ export function AccountAuthGateway({
     }
   }
 
+  const sendPhoneCode = async () => {
+    if (phoneResendSeconds > 0) return
+    setBusy(true)
+    setNotice(null)
+    try {
+      const result = await sendPhoneOtp(phone)
+      setNotice(result.message)
+      if (result.ok) {
+        setPhoneResendSeconds(PHONE_OTP_RESEND_SECONDS)
+        setStep("phone-code")
+      }
+    } catch {
+      setNotice("인증번호를 보내지 못했어요. 잠시 후 다시 시도해 주세요.")
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  const verifyPhoneCode = async () => {
+    setBusy(true)
+    setNotice(null)
+    try {
+      const result = await checkPhoneOtp(phone, phoneCode)
+      setNotice(result.ok ? "로그인 정보를 확인하고 있어요." : result.message)
+    } catch {
+      setNotice("인증번호를 확인하지 못했어요. 잠시 후 다시 시도해 주세요.")
+    } finally {
+      setBusy(false)
+    }
+  }
+
   return (
     <div className="account-auth" data-step={step}>
       {step === "method" && (
@@ -132,6 +187,9 @@ export function AccountAuthGateway({
             <MethodButton className="account-auth__method--kakao" mark="K" label="카카오로 계속하기" onClick={() => chooseMethod("kakao")} />
             <MethodButton mark="G" label="Google로 계속하기" onClick={() => chooseMethod("google")} />
             <MethodButton icon={<Mail aria-hidden="true" size={19} />} label="이메일로 계속하기" onClick={() => chooseMethod("email")} />
+            {config.phoneAuthEnabled && (
+              <MethodButton icon={<Phone aria-hidden="true" size={19} />} label="휴대전화로 계속하기" onClick={() => chooseMethod("phone")} />
+            )}
           </div>
           {onLocalContinue && (
             <button className="account-auth__text-action" type="button" onClick={onLocalContinue}>
@@ -176,7 +234,13 @@ export function AccountAuthGateway({
             disabled={busy || birthDate === ""}
             onClick={() => void continueAfterEligibility()}
           >
-            {busy ? "연결하는 중..." : method === "email" ? "이메일 입력하기" : `${method === "kakao" ? "카카오" : "Google"}로 계속하기`}
+            {busy
+              ? "연결하는 중..."
+              : method === "email"
+                ? "이메일 입력하기"
+                : method === "phone"
+                  ? "휴대전화 번호 입력하기"
+                  : `${method === "kakao" ? "카카오" : "Google"}로 계속하기`}
             {!busy && <ChevronRight aria-hidden="true" size={18} />}
           </button>
         </>
@@ -223,6 +287,51 @@ export function AccountAuthGateway({
           </button>
           <button className="account-auth__text-action" type="button" disabled={busy} onClick={() => void sendCode()}>
             코드 다시 받기
+          </button>
+        </>
+      )}
+
+      {step === "phone" && (
+        <>
+          <StepHeader step="2 / 2" title="인증번호를 받을 휴대전화 번호를 적어 주세요" onBack={() => setStep("eligibility")} />
+          <div className="account-auth__field-group">
+            <label htmlFor="account-phone">휴대전화 번호</label>
+            <input
+              id="account-phone"
+              type="tel"
+              inputMode="tel"
+              autoComplete="tel"
+              value={phone}
+              onChange={(event) => { setPhone(event.target.value); setNotice(null) }}
+              placeholder="010-1234-5678"
+            />
+            <small>국내 010 번호만 지원해요. 비밀번호 대신 문자로 6자리 번호를 보내드려요.</small>
+          </div>
+          <button className="account-auth__primary" type="button" disabled={busy || phone.trim() === ""} onClick={() => void sendPhoneCode()}>
+            {busy ? "보내는 중..." : "문자로 인증번호 받기"}
+          </button>
+        </>
+      )}
+
+      {step === "phone-code" && (
+        <>
+          <StepHeader step="마지막" title="문자로 받은 6자리 번호를 입력해 주세요" onBack={() => { setStep("phone"); setPhoneCode("") }} />
+          <div className="account-auth__field-group">
+            <label htmlFor="account-phone-code">{maskPhoneNumber(phone)}로 보낸 번호</label>
+            <input
+              id="account-phone-code"
+              inputMode="numeric"
+              autoComplete="one-time-code"
+              value={phoneCode}
+              onChange={(event) => { setPhoneCode(event.target.value.replace(/\D/gu, "").slice(0, 6)); setNotice(null) }}
+              placeholder="000000"
+            />
+          </div>
+          <button className="account-auth__primary" type="button" disabled={busy || phoneCode.length !== 6} onClick={() => void verifyPhoneCode()}>
+            {busy ? "확인하는 중..." : "로그인 완료하기"}
+          </button>
+          <button className="account-auth__text-action" type="button" disabled={busy || phoneResendSeconds > 0} onClick={() => void sendPhoneCode()}>
+            {phoneResendSeconds > 0 ? `다시 받기 (${phoneResendSeconds}초)` : "인증번호 다시 받기"}
           </button>
         </>
       )}

@@ -35,6 +35,7 @@ import type { JournalEntry } from "./journal-schema"
 import { parsePrivateMemoRecord } from "./private-memo-vault"
 import type { PrivateMemoRecord } from "./private-memo-vault"
 import { pruneUnusedJournalDecorations } from "./journal-decoration-lifecycle"
+import { isJournalVisible } from "./account/local-journal-ownership"
 
 const KEY = "trainoracle.journal.trash.v1"
 
@@ -99,7 +100,7 @@ function write(items: readonly TrashedEntry[]): boolean {
  * 휴지통 읽기. 깨진 항목과 30일이 지난 항목은 결과에서 빠진다.
  * 최근에 지운 것이 먼저 온다.
  */
-export function loadTrash(now: number = Date.now()): TrashedEntry[] {
+function loadAllTrash(now: number = Date.now()): TrashedEntry[] {
   const localStorage = storage()
   if (localStorage === null) return []
   try {
@@ -120,6 +121,10 @@ export function loadTrash(now: number = Date.now()): TrashedEntry[] {
   }
 }
 
+export function loadTrash(now: number = Date.now()): TrashedEntry[] {
+  return loadAllTrash(now).filter((item) => isJournalVisible(item.entry.id))
+}
+
 /**
  * 만료·손상 항목을 저장소에서도 실제로 지운다.
  * `loadTrash`는 읽을 때 걸러내기만 하므로, 자리를 비우려면 이걸 호출해야 한다.
@@ -130,7 +135,7 @@ export function purgeExpiredTrash(now: number = Date.now()): number {
   if (localStorage === null) return 0
   const raw = localStorage.getItem(KEY)
   if (raw === null) return 0
-  const kept = loadTrash(now)
+  const kept = loadAllTrash(now)
   const before = (() => {
     try {
       const parsed: unknown = JSON.parse(raw)
@@ -166,7 +171,7 @@ export function moveToTrash(
   deletedAt: string = new Date().toISOString(),
   privateMemo?: PrivateMemoRecord,
 ): boolean {
-  const existing = loadTrash().filter((item) => item.entry.id !== entry.id)
+  const existing = loadAllTrash().filter((item) => item.entry.id !== entry.id)
   const item = privateMemo === undefined ? { entry, deletedAt } : { entry, deletedAt, privateMemo }
   const next = [...existing, item]
     .sort((a, b) => a.deletedAt.localeCompare(b.deletedAt))
@@ -181,7 +186,8 @@ export function moveToTrash(
  * 되돌리기를 두 번 눌러 일지가 두 개 생긴다.
  */
 export function takeFromTrash(id: string): TrashedEntry | null {
-  const items = loadTrash()
+  if (!isJournalVisible(id)) return null
+  const items = loadAllTrash()
   const found = items.find((item) => item.entry.id === id)
   if (found === undefined) return null
   if (!write(items.filter((item) => item.entry.id !== id))) return null
@@ -190,7 +196,8 @@ export function takeFromTrash(id: string): TrashedEntry | null {
 
 /** 휴지통에서 완전히 지운다 — 되돌릴 수 없다 */
 export function dropFromTrash(id: string): boolean {
-  const items = loadTrash()
+  if (!isJournalVisible(id)) return false
+  const items = loadAllTrash()
   const found = items.find((item) => item.entry.id === id)
   if (found === undefined) return false
   const remaining = items.filter((item) => item.entry.id !== id)
@@ -201,9 +208,11 @@ export function dropFromTrash(id: string): boolean {
 
 /** 휴지통 비우기 */
 export function emptyTrash(): boolean {
-  const items = loadTrash()
-  if (!write([])) return false
-  pruneUnusedJournalDecorations(items.map((item) => item.entry.date), [])
+  const items = loadAllTrash()
+  const removed = items.filter((item) => isJournalVisible(item.entry.id))
+  const preserved = items.filter((item) => !isJournalVisible(item.entry.id))
+  if (!write(preserved)) return false
+  pruneUnusedJournalDecorations(removed.map((item) => item.entry.date), preserved.map((item) => item.entry.date))
   return true
 }
 

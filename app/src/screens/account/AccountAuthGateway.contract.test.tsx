@@ -6,6 +6,7 @@ import { AccountAuthGateway } from "./AccountAuthGateway"
 const config = {
   url: "https://example.supabase.co",
   anonKey: "public-anon-key",
+  phoneAuthEnabled: false,
   privacyPolicy: { url: "https://trainoracle.example/privacy", version: "2026-08-25" },
   termsOfService: { url: "https://trainoracle.example/terms", version: "2026-08-25" },
 }
@@ -20,7 +21,34 @@ describe("mobile-first account authentication gateway", () => {
     expect(screen.getByRole("button", { name: "카카오로 계속하기" })).toBeVisible()
     expect(screen.getByRole("button", { name: "Google로 계속하기" })).toBeVisible()
     expect(screen.getByRole("button", { name: "이메일로 계속하기" })).toBeVisible()
+    expect(screen.queryByRole("button", { name: "휴대전화로 계속하기" })).not.toBeInTheDocument()
     expect(screen.getByRole("button", { name: "계정 없이 계속 사용" })).toBeVisible()
+  })
+
+  it("uses Korean phone OTP only when the separately gated method is enabled", async () => {
+    const send = vi.fn().mockResolvedValue({ ok: true, message: "문자를 보냈어요." })
+    const verify = vi.fn().mockResolvedValue({ ok: true, message: "로그인" })
+    render(
+      <AccountAuthGateway
+        config={{ ...config, phoneAuthEnabled: true }}
+        today="2026-08-25"
+        onRequestPhoneOtp={send}
+        onVerifyPhoneOtp={verify}
+      />,
+    )
+
+    await userEvent.click(screen.getByRole("button", { name: "휴대전화로 계속하기" }))
+    fireEvent.change(screen.getByLabelText("생년월일"), { target: { value: "2000-01-01" } })
+    await userEvent.click(screen.getByRole("checkbox", { name: /필수 약관에 모두 동의/u }))
+    await userEvent.click(screen.getByRole("button", { name: "휴대전화 번호 입력하기" }))
+    await userEvent.type(screen.getByLabelText("휴대전화 번호"), "010-1234-5678")
+    await userEvent.click(screen.getByRole("button", { name: "문자로 인증번호 받기" }))
+    await userEvent.type(screen.getByLabelText(/010-\*{4}-5678로 보낸 번호/u), "123456")
+    await userEvent.click(screen.getByRole("button", { name: "로그인 완료하기" }))
+
+    expect(send).toHaveBeenCalledWith("010-1234-5678")
+    expect(verify).toHaveBeenCalledWith("010-1234-5678", "123456")
+    expect(screen.getByRole("button", { name: /다시 받기 \(60초\)/u })).toBeDisabled()
   })
 
   it("blocks an under-14 user before any Kakao network call", async () => {
