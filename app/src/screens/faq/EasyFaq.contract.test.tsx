@@ -1,9 +1,23 @@
 import { cleanup, render, screen } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
-import { afterEach, describe, expect, it } from "vitest"
+import { afterEach, describe, expect, it, vi } from "vitest"
 import { EasyFaq } from "./EasyFaq"
 
-afterEach(cleanup)
+afterEach(() => {
+  cleanup()
+  vi.unstubAllEnvs()
+})
+
+function enablePublicAccountForTest() {
+  vi.stubEnv("VITE_ACCOUNT_PUBLIC_ENABLED", "true")
+  vi.stubEnv("VITE_KILL_ACCOUNT", "false")
+  vi.stubEnv("VITE_SUPABASE_URL", "https://project.supabase.co")
+  vi.stubEnv("VITE_SUPABASE_ANON_KEY", "public-anon-key")
+  vi.stubEnv("VITE_PRIVACY_POLICY_URL", "https://example.com/privacy")
+  vi.stubEnv("VITE_PRIVACY_POLICY_VERSION", "2026-08-26")
+  vi.stubEnv("VITE_TERMS_OF_SERVICE_URL", "https://example.com/terms")
+  vi.stubEnv("VITE_TERMS_OF_SERVICE_VERSION", "2026-08-26")
+}
 
 describe("easy FAQ", () => {
   it("shows the approved beta pricing notice before a reader opens a question", () => {
@@ -54,6 +68,20 @@ describe("easy FAQ", () => {
     await user.click(screen.getByText("지금 무료인가요?"))
     expect(screen.getByText(/첫 200명에게 열리는 무료 베타/u)).toBeVisible()
     expect(screen.getByText(/지금은 로그인 없이 이 기기에서 일지를 쓸 수 있어요/u)).toBeVisible()
+  })
+
+  it("describes the live optional account beta without promising automatic upload", async () => {
+    enablePublicAccountForTest()
+    const user = userEvent.setup()
+    render(<EasyFaq />)
+
+    await user.click(screen.getByText("지금 무료인가요?"))
+    expect(screen.getByText(/Google이나 이메일 확인 링크/u)).toBeVisible()
+    expect(screen.getByText(/로그인만으로 기기 데이터가 서버에 올라가지는 않아요/u)).toBeVisible()
+
+    await user.click(screen.getByText("지금 무엇을 할 수 있나요?"))
+    expect(screen.getByText(/선택 로그인을 사용할 수 있어요/u)).toBeVisible()
+    expect(screen.getByText(/정식 문서는 더보기와 가입 화면에서 언제든 확인/u)).toBeVisible()
   })
 
   it("separates what a free beta reader can use today from features still being prepared", async () => {

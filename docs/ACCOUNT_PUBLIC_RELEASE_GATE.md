@@ -7,7 +7,7 @@ product: TrainOracle
 service_provider_working_name: aaclub
 service_operator_target: FREE_BETA_UP_TO_200
 service_operator_scope_decision: ACCOUNT_FIRST_SYNC_LATER
-current_status: OWNER_APPROVED_PREPARATION_GATES_OPEN
+current_status: OWNER_APPROVED_ACCOUNT_ONLY_PUBLIC_SYNC_CLOSED
 contact_path: TrainOracle in-app feedback board
 owner_preparation_approved_at: 2026-08-14
 legal_clearance_claimed: false
@@ -20,22 +20,40 @@ legal_clearance_claimed: false
 사용자가 동기화를 직접 켜야 한다. 나만의 메모는 기기에서 암호화하고 서버에는
 암호문만 저장한다. 훈련 메모만 동기화와 선택 공유에 사용할 수 있다.
 
-1차 인증은 Supabase Auth의 카카오, Google, 이메일 6자리 코드만 제공한다.
+1차 공개 인증은 Supabase Auth의 Google과 이메일 확인 링크만 제공한다.
 TrainOracle은 비밀번호를 만들거나 저장하지 않는다. 만 14세 미만에게는 온라인
 계정을 제공하지 않으며, 계정 없이 로컬 일지와 훈련 계획을 계속 사용할 수 있다.
-전화·문자, 토스, 네이버, Apple, AthleteTime SSO는 이번 공개의 선행조건이 아니다.
+카카오, 전화·문자, 토스, 네이버, Apple, AthleteTime SSO는 이번 공개의 선행조건이 아니다.
 휴대전화 OTP 화면과 코드는 별도 닫힌 게이트로 준비하지만, SMS 공급자·CAPTCHA·
 비용 경보를 실측하기 전에는 공개 버튼이 나타나지 않는다.
 
-이 문서는 공개 승인서가 아니다. 아래 게이트가 모두 실제 증거로 확인되기
-전에는 `TRAINORACLE_ACCOUNT_PUBLIC_ENABLED=true`를 설정하지 않는다.
+이 문서는 법률 준수 확정서가 아니다. 2026-08-26 소유자는 실제 이메일·Google
+왕복과 서버 계정 확정을 확인한 뒤 **계정 생성·로그인만** 공개하도록 승인했다.
+동기화·공유·Kakao·휴대전화는 아래 미완료 게이트와 별개 승인 전까지 계속 닫는다.
+
+## 2026-08-26 계정 공개 실행 기록
+
+- 앱 기준 커밋: `bac0c82aca0f5f7a20df4f599468d0990ab9277b`
+- 이메일 확인 링크 신규 가입과 재로그인: PASS
+- 같은 Google 계정 로그인: PASS
+- Google OAuth 외부 앱: 공개 홈페이지·방침·약관 연결, `프로덕션 단계`
+- 동일 이메일 중복 방지: Supabase 사용자 1명, identity `email`, `google` 2개
+- 법률 동의 저장: 개인정보처리방침·이용약관 버전 `2026-08-26`
+- 서버 기능: `ACCOUNT=true`, `SYNC=false`, `SHARING=false`
+- 상세 증거: `reports/operations/ACCOUNT_EMAIL_GOOGLE_RUNTIME_RECEIPT_2026-08-26.md`
+
+G8 전체와 G5의 실제 삭제 작업은 아직 닫지 않는다. 이번 공개는 이 잔여 위험을
+숨기지 않은 소유자 승인 **계정 전용 베타**이며, 로그인만으로 기기 데이터를 서버에
+보내지 않는다.
 
 ## 2026-08-14 소유자 승인 기록
 
 소유자는 계정 공개를 위한 법률·운영 준비 작업의 진행을 승인했다. 이 승인은
 누락된 운영자 사실이나 실제 시험 증거를 대신하지 않으며, 변호사 검토 완료나
 법률 준수 확정으로 기록하지 않는다. 따라서 공개 문서 초안·배포 연결·시험은
-진행하되 G1~G9가 실제 증거로 닫히기 전까지 계정 공개 스위치는 계속 잠근다.
+진행했다. 이후 2026-08-26 소유자가 잔여 위험을 확인하고 계정 생성·로그인만
+공개하는 제한 베타를 별도로 승인했다. 이 후속 승인은 동기화·공유나 미완료 게이트를
+PASS로 바꾸지 않는다.
 
 ## 필수 게이트
 
@@ -49,8 +67,8 @@ TrainOracle은 비밀번호를 만들거나 저장하지 않는다. 만 14세 �
 | G6 처리업체 | 실제 Supabase 프로젝트 지역과 처리위탁 고지 확정 | OPEN |
 | G7 DB 안전 | 시험 DB에 0001~0028 실행, RLS 활성, 사용자별 정책 실측 | PARTIAL_STAGING_0001_0028_SYNTHETIC_PASS |
 | G8 교차 계정 시험 | 두 계정 격리, 두 기기 동기화, 삭제·복구·재로그인 시험 | PARTIAL_STAGING_TWO_USERS_RLS_PASS_UI_HARNESS_READY_TWO_BROWSER_OPEN |
-| G9 가입 동의 | 가입 전에 방침·약관 링크와 버전 동의를 저장하는 UI·계약 | PARTIAL_STAGING_SCHEMA_APPLIED_UI_LEGAL_OPEN |
-| G10 배포 스위치 | G1~G9 증거 검수 후 저장소 변수를 `true`로 변경 | LOCKED |
+| G9 가입 동의 | 가입 전에 방침·약관 링크와 버전 동의를 저장하는 UI·계약 | RUNTIME_PASS_VERSION_2026_08_26 |
+| G10 배포 스위치 | 소유자 승인 범위에서 계정만 공개하고 동기화·공유는 계속 닫음 | OWNER_APPROVED_ACCOUNT_ONLY_PUBLIC |
 | G11 휴대전화 선택 출시 | SMS 공급자·한국 발신 조건·CAPTCHA·요율 제한·비용 경보·실수신 왕복 | CODE_READY_PROVIDER_OPEN |
 
 G8에는 같은 브라우저에서 계정을 바꿨을 때 이전 사용자의 로컬 일지가 보이지
@@ -70,7 +88,7 @@ G9도 버전 저장 스키마는 시험 DB에 적용됐지만 실제 공개 문�
 
 | 구분 | 동작 |
 |---|---|
-| 로그인 식별자 | Supabase Auth의 카카오, Google 또는 이메일 OTP |
+| 로그인 식별자 | Supabase Auth의 Google 또는 이메일 확인 링크 |
 | 일지 동기화 | 사용자가 `동기화 켜기`를 직접 선택한 뒤 실행 |
 | 나만의 메모 | 기기에서 암호화하고 서버에는 암호문만 저장, 코치·분석 제외 |
 | 훈련 메모 | 동기화 가능, 사용자가 선택한 공유 범위에서만 코치·지원자에게 표시 |
