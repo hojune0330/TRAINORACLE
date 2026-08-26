@@ -16,6 +16,19 @@ beforeEach(() => sessionStorage.clear())
 afterEach(cleanup)
 
 describe("mobile-first account authentication gateway", () => {
+  it("formats eight typed birth-date digits without requiring a calendar picker", async () => {
+    render(<AccountAuthGateway config={config} today="2026-08-25" />)
+
+    await userEvent.click(screen.getByRole("button", { name: "이메일로 계속하기" }))
+    const birthDate = screen.getByLabelText("생년월일")
+    await userEvent.type(birthDate, "2000")
+    expect(screen.getByRole("button", { name: "이메일 입력하기" })).toBeDisabled()
+    await userEvent.type(birthDate, "0101")
+
+    expect(birthDate).toHaveValue("2000-01-01")
+    expect(screen.getByRole("button", { name: "이메일 입력하기" })).toBeEnabled()
+  })
+
   it("shows Kakao, Google, email, and an honest local-only exit on the first screen", () => {
     render(<AccountAuthGateway config={config} today="2026-08-25" onLocalContinue={vi.fn()} />)
 
