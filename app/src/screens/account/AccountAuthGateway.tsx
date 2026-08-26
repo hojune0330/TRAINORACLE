@@ -21,6 +21,13 @@ import type { AuthMethod } from "../../domain/account/auth-onboarding"
 
 type GatewayStep = "method" | "eligibility" | "email" | "code" | "phone" | "phone-code" | "under14"
 
+export function formatBirthDateInput(value: string): string {
+  const digits = value.replace(/\D/gu, "").slice(0, 8)
+  if (digits.length <= 4) return digits
+  if (digits.length <= 6) return `${digits.slice(0, 4)}-${digits.slice(4)}`
+  return `${digits.slice(0, 4)}-${digits.slice(4, 6)}-${digits.slice(6)}`
+}
+
 export type AccountAuthGatewayProps = {
   readonly config: AccountConfig
   readonly today: string
@@ -208,12 +215,15 @@ export function AccountAuthGateway({
             <label htmlFor="account-signup-birth-date">생년월일</label>
             <input
               id="account-signup-birth-date"
-              type="date"
-              max={today}
+              type="text"
+              inputMode="numeric"
+              autoComplete="bday"
+              maxLength={10}
+              placeholder="예: 2000-01-01"
               value={birthDate}
-              onChange={(event) => { setBirthDate(event.target.value); setNotice(null) }}
+              onChange={(event) => { setBirthDate(formatBirthDateInput(event.target.value)); setNotice(null) }}
             />
-            <small>만 14세 이상인지 확인하는 데만 사용해요. 코치·분석·포인트에는 보내지 않아요.</small>
+            <small>숫자 8자리를 입력하면 날짜로 정리돼요. 만 14세 이상인지 확인하는 데만 사용하고 코치·분석·포인트에는 보내지 않아요.</small>
           </div>
           <label className="account-auth__legal-check">
             <input
@@ -233,7 +243,7 @@ export function AccountAuthGateway({
           <button
             className="account-auth__primary"
             type="button"
-            disabled={busy || birthDate === ""}
+            disabled={busy || birthDate.length !== 10}
             onClick={() => void continueAfterEligibility()}
           >
             {busy
