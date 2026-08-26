@@ -5,6 +5,7 @@
 export type AccountConfig = {
   readonly url: string
   readonly anonKey: string
+  readonly kakaoAuthEnabled: boolean
   readonly phoneAuthEnabled: boolean
   readonly privacyPolicy: AccountLegalDocument
   readonly termsOfService: AccountLegalDocument
@@ -44,6 +45,8 @@ export function resolveAccountConfig(env: Readonly<Record<string, unknown>>): Ac
   return {
     url,
     anonKey,
+    kakaoAuthEnabled: textValue(env, "VITE_KAKAO_AUTH_ENABLED") === "true"
+      && textValue(env, "VITE_KILL_KAKAO_AUTH") !== "true",
     phoneAuthEnabled: textValue(env, "VITE_PHONE_AUTH_ENABLED") === "true"
       && textValue(env, "VITE_PHONE_AUTH_OPERATIONS_APPROVED") === "true"
       && textValue(env, "VITE_KILL_PHONE_AUTH") !== "true",
