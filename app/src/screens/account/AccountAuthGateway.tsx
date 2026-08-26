@@ -7,7 +7,6 @@ import {
   requestEmailOtp,
   requestPhoneOtp,
   signInWithProvider,
-  verifyEmailOtp,
   verifyPhoneOtp,
 } from "../../domain/account/auth"
 import type { AccountConfig } from "../../domain/account/config"
@@ -18,15 +17,9 @@ import {
   writePendingAccountSetup,
 } from "../../domain/account/auth-onboarding"
 import type { AuthMethod } from "../../domain/account/auth-onboarding"
+import { formatBirthDateInput } from "./birth-date-input"
 
-type GatewayStep = "method" | "eligibility" | "email" | "code" | "phone" | "phone-code" | "under14"
-
-export function formatBirthDateInput(value: string): string {
-  const digits = value.replace(/\D/gu, "").slice(0, 8)
-  if (digits.length <= 4) return digits
-  if (digits.length <= 6) return `${digits.slice(0, 4)}-${digits.slice(4)}`
-  return `${digits.slice(0, 4)}-${digits.slice(4, 6)}-${digits.slice(6)}`
-}
+type GatewayStep = "method" | "eligibility" | "email" | "email-sent" | "phone" | "phone-code" | "under14"
 
 export type AccountAuthGatewayProps = {
   readonly config: AccountConfig
@@ -34,7 +27,6 @@ export type AccountAuthGatewayProps = {
   readonly onLocalContinue?: () => void
   readonly onSocialSignIn?: (provider: SocialAuthProvider) => Promise<AuthResult>
   readonly onRequestEmailOtp?: (email: string) => Promise<AuthResult>
-  readonly onVerifyEmailOtp?: (email: string, code: string) => Promise<AuthResult>
   readonly onRequestPhoneOtp?: (phone: string) => Promise<AuthResult>
   readonly onVerifyPhoneOtp?: (phone: string, code: string) => Promise<AuthResult>
 }
@@ -45,7 +37,6 @@ export function AccountAuthGateway({
   onLocalContinue,
   onSocialSignIn = signInWithProvider,
   onRequestEmailOtp: sendEmailOtp = requestEmailOtp,
-  onVerifyEmailOtp: checkEmailOtp = verifyEmailOtp,
   onRequestPhoneOtp: sendPhoneOtp = requestPhoneOtp,
   onVerifyPhoneOtp: checkPhoneOtp = verifyPhoneOtp,
 }: AccountAuthGatewayProps) {
@@ -54,7 +45,6 @@ export function AccountAuthGateway({
   const [birthDate, setBirthDate] = React.useState("")
   const [legalAcknowledged, setLegalAcknowledged] = React.useState(false)
   const [email, setEmail] = React.useState("")
-  const [code, setCode] = React.useState("")
   const [phone, setPhone] = React.useState("")
   const [phoneCode, setPhoneCode] = React.useState("")
   const [phoneResendSeconds, setPhoneResendSeconds] = React.useState(0)
@@ -123,28 +113,15 @@ export function AccountAuthGateway({
     }
   }
 
-  const sendCode = async () => {
+  const sendEmailLink = async () => {
     setBusy(true)
     setNotice(null)
     try {
       const result = await sendEmailOtp(email)
       setNotice(result.message)
-      if (result.ok) setStep("code")
+      if (result.ok) setStep("email-sent")
     } catch {
-      setNotice("인증 코드를 보내지 못했어요. 잠시 후 다시 시도해 주세요.")
-    } finally {
-      setBusy(false)
-    }
-  }
-
-  const verifyCode = async () => {
-    setBusy(true)
-    setNotice(null)
-    try {
-      const result = await checkEmailOtp(email, code)
-      setNotice(result.ok ? "로그인 정보를 확인하고 있어요." : result.message)
-    } catch {
-      setNotice("인증 코드를 확인하지 못했어요. 잠시 후 다시 시도해 주세요.")
+      setNotice("확인 이메일을 보내지 못했어요. 잠시 후 다시 시도해 주세요.")
     } finally {
       setBusy(false)
     }
@@ -260,7 +237,7 @@ export function AccountAuthGateway({
 
       {step === "email" && (
         <>
-          <StepHeader step="2 / 2" title="인증 코드를 받을 이메일을 적어 주세요" onBack={() => setStep("eligibility")} />
+          <StepHeader step="2 / 2" title="확인 링크를 받을 이메일을 적어 주세요" onBack={() => setStep("eligibility")} />
           <div className="account-auth__field-group">
             <label htmlFor="account-email">이메일</label>
             <input
@@ -272,34 +249,26 @@ export function AccountAuthGateway({
               onChange={(event) => { setEmail(event.target.value); setNotice(null) }}
               placeholder="you@example.com"
             />
-            <small>비밀번호 대신 6자리 코드를 보내드려요.</small>
+            <small>비밀번호 대신 메일로 확인 링크를 보내드려요.</small>
           </div>
-          <button className="account-auth__primary" type="button" disabled={busy || email.trim() === ""} onClick={() => void sendCode()}>
-            {busy ? "보내는 중..." : "인증 코드 받기"}
+          <button className="account-auth__primary" type="button" disabled={busy || email.trim() === ""} onClick={() => void sendEmailLink()}>
+            {busy ? "보내는 중..." : "확인 이메일 받기"}
           </button>
         </>
       )}
 
-      {step === "code" && (
+      {step === "email-sent" && (
         <>
-          <StepHeader step="마지막" title="이메일의 6자리 코드를 입력해 주세요" onBack={() => { setStep("email"); setCode("") }} />
-          <div className="account-auth__field-group">
-            <label htmlFor="account-code">{email}로 보낸 코드</label>
-            <input
-              id="account-code"
-              inputMode="numeric"
-              autoComplete="one-time-code"
-              value={code}
-              onChange={(event) => { setCode(event.target.value.replace(/\D/gu, "").slice(0, 6)); setNotice(null) }}
-              placeholder="000000"
-            />
+          <StepHeader step="마지막" title="이메일에서 확인 링크를 열어 주세요" onBack={() => setStep("email")} />
+          <div className="account-auth__under14" role="status">
+            <span className="account-auth__trust">확인 이메일 전송</span>
+            <h2>{email}</h2>
+            <p>메일 안의 확인 버튼을 누르면 TrainOracle로 돌아와 가입이 이어져요. 같은 기기에서 열면 가장 빠르게 마칠 수 있어요.</p>
           </div>
-          <button className="account-auth__primary" type="button" disabled={busy || code.length !== 6} onClick={() => void verifyCode()}>
-            {busy ? "확인하는 중..." : "로그인 완료하기"}
+          <button className="account-auth__primary" type="button" disabled={busy} onClick={() => void sendEmailLink()}>
+            {busy ? "보내는 중..." : "확인 이메일 다시 받기"}
           </button>
-          <button className="account-auth__text-action" type="button" disabled={busy} onClick={() => void sendCode()}>
-            코드 다시 받기
-          </button>
+          <button className="account-auth__text-action" type="button" disabled={busy} onClick={() => setStep("email")}>이메일 주소 바꾸기</button>
         </>
       )}
 

@@ -131,4 +131,29 @@ describe("beta account settings", () => {
       termsOfServiceVersion: "2026-08-12",
     })
   })
+
+  it("finishes a new-tab email return without exposing account deletion controls", async () => {
+    const saveProfile = vi.fn().mockResolvedValue({ ok: true, message: "저장했어요." })
+    const completed = vi.fn()
+    render(
+      <BetaAccountSettings
+        userId="athlete-a"
+        today="2026-08-01"
+        legalDocuments={legalDocuments}
+        completionOnly
+        onCompleted={completed}
+        onSaveProfile={saveProfile}
+        onRequestDeletion={vi.fn()}
+      />,
+    )
+
+    await userEvent.type(screen.getByLabelText("생년월일"), "20000101")
+    await userEvent.click(screen.getByRole("checkbox", { name: /개인정보 처리방침/u }))
+    await userEvent.click(screen.getByRole("checkbox", { name: /이용약관/u }))
+    await userEvent.click(screen.getByRole("button", { name: "계정 정보 저장" }))
+
+    expect(screen.getByLabelText("생년월일")).toHaveValue("2000-01-01")
+    expect(completed).toHaveBeenCalledOnce()
+    expect(screen.queryByRole("button", { name: "계정 삭제 요청" })).not.toBeInTheDocument()
+  })
 })
