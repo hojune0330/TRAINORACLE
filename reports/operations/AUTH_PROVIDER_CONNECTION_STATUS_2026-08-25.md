@@ -2,21 +2,27 @@
 
 확인일: 2026-08-25
 
+> 2026-08-26 후속 실측으로 이메일 확인 링크 신규 가입·재로그인과 Google 로그인이
+> 모두 통과했다. 같은 주소는 Supabase 사용자 1명과 `email`, `google` identity 2개로
+> 연결됐다. Google 외부 앱도 공개 홈페이지·방침·약관을 연결한 뒤 `프로덕션 단계`로
+> 게시했다. 최신 영수증은
+> `ACCOUNT_EMAIL_GOOGLE_RUNTIME_RECEIPT_2026-08-26.md`를 따른다.
+
 ## 쉽게 보는 현재 상태
 
 | 항목 | 실제 확인 | 판정 |
 |---|---|---|
 | Supabase 조직 | `trainoracle-beta` | 확인 |
 | Supabase 프로젝트 | `trainoracle-beta-staging`, 서울 리전 | 확인 |
-| Email provider | Enabled | 연결됨, 6자리 코드 운영 발송은 미검증 |
-| Google provider | Enabled | OAuth 키 연결됨, 실제 가입·재로그인 왕복은 미검증 |
+| Email provider | Enabled | 확인 링크 신규 가입·로그아웃·재로그인 실제 통과 |
+| Google provider | Enabled | 같은 Google 계정 로그인 실제 통과, 이메일 identity와 동일 사용자로 연결 |
 | Kakao provider | Disabled | 미연결 |
 | Phone provider | Disabled | 미연결 |
 | Site URL | `https://hojune0330.github.io/TRAINORACLE/` | 설정 완료 |
 | Redirect URLs | `https://hojune0330.github.io/TRAINORACLE/**` | 1개 등록 완료 |
 | Database | 최신 원격 migration `0028` | `0027`·`0028` 적용 및 기록 확인 |
-| Google Cloud | `TrainOracle Auth` (`trainoracle-auth-20260825`) | 전용 프로젝트·웹 OAuth client 생성 |
-| Email template | Hosted 기본 템플릿, custom SMTP 없음 | 현재 6자리 코드 UX와 불일치 |
+| Google Cloud | `TrainOracle Auth` (`trainoracle-auth-20260825`) | 외부 앱 `프로덕션 단계`, 기본 email/profile 범위 |
+| Email template | Hosted 기본 템플릿, custom SMTP 없음 | 앱도 확인 링크 방식으로 정정되어 일치 |
 | 로컬 일지 화면 격리 | 계정별 로컬 저장 구현 완료, 실제 A/B 서버 RLS 교차 시험 통과 | 서로 다른 브라우저 두 개의 화면 전환 실측이 없어 G8 차단 유지 |
 
 이 표는 2026-08-25 소유자 승인 아래 시험 Supabase와 Google Cloud에 실제 적용하고
@@ -38,9 +44,8 @@
 6. Google Cloud 전용 외부 앱과 `TrainOracle Web` client를 만들고 Supabase Google
    provider를 활성화했다. Google의 `Skip nonce checks`와
    `Allow users without an email`은 모두 끈 상태다.
-7. Google 앱은 테스트 상태이며 승인 계정 1개만 test user로 등록했다. 공개 법률
-   URL이 없으므로 일반 사용자 게시와 실제 가입·로그아웃·재로그인 왕복은 아직
-   완료로 기록하지 않는다.
+7. 2026-08-26 공개 법률 URL과 실제 가입·로그아웃·재로그인 왕복을 확인한 뒤 Google
+   외부 앱을 `프로덕션 단계`로 게시했다. 별도 민감·제한 범위는 요청하지 않는다.
 8. 2026-08-26 임시 이메일 계정 A/B를 생성해 두 로그인과 서로 다른 사용자 식별자를
    확인했다. 자기 일지 읽기·쓰기·삭제는 성공하고 상대 계정 읽기·쓰기·삭제는
    0행 또는 RLS 거절이 되는 것을 스테이징에서 확인했다.
@@ -79,8 +84,9 @@ Supabase URL Configuration에는 앱의 복귀 주소를 넣는다. 두 주소�
 3. [완료] 웹 OAuth client를 만들고 위 origin과 Supabase callback만 등록한다.
 4. [완료] Client ID와 secret은 Supabase Google provider 설정에 직접 넣는다. Git에는 넣지 않는다.
 5. [완료] Supabase Site URL과 Redirect URLs를 공개 주소로 바꾼다.
-6. custom SMTP를 연결하고 `supabase/templates/magic-link.html`과 같은 6자리 코드 템플릿을 적용한다.
-7. Google과 이메일을 각각 신규 가입, 로그아웃, 재로그인까지 실측한다.
+6. [선택 후속] 발송량·브랜딩 요구가 생기면 custom SMTP를 연결한다. 현재는 Supabase
+   hosted 확인 링크 메일을 사용하며 앱 문구도 이 방식과 일치한다.
+7. [완료] Google과 이메일을 각각 신규 가입, 로그아웃, 재로그인까지 실측한다.
 8. [완료] `supabase/tests/account_identity_isolation_rehearsal.sql`을 SQL Editor에서 실행해 마지막 PASS와 rollback을 확인한다.
 9. 실제 서로 다른 두 계정과 두 브라우저 시험을 별도로 수행한다.
 10. 증거를 G4, G7, G8, G9에 연결한 뒤에만 계정 공개를 검토한다.
