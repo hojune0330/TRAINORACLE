@@ -3,6 +3,7 @@ import { cleanup, render, screen } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
 import { AppShell } from "./AppShell"
+import { ENGAGEMENT_STORAGE_KEY } from "./domain/engagement"
 import type { JournalEntry } from "./domain/journal-schema"
 
 const STORAGE_KEY = "trainoracle.journal.v1"
@@ -130,10 +131,14 @@ describe("AppShell journal archive routing", () => {
     window.localStorage.clear()
     render(<AppShell />)
 
-    expect(screen.getByRole("heading", { name: "내 기록" })).toBeVisible()
-    expect(screen.getByRole("button", { name: "오늘 기록하기" })).toBeVisible()
+    expect(screen.getByRole("heading", {
+      name: "달리기 일지를 남기고, 내 기록으로 훈련 계획을 받아요.",
+    })).toBeVisible()
+    expect(screen.getByRole("button", { name: "오늘 기록 남기기" })).toBeVisible()
     expect(screen.getByRole("button", { name: "일지" })).toBeVisible()
+    expect(screen.getByRole("button", { name: "오늘 방문 확인 +1P" })).toBeVisible()
     expect(screen.queryByLabelText(/오라클 포인트/u)).not.toBeInTheDocument()
     expect(window.localStorage.getItem("trainoracle.engagement.v1")).toBeNull()
+    expect(window.localStorage.getItem(ENGAGEMENT_STORAGE_KEY)).toBeNull()
   })
 })

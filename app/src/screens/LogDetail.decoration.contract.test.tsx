@@ -82,6 +82,7 @@ describe("real journal decoration surface", () => {
     const seeded = decorationStateSchema.parse({
       ...base,
       ownedItemIds: [...base.ownedItemIds, "STICKER_FINISH_LINE"],
+      spentPoints: 8,
       pagePlacements: [{ date: DATE, slot: "TOP_CORNER", itemId: "STICKER_WEATHER_SUN" }],
     })
     expect(saveDecorationState(seeded).ok).toBe(true)

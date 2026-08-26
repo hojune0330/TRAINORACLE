@@ -6,7 +6,15 @@ import { loadPlanBetaState } from "../domain/plan-beta-store"
 import { toAnalysisJournalEntry } from "../domain/safe-export"
 import type { AnalysisJournalEntry } from "../domain/safe-export"
 import { compactDate, isoShift } from "../domain/dates"
-import { engagementSummary, toEngagementJournalRef } from "../domain/engagement"
+import {
+  loadEngagementSummary,
+  reconcileJournalAwards,
+  recordDailyVisit,
+  type EngagementAwardResult,
+  toEngagementJournalRef,
+} from "../domain/engagement"
+import { buildEngagementSharePayload } from "../domain/engagement-rewards"
+import { DECORATION_CATALOG, loadDecorationState } from "../domain/decorations"
 import { painLevelsRequireReview } from "../safety/memo-safety"
 import { DailyContextTags } from "./home/DailyContextTags"
 import { DeviceJournal } from "./home/DeviceJournal"
@@ -15,6 +23,13 @@ import { EngagementStrip } from "./home/EngagementStrip"
 import { TrainingHome } from "./home/TrainingHome"
 import { TrashBin } from "./home/TrashBin"
 import type { JournalEntryType } from "./log-entry/shared"
+
+const VISIT_NOTICE = {
+  AWARDED: "오늘 방문 +1P가 반영됐어요.",
+  ALREADY_AWARDED: "오늘 방문 1P는 이미 반영돼 있어요.",
+  INELIGIBLE: "오늘 날짜를 확인하지 못해 방문 포인트를 반영하지 않았어요.",
+  SAVE_FAILED: "방문 포인트를 이 기기에 저장하지 못했어요.",
+} satisfies Record<EngagementAwardResult["kind"], string>
 
 export type HomeProps = {
   readonly onWriteLog?: (entryType?: JournalEntryType) => void
@@ -46,14 +61,67 @@ export function Home({
   )
   const today = todayISO()
   const model = buildTrainingHomeViewModel(entries, analysisEntries, loadPlanBetaState(), today)
-  const engagement = engagementSummary(
-    entries.flatMap((entry) => {
+  const engagementRefs = React.useMemo(
+    () => entries.flatMap((entry) => {
       const ref = toEngagementJournalRef(entry)
       return ref === null ? [] : [ref]
     }),
-    today,
+    [entries],
   )
+  const [engagement, setEngagement] = React.useState(() => loadEngagementSummary(today))
+  const [engagementNotice, setEngagementNotice] = React.useState<string | null>(null)
+  const [shareNotice, setShareNotice] = React.useState<string | null>(null)
+  const [spentPoints, setSpentPoints] = React.useState(() => loadDecorationState().spentPoints)
+  const decorationState = loadDecorationState()
+  const availablePoints = Math.max(0, engagement.points - spentPoints)
+  const nextRewardItem = DECORATION_CATALOG
+    .filter((item) => !item.starterOwned && !decorationState.ownedItemIds.includes(item.id))
+    .sort((left, right) => left.cost - right.cost)[0]
+  const nextReward = nextRewardItem === undefined ? null : {
+    name: nextRewardItem.name,
+    cost: nextRewardItem.cost,
+    remainingPoints: Math.max(0, nextRewardItem.cost - availablePoints),
+  }
   const painReviewDates = recentPainReviewDates(analysisEntries, today)
+
+  React.useEffect(() => {
+    setEngagement(reconcileJournalAwards(engagementRefs, today))
+  }, [engagementRefs, today])
+
+  const recordVisit = () => {
+    const result = recordDailyVisit(today)
+    setEngagement(result.summary)
+    setEngagementNotice(VISIT_NOTICE[result.kind])
+  }
+
+  const shareEngagement = async () => {
+    const payload = buildEngagementSharePayload({
+      journalDays: engagement.journalDays,
+      availablePoints,
+      ownedDecorationIds: decorationState.ownedItemIds,
+      appUrl: new URL(import.meta.env.BASE_URL, window.location.origin).toString(),
+    })
+    try {
+      if (typeof navigator.share === "function") {
+        await navigator.share(payload)
+        setShareNotice("공유창에 기록 정원을 보냈어요.")
+        return
+      }
+      if (navigator.clipboard !== undefined) {
+        await navigator.clipboard.writeText(`${payload.text}\n${payload.url}`)
+        setShareNotice("공유할 내용을 복사했어요.")
+        return
+      }
+      setShareNotice("이 브라우저에서는 공유를 열 수 없어요.")
+    } catch (error) {
+      if (error instanceof DOMException && error.name === "AbortError") return
+      if (error instanceof Error) {
+        setShareNotice("공유하지 못했어요. 다시 시도해 주세요.")
+        return
+      }
+      throw error
+    }
+  }
 
   React.useEffect(() => {
     if (!window.location.search.includes("uitest")) return
@@ -66,6 +134,7 @@ export function Home({
         model={model}
         onWriteLog={onWriteLog}
         onOpenArchive={onOpenArchive}
+        onOpenGuide={onOpenGuide}
         onOpenPlan={onOpenPlan}
         onOpenTrends={onOpenTrends}
         onOpenMore={onOpenMore}
@@ -78,10 +147,27 @@ export function Home({
       />
 
       {painReviewDates.length > 0 && <PainReview dates={painReviewDates} />}
-      <EngagementStrip summary={engagement} savedCount={entries.length} onOpenMore={onOpenMore} />
-      <DecorationShop earnedPoints={engagement.points} showPreview={entries.length > 0} />
+      <EngagementStrip
+        summary={engagement}
+        savedCount={entries.length}
+        notice={engagementNotice}
+        availablePoints={availablePoints}
+        spentPoints={spentPoints}
+        nextReward={nextReward}
+        onRecordVisit={recordVisit}
+        onOpenMore={onOpenMore}
+        onShare={() => { void shareEngagement() }}
+        shareNotice={shareNotice}
+      />
+      {model.homeMode !== "WELCOME" && (
+        <DecorationShop
+          earnedPoints={engagement.points}
+          showPreview={entries.length > 0}
+          onSpentPointsChange={setSpentPoints}
+        />
+      )}
 
-      {model.showMinjiPrompt && (
+      {model.homeMode !== "WELCOME" && model.showMinjiPrompt && (
         <div className="training-home__example">
           <button type="button" onClick={onOpenGuide}>
             <span>기록이 쌓이면 어떻게 보일까요?</span>

@@ -170,6 +170,32 @@ describe("decoration V1 to V2 migration", () => {
     expect(window.localStorage.getItem(DECORATION_STORAGE_KEY_V2)).toBe(malformed)
     expect(window.localStorage.getItem(DECORATION_STORAGE_KEY_V1)).toBe(legacyBytes)
   })
+
+  it("refuses a purchase without overwriting malformed V2 bytes", () => {
+    const malformed = "{broken-v2"
+    window.localStorage.setItem(DECORATION_STORAGE_KEY_V2, malformed)
+    const fallback = loadDecorationState()
+
+    const result = purchaseDecoration(20, fallback, "STICKER_FINISH_LINE", malformed)
+
+    expect(result).toMatchObject({ kind: "SAVE_FAILED", code: "INVALID_STATE" })
+    expect(window.localStorage.getItem(DECORATION_STORAGE_KEY_V2)).toBe(malformed)
+  })
+
+  it("refuses paid ownership that has not spent enough points", () => {
+    const inconsistent = JSON.stringify({
+      ...EMPTY_V2,
+      spentPoints: 0,
+      ownedItemIds: [...STARTER_IDS, "AVATAR_START_LINE"],
+    })
+    window.localStorage.setItem(DECORATION_STORAGE_KEY_V2, inconsistent)
+    const fallback = loadDecorationState()
+
+    const result = purchaseDecoration(20, fallback, "STICKER_FINISH_LINE", inconsistent)
+
+    expect(result).toMatchObject({ kind: "SAVE_FAILED", code: "INVALID_STATE" })
+    expect(window.localStorage.getItem(DECORATION_STORAGE_KEY_V2)).toBe(inconsistent)
+  })
 })
 
 describe("decoration V2 verified writes", () => {

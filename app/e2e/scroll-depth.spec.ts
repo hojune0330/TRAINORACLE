@@ -114,7 +114,7 @@ async function scrollHeightPx(page: Page) {
   })
 }
 
-test("첫 화면(홈)은 기록 0건에서도 꾸미기를 보여 주되 성취 점수판은 만들지 않는다", async ({ page }, testInfo) => {
+test("WELCOME은 빈 꾸미기·성취 점수판을 숨기고 유용한 기록 습관 규칙은 남긴다", async ({ page }, testInfo) => {
   limitsFor(testInfo.project.name)
   const project = testInfo.project.name as TouchProject
   await page.goto("/?app=1")
@@ -126,8 +126,8 @@ test("첫 화면(홈)은 기록 0건에서도 꾸미기를 보여 주되 성취 
   await expect(strip.getByText("누적 획득 · BETA")).toHaveCount(0)
   await expect(strip.getByText("기록 연속")).toHaveCount(0)
   await expect(strip.getByText("함께한 날")).toHaveCount(0)
-  await expect(page.getByRole("heading", { name: "일지 꾸미기 · 사용 가능 0P" })).toBeVisible()
-  await expect(page.getByRole("button", { name: "꾸미기 열기" })).toBeVisible()
+  await expect(page.getByRole("heading", { name: "일지 꾸미기 · 사용 가능 0P" })).toHaveCount(0)
+  await expect(page.getByRole("button", { name: "꾸미기 열기" })).toHaveCount(0)
 
   // 그렇다고 아무 말도 없으면 "useful" 이 아니다. 규칙은 남는다.
   await expect(strip.getByText(/몸 상태·회복 체크/u)).toBeVisible()
@@ -173,8 +173,8 @@ test("기록이 하나 생기면 홈 일지 정원과 꾸미기 포인트가 보
   const strip = page.getByLabel("기록 습관")
   await expect(strip.getByText(/이 기기에 1건 저장됨/u)).toBeVisible()
   await expect(strip.getByLabel("식물 상태: 새싹이 자라고 있어요")).toBeVisible()
-  await expect(strip.getByText("함께한 날")).toBeVisible()
-  await expect(strip.getByText("1일 · 4P")).toBeVisible()
+  await expect(strip.getByText("기록한 날", { exact: true })).toBeVisible()
+  await expect(strip.getByText("1일", { exact: true })).toBeVisible()
   await expect(page.getByRole("heading", { name: "일지 꾸미기 · 사용 가능 4P" })).toBeVisible()
   await expect(page.getByRole("button", { name: "꾸미기 열기" })).toBeVisible()
 })

@@ -492,6 +492,29 @@ input, textarea { font-family: inherit; }
   cursor: pointer;
 }
 
+.training-home__welcome-fold {
+  min-block-size: calc(100dvh - var(--app-shell-tab-bar-height));
+  /* 최종 폴리시 D3: 민지 카드 아래 ~190px 죽은 여백이 떠 있었다.
+   * 플렉스 컴럼으로 예시 카드를 폴드 하단에 정착시켜 화면을 위·아래 두 덩어리로
+   * 구성한다 (위: 약속+행동 / 아래: 예시). 콘텐츠가 폴드보다 길어지면 그냥 흘러간다. */
+  display: flex;
+  flex-direction: column;
+}
+
+.training-home__welcome-fold .training-home__example--welcome {
+  margin-block-start: auto;
+  padding-block-end: var(--space-5);
+}
+
+.training-home__welcome-title {
+  word-break: keep-all;
+  overflow-wrap: break-word;
+}
+
+.training-home__welcome-title-phrase {
+  white-space: nowrap;
+}
+
 .training-home__intro {
   padding: 8px 20px 0;
 }
@@ -521,6 +544,44 @@ input, textarea { font-family: inherit; }
 }
 
 .training-home__intro p { font-size: 13.5px; }
+.training-home__intro .training-home__trust {
+  color: var(--ink-3);
+  font-size: var(--fs-body-sm);
+}
+
+.training-home__welcome-actions {
+  display: grid;
+  gap: var(--space-2);
+  padding: var(--space-4) var(--space-5) 0;
+}
+
+.training-home__welcome-actions .training-home__primary {
+  min-height: var(--app-action-height);
+  margin-top: 0;
+  border-radius: 0;
+}
+
+/* 최종 폴리시 D1: 환영 화면의 두 CTA가 같은 검정 프라이머리였다 — 위계 부재.
+ * "일지 먼저" 철학에 따라 기록 CTA만 채우고, 계획 CTA는 아웃라인으로 한 단 낮춘다.
+ * 지오메트리(높이·그리드·간격)는 프라이머리와 동일하게 유지해 터치 평등성은 지킨다. */
+.training-home__secondary {
+  width: 100%;
+  min-height: var(--app-action-height);
+  padding: 0 16px;
+  display: grid;
+  grid-template-columns: 22px minmax(0, 1fr) 20px;
+  gap: 10px;
+  align-items: center;
+  border: 1.5px solid var(--ink);
+  border-radius: 0;
+  background: transparent;
+  color: var(--ink);
+  font-family: var(--sans);
+  font-size: 15px;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+}
 
 .training-home__today {
   margin-top: 22px;
@@ -590,6 +651,8 @@ input, textarea { font-family: inherit; }
   font-size: 12.5px !important;
   line-height: 1.55 !important;
   border-top: 1px dashed var(--line);
+  word-break: keep-all;
+  overflow-wrap: break-word;
 }
 
 .training-home__next {
@@ -601,13 +664,18 @@ input, textarea { font-family: inherit; }
   width: 100%;
   min-height: 58px;
   margin-top: 8px;
-  padding: 10px 2px;
+  padding: 12px 14px;
   display: grid;
   grid-template-columns: minmax(0, 1fr) 24px;
   gap: 12px;
   align-items: center;
-  border: 0;
-  background: transparent;
+  /* 최종 폴리시 D2: TRAINING 모드의 정보 위계 1순위인데 헤어라인 카드라
+   * 아래 검정 기록 버튼에 시선을 밗겼다. 잉크 액센트 좌측 바 + 보더 강화로
+   * 히어로 지위를 시각화한다 (모노크롬 유지, 색 추가 없음). */
+  border: 1px solid var(--ink);
+  border-left: 4px solid var(--ink);
+  border-radius: 8px;
+  background: var(--surface);
   color: var(--ink);
   text-align: left;
   cursor: pointer;
@@ -630,7 +698,8 @@ input, textarea { font-family: inherit; }
   font-size: 12px;
   line-height: 1.45;
   color: var(--ink-3);
-  overflow-wrap: anywhere;
+  word-break: keep-all;
+  overflow-wrap: break-word;
 }
 
 .training-home__services {
@@ -676,6 +745,15 @@ input, textarea { font-family: inherit; }
   font-size: 12px;
   line-height: 1.45;
   color: var(--ink-3);
+}
+
+.training-home__service small {
+  word-break: keep-all;
+  overflow-wrap: break-word;
+}
+
+.more-screen__row small,
+.minji-index__stack small {
   overflow-wrap: anywhere;
 }
 
@@ -697,6 +775,18 @@ input, textarea { font-family: inherit; }
 }
 .training-home__example span { font-family: var(--sans); font-size: 12px; }
 .training-home__example strong { font-family: var(--sans); font-size: 13px; color: var(--ink); }
+.training-home__example--welcome {
+  padding: var(--space-4) var(--space-5) 0;
+}
+.training-home__example--welcome button {
+  min-height: var(--app-touch-min);
+  margin-top: var(--space-2);
+  padding: var(--space-3);
+  border-radius: 0;
+  grid-template-columns: minmax(0, 1fr) var(--space-6);
+  gap: var(--space-3);
+  align-items: center;
+}
 
 .training-home__pain {
   margin: 16px 20px 0;
@@ -705,7 +795,7 @@ input, textarea { font-family: inherit; }
   background: var(--surface);
 }
 .training-home__pain strong { font-family: var(--sans); font-size: 12.5px; color: var(--pain-5); }
-.training-home__pain p { margin: 6px 0 0; font-family: var(--sans); font-size: 12px; line-height: 1.55; color: var(--ink-2); }
+.training-home__pain p { margin: 6px 0 0; font-family: var(--sans); font-size: 12px; line-height: 1.55; color: var(--ink-2); word-break: keep-all; overflow-wrap: break-word; }
 
 .more-screen { min-height: 100%; padding-bottom: 32px; }
 .utility-header {
@@ -1046,6 +1136,15 @@ button:not(:disabled):not([aria-disabled="true"]):active {
   line-height: 1.5;
   letter-spacing: 0;
   opacity: 0.78;
+}
+
+.saved-toast__reward {
+  padding-top: var(--space-1);
+  color: var(--bg);
+  font-family: var(--mono);
+  font-size: var(--fs-mono-xs);
+  font-weight: 600;
+  letter-spacing: 0;
 }
 
 .saved-toast__action {

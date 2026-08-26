@@ -2,7 +2,7 @@ import { expect, test } from "@playwright/test"
 
 test("writes direct and skipped post-session provenance without a test query", async ({ page }) => {
   await page.goto("/?app=1")
-  await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: /기록/u }).click()
+  await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "경기기록" }).click()
   await page.getByRole("button", { name: /훈련 후/u }).click()
   await page.getByRole("textbox", { name: "거리 (km)" }).fill("8")
   await page.getByRole("button", { name: "6", exact: true }).click()

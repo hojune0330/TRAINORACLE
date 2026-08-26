@@ -74,6 +74,15 @@ describe("decoration shop surface", () => {
     expect(screen.getByRole("button", { name: "결승선 스티커 사용하기" })).toBeVisible()
   })
 
+  it("reports spent points to the home balance after a verified purchase", async () => {
+    let spentPoints = 0
+    render(<DecorationShop earnedPoints={20} onSpentPointsChange={(spent) => { spentPoints = spent }} />)
+    await userEvent.click(screen.getByRole("button", { name: "꾸미기 열기" }))
+    await userEvent.click(screen.getByRole("button", { name: "결승선 스티커 8P로 받기" }))
+
+    expect(spentPoints).toBe(8)
+  })
+
   it("does not claim success when purchase storage silently fails", async () => {
     render(<DecorationShop earnedPoints={20} />)
     await userEvent.click(screen.getByRole("button", { name: "꾸미기 열기" }))
@@ -83,6 +92,16 @@ describe("decoration shop surface", () => {
 
     expect(screen.getByRole("status")).toHaveTextContent("저장하지 못했어요. 다시 시도해 주세요.")
     expect(screen.queryByText(/받았어요/u)).toBeNull()
+  })
+
+  it("states the exact shortfall and safe ways to earn it", async () => {
+    render(<DecorationShop earnedPoints={4} />)
+    await userEvent.click(screen.getByRole("button", { name: "꾸미기 열기" }))
+    await userEvent.click(screen.getByRole("button", { name: "결승선 스티커 8P로 받기" }))
+
+    expect(screen.getByRole("status")).toHaveTextContent("포인트가 4P 더 필요해요.")
+    expect(screen.getByRole("status")).toHaveTextContent("오늘 방문 확인은 1P")
+    expect(screen.getByRole("status")).toHaveTextContent("훈련·회복 기록을 남긴 날은 4P")
   })
 
   it("keeps viewing simple until the palette opens the studio", async () => {

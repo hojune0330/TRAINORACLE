@@ -35,7 +35,7 @@ PHILOSOPHY.md에 자세히 있지만, 핵심 7가지:
 3. **카드/박스로 모든 정보 감싸기 금지** — hairline과 여백으로 분리
 4. **Instrument Serif 등 serif 폰트 금지** — UI는 Inter / Pretendard / JetBrains Mono만
 5. **에너지 시스템 컬러를 배경으로 사용 금지** — 점(●) + 코드(V2) + underline 패턴 유지
-6. **소셜 피드, 좋아요, 게이미피케이션 추가 금지** — 브리프 위반
+6. **소셜 피드, 좋아요, 경쟁·훈련량 보상 추가 금지** — 로컬 방문·기록 포인트와 꾸미기는 [오너 결정](./OWNER_DECISION_SAFE_JOURNAL_ENGAGEMENT_2026_08_20.md) 범위만 허용
 7. **AI에게 100% 확신 표현 금지** — 모든 AI 응답에 신뢰도(%) 명시 필수
 
 ---

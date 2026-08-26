@@ -84,6 +84,9 @@ export function saveDecorationStateIfCurrent(
   if (expectedSerialized !== undefined && previous.value !== expectedSerialized) {
     return { ok: false, code: "STALE_STATE" }
   }
+  if (previous.value !== null && parseStoredDecorationState(previous.value) === null) {
+    return { ok: false, code: "INVALID_STATE" }
+  }
 
   const rollback = (): boolean => restoreStorageValue(storage, storageKey, previous.value)
 

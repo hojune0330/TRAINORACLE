@@ -75,11 +75,11 @@ Max content width is 1440px. Breakpoints: single column under 760px, two columns
 - Accessibility: native table with visible headers.
 
 ### App Shell
-- Structure: one centered training surface with a fixed four-item bottom navigation.
+- Structure: one centered training surface with a fixed five-item bottom navigation.
 - Width: fills the viewport up to 520px; desktop visitors see the same real app unless `?workspace=1` is present.
 - Tokens: consumes the root journal token files through `app/src/main.tsx`; no duplicate token declarations in app components.
 - Component tokens: `--app-frame-canvas`, `--app-shell-max-width`, `--app-tab-height`, `--app-date-header-height`, `--app-touch-min`, `--app-action-height`, `--app-choice-height`, `--app-plan-mark-size`, `--app-dialog-max-width`, `--fs-app-title`, and `--fs-app-section-title`.
-- Primary navigation: Home, Plan, Record, Trends. Guide remains a secondary route from Home and first-visit examples.
+- Primary navigation: 홈, 일지, 경기기록, 계획, 분석. Guide remains a secondary route from Home and first-visit examples.
 - States: first visit, empty journal, populated journal, plan intake, plan candidates, active plan, entry form, trends, guide.
 - Compact-height rule: at widths up to 340px and heights up to 650px, first-visit vertical spacing may tighten while both primary actions retain their full touch height.
 - Narrow plan rules: up to 340px the points strip may stack; up to 380px active-plan status moves below its session text and progress actions use two columns.

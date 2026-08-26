@@ -6,8 +6,9 @@ import { Home } from "./screens/Home"
 import { LogEntry } from "./screens/LogEntry"
 import { DeferredMobileScreens } from "./DeferredMobileScreens"
 import { accountFeatureEnabled } from "./domain/account/config"
-import { loadEntries, localOnlyCount } from "./domain/journal-store"
+import { loadEntries, localOnlyCount, todayISO } from "./domain/journal-store"
 import type { JournalEntry } from "./domain/journal-store"
+import { awardJournalEntry, type EngagementAwardResult } from "./domain/engagement"
 import { createSavedFactReceipt } from "./domain/save-receipt"
 import { trackProductEvent } from "./domain/account/product-analytics-service"
 import { currentUser, onAuthChange } from "./domain/account/auth"
@@ -22,6 +23,13 @@ import {
   viewForJournalReturn,
   viewForTab,
 } from "./domain/app-shell-state"
+
+const JOURNAL_REWARD_MESSAGE = {
+  AWARDED: "기록한 날 +4P가 반영됐어요.",
+  ALREADY_AWARDED: "오늘의 다른 기록도 함께 모였어요. 이 날짜의 4P는 이미 반영돼 있어요.",
+  INELIGIBLE: "기록은 저장됐어요. 포인트는 훈련·회복 항목을 남긴 날에만 쌓여요.",
+  SAVE_FAILED: "기록은 저장됐지만 포인트는 이 기기에 반영하지 못했어요.",
+} satisfies Record<EngagementAwardResult["kind"], string>
 
 const TOAST_READABLE_MS = 4000
 const TOAST_EXIT_MS = 150
@@ -79,9 +87,11 @@ export function AppShell() {
   }
   const goHomeAfterSave = (savedEntry: JournalEntry, reviewMessage?: string, detailDate?: string) => {
     const receipt = createSavedFactReceipt(savedEntry)
+    const reward = awardJournalEntry(savedEntry, todayISO())
+    const rewardMessage = JOURNAL_REWARD_MESSAGE[reward.kind]
     setUtilityView(null)
     setV(detailDate === undefined ? INITIAL_VIEW_STATE : viewForJournalReturn(v))
-    setSavedToast({ count: localOnlyCount(), phase: "enter", receipt, reviewMessage })
+    setSavedToast({ count: localOnlyCount(), phase: "enter", receipt, reviewMessage, rewardMessage })
     void trackProductEvent("JOURNAL_SAVED")
   }
 

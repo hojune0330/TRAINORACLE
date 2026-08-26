@@ -17,6 +17,7 @@ describe("decorated journal page frame", () => {
         "STICKER_FINISH_LINE",
         "AVATAR_START_LINE",
       ],
+      spentPoints: 40,
       equipped: {
         themeId: "THEME_SKY_JOURNAL",
         inkId: "INK_NAVY",

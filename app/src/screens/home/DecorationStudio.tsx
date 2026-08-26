@@ -113,7 +113,7 @@ export function DecorationStudio({
         onNotice("다른 화면에서 꾸미기가 바뀌어 최신 상태를 다시 불러왔어요.")
       } else onNotice("저장하지 못했어요. 다시 시도해 주세요.")
     } else if (result.kind === "INSUFFICIENT_POINTS") {
-      onNotice("포인트가 조금 더 필요해요.")
+      onNotice(`포인트가 ${item.cost - result.remainingPoints}P 더 필요해요. 오늘 방문 확인은 1P, 훈련·회복 기록을 남긴 날은 4P가 쌓여요.`)
     } else {
       onNotice(result.kind === "ALREADY_OWNED" ? "이미 가지고 있어요." : "꾸미기 항목을 찾지 못했어요.")
     }

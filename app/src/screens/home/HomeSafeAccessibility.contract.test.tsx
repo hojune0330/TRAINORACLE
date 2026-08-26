@@ -41,6 +41,7 @@ const PRIVATE_EVENING_ENTRY = {
 } satisfies JournalEntry
 
 const HOME_MODEL_WITH_NEXT_TRAINING = {
+  homeMode: "TRAINING",
   todayMessage: "아직 오늘 기록이 없어요.",
   journalSummary: "아직 기록이 없어요",
   flowSummary: "9.5일 주기로 일지 묶어 보기 · 시작일 직접 선택",
@@ -229,22 +230,50 @@ describe("home journal controls", () => {
     expect(screen.getByTestId("home-pain-review")).toBeVisible()
   })
 
-  it("shows the real dashboard instead of a blocking welcome screen when empty", () => {
+  it("shows the welcome value, local trust, equal entry actions, and one promoted example when empty", async () => {
+    const user = userEvent.setup()
+    const onWriteLog = vi.fn()
+    const onOpenPlan = vi.fn()
+    const onOpenGuide = vi.fn()
     window.localStorage.clear()
-    render(<Home />)
+    render(<Home onWriteLog={onWriteLog} onOpenPlan={onOpenPlan} onOpenGuide={onOpenGuide} />)
 
-    const heading = screen.getByRole("heading", { name: "내 기록" })
-    const context = screen.getByRole("region", { name: "오늘의 기분 몸 상태 날씨" })
-    expect(heading.compareDocumentPosition(context) & Node.DOCUMENT_POSITION_FOLLOWING).not.toBe(0)
-    expect(screen.getByText("아직 오늘 기록이 없어요.")).toBeVisible()
-    expect(screen.getByRole("button", { name: /내 일지.*아직 기록이 없어요/u })).toBeVisible()
-    expect(screen.queryByText("오늘 기록을 시작할까요?")).toBeNull()
+    expect(screen.getByRole("heading", {
+      name: "달리기 일지를 남기고, 내 기록으로 훈련 계획을 받아요.",
+    })).toBeVisible()
+    expect(screen.getByText("모든 데이터는 이 기기에만 저장돼요.")).toBeVisible()
+    const writeLog = screen.getByRole("button", { name: "오늘 기록 남기기" })
+    const openPlan = screen.getByRole("button", { name: "훈련 계획 만들기" })
+    const openGuide = screen.getByRole("button", { name: "민지의 예시 일지 보기" })
+    // 최종 폴리시 D1: 기록 CTA만 프라이머리, 계획 CTA는 세컨더리(아웃라인) — "일지 먼저" 위계
+    expect(writeLog).toHaveClass("training-home__primary")
+    expect(openPlan).toHaveClass("training-home__secondary")
+    expect(writeLog.parentElement).toBe(openPlan.parentElement)
+    expect(screen.getByText("이렇게 쓰여요")).toBeVisible()
+    expect(screen.queryByRole("region", { name: "오늘의 기분 몸 상태 날씨" })).toBeNull()
+    expect(screen.queryByRole("button", { name: "하루 마무리 기록하기" })).toBeNull()
+    expect(screen.queryByRole("region", { name: "최근 기록" })).toBeNull()
+    expect(screen.queryByText("기록이 쌓이면 어떻게 보일까요?")).toBeNull()
+    expect(screen.queryByText(/일지 꾸미기/u)).toBeNull()
+    expect(screen.getByRole("region", { name: "기록 습관" })).toBeVisible()
+    const services = screen.getByRole("navigation", { name: "내 기록 살펴보기" })
+    expect(within(services).getAllByRole("button")).toHaveLength(3)
+    expect(openGuide.compareDocumentPosition(services) & Node.DOCUMENT_POSITION_FOLLOWING).not.toBe(0)
+    expect(services.compareDocumentPosition(screen.getByRole("region", { name: "기록 습관" }))
+      & Node.DOCUMENT_POSITION_FOLLOWING).not.toBe(0)
+
+    await user.click(writeLog)
+    await user.click(openPlan)
+    await user.click(openGuide)
+
+    expect(onWriteLog).toHaveBeenCalledWith("post-session")
+    expect(onOpenPlan).toHaveBeenCalledTimes(1)
+    expect(onOpenGuide).toHaveBeenCalledTimes(1)
   })
 
-  it("keeps today context available from the first home screen", async () => {
+  it("keeps today context available in journal mode", async () => {
     // Given
     const user = userEvent.setup()
-    window.localStorage.clear()
     render(<Home />)
 
     // When
@@ -255,9 +284,8 @@ describe("home journal controls", () => {
     expect(screen.getByRole("region", { name: "오늘의 기분 몸 상태 날씨" })).toHaveTextContent("위치정보를 사용하지 않아요")
   })
 
-  it("places today context inside the today journal before all secondary sections", () => {
+  it("places journal-mode today context inside today before all secondary sections", () => {
     // Given
-    window.localStorage.clear()
     render(<Home />)
     const todayJournal = screen.getByLabelText("오늘")
     const context = screen.getByRole("region", { name: "오늘의 기분 몸 상태 날씨" })
