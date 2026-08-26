@@ -105,8 +105,8 @@ export function TrainingHome({
             </>
           ) : (
             <>
-              <h1 id="training-home-title">내 기록</h1>
-              <p>오늘을 남기고, 필요할 때 훈련을 더 자세히 봐요.</p>
+              <h1 id="training-home-title">{model.homeMode === "TRAINING" ? "오늘의 훈련" : "내 기록"}</h1>
+              <p>{model.homeMode === "TRAINING" ? "계획된 훈련을 확인하고, 오늘의 상태를 남겨요." : "오늘을 남기고, 필요할 때 훈련을 더 자세히 봐요."}</p>
             </>
           )}
         </section>
@@ -154,7 +154,14 @@ export function TrainingHome({
 
 function nextTrainingDateLabel(iso: string): string {
   const [, month, day] = iso.split("-")
-  return `${Number(month)}월 ${Number(day)}일`
+  const base = `${Number(month)}월 ${Number(day)}일`
+  const today = new Date()
+  const target = new Date(`${iso}T00:00:00`)
+  const startOfToday = new Date(today.getFullYear(), today.getMonth(), today.getDate())
+  const diffDays = Math.round((target.getTime() - startOfToday.getTime()) / 86400000)
+  if (diffDays === 0) return `오늘(${base})`
+  if (diffDays === 1) return `내일(${base})`
+  return base
 }
 
 function ServiceRow({ label, detail, onClick }: {
