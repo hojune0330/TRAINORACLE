@@ -11,14 +11,23 @@ import {
   parseStoredDecorationState,
 } from "./decoration-schema"
 import type { DecorationState } from "./decoration-schema"
+import { accountScopedStorageKey } from "./account/local-account-scope"
 
 export const DECORATION_STORAGE_KEY_V1 = "trainoracle.decorations.v1"
 export const DECORATION_STORAGE_KEY_V2 = "trainoracle.decorations.v2"
 
+export function activeDecorationStorageKeyV1(): string {
+  return accountScopedStorageKey(DECORATION_STORAGE_KEY_V1)
+}
+
+export function activeDecorationStorageKeyV2(): string {
+  return accountScopedStorageKey(DECORATION_STORAGE_KEY_V2)
+}
+
 export function readDecorationStateSerialized(): string | null {
   const storage = currentStorage()
   if (storage === null) return null
-  const result = readStorage(storage, DECORATION_STORAGE_KEY_V2)
+  const result = readStorage(storage, activeDecorationStorageKeyV2())
   return result.ok ? result.value : null
 }
 
@@ -68,17 +77,18 @@ export function saveDecorationStateIfCurrent(
   if (!parsed.success) return { ok: false, code: "INVALID_STATE" }
   const storage = currentStorage()
   if (storage === null) return { ok: false, code: "STORAGE_UNAVAILABLE" }
+  const storageKey = activeDecorationStorageKeyV2()
   const serialized = JSON.stringify(parsed.data)
-  const previous = readStorage(storage, DECORATION_STORAGE_KEY_V2)
+  const previous = readStorage(storage, storageKey)
   if (!previous.ok) return { ok: false, code: "STORAGE_UNAVAILABLE" }
   if (expectedSerialized !== undefined && previous.value !== expectedSerialized) {
     return { ok: false, code: "STALE_STATE" }
   }
 
-  const rollback = (): boolean => restoreStorageValue(storage, previous.value)
+  const rollback = (): boolean => restoreStorageValue(storage, storageKey, previous.value)
 
   try {
-    storage.setItem(DECORATION_STORAGE_KEY_V2, serialized)
+    storage.setItem(storageKey, serialized)
   } catch (error) {
     if (error instanceof DOMException || error instanceof Error) {
       return rollback() ? { ok: false, code: "WRITE_FAILED" } : { ok: false, code: "ROLLBACK_FAILED" }
@@ -86,7 +96,7 @@ export function saveDecorationStateIfCurrent(
     throw error
   }
 
-  const readback = readStorage(storage, DECORATION_STORAGE_KEY_V2)
+  const readback = readStorage(storage, storageKey)
   if (!readback.ok || readback.value !== serialized) {
     return rollback() ? { ok: false, code: "READBACK_MISMATCH" } : { ok: false, code: "ROLLBACK_FAILED" }
   }
@@ -95,13 +105,13 @@ export function saveDecorationStateIfCurrent(
   return rollback() ? { ok: false, code: "READBACK_MISMATCH" } : { ok: false, code: "ROLLBACK_FAILED" }
 }
 
-function restoreStorageValue(storage: Storage, previous: string | null): boolean {
-  const current = readStorage(storage, DECORATION_STORAGE_KEY_V2)
+function restoreStorageValue(storage: Storage, storageKey: string, previous: string | null): boolean {
+  const current = readStorage(storage, storageKey)
   if (current.ok && current.value === previous) return true
   try {
-    if (previous === null) storage.removeItem(DECORATION_STORAGE_KEY_V2)
-    else storage.setItem(DECORATION_STORAGE_KEY_V2, previous)
-    const readback = readStorage(storage, DECORATION_STORAGE_KEY_V2)
+    if (previous === null) storage.removeItem(storageKey)
+    else storage.setItem(storageKey, previous)
+    const readback = readStorage(storage, storageKey)
     return readback.ok && readback.value === previous
   } catch (error) {
     if (error instanceof DOMException || error instanceof Error) return false
@@ -114,11 +124,11 @@ export function loadDecorationState(): DecorationState {
   const storage = currentStorage()
   if (storage === null) return fallback
 
-  const v2 = readStorage(storage, DECORATION_STORAGE_KEY_V2)
+  const v2 = readStorage(storage, activeDecorationStorageKeyV2())
   if (!v2.ok) return fallback
   if (v2.value !== null) return parseStoredDecorationState(v2.value) ?? fallback
 
-  const v1 = readStorage(storage, DECORATION_STORAGE_KEY_V1)
+  const v1 = readStorage(storage, activeDecorationStorageKeyV1())
   if (!v1.ok) return fallback
   if (v1.value !== null) {
     const migrated = migrateLegacyDecorationState(v1.value)

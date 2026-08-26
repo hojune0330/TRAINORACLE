@@ -144,7 +144,7 @@ beforeEach(() => {
   server.entryPushFails = false
   server.rpcCallCount = 0
   server.journalSelectCount = 0
-  saveSyncConsent({ enabled: true, shareTrainingNotes: false })
+  saveSyncConsent({ enabled: true, shareTrainingNotes: false }, "user-1")
 })
 
 describe("sync schema and recovery orchestration", () => {

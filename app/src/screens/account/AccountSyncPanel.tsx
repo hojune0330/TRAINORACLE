@@ -2,7 +2,7 @@ import React from "react"
 import { SectionLb } from "../../components/JournalPrimitives"
 import { loadSyncConsent, previewSync, saveSyncConsent, syncNow } from "../../domain/account/sync"
 import type { SyncConsent, SyncOutcome, SyncPreviewOutcome } from "../../domain/account/sync"
-import { localOnlyCount } from "../../domain/journal-store"
+import { loadEntriesOwnedBy } from "../../domain/journal-store"
 import { productFeatures } from "../../domain/product-features"
 import { mono, primaryBtn } from "./styles"
 
@@ -67,7 +67,8 @@ export function AccountSyncPanel({
     <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
       <SectionLb>일지 동기화</SectionLb>
       <p style={{ fontFamily: "var(--sans)", fontSize: 12.5, lineHeight: 1.6, color: "var(--ink-2)", margin: 0 }}>
-        이 기기에 있는 일지 {localOnlyCount()}개를 계정에 백업하고 다른 기기의 일지와 합쳐요. 같은 일지는 더 최근에 저장한 쪽이 남아요.
+        이 계정에 연결된 이 기기 일지 {loadEntriesOwnedBy(userId).filter((entry) => entry.syncState === "local").length}개를 백업하고
+        다른 기기의 일지와 합쳐요. 연결하지 않은 기기 일지와 다른 계정의 일지는 보내지 않아요.
       </p>
       <label style={{ display: "flex", alignItems: "center", gap: 10, minHeight: 44, cursor: "pointer" }}>
         <input

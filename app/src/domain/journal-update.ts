@@ -5,6 +5,7 @@ import { isPrivateMemoEntry, removePrivateMemoWithJournalEntries } from "./priva
 import { parseJournalEntryForWrite } from "./journal-schema"
 import type { JournalEntry } from "./journal-schema"
 import { loadJournalEntriesSnapshot } from "./journal-store"
+import { isJournalVisible } from "./account/local-journal-ownership"
 
 export type UpdateEntryResult = {
   readonly ok: boolean
@@ -105,6 +106,7 @@ export function updateEntry(entry: unknown, expectedSavedAt: string): UpdateEntr
   const entries = snapshot.entries
   const nextEntry = parseJournalEntryForWrite(entry)
   if (nextEntry === null) return { ok: false, total: entries.length }
+  if (!isJournalVisible(nextEntry.id)) return { ok: false, total: entries.filter((current) => isJournalVisible(current.id)).length }
 
   const matchingEntries = entries.filter((current) => current.id === nextEntry.id)
   if (matchingEntries.length !== 1) return { ok: false, total: entries.length }

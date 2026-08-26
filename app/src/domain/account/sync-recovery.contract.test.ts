@@ -7,8 +7,10 @@ import {
   recoverPendingSync,
 } from "./sync-recovery"
 import { loadTombstones, recordTombstone } from "./tombstone"
+import { assignJournalsToAccount, setActiveLocalAccount } from "./local-journal-ownership"
 
 const RECOVERY_KEY = "trainoracle.sync.recovery.v1"
+const USER_1_RECOVERY_KEY = `${RECOVERY_KEY}.account.user-1`
 
 function post(id: string, savedAt = "2026-08-02T08:00:00.000Z"): PostSessionEntry {
   return {
@@ -29,32 +31,36 @@ function post(id: string, savedAt = "2026-08-02T08:00:00.000Z"): PostSessionEntr
 
 beforeEach(() => {
   window.localStorage.clear()
+  setActiveLocalAccount("user-1")
 })
 
 describe("interrupted journal sync recovery", () => {
   it("restores the checkpoint without dropping entries or deletions made after interruption", () => {
     saveEntry(post("before"))
+    expect(assignJournalsToAccount(["deleted-before"], "user-1")).toBe(true)
     recordTombstone("deleted-before", "2026-08-02T08:10:00.000Z")
     expect(createSyncRecoveryCheckpoint("user-1", loadEntries(), loadTombstones())).toBe(true)
 
     replaceAllEntries([post("remote")])
     saveEntry(post("during-outage", "2026-08-02T09:00:00.000Z"))
+    expect(assignJournalsToAccount(["deleted-during"], "user-1")).toBe(true)
     recordTombstone("deleted-during", "2026-08-02T09:10:00.000Z")
 
     expect(recoverPendingSync("user-1")).toEqual({ ok: true, recovered: true })
-    expect(loadEntries().map((entry) => entry.id)).toEqual(["before", "remote", "during-outage"])
+    expect(loadEntries().map((entry) => entry.id).sort()).toEqual(["before", "during-outage", "remote"])
     expect(loadTombstones().map((item) => item.id)).toEqual(["deleted-before", "deleted-during"])
-    expect(window.localStorage.getItem(RECOVERY_KEY)).toBeNull()
+    expect(window.localStorage.getItem(USER_1_RECOVERY_KEY)).toBeNull()
   })
 
-  it("discards another account's checkpoint without blocking the current account", () => {
+  it("preserves another account's checkpoint without blocking the current account", () => {
     saveEntry(post("user-1-entry"))
     expect(createSyncRecoveryCheckpoint("user-1", loadEntries(), [])).toBe(true)
     replaceAllEntries([post("user-2-entry")])
+    setActiveLocalAccount("user-2")
 
     expect(recoverPendingSync("user-2")).toEqual({ ok: true, recovered: false })
     expect(loadEntries().map((entry) => entry.id)).toEqual(["user-2-entry"])
-    expect(window.localStorage.getItem(RECOVERY_KEY)).toBeNull()
+    expect(window.localStorage.getItem(USER_1_RECOVERY_KEY)).not.toBeNull()
   })
 
   it("keeps a deletion made after interruption stronger than the checkpoint copy", () => {

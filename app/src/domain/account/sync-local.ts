@@ -2,8 +2,12 @@ import { z } from "zod"
 import type { JournalEntry } from "../journal-schema"
 import { toExportJournalEntry } from "../safe-export"
 import { tombstonedIds } from "./tombstone"
+import {
+  accountScopedStorageKey,
+  accountScopedStorageKeyFor,
+} from "./local-account-scope"
 
-const CONSENT_KEY = "trainoracle.sync.consent.v1"
+export const SYNC_CONSENT_STORAGE_KEY = "trainoracle.sync.consent.v1"
 const BINDING_KEY = "trainoracle.sync.owner.v1"
 
 const syncConsentSchema = z.object({
@@ -24,11 +28,14 @@ function storage(): Storage | null {
   }
 }
 
-export function loadSyncConsent(): SyncConsent {
+export function loadSyncConsent(accountScope?: string | null): SyncConsent {
   const localStorage = storage()
   if (localStorage === null) return DEFAULT_CONSENT
   try {
-    const raw = localStorage.getItem(CONSENT_KEY)
+    const key = accountScope === undefined
+      ? accountScopedStorageKey(SYNC_CONSENT_STORAGE_KEY)
+      : accountScopedStorageKeyFor(SYNC_CONSENT_STORAGE_KEY, accountScope)
+    const raw = localStorage.getItem(key)
     if (raw === null) return DEFAULT_CONSENT
     const parsedJson: unknown = JSON.parse(raw)
     const parsed = syncConsentSchema.safeParse(parsedJson)
@@ -39,11 +46,14 @@ export function loadSyncConsent(): SyncConsent {
   }
 }
 
-export function saveSyncConsent(consent: SyncConsent): boolean {
+export function saveSyncConsent(consent: SyncConsent, accountScope?: string | null): boolean {
   const localStorage = storage()
   if (localStorage === null) return false
   try {
-    localStorage.setItem(CONSENT_KEY, JSON.stringify(consent))
+    const key = accountScope === undefined
+      ? accountScopedStorageKey(SYNC_CONSENT_STORAGE_KEY)
+      : accountScopedStorageKeyFor(SYNC_CONSENT_STORAGE_KEY, accountScope)
+    localStorage.setItem(key, JSON.stringify(consent))
     return true
   } catch {
     return false

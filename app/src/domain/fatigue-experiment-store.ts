@@ -1,8 +1,13 @@
 import { z } from "zod"
 import { fatigueEvidenceSchema, fatigueVector, fatigueVectorSchema } from "./fatigue-vector"
 import type { FatigueEvidence, FatigueVector } from "./fatigue-vector"
+import { accountScopedStorageKey } from "./account/local-account-scope"
 
-const STORAGE_KEY = "trainoracle.fatigue-experiment.v1"
+export const FATIGUE_EXPERIMENT_STORAGE_KEY = "trainoracle.fatigue-experiment.v1"
+
+function activeStorageKey(): string {
+  return accountScopedStorageKey(FATIGUE_EXPERIMENT_STORAGE_KEY)
+}
 const stateSchema = z.object({
   optedIn: z.boolean(),
   vector: fatigueVectorSchema,
@@ -29,7 +34,7 @@ const DEFAULT_STATE: FatigueExperimentState = {
 export function loadFatigueExperiment(): FatigueExperimentState {
   if (typeof window === "undefined") return DEFAULT_STATE
   try {
-    const raw = window.localStorage.getItem(STORAGE_KEY)
+    const raw = window.localStorage.getItem(activeStorageKey())
     if (raw === null) return DEFAULT_STATE
     const parsedJson: unknown = JSON.parse(raw)
     const parsed = storedStateSchema.safeParse(parsedJson)
@@ -48,7 +53,7 @@ export function saveFatigueExperiment(state: FatigueExperimentState): boolean {
   const parsed = stateSchema.safeParse(state)
   if (!parsed.success) return false
   try {
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(parsed.data))
+    window.localStorage.setItem(activeStorageKey(), JSON.stringify(parsed.data))
     return true
   } catch (error) {
     if (error instanceof DOMException) return false
