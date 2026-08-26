@@ -1,4 +1,4 @@
-import { ArrowLeft, BookOpen, CircleHelp, MessageSquareText } from "lucide-react"
+import { ArrowLeft, BookOpen, CircleHelp, MessageSquareText, ScrollText, ShieldCheck } from "lucide-react"
 import { DataSafetyNotice } from "../components/DataSafetyNotice"
 import { feedbackConfig } from "../domain/feedback/feedback-config"
 import { SafeJournalExport } from "./home/DeviceJournal"
@@ -38,6 +38,14 @@ export function More({
         <a className="more-screen__row" href="?feedback=1">
           <MessageSquareText aria-hidden="true" size={19} />
           <span><strong>문의 게시판</strong><small>{feedbackAvailable ? "불편한 점을 일지 내용 없이 남겨요" : "지금은 준비 중이에요. 열리면 앱 안에서 알려드려요"}</small></span>
+        </a>
+        <a className="more-screen__row" href="./legal/privacy.html" target="_blank" rel="noreferrer">
+          <ShieldCheck aria-hidden="true" size={19} />
+          <span><strong>개인정보처리방침</strong><small>어떤 정보를 왜 사용하는지 확인해요</small></span>
+        </a>
+        <a className="more-screen__row" href="./legal/terms.html" target="_blank" rel="noreferrer">
+          <ScrollText aria-hidden="true" size={19} />
+          <span><strong>이용약관</strong><small>계정·기기 저장·훈련 계획 이용 기준을 확인해요</small></span>
         </a>
       </div>
 
