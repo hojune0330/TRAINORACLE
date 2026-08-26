@@ -3,7 +3,7 @@ alter table public.service_feature_controls
 alter table public.service_feature_controls
   add constraint service_feature_controls_feature_key_check
   check (feature_key in (
-    'ACCOUNT', 'SYNC', 'SHARING', 'PLAN_PROPOSALS', 'PRODUCT_ANALYTICS',
+    'ACCOUNT', 'SYNC', 'SHARING', 'PLAN_PROPOSALS', 'PRODUCT_ANALYTICS', 'FEEDBACK_BOARD',
     'PLAN_BACKUP', 'PUBLIC_PROFILE'
   ));
 
@@ -12,7 +12,7 @@ alter table public.service_feature_control_events
 alter table public.service_feature_control_events
   add constraint service_feature_control_events_feature_key_check
   check (feature_key in (
-    'ACCOUNT', 'SYNC', 'SHARING', 'PLAN_PROPOSALS', 'PRODUCT_ANALYTICS',
+    'ACCOUNT', 'SYNC', 'SHARING', 'PLAN_PROPOSALS', 'PRODUCT_ANALYTICS', 'FEEDBACK_BOARD',
     'PLAN_BACKUP', 'PUBLIC_PROFILE'
   ));
 

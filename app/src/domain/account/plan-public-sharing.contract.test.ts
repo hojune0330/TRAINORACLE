@@ -11,6 +11,14 @@ const migration = readFileSync(
 )
 
 describe("plan backup and public sharing contract", () => {
+  it("preserves every previously deployed server feature key", () => {
+    for (const key of [
+      "ACCOUNT", "SYNC", "SHARING", "PLAN_PROPOSALS", "PRODUCT_ANALYTICS", "FEEDBACK_BOARD",
+    ]) {
+      expect(migration).toContain(`'${key}'`)
+    }
+  })
+
   it("keeps plan backup private and account-scoped", () => {
     expect(migration).toContain("create table if not exists public.saved_training_plans")
     expect(migration).toContain("public.account_network_access_allowed(user_id)")

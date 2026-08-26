@@ -37,3 +37,7 @@ The implementation does not enable Kakao, phone authentication, payment, raw mem
 - Hosted release-environment tests: 11/11 PASS.
 - Production build: PASS.
 - Full GitHub CI and live Supabase RLS verification: pending until PR and migration application.
+
+## Production Application Note
+
+The first migration attempt was rejected before feature activation because the new feature-key constraint omitted the already deployed `FEEDBACK_BOARD` key. No compatibility assumption was applied after that error. Migration `0029` now preserves every previously deployed feature key and adds a regression test for the list before retry.
