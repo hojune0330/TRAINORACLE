@@ -7,6 +7,8 @@ describe("product feature kill switches", () => {
       sync: false,
       sharing: false,
       planProposals: false,
+      planBackup: false,
+      publicProfile: false,
       experimentalFatigue: false,
       decorationShop: true,
       productAnalytics: false,
@@ -17,6 +19,20 @@ describe("product feature kill switches", () => {
   it("opens only the explicitly approved feature", () => {
     expect(resolveProductFeatures({ VITE_FEATURE_SYNC: "true" })).toMatchObject({
       sync: true,
+      sharing: false,
+      planProposals: false,
+      planBackup: false,
+      publicProfile: false,
+    })
+  })
+
+  it("opens plan backup and public profiles without opening coach authority features", () => {
+    expect(resolveProductFeatures({
+      VITE_FEATURE_PLAN_BACKUP: "true",
+      VITE_FEATURE_PUBLIC_PROFILE: "true",
+    })).toMatchObject({
+      planBackup: true,
+      publicProfile: true,
       sharing: false,
       planProposals: false,
     })
