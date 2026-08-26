@@ -141,7 +141,7 @@ describe("training home modes", () => {
     expect(contentSections[1]).toHaveClass("training-home__today")
     expect(contentSections[2]).toHaveClass("training-home__recent")
     expect(screen.getByRole("button", {
-      name: /다음 훈련.*지속 페이스.*LT 훈련.*8월 20일.*오후.*총 25~40분.*RPE 5~6.*목표.*페이스는 지정하지 않음/u,
+      name: /다음 훈련.*지속 페이스.*LT 훈련.*8월 20일.*오후.*총 25~40분.*RPE 5~6/u,
     })).toBeVisible()
   })
 

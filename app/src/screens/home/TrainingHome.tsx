@@ -2,7 +2,14 @@ import { CalendarPlus, ChevronRight, Ellipsis, PencilLine } from "lucide-react"
 import type { ReactNode } from "react"
 import type { TrainingHomeViewModel } from "../../domain/home-view-model"
 import { prescriptionLabel, sessionLabel, sessionSlotLabel } from "../plan-beta/labels"
+import type { PlanSession } from "@impl/plan-generator/types"
 import type { JournalEntryType } from "../log-entry/shared"
+
+/** 홈 "다음 훈련" 카드용 축약 처방 라벨 — "거리·목표 페이스는 지정하지 않음" 같은
+ * 저가치 단서는 카드에서 생략한다 (상세는 훈련 계획 화면에서 확인). */
+export function nextTrainingPrescriptionLabel(session: PlanSession): string {
+  return prescriptionLabel(session).replace(/\s*·\s*거리⁠·⁠목표\s페이스는 지정하지 않음$/u, "")
+}
 
 type TrainingHomeProps = {
   readonly model: TrainingHomeViewModel
@@ -35,12 +42,12 @@ export function TrainingHome({
         className="training-home__next-button"
         type="button"
         onClick={onOpenPlan}
-        aria-label={`다음 훈련 · ${sessionLabel(model.nextTraining.session)} · ${nextTrainingDateLabel(model.nextTraining.date)} · ${sessionSlotLabel(model.nextTraining.session.slot)} · ${prescriptionLabel(model.nextTraining.session)}${laterSameDaySession === null ? "" : ` · 같은 날 ${sessionSlotLabel(laterSameDaySession.slot)} ${sessionLabel(laterSameDaySession)}도 예정`}`}
+        aria-label={`다음 훈련 · ${sessionLabel(model.nextTraining.session)} · ${nextTrainingDateLabel(model.nextTraining.date)} · ${sessionSlotLabel(model.nextTraining.session.slot)} · ${nextTrainingPrescriptionLabel(model.nextTraining.session)}${laterSameDaySession === null ? "" : ` · 같은 날 ${sessionSlotLabel(laterSameDaySession.slot)} ${sessionLabel(laterSameDaySession)}도 예정`}`}
       >
         <span>
           <strong>{sessionLabel(model.nextTraining.session)}</strong>
           <small>
-            {nextTrainingDateLabel(model.nextTraining.date)} · {sessionSlotLabel(model.nextTraining.session.slot)} · {prescriptionLabel(model.nextTraining.session)}
+            {nextTrainingDateLabel(model.nextTraining.date)} · {sessionSlotLabel(model.nextTraining.session.slot)} · {nextTrainingPrescriptionLabel(model.nextTraining.session)}
           </small>
           {laterSameDaySession !== null && (
             <small className="training-home__next-follow-up">
@@ -137,7 +144,7 @@ export function TrainingHome({
       {model.homeMode !== "WELCOME" && recentJournal}
 
       <nav className="training-home__services" aria-label="내 기록 살펴보기">
-        <ServiceRow label="내 일지" detail={`${model.journalSummary} · 달력 · 9.5일 · 하루 기록`} onClick={onOpenArchive} />
+        <ServiceRow label="내 일지" detail={`${model.journalSummary} · 달력 · 하루 기록`} onClick={onOpenArchive} />
         <ServiceRow label="훈련 계획" detail={model.planSummary} onClick={onOpenPlan} />
         <ServiceRow label="분석" detail={model.analysisSummary} onClick={onOpenTrends} />
       </nav>
