@@ -48,7 +48,7 @@ TrainOracle은 비밀번호를 만들거나 저장하지 않는다. 만 14세 �
 | G5 보유·탈퇴 | 즉시 접근 차단·30일 삭제 경로 구현과 실제 정리 영수증 | CODE_READY_TEST_OPEN |
 | G6 처리업체 | 실제 Supabase 프로젝트 지역과 처리위탁 고지 확정 | OPEN |
 | G7 DB 안전 | 시험 DB에 0001~0028 실행, RLS 활성, 사용자별 정책 실측 | PARTIAL_STAGING_0001_0028_SYNTHETIC_PASS |
-| G8 교차 계정 시험 | 두 계정 격리, 두 기기 동기화, 삭제·복구·재로그인 시험 | PARTIAL_STAGING_TWO_USERS_RLS_PASS_TWO_BROWSER_OPEN |
+| G8 교차 계정 시험 | 두 계정 격리, 두 기기 동기화, 삭제·복구·재로그인 시험 | PARTIAL_STAGING_TWO_USERS_RLS_PASS_UI_HARNESS_READY_TWO_BROWSER_OPEN |
 | G9 가입 동의 | 가입 전에 방침·약관 링크와 버전 동의를 저장하는 UI·계약 | PARTIAL_STAGING_SCHEMA_APPLIED_UI_LEGAL_OPEN |
 | G10 배포 스위치 | G1~G9 증거 검수 후 저장소 변수를 `true`로 변경 | LOCKED |
 | G11 휴대전화 선택 출시 | SMS 공급자·한국 발신 조건·CAPTCHA·요율 제한·비용 경보·실수신 왕복 | CODE_READY_PROVIDER_OPEN |
@@ -56,7 +56,8 @@ TrainOracle은 비밀번호를 만들거나 저장하지 않는다. 만 14세 �
 G8에는 같은 브라우저에서 계정을 바꿨을 때 이전 사용자의 로컬 일지가 보이지
 않고 새 계정으로 업로드되지 않는 시험을 반드시 포함한다. 현재는 잘못된
 계정으로의 업로드 차단과 계정별 로컬 저장 구현, 스테이징 A/B 서버 RLS 교차 시험은
-통과했다. 서로 다른 브라우저 두 개에서의 화면 격리와 재로그인 왕복은 아직 OPEN이다.
+통과했다. 실계정 화면 격리를 반복 실행할 수 있는 Playwright 하네스도 준비했지만,
+서로 다른 브라우저 두 개에서의 화면 격리와 재로그인 왕복은 아직 OPEN이다.
 
 G4의 현재 제품 결정은 보호자 동의 계정이 아니라 만 14세 미만 온라인 계정 미제공이다.
 클라이언트의 가입 전 차단과 DB 프로필 trigger는 시험 Supabase에 적용됐고,
