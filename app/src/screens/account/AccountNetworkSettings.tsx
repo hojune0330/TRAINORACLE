@@ -1,6 +1,5 @@
 import { BetaAccountSettings } from "./BetaAccountSettings"
 import { CoachSupportPanel } from "./CoachSupportPanel"
-import { PrivateMemoVault } from "./PrivateMemoVault"
 import { ProductAnalyticsConsentPanel } from "./ProductAnalyticsConsentPanel"
 import { productFeatures } from "../../domain/product-features"
 import type { AccountLegalDocument } from "../../domain/account/config"
@@ -35,7 +34,6 @@ export function AccountNetworkSettings({
         profileSetupComplete={profileSetupComplete}
       />
       {features.productAnalytics && <ProductAnalyticsConsentPanel userId={userId} />}
-      {features.sync && <PrivateMemoVault />}
       {features.sharing && <CoachSupportPanel userId={userId} today={today} />}
     </>
   )

@@ -19,10 +19,16 @@ export function AccountSyncPanel({
   readonly onPreview?: (userId: string) => Promise<SyncPreviewOutcome>
   readonly onSync?: (userId: string) => Promise<SyncOutcome>
 }) {
-  const [consent, setConsent] = React.useState<SyncConsent>(() => loadSyncConsent())
+  const [consent, setConsent] = React.useState<SyncConsent>(() => loadSyncConsent(userId))
   const [message, setMessage] = React.useState<string | null>(null)
   const [busy, setBusy] = React.useState(false)
   const [preview, setPreview] = React.useState<SyncPreviewOutcome | null>(null)
+
+  React.useEffect(() => {
+    setConsent(loadSyncConsent(userId))
+    setPreview(null)
+    setMessage(null)
+  }, [userId])
 
   if (!enabled) {
     return (
@@ -36,9 +42,10 @@ export function AccountSyncPanel({
   }
 
   const updateConsent = (next: SyncConsent) => {
-    setConsent(next)
+    const structuredOnly = { ...next, shareTrainingNotes: false }
+    setConsent(structuredOnly)
     setPreview(null)
-    saveSyncConsent(next)
+    saveSyncConsent(structuredOnly, userId)
   }
 
   const synchronize = async () => {
@@ -50,6 +57,7 @@ export function AccountSyncPanel({
       setMessage(outcome.message)
       return
     }
+    setPreview(null)
     const deletedPart = outcome.deleted > 0 ? ` · ${outcome.deleted}개 삭제 반영` : ""
     setMessage(`${outcome.message} (서버 ${outcome.pulled}개 확인 · ${outcome.pushed}개 백업${deletedPart} · 총 ${outcome.total}개)`)
   }
@@ -79,24 +87,10 @@ export function AccountSyncPanel({
         />
         <span style={{ fontFamily: "var(--sans)", fontSize: 14 }}>동기화 켜기</span>
       </label>
-      <label style={{ display: "flex", alignItems: "flex-start", gap: 10, minHeight: 44, opacity: consent.enabled ? 1 : 0.45 }}>
-        <input
-          type="checkbox"
-          checked={consent.shareTrainingNotes}
-          disabled={!consent.enabled}
-          onChange={(event) => updateConsent({ ...consent, shareTrainingNotes: event.target.checked })}
-          style={{ width: 20, height: 20, marginTop: 2 }}
-        />
-        <span style={{ fontFamily: "var(--sans)", fontSize: 13, lineHeight: 1.5 }}>
-          {sharingEnabled ? "훈련 메모를 계정과 코치에게 공유" : "훈련 메모를 계정에 백업"}
-          <br />
-          <small style={{ ...mono, color: "var(--ink-4)" }}>
-            {sharingEnabled
-              ? "나만의 메모는 이 설정과 관계없이 원문을 보내지 않아요."
-              : "코치 연결은 아직 열지 않았어요. 나만의 메모 원문은 보내지 않아요."}
-          </small>
-        </span>
-      </label>
+      <p style={{ ...mono, color: "var(--ink-4)", fontSize: 11, lineHeight: 1.6, margin: 0 }}>
+        거리·시간·RPE 같은 입력값만 백업해요. 훈련 메모와 나만의 메모 원문은 보내지 않아요.
+        {sharingEnabled ? " 코치 공유는 동기화와 따로 선택해요." : " 코치 연결은 아직 열지 않았어요."}
+      </p>
       {preview === null ? (
         <button type="button" style={primaryBtn} disabled={busy || !consent.enabled} onClick={() => void preparePreview()}>
           {busy ? "확인 중…" : "합칠 내용 미리보기"}
@@ -104,7 +98,7 @@ export function AccountSyncPanel({
       ) : (
         <>
           <p style={{ fontFamily: "var(--mono)", fontSize: 11, lineHeight: 1.6, color: "var(--ink-2)", margin: 0 }}>
-            이 기기 {preview.localCount}개 · 계정 일지 {preview.remoteJournalCount}개 · 암호화된 나만의 메모 {preview.remotePrivateCount}개
+            이 기기 {preview.localCount}개 · 계정 일지 {preview.remoteJournalCount}개
           </p>
           <button type="button" style={primaryBtn} disabled={busy} onClick={() => void synchronize()}>
             {busy ? "합치는 중…" : "확인한 내용 합치기"}
