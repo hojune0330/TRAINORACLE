@@ -3,6 +3,7 @@ import {
   authReturnUrl,
   maskPhoneNumber,
   normalizeKoreanMobilePhone,
+  requestEmailOtp,
   requestPhoneOtp,
   signInWithProvider,
   verifyPhoneOtp,
@@ -39,6 +40,25 @@ describe("simple social authentication", () => {
     await expect(signInWithProvider("kakao")).resolves.toEqual({
       ok: false,
       message: "카카오 로그인을 시작하지 못했어요.",
+    })
+  })
+})
+
+describe("passwordless email confirmation", () => {
+  it("sends the default Supabase confirmation link back to the account screen", async () => {
+    const signInWithOtp = vi.fn().mockResolvedValue({ error: null })
+    supabaseMock.mockResolvedValue({ auth: { signInWithOtp } })
+
+    await expect(requestEmailOtp(" runner@example.com ")).resolves.toEqual({
+      ok: true,
+      message: "확인 링크를 이메일로 보냈어요.",
+    })
+    expect(signInWithOtp).toHaveBeenCalledWith({
+      email: "runner@example.com",
+      options: {
+        shouldCreateUser: true,
+        emailRedirectTo: expect.stringContaining("account=1"),
+      },
     })
   })
 })

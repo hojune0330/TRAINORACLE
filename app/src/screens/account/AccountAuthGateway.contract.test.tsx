@@ -99,15 +99,13 @@ describe("mobile-first account authentication gateway", () => {
     expect(sessionStorage.getItem("trainoracle.account.pending-setup.v1")).toContain("2026-08-25")
   })
 
-  it("uses passwordless email OTP after the same age and consent gate", async () => {
-    const send = vi.fn().mockResolvedValue({ ok: true, message: "코드를 보냈어요." })
-    const verify = vi.fn().mockResolvedValue({ ok: true, message: "로그인" })
+  it("uses a passwordless email confirmation link after the same age and consent gate", async () => {
+    const send = vi.fn().mockResolvedValue({ ok: true, message: "확인 링크를 보냈어요." })
     render(
       <AccountAuthGateway
         config={config}
         today="2026-08-25"
         onRequestEmailOtp={send}
-        onVerifyEmailOtp={verify}
       />,
     )
 
@@ -116,12 +114,12 @@ describe("mobile-first account authentication gateway", () => {
     await userEvent.click(screen.getByRole("checkbox", { name: /필수 약관에 모두 동의/u }))
     await userEvent.click(screen.getByRole("button", { name: "이메일 입력하기" }))
     await userEvent.type(screen.getByLabelText("이메일"), "runner@example.com")
-    await userEvent.click(screen.getByRole("button", { name: "인증 코드 받기" }))
-    await userEvent.type(screen.getByLabelText(/runner@example.com로 보낸 코드/u), "123456")
-    await userEvent.click(screen.getByRole("button", { name: "로그인 완료하기" }))
+    await userEvent.click(screen.getByRole("button", { name: "확인 이메일 받기" }))
 
     expect(send).toHaveBeenCalledWith("runner@example.com")
-    expect(verify).toHaveBeenCalledWith("runner@example.com", "123456")
+    expect(screen.getByRole("heading", { name: "이메일에서 확인 링크를 열어 주세요" })).toBeVisible()
+    expect(screen.getByRole("button", { name: "확인 이메일 다시 받기" })).toBeVisible()
+    expect(screen.queryByText(/6자리/u)).not.toBeInTheDocument()
   })
 
   it("recovers the button and explains a provider exception without losing local use", async () => {

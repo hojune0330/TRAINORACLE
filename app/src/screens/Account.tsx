@@ -18,9 +18,10 @@ import {
   AccountNetworkSettings, AccountSyncPanel, DeviceJournalOwnershipPanel, DeviceTrainingDataPanel, EraseLocalData, SwitchAccountPanel,
 } from "./account/index"
 import { AccountAuthGateway } from "./account/AccountAuthGateway"
+import { BetaAccountSettings } from "./account/BetaAccountSettings"
 import { mono, primaryBtn, secondaryBtn } from "./account/styles"
 
-type SetupState = "checking" | "not-required" | "saving" | "ready" | "failed"
+type SetupState = "checking" | "not-required" | "saving" | "needs-profile" | "ready" | "failed"
 
 export function Account({ onBack, onOpenImport, onOpenRestore }: {
   readonly onBack?: () => void
@@ -106,6 +107,9 @@ export function Account({ onBack, onOpenImport, onOpenRestore }: {
         if (result.ready) {
           setSetupState("ready")
           setSetupNotice(result.message)
+        } else if (pending === null && result.ok) {
+          setSetupState("needs-profile")
+          setSetupNotice("확인 링크를 새 화면에서 열었어요. 나이와 필수 약관만 다시 확인하면 가입이 끝나요.")
         } else {
           setSetupState("failed")
           setSetupNotice(result.message)
@@ -175,6 +179,25 @@ export function Account({ onBack, onOpenImport, onOpenRestore }: {
             {setupNotice} 이 기기의 일지와 훈련 계획은 그대로예요. 가입이 끝날 때까지 동기화는 열지 않아요.
           </p>
           <button type="button" style={primaryBtn} onClick={() => setSetupRetry(value => value + 1)}>다시 확인하기</button>
+          <button type="button" style={secondaryBtn} disabled={busy} onClick={() => void handleSignOut()}>로그아웃하고 다시 시작</button>
+        </div>
+      ) : setupState === "needs-profile" ? (
+        <div style={{ marginTop: 24, display: "flex", flexDirection: "column", gap: 14 }}>
+          <h2 style={{ fontFamily: "var(--sans)", fontSize: 18, margin: 0, letterSpacing: 0 }}>가입을 한 번만 더 확인해 주세요</h2>
+          <p role="status" style={{ fontFamily: "var(--sans)", fontSize: 13, lineHeight: 1.65, color: "var(--ink-2)", margin: 0 }}>
+            {setupNotice} 생년월일은 나이 확인에만 사용하고 코치, 분석, 포인트에는 보내지 않아요.
+          </p>
+          <BetaAccountSettings
+            userId={user.id}
+            today={today}
+            legalDocuments={config}
+            completionOnly
+            onCompleted={() => {
+              writeCurrentSetupReceipt(user.id, config)
+              setSetupState("ready")
+              setSetupNotice("가입 확인을 마쳤어요.")
+            }}
+          />
           <button type="button" style={secondaryBtn} disabled={busy} onClick={() => void handleSignOut()}>로그아웃하고 다시 시작</button>
         </div>
       ) : (

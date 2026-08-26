@@ -51,7 +51,7 @@ export function maskPhoneNumber(value: string): string {
   return `010-****-${normalized.slice(-4)}`
 }
 
-/** 이메일로 6자리 인증 코드 전송 (가입/로그인 겸용 — 계정 없으면 생성) */
+/** 이메일 확인 링크 전송 (가입/로그인 겸용 — 계정 없으면 생성). */
 export async function requestEmailOtp(email: string): Promise<AuthResult> {
   const client = await supabase()
   if (client === null) return { ok: false, message: "계정 기능이 꺼져 있어요." }
@@ -61,23 +61,13 @@ export async function requestEmailOtp(email: string): Promise<AuthResult> {
   }
   const { error } = await client.auth.signInWithOtp({
     email: trimmed,
-    options: { shouldCreateUser: true },
+    options: {
+      shouldCreateUser: true,
+      emailRedirectTo: authReturnUrl(),
+    },
   })
-  if (error) return { ok: false, message: "코드 전송에 실패했어요. 잠시 후 다시 시도해 주세요." }
-  return { ok: true, message: "인증 코드를 이메일로 보냈어요." }
-}
-
-/** 이메일로 받은 6자리 코드 확인 */
-export async function verifyEmailOtp(email: string, code: string): Promise<AuthResult> {
-  const client = await supabase()
-  if (client === null) return { ok: false, message: "계정 기능이 꺼져 있어요." }
-  const { error } = await client.auth.verifyOtp({
-    email: email.trim(),
-    token: code.trim(),
-    type: "email",
-  })
-  if (error) return { ok: false, message: "코드가 맞지 않거나 만료됐어요." }
-  return { ok: true, message: "로그인되었어요." }
+  if (error) return { ok: false, message: "확인 이메일을 보내지 못했어요. 잠시 후 다시 시도해 주세요." }
+  return { ok: true, message: "확인 링크를 이메일로 보냈어요." }
 }
 
 export function authReturnUrl(href?: string): string | undefined {

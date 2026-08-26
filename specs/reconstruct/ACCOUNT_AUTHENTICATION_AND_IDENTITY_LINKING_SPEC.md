@@ -5,8 +5,8 @@ document_metadata:
   doc_id: trainoracle-account-authentication-identity-linking-spec
   spec_id: ACCOUNT_AUTHENTICATION_AND_IDENTITY_LINKING_SPEC
   title: TrainOracle 간편 인증 및 향후 계정 연결 계약
-  version: 0.2
-  round: RT2_PHONE_OTP_AND_PROVIDER_OPERATIONS_DRAFT
+  version: 0.3
+  round: RT3_EMAIL_CONFIRMATION_LINK_RUNTIME_ALIGNMENT_DRAFT
   status: DRAFT_FOR_REVIEW
   owner: COACH_HOJUNE
   service_provider_working_name: aaclub
@@ -21,8 +21,13 @@ document_metadata:
 ## 1. 목적과 현재 권위
 
 이 문서는 TrainOracle 첫 공개 계정에 사용할 최소 인증 계약을 정의한다. 소유자가
-승인한 1차 범위는 카카오, Google, 이메일 6자리 인증 코드다. 세 방식은 모두
+승인한 1차 범위는 카카오, Google, 이메일 비밀번호 없는 인증이다. 세 방식은 모두
 Supabase Auth로 통과하며 TrainOracle은 비밀번호를 직접 받거나 저장하지 않는다.
+
+현재 무료 Supabase 기본 메일 서비스는 수정 가능한 6자리 코드 템플릿이 아니라
+확인 링크를 보낸다. 따라서 커스텀 SMTP 또는 Send Email Hook이 별도로 수용되기
+전까지 앱도 확인 링크 흐름을 사실대로 보여준다. 화면만 6자리 코드라고 주장하거나,
+기본 확인 링크를 OTP 코드처럼 취급하면 안 된다.
 
 이 문서는 구현 초안의 기준이지만 canonical 승격, 운영 제공자 설정 완료, 공개
 출시 승인 또는 런타임 증거를 주장하지 않는다. 계정 공개 스위치는
@@ -36,7 +41,7 @@ first_wave_authentication:
   methods:
     - KAKAO_OAUTH
     - GOOGLE_OAUTH
-    - EMAIL_OTP_6_DIGIT
+    - EMAIL_CONFIRMATION_LINK
   password_login: FORBIDDEN
   custom_auth_server: FORBIDDEN
   custom_cross_provider_account_merge: FORBIDDEN
@@ -83,13 +88,13 @@ SMS 공급자는 신원 확인 코드 전달만 담당한다. 전화번호를 �
 2. 외부 인증을 시작하기 전에 생년월일과 필수 약관 전체 동의를 확인한다.
 3. 만 14세 미만이면 외부 인증 요청을 보내지 않고 로컬 사용으로 되돌린다.
 4. 만 14세 이상이면 선택한 인증을 시작한다.
-5. OAuth 또는 OTP 성공 뒤 서버에 생년월일과 동의 문서 버전만 저장한다.
+5. OAuth 또는 이메일 확인 링크 성공 뒤 서버에 생년월일과 동의 문서 버전만 저장한다.
 6. 서버 가입 확정이 실패하면 동기화·공유 설정을 열지 않는다.
 7. 가입이 끝나도 일지 업로드는 자동 시작하지 않는다. 동기화는 별도 명시적 선택이다.
 8. 새 기기에서는 서버 프로필의 최신 동의 상태를 다시 확인한 뒤에만 동기화 설정을 연다.
 
 각 화면은 한 가지 질문만 한다. 첫 화면은 인증 방법, 다음 화면은 나이·약관,
-이메일 경로의 마지막 화면은 코드만 묻는다. 사용자는 모든 단계에서 계정 없이
+이메일 경로의 마지막 화면은 확인 이메일을 열도록 안내한다. 사용자는 모든 단계에서 계정 없이
 로컬 일지와 훈련 계획을 계속 사용할 수 있다.
 
 ## 4. 만 14세 경계
@@ -125,6 +130,12 @@ under_14_policy:
 OAuth 왕복을 위해 생년월일과 문서 버전을 같은 탭의 `sessionStorage`에 최대 15분
 보관할 수 있다. 가입 성공 또는 유효성 실패 시 즉시 지운다. 장기 완료 표식에는
 생년월일을 넣지 않는다.
+
+이메일 확인 링크가 새 탭이나 새 창에서 열려 `sessionStorage`를 읽지 못하면,
+인증된 사용자를 실패 화면이나 동기화 화면으로 보내지 않는다. 생년월일과 현재
+필수 약관을 한 번 더 확인하는 가입 마무리 화면을 제공하고, 서버 프로필 저장이
+성공한 뒤에만 완료 표식과 동기화 설정을 연다. 이를 피하려고 생년월일을 URL,
+`localStorage`, OAuth state 또는 장기 쿠키로 옮기면 안 된다.
 
 ## 6. 데이터와 안전 권한
 
@@ -172,7 +183,8 @@ TrainOracle 자체 사용자 ID, 동의, 삭제, 일지, 안전 데이터 경계
 ## 8. 실패와 복구
 
 - 제공자 시작 실패: 선택 화면으로 돌아가며 로컬 데이터가 안전하다고 알린다.
-- OTP 오류·만료: 이메일을 지우지 않고 다시 받을 수 있게 한다.
+- 이메일 링크 오류·만료: 이메일을 지우지 않고 확인 메일을 다시 받을 수 있게 한다.
+- 이메일 링크가 새 탭에서 열림: 나이·약관을 다시 확인하고 서버 저장 뒤 가입을 끝낸다.
 - OAuth 성공 후 프로필 확정 실패: 로그인 상태만으로 동기화 화면을 열지 않는다.
 - 새 기기의 로컬 완료 표식 부재: 서버의 프로필·약관 버전을 확인하고 실패 시 닫힌다.
 - 약관 버전 변경: 임시 가입 정보를 폐기하고 새 버전 확인부터 다시 시작한다.
@@ -184,7 +196,8 @@ TrainOracle 자체 사용자 ID, 동의, 삭제, 일지, 안전 데이터 경계
 required_release_evidence:
   - KAKAO_NEW_AND_RETURNING_LOGIN
   - GOOGLE_NEW_AND_RETURNING_LOGIN
-  - EMAIL_OTP_NEW_AND_RETURNING_LOGIN
+  - EMAIL_CONFIRMATION_LINK_NEW_AND_RETURNING_LOGIN
+  - EMAIL_LINK_NEW_TAB_PROFILE_FINALIZATION
   - PHONE_OTP_NEW_AND_RETURNING_LOGIN_WHEN_RELEASED
   - OAUTH_RETURN_TO_ACCOUNT_SCREEN
   - EXACT_14TH_BIRTHDAY_BOUNDARY
@@ -215,7 +228,7 @@ required_release_evidence:
 ## 11. Non-Claims
 
 이 문서는 카카오·Google·휴대전화 운영 설정 완료, Supabase 운영 마이그레이션 적용,
-공개 계정 출시, 런타임 OAuth/OTP PASS, canonical 승격 또는 open issue 종결을
+공개 계정 출시, 런타임 OAuth·이메일 링크·OTP PASS, canonical 승격 또는 open issue 종결을
 주장하지 않는다.
 
 [DRAFT_COMPLETE]

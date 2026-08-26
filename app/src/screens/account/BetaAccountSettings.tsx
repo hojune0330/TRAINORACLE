@@ -11,6 +11,7 @@ import type {
 import { profileFromBirthDate } from "../../domain/account/profile"
 import type { AccountLegalDocument } from "../../domain/account/config"
 import { inputStyle, primaryBtn, secondaryBtn } from "./styles"
+import { formatBirthDateInput } from "./birth-date-input"
 
 type BetaAccountSettingsProps = {
   readonly userId: string
@@ -22,6 +23,8 @@ type BetaAccountSettingsProps = {
   readonly initialPrivacyAcknowledged?: boolean
   readonly initialTermsAcknowledged?: boolean
   readonly profileSetupComplete?: boolean
+  readonly completionOnly?: boolean
+  readonly onCompleted?: () => void
   readonly onSaveProfile?: (input: SaveProfileInput) => Promise<AccountActionResult>
   readonly onRequestDeletion?: (userId: string) => Promise<AccountActionResult>
 }
@@ -33,6 +36,8 @@ export function BetaAccountSettings({
   initialPrivacyAcknowledged = false,
   initialTermsAcknowledged = false,
   profileSetupComplete = false,
+  completionOnly = false,
+  onCompleted,
   onSaveProfile = savePrivateProfile,
   onRequestDeletion = requestServerAccountDeletion,
 }: BetaAccountSettingsProps) {
@@ -69,6 +74,7 @@ export function BetaAccountSettings({
     })
     setBusy(false)
     setNotice(result.message)
+    if (result.ok) onCompleted?.()
   }
 
   const requestDeletion = async () => {
@@ -81,7 +87,7 @@ export function BetaAccountSettings({
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-      <SectionLb>계정 정보와 개인정보</SectionLb>
+      <SectionLb>{completionOnly ? "가입 마무리" : "계정 정보와 개인정보"}</SectionLb>
       {profileSetupComplete ? (
         <p style={{ fontFamily: "var(--sans)", fontSize: 12.5, lineHeight: 1.6, color: "var(--ink-2)", margin: 0 }}>
           가입에 필요한 나이 확인과 필수 약관 동의를 저장했어요. 생년월일은 나이 확인에만 쓰고 코치, 분석, 포인트에는 보내지 않아요.
@@ -89,7 +95,17 @@ export function BetaAccountSettings({
       ) : (
         <>
           <label htmlFor="account-birth-date" style={{ fontFamily: "var(--mono)", fontSize: 11, color: "var(--ink-3)" }}>생년월일</label>
-          <input id="account-birth-date" type="date" max={today} value={birthDate} onChange={(event) => setBirthDate(event.target.value)} style={inputStyle} />
+          <input
+            id="account-birth-date"
+            type="text"
+            inputMode="numeric"
+            autoComplete="bday"
+            maxLength={10}
+            placeholder="예: 2000-01-01"
+            value={birthDate}
+            onChange={(event) => setBirthDate(formatBirthDateInput(event.target.value))}
+            style={inputStyle}
+          />
           <p style={{ fontFamily: "var(--sans)", fontSize: 11.5, lineHeight: 1.6, color: "var(--ink-3)", margin: 0 }}>
             생년월일은 나이 확인에만 쓰고 코치, 분석, 포인트에는 보내지 않아요.
           </p>
@@ -108,23 +124,27 @@ export function BetaAccountSettings({
       )}
       {ageMessage !== null && <p role="status" style={{ fontFamily: "var(--sans)", fontSize: 12.5, lineHeight: 1.6, margin: 0 }}>{ageMessage}</p>}
 
-      <SectionLb>계정 삭제</SectionLb>
-      <p style={{ fontFamily: "var(--sans)", fontSize: 12, lineHeight: 1.6, color: "var(--ink-2)", margin: 0 }}>
-        요청하는 즉시 계정 접근을 막고 서버와 백업 데이터는 30일 안에 삭제해요.
-      </p>
-      {deletionConfirming ? (
-        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-          <button type="button" style={primaryBtn} disabled={busy} onClick={() => void requestDeletion()}>
-            네, 계정 삭제를 요청할게요
-          </button>
-          <button type="button" style={secondaryBtn} disabled={busy} onClick={() => setDeletionConfirming(false)}>
-            그만두기
-          </button>
-        </div>
-      ) : (
-        <button type="button" style={secondaryBtn} onClick={() => setDeletionConfirming(true)}>
-          계정 삭제 요청
-        </button>
+      {!completionOnly && (
+        <>
+          <SectionLb>계정 삭제</SectionLb>
+          <p style={{ fontFamily: "var(--sans)", fontSize: 12, lineHeight: 1.6, color: "var(--ink-2)", margin: 0 }}>
+            요청하는 즉시 계정 접근을 막고 서버와 백업 데이터는 30일 안에 삭제해요.
+          </p>
+          {deletionConfirming ? (
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              <button type="button" style={primaryBtn} disabled={busy} onClick={() => void requestDeletion()}>
+                네, 계정 삭제를 요청할게요
+              </button>
+              <button type="button" style={secondaryBtn} disabled={busy} onClick={() => setDeletionConfirming(false)}>
+                그만두기
+              </button>
+            </div>
+          ) : (
+            <button type="button" style={secondaryBtn} onClick={() => setDeletionConfirming(true)}>
+              계정 삭제 요청
+            </button>
+          )}
+        </>
       )}
       {notice !== null && <p role="status" style={{ fontFamily: "var(--mono)", fontSize: 11, color: "var(--ink-2)", margin: 0 }}>{notice}</p>}
     </div>
