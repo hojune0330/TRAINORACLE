@@ -245,8 +245,9 @@ describe("home journal controls", () => {
     const writeLog = screen.getByRole("button", { name: "오늘 기록 남기기" })
     const openPlan = screen.getByRole("button", { name: "훈련 계획 만들기" })
     const openGuide = screen.getByRole("button", { name: "민지의 예시 일지 보기" })
+    // 최종 폴리시 D1: 기록 CTA만 프라이머리, 계획 CTA는 세컨더리(아웃라인) — "일지 먼저" 위계
     expect(writeLog).toHaveClass("training-home__primary")
-    expect(openPlan).toHaveClass("training-home__primary")
+    expect(openPlan).toHaveClass("training-home__secondary")
     expect(writeLog.parentElement).toBe(openPlan.parentElement)
     expect(screen.getByText("이렇게 쓰여요")).toBeVisible()
     expect(screen.queryByRole("region", { name: "오늘의 기분 몸 상태 날씨" })).toBeNull()

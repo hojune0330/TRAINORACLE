@@ -119,7 +119,9 @@ export function TrainingHome({
                 <span>오늘 기록 남기기</span>
                 <ChevronRight aria-hidden="true" size={18} />
               </button>
-              <button className="training-home__primary" type="button" onClick={onOpenPlan}>
+              {/* 최종 폴리시 D1: 한 화면 한 주행동. "일지 먼저" 철학에 따라
+               * 기록 CTA만 필 프라이머리, 계획 CTA는 아웃라인 세컨더리로 위계를 준다. */}
+              <button className="training-home__secondary" type="button" onClick={onOpenPlan}>
                 <CalendarPlus aria-hidden="true" size={19} />
                 <span>훈련 계획 만들기</span>
                 <ChevronRight aria-hidden="true" size={18} />
