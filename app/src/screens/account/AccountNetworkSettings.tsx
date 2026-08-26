@@ -3,6 +3,8 @@ import { CoachSupportPanel } from "./CoachSupportPanel"
 import { ProductAnalyticsConsentPanel } from "./ProductAnalyticsConsentPanel"
 import { productFeatures } from "../../domain/product-features"
 import type { AccountLegalDocument } from "../../domain/account/config"
+import { PublicProfileSettings } from "./PublicProfileSettings"
+import { PlanCloudBackupNotice } from "./PlanCloudBackupNotice"
 
 export function AccountNetworkSettings({
   userId,
@@ -33,7 +35,9 @@ export function AccountNetworkSettings({
         initialTermsAcknowledged={initialTermsAcknowledged}
         profileSetupComplete={profileSetupComplete}
       />
+      {features.planBackup && <PlanCloudBackupNotice />}
       {features.productAnalytics && <ProductAnalyticsConsentPanel userId={userId} />}
+      {features.publicProfile && <PublicProfileSettings userId={userId} />}
       {features.sharing && <CoachSupportPanel userId={userId} today={today} />}
     </>
   )

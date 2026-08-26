@@ -24,6 +24,7 @@ import {
   localAccountScopeIsCurrent,
   localAccountScopeSnapshot,
 } from "../../domain/account/local-account-scope"
+import { backupActivePlanToServer } from "../../domain/account/plan-cloud-backup"
 
 export type CandidateSelection = {
   readonly candidateId: string
@@ -115,6 +116,7 @@ export async function saveSelectedPlanCandidate(
               : "PLAN_STORAGE_STATE_UNCERTAIN",
           } as const
         }
+        void backupActivePlanToServer(state)
         return { kind: "saved", state } as const
       },
     )

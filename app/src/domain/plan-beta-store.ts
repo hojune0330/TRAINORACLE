@@ -20,6 +20,10 @@ import {
   localAccountScopeIsCurrent,
   localAccountScopeSnapshot,
 } from "./account/local-account-scope"
+import {
+  archivePlanOnServer,
+  backupActivePlanToServer,
+} from "./account/plan-cloud-backup"
 import type {
   PlanBetaIntake,
   PlanBetaState,
@@ -218,6 +222,7 @@ export async function savePlanProgressWithLock(
         }
         const next = updateStoredProgress(current, progress)
         const saved = savePlanBetaState(next)
+        if (saved.ok) void backupActivePlanToServer(next)
         return saved.ok
           ? { kind: "saved", state: next } as const
           : {
@@ -314,6 +319,7 @@ export function archiveAndClearActivePlan(state: PlanBetaState): PlanArchiveResu
     if (window.localStorage.getItem(activeKey) !== null) {
       throw new Error("Active plan was not cleared")
     }
+    void archivePlanOnServer(state.activePlan.candidateId)
     return { ok: true, intake: state.intake }
   } catch {
     const rollbackComplete = snapshotsCaptured && [

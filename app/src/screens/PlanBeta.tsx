@@ -17,6 +17,7 @@ import type {
 import {
   loadPlanBetaState,
   loadPreviousIntake,
+  savePlanBetaState,
 } from "../domain/plan-beta-store"
 import type {
   PlanBetaIntake,
@@ -42,6 +43,11 @@ import {
   firstUnansweredRefinement,
   previousIntakeStep,
 } from "./plan-beta/plan-intake-navigation"
+import {
+  backupActivePlanToServer,
+  loadLatestPlanFromServer,
+  planCloudBackupEnabled,
+} from "../domain/account/plan-cloud-backup"
 
 export function PlanBeta({
   onWriteLog,
@@ -52,6 +58,9 @@ export function PlanBeta({
 }) {
   const [stored, setStored] = React.useState<PlanBetaState | null>(
     () => loadPlanBetaState(),
+  )
+  const [cloudRestorePending, setCloudRestorePending] = React.useState(
+    stored === null && planCloudBackupEnabled(),
   )
   const previousIntake = React.useState(() => loadPreviousIntake())[0]
   const [draft, setDraft] = React.useState<Partial<PlanBetaIntake>>(
@@ -104,6 +113,28 @@ export function PlanBeta({
     const scrollRegion = document.querySelector<HTMLElement>(".app-scroll-region")
     if (scrollRegion !== null) scrollRegion.scrollTop = 0
   }, [viewKey])
+
+  React.useEffect(() => {
+    if (stored !== null || !planCloudBackupEnabled()) {
+      setCloudRestorePending(false)
+      return
+    }
+    let cancelled = false
+    void loadLatestPlanFromServer().then((result) => {
+      if (cancelled) return
+      if (result.kind === "loaded" && savePlanBetaState(result.state).ok) {
+        setStored(result.state)
+      }
+      setCloudRestorePending(false)
+    })
+    return () => { cancelled = true }
+  }, [])
+
+  React.useEffect(() => {
+    if (stored !== null && planCloudBackupEnabled()) {
+      void backupActivePlanToServer(stored)
+    }
+  }, [stored])
 
   const generateCandidates = (
     nextDraft: Partial<PlanBetaIntake>,
@@ -205,6 +236,10 @@ export function PlanBeta({
 
   if (notationReaderOpen) {
     return <NotationReader onBack={() => setNotationReaderOpen(false)} />
+  }
+
+  if (cloudRestorePending && stored === null) {
+    return <p role="status" style={{ padding: 24 }}>계정에 저장된 훈련 계획을 확인하고 있어요.</p>
   }
 
   if (stored !== null) {

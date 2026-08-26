@@ -86,6 +86,8 @@ Google 설정을 건너뛰어도 이메일 코드 로그인은 동작하지만, 
           VITE_FEATURE_SYNC: ${{ vars.TRAINORACLE_FEATURE_SYNC }}
           VITE_FEATURE_SHARING: ${{ vars.TRAINORACLE_FEATURE_SHARING }}
           VITE_FEATURE_PLAN_PROPOSALS: ${{ vars.TRAINORACLE_FEATURE_PLAN_PROPOSALS }}
+          VITE_FEATURE_PLAN_BACKUP: ${{ vars.TRAINORACLE_FEATURE_PLAN_BACKUP }}
+          VITE_FEATURE_PUBLIC_PROFILE: ${{ vars.TRAINORACLE_FEATURE_PUBLIC_PROFILE }}
           VITE_FEATURE_PRODUCT_ANALYTICS: ${{ vars.TRAINORACLE_FEATURE_PRODUCT_ANALYTICS }}
           VITE_FEATURE_FEEDBACK_BOARD: ${{ vars.TRAINORACLE_FEATURE_FEEDBACK_BOARD }}
           VITE_KILL_ACCOUNT: ${{ vars.TRAINORACLE_KILL_ACCOUNT }}
@@ -122,9 +124,13 @@ Google 설정을 건너뛰어도 이메일 코드 로그인은 동작하지만, 
 | `TRAINORACLE_FEATURE_SYNC` | `false` 또는 미등록 | 계정 안정화 뒤 별도 결정 |
 | `TRAINORACLE_FEATURE_SHARING` | `false` 또는 미등록 | 동기화 안정화 뒤 별도 결정 |
 | `TRAINORACLE_FEATURE_PLAN_PROPOSALS` | `false` 또는 미등록 | 공유 안정화 뒤 별도 결정 |
+| `TRAINORACLE_FEATURE_PLAN_BACKUP` | `false` 또는 미등록 | 자동 계획 보관 승인 뒤 `true` |
+| `TRAINORACLE_FEATURE_PUBLIC_PROFILE` | `false` 또는 미등록 | 공개 프로필·친구 공유 승인 뒤 `true` |
 | `TRAINORACLE_FEATURE_PRODUCT_ANALYTICS` | `false` 또는 미등록 | 별도 동의·삭제 시험 뒤 별도 결정 |
 | `TRAINORACLE_FEATURE_FEEDBACK_BOARD` | `false` 또는 미등록 | 문의판 시험 뒤 `true` |
 | `TRAINORACLE_KILL_ACCOUNT` | `false` 또는 미등록 | 계정만 즉시 닫을 때 `true` |
+| `TRAINORACLE_KILL_PLAN_BACKUP` | `false` 또는 미등록 | 계획 온라인 보관만 즉시 닫을 때 `true` |
+| `TRAINORACLE_KILL_PUBLIC_PROFILE` | `false` 또는 미등록 | 공개 프로필·친구 공유만 즉시 닫을 때 `true` |
 | `TRAINORACLE_KILL_FEEDBACK_BOARD` | `false` 또는 미등록 | 문의판만 즉시 닫을 때 `true` |
 
 키만 등록한 상태에서는 계정 기능이 노출되지 않습니다. 공개 게이트를 모두
