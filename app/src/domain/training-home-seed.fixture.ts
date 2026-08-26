@@ -61,6 +61,7 @@ export function trainingHomeSeedFixture(today: string): PlanBetaState {
           day: 4,
           slot: "AM",
           role: "REST",
+          plannedEnergyIntent: "RECOVERY_INTENT",
           prescription: { kind: "REST" },
         },
         {
