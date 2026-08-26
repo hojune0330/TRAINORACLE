@@ -44,6 +44,11 @@ legal_clearance_claimed: false
 | 동기화 | 계속 닫힘 |
 | 공유 | 계속 닫힘 |
 
+메일 발송은 현재 Supabase 기본 SMTP와 기본 영문 템플릿을 사용한다. 운영 Dashboard에서
+`Confirm sign up`과 `Magic link or OTP`의 제목·본문 편집이 비활성화되어 있음을 실제로
+확인했다. 별도 SMTP 발송 계정을 연결하기 전에는 한글 브랜드 템플릿이 운영 메일에
+적용됐다고 주장하지 않는다.
+
 ## 3. 실행 중 발견하고 처리한 문제
 
 첫 서버 계정 확정 시 `SERVER_FEATURE_DISABLED_ACCOUNT`가 반환됐다. 앱은 이를 성공으로
@@ -75,6 +80,7 @@ Google Cloud 브랜딩에는 공개 홈페이지·개인정보처리방침·이�
 - 두 기기 동기화와 충돌 해결
 - 계정 삭제 요청 뒤 30일 이내 실제 정리 작업 영수증
 - Kakao, 휴대전화, AthleteTime SSO
+- custom SMTP 연결과 한글 가입·로그인 메일 운영 수신 검증
 - 법률 전문가의 최종 검토
 
 따라서 `docs/ACCOUNT_PUBLIC_RELEASE_GATE.md`의 G8 전체는 계속 OPEN이고, 동기화와

@@ -22,7 +22,7 @@
 | Redirect URLs | `https://hojune0330.github.io/TRAINORACLE/**` | 1개 등록 완료 |
 | Database | 최신 원격 migration `0028` | `0027`·`0028` 적용 및 기록 확인 |
 | Google Cloud | `TrainOracle Auth` (`trainoracle-auth-20260825`) | 외부 앱 `프로덕션 단계`, 기본 email/profile 범위 |
-| Email template | Hosted 기본 템플릿, custom SMTP 없음 | 앱도 확인 링크 방식으로 정정되어 일치 |
+| Email template | Hosted 기본 영문 템플릿, custom SMTP 없음 | 링크 동작은 일치. 한글 브랜드 템플릿은 저장소에 준비했으나 운영 적용 전 |
 | 로컬 일지 화면 격리 | 계정별 로컬 저장 구현 완료, 실제 A/B 서버 RLS 교차 시험 통과 | 서로 다른 브라우저 두 개의 화면 전환 실측이 없어 G8 차단 유지 |
 
 이 표는 2026-08-25 소유자 승인 아래 시험 Supabase와 Google Cloud에 실제 적용하고
@@ -84,8 +84,8 @@ Supabase URL Configuration에는 앱의 복귀 주소를 넣는다. 두 주소�
 3. [완료] 웹 OAuth client를 만들고 위 origin과 Supabase callback만 등록한다.
 4. [완료] Client ID와 secret은 Supabase Google provider 설정에 직접 넣는다. Git에는 넣지 않는다.
 5. [완료] Supabase Site URL과 Redirect URLs를 공개 주소로 바꾼다.
-6. [선택 후속] 발송량·브랜딩 요구가 생기면 custom SMTP를 연결한다. 현재는 Supabase
-   hosted 확인 링크 메일을 사용하며 앱 문구도 이 방식과 일치한다.
+6. [후속 관문] 한글 제목·본문과 발송량 제어가 필요하므로 custom SMTP를 연결한다.
+   현재 Supabase Dashboard는 기본 발송기 상태에서 템플릿 편집을 비활성화한다.
 7. [완료] Google과 이메일을 각각 신규 가입, 로그아웃, 재로그인까지 실측한다.
 8. [완료] `supabase/tests/account_identity_isolation_rehearsal.sql`을 SQL Editor에서 실행해 마지막 PASS와 rollback을 확인한다.
 9. 실제 서로 다른 두 계정과 두 브라우저 시험을 별도로 수행한다.

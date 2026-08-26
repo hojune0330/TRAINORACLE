@@ -4,21 +4,33 @@ import { describe, expect, it } from "vitest"
 
 const supabaseRoot = join(process.cwd(), "..", "supabase")
 const config = readFileSync(join(supabaseRoot, "config.toml"), "utf8")
-const emailTemplate = readFileSync(join(supabaseRoot, "templates", "magic-link.html"), "utf8")
+const magicLinkTemplate = readFileSync(
+  join(supabaseRoot, "templates", "magic-link.html"),
+  "utf8",
+)
+const confirmationTemplate = readFileSync(
+  join(supabaseRoot, "templates", "confirm-signup.html"),
+  "utf8",
+)
 const isolationRehearsal = readFileSync(
   join(supabaseRoot, "tests", "account_identity_isolation_rehearsal.sql"),
   "utf8",
 )
 
 describe("auth provider operations packet", () => {
-  it("uses a six-digit, short-lived local email OTP template without a magic link", () => {
+  it("uses branded confirmation links for signup and returning email login", () => {
     expect(config).toContain("otp_length = 6")
     expect(config).toContain("otp_expiry = 600")
     expect(config).toContain('max_frequency = "1m"')
     expect(config).toContain("[auth.email.template.magic_link]")
-    expect(emailTemplate.match(/\{\{ \.Token \}\}/gu)).toHaveLength(1)
-    expect(emailTemplate).not.toContain(".ConfirmationURL")
-    expect(emailTemplate).not.toMatch(/client[_-]?secret|service[_-]?role|auth[_-]?token/iu)
+    expect(config).toContain("[auth.email.template.confirmation]")
+
+    for (const template of [magicLinkTemplate, confirmationTemplate]) {
+      expect(template.match(/\{\{ \.ConfirmationURL \}\}/gu)).toHaveLength(1)
+      expect(template).not.toContain("{{ .Token }}")
+      expect(template).not.toMatch(/6자리|인증번호/gu)
+      expect(template).not.toMatch(/client[_-]?secret|service[_-]?role|auth[_-]?token/iu)
+    }
   })
 
   it("keeps local SMS signup closed until a real provider is configured", () => {
