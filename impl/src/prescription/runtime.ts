@@ -276,6 +276,14 @@ export function calculateSameEventRacePace(
 }
 
 export function preparePrescriptionRuntime(input: unknown): RuntimePreparationResult {
+  try {
+    return preparePrescriptionRuntimeUnchecked(input)
+  } catch {
+    return reject("MALFORMED_RUNTIME_INPUT")
+  }
+}
+
+function preparePrescriptionRuntimeUnchecked(input: unknown): RuntimePreparationResult {
   const request = parseRuntimeRequest(input)
   if (request === undefined) return reject("MALFORMED_RUNTIME_INPUT")
   if (request.safetyGate.kind === "blocked") return reject("SAFETY_GATE_BLOCKED")

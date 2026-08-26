@@ -4,6 +4,7 @@ import type {
   PostSessionEntry,
   RaceEntry,
 } from "./journal-schema"
+import { parseJournalEntry } from "./journal-schema"
 import { isEligibleForAnalysis } from "./field-provenance"
 
 export type SafePostSessionEntry = Omit<PostSessionEntry, "memo" | "memoPurpose">
@@ -199,6 +200,18 @@ function toAnalysisEveningEntry(entry: EveningEntry): AnalysisEveningEntry {
 export function toExportJournalEntry(entry: JournalEntry): SafeJournalEntry | null {
   if (!hasExportableStructuredSignal(entry)) return null
   return toSafeJournalEntry(entry)
+}
+
+/**
+ * 메모가 제거된 서버/안전 백업 payload를 로컬 일지 셸로 되돌린다.
+ * 서버 값에 메모 필드가 섞여 있어도 신뢰하지 않고 모두 버린다.
+ */
+export function fromStructuredJournalPayload(value: unknown): JournalEntry | null {
+  if (typeof value !== "object" || value === null || Array.isArray(value)) return null
+  const record = value as Record<string, unknown>
+  const { memo: _memo, note: _note, memoPurpose: _memoPurpose, ...structured } = record
+  const textField = structured.kind === "evening" ? "note" : "memo"
+  return parseJournalEntry({ ...structured, syncState: "local", [textField]: "" })
 }
 
 export function toAnalysisJournalEntry(entry: JournalEntry): AnalysisJournalEntry | null {

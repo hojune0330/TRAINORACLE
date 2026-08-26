@@ -1,7 +1,7 @@
 import { expect, test } from "@playwright/test"
 import type { Page } from "@playwright/test"
+import { mkdir, writeFile } from "node:fs/promises"
 import path from "node:path"
-import { selectNineDayProjection } from "./plan-flow"
 
 test.use({ serviceWorkers: "block" })
 const appPath = process.env.PLAYWRIGHT_APP_PATH ?? "/"
@@ -13,8 +13,17 @@ test.skip(
 )
 const evidenceDir = path.resolve(
   process.cwd(),
-  "../../../.omo/evidence/trainoracle-adaptive-replanning/task-4/ui-lifecycle",
+  "../.omo/evidence/personalized-prescription-algorithm-v2/task-8/ui-lifecycle",
 )
+const finalEvidenceDir = path.resolve(
+  process.cwd(),
+  "../.omo/evidence/personalized-prescription-algorithm-v2/final-3",
+)
+
+test.beforeAll(async () => {
+  await mkdir(evidenceDir, { recursive: true })
+  await mkdir(finalEvidenceDir, { recursive: true })
+})
 
 const records = [{
   schemaVersion: 1,
@@ -31,24 +40,28 @@ const records = [{
 }] as const
 
 for (const viewport of [
-  { name: "320x568", width: 320, height: 568 },
-  { name: "375x667", width: 375, height: 667 },
-  { name: "768x1024", width: 768, height: 1024 },
-  { name: "1440x900", width: 1440, height: 900 },
+  { name: "320x568", width: 320, height: 568, projectionLength: 7 },
+  { name: "375x667", width: 375, height: 667, projectionLength: 9 },
+  { name: "768x1024", width: 768, height: 1024, projectionLength: 10 },
+  { name: "1440x900", width: 1440, height: 900, projectionLength: 9 },
 ] as const) {
-  test(`creates and reloads an immutable next-frame successor at ${viewport.name}`, async ({ page }) => {
+  test(`activates an immutable ${viewport.projectionLength}-day successor at ${viewport.name}`, async ({ page }) => {
     await page.setViewportSize({ width: viewport.width, height: viewport.height })
     await seedRecords(page)
     await openPlan(page)
-    await createBoundActivePlan(page)
+    await createBoundActivePlan(page, viewport.projectionLength)
     await assertCurrentBuild(page)
-    const activeBefore = await page.evaluate(() => window.localStorage.getItem("trainoracle.plan-beta.v1"))
 
-    await expect(page.getByRole("button", { name: "다음 계획 조정하기" })).toBeVisible()
+    await expect(page.getByRole("button", { name: "현재 계획을 먼저 기록해 주세요" })).toBeDisabled()
+    await expect(page.getByRole("button", { name: "다음 계획 조정하기" })).toHaveCount(0)
     await expect(page.getByRole("list", { name: "날짜별 계획 미리보기" })).toHaveCount(1)
     await assertNoHorizontalOverflow(page)
+    await completeVisibleTrainingSessions(page)
+    const activeBefore = await page.evaluate(() => window.localStorage.getItem("trainoracle.plan-beta.v1"))
+
     await assertTouchTargets(page)
     const adaptationAction = page.getByRole("button", { name: "다음 계획 조정하기" })
+    await expect(adaptationAction).toBeVisible()
     await adaptationAction.focus()
     await expect(adaptationAction).toBeFocused()
     await page.screenshot({
@@ -87,10 +100,12 @@ for (const viewport of [
     await page.getByRole("button", { name: "현재 계획으로 돌아가기" }).click()
     const candidateBefore = await activeCandidateId(page)
     await page.getByLabel("DAY 1 오전 진행 기록")
-      .getByRole("button", { name: "완료" })
+      .getByRole("button", { name: "휴식" })
       .click()
+    await expect.poll(() => page.evaluate(
+      () => window.localStorage.getItem("trainoracle.plan-beta.v1"),
+    )).not.toBe(activeBefore)
     const laterActiveBytes = await page.evaluate(() => window.localStorage.getItem("trainoracle.plan-beta.v1"))
-    expect(laterActiveBytes).not.toBe(activeBefore)
     expect(await activeCandidateId(page)).toBe(candidateBefore)
 
     await page.getByRole("button", { name: "다음 계획 조정하기" }).click()
@@ -110,6 +125,52 @@ for (const viewport of [
     await page.getByRole("button", { name: "다음 계획 조정하기" }).click()
     await expect(page.getByRole("status")).toContainText("다음 주기에 사용할 보수적인 계획")
     expect(await page.evaluate(() => window.localStorage.getItem("trainoracle.plan-beta.v1"))).toBe(laterActiveBytes)
+    await page.getByRole("button", { name: "현재 계획으로 돌아가기" }).click()
+    await page.getByRole("button", { name: "선택한 다음 계획 시작하기" }).click()
+    await expect(page.getByRole("group", { name: "다음 계획 시작 전 몸 상태 확인" })).toBeVisible()
+    await page.getByRole("group", { name: "다음 계획 시작 전 몸 상태 확인" })
+      .getByRole("button", { name: "통증 없고 몸 상태는 평소와 같아요" })
+      .click()
+    await expect(page.getByRole("status").filter({
+      hasText: "선택한 다음 계획을 시작했어요",
+    })).toBeVisible()
+    expect(await activeCandidateId(page)).not.toBe(candidateBefore)
+    expect(await page.evaluate(() => window.localStorage.getItem("trainoracle.plan-beta.adaptation.v1"))).toBeNull()
+    expect(await page.evaluate(() => JSON.parse(
+      window.localStorage.getItem("trainoracle.plan-beta.history.v1") ?? "[]",
+    ))).toHaveLength(1)
+    const activatedBytes = await page.evaluate(() => window.localStorage.getItem("trainoracle.plan-beta.v1"))
+
+    await page.reload()
+    await page.getByRole("navigation", { name: "주 탭" })
+      .getByRole("button", { name: "계획" })
+      .click()
+    expect(await page.evaluate(() => window.localStorage.getItem("trainoracle.plan-beta.v1"))).toBe(activatedBytes)
+    expect(await page.evaluate(() => JSON.parse(
+      window.localStorage.getItem("trainoracle.plan-beta.history.v1") ?? "[]",
+    ))).toHaveLength(1)
+    if (viewport.name === "375x667") {
+      const storageSnapshot = await page.evaluate(() => {
+        const readJson = (key: string) => {
+          const raw = window.localStorage.getItem(key)
+          return raw === null ? null : JSON.parse(raw) as unknown
+        }
+        return {
+          kind: "TRAINORACLE_PLAN_STORAGE_SNAPSHOT",
+          privacy: "STRUCTURED_PLAN_FIELDS_ONLY_NO_RAW_TEXT",
+          viewport: { width: window.innerWidth, height: window.innerHeight },
+          activePlan: readJson("trainoracle.plan-beta.v1"),
+          adaptationContext: readJson("trainoracle.plan-adaptation-context.v1"),
+          pendingSuccessor: readJson("trainoracle.plan-beta.adaptation.v1"),
+          history: readJson("trainoracle.plan-beta.history.v1"),
+        }
+      })
+      await writeFile(
+        path.join(finalEvidenceDir, "storage-snapshot-375x667.json"),
+        `${JSON.stringify(storageSnapshot, null, 2)}\n`,
+        "utf8",
+      )
+    }
     await assertNoHorizontalOverflow(page)
     await page.screenshot({
       path: path.join(evidenceDir, `${viewport.name}-final-pending.png`),
@@ -143,7 +204,7 @@ async function openPlan(page: Page): Promise<void> {
     .click()
 }
 
-async function createBoundActivePlan(page: Page): Promise<void> {
+async function createBoundActivePlan(page: Page, projectionLength: 7 | 9 | 10): Promise<void> {
   await page.getByRole("button", { name: /5km/u }).click()
   await expect(page.getByRole("button", { name: /일반부/u })).toBeVisible()
   await page.getByRole("button", { name: /일반부/u }).click()
@@ -157,17 +218,36 @@ async function createBoundActivePlan(page: Page): Promise<void> {
   )).toBeVisible()
   await page.getByRole("button", { name: "내 계획 완성하기" }).click()
   await page.getByRole("button", { name: /반복 인터벌.*VO2/u }).click()
+  await page.getByRole("button", { name: /5000m 경기 페이스 상세 훈련 포함/u }).click()
   await page.getByRole("button", { name: /^3일/u }).click()
-  await selectNineDayProjection(page)
+  await expect(page.getByRole("heading", { name: "이번에 며칠 계획을 받을까요?" })).toBeVisible()
+  await page.getByRole("button", {
+    name: projectionLength === 7
+      ? /^7일만 먼저 받기/u
+      : new RegExp(`^${projectionLength}일 계획 받기`, "u"),
+  }).click()
   await page.getByRole("button", { name: /아침에 운동해요/u }).click()
   await page.getByRole("button", { name: /하루 한 번 운동/u }).click()
+  await page.getByRole("button", { name: "날짜 없이 계획 후보 보기" }).click()
 
   const picker = page.getByRole("region", { name: "개인 페이스 기준 기록" })
   await expect(picker).toBeVisible()
   await picker.getByRole("button", { name: /개인 최고.*18분 30초/u }).click()
   await picker.getByRole("button", { name: "이 기록으로 개인 페이스 적용" }).click()
-  await page.getByRole("button", { name: /반복 인터벌 포함 선택하기/u }).click()
-  await expect(page.getByRole("heading", { name: /반복 인터벌 포함 9일 계획/u })).toBeVisible()
+  await page.getByRole("button", { name: /기본 보조훈련 선택하기/u }).click()
+  await expect(page.getByRole("heading", {
+    name: new RegExp(`기본 보조훈련 ${projectionLength}일 계획`, "u"),
+  })).toBeVisible()
+}
+
+async function completeVisibleTrainingSessions(page: Page): Promise<void> {
+  const completeActions = page.getByRole("button", { name: "완료", exact: true })
+  const count = await completeActions.count()
+  expect(count).toBeGreaterThan(0)
+  for (let index = 0; index < count; index += 1) {
+    await completeActions.nth(index).click()
+  }
+  await expect(page.getByRole("button", { name: "다음 계획 조정하기" })).toBeVisible()
 }
 
 async function assertNoHorizontalOverflow(page: Page): Promise<void> {

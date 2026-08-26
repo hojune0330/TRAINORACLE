@@ -1,8 +1,24 @@
 import { assertNever } from "../shared/assert-never"
-import { RVE_NON_SENSITIVE_REASON_CODES } from "../rve/signal"
-import { isRecord } from "./input-values"
+import {
+  continuityContextIdentity,
+  continuityIdentityFromCandidateId,
+  hasValidCandidateIdentity,
+  pairIdHasBase,
+  projectPlanCandidate,
+} from "./candidate-identity"
+import {
+  ADAPTATION_SUCCESSOR_POLICY_VERSION,
+  ADAPTATION_TRANSFORM_REGISTRY_FINGERPRINT,
+  ADAPTATION_TRANSFORM_REGISTRY_VERSION,
+  resolveRegisteredAdaptationTransform,
+} from "./adaptation-transform-registry"
+import type {
+  AdaptationTransformDirection,
+  AdaptationTransformEdgeId,
+} from "./adaptation-transform-registry"
+import { isRecord, parseSafetyGate } from "./input-values"
 import type { SafetyGateDecision } from "../safety-gate/gate"
-import type { PlanCandidate, PlanSelectionAuthority, PlanSession } from "./types"
+import type { DetailedTemplateRef, PlanCandidate, PlanSelectionAuthority, PlanSession } from "./types"
 
 export const ADAPTATION_DIMENSIONS = ["INTENSITY", "VOLUME", "FREQUENCY"] as const
 export type AdaptationDimension = (typeof ADAPTATION_DIMENSIONS)[number]
@@ -11,11 +27,16 @@ export type SupportedAdaptationEvent = 800 | 1500 | 3000 | 5000
 
 export type AdaptationTrigger =
   | { readonly kind: "EXPLICIT_REQUEST"; readonly requestedBy: "ATHLETE" | "COACH"; readonly sourceRef: string }
-  | { readonly kind: "SAME_EVENT_PB_SB_AFTER_ACTIVE_PLAN_START"; readonly explicitlyConfirmed: true; readonly recordId: string; readonly purpose: "PERSONAL_BEST" | "SEASON_BEST"; readonly eventDistanceM: SupportedAdaptationEvent; readonly achievedAt: string; readonly sourceRef: string; readonly historicalOrBackfilled: boolean }
+  | { readonly kind: "SAME_EVENT_PB_SB_AFTER_ACTIVE_PLAN_START"; readonly explicitlyConfirmed: true; readonly recordId: string; readonly purpose: "PERSONAL_BEST" | "SEASON_BEST"; readonly eventDistanceM: SupportedAdaptationEvent; readonly performanceSeconds: number; readonly achievedAt: string; readonly sourceRef: string; readonly historicalOrBackfilled: boolean }
 
 export type PlanAdaptationProposalRequest = {
   readonly kind: "PLAN_ADAPTATION_PROPOSAL_REQUEST"
-  readonly scope: { readonly athleteId: string; readonly eventDistanceM: SupportedAdaptationEvent }
+  readonly scope: {
+    readonly athleteId: string
+    readonly eventDistanceM: SupportedAdaptationEvent
+    readonly pairId: string
+    readonly selectedDetailedTemplateRef: DetailedTemplateRef | null
+  }
   readonly activePlanStartedAt: string
   readonly baseCandidate: PlanCandidate
   readonly proposedCandidate: PlanCandidate
@@ -37,10 +58,24 @@ export type PlanAdaptationProposal = {
   readonly targetFrame: "NEXT_FRAME"
   readonly athleteId: string
   readonly eventDistanceM: SupportedAdaptationEvent
+  readonly pairId: string
+  readonly selectedDetailedTemplateRef: DetailedTemplateRef | null
   readonly proposalOrigin: AdaptationProposalOrigin
   readonly selectionAuthority: PlanSelectionAuthority
   readonly trigger: AdaptationTrigger["kind"]
+  readonly triggerSnapshot: AdaptationTrigger
+  readonly triggerSnapshotHash: string
   readonly changeDimension: AdaptationDimension
+  readonly transformRegistryVersion: typeof ADAPTATION_TRANSFORM_REGISTRY_VERSION
+  readonly transformRegistryFingerprint: string
+  readonly transformEdgeId: AdaptationTransformEdgeId
+  readonly transformPolicyVersion: typeof ADAPTATION_SUCCESSOR_POLICY_VERSION
+  readonly transformDirection: AdaptationTransformDirection
+  readonly predecessorPairFingerprint: string
+  readonly sourceCandidateId: string
+  readonly sourceCandidateContentHash: string
+  readonly allowedJsonPointers: readonly string[]
+  readonly activePlanStartedAt: string
   readonly baseCandidateId: string
   readonly baseContentHash: string
   readonly proposedContentHash: string
@@ -48,7 +83,17 @@ export type PlanAdaptationProposal = {
   readonly approvedAfterValueRef: string
   readonly baseCandidate: PlanCandidate
   readonly successorCandidate: PlanCandidate
+  readonly successorProvenanceHash: string
+  readonly safetyGate: SafetyGateDecision
+  readonly safetySnapshotHash: string
+  readonly safetyEvaluatedAt: string
+  readonly safetyValidUntil: string
+  readonly activeHold: false
   readonly createdAt: string
+  readonly evaluatedAt: string
+  readonly expiresAt: string
+  readonly edgeExpiresAt: null
+  readonly edgeRevoked: false
   readonly idempotencyKey: string
 }
 
@@ -58,7 +103,8 @@ export type PlanAdaptationProposalResult =
   | { readonly kind: "rejected"; readonly code: "MALFORMED_INPUT" | "UNSUPPORTED_EVENT" | "CROSS_SCOPE_PROVENANCE" | "INELIGIBLE_TRIGGER" | "STALE_BASE" | "NO_OP" | "MULTIPLE_DIMENSIONS" | "DIMENSION_MISMATCH" | "UNAPPROVED_TRANSFORM" }
 
 const REQUEST_KEYS = ["kind", "scope", "activePlanStartedAt", "baseCandidate", "proposedCandidate", "baseContentHash", "proposalOrigin", "trigger", "changeDimension", "safetyGate", "safetyEvaluatedAt", "safetyValidUntil", "activeHold", "createdAt", "idempotencyKey"] as const
-const CANDIDATE_KEYS = ["candidateId", "kind", "eventGroup", "eventDistanceM", "selectedEnergyIntent", "sourceMode", "confidence", "beta", "detailedPrescriptionFingerprint", "continuityContext", "selectionAuthority", "frame", "mainExposureLedger", "rationaleCodes", "sessions"] as const
+const PROPOSAL_KEYS = ["proposalId", "proposalHash", "targetFrame", "athleteId", "eventDistanceM", "pairId", "selectedDetailedTemplateRef", "proposalOrigin", "selectionAuthority", "trigger", "triggerSnapshot", "triggerSnapshotHash", "changeDimension", "transformRegistryVersion", "transformRegistryFingerprint", "transformEdgeId", "transformPolicyVersion", "transformDirection", "predecessorPairFingerprint", "sourceCandidateId", "sourceCandidateContentHash", "allowedJsonPointers", "activePlanStartedAt", "baseCandidateId", "baseContentHash", "proposedContentHash", "approvedBeforeValueRef", "approvedAfterValueRef", "baseCandidate", "successorCandidate", "successorProvenanceHash", "safetyGate", "safetySnapshotHash", "safetyEvaluatedAt", "safetyValidUntil", "activeHold", "createdAt", "evaluatedAt", "expiresAt", "edgeExpiresAt", "edgeRevoked", "idempotencyKey"] as const
+const CANDIDATE_KEYS = ["candidateId", "pairId", "kind", "eventGroup", "eventDistanceM", "selectedDetailedTemplateRef", "selectedEnergyIntent", "sourceMode", "confidence", "beta", "detailedPrescriptionFingerprint", "continuityContext", "selectionAuthority", "frame", "mainExposureLedger", "rationaleCodes", "sessions"] as const
 const PRIVATE_KEY = /(?:memo|note|symptom)/iu
 const SHA256_PATTERN = /^sha256:[a-f0-9]{64}$/u
 const ISO_DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/u
@@ -66,9 +112,9 @@ const CURRENT_ELAPSED_LABELS = new Set(
   Array.from({ length: 19 }, (_, months) => formatElapsedMonths(months)),
 )
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/iu
-const LOCAL_RECORD_ID_PATTERN = /^local-\d+-[a-z0-9]+$/u
+const OPAQUE_RECORD_ID_PATTERN = /^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$/u
 const EXPOSURE_ID_PATTERN = /^(?:app-main-day-(?:[1-9]|10)|fixture-main-[1-3])$/u
-const CANDIDATE_ID_PATTERN = /^beta:(?:balanced|conservative):(?:middle_distance|five_k):event-(?:800|1500|3000|5000):(?:new_to_running|developing|experienced):(?:recovery_intent|base_intent|lt_intent|vo2_intent|gly_intent|atp_pc_intent|mixed_intent):(?:single_session_only|recovery_pm_allowed):(?:morning|evening|varies):projection-(?:7|9|9\.5|10):local-civil-9-5:[a-z0-9-]+:\d+(?:-\d+)*:(?:no_usable_journal|recent_journal_context):(?:no-continuity|(?:balanced|conservative):(?:completed|rested|skipped|pain_checkin)-\d+(?:-(?:completed|rested|skipped|pain_checkin)-\d+)*)$/u
+const CANDIDATE_ID_PATTERN = /^beta:(?:balanced|conservative):(?:middle_distance|five_k):event-(?:800|1500|3000|5000):(?:new_to_running|developing|experienced):(?:recovery_intent|base_intent|lt_intent|vo2_intent|gly_intent|atp_pc_intent|mixed_intent):(?:single_session_only|recovery_pm_allowed):(?:morning|evening|varies):projection-(?:7|9|9\.5|10):local-civil-9-5:[a-z0-9-]+:\d+(?:-\d+)*:(?:no_usable_journal|recent_journal_context):(?:no-continuity|(?:balanced|conservative):(?:completed|rested|skipped|pain_checkin)-\d+(?:-(?:completed|rested|skipped|pain_checkin)-\d+)*):template-(?:rpe-only|[a-z0-9-]+\.\d+\.\d+\.\d+\.[a-f0-9]{64}):candidate-sha256-[a-f0-9]{64}$/u
 const PLAN_BETA_CODES = new Set([
   "PROFILE_ONLY_LIMITED_CONTEXT", "RECENT_JOURNAL_CONTEXT_PRESENT", "BETA_DURATION_RPE_ONLY",
   "PACE_TARGET_BOUND", "BETA_NON_UNIVERSAL_FORMATION_SCOPE", "PREVIOUS_FRAME_CONTEXT_RETAINED",
@@ -82,7 +128,6 @@ const PLAN_BETA_CODES = new Set([
   "NON_SELECTABLE_PLAN_RESULT", "STALE_CANDIDATE_FINGERPRINT", "NONCANONICAL_CANDIDATE_FRAME",
   "SAFETY_GATE_RECHECK_BLOCKED", "SESSION_DAY_NOT_IN_ACTIVE_PLAN", "SESSION_SLOT_NOT_IN_ACTIVE_PLAN",
 ])
-const SAFETY_REASON_CODES: ReadonlySet<string> = new Set(RVE_NON_SENSITIVE_REASON_CODES)
 
 export function canonicalJson(value: unknown): string {
   if (!isCanonicalJsonTree(value)) {
@@ -134,24 +179,76 @@ export function hashPlanCandidate(candidate: PlanCandidate): Promise<string> {
 export async function verifyPlanAdaptationProposal(proposal: unknown): Promise<boolean> {
   try {
   if (!isCanonicalJsonTree(proposal)) return false
-  if (!isRecord(proposal) || !hasExactKeys(proposal, ["proposalId", "proposalHash", "targetFrame", "athleteId", "eventDistanceM", "proposalOrigin", "selectionAuthority", "trigger", "changeDimension", "baseCandidateId", "baseContentHash", "proposedContentHash", "approvedBeforeValueRef", "approvedAfterValueRef", "baseCandidate", "successorCandidate", "createdAt", "idempotencyKey"])) return false
+  if (!isRecord(proposal) || !hasExactKeys(proposal, PROPOSAL_KEYS)) return false
   const baseCandidate = parsePlanCandidate(proposal["baseCandidate"])
   const successorCandidate = parsePlanCandidate(proposal["successorCandidate"])
-  if (baseCandidate === null || successorCandidate === null) return false
+  const triggerSnapshot = parseTrigger(proposal["triggerSnapshot"])
+  const safetyGate = parseSafetyGate(proposal["safetyGate"]) ?? null
+  if (baseCandidate === null || successorCandidate === null || triggerSnapshot === null || safetyGate === null) return false
   const { proposalId, proposalHash, ...content } = proposal
   const expectedProposalHash = await canonicalJsonSha256("trainoracle.plan-adaptation-proposal.v1", content)
-  const [baseHash, proposedHash] = await Promise.all([hashPlanCandidate(baseCandidate), hashPlanCandidate(successorCandidate)])
+  const transform = resolveRegisteredAdaptationTransform(baseCandidate, successorCandidate, triggerSnapshot.kind)
+  if (transform === null) return false
+  const [baseHash, proposedHash, triggerSnapshotHash, safetySnapshotHash] = await Promise.all([
+    hashPlanCandidate(baseCandidate),
+    hashPlanCandidate(successorCandidate),
+    canonicalJsonSha256("trainoracle.plan-adaptation-trigger-snapshot.v1", triggerSnapshot),
+    canonicalJsonSha256("trainoracle.plan-adaptation-safety-snapshot.v1", {
+      safetyGate,
+      activeHold: proposal["activeHold"],
+    }),
+  ])
+  const successorProvenanceHash = await hashSuccessorProvenance({
+    pairId: baseCandidate.pairId,
+    edgeId: transform.edge.edgeId,
+    sourceCandidateId: baseCandidate.candidateId,
+    sourceCandidateContentHash: baseHash,
+    successorCandidateId: successorCandidate.candidateId,
+    successorContentHash: proposedHash,
+  })
   return proposalHash === expectedProposalHash
     && proposalId === `adaptation:${expectedProposalHash.slice("sha256:".length)}`
     && isAthleteId(proposal["athleteId"])
     && typeof proposal["idempotencyKey"] === "string" && SHA256_PATTERN.test(proposal["idempotencyKey"])
     && isIsoTimestamp(proposal["createdAt"])
     && proposal["baseCandidateId"] === baseCandidate.candidateId
+    && proposal["sourceCandidateId"] === baseCandidate.candidateId
+    && proposal["sourceCandidateContentHash"] === baseHash
     && proposal["baseContentHash"] === baseHash && proposal["proposedContentHash"] === proposedHash
     && proposal["approvedBeforeValueRef"] === baseHash && proposal["approvedAfterValueRef"] === proposedHash
+    && proposal["pairId"] === baseCandidate.pairId
+    && proposal["pairId"] === successorCandidate.pairId
+    && proposal["selectionAuthority"] === baseCandidate.selectionAuthority
+    && proposal["selectionAuthority"] === successorCandidate.selectionAuthority
+    && canonicalJson(proposal["selectedDetailedTemplateRef"]) === canonicalJson(baseCandidate.selectedDetailedTemplateRef)
+    && canonicalJson(proposal["selectedDetailedTemplateRef"]) === canonicalJson(successorCandidate.selectedDetailedTemplateRef)
     && candidateEligibleForExactEvent(proposal["eventDistanceM"], baseCandidate)
     && candidateEligibleForExactEvent(proposal["eventDistanceM"], successorCandidate)
-    && validateApprovedAdaptationTransform(baseCandidate, successorCandidate, proposal["changeDimension"]).kind === "approved"
+    && proposal["trigger"] === triggerSnapshot.kind
+    && proposal["triggerSnapshotHash"] === triggerSnapshotHash
+    && isIsoTimestamp(proposal["activePlanStartedAt"])
+    && triggerAllowedValues(proposal["proposalOrigin"], proposal["athleteId"], proposal["eventDistanceM"], proposal["activePlanStartedAt"], triggerSnapshot)
+    && proposal["transformRegistryVersion"] === ADAPTATION_TRANSFORM_REGISTRY_VERSION
+    && proposal["transformRegistryFingerprint"] === ADAPTATION_TRANSFORM_REGISTRY_FINGERPRINT
+    && proposal["transformEdgeId"] === transform.edge.edgeId
+    && proposal["transformPolicyVersion"] === transform.edge.successorPolicyVersion
+    && proposal["transformDirection"] === transform.edge.direction
+    && proposal["predecessorPairFingerprint"] === baseCandidate.pairId
+    && canonicalJson(proposal["allowedJsonPointers"]) === canonicalJson(transform.allowedJsonPointers)
+    && proposal["successorProvenanceHash"] === successorProvenanceHash
+    && proposal["safetySnapshotHash"] === safetySnapshotHash
+    && safetyGate.kind === "passed"
+    && isIsoTimestamp(proposal["safetyEvaluatedAt"])
+    && isIsoTimestamp(proposal["safetyValidUntil"])
+    && Date.parse(proposal["safetyEvaluatedAt"]) <= Date.parse(proposal["createdAt"])
+    && Date.parse(proposal["createdAt"]) <= Date.parse(proposal["safetyValidUntil"])
+    && proposal["activeHold"] === false
+    && proposal["evaluatedAt"] === proposal["createdAt"]
+    && isIsoTimestamp(proposal["createdAt"])
+    && proposal["expiresAt"] === proposalExpiry(proposal["createdAt"])
+    && proposal["edgeExpiresAt"] === transform.edge.expiresAt
+    && proposal["edgeRevoked"] === transform.edge.revoked
+    && proposal["changeDimension"] === "VOLUME"
     && (proposal["proposalOrigin"] === "SELF_SERVICE" || proposal["proposalOrigin"] === "COACH_AUTHORED")
     && proposal["selectionAuthority"] === authorityFor(proposal["proposalOrigin"])
   } catch {
@@ -176,6 +273,12 @@ async function createPlanAdaptationProposalUnchecked(candidate: unknown): Promis
   if (candidateEventDistanceM === null
       || candidateEventDistanceM !== request.proposedCandidate.eventDistanceM
       || candidateEventDistanceM !== request.scope.eventDistanceM
+      || request.baseCandidate.pairId !== request.proposedCandidate.pairId
+      || request.baseCandidate.pairId !== request.scope.pairId
+      || canonicalJson(request.baseCandidate.selectedDetailedTemplateRef) !== canonicalJson(request.scope.selectedDetailedTemplateRef)
+      || canonicalJson(request.proposedCandidate.selectedDetailedTemplateRef) !== canonicalJson(request.scope.selectedDetailedTemplateRef)
+      || request.baseCandidate.selectionAuthority !== authorityFor(request.proposalOrigin)
+      || request.proposedCandidate.selectionAuthority !== authorityFor(request.proposalOrigin)
       || !candidateEligibleForExactEvent(candidateEventDistanceM, request.baseCandidate)
       || !candidateEligibleForExactEvent(request.scope.eventDistanceM, request.proposedCandidate)) return { kind: "rejected", code: "CROSS_SCOPE_PROVENANCE" }
   if (!triggerAllowed(request)) return { kind: "rejected", code: "INELIGIBLE_TRIGGER" }
@@ -188,16 +291,50 @@ async function createPlanAdaptationProposalUnchecked(candidate: unknown): Promis
   if (request.activeHold) return { kind: "blocked", code: "ACTIVE_HOLD" }
   const baseContentHash = await hashPlanCandidate(request.baseCandidate)
   if (baseContentHash !== request.baseContentHash) return { kind: "rejected", code: "STALE_BASE" }
-  const transform = validateApprovedAdaptationTransform(request.baseCandidate, request.proposedCandidate, request.changeDimension)
-  if (transform.kind === "rejected") return transform
+  const dimensions = changedDimensions(request.baseCandidate, request.proposedCandidate)
+  if (dimensions.length === 0) return { kind: "rejected", code: "NO_OP" }
+  if (dimensions.length > 1) return { kind: "rejected", code: "MULTIPLE_DIMENSIONS" }
+  if (dimensions[0] !== request.changeDimension) return { kind: "rejected", code: "DIMENSION_MISMATCH" }
+  const transform = request.changeDimension === "VOLUME"
+    ? resolveRegisteredAdaptationTransform(request.baseCandidate, request.proposedCandidate, request.trigger.kind)
+    : null
+  if (transform === null) return { kind: "rejected", code: "UNAPPROVED_TRANSFORM" }
   const proposedContentHash = await hashPlanCandidate(request.proposedCandidate)
+  const [triggerSnapshotHash, safetySnapshotHash] = await Promise.all([
+    canonicalJsonSha256("trainoracle.plan-adaptation-trigger-snapshot.v1", request.trigger),
+    canonicalJsonSha256("trainoracle.plan-adaptation-safety-snapshot.v1", {
+      safetyGate: request.safetyGate,
+      activeHold: request.activeHold,
+    }),
+  ])
+  const successorProvenanceHash = await hashSuccessorProvenance({
+    pairId: request.scope.pairId,
+    edgeId: transform.edge.edgeId,
+    sourceCandidateId: request.baseCandidate.candidateId,
+    sourceCandidateContentHash: baseContentHash,
+    successorCandidateId: request.proposedCandidate.candidateId,
+    successorContentHash: proposedContentHash,
+  })
   const content = {
     targetFrame: "NEXT_FRAME" as const, athleteId: request.scope.athleteId, eventDistanceM: candidateEventDistanceM,
+    pairId: request.scope.pairId, selectedDetailedTemplateRef: request.scope.selectedDetailedTemplateRef,
     proposalOrigin: request.proposalOrigin, selectionAuthority: authorityFor(request.proposalOrigin), trigger: request.trigger.kind,
-    changeDimension: request.changeDimension, baseCandidateId: request.baseCandidate.candidateId, baseContentHash, proposedContentHash,
+    triggerSnapshot: request.trigger, triggerSnapshotHash, changeDimension: request.changeDimension,
+    transformRegistryVersion: ADAPTATION_TRANSFORM_REGISTRY_VERSION,
+    transformRegistryFingerprint: ADAPTATION_TRANSFORM_REGISTRY_FINGERPRINT,
+    transformEdgeId: transform.edge.edgeId, transformPolicyVersion: transform.edge.successorPolicyVersion,
+    transformDirection: transform.edge.direction, predecessorPairFingerprint: request.scope.pairId,
+    sourceCandidateId: request.baseCandidate.candidateId, sourceCandidateContentHash: baseContentHash,
+    allowedJsonPointers: transform.allowedJsonPointers, activePlanStartedAt: request.activePlanStartedAt,
+    baseCandidateId: request.baseCandidate.candidateId, baseContentHash, proposedContentHash,
     approvedBeforeValueRef: baseContentHash, approvedAfterValueRef: proposedContentHash, baseCandidate: request.baseCandidate,
-    successorCandidate: request.proposedCandidate, createdAt: request.createdAt, idempotencyKey: request.idempotencyKey,
-  }
+    successorCandidate: request.proposedCandidate, successorProvenanceHash,
+    safetyGate: request.safetyGate, safetySnapshotHash,
+    safetyEvaluatedAt: request.safetyEvaluatedAt, safetyValidUntil: request.safetyValidUntil,
+    activeHold: false as const, createdAt: request.createdAt, evaluatedAt: request.createdAt,
+    expiresAt: proposalExpiry(request.createdAt), edgeExpiresAt: transform.edge.expiresAt,
+    edgeRevoked: transform.edge.revoked, idempotencyKey: request.idempotencyKey,
+  } as const
   const proposalHash = await canonicalJsonSha256("trainoracle.plan-adaptation-proposal.v1", content)
   return { kind: "proposed", proposal: Object.freeze({ proposalId: `adaptation:${proposalHash.slice("sha256:".length)}`, proposalHash, ...content }) }
 }
@@ -206,14 +343,17 @@ function parseAdaptationRequest(value: unknown): PlanAdaptationProposalRequest |
   if (!isRecord(value) || !hasExactKeys(value, REQUEST_KEYS) || value["kind"] !== "PLAN_ADAPTATION_PROPOSAL_REQUEST") return null
   const scope = value["scope"]
   const trigger = parseTrigger(value["trigger"])
-  const safetyGate = parseStrictSafetyGate(value["safetyGate"])
-  if (!isRecord(scope) || !hasExactKeys(scope, ["athleteId", "eventDistanceM"]) || !isAthleteId(scope["athleteId"])) return null
+  const safetyGate = parseSafetyGate(value["safetyGate"]) ?? null
+  if (!isRecord(scope) || !hasExactKeys(scope, ["athleteId", "eventDistanceM", "pairId", "selectedDetailedTemplateRef"]) || !isAthleteId(scope["athleteId"])) return null
   const eventDistanceM = parseSupportedEvent(scope["eventDistanceM"])
   const baseCandidate = parsePlanCandidate(value["baseCandidate"])
   const proposedCandidate = parsePlanCandidate(value["proposedCandidate"])
   const proposalOrigin = value["proposalOrigin"]
   const changeDimension = value["changeDimension"]
+  const selectedDetailedTemplateRef = scope["selectedDetailedTemplateRef"]
   if (eventDistanceM === null || baseCandidate === null || proposedCandidate === null || trigger === null || safetyGate === null
+      || typeof scope["pairId"] !== "string" || !scope["pairId"].startsWith("plan-pair:v3:")
+      || !isDetailedTemplateRef(selectedDetailedTemplateRef)
       || (proposalOrigin !== "SELF_SERVICE" && proposalOrigin !== "COACH_AUTHORED")
       || (changeDimension !== "INTENSITY" && changeDimension !== "VOLUME" && changeDimension !== "FREQUENCY")
       || typeof value["baseContentHash"] !== "string" || !SHA256_PATTERN.test(value["baseContentHash"])
@@ -224,7 +364,7 @@ function parseAdaptationRequest(value: unknown): PlanAdaptationProposalRequest |
   const createdAt = value["createdAt"]
   if (!isIsoTimestamp(activePlanStartedAt) || !isIsoTimestamp(safetyEvaluatedAt) || !isIsoTimestamp(safetyValidUntil) || !isIsoTimestamp(createdAt)) return null
   if (!candidateAnchorLabelsMatch(baseCandidate, createdAt) || !candidateAnchorLabelsMatch(proposedCandidate, createdAt)) return null
-  return { kind: "PLAN_ADAPTATION_PROPOSAL_REQUEST", scope: { athleteId: scope["athleteId"], eventDistanceM }, activePlanStartedAt, baseCandidate, proposedCandidate, baseContentHash: value["baseContentHash"], proposalOrigin, trigger, changeDimension, safetyGate, safetyEvaluatedAt, safetyValidUntil, activeHold: value["activeHold"], createdAt, idempotencyKey: value["idempotencyKey"] }
+  return { kind: "PLAN_ADAPTATION_PROPOSAL_REQUEST", scope: { athleteId: scope["athleteId"], eventDistanceM, pairId: scope["pairId"], selectedDetailedTemplateRef }, activePlanStartedAt, baseCandidate, proposedCandidate, baseContentHash: value["baseContentHash"], proposalOrigin, trigger, changeDimension, safetyGate, safetyEvaluatedAt, safetyValidUntil, activeHold: value["activeHold"], createdAt, idempotencyKey: value["idempotencyKey"] }
 }
 
 function parseTrigger(value: unknown): AdaptationTrigger | null {
@@ -235,42 +375,14 @@ function parseTrigger(value: unknown): AdaptationTrigger | null {
         ? { kind: "EXPLICIT_REQUEST", requestedBy: value["requestedBy"], sourceRef: value["sourceRef"] } : null
     case "SAME_EVENT_PB_SB_AFTER_ACTIVE_PLAN_START": {
       const eventDistanceM = parseSupportedEvent(value["eventDistanceM"])
-      if (!hasExactKeys(value, ["kind", "explicitlyConfirmed", "recordId", "purpose", "eventDistanceM", "achievedAt", "sourceRef", "historicalOrBackfilled"])
+      if (!hasExactKeys(value, ["kind", "explicitlyConfirmed", "recordId", "purpose", "eventDistanceM", "performanceSeconds", "achievedAt", "sourceRef", "historicalOrBackfilled"])
           || value["explicitlyConfirmed"] !== true || typeof value["historicalOrBackfilled"] !== "boolean" || eventDistanceM === null
           || !isRecordId(value["recordId"]) || (value["purpose"] !== "PERSONAL_BEST" && value["purpose"] !== "SEASON_BEST")
+          || typeof value["performanceSeconds"] !== "number" || !Number.isFinite(value["performanceSeconds"]) || value["performanceSeconds"] <= 0
           || !isIsoTimestamp(value["achievedAt"]) || value["sourceRef"] !== `athlete-record:${value["recordId"]}`) return null
-      return { kind: "SAME_EVENT_PB_SB_AFTER_ACTIVE_PLAN_START", explicitlyConfirmed: true, recordId: value["recordId"], purpose: value["purpose"], eventDistanceM, achievedAt: value["achievedAt"], sourceRef: value["sourceRef"], historicalOrBackfilled: value["historicalOrBackfilled"] }
+      return { kind: "SAME_EVENT_PB_SB_AFTER_ACTIVE_PLAN_START", explicitlyConfirmed: true, recordId: value["recordId"], purpose: value["purpose"], eventDistanceM, performanceSeconds: value["performanceSeconds"], achievedAt: value["achievedAt"], sourceRef: value["sourceRef"], historicalOrBackfilled: value["historicalOrBackfilled"] }
     }
     default: return null
-  }
-}
-
-function parseStrictSafetyGate(value: unknown): SafetyGateDecision | null {
-  if (!isRecord(value) || !isRecord(value["audit"]) || !hasExactKeys(value["audit"], ["event", "privacy"])) return null
-  const reasonCodes = value["nonSensitiveReasonCodes"]
-  if (!Array.isArray(reasonCodes) || !isDenseArray(reasonCodes)
-      || !reasonCodes.every((code) => typeof code === "string" && SAFETY_REASON_CODES.has(code))) return null
-  const audit = value["audit"]
-  if (audit["privacy"] !== "REASON_CODES_ONLY") return null
-  switch (value["kind"]) {
-    case "passed":
-      return hasExactKeys(value, ["kind", "action", "planGenerationAllowed", "nonSensitiveReasonCodes", "audit"])
-        && value["action"] === "CONTINUE_WITH_OTHER_GATES"
-        && value["planGenerationAllowed"] === true
-        && audit["event"] === "PLAN_SAFETY_GATE_PASSED"
-        ? { kind: "passed", action: "CONTINUE_WITH_OTHER_GATES", planGenerationAllowed: true, nonSensitiveReasonCodes: reasonCodes, audit: { event: "PLAN_SAFETY_GATE_PASSED", privacy: "REASON_CODES_ONLY" } }
-        : null
-    case "blocked":
-      if (!hasExactKeys(value, ["kind", "action", "planGenerationAllowed", "requiredNextAction", "nonSensitiveReasonCodes", "audit"])
-          || value["planGenerationAllowed"] !== false || audit["event"] !== "PLAN_SAFETY_GATE_BLOCKED") return null
-      if (value["action"] === "BLOCK" && value["requiredNextAction"] === "HUMAN_REVIEW") {
-        return { kind: "blocked", action: "BLOCK", planGenerationAllowed: false, requiredNextAction: "HUMAN_REVIEW", nonSensitiveReasonCodes: reasonCodes, audit: { event: "PLAN_SAFETY_GATE_BLOCKED", privacy: "REASON_CODES_ONLY" } }
-      }
-      return value["action"] === "BLOCK_OR_HUMAN_REVIEW" && value["requiredNextAction"] === "MORE_INFO_OR_HUMAN_REVIEW"
-        ? { kind: "blocked", action: "BLOCK_OR_HUMAN_REVIEW", planGenerationAllowed: false, requiredNextAction: "MORE_INFO_OR_HUMAN_REVIEW", nonSensitiveReasonCodes: reasonCodes, audit: { event: "PLAN_SAFETY_GATE_BLOCKED", privacy: "REASON_CODES_ONLY" } }
-        : null
-    default:
-      return null
   }
 }
 
@@ -279,16 +391,24 @@ function parsePlanCandidate(value: unknown): PlanCandidate | null {
   return value
 }
 
+export function isVerifiedPlanCandidate(value: unknown): value is PlanCandidate {
+  return isCanonicalJsonTree(value) && isPlanCandidate(value)
+}
+
 function isPlanCandidate(value: unknown): value is PlanCandidate {
+  const continuityContext = isRecord(value) ? value["continuityContext"] : undefined
+  const selectedEnergyIntent = isRecord(value) ? value["selectedEnergyIntent"] : undefined
   if (!isRecord(value) || !hasExactKeys(value, CANDIDATE_KEYS) || !Array.isArray(value["sessions"])
       || !isDenseArray(value["sessions"]) || !value["sessions"].every(isPlanSession)
       || (value["kind"] !== "BALANCED" && value["kind"] !== "CONSERVATIVE")
       || (value["eventGroup"] !== "MIDDLE_DISTANCE" && value["eventGroup"] !== "FIVE_K")
-      || !(value["eventDistanceM"] === null || parseSupportedEvent(value["eventDistanceM"]) !== null)
-      || !isPlannedEnergyIntent(value["selectedEnergyIntent"])
+      || parseSupportedEvent(value["eventDistanceM"]) === null
+      || typeof value["pairId"] !== "string" || !value["pairId"].startsWith("plan-pair:v3:")
+      || !isDetailedTemplateRef(value["selectedDetailedTemplateRef"])
+      || !isPlannedEnergyIntent(selectedEnergyIntent)
       || (value["sourceMode"] !== "PROFILE_ONLY" && value["sourceMode"] !== "JOURNAL_CONTEXT_ONLY")
       || value["confidence"] !== "LIMITED" || !isCandidateBeta(value["beta"])
-      || !isContinuityContext(value["continuityContext"])
+      || !isContinuityContext(continuityContext)
       || (value["selectionAuthority"] !== "SELF" && value["selectionAuthority"] !== "COACH_REQUIRED")
       || !isCandidateFrame(value["frame"]) || !isExposureLedger(value["mainExposureLedger"])
       || !Array.isArray(value["rationaleCodes"]) || !isDenseArray(value["rationaleCodes"])
@@ -313,10 +433,44 @@ function isPlanCandidate(value: unknown): value is PlanCandidate {
   const ledger = value["mainExposureLedger"]
   if (!isExposureLedger(ledger)) return false
   const exposureIdentity = `:${ledger.countedExposureIds.join("-")}:`
+  const reference = value["selectedDetailedTemplateRef"]
+  const templateIdentity = reference === null
+    ? "rpe-only"
+    : `${reference.templateId.toLowerCase()}.${reference.version}.${reference.fingerprint.slice("sha256:".length)}`
+  const baseCandidateId = value["candidateId"].split(":pace-target:")[0]
+  const candidateSegments = baseCandidateId?.split(":") ?? []
+  const expectedContinuityIdentity = continuityContextIdentity(continuityContext)
+  const expectedPairId = [
+    "plan-pair", "v3", value["eventDistanceM"], templateIdentity,
+    selectedEnergyIntent.toLowerCase(), candidateSegments[10], candidateSegments[11],
+    expectedContinuityIdentity,
+  ].join(":")
+  const expectedDetailedIntent = value["eventDistanceM"] === 800
+    ? "GLY_INTENT"
+    : value["eventDistanceM"] === 1500
+      ? "MIXED_INTENT"
+      : "VO2_INTENT"
   return value["candidateId"].includes(eventIdentity)
     && value["candidateId"].includes(exposureIdentity)
+    && value["candidateId"].includes(`:template-${templateIdentity}`)
+    && continuityIdentityFromCandidateId(value["candidateId"]) === expectedContinuityIdentity
+    && pairIdHasBase(value["pairId"], expectedPairId)
+    && hasValidCandidateIdentity(value["candidateId"], projectPlanCandidate(value as PlanCandidate))
+    && (reference === null || selectedEnergyIntent === expectedDetailedIntent)
     && value["sessions"].every((session) => session.prescription.kind !== "PACE_TARGET"
-    || session.prescription.scope.eventGroup === value["eventGroup"])
+    || (session.prescription.scope.eventGroup === value["eventGroup"]
+      && reference !== null
+      && session.prescription.templateId === reference.templateId
+      && session.prescription.templateVersion === reference.version
+      && session.prescription.templateContentFingerprint === reference.fingerprint))
+}
+
+function isDetailedTemplateRef(value: unknown): value is DetailedTemplateRef | null {
+  return value === null || (isRecord(value)
+    && hasExactKeys(value, ["templateId", "version", "fingerprint"])
+    && typeof value["templateId"] === "string" && /^[A-Z0-9]+(?:-[A-Z0-9]+)*$/u.test(value["templateId"])
+    && typeof value["version"] === "string" && /^\d+\.\d+\.\d+$/u.test(value["version"])
+    && typeof value["fingerprint"] === "string" && SHA256_PATTERN.test(value["fingerprint"]))
 }
 
 function isPlanSession(value: unknown): value is PlanSession {
@@ -333,11 +487,18 @@ function isPlanSession(value: unknown): value is PlanSession {
 function hasRpePrescription(session: Record<string, unknown>): boolean {
   const prescription = session["prescription"]
   if (!hasExactKeys(session, ["day", "slot", "role", "plannedEnergyIntent", "prescription"]) || !isRecord(prescription) || !hasExactKeys(prescription, ["kind", "rpe", "durationMinutes"]) || prescription["kind"] !== "RPE_TIME_RANGE") return false
-  return isFiniteRange(prescription["rpe"]) && isFiniteRange(prescription["durationMinutes"])
+  return isBoundedRange(prescription["rpe"], 1, 10)
+    && isBoundedRange(prescription["durationMinutes"], Number.MIN_VALUE, Number.POSITIVE_INFINITY)
 }
 
 function isFiniteRange(value: unknown): boolean {
   return isRecord(value) && hasExactKeys(value, ["minimum", "maximum"]) && typeof value["minimum"] === "number" && Number.isFinite(value["minimum"]) && typeof value["maximum"] === "number" && Number.isFinite(value["maximum"]) && value["minimum"] <= value["maximum"]
+}
+
+function isBoundedRange(value: unknown, minimum: number, maximum: number): boolean {
+  return isFiniteRange(value) && isRecord(value)
+    && typeof value["minimum"] === "number" && value["minimum"] >= minimum
+    && typeof value["maximum"] === "number" && value["maximum"] <= maximum
 }
 
 function isCandidateBeta(value: unknown): boolean {
@@ -346,7 +507,7 @@ function isCandidateBeta(value: unknown): boolean {
     && value["formationMethodClaim"] === "NOT_UNIVERSAL"
 }
 
-function isContinuityContext(value: unknown): boolean {
+function isContinuityContext(value: unknown): value is PlanCandidate["continuityContext"] {
   if (!isRecord(value)) return false
   if (value["kind"] === "NO_PREVIOUS_FRAME_CONTEXT") return hasExactKeys(value, ["kind"])
   return value["kind"] === "PREVIOUS_FRAME_CONTEXT_RETAINED"
@@ -660,7 +821,7 @@ function isStopCode(value: unknown): boolean {
 
 function isPositiveInteger(value: unknown): value is number { return typeof value === "number" && Number.isInteger(value) && value > 0 }
 function isPositiveNumber(value: unknown): value is number { return typeof value === "number" && Number.isFinite(value) && value > 0 }
-function isPlannedEnergyIntent(value: unknown): boolean { return value === "RECOVERY_INTENT" || value === "BASE_INTENT" || isQualityEnergyIntent(value) }
+function isPlannedEnergyIntent(value: unknown): value is PlanCandidate["selectedEnergyIntent"] { return value === "RECOVERY_INTENT" || value === "BASE_INTENT" || isQualityEnergyIntent(value) }
 function isQualityEnergyIntent(value: unknown): boolean { return value === "LT_INTENT" || value === "VO2_INTENT" || value === "GLY_INTENT" || value === "ATP_PC_INTENT" || value === "MIXED_INTENT" }
 
 function changedDimensions(base: PlanCandidate, next: PlanCandidate): AdaptationDimension[] {
@@ -688,36 +849,60 @@ export function validateApprovedAdaptationTransform(
     if (changed.length === 0) return { kind: "rejected", code: "NO_OP" }
     if (changed.length > 1) return { kind: "rejected", code: "MULTIPLE_DIMENSIONS" }
     if (changed[0] !== claimedDimension) return { kind: "rejected", code: "DIMENSION_MISMATCH" }
-    if (claimedDimension !== "VOLUME" || !isApprovedConservativeVolumeTransform(base, successor)) return { kind: "rejected", code: "UNAPPROVED_TRANSFORM" }
+    if (claimedDimension !== "VOLUME"
+        || resolveRegisteredAdaptationTransform(base, successor, "EXPLICIT_REQUEST") === null) return { kind: "rejected", code: "UNAPPROVED_TRANSFORM" }
     return { kind: "approved", changeDimension: "VOLUME" }
   } catch {
     return { kind: "rejected", code: "MALFORMED_INPUT" }
   }
 }
 
-function isApprovedConservativeVolumeTransform(base: PlanCandidate, next: PlanCandidate): boolean {
-  if (base.kind !== "BALANCED" || next.kind !== "CONSERVATIVE" || next.candidateId !== base.candidateId.replace("beta:balanced:", "beta:conservative:") || base.sessions.length !== next.sessions.length) return false
-  const stable = (plan: PlanCandidate) => ({ eventGroup: plan.eventGroup, eventDistanceM: plan.eventDistanceM, selectedEnergyIntent: plan.selectedEnergyIntent, sourceMode: plan.sourceMode, confidence: plan.confidence, beta: plan.beta, detailedPrescriptionFingerprint: plan.detailedPrescriptionFingerprint, continuityContext: plan.continuityContext, selectionAuthority: plan.selectionAuthority, frame: plan.frame, mainExposureLedger: plan.mainExposureLedger, rationaleCodes: plan.rationaleCodes })
-  if (canonicalJson(stable(base)) !== canonicalJson(stable(next))) return false
-  return base.sessions.every((session, index) => {
-    const successor = next.sessions[index]
-    if (successor === undefined || session.day !== successor.day || session.slot !== successor.slot || session.role !== successor.role || session.plannedEnergyIntent !== successor.plannedEnergyIntent || session.prescription.kind !== successor.prescription.kind) return false
-    if (session.prescription.kind !== "RPE_TIME_RANGE" || successor.prescription.kind !== "RPE_TIME_RANGE") return canonicalJson(session.prescription) === canonicalJson(successor.prescription)
-    return canonicalJson(session.prescription.rpe) === canonicalJson(successor.prescription.rpe) && successor.prescription.durationMinutes.minimum === session.prescription.durationMinutes.minimum && (successor.prescription.durationMinutes.maximum === session.prescription.durationMinutes.minimum || successor.prescription.durationMinutes.maximum === session.prescription.durationMinutes.maximum)
-  })
+function proposalExpiry(createdAt: string): string {
+  return new Date(Date.parse(createdAt) + 72 * 60 * 60 * 1_000).toISOString()
+}
+
+function hashSuccessorProvenance(value: {
+  readonly pairId: string
+  readonly edgeId: AdaptationTransformEdgeId
+  readonly sourceCandidateId: string
+  readonly sourceCandidateContentHash: string
+  readonly successorCandidateId: string
+  readonly successorContentHash: string
+}): Promise<string> {
+  return canonicalJsonSha256("trainoracle.plan-adaptation-successor-provenance.v1", value)
 }
 
 function triggerAllowed(request: PlanAdaptationProposalRequest): boolean {
-  switch (request.trigger.kind) {
+  return triggerAllowedValues(
+    request.proposalOrigin,
+    request.scope.athleteId,
+    request.scope.eventDistanceM,
+    request.activePlanStartedAt,
+    request.trigger,
+  )
+}
+
+function triggerAllowedValues(
+  proposalOrigin: unknown,
+  athleteId: unknown,
+  eventDistanceM: unknown,
+  activePlanStartedAt: unknown,
+  trigger: AdaptationTrigger,
+): boolean {
+  if ((proposalOrigin !== "SELF_SERVICE" && proposalOrigin !== "COACH_AUTHORED")
+      || !isAthleteId(athleteId)
+      || parseSupportedEvent(eventDistanceM) === null
+      || !isIsoTimestamp(activePlanStartedAt)) return false
+  switch (trigger.kind) {
     case "EXPLICIT_REQUEST": {
-      const actor = request.proposalOrigin === "SELF_SERVICE" ? "ATHLETE" : "COACH"
-      const prefix = `${actor.toLowerCase()}-request:${request.scope.athleteId}:`
-      return request.trigger.requestedBy === actor
-        && request.trigger.sourceRef.startsWith(prefix)
-        && /^(?:req-\d+|v\d+)$/u.test(request.trigger.sourceRef.slice(prefix.length))
+      const actor = proposalOrigin === "SELF_SERVICE" ? "ATHLETE" : "COACH"
+      const prefix = `${actor.toLowerCase()}-request:${athleteId}:`
+      return trigger.requestedBy === actor
+        && trigger.sourceRef.startsWith(prefix)
+        && /^(?:req-\d+|v\d+)$/u.test(trigger.sourceRef.slice(prefix.length))
     }
-    case "SAME_EVENT_PB_SB_AFTER_ACTIVE_PLAN_START": return !request.trigger.historicalOrBackfilled && request.trigger.eventDistanceM === request.scope.eventDistanceM && request.trigger.sourceRef === `athlete-record:${request.trigger.recordId}` && Date.parse(request.trigger.achievedAt) > Date.parse(request.activePlanStartedAt)
-    default: return assertNever(request.trigger)
+    case "SAME_EVENT_PB_SB_AFTER_ACTIVE_PLAN_START": return !trigger.historicalOrBackfilled && trigger.eventDistanceM === eventDistanceM && trigger.sourceRef === `athlete-record:${trigger.recordId}` && Date.parse(trigger.achievedAt) > Date.parse(activePlanStartedAt)
+    default: return assertNever(trigger)
   }
 }
 
@@ -779,7 +964,11 @@ function candidateAnchorLabelsMatch(candidate: PlanCandidate, evaluatedAt: strin
   })
 }
 function isAthleteId(value: unknown): value is string { return typeof value === "string" && (value === "local-athlete" || /^athlete-\d+$/u.test(value) || UUID_PATTERN.test(value)) }
-function isRecordId(value: unknown): value is string { return typeof value === "string" && (UUID_PATTERN.test(value) || LOCAL_RECORD_ID_PATTERN.test(value)) }
+function isRecordId(value: unknown): value is string {
+  return typeof value === "string"
+    && OPAQUE_RECORD_ID_PATTERN.test(value)
+    && !PRIVATE_KEY.test(value)
+}
 function isExposureId(value: unknown): value is string { return typeof value === "string" && EXPOSURE_ID_PATTERN.test(value) }
 function isCandidateId(value: unknown, detailedFingerprint: unknown): value is string {
   if (typeof value !== "string") return false

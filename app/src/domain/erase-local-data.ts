@@ -24,6 +24,38 @@ import {
   PRIVATE_NOTE_RECOVERY_STORAGE_KEY,
   SYNC_RECOVERY_STORAGE_KEY,
 } from "./journal-storage-keys"
+import {
+  LOCAL_JOURNAL_OWNERSHIP_KEY,
+  retainJournalOwnershipForIds,
+} from "./account/local-journal-ownership"
+import { loadTombstones } from "./account/tombstone"
+import { findAccountScopedStorageKeys } from "./account/local-account-scope"
+import { DAILY_CONTEXT_STORAGE_KEY } from "./daily-context"
+import { FATIGUE_EXPERIMENT_STORAGE_KEY } from "./fatigue-experiment-store"
+import { SYNC_CONSENT_STORAGE_KEY } from "./account/sync-local"
+
+const ACCOUNT_SCOPED_PLAN_LOCAL_KEYS = [
+  "trainoracle.plan-beta.v1",
+  "trainoracle.plan-beta.history.v1",
+  "trainoracle.plan-beta.adaptation.v1",
+  "trainoracle.plan-beta.adaptation-activation.v1",
+  "trainoracle.plan-adaptation-context.v1",
+  "trainoracle.plan-cloud-archive.v1",
+] as const
+const ACCOUNT_SCOPED_LOCAL_KEYS = [
+  ATHLETE_RECORDS_STORAGE_KEY,
+  DECORATION_STORAGE_KEY_V1,
+  DECORATION_STORAGE_KEY_V2,
+  DAILY_CONTEXT_STORAGE_KEY,
+  FATIGUE_EXPERIMENT_STORAGE_KEY,
+  SYNC_CONSENT_STORAGE_KEY,
+  SYNC_RECOVERY_STORAGE_KEY,
+  ...ACCOUNT_SCOPED_PLAN_LOCAL_KEYS,
+] as const
+const ACCOUNT_SCOPED_SESSION_KEYS = [
+  "trainoracle.plan-beta.previous-intake.v1",
+  PRIVATE_NOTE_RECOVERY_STORAGE_KEY,
+] as const
 
 /** 일지 본문이 담기는 키 — 반드시 지운다 */
 const CONTENT_KEYS = [
@@ -38,21 +70,26 @@ const CONTENT_KEYS = [
   SYNC_RECOVERY_STORAGE_KEY,
   PRIVATE_MEMO_VAULT_STORAGE_KEY,
   ATHLETE_RECORDS_STORAGE_KEY,
-  "trainoracle.plan-beta.v1",
-  "trainoracle.plan-beta.history.v1",
+  ...ACCOUNT_SCOPED_PLAN_LOCAL_KEYS,
+  // 이전 빌드가 이 세션 값을 localStorage에 남겼을 가능성까지 정리한다.
   "trainoracle.plan-beta.previous-intake.v1",
-  "trainoracle.plan-beta.adaptation.v1",
-  "trainoracle.plan-adaptation-context.v1",
   "trainoracle.engagement.v1",
   ENGAGEMENT_STORAGE_KEY,
+  DAILY_CONTEXT_STORAGE_KEY,
+  FATIGUE_EXPERIMENT_STORAGE_KEY,
   "trainoracle.onboarding.dismissed.v1",
 ] as const
 
-const SESSION_KEYS = [PRIVATE_NOTE_RECOVERY_STORAGE_KEY] as const
+const SESSION_KEYS = [
+  PRIVATE_NOTE_RECOVERY_STORAGE_KEY,
+  "trainoracle.account.pending-setup.v1",
+  ...ACCOUNT_SCOPED_SESSION_KEYS,
+] as const
 
 /** 계정·동기화 관련 키 — 기기를 넘길 때 남으면 안 된다 */
 const ACCOUNT_KEYS = [
   "trainoracle.auth.v1",
+  "trainoracle.account.setup-receipt.v1",
   "trainoracle.sync.consent.v1",
   // 이 키에는 **계정 userId가 평문으로** 들어 있다(`sync.ts`의 claimSyncOwner).
   // 원래는 삭제 기록과 한 묶음으로 다뤄 기본 삭제에서 빠져 있었는데, 그 묶음의
@@ -129,18 +166,32 @@ export function eraseAllLocalData(options: EraseOptions = {}): EraseResult {
   const localStorage = storage("local")
   if (localStorage === null) return { ok: false, cleared: 0, failed: ["storage-unavailable"] }
 
-  const keys: string[] = [...CONTENT_KEYS, ...ACCOUNT_KEYS]
+  const retainedTombstoneIds = options.includeDeletionRecord === true
+    ? []
+    : loadTombstones().map((tombstone) => tombstone.id)
+  const keys: string[] = [
+    ...CONTENT_KEYS,
+    ...ACCOUNT_KEYS,
+    ...findAccountScopedStorageKeys(localStorage, ACCOUNT_SCOPED_LOCAL_KEYS),
+  ]
   if (options.includeDeletionRecord === true) {
     keys.push(DELETION_RECORD_KEY)
   }
 
   const failed: string[] = []
   let cleared = clearStorageKeys(localStorage, keys, failed)
+  const ownershipResult = retainJournalOwnershipForIds(retainedTombstoneIds)
+  if (ownershipResult === "removed") cleared += 1
+  else if (ownershipResult === "failed") failed.push(LOCAL_JOURNAL_OWNERSHIP_KEY)
   const sessionStorage = storage("session")
   if (sessionStorage === null) {
     failed.push("session-storage-unavailable")
   } else {
-    cleared += clearStorageKeys(sessionStorage, SESSION_KEYS, failed)
+    const sessionKeys = [
+      ...SESSION_KEYS,
+      ...findAccountScopedStorageKeys(sessionStorage, ACCOUNT_SCOPED_SESSION_KEYS),
+    ]
+    cleared += clearStorageKeys(sessionStorage, sessionKeys, failed)
   }
 
   return { ok: failed.length === 0, cleared, failed }
@@ -149,8 +200,17 @@ export function eraseAllLocalData(options: EraseOptions = {}): EraseResult {
 /** 지워질 대상 키 목록 — UI에서 "무엇이 지워지는지" 보여줄 때 쓴다 */
 export function erasableKeys(options: EraseOptions = {}): readonly string[] {
   const keys: string[] = [...CONTENT_KEYS, ...ACCOUNT_KEYS, ...SESSION_KEYS]
+  const localStorage = storage("local")
+  if (localStorage !== null) {
+    keys.push(...findAccountScopedStorageKeys(localStorage, ACCOUNT_SCOPED_LOCAL_KEYS))
+  }
+  const sessionStorage = storage("session")
+  if (sessionStorage !== null) {
+    keys.push(...findAccountScopedStorageKeys(sessionStorage, ACCOUNT_SCOPED_SESSION_KEYS))
+  }
   if (options.includeDeletionRecord === true) {
     keys.push(DELETION_RECORD_KEY)
+    keys.push(LOCAL_JOURNAL_OWNERSHIP_KEY)
   }
   return keys
 }

@@ -72,3 +72,14 @@ test("rejects a second active seed", async () => {
   assert.notEqual(catalog, value.catalog)
   assert.throws(() => validateCurrentActivation({ ...value, catalog }), /only V2-SEED-05 may be active/u)
 })
+
+test("rejects a missing or additional runtime allowlist entry", async () => {
+  const value = await inputs()
+  for (const contract of [
+    value.contract.replace(/    - MD-3000-01@1\.0\.0\r?\n/u, ""),
+    value.contract.replace(/    - MD-3000-01@1\.0\.0\r?\n/u, "    - MD-3000-01@1.0.0\n    - UNAPPROVED-01@1.0.0\n"),
+  ]) {
+    assert.notEqual(contract, value.contract, "hostile allowlist mutation must alter its target")
+    assert.throws(() => validateCurrentActivation({ ...value, contract }), /contract active numeric template allowlist mismatch/u)
+  }
+})

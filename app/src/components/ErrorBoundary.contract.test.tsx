@@ -4,7 +4,8 @@
 // 흰 화면이 되면 기기에만 있는 기록에 접근할 방법이 사라진다.
 import { describe, expect, it, vi, beforeEach, afterEach } from "vitest"
 import { cleanup, render, screen } from "@testing-library/react"
-import { ErrorBoundary } from "./ErrorBoundary"
+import { ErrorBoundary, emergencyJournalBackupRaw } from "./ErrorBoundary"
+import { setActiveLocalAccount } from "../domain/account/local-journal-ownership"
 
 const JOURNAL_KEY = "trainoracle.journal.v1"
 
@@ -14,12 +15,14 @@ function Boom(): React.ReactElement {
 
 beforeEach(() => {
   window.localStorage.clear()
+  setActiveLocalAccount(null)
   // React가 경계 테스트에서 콘솔에 찍는 오류를 잠시 가린다
   vi.spyOn(console, "error").mockImplementation(() => {})
 })
 
 afterEach(() => {
   cleanup()
+  setActiveLocalAccount(null)
   vi.restoreAllMocks()
 })
 
@@ -47,6 +50,33 @@ describe("ErrorBoundary", () => {
     render(<ErrorBoundary><Boom /></ErrorBoundary>)
     // "다시 시도"만 있으면 같은 오류가 반복될 때 탈출구가 없다
     expect(screen.getByTestId("error-download-backup")).toBeTruthy()
+  })
+
+  it("오류 백업에서도 다른 계정의 일지를 제외한다", () => {
+    window.localStorage.setItem(JOURNAL_KEY, JSON.stringify([
+      { id: "device", title: "기기 일지" },
+      { id: "mine", title: "내 일지" },
+      { id: "other", title: "다른 계정 일지" },
+    ]))
+    window.localStorage.setItem("trainoracle.journal.ownership.v1", JSON.stringify({
+      schemaVersion: 1,
+      ownerByEntryId: { mine: "account-a", other: "account-b" },
+    }))
+    setActiveLocalAccount("account-a")
+
+    expect(JSON.parse(emergencyJournalBackupRaw())).toEqual([
+      { id: "device", title: "기기 일지" },
+      { id: "mine", title: "내 일지" },
+    ])
+    render(<ErrorBoundary><Boom /></ErrorBoundary>)
+    expect(screen.getByText(/일지 2개는 이 기기에 그대로 있어요/u)).toBeTruthy()
+  })
+
+  it("소유권 장부가 손상되면 공용 원문을 내보내지 않는다", () => {
+    window.localStorage.setItem(JOURNAL_KEY, JSON.stringify([{ id: "possibly-private" }]))
+    window.localStorage.setItem("trainoracle.journal.ownership.v1", "{broken")
+
+    expect(emergencyJournalBackupRaw()).toBe("[]")
   })
 
   it("다시 열어 보기 경로를 제공한다", () => {

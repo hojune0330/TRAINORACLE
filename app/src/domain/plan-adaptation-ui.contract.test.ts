@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest"
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import {
   createPlanAdaptationProposal,
   hashPlanCandidate,
@@ -27,18 +27,45 @@ import {
   type PlanBetaState,
 } from "./plan-beta-store"
 import { createPlanFormation } from "./plan-beta-formation"
-import type { PlanBetaStateV2 } from "./plan-beta-schema"
+import { planAdaptationProposalSchema, planBetaStateV3Schema } from "./plan-beta-schema"
+import type { PlanBetaStateV3 } from "./plan-beta-schema"
+import { DETAILED_PRESCRIPTION_APPROVALS } from "./detailed-prescription-approvals"
 import { saveSelectedPlanCandidate } from "../screens/plan-beta/plan-selection"
 import {
   loadPlanAdaptationContext,
   PLAN_ADAPTATION_CONTEXT_STORAGE_KEY,
 } from "./plan-adaptation-ui-context"
+import { PLAN_BETA_MUTATION_LOCK_NAME } from "./plan-mutation-lock"
 
 const ACTIVE_KEY = "trainoracle.plan-beta.v1"
+let locksDescriptor: PropertyDescriptor | undefined
+const fiveKApproval = DETAILED_PRESCRIPTION_APPROVALS.find((approval) => approval.targetEventDistanceM === 5000)
+if (fiveKApproval === undefined) throw new TypeError("Expected approved 5000m fixture")
+const fiveKTemplateRef = {
+  templateId: fiveKApproval.templateId,
+  version: fiveKApproval.templateVersion,
+  fingerprint: fiveKApproval.templateContentFingerprint,
+} as const
 
 beforeEach(() => {
   window.localStorage.clear()
   window.sessionStorage.clear()
+  locksDescriptor = Object.getOwnPropertyDescriptor(navigator, "locks")
+  Object.defineProperty(navigator, "locks", {
+    configurable: true,
+    value: {
+      request: async (name: string, _options: unknown, callback: (lock: object | null) => unknown) => {
+        expect(name).toBe(PLAN_BETA_MUTATION_LOCK_NAME)
+        return callback({})
+      },
+    },
+  })
+})
+
+afterEach(() => {
+  if (locksDescriptor === undefined) Reflect.deleteProperty(navigator, "locks")
+  else Object.defineProperty(navigator, "locks", locksDescriptor)
+  vi.restoreAllMocks()
 })
 
 describe("next-frame adaptation UI adapter", () => {
@@ -83,7 +110,11 @@ describe("next-frame adaptation UI adapter", () => {
     ] as [PlanCandidate, PlanCandidate]
     const setItem = vi.spyOn(Storage.prototype, "setItem")
 
-    expect(savePlanAdaptationContext(candidates, fixture.baseCandidate.candidateId)).toBe(false)
+    expect(savePlanAdaptationContext(candidates, fixture.baseCandidate.candidateId)).toEqual({
+      ok: false,
+      code: "ADAPTATION_CONTEXT_STORAGE_WRITE_FAILED",
+      rollbackComplete: true,
+    })
     expect(setItem).not.toHaveBeenCalled()
   })
 
@@ -103,8 +134,30 @@ describe("next-frame adaptation UI adapter", () => {
     expect(savePlanAdaptationContext(
       candidates,
       fixture.baseCandidate.candidateId,
-    )).toBe(false)
+    )).toEqual({
+      ok: false,
+      code: "ADAPTATION_CONTEXT_STORAGE_WRITE_FAILED",
+      rollbackComplete: true,
+    })
     expect(setItem).not.toHaveBeenCalled()
+  })
+
+  it("reports an uncertain rollback when the previous adaptation context cannot be read", () => {
+    const fixture = createCoachRequiredFixture(new Date("2026-08-18T12:00:00.000Z"))
+    const realGetItem = Storage.prototype.getItem
+    vi.spyOn(Storage.prototype, "getItem").mockImplementation(function (this: Storage, key: string) {
+      if (key === PLAN_ADAPTATION_CONTEXT_STORAGE_KEY) throw new Error("SecurityError")
+      return realGetItem.call(this, key)
+    })
+
+    expect(savePlanAdaptationContext(
+      [fixture.baseCandidate, fixture.proposedCandidate],
+      fixture.baseCandidate.candidateId,
+    )).toEqual({
+      ok: false,
+      code: "ADAPTATION_CONTEXT_STORAGE_WRITE_FAILED",
+      rollbackComplete: false,
+    })
   })
 
   it("rejects a raw active candidate selector without changing saved context bytes", () => {
@@ -118,7 +171,11 @@ describe("next-frame adaptation UI adapter", () => {
     expect(savePlanAdaptationContext(
       candidates,
       "raw-symptom-chest-pain-after-training-1",
-    )).toBe(false)
+    )).toEqual({
+      ok: false,
+      code: "ADAPTATION_CONTEXT_STORAGE_WRITE_FAILED",
+      rollbackComplete: true,
+    })
     expect(setItem).not.toHaveBeenCalled()
     expect(window.localStorage.getItem(PLAN_ADAPTATION_CONTEXT_STORAGE_KEY)).toBe(previousBytes)
   })
@@ -141,12 +198,43 @@ describe("next-frame adaptation UI adapter", () => {
     expect(loadPlanAdaptationContext(fixture.baseCandidate.candidateId)).toBeNull()
   })
 
-  it("accepts one real conservative successor, survives reload, and preserves active bytes", async () => {
+  it("restores the previous adaptation context after a silent readback mismatch", () => {
+    const first = createCoachRequiredFixture(new Date("2026-08-18T12:00:00.000Z"))
+    const previousBytes = window.localStorage.getItem(PLAN_ADAPTATION_CONTEXT_STORAGE_KEY)
+    expect(previousBytes).not.toBeNull()
+    const realSetItem = Storage.prototype.setItem
+    let corruptOnce = true
+    vi.spyOn(Storage.prototype, "setItem").mockImplementation(function (
+      this: Storage,
+      key: string,
+      value: string,
+    ) {
+      if (key === PLAN_ADAPTATION_CONTEXT_STORAGE_KEY && corruptOnce) {
+        corruptOnce = false
+        return realSetItem.call(this, key, "{\"corrupt\":true}")
+      }
+      return realSetItem.call(this, key, value)
+    })
+
+    expect(savePlanAdaptationContext(
+      [first.baseCandidate, first.proposedCandidate],
+      first.proposedCandidate.candidateId,
+    )).toEqual({
+      ok: false,
+      code: "ADAPTATION_CONTEXT_STORAGE_WRITE_FAILED",
+      rollbackComplete: true,
+    })
+    expect(window.localStorage.getItem(PLAN_ADAPTATION_CONTEXT_STORAGE_KEY)).toBe(previousBytes)
+    expect(loadPlanAdaptationContext(first.baseCandidate.candidateId)).not.toBeNull()
+  })
+
+  it("rolls the active plan back when its paired adaptation context cannot be saved", async () => {
     const now = new Date()
-    const anchor = athleteRecord("00000000-0000-4000-8000-000000005001", 5000, "2026-08-01", now)
+    const anchor = athleteRecord("00000000-0000-4000-8000-000000005099", 5000, "2026-08-01", now)
     expect(saveAthleteRecord(anchor, now).ok).toBe(true)
     const generated = generatePlanFromDraft({
       eventGroup: "FIVE_K",
+      eventDistanceM: 5000,
       competitionDivision: "OPEN",
       experienceBand: "EXPERIENCED",
       availableDayCount: 5,
@@ -154,11 +242,182 @@ describe("next-frame adaptation UI adapter", () => {
       trainingFocus: "VO2_INTENT",
       secondSessionMode: "SINGLE_SESSION_ONLY",
       trainingTimePreference: "MORNING",
+      selectedDetailedTemplateRef: fiveKTemplateRef,
+    }, "NO_KNOWN_RISK", { selectedRecordId: anchor.id })
+    if (generated.kind !== "generated") throw new TypeError("Expected generated plan")
+    const realSetItem = Storage.prototype.setItem
+    vi.spyOn(Storage.prototype, "setItem").mockImplementation(function (
+      this: Storage,
+      key: string,
+      value: string,
+    ) {
+      if (key === PLAN_ADAPTATION_CONTEXT_STORAGE_KEY) throw new Error("QuotaExceededError")
+      return realSetItem.call(this, key, value)
+    })
+
+    await expect(saveSelectedPlanCandidate(
+      { candidateId: generated.generated.candidates[0].candidateId, startDate: "2026-08-18" },
+      generated.generated,
+      generated.gate,
+      generated.intake,
+      generated.athleteEvidence,
+    )).resolves.toEqual({ kind: "rejected", code: "PLAN_STORAGE_WRITE_FAILED" })
+    expect(window.localStorage.getItem(ACTIVE_KEY)).toBeNull()
+    expect(window.localStorage.getItem(PLAN_ADAPTATION_CONTEXT_STORAGE_KEY)).toBeNull()
+  })
+
+  it("reports uncertain state when adaptation-context rollback cannot be confirmed", async () => {
+    const now = new Date()
+    const anchor = athleteRecord("00000000-0000-4000-8000-000000005098", 5000, "2026-08-01", now)
+    expect(saveAthleteRecord(anchor, now).ok).toBe(true)
+    const generated = generatePlanFromDraft({
+      eventGroup: "FIVE_K",
+      eventDistanceM: 5000,
+      competitionDivision: "OPEN",
+      experienceBand: "EXPERIENCED",
+      availableDayCount: 5,
+      requestedFrameLength: 9,
+      trainingFocus: "VO2_INTENT",
+      secondSessionMode: "SINGLE_SESSION_ONLY",
+      trainingTimePreference: "MORNING",
+      selectedDetailedTemplateRef: fiveKTemplateRef,
+    }, "NO_KNOWN_RISK", { selectedRecordId: anchor.id })
+    if (generated.kind !== "generated") throw new TypeError("Expected generated plan")
+    const realSetItem = Storage.prototype.setItem
+    const realRemoveItem = Storage.prototype.removeItem
+    vi.spyOn(Storage.prototype, "setItem").mockImplementation(function (
+      this: Storage,
+      key: string,
+      value: string,
+    ) {
+      if (key === PLAN_ADAPTATION_CONTEXT_STORAGE_KEY) {
+        return realSetItem.call(this, key, "{\"corrupt\":true}")
+      }
+      return realSetItem.call(this, key, value)
+    })
+    vi.spyOn(Storage.prototype, "removeItem").mockImplementation(function (
+      this: Storage,
+      key: string,
+    ) {
+      if (key === PLAN_ADAPTATION_CONTEXT_STORAGE_KEY) throw new Error("SecurityError")
+      return realRemoveItem.call(this, key)
+    })
+
+    await expect(saveSelectedPlanCandidate(
+      { candidateId: generated.generated.candidates[0].candidateId, startDate: "2026-08-18" },
+      generated.generated,
+      generated.gate,
+      generated.intake,
+      generated.athleteEvidence,
+    )).resolves.toEqual({ kind: "rejected", code: "PLAN_STORAGE_STATE_UNCERTAIN" })
+    expect(window.localStorage.getItem(ACTIVE_KEY)).toBeNull()
+    expect(window.localStorage.getItem(PLAN_ADAPTATION_CONTEXT_STORAGE_KEY)).toBe("{\"corrupt\":true}")
+  })
+
+  it("reports uncertain state when the active-plan preflight snapshot cannot be read", async () => {
+    const now = new Date()
+    const anchor = athleteRecord("00000000-0000-4000-8000-000000005096", 5000, "2026-08-01", now)
+    expect(saveAthleteRecord(anchor, now).ok).toBe(true)
+    const generated = generatePlanFromDraft({
+      eventGroup: "FIVE_K",
+      eventDistanceM: 5000,
+      competitionDivision: "OPEN",
+      experienceBand: "EXPERIENCED",
+      availableDayCount: 5,
+      requestedFrameLength: 9,
+      trainingFocus: "VO2_INTENT",
+      secondSessionMode: "SINGLE_SESSION_ONLY",
+      trainingTimePreference: "MORNING",
+      selectedDetailedTemplateRef: fiveKTemplateRef,
+    }, "NO_KNOWN_RISK", { selectedRecordId: anchor.id })
+    if (generated.kind !== "generated") throw new TypeError("Expected generated plan")
+    const realGetItem = Storage.prototype.getItem
+    vi.spyOn(Storage.prototype, "getItem").mockImplementation(function (this: Storage, key: string) {
+      if (key === ACTIVE_KEY) throw new Error("SecurityError")
+      return realGetItem.call(this, key)
+    })
+
+    await expect(saveSelectedPlanCandidate(
+      { candidateId: generated.generated.candidates[0].candidateId, startDate: "2026-08-18" },
+      generated.generated,
+      generated.gate,
+      generated.intake,
+      generated.athleteEvidence,
+    )).resolves.toEqual({ kind: "rejected", code: "PLAN_STORAGE_STATE_UNCERTAIN" })
+  })
+
+  it("derives the saved plan and adaptation scope only from the canonical generated candidate", async () => {
+    const now = new Date()
+    const anchor = athleteRecord("00000000-0000-4000-8000-000000005097", 5000, "2026-08-01", now)
+    expect(saveAthleteRecord(anchor, now).ok).toBe(true)
+    const generated = generatePlanFromDraft({
+      eventGroup: "FIVE_K",
+      eventDistanceM: 5000,
+      competitionDivision: "OPEN",
+      experienceBand: "EXPERIENCED",
+      availableDayCount: 5,
+      requestedFrameLength: 9,
+      trainingFocus: "VO2_INTENT",
+      secondSessionMode: "SINGLE_SESSION_ONLY",
+      trainingTimePreference: "MORNING",
+      selectedDetailedTemplateRef: fiveKTemplateRef,
+    }, "NO_KNOWN_RISK", { selectedRecordId: anchor.id })
+    if (generated.kind !== "generated") throw new TypeError("Expected generated plan")
+    const candidate = generated.generated.candidates[0]
+    const forgedSelection = {
+      candidateId: candidate.candidateId,
+      startDate: "2026-08-18",
+      candidate: {
+        ...candidate,
+        eventDistanceM: 800,
+        pairId: "forged-pair",
+        selectedDetailedTemplateRef: null,
+      },
+    }
+
+    const saved = await saveSelectedPlanCandidate(
+      forgedSelection,
+      generated.generated,
+      generated.gate,
+      generated.intake,
+      generated.athleteEvidence,
+    )
+
+    expect(saved.kind).toBe("saved")
+    if (saved.kind !== "saved") return
+    expect(saved.state.activePlan).toMatchObject({
+      candidateId: candidate.candidateId,
+      eventDistanceM: 5000,
+      pairId: candidate.pairId,
+      selectedDetailedTemplateRef: fiveKTemplateRef,
+    })
+    expect(saved.state.adaptationScope).toMatchObject({
+      eventDistanceM: 5000,
+      pairId: candidate.pairId,
+      selectedDetailedTemplateRef: fiveKTemplateRef,
+    })
+  })
+
+  it("accepts one real conservative successor, survives reload, and preserves active bytes", async () => {
+    const now = new Date()
+    const anchor = athleteRecord("00000000-0000-4000-8000-000000005001", 5000, "2026-08-01", now)
+    expect(saveAthleteRecord(anchor, now).ok).toBe(true)
+    const generated = generatePlanFromDraft({
+      eventGroup: "FIVE_K",
+      eventDistanceM: 5000,
+      competitionDivision: "OPEN",
+      experienceBand: "EXPERIENCED",
+      availableDayCount: 5,
+      requestedFrameLength: 9,
+      trainingFocus: "VO2_INTENT",
+      secondSessionMode: "SINGLE_SESSION_ONLY",
+      trainingTimePreference: "MORNING",
+      selectedDetailedTemplateRef: fiveKTemplateRef,
     }, "NO_KNOWN_RISK", { selectedRecordId: anchor.id })
     if (generated.kind !== "generated") throw new Error(`Expected generated plan, got ${generated.kind}`)
     expect(generated.prescriptionBinding.kind).toBe("bound")
-    const saved = saveSelectedPlanCandidate(
-      { candidate: generated.generated.candidates[0], startDate: "2026-08-18" },
+    const saved = await saveSelectedPlanCandidate(
+      { candidateId: generated.generated.candidates[0].candidateId, startDate: "2026-08-18" },
       generated.generated,
       generated.gate,
       generated.intake,
@@ -186,7 +445,6 @@ describe("next-frame adaptation UI adapter", () => {
       { day: 1, slot: "AM", before: [35, 60], after: [35, 35] },
       { day: 5, slot: "AM", before: [35, 60], after: [35, 35] },
       { day: 7, slot: "AM", before: [35, 60], after: [35, 35] },
-      { day: 9, slot: "AM", before: [30, 50], after: [30, 30] },
     ])
 
     const acceptanceTime = new Date(proposalTime.getTime() + 1_000)
@@ -195,13 +453,18 @@ describe("next-frame adaptation UI adapter", () => {
       "NO_KNOWN_RISK",
       acceptanceTime,
     )
+    expect(planAdaptationProposalSchema.safeParse(prepared.prepared.proposal).success).toBe(true)
+    expect(planBetaStateV3Schema.safeParse(saved.state).success).toBe(true)
+    if (saved.state.version !== 3) throw new Error("Expected a v3 selected state")
+    const parsedSuccessor = planBetaStateV3Schema.safeParse(prepared.prepared.successorState)
+    expect(parsedSuccessor.success, parsedSuccessor.success ? "" : JSON.stringify(parsedSuccessor.error.issues)).toBe(true)
     const accepted = await acceptPreparedNextFrameAdaptation({
       prepared: prepared.prepared,
       predecessorState: saved.state,
       safety: acceptanceSafety,
       operationAt: acceptanceTime.toISOString(),
     })
-    expect(accepted.kind).toBe("accepted")
+    expect(accepted.kind, JSON.stringify(accepted)).toBe("accepted")
     expect(window.localStorage.getItem(ACTIVE_KEY)).toBe(activeBefore)
     const reloaded = await loadMatchingPendingSuccessor(saved.state)
     expect(reloaded?.baseCandidateId).toBe(saved.state.activePlan.candidateId)
@@ -216,14 +479,38 @@ describe("next-frame adaptation UI adapter", () => {
     expect(await loadMatchingPendingSuccessor(laterFrame)).toBeNull()
   })
 
+  it("prepares the registered increase edge from an active conservative sibling", async () => {
+    const state = await createBoundState("CONSERVATIVE")
+    const operationAt = new Date(Date.now() + 60_000)
+    const result = await prepareNextFrameAdaptation({
+      state,
+      reason: "EXPLICIT_REQUEST",
+      record: null,
+      safety: evaluateActivePlanAdaptationSafety(state, "NO_KNOWN_RISK", operationAt),
+      operationAt: operationAt.toISOString(),
+    })
+
+    expect(result).toMatchObject({
+      kind: "ready",
+      prepared: {
+        proposal: {
+          transformEdgeId: "CONSERVATIVE_TO_BALANCED_EXISTING_SIBLING_ONLY",
+          transformDirection: "INCREASE",
+          baseCandidate: { kind: "CONSERVATIVE" },
+          successorCandidate: { kind: "BALANCED" },
+        },
+      },
+    })
+  })
+
   it("consumes real blocked, stale, and held active-plan safety contexts", async () => {
-    const state = createBoundState()
+    const state = await createBoundState()
     const checkedAt = new Date(Date.now() + 60_000)
     const passed = evaluateActivePlanAdaptationSafety(state, "NO_KNOWN_RISK", checkedAt)
     const blocked = evaluateActivePlanAdaptationSafety(state, "REVIEW_REQUIRED", checkedAt)
     const firstSession = state.activePlan.sessions[0]
     if (firstSession === undefined) throw new Error("Expected a session for the hold fixture")
-    const heldState: PlanBetaState = {
+    const heldState: PlanBetaStateV3 = {
       ...state,
       progress: [{
         sessionDay: firstSession.day,
@@ -359,12 +646,15 @@ describe("next-frame adaptation UI adapter", () => {
   })
 })
 
-function createBoundState(): PlanBetaState {
+async function createBoundState(
+  candidateKind: "BALANCED" | "CONSERVATIVE" = "BALANCED",
+): Promise<PlanBetaStateV3> {
   const now = new Date()
   const anchor = athleteRecord("00000000-0000-4000-8000-000000005002", 5000, "2026-08-01", now)
   expect(saveAthleteRecord(anchor, now).ok).toBe(true)
   const generated = generatePlanFromDraft({
     eventGroup: "FIVE_K",
+    eventDistanceM: 5000,
     competitionDivision: "OPEN",
     experienceBand: "EXPERIENCED",
     availableDayCount: 5,
@@ -372,21 +662,25 @@ function createBoundState(): PlanBetaState {
     trainingFocus: "VO2_INTENT",
     secondSessionMode: "SINGLE_SESSION_ONLY",
     trainingTimePreference: "MORNING",
+    selectedDetailedTemplateRef: fiveKTemplateRef,
   }, "NO_KNOWN_RISK", { selectedRecordId: anchor.id })
   if (generated.kind !== "generated") throw new Error(`Expected generated plan, got ${generated.kind}`)
-  const saved = saveSelectedPlanCandidate(
-    { candidate: generated.generated.candidates[0], startDate: "2026-08-18" },
+  const candidate = generated.generated.candidates.find((item) => item.kind === candidateKind)
+  if (candidate === undefined) throw new Error(`Expected ${candidateKind} candidate`)
+  const saved = await saveSelectedPlanCandidate(
+    { candidateId: candidate.candidateId, startDate: "2026-08-18" },
     generated.generated,
     generated.gate,
     generated.intake,
     generated.athleteEvidence,
   )
   if (saved.kind !== "saved") throw new Error(`Expected saved plan, got ${saved.code}`)
+  if (saved.state.version !== 3) throw new Error("Expected a v3 selected state")
   return saved.state
 }
 
 function createCoachRequiredFixture(now: Date): {
-  readonly state: PlanBetaState
+  readonly state: PlanBetaStateV3
   readonly baseCandidate: PlanCandidate
   readonly proposedCandidate: PlanCandidate
 } {
@@ -413,10 +707,11 @@ function createCoachRequiredFixture(now: Date): {
   if (generated.kind !== "generated") throw new Error(`Expected coach candidates, got ${generated.kind}`)
   const baseCandidate = generated.candidates[0]
   const proposedCandidate = generated.candidates[1]
-  const state: PlanBetaState = {
-    version: 2,
+  const state: PlanBetaStateV3 = {
+    version: 3,
     intake: {
       eventGroup: "FIVE_K",
+      eventDistanceM: 5000,
       competitionDivision: "OPEN",
       experienceBand: "EXPERIENCED",
       availableDayCount: 5,
@@ -425,13 +720,16 @@ function createCoachRequiredFixture(now: Date): {
       secondSessionMode: "SINGLE_SESSION_ONLY",
       trainingTimePreference: "MORNING",
       startDate: "2026-08-18",
+      selectedDetailedTemplateRef: null,
     },
     activePlan: {
       kind: "BETA_ACTIVE_PLAN_SNAPSHOT",
       activationState: "SELECTED_BETA_SNAPSHOT",
       candidateId: baseCandidate.candidateId,
+      pairId: baseCandidate.pairId,
       candidateKind: baseCandidate.kind,
       eventDistanceM: baseCandidate.eventDistanceM,
+      selectedDetailedTemplateRef: baseCandidate.selectedDetailedTemplateRef,
       selectionActor: "COACH",
       sourceMode: baseCandidate.sourceMode,
       selectedEnergyIntent: baseCandidate.selectedEnergyIntent,
@@ -440,27 +738,34 @@ function createCoachRequiredFixture(now: Date): {
     },
     progress: [],
     generatedAt: "2026-08-10T12:00:00.000Z",
-    adaptationScope: { athleteId: "local-athlete", eventDistanceM: 5000 },
+    adaptationScope: {
+      athleteId: "local-athlete",
+      eventDistanceM: 5000,
+      pairId: baseCandidate.pairId,
+      selectedDetailedTemplateRef: baseCandidate.selectedDetailedTemplateRef,
+    },
   }
   expect(savePlanBetaState(state).ok).toBe(true)
-  expect(savePlanAdaptationContext(generated.candidates, baseCandidate.candidateId)).toBe(true)
+  expect(savePlanAdaptationContext(generated.candidates, baseCandidate.candidateId)).toEqual({ ok: true })
   return { state, baseCandidate, proposedCandidate }
 }
 
 function successorStateFor(
-  state: PlanBetaState,
+  state: PlanBetaStateV3,
   candidate: PlanCandidate,
   generatedAt: string,
-): PlanBetaStateV2 {
+): PlanBetaStateV3 {
   return {
     ...state,
-    version: 2,
+    version: 3,
     activePlan: {
       kind: "BETA_ACTIVE_PLAN_SNAPSHOT",
       activationState: "SELECTED_BETA_SNAPSHOT",
       candidateId: candidate.candidateId,
+      pairId: candidate.pairId,
       candidateKind: candidate.kind,
       eventDistanceM: candidate.eventDistanceM,
+      selectedDetailedTemplateRef: candidate.selectedDetailedTemplateRef,
       selectionActor: "COACH",
       sourceMode: candidate.sourceMode,
       selectedEnergyIntent: candidate.selectedEnergyIntent,

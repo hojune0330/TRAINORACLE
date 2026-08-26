@@ -1,9 +1,23 @@
 import { cleanup, render, screen } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
-import { afterEach, describe, expect, it } from "vitest"
+import { afterEach, describe, expect, it, vi } from "vitest"
 import { EasyFaq } from "./EasyFaq"
 
-afterEach(cleanup)
+afterEach(() => {
+  cleanup()
+  vi.unstubAllEnvs()
+})
+
+function enablePublicAccountForTest() {
+  vi.stubEnv("VITE_ACCOUNT_PUBLIC_ENABLED", "true")
+  vi.stubEnv("VITE_KILL_ACCOUNT", "false")
+  vi.stubEnv("VITE_SUPABASE_URL", "https://project.supabase.co")
+  vi.stubEnv("VITE_SUPABASE_ANON_KEY", "public-anon-key")
+  vi.stubEnv("VITE_PRIVACY_POLICY_URL", "https://example.com/privacy")
+  vi.stubEnv("VITE_PRIVACY_POLICY_VERSION", "2026-08-26")
+  vi.stubEnv("VITE_TERMS_OF_SERVICE_URL", "https://example.com/terms")
+  vi.stubEnv("VITE_TERMS_OF_SERVICE_VERSION", "2026-08-26")
+}
 
 describe("easy FAQ", () => {
   it("shows the approved beta pricing notice before a reader opens a question", () => {
@@ -38,12 +52,13 @@ describe("easy FAQ", () => {
     expect(screen.queryByText(/Owner/u)).not.toBeInTheDocument()
   })
 
-  it("states private memo and guardian boundaries in plain Korean", () => {
+  it("states private memo and under-14 local-use boundaries in plain Korean", () => {
     render(<EasyFaq />)
 
     expect(screen.getByText("나만의 메모는 서비스 운영자도 볼 수 없나요?")).toBeVisible()
     expect(screen.getByText(/복구 코드를 가진 사용자만/u)).toBeInTheDocument()
-    expect(screen.getByText("만 14세 미만은 왜 보호자 확인이 필요한가요?")).toBeVisible()
+    expect(screen.getByText("만 14세 미만도 사용할 수 있나요?")).toBeVisible()
+    expect(screen.getByText(/계정 없이 이 기기에서 일지를 쓰고 훈련 계획을 만들 수 있어요/u)).toBeInTheDocument()
   })
 
   it("explains the first 200 free beta places while account features stay closed", async () => {
@@ -55,6 +70,20 @@ describe("easy FAQ", () => {
     expect(screen.getByText(/지금은 로그인 없이 이 기기에서 일지를 쓸 수 있어요/u)).toBeVisible()
   })
 
+  it("describes the live optional account beta without promising automatic upload", async () => {
+    enablePublicAccountForTest()
+    const user = userEvent.setup()
+    render(<EasyFaq />)
+
+    await user.click(screen.getByText("지금 무료인가요?"))
+    expect(screen.getByText(/Google이나 이메일 확인 링크/u)).toBeVisible()
+    expect(screen.getByText(/로그인만으로 기기 데이터가 서버에 올라가지는 않아요/u)).toBeVisible()
+
+    await user.click(screen.getByText("지금 무엇을 할 수 있나요?"))
+    expect(screen.getByText(/선택 로그인을 사용할 수 있어요/u)).toBeVisible()
+    expect(screen.getByText(/정식 문서는 더보기와 가입 화면에서 언제든 확인/u)).toBeVisible()
+  })
+
   it("separates what a free beta reader can use today from features still being prepared", async () => {
     const user = userEvent.setup()
     render(<EasyFaq />)
@@ -63,8 +92,9 @@ describe("easy FAQ", () => {
     expect(screen.getByText(/오늘의 일지, 달력과 9.5일 보기, 지난 일지, 백업·복원, 꾸미기를 사용할 수 있어요/u)).toBeVisible()
 
     await user.click(screen.getByText("아직 준비 중인 기능은 무엇인가요?"))
-    expect(screen.getByText(/계정 동기화, 코치 연결, 문의 게시판, 자동 훈련 처방은 아직 열지 않았어요/u)).toBeVisible()
-    expect(screen.getByText(/준비가 끝나고 열기 전에 앱에서 먼저 알려드려요/u)).toBeVisible()
+    expect(screen.getByText(/계정 동기화, 코치 연결, 사용자가 확인하지 않은 자동 계획 변경은 아직 열지 않았어요/u)).toBeVisible()
+    expect(screen.getByText(/문의 게시판은 지금 사용할 수 있어요/u)).toBeVisible()
+    expect(screen.getByText(/새 기능을 열기 전에는 앱에서 먼저 알려드려요/u)).toBeVisible()
   })
 
   it("describes account, coach sharing, and plan features as closed when they are closed", async () => {

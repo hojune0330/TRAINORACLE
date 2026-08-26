@@ -5,8 +5,8 @@ document_metadata:
   doc_id: trainoracle-local-first-sync-promotion-contract
   spec_id: LOCAL_FIRST_SYNC_AND_PROMOTION_CONTRACT
   title: Local-First Sync And Promotion Contract
-  version: 0.1
-  round: RT1_RECONSTRUCTED
+  version: 0.2
+  round: RT2_STRUCTURED_SYNC_BETA_ALIGNMENT
   status: DRAFT_FOR_REVIEW
   owner: COACH_HOJUNE
   created_from:
@@ -25,12 +25,14 @@ document_metadata:
 
 This document defines the draft contract for promoting local journal entries
 from a device-only store into TrainOracle server storage after account linking.
-It is a sync and data-boundary contract only. It does not implement a backend,
+It is a sync and data-boundary contract. A Supabase-backed implementation now
+exists behind a release gate, but this draft does not by itself open that gate,
 close any issue, or authorize raw free-text server persistence.
 
 The current app model stores entries locally first with `syncState: local`.
-Server sync is a later account-linked capability. The local writing flow must
-remain usable even when the server is unavailable.
+Server sync is a separately enabled, account-linked capability. The local
+writing flow must remain usable when sync is disabled or the server is
+unavailable.
 
 ---
 
@@ -61,25 +63,26 @@ TrainOracle under the accepted account contract.
 
 ```yaml
 promotion_flow:
-  trigger: account_link_complete
+  trigger: explicit_sync_consent_then_preview_then_confirmation
   source: device_local_journal_store
   destination: TRAINORACLE_SERVER_ONLY
-  batch_policy: upload_local_items
+  batch_policy: merge_account_owned_structured_items
+  automatic_upload_after_login: forbidden
+  unbound_device_data_auto_claim: forbidden
   local_delete_before_confirmed_upload: forbidden
   syncState_transition:
-    from: local
-    to: synced
-    allowed_only_after: server_ack_for_that_item
+    first_beta_behavior: keep_local_for_backward_compatible_device_storage
+    synced_state_activation: deferred_until_dirty_state_contract_exists
 ```
 
 Required item-level behavior:
 
 | Step | Rule |
 |---|---|
-| Read local entries | Include only entries currently marked `syncState: local`. |
-| Upload | Send a bounded batch with stable local IDs and idempotency keys. |
-| Partial success | Mark only acknowledged items as `synced`; leave failed items `local`. |
-| Retry | Retry failed local items with the same idempotency key unless the user cancels sync. |
+| Read local entries | Include only entries explicitly owned by the current account. |
+| Upload | Send a bounded idempotent batch with stable local IDs. |
+| Partial success | Keep local entries readable and report the failed server operation visibly. |
+| Retry | Re-run the explicit preview and confirmation flow; upsert the same stable IDs. |
 | Local retention | Keep the local source until the server confirms durable storage. |
 
 Any UI copy must describe the transition as online backup or multi-device
@@ -95,7 +98,7 @@ Local writing is the primary path.
 offline_first_order:
   save_journal_entry:
     - write_local_first
-    - then_attempt_background_upload_if_authenticated
+    - wait_for_user_initiated_sync
   server_unavailable_blocks_writing: false
   failed_upload_blocks_local_review: false
   sync_retry_visible: true
@@ -108,26 +111,26 @@ the athlete from writing or reading local entries on that device.
 
 ## 5. Conflict Handling
 
-Automatic merge is forbidden for same `date + kind` conflicts.
+The first beta uses stable journal IDs rather than `date + kind` as identity.
+Two independently created entries for the same date and kind are preserved as
+separate entries. Only two versions carrying the same stable ID compete.
 
 ```yaml
 conflict_key:
-  fields:
-    - date
-    - kind
+  field: journal_id
 
 conflict_resolution:
-  automatic_overwrite_allowed: false
-  automatic_merge_allowed: false
-  preserve_both_versions: true
-  required_resolution: user_confirmation
+  different_id_overwrite_allowed: false
+  same_id_resolution: latest_savedAt_wins
+  different_ids_same_date_kind: preserve_both
+  ambiguous_or_invalid_savedAt: fail_visible_without_mutation
   audit_resolution_without_raw_text: true
 ```
 
-If a server already contains an entry for the same date and journal kind from
-another device, both versions must be preserved until the user chooses a
-structured resolution. This mirrors the conflict principle in
-`EXTERNAL_RECORD_INTEGRATION_SPEC.md`: no side wins automatically.
+This rule prevents one device from overwriting a separately created session
+only because both sessions share a date and kind. A same-ID update may select
+the later `savedAt` value, but a schema or persistence failure stops visibly
+and keeps the local recovery checkpoint.
 
 ---
 
@@ -137,7 +140,21 @@ structured resolution. This mirrors the conflict principle in
 persistence conflicts with the existing §8 memo policy unless explicitly
 accepted by the owner.
 
-### 6.1 Options
+### 6.1 First-Beta Owner Decision
+
+```yaml
+owner_decision_2026_08_27:
+  first_beta_model: structured_journal_only
+  raw_training_memo_upload: forbidden
+  encrypted_private_memo_upload: deferred
+  memo_purpose_upload: forbidden
+  later_encrypted_memo_release_requires_separate_gate: true
+```
+
+The first public sync beta adopts option A below. Existing experimental consent
+or recovery-code state must not reopen memo transmission at runtime.
+
+### 6.2 Options
 
 | Option | Server behavior | Benefit | Risk |
 |---|---|---|---|
@@ -145,22 +162,23 @@ accepted by the owner.
 | B. End-to-end encrypted memo | Server stores encrypted blob it cannot read. | Supports backup while reducing server exposure. | Requires key management, recovery, and clear UX. |
 | C. Policy revision | Owner accepts a revised rule for raw memo server persistence. | Simplest product behavior. | Changes a core privacy invariant and needs explicit acceptance. |
 
-Recommended draft default:
+Accepted first-beta default:
 
 ```yaml
 recommended_memo_server_policy:
-  model: local_only_until_owner_decision
-  raw_memo_server_persistence_before_decision: forbidden
+  model: local_only_for_first_public_sync_beta
+  raw_memo_server_persistence: forbidden
+  encrypted_private_memo_persistence: deferred
   raw_memo_audit_persistence: forbidden
   implementation_before_decision: forbidden
 ```
 
-Until a later accepted decision changes this contract, sync implementation must
+Until a later accepted decision and separate release gate change this contract, sync implementation must
 not transmit raw `memo`, `note`, raw symptom clauses, injury narratives,
 medical notes, guardian notes, or coach private notes to the server or audit
 logs.
 
-### 6.2 Allowed Structured Promotion
+### 6.3 Allowed Structured Promotion
 
 The following classes may be promoted before memo policy changes, subject to
 the accepted journal schema:
@@ -178,9 +196,10 @@ allowed_structured_promotion:
   - redaction_state_for_omitted_text
 ```
 
-Omitted memo fields should carry a redaction state such as
-`memo_server_state: local_only` so the UI can explain why an entry looks
-different across devices.
+The first beta omits memo fields entirely and explains this boundary once in
+the sync UI. A future schema may add a non-sensitive redaction state such as
+`memo_server_state: local_only`; its absence in the first beta must not be
+interpreted as permission to infer, request, or upload the omitted text.
 
 ---
 
@@ -228,9 +247,9 @@ and policy acceptance before implementation.
 
 | issue_id | title | status | canonical_blocking | notes |
 |---|---|---|---:|---|
-| OI-LFSP-BACKEND-REALITY-001 | TrainOracle server backend is not implemented | OPEN | YES | F2 Workers+D1 or successor backend must exist before runtime sync can be claimed. |
-| OI-LFSP-MEMO-SERVER-POLICY-001 | Raw memo/note server persistence decision unresolved | OPEN | YES | Until accepted, raw memo/note and symptom text must remain local-only or omitted/redacted from server sync. |
-| OI-LFSP-ENCRYPTION-001 | Encryption and key-recovery design unresolved | OPEN | YES | Required if owner chooses E2E encrypted memo backup or other sensitive backup path. |
+| OI-LFSP-BACKEND-REALITY-001 | Supabase sync implementation exists behind a release gate | OPEN | YES | Keep open until the intended public environment deploys the structured-only path and operational receipts exist. |
+| OI-LFSP-MEMO-SERVER-POLICY-001 | First beta decided as structured-only; later memo policy remains deferred | OPEN | YES | Raw memo/note, memo purpose, and symptom text remain local-only. A later scope needs a separate owner decision. |
+| OI-LFSP-ENCRYPTION-001 | Encrypted private memo release remains deferred | OPEN | YES | Existing experimental crypto code is not first-beta release authority. Recovery UX and operations need a separate gate. |
 | OI-LFSP-RETENTION-DELETE-001 | Retention, export, deletion, and unlink UX not accepted | OPEN | NO | Needed before production account deletion and device/server divergence flows. |
 
 ---
@@ -239,11 +258,20 @@ and policy acceptance before implementation.
 
 This draft does not claim:
 
-- Any backend sync has been implemented.
+- Public production sync has been enabled or deployed.
 - Any runtime test has passed.
 - Raw memo server persistence is allowed.
 - Any open issue is closed.
 - Any canonical promotion is granted.
 - Sync state can affect D9, RVE, Safety Gate, or Plan Generator safety disposition.
+
+---
+
+## 11. Change History
+
+| version | date | change |
+|---|---|---|
+| 0.1 | 2026-07 | Reconstructed local-first sync draft. |
+| 0.2 | 2026-08-27 | Aligned the draft with explicit preview/confirmation, stable-ID merge behavior, account-scoped consent, and the owner-approved structured-only first beta. Open issues remain open. |
 
 [DRAFT_COMPLETE]

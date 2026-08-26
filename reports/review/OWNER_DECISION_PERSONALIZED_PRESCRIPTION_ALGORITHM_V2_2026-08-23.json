@@ -1,0 +1,75 @@
+{
+  "kind": "TRAINORACLE_OWNER_DECISION_RECORD",
+  "recordedAt": "2026-08-23T03:32:21+09:00",
+  "canonicalPayload": {
+    "schemaVersion": 1,
+    "kind": "TRAINORACLE_PERSONALIZED_PRESCRIPTION_ALGORITHM_V2_OWNER_DECISION",
+    "decisionId": "TO-PERSONALIZED-PRESCRIPTION-ALGORITHM-V2-2026-08-23",
+    "status": "APPROVED_FOR_IMPLEMENTATION",
+    "owner": {
+      "ownerId": "COACH_HOJUNE",
+      "role": "PRODUCT_OWNER_COACH",
+      "signatureKind": "CONVERSATION_OWNER_APPROVAL"
+    },
+    "approvedOn": "2026-08-23",
+    "source": {
+      "mainSha": "5ea2eed9fce0f0ddb314358d57c0b2fc538b9daa",
+      "planPath": ".omo/plans/personalized-prescription-algorithm-v2.md",
+      "planSha256": "3f081ebbd8d8fa456ff33f01a037942e618cf13f9e549ff3feb83789df590d6b"
+    },
+    "decisions": {
+      "candidateDifference": {
+        "token": "1A",
+        "initialPairDifference": "SUPPORT_DURATION_ONLY",
+        "qualityContentIdentical": true,
+        "frequencyIdentical": true,
+        "futureChangeDimensionsMax": 1
+      },
+      "detailedTemplates": {
+        "token": "2A",
+        "supportedEvents": [800, 1500, 3000, 5000],
+        "activeBaselineTemplateCount": 4,
+        "targetTotalPerEvent": [2, 3],
+        "maximumReviewedAdditionsPerEvent": 2,
+        "zeroAdditionsValid": true,
+        "sprintOrAtpPcActivationAuthorized": false
+      },
+      "racePreparation": {
+        "token": "3A",
+        "optionalRaceDate": true,
+        "sourceBackedPlacementOnly": true,
+        "numericTaperAuthority": "NOT_GRANTED",
+        "stages": [
+          "TAPER_EVIDENCE_MATRIX_INACTIVE",
+          "PLACEMENT_ONLY_PREVIEW_AFTER_DUAL_REVIEW",
+          "PERSISTENCE_AND_PLACEMENT_AFTER_NAMED_GOVERNANCE_RECEIPT"
+        ],
+        "persistencePolicy": "RACE_DATE_PERSISTENCE_DISABLED_UNTIL_GOVERNANCE_RECEIPT"
+      },
+      "delegatedAuthority": {
+        "token": "B",
+        "activationRequires": [
+          "COACHING_APPLICABILITY_APPROVAL",
+          "SPORTS_SCIENCE_AND_TRANSFER_APPROVAL"
+        ],
+        "sameDigestRequired": true,
+        "ownerAuthorityDelegatedForNumericTaper": false
+      },
+      "adaptation": {
+        "baselineActiveEdge": "BALANCED_TO_CONSERVATIVE_EXISTING_SIBLING_ONLY",
+        "baselineEdgeState": "ACTIVE_BASELINE",
+        "reverseEdge": "CONSERVATIVE_TO_BALANCED_EXISTING_SIBLING_ONLY",
+        "reverseEdgeState": "APPROVED_FOR_IMPLEMENTATION_NOT_ACTIVE",
+        "frequencyEdgeState": "INACTIVE_NOT_AUTHORIZED",
+        "intensityEdgeState": "INACTIVE_NOT_AUTHORIZED"
+      },
+      "prohibitions": {
+        "unsupportedEvents": ["100M", "200M", "400M", "TEN_K", "GENERAL_ENDURANCE"],
+        "automaticIncreaseTriggers": ["JOURNAL", "REWARDS"],
+        "canonicalPromotion": false,
+        "issueClosure": false
+      }
+    }
+  },
+  "canonicalPayloadSha256": "sha256:e5a1a8ca8ea7c6301239292ba7a6db4de289feea6a477d195b847893fcbd66be"
+}

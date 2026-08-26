@@ -11,10 +11,15 @@ import { parseContinuityInput } from "./continuity"
 import { parseFormation } from "./formation-parser"
 import type {
   CanonicalPlanGenerationRequest,
+  DetailedTemplateRef,
   PlanGenerationRequest,
   PlanProfile,
   PlanReviewReasonCode,
 } from "./types"
+
+const TEMPLATE_ID_PATTERN = /^[A-Z0-9]+(?:-[A-Z0-9]+)*$/u
+const VERSION_PATTERN = /^\d+\.\d+\.\d+$/u
+const FINGERPRINT_PATTERN = /^sha256:[a-f0-9]{64}$/u
 
 type ParseRejectionCode =
   | "MALFORMED_INPUT"
@@ -92,10 +97,51 @@ function parseProjectionLength(value: unknown): 7 | 9 | 9.5 | 10 | undefined {
   }
 }
 
+function parseDetailedTemplateRef(value: unknown): DetailedTemplateRef | null | undefined {
+  if (value === undefined || value === null) return null
+  if (!isRecord(value) || !hasOnlyKeys(value, ["templateId", "version", "fingerprint"])) return undefined
+  const templateId = value["templateId"]
+  const version = value["version"]
+  const fingerprint = value["fingerprint"]
+  return typeof templateId === "string" && TEMPLATE_ID_PATTERN.test(templateId)
+    && typeof version === "string" && VERSION_PATTERN.test(version)
+    && typeof fingerprint === "string" && FINGERPRINT_PATTERN.test(fingerprint)
+    ? { templateId, version, fingerprint }
+    : undefined
+}
+
+function localCivilDate(date: Date): string {
+  const padded = (part: number) => String(part).padStart(2, "0")
+  return `${date.getFullYear()}-${padded(date.getMonth() + 1)}-${padded(date.getDate())}`
+}
+
+function parseTargetRaceDate(value: unknown): string | undefined | null {
+  if (value === undefined) return undefined
+  if (typeof value !== "string" || !/^\d{4}-\d{2}-\d{2}$/u.test(value)) return null
+  const parsed = new Date(`${value}T00:00:00.000Z`)
+  if (!Number.isFinite(parsed.getTime()) || parsed.toISOString().slice(0, 10) !== value) return null
+  return value > localCivilDate(new Date()) ? value : null
+}
+
+function hasOnlyKeys(value: Record<string, unknown>, allowed: readonly string[]): boolean {
+  try {
+    if (!isRecord(value)) return false
+    const allowedKeys = new Set(allowed)
+    return Reflect.ownKeys(value).every((key) => typeof key === "string" && allowedKeys.has(key))
+  } catch {
+    return false
+  }
+}
+
 export function parsePlanGenerationRequest(input: unknown): ParsedPlanRequest {
   if (!isRecord(input) || input["kind"] !== "PLAN_BETA_GENERATION_REQUEST") {
     return reject("MALFORMED_INPUT")
   }
+  if (!hasOnlyKeys(input, [
+    "kind", "safetyGate", "profile", "requestedFrameLength", "selectedEnergyIntent",
+    "selectedDetailedTemplateRef", "targetRaceDate", "journalSource", "selectionAuthority",
+    "continuity", "formation",
+  ])) return reject("MALFORMED_INPUT")
 
   const safetyGate = parseSafetyGate(input["safetyGate"])
   const profile = parseProfile(input["profile"])
@@ -103,6 +149,8 @@ export function parsePlanGenerationRequest(input: unknown): ParsedPlanRequest {
   const selectionAuthority = parseSelectionAuthority(input["selectionAuthority"])
   const selectedEnergyIntent = parsePlannedEnergyIntent(input["selectedEnergyIntent"])
   const continuity = parseContinuityInput(input["continuity"])
+  const selectedDetailedTemplateRef = parseDetailedTemplateRef(input["selectedDetailedTemplateRef"])
+  const targetRaceDate = parseTargetRaceDate(input["targetRaceDate"])
   if (journal.kind === "invalid") {
     return reject("INVALID_JOURNAL_CONTEXT")
   }
@@ -113,7 +161,9 @@ export function parsePlanGenerationRequest(input: unknown): ParsedPlanRequest {
     safetyGate === undefined ||
     profile === undefined ||
     selectionAuthority === undefined ||
-    selectedEnergyIntent === undefined
+    selectedEnergyIntent === undefined ||
+    selectedDetailedTemplateRef === undefined ||
+    targetRaceDate === null
   ) {
     return reject("MALFORMED_INPUT")
   }
@@ -153,6 +203,8 @@ export function parsePlanGenerationRequest(input: unknown): ParsedPlanRequest {
     journalSource: journal.journalSource,
     selectionAuthority,
     selectedEnergyIntent,
+    selectedDetailedTemplateRef,
+    ...(targetRaceDate === undefined ? {} : { targetRaceDate }),
   }
   switch (continuity.kind) {
     case "absent":

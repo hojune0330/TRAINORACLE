@@ -1,0 +1,121 @@
+{
+  "pristineExitCode": 0,
+  "invalidCases": 18,
+  "invalidExitCodes": [
+    1
+  ],
+  "exitCodeAuthoritative": true,
+  "targetPresenceChecked": true,
+  "cleanupComplete": true,
+  "outcomes": [
+    {
+      "name": "active-authority",
+      "exitCode": 1,
+      "targetPresent": true,
+      "rejected": true
+    },
+    {
+      "name": "omitted-source",
+      "exitCode": 1,
+      "targetPresent": true,
+      "rejected": true
+    },
+    {
+      "name": "duplicate-source",
+      "exitCode": 1,
+      "targetPresent": true,
+      "rejected": true
+    },
+    {
+      "name": "deleted-null-evidence",
+      "exitCode": 1,
+      "targetPresent": true,
+      "rejected": true
+    },
+    {
+      "name": "invented-percentage",
+      "exitCode": 1,
+      "targetPresent": true,
+      "rejected": true
+    },
+    {
+      "name": "changed-reported-number",
+      "exitCode": 1,
+      "targetPresent": true,
+      "rejected": true
+    },
+    {
+      "name": "missing-supplemental-evidence",
+      "exitCode": 1,
+      "targetPresent": true,
+      "rejected": true
+    },
+    {
+      "name": "stale-supplemental-digest",
+      "exitCode": 1,
+      "targetPresent": true,
+      "rejected": true
+    },
+    {
+      "name": "wrong-supplemental-fragment",
+      "exitCode": 1,
+      "targetPresent": true,
+      "rejected": true
+    },
+    {
+      "name": "wrong-supplemental-path",
+      "exitCode": 1,
+      "targetPresent": true,
+      "rejected": true
+    },
+    {
+      "name": "coordinated-subgroup-values",
+      "exitCode": 1,
+      "targetPresent": true,
+      "rejected": true
+    },
+    {
+      "name": "operative-multiplier",
+      "exitCode": 1,
+      "targetPresent": true,
+      "rejected": true
+    },
+    {
+      "name": "assumed-baseline",
+      "exitCode": 1,
+      "targetPresent": true,
+      "rejected": true
+    },
+    {
+      "name": "malformed-json",
+      "exitCode": 1,
+      "targetPresent": true,
+      "rejected": true
+    },
+    {
+      "name": "trailing-text",
+      "exitCode": 1,
+      "targetPresent": true,
+      "rejected": true
+    },
+    {
+      "name": "misleading-human-status",
+      "exitCode": 1,
+      "targetPresent": true,
+      "rejected": true
+    },
+    {
+      "name": "stale-source-gate",
+      "exitCode": 1,
+      "targetPresent": true,
+      "rejected": true
+    },
+    {
+      "name": "supplemental-source-999-1",
+      "exitCode": 1,
+      "targetPresent": true,
+      "rejected": true,
+      "misleadingSuccessOutput": false
+    }
+  ]
+}

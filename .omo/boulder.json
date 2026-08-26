@@ -1,6 +1,6 @@
 {
   "schema_version": 2,
-  "active_work_id": "trainoracle-personalized-auto-prescription",
+  "active_work_id": "trainoracle-personalized-prescription-algorithm-v2-20260823",
   "works": {
     "trainoracle-feasible-recovery-formation-sequencing": {
       "work_id": "trainoracle-feasible-recovery-formation-sequencing",
@@ -69,8 +69,18 @@
       "session_ids": [
         "codex:019ef850-bb65-7082-ad74-7dc718b3f8e8"
       ],
-      "status": "active",
+      "status": "complete",
       "worktree_path": "D:\\admin\\Documents\\트레인 오라클 진도\\publish-plan-athlete-link"
+    },
+    "trainoracle-personalized-prescription-algorithm-v2-20260823": {
+      "work_id": "trainoracle-personalized-prescription-algorithm-v2-20260823",
+      "active_plan": ".omo/plans/personalized-prescription-algorithm-v2.md",
+      "plan_name": "personalized-prescription-algorithm-v2",
+      "session_ids": [
+        "codex:019ef850-bb65-7082-ad74-7dc718b3f8e8"
+      ],
+      "status": "active",
+      "worktree_path": "D:\\admin\\Documents\\TRAINORACLE-launch-ready"
     }
   }
 }

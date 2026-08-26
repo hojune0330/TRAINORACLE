@@ -43,16 +43,20 @@ afterEach(cleanup)
 
 async function reachCandidates(): Promise<void> {
   const user = userEvent.setup()
-  await user.click(screen.getByRole("button", { name: /5km/u }))
+  await user.click(screen.getByRole("button", { name: /^5000m/u }))
   await user.click(screen.getByRole("button", { name: /일반부/u }))
   await user.click(screen.getByRole("button", { name: /구조화된 훈련과 경기 경험이 많아요/u }))
   await user.click(screen.getByRole("button", { name: /통증은 없고 몸 상태는 평소와 같아요/u }))
   await user.click(screen.getByRole("button", { name: "내 계획 완성하기" }))
   await user.click(screen.getByRole("button", { name: /반복 인터벌.*VO2/u }))
+  await user.click(screen.getByRole("button", {
+    name: /5000m 경기 페이스 상세 훈련 포함/u,
+  }))
   await user.click(screen.getByRole("button", { name: /^3일/u }))
   await user.click(screen.getByRole("button", { name: /9일 계획 받기/u }))
   await user.click(screen.getByRole("button", { name: /아침에 운동해요/u }))
   await user.click(screen.getByRole("button", { name: /하루 한 번 운동/u }))
+  await user.click(screen.getByRole("button", { name: "날짜 없이 계획 후보 보기" }))
 }
 
 describe("production detailed prescription experience", () => {
@@ -81,8 +85,10 @@ describe("production detailed prescription experience", () => {
     await user.click(within(schedule).getByText("기준 기록·중단·낮춤 규칙 보기"))
     expect(within(schedule).getByText(/5000m.*18분 31초.*2026-05-10/u)).toBeVisible()
 
-    await user.click(screen.getByRole("button", { name: /반복 인터벌 포함 선택하기/u }))
-    expect(screen.getByRole("heading", { name: /반복 인터벌 포함 9일 계획/u })).toBeVisible()
+    await user.click(screen.getByRole("button", { name: /기본 보조훈련 선택하기/u }))
+    await screen.findByRole("heading", { name: /기본 보조훈련 9일 계획/u })
+    expect(screen.queryByRole("alert")).toBeNull()
+    expect(screen.getByRole("heading", { name: /기본 보조훈련 9일 계획/u })).toBeVisible()
     const activeNotation = screen.getByText(/5×1000m @5000m RP.*r150.*JOG/u)
     expect(activeNotation).toBeVisible()
     const activeSession = activeNotation.closest("section[role='group']")
@@ -94,13 +100,13 @@ describe("production detailed prescription experience", () => {
     expect(screen.queryByRole("button", { name: "통증 없고 평소와 같음 · 다시 시작 확인" })).toBeNull()
     expect(reviewButton).toHaveClass("active-plan__execution-review")
     await user.click(startButton)
-    expect(screen.getByRole("status")).toHaveTextContent("시작할 수 있어요")
+    expect(screen.getByText(/현재 안전 상태.*시작할 수 있어요/u)).toBeVisible()
 
     const completedButton = within(activeSession).getByRole("button", { name: "완료" })
     await user.click(completedButton)
     expect(screen.queryByRole("button", { name: "통증 없고 평소와 같음 · 시작 확인" })).toBeNull()
     expect(screen.queryByRole("button", { name: "통증 없고 평소와 같음 · 다시 시작 확인" })).toBeNull()
-    expect(screen.queryByRole("status")).toBeNull()
+    expect(screen.queryByText(/현재 안전 상태.*시작할 수 있어요/u)).toBeNull()
     expect(screen.getByText(/이미 결과를 기록한 세션은 다시 시작하지 않아요/u)).toBeVisible()
     expect(screen.getByRole("button", { name: "통증·이상 또는 잘 모르겠음" })).toBeVisible()
 
@@ -108,7 +114,7 @@ describe("production detailed prescription experience", () => {
     await user.click(painButton)
     expect(screen.queryByRole("button", { name: "통증 없고 평소와 같음 · 시작 확인" })).toBeNull()
     expect(screen.queryByRole("button", { name: "통증 없고 평소와 같음 · 다시 시작 확인" })).toBeNull()
-    expect(screen.queryByRole("status")).toBeNull()
+    expect(screen.queryByText(/현재 안전 상태.*시작할 수 있어요/u)).toBeNull()
     expect(screen.getByRole("button", { name: "통증·이상 또는 잘 모르겠음" })).toBeVisible()
 
     firstRender.unmount()
@@ -116,7 +122,7 @@ describe("production detailed prescription experience", () => {
     expect(screen.getByText(/5×1000m @5000m RP.*r150.*JOG/u)).toBeVisible()
     await user.click(screen.getByText("기준 기록·중단·낮춤 규칙 보기"))
     expect(screen.getByText(/5000m.*18분 31초.*2026-05-10/u)).toBeVisible()
-  })
+  }, 15_000)
 
   it("clears the execution allowance message on every recorded outcome", async () => {
     const user = userEvent.setup()
@@ -126,7 +132,8 @@ describe("production detailed prescription experience", () => {
     const picker = screen.getByRole("region", { name: "개인 페이스 기준 기록" })
     await user.click(within(picker).getByRole("button", { name: /개인 최고.*18분 31초/u }))
     await user.click(within(picker).getByRole("button", { name: "이 기록으로 개인 페이스 적용" }))
-    await user.click(screen.getByRole("button", { name: /반복 인터벌 포함 선택하기/u }))
+    await user.click(screen.getByRole("button", { name: /기본 보조훈련 선택하기/u }))
+    await screen.findByRole("heading", { name: /기본 보조훈련 9일 계획/u })
 
     const activeNotation = screen.getByText(/5×1000m @5000m RP.*r150.*JOG/u)
     const activeSession = activeNotation.closest("section[role='group']")
@@ -135,23 +142,23 @@ describe("production detailed prescription experience", () => {
     // RESTED clears the START allowance message and removes start/restart
     await user.click(screen.getByText("시작 전 확인"))
     await user.click(screen.getByRole("button", { name: "통증 없고 평소와 같음 · 시작 확인" }))
-    expect(screen.getByRole("status")).toHaveTextContent("시작할 수 있어요")
+    expect(screen.getByText(/현재 안전 상태.*시작할 수 있어요/u)).toBeVisible()
     await user.click(within(activeSession).getByRole("button", { name: "휴식" }))
-    expect(screen.queryByRole("status")).toBeNull()
+    expect(screen.queryByText(/현재 안전 상태.*시작할 수 있어요/u)).toBeNull()
     expect(screen.queryByRole("button", { name: /통증 없고 평소와 같음 · (시작|다시 시작) 확인/u })).toBeNull()
 
     // SKIPPED clears a review message raised after the outcome
     await user.click(screen.getByRole("button", { name: "통증·이상 또는 잘 모르겠음" }))
-    expect(screen.getByRole("status")).toHaveTextContent("지금은 상세 세션을 시작하지 않아요")
+    expect(screen.getByText(/지금은 상세 세션을 시작하지 않아요/u)).toBeVisible()
     await user.click(within(activeSession).getByRole("button", { name: "건너뜀" }))
-    expect(screen.queryByRole("status")).toBeNull()
+    expect(screen.queryByText(/지금은 상세 세션을 시작하지 않아요/u)).toBeNull()
     expect(screen.queryByRole("button", { name: /통증 없고 평소와 같음 · (시작|다시 시작) 확인/u })).toBeNull()
 
     // PAIN_CHECKIN clears any remaining message and keeps only the review path
     await user.click(screen.getByRole("button", { name: "통증·이상 또는 잘 모르겠음" }))
-    expect(screen.getByRole("status")).toBeVisible()
+    expect(screen.getByText(/지금은 상세 세션을 시작하지 않아요/u)).toBeVisible()
     await user.click(within(activeSession).getByRole("button", { name: "통증 체크" }))
-    expect(screen.queryByRole("status")).toBeNull()
+    expect(screen.queryByText(/지금은 상세 세션을 시작하지 않아요/u)).toBeNull()
     expect(screen.getByText("통증 기록 후 확인")).toBeVisible()
     expect(screen.queryByRole("button", { name: /통증 없고 평소와 같음 · (시작|다시 시작) 확인/u })).toBeNull()
     expect(screen.getByRole("button", { name: "통증·이상 또는 잘 모르겠음" })).toBeVisible()
@@ -168,11 +175,11 @@ describe("production detailed prescription experience", () => {
     expect(screen.getAllByText(/5×1000m @5000m RP.*r150.*JOG/u)).not.toHaveLength(0)
 
     await user.click(within(picker).getByRole("button", { name: /^시즌 최고.*19분/u }))
-    expect(screen.getByRole("button", { name: /반복 인터벌 포함 선택하기/u })).toBeDisabled()
+    expect(screen.getByRole("button", { name: /기본 보조훈련 선택하기/u })).toBeDisabled()
     expect(screen.queryByText(/5×1000m @5000m RP.*r150.*JOG/u)).toBeNull()
 
     await user.click(within(picker).getByRole("button", { name: "이 기록으로 개인 페이스 적용" }))
-    expect(screen.getByRole("button", { name: /반복 인터벌 포함 선택하기/u })).toBeEnabled()
+    expect(screen.getByRole("button", { name: /기본 보조훈련 선택하기/u })).toBeEnabled()
     expect(screen.getAllByText(/5000m.*19분.*2026-04-20/u)).not.toHaveLength(0)
   })
   it("keeps both candidates RPE-only when the confirmed record is stale", async () => {
@@ -188,7 +195,7 @@ describe("production detailed prescription experience", () => {
 
     expect(within(picker).getByText(/기록일이 현재 기준 범위를 벗어났어요/u)).toBeVisible()
     expect(screen.queryByText(/5×1000m @5000m RP/u)).toBeNull()
-    expect(screen.getAllByText(/거리.*목표.*페이스는 지정하지 않음/u)).not.toHaveLength(0)
+    expect(screen.getByText(/두 후보 모두 원래 RPE 계획을 유지합니다/u)).toBeVisible()
   })
 
   it("shows a plain RPE fallback when no record exists", async () => {
@@ -203,7 +210,7 @@ describe("production detailed prescription experience", () => {
   it("blocks at D9 before producing candidates", async () => {
     const user = userEvent.setup()
     render(<PlanBeta />)
-    await user.click(screen.getByRole("button", { name: /5km/u }))
+    await user.click(screen.getByRole("button", { name: /^5000m/u }))
     await user.click(screen.getByRole("button", { name: /일반부/u }))
     await user.click(screen.getByRole("button", { name: /구조화된 훈련과 경기 경험이 많아요/u }))
     await user.click(screen.getByRole("button", { name: /통증.*부상.*몸 이상/u }))

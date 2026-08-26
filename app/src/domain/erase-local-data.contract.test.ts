@@ -11,6 +11,7 @@ import { ATHLETE_RECORDS_STORAGE_KEY } from "./athlete-records"
 import { recoverPendingSync } from "./account/sync-recovery"
 import { eraseAllLocalData, erasableKeys } from "./erase-local-data"
 import { ENGAGEMENT_STORAGE_KEY } from "./engagement"
+import { LOCAL_JOURNAL_OWNERSHIP_KEY } from "./account/local-journal-ownership"
 
 const JOURNAL = "trainoracle.journal.v1"
 const TOMBSTONES = "trainoracle.sync.tombstones.v1"
@@ -25,6 +26,7 @@ const PRIVATE_MEMO_VAULT = "trainoracle.private-memo.v1"
 const PRIVATE_NOTE_RECOVERY = "trainoracle.private-note.recovery.v1"
 const DECORATIONS_V1 = "trainoracle.decorations.v1"
 const DECORATIONS_V2 = "trainoracle.decorations.v2"
+const JOURNAL_OWNERSHIP = LOCAL_JOURNAL_OWNERSHIP_KEY
 
 beforeEach(() => {
   window.localStorage.clear()
@@ -71,6 +73,10 @@ function seed(): void {
   window.localStorage.setItem(DECORATIONS_V1, JSON.stringify({ version: 1 }))
   window.localStorage.setItem(DECORATIONS_V2, JSON.stringify({ version: 2 }))
   window.localStorage.setItem(TOMBSTONES, JSON.stringify([{ id: "gone", deletedAt: "2026-07-20T00:00:00.000Z" }]))
+  window.localStorage.setItem(JOURNAL_OWNERSHIP, JSON.stringify({
+    schemaVersion: 1,
+    ownerByEntryId: { a: "athlete-a", b: "athlete-a", gone: "athlete-a" },
+  }))
 }
 
 describe("eraseAllLocalData", () => {
@@ -169,6 +175,8 @@ describe("eraseAllLocalData", () => {
     // 이게 사라지면 다음 동기화에서 지운 일지가 전부 되돌아온다.
     // 부활 방지 근거가 실제로 적용되는 키는 이것 하나뿐이다.
     expect(window.localStorage.getItem(TOMBSTONES)).not.toBeNull()
+    expect(JSON.parse(window.localStorage.getItem(JOURNAL_OWNERSHIP) ?? "{}").ownerByEntryId)
+      .toEqual({ gone: "athlete-a" })
   })
 
   it("명시적으로 요청하면 삭제 기록도 지운다", () => {
@@ -176,6 +184,7 @@ describe("eraseAllLocalData", () => {
     const result = eraseAllLocalData({ includeDeletionRecord: true })
     expect(result.ok).toBe(true)
     expect(window.localStorage.getItem(TOMBSTONES)).toBeNull()
+    expect(window.localStorage.getItem(JOURNAL_OWNERSHIP)).toBeNull()
   })
 
   it("지운 개수를 정확히 보고한다", () => {
@@ -200,6 +209,7 @@ describe("eraseAllLocalData", () => {
     // 삭제 기록만 기본에서 빠진다(부활 방지)
     expect(erasableKeys()).not.toContain(TOMBSTONES)
     expect(erasableKeys({ includeDeletionRecord: true })).toContain(TOMBSTONES)
+    expect(erasableKeys({ includeDeletionRecord: true })).toContain(JOURNAL_OWNERSHIP)
   })
 
   it("전체 삭제 후 일지를 읽으면 비어 있다", () => {

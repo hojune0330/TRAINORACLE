@@ -5,6 +5,8 @@
 export type AccountConfig = {
   readonly url: string
   readonly anonKey: string
+  readonly kakaoAuthEnabled: boolean
+  readonly phoneAuthEnabled: boolean
   readonly privacyPolicy: AccountLegalDocument
   readonly termsOfService: AccountLegalDocument
 }
@@ -40,7 +42,17 @@ export function resolveAccountConfig(env: Readonly<Record<string, unknown>>): Ac
   ) return null
   if (!url.startsWith("https://")) return null
   if (!privacyPolicy.url.startsWith("https://") || !termsOfService.url.startsWith("https://")) return null
-  return { url, anonKey, privacyPolicy, termsOfService }
+  return {
+    url,
+    anonKey,
+    kakaoAuthEnabled: textValue(env, "VITE_KAKAO_AUTH_ENABLED") === "true"
+      && textValue(env, "VITE_KILL_KAKAO_AUTH") !== "true",
+    phoneAuthEnabled: textValue(env, "VITE_PHONE_AUTH_ENABLED") === "true"
+      && textValue(env, "VITE_PHONE_AUTH_OPERATIONS_APPROVED") === "true"
+      && textValue(env, "VITE_KILL_PHONE_AUTH") !== "true",
+    privacyPolicy,
+    termsOfService,
+  }
 }
 
 export function accountConfig(): AccountConfig | null {

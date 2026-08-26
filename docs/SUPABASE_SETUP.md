@@ -15,10 +15,10 @@
    - `Project URL` (예: `https://abcdefgh.supabase.co`)
    - `anon public` 키 (공개용 키 — 프론트에 넣어도 안전, RLS가 지킴)
 
-## 2. 마이그레이션 26개 적용
+## 2. 마이그레이션 28개 적용
 
 SQL Editor에 일부 파일만 복사하지 않는다. 저장소 루트에서 Supabase CLI로
-시험 프로젝트를 연결한 뒤 `0001`부터 `0026`까지 순서대로 적용한다.
+시험 프로젝트를 연결한 뒤 `0001`부터 `0028`까지 순서대로 적용한다.
 
 ```bash
 npx supabase login
@@ -27,7 +27,7 @@ npx supabase db push --linked --include-all
 npx supabase migration list --linked
 ```
 
-마지막 명령에서 `0001`~`0026`이 모두 로컬·원격 양쪽에 표시돼야 한다.
+마지막 명령에서 `0001`~`0028`이 모두 로컬·원격 양쪽에 표시돼야 한다.
 명령 시각, 시험 프로젝트 ref, Region, 적용 목록과 성공 결과를
 `reports/operations/`의 시험 영수증에 남긴다. 비밀번호·access token·anon key는
 영수증이나 Git에 기록하지 않는다.
@@ -37,7 +37,21 @@ npx supabase migration list --linked
 `Authentication → Providers → Email`이 기본 활성입니다.
 `Confirm email` 설정은 그대로 두면 됩니다 (앱은 6자리 OTP 코드 방식 사용).
 
-## 4. Google 간편 로그인 (선택)
+## 4. 카카오 간편 로그인
+
+1. https://developers.kakao.com 에서 aaclub 운영 계정으로 TrainOracle 앱을 만든다.
+2. 카카오 로그인을 활성화하고 동의항목은 공개 정책에 적힌 최소 식별 범위만 선택한다.
+3. Supabase `Authentication → Providers → Kakao` 화면에 표시된 callback URL을
+   카카오 Redirect URI에 정확히 등록한다.
+4. 카카오 REST API key와 client secret을 Supabase provider 설정에만 입력한다.
+   채팅, Git, 문서, 프론트 환경변수에는 기록하지 않는다.
+5. Supabase `Authentication → URL Configuration`에 시험 URL과
+   `https://hojune0330.github.io/TRAINORACLE/`을 필요한 단계에 맞춰 등록한다.
+
+화면에 카카오 버튼을 공개하기 전에 신규 가입, 기존 로그인, 취소, callback 실패를
+실제 브라우저에서 확인한다.
+
+## 5. Google 간편 로그인
 
 1. https://console.cloud.google.com → 프로젝트 생성 → `APIs & Services → Credentials`
 2. `OAuth client ID` 생성 (Web application)
@@ -48,16 +62,17 @@ npx supabase migration list --linked
    - Site URL: `https://hojune0330.github.io/TRAINORACLE/`
    - Redirect URLs에도 같은 주소 추가
 
-Google 설정을 건너뛰어도 이메일 코드 로그인은 동작합니다.
+Google 설정을 건너뛰어도 이메일 코드 로그인은 동작하지만, 공개 화면에 Google
+버튼이 보이는 배포에서는 반드시 설정과 왕복 시험을 마쳐야 합니다.
 
-## 5. 시험 앱에서 계정만 확인
+## 6. 시험 앱에서 계정만 확인
 
 시험 중에도 동기화·공유·계획·분석 플래그는 계속 끈다. 계정 화면만 켠
-로컬 빌드에서 이메일 OTP, Google 로그인(설정한 경우), 만 14세 미만 보호자
-확인, 로그아웃, 삭제 요청과 실패 경로를 확인한다. 시험 DB 적용만으로 공개
+로컬 빌드에서 카카오·Google·이메일 OTP, 만 14세 경계와 외부 인증 미호출,
+로그아웃, 삭제 요청과 실패 경로를 확인한다. 시험 DB 적용만으로 공개
 사이트의 계정 기능을 켜지 않는다.
 
-## 6. CI 워크플로 확인
+## 7. CI 워크플로 확인
 
 `.github/workflows/ci.yml`의 `deploy-pages` 잡은 계정 설정과 기능별 공개·중단
 스위치를 배포 빌드에 주입하도록 준비되어 있습니다. 계정만 시험할 때는
@@ -71,6 +86,8 @@ Google 설정을 건너뛰어도 이메일 코드 로그인은 동작합니다.
           VITE_FEATURE_SYNC: ${{ vars.TRAINORACLE_FEATURE_SYNC }}
           VITE_FEATURE_SHARING: ${{ vars.TRAINORACLE_FEATURE_SHARING }}
           VITE_FEATURE_PLAN_PROPOSALS: ${{ vars.TRAINORACLE_FEATURE_PLAN_PROPOSALS }}
+          VITE_FEATURE_PLAN_BACKUP: ${{ vars.TRAINORACLE_FEATURE_PLAN_BACKUP }}
+          VITE_FEATURE_PUBLIC_PROFILE: ${{ vars.TRAINORACLE_FEATURE_PUBLIC_PROFILE }}
           VITE_FEATURE_PRODUCT_ANALYTICS: ${{ vars.TRAINORACLE_FEATURE_PRODUCT_ANALYTICS }}
           VITE_FEATURE_FEEDBACK_BOARD: ${{ vars.TRAINORACLE_FEATURE_FEEDBACK_BOARD }}
           VITE_KILL_ACCOUNT: ${{ vars.TRAINORACLE_KILL_ACCOUNT }}
@@ -86,7 +103,7 @@ Google 설정을 건너뛰어도 이메일 코드 로그인은 동작합니다.
           npm run build
 ```
 
-## 7. GitHub 저장소에 키와 출시 변수 등록
+## 8. GitHub 저장소에 키와 출시 변수 등록
 
 저장소 `Settings → Secrets and variables → Actions → New repository secret`:
 
@@ -107,15 +124,19 @@ Google 설정을 건너뛰어도 이메일 코드 로그인은 동작합니다.
 | `TRAINORACLE_FEATURE_SYNC` | `false` 또는 미등록 | 계정 안정화 뒤 별도 결정 |
 | `TRAINORACLE_FEATURE_SHARING` | `false` 또는 미등록 | 동기화 안정화 뒤 별도 결정 |
 | `TRAINORACLE_FEATURE_PLAN_PROPOSALS` | `false` 또는 미등록 | 공유 안정화 뒤 별도 결정 |
+| `TRAINORACLE_FEATURE_PLAN_BACKUP` | `false` 또는 미등록 | 자동 계획 보관 승인 뒤 `true` |
+| `TRAINORACLE_FEATURE_PUBLIC_PROFILE` | `false` 또는 미등록 | 공개 프로필·친구 공유 승인 뒤 `true` |
 | `TRAINORACLE_FEATURE_PRODUCT_ANALYTICS` | `false` 또는 미등록 | 별도 동의·삭제 시험 뒤 별도 결정 |
 | `TRAINORACLE_FEATURE_FEEDBACK_BOARD` | `false` 또는 미등록 | 문의판 시험 뒤 `true` |
 | `TRAINORACLE_KILL_ACCOUNT` | `false` 또는 미등록 | 계정만 즉시 닫을 때 `true` |
+| `TRAINORACLE_KILL_PLAN_BACKUP` | `false` 또는 미등록 | 계획 온라인 보관만 즉시 닫을 때 `true` |
+| `TRAINORACLE_KILL_PUBLIC_PROFILE` | `false` 또는 미등록 | 공개 프로필·친구 공유만 즉시 닫을 때 `true` |
 | `TRAINORACLE_KILL_FEEDBACK_BOARD` | `false` 또는 미등록 | 문의판만 즉시 닫을 때 `true` |
 
 키만 등록한 상태에서는 계정 기능이 노출되지 않습니다. 공개 게이트를 모두
 확인한 뒤 위 변수만 `true`로 바꾸고 main을 다시 배포합니다.
 
-## 8. 로컬 개발에서 켜보기 (선택)
+## 9. 로컬 개발에서 켜보기 (선택)
 
 `app/.env.local` 파일 생성 (git에 올라가지 않음):
 
@@ -125,7 +146,7 @@ VITE_SUPABASE_ANON_KEY=eyJ...
 VITE_ACCOUNT_PUBLIC_ENABLED=true
 ```
 
-## 9. 문의 게시판 운영
+## 10. 문의 게시판 운영
 
 문의 게시판은 계정 기능과 별개다. 공개 전에는 시험 프로젝트에서 다음을 모두
 확인한다.

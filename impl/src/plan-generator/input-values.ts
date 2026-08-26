@@ -1,4 +1,5 @@
 import type { SafetyGateDecision } from "../safety-gate/gate"
+import { RVE_NON_SENSITIVE_REASON_CODES } from "../rve/signal"
 import type {
   ExperienceBand,
   JournalSource,
@@ -20,22 +21,47 @@ export type ParsedJournalSource =
     }
 
 export function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null && !Array.isArray(value)
+  if (typeof value !== "object" || value === null || Array.isArray(value)) return false
+  try {
+    if (Object.getPrototypeOf(value) !== Object.prototype) return false
+    return Reflect.ownKeys(value).every((key) => {
+      if (typeof key !== "string") return false
+      const descriptor = Object.getOwnPropertyDescriptor(value, key)
+      return descriptor !== undefined && "value" in descriptor
+    })
+  } catch {
+    return false
+  }
+}
+
+const SAFETY_REASON_CODES: ReadonlySet<string> = new Set(RVE_NON_SENSITIVE_REASON_CODES)
+
+function hasExactDataKeys(value: Record<string, unknown>, keys: readonly string[]): boolean {
+  try {
+    if (!isRecord(value)) return false
+    const ownKeys = Reflect.ownKeys(value)
+    return ownKeys.length === keys.length
+      && ownKeys.every((key) => typeof key === "string" && keys.includes(key))
+  } catch {
+    return false
+  }
 }
 
 function parseCodes(value: unknown): readonly string[] | undefined {
-  if (!Array.isArray(value)) {
-    return undefined
-  }
-
-  const codes: string[] = []
-  for (const code of value) {
-    if (typeof code !== "string") {
+  try {
+    if (!Array.isArray(value) || Object.getPrototypeOf(value) !== Array.prototype) {
       return undefined
     }
-    codes.push(code)
+    const ownKeys = Reflect.ownKeys(value)
+    if (ownKeys.some((key) => typeof key !== "string" || (key !== "length" && !/^(?:0|[1-9]\d*)$/u.test(key)))
+        || Object.keys(value).length !== value.length
+        || !value.every((code) => typeof code === "string" && SAFETY_REASON_CODES.has(code))) {
+      return undefined
+    }
+    return Object.freeze([...value])
+  } catch {
+    return undefined
   }
-  return codes
 }
 
 export function parseSafetyGate(value: unknown): SafetyGateDecision | undefined {
@@ -50,7 +76,13 @@ export function parseSafetyGate(value: unknown): SafetyGateDecision | undefined 
 
   switch (value["kind"]) {
     case "passed":
-      if (value["planGenerationAllowed"] !== true) {
+      if (!hasExactDataKeys(value, ["kind", "action", "planGenerationAllowed", "nonSensitiveReasonCodes", "audit"])
+          || value["action"] !== "CONTINUE_WITH_OTHER_GATES"
+          || value["planGenerationAllowed"] !== true
+          || !isRecord(value["audit"])
+          || !hasExactDataKeys(value["audit"], ["event", "privacy"])
+          || value["audit"]["event"] !== "PLAN_SAFETY_GATE_PASSED"
+          || value["audit"]["privacy"] !== "REASON_CODES_ONLY") {
         return undefined
       }
       return {
@@ -64,11 +96,17 @@ export function parseSafetyGate(value: unknown): SafetyGateDecision | undefined 
         },
       }
     case "blocked":
-      if (value["planGenerationAllowed"] !== false) {
+      if (!hasExactDataKeys(value, ["kind", "action", "planGenerationAllowed", "requiredNextAction", "nonSensitiveReasonCodes", "audit"])
+          || value["planGenerationAllowed"] !== false
+          || !isRecord(value["audit"])
+          || !hasExactDataKeys(value["audit"], ["event", "privacy"])
+          || value["audit"]["event"] !== "PLAN_SAFETY_GATE_BLOCKED"
+          || value["audit"]["privacy"] !== "REASON_CODES_ONLY") {
         return undefined
       }
       switch (value["action"]) {
         case "BLOCK":
+          if (value["requiredNextAction"] !== "HUMAN_REVIEW") return undefined
           return {
             kind: "blocked",
             action: "BLOCK",
@@ -81,6 +119,7 @@ export function parseSafetyGate(value: unknown): SafetyGateDecision | undefined 
             },
           }
         case "BLOCK_OR_HUMAN_REVIEW":
+          if (value["requiredNextAction"] !== "MORE_INFO_OR_HUMAN_REVIEW") return undefined
           return {
             kind: "blocked",
             action: "BLOCK_OR_HUMAN_REVIEW",
@@ -162,18 +201,27 @@ export function parsePlannedEnergyIntent(
 }
 
 function parseTrainingDays(value: unknown): readonly number[] | undefined {
-  if (!Array.isArray(value)) {
-    return undefined
-  }
-
-  const days: number[] = []
-  for (const day of value) {
-    if (!Number.isInteger(day) || days.includes(day)) {
+  try {
+    if (!Array.isArray(value) || Object.getPrototypeOf(value) !== Array.prototype) {
       return undefined
     }
-    days.push(day)
+    const ownKeys = Reflect.ownKeys(value)
+    if (ownKeys.some((key) => typeof key !== "string" || (key !== "length" && !/^(?:0|[1-9]\d*)$/u.test(key)))
+        || Object.keys(value).length !== value.length) {
+      return undefined
+    }
+
+    const days: number[] = []
+    for (const day of value) {
+      if (!Number.isInteger(day) || days.includes(day)) {
+        return undefined
+      }
+      days.push(day)
+    }
+    return Object.freeze([...days].sort((left, right) => left - right))
+  } catch {
+    return undefined
   }
-  return Object.freeze([...days].sort((left, right) => left - right))
 }
 
 function parseSecondSessionMode(value: unknown): SecondSessionMode | undefined {
@@ -206,20 +254,25 @@ export function parseProfile(value: unknown): PlanProfile | undefined {
   if (!isRecord(value)) {
     return undefined
   }
+  const allowedKeys = new Set([
+    "eventGroup", "eventDistanceM", "experienceBand", "availableTrainingDays",
+    "secondSessionMode", "trainingTimePreference",
+  ])
+  if (!Reflect.ownKeys(value).every((key) => typeof key === "string" && allowedKeys.has(key))) {
+    return undefined
+  }
 
   const eventGroup = parseEventGroup(value["eventGroup"])
   const rawEventDistanceM = value["eventDistanceM"]
-  const eventDistanceM = rawEventDistanceM === undefined
-    ? undefined
-    : parseSupportedEventDistance(rawEventDistanceM)
+  const eventDistanceM = parseSupportedEventDistance(rawEventDistanceM)
   const experienceBand = parseExperienceBand(value["experienceBand"])
   const availableTrainingDays = parseTrainingDays(value["availableTrainingDays"])
   const secondSessionMode = parseSecondSessionMode(value["secondSessionMode"])
   const trainingTimePreference = parseTrainingTimePreference(value["trainingTimePreference"])
   if (
     eventGroup === undefined ||
-    (rawEventDistanceM !== undefined && eventDistanceM === undefined) ||
-    (eventDistanceM !== undefined && !eventDistanceMatchesGroup(eventDistanceM, eventGroup)) ||
+    eventDistanceM === undefined ||
+    !eventDistanceMatchesGroup(eventDistanceM, eventGroup) ||
     experienceBand === undefined ||
     availableTrainingDays === undefined ||
     secondSessionMode === undefined ||
@@ -230,7 +283,7 @@ export function parseProfile(value: unknown): PlanProfile | undefined {
 
   return {
     eventGroup,
-    ...(eventDistanceM === undefined ? {} : { eventDistanceM }),
+    eventDistanceM,
     experienceBand,
     availableTrainingDays,
     secondSessionMode,

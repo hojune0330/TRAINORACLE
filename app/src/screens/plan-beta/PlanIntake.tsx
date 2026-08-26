@@ -1,25 +1,24 @@
-import { useState } from "react"
-import { ArrowLeft, ChevronRight, Medal } from "lucide-react"
+import React from "react"
+import { ArrowLeft, CalendarDays, ChevronRight, Medal } from "lucide-react"
 import {
   EXPERIENCE_BANDS,
-  PLAN_EVENT_GROUPS,
   PLANNED_ENERGY_INTENTS,
   TRAINING_TIME_PREFERENCES,
 } from "@impl/plan-generator/types"
 import type {
   ExperienceBand,
-  PlanEventGroup,
   PlannedEnergyIntent,
   SecondSessionMode,
   TrainingTimePreference,
 } from "@impl/plan-generator/types"
 import { TermHelp } from "../../components/TermHelp"
+import { isValidIsoDate, isoShift } from "../../domain/dates"
+import { todayISO } from "../../domain/journal-store"
 import { COMPETITION_DIVISIONS } from "../../domain/plan-beta-schema"
 import type { CompetitionDivision } from "../../domain/plan-beta-schema"
 import type { PlanBetaIntake } from "../../domain/plan-beta-store"
 import {
   ENERGY_INTENT_LABELS,
-  EVENT_LABELS,
   EXPERIENCE_LABELS,
 } from "./labels"
 import { PlanChoice as Choice } from "./PlanChoice"
@@ -27,11 +26,14 @@ import { answeredSummary, DIVISION_LABELS, STEP_META, trainingTimeLabel } from "
 import type { IntakeStep as MetaIntakeStep } from "./plan-intake-meta"
 import {
   unansweredRefinements,
+  eventDistanceLabel,
+  SUPPORTED_PLAN_EVENTS,
   visibleIntakeSteps,
 } from "./plan-intake-navigation"
 import type { RefinementStep } from "./plan-intake-navigation"
+import { resolveDetailedPlanTemplateOption } from "./plan-template-options"
 
-export type IntakeStep = MetaIntakeStep | "frame-length" | "preview"
+export type IntakeStep = MetaIntakeStep | "frame-length" | "race-date" | "preview"
 
 type IntakeDraft = Partial<PlanBetaIntake>
 
@@ -42,6 +44,7 @@ const PREVIEW_REFINEMENTS: readonly {
   { step: "days", label: "훈련일" },
   { step: "frame-length", label: "첫 계획 길이 7·9·10일" },
   { step: "focus", label: "훈련 목적" },
+  { step: "template", label: "훈련 상세 방식" },
   { step: "training-time", label: "주로 하는 시간" },
   { step: "two-a-day", label: "하루 한 번/두 번 선택" },
 ]
@@ -50,14 +53,18 @@ type PlanIntakeProps = {
   readonly step: IntakeStep
   readonly draft: IntakeDraft
   readonly onBack: () => void
-  readonly onGoal: (goal: PlanEventGroup) => void
+  readonly onGoal: (distanceM: PlanBetaIntake["eventDistanceM"]) => void
   readonly onDivision: (division: CompetitionDivision) => void
   readonly onExperience: (band: ExperienceBand) => void
   readonly onFocus: (focus: PlannedEnergyIntent) => void
+  readonly onTemplate: (template: PlanBetaIntake["selectedDetailedTemplateRef"]) => void
   readonly onDays: (days: PlanBetaIntake["availableDayCount"]) => void
   readonly onFrameLength: (length: PlanBetaIntake["requestedFrameLength"]) => void
   readonly onTrainingTime: (preference: TrainingTimePreference) => void
   readonly onSecondSession: (mode: SecondSessionMode) => void
+  readonly targetRaceDate?: string
+  readonly onTargetRaceDateChange?: (value: string) => void
+  readonly onRaceDate?: (targetRaceDate?: string) => void
   readonly onManageRecords: () => void
   readonly onOpenNotationReader: () => void
   readonly onSafety: (
@@ -75,10 +82,14 @@ export function PlanIntake({
   onDivision,
   onExperience,
   onFocus,
+  onTemplate,
   onDays,
   onFrameLength,
   onTrainingTime,
   onSecondSession,
+  targetRaceDate = "",
+  onTargetRaceDateChange,
+  onRaceDate,
   onManageRecords,
   onOpenNotationReader,
   onSafety,
@@ -99,6 +110,13 @@ export function PlanIntake({
         copy: "7일은 먼저 7일만 받고 다음 계획으로 이어집니다. 9일과 10일은 고른 날짜 수만큼 한 번에 받습니다.",
         helpTerm: "plan-option" as const,
       }
+    : step === "race-date"
+    ? {
+        eyebrow: "목표 경기 날짜",
+        title: "목표 경기 날짜가 있나요? (선택)",
+        copy: "날짜 없이도 일반 계획 후보를 바로 만들 수 있어요. 날짜를 고르면 현재는 저장하거나 훈련량·강도를 바꾸지 않고, 이 화면에서만 적용 가능 여부를 미리 확인해요.",
+        helpTerm: null,
+      }
     : STEP_META[step]
   const visibleSteps = visibleIntakeSteps(draft.eventGroup)
   const unanswered = unansweredRefinements(draft)
@@ -113,14 +131,14 @@ export function PlanIntake({
   if (draft.requestedFrameLength !== undefined) {
     summaryLabels.set("frame-length", `${draft.requestedFrameLength}일 계획`)
   }
+  if (targetRaceDate !== "") {
+    summaryLabels.set("race-date", `목표 경기 ${targetRaceDate}`)
+  }
   const answeredSteps = visibleSteps.flatMap((answeredStep) => {
     const label = summaryLabels.get(answeredStep)
     return label === undefined ? [] : [{ step: answeredStep, label }]
   })
-  const [showTenKm, setShowTenKm] = useState(false)
-  const eventGroups = showTenKm
-    ? PLAN_EVENT_GROUPS
-    : PLAN_EVENT_GROUPS.filter((value) => value !== "TEN_K")
+  const detailedTemplate = resolveDetailedPlanTemplateOption(draft)
   return (
     <section className="plan-intake" aria-labelledby="plan-intake-title">
       <button className="plan-back" type="button" onClick={onBack}>
@@ -159,9 +177,7 @@ export function PlanIntake({
             <div>
               <dt>준비 종목</dt>
               <dd>
-                {draft.eventGroup === undefined
-                  ? "아직 선택되지 않음"
-                  : EVENT_LABELS[draft.eventGroup].title}
+                {eventDistanceLabel(draft.eventDistanceM)}
               </dd>
             </div>
             <div>
@@ -193,7 +209,7 @@ export function PlanIntake({
           <button
             className="plan-select-action plan-preview-action"
             type="button"
-            disabled={draft.eventGroup === undefined || draft.experienceBand === undefined}
+            disabled={draft.eventDistanceM === undefined || draft.experienceBand === undefined}
             onClick={onContinue}
           >
             {remainingRefinements.length === 0 ? "계획 후보 만들기" : "내 계획 완성하기"}
@@ -208,13 +224,13 @@ export function PlanIntake({
           aria-label={step === "goal" ? "계획 종목 선택" : undefined}
         >
         {step === "goal" && (
-          eventGroups.map((value) => (
+          SUPPORTED_PLAN_EVENTS.map((event) => (
             <Choice
-              key={value}
-              title={EVENT_LABELS[value].title}
-              detail={EVENT_LABELS[value].detail}
-              selected={draft.eventGroup === value}
-              onClick={() => onGoal(value)}
+              key={event.distanceM}
+              title={event.title}
+              detail={event.detail}
+              selected={draft.eventDistanceM === event.distanceM}
+              onClick={() => onGoal(event.distanceM)}
             />
           ))
         )}
@@ -241,7 +257,7 @@ export function PlanIntake({
           ))
         )}
         {step === "focus" && (
-          PLANNED_ENERGY_INTENTS.filter((value) => value !== "MIXED_INTENT").map((value) => (
+          PLANNED_ENERGY_INTENTS.map((value) => (
             <Choice
               key={value}
               title={ENERGY_INTENT_LABELS[value].title}
@@ -250,6 +266,29 @@ export function PlanIntake({
               onClick={() => onFocus(value)}
             />
           ))
+        )}
+        {step === "template" && (
+          <>
+            <Choice
+              title="RPE 기준으로 받기"
+              detail="경기 기록 없이도 시작 · 각 훈련의 체감 강도와 시간을 안내"
+              selected={draft.selectedDetailedTemplateRef === null}
+              onClick={() => onTemplate(null)}
+            />
+            {detailedTemplate !== null && (
+              <Choice
+                title={`${detailedTemplate.targetEventDistanceM}m 경기 페이스 상세 훈련 포함`}
+                detail={`${detailedTemplate.notation} · 같은 종목의 현재 기록을 직접 확인하면 반복 목표 시간을 계산`}
+                selected={draft.selectedDetailedTemplateRef?.templateId === detailedTemplate.ref.templateId}
+                onClick={() => onTemplate(detailedTemplate.ref)}
+              />
+            )}
+            {detailedTemplate === null && (
+              <p className="plan-choice-note" role="status">
+                지금 고른 종목·훈련 목적에는 활성화된 상세 훈련표가 없어요. RPE 기준 계획은 그대로 받을 수 있어요.
+              </p>
+            )}
+          </>
         )}
         {step === "days" && (
           ([3, 4, 5, 6, "EVERY_DAY"] as const).map((days) => (
@@ -304,6 +343,14 @@ export function PlanIntake({
             />
           </>
         )}
+        {step === "race-date" && (
+          <RaceDateChoice
+            value={targetRaceDate}
+            onChange={(value) => onTargetRaceDateChange?.(value)}
+            onContinueWithoutDate={() => onRaceDate?.()}
+            onPreview={() => onRaceDate?.(targetRaceDate)}
+          />
+        )}
         {step === "safety" && (
           <>
             <Choice
@@ -321,15 +368,6 @@ export function PlanIntake({
           </>
         )}
         </div>
-      )}
-      {step === "goal" && !showTenKm && (
-        <button
-          className="plan-text-action"
-          type="button"
-          onClick={() => setShowTenKm(true)}
-        >
-          10km 계획 보기
-        </button>
       )}
       {step === "goal" && (
         <>
@@ -356,5 +394,62 @@ export function PlanIntake({
         </>
       )}
     </section>
+  )
+}
+
+function RaceDateChoice({
+  value,
+  onChange,
+  onContinueWithoutDate,
+  onPreview,
+}: {
+  readonly value: string
+  readonly onChange: (value: string) => void
+  readonly onContinueWithoutDate: () => void
+  readonly onPreview: () => void
+}) {
+  const today = todayISO()
+  const validFutureDate = isValidIsoDate(value) && value > today
+  const describedBy = value !== "" && !validFutureDate
+    ? "plan-race-date-help plan-race-date-error"
+    : "plan-race-date-help"
+
+  return (
+    <div className="plan-race-date">
+      <label htmlFor="plan-target-race-date">
+        <span><CalendarDays aria-hidden="true" size={17} /> 목표 경기 날짜</span>
+        <input
+          id="plan-target-race-date"
+          type="date"
+          min={isoShift(today, 1)}
+          value={value}
+          aria-invalid={value !== "" && !validFutureDate}
+          aria-describedby={describedBy}
+          onChange={(event) => onChange(event.target.value)}
+        />
+      </label>
+      <small id="plan-race-date-help">
+        입력한 날짜는 이 미리보기에서만 사용하고 기기나 계정에 저장하지 않아요.
+      </small>
+      {value !== "" && !validFutureDate && (
+        <p id="plan-race-date-error" role="alert">
+          오늘보다 뒤의 실제 날짜를 골라주세요.
+        </p>
+      )}
+      <div className="plan-race-date__actions">
+        <button className="plan-select-action" type="button" onClick={onContinueWithoutDate}>
+          날짜 없이 계획 후보 보기
+          <ChevronRight aria-hidden="true" size={18} />
+        </button>
+        <button
+          className="plan-secondary-action"
+          type="button"
+          disabled={!validFutureDate}
+          onClick={onPreview}
+        >
+          이 날짜로 배치 미리보기
+        </button>
+      </div>
+    </div>
   )
 }

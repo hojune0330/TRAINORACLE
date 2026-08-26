@@ -5,15 +5,18 @@ import type {
   RacePaceCalculationResult,
   StructuredPrescription,
 } from "@impl/prescription/types"
+import type { PlannedEnergyIntent } from "@impl/plan-generator/types"
 import type { SafetyGateDecision } from "@impl/safety-gate/gate"
 import {
   resolveDetailedPrescriptionApproval,
   type DetailedPrescriptionApprovalRecord,
   type DetailedPrescriptionApprovalRequest,
 } from "./detailed-prescription-approvals"
+import { resolveDetailedPrescriptionRuntimeAuthority } from "./detailed-prescription-runtime-authority"
 
 type DetailedPrescriptionInput = DetailedPrescriptionApprovalRequest & {
   readonly detailedPrescriptionEnabled: boolean
+  readonly selectedEnergyIntent: PlannedEnergyIntent
   readonly anchor: PaceAnchorRecord
   readonly displayRoundingPolicyVersion: string
   readonly safetyGate: SafetyGateDecision
@@ -31,8 +34,19 @@ export function prepareDetailedPrescription(
   input: DetailedPrescriptionInput,
 ): DetailedPrescription | null {
   if (!input.detailedPrescriptionEnabled) return null
+  const runtimeAuthority = resolveDetailedPrescriptionRuntimeAuthority({
+    selectedTemplateRef: {
+      templateId: input.templateId,
+      version: input.templateVersion,
+      fingerprint: input.templateContentFingerprint,
+    },
+    targetEventDistanceM: input.targetEventDistanceM,
+    selectedEnergyIntent: input.selectedEnergyIntent,
+    evaluatedAt: input.evaluatedAt,
+  })
+  if (runtimeAuthority.kind === "fallback") return null
   const approval = resolveDetailedPrescriptionApproval(input)
-  if (approval === undefined) return null
+  if (approval === undefined || approval !== runtimeAuthority.approval) return null
 
   const prepared = preparePrescriptionRuntime({
     notation: approval.notation,

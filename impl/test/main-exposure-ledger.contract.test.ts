@@ -34,6 +34,7 @@ function legacyQualityOnlyRequest(frameLength: 9 | 10): PlanGenerationRequest {
     safetyGate: clearedGate(),
     profile: {
       eventGroup: "MIDDLE_DISTANCE",
+      eventDistanceM: 1500,
       experienceBand: "DEVELOPING",
       availableTrainingDays: [1, 3, 5, 7, 9],
       secondSessionMode: "SINGLE_SESSION_ONLY",
@@ -64,6 +65,7 @@ function canonicalNinePointFiveInput() {
     safetyGate: clearedGate(),
     profile: {
       eventGroup: "MIDDLE_DISTANCE",
+      eventDistanceM: 1500,
       experienceBand: "DEVELOPING",
       availableTrainingDays: [1, 3, 5, 7, 9],
       secondSessionMode: "SINGLE_SESSION_ONLY",

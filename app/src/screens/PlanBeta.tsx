@@ -12,10 +12,12 @@ import {
 import type {
   PlanAthleteEvidence,
   PlanCurrentCheck,
+  PlanDraftGeneration,
 } from "../domain/plan-beta-flow"
 import {
   loadPlanBetaState,
   loadPreviousIntake,
+  savePlanBetaState,
 } from "../domain/plan-beta-store"
 import type {
   PlanBetaIntake,
@@ -27,6 +29,7 @@ import { PlanCandidates } from "./plan-beta/PlanCandidates"
 import { PlanIntake } from "./plan-beta/PlanIntake"
 import type { IntakeStep } from "./plan-beta/PlanIntake"
 import { NotationReader } from "./plan-beta/NotationReader"
+import { RaceDatePreview } from "./plan-beta/RaceDatePreview"
 import {
   saveSelectedPlanCandidate,
 } from "./plan-beta/plan-selection"
@@ -36,9 +39,15 @@ import { loadAthleteRecords } from "../domain/athlete-records"
 import type { CandidatePrescriptionBinding } from "../domain/plan-candidate-prescription"
 import {
   divisionForGoal,
+  eventGroupForDistance,
   firstUnansweredRefinement,
   previousIntakeStep,
 } from "./plan-beta/plan-intake-navigation"
+import {
+  backupActivePlanToServer,
+  loadLatestPlanFromServer,
+  planCloudBackupEnabled,
+} from "../domain/account/plan-cloud-backup"
 
 export function PlanBeta({
   onWriteLog,
@@ -50,12 +59,15 @@ export function PlanBeta({
   const [stored, setStored] = React.useState<PlanBetaState | null>(
     () => loadPlanBetaState(),
   )
+  const [cloudRestorePending, setCloudRestorePending] = React.useState(
+    stored === null && planCloudBackupEnabled(),
+  )
   const previousIntake = React.useState(() => loadPreviousIntake())[0]
   const [draft, setDraft] = React.useState<Partial<PlanBetaIntake>>(
     previousIntake ?? {},
   )
   const [step, setStep] = React.useState<IntakeStep>(
-    previousIntake === null
+    previousIntake === null || !("eventDistanceM" in previousIntake)
       ? "goal"
       : previousIntake.competitionDivision === undefined
         && previousIntake.eventGroup !== "GENERAL_ENDURANCE"
@@ -69,6 +81,10 @@ export function PlanBeta({
     React.useState<PlanBetaIntake | null>(null)
   const [gate, setGate] = React.useState<SafetyGateDecision | null>(null)
   const [generatedEvidence, setGeneratedEvidence] = React.useState<PlanAthleteEvidence | null>(null)
+  const [targetRaceDate, setTargetRaceDate] = React.useState("")
+  const [racePreview, setRacePreview] = React.useState<
+    Extract<PlanDraftGeneration, { readonly kind: "preview_only" }> | null
+  >(null)
   const [blocked, setBlocked] = React.useState(false)
   const [currentCheck, setCurrentCheck] = React.useState<PlanCurrentCheck | null>(null)
   const [errorCode, setErrorCode] = React.useState<string | null>(null)
@@ -85,6 +101,8 @@ export function PlanBeta({
     ? "notation-reader"
     : stored !== null
     ? "active"
+    : racePreview !== null
+      ? "race-preview"
     : blocked
       ? "blocked"
       : generated !== null && gate !== null
@@ -96,9 +114,32 @@ export function PlanBeta({
     if (scrollRegion !== null) scrollRegion.scrollTop = 0
   }, [viewKey])
 
+  React.useEffect(() => {
+    if (stored !== null || !planCloudBackupEnabled()) {
+      setCloudRestorePending(false)
+      return
+    }
+    let cancelled = false
+    void loadLatestPlanFromServer().then((result) => {
+      if (cancelled) return
+      if (result.kind === "loaded" && savePlanBetaState(result.state).ok) {
+        setStored(result.state)
+      }
+      setCloudRestorePending(false)
+    })
+    return () => { cancelled = true }
+  }, [])
+
+  React.useEffect(() => {
+    if (stored !== null && planCloudBackupEnabled()) {
+      void backupActivePlanToServer(stored)
+    }
+  }, [stored])
+
   const generateCandidates = (
     nextDraft: Partial<PlanBetaIntake>,
     recordId: string | null = null,
+    raceDate?: string,
   ) => {
     if (currentCheck === null) {
       setErrorCode(null)
@@ -106,7 +147,7 @@ export function PlanBeta({
       return
     }
     const result = generatePlanFromDraft(
-      nextDraft,
+      raceDate === undefined ? nextDraft : { ...nextDraft, targetRaceDate: raceDate },
       currentCheck,
       recordId === null ? undefined : { selectedRecordId: recordId },
     )
@@ -120,12 +161,19 @@ export function PlanBeta({
         setErrorCode(result.code)
         return
       case "generated":
+        setRacePreview(null)
         setErrorCode(null)
         setGate(result.gate)
         setGenerated(result.generated)
         setGeneratedIntake(result.intake)
         setGeneratedEvidence(result.athleteEvidence)
         setPrescriptionBinding(result.prescriptionBinding)
+        return
+      case "preview_only":
+        setErrorCode(null)
+        setGenerated(null)
+        setGate(null)
+        setRacePreview(result)
         return
     }
   }
@@ -137,7 +185,7 @@ export function PlanBeta({
       setStep(nextRefinement)
       return
     }
-    generateCandidates(nextDraft)
+    setStep("race-date")
   }
 
   const selectRecord = (recordId: string) => {
@@ -148,7 +196,7 @@ export function PlanBeta({
     if (generatedIntake !== null) generateCandidates(generatedIntake)
   }
 
-  const saveCandidate = (
+  const saveCandidate = async (
     selection: CandidateSelection,
     activeGenerated: PlanGenerationSuccess,
   ) => {
@@ -166,7 +214,7 @@ export function PlanBeta({
       setErrorCode("MINIMUM_PROFILE_INCOMPLETE")
       return
     }
-    const result = saveSelectedPlanCandidate(
+    const result = await saveSelectedPlanCandidate(
       selection,
       activeGenerated,
       safety.gate,
@@ -188,6 +236,10 @@ export function PlanBeta({
 
   if (notationReaderOpen) {
     return <NotationReader onBack={() => setNotationReaderOpen(false)} />
+  }
+
+  if (cloudRestorePending && stored === null) {
+    return <p role="status" style={{ padding: 24 }}>계정에 저장된 훈련 계획을 확인하고 있어요.</p>
   }
 
   if (stored !== null) {
@@ -242,6 +294,23 @@ export function PlanBeta({
     )
   }
 
+  if (racePreview !== null) {
+    return (
+      <RaceDatePreview
+        result={racePreview}
+        onChangeDate={() => {
+          setRacePreview(null)
+          setStep("race-date")
+        }}
+        onContinueWithoutDate={() => {
+          setTargetRaceDate("")
+          setRacePreview(null)
+          generateCandidates(draft)
+        }}
+      />
+    )
+  }
+
   if (generated !== null && gate !== null && generatedIntake !== null && generatedEvidence !== null) {
     return (
       <>
@@ -270,10 +339,10 @@ export function PlanBeta({
             setSelectedRecordId(null)
             setComparisonRecordId(null)
             setRecordConfirmationPending(false)
-            setStep("two-a-day")
+            setStep("race-date")
           }}
           onSelect={(selection) => {
-            saveCandidate(selection, generated)
+            void saveCandidate(selection, generated)
           }}
         />
         {errorCode !== null && (
@@ -286,7 +355,7 @@ export function PlanBeta({
             className="plan-text-action"
             type="button"
             onClick={() => {
-              saveCandidate(retrySelection, generated)
+              void saveCandidate(retrySelection, generated)
             }}
           >
             계획 다시 저장하기
@@ -303,11 +372,27 @@ export function PlanBeta({
         draft={draft}
         onBack={() => setStep(previousIntakeStep(step, draft.eventGroup))}
         onJump={(target) => setStep(target)}
-        onGoal={(eventGroup) => {
+        onGoal={(eventDistanceM) => {
+          const eventGroup = eventGroupForDistance(eventDistanceM)
           const competitionDivision = divisionForGoal(eventGroup)
+          setSelectedRecordId(null)
+          setComparisonRecordId(null)
+          setRecordConfirmationPending(false)
           setDraft((current) => competitionDivision === undefined
-            ? { ...current, eventGroup, competitionDivision: undefined }
-            : { ...current, eventGroup, competitionDivision })
+            ? {
+                ...current,
+                eventGroup,
+                eventDistanceM,
+                competitionDivision: undefined,
+                selectedDetailedTemplateRef: undefined,
+              }
+            : {
+                ...current,
+                eventGroup,
+                eventDistanceM,
+                competitionDivision,
+                selectedDetailedTemplateRef: undefined,
+              })
           setStep(competitionDivision === undefined ? "division" : "experience")
         }}
         onDivision={(competitionDivision) => {
@@ -318,11 +403,22 @@ export function PlanBeta({
           setDraft((current) => ({ ...current, experienceBand }))
           setStep("safety")
         }}
-        onFocus={(trainingFocus) => continueAfterRefinement({ ...draft, trainingFocus })}
+        onFocus={(trainingFocus) => continueAfterRefinement({
+          ...draft,
+          trainingFocus,
+          selectedDetailedTemplateRef: undefined,
+        })}
+        onTemplate={(selectedDetailedTemplateRef) => continueAfterRefinement({
+          ...draft,
+          selectedDetailedTemplateRef,
+        })}
         onDays={(availableDayCount) => continueAfterRefinement({ ...draft, availableDayCount })}
         onFrameLength={(requestedFrameLength) => continueAfterRefinement({ ...draft, requestedFrameLength })}
         onTrainingTime={(trainingTimePreference: TrainingTimePreference) => continueAfterRefinement({ ...draft, trainingTimePreference })}
         onSecondSession={(secondSessionMode) => continueAfterRefinement({ ...draft, secondSessionMode })}
+        targetRaceDate={targetRaceDate}
+        onTargetRaceDateChange={setTargetRaceDate}
+        onRaceDate={(raceDate) => generateCandidates(draft, null, raceDate)}
         onManageRecords={() => onManageRecords?.()}
         onOpenNotationReader={() => setNotationReaderOpen(true)}
         onSafety={(nextCurrentCheck) => {
@@ -352,7 +448,7 @@ export function PlanBeta({
             setStep(nextRefinement)
             return
           }
-          generateCandidates(draft)
+          setStep("race-date")
         }}
       />
       {errorCode !== null && (

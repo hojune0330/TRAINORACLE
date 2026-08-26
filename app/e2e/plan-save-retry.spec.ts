@@ -5,16 +5,18 @@ import { selectNineDayProjection } from "./plan-flow"
 test.use({ serviceWorkers: "block" })
 
 async function answerMinimumPlanQuestions(page: Page): Promise<void> {
-  await page.getByRole("button", { name: /800m.*1500m/u }).click()
+  await page.getByRole("button", { name: /^1500m\b/u }).click()
   await page.getByRole("button", { name: /고등부/u }).click()
   await page.getByRole("button", { name: /훈련 계획에 맞춰 달려 본 경험/u }).click()
   await page.getByRole("button", { name: /통증은 없고 몸 상태는 평소와 같아요/u }).click()
   await page.getByRole("button", { name: "내 계획 완성하기" }).click()
   await page.getByRole("button", { name: /지속 페이스.*LT/u }).click()
+  await page.getByRole("button", { name: /^RPE 기준으로 받기/u }).click()
   await page.getByRole("button", { name: /^3일/u }).click()
   await selectNineDayProjection(page)
   await page.getByRole("button", { name: /날마다 달라요/u }).click()
   await page.getByRole("button", { name: "하루 한 번 운동" }).click()
+  await page.getByRole("button", { name: "날짜 없이 계획 후보 보기" }).click()
 }
 
 test("retries a selected plan save and keeps the plan after reload", async ({ page }) => {
@@ -50,7 +52,8 @@ test("retries a selected plan save and keeps the plan after reload", async ({ pa
   )).not.toBeNull()
   await page.getByRole("navigation", { name: "내 기록 살펴보기" }).getByRole("button", { name: /^훈련 계획/u }).click()
   await expect(page.getByRole("heading", { name: /9일 계획/u })).toBeVisible()
-  await expect(page.getByRole("button", { name: "다음 주기 후보 만들기" })).toBeVisible()
+  await expect(page.getByRole("button", { name: "다음 주기 후보 만들기" })).toHaveCount(0)
+  await expect(page.getByRole("status")).toContainText("보이는 훈련을 완료·휴식·건너뜀·통증 확인 중 하나로 기록")
 })
 
 test("retries a completed-session save without losing the active plan", async ({ page }) => {

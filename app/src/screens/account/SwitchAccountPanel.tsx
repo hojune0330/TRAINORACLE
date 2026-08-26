@@ -71,7 +71,7 @@ export function SwitchAccountPanel({
       ) : confirming ? (
         <>
           <p style={{ fontFamily: "var(--sans)", fontSize: 12.5, lineHeight: 1.6, color: "var(--ink-2)", margin: 0 }}>
-            이 기기의 계정 연결만 끊어요. <b>이 기기의 일지 {loadEntries().length}개는 그대로 남아요.</b>
+            이 기기의 계정 연결만 끊어요. <b>현재 볼 수 있는 일지 {loadEntries().length}개는 그대로 남아요.</b>
             {" "}동기화는 꺼지고 로그아웃돼요. 다른 계정으로 로그인해서 다시 켤 수 있어요.
           </p>
           {onOpenBackup !== undefined && (

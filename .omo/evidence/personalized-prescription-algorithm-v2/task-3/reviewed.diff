@@ -1,0 +1,4053 @@
+diff --git a/app/src/domain/plan-adaptation-parser-parity.contract.test.ts b/app/src/domain/plan-adaptation-parser-parity.contract.test.ts
+index 0b9f3c6..4870037 100644
+--- a/app/src/domain/plan-adaptation-parser-parity.contract.test.ts
++++ b/app/src/domain/plan-adaptation-parser-parity.contract.test.ts
+@@ -14,7 +14,7 @@ import {
+ import {
+   planAdaptationProposalSchema,
+   planAdaptationCandidateSchema,
+-  planBetaStateV2Schema,
++  planBetaStateV3Schema,
+ } from "./plan-beta-schema"
+ import { generatePlanFromDraft } from "./plan-beta-flow"
+ import {
+@@ -41,10 +41,11 @@ beforeEach(() => {
+ function appAcceptsCandidate(candidate: unknown): boolean {
+   const parsed = candidateSchema.safeParse(candidate)
+   if (!parsed.success || parsed.data.eventDistanceM === null) return false
+-  return planBetaStateV2Schema.safeParse({
+-    version: 2,
++  return planBetaStateV3Schema.safeParse({
++    version: 3,
+     intake: {
+       eventGroup: parsed.data.eventGroup,
++      eventDistanceM: parsed.data.eventDistanceM,
+       competitionDivision: "OPEN",
+       experienceBand: "EXPERIENCED",
+       availableDayCount: 5,
+@@ -52,19 +53,24 @@ function appAcceptsCandidate(candidate: unknown): boolean {
+       trainingFocus: parsed.data.selectedEnergyIntent,
+       secondSessionMode: "RECOVERY_PM_ALLOWED",
+       trainingTimePreference: "VARIES",
++      selectedDetailedTemplateRef: parsed.data.selectedDetailedTemplateRef,
+     },
+     progress: [],
+     generatedAt: "2026-08-01T00:00:00.000Z",
+     adaptationScope: {
+       athleteId: "athlete-1",
+       eventDistanceM: parsed.data.eventDistanceM,
++      pairId: parsed.data.pairId,
++      selectedDetailedTemplateRef: parsed.data.selectedDetailedTemplateRef,
+     },
+     activePlan: {
+       kind: "BETA_ACTIVE_PLAN_SNAPSHOT",
+       activationState: "SELECTED_BETA_SNAPSHOT",
+       candidateId: parsed.data.candidateId,
++      pairId: parsed.data.pairId,
+       candidateKind: parsed.data.kind,
+       eventDistanceM: parsed.data.eventDistanceM,
++      selectedDetailedTemplateRef: parsed.data.selectedDetailedTemplateRef,
+       selectionActor: "SELF",
+       sourceMode: parsed.data.sourceMode,
+       selectedEnergyIntent: parsed.data.selectedEnergyIntent,
+@@ -84,9 +90,18 @@ async function proposalFor(baseCandidate: unknown, proposedCandidate: unknown) {
+   } catch {
+     // Malformed sparse values cannot have a canonical contract hash.
+   }
++  const parsedBase = candidateSchema.safeParse(baseCandidate)
++  const scopeCandidate = parsedBase.success
++    ? parsedBase.data
++    : expectGenerated(generatePlanCandidates(baseRequest())).candidates[0]
+   return createPlanAdaptationProposal({
+     kind: "PLAN_ADAPTATION_PROPOSAL_REQUEST",
+-    scope: { athleteId: "athlete-1", eventDistanceM: 1500 },
++    scope: {
++      athleteId: "athlete-1",
++      eventDistanceM: scopeCandidate.eventDistanceM,
++      pairId: scopeCandidate.pairId,
++      selectedDetailedTemplateRef: scopeCandidate.selectedDetailedTemplateRef,
++    },
+     activePlanStartedAt: "2026-08-01T00:00:00.000Z",
+     baseCandidate,
+     proposedCandidate,
+diff --git a/app/src/domain/plan-adaptation-store.contract.test.ts b/app/src/domain/plan-adaptation-store.contract.test.ts
+index 4d06596..ed6c521 100644
+--- a/app/src/domain/plan-adaptation-store.contract.test.ts
++++ b/app/src/domain/plan-adaptation-store.contract.test.ts
+@@ -18,7 +18,7 @@ import {
+   loadPendingNextFrameSuccessor,
+ } from "./plan-adaptation-store"
+ import { savePlanBetaState } from "./plan-beta-store"
+-import type { PlanBetaStateV2 } from "./plan-beta-schema"
++import type { PlanBetaStateV3 } from "./plan-beta-schema"
+ import { planAdaptationEnvelopeSchema } from "./plan-beta-schema"
+ 
+ const ACTIVE_KEY = "trainoracle.plan-beta.v1"
+@@ -46,7 +46,12 @@ async function requestFixture(
+   const [baseCandidate, successorCandidate] = generated.candidates
+   const proposalResult = await createPlanAdaptationProposal({
+     kind: "PLAN_ADAPTATION_PROPOSAL_REQUEST",
+-    scope: { athleteId: "athlete-1", eventDistanceM: 1500 },
++    scope: {
++      athleteId: "athlete-1",
++      eventDistanceM: 1500,
++      pairId: baseCandidate.pairId,
++      selectedDetailedTemplateRef: baseCandidate.selectedDetailedTemplateRef,
++    },
+     activePlanStartedAt: "2026-08-01T00:00:00.000Z",
+     baseCandidate,
+     proposedCandidate: successorCandidate,
+@@ -86,9 +91,10 @@ async function requestFixture(
+     throw new Error("selection fixture failed")
+   }
+   const common = {
+-    version: 2 as const,
++    version: 3 as const,
+     intake: {
+       eventGroup: "MIDDLE_DISTANCE" as const,
++      eventDistanceM: 1500 as const,
+       competitionDivision: "OPEN" as const,
+       experienceBand: "DEVELOPING" as const,
+       availableDayCount: 5 as const,
+@@ -96,19 +102,22 @@ async function requestFixture(
+       trainingFocus: selectedEnergyIntent,
+       secondSessionMode: "SINGLE_SESSION_ONLY" as const,
+       trainingTimePreference: "VARIES" as const,
++      selectedDetailedTemplateRef: baseCandidate.selectedDetailedTemplateRef,
+     },
+     progress: [],
+     adaptationScope: {
+       athleteId: "athlete-1",
+       eventDistanceM: 1500 as const,
++      pairId: baseCandidate.pairId,
++      selectedDetailedTemplateRef: baseCandidate.selectedDetailedTemplateRef,
+     },
+   }
+-  const predecessorState: PlanBetaStateV2 = {
++  const predecessorState: PlanBetaStateV3 = {
+     ...common,
+     activePlan: baseSelection.activePlan,
+     generatedAt: "2026-08-01T00:00:00.000Z",
+   }
+-  const successorState: PlanBetaStateV2 = {
++  const successorState: PlanBetaStateV3 = {
+     ...common,
+     activePlan: successorSelection.activePlan,
+     generatedAt: "2026-08-18T00:05:00.000Z",
+@@ -131,7 +140,12 @@ async function coachRequestFixture() {
+   const input = await requestFixture()
+   const proposalResult = await createPlanAdaptationProposal({
+     kind: "PLAN_ADAPTATION_PROPOSAL_REQUEST",
+-    scope: { athleteId: "athlete-1", eventDistanceM: 1500 },
++    scope: {
++      athleteId: "athlete-1",
++      eventDistanceM: 1500,
++      pairId: input.proposal.baseCandidate.pairId,
++      selectedDetailedTemplateRef: input.proposal.baseCandidate.selectedDetailedTemplateRef,
++    },
+     activePlanStartedAt: input.predecessorState.generatedAt,
+     baseCandidate: input.proposal.baseCandidate,
+     proposedCandidate: input.proposal.successorCandidate,
+@@ -471,9 +485,11 @@ describe("local immutable next-frame adaptation contract", () => {
+         adaptationScope: {
+           athleteId: "athlete-1",
+           eventDistanceM: 800,
++          pairId: input.successorState.activePlan.pairId,
++          selectedDetailedTemplateRef: input.successorState.activePlan.selectedDetailedTemplateRef,
+         },
+       },
+-    })).toEqual({ kind: "rejected", code: "SCOPE_MISMATCH" })
++    })).toEqual({ kind: "rejected", code: "MALFORMED_INPUT" })
+     expect(await acceptNextFrameProposal({
+       ...input,
+       successorState: {
+@@ -483,7 +499,7 @@ describe("local immutable next-frame adaptation contract", () => {
+           sourceMode: "JOURNAL_CONTEXT_ONLY",
+         },
+       },
+-    })).toEqual({ kind: "rejected", code: "SUCCESSOR_MISMATCH" })
++    })).toEqual({ kind: "rejected", code: "MALFORMED_INPUT" })
+   })
+ 
+   it("rejects recomputed INTENSITY, FREQUENCY, and arbitrary VOLUME transforms", async () => {
+@@ -543,7 +559,7 @@ describe("local immutable next-frame adaptation contract", () => {
+         proposalHash,
+         ...content,
+       }
+-      expect(await acceptNextFrameProposal({
++      const result = await acceptNextFrameProposal({
+         ...input,
+         proposal,
+         successorState: {
+@@ -554,7 +570,11 @@ describe("local immutable next-frame adaptation contract", () => {
+             sessions: successorCandidate.sessions,
+           },
+         },
+-      })).toEqual({ kind: "rejected", code: "FORGED_PROPOSAL" })
++      })
++      expect(result).toMatchObject({ kind: "rejected" })
++      if (result.kind === "rejected") {
++        expect(["FORGED_PROPOSAL", "MALFORMED_INPUT"]).toContain(result.code)
++      }
+     }
+   })
+ 
+@@ -727,7 +747,12 @@ describe("local immutable next-frame adaptation contract", () => {
+     const input = await requestFixture()
+     expect(await createPlanAdaptationProposal({
+       kind: "PLAN_ADAPTATION_PROPOSAL_REQUEST",
+-      scope: { athleteId: "athlete-1", eventDistanceM: 1500 },
++      scope: {
++        athleteId: "athlete-1",
++        eventDistanceM: 1500,
++        pairId: input.proposal.baseCandidate.pairId,
++        selectedDetailedTemplateRef: input.proposal.baseCandidate.selectedDetailedTemplateRef,
++      },
+       activePlanStartedAt: "2026-08-12T12:00:00.000Z",
+       baseCandidate: input.proposal.baseCandidate,
+       proposedCandidate: input.proposal.successorCandidate,
+diff --git a/app/src/domain/plan-adaptation-store.ts b/app/src/domain/plan-adaptation-store.ts
+index ca3fef3..ba55fd9 100644
+--- a/app/src/domain/plan-adaptation-store.ts
++++ b/app/src/domain/plan-adaptation-store.ts
+@@ -10,13 +10,13 @@ import {
+   parsePlanBetaState,
+   planAdaptationEnvelopeSchema,
+   planAdaptationProposalSchema,
+-  planBetaStateV2Schema,
++  planBetaStateV3Schema,
+ } from "./plan-beta-schema"
+ import type {
+   PendingNextFrameSuccessor,
+   PlanAdaptationEnvelope,
+   PlanBetaState,
+-  PlanBetaStateV2,
++  PlanBetaStateV3,
+ } from "./plan-beta-schema"
+ 
+ const ACTIVE_KEY = "trainoracle.plan-beta.v1"
+@@ -44,8 +44,8 @@ const blockedSafetyGateSchema = z.object({
+ })
+ const acceptanceRequestSchema = z.object({
+   proposal: planAdaptationProposalSchema,
+-  predecessorState: planBetaStateV2Schema,
+-  successorState: planBetaStateV2Schema,
++  predecessorState: planBetaStateV3Schema,
++  successorState: planBetaStateV3Schema,
+   actor: z.enum(["SELF", "COACH"]),
+   safetyGate: z.union([passedSafetyGateSchema, blockedSafetyGateSchema]),
+   safetyEvaluatedAt: z.string().datetime(),
+@@ -132,6 +132,8 @@ async function acceptNextFrameProposalUnchecked(candidate: unknown): Promise<Ada
+     changeDimension: request.proposal.changeDimension,
+     athleteId: request.proposal.athleteId,
+     eventDistanceM: request.proposal.eventDistanceM,
++    pairId: request.proposal.pairId,
++    selectedDetailedTemplateRef: request.proposal.selectedDetailedTemplateRef,
+     baseCandidateId: request.proposal.baseCandidateId,
+     baseContentHash: request.proposal.baseContentHash,
+     proposedContentHash: request.proposal.proposedContentHash,
+@@ -175,12 +177,13 @@ function loadEnvelope(): PlanAdaptationEnvelope | null {
+   }
+ }
+ 
+-function loadActiveState(): PlanBetaStateV2 | null {
++function loadActiveState(): PlanBetaStateV3 | null {
+   try {
+     const raw = window.localStorage.getItem(ACTIVE_KEY)
+     if (raw === null) return null
+     const json: unknown = JSON.parse(raw)
+-    return parsePlanBetaState(json)
++    const parsed = parsePlanBetaState(json)
++    return parsed?.version === 3 ? parsed : null
+   } catch (error) {
+     if (error instanceof Error) return null
+     throw error
+@@ -194,18 +197,25 @@ function validSafetyTimes(request: AcceptanceRequest): boolean {
+ 
+ function scopeMatches(request: AcceptanceRequest): boolean {
+   if (request.predecessorState.adaptationScope === undefined || request.successorState.adaptationScope === undefined) return false
+-  const expected = { athleteId: request.proposal.athleteId, eventDistanceM: request.proposal.eventDistanceM }
++  const expected = {
++    athleteId: request.proposal.athleteId,
++    eventDistanceM: request.proposal.eventDistanceM,
++    pairId: request.proposal.pairId,
++    selectedDetailedTemplateRef: request.proposal.selectedDetailedTemplateRef,
++  }
+   return canonicalJson(request.predecessorState.adaptationScope) === canonicalJson(expected)
+     && canonicalJson(request.successorState.adaptationScope) === canonicalJson(expected)
+ }
+ 
+-function candidateMatchesActivePlan(candidate: AcceptanceRequest["proposal"]["baseCandidate"], activePlan: PlanBetaStateV2["activePlan"], selectionActor: "SELF" | "COACH"): boolean {
++function candidateMatchesActivePlan(candidate: AcceptanceRequest["proposal"]["baseCandidate"], activePlan: PlanBetaStateV3["activePlan"], selectionActor: "SELF" | "COACH"): boolean {
+   const expected = {
+     kind: "BETA_ACTIVE_PLAN_SNAPSHOT",
+     activationState: "SELECTED_BETA_SNAPSHOT",
+     candidateId: candidate.candidateId,
++    pairId: candidate.pairId,
+     candidateKind: candidate.kind,
+     eventDistanceM: candidate.eventDistanceM,
++    selectedDetailedTemplateRef: candidate.selectedDetailedTemplateRef,
+     selectionActor,
+     sourceMode: candidate.sourceMode,
+     selectedEnergyIntent: candidate.selectedEnergyIntent,
+diff --git a/app/src/domain/plan-adaptation-ui-context.ts b/app/src/domain/plan-adaptation-ui-context.ts
+index d10c817..1670b30 100644
+--- a/app/src/domain/plan-adaptation-ui-context.ts
++++ b/app/src/domain/plan-adaptation-ui-context.ts
+@@ -102,7 +102,12 @@ export function parseActivePlanAdaptationSafety(
+ export function adaptationScopeForCandidate(candidate: PlanCandidate) {
+   const parsed = supportedEventSchema.safeParse(candidate.eventDistanceM)
+   return parsed.success
+-    ? { athleteId: LOCAL_ADAPTATION_ATHLETE_ID, eventDistanceM: parsed.data }
++    ? {
++        athleteId: LOCAL_ADAPTATION_ATHLETE_ID,
++        eventDistanceM: parsed.data,
++        pairId: candidate.pairId,
++        selectedDetailedTemplateRef: candidate.selectedDetailedTemplateRef,
++      }
+     : null
+ }
+ 
+diff --git a/app/src/domain/plan-adaptation-ui.contract.test.ts b/app/src/domain/plan-adaptation-ui.contract.test.ts
+index bd8ff6a..653e931 100644
+--- a/app/src/domain/plan-adaptation-ui.contract.test.ts
++++ b/app/src/domain/plan-adaptation-ui.contract.test.ts
+@@ -27,7 +27,9 @@ import {
+   type PlanBetaState,
+ } from "./plan-beta-store"
+ import { createPlanFormation } from "./plan-beta-formation"
+-import type { PlanBetaStateV2 } from "./plan-beta-schema"
++import { planAdaptationProposalSchema, planBetaStateV3Schema } from "./plan-beta-schema"
++import type { PlanBetaStateV3 } from "./plan-beta-schema"
++import { DETAILED_PRESCRIPTION_APPROVALS } from "./detailed-prescription-approvals"
+ import { saveSelectedPlanCandidate } from "../screens/plan-beta/plan-selection"
+ import {
+   loadPlanAdaptationContext,
+@@ -35,6 +37,13 @@ import {
+ } from "./plan-adaptation-ui-context"
+ 
+ const ACTIVE_KEY = "trainoracle.plan-beta.v1"
++const fiveKApproval = DETAILED_PRESCRIPTION_APPROVALS.find((approval) => approval.targetEventDistanceM === 5000)
++if (fiveKApproval === undefined) throw new TypeError("Expected approved 5000m fixture")
++const fiveKTemplateRef = {
++  templateId: fiveKApproval.templateId,
++  version: fiveKApproval.templateVersion,
++  fingerprint: fiveKApproval.templateContentFingerprint,
++} as const
+ 
+ beforeEach(() => {
+   window.localStorage.clear()
+@@ -147,6 +156,7 @@ describe("next-frame adaptation UI adapter", () => {
+     expect(saveAthleteRecord(anchor, now).ok).toBe(true)
+     const generated = generatePlanFromDraft({
+       eventGroup: "FIVE_K",
++      eventDistanceM: 5000,
+       competitionDivision: "OPEN",
+       experienceBand: "EXPERIENCED",
+       availableDayCount: 5,
+@@ -154,6 +164,7 @@ describe("next-frame adaptation UI adapter", () => {
+       trainingFocus: "VO2_INTENT",
+       secondSessionMode: "SINGLE_SESSION_ONLY",
+       trainingTimePreference: "MORNING",
++      selectedDetailedTemplateRef: fiveKTemplateRef,
+     }, "NO_KNOWN_RISK", { selectedRecordId: anchor.id })
+     if (generated.kind !== "generated") throw new Error(`Expected generated plan, got ${generated.kind}`)
+     expect(generated.prescriptionBinding.kind).toBe("bound")
+@@ -186,7 +197,6 @@ describe("next-frame adaptation UI adapter", () => {
+       { day: 1, slot: "AM", before: [35, 60], after: [35, 35] },
+       { day: 5, slot: "AM", before: [35, 60], after: [35, 35] },
+       { day: 7, slot: "AM", before: [35, 60], after: [35, 35] },
+-      { day: 9, slot: "AM", before: [30, 50], after: [30, 30] },
+     ])
+ 
+     const acceptanceTime = new Date(proposalTime.getTime() + 1_000)
+@@ -195,13 +205,18 @@ describe("next-frame adaptation UI adapter", () => {
+       "NO_KNOWN_RISK",
+       acceptanceTime,
+     )
++    expect(planAdaptationProposalSchema.safeParse(prepared.prepared.proposal).success).toBe(true)
++    expect(planBetaStateV3Schema.safeParse(saved.state).success).toBe(true)
++    if (saved.state.version !== 3) throw new Error("Expected a v3 selected state")
++    const parsedSuccessor = planBetaStateV3Schema.safeParse(prepared.prepared.successorState)
++    expect(parsedSuccessor.success, parsedSuccessor.success ? "" : JSON.stringify(parsedSuccessor.error.issues)).toBe(true)
+     const accepted = await acceptPreparedNextFrameAdaptation({
+       prepared: prepared.prepared,
+       predecessorState: saved.state,
+       safety: acceptanceSafety,
+       operationAt: acceptanceTime.toISOString(),
+     })
+-    expect(accepted.kind).toBe("accepted")
++    expect(accepted.kind, JSON.stringify(accepted)).toBe("accepted")
+     expect(window.localStorage.getItem(ACTIVE_KEY)).toBe(activeBefore)
+     const reloaded = await loadMatchingPendingSuccessor(saved.state)
+     expect(reloaded?.baseCandidateId).toBe(saved.state.activePlan.candidateId)
+@@ -223,7 +238,7 @@ describe("next-frame adaptation UI adapter", () => {
+     const blocked = evaluateActivePlanAdaptationSafety(state, "REVIEW_REQUIRED", checkedAt)
+     const firstSession = state.activePlan.sessions[0]
+     if (firstSession === undefined) throw new Error("Expected a session for the hold fixture")
+-    const heldState: PlanBetaState = {
++    const heldState: PlanBetaStateV3 = {
+       ...state,
+       progress: [{
+         sessionDay: firstSession.day,
+@@ -359,12 +374,13 @@ describe("next-frame adaptation UI adapter", () => {
+   })
+ })
+ 
+-function createBoundState(): PlanBetaState {
++function createBoundState(): PlanBetaStateV3 {
+   const now = new Date()
+   const anchor = athleteRecord("00000000-0000-4000-8000-000000005002", 5000, "2026-08-01", now)
+   expect(saveAthleteRecord(anchor, now).ok).toBe(true)
+   const generated = generatePlanFromDraft({
+     eventGroup: "FIVE_K",
++    eventDistanceM: 5000,
+     competitionDivision: "OPEN",
+     experienceBand: "EXPERIENCED",
+     availableDayCount: 5,
+@@ -372,6 +388,7 @@ function createBoundState(): PlanBetaState {
+     trainingFocus: "VO2_INTENT",
+     secondSessionMode: "SINGLE_SESSION_ONLY",
+     trainingTimePreference: "MORNING",
++    selectedDetailedTemplateRef: fiveKTemplateRef,
+   }, "NO_KNOWN_RISK", { selectedRecordId: anchor.id })
+   if (generated.kind !== "generated") throw new Error(`Expected generated plan, got ${generated.kind}`)
+   const saved = saveSelectedPlanCandidate(
+@@ -382,11 +399,12 @@ function createBoundState(): PlanBetaState {
+     generated.athleteEvidence,
+   )
+   if (saved.kind !== "saved") throw new Error(`Expected saved plan, got ${saved.code}`)
++  if (saved.state.version !== 3) throw new Error("Expected a v3 selected state")
+   return saved.state
+ }
+ 
+ function createCoachRequiredFixture(now: Date): {
+-  readonly state: PlanBetaState
++  readonly state: PlanBetaStateV3
+   readonly baseCandidate: PlanCandidate
+   readonly proposedCandidate: PlanCandidate
+ } {
+@@ -413,10 +431,11 @@ function createCoachRequiredFixture(now: Date): {
+   if (generated.kind !== "generated") throw new Error(`Expected coach candidates, got ${generated.kind}`)
+   const baseCandidate = generated.candidates[0]
+   const proposedCandidate = generated.candidates[1]
+-  const state: PlanBetaState = {
+-    version: 2,
++  const state: PlanBetaStateV3 = {
++    version: 3,
+     intake: {
+       eventGroup: "FIVE_K",
++      eventDistanceM: 5000,
+       competitionDivision: "OPEN",
+       experienceBand: "EXPERIENCED",
+       availableDayCount: 5,
+@@ -425,13 +444,16 @@ function createCoachRequiredFixture(now: Date): {
+       secondSessionMode: "SINGLE_SESSION_ONLY",
+       trainingTimePreference: "MORNING",
+       startDate: "2026-08-18",
++      selectedDetailedTemplateRef: null,
+     },
+     activePlan: {
+       kind: "BETA_ACTIVE_PLAN_SNAPSHOT",
+       activationState: "SELECTED_BETA_SNAPSHOT",
+       candidateId: baseCandidate.candidateId,
++      pairId: baseCandidate.pairId,
+       candidateKind: baseCandidate.kind,
+       eventDistanceM: baseCandidate.eventDistanceM,
++      selectedDetailedTemplateRef: baseCandidate.selectedDetailedTemplateRef,
+       selectionActor: "COACH",
+       sourceMode: baseCandidate.sourceMode,
+       selectedEnergyIntent: baseCandidate.selectedEnergyIntent,
+@@ -440,7 +462,12 @@ function createCoachRequiredFixture(now: Date): {
+     },
+     progress: [],
+     generatedAt: "2026-08-10T12:00:00.000Z",
+-    adaptationScope: { athleteId: "local-athlete", eventDistanceM: 5000 },
++    adaptationScope: {
++      athleteId: "local-athlete",
++      eventDistanceM: 5000,
++      pairId: baseCandidate.pairId,
++      selectedDetailedTemplateRef: baseCandidate.selectedDetailedTemplateRef,
++    },
+   }
+   expect(savePlanBetaState(state).ok).toBe(true)
+   expect(savePlanAdaptationContext(generated.candidates, baseCandidate.candidateId)).toBe(true)
+@@ -448,19 +475,21 @@ function createCoachRequiredFixture(now: Date): {
+ }
+ 
+ function successorStateFor(
+-  state: PlanBetaState,
++  state: PlanBetaStateV3,
+   candidate: PlanCandidate,
+   generatedAt: string,
+-): PlanBetaStateV2 {
++): PlanBetaStateV3 {
+   return {
+     ...state,
+-    version: 2,
++    version: 3,
+     activePlan: {
+       kind: "BETA_ACTIVE_PLAN_SNAPSHOT",
+       activationState: "SELECTED_BETA_SNAPSHOT",
+       candidateId: candidate.candidateId,
++      pairId: candidate.pairId,
+       candidateKind: candidate.kind,
+       eventDistanceM: candidate.eventDistanceM,
++      selectedDetailedTemplateRef: candidate.selectedDetailedTemplateRef,
+       selectionActor: "COACH",
+       sourceMode: candidate.sourceMode,
+       selectedEnergyIntent: candidate.selectedEnergyIntent,
+diff --git a/app/src/domain/plan-adaptation-ui.ts b/app/src/domain/plan-adaptation-ui.ts
+index 1c5b23c..10a893e 100644
+--- a/app/src/domain/plan-adaptation-ui.ts
++++ b/app/src/domain/plan-adaptation-ui.ts
+@@ -18,7 +18,7 @@ import type { AdaptationAcceptanceResult } from "./plan-adaptation-store"
+ import type {
+   PendingNextFrameSuccessor,
+   PlanBetaState,
+-  PlanBetaStateV2,
++  PlanBetaStateV3,
+ } from "./plan-beta-schema"
+ import {
+   loadPlanAdaptationContext,
+@@ -43,7 +43,7 @@ export type ChangedSession = {
+ 
+ export type PreparedNextFrameAdaptation = {
+   readonly proposal: PlanAdaptationProposal
+-  readonly successorState: PlanBetaStateV2
++  readonly successorState: PlanBetaStateV3
+   readonly changedSessions: readonly ChangedSession[]
+   readonly reason: AdaptationReason
+   readonly record: AthleteRecord | null
+@@ -73,6 +73,9 @@ export async function prepareNextFrameAdaptation(
+   if (!validOperationTimestamp(input.operationAt)) {
+     return { kind: "blocked", code: "SAFETY_CONTEXT_UNAVAILABLE" }
+   }
++  if (input.state.version !== 3) {
++    return { kind: "unavailable", code: "ADAPTATION_CONTEXT_UNAVAILABLE" }
++  }
+   const scope = input.state.adaptationScope
+   const context = loadPlanAdaptationContext(input.state.activePlan.candidateId)
+   if (scope === undefined || context === null) {
+@@ -150,7 +153,7 @@ export async function prepareNextFrameAdaptation(
+ 
+ export async function acceptPreparedNextFrameAdaptation(input: {
+   readonly prepared: PreparedNextFrameAdaptation
+-  readonly predecessorState: PlanBetaState
++  readonly predecessorState: PlanBetaStateV3
+   readonly safety: ActivePlanAdaptationSafety
+   readonly operationAt: string
+ }): Promise<AdaptationAcceptanceResult> {
+@@ -180,7 +183,7 @@ export async function acceptPreparedNextFrameAdaptation(input: {
+ }
+ 
+ export async function loadMatchingPendingSuccessor(
+-  state: PlanBetaState,
++  state: PlanBetaStateV3,
+ ): Promise<PendingNextFrameSuccessor | null> {
+   const pending = loadPendingNextFrameSuccessor()
+   if (pending?.baseCandidateId !== state.activePlan.candidateId) return null
+@@ -215,20 +218,22 @@ function triggerFor(
+ }
+ 
+ function successorStateFor(
+-  state: PlanBetaState,
++  state: PlanBetaStateV3,
+   candidate: PlanCandidate,
+   generatedAt: string,
+-): PlanBetaStateV2 {
++): PlanBetaStateV3 {
+   const selectionActor = candidate.selectionAuthority === "SELF" ? "SELF" as const : "COACH" as const
+   return {
+-    version: 2,
++    version: 3,
+     intake: state.intake,
+     activePlan: {
+       kind: "BETA_ACTIVE_PLAN_SNAPSHOT",
+       activationState: "SELECTED_BETA_SNAPSHOT",
+       candidateId: candidate.candidateId,
++      pairId: candidate.pairId,
+       candidateKind: candidate.kind,
+       eventDistanceM: candidate.eventDistanceM,
++      selectedDetailedTemplateRef: candidate.selectedDetailedTemplateRef,
+       selectionActor,
+       sourceMode: candidate.sourceMode,
+       selectedEnergyIntent: candidate.selectedEnergyIntent,
+diff --git a/app/src/domain/plan-beta-detailed-candidates.contract.test.ts b/app/src/domain/plan-beta-detailed-candidates.contract.test.ts
+index b973434..921db24 100644
+--- a/app/src/domain/plan-beta-detailed-candidates.contract.test.ts
++++ b/app/src/domain/plan-beta-detailed-candidates.contract.test.ts
+@@ -20,8 +20,19 @@ import {
+ } from "./plan-beta-store"
+ 
+ const TODAY = new Date("2026-08-17T03:00:00.000Z")
++const APPROVAL_5000 = approvalModule.DETAILED_PRESCRIPTION_APPROVALS.find(
++  (approval) => approval.targetEventDistanceM === 5000,
++)
++if (APPROVAL_5000 === undefined) throw new TypeError("Expected approved 5000m fixture")
++const TEMPLATE_5000 = {
++  templateId: APPROVAL_5000.templateId,
++  version: APPROVAL_5000.templateVersion,
++  fingerprint: APPROVAL_5000.templateContentFingerprint,
++} as const
++const CURRENT_RECORD_ID = "local-1723867200000-current5000"
+ const DRAFT = {
+   eventGroup: "FIVE_K" as const,
++  eventDistanceM: 5000 as const,
+   competitionDivision: "OPEN" as const,
+   experienceBand: "EXPERIENCED" as const,
+   availableDayCount: 5 as const,
+@@ -29,11 +40,12 @@ const DRAFT = {
+   trainingFocus: "VO2_INTENT" as const,
+   secondSessionMode: "SINGLE_SESSION_ONLY" as const,
+   trainingTimePreference: "VARIES" as const,
++  selectedDetailedTemplateRef: TEMPLATE_5000,
+ }
+ 
+ function saveCurrentFiveKilometreRecord(): void {
+   const record = createSelfReportedAthleteRecord({
+-    id: "current-5000",
++    id: CURRENT_RECORD_ID,
+     purpose: "RECENT_RESULT",
+     eventDistanceM: 5000,
+     performanceSeconds: 1110,
+@@ -46,7 +58,7 @@ function saveCurrentFiveKilometreRecord(): void {
+ 
+ function bindingInput() {
+   return {
+-    selectedRecordId: "current-5000",
++    selectedRecordId: CURRENT_RECORD_ID,
+   }
+ }
+ 
+@@ -193,6 +205,8 @@ describe("production candidate detailed-prescription binding", () => {
+         .map((session) => `${session.day}:${session.slot}`)
+       expect(afterQualityDays).toStrictEqual(beforeQualityDays)
+     }
++    expect(result.generated.candidates[1].sessions.filter((session) => session.role === "QUALITY"))
++      .toStrictEqual(result.generated.candidates[0].sessions.filter((session) => session.role === "QUALITY"))
+     expect(JSON.stringify(result.generated)).not.toMatch(
+       /rawMemo|symptomNarrative|guardianNarrative|medicalNarrative/u,
+     )
+@@ -403,7 +417,7 @@ describe("production candidate detailed-prescription binding", () => {
+     )
+   })
+ 
+-  it("selects and stores a bound candidate as a strict version-2 snapshot", () => {
++  it("selects and stores a bound candidate as a strict version-3 snapshot", () => {
+     saveCurrentFiveKilometreRecord()
+     const result = generatePlanFromDraft(DRAFT, "NO_KNOWN_RISK", bindingInput())
+     if (result.kind !== "generated") throw new TypeError("Detailed candidates were not generated")
+@@ -417,7 +431,7 @@ describe("production candidate detailed-prescription binding", () => {
+     )
+     expect(selected.kind).toBe("selected")
+     if (selected.kind !== "selected") return
+-    expect(selected.state.version).toBe(2)
++    expect(selected.state.version).toBe(3)
+     expect(selected.state.activePlan.sessions.some((session) => (
+       session.role === "QUALITY" && session.prescription.kind === "PACE_TARGET"
+     ))).toBe(true)
+diff --git a/app/src/domain/plan-beta-flow.contract.test.ts b/app/src/domain/plan-beta-flow.contract.test.ts
+index a0b0b9c..76d869f 100644
+--- a/app/src/domain/plan-beta-flow.contract.test.ts
++++ b/app/src/domain/plan-beta-flow.contract.test.ts
+@@ -18,6 +18,7 @@ beforeEach(() => {
+ 
+ const COMPLETE_DRAFT = {
+   eventGroup: "MIDDLE_DISTANCE" as const,
++  eventDistanceM: 1500 as const,
+   competitionDivision: "OPEN" as const,
+   experienceBand: "DEVELOPING" as const,
+   availableDayCount: 3 as const,
+@@ -25,6 +26,7 @@ const COMPLETE_DRAFT = {
+   trainingFocus: "LT_INTENT" as const,
+   secondSessionMode: "SINGLE_SESSION_ONLY" as const,
+   trainingTimePreference: "VARIES" as const,
++  selectedDetailedTemplateRef: null,
+ }
+ 
+ afterEach(() => {
+@@ -72,12 +74,16 @@ describe("plan journal safety read boundary", () => {
+ })
+ 
+ describe("canonical plan intake boundary", () => {
+-  it.each([undefined, "NOT_PROVIDED" as const])(
+-    "generates without a competition division when the intake uses %s",
+-    (competitionDivision) => {
++  it.each([
++    [undefined, "MALFORMED_INPUT"],
++    ["NOT_PROVIDED" as const, "MINIMUM_PROFILE_INCOMPLETE"],
++  ] as const)(
++    "rejects unsupported general endurance even when division uses %s",
++    (competitionDivision, expectedCode) => {
+       // Given
+       const draft = {
+         eventGroup: "GENERAL_ENDURANCE" as const,
++        eventDistanceM: 5000 as const,
+         competitionDivision,
+         experienceBand: "DEVELOPING" as const,
+         availableDayCount: 4 as const,
+@@ -85,15 +91,17 @@ describe("canonical plan intake boundary", () => {
+         trainingFocus: "BASE_INTENT" as const,
+         secondSessionMode: "SINGLE_SESSION_ONLY" as const,
+         trainingTimePreference: "VARIES" as const,
++        selectedDetailedTemplateRef: null,
+       }
+ 
+       // When
+       const result = generatePlanFromDraft(draft, "NO_KNOWN_RISK")
+ 
+       // Then
+-      expect(result.kind).toBe("generated")
+-      if (result.kind !== "generated") return
+-      expect(result.intake.competitionDivision).toBe("NOT_PROVIDED")
++      expect(result).toEqual({
++        kind: "rejected",
++        code: expectedCode,
++      })
+     },
+   )
+ 
+@@ -101,6 +109,7 @@ describe("canonical plan intake boundary", () => {
+       // Given
+       const draft = {
+         eventGroup: "MIDDLE_DISTANCE" as const,
++        eventDistanceM: 1500 as const,
+         competitionDivision: "OPEN" as const,
+         experienceBand: "EXPERIENCED" as const,
+       availableDayCount: 5 as const,
+@@ -108,6 +117,7 @@ describe("canonical plan intake boundary", () => {
+       trainingFocus: "LT_INTENT" as const,
+       secondSessionMode: "SINGLE_SESSION_ONLY" as const,
+       trainingTimePreference: "VARIES" as const,
++      selectedDetailedTemplateRef: null,
+     }
+ 
+     // When
+@@ -220,6 +230,7 @@ describe("canonical plan intake boundary", () => {
+     // Given
+     const draft = {
+       eventGroup: "MIDDLE_DISTANCE" as const,
++      eventDistanceM: 1500 as const,
+       competitionDivision: "HIGH_SCHOOL" as const,
+       experienceBand: "DEVELOPING" as const,
+       availableDayCount: 3 as const,
+@@ -227,6 +238,7 @@ describe("canonical plan intake boundary", () => {
+       trainingFocus: "LT_INTENT" as const,
+       secondSessionMode: "SINGLE_SESSION_ONLY" as const,
+       trainingTimePreference: "VARIES" as const,
++      selectedDetailedTemplateRef: null,
+     }
+ 
+     // When
+@@ -252,6 +264,7 @@ describe("canonical plan intake boundary", () => {
+     // Given
+     const draft = {
+       eventGroup: "MIDDLE_DISTANCE" as const,
++      eventDistanceM: 1500 as const,
+       competitionDivision: "HIGH_SCHOOL" as const,
+       experienceBand: "DEVELOPING" as const,
+       availableDayCount: 4 as const,
+@@ -259,6 +272,7 @@ describe("canonical plan intake boundary", () => {
+       trainingFocus: "LT_INTENT" as const,
+       secondSessionMode: "RECOVERY_PM_ALLOWED" as const,
+       trainingTimePreference: "EVENING" as const,
++      selectedDetailedTemplateRef: null,
+     }
+ 
+     // When
+@@ -277,6 +291,7 @@ describe("canonical plan intake boundary", () => {
+     // Given
+     const draft = {
+       eventGroup: "FIVE_K" as const,
++      eventDistanceM: 5000 as const,
+       competitionDivision: "OPEN" as const,
+       experienceBand: "EXPERIENCED" as const,
+       availableDayCount: "EVERY_DAY" as const,
+@@ -284,6 +299,7 @@ describe("canonical plan intake boundary", () => {
+       trainingFocus: "VO2_INTENT" as const,
+       secondSessionMode: "RECOVERY_PM_ALLOWED" as const,
+       trainingTimePreference: "EVENING" as const,
++      selectedDetailedTemplateRef: null,
+     }
+     const generated = generatePlanFromDraft(draft, "NO_KNOWN_RISK")
+     expect(generated.kind).toBe("generated")
+diff --git a/app/src/domain/plan-beta-flow.ts b/app/src/domain/plan-beta-flow.ts
+index e9ac1bf..d3920da 100644
+--- a/app/src/domain/plan-beta-flow.ts
++++ b/app/src/domain/plan-beta-flow.ts
+@@ -9,6 +9,7 @@ import type {
+   PlanCandidate,
+   PlanGenerationSuccess,
+ } from "@impl/plan-generator/types"
++import raceDateRetentionAuthority from "../../../reports/review/RACE_DATE_RETENTION_AUTHORITY.json"
+ import {
+   createEvaluatorFailureSignal,
+   mapD9ResultToRveSignal,
+@@ -34,6 +35,8 @@ import type {
+   PlanBetaIntake,
+   PlanBetaState,
+ } from "./plan-beta-store"
++import { hasCanonicalJsonTree, planIntakeSchema } from "./plan-beta-schema"
++import { DETAILED_PRESCRIPTION_APPROVALS } from "./detailed-prescription-approvals"
+ import {
+   assessPurposeScopedMemo,
+   painLevelsRequireReview,
+@@ -76,6 +79,15 @@ export type PlanDraftGeneration =
+       readonly intake: PlanBetaIntake
+       readonly athleteEvidence: PlanAthleteEvidence
+     }
++  | {
++      readonly kind: "preview_only"
++      readonly code: "RACE_DATE_PERSISTENCE_NOT_AUTHORIZED"
++      readonly preview: {
++        readonly eventDistanceM: 800 | 1500 | 3000 | 5000
++        readonly targetRaceDate: string
++      }
++      readonly candidates: readonly []
++    }
+   | {
+       readonly kind: "rejected"
+       readonly code: string
+@@ -96,15 +108,27 @@ export type PlanSelection =
+     }
+ 
+ export function generatePlanFromDraft(
+-  draft: Partial<PlanBetaIntake>,
++  draft: Partial<PlanBetaIntake> & { readonly targetRaceDate?: unknown },
+   currentCheck: PlanCurrentCheck,
+   prescriptionSelection?: unknown,
+ ): PlanDraftGeneration {
++  const draftKeys = new Set([
++    "eventGroup", "eventDistanceM", "competitionDivision", "experienceBand",
++    "availableDayCount", "requestedFrameLength", "trainingFocus", "secondSessionMode",
++    "trainingTimePreference", "selectedDetailedTemplateRef", "startDate", "targetRaceDate",
++  ])
++  if (!hasCanonicalJsonTree(draft)
++      || !Reflect.ownKeys(draft).every((key) => typeof key === "string" && draftKeys.has(key))) {
++    return { kind: "rejected", code: "MALFORMED_INPUT" }
++  }
+   const evaluatedAt = new Date()
+   const intake = completeIntake(draft)
+   if (intake === null) {
+     return { kind: "rejected", code: "MINIMUM_PROFILE_INCOMPLETE" }
+   }
++  if (!selectedTemplateIsCurrent(intake)) {
++    return { kind: "rejected", code: "INVALID_DETAILED_TEMPLATE_REF" }
++  }
+ 
+   const safety = evaluatePlanSafety(currentCheck, evaluatedAt)
+   if (safety.kind === "blocked") return safety
+@@ -119,6 +143,7 @@ export function generatePlanFromDraft(
+     safetyGate,
+     profile: {
+       eventGroup: intake.eventGroup,
++      eventDistanceM: intake.eventDistanceM,
+       experienceBand: intake.experienceBand,
+       availableTrainingDays,
+       secondSessionMode: intake.secondSessionMode,
+@@ -131,6 +156,8 @@ export function generatePlanFromDraft(
+     ),
+     requestedFrameLength: intake.requestedFrameLength,
+     selectedEnergyIntent: intake.trainingFocus,
++    selectedDetailedTemplateRef: intake.selectedDetailedTemplateRef,
++    ...(draft.targetRaceDate === undefined ? {} : { targetRaceDate: draft.targetRaceDate }),
+     journalSource: safety.journalSource,
+     selectionAuthority: "SELF",
+     continuity: loadPreviousContinuity(),
+@@ -157,6 +184,16 @@ export function generatePlanFromDraft(
+       }
+     case "needs_review_with_reason":
+       return { kind: "rejected", code: "FORMATION_REVIEW_REQUIRED" }
++    case "preview_only":
++      if (!raceDatePersistenceIsDisabled()) {
++        return { kind: "rejected", code: "RACE_DATE_AUTHORITY_NOT_IMPLEMENTED" }
++      }
++      return {
++        kind: "preview_only",
++        code: result.code,
++        preview: result.preview,
++        candidates: result.candidates,
++      }
+     case "blocked":
+     case "rejected":
+       return { kind: "rejected", code: result.code }
+@@ -212,7 +249,7 @@ export function selectPlanForActivation(
+   return {
+     kind: "selected",
+     state: {
+-      version: 2,
++      version: 3,
+       intake,
+       activePlan: result.activePlan,
+       progress: [],
+@@ -227,6 +264,7 @@ function completeIntake(
+ ): PlanBetaIntake | null {
+   const {
+     eventGroup,
++    eventDistanceM,
+     competitionDivision,
+     experienceBand,
+     availableDayCount,
+@@ -234,9 +272,11 @@ function completeIntake(
+     trainingFocus,
+     secondSessionMode,
+     trainingTimePreference,
++    selectedDetailedTemplateRef,
+   } = draft
+   if (
+     eventGroup === undefined
++    || eventDistanceM === undefined
+     || experienceBand === undefined
+     || availableDayCount === undefined
+     || requestedFrameLength === undefined
+@@ -248,8 +288,9 @@ function completeIntake(
+   }
+   const normalizedCompetitionDivision = divisionForGoal(eventGroup) ?? competitionDivision
+   if (normalizedCompetitionDivision === undefined) return null
+-  return {
++  const parsed = planIntakeSchema.safeParse({
+     eventGroup,
++    eventDistanceM,
+     competitionDivision: normalizedCompetitionDivision,
+     experienceBand,
+     availableDayCount,
+@@ -257,7 +298,27 @@ function completeIntake(
+     trainingFocus,
+     secondSessionMode,
+     trainingTimePreference,
+-  }
++    selectedDetailedTemplateRef: selectedDetailedTemplateRef ?? null,
++  })
++  return parsed.success ? parsed.data : null
++}
++
++function selectedTemplateIsCurrent(intake: PlanBetaIntake): boolean {
++  const reference = intake.selectedDetailedTemplateRef
++  return reference === null || DETAILED_PRESCRIPTION_APPROVALS.some((approval) => (
++    approval.templateId === reference.templateId
++    && approval.templateVersion === reference.version
++    && approval.templateContentFingerprint === reference.fingerprint
++    && approval.targetEventDistanceM === intake.eventDistanceM
++  ))
++}
++
++function raceDatePersistenceIsDisabled(): boolean {
++  return raceDateRetentionAuthority.schemaVersion === 1
++    && raceDateRetentionAuthority.kind === "TRAINORACLE_RACE_DATE_RETENTION_AUTHORITY"
++    && raceDateRetentionAuthority.status === "NOT_AUTHORIZED"
++    && raceDateRetentionAuthority.policy === "RACE_DATE_PERSISTENCE_DISABLED_UNTIL_GOVERNANCE_RECEIPT"
++    && raceDateRetentionAuthority.receipt === null
+ }
+ 
+ function currentCheckGate(currentCheck: PlanCurrentCheck): SafetyGateDecision {
+diff --git a/app/src/domain/plan-beta-pace-storage.contract.test.ts b/app/src/domain/plan-beta-pace-storage.contract.test.ts
+index 5671038..6c8997f 100644
+--- a/app/src/domain/plan-beta-pace-storage.contract.test.ts
++++ b/app/src/domain/plan-beta-pace-storage.contract.test.ts
+@@ -1,4 +1,5 @@
+ import { beforeEach, describe, expect, it } from "vitest"
++import { deriveCandidateId, derivePairId } from "@impl/plan-generator/candidate-identity"
+ import { decideSafetyGate } from "@impl/safety-gate/gate"
+ import { mapD9ResultToRveSignal } from "@impl/rve/signal"
+ import { DETAILED_PRESCRIPTION_APPROVALS } from "./detailed-prescription-approvals"
+@@ -21,6 +22,11 @@ const approval = (() => {
+   if (found === undefined) throw new TypeError("Trusted V2-SEED-05 approval is missing")
+   return found
+ })()
++const selectedTemplateRef = {
++  templateId: approval.templateId,
++  version: approval.templateVersion,
++  fingerprint: approval.templateContentFingerprint,
++} as const
+ 
+ function safetyGate(disposition: "D9_CLEARED" | "D9_ACTIVE" | "D9_UNKNOWN") {
+   return decideSafetyGate(mapD9ResultToRveSignal({
+@@ -112,13 +118,18 @@ function detailedPrescription(overrides: Record<string, unknown> = {}) {
+ }
+ 
+ function v1RestRpeState() {
+-  const legacy = stateFixture()
++  const current = stateFixture()
++  if (current.version !== 3) throw new TypeError("Expected current v3 fixture")
++  const { eventDistanceM: _event, selectedDetailedTemplateRef: _template, ...intake } = current.intake
++  const { pairId: _pair, selectedDetailedTemplateRef: _activeTemplate, ...activePlan } = current.activePlan
+   return {
+-    ...legacy,
++    ...current,
++    version: 1 as const,
++    intake,
+     activePlan: {
+-      ...legacy.activePlan,
++      ...activePlan,
+       sessions: [
+-        ...legacy.activePlan.sessions,
++        ...activePlan.sessions,
+         {
+           day: 2,
+           slot: "AM" as const,
+@@ -131,22 +142,46 @@ function v1RestRpeState() {
+   }
+ }
+ 
+-function v2DetailedState() {
+-  const legacy = stateFixture()
++function v3DetailedState() {
++  const current = stateFixture()
++  if (current.version !== 3) throw new TypeError("Expected current v3 fixture")
++  if (!("formationKind" in current.activePlan.frame)) throw new TypeError("Expected canonical v3 frame")
++  const templateIdentity = `${approval.templateId.toLowerCase()}.${approval.templateVersion}.${approval.templateContentFingerprint.slice("sha256:".length)}`
++  const prescription = detailedPrescription()
++  const candidateBaseId = `beta:balanced:five_k:event-5000:experienced:vo2_intent:single_session_only:varies:projection-9:local-civil-9-5:fixture-main-1-fixture-main-2:1-5-9:no_usable_journal:no-continuity:template-${templateIdentity}`
++  const pairBaseId = `plan-pair:v3:5000:${templateIdentity}:vo2_intent:fixture-main-1-fixture-main-2:1-5-9:no-continuity`
++  const sessions = [{
++    day: 1,
++    slot: "AM" as const,
++    role: "QUALITY" as const,
++    plannedEnergyIntent: "VO2_INTENT" as const,
++    prescription,
++  }]
++  const projection = {
++    kind: "BALANCED" as const,
++    eventDistanceM: 5000 as const,
++    selectedDetailedTemplateRef: selectedTemplateRef,
++    selectedEnergyIntent: "VO2_INTENT" as const,
++    sourceMode: current.activePlan.sourceMode,
++    frame: current.activePlan.frame,
++    sessions,
++  }
++  const candidateId = deriveCandidateId(candidateBaseId, projection)
++  const conservativeId = deriveCandidateId(
++    candidateBaseId.replace("beta:balanced:", "beta:conservative:"),
++    { ...projection, kind: "CONSERVATIVE" },
++  )
++  const pairId = derivePairId(pairBaseId, candidateId, conservativeId)
+   return {
+-    ...legacy,
+-    version: 2 as const,
+-    intake: { ...legacy.intake, experienceBand: "EXPERIENCED" as const },
++    ...current,
++    intake: { ...current.intake, experienceBand: "EXPERIENCED" as const, trainingFocus: "VO2_INTENT" as const, selectedDetailedTemplateRef: selectedTemplateRef },
+     activePlan: {
+-      ...legacy.activePlan,
++      ...current.activePlan,
++      candidateId,
++      pairId,
++      selectedDetailedTemplateRef: selectedTemplateRef,
+       selectedEnergyIntent: "VO2_INTENT" as const,
+-      sessions: [{
+-        day: 1,
+-        slot: "AM" as const,
+-        role: "QUALITY" as const,
+-        plannedEnergyIntent: "VO2_INTENT" as const,
+-        prescription: detailedPrescription(),
+-      }],
++      sessions,
+     },
+   }
+ }
+@@ -238,10 +273,10 @@ describe("versioned detailed prescription storage", () => {
+     expect(window.localStorage.getItem(STORAGE_KEY)).toBe(raw)
+   })
+ 
+-  it("roundtrips a valid v2 detailed QUALITY prescription", () => {
+-    const state = v2DetailedState()
++  it("roundtrips a valid v3 detailed QUALITY prescription", () => {
++    const state = v3DetailedState()
+     expect(savePlanBetaState(state)).toEqual({ ok: true })
+-    expect(JSON.parse(window.localStorage.getItem(STORAGE_KEY) ?? "{}").version).toBe(2)
++    expect(JSON.parse(window.localStorage.getItem(STORAGE_KEY) ?? "{}").version).toBe(3)
+     expect(loadVersionedPlanBetaState()).toStrictEqual(state)
+   })
+ 
+@@ -249,7 +284,7 @@ describe("versioned detailed prescription storage", () => {
+     ["prescription fingerprint", tamperPrescriptionFingerprint],
+     ["component fingerprint", tamperComponentFingerprint],
+   ])("rejects a tampered %s without deleting or repairing storage", (_name, mutate) => {
+-    const state = v2DetailedState()
++    const state = v3DetailedState()
+     expect(savePlanBetaState(state)).toEqual({ ok: true })
+     const parsed = JSON.parse(window.localStorage.getItem(STORAGE_KEY) ?? "{}")
+     const before = JSON.stringify(parsed)
+@@ -272,7 +307,7 @@ describe("versioned detailed prescription storage", () => {
+   it.each(["D9_ACTIVE", "D9_UNKNOWN"] as const)(
+     "blocks START under %s without deleting the stored snapshot",
+     (disposition) => {
+-      const state = v2DetailedState()
++      const state = v3DetailedState()
+       expect(savePlanBetaState(state)).toEqual({ ok: true })
+       const raw = window.localStorage.getItem(STORAGE_KEY)
+       expect(recheckStoredDetailedPrescriptionAuthority({
+@@ -290,7 +325,7 @@ describe("versioned detailed prescription storage", () => {
+   )
+ 
+   it("blocks expired authority at START and revoked authority at RESTART without deletion", () => {
+-    const state = v2DetailedState()
++    const state = v3DetailedState()
+     expect(savePlanBetaState(state)).toEqual({ ok: true })
+     const raw = window.localStorage.getItem(STORAGE_KEY)
+ 
+@@ -350,7 +385,7 @@ describe("versioned detailed prescription storage", () => {
+     ["RPE prescription rawMemo", (stored: unknown) => addUnknownField(stored, ["activePlan", "firstSession", "prescription"], "rawMemo")],
+     ["root benign extraKey", (stored: unknown) => addUnknownField(stored, [], "extraKey")],
+   ])("rejects unknown %s atomically on save and load", (_name, mutate) => {
+-    const existing = v2DetailedState()
++    const existing = v3DetailedState()
+     expect(savePlanBetaState(existing)).toEqual({ ok: true })
+     const existingRaw = window.localStorage.getItem(STORAGE_KEY)
+     const candidate: unknown = JSON.parse(JSON.stringify(v1RestRpeState()))
+diff --git a/app/src/domain/plan-beta-schema.ts b/app/src/domain/plan-beta-schema.ts
+index 9f16b1a..54554de 100644
+--- a/app/src/domain/plan-beta-schema.ts
++++ b/app/src/domain/plan-beta-schema.ts
+@@ -1,4 +1,10 @@
+ import { z } from "zod"
++import {
++  hasValidCandidateIdentity,
++  hasValidCandidatePairIdentity,
++  pairIdHasBase,
++  projectPlanCandidate,
++} from "@impl/plan-generator/candidate-identity"
+ import {
+   activePlanSchema,
+   frameLengthSchema,
+@@ -51,9 +57,21 @@ const storedFrameLengthSchema = z.union([
+ const selectedStartDateSchema = z.string().refine(isValidIsoDate, {
+   message: "Plan start date must use a real YYYY-MM-DD calendar date.",
+ })
++export const supportedPlanEventDistanceSchema = z.union([
++  z.literal(800),
++  z.literal(1500),
++  z.literal(3000),
++  z.literal(5000),
++])
++export const detailedTemplateRefSchema = z.object({
++  templateId: z.string().regex(/^[A-Z0-9]+(?:-[A-Z0-9]+)*$/u),
++  version: z.string().regex(/^\d+\.\d+\.\d+$/u),
++  fingerprint: z.string().regex(/^sha256:[a-f0-9]{64}$/u),
++}).strict()
+ 
+ export const planIntakeSchema = z.object({
+   eventGroup: planEventGroupSchema,
++  eventDistanceM: supportedPlanEventDistanceSchema,
+   competitionDivision: competitionDivisionSchema,
+   experienceBand: experienceBandSchema,
+   availableDayCount: z.union([
+@@ -67,8 +85,15 @@ export const planIntakeSchema = z.object({
+   trainingFocus: plannedEnergyIntentSchema,
+   secondSessionMode: secondSessionModeSchema,
+   trainingTimePreference: trainingTimePreferenceSchema,
++  selectedDetailedTemplateRef: detailedTemplateRefSchema.nullable(),
+   startDate: selectedStartDateSchema.optional(),
+-}).strict()
++}).strict().superRefine((intake, context) => {
++  const matchesGroup = intake.eventGroup === "FIVE_K"
++    ? intake.eventDistanceM === 5000
++    : intake.eventGroup === "MIDDLE_DISTANCE"
++      && intake.eventDistanceM !== 5000
++  if (!matchesGroup) addIssue(context, ["eventDistanceM"], "Target event must match the supported event group.")
++})
+ 
+ export const storedPlanIntakeSchema = z.object({
+   eventGroup: planEventGroupSchema,
+@@ -94,7 +119,7 @@ export const progressSchema = z.object({
+   state: progressStateSchema,
+ }).strict()
+ 
+-export const planHistorySchema = z.object({
++const legacyPlanHistorySchema = z.object({
+   candidateId: z.string().min(1),
+   candidateKind: z.enum(["BALANCED", "CONSERVATIVE"]),
+   frameLengthDays: storedFrameLengthSchema,
+@@ -102,6 +127,15 @@ export const planHistorySchema = z.object({
+   archivedAt: z.string().datetime(),
+ }).strict()
+ 
++const planHistoryV3Schema = legacyPlanHistorySchema.extend({
++  version: z.literal(3),
++  pairId: z.string().regex(/^plan-pair:v3:/u),
++  eventDistanceM: supportedPlanEventDistanceSchema,
++  selectedDetailedTemplateRef: detailedTemplateRefSchema.nullable(),
++}).strict()
++
++export const planHistorySchema = z.union([planHistoryV3Schema, legacyPlanHistorySchema])
++
+ const planAthleteEvidenceSchema = z.object({
+   storedRecordCount: z.number().int().nonnegative(),
+   goalRecordCount: z.number().int().nonnegative(),
+@@ -124,12 +158,20 @@ const currentElapsedLabels = new Set(
+ const adaptationCandidateIdSchema = z.string().refine((value) => {
+   const markerIndex = value.indexOf(":pace-target:")
+   const baseId = markerIndex < 0 ? value : value.slice(0, markerIndex)
+-  return /^beta:(?:balanced|conservative):(?:middle_distance|five_k):event-(?:800|1500|3000|5000):(?:new_to_running|developing|experienced):(?:recovery_intent|base_intent|lt_intent|vo2_intent|gly_intent|atp_pc_intent|mixed_intent):(?:single_session_only|recovery_pm_allowed):(?:morning|evening|varies):projection-(?:7|9|9\.5|10):local-civil-9-5:[a-z0-9-]+:\d+(?:-\d+)*:(?:no_usable_journal|recent_journal_context):(?:no-continuity|(?:balanced|conservative):(?:completed|rested|skipped|pain_checkin)-\d+(?:-(?:completed|rested|skipped|pain_checkin)-\d+)*)$/u.test(baseId)
++  return /^beta:(?:balanced|conservative):(?:middle_distance|five_k):event-(?:800|1500|3000|5000):(?:new_to_running|developing|experienced):(?:recovery_intent|base_intent|lt_intent|vo2_intent|gly_intent|atp_pc_intent|mixed_intent):(?:single_session_only|recovery_pm_allowed):(?:morning|evening|varies):projection-(?:7|9|9\.5|10):local-civil-9-5:[a-z0-9-]+:\d+(?:-\d+)*:(?:no_usable_journal|recent_journal_context):(?:no-continuity|(?:balanced|conservative):(?:completed|rested|skipped|pain_checkin)-\d+(?:-(?:completed|rested|skipped|pain_checkin)-\d+)*):template-(?:rpe-only|[a-z0-9-]+\.\d+\.\d+\.\d+\.[a-f0-9]{64}):candidate-sha256-[a-f0-9]{64}$/u.test(baseId)
+ })
+ 
+ const adaptationScopeSchema = z.object({
+   athleteId: opaqueAthleteIdSchema,
+-  eventDistanceM: z.union([z.literal(800), z.literal(1500), z.literal(3000), z.literal(5000)]),
++  eventDistanceM: supportedPlanEventDistanceSchema,
++  pairId: z.string().regex(/^plan-pair:v3:/u).optional(),
++  selectedDetailedTemplateRef: detailedTemplateRefSchema.nullable().optional(),
++}).strict()
++const adaptationScopeV3Schema = z.object({
++  athleteId: opaqueAthleteIdSchema,
++  eventDistanceM: supportedPlanEventDistanceSchema,
++  pairId: z.string().regex(/^plan-pair:v3:/u),
++  selectedDetailedTemplateRef: detailedTemplateRefSchema.nullable(),
+ }).strict()
+ 
+ const planBetaStateCommonShape = {
+@@ -149,10 +191,64 @@ const planBetaStateV2BaseSchema = z.object({
+   ...planBetaStateCommonShape,
+   activePlan: activePlanSchema,
+ }).strict()
+-type ValidatedPlanBetaState = Omit<
+-  z.infer<typeof planBetaStateV2BaseSchema>,
+-  "version"
+-> & { readonly version: 1 | 2 }
++const activePlanV3Schema = activePlanSchema.extend({
++  pairId: z.string().regex(/^plan-pair:v3:/u),
++  eventDistanceM: supportedPlanEventDistanceSchema,
++  selectedDetailedTemplateRef: detailedTemplateRefSchema.nullable(),
++}).strict()
++const planBetaStateV3BaseSchema = z.object({
++  version: z.literal(3),
++  intake: planIntakeSchema,
++  progress: z.array(progressSchema),
++  generatedAt: z.string().datetime(),
++  athleteEvidence: planAthleteEvidenceSchema.optional(),
++  adaptationScope: adaptationScopeV3Schema.optional(),
++  activePlan: activePlanV3Schema,
++}).strict().superRefine((state, context) => {
++  if (state.activePlan.eventDistanceM !== state.intake.eventDistanceM) {
++    addIssue(context, ["activePlan", "eventDistanceM"], "Active target event must match intake.")
++  }
++  if (state.activePlan.pairId !== state.adaptationScope?.pairId && state.adaptationScope !== undefined) {
++    addIssue(context, ["adaptationScope", "pairId"], "Adaptation pair identity must match the active plan.")
++  }
++  if (state.adaptationScope !== undefined
++      && (state.adaptationScope.eventDistanceM !== state.activePlan.eventDistanceM
++        || JSON.stringify(state.adaptationScope.selectedDetailedTemplateRef) !== JSON.stringify(state.activePlan.selectedDetailedTemplateRef))) {
++    addIssue(context, ["adaptationScope"], "Adaptation scope must match active event and template selection.")
++  }
++  if (JSON.stringify(state.activePlan.selectedDetailedTemplateRef) !== JSON.stringify(state.intake.selectedDetailedTemplateRef)) {
++    addIssue(context, ["activePlan", "selectedDetailedTemplateRef"], "Active template selection must match intake.")
++  }
++  const reference = state.activePlan.selectedDetailedTemplateRef
++  const templateIdentity = reference === null
++    ? "rpe-only"
++    : `${reference.templateId.toLowerCase()}.${reference.version}.${reference.fingerprint.slice("sha256:".length)}`
++  const candidateSegments = state.activePlan.candidateId.split(":pace-target:")[0]?.split(":") ?? []
++  const expectedPairId = [
++    "plan-pair", "v3", state.activePlan.eventDistanceM, templateIdentity,
++    state.activePlan.selectedEnergyIntent.toLowerCase(), candidateSegments[10], candidateSegments[11],
++    candidateSegments[13],
++  ].join(":")
++  const activeIdentityMatches = "formationKind" in state.activePlan.frame
++    && hasValidCandidateIdentity(state.activePlan.candidateId, {
++      kind: state.activePlan.candidateKind,
++      eventDistanceM: state.activePlan.eventDistanceM,
++      selectedDetailedTemplateRef: state.activePlan.selectedDetailedTemplateRef,
++      selectedEnergyIntent: state.activePlan.selectedEnergyIntent,
++      sourceMode: state.activePlan.sourceMode,
++      frame: state.activePlan.frame,
++      sessions: state.activePlan.sessions,
++    })
++  if (!state.activePlan.candidateId.includes(`:event-${state.activePlan.eventDistanceM}:`)
++      || !state.activePlan.candidateId.includes(`:template-${templateIdentity}`)
++      || !pairIdHasBase(state.activePlan.pairId, expectedPairId)
++      || !activeIdentityMatches) {
++    addIssue(context, ["activePlan", "candidateId"], "Active candidate identity must bind target event and template selection.")
++  }
++})
++type ValidatedPlanBetaState = z.infer<typeof planBetaStateV1BaseSchema>
++  | z.infer<typeof planBetaStateV2BaseSchema>
++  | z.infer<typeof planBetaStateV3BaseSchema>
+ 
+ export function hasCanonicalJsonTree(
+   value: unknown,
+@@ -235,7 +331,8 @@ function validatePlanBetaState(
+     }
+     if (sessions.some((session) => session.role === "QUALITY")) {
+       for (const companion of sessions.filter((session) => session.role === "EASY")) {
+-        if (companion.prescription.rpe.minimum < 1 || companion.prescription.rpe.maximum > 3) {
++        if (companion.prescription.kind !== "RPE_TIME_RANGE"
++            || companion.prescription.rpe.minimum < 1 || companion.prescription.rpe.maximum > 3) {
+           addIssue(context, ["activePlan", "sessions"], "A QUALITY companion must stay within RPE 1-3.")
+         }
+       }
+@@ -258,7 +355,11 @@ const planBetaStateV1Schema = canonicalJsonTreeSchema.pipe(
+ export const planBetaStateV2Schema = canonicalJsonTreeSchema.pipe(
+   planBetaStateV2BaseSchema.superRefine(validatePlanBetaState),
+ )
++export const planBetaStateV3Schema = canonicalJsonTreeSchema.pipe(
++  planBetaStateV3BaseSchema.superRefine(validatePlanBetaState),
++)
+ const planBetaStateSchema = z.union([
++  planBetaStateV3Schema,
+   planBetaStateV2Schema,
+   planBetaStateV1Schema.transform((state) => ({
+     ...state,
+@@ -292,12 +393,11 @@ const candidateFrameSchema = z.object({
+ }).strict()
+ const planCandidateObjectSchema = z.object({
+   candidateId: adaptationCandidateIdSchema,
++  pairId: z.string().regex(/^plan-pair:v3:/u),
+   kind: z.enum(["BALANCED", "CONSERVATIVE"]),
+   eventGroup: z.enum(["MIDDLE_DISTANCE", "FIVE_K"]),
+-  eventDistanceM: z.union([
+-    adaptationScopeSchema.shape.eventDistanceM,
+-    z.null(),
+-  ]),
++  eventDistanceM: supportedPlanEventDistanceSchema,
++  selectedDetailedTemplateRef: detailedTemplateRefSchema.nullable(),
+   selectedEnergyIntent: plannedEnergyIntentSchema,
+   sourceMode: z.enum(["PROFILE_ONLY", "JOURNAL_CONTEXT_ONLY"]),
+   confidence: z.literal("LIMITED"),
+@@ -333,7 +433,28 @@ export const planAdaptationCandidateSchema = canonicalJsonTreeSchema.pipe(planCa
+     || (expectedDetailedFingerprint === null
+       ? markerIndex >= 0
+       : candidate.candidateId.slice(markerIndex + marker.length) !== expectedDetailedFingerprint)) {
+-    addIssue(context, ["candidateId"], "Detailed prescription identity mismatch.")
++      addIssue(context, ["candidateId"], "Detailed prescription identity mismatch.")
++  }
++  const reference = candidate.selectedDetailedTemplateRef
++  const templateIdentity = reference === null
++    ? "rpe-only"
++    : `${reference.templateId.toLowerCase()}.${reference.version}.${reference.fingerprint.slice("sha256:".length)}`
++  const candidateSegments = candidate.candidateId.split(marker)[0]?.split(":") ?? []
++  const continuityIdentity = candidate.continuityContext.kind === "NO_PREVIOUS_FRAME_CONTEXT"
++    ? "no-continuity"
++    : [
++        candidate.continuityContext.previousCandidateKind.toLowerCase(),
++        ...candidate.continuityContext.progressStateCounts.flatMap((entry) => [entry.state.toLowerCase(), String(entry.count)]),
++      ].join("-")
++  const expectedPairId = [
++    "plan-pair", "v3", candidate.eventDistanceM, templateIdentity,
++    candidate.selectedEnergyIntent.toLowerCase(), candidateSegments[10], candidateSegments[11],
++    continuityIdentity,
++  ].join(":")
++  if (!candidate.candidateId.includes(`:template-${templateIdentity}`)
++      || !pairIdHasBase(candidate.pairId, expectedPairId)
++      || !hasValidCandidateIdentity(candidate.candidateId, projectPlanCandidate(candidate))) {
++    addIssue(context, ["pairId"], "Template selection must bind candidate and pair identity.")
+   }
+   if (candidate.mainExposureLedger.fingerprint !== candidate.mainExposureLedger.countedExposureIds.join(":")) {
+     addIssue(context, ["mainExposureLedger", "fingerprint"], "Exposure identity mismatch.")
+@@ -344,6 +465,12 @@ export const planAdaptationCandidateSchema = canonicalJsonTreeSchema.pipe(planCa
+   for (const [index, session] of candidate.sessions.entries()) {
+     if (session.prescription.kind !== "PACE_TARGET") continue
+     const prescription = session.prescription
++    if (reference === null
++        || prescription.templateId !== reference.templateId
++        || prescription.templateVersion !== reference.version
++        || prescription.templateContentFingerprint !== reference.fingerprint) {
++      addIssue(context, ["sessions", index, "prescription"], "Prescription must match the selected template reference.")
++    }
+     const approval = DETAILED_PRESCRIPTION_APPROVALS.find((item) => (
+       item.templateId === prescription.templateId
+       && item.templateVersion === prescription.templateVersion
+@@ -394,6 +521,8 @@ const planAdaptationProposalObjectSchema = z.object({
+   targetFrame: z.literal("NEXT_FRAME"),
+   athleteId: opaqueAthleteIdSchema,
+   eventDistanceM: adaptationScopeSchema.shape.eventDistanceM,
++  pairId: z.string().regex(/^plan-pair:v3:/u),
++  selectedDetailedTemplateRef: detailedTemplateRefSchema.nullable(),
+   proposalOrigin: z.enum(["SELF_SERVICE", "COACH_AUTHORED"]),
+   selectionAuthority: z.enum(["SELF", "COACH_REQUIRED"]),
+   trigger: z.enum(["SAME_EVENT_PB_SB_AFTER_ACTIVE_PLAN_START", "EXPLICIT_REQUEST"]),
+@@ -411,6 +540,12 @@ const planAdaptationProposalObjectSchema = z.object({
+   const expectedAuthority = proposal.proposalOrigin === "SELF_SERVICE" ? "SELF" : "COACH_REQUIRED"
+   if (proposal.selectionAuthority !== expectedAuthority) addIssue(context, ["selectionAuthority"], "Selection authority must follow proposal origin.")
+   if (proposal.baseCandidateId !== proposal.baseCandidate.candidateId) addIssue(context, ["baseCandidateId"], "Base candidate identity mismatch.")
++  if (proposal.pairId !== proposal.baseCandidate.pairId || proposal.pairId !== proposal.successorCandidate.pairId) addIssue(context, ["pairId"], "Proposal pair identity mismatch.")
++  if (!hasValidCandidatePairIdentity(proposal.baseCandidate, proposal.successorCandidate)) addIssue(context, ["pairId"], "Proposal pair content identity mismatch.")
++  if (JSON.stringify(proposal.selectedDetailedTemplateRef) !== JSON.stringify(proposal.baseCandidate.selectedDetailedTemplateRef)
++      || JSON.stringify(proposal.selectedDetailedTemplateRef) !== JSON.stringify(proposal.successorCandidate.selectedDetailedTemplateRef)) {
++    addIssue(context, ["selectedDetailedTemplateRef"], "Proposal template identity mismatch.")
++  }
+ })
+ export const planAdaptationProposalSchema = canonicalJsonTreeSchema.pipe(planAdaptationProposalObjectSchema)
+ 
+@@ -419,13 +554,18 @@ const pendingNextFrameSuccessorObjectSchema = z.object({
+   proposalOrigin: z.enum(["SELF_SERVICE", "COACH_AUTHORED"]), selectionAuthority: z.enum(["SELF", "COACH_REQUIRED"]),
+   trigger: z.enum(["SAME_EVENT_PB_SB_AFTER_ACTIVE_PLAN_START", "EXPLICIT_REQUEST"]), changeDimension: z.enum(["INTENSITY", "VOLUME", "FREQUENCY"]),
+   athleteId: opaqueAthleteIdSchema, eventDistanceM: adaptationScopeSchema.shape.eventDistanceM,
++  pairId: z.string().regex(/^plan-pair:v3:/u), selectedDetailedTemplateRef: detailedTemplateRefSchema.nullable(),
+   baseCandidateId: adaptationCandidateIdSchema, baseContentHash: hashSchema, proposedContentHash: hashSchema, predecessorStateHash: hashSchema,
+-  successorState: canonicalJsonTreeSchema.pipe(planBetaStateV2BaseSchema), acceptedAt: z.string().datetime(), decisionId: z.string().regex(/^adaptation-decision:[a-f0-9]{64}$/u), idempotencyKey: hashSchema, requestHash: hashSchema,
++  successorState: planBetaStateV3Schema, acceptedAt: z.string().datetime(), decisionId: z.string().regex(/^adaptation-decision:[a-f0-9]{64}$/u), idempotencyKey: hashSchema, requestHash: hashSchema,
+ }).strict().superRefine((record, context) => {
+   if (record.successorState.activePlan.candidateId === record.baseCandidateId) addIssue(context, ["successorState", "activePlan", "candidateId"], "Successor must differ from predecessor.")
+   if (!adaptationCandidateIdSchema.safeParse(record.successorState.activePlan.candidateId).success) addIssue(context, ["successorState", "activePlan", "candidateId"], "Successor candidate identity is invalid.")
+   const expectedAuthority = record.proposalOrigin === "SELF_SERVICE" ? "SELF" : "COACH_REQUIRED"
+   if (record.selectionAuthority !== expectedAuthority) addIssue(context, ["selectionAuthority"], "Selection authority must follow proposal origin.")
++  if (record.pairId !== record.successorState.activePlan.pairId
++      || JSON.stringify(record.selectedDetailedTemplateRef) !== JSON.stringify(record.successorState.activePlan.selectedDetailedTemplateRef)) {
++    addIssue(context, ["successorState"], "Pending successor scope must match its active plan.")
++  }
+ })
+ export const pendingNextFrameSuccessorSchema = canonicalJsonTreeSchema.pipe(pendingNextFrameSuccessorObjectSchema)
+ 
+@@ -447,15 +587,16 @@ export type CompetitionDivision = PlanBetaIntake["competitionDivision"]
+ export type StoredPlanProgress = z.infer<typeof progressSchema>
+ export type LegacyPlanBetaState = z.infer<typeof planBetaStateV1Schema>
+ export type PlanBetaStateV2 = z.infer<typeof planBetaStateV2Schema>
+-export type PlanBetaState = Omit<PlanBetaStateV2, "version"> & {
++export type PlanBetaStateV3 = z.infer<typeof planBetaStateV3Schema>
++export type PlanBetaState = (Omit<PlanBetaStateV2, "version"> & {
+   readonly version: 1 | 2
+-}
++}) | PlanBetaStateV3
+ export type StoredPlanHistory = z.infer<typeof planHistorySchema>
+ export type PendingNextFrameSuccessor = z.infer<typeof pendingNextFrameSuccessorSchema>
+ export type PlanAdaptationDecision = z.infer<typeof planAdaptationDecisionSchema>
+ export type PlanAdaptationEnvelope = z.infer<typeof planAdaptationEnvelopeSchema>
+ 
+-export function parsePlanBetaState(candidate: unknown): PlanBetaStateV2 | null {
++export function parsePlanBetaState(candidate: unknown): PlanBetaState | null {
+   const parsed = planBetaStateSchema.safeParse(candidate)
+   return parsed.success ? parsed.data : null
+ }
+diff --git a/app/src/domain/plan-beta-store.test-fixture.ts b/app/src/domain/plan-beta-store.test-fixture.ts
+index 45524b6..aa72f2e 100644
+--- a/app/src/domain/plan-beta-store.test-fixture.ts
++++ b/app/src/domain/plan-beta-store.test-fixture.ts
+@@ -1,10 +1,47 @@
+ import type { PlanBetaState } from "./plan-beta-store"
++import { deriveCandidateId, derivePairId } from "@impl/plan-generator/candidate-identity"
+ 
+ export function stateFixture(): PlanBetaState {
++  const candidateBaseId = "beta:balanced:five_k:event-5000:developing:lt_intent:single_session_only:varies:projection-9:local-civil-9-5:fixture-main-1-fixture-main-2:1-5-9:no_usable_journal:no-continuity:template-rpe-only"
++  const pairBaseId = "plan-pair:v3:5000:rpe-only:lt_intent:fixture-main-1-fixture-main-2:1-5-9:no-continuity"
++  const frame = {
++    formationKind: "LOCAL_CIVIL_9_5" as const,
++    lengthDays: 9.5 as const,
++    slotCount: 19 as const,
++    projectionLengthDays: 9 as const,
++    continuity: { kind: "STANDARD_FRAME" as const },
++  }
++  const sessions = [{
++    day: 1,
++    slot: "AM" as const,
++    role: "EASY" as const,
++    plannedEnergyIntent: "BASE_INTENT" as const,
++    prescription: {
++      kind: "RPE_TIME_RANGE" as const,
++      rpe: { minimum: 2, maximum: 4 },
++      durationMinutes: { minimum: 20, maximum: 30 },
++    },
++  }]
++  const projection = {
++    kind: "BALANCED" as const,
++    eventDistanceM: 5000 as const,
++    selectedDetailedTemplateRef: null,
++    selectedEnergyIntent: "LT_INTENT" as const,
++    sourceMode: "PROFILE_ONLY" as const,
++    frame,
++    sessions,
++  }
++  const candidateId = deriveCandidateId(candidateBaseId, projection)
++  const conservativeId = deriveCandidateId(
++    candidateBaseId.replace("beta:balanced:", "beta:conservative:"),
++    { ...projection, kind: "CONSERVATIVE" },
++  )
++  const pairId = derivePairId(pairBaseId, candidateId, conservativeId)
+   return {
+-    version: 1,
++    version: 3,
+     intake: {
+       eventGroup: "FIVE_K",
++      eventDistanceM: 5000,
+       competitionDivision: "OPEN",
+       experienceBand: "DEVELOPING",
+       availableDayCount: 4,
+@@ -12,32 +49,21 @@ export function stateFixture(): PlanBetaState {
+       trainingFocus: "LT_INTENT",
+       secondSessionMode: "SINGLE_SESSION_ONLY",
+       trainingTimePreference: "VARIES",
++      selectedDetailedTemplateRef: null,
+     },
+     activePlan: {
+       kind: "BETA_ACTIVE_PLAN_SNAPSHOT",
+       activationState: "SELECTED_BETA_SNAPSHOT",
+-      candidateId: "candidate-1",
++      candidateId,
++      pairId,
+       candidateKind: "BALANCED",
++      eventDistanceM: 5000,
++      selectedDetailedTemplateRef: null,
+       selectionActor: "SELF",
+       sourceMode: "PROFILE_ONLY",
+       selectedEnergyIntent: "LT_INTENT",
+-      frame: {
+-        lengthDays: 9,
+-        continuity: { kind: "STANDARD_FRAME" },
+-      },
+-      sessions: [
+-        {
+-          day: 1,
+-          slot: "AM",
+-          role: "EASY",
+-          plannedEnergyIntent: "BASE_INTENT",
+-          prescription: {
+-            kind: "RPE_TIME_RANGE",
+-            rpe: { minimum: 2, maximum: 4 },
+-            durationMinutes: { minimum: 20, maximum: 30 },
+-          },
+-        },
+-      ],
++      frame,
++      sessions,
+     },
+     progress: [],
+     generatedAt: "2026-07-24T00:00:00.000Z",
+diff --git a/app/src/domain/plan-beta-store.test.ts b/app/src/domain/plan-beta-store.test.ts
+index 1356320..6e701b9 100644
+--- a/app/src/domain/plan-beta-store.test.ts
++++ b/app/src/domain/plan-beta-store.test.ts
+@@ -10,8 +10,20 @@ import {
+ import type { PlanBetaState } from "./plan-beta-store"
+ import { stateFixture } from "./plan-beta-store.test-fixture"
+ 
+-function migratedState(state: PlanBetaState): PlanBetaState {
+-  return { ...state, version: 2 }
++function legacyStateFixture() {
++  const current = stateFixture()
++  if (current.version !== 3) throw new TypeError("Expected current v3 fixture")
++  const {
++    eventDistanceM: _eventDistanceM,
++    selectedDetailedTemplateRef: _selectedDetailedTemplateRef,
++    ...intake
++  } = current.intake
++  const {
++    pairId: _pairId,
++    selectedDetailedTemplateRef: _activeTemplateRef,
++    ...activePlan
++  } = current.activePlan
++  return { ...current, version: 1 as const, intake, activePlan }
+ }
+ 
+ describe("plan beta local store", () => {
+@@ -29,7 +41,7 @@ describe("plan beta local store", () => {
+ 
+     expect(savePlanBetaState(state)).toEqual({ ok: true })
+ 
+-    expect(loadPlanBetaState()).toEqual(migratedState(state))
++    expect(loadPlanBetaState()).toEqual(state)
+     expect(JSON.stringify(loadPlanBetaState())).not.toMatch(/memo|symptom/u)
+   })
+ 
+@@ -40,7 +52,7 @@ describe("plan beta local store", () => {
+     "trainingTimePreference",
+     "secondSessionMode",
+   ] as const)("preserves a missing stored %s answer instead of inventing one", (field) => {
+-    const state = stateFixture()
++    const state = legacyStateFixture()
+     const intake = Object.fromEntries(
+       Object.entries(state.intake).filter(([key]) => key !== field),
+     )
+@@ -62,7 +74,7 @@ describe("plan beta local store", () => {
+     "trainingTimePreference",
+     "secondSessionMode",
+   ] as const)("preserves a missing previous %s answer instead of inventing one", (field) => {
+-    const state = stateFixture()
++    const state = legacyStateFixture()
+     const intake = Object.fromEntries(
+       Object.entries(state.intake).filter(([key]) => key !== field),
+     )
+@@ -110,7 +122,7 @@ describe("plan beta local store", () => {
+       code: "PLAN_ARCHIVE_WRITE_FAILED",
+       rollbackComplete: true,
+     })
+-    expect(loadPlanBetaState()).toEqual(migratedState(state))
++    expect(loadPlanBetaState()).toEqual(state)
+     expect(loadPreviousContinuity()).toBeUndefined()
+   })
+ 
+@@ -133,7 +145,7 @@ describe("plan beta local store", () => {
+       ok: false,
+       rollbackComplete: true,
+     })
+-    expect(loadPlanBetaState()).toEqual(migratedState(state))
++    expect(loadPlanBetaState()).toEqual(state)
+     expect(loadPreviousContinuity()).toBeUndefined()
+   })
+ 
+@@ -154,7 +166,7 @@ describe("plan beta local store", () => {
+       ok: false,
+       rollbackComplete: true,
+     })
+-    expect(loadPlanBetaState()).toEqual(migratedState(state))
++    expect(loadPlanBetaState()).toEqual(state)
+     expect(loadPreviousContinuity()).toBeUndefined()
+   })
+ 
+@@ -175,7 +187,7 @@ describe("plan beta local store", () => {
+       ok: false,
+       rollbackComplete: true,
+     })
+-    expect(loadPlanBetaState()).toEqual(migratedState(state))
++    expect(loadPlanBetaState()).toEqual(state)
+     expect(loadPreviousContinuity()).toBeUndefined()
+   })
+ 
+@@ -197,7 +209,7 @@ describe("plan beta local store", () => {
+       ok: false,
+       rollbackComplete: true,
+     })
+-    expect(loadPlanBetaState()).toEqual(migratedState(state))
++    expect(loadPlanBetaState()).toEqual(state)
+     expect(loadPreviousContinuity()).toBeUndefined()
+   })
+ 
+@@ -266,16 +278,18 @@ describe("plan beta local store", () => {
+   })
+ 
+   it("keeps AM and PM progress separate for an explicitly selected two-a-day plan", () => {
++    const fixture = stateFixture()
++    if (fixture.version !== 3) throw new TypeError("Expected current v3 fixture")
+     const state: PlanBetaState = {
+-      ...stateFixture(),
++      ...fixture,
+       intake: {
+-        ...stateFixture().intake,
++        ...fixture.intake,
+         secondSessionMode: "RECOVERY_PM_ALLOWED",
+       },
+       activePlan: {
+-        ...stateFixture().activePlan,
++        ...fixture.activePlan,
+         sessions: [
+-          ...stateFixture().activePlan.sessions,
++          ...fixture.activePlan.sessions,
+           {
+             day: 1,
+             slot: "PM",
+@@ -309,7 +323,7 @@ describe("plan beta local store", () => {
+   })
+ 
+   it("loads an older single-session snapshot as AM-only without inventing consent", () => {
+-    const state = stateFixture()
++    const state = legacyStateFixture()
+     const { secondSessionMode: _secondSessionMode, ...legacyIntake } = state.intake
+     const legacySessions = state.activePlan.sessions.map(({ slot: _slot, ...session }) => session)
+     window.localStorage.setItem(
+@@ -336,7 +350,7 @@ describe("plan beta local store", () => {
+   })
+ 
+   it("keeps an existing legacy 7-day standard frame visible", () => {
+-    const state = stateFixture()
++    const state = legacyStateFixture()
+     window.localStorage.setItem(
+       "trainoracle.plan-beta.v1",
+       JSON.stringify({
+@@ -357,7 +371,7 @@ describe("plan beta local store", () => {
+   })
+ 
+   it("loads a persisted two-session plan with explicit consent", () => {
+-    const state = stateFixture()
++    const state = legacyStateFixture()
+     window.localStorage.setItem(
+       "trainoracle.plan-beta.v1",
+       JSON.stringify({
+diff --git a/app/src/domain/plan-beta-store.ts b/app/src/domain/plan-beta-store.ts
+index cc0488b..c6549df 100644
+--- a/app/src/domain/plan-beta-store.ts
++++ b/app/src/domain/plan-beta-store.ts
+@@ -4,13 +4,16 @@ import type {
+ } from "@impl/plan-generator/types"
+ import {
+   parsePlanBetaState,
++  planBetaStateV3Schema,
+   planHistoryListSchema,
++  planIntakeSchema,
+   storedPlanIntakeSchema,
+ } from "./plan-beta-schema"
+ import type {
+   PlanBetaIntake,
+   PlanBetaState,
+   PlanBetaStateV2,
++  PlanBetaStateV3,
+   StoredPlanBetaIntake,
+   StoredPlanHistory,
+   StoredPlanProgress,
+@@ -19,6 +22,7 @@ export type {
+   PlanBetaIntake,
+   PlanBetaState,
+   PlanBetaStateV2,
++  PlanBetaStateV3,
+   StoredPlanBetaIntake,
+   StoredPlanHistory,
+   StoredPlanProgress,
+@@ -46,7 +50,7 @@ export function loadPlanBetaState(): PlanBetaState | null {
+   return parsed
+ }
+ 
+-export function loadVersionedPlanBetaState(): PlanBetaStateV2 | null {
++export function loadVersionedPlanBetaState(): PlanBetaState | null {
+   if (typeof window === "undefined") return null
+   const raw = window.localStorage.getItem(STORAGE_KEY)
+   if (raw === null) return null
+@@ -66,11 +70,11 @@ export function savePlanBetaState(
+   if (typeof window === "undefined") {
+     return { ok: false, code: "PLAN_STORAGE_WRITE_FAILED" }
+   }
+-  const parsed = parsePlanBetaState(state)
+-  if (parsed === null) return { ok: false, code: "PLAN_STORAGE_WRITE_FAILED" }
++  const parsed = planBetaStateV3Schema.safeParse(state)
++  if (!parsed.success) return { ok: false, code: "PLAN_STORAGE_WRITE_FAILED" }
+ 
+   try {
+-    const serialized = JSON.stringify(parsed)
++    const serialized = JSON.stringify(parsed.data)
+     window.localStorage.setItem(STORAGE_KEY, serialized)
+     if (window.localStorage.getItem(STORAGE_KEY) !== serialized) {
+       return { ok: false, code: "PLAN_STORAGE_WRITE_FAILED" }
+@@ -108,10 +112,21 @@ export function archiveAndClearActivePlan(state: PlanBetaState): PlanArchiveResu
+       rollbackComplete: false,
+     }
+   }
++  if (state.version !== 3) {
++    return {
++      ok: false,
++      code: "PLAN_ARCHIVE_WRITE_FAILED",
++      rollbackComplete: true,
++    }
++  }
+ 
+   const history: StoredPlanHistory = {
++    version: 3,
+     candidateId: state.activePlan.candidateId,
++    pairId: state.activePlan.pairId,
+     candidateKind: state.activePlan.candidateKind,
++    eventDistanceM: state.activePlan.eventDistanceM,
++    selectedDetailedTemplateRef: state.activePlan.selectedDetailedTemplateRef,
+     frameLengthDays: state.activePlan.frame.lengthDays,
+     progress: state.progress,
+     archivedAt: new Date().toISOString(),
+@@ -154,8 +169,10 @@ export function loadPreviousIntake(): StoredPlanBetaIntake | null {
+ 
+   try {
+     const json: unknown = JSON.parse(raw)
+-    const parsed = storedPlanIntakeSchema.safeParse(json)
+-    return parsed.success ? parsed.data : null
++    const current = planIntakeSchema.safeParse(json)
++    if (current.success) return current.data
++    const legacy = storedPlanIntakeSchema.safeParse(json)
++    return legacy.success ? legacy.data : null
+   } catch (error) {
+     if (!(error instanceof SyntaxError)) throw error
+     return null
+diff --git a/app/src/domain/plan-candidate-prescription.ts b/app/src/domain/plan-candidate-prescription.ts
+index d61a1a2..448e6bb 100644
+--- a/app/src/domain/plan-candidate-prescription.ts
++++ b/app/src/domain/plan-candidate-prescription.ts
+@@ -1,5 +1,6 @@
+ import { z } from "zod"
+ import { bindOneDetailedPrescriptionCandidate } from "@impl/plan-generator/candidates"
++import { rebindCandidatePairIdentity } from "@impl/plan-generator/candidate-identity"
+ import type { PlanGenerationSuccess } from "@impl/plan-generator/types"
+ import type { SafetyGateDecision } from "@impl/safety-gate/gate"
+ import { loadAthleteRecords } from "./athlete-records"
+@@ -19,6 +20,7 @@ const selectionSchema = z.object({
+ 
+ export type CandidatePrescriptionFallbackCode =
+   | "PACE_TARGET_FALLBACK_NO_EXPLICIT_ANCHOR"
++  | "PACE_TARGET_FALLBACK_NO_EXPLICIT_TEMPLATE"
+   | "PACE_TARGET_FALLBACK_INVALID_SELECTION"
+   | "PACE_TARGET_FALLBACK_ANCHOR_UNAVAILABLE"
+   | "PACE_TARGET_FALLBACK_ANCHOR_NOT_CURRENT"
+@@ -58,6 +60,10 @@ export function bindDetailedPrescriptionCandidates(
+   if (safetyGate.kind === "blocked") {
+     return fallback(generated, "PACE_TARGET_FALLBACK_SAFETY_GATE")
+   }
++  const selectedTemplate = intake.selectedDetailedTemplateRef
++  if (selectedTemplate === null) {
++    return fallback(generated, "PACE_TARGET_FALLBACK_NO_EXPLICIT_TEMPLATE")
++  }
+   if (selection === undefined) {
+     return fallback(generated, "PACE_TARGET_FALLBACK_NO_EXPLICIT_ANCHOR")
+   }
+@@ -75,11 +81,7 @@ export function bindDetailedPrescriptionCandidates(
+   if (freshness !== "CURRENT") {
+     return fallback(generated, "PACE_TARGET_FALLBACK_ANCHOR_NOT_CURRENT")
+   }
+-  const supportedTarget = (
+-    intake.eventGroup === "FIVE_K" && record.eventDistanceM === 5000
+-  ) || (
+-    intake.eventGroup === "MIDDLE_DISTANCE" && [800, 1500, 3000].includes(record.eventDistanceM)
+-  )
++  const supportedTarget = record.eventDistanceM === intake.eventDistanceM
+   if (!supportedTarget) {
+     return fallback(generated, "PACE_TARGET_FALLBACK_EVENT_SCOPE")
+   }
+@@ -88,7 +90,10 @@ export function bindDetailedPrescriptionCandidates(
+   }
+ 
+   const approval = DETAILED_PRESCRIPTION_APPROVALS.find((candidate) => (
+-    candidate.targetEventDistanceM === record.eventDistanceM
++    candidate.templateId === selectedTemplate.templateId
++    && candidate.templateVersion === selectedTemplate.version
++    && candidate.templateContentFingerprint === selectedTemplate.fingerprint
++    && candidate.targetEventDistanceM === intake.eventDistanceM
+     && candidate.eligibleEventGroups.includes(intake.eventGroup)
+   ))
+   if (approval === undefined || approval.populationApplicability.scope !== "YOUTH_AND_ADULT") {
+@@ -181,12 +186,14 @@ export function bindDetailedPrescriptionCandidates(
+   if (balanced === null || conservative === null) {
+     return fallback(generated, "PACE_TARGET_FALLBACK_NO_ELIGIBLE_QUALITY")
+   }
++  const candidates = rebindCandidatePairIdentity([balanced, conservative])
+   return Object.freeze({
+     kind: "bound",
+     code: "PACE_TARGET_BOUND",
+     generated: Object.freeze({
+       ...generated,
+-      candidates: Object.freeze([balanced, conservative] as const),
++      pairId: candidates[0].pairId,
++      candidates,
+       audit: Object.freeze({
+         ...generated.audit,
+         codes: Object.freeze([
+diff --git a/app/src/domain/prescription-quality-matrix.test-fixtures.ts b/app/src/domain/prescription-quality-matrix.test-fixtures.ts
+index 014060b..eb87c19 100644
+--- a/app/src/domain/prescription-quality-matrix.test-fixtures.ts
++++ b/app/src/domain/prescription-quality-matrix.test-fixtures.ts
+@@ -4,6 +4,7 @@ import type { PlanBetaIntake } from "./plan-beta-schema"
+ import { createSelfReportedAthleteRecord, saveAthleteRecord } from "./athlete-records"
+ import { MEMO_PURPOSE } from "./journal-schema"
+ import { saveEntry } from "./journal-store"
++import { DETAILED_PRESCRIPTION_APPROVALS } from "./detailed-prescription-approvals"
+ 
+ export const TODAY = new Date("2026-08-17T03:00:00.000Z")
+ export const RAW_MARKER = "MATRIX_RAW_FREE_TEXT_9f86d081"
+@@ -64,8 +65,13 @@ export type PopulationContractObservation = {
+ }
+ 
+ export function draftFor(fixture: MatrixCase): PlanBetaIntake {
++  const approval = DETAILED_PRESCRIPTION_APPROVALS.find((candidate) => (
++    candidate.targetEventDistanceM === fixture.eventDistanceM
++  ))
++  if (approval === undefined) throw new TypeError("Matrix fixture requires an approved exact-event template")
+   return {
+     eventGroup: fixture.eventGroup,
++    eventDistanceM: fixture.eventDistanceM,
+     competitionDivision: "OPEN",
+     experienceBand: "EXPERIENCED",
+     availableDayCount: fixture.availableDayCount,
+@@ -73,6 +79,11 @@ export function draftFor(fixture: MatrixCase): PlanBetaIntake {
+     trainingFocus: "VO2_INTENT",
+     secondSessionMode: fixture.secondSessionMode,
+     trainingTimePreference: fixture.trainingTimePreference,
++    selectedDetailedTemplateRef: {
++      templateId: approval.templateId,
++      version: approval.templateVersion,
++      fingerprint: approval.templateContentFingerprint,
++    },
+   }
+ }
+ 
+diff --git a/app/src/screens/plan-beta/PlanActiveState.tsx b/app/src/screens/plan-beta/PlanActiveState.tsx
+index f3782a3..d8ccc1a 100644
+--- a/app/src/screens/plan-beta/PlanActiveState.tsx
++++ b/app/src/screens/plan-beta/PlanActiveState.tsx
+@@ -36,6 +36,10 @@ export function PlanActiveState({
+ 
+   const saveProgress = (progress: StoredPlanProgress) => {
+     setExecutionMessage(null)
++    if (state.version !== 3) {
++      setError("이전 계획은 내용만 확인할 수 있어요. 새 계획을 만들어 진행을 기록해 주세요.")
++      return
++    }
+     const result = recordPlanProgress({
+       kind: "PLAN_BETA_PROGRESS_REQUEST",
+       activePlan: state.activePlan,
+diff --git a/app/src/screens/plan-beta/PlanAdaptationFlow.contract.test.tsx b/app/src/screens/plan-beta/PlanAdaptationFlow.contract.test.tsx
+index 531fda7..62332c1 100644
+--- a/app/src/screens/plan-beta/PlanAdaptationFlow.contract.test.tsx
++++ b/app/src/screens/plan-beta/PlanAdaptationFlow.contract.test.tsx
+@@ -7,6 +7,7 @@ import {
+   saveAthleteRecord,
+ } from "../../domain/athlete-records"
+ import { generatePlanFromDraft } from "../../domain/plan-beta-flow"
++import { DETAILED_PRESCRIPTION_APPROVALS } from "../../domain/detailed-prescription-approvals"
+ import {
+   savePlanBetaState,
+   type PlanBetaState,
+@@ -17,6 +18,16 @@ import {
+ import { saveSelectedPlanCandidate } from "./plan-selection"
+ import { PlanAdaptationFlow } from "./PlanAdaptationFlow"
+ 
++const APPROVAL_5000 = DETAILED_PRESCRIPTION_APPROVALS.find(
++  (approval) => approval.targetEventDistanceM === 5000,
++)
++if (APPROVAL_5000 === undefined) throw new TypeError("Expected approved 5000m fixture")
++const TEMPLATE_5000 = {
++  templateId: APPROVAL_5000.templateId,
++  version: APPROVAL_5000.templateVersion,
++  fingerprint: APPROVAL_5000.templateContentFingerprint,
++} as const
++
+ beforeEach(() => {
+   window.localStorage.clear()
+   window.sessionStorage.clear()
+@@ -83,16 +94,18 @@ describe("next-frame adaptation flow", () => {
+ 
+     const changedSection = (await screen.findByRole("heading", { name: "바뀌는 것" })).parentElement
+     if (changedSection === null) throw new Error("Changed-session section missing")
+-    expect(within(changedSection).getAllByRole("listitem")).toHaveLength(4)
++    expect(within(changedSection).getAllByRole("listitem")).toHaveLength(3)
+     expect(within(changedSection).getByText(/DAY 1 오전 · 기초 지구력 달리기/u)).toBeVisible()
+     expect(within(changedSection).getByText(/DAY 5 오전 · 기초 지구력 달리기/u)).toBeVisible()
+     expect(within(changedSection).getByText(/DAY 7 오전 · 기초 지구력 달리기/u)).toBeVisible()
+-    expect(within(changedSection).getByText(/DAY 9 오전 · 반복 인터벌 · VO2 훈련/u)).toBeVisible()
++    expect(within(changedSection).queryByText(/DAY 9 오전 · 반복 인터벌 · VO2 훈련/u)).not.toBeInTheDocument()
+     const metadataTokens = [...changedSection.querySelectorAll(".plan-adaptation__metadata-token")]
+       .map((token) => token.textContent)
+     expect(metadataTokens).toContain("35~35분")
+     expect(metadataTokens).toContain("기초 지구력 · BASE")
+-    expect(screen.getByRole("heading", { name: "그대로인 것" })).toBeVisible()
++    const unchangedSection = screen.getByRole("heading", { name: "그대로인 것" }).parentElement
++    if (unchangedSection === null) throw new Error("Unchanged-session section missing")
++    expect(within(unchangedSection).getByText(/훈련 날짜와 세션 역할, 선택한 훈련 의도/u)).toBeVisible()
+     expect(screen.getByRole("heading", { name: "이유와 기록 출처" })).toBeVisible()
+     expect(screen.getByRole("heading", { name: "불확실한 점" })).toBeVisible()
+     expect(screen.queryByRole("list", { name: "날짜별 계획 미리보기" })).not.toBeInTheDocument()
+@@ -208,6 +221,7 @@ function createBoundActivePlan(): { readonly state: PlanBetaState } {
+   saveAthleteRecord(anchor, now)
+   const generated = generatePlanFromDraft({
+     eventGroup: "FIVE_K",
++    eventDistanceM: 5000,
+     competitionDivision: "OPEN",
+     experienceBand: "EXPERIENCED",
+     availableDayCount: 5,
+@@ -215,6 +229,7 @@ function createBoundActivePlan(): { readonly state: PlanBetaState } {
+     trainingFocus: "VO2_INTENT",
+     secondSessionMode: "SINGLE_SESSION_ONLY",
+     trainingTimePreference: "MORNING",
++    selectedDetailedTemplateRef: TEMPLATE_5000,
+   }, "NO_KNOWN_RISK", { selectedRecordId: anchor.id })
+   if (generated.kind !== "generated") throw new Error(`Expected generated plan, got ${generated.kind}`)
+   const saved = saveSelectedPlanCandidate(
+diff --git a/app/src/screens/plan-beta/PlanAdaptationFlow.tsx b/app/src/screens/plan-beta/PlanAdaptationFlow.tsx
+index e498333..6ccbd43 100644
+--- a/app/src/screens/plan-beta/PlanAdaptationFlow.tsx
++++ b/app/src/screens/plan-beta/PlanAdaptationFlow.tsx
+@@ -63,6 +63,11 @@ export function PlanAdaptationFlow({
+     let current = true
+     const loadPending = async () => {
+       try {
++        if (state.version !== 3) {
++          setPending(null)
++          setPendingState(state)
++          return
++        }
+         const loaded = await onLoadPending(state)
+         if (!current) return
+         setPending(loaded)
+@@ -104,6 +109,11 @@ export function PlanAdaptationFlow({
+ 
+   const accept = async () => {
+     if (prepared === null || currentCheck === null) return
++    if (state.version !== 3) {
++      setMessage("이전 계획은 다음 계획 조정을 지원하지 않아요.")
++      setStep("result")
++      return
++    }
+     const operationAt = new Date()
+     const safety = onEvaluateSafety(state, currentCheck, operationAt)
+     setBusy(true)
+diff --git a/app/src/screens/plan-beta/candidate-purpose-status.ts b/app/src/screens/plan-beta/candidate-purpose-status.ts
+index eeb5a1b..1bac088 100644
+--- a/app/src/screens/plan-beta/candidate-purpose-status.ts
++++ b/app/src/screens/plan-beta/candidate-purpose-status.ts
+@@ -12,14 +12,14 @@ export function candidatePurposeStatus(kind: PlanCandidateKind): CandidatePurpos
+     case "BALANCED":
+       return {
+         tone: "included",
+-        label: "고른 목적을 표준 용량으로 넣었어요.",
+-        detail: "고른 목적은 유지하고, 집중 훈련과 가벼운 훈련을 표준 구성으로 보여줘요.",
++        label: "보조 훈련 시간 범위를 그대로 보여줘요.",
++        detail: "고강도 훈련과 훈련 횟수는 후보 B와 같고, 보조 훈련 시간 범위는 현재 상한을 유지해요.",
+       }
+     case "CONSERVATIVE":
+       return {
+         tone: "conservative",
+-        label: "같은 목적을 더 낮은 부담으로 넣었어요.",
+-        detail: "고른 목적은 유지하고, 훈련량을 줄이거나 회복 여유를 더 둬요.",
++        label: "보조 훈련 시간만 짧게 보여줘요.",
++        detail: "고강도 훈련과 훈련 횟수는 후보 A와 같고, 적용 가능한 보조 훈련 시간만 범위의 최솟값으로 줄여요.",
+       }
+     default:
+       return assertNever(kind)
+diff --git a/app/src/screens/plan-beta/labels.ts b/app/src/screens/plan-beta/labels.ts
+index 1c888f9..345a2a8 100644
+--- a/app/src/screens/plan-beta/labels.ts
++++ b/app/src/screens/plan-beta/labels.ts
+@@ -100,33 +100,14 @@ export function candidateLabel(
+   readonly detail: string
+ } {
+   if (kind === "CONSERVATIVE") {
+-    if (selectedEnergyIntent === "RECOVERY_INTENT") {
+-      return {
+-        title: "회복 목적 · 부담 낮춤",
+-        detail: "고른 회복 목적은 유지하고, 움직임 양을 줄이거나 쉬는 날을 늘립니다.",
+-      }
+-    }
+-    return {
+-      title: `${ENERGY_INTENT_LABELS[selectedEnergyIntent].title.split(" · ")[0]} · 부담 낮춤`,
+-      detail: `고른 ${ENERGY_INTENT_LABELS[selectedEnergyIntent].title} 목적은 유지하고, 훈련량을 줄이거나 회복 여유를 늘립니다.`,
+-    }
+-  }
+-
+-  if (selectedEnergyIntent === "RECOVERY_INTENT") {
+-    return {
+-      title: "가벼운 회복 움직임",
+-      detail: "가능한 날에 RPE 1~2 회복 움직임을 배치합니다.",
+-    }
+-  }
+-  if (selectedEnergyIntent === "BASE_INTENT") {
+     return {
+-      title: "기초 지구력 중심",
+-      detail: "가능한 날에 RPE 3~4 기본 유산소 달리기를 배치합니다.",
++      title: "보조훈련 짧게",
++      detail: `고른 ${ENERGY_INTENT_LABELS[selectedEnergyIntent].title} 목적의 고강도 훈련과 훈련 횟수는 후보 A와 같고, 적용 가능한 보조 훈련 시간만 범위의 최솟값으로 줄입니다.`,
+     }
+   }
+   return {
+-    title: `${ENERGY_INTENT_LABELS[selectedEnergyIntent].title.split(" · ")[0]} 포함`,
+-    detail: `기초 지구력 날 사이에 ${ENERGY_INTENT_LABELS[selectedEnergyIntent].title} 목적의 RPE 안내를 배치합니다.`,
++    title: "기본 보조훈련",
++    detail: `고른 ${ENERGY_INTENT_LABELS[selectedEnergyIntent].title} 목적의 고강도 훈련과 훈련 횟수는 후보 B와 같고, 적용 가능한 보조 훈련 시간은 현재 범위를 유지합니다.`,
+   }
+ }
+ 
+diff --git a/impl/src/plan-generator/adaptation.ts b/impl/src/plan-generator/adaptation.ts
+index 6ae2289..68f8461 100644
+--- a/impl/src/plan-generator/adaptation.ts
++++ b/impl/src/plan-generator/adaptation.ts
+@@ -1,8 +1,14 @@
+ import { assertNever } from "../shared/assert-never"
++import {
++  hasValidCandidateIdentity,
++  pairIdHasBase,
++  projectPlanCandidate,
++} from "./candidate-identity"
++import { isSupportOnlyCandidatePair } from "./support-only-candidate-pair"
+ import { RVE_NON_SENSITIVE_REASON_CODES } from "../rve/signal"
+ import { isRecord } from "./input-values"
+ import type { SafetyGateDecision } from "../safety-gate/gate"
+-import type { PlanCandidate, PlanSelectionAuthority, PlanSession } from "./types"
++import type { DetailedTemplateRef, PlanCandidate, PlanSelectionAuthority, PlanSession } from "./types"
+ 
+ export const ADAPTATION_DIMENSIONS = ["INTENSITY", "VOLUME", "FREQUENCY"] as const
+ export type AdaptationDimension = (typeof ADAPTATION_DIMENSIONS)[number]
+@@ -15,7 +21,12 @@ export type AdaptationTrigger =
+ 
+ export type PlanAdaptationProposalRequest = {
+   readonly kind: "PLAN_ADAPTATION_PROPOSAL_REQUEST"
+-  readonly scope: { readonly athleteId: string; readonly eventDistanceM: SupportedAdaptationEvent }
++  readonly scope: {
++    readonly athleteId: string
++    readonly eventDistanceM: SupportedAdaptationEvent
++    readonly pairId: string
++    readonly selectedDetailedTemplateRef: DetailedTemplateRef | null
++  }
+   readonly activePlanStartedAt: string
+   readonly baseCandidate: PlanCandidate
+   readonly proposedCandidate: PlanCandidate
+@@ -37,6 +48,8 @@ export type PlanAdaptationProposal = {
+   readonly targetFrame: "NEXT_FRAME"
+   readonly athleteId: string
+   readonly eventDistanceM: SupportedAdaptationEvent
++  readonly pairId: string
++  readonly selectedDetailedTemplateRef: DetailedTemplateRef | null
+   readonly proposalOrigin: AdaptationProposalOrigin
+   readonly selectionAuthority: PlanSelectionAuthority
+   readonly trigger: AdaptationTrigger["kind"]
+@@ -58,7 +71,7 @@ export type PlanAdaptationProposalResult =
+   | { readonly kind: "rejected"; readonly code: "MALFORMED_INPUT" | "UNSUPPORTED_EVENT" | "CROSS_SCOPE_PROVENANCE" | "INELIGIBLE_TRIGGER" | "STALE_BASE" | "NO_OP" | "MULTIPLE_DIMENSIONS" | "DIMENSION_MISMATCH" | "UNAPPROVED_TRANSFORM" }
+ 
+ const REQUEST_KEYS = ["kind", "scope", "activePlanStartedAt", "baseCandidate", "proposedCandidate", "baseContentHash", "proposalOrigin", "trigger", "changeDimension", "safetyGate", "safetyEvaluatedAt", "safetyValidUntil", "activeHold", "createdAt", "idempotencyKey"] as const
+-const CANDIDATE_KEYS = ["candidateId", "kind", "eventGroup", "eventDistanceM", "selectedEnergyIntent", "sourceMode", "confidence", "beta", "detailedPrescriptionFingerprint", "continuityContext", "selectionAuthority", "frame", "mainExposureLedger", "rationaleCodes", "sessions"] as const
++const CANDIDATE_KEYS = ["candidateId", "pairId", "kind", "eventGroup", "eventDistanceM", "selectedDetailedTemplateRef", "selectedEnergyIntent", "sourceMode", "confidence", "beta", "detailedPrescriptionFingerprint", "continuityContext", "selectionAuthority", "frame", "mainExposureLedger", "rationaleCodes", "sessions"] as const
+ const PRIVATE_KEY = /(?:memo|note|symptom)/iu
+ const SHA256_PATTERN = /^sha256:[a-f0-9]{64}$/u
+ const ISO_DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/u
+@@ -68,7 +81,7 @@ const CURRENT_ELAPSED_LABELS = new Set(
+ const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/iu
+ const LOCAL_RECORD_ID_PATTERN = /^local-\d+-[a-z0-9]+$/u
+ const EXPOSURE_ID_PATTERN = /^(?:app-main-day-(?:[1-9]|10)|fixture-main-[1-3])$/u
+-const CANDIDATE_ID_PATTERN = /^beta:(?:balanced|conservative):(?:middle_distance|five_k):event-(?:800|1500|3000|5000):(?:new_to_running|developing|experienced):(?:recovery_intent|base_intent|lt_intent|vo2_intent|gly_intent|atp_pc_intent|mixed_intent):(?:single_session_only|recovery_pm_allowed):(?:morning|evening|varies):projection-(?:7|9|9\.5|10):local-civil-9-5:[a-z0-9-]+:\d+(?:-\d+)*:(?:no_usable_journal|recent_journal_context):(?:no-continuity|(?:balanced|conservative):(?:completed|rested|skipped|pain_checkin)-\d+(?:-(?:completed|rested|skipped|pain_checkin)-\d+)*)$/u
++const CANDIDATE_ID_PATTERN = /^beta:(?:balanced|conservative):(?:middle_distance|five_k):event-(?:800|1500|3000|5000):(?:new_to_running|developing|experienced):(?:recovery_intent|base_intent|lt_intent|vo2_intent|gly_intent|atp_pc_intent|mixed_intent):(?:single_session_only|recovery_pm_allowed):(?:morning|evening|varies):projection-(?:7|9|9\.5|10):local-civil-9-5:[a-z0-9-]+:\d+(?:-\d+)*:(?:no_usable_journal|recent_journal_context):(?:no-continuity|(?:balanced|conservative):(?:completed|rested|skipped|pain_checkin)-\d+(?:-(?:completed|rested|skipped|pain_checkin)-\d+)*):template-(?:rpe-only|[a-z0-9-]+\.\d+\.\d+\.\d+\.[a-f0-9]{64}):candidate-sha256-[a-f0-9]{64}$/u
+ const PLAN_BETA_CODES = new Set([
+   "PROFILE_ONLY_LIMITED_CONTEXT", "RECENT_JOURNAL_CONTEXT_PRESENT", "BETA_DURATION_RPE_ONLY",
+   "PACE_TARGET_BOUND", "BETA_NON_UNIVERSAL_FORMATION_SCOPE", "PREVIOUS_FRAME_CONTEXT_RETAINED",
+@@ -134,7 +147,7 @@ export function hashPlanCandidate(candidate: PlanCandidate): Promise<string> {
+ export async function verifyPlanAdaptationProposal(proposal: unknown): Promise<boolean> {
+   try {
+   if (!isCanonicalJsonTree(proposal)) return false
+-  if (!isRecord(proposal) || !hasExactKeys(proposal, ["proposalId", "proposalHash", "targetFrame", "athleteId", "eventDistanceM", "proposalOrigin", "selectionAuthority", "trigger", "changeDimension", "baseCandidateId", "baseContentHash", "proposedContentHash", "approvedBeforeValueRef", "approvedAfterValueRef", "baseCandidate", "successorCandidate", "createdAt", "idempotencyKey"])) return false
++  if (!isRecord(proposal) || !hasExactKeys(proposal, ["proposalId", "proposalHash", "targetFrame", "athleteId", "eventDistanceM", "pairId", "selectedDetailedTemplateRef", "proposalOrigin", "selectionAuthority", "trigger", "changeDimension", "baseCandidateId", "baseContentHash", "proposedContentHash", "approvedBeforeValueRef", "approvedAfterValueRef", "baseCandidate", "successorCandidate", "createdAt", "idempotencyKey"])) return false
+   const baseCandidate = parsePlanCandidate(proposal["baseCandidate"])
+   const successorCandidate = parsePlanCandidate(proposal["successorCandidate"])
+   if (baseCandidate === null || successorCandidate === null) return false
+@@ -149,6 +162,10 @@ export async function verifyPlanAdaptationProposal(proposal: unknown): Promise<b
+     && proposal["baseCandidateId"] === baseCandidate.candidateId
+     && proposal["baseContentHash"] === baseHash && proposal["proposedContentHash"] === proposedHash
+     && proposal["approvedBeforeValueRef"] === baseHash && proposal["approvedAfterValueRef"] === proposedHash
++    && proposal["pairId"] === baseCandidate.pairId
++    && proposal["pairId"] === successorCandidate.pairId
++    && canonicalJson(proposal["selectedDetailedTemplateRef"]) === canonicalJson(baseCandidate.selectedDetailedTemplateRef)
++    && canonicalJson(proposal["selectedDetailedTemplateRef"]) === canonicalJson(successorCandidate.selectedDetailedTemplateRef)
+     && candidateEligibleForExactEvent(proposal["eventDistanceM"], baseCandidate)
+     && candidateEligibleForExactEvent(proposal["eventDistanceM"], successorCandidate)
+     && validateApprovedAdaptationTransform(baseCandidate, successorCandidate, proposal["changeDimension"]).kind === "approved"
+@@ -176,6 +193,10 @@ async function createPlanAdaptationProposalUnchecked(candidate: unknown): Promis
+   if (candidateEventDistanceM === null
+       || candidateEventDistanceM !== request.proposedCandidate.eventDistanceM
+       || candidateEventDistanceM !== request.scope.eventDistanceM
++      || request.baseCandidate.pairId !== request.proposedCandidate.pairId
++      || request.baseCandidate.pairId !== request.scope.pairId
++      || canonicalJson(request.baseCandidate.selectedDetailedTemplateRef) !== canonicalJson(request.scope.selectedDetailedTemplateRef)
++      || canonicalJson(request.proposedCandidate.selectedDetailedTemplateRef) !== canonicalJson(request.scope.selectedDetailedTemplateRef)
+       || !candidateEligibleForExactEvent(candidateEventDistanceM, request.baseCandidate)
+       || !candidateEligibleForExactEvent(request.scope.eventDistanceM, request.proposedCandidate)) return { kind: "rejected", code: "CROSS_SCOPE_PROVENANCE" }
+   if (!triggerAllowed(request)) return { kind: "rejected", code: "INELIGIBLE_TRIGGER" }
+@@ -193,6 +214,7 @@ async function createPlanAdaptationProposalUnchecked(candidate: unknown): Promis
+   const proposedContentHash = await hashPlanCandidate(request.proposedCandidate)
+   const content = {
+     targetFrame: "NEXT_FRAME" as const, athleteId: request.scope.athleteId, eventDistanceM: candidateEventDistanceM,
++    pairId: request.scope.pairId, selectedDetailedTemplateRef: request.scope.selectedDetailedTemplateRef,
+     proposalOrigin: request.proposalOrigin, selectionAuthority: authorityFor(request.proposalOrigin), trigger: request.trigger.kind,
+     changeDimension: request.changeDimension, baseCandidateId: request.baseCandidate.candidateId, baseContentHash, proposedContentHash,
+     approvedBeforeValueRef: baseContentHash, approvedAfterValueRef: proposedContentHash, baseCandidate: request.baseCandidate,
+@@ -207,13 +229,16 @@ function parseAdaptationRequest(value: unknown): PlanAdaptationProposalRequest |
+   const scope = value["scope"]
+   const trigger = parseTrigger(value["trigger"])
+   const safetyGate = parseStrictSafetyGate(value["safetyGate"])
+-  if (!isRecord(scope) || !hasExactKeys(scope, ["athleteId", "eventDistanceM"]) || !isAthleteId(scope["athleteId"])) return null
++  if (!isRecord(scope) || !hasExactKeys(scope, ["athleteId", "eventDistanceM", "pairId", "selectedDetailedTemplateRef"]) || !isAthleteId(scope["athleteId"])) return null
+   const eventDistanceM = parseSupportedEvent(scope["eventDistanceM"])
+   const baseCandidate = parsePlanCandidate(value["baseCandidate"])
+   const proposedCandidate = parsePlanCandidate(value["proposedCandidate"])
+   const proposalOrigin = value["proposalOrigin"]
+   const changeDimension = value["changeDimension"]
++  const selectedDetailedTemplateRef = scope["selectedDetailedTemplateRef"]
+   if (eventDistanceM === null || baseCandidate === null || proposedCandidate === null || trigger === null || safetyGate === null
++      || typeof scope["pairId"] !== "string" || !scope["pairId"].startsWith("plan-pair:v3:")
++      || !isDetailedTemplateRef(selectedDetailedTemplateRef)
+       || (proposalOrigin !== "SELF_SERVICE" && proposalOrigin !== "COACH_AUTHORED")
+       || (changeDimension !== "INTENSITY" && changeDimension !== "VOLUME" && changeDimension !== "FREQUENCY")
+       || typeof value["baseContentHash"] !== "string" || !SHA256_PATTERN.test(value["baseContentHash"])
+@@ -224,7 +249,7 @@ function parseAdaptationRequest(value: unknown): PlanAdaptationProposalRequest |
+   const createdAt = value["createdAt"]
+   if (!isIsoTimestamp(activePlanStartedAt) || !isIsoTimestamp(safetyEvaluatedAt) || !isIsoTimestamp(safetyValidUntil) || !isIsoTimestamp(createdAt)) return null
+   if (!candidateAnchorLabelsMatch(baseCandidate, createdAt) || !candidateAnchorLabelsMatch(proposedCandidate, createdAt)) return null
+-  return { kind: "PLAN_ADAPTATION_PROPOSAL_REQUEST", scope: { athleteId: scope["athleteId"], eventDistanceM }, activePlanStartedAt, baseCandidate, proposedCandidate, baseContentHash: value["baseContentHash"], proposalOrigin, trigger, changeDimension, safetyGate, safetyEvaluatedAt, safetyValidUntil, activeHold: value["activeHold"], createdAt, idempotencyKey: value["idempotencyKey"] }
++  return { kind: "PLAN_ADAPTATION_PROPOSAL_REQUEST", scope: { athleteId: scope["athleteId"], eventDistanceM, pairId: scope["pairId"], selectedDetailedTemplateRef }, activePlanStartedAt, baseCandidate, proposedCandidate, baseContentHash: value["baseContentHash"], proposalOrigin, trigger, changeDimension, safetyGate, safetyEvaluatedAt, safetyValidUntil, activeHold: value["activeHold"], createdAt, idempotencyKey: value["idempotencyKey"] }
+ }
+ 
+ function parseTrigger(value: unknown): AdaptationTrigger | null {
+@@ -279,16 +304,24 @@ function parsePlanCandidate(value: unknown): PlanCandidate | null {
+   return value
+ }
+ 
++export function isVerifiedPlanCandidate(value: unknown): value is PlanCandidate {
++  return isCanonicalJsonTree(value) && isPlanCandidate(value)
++}
++
+ function isPlanCandidate(value: unknown): value is PlanCandidate {
++  const continuityContext = isRecord(value) ? value["continuityContext"] : undefined
++  const selectedEnergyIntent = isRecord(value) ? value["selectedEnergyIntent"] : undefined
+   if (!isRecord(value) || !hasExactKeys(value, CANDIDATE_KEYS) || !Array.isArray(value["sessions"])
+       || !isDenseArray(value["sessions"]) || !value["sessions"].every(isPlanSession)
+       || (value["kind"] !== "BALANCED" && value["kind"] !== "CONSERVATIVE")
+       || (value["eventGroup"] !== "MIDDLE_DISTANCE" && value["eventGroup"] !== "FIVE_K")
+-      || !(value["eventDistanceM"] === null || parseSupportedEvent(value["eventDistanceM"]) !== null)
+-      || !isPlannedEnergyIntent(value["selectedEnergyIntent"])
++      || parseSupportedEvent(value["eventDistanceM"]) === null
++      || typeof value["pairId"] !== "string" || !value["pairId"].startsWith("plan-pair:v3:")
++      || !isDetailedTemplateRef(value["selectedDetailedTemplateRef"])
++      || !isPlannedEnergyIntent(selectedEnergyIntent)
+       || (value["sourceMode"] !== "PROFILE_ONLY" && value["sourceMode"] !== "JOURNAL_CONTEXT_ONLY")
+       || value["confidence"] !== "LIMITED" || !isCandidateBeta(value["beta"])
+-      || !isContinuityContext(value["continuityContext"])
++      || !isContinuityContext(continuityContext)
+       || (value["selectionAuthority"] !== "SELF" && value["selectionAuthority"] !== "COACH_REQUIRED")
+       || !isCandidateFrame(value["frame"]) || !isExposureLedger(value["mainExposureLedger"])
+       || !Array.isArray(value["rationaleCodes"]) || !isDenseArray(value["rationaleCodes"])
+@@ -313,10 +346,42 @@ function isPlanCandidate(value: unknown): value is PlanCandidate {
+   const ledger = value["mainExposureLedger"]
+   if (!isExposureLedger(ledger)) return false
+   const exposureIdentity = `:${ledger.countedExposureIds.join("-")}:`
++  const reference = value["selectedDetailedTemplateRef"]
++  const templateIdentity = reference === null
++    ? "rpe-only"
++    : `${reference.templateId.toLowerCase()}.${reference.version}.${reference.fingerprint.slice("sha256:".length)}`
++  const baseCandidateId = value["candidateId"].split(":pace-target:")[0]
++  const candidateSegments = baseCandidateId?.split(":") ?? []
++  const expectedContinuityIdentity = continuityContext.kind === "NO_PREVIOUS_FRAME_CONTEXT"
++    ? "no-continuity"
++    : [
++        continuityContext.previousCandidateKind.toLowerCase(),
++        ...continuityContext.progressStateCounts.flatMap((entry) => [entry.state.toLowerCase(), String(entry.count)]),
++      ].join("-")
++  const expectedPairId = [
++    "plan-pair", "v3", value["eventDistanceM"], templateIdentity,
++    selectedEnergyIntent.toLowerCase(), candidateSegments[10], candidateSegments[11],
++    expectedContinuityIdentity,
++  ].join(":")
+   return value["candidateId"].includes(eventIdentity)
+     && value["candidateId"].includes(exposureIdentity)
++    && value["candidateId"].includes(`:template-${templateIdentity}`)
++    && pairIdHasBase(value["pairId"], expectedPairId)
++    && hasValidCandidateIdentity(value["candidateId"], projectPlanCandidate(value as PlanCandidate))
+     && value["sessions"].every((session) => session.prescription.kind !== "PACE_TARGET"
+-    || session.prescription.scope.eventGroup === value["eventGroup"])
++    || (session.prescription.scope.eventGroup === value["eventGroup"]
++      && reference !== null
++      && session.prescription.templateId === reference.templateId
++      && session.prescription.templateVersion === reference.version
++      && session.prescription.templateContentFingerprint === reference.fingerprint))
++}
++
++function isDetailedTemplateRef(value: unknown): value is DetailedTemplateRef | null {
++  return value === null || (isRecord(value)
++    && hasExactKeys(value, ["templateId", "version", "fingerprint"])
++    && typeof value["templateId"] === "string" && /^[A-Z0-9]+(?:-[A-Z0-9]+)*$/u.test(value["templateId"])
++    && typeof value["version"] === "string" && /^\d+\.\d+\.\d+$/u.test(value["version"])
++    && typeof value["fingerprint"] === "string" && SHA256_PATTERN.test(value["fingerprint"]))
+ }
+ 
+ function isPlanSession(value: unknown): value is PlanSession {
+@@ -346,7 +411,7 @@ function isCandidateBeta(value: unknown): boolean {
+     && value["formationMethodClaim"] === "NOT_UNIVERSAL"
+ }
+ 
+-function isContinuityContext(value: unknown): boolean {
++function isContinuityContext(value: unknown): value is PlanCandidate["continuityContext"] {
+   if (!isRecord(value)) return false
+   if (value["kind"] === "NO_PREVIOUS_FRAME_CONTEXT") return hasExactKeys(value, ["kind"])
+   return value["kind"] === "PREVIOUS_FRAME_CONTEXT_RETAINED"
+@@ -660,7 +725,7 @@ function isStopCode(value: unknown): boolean {
+ 
+ function isPositiveInteger(value: unknown): value is number { return typeof value === "number" && Number.isInteger(value) && value > 0 }
+ function isPositiveNumber(value: unknown): value is number { return typeof value === "number" && Number.isFinite(value) && value > 0 }
+-function isPlannedEnergyIntent(value: unknown): boolean { return value === "RECOVERY_INTENT" || value === "BASE_INTENT" || isQualityEnergyIntent(value) }
++function isPlannedEnergyIntent(value: unknown): value is PlanCandidate["selectedEnergyIntent"] { return value === "RECOVERY_INTENT" || value === "BASE_INTENT" || isQualityEnergyIntent(value) }
+ function isQualityEnergyIntent(value: unknown): boolean { return value === "LT_INTENT" || value === "VO2_INTENT" || value === "GLY_INTENT" || value === "ATP_PC_INTENT" || value === "MIXED_INTENT" }
+ 
+ function changedDimensions(base: PlanCandidate, next: PlanCandidate): AdaptationDimension[] {
+@@ -696,15 +761,7 @@ export function validateApprovedAdaptationTransform(
+ }
+ 
+ function isApprovedConservativeVolumeTransform(base: PlanCandidate, next: PlanCandidate): boolean {
+-  if (base.kind !== "BALANCED" || next.kind !== "CONSERVATIVE" || next.candidateId !== base.candidateId.replace("beta:balanced:", "beta:conservative:") || base.sessions.length !== next.sessions.length) return false
+-  const stable = (plan: PlanCandidate) => ({ eventGroup: plan.eventGroup, eventDistanceM: plan.eventDistanceM, selectedEnergyIntent: plan.selectedEnergyIntent, sourceMode: plan.sourceMode, confidence: plan.confidence, beta: plan.beta, detailedPrescriptionFingerprint: plan.detailedPrescriptionFingerprint, continuityContext: plan.continuityContext, selectionAuthority: plan.selectionAuthority, frame: plan.frame, mainExposureLedger: plan.mainExposureLedger, rationaleCodes: plan.rationaleCodes })
+-  if (canonicalJson(stable(base)) !== canonicalJson(stable(next))) return false
+-  return base.sessions.every((session, index) => {
+-    const successor = next.sessions[index]
+-    if (successor === undefined || session.day !== successor.day || session.slot !== successor.slot || session.role !== successor.role || session.plannedEnergyIntent !== successor.plannedEnergyIntent || session.prescription.kind !== successor.prescription.kind) return false
+-    if (session.prescription.kind !== "RPE_TIME_RANGE" || successor.prescription.kind !== "RPE_TIME_RANGE") return canonicalJson(session.prescription) === canonicalJson(successor.prescription)
+-    return canonicalJson(session.prescription.rpe) === canonicalJson(successor.prescription.rpe) && successor.prescription.durationMinutes.minimum === session.prescription.durationMinutes.minimum && (successor.prescription.durationMinutes.maximum === session.prescription.durationMinutes.minimum || successor.prescription.durationMinutes.maximum === session.prescription.durationMinutes.maximum)
+-  })
++  return isSupportOnlyCandidatePair(base, next)
+ }
+ 
+ function triggerAllowed(request: PlanAdaptationProposalRequest): boolean {
+diff --git a/impl/src/plan-generator/candidates.ts b/impl/src/plan-generator/candidates.ts
+index 2a33e99..44d8a84 100644
+--- a/impl/src/plan-generator/candidates.ts
++++ b/impl/src/plan-generator/candidates.ts
+@@ -1,10 +1,12 @@
+ import { assertNever } from "../shared/assert-never"
++import { rebindCandidatePairIdentity } from "./candidate-identity"
+ import { makeCandidateSessions } from "./session-builder"
+ import type {
+   CanonicalPlanGenerationRequest,
+   PlanBetaCode,
+   PlanCandidate,
+   PlanCandidateKind,
++  SupportedPlanEventDistanceM,
+ } from "./types"
+ import type { CompiledExposureLedger } from "./exposure-ledger"
+ import type { PaceTargetPlanPrescription } from "./session-types"
+@@ -77,6 +79,26 @@ function candidateId(input: CandidateBuildInput): string {
+     input.request.profile.availableTrainingDays.join("-"),
+     input.request.journalSource.kind.toLowerCase(),
+     continuityIdentity(input.request),
++    `template-${templateIdentity(input.request)}`,
++  ].join(":")
++}
++
++function templateIdentity(request: CanonicalPlanGenerationRequest): string {
++  const reference = request.selectedDetailedTemplateRef
++  return reference === null
++    ? "rpe-only"
++    : `${reference.templateId.toLowerCase()}.${reference.version}.${reference.fingerprint.slice("sha256:".length)}`
++}
++
++export function planPairId(
++  request: CanonicalPlanGenerationRequest,
++  ledger: SelectableExposureLedger,
++): string {
++  return [
++    "plan-pair", "v3", request.profile.eventDistanceM,
++    templateIdentity(request), request.selectedEnergyIntent.toLowerCase(),
++    ledger.countedExposureIds.join("-"), request.profile.availableTrainingDays.join("-"),
++    continuityIdentity(request),
+   ].join(":")
+ }
+ 
+@@ -106,11 +128,14 @@ function continuityContextFor(request: CanonicalPlanGenerationRequest): PlanCand
+ }
+ 
+ function buildCandidate(input: CandidateBuildInput): PlanCandidate {
++  const pairId = planPairId(input.request, input.ledger)
+   return Object.freeze({
+     candidateId: candidateId(input),
++    pairId,
+     kind: input.kind,
+     eventGroup: input.request.profile.eventGroup,
+     eventDistanceM: candidateEventDistance(input.request),
++    selectedDetailedTemplateRef: input.request.selectedDetailedTemplateRef,
+     selectedEnergyIntent: input.request.selectedEnergyIntent,
+     sourceMode:
+       input.request.journalSource.kind === "NO_USABLE_JOURNAL"
+@@ -140,7 +165,6 @@ function candidateEventDistance(
+   request: CanonicalPlanGenerationRequest,
+ ): PlanCandidate["eventDistanceM"] {
+   return request.profile.eventDistanceM
+-    ?? (request.profile.eventGroup === "FIVE_K" ? 5000 : null)
+ }
+ 
+ export function bindOneDetailedPrescriptionCandidate(
+@@ -155,6 +179,10 @@ export function bindOneDetailedPrescriptionCandidate(
+   if (eventDistanceM === null) return null
+   if (candidate.eventDistanceM !== null
+       && candidate.eventDistanceM !== eventDistanceM) return null
++  if (candidate.selectedDetailedTemplateRef === null
++      || candidate.selectedDetailedTemplateRef.templateId !== prescription.templateId
++      || candidate.selectedDetailedTemplateRef.version !== prescription.templateVersion
++      || candidate.selectedDetailedTemplateRef.fingerprint !== prescription.templateContentFingerprint) return null
+ 
+   const sessions = candidate.sessions.map((session, index) => {
+     if (index !== qualityIndex || session.role !== "QUALITY") return session
+@@ -183,7 +211,7 @@ export function bindOneDetailedPrescriptionCandidate(
+   })
+ }
+ 
+-function supportedEventDistance(value: number): PlanCandidate["eventDistanceM"] {
++function supportedEventDistance(value: number): SupportedPlanEventDistanceM | null {
+   return value === 800 || value === 1500 || value === 3000 || value === 5000
+     ? value
+     : null
+@@ -234,5 +262,5 @@ export function createDeterministicCandidates(
+     kind: "CONSERVATIVE",
+     qualityDays: balancedQualityDays(request),
+   })
+-  return Object.freeze([balanced, conservative])
++  return rebindCandidatePairIdentity([balanced, conservative])
+ }
+diff --git a/impl/src/plan-generator/generator.ts b/impl/src/plan-generator/generator.ts
+index af1af14..8a10fa0 100644
+--- a/impl/src/plan-generator/generator.ts
++++ b/impl/src/plan-generator/generator.ts
+@@ -57,19 +57,35 @@ function generatedResult(
+   request: CanonicalPlanGenerationRequest,
+   ledger: SelectableExposureLedger,
+ ): PlanGenerationResult {
++  const candidates = createDeterministicCandidates(request, ledger)
+   return {
+     kind: "generated",
++    pairId: candidates[0].pairId,
+     sourceMode: request.journalSource.kind === "NO_USABLE_JOURNAL"
+       ? "PROFILE_ONLY"
+       : "JOURNAL_CONTEXT_ONLY",
+     selectedEnergyIntent: request.selectedEnergyIntent,
+     confidence: "LIMITED",
+     selectionAuthority: request.selectionAuthority,
+-    candidates: createDeterministicCandidates(request, ledger),
++    candidates,
+     audit: audit("PLAN_BETA_GENERATED", ["BETA_DURATION_RPE_ONLY"]),
+   }
+ }
+ 
++function previewOnlyResult(request: CanonicalPlanGenerationRequest): PlanGenerationResult {
++  if (request.targetRaceDate === undefined) throw new TypeError("Race preview date is required")
++  return {
++    kind: "preview_only",
++    code: "RACE_DATE_PERSISTENCE_NOT_AUTHORIZED",
++    preview: Object.freeze({
++      eventDistanceM: request.profile.eventDistanceM,
++      targetRaceDate: request.targetRaceDate,
++    }),
++    candidates: noCandidates(),
++    audit: audit("PLAN_BETA_REJECTED", []),
++  }
++}
++
+ function hasSelectableMainExposureCount(
+   ledger: Extract<ReturnType<typeof compileExposureLedger>, { readonly kind: "valid" }>,
+ ): ledger is SelectableExposureLedger {
+@@ -129,6 +145,9 @@ export function generatePlanCandidates(input: unknown): PlanGenerationResult {
+     case "parsed":
+       switch (parsed.request.safetyGate.kind) {
+         case "passed": {
++          if (parsed.request.targetRaceDate !== undefined) {
++            return previewOnlyResult(parsed.request)
++          }
+           const ledger = compileExposureLedger(parsed.request.formation)
+           if (ledger.kind === "needs_review") {
+             return reviewResult(parsed.request, ledger.reasonCodes)
+diff --git a/impl/src/plan-generator/input-values.ts b/impl/src/plan-generator/input-values.ts
+index 0c02498..f3f29c4 100644
+--- a/impl/src/plan-generator/input-values.ts
++++ b/impl/src/plan-generator/input-values.ts
+@@ -206,20 +206,25 @@ export function parseProfile(value: unknown): PlanProfile | undefined {
+   if (!isRecord(value)) {
+     return undefined
+   }
++  const allowedKeys = new Set([
++    "eventGroup", "eventDistanceM", "experienceBand", "availableTrainingDays",
++    "secondSessionMode", "trainingTimePreference",
++  ])
++  if (!Reflect.ownKeys(value).every((key) => typeof key === "string" && allowedKeys.has(key))) {
++    return undefined
++  }
+ 
+   const eventGroup = parseEventGroup(value["eventGroup"])
+   const rawEventDistanceM = value["eventDistanceM"]
+-  const eventDistanceM = rawEventDistanceM === undefined
+-    ? undefined
+-    : parseSupportedEventDistance(rawEventDistanceM)
++  const eventDistanceM = parseSupportedEventDistance(rawEventDistanceM)
+   const experienceBand = parseExperienceBand(value["experienceBand"])
+   const availableTrainingDays = parseTrainingDays(value["availableTrainingDays"])
+   const secondSessionMode = parseSecondSessionMode(value["secondSessionMode"])
+   const trainingTimePreference = parseTrainingTimePreference(value["trainingTimePreference"])
+   if (
+     eventGroup === undefined ||
+-    (rawEventDistanceM !== undefined && eventDistanceM === undefined) ||
+-    (eventDistanceM !== undefined && !eventDistanceMatchesGroup(eventDistanceM, eventGroup)) ||
++    eventDistanceM === undefined ||
++    !eventDistanceMatchesGroup(eventDistanceM, eventGroup) ||
+     experienceBand === undefined ||
+     availableTrainingDays === undefined ||
+     secondSessionMode === undefined ||
+@@ -230,7 +235,7 @@ export function parseProfile(value: unknown): PlanProfile | undefined {
+ 
+   return {
+     eventGroup,
+-    ...(eventDistanceM === undefined ? {} : { eventDistanceM }),
++    eventDistanceM,
+     experienceBand,
+     availableTrainingDays,
+     secondSessionMode,
+diff --git a/impl/src/plan-generator/parser.ts b/impl/src/plan-generator/parser.ts
+index c3d9c9b..7ea613d 100644
+--- a/impl/src/plan-generator/parser.ts
++++ b/impl/src/plan-generator/parser.ts
+@@ -11,11 +11,16 @@ import { parseContinuityInput } from "./continuity"
+ import { parseFormation } from "./formation-parser"
+ import type {
+   CanonicalPlanGenerationRequest,
++  DetailedTemplateRef,
+   PlanGenerationRequest,
+   PlanProfile,
+   PlanReviewReasonCode,
+ } from "./types"
+ 
++const TEMPLATE_ID_PATTERN = /^[A-Z0-9]+(?:-[A-Z0-9]+)*$/u
++const VERSION_PATTERN = /^\d+\.\d+\.\d+$/u
++const FINGERPRINT_PATTERN = /^sha256:[a-f0-9]{64}$/u
++
+ type ParseRejectionCode =
+   | "MALFORMED_INPUT"
+   | "UNSUPPORTED_FRAME_LENGTH"
+@@ -92,10 +97,46 @@ function parseProjectionLength(value: unknown): 7 | 9 | 9.5 | 10 | undefined {
+   }
+ }
+ 
++function parseDetailedTemplateRef(value: unknown): DetailedTemplateRef | null | undefined {
++  if (value === undefined || value === null) return null
++  if (!isRecord(value) || !hasOnlyKeys(value, ["templateId", "version", "fingerprint"])) return undefined
++  const templateId = value["templateId"]
++  const version = value["version"]
++  const fingerprint = value["fingerprint"]
++  return typeof templateId === "string" && TEMPLATE_ID_PATTERN.test(templateId)
++    && typeof version === "string" && VERSION_PATTERN.test(version)
++    && typeof fingerprint === "string" && FINGERPRINT_PATTERN.test(fingerprint)
++    ? { templateId, version, fingerprint }
++    : undefined
++}
++
++function localCivilDate(date: Date): string {
++  const padded = (part: number) => String(part).padStart(2, "0")
++  return `${date.getFullYear()}-${padded(date.getMonth() + 1)}-${padded(date.getDate())}`
++}
++
++function parseTargetRaceDate(value: unknown): string | undefined | null {
++  if (value === undefined) return undefined
++  if (typeof value !== "string" || !/^\d{4}-\d{2}-\d{2}$/u.test(value)) return null
++  const parsed = new Date(`${value}T00:00:00.000Z`)
++  if (!Number.isFinite(parsed.getTime()) || parsed.toISOString().slice(0, 10) !== value) return null
++  return value > localCivilDate(new Date()) ? value : null
++}
++
++function hasOnlyKeys(value: Record<string, unknown>, allowed: readonly string[]): boolean {
++  const allowedKeys = new Set(allowed)
++  return Reflect.ownKeys(value).every((key) => typeof key === "string" && allowedKeys.has(key))
++}
++
+ export function parsePlanGenerationRequest(input: unknown): ParsedPlanRequest {
+   if (!isRecord(input) || input["kind"] !== "PLAN_BETA_GENERATION_REQUEST") {
+     return reject("MALFORMED_INPUT")
+   }
++  if (!hasOnlyKeys(input, [
++    "kind", "safetyGate", "profile", "requestedFrameLength", "selectedEnergyIntent",
++    "selectedDetailedTemplateRef", "targetRaceDate", "journalSource", "selectionAuthority",
++    "continuity", "formation",
++  ])) return reject("MALFORMED_INPUT")
+ 
+   const safetyGate = parseSafetyGate(input["safetyGate"])
+   const profile = parseProfile(input["profile"])
+@@ -103,6 +144,8 @@ export function parsePlanGenerationRequest(input: unknown): ParsedPlanRequest {
+   const selectionAuthority = parseSelectionAuthority(input["selectionAuthority"])
+   const selectedEnergyIntent = parsePlannedEnergyIntent(input["selectedEnergyIntent"])
+   const continuity = parseContinuityInput(input["continuity"])
++  const selectedDetailedTemplateRef = parseDetailedTemplateRef(input["selectedDetailedTemplateRef"])
++  const targetRaceDate = parseTargetRaceDate(input["targetRaceDate"])
+   if (journal.kind === "invalid") {
+     return reject("INVALID_JOURNAL_CONTEXT")
+   }
+@@ -113,7 +156,9 @@ export function parsePlanGenerationRequest(input: unknown): ParsedPlanRequest {
+     safetyGate === undefined ||
+     profile === undefined ||
+     selectionAuthority === undefined ||
+-    selectedEnergyIntent === undefined
++    selectedEnergyIntent === undefined ||
++    selectedDetailedTemplateRef === undefined ||
++    targetRaceDate === null
+   ) {
+     return reject("MALFORMED_INPUT")
+   }
+@@ -153,6 +198,8 @@ export function parsePlanGenerationRequest(input: unknown): ParsedPlanRequest {
+     journalSource: journal.journalSource,
+     selectionAuthority,
+     selectedEnergyIntent,
++    selectedDetailedTemplateRef,
++    ...(targetRaceDate === undefined ? {} : { targetRaceDate }),
+   }
+   switch (continuity.kind) {
+     case "absent":
+diff --git a/impl/src/plan-generator/selection-types.ts b/impl/src/plan-generator/selection-types.ts
+index 119b29e..88cb945 100644
+--- a/impl/src/plan-generator/selection-types.ts
++++ b/impl/src/plan-generator/selection-types.ts
+@@ -1,4 +1,5 @@
+ import type {
++  DetailedTemplateRef,
+   PlanBetaAudit,
+   PlanCandidateKind,
+   PlanProgressState,
+@@ -12,8 +13,10 @@ export type BetaActivePlanSnapshot = {
+   readonly kind: "BETA_ACTIVE_PLAN_SNAPSHOT"
+   readonly activationState: "SELECTED_BETA_SNAPSHOT"
+   readonly candidateId: string
++  readonly pairId: string
+   readonly candidateKind: PlanCandidateKind
+-  readonly eventDistanceM?: import("./types").SupportedPlanEventDistanceM | null
++  readonly eventDistanceM: import("./types").SupportedPlanEventDistanceM
++  readonly selectedDetailedTemplateRef: DetailedTemplateRef | null
+   readonly selectionActor: "SELF" | "COACH"
+   readonly sourceMode: PlanSourceMode
+   readonly selectedEnergyIntent: PlannedEnergyIntent
+diff --git a/impl/src/plan-generator/selection.ts b/impl/src/plan-generator/selection.ts
+index e5025c7..70881e3 100644
+--- a/impl/src/plan-generator/selection.ts
++++ b/impl/src/plan-generator/selection.ts
+@@ -1,5 +1,7 @@
+ import { assertNever } from "../shared/assert-never"
+ import { isRecord, parseSafetyGate } from "./input-values"
++import { isVerifiedPlanCandidate } from "./adaptation"
++import { isSupportOnlyCandidatePair } from "./support-only-candidate-pair"
+ import type {
+   BetaActivePlanSnapshot,
+   CanonicalPlanFrame,
+@@ -94,8 +96,10 @@ function createActiveSnapshot(
+     kind: "BETA_ACTIVE_PLAN_SNAPSHOT",
+     activationState: "SELECTED_BETA_SNAPSHOT",
+     candidateId: candidate.candidateId,
++    pairId: candidate.pairId,
+     candidateKind: candidate.kind,
+     eventDistanceM: candidate.eventDistanceM,
++    selectedDetailedTemplateRef: candidate.selectedDetailedTemplateRef,
+     selectionActor: actor,
+     sourceMode: candidate.sourceMode,
+     selectedEnergyIntent: candidate.selectedEnergyIntent,
+@@ -128,27 +132,22 @@ function rejectSelection(
+   }
+ }
+ 
+-function isPlanCandidate(value: unknown): value is PlanCandidate {
+-  return isRecord(value)
+-    && typeof value["candidateId"] === "string"
+-    && (value["kind"] === "BALANCED" || value["kind"] === "CONSERVATIVE")
+-    && (value["eventDistanceM"] === null || value["eventDistanceM"] === 800 || value["eventDistanceM"] === 1500 || value["eventDistanceM"] === 3000 || value["eventDistanceM"] === 5000)
+-    && typeof value["candidateId"] === "string"
+-    && value["candidateId"].includes(`:event-${value["eventDistanceM"] ?? "unbound"}:`)
+-    && isRecord(value["frame"])
+-    && isRecord(value["mainExposureLedger"])
+-    && Array.isArray(value["sessions"])
+-}
+-
+ function isGeneratedPlan(value: unknown): value is PlanGenerationSuccess {
+   if (!isRecord(value) || value["kind"] !== "generated") {
+     return false
+   }
+ 
+   const candidates = value["candidates"]
+-  return Array.isArray(candidates)
++  const pairId = value["pairId"]
++  return typeof pairId === "string"
++    && /^plan-pair:v3:/u.test(pairId)
++    && Array.isArray(candidates)
+     && candidates.length === 2
+-    && candidates.every(isPlanCandidate)
++    && candidates.every(isVerifiedPlanCandidate)
++    && candidates.every((candidate) => candidate.pairId === pairId)
++    && candidates[0]?.kind === "BALANCED"
++    && candidates[1]?.kind === "CONSERVATIVE"
++    && candidates[0].candidateId !== candidates[1].candidateId
+ }
+ 
+ function hasCanonicalProjectionContinuity(frame: Record<string, unknown>): boolean {
+@@ -172,6 +171,36 @@ function hasCanonicalProjectionContinuity(frame: Record<string, unknown>): boole
+ function generatedPlanGuard(value: unknown):
+   | { readonly kind: "valid"; readonly generatedPlan: PlanGenerationSuccess }
+   | { readonly kind: "rejected"; readonly code: "NON_SELECTABLE_PLAN_RESULT" | "STALE_CANDIDATE_FINGERPRINT" | "NONCANONICAL_CANDIDATE_FRAME" } {
++  if (isRecord(value) && Array.isArray(value["candidates"])) {
++    for (const candidate of value["candidates"]) {
++      if (!isRecord(candidate) || !isRecord(candidate["frame"])) continue
++      const frame = candidate["frame"]
++      if (
++        frame["formationKind"] !== "LOCAL_CIVIL_9_5"
++        || frame["lengthDays"] !== 9.5
++        || frame["slotCount"] !== 19
++        || !hasCanonicalProjectionContinuity(frame)
++      ) {
++        return { kind: "rejected", code: "NONCANONICAL_CANDIDATE_FRAME" }
++      }
++    }
++  }
++  if (
++    isRecord(value)
++    && value["kind"] === "generated"
++    && typeof value["pairId"] === "string"
++    && /^plan-pair:v3:/u.test(value["pairId"])
++    && Array.isArray(value["candidates"])
++    && value["candidates"].length === 2
++    && value["candidates"].every((candidate) => (
++      isRecord(candidate)
++      && typeof candidate["candidateId"] === "string"
++      && typeof candidate["pairId"] === "string"
++    ))
++    && !value["candidates"].every(isVerifiedPlanCandidate)
++  ) {
++    return { kind: "rejected", code: "STALE_CANDIDATE_FINGERPRINT" }
++  }
+   if (!isGeneratedPlan(value)) {
+     return { kind: "rejected", code: "NON_SELECTABLE_PLAN_RESULT" }
+   }
+@@ -205,6 +234,10 @@ function generatedPlanGuard(value: unknown):
+     }
+   }
+ 
++  if (!isSupportOnlyCandidatePair(value.candidates[0], value.candidates[1])) {
++    return { kind: "rejected", code: "STALE_CANDIDATE_FINGERPRINT" }
++  }
++
+   return { kind: "valid", generatedPlan: value }
+ }
+ 
+diff --git a/impl/src/plan-generator/session-builder.ts b/impl/src/plan-generator/session-builder.ts
+index c4c9b32..690f8cb 100644
+--- a/impl/src/plan-generator/session-builder.ts
++++ b/impl/src/plan-generator/session-builder.ts
+@@ -226,7 +226,7 @@ export function makeCandidateSessions(input: CandidateSessionBuildInput): readon
+       }
+       sessions.push(qualityTrainingSession(
+         day,
+-        durationForCandidate(ranges.quality, input.kind),
++        ranges.quality,
+         qualityIntentFor(input.request),
+         qualitySlot,
+       ))
+diff --git a/impl/src/plan-generator/types.ts b/impl/src/plan-generator/types.ts
+index be50e83..aa8b177 100644
+--- a/impl/src/plan-generator/types.ts
++++ b/impl/src/plan-generator/types.ts
+@@ -77,6 +77,12 @@ export type PlanSelectionAuthority = "SELF" | "COACH_REQUIRED"
+ export type PlanCandidateKind = "BALANCED" | "CONSERVATIVE"
+ export type SupportedPlanEventDistanceM = 800 | 1500 | 3000 | 5000
+ 
++export type DetailedTemplateRef = {
++  readonly templateId: string
++  readonly version: string
++  readonly fingerprint: string
++}
++
+ export const SECOND_SESSION_MODES = [
+   "SINGLE_SESSION_ONLY",
+   "RECOVERY_PM_ALLOWED",
+@@ -148,9 +154,11 @@ export type PlanBetaAudit = {
+ 
+ export type PlanCandidate = {
+   readonly candidateId: string
++  readonly pairId: string
+   readonly kind: PlanCandidateKind
+   readonly eventGroup: PlanEventGroup
+-  readonly eventDistanceM: SupportedPlanEventDistanceM | null
++  readonly eventDistanceM: SupportedPlanEventDistanceM
++  readonly selectedDetailedTemplateRef: DetailedTemplateRef | null
+   readonly selectedEnergyIntent: PlannedEnergyIntent
+   readonly sourceMode: PlanSourceMode
+   readonly confidence: "LIMITED"
+@@ -182,7 +190,7 @@ export type PlanCandidate = {
+ 
+ export type PlanProfile = {
+   readonly eventGroup: PlanEventGroup
+-  readonly eventDistanceM?: SupportedPlanEventDistanceM
++  readonly eventDistanceM: SupportedPlanEventDistanceM
+   readonly experienceBand: ExperienceBand
+   readonly availableTrainingDays: readonly number[]
+   readonly secondSessionMode: SecondSessionMode
+@@ -204,18 +212,25 @@ export type PlanGenerationRequest = {
+   readonly profile: PlanProfile
+   readonly requestedFrameLength: 7 | 9 | 10
+   readonly selectedEnergyIntent: PlannedEnergyIntent
++  readonly selectedDetailedTemplateRef?: DetailedTemplateRef | null
++  readonly targetRaceDate?: string
+   readonly journalSource: JournalSource
+   readonly selectionAuthority: PlanSelectionAuthority
+   readonly continuity?: PlanContinuityInput
+ }
+ 
+-export type CanonicalPlanGenerationRequest = Omit<PlanGenerationRequest, "requestedFrameLength"> & {
++export type CanonicalPlanGenerationRequest = Omit<
++  PlanGenerationRequest,
++  "requestedFrameLength" | "selectedDetailedTemplateRef"
++> & {
+   readonly requestedFrameLength: 7 | 9 | 9.5 | 10
++  readonly selectedDetailedTemplateRef: DetailedTemplateRef | null
+   readonly formation: LocalCivilNinePointFiveFormation
+ }
+ 
+ export type PlanGenerationSuccess = {
+   readonly kind: "generated"
++  readonly pairId: string
+   readonly sourceMode: PlanSourceMode
+   readonly selectedEnergyIntent: PlannedEnergyIntent
+   readonly confidence: "LIMITED"
+@@ -236,6 +251,16 @@ export type PlanGenerationReviewResult = {
+ 
+ export type PlanGenerationResult =
+   | PlanGenerationSuccess
++  | {
++      readonly kind: "preview_only"
++      readonly code: "RACE_DATE_PERSISTENCE_NOT_AUTHORIZED"
++      readonly preview: {
++        readonly eventDistanceM: SupportedPlanEventDistanceM
++        readonly targetRaceDate: string
++      }
++      readonly candidates: readonly []
++      readonly audit: PlanBetaAudit
++    }
+   | PlanGenerationReviewResult
+   | {
+       readonly kind: "blocked"
+diff --git a/impl/test/main-exposure-ledger.contract.test.ts b/impl/test/main-exposure-ledger.contract.test.ts
+index 520c8a5..73fc057 100644
+--- a/impl/test/main-exposure-ledger.contract.test.ts
++++ b/impl/test/main-exposure-ledger.contract.test.ts
+@@ -34,6 +34,7 @@ function legacyQualityOnlyRequest(frameLength: 9 | 10): PlanGenerationRequest {
+     safetyGate: clearedGate(),
+     profile: {
+       eventGroup: "MIDDLE_DISTANCE",
++      eventDistanceM: 1500,
+       experienceBand: "DEVELOPING",
+       availableTrainingDays: [1, 3, 5, 7, 9],
+       secondSessionMode: "SINGLE_SESSION_ONLY",
+@@ -64,6 +65,7 @@ function canonicalNinePointFiveInput() {
+     safetyGate: clearedGate(),
+     profile: {
+       eventGroup: "MIDDLE_DISTANCE",
++      eventDistanceM: 1500,
+       experienceBand: "DEVELOPING",
+       availableTrainingDays: [1, 3, 5, 7, 9],
+       secondSessionMode: "SINGLE_SESSION_ONLY",
+diff --git a/impl/test/plan-adaptation.test.ts b/impl/test/plan-adaptation.test.ts
+index ba15cc5..7aae2dc 100644
+--- a/impl/test/plan-adaptation.test.ts
++++ b/impl/test/plan-adaptation.test.ts
+@@ -15,7 +15,12 @@ async function fixtureRequest() {
+   const [baseCandidate, proposedCandidate] = generated.candidates
+   return {
+     kind: "PLAN_ADAPTATION_PROPOSAL_REQUEST" as const,
+-    scope: { athleteId: "athlete-1", eventDistanceM: 1500 },
++    scope: {
++      athleteId: "athlete-1",
++      eventDistanceM: 1500,
++      pairId: baseCandidate.pairId,
++      selectedDetailedTemplateRef: baseCandidate.selectedDetailedTemplateRef,
++    },
+     activePlanStartedAt: "2026-08-01T00:00:00.000Z",
+     baseCandidate,
+     proposedCandidate,
+@@ -244,7 +249,7 @@ describe("next-frame plan adaptation", () => {
+         ...input.proposedCandidate,
+         selectedEnergyIntent: "VO2_INTENT",
+       },
+-    })).toEqual({ kind: "rejected", code: "MULTIPLE_DIMENSIONS" })
++    })).toEqual({ kind: "rejected", code: "MALFORMED_INPUT" })
+     const firstRpeIndex = input.proposedCandidate.sessions.findIndex(
+       (session) => session.prescription.kind === "RPE_TIME_RANGE",
+     )
+@@ -261,7 +266,7 @@ describe("next-frame plan adaptation", () => {
+     expect(await createPlanAdaptationProposal({
+       ...input,
+       proposedCandidate: { ...input.proposedCandidate, sessions: arbitrarySessions },
+-    })).toEqual({ kind: "rejected", code: "UNAPPROVED_TRANSFORM" })
++    })).toEqual({ kind: "rejected", code: "MALFORMED_INPUT" })
+   })
+ 
+   it("rejects malformed provenance and raw private keys", async () => {
+diff --git a/impl/test/plan-beta-generation.test.ts b/impl/test/plan-beta-generation.test.ts
+index f4b745f..a2d2870 100644
+--- a/impl/test/plan-beta-generation.test.ts
++++ b/impl/test/plan-beta-generation.test.ts
+@@ -75,7 +75,7 @@ describe("plan beta generation contract", () => {
+     }
+   })
+ 
+-  it.each(["MIDDLE_DISTANCE", "FIVE_K", "TEN_K", "GENERAL_ENDURANCE"])(
++  it.each(["MIDDLE_DISTANCE", "FIVE_K"])(
+     "keeps %s in an explicit non-universal beta scope",
+     (eventGroup) => {
+       // Given
+@@ -107,6 +107,20 @@ describe("plan beta generation contract", () => {
+     },
+   )
+ 
++  it.each(["TEN_K", "GENERAL_ENDURANCE"])(
++    "rejects unsupported %s requests without an exact target event",
++    (eventGroup) => {
++      const { eventDistanceM: _eventDistanceM, ...baseProfile } = baseRequest().profile
++
++      const result = generatePlanCandidates({
++        ...baseRequest(),
++        profile: { ...baseProfile, eventGroup },
++      })
++
++      expect(result).toMatchObject({ kind: "rejected", code: "MALFORMED_INPUT" })
++    },
++  )
++
+   it("returns identical candidate content and order for identical canonical input", () => {
+     // Given
+     const request = baseRequest()
+@@ -305,7 +319,7 @@ describe("plan beta generation contract", () => {
+     )
+   })
+ 
+-  it("does not invent pace or retain raw free text in plans or audits", () => {
++  it("rejects raw free text at the generation boundary", () => {
+     // Given
+     const rawMemo = "free text must never cross the plan boundary"
+     const request = {
+@@ -314,18 +328,11 @@ describe("plan beta generation contract", () => {
+     }
+ 
+     // When
+-    const result = expectGenerated(generatePlanCandidates(request))
++    const result = generatePlanCandidates(request)
+ 
+     // Then
++    expect(result).toMatchObject({ kind: "rejected", code: "MALFORMED_INPUT" })
+     expect(JSON.stringify(result)).not.toContain(rawMemo)
+-    expect(JSON.stringify(result)).not.toContain("pace")
+-    for (const candidate of result.candidates) {
+-      for (const session of candidate.sessions) {
+-        if (session.role !== "REST") {
+-          expect(session.prescription.kind).toBe("RPE_TIME_RANGE")
+-        }
+-      }
+-    }
+   })
+ 
+   it("returns a typed rejection for malformed or out-of-range input", () => {
+diff --git a/impl/test/plan-beta-selection.test.ts b/impl/test/plan-beta-selection.test.ts
+index 0cf2feb..111c614 100644
+--- a/impl/test/plan-beta-selection.test.ts
++++ b/impl/test/plan-beta-selection.test.ts
+@@ -44,6 +44,7 @@ function generatedCoachRequiredPlan() {
+     safetyGate: clearedGate(),
+     profile: {
+       eventGroup: "MIDDLE_DISTANCE",
++      eventDistanceM: 1500,
+       experienceBand: "DEVELOPING",
+       availableTrainingDays: [1, 3, 5, 7, 9],
+       secondSessionMode: "SINGLE_SESSION_ONLY",
+@@ -53,13 +54,13 @@ function generatedCoachRequiredPlan() {
+       slots,
+       exposures: [
+         {
+-          exposureId: "coach-main-one",
++          exposureId: "fixture-main-1",
+           classification: "TRAINING_MAIN",
+           localDayKey: localDays[2],
+           component: { kind: "STANDALONE" },
+         },
+         {
+-          exposureId: "coach-main-two",
++          exposureId: "fixture-main-2",
+           classification: "TRAINING_MAIN",
+           localDayKey: localDays[6],
+           component: { kind: "STANDALONE" },
+@@ -257,7 +258,10 @@ describe("plan beta selection and progress contract", () => {
+       kind: "BETA_ACTIVE_PLAN_SNAPSHOT",
+       activationState: "SELECTED_BETA_SNAPSHOT",
+       candidateId: "candidate-pm-quality",
++      pairId: "plan-pair:v3:1500:rpe-only:lt_intent:fixture-main-1-fixture-main-2:2:no-continuity",
+       candidateKind: "BALANCED",
++      eventDistanceM: 1500,
++      selectedDetailedTemplateRef: null,
+       selectionActor: "COACH",
+       sourceMode: "PROFILE_ONLY",
+       selectedEnergyIntent: "LT_INTENT",
+@@ -296,7 +300,10 @@ describe("plan beta selection and progress contract", () => {
+       kind: "BETA_ACTIVE_PLAN_SNAPSHOT",
+       activationState: "SELECTED_BETA_SNAPSHOT",
+       candidateId: "candidate-pm-quality",
++      pairId: "plan-pair:v3:1500:rpe-only:lt_intent:fixture-main-1-fixture-main-2:2:no-continuity",
+       candidateKind: "BALANCED",
++      eventDistanceM: 1500,
++      selectedDetailedTemplateRef: null,
+       selectionActor: "COACH",
+       sourceMode: "PROFILE_ONLY",
+       selectedEnergyIntent: "LT_INTENT",
+diff --git a/impl/test/plan-energy-intent.test.ts b/impl/test/plan-energy-intent.test.ts
+index 8dc4b07..e3eedb1 100644
+--- a/impl/test/plan-energy-intent.test.ts
++++ b/impl/test/plan-energy-intent.test.ts
+@@ -26,6 +26,7 @@ function generateFor(selectedEnergyIntent: string) {
+     safetyGate: clearedGate(),
+     profile: {
+       eventGroup: "FIVE_K",
++      eventDistanceM: 5000,
+       experienceBand: "DEVELOPING",
+       availableTrainingDays: [1, 3, 5, 7, 9],
+       secondSessionMode: "SINGLE_SESSION_ONLY",
+@@ -45,7 +46,7 @@ function expectGenerated(result: ReturnType<typeof generatePlanCandidates>) {
+ }
+ 
+ describe("personal plan energy intention contract", () => {
+-  it("keeps the selected quality focus in both candidates and reduces Candidate B duration dose", () => {
++  it("keeps Candidate B QUALITY equal while collapsing BASE support maxima", () => {
+     // Given
+     const generated = expectGenerated(generateFor("VO2_INTENT"))
+ 
+@@ -53,6 +54,12 @@ describe("personal plan energy intention contract", () => {
+     const [balanced, conservative] = generated.candidates
+     const balancedQuality = balanced.sessions.find((session) => session.role === "QUALITY")
+     const conservativeQuality = conservative.sessions.find((session) => session.role === "QUALITY")
++    const balancedSupport = balanced.sessions.find((session) => (
++      session.role === "EASY" && session.plannedEnergyIntent === "BASE_INTENT"
++    ))
++    const conservativeSupport = conservative.sessions.find((session) => (
++      session.role === "EASY" && session.plannedEnergyIntent === "BASE_INTENT"
++    ))
+ 
+     // Then
+     expect(balancedQuality?.plannedEnergyIntent).toBe("VO2_INTENT")
+@@ -62,8 +69,13 @@ describe("personal plan energy intention contract", () => {
+       balancedQuality.prescription.kind !== "RPE_TIME_RANGE"
+       || conservativeQuality.prescription.kind !== "RPE_TIME_RANGE"
+     ) return
+-    expect(conservativeQuality.prescription.durationMinutes.maximum).toBeLessThan(
+-      balancedQuality.prescription.durationMinutes.maximum,
++    expect(conservativeQuality).toStrictEqual(balancedQuality)
++    if (
++      balancedSupport?.role !== "EASY"
++      || conservativeSupport?.role !== "EASY"
++    ) return
++    expect(conservativeSupport.prescription.durationMinutes.maximum).toBeLessThan(
++      balancedSupport.prescription.durationMinutes.maximum,
+     )
+   })
+ 
+@@ -73,6 +85,7 @@ describe("personal plan energy intention contract", () => {
+       safetyGate: clearedGate(),
+       profile: {
+         eventGroup: "FIVE_K",
++        eventDistanceM: 5000,
+         experienceBand: "EXPERIENCED",
+         availableTrainingDays: [1, 3, 5, 7, 9],
+         secondSessionMode: "RECOVERY_PM_ALLOWED",
+@@ -100,6 +113,7 @@ describe("personal plan energy intention contract", () => {
+       safetyGate: clearedGate(),
+       profile: {
+         eventGroup: "FIVE_K",
++        eventDistanceM: 5000,
+         experienceBand: "EXPERIENCED",
+         availableTrainingDays: [1, 2, 3, 4, 5, 6, 7, 8, 9],
+         secondSessionMode: "RECOVERY_PM_ALLOWED",
+@@ -175,6 +189,7 @@ describe("personal plan energy intention contract", () => {
+       safetyGate: clearedGate(),
+       profile: {
+         eventGroup: "FIVE_K",
++        eventDistanceM: 5000,
+         experienceBand: "DEVELOPING",
+         availableTrainingDays: [1, 2, 3, 4, 5, 6, 7, 8, 9],
+         secondSessionMode: "RECOVERY_PM_ALLOWED",
+@@ -206,6 +221,7 @@ describe("personal plan energy intention contract", () => {
+       safetyGate: clearedGate(),
+       profile: {
+         eventGroup: "FIVE_K",
++        eventDistanceM: 5000,
+         experienceBand: "EXPERIENCED",
+         availableTrainingDays: [1, 2, 3, 4, 5, 6, 7, 8, 9],
+         secondSessionMode: "RECOVERY_PM_ALLOWED",
+@@ -252,6 +268,7 @@ describe("personal plan energy intention contract", () => {
+       safetyGate: clearedGate(),
+       profile: {
+         eventGroup: "FIVE_K",
++        eventDistanceM: 5000,
+         experienceBand: "EXPERIENCED",
+         availableTrainingDays: [1, 2, 3, 4, 5, 6, 7, 8, 9],
+         secondSessionMode: "RECOVERY_PM_ALLOWED",
+diff --git a/app/src/domain/plan-beta-v3.contract.test.ts b/app/src/domain/plan-beta-v3.contract.test.ts
+new file mode 100644
+index 0000000..10a935e
+--- /dev/null
++++ b/app/src/domain/plan-beta-v3.contract.test.ts
+@@ -0,0 +1,321 @@
++import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
++import {
++  generatePlanFromDraft,
++  selectPlanForActivation,
++} from "./plan-beta-flow"
++import { selectPlanCandidate } from "@impl/plan-generator/selection"
++import { DETAILED_PRESCRIPTION_APPROVALS } from "./detailed-prescription-approvals"
++import { createSelfReportedAthleteRecord, saveAthleteRecord } from "./athlete-records"
++import { loadPlanBetaState, savePlanBetaState } from "./plan-beta-store"
++
++const NOW = new Date("2026-08-23T03:00:00.000Z")
++const DRAFT = {
++  eventGroup: "MIDDLE_DISTANCE" as const,
++  eventDistanceM: 1500 as const,
++  competitionDivision: "OPEN" as const,
++  experienceBand: "DEVELOPING" as const,
++  availableDayCount: 5 as const,
++  requestedFrameLength: 9 as const,
++  trainingFocus: "LT_INTENT" as const,
++  secondSessionMode: "SINGLE_SESSION_ONLY" as const,
++  trainingTimePreference: "VARIES" as const,
++  selectedDetailedTemplateRef: null,
++}
++const approval1500 = DETAILED_PRESCRIPTION_APPROVALS.find((approval) => approval.targetEventDistanceM === 1500)
++if (approval1500 === undefined) throw new TypeError("Expected approved 1500m fixture")
++const TEMPLATE_1500 = {
++  templateId: approval1500.templateId,
++  version: approval1500.templateVersion,
++  fingerprint: approval1500.templateContentFingerprint,
++} as const
++
++beforeEach(() => {
++  vi.useFakeTimers()
++  vi.setSystemTime(NOW)
++  window.localStorage.clear()
++  window.sessionStorage.clear()
++})
++
++afterEach(() => {
++  vi.useRealTimers()
++  vi.restoreAllMocks()
++})
++
++describe("stored plan v3 target and preview boundary", () => {
++  it("requires and binds one exact target event plus an explicit null template selection", () => {
++    const missingTarget = generatePlanFromDraft(
++      { ...DRAFT, eventDistanceM: undefined },
++      "NO_KNOWN_RISK",
++    )
++    expect(missingTarget).toEqual({
++      kind: "rejected",
++      code: "MALFORMED_INPUT",
++    })
++
++    const result = generatePlanFromDraft(DRAFT, "NO_KNOWN_RISK")
++    expect(result.kind).toBe("generated")
++    if (result.kind !== "generated") return
++
++    expect(result.generated.pairId).toMatch(/^plan-pair:v3:/u)
++    expect(result.generated.candidates).toHaveLength(2)
++    for (const candidate of result.generated.candidates) {
++      expect(candidate.eventDistanceM).toBe(1500)
++      expect(candidate.selectedDetailedTemplateRef).toBeNull()
++      expect(candidate.pairId).toBe(result.generated.pairId)
++      expect(candidate.detailedPrescriptionFingerprint).toBeNull()
++    }
++  })
++
++  it("returns a valid future race date only as a non-selectable in-memory preview", () => {
++    const result = generatePlanFromDraft({
++      ...DRAFT,
++      targetRaceDate: "2026-09-12",
++    }, "NO_KNOWN_RISK")
++
++    expect(result).toMatchObject({
++      kind: "preview_only",
++      code: "RACE_DATE_PERSISTENCE_NOT_AUTHORIZED",
++      preview: {
++        eventDistanceM: 1500,
++        targetRaceDate: "2026-09-12",
++      },
++      candidates: [],
++    })
++    expect(window.localStorage.length).toBe(0)
++    expect(window.sessionStorage.length).toBe(0)
++  })
++
++  it("compares a race date with the authoritative local civil day after KST midnight", () => {
++    vi.setSystemTime(new Date(2026, 7, 24, 0, 30))
++
++    const sameLocalDay = generatePlanFromDraft({
++      ...DRAFT,
++      targetRaceDate: "2026-08-24",
++    }, "NO_KNOWN_RISK")
++    const nextLocalDay = generatePlanFromDraft({
++      ...DRAFT,
++      targetRaceDate: "2026-08-25",
++    }, "NO_KNOWN_RISK")
++
++    expect(sameLocalDay).toMatchObject({ kind: "rejected", code: "MALFORMED_INPUT" })
++    expect(nextLocalDay).toMatchObject({
++      kind: "preview_only",
++      preview: { targetRaceDate: "2026-08-25" },
++    })
++    expect(window.localStorage.length).toBe(0)
++    expect(window.sessionStorage.length).toBe(0)
++  })
++
++  it("creates a v3 active snapshot from a generated candidate", () => {
++    const result = generatePlanFromDraft(DRAFT, "NO_KNOWN_RISK")
++    if (result.kind !== "generated") throw new TypeError("Expected generated v3 fixture")
++
++    const selected = selectPlanForActivation(
++      result.generated.candidates[0],
++      result.generated,
++      result.gate,
++      result.intake,
++      result.athleteEvidence,
++    )
++
++    expect(selected.kind).toBe("selected")
++    if (selected.kind !== "selected") return
++    expect(selected.state).toMatchObject({
++      version: 3,
++      intake: {
++        eventDistanceM: 1500,
++        selectedDetailedTemplateRef: null,
++      },
++      activePlan: {
++        eventDistanceM: 1500,
++        selectedDetailedTemplateRef: null,
++        pairId: result.generated.pairId,
++      },
++    })
++  })
++
++  it("keeps target event distinct from cross-event evidence and falls back atomically", () => {
++    const record = createSelfReportedAthleteRecord({
++      id: "00000000-0000-4000-8000-000000005000",
++      purpose: "RECENT_RESULT",
++      eventDistanceM: 5000,
++      performanceSeconds: 1100,
++      achievedOn: "2026-08-10",
++      seasonId: null,
++    }, NOW)
++    if (record === null) throw new TypeError("Expected valid cross-event fixture")
++    expect(saveAthleteRecord(record, NOW).ok).toBe(true)
++
++    const result = generatePlanFromDraft({
++      ...DRAFT,
++      experienceBand: "EXPERIENCED",
++      selectedDetailedTemplateRef: TEMPLATE_1500,
++    }, "NO_KNOWN_RISK", { selectedRecordId: record.id })
++
++    expect(result.kind).toBe("generated")
++    if (result.kind !== "generated") return
++    expect(result.prescriptionBinding.code).toBe("PACE_TARGET_FALLBACK_EVENT_SCOPE")
++    expect(result.generated.candidates.every((candidate) => (
++      candidate.eventDistanceM === 1500
++      && candidate.selectedDetailedTemplateRef?.templateId === TEMPLATE_1500.templateId
++      && candidate.detailedPrescriptionFingerprint === null
++      && candidate.sessions.every((session) => session.prescription.kind !== "PACE_TARGET")
++    ))).toBe(true)
++  })
++
++  it("binds one explicitly selected exact-event template to both candidates", () => {
++    const record = createSelfReportedAthleteRecord({
++      id: "00000000-0000-4000-8000-000000001500",
++      purpose: "RECENT_RESULT",
++      eventDistanceM: 1500,
++      performanceSeconds: 245,
++      achievedOn: "2026-08-10",
++      seasonId: null,
++    }, NOW)
++    if (record === null) throw new TypeError("Expected valid same-event fixture")
++    expect(saveAthleteRecord(record, NOW).ok).toBe(true)
++
++    const result = generatePlanFromDraft({
++      ...DRAFT,
++      experienceBand: "EXPERIENCED",
++      selectedDetailedTemplateRef: TEMPLATE_1500,
++    }, "NO_KNOWN_RISK", { selectedRecordId: record.id })
++
++    expect(result.kind).toBe("generated")
++    if (result.kind !== "generated") return
++    expect(result.prescriptionBinding.kind).toBe("bound")
++    expect(result.generated.candidates.every((candidate) => (
++      candidate.selectedDetailedTemplateRef?.fingerprint === TEMPLATE_1500.fingerprint
++      && candidate.detailedPrescriptionFingerprint?.startsWith("canonical-json-v1:") === true
++      && candidate.sessions.filter((session) => session.prescription.kind === "PACE_TARGET").length === 1
++    ))).toBe(true)
++  })
++
++  it("invalidates coordinated candidate and pair mutations at selection", () => {
++    const original = generatePlanFromDraft(DRAFT, "NO_KNOWN_RISK")
++    if (original.kind !== "generated") throw new TypeError("Expected generated v3 fixture")
++    const [balanced, conservative] = original.generated.candidates
++    const forgedPairId = original.generated.pairId.replace(":lt_intent:", ":vo2_intent:")
++    const forgedBalanced = { ...balanced, pairId: forgedPairId }
++    const forgedConservative = { ...conservative, pairId: forgedPairId }
++    const forgedGenerated = {
++      ...original.generated,
++      pairId: forgedPairId,
++      candidates: [forgedBalanced, forgedConservative] as const,
++    }
++
++    const selection = selectPlanCandidate({
++      kind: "PLAN_BETA_SELECTION_REQUEST",
++      generatedPlan: forgedGenerated,
++      selectedCandidateId: forgedBalanced.candidateId,
++      actor: "SELF",
++      safetyGate: original.gate,
++    })
++
++    expect(selection).toMatchObject({ kind: "rejected" })
++  })
++
++  it("rejects malformed, past, multiple, prioritized, and receipt-injected race input", () => {
++    const malformedInputs = [
++      { ...DRAFT, targetRaceDate: "2026-02-30" },
++      { ...DRAFT, targetRaceDate: "2026-08-23" },
++      { ...DRAFT, raceDates: ["2026-09-12"] },
++      { ...DRAFT, targetRacePriority: 1 },
++      { ...DRAFT, retentionReceipt: { status: "AUTHORIZED" } },
++    ]
++
++    for (const input of malformedInputs) {
++      expect(generatePlanFromDraft(input, "NO_KNOWN_RISK")).toMatchObject({ kind: "rejected" })
++    }
++    expect(window.localStorage.length).toBe(0)
++    expect(window.sessionStorage.length).toBe(0)
++  })
++
++  it("leaves no persistent race-date bytes and cannot select or save a preview", () => {
++    const urlBefore = window.location.href
++    const historyBefore = JSON.stringify(window.history.state)
++    const fetchSpy = vi.spyOn(globalThis, "fetch")
++    const result = generatePlanFromDraft({ ...DRAFT, targetRaceDate: "2026-09-12" }, "NO_KNOWN_RISK")
++    expect(result.kind).toBe("preview_only")
++    if (result.kind !== "preview_only") return
++
++    expect(selectPlanCandidate({
++      kind: "PLAN_BETA_SELECTION_REQUEST",
++      generatedPlan: result,
++      selectedCandidateId: "preview-candidate",
++      actor: "SELF",
++      safetyGate: { kind: "passed" },
++    })).toMatchObject({ kind: "rejected", code: "INVALID_SELECTION_REQUEST" })
++
++    const generic = generatePlanFromDraft(DRAFT, "NO_KNOWN_RISK")
++    if (generic.kind !== "generated") throw new TypeError("Expected generic v3 fixture")
++    const selected = selectPlanForActivation(
++      generic.generated.candidates[0], generic.generated, generic.gate, generic.intake, generic.athleteEvidence,
++    )
++    if (selected.kind !== "selected") throw new TypeError("Expected selected v3 fixture")
++    const nonCanonicalState = { ...selected.state, targetRaceDate: result.preview.targetRaceDate }
++    expect(savePlanBetaState(nonCanonicalState)).toEqual({ ok: false, code: "PLAN_STORAGE_WRITE_FAILED" })
++    expect(loadPlanBetaState()).toBeNull()
++
++    const storageBytes = [
++      ...Array.from({ length: window.localStorage.length }, (_, index) => window.localStorage.key(index)),
++      ...Array.from({ length: window.sessionStorage.length }, (_, index) => window.sessionStorage.key(index)),
++    ].flatMap((key) => key === null ? [] : [key, window.localStorage.getItem(key), window.sessionStorage.getItem(key)])
++    expect(JSON.stringify(storageBytes)).not.toContain(result.preview.targetRaceDate)
++    expect(window.location.href).toBe(urlBefore)
++    expect(JSON.stringify(window.history.state)).toBe(historyBefore)
++    expect(fetchSpy).not.toHaveBeenCalled()
++  })
++
++  it("preserves invalid stored bytes while rejecting identity tampering", () => {
++    const generated = generatePlanFromDraft(DRAFT, "NO_KNOWN_RISK")
++    if (generated.kind !== "generated") throw new TypeError("Expected generated v3 fixture")
++    const selected = selectPlanForActivation(
++      generated.generated.candidates[0], generated.generated, generated.gate, generated.intake, generated.athleteEvidence,
++    )
++    if (selected.kind !== "selected") throw new TypeError("Expected selected v3 fixture")
++    expect(savePlanBetaState(selected.state)).toEqual({ ok: true })
++    const stored = window.localStorage.getItem("trainoracle.plan-beta.v1")
++    if (stored === null) throw new TypeError("Expected stored v3 bytes")
++    const parsed: unknown = JSON.parse(stored)
++    if (typeof parsed !== "object" || parsed === null || !("activePlan" in parsed)) throw new TypeError("Expected stored active plan")
++    const activePlan = parsed.activePlan
++    if (typeof activePlan !== "object" || activePlan === null) throw new TypeError("Expected stored active snapshot")
++    const tampered = JSON.stringify({ ...parsed, activePlan: { ...activePlan, pairId: "plan-pair:v3:1500:rpe-only:vo2_intent:fixture-main-1-fixture-main-2:1-3-5-7-9:no-continuity" } })
++    window.localStorage.setItem("trainoracle.plan-beta.v1", tampered)
++
++    expect(loadPlanBetaState()).toBeNull()
++    expect(window.localStorage.getItem("trainoracle.plan-beta.v1")).toBe(tampered)
++  })
++
++  it("rejects retained candidate identity after stored support-session bytes change", () => {
++    const generated = generatePlanFromDraft(DRAFT, "NO_KNOWN_RISK")
++    if (generated.kind !== "generated") throw new TypeError("Expected generated v3 fixture")
++    const selected = selectPlanForActivation(
++      generated.generated.candidates[0], generated.generated, generated.gate, generated.intake, generated.athleteEvidence,
++    )
++    if (selected.kind !== "selected") throw new TypeError("Expected selected v3 fixture")
++
++    const supportIndex = selected.state.activePlan.sessions.findIndex((session) => session.role === "EASY")
++    if (supportIndex < 0) throw new TypeError("Expected support session fixture")
++    const tamperedSessions = selected.state.activePlan.sessions.map((session, index) => (
++      index === supportIndex && session.role === "EASY"
++        ? {
++            ...session,
++            prescription: {
++              ...session.prescription,
++              durationMinutes: { minimum: 999, maximum: 1000 },
++            },
++          }
++        : session
++    ))
++    const tampered = JSON.stringify({
++      ...selected.state,
++      activePlan: { ...selected.state.activePlan, sessions: tamperedSessions },
++    })
++    window.localStorage.setItem("trainoracle.plan-beta.v1", tampered)
++
++    expect(loadPlanBetaState()).toBeNull()
++    expect(window.localStorage.getItem("trainoracle.plan-beta.v1")).toBe(tampered)
++  })
++})
+diff --git a/app/src/screens/plan-beta/candidate-support-copy.contract.test.ts b/app/src/screens/plan-beta/candidate-support-copy.contract.test.ts
+new file mode 100644
+index 0000000..7aa1085
+--- /dev/null
++++ b/app/src/screens/plan-beta/candidate-support-copy.contract.test.ts
+@@ -0,0 +1,21 @@
++import { describe, expect, it } from "vitest"
++import { candidatePurposeStatus } from "./candidate-purpose-status"
++import { candidateLabel } from "./labels"
++
++describe("support-only candidate copy", () => {
++  it("uses the approved labels without global burden, safety, or recovery claims", () => {
++    const balanced = {
++      ...candidateLabel("BALANCED", "VO2_INTENT"),
++      ...candidatePurposeStatus("BALANCED"),
++    }
++    const conservative = {
++      ...candidateLabel("CONSERVATIVE", "VO2_INTENT"),
++      ...candidatePurposeStatus("CONSERVATIVE"),
++    }
++    const copy = JSON.stringify([balanced, conservative])
++
++    expect(balanced.title).toBe("기본 보조훈련")
++    expect(conservative.title).toBe("보조훈련 짧게")
++    expect(copy).not.toMatch(/부담|더 안전|회복 여유|회복 최적화|쉬는 날을 늘/u)
++  })
++})
+diff --git a/impl/src/plan-generator/candidate-identity.ts b/impl/src/plan-generator/candidate-identity.ts
+new file mode 100644
+index 0000000..dfeefcd
+--- /dev/null
++++ b/impl/src/plan-generator/candidate-identity.ts
+@@ -0,0 +1,227 @@
++import type {
++  PlanCandidate,
++  PlanCandidateKind,
++  PlanSourceMode,
++  PlannedEnergyIntent,
++  DetailedTemplateRef,
++  SupportedPlanEventDistanceM,
++} from "./types"
++import type { CanonicalPlanFrame, PlanSession } from "./session-types"
++
++const CANDIDATE_HASH_MARKER = ":candidate-sha256-"
++const PAIR_HASH_MARKER = ":pair-sha256-"
++const PACE_TARGET_MARKER = ":pace-target:"
++
++const SHA256_CONSTANTS = Object.freeze([
++  0x428a2f98, 0x71374491, 0xb5c0fbcf, 0xe9b5dba5, 0x3956c25b, 0x59f111f1, 0x923f82a4, 0xab1c5ed5,
++  0xd807aa98, 0x12835b01, 0x243185be, 0x550c7dc3, 0x72be5d74, 0x80deb1fe, 0x9bdc06a7, 0xc19bf174,
++  0xe49b69c1, 0xefbe4786, 0x0fc19dc6, 0x240ca1cc, 0x2de92c6f, 0x4a7484aa, 0x5cb0a9dc, 0x76f988da,
++  0x983e5152, 0xa831c66d, 0xb00327c8, 0xbf597fc7, 0xc6e00bf3, 0xd5a79147, 0x06ca6351, 0x14292967,
++  0x27b70a85, 0x2e1b2138, 0x4d2c6dfc, 0x53380d13, 0x650a7354, 0x766a0abb, 0x81c2c92e, 0x92722c85,
++  0xa2bfe8a1, 0xa81a664b, 0xc24b8b70, 0xc76c51a3, 0xd192e819, 0xd6990624, 0xf40e3585, 0x106aa070,
++  0x19a4c116, 0x1e376c08, 0x2748774c, 0x34b0bcb5, 0x391c0cb3, 0x4ed8aa4a, 0x5b9cca4f, 0x682e6ff3,
++  0x748f82ee, 0x78a5636f, 0x84c87814, 0x8cc70208, 0x90befffa, 0xa4506ceb, 0xbef9a3f7, 0xc67178f2,
++])
++
++export type PlanCandidateIdentityProjection = {
++  readonly kind: PlanCandidateKind
++  readonly eventDistanceM: SupportedPlanEventDistanceM
++  readonly selectedDetailedTemplateRef: DetailedTemplateRef | null
++  readonly selectedEnergyIntent: PlannedEnergyIntent
++  readonly sourceMode: PlanSourceMode
++  readonly frame: CanonicalPlanFrame
++  readonly sessions: readonly PlanSession[]
++}
++
++function canonicalJson(value: unknown): string {
++  if (value === null || typeof value === "boolean" || typeof value === "number" || typeof value === "string") {
++    return JSON.stringify(value)
++  }
++  if (Array.isArray(value)) return `[${value.map(canonicalJson).join(",")}]`
++  if (typeof value !== "object") throw new TypeError("Candidate identity requires JSON data")
++  const record = value as Readonly<Record<string, unknown>>
++  return `{${Object.keys(record).sort().map((key) => `${JSON.stringify(key)}:${canonicalJson(record[key])}`).join(",")}}`
++}
++
++function rotateRight(value: number, shift: number): number {
++  return (value >>> shift) | (value << (32 - shift))
++}
++
++function utf8Bytes(input: string): Uint8Array {
++  const bytes: number[] = []
++  for (const character of input) {
++    const codePoint = character.codePointAt(0)
++    if (codePoint === undefined) continue
++    if (codePoint <= 0x7f) bytes.push(codePoint)
++    else if (codePoint <= 0x7ff) bytes.push(0xc0 | (codePoint >>> 6), 0x80 | (codePoint & 0x3f))
++    else if (codePoint <= 0xffff) bytes.push(
++      0xe0 | (codePoint >>> 12),
++      0x80 | ((codePoint >>> 6) & 0x3f),
++      0x80 | (codePoint & 0x3f),
++    )
++    else bytes.push(
++      0xf0 | (codePoint >>> 18),
++      0x80 | ((codePoint >>> 12) & 0x3f),
++      0x80 | ((codePoint >>> 6) & 0x3f),
++      0x80 | (codePoint & 0x3f),
++    )
++  }
++  return Uint8Array.from(bytes)
++}
++
++function sha256Hex(input: string): string {
++  const bytes = utf8Bytes(input)
++  const bitLength = bytes.length * 8
++  const paddedLength = Math.ceil((bytes.length + 9) / 64) * 64
++  const padded = new Uint8Array(paddedLength)
++  padded.set(bytes)
++  padded[bytes.length] = 0x80
++  const view = new DataView(padded.buffer)
++  view.setUint32(paddedLength - 8, Math.floor(bitLength / 0x1_0000_0000), false)
++  view.setUint32(paddedLength - 4, bitLength >>> 0, false)
++
++  const hash = new Uint32Array([
++    0x6a09e667, 0xbb67ae85, 0x3c6ef372, 0xa54ff53a,
++    0x510e527f, 0x9b05688c, 0x1f83d9ab, 0x5be0cd19,
++  ])
++  const words = new Uint32Array(64)
++  for (let offset = 0; offset < paddedLength; offset += 64) {
++    for (let index = 0; index < 16; index += 1) words[index] = view.getUint32(offset + index * 4, false)
++    for (let index = 16; index < 64; index += 1) {
++      const previous15 = words[index - 15] ?? 0
++      const previous2 = words[index - 2] ?? 0
++      const sigma0 = rotateRight(previous15, 7) ^ rotateRight(previous15, 18) ^ (previous15 >>> 3)
++      const sigma1 = rotateRight(previous2, 17) ^ rotateRight(previous2, 19) ^ (previous2 >>> 10)
++      words[index] = ((words[index - 16] ?? 0) + sigma0 + (words[index - 7] ?? 0) + sigma1) >>> 0
++    }
++
++    let a = hash[0] ?? 0
++    let b = hash[1] ?? 0
++    let c = hash[2] ?? 0
++    let d = hash[3] ?? 0
++    let e = hash[4] ?? 0
++    let f = hash[5] ?? 0
++    let g = hash[6] ?? 0
++    let h = hash[7] ?? 0
++    for (let index = 0; index < 64; index += 1) {
++      const sum1 = rotateRight(e, 6) ^ rotateRight(e, 11) ^ rotateRight(e, 25)
++      const choice = (e & f) ^ (~e & g)
++      const temporary1 = (h + sum1 + choice + (SHA256_CONSTANTS[index] ?? 0) + (words[index] ?? 0)) >>> 0
++      const sum0 = rotateRight(a, 2) ^ rotateRight(a, 13) ^ rotateRight(a, 22)
++      const majority = (a & b) ^ (a & c) ^ (b & c)
++      const temporary2 = (sum0 + majority) >>> 0
++      h = g
++      g = f
++      f = e
++      e = (d + temporary1) >>> 0
++      d = c
++      c = b
++      b = a
++      a = (temporary1 + temporary2) >>> 0
++    }
++    hash[0] = ((hash[0] ?? 0) + a) >>> 0
++    hash[1] = ((hash[1] ?? 0) + b) >>> 0
++    hash[2] = ((hash[2] ?? 0) + c) >>> 0
++    hash[3] = ((hash[3] ?? 0) + d) >>> 0
++    hash[4] = ((hash[4] ?? 0) + e) >>> 0
++    hash[5] = ((hash[5] ?? 0) + f) >>> 0
++    hash[6] = ((hash[6] ?? 0) + g) >>> 0
++    hash[7] = ((hash[7] ?? 0) + h) >>> 0
++  }
++  return [...hash].map((word) => word.toString(16).padStart(8, "0")).join("")
++}
++
++function detailedFingerprint(projection: PlanCandidateIdentityProjection): string | null {
++  const fingerprints = projection.sessions.flatMap((session) => (
++    session.prescription.kind === "PACE_TARGET"
++      ? [session.prescription.prescriptionFingerprint]
++      : []
++  ))
++  return fingerprints.length === 1 ? fingerprints[0] ?? null : null
++}
++
++function candidateBaseId(candidateId: string): string {
++  const withoutPrescription = candidateId.split(PACE_TARGET_MARKER)[0] ?? candidateId
++  const markerIndex = withoutPrescription.indexOf(CANDIDATE_HASH_MARKER)
++  return markerIndex < 0 ? withoutPrescription : withoutPrescription.slice(0, markerIndex)
++}
++
++function pairBaseId(pairId: string): string {
++  const markerIndex = pairId.indexOf(PAIR_HASH_MARKER)
++  return markerIndex < 0 ? pairId : pairId.slice(0, markerIndex)
++}
++
++export function projectPlanCandidate(candidate: PlanCandidate): PlanCandidateIdentityProjection {
++  return {
++    kind: candidate.kind,
++    eventDistanceM: candidate.eventDistanceM,
++    selectedDetailedTemplateRef: candidate.selectedDetailedTemplateRef,
++    selectedEnergyIntent: candidate.selectedEnergyIntent,
++    sourceMode: candidate.sourceMode,
++    frame: candidate.frame,
++    sessions: candidate.sessions,
++  }
++}
++
++export function deriveCandidateId(
++  candidateId: string,
++  projection: PlanCandidateIdentityProjection,
++): string {
++  const digest = sha256Hex(`trainoracle.plan-candidate-identity.v1\0${canonicalJson(projection)}`)
++  const prescriptionFingerprint = detailedFingerprint(projection)
++  const prescriptionSuffix = prescriptionFingerprint === null
++    ? ""
++    : `${PACE_TARGET_MARKER}${prescriptionFingerprint}`
++  return `${candidateBaseId(candidateId)}${CANDIDATE_HASH_MARKER}${digest}${prescriptionSuffix}`
++}
++
++export function hasValidCandidateIdentity(
++  candidateId: string,
++  projection: PlanCandidateIdentityProjection,
++): boolean {
++  return candidateId === deriveCandidateId(candidateId, projection)
++}
++
++export function derivePairId(
++  pairId: string,
++  balancedCandidateId: string,
++  conservativeCandidateId: string,
++): string {
++  const baseId = pairBaseId(pairId)
++  const digest = sha256Hex(`trainoracle.plan-candidate-pair-identity.v1\0${canonicalJson({
++    baseId,
++    candidateIds: [balancedCandidateId, conservativeCandidateId],
++  })}`)
++  return `${baseId}${PAIR_HASH_MARKER}${digest}`
++}
++
++export function pairIdHasBase(pairId: string, expectedBaseId: string): boolean {
++  return /:pair-sha256-[a-f0-9]{64}$/u.test(pairId)
++    && pairBaseId(pairId) === expectedBaseId
++}
++
++export function rebindCandidatePairIdentity(
++  candidates: readonly [PlanCandidate, PlanCandidate],
++): readonly [PlanCandidate, PlanCandidate] {
++  const balancedId = deriveCandidateId(candidates[0].candidateId, projectPlanCandidate(candidates[0]))
++  const conservativeId = deriveCandidateId(candidates[1].candidateId, projectPlanCandidate(candidates[1]))
++  const pairId = derivePairId(candidates[0].pairId, balancedId, conservativeId)
++  return Object.freeze([
++    Object.freeze({ ...candidates[0], candidateId: balancedId, pairId }),
++    Object.freeze({ ...candidates[1], candidateId: conservativeId, pairId }),
++  ])
++}
++
++export function hasValidCandidatePairIdentity(
++  balanced: PlanCandidate,
++  conservative: PlanCandidate,
++): boolean {
++  return hasValidCandidateIdentity(balanced.candidateId, projectPlanCandidate(balanced))
++    && hasValidCandidateIdentity(conservative.candidateId, projectPlanCandidate(conservative))
++    && balanced.pairId === conservative.pairId
++    && balanced.pairId === derivePairId(
++      balanced.pairId,
++      balanced.candidateId,
++      conservative.candidateId,
++    )
++}
+diff --git a/impl/src/plan-generator/support-only-candidate-pair.ts b/impl/src/plan-generator/support-only-candidate-pair.ts
+new file mode 100644
+index 0000000..4791bd8
+--- /dev/null
++++ b/impl/src/plan-generator/support-only-candidate-pair.ts
+@@ -0,0 +1,102 @@
++import type { PlanCandidate, PlanSession } from "./types"
++import { hasValidCandidatePairIdentity } from "./candidate-identity"
++
++function sameJson(left: unknown, right: unknown): boolean {
++  return JSON.stringify(left) === JSON.stringify(right)
++}
++
++function sharedCandidateContent(candidate: PlanCandidate): unknown {
++  return {
++    pairId: candidate.pairId,
++    eventGroup: candidate.eventGroup,
++    eventDistanceM: candidate.eventDistanceM,
++    selectedDetailedTemplateRef: candidate.selectedDetailedTemplateRef,
++    selectedEnergyIntent: candidate.selectedEnergyIntent,
++    sourceMode: candidate.sourceMode,
++    confidence: candidate.confidence,
++    beta: candidate.beta,
++    detailedPrescriptionFingerprint: candidate.detailedPrescriptionFingerprint,
++    continuityContext: candidate.continuityContext,
++    selectionAuthority: candidate.selectionAuthority,
++    frame: candidate.frame,
++    mainExposureLedger: candidate.mainExposureLedger,
++    rationaleCodes: candidate.rationaleCodes,
++  }
++}
++
++function isRecoveryCompanion(
++  sessions: readonly PlanSession[],
++  session: PlanSession,
++): boolean {
++  if (session.role !== "EASY" || session.plannedEnergyIntent !== "RECOVERY_INTENT") {
++    return false
++  }
++  const sameDay = sessions.filter((item) => item.day === session.day)
++  return sameDay.some((item) => item.role === "QUALITY")
++    || (session.slot === "PM" && sameDay.length === 2)
++}
++
++export function isSupportOnlyCandidatePair(
++  balanced: PlanCandidate,
++  conservative: PlanCandidate,
++): boolean {
++  if (
++    !hasValidCandidatePairIdentity(balanced, conservative)
++    || balanced.kind !== "BALANCED"
++    || conservative.kind !== "CONSERVATIVE"
++    || balanced.sessions.length !== conservative.sessions.length
++    || !sameJson(sharedCandidateContent(balanced), sharedCandidateContent(conservative))
++  ) {
++    return false
++  }
++
++  let shortenedSupport = false
++  for (const [index, session] of balanced.sessions.entries()) {
++    const shorter = conservative.sessions[index]
++    if (
++      shorter === undefined
++      || session.day !== shorter.day
++      || session.slot !== shorter.slot
++      || session.role !== shorter.role
++      || session.plannedEnergyIntent !== shorter.plannedEnergyIntent
++    ) {
++      return false
++    }
++    if (session.role !== "EASY") {
++      if (!sameJson(session, shorter)) return false
++      continue
++    }
++    if (
++      session.prescription.kind !== "RPE_TIME_RANGE"
++      || shorter.prescription.kind !== "RPE_TIME_RANGE"
++    ) {
++      return false
++    }
++    if (isRecoveryCompanion(balanced.sessions, session)) {
++      if (
++        session.prescription.rpe.minimum < 1
++        || session.prescription.rpe.maximum > 3
++        || !sameJson(session, shorter)
++      ) {
++        return false
++      }
++      continue
++    }
++    if (
++      !sameJson(session.prescription.rpe, shorter.prescription.rpe)
++      || shorter.prescription.durationMinutes.minimum
++        !== session.prescription.durationMinutes.minimum
++      || shorter.prescription.durationMinutes.maximum
++        !== session.prescription.durationMinutes.minimum
++    ) {
++      return false
++    }
++    if (
++      shorter.prescription.durationMinutes.maximum
++      < session.prescription.durationMinutes.maximum
++    ) {
++      shortenedSupport = true
++    }
++  }
++  return shortenedSupport
++}
+diff --git a/impl/test/support-only-candidate-pair.contract.test.ts b/impl/test/support-only-candidate-pair.contract.test.ts
+new file mode 100644
+index 0000000..04ddd4a
+--- /dev/null
++++ b/impl/test/support-only-candidate-pair.contract.test.ts
+@@ -0,0 +1,320 @@
++import { describe, expect, it } from "vitest"
++import {
++  canonicalJsonSha256,
++  createPlanAdaptationProposal,
++  hashPlanCandidate,
++  validateApprovedAdaptationTransform,
++  verifyPlanAdaptationProposal,
++} from "../src/plan-generator/adaptation"
++import { projectPlanCandidate } from "../src/plan-generator/candidate-identity"
++import { generatePlanCandidates } from "../src/plan-generator/generator"
++import { selectPlanCandidate } from "../src/plan-generator/selection"
++import type { PlanCandidate, PlanGenerationSuccess } from "../src/plan-generator/types"
++import { canonicalFormation } from "./fixtures/canonical-formation"
++import { baseRequest, clearedGate, expectGenerated } from "./fixtures/plan-beta-request"
++
++const EVENT_CASES = [
++  { eventDistanceM: 800, eventGroup: "MIDDLE_DISTANCE", selectedEnergyIntent: "GLY_INTENT" },
++  { eventDistanceM: 1500, eventGroup: "MIDDLE_DISTANCE", selectedEnergyIntent: "MIXED_INTENT" },
++  { eventDistanceM: 3000, eventGroup: "MIDDLE_DISTANCE", selectedEnergyIntent: "VO2_INTENT" },
++  { eventDistanceM: 5000, eventGroup: "FIVE_K", selectedEnergyIntent: "VO2_INTENT" },
++] as const
++const EXPERIENCE_BANDS = ["NEW_TO_RUNNING", "DEVELOPING", "EXPERIENCED"] as const
++const AVAILABILITY_CASES = [
++  { label: "3 days", days: [3, 7, 9] },
++  { label: "4 days", days: [1, 3, 7, 9] },
++  { label: "5 days", days: [1, 3, 5, 7, 9] },
++  { label: "6 days", days: [1, 2, 3, 5, 7, 9] },
++  { label: "every day", days: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10] },
++] as const
++const SECOND_SESSION_MODES = ["SINGLE_SESSION_ONLY", "RECOVERY_PM_ALLOWED"] as const
++const PROJECTION_LENGTHS = [7, 9, 10] as const
++
++const MATRIX_CASES = EVENT_CASES.flatMap((event) => EXPERIENCE_BANDS.flatMap(
++  (experienceBand) => AVAILABILITY_CASES.flatMap((availability) => SECOND_SESSION_MODES.flatMap(
++    (secondSessionMode) => PROJECTION_LENGTHS.map((requestedFrameLength) => ({
++      ...event,
++      experienceBand,
++      availability,
++      secondSessionMode,
++      requestedFrameLength,
++    })),
++  )),
++))
++
++function topology(candidate: PlanCandidate) {
++  return candidate.sessions.map(({ day, slot, role }) => ({ day, slot, role }))
++}
++
++function qualitySessions(candidate: PlanCandidate) {
++  return candidate.sessions.filter((session) => session.role === "QUALITY")
++}
++
++function isRecoveryCompanion(candidate: PlanCandidate, index: number): boolean {
++  const session = candidate.sessions[index]
++  if (session?.role !== "EASY" || session.plannedEnergyIntent !== "RECOVERY_INTENT") return false
++  const sameDay = candidate.sessions.filter((item) => item.day === session.day)
++  return sameDay.some((item) => item.role === "QUALITY")
++    || (session.slot === "PM" && sameDay.length === 2)
++}
++
++function withQualityMaximumCollapsed(
++  conservative: PlanCandidate,
++): PlanCandidate {
++  return {
++    ...conservative,
++    sessions: conservative.sessions.map((session) => (
++      session.role === "QUALITY" && session.prescription.kind === "RPE_TIME_RANGE"
++        ? {
++            ...session,
++            prescription: {
++              ...session.prescription,
++              durationMinutes: {
++                ...session.prescription.durationMinutes,
++                maximum: session.prescription.durationMinutes.minimum,
++              },
++            },
++          }
++        : session
++    )),
++  }
++}
++
++function selectConservative(
++  generated: PlanGenerationSuccess,
++  conservative: PlanCandidate,
++) {
++  return selectPlanCandidate({
++    kind: "PLAN_BETA_SELECTION_REQUEST",
++    generatedPlan: { ...generated, candidates: [generated.candidates[0], conservative] },
++    selectedCandidateId: conservative.candidateId,
++    actor: "SELF",
++    safetyGate: clearedGate(),
++  })
++}
++
++function selectForgedPair(
++  generated: PlanGenerationSuccess,
++  balanced: PlanCandidate,
++  conservative: PlanCandidate,
++) {
++  return selectPlanCandidate({
++    kind: "PLAN_BETA_SELECTION_REQUEST",
++    generatedPlan: { ...generated, candidates: [balanced, conservative] },
++    selectedCandidateId: conservative.candidateId,
++    actor: "SELF",
++    safetyGate: clearedGate(),
++  })
++}
++
++function withDurationMutation(
++  candidate: PlanCandidate,
++  role: "EASY" | "QUALITY",
++  minimum: number,
++  maximum: number,
++): PlanCandidate {
++  const targetIndex = candidate.sessions.findIndex((session) => (
++    session.role === role
++    && session.prescription.kind === "RPE_TIME_RANGE"
++    && (role !== "EASY" || session.plannedEnergyIntent === "BASE_INTENT")
++  ))
++  return {
++    ...candidate,
++    sessions: candidate.sessions.map((session, index) => (
++      index === targetIndex
++        && session.role !== "REST"
++        && session.prescription.kind === "RPE_TIME_RANGE"
++        ? {
++            ...session,
++            prescription: {
++              ...session.prescription,
++              durationMinutes: { minimum, maximum },
++            },
++          }
++        : session
++    )),
++  }
++}
++
++describe("support-only candidate pair", () => {
++  it.each(MATRIX_CASES)(
++    "keeps topology and QUALITY identical for $eventDistanceM m, $experienceBand, $availability.label, $secondSessionMode, projection $requestedFrameLength",
++    ({
++      eventDistanceM,
++      eventGroup,
++      selectedEnergyIntent,
++      experienceBand,
++      availability,
++      secondSessionMode,
++      requestedFrameLength,
++    }) => {
++      const generated = expectGenerated(generatePlanCandidates({
++        kind: "PLAN_BETA_GENERATION_REQUEST",
++        safetyGate: clearedGate(),
++        profile: {
++          eventGroup,
++          eventDistanceM,
++          experienceBand,
++          availableTrainingDays: availability.days,
++          secondSessionMode,
++          trainingTimePreference: "VARIES",
++        },
++        formation: canonicalFormation(),
++        requestedFrameLength,
++        journalSource: { kind: "NO_USABLE_JOURNAL" },
++        selectionAuthority: "SELF",
++        selectedEnergyIntent,
++        selectedDetailedTemplateRef: null,
++      }))
++      const [balanced, conservative] = generated.candidates
++
++      expect(topology(conservative)).toStrictEqual(topology(balanced))
++      expect(conservative.sessions.map((session) => session.plannedEnergyIntent))
++        .toStrictEqual(balanced.sessions.map((session) => session.plannedEnergyIntent))
++      expect(qualitySessions(conservative)).toStrictEqual(qualitySessions(balanced))
++      expect(qualitySessions(balanced).length).toBeLessThanOrEqual(2)
++      expect(conservative.mainExposureLedger).toStrictEqual(balanced.mainExposureLedger)
++      expect(new Set(balanced.mainExposureLedger.countedExposureIds).size)
++        .toBe(balanced.mainExposureLedger.mainExposureCount)
++      expect(balanced.candidateId).toMatch(/:candidate-sha256-[a-f0-9]{64}(?::pace-target:|$)/u)
++      expect(conservative.candidateId).toMatch(/:candidate-sha256-[a-f0-9]{64}(?::pace-target:|$)/u)
++      expect(conservative.candidateId).not.toBe(balanced.candidateId)
++
++      let comparableSupportCount = 0
++      let shorterSupportCount = 0
++      for (const [index, session] of balanced.sessions.entries()) {
++        const shorter = conservative.sessions[index]
++        if (session.role !== "EASY" || shorter?.role !== "EASY") continue
++        if (isRecoveryCompanion(balanced, index)) {
++          expect(shorter).toStrictEqual(session)
++          expect(shorter.prescription.rpe.minimum).toBeGreaterThanOrEqual(1)
++          expect(shorter.prescription.rpe.maximum).toBeLessThanOrEqual(3)
++          continue
++        }
++        comparableSupportCount += 1
++        expect(shorter.prescription.rpe).toStrictEqual(session.prescription.rpe)
++        expect(shorter.prescription.durationMinutes.minimum)
++          .toBe(session.prescription.durationMinutes.minimum)
++        expect(shorter.prescription.durationMinutes.maximum)
++          .toBe(session.prescription.durationMinutes.minimum)
++        expect(shorter.prescription.durationMinutes.maximum)
++          .toBeLessThanOrEqual(session.prescription.durationMinutes.maximum)
++        if (shorter.prescription.durationMinutes.maximum
++            < session.prescription.durationMinutes.maximum) shorterSupportCount += 1
++      }
++      expect(comparableSupportCount).toBeGreaterThan(0)
++      expect(shorterSupportCount).toBeGreaterThan(0)
++    },
++  )
++
++  it("rejects a QUALITY-duration mutation at the retained identity boundary", () => {
++    const generated = expectGenerated(generatePlanCandidates(baseRequest()))
++    const [balanced, supportOnly] = generated.candidates
++    const qualityMutated = withQualityMaximumCollapsed(supportOnly)
++
++    expect(validateApprovedAdaptationTransform(balanced, supportOnly, "VOLUME"))
++      .toEqual({ kind: "approved", changeDimension: "VOLUME" })
++    expect(validateApprovedAdaptationTransform(balanced, qualityMutated, "VOLUME"))
++      .toEqual({ kind: "rejected", code: "MALFORMED_INPUT" })
++  })
++
++  it("rejects coordinated support-duration forgery with retained candidate and pair identities", () => {
++    const generated = expectGenerated(generatePlanCandidates(baseRequest()))
++    const balanced = withDurationMutation(generated.candidates[0], "EASY", 999, 1000)
++    const conservative = withDurationMutation(generated.candidates[1], "EASY", 999, 999)
++
++    expect(selectForgedPair(generated, balanced, conservative)).toMatchObject({
++      kind: "rejected",
++      code: "STALE_CANDIDATE_FINGERPRINT",
++    })
++  })
++
++  it("rejects coordinated QUALITY forgery with retained candidate and pair identities", () => {
++    const generated = expectGenerated(generatePlanCandidates(baseRequest()))
++    const balanced = withDurationMutation(generated.candidates[0], "QUALITY", 999, 1000)
++    const conservative = withDurationMutation(generated.candidates[1], "QUALITY", 999, 1000)
++
++    expect(selectForgedPair(generated, balanced, conservative)).toMatchObject({
++      kind: "rejected",
++      code: "STALE_CANDIDATE_FINGERPRINT",
++    })
++  })
++
++  it("rejects topology, stale identity, and coordinated MAIN-link mutations at selection", () => {
++    const generated = expectGenerated(generatePlanCandidates(baseRequest()))
++    const [balanced, conservative] = generated.candidates
++    const supportOnly = conservative
++    const staleCandidateId = supportOnly.candidateId.replace(":1-3-5-7-9:", ":1-3-5-7-10:")
++    const nextExposureIds = ["fixture-main-1", "fixture-main-3"] as const
++    const coordinatedMainMutation = {
++      ...supportOnly,
++      candidateId: supportOnly.candidateId.replace(
++        "fixture-main-1-fixture-main-2",
++        "fixture-main-1-fixture-main-3",
++      ),
++      mainExposureLedger: {
++        mainExposureCount: 2 as const,
++        fingerprint: nextExposureIds.join(":"),
++        countedExposureIds: nextExposureIds,
++      },
++    }
++    expect(staleCandidateId).not.toBe(supportOnly.candidateId)
++
++    expect(selectConservative(generated, {
++      ...supportOnly,
++      sessions: supportOnly.sessions.slice(1),
++    })).toMatchObject({ kind: "rejected" })
++    expect(selectConservative(generated, {
++      ...supportOnly,
++      candidateId: staleCandidateId,
++    })).toMatchObject({ kind: "rejected" })
++    expect(selectConservative(generated, coordinatedMainMutation))
++      .toMatchObject({ kind: "rejected" })
++  })
++
++  it("binds the derived candidate hash and rejects an altered proposal under the stale hash", async () => {
++    const generated = expectGenerated(generatePlanCandidates(baseRequest()))
++    const [balanced, conservative] = generated.candidates
++    const supportOnly = conservative
++    const candidateDigest = balanced.candidateId.match(/:candidate-sha256-([a-f0-9]{64})/u)?.[1]
++    expect(candidateDigest).toBeDefined()
++    expect(`sha256:${candidateDigest}`).toBe(await canonicalJsonSha256(
++      "trainoracle.plan-candidate-identity.v1",
++      projectPlanCandidate(balanced),
++    ))
++    const baseContentHash = await hashPlanCandidate(balanced)
++    const proposedContentHash = await hashPlanCandidate(supportOnly)
++    const result = await createPlanAdaptationProposal({
++      kind: "PLAN_ADAPTATION_PROPOSAL_REQUEST",
++      scope: {
++        athleteId: "athlete-1",
++        eventDistanceM: 1500,
++        pairId: balanced.pairId,
++        selectedDetailedTemplateRef: balanced.selectedDetailedTemplateRef,
++      },
++      activePlanStartedAt: "2026-08-01T00:00:00.000Z",
++      baseCandidate: balanced,
++      proposedCandidate: supportOnly,
++      baseContentHash,
++      proposalOrigin: "SELF_SERVICE",
++      trigger: {
++        kind: "EXPLICIT_REQUEST",
++        requestedBy: "ATHLETE",
++        sourceRef: "athlete-request:athlete-1:req-1",
++      },
++      changeDimension: "VOLUME",
++      safetyGate: clearedGate(),
++      safetyEvaluatedAt: "2026-08-18T00:00:00.000Z",
++      safetyValidUntil: "2026-08-18T00:10:00.000Z",
++      activeHold: false,
++      createdAt: "2026-08-18T00:05:00.000Z",
++      idempotencyKey: `sha256:${"1".repeat(64)}`,
++    })
++    if (result.kind !== "proposed") throw new TypeError(`Expected proposal, received ${result.kind}`)
++    expect(result.proposal.proposedContentHash).toBe(proposedContentHash)
++    expect(await verifyPlanAdaptationProposal({
++      ...result.proposal,
++      successorCandidate: { ...supportOnly, sessions: supportOnly.sessions.slice(1) },
++    })).toBe(false)
++  })
++})

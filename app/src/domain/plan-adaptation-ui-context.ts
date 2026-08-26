@@ -12,6 +12,7 @@ import {
   evaluatePlanSafety,
   type PlanCurrentCheck,
 } from "./plan-beta-flow"
+import { accountScopedStorageKey } from "./account/local-account-scope"
 
 export const PLAN_ADAPTATION_CONTEXT_STORAGE_KEY = "trainoracle.plan-adaptation-context.v1"
 export const LOCAL_ADAPTATION_ATHLETE_ID = "local-athlete"
@@ -74,6 +75,14 @@ export type ActivePlanAdaptationSafety =
       readonly activeHold: boolean
     }
 
+export type PlanAdaptationContextSaveResult =
+  | { readonly ok: true }
+  | {
+      readonly ok: false
+      readonly code: "ADAPTATION_CONTEXT_STORAGE_WRITE_FAILED"
+      readonly rollbackComplete: boolean
+    }
+
 export function evaluateActivePlanAdaptationSafety(
   state: PlanBetaState,
   currentCheck: PlanCurrentCheck,
@@ -102,34 +111,78 @@ export function parseActivePlanAdaptationSafety(
 export function adaptationScopeForCandidate(candidate: PlanCandidate) {
   const parsed = supportedEventSchema.safeParse(candidate.eventDistanceM)
   return parsed.success
-    ? { athleteId: LOCAL_ADAPTATION_ATHLETE_ID, eventDistanceM: parsed.data }
+    ? {
+        athleteId: LOCAL_ADAPTATION_ATHLETE_ID,
+        eventDistanceM: parsed.data,
+        pairId: candidate.pairId,
+        selectedDetailedTemplateRef: candidate.selectedDetailedTemplateRef,
+      }
     : null
 }
 
 export function savePlanAdaptationContext(
   candidates: readonly [PlanCandidate, PlanCandidate],
   activeCandidateId: string,
-): boolean {
-  if (typeof window === "undefined") return false
+): PlanAdaptationContextSaveResult {
+  if (typeof window === "undefined") {
+    return {
+      ok: false,
+      code: "ADAPTATION_CONTEXT_STORAGE_WRITE_FAILED",
+      rollbackComplete: false,
+    }
+  }
   const input = { version: 1, activeCandidateId, candidates }
-  if (!hasCanonicalJsonTree(input)) return false
+  if (!hasCanonicalJsonTree(input)) {
+    return {
+      ok: false,
+      code: "ADAPTATION_CONTEXT_STORAGE_WRITE_FAILED",
+      rollbackComplete: true,
+    }
+  }
   const parsed = contextSchema.safeParse(input)
-  if (!parsed.success) return false
+  if (!parsed.success) {
+    return {
+      ok: false,
+      code: "ADAPTATION_CONTEXT_STORAGE_WRITE_FAILED",
+      rollbackComplete: true,
+    }
+  }
+  let previous: string | null = null
+  let previousCaptured = false
+  const storageKey = accountScopedStorageKey(PLAN_ADAPTATION_CONTEXT_STORAGE_KEY)
   try {
-    window.localStorage.setItem(
-      PLAN_ADAPTATION_CONTEXT_STORAGE_KEY,
-      JSON.stringify(parsed.data),
-    )
-    return true
+    previous = window.localStorage.getItem(storageKey)
+    previousCaptured = true
+    const serialized = JSON.stringify(parsed.data)
+    window.localStorage.setItem(storageKey, serialized)
+    if (window.localStorage.getItem(storageKey) !== serialized) {
+      const rollbackComplete = restoreStorageValue(
+        window.localStorage,
+        storageKey,
+        previous,
+      )
+      return {
+        ok: false,
+        code: "ADAPTATION_CONTEXT_STORAGE_WRITE_FAILED",
+        rollbackComplete,
+      }
+    }
+    return { ok: true }
   } catch {
-    return false
+    const rollbackComplete = previousCaptured
+      && restoreStorageValue(window.localStorage, storageKey, previous)
+    return {
+      ok: false,
+      code: "ADAPTATION_CONTEXT_STORAGE_WRITE_FAILED",
+      rollbackComplete,
+    }
   }
 }
 
 export function loadPlanAdaptationContext(activeCandidateId: string) {
   if (typeof window === "undefined") return null
   try {
-    const raw = window.localStorage.getItem(PLAN_ADAPTATION_CONTEXT_STORAGE_KEY)
+    const raw = window.localStorage.getItem(accountScopedStorageKey(PLAN_ADAPTATION_CONTEXT_STORAGE_KEY))
     if (raw === null) return null
     const input: unknown = JSON.parse(raw)
     if (!hasCanonicalJsonTree(input)) return null
@@ -139,6 +192,17 @@ export function loadPlanAdaptationContext(activeCandidateId: string) {
       : null
   } catch {
     return null
+  }
+}
+
+function restoreStorageValue(storage: Storage, key: string, value: string | null): boolean {
+  try {
+    if (storage.getItem(key) === value) return true
+    if (value === null) storage.removeItem(key)
+    else storage.setItem(key, value)
+    return storage.getItem(key) === value
+  } catch {
+    return false
   }
 }
 

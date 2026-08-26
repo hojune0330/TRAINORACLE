@@ -4,6 +4,7 @@ import type { PlanBetaIntake } from "./plan-beta-schema"
 import { createSelfReportedAthleteRecord, saveAthleteRecord } from "./athlete-records"
 import { MEMO_PURPOSE } from "./journal-schema"
 import { saveEntry } from "./journal-store"
+import { DETAILED_PRESCRIPTION_APPROVALS } from "./detailed-prescription-approvals"
 
 export const TODAY = new Date("2026-08-17T03:00:00.000Z")
 export const RAW_MARKER = "MATRIX_RAW_FREE_TEXT_9f86d081"
@@ -64,15 +65,29 @@ export type PopulationContractObservation = {
 }
 
 export function draftFor(fixture: MatrixCase): PlanBetaIntake {
+  const approval = DETAILED_PRESCRIPTION_APPROVALS.find((candidate) => (
+    candidate.targetEventDistanceM === fixture.eventDistanceM
+  ))
+  if (approval === undefined) throw new TypeError("Matrix fixture requires an approved exact-event template")
   return {
     eventGroup: fixture.eventGroup,
+    eventDistanceM: fixture.eventDistanceM,
     competitionDivision: "OPEN",
     experienceBand: "EXPERIENCED",
     availableDayCount: fixture.availableDayCount,
     requestedFrameLength: fixture.requestedFrameLength,
-    trainingFocus: "VO2_INTENT",
+    trainingFocus: fixture.eventDistanceM === 800
+      ? "GLY_INTENT"
+      : fixture.eventDistanceM === 1500
+        ? "MIXED_INTENT"
+        : "VO2_INTENT",
     secondSessionMode: fixture.secondSessionMode,
     trainingTimePreference: fixture.trainingTimePreference,
+    selectedDetailedTemplateRef: {
+      templateId: approval.templateId,
+      version: approval.templateVersion,
+      fingerprint: approval.templateContentFingerprint,
+    },
   }
 }
 

@@ -15,9 +15,20 @@ import {
   restorePrivateMemo,
   restorePrivateMemoShell,
   savePrivateMemoWithJournalShell,
+  savePrivateMemosWithJournalShells,
 } from "./private-memo-vault"
 import { loadSessionRecoveryCode } from "./account/private-note-sync"
 import { loadDecorationState } from "./decorations"
+import {
+  activeLocalAccount,
+  assignJournalsToAccount,
+  isJournalOwnedBy,
+  isJournalVisible,
+  journalOwner,
+  reserveJournalOwnership,
+  rollbackJournalOwnership,
+  unboundJournalIds,
+} from "./account/local-journal-ownership"
 
 const privateMemoCache = new Map<string, { readonly recoveryCode: string; readonly memo: string }>()
 
@@ -46,7 +57,23 @@ export class PrivateMemoUnlockRequiredError extends Error {
 }
 
 export function loadEntries(): JournalEntry[] {
-  return loadJournalEntriesSnapshot().entries
+  return loadJournalEntriesSnapshot().entries.filter((entry) => isJournalVisible(entry.id))
+}
+
+/** 동기화 전용. 기기 미연결 데이터와 다른 계정 데이터는 포함하지 않는다. */
+export function loadEntriesOwnedBy(userId: string): JournalEntry[] {
+  return loadJournalEntriesSnapshot().entries.filter((entry) => isJournalOwnedBy(entry.id, userId))
+}
+
+export function unboundDeviceJournalCount(): number {
+  const entries = loadJournalEntriesSnapshot().entries
+  return unboundJournalIds(entries.map((entry) => entry.id)).length
+}
+
+export function connectUnboundDeviceJournals(userId: string): { readonly ok: boolean; readonly total: number } {
+  const entries = loadJournalEntriesSnapshot().entries
+  const ids = unboundJournalIds(entries.map((entry) => entry.id))
+  return { ok: assignJournalsToAccount(ids, userId), total: ids.length }
 }
 
 export type JournalEntriesStorageSnapshot = {
@@ -62,7 +89,7 @@ export type PlanSafetyJournalRead =
 export function loadEntriesForPlanSafety(): PlanSafetyJournalRead {
   const snapshot = loadJournalEntriesSnapshot()
   return snapshot.readStatus === "complete"
-    ? { status: "complete", entries: snapshot.entries }
+    ? { status: "complete", entries: snapshot.entries.filter((entry) => isJournalVisible(entry.id)) }
     : { status: "uncertain" }
 }
 
@@ -97,10 +124,17 @@ export function saveEntry(entry: unknown): { readonly ok: boolean; readonly tota
   if (parsedEntry === null) return { ok: false, total: all.length }
   if (hasPrivateMemoText(parsedEntry)) return { ok: false, total: all.length }
 
+  const ownership = reserveJournalOwnership([parsedEntry.id], activeLocalAccount())
+  if (!ownership.ok) return { ok: false, total: loadEntries().length }
   all.push(parsedEntry)
   const localStorage = journalStorage()
-  if (localStorage === null) return { ok: false, total: all.length }
-  return { ok: writeJournalEntries(localStorage, all, snapshot.raw), total: all.length }
+  if (localStorage === null) {
+    rollbackJournalOwnership(ownership)
+    return { ok: false, total: loadEntries().length }
+  }
+  const ok = writeJournalEntries(localStorage, all, snapshot.raw)
+  if (!ok) rollbackJournalOwnership(ownership)
+  return { ok, total: loadEntries().length }
 }
 
 export async function savePrivateEntry(entry: unknown): Promise<{ readonly ok: boolean; readonly total: number }> {
@@ -112,6 +146,8 @@ export async function savePrivateEntry(entry: unknown): Promise<{ readonly ok: b
   const recoveryCode = loadSessionRecoveryCode()
   if (localStorage === null || recoveryCode === null) return { ok: false, total: all.length }
 
+  const ownership = reserveJournalOwnership([parsedEntry.id], activeLocalAccount())
+  if (!ownership.ok) return { ok: false, total: loadEntries().length }
   const ok = await savePrivateMemoWithJournalShell(
     localStorage,
     [...all, parsedEntry],
@@ -119,9 +155,12 @@ export async function savePrivateEntry(entry: unknown): Promise<{ readonly ok: b
     recoveryCode,
     snapshot.raw,
   )
-  if (!ok) return { ok: false, total: all.length }
+  if (!ok) {
+    rollbackJournalOwnership(ownership)
+    return { ok: false, total: loadEntries().length }
+  }
   privateMemoCache.set(parsedEntry.id, { recoveryCode, memo: parsedEntry.kind === "evening" ? parsedEntry.note : parsedEntry.memo })
-  return { ok: true, total: all.length + 1 }
+  return { ok: true, total: loadEntries().length }
 }
 
 export async function updatePrivateEntry(
@@ -132,6 +171,7 @@ export async function updatePrivateEntry(
   const entries = snapshot.entries
   const nextEntry = parseJournalEntryForWrite(entry)
   if (nextEntry === null || !hasPrivateMemoText(nextEntry)) return { ok: false, total: entries.length }
+  if (!isJournalVisible(nextEntry.id)) return { ok: false, total: loadEntries().length }
   const matchingEntries = entries.filter((current) => current.id === nextEntry.id)
   if (matchingEntries.length !== 1) return { ok: false, total: entries.length }
   const previous = matchingEntries[0]
@@ -195,17 +235,63 @@ export function entriesForDate(date: string): JournalEntry[] {
 }
 
 /**
- * 전체 교체 — 동기화 병합 결과 반영 전용.
- * fail-closed: 스키마 파싱을 통과한 항목만 기록하고, 하나라도 유효하지 않으면
- * 유효분만 저장한다. 저장 실패 시 기존 localStorage 내용은 건드리지 않는다.
+ * 현재 화면 범위의 전체 교체 — 백업 복원·파일 가져오기용.
+ * 다른 계정의 숨은 항목은 보존하고, 새 항목은 자동으로 계정에 귀속하지 않는다.
+ * 계정 동기화 결과에는 `replaceEntriesOwnedBy`를 사용한다.
  */
 export function replaceAllEntries(entries: readonly unknown[]): { readonly ok: boolean; readonly total: number } {
   const parsed = parseJournalEntryList(entries)
   const snapshot = loadJournalEntriesSnapshot()
   const localStorage = journalStorage()
-  if (localStorage === null) return { ok: false, total: snapshot.entries.length }
-  const ok = writeJournalEntries(localStorage, parsed, snapshot.raw)
-  return { ok, total: ok ? parsed.length : snapshot.entries.length }
+  const hidden = snapshot.entries.filter((entry) => !isJournalVisible(entry.id))
+  const hiddenIds = new Set(hidden.map((entry) => entry.id))
+  if (parsed.some((entry) => hiddenIds.has(entry.id))) return { ok: false, total: loadEntries().length }
+  if (localStorage === null) return { ok: false, total: loadEntries().length }
+  const ok = writeJournalEntries(localStorage, [...hidden, ...parsed], snapshot.raw)
+  return { ok, total: ok ? parsed.length : loadEntries().length }
+}
+
+/** 계정 동기화 병합 결과를 반영하되 다른 계정·기기 미연결 일지는 그대로 보존한다. */
+export function replaceEntriesOwnedBy(
+  userId: string,
+  entries: readonly unknown[],
+): { readonly ok: boolean; readonly total: number } {
+  const parsed = parseJournalEntryList(entries)
+  const snapshot = loadJournalEntriesSnapshot()
+  const preserved = snapshot.entries.filter((entry) => !isJournalOwnedBy(entry.id, userId))
+  const preservedIds = new Set(preserved.map((entry) => entry.id))
+  if (parsed.some((entry) => preservedIds.has(entry.id))) return { ok: false, total: loadEntriesOwnedBy(userId).length }
+  const ownership = reserveJournalOwnership(parsed.map((entry) => entry.id), userId)
+  if (!ownership.ok) return { ok: false, total: loadEntriesOwnedBy(userId).length }
+  const localStorage = journalStorage()
+  const ok = localStorage !== null && writeJournalEntries(localStorage, [...preserved, ...parsed], snapshot.raw)
+  if (!ok) rollbackJournalOwnership(ownership)
+  return { ok, total: ok ? parsed.length : loadEntriesOwnedBy(userId).length }
+}
+
+export async function replaceEntriesOwnedByWithPrivateMemos(
+  userId: string,
+  entries: readonly JournalEntry[],
+  privateEntries: readonly JournalEntry[],
+  recoveryCode: string,
+): Promise<{ readonly ok: boolean; readonly total: number }> {
+  const snapshot = loadJournalEntriesSnapshot()
+  const preserved = snapshot.entries.filter((entry) => !isJournalOwnedBy(entry.id, userId))
+  const preservedIds = new Set(preserved.map((entry) => entry.id))
+  if (entries.some((entry) => preservedIds.has(entry.id))) return { ok: false, total: loadEntriesOwnedBy(userId).length }
+  const ownership = reserveJournalOwnership(entries.map((entry) => entry.id), userId)
+  if (!ownership.ok) return { ok: false, total: loadEntriesOwnedBy(userId).length }
+  const localStorage = journalStorage()
+  const persisted = localStorage === null
+    ? null
+    : await savePrivateMemosWithJournalShells(
+      localStorage,
+      [...preserved, ...entries],
+      privateEntries,
+      recoveryCode,
+    )
+  if (persisted === null) rollbackJournalOwnership(ownership)
+  return { ok: persisted !== null, total: persisted === null ? loadEntriesOwnedBy(userId).length : entries.length }
 }
 
 export type DeleteEntryResult = {
@@ -240,6 +326,7 @@ export type DeleteEntryResult = {
 export function deleteEntry(id: string): DeleteEntryResult {
   const snapshot = loadJournalEntriesSnapshot()
   const all = snapshot.entries
+  if (!isJournalVisible(id)) return { ok: false, total: loadEntries().length, trashed: false }
   const matches = all.filter((entry) => entry.id === id)
   if (matches.length !== 1) return { ok: false, total: all.length, trashed: false }
   const [target] = matches
@@ -289,14 +376,26 @@ export type RestoreDeletedResult = {
  * 휴지통에서 꺼내기(takeFromTrash)를 먼저 해서, 저장이 실패하면 되돌려 놓는다.
  */
 export function restoreDeletedEntry(id: string): RestoreDeletedResult {
+  if (!isJournalVisible(id)) return { ok: false, restoredId: null, total: loadEntries().length }
   const taken = takeFromTrash(id)
   if (taken === null) return { ok: false, restoredId: null, total: loadEntries().length }
 
   const snapshot = loadJournalEntriesSnapshot()
   const restored = { ...taken.entry, id: newEntryId(), syncState: "local" as const }
+  const owner = journalOwner(taken.entry.id)
+  if (owner === undefined) {
+    moveToTrash(taken.entry, taken.deletedAt, taken.privateMemo)
+    return { ok: false, restoredId: null, total: loadEntries().length }
+  }
+  const ownership = reserveJournalOwnership([restored.id], owner)
+  if (!ownership.ok) {
+    moveToTrash(taken.entry, taken.deletedAt, taken.privateMemo)
+    return { ok: false, restoredId: null, total: loadEntries().length }
+  }
   const next = [...snapshot.entries, restored]
   const localStorage = journalStorage()
   if (localStorage === null) {
+    rollbackJournalOwnership(ownership)
     moveToTrash(taken.entry, taken.deletedAt, taken.privateMemo)
     return { ok: false, restoredId: null, total: next.length - 1 }
   }
@@ -311,6 +410,7 @@ export function restoreDeletedEntry(id: string): RestoreDeletedResult {
       snapshot.raw,
     )
   if (!ok) {
+    rollbackJournalOwnership(ownership)
     // 꺼내 놓고 저장에 실패하면 일지가 어디에도 없게 된다. 휴지통에 되돌린다.
     moveToTrash(taken.entry, taken.deletedAt, taken.privateMemo)
     return { ok: false, restoredId: null, total: next.length - 1 }

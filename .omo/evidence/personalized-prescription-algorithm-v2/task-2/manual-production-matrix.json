@@ -1,0 +1,42 @@
+{
+  "kind": "TRAINORACLE_TODO2_PRODUCTION_IMPORT_MATRIX",
+  "source": "temporary Vitest executed real app domain imports and was deleted after exit 0",
+  "approved": [
+    { "eventDistanceM": 800, "templateId": "MD-800-01", "generation": "generated", "binding": "bound", "storedVersion": 3 },
+    { "eventDistanceM": 1500, "templateId": "MD-1500-01", "generation": "generated", "binding": "bound", "storedVersion": 3 },
+    { "eventDistanceM": 3000, "templateId": "MD-3000-01", "generation": "generated", "binding": "bound", "storedVersion": 3 },
+    { "eventDistanceM": 5000, "templateId": "V2-SEED-05", "generation": "generated", "binding": "bound", "storedVersion": 3 }
+  ],
+  "adversarial": {
+    "nullTemplate": { "generation": "generated", "binding": "fallback", "detailedSessionCount": 0 },
+    "atpWithoutTemplate": { "generation": "generated", "detailedSessionCount": 0 },
+    "incompatibleTemplate": { "kind": "rejected", "code": "INVALID_DETAILED_TEMPLATE_REF", "writes": 0 },
+    "racePreview": {
+      "kind": "preview_only",
+      "selectableCandidates": 0,
+      "localStorageKeys": 0,
+      "sessionStorageKeys": 0,
+      "urlChanged": false,
+      "historyChanged": false,
+      "networkCalls": 0
+    }
+  },
+  "localCivilDateBoundary": {
+    "authoritativeClock": { "localCivilDate": "2026-08-24", "localTime": "00:30", "utcDate": "2026-08-23" },
+    "sameLocalDay": { "targetRaceDate": "2026-08-24", "kind": "rejected", "code": "MALFORMED_INPUT" },
+    "nextLocalDay": { "targetRaceDate": "2026-08-25", "kind": "preview_only" },
+    "invalidCalendarDay": { "targetRaceDate": "2026-02-30", "kind": "rejected", "code": "MALFORMED_INPUT" },
+    "persistence": {
+      "localStorageKeys": 0,
+      "sessionStorageKeys": 0,
+      "urlChanged": false,
+      "historyChanged": false,
+      "networkCalls": 0
+    },
+    "commandResult": { "testFiles": 1, "testsPassed": 1, "exitCode": 0 }
+  },
+  "commandResult": {
+    "approvedAndAdversarialMatrix": { "testFiles": 1, "testsPassed": 1, "exitCode": 0 },
+    "localCivilDateMatrix": { "testFiles": 1, "testsPassed": 1, "exitCode": 0 }
+  }
+}

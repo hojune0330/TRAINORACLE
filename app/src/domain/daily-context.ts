@@ -1,7 +1,12 @@
 import { z } from "zod"
 import { isValidIsoDate } from "./dates"
+import { accountScopedStorageKey } from "./account/local-account-scope"
 
-const STORAGE_KEY = "trainoracle.daily-context.v1"
+export const DAILY_CONTEXT_STORAGE_KEY = "trainoracle.daily-context.v1"
+
+function activeStorageKey(): string {
+  return accountScopedStorageKey(DAILY_CONTEXT_STORAGE_KEY)
+}
 
 const dailyContextSchema = z.object({
   date: z.string(),
@@ -16,7 +21,7 @@ export type DailyContext = z.infer<typeof dailyContextSchema>
 function loadMap(): Record<string, DailyContext> {
   if (typeof window === "undefined") return {}
   try {
-    const raw = window.localStorage.getItem(STORAGE_KEY)
+    const raw = window.localStorage.getItem(activeStorageKey())
     if (raw === null) return {}
     const parsedJson: unknown = JSON.parse(raw)
     const parsed = dailyContextMapSchema.safeParse(parsedJson)
@@ -37,7 +42,7 @@ export function saveDailyContext(context: DailyContext): boolean {
   const parsed = dailyContextSchema.safeParse(context)
   if (!parsed.success) return false
   try {
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify({ ...loadMap(), [context.date]: parsed.data }))
+    window.localStorage.setItem(activeStorageKey(), JSON.stringify({ ...loadMap(), [context.date]: parsed.data }))
     return true
   } catch {
     return false

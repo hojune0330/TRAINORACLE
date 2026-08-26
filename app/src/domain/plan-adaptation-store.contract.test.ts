@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest"
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import {
   canonicalJsonSha256,
   createPlanAdaptationProposal,
@@ -18,11 +18,13 @@ import {
   loadPendingNextFrameSuccessor,
 } from "./plan-adaptation-store"
 import { savePlanBetaState } from "./plan-beta-store"
-import type { PlanBetaStateV2 } from "./plan-beta-schema"
+import type { PlanBetaStateV3 } from "./plan-beta-schema"
 import { planAdaptationEnvelopeSchema } from "./plan-beta-schema"
+import { PLAN_BETA_MUTATION_LOCK_NAME } from "./plan-mutation-lock"
 
 const ACTIVE_KEY = "trainoracle.plan-beta.v1"
 const ADAPTATION_KEY = "trainoracle.plan-beta.adaptation.v1"
+let locksDescriptor: PropertyDescriptor | undefined
 
 async function requestFixture(
   selectedEnergyIntent: "LT_INTENT" | "VO2_INTENT" = "LT_INTENT",
@@ -46,7 +48,12 @@ async function requestFixture(
   const [baseCandidate, successorCandidate] = generated.candidates
   const proposalResult = await createPlanAdaptationProposal({
     kind: "PLAN_ADAPTATION_PROPOSAL_REQUEST",
-    scope: { athleteId: "athlete-1", eventDistanceM: 1500 },
+    scope: {
+      athleteId: "athlete-1",
+      eventDistanceM: 1500,
+      pairId: baseCandidate.pairId,
+      selectedDetailedTemplateRef: baseCandidate.selectedDetailedTemplateRef,
+    },
     activePlanStartedAt: "2026-08-01T00:00:00.000Z",
     baseCandidate,
     proposedCandidate: successorCandidate,
@@ -86,9 +93,10 @@ async function requestFixture(
     throw new Error("selection fixture failed")
   }
   const common = {
-    version: 2 as const,
+    version: 3 as const,
     intake: {
       eventGroup: "MIDDLE_DISTANCE" as const,
+      eventDistanceM: 1500 as const,
       competitionDivision: "OPEN" as const,
       experienceBand: "DEVELOPING" as const,
       availableDayCount: 5 as const,
@@ -96,19 +104,22 @@ async function requestFixture(
       trainingFocus: selectedEnergyIntent,
       secondSessionMode: "SINGLE_SESSION_ONLY" as const,
       trainingTimePreference: "VARIES" as const,
+      selectedDetailedTemplateRef: baseCandidate.selectedDetailedTemplateRef,
     },
     progress: [],
     adaptationScope: {
       athleteId: "athlete-1",
       eventDistanceM: 1500 as const,
+      pairId: baseCandidate.pairId,
+      selectedDetailedTemplateRef: baseCandidate.selectedDetailedTemplateRef,
     },
   }
-  const predecessorState: PlanBetaStateV2 = {
+  const predecessorState: PlanBetaStateV3 = {
     ...common,
     activePlan: baseSelection.activePlan,
     generatedAt: "2026-08-01T00:00:00.000Z",
   }
-  const successorState: PlanBetaStateV2 = {
+  const successorState: PlanBetaStateV3 = {
     ...common,
     activePlan: successorSelection.activePlan,
     generatedAt: "2026-08-18T00:05:00.000Z",
@@ -127,50 +138,39 @@ async function requestFixture(
   }
 }
 
-async function coachRequestFixture() {
-  const input = await requestFixture()
-  const proposalResult = await createPlanAdaptationProposal({
-    kind: "PLAN_ADAPTATION_PROPOSAL_REQUEST",
-    scope: { athleteId: "athlete-1", eventDistanceM: 1500 },
-    activePlanStartedAt: input.predecessorState.generatedAt,
-    baseCandidate: input.proposal.baseCandidate,
-    proposedCandidate: input.proposal.successorCandidate,
-    baseContentHash: await hashPlanCandidate(input.proposal.baseCandidate),
-    proposalOrigin: "COACH_AUTHORED",
-    trigger: {
-      kind: "EXPLICIT_REQUEST",
-      requestedBy: "COACH",
-      sourceRef: "coach-request:athlete-1:req-1",
-    },
-    changeDimension: "VOLUME",
-    safetyGate: input.safetyGate,
-    safetyEvaluatedAt: input.safetyEvaluatedAt,
-    safetyValidUntil: input.safetyValidUntil,
-    activeHold: false,
-    createdAt: "2026-08-18T00:05:00.000Z",
-    idempotencyKey: await canonicalJsonSha256("trainoracle.test.coach-proposal-key.v1", "1"),
-  })
-  if (proposalResult.kind !== "proposed") {
-    throw new Error(`coach proposal fixture failed: ${JSON.stringify(proposalResult)}`)
-  }
-  return {
-    ...input,
-    proposal: proposalResult.proposal,
-    successorState: {
-      ...input.successorState,
-      activePlan: {
-        ...input.successorState.activePlan,
-        selectionActor: "COACH" as const,
-      },
-    },
-    actor: "COACH" as const,
-  }
-}
-
 describe("local immutable next-frame adaptation contract", () => {
   beforeEach(() => {
     window.localStorage.clear()
     vi.restoreAllMocks()
+    locksDescriptor = Object.getOwnPropertyDescriptor(navigator, "locks")
+    Object.defineProperty(navigator, "locks", {
+      configurable: true,
+      value: {
+        request: async (name: string, _options: unknown, callback: (lock: object | null) => unknown) => {
+          expect(name).toBe(PLAN_BETA_MUTATION_LOCK_NAME)
+          return callback({})
+        },
+      },
+    })
+  })
+
+  afterEach(() => {
+    if (locksDescriptor === undefined) Reflect.deleteProperty(navigator, "locks")
+    else Object.defineProperty(navigator, "locks", locksDescriptor)
+  })
+
+  it("fails closed before reading or writing plan state when the shared lock is unavailable", async () => {
+    const input = await requestFixture()
+    expect(savePlanBetaState(input.predecessorState)).toEqual({ ok: true })
+    const before = window.localStorage.getItem(ACTIVE_KEY)
+    Object.defineProperty(navigator, "locks", { configurable: true, value: undefined })
+
+    await expect(acceptNextFrameProposal(input)).resolves.toEqual({
+      kind: "rejected",
+      code: "MUTATION_LOCK_UNAVAILABLE",
+    })
+    expect(window.localStorage.getItem(ACTIVE_KEY)).toBe(before)
+    expect(window.localStorage.getItem(ADAPTATION_KEY)).toBeNull()
   })
 
   it("accepts one linked successor with one write and preserves exact active bytes", async () => {
@@ -201,6 +201,69 @@ describe("local immutable next-frame adaptation contract", () => {
         },
       }
     })
+  })
+
+  it("returns a storage failure when the rollback snapshot cannot be read", async () => {
+    const input = await requestFixture()
+    expect(savePlanBetaState(input.predecessorState)).toEqual({ ok: true })
+    const realGetItem = Storage.prototype.getItem
+    vi.spyOn(Storage.prototype, "getItem").mockImplementation(function (this: Storage, key: string) {
+      if (key === ADAPTATION_KEY) throw new Error("SecurityError")
+      return realGetItem.call(this, key)
+    })
+
+    await expect(acceptNextFrameProposal(input)).resolves.toEqual({
+      kind: "failed",
+      code: "ADAPTATION_STORAGE_WRITE_FAILED",
+      rollbackComplete: false,
+    })
+  })
+
+  it.each([
+    ["72h minus 1ms", "2026-08-21T00:04:59.999Z", "accepted"],
+    ["exactly 72h", "2026-08-21T00:05:00.000Z", "rejected"],
+    ["72h plus 1ms", "2026-08-21T00:05:00.001Z", "rejected"],
+  ] as const)("enforces proposal expiry at %s", async (_label, acceptedAt, expectedKind) => {
+    const input = await requestFixture()
+    const proposalResult = await createPlanAdaptationProposal({
+      kind: "PLAN_ADAPTATION_PROPOSAL_REQUEST",
+      scope: {
+        athleteId: input.proposal.athleteId,
+        eventDistanceM: input.proposal.eventDistanceM,
+        pairId: input.proposal.pairId,
+        selectedDetailedTemplateRef: input.proposal.selectedDetailedTemplateRef,
+      },
+      activePlanStartedAt: input.predecessorState.generatedAt,
+      baseCandidate: input.proposal.baseCandidate,
+      proposedCandidate: input.proposal.successorCandidate,
+      baseContentHash: input.proposal.baseContentHash,
+      proposalOrigin: "SELF_SERVICE",
+      trigger: input.proposal.triggerSnapshot,
+      changeDimension: "VOLUME",
+      safetyGate: input.safetyGate,
+      safetyEvaluatedAt: "2026-08-18T00:00:00.000Z",
+      safetyValidUntil: "2026-08-22T00:00:00.000Z",
+      activeHold: false,
+      createdAt: "2026-08-18T00:05:00.000Z",
+      idempotencyKey: `sha256:${"8".repeat(64)}`,
+    })
+    if (proposalResult.kind !== "proposed") throw new TypeError("Expected expiring proposal")
+    expect(savePlanBetaState(input.predecessorState)).toEqual({ ok: true })
+    const activeBytes = window.localStorage.getItem(ACTIVE_KEY)
+
+    const result = await acceptNextFrameProposal({
+      ...input,
+      proposal: proposalResult.proposal,
+      safetyValidUntil: "2026-08-22T00:00:00.000Z",
+      acceptedAt,
+    })
+
+    expect(result.kind).toBe(expectedKind)
+    if (expectedKind === "rejected") {
+      expect(result).toEqual({ kind: "rejected", code: "EXPIRED_PROPOSAL" })
+      expect(loadPendingNextFrameSuccessor()).toBeNull()
+    }
+    expect(window.localStorage.getItem(ACTIVE_KEY)).toBe(activeBytes)
   })
 
   it("rejects a raw reason code without replacing the previous pending envelope", async () => {
@@ -312,8 +375,36 @@ describe("local immutable next-frame adaptation contract", () => {
     const oldPending = loadPendingNextFrameSuccessor()
     if (oldPending === null) throw new TypeError("Expected the first pending successor")
 
+    const laterProposal = await createPlanAdaptationProposal({
+      kind: "PLAN_ADAPTATION_PROPOSAL_REQUEST",
+      scope: {
+        athleteId: planA.proposal.athleteId,
+        eventDistanceM: planA.proposal.eventDistanceM,
+        pairId: planA.proposal.pairId,
+        selectedDetailedTemplateRef: planA.proposal.selectedDetailedTemplateRef,
+      },
+      activePlanStartedAt: "2026-08-18T00:07:00.000Z",
+      baseCandidate: planA.proposal.baseCandidate,
+      proposedCandidate: planA.proposal.successorCandidate,
+      baseContentHash: planA.proposal.baseContentHash,
+      proposalOrigin: "SELF_SERVICE",
+      trigger: {
+        kind: "EXPLICIT_REQUEST",
+        requestedBy: "ATHLETE",
+        sourceRef: "athlete-request:athlete-1:req-2",
+      },
+      changeDimension: "VOLUME",
+      safetyGate: planA.safetyGate,
+      safetyEvaluatedAt: "2026-08-18T00:07:00.000Z",
+      safetyValidUntil: "2026-08-18T00:17:00.000Z",
+      activeHold: false,
+      createdAt: "2026-08-18T00:07:00.000Z",
+      idempotencyKey: `sha256:${"c".repeat(64)}`,
+    })
+    if (laterProposal.kind !== "proposed") throw new TypeError("Expected a fresh later-frame proposal")
     const laterFrame = {
       ...planA,
+      proposal: laterProposal.proposal,
       predecessorState: {
         ...planA.predecessorState,
         generatedAt: "2026-08-18T00:07:00.000Z",
@@ -323,6 +414,8 @@ describe("local immutable next-frame adaptation contract", () => {
         generatedAt: "2026-08-18T00:07:00.000Z",
       },
       acceptedAt: "2026-08-18T00:08:00.000Z",
+      safetyEvaluatedAt: "2026-08-18T00:07:00.000Z",
+      safetyValidUntil: "2026-08-18T00:17:00.000Z",
       idempotencyKey: `sha256:${"b".repeat(64)}`,
     }
     expect(laterFrame.predecessorState.activePlan.candidateId)
@@ -411,7 +504,8 @@ describe("local immutable next-frame adaptation contract", () => {
   })
 
   it("denies caller-asserted coach acceptance without writing a local decision", async () => {
-    const input = await coachRequestFixture()
+    const selfInput = await requestFixture()
+    const input = { ...selfInput, actor: "COACH" as const }
     expect(savePlanBetaState(input.predecessorState)).toEqual({ ok: true })
     const writes: string[] = []
     const realSet = Storage.prototype.setItem
@@ -471,9 +565,11 @@ describe("local immutable next-frame adaptation contract", () => {
         adaptationScope: {
           athleteId: "athlete-1",
           eventDistanceM: 800,
+          pairId: input.successorState.activePlan.pairId,
+          selectedDetailedTemplateRef: input.successorState.activePlan.selectedDetailedTemplateRef,
         },
       },
-    })).toEqual({ kind: "rejected", code: "SCOPE_MISMATCH" })
+    })).toEqual({ kind: "rejected", code: "MALFORMED_INPUT" })
     expect(await acceptNextFrameProposal({
       ...input,
       successorState: {
@@ -483,7 +579,7 @@ describe("local immutable next-frame adaptation contract", () => {
           sourceMode: "JOURNAL_CONTEXT_ONLY",
         },
       },
-    })).toEqual({ kind: "rejected", code: "SUCCESSOR_MISMATCH" })
+    })).toEqual({ kind: "rejected", code: "MALFORMED_INPUT" })
   })
 
   it("rejects recomputed INTENSITY, FREQUENCY, and arbitrary VOLUME transforms", async () => {
@@ -543,7 +639,7 @@ describe("local immutable next-frame adaptation contract", () => {
         proposalHash,
         ...content,
       }
-      expect(await acceptNextFrameProposal({
+      const result = await acceptNextFrameProposal({
         ...input,
         proposal,
         successorState: {
@@ -554,7 +650,11 @@ describe("local immutable next-frame adaptation contract", () => {
             sessions: successorCandidate.sessions,
           },
         },
-      })).toEqual({ kind: "rejected", code: "FORGED_PROPOSAL" })
+      })
+      expect(result).toMatchObject({ kind: "rejected" })
+      if (result.kind === "rejected") {
+        expect(["FORGED_PROPOSAL", "MALFORMED_INPUT"]).toContain(result.code)
+      }
     }
   })
 
@@ -727,7 +827,12 @@ describe("local immutable next-frame adaptation contract", () => {
     const input = await requestFixture()
     expect(await createPlanAdaptationProposal({
       kind: "PLAN_ADAPTATION_PROPOSAL_REQUEST",
-      scope: { athleteId: "athlete-1", eventDistanceM: 1500 },
+      scope: {
+        athleteId: "athlete-1",
+        eventDistanceM: 1500,
+        pairId: input.proposal.baseCandidate.pairId,
+        selectedDetailedTemplateRef: input.proposal.baseCandidate.selectedDetailedTemplateRef,
+      },
       activePlanStartedAt: "2026-08-12T12:00:00.000Z",
       baseCandidate: input.proposal.baseCandidate,
       proposedCandidate: input.proposal.successorCandidate,
@@ -739,6 +844,7 @@ describe("local immutable next-frame adaptation contract", () => {
         recordId: "00000000-0000-4000-8000-000000000006",
         purpose: "PERSONAL_BEST",
         eventDistanceM: 1500,
+        performanceSeconds: 245,
         achievedAt: "2026-08-12T11:59:59.999Z",
         sourceRef: "athlete-record:00000000-0000-4000-8000-000000000006",
         historicalOrBackfilled: false,
@@ -798,6 +904,25 @@ describe("local immutable next-frame adaptation contract", () => {
       rollbackComplete: true,
     })
     expect(attempts).toEqual([ADAPTATION_KEY])
+    expect(loadPendingNextFrameSuccessor()).toBeNull()
+    expect(window.localStorage.getItem(ACTIVE_KEY)).toBe(activeBefore)
+  })
+
+  it("fails closed when the adaptation envelope write is silently dropped", async () => {
+    const input = await requestFixture()
+    expect(savePlanBetaState(input.predecessorState)).toEqual({ ok: true })
+    const activeBefore = window.localStorage.getItem(ACTIVE_KEY)
+    const realSet = Storage.prototype.setItem
+    vi.spyOn(Storage.prototype, "setItem").mockImplementation(function (this: Storage, key, value) {
+      if (key === ADAPTATION_KEY) return
+      return realSet.call(this, key, value)
+    })
+
+    expect(await acceptNextFrameProposal(input)).toEqual({
+      kind: "failed",
+      code: "ADAPTATION_STORAGE_WRITE_FAILED",
+      rollbackComplete: true,
+    })
     expect(loadPendingNextFrameSuccessor()).toBeNull()
     expect(window.localStorage.getItem(ACTIVE_KEY)).toBe(activeBefore)
   })

@@ -1,4 +1,5 @@
-import { loadEntries } from "../journal-store"
+import { activeLocalAccount } from "./local-journal-ownership"
+import { loadEntriesOwnedBy } from "../journal-store"
 import { supabase } from "./supabase-client"
 import type { SyncFailureCode, SyncOutcome } from "./sync-types"
 
@@ -24,13 +25,14 @@ export async function hasSupportedSyncSchema(client: SyncClient): Promise<boolea
 }
 
 export function failed(message: string, failureCode?: SyncFailureCode): SyncOutcome {
+  const userId = activeLocalAccount()
   return {
     ok: false,
     message,
     pulled: 0,
     pushed: 0,
     deleted: 0,
-    total: loadEntries().length,
+    total: userId === null ? 0 : loadEntriesOwnedBy(userId).length,
     failureCode,
   }
 }

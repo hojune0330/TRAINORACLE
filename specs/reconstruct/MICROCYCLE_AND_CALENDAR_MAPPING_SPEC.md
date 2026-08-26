@@ -576,6 +576,40 @@ Issue closure requires accepted source spec, target patch, target open-issue rec
 
 ---
 
+## 19A. 2026-08-24 Target-Race Preview Boundary
+
+The beta runtime adds an optional target-race date only as a transient placement
+preview. It is not yet an accepted race anchor or calendar mapping.
+
+```yaml
+target_race_preview_boundary:
+  target_date_required: false
+  accepted_input: FUTURE_DATE_ONLY
+  persistence:
+    local_storage: FORBIDDEN
+    session_storage: FORBIDDEN
+    url_or_history_state: FORBIDDEN
+    server_or_profile: FORBIDDEN
+  no_date_path:
+    state: NO_TARGET_RACE
+    behavior: GENERIC_PLAN_CANDIDATES
+  date_path:
+    state: TARGET_RACE_PREVIEW_ONLY_RETENTION_BLOCKED
+    generated_candidates: 0
+    selectable_or_savable_plan: false
+    calendar_write: false
+    session_reordering: false
+    quantity_intensity_frequency_change: false
+  compiled_race_placement_rows: 0
+  numeric_taper_authority: NOT_GRANTED
+```
+
+`TARGET_RACE_STORED_FOR_LATER`, `RACE_PLACEMENT_ONLY`, and
+`GENERIC_PLACEMENT_NO_AUTHORITY` remain inactive vocabulary. This section supplies
+partial UI/runtime evidence only and closes no issue.
+
+---
+
 ## 20. Open Issues
 
 | Issue ID | Priority | Canonical blocking | Status | Problem | Required next evidence |
@@ -583,7 +617,7 @@ Issue closure requires accepted source spec, target patch, target open-issue rec
 | `OI-MCM-PLAN-GENERATOR-BINDING-001` | P1 | YES | OPEN | `PLAN_GENERATOR_SPEC.md` still owns `OI-PG-MICROCYCLE-CALENDAR-MAPPING-001`; this draft has not been patched into the target issue table. | Patch Plan Generator after review, then recount target issues. |
 | `OI-MCM-APP-BRIDGE-BINDING-001` | P1 | YES | OPEN | App Bridge does not yet define microcycle/calendar storage, audit, endpoint, permission, or tenant-isolation enforcement. | Patch App Bridge and run implementation/privacy review before production. |
 | `OI-MCM-NAMESPACE-ENFORCEMENT-001` | P1 | YES | OPEN | No implementation evidence proves `CYCLE_DAY.*`, `RULE_SPEC_D1_D9.*`, and `LEGACY_PHASE_D.*` cannot be confused. | Add parser/type/API checks after implementation exists. |
-| `OI-MCM-RUNTIME-EVIDENCE-001` | P1 | YES | OPEN | No runtime or CI evidence proves date mapping, timezone handling, source refs, or namespace guards. | Add actual terminal or CI logs after implementation exists. |
+| `OI-MCM-RUNTIME-EVIDENCE-001` | P1 | YES | OPEN | Preview-only runtime evidence proves transient future-date handling and no candidate/calendar mutation, but does not prove accepted date mapping, timezone handling, source refs, namespace guards, or persisted race anchors. | Preserve preview evidence and add accepted mapping, timezone, namespace, and persistence evidence before closure. |
 | `OI-MCM-UI-SURFACE-BINDING-001` | P2 | NO | OPEN | Calendar, Dashboard, Session Detail, and Analysis surfaces are design references only. | Patch UI/screen contracts after this mapping contract is reviewed. |
 | `OI-MCM-RACE-ANCHOR-POLICY-001` | P2 | NO | OPEN | Race anchor selection, updates, conflicts, and timezone correction need product review. | Define accepted anchor workflow and human review behavior. |
 | `OI-MCM-EDIT-WORKFLOW-001` | P2 | NO | OPEN | Calendar drag/drop or manual edits are not accepted plan modification workflows. | Define App Bridge/Plan Generator write workflow before any edit UI implementation. |

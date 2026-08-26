@@ -11,7 +11,7 @@ const legalDocuments = {
 }
 
 describe("beta account settings", () => {
-  it("explains the guardian gate after an under-14 birth date is saved", async () => {
+  it("does not save an under-14 online profile", async () => {
     const saveProfile = vi.fn().mockResolvedValue({ ok: true, message: "저장했어요." })
     render(
       <BetaAccountSettings
@@ -28,13 +28,8 @@ describe("beta account settings", () => {
     await userEvent.click(screen.getByRole("checkbox", { name: /이용약관/u }))
     await userEvent.click(screen.getByRole("button", { name: "계정 정보 저장" }))
 
-    expect(saveProfile).toHaveBeenCalledWith({
-      userId: "athlete-a",
-      birthDate: "2013-08-02",
-      privacyPolicyVersion: "2026-08-12",
-      termsOfServiceVersion: "2026-08-12",
-    })
-    expect(screen.getByText(/보호자 확인 전에는 계정 동기화와 일지 데이터 공유를 열지 않아요/u)).toBeVisible()
+    expect(saveProfile).not.toHaveBeenCalled()
+    expect(screen.getByText(/온라인 계정은 만 14세부터/u)).toBeVisible()
   })
 
   it("does not bundle product analytics consent into private profile saving", async () => {
@@ -135,5 +130,30 @@ describe("beta account settings", () => {
       privacyPolicyVersion: "2026-08-12",
       termsOfServiceVersion: "2026-08-12",
     })
+  })
+
+  it("finishes a new-tab email return without exposing account deletion controls", async () => {
+    const saveProfile = vi.fn().mockResolvedValue({ ok: true, message: "저장했어요." })
+    const completed = vi.fn()
+    render(
+      <BetaAccountSettings
+        userId="athlete-a"
+        today="2026-08-01"
+        legalDocuments={legalDocuments}
+        completionOnly
+        onCompleted={completed}
+        onSaveProfile={saveProfile}
+        onRequestDeletion={vi.fn()}
+      />,
+    )
+
+    await userEvent.type(screen.getByLabelText("생년월일"), "20000101")
+    await userEvent.click(screen.getByRole("checkbox", { name: /개인정보 처리방침/u }))
+    await userEvent.click(screen.getByRole("checkbox", { name: /이용약관/u }))
+    await userEvent.click(screen.getByRole("button", { name: "계정 정보 저장" }))
+
+    expect(screen.getByLabelText("생년월일")).toHaveValue("2000-01-01")
+    expect(completed).toHaveBeenCalledOnce()
+    expect(screen.queryByRole("button", { name: "계정 삭제 요청" })).not.toBeInTheDocument()
   })
 })

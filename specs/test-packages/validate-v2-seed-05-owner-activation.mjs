@@ -10,6 +10,12 @@ const STOP_CODES = [
   "STOP_CHEST_PAIN_OR_UNUSUAL_BREATHING",
   "STOP_LOSS_OF_CONTROLLED_FORM",
 ]
+const ACTIVE_NUMERIC_TEMPLATE_ALLOWLIST = [
+  "V2-SEED-05@1.0.0",
+  "MD-800-01@1.0.0",
+  "MD-1500-01@1.0.0",
+  "MD-3000-01@1.0.0",
+]
 
 function invariant(condition, message) {
   if (!condition) throw new Error(message)
@@ -82,7 +88,9 @@ export function validateCurrentActivation({ catalog, contract, report, manifest 
   const active = blocks.filter((block) => block.includes("lifecycleStatus: ACTIVE") || block.includes("eligibilityStatus: ELIGIBLE"))
   invariant(active.length === 1 && /^- templateId: V2-SEED-05\r?$/mu.test(active[0]), "only V2-SEED-05 may be active")
   for (const marker of ["version: \"1.0.0\"", "allowedEventGroups: [FIVE_K]", "allowedExperienceBands: [EXPERIENCED]", "repetitionRecovery: \"150 sec JOG\"", "numericReducedRepetitionVariant: null", ...STOP_CODES]) invariant(active[0].includes(marker), `catalog V2 entry missing ${marker}`)
-  invariant(contract.includes("active_numeric_template_exists_in_this_document: V2-SEED-05@1.0.0_ONLY"), "contract current activation mismatch")
+  const allowlistBlock = contract.match(/^\s+active_numeric_template_allowlist:\r?\n((?:\s+- [^\r\n]+\r?\n)+)/mu)?.[1] ?? ""
+  const allowlist = [...allowlistBlock.matchAll(/^\s+- ([^\r\n]+)$/gmu)].map((match) => match[1])
+  exactArray(allowlist, ACTIVE_NUMERIC_TEMPLATE_ALLOWLIST, "contract active numeric template allowlist")
   invariant(contract.includes("runtime_repetition_arithmetic_for_downshift: forbidden"), "contract runtime arithmetic guard missing")
   invariant(report.trimEnd().endsWith("[DRAFT_COMPLETE]"), "owner decision final marker missing")
   invariant(report.includes("independent_human_review_claimed: false"), "owner decision honesty boundary missing")

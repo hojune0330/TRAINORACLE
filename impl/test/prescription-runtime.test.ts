@@ -154,6 +154,26 @@ describe("prescription runtime safety boundary", () => {
     expect(JSON.stringify(result)).not.toContain("private")
   })
 
+  it("returns a typed rejection for hostile nested safety-code arrays", () => {
+    const hostileCodes = new Proxy([], {
+      getPrototypeOf: () => { throw new Error("hostile nested array") },
+    })
+    const input = {
+      ...runtimeInput,
+      template: { lifecycleStatus: "ACTIVE", eligibilityStatus: "ELIGIBLE" },
+      safetyGate: {
+        ...gateFor("D9_CLEARED"),
+        nonSensitiveReasonCodes: hostileCodes,
+      },
+    }
+
+    expect(() => preparePrescriptionRuntime(input)).not.toThrow()
+    expect(preparePrescriptionRuntime(input)).toEqual({
+      kind: "rejected",
+      code: "MALFORMED_RUNTIME_INPUT",
+    })
+  })
+
   it("prepares the exact V2-SEED-05 JOG session with complete operational components", () => {
     const input = {
       ...runtimeInput,

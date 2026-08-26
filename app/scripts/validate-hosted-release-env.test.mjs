@@ -44,13 +44,43 @@ test("requires the account gate before opening account-backed features", () => {
     VITE_FEATURE_SYNC: "true",
     VITE_FEATURE_SHARING: "true",
     VITE_FEATURE_PLAN_PROPOSALS: "true",
+    VITE_FEATURE_PLAN_BACKUP: "true",
+    VITE_FEATURE_PUBLIC_PROFILE: "true",
     VITE_FEATURE_PRODUCT_ANALYTICS: "true",
   }), [
     "SYNC_REQUIRES_ACCOUNT",
     "SHARING_REQUIRES_ACCOUNT",
     "PLAN_PROPOSALS_REQUIRES_ACCOUNT",
+    "PLAN_BACKUP_REQUIRES_ACCOUNT",
+    "PUBLIC_PROFILE_REQUIRES_ACCOUNT",
     "PRODUCT_ANALYTICS_REQUIRES_ACCOUNT",
   ])
+})
+
+test("keeps phone auth closed without both the account and operations approval", () => {
+  assert.deepEqual(validateHostedReleaseEnvironment({
+    VITE_PHONE_AUTH_ENABLED: "true",
+  }), [
+    "PHONE_AUTH_REQUIRES_ACCOUNT",
+    "PHONE_AUTH_REQUIRES_OPERATIONAL_APPROVAL",
+  ])
+
+  assert.deepEqual(validateHostedReleaseEnvironment({
+    ...connection,
+    ...legalDocuments,
+    VITE_ACCOUNT_PUBLIC_ENABLED: "true",
+    VITE_PHONE_AUTH_ENABLED: "true",
+  }), ["PHONE_AUTH_REQUIRES_OPERATIONAL_APPROVAL"])
+})
+
+test("allows phone auth only after its separate operations approval", () => {
+  assert.deepEqual(validateHostedReleaseEnvironment({
+    ...connection,
+    ...legalDocuments,
+    VITE_ACCOUNT_PUBLIC_ENABLED: "true",
+    VITE_PHONE_AUTH_ENABLED: "true",
+    VITE_PHONE_AUTH_OPERATIONS_APPROVED: "true",
+  }), [])
 })
 
 test("allows an independently released feedback board with a valid public connection", () => {

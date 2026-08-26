@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>TrainOracle 이메일 확인</title>
+  </head>
+  <body style="margin:0;background:#f4f5f2;color:#171a17;font-family:Arial,'Apple SD Gothic Neo','Noto Sans KR',sans-serif;">
+    <div style="max-width:520px;margin:0 auto;padding:32px 18px;">
+      <div style="border:1px solid #d7dbd4;background:#ffffff;padding:28px 24px;">
+        <p style="margin:0 0 8px;font-size:12px;color:#5d675d;">TRAINORACLE</p>
+        <h1 style="margin:0 0 12px;font-size:22px;line-height:1.35;">이메일 주소를 확인해 주세요</h1>
+        <p style="margin:0 0 20px;font-size:14px;line-height:1.65;color:#434b43;">
+          아래 버튼을 누르면 TrainOracle로 돌아가 가입이 이어집니다.
+        </p>
+        <p style="margin:0 0 20px;">
+          <a href="{{ .ConfirmationURL }}" style="display:block;background:#171a17;color:#ffffff;text-align:center;text-decoration:none;padding:14px 18px;font-size:15px;font-weight:700;">
+            가입 계속하기
+          </a>
+        </p>
+        <p style="margin:0;font-size:12px;line-height:1.65;color:#667066;">
+          이 링크는 한 번만 사용할 수 있고 곧 만료됩니다. 본인이 요청하지 않았다면 누르지 말고 이 메일을 무시해 주세요.
+        </p>
+      </div>
+    </div>
+  </body>
+</html>

@@ -36,7 +36,11 @@ import type { JournalEntry } from "./journal-schema"
 import { saveEntry } from "./journal-store"
 
 const TRASH_KEY = "trainoracle.journal.trash.v1"
-const TEST_NOW = new Date("2026-07-23T00:00:00.000Z")
+const ONE_DAY_MS = 24 * 60 * 60 * 1000
+
+function recentDeletedAt(): string {
+  return new Date(Date.now() - ONE_DAY_MS).toISOString()
+}
 
 function session(id: string, overrides: Partial<JournalEntry> = {}): JournalEntry {
   return {
@@ -97,14 +101,18 @@ function seedTrash(items: readonly { entry: JournalEntry; deletedAt: string }[])
 }
 
 beforeEach(() => {
-  window.localStorage.clear()
+  // 이 파일의 픽스처 deletedAt은 "2026년 7월" 같은 절대 날짜였다. 휴지통은
+  // 읽는 순간 30일이 지난 항목을 버리므로, 실제 시간이 흘러 deletedAt이
+  // 30일 전보 오래되면 loadTrash()가 항목을 조용히 비워버려 T-2~T-4가
+  // 2026-08-20부터 깨지기 시작했다(시간 경과로 썩는 테스트). 시계를
+  // 고정하고 픽스처를 그 기준 상대값으로 계산해 재발을 막는다.
   vi.useFakeTimers()
-  vi.setSystemTime(TEST_NOW)
+  vi.setSystemTime(new Date("2026-08-01T00:00:00.000Z"))
 })
 
 afterEach(() => {
-  vi.restoreAllMocks()
   vi.useRealTimers()
+  vi.restoreAllMocks()
   window.localStorage.clear()
 })
 
@@ -124,7 +132,7 @@ describe("journal-trash — 쓰기 실패를 숨기지 않는다", () => {
 
   it("T-2 takeFromTrash 저장이 실패하면 null을 주고 항목은 휴지통에 그대로 남는다", () => {
     const entry = assertStorable(session("a"))
-    seedTrash([{ entry, deletedAt: "2026-07-21T00:00:00.000Z" }])
+    seedTrash([{ entry, deletedAt: recentDeletedAt() }])
     expect(loadTrash()).toHaveLength(1)
 
     failWritesTo(TRASH_KEY)
@@ -141,7 +149,7 @@ describe("journal-trash — 쓰기 실패를 숨기지 않는다", () => {
 
   it("T-3 dropFromTrash 저장이 실패하면 false를 주고 항목은 살아남는다", () => {
     const entry = assertStorable(session("a"))
-    seedTrash([{ entry, deletedAt: "2026-07-21T00:00:00.000Z" }])
+    seedTrash([{ entry, deletedAt: recentDeletedAt() }])
 
     failWritesTo(TRASH_KEY)
     const dropped = dropFromTrash("a")
@@ -155,9 +163,10 @@ describe("journal-trash — 쓰기 실패를 숨기지 않는다", () => {
   it("T-4 emptyTrash 저장이 실패하면 false를 주고 항목 전부 살아남는다", () => {
     const a = assertStorable(session("a"))
     const b = assertStorable(session("b", { id: "b" }))
+    const recent = Date.now() - ONE_DAY_MS
     seedTrash([
-      { entry: a, deletedAt: "2026-07-21T00:00:00.000Z" },
-      { entry: b, deletedAt: "2026-07-22T00:00:00.000Z" },
+      { entry: a, deletedAt: new Date(recent - 1000).toISOString() },
+      { entry: b, deletedAt: new Date(recent).toISOString() },
     ])
     expect(loadTrash()).toHaveLength(2)
 
@@ -189,7 +198,8 @@ describe("journal-trash — 쓰기 실패를 숨기지 않는다", () => {
 
   it("T-6 저장 실패 시 꾸미기 정리를 돌리지 않는다 — 되돌린 일지의 겉모습이 달라지면 안 된다", () => {
     const entry = assertStorable(session("a"))
-    seedTrash([{ entry, deletedAt: "2026-07-21T00:00:00.000Z" }])
+    seedTrash([{ entry, deletedAt: recentDeletedAt() }])
+    expect(loadTrash()).toHaveLength(1)
 
     // 꾸미기 정리는 별도 키에 쓴다. 그 키에 쓰기가 일어났는지로
     // "정리가 돌았는가"를 관찰한다.

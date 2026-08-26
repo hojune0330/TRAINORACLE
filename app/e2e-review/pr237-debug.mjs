@@ -1,0 +1,10 @@
+import { chromium } from "playwright"
+const browser = await chromium.launch()
+const page = await browser.newPage({ viewport: { width: 375, height: 667 } })
+page.on("response", (r) => { if (r.status() >= 400) console.log("HTTP", r.status(), r.url()) })
+page.on("pageerror", (e) => console.log("PAGEERROR:", String(e).slice(0, 400)))
+await page.goto("http://127.0.0.1:4173/", { waitUntil: "networkidle" })
+await page.waitForTimeout(1500)
+console.log("H1:", await page.evaluate(() => document.querySelector("h1")?.textContent ?? "NONE"))
+console.log("rootChildren:", await page.evaluate(() => document.getElementById("root")?.childElementCount))
+await browser.close()

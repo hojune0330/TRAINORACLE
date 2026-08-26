@@ -2,6 +2,8 @@ export type ProductFeatures = {
   readonly sync: boolean
   readonly sharing: boolean
   readonly planProposals: boolean
+  readonly planBackup: boolean
+  readonly publicProfile: boolean
   readonly experimentalFatigue: boolean
   readonly decorationShop: boolean
   readonly productAnalytics: boolean
@@ -12,6 +14,8 @@ const SAFE_DEFAULTS: ProductFeatures = {
   sync: false,
   sharing: false,
   planProposals: false,
+  planBackup: false,
+  publicProfile: false,
   experimentalFatigue: false,
   decorationShop: true,
   productAnalytics: false,
@@ -36,6 +40,8 @@ export function resolveProductFeatures(env: Readonly<Record<string, unknown>>): 
     sync: enabled(env, "SYNC"),
     sharing: enabled(env, "SHARING"),
     planProposals: enabled(env, "PLAN_PROPOSALS"),
+    planBackup: enabled(env, "PLAN_BACKUP"),
+    publicProfile: enabled(env, "PUBLIC_PROFILE"),
     experimentalFatigue: enabled(env, "EXPERIMENTAL_FATIGUE"),
     decorationShop: enabled(env, "DECORATION_SHOP", SAFE_DEFAULTS.decorationShop),
     productAnalytics: enabled(env, "PRODUCT_ANALYTICS"),

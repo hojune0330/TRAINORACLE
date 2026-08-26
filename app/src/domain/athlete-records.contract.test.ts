@@ -100,6 +100,17 @@ describe("athlete record schema and storage", () => {
     },
   )
 
+  it.each([
+    "raw-symptom-chest-pain-after-training-1",
+    "private_note_after_run_1",
+    "memo:felt-good",
+  ])("rejects private-text field names in an opaque record ID: %s", (id) => {
+    expect(saveAthleteRecord(personalBest({
+      id,
+      sourceRef: `athlete-record:${id}`,
+    }), TODAY).ok).toBe(false)
+  })
+
   it.each([0, -1, Number.POSITIVE_INFINITY, Number.NaN])(
     "rejects invalid performance seconds %s",
     (performanceSeconds) => {

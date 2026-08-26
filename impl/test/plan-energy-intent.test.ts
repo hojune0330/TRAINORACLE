@@ -26,6 +26,7 @@ function generateFor(selectedEnergyIntent: string) {
     safetyGate: clearedGate(),
     profile: {
       eventGroup: "FIVE_K",
+      eventDistanceM: 5000,
       experienceBand: "DEVELOPING",
       availableTrainingDays: [1, 3, 5, 7, 9],
       secondSessionMode: "SINGLE_SESSION_ONLY",
@@ -45,7 +46,7 @@ function expectGenerated(result: ReturnType<typeof generatePlanCandidates>) {
 }
 
 describe("personal plan energy intention contract", () => {
-  it("keeps the selected quality focus in both candidates and reduces Candidate B duration dose", () => {
+  it("keeps Candidate B QUALITY equal while collapsing BASE support maxima", () => {
     // Given
     const generated = expectGenerated(generateFor("VO2_INTENT"))
 
@@ -53,6 +54,12 @@ describe("personal plan energy intention contract", () => {
     const [balanced, conservative] = generated.candidates
     const balancedQuality = balanced.sessions.find((session) => session.role === "QUALITY")
     const conservativeQuality = conservative.sessions.find((session) => session.role === "QUALITY")
+    const balancedSupport = balanced.sessions.find((session) => (
+      session.role === "EASY" && session.plannedEnergyIntent === "BASE_INTENT"
+    ))
+    const conservativeSupport = conservative.sessions.find((session) => (
+      session.role === "EASY" && session.plannedEnergyIntent === "BASE_INTENT"
+    ))
 
     // Then
     expect(balancedQuality?.plannedEnergyIntent).toBe("VO2_INTENT")
@@ -62,8 +69,13 @@ describe("personal plan energy intention contract", () => {
       balancedQuality.prescription.kind !== "RPE_TIME_RANGE"
       || conservativeQuality.prescription.kind !== "RPE_TIME_RANGE"
     ) return
-    expect(conservativeQuality.prescription.durationMinutes.maximum).toBeLessThan(
-      balancedQuality.prescription.durationMinutes.maximum,
+    expect(conservativeQuality).toStrictEqual(balancedQuality)
+    if (
+      balancedSupport?.role !== "EASY"
+      || conservativeSupport?.role !== "EASY"
+    ) return
+    expect(conservativeSupport.prescription.durationMinutes.maximum).toBeLessThan(
+      balancedSupport.prescription.durationMinutes.maximum,
     )
   })
 
@@ -73,6 +85,7 @@ describe("personal plan energy intention contract", () => {
       safetyGate: clearedGate(),
       profile: {
         eventGroup: "FIVE_K",
+        eventDistanceM: 5000,
         experienceBand: "EXPERIENCED",
         availableTrainingDays: [1, 3, 5, 7, 9],
         secondSessionMode: "RECOVERY_PM_ALLOWED",
@@ -100,6 +113,7 @@ describe("personal plan energy intention contract", () => {
       safetyGate: clearedGate(),
       profile: {
         eventGroup: "FIVE_K",
+        eventDistanceM: 5000,
         experienceBand: "EXPERIENCED",
         availableTrainingDays: [1, 2, 3, 4, 5, 6, 7, 8, 9],
         secondSessionMode: "RECOVERY_PM_ALLOWED",
@@ -175,6 +189,7 @@ describe("personal plan energy intention contract", () => {
       safetyGate: clearedGate(),
       profile: {
         eventGroup: "FIVE_K",
+        eventDistanceM: 5000,
         experienceBand: "DEVELOPING",
         availableTrainingDays: [1, 2, 3, 4, 5, 6, 7, 8, 9],
         secondSessionMode: "RECOVERY_PM_ALLOWED",
@@ -206,6 +221,7 @@ describe("personal plan energy intention contract", () => {
       safetyGate: clearedGate(),
       profile: {
         eventGroup: "FIVE_K",
+        eventDistanceM: 5000,
         experienceBand: "EXPERIENCED",
         availableTrainingDays: [1, 2, 3, 4, 5, 6, 7, 8, 9],
         secondSessionMode: "RECOVERY_PM_ALLOWED",
@@ -252,6 +268,7 @@ describe("personal plan energy intention contract", () => {
       safetyGate: clearedGate(),
       profile: {
         eventGroup: "FIVE_K",
+        eventDistanceM: 5000,
         experienceBand: "EXPERIENCED",
         availableTrainingDays: [1, 2, 3, 4, 5, 6, 7, 8, 9],
         secondSessionMode: "RECOVERY_PM_ALLOWED",

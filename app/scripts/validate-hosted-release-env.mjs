@@ -2,6 +2,8 @@ const ACCOUNT_BACKED_FEATURES = [
   "SYNC",
   "SHARING",
   "PLAN_PROPOSALS",
+  "PLAN_BACKUP",
+  "PUBLIC_PROFILE",
   "PRODUCT_ANALYTICS",
 ]
 
@@ -20,6 +22,11 @@ function isAccountEnabled(environment) {
     && textValue(environment, "VITE_KILL_ACCOUNT") !== "true"
 }
 
+function isPhoneAuthEnabled(environment) {
+  return textValue(environment, "VITE_PHONE_AUTH_ENABLED") === "true"
+    && textValue(environment, "VITE_KILL_PHONE_AUTH") !== "true"
+}
+
 function hasPublicConnection(environment) {
   return textValue(environment, "VITE_SUPABASE_URL").startsWith("https://")
     && textValue(environment, "VITE_SUPABASE_ANON_KEY") !== ""
@@ -36,12 +43,19 @@ export function validateHostedReleaseEnvironment(environment) {
   const errors = []
   const accountOpen = isAccountEnabled(environment)
   const connectionReady = hasPublicConnection(environment)
+  const phoneAuthOpen = isPhoneAuthEnabled(environment)
 
   if (accountOpen && !connectionReady) {
     errors.push("ACCOUNT_REQUIRES_PUBLIC_CONNECTION")
   }
   if (accountOpen && !hasPublicLegalDocuments(environment)) {
     errors.push("ACCOUNT_REQUIRES_PUBLIC_LEGAL_DOCUMENTS")
+  }
+  if (phoneAuthOpen && !accountOpen) {
+    errors.push("PHONE_AUTH_REQUIRES_ACCOUNT")
+  }
+  if (phoneAuthOpen && textValue(environment, "VITE_PHONE_AUTH_OPERATIONS_APPROVED") !== "true") {
+    errors.push("PHONE_AUTH_REQUIRES_OPERATIONAL_APPROVAL")
   }
 
   for (const feature of ACCOUNT_BACKED_FEATURES) {

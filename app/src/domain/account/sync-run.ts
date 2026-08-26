@@ -1,9 +1,11 @@
-import { parseJournalEntryList } from "../journal-schema"
 import type { JournalEntry } from "../journal-schema"
-import { journalStorage } from "../journal-local-storage"
-import { loadEntries, replaceAllEntries } from "../journal-store"
-import { savePrivateMemosWithJournalShells } from "../private-memo-vault"
-import { loadSessionRecoveryCode } from "./private-note-sync"
+import { fromStructuredJournalPayload } from "../safe-export"
+import {
+  loadEntriesOwnedBy,
+  replaceEntriesOwnedBy,
+  replaceEntriesOwnedByWithPrivateMemos,
+} from "../journal-store"
+import { assignJournalsToAccount } from "./local-journal-ownership"
 import { pullPrivateJournalEntries, pushPrivateJournalEntries } from "./private-note-remote"
 import {
   clearSyncRecoveryCheckpoint,
@@ -13,7 +15,12 @@ import {
 import { failed, hasSupportedSyncSchema, sessionFailureCode } from "./sync-guard"
 import { claimSyncBinding, loadSyncConsent, mergeEntries, toUploadPayload } from "./sync-local"
 import { supabase } from "./supabase-client"
-import { loadTombstones, mergeTombstones, saveTombstones, tombstonedIds } from "./tombstone"
+import {
+  loadTombstonesOwnedBy,
+  mergeTombstones,
+  saveTombstonesOwnedBy,
+  tombstonedIds,
+} from "./tombstone"
 import type { Tombstone } from "./tombstone"
 import type { SyncOutcome } from "./sync-types"
 
@@ -36,8 +43,11 @@ export async function syncNow(userId: string): Promise<SyncOutcome> {
   if (failureCode !== null) {
     return failed("Sync requires the matching signed-in account.", failureCode)
   }
-  const consent = loadSyncConsent()
-  if (!consent.enabled) return failed("동기화가 꺼져 있어요. 먼저 동기화를 켜 주세요.")
+  const storedConsent = loadSyncConsent(userId)
+  if (!storedConsent.enabled) return failed("동기화가 꺼져 있어요. 먼저 동기화를 켜 주세요.")
+  // 첫 공개 동기화는 구조화 일지만 다룬다. 이전 시험 설정에 메모 공유가
+  // 남아 있어도 원문이 서버로 올라가지 않도록 실행 경계에서도 다시 닫는다.
+  const consent = { ...storedConsent, shareTrainingNotes: false }
   if (!claimSyncBinding(userId)) {
     return failed(
       "이 기기의 일지는 다른 계정과 연결되어 있어요. 다른 계정으로 업로드하지 않았어요. "
@@ -59,9 +69,24 @@ export async function syncNow(userId: string): Promise<SyncOutcome> {
 
   const { data, error } = await client.from(JOURNAL_TABLE).select("entry").eq("user_id", userId)
   if (error) return failed("서버에서 일지를 가져오지 못했어요.")
-  const remote = parseJournalEntryList((data ?? []).map((row: { entry: unknown }) => row.entry))
+  const remoteReceived = (data ?? [])
+    .map((row: { entry: unknown }) => fromStructuredJournalPayload(row.entry))
+    .filter((entry: JournalEntry | null): entry is JournalEntry => entry !== null)
+  const remote: JournalEntry[] = []
+  const memoExcludedEntryIds: string[] = []
+  for (const entry of remoteReceived) {
+    const payload = toUploadPayload(entry, consent)
+    if (payload === null) {
+      memoExcludedEntryIds.push(entry.id)
+      continue
+    }
+    const structured = fromStructuredJournalPayload(payload)
+    if (structured !== null) remote.push(structured)
+  }
 
-  const recoveryCode = loadSessionRecoveryCode()
+  // 암호화 개인 메모 동기화는 별도 복구 UX와 운영 승격 뒤에 연다.
+  // 기존 세션에 복구 코드가 남아 있어도 첫 공개 동기화에서는 건드리지 않는다.
+  const recoveryCode = null
   const privatePull = await pullPrivateJournalEntries(client, userId, recoveryCode)
   if (!privatePull.ok) return failed(privatePull.message)
 
@@ -78,8 +103,8 @@ export async function syncNow(userId: string): Promise<SyncOutcome> {
     .map((row: { entry_id: string; deleted_at: string }) =>
       ({ id: row.entry_id, deletedAt: row.deleted_at }))
 
-  const local = loadEntries()
-  const localTombstones = loadTombstones()
+  const local = loadEntriesOwnedBy(userId)
+  const localTombstones = loadTombstonesOwnedBy(userId)
   const tombstones = mergeTombstones(localTombstones, remoteTombstones)
   if (!createSyncRecoveryCheckpoint(userId, local, localTombstones)) {
     return failed(
@@ -87,7 +112,8 @@ export async function syncNow(userId: string): Promise<SyncOutcome> {
       "SYNC_RECOVERY_FAILED",
     )
   }
-  if (!saveTombstones(tombstones)) {
+  if (!assignJournalsToAccount(remoteTombstones.map((tombstone) => tombstone.id), userId)
+    || !saveTombstonesOwnedBy(userId, tombstones)) {
     return failed("삭제 기록을 이 기기에 저장하지 못해 동기화를 멈췄어요. 로컬 일지는 그대로예요.")
   }
   const deletedIds = tombstonedIds(tombstones)
@@ -97,25 +123,23 @@ export async function syncNow(userId: string): Promise<SyncOutcome> {
       entry.id === pulled.id && entry.savedAt === pulled.savedAt))
   let merged: JournalEntry[] = mergedBeforePrivateVault
   if (selectedPrivateEntries.length > 0) {
-    const localStorage = journalStorage()
-    const persisted = localStorage === null || recoveryCode === null
-      ? null
-      : await savePrivateMemosWithJournalShells(
-        localStorage,
+    const persisted = recoveryCode === null
+      ? { ok: false }
+      : await replaceEntriesOwnedByWithPrivateMemos(
+        userId,
         mergedBeforePrivateVault,
         selectedPrivateEntries,
         recoveryCode,
       )
-    if (persisted !== null) merged = persisted
+    if (persisted.ok) merged = mergedBeforePrivateVault
     else {
       return failed("나만의 메모를 이 기기에 안전하게 저장하지 못해 동기화를 멈췄어요.")
     }
-  } else if (!replaceAllEntries(merged).ok) {
+  } else if (!replaceEntriesOwnedBy(userId, merged).ok) {
     return failed("병합 결과를 저장하지 못했어요. 로컬 일지는 그대로예요.")
   }
 
   const rows: { user_id: string; entry_id: string; saved_at: string; entry: Record<string, unknown> }[] = []
-  const memoExcludedEntryIds: string[] = []
   for (const entry of merged) {
     const payload = toUploadPayload(entry, consent)
     if (payload === null) memoExcludedEntryIds.push(entry.id)
@@ -133,7 +157,7 @@ export async function syncNow(userId: string): Promise<SyncOutcome> {
       .from(JOURNAL_TABLE)
       .delete()
       .eq("user_id", userId)
-      .in("entry_id", memoExcludedEntryIds)
+      .in("entry_id", [...new Set(memoExcludedEntryIds)])
     if (memoDeleteError) {
       return remoteFailure(
         "메모 제외 설정을 서버에 반영하지 못했어요. 다시 동기화해 주세요.",
@@ -196,7 +220,7 @@ export async function syncNow(userId: string): Promise<SyncOutcome> {
     deleted = toDelete.length
   }
 
-  if (!clearSyncRecoveryCheckpoint()) {
+  if (!clearSyncRecoveryCheckpoint(userId)) {
     return {
       ok: false,
       message: "동기화는 끝났지만 복구 기록을 정리하지 못했어요. 다시 동기화해 주세요.",

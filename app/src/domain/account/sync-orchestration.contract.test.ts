@@ -134,6 +134,7 @@ import { saveSessionRecoveryCode } from "./private-note-sync"
 import { createRecoveryCode } from "./private-note-crypto"
 import { loadTombstones, recordTombstone } from "./tombstone"
 import { saveEntry, savePrivateEntry } from "../journal-store"
+import { assignJournalsToAccount, setActiveLocalAccount } from "./local-journal-ownership"
 import type { PostSessionEntry } from "../journal-schema"
 
 const JOURNAL_KEY = "trainoracle.journal.v1"
@@ -180,6 +181,7 @@ beforeEach(() => {
   server.schemaRpcFails = false
   server.rpcCallCount = 0
   server.journalSelectCount = 0
+  setActiveLocalAccount("user-1")
   saveSyncConsent({ enabled: true, shareTrainingNotes: false })
 })
 
@@ -240,6 +242,7 @@ describe("syncNow — 삭제 기록 서버 전파", () => {
   })
 
   it("삭제 기록에는 본문·날짜·수치가 올라가지 않는다 (최소 수집)", async () => {
+    expect(assignJournalsToAccount(["min-1"], "user-1")).toBe(true)
     recordTombstone("min-1", "2026-07-21T00:00:00.000Z")
     await syncNow("user-1")
 
@@ -263,7 +266,7 @@ describe("syncNow — 삭제 기록 서버 전파", () => {
     expect(outcome.message).toMatch(/메모 제외/u)
   })
 
-  it("나만의 메모는 복구 코드가 있을 때 암호문으로만 서버에 올린다", async () => {
+  it("첫 공개 동기화는 복구 코드가 있어도 나만의 메모 암호문을 올리지 않는다", async () => {
     const code = createRecoveryCode()
     saveSessionRecoveryCode(code)
     await savePrivateEntry({
@@ -275,9 +278,54 @@ describe("syncNow — 삭제 기록 서버 전파", () => {
     const outcome = await syncNow("user-1")
 
     expect(outcome.ok).toBe(true)
-    expect(server.privateNotes).toHaveLength(1)
+    expect(server.privateNotes).toHaveLength(0)
     expect(JSON.stringify(server.privateNotes)).not.toContain("나만 보는 원문")
     expect(server.entries).toHaveLength(0)
+  })
+
+  it("이전 시험 동의가 남아 있어도 훈련 메모 원문은 서버 payload에서 제거한다", async () => {
+    const secret = "서버로 보내면 안 되는 훈련 메모"
+    saveEntry({
+      ...post("structured-with-note"),
+      memo: secret,
+      memoPurpose: "ANALYZABLE_TRAINING_NOTE",
+    })
+    saveSyncConsent({ enabled: true, shareTrainingNotes: true })
+
+    const outcome = await syncNow("user-1")
+
+    expect(outcome.ok).toBe(true)
+    expect(server.entries).toHaveLength(1)
+    expect(JSON.stringify(server.entries)).not.toContain(secret)
+    expect(JSON.stringify(server.entries)).not.toContain("memoPurpose")
+  })
+
+  it("서버에 남은 과거 메모 원문도 내려받은 뒤 로컬·서버 양쪽에서 정리한다", async () => {
+    const structuredSecret = "과거 서버 훈련 메모"
+    const memoOnlySecret = "과거 서버 개인 메모"
+    server.entries = [
+      {
+        entry_id: "remote-structured",
+        entry: {
+          ...post("remote-structured"),
+          memo: structuredSecret,
+          memoPurpose: "ANALYZABLE_TRAINING_NOTE",
+        },
+      },
+      {
+        entry_id: "remote-memo-only",
+        entry: { ...memoOnlyPost("remote-memo-only"), memo: memoOnlySecret },
+      },
+    ]
+
+    const outcome = await syncNow("user-1")
+
+    expect(outcome.ok).toBe(true)
+    expect(server.entries).toHaveLength(1)
+    expect(JSON.stringify(server.entries)).not.toContain(structuredSecret)
+    expect(JSON.stringify(server.entries)).not.toContain(memoOnlySecret)
+    expect(JSON.stringify(window.localStorage)).not.toContain(structuredSecret)
+    expect(JSON.stringify(window.localStorage)).not.toContain(memoOnlySecret)
   })
 
 })

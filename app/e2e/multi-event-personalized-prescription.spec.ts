@@ -27,6 +27,7 @@ const records = [
 const cases = [
   {
     eventDistanceM: 800,
+    focus: /스피드 지구력.*GLY/u,
     notation: /10×200m @800m RP.*r60.*STAND/u,
     summary: "총 10회 · 품질 거리 2000m · 200m 31초",
     execution: "준비, 10회 본운동과 9번의 사이 회복, 정리 순서로 진행하세요.",
@@ -35,6 +36,7 @@ const cases = [
   },
   {
     eventDistanceM: 1500,
+    focus: /섞어 하는 강도.*MIXED/u,
     notation: /3×500m @1500m RP.*r180.*STAND/u,
     summary: "총 3회 · 품질 거리 1500m · 500m 1분 22초",
     execution: "준비, 3회 본운동과 2번의 사이 회복, 정리 순서로 진행하세요.",
@@ -43,6 +45,7 @@ const cases = [
   },
   {
     eventDistanceM: 3000,
+    focus: /반복 인터벌.*VO2/u,
     notation: /4×800m @3000m RP.*r180.*WALK/u,
     summary: "총 4회 · 품질 거리 3200m · 800m 2분 43초",
     execution: "준비, 4회 본운동과 3번의 사이 회복, 정리 순서로 진행하세요.",
@@ -57,21 +60,29 @@ async function seedRecords(page: Page): Promise<void> {
   }, records)
 }
 
-async function reachMiddleDistanceCandidates(page: Page): Promise<void> {
+async function reachExactEventCandidates(
+  page: Page,
+  eventDistanceM: number,
+  focus: RegExp,
+): Promise<void> {
   await page.goto(`${appPath}?app=1`)
   await page.getByRole("navigation", { name: "주 탭" })
     .getByRole("button", { name: "계획" })
     .click()
-  await page.getByRole("button", { name: /800m.*1500m.*3000m/u }).click()
+  await page.getByRole("button", { name: new RegExp(`^${eventDistanceM}m`, "u") }).click()
   await page.getByRole("button", { name: /일반부/u }).click()
   await page.getByRole("button", { name: /구조화된 훈련과 경기 경험이 많아요/u }).click()
   await page.getByRole("button", { name: /통증은 없고 몸 상태는 평소와 같아요/u }).click()
   await page.getByRole("button", { name: "내 계획 완성하기" }).click()
-  await page.getByRole("button", { name: /반복 인터벌.*VO2/u }).click()
+  await page.getByRole("button", { name: focus }).click()
+  await page.getByRole("button", {
+    name: new RegExp(`${eventDistanceM}m 경기 페이스 상세 훈련 포함`, "u"),
+  }).click()
   await page.getByRole("button", { name: /^3일/u }).click()
   await selectNineDayProjection(page)
   await page.getByRole("button", { name: /아침에 운동해요/u }).click()
   await page.getByRole("button", { name: /하루 한 번 운동/u }).click()
+  await page.getByRole("button", { name: "날짜 없이 계획 후보 보기" }).click()
 }
 
 for (const fixture of cases) {
@@ -85,17 +96,22 @@ for (const fixture of cases) {
     })
     page.on("pageerror", (error) => browserErrors.push(error.message))
     await seedRecords(page)
-    await reachMiddleDistanceCandidates(page)
+    await reachExactEventCandidates(page, fixture.eventDistanceM, fixture.focus)
 
     const picker = page.getByRole("region", { name: "개인 페이스 기준 기록" })
     const comparison = page.getByRole("region", { name: "두 계획 핵심 비교" })
     const pickerBox = await picker.boundingBox()
     const comparisonBox = await comparison.boundingBox()
     expect(pickerBox?.y).toBeLessThan(comparisonBox?.y ?? 0)
-    await expect(picker.getByRole("button", { name: /800m/u })).toBeVisible()
-    await expect(picker.getByRole("button", { name: /1500m/u })).toBeVisible()
-    await expect(picker.getByRole("button", { name: /3000m/u })).toBeVisible()
-    await expect(picker.getByRole("button", { name: /5000m/u })).toHaveCount(0)
+    await expect(picker.getByRole("button", {
+      name: new RegExp(`${fixture.eventDistanceM}m`, "u"),
+    })).toBeVisible()
+    for (const otherDistance of [800, 1500, 3000, 5000]) {
+      if (otherDistance === fixture.eventDistanceM) continue
+      await expect(picker.getByRole("button", {
+        name: new RegExp(`${otherDistance}m`, "u"),
+      })).toHaveCount(0)
+    }
 
     await picker.getByRole("button", {
       name: new RegExp(`${fixture.eventDistanceM}m`, "u"),
@@ -112,7 +128,8 @@ for (const fixture of cases) {
         path: testInfo.outputPath(`candidate-${fixture.eventDistanceM}m.png`),
       })
     }
-    await page.getByRole("button", { name: /반복 인터벌 포함 선택하기/u }).click()
+    await page.getByRole("button", { name: /기본 보조훈련 선택하기/u }).click()
+    await expect(page.getByRole("heading", { name: /기본 보조훈련 9일 계획/u })).toBeVisible()
     await expect(page.getByText(fixture.summary).first()).toBeVisible()
     await expect(page.getByText(fixture.execution).first()).toBeVisible()
     await expect(page.getByText(fixture.work).first()).toBeVisible()
@@ -136,31 +153,31 @@ for (const fixture of cases) {
     await page.getByRole("button", {
       name: "통증 없고 평소와 같음 · 시작 확인",
     }).click()
-    await expect(page.getByRole("status")).toContainText("시작할 수 있어요")
+    await expect(page.getByRole("status").filter({ hasText: "시작할 수 있어요" })).toBeVisible()
     const activeSession = page.getByText(fixture.notation).first()
       .locator("xpath=ancestor::section[@role='group'][1]")
     await activeSession.getByRole("button", { name: "완료" }).click()
     await expect(page.getByRole("button", {
       name: /통증 없고 평소와 같음 · (시작|다시 시작) 확인/u,
     })).toHaveCount(0)
-    await expect(page.getByRole("status")).toHaveCount(0)
+    await expect(page.getByRole("status").filter({ hasText: "시작할 수 있어요" })).toHaveCount(0)
     await expect(page.getByText(/이미 결과를 기록한 세션은 다시 시작하지 않아요/u).first())
       .toBeVisible()
     await activeSession.getByRole("button", { name: "휴식" }).click()
     await expect(page.getByRole("button", {
       name: /통증 없고 평소와 같음 · (시작|다시 시작) 확인/u,
     })).toHaveCount(0)
-    await expect(page.getByRole("status")).toHaveCount(0)
+    await expect(page.getByRole("status").filter({ hasText: "시작할 수 있어요" })).toHaveCount(0)
     await activeSession.getByRole("button", { name: "건너뜀" }).click()
     await expect(page.getByRole("button", {
       name: /통증 없고 평소와 같음 · (시작|다시 시작) 확인/u,
     })).toHaveCount(0)
-    await expect(page.getByRole("status")).toHaveCount(0)
+    await expect(page.getByRole("status").filter({ hasText: "시작할 수 있어요" })).toHaveCount(0)
     await activeSession.getByRole("button", { name: "통증 체크" }).click()
     await expect(page.getByRole("button", {
       name: /통증 없고 평소와 같음 · (시작|다시 시작) 확인/u,
     })).toHaveCount(0)
-    await expect(page.getByRole("status")).toHaveCount(0)
+    await expect(page.getByRole("status").filter({ hasText: "시작할 수 있어요" })).toHaveCount(0)
     await expect(page.getByText("통증 기록 후 확인")).toBeVisible()
     await expect(page.getByRole("button", {
       name: "통증·이상 또는 잘 모르겠음",

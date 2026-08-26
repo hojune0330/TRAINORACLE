@@ -4,9 +4,9 @@
 document_metadata:
   doc_id: trainoracle-account-federation-decision
   title: 계정 구조 확정 — 분리 운영 + 계열사 통합회원 (원클릭 연동)
-  version: 1.0
+  version: 1.1
   date: 2026-07-10
-  status: DECIDED
+  status: SUPERSEDED_FOR_PRIMARY_AUTH_RETAINED_FUTURE_REFERENCE
   decided_by: 승인권자(사용자)
   decision_verbatim: >
     "통일하기보단 분리하되 연동이 바로 되는 느낌이 좋겠어.
@@ -18,6 +18,14 @@ document_metadata:
     - ATHLETETIME_INTEGRATION_REVIEW.md §2 (PB/SB API 소비) — 유지
     - 데이터 경계 원칙 전체 (일지·통증·안전 데이터 비유출) — 유지
 ```
+
+---
+
+> **현재 결정 (2026-08-25):** TrainOracle 1차 인증원은 Supabase Auth이며 카카오,
+> Google, 이메일 OTP를 제공한다. AthleteTime SSO는 첫 출시의 선행조건이나 신원의
+> 뿌리가 아니며 향후 선택 계정 연결 후보로 보류한다. 아래 내용은 2026-07-10 당시
+> 승인된 장기 연합 구상과 역사적 이유를 보존한 것이며, 현재 구현 지시는
+> `specs/reconstruct/ACCOUNT_AUTHENTICATION_AND_IDENTITY_LINKING_SPEC.md`가 우선한다.
 
 ---
 

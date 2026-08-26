@@ -1,11 +1,11 @@
-import { loadEntries } from "../journal-store"
+import { loadEntriesOwnedBy } from "../journal-store"
 import { claimSyncBinding, loadSyncConsent } from "./sync-local"
 import { hasSupportedSyncSchema, sessionFailureCode } from "./sync-guard"
 import { supabase } from "./supabase-client"
 import type { SyncPreviewOutcome } from "./sync-types"
 
 export async function previewSync(userId: string): Promise<SyncPreviewOutcome> {
-  const localCount = loadEntries().length
+  const localCount = loadEntriesOwnedBy(userId).length
   const client = await supabase()
   if (client === null) {
     return { ok: false, message: "계정 기능이 꺼져 있어요.", localCount, remoteJournalCount: 0, remotePrivateCount: 0 }
@@ -21,7 +21,7 @@ export async function previewSync(userId: string): Promise<SyncPreviewOutcome> {
       failureCode,
     }
   }
-  if (!loadSyncConsent().enabled) {
+  if (!loadSyncConsent(userId).enabled) {
     return { ok: false, message: "동기화를 먼저 켜 주세요.", localCount, remoteJournalCount: 0, remotePrivateCount: 0 }
   }
   if (!claimSyncBinding(userId)) {
@@ -44,11 +44,8 @@ export async function previewSync(userId: string): Promise<SyncPreviewOutcome> {
       failureCode: "SERVER_SCHEMA_OUTDATED",
     }
   }
-  const [journalResult, privateResult] = await Promise.all([
-    client.from("journal_entries").select("entry_id").eq("user_id", userId),
-    client.from("encrypted_private_notes").select("entry_id").eq("user_id", userId),
-  ])
-  if (journalResult.error || privateResult.error) {
+  const journalResult = await client.from("journal_entries").select("entry_id").eq("user_id", userId)
+  if (journalResult.error) {
     return {
       ok: false,
       message: "계정의 일지 개수를 확인하지 못했어요. 이 기기의 일지는 그대로예요.",
@@ -62,6 +59,6 @@ export async function previewSync(userId: string): Promise<SyncPreviewOutcome> {
     message: "합칠 내용을 확인했어요.",
     localCount,
     remoteJournalCount: journalResult.data?.length ?? 0,
-    remotePrivateCount: privateResult.data?.length ?? 0,
+    remotePrivateCount: 0,
   }
 }

@@ -5,6 +5,7 @@ import type {
   PlanReviewReasonCode,
 } from "./formation-types"
 import type { CanonicalPlanFrame, PlanSession } from "./session-types"
+import type { RacePlacementState } from "./race-placement"
 
 export {
   FORMATION_FRAME_KINDS,
@@ -77,6 +78,12 @@ export type PlanSelectionAuthority = "SELF" | "COACH_REQUIRED"
 export type PlanCandidateKind = "BALANCED" | "CONSERVATIVE"
 export type SupportedPlanEventDistanceM = 800 | 1500 | 3000 | 5000
 
+export type DetailedTemplateRef = {
+  readonly templateId: string
+  readonly version: string
+  readonly fingerprint: string
+}
+
 export const SECOND_SESSION_MODES = [
   "SINGLE_SESSION_ONLY",
   "RECOVERY_PM_ALLOWED",
@@ -148,9 +155,11 @@ export type PlanBetaAudit = {
 
 export type PlanCandidate = {
   readonly candidateId: string
+  readonly pairId: string
   readonly kind: PlanCandidateKind
   readonly eventGroup: PlanEventGroup
-  readonly eventDistanceM: SupportedPlanEventDistanceM | null
+  readonly eventDistanceM: SupportedPlanEventDistanceM
+  readonly selectedDetailedTemplateRef: DetailedTemplateRef | null
   readonly selectedEnergyIntent: PlannedEnergyIntent
   readonly sourceMode: PlanSourceMode
   readonly confidence: "LIMITED"
@@ -182,7 +191,7 @@ export type PlanCandidate = {
 
 export type PlanProfile = {
   readonly eventGroup: PlanEventGroup
-  readonly eventDistanceM?: SupportedPlanEventDistanceM
+  readonly eventDistanceM: SupportedPlanEventDistanceM
   readonly experienceBand: ExperienceBand
   readonly availableTrainingDays: readonly number[]
   readonly secondSessionMode: SecondSessionMode
@@ -204,18 +213,26 @@ export type PlanGenerationRequest = {
   readonly profile: PlanProfile
   readonly requestedFrameLength: 7 | 9 | 10
   readonly selectedEnergyIntent: PlannedEnergyIntent
+  readonly selectedDetailedTemplateRef?: DetailedTemplateRef | null
+  readonly targetRaceDate?: string
   readonly journalSource: JournalSource
   readonly selectionAuthority: PlanSelectionAuthority
   readonly continuity?: PlanContinuityInput
 }
 
-export type CanonicalPlanGenerationRequest = Omit<PlanGenerationRequest, "requestedFrameLength"> & {
+export type CanonicalPlanGenerationRequest = Omit<
+  PlanGenerationRequest,
+  "requestedFrameLength" | "selectedDetailedTemplateRef"
+> & {
   readonly requestedFrameLength: 7 | 9 | 9.5 | 10
+  readonly selectedDetailedTemplateRef: DetailedTemplateRef | null
   readonly formation: LocalCivilNinePointFiveFormation
 }
 
 export type PlanGenerationSuccess = {
   readonly kind: "generated"
+  readonly racePlacement: Extract<RacePlacementState, { readonly kind: "NO_TARGET_RACE" | "GENERIC_PLACEMENT_NO_AUTHORITY" }>
+  readonly pairId: string
   readonly sourceMode: PlanSourceMode
   readonly selectedEnergyIntent: PlannedEnergyIntent
   readonly confidence: "LIMITED"
@@ -236,6 +253,17 @@ export type PlanGenerationReviewResult = {
 
 export type PlanGenerationResult =
   | PlanGenerationSuccess
+  | {
+      readonly kind: "preview_only"
+      readonly code: "RACE_DATE_PERSISTENCE_NOT_AUTHORIZED"
+      readonly racePlacement: Extract<RacePlacementState, { readonly kind: "TARGET_RACE_PREVIEW_ONLY_RETENTION_BLOCKED" }>
+      readonly preview: {
+        readonly eventDistanceM: SupportedPlanEventDistanceM
+        readonly targetRaceDate: string
+      }
+      readonly candidates: readonly []
+      readonly audit: PlanBetaAudit
+    }
   | PlanGenerationReviewResult
   | {
       readonly kind: "blocked"
