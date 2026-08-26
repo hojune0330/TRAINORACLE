@@ -44,11 +44,8 @@ export async function previewSync(userId: string): Promise<SyncPreviewOutcome> {
       failureCode: "SERVER_SCHEMA_OUTDATED",
     }
   }
-  const [journalResult, privateResult] = await Promise.all([
-    client.from("journal_entries").select("entry_id").eq("user_id", userId),
-    client.from("encrypted_private_notes").select("entry_id").eq("user_id", userId),
-  ])
-  if (journalResult.error || privateResult.error) {
+  const journalResult = await client.from("journal_entries").select("entry_id").eq("user_id", userId)
+  if (journalResult.error) {
     return {
       ok: false,
       message: "계정의 일지 개수를 확인하지 못했어요. 이 기기의 일지는 그대로예요.",
@@ -62,6 +59,6 @@ export async function previewSync(userId: string): Promise<SyncPreviewOutcome> {
     message: "합칠 내용을 확인했어요.",
     localCount,
     remoteJournalCount: journalResult.data?.length ?? 0,
-    remotePrivateCount: privateResult.data?.length ?? 0,
+    remotePrivateCount: 0,
   }
 }
