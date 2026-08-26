@@ -22,6 +22,11 @@ import {
   getPlanMutationLockManager,
   PLAN_BETA_MUTATION_LOCK_NAME,
 } from "./plan-mutation-lock"
+import {
+  accountScopedStorageKeyFor,
+  localAccountScopeIsCurrent,
+  localAccountScopeSnapshot,
+} from "./account/local-account-scope"
 
 const ACTIVE_KEY = "trainoracle.plan-beta.v1"
 const ADAPTATION_KEY = "trainoracle.plan-beta.adaptation.v1"
@@ -56,6 +61,7 @@ export function hashPlanBetaState(state: PlanBetaState): Promise<string> {
  * through acceptPreparedNextFrameAdaptation with evaluated safety and hold context.
  */
 export async function acceptNextFrameProposal(candidate: unknown): Promise<AdaptationAcceptanceResult> {
+  const accountScope = localAccountScopeSnapshot()
   const locks = getPlanMutationLockManager()
   if (locks === null) return { kind: "rejected", code: "MUTATION_LOCK_UNAVAILABLE" }
   try {
@@ -64,7 +70,9 @@ export async function acceptNextFrameProposal(candidate: unknown): Promise<Adapt
       { mode: "exclusive", ifAvailable: true },
       async (lock) => lock === null
         ? { kind: "rejected", code: "MUTATION_LOCK_UNAVAILABLE" } as const
-        : acceptNextFrameProposalUnchecked(candidate),
+        : localAccountScopeIsCurrent(accountScope)
+          ? acceptNextFrameProposalUnchecked(candidate, accountScope)
+          : { kind: "rejected", code: "SCOPE_MISMATCH" } as const,
     )
   } catch {
     return { kind: "rejected", code: "MUTATION_LOCK_UNAVAILABLE" }
@@ -72,7 +80,10 @@ export async function acceptNextFrameProposal(candidate: unknown): Promise<Adapt
 }
 
 /** Parsed implementation of the internal local-consistency boundary, not authorization. */
-async function acceptNextFrameProposalUnchecked(candidate: unknown): Promise<AdaptationAcceptanceResult> {
+async function acceptNextFrameProposalUnchecked(
+  candidate: unknown,
+  accountScope: string | null,
+): Promise<AdaptationAcceptanceResult> {
   if (typeof window === "undefined"
       || !hasCanonicalJsonTree(candidate)
       || containsPrivateKey(candidate)) return { kind: "rejected", code: "MALFORMED_INPUT" }
@@ -103,7 +114,7 @@ async function acceptNextFrameProposalUnchecked(candidate: unknown): Promise<Ada
     return { kind: "rejected", code: "EXPIRED_PROPOSAL" }
   }
 
-  const active = loadActiveState()
+  const active = loadActiveState(accountScope)
   if (active === null) return { kind: "rejected", code: "STALE_BASE" }
   const [activeHash, predecessorStateHash] = await Promise.all([hashPlanBetaState(active), hashPlanBetaState(request.predecessorState)])
   if (activeHash !== predecessorStateHash) return { kind: "rejected", code: "STALE_BASE" }
@@ -116,11 +127,14 @@ async function acceptNextFrameProposalUnchecked(candidate: unknown): Promise<Ada
       || request.successorState.progress.length !== 0) return { kind: "rejected", code: "SUCCESSOR_MISMATCH" }
 
   const requestHash = await canonicalJsonSha256("trainoracle.plan-adaptation-acceptance.v1", request)
-  const existing = loadEnvelope()
+  const existing = loadEnvelope(accountScope)
   const sameFrame = existing !== null
     && existing.pending.baseCandidateId === request.proposal.baseCandidateId
     && existing.pending.predecessorStateHash === predecessorStateHash
   if (sameFrame) {
+    if (!localAccountScopeIsCurrent(accountScope)) {
+      return { kind: "rejected", code: "SCOPE_MISMATCH" }
+    }
     if (existing.decision.idempotencyKey !== request.idempotencyKey) return { kind: "rejected", code: "STALE_BASE" }
     if (existing.decision.requestHash !== requestHash || existing.decision.proposalId !== request.proposal.proposalId) return { kind: "rejected", code: "REPLAY_MISMATCH" }
     return { kind: "accepted", pending: existing.pending, replay: true }
@@ -180,14 +194,18 @@ async function acceptNextFrameProposalUnchecked(candidate: unknown): Promise<Ada
     decision: { version: 1, decisionId, proposalId: request.proposal.proposalId, decision: "ACCEPT", predecessorStateHash, proposedContentHash: request.proposal.proposedContentHash, decidedAt: request.acceptedAt, idempotencyKey: request.idempotencyKey, requestHash },
   })
   if (!envelope.success) return { kind: "rejected", code: "MALFORMED_INPUT" }
+  if (!localAccountScopeIsCurrent(accountScope)) {
+    return { kind: "rejected", code: "SCOPE_MISMATCH" }
+  }
   let previous: string | null = null
   let previousCaptured = false
+  const adaptationKey = accountScopedStorageKeyFor(ADAPTATION_KEY, accountScope)
   try {
-    previous = window.localStorage.getItem(ADAPTATION_KEY)
+    previous = window.localStorage.getItem(adaptationKey)
     previousCaptured = true
     const serialized = JSON.stringify(envelope.data)
-    window.localStorage.setItem(ADAPTATION_KEY, serialized)
-    if (window.localStorage.getItem(ADAPTATION_KEY) !== serialized) {
+    window.localStorage.setItem(adaptationKey, serialized)
+    if (window.localStorage.getItem(adaptationKey) !== serialized) {
       throw new Error("Adaptation envelope was not persisted")
     }
     return { kind: "accepted", pending: envelope.data.pending, replay: false }
@@ -196,7 +214,7 @@ async function acceptNextFrameProposalUnchecked(candidate: unknown): Promise<Ada
       kind: "failed",
       code: "ADAPTATION_STORAGE_WRITE_FAILED",
       rollbackComplete: previousCaptured
-        && restoreStorageValue(window.localStorage, ADAPTATION_KEY, previous),
+        && restoreStorageValue(window.localStorage, adaptationKey, previous),
     }
   }
 }
@@ -205,10 +223,10 @@ export function loadPendingNextFrameSuccessor(): PendingNextFrameSuccessor | nul
   return loadEnvelope()?.pending ?? null
 }
 
-function loadEnvelope(): PlanAdaptationEnvelope | null {
+function loadEnvelope(accountScope = localAccountScopeSnapshot()): PlanAdaptationEnvelope | null {
   if (typeof window === "undefined") return null
   try {
-    const raw = window.localStorage.getItem(ADAPTATION_KEY)
+    const raw = window.localStorage.getItem(accountScopedStorageKeyFor(ADAPTATION_KEY, accountScope))
     if (raw === null) return null
     const json: unknown = JSON.parse(raw)
     const parsed = planAdaptationEnvelopeSchema.safeParse(json)
@@ -219,9 +237,9 @@ function loadEnvelope(): PlanAdaptationEnvelope | null {
   }
 }
 
-function loadActiveState(): PlanBetaStateV3 | null {
+function loadActiveState(accountScope: string | null): PlanBetaStateV3 | null {
   try {
-    const raw = window.localStorage.getItem(ACTIVE_KEY)
+    const raw = window.localStorage.getItem(accountScopedStorageKeyFor(ACTIVE_KEY, accountScope))
     if (raw === null) return null
     const json: unknown = JSON.parse(raw)
     const parsed = parsePlanBetaState(json)

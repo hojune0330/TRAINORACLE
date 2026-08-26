@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>TrainOracle 로그인 인증번호</title>
+  </head>
+  <body style="margin:0;background:#f4f5f2;color:#171a17;font-family:Arial,'Apple SD Gothic Neo','Noto Sans KR',sans-serif;">
+    <div style="max-width:520px;margin:0 auto;padding:32px 18px;">
+      <div style="border:1px solid #d7dbd4;background:#ffffff;padding:28px 24px;">
+        <p style="margin:0 0 8px;font-size:12px;color:#5d675d;">TRAINORACLE</p>
+        <h1 style="margin:0 0 12px;font-size:22px;line-height:1.35;">로그인 인증번호예요</h1>
+        <p style="margin:0 0 20px;font-size:14px;line-height:1.65;color:#434b43;">
+          TrainOracle 화면에 아래 6자리 번호를 입력해 주세요.
+        </p>
+        <p style="margin:0;padding:16px;border:1px solid #171a17;text-align:center;font-size:30px;font-weight:700;letter-spacing:6px;">
+          {{ .Token }}
+        </p>
+        <p style="margin:20px 0 0;font-size:12px;line-height:1.65;color:#667066;">
+          이 번호는 10분 동안만 사용할 수 있어요. 본인이 요청하지 않았다면 입력하지 말고 이 메일을 무시해 주세요.
+        </p>
+      </div>
+    </div>
+  </body>
+</html>

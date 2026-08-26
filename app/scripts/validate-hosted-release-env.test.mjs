@@ -53,6 +53,32 @@ test("requires the account gate before opening account-backed features", () => {
   ])
 })
 
+test("keeps phone auth closed without both the account and operations approval", () => {
+  assert.deepEqual(validateHostedReleaseEnvironment({
+    VITE_PHONE_AUTH_ENABLED: "true",
+  }), [
+    "PHONE_AUTH_REQUIRES_ACCOUNT",
+    "PHONE_AUTH_REQUIRES_OPERATIONAL_APPROVAL",
+  ])
+
+  assert.deepEqual(validateHostedReleaseEnvironment({
+    ...connection,
+    ...legalDocuments,
+    VITE_ACCOUNT_PUBLIC_ENABLED: "true",
+    VITE_PHONE_AUTH_ENABLED: "true",
+  }), ["PHONE_AUTH_REQUIRES_OPERATIONAL_APPROVAL"])
+})
+
+test("allows phone auth only after its separate operations approval", () => {
+  assert.deepEqual(validateHostedReleaseEnvironment({
+    ...connection,
+    ...legalDocuments,
+    VITE_ACCOUNT_PUBLIC_ENABLED: "true",
+    VITE_PHONE_AUTH_ENABLED: "true",
+    VITE_PHONE_AUTH_OPERATIONS_APPROVED: "true",
+  }), [])
+})
+
 test("allows an independently released feedback board with a valid public connection", () => {
   assert.deepEqual(validateHostedReleaseEnvironment({
     ...connection,

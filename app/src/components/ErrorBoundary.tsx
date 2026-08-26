@@ -14,6 +14,7 @@
 //  - 오류 내용을 서버로 보내지 않는다. 일지 본문이 섞여 나갈 수 있다.
 //  - 사용자를 탓하거나 불안을 주는 문구를 쓰지 않는다.
 import React from "react"
+import { isJournalVisible } from "../domain/account/local-journal-ownership"
 
 const JOURNAL_KEY = "trainoracle.journal.v1"
 
@@ -23,7 +24,7 @@ type State = { readonly failed: boolean; readonly detail: string }
 /** 깨진 상태에서도 동작하도록 localStorage를 직접 읽어 백업을 만든다 */
 function downloadRawBackup(): void {
   try {
-    const raw = window.localStorage.getItem(JOURNAL_KEY) ?? "[]"
+    const raw = emergencyJournalBackupRaw()
     const stamp = new Date().toISOString().slice(0, 10)
     const blob = new Blob([raw], { type: "application/json" })
     const url = URL.createObjectURL(blob)
@@ -39,9 +40,25 @@ function downloadRawBackup(): void {
   }
 }
 
-function entryCount(): number {
+export function emergencyJournalBackupRaw(): string {
   try {
     const parsed: unknown = JSON.parse(window.localStorage.getItem(JOURNAL_KEY) ?? "[]")
+    if (!Array.isArray(parsed)) return "[]"
+    return JSON.stringify(parsed.filter((candidate) => (
+      typeof candidate === "object"
+      && candidate !== null
+      && typeof (candidate as Record<string, unknown>).id === "string"
+      && isJournalVisible((candidate as Record<string, unknown>).id as string)
+    )))
+  } catch {
+    // 소유권을 확인할 수 없는 원문을 그대로 내보내면 다른 계정 일지가 섞일 수 있다.
+    return "[]"
+  }
+}
+
+function entryCount(): number {
+  try {
+    const parsed: unknown = JSON.parse(emergencyJournalBackupRaw())
     return Array.isArray(parsed) ? parsed.length : 0
   } catch {
     return 0

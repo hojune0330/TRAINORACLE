@@ -22,6 +22,8 @@
 //    잡아먹고, 아주 오래 전 삭제분이 서버에 남아 있을 가능성은 낮다.
 //    **주의**: 상한 축출은 이론적 부활 경로다(§mergeTombstones 주석 참고).
 
+import { isJournalOwnedBy } from "./local-journal-ownership"
+
 const KEY = "trainoracle.sync.tombstones.v1"
 
 /** 보관 상한 — 최근 삭제분 우선 (초과분은 오래된 것부터 잘라낸다) */
@@ -63,6 +65,10 @@ export function loadTombstones(): Tombstone[] {
   } catch {
     return []
   }
+}
+
+export function loadTombstonesOwnedBy(userId: string): Tombstone[] {
+  return loadTombstones().filter((tombstone) => isJournalOwnedBy(tombstone.id, userId))
 }
 
 function write(tombstones: readonly Tombstone[]): boolean {
@@ -121,6 +127,13 @@ export function mergeTombstones(
 /** 합친 삭제 기록을 저장한다 — 서버 pull 이후 로컬 반영용 */
 export function saveTombstones(tombstones: readonly Tombstone[]): boolean {
   return write(tombstones)
+}
+
+export function saveTombstonesOwnedBy(userId: string, tombstones: readonly Tombstone[]): boolean {
+  const preserved = loadTombstones().filter((tombstone) => !isJournalOwnedBy(tombstone.id, userId))
+  const incomingIds = new Set(tombstones.map((tombstone) => tombstone.id))
+  if (preserved.some((tombstone) => incomingIds.has(tombstone.id))) return false
+  return write([...preserved, ...tombstones])
 }
 
 /** 삭제된 id 집합 — 머지에서 빠르게 조회하기 위한 형태 */

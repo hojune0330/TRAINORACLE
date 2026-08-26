@@ -12,6 +12,7 @@ import {
   evaluatePlanSafety,
   type PlanCurrentCheck,
 } from "./plan-beta-flow"
+import { accountScopedStorageKey } from "./account/local-account-scope"
 
 export const PLAN_ADAPTATION_CONTEXT_STORAGE_KEY = "trainoracle.plan-adaptation-context.v1"
 export const LOCAL_ADAPTATION_ATHLETE_ID = "local-athlete"
@@ -148,15 +149,16 @@ export function savePlanAdaptationContext(
   }
   let previous: string | null = null
   let previousCaptured = false
+  const storageKey = accountScopedStorageKey(PLAN_ADAPTATION_CONTEXT_STORAGE_KEY)
   try {
-    previous = window.localStorage.getItem(PLAN_ADAPTATION_CONTEXT_STORAGE_KEY)
+    previous = window.localStorage.getItem(storageKey)
     previousCaptured = true
     const serialized = JSON.stringify(parsed.data)
-    window.localStorage.setItem(PLAN_ADAPTATION_CONTEXT_STORAGE_KEY, serialized)
-    if (window.localStorage.getItem(PLAN_ADAPTATION_CONTEXT_STORAGE_KEY) !== serialized) {
+    window.localStorage.setItem(storageKey, serialized)
+    if (window.localStorage.getItem(storageKey) !== serialized) {
       const rollbackComplete = restoreStorageValue(
         window.localStorage,
-        PLAN_ADAPTATION_CONTEXT_STORAGE_KEY,
+        storageKey,
         previous,
       )
       return {
@@ -168,7 +170,7 @@ export function savePlanAdaptationContext(
     return { ok: true }
   } catch {
     const rollbackComplete = previousCaptured
-      && restoreStorageValue(window.localStorage, PLAN_ADAPTATION_CONTEXT_STORAGE_KEY, previous)
+      && restoreStorageValue(window.localStorage, storageKey, previous)
     return {
       ok: false,
       code: "ADAPTATION_CONTEXT_STORAGE_WRITE_FAILED",
@@ -180,7 +182,7 @@ export function savePlanAdaptationContext(
 export function loadPlanAdaptationContext(activeCandidateId: string) {
   if (typeof window === "undefined") return null
   try {
-    const raw = window.localStorage.getItem(PLAN_ADAPTATION_CONTEXT_STORAGE_KEY)
+    const raw = window.localStorage.getItem(accountScopedStorageKey(PLAN_ADAPTATION_CONTEXT_STORAGE_KEY))
     if (raw === null) return null
     const input: unknown = JSON.parse(raw)
     if (!hasCanonicalJsonTree(input)) return null

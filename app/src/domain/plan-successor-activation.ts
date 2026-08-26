@@ -13,7 +13,7 @@ import {
 } from "@impl/plan-generator/adaptation-transform-registry"
 import type { PlanCandidate } from "@impl/plan-generator/types"
 import {
-  loadAthleteRecords,
+  loadAthleteRecordsForAccount,
 } from "./athlete-records"
 import {
   resolveDetailedPrescriptionRuntimeAuthority,
@@ -44,6 +44,11 @@ import {
   getPlanMutationLockManager,
   PLAN_BETA_MUTATION_LOCK_NAME,
 } from "./plan-mutation-lock"
+import {
+  accountScopedStorageKeyFor,
+  localAccountScopeIsCurrent,
+  localAccountScopeSnapshot,
+} from "./account/local-account-scope"
 
 export { PLAN_BETA_MUTATION_LOCK_NAME } from "./plan-mutation-lock"
 export const PLAN_SUCCESSOR_ACTIVATION_RECEIPT_STORAGE_KEY = "trainoracle.plan-beta.adaptation-activation.v1"
@@ -56,6 +61,26 @@ const PREVIOUS_INTAKE_KEY = "trainoracle.plan-beta.previous-intake.v1"
 const PRIVATE_KEY = /(?:memo|note|symptom)/iu
 const terminalProgressStates = new Set(["COMPLETED", "RESTED", "SKIPPED", "PAIN_CHECKIN"])
 const MAX_ACTIVATION_FUTURE_SKEW_MS = 5 * 60 * 1000
+
+type PlanStorageKeys = {
+  readonly active: string
+  readonly history: string
+  readonly pending: string
+  readonly context: string
+  readonly previousIntake: string
+  readonly receipt: string
+}
+
+function currentPlanStorageKeys(accountScope: string | null): PlanStorageKeys {
+  return {
+    active: accountScopedStorageKeyFor(ACTIVE_KEY, accountScope),
+    history: accountScopedStorageKeyFor(HISTORY_KEY, accountScope),
+    pending: accountScopedStorageKeyFor(PENDING_KEY, accountScope),
+    context: accountScopedStorageKeyFor(CONTEXT_KEY, accountScope),
+    previousIntake: accountScopedStorageKeyFor(PREVIOUS_INTAKE_KEY, accountScope),
+    receipt: accountScopedStorageKeyFor(PLAN_SUCCESSOR_ACTIVATION_RECEIPT_STORAGE_KEY, accountScope),
+  }
+}
 
 const activationInputSchema = z.object({
   currentCheck: z.enum(["NO_KNOWN_RISK", "REVIEW_REQUIRED"]),
@@ -123,6 +148,7 @@ export type ActivateAcceptedSuccessorResult =
 export async function activateAcceptedNextFrameSuccessor(
   input: ActivateAcceptedSuccessorInput,
 ): Promise<ActivateAcceptedSuccessorResult> {
+  const accountScope = localAccountScopeSnapshot()
   const parsedInput = parseActivationInput(input)
   if (parsedInput === null) return { kind: "rejected", code: "MALFORMED_INPUT" }
   const locks = getPlanMutationLockManager()
@@ -134,7 +160,8 @@ export async function activateAcceptedNextFrameSuccessor(
       { mode: "exclusive", ifAvailable: true },
       async (lock) => {
         if (lock === null) return { kind: "rejected", code: "MUTATION_LOCK_UNAVAILABLE" } as const
-        return activateInsideLock(parsedInput)
+        if (!localAccountScopeIsCurrent(accountScope)) return { kind: "rejected", code: "STALE_BASE" } as const
+        return activateInsideLock(parsedInput, accountScope)
       },
     )
   } catch {
@@ -151,16 +178,24 @@ export function isPlanFrameCompletionEligible(
 
 async function activateInsideLock(
   input: ActivateAcceptedSuccessorInput,
+  accountScope: string | null,
 ): Promise<ActivateAcceptedSuccessorResult> {
   if (typeof window === "undefined") return { kind: "rejected", code: "MUTATION_LOCK_UNAVAILABLE" }
 
-  const snapshots = snapshotStorage()
+  const storageKeys = currentPlanStorageKeys(accountScope)
+  const snapshots = snapshotStorage(storageKeys)
   if (snapshots === null) return { kind: "failed", code: "ACTIVATION_STORAGE_WRITE_FAILED", rollbackComplete: false }
 
   const active = parseActiveState(snapshots.active)
   if (active === null) return { kind: "rejected", code: "STALE_BASE" }
   const pending = parsePendingEnvelope(snapshots.pending)
-  if (snapshots.pending === null) return alreadyConsumedOrNoPending(active, snapshots.receipt)
+  if (snapshots.pending === null) {
+    if (!localAccountScopeIsCurrent(accountScope)) return { kind: "rejected", code: "STALE_BASE" }
+    const replay = await alreadyConsumedOrNoPending(active, snapshots.receipt)
+    return localAccountScopeIsCurrent(accountScope)
+      ? replay
+      : { kind: "rejected", code: "STALE_BASE" }
+  }
   if (pending === null) return { kind: "rejected", code: "MALFORMED_INPUT" }
   const safety = evaluateActivePlanAdaptationSafety(
     active,
@@ -182,7 +217,14 @@ async function activateInsideLock(
   }
   if (!frameIsComplete(active, input.localDate)) return { kind: "blocked", code: "INCOMPLETE_FRAME" }
 
-  const verification = await verifyAcceptedPending({ active, pending, context, safety, activatedAt: input.activatedAt })
+  const verification = await verifyAcceptedPending({
+    active,
+    pending,
+    context,
+    safety,
+    activatedAt: input.activatedAt,
+    accountScope,
+  })
   if (verification.kind !== "verified") return verification
 
   const nextState = buildActivatedSuccessorState(pending.pending.successorState, input.activatedAt, input.localDate)
@@ -226,13 +268,16 @@ async function activateInsideLock(
     active: JSON.stringify(nextState),
     receipt: JSON.stringify(receipt.data),
   }
+  if (!localAccountScopeIsCurrent(accountScope)) {
+    return { kind: "rejected", code: "STALE_BASE" }
+  }
   const transaction = [
-    () => writeVerified(window.localStorage, HISTORY_KEY, staged.history),
-    () => writeVerified(window.sessionStorage, PREVIOUS_INTAKE_KEY, staged.previousIntake),
-    () => writeVerified(window.localStorage, CONTEXT_KEY, staged.context),
-    () => writeVerified(window.localStorage, ACTIVE_KEY, staged.active),
-    () => writeVerified(window.localStorage, PLAN_SUCCESSOR_ACTIVATION_RECEIPT_STORAGE_KEY, staged.receipt),
-    () => removeVerified(window.localStorage, PENDING_KEY),
+    () => writeVerified(window.localStorage, storageKeys.history, staged.history),
+    () => writeVerified(window.sessionStorage, storageKeys.previousIntake, staged.previousIntake),
+    () => writeVerified(window.localStorage, storageKeys.context, staged.context),
+    () => writeVerified(window.localStorage, storageKeys.active, staged.active),
+    () => writeVerified(window.localStorage, storageKeys.receipt, staged.receipt),
+    () => removeVerified(window.localStorage, storageKeys.pending),
   ]
 
   for (const stage of transaction) {
@@ -240,7 +285,7 @@ async function activateInsideLock(
       return {
         kind: "failed",
         code: "ACTIVATION_STORAGE_WRITE_FAILED",
-        rollbackComplete: restoreSnapshots(snapshots),
+        rollbackComplete: restoreSnapshots(snapshots, storageKeys),
       }
     }
   }
@@ -253,6 +298,7 @@ async function verifyAcceptedPending(input: {
   readonly context: StoredAdaptationContext
   readonly safety: Extract<ActivePlanAdaptationSafety, { readonly kind: "evaluated" }>
   readonly activatedAt: string
+  readonly accountScope: string | null
 }): Promise<{ readonly kind: "verified" } | Exclude<ActivateAcceptedSuccessorResult, { readonly kind: "activated" } | { readonly kind: "already_consumed" } | { readonly kind: "blocked" } | { readonly kind: "failed" }>> {
   const pending = input.pending.pending
   const base = input.context.candidates.find((candidate) => candidate.candidateId === input.active.activePlan.candidateId)
@@ -367,7 +413,7 @@ async function verifyAcceptedPending(input: {
       || input.pending.decision.decidedAt !== pending.acceptedAt) {
     return { kind: "rejected", code: "PENDING_ENVELOPE_MISMATCH" }
   }
-  if (!recordSnapshotMatches(pending, input.active.generatedAt, input.activatedAt)) {
+  if (!recordSnapshotMatches(pending, input.active.generatedAt, input.activatedAt, input.accountScope)) {
     return { kind: "rejected", code: "RECORD_SNAPSHOT_MISMATCH" }
   }
   if (!currentTemplateAuthorityMatches(input.active, successor, input.safety.safetyGate, input.activatedAt)) {
@@ -434,6 +480,7 @@ function recordSnapshotMatches(
   pending: PendingNextFrameSuccessor,
   activePlanStartedAt: string,
   evaluatedAt: string,
+  accountScope: string | null,
 ): boolean {
   if (pending.trigger === "EXPLICIT_REQUEST") return true
   const snapshot = pending.triggerSnapshot
@@ -441,7 +488,8 @@ function recordSnapshotMatches(
       || snapshot.historicalOrBackfilled
       || snapshot.eventDistanceM !== pending.eventDistanceM
       || Date.parse(snapshot.achievedAt) <= Date.parse(activePlanStartedAt)) return false
-  const record = loadAthleteRecords(new Date(evaluatedAt)).find((candidate) => candidate.id === snapshot.recordId)
+  const record = loadAthleteRecordsForAccount(accountScope, new Date(evaluatedAt))
+    .find((candidate) => candidate.id === snapshot.recordId)
   return record !== undefined
     && (record.purpose === "PERSONAL_BEST" || record.purpose === "SEASON_BEST")
     && record.purpose === snapshot.purpose
@@ -556,7 +604,7 @@ function parseHistory(raw: string | null): readonly StoredPlanHistory[] | null {
   }
 }
 
-function snapshotStorage(): {
+function snapshotStorage(keys: PlanStorageKeys): {
   readonly active: string | null
   readonly history: string | null
   readonly pending: string | null
@@ -566,26 +614,29 @@ function snapshotStorage(): {
 } | null {
   try {
     return {
-      active: window.localStorage.getItem(ACTIVE_KEY),
-      history: window.localStorage.getItem(HISTORY_KEY),
-      pending: window.localStorage.getItem(PENDING_KEY),
-      context: window.localStorage.getItem(CONTEXT_KEY),
-      previousIntake: window.sessionStorage.getItem(PREVIOUS_INTAKE_KEY),
-      receipt: window.localStorage.getItem(PLAN_SUCCESSOR_ACTIVATION_RECEIPT_STORAGE_KEY),
+      active: window.localStorage.getItem(keys.active),
+      history: window.localStorage.getItem(keys.history),
+      pending: window.localStorage.getItem(keys.pending),
+      context: window.localStorage.getItem(keys.context),
+      previousIntake: window.sessionStorage.getItem(keys.previousIntake),
+      receipt: window.localStorage.getItem(keys.receipt),
     }
   } catch {
     return null
   }
 }
 
-function restoreSnapshots(snapshots: NonNullable<ReturnType<typeof snapshotStorage>>): boolean {
+function restoreSnapshots(
+  snapshots: NonNullable<ReturnType<typeof snapshotStorage>>,
+  keys: PlanStorageKeys,
+): boolean {
   return [
-    restoreVerified(window.localStorage, ACTIVE_KEY, snapshots.active),
-    restoreVerified(window.localStorage, HISTORY_KEY, snapshots.history),
-    restoreVerified(window.localStorage, PENDING_KEY, snapshots.pending),
-    restoreVerified(window.localStorage, CONTEXT_KEY, snapshots.context),
-    restoreVerified(window.sessionStorage, PREVIOUS_INTAKE_KEY, snapshots.previousIntake),
-    restoreVerified(window.localStorage, PLAN_SUCCESSOR_ACTIVATION_RECEIPT_STORAGE_KEY, snapshots.receipt),
+    restoreVerified(window.localStorage, keys.active, snapshots.active),
+    restoreVerified(window.localStorage, keys.history, snapshots.history),
+    restoreVerified(window.localStorage, keys.pending, snapshots.pending),
+    restoreVerified(window.localStorage, keys.context, snapshots.context),
+    restoreVerified(window.sessionStorage, keys.previousIntake, snapshots.previousIntake),
+    restoreVerified(window.localStorage, keys.receipt, snapshots.receipt),
   ].every(Boolean)
 }
 

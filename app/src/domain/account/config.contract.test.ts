@@ -30,6 +30,7 @@ describe("account public release gate", () => {
     })).toEqual({
       url: credentials.VITE_SUPABASE_URL,
       anonKey: credentials.VITE_SUPABASE_ANON_KEY,
+      phoneAuthEnabled: false,
       privacyPolicy: {
         url: legalDocuments.VITE_PRIVACY_POLICY_URL,
         version: legalDocuments.VITE_PRIVACY_POLICY_VERSION,
@@ -39,6 +40,40 @@ describe("account public release gate", () => {
         version: legalDocuments.VITE_TERMS_OF_SERVICE_VERSION,
       },
     })
+  })
+
+  it("keeps phone login behind its own exact release flag", () => {
+    expect(resolveAccountConfig({
+      ...credentials,
+      ...legalDocuments,
+      VITE_ACCOUNT_PUBLIC_ENABLED: "true",
+      VITE_PHONE_AUTH_ENABLED: "true",
+      VITE_PHONE_AUTH_OPERATIONS_APPROVED: "true",
+    })?.phoneAuthEnabled).toBe(true)
+    expect(resolveAccountConfig({
+      ...credentials,
+      ...legalDocuments,
+      VITE_ACCOUNT_PUBLIC_ENABLED: "true",
+      VITE_PHONE_AUTH_ENABLED: "TRUE",
+      VITE_PHONE_AUTH_OPERATIONS_APPROVED: "true",
+    })?.phoneAuthEnabled).toBe(false)
+  })
+
+  it("keeps phone login closed without operations approval or during an SMS incident", () => {
+    expect(resolveAccountConfig({
+      ...credentials,
+      ...legalDocuments,
+      VITE_ACCOUNT_PUBLIC_ENABLED: "true",
+      VITE_PHONE_AUTH_ENABLED: "true",
+    })?.phoneAuthEnabled).toBe(false)
+    expect(resolveAccountConfig({
+      ...credentials,
+      ...legalDocuments,
+      VITE_ACCOUNT_PUBLIC_ENABLED: "true",
+      VITE_PHONE_AUTH_ENABLED: "true",
+      VITE_PHONE_AUTH_OPERATIONS_APPROVED: "true",
+      VITE_KILL_PHONE_AUTH: "true",
+    })?.phoneAuthEnabled).toBe(false)
   })
 
   it("stays disabled when a deploy has account credentials but no public legal-document versions", () => {

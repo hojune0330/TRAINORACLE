@@ -17,6 +17,15 @@ document_metadata:
 
 ---
 
+> **현재 결정 (2026-08-25):** 이 문서의 Cloudflare 중심 백엔드와 AthleteTime 우선
+> 계정 순서는 현재 1차 구현 지시가 아니다. 첫 계정은 기존 Supabase 계약 위에서
+> 카카오·Google·이메일 OTP로 준비하며, 만 14세 미만 온라인 계정은 제공하지 않는다.
+> 동기화·결제·AthleteTime 연결은 계속 별도 단계다. 현재 기준은
+> `specs/reconstruct/ACCOUNT_AUTHENTICATION_AND_IDENTITY_LINKING_SPEC.md`와
+> `docs/ACCOUNT_PUBLIC_RELEASE_GATE.md`를 따른다. 아래는 과거 기획 맥락으로 보존한다.
+
+---
+
 > **상태 정렬 (2026-07-14):** 제품 방향은 AthleteTime으로 계속하기 연합 계정 연결이다. 다만 AthleteTime OAuth 제공자, 등록된 클라이언트, 동의 화면, redirect, 토큰 교환은 검증·구현되지 않았다. 아래 OAuth 흐름은 목표 계약이며 현재 동작하는 로그인 기능이 아니다.
 
 ---

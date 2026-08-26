@@ -1,7 +1,6 @@
 import { BetaAccountSettings } from "./BetaAccountSettings"
 import { CoachSupportPanel } from "./CoachSupportPanel"
 import { PrivateMemoVault } from "./PrivateMemoVault"
-import { GuardianConfirmationPanel } from "./GuardianConfirmationPanel"
 import { ProductAnalyticsConsentPanel } from "./ProductAnalyticsConsentPanel"
 import { productFeatures } from "../../domain/product-features"
 import type { AccountLegalDocument } from "../../domain/account/config"
@@ -12,6 +11,7 @@ export function AccountNetworkSettings({
   legalDocuments,
   initialPrivacyAcknowledged,
   initialTermsAcknowledged,
+  profileSetupComplete = false,
 }: {
   readonly userId: string
   readonly today: string
@@ -21,6 +21,7 @@ export function AccountNetworkSettings({
   }
   readonly initialPrivacyAcknowledged?: boolean
   readonly initialTermsAcknowledged?: boolean
+  readonly profileSetupComplete?: boolean
 }) {
   const features = productFeatures()
   return (
@@ -31,9 +32,9 @@ export function AccountNetworkSettings({
         legalDocuments={legalDocuments}
         initialPrivacyAcknowledged={initialPrivacyAcknowledged}
         initialTermsAcknowledged={initialTermsAcknowledged}
+        profileSetupComplete={profileSetupComplete}
       />
       {features.productAnalytics && <ProductAnalyticsConsentPanel userId={userId} />}
-      {(features.sync || features.sharing) && <GuardianConfirmationPanel userId={userId} />}
       {features.sync && <PrivateMemoVault />}
       {features.sharing && <CoachSupportPanel userId={userId} today={today} />}
     </>

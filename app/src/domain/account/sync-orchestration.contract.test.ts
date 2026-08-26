@@ -134,6 +134,7 @@ import { saveSessionRecoveryCode } from "./private-note-sync"
 import { createRecoveryCode } from "./private-note-crypto"
 import { loadTombstones, recordTombstone } from "./tombstone"
 import { saveEntry, savePrivateEntry } from "../journal-store"
+import { assignJournalsToAccount, setActiveLocalAccount } from "./local-journal-ownership"
 import type { PostSessionEntry } from "../journal-schema"
 
 const JOURNAL_KEY = "trainoracle.journal.v1"
@@ -180,6 +181,7 @@ beforeEach(() => {
   server.schemaRpcFails = false
   server.rpcCallCount = 0
   server.journalSelectCount = 0
+  setActiveLocalAccount("user-1")
   saveSyncConsent({ enabled: true, shareTrainingNotes: false })
 })
 
@@ -240,6 +242,7 @@ describe("syncNow — 삭제 기록 서버 전파", () => {
   })
 
   it("삭제 기록에는 본문·날짜·수치가 올라가지 않는다 (최소 수집)", async () => {
+    expect(assignJournalsToAccount(["min-1"], "user-1")).toBe(true)
     recordTombstone("min-1", "2026-07-21T00:00:00.000Z")
     await syncNow("user-1")
 

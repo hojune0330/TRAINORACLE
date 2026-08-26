@@ -10,6 +10,11 @@ import { loadEntries, localOnlyCount } from "./domain/journal-store"
 import type { JournalEntry } from "./domain/journal-store"
 import { createSavedFactReceipt } from "./domain/save-receipt"
 import { trackProductEvent } from "./domain/account/product-analytics-service"
+import { currentUser, onAuthChange } from "./domain/account/auth"
+import {
+  onLocalJournalScopeChange,
+  setActiveLocalAccount,
+} from "./domain/account/local-journal-ownership"
 import {
   INITIAL_VIEW_STATE,
   shouldResetTabView,
@@ -22,7 +27,13 @@ const TOAST_READABLE_MS = 4000
 const TOAST_EXIT_MS = 150
 
 export function AppShell() {
-  const [v, setV] = React.useState(INITIAL_VIEW_STATE)
+  const [accountScopeRevision, setAccountScopeRevision] = React.useState(0)
+  const [v, setV] = React.useState(() => {
+    if (!accountFeatureEnabled() || typeof window === "undefined") return INITIAL_VIEW_STATE
+    return new URLSearchParams(window.location.search).get("account") === "1"
+      ? { ...INITIAL_VIEW_STATE, accountOpen: true }
+      : INITIAL_VIEW_STATE
+  })
   const [savedToast, setSavedToast] = React.useState<ShellToastState | null>(null)
   const [athleteRecordsOpen, setAthleteRecordsOpen] = React.useState(false)
   const scrollRegionRef = React.useRef<HTMLElement>(null)
@@ -30,7 +41,35 @@ export function AppShell() {
   const [utilityOrigin, setUtilityOrigin] = React.useState<"home" | "more">("more")
 
   React.useEffect(() => {
+    if (!accountFeatureEnabled()) {
+      setActiveLocalAccount(null)
+      return
+    }
+    let mounted = true
+    let authEventSeen = false
+    const refresh = () => setAccountScopeRevision((value) => value + 1)
+    const unsubscribeScope = onLocalJournalScopeChange(refresh)
+    void currentUser().then((user) => {
+      if (mounted && !authEventSeen) setActiveLocalAccount(user?.id ?? null)
+    })
+    const unsubscribeAuth = onAuthChange((user) => {
+      authEventSeen = true
+      setActiveLocalAccount(user?.id ?? null)
+    })
+    return () => {
+      mounted = false
+      unsubscribeScope()
+      unsubscribeAuth()
+    }
+  }, [])
+
+  React.useEffect(() => {
     void trackProductEvent("APP_OPENED")
+    const url = new URL(window.location.href)
+    if (url.searchParams.get("account") === "1") {
+      url.searchParams.delete("account")
+      window.history.replaceState(null, "", url)
+    }
   }, [])
 
   const goHome = () => {
@@ -243,7 +282,9 @@ export function AppShell() {
       hideTabBar={false}
     >
       <React.Suspense fallback={<p role="status">화면을 불러오는 중이에요.</p>}>
-        {screen}
+        <React.Fragment key={`account-scope-${accountScopeRevision}`}>
+          {screen}
+        </React.Fragment>
       </React.Suspense>
     </AppShellFrame>
   )

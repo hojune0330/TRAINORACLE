@@ -92,7 +92,8 @@ TrainOracle의 핵심은 예쁜 훈련 일지 화면만이 아니라, **선수 �
 | `TRAINING_PLAN_FORMATION_AND_ADAPTATION_SPEC.md` | 소유자 결정 기록, 9.5일 local-civil frame, MAIN 노출 2-3회, 복합 부하 | 결정론적 후보, 계획/완료/체감 분리, 안전 중단, 불변 버전·코치 선택 계약 |
 | `JOURNAL_DELIGHT_AND_DECORATION_SPEC.md` | 일지만 쓰는 사용자, 꾸미기, 스트릭, 스티커/스탬프 | 훈련량 보상이 아닌 안전한 일지 재미 요소 계약 |
 | `LOCAL_FIRST_SYNC_AND_PROMOTION_CONTRACT.md` | 기기 로컬 일지, 계정 연동, syncState, memo privacy | 로컬 저장 일지를 나중에 서버/계정으로 승격하는 동기화 계약 |
-| `FEDERATED_ACCOUNT_SSO_CONTRACT.md` | AthleteTime 계정, SSO, consent, redirect/token boundary | "AthleteTime으로 계속하기"를 identity 권한으로만 묶는 계정 계약 |
+| `ACCOUNT_AUTHENTICATION_AND_IDENTITY_LINKING_SPEC.md` | 카카오·Google·이메일 OTP, 가입 전 나이·약관, Supabase Auth | 비밀번호 없는 1차 가입·로그인과 14세 미만 로컬 사용 경계 |
+| `FEDERATED_ACCOUNT_SSO_CONTRACT.md` | AthleteTime 계정, SSO, consent, redirect/token boundary | 향후 선택 AthleteTime 연동을 identity 권한으로만 묶는 참고 계약 |
 
 이 표의 핵심은 “데이터가 들어오면 바로 AI가 답을 만드는 구조”가 아니라는 점입니다. TrainOracle은 먼저 근거를 분류하고, 저장해도 되는 정보만 남기고, 안전 게이트를 통과한 뒤에 계획과 분석 결과를 만들도록 설계되어 있습니다.
 

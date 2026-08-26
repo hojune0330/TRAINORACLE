@@ -17,7 +17,16 @@ document_metadata:
   canonical_blocking_count: 4
   executed_tests_total: 0
   runtime_evidence: none
+  current_runtime_scope: FUTURE_DEFERRED_OPTIONAL_IDENTITY_PROVIDER
 ```
+
+---
+
+> **현재 범위 정렬 (2026-08-25):** 이 초안은 AthleteTime을 향후 선택 계정
+> 제공자로 검토할 때의 경계 자료다. 첫 공개 인증의 선행조건이 아니며 현재
+> identity root도 아니다. 카카오·Google·이메일 OTP의 현재 구현 기준은
+> `ACCOUNT_AUTHENTICATION_AND_IDENTITY_LINKING_SPEC.md`가 우선한다. 아래 open issue는
+> 닫지 않고 미래 AthleteTime 연결 작업에 그대로 남긴다.
 
 ---
 
