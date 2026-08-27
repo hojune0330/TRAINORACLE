@@ -492,6 +492,37 @@ input, textarea { font-family: inherit; }
   cursor: pointer;
 }
 
+.training-home__header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* 로그인 발견성(2026-08-27): 계정 진입 버튼을 홈 헤더에 상시 노출.
+ * 비로그인 상태는 "로그인" 라벨을 붙여 회원가입·로그인 입구임을 즉시 알린다. */
+.training-home__account {
+  min-height: 44px;
+  padding: 0 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--ink);
+  font-family: var(--sans);
+  font-size: 12.5px;
+  font-weight: 600;
+  letter-spacing: 0;
+  cursor: pointer;
+}
+
+.training-home__account--signed-in {
+  width: 44px;
+  padding: 0;
+  justify-content: center;
+}
+
 .training-home__welcome-fold {
   min-block-size: calc(100dvh - var(--app-shell-tab-bar-height));
   /* 최종 폴리시 D3: 민지 카드 아래 ~190px 죽은 여백이 떠 있었다.
