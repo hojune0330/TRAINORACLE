@@ -20,6 +20,16 @@
 > 강도·기록·계획·안전 코드를 만지기 전에 **어느 스펙 문서를 먼저 읽어야
 > 하는지**를 모듈별 표로 정리해 둔 파일입니다.
 
+## TrainOracle Master Plan
+
+- **전체 제품 방향:** [`TRAINORACLE_MASTER_PLAN.md`](./TRAINORACLE_MASTER_PLAN.md)
+- **개발 시작 전 준비 상태:** [`TRAINORACLE_IMPLEMENTATION_READINESS.md`](./TRAINORACLE_IMPLEMENTATION_READINESS.md)
+
+마스터 플랜은 훈련 일지, 누적 분석, 에너지 시스템, 상세 훈련계획, 9.5일·
+중주기·24주 주기화, 오라클, 다이어리·공유, 선수용 추가 기능과 UX 방향을
+축약하지 않고 보존합니다. 개발 준비 문서는 다음 구현 순서와 검증 관문만
+정리하며, 현재 개발 작업은 시작되지 않았습니다.
+
 ## 현재 공개 상태
 
 **현재 공개 앱: [TrainOracle 베타 열기](https://hojune0330.github.io/TRAINORACLE/)**
