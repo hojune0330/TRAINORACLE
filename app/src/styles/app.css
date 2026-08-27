@@ -71,6 +71,18 @@ button, input, textarea, select { font: inherit; letter-spacing: inherit; }
   overflow-y: auto;
 }
 
+/* 화면 전체 래퍼에 transform을 주면 하단 고정 버튼의 기준점이 바뀐다.
+   탭 전환은 짧게 밝아지고, 선택 단계 안쪽만 아주 조금 정착한다. */
+.app-flow-stage {
+  min-width: 0;
+  animation: ui-fade-in var(--dur-fast) var(--ease-out-strong) both;
+}
+
+.journal-flow-stage {
+  min-width: 0;
+  animation: flow-stage-enter var(--dur-base) var(--ease-out-strong) both;
+}
+
 .home-plan-entry {
   padding: var(--space-3) var(--space-5) 0;
 }
@@ -1181,11 +1193,67 @@ button:not(:disabled):not([aria-disabled="true"]):active {
 
 .saved-toast__heading strong {
   min-width: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
   font-family: var(--mono);
   font-size: var(--fs-mono-sm);
   line-height: 1.45;
   letter-spacing: 0;
   overflow-wrap: anywhere;
+}
+
+.saved-toast__check {
+  flex: 0 0 auto;
+  animation: confirmation-check var(--dur-slow) var(--ease-out-strong) both;
+}
+
+.pwa-update-notice {
+  position: fixed;
+  inset-inline: var(--space-3);
+  bottom: calc(var(--app-shell-tab-bar-height) + env(safe-area-inset-bottom, 0px) + var(--space-2));
+  z-index: 44;
+  width: min(calc(100% - (2 * var(--space-3))), calc(var(--app-shell-max-width) - (2 * var(--space-3))));
+  margin-inline: auto;
+  padding: var(--space-3);
+  border: var(--bw-line) solid var(--ink);
+  border-radius: 6px;
+  box-sizing: border-box;
+  background: var(--surface);
+  color: var(--ink);
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: var(--space-3);
+  align-items: center;
+  animation: saved-toast-enter var(--dur-base) var(--ease-out-strong) both;
+}
+
+.pwa-update-notice[data-raised="true"] {
+  bottom: calc(var(--app-shell-tab-bar-height) + env(safe-area-inset-bottom, 0px) + 136px);
+}
+
+.pwa-update-notice span {
+  font-family: var(--sans);
+  font-size: var(--fs-body-sm);
+  line-height: 1.5;
+  letter-spacing: 0;
+}
+
+.pwa-update-notice button {
+  min-height: var(--app-touch-min);
+  padding: 0 var(--space-3);
+  border: 0;
+  border-radius: 4px;
+  background: var(--ink);
+  color: var(--bg);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-family: var(--sans);
+  font-size: var(--fs-body-sm);
+  font-weight: 600;
+  white-space: nowrap;
 }
 
 .saved-toast__heading button {
@@ -1254,6 +1322,16 @@ button:not(:disabled):not([aria-disabled="true"]):active {
   to { opacity: 0; transform: translateY(6px); }
 }
 
+@keyframes flow-stage-enter {
+  from { opacity: 0.65; transform: translateY(6px); }
+  to { opacity: 1; transform: none; }
+}
+
+@keyframes confirmation-check {
+  from { opacity: 0.5; transform: scale(0.82); }
+  to { opacity: 1; transform: scale(1); }
+}
+
 /* 구획이 접힐 때 접힌 줄만 아주 짧게 자리를 잡는다 (작업지시서 UX1 §3-4).
    height 를 애니메이션하지 않는다 — 아래 구획이 통째로 밀려 올라와
    눈이 위치를 잃는다. 접기 자체는 즉시 일어나고, 움직이는 건 접힌 줄뿐이다.
@@ -1283,7 +1361,11 @@ button:not(:disabled):not([aria-disabled="true"]):active {
   .popover-surface,
   .saved-toast--enter .saved-toast__surface,
   .formsec--collapsed,
-  .first-visit__content {
+  .first-visit__content,
+  .app-flow-stage,
+  .journal-flow-stage,
+  .saved-toast__check,
+  .pwa-update-notice {
     animation-name: ui-fade-in;
     transform: none;
   }

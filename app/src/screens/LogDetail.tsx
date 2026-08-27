@@ -2,6 +2,7 @@ import React from "react"
 import { IndexCard, MoodStrip, PainDot, SectionLb } from "../components/JournalPrimitives"
 import { JournalConfirmationDialog } from "../components/JournalConfirmationDialog"
 import { TermHelp } from "../components/TermHelp"
+import type { TermId } from "../domain/glossary"
 import type { JournalEntry, PostSessionEntry, EveningEntry, RaceEntry } from "../domain/journal-store"
 import { entriesForDate, deleteEntry, restoreDeletedEntry } from "../domain/journal-store"
 import { TRASH_RETENTION_DAYS } from "../domain/journal-trash"
@@ -28,13 +29,13 @@ export function LogDetail(props: LogDetailProps) {
   return <LogDetailJournal {...props} />
 }
 
-const SYSTEM_META: Record<string, { c: string; n: string; cls: string }> = {
-  base: { c: "BA", n: "Base", cls: "base" },
-  lt:   { c: "LT", n: "Lactate", cls: "lt" },
-  vo2:  { c: "V2", n: "VO2", cls: "vo2" },
-  gly:  { c: "GL", n: "Glycolytic", cls: "gly" },
-  atp:  { c: "AP", n: "ATP-PC", cls: "atp" },
-  rest: { c: "RE", n: "Recovery", cls: "rest" },
+const SYSTEM_META: Record<string, { c: string; n: string; cls: string; term: TermId }> = {
+  base: { c: "BA", n: "Base", cls: "base", term: "base" },
+  lt:   { c: "LT", n: "Lactate", cls: "lt", term: "lt" },
+  vo2:  { c: "V2", n: "VO2", cls: "vo2", term: "vo2" },
+  gly:  { c: "GL", n: "Glycolytic", cls: "gly", term: "gly" },
+  atp:  { c: "AP", n: "ATP-PC", cls: "atp", term: "atp" },
+  rest: { c: "RE", n: "Recovery", cls: "rest", term: "rec" },
 }
 
 function savedClock(iso: string): string {
@@ -144,13 +145,14 @@ function LogDetailJournal({ date, onBack, onAddEntry, onEditEntry, readerControl
 
       {/* 훈련 세션 (실데이터) */}
       {sessions.map((s, index) => {
-        const meta = SYSTEM_META[s.system] ?? { c: "??", n: s.system, cls: "rest" }
+        const meta = SYSTEM_META[s.system] ?? { c: "??", n: s.system, cls: "rest", term: "rec" as const }
         return (
           <div key={`post-session-${s.id}-${index}`} style={{ padding: "24px 20px 0" }}>
             <SectionLb action={savedClock(s.savedAt)}>— TRAINING SESSION</SectionLb>
             <div style={{ background: "var(--surface)", border: "1px solid var(--ink)", padding: "14px 16px" }}>
               <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
                 <span className={`etag ${meta.cls}`}><span className="d"></span><span className="c">{meta.c}</span><span className="n">{meta.n}</span></span>
+                <TermHelp term={meta.term} />
                 <SyncChip />
                 {hasImportedField(s.fieldProvenance) && <ImportedChip />}
               </div>

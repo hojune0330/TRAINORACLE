@@ -135,6 +135,16 @@ export function AppShell() {
   }
 
   const accountEnabled = accountFeatureEnabled()
+  const screenKey = [
+    v.tab,
+    v.entryType,
+    v.detailDate ?? "",
+    v.importOpen ? "import" : "",
+    v.restoreOpen ? "restore" : "",
+    v.accountOpen ? "account" : "",
+    utilityView ?? "",
+    athleteRecordsOpen ? "records" : "",
+  ].join(":")
 
   const openRestore = () => setV(s => ({
     ...s,
@@ -299,9 +309,12 @@ export function AppShell() {
       hideTabBar={false}
     >
       <React.Suspense fallback={<p role="status">화면을 불러오는 중이에요.</p>}>
-        <React.Fragment key={`account-scope-${accountScopeRevision}`}>
+        <div
+          key={`${screenKey}:account-scope-${accountScopeRevision}`}
+          className="app-flow-stage"
+        >
           {screen}
-        </React.Fragment>
+        </div>
       </React.Suspense>
     </AppShellFrame>
   )

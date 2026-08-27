@@ -3,6 +3,7 @@ import ReactDOM from "react-dom/client"
 import App from "./App"
 import { ErrorBoundary } from "./components/ErrorBoundary"
 import { purgeExpiredTrash } from "./domain/journal-trash"
+import { registerAppServiceWorker } from "./domain/pwa-update"
 import { FeedbackBoardRoute } from "./screens/FeedbackBoardRoute"
 
 // 토큰 단일 소스: 저장소 루트 CSS를 직접 import (이중 정의 금지)
@@ -32,9 +33,7 @@ if (import.meta.env.DEV && !showP3PaceHarness) {
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
     const base = import.meta.env.BASE_URL || "/"
-    navigator.serviceWorker
-      .register(`${base}sw.js`, { scope: base })
-      .catch((err) => console.warn("[SW] register failed:", err))
+    registerAppServiceWorker(base)
   })
 }
 

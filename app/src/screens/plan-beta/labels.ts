@@ -86,7 +86,7 @@ export const ENERGY_INTENT_LABELS: Record<PlannedEnergyIntent, {
     term: "atp",
   },
   MIXED_INTENT: {
-    title: "섞어 하는 강도 · MIXED",
+    title: "여러 강도 조합 · MIX",
     detail: "한 가지 목적만 고정하지 않고 여러 강도 구간을 함께 다루는 목적이에요. 상세 반복과 회복은 직접 고른 훈련표가 있을 때만 안내해요.",
     term: "energy-system",
   },

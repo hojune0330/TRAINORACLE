@@ -84,8 +84,9 @@ export function RaceForm({ onBack, onDone, targetDate, initialEntry }: EntryForm
       <RaceHeader date={entryDate} isToday={entryDate === todayISO()} />
       <StageTabs stage={stage} onChange={setStage} />
 
-      {stage === "pre" ? (
-        <RacePreChecks
+      <div key={stage} className="journal-flow-stage">
+        {stage === "pre" ? (
+          <RacePreChecks
           tension={tension}
           condition={condition}
           paceMinutes={paceMinutes}
@@ -96,8 +97,8 @@ export function RaceForm({ onBack, onDone, targetDate, initialEntry }: EntryForm
           onPaceMinutes={setPaceMinutes}
           onPaceSeconds={setPaceSeconds}
         />
-      ) : (
-        <>
+        ) : (
+          <>
           <FormSec lb="기록">
             <input aria-label="경기 기록" type="text" value={record} onChange={(event) => setRecord(event.target.value)} placeholder="16:42.18" style={{ ...inputStyle(), fontFamily: "var(--mono)", fontSize: 24, textAlign: "center", fontWeight: 500 }} />
             <div style={{ marginTop: 8, fontFamily: "var(--mono)", fontSize: 10, color: "var(--ink-4)" }}>
@@ -111,8 +112,9 @@ export function RaceForm({ onBack, onDone, targetDate, initialEntry }: EntryForm
             </div>
           </FormSec>
           <RacePostMood selected={mood} onSelect={setMood} />
-        </>
-      )}
+          </>
+        )}
+      </div>
 
       <FormSec lb="메모">
         <PurposeScopedMemoField

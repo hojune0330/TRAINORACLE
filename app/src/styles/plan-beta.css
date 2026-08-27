@@ -2668,3 +2668,15 @@
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
+.plan-intake,
+.plan-candidates,
+.plan-race-preview,
+.plan-notation-reader,
+.plan-blocked,
+.active-plan {
+  animation: flow-stage-enter var(--dur-base) var(--ease-out-strong) both;
+}
+
+.plan-progress > i {
+  transition: width var(--dur-base) var(--ease-out-strong);
+}

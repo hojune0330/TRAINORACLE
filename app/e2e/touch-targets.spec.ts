@@ -27,7 +27,7 @@ test("keeps core journal controls at least 44px tall", async ({ page }, testInfo
   await auditTouchTargets(page, [
     { name: "post.back", locator: page.getByRole("button", { name: "← 뒤로" }) },
     { name: "post.energy-help", locator: page.getByRole("button", { name: /훈련 목적 설명 보기/u }) },
-    { name: "post.energy", locator: page.getByRole("button", { name: /^(BA BASE|LT LT|V2 VO2|GL GLY|AP ATP|RE REST)$/u }), count: 6 },
+    { name: "post.energy", locator: page.getByRole("button", { name: /^(BA BASE|LT LT|V2 VO2|GL GLY|AP ATP|RE REC)$/u }), count: 6 },
     { name: "post.title", locator: page.getByRole("textbox", { name: "세션 제목" }), heightOnly: true },
     { name: "post.distance", locator: page.getByRole("textbox", { name: "거리 (km)" }), heightOnly: true },
     { name: "post.duration", locator: page.getByRole("textbox", { name: "시간 (분)" }), heightOnly: true },
@@ -41,7 +41,7 @@ test("keeps core journal controls at least 44px tall", async ({ page }, testInfo
     { name: "post.save", locator: page.getByRole("button", { name: /^저장/u }) },
   ])
   const base = page.getByRole("button", { name: "BA BASE" })
-  const rest = page.getByRole("button", { name: "RE REST" })
+  const rest = page.getByRole("button", { name: "RE REC" })
   await base.click()
   await rest.click()
   await expect(base).toHaveAttribute("aria-pressed", "false")

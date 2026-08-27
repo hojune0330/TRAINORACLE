@@ -25,7 +25,7 @@ const ENERGY_SYSTEMS = [
   { id: "vo2", c: "V2", n: "VO2", color: "#C7761C" },
   { id: "gly", c: "GL", n: "GLY", color: "#B8332E" },
   { id: "atp", c: "AP", n: "ATP", color: "#7A3FB5" },
-  { id: "rest", c: "RE", n: "REST", color: "#7A7A70" },
+  { id: "rest", c: "RE", n: "REC", color: "#7A7A70" },
 ] as const
 
 export function PostSessionForm({ onBack, onDone, targetDate, initialEntry }: EntryFormProps) {

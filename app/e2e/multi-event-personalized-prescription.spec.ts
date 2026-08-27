@@ -37,7 +37,7 @@ const cases = [
   },
   {
     eventDistanceM: 1500,
-    focus: /섞어 하는 강도.*MIXED/u,
+    focus: /여러 강도 조합.*MIX/u,
     notation: /3×500m @1500m RP.*r180.*STAND/u,
     summary: "총 3회 · 품질 거리 1500m · 500m 1분 22초",
     execution: "준비, 3회 본운동과 2번의 사이 회복, 정리 순서로 진행하세요.",
