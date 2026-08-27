@@ -1,6 +1,7 @@
 import { expect, test } from "@playwright/test"
 import type { Page } from "@playwright/test"
 import { selectNineDayProjection } from "./plan-flow"
+import { expectActivePlanHeading, openActiveSessionDetails } from "./active-plan-flow"
 
 async function answerMinimumPlanQuestions(page: Page): Promise<void> {
   await page.getByRole("button", { name: /^1500m\b/u }).click()
@@ -141,16 +142,13 @@ test("keeps an evening two-a-day plan after selection and reload", async ({ page
   await page.getByRole("button", { name: /선택하기/u }).first().click()
 
   // Then
-  await expect(page.getByRole("heading", { name: /9일 계획/u })).toBeVisible()
-  await expect(page.getByRole("list", { name: "훈련 실행 순서" }).first()).toContainText("준비")
-  await expect(page.getByRole("list", { name: "훈련 실행 순서" }).first()).toContainText("본운동")
-  await expect(page.getByText(/빠른\s구간과 천천히 움직이는 회복 구간을 번갈아\s하세요/u).first()).toBeVisible()
-  await expect(page.getByRole("list", { name: "훈련 실행 순서" }).first()).toContainText("정리")
-  await expect(page.getByRole("group").filter({
-    hasText: "오후",
-  }).filter({
-    hasText: "반복 인터벌",
-  })).not.toHaveCount(0)
+  await expectActivePlanHeading(page)
+  const qualitySession = await openActiveSessionDetails(page, /반복 인터벌/u)
+  await expect(qualitySession.getByRole("list", { name: "훈련 실행 순서" }).first()).toContainText("준비")
+  await expect(qualitySession.getByRole("list", { name: "훈련 실행 순서" }).first()).toContainText("본운동")
+  await expect(qualitySession.getByText(/빠른\s구간과 천천히 움직이는 회복 구간을 번갈아\s하세요/u).first()).toBeVisible()
+  await expect(qualitySession.getByRole("list", { name: "훈련 실행 순서" }).first()).toContainText("정리")
+  await expect(qualitySession).toContainText("오후")
   await expect.poll(async () => page.evaluate(() => {
     const stored = window.localStorage.getItem("trainoracle.plan-beta.v1")
     if (stored === null) return false
@@ -175,9 +173,10 @@ test("keeps an evening two-a-day plan after selection and reload", async ({ page
     name: /훈련 계획 저장된 계획/u,
   })).toBeVisible()
   await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "계획" }).click()
-  await expect(page.getByRole("heading", { name: /9일 계획/u })).toBeVisible()
-  await expect(page.getByText(/거리\u2060·\u2060목표\s페이스는 지정하지 않음/u).first()).toBeVisible()
-  await expect(page.getByRole("list", { name: "훈련 실행 순서" }).first()).toBeVisible()
+  await expectActivePlanHeading(page)
+  const reloadedQualitySession = await openActiveSessionDetails(page, /반복 인터벌/u)
+  await expect(reloadedQualitySession.getByText(/거리\u2060·\u2060목표\s페이스는 지정하지 않음/u).first()).toBeVisible()
+  await expect(reloadedQualitySession.getByRole("list", { name: "훈련 실행 순서" }).first()).toBeVisible()
 })
 
 test("reads a detailed training notation without creating a plan", async ({ page }) => {
@@ -272,7 +271,7 @@ test("shows a truthful distance receipt and opens the real trend", async ({ page
   const receipt = page.getByRole("status")
   await expect(receipt).toContainText("8 km")
   await receipt.getByRole("button", { name: "거리 추이 보기" }).click()
-  await expect(page.getByRole("heading", { name: "추이" })).toBeVisible()
+  await expect(page.getByRole("heading", { name: "분석" })).toBeVisible()
   const weekly = page.getByRole("region", { name: "최근 4주 거리" })
   await expect(weekly.getByText(/^8$/u)).toBeVisible()
   await expect(weekly.getByText(/집계 사용 1건/u)).toBeVisible()

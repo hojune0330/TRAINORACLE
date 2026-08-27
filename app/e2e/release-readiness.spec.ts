@@ -49,6 +49,6 @@ test("moves through every main tab by keyboard at 320px", async ({ page }, testI
   await page.keyboard.press("Enter")
 
   // Then: Analysis opens and the viewport remains intact.
-  await expect(page.getByRole("heading", { name: "추이" })).toBeVisible()
+  await expect(page.getByRole("heading", { name: "분석" })).toBeVisible()
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true)
 })

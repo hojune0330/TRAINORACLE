@@ -1,6 +1,7 @@
 import { expect, test } from "@playwright/test"
 import type { Page } from "@playwright/test"
 import { selectNineDayProjection } from "./plan-flow"
+import { expectActivePlanHeading } from "./active-plan-flow"
 
 test.use({ serviceWorkers: "block" })
 
@@ -32,5 +33,5 @@ test("shows a saved upcoming training on home and opens its existing plan", asyn
   await expect(nextTraining).toContainText("RPE")
   await expect(nextTraining).not.toContainText("목표 페이스")
   await nextTraining.getByRole("button", { name: /^다음 훈련/u }).click()
-  await expect(page.getByRole("heading", { name: /9일 계획/u })).toBeVisible()
+  await expectActivePlanHeading(page)
 })

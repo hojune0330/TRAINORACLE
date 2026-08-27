@@ -2,6 +2,7 @@ import { expect, test } from "@playwright/test"
 import type { Page } from "@playwright/test"
 import path from "node:path"
 import { selectNineDayProjection } from "./plan-flow"
+import { expectActivePlanHeading, openActiveSessionDetails } from "./active-plan-flow"
 
 test.use({ serviceWorkers: "block" })
 const appPath = process.env.PLAYWRIGHT_APP_PATH ?? "/"
@@ -182,14 +183,14 @@ for (const viewport of [
       fullPage: true,
     })
 
-  await page.getByRole("button", { name: /시간 조절 계획 선택하기/u }).click()
-  await expect(page.getByRole("heading", { name: /시간 조절 계획 9일 계획/u })).toBeVisible()
+    await page.getByRole("button", { name: /시간 조절 계획 선택하기/u }).click()
+    await expectActivePlanHeading(page)
     await page.reload()
     await page.getByRole("navigation", { name: "주 탭" })
       .getByRole("button", { name: "계획" })
       .click()
-    await expect(page.getByText(/5×1000m @5000m RP.*r150.*JOG/u)).toBeVisible()
-    await page.getByText("시작 전 확인").click()
+    const activeSession = await openActiveSessionDetails(page, /5×1000m @5000m RP.*r150.*JOG/u)
+    await activeSession.getByText("시작 전 확인").click()
     await expect(page.getByRole("button", {
       name: "통증 없고 평소와 같음 · 다시 시작 확인",
     })).toHaveCount(0)
@@ -219,7 +220,7 @@ test("keeps youth and adult 5K eligibility and dose identical", async ({ browser
     await expect(page.getByText(new RegExp(`참가 부문: ${divisionName.source}`, "u"))).toBeVisible()
     await bindFirstRecord(page)
     await expect(page.getByText(/5×1000m @5000m RP.*r150.*JOG/u).first()).toBeVisible()
-  await page.getByRole("button", { name: /시간 조절 계획 선택하기/u }).click()
+    await page.getByRole("button", { name: /시간 조절 계획 선택하기/u }).click()
 
     storedDoses.push(await page.evaluate(() => {
       const raw = window.localStorage.getItem("trainoracle.plan-beta.v1")
@@ -242,7 +243,7 @@ test("keeps youth and adult 5K eligibility and dose identical", async ({ browser
     await page.getByRole("navigation", { name: "주 탭" })
       .getByRole("button", { name: "계획" })
       .click()
-    await expect(page.getByText(/5×1000m @5000m RP.*r150.*JOG/u)).toBeVisible()
+    await openActiveSessionDetails(page, /5×1000m @5000m RP.*r150.*JOG/u)
     await context.close()
   }
 

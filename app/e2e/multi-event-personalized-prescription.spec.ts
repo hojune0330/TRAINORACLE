@@ -1,5 +1,6 @@
 import { expect, test } from "@playwright/test"
 import type { Page } from "@playwright/test"
+import { expectActivePlanHeading, openActiveSessionDetails } from "./active-plan-flow"
 import { selectNineDayProjection } from "./plan-flow"
 
 test.use({ serviceWorkers: "block" })
@@ -129,19 +130,20 @@ for (const fixture of cases) {
       })
     }
     await page.getByRole("button", { name: /시간 조절 계획 선택하기/u }).click()
-    await expect(page.getByRole("heading", { name: /시간 조절 계획 9일 계획/u })).toBeVisible()
-    await expect(page.getByText(fixture.summary).first()).toBeVisible()
-    await expect(page.getByText(fixture.execution).first()).toBeVisible()
-    await expect(page.getByText(fixture.work).first()).toBeVisible()
-    await expect(page.getByText(fixture.recovery).first()).toBeVisible()
-    await expect(page.getByText(fixture.notation).first()).toBeVisible()
+    await expectActivePlanHeading(page)
+    const selectedSession = await openActiveSessionDetails(page, fixture.notation)
+    await expect(selectedSession.getByText(fixture.summary).first()).toBeVisible()
+    await expect(selectedSession.getByText(fixture.execution).first()).toBeVisible()
+    await expect(selectedSession.getByText(fixture.work).first()).toBeVisible()
+    await expect(selectedSession.getByText(fixture.recovery).first()).toBeVisible()
+    await expect(selectedSession.getByText(fixture.notation).first()).toBeVisible()
 
     await page.reload()
     await page.getByRole("navigation", { name: "주 탭" })
       .getByRole("button", { name: "계획" })
       .click()
-    await expect(page.getByText(fixture.notation).first()).toBeVisible()
-    await page.getByText("시작 전 확인").click()
+    const activeSession = await openActiveSessionDetails(page, fixture.notation)
+    await activeSession.getByText("시작 전 확인").click()
     await expect(page.getByRole("button", {
       name: "통증 없고 평소와 같음 · 다시 시작 확인",
     })).toHaveCount(0)
@@ -154,8 +156,6 @@ for (const fixture of cases) {
       name: "통증 없고 평소와 같음 · 시작 확인",
     }).click()
     await expect(page.getByRole("status").filter({ hasText: "시작할 수 있어요" })).toBeVisible()
-    const activeSession = page.getByText(fixture.notation).first()
-      .locator("xpath=ancestor::section[@role='group'][1]")
     await activeSession.getByRole("button", { name: "완료" }).click()
     await expect(page.getByRole("button", {
       name: /통증 없고 평소와 같음 · (시작|다시 시작) 확인/u,
