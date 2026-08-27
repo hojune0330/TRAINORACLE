@@ -6,6 +6,7 @@ export function DecorationStudioPreview({
   today,
   state,
   previewName,
+  hasEntries,
   onPreviousDate,
   onNextDate,
   onToday,
@@ -14,6 +15,7 @@ export function DecorationStudioPreview({
   readonly today: string
   readonly state: DecorationState
   readonly previewName: string | null
+  readonly hasEntries?: boolean
   readonly onPreviousDate?: () => void
   readonly onNextDate?: () => void
   readonly onToday?: () => void
@@ -25,6 +27,17 @@ export function DecorationStudioPreview({
         <strong data-testid="decoration-date-current">{date}</strong>
         <strong>{previewName === null ? "현재 꾸미기" : `${previewName} 미리보기 중`}</strong>
       </header>
+      {/* 감사 F5: 저장 가능 여부를 실패 후가 아니라 날짜 이동 시점에 미리 알려 준다. */}
+      {hasEntries !== undefined && (
+        <p
+          className={`decoration-studio-preview__day-state${hasEntries ? "" : " decoration-studio-preview__day-state--empty"}`}
+          data-testid="decoration-date-state"
+        >
+          {hasEntries
+            ? "기록이 있는 날 · 스티커·도장·테이프를 저장할 수 있어요"
+            : "기록이 없는 날 · 미리보기만 돼요"}
+        </p>
+      )}
       {onPreviousDate !== undefined && onNextDate !== undefined && onToday !== undefined && (
         <div className="decoration-studio-preview__targets" aria-label="꾸밀 날짜 선택">
           <button type="button" data-testid="decoration-date-previous" onClick={onPreviousDate}>이전 날짜</button>

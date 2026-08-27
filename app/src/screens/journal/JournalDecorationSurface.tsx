@@ -17,6 +17,7 @@ import {
   previewJournalDecoration,
   removeJournalDecoration,
 } from "../../domain/journal-decoration-state"
+import { withJosa } from "../../domain/korean-josa"
 import { JournalDecorationToolbar } from "./JournalDecorationToolbar"
 
 type Replacement = {
@@ -92,7 +93,7 @@ export function JournalDecorationSurface({
         return
       }
     }
-    commit(applyJournalDecoration(canonical, item, date, slot), `${item.name}을 저장했어요.`)
+    commit(applyJournalDecoration(canonical, item, date, slot), `${withJosa(item.name, "을/를")} 저장했어요.`)
   }
 
   const close = (): void => {
@@ -121,7 +122,7 @@ export function JournalDecorationSurface({
           setNotice("")
         }}
         onApply={apply}
-        onRemove={(item) => commit(removeJournalDecoration(canonical, item, date), `${item.name}을 제거했어요.`)}
+        onRemove={(item) => commit(removeJournalDecoration(canonical, item, date), `${withJosa(item.name, "을/를")} 제거했어요.`)}
         onUndo={() => {
           const previous = undoState
           if (previous !== null && saveDecorationStateIfCurrent(previous, storageVersion).ok) {
@@ -140,13 +141,13 @@ export function JournalDecorationSurface({
       {replacement !== null && (
         <JournalConfirmationDialog
           title="꾸미기 교체 확인"
-          description={`${replacement.previous.name} 대신 ${replacement.item.name}을 사용할까요?`}
+          description={`${replacement.previous.name} 대신 ${withJosa(replacement.item.name, "을/를")} 사용할까요?`}
           confirmLabel="교체하기"
           onCancel={() => setReplacement(null)}
           onConfirm={() => {
             const ok = commit(
               applyJournalDecoration(canonical, replacement.item, date, replacement.slot),
-              `${replacement.item.name}으로 교체했어요.`,
+              `${withJosa(replacement.item.name, "으로/로")} 교체했어요.`,
             )
             if (ok) setReplacement(null)
             return ok
