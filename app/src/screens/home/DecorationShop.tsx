@@ -55,6 +55,17 @@ export function DecorationShop({
         )}
       </header>
       {(open || showPreview) && <p>베타 포인트는 꾸미기에만 써요. 현금으로 바꾸거나 다른 사람에게 보낼 수 없어요.</p>}
+      {/*
+        * 알림은 스튜디오(긴 목록) 위에 sticky 로 둔다.
+        * 감사 F4: 목록 아래에 있으면 받기·사용 결과가 화면 밖에 렌더링돼 보이지 않았다.
+        * 주의: 항상 렌더링하면 role="status" 가 저장 토스트와 겹쳐
+        * Motion 계약 테스트(getByRole("status"))가 깨진다 — 조건부 렌더링 유지.
+        */}
+      {notice !== null && (
+        <p role="status" aria-live="polite" className="decoration-shop__notice">
+          {notice}
+        </p>
+      )}
       {open ? (
         <DecorationStudio
           date={selectedDate}
@@ -71,7 +82,6 @@ export function DecorationShop({
       ) : showPreview ? (
         <DecorationStudioPreview date={selectedDate} today={today} state={state} previewName={null} />
       ) : null}
-      {notice !== null && <p role="status">{notice}</p>}
     </section>
   )
 }

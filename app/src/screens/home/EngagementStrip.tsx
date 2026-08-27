@@ -55,14 +55,24 @@ export function EngagementStrip({
   const PlantIcon = GARDEN_ICONS[plant.icon]
   const badges = engagementBadges(summary.journalDays)
   const nextBadge = nextEngagementMilestone(summary.journalDays)
+  /* 감사 F6: 성장 단계를 점 4개로 보여 준다 (재촉 없이 현재 위치만). */
+  const growthStage = summary.journalDays === 0 ? 0 : summary.journalDays <= 6 ? 1 : summary.journalDays <= 13 ? 2 : summary.journalDays <= 29 ? 3 : 4
 
   return (
     <section className="engagement-strip" aria-label="기록 습관">
-      <div className="engagement-strip__metric" aria-label={`식물 상태: ${plant.label}`}>
-        <PlantIcon aria-hidden="true" size={22} strokeWidth={1.8} />
-        <span>
+      <div className="engagement-strip__garden" aria-label={`식물 상태: ${plant.label}`}>
+        <span className="engagement-strip__garden-icon">
+          <PlantIcon aria-hidden="true" size={34} strokeWidth={1.6} />
+        </span>
+        <span className="engagement-strip__garden-copy">
           <small>일지 정원</small>
           <strong>{plant.name}</strong>
+          <small>{plant.label}</small>
+        </span>
+        <span className="engagement-strip__garden-stages" aria-hidden="true">
+          {[1, 2, 3, 4].map((stage) => (
+            <i key={stage} data-reached={stage <= growthStage} />
+          ))}
         </span>
       </div>
       <div className="engagement-strip__metric">

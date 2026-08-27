@@ -44,6 +44,21 @@
 }
 
 .decoration-shop > p { margin: 0; padding: 0 var(--space-3) var(--space-3); color: var(--ink-3); font-size: var(--fs-body-sm); line-height: 1.45; }
+
+/* 감사 F4: 결과 알림을 긴 목록 위 sticky로 고정 — 어디서 누르든 보이게 */
+.decoration-shop__notice {
+  position: sticky;
+  top: 0;
+  z-index: 3;
+  margin: 0;
+  padding: var(--space-2) var(--space-3);
+  border-block: var(--bw-line) solid var(--line);
+  background: #fff8dc;
+  color: var(--ink);
+  font-size: var(--fs-body-sm);
+  line-height: 1.45;
+  word-break: keep-all;
+}
 .decoration-studio { border-top: var(--bw-line) solid var(--hair); }
 .decoration-studio-preview { border-bottom: var(--bw-line) solid var(--line); background: #eaf7fb; }
 
@@ -62,13 +77,15 @@
 .decoration-studio-preview > header span { color: var(--ink-3); }
 .decoration-studio-preview > header strong { color: var(--ink); text-align: right; }
 
-.decoration-studio-preview__targets,
+.decoration-studio-preview__targets {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+/* 감사 F3: 가로 스크롤 대신 랩 그리드로 전부 노출 (375px 기준) */
 .decoration-studio__type-filter {
   display: grid;
-  grid-auto-flow: column;
-  grid-auto-columns: minmax(max-content, 1fr);
-  overflow-x: auto;
-  scrollbar-width: thin;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
 }
 
 .decoration-studio-preview__targets button,
@@ -104,9 +121,13 @@
 .decoration-studio-preview__page div { margin-top: var(--space-3); display: flex; flex-wrap: wrap; gap: var(--space-1); }
 .decoration-studio-preview__page div span { padding: var(--space-1) var(--space-2); border: var(--bw-line) solid var(--line); border-radius: 999px; background: rgba(255, 255, 255, 0.82); font-size: var(--fs-caption); }
 
-.decoration-studio__situation-tabs { display: flex; overflow-x: auto; border-bottom: var(--bw-line) solid var(--line); scrollbar-width: thin; }
+/* 감사 F3: 8개 탭을 4×2 그리드로 전부 노출 — 숨은 가로 스크롤 제거 */
+.decoration-studio__situation-tabs {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  border-bottom: var(--bw-line) solid var(--line);
+}
 .decoration-studio__situation-tabs button {
-  flex: 0 0 auto;
   min-height: var(--app-touch-min);
   padding: 0 var(--space-3);
   border: 0;
@@ -117,6 +138,7 @@
   font-size: var(--fs-body-sm);
   white-space: nowrap;
 }
+.decoration-studio__situation-tabs button:nth-child(n + 5) { border-top: var(--bw-line) solid var(--hair); }
 .decoration-studio__situation-tabs button[aria-selected="true"] { box-shadow: inset 0 -3px 0 #f07f67; color: var(--ink); font-weight: 700; }
 
 .decoration-studio__presets { padding: var(--space-3); border-bottom: var(--bw-line) solid var(--line); background: #fffdf6; }
@@ -168,6 +190,17 @@
 .decoration-shop__item-actions button:disabled { border-color: var(--line); color: var(--ink-3); cursor: default; }
 .decoration-shop__item-actions .decoration-shop__icon-button { width: var(--app-touch-min); padding: 0; border-color: var(--line); }
 .decoration-studio__empty { margin: 0; padding: var(--space-5) var(--space-3); color: var(--ink-3); font-size: var(--fs-body-sm); text-align: center; }
+
+.decoration-studio-preview__day-state {
+  margin: 0;
+  padding: var(--space-1) var(--space-3);
+  border-bottom: var(--bw-line) solid var(--hair);
+  background: #eef8f0;
+  color: var(--ink-2);
+  font-size: var(--fs-caption);
+  line-height: 1.4;
+}
+.decoration-studio-preview__day-state--empty { background: var(--surface-2); color: var(--ink-3); }
 
 @media (max-width: 520px) {
   .decoration-studio__presets > div { grid-template-columns: 1fr; }

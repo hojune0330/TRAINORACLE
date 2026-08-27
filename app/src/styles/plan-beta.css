@@ -31,7 +31,72 @@
   margin: var(--space-5) var(--space-5) 0;
   border-block: var(--bw-line) solid var(--line);
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+/* 감사 F6: 정원을 전폭 히어로로 — 22px 아이콘 하나에 갇힌 은유를 화면의 주인공으로. */
+.engagement-strip__garden {
+  grid-column: 1 / -1;
+  min-width: 0;
+  padding: var(--space-3);
+  border-bottom: var(--bw-line) solid var(--hair);
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  background: linear-gradient(180deg, #f2f9ef 0%, #fbfdf9 100%);
+}
+
+.engagement-strip__garden-icon {
+  flex: 0 0 auto;
+  width: 56px;
+  height: 56px;
+  border: var(--bw-line) solid #cfe5c8;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: var(--surface);
+  color: #3f7d47;
+}
+
+.engagement-strip__garden-copy {
+  min-width: 0;
+  flex: 1 1 auto;
+  display: grid;
+  gap: 2px;
+}
+
+.engagement-strip__garden-copy small {
+  color: var(--ink-3);
+  font-family: var(--sans);
+  font-size: var(--fs-caption);
+  line-height: 1.4;
+  word-break: keep-all;
+}
+
+.engagement-strip__garden-copy strong {
+  font-family: var(--sans);
+  font-size: var(--fs-app-section-title);
+  font-weight: 700;
+  letter-spacing: 0;
+}
+
+.engagement-strip__garden-stages {
+  flex: 0 0 auto;
+  display: grid;
+  gap: 5px;
+}
+
+.engagement-strip__garden-stages i {
+  width: 8px;
+  height: 8px;
+  border: var(--bw-line) solid #9dc397;
+  border-radius: 50%;
+  background: transparent;
+}
+
+.engagement-strip__garden-stages i[data-reached="true"] {
+  border-color: #3f7d47;
+  background: #6aa86f;
 }
 
 .engagement-strip__metric {

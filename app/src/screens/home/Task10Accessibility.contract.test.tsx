@@ -50,13 +50,20 @@ describe("task 10 mobile accessibility contract", () => {
     expect(navigationRule).toContain("min-width: var(--app-touch-min)")
   })
 
-  it("keeps decoration layers behind readable journal content", () => {
+  /*
+   * 감사 2026-08-27 F1: 장식이 z-index 0 으로 콘텐츠(z-index 1) 뒤에 깔려
+   * 구매·배치한 스티커가 실제 일지에서 전혀 보이지 않았다(elementFromPoint 실측).
+   * 새 계약: 장식은 콘텐츠 위 레이어(z-index 2)에 스크랩북처럼 붙되,
+   * pointer-events: none 으로 본문 상호작용은 절대 가로막지 않는다.
+   * 가독성은 슬롯이 여백·모서리에만 놓이는 배치 규칙이 지킨다.
+   */
+  it("shows decoration layers above content without blocking interaction", () => {
     const contentRule = journalDecorationCss.match(/\.decorated-journal-page__content\s*\{[^}]*\}/u)?.[0] ?? ""
     const decorationRule = journalDecorationCss.match(/\.decorated-journal-page__avatar,[\s\S]*?\.decorated-journal-page__slot\s*\{[^}]*\}/u)?.[0] ?? ""
 
     // Then
     expect(contentRule).toContain("z-index: 1")
-    expect(decorationRule).toContain("z-index: 0")
+    expect(decorationRule).toContain("z-index: 2")
     expect(decorationRule).toContain("pointer-events: none")
   })
 

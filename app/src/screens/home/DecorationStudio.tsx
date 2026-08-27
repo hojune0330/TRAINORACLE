@@ -12,6 +12,7 @@ import {
   toggleFavoriteDecoration,
 } from "../../domain/decorations"
 import type { DecorationCatalogItem, DecorationState } from "../../domain/decorations"
+import { withJosa } from "../../domain/korean-josa"
 import { DecorationStudioItem } from "./DecorationStudioItem"
 import { DecorationStudioPreview } from "./DecorationStudioPreview"
 import {
@@ -122,7 +123,7 @@ export function DecorationStudio({
   const favorite = (item: DecorationCatalogItem) => {
     const next = toggleFavoriteDecoration(state, item.id)
     const added = next.library.favoriteItemIds.includes(item.id)
-    persist(next, added ? `${item.name}을 즐겨찾기에 담았어요.` : `${item.name}을 즐겨찾기에서 뺐어요.`)
+    persist(next, added ? `${withJosa(item.name, "을/를")} 즐겨찾기에 담았어요.` : `${withJosa(item.name, "을/를")} 즐겨찾기에서 뺐어요.`)
   }
 
   const changeDate = (nextDate: string) => {
@@ -144,7 +145,7 @@ export function DecorationStudio({
         return
       }
     }
-    persist(useOwnedDecorationItem(state, item, date), `${item.name}을 사용했어요.`)
+    persist(useOwnedDecorationItem(state, item, date), `${withJosa(item.name, "을/를")} 사용했어요.`)
   }
 
   return (
@@ -154,6 +155,7 @@ export function DecorationStudio({
         today={today}
         state={previewState}
         previewName={previewName}
+        hasEntries={hasEntriesForDate(date)}
         onPreviousDate={() => changeDate(moveDecorationDate(date, -1))}
         onNextDate={() => changeDate(moveDecorationDate(date, 1))}
         onToday={() => changeDate(today)}
@@ -207,7 +209,7 @@ export function DecorationStudio({
               onBuy={() => buy(item)}
               onFavorite={() => favorite(item)}
               onUse={() => use(item)}
-              onRemove={() => persist(removeDecorationItem(state, item, date), `${item.name}을 제거했어요.`)}
+              onRemove={() => persist(removeDecorationItem(state, item, date), `${withJosa(item.name, "을/를")} 제거했어요.`)}
             />
           )
         })}
@@ -215,11 +217,11 @@ export function DecorationStudio({
       {replacement !== null && (
         <JournalConfirmationDialog
           title="꾸미기를 바꿀까요?"
-          description={`${replacement.previous.name} 대신 ${replacement.item.name}을 이 칸에 놓아요.`}
+          description={`${replacement.previous.name} 대신 ${withJosa(replacement.item.name, "을/를")} 이 칸에 놓아요.`}
           confirmLabel="바꾸기"
           onCancel={() => setReplacement(null)}
           onConfirm={() => {
-            const ok = persist(useOwnedDecorationItem(state, replacement.item, date), `${replacement.item.name}을 사용했어요.`)
+            const ok = persist(useOwnedDecorationItem(state, replacement.item, date), `${withJosa(replacement.item.name, "을/를")} 사용했어요.`)
             if (ok) setReplacement(null)
             return ok
           }}
