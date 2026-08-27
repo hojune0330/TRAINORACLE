@@ -2,6 +2,7 @@ import {
   ArrowRight,
   BookOpen,
   CalendarDays,
+  CircleCheck,
   House,
   Plus,
   TrendingUp,
@@ -88,6 +89,7 @@ export function SavedToast({
       <div className="saved-toast__surface">
         <div className="saved-toast__heading">
           <strong>
+            {!needsReview && <CircleCheck className="saved-toast__check" aria-hidden="true" size={18} />}
             {needsReview ? LOCAL_SAVE_NOTICE : presentation.title}
             {count > 0 ? ` · 총 ${count}건` : ""}
           </strong>

@@ -372,6 +372,7 @@ export function PlanBeta({
   return (
     <>
       <PlanIntake
+        key={step}
         step={step}
         draft={draft}
         onBack={() => setStep(previousIntakeStep(step, draft.eventGroup))}

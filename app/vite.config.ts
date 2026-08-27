@@ -26,4 +26,17 @@ export default defineConfig({
     port: 4173,
     allowedHosts: true,
   },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (!id.includes("node_modules")) return undefined
+          if (id.includes("react-dom") || /node_modules[\\/]react[\\/]/u.test(id)) return "vendor-react"
+          if (id.includes("lucide-react")) return "vendor-icons"
+          if (id.includes("zod")) return "vendor-validation"
+          return undefined
+        },
+      },
+    },
+  },
 })

@@ -105,10 +105,21 @@ describe("motion CSS contract", () => {
     expect(appCss).toMatch(/@keyframes saved-toast-exit[\s\S]*opacity[\s\S]*transform/iu)
   })
 
+  it("glides only the new flow surface and gives save confirmation one brief check", () => {
+    expect(appCss).toContain("flow-stage-enter var(--dur-base) var(--ease-out-strong)")
+    expect(appCss).toContain("translateY(6px)")
+    expect(appCss).toContain(".app-flow-stage")
+    expect(appCss).toContain("ui-fade-in var(--dur-fast)")
+    expect(appCss).toContain("confirmation-check var(--dur-slow) var(--ease-out-strong)")
+    expect(appCss).not.toContain("scroll-jacking")
+  })
+
   it("removes spatial movement when reduced motion is requested", () => {
     expect(appCss).toContain("@media (prefers-reduced-motion: reduce)")
     expect(appCss).toContain("animation-name: ui-fade-in")
     expect(appCss).toContain("transform: none")
+    expect(appCss).toContain(".journal-flow-stage")
+    expect(appCss).toContain(".saved-toast__check")
   })
 })
 
