@@ -210,6 +210,7 @@ export function AppShell() {
           onOpenPlan={() => setV(viewForTab("plan"))}
           onOpenTrends={() => setV(viewForTab("trends"))}
           onOpenMore={() => setUtilityView("more")}
+          onOpenAccount={accountEnabled ? () => setV(s => ({ ...s, accountOpen: true })) : undefined}
         />
       )
   } else if (v.tab === "journal") {

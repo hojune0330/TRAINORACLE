@@ -16,6 +16,7 @@ import {
 import { buildEngagementSharePayload } from "../domain/engagement-rewards"
 import { DECORATION_CATALOG, loadDecorationState } from "../domain/decorations"
 import { painLevelsRequireReview } from "../safety/memo-safety"
+import { AccountEntryButton } from "../components/AccountEntryButton"
 import { DailyContextTags } from "./home/DailyContextTags"
 import { DeviceJournal } from "./home/DeviceJournal"
 import { DecorationShop } from "./home/DecorationShop"
@@ -39,6 +40,7 @@ export type HomeProps = {
   readonly onOpenPlan?: () => void
   readonly onOpenTrends?: () => void
   readonly onOpenMore?: () => void
+  readonly onOpenAccount?: () => void
 }
 
 export function Home({
@@ -49,6 +51,7 @@ export function Home({
   onOpenPlan,
   onOpenTrends,
   onOpenMore,
+  onOpenAccount,
 }: HomeProps) {
   const [revision, setRevision] = React.useState(0)
   const entries = React.useMemo(() => loadEntries(), [revision])
@@ -138,6 +141,7 @@ export function Home({
         onOpenPlan={onOpenPlan}
         onOpenTrends={onOpenTrends}
         onOpenMore={onOpenMore}
+        accountEntry={<AccountEntryButton onOpenAccount={onOpenAccount} />}
         todayContext={<DailyContextTags date={today} />}
         recentJournal={(
           <section className="training-home__recent" aria-label="최근 기록">

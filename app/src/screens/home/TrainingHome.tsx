@@ -19,6 +19,8 @@ type TrainingHomeProps = {
   readonly onOpenPlan?: () => void
   readonly onOpenTrends?: () => void
   readonly onOpenMore?: () => void
+  /** 헤더 우측 계정 진입 버튼 슬롯 — 로그인 발견성 개선(2026-08-27). 계정 기능 OFF면 null. */
+  readonly accountEntry?: ReactNode
   readonly todayContext?: ReactNode
   readonly recentJournal?: ReactNode
 }
@@ -31,6 +33,7 @@ export function TrainingHome({
   onOpenPlan,
   onOpenTrends,
   onOpenMore,
+  accountEntry,
   todayContext,
   recentJournal,
 }: TrainingHomeProps) {
@@ -87,9 +90,12 @@ export function TrainingHome({
       <div className={model.homeMode === "WELCOME" ? "training-home__welcome-fold" : undefined}>
         <header className="training-home__header">
           <div className="training-home__brand">TRAINORACLE</div>
-          <button className="training-home__more" type="button" onClick={onOpenMore} aria-label="더보기" title="더보기">
-            <Ellipsis aria-hidden="true" size={21} />
-          </button>
+          <div className="training-home__header-actions">
+            {accountEntry}
+            <button className="training-home__more" type="button" onClick={onOpenMore} aria-label="더보기" title="더보기">
+              <Ellipsis aria-hidden="true" size={21} />
+            </button>
+          </div>
         </header>
 
         <section className="training-home__intro" aria-labelledby="training-home-title">
