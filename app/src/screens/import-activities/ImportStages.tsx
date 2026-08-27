@@ -23,7 +23,7 @@ export function PickStage({ busy, failure, fileInputRef, onFile, onCancel }: {
 
       <div
         data-testid="import-privacy-notice"
-        style={{ border: "1px solid var(--line)", borderLeft: "3px solid var(--ink-3)", background: "var(--surface)", padding: "10px 13px" }}
+      style={{ border: "1px solid var(--line)", background: "var(--surface)", padding: "10px 13px" }}
       >
         <div style={{ ...mono, fontSize: 9.5, fontWeight: 600, color: "var(--ink-3)", letterSpacing: "0.12em" }}>
           파일은 이 기기에서만 읽어요

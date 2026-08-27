@@ -169,7 +169,7 @@ function PickStage({ busy, failure, onFile }: {
 
       <div
         data-testid="restore-privacy-notice"
-        style={{ border: "1px solid var(--line)", borderLeft: "3px solid var(--ink-3)", background: "var(--surface)", padding: "10px 13px" }}
+            style={{ border: "1px solid var(--line)", background: "var(--surface)", padding: "10px 13px" }}
       >
         <div style={{ ...mono, fontSize: 9.5, fontWeight: 600, color: "var(--ink-3)", letterSpacing: "0.12em" }}>
           지금 일지를 지운 뒤 넣는 게 아니에요

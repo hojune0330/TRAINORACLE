@@ -4,8 +4,7 @@
 
 html, body { margin: 0; padding: 0; background: var(--app-frame-canvas); }
 #root { min-height: 100vh; }
-button { font-family: inherit; }
-input, textarea { font-family: inherit; }
+button, input, textarea, select { font: inherit; letter-spacing: inherit; }
 
 .journal-ten-scale {
   grid-template-columns: repeat(10, minmax(0, 1fr));
@@ -700,12 +699,8 @@ input, textarea { font-family: inherit; }
   grid-template-columns: minmax(0, 1fr) 24px;
   gap: 12px;
   align-items: center;
-  /* 최종 폴리시 D2: TRAINING 모드의 정보 위계 1순위인데 헤어라인 카드라
-   * 아래 검정 기록 버튼에 시선을 밗겼다. 잉크 액센트 좌측 바 + 보더 강화로
-   * 히어로 지위를 시각화한다 (모노크롬 유지, 색 추가 없음). */
-  border: 1px solid var(--ink);
-  border-left: 4px solid var(--ink);
-  border-radius: 8px;
+  border: 1px solid var(--line-2);
+  border-radius: 6px;
   background: var(--surface);
   color: var(--ink);
   text-align: left;
@@ -912,9 +907,9 @@ input, textarea { font-family: inherit; }
 .minji-page__situation { margin: 12px 0 0; font-family: var(--sans); font-size: 13.5px; line-height: 1.65; color: var(--ink-2); }
 .minji-page blockquote {
   margin: 18px 0 0;
-  padding: 16px 15px;
-  border: 0;
-  border-left: 3px solid var(--brand);
+  padding: 16px 0;
+  border-block: 1px solid var(--line-2);
+  border-inline: 0;
   background: var(--paper-2);
   color: var(--ink-blue);
   font-family: var(--sans);

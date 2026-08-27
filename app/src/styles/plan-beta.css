@@ -108,7 +108,7 @@
 }
 
 .engagement-strip__metric + .engagement-strip__metric {
-  border-left: var(--bw-line) solid var(--hair);
+  border-left: 0;
 }
 
 .engagement-strip__metric span {
@@ -552,7 +552,7 @@
 }
 
 .plan-training-flow__days > li[data-active-day="true"] {
-  box-shadow: inset 0 -3px 0 var(--brand);
+  background: color-mix(in srgb, var(--brand) 8%, var(--surface));
 }
 
 .plan-training-flow__days > li[data-current-date="true"] time {
@@ -568,7 +568,7 @@
 }
 
 .plan-training-flow__days time span {
-  font-size: 8px;
+  font-size: 9px;
 }
 
 .plan-training-flow__days time strong {
@@ -593,7 +593,7 @@
   display: grid;
   place-items: center;
   font-family: var(--mono);
-  font-size: 7px;
+  font-size: 8px;
   line-height: 1;
 }
 
@@ -615,7 +615,7 @@
 }
 
 .plan-training-flow__markers small {
-  font-size: 6px;
+  font-size: 7px;
   line-height: 1;
 }
 
@@ -774,16 +774,8 @@
   background: var(--bg);
 }
 
-.plan-schedule-preview[data-display-mode="swipe"] .plan-schedule-preview__sessions > section[data-flow-kind="main"] {
-  border-left: 3px solid var(--ink);
-}
-
-.plan-schedule-preview[data-display-mode="swipe"] .plan-schedule-preview__sessions > section[data-flow-kind="base"] {
-  border-left: 3px solid var(--brand);
-}
-
 .active-plan .plan-schedule-preview__sessions > section {
-  border-color: var(--ink);
+  border-color: var(--line-2);
 }
 
 .plan-schedule-preview__sessions[data-session-count="2"] > section + section {
@@ -794,14 +786,6 @@
 .plan-schedule-preview[data-display-mode="swipe"] .plan-schedule-preview__sessions[data-session-count="2"] > section + section {
   padding-left: var(--space-2);
   border: var(--bw-line) solid var(--hair);
-}
-
-.plan-schedule-preview[data-display-mode="swipe"] .plan-schedule-preview__sessions[data-session-count="2"] > section[data-flow-kind="main"] {
-  border-left: 3px solid var(--ink);
-}
-
-.plan-schedule-preview[data-display-mode="swipe"] .plan-schedule-preview__sessions[data-session-count="2"] > section[data-flow-kind="base"] {
-  border-left: 3px solid var(--brand);
 }
 
 .plan-schedule-preview[data-display-mode="swipe"] .plan-schedule-preview__sessions[data-session-count="2"] {
@@ -863,8 +847,8 @@
 }
 
 .plan-session-flow-code small {
-  padding-left: 3px;
-  border-left: var(--bw-line) solid currentColor;
+  padding-left: 1px;
+  border-left: 0;
   color: inherit;
   font-size: inherit;
 }
@@ -1411,8 +1395,9 @@
 
 .plan-preview-boundary {
   margin-top: var(--space-4);
-  padding-left: var(--space-3);
-  border-left: 3px solid var(--brand);
+  padding: var(--space-3);
+  border: var(--bw-line) solid var(--line);
+  background: var(--surface-2);
   font-family: var(--sans);
 }
 
@@ -1537,13 +1522,14 @@
 
 .plan-detailed-prescription code {
   min-width: 0;
-  font-family: var(--mono);
+  font-family: var(--code-mono);
   overflow-wrap: anywhere;
 }
 
 .plan-detailed-prescription details div {
-  padding-left: var(--space-3);
-  border-left: var(--bw-line) solid var(--line);
+  padding: var(--space-3);
+  border-left: 0;
+  background: var(--surface-2);
   color: var(--ink-2);
   font-size: var(--fs-body-sm);
 }
@@ -1860,7 +1846,7 @@
   display: flex;
   align-items: center;
   gap: var(--space-3);
-  box-shadow: 0 8px 24px rgb(0 0 0 / 18%);
+  box-shadow: none;
   pointer-events: none;
   animation: active-plan-created 3s var(--ease-out-strong) both;
 }
@@ -2068,8 +2054,9 @@
   display: grid;
   gap: 3px;
   margin-top: var(--space-3);
-  padding: 0 0 0 var(--space-3);
-  border-left: 3px solid var(--brand);
+  padding: var(--space-3);
+  border: var(--bw-line) solid var(--line);
+  background: var(--surface-2);
   color: var(--ink);
   font-size: var(--fs-body-sm);
   line-height: 1.55;
@@ -2314,7 +2301,8 @@
 .plan-session-guidance p {
   margin: 0 0 var(--space-2);
   padding: var(--space-2);
-  border-left: var(--bw-line) solid var(--line);
+  border: 0;
+  background: var(--surface-2);
   color: var(--ink-2);
   font-family: var(--sans);
   font-size: var(--fs-body-sm);

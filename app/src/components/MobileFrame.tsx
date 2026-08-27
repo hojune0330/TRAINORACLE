@@ -21,7 +21,7 @@ export function MobileFrame({ children, label, width = 380, height = 800 }: {
         width: width + 20,
         background: "#0E1412",
         padding: 10,
-        boxShadow: "0 40px 100px -30px rgba(0,0,0,0.28), 0 10px 30px -10px rgba(0,0,0,0.18)",
+        boxShadow: "none",
       }}>
         <div data-mobile-frame style={{
           width: width,

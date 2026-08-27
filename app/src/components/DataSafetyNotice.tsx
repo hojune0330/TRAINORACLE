@@ -3,7 +3,7 @@
 //  회원 가입·계정 연동으로 일지와 데이터를 지키라고 계속 언급하게 하자."
 //
 // 원칙:
-//  - 영구 닫기 없음 (상시 노출). 대신 작고 조용한 스트립으로 피로 최소화.
+//  - 영구 닫기 없음 (상시 노출). 대신 작고 조용한 안내 블록으로 피로 최소화.
 //  - 계정 기능 ON: "계정 연동으로 지키기" CTA.
 //    계정 기능 OFF(키 미설정 빌드): CTA 없이 사실 고지 + JSON 내보내기 안내.
 //  - 협박형 문구 금지 — 사실만 말한다 ("지워질 수 있어요", 손실 카운트다운 없음).
@@ -20,7 +20,6 @@ export function DataSafetyNotice({ onOpenAccount }: {
         data-testid="data-safety-notice"
         style={{
           border: "1px solid var(--line)",
-          borderLeft: "3px solid var(--ink-3)",
           background: "var(--surface)",
           padding: "10px 13px",
         }}

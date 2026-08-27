@@ -68,7 +68,7 @@ export function PopCard({ open, align = "left", width = 232, accentBorder, label
   /** 트리거 기준 기본 정렬 (보정 전) */
   align?: "left" | "right"
   width?: number
-  /** 카드 테두리/좌측 강조선 색 (안전 용어 = warn) */
+  /** 카드 테두리 색 (안전 용어 = warn) */
   accentBorder: { border: string; bar: string }
   /** uitest 로그 식별용 */
   label?: string
@@ -124,7 +124,6 @@ export function PopCard({ open, align = "left", width = 232, accentBorder, label
     width,
     background: "var(--surface)",
     border: `var(--bw-line) solid ${accentBorder.border}`,
-    borderLeft: `3px solid ${accentBorder.bar}`,
     padding: "var(--space-3)",
     textTransform: "none", letterSpacing: 0, textAlign: "left",
   }
