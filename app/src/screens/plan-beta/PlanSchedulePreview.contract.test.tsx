@@ -75,7 +75,7 @@ describe("plan schedule preview", () => {
     }))
     expect(screen.getByRole("listitem", {
       name: "8월 17일 월요일 · 훈련 2개",
-    })).toHaveTextContent("오전오후")
+    })).toHaveTextContent("메인오후")
 
     const restCalendarDay = screen.getByRole("listitem", {
       name: /8월 18일.*휴식/u,

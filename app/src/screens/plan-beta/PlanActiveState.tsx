@@ -27,10 +27,12 @@ type PersistenceRetry =
 
 export function PlanActiveState({
   state,
+  celebrateOnMount = false,
   onStateChange,
   onArchived,
 }: {
   readonly state: PlanBetaState
+  readonly celebrateOnMount?: boolean
   readonly onStateChange: (state: PlanBetaState) => void
   readonly onArchived: (intake: StoredPlanBetaIntake) => void
 }) {
@@ -172,6 +174,7 @@ export function PlanActiveState({
     <>
       <ActivePlan
         state={state}
+        showCreatedCelebration={celebrateOnMount}
         onProgress={saveProgress}
         onNextFrame={() => void startNextFrame()}
         onActivateNextFrame={(nextCurrentCheck) => void activateNextFrame(nextCurrentCheck)}

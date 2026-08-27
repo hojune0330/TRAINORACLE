@@ -30,11 +30,17 @@ export function PlanSchedulePreview({
   frameLengthDays = 9.5,
   sessions,
   renderSessionFooter,
+  renderAfterCalendar,
+  showRpeGuide = true,
+  timelineHeading,
 }: {
   readonly startDate: string
   readonly frameLengthDays?: FrameLengthDays
   readonly sessions: readonly PlanSession[]
   readonly renderSessionFooter?: (session: PlanSession) => ReactNode
+  readonly renderAfterCalendar?: ReactNode
+  readonly showRpeGuide?: boolean
+  readonly timelineHeading?: string
 }) {
   if (!isValidIsoDate(startDate)) return null
 
@@ -42,14 +48,12 @@ export function PlanSchedulePreview({
   const days = buildScheduleDays(startDate, sessions, dayCount)
   return (
     <>
-      <div className="plan-rpe-guide">
-        <strong>RPE 기준<TermHelp term="rpe" /></strong>
-        <span>
-          1~2 회복 움직임 · 3~4 대화 가능한 쉬운 유산소 · 5 꾸준한 노력 · 6 짧은 문장만 가능 · 7 몇 마디만 가능 · 8 매우 힘든 짧은 반복 · 9 거의 최대인 짧은 노력 · 10 최대 노력에 가까운 느낌
-        </span>
-        <small>몸의 느낌을 설명하는 기준이며 의료 판단이 아닙니다.</small>
-      </div>
+      {showRpeGuide && <PlanRpeGuide />}
       <PlanScheduleCalendar days={days} today={todayISO()} frameLengthDays={frameLengthDays} />
+      {renderAfterCalendar}
+      {timelineHeading !== undefined && (
+        <h2 className="plan-schedule-preview__heading">{timelineHeading}</h2>
+      )}
       <ol className="plan-schedule-preview" aria-label="날짜별 계획 미리보기">
       {days.map(({ date, day, sessions: daySessions }) => {
         const label = `${calendarDateLabel(date)} · ${daySummary(daySessions)}`
@@ -114,6 +118,18 @@ export function PlanSchedulePreview({
   )
 }
 
+export function PlanRpeGuide() {
+  return (
+    <div className="plan-rpe-guide">
+      <strong>RPE 기준<TermHelp term="rpe" /></strong>
+      <span>
+        1~2 회복 움직임 · 3~4 대화 가능한 쉬운 유산소 · 5 꾸준한 노력 · 6 짧은 문장만 가능 · 7 몇 마디만 가능 · 8 매우 힘든 짧은 반복 · 9 거의 최대인 짧은 노력 · 10 최대 노력에 가까운 느낌
+      </span>
+      <small>몸의 느낌을 설명하는 기준이며 의료 판단이 아닙니다.</small>
+    </div>
+  )
+}
+
 function PlanScheduleCalendar({
   days,
   today,
@@ -155,8 +171,15 @@ function PlanScheduleCalendar({
               {day.sessions.length > 0 && (
                 <span className="plan-schedule-calendar__slots">
                   {day.sessions.map((session) => (
-                    <span key={`${session.day}-${session.slot}`}>
-                      {session.role === "REST" ? "휴식" : sessionSlotLabel(session.slot)}
+                    <span
+                      key={`${session.day}-${session.slot}`}
+                      data-session-role={session.role.toLowerCase()}
+                    >
+                      {session.role === "REST"
+                        ? "휴식"
+                        : session.role === "QUALITY"
+                          ? "메인"
+                          : sessionSlotLabel(session.slot)}
                     </span>
                   ))}
                 </span>

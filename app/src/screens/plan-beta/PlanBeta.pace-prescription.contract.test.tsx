@@ -86,9 +86,9 @@ describe("production detailed prescription experience", () => {
     expect(within(schedule).getByText(/5000m.*18분 31초.*2026-05-10/u)).toBeVisible()
 
     await user.click(screen.getByRole("button", { name: /시간 조절 계획 선택하기/u }))
-    await screen.findByRole("heading", { name: /시간 조절 계획 9일 계획/u })
+    await screen.findByRole("heading", { name: /9일 훈련 계획/u })
     expect(screen.queryByRole("alert")).toBeNull()
-    expect(screen.getByRole("heading", { name: /시간 조절 계획 9일 계획/u })).toBeVisible()
+    expect(screen.getByText("시간 조절 계획")).toBeVisible()
     const activeNotation = screen.getByText(/5×1000m @5000m RP.*r150.*JOG/u)
     expect(activeNotation).toBeVisible()
     const activeSession = activeNotation.closest("section[role='group']")
@@ -133,7 +133,7 @@ describe("production detailed prescription experience", () => {
     await user.click(within(picker).getByRole("button", { name: /개인 최고.*18분 31초/u }))
     await user.click(within(picker).getByRole("button", { name: "이 기록으로 개인 페이스 적용" }))
     await user.click(screen.getByRole("button", { name: /시간 조절 계획 선택하기/u }))
-    await screen.findByRole("heading", { name: /시간 조절 계획 9일 계획/u })
+    await screen.findByRole("heading", { name: /9일 훈련 계획/u })
 
     const activeNotation = screen.getByText(/5×1000m @5000m RP.*r150.*JOG/u)
     const activeSession = activeNotation.closest("section[role='group']")

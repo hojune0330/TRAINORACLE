@@ -683,7 +683,7 @@ describe("plan beta user flow", () => {
     if (!firstChoice) throw new Error("Expected at least one candidate choice")
     await userEvent.setup().click(firstChoice)
 
-    expect(screen.getByRole("heading", { name: /9일 계획/u })).toBeVisible()
+    expect(screen.getByRole("heading", { name: /9일 훈련 계획/u })).toBeVisible()
     expect(screen.getByText("내 훈련 일정")).toBeVisible()
     expect(screen.queryByText("ACTIVE · LOCAL BETA")).toBeNull()
     expect(window.localStorage.getItem("trainoracle.plan-beta.v1")).not.toBeNull()
@@ -816,7 +816,7 @@ describe("plan beta user flow", () => {
 
     expect(screen.getByRole("button", { name: "현재 계획을 먼저 기록해 주세요" }))
       .toBeDisabled()
-    expect(screen.getByRole("heading", { name: /9일 계획/u })).toBeVisible()
+    expect(screen.getByRole("heading", { name: /9일 훈련 계획/u })).toBeVisible()
     expect(window.localStorage.getItem("trainoracle.plan-beta.v1")).not.toBeNull()
     expect(window.localStorage.getItem("trainoracle.plan-beta.history.v1")).toBeNull()
   })

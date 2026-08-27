@@ -90,6 +90,7 @@ export function PlanBeta({
   const [errorCode, setErrorCode] = React.useState<string | null>(null)
   const [retrySelection, setRetrySelection] = React.useState<CandidateSelection | null>(null)
   const [notationReaderOpen, setNotationReaderOpen] = React.useState(false)
+  const [celebrateActivePlan, setCelebrateActivePlan] = React.useState(false)
   const [athleteRecords] = React.useState(() => loadAthleteRecords())
   const [selectedRecordId, setSelectedRecordId] = React.useState<string | null>(null)
   const [comparisonRecordId, setComparisonRecordId] = React.useState<string | null>(null)
@@ -225,6 +226,7 @@ export function PlanBeta({
       case "saved":
         setErrorCode(null)
         setRetrySelection(null)
+        setCelebrateActivePlan(true)
         setStored(result.state)
         return
       case "rejected":
@@ -246,8 +248,10 @@ export function PlanBeta({
     return (
       <PlanActiveState
         state={stored}
+        celebrateOnMount={celebrateActivePlan}
         onStateChange={setStored}
         onArchived={(intake) => {
+          setCelebrateActivePlan(false)
           setStored(null)
           setDraft(intake)
           setGenerated(null)
