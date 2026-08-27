@@ -127,7 +127,10 @@ export function ActivePlan({
       </p>
       <ul className="active-plan__build-summary" aria-label="계획 구성 요약">
         <li>{eventDistanceLabel(activePlan.eventDistanceM ?? state.intake.eventDistanceM)}</li>
-        <li>{focusLabel}</li>
+        <li>
+          {focusLabel}
+          <TermHelp term={ENERGY_INTENT_LABELS[activePlan.selectedEnergyIntent].term} />
+        </li>
         <li>{state.intake.secondSessionMode === "RECOVERY_PM_ALLOWED" ? "하루 2회 포함" : "하루 1회"}</li>
       </ul>
       <PlanSchedulePreview

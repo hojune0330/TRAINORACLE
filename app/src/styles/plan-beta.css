@@ -513,19 +513,93 @@
 
 .plan-training-flow__legend li {
   display: inline-flex;
-  align-items: baseline;
+  align-items: center;
   gap: 3px;
   font-family: var(--sans);
   font-size: var(--fs-mono-xs);
 }
 
-.plan-training-flow__legend strong {
+.plan-flow-code-help__legend-code > strong {
   color: var(--ink);
   font-family: var(--mono);
 }
 
-.plan-training-flow__legend span {
+.plan-training-flow__legend > li > span:last-child {
   color: var(--ink-3);
+}
+
+.plan-flow-code-help {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  flex: 0 0 auto;
+}
+
+.plan-flow-code-help__trigger {
+  min-width: 44px;
+  min-height: 44px;
+  margin: -10px -6px;
+  padding: 0 6px;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.plan-flow-code-help__legend-code {
+  min-height: 1.35rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  color: var(--ink);
+  font-family: var(--mono);
+  font-size: var(--fs-mono-xs);
+}
+
+.plan-flow-code-help__question {
+  width: 14px;
+  height: 14px;
+  border: 1px solid currentColor;
+  border-radius: 50%;
+  color: inherit;
+  font-family: var(--mono);
+  font-size: 8.5px;
+  font-weight: 700;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.plan-flow-code-help__trigger[aria-expanded="true"] .plan-flow-code-help__legend-code {
+  color: var(--brand);
+}
+
+.plan-flow-code-help__section[data-divided="true"] {
+  margin-top: var(--space-3);
+  padding-top: var(--space-3);
+  border-top: var(--bw-line) solid var(--hair);
+}
+
+.plan-flow-code-help__floating-card {
+  position: fixed;
+  z-index: 80;
+  left: 50%;
+  bottom: calc(76px + env(safe-area-inset-bottom, 0px));
+  width: min(420px, calc(100vw - 32px));
+  max-height: calc(100dvh - 112px);
+  overflow-y: auto;
+  box-sizing: border-box;
+  transform: translateX(-50%);
+  border: var(--bw-line) solid var(--line);
+  background: var(--surface);
+  padding: var(--space-3);
+  color: var(--ink);
+  text-align: left;
 }
 
 .plan-training-flow__days {
@@ -853,6 +927,15 @@
   font-size: inherit;
 }
 
+.plan-session-flow-code .plan-flow-code-help__question {
+  margin-left: 2px;
+}
+
+.plan-flow-code-help__trigger[aria-expanded="true"] .plan-session-flow-code[data-flow-kind="main"] {
+  outline: 2px solid var(--brand);
+  outline-offset: 2px;
+}
+
 .plan-day-card__details {
   margin-top: var(--space-1);
   border-top: var(--bw-line) solid var(--hair);
@@ -903,10 +986,16 @@
   font-family: var(--sans);
 }
 
-.plan-day-card__empty span {
+.plan-day-card__empty > span {
   color: var(--ink-3);
   font-size: var(--fs-body-sm);
   line-height: 1.45;
+}
+
+.plan-day-card__empty-title {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
 }
 
 .plan-schedule-preview__sessions > p {
@@ -1931,6 +2020,19 @@
   content: "·";
   margin-inline: var(--space-2);
   color: var(--ink-3);
+}
+
+.active-plan__build-summary li {
+  display: inline-flex;
+  align-items: center;
+}
+
+.plan-adaptation__term-help {
+  margin: 0 0 var(--space-2);
+  color: var(--ink-2);
+  font-size: var(--fs-body-sm);
+  display: flex;
+  align-items: center;
 }
 
 .plan-candidate-comparison__intro {

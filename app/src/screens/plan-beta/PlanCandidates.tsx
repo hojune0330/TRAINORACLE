@@ -203,7 +203,8 @@ function CandidateComparison({
     <section className="plan-candidate-comparison" aria-label="두 계획 핵심 비교">
       <h2>고른 목표는 같고, 쉬운 훈련 시간만 달라요</h2>
       <p className="plan-candidate-comparison__intro">
-        두 계획 모두 고강도 훈련인 &lsquo;{selectedIntentLabel}&rsquo;을 같은 횟수와 RPE로 넣었어요.
+        두 계획 모두 고강도 훈련인 &lsquo;{selectedIntentLabel}&rsquo;
+        <TermHelp term={ENERGY_INTENT_LABELS[sharedCandidate.selectedEnergyIntent].term} />을 같은 횟수와 RPE로 넣었어요.
         여기서 쉬운 훈련은 기초 달리기와 회복 운동을 말해요.
       </p>
       <div className="plan-candidate-comparison__shared">

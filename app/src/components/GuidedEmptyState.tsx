@@ -8,7 +8,7 @@ export function GuidedEmptyState({
   onAction,
 }: {
   readonly title: string
-  readonly description: string
+  readonly description: React.ReactNode
   readonly actionLabel: string
   readonly onAction?: (() => void) | undefined
 }) {

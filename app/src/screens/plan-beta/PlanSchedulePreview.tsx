@@ -15,6 +15,7 @@ import {
   sessionSlotLabel,
 } from "./labels"
 import { DetailedPrescriptionView } from "./DetailedPrescriptionView"
+import { PlanFlowCodeHelp } from "./PlanFlowCodeHelp"
 
 const WEEKDAYS = ["일요일", "월요일", "화요일", "수요일", "목요일", "금요일", "토요일"] as const
 type FrameLengthDays = 7 | 9 | 9.5 | 10
@@ -190,7 +191,10 @@ export function PlanSchedulePreview({
                   ))}
                   {daySessions.length === 0 && (
                     <div className="plan-day-card__empty">
-                      <strong>OFF · 비워 둔 날</strong>
+                      <div className="plan-day-card__empty-title">
+                        <PlanFlowCodeHelp primary="OFF" kind="off" />
+                        <strong>비워 둔 날</strong>
+                      </div>
                       <span>훈련을 더 채우지 않고 회복 상태를 확인하세요.</span>
                     </div>
                   )}
@@ -255,10 +259,11 @@ function PlanSessionPreview({
     >
       <header>
         <span className="plan-schedule-preview__slot">{sessionSlotLabel(session.slot)}</span>
-        <span className="plan-session-flow-code" data-flow-kind={flow.kind}>
-          <strong>{flow.primary}</strong>
-          {flow.secondary !== undefined && <small>{flow.secondary}</small>}
-        </span>
+        <PlanFlowCodeHelp
+          primary={flow.primary}
+          secondary={flow.secondary}
+          kind={flow.kind}
+        />
       </header>
       <div className="plan-session-content">
         <strong>{sessionLabel(session)}</strong>
@@ -306,10 +311,10 @@ function PlanTrainingFlow({
         <span>강약과 회복을 먼저 확인하세요.</span>
       </header>
       <ul className="plan-training-flow__legend" aria-label="훈련 구분">
-        <li><strong>MAIN</strong><span>핵심</span></li>
-        <li><strong>BASE</strong><span>기초</span></li>
-        <li><strong>REC</strong><span>회복</span></li>
-        <li><strong>OFF</strong><span>휴식</span></li>
+        <li><PlanFlowCodeHelp primary="MAIN" kind="main" variant="legend" /><span>핵심</span></li>
+        <li><PlanFlowCodeHelp primary="BASE" kind="base" variant="legend" /><span>기초</span></li>
+        <li><PlanFlowCodeHelp primary="REC" kind="recovery" variant="legend" /><span>회복</span></li>
+        <li><PlanFlowCodeHelp primary="OFF" kind="off" variant="legend" /><span>휴식</span></li>
       </ul>
       <ol
         className="plan-training-flow__days"

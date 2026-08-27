@@ -5,6 +5,7 @@ import type { SyncConsent, SyncOutcome, SyncPreviewOutcome } from "../../domain/
 import { loadEntriesOwnedBy } from "../../domain/journal-store"
 import { productFeatures } from "../../domain/product-features"
 import { mono, primaryBtn } from "./styles"
+import { TermHelp } from "../../components/TermHelp"
 
 export function AccountSyncPanel({
   userId,
@@ -88,7 +89,7 @@ export function AccountSyncPanel({
         <span style={{ fontFamily: "var(--sans)", fontSize: 14 }}>동기화 켜기</span>
       </label>
       <p style={{ ...mono, color: "var(--ink-4)", fontSize: 11, lineHeight: 1.6, margin: 0 }}>
-        거리·시간·RPE 같은 입력값만 백업해요. 훈련 메모와 나만의 메모 원문은 보내지 않아요.
+        거리·시간·RPE<TermHelp term="rpe" /> 같은 입력값만 백업해요. 훈련 메모와 나만의 메모 원문은 보내지 않아요.
         {sharingEnabled ? " 코치 공유는 동기화와 따로 선택해요." : " 코치 연결은 아직 열지 않았어요."}
       </p>
       {preview === null ? (

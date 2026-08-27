@@ -1,4 +1,4 @@
-import { act, cleanup, render, screen } from "@testing-library/react"
+import { act, cleanup, render, screen, within } from "@testing-library/react"
 import { afterEach, describe, expect, it, vi } from "vitest"
 import type { PlanSession } from "@impl/plan-generator/types"
 import { stateFixture } from "../../domain/plan-beta-store.test-fixture"
@@ -59,9 +59,12 @@ describe("active plan first-view overview", () => {
 
     expect(screen.getByRole("heading", { level: 1, name: "9일 훈련 계획" })).toBeVisible()
     expect(screen.getByText("8월 27일(목) - 9월 4일(금)")).toBeVisible()
-    expect(screen.getByRole("list", { name: "계획 구성 요약" })).toHaveTextContent(
-      "5000m지속 페이스 · LT하루 2회 포함",
-    )
+    const buildSummary = screen.getByRole("list", { name: "계획 구성 요약" })
+    const summaryItems = within(buildSummary).getAllByRole("listitem")
+    expect(summaryItems[0]).toHaveTextContent("5000m")
+    expect(summaryItems[1]).toHaveTextContent("지속 페이스 · LT")
+    expect(summaryItems[2]).toHaveTextContent("하루 2회 포함")
+    expect(within(buildSummary).getByRole("button", { name: "LT 설명 보기" })).toBeVisible()
 
     const flow = screen.getByLabelText("9일 훈련 흐름")
     const information = screen.getByText("계획 정보와 유의사항").closest("details")

@@ -141,6 +141,20 @@ describe("plan schedule preview", () => {
     expect(screen.getByText(/의료 판단이 아닙니다/u)).toBeVisible()
   })
 
+  it("opens beginner explanations from the legend and the dated session badge", async () => {
+    const user = userEvent.setup()
+    render(<PlanSchedulePreview startDate="2026-08-17" sessions={sessions} />)
+
+    await user.click(screen.getByRole("button", { name: "MAIN 일정표 구분 설명 보기" }))
+    expect(screen.getByText(/가장 중요한 목표 중심 훈련/u)).toBeVisible()
+
+    await user.click(screen.getByRole("button", { name: "MAIN LT 훈련 설명 보기" }))
+    expect(screen.getByText(/젖산 역치/u)).toBeVisible()
+
+    await user.click(screen.getByRole("button", { name: "REC 일정표 구분 설명 보기" }))
+    expect(screen.getByText(/Recovery의 줄임말/u)).toBeVisible()
+  })
+
   it("marks only today's date while the frame is being followed", () => {
     vi.useFakeTimers()
     vi.setSystemTime(new Date("2026-08-17T12:00:00"))
