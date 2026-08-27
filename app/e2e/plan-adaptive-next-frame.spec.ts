@@ -234,9 +234,9 @@ async function createBoundActivePlan(page: Page, projectionLength: 7 | 9 | 10): 
   await expect(picker).toBeVisible()
   await picker.getByRole("button", { name: /개인 최고.*18분 30초/u }).click()
   await picker.getByRole("button", { name: "이 기록으로 개인 페이스 적용" }).click()
-  await page.getByRole("button", { name: /기본 보조훈련 선택하기/u }).click()
+  await page.getByRole("button", { name: /시간 조절 계획 선택하기/u }).click()
   await expect(page.getByRole("heading", {
-    name: new RegExp(`기본 보조훈련 ${projectionLength}일 계획`, "u"),
+    name: new RegExp(`시간 조절 계획 ${projectionLength}일 계획`, "u"),
   })).toBeVisible()
 }
 

@@ -190,7 +190,7 @@ export function PlanIntake({
             </div>
             <div>
               <dt>비교 방식</dt>
-              <dd>부담이 다른 후보 A와 B를 나란히 비교</dd>
+              <dd>쉬운 훈련 시간 표시가 다른 후보 A와 B를 나란히 비교</dd>
             </div>
           </dl>
           <div className="plan-preview-boundary">

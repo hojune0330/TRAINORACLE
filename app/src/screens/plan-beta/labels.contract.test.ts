@@ -81,7 +81,7 @@ describe("two-a-day plan summary", () => {
     expect(candidateSessionSummary({
       sessions,
       frame: { projectionLengthDays: 9.5 },
-    })).toContain("총 계획 시간 65~100분")
+    })).toContain("9.5일 동안 표시된 시간 합계 1시간 5분~1시간 40분")
   })
 
   it("does not count a single evening session as two-a-day training", () => {

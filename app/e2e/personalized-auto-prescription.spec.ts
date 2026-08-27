@@ -182,8 +182,8 @@ for (const viewport of [
       fullPage: true,
     })
 
-    await page.getByRole("button", { name: /기본 보조훈련 선택하기/u }).click()
-    await expect(page.getByRole("heading", { name: /기본 보조훈련 9일 계획/u })).toBeVisible()
+  await page.getByRole("button", { name: /시간 조절 계획 선택하기/u }).click()
+  await expect(page.getByRole("heading", { name: /시간 조절 계획 9일 계획/u })).toBeVisible()
     await page.reload()
     await page.getByRole("navigation", { name: "주 탭" })
       .getByRole("button", { name: "계획" })
@@ -219,7 +219,7 @@ test("keeps youth and adult 5K eligibility and dose identical", async ({ browser
     await expect(page.getByText(new RegExp(`참가 부문: ${divisionName.source}`, "u"))).toBeVisible()
     await bindFirstRecord(page)
     await expect(page.getByText(/5×1000m @5000m RP.*r150.*JOG/u).first()).toBeVisible()
-    await page.getByRole("button", { name: /기본 보조훈련 선택하기/u }).click()
+  await page.getByRole("button", { name: /시간 조절 계획 선택하기/u }).click()
 
     storedDoses.push(await page.evaluate(() => {
       const raw = window.localStorage.getItem("trainoracle.plan-beta.v1")
@@ -261,12 +261,12 @@ test("requires reconfirmation after replacing the selected record", async ({ pag
   await expect(page.getByText(/5×1000m @5000m RP.*r150.*JOG/u).first()).toBeVisible()
 
   await picker.getByRole("button", { name: /^시즌 최고.*19분/u }).click()
-  await expect(page.getByRole("button", { name: /기본 보조훈련 선택하기/u })).toBeDisabled()
+  await expect(page.getByRole("button", { name: /시간 조절 계획 선택하기/u })).toBeDisabled()
   await expect(page.getByText(/5×1000m @5000m RP/u)).toHaveCount(0)
   await expect(page.getByText("새로 고른 기준 기록을 확인한 뒤 계획을 선택해 주세요.")).toBeVisible()
 
   await picker.getByRole("button", { name: "이 기록으로 개인 페이스 적용" }).click()
-  await expect(page.getByRole("button", { name: /기본 보조훈련 선택하기/u })).toBeEnabled()
+  await expect(page.getByRole("button", { name: /시간 조절 계획 선택하기/u })).toBeEnabled()
   await page.getByText("기준 기록·중단·낮춤 규칙 보기").first().click()
   await expect(page.getByText(/기준 기록.*5000m.*19분.*2026-04-20/u).first()).toBeVisible()
 })

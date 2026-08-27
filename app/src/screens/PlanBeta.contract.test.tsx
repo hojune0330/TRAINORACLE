@@ -135,6 +135,9 @@ describe("plan beta user flow", () => {
     await answerPreviewDecisions("clear")
 
     expect(screen.getByRole("heading", { name: "계획 형태 미리보기" })).toBeVisible()
+    expect(screen.getByText("쉬운 훈련 시간 표시가 다른 후보 A와 B를 나란히 비교"))
+      .toBeVisible()
+    expect(screen.queryByText(/부담이 다른 후보/u)).not.toBeInTheDocument()
     expect(screen.getByText(
       /훈련일.*첫 계획 길이.*7.*9.*10.*훈련 목적.*시간.*하루 한 번.*두 번/u,
     )).toBeVisible()

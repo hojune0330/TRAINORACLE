@@ -128,8 +128,8 @@ for (const fixture of cases) {
         path: testInfo.outputPath(`candidate-${fixture.eventDistanceM}m.png`),
       })
     }
-    await page.getByRole("button", { name: /기본 보조훈련 선택하기/u }).click()
-    await expect(page.getByRole("heading", { name: /기본 보조훈련 9일 계획/u })).toBeVisible()
+    await page.getByRole("button", { name: /시간 조절 계획 선택하기/u }).click()
+    await expect(page.getByRole("heading", { name: /시간 조절 계획 9일 계획/u })).toBeVisible()
     await expect(page.getByText(fixture.summary).first()).toBeVisible()
     await expect(page.getByText(fixture.execution).first()).toBeVisible()
     await expect(page.getByText(fixture.work).first()).toBeVisible()

@@ -85,10 +85,10 @@ describe("production detailed prescription experience", () => {
     await user.click(within(schedule).getByText("기준 기록·중단·낮춤 규칙 보기"))
     expect(within(schedule).getByText(/5000m.*18분 31초.*2026-05-10/u)).toBeVisible()
 
-    await user.click(screen.getByRole("button", { name: /기본 보조훈련 선택하기/u }))
-    await screen.findByRole("heading", { name: /기본 보조훈련 9일 계획/u })
+    await user.click(screen.getByRole("button", { name: /시간 조절 계획 선택하기/u }))
+    await screen.findByRole("heading", { name: /시간 조절 계획 9일 계획/u })
     expect(screen.queryByRole("alert")).toBeNull()
-    expect(screen.getByRole("heading", { name: /기본 보조훈련 9일 계획/u })).toBeVisible()
+    expect(screen.getByRole("heading", { name: /시간 조절 계획 9일 계획/u })).toBeVisible()
     const activeNotation = screen.getByText(/5×1000m @5000m RP.*r150.*JOG/u)
     expect(activeNotation).toBeVisible()
     const activeSession = activeNotation.closest("section[role='group']")
@@ -132,8 +132,8 @@ describe("production detailed prescription experience", () => {
     const picker = screen.getByRole("region", { name: "개인 페이스 기준 기록" })
     await user.click(within(picker).getByRole("button", { name: /개인 최고.*18분 31초/u }))
     await user.click(within(picker).getByRole("button", { name: "이 기록으로 개인 페이스 적용" }))
-    await user.click(screen.getByRole("button", { name: /기본 보조훈련 선택하기/u }))
-    await screen.findByRole("heading", { name: /기본 보조훈련 9일 계획/u })
+    await user.click(screen.getByRole("button", { name: /시간 조절 계획 선택하기/u }))
+    await screen.findByRole("heading", { name: /시간 조절 계획 9일 계획/u })
 
     const activeNotation = screen.getByText(/5×1000m @5000m RP.*r150.*JOG/u)
     const activeSession = activeNotation.closest("section[role='group']")
@@ -175,11 +175,11 @@ describe("production detailed prescription experience", () => {
     expect(screen.getAllByText(/5×1000m @5000m RP.*r150.*JOG/u)).not.toHaveLength(0)
 
     await user.click(within(picker).getByRole("button", { name: /^시즌 최고.*19분/u }))
-    expect(screen.getByRole("button", { name: /기본 보조훈련 선택하기/u })).toBeDisabled()
+    expect(screen.getByRole("button", { name: /시간 조절 계획 선택하기/u })).toBeDisabled()
     expect(screen.queryByText(/5×1000m @5000m RP.*r150.*JOG/u)).toBeNull()
 
     await user.click(within(picker).getByRole("button", { name: "이 기록으로 개인 페이스 적용" }))
-    expect(screen.getByRole("button", { name: /기본 보조훈련 선택하기/u })).toBeEnabled()
+    expect(screen.getByRole("button", { name: /시간 조절 계획 선택하기/u })).toBeEnabled()
     expect(screen.getAllByText(/5000m.*19분.*2026-04-20/u)).not.toHaveLength(0)
   })
   it("keeps both candidates RPE-only when the confirmed record is stale", async () => {

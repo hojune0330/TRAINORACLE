@@ -1489,15 +1489,48 @@
 }
 
 .plan-candidate-comparison h2 {
-  margin: 0 0 var(--space-3);
+  margin: 0;
   font-family: var(--sans);
   font-size: var(--fs-app-section-title);
   letter-spacing: 0;
+  text-wrap: pretty;
 }
 
-.plan-candidate-comparison > div {
+.plan-candidate-comparison__intro {
+  margin: var(--space-2) 0 0;
+  color: var(--ink-2);
+  font-size: var(--fs-body-sm);
+  line-height: 1.55;
+  word-break: keep-all;
+  text-wrap: pretty;
+}
+
+.plan-candidate-comparison__shared {
+  display: grid;
+  gap: var(--space-1);
+  margin-top: var(--space-3);
+  padding-block: var(--space-3);
+  border-block: var(--bw-line) solid var(--hair);
+}
+
+.plan-candidate-comparison__shared strong {
+  color: var(--brand);
+  font-family: var(--mono);
+  font-size: var(--fs-mono-xs);
+}
+
+.plan-candidate-comparison__shared span {
+  color: var(--ink-2);
+  font-size: var(--fs-body-sm);
+  line-height: 1.5;
+  word-break: keep-all;
+  overflow-wrap: break-word;
+}
+
+.plan-candidate-comparison__options {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin-top: var(--space-3);
 }
 
 .plan-candidate-comparison article {
@@ -1540,6 +1573,17 @@
   font-size: var(--fs-body-sm);
   line-height: 1.45;
   word-break: keep-all;
+}
+
+.plan-candidate-comparison__note {
+  margin: var(--space-3) 0 0;
+  padding-top: var(--space-3);
+  border-top: var(--bw-line) solid var(--hair);
+  color: var(--ink-3);
+  font-size: var(--fs-body-sm);
+  line-height: 1.55;
+  word-break: keep-all;
+  text-wrap: pretty;
 }
 
 .plan-candidate {
@@ -1830,7 +1874,7 @@
 }
 
 @media (max-width: 420px) {
-  .plan-candidate-comparison > div {
+  .plan-candidate-comparison__options {
     grid-template-columns: 1fr;
   }
 
