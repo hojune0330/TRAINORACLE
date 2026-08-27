@@ -29,7 +29,7 @@ function overviewState() {
     },
   }
   const easySession: PlanSession = {
-    day: 4,
+    day: 3,
     slot: "PM",
     role: "EASY",
     plannedEnergyIntent: "RECOVERY_INTENT",
@@ -54,26 +54,29 @@ function overviewState() {
 }
 
 describe("active plan first-view overview", () => {
-  it("shows dates and main sessions before the calendar, then keeps long notes collapsed", () => {
+  it("shows the training flow and same-day sessions before collapsed notes", () => {
     render(<ActivePlan state={overviewState()} {...callbacks} />)
 
     expect(screen.getByRole("heading", { level: 1, name: "9일 훈련 계획" })).toBeVisible()
     expect(screen.getByText("8월 27일(목) - 9월 4일(금)")).toBeVisible()
     expect(screen.getByRole("list", { name: "계획 구성 요약" })).toHaveTextContent(
-      "5000m지속 페이스 · LT2일 운동하루 2회 포함",
+      "5000m지속 페이스 · LT하루 2회 포함",
     )
 
-    const mainTraining = screen.getByRole("heading", { level: 2, name: "메인 훈련일" }).closest("section")
-    const calendar = screen.getByLabelText("9일 달력 요약")
+    const flow = screen.getByLabelText("9일 훈련 흐름")
     const information = screen.getByText("계획 정보와 유의사항").closest("details")
     const timeline = screen.getByRole("list", { name: "날짜별 계획 미리보기" })
+    const trainingDay = screen.getByRole("group", {
+      name: "8월 29일 토요일 · 훈련 2개",
+    })
 
-    expect(mainTraining).toHaveTextContent(/8월 29일\(토\).*지속 페이스.*오전/u)
-    expect((mainTraining?.compareDocumentPosition(calendar) ?? 0) & Node.DOCUMENT_POSITION_FOLLOWING).not.toBe(0)
-    expect(calendar.compareDocumentPosition(information as Node) & Node.DOCUMENT_POSITION_FOLLOWING).not.toBe(0)
-    expect((information?.compareDocumentPosition(timeline) ?? 0) & Node.DOCUMENT_POSITION_FOLLOWING).not.toBe(0)
+    expect(flow).toHaveTextContent(/MAINLT.*REC/u)
+    expect(trainingDay).toHaveTextContent(/오전.*MAINLT.*지속 페이스.*오후.*REC.*오후 회복 운동/u)
+    expect(flow.compareDocumentPosition(timeline) & Node.DOCUMENT_POSITION_FOLLOWING).not.toBe(0)
+    expect(timeline.compareDocumentPosition(information as Node) & Node.DOCUMENT_POSITION_FOLLOWING).not.toBe(0)
     expect(information).not.toHaveAttribute("open")
     expect(screen.getByText(/1~2 회복 움직임/u)).not.toBeVisible()
+    expect(screen.getByText("오전 훈련 방법과 기록").closest("details")).not.toHaveAttribute("open")
   })
 
   it("shows a one-shot creation confirmation and removes it automatically", () => {

@@ -684,7 +684,7 @@ describe("plan beta user flow", () => {
     await userEvent.setup().click(firstChoice)
 
     expect(screen.getByRole("heading", { name: /9일 훈련 계획/u })).toBeVisible()
-    expect(screen.getByText("내 훈련 일정")).toBeVisible()
+    expect(screen.getByLabelText("9일 훈련 흐름")).toBeVisible()
     expect(screen.queryByText("ACTIVE · LOCAL BETA")).toBeNull()
     expect(window.localStorage.getItem("trainoracle.plan-beta.v1")).not.toBeNull()
   })
@@ -834,8 +834,10 @@ describe("plan beta user flow", () => {
       return realSetItem.call(this, key, value)
     })
 
+    const user = userEvent.setup()
+    await user.click(screen.getAllByText(/훈련 방법과 기록/u)[0]!)
     const progress = screen.getByLabelText(/DAY 1.*진행 기록/u)
-    await userEvent.setup().click(within(progress).getByRole("button", { name: "완료" }))
+    await user.click(within(progress).getByRole("button", { name: "완료" }))
 
     expect(screen.getByRole("alert")).toHaveTextContent("진행 기록 저장을 되돌렸는지 확인할 수 없어요")
     expect(screen.queryByRole("button", { name: "진행 상태 다시 저장하기" })).not.toBeInTheDocument()

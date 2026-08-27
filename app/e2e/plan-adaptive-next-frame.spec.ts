@@ -87,18 +87,21 @@ for (const viewport of [
     })
 
     await page.getByRole("button", { name: "이 다음 계획 선택하기" }).click()
-    await expect(page.getByRole("status")).toContainText("현재 활성 계획과 진행 기록은 바뀌지 않았습니다")
+    await expect(page.getByText("현재 활성 계획과 진행 기록은 바뀌지 않았습니다", { exact: false }))
+      .toBeVisible()
     expect(await page.evaluate(() => window.localStorage.getItem("trainoracle.plan-beta.v1"))).toBe(activeBefore)
     await page.reload()
     await page.getByRole("navigation", { name: "주 탭" })
       .getByRole("button", { name: "계획" })
       .click()
     await page.getByRole("button", { name: "다음 계획 조정하기" }).click()
-    await expect(page.getByRole("status")).toContainText("다음 주기에 사용할 보수적인 계획")
+    await expect(page.getByText("다음 주기에 사용할 보수적인 계획", { exact: false }))
+      .toBeVisible()
     expect(await page.evaluate(() => window.localStorage.getItem("trainoracle.plan-beta.v1"))).toBe(activeBefore)
 
     await page.getByRole("button", { name: "현재 계획으로 돌아가기" }).click()
     const candidateBefore = await activeCandidateId(page)
+    await page.getByText("오전 훈련 방법과 기록", { exact: true }).first().click()
     await page.getByLabel("DAY 1 오전 진행 기록")
       .getByRole("button", { name: "휴식" })
       .click()
@@ -115,7 +118,8 @@ for (const viewport of [
     await page.getByRole("button", { name: /통증은 없고 몸 상태는 평소와 같아요/u }).click()
     await page.getByRole("button", { name: /훈련량을 조금 줄인 다음 계획/u }).click()
     await page.getByRole("button", { name: "이 다음 계획 선택하기" }).click()
-    await expect(page.getByRole("status")).toContainText("현재 활성 계획과 진행 기록은 바뀌지 않았습니다")
+    await expect(page.getByText("현재 활성 계획과 진행 기록은 바뀌지 않았습니다", { exact: false }))
+      .toBeVisible()
     expect(await page.evaluate(() => window.localStorage.getItem("trainoracle.plan-beta.v1"))).toBe(laterActiveBytes)
 
     await page.reload()
@@ -123,7 +127,8 @@ for (const viewport of [
       .getByRole("button", { name: "계획" })
       .click()
     await page.getByRole("button", { name: "다음 계획 조정하기" }).click()
-    await expect(page.getByRole("status")).toContainText("다음 주기에 사용할 보수적인 계획")
+    await expect(page.getByText("다음 주기에 사용할 보수적인 계획", { exact: false }))
+      .toBeVisible()
     expect(await page.evaluate(() => window.localStorage.getItem("trainoracle.plan-beta.v1"))).toBe(laterActiveBytes)
     await page.getByRole("button", { name: "현재 계획으로 돌아가기" }).click()
     await page.getByRole("button", { name: "선택한 다음 계획 시작하기" }).click()
@@ -236,16 +241,26 @@ async function createBoundActivePlan(page: Page, projectionLength: 7 | 9 | 10): 
   await picker.getByRole("button", { name: "이 기록으로 개인 페이스 적용" }).click()
   await page.getByRole("button", { name: /시간 조절 계획 선택하기/u }).click()
   await expect(page.getByRole("heading", {
-    name: new RegExp(`시간 조절 계획 ${projectionLength}일 계획`, "u"),
+    name: new RegExp(`${projectionLength}일 훈련 계획`, "u"),
   })).toBeVisible()
 }
 
 async function completeVisibleTrainingSessions(page: Page): Promise<void> {
-  const completeActions = page.getByRole("button", { name: "완료", exact: true })
-  const count = await completeActions.count()
-  expect(count).toBeGreaterThan(0)
-  for (let index = 0; index < count; index += 1) {
-    await completeActions.nth(index).click()
+  const cards = page.getByRole("list", { name: "날짜별 계획 미리보기" })
+    .getByRole("group", { name: /훈련 \d+개/u })
+  const dayCount = await cards.count()
+  expect(dayCount).toBeGreaterThan(0)
+  for (let dayIndex = 0; dayIndex < dayCount; dayIndex += 1) {
+    const card = cards.nth(dayIndex)
+    const details = card.getByText(/훈련 방법과 기록/u)
+    const sessionCount = await details.count()
+    for (let sessionIndex = 0; sessionIndex < sessionCount; sessionIndex += 1) {
+      await details.nth(sessionIndex).click()
+      await card.getByRole("button", { name: "완료", exact: true }).nth(sessionIndex).click()
+    }
+    if (dayIndex < dayCount - 1) {
+      await page.getByRole("button", { name: "다음 날짜" }).click()
+    }
   }
   await expect(page.getByRole("button", { name: "다음 계획 조정하기" })).toBeVisible()
 }

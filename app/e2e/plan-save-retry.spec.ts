@@ -40,7 +40,7 @@ test("retries a selected plan save and keeps the plan after reload", async ({ pa
   await page.getByRole("button", { name: /선택하기/u }).first().click()
   await expect(page.getByRole("alert")).toContainText("계획을 이 기기에 저장하지 못했어요")
   await page.getByRole("button", { name: "계획 다시 저장하기" }).click()
-  await expect(page.getByRole("heading", { name: /9일 계획/u })).toBeVisible()
+  await expect(page.getByRole("heading", { name: /9일 훈련 계획/u })).toBeVisible()
   await expect.poll(() => page.evaluate(
     () => window.localStorage.getItem("trainoracle.plan-beta.v1"),
   )).not.toBeNull()
@@ -51,9 +51,10 @@ test("retries a selected plan save and keeps the plan after reload", async ({ pa
     () => window.localStorage.getItem("trainoracle.plan-beta.v1"),
   )).not.toBeNull()
   await page.getByRole("navigation", { name: "내 기록 살펴보기" }).getByRole("button", { name: /^훈련 계획/u }).click()
-  await expect(page.getByRole("heading", { name: /9일 계획/u })).toBeVisible()
+  await expect(page.getByRole("heading", { name: /9일 훈련 계획/u })).toBeVisible()
   await expect(page.getByRole("button", { name: "다음 주기 후보 만들기" })).toHaveCount(0)
-  await expect(page.getByRole("status")).toContainText("보이는 훈련을 완료·휴식·건너뜀·통증 확인 중 하나로 기록")
+  await expect(page.getByText("각 훈련을 마친 뒤 완료·휴식·건너뜀·통증 확인 중 하나를 기록해 주세요."))
+    .toBeVisible()
 })
 
 test("retries a completed-session save without losing the active plan", async ({ page }) => {
@@ -77,6 +78,7 @@ test("retries a completed-session save without losing the active plan", async ({
   await page.getByRole("button", { name: /선택하기/u }).first().click()
 
   // When: the athlete records completion, sees the save failure, and retries the same change.
+  await page.getByText("오전 훈련 방법과 기록", { exact: true }).first().click()
   await page.getByRole("button", { name: "완료" }).first().click()
   await expect(page.getByRole("alert")).toContainText("계획을 이 기기에 저장하지 못했어요")
   await page.getByRole("button", { name: "진행 상태 다시 저장하기" }).click()
@@ -87,5 +89,6 @@ test("retries a completed-session save without losing the active plan", async ({
   )).toContain("COMPLETED")
   await page.reload()
   await page.getByRole("navigation", { name: "내 기록 살펴보기" }).getByRole("button", { name: /^훈련 계획/u }).click()
+  await page.getByText("오전 훈련 방법과 기록", { exact: true }).first().click()
   await expect(page.getByLabel("DAY 1 오전 진행 기록").getByRole("button", { name: "완료" })).toHaveAttribute("aria-pressed", "true")
 })

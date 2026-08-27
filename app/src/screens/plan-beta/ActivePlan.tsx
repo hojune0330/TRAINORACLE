@@ -6,7 +6,6 @@ import {
   ChevronDown,
   CircleCheck,
   CircleMinus,
-  Flag,
   HeartPulse,
   Info,
   RefreshCw,
@@ -22,7 +21,6 @@ import {
   candidateLabel,
   ENERGY_INTENT_LABELS,
   PROGRESS_LABELS,
-  sessionLabel,
   sessionSlotLabel,
 } from "./labels"
 import { PlanRpeGuide, PlanSchedulePreview } from "./PlanSchedulePreview"
@@ -90,12 +88,6 @@ export function ActivePlan({
   const frameComplete = isPlanFrameCompletionEligible(state, todayISO())
   const startDate = state.intake.startDate ?? state.generatedAt.slice(0, 10)
   const frameDayCount = Math.ceil(frameLengthDays)
-  const qualitySessions = activePlan.sessions.filter((session) => session.role === "QUALITY")
-  const trainingDayCount = new Set(
-    activePlan.sessions
-      .filter((session) => session.role !== "REST")
-      .map((session) => session.day),
-  ).size
   const focusLabel = ENERGY_INTENT_LABELS[activePlan.selectedEnergyIntent].title
   const planAdjustment = activePlan.candidateKind === "CONSERVATIVE"
     ? "쉬운 훈련은 가장 짧은 시간으로 구성"
@@ -124,7 +116,6 @@ export function ActivePlan({
           </span>
         </div>
       )}
-      <div className="plan-eyebrow">내 훈련 일정</div>
       <h1 id="active-plan-title">{frameLengthDays}일 훈련 계획</h1>
       <p className="active-plan__variant">
         <strong>{label.title}</strong>
@@ -137,40 +128,16 @@ export function ActivePlan({
       <ul className="active-plan__build-summary" aria-label="계획 구성 요약">
         <li>{eventDistanceLabel(activePlan.eventDistanceM ?? state.intake.eventDistanceM)}</li>
         <li>{focusLabel}</li>
-        <li>{trainingDayCount}일 운동</li>
         <li>{state.intake.secondSessionMode === "RECOVERY_PM_ALLOWED" ? "하루 2회 포함" : "하루 1회"}</li>
       </ul>
-      <section className="active-plan__quality-summary" aria-labelledby="active-plan-quality-title">
-        <header>
-          <span>
-            <Flag aria-hidden="true" size={17} />
-            <h2 id="active-plan-quality-title">메인 훈련일</h2>
-          </span>
-          <small>{qualitySessions.length}회</small>
-        </header>
-        {qualitySessions.length > 0 ? (
-          <ol>
-            {qualitySessions.map((session) => (
-              <li key={`${session.day}-${session.slot}`}>
-                <time dateTime={isValidIsoDate(startDate) ? isoShift(startDate, session.day - 1) : undefined}>
-                  {planSessionDateLabel(startDate, session.day)}
-                </time>
-                <strong>{sessionLabel(session)}</strong>
-                <span>{sessionSlotLabel(session.slot)}</span>
-              </li>
-            ))}
-          </ol>
-        ) : (
-          <p>이번 계획은 쉬운 훈련과 회복 중심으로 구성됐어요.</p>
-        )}
-      </section>
       <PlanSchedulePreview
         startDate={startDate}
         frameLengthDays={frameLengthDays}
         sessions={activePlan.sessions}
         showRpeGuide={false}
-        timelineHeading="날짜별 훈련 내용"
-        renderAfterCalendar={(
+        timelineHeading="날짜별 훈련"
+        displayMode="swipe"
+        renderAfterSchedule={(
           <>
             {frameComplete ? (
               <PlanAdaptationFlow state={state} onPendingChange={setHasPendingSuccessor} />
@@ -348,11 +315,6 @@ const SHORT_WEEKDAYS = ["일", "월", "화", "수", "목", "금", "토"] as cons
 function planDateRangeLabel(startDate: string, dayCount: number): string {
   if (!isValidIsoDate(startDate)) return `${dayCount}일 일정`
   return `${planDateLabel(startDate)} - ${planDateLabel(isoShift(startDate, dayCount - 1))}`
-}
-
-function planSessionDateLabel(startDate: string, day: number): string {
-  if (!isValidIsoDate(startDate)) return `DAY ${day}`
-  return planDateLabel(isoShift(startDate, day - 1))
 }
 
 function planDateLabel(iso: string): string {
