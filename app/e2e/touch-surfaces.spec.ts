@@ -81,7 +81,7 @@ test("audits populated home, detail, and trends actions", async ({ page }, testI
     .getByRole("region", { name: "최근 4개월 추이" })
     .getByRole("button")
   await auditTouchTargets(page, [
-    { name: "trends.back", locator: page.getByRole("button", { name: "← 뒤로" }) },
+    { name: "trends.back", locator: page.getByRole("button", { name: "뒤로", exact: true }) },
     { name: "trends.metrics", locator: metricButtons, count: 4 },
   ])
   await expectNoHorizontalOverflow(page)
