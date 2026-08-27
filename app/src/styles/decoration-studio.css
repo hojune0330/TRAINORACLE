@@ -139,7 +139,7 @@
   white-space: nowrap;
 }
 .decoration-studio__situation-tabs button:nth-child(n + 5) { border-top: var(--bw-line) solid var(--hair); }
-.decoration-studio__situation-tabs button[aria-selected="true"] { box-shadow: inset 0 -3px 0 #f07f67; color: var(--ink); font-weight: 700; }
+.decoration-studio__situation-tabs button[aria-selected="true"] { background: var(--surface-2); color: var(--ink); font-weight: 700; }
 
 .decoration-studio__presets { padding: var(--space-3); border-bottom: var(--bw-line) solid var(--line); background: #fffdf6; }
 .decoration-studio__presets h4 { margin: 0 0 var(--space-2); display: flex; align-items: center; gap: var(--space-1); color: var(--ink); font-size: var(--fs-body-sm); }

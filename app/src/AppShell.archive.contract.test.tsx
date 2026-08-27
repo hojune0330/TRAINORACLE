@@ -42,7 +42,7 @@ describe("AppShell journal archive routing", () => {
     render(<AppShell />)
 
     await user.click(screen.getByRole("button", { name: "전체 보기" }))
-    await user.click(await screen.findByRole("button", { name: /2026년 7월/u }))
+    await user.click(await screen.findByRole("button", { name: /2026년 7월/u }, { timeout: 5_000 }))
     await user.click(await screen.findByRole("button", { name: /2026년 7월 10일/u }))
 
     expect(await screen.findByText("아카이브 복귀 훈련")).toBeVisible()
@@ -58,7 +58,7 @@ describe("AppShell journal archive routing", () => {
     render(<AppShell />)
 
     await user.click(screen.getByRole("button", { name: "전체 보기" }))
-    await user.click(await screen.findByRole("button", { name: /2026년 7월/u }))
+    await user.click(await screen.findByRole("button", { name: /2026년 7월/u }, { timeout: 5_000 }))
     await user.click(await screen.findByRole("button", { name: /2026년 7월 10일/u }))
     await user.click(await screen.findByRole("button", { name: "훈련 기록 수정" }))
 

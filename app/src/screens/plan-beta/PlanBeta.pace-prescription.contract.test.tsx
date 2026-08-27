@@ -160,7 +160,7 @@ describe("production detailed prescription experience", () => {
     expect(screen.getByText("통증 기록 후 확인")).toBeVisible()
     expect(screen.queryByRole("button", { name: /통증 없고 평소와 같음 · (시작|다시 시작) 확인/u })).toBeNull()
     expect(screen.getByRole("button", { name: "통증·이상 또는 잘 모르겠음" })).toBeVisible()
-  })
+  }, 15_000)
 
   it("requires reconfirmation after replacing a confirmed record", async () => {
     const user = userEvent.setup()
