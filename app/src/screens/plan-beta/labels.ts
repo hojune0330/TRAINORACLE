@@ -101,13 +101,13 @@ export function candidateLabel(
 } {
   if (kind === "CONSERVATIVE") {
     return {
-      title: "보조훈련 짧게",
-      detail: `고른 ${ENERGY_INTENT_LABELS[selectedEnergyIntent].title} 목적의 고강도 훈련과 훈련 횟수는 후보 A와 같고, 적용 가능한 보조 훈련 시간만 범위의 최솟값으로 줄입니다.`,
+      title: "최소 시간 계획",
+      detail: `고른 ${ENERGY_INTENT_LABELS[selectedEnergyIntent].title} 목적에 맞춘 고강도 훈련의 종류·횟수·RPE는 후보 A와 같아요. 조정할 수 있는 쉬운 훈련만 각 시간 범위의 가장 짧은 값으로 정해요.`,
     }
   }
   return {
-    title: "기본 보조훈련",
-    detail: `고른 ${ENERGY_INTENT_LABELS[selectedEnergyIntent].title} 목적의 고강도 훈련과 훈련 횟수는 후보 B와 같고, 적용 가능한 보조 훈련 시간은 현재 범위를 유지합니다.`,
+    title: "시간 조절 계획",
+    detail: `고른 ${ENERGY_INTENT_LABELS[selectedEnergyIntent].title} 목적에 맞춘 고강도 훈련의 종류·횟수·RPE는 후보 B와 같아요. 쉬운 훈련은 표시된 시간 범위 안에서 직접 조절해요.`,
   }
 }
 
@@ -265,10 +265,22 @@ function qualityGuidance(intent: PlannedEnergyIntent): string {
   }
 }
 
-export function candidateSessionSummary(candidate: {
+type CandidateSummarySource = {
   readonly sessions: readonly PlanSession[]
   readonly frame?: { readonly projectionLengthDays?: 7 | 9 | 9.5 | 10 }
-}): string {
+}
+
+function formatTotalMinutes(totalMinutes: number): string {
+  if (totalMinutes < 60) {
+    return `${totalMinutes}분`
+  }
+
+  const hours = Math.floor(totalMinutes / 60)
+  const minutes = totalMinutes % 60
+  return minutes === 0 ? `${hours}시간` : `${hours}시간 ${minutes}분`
+}
+
+function candidateSessionFacts(candidate: CandidateSummarySource) {
   const projectionLengthDays = candidate.frame?.projectionLengthDays
   const visibleSessions = projectionLengthDays === undefined
     ? candidate.sessions
@@ -323,20 +335,44 @@ export function candidateSessionSummary(candidate: {
     { minimum: 0, maximum: 0 },
   )
   const durationLabel = plannedDuration.minimum === plannedDuration.maximum
-    ? `${plannedDuration.minimum}분`
-    : `${plannedDuration.minimum}~${plannedDuration.maximum}분`
+    ? formatTotalMinutes(plannedDuration.minimum)
+    : `${formatTotalMinutes(plannedDuration.minimum)}~${formatTotalMinutes(plannedDuration.maximum)}`
 
   const twoADayTrainingDays = twoADayTrainingDayCount(visibleSessions)
-  const secondSession = twoADayTrainingDays === 0
-    ? ""
-    : ` · 하루 2회 훈련 ${twoADayTrainingDays}일`
-  const hasDetailedPrescription = candidate.sessions.some(
+  const hasDetailedPrescription = visibleSessions.some(
     (session) => session.prescription.kind === "PACE_TARGET",
   )
-  const timeLabel = hasDetailedPrescription
-    ? `RPE 세션 시간 ${durationLabel} · 상세 페이스 세션 별도 표시`
-    : `총 계획 시간 ${durationLabel}`
-  return `운동 ${counts.training}회 · 기초 지구력 ${intentionCounts.BASE_INTENT}일 · ${qualityLabel} · 휴식 ${counts.rest}일 · ${timeLabel}${secondSession}`
+  return {
+    counts,
+    intentionCounts,
+    qualityLabel,
+    durationLabel,
+    twoADayTrainingDays,
+    hasDetailedPrescription,
+    projectionLengthDays,
+  }
+}
+
+export function candidateSharedSessionSummary(candidate: CandidateSummarySource): string {
+  const facts = candidateSessionFacts(candidate)
+  const secondSession = facts.twoADayTrainingDays === 0
+    ? ""
+    : ` · 하루 2회 훈련 ${facts.twoADayTrainingDays}일`
+  return `운동 ${facts.counts.training}회 · 기초 지구력 ${facts.intentionCounts.BASE_INTENT}일 · ${facts.qualityLabel} · 휴식 ${facts.counts.rest}일${secondSession}`
+}
+
+export function candidateDurationSummary(candidate: CandidateSummarySource): string {
+  const facts = candidateSessionFacts(candidate)
+  const frameLabel = facts.projectionLengthDays === undefined
+    ? ""
+    : `${facts.projectionLengthDays}일 동안 `
+  return facts.hasDetailedPrescription
+    ? `${frameLabel}RPE 훈련 시간 합계 ${facts.durationLabel} · 개인 페이스 훈련 시간은 일정에서 확인`
+    : `${frameLabel}표시된 시간 합계 ${facts.durationLabel}`
+}
+
+export function candidateSessionSummary(candidate: CandidateSummarySource): string {
+  return `${candidateSharedSessionSummary(candidate)} · ${candidateDurationSummary(candidate)}`
 }
 
 export function twoADayTrainingDayCount(sessions: readonly PlanSession[]): number {

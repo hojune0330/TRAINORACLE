@@ -51,17 +51,24 @@ describe("plan candidate purpose contrast", () => {
       .not.toBeInTheDocument()
   })
 
-  it("explains the support-duration-only difference before selection", async () => {
+  it("explains the easy-session-duration-only difference before selection", async () => {
     // Given: an athlete chose LT as the purpose for a new 9.5-day plan.
     render(<PlanBeta />)
 
     // When: the plan candidates are generated.
     await generateCandidates(/지속 페이스.*LT/u)
 
-    // Then: the athlete can distinguish only the authorized support-duration difference.
+    // Then: the athlete sees the shared high-intensity work before the only authorized difference.
     const comparison = screen.getByRole("region", { name: "두 계획 핵심 비교" })
-    expect(within(comparison).getByText("보조 훈련 시간 범위를 그대로 보여줘요.")).toBeVisible()
-    expect(within(comparison).getByText("보조 훈련 시간만 짧게 보여줘요.")).toBeVisible()
+    expect(within(comparison).getByRole("heading", {
+      name: "고른 목표는 같고, 쉬운 훈련 시간만 달라요",
+    })).toBeVisible()
+    expect(within(comparison).getByText("쉬운 훈련 시간을 범위로 표시해요.")).toBeVisible()
+    expect(within(comparison).getByText("쉬운 훈련을 가장 짧은 시간으로 표시해요.")).toBeVisible()
+    expect(within(comparison).getByText(/같은 횟수와 RPE로/u)).toBeVisible()
+    expect(within(comparison).getByText(/고강도 훈련이 더 많거나 세지는 차이는 아니에요/u)).toBeVisible()
+    expect(comparison).not.toHaveTextContent("보조훈련")
+    expect(comparison).not.toHaveTextContent("보조 훈련")
 
     const firstSchedule = screen.getAllByRole("list", { name: "날짜별 계획 미리보기" })[0]
     if (firstSchedule === undefined) throw new Error("Expected the first candidate schedule")
@@ -69,24 +76,24 @@ describe("plan candidate purpose contrast", () => {
       .toBe(Node.DOCUMENT_POSITION_FOLLOWING)
   })
 
-  it("shows each VO2 candidate's total prescribed minutes in its headline summary", async () => {
+  it("shows each VO2 candidate's readable total time without repeating shared facts", async () => {
     render(<PlanBeta />)
 
     await generateCandidates(/반복 인터벌.*VO2/u)
 
     const comparison = screen.getByRole("region", { name: "두 계획 핵심 비교" })
-    const comparisonSummaries = within(comparison).getAllByText(/총 계획 시간/u)
-    const headlineSummaries = screen.getAllByText(/총 계획 시간/u, {
+    const comparisonSummaries = within(comparison).getAllByText(/표시된 시간 합계/u)
+    const headlineSummaries = screen.getAllByText(/표시된 시간 합계/u, {
       selector: ".plan-candidate-summary",
     })
 
     expect(comparisonSummaries).toHaveLength(2)
-    expect(comparisonSummaries[0]).toHaveTextContent("총 계획 시간 85~130분")
-    expect(comparisonSummaries[1]).toHaveTextContent("총 계획 시간 85~100분")
+    expect(comparisonSummaries[0]).toHaveTextContent("9일 동안 표시된 시간 합계 1시간 25분~2시간 10분")
+    expect(comparisonSummaries[1]).toHaveTextContent("9일 동안 표시된 시간 합계 1시간 25분~1시간 40분")
     expect(comparisonSummaries[0]?.textContent).not.toBe(comparisonSummaries[1]?.textContent)
     expect(headlineSummaries).toHaveLength(2)
-    expect(headlineSummaries[0]).toHaveTextContent("총 계획 시간 85~130분")
-    expect(headlineSummaries[1]).toHaveTextContent("총 계획 시간 85~100분")
+    expect(headlineSummaries[0]).toHaveTextContent("9일 동안 표시된 시간 합계 1시간 25분~2시간 10분")
+    expect(headlineSummaries[1]).toHaveTextContent("9일 동안 표시된 시간 합계 1시간 25분~1시간 40분")
     expect(screen.getAllByText(/반복 인터벌 · VO2 목적/u)).toHaveLength(2)
   })
 })

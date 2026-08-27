@@ -135,6 +135,9 @@ describe("plan beta user flow", () => {
     await answerPreviewDecisions("clear")
 
     expect(screen.getByRole("heading", { name: "계획 형태 미리보기" })).toBeVisible()
+    expect(screen.getByText("쉬운 훈련 시간 표시가 다른 후보 A와 B를 나란히 비교"))
+      .toBeVisible()
+    expect(screen.queryByText(/부담이 다른 후보/u)).not.toBeInTheDocument()
     expect(screen.getByText(
       /훈련일.*첫 계획 길이.*7.*9.*10.*훈련 목적.*시간.*하루 한 번.*두 번/u,
     )).toBeVisible()
@@ -680,8 +683,8 @@ describe("plan beta user flow", () => {
     if (!firstChoice) throw new Error("Expected at least one candidate choice")
     await userEvent.setup().click(firstChoice)
 
-    expect(screen.getByRole("heading", { name: /9일 계획/u })).toBeVisible()
-    expect(screen.getByText("내 훈련 일정")).toBeVisible()
+    expect(screen.getByRole("heading", { name: /9일 훈련 계획/u })).toBeVisible()
+    expect(screen.getByLabelText("9일 훈련 흐름")).toBeVisible()
     expect(screen.queryByText("ACTIVE · LOCAL BETA")).toBeNull()
     expect(window.localStorage.getItem("trainoracle.plan-beta.v1")).not.toBeNull()
   })
@@ -813,7 +816,7 @@ describe("plan beta user flow", () => {
 
     expect(screen.getByRole("button", { name: "현재 계획을 먼저 기록해 주세요" }))
       .toBeDisabled()
-    expect(screen.getByRole("heading", { name: /9일 계획/u })).toBeVisible()
+    expect(screen.getByRole("heading", { name: /9일 훈련 계획/u })).toBeVisible()
     expect(window.localStorage.getItem("trainoracle.plan-beta.v1")).not.toBeNull()
     expect(window.localStorage.getItem("trainoracle.plan-beta.history.v1")).toBeNull()
   })
@@ -831,8 +834,10 @@ describe("plan beta user flow", () => {
       return realSetItem.call(this, key, value)
     })
 
+    const user = userEvent.setup()
+    await user.click(screen.getAllByText(/훈련 방법과 기록/u)[0]!)
     const progress = screen.getByLabelText(/DAY 1.*진행 기록/u)
-    await userEvent.setup().click(within(progress).getByRole("button", { name: "완료" }))
+    await user.click(within(progress).getByRole("button", { name: "완료" }))
 
     expect(screen.getByRole("alert")).toHaveTextContent("진행 기록 저장을 되돌렸는지 확인할 수 없어요")
     expect(screen.queryByRole("button", { name: "진행 상태 다시 저장하기" })).not.toBeInTheDocument()

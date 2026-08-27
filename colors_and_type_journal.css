@@ -65,15 +65,16 @@
 /* ============== HANDWRITTEN CLASSES ============== */
 
 .hand {
-  font-family: "Segoe Print", "Nanum Pen Script", cursive;
-  font-weight: 500;
-  letter-spacing: 0.01em;
+  font-family: var(--sans);
+  font-weight: 600;
+  letter-spacing: 0;
   color: var(--ink-blue);
 }
 
 .hand-pencil {
-  font-family: "Nanum Pen Script", "Segoe Print", cursive;
-  font-weight: 400;
+  font-family: var(--sans);
+  font-weight: 500;
+  letter-spacing: 0;
   color: var(--pencil);
 }
 

@@ -59,6 +59,7 @@ export function IntensityAssessmentField({
     <>
       <FormSec
         lb={`예상 강도 (${controller.plannedRpe > 0 ? `${controller.plannedRpe}/10` : "미선택"})`}
+        help="rpe"
         onTouch={touchOf("planned-rpe")}
       >
         <div className="journal-ten-scale" style={{ display: "grid", gap: 0, border: "1px solid var(--ink)" }}>

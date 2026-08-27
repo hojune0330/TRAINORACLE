@@ -85,17 +85,16 @@ describe("production detailed prescription experience", () => {
     await user.click(within(schedule).getByText("기준 기록·중단·낮춤 규칙 보기"))
     expect(within(schedule).getByText(/5000m.*18분 31초.*2026-05-10/u)).toBeVisible()
 
-    await user.click(screen.getByRole("button", { name: /기본 보조훈련 선택하기/u }))
-    await screen.findByRole("heading", { name: /기본 보조훈련 9일 계획/u })
+    await user.click(screen.getByRole("button", { name: /시간 조절 계획 선택하기/u }))
+    await screen.findByRole("heading", { name: /9일 훈련 계획/u })
     expect(screen.queryByRole("alert")).toBeNull()
-    expect(screen.getByRole("heading", { name: /기본 보조훈련 9일 계획/u })).toBeVisible()
-    const activeNotation = screen.getByText(/5×1000m @5000m RP.*r150.*JOG/u)
+    expect(screen.getByText("시간 조절 계획")).toBeVisible()
+    const activeSession = await openDetailedActiveSession(user)
+    const activeNotation = within(activeSession).getByText(/5×1000m @5000m RP.*r150.*JOG/u)
     expect(activeNotation).toBeVisible()
-    const activeSession = activeNotation.closest("section[role='group']")
-    if (!(activeSession instanceof HTMLElement)) throw new Error("Expected the detailed active session")
-    await user.click(screen.getByText("시작 전 확인"))
-    const startButton = screen.getByRole("button", { name: "통증 없고 평소와 같음 · 시작 확인" })
-    const reviewButton = screen.getByRole("button", { name: "통증·이상 또는 잘 모르겠음" })
+    await user.click(within(activeSession).getByText("시작 전 확인"))
+    const startButton = within(activeSession).getByRole("button", { name: "통증 없고 평소와 같음 · 시작 확인" })
+    const reviewButton = within(activeSession).getByRole("button", { name: "통증·이상 또는 잘 모르겠음" })
     expect(startButton).toHaveClass("active-plan__execution-primary")
     expect(screen.queryByRole("button", { name: "통증 없고 평소와 같음 · 다시 시작 확인" })).toBeNull()
     expect(reviewButton).toHaveClass("active-plan__execution-review")
@@ -119,9 +118,10 @@ describe("production detailed prescription experience", () => {
 
     firstRender.unmount()
     render(<PlanBeta />)
-    expect(screen.getByText(/5×1000m @5000m RP.*r150.*JOG/u)).toBeVisible()
-    await user.click(screen.getByText("기준 기록·중단·낮춤 규칙 보기"))
-    expect(screen.getByText(/5000m.*18분 31초.*2026-05-10/u)).toBeVisible()
+    const reloadedSession = await openDetailedActiveSession(user)
+    expect(within(reloadedSession).getByText(/5×1000m @5000m RP.*r150.*JOG/u)).toBeVisible()
+    await user.click(within(reloadedSession).getByText("기준 기록·중단·낮춤 규칙 보기"))
+    expect(within(reloadedSession).getByText(/5000m.*18분 31초.*2026-05-10/u)).toBeVisible()
   }, 15_000)
 
   it("clears the execution allowance message on every recorded outcome", async () => {
@@ -132,16 +132,14 @@ describe("production detailed prescription experience", () => {
     const picker = screen.getByRole("region", { name: "개인 페이스 기준 기록" })
     await user.click(within(picker).getByRole("button", { name: /개인 최고.*18분 31초/u }))
     await user.click(within(picker).getByRole("button", { name: "이 기록으로 개인 페이스 적용" }))
-    await user.click(screen.getByRole("button", { name: /기본 보조훈련 선택하기/u }))
-    await screen.findByRole("heading", { name: /기본 보조훈련 9일 계획/u })
+    await user.click(screen.getByRole("button", { name: /시간 조절 계획 선택하기/u }))
+    await screen.findByRole("heading", { name: /9일 훈련 계획/u })
 
-    const activeNotation = screen.getByText(/5×1000m @5000m RP.*r150.*JOG/u)
-    const activeSession = activeNotation.closest("section[role='group']")
-    if (!(activeSession instanceof HTMLElement)) throw new Error("Expected the detailed active session")
+    const activeSession = await openDetailedActiveSession(user)
 
     // RESTED clears the START allowance message and removes start/restart
-    await user.click(screen.getByText("시작 전 확인"))
-    await user.click(screen.getByRole("button", { name: "통증 없고 평소와 같음 · 시작 확인" }))
+    await user.click(within(activeSession).getByText("시작 전 확인"))
+    await user.click(within(activeSession).getByRole("button", { name: "통증 없고 평소와 같음 · 시작 확인" }))
     expect(screen.getByText(/현재 안전 상태.*시작할 수 있어요/u)).toBeVisible()
     await user.click(within(activeSession).getByRole("button", { name: "휴식" }))
     expect(screen.queryByText(/현재 안전 상태.*시작할 수 있어요/u)).toBeNull()
@@ -162,7 +160,7 @@ describe("production detailed prescription experience", () => {
     expect(screen.getByText("통증 기록 후 확인")).toBeVisible()
     expect(screen.queryByRole("button", { name: /통증 없고 평소와 같음 · (시작|다시 시작) 확인/u })).toBeNull()
     expect(screen.getByRole("button", { name: "통증·이상 또는 잘 모르겠음" })).toBeVisible()
-  })
+  }, 15_000)
 
   it("requires reconfirmation after replacing a confirmed record", async () => {
     const user = userEvent.setup()
@@ -175,11 +173,11 @@ describe("production detailed prescription experience", () => {
     expect(screen.getAllByText(/5×1000m @5000m RP.*r150.*JOG/u)).not.toHaveLength(0)
 
     await user.click(within(picker).getByRole("button", { name: /^시즌 최고.*19분/u }))
-    expect(screen.getByRole("button", { name: /기본 보조훈련 선택하기/u })).toBeDisabled()
+    expect(screen.getByRole("button", { name: /시간 조절 계획 선택하기/u })).toBeDisabled()
     expect(screen.queryByText(/5×1000m @5000m RP.*r150.*JOG/u)).toBeNull()
 
     await user.click(within(picker).getByRole("button", { name: "이 기록으로 개인 페이스 적용" }))
-    expect(screen.getByRole("button", { name: /기본 보조훈련 선택하기/u })).toBeEnabled()
+    expect(screen.getByRole("button", { name: /시간 조절 계획 선택하기/u })).toBeEnabled()
     expect(screen.getAllByText(/5000m.*19분.*2026-04-20/u)).not.toHaveLength(0)
   })
   it("keeps both candidates RPE-only when the confirmed record is stale", async () => {
@@ -219,3 +217,15 @@ describe("production detailed prescription experience", () => {
     expect(screen.queryByText("선택 가능한 계획 2가지")).toBeNull()
   })
 })
+
+async function openDetailedActiveSession(
+  user: ReturnType<typeof userEvent.setup>,
+): Promise<HTMLElement> {
+  const sessionTitle = screen.getAllByText(/반복 인터벌 · VO2 훈련/u)[0]
+  const session = sessionTitle?.closest("section[role='group']")
+  if (!(session instanceof HTMLElement)) throw new Error("Expected the detailed active session")
+  const details = within(session).getByText(/훈련 방법과 기록/u).closest("details")
+  if (!(details instanceof HTMLDetailsElement)) throw new Error("Expected active session details")
+  if (!details.open) await user.click(within(details).getByText(/훈련 방법과 기록/u))
+  return session
+}

@@ -22,6 +22,7 @@ import type { AdaptationAcceptanceResult } from "../../domain/plan-adaptation-st
 import type { PendingNextFrameSuccessor } from "../../domain/plan-beta-schema"
 import { PlanChoice } from "./PlanChoice"
 import { PlanAdaptationResult, PlanAdaptationReview } from "./PlanAdaptationReview"
+import { TermHelp } from "../../components/TermHelp"
 
 type Step = "closed" | "reason" | "record" | "safety" | "choice" | "review" | "result" | "pending"
 type Reason = "PB_SB" | "EXPLICIT_REQUEST"
@@ -165,6 +166,9 @@ export function PlanAdaptationFlow({
         <div className="plan-adaptation__panel" aria-live="polite">
           {step === "reason" && (
             <DecisionStep title="조정 이유를 선택해 주세요" onBack={reset}>
+              <p className="plan-adaptation__term-help">
+                PB<TermHelp term="pb" /> · SB<TermHelp term="sb" /> 뜻 확인
+              </p>
               <PlanChoice
                 title="최근 기록이 좋아졌어요"
                 detail="계획 시작 뒤 달성한 같은 종목 PB 또는 SB를 확인해요."
@@ -205,7 +209,7 @@ export function PlanAdaptationFlow({
             <DecisionStep title="현재 몸 상태를 확인해 주세요" onBack={() => setStep(reason === "PB_SB" ? "record" : "reason")}>
               <PlanChoice
                 title="통증은 없고 몸 상태는 평소와 같아요"
-                detail="현재 D9 안전 상태와 활성 계획의 hold를 함께 확인해요."
+                detail="저장된 통증·안전 확인 상태와 현재 계획이 중지되어 있는지 함께 확인해요."
                 selected={currentCheck === "NO_KNOWN_RISK"}
                 onClick={() => {
                   setCurrentCheck("NO_KNOWN_RISK")

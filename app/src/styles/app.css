@@ -4,8 +4,7 @@
 
 html, body { margin: 0; padding: 0; background: var(--app-frame-canvas); }
 #root { min-height: 100vh; }
-button { font-family: inherit; }
-input, textarea { font-family: inherit; }
+button, input, textarea, select { font: inherit; letter-spacing: inherit; }
 
 .journal-ten-scale {
   grid-template-columns: repeat(10, minmax(0, 1fr));
@@ -700,12 +699,8 @@ input, textarea { font-family: inherit; }
   grid-template-columns: minmax(0, 1fr) 24px;
   gap: 12px;
   align-items: center;
-  /* 최종 폴리시 D2: TRAINING 모드의 정보 위계 1순위인데 헤어라인 카드라
-   * 아래 검정 기록 버튼에 시선을 밗겼다. 잉크 액센트 좌측 바 + 보더 강화로
-   * 히어로 지위를 시각화한다 (모노크롬 유지, 색 추가 없음). */
-  border: 1px solid var(--ink);
-  border-left: 4px solid var(--ink);
-  border-radius: 8px;
+  border: 1px solid var(--line-2);
+  border-radius: 6px;
   background: var(--surface);
   color: var(--ink);
   text-align: left;
@@ -912,9 +907,9 @@ input, textarea { font-family: inherit; }
 .minji-page__situation { margin: 12px 0 0; font-family: var(--sans); font-size: 13.5px; line-height: 1.65; color: var(--ink-2); }
 .minji-page blockquote {
   margin: 18px 0 0;
-  padding: 16px 15px;
-  border: 0;
-  border-left: 3px solid var(--brand);
+  padding: 16px 0;
+  border-block: 1px solid var(--line-2);
+  border-inline: 0;
   background: var(--paper-2);
   color: var(--ink-blue);
   font-family: var(--sans);
@@ -970,6 +965,54 @@ button:not(:disabled):not([aria-disabled="true"]):active {
 :where(button, [href], input, textarea, select, [tabindex]):focus-visible {
   outline: 2px solid var(--focus-ring);
   outline-offset: 3px;
+}
+
+.guided-empty-state {
+  width: min(100%, 340px);
+  margin-inline: auto;
+  padding: 44px 0 28px;
+  text-align: center;
+}
+
+.guided-empty-state__icon {
+  color: var(--brand);
+}
+
+.guided-empty-state h2 {
+  margin: 12px 0 0;
+  color: var(--ink);
+  font-family: var(--sans);
+  font-size: 20px;
+  font-weight: 650;
+  line-height: 1.3;
+}
+
+.guided-empty-state p {
+  margin: 10px auto 0;
+  max-width: 300px;
+  color: var(--ink-2);
+  font-family: var(--sans);
+  font-size: 13px;
+  line-height: 1.65;
+}
+
+.guided-empty-state button {
+  width: min(100%, 260px);
+  min-height: 48px;
+  margin-top: 22px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: 1px solid var(--ink);
+  border-radius: 6px;
+  background: var(--ink);
+  color: var(--bg);
+  font-family: var(--sans);
+  font-size: 14px;
+  font-weight: 650;
+  cursor: pointer;
+  touch-action: manipulation;
 }
 
 .popover-surface {

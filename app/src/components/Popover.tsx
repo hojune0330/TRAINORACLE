@@ -6,24 +6,25 @@
  *    → 열릴 때 가장 가까운 [data-mobile-frame] (없으면 뷰포트) 경계를 측정해
  *      수평 보정(translateX clamp), 아래 공간 부족 + 위 공간이 더 크면 위로 뒤집기(flip).
  * 2. 접근성: Escape 닫기, 바깥 탭 닫기.
- * 3. 검증 가능성: URL에 ?uitest 가 있으면 모든 팝오버가 자동 열리고
- *    보정 후 실측 결과를 [POPCLAMP] 콘솔 로그로 남긴다 (런타임 증거용, 프로덕션 무해).
+ * 3. 검증 가능성: URL에 ?popover-test=1 이 있을 때만 모든 팝오버가 자동 열리고
+ *    보정 후 실측 결과를 [POPCLAMP] 콘솔 로그로 남긴다. 일반 ?uitest=1에서는
+ *    실제 사용자 화면처럼 닫힌 상태를 유지해 입력 버튼을 가리지 않는다.
  *
  * 표시 전용 — 어떤 데이터·안전 상태도 변경하지 않는다.
  */
 import { useEffect, useLayoutEffect, useRef, useState } from "react"
 import type { CSSProperties, ReactNode, RefObject } from "react"
 
-const UITEST =
+const POPOVER_TEST =
   typeof window !== "undefined" &&
-  new URLSearchParams(window.location.search).has("uitest")
+  new URLSearchParams(window.location.search).get("popover-test") === "1"
 
 export function usePopover(): {
   open: boolean
   toggle: () => void
   wrapRef: RefObject<HTMLSpanElement>
 } {
-  const [open, setOpen] = useState<boolean>(UITEST)
+  const [open, setOpen] = useState<boolean>(POPOVER_TEST)
   const wrapRef = useRef<HTMLSpanElement>(null)
 
   useEffect(() => {
@@ -68,9 +69,9 @@ export function PopCard({ open, align = "left", width = 232, accentBorder, label
   /** 트리거 기준 기본 정렬 (보정 전) */
   align?: "left" | "right"
   width?: number
-  /** 카드 테두리/좌측 강조선 색 (안전 용어 = warn) */
+  /** 카드 테두리 색 (안전 용어 = warn) */
   accentBorder: { border: string; bar: string }
-  /** uitest 로그 식별용 */
+  /** 팝오버 배치 테스트 로그 식별용 */
   label?: string
   children: ReactNode
 }) {
@@ -98,9 +99,9 @@ export function PopCard({ open, align = "left", width = 232, accentBorder, label
     setAdj({ dx: Math.round(dx), up })
   }, [open])
 
-  // 2차(uitest 전용): 보정 적용 후 실측 재검증 로그
+  // 2차(팝오버 전용 테스트): 보정 적용 후 실측 재검증 로그
   useLayoutEffect(() => {
-    if (!open || !adj || !UITEST) return
+    if (!open || !adj || !POPOVER_TEST) return
     const el = cardRef.current
     if (!el) return
     const fr = boundaryRect(el)
@@ -124,7 +125,6 @@ export function PopCard({ open, align = "left", width = 232, accentBorder, label
     width,
     background: "var(--surface)",
     border: `var(--bw-line) solid ${accentBorder.border}`,
-    borderLeft: `3px solid ${accentBorder.bar}`,
     padding: "var(--space-3)",
     textTransform: "none", letterSpacing: 0, textAlign: "left",
   }

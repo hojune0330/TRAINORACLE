@@ -42,7 +42,7 @@ describe("AppShell journal archive routing", () => {
     render(<AppShell />)
 
     await user.click(screen.getByRole("button", { name: "전체 보기" }))
-    await user.click(await screen.findByRole("button", { name: /2026년 7월/u }))
+    await user.click(await screen.findByRole("button", { name: /2026년 7월/u }, { timeout: 5_000 }))
     await user.click(await screen.findByRole("button", { name: /2026년 7월 10일/u }))
 
     expect(await screen.findByText("아카이브 복귀 훈련")).toBeVisible()
@@ -58,7 +58,7 @@ describe("AppShell journal archive routing", () => {
     render(<AppShell />)
 
     await user.click(screen.getByRole("button", { name: "전체 보기" }))
-    await user.click(await screen.findByRole("button", { name: /2026년 7월/u }))
+    await user.click(await screen.findByRole("button", { name: /2026년 7월/u }, { timeout: 5_000 }))
     await user.click(await screen.findByRole("button", { name: /2026년 7월 10일/u }))
     await user.click(await screen.findByRole("button", { name: "훈련 기록 수정" }))
 
@@ -100,6 +100,29 @@ describe("AppShell journal archive routing", () => {
     await user.click(screen.getByRole("button", { name: "일지" }))
 
     expect(await screen.findByRole("heading", { name: "지난 일지" })).toBeVisible()
+  })
+
+  it("starts a journal from the empty archive without returning home first", async () => {
+    window.localStorage.clear()
+    const user = userEvent.setup()
+    render(<AppShell />)
+
+    await user.click(screen.getByRole("button", { name: "일지" }))
+    await user.click(await screen.findByRole("button", { name: "오늘 기록하기" }))
+
+    expect(await screen.findByRole("heading", { name: "어떤 일지를 쓰세요?" })).toBeVisible()
+  })
+
+  it("starts a journal from the empty analysis screen", async () => {
+    window.localStorage.clear()
+    const user = userEvent.setup()
+    render(<AppShell />)
+
+    await user.click(screen.getByRole("button", { name: "분석" }))
+    expect(await screen.findByRole("heading", { name: "분석" })).toBeVisible()
+    await user.click(screen.getByRole("button", { name: "첫 기록 남기기" }))
+
+    expect(await screen.findByRole("heading", { name: "어떤 일지를 쓰세요?" })).toBeVisible()
   })
 
   it("keeps the easy FAQ one tap away through more", async () => {

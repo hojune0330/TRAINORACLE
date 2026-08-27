@@ -34,7 +34,7 @@ test("keeps core journal controls at least 44px tall", async ({ page }, testInfo
     { name: "post.pace", locator: page.getByRole("textbox", { name: "평균 페이스 (/km)" }), heightOnly: true },
     { name: "post.pace-help", locator: page.getByRole("button", { name: /페이스 설명 보기/u }) },
     { name: "post.rpe", locator: page.getByRole("button", { name: /^(?:[1-9]|10)$/u }), count: 10 },
-    { name: "post.rpe-help", locator: page.getByRole("button", { name: /RPE 설명 보기/u }) },
+    { name: "post.rpe-help", locator: page.getByRole("button", { name: /RPE 설명 보기/u }), count: 2 },
     { name: "post.private-label", locator: privateMemo.locator("xpath=.."), heightOnly: true },
     { name: "post.training-label", locator: trainingMemo.locator("xpath=.."), heightOnly: true },
     { name: "post.memo", locator: page.getByRole("textbox", { name: "훈련 메모 내용" }), heightOnly: true },

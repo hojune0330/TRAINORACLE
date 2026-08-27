@@ -230,6 +230,7 @@ export function AppShell() {
           onSelectionChange={(archiveSelection) => setV(s => ({ ...s, archiveSelection }))}
           onOpenDay={(detailDate) => setV(s => ({ ...s, detailDate }))}
           onBack={goHome}
+          onWriteLog={() => setV(viewForTab("log"))}
         />
       )
   } else if (v.tab === "plan") {
@@ -275,7 +276,12 @@ export function AppShell() {
       />
     )
   } else if (v.tab === "trends") {
-    screen = <DeferredMobileScreens.Trends onBack={goHome} />
+    screen = (
+      <DeferredMobileScreens.Trends
+        onBack={goHome}
+        onWriteLog={() => setV(viewForTab("log"))}
+      />
+    )
   }
 
   return (

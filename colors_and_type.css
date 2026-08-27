@@ -2,7 +2,7 @@
    TRAINORACLE — Colors & Type
    "Scientific Minimalism — Tufte × Linear"
 
-   Pretendard + Inter + JetBrains Mono.
+   Self-hosted Pretendard Variable for every interface label.
    직각 박스, hairline border, 색은 정보 전달용으로만.
    ============================================================ */
 
@@ -52,8 +52,11 @@
   --e-rest-strong: #4A4A45; --e-rest-mid: #7A7A70; --e-rest-text: #5A5A55; --e-rest-wash: #EFEEEA;
 
   /* ============== TYPOGRAPHY ============== */
-  --sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", "Noto Sans KR", sans-serif;
-  --mono: ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", monospace;
+  --sans: "Pretendard Variable", "Pretendard", "Noto Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+  /* Korean labels historically used --mono too. Keep one glyph source across the app;
+     reserve --code-mono for literal code only. */
+  --mono: "Pretendard Variable", "Pretendard", "Noto Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+  --code-mono: ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", monospace;
   /* NO serif. Instrument Serif removed in v2. */
 
   /* ============== SPACING (4px base) ============== */
@@ -82,8 +85,8 @@
   --bw-under: 1.5px; /* energy underline */
 
   /* ============== SHADOWS (거의 안 씀) ============== */
-  --shadow-frame: 0 40px 100px -30px rgba(0,0,0,0.22), 0 10px 30px -10px rgba(0,0,0,0.12);
-  --shadow-subtle: 0 1px 2px rgba(0,0,0,0.04);
+  --shadow-frame: none;
+  --shadow-subtle: none;
 
   /* ============== ANIMATION ============== */
   --ease-default: cubic-bezier(0.2, 0.0, 0.2, 1.0);
@@ -129,13 +132,21 @@
 }
 
 /* ============== BASE ============== */
-html { font-feature-settings: "ss01", "cv11"; -webkit-font-smoothing: antialiased; }
+html {
+  font-synthesis: none;
+  font-kerning: normal;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
 body {
   margin: 0;
   background: var(--bg);
   color: var(--ink);
   font-family: var(--sans);
   font-size: var(--fs-body);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0;
   line-height: 1.55;
 }
 
@@ -144,36 +155,37 @@ body {
   font-family: var(--sans);
   font-size: var(--fs-display);
   font-weight: 500;
-  letter-spacing: -0.045em;
+  letter-spacing: 0;
   line-height: 0.95;
 }
 .t-h1 {
   font-family: var(--sans);
   font-size: var(--fs-h1);
   font-weight: 500;
-  letter-spacing: -0.03em;
+  letter-spacing: 0;
   line-height: 1.1;
 }
 .t-h2 {
   font-family: var(--sans);
   font-size: var(--fs-h2);
   font-weight: 500;
-  letter-spacing: -0.02em;
+  letter-spacing: 0;
   line-height: 1.2;
 }
 .t-h3 {
   font-family: var(--sans);
   font-size: var(--fs-h3);
   font-weight: 500;
-  letter-spacing: -0.01em;
+  letter-spacing: 0;
   line-height: 1.3;
 }
-.t-body-lg { font-size: var(--fs-body-lg); line-height: 1.6; letter-spacing: -0.005em; }
-.t-body    { font-size: var(--fs-body);    line-height: 1.55; letter-spacing: -0.005em; }
-.t-body-sm { font-size: var(--fs-body-sm); line-height: 1.5; letter-spacing: -0.005em; color: var(--ink-2); }
+.t-body-lg { font-size: var(--fs-body-lg); line-height: 1.6; letter-spacing: 0; }
+.t-body    { font-size: var(--fs-body);    line-height: 1.55; letter-spacing: 0; }
+.t-body-sm { font-size: var(--fs-body-sm); line-height: 1.5; letter-spacing: 0; color: var(--ink-2); }
 .t-caption { font-size: var(--fs-caption); line-height: 1.45; color: var(--ink-3); }
 
 .mono { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+code, pre, kbd, samp { font-family: var(--code-mono); }
 .t-mono-sm {
   font-family: var(--mono);
   font-size: var(--fs-mono-sm);

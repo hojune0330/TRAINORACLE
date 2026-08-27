@@ -1,4 +1,4 @@
-import { cleanup, render, screen } from "@testing-library/react"
+import { cleanup, render, screen, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { afterEach, describe, expect, it, vi } from "vitest"
 import type { PlanSession } from "@impl/plan-generator/types"
@@ -61,7 +61,7 @@ describe("plan schedule preview", () => {
       />,
     )
 
-    expect(screen.getByLabelText("7일 달력 요약")).toBeVisible()
+    expect(screen.getByLabelText("7일 훈련 흐름")).toBeVisible()
     expect(screen.getByRole("group", { name: /8월 23일 일요일/u })).toBeVisible()
     expect(screen.queryByRole("group", { name: /8월 24일 월요일/u })).not.toBeInTheDocument()
   })
@@ -69,19 +69,18 @@ describe("plan schedule preview", () => {
   it("shows a chosen date as two separate same-day training slots", () => {
     render(<PlanSchedulePreview startDate="2026-08-17" sessions={sessions} />)
 
-    const calendar = screen.getByLabelText("9.5일 달력 요약")
-    expect(calendar).toContainElement(screen.getByRole("listitem", {
-      name: "8월 17일 월요일 · 훈련 2개",
+    const flow = screen.getByLabelText("9.5일 훈련 흐름")
+    expect(flow).toContainElement(screen.getByRole("listitem", {
+      name: "8월 17일 월요일 · 핵심 LT · 회복",
     }))
     expect(screen.getByRole("listitem", {
-      name: "8월 17일 월요일 · 훈련 2개",
-    })).toHaveTextContent("오전오후")
+      name: "8월 17일 월요일 · 핵심 LT · 회복",
+    })).toHaveTextContent("MAINLTREC")
 
-    const restCalendarDay = screen.getByRole("listitem", {
+    const restFlowDay = screen.getByRole("listitem", {
       name: /8월 18일.*휴식/u,
     })
-    expect(restCalendarDay).toHaveTextContent("휴식")
-    expect(restCalendarDay).not.toHaveTextContent("오전")
+    expect(restFlowDay).toHaveTextContent("OFF")
 
     const firstDay = screen.getByRole("group", {
       name: "8월 17일 월요일 · 훈련 2개",
@@ -96,6 +95,35 @@ describe("plan schedule preview", () => {
     expect(screen.getByRole("group", {
       name: "8월 18일 화요일 · 휴식",
     })).toHaveTextContent("휴식일")
+  })
+
+  it("keeps morning and afternoon in one swipe card and orders morning first", async () => {
+    const user = userEvent.setup()
+    render(
+      <PlanSchedulePreview
+        startDate="2026-08-17"
+        sessions={[sessions[1]!, sessions[0]!, sessions[2]!]}
+        displayMode="swipe"
+        timelineHeading="날짜별 훈련"
+      />,
+    )
+
+    const firstDay = screen.getByRole("group", {
+      name: "8월 17일 월요일 · 훈련 2개",
+    })
+    const morning = screen.getByRole("group", { name: "8월 17일 월요일 오전 세션" })
+    const afternoon = screen.getByRole("group", { name: "8월 17일 월요일 오후 세션" })
+
+    expect(firstDay).toContainElement(morning)
+    expect(firstDay).toContainElement(afternoon)
+    expect(morning.compareDocumentPosition(afternoon) & Node.DOCUMENT_POSITION_FOLLOWING).not.toBe(0)
+    expect(within(firstDay).getByText("본운동")).not.toBeVisible()
+
+    await user.click(within(morning).getByText("오전 훈련 방법과 기록"))
+    expect(within(firstDay).getByText("본운동")).toBeVisible()
+    expect(screen.getByRole("button", { name: "이전 날짜" })).toBeDisabled()
+    expect(screen.getByRole("button", { name: "다음 날짜" })).toBeEnabled()
+    expect(screen.getByText("1/10")).toBeVisible()
   })
 
   it("presents notation, plain execution, and optional RPE detail in order", async () => {
@@ -113,18 +141,31 @@ describe("plan schedule preview", () => {
     expect(screen.getByText(/의료 판단이 아닙니다/u)).toBeVisible()
   })
 
+  it("opens beginner explanations from the legend and the dated session badge", async () => {
+    const user = userEvent.setup()
+    render(<PlanSchedulePreview startDate="2026-08-17" sessions={sessions} />)
+
+    await user.click(screen.getByRole("button", { name: "MAIN 일정표 구분 설명 보기" }))
+    expect(screen.getByText(/가장 중요한 목표 중심 훈련/u)).toBeVisible()
+
+    await user.click(screen.getByRole("button", { name: "MAIN LT 훈련 설명 보기" }))
+    expect(screen.getByText(/젖산 역치/u)).toBeVisible()
+
+    await user.click(screen.getByRole("button", { name: "REC 일정표 구분 설명 보기" }))
+    expect(screen.getByText(/Recovery의 줄임말/u)).toBeVisible()
+  })
+
   it("marks only today's date while the frame is being followed", () => {
     vi.useFakeTimers()
     vi.setSystemTime(new Date("2026-08-17T12:00:00"))
     render(<PlanSchedulePreview startDate="2026-08-17" sessions={sessions} />)
 
     const today = screen.getByRole("listitem", {
-      name: "8월 17일 월요일 · 훈련 2개",
+      name: "8월 17일 월요일 · 핵심 LT · 회복",
     })
     expect(today).toHaveAttribute("aria-current", "date")
-    expect(today).toHaveTextContent("오늘")
     expect(screen.getByRole("listitem", {
-      name: "8월 24일 월요일 · 비움",
+      name: "8월 24일 월요일 · 휴식",
     })).not.toHaveAttribute("aria-current")
   })
 })

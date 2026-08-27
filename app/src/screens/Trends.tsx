@@ -1,4 +1,5 @@
 import React from "react"
+import { ArrowLeft } from "lucide-react"
 import {
   projectStructuredJournalObservation,
   selectStructuredJournalInput,
@@ -8,8 +9,13 @@ import { MonthlyTrendSection } from "./trends/MonthlyTrendSection"
 import { WeeklyDistanceSection } from "./trends/WeeklyDistanceSection"
 import { FatigueExperimentPanel } from "./trends/FatigueExperimentPanel"
 import { productFeatures } from "../domain/product-features"
+import { GuidedEmptyState } from "../components/GuidedEmptyState"
+import { TermHelp } from "../components/TermHelp"
 
-export function Trends({ onBack }: { onBack?: () => void }) {
+export function Trends({ onBack, onWriteLog }: {
+  readonly onBack?: (() => void) | undefined
+  readonly onWriteLog?: (() => void) | undefined
+}) {
   const observations = React.useMemo(() => loadEntries().flatMap((entry) => {
     const input = selectStructuredJournalInput(entry)
     return input === null ? [] : [projectStructuredJournalObservation(input)]
@@ -34,20 +40,13 @@ export function Trends({ onBack }: { onBack?: () => void }) {
     <div style={{ paddingBottom: 30 }}>
       <TrendsHeader onBack={onBack} />
       {isEmpty ? (
-        <div style={{ padding: "40px 20px" }}>
-          <div className="hand" style={{ fontSize: 22, color: "var(--pencil)", lineHeight: 1.35 }}>
-            훈련한 날도, 쉰 날도<br />기록은 모두 남아요.
-          </div>
-          <div style={{
-            marginTop: 14,
-            fontFamily: "var(--mono)",
-            fontSize: 10.5,
-            color: "var(--ink-3)",
-            lineHeight: 1.7,
-          }}>
-            거리·페이스·기분·통증을 구조화해서 남기면<br />
-            출처가 확인된 값만 여기서 함께 볼 수 있어요.
-          </div>
+        <div style={{ padding: "0 20px" }}>
+          <GuidedEmptyState
+            title="기록이 쌓이면 변화가 보여요"
+            description={<>훈련한 날과 쉰 날의 거리·시간·RPE<TermHelp term="rpe" />·기분을 직접 남기면 주간과 월간 흐름으로 정리해 드려요.</>}
+            actionLabel="첫 기록 남기기"
+            onAction={onWriteLog}
+          />
           <AnalysisExclusionNotice summary={exclusion} />
         </div>
       ) : (
@@ -145,10 +144,16 @@ function TrendsHeader({ onBack }: { readonly onBack?: (() => void) | undefined }
         padding: 4,
         minWidth: 64,
         minHeight: 44,
+        display: "inline-flex",
+        alignItems: "center",
+        gap: 4,
         fontFamily: "var(--mono)",
         fontSize: 11,
         color: "var(--ink-2)",
-      }}>← 뒤로</button>
+      }}>
+        <ArrowLeft aria-hidden="true" size={16} />
+        <span>뒤로</span>
+      </button>
       <h1 style={{
         minWidth: 0,
         fontFamily: "var(--mono)",
@@ -157,7 +162,7 @@ function TrendsHeader({ onBack }: { readonly onBack?: (() => void) | undefined }
         color: "var(--ink)",
         textAlign: "center",
         margin: 0,
-      }}>추이</h1>
+      }}>분석</h1>
       <div aria-hidden="true" />
     </div>
   )

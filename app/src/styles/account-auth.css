@@ -233,7 +233,7 @@
 .account-auth__notice {
   margin: 0;
   padding: 10px 12px;
-  border-left: 3px solid var(--brand);
+  border: 1px solid var(--line);
   color: var(--ink-2);
   background: var(--surface);
   font-family: var(--sans);

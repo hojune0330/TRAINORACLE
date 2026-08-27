@@ -11,8 +11,10 @@ import type { PlanAthleteEvidence } from "../../domain/plan-beta-flow"
 import type { AthleteRecord } from "../../domain/athlete-records"
 import type { CandidatePrescriptionBinding } from "../../domain/plan-candidate-prescription"
 import {
-  candidateSessionSummary,
+  candidateDurationSummary,
   candidateLabel,
+  candidateSharedSessionSummary,
+  ENERGY_INTENT_LABELS,
 } from "./labels"
 import { candidatePurposeStatus } from "./candidate-purpose-status"
 import { DIVISION_LABELS } from "./plan-intake-meta"
@@ -194,10 +196,22 @@ function CandidateComparison({
 }: {
   readonly candidates: PlanGenerationSuccess["candidates"]
 }) {
+  const sharedCandidate = candidates[0]
+  const selectedIntentLabel = ENERGY_INTENT_LABELS[sharedCandidate.selectedEnergyIntent].title
+
   return (
     <section className="plan-candidate-comparison" aria-label="두 계획 핵심 비교">
-      <h2>먼저 핵심만 비교</h2>
-      <div>
+      <h2>고른 목표는 같고, 쉬운 훈련 시간만 달라요</h2>
+      <p className="plan-candidate-comparison__intro">
+        두 계획 모두 고강도 훈련인 &lsquo;{selectedIntentLabel}&rsquo;
+        <TermHelp term={ENERGY_INTENT_LABELS[sharedCandidate.selectedEnergyIntent].term} />을 같은 횟수와 RPE로 넣었어요.
+        여기서 쉬운 훈련은 기초 달리기와 회복 운동을 말해요.
+      </p>
+      <div className="plan-candidate-comparison__shared">
+        <strong>두 계획 공통</strong>
+        <span>{candidateSharedSessionSummary(sharedCandidate)}</span>
+      </div>
+      <div className="plan-candidate-comparison__options">
         {candidates.map((candidate) => {
           const label = candidateLabel(candidate.kind, candidate.selectedEnergyIntent)
           const purposeStatus = candidatePurposeStatus(candidate.kind)
@@ -206,11 +220,15 @@ function CandidateComparison({
               <span>후보 {candidate.kind === "BALANCED" ? "A" : "B"}</span>
               <strong>{label.title}</strong>
               <p>{purposeStatus.label}</p>
-              <small>{candidateSessionSummary(candidate)}</small>
+              <small>{candidateDurationSummary(candidate)}</small>
             </article>
           )
         })}
       </div>
+      <p className="plan-candidate-comparison__note">
+        두 합계의 차이는 조절할 수 있는 쉬운 훈련을 A에서는 시간 범위로, B에서는 가장 짧은 시간으로 계산해서 생겨요.
+        고강도 훈련이 더 많거나 세지는 차이는 아니에요.
+      </p>
     </section>
   )
 }

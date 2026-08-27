@@ -143,7 +143,7 @@ export function PurposeScopedMemoField({
         rows={rows}
         className="paper-grid"
         style={{
-          ...inputStyle(), fontFamily: '"Caveat", "Gowun Dodum", cursive',
+        ...inputStyle(), fontFamily: "var(--sans)",
           fontSize: 18, lineHeight: 1.4, color: "var(--ink-blue)", resize: "none",
         }}
       />

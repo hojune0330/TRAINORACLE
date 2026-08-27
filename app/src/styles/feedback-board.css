@@ -82,10 +82,15 @@
 .feedback-board__notice,
 .feedback-board__error {
   padding: var(--space-3);
-  border-left: 3px solid var(--brand);
+  border: 1px solid var(--line);
   background: var(--surface);
   font-size: 13px;
   line-height: 1.55;
+}
+
+.feedback-board__error {
+  border-color: color-mix(in srgb, var(--err) 45%, var(--line));
+  color: var(--err);
 }
 .feedback-board__error { border-left-color: var(--pain-5); }
 
@@ -121,8 +126,8 @@
 .feedback-thread__summary small { color: var(--brand); font-size: 11px; }
 .feedback-thread__summary strong { font-size: 14px; overflow-wrap: anywhere; }
 .feedback-thread__body { padding: 0 0 var(--space-5); }
-.feedback-comment { margin-top: var(--space-3); padding: var(--space-3); background: var(--surface); border-left: 3px solid var(--line); }
-.feedback-comment[data-author="OPERATOR"] { border-left-color: var(--brand); }
+.feedback-comment { margin-top: var(--space-3); padding: var(--space-3); background: var(--surface); border: 1px solid var(--line); }
+.feedback-comment[data-author="OPERATOR"] { border-color: var(--line-2); }
 .feedback-comment strong { font-size: 12px; }
 .feedback-comment p { margin: 5px 0 0; white-space: pre-wrap; font-size: 14px; line-height: 1.55; }
 .feedback-thread__delete {

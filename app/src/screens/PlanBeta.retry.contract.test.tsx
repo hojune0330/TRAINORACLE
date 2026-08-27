@@ -84,7 +84,7 @@ describe("plan candidate save retry", () => {
 
     // Then: the local snapshot exists and the active plan is shown.
     expect(window.localStorage.getItem("trainoracle.plan-beta.v1")).not.toBeNull()
-    expect(screen.getByRole("heading", { name: /9일 계획/u })).toBeVisible()
+    expect(screen.getByRole("heading", { name: /9일 훈련 계획/u })).toBeVisible()
   })
 
   it("stores one plan when an athlete taps a candidate twice quickly", async () => {
@@ -110,7 +110,7 @@ describe("plan candidate save retry", () => {
     // Then: one active plan is stored and the candidate screen is gone.
     expect(activePlanWrites).toBe(1)
     expect(window.localStorage.getItem("trainoracle.plan-beta.v1")).not.toBeNull()
-    expect(screen.getByRole("heading", { name: /9일 계획/u })).toBeVisible()
+    expect(screen.getByRole("heading", { name: /9일 훈련 계획/u })).toBeVisible()
   })
 
   it("keeps a generated candidate unsaved when its start date is cleared", async () => {

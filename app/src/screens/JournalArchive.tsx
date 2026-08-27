@@ -1,5 +1,6 @@
 import React from "react"
 import { ArrowLeft } from "lucide-react"
+import { GuidedEmptyState } from "../components/GuidedEmptyState"
 import {
   projectJournalArchive,
 } from "../domain/journal-archive"
@@ -25,6 +26,7 @@ export type JournalArchiveProps = {
   readonly onSelectionChange: (selection: ArchiveSelection) => void
   readonly onOpenDay: (date: string) => void
   readonly onBack: () => void
+  readonly onWriteLog?: (() => void) | undefined
   readonly mode?: "CALENDAR" | "CYCLE"
   readonly cycleAnchor?: string | null
   readonly cycleIndex?: number
@@ -39,6 +41,7 @@ export function JournalArchive({
   onSelectionChange,
   onOpenDay,
   onBack,
+  onWriteLog,
   mode,
   cycleAnchor,
   cycleIndex,
@@ -146,13 +149,15 @@ export function JournalArchive({
           onAnchorChange={onCycleAnchorChange}
           onIndexChange={onCycleIndexChange}
           onOpenDay={onOpenDay}
+          onWriteLog={onWriteLog}
         />
       ) : archive.months.length === 0 ? (
-        <div style={{ padding: "48px 20px", textAlign: "center" }}>
-          <div style={{ fontFamily: "var(--sans)", fontSize: 16, color: "var(--ink)" }}>
-            아직 지난 일지가 없어요.
-          </div>
-        </div>
+        <GuidedEmptyState
+          title="첫 일지를 남겨보세요"
+          description="훈련한 날도, 쉰 날도 기록할 수 있어요. 한 번 남기면 날짜별 일지가 여기에 모입니다."
+          actionLabel="오늘 기록하기"
+          onAction={onWriteLog}
+        />
       ) : selectedWeek !== null ? (
         <SummaryList
           label={`${weekHeading(selectedWeek)} 일별 기록`}

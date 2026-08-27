@@ -82,7 +82,7 @@ export function PostSessionForm({ onBack, onDone, targetDate, initialEntry }: En
   return (
     <div style={{ paddingBottom: 100 }}>
       <TopBar onBack={onBack}>훈련 후 · 기록</TopBar>
-      <div style={{ padding: "14px 20px 0" }}>
+      <div style={{ padding: "8px 20px 0" }}>
         <IndexCard date={compactDate(entryDate)} dow={`${dowOf(entryDate)} · ${nowClock()}`} />
       </div>
 

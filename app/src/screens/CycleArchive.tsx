@@ -6,14 +6,16 @@ import { todayISO } from "../domain/journal-store"
 import { trainingCycleWindow } from "../domain/training-cycle-window"
 import { isValidIsoDate } from "../domain/dates"
 import { dayLabel, SummaryButton, SummaryList, summaryText } from "./JournalArchiveSummary"
+import { GuidedEmptyState } from "../components/GuidedEmptyState"
 
-export function CycleArchive({ entries, anchor, index, onAnchorChange, onIndexChange, onOpenDay }: {
+export function CycleArchive({ entries, anchor, index, onAnchorChange, onIndexChange, onOpenDay, onWriteLog }: {
   readonly entries: readonly JournalEntry[]
   readonly anchor?: string | null
   readonly index?: number
   readonly onAnchorChange?: (anchor: string) => void
   readonly onIndexChange?: (index: number) => void
   readonly onOpenDay: (date: string) => void
+  readonly onWriteLog?: (() => void) | undefined
 }) {
   const [internalAnchor, setInternalAnchor] = React.useState(todayISO)
   const [internalIndex, setInternalIndex] = React.useState(0)
@@ -50,8 +52,15 @@ export function CycleArchive({ entries, anchor, index, onAnchorChange, onIndexCh
         </strong>
         <button type="button" aria-label="다음 주기" disabled={window === null} onClick={() => changeIndex(effectiveIndex + 1)} style={cycleButtonStyle}>→</button>
       </div>
-      {window === null || days.length === 0 ? (
-        <p style={{ margin: "28px 0 0", textAlign: "center", fontFamily: "var(--sans)", color: "var(--ink-3)" }}>이 구간에는 기록이 없어요.</p>
+      {window === null ? (
+        <p style={{ margin: "28px 0 0", textAlign: "center", fontFamily: "var(--sans)", color: "var(--ink-3)" }}>시작일을 다시 확인해 주세요.</p>
+      ) : days.length === 0 ? (
+        <GuidedEmptyState
+          title="이 주기에 기록이 없어요"
+          description="오늘의 훈련이나 휴식을 남기면 선택한 9일·10일 구간 안에서 날짜순으로 볼 수 있어요."
+          actionLabel="오늘 기록하기"
+          onAction={onWriteLog}
+        />
       ) : (
         <SummaryList
           label={`${window.lengthDays}일 구간의 일별 기록`}

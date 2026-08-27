@@ -4,6 +4,7 @@ import { compactDate } from "../../domain/dates"
 import type { ActivityParseResult } from "../../domain/import/activity-file"
 import type { ImportDraft, ImportSaveResult } from "../../domain/import/import-draft"
 import { mono, primaryBtn, secondaryBtn } from "./styles"
+import { TermHelp } from "../../components/TermHelp"
 
 export type ReadFailure = "unreadable" | "empty" | "too-large" | "cancelled" | null
 
@@ -23,7 +24,7 @@ export function PickStage({ busy, failure, fileInputRef, onFile, onCancel }: {
 
       <div
         data-testid="import-privacy-notice"
-        style={{ border: "1px solid var(--line)", borderLeft: "3px solid var(--ink-3)", background: "var(--surface)", padding: "10px 13px" }}
+      style={{ border: "1px solid var(--line)", background: "var(--surface)", padding: "10px 13px" }}
       >
         <div style={{ ...mono, fontSize: 9.5, fontWeight: 600, color: "var(--ink-3)", letterSpacing: "0.12em" }}>
           파일은 이 기기에서만 읽어요
@@ -151,7 +152,7 @@ export function ReviewStage({ drafts, result, selected, onToggle, onSave, onRest
         })}
       </div>
       <div style={{ ...mono, fontSize: 10, color: "var(--ink-4)", lineHeight: 1.65 }}>
-        RPE와 메모는 파일에 없어요 — 저장한 뒤 일지에서 직접 채워 주세요.
+        RPE<TermHelp term="rpe" />와 메모는 파일에 없어요 — 저장한 뒤 일지에서 직접 채워 주세요.
         가져온 숫자는 <b>주간 통계·추이·훈련계획에는 들어가지 않아요</b> (직접 확인한 값만 분석에 쓰는 원칙).
       </div>
       <button type="button" style={primaryBtn} disabled={chosenCount === 0} onClick={onSave}>
@@ -183,7 +184,7 @@ export function SavedStage({ outcome, onOpenLog, onRestart }: {
           </div>
         )}
         <div style={{ ...mono, fontSize: 10, color: "var(--ink-4)", lineHeight: 1.65, marginTop: 8 }}>
-          가져온 일지에는 <b>가져옴</b> 표시가 붙어요. RPE·메모를 채우면 그 값은 직접 입력한 기록으로 분석에 쓰여요.
+          가져온 일지에는 <b>가져옴</b> 표시가 붙어요. RPE<TermHelp term="rpe" />·메모를 채우면 그 값은 직접 입력한 기록으로 분석에 쓰여요.
         </div>
       </div>
       {onOpenLog && <button type="button" style={primaryBtn} onClick={onOpenLog}>일지에서 확인하기</button>}
