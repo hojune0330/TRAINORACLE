@@ -967,6 +967,54 @@ button:not(:disabled):not([aria-disabled="true"]):active {
   outline-offset: 3px;
 }
 
+.guided-empty-state {
+  width: min(100%, 340px);
+  margin-inline: auto;
+  padding: 44px 0 28px;
+  text-align: center;
+}
+
+.guided-empty-state__icon {
+  color: var(--brand);
+}
+
+.guided-empty-state h2 {
+  margin: 12px 0 0;
+  color: var(--ink);
+  font-family: var(--sans);
+  font-size: 20px;
+  font-weight: 650;
+  line-height: 1.3;
+}
+
+.guided-empty-state p {
+  margin: 10px auto 0;
+  max-width: 300px;
+  color: var(--ink-2);
+  font-family: var(--sans);
+  font-size: 13px;
+  line-height: 1.65;
+}
+
+.guided-empty-state button {
+  width: min(100%, 260px);
+  min-height: 48px;
+  margin-top: 22px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: 1px solid var(--ink);
+  border-radius: 6px;
+  background: var(--ink);
+  color: var(--bg);
+  font-family: var(--sans);
+  font-size: 14px;
+  font-weight: 650;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
 .popover-surface {
   animation: popover-enter 150ms var(--ease-out-strong) both;
 }
