@@ -1,0 +1,16 @@
+import { chromium } from "playwright"
+const browser = await chromium.launch()
+const page = await browser.newPage({ viewport: { width: 375, height: 667 } })
+// 새 프로필(데이터 없음) = 신규 사용자 환영 홈
+await page.goto("https://hojune0330.github.io/TRAINORACLE/", { waitUntil: "networkidle" })
+await page.waitForSelector(".training-home__header", { timeout: 15000 })
+const login = page.getByRole("button", { name: "로그인 또는 가입" })
+console.log("LIVE login button visible:", await login.isVisible().catch(() => false))
+await page.screenshot({ path: "e2e-review/garden/24-live-login-entry.png" })
+await login.click()
+await page.waitForSelector("h1", { timeout: 15000 })
+console.log("LIVE account h1:", (await page.locator("h1").first().textContent())?.trim())
+console.log("LIVE google btn:", await page.getByRole("button", { name: /Google로 계속하기/ }).isVisible().catch(() => false))
+await page.screenshot({ path: "e2e-review/garden/25-live-account-gateway.png" })
+await browser.close()
+console.log("LIVE-CHECK DONE")
