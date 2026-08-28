@@ -11,6 +11,7 @@ import { loadPlanBetaState } from "../domain/plan-beta-store"
 import { activePlanDateWindow } from "../domain/cumulative-distance"
 import { CumulativeDistancePanel } from "./trends/CumulativeDistancePanel"
 import { EnergySystemLedgerPanel } from "./trends/EnergySystemLedgerPanel"
+import { PersonalOraclePanel } from "./trends/PersonalOraclePanel"
 
 export function Trends({ onBack, onWriteLog }: {
   readonly onBack?: (() => void) | undefined
@@ -44,6 +45,7 @@ export function Trends({ onBack, onWriteLog }: {
   return (
     <div style={{ paddingBottom: 30 }}>
       <TrendsHeader onBack={onBack} />
+      <PersonalOraclePanel observations={observations} today={today} planState={planState} />
       {isEmpty ? (
         <>
           {planState !== null && (

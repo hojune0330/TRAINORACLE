@@ -4,7 +4,7 @@
 document_metadata:
   doc_id: trainoracle-implementation-readiness
   title: TrainOracle Implementation Readiness
-  version: "1.1"
+  version: "1.2"
   recorded_at: 2026-08-28
   owner: COACH_HOJUNE
   status: DEVELOPMENT_IN_PROGRESS
@@ -29,12 +29,12 @@ readiness_state:
   master_plan_recorded: true
   implementation: IN_PROGRESS
   first_task: TARGETED_SPEC_ALIGNMENT_STARTED
-  active_development_branch: codex/periodization-lineage-v1
+  active_development_branch: codex/personal-oracle-v1
   active_work_order: OWNER_DIRECT_DEVELOPMENT_INSTRUCTION
   assigned_agent: CODEX
-  code_change: ENERGY_LEDGER_MERGED_PLAN_JOURNAL_IN_REVIEW_PERIODIZATION_IN_PROGRESS
-  spec_patch: PLAN_JOURNAL_AND_PERIODIZATION_DRAFTS_IN_REVIEW
-  design_change: PERIODIZATION_DIRECTION_COMPACT_TRACK_IN_PROGRESS
+  code_change: PLAN_JOURNAL_PERIODIZATION_EVENT_BREADTH_MERGED_ACCOUNT_AND_ORACLE_IN_REVIEW
+  spec_patch: PERSONAL_ORACLE_EXPLANATION_DRAFT_IN_REVIEW
+  design_change: PERSONAL_ORACLE_ANALYSIS_PANEL_IN_PROGRESS
   deployment: NONE
 ```
 
@@ -92,9 +92,9 @@ readiness_state:
 | 1 | 스펙 정합성·충돌 감사 | 별도 오너 시작 지시 | TARGETED_AUDIT_IN_PROGRESS |
 | 2 | 용어·누적 거리·에너지 시스템·선수용·오라클 오너 결정 | 단계 1 보고서 검수 | DISTANCE_ACCEPTED_ENERGY_IN_PROGRESS |
 | 3 | 주간·월간·연간 거리와 에너지 시스템 누적 분석 | 승인 SPEC과 테스트 기준선 | ENERGY_LEDGER_V1_MERGED |
-| 4 | 800m~마라톤 상세 후보와 9.5일·중주기·24주 계보 | 활성 템플릿·주기 계약 | LINEAGE_V1_IN_REVIEW_EVENT_BREADTH_V1_IN_PROGRESS_DETAILED_TEMPLATES_PENDING |
-| 5 | 일지 수행 연결과 적응 근거 원장 | `plannedSessionId`·개인정보 계약 | PLAN_JOURNAL_V1_IN_REVIEW_ADAPTATION_PARTIAL |
-| 6 | 개인 오라클과 훈련법 궁합 | 결정적 규칙·근거·안전 독립 계약 | NOT_STARTED |
+| 4 | 800m~마라톤 상세 후보와 9.5일·중주기·24주 계보 | 활성 템플릿·주기 계약 | LINEAGE_AND_EVENT_BREADTH_V1_MERGED_DETAILED_LONG_DISTANCE_TEMPLATES_PENDING |
+| 5 | 일지 수행 연결과 적응 근거 원장 | `plannedSessionId`·개인정보 계약 | PLAN_JOURNAL_V1_MERGED_ADAPTATION_PARTIAL_ACCOUNT_STATUS_IN_REVIEW |
+| 6 | 개인 오라클과 훈련법 궁합 | 결정적 규칙·근거·안전 독립 계약 | PERSONAL_ORACLE_V1_IN_PROGRESS_METHOD_COMPATIBILITY_NOT_STARTED |
 | 7 | 친구 비교와 함께 달리기 오라클 | 계정·동의·공유 항목 계약 | NOT_STARTED |
 | 8 | 다이어리 공개·비밀 기록·팔로워 | RLS·차단·신고·삭제 검증 | NOT_STARTED |
 | 9 | 콘텐츠·포인트·꾸미기·공유 | 보상 금지선·콘텐츠 검토 상태 | NOT_STARTED |
