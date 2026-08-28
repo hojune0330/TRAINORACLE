@@ -46,7 +46,7 @@ export function AppShell() {
   const [savedToast, setSavedToast] = React.useState<ShellToastState | null>(null)
   const [athleteRecordsOpen, setAthleteRecordsOpen] = React.useState(false)
   const scrollRegionRef = React.useRef<HTMLElement>(null)
-  const [utilityView, setUtilityView] = React.useState<"more" | "guide" | "minji" | null>(null)
+  const [utilityView, setUtilityView] = React.useState<"more" | "guide" | "minji" | "content" | null>(null)
   const [utilityOrigin, setUtilityOrigin] = React.useState<"home" | "more">("more")
 
   React.useEffect(() => {
@@ -194,6 +194,7 @@ export function AppShell() {
         onBack={() => setUtilityView(null)}
         onOpenMinji={() => { setUtilityOrigin("more"); setUtilityView("minji") }}
         onOpenGuide={() => { setUtilityOrigin("more"); setUtilityView("guide") }}
+        onOpenContent={() => setUtilityView("content")}
         onOpenAccount={accountEnabled ? () => setV(s => ({ ...s, accountOpen: true })) : undefined}
         onOpenRestore={() => {
           setUtilityView(null)
@@ -201,6 +202,8 @@ export function AppShell() {
         }}
       />
     )
+  } else if (v.tab === "home" && utilityView === "content") {
+    screen = <DeferredMobileScreens.TrainingContent onBack={() => setUtilityView(null)} />
   } else if (v.tab === "home" && (utilityView === "guide" || utilityView === "minji")) {
     screen = <DeferredMobileScreens.Guide
       initialSection={utilityView}
@@ -222,6 +225,7 @@ export function AppShell() {
           onOpenTrends={() => setV(viewForTab("trends"))}
           onOpenMore={() => setUtilityView("more")}
           onOpenAccount={accountEnabled ? () => setV(s => ({ ...s, accountOpen: true })) : undefined}
+          onOpenContent={() => setUtilityView("content")}
         />
       )
   } else if (v.tab === "journal") {

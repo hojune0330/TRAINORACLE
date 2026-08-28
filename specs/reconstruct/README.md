@@ -17,6 +17,7 @@ Current productization drafts:
 - `PERIODIZATION_LINEAGE_CONTRACT.md` (`DRAFT_FOR_REVIEW`; 9.5-day frame, three-frame display group, and 18-frame direction lineage, not an automatic load rule, not canonical, not runtime evidence)
 - `PLAN_EVENT_BREADTH_CONTRACT.md` (`DRAFT_FOR_REVIEW`; seven initial events from 800m through marathon, RPE-time generation only where no detailed template is active, not canonical, not detailed-template activation authority)
 - `PERSONAL_ORACLE_EXPLANATION_CONTRACT.md` (`DRAFT_FOR_REVIEW`; deterministic personal structured-fact explanation, no score, prescription, safety, friend-comparison or private-memo authority)
+- `TRENDING_TRAINING_CONTENT_CONTRACT.md` (`DRAFT_FOR_REVIEW`; source-labelled read-only content and local bookmarks, no plan activation or content-point authority)
 - `PLAN_OUTPUT_RATIONALE_PRIVACY_SPEC.md` (`DRAFT_FOR_REVIEW`; new productization draft, not original restored, not canonical, not runtime evidence)
 - `MICROCYCLE_AND_CALENDAR_MAPPING_SPEC.md` (`DRAFT_FOR_REVIEW`; new productization draft, not original restored, not canonical, not runtime evidence)
 - `TRAINING_PLAN_FORMATION_AND_ADAPTATION_SPEC.md` (`DRAFT_FOR_REVIEW`; decision-provenanced first-pilot formation/adaptation policy with ten canonical blockers and an athlete-visible non-executing shadow-pilot boundary, audited in root `TRAINING_PLAN_BLUEPRINT_MULTIPERSPECTIVE_REVIEW.md`, not canonical, not runtime evidence)
