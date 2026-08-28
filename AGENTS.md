@@ -58,6 +58,7 @@
 | `aggregates.ts`, `weekly-distance.ts`, `trend-analysis.ts` | [`specs/reconstruct/METRIC_ALGORITHM_CONTRACT.md`](./specs/reconstruct/METRIC_ALGORITHM_CONTRACT.md), [`specs/reconstruct/ANALYSIS_AND_VISUALIZATION_DATA_CONTRACT.md`](./specs/reconstruct/ANALYSIS_AND_VISUALIZATION_DATA_CONTRACT.md) | ⚠️ 초안 |
 | 세션 분류 | [`specs/active/SESSION_CLASSIFIER_SPEC.md`](./specs/active/SESSION_CLASSIFIER_SPEC.md) | 🟡 업로드 준비 |
 | 템플릿 | [`specs/active/TEMPLATE_LIBRARY_SPEC.md`](./specs/active/TEMPLATE_LIBRARY_SPEC.md) | ⚠️ 상태 표기 없음 |
+| 화면·CSS·차트·아이콘·꾸미기 등 **모든 UI 작업** | [`docs/UX_UI_VISUAL_STANDARD.md`](./docs/UX_UI_VISUAL_STANDARD.md) — 토큰·색·차트·생성 아이콘·꾸미기 합격 기준과 §8 검수 체크리스트 | ✅ 구속력 있음 |
 
 ### 🔴 `specs/active/` 폴더에 있다고 활성 계약이 아니다
 

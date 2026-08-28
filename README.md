@@ -24,6 +24,9 @@
 
 - **전체 제품 방향:** [`TRAINORACLE_MASTER_PLAN.md`](./TRAINORACLE_MASTER_PLAN.md)
 - **개발 시작 전 준비 상태:** [`TRAINORACLE_IMPLEMENTATION_READINESS.md`](./TRAINORACLE_IMPLEMENTATION_READINESS.md)
+- **UX·UI 시각 기준 (모든 UI 작업에 구속):** [`docs/UX_UI_VISUAL_STANDARD.md`](./docs/UX_UI_VISUAL_STANDARD.md)
+  — 꾸미기·그래프·생성형 아이콘이 "이쁘게" 나오기 위한 검증 가능한 기준.
+  UI를 만지기 전에 읽고, PR 검수 체크리스트(§8)로 자가 채점합니다.
 
 마스터 플랜은 훈련 일지, 누적 분석, 에너지 시스템, 상세 훈련계획, 9.5일·
 중주기·24주 주기화, 오라클, 다이어리·공유, 선수용 추가 기능과 UX 방향을
