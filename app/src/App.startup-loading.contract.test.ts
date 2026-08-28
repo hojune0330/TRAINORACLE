@@ -18,6 +18,7 @@ const deferredShellScreens = [
   "ImportActivities",
   "RestoreBackup",
   "More",
+  "TrainingContent",
 ]
 
 describe("mobile startup loading boundary", () => {

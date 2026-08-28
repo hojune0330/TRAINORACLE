@@ -106,6 +106,7 @@ TrainOracle의 핵심은 예쁜 훈련 일지 화면만이 아니라, **선수 �
 | `PERIODIZATION_LINEAGE_CONTRACT.md` | 새 계획 선택과 실제 다음 프레임 활성화 | 9.5일 계획이 18개 프레임·6개 표시 묶음·24주 방향 중 어디인지 보존하되 훈련량은 자동 증가시키지 않는 계보 |
 | `PLAN_EVENT_BREADTH_CONTRACT.md` | 사용자가 직접 고른 800m~마라톤 목표 종목 | 7개 초기 종목의 계획 생성 범위를 열되 승인 없는 개인 페이스 수치는 발명하지 않는 종목-그룹 경계 |
 | `PERSONAL_ORACLE_EXPLANATION_CONTRACT.md` | 출처가 확인된 거리·에너지 시스템·계획 진행 표시 | 점수나 자동 처방 없이 확인된 사실·근거·아직 모르는 것을 설명하는 개인 오라클 |
+| `TRENDING_TRAINING_CONTENT_CONTRACT.md` | 출처 상태가 표시된 훈련법·선수 사례·기사 | 자동 처방과 분리해 읽고 기기에 저장하는 훈련 콘텐츠 카탈로그 |
 | `PLAN_OUTPUT_RATIONALE_PRIVACY_SPEC.md` | Plan Generator 결과, source refs, privacy tier, redaction state | 훈련 계획 설명이 민감정보를 누출하지 않게 하는 rationale 계약 |
 | `MICROCYCLE_AND_CALENDAR_MAPPING_SPEC.md` | 9.5-day cycle, `CYCLE_DAY`, plannedDate/sessionSlot, Calendar | 사이클/달력 라벨을 규칙 ID와 섞지 않는 날짜 매핑 계약 |
 | `TRAINING_PLAN_FORMATION_AND_ADAPTATION_SPEC.md` | 소유자 결정 기록, 9.5일 local-civil frame, MAIN 노출 2-3회, 복합 부하 | 결정론적 후보, 계획/완료/체감 분리, 안전 중단, 불변 버전·코치 선택 계약 |

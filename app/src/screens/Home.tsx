@@ -27,6 +27,7 @@ import { TrainingHome } from "./home/TrainingHome"
 import { CumulativeDistancePanel } from "./trends/CumulativeDistancePanel"
 import { EnergySystemLedgerPanel } from "./trends/EnergySystemLedgerPanel"
 import { TrashBin } from "./home/TrashBin"
+import { TrainingContentTeaser } from "./home/TrainingContentTeaser"
 import type { JournalEntryType } from "./log-entry/shared"
 
 const VISIT_NOTICE = {
@@ -45,6 +46,7 @@ export type HomeProps = {
   readonly onOpenTrends?: () => void
   readonly onOpenMore?: () => void
   readonly onOpenAccount?: () => void
+  readonly onOpenContent?: () => void
 }
 
 export function Home({
@@ -56,6 +58,7 @@ export function Home({
   onOpenTrends,
   onOpenMore,
   onOpenAccount,
+  onOpenContent,
 }: HomeProps) {
   const [revision, setRevision] = React.useState(0)
   const entries = React.useMemo(() => loadEntries(), [revision])
@@ -185,6 +188,8 @@ export function Home({
           onOpenTrends={onOpenTrends}
         />
       )}
+
+      <TrainingContentTeaser onOpen={onOpenContent} />
 
       {(entries.length > 0 || planState !== null) && (
         <EnergySystemLedgerPanel

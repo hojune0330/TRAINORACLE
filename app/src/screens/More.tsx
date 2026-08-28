@@ -1,4 +1,4 @@
-import { ArrowLeft, BookOpen, CircleHelp, MessageSquareText, ScrollText, ShieldCheck } from "lucide-react"
+import { ArrowLeft, BookOpen, CircleHelp, MessageSquareText, Newspaper, ScrollText, ShieldCheck } from "lucide-react"
 import { DataSafetyNotice } from "../components/DataSafetyNotice"
 import { feedbackConfig } from "../domain/feedback/feedback-config"
 import { SafeJournalExport } from "./home/DeviceJournal"
@@ -10,6 +10,7 @@ export type MoreProps = {
   readonly onOpenAccount?: () => void
   readonly onOpenRestore?: () => void
   readonly feedbackAvailable?: boolean
+  readonly onOpenContent?: () => void
 }
 
 export function More({
@@ -19,6 +20,7 @@ export function More({
   onOpenAccount,
   onOpenRestore,
   feedbackAvailable = feedbackConfig() !== null,
+  onOpenContent,
 }: MoreProps) {
   return (
     <div className="more-screen">
@@ -35,6 +37,7 @@ export function More({
       <div className="more-screen__list">
         <UtilityRow icon={BookOpen} label="민지의 예시 일지" detail="기록이 쌓이는 모습을 한 장씩 구경해요" onClick={onOpenMinji} />
         <UtilityRow icon={CircleHelp} label="쉬운 도움말과 FAQ" detail="무료 이용·메모·계획을 쉬운 말로 확인해요" onClick={onOpenGuide} />
+        {onOpenContent !== undefined && <UtilityRow icon={Newspaper} label="요즘 주목받는 훈련법" detail="유행 이름보다 근거와 사용 범위를 먼저 봐요" onClick={onOpenContent} />}
         <a className="more-screen__row" href="?feedback=1">
           <MessageSquareText aria-hidden="true" size={19} />
           <span><strong>문의 게시판</strong><small>{feedbackAvailable ? "불편한 점을 일지 내용 없이 남겨요" : "지금은 준비 중이에요. 열리면 앱 안에서 알려드려요"}</small></span>
