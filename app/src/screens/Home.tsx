@@ -189,7 +189,9 @@ export function Home({
         />
       )}
 
-      <TrainingContentTeaser onOpen={onOpenContent} />
+      {(entries.length > 0 || planState !== null) && (
+        <TrainingContentTeaser onOpen={onOpenContent} />
+      )}
 
       {(entries.length > 0 || planState !== null) && (
         <EnergySystemLedgerPanel

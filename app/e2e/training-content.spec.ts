@@ -5,7 +5,7 @@ const SAVED_CONTENT_KEY = "trainoracle.training-content.saved.v1"
 test("opens, saves, and reloads a training article without changing other product state", async ({ page }) => {
   await page.goto("/?app=1")
 
-  await page.getByRole("button", { name: "더블 스레숄드 읽기" }).click()
+  await openTrainingContent(page)
   await expect(page.getByText("요즘 주목받는 훈련법", { exact: true })).toBeVisible()
   await page.getByRole("button", { name: /노르웨이식 더블 스레숄드/u }).click()
   await expect(page.getByRole("heading", { name: "노르웨이식 더블 스레숄드, 왜 자주 들릴까요?" })).toBeVisible()
@@ -26,7 +26,12 @@ test("opens, saves, and reloads a training article without changing other produc
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true)
 
   await page.reload()
-  await page.getByRole("button", { name: "더블 스레숄드 읽기" }).click()
+  await openTrainingContent(page)
   await page.getByRole("button", { name: /노르웨이식 더블 스레숄드/u }).click()
   await expect(page.getByRole("button", { name: "저장됨" })).toHaveAttribute("aria-pressed", "true")
 })
+
+async function openTrainingContent(page: import("@playwright/test").Page) {
+  await page.getByRole("button", { name: "더보기" }).click()
+  await page.getByRole("button", { name: /요즘 주목받는 훈련법/u }).click()
+}

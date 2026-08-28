@@ -2,9 +2,10 @@
 
 ## Scope
 
-TrainOracle now has a first read-only training-content path. Home shows one concrete
-featured article, and the reader exposes three source-labelled articles with a device
-bookmark. The existing five-tab navigation remains unchanged.
+TrainOracle now has a first read-only training-content path. More always exposes the
+reader, while Home shows one concrete featured article after a journal or plan exists.
+This keeps the first-visit screen compact. The reader exposes three source-labelled
+articles with a device bookmark. The existing five-tab navigation remains unchanged.
 
 ## Initial Articles
 
@@ -27,12 +28,14 @@ and what TrainOracle refuses to infer or prescribe.
 
 - focused content contract and component tests: 9 PASS
 - focused content browser flow across desktop, mobile, 320px and reduced motion: 4 PASS
+- content plus scroll-depth browser regression: 22 PASS, 18 conditional skips, 0 failures
+- mobile first-visit Home scroll height after the guard: 1,147px (limit 1,200px)
 - full app default timezone: 1,762 PASS
 - full app Asia/Seoul timezone: 1,762 PASS
 - hosted release environment gate: 11 PASS
 - app TypeScript: PASS
 - production build: PASS
-- browser CI: pending before merge
+- initial browser CI caught a 1,369px first-visit Home regression; the corrected rerun is pending before merge
 
 This report is local implementation evidence only. It is not research acceptance,
 template activation, canonical promotion, runtime production evidence, or issue closure.
