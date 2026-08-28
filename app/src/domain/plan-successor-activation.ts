@@ -49,6 +49,10 @@ import {
   localAccountScopeIsCurrent,
   localAccountScopeSnapshot,
 } from "./account/local-account-scope"
+import {
+  advancePeriodizationContext,
+  createInitialPeriodizationContext,
+} from "./periodization-lineage"
 
 export { PLAN_BETA_MUTATION_LOCK_NAME } from "./plan-mutation-lock"
 export const PLAN_SUCCESSOR_ACTIVATION_RECEIPT_STORAGE_KEY = "trainoracle.plan-beta.adaptation-activation.v1"
@@ -227,7 +231,12 @@ async function activateInsideLock(
   })
   if (verification.kind !== "verified") return verification
 
-  const nextState = buildActivatedSuccessorState(pending.pending.successorState, input.activatedAt, input.localDate)
+  const nextState = buildActivatedSuccessorState(
+    pending.pending.successorState,
+    active,
+    input.activatedAt,
+    input.localDate,
+  )
   if (nextState === null) return { kind: "rejected", code: "PENDING_ENVELOPE_MISMATCH" }
   const nextStateHash = await canonicalJsonSha256("trainoracle.plan-beta-state.v1", nextState)
   const history = parseHistory(snapshots.history)
@@ -239,6 +248,7 @@ async function activateInsideLock(
     candidateKind: active.activePlan.candidateKind,
     eventDistanceM: active.activePlan.eventDistanceM,
     selectedDetailedTemplateRef: active.activePlan.selectedDetailedTemplateRef,
+    ...(active.periodization === undefined ? {} : { periodization: active.periodization }),
     frameLengthDays: active.activePlan.frame.lengthDays,
     progress: visibleProgress(active),
     archivedAt: input.activatedAt,
@@ -262,7 +272,7 @@ async function activateInsideLock(
   if (!receipt.success) return { kind: "rejected", code: "MALFORMED_INPUT" }
 
   const staged = {
-    history: JSON.stringify([nextHistory, ...history].slice(0, 5)),
+    history: JSON.stringify([nextHistory, ...history].slice(0, 18)),
     previousIntake: JSON.stringify(active.intake),
     context: JSON.stringify(nextContext.data),
     active: JSON.stringify(nextState),
@@ -501,14 +511,24 @@ function recordSnapshotMatches(
 
 function buildActivatedSuccessorState(
   preview: PlanBetaStateV3,
+  predecessor: PlanBetaStateV3,
   activatedAt: string,
   localDate: string,
 ): PlanBetaStateV3 | null {
+  const predecessorPeriodization = predecessor.periodization
+    ?? createInitialPeriodizationContext(
+      predecessor.activePlan.candidateId,
+      predecessor.generatedAt,
+    )
+  if (predecessorPeriodization === null) return null
+  const periodization = advancePeriodizationContext(predecessorPeriodization, activatedAt)
+  if (periodization === null) return null
   const parsed = planBetaStateV3Schema.safeParse({
     ...preview,
     generatedAt: activatedAt,
     intake: { ...preview.intake, startDate: localDate },
     progress: [],
+    periodization,
   })
   return parsed.success ? parsed.data : null
 }

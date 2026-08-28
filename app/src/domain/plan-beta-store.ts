@@ -287,6 +287,7 @@ export function archiveAndClearActivePlan(state: PlanBetaState): PlanArchiveResu
     candidateKind: state.activePlan.candidateKind,
     eventDistanceM: state.activePlan.eventDistanceM,
     selectedDetailedTemplateRef: state.activePlan.selectedDetailedTemplateRef,
+    ...(state.periodization === undefined ? {} : { periodization: state.periodization }),
     frameLengthDays: state.activePlan.frame.lengthDays,
     progress: state.progress,
     archivedAt: new Date().toISOString(),
@@ -305,7 +306,7 @@ export function archiveAndClearActivePlan(state: PlanBetaState): PlanArchiveResu
     oldActive = window.localStorage.getItem(activeKey)
     snapshotsCaptured = true
     const previous = loadPlanHistory()
-    const stagedHistory = JSON.stringify([history, ...previous].slice(0, 5))
+    const stagedHistory = JSON.stringify([history, ...previous].slice(0, 18))
     const stagedIntake = JSON.stringify(state.intake)
     window.localStorage.setItem(historyKey, stagedHistory)
     if (window.localStorage.getItem(historyKey) !== stagedHistory) {

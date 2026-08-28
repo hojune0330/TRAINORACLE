@@ -103,6 +103,7 @@ TrainOracle의 핵심은 예쁜 훈련 일지 화면만이 아니라, **선수 �
 | `CUMULATIVE_DISTANCE_ANALYSIS_CONTRACT.md` | 출처가 확인된 구조화 거리, 로컬 날짜, 현재 계획의 표시 날짜 범위 | 홈·분석에서 동일하게 쓰는 주간·월간·연간·계획 기간 누적 거리와 날짜별 분포 |
 | `ENERGY_SYSTEM_ACCUMULATION_CONTRACT.md` | 일지에서 직접 고른 시스템, 현재 계획의 예정 세션, 별도 완료 표시 | BASE·LT·VO2·GLY·ATP-PC·RECOVERY·MIX를 계획·완료 표시·실제 일지로 나눈 누적 원장 |
 | `PLAN_JOURNAL_LINKAGE_CONTRACT.md` | 선수가 계획의 특정 날짜·오전/오후 훈련에서 직접 연 일지 | 계획 세션과 실제 수행 일지를 불변 식별자로 연결하되 완료 표시·실제 분류는 따로 보존 |
+| `PERIODIZATION_LINEAGE_CONTRACT.md` | 새 계획 선택과 실제 다음 프레임 활성화 | 9.5일 계획이 18개 프레임·6개 표시 묶음·24주 방향 중 어디인지 보존하되 훈련량은 자동 증가시키지 않는 계보 |
 | `PLAN_OUTPUT_RATIONALE_PRIVACY_SPEC.md` | Plan Generator 결과, source refs, privacy tier, redaction state | 훈련 계획 설명이 민감정보를 누출하지 않게 하는 rationale 계약 |
 | `MICROCYCLE_AND_CALENDAR_MAPPING_SPEC.md` | 9.5-day cycle, `CYCLE_DAY`, plannedDate/sessionSlot, Calendar | 사이클/달력 라벨을 규칙 ID와 섞지 않는 날짜 매핑 계약 |
 | `TRAINING_PLAN_FORMATION_AND_ADAPTATION_SPEC.md` | 소유자 결정 기록, 9.5일 local-civil frame, MAIN 노출 2-3회, 복합 부하 | 결정론적 후보, 계획/완료/체감 분리, 안전 중단, 불변 버전·코치 선택 계약 |

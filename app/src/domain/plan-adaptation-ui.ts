@@ -245,6 +245,7 @@ function successorStateFor(
     generatedAt,
     ...(state.athleteEvidence === undefined ? {} : { athleteEvidence: state.athleteEvidence }),
     ...(state.adaptationScope === undefined ? {} : { adaptationScope: state.adaptationScope }),
+    ...(state.periodization === undefined ? {} : { periodization: state.periodization }),
   }
 }
 
