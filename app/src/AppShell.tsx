@@ -21,6 +21,7 @@ import {
   shouldResetTabView,
   viewForJournalDraft,
   viewForJournalReturn,
+  viewForPlannedSessionDraft,
   viewForTab,
 } from "./domain/app-shell-state"
 
@@ -252,6 +253,7 @@ export function AppShell() {
         <DeferredMobileScreens.PlanBeta
           onManageRecords={() => setAthleteRecordsOpen(true)}
           onWriteLog={(entryType) => setV(viewForTab("log", entryType))}
+          onWritePlannedSessionLog={(draft) => setV((state) => viewForPlannedSessionDraft(state, draft))}
         />
       </>
     )
@@ -268,6 +270,7 @@ export function AppShell() {
         entryType={v.entryType}
         targetDate={v.journalDraft?.date}
         initialEntry={v.journalDraft?.initialEntry}
+        plannedSessionLink={v.journalDraft?.plannedSessionLink}
         onBack={v.entryType === "choose"
           ? v.journalDraft === undefined
             ? goHome

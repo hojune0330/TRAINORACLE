@@ -4,6 +4,7 @@ import { PostSessionForm } from "./log-entry/PostSessionForm"
 import { RaceForm } from "./log-entry/RaceForm"
 import type { JournalEntryType } from "./log-entry/shared"
 import type { JournalEntry } from "../domain/journal-store"
+import type { PlannedSessionLink } from "../domain/planned-session-link"
 
 export type EntryType = "choose" | JournalEntryType
 
@@ -13,11 +14,12 @@ export interface LogEntryProps {
   readonly onDone?: (entryType: JournalEntryType, savedEntry?: JournalEntry, reviewMessage?: string) => void
   readonly targetDate?: string
   readonly initialEntry?: JournalEntry
+  readonly plannedSessionLink?: PlannedSessionLink
   /** 기기 데이터 가져오기 화면 진입 — 선택 화면에서만 노출 */
   readonly onOpenImport?: () => void
 }
 
-export function LogEntry({ entryType = "choose", onBack, onDone, onOpenImport, targetDate, initialEntry }: LogEntryProps) {
+export function LogEntry({ entryType = "choose", onBack, onDone, onOpenImport, targetDate, initialEntry, plannedSessionLink }: LogEntryProps) {
   if (entryType === "choose") {
     return <EntryChooser onBack={onBack} onPick={(picked) => onDone?.(picked)} onOpenImport={onOpenImport} targetDate={targetDate} />
   }
@@ -34,7 +36,7 @@ export function LogEntry({ entryType = "choose", onBack, onDone, onOpenImport, t
     onDone?.(picked, savedEntry, reviewMessage)
   }
   const draftKey = `${entryType}:${initialEntry?.id ?? targetDate ?? "new"}`
-  if (entryType === "post-session") return <PostSessionForm key={draftKey} onBack={onBack} onDone={handleSaved} targetDate={targetDate} initialEntry={initialEntry} />
+  if (entryType === "post-session") return <PostSessionForm key={draftKey} onBack={onBack} onDone={handleSaved} targetDate={targetDate} initialEntry={initialEntry} plannedSessionLink={plannedSessionLink} />
   if (entryType === "evening") return <EveningCheckin key={draftKey} onBack={onBack} onDone={handleSaved} targetDate={targetDate} initialEntry={initialEntry} />
   if (entryType === "race") return <RaceForm key={draftKey} onBack={onBack} onDone={handleSaved} targetDate={targetDate} initialEntry={initialEntry} />
   return null

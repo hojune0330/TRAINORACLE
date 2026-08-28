@@ -2,6 +2,7 @@ import React, { type ReactNode } from "react"
 import { TermHelp } from "../../components/TermHelp"
 import type { TermId } from "../../domain/glossary"
 import type { JournalEntry } from "../../domain/journal-store"
+import type { PlannedSessionLink } from "../../domain/planned-session-link"
 
 export type JournalEntryType = "post-session" | "evening" | "race"
 
@@ -10,6 +11,7 @@ export interface EntryFormProps {
   readonly onDone?: (entryType: JournalEntryType, savedEntry: JournalEntry, reviewMessage?: string) => void
   readonly targetDate?: string
   readonly initialEntry?: JournalEntry
+  readonly plannedSessionLink?: PlannedSessionLink
 }
 
 const SECTION_LABEL_STYLE = {

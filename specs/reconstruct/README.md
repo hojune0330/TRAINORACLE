@@ -13,6 +13,7 @@ Current productization drafts:
 - `DAILY_BRIEF_AND_INBOX_SIGNAL_SPEC.md` (`DRAFT_FOR_REVIEW`; new productization draft, not original restored, not canonical, not runtime evidence)
 - `ANALYSIS_AND_VISUALIZATION_DATA_CONTRACT.md` (`DRAFT_FOR_REVIEW`; new productization draft, not original restored, not canonical, not runtime evidence)
 - `CUMULATIVE_DISTANCE_ANALYSIS_CONTRACT.md` (`DRAFT_FOR_REVIEW`; cumulative-distance v1 implementation binding, exact 9.5-day attribution and whole-entry privacy remain open, not canonical, not runtime evidence)
+- `PLAN_JOURNAL_LINKAGE_CONTRACT.md` (`DRAFT_FOR_REVIEW`; explicit immutable planned-session to post-session journal binding, exact occurrence and historical ledger remain open, not canonical, not runtime evidence)
 - `PLAN_OUTPUT_RATIONALE_PRIVACY_SPEC.md` (`DRAFT_FOR_REVIEW`; new productization draft, not original restored, not canonical, not runtime evidence)
 - `MICROCYCLE_AND_CALENDAR_MAPPING_SPEC.md` (`DRAFT_FOR_REVIEW`; new productization draft, not original restored, not canonical, not runtime evidence)
 - `TRAINING_PLAN_FORMATION_AND_ADAPTATION_SPEC.md` (`DRAFT_FOR_REVIEW`; decision-provenanced first-pilot formation/adaptation policy with ten canonical blockers and an athlete-visible non-executing shadow-pilot boundary, audited in root `TRAINING_PLAN_BLUEPRINT_MULTIPERSPECTIVE_REVIEW.md`, not canonical, not runtime evidence)
@@ -116,6 +117,13 @@ Use this order before creating any reconstructed file:
 - It keeps mixed sessions visible as `MIXED_UNALLOCATED` and extends duplicate signatures to duration, distance, and RPE.
 - It does not authorize physiological measurement claims, automatic adaptation, exact 9.5-day attribution, or historical plan linkage.
 - It creates no distance-goal, reward, training-plan mutation, safety, or medical authority.
+
+`PLAN_JOURNAL_LINKAGE_CONTRACT.md`:
+
+- It creates an immutable opaque link only after the athlete selects one exact non-rest session and chooses to write its journal.
+- It keeps the plan, progress mark, and performed journal result as separate facts.
+- It does not infer execution from date, title, RPE, memo text, or planned energy intent.
+- It leaves exact 9.5-day occurrence attribution, historical plan ledger, and cross-device conflict resolution open.
 
 `PLAN_OUTPUT_RATIONALE_PRIVACY_SPEC.md`:
 

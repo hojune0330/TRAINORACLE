@@ -6,6 +6,7 @@ import { parseJournalEntryForWrite } from "./journal-schema"
 import type { JournalEntry } from "./journal-schema"
 import { loadJournalEntriesSnapshot } from "./journal-store"
 import { isJournalVisible } from "./account/local-journal-ownership"
+import { samePlannedSessionLink } from "./planned-session-link"
 
 export type UpdateEntryResult = {
   readonly ok: boolean
@@ -13,10 +14,14 @@ export type UpdateEntryResult = {
 }
 
 function keepsImmutableIdentity(previous: JournalEntry, next: JournalEntry): boolean {
+  const keepsPlanLink = previous.kind !== "post-session" || next.kind !== "post-session"
+    ? true
+    : samePlannedSessionLink(previous.plannedSessionLink, next.plannedSessionLink)
   return previous.id === next.id
     && previous.kind === next.kind
     && previous.date === next.date
     && previous.syncState === next.syncState
+    && keepsPlanLink
 }
 
 function hasNewerSavedAt(previous: JournalEntry, next: JournalEntry): boolean {

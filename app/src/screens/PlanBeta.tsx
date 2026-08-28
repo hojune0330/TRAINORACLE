@@ -48,13 +48,16 @@ import {
   loadLatestPlanFromServer,
   planCloudBackupEnabled,
 } from "../domain/account/plan-cloud-backup"
+import type { PlannedSessionLogDraft } from "../domain/planned-session-link"
 
 export function PlanBeta({
   onWriteLog,
   onManageRecords,
+  onWritePlannedSessionLog,
 }: {
   readonly onWriteLog?: (entryType?: JournalEntryType) => void
   readonly onManageRecords?: () => void
+  readonly onWritePlannedSessionLog?: (draft: PlannedSessionLogDraft) => void
 }) {
   const [stored, setStored] = React.useState<PlanBetaState | null>(
     () => loadPlanBetaState(),
@@ -265,6 +268,7 @@ export function PlanBeta({
               : "safety",
           )
         }}
+        onWritePlannedSessionLog={onWritePlannedSessionLog}
       />
     )
   }

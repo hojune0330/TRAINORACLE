@@ -19,6 +19,11 @@ import {
   recheckStoredDetailedPrescriptionAuthority,
   type StoredPaceTargetPrescription,
 } from "../../domain/plan-session-schema"
+import {
+  createPlannedSessionLogDraft,
+  type PlannedSessionLogDraft,
+} from "../../domain/planned-session-link"
+import type { PlanSession } from "@impl/plan-generator/types"
 
 type PersistenceRetry =
   | { readonly kind: "progress"; readonly progress: StoredPlanProgress }
@@ -30,11 +35,13 @@ export function PlanActiveState({
   celebrateOnMount = false,
   onStateChange,
   onArchived,
+  onWritePlannedSessionLog,
 }: {
   readonly state: PlanBetaState
   readonly celebrateOnMount?: boolean
   readonly onStateChange: (state: PlanBetaState) => void
   readonly onArchived: (intake: StoredPlanBetaIntake) => void
+  readonly onWritePlannedSessionLog?: (draft: PlannedSessionLogDraft) => void
 }) {
   const [error, setError] = React.useState<string | null>(null)
   const [retry, setRetry] = React.useState<PersistenceRetry | null>(null)
@@ -148,6 +155,16 @@ export function PlanActiveState({
     }
   }
 
+  const writePlannedSessionLog = (session: PlanSession) => {
+    const draft = createPlannedSessionLogDraft(state, session, new Date().toISOString())
+    if (draft === null) {
+      setError("이 훈련의 계획 연결 정보를 확인할 수 없어 일지 화면을 열지 않았어요.")
+      return
+    }
+    setError(null)
+    onWritePlannedSessionLog?.(draft)
+  }
+
   const checkDetailedExecution = (
     prescription: StoredPaceTargetPrescription,
     operation: "START" | "RESTART",
@@ -179,6 +196,7 @@ export function PlanActiveState({
         onNextFrame={() => void startNextFrame()}
         onActivateNextFrame={(nextCurrentCheck) => void activateNextFrame(nextCurrentCheck)}
         onCheckDetailedExecution={checkDetailedExecution}
+        onWriteSessionLog={onWritePlannedSessionLog === undefined ? undefined : writePlannedSessionLog}
       />
       {executionMessage !== null && (
         <div className="plan-execution-status" role="status">{executionMessage}</div>

@@ -9,6 +9,8 @@ import { sessionIntensityAssessmentSchema } from "./intensity-assessment"
 import type { SessionIntensityAssessment } from "./intensity-assessment"
 import { parsePaceText } from "./numeric-input"
 import { isValidIsoDate } from "./dates"
+import { plannedSessionLinkSchema } from "./planned-session-link"
+import type { PlannedSessionLink } from "./planned-session-link"
 
 export const MEMO_PURPOSE = {
   privateSelfOnly: "PRIVATE_SELF_ONLY",
@@ -48,6 +50,7 @@ export type PostSessionEntry = JournalEntryBase & PurposeScopedMemo & {
   readonly rpe: number
   readonly memo: string
   readonly intensityAssessment?: SessionIntensityAssessment
+  readonly plannedSessionLink?: PlannedSessionLink
 }
 
 export type EveningEntry = JournalEntryBase & PurposeScopedMemo & {
@@ -135,6 +138,7 @@ const postSessionSchema: z.ZodType<PostSessionEntry> = z.object({
   rpe: z.number().int().min(0).max(10),
   memo: z.string(),
   intensityAssessment: sessionIntensityAssessmentSchema.optional(),
+  plannedSessionLink: plannedSessionLinkSchema.optional(),
 })
 
 const eveningSchema: z.ZodType<EveningEntry> = z.object({
