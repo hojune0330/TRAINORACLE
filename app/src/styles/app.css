@@ -27,6 +27,36 @@ button, input, textarea, select { font: inherit; letter-spacing: inherit; }
 .energy-dot--recovery,
 .energy-dot--mixed-unallocated { background: var(--e-rest); }
 
+.journal-energy-picker {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  column-gap: var(--space-2);
+  row-gap: var(--space-1);
+}
+
+.journal-energy-picker__option {
+  min-width: 0;
+  min-height: var(--app-touch-min);
+  padding: var(--space-2);
+  border: 1px solid var(--line);
+  border-radius: 0;
+  background: var(--surface);
+  color: var(--ink);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-1);
+  cursor: pointer;
+  font-family: var(--mono);
+  font-size: var(--fs-mono-sm);
+  font-weight: 600;
+  letter-spacing: 0;
+}
+
+.journal-energy-picker__option[aria-pressed="true"] {
+  border: 2px solid var(--ink);
+}
+
 .energy-ledger {
   padding: var(--space-6) var(--space-5) 0;
   color: var(--ink);

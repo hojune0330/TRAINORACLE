@@ -82,23 +82,22 @@ export function PostSessionForm({ onBack, onDone, targetDate, initialEntry }: En
       </div>
 
       <FormSec lb="강도 시스템" help="energy-system">
-        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+        <div className="journal-energy-picker">
           {JOURNAL_ENERGY_SYSTEM_OPTIONS.map((energySystem) => (
-            <button key={energySystem.key} aria-label={`${energySystem.code} ${energySystem.shortLabel}`} aria-pressed={system === energySystem.journalValue} onClick={() => setSystem(energySystem.journalValue)} style={{
-              minHeight: 44, padding: "8px 12px", background: "var(--surface)",
-              border: system === energySystem.journalValue ? "1.5px solid var(--ink)" : "1px solid var(--line)",
-              cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 6,
-              borderRadius: 0,
-            }}>
+            <button
+              key={energySystem.key}
+              type="button"
+              className="journal-energy-picker__option"
+              aria-label={`${energySystem.code} ${energySystem.shortLabel}`}
+              aria-pressed={system === energySystem.journalValue}
+              title={energySystem.shortLabel}
+              onClick={() => setSystem(energySystem.journalValue)}
+            >
               <span className={`energy-dot energy-dot--${energySystem.key.toLowerCase().replace("_", "-")}`} aria-hidden="true" />
-              <span style={{ fontFamily: "var(--mono)", fontSize: 11, fontWeight: 600, color: "var(--ink)" }}>{energySystem.code}</span>
-              <span style={{ fontFamily: "var(--sans)", fontSize: 12, color: "var(--ink-3)" }}>{energySystem.shortLabel}</span>
+              <span>{energySystem.code}</span>
             </button>
           ))}
         </div>
-        <p style={{ margin: "8px 0 0", fontSize: 12, color: "var(--ink-3)", lineHeight: 1.5 }}>
-          오늘 훈련의 주된 목적을 직접 고르세요. 잘 모르겠으면 선택하지 않아도 돼요.
-        </p>
       </FormSec>
 
       <FormSec lb="세션 제목">
