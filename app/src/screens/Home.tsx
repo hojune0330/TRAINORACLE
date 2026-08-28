@@ -25,6 +25,7 @@ import { DecorationShop } from "./home/DecorationShop"
 import { EngagementStrip } from "./home/EngagementStrip"
 import { TrainingHome } from "./home/TrainingHome"
 import { CumulativeDistancePanel } from "./trends/CumulativeDistancePanel"
+import { EnergySystemLedgerPanel } from "./trends/EnergySystemLedgerPanel"
 import { TrashBin } from "./home/TrashBin"
 import type { JournalEntryType } from "./log-entry/shared"
 
@@ -180,6 +181,16 @@ export function Home({
           observations={observations}
           today={today}
           planWindow={planWindow}
+          mode="compact"
+          onOpenTrends={onOpenTrends}
+        />
+      )}
+
+      {(entries.length > 0 || planState !== null) && (
+        <EnergySystemLedgerPanel
+          observations={observations}
+          today={today}
+          planState={planState}
           mode="compact"
           onOpenTrends={onOpenTrends}
         />

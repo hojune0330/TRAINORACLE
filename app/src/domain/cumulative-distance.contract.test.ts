@@ -150,6 +150,22 @@ describe("cumulative distance v1", () => {
     expect(summary.reasonCodes).not.toContain("IDENTICAL_DUPLICATE_SOURCE")
   })
 
+  it("scopes same-id conflict evaluation to the requested reporting window", () => {
+    const summary = cumulativeDistance([
+      distanceObservation({ sourceId: "cross-window", loggedOn: "2026-07-01", distanceKm: 5 }),
+      distanceObservation({ sourceId: "cross-window", loggedOn: "2026-08-20", distanceKm: 8 }),
+    ], {
+      kind: "MONTH_TO_DATE",
+      startDate: "2026-08-01",
+      endDate: "2026-08-28",
+      precision: "LOCAL_DATE",
+    })
+
+    expect(summary.totalKm).toBe(8)
+    expect(summary.includedSourceCount).toBe(1)
+    expect(summary.reasonCodes).not.toContain("CONFLICTING_SOURCE_ID")
+  })
+
   it("builds week, month, and day buckets without converting missing to zero", () => {
     const observations = [
       distanceObservation({ sourceId: "a", loggedOn: "2026-07-31", distanceKm: 6 }),

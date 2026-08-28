@@ -73,9 +73,9 @@ describe("trend chart alternatives", () => {
     for (const toggle of tableToggles) await user.click(toggle)
 
     // Then
-    expect(tableToggles).toHaveLength(3)
-    expect(screen.getAllByRole("table")).toHaveLength(3)
-    expect(screen.getAllByRole("img")).toHaveLength(3)
+    expect(tableToggles).toHaveLength(4)
+    expect(screen.getAllByRole("table")).toHaveLength(4)
+    expect(screen.getAllByRole("img")).toHaveLength(4)
     expect(screen.getByRole("list", { name: /월 날짜별 거리/u })).toBeVisible()
     expect(screen.getAllByRole("listitem").some((item) => (
       item.getAttribute("aria-label")?.includes("킬로미터") ?? false

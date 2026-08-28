@@ -6,7 +6,6 @@ import { todayISO } from "../../domain/journal-store"
 import type { StructuredJournalObservation } from "../../domain/journal-observation"
 import { Trends } from "../Trends"
 import { MonthlyTrendSection } from "./MonthlyTrendSection"
-import { WeeklyDistanceSection } from "./WeeklyDistanceSection"
 
 const STORAGE_KEY = "trainoracle.journal.v1"
 
@@ -172,16 +171,4 @@ describe("non-color source states", () => {
     expect(screen.getByText(/출처 충돌 · 확인 필요/u)).toBeVisible()
   })
 
-  it("does not call a stale weekly source confirmed", async () => {
-    const user = userEvent.setup()
-    render(<WeeklyDistanceSection
-      observations={[statusObservation("stale-week", "STALE")]}
-      today="2026-07-10"
-    />)
-
-    expect(screen.getByText(/집계 사용 1건/u)).toBeVisible()
-    expect(screen.queryByText(/출처 확인 1건/u)).not.toBeInTheDocument()
-    await user.click(screen.getByText("출처 기록 보기"))
-    expect(screen.getByText(/stale-week · 확인 필요/u)).toBeVisible()
-  })
 })

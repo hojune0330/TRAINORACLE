@@ -106,6 +106,8 @@ The dedupe key is `sourceKind + sourceId`.
 - Repeated observations with the same key but conflicting values: exclude the entire key, emit `CONFLICTING_SOURCE_ID`, and do not select a winner by array order or timestamp.
 - A missing `sourceId` is invalid and excluded.
 
+Duplicate and conflict evaluation is scoped to the requested window after date filtering. An observation with the same source key outside that window does not alter the total, coverage, or conflict state inside the window. This is a reporting-window rule only; it does not declare two cross-window records globally consistent.
+
 This rule prevents sync, restore, or repeated projection from silently doubling mileage.
 
 ---

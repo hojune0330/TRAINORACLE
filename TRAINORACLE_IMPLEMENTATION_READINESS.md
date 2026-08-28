@@ -4,21 +4,21 @@
 document_metadata:
   doc_id: trainoracle-implementation-readiness
   title: TrainOracle Implementation Readiness
-  version: "1.0"
+  version: "1.1"
   recorded_at: 2026-08-28
   owner: COACH_HOJUNE
-  status: PREPARED_NOT_STARTED
+  status: DEVELOPMENT_IN_PROGRESS
   source_plan: TRAINORACLE_MASTER_PLAN.md
-  development_started: false
-  work_order_issued: false
+  development_started: true
+  work_order_issued: OWNER_DIRECT_INSTRUCTION
   agent_dispatched: false
-  runtime_modified: false
+  runtime_modified: true
   deployment_requested: false
   final_marker_required: "[DRAFT_COMPLETE]"
 ```
 
-> 이 문서는 개발을 시작하기 위한 준비 상태와 순서를 기록한다. 작업 지시서가
-> 아니며, 코드·SPEC·디자인·런타임 변경을 허가하지 않는다.
+> 이 문서는 개발 준비에서 실제 구현으로 넘어간 상태와 순서를 기록한다. 개별
+> 기능의 구현 권한, 정본 승격, 배포 승인 또는 과학적 타당성을 대신하지 않는다.
 
 ---
 
@@ -27,13 +27,13 @@ document_metadata:
 ```yaml
 readiness_state:
   master_plan_recorded: true
-  implementation: NOT_STARTED
-  first_task: NOT_STARTED
-  active_development_branch: NONE_FROM_THIS_PLAN
-  active_work_order: NONE_FROM_THIS_PLAN
-  assigned_agent: NONE
-  code_change: NONE
-  spec_patch: NONE
+  implementation: IN_PROGRESS
+  first_task: TARGETED_SPEC_ALIGNMENT_STARTED
+  active_development_branch: codex/energy-system-ledger-v1
+  active_work_order: OWNER_DIRECT_DEVELOPMENT_INSTRUCTION
+  assigned_agent: CODEX
+  code_change: CUMULATIVE_DISTANCE_MERGED_ENERGY_LEDGER_IN_PROGRESS
+  spec_patch: CUMULATIVE_DISTANCE_DRAFT_MERGED_ENERGY_ACCUMULATION_DRAFT_IN_PROGRESS
   design_change: NONE
   deployment: NONE
 ```
@@ -62,8 +62,10 @@ readiness_state:
 
 ## 3. 첫 개발 작업
 
-첫 개발 작업의 이름은 **스펙 정합성·충돌 감사**다. 현재 상태는
-`NOT_STARTED`이며 이 문서로는 실행하지 않는다.
+첫 개발 작업의 이름은 **스펙 정합성·충돌 감사**다. 오너의 별도 개발 지시로
+대상 기능 단위 감사를 시작했다. 전체 21개 장 감사 완료는 주장하지 않는다.
+누적 거리 대상 감사와 구현은 PR #261로 병합됐고, 에너지 시스템 누적 원장은
+그 검수 후속 지적을 반영해 별도 브랜치에서 진행 중이다.
 
 감사 범위는 다음과 같다.
 
@@ -87,9 +89,9 @@ readiness_state:
 | 단계 | 목적 | 선행 조건 | 현재 상태 |
 |---|---|---|---|
 | 0 | 마스터 플랜과 준비 문서 보존 | 문서 PR 병합 | DOCUMENTATION_ONLY |
-| 1 | 스펙 정합성·충돌 감사 | 별도 오너 시작 지시 | NOT_STARTED |
-| 2 | 용어·누적 거리·에너지 시스템·선수용·오라클 오너 결정 | 단계 1 보고서 검수 | NOT_STARTED |
-| 3 | 주간·월간·연간 거리와 에너지 시스템 누적 분석 | 승인 SPEC과 테스트 기준선 | NOT_STARTED |
+| 1 | 스펙 정합성·충돌 감사 | 별도 오너 시작 지시 | TARGETED_AUDIT_IN_PROGRESS |
+| 2 | 용어·누적 거리·에너지 시스템·선수용·오라클 오너 결정 | 단계 1 보고서 검수 | DISTANCE_ACCEPTED_ENERGY_IN_PROGRESS |
+| 3 | 주간·월간·연간 거리와 에너지 시스템 누적 분석 | 승인 SPEC과 테스트 기준선 | IN_PROGRESS |
 | 4 | 800m~마라톤 상세 후보와 9.5일·중주기·24주 계보 | 활성 템플릿·주기 계약 | NOT_STARTED |
 | 5 | 일지 수행 연결과 적응 근거 원장 | `plannedSessionId`·개인정보 계약 | NOT_STARTED |
 | 6 | 개인 오라클과 훈련법 궁합 | 결정적 규칙·근거·안전 독립 계약 | NOT_STARTED |
@@ -141,7 +143,7 @@ required_gates:
 
 ---
 
-## 7. 이번 문서 작업의 종료 조건
+## 7. 이전 준비 단계의 종료 조건
 
 다음 항목이 충족되면 준비 단계는 완료되지만 개발은 시작되지 않은 상태다.
 
@@ -152,6 +154,8 @@ required_gates:
 - 문서 전용 PR이 `main`에 병합되고 로컬 작업트리가 깨끗하다.
 - 별도 개발 브랜치·작업 지시·에이전트 발주는 존재하지 않는다.
 
-이 상태에서 멈추고 오너의 다음 개발 시작 지시를 기다린다.
+이 조건은 2026-08-28 개발 시작 지시 전의 준비 단계 종료 기준이다. 현재는
+개발이 시작됐으므로 역사 기록으로만 유지한다. 다음 작업자는 최신 `main`, 열린
+PR, 이 문서의 §1 상태를 다시 확인한 뒤 중복 구현을 피해야 한다.
 
 [DRAFT_COMPLETE]

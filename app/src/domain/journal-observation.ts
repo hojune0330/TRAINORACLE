@@ -6,6 +6,8 @@ import {
 import type { FieldProvenanceMap } from "./field-provenance"
 import type { JournalEntry } from "./journal-schema"
 import { parseDistanceKm, parseDurationMin, parsePaceText } from "./numeric-input"
+import { journalSystemToEnergySystem } from "./energy-system-taxonomy"
+import type { EnergySystemKey } from "./energy-system-taxonomy"
 
 export const PACE_DERIVATION_RULE_ID = "JOURNAL_DISTANCE_DURATION_TO_SECONDS_PER_KM_V1"
 export const PAIN_MAX_DERIVATION_RULE_ID = "JOURNAL_EXPLICIT_PAIN_PARTS_TO_MAX_V1"
@@ -20,6 +22,7 @@ export type StructuredJournalInput =
       readonly sourceId: string
       readonly loggedOn: string
       readonly observedAt: string
+      readonly system?: string
       readonly distanceKm: string
       readonly durationMin: string
       readonly avgPace: string
@@ -46,6 +49,7 @@ export type StructuredJournalObservation = {
     readonly containsPrivateRawText: false
   }
   readonly loggedOn: string
+  readonly energySystem?: EnergySystemKey | null
   readonly distanceKm: number | null
   readonly durationMin: number | null
   readonly secondsPerKm: number | null
@@ -54,6 +58,7 @@ export type StructuredJournalObservation = {
   readonly painMax: number | null
   readonly painSourceLevels: readonly number[]
   readonly fieldProvenance: {
+    readonly system?: ObservationProvenance
     readonly distanceKm: ObservationProvenance
     readonly durationMin: ObservationProvenance
     readonly secondsPerKm: ObservationProvenance
@@ -121,6 +126,7 @@ export function selectStructuredJournalInput(entry: JournalEntry): StructuredJou
       sourceId: entry.id,
       loggedOn: entry.date,
       observedAt: entry.savedAt,
+      system: entry.system,
       distanceKm: entry.distanceKm,
       durationMin: entry.durationMin,
       avgPace: entry.avgPace,
@@ -205,6 +211,7 @@ export function projectStructuredJournalObservation(
     return {
       sourceRef,
       loggedOn: input.loggedOn,
+      energySystem: null,
       distanceKm: null,
       durationMin: null,
       secondsPerKm: null,
@@ -213,6 +220,7 @@ export function projectStructuredJournalObservation(
       painMax,
       painSourceLevels,
       fieldProvenance: {
+        system: "MISSING",
         distanceKm: "MISSING",
         durationMin: "MISSING",
         secondsPerKm: "MISSING",
@@ -246,6 +254,7 @@ export function projectStructuredJournalObservation(
   return {
     sourceRef,
     loggedOn: input.loggedOn,
+    energySystem: journalSystemToEnergySystem(input.system ?? ""),
     distanceKm,
     durationMin,
     secondsPerKm: recordedPace ?? derivedPace,
@@ -254,6 +263,7 @@ export function projectStructuredJournalObservation(
     painMax: null,
     painSourceLevels: [],
     fieldProvenance: {
+      system: provenanceOf("system", input.fieldProvenance),
       distanceKm: provenanceOf("distanceKm", input.fieldProvenance),
       durationMin: provenanceOf("durationMin", input.fieldProvenance),
       secondsPerKm: hasDerivedPace

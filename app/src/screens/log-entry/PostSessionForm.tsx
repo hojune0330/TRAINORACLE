@@ -18,15 +18,7 @@ import { inputStyle } from "./input-style"
 import { FormSec, TopBar, useSectionTouchOrder } from "./shared"
 import { StickyBar } from "./StickyBar"
 import type { EntryFormProps } from "./shared"
-
-const ENERGY_SYSTEMS = [
-  { id: "base", c: "BA", n: "BASE", color: "#4A8FC7" },
-  { id: "lt", c: "LT", n: "LT", color: "#B8A024" },
-  { id: "vo2", c: "V2", n: "VO2", color: "#C7761C" },
-  { id: "gly", c: "GL", n: "GLY", color: "#B8332E" },
-  { id: "atp", c: "AP", n: "ATP", color: "#7A3FB5" },
-  { id: "rest", c: "RE", n: "REC", color: "#7A7A70" },
-] as const
+import { JOURNAL_ENERGY_SYSTEM_OPTIONS } from "../../domain/energy-system-taxonomy"
 
 export function PostSessionForm({ onBack, onDone, targetDate, initialEntry }: EntryFormProps) {
   const initial = initialEntry?.kind === "post-session" ? initialEntry : undefined
@@ -34,7 +26,9 @@ export function PostSessionForm({ onBack, onDone, targetDate, initialEntry }: En
   const entryDate = initial?.date ?? targetDate ?? todayISO()
   const [rpe, setRpe] = React.useState(() => initial?.rpe ?? 0)
   const [saveError, setSaveError] = React.useState(false)
-  const [system, setSystem] = React.useState(() => initial?.system ?? "base")
+  const [system, setSystem] = React.useState(() => (
+    initial?.fieldProvenance?.system?.provenance === "EXPLICIT" ? initial.system : ""
+  ))
   const [title, setTitle] = React.useState(() => initial?.title ?? "")
   const [distanceKm, setDistanceKm] = React.useState(() => initial?.distanceKm ?? "")
   const [durationMin, setDurationMin] = React.useState(() => initial?.durationMin ?? "")
@@ -60,6 +54,7 @@ export function PostSessionForm({ onBack, onDone, targetDate, initialEntry }: En
       system, title, distanceKm, durationMin, avgPace, rpe, memo: memo.text,
       ...(intensity.assessment === undefined ? {} : { intensityAssessment: intensity.assessment }),
       fieldProvenance: {
+        system: explicitOrMissing(system !== ""),
         distanceKm: explicitOrMissing(distanceKm.trim() !== ""),
         durationMin: explicitOrMissing(durationMin.trim() !== ""),
         avgPace: explicitOrMissing(avgPace.trim() !== ""),
@@ -87,20 +82,23 @@ export function PostSessionForm({ onBack, onDone, targetDate, initialEntry }: En
       </div>
 
       <FormSec lb="강도 시스템" help="energy-system">
-        <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-          {ENERGY_SYSTEMS.map((energySystem) => (
-            <button key={energySystem.id} aria-label={`${energySystem.c} ${energySystem.n}`} aria-pressed={system === energySystem.id} onClick={() => setSystem(energySystem.id)} style={{
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+          {JOURNAL_ENERGY_SYSTEM_OPTIONS.map((energySystem) => (
+            <button key={energySystem.key} aria-label={`${energySystem.code} ${energySystem.shortLabel}`} aria-pressed={system === energySystem.journalValue} onClick={() => setSystem(energySystem.journalValue)} style={{
               minHeight: 44, padding: "8px 12px", background: "var(--surface)",
-              border: system === energySystem.id ? `1.5px solid ${energySystem.color}` : "1px solid var(--line)",
+              border: system === energySystem.journalValue ? "1.5px solid var(--ink)" : "1px solid var(--line)",
               cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 6,
               borderRadius: 0,
             }}>
-              <span style={{ width: 7, height: 7, borderRadius: "50%", background: energySystem.color }}></span>
-              <span style={{ fontFamily: "var(--mono)", fontSize: 11, fontWeight: 600, color: "var(--ink)" }}>{energySystem.c}</span>
-              <span style={{ fontFamily: "var(--mono)", fontSize: 10, color: "var(--ink-3)" }}>{energySystem.n}</span>
+              <span className={`energy-dot energy-dot--${energySystem.key.toLowerCase().replace("_", "-")}`} aria-hidden="true" />
+              <span style={{ fontFamily: "var(--mono)", fontSize: 11, fontWeight: 600, color: "var(--ink)" }}>{energySystem.code}</span>
+              <span style={{ fontFamily: "var(--sans)", fontSize: 12, color: "var(--ink-3)" }}>{energySystem.shortLabel}</span>
             </button>
           ))}
         </div>
+        <p style={{ margin: "8px 0 0", fontSize: 12, color: "var(--ink-3)", lineHeight: 1.5 }}>
+          오늘 훈련의 주된 목적을 직접 고르세요. 잘 모르겠으면 선택하지 않아도 돼요.
+        </p>
       </FormSec>
 
       <FormSec lb="세션 제목">

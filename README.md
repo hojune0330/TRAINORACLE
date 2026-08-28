@@ -98,6 +98,7 @@ TrainOracle의 핵심은 예쁜 훈련 일지 화면만이 아니라, **선수 �
 | `DAILY_BRIEF_AND_INBOX_SIGNAL_SPEC.md` | Daily Log, 세션, 안전/physio/profile 구조 신호 | 매일 요약, 코치 알림, AI Inbox 항목 |
 | `ANALYSIS_AND_VISUALIZATION_DATA_CONTRACT.md` | 구조화된 일지/세션/분류/안전/physio/계획 신호 | Dashboard, Analysis, Session Detail, Calendar가 읽는 근거 기반 시각화 데이터 |
 | `CUMULATIVE_DISTANCE_ANALYSIS_CONTRACT.md` | 출처가 확인된 구조화 거리, 로컬 날짜, 현재 계획의 표시 날짜 범위 | 홈·분석에서 동일하게 쓰는 주간·월간·연간·계획 기간 누적 거리와 날짜별 분포 |
+| `ENERGY_SYSTEM_ACCUMULATION_CONTRACT.md` | 일지에서 직접 고른 시스템, 현재 계획의 예정 세션, 별도 완료 표시 | BASE·LT·VO2·GLY·ATP-PC·RECOVERY·MIX를 계획·완료 표시·실제 일지로 나눈 누적 원장 |
 | `PLAN_OUTPUT_RATIONALE_PRIVACY_SPEC.md` | Plan Generator 결과, source refs, privacy tier, redaction state | 훈련 계획 설명이 민감정보를 누출하지 않게 하는 rationale 계약 |
 | `MICROCYCLE_AND_CALENDAR_MAPPING_SPEC.md` | 9.5-day cycle, `CYCLE_DAY`, plannedDate/sessionSlot, Calendar | 사이클/달력 라벨을 규칙 ID와 섞지 않는 날짜 매핑 계약 |
 | `TRAINING_PLAN_FORMATION_AND_ADAPTATION_SPEC.md` | 소유자 결정 기록, 9.5일 local-civil frame, MAIN 노출 2-3회, 복합 부하 | 결정론적 후보, 계획/완료/체감 분리, 안전 중단, 불변 버전·코치 선택 계약 |
