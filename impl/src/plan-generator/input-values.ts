@@ -291,16 +291,21 @@ export function parseProfile(value: unknown): PlanProfile | undefined {
   }
 }
 
-function parseSupportedEventDistance(value: unknown): 800 | 1500 | 3000 | 5000 | undefined {
-  return value === 800 || value === 1500 || value === 3000 || value === 5000 ? value : undefined
+function parseSupportedEventDistance(value: unknown): 800 | 1500 | 3000 | 5000 | 10000 | 21097 | 42195 | undefined {
+  return value === 800 || value === 1500 || value === 3000 || value === 5000
+    || value === 10000 || value === 21097 || value === 42195
+    ? value
+    : undefined
 }
 
 function eventDistanceMatchesGroup(
-  distance: 800 | 1500 | 3000 | 5000,
+  distance: 800 | 1500 | 3000 | 5000 | 10000 | 21097 | 42195,
   eventGroup: PlanEventGroup,
 ): boolean {
   return eventGroup === "FIVE_K" ? distance === 5000
-    : eventGroup === "MIDDLE_DISTANCE" && (distance === 800 || distance === 1500 || distance === 3000)
+    : eventGroup === "TEN_K" ? distance === 10000
+      : eventGroup === "GENERAL_ENDURANCE" ? distance === 21097 || distance === 42195
+        : eventGroup === "MIDDLE_DISTANCE" && (distance === 800 || distance === 1500 || distance === 3000)
 }
 
 export function parseJournalSource(value: unknown): ParsedJournalSource {

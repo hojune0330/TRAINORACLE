@@ -72,7 +72,20 @@ export const supportedPlanEventDistanceSchema = z.union([
   z.literal(1500),
   z.literal(3000),
   z.literal(5000),
+  z.literal(10000),
+  z.literal(21097),
+  z.literal(42195),
 ])
+
+function eventDistanceMatchesGroup(
+  distanceM: z.infer<typeof supportedPlanEventDistanceSchema>,
+  eventGroup: z.infer<typeof planEventGroupSchema>,
+): boolean {
+  if (eventGroup === "MIDDLE_DISTANCE") return distanceM === 800 || distanceM === 1500 || distanceM === 3000
+  if (eventGroup === "FIVE_K") return distanceM === 5000
+  if (eventGroup === "TEN_K") return distanceM === 10000
+  return distanceM === 21097 || distanceM === 42195
+}
 export const detailedTemplateRefSchema = z.object({
   templateId: z.string().regex(/^[A-Z0-9]+(?:-[A-Z0-9]+)*$/u),
   version: z.string().regex(/^\d+\.\d+\.\d+$/u),
@@ -98,11 +111,9 @@ export const planIntakeSchema = z.object({
   selectedDetailedTemplateRef: detailedTemplateRefSchema.nullable(),
   startDate: selectedStartDateSchema.optional(),
 }).strict().superRefine((intake, context) => {
-  const matchesGroup = intake.eventGroup === "FIVE_K"
-    ? intake.eventDistanceM === 5000
-    : intake.eventGroup === "MIDDLE_DISTANCE"
-      && intake.eventDistanceM !== 5000
-  if (!matchesGroup) addIssue(context, ["eventDistanceM"], "Target event must match the supported event group.")
+  if (!eventDistanceMatchesGroup(intake.eventDistanceM, intake.eventGroup)) {
+    addIssue(context, ["eventDistanceM"], "Target event must match the supported event group.")
+  }
 })
 
 export const storedPlanIntakeSchema = z.object({
@@ -125,11 +136,9 @@ export const storedPlanIntakeSchema = z.object({
   startDate: selectedStartDateSchema.optional(),
 }).strict().superRefine((intake, context) => {
   if (intake.eventDistanceM === undefined) return
-  const matchesGroup = intake.eventGroup === "FIVE_K"
-    ? intake.eventDistanceM === 5000
-    : intake.eventGroup === "MIDDLE_DISTANCE"
-      && intake.eventDistanceM !== 5000
-  if (!matchesGroup) addIssue(context, ["eventDistanceM"], "Target event must match the supported event group.")
+  if (!eventDistanceMatchesGroup(intake.eventDistanceM, intake.eventGroup)) {
+    addIssue(context, ["eventDistanceM"], "Target event must match the supported event group.")
+  }
 })
 
 export const progressSchema = z.object({
@@ -175,7 +184,7 @@ const currentElapsedLabels = new Set(
 const adaptationCandidateIdSchema = z.string().refine((value) => {
   const markerIndex = value.indexOf(":pace-target:")
   const baseId = markerIndex < 0 ? value : value.slice(0, markerIndex)
-  return /^beta:(?:balanced|conservative):(?:middle_distance|five_k):event-(?:800|1500|3000|5000):(?:new_to_running|developing|experienced):(?:recovery_intent|base_intent|lt_intent|vo2_intent|gly_intent|atp_pc_intent|mixed_intent):(?:single_session_only|recovery_pm_allowed):(?:morning|evening|varies):projection-(?:7|9|9\.5|10):local-civil-9-5:[a-z0-9-]+:\d+(?:-\d+)*:(?:no_usable_journal|recent_journal_context):(?:no-continuity|(?:balanced|conservative):(?:completed|rested|skipped|pain_checkin)-\d+(?:-(?:completed|rested|skipped|pain_checkin)-\d+)*):template-(?:rpe-only|[a-z0-9-]+\.\d+\.\d+\.\d+\.[a-f0-9]{64}):candidate-sha256-[a-f0-9]{64}$/u.test(baseId)
+  return /^beta:(?:balanced|conservative):(?:middle_distance|five_k|ten_k|general_endurance):event-(?:800|1500|3000|5000|10000|21097|42195):(?:new_to_running|developing|experienced):(?:recovery_intent|base_intent|lt_intent|vo2_intent|gly_intent|atp_pc_intent|mixed_intent):(?:single_session_only|recovery_pm_allowed):(?:morning|evening|varies):projection-(?:7|9|9\.5|10):local-civil-9-5:[a-z0-9-]+:\d+(?:-\d+)*:(?:no_usable_journal|recent_journal_context):(?:no-continuity|(?:balanced|conservative):(?:completed|rested|skipped|pain_checkin)-\d+(?:-(?:completed|rested|skipped|pain_checkin)-\d+)*):template-(?:rpe-only|[a-z0-9-]+\.\d+\.\d+\.\d+\.[a-f0-9]{64}):candidate-sha256-[a-f0-9]{64}$/u.test(baseId)
 })
 
 const adaptationScopeSchema = z.object({

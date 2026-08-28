@@ -9,6 +9,7 @@ import {
   EVENT_LABELS,
 } from "./labels"
 import { PlanSchedulePreview } from "./PlanSchedulePreview"
+import { eventDistanceLabel } from "./plan-intake-navigation"
 
 export function CandidateSection({
   candidate,
@@ -47,7 +48,7 @@ export function CandidateSection({
           {candidateSessionSummary(candidate)}
         </strong>
         <small>
-          {EVENT_LABELS[candidate.eventGroup].title} · {frameLengthDays}일
+          {eventDistanceLabel(candidate.eventDistanceM)} · {EVENT_LABELS[candidate.eventGroup].title} · {frameLengthDays}일
           {" · "}훈련일마다 총 시간·RPE·훈련 목적 표시
         </small>
         <div className="plan-session-legend" aria-label="훈련 수치와 의도 설명">

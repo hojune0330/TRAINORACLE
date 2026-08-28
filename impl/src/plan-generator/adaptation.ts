@@ -18,12 +18,19 @@ import type {
 } from "./adaptation-transform-registry"
 import { isRecord, parseSafetyGate } from "./input-values"
 import type { SafetyGateDecision } from "../safety-gate/gate"
-import type { DetailedTemplateRef, PlanCandidate, PlanSelectionAuthority, PlanSession } from "./types"
+import type {
+  DetailedTemplateRef,
+  PlanCandidate,
+  PlanEventGroup,
+  PlanSelectionAuthority,
+  PlanSession,
+  SupportedPlanEventDistanceM,
+} from "./types"
 
 export const ADAPTATION_DIMENSIONS = ["INTENSITY", "VOLUME", "FREQUENCY"] as const
 export type AdaptationDimension = (typeof ADAPTATION_DIMENSIONS)[number]
 export type AdaptationProposalOrigin = "SELF_SERVICE" | "COACH_AUTHORED"
-export type SupportedAdaptationEvent = 800 | 1500 | 3000 | 5000
+export type SupportedAdaptationEvent = SupportedPlanEventDistanceM
 
 export type AdaptationTrigger =
   | { readonly kind: "EXPLICIT_REQUEST"; readonly requestedBy: "ATHLETE" | "COACH"; readonly sourceRef: string }
@@ -114,7 +121,7 @@ const CURRENT_ELAPSED_LABELS = new Set(
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/iu
 const OPAQUE_RECORD_ID_PATTERN = /^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$/u
 const EXPOSURE_ID_PATTERN = /^(?:app-main-day-(?:[1-9]|10)|fixture-main-[1-3])$/u
-const CANDIDATE_ID_PATTERN = /^beta:(?:balanced|conservative):(?:middle_distance|five_k):event-(?:800|1500|3000|5000):(?:new_to_running|developing|experienced):(?:recovery_intent|base_intent|lt_intent|vo2_intent|gly_intent|atp_pc_intent|mixed_intent):(?:single_session_only|recovery_pm_allowed):(?:morning|evening|varies):projection-(?:7|9|9\.5|10):local-civil-9-5:[a-z0-9-]+:\d+(?:-\d+)*:(?:no_usable_journal|recent_journal_context):(?:no-continuity|(?:balanced|conservative):(?:completed|rested|skipped|pain_checkin)-\d+(?:-(?:completed|rested|skipped|pain_checkin)-\d+)*):template-(?:rpe-only|[a-z0-9-]+\.\d+\.\d+\.\d+\.[a-f0-9]{64}):candidate-sha256-[a-f0-9]{64}$/u
+const CANDIDATE_ID_PATTERN = /^beta:(?:balanced|conservative):(?:middle_distance|five_k|ten_k|general_endurance):event-(?:800|1500|3000|5000|10000|21097|42195):(?:new_to_running|developing|experienced):(?:recovery_intent|base_intent|lt_intent|vo2_intent|gly_intent|atp_pc_intent|mixed_intent):(?:single_session_only|recovery_pm_allowed):(?:morning|evening|varies):projection-(?:7|9|9\.5|10):local-civil-9-5:[a-z0-9-]+:\d+(?:-\d+)*:(?:no_usable_journal|recent_journal_context):(?:no-continuity|(?:balanced|conservative):(?:completed|rested|skipped|pain_checkin)-\d+(?:-(?:completed|rested|skipped|pain_checkin)-\d+)*):template-(?:rpe-only|[a-z0-9-]+\.\d+\.\d+\.\d+\.[a-f0-9]{64}):candidate-sha256-[a-f0-9]{64}$/u
 const PLAN_BETA_CODES = new Set([
   "PROFILE_ONLY_LIMITED_CONTEXT", "RECENT_JOURNAL_CONTEXT_PRESENT", "BETA_DURATION_RPE_ONLY",
   "PACE_TARGET_BOUND", "BETA_NON_UNIVERSAL_FORMATION_SCOPE", "PREVIOUS_FRAME_CONTEXT_RETAINED",
@@ -401,7 +408,7 @@ function isPlanCandidate(value: unknown): value is PlanCandidate {
   if (!isRecord(value) || !hasExactKeys(value, CANDIDATE_KEYS) || !Array.isArray(value["sessions"])
       || !isDenseArray(value["sessions"]) || !value["sessions"].every(isPlanSession)
       || (value["kind"] !== "BALANCED" && value["kind"] !== "CONSERVATIVE")
-      || (value["eventGroup"] !== "MIDDLE_DISTANCE" && value["eventGroup"] !== "FIVE_K")
+      || !isPlanEventGroup(value["eventGroup"])
       || parseSupportedEvent(value["eventDistanceM"]) === null
       || typeof value["pairId"] !== "string" || !value["pairId"].startsWith("plan-pair:v3:")
       || !isDetailedTemplateRef(value["selectedDetailedTemplateRef"])
@@ -914,7 +921,25 @@ function authorityFor(origin: AdaptationProposalOrigin): PlanSelectionAuthority 
   }
 }
 
-function parseSupportedEvent(value: unknown): SupportedAdaptationEvent | null { return value === 800 || value === 1500 || value === 3000 || value === 5000 ? value : null }
+function parseSupportedEvent(value: unknown): SupportedAdaptationEvent | null {
+  return value === 800 || value === 1500 || value === 3000 || value === 5000
+    || value === 10000 || value === 21097 || value === 42195
+    ? value
+    : null
+}
+function isPlanEventGroup(value: unknown): value is PlanEventGroup {
+  return value === "MIDDLE_DISTANCE" || value === "FIVE_K"
+    || value === "TEN_K" || value === "GENERAL_ENDURANCE"
+}
+function eventGroupMatchesDistance(
+  eventGroup: PlanEventGroup,
+  distance: SupportedAdaptationEvent,
+): boolean {
+  if (eventGroup === "MIDDLE_DISTANCE") return distance === 800 || distance === 1500 || distance === 3000
+  if (eventGroup === "FIVE_K") return distance === 5000
+  if (eventGroup === "TEN_K") return distance === 10000
+  return distance === 21097 || distance === 42195
+}
 function hasUnsupportedNumericEvent(value: unknown): boolean {
   if (!isRecord(value) || !isRecord(value["scope"])) return false
   const event = value["scope"]["eventDistanceM"]
@@ -923,7 +948,7 @@ function hasUnsupportedNumericEvent(value: unknown): boolean {
 function candidateEligibleForExactEvent(value: unknown, candidate: PlanCandidate): boolean {
   const distance = parseSupportedEvent(value)
   if (distance === null || candidate.eventDistanceM !== distance
-      || (distance === 5000 ? candidate.eventGroup !== "FIVE_K" : candidate.eventGroup !== "MIDDLE_DISTANCE")) return false
+      || !eventGroupMatchesDistance(candidate.eventGroup, distance)) return false
   return candidate.sessions.every((session) =>
     session.prescription.kind !== "PACE_TARGET"
     || (session.prescription.targetEventDistanceM === distance

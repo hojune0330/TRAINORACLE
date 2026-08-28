@@ -181,7 +181,7 @@ describe("optional target race date", () => {
 })
 
 describe("exact event and explicit detail selection", () => {
-  it("offers only the four supported exact events", async () => {
+  it("offers the seven owner-approved initial events", async () => {
     const user = userEvent.setup()
     const onGoal = vi.fn()
     render(
@@ -205,8 +205,7 @@ describe("exact event and explicit detail selection", () => {
       />,
     )
 
-    expect(screen.getAllByRole("button", { name: /^(800m|1500m|3000m|5000m)/u })).toHaveLength(4)
-    expect(screen.queryByRole("button", { name: /10km/u })).toBeNull()
+    expect(screen.getAllByRole("button", { name: /^(800m|1500m|3000m|5000m|10km|하프마라톤|마라톤)/u })).toHaveLength(7)
     await user.click(screen.getByRole("button", { name: /^1500m/u }))
     expect(onGoal).toHaveBeenCalledWith(1500)
   })

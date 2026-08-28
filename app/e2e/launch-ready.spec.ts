@@ -104,7 +104,7 @@ test("generates selectable 9-day candidates from first-screen intake", async ({ 
 test("generates a bounded two-a-day 9-day candidate", async ({ page }) => {
   await page.goto("/?app=1")
   await page.getByRole("navigation", { name: "내 기록 살펴보기" }).getByRole("button", { name: /^훈련 계획/u }).click()
-  await page.getByRole("button", { name: /5km/u }).click()
+  await page.getByRole("button", { name: /^5000m\b/u }).click()
   await page.getByRole("button", { name: /고등부/u }).click()
   await page.getByRole("button", { name: /훈련 계획에 맞춰 달려 본 경험/u }).click()
   await page.getByRole("button", { name: /통증은 없고 몸 상태는 평소와 같아요/u }).click()
@@ -125,7 +125,7 @@ test("keeps an evening two-a-day plan after selection and reload", async ({ page
   // Given
   await page.goto("/?app=1")
   await page.getByRole("navigation", { name: "내 기록 살펴보기" }).getByRole("button", { name: /^훈련 계획/u }).click()
-  await page.getByRole("button", { name: /5km/u }).click()
+  await page.getByRole("button", { name: /^5000m\b/u }).click()
   await page.getByRole("button", { name: /고등부/u }).click()
   await page.getByRole("button", { name: /훈련 계획에 맞춰 달려 본 경험/u }).click()
   await page.getByRole("button", { name: /통증은 없고 몸 상태는 평소와 같아요/u }).click()

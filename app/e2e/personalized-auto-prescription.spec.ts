@@ -59,7 +59,7 @@ async function reachExperiencedFiveKCandidates(
   page: Page,
   divisionName: RegExp = /일반부/u,
 ): Promise<void> {
-  await page.getByRole("button", { name: /5km/u }).click()
+  await page.getByRole("button", { name: /^5000m\b/u }).click()
   await page.getByRole("button", { name: divisionName }).click()
   await page.getByRole("button", { name: /구조화된 훈련과 경기 경험이 많아요/u }).click()
   await page.getByRole("button", { name: /통증은 없고 몸 상태는 평소와 같아요/u }).click()
@@ -301,7 +301,7 @@ test("D9 blocks before candidates", async ({ page }) => {
   await page.setViewportSize({ width: 375, height: 667 })
   await seedRecords(page, currentRecords)
   await openPlan(page)
-  await page.getByRole("button", { name: /5km/u }).click()
+  await page.getByRole("button", { name: /^5000m\b/u }).click()
   await page.getByRole("button", { name: /일반부/u }).click()
   await page.getByRole("button", { name: /구조화된 훈련과 경기 경험이 많아요/u }).click()
   await page.getByRole("button", { name: /통증.*부상.*몸 이상/u }).click()

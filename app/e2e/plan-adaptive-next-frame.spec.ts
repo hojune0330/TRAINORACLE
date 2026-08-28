@@ -210,7 +210,7 @@ async function openPlan(page: Page): Promise<void> {
 }
 
 async function createBoundActivePlan(page: Page, projectionLength: 7 | 9 | 10): Promise<void> {
-  await page.getByRole("button", { name: /5km/u }).click()
+  await page.getByRole("button", { name: /^5000m\b/u }).click()
   await expect(page.getByRole("button", { name: /일반부/u })).toBeVisible()
   await page.getByRole("button", { name: /일반부/u }).click()
   await expect(page.getByRole("button", { name: /구조화된 훈련과 경기 경험이 많아요/u })).toBeVisible()
