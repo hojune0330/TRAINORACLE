@@ -10,6 +10,7 @@ import { TermHelp } from "../components/TermHelp"
 import { loadPlanBetaState } from "../domain/plan-beta-store"
 import { activePlanDateWindow } from "../domain/cumulative-distance"
 import { CumulativeDistancePanel } from "./trends/CumulativeDistancePanel"
+import { EnergySystemLedgerPanel } from "./trends/EnergySystemLedgerPanel"
 
 export function Trends({ onBack, onWriteLog }: {
   readonly onBack?: (() => void) | undefined
@@ -44,21 +45,37 @@ export function Trends({ onBack, onWriteLog }: {
     <div style={{ paddingBottom: 30 }}>
       <TrendsHeader onBack={onBack} />
       {isEmpty ? (
-        <div style={{ padding: "0 20px" }}>
-          <GuidedEmptyState
-            title="기록이 쌓이면 변화가 보여요"
-            description={<>훈련한 날과 쉰 날의 거리·시간·RPE<TermHelp term="rpe" />·기분을 직접 남기면 주간과 월간 흐름으로 정리해 드려요.</>}
-            actionLabel="첫 기록 남기기"
-            onAction={onWriteLog}
-          />
-          <AnalysisExclusionNotice summary={exclusion} />
-        </div>
+        <>
+          {planState !== null && (
+            <EnergySystemLedgerPanel
+              observations={observations}
+              today={today}
+              planState={planState}
+              mode="full"
+            />
+          )}
+          <div style={{ padding: "0 20px" }}>
+            <GuidedEmptyState
+              title="기록이 쌓이면 변화가 보여요"
+              description={<>훈련한 날과 쉰 날의 거리·시간·RPE<TermHelp term="rpe" />·기분을 직접 남기면 주간과 월간 흐름으로 정리해 드려요.</>}
+              actionLabel="첫 기록 남기기"
+              onAction={onWriteLog}
+            />
+            <AnalysisExclusionNotice summary={exclusion} />
+          </div>
+        </>
       ) : (
         <>
           <CumulativeDistancePanel
             observations={observations}
             today={today}
             planWindow={planWindow}
+            mode="full"
+          />
+          <EnergySystemLedgerPanel
+            observations={observations}
+            today={today}
+            planState={planState}
             mode="full"
           />
           <MonthlyTrendSection observations={observations} today={today} />

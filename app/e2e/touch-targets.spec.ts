@@ -27,7 +27,7 @@ test("keeps core journal controls at least 44px tall", async ({ page }, testInfo
   await auditTouchTargets(page, [
     { name: "post.back", locator: page.getByRole("button", { name: "← 뒤로" }) },
     { name: "post.energy-help", locator: page.getByRole("button", { name: /훈련 목적 설명 보기/u }) },
-    { name: "post.energy", locator: page.getByRole("button", { name: /^(BA BASE|LT LT|V2 VO2|GL GLY|AP ATP|RE REC)$/u }), count: 6 },
+    { name: "post.energy", locator: page.getByRole("button", { name: /^(REC 회복|BASE 기초 지구력|LT 지속 페이스|VO2 강한 유산소|GLY 젖산성 스피드|ATP 짧고 빠른 가속|MIX 복합·미배분)$/u }), count: 7 },
     { name: "post.title", locator: page.getByRole("textbox", { name: "세션 제목" }), heightOnly: true },
     { name: "post.distance", locator: page.getByRole("textbox", { name: "거리 (km)" }), heightOnly: true },
     { name: "post.duration", locator: page.getByRole("textbox", { name: "시간 (분)" }), heightOnly: true },
@@ -40,8 +40,8 @@ test("keeps core journal controls at least 44px tall", async ({ page }, testInfo
     { name: "post.memo", locator: page.getByRole("textbox", { name: "훈련 메모 내용" }), heightOnly: true },
     { name: "post.save", locator: page.getByRole("button", { name: /^저장/u }) },
   ])
-  const base = page.getByRole("button", { name: "BA BASE" })
-  const rest = page.getByRole("button", { name: "RE REC" })
+  const base = page.getByRole("button", { name: "BASE 기초 지구력" })
+  const rest = page.getByRole("button", { name: "REC 회복" })
   await base.click()
   await rest.click()
   await expect(base).toHaveAttribute("aria-pressed", "false")

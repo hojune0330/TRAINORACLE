@@ -108,6 +108,13 @@ Use this order before creating any reconstructed file:
 - Missing distance remains missing, imported/unverified and legacy-no-provenance distance is excluded, and duplicate source identities cannot double-count mileage.
 - Private memo text and memo-presence signals are absent from the engine; the missing whole-entry privacy scope is disclosed as an open issue.
 - It forbids an exact 9.5-day metric label until timezone, frame instants, occurrence time, and plan-session attribution exist.
+
+`ENERGY_SYSTEM_ACCUMULATION_CONTRACT.md`:
+
+- It defines the first descriptive energy-system ledger across explicit journal selections and the current selected plan.
+- It keeps planned sessions, completion marks, and journal metrics separate; legacy defaults never become BASE evidence.
+- It keeps mixed sessions visible as `MIXED_UNALLOCATED` and extends duplicate signatures to duration, distance, and RPE.
+- It does not authorize physiological measurement claims, automatic adaptation, exact 9.5-day attribution, or historical plan linkage.
 - It creates no distance-goal, reward, training-plan mutation, safety, or medical authority.
 
 `PLAN_OUTPUT_RATIONALE_PRIVACY_SPEC.md`:

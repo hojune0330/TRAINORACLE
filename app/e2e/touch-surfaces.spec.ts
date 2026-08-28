@@ -29,10 +29,8 @@ test("audits empty home and chooser touch actions", async ({ page }, testInfo) =
   await page.getByRole("button", { name: "오늘 기록 남기기" }).click()
   await auditTouchTargets(page, [
     { name: "post.back", locator: page.getByRole("button", { name: "← 뒤로" }) },
-    // 강도 시스템 버튼의 접근 이름은 `${c} ${n}`(예: "BA BASE")이다
-    // (PostSessionForm.tsx:92). "에너지 시스템"은 용어집 설명문에만 있는 말이라
-    // 버튼 이름으로 쓰면 0건이 잡혀 감사가 헛돈다. 6개 전부를 감사한다.
-    { name: "post.energy", locator: page.getByRole("button", { name: /^(BA BASE|LT LT|V2 VO2|GL GLY|AP ATP|RE REC)$/u }), count: 6, heightOnly: true },
+    // 짧은 화면 표시는 코드만 쓰되 접근 이름은 한글 뜻까지 보존한다.
+    { name: "post.energy", locator: page.getByRole("button", { name: /^(REC 회복|BASE 기초 지구력|LT 지속 페이스|VO2 강한 유산소|GLY 젖산성 스피드|ATP 짧고 빠른 가속|MIX 복합·미배분)$/u }), count: 7, heightOnly: true },
   ])
   await expectNoHorizontalOverflow(page)
   // the chooser is reached via the "경기기록" tab bar button
