@@ -208,6 +208,7 @@ export function bindOneDetailedPrescriptionCandidate(
 
 function supportedEventDistance(value: number): SupportedPlanEventDistanceM | null {
   return value === 800 || value === 1500 || value === 3000 || value === 5000
+    || value === 10000 || value === 21097 || value === 42195
     ? value
     : null
 }

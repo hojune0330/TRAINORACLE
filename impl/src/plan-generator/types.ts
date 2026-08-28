@@ -76,7 +76,7 @@ export type PlanSourceMode = "PROFILE_ONLY" | "JOURNAL_CONTEXT_ONLY"
 export type PlanSelectionAuthority = "SELF" | "COACH_REQUIRED"
 
 export type PlanCandidateKind = "BALANCED" | "CONSERVATIVE"
-export type SupportedPlanEventDistanceM = 800 | 1500 | 3000 | 5000
+export type SupportedPlanEventDistanceM = 800 | 1500 | 3000 | 5000 | 10000 | 21097 | 42195
 
 export type DetailedTemplateRef = {
   readonly templateId: string

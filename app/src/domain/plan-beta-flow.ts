@@ -8,6 +8,7 @@ import type {
   JournalSource,
   PlanCandidate,
   PlanGenerationSuccess,
+  SupportedPlanEventDistanceM,
 } from "@impl/plan-generator/types"
 import type { RacePlacementState } from "@impl/plan-generator/race-placement"
 import raceDateRetentionAuthority from "../../../reports/review/RACE_DATE_RETENTION_AUTHORITY.json"
@@ -90,7 +91,7 @@ export type PlanDraftGeneration =
       readonly code: "RACE_DATE_PERSISTENCE_NOT_AUTHORIZED"
       readonly racePlacement: Extract<RacePlacementState, { readonly kind: "TARGET_RACE_PREVIEW_ONLY_RETENTION_BLOCKED" }>
       readonly preview: {
-        readonly eventDistanceM: 800 | 1500 | 3000 | 5000
+        readonly eventDistanceM: SupportedPlanEventDistanceM
         readonly targetRaceDate: string
       }
       readonly candidates: readonly []

@@ -22,23 +22,33 @@ export const SUPPORTED_PLAN_EVENTS = [
   { distanceM: 1500, eventGroup: "MIDDLE_DISTANCE", title: "1500m", detail: "중거리 경기 준비 · 경기 속도와 유산소 능력을 함께 다룸" },
   { distanceM: 3000, eventGroup: "MIDDLE_DISTANCE", title: "3000m", detail: "중장거리 경기 준비 · 유산소 능력과 경기 속도 유지 중심" },
   { distanceM: 5000, eventGroup: "FIVE_K", title: "5000m", detail: "5km 경기 준비 · 지구력과 5km 경기 속도 중심" },
+  { distanceM: 10000, eventGroup: "TEN_K", title: "10km", detail: "10km 경기 준비 · 지속 능력과 경기 속도 조절 중심" },
+  { distanceM: 21097, eventGroup: "GENERAL_ENDURANCE", title: "하프마라톤", detail: "21.097km 경기 준비 · 오래 달리는 힘과 페이스 유지 중심" },
+  { distanceM: 42195, eventGroup: "GENERAL_ENDURANCE", title: "마라톤", detail: "42.195km 경기 준비 · 장거리 적응과 안정적인 페이스 운영 중심" },
 ] as const satisfies readonly {
   readonly distanceM: PlanBetaIntake["eventDistanceM"]
-  readonly eventGroup: Extract<PlanEventGroup, "MIDDLE_DISTANCE" | "FIVE_K">
+  readonly eventGroup: PlanEventGroup
   readonly title: string
   readonly detail: string
 }[]
 
 export function eventGroupForDistance(
   distanceM: PlanBetaIntake["eventDistanceM"],
-): Extract<PlanEventGroup, "MIDDLE_DISTANCE" | "FIVE_K"> {
-  return distanceM === 5000 ? "FIVE_K" : "MIDDLE_DISTANCE"
+): PlanEventGroup {
+  if (distanceM === 5000) return "FIVE_K"
+  if (distanceM === 10000) return "TEN_K"
+  if (distanceM === 21097 || distanceM === 42195) return "GENERAL_ENDURANCE"
+  return "MIDDLE_DISTANCE"
 }
 
 export function eventDistanceLabel(
   distanceM: PlanBetaIntake["eventDistanceM"] | undefined,
 ): string {
-  return distanceM === undefined ? "아직 선택되지 않음" : `${distanceM}m`
+  if (distanceM === undefined) return "아직 선택되지 않음"
+  if (distanceM === 10000) return "10km"
+  if (distanceM === 21097) return "하프마라톤"
+  if (distanceM === 42195) return "마라톤"
+  return `${distanceM}m`
 }
 
 export type RefinementStep = Exclude<
