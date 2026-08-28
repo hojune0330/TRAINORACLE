@@ -98,13 +98,19 @@ test("shows provenance-safe trends without leaking private memo signals", async 
   }, privateText)
 
   await page.goto("/?app=1")
-  await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "분석" }).click()
+  const homeDistance = page.getByRole("region", { name: "내 달리기가 얼마나 쌓였을까요?" })
+  await expect(homeDistance.getByText(/^8\s*km$/u).first()).toBeVisible()
+  await homeDistance.getByRole("button", { name: "누적 거리 자세히 보기" }).click()
 
-  const weekly = page.getByRole("region", { name: "최근 4주 거리" })
-  await expect(weekly.getByText(/^8$/u)).toBeVisible()
-  await expect(weekly.getByText(/집계 사용 1건/u)).toBeVisible()
-  await expect(weekly.getByText(/집계 제외 2건/u)).toBeVisible()
-  await weekly.getByText("출처 기록 보기").click()
+  const distance = page.getByRole("region", { name: "거리 흐름" })
+  await expect(distance.locator(".distance-overview__totals").getByText(/^8\s*km$/u).first()).toBeVisible()
+  await expect(distance.getByText(/1건 반영/u).first()).toBeVisible()
+  await expect(distance.getByText(/집계 기준에 맞지 않아 제외한 기록 2건/u).first()).toBeVisible()
+  await distance.getByRole("button", { name: "12주" }).click()
+  await distance.getByRole("button", { name: "12개월" }).click()
+  await expect(distance.getByRole("button", { name: "12주" })).toHaveAttribute("aria-pressed", "true")
+  await expect(distance.getByRole("button", { name: "12개월" })).toHaveAttribute("aria-pressed", "true")
+  await expect(distance.getByRole("listitem", { name: new RegExp(`${new Date().getDate()}일, 8킬로미터`, "u") })).toBeVisible()
 
   const monthly = page.getByRole("region", { name: "최근 4개월 추이" })
   await expect(monthly.getByText(/중앙 페이스 5:00/u)).toBeVisible()
@@ -118,5 +124,9 @@ test("shows provenance-safe trends without leaking private memo signals", async 
 
   await expect(page.getByText(privateText, { exact: false })).toHaveCount(0)
   await expect(page.getByText(/기준:\s*데모|과다|통증·피로/u)).toHaveCount(0)
-  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true)
+  expect(await page.evaluate(() => {
+    const scrollRegion = document.querySelector<HTMLElement>(".app-scroll-region")
+    return document.documentElement.scrollWidth <= window.innerWidth
+      && (scrollRegion === null || scrollRegion.scrollWidth <= scrollRegion.clientWidth)
+  })).toBe(true)
 })

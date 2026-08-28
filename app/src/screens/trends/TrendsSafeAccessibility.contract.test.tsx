@@ -73,9 +73,13 @@ describe("trend chart alternatives", () => {
     for (const toggle of tableToggles) await user.click(toggle)
 
     // Then
-    expect(tableToggles).toHaveLength(2)
-    expect(screen.getAllByRole("table")).toHaveLength(2)
-    expect(screen.getAllByRole("img")).toHaveLength(2)
+    expect(tableToggles).toHaveLength(3)
+    expect(screen.getAllByRole("table")).toHaveLength(3)
+    expect(screen.getAllByRole("img")).toHaveLength(3)
+    expect(screen.getByRole("list", { name: /월 날짜별 거리/u })).toBeVisible()
+    expect(screen.getAllByRole("listitem").some((item) => (
+      item.getAttribute("aria-label")?.includes("킬로미터") ?? false
+    ))).toBe(true)
 
     const monthly = screen.getByRole("region", { name: "최근 4개월 추이" })
     for (const metric of ["거리", "페이스", "기분", "통증"]) {

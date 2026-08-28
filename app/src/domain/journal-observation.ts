@@ -143,6 +143,20 @@ export function selectStructuredJournalInput(entry: JournalEntry): StructuredJou
   return null
 }
 
+/**
+ * Home과 Analysis가 동일한 구조화 관측 목록을 사용하도록 하는 공용 투영 관문.
+ * 메모·노트 원문은 StructuredJournalInput 타입에 들어갈 자리가 없으므로 이
+ * 함수의 결과에는 비밀 메모 내용이나 존재 여부가 포함되지 않는다.
+ */
+export function projectStructuredJournalObservations(
+  entries: readonly JournalEntry[],
+): readonly StructuredJournalObservation[] {
+  return entries.flatMap((entry) => {
+    const input = selectStructuredJournalInput(entry)
+    return input === null ? [] : [projectStructuredJournalObservation(input)]
+  })
+}
+
 function validRpe(value: number): number | null {
   return Number.isInteger(value) && value >= 1 && value <= 10 ? value : null
 }

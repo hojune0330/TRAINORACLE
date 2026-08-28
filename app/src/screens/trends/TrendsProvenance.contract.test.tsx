@@ -89,10 +89,12 @@ describe("provenance-safe Trends surface", () => {
   it("shows only verified weekly distance and explains excluded records", () => {
     render(<Trends />)
 
-    const weekly = screen.getByRole("region", { name: "최근 4주 거리" })
-    expect(within(weekly).getByText(/^8$/u)).toBeVisible()
-    expect(within(weekly).getByText(/집계 사용 1건/u)).toBeVisible()
-    expect(within(weekly).getByText(/집계 제외 2건/u)).toBeVisible()
+    const distance = screen.getByRole("region", { name: "거리 흐름" })
+    expect(within(distance).getByLabelText(/이번 주, 8킬로미터, 기록 1건/u)).toBeVisible()
+    expect(within(distance).getByLabelText(/이번 달, 8킬로미터, 기록 1건/u)).toBeVisible()
+    expect(within(distance).getAllByText(/집계 기준에 맞지 않아 제외한 기록 2건/u)).toHaveLength(2)
+    expect(screen.getByTestId("trends-excluded-imported")).toHaveTextContent("가져온 일지 1개")
+    expect(screen.getByTestId("trends-excluded-no-provenance")).toHaveTextContent("일지 1개")
     expect(screen.queryByText(/전체 누적/u)).not.toBeInTheDocument()
     expect(screen.queryByText(/기준:\s*데모|과다|통증·피로/u)).not.toBeInTheDocument()
   })
