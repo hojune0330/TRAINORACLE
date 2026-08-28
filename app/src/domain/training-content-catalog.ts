@@ -7,6 +7,10 @@ export type TrainingContentSourceState = "DIRECT_SOURCE_REOPENED" | "DISCOVERY_S
 
 export type TrainingContentArticle = {
   readonly id: TrainingContentId
+  readonly contentRevision: number
+  readonly publicationState: "BETA_READ_ONLY_PUBLISHED" | "CORRECTED"
+  readonly publishedOn: string
+  readonly correctionNotice: string | null
   readonly category: "요즘 해외 훈련법" | "훈련 개념" | "선수 사례"
   readonly title: string
   readonly shortTitle: string
@@ -31,6 +35,10 @@ export type TrainingContentArticle = {
 export const TRAINING_CONTENT_CATALOG = [
   {
     id: "NORWEGIAN_DOUBLE_THRESHOLD",
+    contentRevision: 1,
+    publicationState: "BETA_READ_ONLY_PUBLISHED",
+    publishedOn: "2026-08-28",
+    correctionNotice: null,
     category: "요즘 해외 훈련법",
     title: "노르웨이식 더블 스레숄드, 왜 자주 들릴까요?",
     shortTitle: "더블 스레숄드",
@@ -53,6 +61,10 @@ export const TRAINING_CONTENT_CATALOG = [
   },
   {
     id: "CRUISE_INTERVALS",
+    contentRevision: 1,
+    publicationState: "BETA_READ_ONLY_PUBLISHED",
+    publishedOn: "2026-08-28",
+    correctionNotice: null,
     category: "훈련 개념",
     title: "크루즈 인터벌은 지속주와 무엇이 다를까요?",
     shortTitle: "크루즈 인터벌",
@@ -75,6 +87,10 @@ export const TRAINING_CONTENT_CATALOG = [
   },
   {
     id: "ELITE_MARATHON_WEEK",
+    contentRevision: 1,
+    publicationState: "BETA_READ_ONLY_PUBLISHED",
+    publishedOn: "2026-08-28",
+    correctionNotice: null,
     category: "선수 사례",
     title: "엘리트 마라톤 한 주를 그대로 따라 하면 안 되는 이유",
     shortTitle: "엘리트 마라톤 한 주",

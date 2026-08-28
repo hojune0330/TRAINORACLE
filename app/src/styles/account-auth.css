@@ -33,6 +33,37 @@
   letter-spacing: 0;
 }
 
+.plan-cloud-backup-notice {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.plan-cloud-backup-notice__body {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+}
+
+.plan-cloud-backup-notice__icon {
+  flex: 0 0 auto;
+  margin-top: 2px;
+}
+
+.plan-cloud-backup-notice strong {
+  display: block;
+  font-family: var(--sans);
+  font-size: 13px;
+}
+
+.plan-cloud-backup-notice p {
+  margin: var(--space-1) 0 0;
+  color: var(--ink-2);
+  font-family: var(--sans);
+  font-size: 12px;
+  line-height: 1.65;
+}
+
 .account-auth__trust {
   display: inline-flex;
   align-items: center;

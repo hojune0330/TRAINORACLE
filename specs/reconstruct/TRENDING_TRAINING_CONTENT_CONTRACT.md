@@ -5,8 +5,8 @@ document_metadata:
   doc_id: trainoracle-spec-trending-training-content-v1
   spec_id: TRENDING_TRAINING_CONTENT_CONTRACT
   title: TrainOracle Trending Training Content Contract
-  version: "1.0"
-  round: RT1_IMPLEMENTATION_BOUNDARY
+  version: "1.1"
+  round: RT2_OPERATIONS_PIPELINE_DRAFT
   status: DRAFT_FOR_REVIEW
   owner: COACH_HOJUNE
   open_issues_total: 4
@@ -89,7 +89,52 @@ current plan-generation scope, and this content surface does not change that bou
 
 ---
 
-## 6. Open Issues
+## 6. Content Review And Publication Pipeline
+
+New content cannot be added directly to the runtime catalog from a search result,
+conversation summary, social post, or named-athlete programme. Each candidate needs a
+durable change packet with these fields:
+
+- candidate ID, proposed content ID, category, and plain-language purpose;
+- source URL, source owner or publisher, access date, source grade, and source state;
+- exact claims intended for display and the transfer limitations attached to them;
+- editorial reviewer, review date, reviewed commit or artifact SHA, and verdict;
+- owner decision limited to read-only publication, with decision date and scope;
+- content revision, publication state, correction notice, and withdrawal reason;
+- explicit `NOT_PLAN_ELIGIBLE` and zero-reward declarations.
+
+The allowed lifecycle is append-only:
+
+```text
+DISCOVERED
+  -> SOURCE_REOPENED | DISCOVERY_ONLY_HELD
+  -> EDITORIAL_REVIEWED
+  -> OWNER_ACCEPTED_FOR_READ_ONLY
+  -> BETA_READ_ONLY_PUBLISHED
+  -> CORRECTED | WITHDRAWN
+```
+
+`DISCOVERY_ONLY_HELD` may support an internally recorded candidate, but it cannot skip
+editorial review or owner acceptance. `BETA_READ_ONLY_PUBLISHED` is not research
+acceptance, template acceptance, canonical promotion, or athlete eligibility. Automation
+may reject malformed packets, duplicate IDs, insecure URLs, missing boundaries, or
+forbidden plan eligibility. It cannot produce the editorial or owner verdict.
+
+Published runtime entries must expose a positive integer content revision, publication
+state, publication date, and nullable correction notice. A correction increments the
+revision and displays the correction notice without overwriting the durable prior packet.
+A withdrawal removes the item from list and direct runtime lookup, preserves a durable
+withdrawal receipt, and cannot silently substitute a different source or article under
+the same revision.
+
+Before catalog expansion, verification must prove that a candidate held before owner
+acceptance is absent from the runtime bundle, a corrected item displays its notice, a
+withdrawn item fails closed, and no lifecycle transition changes plan, D9, journal,
+account, sharing, or point state.
+
+---
+
+## 7. Open Issues
 
 | Issue ID | Canonical blocking | Status | Required evidence |
 |---|---:|---|---|
@@ -102,7 +147,7 @@ No issue is closed by this draft or by local tests.
 
 ---
 
-## 7. Required Verification
+## 8. Required Verification
 
 - all catalog IDs are unique and every URL uses HTTPS;
 - every launch item remains `NOT_PLAN_ELIGIBLE`;
@@ -110,6 +155,11 @@ No issue is closed by this draft or by local tests.
 - unknown saved IDs are ignored;
 - saving creates no point, plan, safety, journal or account state;
 - source links open explicitly and do not embed athlete data;
+- every runtime item has a revision, read-only publication state, publication date, and
+  nullable correction notice;
+- candidates without editorial review and owner read-only acceptance stay outside the
+  runtime catalog;
+- correction and withdrawal receipts preserve prior revision provenance;
 - list and article views work at 320 and 375 pixel widths, keyboard and screen reader;
 - the existing five-tab navigation stays unchanged until the separate navigation gate.
 

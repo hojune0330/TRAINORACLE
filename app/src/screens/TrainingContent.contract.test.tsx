@@ -1,6 +1,6 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/react"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
-import { TrainingContent } from "./TrainingContent"
+import { TrainingContent, TrainingContentCorrectionNotice } from "./TrainingContent"
 
 beforeEach(() => window.localStorage.clear())
 afterEach(cleanup)
@@ -27,5 +27,21 @@ describe("training content reader", () => {
     const save = screen.getByRole("button", { name: "나중에 읽기" })
     fireEvent.click(save)
     expect(screen.getByRole("button", { name: "저장됨" })).toHaveAttribute("aria-pressed", "true")
+  })
+})
+
+describe("training content correction notice", () => {
+  it("shows an explicit correction without changing the article body", () => {
+    render(<TrainingContentCorrectionNotice notice="출처 날짜를 2026년 8월 28일로 바로잡았어요." />)
+
+    expect(screen.getByRole("status")).toHaveTextContent(
+      "정정 안내 · 출처 날짜를 2026년 8월 28일로 바로잡았어요.",
+    )
+  })
+
+  it("renders nothing when no correction exists", () => {
+    const { container } = render(<TrainingContentCorrectionNotice notice={null} />)
+
+    expect(container).toBeEmptyDOMElement()
   })
 })
