@@ -24,6 +24,7 @@ import {
   type PlannedSessionLogDraft,
 } from "../../domain/planned-session-link"
 import type { PlanSession } from "@impl/plan-generator/types"
+import type { PlanCloudPersistenceState } from "../../domain/account/plan-cloud-backup"
 
 type PersistenceRetry =
   | { readonly kind: "progress"; readonly progress: StoredPlanProgress }
@@ -32,12 +33,16 @@ type PersistenceRetry =
 
 export function PlanActiveState({
   state,
+  cloudPersistence = "DEVICE_ONLY",
+  onRetryCloudBackup,
   celebrateOnMount = false,
   onStateChange,
   onArchived,
   onWritePlannedSessionLog,
 }: {
   readonly state: PlanBetaState
+  readonly cloudPersistence?: PlanCloudPersistenceState
+  readonly onRetryCloudBackup?: () => void
   readonly celebrateOnMount?: boolean
   readonly onStateChange: (state: PlanBetaState) => void
   readonly onArchived: (intake: StoredPlanBetaIntake) => void
@@ -191,6 +196,8 @@ export function PlanActiveState({
     <>
       <ActivePlan
         state={state}
+        cloudPersistence={cloudPersistence}
+        onRetryCloudBackup={onRetryCloudBackup}
         showCreatedCelebration={celebrateOnMount}
         onProgress={saveProgress}
         onNextFrame={() => void startNextFrame()}

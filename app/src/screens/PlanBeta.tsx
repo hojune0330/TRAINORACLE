@@ -48,6 +48,7 @@ import {
   loadLatestPlanFromServer,
   planCloudBackupEnabled,
 } from "../domain/account/plan-cloud-backup"
+import type { PlanCloudPersistenceState } from "../domain/account/plan-cloud-backup"
 import type { PlannedSessionLogDraft } from "../domain/planned-session-link"
 
 export function PlanBeta({
@@ -65,6 +66,10 @@ export function PlanBeta({
   const [cloudRestorePending, setCloudRestorePending] = React.useState(
     stored === null && planCloudBackupEnabled(),
   )
+  const [cloudPersistence, setCloudPersistence] = React.useState<PlanCloudPersistenceState>(
+    planCloudBackupEnabled() ? "CHECKING" : "DEVICE_ONLY",
+  )
+  const cloudBackupAttempt = React.useRef(0)
   const previousIntake = React.useState(() => loadPreviousIntake())[0]
   const [draft, setDraft] = React.useState<Partial<PlanBetaIntake>>(
     previousIntake ?? {},
@@ -121,6 +126,7 @@ export function PlanBeta({
   React.useEffect(() => {
     if (stored !== null || !planCloudBackupEnabled()) {
       setCloudRestorePending(false)
+      if (!planCloudBackupEnabled()) setCloudPersistence("DEVICE_ONLY")
       return
     }
     let cancelled = false
@@ -128,6 +134,11 @@ export function PlanBeta({
       if (cancelled) return
       if (result.kind === "loaded" && savePlanBetaState(result.state).ok) {
         setStored(result.state)
+        setCloudPersistence("SAVED")
+      } else if (result.kind === "failed") {
+        setCloudPersistence("FAILED")
+      } else {
+        setCloudPersistence("DEVICE_ONLY")
       }
       setCloudRestorePending(false)
     })
@@ -136,9 +147,26 @@ export function PlanBeta({
 
   React.useEffect(() => {
     if (stored !== null && planCloudBackupEnabled()) {
-      void backupActivePlanToServer(stored)
+      const attempt = ++cloudBackupAttempt.current
+      setCloudPersistence("SAVING")
+      void backupActivePlanToServer(stored).then((result) => {
+        if (attempt !== cloudBackupAttempt.current) return
+        setCloudPersistence(result.kind === "saved" ? "SAVED" : "FAILED")
+      })
+    } else if (!planCloudBackupEnabled()) {
+      setCloudPersistence("DEVICE_ONLY")
     }
   }, [stored])
+
+  const retryCloudBackup = () => {
+    if (stored === null || !planCloudBackupEnabled()) return
+    const attempt = ++cloudBackupAttempt.current
+    setCloudPersistence("SAVING")
+    void backupActivePlanToServer(stored).then((result) => {
+      if (attempt !== cloudBackupAttempt.current) return
+      setCloudPersistence(result.kind === "saved" ? "SAVED" : "FAILED")
+    })
+  }
 
   const generateCandidates = (
     nextDraft: Partial<PlanBetaIntake>,
@@ -251,6 +279,8 @@ export function PlanBeta({
     return (
       <PlanActiveState
         state={stored}
+        cloudPersistence={cloudPersistence}
+        onRetryCloudBackup={retryCloudBackup}
         celebrateOnMount={celebrateActivePlan}
         onStateChange={setStored}
         onArchived={(intake) => {

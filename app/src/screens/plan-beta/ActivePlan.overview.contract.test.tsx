@@ -1,4 +1,5 @@
 import { act, cleanup, render, screen, within } from "@testing-library/react"
+import userEvent from "@testing-library/user-event"
 import { afterEach, describe, expect, it, vi } from "vitest"
 import type { PlanSession } from "@impl/plan-generator/types"
 import { stateFixture } from "../../domain/plan-beta-store.test-fixture"
@@ -100,5 +101,32 @@ describe("active plan first-view overview", () => {
   it("does not celebrate an already stored plan opened later", () => {
     render(<ActivePlan state={overviewState()} {...callbacks} />)
     expect(screen.queryByText("훈련 계획이 완성됐어요")).not.toBeInTheDocument()
+  })
+
+  it("states whether the plan is device-only or also saved to the signed-in account", () => {
+    const { rerender } = render(
+      <ActivePlan state={overviewState()} cloudPersistence="DEVICE_ONLY" {...callbacks} />,
+    )
+
+    expect(screen.getByText(/이 기기에만 저장/u)).toBeInTheDocument()
+
+    rerender(<ActivePlan state={overviewState()} cloudPersistence="SAVED" {...callbacks} />)
+    expect(screen.getByText(/이 기기와 로그인한 계정에 저장/u)).toBeInTheDocument()
+  })
+
+  it("offers an explicit retry after a cloud backup failure", async () => {
+    const retry = vi.fn()
+    const user = userEvent.setup()
+    render(
+      <ActivePlan
+        state={overviewState()}
+        cloudPersistence="FAILED"
+        onRetryCloudBackup={retry}
+        {...callbacks}
+      />,
+    )
+
+    await user.click(screen.getByRole("button", { name: "계정 보관 다시 시도" }))
+    expect(retry).toHaveBeenCalledTimes(1)
   })
 })
