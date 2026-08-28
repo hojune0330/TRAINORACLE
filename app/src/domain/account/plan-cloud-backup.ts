@@ -7,6 +7,13 @@ import { accountScopedStorageKey } from "./local-account-scope"
 
 export const PLAN_CLOUD_ARCHIVE_STORAGE_KEY = "trainoracle.plan-cloud-archive.v1"
 
+export type PlanCloudPersistenceState =
+  | "DEVICE_ONLY"
+  | "CHECKING"
+  | "SAVING"
+  | "SAVED"
+  | "FAILED"
+
 export type PlanCloudBackupResult =
   | { readonly kind: "saved" }
   | { readonly kind: "loaded"; readonly state: PlanBetaStateV3 }

@@ -34,6 +34,7 @@ import { todayISO } from "../../domain/journal-store"
 import { isValidIsoDate, isoShift, isoToDate } from "../../domain/dates"
 import { isPlanFrameCompletionEligible } from "../../domain/plan-successor-activation"
 import { PERIODIZATION_PHASE_LABELS } from "../../domain/periodization-lineage"
+import type { PlanCloudPersistenceState } from "../../domain/account/plan-cloud-backup"
 
 const PROGRESS_ACTIONS: readonly {
   readonly state: PlanProgressState
@@ -47,6 +48,8 @@ const PROGRESS_ACTIONS: readonly {
 
 export function ActivePlan({
   state,
+  cloudPersistence = "DEVICE_ONLY",
+  onRetryCloudBackup,
   onProgress,
   onNextFrame,
   onActivateNextFrame,
@@ -55,6 +58,8 @@ export function ActivePlan({
   onWriteSessionLog,
 }: {
   readonly state: PlanBetaState
+  readonly cloudPersistence?: PlanCloudPersistenceState
+  readonly onRetryCloudBackup?: () => void
   readonly onProgress: (progress: StoredPlanProgress) => void
   readonly onNextFrame: () => void
   readonly onActivateNextFrame: (currentCheck: PlanCurrentCheck) => void
@@ -206,7 +211,16 @@ export function ActivePlan({
                       </span>
                       <TermHelp term="plan-beta-basis" />
                     </strong>
-                    <small>이 계획과 진행 상태는 이 브라우저에만 저장 · 의료 판단 아님</small>
+                    <small>{cloudPersistenceLabel(cloudPersistence)} · 의료 판단 아님</small>
+                    {cloudPersistence === "FAILED" && onRetryCloudBackup !== undefined && (
+                      <button
+                        className="plan-source-strip__retry"
+                        type="button"
+                        onClick={onRetryCloudBackup}
+                      >
+                        계정 보관 다시 시도
+                      </button>
+                    )}
                     {state.athleteEvidence !== undefined && (
                       <small>
                         저장된 경기 기록 {state.athleteEvidence.storedRecordCount}개
@@ -350,6 +364,21 @@ export function ActivePlan({
       </div>
     </section>
   )
+}
+
+function cloudPersistenceLabel(state: PlanCloudPersistenceState): string {
+  switch (state) {
+    case "CHECKING":
+      return "이 기기에 저장 · 계정 보관 확인 중"
+    case "SAVING":
+      return "이 기기에 저장 · 계정에 보관 중"
+    case "SAVED":
+      return "이 기기와 로그인한 계정에 저장"
+    case "FAILED":
+      return "이 기기에 저장 · 계정 보관은 완료되지 않음"
+    case "DEVICE_ONLY":
+      return "이 기기에만 저장"
+  }
 }
 
 function actionsForRole(

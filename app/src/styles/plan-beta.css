@@ -1682,6 +1682,20 @@
   text-wrap: pretty;
 }
 
+.plan-source-strip__retry {
+  justify-self: start;
+  min-height: var(--app-touch-min);
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: var(--accent-ink);
+  font-family: var(--sans);
+  font-size: var(--fs-body-sm);
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
 .plan-adaptation {
   margin-top: var(--space-4);
   border-block: var(--bw-line) solid var(--ink);
