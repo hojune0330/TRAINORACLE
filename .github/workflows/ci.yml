@@ -148,14 +148,28 @@ jobs:
       contents: write
     concurrency:
       group: trainoracle-pages
-      cancel-in-progress: false
+      cancel-in-progress: true
     steps:
       - name: Checkout
         uses: actions/checkout@v7
         with:
           fetch-depth: 0
 
+      - name: Verify source is current main
+        id: deployment-source
+        shell: bash
+        run: |
+          git fetch origin main
+          CURRENT_MAIN_SHA="$(git rev-parse origin/main)"
+          if [[ "$GITHUB_SHA" == "$CURRENT_MAIN_SHA" ]]; then
+            echo "current=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          echo "current=false" >> "$GITHUB_OUTPUT"
+          echo "::notice::Skipping stale deployment source $GITHUB_SHA; current main is $CURRENT_MAIN_SHA."
+
       - name: Setup Node
+        if: steps.deployment-source.outputs.current == 'true'
         uses: actions/setup-node@v7
         with:
           node-version: "24"
@@ -163,6 +177,7 @@ jobs:
           cache-dependency-path: app/package-lock.json
 
       - name: Build hosted app
+        if: steps.deployment-source.outputs.current == 'true'
         working-directory: app
         env:
           VITE_ACCOUNT_PUBLIC_ENABLED: ${{ vars.TRAINORACLE_ACCOUNT_PUBLIC_ENABLED }}
@@ -202,6 +217,7 @@ jobs:
           npm run build
 
       - name: Publish verified build to gh-pages
+        if: steps.deployment-source.outputs.current == 'true'
         shell: bash
         run: |
           git fetch origin gh-pages
