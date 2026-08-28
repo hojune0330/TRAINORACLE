@@ -178,7 +178,8 @@ Home and Analysis must use the same engine output. They must never calculate tot
 
 Required first-slice presentation:
 
-- Home: compact `이번 주`, `이번 달`, `올해`, and optional `현재 계획 기간` totals with a direct route to Analysis.
+- Home: after the first journal entry or saved plan exists, compact `이번 주`, `이번 달`, `올해`, and optional `현재 계획 기간` totals with a direct route to Analysis.
+- A completely empty first-visit Home may omit the empty cumulative panel to preserve the existing mobile scroll-depth contract; the existing example-journal preview remains the value demonstration.
 - Analysis: 4/12-week comparison, 6/12-month totals, and current-month daily heatmap.
 - Missing windows show `기록 없음` or an em dash, never `0 km`.
 - Partial/excluded data is disclosed near the visualization.

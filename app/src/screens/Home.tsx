@@ -175,13 +175,15 @@ export function Home({
         )}
       />
 
-      <CumulativeDistancePanel
-        observations={observations}
-        today={today}
-        planWindow={planWindow}
-        mode="compact"
-        onOpenTrends={onOpenTrends}
-      />
+      {(entries.length > 0 || planState !== null) && (
+        <CumulativeDistancePanel
+          observations={observations}
+          today={today}
+          planWindow={planWindow}
+          mode="compact"
+          onOpenTrends={onOpenTrends}
+        />
+      )}
 
       {painReviewDates.length > 0 && <PainReview dates={painReviewDates} />}
       <EngagementStrip
