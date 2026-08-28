@@ -6,6 +6,8 @@ import { loadPlanBetaState } from "../domain/plan-beta-store"
 import { toAnalysisJournalEntry } from "../domain/safe-export"
 import type { AnalysisJournalEntry } from "../domain/safe-export"
 import { compactDate, isoShift } from "../domain/dates"
+import { activePlanDateWindow, summarizeToDateDistances } from "../domain/cumulative-distance"
+import { projectStructuredJournalObservations } from "../domain/journal-observation"
 import {
   loadEngagementSummary,
   reconcileJournalAwards,
@@ -22,6 +24,7 @@ import { DeviceJournal } from "./home/DeviceJournal"
 import { DecorationShop } from "./home/DecorationShop"
 import { EngagementStrip } from "./home/EngagementStrip"
 import { TrainingHome } from "./home/TrainingHome"
+import { CumulativeDistancePanel } from "./trends/CumulativeDistancePanel"
 import { TrashBin } from "./home/TrashBin"
 import type { JournalEntryType } from "./log-entry/shared"
 
@@ -63,7 +66,29 @@ export function Home({
     [entries],
   )
   const today = todayISO()
-  const model = buildTrainingHomeViewModel(entries, analysisEntries, loadPlanBetaState(), today)
+  const planState = loadPlanBetaState()
+  const observations = React.useMemo(
+    () => projectStructuredJournalObservations(entries),
+    [entries],
+  )
+  const toDateDistance = React.useMemo(
+    () => summarizeToDateDistances(observations, today),
+    [observations, today],
+  )
+  const baseModel = buildTrainingHomeViewModel(entries, analysisEntries, planState, today)
+  const model = {
+    ...baseModel,
+    analysisSummary: toDateDistance.week.totalKm === null
+      ? baseModel.analysisSummary
+      : `이번 주 ${toDateDistance.week.totalKm}km · 직접 입력 ${toDateDistance.week.includedSourceCount}건`,
+  }
+  const planFrame = planState?.activePlan.frame
+  const planVisibleLength = planFrame === undefined
+    ? undefined
+    : "projectionLengthDays" in planFrame
+      ? planFrame.projectionLengthDays ?? planFrame.lengthDays
+      : planFrame.lengthDays
+  const planWindow = activePlanDateWindow(planState?.intake.startDate, planVisibleLength)
   const engagementRefs = React.useMemo(
     () => entries.flatMap((entry) => {
       const ref = toEngagementJournalRef(entry)
@@ -148,6 +173,14 @@ export function Home({
             <DeviceJournal onOpenDay={onOpenDay} onOpenArchive={onOpenArchive} />
           </section>
         )}
+      />
+
+      <CumulativeDistancePanel
+        observations={observations}
+        today={today}
+        planWindow={planWindow}
+        mode="compact"
+        onOpenTrends={onOpenTrends}
       />
 
       {painReviewDates.length > 0 && <PainReview dates={painReviewDates} />}

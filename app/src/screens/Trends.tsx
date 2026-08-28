@@ -1,26 +1,30 @@
 import React from "react"
 import { ArrowLeft } from "lucide-react"
-import {
-  projectStructuredJournalObservation,
-  selectStructuredJournalInput,
-} from "../domain/journal-observation"
+import { projectStructuredJournalObservations } from "../domain/journal-observation"
 import { analysisExclusionSummary, loadEntries, todayISO } from "../domain/journal-store"
 import { MonthlyTrendSection } from "./trends/MonthlyTrendSection"
-import { WeeklyDistanceSection } from "./trends/WeeklyDistanceSection"
 import { FatigueExperimentPanel } from "./trends/FatigueExperimentPanel"
 import { productFeatures } from "../domain/product-features"
 import { GuidedEmptyState } from "../components/GuidedEmptyState"
 import { TermHelp } from "../components/TermHelp"
+import { loadPlanBetaState } from "../domain/plan-beta-store"
+import { activePlanDateWindow } from "../domain/cumulative-distance"
+import { CumulativeDistancePanel } from "./trends/CumulativeDistancePanel"
 
 export function Trends({ onBack, onWriteLog }: {
   readonly onBack?: (() => void) | undefined
   readonly onWriteLog?: (() => void) | undefined
 }) {
-  const observations = React.useMemo(() => loadEntries().flatMap((entry) => {
-    const input = selectStructuredJournalInput(entry)
-    return input === null ? [] : [projectStructuredJournalObservation(input)]
-  }), [])
+  const observations = React.useMemo(() => projectStructuredJournalObservations(loadEntries()), [])
   const today = todayISO()
+  const planState = loadPlanBetaState()
+  const planFrame = planState?.activePlan.frame
+  const planVisibleLength = planFrame === undefined
+    ? undefined
+    : "projectionLengthDays" in planFrame
+      ? planFrame.projectionLengthDays ?? planFrame.lengthDays
+      : planFrame.lengthDays
+  const planWindow = activePlanDateWindow(planState?.intake.startDate, planVisibleLength)
   const isEmpty = observations.length === 0
   /**
    * 값을 적었는데도 추이에 못 들어간 일지 개수 (Q1).
@@ -51,7 +55,12 @@ export function Trends({ onBack, onWriteLog }: {
         </div>
       ) : (
         <>
-          <WeeklyDistanceSection observations={observations} today={today} />
+          <CumulativeDistancePanel
+            observations={observations}
+            today={today}
+            planWindow={planWindow}
+            mode="full"
+          />
           <MonthlyTrendSection observations={observations} today={today} />
           <div style={{
             padding: "24px 20px 0",
