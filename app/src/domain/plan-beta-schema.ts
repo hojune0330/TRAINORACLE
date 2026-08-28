@@ -25,6 +25,7 @@ import { isValidIsoDate } from "./dates"
 import { DETAILED_PRESCRIPTION_APPROVALS } from "./detailed-prescription-approvals"
 import { formatElapsedMonths, SEASON_WINDOW_MONTHS } from "./athlete-record-display"
 import { athleteRecordIdSchema } from "./athlete-records"
+import { periodizationContextSchema } from "./periodization-lineage"
 
 const planEventGroupSchema = z.enum([
   "MIDDLE_DISTANCE",
@@ -150,6 +151,7 @@ const planHistoryV3Schema = legacyPlanHistorySchema.extend({
   pairId: z.string().regex(/^plan-pair:v3:/u),
   eventDistanceM: supportedPlanEventDistanceSchema,
   selectedDetailedTemplateRef: detailedTemplateRefSchema.nullable(),
+  periodization: periodizationContextSchema.optional(),
 }).strict()
 
 export const planHistorySchema = z.union([planHistoryV3Schema, legacyPlanHistorySchema])
@@ -218,6 +220,7 @@ const planBetaStateV3BaseSchema = z.object({
   generatedAt: z.string().datetime(),
   athleteEvidence: planAthleteEvidenceSchema.optional(),
   adaptationScope: adaptationScopeV3Schema.optional(),
+  periodization: periodizationContextSchema.optional(),
   activePlan: activePlanV3Schema,
 }).strict().superRefine((state, context) => {
   if (state.activePlan.eventDistanceM !== state.intake.eventDistanceM) {
@@ -733,7 +736,7 @@ const planAdaptationEnvelopeObjectSchema = z.object({ version: z.literal(1), pen
 })
 export const planAdaptationEnvelopeSchema = canonicalJsonTreeSchema.pipe(planAdaptationEnvelopeObjectSchema)
 
-export const planHistoryListSchema = z.array(planHistorySchema).max(5)
+export const planHistoryListSchema = z.array(planHistorySchema).max(18)
 
 export type PlanBetaIntake = z.infer<typeof planIntakeSchema>
 export type StoredPlanBetaIntake = z.infer<typeof storedPlanIntakeSchema>

@@ -33,6 +33,7 @@ import { PlanAdaptationFlow } from "./PlanAdaptationFlow"
 import { todayISO } from "../../domain/journal-store"
 import { isValidIsoDate, isoShift, isoToDate } from "../../domain/dates"
 import { isPlanFrameCompletionEligible } from "../../domain/plan-successor-activation"
+import { PERIODIZATION_PHASE_LABELS } from "../../domain/periodization-lineage"
 
 const PROGRESS_ACTIONS: readonly {
   readonly state: PlanProgressState
@@ -136,6 +137,39 @@ export function ActivePlan({
         </li>
         <li>{state.intake.secondSessionMode === "RECOVERY_PM_ALLOWED" ? "하루 2회 포함" : "하루 1회"}</li>
       </ul>
+      {state.version === 3 && state.periodization !== undefined && (
+        <section className="periodization-direction" aria-labelledby="periodization-direction-title">
+          <div>
+            <p id="periodization-direction-title">24주 훈련 방향</p>
+            <strong>
+              {state.periodization.frameOrdinal}/18번째 계획
+              {" · "}{PERIODIZATION_PHASE_LABELS[state.periodization.phase]}
+            </strong>
+            <small>
+              3개 계획을 한 묶음으로 보고 있어요. 지금은 {state.periodization.mesocycleOrdinal}/6번째 묶음이에요.
+            </small>
+          </div>
+          <div
+            className="periodization-direction__track"
+            role="progressbar"
+            aria-label="24주 훈련 방향 진행 위치"
+            aria-valuemin={1}
+            aria-valuemax={18}
+            aria-valuenow={state.periodization.frameOrdinal}
+          >
+            {Array.from({ length: 18 }, (_, index) => (
+              <span
+                key={index}
+                className={index + 1 <= state.periodization!.frameOrdinal ? "is-reached" : undefined}
+                aria-hidden="true"
+              />
+            ))}
+          </div>
+          <p className="periodization-direction__boundary">
+            장기 방향을 보여주는 표예요. 이 표가 훈련 강도·양·횟수를 자동으로 올리지는 않아요.
+          </p>
+        </section>
+      )}
       <PlanSchedulePreview
         startDate={startDate}
         frameLengthDays={frameLengthDays}

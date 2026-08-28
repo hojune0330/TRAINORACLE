@@ -2524,6 +2524,64 @@
   border-block: var(--bw-line) solid var(--line);
 }
 
+.periodization-direction {
+  display: grid;
+  gap: var(--space-3);
+  margin-top: var(--space-5);
+  padding-block: var(--space-4);
+  border-block: var(--bw-line) solid var(--line);
+}
+
+.periodization-direction > div:first-child {
+  display: grid;
+  gap: var(--space-1);
+}
+
+.periodization-direction p,
+.periodization-direction strong,
+.periodization-direction small {
+  margin: 0;
+}
+
+.periodization-direction > div > p {
+  color: var(--ink-3);
+  font-size: var(--fs-body-sm);
+  font-weight: 700;
+}
+
+.periodization-direction > div > strong {
+  color: var(--ink);
+  font-size: var(--fs-body);
+}
+
+.periodization-direction > div > small,
+.periodization-direction__boundary {
+  color: var(--ink-3);
+  font-size: var(--fs-body-sm);
+  line-height: 1.5;
+  word-break: keep-all;
+}
+
+.periodization-direction__track {
+  display: grid;
+  grid-template-columns: repeat(18, minmax(0, 1fr));
+  gap: 2px;
+  min-height: 8px;
+}
+
+.periodization-direction__track span {
+  min-width: 0;
+  background: var(--line);
+}
+
+.periodization-direction__track span.is-reached {
+  background: var(--brand);
+}
+
+.periodization-direction__boundary {
+  margin: 0;
+}
+
 .active-plan__execution-check {
   grid-column: 1 / -1;
   margin-top: var(--space-2);

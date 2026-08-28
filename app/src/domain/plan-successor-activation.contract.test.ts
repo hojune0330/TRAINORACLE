@@ -80,10 +80,19 @@ describe("accepted successor activation", () => {
     expect(result.state.intake.startDate).toBe(LOCAL_DATE)
     expect(result.state.progress).toStrictEqual([])
     expect(result.state.activePlan.candidateId).toBe(fixture.successorCandidateId)
+    expect(result.state.periodization).toMatchObject({
+      macrocycleOrdinal: 1,
+      frameOrdinal: 2,
+      mesocycleOrdinal: 1,
+      phase: "BASE",
+      source: "ROLLED_FORWARD",
+    })
     expect(window.localStorage.getItem(PENDING_KEY)).toBeNull()
     expect(window.localStorage.getItem(PLAN_SUCCESSOR_ACTIVATION_RECEIPT_STORAGE_KEY)).not.toBeNull()
     expect(window.sessionStorage.getItem(PREVIOUS_INTAKE_KEY)).toBe(before.activeIntake)
-    expect(JSON.parse(window.localStorage.getItem(HISTORY_KEY) ?? "[]")).toHaveLength(1)
+    const history = JSON.parse(window.localStorage.getItem(HISTORY_KEY) ?? "[]")
+    expect(history).toHaveLength(1)
+    expect(history[0].periodization).toMatchObject({ frameOrdinal: 1, phase: "BASE" })
     expect(JSON.parse(window.localStorage.getItem(CONTEXT_KEY) ?? "{}").activeCandidateId)
       .toBe(fixture.successorCandidateId)
 

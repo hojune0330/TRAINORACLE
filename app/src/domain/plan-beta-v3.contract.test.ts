@@ -143,6 +143,15 @@ describe("stored plan v3 target and preview boundary", () => {
         selectedDetailedTemplateRef: null,
         pairId: result.generated.pairId,
       },
+      periodization: {
+        macrocycleOrdinal: 1,
+        frameOrdinal: 1,
+        mesocycleOrdinal: 1,
+        phase: "BASE",
+        frameLengthDays: 9.5,
+        targetFrameCount: 18,
+        source: "NEW_PLAN",
+      },
     })
   })
 

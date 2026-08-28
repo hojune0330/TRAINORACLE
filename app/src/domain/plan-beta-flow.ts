@@ -50,6 +50,7 @@ import {
   bindDetailedPrescriptionCandidates,
   type CandidatePrescriptionBinding,
 } from "./plan-candidate-prescription"
+import { createInitialPeriodizationContext } from "./periodization-lineage"
 
 export type PlanCurrentCheck = "NO_KNOWN_RISK" | "REVIEW_REQUIRED"
 
@@ -303,6 +304,15 @@ export function selectPlanForActivation(
     }
   }
 
+  const generatedAt = evaluatedAt.toISOString()
+  const periodization = createInitialPeriodizationContext(
+    result.activePlan.candidateId,
+    generatedAt,
+  )
+  if (periodization === null) {
+    return { kind: "rejected", code: "INVALID_SELECTION_REQUEST" }
+  }
+
   return {
     kind: "selected",
     state: {
@@ -310,7 +320,8 @@ export function selectPlanForActivation(
       intake,
       activePlan: result.activePlan,
       progress: [],
-      generatedAt: new Date().toISOString(),
+      generatedAt,
+      periodization,
       athleteEvidence,
     },
   }
