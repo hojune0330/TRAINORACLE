@@ -29,6 +29,7 @@ import {
   rollbackJournalOwnership,
   unboundJournalIds,
 } from "./account/local-journal-ownership"
+import { samePlannedSessionLink } from "./planned-session-link"
 
 const privateMemoCache = new Map<string, { readonly recoveryCode: string; readonly memo: string }>()
 
@@ -123,6 +124,7 @@ export function saveEntry(entry: unknown): { readonly ok: boolean; readonly tota
   const parsedEntry = parseJournalEntryForWrite(entry)
   if (parsedEntry === null) return { ok: false, total: all.length }
   if (hasPrivateMemoText(parsedEntry)) return { ok: false, total: all.length }
+  if (hasDuplicatePlannedSessionLink(all, parsedEntry)) return { ok: false, total: loadEntries().length }
 
   const ownership = reserveJournalOwnership([parsedEntry.id], activeLocalAccount())
   if (!ownership.ok) return { ok: false, total: loadEntries().length }
@@ -142,6 +144,7 @@ export async function savePrivateEntry(entry: unknown): Promise<{ readonly ok: b
   const all = snapshot.entries
   const parsedEntry = parseJournalEntryForWrite(entry)
   if (parsedEntry === null || !hasPrivateMemoText(parsedEntry)) return { ok: false, total: all.length }
+  if (hasDuplicatePlannedSessionLink(all, parsedEntry)) return { ok: false, total: loadEntries().length }
   const localStorage = journalStorage()
   const recoveryCode = loadSessionRecoveryCode()
   if (localStorage === null || recoveryCode === null) return { ok: false, total: all.length }
@@ -163,6 +166,16 @@ export async function savePrivateEntry(entry: unknown): Promise<{ readonly ok: b
   return { ok: true, total: loadEntries().length }
 }
 
+function hasDuplicatePlannedSessionLink(
+  entries: readonly JournalEntry[],
+  candidate: JournalEntry,
+): boolean {
+  if (candidate.kind !== "post-session" || candidate.plannedSessionLink === undefined) return false
+  return entries.some((entry) => entry.kind === "post-session"
+    && isJournalVisible(entry.id)
+    && entry.plannedSessionLink?.plannedSessionId === candidate.plannedSessionLink?.plannedSessionId)
+}
+
 export async function updatePrivateEntry(
   entry: unknown,
   expectedSavedAt: string,
@@ -181,6 +194,8 @@ export async function updatePrivateEntry(
     || previous.savedAt !== expectedSavedAt
     || previous.kind !== nextEntry.kind
     || previous.date !== nextEntry.date
+    || (previous.kind === "post-session" && nextEntry.kind === "post-session"
+      && !samePlannedSessionLink(previous.plannedSessionLink, nextEntry.plannedSessionLink))
     || !isNewerSavedAt(previous.savedAt, nextEntry.savedAt)) {
     return { ok: false, total: entries.length }
   }

@@ -12,6 +12,7 @@ import {
 } from "lucide-react"
 import type { LucideIcon } from "lucide-react"
 import type { PlanProgressState } from "@impl/plan-generator/types"
+import type { PlanSession } from "@impl/plan-generator/types"
 import type {
   PlanBetaState,
   StoredPlanProgress,
@@ -50,6 +51,7 @@ export function ActivePlan({
   onActivateNextFrame,
   onCheckDetailedExecution,
   showCreatedCelebration = false,
+  onWriteSessionLog,
 }: {
   readonly state: PlanBetaState
   readonly onProgress: (progress: StoredPlanProgress) => void
@@ -61,6 +63,7 @@ export function ActivePlan({
     currentCheck: PlanCurrentCheck,
   ) => void
   readonly showCreatedCelebration?: boolean
+  readonly onWriteSessionLog?: (session: PlanSession) => void
 }) {
   const [hasPendingSuccessor, setHasPendingSuccessor] = React.useState(false)
   const [showActivationCheck, setShowActivationCheck] = React.useState(false)
@@ -243,6 +246,15 @@ export function ActivePlan({
               <em className="active-plan__status">
                 {current === undefined ? "예정" : PROGRESS_LABELS[current]}
               </em>
+              {session.role !== "REST" && onWriteSessionLog !== undefined && (
+                <button
+                  className="active-plan__journal-action"
+                  type="button"
+                  onClick={() => onWriteSessionLog(session)}
+                >
+                  이 훈련 일지 쓰기
+                </button>
+              )}
               <div
                 className="active-plan__actions"
                 role="group"

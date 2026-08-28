@@ -57,6 +57,25 @@ button, input, textarea, select { font: inherit; letter-spacing: inherit; }
   border: 2px solid var(--ink);
 }
 
+.planned-session-link-note {
+  margin: var(--space-3) var(--space-5) 0;
+  padding: var(--space-3) 0;
+  border-block: 1px solid var(--line);
+  display: grid;
+  gap: var(--space-1);
+  color: var(--ink);
+}
+
+.planned-session-link-note strong {
+  font-size: var(--fs-body);
+}
+
+.planned-session-link-note span {
+  color: var(--ink-3);
+  font-size: var(--fs-caption);
+  line-height: 1.55;
+}
+
 .energy-ledger {
   padding: var(--space-6) var(--space-5) 0;
   color: var(--ink);

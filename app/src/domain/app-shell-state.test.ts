@@ -3,7 +3,10 @@ import {
   INITIAL_VIEW_STATE,
   shouldResetTabView,
   viewForJournalReturn,
+  viewForPlannedSessionDraft,
 } from "./app-shell-state"
+import { stateFixture } from "./plan-beta-store.test-fixture"
+import { createPlannedSessionLogDraft } from "./planned-session-link"
 
 describe("app shell return state", () => {
   it("keeps the selected cycle window when returning from a journal draft", () => {
@@ -26,6 +29,27 @@ describe("app shell return state", () => {
       cycleAnchor: "2026-07-20",
       cycleIndex: 2,
     })
+  })
+
+  it("returns a planned-session journal to the plan tab with its exact link", () => {
+    const plan = stateFixture()
+    const session = plan.activePlan.sessions[0]
+    if (session === undefined) throw new Error("Missing fixture session")
+    const draft = createPlannedSessionLogDraft(plan, session, "2026-08-28T03:00:00.000Z")
+    if (draft === null) throw new Error("Missing planned session draft")
+
+    const view = viewForPlannedSessionDraft(INITIAL_VIEW_STATE, draft)
+    expect(view).toMatchObject({
+      tab: "log",
+      entryType: "post-session",
+      detailDate: draft.date,
+      journalDraft: {
+        date: draft.date,
+        returnTab: "plan",
+        plannedSessionLink: draft.link,
+      },
+    })
+    expect(viewForJournalReturn(view).tab).toBe("plan")
   })
 })
 

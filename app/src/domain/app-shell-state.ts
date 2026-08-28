@@ -2,6 +2,7 @@ import type { AppTab } from "../components/AppChrome"
 import type { ArchiveSelection } from "./journal-archive"
 import type { JournalEntry } from "./journal-store"
 import type { EntryType } from "../screens/LogEntry"
+import type { PlannedSessionLogDraft } from "./planned-session-link"
 
 export type AppViewState = {
   readonly tab: AppTab
@@ -17,8 +18,9 @@ export type AppViewState = {
   readonly journalDraft?: {
     readonly date: string
     readonly initialEntry?: JournalEntry
-    readonly returnTab: "home" | "journal"
+    readonly returnTab: "home" | "journal" | "plan"
     readonly archiveSelection: ArchiveSelection | null
+    readonly plannedSessionLink?: PlannedSessionLogDraft["link"]
   }
 }
 
@@ -109,6 +111,24 @@ export function viewForJournalDraft(
       ...(initialEntry === undefined ? {} : { initialEntry }),
       returnTab: state.tab === "journal" ? "journal" : "home",
       archiveSelection: state.archiveSelection,
+    },
+  }
+}
+
+export function viewForPlannedSessionDraft(
+  state: AppViewState,
+  draft: PlannedSessionLogDraft,
+): AppViewState {
+  return {
+    ...state,
+    tab: "log",
+    entryType: "post-session",
+    detailDate: draft.date,
+    journalDraft: {
+      date: draft.date,
+      returnTab: "plan",
+      archiveSelection: null,
+      plannedSessionLink: draft.link,
     },
   }
 }

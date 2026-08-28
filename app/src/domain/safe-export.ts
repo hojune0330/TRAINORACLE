@@ -56,6 +56,7 @@ function toSafeJournalEntry(entry: JournalEntry): SafeJournalEntry {
         durationMin: entry.durationMin,
         avgPace: entry.avgPace,
         rpe: entry.rpe,
+        ...(entry.plannedSessionLink === undefined ? {} : { plannedSessionLink: entry.plannedSessionLink }),
         ...provenance,
         ...(entry.intensityAssessment === undefined ? {} : { intensityAssessment: entry.intensityAssessment }),
       }
@@ -177,6 +178,7 @@ function toAnalysisPostSessionEntry(entry: PostSessionEntry): AnalysisPostSessio
     durationMin: isEligibleForAnalysis("durationMin", entry.fieldProvenance) ? entry.durationMin : "",
     avgPace: isEligibleForAnalysis("avgPace", entry.fieldProvenance) ? entry.avgPace : "",
     rpe: isEligibleForAnalysis("rpe", entry.fieldProvenance) ? entry.rpe : 0,
+    ...(entry.plannedSessionLink === undefined ? {} : { plannedSessionLink: entry.plannedSessionLink }),
     ...(intensityAssessment === undefined ? {} : { intensityAssessment }),
   }
 }
@@ -237,7 +239,8 @@ export function toAnalysisJournalEntry(entry: JournalEntry): AnalysisJournalEntr
 
 function hasExportableStructuredSignal(entry: JournalEntry): boolean {
   if (entry.kind === "post-session") {
-    return entry.title.trim() !== ""
+    return entry.plannedSessionLink !== undefined
+      || entry.title.trim() !== ""
       || entry.distanceKm.trim() !== ""
       || entry.durationMin.trim() !== ""
       || entry.avgPace.trim() !== ""

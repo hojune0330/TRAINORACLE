@@ -20,10 +20,11 @@ import { StickyBar } from "./StickyBar"
 import type { EntryFormProps } from "./shared"
 import { JOURNAL_ENERGY_SYSTEM_OPTIONS } from "../../domain/energy-system-taxonomy"
 
-export function PostSessionForm({ onBack, onDone, targetDate, initialEntry }: EntryFormProps) {
+export function PostSessionForm({ onBack, onDone, targetDate, initialEntry, plannedSessionLink }: EntryFormProps) {
   const initial = initialEntry?.kind === "post-session" ? initialEntry : undefined
   const isEditing = initial !== undefined
   const entryDate = initial?.date ?? targetDate ?? todayISO()
+  const planLink = initial?.plannedSessionLink ?? plannedSessionLink
   const [rpe, setRpe] = React.useState(() => initial?.rpe ?? 0)
   const [saveError, setSaveError] = React.useState(false)
   const [system, setSystem] = React.useState(() => (
@@ -53,6 +54,7 @@ export function PostSessionForm({ onBack, onDone, targetDate, initialEntry }: En
       savedAt: nextJournalSavedAt(initial?.savedAt), syncState: "local",
       system, title, distanceKm, durationMin, avgPace, rpe, memo: memo.text,
       ...(intensity.assessment === undefined ? {} : { intensityAssessment: intensity.assessment }),
+      ...(planLink === undefined ? {} : { plannedSessionLink: planLink }),
       fieldProvenance: {
         system: explicitOrMissing(system !== ""),
         distanceKm: explicitOrMissing(distanceKm.trim() !== ""),
@@ -80,6 +82,12 @@ export function PostSessionForm({ onBack, onDone, targetDate, initialEntry }: En
       <div style={{ padding: "8px 20px 0" }}>
         <IndexCard date={compactDate(entryDate)} dow={`${dowOf(entryDate)} · ${nowClock()}`} />
       </div>
+      {planLink !== undefined && (
+        <div className="planned-session-link-note" role="status">
+          <strong>계획의 DAY {planLink.sessionDay} {planLink.sessionSlot === "AM" ? "오전" : "오후"} 훈련</strong>
+          <span>이 일지를 선택한 훈련과 연결해 저장해요. 실제로 한 내용은 아래에 직접 적어 주세요.</span>
+        </div>
+      )}
 
       <FormSec lb="강도 시스템" help="energy-system">
         <div className="journal-energy-picker">
