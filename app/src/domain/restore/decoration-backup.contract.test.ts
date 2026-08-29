@@ -92,7 +92,8 @@ describe("explicit full backup decoration section", () => {
     const read = readBackupFile(exportEntriesJSON({ includeRawMemos: true }))
 
     expect(read.decorationStatus).toBe("included")
-    expect(read.decorationItemCount).toBe(5)
+    // 2026-08-29: 이모지 스티커 48종 무료 스타터 추가 → 기본 5 + 48 = 53.
+    expect(read.decorationItemCount).toBe(53)
     expect(read.decorationPlacementCount).toBe(2)
   })
 

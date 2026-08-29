@@ -1,5 +1,11 @@
 import { beforeEach, describe, expect, it } from "vitest"
-import { DECORATION_CATALOG, loadDecorationState, purchaseDecoration } from "./decorations"
+import {
+  DECORATION_CATALOG,
+  EMOJI_STICKER_IDS,
+  EMOJI_STICKER_SLOTS,
+  loadDecorationState,
+  purchaseDecoration,
+} from "./decorations"
 
 const DECORATION_STORAGE_KEY_V1 = "trainoracle.decorations.v1"
 const DECORATION_STORAGE_KEY_V2 = "trainoracle.decorations.v2"
@@ -13,6 +19,8 @@ const EMPTY_DECORATION_STATE = {
     "STICKER_WEATHER_SUN",
     "STAMP_REST_DAY",
     "TAPE_CHECKER",
+    // 이모지 스티커 48종은 전부 기본 제공(무료 스타터) — 2026-08-29 V1.
+    ...EMOJI_STICKER_IDS,
   ],
   equipped: {
     themeId: "THEME_TRACK_NOTEBOOK",
@@ -30,16 +38,18 @@ const EMPTY_DECORATION_STATE = {
 beforeEach(() => window.localStorage.clear())
 
 describe("beta decoration shop", () => {
-  it("exposes the complete eight-item beta catalog without changing paid prices", () => {
-    // Given / When
-    const catalogIdentity = DECORATION_CATALOG.map(({
-      id,
-      cost,
-      typeLabel,
-      assetPath,
-      compatibleSlots,
-      starterOwned,
-    }) => ({ id, cost, typeLabel, assetPath, compatibleSlots, starterOwned }))
+  it("keeps the original eight-item beta catalog identity without changing paid prices", () => {
+    // Given / When: 이모지 스티커(별도 계약) 이외의 기존 8종 식별자는 그대로여야 한다.
+    const catalogIdentity = DECORATION_CATALOG
+      .filter((item) => item.category !== "EMOJI_STICKER")
+      .map(({
+        id,
+        cost,
+        typeLabel,
+        assetPath,
+        compatibleSlots,
+        starterOwned,
+      }) => ({ id, cost, typeLabel, assetPath, compatibleSlots, starterOwned }))
 
     // Then
     expect(catalogIdentity).toEqual([
@@ -108,6 +118,25 @@ describe("beta decoration shop", () => {
         starterOwned: false,
       },
     ])
+  })
+
+  it("ships 48 free emoji stickers rendered as unicode text with no bundled artwork", () => {
+    // Given / When
+    const emojiItems: readonly import("./decorations").DecorationCatalogItem[] = DECORATION_CATALOG.filter((item) => item.category === "EMOJI_STICKER")
+
+    // Then: 48종, 전부 무료 스타터, 자산 경로 없음(벤더 아트워크 번들 금지),
+    // 전용 슬롯 3칸만 호환, 이모지는 NFC 정규화된 유니코드 문자.
+    expect(emojiItems.map((item) => item.id)).toEqual([...EMOJI_STICKER_IDS])
+    for (const item of emojiItems) {
+      expect(item.cost).toBe(0)
+      expect(item.starterOwned).toBe(true)
+      expect(item.assetPath).toBe("")
+      expect(item.compatibleSlots).toEqual([...EMOJI_STICKER_SLOTS])
+      expect(typeof item.emoji).toBe("string")
+      expect(item.emoji).toBe(item.emoji?.normalize("NFC"))
+      // ZWJ 합성 금지 (OI-EMOJI-2 검증 전 보류)
+      expect(item.emoji?.includes("\u200d")).toBe(false)
+    }
   })
 
   it("spends non-economic points on a theme, sticker, or avatar", () => {

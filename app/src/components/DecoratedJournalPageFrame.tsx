@@ -17,6 +17,9 @@ const SLOT_TEST_IDS = {
   TOP_CORNER: "journal-slot-top-corner",
   BODY_MARGIN: "journal-slot-body-margin",
   PAGE_FOOTER: "journal-slot-page-footer",
+  BODY_STICKER_1: "journal-slot-body-sticker-1",
+  BODY_STICKER_2: "journal-slot-body-sticker-2",
+  BODY_STICKER_3: "journal-slot-body-sticker-3",
 } as const satisfies Record<DecorationSlot, string>
 
 function DecorationAsset({
@@ -29,6 +32,17 @@ function DecorationAsset({
   readonly testId: string
 }) {
   const [failed, setFailed] = React.useState(false)
+  if (item.category === "EMOJI_STICKER") {
+    /*
+     * 이모지 스티커는 유니코드 텍스트로만 렌더한다(플랫폼 이모지 폰트 위임).
+     * 벤더 아트워크 파일을 절대 로드하지 않는다 — 검수 계약 2026-08-29 §3.
+     */
+    return (
+      <span className={`${className} decorated-journal-page__emoji`} data-testid={testId} aria-hidden="true">
+        {item.emoji}
+      </span>
+    )
+  }
   if (failed) {
     return (
       <span className={`${className} decorated-journal-page__asset-fallback`} data-testid={testId} aria-hidden="true">
@@ -63,7 +77,10 @@ export function DecoratedJournalPageFrame({ date, state, children }: DecoratedJo
   const topCorner = placementFor("TOP_CORNER")
   const bodyMargin = placementFor("BODY_MARGIN")
   const pageFooter = placementFor("PAGE_FOOTER")
+  const stickerSlots = (["BODY_STICKER_1", "BODY_STICKER_2", "BODY_STICKER_3"] as const)
+    .map((slot) => ({ slot, placement: placementFor(slot) }))
   const hasTopRail = avatar !== undefined || headerTape !== undefined || topCorner !== undefined
+  const hasStickerRail = stickerSlots.some(({ placement }) => placement !== undefined)
 
   return (
     <section
@@ -91,6 +108,21 @@ export function DecoratedJournalPageFrame({ date, state, children }: DecoratedJo
           </aside>
         )}
       </div>
+      {hasStickerRail && (
+        <div className="decorated-journal-page__sticker-rail" data-testid="journal-sticker-rail" aria-hidden="true">
+          {stickerSlots.map(({ slot, placement }) => (
+            <span key={slot} className="decorated-journal-page__sticker-cell">
+              {placement !== undefined && (
+                <DecorationAsset
+                  item={placement.item}
+                  className={`decorated-journal-page__slot decorated-journal-page__slot--${slot.toLowerCase().replaceAll("_", "-")}`}
+                  testId={SLOT_TEST_IDS[slot]}
+                />
+              )}
+            </span>
+          ))}
+        </div>
+      )}
       {pageFooter !== undefined && (
         <div className="decorated-journal-page__footer-rail" aria-hidden="true">
           <DecorationAsset item={pageFooter.item} className="decorated-journal-page__slot decorated-journal-page__slot--page-footer" testId={SLOT_TEST_IDS.PAGE_FOOTER} />

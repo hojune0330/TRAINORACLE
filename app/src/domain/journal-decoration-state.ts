@@ -1,6 +1,7 @@
 import {
   decorationStateSchema,
   isAvatarDecorationId,
+  isEmojiStickerId,
   isInkDecorationId,
   isPlacementDecorationId,
   isThemeDecorationId,
@@ -11,6 +12,25 @@ import type {
   DecorationSlot,
   DecorationState,
 } from "./decorations"
+
+/*
+ * 이모지 스티커는 전용 슬롯 3칸 중 비어 있는 첫 칸을 고른다.
+ * 세 칸이 모두 차면 첫 칸을 돌려줘서 교체 확인 흐름을 타게 한다.
+ * 다른 장식은 기존처럼 첫 호환 슬롯을 쓴다.
+ */
+export function resolveJournalDecorationSlot(
+  state: DecorationState,
+  item: DecorationCatalogItem,
+  date: string,
+  slot?: DecorationSlot,
+): DecorationSlot | undefined {
+  if (slot !== undefined) return slot
+  if (!isEmojiStickerId(item.id)) return item.compatibleSlots[0]
+  const occupied = new Set(
+    state.pagePlacements.filter((placement) => placement.date === date).map((placement) => placement.slot),
+  )
+  return item.compatibleSlots.find((candidate) => !occupied.has(candidate)) ?? item.compatibleSlots[0]
+}
 
 function candidateState(
   state: DecorationState,
@@ -28,7 +48,7 @@ function candidateState(
     return { ...state, equipped: { ...state.equipped, avatarId: item.id } }
   }
   if (!isPlacementDecorationId(item.id)) return state
-  const targetSlot = slot ?? item.compatibleSlots[0]
+  const targetSlot = resolveJournalDecorationSlot(state, item, date, slot)
   if (targetSlot === undefined || !item.compatibleSlots.includes(targetSlot)) return null
   return {
     ...state,

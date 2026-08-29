@@ -4,7 +4,6 @@ import {
   DECORATION_IDS,
   DECORATION_SLOTS,
   INK_DECORATION_IDS,
-  PAID_DECORATION_IDS,
   PLACEMENT_DECORATION_IDS,
   STARTER_DECORATION_IDS,
   THEME_DECORATION_IDS,
@@ -229,11 +228,11 @@ export function migrateLegacyDecorationState(raw: string): DecorationState | nul
   const json = parseJson(raw)
   const parsed = legacyStateSchema.safeParse(json)
   if (!parsed.success) return null
-  const paidIds = PAID_DECORATION_IDS.filter((itemId) => parsed.data.ownedItemIds.includes(itemId))
+  /* 보유 목록 순서는 v2 로드 경로와 동일하게 카탈로그 순서로 통일한다. */
   const candidate = {
     ...createEmptyDecorationState(),
     spentPoints: parsed.data.spentPoints,
-    ownedItemIds: [...STARTER_DECORATION_IDS, ...paidIds],
+    ownedItemIds: normalizedOwnedIds(parsed.data.ownedItemIds),
   }
   const state = decorationStateSchema.safeParse(candidate)
   return state.success ? state.data : null
