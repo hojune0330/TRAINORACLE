@@ -7,6 +7,7 @@ import {
   isThemeDecorationId,
   rememberDecorationUse,
 } from "../../domain/decorations"
+import { resolveJournalDecorationSlot } from "../../domain/journal-decoration-state"
 import type {
   DecorationCatalogItem,
   DecorationId,
@@ -34,6 +35,7 @@ export const TYPE_FILTERS = [
   { id: "TAPE", label: "테이프" },
   { id: "INK", label: "글자색" },
   { id: "AVATAR", label: "아바타" },
+  { id: "EMOJI_STICKER", label: "이모지" },
 ] as const
 
 export type TypeFilterId = (typeof TYPE_FILTERS)[number]["id"]
@@ -60,11 +62,12 @@ export const DECORATION_PRESETS: readonly DecorationPreset[] = [
   { id: "COMPETITION_DAY", name: "경기 날", description: "결과보다 그날의 출발을 기억해요.", itemIds: ["THEME_TRACK_NOTEBOOK", "STICKER_FINISH_LINE", "AVATAR_START_LINE"] },
 ]
 
+/* 상황 탭에 이모지 그룹을 연결해 “오늘 붙일 만한 것”이 바로 보이게 한다. */
 const SITUATION_ITEMS: Readonly<Record<Exclude<SituationTabId, "RECENT" | "FAVORITES" | "ALL" | "RECOMMENDED">, readonly DecorationId[]>> = {
-  WEATHER: ["STICKER_WEATHER_SUN", "THEME_SKY_JOURNAL", "TAPE_CHECKER"],
-  RECOVERY: ["STAMP_REST_DAY", "THEME_SKY_JOURNAL", "INK_NAVY"],
-  COMPETITION: ["STICKER_FINISH_LINE", "AVATAR_START_LINE", "THEME_TRACK_NOTEBOOK"],
-  SEASON: ["THEME_SKY_JOURNAL", "STICKER_WEATHER_SUN", "TAPE_CHECKER"],
+  WEATHER: ["STICKER_WEATHER_SUN", "THEME_SKY_JOURNAL", "TAPE_CHECKER", "EMOJI_SUN", "EMOJI_SUN_CLOUD", "EMOJI_CLOUD", "EMOJI_RAIN", "EMOJI_SNOW"],
+  RECOVERY: ["STAMP_REST_DAY", "THEME_SKY_JOURNAL", "INK_NAVY", "EMOJI_SLEEP", "EMOJI_BATH", "EMOJI_WATER", "EMOJI_SALAD", "EMOJI_BANDAGE"],
+  COMPETITION: ["STICKER_FINISH_LINE", "AVATAR_START_LINE", "THEME_TRACK_NOTEBOOK", "EMOJI_FINISH", "EMOJI_MEDAL", "EMOJI_STADIUM", "EMOJI_PARTY", "EMOJI_FIRE"],
+  SEASON: ["THEME_SKY_JOURNAL", "STICKER_WEATHER_SUN", "TAPE_CHECKER", "EMOJI_BLOSSOM", "EMOJI_FALLEN_LEAF", "EMOJI_MOON", "EMOJI_HOT", "EMOJI_COLD"],
 }
 
 export function visibleStudioItems(
@@ -91,7 +94,7 @@ export function previewDecorationItem(
   if (isInkDecorationId(item.id)) return { ...state, equipped: { ...state.equipped, inkId: item.id } }
   if (isAvatarDecorationId(item.id)) return { ...state, equipped: { ...state.equipped, avatarId: item.id } }
   if (!isPlacementDecorationId(item.id)) return state
-  const slot = item.compatibleSlots[0]
+  const slot = resolveJournalDecorationSlot(state, item, date)
   if (slot === undefined) return state
   return {
     ...state,

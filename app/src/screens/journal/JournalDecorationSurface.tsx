@@ -16,6 +16,7 @@ import {
   applyJournalDecoration,
   previewJournalDecoration,
   removeJournalDecoration,
+  resolveJournalDecorationSlot,
 } from "../../domain/journal-decoration-state"
 import { withJosa } from "../../domain/korean-josa"
 import { JournalDecorationToolbar } from "./JournalDecorationToolbar"
@@ -85,11 +86,13 @@ export function JournalDecorationSurface({
   }
 
   const apply = (item: DecorationCatalogItem, slot?: DecorationSlot): void => {
-    if (slot !== undefined) {
-      const current = canonical.pagePlacements.find((placement) => placement.date === date && placement.slot === slot)
+    /* 이모지는 빈 칸 자동 배정 결과를 기준으로 교체 확인을 한다. */
+    const targetSlot = resolveJournalDecorationSlot(canonical, item, date, slot)
+    if (targetSlot !== undefined) {
+      const current = canonical.pagePlacements.find((placement) => placement.date === date && placement.slot === targetSlot)
       const previous = current === undefined ? undefined : DECORATION_CATALOG.find((candidate) => candidate.id === current.itemId)
       if (previous !== undefined && previous.id !== item.id) {
-        setReplacement({ item, previous, slot })
+        setReplacement({ item, previous, slot: targetSlot })
         return
       }
     }

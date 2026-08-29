@@ -181,6 +181,8 @@
 .decoration-shop__preview { width: 72px; height: 72px; border: var(--bw-line) solid var(--line); border-radius: 6px; overflow: hidden; display: grid; place-items: center; background: var(--surface); }
 .decoration-shop__preview img { width: 100%; height: 100%; display: block; object-fit: contain; }
 .decoration-shop__fallback { padding: var(--space-1); color: var(--ink-3); font-size: var(--fs-caption); line-height: 1.35; text-align: center; }
+/* 이모지 스티커: 유니코드 텍스트 렌더 — 종이 위 스티커 감성으로 종이 톤 배경. */
+.decoration-shop__preview--emoji { background: var(--paper, var(--surface)); font-size: 34px; line-height: 1; user-select: none; }
 .decoration-shop__item strong,
 .decoration-shop__item small,
 .decoration-shop__item button { font-size: var(--fs-body-sm); letter-spacing: 0; }
@@ -190,6 +192,30 @@
 .decoration-shop__item-actions button:disabled { border-color: var(--line); color: var(--ink-3); cursor: default; }
 .decoration-shop__item-actions .decoration-shop__icon-button { width: var(--app-touch-min); padding: 0; border-color: var(--line); }
 .decoration-studio__empty { margin: 0; padding: var(--space-5) var(--space-3); color: var(--ink-3); font-size: var(--fs-body-sm); text-align: center; }
+
+/*
+ * 이모지 스티커 그룹 그리드 (계약 2026-08-29 §6): 44px 터치 타깃,
+ * 유니코드 텍스트 렌더 전용. 붙인 이모지는 만년필 잉크색 테두리.
+ */
+.decoration-studio__emoji-groups { display: grid; gap: var(--space-3); padding: var(--space-2) var(--space-3) var(--space-3); }
+.decoration-studio__emoji-groups section { display: grid; gap: var(--space-1); }
+.decoration-studio__emoji-groups section > small { color: var(--ink-3); font-size: var(--fs-caption); letter-spacing: 0.02em; }
+.decoration-studio__emoji-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(44px, 1fr)); gap: 4px; }
+.decoration-studio__emoji-grid button {
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  border: var(--bw-line) solid var(--hair);
+  border-radius: 6px;
+  background: var(--paper, var(--surface));
+  font-size: 22px;
+  line-height: 1;
+  user-select: none;
+  cursor: pointer;
+}
+.decoration-studio__emoji-grid button[aria-pressed="true"] { border: 1.5px solid var(--ink-blue); }
 
 .decoration-studio-preview__day-state {
   margin: 0;

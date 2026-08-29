@@ -6,7 +6,7 @@ import {
 import { PLAN_BETA_STORAGE_KEY } from "../plan-beta-store"
 import { stateFixture } from "../plan-beta-store.test-fixture"
 import { DECORATION_STORAGE_KEY_V1, DECORATION_STORAGE_KEY_V2 } from "../decoration-store"
-import { createEmptyDecorationState } from "../decoration-schema"
+import { createEmptyDecorationState, parseStoredDecorationState } from "../decoration-schema"
 import {
   connectDeviceTrainingData,
   inspectDeviceTrainingDataConnection,
@@ -177,11 +177,12 @@ describe("explicit device training data connection", () => {
   })
 
   it("moves meaningful device decorations without inventing or refunding points", () => {
-    const state = {
+    /* 보유 목록은 로드 시 카탈로그 순서로 정규화되므로 기대 바이트도 정규화 후로 만든다. */
+    const state = parseStoredDecorationState(JSON.stringify({
       ...createEmptyDecorationState(),
       spentPoints: 12,
       ownedItemIds: [...createEmptyDecorationState().ownedItemIds, "STICKER_FINISH_LINE"],
-    }
+    }))
     const serialized = JSON.stringify(state)
     window.localStorage.setItem(DECORATION_STORAGE_KEY_V2, serialized)
 

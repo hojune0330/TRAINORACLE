@@ -4,6 +4,14 @@ import type { DecorationCatalogItem } from "../../domain/decorations"
 
 function ItemImage({ item }: { readonly item: DecorationCatalogItem }) {
   const [failed, setFailed] = React.useState(false)
+  /* 이모지 스티커는 항상 유니코드 텍스트로만 렌더한다(벤더 아트워크 로드 금지). */
+  if (item.category === "EMOJI_STICKER") {
+    return (
+      <span className="decoration-shop__preview decoration-shop__preview--emoji">
+        <span role="img" aria-label={item.fallbackLabel}>{item.emoji}</span>
+      </span>
+    )
+  }
   return (
     <span className="decoration-shop__preview">
       {failed ? (
