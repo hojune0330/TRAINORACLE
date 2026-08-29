@@ -1,4 +1,4 @@
-import { ArrowLeft, BookOpen, CircleHelp, MessageSquareText, Newspaper, ScrollText, ShieldCheck } from "lucide-react"
+import { ArrowLeft, BookOpen, CircleHelp, MessageSquareText, Newspaper, ScrollText, ShieldCheck, Watch } from "lucide-react"
 import { DataSafetyNotice } from "../components/DataSafetyNotice"
 import { feedbackConfig } from "../domain/feedback/feedback-config"
 import { SafeJournalExport } from "./home/DeviceJournal"
@@ -41,6 +41,10 @@ export function More({
         <a className="more-screen__row" href="?feedback=1">
           <MessageSquareText aria-hidden="true" size={19} />
           <span><strong>문의 게시판</strong><small>{feedbackAvailable ? "불편한 점을 일지 내용 없이 남겨요" : "지금은 준비 중이에요. 열리면 앱 안에서 알려드려요"}</small></span>
+        </a>
+        <a className="more-screen__row" href="./support.html" target="_blank" rel="noreferrer">
+          <Watch aria-hidden="true" size={19} />
+          <span><strong>기기 연동 상태</strong><small>Garmin·COROS 신청 현황과 파일 가져오기를 확인해요</small></span>
         </a>
         <a className="more-screen__row" href="./legal/privacy.html" target="_blank" rel="noreferrer">
           <ShieldCheck aria-hidden="true" size={19} />
