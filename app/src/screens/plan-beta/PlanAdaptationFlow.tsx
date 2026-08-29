@@ -23,8 +23,11 @@ import type { PendingNextFrameSuccessor } from "../../domain/plan-beta-schema"
 import { PlanChoice } from "./PlanChoice"
 import { PlanAdaptationResult, PlanAdaptationReview } from "./PlanAdaptationReview"
 import { TermHelp } from "../../components/TermHelp"
+import { loadEntries } from "../../domain/journal-store"
+import { derivePlanCycleResponse } from "../../domain/plan-cycle-response"
+import type { JournalEntry } from "../../domain/journal-schema"
 
-type Step = "closed" | "reason" | "record" | "safety" | "choice" | "review" | "result" | "pending"
+type Step = "closed" | "reason" | "cycle" | "record" | "safety" | "choice" | "review" | "result" | "pending"
 type Reason = "PB_SB" | "EXPLICIT_REQUEST"
 
 type PlanAdaptationFlowProps = {
@@ -34,6 +37,7 @@ type PlanAdaptationFlowProps = {
   readonly onLoadRecords?: () => readonly AthleteRecord[]
   readonly onLoadPending?: typeof loadMatchingPendingSuccessor
   readonly onEvaluateSafety?: typeof evaluateActivePlanAdaptationSafety
+  readonly onLoadEntries?: () => readonly JournalEntry[]
   readonly onPendingChange?: (hasPending: boolean) => void
 }
 
@@ -44,6 +48,7 @@ export function PlanAdaptationFlow({
   onLoadRecords = loadAthleteRecords,
   onLoadPending = loadMatchingPendingSuccessor,
   onEvaluateSafety = evaluateActivePlanAdaptationSafety,
+  onLoadEntries = loadEntries,
   onPendingChange,
 }: PlanAdaptationFlowProps) {
   const [step, setStep] = React.useState<Step>("closed")
@@ -60,6 +65,10 @@ export function PlanAdaptationFlow({
   const records = React.useMemo(
     () => eligiblePbSbRecords(state, onLoadRecords()),
     [onLoadRecords, state],
+  )
+  const cycleResponse = React.useMemo(
+    () => derivePlanCycleResponse(onLoadEntries(), state),
+    [onLoadEntries, state],
   )
 
   React.useEffect(() => {
@@ -95,7 +104,7 @@ export function PlanAdaptationFlow({
     setStep(nextReason === "PB_SB" ? "record" : "safety")
   }
 
-  const prepareReduction = async () => {
+  const prepareCandidate = async () => {
     if (reason === null || currentCheck === null) return
     const operationAt = new Date()
     const safety = onEvaluateSafety(state, currentCheck, operationAt)
@@ -181,6 +190,44 @@ export function PlanAdaptationFlow({
                 selected={false}
                 onClick={() => chooseReason("EXPLICIT_REQUEST")}
               />
+              <PlanChoice
+                title="이번 주기 수행 기록을 볼래요"
+                detail="계획에서 이어 쓴 일지의 RPE만 비교해 유지·감량·확인 방향을 설명해요."
+                selected={false}
+                onClick={() => setStep("cycle")}
+              />
+            </DecisionStep>
+          )}
+
+          {step === "cycle" && (
+            <DecisionStep title="이번 주기에서 확인된 흐름" onBack={() => setStep("reason")}>
+              <div className="plan-adaptation__evidence">
+                <strong>{cycleResponse.headline}</strong>
+                {cycleResponse.evidence.map((item) => <p key={item}>{item}</p>)}
+                <small>일지 원문·비밀 메모·통증 문장은 읽지 않으며, 이 결과만으로 훈련량을 늘리지 않아요.</small>
+              </div>
+              {cycleResponse.recommendation === "REDUCE_OR_REVIEW"
+                && state.activePlan.candidateKind === "BALANCED" && (
+                <PlanChoice
+                  title="훈련량을 줄인 후보 확인"
+                  detail="현재 계획은 그대로 두고 승인된 보수적 다음 후보만 비교해요."
+                  selected={false}
+                  onClick={() => chooseReason("EXPLICIT_REQUEST")}
+                />
+              )}
+              <PlanChoice
+                title={cycleResponse.recommendation === "MAINTAIN_OR_VARY_METHOD" ? "현재 수준을 유지하고 방법을 다양화" : "현재 기준 유지"}
+                detail={cycleResponse.recommendation === "MAINTAIN_OR_VARY_METHOD"
+                  ? "훈련량은 올리지 않아요. 다음 계획에서 승인된 다른 상세 세션이 있으면 후보로 비교합니다."
+                  : "새 후보를 저장하지 않고 현재 계획과 다음 계획 기준을 유지해요."}
+                selected={false}
+                onClick={() => {
+                  setMessage(cycleResponse.recommendation === "MAINTAIN_OR_VARY_METHOD"
+                    ? "훈련량은 그대로 유지해요. 승인된 다른 상세 세션이 있는 경우에만 다음 후보에서 방법을 바꿔 보여드려요."
+                    : "현재 기준을 유지해요. 강도·양·횟수는 바꾸지 않았습니다.")
+                  setStep("result")
+                }}
+              />
             </DecisionStep>
           )}
 
@@ -236,10 +283,18 @@ export function PlanAdaptationFlow({
           {step === "choice" && (
             <DecisionStep title="다음 계획의 기준을 선택해 주세요" onBack={() => setStep("safety")}>
               <PlanChoice
-                title="훈련량을 조금 줄인 다음 계획"
-                detail="승인된 보수적 후보가 있을 때만 바뀐 세션을 비교해요."
+                title={reason === "PB_SB"
+                  ? "기록 갱신을 반영한 다음 후보"
+                  : state.activePlan.candidateKind === "BALANCED"
+                    ? "훈련량을 조금 줄인 다음 계획"
+                    : "기본 훈련량 범위로 돌아간 다음 계획"}
+                detail={reason === "PB_SB"
+                  ? "PB·SB 뒤에도 강도·양·횟수를 함께 올리지 않고 승인된 기존 후보만 비교해요."
+                  : state.activePlan.candidateKind === "BALANCED"
+                    ? "승인된 보수적 후보가 있을 때만 바뀐 세션을 비교해요."
+                    : "이전에 줄여 둔 쉬운 훈련 시간을 원래 후보 범위로 되돌려 비교해요. 강도와 횟수는 올리지 않아요."}
                 selected={false}
-                onClick={() => void prepareReduction()}
+                onClick={() => void prepareCandidate()}
               />
               <PlanChoice
                 title="현재 계획과 같은 기준 유지"

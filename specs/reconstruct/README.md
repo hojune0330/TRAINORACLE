@@ -17,6 +17,7 @@ Current productization drafts:
 - `PERIODIZATION_LINEAGE_CONTRACT.md` (`DRAFT_FOR_REVIEW`; 9.5-day frame, three-frame display group, and 18-frame direction lineage, not an automatic load rule, not canonical, not runtime evidence)
 - `PLAN_EVENT_BREADTH_CONTRACT.md` (`DRAFT_FOR_REVIEW`; seven initial events from 800m through marathon, RPE-time generation only where no detailed template is active, not canonical, not detailed-template activation authority)
 - `PERSONAL_ORACLE_EXPLANATION_CONTRACT.md` (`DRAFT_FOR_REVIEW`; deterministic personal structured-fact explanation, no score, prescription, safety, friend-comparison or private-memo authority)
+- `TRAINING_METHOD_COMPATIBILITY_CONTRACT.md` (`DRAFT_FOR_REVIEW`; deterministic method-context comparison with evidence and conflicts, no numeric score or plan authority)
 - `TRENDING_TRAINING_CONTENT_CONTRACT.md` (`DRAFT_FOR_REVIEW`; source-labelled read-only content and local bookmarks, no plan activation or content-point authority)
 - `PLAN_OUTPUT_RATIONALE_PRIVACY_SPEC.md` (`DRAFT_FOR_REVIEW`; new productization draft, not original restored, not canonical, not runtime evidence)
 - `MICROCYCLE_AND_CALENDAR_MAPPING_SPEC.md` (`DRAFT_FOR_REVIEW`; new productization draft, not original restored, not canonical, not runtime evidence)
@@ -198,6 +199,13 @@ Use this order before creating any reconstructed file:
 - It cannot edit AthleteTime code, export TrainOracle private data, clear D9 risk, clear Safety Gate blocks, close downstream issues, or claim runtime evidence.
 
 ## Required Safety Semantics
+
+`TRAINING_METHOD_COMPATIBILITY_CONTRACT.md`, `PLAN_CYCLE_RESPONSE_AND_ADAPTATION_CONTRACT.md`, and `FRIEND_COMPARISON_AND_TOGETHER_RUNNING_ORACLE_SPEC.md`:
+
+- keep training-method matching descriptive and non-prescriptive;
+- connect only immutable plan-linked structured results to next-candidate review;
+- require separate field-level consent before a public profile can expose friend-comparison aggregates;
+- never use these features to clear D9, mutate an active plan, or expose private text.
 
 - `D9_ACTIVE` blocks Plan Generator.
 - `D9_UNKNOWN` blocks Plan Generator or requires human review.

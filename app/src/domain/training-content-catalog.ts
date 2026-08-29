@@ -19,6 +19,13 @@ export type TrainingContentArticle = {
   readonly sourceGrade: "A_OBSERVED" | "B_TECHNICAL" | "C_MEDIA"
   readonly sourceState: TrainingContentSourceState
   readonly planEligibility: "NOT_PLAN_ELIGIBLE"
+  readonly compatibility: {
+    readonly targetEnergySystems: readonly ("BASE" | "LT" | "VO2" | "GLY" | "ATP_PC" | "RECOVERY" | "MIXED_UNALLOCATED")[]
+    readonly suitableEventDistancesM: readonly (800 | 1500 | 3000 | 5000 | 10000 | 21097 | 42195)[]
+    readonly suitableExperienceBands: readonly ("NEW_TO_RUNNING" | "DEVELOPING" | "EXPERIENCED")[]
+    readonly minimumAvailableDays: 3 | 4 | 5 | 6 | "EVERY_DAY"
+    readonly requiresTwoQualitySessionsSameDay: boolean
+  }
 }
 
 export const TRAINING_CONTENT_CATALOG = [
@@ -36,6 +43,13 @@ export const TRAINING_CONTENT_CATALOG = [
     sourceGrade: "C_MEDIA",
     sourceState: "DISCOVERY_SOURCE_ONLY",
     planEligibility: "NOT_PLAN_ELIGIBLE",
+    compatibility: {
+      targetEnergySystems: ["LT"],
+      suitableEventDistancesM: [800, 1500, 3000, 5000, 10000, 21097, 42195],
+      suitableExperienceBands: ["EXPERIENCED"],
+      minimumAvailableDays: 6,
+      requiresTwoQualitySessionsSameDay: true,
+    },
   },
   {
     id: "CRUISE_INTERVALS",
@@ -51,6 +65,13 @@ export const TRAINING_CONTENT_CATALOG = [
     sourceGrade: "B_TECHNICAL",
     sourceState: "DIRECT_SOURCE_REOPENED",
     planEligibility: "NOT_PLAN_ELIGIBLE",
+    compatibility: {
+      targetEnergySystems: ["LT"],
+      suitableEventDistancesM: [3000, 5000, 10000, 21097, 42195],
+      suitableExperienceBands: ["DEVELOPING", "EXPERIENCED"],
+      minimumAvailableDays: 4,
+      requiresTwoQualitySessionsSameDay: false,
+    },
   },
   {
     id: "ELITE_MARATHON_WEEK",
@@ -66,6 +87,13 @@ export const TRAINING_CONTENT_CATALOG = [
     sourceGrade: "A_OBSERVED",
     sourceState: "DIRECT_SOURCE_REOPENED",
     planEligibility: "NOT_PLAN_ELIGIBLE",
+    compatibility: {
+      targetEnergySystems: ["BASE", "LT", "MIXED_UNALLOCATED"],
+      suitableEventDistancesM: [42195],
+      suitableExperienceBands: ["EXPERIENCED"],
+      minimumAvailableDays: 6,
+      requiresTwoQualitySessionsSameDay: false,
+    },
   },
 ] as const satisfies readonly TrainingContentArticle[]
 

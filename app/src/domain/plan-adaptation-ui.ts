@@ -85,7 +85,9 @@ export async function prepareNextFrameAdaptation(
     (candidate) => candidate.candidateId === context.activeCandidateId,
   )
   const proposedCandidate = context.candidates.find(
-    (candidate) => candidate.kind !== baseCandidate?.kind,
+    (candidate) => input.reason === "PB_SB"
+      ? candidate.kind === "BALANCED" && candidate.kind !== baseCandidate?.kind
+      : candidate.kind !== baseCandidate?.kind,
   )
   if (baseCandidate === undefined || proposedCandidate === undefined) {
     return { kind: "unavailable", code: "ADAPTATION_CONTEXT_UNAVAILABLE" }

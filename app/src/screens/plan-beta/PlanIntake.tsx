@@ -31,7 +31,7 @@ import {
   visibleIntakeSteps,
 } from "./plan-intake-navigation"
 import type { RefinementStep } from "./plan-intake-navigation"
-import { resolveDetailedPlanTemplateOption } from "./plan-template-options"
+import { resolveDetailedPlanTemplateOptions } from "./plan-template-options"
 
 export type IntakeStep = MetaIntakeStep | "frame-length" | "race-date" | "preview"
 
@@ -138,7 +138,7 @@ export function PlanIntake({
     const label = summaryLabels.get(answeredStep)
     return label === undefined ? [] : [{ step: answeredStep, label }]
   })
-  const detailedTemplate = resolveDetailedPlanTemplateOption(draft)
+  const detailedTemplates = resolveDetailedPlanTemplateOptions(draft)
   return (
     <section className="plan-intake" aria-labelledby="plan-intake-title">
       <button className="plan-back" type="button" onClick={onBack}>
@@ -275,15 +275,19 @@ export function PlanIntake({
               selected={draft.selectedDetailedTemplateRef === null}
               onClick={() => onTemplate(null)}
             />
-            {detailedTemplate !== null && (
+            {detailedTemplates.map((detailedTemplate, index) => (
               <Choice
-                title={`${detailedTemplate.targetEventDistanceM}m 경기 페이스 상세 훈련 포함`}
+                key={`${detailedTemplate.ref.templateId}@${detailedTemplate.ref.version}`}
+                title={detailedTemplates.length > 1
+                  ? `${detailedTemplate.targetEventDistanceM}m 상세 훈련 ${index + 1}`
+                  : `${detailedTemplate.targetEventDistanceM}m 경기 페이스 상세 훈련 포함`}
                 detail={`${detailedTemplate.notation} · 같은 종목의 현재 기록을 직접 확인하면 반복 목표 시간을 계산`}
-                selected={draft.selectedDetailedTemplateRef?.templateId === detailedTemplate.ref.templateId}
+                selected={draft.selectedDetailedTemplateRef?.templateId === detailedTemplate.ref.templateId
+                  && draft.selectedDetailedTemplateRef.version === detailedTemplate.ref.version}
                 onClick={() => onTemplate(detailedTemplate.ref)}
               />
-            )}
-            {detailedTemplate === null && (
+            ))}
+            {detailedTemplates.length === 0 && (
               <p className="plan-choice-note" role="status">
                 지금 고른 종목·훈련 목적에는 활성화된 상세 훈련표가 없어요. RPE 기준 계획은 그대로 받을 수 있어요.
               </p>
