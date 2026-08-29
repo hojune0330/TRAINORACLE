@@ -134,7 +134,11 @@ test("callback and status endpoints make the application-pending state explicit"
 })
 
 test("public pages are truthful, cross-linked, and do not claim live provider access", () => {
-  assert.match(supportPage, /자동 연동은 아직 신청·검토 중입니다/u)
+  assert.match(supportPage, /공식 연동 신청은 완료됐고 제공자 검토를 기다리고 있습니다/u)
+  assert.match(supportPage, /Garmin·COROS가 결정합니다/u)
+  assert.match(supportPage, /공식 개발자 프로그램 신청 완료 · 제공자 검토 대기/u)
+  assert.match(supportPage, /공식 API 신청 완료 · 제공자 검토 대기/u)
+  assert.doesNotMatch(supportPage, /신청 준비/u)
   assert.match(supportPage, /legal\/device-integrations\.html/u)
   assert.match(supportPage, /hojune0330@gmail\.com/u)
   assert.match(noticePage, /실제 연결 기능은 아직 제공하지 않음/u)
