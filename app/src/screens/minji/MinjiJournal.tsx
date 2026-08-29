@@ -88,13 +88,17 @@ export function MinjiJournal({ onWriteLog }: { readonly onWriteLog?: () => void 
   )
 }
 
-function MinjiIndexDecorationThumbnail({ page }: { readonly page: MinjiJournalPage }) {
+export function MinjiIndexDecorationThumbnail({ page }: { readonly page: MinjiJournalPage }) {
   const itemId = page.decorationPreset.placements[0]?.itemId ?? page.decorationPreset.themeId
   const item = decorationCatalogItem(itemId)
   if (item === undefined) return null
   return (
     <span className="minji-index__decoration" aria-label={`${item.name} 꾸미기`}>
-      <img src={`${import.meta.env.BASE_URL}${item.assetPath}`} alt="" loading="lazy" />
+      {item.category === "EMOJI_STICKER" && item.emoji !== undefined ? (
+        <span className="minji-index__emoji" aria-hidden="true">{item.emoji}</span>
+      ) : (
+        <img src={`${import.meta.env.BASE_URL}${item.assetPath}`} alt="" loading="lazy" />
+      )}
     </span>
   )
 }

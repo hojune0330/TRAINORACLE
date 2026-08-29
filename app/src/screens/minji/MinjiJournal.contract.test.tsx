@@ -1,11 +1,28 @@
 import { cleanup, render, screen } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { afterEach, describe, expect, it } from "vitest"
-import { MinjiJournal } from "./MinjiJournal"
+import { MINJI_JOURNAL_PAGES } from "./minji-journal-data"
+import { MinjiIndexDecorationThumbnail, MinjiJournal } from "./MinjiJournal"
 
 afterEach(cleanup)
 
 describe("Minji journal fixed page frame", () => {
+  it("renders an emoji decoration as text instead of an empty image URL", () => {
+    const page = MINJI_JOURNAL_PAGES[0]
+    if (page === undefined) throw new Error("Minji fixture page is missing")
+    const emojiPage = {
+      ...page,
+      decorationPreset: {
+        ...page.decorationPreset,
+        placements: [{ slot: "BODY_STICKER_1" as const, itemId: "EMOJI_SUN" as const }],
+      },
+    }
+    const { container } = render(<MinjiIndexDecorationThumbnail page={emojiPage} />)
+
+    expect(screen.getByLabelText("해 꾸미기")).toHaveTextContent("☀️")
+    expect(container.querySelector("img")).toBeNull()
+  })
+
   it("resets page-only disclosure state when the selected diary changes", async () => {
     const user = userEvent.setup()
     render(<MinjiJournal />)
