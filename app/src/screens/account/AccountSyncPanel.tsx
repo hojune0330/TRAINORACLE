@@ -77,7 +77,7 @@ export function AccountSyncPanel({
       <SectionLb>일지 동기화</SectionLb>
       <p style={{ fontFamily: "var(--sans)", fontSize: 12.5, lineHeight: 1.6, color: "var(--ink-2)", margin: 0 }}>
         이 계정에 연결된 이 기기 일지 {loadEntriesOwnedBy(userId).filter((entry) => entry.syncState === "local").length}개를 백업하고
-        다른 기기의 일지와 합쳐요. 연결하지 않은 기기 일지와 다른 계정의 일지는 보내지 않아요.
+        다른 기기의 일지와 합쳐요. 기록을 안전하게 남기려면 동기화를 켜 두는 걸 권해요. 연결하지 않은 기기 일지와 다른 계정의 일지는 보내지 않아요.
       </p>
       <label style={{ display: "flex", alignItems: "center", gap: 10, minHeight: 44, cursor: "pointer" }}>
         <input

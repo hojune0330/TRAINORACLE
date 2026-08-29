@@ -24,7 +24,6 @@ type GatewayStep = "method" | "eligibility" | "email" | "email-sent" | "phone" |
 export type AccountAuthGatewayProps = {
   readonly config: AccountConfig
   readonly today: string
-  readonly onLocalContinue?: () => void
   readonly onSocialSignIn?: (provider: SocialAuthProvider) => Promise<AuthResult>
   readonly onRequestEmailOtp?: (email: string) => Promise<AuthResult>
   readonly onRequestPhoneOtp?: (phone: string) => Promise<AuthResult>
@@ -34,7 +33,6 @@ export type AccountAuthGatewayProps = {
 export function AccountAuthGateway({
   config,
   today,
-  onLocalContinue,
   onSocialSignIn = signInWithProvider,
   onRequestEmailOtp: sendEmailOtp = requestEmailOtp,
   onRequestPhoneOtp: sendPhoneOtp = requestPhoneOtp,
@@ -163,9 +161,9 @@ export function AccountAuthGateway({
       {step === "method" && (
         <>
           <div className="account-auth__intro">
-            <span className="account-auth__trust"><ShieldCheck aria-hidden="true" size={15} /> 계정은 선택이에요</span>
-            <h2>가장 편한 방법으로 계속하세요</h2>
-            <p>계정이 없어도 일지와 훈련 계획은 계속 쓸 수 있어요. 로그인하면 기기를 바꿀 때 데이터를 지킬 준비를 할 수 있어요.</p>
+            <span className="account-auth__trust"><ShieldCheck aria-hidden="true" size={15} /> 로그인하고 기록을 지키세요</span>
+            <h2>로그인하면 기록이 안전하게 남아요</h2>
+            <p>로그인해 두면 일지와 훈련 계획을 계정과 연결해 기기를 바꾸거나 잃어버려도 지킬 수 있어요. 가장 편한 방법으로 시작하세요.</p>
           </div>
           <div className="account-auth__methods" aria-label="로그인 방법 선택">
             {config.kakaoAuthEnabled && (
@@ -177,11 +175,6 @@ export function AccountAuthGateway({
               <MethodButton icon={<Phone aria-hidden="true" size={19} />} label="휴대전화로 계속하기" onClick={() => chooseMethod("phone")} />
             )}
           </div>
-          {onLocalContinue && (
-            <button className="account-auth__text-action" type="button" onClick={onLocalContinue}>
-              계정 없이 계속 사용
-            </button>
-          )}
         </>
       )}
 
@@ -321,16 +314,13 @@ export function AccountAuthGateway({
         <div className="account-auth__under14" role="status">
           <span className="account-auth__trust">온라인 계정 안내</span>
           <h2>온라인 계정은 만 14세부터 만들 수 있어요</h2>
-          <p>계정을 만들지 않아도 이 기기에서 일지를 쓰고 훈련 계획을 만들 수 있어요. 저장한 내용은 자동으로 서버에 올라가지 않아요.</p>
-          {onLocalContinue && (
-            <button className="account-auth__primary" type="button" onClick={onLocalContinue}>계정 없이 계속 사용</button>
-          )}
-          <button className="account-auth__text-action" type="button" onClick={resetMethod}>생년월일 다시 확인</button>
+          <p>만 14세가 되면 로그인해서 기록을 계정에 안전하게 남길 수 있어요. 그 전까지는 이 기기에서 일지를 쓰고 훈련 계획을 만들 수 있어요.</p>
+          <button className="account-auth__primary" type="button" onClick={resetMethod}>생년월일 다시 확인</button>
         </div>
       )}
 
       {notice !== null && <p className="account-auth__notice" role="status">{notice}</p>}
-      <p className="account-auth__privacy-note">로그인만으로 일지나 메모가 업로드되지는 않아요. 동기화는 로그인 뒤 직접 켜야 시작돼요.</p>
+      <p className="account-auth__privacy-note">기록을 안전하게 남기려면 로그인한 상태로 쓰는 걸 권해요. 업로드 항목은 로그인 뒤 계정 설정에서 확인할 수 있어요.</p>
     </div>
   )
 }

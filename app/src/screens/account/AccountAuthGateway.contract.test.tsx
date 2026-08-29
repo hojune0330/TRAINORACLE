@@ -29,18 +29,20 @@ describe("mobile-first account authentication gateway", () => {
     expect(screen.getByRole("button", { name: "이메일 입력하기" })).toBeEnabled()
   })
 
-  it("shows Kakao, Google, email, and an honest local-only exit on the first screen", () => {
-    render(<AccountAuthGateway config={config} today="2026-08-25" onLocalContinue={vi.fn()} />)
+  it("shows Kakao, Google, and email as online-first options without a local-mode exit", () => {
+    render(<AccountAuthGateway config={config} today="2026-08-25" />)
 
     expect(screen.getByRole("button", { name: "카카오로 계속하기" })).toBeVisible()
     expect(screen.getByRole("button", { name: "Google로 계속하기" })).toBeVisible()
     expect(screen.getByRole("button", { name: "이메일로 계속하기" })).toBeVisible()
     expect(screen.queryByRole("button", { name: "휴대전화로 계속하기" })).not.toBeInTheDocument()
-    expect(screen.getByRole("button", { name: "계정 없이 계속 사용" })).toBeVisible()
+    expect(screen.queryByRole("button", { name: "계정 없이 계속 사용" })).not.toBeInTheDocument()
+    expect(screen.getByText(/로그인하면 기록이 안전하게 남아요/u)).toBeVisible()
+    expect(screen.getByText(/로그인한 상태로 쓰는 걸 권해요/u)).toBeVisible()
   })
 
   it("hides Kakao when the provider has not been released", () => {
-    render(<AccountAuthGateway config={{ ...config, kakaoAuthEnabled: false }} today="2026-08-25" onLocalContinue={vi.fn()} />)
+    render(<AccountAuthGateway config={{ ...config, kakaoAuthEnabled: false }} today="2026-08-25" />)
 
     expect(screen.queryByRole("button", { name: "카카오로 계속하기" })).not.toBeInTheDocument()
     expect(screen.getByRole("button", { name: "Google로 계속하기" })).toBeVisible()
@@ -83,6 +85,8 @@ describe("mobile-first account authentication gateway", () => {
 
     expect(socialSignIn).not.toHaveBeenCalled()
     expect(screen.getByRole("status")).toHaveTextContent("온라인 계정은 만 14세부터")
+    expect(screen.queryByRole("button", { name: "계정 없이 계속 사용" })).not.toBeInTheDocument()
+    expect(screen.getByRole("button", { name: "생년월일 다시 확인" })).toBeVisible()
     expect(sessionStorage.length).toBe(0)
   })
 
@@ -122,9 +126,9 @@ describe("mobile-first account authentication gateway", () => {
     expect(screen.queryByText(/6자리/u)).not.toBeInTheDocument()
   })
 
-  it("recovers the button and explains a provider exception without losing local use", async () => {
+  it("recovers the button and explains a provider exception without losing local data", async () => {
     const socialSignIn = vi.fn().mockRejectedValue(new Error("provider unavailable"))
-    render(<AccountAuthGateway config={config} today="2026-08-25" onSocialSignIn={socialSignIn} onLocalContinue={vi.fn()} />)
+    render(<AccountAuthGateway config={config} today="2026-08-25" onSocialSignIn={socialSignIn} />)
 
     await userEvent.click(screen.getByRole("button", { name: "Google로 계속하기" }))
     fireEvent.change(screen.getByLabelText("생년월일"), { target: { value: "2000-01-01" } })

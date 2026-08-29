@@ -1733,54 +1733,6 @@ button:not(:disabled):not([aria-disabled="true"]):active {
   animation: confirmation-check var(--dur-slow) var(--ease-out-strong) both;
 }
 
-.pwa-update-notice {
-  position: fixed;
-  inset-inline: var(--space-3);
-  bottom: calc(var(--app-shell-tab-bar-height) + env(safe-area-inset-bottom, 0px) + var(--space-2));
-  z-index: 44;
-  width: min(calc(100% - (2 * var(--space-3))), calc(var(--app-shell-max-width) - (2 * var(--space-3))));
-  margin-inline: auto;
-  padding: var(--space-3);
-  border: var(--bw-line) solid var(--ink);
-  border-radius: 6px;
-  box-sizing: border-box;
-  background: var(--surface);
-  color: var(--ink);
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: var(--space-3);
-  align-items: center;
-  animation: saved-toast-enter var(--dur-base) var(--ease-out-strong) both;
-}
-
-.pwa-update-notice[data-raised="true"] {
-  bottom: calc(var(--app-shell-tab-bar-height) + env(safe-area-inset-bottom, 0px) + 136px);
-}
-
-.pwa-update-notice span {
-  font-family: var(--sans);
-  font-size: var(--fs-body-sm);
-  line-height: 1.5;
-  letter-spacing: 0;
-}
-
-.pwa-update-notice button {
-  min-height: var(--app-touch-min);
-  padding: 0 var(--space-3);
-  border: 0;
-  border-radius: 4px;
-  background: var(--ink);
-  color: var(--bg);
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-1);
-  font-family: var(--sans);
-  font-size: var(--fs-body-sm);
-  font-weight: 600;
-  white-space: nowrap;
-}
-
 .saved-toast__heading button {
   width: var(--app-touch-min);
   height: var(--app-touch-min);
@@ -1889,8 +1841,7 @@ button:not(:disabled):not([aria-disabled="true"]):active {
   .first-visit__content,
   .app-flow-stage,
   .journal-flow-stage,
-  .saved-toast__check,
-  .pwa-update-notice {
+  .saved-toast__check {
     animation-name: ui-fade-in;
     transform: none;
   }

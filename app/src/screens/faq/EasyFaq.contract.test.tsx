@@ -58,7 +58,7 @@ describe("easy FAQ", () => {
     expect(screen.getByText("나만의 메모는 서비스 운영자도 볼 수 없나요?")).toBeVisible()
     expect(screen.getByText(/복구 코드를 가진 사용자만/u)).toBeInTheDocument()
     expect(screen.getByText("만 14세 미만도 사용할 수 있나요?")).toBeVisible()
-    expect(screen.getByText(/계정 없이 이 기기에서 일지를 쓰고 훈련 계획을 만들 수 있어요/u)).toBeInTheDocument()
+    expect(screen.getByText(/온라인 계정은 만 14세부터 제공해요/u)).toBeInTheDocument()
   })
 
   it("explains the first 200 free beta places while account features stay closed", async () => {
@@ -70,17 +70,17 @@ describe("easy FAQ", () => {
     expect(screen.getByText(/지금은 로그인 없이 이 기기에서 일지를 쓸 수 있어요/u)).toBeVisible()
   })
 
-  it("describes the live optional account beta without promising automatic upload", async () => {
+  it("recommends the login-first account beta while records stay in the runner's account", async () => {
     enablePublicAccountForTest()
     const user = userEvent.setup()
     render(<EasyFaq />)
 
     await user.click(screen.getByText("지금 무료인가요?"))
     expect(screen.getByText(/Google이나 이메일 확인 링크/u)).toBeVisible()
-    expect(screen.getByText(/로그인만으로 기기 데이터가 서버에 올라가지는 않아요/u)).toBeVisible()
+    expect(screen.getByText(/로그인하면 기록을 계정과 연결해 안전하게 남길 준비가 돼요/u)).toBeVisible()
 
     await user.click(screen.getByText("지금 무엇을 할 수 있나요?"))
-    expect(screen.getByText(/선택 로그인을 사용할 수 있어요/u)).toBeVisible()
+    expect(screen.getByText(/로그인한 상태로 쓰는 걸 권해요/u)).toBeVisible()
     expect(screen.getByText(/정식 문서는 더보기와 가입 화면에서 언제든 확인/u)).toBeVisible()
   })
 
