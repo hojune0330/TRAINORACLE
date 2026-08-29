@@ -17,6 +17,9 @@ const SLOT_TEST_IDS = {
   TOP_CORNER: "journal-slot-top-corner",
   BODY_MARGIN: "journal-slot-body-margin",
   PAGE_FOOTER: "journal-slot-page-footer",
+  BODY_STICKER_1: "journal-slot-body-sticker-1",
+  BODY_STICKER_2: "journal-slot-body-sticker-2",
+  BODY_STICKER_3: "journal-slot-body-sticker-3",
 } as const satisfies Record<DecorationSlot, string>
 
 function DecorationAsset({
@@ -29,6 +32,17 @@ function DecorationAsset({
   readonly testId: string
 }) {
   const [failed, setFailed] = React.useState(false)
+  if (item.category === "EMOJI_STICKER") {
+    /*
+     * 이모지 스티커는 유니코드 텍스트로만 렌더한다(플랫폼 이모지 폰트 위임).
+     * 벤더 아트워크 파일을 절대 로드하지 않는다 — 검수 계약 2026-08-29 §3.
+     */
+    return (
+      <span className={`${className} decorated-journal-page__emoji`} data-testid={testId} aria-hidden="true">
+        {item.emoji}
+      </span>
+    )
+  }
   if (failed) {
     return (
       <span className={`${className} decorated-journal-page__asset-fallback`} data-testid={testId} aria-hidden="true">

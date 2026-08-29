@@ -3,6 +3,7 @@ import React from "react"
 import { JournalConfirmationDialog } from "../../components/JournalConfirmationDialog"
 import {
   DECORATION_CATALOG,
+  EMOJI_STICKER_GROUPS,
   decorationItemOwned,
   isPlacementDecorationId,
   purchaseDecoration,
@@ -15,6 +16,7 @@ import type { DecorationCatalogItem, DecorationState } from "../../domain/decora
 import { withJosa } from "../../domain/korean-josa"
 import { DecorationStudioItem } from "./DecorationStudioItem"
 import { DecorationStudioPreview } from "./DecorationStudioPreview"
+import { resolveJournalDecorationSlot } from "../../domain/journal-decoration-state"
 import {
   DECORATION_PRESETS,
   SITUATION_TABS,
@@ -76,6 +78,8 @@ export function DecorationStudio({
       : base
   const previewName = selection?.kind === "ITEM" ? selection.item.name : selection?.preset.name ?? null
   const items = visibleStudioItems(state, situation, type)
+  const rowItems = items.filter((item) => item.category !== "EMOJI_STICKER")
+  const emojiItems = items.filter((item) => item.category === "EMOJI_STICKER")
 
   const persist = (next: DecorationState | null, success: string) => {
     if (next === null) {
@@ -137,7 +141,8 @@ export function DecorationStudio({
       return
     }
     if (isPlacementDecorationId(item.id)) {
-      const slot = item.compatibleSlots[0]
+      /* 이모지는 빈 칸 자동 배정과 같은 규칙으로 교체 대상을 찾는다. */
+      const slot = resolveJournalDecorationSlot(state, item, date)
       const current = slot === undefined ? undefined : state.pagePlacements.find((placement) => placement.date === date && placement.slot === slot)
       const previous = current === undefined ? undefined : DECORATION_CATALOG.find((candidate) => candidate.id === current.itemId)
       if (previous !== undefined && previous.id !== item.id) {
@@ -194,26 +199,67 @@ export function DecorationStudio({
         ))}
       </div>
 
-      <div className="decoration-shop__items">
-        {items.length === 0 && <p className="decoration-studio__empty">아직 여기에 모인 꾸미기가 없어요.</p>}
-        {items.map((item) => {
-          const owned = decorationItemOwned(state, item.id)
-          return (
-            <DecorationStudioItem
-              key={item.id}
-              item={item}
-              owned={owned}
-              active={decorationItemActive(state, item, date)}
-              favorite={state.library.favoriteItemIds.includes(item.id)}
-              onPreview={() => setSelection({ kind: "ITEM", item })}
-              onBuy={() => buy(item)}
-              onFavorite={() => favorite(item)}
-              onUse={() => use(item)}
-              onRemove={() => persist(removeDecorationItem(state, item, date), `${withJosa(item.name, "을/를")} 제거했어요.`)}
-            />
-          )
-        })}
-      </div>
+      {items.length === 0 && <p className="decoration-studio__empty">아직 여기에 모인 꾸미기가 없어요.</p>}
+      {rowItems.length > 0 && (
+        <div className="decoration-shop__items">
+          {rowItems.map((item) => {
+            const owned = decorationItemOwned(state, item.id)
+            return (
+              <DecorationStudioItem
+                key={item.id}
+                item={item}
+                owned={owned}
+                active={decorationItemActive(state, item, date)}
+                favorite={state.library.favoriteItemIds.includes(item.id)}
+                onPreview={() => setSelection({ kind: "ITEM", item })}
+                onBuy={() => buy(item)}
+                onFavorite={() => favorite(item)}
+                onUse={() => use(item)}
+                onRemove={() => persist(removeDecorationItem(state, item, date), `${withJosa(item.name, "을/를")} 제거했어요.`)}
+              />
+            )
+          })}
+        </div>
+      )}
+      {emojiItems.length > 0 && (
+        /*
+         * 이모지 스티커는 그룹별 44px 그리드(계약 §6) — 행 목록은 48종에 부적합.
+         * 탭 = 붙이기(빈 칸 자동 배정 · 교체 확인 포함), 붙은 것 탭 = 떼기.
+         * 상황 탭(날씨/회복/경기/계절)에서도 해당 그룹 이모지가 함께 보인다.
+         */
+        <div className="decoration-studio__emoji-groups">
+          {EMOJI_STICKER_GROUPS.map((group) => {
+            const groupItems = emojiItems.filter((item) => item.emojiGroup === group.id)
+            if (groupItems.length === 0) return null
+            return (
+              <section key={group.id} aria-label={`${group.label} 이모지`}>
+                <small>{group.label}</small>
+                <div className="decoration-studio__emoji-grid">
+                  {groupItems.map((item) => {
+                    const active = decorationItemActive(state, item, date)
+                    return (
+                      <button
+                        key={item.id}
+                        type="button"
+                        aria-pressed={active}
+                        aria-label={`${item.name} 이모지 ${active ? "떼기" : "붙이기"}`}
+                        data-testid={`decoration-emoji-${item.id}`}
+                        onClick={() => (
+                          active
+                            ? persist(removeDecorationItem(state, item, date), `${withJosa(item.name, "을/를")} 제거했어요.`)
+                            : use(item)
+                        )}
+                      >
+                        <span aria-hidden="true">{item.emoji}</span>
+                      </button>
+                    )
+                  })}
+                </div>
+              </section>
+            )
+          })}
+        </div>
+      )}
       {replacement !== null && (
         <JournalConfirmationDialog
           title="꾸미기를 바꿀까요?"

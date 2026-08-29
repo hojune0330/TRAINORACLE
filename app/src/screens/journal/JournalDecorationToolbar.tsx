@@ -7,6 +7,49 @@ const SLOT_LABELS: Readonly<Record<DecorationSlot, string>> = {
   TOP_CORNER: "오른쪽 위",
   BODY_MARGIN: "본문 옆",
   PAGE_FOOTER: "페이지 아래",
+  BODY_STICKER_1: "본문 스티커 ①",
+  BODY_STICKER_2: "본문 스티커 ②",
+  BODY_STICKER_3: "본문 스티커 ③",
+}
+
+/*
+ * 이모지 스티커는 48종이라 행 목록 대신 44px 터치 타깃 그리드로 보여 준다.
+ * 탭 = 붙이기(빈 칸 자동 배정), 붙은 것을 다시 탭 = 떼기.
+ * 유니코드 텍스트 렌더 전용 — 이미지 자산 없음.
+ */
+function EmojiStickerGrid({
+  items,
+  activeItemIds,
+  onApply,
+  onRemove,
+}: {
+  readonly items: readonly DecorationCatalogItem[]
+  readonly activeItemIds: ReadonlySet<string>
+  readonly onApply: (item: DecorationCatalogItem) => void
+  readonly onRemove: (item: DecorationCatalogItem) => void
+}) {
+  if (items.length === 0) return null
+  return (
+    <div className="journal-decoration-toolbar__emoji-section">
+      <small>이모지 스티커 · 한 페이지에 3개까지</small>
+      <div className="journal-decoration-toolbar__emoji-grid" role="group" aria-label="이모지 스티커">
+        {items.map((item) => {
+          const active = activeItemIds.has(item.id)
+          return (
+            <button
+              key={item.id}
+              type="button"
+              aria-pressed={active}
+              aria-label={`${item.name} 이모지 ${active ? "떼기" : "붙이기"}`}
+              onClick={() => (active ? onRemove(item) : onApply(item))}
+            >
+              <span aria-hidden="true">{item.emoji}</span>
+            </button>
+          )
+        })}
+      </div>
+    </div>
+  )
 }
 
 type JournalDecorationToolbarProps = {
@@ -49,7 +92,7 @@ export function JournalDecorationToolbar(props: JournalDecorationToolbarProps) {
         </button>
       </header>
       <div className="journal-decoration-toolbar__items">
-        {props.items.map((item) => {
+        {props.items.filter((item) => item.category !== "EMOJI_STICKER").map((item) => {
           const slot = item.compatibleSlots[0]
           const position = slot === undefined ? "" : `${SLOT_LABELS[slot]}에 `
           const active = props.activeItemIds.has(item.id)
@@ -61,7 +104,7 @@ export function JournalDecorationToolbar(props: JournalDecorationToolbarProps) {
                 <button type="button" onClick={() => props.onPreview(item, slot)} aria-label={`${item.name} ${position}미리보기`}>
                   <Eye aria-hidden="true" size={14} /> 미리보기
                 </button>
-                {props.hasEntries && active && slot !== undefined && (
+                {props.hasEntries && active && item.compatibleSlots.length > 0 && (
                   <button type="button" onClick={() => props.onRemove(item)} aria-label={`${item.name} 제거`}>
                     <Trash2 aria-hidden="true" size={14} /> 제거
                   </button>
@@ -77,6 +120,12 @@ export function JournalDecorationToolbar(props: JournalDecorationToolbarProps) {
           )
         })}
       </div>
+      <EmojiStickerGrid
+        items={props.items.filter((item) => item.category === "EMOJI_STICKER")}
+        activeItemIds={props.activeItemIds}
+        onApply={props.onApply}
+        onRemove={props.onRemove}
+      />
       <footer>
         {props.canUndo && (
           <button type="button" onClick={props.onUndo} aria-label="꾸미기 되돌리기">

@@ -291,7 +291,8 @@ describe("restore backup decorations preview", () => {
     await pick(user, backupFile([postSession("a", "2026-07-21")], FULL_FORMAT, undefined, decorations))
 
     await waitFor(() => {
-      expect(screen.getByTestId("restore-decoration-summary").textContent).toMatch(/꾸미기 항목 5개/u)
+      // 2026-08-29: 이모지 스티커 48종 무료 스타터 추가 → 기본 5 + 48 = 53.
+      expect(screen.getByTestId("restore-decoration-summary").textContent).toMatch(/꾸미기 항목 53개/u)
     })
     expect(screen.getByTestId("restore-decoration-summary").textContent).toMatch(/날짜 배치 1개/u)
   })

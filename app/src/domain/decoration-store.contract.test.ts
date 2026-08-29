@@ -1,7 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import {
+  DECORATION_IDS,
   DECORATION_STORAGE_KEY_V1,
   DECORATION_STORAGE_KEY_V2,
+  PAID_DECORATION_IDS,
   loadDecorationState,
   purchaseDecoration,
   rememberDecorationUse,
@@ -11,18 +13,17 @@ import {
 } from "./decorations"
 import type { DecorationState } from "./decorations"
 
-const STARTER_IDS = [
-  "THEME_TRACK_NOTEBOOK",
-  "INK_NAVY",
-  "STICKER_WEATHER_SUN",
-  "STAMP_REST_DAY",
-  "TAPE_CHECKER",
-] as const
+/*
+ * 2026-08-29: 이모지 스티커 48종이 무료 스타터로 추가되어, 정규화된 보유
+ * 목록은 "카탈로그 순서의 무료 전체 + 소유한 유료"가 된다.
+ */
+const ownedAfterLoad = (paidOwned: readonly string[] = []) =>
+  DECORATION_IDS.filter((id) => !(PAID_DECORATION_IDS as readonly string[]).includes(id) || paidOwned.includes(id))
 
 const EMPTY_V2: DecorationState = {
   version: 2,
   spentPoints: 0,
-  ownedItemIds: [...STARTER_IDS],
+  ownedItemIds: ownedAfterLoad(),
   equipped: {
     themeId: "THEME_TRACK_NOTEBOOK",
     inkId: "INK_NAVY",
@@ -60,7 +61,7 @@ describe("decoration V1 to V2 migration", () => {
     const state = loadDecorationState()
 
     expect(state.spentPoints).toBe(8)
-    expect(state.ownedItemIds).toEqual([...STARTER_IDS, "STICKER_FINISH_LINE"])
+    expect(state.ownedItemIds).toEqual(ownedAfterLoad(["STICKER_FINISH_LINE"]))
     expect(window.localStorage.getItem(DECORATION_STORAGE_KEY_V1)).toBe(legacyBytes)
   })
 
@@ -91,12 +92,7 @@ describe("decoration V1 to V2 migration", () => {
 
     const state = loadDecorationState()
 
-    expect(state.ownedItemIds).toEqual([
-      ...STARTER_IDS,
-      "THEME_SKY_JOURNAL",
-      "STICKER_FINISH_LINE",
-      "AVATAR_START_LINE",
-    ])
+    expect(state.ownedItemIds).toEqual(ownedAfterLoad(["THEME_SKY_JOURNAL", "STICKER_FINISH_LINE", "AVATAR_START_LINE"]))
     expect(state.spentPoints).toBe(40)
     expect(window.localStorage.getItem(DECORATION_STORAGE_KEY_V1)).toBe(legacyBytes)
   })
@@ -105,7 +101,7 @@ describe("decoration V1 to V2 migration", () => {
     const authoritative = {
       ...EMPTY_V2,
       spentPoints: 12,
-      ownedItemIds: [...STARTER_IDS, "THEME_SKY_JOURNAL"],
+      ownedItemIds: ownedAfterLoad(["THEME_SKY_JOURNAL"]),
     }
     window.localStorage.setItem(DECORATION_STORAGE_KEY_V2, JSON.stringify(authoritative))
     window.localStorage.setItem(DECORATION_STORAGE_KEY_V1, JSON.stringify({
@@ -122,7 +118,7 @@ describe("decoration V1 to V2 migration", () => {
     const stored = JSON.stringify({
       ...EMPTY_V2,
       spentPoints: 8,
-      ownedItemIds: [...STARTER_IDS, "STICKER_FINISH_LINE", "UNKNOWN_OWNED"],
+      ownedItemIds: [...ownedAfterLoad(["STICKER_FINISH_LINE"]), "UNKNOWN_OWNED"],
       library: {
         favoriteItemIds: ["STICKER_FINISH_LINE", "UNKNOWN_FAVORITE"],
         recentItemIds: ["UNKNOWN_RECENT", "STICKER_FINISH_LINE"],
@@ -137,7 +133,7 @@ describe("decoration V1 to V2 migration", () => {
 
     const state = loadDecorationState()
 
-    expect(state.ownedItemIds).toEqual([...STARTER_IDS, "STICKER_FINISH_LINE"])
+    expect(state.ownedItemIds).toEqual(ownedAfterLoad(["STICKER_FINISH_LINE"]))
     expect(state.library.favoriteItemIds).toEqual(["STICKER_FINISH_LINE"])
     expect(state.library.recentItemIds).toEqual(["STICKER_FINISH_LINE"])
     expect(state.pagePlacements).toEqual([
@@ -186,7 +182,7 @@ describe("decoration V1 to V2 migration", () => {
     const inconsistent = JSON.stringify({
       ...EMPTY_V2,
       spentPoints: 0,
-      ownedItemIds: [...STARTER_IDS, "AVATAR_START_LINE"],
+      ownedItemIds: ownedAfterLoad(["AVATAR_START_LINE"]),
     })
     window.localStorage.setItem(DECORATION_STORAGE_KEY_V2, inconsistent)
     const fallback = loadDecorationState()
@@ -213,7 +209,7 @@ describe("decoration V2 verified writes", () => {
     const ownAll: DecorationState = {
       ...EMPTY_V2,
       spentPoints: 40,
-      ownedItemIds: [...STARTER_IDS, "THEME_SKY_JOURNAL", "STICKER_FINISH_LINE", "AVATAR_START_LINE"],
+      ownedItemIds: ownedAfterLoad(["THEME_SKY_JOURNAL", "STICKER_FINISH_LINE", "AVATAR_START_LINE"]),
     }
     const withRecents = recentIds.reduce(rememberDecorationUse, ownAll)
     const repeated = rememberDecorationUse(withRecents, "THEME_TRACK_NOTEBOOK")
