@@ -9,10 +9,11 @@
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
     "typecheck:e2e": "tsc --noEmit -p tsconfig.e2e.json",
-    "test": "npm run test:unit && npm run test:unit:kst && npm run test:release-env",
+    "test": "npm run test:unit && npm run test:unit:kst && npm run test:release-env && npm run test:device-integration",
     "test:unit": "vitest run",
     "test:unit:kst": "vitest run -c vitest.config.kst.ts",
     "test:release-env": "node --test scripts/validate-hosted-release-env.test.mjs",
+    "test:device-integration": "node --test scripts/validate-device-integration.test.mjs",
     "test:watch": "vitest",
     "test:e2e:adaptive-next-frame": "node e2e/run-adaptive-next-frame.mjs",
     "test:e2e": "npm run build && node e2e/run-full-suite.mjs"

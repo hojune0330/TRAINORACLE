@@ -35,3 +35,12 @@ content_path = "./supabase/templates/confirm-signup.html"
 [auth.sms]
 enable_signup = false
 enable_confirmations = true
+
+[functions.device-integration-status]
+verify_jwt = false
+
+[functions.coros-oauth-callback]
+verify_jwt = false
+
+[functions.coros-workout-push]
+verify_jwt = false
