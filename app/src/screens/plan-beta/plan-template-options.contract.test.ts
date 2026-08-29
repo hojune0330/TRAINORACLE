@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest"
-import { resolveDetailedPlanTemplateOption } from "./plan-template-options"
+import { resolveDetailedPlanTemplateOption, resolveDetailedPlanTemplateOptions } from "./plan-template-options"
 
 describe("explicit detailed plan template options", () => {
   it.each([
@@ -31,5 +31,13 @@ describe("explicit detailed plan template options", () => {
       { eventDistanceM: 5000, trainingFocus: "VO2_INTENT" },
       "2028-08-24T09:00:00.000Z",
     )).toBeNull()
+  })
+
+  it("returns an ordered list so more than one independently approved method can be offered", () => {
+    const options = resolveDetailedPlanTemplateOptions(
+      { eventDistanceM: 5000, trainingFocus: "VO2_INTENT" },
+      "2026-08-24T09:00:00.000Z",
+    )
+    expect(options.map(option => option.ref.templateId)).toEqual(["V2-SEED-05"])
   })
 })

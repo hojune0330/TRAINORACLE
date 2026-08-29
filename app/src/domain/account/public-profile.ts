@@ -1,6 +1,8 @@
 import { z } from "zod"
 import { planBetaStateV3Schema } from "../plan-beta-schema"
 import type { PlanBetaStateV3 } from "../plan-beta-schema"
+import { oracleComparisonSnapshotSchema } from "../friend-running-oracle"
+import type { OracleComparisonSnapshot } from "../friend-running-oracle"
 import { productFeatures } from "../product-features"
 import { supabase } from "./supabase-client"
 
@@ -43,6 +45,7 @@ export type PublicPlanCard = z.infer<typeof cardPayloadSchema> & {
 export type PublicProfilePageData = {
   readonly profile: PublicAthleteProfile
   readonly cards: readonly PublicPlanCard[]
+  readonly oracleSnapshot: OracleComparisonSnapshot | null
 }
 
 export type PublicProfileSaveInput = {
@@ -176,7 +179,20 @@ export async function loadPublicProfile(handle: string): Promise<PublicProfilePa
     const parsed = cardRowSchema.safeParse(candidate)
     return parsed.success ? [{ ...parsed.data.card_payload, shareSlug: parsed.data.share_slug, updatedAt: parsed.data.updated_at }] : []
   })
-  return { profile, cards }
+  const snapshotResult = await client
+    .from("public_oracle_comparison_snapshots")
+    .select("snapshot_payload, is_enabled")
+    .eq("user_id", profile.userId)
+    .eq("is_enabled", true)
+    .maybeSingle()
+  const parsedSnapshot = snapshotResult.error === null && snapshotResult.data?.is_enabled === true
+    ? oracleComparisonSnapshotSchema.safeParse(snapshotResult.data.snapshot_payload)
+    : null
+  return {
+    profile,
+    cards,
+    oracleSnapshot: parsedSnapshot !== null && parsedSnapshot.success ? parsedSnapshot.data : null,
+  }
 }
 
 export function publicProfileUrl(handle: string): string {

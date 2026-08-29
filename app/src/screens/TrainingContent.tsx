@@ -1,15 +1,27 @@
 import React from "react"
-import { ArrowLeft, Bookmark, BookmarkCheck, ChevronRight, ExternalLink } from "lucide-react"
+import { ArrowLeft, Bookmark, BookmarkCheck, ChevronRight, ExternalLink, Scale } from "lucide-react"
 import {
   TRAINING_CONTENT_CATALOG,
   trainingContentById,
 } from "../domain/training-content-catalog"
 import type { TrainingContentId, TrainingContentSourceState } from "../domain/training-content-catalog"
 import { loadSavedTrainingContent, setTrainingContentSaved } from "../domain/training-content-store"
+import { loadEntries, todayISO } from "../domain/journal-store"
+import { projectStructuredJournalObservations } from "../domain/journal-observation"
+import { loadPlanBetaState } from "../domain/plan-beta-store"
+import { deriveTrainingMethodCompatibility } from "../domain/training-method-compatibility"
+import type { TrainingMethodCompatibilityStatus } from "../domain/training-method-compatibility"
 
 const SOURCE_STATE_LABEL: Record<TrainingContentSourceState, string> = {
   DIRECT_SOURCE_REOPENED: "원문 확인 자료",
   DISCOVERY_SOURCE_ONLY: "추가 검토 중인 기사",
+}
+
+const COMPATIBILITY_LABEL: Record<TrainingMethodCompatibilityStatus, string> = {
+  CONTEXT_MATCH: "조건이 맞아요",
+  PARTIAL_MATCH: "일부 조건이 맞아요",
+  CONTEXT_MISMATCH: "충돌 조건이 있어요",
+  NOT_ENOUGH_DATA: "자료가 더 필요해요",
 }
 
 export function TrainingContent({ onBack }: { readonly onBack: () => void }) {
@@ -19,6 +31,12 @@ export function TrainingContent({ onBack }: { readonly onBack: () => void }) {
   if (selected !== null) {
     const article = trainingContentById(selected)
     const isSaved = saved.includes(selected)
+    const compatibility = deriveTrainingMethodCompatibility({
+      article,
+      observations: projectStructuredJournalObservations(loadEntries()),
+      planState: loadPlanBetaState(),
+      today: todayISO(),
+    })
     return (
       <div className="training-content-screen">
         <ContentHeader title="훈련법 읽기" onBack={() => setSelected(null)} />
@@ -43,6 +61,34 @@ export function TrainingContent({ onBack }: { readonly onBack: () => void }) {
           <section>
             <h2>무엇을 훈련하나요?</h2>
             <p>{article.whatItTrains}</p>
+          </section>
+          <section className="training-content-article__compatibility" aria-labelledby="training-method-compatibility-title">
+            <div className="training-content-article__compatibility-head">
+              <Scale aria-hidden="true" size={18} />
+              <div>
+                <span>내 기록과 비교</span>
+                <h2 id="training-method-compatibility-title">{compatibility.headline}</h2>
+              </div>
+              <strong data-status={compatibility.status}>{COMPATIBILITY_LABEL[compatibility.status]}</strong>
+            </div>
+            {compatibility.supports.length > 0 && (
+              <CompatibilityGroup title="맞는 조건" items={compatibility.supports} />
+            )}
+            {compatibility.conflicts.length > 0 && (
+              <CompatibilityGroup title="부딪히는 조건" items={compatibility.conflicts} />
+            )}
+            {compatibility.unknowns.length > 0 && (
+              <CompatibilityGroup title="아직 모르는 것" items={compatibility.unknowns} />
+            )}
+            <details>
+              <summary>판단에 사용한 기록</summary>
+              {compatibility.evidence.length === 0
+                ? <p>사용한 구조화 기록이 없어요.</p>
+                : compatibility.evidence.map((item) => <p key={item}>{item}</p>)}
+            </details>
+            <p className="training-content-article__compatibility-boundary">
+              이 비교는 훈련법을 이해하기 위한 설명이에요. 계획 후보를 만들거나 강도·양·빈도와 안전 상태를 바꾸지 않아요.
+            </p>
           </section>
           <section className="training-content-article__boundary">
             <h2>따라 하기 전에</h2>
@@ -85,6 +131,18 @@ export function TrainingContent({ onBack }: { readonly onBack: () => void }) {
         ))}
       </div>
       <p className="training-content-reward-note">콘텐츠 포인트는 기존 포인트와 합치는 규칙이 정해진 뒤에 열어요.</p>
+    </div>
+  )
+}
+
+function CompatibilityGroup({ title, items }: {
+  readonly title: string
+  readonly items: readonly string[]
+}) {
+  return (
+    <div className="training-content-article__compatibility-group">
+      <strong>{title}</strong>
+      {items.map((item) => <p key={item}>{item}</p>)}
     </div>
   )
 }

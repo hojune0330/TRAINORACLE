@@ -12,8 +12,6 @@ import {
   savePlanBetaState,
   type PlanBetaState,
 } from "../../domain/plan-beta-store"
-import {
-} from "../../domain/plan-adaptation-ui"
 import { saveSelectedPlanCandidate } from "./plan-selection"
 import { PlanAdaptationFlow } from "./PlanAdaptationFlow"
 import { PLAN_BETA_MUTATION_LOCK_NAME } from "../../domain/plan-mutation-lock"
@@ -50,6 +48,21 @@ afterEach(() => {
 })
 
 describe("next-frame adaptation flow", () => {
+  it("shows linked-cycle evidence without reading private text or increasing training", async () => {
+    const user = userEvent.setup()
+    const { state } = await createBoundActivePlan()
+    render(<PlanAdaptationFlow state={state} onLoadEntries={() => []} />)
+
+    await openAdaptation(user)
+    await user.click(screen.getByRole("button", { name: /이번 주기 수행 기록을 볼래요/u }))
+
+    expect(screen.getByRole("heading", { name: "이번 주기에서 확인된 흐름" })).toBeVisible()
+    expect(screen.getByText(/계획에서 이어 쓴 일지가 아직 없/u)).toBeVisible()
+    expect(screen.getByText(/일지 원문·비밀 메모·통증 문장은 읽지 않/u)).toBeVisible()
+    expect(screen.getByText(/이 결과만으로 훈련량을 늘리지 않/u)).toBeVisible()
+    expect(screen.queryByRole("textbox")).not.toBeInTheDocument()
+  })
+
   it("uses one decision per step, offers no raw text field, and keeps a no-op unchanged", async () => {
     const user = userEvent.setup()
     const { state } = await createBoundActivePlan()
