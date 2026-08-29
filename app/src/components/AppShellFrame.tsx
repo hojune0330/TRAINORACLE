@@ -2,7 +2,6 @@ import React from "react"
 import { SavedToast, TabBar } from "./AppChrome"
 import type { AppTab, ToastPhase } from "./AppChrome"
 import type { SavedFactReceipt } from "../domain/save-receipt"
-import { PwaUpdateNotice } from "./PwaUpdateNotice"
 
 export type ShellToastState = {
   readonly count: number
@@ -54,7 +53,6 @@ export function AppShellFrame({
           onOpenBackup={onOpenBackup}
         />
       )}
-      <PwaUpdateNotice raised={savedToast !== null} />
       {!hideTabBar && <TabBar tab={tab} onTab={onTab} />}
     </div>
   )

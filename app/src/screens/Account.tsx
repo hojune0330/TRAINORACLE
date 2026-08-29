@@ -165,7 +165,7 @@ export function Account({ onBack, onOpenImport, onOpenRestore }: {
       {loading ? (
         <p role="status" style={{ ...mono, fontSize: 12, color: "var(--ink-3)", marginTop: 24 }}>계정 상태를 확인하고 있어요.</p>
       ) : user === null ? (
-        <AccountAuthGateway config={config} today={today} onLocalContinue={onBack} />
+        <AccountAuthGateway config={config} today={today} />
       ) : setupState === "saving" || setupState === "checking" ? (
         <div style={{ marginTop: 24 }}>
           <p role="status" style={{ fontFamily: "var(--sans)", fontSize: 14, lineHeight: 1.65, margin: 0 }}>
