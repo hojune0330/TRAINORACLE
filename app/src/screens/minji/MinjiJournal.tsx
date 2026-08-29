@@ -177,8 +177,8 @@ function MinjiPage({ page, position, headingRef, onClose, onPrevious, onNext, on
             <p>{page.decorationPreset.name}</p>
             <div>{decorationNames.map((name) => <span key={name}>{name}</span>)}</div>
           </section>
-          <section className="minji-page__discovery" aria-label="나중에 보인 것">
-            <strong>나중에 보인 것</strong><p>{page.discovery}</p>
+          <section className="minji-page__discovery" aria-label="기록에서 확인한 점">
+            <strong>기록에서 확인한 점</strong><p>{page.discovery}</p>
             {page.supportingText !== undefined && <small>{page.supportingText}</small>}
             {page.caution !== undefined && <small>{page.caution}</small>}
           </section>

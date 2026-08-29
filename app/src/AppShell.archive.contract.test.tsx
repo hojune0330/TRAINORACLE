@@ -130,7 +130,7 @@ describe("AppShell journal archive routing", () => {
     render(<AppShell />)
 
     await user.click(screen.getByRole("button", { name: "더보기" }))
-    await user.click(await screen.findByRole("button", { name: "쉬운 도움말과 FAQ" }))
+    await user.click(await screen.findByRole("button", { name: "훈련 용어집·도움말" }))
 
     expect(await screen.findByRole("heading", { name: "궁금한 점을 쉽게 풀어드려요" })).toBeVisible()
   })

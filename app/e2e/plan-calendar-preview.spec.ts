@@ -16,7 +16,7 @@ async function answerTwoSessionPlanQuestions(page: Page): Promise<void> {
   await selectNineDayProjection(page)
   await page.getByRole("button", { name: /아침에 운동해요/u }).click()
   await page.getByRole("button", { name: /하루 두 번 운동할게요/u }).click()
-  await page.getByRole("button", { name: "날짜 없이 계획 후보 보기" }).click()
+  await page.getByRole("button", { name: "날짜 없이 계획안 보기" }).click()
 }
 
 test("shows a dated AM and PM plan before selection and after reload", async ({ page }) => {
@@ -31,10 +31,10 @@ test("shows a dated AM and PM plan before selection and after reload", async ({ 
   const overview = page.getByLabel("9일 훈련 흐름").first()
   await expect(overview.getByRole("listitem", {
     name: /8월 25일 화요일/u,
-  })).toContainText(/MAIN|BASE/u)
+  })).toContainText("기초")
   await expect(overview.getByRole("listitem", {
     name: /8월 25일 화요일/u,
-  })).toContainText("REC")
+  })).toContainText("회복")
   const candidateDay = page.getByRole("group", {
     name: "8월 25일 화요일 · 훈련 2개",
   }).first()
@@ -52,7 +52,7 @@ test("shows a dated AM and PM plan before selection and after reload", async ({ 
   await expect(activeDay).toContainText("오전")
   await expect(activeDay).toContainText("오후")
   await expect(activeDay).toContainText("오후 회복 운동")
-  await expect(page.getByLabel("9일 훈련 흐름")).toContainText("REC")
+  await expect(page.getByLabel("9일 훈련 흐름")).toContainText("회복")
   await expect(page.getByRole("group", { name: /훈련 2개/u })).toHaveCount(3)
   await expect.poll(() => page.evaluate(() => window.localStorage.getItem("trainoracle.plan-beta.v1"))).toContain("2026-08-17")
 })

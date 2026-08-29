@@ -56,7 +56,7 @@ describe("next-frame adaptation flow", () => {
     await openAdaptation(user)
     await user.click(screen.getByRole("button", { name: /이번 주기 수행 기록을 볼래요/u }))
 
-    expect(screen.getByRole("heading", { name: "이번 주기에서 확인된 흐름" })).toBeVisible()
+    expect(screen.getByRole("heading", { name: "이번 주기 기록 요약" })).toBeVisible()
     expect(screen.getByText(/계획에서 이어 쓴 일지가 아직 없/u)).toBeVisible()
     expect(screen.getByText(/일지 원문·비밀 메모·통증 문장은 읽지 않/u)).toBeVisible()
     expect(screen.getByText(/이 결과만으로 훈련량을 늘리지 않/u)).toBeVisible()
@@ -82,7 +82,7 @@ describe("next-frame adaptation flow", () => {
     expect(screen.queryByRole("textbox")).not.toBeInTheDocument()
 
     await user.click(screen.getByRole("button", { name: /현재 계획과 같은 기준 유지/u }))
-    expect(screen.getByRole("status")).toHaveTextContent("새 후보는 만들지 않았고 현재 계획도 그대로")
+    expect(screen.getByRole("status")).toHaveTextContent("새 계획안은 만들지 않았고 현재 계획도 그대로")
   })
 
   it("shows only strictly eligible same-event PB/SB records before the volume choice", async () => {
@@ -126,7 +126,7 @@ describe("next-frame adaptation flow", () => {
     expect(within(changedSection).getByText(/DAY 1 오전 · 기초 지구력 달리기/u)).toBeVisible()
     expect(within(changedSection).getByText(/DAY 5 오전 · 기초 지구력 달리기/u)).toBeVisible()
     expect(within(changedSection).getByText(/DAY 7 오전 · 기초 지구력 달리기/u)).toBeVisible()
-    expect(within(changedSection).queryByText(/DAY 9 오전 · 반복 인터벌 · VO2 훈련/u)).not.toBeInTheDocument()
+    expect(within(changedSection).queryByText(/DAY 9 오전 · 강한 유산소 반복 · VO₂ 훈련/u)).not.toBeInTheDocument()
     const metadataTokens = [...changedSection.querySelectorAll(".plan-adaptation__metadata-token")]
       .map((token) => token.textContent)
     expect(metadataTokens).toContain("35~35분")

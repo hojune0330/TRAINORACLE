@@ -136,7 +136,7 @@ export function Home({
     try {
       if (typeof navigator.share === "function") {
         await navigator.share(payload)
-        setShareNotice("공유창에 기록 정원을 보냈어요.")
+        setShareNotice("공유창에 내 러닝 기록 요약을 보냈어요.")
         return
       }
       if (navigator.clipboard !== undefined) {

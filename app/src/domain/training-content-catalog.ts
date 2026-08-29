@@ -81,7 +81,7 @@ export const TRAINING_CONTENT_CATALOG = [
     summary: "공개된 엘리트 훈련 주간은 배울 자료이지만, 다른 선수의 다음 주 계획은 아니에요.",
     whyNoticed: "유명 선수의 거리·횟수·훈련 배치는 구체적이어서 따라 하고 싶은 마음을 만들어요. 동시에 고지대, 훈련 집단, 오랜 적응, 회복 환경처럼 표에 보이지 않는 조건이 많습니다.",
     whatItTrains: "공개 사례는 한 선수의 마라톤 준비에서 쉬운 달리기, 긴 달리기, 주요 훈련이 어떻게 함께 놓였는지 비교하는 데 도움이 됩니다.",
-    useBoundary: "TrainOracle은 사례의 맥락을 소개할 수 있지만 거리·더블 세션·페이스를 복사하지 않아요. 개인 계획에는 별도로 승인된 템플릿과 선수 자신의 근거만 들어갑니다.",
+    useBoundary: "TrainOracle은 사례의 맥락을 소개할 수 있지만 거리·하루 두 번 훈련·페이스를 그대로 복사하지 않아요. 개인 계획에는 별도로 검토된 템플릿과 선수 자신의 근거만 사용합니다.",
     sourceLabel: "Sweat Elite Kipchoge 공개 사례",
     sourceUrl: "https://articles.sweatelite.co/eliud-kipchoge-a-typical-week-of-training-preparing-for-a-sub-2-hour-marathon/",
     sourceGrade: "A_OBSERVED",

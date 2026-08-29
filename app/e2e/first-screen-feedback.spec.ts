@@ -8,7 +8,7 @@ test("explains the first free beta places without implying that account sync is 
   await page.getByRole("button", { name: "더보기" }).click()
 
   // When: the athlete opens the plain-language FAQ and expands the free-beta answer.
-  await page.getByRole("button", { name: "쉬운 도움말과 FAQ" }).click()
+  await page.getByRole("button", { name: "훈련 용어집·도움말" }).click()
   await expect(page.getByTestId("beta-price-notice")).toHaveText(
     "TrainOracle 베타는 현재 무료입니다. 서비스 운영을 위해 나중에 월 구독이나 광고가 포함된 선택 상품이 생길 수 있습니다. 가격이나 무료 기능이 바뀌기 전에는 앱에서 먼저 알려드립니다.",
   )

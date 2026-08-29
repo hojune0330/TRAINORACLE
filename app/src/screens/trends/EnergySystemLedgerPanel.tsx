@@ -55,6 +55,7 @@ export function EnergySystemLedgerPanel({
   if (mode === "compact") {
     const actualRows = ledger.rows.filter((row) => row.journalSessionCount > 0)
     const mixed = ledger.rows.find((row) => row.key === "MIXED_UNALLOCATED")
+    const mixedMeta = ENERGY_SYSTEM_META.MIXED_UNALLOCATED
     return (
       <section className="energy-ledger energy-ledger--compact" aria-label="에너지 시스템 요약">
         <div className="energy-ledger__heading-row">
@@ -78,7 +79,7 @@ export function EnergySystemLedgerPanel({
           </div>
         )}
         <p className="energy-ledger__mixed-note">
-          MIX 복합·미배분 {ledger.coverage === "MISSING" ? "—" : `${mixed?.journalSessionCount ?? 0}회`}
+          {mixedMeta.code} {mixedMeta.shortLabel} {ledger.coverage === "MISSING" ? "—" : `${mixed?.journalSessionCount ?? 0}회`}
         </p>
         {plan !== null && (
           <p className="energy-ledger__plan-brief">

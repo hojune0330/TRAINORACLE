@@ -98,8 +98,8 @@ export function deriveTrainingMethodCompatibility({
   }
 
   if (article.compatibility.requiresTwoQualitySessionsSameDay) {
-    conflicts.push("현재 TrainOracle은 같은 날 품질훈련 두 번을 자동 계획으로 만들지 않아요.")
-    evidence.push("하루 2회 품질훈련 자동 처방 비활성")
+    conflicts.push("현재 TrainOracle은 같은 날 주요 훈련 두 번을 자동 계획으로 만들지 않아요.")
+    evidence.push("하루 두 번 주요 훈련 자동 처방 비활성")
   }
 
   const targetRows = ledger.rows.filter((row) => article.compatibility.targetEnergySystems.includes(row.key))

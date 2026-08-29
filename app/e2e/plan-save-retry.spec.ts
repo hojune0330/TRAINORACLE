@@ -16,7 +16,7 @@ async function answerMinimumPlanQuestions(page: Page): Promise<void> {
   await selectNineDayProjection(page)
   await page.getByRole("button", { name: /날마다 달라요/u }).click()
   await page.getByRole("button", { name: "하루 한 번 운동" }).click()
-  await page.getByRole("button", { name: "날짜 없이 계획 후보 보기" }).click()
+  await page.getByRole("button", { name: "날짜 없이 계획안 보기" }).click()
 }
 
 test("retries a selected plan save and keeps the plan after reload", async ({ page }) => {
@@ -52,7 +52,7 @@ test("retries a selected plan save and keeps the plan after reload", async ({ pa
   )).not.toBeNull()
   await page.getByRole("navigation", { name: "내 기록 살펴보기" }).getByRole("button", { name: /^훈련 계획/u }).click()
   await expect(page.getByRole("heading", { name: /9일 훈련 계획/u })).toBeVisible()
-  await expect(page.getByRole("button", { name: "다음 주기 후보 만들기" })).toHaveCount(0)
+  await expect(page.getByRole("button", { name: "현재 기준으로 다음 계획안 만들기" })).toHaveCount(0)
   await expect(page.getByText("각 훈련을 마친 뒤 완료·휴식·건너뜀·통증 확인 중 하나를 기록해 주세요."))
     .toBeVisible()
 })

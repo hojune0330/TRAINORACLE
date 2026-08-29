@@ -70,7 +70,7 @@ export function buildEngagementSharePayload(input: EngagementShareInput): Engage
   url.search = ""
   url.hash = ""
   return {
-    title: "TrainOracle 기록 정원",
+    title: "TrainOracle 러닝 기록",
     text: [
       `기록한 날 ${journalDays}일 · ${engagementGarden(journalDays).name}`,
       `사용 가능 ${availablePoints}P`,

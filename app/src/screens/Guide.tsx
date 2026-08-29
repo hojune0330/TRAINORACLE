@@ -2,6 +2,7 @@ import { ArrowLeft } from "lucide-react"
 import { feedbackConfig } from "../domain/feedback/feedback-config"
 import { EasyFaq } from "./faq/EasyFaq"
 import { MinjiJournal } from "./minji/MinjiJournal"
+import { TrainingLexicon } from "./TrainingLexicon"
 
 export type GuideProps = {
   readonly initialSection?: "all" | "guide" | "minji"
@@ -21,6 +22,7 @@ export function Guide({ initialSection = "all", onBack, onWriteLog, feedbackAvai
       {(initialSection === "all" || initialSection === "minji") && <MinjiJournal onWriteLog={onWriteLog} />}
       {(initialSection === "all" || initialSection === "guide") && (
         <>
+          <TrainingLexicon />
           <EasyFaq />
           <FeedbackEntry available={feedbackAvailable} />
         </>

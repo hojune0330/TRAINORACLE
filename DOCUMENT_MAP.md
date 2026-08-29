@@ -113,6 +113,7 @@
 | 2026-07-26 | 작업기록 | REPORT | 기타 | reports/review/PR118_C_PUBLIC_RELEASE_AUDIT_2026-07-26.md |
 | 2026-07-26 | 재구성-초안 | SPEC_RECONSTRUCT | 처방·템플릿 | specs/reconstruct/ENERGY_SYSTEM_SESSION_TEMPLATE_CATALOG.md |
 | 2026-07-26 | 재구성-초안 | SPEC_RECONSTRUCT | 처방·템플릿 | specs/reconstruct/TRAINING_SESSION_PRESCRIPTION_CONTRACT.md |
+| 2026-08-29 | 재구성-초안 | SPEC_RECONSTRUCT | 용어·설명·에너지 시스템 | specs/reconstruct/TRAINING_TERMINOLOGY_AND_EXPLANATION_SPEC.md |
 | 2026-07-26 | 검토필요 | ROOT_GUIDE_OR_RECORD | 처방·템플릿, 작업관리 | TERRA_WORK_ORDER_019_DETAILED_PRESCRIPTION_RUNTIME.md |
 | 2026-07-24 | 검토필요 | ROOT_GUIDE_OR_RECORD | 훈련계획, 작업관리 | PLAN_BETA_PRODUCT_DECISION_2026_07_24.md |
 | 2026-07-24 | 작업기록 | REPORT | 훈련계획, 계정·프라이버시 | reports/implementation/ACCOUNT_SYNC_PLAN_2026-07-24.md |

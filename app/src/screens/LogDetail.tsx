@@ -3,6 +3,7 @@ import { IndexCard, MoodStrip, PainDot, SectionLb } from "../components/JournalP
 import { JournalConfirmationDialog } from "../components/JournalConfirmationDialog"
 import { TermHelp } from "../components/TermHelp"
 import type { TermId } from "../domain/glossary"
+import { ENERGY_SYSTEM_META, type EnergySystemKey } from "../domain/energy-system-taxonomy"
 import type { JournalEntry, PostSessionEntry, EveningEntry, RaceEntry } from "../domain/journal-store"
 import { entriesForDate, deleteEntry, restoreDeletedEntry } from "../domain/journal-store"
 import { TRASH_RETENTION_DAYS } from "../domain/journal-trash"
@@ -29,14 +30,27 @@ export function LogDetail(props: LogDetailProps) {
   return <LogDetailJournal {...props} />
 }
 
-const SYSTEM_META: Record<string, { c: string; n: string; cls: string; term: TermId }> = {
-  base: { c: "BA", n: "Base", cls: "base", term: "base" },
-  lt:   { c: "LT", n: "Lactate", cls: "lt", term: "lt" },
-  vo2:  { c: "V2", n: "VO2", cls: "vo2", term: "vo2" },
-  gly:  { c: "GL", n: "Glycolytic", cls: "gly", term: "gly" },
-  atp:  { c: "AP", n: "ATP-PC", cls: "atp", term: "atp" },
-  rest: { c: "RE", n: "Recovery", cls: "rest", term: "rec" },
+const SYSTEM_TERM: Readonly<Record<EnergySystemKey, TermId>> = {
+  RECOVERY: "rec",
+  BASE: "base",
+  LT: "lt",
+  VO2: "vo2",
+  GLY: "gly",
+  ATP_PC: "atp",
+  MIXED_UNALLOCATED: "mix",
 }
+
+const SYSTEM_META = Object.fromEntries(
+  (Object.entries(ENERGY_SYSTEM_META) as [EnergySystemKey, (typeof ENERGY_SYSTEM_META)[EnergySystemKey]][])
+    .map(([key, meta]) => [meta.journalValue, {
+      c: meta.code,
+      n: meta.shortLabel,
+      cls: key === "RECOVERY" || key === "MIXED_UNALLOCATED"
+        ? "rest"
+        : key.toLowerCase().replace("_pc", ""),
+      term: SYSTEM_TERM[key],
+    }]),
+) as Record<string, { c: string; n: string; cls: string; term: TermId }>
 
 function savedClock(iso: string): string {
   const d = new Date(iso)

@@ -48,7 +48,7 @@ async function reachCandidates(): Promise<void> {
   await user.click(screen.getByRole("button", { name: /구조화된 훈련과 경기 경험이 많아요/u }))
   await user.click(screen.getByRole("button", { name: /통증은 없고 몸 상태는 평소와 같아요/u }))
   await user.click(screen.getByRole("button", { name: "내 계획 완성하기" }))
-  await user.click(screen.getByRole("button", { name: /반복 인터벌.*VO2/u }))
+  await user.click(screen.getByRole("button", { name: /강한 유산소 반복.*VO₂/u }))
   await user.click(screen.getByRole("button", {
     name: /5000m 경기 페이스 상세 훈련 포함/u,
   }))
@@ -56,7 +56,7 @@ async function reachCandidates(): Promise<void> {
   await user.click(screen.getByRole("button", { name: /9일 계획 받기/u }))
   await user.click(screen.getByRole("button", { name: /아침에 운동해요/u }))
   await user.click(screen.getByRole("button", { name: /하루 한 번 운동/u }))
-  await user.click(screen.getByRole("button", { name: "날짜 없이 계획 후보 보기" }))
+  await user.click(screen.getByRole("button", { name: "날짜 없이 계획안 보기" }))
 }
 
 describe("production detailed prescription experience", () => {
@@ -79,7 +79,7 @@ describe("production detailed prescription experience", () => {
     const schedule = screen.getAllByRole("list", { name: "날짜별 계획 미리보기" })[0]
     if (schedule === undefined) throw new Error("Expected an expanded candidate schedule")
     expect(within(schedule).getByText(/5×1000m @5000m RP.*r150.*JOG/u)).toBeVisible()
-    expect(within(schedule).getByText("총 5회 · 품질 거리 5000m · 1000m 3분 42초")).toBeVisible()
+    expect(within(schedule).getByText("총 5회 · 주요 구간 5000m · 1000m당 3분 42초")).toBeVisible()
     expect(within(schedule).getAllByText(/5회.*5000m/u)).not.toHaveLength(0)
     expect(within(schedule).getByText(/4번.*150초.*조깅.*600초/u)).toBeVisible()
     await user.click(within(schedule).getByText("기준 기록·중단·낮춤 규칙 보기"))
@@ -193,7 +193,7 @@ describe("production detailed prescription experience", () => {
 
     expect(within(picker).getByText(/기록일이 현재 기준 범위를 벗어났어요/u)).toBeVisible()
     expect(screen.queryByText(/5×1000m @5000m RP/u)).toBeNull()
-    expect(screen.getByText(/두 후보 모두 원래 RPE 계획을 유지합니다/u)).toBeVisible()
+    expect(screen.getByText(/두 계획안 모두 원래 RPE 계획을 유지합니다/u)).toBeVisible()
   })
 
   it("shows a plain RPE fallback when no record exists", async () => {
@@ -221,7 +221,7 @@ describe("production detailed prescription experience", () => {
 async function openDetailedActiveSession(
   user: ReturnType<typeof userEvent.setup>,
 ): Promise<HTMLElement> {
-  const sessionTitle = screen.getAllByText(/반복 인터벌 · VO2 훈련/u)[0]
+  const sessionTitle = screen.getAllByText(/강한 유산소 반복 · VO₂ 훈련/u)[0]
   const session = sessionTitle?.closest("section[role='group']")
   if (!(session instanceof HTMLElement)) throw new Error("Expected the detailed active session")
   const details = within(session).getByText(/훈련 방법과 기록/u).closest("details")

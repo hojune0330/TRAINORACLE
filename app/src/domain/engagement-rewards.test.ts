@@ -31,7 +31,7 @@ describe("engagement rewards", () => {
     const payload = buildEngagementSharePayload(input)
 
     expect(payload).toMatchObject({
-      title: "TrainOracle 기록 정원",
+      title: "TrainOracle 러닝 기록",
       url: "https://example.test/TRAINORACLE/",
     })
     expect(payload.text).toContain("14일")

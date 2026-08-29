@@ -6,22 +6,24 @@ import { TermHelp } from "./TermHelp"
 afterEach(cleanup)
 
 describe("plan help copy", () => {
-  it("explains that an explicitly selected PM slot can contain the main session", async () => {
+  it("keeps inline help short and links to the complete explanation", async () => {
     const user = userEvent.setup()
     render(<TermHelp term="two-a-day" />)
 
     await user.click(screen.getByRole("button", { name: /하루 두 번 운동.*설명 보기/u }))
 
-    expect(screen.getByText(/오후에도 주요 훈련이 들어갈 수 있어요/u)).toBeVisible()
-    expect(screen.getByText(/직접 선택한 경우에만 표시/u)).toBeVisible()
+    expect(screen.getByText(/오전과 오후 두 번으로 나누어/u)).toBeVisible()
+    expect(screen.getByRole("link", { name: "왜 이런 이름인가요?" })).toHaveAttribute("href", "?terms=1&term=two-a-day")
+    expect(screen.queryByText(/모든 선수에게 필요한 방식/u)).toBeNull()
   })
 
-  it("lists training time among the seven inputs used by the beta plan", async () => {
+  it("links beta-plan help to its dedicated glossary entry", async () => {
     const user = userEvent.setup()
     render(<TermHelp term="plan-beta-basis" />)
 
-    await user.click(screen.getByRole("button", { name: /베타 계획의 근거.*설명 보기/u }))
+    await user.click(screen.getByRole("button", { name: /베타 계획에 사용한 정보.*설명 보기/u }))
 
-    expect(screen.getByText(/훈련 시간대/u)).toBeVisible()
+    expect(screen.getByText(/실제 계획 계산에 사용한 정보/u)).toBeVisible()
+    expect(screen.getByRole("link", { name: "왜 이런 이름인가요?" })).toHaveAttribute("href", "?terms=1&term=plan-beta-basis")
   })
 })

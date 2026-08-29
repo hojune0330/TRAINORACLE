@@ -36,7 +36,7 @@ export const DECORATION_CATALOG = [
   { id: "TAPE_CHECKER", name: "체크 테이프", typeLabel: "마스킹 테이프", description: "페이지의 시작을 정리하는 테이프예요.", fallbackLabel: "체크 테이프 예시", assetPath: "decorations/tape-checker.webp", category: "TAPE", compatibleSlots: ["HEADER_TAPE"], cost: 0, starterOwned: true },
   { id: "THEME_SKY_JOURNAL", name: "하늘 일지 테마", typeLabel: "페이지 테마", description: "회복 페이지에 어울리는 맑은 배경이에요.", fallbackLabel: "하늘 일지 테마 예시", assetPath: "decorations/theme-sky-journal.webp", category: "THEME", compatibleSlots: [], cost: 12, starterOwned: false },
   { id: "STICKER_FINISH_LINE", name: "결승선 스티커", typeLabel: "스티커", description: "기록의 마무리를 보여 주는 스티커예요.", fallbackLabel: "결승선 스티커 예시", assetPath: "decorations/sticker-finish-line.webp", category: "STICKER", compatibleSlots: ["TOP_CORNER", "BODY_MARGIN"], cost: 8, starterOwned: false },
-  { id: "AVATAR_START_LINE", name: "출발선 아바타", typeLabel: "아바타", description: "페이지의 출발감을 더하는 작은 아바타예요.", fallbackLabel: "출발선 아바타 예시", assetPath: "decorations/avatar-start-line.webp", category: "AVATAR", compatibleSlots: [], cost: 20, starterOwned: false },
+  { id: "AVATAR_START_LINE", name: "출발선 아바타", typeLabel: "아바타", description: "일지 첫머리에 출발선을 표시하는 작은 아바타예요.", fallbackLabel: "출발선 아바타 예시", assetPath: "decorations/avatar-start-line.webp", category: "AVATAR", compatibleSlots: [], cost: 20, starterOwned: false },
 ] as const satisfies readonly DecorationCatalogItem[]
 
 function includesValue<T extends string>(values: readonly T[], candidate: string): candidate is T { return values.includes(candidate as T) }

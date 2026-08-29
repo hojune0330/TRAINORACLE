@@ -51,7 +51,7 @@ test("keeps explicit energy records separate from legacy defaults across home an
   const home = page.getByRole("region", { name: "에너지 시스템 요약" })
   await expect(home.getByText("지속 페이스")).toBeVisible()
   await expect(home.getByText("1회")).toBeVisible()
-  await expect(home.getByText("MIX 복합·미배분 0회")).toBeVisible()
+  await expect(home.getByText("MIX 여러 강도 조합 0회")).toBeVisible()
   await home.getByRole("button", { name: "에너지 시스템 자세히 보기" }).click()
 
   const analysis = page.getByRole("region", { name: "에너지 시스템 누적" })

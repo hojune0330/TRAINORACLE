@@ -30,7 +30,7 @@ test("audits empty home and chooser touch actions", async ({ page }, testInfo) =
   await auditTouchTargets(page, [
     { name: "post.back", locator: page.getByRole("button", { name: "← 뒤로" }) },
     // 짧은 화면 표시는 코드만 쓰되 접근 이름은 한글 뜻까지 보존한다.
-    { name: "post.energy", locator: page.getByRole("button", { name: /^(REC 회복|BASE 기초 지구력|LT 지속 페이스|VO2 강한 유산소|GLY 젖산성 스피드|ATP 짧고 빠른 가속|MIX 복합·미배분)$/u }), count: 7, heightOnly: true },
+    { name: "post.energy", locator: page.getByRole("button", { name: /^(REC 회복 운동|BASE 기초 지구력|LT 지속 페이스|VO₂ 강한 유산소 반복|GLY 짧은 고강도 반복|ATP-PC 스피드·가속|MIX 여러 강도 조합)$/u }), count: 7, heightOnly: true },
   ])
   await expectNoHorizontalOverflow(page)
   // the chooser is reached via the "경기기록" tab bar button

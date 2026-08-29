@@ -11,7 +11,7 @@ const WELCOME_MODEL = {
   todayMessage: "아직 오늘 기록이 없어요.",
   journalSummary: "아직 기록이 없어요",
   flowSummary: "9.5일 주기로 일지 묶어 보기 · 시작일 직접 선택",
-  planSummary: "저장된 계획 없음 · 계획 후보 만들기",
+  planSummary: "저장된 계획 없음 · 계획안 만들기",
   analysisSummary: "기록이 쌓이면 변화를 볼 수 있어요",
   showMinjiPrompt: true,
   nextTraining: null,

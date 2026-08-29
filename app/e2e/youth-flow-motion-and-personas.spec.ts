@@ -48,7 +48,7 @@ test("a high-school athlete can make a ten-day two-a-day plan without prior reco
   await page.getByRole("button", { name: /^10일 계획 받기/u }).click()
   await page.getByRole("button", { name: /날마다 달라요/u }).click()
   await page.getByRole("button", { name: /하루 두 번 운동할게요/u }).click()
-  await page.getByRole("button", { name: "날짜 없이 계획 후보 보기" }).click()
+  await page.getByRole("button", { name: "날짜 없이 계획안 보기" }).click()
 
   await expect(page.getByRole("heading", { name: "두 계획에서 하나를 골라보세요" })).toBeVisible()
   await expect(page.getByRole("region", { name: "두 계획 핵심 비교" })).toContainText("지속 페이스 · LT")
@@ -73,10 +73,10 @@ test("a self-directed runner with no journal can still reach an RPE plan", async
   await page.getByRole("button", { name: /^7일만 먼저 받기/u }).click()
   await page.getByRole("button", { name: /저녁에 운동해요/u }).click()
   await page.getByRole("button", { name: /하루 한 번 운동/u }).click()
-  await page.getByRole("button", { name: "날짜 없이 계획 후보 보기" }).click()
+  await page.getByRole("button", { name: "날짜 없이 계획안 보기" }).click()
 
   await expect(page.getByRole("heading", { name: "두 계획에서 하나를 골라보세요" })).toBeVisible()
   await expect(page.getByText("RPE 기준 실행 안내").first()).toBeVisible()
   await expect(page.getByText("기록 없이 시작한 베타 계획")).toBeVisible()
-  await expect(page.getByText(/확인한 기준 기록이 없으면 기록값과 구조화 일지는 시간·RPE 계산에 미사용/u)).toBeVisible()
+  await expect(page.getByText(/확인한 기준 기록이 없어 기록값과 구조화 일지는 이번 계획 계산에 사용하지 않았어요/u)).toBeVisible()
 })

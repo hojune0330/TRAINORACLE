@@ -62,28 +62,28 @@ export const STEP_META: Record<IntakeStep, {
     number: 5,
     eyebrow: "이번 목표",
     title: "이번 주기에 어떤 훈련을 더 넣고 싶나요?",
-    copy: "고른 목적은 고강도 날의 종류와 RPE 안내를 정해요. 지원 조건이 맞으면 한 번의 주요 훈련에 반복 횟수·거리·페이스·회복 시간도 보여드려요.",
+    copy: "고른 목적은 주요 훈련의 종류와 RPE 안내를 정해요. 지원 조건이 맞으면 한 번의 주요 훈련에 반복 횟수·거리·페이스·회복 시간도 표시해요.",
     helpTerm: "energy-system",
   },
   template: {
     number: 6,
     eyebrow: "훈련 상세 방식",
     title: "훈련 강도를 어떻게 안내받을까요?",
-    copy: "RPE 기준은 기록 없이도 시작할 수 있어요. 상세 훈련은 현재 종목·목적에 승인된 훈련표를 직접 고르고, 같은 종목의 현재 기록을 확인해야 반복 페이스를 계산합니다.",
+    copy: "RPE 기준은 기록 없이도 시작할 수 있어요. 상세 훈련은 현재 종목·목적에 맞는 검토된 훈련표를 직접 고르고, 같은 종목의 현재 기록을 확인해야 반복 페이스를 계산합니다.",
     helpTerm: "training-notation",
   },
   days: {
     number: 7,
     eyebrow: "가능한 날",
     title: "이번 계획에서 운동할 수 있는 날은 며칠인가요?",
-    copy: "달리기뿐 아니라 걷기, 가벼운 조깅, 자전거 같은 회복 운동을 하는 날도 포함해 골라주세요. 고른 날 수를 9.5일 기본 틀의 운동 가능한 날짜에 배치해요. N이 작을수록 계획의 하루 훈련 시간이 늘어날 수 있고, 현재 베타는 여러 날짜 배치 방식 중 이 기본 배치 하나만 제공해요.",
+    copy: "달리기뿐 아니라 걷기, 가벼운 조깅, 자전거 같은 회복 운동을 하는 날도 포함해 골라주세요. 고른 날 수를 9.5일 기본 틀에 배치해요. 운동할 수 있는 날이 적으면 하루 운동 시간이 늘어날 수 있어요. 현재 베타는 이 기본 배치 한 가지를 제공합니다.",
     helpTerm: "training-days",
   },
   "training-time": {
     number: 8,
     eyebrow: "주로 하는 시간",
     title: "주로 언제 운동하나요?",
-    copy: "품질 훈련을 보기 편한 시간대에 놓는 데만 사용해요. 운동 능력을 평가하거나 훈련 강도를 바꾸지 않아요.",
+    copy: "주요 훈련을 보기 편한 시간대에 놓는 데만 사용해요. 운동 능력을 평가하거나 훈련 강도를 바꾸지 않아요.",
     helpTerm: "training-days",
   },
   "two-a-day": {
@@ -145,11 +145,11 @@ export function trainingTimeLabel(preference: TrainingTimePreference): {
 } {
   switch (preference) {
     case "MORNING":
-      return { title: "아침에 운동해요", detail: "품질 훈련을 오전에 먼저 보여줘요" }
+      return { title: "아침에 운동해요", detail: "주요 훈련을 오전에 먼저 배치해요" }
     case "EVENING":
-      return { title: "저녁에 운동해요", detail: "품질 훈련을 오후에 먼저 보여줘요" }
+      return { title: "저녁에 운동해요", detail: "주요 훈련을 오후에 먼저 배치해요" }
     case "VARIES":
-      return { title: "날마다 달라요", detail: "품질 훈련을 오전에 기본으로 보여줘요" }
+      return { title: "날마다 달라요", detail: "주요 훈련은 오전에 기본 배치해요" }
     default:
       return assertNever(preference)
   }

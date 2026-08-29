@@ -11,14 +11,14 @@ describe("plan flow code help", () => {
     const user = userEvent.setup()
     render(<PlanFlowCodeHelp primary="MAIN" secondary="LT" kind="main" />)
 
-    const trigger = screen.getByRole("button", { name: "MAIN LT 훈련 설명 보기" })
+    const trigger = screen.getByRole("button", { name: "주요 훈련 MAIN, 지속 페이스 LT 훈련 설명 보기" })
     expect(trigger).toHaveAttribute("aria-expanded", "false")
 
     await user.click(trigger)
 
     expect(screen.getByText(GLOSSARY.main.short)).toBeVisible()
     expect(screen.getByText(GLOSSARY.lt.short)).toBeVisible()
-    expect(screen.getByRole("button", { name: "MAIN LT 훈련 설명 닫기" })).toHaveAttribute("aria-expanded", "true")
+    expect(screen.getByRole("button", { name: "주요 훈련 MAIN, 지속 페이스 LT 훈련 설명 닫기" })).toHaveAttribute("aria-expanded", "true")
   })
 
   it.each([
@@ -29,7 +29,7 @@ describe("plan flow code help", () => {
     const user = userEvent.setup()
     render(<PlanFlowCodeHelp primary={primary} kind={kind} variant="legend" />)
 
-    await user.click(screen.getByRole("button", { name: `${primary} 일정표 구분 설명 보기` }))
+    await user.click(screen.getByRole("button", { name: new RegExp(`${GLOSSARY[term].label}.*${primary}.*일정표 구분 설명 보기`, "u") }))
 
     expect(screen.getByText(GLOSSARY[term].short)).toBeVisible()
   })
@@ -43,7 +43,7 @@ describe("plan flow code help", () => {
     const user = userEvent.setup()
     render(<PlanFlowCodeHelp primary="MAIN" secondary={secondary} kind="main" />)
 
-    await user.click(screen.getByRole("button", { name: `MAIN ${secondary} 훈련 설명 보기` }))
+    await user.click(screen.getByRole("button", { name: new RegExp(`주요 훈련 MAIN.*${GLOSSARY[term].label}.*훈련 설명 보기`, "u") }))
 
     expect(screen.getByText(GLOSSARY[term].short)).toBeVisible()
   })

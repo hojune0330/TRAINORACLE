@@ -47,7 +47,7 @@ const states: readonly {
       authorityRowId: "fixture-row",
       numericTaperAuthority: "NOT_GRANTED",
     },
-    title: "승인된 기준으로 날짜 배치만 적용",
+    title: "현재 제공 기준으로 날짜 배치만 적용",
   },
   {
     state: {

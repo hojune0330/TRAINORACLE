@@ -52,7 +52,7 @@ describe("energy system ledger UI", () => {
     const region = screen.getByRole("region", { name: "에너지 시스템 누적" })
     expect(within(region).getByRole("img", { name: /LT 지속 페이스 1회/u })).toBeVisible()
     expect(within(region).getByText("40분 · 8km · RPE 6")).toBeVisible()
-    expect(within(region).getByRole("img", { name: /MIX 복합·미배분 0회/u })).toBeVisible()
+    expect(within(region).getByRole("img", { name: /MIX 여러 강도 조합 0회/u })).toBeVisible()
     expect(within(region).getByRole("table", { name: "에너지 시스템별 일지 누적" })).toBeInTheDocument()
     expect(within(region).getByText(/예정 1회 · 완료 표시 0회/u)).toBeVisible()
 
@@ -82,7 +82,7 @@ describe("energy system ledger UI", () => {
     />)
 
     expect(screen.getByRole("region", { name: "에너지 시스템 요약" })).toBeVisible()
-    expect(screen.getByText("MIX 복합·미배분 0회")).toBeVisible()
+    expect(screen.getByText("MIX 여러 강도 조합 0회")).toBeVisible()
     expect(screen.getByText(/현재 계획 예정 1회 · 완료 표시 0회/u)).toBeVisible()
   })
 
@@ -94,7 +94,7 @@ describe("energy system ledger UI", () => {
       mode="compact"
     />)
 
-    expect(screen.getByText("MIX 복합·미배분 —")).toBeVisible()
-    expect(screen.queryByText("MIX 복합·미배분 0회")).not.toBeInTheDocument()
+    expect(screen.getByText("MIX 여러 강도 조합 —")).toBeVisible()
+    expect(screen.queryByText("MIX 여러 강도 조합 0회")).not.toBeInTheDocument()
   })
 })

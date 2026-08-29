@@ -146,7 +146,7 @@ describe("explicit pace evidence selection", () => {
     await user.click(within(flow).getByRole("button", { name: "이 기록으로 개인 페이스 적용" }))
 
     const status = within(flow).getByRole("status")
-    expect(status).toHaveTextContent("선택한 기록으로 두 후보에 같은 상세 처방을 적용했어요.")
+    expect(status).toHaveTextContent("선택한 기록으로 두 계획안에 같은 상세 훈련 수치를 적용했어요.")
     expect(status).toHaveFocus()
   })
 

@@ -17,7 +17,7 @@ async function answerMinimumPlanQuestions(page: Page): Promise<void> {
   await selectNineDayProjection(page)
   await page.getByRole("button", { name: /날마다 달라요/u }).click()
   await page.getByRole("button", { name: "하루 한 번 운동" }).click()
-  await page.getByRole("button", { name: "날짜 없이 계획 후보 보기" }).click()
+  await page.getByRole("button", { name: "날짜 없이 계획안 보기" }).click()
 }
 
 async function expectCanonicalPlanCandidates(page: Page): Promise<void> {
@@ -41,7 +41,7 @@ test("keeps plan help inside the narrow scroll region", async ({ page }) => {
   const geometry = await page.evaluate(() => {
     const scrollRegion = document.querySelector<HTMLElement>(".app-scroll-region")
     const popover = document.querySelector<HTMLElement>(".popover-surface")
-    const detail = document.querySelector<HTMLElement>(".term-help__detail")
+    const detail = document.querySelector<HTMLElement>(".term-help__short")
     if (scrollRegion === null || popover === null || detail === null) return null
     const scrollRect = scrollRegion.getBoundingClientRect()
     const popoverRect = popover.getBoundingClientRect()
@@ -109,13 +109,13 @@ test("generates a bounded two-a-day 9-day candidate", async ({ page }) => {
   await page.getByRole("button", { name: /훈련 계획에 맞춰 달려 본 경험/u }).click()
   await page.getByRole("button", { name: /통증은 없고 몸 상태는 평소와 같아요/u }).click()
   await page.getByRole("button", { name: "내 계획 완성하기" }).click()
-  await page.getByRole("button", { name: /반복 인터벌.*VO2/u }).click()
+  await page.getByRole("button", { name: /강한 유산소 반복.*VO₂/u }).click()
   await page.getByRole("button", { name: /^RPE 기준으로 받기/u }).click()
   await page.getByRole("button", { name: "매일" }).click()
   await selectNineDayProjection(page)
   await page.getByRole("button", { name: /날마다 달라요/u }).click()
   await page.getByRole("button", { name: "하루 두 번 운동할게요" }).click()
-  await page.getByRole("button", { name: "날짜 없이 계획 후보 보기" }).click()
+  await page.getByRole("button", { name: "날짜 없이 계획안 보기" }).click()
 
   await expectCanonicalPlanCandidates(page)
   await expect(page.getByText(/오후 회복/u).first()).toBeVisible()
@@ -130,23 +130,23 @@ test("keeps an evening two-a-day plan after selection and reload", async ({ page
   await page.getByRole("button", { name: /훈련 계획에 맞춰 달려 본 경험/u }).click()
   await page.getByRole("button", { name: /통증은 없고 몸 상태는 평소와 같아요/u }).click()
   await page.getByRole("button", { name: "내 계획 완성하기" }).click()
-  await page.getByRole("button", { name: /반복 인터벌.*VO2/u }).click()
+  await page.getByRole("button", { name: /강한 유산소 반복.*VO₂/u }).click()
   await page.getByRole("button", { name: /^RPE 기준으로 받기/u }).click()
   await page.getByRole("button", { name: "매일" }).click()
   await selectNineDayProjection(page)
   await page.getByRole("button", { name: /저녁에 운동해요/u }).click()
   await page.getByRole("button", { name: "하루 두 번 운동할게요" }).click()
-  await page.getByRole("button", { name: "날짜 없이 계획 후보 보기" }).click()
+  await page.getByRole("button", { name: "날짜 없이 계획안 보기" }).click()
 
   // When
   await page.getByRole("button", { name: /선택하기/u }).first().click()
 
   // Then
   await expectActivePlanHeading(page)
-  const qualitySession = await openActiveSessionDetails(page, /반복 인터벌/u)
+  const qualitySession = await openActiveSessionDetails(page, /강한 유산소 반복/u)
   await expect(qualitySession.getByRole("list", { name: "훈련 실행 순서" }).first()).toContainText("준비")
   await expect(qualitySession.getByRole("list", { name: "훈련 실행 순서" }).first()).toContainText("본운동")
-  await expect(qualitySession.getByText(/빠른\s구간과 천천히 움직이는 회복 구간을 번갈아\s하세요/u).first()).toBeVisible()
+  await expect(qualitySession.getByText(/강한\s구간과 천천히 움직이는 회복 구간을 번갈아\s하세요/u).first()).toBeVisible()
   await expect(qualitySession.getByRole("list", { name: "훈련 실행 순서" }).first()).toContainText("정리")
   await expect(qualitySession).toContainText("오후")
   await expect.poll(async () => page.evaluate(() => {
@@ -174,7 +174,7 @@ test("keeps an evening two-a-day plan after selection and reload", async ({ page
   })).toBeVisible()
   await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "계획" }).click()
   await expectActivePlanHeading(page)
-  const reloadedQualitySession = await openActiveSessionDetails(page, /반복 인터벌/u)
+  const reloadedQualitySession = await openActiveSessionDetails(page, /강한 유산소 반복/u)
   await expect(reloadedQualitySession.getByText(/거리\u2060·\u2060목표\s페이스는 지정하지 않음/u).first()).toBeVisible()
   await expect(reloadedQualitySession.getByRole("list", { name: "훈련 실행 순서" }).first()).toBeVisible()
 })
@@ -272,7 +272,7 @@ test("shows a truthful distance receipt and opens the real trend", async ({ page
   await expect(receipt).toContainText("8 km")
   await receipt.getByRole("button", { name: "거리 추이 보기" }).click()
   await expect(page.getByRole("heading", { name: "분석" })).toBeVisible()
-  const distance = page.getByRole("region", { name: "거리 흐름" })
+  const distance = page.getByRole("region", { name: "누적 거리와 변화" })
   await expect(distance.getByLabel(/이번 주, 8킬로미터, 기록 1건/u)).toBeVisible()
   await expect(distance.getByText(/1건 반영/u).first()).toBeVisible()
 })

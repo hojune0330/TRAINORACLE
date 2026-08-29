@@ -23,7 +23,7 @@ export function DetailedPrescriptionView({ prescription }: { readonly prescripti
           {prescription.repetitionDistanceM}m를 {formatTrainingSeconds(prescription.targetRepSeconds)} 목표로
           {" "}{prescription.repetitionsPerSet}회
           {prescription.setCount > 1 && ` · 총 ${prescription.totals.totalRepetitions}회`}
-          {" · "}품질 거리 {prescription.totals.qualityDistanceM}m
+          {" · "}주요 구간 거리 {prescription.totals.qualityDistanceM}m
         </span>
       </p>
       {prescription.repetitionRecoverySeconds !== null && (
@@ -65,7 +65,7 @@ export function DetailedPrescriptionView({ prescription }: { readonly prescripti
           <p>
             기준 기록 · {anchor.eventDistanceM}m {formatRecordTime(anchor.performanceSeconds)} · {anchor.achievedAt}
           </p>
-          <p>낮춤 · 숫자 반복을 줄여 계산하지 않고 기존 RPE 후보로 되돌아갑니다.</p>
+          <p>낮춤 · 숫자 반복을 임의로 줄이지 않고 기존 RPE 계획안으로 돌아갑니다.</p>
           <ul>
             {prescription.stopCodes.map((code) => <li key={code}>{stopLabel(code)}</li>)}
           </ul>

@@ -23,7 +23,7 @@ async function generateCandidates(purpose: RegExp): Promise<void> {
   await user.click(screen.getByRole("button", { name: /9일 계획 받기/u }))
   await user.click(screen.getByRole("button", { name: /아침에 운동해요/u }))
   await user.click(screen.getByRole("button", { name: /하루 한 번 운동/u }))
-  await user.click(screen.getByRole("button", { name: "날짜 없이 계획 후보 보기" }))
+  await user.click(screen.getByRole("button", { name: "날짜 없이 계획안 보기" }))
 }
 
 describe("plan candidate purpose contrast", () => {
@@ -33,20 +33,20 @@ describe("plan candidate purpose contrast", () => {
     await generateCandidates(/지속 페이스.*LT/u)
 
     const user = userEvent.setup()
-    const candidateA = screen.getByRole("button", { name: "후보 A 일정 접기" })
-    const candidateB = screen.getByRole("button", { name: "후보 B 일정 펼치기" })
+    const candidateA = screen.getByRole("button", { name: "계획안 A 일정 접기" })
+    const candidateB = screen.getByRole("button", { name: "계획안 B 일정 펼치기" })
     expect(candidateA).toHaveAttribute("aria-expanded", "true")
     expect(candidateB).toHaveAttribute("aria-expanded", "false")
     expect(screen.getAllByRole("list", { name: "날짜별 계획 미리보기" })).toHaveLength(1)
 
     await user.click(candidateB)
-    expect(screen.getByRole("button", { name: "후보 A 일정 펼치기" }))
+    expect(screen.getByRole("button", { name: "계획안 A 일정 펼치기" }))
       .toHaveAttribute("aria-expanded", "false")
-    expect(screen.getByRole("button", { name: "후보 B 일정 접기" }))
+    expect(screen.getByRole("button", { name: "계획안 B 일정 접기" }))
       .toHaveAttribute("aria-expanded", "true")
     expect(screen.getAllByRole("list", { name: "날짜별 계획 미리보기" })).toHaveLength(1)
 
-    await user.click(screen.getByRole("button", { name: "후보 B 일정 접기" }))
+    await user.click(screen.getByRole("button", { name: "계획안 B 일정 접기" }))
     expect(screen.queryByRole("list", { name: "날짜별 계획 미리보기" }))
       .not.toBeInTheDocument()
   })
@@ -66,7 +66,7 @@ describe("plan candidate purpose contrast", () => {
     expect(within(comparison).getByText("쉬운 훈련 시간을 범위로 표시해요.")).toBeVisible()
     expect(within(comparison).getByText("쉬운 훈련을 가장 짧은 시간으로 표시해요.")).toBeVisible()
     expect(within(comparison).getByText(/같은 횟수와 RPE로/u)).toBeVisible()
-    expect(within(comparison).getByText(/고강도 훈련이 더 많거나 세지는 차이는 아니에요/u)).toBeVisible()
+    expect(within(comparison).getByText(/주요 훈련이 더 많거나 세지는 차이는 아니에요/u)).toBeVisible()
     expect(comparison).not.toHaveTextContent("보조훈련")
     expect(comparison).not.toHaveTextContent("보조 훈련")
 
@@ -79,7 +79,7 @@ describe("plan candidate purpose contrast", () => {
   it("shows each VO2 candidate's readable total time without repeating shared facts", async () => {
     render(<PlanBeta />)
 
-    await generateCandidates(/반복 인터벌.*VO2/u)
+    await generateCandidates(/강한 유산소 반복.*VO₂/u)
 
     const comparison = screen.getByRole("region", { name: "두 계획 핵심 비교" })
     const comparisonSummaries = within(comparison).getAllByText(/표시된 시간 합계/u)
@@ -94,6 +94,6 @@ describe("plan candidate purpose contrast", () => {
     expect(headlineSummaries).toHaveLength(2)
     expect(headlineSummaries[0]).toHaveTextContent("9일 동안 표시된 시간 합계 1시간 25분~2시간 10분")
     expect(headlineSummaries[1]).toHaveTextContent("9일 동안 표시된 시간 합계 1시간 25분~1시간 40분")
-    expect(screen.getAllByText(/반복 인터벌 · VO2 목적/u)).toHaveLength(2)
+    expect(screen.getAllByText(/강한 유산소 반복 · VO₂ 목적/u)).toHaveLength(2)
   })
 })

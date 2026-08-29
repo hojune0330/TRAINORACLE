@@ -47,7 +47,8 @@
   inset-block-start: 12px;
   inset-inline-start: 50%;
   width: min(76%, 280px);
-  min-height: 148px;
+  height: 148px;
+  min-height: 0;
   border: 1px solid color-mix(in srgb, var(--ink) 18%, transparent);
   border-radius: 6px;
   box-shadow: none;
@@ -70,12 +71,65 @@
 }
 
 .minji-showcase-preview .decorated-journal-page__content {
-  min-height: 148px;
-  padding: 30px 42px 20px 20px;
+  min-height: 82px;
+  padding: 8px 6px 8px 12px;
   display: grid;
   align-content: center;
   gap: 5px;
   box-sizing: border-box;
+}
+
+/* The stacked preview uses the same safe rails as a full diary page, but at
+ * thumbnail scale so the cards cannot extend over the selectable list below. */
+.minji-showcase-preview .decorated-journal-page__top-rail {
+  min-height: 32px;
+  height: 32px;
+  padding: 2px 7px;
+  grid-template-columns: 28px minmax(0, 1fr) 30px;
+  gap: 4px;
+}
+
+.minji-showcase-preview .decorated-journal-page__avatar {
+  width: 25px;
+  height: 25px;
+}
+
+.minji-showcase-preview .decorated-journal-page__slot--header-tape {
+  width: min(100%, 110px);
+  height: 22px;
+}
+
+.minji-showcase-preview .decorated-journal-page__slot--top-corner {
+  width: 27px;
+  height: 27px;
+}
+
+.minji-showcase-preview .decorated-journal-page__body[data-has-side-rail="true"] {
+  grid-template-columns: minmax(0, 1fr) 34px;
+}
+
+.minji-showcase-preview .decorated-journal-page__side-rail {
+  min-height: 0;
+  padding: 4px 3px;
+  align-items: center;
+  border-top: 0;
+}
+
+.minji-showcase-preview .decorated-journal-page__slot--body-margin {
+  position: static;
+  width: 28px;
+  height: 28px;
+}
+
+.minji-showcase-preview .decorated-journal-page__footer-rail {
+  min-height: 32px;
+  height: 32px;
+  padding: 2px 7px;
+}
+
+.minji-showcase-preview .decorated-journal-page__slot--page-footer {
+  width: 28px;
+  height: 28px;
 }
 
 .minji-showcase-preview .decorated-journal-page__content > span,
@@ -166,8 +220,8 @@
 
 @media (max-width: 350px) {
   .minji-showcase-preview { height: 178px; }
-  .minji-showcase-preview > .decorated-journal-page { width: 82%; min-height: 136px; }
-  .minji-showcase-preview .decorated-journal-page__content { min-height: 136px; padding-inline-start: 16px; }
+  .minji-showcase-preview > .decorated-journal-page { width: 82%; height: 136px; }
+  .minji-showcase-preview .decorated-journal-page__content { min-height: 70px; padding-inline-start: 10px; }
   .minji-page__body { padding-inline: 14px; }
   .minji-page__write { width: calc(100% - 24px); margin-inline: 12px; }
 }

@@ -29,7 +29,7 @@ describe("plan calendar selection", () => {
     await user.click(screen.getByRole("button", { name: /9일 계획 받기/u }))
     await user.click(screen.getByRole("button", { name: /아침에 운동해요/u }))
     await user.click(screen.getByRole("button", { name: /하루 두 번 운동할게요/u }))
-    await user.click(screen.getByRole("button", { name: "날짜 없이 계획 후보 보기" }))
+    await user.click(screen.getByRole("button", { name: "날짜 없이 계획안 보기" }))
 
     const startDate = screen.getByLabelText("계획 시작 날짜")
     await user.clear(startDate)
@@ -56,7 +56,7 @@ describe("plan calendar selection", () => {
     await user.click(screen.getByRole("button", { name: /9일 계획 받기/u }))
     await user.click(screen.getByRole("button", { name: /아침에 운동해요/u }))
     await user.click(screen.getByRole("button", { name: /하루 두 번 운동할게요/u }))
-    await user.click(screen.getByRole("button", { name: "날짜 없이 계획 후보 보기" }))
+    await user.click(screen.getByRole("button", { name: "날짜 없이 계획안 보기" }))
 
     const startDate = screen.getByLabelText("계획 시작 날짜")
     await user.clear(startDate)
@@ -95,7 +95,7 @@ describe("plan calendar selection", () => {
     await user.click(screen.getByRole("button", { name: /9일 계획 받기/u }))
     await user.click(screen.getByRole("button", { name: /아침에 운동해요/u }))
     await user.click(screen.getByRole("button", { name: /하루 두 번 운동할게요/u }))
-    await user.click(screen.getByRole("button", { name: "날짜 없이 계획 후보 보기" }))
+    await user.click(screen.getByRole("button", { name: "날짜 없이 계획안 보기" }))
 
     const startDate = screen.getByLabelText("계획 시작 날짜")
     await user.clear(startDate)

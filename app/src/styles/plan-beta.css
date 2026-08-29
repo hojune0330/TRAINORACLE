@@ -506,26 +506,18 @@
   margin: var(--space-2) 0 0;
   padding: 0;
   display: grid;
-  grid-template-columns: repeat(4, max-content);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: var(--space-2) var(--space-3);
   list-style: none;
 }
 
 .plan-training-flow__legend li {
-  display: inline-flex;
+  min-width: 0;
+  display: flex;
   align-items: center;
   gap: 3px;
   font-family: var(--sans);
   font-size: var(--fs-mono-xs);
-}
-
-.plan-flow-code-help__legend-code > strong {
-  color: var(--ink);
-  font-family: var(--mono);
-}
-
-.plan-training-flow__legend > li > span:last-child {
-  color: var(--ink-3);
 }
 
 .plan-flow-code-help {
@@ -552,13 +544,19 @@
 
 .plan-flow-code-help__legend-code {
   min-height: 1.35rem;
-  display: inline-flex;
+  display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 3px;
   color: var(--ink);
-  font-family: var(--mono);
-  font-size: var(--fs-mono-xs);
+  font-family: var(--sans);
+  font-size: var(--fs-body-sm);
 }
+
+.plan-flow-code-help__name { min-width: 0; display: inline-flex; align-items: baseline; gap: 4px; }
+.plan-flow-code-help__name > strong { color: inherit; font-family: var(--sans); font-size: inherit; line-height: 1.3; }
+.plan-flow-code-help__name > small { color: inherit; opacity: .72; font-family: var(--mono); font-size: 8.5px; line-height: 1; }
+.plan-flow-code-help__name[data-secondary="true"] { padding-left: 5px; border-left: 1px solid currentColor; }
 
 .plan-flow-code-help__question {
   width: 14px;
@@ -902,11 +900,12 @@
   padding: 2px var(--space-1);
   border: var(--bw-line) solid var(--line);
   color: var(--ink-2);
-  display: inline-flex;
+  display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 3px;
-  font-family: var(--mono);
-  font-size: var(--fs-mono-xs);
+  font-family: var(--sans);
+  font-size: var(--fs-body-sm);
 }
 
 .plan-session-flow-code[data-flow-kind="main"] {
@@ -918,13 +917,6 @@
 .plan-session-flow-code[data-flow-kind="base"] {
   border-color: var(--brand);
   color: var(--brand);
-}
-
-.plan-session-flow-code small {
-  padding-left: 1px;
-  border-left: 0;
-  color: inherit;
-  font-size: inherit;
 }
 
 .plan-session-flow-code .plan-flow-code-help__question {

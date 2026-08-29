@@ -35,7 +35,11 @@ export function PlanFlowCodeHelp({
   const { open, toggle, wrapRef } = usePopover()
   const primaryTerm = PRIMARY_TERM[primary]
   const secondaryTerm = secondary === undefined ? undefined : SECONDARY_TERM[secondary]
-  const accessibleCode = secondary === undefined ? primary : `${primary} ${secondary}`
+  const primaryEntry = GLOSSARY[primaryTerm]
+  const secondaryEntry = secondaryTerm === undefined ? undefined : GLOSSARY[secondaryTerm]
+  const accessibleCode = secondaryEntry === undefined
+    ? `${primaryEntry.label} ${primaryEntry.code ?? primary}`
+    : `${primaryEntry.label} ${primaryEntry.code ?? primary}, ${secondaryEntry.label} ${secondaryEntry.code ?? secondary}`
   const contextLabel = variant === "legend" ? "일정표 구분" : "훈련"
   const content = (
     <>
@@ -62,8 +66,16 @@ export function PlanFlowCodeHelp({
           data-flow-kind={kind}
           aria-hidden="true"
         >
-          <strong>{primary}</strong>
-          {secondary !== undefined && <small>{secondary}</small>}
+          <span className="plan-flow-code-help__name">
+            <strong>{primaryEntry.label}</strong>
+            <small>{primaryEntry.code ?? primary}</small>
+          </span>
+          {secondaryEntry !== undefined && (
+            <span className="plan-flow-code-help__name" data-secondary="true">
+              <strong>{secondaryEntry.label}</strong>
+              <small>{secondaryEntry.code ?? secondary}</small>
+            </span>
+          )}
           <span className="plan-flow-code-help__question">?</span>
         </span>
       </button>
@@ -100,7 +112,7 @@ function GlossarySection({ term, divided = false }: {
     <section className="plan-flow-code-help__section" data-divided={divided ? "true" : undefined}>
       <div className="term-help__label">{entry.label}</div>
       <div className="term-help__short">{entry.short}</div>
-      {entry.detail !== undefined && <div className="term-help__detail">{entry.detail}</div>}
+      <a className="term-help__more" href={`?terms=1&term=${term}`}>용어 자세히 보기</a>
     </section>
   )
 }

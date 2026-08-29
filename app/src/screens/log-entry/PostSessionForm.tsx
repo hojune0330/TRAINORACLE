@@ -102,7 +102,10 @@ export function PostSessionForm({ onBack, onDone, targetDate, initialEntry, plan
               onClick={() => setSystem(energySystem.journalValue)}
             >
               <span className={`energy-dot energy-dot--${energySystem.key.toLowerCase().replace("_", "-")}`} aria-hidden="true" />
-              <span>{energySystem.code}</span>
+              <span className="journal-energy-picker__label">
+                <strong>{energySystem.pickerLabel}</strong>
+                <small>{energySystem.code}</small>
+              </span>
             </button>
           ))}
         </div>

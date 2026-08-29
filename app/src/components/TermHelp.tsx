@@ -22,7 +22,7 @@ export function TermHelp({ term }: { term: TermId }) {
     <span ref={wrapRef} style={{ position: "relative", display: "inline-flex", alignItems: "center" }}>
       <button
         type="button"
-        aria-label={`${entry.label} 설명 ${open ? "닫기" : "보기"}`}
+        aria-label={`${entry.label}${entry.code === undefined ? "" : ` ${entry.code}`} 설명 ${open ? "닫기" : "보기"}`}
         aria-expanded={open}
         onClick={toggle}
         style={{
@@ -58,16 +58,19 @@ export function TermHelp({ term }: { term: TermId }) {
           className="term-help__label"
           data-safety={entry.safety ? "true" : "false"}
         >
-          {entry.label}{entry.safety ? " · 안전 표시" : ""}
+          {entry.label}{entry.code === undefined ? "" : ` · ${entry.code}`}{entry.safety ? " · 안전 표시" : ""}
         </div>
         <div className="term-help__short">
           {entry.short}
         </div>
-        {entry.detail && (
+        {entry.safety && entry.detail && (
           <div className="term-help__detail">
             {entry.detail}
           </div>
         )}
+        <a className="term-help__more" href={`?terms=1&term=${term}`}>
+          왜 이런 이름인가요?
+        </a>
       </PopCard>
     </span>
   )

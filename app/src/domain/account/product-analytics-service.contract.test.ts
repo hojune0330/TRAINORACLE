@@ -19,7 +19,7 @@ describe("product analytics consent service", () => {
     await expect(loadProductAnalyticsConsent("athlete-a")).resolves.toEqual({
       ok: false,
       optedIn: false,
-      message: "사용 흐름 분석 기능이 꺼져 있어요.",
+      message: "앱 사용 정보 보내기 기능이 꺼져 있어요.",
     })
     expect(supabaseMock).not.toHaveBeenCalled()
   })
@@ -34,7 +34,7 @@ describe("product analytics consent service", () => {
 
     await expect(setProductAnalyticsConsent("athlete-a", false)).resolves.toEqual({
       ok: true,
-      message: "분석을 끄고 전에 모인 사용 흐름 기록도 삭제했어요.",
+      message: "앱 사용 정보 보내기를 끄고 전에 모인 기록도 삭제했어요.",
     })
     expect(rpc).toHaveBeenCalledWith("set_product_analytics_consent", { enabled_input: false })
   })
@@ -69,7 +69,7 @@ describe("product analytics consent service", () => {
 
     await expect(setProductAnalyticsConsent("athlete-a", false)).resolves.toEqual({
       ok: true,
-      message: "분석을 끄고 전에 모인 사용 흐름 기록도 삭제했어요.",
+      message: "앱 사용 정보 보내기를 끄고 전에 모인 기록도 삭제했어요.",
     })
     expect(rpc).toHaveBeenCalledWith("set_product_analytics_consent", { enabled_input: false })
   })

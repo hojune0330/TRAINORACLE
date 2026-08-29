@@ -45,13 +45,17 @@ button, input, textarea, select { font: inherit; letter-spacing: inherit; }
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: var(--space-1);
+  gap: 4px;
   cursor: pointer;
-  font-family: var(--mono);
-  font-size: var(--fs-mono-sm);
+  font-family: var(--sans);
+  font-size: var(--fs-body-sm);
   font-weight: 600;
   letter-spacing: 0;
 }
+
+.journal-energy-picker__label { min-width: 0; display: grid; gap: 2px; text-align: center; }
+.journal-energy-picker__label strong { font-size: 10px; line-height: 1.15; white-space: nowrap; }
+.journal-energy-picker__label small { color: var(--ink-3); font: 700 9px/1 var(--mono); }
 
 .journal-energy-picker__option[aria-pressed="true"] {
   border: 2px solid var(--ink);

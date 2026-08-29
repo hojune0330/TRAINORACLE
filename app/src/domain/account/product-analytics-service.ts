@@ -14,7 +14,7 @@ export type ProductAnalyticsConsentStatus = {
 const consentRowSchema = z.object({ analytics_opt_in: z.boolean() })
 
 export async function loadProductAnalyticsConsent(userId: string): Promise<ProductAnalyticsConsentStatus> {
-  if (!productFeatures().productAnalytics) return consentStatus(false, "사용 흐름 분석 기능이 꺼져 있어요.")
+  if (!productFeatures().productAnalytics) return consentStatus(false, "앱 사용 정보 보내기 기능이 꺼져 있어요.")
   const client = await supabase()
   if (client === null) return consentStatus(false, "분석 설정을 불러올 수 없어요.")
   const { data: sessionData } = await client.auth.getSession()
@@ -36,7 +36,7 @@ export async function setProductAnalyticsConsent(
   optedIn: boolean,
 ): Promise<AccountActionResult> {
   if (optedIn && !productFeatures().productAnalytics) {
-    return { ok: false, message: "사용 흐름 분석 기능이 꺼져 있어요." }
+    return { ok: false, message: "앱 사용 정보 보내기 기능이 꺼져 있어요." }
   }
   const client = await supabase()
   if (client === null) return { ok: false, message: "분석 설정을 저장할 수 없어요." }
@@ -48,8 +48,8 @@ export async function setProductAnalyticsConsent(
   })
   if (error !== null || data !== true) return { ok: false, message: "분석 설정을 저장하지 못했어요." }
   return optedIn
-    ? { ok: true, message: "선택 사용 흐름 분석을 켰어요." }
-    : { ok: true, message: "분석을 끄고 전에 모인 사용 흐름 기록도 삭제했어요." }
+    ? { ok: true, message: "앱 사용 정보 보내기를 켰어요." }
+    : { ok: true, message: "앱 사용 정보 보내기를 끄고 전에 모인 기록도 삭제했어요." }
 }
 
 export async function trackProductEvent(name: string): Promise<ProductAnalyticsResult> {

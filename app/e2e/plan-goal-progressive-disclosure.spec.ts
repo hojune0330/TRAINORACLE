@@ -41,7 +41,7 @@ test("creates a mobile marathon beta plan without inventing pace numbers", async
   await page.getByRole("button", { name: /^9일 계획 받기/u }).click()
   await page.getByRole("button", { name: /날마다 달라요/u }).click()
   await page.getByRole("button", { name: "하루 한 번 운동" }).click()
-  await page.getByRole("button", { name: "날짜 없이 계획 후보 보기" }).click()
+  await page.getByRole("button", { name: "날짜 없이 계획안 보기" }).click()
 
   await expect(page.getByRole("heading", { name: "두 계획에서 하나를 골라보세요" })).toBeVisible()
   await expect(page.getByText("마라톤").first()).toBeVisible()

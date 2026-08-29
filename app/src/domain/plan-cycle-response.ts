@@ -88,7 +88,7 @@ export function derivePlanCycleResponse(
     ONE_SIGNAL: "한 번의 기록만 있어 현재 수준을 유지해요",
     REPEATED_MATCH: "반복 기록이 계획 RPE 범위와 맞았어요",
     REPEATED_HIGHER_EFFORT: "반복 기록의 RPE가 계획보다 높았어요",
-    MIXED_SIGNAL: "기록마다 RPE 흐름이 달라요",
+    MIXED_SIGNAL: "같은 훈련의 RPE가 기록마다 일정하지 않아요",
   }
 
   return {

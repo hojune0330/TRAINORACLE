@@ -56,7 +56,7 @@ export const ENERGY_INTENT_LABELS: Record<PlannedEnergyIntent, {
   readonly term: "base" | "lt" | "vo2" | "gly" | "atp" | "energy-system" | "rpe"
 }> = {
   RECOVERY_INTENT: {
-    title: "가벼운 회복 움직임",
+    title: "회복 운동 · REC",
     detail: "걷기, 아주 가벼운 조깅, 느린 자전거처럼 몸을 편하게 움직이는 날이에요.",
     term: "rpe",
   },
@@ -71,18 +71,18 @@ export const ENERGY_INTENT_LABELS: Record<PlannedEnergyIntent, {
     term: "lt",
   },
   VO2_INTENT: {
-    title: "반복 인터벌 · VO2",
-    detail: "숨이 많이 차는 반복 훈련을 준비하는 목적이에요. 정확한 반복 구성은 아직 정하지 않아요.",
+    title: "강한 유산소 반복 · VO₂",
+    detail: "숨이 많이 차는 구간과 회복 구간을 반복해 강한 유산소 능력을 준비해요. 정확한 반복 구성은 지원 근거가 있을 때만 정합니다.",
     term: "vo2",
   },
   GLY_INTENT: {
-    title: "스피드 지구력 · GLY",
-    detail: "빠른 구간을 여러 번 이어 가는 힘을 준비하는 목적이에요. 세트와 회복은 아직 정하지 않아요.",
+    title: "짧은 고강도 반복 · GLY",
+    detail: "짧고 강한 구간을 충분한 회복과 함께 반복하는 목적이에요. 스피드 자체나 모든 빠른 달리기를 뜻하지 않아요.",
     term: "gly",
   },
   ATP_PC_INTENT: {
-    title: "짧고 빠른 가속 · ATP-PC",
-    detail: "짧은 가속과 충분한 회복을 준비하는 목적이에요. 100·200·400m 전용 계획은 아직 만들지 않아요.",
+    title: "스피드·가속 · ATP-PC",
+    detail: "매우 짧은 스피드·가속 구간과 충분한 회복을 다루는 목적이에요. 100·200·400m 전용 계획은 아직 만들지 않아요.",
     term: "atp",
   },
   MIXED_INTENT: {
@@ -102,12 +102,12 @@ export function candidateLabel(
   if (kind === "CONSERVATIVE") {
     return {
       title: "최소 시간 계획",
-      detail: `고른 ${ENERGY_INTENT_LABELS[selectedEnergyIntent].title} 목적에 맞춘 고강도 훈련의 종류·횟수·RPE는 후보 A와 같아요. 조정할 수 있는 쉬운 훈련만 각 시간 범위의 가장 짧은 값으로 정해요.`,
+      detail: `고른 ${ENERGY_INTENT_LABELS[selectedEnergyIntent].title} 목적에 맞춘 주요 훈련의 종류·횟수·RPE는 계획안 A와 같아요. 조정할 수 있는 쉬운 훈련만 각 시간 범위의 가장 짧은 값으로 정해요.`,
     }
   }
   return {
     title: "시간 조절 계획",
-    detail: `고른 ${ENERGY_INTENT_LABELS[selectedEnergyIntent].title} 목적에 맞춘 고강도 훈련의 종류·횟수·RPE는 후보 B와 같아요. 쉬운 훈련은 표시된 시간 범위 안에서 직접 조절해요.`,
+    detail: `고른 ${ENERGY_INTENT_LABELS[selectedEnergyIntent].title} 목적에 맞춘 주요 훈련의 종류·횟수·RPE는 계획안 B와 같아요. 쉬운 훈련은 표시된 시간 범위 안에서 직접 조절해요.`,
   }
 }
 
@@ -138,7 +138,7 @@ export function prescriptionLabel(session: PlanSession): string {
     return "달리기 일정 없음"
   }
   if (session.prescription.kind === "PACE_TARGET") {
-    return `총 ${session.prescription.totals.totalRepetitions}회 · 품질 거리 ${session.prescription.totals.qualityDistanceM}m · ${session.prescription.repetitionDistanceM}m ${formatTrainingSeconds(session.prescription.targetRepSeconds)}`
+    return `총 ${session.prescription.totals.totalRepetitions}회 · 주요 구간 ${session.prescription.totals.qualityDistanceM}m · ${session.prescription.repetitionDistanceM}m당 ${formatTrainingSeconds(session.prescription.targetRepSeconds)}`
   }
   const duration = `${session.prescription.durationMinutes.minimum}~${session.prescription.durationMinutes.maximum}분`
   const rpe = `RPE ${session.prescription.rpe.minimum}~${session.prescription.rpe.maximum}`
@@ -234,9 +234,9 @@ function qualityExecution(
     case "LT_INTENT":
       return `${effort}으로 일정하게 달리세요. 숨은 차지만 짧은 문장이 가능하고, 속도를 크게 바꾸지 않는 수준입니다.`
     case "VO2_INTENT":
-      return `${effort} 빠른\u00a0구간과 천천히 움직이는 회복 구간을 번갈아\u00a0하세요. 자세나 속도가 흐트러지기 전에 빠른\u00a0구간을 끝내세요. 짧은 말이 가능할 만큼 숨이\u00a0가라앉으면 다음 구간을 시작하세요. 같은 강도로 한 번 더 달릴\u00a0여유가 없으면 본운동을 끝내세요.`
+      return `${effort} 강한\u00a0구간과 천천히 움직이는 회복 구간을 번갈아\u00a0하세요. 자세나 속도가 흐트러지기 전에 강한\u00a0구간을 끝내세요. 짧은 말이 가능할 만큼 숨이\u00a0가라앉으면 다음 구간을 시작하세요. 같은 강도로 한 번 더 달릴\u00a0여유가 없으면 본운동을 끝내세요.`
     case "GLY_INTENT":
-      return `${effort}으로 달리다가 자세나 속도가 흐트러지기 전에 빠른\u00a0구간을 끝내세요. 그 뒤에는 천천히 움직이세요. 짧은 말이 가능할 만큼 숨이\u00a0가라앉으면 다음\u00a0빠른\u00a0구간을 시작하세요. 같은 강도로 한 번 더 달릴\u00a0여유가 없으면 본운동을 끝내세요.`
+      return `${effort}의 짧은 고강도 구간을 달리다가 자세나 속도가 흐트러지기 전에 끝내세요. 그 뒤에는 천천히 움직이세요. 짧은 말이 가능할 만큼 숨이\u00a0가라앉으면 다음 구간을 시작하세요. 같은 강도로 한 번 더 달릴\u00a0여유가 없으면 본운동을 끝내세요.`
     case "ATP_PC_INTENT":
       return `${effort}에 닿으면 더 세게 밀지 말고 한\u00a0번의\u00a0가속\u00a0구간을 끝내세요. 그 뒤에는 걷거나 천천히 움직이세요. 숨과 다리가 편해지면 다음 가속을 시작하고, 전력질주가 되거나 가속 자세가 흐트러지면 본운동을 끝내세요.`
     case "MIXED_INTENT":
@@ -316,7 +316,7 @@ function candidateSessionFacts(candidate: CandidateSummarySource) {
     && intentionCounts[intent] > 0
   ))
   const qualityLabel = qualityIntent === undefined
-    ? "고강도 0일"
+    ? "주요 훈련 0일"
     : `${ENERGY_INTENT_LABELS[qualityIntent].title} ${intentionCounts[qualityIntent]}일`
 
   const plannedDuration = visibleSessions.reduce(

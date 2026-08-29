@@ -26,7 +26,7 @@ async function generatePlanCandidates(): Promise<void> {
   await user.click(screen.getByRole("button", { name: /9일 계획 받기/u }))
   await user.click(screen.getByRole("button", { name: /날마다 달라요/u }))
   await user.click(screen.getByRole("button", { name: /하루 한 번 운동/u }))
-  await user.click(screen.getByRole("button", { name: "날짜 없이 계획 후보 보기" }))
+  await user.click(screen.getByRole("button", { name: "날짜 없이 계획안 보기" }))
 }
 
 describe("plan candidate save retry", () => {

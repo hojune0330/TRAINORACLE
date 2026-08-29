@@ -58,6 +58,12 @@ export function DecoratedJournalPageFrame({ date, state, children }: DecoratedJo
     const item = decorationCatalogItem(placement.itemId)
     return item === undefined ? [] : [{ item, slot }]
   })
+  const placementFor = (slot: DecorationSlot) => placements.find((placement) => placement.slot === slot)
+  const headerTape = placementFor("HEADER_TAPE")
+  const topCorner = placementFor("TOP_CORNER")
+  const bodyMargin = placementFor("BODY_MARGIN")
+  const pageFooter = placementFor("PAGE_FOOTER")
+  const hasTopRail = avatar !== undefined || headerTape !== undefined || topCorner !== undefined
 
   return (
     <section
@@ -68,20 +74,28 @@ export function DecoratedJournalPageFrame({ date, state, children }: DecoratedJo
       {theme !== undefined && (
         <DecorationAsset item={theme} className="decorated-journal-page__theme" testId="journal-page-theme" />
       )}
-      {avatar !== undefined && (
-        <DecorationAsset item={avatar} className="decorated-journal-page__avatar" testId="journal-page-avatar" />
+      {hasTopRail && (
+        <div className="decorated-journal-page__top-rail" aria-hidden="true">
+          <span>{avatar !== undefined && <DecorationAsset item={avatar} className="decorated-journal-page__avatar" testId="journal-page-avatar" />}</span>
+          <span>{headerTape !== undefined && <DecorationAsset item={headerTape.item} className="decorated-journal-page__slot decorated-journal-page__slot--header-tape" testId={SLOT_TEST_IDS.HEADER_TAPE} />}</span>
+          <span>{topCorner !== undefined && <DecorationAsset item={topCorner.item} className="decorated-journal-page__slot decorated-journal-page__slot--top-corner" testId={SLOT_TEST_IDS.TOP_CORNER} />}</span>
+        </div>
       )}
-      {placements.map(({ item, slot }) => (
-        <DecorationAsset
-          key={slot}
-          item={item}
-          className={`decorated-journal-page__slot decorated-journal-page__slot--${slot.toLowerCase().replaceAll("_", "-")}`}
-          testId={SLOT_TEST_IDS[slot]}
-        />
-      ))}
-      <div key={date} className="decorated-journal-page__content journal-reader-page" data-testid="decorated-journal-content">
-        {children}
+      <div className="decorated-journal-page__body" data-has-side-rail={bodyMargin !== undefined ? "true" : undefined}>
+        <div key={date} className="decorated-journal-page__content journal-reader-page" data-testid="decorated-journal-content">
+          {children}
+        </div>
+        {bodyMargin !== undefined && (
+          <aside className="decorated-journal-page__side-rail" aria-hidden="true">
+            <DecorationAsset item={bodyMargin.item} className="decorated-journal-page__slot decorated-journal-page__slot--body-margin" testId={SLOT_TEST_IDS.BODY_MARGIN} />
+          </aside>
+        )}
       </div>
+      {pageFooter !== undefined && (
+        <div className="decorated-journal-page__footer-rail" aria-hidden="true">
+          <DecorationAsset item={pageFooter.item} className="decorated-journal-page__slot decorated-journal-page__slot--page-footer" testId={SLOT_TEST_IDS.PAGE_FOOTER} />
+        </div>
+      )}
     </section>
   )
 }
