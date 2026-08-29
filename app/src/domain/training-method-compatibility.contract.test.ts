@@ -55,7 +55,7 @@ describe("training method compatibility", () => {
       today: "2026-08-29",
     })
     expect(result.status).toBe("CONTEXT_MISMATCH")
-    expect(result.conflicts.join(" ")).toContain("품질훈련 두 번")
+    expect(result.conflicts.join(" ")).toContain("주요 훈련 두 번")
     expect(result.conflicts.join(" ")).toContain("경험")
   })
 })

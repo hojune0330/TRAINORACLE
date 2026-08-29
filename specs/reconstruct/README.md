@@ -123,6 +123,13 @@ Use this order before creating any reconstructed file:
 - It does not authorize physiological measurement claims, automatic adaptation, exact 9.5-day attribution, or historical plan linkage.
 - It creates no distance-goal, reward, training-plan mutation, safety, or medical authority.
 
+`TRAINING_TERMINOLOGY_AND_EXPLANATION_SPEC.md`:
+
+- It separates schedule roles, planned intents, metabolic pathways, fuel context, lactate response, and athlete-reported metrics.
+- It requires Korean-first labels, short inline help, and a full searchable term view from one runtime lexicon source.
+- It preserves internal enums and forbids planned labels from being presented as measured physiology.
+- It keeps legacy terms searchable without promoting inaccurate aliases to canonical scientific names.
+
 `PLAN_JOURNAL_LINKAGE_CONTRACT.md`:
 
 - It creates an immutable opaque link only after the athlete selects one exact non-rest session and chooses to write its journal.

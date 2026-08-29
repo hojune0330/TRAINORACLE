@@ -36,12 +36,28 @@ test("keeps a zero-point starter decoration on the real diary through refresh an
     }]))
   })
 
+  await page.setViewportSize({ width: 320, height: 568 })
   await page.goto("/?app=1")
   await page.getByRole("button", { name: /Zero point decoration check.*상세 열기/u }).click()
   await page.getByRole("button", { name: "일지 꾸미기 열기" }).click()
   await page.getByRole("button", { name: "맑은 날 오른쪽 위에 사용" }).click()
 
   await expect(page.getByTestId("journal-slot-top-corner")).toBeVisible()
+  const reservedRailGeometry = await page.evaluate(() => {
+    const sticker = document.querySelector<HTMLElement>('[data-testid="journal-slot-top-corner"]')
+    const content = document.querySelector<HTMLElement>('[data-testid="decorated-journal-content"]')
+    if (sticker === null || content === null) return null
+    const stickerRect = sticker.getBoundingClientRect()
+    const contentRect = content.getBoundingClientRect()
+    return {
+      stickerBottom: stickerRect.bottom,
+      contentTop: contentRect.top,
+      documentFits: document.documentElement.scrollWidth <= window.innerWidth,
+    }
+  })
+  expect(reservedRailGeometry).not.toBeNull()
+  expect(reservedRailGeometry?.stickerBottom).toBeLessThanOrEqual(reservedRailGeometry?.contentTop ?? 0)
+  expect(reservedRailGeometry?.documentFits).toBe(true)
   await expect.poll(() => page.evaluate(() => {
     const raw = window.localStorage.getItem("trainoracle.decorations.v2")
     return raw?.includes('"itemId":"STICKER_WEATHER_SUN"') ?? false

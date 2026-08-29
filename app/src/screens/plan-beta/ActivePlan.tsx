@@ -218,7 +218,7 @@ export function ActivePlan({
                         type="button"
                         onClick={onRetryCloudBackup}
                       >
-                        계정 보관 다시 시도
+                        계정에 다시 저장
                       </button>
                     )}
                     {state.athleteEvidence !== undefined && (
@@ -226,14 +226,14 @@ export function ActivePlan({
                         저장된 경기 기록 {state.athleteEvidence.storedRecordCount}개
                         {" · "}최근 구조화 일지 {state.athleteEvidence.recentJournalSessionCount}개 연결
                         {" · "}{hasDetailedPrescription
-                            ? `확인한 ${detailedPrescription.targetEventDistanceM}m 기록은 상세 세션 페이스에 사용 · 일지 값은 시간·RPE 계산에 미사용`
-                          : "개인 페이스·훈련 시간·RPE 계산에는 미사용"}
+                            ? `확인한 ${detailedPrescription.targetEventDistanceM}m 기록은 상세 세션 페이스에 사용 · 연결된 일지 값은 이번 계획 계산에 사용하지 않았어요`
+                          : "연결된 기록과 일지 값은 이번 계획 계산에 사용하지 않았어요"}
                       </small>
                     )}
                     {state.intake.competitionDivision !== undefined
                       && state.intake.competitionDivision !== "NOT_PROVIDED" && (
                       <small>
-                        참가 부문: {DIVISION_LABELS[state.intake.competitionDivision].title} · 표시용 정보이며 훈련 강도와 안전 판정에는 미사용
+                        참가 부문: {DIVISION_LABELS[state.intake.competitionDivision].title} · 화면에만 표시하며 훈련 강도와 안전 판단에는 사용하지 않았어요
                       </small>
                     )}
                   </span>
@@ -358,7 +358,7 @@ export function ActivePlan({
           </>
         ) : (
           <button type="button" disabled={!frameComplete} onClick={onNextFrame}>
-            {frameComplete ? "현재 기준으로 다음 후보 만들기" : "현재 계획을 먼저 기록해 주세요"}
+            {frameComplete ? "현재 기준으로 다음 계획안 만들기" : "현재 계획을 먼저 기록해 주세요"}
           </button>
         )}
       </div>
@@ -369,13 +369,13 @@ export function ActivePlan({
 function cloudPersistenceLabel(state: PlanCloudPersistenceState): string {
   switch (state) {
     case "CHECKING":
-      return "이 기기에 저장 · 계정 보관 확인 중"
+      return "이 기기에 저장됨 · 계정 저장 상태 확인 중"
     case "SAVING":
-      return "이 기기에 저장 · 계정에 보관 중"
+      return "이 기기에 저장됨 · 계정에 저장 중"
     case "SAVED":
       return "이 기기와 로그인한 계정에 저장"
     case "FAILED":
-      return "이 기기에 저장 · 계정 보관은 완료되지 않음"
+      return "이 기기에 저장됨 · 계정에는 저장하지 못했어요"
     case "DEVICE_ONLY":
       return "이 기기에만 저장"
   }

@@ -19,6 +19,16 @@ test("opens Minji's diary as a readable page stack", async ({ page }, testInfo) 
   const storageBefore = await page.evaluate(() => JSON.stringify({ ...window.localStorage }))
 
   await expect(page.getByLabel("민지의 꾸며진 일지 미리보기")).toBeVisible()
+  const previewGeometry = await page.evaluate(() => {
+    const preview = document.querySelector<HTMLElement>(".minji-showcase-preview")
+    const list = document.querySelector<HTMLElement>(".minji-index__stack")
+    if (preview === null || list === null) return null
+    const previewRect = preview.getBoundingClientRect()
+    const listRect = list.getBoundingClientRect()
+    return { previewBottom: previewRect.bottom, listTop: listRect.top }
+  })
+  expect(previewGeometry).not.toBeNull()
+  expect(previewGeometry?.previewBottom).toBeLessThanOrEqual(previewGeometry?.listTop ?? 0)
   const pageButton = page.getByRole("button", { name: /첫날.*처음 적은 한 줄/u })
   await pageButton.click()
   await expect(page.getByRole("heading", { name: "처음 적은 한 줄" })).toBeFocused()
@@ -40,7 +50,7 @@ test("opens Minji's diary as a readable page stack", async ({ page }, testInfo) 
       return region instanceof HTMLElement ? region.scrollTop : -1
     })).toBe(0)
     if (pageNumber === 4) {
-      await expect(page.getByText("무릎이 신경 쓰이는 날도 한 페이지예요.")).toBeVisible()
+      await expect(page.getByText("무릎이 신경 쓰이는 날의 상태를 남겼어요.")).toBeVisible()
     }
   }
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true)

@@ -88,7 +88,7 @@ describe("provenance-safe Trends surface", () => {
   it("shows only verified weekly distance and explains excluded records", () => {
     render(<Trends />)
 
-    const distance = screen.getByRole("region", { name: "거리 흐름" })
+    const distance = screen.getByRole("region", { name: "누적 거리와 변화" })
     expect(within(distance).getByLabelText(/이번 주, 8킬로미터, 기록 1건/u)).toBeVisible()
     expect(within(distance).getByLabelText(/이번 달, 8킬로미터, 기록 1건/u)).toBeVisible()
     expect(within(distance).getAllByText(/집계 기준에 맞지 않아 제외한 기록 2건/u)).toHaveLength(2)

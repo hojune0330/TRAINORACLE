@@ -87,7 +87,7 @@ export function TrainingContent({ onBack }: { readonly onBack: () => void }) {
                 : compatibility.evidence.map((item) => <p key={item}>{item}</p>)}
             </details>
             <p className="training-content-article__compatibility-boundary">
-              이 비교는 훈련법을 이해하기 위한 설명이에요. 계획 후보를 만들거나 강도·양·빈도와 안전 상태를 바꾸지 않아요.
+              이 비교는 훈련법을 이해하기 위한 설명이에요. 계획안을 만들거나 강도·양·빈도와 안전 상태를 바꾸지 않아요.
             </p>
           </section>
           <section className="training-content-article__boundary">

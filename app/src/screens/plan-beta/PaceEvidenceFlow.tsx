@@ -57,7 +57,7 @@ export function PaceEvidenceFlow({
         <p>기록이 하나여도 자동으로 고르지 않아요. 선택한 기록만 계획의 기준이 됩니다.</p>
       </header>
       {usable.length === 0 ? (
-        <p className="pace-evidence-fallback">사용할 수 있는 경기 기록이 없어 RPE 계획을 그대로 보여드려요.</p>
+        <p className="pace-evidence-fallback">사용할 수 있는 경기 기록이 없어 RPE 계획안을 그대로 유지해요.</p>
       ) : (
         <>
           <div className="plan-choice-list" role="group" aria-label="기준 기록 선택">
@@ -125,13 +125,13 @@ function BindingStatus({
   readonly statusRef: React.RefObject<HTMLParagraphElement>
 }) {
   if (binding.kind === "bound") {
-    return <p ref={statusRef} className="pace-evidence-status" role="status" tabIndex={-1}><Check aria-hidden="true" size={16} /><span className="pace-evidence-copy">선택한 기록으로 두 후보에 같은 상세 처방을 적용했어요.</span></p>
+    return <p ref={statusRef} className="pace-evidence-status" role="status" tabIndex={-1}><Check aria-hidden="true" size={16} /><span className="pace-evidence-copy">선택한 기록으로 두 계획안에 같은 상세 훈련 수치를 적용했어요.</span></p>
   }
   if (binding.code === "PACE_TARGET_FALLBACK_NO_EXPLICIT_ANCHOR") return null
   return (
     <p ref={statusRef} className="pace-evidence-fallback" role="status" tabIndex={-1}>
       <RefreshCw aria-hidden="true" size={16} />
-      <span className="pace-evidence-copy">{fallbackMessage(binding.code)} 두 후보 모두 원래 RPE 계획을 유지합니다.</span>
+      <span className="pace-evidence-copy">{fallbackMessage(binding.code)} 두 계획안 모두 원래 RPE 계획을 유지합니다.</span>
     </p>
   )
 }
@@ -143,7 +143,7 @@ function fallbackMessage(code: string): string {
   if (code === "PACE_TARGET_FALLBACK_ANCHOR_UNAVAILABLE") return "선택한 기록을 저장소에서 다시 확인할 수 없어요."
   if (code === "PACE_TARGET_FALLBACK_EXPERIENCE_SCOPE") return "현재 선택한 훈련 경험 단계에서는 상세 페이스를 적용하지 않아요."
   if (code === "PACE_TARGET_FALLBACK_SAFETY_GATE") return "현재 몸 상태 확인 결과 상세 페이스를 적용하지 않아요."
-  if (code === "PACE_TARGET_FALLBACK_NO_ELIGIBLE_QUALITY") return "이번 두 후보에는 상세 페이스를 넣을 고강도 세션이 없어요."
+  if (code === "PACE_TARGET_FALLBACK_NO_ELIGIBLE_QUALITY") return "이번 두 계획안에는 상세 페이스를 넣을 주요 훈련이 없어요."
   if (code === "PACE_TARGET_FALLBACK_AUTHORITY_OR_COMPONENT") return "선택한 기록에는 문제가 없어요. 상세 처방을 연결하는 중 문제가 생겨 안전하게 되돌렸어요."
   if (code === "PACE_TARGET_FALLBACK_STORED_SCHEMA") return "선택한 기록에는 문제가 없어요. 계산 결과를 계획 형식으로 저장하는 중 문제가 생겨 안전하게 되돌렸어요."
   return "기준 기록을 확인한 뒤 상세 페이스를 적용할 수 있어요."

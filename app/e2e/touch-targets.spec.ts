@@ -26,8 +26,8 @@ test("keeps core journal controls at least 44px tall", async ({ page }, testInfo
 
   await auditTouchTargets(page, [
     { name: "post.back", locator: page.getByRole("button", { name: "← 뒤로" }) },
-    { name: "post.energy-help", locator: page.getByRole("button", { name: /훈련 목적 설명 보기/u }) },
-    { name: "post.energy", locator: page.getByRole("button", { name: /^(REC 회복|BASE 기초 지구력|LT 지속 페이스|VO2 강한 유산소|GLY 젖산성 스피드|ATP 짧고 빠른 가속|MIX 복합·미배분)$/u }), count: 7 },
+    { name: "post.energy-help", locator: page.getByRole("button", { name: /훈련 목적과 에너지 대사 설명 보기/u }) },
+    { name: "post.energy", locator: page.getByRole("button", { name: /^(REC 회복 운동|BASE 기초 지구력|LT 지속 페이스|VO₂ 강한 유산소 반복|GLY 짧은 고강도 반복|ATP-PC 스피드·가속|MIX 여러 강도 조합)$/u }), count: 7 },
     { name: "post.title", locator: page.getByRole("textbox", { name: "세션 제목" }), heightOnly: true },
     { name: "post.distance", locator: page.getByRole("textbox", { name: "거리 (km)" }), heightOnly: true },
     { name: "post.duration", locator: page.getByRole("textbox", { name: "시간 (분)" }), heightOnly: true },
@@ -216,7 +216,7 @@ test("keeps race stages, checks, fields, and help controls touchable", async ({ 
 
 test("keeps the help mark small while its hit area and popover remain usable", async ({ page }, testInfo) => {
   await openEntry(page, /훈련 후/u)
-  const help = page.getByRole("button", { name: /훈련 목적 설명 보기/u })
+  const help = page.getByRole("button", { name: /훈련 목적과 에너지 대사 설명 보기/u })
   if (TOUCH_PROJECTS.has(testInfo.project.name)) await expectMinimumTouchSize(help)
   const markBox = await help.locator("span").boundingBox()
   expect(markBox?.width).toBe(14)

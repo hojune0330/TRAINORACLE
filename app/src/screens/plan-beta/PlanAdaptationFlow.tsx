@@ -167,7 +167,7 @@ export function PlanAdaptationFlow({
         <SlidersHorizontal aria-hidden="true" size={18} />
         <span>
           <strong>다음 계획 조정하기</strong>
-          <small>{matchingPending === null ? "현재 계획은 바꾸지 않고 다음 주기 후보만 확인" : "선택해 둔 다음 계획 확인"}</small>
+          <small>{matchingPending === null ? "현재 계획은 바꾸지 않고 다음 주기 계획안만 확인" : "선택해 둔 다음 계획 확인"}</small>
         </span>
       </button>
 
@@ -200,7 +200,7 @@ export function PlanAdaptationFlow({
           )}
 
           {step === "cycle" && (
-            <DecisionStep title="이번 주기에서 확인된 흐름" onBack={() => setStep("reason")}>
+            <DecisionStep title="이번 주기 기록 요약" onBack={() => setStep("reason")}>
               <div className="plan-adaptation__evidence">
                 <strong>{cycleResponse.headline}</strong>
                 {cycleResponse.evidence.map((item) => <p key={item}>{item}</p>)}
@@ -209,8 +209,8 @@ export function PlanAdaptationFlow({
               {cycleResponse.recommendation === "REDUCE_OR_REVIEW"
                 && state.activePlan.candidateKind === "BALANCED" && (
                 <PlanChoice
-                  title="훈련량을 줄인 후보 확인"
-                  detail="현재 계획은 그대로 두고 승인된 보수적 다음 후보만 비교해요."
+                  title="훈련량을 줄인 계획안 확인"
+                  detail="현재 계획은 그대로 두고 지금 제공할 수 있는 보수적인 다음 계획안만 비교해요."
                   selected={false}
                   onClick={() => chooseReason("EXPLICIT_REQUEST")}
                 />
@@ -218,12 +218,12 @@ export function PlanAdaptationFlow({
               <PlanChoice
                 title={cycleResponse.recommendation === "MAINTAIN_OR_VARY_METHOD" ? "현재 수준을 유지하고 방법을 다양화" : "현재 기준 유지"}
                 detail={cycleResponse.recommendation === "MAINTAIN_OR_VARY_METHOD"
-                  ? "훈련량은 올리지 않아요. 다음 계획에서 승인된 다른 상세 세션이 있으면 후보로 비교합니다."
-                  : "새 후보를 저장하지 않고 현재 계획과 다음 계획 기준을 유지해요."}
+                  ? "훈련량은 올리지 않아요. 다음 계획에서 현재 제공할 수 있는 다른 상세 세션이 있으면 계획안으로 비교합니다."
+                  : "새 계획안을 저장하지 않고 현재 계획과 다음 계획 기준을 유지해요."}
                 selected={false}
                 onClick={() => {
                   setMessage(cycleResponse.recommendation === "MAINTAIN_OR_VARY_METHOD"
-                    ? "훈련량은 그대로 유지해요. 승인된 다른 상세 세션이 있는 경우에만 다음 후보에서 방법을 바꿔 보여드려요."
+                    ? "훈련량은 그대로 유지해요. 현재 제공할 수 있는 다른 상세 세션이 있을 때만 다음 계획안에서 방법을 바꿔 안내해요."
                     : "현재 기준을 유지해요. 강도·양·횟수는 바꾸지 않았습니다.")
                   setStep("result")
                 }}
@@ -265,14 +265,14 @@ export function PlanAdaptationFlow({
               />
               <PlanChoice
                 title="통증·부상·몸 이상이 있거나 잘 모르겠어요"
-                detail="후보를 만들지 않고 현재 계획을 그대로 유지해요."
+                detail="다음 계획안을 만들지 않고 현재 계획을 그대로 유지해요."
                 selected={currentCheck === "REVIEW_REQUIRED"}
                 onClick={() => {
                   const operationAt = new Date()
                   setCurrentCheck("REVIEW_REQUIRED")
                   const safety = onEvaluateSafety(state, "REVIEW_REQUIRED", operationAt)
                   setMessage(safety.kind === "blocked"
-                    ? "현재 안전 상태를 먼저 확인해야 해서 다음 계획 후보를 만들지 않았어요. 현재 계획은 그대로예요."
+                    ? "현재 안전 상태를 먼저 확인해야 해서 다음 계획안을 만들지 않았어요. 현재 계획은 그대로예요."
                     : "현재 계획은 그대로 유지돼요.")
                   setStep("result")
                 }}
@@ -284,28 +284,28 @@ export function PlanAdaptationFlow({
             <DecisionStep title="다음 계획의 기준을 선택해 주세요" onBack={() => setStep("safety")}>
               <PlanChoice
                 title={reason === "PB_SB"
-                  ? "기록 갱신을 반영한 다음 후보"
+                  ? "기록 갱신을 반영한 다음 계획안"
                   : state.activePlan.candidateKind === "BALANCED"
                     ? "훈련량을 조금 줄인 다음 계획"
                     : "기본 훈련량 범위로 돌아간 다음 계획"}
                 detail={reason === "PB_SB"
-                  ? "PB·SB 뒤에도 강도·양·횟수를 함께 올리지 않고 승인된 기존 후보만 비교해요."
+                  ? "PB·SB 뒤에도 강도·양·횟수를 함께 올리지 않고 현재 제공할 수 있는 기존 계획안만 비교해요."
                   : state.activePlan.candidateKind === "BALANCED"
-                    ? "승인된 보수적 후보가 있을 때만 바뀐 세션을 비교해요."
-                    : "이전에 줄여 둔 쉬운 훈련 시간을 원래 후보 범위로 되돌려 비교해요. 강도와 횟수는 올리지 않아요."}
+                    ? "현재 제공할 수 있는 보수적인 계획안이 있을 때만 바뀐 세션을 비교해요."
+                    : "이전에 줄여 둔 쉬운 훈련 시간을 원래 계획안 범위로 되돌려 비교해요. 강도와 횟수는 올리지 않아요."}
                 selected={false}
                 onClick={() => void prepareCandidate()}
               />
               <PlanChoice
                 title="현재 계획과 같은 기준 유지"
-                detail="새 후보를 만들지 않고 현재 계획과 다음 계획 기준을 유지해요."
+                detail="새 계획안을 만들지 않고 현재 계획과 다음 계획 기준을 유지해요."
                 selected={false}
                 onClick={() => {
-                  setMessage("같은 기준을 선택했어요. 새 후보는 만들지 않았고 현재 계획도 그대로예요.")
+                  setMessage("같은 기준을 선택했어요. 새 계획안은 만들지 않았고 현재 계획도 그대로예요.")
                   setStep("result")
                 }}
               />
-              {busy && <p className="plan-adaptation__notice" role="status">다음 계획 후보를 확인하고 있어요.</p>}
+              {busy && <p className="plan-adaptation__notice" role="status">다음 계획안을 확인하고 있어요.</p>}
             </DecisionStep>
           )}
 
@@ -314,7 +314,7 @@ export function PlanAdaptationFlow({
           )}
 
           {step === "result" && (
-            <PlanAdaptationResult message={message ?? "다음 계획 후보를 만들지 못했어요. 현재 계획은 그대로예요."} onClose={reset} />
+            <PlanAdaptationResult message={message ?? "다음 계획안을 만들지 못했어요. 현재 계획은 그대로예요."} onClose={reset} />
           )}
 
           {step === "pending" && matchingPending !== null && (
@@ -363,10 +363,10 @@ function handlePrepared(
     return
   }
   setMessage(result.kind === "blocked"
-    ? "현재 안전 상태를 다시 확인해야 해서 다음 계획 후보를 만들지 않았어요. 현재 계획은 그대로예요."
+    ? "현재 안전 상태를 다시 확인해야 해서 다음 계획안을 만들지 않았어요. 현재 계획은 그대로예요."
     : result.code === "COACH_CONNECTION_REQUIRED"
       ? "이 계획은 지도자 확인이 필요해요. 인증된 지도자 연결이 없어 선수 화면에서는 선택할 수 없고 현재 계획은 그대로예요."
-      : "이 계획에는 정확한 종목과 승인된 비교 후보가 함께 저장되어 있지 않아 조정 후보를 만들 수 없어요. 현재 계획은 그대로예요.")
+      : "이 계획에는 정확한 종목과 비교할 계획안이 함께 저장되어 있지 않아 조정 계획안을 만들 수 없어요. 현재 계획은 그대로예요.")
   setStep("result")
 }
 
@@ -382,7 +382,7 @@ function handleAccepted(
     return
   }
   setMessage(result.kind === "blocked"
-    ? "안전 상태가 바뀌었거나 확인 시간이 지나 후보를 저장하지 않았어요. 현재 계획은 그대로예요."
-    : "다음 계획 후보를 저장하지 못했어요. 현재 계획은 그대로이고 다시 확인할 수 있어요.")
+    ? "안전 상태가 바뀌었거나 확인 시간이 지나 계획안을 저장하지 않았어요. 현재 계획은 그대로예요."
+    : "다음 계획안을 저장하지 못했어요. 현재 계획은 그대로이고 다시 확인할 수 있어요.")
   setStep("result")
 }

@@ -90,7 +90,7 @@ export function CumulativeDistancePanel({
       <div className="distance-overview__heading">
         <div>
           <span className="distance-overview__eyebrow">누적 거리</span>
-          <h2 id="distance-analysis-title">거리 흐름</h2>
+          <h2 id="distance-analysis-title">누적 거리와 변화</h2>
           <p>직접 적어 출처가 확인된 거리만 더해요. 미기록은 0 km로 바꾸지 않아요.</p>
         </div>
       </div>

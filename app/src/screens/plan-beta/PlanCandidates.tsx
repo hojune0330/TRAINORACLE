@@ -120,15 +120,15 @@ export function PlanCandidates({
           </strong>
           <small>
             {prescriptionBinding.kind === "bound"
-              ? `선택하고 확인한 ${selectedEventLabel} 기록만 상세 페이스 계산에 사용 · 일지 값은 시간·RPE 계산에 미사용`
-              : "확인한 기준 기록이 없으면 기록값과 구조화 일지는 시간·RPE 계산에 미사용"}
+              ? `선택하고 확인한 ${selectedEventLabel} 기록만 상세 페이스 계산에 사용 · 연결된 일지 값은 이번 계획 계산에 사용하지 않았어요`
+              : "확인한 기준 기록이 없어 기록값과 구조화 일지는 이번 계획 계산에 사용하지 않았어요"}
           </small>
           {athleteEvidence.goalRecordCount > 0 && (
-            <small>목표 기록 {athleteEvidence.goalRecordCount}개 포함 · 현재는 수치 계산에 미사용</small>
+            <small>목표 기록 {athleteEvidence.goalRecordCount}개 포함 · 현재 수치 계산에는 사용하지 않았어요</small>
           )}
           {intake.competitionDivision !== "NOT_PROVIDED" && (
             <small>
-              참가 부문: {DIVISION_LABELS[intake.competitionDivision].title} · 표시용 정보이며 훈련 강도와 안전 판정에는 미사용
+              참가 부문: {DIVISION_LABELS[intake.competitionDivision].title} · 화면에만 표시하며 훈련 강도와 안전 판단에는 사용하지 않았어요
             </small>
           )}
           {generated.candidates[0].continuityContext.kind ===
@@ -203,7 +203,7 @@ function CandidateComparison({
     <section className="plan-candidate-comparison" aria-label="두 계획 핵심 비교">
       <h2>고른 목표는 같고, 쉬운 훈련 시간만 달라요</h2>
       <p className="plan-candidate-comparison__intro">
-        두 계획 모두 고강도 훈련인 &lsquo;{selectedIntentLabel}&rsquo;
+        두 계획 모두 주요 훈련 목적인 &lsquo;{selectedIntentLabel}&rsquo;
         <TermHelp term={ENERGY_INTENT_LABELS[sharedCandidate.selectedEnergyIntent].term} />을 같은 횟수와 RPE로 넣었어요.
         여기서 쉬운 훈련은 기초 달리기와 회복 운동을 말해요.
       </p>
@@ -217,7 +217,7 @@ function CandidateComparison({
           const purposeStatus = candidatePurposeStatus(candidate.kind)
           return (
             <article key={candidate.candidateId}>
-              <span>후보 {candidate.kind === "BALANCED" ? "A" : "B"}</span>
+              <span>계획안 {candidate.kind === "BALANCED" ? "A" : "B"}</span>
               <strong>{label.title}</strong>
               <p>{purposeStatus.label}</p>
               <small>{candidateDurationSummary(candidate)}</small>
@@ -227,7 +227,7 @@ function CandidateComparison({
       </div>
       <p className="plan-candidate-comparison__note">
         두 합계의 차이는 조절할 수 있는 쉬운 훈련을 A에서는 시간 범위로, B에서는 가장 짧은 시간으로 계산해서 생겨요.
-        고강도 훈련이 더 많거나 세지는 차이는 아니에요.
+        주요 훈련이 더 많거나 세지는 차이는 아니에요.
       </p>
     </section>
   )

@@ -51,7 +51,7 @@ async function answerMinimumPlanQuestions(
   await answerPlanQuestionsThroughRaceDate(riskAnswer)
   if (riskAnswer === "review") return
   const user = userEvent.setup()
-  const continueWithoutDate = screen.queryByRole("button", { name: "날짜 없이 계획 후보 보기" })
+  const continueWithoutDate = screen.queryByRole("button", { name: "날짜 없이 계획안 보기" })
   if (continueWithoutDate !== null) await user.click(continueWithoutDate)
 }
 
@@ -114,7 +114,7 @@ describe("plan beta user flow", () => {
     await user.click(screen.getByRole("button", { name: "이 날짜로 배치 미리보기" }))
 
     expect(screen.getByRole("heading", { name: "아직 경기 날짜를 계획에 적용할 수 없어요" })).toBeVisible()
-    expect(screen.getByText(/계획 후보를 저장하거나 시작할 수 없고.*훈련 내용.*양.*강도도 바꾸지 않아요/u)).toBeVisible()
+    expect(screen.getByText(/계획안을 저장하거나 시작할 수 없고.*훈련 내용.*양.*강도도 바꾸지 않아요/u)).toBeVisible()
     expect(screen.queryByRole("button", { name: /선택하기|계획 시작|저장/u })).not.toBeInTheDocument()
     expect(window.localStorage.getItem("trainoracle.plan-beta.v1")).toBeNull()
     expect(JSON.stringify({
@@ -135,7 +135,7 @@ describe("plan beta user flow", () => {
     await answerPreviewDecisions("clear")
 
     expect(screen.getByRole("heading", { name: "계획 형태 미리보기" })).toBeVisible()
-    expect(screen.getByText("쉬운 훈련 시간 표시가 다른 후보 A와 B를 나란히 비교"))
+    expect(screen.getByText("쉬운 훈련 시간이 다른 계획안 A와 B를 나란히 비교"))
       .toBeVisible()
     expect(screen.queryByText(/부담이 다른 후보/u)).not.toBeInTheDocument()
     expect(screen.getByText(
@@ -199,7 +199,7 @@ describe("plan beta user flow", () => {
     await user.click(screen.getByRole("button", { name: /9일 계획 받기/u }))
     await user.click(screen.getByRole("button", { name: /날마다 달라요/u }))
     await user.click(screen.getByRole("button", { name: /하루 한 번 운동/u }))
-    await user.click(screen.getByRole("button", { name: "날짜 없이 계획 후보 보기" }))
+    await user.click(screen.getByRole("button", { name: "날짜 없이 계획안 보기" }))
 
     expect(screen.getByRole("heading", { name: "지금은 계획을 멈췄어요" })).toBeVisible()
     expect(screen.queryByRole("heading", { name: "두 계획에서 하나를 골라보세요" }))
@@ -250,7 +250,7 @@ describe("plan beta user flow", () => {
     await user.click(screen.getByRole("button", { name: /통증은 없고 몸 상태는 평소와 같아요/u }))
     await user.click(screen.getByRole("button", { name: "내 계획 완성하기" }))
     await user.click(screen.getByRole("button", { name: /RPE 기준으로 받기/u }))
-    await user.click(screen.getByRole("button", { name: "날짜 없이 계획 후보 보기" }))
+    await user.click(screen.getByRole("button", { name: "날짜 없이 계획안 보기" }))
 
     expectGeneratedCandidates()
   })
@@ -321,13 +321,13 @@ describe("plan beta user flow", () => {
 
     await user.click(screen.getByRole("button", { name: /통증은 없고 몸 상태는 평소와 같아요/u }))
     expect(screen.getByText(/남은 선택 0개/u)).toHaveTextContent("저장된 선택을 그대로 다시 사용할 수 있어요")
-    expect(screen.getByText(/남은 선택 0개/u)).toHaveTextContent("후보는 아직 만들지 않았어요")
-    await user.click(screen.getByRole("button", { name: "계획 후보 만들기" }))
-    await user.click(screen.getByRole("button", { name: "날짜 없이 계획 후보 보기" }))
+    expect(screen.getByText(/남은 선택 0개/u)).toHaveTextContent("계획안은 아직 만들지 않았어요")
+    await user.click(screen.getByRole("button", { name: "계획안 만들기" }))
+    await user.click(screen.getByRole("button", { name: "날짜 없이 계획안 보기" }))
 
     expect(screen.getByRole("heading", { name: "두 계획에서 하나를 골라보세요" })).toBeVisible()
     expect(screen.getAllByText(/5km.*10일/u)).not.toHaveLength(0)
-    expect(screen.getAllByText(/반복 인터벌.*VO2/u)).not.toHaveLength(0)
+    expect(screen.getAllByText(/강한 유산소 반복.*VO₂/u)).not.toHaveLength(0)
     expect(screen.queryByRole("heading", {
       name: "이번 주기에 어떤 훈련을 더 넣고 싶나요?",
     })).not.toBeInTheDocument()
@@ -353,7 +353,7 @@ describe("plan beta user flow", () => {
     await user.click(screen.getByRole("button", { name: "내 계획 완성하기" }))
     await user.click(screen.getByRole("button", { name: /지속 페이스.*LT/u }))
     await user.click(screen.getByRole("button", { name: /RPE 기준으로 받기/u }))
-    await user.click(screen.getByRole("button", { name: "날짜 없이 계획 후보 보기" }))
+    await user.click(screen.getByRole("button", { name: "날짜 없이 계획안 보기" }))
 
     expectGeneratedCandidates()
     expect(screen.queryAllByRole("heading", {
@@ -367,13 +367,13 @@ describe("plan beta user flow", () => {
 
     await answerPreviewDecisions("clear")
     await user.click(screen.getByRole("button", { name: "내 계획 완성하기" }))
-    await user.click(screen.getByRole("button", { name: /반복 인터벌.*VO2/u }))
+    await user.click(screen.getByRole("button", { name: /강한 유산소 반복.*VO₂/u }))
     await user.click(screen.getByRole("button", { name: /RPE 기준으로 받기/u }))
     await user.click(screen.getByRole("button", { name: /^6일/u }))
     await user.click(screen.getByRole("button", { name: /10일 계획 받기/u }))
     await user.click(screen.getByRole("button", { name: /저녁에 운동해요/u }))
     await user.click(screen.getByRole("button", { name: /하루 두 번 운동할게요/u }))
-    await user.click(screen.getByRole("button", { name: "날짜 없이 계획 후보 보기" }))
+    await user.click(screen.getByRole("button", { name: "날짜 없이 계획안 보기" }))
     const [choice] = screen.getAllByRole("button", { name: /선택하기/u })
     if (choice === undefined) throw new Error("Expected a generated plan choice")
     await user.click(choice)
@@ -451,7 +451,7 @@ describe("plan beta user flow", () => {
     await user.click(screen.getByRole("button", { name: /RPE 기준으로 받기/u }))
 
     const availableDaysHelp = screen.getByRole("button", {
-      name: "훈련할 수 있는 날 설명 보기",
+      name: "이번 계획에서 운동할 날 설명 보기",
     })
     expect(availableDaysHelp).toHaveAttribute("aria-expanded", "false")
     await user.click(availableDaysHelp)
@@ -492,13 +492,13 @@ describe("plan beta user flow", () => {
     await user.click(screen.getByRole("button", { name: "내 계획 완성하기" }))
 
     expect(screen.getByRole("button", { name: /지속 페이스.*LT/u })).toBeVisible()
-    expect(screen.getByRole("button", { name: /반복 인터벌.*VO2/u })).toBeVisible()
-    expect(screen.getByRole("button", { name: /스피드 지구력.*GLY/u })).toBeVisible()
-    expect(screen.getByRole("button", { name: /짧고 빠른 가속.*ATP-PC/u })).toBeVisible()
+    expect(screen.getByRole("button", { name: /강한 유산소 반복.*VO₂/u })).toBeVisible()
+    expect(screen.getByRole("button", { name: /짧은 고강도 반복.*GLY/u })).toBeVisible()
+    expect(screen.getByRole("button", { name: /스피드·가속.*ATP-PC/u })).toBeVisible()
 
-    const focusHelp = screen.getByRole("button", { name: "훈련 목적 설명 보기" })
+    const focusHelp = screen.getByRole("button", { name: "훈련 목적과 에너지 대사 설명 보기" })
     await user.click(focusHelp)
-    expect(screen.getByText(/앱이 몸속 에너지 시스템을 측정한 결과는 아닙니다/u)).toBeVisible()
+    expect(screen.getByText(/앱이 몸속 대사를 측정했다는 뜻은 아닙니다/u)).toBeVisible()
   })
 
   it("generates canonical candidates without storing until the athlete selects one", async () => {
@@ -873,7 +873,7 @@ async function answerReturningPreview(
     render(<PlanBeta />)
     await answerReturningPreview(user)
     await user.click(firstUnpressedChoice())
-    await user.click(screen.getByRole("button", { name: "날짜 없이 계획 후보 보기" }))
+    await user.click(screen.getByRole("button", { name: "날짜 없이 계획안 보기" }))
     expectGeneratedCandidates()
   })
 
@@ -887,7 +887,7 @@ async function answerReturningPreview(
     render(<PlanBeta />)
     await answerReturningPreview(user)
     await user.click(firstUnpressedChoice())
-    await user.click(screen.getByRole("button", { name: "날짜 없이 계획 후보 보기" }))
+    await user.click(screen.getByRole("button", { name: "날짜 없이 계획안 보기" }))
     expectGeneratedCandidates()
   })
 
@@ -901,6 +901,6 @@ async function answerReturningPreview(
     render(<PlanBeta />)
     await answerReturningPreview(user)
     await user.click(firstUnpressedChoice())
-    await user.click(screen.getByRole("button", { name: "날짜 없이 계획 후보 보기" }))
+    await user.click(screen.getByRole("button", { name: "날짜 없이 계획안 보기" }))
     expectGeneratedCandidates()
   })

@@ -37,7 +37,7 @@ export function CandidateSection({
   return (
     <article className="plan-candidate" aria-labelledby={`candidate-${candidate.candidateId}`}>
       <header>
-        <span>후보 {optionLetter}</span>
+        <span>계획안 {optionLetter}</span>
         <h2 id={`candidate-${candidate.candidateId}`}>{label.title}</h2>
         <p>{label.detail}</p>
         <p className={`plan-candidate-purpose plan-candidate-purpose--${purposeStatus.tone}`}>
@@ -68,7 +68,7 @@ export function CandidateSection({
           <button
             className="plan-candidate-schedule-toggle"
             type="button"
-            aria-label={`후보 ${optionLetter} 일정 ${expanded ? "접기" : "펼치기"}`}
+            aria-label={`계획안 ${optionLetter} 일정 ${expanded ? "접기" : "펼치기"}`}
             aria-expanded={expanded}
             aria-controls={scheduleId}
             onClick={onToggleSchedule}

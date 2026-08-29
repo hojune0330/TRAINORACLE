@@ -18,13 +18,13 @@ describe("product analytics consent panel", () => {
     )
 
     await waitFor(() => expect(loadConsent).toHaveBeenCalledWith("athlete-a"))
-    expect(screen.getByText(/계정과 연결된 사용 흐름/u)).toBeVisible()
+    expect(screen.getByText(/어떤 화면을 열고 저장이 성공했는지/u)).toBeVisible()
     expect(screen.getByText(/30일 뒤 자동으로 삭제/u)).toBeVisible()
     expect(screen.getByText(/메모 원문, 통증값, 기분값, 훈련 내용/u)).toBeVisible()
     expect(screen.getByText(/거절해도 기본 기능/u)).toBeVisible()
     expect(screen.queryByText(/익명/u)).not.toBeInTheDocument()
 
-    await userEvent.click(screen.getByRole("checkbox", { name: "선택 사용 흐름 분석 허용" }))
+    await userEvent.click(screen.getByRole("checkbox", { name: "앱 사용 정보 보내기 허용" }))
     await userEvent.click(screen.getByRole("button", { name: "분석 설정 저장" }))
 
     expect(setConsent).toHaveBeenCalledWith("athlete-a", true)
@@ -40,10 +40,10 @@ describe("product analytics consent panel", () => {
       />,
     )
 
-    const checkbox = await screen.findByRole("checkbox", { name: "선택 사용 흐름 분석 허용" })
+    const checkbox = await screen.findByRole("checkbox", { name: "앱 사용 정보 보내기 허용" })
     expect(checkbox).toBeChecked()
     await userEvent.click(checkbox)
-    expect(screen.getByText(/전에 모인 사용 흐름 기록도 삭제/u)).toBeVisible()
+    expect(screen.getByText(/전에 모인 기록도 삭제/u)).toBeVisible()
     await userEvent.click(screen.getByRole("button", { name: "분석 설정 저장" }))
 
     expect(setConsent).toHaveBeenCalledWith("athlete-a", false)

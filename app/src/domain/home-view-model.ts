@@ -54,7 +54,7 @@ export function buildTrainingHomeViewModel(
       : `${journalDays}일 · ${visibleEntries.length}개의 기록`,
     flowSummary: "9.5일 주기로 일지 묶어 보기 · 시작일 직접 선택",
     planSummary: plan === null
-      ? "저장된 계획 없음 · 계획 후보 만들기"
+      ? "저장된 계획 없음 · 계획안 만들기"
       : `저장된 계획 · ${plan.activePlan.sessions.length}개 일정`,
     analysisSummary: week.sessions === 0
       ? visibleEntries.length === 0

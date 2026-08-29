@@ -114,7 +114,7 @@ export function PlanIntake({
     ? {
         eyebrow: "목표 경기 날짜",
         title: "목표 경기 날짜가 있나요? (선택)",
-        copy: "날짜 없이도 일반 계획 후보를 바로 만들 수 있어요. 날짜를 고르면 현재는 저장하거나 훈련량·강도를 바꾸지 않고, 이 화면에서만 적용 가능 여부를 미리 확인해요.",
+        copy: "날짜 없이도 일반 계획안 두 개를 바로 만들 수 있어요. 날짜를 고르면 저장하거나 훈련량·강도를 바꾸지 않고 이 화면에서 적용 가능 여부만 미리 확인해요.",
         helpTerm: null,
       }
     : STEP_META[step]
@@ -190,20 +190,20 @@ export function PlanIntake({
             </div>
             <div>
               <dt>비교 방식</dt>
-              <dd>쉬운 훈련 시간 표시가 다른 후보 A와 B를 나란히 비교</dd>
+              <dd>쉬운 훈련 시간이 다른 계획안 A와 B를 나란히 비교</dd>
             </div>
           </dl>
           <div className="plan-preview-boundary">
             <strong>아직 계획이 아니에요.</strong>
             <p>
               {remainingRefinements.length === 0
-                ? "남은 선택 0개 · 저장된 선택을 그대로 다시 사용할 수 있어요. 후보는 아직 만들지 않았어요."
+                ? "남은 선택 0개 · 저장된 선택을 그대로 다시 사용할 수 있어요. 계획안은 아직 만들지 않았어요."
                 : `남은 선택 ${remainingRefinements.length}개 · ${remainingRefinements
                     .map(({ label }) => label)
                     .join(" · ")}`}
             </p>
             <small>
-              이 미리보기는 저장되지 않으며 실제 후보를 만들 때 안전 확인을 다시 적용해요.
+              이 미리보기는 저장되지 않으며 실제 계획안을 만들 때 안전 확인을 다시 적용해요.
             </small>
           </div>
           <button
@@ -212,7 +212,7 @@ export function PlanIntake({
             disabled={draft.eventDistanceM === undefined || draft.experienceBand === undefined}
             onClick={onContinue}
           >
-            {remainingRefinements.length === 0 ? "계획 후보 만들기" : "내 계획 완성하기"}
+            {remainingRefinements.length === 0 ? "계획안 만들기" : "내 계획 완성하기"}
             <ChevronRight aria-hidden="true" size={18} />
           </button>
         </>
@@ -341,7 +341,7 @@ export function PlanIntake({
             />
             <Choice
               title="하루 두 번 운동할게요"
-              detail="고른 선호 시간에 주 훈련·품질 세션을 배치하고, 다른 시간에는 쉬운 훈련이나 회복 움직임을 보여줘요. 고강도 두 개를 자동으로 넣지는 않아요"
+              detail="고른 시간대에 주요 훈련을 배치하고 다른 시간에는 쉬운 훈련이나 회복 운동을 안내해요. 주요 훈련 두 개를 자동으로 넣지는 않아요"
               selected={draft.secondSessionMode === "RECOVERY_PM_ALLOWED"}
               onClick={() => onSecondSession("RECOVERY_PM_ALLOWED")}
             />
@@ -442,7 +442,7 @@ function RaceDateChoice({
       )}
       <div className="plan-race-date__actions">
         <button className="plan-select-action" type="button" onClick={onContinueWithoutDate}>
-          날짜 없이 계획 후보 보기
+          날짜 없이 계획안 보기
           <ChevronRight aria-hidden="true" size={18} />
         </button>
         <button

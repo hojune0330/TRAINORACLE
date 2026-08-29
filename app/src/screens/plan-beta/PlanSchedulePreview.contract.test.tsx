@@ -71,16 +71,16 @@ describe("plan schedule preview", () => {
 
     const flow = screen.getByLabelText("9.5일 훈련 흐름")
     expect(flow).toContainElement(screen.getByRole("listitem", {
-      name: "8월 17일 월요일 · 핵심 LT · 회복",
+      name: "8월 17일 월요일 · 주요 훈련 LT · 회복 운동",
     }))
     expect(screen.getByRole("listitem", {
-      name: "8월 17일 월요일 · 핵심 LT · 회복",
-    })).toHaveTextContent("MAINLTREC")
+      name: "8월 17일 월요일 · 주요 훈련 LT · 회복 운동",
+    })).toHaveTextContent("주요LT회복")
 
     const restFlowDay = screen.getByRole("listitem", {
-      name: /8월 18일.*휴식/u,
+      name: /8월 18일.*훈련 없음/u,
     })
-    expect(restFlowDay).toHaveTextContent("OFF")
+    expect(restFlowDay).toHaveTextContent("휴식")
 
     const firstDay = screen.getByRole("group", {
       name: "8월 17일 월요일 · 훈련 2개",
@@ -135,24 +135,27 @@ describe("plan schedule preview", () => {
     expect(session).toHaveTextContent("본운동")
     expect(session).toHaveTextContent(/숨은 차지만.*짧은 문장이 가능/u)
 
-    const rpeHelp = screen.getByRole("button", { name: "RPE 설명 보기" })
+    const rpeHelp = screen.getByRole("button", { name: "운동 자각도 RPE 설명 보기" })
     await user.click(rpeHelp)
-    expect(screen.getByText(/1~2는 빨리 걷기.*3~4는 대화.*5는 꾸준한 노력.*10은 최대 노력/u)).toBeVisible()
-    expect(screen.getByText(/의료 판단이 아닙니다/u)).toBeVisible()
+    expect(screen.getByText(/내 몸의 느낌으로 매기는 1~10점/u)).toBeVisible()
+    expect(screen.getByRole("link", { name: "왜 이런 이름인가요?" })).toHaveAttribute(
+      "href",
+      "?terms=1&term=rpe",
+    )
   })
 
   it("opens beginner explanations from the legend and the dated session badge", async () => {
     const user = userEvent.setup()
     render(<PlanSchedulePreview startDate="2026-08-17" sessions={sessions} />)
 
-    await user.click(screen.getByRole("button", { name: "MAIN 일정표 구분 설명 보기" }))
-    expect(screen.getByText(/가장 중요한 목표 중심 훈련/u)).toBeVisible()
+    await user.click(screen.getByRole("button", { name: "주요 훈련 MAIN 일정표 구분 설명 보기" }))
+    expect(screen.getByText(/준비 목표를 가장 직접적으로 다루는 훈련/u)).toBeVisible()
 
-    await user.click(screen.getByRole("button", { name: "MAIN LT 훈련 설명 보기" }))
-    expect(screen.getByText(/젖산 역치/u)).toBeVisible()
+    await user.click(screen.getByRole("button", { name: "주요 훈련 MAIN, 지속 페이스 LT 훈련 설명 보기" }))
+    expect(screen.getByText(/조금 힘든 느낌을 비교적 일정하게 유지/u)).toBeVisible()
 
-    await user.click(screen.getByRole("button", { name: "REC 일정표 구분 설명 보기" }))
-    expect(screen.getByText(/Recovery의 줄임말/u)).toBeVisible()
+    await user.click(screen.getByRole("button", { name: "회복 운동 REC 일정표 구분 설명 보기" }))
+    expect(screen.getByText(/빠른 걷기.*아주 가벼운 조깅.*느린 자전거/u)).toBeVisible()
   })
 
   it("marks only today's date while the frame is being followed", () => {
@@ -161,11 +164,11 @@ describe("plan schedule preview", () => {
     render(<PlanSchedulePreview startDate="2026-08-17" sessions={sessions} />)
 
     const today = screen.getByRole("listitem", {
-      name: "8월 17일 월요일 · 핵심 LT · 회복",
+      name: "8월 17일 월요일 · 주요 훈련 LT · 회복 운동",
     })
     expect(today).toHaveAttribute("aria-current", "date")
     expect(screen.getByRole("listitem", {
-      name: "8월 24일 월요일 · 휴식",
+      name: "8월 24일 월요일 · 훈련 없음",
     })).not.toHaveAttribute("aria-current")
   })
 })

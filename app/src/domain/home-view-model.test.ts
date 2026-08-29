@@ -140,7 +140,7 @@ describe("training home view model", () => {
   it("does not invent a plan or analysis when there is no evidence", () => {
     const model = buildTrainingHomeViewModel([], [], null, "2026-08-03")
 
-    expect(model.planSummary).toBe("저장된 계획 없음 · 계획 후보 만들기")
+    expect(model.planSummary).toBe("저장된 계획 없음 · 계획안 만들기")
     expect(model.analysisSummary).toContain("기록이 쌓이면")
     expect(model.flowSummary).toBe("9.5일 주기로 일지 묶어 보기 · 시작일 직접 선택")
   })

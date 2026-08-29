@@ -123,7 +123,7 @@ export function deriveFriendRunningOracle(
   if (own.recent8WeekDistanceKm !== null && friend.recent8WeekDistanceKm !== null) {
     facts.push(`최근 8주 공개 거리: 나 ${own.recent8WeekDistanceKm}km · 친구 ${friend.recent8WeekDistanceKm}km`)
   } else {
-    unknowns.push("두 사람 모두 최근 8주 거리를 공개한 경우에만 거리 흐름을 나란히 보여줘요.")
+    unknowns.push("두 사람 모두 최근 8주 거리를 공개한 경우에만 누적 거리 변화를 나란히 비교할 수 있어요.")
   }
 
   const ownTop = mostFrequentSystems(own.energySessionCounts)
@@ -137,7 +137,7 @@ export function deriveFriendRunningOracle(
   return {
     version: FRIEND_RUNNING_ORACLE_VERSION,
     headline: facts.length === 0
-      ? "지금은 함께 달릴 기본 원칙만 보여드려요"
+      ? "지금은 함께 달릴 때 지킬 기본 원칙만 안내해요"
       : "공개하기로 고른 기록만 나란히 봤어요",
     facts,
     togetherPlan,

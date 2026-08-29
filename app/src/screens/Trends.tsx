@@ -58,8 +58,8 @@ export function Trends({ onBack, onWriteLog }: {
           )}
           <div style={{ padding: "0 20px" }}>
             <GuidedEmptyState
-              title="기록이 쌓이면 변화가 보여요"
-              description={<>훈련한 날과 쉰 날의 거리·시간·RPE<TermHelp term="rpe" />·기분을 직접 남기면 주간과 월간 흐름으로 정리해 드려요.</>}
+              title="기록이 쌓이면 변화를 확인할 수 있어요"
+              description={<>훈련한 날과 쉰 날의 거리·시간·RPE<TermHelp term="rpe" />·기분을 직접 남기면 주간과 월간 기록으로 정리해요.</>}
               actionLabel="첫 기록 남기기"
               onAction={onWriteLog}
             />

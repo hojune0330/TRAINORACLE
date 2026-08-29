@@ -49,7 +49,7 @@ test("shows a legacy journal entry without allowing it into home totals or trend
   await expect(services.getByRole("button", { name: /^내 일지/u })).toContainText("1일 · 1개의 기록")
   await expect(services.getByRole("button", { name: /^분석/u })).toContainText("분석에 쓸 직접 입력 기록이 없어요")
   await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "분석" }).click()
-  const distance = page.getByRole("region", { name: "거리 흐름" })
+  const distance = page.getByRole("region", { name: "누적 거리와 변화" })
   await expect(distance.getByLabel(/이번 주, 집계 가능한 거리 기록 없음/u)).toBeVisible()
   await expect(distance.getByText(/집계 기준에 맞지 않아 제외한 기록 1건/u).first()).toBeVisible()
 })

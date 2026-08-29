@@ -33,6 +33,7 @@ type SessionFlowLabel = {
   readonly secondary?: "LT" | "VO2" | "GLY" | "ATP" | "MIX"
   readonly kind: SessionFlowKind
   readonly accessible: string
+  readonly short: string
 }
 
 export function PlanSchedulePreview({
@@ -311,10 +312,10 @@ function PlanTrainingFlow({
         <span>강약과 회복을 먼저 확인하세요.</span>
       </header>
       <ul className="plan-training-flow__legend" aria-label="훈련 구분">
-        <li><PlanFlowCodeHelp primary="MAIN" kind="main" variant="legend" /><span>핵심</span></li>
-        <li><PlanFlowCodeHelp primary="BASE" kind="base" variant="legend" /><span>기초</span></li>
-        <li><PlanFlowCodeHelp primary="REC" kind="recovery" variant="legend" /><span>회복</span></li>
-        <li><PlanFlowCodeHelp primary="OFF" kind="off" variant="legend" /><span>휴식</span></li>
+        <li><PlanFlowCodeHelp primary="MAIN" kind="main" variant="legend" /></li>
+        <li><PlanFlowCodeHelp primary="BASE" kind="base" variant="legend" /></li>
+        <li><PlanFlowCodeHelp primary="REC" kind="recovery" variant="legend" /></li>
+        <li><PlanFlowCodeHelp primary="OFF" kind="off" variant="legend" /></li>
       </ul>
       <ol
         className="plan-training-flow__days"
@@ -324,7 +325,7 @@ function PlanTrainingFlow({
           const isToday = day.date === today
           const labels = day.sessions.length > 0
             ? day.sessions.map(sessionFlowLabel)
-            : [{ primary: "OFF", kind: "off", accessible: "휴식" } satisfies SessionFlowLabel]
+            : [{ primary: "OFF", kind: "off", accessible: "훈련 없음", short: "휴식" } satisfies SessionFlowLabel]
           return (
             <li
               key={day.date}
@@ -340,8 +341,8 @@ function PlanTrainingFlow({
               <span className="plan-training-flow__markers">
                 {labels.map((label, labelIndex) => (
                   <span key={`${day.date}-${labelIndex}`} data-flow-kind={label.kind}>
-                    <strong>{label.primary}</strong>
-                    {label.secondary !== undefined && <small>{label.secondary}</small>}
+                    <strong>{label.short}</strong>
+                    {label.secondary !== undefined && <small>{timelineSecondaryCode(label.secondary)}</small>}
                   </span>
                 ))}
               </span>
@@ -376,7 +377,7 @@ function sessionSlotOrder(session: PlanSession): number {
 
 function sessionFlowLabel(session: PlanSession): SessionFlowLabel {
   if (session.role === "REST") {
-    return { primary: "OFF", kind: "off", accessible: "휴식" }
+    return { primary: "OFF", kind: "off", accessible: "훈련 없음", short: "휴식" }
   }
   if (session.role === "QUALITY") {
     const secondary = qualityIntentCode(session)
@@ -384,13 +385,14 @@ function sessionFlowLabel(session: PlanSession): SessionFlowLabel {
       primary: "MAIN",
       secondary,
       kind: "main",
-      accessible: `핵심 ${secondary}`,
+      accessible: `주요 훈련 ${secondary}`,
+      short: "주요",
     }
   }
   if (session.plannedEnergyIntent === "RECOVERY_INTENT") {
-    return { primary: "REC", kind: "recovery", accessible: "회복" }
+    return { primary: "REC", kind: "recovery", accessible: "회복 운동", short: "회복" }
   }
-  return { primary: "BASE", kind: "base", accessible: "기초 지구력" }
+  return { primary: "BASE", kind: "base", accessible: "기초 지구력", short: "기초" }
 }
 
 function qualityIntentCode(session: PlanSession): NonNullable<SessionFlowLabel["secondary"]> {
@@ -407,6 +409,12 @@ function qualityIntentCode(session: PlanSession): NonNullable<SessionFlowLabel["
     default:
       return intent satisfies never
   }
+}
+
+function timelineSecondaryCode(code: NonNullable<SessionFlowLabel["secondary"]>): string {
+  if (code === "VO2") return "VO₂"
+  if (code === "ATP") return "ATP-PC"
+  return code
 }
 
 function calendarDateLabel(iso: string): string {

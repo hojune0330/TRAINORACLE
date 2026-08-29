@@ -102,7 +102,7 @@ test("shows provenance-safe trends without leaking private memo signals", async 
   await expect(homeDistance.getByText(/^8\s*km$/u).first()).toBeVisible()
   await homeDistance.getByRole("button", { name: "누적 거리 자세히 보기" }).click()
 
-  const distance = page.getByRole("region", { name: "거리 흐름" })
+  const distance = page.getByRole("region", { name: "누적 거리와 변화" })
   await expect(distance.locator(".distance-overview__totals").getByText(/^8\s*km$/u).first()).toBeVisible()
   await expect(distance.getByText(/1건 반영/u).first()).toBeVisible()
   await expect(distance.getByText(/집계 기준에 맞지 않아 제외한 기록 2건/u).first()).toBeVisible()

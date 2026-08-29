@@ -17,7 +17,7 @@ async function answerPlanQuestions(page: Page): Promise<void> {
   await selectNineDayProjection(page)
   await page.getByRole("button", { name: /날마다 달라요/u }).click()
   await page.getByRole("button", { name: "하루 한 번 운동" }).click()
-  await page.getByRole("button", { name: "날짜 없이 계획 후보 보기" }).click()
+  await page.getByRole("button", { name: "날짜 없이 계획안 보기" }).click()
 }
 
 test("shows a saved upcoming training on home and opens its existing plan", async ({ page }) => {

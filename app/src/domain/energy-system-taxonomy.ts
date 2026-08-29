@@ -13,15 +13,16 @@ export type EnergySystemKey = (typeof ENERGY_SYSTEM_KEYS)[number]
 export const ENERGY_SYSTEM_META: Readonly<Record<EnergySystemKey, {
   readonly code: string
   readonly shortLabel: string
+  readonly pickerLabel: string
   readonly journalValue: string
 }>> = {
-  RECOVERY: { code: "REC", shortLabel: "회복", journalValue: "rest" },
-  BASE: { code: "BASE", shortLabel: "기초 지구력", journalValue: "base" },
-  LT: { code: "LT", shortLabel: "지속 페이스", journalValue: "lt" },
-  VO2: { code: "VO2", shortLabel: "강한 유산소", journalValue: "vo2" },
-  GLY: { code: "GLY", shortLabel: "젖산성 스피드", journalValue: "gly" },
-  ATP_PC: { code: "ATP", shortLabel: "짧고 빠른 가속", journalValue: "atp" },
-  MIXED_UNALLOCATED: { code: "MIX", shortLabel: "복합·미배분", journalValue: "mixed" },
+  RECOVERY: { code: "REC", shortLabel: "회복 운동", pickerLabel: "회복", journalValue: "rest" },
+  BASE: { code: "BASE", shortLabel: "기초 지구력", pickerLabel: "기초", journalValue: "base" },
+  LT: { code: "LT", shortLabel: "지속 페이스", pickerLabel: "지속", journalValue: "lt" },
+  VO2: { code: "VO₂", shortLabel: "강한 유산소 반복", pickerLabel: "고산소", journalValue: "vo2" },
+  GLY: { code: "GLY", shortLabel: "짧은 고강도 반복", pickerLabel: "해당계", journalValue: "gly" },
+  ATP_PC: { code: "ATP-PC", shortLabel: "스피드·가속", pickerLabel: "스피드", journalValue: "atp" },
+  MIXED_UNALLOCATED: { code: "MIX", shortLabel: "여러 강도 조합", pickerLabel: "혼합", journalValue: "mixed" },
 }
 
 export const JOURNAL_ENERGY_SYSTEM_OPTIONS = ENERGY_SYSTEM_KEYS.map((key) => ({

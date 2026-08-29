@@ -48,7 +48,7 @@ describe("two-a-day intake", () => {
     )
 
     expect(screen.getByRole("button", { name: /하루 두 번 운동할게요/u }))
-      .toHaveTextContent("고른 선호 시간에 주 훈련·품질 세션을 배치하고, 다른 시간에는 쉬운 훈련이나 회복 움직임을 보여줘요. 고강도 두 개를 자동으로 넣지는 않아요")
+      .toHaveTextContent("고른 시간대에 주요 훈련을 배치하고 다른 시간에는 쉬운 훈련이나 회복 운동을 안내해요. 주요 훈련 두 개를 자동으로 넣지는 않아요")
   })
 })
 
@@ -144,10 +144,10 @@ describe("optional target race date", () => {
       />,
     )
 
-    expect(screen.getByRole("button", { name: "날짜 없이 계획 후보 보기" })).toBeEnabled()
+    expect(screen.getByRole("button", { name: "날짜 없이 계획안 보기" })).toBeEnabled()
     expect(screen.getByRole("button", { name: "이 날짜로 배치 미리보기" })).toBeDisabled()
     expect(screen.getByLabelText("목표 경기 날짜")).toHaveAttribute("aria-invalid", "false")
-    await user.click(screen.getByRole("button", { name: "날짜 없이 계획 후보 보기" }))
+    await user.click(screen.getByRole("button", { name: "날짜 없이 계획안 보기" }))
     expect(onRaceDate).toHaveBeenCalledWith()
 
     rerender(

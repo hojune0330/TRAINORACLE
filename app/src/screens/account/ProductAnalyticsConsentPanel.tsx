@@ -57,9 +57,9 @@ export function ProductAnalyticsConsentPanel({
 
   return (
     <section aria-labelledby="product-analytics-title" style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-      <SectionLb><span id="product-analytics-title">선택 사용 흐름 분석</span></SectionLb>
+      <SectionLb><span id="product-analytics-title">앱 사용 정보 보내기</span></SectionLb>
       <p style={{ fontFamily: "var(--sans)", fontSize: 12, lineHeight: 1.65, color: "var(--ink-2)", margin: 0 }}>
-        계정과 연결된 사용 흐름만 모아요. 어떤 화면을 열고 저장이 성공했는지 같은 정해진 이름만 기록하며,
+        앱을 개선할 수 있도록 어떤 화면을 열고 저장이 성공했는지 같은 정해진 이름만 기록해요.
         메모 원문, 통증값, 기분값, 훈련 내용은 보내지 않아요.
       </p>
       <p style={{ fontFamily: "var(--sans)", fontSize: 12, lineHeight: 1.65, color: "var(--ink-3)", margin: 0 }}>
@@ -72,17 +72,17 @@ export function ProductAnalyticsConsentPanel({
           <label style={{ display: "flex", alignItems: "flex-start", gap: 10, minHeight: 44 }}>
             <input
               type="checkbox"
-              aria-label="선택 사용 흐름 분석 허용"
+              aria-label="앱 사용 정보 보내기 허용"
               checked={optedIn}
               disabled={!available || busy}
               onChange={(event) => setOptedIn(event.target.checked)}
               style={{ width: 20, height: 20, marginTop: 2 }}
             />
             <span style={{ fontFamily: "var(--sans)", fontSize: 13, lineHeight: 1.5 }}>
-              선택 사용 흐름 분석 허용
+              앱 사용 정보 보내기 허용
               {!optedIn && savedOptedIn && (
                 <small style={{ display: "block", color: "var(--ink-3)" }}>
-                  저장하면 새 기록을 보내지 않고 전에 모인 사용 흐름 기록도 삭제해요.
+                  저장하면 새 사용 정보를 보내지 않고 전에 모인 기록도 삭제해요.
                 </small>
               )}
             </span>

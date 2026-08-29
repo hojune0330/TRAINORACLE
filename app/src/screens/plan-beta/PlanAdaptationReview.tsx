@@ -56,7 +56,7 @@ export function PlanAdaptationReview({
       </section>
       <section aria-labelledby="adaptation-uncertainty-title">
         <h3 id="adaptation-uncertainty-title">불확실한 점</h3>
-        <p>이 비교는 승인된 두 베타 후보의 차이만 보여줘요. 회복 상태나 경기 결과를 예측하지 않으며 현재 계획을 자동으로 바꾸지 않아요.</p>
+        <p>이 비교는 현재 제공할 수 있는 두 베타 계획안의 차이만 설명해요. 회복 상태나 경기 결과를 예측하지 않으며 현재 계획을 자동으로 바꾸지 않아요.</p>
       </section>
       {selfSelectable ? (
         <button className="plan-adaptation__accept" type="button" disabled={busy} onClick={onAccept}>
@@ -64,7 +64,7 @@ export function PlanAdaptationReview({
         </button>
       ) : (
         <p className="plan-adaptation__notice" role="status">
-          이 후보는 지도자 확인이 필요해요. 선수 화면에서는 적용할 수 없고 현재 계획은 그대로 유지됩니다.
+          이 계획안은 지도자 확인이 필요해요. 선수 화면에서는 적용할 수 없고 현재 계획은 그대로 유지됩니다.
         </p>
       )}
     </div>

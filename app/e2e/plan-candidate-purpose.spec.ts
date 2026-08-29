@@ -20,7 +20,7 @@ test("explains the easy-session time difference while keeping the selected purpo
   await selectNineDayProjection(page)
   await page.getByRole("button", { name: /아침에 운동해요/u }).click()
   await page.getByRole("button", { name: /하루 한 번 운동/u }).click()
-  await page.getByRole("button", { name: "날짜 없이 계획 후보 보기" }).click()
+  await page.getByRole("button", { name: "날짜 없이 계획안 보기" }).click()
 
   // Then: both choices preserve the selected purpose and explain only the easy-session time difference.
   const comparison = page.getByRole("region", { name: "두 계획 핵심 비교" })

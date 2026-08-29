@@ -232,13 +232,13 @@ type SuccessorRejectionCode = Extract<
 function successorRejectionMessage(code: SuccessorRejectionCode): string {
   switch (code) {
     case "NO_PENDING_SUCCESSOR":
-      return "먼저 위에서 다음 계획 후보를 골라 주세요. 현재 계획은 그대로예요."
+      return "먼저 위에서 다음 계획안을 골라 주세요. 현재 계획은 그대로예요."
     case "MUTATION_LOCK_UNAVAILABLE":
       return "이 브라우저에서는 안전한 계획 전환 잠금을 사용할 수 없어요. 현재 계획은 그대로예요."
     case "STALE_BASE":
-      return "후보를 고른 뒤 현재 계획이 바뀌었어요. 지금 기록을 기준으로 다음 계획을 다시 골라 주세요."
+      return "계획안을 고른 뒤 현재 계획이 바뀌었어요. 지금 기록을 기준으로 다음 계획을 다시 골라 주세요."
     case "CONTEXT_MISMATCH":
-      return "현재 계획의 두 후보 정보를 확인할 수 없어요. 현재 계획은 그대로이며 새 계획을 다시 만들어야 해요."
+      return "현재 계획의 두 계획안 정보를 확인할 수 없어요. 현재 계획은 그대로이며 새 계획을 다시 만들어야 해요."
     case "PENDING_ENVELOPE_MISMATCH":
       return "선택해 둔 다음 계획이 현재 계획과 일치하지 않아요. 현재 기록을 기준으로 다음 계획을 다시 골라 주세요."
     case "TEMPLATE_AUTHORITY_UNAVAILABLE":

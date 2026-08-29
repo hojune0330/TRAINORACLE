@@ -116,7 +116,7 @@ describe("two-a-day plan summary", () => {
     expect(firstDay).toHaveTextContent("총 30~50분 · RPE 7~8")
     expect(firstDay).toHaveTextContent("준비")
     expect(firstDay).toHaveTextContent("본운동")
-    expect(firstDay).toHaveTextContent("빠른 구간과 천천히 움직이는 회복 구간을 번갈아")
+    expect(firstDay).toHaveTextContent("강한 구간과 천천히 움직이는 회복 구간을 번갈아")
     expect(firstDay).toHaveTextContent("정리")
     expect(firstDay).toHaveTextContent("거리\u2060·\u2060목표 페이스는 지정하지 않음")
     expect(firstDay).toHaveTextContent("같은 강도로 한 번 더 달릴 여유가 없으면 본운동을 끝내세요")
@@ -125,8 +125,8 @@ describe("two-a-day plan summary", () => {
   it.each([
     {
       intent: "GLY_INTENT" as const,
-      endpoint: "자세나 속도가 흐트러지기 전에 빠른\u00a0구간을 끝내세요",
-      restart: "숨이\u00a0가라앉으면 다음\u00a0빠른\u00a0구간을 시작하세요",
+      endpoint: "자세나 속도가 흐트러지기 전에 끝내세요",
+      restart: "숨이\u00a0가라앉으면 다음 구간을 시작하세요",
     },
     {
       intent: "ATP_PC_INTENT" as const,

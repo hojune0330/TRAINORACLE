@@ -28,29 +28,29 @@ const records = [
 const cases = [
   {
     eventDistanceM: 800,
-    focus: /스피드 지구력.*GLY/u,
+    focus: /짧은 고강도 반복.*GLY/u,
     notation: /10×200m @800m RP.*r60.*STAND/u,
-    summary: "총 10회 · 품질 거리 2000m · 200m 31초",
+    summary: "총 10회 · 주요 구간 2000m · 200m당 31초",
     execution: "준비, 10회 본운동과 9번의 사이 회복, 정리 순서로 진행하세요.",
-    work: "200m를 31초 목표로 10회 · 품질 거리 2000m",
+    work: "200m를 31초 목표로 10회 · 주요 구간 거리 2000m",
     recovery: "9번 · 매번 60초 서서 쉬기 · 총 540초",
   },
   {
     eventDistanceM: 1500,
     focus: /여러 강도 조합.*MIX/u,
     notation: /3×500m @1500m RP.*r180.*STAND/u,
-    summary: "총 3회 · 품질 거리 1500m · 500m 1분 22초",
+    summary: "총 3회 · 주요 구간 1500m · 500m당 1분 22초",
     execution: "준비, 3회 본운동과 2번의 사이 회복, 정리 순서로 진행하세요.",
-    work: "500m를 1분 22초 목표로 3회 · 품질 거리 1500m",
+    work: "500m를 1분 22초 목표로 3회 · 주요 구간 거리 1500m",
     recovery: "2번 · 매번 180초 서서 쉬기 · 총 360초",
   },
   {
     eventDistanceM: 3000,
-    focus: /반복 인터벌.*VO2/u,
+    focus: /강한 유산소 반복.*VO₂/u,
     notation: /4×800m @3000m RP.*r180.*WALK/u,
-    summary: "총 4회 · 품질 거리 3200m · 800m 2분 43초",
+    summary: "총 4회 · 주요 구간 3200m · 800m당 2분 43초",
     execution: "준비, 4회 본운동과 3번의 사이 회복, 정리 순서로 진행하세요.",
-    work: "800m를 2분 43초 목표로 4회 · 품질 거리 3200m",
+    work: "800m를 2분 43초 목표로 4회 · 주요 구간 거리 3200m",
     recovery: "3번 · 매번 180초 걷기 · 총 540초",
   },
 ] as const
@@ -83,7 +83,7 @@ async function reachExactEventCandidates(
   await selectNineDayProjection(page)
   await page.getByRole("button", { name: /아침에 운동해요/u }).click()
   await page.getByRole("button", { name: /하루 한 번 운동/u }).click()
-  await page.getByRole("button", { name: "날짜 없이 계획 후보 보기" }).click()
+  await page.getByRole("button", { name: "날짜 없이 계획안 보기" }).click()
 }
 
 for (const fixture of cases) {

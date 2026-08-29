@@ -30,10 +30,10 @@ describe("selector state", () => {
   it("exposes the selected energy system and RPE as pressed", async () => {
     const user = userEvent.setup()
     render(<PostSessionForm />)
-    const vo2 = screen.getByRole("button", { name: /VO2 강한 유산소/u })
+    const vo2 = screen.getByRole("button", { name: /VO₂ 강한 유산소 반복/u })
     const rpeSix = screen.getByRole("button", { name: "6" })
 
-    expect(screen.getAllByRole("button", { name: /^(?:REC|BASE|LT|VO2|GLY|ATP|MIX) /u })
+    expect(screen.getAllByRole("button", { name: /^(?:REC|BASE|LT|VO₂|GLY|ATP-PC|MIX) /u })
       .every((button) => button.getAttribute("aria-pressed") === "false")).toBe(true)
     expect(vo2).toHaveAttribute("aria-pressed", "false")
     expect(rpeSix).toHaveAttribute("aria-pressed", "false")

@@ -5,6 +5,7 @@ import { ErrorBoundary } from "./components/ErrorBoundary"
 import { purgeExpiredTrash } from "./domain/journal-trash"
 import { registerAppServiceWorker } from "./domain/pwa-update"
 import { FeedbackBoardRoute } from "./screens/FeedbackBoardRoute"
+import { TrainingLexiconRoute } from "./screens/TrainingLexiconRoute"
 
 // 토큰 단일 소스: 저장소 루트 CSS를 직접 import (이중 정의 금지)
 import "../../colors_and_type.css"
@@ -20,10 +21,12 @@ import "./styles/decoration-studio.css"
 import "./styles/minji-showcase.css"
 import "./styles/account-auth.css"
 import "./styles/training-content.css"
+import "./styles/training-lexicon.css"
 
 const showP3PaceHarness = import.meta.env.DEV
   && new URLSearchParams(window.location.search).get("p3-pace-fixture") === "1"
 const showFeedbackBoard = new URLSearchParams(window.location.search).get("feedback") === "1"
+const showTrainingLexicon = new URLSearchParams(window.location.search).get("terms") === "1"
 
 if (import.meta.env.DEV && !showP3PaceHarness) {
   void import("react-grab")
@@ -62,7 +65,9 @@ function renderRoot(content: React.ReactNode): void {
   )
 }
 
-if (showFeedbackBoard) {
+if (showTrainingLexicon) {
+  renderRoot(<TrainingLexiconRoute />)
+} else if (showFeedbackBoard) {
   renderRoot(<FeedbackBoardRoute />)
 } else if (showP3PaceHarness) {
   void import("./testing/P3PaceHarness").then(({ P3PaceHarness }) => {

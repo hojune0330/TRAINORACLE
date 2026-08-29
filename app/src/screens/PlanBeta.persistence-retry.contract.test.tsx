@@ -139,7 +139,7 @@ describe("active plan persistence retry", () => {
     render(<PlanBeta />)
 
     // When: the athlete starts the next frame but history storage fails.
-    await user.click(screen.getByRole("button", { name: "현재 기준으로 다음 후보 만들기" }))
+    await user.click(screen.getByRole("button", { name: "현재 기준으로 다음 계획안 만들기" }))
 
     // Then: the active plan remains until the same action can be retried successfully.
     expect(screen.getByRole("alert")).toHaveTextContent("지금 계획과 진행 기록은 그대로")
@@ -171,7 +171,7 @@ describe("active plan persistence retry", () => {
     )
 
     // When: the athlete starts a next-frame archive with an unknown rollback result.
-    await user.click(screen.getByRole("button", { name: "현재 기준으로 다음 후보 만들기" }))
+    await user.click(screen.getByRole("button", { name: "현재 기준으로 다음 계획안 만들기" }))
 
     // Then: retry is withheld because it could duplicate a partially archived plan.
     expect(screen.getByRole("alert")).toHaveTextContent("저장 상태도 확인하지 못했어요")
@@ -194,7 +194,7 @@ describe("active plan persistence retry", () => {
       />,
     )
 
-    await user.click(screen.getByRole("button", { name: "현재 기준으로 다음 후보 만들기" }))
+    await user.click(screen.getByRole("button", { name: "현재 기준으로 다음 계획안 만들기" }))
 
     expect(screen.getByRole("alert")).toHaveTextContent("저장된 계획을 읽을 수 없어요")
     expect(screen.queryByRole("button", { name: "다음 주기 다시 만들기" })).not.toBeInTheDocument()
