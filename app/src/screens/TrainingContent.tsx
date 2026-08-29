@@ -101,6 +101,7 @@ export function TrainingContent({ onBack }: { readonly onBack: () => void }) {
               {article.sourceLabel}<ExternalLink aria-hidden="true" size={14} />
             </a>
           </div>
+          <TrainingContentCorrectionNotice notice={article.correctionNotice} />
           <p className="training-content-article__footnote">
             이 읽을거리는 훈련 계획이 아니며, 저장해도 계획·안전 판단·포인트가 바뀌지 않아요.
           </p>
@@ -145,6 +146,11 @@ function CompatibilityGroup({ title, items }: {
       {items.map((item) => <p key={item}>{item}</p>)}
     </div>
   )
+}
+
+export function TrainingContentCorrectionNotice({ notice }: { readonly notice: string | null }) {
+  if (notice === null) return null
+  return <p className="training-content-article__correction" role="status">정정 안내 · {notice}</p>
 }
 
 function ContentHeader({ title, onBack }: { readonly title: string; readonly onBack: () => void }) {

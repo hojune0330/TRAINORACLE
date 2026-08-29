@@ -57,4 +57,16 @@ describe("shared visual system", () => {
     expect(source).not.toMatch(/Caveat|Gowun Dodum|Segoe Print|Nanum Pen Script|cursive/iu)
     expect(journalTokens).not.toMatch(/Segoe Print|Nanum Pen Script|cursive/iu)
   })
+
+  it("keeps the audited new surfaces free from inline presentation styles", () => {
+    const guardedSurfaces = [
+      "src/screens/TrainingContent.tsx",
+      "src/screens/trends/PersonalOraclePanel.tsx",
+      "src/screens/account/PlanCloudBackupNotice.tsx",
+    ]
+
+    for (const path of guardedSurfaces) {
+      expect(readFileSync(path, "utf8"), path).not.toMatch(/\sstyle=/u)
+    }
+  })
 })

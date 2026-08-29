@@ -96,4 +96,20 @@ describe("personal oracle explanation contract", () => {
     expect(result.insights.find((item) => item.id === "DISTANCE_FLOW")?.headline).toContain("아직")
     expect(result.insights.find((item) => item.id === "ENERGY_COVERAGE")?.headline).toContain("아직")
   })
+
+  it("names every jointly most frequent system as a tie", () => {
+    const result = derivePersonalOracle({
+      observations: [
+        observation("base-a", "2026-08-20", 6, "BASE"),
+        observation("lt-a", "2026-08-22", 5, "LT"),
+        observation("recovery-a", "2026-08-24", 3, "RECOVERY"),
+      ],
+      today: "2026-08-28",
+      planState: null,
+    })
+    const detail = result.insights.find((item) => item.id === "ENERGY_COVERAGE")?.detail
+
+    expect(detail).toContain("BASE 기초 지구력 · LT 지속 페이스 · REC 회복")
+    expect(detail).toContain("모두 1회로 동률")
+  })
 })

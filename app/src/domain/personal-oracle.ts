@@ -109,15 +109,17 @@ function energyInsight(
   }
 
   const maxCount = Math.max(...used.map((row) => row.journalSessionCount))
-  const mostFrequent = used
-    .filter((row) => row.journalSessionCount === maxCount)
+  const mostFrequent = [...used.filter((row) => row.journalSessionCount === maxCount)]
+    .sort((left, right) => ENERGY_SYSTEM_META[left.key].code < ENERGY_SYSTEM_META[right.key].code ? -1 : 1)
     .map((row) => `${ENERGY_SYSTEM_META[row.key].code} ${ENERGY_SYSTEM_META[row.key].shortLabel}`)
-    .join(" · ")
+  const frequencyDetail = mostFrequent.length === 1
+    ? `가장 자주 고른 유형은 ${mostFrequent[0]} ${maxCount}회예요.`
+    : `가장 자주 고른 유형은 ${mostFrequent.join(" · ")}이며, 모두 ${maxCount}회로 동률이에요.`
   return {
     id: "ENERGY_COVERAGE",
     title: "훈련 목적의 구성",
     headline: `최근 8주 ${used.length}가지 유형을 기록했어요`,
-    detail: `가장 자주 고른 유형은 ${mostFrequent} ${maxCount}회예요. 자주 또는 적게 기록됐다는 사실이며, 강점·약점이나 부족 판정은 아니에요.`,
+    detail: `${frequencyDetail} 자주 또는 적게 기록됐다는 사실이며, 강점·약점이나 부족 판정은 아니에요.`,
     evidence: `직접 선택 ${ledger.includedSourceCount}건 · 제외 ${ledger.excludedSourceCount}건 · 중복 ${ledger.duplicateSourceCount}건`,
   }
 }

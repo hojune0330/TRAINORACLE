@@ -252,6 +252,12 @@ jobs:
             exit 0
           fi
           git commit -m "deploy: verified app from main ${GITHUB_SHA::7}"
+          git fetch origin main
+          CURRENT_MAIN_SHA_BEFORE_PUSH="$(git rev-parse origin/main)"
+          if [[ "$GITHUB_SHA" != "$CURRENT_MAIN_SHA_BEFORE_PUSH" ]]; then
+            echo "::notice::Skipping stale deployment immediately before publish: $GITHUB_SHA; current main is $CURRENT_MAIN_SHA_BEFORE_PUSH."
+            exit 0
+          fi
           git push origin HEAD:gh-pages
           {
             echo "### deployment receipt"

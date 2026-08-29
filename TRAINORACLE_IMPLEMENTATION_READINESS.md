@@ -4,8 +4,8 @@
 document_metadata:
   doc_id: trainoracle-implementation-readiness
   title: TrainOracle Implementation Readiness
-  version: "1.2"
-  recorded_at: 2026-08-28
+  version: "1.3"
+  recorded_at: 2026-08-29
   owner: COACH_HOJUNE
   status: DEVELOPMENT_IN_PROGRESS
   source_plan: TRAINORACLE_MASTER_PLAN.md
@@ -29,12 +29,12 @@ readiness_state:
   master_plan_recorded: true
   implementation: IN_PROGRESS
   first_task: TARGETED_SPEC_ALIGNMENT_STARTED
-  active_development_branch: codex/trending-training-content-v1
+  active_development_branch: codex/post-audit-hardening-271
   active_work_order: OWNER_DIRECT_DEVELOPMENT_INSTRUCTION
   assigned_agent: CODEX
-  code_change: PLAN_JOURNAL_PERIODIZATION_EVENT_BREADTH_ACCOUNT_ORACLE_MERGED_CONTENT_IN_REVIEW
-  spec_patch: TRENDING_TRAINING_CONTENT_DRAFT_IN_REVIEW
-  design_change: TRAINING_CONTENT_READER_IN_PROGRESS
+  code_change: PR_263_270_MERGED_POST_AUDIT_HARDENING_READY_FOR_PRE_MERGE_REVIEW
+  spec_patch: TRENDING_TRAINING_CONTENT_OPERATIONS_PIPELINE_DRAFT_IN_PROGRESS
+  design_change: EXISTING_SURFACE_HARDENING_ONLY
   deployment: NONE
 ```
 
@@ -94,11 +94,11 @@ readiness_state:
 | 3 | 주간·월간·연간 거리와 에너지 시스템 누적 분석 | 승인 SPEC과 테스트 기준선 | ENERGY_LEDGER_V1_MERGED |
 | 4 | 800m~마라톤 상세 후보와 9.5일·중주기·24주 계보 | 활성 템플릿·주기 계약 | LINEAGE_AND_EVENT_BREADTH_V1_MERGED_DETAILED_LONG_DISTANCE_TEMPLATES_PENDING |
 | 5 | 일지 수행 연결과 적응 근거 원장 | `plannedSessionId`·개인정보 계약 | PLAN_JOURNAL_V1_MERGED_ADAPTATION_PARTIAL_ACCOUNT_STATUS_V1_MERGED |
-| 6 | 개인 오라클과 훈련법 궁합 | 결정적 규칙·근거·안전 독립 계약 | PERSONAL_ORACLE_V1_MERGED_METHOD_COMPATIBILITY_NOT_STARTED |
+| 6 | 개인 오라클과 훈련법 궁합 | 결정적 규칙·근거·안전 독립 계약 | PERSONAL_ORACLE_V1_MERGED_TIE_WORDING_HARDENED_METHOD_COMPATIBILITY_NOT_STARTED |
 | 7 | 친구 비교와 함께 달리기 오라클 | 계정·동의·공유 항목 계약 | NOT_STARTED |
 | 8 | 다이어리 공개·비밀 기록·팔로워 | RLS·차단·신고·삭제 검증 | NOT_STARTED |
-| 9 | 콘텐츠·포인트·꾸미기·공유 | 보상 금지선·콘텐츠 검토 상태 | EXISTING_LOCAL_REWARDS_AND_DECORATION_MERGED_CONTENT_READER_IN_PROGRESS |
-| 10 | 유행 훈련법 콘텐츠와 SEO 검토 | 별도 연구·법률·오너 승인 | READ_ONLY_CONTENT_V1_IN_PROGRESS_SEO_NOT_STARTED |
+| 9 | 콘텐츠·포인트·꾸미기·공유 | 보상 금지선·콘텐츠 검토 상태 | EXISTING_LOCAL_REWARDS_AND_DECORATION_MERGED_CONTENT_READER_V1_MERGED_PIPELINE_CONTRACT_DRAFTED |
+| 10 | 유행 훈련법 콘텐츠와 SEO 검토 | 별도 연구·법률·오너 승인 | READ_ONLY_CONTENT_V1_MERGED_OPERATIONS_CONTRACT_DRAFTED_SEO_NOT_STARTED |
 | 11 | 실제 사용자 베타와 배포 | 모든 필수 검증과 배포 승인 | NOT_STARTED |
 
 ---

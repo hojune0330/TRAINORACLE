@@ -13,3 +13,11 @@ test("publishes only when the workflow source is still current main", () => {
   assert.match(workflow, /CURRENT_MAIN_SHA="\$\(git rev-parse origin\/main\)"/u)
   assert.match(workflow, /if: steps\.deployment-source\.outputs\.current == 'true'[\s\S]*name: Publish verified build to gh-pages/u)
 })
+
+test("rechecks main immediately before pushing the verified Pages commit", () => {
+  const publishStep = workflow.slice(workflow.indexOf("- name: Publish verified build to gh-pages"))
+
+  assert.match(publishStep, /git commit -m "deploy: verified app[\s\S]*git fetch origin main/u)
+  assert.match(publishStep, /CURRENT_MAIN_SHA_BEFORE_PUSH="\$\(git rev-parse origin\/main\)"/u)
+  assert.match(publishStep, /if \[\[ "\$GITHUB_SHA" != "\$CURRENT_MAIN_SHA_BEFORE_PUSH" \]\][\s\S]*exit 0[\s\S]*git push origin HEAD:gh-pages/u)
+})

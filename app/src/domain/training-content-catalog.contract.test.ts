@@ -9,6 +9,11 @@ describe("training content catalog", () => {
     expect(TRAINING_CONTENT_CATALOG).toHaveLength(3)
     expect(new Set(TRAINING_CONTENT_CATALOG.map((article) => article.id)).size).toBe(3)
     for (const article of TRAINING_CONTENT_CATALOG) {
+      expect(Number.isInteger(article.contentRevision)).toBe(true)
+      expect(article.contentRevision).toBeGreaterThan(0)
+      expect(article.publicationState).toBe("BETA_READ_ONLY_PUBLISHED")
+      expect(article.publishedOn).toMatch(/^\d{4}-\d{2}-\d{2}$/u)
+      expect(article.correctionNotice).toBeNull()
       expect(article.planEligibility).toBe("NOT_PLAN_ELIGIBLE")
       expect(article.sourceUrl).toMatch(/^https:\/\//u)
       expect(article.useBoundary.length).toBeGreaterThan(30)
