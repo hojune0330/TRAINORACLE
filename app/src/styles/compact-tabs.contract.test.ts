@@ -23,6 +23,7 @@ describe("compact tab density", () => {
   it("keeps a 44px target around a 32px visible tab face", () => {
     expect(compactTabsCss).toMatch(/\.app-compact-tab\s*\{[\s\S]*min-height:\s*var\(--app-touch-min\)\s*!important/u)
     expect(compactTabsCss).toMatch(/\.app-compact-tab::before\s*\{[\s\S]*inset:\s*6px 0/u)
+    expect(compactTabsCss).toContain("padding-bottom: calc(42px + env(safe-area-inset-bottom))")
   })
 
   it("uses the shared density rule on every audited tab surface", () => {

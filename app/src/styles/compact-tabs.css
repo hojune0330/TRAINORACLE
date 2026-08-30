@@ -87,6 +87,12 @@
   padding: 0 12px 0 16px;
 }
 
+/* Keep enough trailing scroll range to align the diary paper after the
+ * example header becomes 20px shorter (64px -> 44px). */
+.minji-page {
+  padding-bottom: calc(42px + env(safe-area-inset-bottom));
+}
+
 .decoration-shop--open .decoration-shop__header {
   min-height: var(--app-touch-min);
   max-height: calc(var(--app-touch-min) + env(safe-area-inset-top));
