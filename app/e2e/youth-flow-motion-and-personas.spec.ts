@@ -6,6 +6,24 @@ async function resetLocalState(page: import("@playwright/test").Page): Promise<v
   await page.addInitScript(() => window.localStorage.clear())
 }
 
+async function expectActiveQuestionAtReadingPosition(page: import("@playwright/test").Page): Promise<void> {
+  await expect.poll(() => page.locator(".plan-eyebrow").evaluate((element) => {
+    const scrollRegion = element.closest<HTMLElement>(".app-scroll-region")
+    if (scrollRegion === null) return false
+
+    const targetRect = element.getBoundingClientRect()
+    const regionRect = scrollRegion.getBoundingClientRect()
+    const scrollMargin = Number.parseFloat(window.getComputedStyle(element).scrollMarginTop) || 0
+    const aligned = Math.abs(targetRect.top - regionRect.top - scrollMargin) <= 4
+    const cannotScrollFurther = scrollRegion.scrollTop >= scrollRegion.scrollHeight - scrollRegion.clientHeight - 2
+    const readableTopLimit = window.innerWidth <= 600 ? 64 : window.innerHeight * 0.25
+
+    return targetRect.top >= regionRect.top
+      && targetRect.top <= readableTopLimit
+      && (aligned || cannotScrollFurther)
+  })).toBe(true)
+}
+
 test("moves from a choice to the next question and gives a clear journal save confirmation", async ({ page }, testInfo) => {
   await resetLocalState(page)
   await page.goto("/?app=1")
@@ -18,12 +36,7 @@ test("moves from a choice to the next question and gives a clear journal save co
 
   await page.getByRole("button", { name: /^1500m/u }).click()
   await expect(page.getByRole("heading", { name: "현재 참가하거나 준비 중인 부문이 있나요?" })).toBeVisible()
-  await expect.poll(() => page.locator(".plan-eyebrow").evaluate((element) => (
-    Math.round(element.getBoundingClientRect().top)
-  ))).toBeLessThanOrEqual(testInfo.project.name === "reduced-motion" ? 160 : 48)
-  if (testInfo.project.name !== "reduced-motion") {
-    await expect.poll(() => page.locator(".app-scroll-region").evaluate((element) => element.scrollTop)).toBeGreaterThan(0)
-  }
+  await expectActiveQuestionAtReadingPosition(page)
   const nextAnimation = await page.locator(".plan-intake").evaluate((element) => getComputedStyle(element).animationName)
   expect(nextAnimation).toBe(testInfo.project.name === "reduced-motion" ? "none" : "flow-stage-enter")
 
