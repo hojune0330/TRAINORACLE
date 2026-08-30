@@ -175,7 +175,7 @@ test("기록이 하나 생기면 홈 일지 정원과 꾸미기 포인트가 보
   await expect(strip.getByLabel("식물 상태: 새싹이 자라고 있어요")).toBeVisible()
   await expect(strip.getByText("기록한 날", { exact: true })).toBeVisible()
   await expect(strip.getByText("1일", { exact: true })).toBeVisible()
-  await expect(page.getByRole("heading", { name: "일지 꾸미기 · 사용 가능 4P" })).toBeVisible()
+  await expect(page.getByRole("heading", { name: "꾸미기 보관함 · 사용 가능 4P" })).toBeVisible()
   await expect(page.getByRole("button", { name: "꾸미기 열기" })).toBeVisible()
 })
 

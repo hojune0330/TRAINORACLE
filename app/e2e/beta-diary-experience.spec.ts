@@ -48,7 +48,7 @@ test("uses the diary context, decoration, cycle archive, and easy FAQ as one flo
   await expect(page.getByRole("button", { name: "기분 좋음" })).toHaveAttribute("aria-pressed", "true")
   await expect(page.getByText("위치정보를 사용하지 않아요.")).toBeVisible()
 
-  await expect(page.getByRole("heading", { name: "일지 꾸미기 · 사용 가능 32P" })).toBeVisible()
+  await expect(page.getByRole("heading", { name: "꾸미기 보관함 · 사용 가능 32P" })).toBeVisible()
   await page.getByRole("button", { name: "꾸미기 열기" }).click()
   await expect(page.getByRole("button", { name: "꾸미기 닫기" })).toBeVisible()
   await page.getByRole("button", { name: "꾸미기 닫기" }).click()

@@ -85,7 +85,7 @@ test("shows a returning athlete's latest entry before the decoration studio", as
   await page.goto("/")
   const recentEntry = page.getByRole("button", { name: /훈련 후.*아침 템포런.*상세/u })
   const services = page.getByRole("navigation", { name: "내 기록 살펴보기" })
-  const decorationEntry = page.getByText("일지 꾸미기 · 사용 가능 4P")
+  const decorationEntry = page.getByText("꾸미기 보관함 · 사용 가능 4P")
 
   // When: the athlete opens the first home screen.
   await expect(recentEntry).toBeVisible()
