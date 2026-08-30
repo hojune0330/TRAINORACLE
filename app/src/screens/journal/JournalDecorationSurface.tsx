@@ -31,10 +31,12 @@ export function JournalDecorationSurface({
   date,
   hasEntries,
   children,
+  pageTopRef,
 }: {
   readonly date: string
   readonly hasEntries: boolean
   readonly children: React.ReactNode
+  readonly pageTopRef?: React.Ref<HTMLDivElement>
 }) {
   const [canonical, setCanonical] = React.useState(loadDecorationState)
   const [storageVersion, setStorageVersion] = React.useState(() => readDecorationStateSerialized())
@@ -140,7 +142,7 @@ export function JournalDecorationSurface({
           }
         }}
       />
-      <DecoratedJournalPageFrame date={date} state={visible}>{children}</DecoratedJournalPageFrame>
+      <DecoratedJournalPageFrame date={date} state={visible} pageTopRef={pageTopRef}>{children}</DecoratedJournalPageFrame>
       {replacement !== null && (
         <JournalConfirmationDialog
           title="꾸미기 교체 확인"

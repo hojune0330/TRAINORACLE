@@ -24,6 +24,7 @@ export type LogDetailProps = {
   readonly onAddEntry?: (date: string) => void
   readonly onEditEntry?: (entry: JournalEntry) => void
   readonly readerControls?: React.ReactNode
+  readonly pageTopRef?: React.RefObject<HTMLDivElement>
 }
 
 export function LogDetail(props: LogDetailProps) {
@@ -59,7 +60,7 @@ function savedClock(iso: string): string {
 }
 
 // ───────── A. Journal-page (실데이터) ─────────
-function LogDetailJournal({ date, onBack, onAddEntry, onEditEntry, readerControls }: LogDetailProps) {
+function LogDetailJournal({ date, onBack, onAddEntry, onEditEntry, readerControls, pageTopRef }: LogDetailProps) {
   const [rev, setRev] = React.useState(0)
   // 방금 지운 것 — 되돌리기 버튼을 그 자리에서 띄우기 위해 들고 있는다.
   // 휴지통(30일)에 남아 있으므로 이 상태가 사라져도 복구는 가능하다.
@@ -108,7 +109,7 @@ function LogDetailJournal({ date, onBack, onAddEntry, onEditEntry, readerControl
     <div style={{ paddingBottom: 40 }} className="paper-grid">
       <TopBar2 onBack={onBack}>일지</TopBar2>
       {readerControls}
-      <JournalDecorationSurface key={date} date={date} hasEntries={entries.length > 0}>
+      <JournalDecorationSurface key={date} date={date} hasEntries={entries.length > 0} pageTopRef={pageTopRef}>
 
       <div style={{ padding: "14px 20px 0" }}>
         <IndexCard date={cardDate(date)} dow={dowOf(date)} season={seasonOf(date)} />

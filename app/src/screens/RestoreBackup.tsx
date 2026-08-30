@@ -19,6 +19,7 @@ import {
 import type {
   BackupReadResult, DecorationRestoreMode, RestoreMode, RestoreOutcome, RestorePlan,
 } from "../domain/restore/backup-file"
+import { useActiveContentScroll } from "../hooks/useActiveContentScroll"
 
 const mono: React.CSSProperties = { fontFamily: "var(--mono)" }
 
@@ -48,6 +49,8 @@ export function RestoreBackup({ onBack, onOpenHome }: {
   const [decorationMode, setDecorationMode] = React.useState<DecorationRestoreMode>("keep-existing")
   const [busy, setBusy] = React.useState(false)
   const busyRef = React.useRef(false)
+  const stageRef = React.useRef<HTMLDivElement>(null)
+  useActiveContentScroll(stage.step, stageRef, undefined, true)
 
   const handleFile = async (file: File) => {
     if (busyRef.current) return
@@ -121,36 +124,38 @@ export function RestoreBackup({ onBack, onOpenHome }: {
         </div>
       </div>
 
-      {stage.step === "pick" && (
-        <PickStage busy={busy} failure={failure} onFile={handleFile} />
-      )}
+      <div key={stage.step} ref={stageRef} className="active-stage-content active-content-scroll-target">
+        {stage.step === "pick" && (
+          <PickStage busy={busy} failure={failure} onFile={handleFile} />
+        )}
 
-      {stage.step === "review" && (
-        <ReviewStage
-          read={stage.read}
-          plan={stage.plan}
-          mode={mode}
-          onModeChange={setMode}
-          decorationMode={decorationMode}
-          onDecorationModeChange={setDecorationMode}
-          onRestore={handleRestore}
-          onRestart={restart}
-          busy={busy}
-        />
-      )}
+        {stage.step === "review" && (
+          <ReviewStage
+            read={stage.read}
+            plan={stage.plan}
+            mode={mode}
+            onModeChange={setMode}
+            decorationMode={decorationMode}
+            onDecorationModeChange={setDecorationMode}
+            onRestore={handleRestore}
+            onRestart={restart}
+            busy={busy}
+          />
+        )}
 
-      {stage.step === "done" && (
-        <DoneStage
-          outcome={stage.outcome}
-          onOpenHome={onOpenHome}
-          onRestart={restart}
-          busy={busy}
-        />
-      )}
+        {stage.step === "done" && (
+          <DoneStage
+            outcome={stage.outcome}
+            onOpenHome={onOpenHome}
+            onRestart={restart}
+            busy={busy}
+          />
+        )}
 
-      {stage.step === "failed" && (
-        <RestoreFailedStage outcome={stage.outcome} onRestart={restart} />
-      )}
+        {stage.step === "failed" && (
+          <RestoreFailedStage outcome={stage.outcome} onRestart={restart} />
+        )}
+      </div>
     </div>
   )
 }

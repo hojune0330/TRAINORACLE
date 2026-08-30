@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, render, screen } from "@testing-library/react"
+import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { afterEach, describe, expect, it, vi } from "vitest"
 import type { JournalEntry } from "../domain/journal-schema"
@@ -94,5 +94,37 @@ describe("journal day reader surface", () => {
     fireEvent.touchEnd(readerSurface, { changedTouches: [{ clientX: 120, clientY: 202 }] })
 
     expect(onDateChange).not.toHaveBeenCalled()
+  })
+
+  it("returns the newly selected real diary to the paper top", async () => {
+    const scrollIntoView = vi.fn()
+    Object.defineProperty(HTMLElement.prototype, "scrollIntoView", {
+      configurable: true,
+      value: scrollIntoView,
+    })
+    const onDateChange = vi.fn()
+    const { rerender } = render(
+      <JournalDayReader
+        date="2026-08-01"
+        entries={entries}
+        onDateChange={onDateChange}
+        onBack={vi.fn()}
+      />,
+    )
+
+    rerender(
+      <JournalDayReader
+        date="2026-08-03"
+        entries={entries}
+        onDateChange={onDateChange}
+        onBack={vi.fn()}
+      />,
+    )
+
+    await waitFor(() => expect(scrollIntoView).toHaveBeenLastCalledWith({
+      behavior: "smooth",
+      block: "start",
+      inline: "nearest",
+    }))
   })
 })
