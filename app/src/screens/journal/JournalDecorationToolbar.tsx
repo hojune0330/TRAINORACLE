@@ -69,6 +69,18 @@ type JournalDecorationToolbarProps = {
 }
 
 export function JournalDecorationToolbar(props: JournalDecorationToolbarProps) {
+  const closeButtonRef = React.useRef<HTMLButtonElement>(null)
+
+  React.useEffect(() => {
+    if (!props.open) return
+    closeButtonRef.current?.focus()
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") props.onClose()
+    }
+    window.addEventListener("keydown", onKeyDown)
+    return () => window.removeEventListener("keydown", onKeyDown)
+  }, [props.open, props.onClose])
+
   if (!props.open) {
     return (
       <div className="journal-decoration-launch" data-decoration-interaction="true">
@@ -81,13 +93,13 @@ export function JournalDecorationToolbar(props: JournalDecorationToolbarProps) {
   }
 
   return (
-    <section className="journal-decoration-toolbar" aria-label="이 일지 꾸미기" data-decoration-interaction="true">
+    <section className="journal-decoration-toolbar" role="dialog" aria-label="이 일지 꾸미기" data-decoration-interaction="true">
       <header>
         <div>
           <strong>이 일지 꾸미기</strong>
           <span>{props.hasEntries ? "미리 본 뒤 저장해요." : "기록이 없는 날에는 테마만 미리 볼 수 있어요."}</span>
         </div>
-        <button type="button" className="journal-decoration-toolbar__icon" onClick={props.onClose} aria-label="일지 꾸미기 닫기">
+        <button ref={closeButtonRef} type="button" className="journal-decoration-toolbar__icon" onClick={props.onClose} aria-label="일지 꾸미기 닫기">
           <X aria-hidden="true" size={17} />
         </button>
       </header>

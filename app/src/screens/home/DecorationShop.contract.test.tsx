@@ -26,10 +26,42 @@ describe("decoration shop surface", () => {
     expect(screen.queryByRole("region", { name: "꾸미기 미리보기" })).toBeNull()
   })
 
+  it("opens a keyboard-closable editor with the preview and catalog controls separated", async () => {
+    const user = userEvent.setup()
+    render(<DecorationShop earnedPoints={0} />)
+
+    await user.click(screen.getByRole("button", { name: "꾸미기 열기" }))
+
+    expect(screen.getByRole("dialog", { name: "일지 꾸미기 · 사용 가능 0P" })).toBeVisible()
+    expect(screen.getByRole("button", { name: "꾸미기 닫기" })).toHaveFocus()
+    expect(screen.getByRole("region", { name: "꾸미기 미리보기" })).toBeVisible()
+    expect(screen.getByRole("combobox", { name: "꾸미기 종류" })).toBeVisible()
+    expect(document.querySelector(".decoration-studio__catalog")).not.toBeNull()
+
+    await user.keyboard("{Escape}")
+    expect(screen.queryByRole("dialog", { name: /일지 꾸미기/u })).toBeNull()
+  })
+
+  it("keeps item commands in one action area after an item is selected", async () => {
+    const user = userEvent.setup()
+    render(<DecorationShop earnedPoints={20} />)
+    await user.click(screen.getByRole("button", { name: "꾸미기 열기" }))
+
+    expect(screen.queryByRole("region", { name: "선택한 꾸미기" })).toBeNull()
+    await user.click(screen.getByRole("button", { name: "결승선 스티커 미리보기" }))
+
+    const actionArea = screen.getByRole("region", { name: "선택한 꾸미기" })
+    expect(actionArea).toHaveTextContent("결승선 스티커")
+    expect(screen.getAllByRole("button").length).toBeLessThan(85)
+    expect(screen.getByRole("button", { name: "결승선 스티커 8P로 받기" })).toBeVisible()
+  })
+
   it("shows eight visual previews including five starter items and never suggests cash value", () => {
     const { container } = render(<DecorationShop earnedPoints={20} />)
+    expect(screen.getByText(/현금으로 바꾸거나 다른 사람에게 보낼 수 없어요/u)).toBeVisible()
     fireEvent.click(screen.getByRole("button", { name: "꾸미기 열기" }))
 
+    expect(screen.getByRole("dialog", { name: "일지 꾸미기 · 사용 가능 20P" })).toBeVisible()
     expect(screen.getByText("트랙 노트")).toBeVisible()
     expect(screen.getByText("남색 잉크")).toBeVisible()
     expect(screen.getByText("맑은 날")).toBeVisible()
@@ -39,15 +71,10 @@ describe("decoration shop surface", () => {
     expect(screen.getByText("결승선 스티커")).toBeVisible()
     expect(screen.getByText("출발선 아바타")).toBeVisible()
     expect(container.querySelectorAll(".decoration-shop__item img")).toHaveLength(8)
+    fireEvent.click(screen.getByRole("button", { name: "트랙 노트 미리보기" }))
     expect(screen.getByRole("button", { name: "트랙 노트 사용 중" })).toBeVisible()
-    expect(screen.getByRole("button", { name: "남색 잉크 사용 중" })).toBeVisible()
-    expect(screen.getByRole("button", { name: "맑은 날 바로 사용" })).toBeVisible()
-    expect(screen.getByRole("button", { name: "푹 쉬었어요 바로 사용" })).toBeVisible()
-    expect(screen.getByRole("button", { name: "체크 테이프 바로 사용" })).toBeVisible()
+    fireEvent.click(screen.getByRole("button", { name: "하늘 일지 테마 미리보기" }))
     expect(screen.getByRole("button", { name: "하늘 일지 테마 12P로 받기" })).toBeVisible()
-    expect(screen.getByRole("button", { name: "결승선 스티커 8P로 받기" })).toBeVisible()
-    expect(screen.getByRole("button", { name: "출발선 아바타 20P로 받기" })).toBeVisible()
-    expect(screen.getByText(/현금으로 바꾸거나 다른 사람에게 보낼 수 없어요/u)).toBeVisible()
   })
 
   it("shows a named fallback when an asset cannot load", () => {
@@ -65,12 +92,14 @@ describe("decoration shop surface", () => {
   it("keeps a purchased item after reopening the shop", async () => {
     const first = render(<DecorationShop earnedPoints={20} />)
     await userEvent.click(screen.getByRole("button", { name: "꾸미기 열기" }))
+    await userEvent.click(screen.getByRole("button", { name: "결승선 스티커 미리보기" }))
     await userEvent.click(screen.getByRole("button", { name: "결승선 스티커 8P로 받기" }))
     expect(screen.getByRole("button", { name: "결승선 스티커 사용하기" })).toBeVisible()
 
     first.unmount()
     render(<DecorationShop earnedPoints={20} />)
     await userEvent.click(screen.getByRole("button", { name: "꾸미기 열기" }))
+    await userEvent.click(screen.getByRole("button", { name: "결승선 스티커 미리보기" }))
     expect(screen.getByRole("button", { name: "결승선 스티커 사용하기" })).toBeVisible()
   })
 
@@ -78,6 +107,7 @@ describe("decoration shop surface", () => {
     let spentPoints = 0
     render(<DecorationShop earnedPoints={20} onSpentPointsChange={(spent) => { spentPoints = spent }} />)
     await userEvent.click(screen.getByRole("button", { name: "꾸미기 열기" }))
+    await userEvent.click(screen.getByRole("button", { name: "결승선 스티커 미리보기" }))
     await userEvent.click(screen.getByRole("button", { name: "결승선 스티커 8P로 받기" }))
 
     expect(spentPoints).toBe(8)
@@ -88,6 +118,7 @@ describe("decoration shop surface", () => {
     await userEvent.click(screen.getByRole("button", { name: "꾸미기 열기" }))
     vi.spyOn(Storage.prototype, "setItem").mockImplementation(() => undefined)
 
+    await userEvent.click(screen.getByRole("button", { name: "결승선 스티커 미리보기" }))
     await userEvent.click(screen.getByRole("button", { name: "결승선 스티커 8P로 받기" }))
 
     expect(screen.getByRole("status")).toHaveTextContent("저장하지 못했어요. 다시 시도해 주세요.")
@@ -97,6 +128,7 @@ describe("decoration shop surface", () => {
   it("states the exact shortfall and safe ways to earn it", async () => {
     render(<DecorationShop earnedPoints={4} />)
     await userEvent.click(screen.getByRole("button", { name: "꾸미기 열기" }))
+    await userEvent.click(screen.getByRole("button", { name: "결승선 스티커 미리보기" }))
     await userEvent.click(screen.getByRole("button", { name: "결승선 스티커 8P로 받기" }))
 
     expect(screen.getByRole("status")).toHaveTextContent("포인트가 4P 더 필요해요.")
@@ -108,12 +140,12 @@ describe("decoration shop surface", () => {
     render(<DecorationShop earnedPoints={0} />)
 
     expect(screen.getByText("보기")).toBeVisible()
-    expect(screen.queryByRole("tab", { name: "추천 조합" })).toBeNull()
+    expect(screen.queryByRole("button", { name: "추천" })).toBeNull()
 
     await userEvent.click(screen.getByRole("button", { name: "꾸미기 열기" }))
 
-    for (const name of ["추천 조합", "최근 사용", "즐겨찾기", "날씨", "회복", "경기", "계절", "모두"]) {
-      expect(screen.getByRole("tab", { name })).toBeVisible()
+    for (const name of ["추천", "최근 사용", "즐겨찾기", "날씨", "회복", "경기", "계절", "모두"]) {
+      expect(screen.getByRole("button", { name })).toBeVisible()
     }
     for (const name of ["가벼운 날", "회복한 날", "비 오는 날", "경기 날"]) {
       expect(screen.getByRole("button", { name: `${name} 미리보기` })).toBeVisible()
@@ -139,6 +171,7 @@ describe("decoration shop surface", () => {
   it("lets a zero-point user apply a starter and keeps favorites and recents after reopening", async () => {
     const first = render(<DecorationShop earnedPoints={0} hasEntriesForDate={() => true} />)
     await userEvent.click(screen.getByRole("button", { name: "꾸미기 열기" }))
+    await userEvent.click(screen.getByRole("button", { name: "맑은 날 미리보기" }))
     await userEvent.click(screen.getByRole("button", { name: "맑은 날 즐겨찾기" }))
     await userEvent.click(screen.getByRole("button", { name: "맑은 날 바로 사용" }))
 
@@ -147,9 +180,11 @@ describe("decoration shop surface", () => {
 
     render(<DecorationShop earnedPoints={0} hasEntriesForDate={() => true} />)
     await userEvent.click(screen.getByRole("button", { name: "꾸미기 열기" }))
-    await userEvent.click(screen.getByRole("tab", { name: "최근 사용" }))
-    expect(screen.getByRole("button", { name: "맑은 날 사용 중" })).toBeVisible()
-    await userEvent.click(screen.getByRole("tab", { name: "즐겨찾기" }))
+    await userEvent.click(screen.getByRole("button", { name: "최근 사용" }))
+    await userEvent.click(screen.getByRole("button", { name: "맑은 날 미리보기" }))
+    expect(screen.getByRole("button", { name: "맑은 날 제거" })).toBeVisible()
+    await userEvent.click(screen.getByRole("button", { name: "즐겨찾기" }))
+    await userEvent.click(screen.getByRole("button", { name: "맑은 날 미리보기" }))
     expect(screen.getByRole("button", { name: "맑은 날 즐겨찾기 해제" })).toBeVisible()
   })
 
@@ -158,6 +193,7 @@ describe("decoration shop surface", () => {
     await userEvent.click(screen.getByRole("button", { name: "꾸미기 열기" }))
     vi.spyOn(Storage.prototype, "setItem").mockImplementation(() => undefined)
 
+    await userEvent.click(screen.getByRole("button", { name: "맑은 날 미리보기" }))
     await userEvent.click(screen.getByRole("button", { name: "맑은 날 바로 사용" }))
 
     expect(screen.getByRole("status")).toHaveTextContent("꾸미기를 저장하지 못했어요. 일지는 그대로예요.")
@@ -176,9 +212,10 @@ describe("decoration shop surface", () => {
     fireEvent.click(screen.getByTestId("decoration-preset-LIGHT_DAY"))
 
     expect(screen.getByTestId("decoration-date-current")).toHaveTextContent(previousDate)
-    expect(screen.getByText("조합 미리보기")).toBeVisible()
+    expect(screen.getByText(/조합을 미리 보고 있어요/u)).toBeVisible()
     expect(window.localStorage.getItem(DECORATION_STORAGE_KEY_V2)).toBe(before)
 
+    fireEvent.click(screen.getByRole("button", { name: "맑은 날 미리보기" }))
     fireEvent.click(screen.getByTestId("decoration-item-use-STICKER_WEATHER_SUN"))
 
     const after = window.localStorage.getItem(DECORATION_STORAGE_KEY_V2)

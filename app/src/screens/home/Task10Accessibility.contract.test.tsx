@@ -8,6 +8,7 @@ afterEach(cleanup)
 const appCss = readFileSync("src/styles/app.css", "utf8")
 const decorationStudioCss = readFileSync("src/styles/decoration-studio.css", "utf8")
 const journalDecorationCss = readFileSync("src/styles/journal-decoration.css", "utf8")
+const planBetaCss = readFileSync("src/styles/plan-beta.css", "utf8")
 const mobileStyles = [
   appCss,
   decorationStudioCss,
@@ -42,6 +43,11 @@ describe("task 10 mobile accessibility contract", () => {
 
     expect(toggleRule).toContain("min-width: var(--app-touch-min)")
     expect(toggleRule).toContain("min-height: var(--app-touch-min)")
+  })
+
+  it("keeps decoration item layout owned by the studio stylesheet only", () => {
+    expect(decorationStudioCss).toMatch(/\.decoration-shop__item\s*\{/u)
+    expect(planBetaCss).not.toMatch(/\.decoration-shop__item\s*\{/u)
   })
 
   it("keeps dated journal previous and next controls wide enough at 320px", () => {

@@ -1,4 +1,4 @@
-import { Sparkles } from "lucide-react"
+import { Check, Heart, HeartOff, MinusCircle, Sparkles } from "lucide-react"
 import React from "react"
 import { JournalConfirmationDialog } from "../../components/JournalConfirmationDialog"
 import {
@@ -80,6 +80,21 @@ export function DecorationStudio({
   const items = visibleStudioItems(state, situation, type)
   const rowItems = items.filter((item) => item.category !== "EMOJI_STICKER")
   const emojiItems = items.filter((item) => item.category === "EMOJI_STICKER")
+  const selectedItem = selection?.kind === "ITEM" ? selection.item : null
+  const selectedOwned = selectedItem === null ? false : decorationItemOwned(state, selectedItem.id)
+  const selectedActive = selectedItem === null ? false : decorationItemActive(state, selectedItem, date)
+  const selectedFavorite = selectedItem === null ? false : state.library.favoriteItemIds.includes(selectedItem.id)
+  const selectedRemovable = selectedActive && selectedItem?.id !== "THEME_TRACK_NOTEBOOK" && selectedItem?.id !== "INK_NAVY"
+
+  const changeSituation = (next: SituationTabId) => {
+    setSituation(next)
+    setSelection(null)
+  }
+
+  const changeType = (next: TypeFilterId) => {
+    setType(next)
+    setSelection(null)
+  }
 
   const persist = (next: DecorationState | null, success: string) => {
     if (next === null) {
@@ -166,68 +181,71 @@ export function DecorationStudio({
         onToday={() => changeDate(today)}
       />
 
-      <div className="decoration-studio__situation-tabs" role="tablist" aria-label="꾸미기 상황">
-        {SITUATION_TABS.map((tab) => (
-          <button key={tab.id} type="button" role="tab" aria-selected={situation === tab.id} onClick={() => setSituation(tab.id)}>
-            {tab.label}
-          </button>
-        ))}
-      </div>
-
-      {situation === "RECOMMENDED" && (
-        <section className="decoration-studio__presets" aria-labelledby="decoration-presets-title">
-          <h4 id="decoration-presets-title"><Sparkles aria-hidden="true" size={16} /> 조합 미리보기</h4>
-          <div>
-            {DECORATION_PRESETS.map((preset) => {
-              const missing = missingPresetItems(state, preset)
-              return (
-                <button key={preset.id} type="button" data-testid={`decoration-preset-${preset.id}`} onClick={() => setSelection({ kind: "PRESET", preset })} aria-label={`${preset.name} 미리보기`}>
-                  <strong>{preset.name}</strong>
-                  <small>{preset.description}</small>
-                  <small>미리보기</small>
-                  {missing > 0 && <span>없는 항목 {missing}개</span>}
-                </button>
-              )
-            })}
+      <div className="decoration-studio__drawer">
+        <div className="decoration-studio__controls">
+          <div className="decoration-studio__situation-tabs" aria-label="꾸미기 모음">
+            {SITUATION_TABS.filter((tab) => ["RECOMMENDED", "RECENT", "FAVORITES", "ALL"].includes(tab.id)).map((tab) => (
+              <button key={tab.id} type="button" aria-pressed={situation === tab.id} onClick={() => changeSituation(tab.id)}>
+                {tab.label.replace(" 조합", "")}
+              </button>
+            ))}
           </div>
-        </section>
-      )}
-
-      <div className="decoration-studio__type-filter" aria-label="꾸미기 종류">
-        {TYPE_FILTERS.map((filter) => (
-          <button key={filter.id} type="button" aria-pressed={type === filter.id} onClick={() => setType(filter.id)}>{filter.label}</button>
-        ))}
-      </div>
-
-      {items.length === 0 && <p className="decoration-studio__empty">아직 여기에 모인 꾸미기가 없어요.</p>}
-      {rowItems.length > 0 && (
-        <div className="decoration-shop__items">
-          {rowItems.map((item) => {
-            const owned = decorationItemOwned(state, item.id)
-            return (
-              <DecorationStudioItem
-                key={item.id}
-                item={item}
-                owned={owned}
-                active={decorationItemActive(state, item, date)}
-                favorite={state.library.favoriteItemIds.includes(item.id)}
-                onPreview={() => setSelection({ kind: "ITEM", item })}
-                onBuy={() => buy(item)}
-                onFavorite={() => favorite(item)}
-                onUse={() => use(item)}
-                onRemove={() => persist(removeDecorationItem(state, item, date), `${withJosa(item.name, "을/를")} 제거했어요.`)}
-              />
-            )
-          })}
+          <div className="decoration-studio__context-filter" aria-label="오늘의 상황으로 찾기">
+            {SITUATION_TABS.filter((tab) => ["WEATHER", "RECOVERY", "COMPETITION", "SEASON"].includes(tab.id)).map((tab) => (
+              <button key={tab.id} type="button" aria-pressed={situation === tab.id} onClick={() => changeSituation(tab.id)}>
+                {tab.label}
+              </button>
+            ))}
+          </div>
+          <label className="decoration-studio__type-filter">
+            <span>꾸미기 종류</span>
+            <select aria-label="꾸미기 종류" value={type} onChange={(event) => changeType(event.target.value as TypeFilterId)}>
+              {TYPE_FILTERS.map((filter) => <option key={filter.id} value={filter.id}>{filter.label}</option>)}
+            </select>
+          </label>
         </div>
-      )}
-      {emojiItems.length > 0 && (
+
+        <div className="decoration-studio__catalog">
+          {situation === "RECOMMENDED" && (
+            <section className="decoration-studio__presets" aria-labelledby="decoration-presets-title">
+              <h4 id="decoration-presets-title"><Sparkles aria-hidden="true" size={16} /> 추천 조합</h4>
+              <div>
+                {DECORATION_PRESETS.map((preset) => {
+                  const missing = missingPresetItems(state, preset)
+                  return (
+                    <button key={preset.id} type="button" data-testid={`decoration-preset-${preset.id}`} onClick={() => setSelection({ kind: "PRESET", preset })} aria-label={`${preset.name} 미리보기`} aria-pressed={selection?.kind === "PRESET" && selection.preset.id === preset.id}>
+                      <strong>{preset.name}</strong>
+                      <small>{preset.description}</small>
+                      {missing > 0 && <span>없는 항목 {missing}개</span>}
+                    </button>
+                  )
+                })}
+              </div>
+            </section>
+          )}
+
+          {items.length === 0 && <p className="decoration-studio__empty">아직 여기에 모인 꾸미기가 없어요.</p>}
+          {rowItems.length > 0 && (
+            <div className="decoration-shop__items" aria-label="꾸미기 항목">
+              {rowItems.map((item) => (
+                <DecorationStudioItem
+                  key={item.id}
+                  item={item}
+                  owned={decorationItemOwned(state, item.id)}
+                  active={decorationItemActive(state, item, date)}
+                  selected={selection?.kind === "ITEM" && selection.item.id === item.id}
+                  onSelect={() => setSelection({ kind: "ITEM", item })}
+                />
+              ))}
+            </div>
+          )}
+          {emojiItems.length > 0 && (
         /*
          * 이모지 스티커는 그룹별 44px 그리드(계약 §6) — 행 목록은 48종에 부적합.
          * 탭 = 붙이기(빈 칸 자동 배정 · 교체 확인 포함), 붙은 것 탭 = 떼기.
          * 상황 탭(날씨/회복/경기/계절)에서도 해당 그룹 이모지가 함께 보인다.
          */
-        <div className="decoration-studio__emoji-groups">
+            <div className="decoration-studio__emoji-groups">
           {EMOJI_STICKER_GROUPS.map((group) => {
             const groupItems = emojiItems.filter((item) => item.emojiGroup === group.id)
             if (groupItems.length === 0) return null
@@ -258,8 +276,41 @@ export function DecorationStudio({
               </section>
             )
           })}
+            </div>
+          )}
         </div>
-      )}
+
+        {selectedItem !== null && (
+          <section className="decoration-studio__selection" aria-label="선택한 꾸미기">
+            <span>
+              <small>{selectedItem.typeLabel}</small>
+              <strong>{selectedItem.name}</strong>
+              <small>{selectedItem.description}</small>
+            </span>
+            <div>
+              {selectedOwned && (
+                <button className="decoration-studio__icon-button" type="button" aria-label={`${selectedItem.name} ${selectedFavorite ? "즐겨찾기 해제" : "즐겨찾기"}`} aria-pressed={selectedFavorite} onClick={() => favorite(selectedItem)} title={selectedFavorite ? "즐겨찾기 해제" : "즐겨찾기"}>
+                  {selectedFavorite ? <HeartOff aria-hidden="true" size={17} /> : <Heart aria-hidden="true" size={17} />}
+                </button>
+              )}
+              {!selectedOwned ? (
+                <button type="button" onClick={() => buy(selectedItem)} aria-label={`${selectedItem.name} ${selectedItem.cost}P로 받기`}>{selectedItem.cost}P로 받기</button>
+              ) : selectedActive ? (
+                selectedRemovable ? (
+                  <button type="button" onClick={() => persist(removeDecorationItem(state, selectedItem, date), `${withJosa(selectedItem.name, "을/를")} 제거했어요.`)} aria-label={`${selectedItem.name} 제거`}><MinusCircle aria-hidden="true" size={16} /> 제거</button>
+                ) : (
+                  <button type="button" disabled aria-label={`${selectedItem.name} 사용 중`}><Check aria-hidden="true" size={16} /> 사용 중</button>
+                )
+              ) : (
+                <button type="button" data-testid={`decoration-item-use-${selectedItem.id}`} onClick={() => use(selectedItem)} aria-label={`${selectedItem.name} ${selectedItem.starterOwned ? "바로 사용" : "사용하기"}`}>사용</button>
+              )}
+            </div>
+          </section>
+        )}
+        {selection?.kind === "PRESET" && (
+          <p className="decoration-studio__preset-note"><strong>{selection.preset.name}</strong> 조합을 미리 보고 있어요. 마음에 드는 항목을 아래에서 하나씩 고를 수 있어요.</p>
+        )}
+      </div>
       {replacement !== null && (
         <JournalConfirmationDialog
           title="꾸미기를 바꿀까요?"

@@ -56,10 +56,10 @@ export type DecorationPreset = {
 }
 
 export const DECORATION_PRESETS: readonly DecorationPreset[] = [
-  { id: "LIGHT_DAY", name: "가벼운 날", description: "평범한 훈련도 산뜻하게 남겨요.", itemIds: ["THEME_TRACK_NOTEBOOK", "STICKER_WEATHER_SUN", "INK_NAVY"] },
-  { id: "RECOVERY_DAY", name: "회복한 날", description: "쉬는 날에도 한 페이지를 내어 줘요.", itemIds: ["THEME_SKY_JOURNAL", "STAMP_REST_DAY"] },
-  { id: "RAINY_DAY", name: "비 오는 날", description: "차분한 날씨와 분위기를 묶어요.", itemIds: ["THEME_SKY_JOURNAL", "TAPE_CHECKER", "INK_NAVY"] },
-  { id: "COMPETITION_DAY", name: "경기 날", description: "결과보다 그날의 출발을 기억해요.", itemIds: ["THEME_TRACK_NOTEBOOK", "STICKER_FINISH_LINE", "AVATAR_START_LINE"] },
+  { id: "LIGHT_DAY", name: "가벼운 날", description: "평범한 훈련 기록을 밝게 꾸며요.", itemIds: ["THEME_TRACK_NOTEBOOK", "STICKER_WEATHER_SUN", "INK_NAVY"] },
+  { id: "RECOVERY_DAY", name: "회복한 날", description: "회복일 기록을 차분하게 정리해요.", itemIds: ["THEME_SKY_JOURNAL", "STAMP_REST_DAY"] },
+  { id: "RAINY_DAY", name: "비 오는 날", description: "비 오는 날의 기록을 차분한 색으로 묶어요.", itemIds: ["THEME_SKY_JOURNAL", "TAPE_CHECKER", "INK_NAVY"] },
+  { id: "COMPETITION_DAY", name: "경기 날", description: "경기 날짜와 그날의 느낌을 한눈에 남겨요.", itemIds: ["THEME_TRACK_NOTEBOOK", "STICKER_FINISH_LINE", "AVATAR_START_LINE"] },
 ]
 
 /* 상황 탭에 이모지 그룹을 연결해 “오늘 붙일 만한 것”이 바로 보이게 한다. */
