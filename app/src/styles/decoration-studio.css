@@ -37,8 +37,12 @@
 
 .decoration-shop--open .decoration-shop__header {
   flex: 0 0 auto;
-  padding-top: max(var(--space-3), env(safe-area-inset-top));
+  min-height: 52px;
+  max-height: calc(52px + env(safe-area-inset-top));
+  padding: max(var(--space-2), env(safe-area-inset-top)) var(--space-3) var(--space-2);
   border-bottom: var(--bw-line) solid var(--line);
+  overflow: hidden;
+  transition: max-height 180ms var(--ease-out-strong), padding 180ms var(--ease-out-strong), opacity 140ms ease, transform 180ms var(--ease-out-strong);
 }
 
 .decoration-shop__header--compact {
@@ -90,7 +94,7 @@
   flex: 1 1 auto;
   min-height: 0;
   display: grid;
-  grid-template-rows: minmax(218px, min(34dvh, 300px)) minmax(0, 1fr);
+  grid-template-rows: minmax(188px, min(30dvh, 248px)) minmax(0, 1fr);
   overflow: hidden;
 }
 
@@ -106,7 +110,7 @@
 .decoration-studio-preview::-webkit-scrollbar { display: none; }
 
 .decoration-studio-preview > header {
-  min-height: 48px;
+  min-height: 40px;
   padding: var(--space-1) var(--space-3);
   display: flex;
   align-items: center;
@@ -122,7 +126,7 @@
 .decoration-studio-preview__targets { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); }
 
 .decoration-studio-preview__targets button {
-  min-height: var(--app-touch-min);
+  min-height: 40px;
   padding: 0 var(--space-2);
   border: 0;
   border-right: var(--bw-line) solid var(--hair);
@@ -136,11 +140,11 @@
 
 .decoration-studio-preview__targets button[aria-pressed="true"] { background: var(--surface-2); color: var(--ink); font-weight: 700; }
 .decoration-studio-preview .decorated-journal-page,
-.decoration-studio-preview .decorated-journal-page__content { min-height: 230px; }
+.decoration-studio-preview .decorated-journal-page__content { min-height: 196px; }
 
 .decoration-studio-preview__page {
-  min-height: 230px;
-  padding: 34px 54px 28px 28px;
+  min-height: 196px;
+  padding: 24px 50px 20px 24px;
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
@@ -173,10 +177,9 @@
 }
 
 .decoration-studio__controls {
-  flex: 0 0 auto;
   padding: var(--space-2) var(--space-3);
   display: grid;
-  gap: var(--space-2);
+  gap: var(--space-1);
   border-bottom: var(--bw-line) solid var(--line);
   background: var(--surface);
 }
@@ -187,14 +190,14 @@
 .decoration-studio__situation-tabs button,
 .decoration-studio__context-filter button {
   min-width: 0;
-  min-height: var(--app-touch-min);
+  min-height: 38px;
   padding: 0 var(--space-1);
   border: var(--bw-line) solid var(--hair);
   border-radius: 6px;
   background: var(--surface);
   color: var(--ink-3);
   cursor: pointer;
-  font-size: var(--fs-body-sm);
+  font-size: var(--fs-caption);
   white-space: nowrap;
   touch-action: manipulation;
 }
@@ -203,7 +206,7 @@
 .decoration-studio__context-filter button[aria-pressed="true"] { border-color: var(--ink); background: var(--surface-2); color: var(--ink); font-weight: 700; }
 
 .decoration-studio__type-filter {
-  min-height: var(--app-touch-min);
+  min-height: 38px;
   display: grid;
   grid-template-columns: auto minmax(0, 1fr);
   align-items: center;
@@ -214,7 +217,7 @@
 
 .decoration-studio__type-filter select {
   width: 100%;
-  min-height: var(--app-touch-min);
+  min-height: 38px;
   padding: 0 var(--space-2);
   border: var(--bw-line) solid var(--line);
   border-radius: 6px;
@@ -232,12 +235,12 @@
 }
 .decoration-studio__catalog::-webkit-scrollbar { display: none; }
 
-.decoration-studio__presets { padding: var(--space-3); border-bottom: var(--bw-line) solid var(--line); }
+.decoration-studio__presets { padding: var(--space-2) var(--space-3); border-bottom: var(--bw-line) solid var(--line); }
 .decoration-studio__presets h4 { margin: 0 0 var(--space-2); display: flex; align-items: center; gap: var(--space-1); color: var(--ink); font-size: var(--fs-body-sm); }
 .decoration-studio__presets > div { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-2); }
 .decoration-studio__presets button {
   min-width: 0;
-  min-height: 82px;
+  min-height: 66px;
   padding: var(--space-2);
   border: var(--bw-line) solid var(--line);
   border-radius: 8px;
@@ -264,10 +267,10 @@
 
 .decoration-shop__item {
   min-width: 0;
-  min-height: 132px;
+  min-height: 108px;
   padding: var(--space-1);
   display: grid;
-  grid-template-rows: minmax(72px, 1fr) auto;
+  grid-template-rows: minmax(58px, 1fr) auto;
   gap: var(--space-1);
   border: var(--bw-line) solid var(--hair);
   border-radius: 8px;
@@ -281,8 +284,8 @@
 .decoration-shop__copy { min-width: 0; padding: 0 var(--space-1) var(--space-1); display: grid; gap: 2px; }
 .decoration-shop__copy strong { overflow-wrap: anywhere; word-break: keep-all; font-size: var(--fs-body-sm); letter-spacing: 0; }
 .decoration-shop__copy small { color: var(--ink-3); font-size: var(--fs-caption); line-height: 1.35; }
-.decoration-shop__preview { width: 100%; height: 100%; min-height: 72px; border-bottom: var(--bw-line) solid var(--hair); overflow: hidden; display: grid; place-items: center; background: var(--surface-2); }
-.decoration-shop__preview img { width: 100%; height: 100%; max-height: 92px; display: block; object-fit: contain; }
+.decoration-shop__preview { width: 100%; height: 100%; min-height: 58px; border-bottom: var(--bw-line) solid var(--hair); overflow: hidden; display: grid; place-items: center; background: var(--surface-2); }
+.decoration-shop__preview img { width: 100%; height: 100%; max-height: 72px; display: block; object-fit: contain; }
 .decoration-shop__fallback { padding: var(--space-1); color: var(--ink-3); font-size: var(--fs-caption); line-height: 1.35; text-align: center; }
 .decoration-shop__preview--emoji { background: var(--paper, var(--surface)); font-size: 34px; line-height: 1; user-select: none; }
 .decoration-studio__empty { margin: 0; padding: var(--space-5) var(--space-3); color: var(--ink-3); font-size: var(--fs-body-sm); text-align: center; }
@@ -310,7 +313,7 @@
 
 .decoration-studio__selection {
   flex: 0 0 auto;
-  min-height: 82px;
+  min-height: 70px;
   padding: var(--space-2) var(--space-3) max(var(--space-2), env(safe-area-inset-bottom));
   border-top: var(--bw-line) solid var(--ink);
   background: var(--surface);
@@ -352,6 +355,46 @@
   .decoration-studio { grid-template-columns: minmax(320px, 44%) minmax(0, 1fr); grid-template-rows: minmax(0, 1fr); }
   .decoration-studio-preview { border-right: var(--bw-line) solid var(--line); border-bottom: 0; }
   .decoration-shop__items { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
+
+.decoration-studio__tab-rail { display: grid; gap: var(--space-1); }
+
+@media (max-width: 759px) {
+  /* 목록을 내리면 제목·닫기 탭도 예시 일지의 상단 바처럼 함께 사라진다.
+   * 목록 맨 위로 돌아왔을 때만 다시 나타나 작업 영역을 계속 차지하지 않는다. */
+  .decoration-shop--open .decoration-shop__header--collapsed {
+    min-height: 0;
+    max-height: 0;
+    padding-block: 0;
+    border-bottom: 0;
+    opacity: 0;
+    transform: translateY(-100%);
+    pointer-events: none;
+  }
+  .decoration-shop[data-header-collapsed="true"] .decoration-shop__notice { top: var(--space-2); }
+  .decoration-studio__tab-rail {
+    display: flex;
+    gap: var(--space-1);
+    margin-right: calc(var(--space-3) * -1);
+    padding-right: var(--space-3);
+    overflow-x: auto;
+    overscroll-behavior-inline: contain;
+    scrollbar-width: none;
+  }
+  .decoration-studio__tab-rail::-webkit-scrollbar { display: none; }
+  .decoration-studio__situation-tabs,
+  .decoration-studio__context-filter { display: contents; }
+  .decoration-studio__situation-tabs button,
+  .decoration-studio__context-filter button {
+    flex: 0 0 auto;
+    min-height: 36px;
+    padding-inline: var(--space-3);
+  }
+  .decoration-studio__selection > span small:last-child {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
 }
 
 @media (min-width: 520px) and (max-width: 759px) {

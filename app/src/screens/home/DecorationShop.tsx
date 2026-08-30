@@ -9,11 +9,13 @@ export function DecorationShop({
   earnedPoints,
   hasEntriesForDate: hasEntriesForDateProp,
   showPreview = true,
+  hasJournalEntries = showPreview,
   onSpentPointsChange,
 }: {
   readonly earnedPoints: number
   readonly hasEntriesForDate?: (date: string) => boolean
   readonly showPreview?: boolean
+  readonly hasJournalEntries?: boolean
   readonly onSpentPointsChange?: (spentPoints: number) => void
 }) {
   const closeButtonRef = React.useRef<HTMLButtonElement>(null)
@@ -21,6 +23,7 @@ export function DecorationShop({
   const [state, setState] = React.useState(loadDecorationState)
   const [storageVersion, setStorageVersion] = React.useState(() => readDecorationStateSerialized())
   const [open, setOpen] = React.useState(false)
+  const [headerCollapsed, setHeaderCollapsed] = React.useState(false)
   const [notice, setNotice] = React.useState<string | null>(null)
   const [selectedDate, setSelectedDate] = React.useState(todayISO)
   const available = Math.max(0, earnedPoints - state.spentPoints)
@@ -45,13 +48,24 @@ export function DecorationShop({
 
   const close = () => {
     setOpen(false)
+    setHeaderCollapsed(false)
     setNotice(null)
     window.requestAnimationFrame(() => openerRef.current?.focus())
   }
 
   const openStudio = (event: React.MouseEvent<HTMLButtonElement>) => {
     openerRef.current = event.currentTarget
+    setHeaderCollapsed(false)
     setOpen(true)
+  }
+
+  const handleCatalogScrolled = (scrolled: boolean) => {
+    const mobile = typeof window.matchMedia === "function"
+      ? window.matchMedia("(max-width: 759px)").matches
+      : window.innerWidth <= 759
+    const collapseOnMobile = scrolled && mobile
+    setHeaderCollapsed(collapseOnMobile)
+    if (collapseOnMobile && document.activeElement === closeButtonRef.current) closeButtonRef.current?.blur()
   }
 
   return (
@@ -60,14 +74,15 @@ export function DecorationShop({
       aria-labelledby="decoration-shop-title"
       role={open ? "dialog" : undefined}
       aria-modal={open ? "true" : undefined}
+      data-header-collapsed={open && headerCollapsed ? "true" : "false"}
     >
-      <header className={`decoration-shop__header${isCompact ? " decoration-shop__header--compact" : ""}`}>
+      <header className={`decoration-shop__header${isCompact ? " decoration-shop__header--compact" : ""}${open && headerCollapsed ? " decoration-shop__header--collapsed" : ""}`}>
         <span>
-          <small>{open ? "꾸미기" : showPreview ? "보기" : "첫 기록 뒤 시작"}</small>
-          <h3 id="decoration-shop-title">일지 꾸미기 · 사용 가능 {available}P</h3>
+          <small>{open ? "내 일지" : showPreview ? "보기" : hasJournalEntries ? "내 기록에 꾸미기" : "첫 기록 뒤 시작"}</small>
+          <h3 id="decoration-shop-title">{open || showPreview ? "일지 꾸미기" : "꾸미기 보관함"} · 사용 가능 {available}P</h3>
         </span>
         {open ? (
-          <button ref={closeButtonRef} type="button" onClick={close} aria-label="꾸미기 닫기" title="꾸미기 닫기">
+          <button ref={closeButtonRef} type="button" onClick={close} aria-label="꾸미기 닫기" title="꾸미기 닫기" tabIndex={headerCollapsed ? -1 : 0}>
             <X aria-hidden="true" size={18} />
           </button>
         ) : (
@@ -101,6 +116,7 @@ export function DecorationShop({
           expectedSerialized={storageVersion}
           onStorageVersionChange={setStorageVersion}
           hasEntriesForDate={hasEntriesForDate}
+          onCatalogScrolled={handleCatalogScrolled}
         />
       ) : showPreview ? (
         <DecorationStudioPreview date={selectedDate} today={today} state={state} previewName={null} />

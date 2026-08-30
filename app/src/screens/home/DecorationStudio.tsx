@@ -53,6 +53,7 @@ export function DecorationStudio({
   expectedSerialized,
   onStorageVersionChange,
   hasEntriesForDate,
+  onCatalogScrolled,
 }: {
   readonly date: string
   readonly today: string
@@ -64,7 +65,9 @@ export function DecorationStudio({
   readonly expectedSerialized: string | null
   readonly onStorageVersionChange: (serialized: string | null) => void
   readonly hasEntriesForDate: (date: string) => boolean
+  readonly onCatalogScrolled?: (scrolled: boolean) => void
 }) {
+  const catalogRef = React.useRef<HTMLDivElement>(null)
   const [situation, setSituation] = React.useState<SituationTabId>("RECOMMENDED")
   const [type, setType] = React.useState<TypeFilterId>("ALL")
   const [selection, setSelection] = React.useState<PreviewSelection>(null)
@@ -86,14 +89,24 @@ export function DecorationStudio({
   const selectedFavorite = selectedItem === null ? false : state.library.favoriteItemIds.includes(selectedItem.id)
   const selectedRemovable = selectedActive && selectedItem?.id !== "THEME_TRACK_NOTEBOOK" && selectedItem?.id !== "INK_NAVY"
 
+  const resetCatalogScroll = () => {
+    const catalog = catalogRef.current
+    if (catalog === null) return
+    if (typeof catalog.scrollTo === "function") catalog.scrollTo({ top: 0, behavior: "smooth" })
+    else catalog.scrollTop = 0
+    onCatalogScrolled?.(false)
+  }
+
   const changeSituation = (next: SituationTabId) => {
     setSituation(next)
     setSelection(null)
+    resetCatalogScroll()
   }
 
   const changeType = (next: TypeFilterId) => {
     setType(next)
     setSelection(null)
+    resetCatalogScroll()
   }
 
   const persist = (next: DecorationState | null, success: string) => {
@@ -182,30 +195,36 @@ export function DecorationStudio({
       />
 
       <div className="decoration-studio__drawer">
-        <div className="decoration-studio__controls">
-          <div className="decoration-studio__situation-tabs" aria-label="꾸미기 모음">
-            {SITUATION_TABS.filter((tab) => ["RECOMMENDED", "RECENT", "FAVORITES", "ALL"].includes(tab.id)).map((tab) => (
-              <button key={tab.id} type="button" aria-pressed={situation === tab.id} onClick={() => changeSituation(tab.id)}>
-                {tab.label.replace(" 조합", "")}
-              </button>
-            ))}
+        <div
+          ref={catalogRef}
+          className="decoration-studio__catalog"
+          onScroll={(event) => onCatalogScrolled?.(event.currentTarget.scrollTop > 48)}
+        >
+          <div className="decoration-studio__controls">
+            <div className="decoration-studio__tab-rail">
+              <div className="decoration-studio__situation-tabs" aria-label="꾸미기 모음">
+                {SITUATION_TABS.filter((tab) => ["RECOMMENDED", "RECENT", "FAVORITES", "ALL"].includes(tab.id)).map((tab) => (
+                  <button key={tab.id} type="button" aria-pressed={situation === tab.id} onClick={() => changeSituation(tab.id)}>
+                    {tab.label.replace(" 조합", "")}
+                  </button>
+                ))}
+              </div>
+              <div className="decoration-studio__context-filter" aria-label="오늘의 상황으로 찾기">
+                {SITUATION_TABS.filter((tab) => ["WEATHER", "RECOVERY", "COMPETITION", "SEASON"].includes(tab.id)).map((tab) => (
+                  <button key={tab.id} type="button" aria-pressed={situation === tab.id} onClick={() => changeSituation(tab.id)}>
+                    {tab.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <label className="decoration-studio__type-filter">
+              <span>종류</span>
+              <select aria-label="꾸미기 종류" value={type} onChange={(event) => changeType(event.target.value as TypeFilterId)}>
+                {TYPE_FILTERS.map((filter) => <option key={filter.id} value={filter.id}>{filter.label}</option>)}
+              </select>
+            </label>
           </div>
-          <div className="decoration-studio__context-filter" aria-label="오늘의 상황으로 찾기">
-            {SITUATION_TABS.filter((tab) => ["WEATHER", "RECOVERY", "COMPETITION", "SEASON"].includes(tab.id)).map((tab) => (
-              <button key={tab.id} type="button" aria-pressed={situation === tab.id} onClick={() => changeSituation(tab.id)}>
-                {tab.label}
-              </button>
-            ))}
-          </div>
-          <label className="decoration-studio__type-filter">
-            <span>꾸미기 종류</span>
-            <select aria-label="꾸미기 종류" value={type} onChange={(event) => changeType(event.target.value as TypeFilterId)}>
-              {TYPE_FILTERS.map((filter) => <option key={filter.id} value={filter.id}>{filter.label}</option>)}
-            </select>
-          </label>
-        </div>
 
-        <div className="decoration-studio__catalog">
           {situation === "RECOMMENDED" && (
             <section className="decoration-studio__presets" aria-labelledby="decoration-presets-title">
               <h4 id="decoration-presets-title"><Sparkles aria-hidden="true" size={16} /> 추천 조합</h4>

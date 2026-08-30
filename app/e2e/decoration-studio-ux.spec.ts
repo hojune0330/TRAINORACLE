@@ -7,7 +7,7 @@ test.beforeEach(({}, testInfo) => {
   )
 })
 
-test("keeps the paper visible while the catalog and real-journal drawer stay independently usable", async ({ page }, testInfo) => {
+test("prioritizes the real journal and keeps the compact decoration editor usable", async ({ page }, testInfo) => {
   const isDesktop = testInfo.project.name === "desktop-chromium"
   const consoleErrors: string[] = []
   page.on("console", (message) => {
@@ -45,6 +45,8 @@ test("keeps the paper visible while the catalog and real-journal drawer stay ind
   })
 
   await page.goto("/?app=1")
+  await expect(page.getByText("꾸미기 보관함", { exact: false })).toBeVisible()
+  await expect(page.getByRole("region", { name: "꾸미기 미리보기" })).toHaveCount(0)
   await page.getByRole("button", { name: "꾸미기 열기" }).click()
 
   const studio = page.getByRole("dialog", { name: /일지 꾸미기 · 사용 가능/u })
@@ -83,10 +85,23 @@ test("keeps the paper visible while the catalog and real-journal drawer stay ind
   expect(studioGeometry?.navigationHidden).toBe(true)
   expect(studioGeometry?.pageFits).toBe(true)
 
+  if (!isDesktop) {
+    const catalog = page.locator(".decoration-studio__catalog")
+    await catalog.evaluate((element) => { element.scrollTop = 120 })
+    await expect(studio).toHaveAttribute("data-header-collapsed", "true")
+    await expect(page.locator(".decoration-shop__header")).toHaveCSS("max-height", "0px")
+    await catalog.evaluate((element) => { element.scrollTop = 0 })
+    await expect(studio).toHaveAttribute("data-header-collapsed", "false")
+  }
+
   await page.getByRole("button", { name: "결승선 스티커 미리보기" }).click()
   await expect(page.getByRole("region", { name: "선택한 꾸미기" })).toContainText("결승선 스티커")
   await expect(page.getByRole("button", { name: "결승선 스티커 8P로 받기" })).toBeVisible()
 
+  if (!isDesktop) {
+    await page.locator(".decoration-studio__catalog").evaluate((element) => { element.scrollTop = 0 })
+    await expect(studio).toHaveAttribute("data-header-collapsed", "false")
+  }
   await page.getByRole("button", { name: "꾸미기 닫기" }).click()
   await page.getByRole("button", { name: /꾸미기 화면 점검.*상세 열기/u }).click()
   await page.getByRole("button", { name: "일지 꾸미기 열기" }).click()
