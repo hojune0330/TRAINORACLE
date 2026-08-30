@@ -184,6 +184,9 @@
   outline-offset: 3px;
   background: color-mix(in srgb, var(--surface) 18%, transparent);
 }
+.decorated-journal-page__free-item[data-selected="true"][data-category="EMOJI_STICKER"] .decorated-journal-page__emoji {
+  animation: journal-emoji-selected 480ms var(--ease-out-strong) both;
+}
 .decorated-journal-page__free-item--readonly {
   pointer-events: none;
   cursor: default;
@@ -222,6 +225,13 @@
 @keyframes journal-emoji-attach {
   from { transform: scale(1.15) rotate(var(--emoji-rot, 0deg)); }
   to { transform: scale(1) rotate(var(--emoji-rot, 0deg)); }
+}
+
+@keyframes journal-emoji-selected {
+  0% { transform: translateY(0) rotate(0) scale(1); }
+  38% { transform: translateY(-3px) rotate(-3deg) scale(1.04); }
+  72% { transform: translateY(1px) rotate(2deg) scale(0.99); }
+  100% { transform: translateY(0) rotate(0) scale(1); }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -435,6 +445,7 @@
   min-height: calc(100dvh - 58px - env(safe-area-inset-bottom));
   padding-bottom: calc(58px + env(safe-area-inset-bottom));
   box-sizing: border-box;
+  animation: decoration-canvas-enter var(--dur-base) var(--ease-out-strong) backwards;
 }
 
 .journal-decoration-editor__topbar {
@@ -505,6 +516,16 @@
 .journal-decoration-editor__dock button { width: min(76px, 23vw); min-height: 52px; align-content: center; gap: 2px; }
 .journal-decoration-editor__dock button[aria-pressed="true"] { background: var(--surface-2); color: var(--ink); }
 .journal-decoration-editor__dock span { font-size: 10px; }
+.journal-decoration-editor__dock button svg,
+.journal-decoration-editor__topbar button svg {
+  transition: transform var(--dur-fast) var(--ease-out-strong);
+}
+.journal-decoration-editor__dock button[aria-pressed="true"] svg {
+  transform: translateY(-2px) scale(1.06);
+}
+.journal-decoration-editor__notice {
+  animation: decoration-notice-enter var(--dur-base) var(--ease-out-strong) backwards;
+}
 
 .journal-decoration-workspace--open .journal-decoration-toolbar {
   position: fixed;
@@ -531,6 +552,30 @@
   pointer-events: none;
   transition: transform 220ms var(--ease-out-strong), visibility 0s linear 220ms;
 }
+.journal-decoration-workspace--open .journal-decoration-toolbar[data-open="true"] > header,
+.journal-decoration-workspace--open .journal-decoration-toolbar[data-open="true"] > section,
+.journal-decoration-workspace--open .journal-decoration-toolbar[data-open="true"] > div,
+.journal-decoration-workspace--open .journal-decoration-toolbar[data-open="true"] > footer {
+  animation: decoration-tools-content-enter var(--dur-base) var(--ease-out-strong) backwards;
+}
+.journal-decoration-workspace--open .journal-decoration-toolbar[data-open="true"] > section,
+.journal-decoration-workspace--open .journal-decoration-toolbar[data-open="true"] > div { animation-delay: 45ms; }
+.journal-decoration-workspace--open .journal-decoration-toolbar[data-open="true"] > footer { animation-delay: 80ms; }
+
+@keyframes decoration-canvas-enter {
+  from { opacity: 0.62; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes decoration-notice-enter {
+  from { opacity: 0; transform: translateY(-6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes decoration-tools-content-enter {
+  from { opacity: 0.55; transform: translateY(7px); }
+  to { opacity: 1; transform: translateY(0); }
+}
 
 @media (min-width: 760px) {
   .journal-decoration-workspace--open .journal-decoration-toolbar {
@@ -552,5 +597,8 @@
 @media (prefers-reduced-motion: reduce) {
   .journal-decoration-editor__dock *,
   .journal-decoration-editor__topbar *,
-  .journal-decoration-workspace--open .journal-decoration-toolbar { transition: none !important; }
+  .journal-decoration-workspace--open > .decorated-journal-page,
+  .journal-decoration-editor__notice,
+  .journal-decoration-workspace--open .journal-decoration-toolbar,
+  .journal-decoration-workspace--open .journal-decoration-toolbar * { animation: none !important; transition: none !important; }
 }

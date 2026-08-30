@@ -110,6 +110,17 @@
 }
 .decoration-studio-preview::-webkit-scrollbar { display: none; }
 
+.decoration-studio-preview__canvas {
+  min-height: 100%;
+  animation: decoration-page-stay var(--dur-base) var(--ease-out-strong) backwards;
+}
+.decoration-studio-preview__canvas[data-motion-direction="FORWARD"] {
+  animation-name: decoration-page-forward;
+}
+.decoration-studio-preview__canvas[data-motion-direction="BACKWARD"] {
+  animation-name: decoration-page-backward;
+}
+
 .decoration-studio-preview > header {
   position: sticky;
   top: 0;
@@ -209,6 +220,20 @@
   transition: transform 220ms var(--ease-out-strong), visibility 0s linear 220ms;
 }
 
+.decoration-studio__drawer[data-open="true"] .decoration-studio__controls,
+.decoration-studio__drawer[data-open="true"] .decoration-studio__presets,
+.decoration-studio__drawer[data-open="true"] .decoration-shop__items,
+.decoration-studio__drawer[data-open="true"] .decoration-studio__emoji-groups,
+.decoration-studio__drawer[data-open="true"] .decoration-studio__selection,
+.decoration-studio__drawer[data-open="true"] .decoration-studio__preset-note {
+  animation: decoration-tool-enter var(--dur-base) var(--ease-out-strong) backwards;
+}
+.decoration-studio__drawer[data-open="true"] .decoration-studio__presets,
+.decoration-studio__drawer[data-open="true"] .decoration-shop__items,
+.decoration-studio__drawer[data-open="true"] .decoration-studio__emoji-groups { animation-delay: 45ms; }
+.decoration-studio__drawer[data-open="true"] .decoration-studio__selection,
+.decoration-studio__drawer[data-open="true"] .decoration-studio__preset-note { animation-delay: 80ms; }
+
 .decoration-studio__drawer-close {
   width: 100%;
   min-height: 36px;
@@ -257,6 +282,12 @@
 }
 .decoration-studio__tool-dock button[aria-pressed="true"] { background: var(--surface-2); color: var(--ink); }
 .decoration-studio__tool-dock span { font-size: 10px; }
+.decoration-studio__tool-dock button svg {
+  transition: transform var(--dur-fast) var(--ease-out-strong);
+}
+.decoration-studio__tool-dock button[aria-pressed="true"] svg {
+  transform: translateY(-2px) scale(1.06);
+}
 
 .decoration-studio__controls {
   padding: var(--space-2) var(--space-3);
@@ -392,6 +423,41 @@
   touch-action: manipulation;
 }
 .decoration-studio__emoji-grid button[aria-pressed="true"] { border-color: var(--ink-blue); }
+.decoration-studio__emoji-grid button > span {
+  transition: transform var(--dur-fast) var(--ease-out-strong);
+}
+.decoration-studio__emoji-grid button:active > span {
+  transform: scale(0.86) rotate(-5deg);
+}
+.decoration-studio__emoji-grid button[aria-pressed="true"] > span {
+  animation: decoration-emoji-confirm var(--dur-slow) var(--ease-out-strong) both;
+}
+
+@keyframes decoration-page-forward {
+  from { opacity: 0.55; transform: translateX(14px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes decoration-page-backward {
+  from { opacity: 0.55; transform: translateX(-14px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes decoration-page-stay {
+  from { opacity: 0.62; transform: translateY(5px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes decoration-tool-enter {
+  from { opacity: 0.55; transform: translateY(7px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes decoration-emoji-confirm {
+  0% { transform: scale(0.88) rotate(-5deg); }
+  58% { transform: scale(1.08) rotate(3deg); }
+  100% { transform: scale(1) rotate(0); }
+}
 
 .decoration-studio__selection {
   flex: 0 0 auto;

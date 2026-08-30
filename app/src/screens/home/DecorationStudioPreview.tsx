@@ -12,6 +12,7 @@ export function DecorationStudioPreview({
   onToday,
   editable = false,
   selectedSlot = null,
+  motionDirection = "STAY",
   onSelectPlacement,
   onTransformPlacement,
 }: {
@@ -25,6 +26,7 @@ export function DecorationStudioPreview({
   readonly onToday?: () => void
   readonly editable?: boolean
   readonly selectedSlot?: DecorationSlot | null
+  readonly motionDirection?: "BACKWARD" | "FORWARD" | "STAY"
   readonly onSelectPlacement?: (slot: DecorationSlot) => void
   readonly onTransformPlacement?: (slot: DecorationSlot, transform: DecorationPlacementTransform) => void
 }) {
@@ -53,24 +55,30 @@ export function DecorationStudioPreview({
           <button type="button" data-testid="decoration-date-next" onClick={onNextDate}>다음 날짜</button>
         </div>
       )}
-      <DecoratedJournalPageFrame
-        date={date}
-        state={state}
-        editable={editable}
-        selectedSlot={selectedSlot}
-        onSelectPlacement={onSelectPlacement}
-        onTransformPlacement={onTransformPlacement}
+      <div
+        key={date}
+        className="decoration-studio-preview__canvas"
+        data-motion-direction={motionDirection}
       >
-        <article className="decoration-studio-preview__page">
-          <small>{date === today ? "오늘" : "선택한 날짜"}</small>
-          <h3>{date === today ? "오늘의 훈련 일지" : "선택한 날짜의 훈련 일지"}</h3>
-          <p>내 기록은 그대로 두고, 꾸미기만 먼저 시험해 봐요.</p>
-          <div>
-            <span>기분 · 차분함</span>
-            <span>날씨 · 맑음</span>
-          </div>
-        </article>
-      </DecoratedJournalPageFrame>
+        <DecoratedJournalPageFrame
+          date={date}
+          state={state}
+          editable={editable}
+          selectedSlot={selectedSlot}
+          onSelectPlacement={onSelectPlacement}
+          onTransformPlacement={onTransformPlacement}
+        >
+          <article className="decoration-studio-preview__page">
+            <small>{date === today ? "오늘" : "선택한 날짜"}</small>
+            <h3>{date === today ? "오늘의 훈련 일지" : "선택한 날짜의 훈련 일지"}</h3>
+            <p>내 기록은 그대로 두고, 꾸미기만 먼저 시험해 봐요.</p>
+            <div>
+              <span>기분 · 차분함</span>
+              <span>날씨 · 맑음</span>
+            </div>
+          </article>
+        </DecoratedJournalPageFrame>
+      </div>
     </section>
   )
 }
