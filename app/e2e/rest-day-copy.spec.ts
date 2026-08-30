@@ -20,11 +20,14 @@ test("offers a rest-day path without pressuring the athlete to log more", async 
   })
   await page.goto("/?app=1")
 
-  await expect(page.getByRole("button", { name: "하루 마무리 기록하기" })).toBeVisible()
+  await expect(page.getByText("오늘 기록을 마쳤어요.")).toBeVisible()
+  await expect(page.getByRole("button", { name: "오늘 기록하기" })).toHaveCount(0)
+  await expect(page.getByRole("button", { name: "하루 마무리 기록하기" })).toHaveCount(0)
   await expect(page.getByText(/일만 더 쓰면/u)).toHaveCount(0)
 
-  // 승격의 핵심은 "누를 수 있다"는 것이다. 보이는 것만 확인하면 절반이다.
-  await page.getByRole("button", { name: "하루 마무리 기록하기" }).click()
+  // 추가 기록은 완료 상태를 깨지 않고 보조 동작으로만 열 수 있다.
+  await page.getByRole("button", { name: "기록 더 남기기" }).click()
+  await page.getByRole("button", { name: /회복 · 하루 마무리/u }).click()
   await expect(page.getByRole("heading", { name: "회복 · 하루 마무리" })).toBeVisible()
 
   // 하루 마무리 폼에서 탭바 "경기기록"을 누르면 종류 선택으로 돌아온다(§3-3).

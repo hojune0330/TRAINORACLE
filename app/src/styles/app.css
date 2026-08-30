@@ -1169,6 +1169,68 @@ button, input, textarea, select { font: inherit; letter-spacing: inherit; }
 
 .training-home__today p { font-size: 14px; }
 
+.training-home__today-complete {
+  margin-top: 10px;
+}
+
+.training-home__today-complete-status {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  color: var(--ink);
+}
+
+.training-home__today-complete-status > svg {
+  flex: 0 0 auto;
+  margin-top: 1px;
+  color: var(--ok);
+}
+
+.training-home__today-complete-status span {
+  display: grid;
+  gap: 3px;
+}
+
+.training-home__today-complete-status strong {
+  font-family: var(--sans);
+  font-size: 15px;
+  line-height: 1.4;
+}
+
+.training-home__today-complete-status small {
+  color: var(--ink-3);
+  font-family: var(--sans);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.training-home__today-complete-actions {
+  margin-top: 12px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 14px;
+}
+
+.training-home__today-complete-actions button {
+  min-height: 44px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  border: 0;
+  background: transparent;
+  color: var(--ink);
+  font-family: var(--sans);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.training-home__today-complete-actions button + button {
+  color: var(--ink-3);
+  font-weight: 500;
+}
+
 .training-home__primary {
   width: 100%;
   min-height: 52px;

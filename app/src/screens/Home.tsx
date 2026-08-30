@@ -166,6 +166,7 @@ export function Home({
         model={model}
         onWriteLog={onWriteLog}
         onOpenArchive={onOpenArchive}
+        onOpenToday={onOpenDay === undefined ? onOpenArchive : () => onOpenDay(today)}
         onOpenGuide={onOpenGuide}
         onOpenPlan={onOpenPlan}
         onOpenTrends={onOpenTrends}

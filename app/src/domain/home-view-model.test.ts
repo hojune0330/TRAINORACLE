@@ -131,7 +131,8 @@ describe("training home view model", () => {
   it("summarizes entry shells and safe analysis without exposing memo text", () => {
     const model = buildTrainingHomeViewModel([entry], [analysisEntry], null, "2026-08-03")
 
-    expect(model.todayMessage).toBe("오늘 1개의 기록이 있어요.")
+    expect(model.todayMessage).toBe("오늘 기록을 마쳤어요.")
+    expect(model.todayRecordCount).toBe(1)
     expect(model.journalSummary).toBe("1일 · 1개의 기록")
     expect(model.analysisSummary).toContain("5km")
     expect(JSON.stringify(model)).not.toContain(entry.memo)
@@ -140,6 +141,7 @@ describe("training home view model", () => {
   it("does not invent a plan or analysis when there is no evidence", () => {
     const model = buildTrainingHomeViewModel([], [], null, "2026-08-03")
 
+    expect(model.todayRecordCount).toBe(0)
     expect(model.planSummary).toBe("저장된 계획 없음 · 계획안 만들기")
     expect(model.analysisSummary).toContain("기록이 쌓이면")
     expect(model.flowSummary).toBe("9.5일 주기로 일지 묶어 보기 · 시작일 직접 선택")

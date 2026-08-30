@@ -1,7 +1,7 @@
 import { cleanup, render, screen, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
-import type { JournalEntry } from "../../domain/journal-store"
+import { todayISO, type JournalEntry } from "../../domain/journal-store"
 import type { TrainingHomeViewModel } from "../../domain/home-view-model"
 import { Home } from "../Home"
 import { TrainingHome } from "./TrainingHome"
@@ -43,6 +43,7 @@ const PRIVATE_EVENING_ENTRY = {
 const HOME_MODEL_WITH_NEXT_TRAINING = {
   homeMode: "TRAINING",
   todayMessage: "아직 오늘 기록이 없어요.",
+  todayRecordCount: 0,
   journalSummary: "아직 기록이 없어요",
   flowSummary: "9.5일 주기로 일지 묶어 보기 · 시작일 직접 선택",
   planSummary: "저장된 계획 · 3개 일정",
@@ -118,6 +119,33 @@ describe("home journal controls", () => {
     expect(serviceChoices).toHaveLength(3)
     expect(screen.queryByRole("button", { name: /훈련 흐름/u })).toBeNull()
     expect(screen.queryByText("비공개 원문")).toBeNull()
+  })
+
+  it("treats a saved entry as today's completed record and keeps extra writing secondary", async () => {
+    const user = userEvent.setup()
+    const onOpenDay = vi.fn()
+    const onWriteLog = vi.fn()
+    const today = todayISO()
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify([{
+      ...RECENT_ENTRY,
+      id: "today-complete",
+      date: today,
+      savedAt: `${today}T08:00:00.000Z`,
+    } satisfies JournalEntry]))
+
+    render(<Home onOpenDay={onOpenDay} onWriteLog={onWriteLog} />)
+
+    expect(screen.getByText("오늘 기록을 마쳤어요.")).toBeVisible()
+    expect(screen.getByText("1개의 기록이 이 기기에 저장됐어요.")).toBeVisible()
+    expect(screen.queryByRole("button", { name: "오늘 기록하기" })).toBeNull()
+    expect(screen.queryByRole("button", { name: "하루 마무리 기록하기" })).toBeNull()
+    expect(screen.queryByRole("region", { name: "오늘의 기분 몸 상태 날씨" })).toBeNull()
+
+    await user.click(screen.getByRole("button", { name: "오늘 기록 보기" }))
+    await user.click(screen.getByRole("button", { name: "기록 더 남기기" }))
+
+    expect(onOpenDay).toHaveBeenCalledWith(today)
+    expect(onWriteLog).toHaveBeenCalledWith()
   })
 
   it("shows the nearest saved training as a separate route without adding another service choice", async () => {

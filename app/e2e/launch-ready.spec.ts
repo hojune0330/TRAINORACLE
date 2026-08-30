@@ -79,10 +79,13 @@ test("moves a first visitor from WELCOME to JOURNAL after a real first save", as
     return Array.isArray(parsed) ? parsed.length : -1
   })).toBe(1)
   await expect(page.getByRole("heading", { name: "내 기록" })).toBeVisible()
+  await expect(page.getByText("오늘 기록을 마쳤어요.")).toBeVisible()
+  await expect(page.getByRole("button", { name: "오늘 기록하기" })).toHaveCount(0)
+  await expect(page.getByRole("button", { name: "하루 마무리 기록하기" })).toHaveCount(0)
 
-  const eveningEntry = page.getByRole("button", { name: "하루 마무리 기록하기" })
-  await expect(eveningEntry).toBeVisible()
-  await eveningEntry.click()
+  await page.getByRole("button", { name: "기록 더 남기기" }).click()
+  await expect(page.getByRole("heading", { name: "어떤 일지를 쓰세요?" })).toBeVisible()
+  await page.getByRole("button", { name: /회복 · 하루 마무리/u }).click()
   await expect(page.getByRole("heading", { name: /회복.*하루 마무리/u })).toBeVisible()
 })
 
