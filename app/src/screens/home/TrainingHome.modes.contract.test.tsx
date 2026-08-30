@@ -9,6 +9,7 @@ const appCss = readFileSync("src/styles/app.css", "utf8")
 const WELCOME_MODEL = {
   homeMode: "WELCOME",
   todayMessage: "아직 오늘 기록이 없어요.",
+  todayRecordCount: 0,
   journalSummary: "아직 기록이 없어요",
   flowSummary: "9.5일 주기로 일지 묶어 보기 · 시작일 직접 선택",
   planSummary: "저장된 계획 없음 · 계획안 만들기",
@@ -21,7 +22,8 @@ const WELCOME_MODEL = {
 const JOURNAL_MODEL = {
   ...WELCOME_MODEL,
   homeMode: "JOURNAL",
-  todayMessage: "오늘 1개의 기록이 있어요.",
+  todayMessage: "오늘 기록을 마쳤어요.",
+  todayRecordCount: 1,
   journalSummary: "1일 · 1개의 기록",
 } satisfies TrainingHomeViewModel
 
@@ -162,6 +164,10 @@ describe("training home modes", () => {
     expect(intro.compareDocumentPosition(today) & Node.DOCUMENT_POSITION_FOLLOWING).not.toBe(0)
     expect(today.compareDocumentPosition(recent) & Node.DOCUMENT_POSITION_FOLLOWING).not.toBe(0)
     expect(recent.compareDocumentPosition(services) & Node.DOCUMENT_POSITION_FOLLOWING).not.toBe(0)
+    expect(screen.getByText("오늘 기록을 마쳤어요.")).toBeVisible()
+    expect(screen.queryByRole("button", { name: "오늘 기록하기" })).toBeNull()
+    expect(screen.queryByRole("button", { name: "하루 마무리 기록하기" })).toBeNull()
+    expect(screen.queryByText("오늘 상태")).toBeNull()
     expect(screen.queryByText("다음 훈련")).toBeNull()
   })
 

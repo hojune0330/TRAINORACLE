@@ -50,7 +50,8 @@ test("audits populated home, detail, and trends actions", async ({ page }, testI
   await page.goto("/?app=1")
   const entries = page.getByRole("button", { name: /상세 열기/u })
   await auditTouchTargets(page, [
-    { name: "populated-home.write", locator: page.getByRole("button", { name: "오늘 기록하기" }), heightOnly: true },
+    { name: "populated-home.open-today", locator: page.getByRole("button", { name: "오늘 기록 보기" }), heightOnly: true },
+    { name: "populated-home.add", locator: page.getByRole("button", { name: "기록 더 남기기" }), heightOnly: true },
     { name: "populated-home.entries", locator: entries, count: 5, heightOnly: true },
     { name: "populated-home.tabs", locator: page.getByRole("navigation", { name: "주 탭" }).getByRole("button"), count: 5 },
   ])

@@ -1,4 +1,4 @@
-import { CalendarPlus, ChevronRight, Ellipsis, PencilLine } from "lucide-react"
+import { CalendarPlus, CheckCircle2, ChevronRight, Ellipsis, PencilLine, Plus } from "lucide-react"
 import type { ReactNode } from "react"
 import type { TrainingHomeViewModel } from "../../domain/home-view-model"
 import { prescriptionLabel, sessionLabel, sessionSlotLabel } from "../plan-beta/labels"
@@ -15,6 +15,7 @@ type TrainingHomeProps = {
   readonly model: TrainingHomeViewModel
   readonly onWriteLog?: (entryType?: JournalEntryType) => void
   readonly onOpenArchive?: () => void
+  readonly onOpenToday?: () => void
   readonly onOpenGuide?: () => void
   readonly onOpenPlan?: () => void
   readonly onOpenTrends?: () => void
@@ -29,6 +30,7 @@ export function TrainingHome({
   model,
   onWriteLog,
   onOpenArchive,
+  onOpenToday,
   onOpenGuide,
   onOpenPlan,
   onOpenTrends,
@@ -65,22 +67,49 @@ export function TrainingHome({
   const todaySection = (
     <section className="training-home__today" aria-labelledby="training-home-today">
       <div id="training-home-today" className="training-home__label">오늘</div>
-      <p>{model.todayMessage}</p>
-      <button className="training-home__primary" type="button" onClick={() => onWriteLog?.("post-session")}>
-        <PencilLine aria-hidden="true" size={19} />
-        <span>오늘 기록하기</span>
-        <ChevronRight aria-hidden="true" size={18} />
-      </button>
-      <button
-        className="training-home__rest-entry"
-        type="button"
-        onClick={() => onWriteLog?.("evening")}
-      >
-        하루 마무리 기록하기
-      </button>
-      {todayContext}
-      {model.briefing !== "" && (
-        <p className="training-home__briefing" aria-label="아침 브리핑">{model.briefing}</p>
+      {model.todayRecordCount > 0 ? (
+        <div className="training-home__today-complete">
+          <div className="training-home__today-complete-status">
+            <CheckCircle2 aria-hidden="true" size={22} />
+            <span>
+              <strong>{model.todayMessage}</strong>
+              <small>{model.todayRecordCount}개의 기록이 이 기기에 저장됐어요.</small>
+            </span>
+          </div>
+          {model.briefing !== "" && (
+            <p className="training-home__briefing" aria-label="오늘 기록 요약">{model.briefing}</p>
+          )}
+          <div className="training-home__today-complete-actions">
+            <button type="button" onClick={onOpenToday}>
+              <span>오늘 기록 보기</span>
+              <ChevronRight aria-hidden="true" size={17} />
+            </button>
+            <button type="button" onClick={() => onWriteLog?.()}>
+              <Plus aria-hidden="true" size={16} />
+              <span>기록 더 남기기</span>
+            </button>
+          </div>
+        </div>
+      ) : (
+        <>
+          <p>{model.todayMessage}</p>
+          <button className="training-home__primary" type="button" onClick={() => onWriteLog?.("post-session")}>
+            <PencilLine aria-hidden="true" size={19} />
+            <span>오늘 기록하기</span>
+            <ChevronRight aria-hidden="true" size={18} />
+          </button>
+          <button
+            className="training-home__rest-entry"
+            type="button"
+            onClick={() => onWriteLog?.("evening")}
+          >
+            하루 마무리 기록하기
+          </button>
+          {todayContext}
+          {model.briefing !== "" && (
+            <p className="training-home__briefing" aria-label="아침 브리핑">{model.briefing}</p>
+          )}
+        </>
       )}
     </section>
   )

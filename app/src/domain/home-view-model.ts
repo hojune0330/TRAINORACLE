@@ -14,6 +14,7 @@ export type NextTraining = {
 export type TrainingHomeViewModel = {
   readonly homeMode: "WELCOME" | "TRAINING" | "JOURNAL"
   readonly todayMessage: string
+  readonly todayRecordCount: number
   readonly journalSummary: string
   readonly flowSummary: string
   readonly planSummary: string
@@ -47,7 +48,8 @@ export function buildTrainingHomeViewModel(
     homeMode,
     todayMessage: todayCount === 0
       ? "아직 오늘 기록이 없어요."
-      : `오늘 ${todayCount}개의 기록이 있어요.`,
+      : "오늘 기록을 마쳤어요.",
+    todayRecordCount: todayCount,
     journalSummary: visibleEntries.length === 0
       ? "아직 기록이 없어요"
       : `${journalDays}일 · ${visibleEntries.length}개의 기록`,

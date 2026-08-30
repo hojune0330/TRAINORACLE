@@ -10,7 +10,7 @@ test("uses the diary context, decoration, cycle archive, and easy FAQ as one flo
   await page.addInitScript(() => {
     const entries = Array.from({ length: 8 }, (_, index) => {
       const day = new Date()
-      day.setDate(day.getDate() - index)
+      day.setDate(day.getDate() - (index + 1))
       const date = [
         day.getFullYear(),
         String(day.getMonth() + 1).padStart(2, "0"),
