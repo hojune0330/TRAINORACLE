@@ -231,6 +231,58 @@ button, input, textarea, select { font: inherit; letter-spacing: inherit; }
   font-size: 9px;
 }
 
+/* Oracle motion follows the reading order: section, heading, evidence cards,
+ * then the optional evidence drawer. Only transform and opacity move. */
+.trends-motion-stage > * {
+  animation: oracle-section-enter var(--dur-slow) var(--ease-out-strong) backwards;
+}
+.trends-motion-stage > *:nth-child(2) { animation-delay: 50ms; }
+.trends-motion-stage > *:nth-child(3) { animation-delay: 90ms; }
+.trends-motion-stage > *:nth-child(n + 4) { animation-delay: 120ms; }
+
+.personal-oracle__mark {
+  animation: oracle-mark-settle var(--dur-slow) var(--ease-out-strong) backwards;
+}
+
+.personal-oracle__summary,
+.personal-oracle__insight,
+.personal-oracle__details {
+  animation: oracle-insight-enter var(--dur-slow) var(--ease-out-strong) backwards;
+}
+.personal-oracle__summary { animation-delay: 40ms; }
+.personal-oracle__insight:nth-child(1) { animation-delay: 80ms; }
+.personal-oracle__insight:nth-child(2) { animation-delay: 120ms; }
+.personal-oracle__insight:nth-child(3) { animation-delay: 160ms; }
+.personal-oracle__details { animation-delay: 190ms; }
+
+.personal-oracle__details summary svg:last-child {
+  transition: transform var(--dur-base) var(--ease-out-strong);
+}
+.personal-oracle__details[open] .personal-oracle__details-grid,
+.personal-oracle__details[open] .personal-oracle__source {
+  animation: oracle-evidence-enter var(--dur-base) var(--ease-out-strong) backwards;
+}
+
+@keyframes oracle-section-enter {
+  from { opacity: 0.55; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes oracle-insight-enter {
+  from { opacity: 0.45; transform: translateX(9px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes oracle-mark-settle {
+  from { opacity: 0.55; transform: scale(0.88) rotate(-7deg); }
+  to { opacity: 1; transform: scale(1) rotate(0); }
+}
+
+@keyframes oracle-evidence-enter {
+  from { opacity: 0.5; transform: translateY(-6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
 @media (max-width: 420px) {
   .personal-oracle { margin: 16px 20px 20px; }
   .personal-oracle__header { grid-template-columns: 34px minmax(0, 1fr); }
@@ -239,6 +291,17 @@ button, input, textarea, select { font: inherit; letter-spacing: inherit; }
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .trends-motion-stage > *,
+  .personal-oracle__mark,
+  .personal-oracle__summary,
+  .personal-oracle__insight,
+  .personal-oracle__details,
+  .personal-oracle__details[open] .personal-oracle__details-grid,
+  .personal-oracle__details[open] .personal-oracle__source {
+    animation: none;
+    opacity: 1;
+    transform: none;
+  }
   .personal-oracle__details summary svg:last-child { transition: none; }
 }
 

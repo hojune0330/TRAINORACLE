@@ -45,58 +45,60 @@ export function Trends({ onBack, onWriteLog }: {
   return (
     <div style={{ paddingBottom: 30 }}>
       <TrendsHeader onBack={onBack} />
-      <PersonalOraclePanel observations={observations} today={today} planState={planState} />
-      {isEmpty ? (
-        <>
-          {planState !== null && (
+      <div className="trends-motion-stage">
+        <PersonalOraclePanel observations={observations} today={today} planState={planState} />
+        {isEmpty ? (
+          <>
+            {planState !== null && (
+              <EnergySystemLedgerPanel
+                observations={observations}
+                today={today}
+                planState={planState}
+                mode="full"
+              />
+            )}
+            <div style={{ padding: "0 20px" }}>
+              <GuidedEmptyState
+                title="기록이 쌓이면 변화를 확인할 수 있어요"
+                description={<>훈련한 날과 쉰 날의 거리·시간·RPE<TermHelp term="rpe" />·기분을 직접 남기면 주간과 월간 기록으로 정리해요.</>}
+                actionLabel="첫 기록 남기기"
+                onAction={onWriteLog}
+              />
+              <AnalysisExclusionNotice summary={exclusion} />
+            </div>
+          </>
+        ) : (
+          <>
+            <CumulativeDistancePanel
+              observations={observations}
+              today={today}
+              planWindow={planWindow}
+              mode="full"
+            />
             <EnergySystemLedgerPanel
               observations={observations}
               today={today}
               planState={planState}
               mode="full"
             />
-          )}
-          <div style={{ padding: "0 20px" }}>
-            <GuidedEmptyState
-              title="기록이 쌓이면 변화를 확인할 수 있어요"
-              description={<>훈련한 날과 쉰 날의 거리·시간·RPE<TermHelp term="rpe" />·기분을 직접 남기면 주간과 월간 기록으로 정리해요.</>}
-              actionLabel="첫 기록 남기기"
-              onAction={onWriteLog}
-            />
-            <AnalysisExclusionNotice summary={exclusion} />
-          </div>
-        </>
-      ) : (
-        <>
-          <CumulativeDistancePanel
-            observations={observations}
-            today={today}
-            planWindow={planWindow}
-            mode="full"
-          />
-          <EnergySystemLedgerPanel
-            observations={observations}
-            today={today}
-            planState={planState}
-            mode="full"
-          />
-          <MonthlyTrendSection observations={observations} today={today} />
-          <div style={{
-            padding: "24px 20px 0",
-            fontFamily: "var(--mono)",
-            fontSize: 9.5,
-            color: "var(--ink-4)",
-            lineHeight: 1.6,
-          }}>
-            이 화면은 출처가 확인된 구조화 기록의 설명 통계예요. 개인 메모는 읽지 않으며,
-            계획·안전 판정·다음 훈련 결정에는 쓰이지 않아요.
-          </div>
-          <div style={{ padding: "0 20px" }}>
-            <AnalysisExclusionNotice summary={exclusion} />
-          </div>
-        </>
-      )}
-      {productFeatures().experimentalFatigue && <FatigueExperimentPanel />}
+            <MonthlyTrendSection observations={observations} today={today} />
+            <div style={{
+              padding: "24px 20px 0",
+              fontFamily: "var(--mono)",
+              fontSize: 9.5,
+              color: "var(--ink-4)",
+              lineHeight: 1.6,
+            }}>
+              이 화면은 출처가 확인된 구조화 기록의 설명 통계예요. 개인 메모는 읽지 않으며,
+              계획·안전 판정·다음 훈련 결정에는 쓰이지 않아요.
+            </div>
+            <div style={{ padding: "0 20px" }}>
+              <AnalysisExclusionNotice summary={exclusion} />
+            </div>
+          </>
+        )}
+        {productFeatures().experimentalFatigue && <FatigueExperimentPanel />}
+      </div>
     </div>
   )
 }

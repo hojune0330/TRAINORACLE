@@ -44,6 +44,8 @@ type Replacement = {
   readonly slot: DecorationSlot
 }
 
+type PreviewMotionDirection = "BACKWARD" | "FORWARD" | "STAY"
+
 export function DecorationStudio({
   date,
   today,
@@ -77,6 +79,7 @@ export function DecorationStudio({
   const [replacement, setReplacement] = React.useState<Replacement | null>(null)
   const [toolsOpen, setToolsOpen] = React.useState(false)
   const [selectedSlot, setSelectedSlot] = React.useState<DecorationSlot | null>(null)
+  const [previewMotionDirection, setPreviewMotionDirection] = React.useState<PreviewMotionDirection>("STAY")
   const previewDate = date
   const base = state
   const previewState = selection?.kind === "ITEM"
@@ -171,6 +174,7 @@ export function DecorationStudio({
   }
 
   const changeDate = (nextDate: string) => {
+    setPreviewMotionDirection(nextDate === date ? "STAY" : nextDate > date ? "FORWARD" : "BACKWARD")
     setSelection(null)
     setSelectedSlot(null)
     onDateChange(nextDate)
@@ -231,6 +235,7 @@ export function DecorationStudio({
         onToday={() => changeDate(today)}
         editable={selection === null}
         selectedSlot={selectedSlot}
+        motionDirection={previewMotionDirection}
         onSelectPlacement={(slot) => {
           setSelectedSlot(slot)
           closeTools()
