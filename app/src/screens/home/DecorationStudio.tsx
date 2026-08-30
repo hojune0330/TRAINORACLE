@@ -1,4 +1,4 @@
-import { Check, Heart, HeartOff, MinusCircle, Sparkles } from "lucide-react"
+import { BookOpen, Check, ChevronDown, Heart, HeartOff, MinusCircle, Palette, PenLine, Smile, Sparkles } from "lucide-react"
 import React from "react"
 import { JournalConfirmationDialog } from "../../components/JournalConfirmationDialog"
 import {
@@ -12,11 +12,12 @@ import {
   saveDecorationStateIfCurrent,
   toggleFavoriteDecoration,
 } from "../../domain/decorations"
-import type { DecorationCatalogItem, DecorationState } from "../../domain/decorations"
+import type { DecorationCatalogItem, DecorationPlacementTransform, DecorationSlot, DecorationState } from "../../domain/decorations"
 import { withJosa } from "../../domain/korean-josa"
 import { DecorationStudioItem } from "./DecorationStudioItem"
 import { DecorationStudioPreview } from "./DecorationStudioPreview"
 import { resolveJournalDecorationSlot } from "../../domain/journal-decoration-state"
+import { updateJournalDecorationTransform } from "../../domain/journal-decoration-state"
 import {
   DECORATION_PRESETS,
   SITUATION_TABS,
@@ -40,6 +41,7 @@ type PreviewSelection =
 type Replacement = {
   readonly item: DecorationCatalogItem
   readonly previous: DecorationCatalogItem
+  readonly slot: DecorationSlot
 }
 
 export function DecorationStudio({
@@ -68,10 +70,13 @@ export function DecorationStudio({
   readonly onCatalogScrolled?: (scrolled: boolean) => void
 }) {
   const catalogRef = React.useRef<HTMLDivElement>(null)
+  const drawerRef = React.useRef<HTMLDivElement>(null)
   const [situation, setSituation] = React.useState<SituationTabId>("RECOMMENDED")
   const [type, setType] = React.useState<TypeFilterId>("ALL")
   const [selection, setSelection] = React.useState<PreviewSelection>(null)
   const [replacement, setReplacement] = React.useState<Replacement | null>(null)
+  const [toolsOpen, setToolsOpen] = React.useState(false)
+  const [selectedSlot, setSelectedSlot] = React.useState<DecorationSlot | null>(null)
   const previewDate = date
   const base = state
   const previewState = selection?.kind === "ITEM"
@@ -88,6 +93,13 @@ export function DecorationStudio({
   const selectedActive = selectedItem === null ? false : decorationItemActive(state, selectedItem, date)
   const selectedFavorite = selectedItem === null ? false : state.library.favoriteItemIds.includes(selectedItem.id)
   const selectedRemovable = selectedActive && selectedItem?.id !== "THEME_TRACK_NOTEBOOK" && selectedItem?.id !== "INK_NAVY"
+
+  React.useEffect(() => {
+    const drawer = drawerRef.current
+    if (drawer === null) return
+    if (toolsOpen) drawer.removeAttribute("inert")
+    else drawer.setAttribute("inert", "")
+  }, [toolsOpen])
 
   const resetCatalogScroll = () => {
     const catalog = catalogRef.current
@@ -160,7 +172,24 @@ export function DecorationStudio({
 
   const changeDate = (nextDate: string) => {
     setSelection(null)
+    setSelectedSlot(null)
     onDateChange(nextDate)
+  }
+
+  const openTool = (nextType: TypeFilterId) => {
+    setType(nextType)
+    setSelection(null)
+    setToolsOpen(true)
+  }
+
+  const closeTools = () => {
+    setToolsOpen(false)
+    onCatalogScrolled?.(false)
+  }
+
+  const transformPlacement = (slot: DecorationSlot, transform: DecorationPlacementTransform) => {
+    setSelectedSlot(slot)
+    persist(updateJournalDecorationTransform(state, date, slot, transform), "위치와 크기를 저장했어요.")
   }
 
   const use = (item: DecorationCatalogItem) => {
@@ -173,12 +202,20 @@ export function DecorationStudio({
       const slot = resolveJournalDecorationSlot(state, item, date)
       const current = slot === undefined ? undefined : state.pagePlacements.find((placement) => placement.date === date && placement.slot === slot)
       const previous = current === undefined ? undefined : DECORATION_CATALOG.find((candidate) => candidate.id === current.itemId)
-      if (previous !== undefined && previous.id !== item.id) {
-        setReplacement({ item, previous })
+      if (slot !== undefined && previous !== undefined && previous.id !== item.id) {
+        setReplacement({ item, previous, slot })
         return
       }
     }
-    persist(useOwnedDecorationItem(state, item, date), `${withJosa(item.name, "을/를")} 사용했어요.`)
+    const next = useOwnedDecorationItem(state, item, date)
+    if (persist(next, `${withJosa(item.name, "을/를")} 사용했어요.`)) {
+      if (isPlacementDecorationId(item.id)) {
+        const slot = resolveJournalDecorationSlot(state, item, date)
+        if (slot !== undefined) setSelectedSlot(slot)
+      }
+      setSelection(null)
+      closeTools()
+    }
   }
 
   return (
@@ -192,9 +229,26 @@ export function DecorationStudio({
         onPreviousDate={() => changeDate(moveDecorationDate(date, -1))}
         onNextDate={() => changeDate(moveDecorationDate(date, 1))}
         onToday={() => changeDate(today)}
+        editable={selection === null}
+        selectedSlot={selectedSlot}
+        onSelectPlacement={(slot) => {
+          setSelectedSlot(slot)
+          closeTools()
+        }}
+        onTransformPlacement={transformPlacement}
       />
 
-      <div className="decoration-studio__drawer">
+      <nav className="decoration-studio__tool-dock" aria-label="꾸미기 도구">
+        <button type="button" aria-label="모든 꾸미기 도구" aria-pressed={toolsOpen && type === "ALL"} onClick={() => openTool("ALL")} title="모든 도구"><Palette aria-hidden="true" size={19} /><span>모두</span></button>
+        <button type="button" aria-label="이모지 스티커 도구" aria-pressed={toolsOpen && type === "EMOJI_STICKER"} onClick={() => openTool("EMOJI_STICKER")} title="스티커"><Smile aria-hidden="true" size={19} /><span>스티커</span></button>
+        <button type="button" aria-label="페이지 테마 도구" aria-pressed={toolsOpen && type === "THEME"} onClick={() => openTool("THEME")} title="테마"><BookOpen aria-hidden="true" size={19} /><span>테마</span></button>
+        <button type="button" aria-label="글자색 도구" aria-pressed={toolsOpen && type === "INK"} onClick={() => openTool("INK")} title="글자색"><PenLine aria-hidden="true" size={19} /><span>글자</span></button>
+      </nav>
+
+      <div ref={drawerRef} className="decoration-studio__drawer" data-open={toolsOpen ? "true" : "false"} aria-hidden={toolsOpen ? undefined : "true"}>
+        <button type="button" className="decoration-studio__drawer-close" onClick={closeTools} aria-label="꾸미기 도구 숨기기" tabIndex={toolsOpen ? 0 : -1}>
+          <ChevronDown aria-hidden="true" size={20} />
+        </button>
         <div
           ref={catalogRef}
           className="decoration-studio__catalog"
@@ -281,11 +335,14 @@ export function DecorationStudio({
                         aria-pressed={active}
                         aria-label={`${item.name} 이모지 ${active ? "떼기" : "붙이기"}`}
                         data-testid={`decoration-emoji-${item.id}`}
-                        onClick={() => (
-                          active
-                            ? persist(removeDecorationItem(state, item, date), `${withJosa(item.name, "을/를")} 제거했어요.`)
-                            : use(item)
-                        )}
+                        onClick={() => {
+                          if (active) {
+                            if (persist(removeDecorationItem(state, item, date), `${withJosa(item.name, "을/를")} 제거했어요.`)) {
+                              setSelectedSlot(null)
+                              closeTools()
+                            }
+                          } else use(item)
+                        }}
                       >
                         <span aria-hidden="true">{item.emoji}</span>
                       </button>
@@ -316,7 +373,13 @@ export function DecorationStudio({
                 <button type="button" onClick={() => buy(selectedItem)} aria-label={`${selectedItem.name} ${selectedItem.cost}P로 받기`}>{selectedItem.cost}P로 받기</button>
               ) : selectedActive ? (
                 selectedRemovable ? (
-                  <button type="button" onClick={() => persist(removeDecorationItem(state, selectedItem, date), `${withJosa(selectedItem.name, "을/를")} 제거했어요.`)} aria-label={`${selectedItem.name} 제거`}><MinusCircle aria-hidden="true" size={16} /> 제거</button>
+                  <button type="button" onClick={() => {
+                    if (persist(removeDecorationItem(state, selectedItem, date), `${withJosa(selectedItem.name, "을/를")} 제거했어요.`)) {
+                      setSelectedSlot(null)
+                      setSelection(null)
+                      closeTools()
+                    }
+                  }} aria-label={`${selectedItem.name} 제거`}><MinusCircle aria-hidden="true" size={16} /> 제거</button>
                 ) : (
                   <button type="button" disabled aria-label={`${selectedItem.name} 사용 중`}><Check aria-hidden="true" size={16} /> 사용 중</button>
                 )
@@ -338,7 +401,12 @@ export function DecorationStudio({
           onCancel={() => setReplacement(null)}
           onConfirm={() => {
             const ok = persist(useOwnedDecorationItem(state, replacement.item, date), `${withJosa(replacement.item.name, "을/를")} 사용했어요.`)
-            if (ok) setReplacement(null)
+            if (ok) {
+              setSelectedSlot(replacement.slot)
+              setSelection(null)
+              closeTools()
+              setReplacement(null)
+            }
             return ok
           }}
         />

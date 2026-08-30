@@ -9,9 +9,43 @@ import {
 } from "./decorations"
 import type {
   DecorationCatalogItem,
+  DecorationPlacementTransform,
   DecorationSlot,
   DecorationState,
 } from "./decorations"
+
+const DEFAULT_PLACEMENT_TRANSFORMS: Readonly<Record<DecorationSlot, DecorationPlacementTransform>> = {
+  HEADER_TAPE: { xPercent: 50, yPercent: 9, scale: 1, rotationDeg: 0 },
+  TOP_CORNER: { xPercent: 86, yPercent: 14, scale: 1, rotationDeg: 0 },
+  BODY_MARGIN: { xPercent: 88, yPercent: 48, scale: 1, rotationDeg: 0 },
+  PAGE_FOOTER: { xPercent: 50, yPercent: 91, scale: 1, rotationDeg: 0 },
+  BODY_STICKER_1: { xPercent: 24, yPercent: 84, scale: 1, rotationDeg: -4 },
+  BODY_STICKER_2: { xPercent: 50, yPercent: 84, scale: 1, rotationDeg: 3 },
+  BODY_STICKER_3: { xPercent: 76, yPercent: 84, scale: 1, rotationDeg: -2 },
+}
+
+export function defaultJournalDecorationTransform(slot: DecorationSlot): DecorationPlacementTransform {
+  return DEFAULT_PLACEMENT_TRANSFORMS[slot]
+}
+
+export function updateJournalDecorationTransform(
+  state: DecorationState,
+  date: string,
+  slot: DecorationSlot,
+  transform: DecorationPlacementTransform,
+): DecorationState | null {
+  const placement = state.pagePlacements.find((candidate) => candidate.date === date && candidate.slot === slot)
+  if (placement === undefined) return null
+  const parsed = decorationStateSchema.safeParse({
+    ...state,
+    pagePlacements: state.pagePlacements.map((candidate) => (
+      candidate.date === date && candidate.slot === slot
+        ? { ...candidate, transform }
+        : candidate
+    )),
+  })
+  return parsed.success ? parsed.data : null
+}
 
 /*
  * 이모지 스티커는 전용 슬롯 3칸 중 비어 있는 첫 칸을 고른다.

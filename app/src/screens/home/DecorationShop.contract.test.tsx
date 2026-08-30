@@ -12,6 +12,14 @@ afterEach(() => {
   vi.restoreAllMocks()
 })
 
+async function openAllStudioTools(): Promise<void> {
+  await userEvent.click(screen.getByRole("button", { name: "모든 꾸미기 도구" }))
+}
+
+function openAllStudioToolsSync(): void {
+  fireEvent.click(screen.getByRole("button", { name: "모든 꾸미기 도구" }))
+}
+
 describe("decoration shop surface", () => {
   it("PIN: shows the exact zero-point balance in the current shop summary", () => {
     render(<DecorationShop earnedPoints={0} />)
@@ -43,6 +51,8 @@ describe("decoration shop surface", () => {
     expect(screen.getByRole("dialog", { name: "일지 꾸미기 · 사용 가능 0P" })).toBeVisible()
     expect(screen.getByRole("button", { name: "꾸미기 닫기" })).toHaveFocus()
     expect(screen.getByRole("region", { name: "꾸미기 미리보기" })).toBeVisible()
+    expect(screen.queryByRole("combobox", { name: "꾸미기 종류" })).toBeNull()
+    await openAllStudioTools()
     expect(screen.getByRole("combobox", { name: "꾸미기 종류" })).toBeVisible()
     expect(document.querySelector(".decoration-studio__catalog")).not.toBeNull()
 
@@ -54,6 +64,7 @@ describe("decoration shop surface", () => {
     const user = userEvent.setup()
     render(<DecorationShop earnedPoints={20} />)
     await user.click(screen.getByRole("button", { name: "꾸미기 열기" }))
+    await openAllStudioTools()
 
     expect(screen.queryByRole("region", { name: "선택한 꾸미기" })).toBeNull()
     await user.click(screen.getByRole("button", { name: "결승선 스티커 미리보기" }))
@@ -68,6 +79,7 @@ describe("decoration shop surface", () => {
     const { container } = render(<DecorationShop earnedPoints={20} />)
     expect(screen.getByText(/현금으로 바꾸거나 다른 사람에게 보낼 수 없어요/u)).toBeVisible()
     fireEvent.click(screen.getByRole("button", { name: "꾸미기 열기" }))
+    openAllStudioToolsSync()
 
     expect(screen.getByRole("dialog", { name: "일지 꾸미기 · 사용 가능 20P" })).toBeVisible()
     expect(screen.getByText("트랙 노트")).toBeVisible()
@@ -88,6 +100,7 @@ describe("decoration shop surface", () => {
   it("shows a named fallback when an asset cannot load", () => {
     const { container } = render(<DecorationShop earnedPoints={20} />)
     fireEvent.click(screen.getByRole("button", { name: "꾸미기 열기" }))
+    openAllStudioToolsSync()
     const firstPreview = container.querySelector(".decoration-shop__item img")
     expect(firstPreview).not.toBeNull()
     if (firstPreview === null) return
@@ -100,6 +113,7 @@ describe("decoration shop surface", () => {
   it("keeps a purchased item after reopening the shop", async () => {
     const first = render(<DecorationShop earnedPoints={20} />)
     await userEvent.click(screen.getByRole("button", { name: "꾸미기 열기" }))
+    await openAllStudioTools()
     await userEvent.click(screen.getByRole("button", { name: "결승선 스티커 미리보기" }))
     await userEvent.click(screen.getByRole("button", { name: "결승선 스티커 8P로 받기" }))
     expect(screen.getByRole("button", { name: "결승선 스티커 사용하기" })).toBeVisible()
@@ -107,6 +121,7 @@ describe("decoration shop surface", () => {
     first.unmount()
     render(<DecorationShop earnedPoints={20} />)
     await userEvent.click(screen.getByRole("button", { name: "꾸미기 열기" }))
+    await openAllStudioTools()
     await userEvent.click(screen.getByRole("button", { name: "결승선 스티커 미리보기" }))
     expect(screen.getByRole("button", { name: "결승선 스티커 사용하기" })).toBeVisible()
   })
@@ -115,6 +130,7 @@ describe("decoration shop surface", () => {
     let spentPoints = 0
     render(<DecorationShop earnedPoints={20} onSpentPointsChange={(spent) => { spentPoints = spent }} />)
     await userEvent.click(screen.getByRole("button", { name: "꾸미기 열기" }))
+    await openAllStudioTools()
     await userEvent.click(screen.getByRole("button", { name: "결승선 스티커 미리보기" }))
     await userEvent.click(screen.getByRole("button", { name: "결승선 스티커 8P로 받기" }))
 
@@ -124,6 +140,7 @@ describe("decoration shop surface", () => {
   it("does not claim success when purchase storage silently fails", async () => {
     render(<DecorationShop earnedPoints={20} />)
     await userEvent.click(screen.getByRole("button", { name: "꾸미기 열기" }))
+    await openAllStudioTools()
     vi.spyOn(Storage.prototype, "setItem").mockImplementation(() => undefined)
 
     await userEvent.click(screen.getByRole("button", { name: "결승선 스티커 미리보기" }))
@@ -136,6 +153,7 @@ describe("decoration shop surface", () => {
   it("states the exact shortfall and safe ways to earn it", async () => {
     render(<DecorationShop earnedPoints={4} />)
     await userEvent.click(screen.getByRole("button", { name: "꾸미기 열기" }))
+    await openAllStudioTools()
     await userEvent.click(screen.getByRole("button", { name: "결승선 스티커 미리보기" }))
     await userEvent.click(screen.getByRole("button", { name: "결승선 스티커 8P로 받기" }))
 
@@ -151,6 +169,7 @@ describe("decoration shop surface", () => {
     expect(screen.queryByRole("button", { name: "추천" })).toBeNull()
 
     await userEvent.click(screen.getByRole("button", { name: "꾸미기 열기" }))
+    await openAllStudioTools()
 
     for (const name of ["추천", "최근 사용", "즐겨찾기", "날씨", "회복", "경기", "계절", "모두"]) {
       expect(screen.getByRole("button", { name })).toBeVisible()
@@ -164,6 +183,7 @@ describe("decoration shop surface", () => {
     render(<DecorationShop earnedPoints={0} />)
     const before = window.localStorage.getItem("trainoracle.decorations.v2")
     await userEvent.click(screen.getByRole("button", { name: "꾸미기 열기" }))
+    await openAllStudioTools()
 
     await userEvent.click(screen.getByRole("button", { name: "하늘 일지 테마 미리보기" }))
 
@@ -179,6 +199,7 @@ describe("decoration shop surface", () => {
   it("lets a zero-point user apply a starter and keeps favorites and recents after reopening", async () => {
     const first = render(<DecorationShop earnedPoints={0} hasEntriesForDate={() => true} />)
     await userEvent.click(screen.getByRole("button", { name: "꾸미기 열기" }))
+    await openAllStudioTools()
     await userEvent.click(screen.getByRole("button", { name: "맑은 날 미리보기" }))
     await userEvent.click(screen.getByRole("button", { name: "맑은 날 즐겨찾기" }))
     await userEvent.click(screen.getByRole("button", { name: "맑은 날 바로 사용" }))
@@ -188,6 +209,7 @@ describe("decoration shop surface", () => {
 
     render(<DecorationShop earnedPoints={0} hasEntriesForDate={() => true} />)
     await userEvent.click(screen.getByRole("button", { name: "꾸미기 열기" }))
+    await openAllStudioTools()
     await userEvent.click(screen.getByRole("button", { name: "최근 사용" }))
     await userEvent.click(screen.getByRole("button", { name: "맑은 날 미리보기" }))
     expect(screen.getByRole("button", { name: "맑은 날 제거" })).toBeVisible()
@@ -199,6 +221,7 @@ describe("decoration shop surface", () => {
   it("does not claim a starter was applied when verified storage fails", async () => {
     render(<DecorationShop earnedPoints={0} hasEntriesForDate={() => true} />)
     await userEvent.click(screen.getByRole("button", { name: "꾸미기 열기" }))
+    await openAllStudioTools()
     vi.spyOn(Storage.prototype, "setItem").mockImplementation(() => undefined)
 
     await userEvent.click(screen.getByRole("button", { name: "맑은 날 미리보기" }))
@@ -216,6 +239,7 @@ describe("decoration shop surface", () => {
     const beforeState = parseStoredDecorationState(before ?? "")
 
     fireEvent.click(screen.getByRole("button", { name: "꾸미기 열기" }))
+    openAllStudioToolsSync()
     fireEvent.click(screen.getByTestId("decoration-date-previous"))
     fireEvent.click(screen.getByTestId("decoration-preset-LIGHT_DAY"))
 
@@ -241,6 +265,7 @@ describe("decoration shop surface", () => {
   it("does not save a date decoration for an empty date", async () => {
     render(<DecorationShop earnedPoints={0} />)
     await userEvent.click(screen.getByRole("button", { name: "꾸미기 열기" }))
+    await openAllStudioTools()
     await userEvent.click(screen.getByRole("button", { name: "맑은 날 미리보기" }))
     await userEvent.click(screen.getByTestId("decoration-item-use-STICKER_WEATHER_SUN"))
 

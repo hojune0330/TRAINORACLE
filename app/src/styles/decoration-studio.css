@@ -93,16 +93,17 @@
 .decoration-studio {
   flex: 1 1 auto;
   min-height: 0;
-  display: grid;
-  grid-template-rows: minmax(188px, min(30dvh, 248px)) minmax(0, 1fr);
+  position: relative;
   overflow: hidden;
+  background: var(--surface-2);
 }
 
 .decoration-studio-preview {
+  position: absolute;
+  inset: 0 0 calc(58px + env(safe-area-inset-bottom));
   min-width: 0;
   min-height: 0;
   overflow: auto;
-  border-bottom: var(--bw-line) solid var(--line);
   background: var(--surface-2);
   overscroll-behavior: contain;
   scrollbar-width: none;
@@ -110,20 +111,32 @@
 .decoration-studio-preview::-webkit-scrollbar { display: none; }
 
 .decoration-studio-preview > header {
+  position: sticky;
+  top: 0;
+  z-index: 8;
   min-height: 40px;
   padding: var(--space-1) var(--space-3);
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: var(--space-2);
-  background: var(--surface);
+  background: color-mix(in srgb, var(--surface) 94%, transparent);
+  backdrop-filter: blur(10px);
 }
 
 .decoration-studio-preview > header span,
 .decoration-studio-preview > header strong { font-size: var(--fs-body-sm); letter-spacing: 0; }
 .decoration-studio-preview > header span { color: var(--ink-3); }
 .decoration-studio-preview > header strong { color: var(--ink); text-align: right; }
-.decoration-studio-preview__targets { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.decoration-studio-preview__targets {
+  position: sticky;
+  top: 40px;
+  z-index: 7;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  background: color-mix(in srgb, var(--surface) 94%, transparent);
+  backdrop-filter: blur(10px);
+}
 
 .decoration-studio-preview__targets button {
   min-height: 40px;
@@ -140,11 +153,11 @@
 
 .decoration-studio-preview__targets button[aria-pressed="true"] { background: var(--surface-2); color: var(--ink); font-weight: 700; }
 .decoration-studio-preview .decorated-journal-page,
-.decoration-studio-preview .decorated-journal-page__content { min-height: 196px; }
+.decoration-studio-preview .decorated-journal-page__content { min-height: max(540px, calc(100dvh - 190px)); }
 
 .decoration-studio-preview__page {
-  min-height: 196px;
-  padding: 24px 50px 20px 24px;
+  min-height: max(540px, calc(100dvh - 190px));
+  padding: 48px 56px 40px 28px;
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
@@ -158,6 +171,9 @@
 .decoration-studio-preview__page div span { padding: var(--space-1) var(--space-2); border: var(--bw-line) solid var(--line); border-radius: 8px; background: var(--surface); font-size: var(--fs-caption); }
 
 .decoration-studio-preview__day-state {
+  position: sticky;
+  top: 80px;
+  z-index: 7;
   margin: 0;
   padding: var(--space-1) var(--space-3);
   border-bottom: var(--bw-line) solid var(--hair);
@@ -169,12 +185,78 @@
 .decoration-studio-preview__day-state--empty { color: var(--ink-3); }
 
 .decoration-studio__drawer {
+  position: absolute;
+  right: 0;
+  bottom: calc(58px + env(safe-area-inset-bottom));
+  left: 0;
+  z-index: 20;
   min-height: 0;
+  max-height: min(62dvh, 560px);
   display: flex;
   flex-direction: column;
   background: var(--surface);
   overflow: hidden;
+  border-top: var(--bw-line) solid var(--ink);
+  transform: translateY(0);
+  visibility: visible;
+  transition: transform 220ms var(--ease-out-strong), visibility 0s linear;
 }
+
+.decoration-studio__drawer[data-open="false"] {
+  transform: translateY(calc(100% + 72px));
+  visibility: hidden;
+  pointer-events: none;
+  transition: transform 220ms var(--ease-out-strong), visibility 0s linear 220ms;
+}
+
+.decoration-studio__drawer-close {
+  width: 100%;
+  min-height: 36px;
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-bottom: var(--bw-line) solid var(--hair);
+  background: var(--surface);
+  color: var(--ink-3);
+  cursor: pointer;
+}
+
+.decoration-studio__tool-dock {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 22;
+  min-height: calc(58px + env(safe-area-inset-bottom));
+  padding: 3px max(12px, env(safe-area-inset-right)) max(3px, env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left));
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 2px;
+  border-top: var(--bw-line) solid var(--line);
+  background: color-mix(in srgb, var(--surface) 96%, transparent);
+  backdrop-filter: blur(12px);
+}
+
+.decoration-studio__tool-dock button {
+  width: min(76px, 23vw);
+  min-height: 52px;
+  padding: 4px 8px;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 2px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--ink-3);
+  font-size: var(--fs-caption);
+  cursor: pointer;
+  touch-action: manipulation;
+}
+.decoration-studio__tool-dock button[aria-pressed="true"] { background: var(--surface-2); color: var(--ink); }
+.decoration-studio__tool-dock span { font-size: 10px; }
 
 .decoration-studio__controls {
   padding: var(--space-2) var(--space-3);
@@ -352,9 +434,22 @@
 
 @media (min-width: 760px) {
   .decoration-shop--open { inset: var(--space-4); height: calc(100dvh - (var(--space-4) * 2)); border: var(--bw-line) solid var(--line); }
-  .decoration-studio { grid-template-columns: minmax(320px, 44%) minmax(0, 1fr); grid-template-rows: minmax(0, 1fr); }
-  .decoration-studio-preview { border-right: var(--bw-line) solid var(--line); border-bottom: 0; }
-  .decoration-shop__items { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .decoration-studio-preview { right: 0; }
+  .decoration-studio__drawer {
+    top: 0;
+    bottom: calc(58px + env(safe-area-inset-bottom));
+    left: auto;
+    width: min(44vw, 520px);
+    max-height: none;
+    border-top: 0;
+    border-left: var(--bw-line) solid var(--line);
+    transform: translateX(0);
+  }
+  .decoration-studio__drawer[data-open="false"] {
+    transform: translateX(calc(100% + 24px));
+  }
+  .decoration-studio__tool-dock { left: auto; width: min(44vw, 520px); box-sizing: border-box; }
+  .decoration-shop__items { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 }
 
 .decoration-studio__tab-rail { display: grid; gap: var(--space-1); }

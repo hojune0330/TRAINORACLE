@@ -37,12 +37,20 @@ const isoDateSchema = z.string().refine((value) => {
     && date.getUTCDate() === day
 }, "invalid calendar date")
 
+export const decorationPlacementTransformSchema = z.object({
+  xPercent: z.number().min(4).max(96),
+  yPercent: z.number().min(4).max(96),
+  scale: z.number().min(0.6).max(2),
+  rotationDeg: z.number().min(-45).max(45),
+}).strict().readonly()
+
 const uniqueIds = (ids: readonly string[]): boolean => new Set(ids).size === ids.length
 
 const pagePlacementSchema = z.object({
   date: isoDateSchema,
   slot: slotSchema,
   itemId: placementItemIdSchema,
+  transform: decorationPlacementTransformSchema.optional(),
 }).strict().readonly()
 
 const equippedSchema = z.object({
@@ -104,6 +112,7 @@ export const decorationStateSchema = z.object({
 
 export type DecorationState = z.infer<typeof decorationStateSchema>
 export type DecorationPagePlacement = z.infer<typeof pagePlacementSchema>
+export type DecorationPlacementTransform = z.infer<typeof decorationPlacementTransformSchema>
 
 const storedV2ShapeSchema = z.object({
   version: z.literal(2),
@@ -126,6 +135,7 @@ const storedPlacementShapeSchema = z.object({
   date: isoDateSchema,
   slot: z.string(),
   itemId: z.string(),
+  transform: z.unknown().optional(),
 }).strict()
 
 const legacyStateSchema = z.object({
@@ -160,7 +170,7 @@ function normalizedPlacements(rows: readonly unknown[], owned: ReadonlySet<Decor
   for (const row of rows) {
     const parsed = storedPlacementShapeSchema.safeParse(row)
     if (!parsed.success) continue
-    const { date, slot, itemId } = parsed.data
+    const { date, slot, itemId, transform } = parsed.data
     if (!isDecorationSlot(slot) || !isPlacementDecorationId(itemId)) continue
     if (isPaidDecorationId(itemId) && !owned.has(itemId)) continue
     const item = decorationCatalogItem(itemId)
@@ -168,7 +178,13 @@ function normalizedPlacements(rows: readonly unknown[], owned: ReadonlySet<Decor
     const key = `${date}:${slot}`
     if (occupiedSlots.has(key)) continue
     occupiedSlots.add(key)
-    result.push({ date, slot, itemId })
+    const parsedTransform = decorationPlacementTransformSchema.safeParse(transform)
+    result.push({
+      date,
+      slot,
+      itemId,
+      ...(parsedTransform.success ? { transform: parsedTransform.data } : {}),
+    })
   }
   return result
 }

@@ -1,5 +1,5 @@
 import { DecoratedJournalPageFrame } from "../../components/DecoratedJournalPageFrame"
-import type { DecorationState } from "../../domain/decorations"
+import type { DecorationPlacementTransform, DecorationSlot, DecorationState } from "../../domain/decorations"
 
 export function DecorationStudioPreview({
   date,
@@ -10,6 +10,10 @@ export function DecorationStudioPreview({
   onPreviousDate,
   onNextDate,
   onToday,
+  editable = false,
+  selectedSlot = null,
+  onSelectPlacement,
+  onTransformPlacement,
 }: {
   readonly date: string
   readonly today: string
@@ -19,6 +23,10 @@ export function DecorationStudioPreview({
   readonly onPreviousDate?: () => void
   readonly onNextDate?: () => void
   readonly onToday?: () => void
+  readonly editable?: boolean
+  readonly selectedSlot?: DecorationSlot | null
+  readonly onSelectPlacement?: (slot: DecorationSlot) => void
+  readonly onTransformPlacement?: (slot: DecorationSlot, transform: DecorationPlacementTransform) => void
 }) {
   return (
     <section className="decoration-studio-preview" role="region" aria-label="꾸미기 미리보기">
@@ -45,7 +53,14 @@ export function DecorationStudioPreview({
           <button type="button" data-testid="decoration-date-next" onClick={onNextDate}>다음 날짜</button>
         </div>
       )}
-      <DecoratedJournalPageFrame date={date} state={state}>
+      <DecoratedJournalPageFrame
+        date={date}
+        state={state}
+        editable={editable}
+        selectedSlot={selectedSlot}
+        onSelectPlacement={onSelectPlacement}
+        onTransformPlacement={onTransformPlacement}
+      >
         <article className="decoration-studio-preview__page">
           <small>{date === today ? "오늘" : "선택한 날짜"}</small>
           <h3>{date === today ? "오늘의 훈련 일지" : "선택한 날짜의 훈련 일지"}</h3>

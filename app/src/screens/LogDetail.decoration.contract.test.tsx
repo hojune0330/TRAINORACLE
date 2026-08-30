@@ -1,4 +1,4 @@
-import { cleanup, render, screen } from "@testing-library/react"
+import { cleanup, fireEvent, render, screen } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import {
@@ -49,6 +49,10 @@ afterEach(() => {
   window.localStorage.clear()
 })
 
+async function openJournalDecorationTools(): Promise<void> {
+  await userEvent.click(screen.getByRole("button", { name: "모든 꾸미기 도구" }))
+}
+
 describe("real journal decoration surface", () => {
   it("adds a free page decoration and undoes the exact saved change", async () => {
     // Given
@@ -58,6 +62,7 @@ describe("real journal decoration surface", () => {
 
     // When
     await user.click(screen.getByRole("button", { name: "일지 꾸미기 열기" }))
+    await openJournalDecorationTools()
     await user.click(screen.getByRole("button", { name: "맑은 날 오른쪽 위에 사용" }))
 
     // Then
@@ -90,6 +95,7 @@ describe("real journal decoration surface", () => {
 
     // When
     await user.click(screen.getByRole("button", { name: "일지 꾸미기 열기" }))
+    await openJournalDecorationTools()
     await user.click(screen.getByRole("button", { name: "결승선 스티커 오른쪽 위에 사용" }))
 
     // Then
@@ -118,6 +124,7 @@ describe("real journal decoration surface", () => {
 
     // When
     await user.click(screen.getByRole("button", { name: "일지 꾸미기 열기" }))
+    await openJournalDecorationTools()
     await user.click(screen.getByRole("button", { name: "체크 테이프 제거" }))
     view.unmount()
     render(<LogDetail date={DATE} />)
@@ -135,6 +142,7 @@ describe("real journal decoration surface", () => {
 
     // When
     await user.click(screen.getByRole("button", { name: "일지 꾸미기 열기" }))
+    await openJournalDecorationTools()
     await user.click(screen.getByRole("button", { name: "맑은 날 오른쪽 위에 사용" }))
     first.unmount()
     render(<LogDetail date={DATE} />)
@@ -147,6 +155,7 @@ describe("real journal decoration surface", () => {
 
     // When
     await user.click(screen.getByRole("button", { name: "일지 꾸미기 열기" }))
+    await openJournalDecorationTools()
     await user.click(screen.getByRole("button", { name: "맑은 날 제거" }))
     await user.click(screen.getByRole("button", { name: "꾸미기 되돌리기" }))
 
@@ -164,6 +173,7 @@ describe("real journal decoration surface", () => {
 
     // When
     await user.click(screen.getByRole("button", { name: "일지 꾸미기 열기" }))
+    await openJournalDecorationTools()
 
     // Then
     expect(screen.getByText("기록이 없는 날에는 테마만 미리 볼 수 있어요.")).toBeVisible()
@@ -188,6 +198,7 @@ describe("real journal decoration surface", () => {
       />,
     )
     await user.click(screen.getByRole("button", { name: "일지 꾸미기 열기" }))
+    await openJournalDecorationTools()
     await user.click(screen.getByRole("button", { name: "하늘 일지 테마 미리보기" }))
     expect(screen.getByText("하늘 일지 테마 미리보기 중")).toBeVisible()
 
@@ -220,10 +231,36 @@ describe("real journal decoration surface", () => {
 
     // When
     await user.click(screen.getByRole("button", { name: "일지 꾸미기 열기" }))
+    await openJournalDecorationTools()
     await user.click(screen.getByRole("button", { name: "맑은 날 오른쪽 위에 사용" }))
 
     // Then
     expect(screen.getByRole("status")).toHaveTextContent("꾸미기를 저장하지 못했어요. 일지는 그대로예요.")
     expect(loadDecorationState().pagePlacements).toEqual([])
+  })
+
+  it("moves a saved decoration with the keyboard and keeps the normalized position after remount", async () => {
+    const user = userEvent.setup()
+    storeEntries([session("one")])
+    const base = createEmptyDecorationState()
+    expect(saveDecorationState(decorationStateSchema.parse({
+      ...base,
+      pagePlacements: [{ date: DATE, slot: "TOP_CORNER", itemId: "STICKER_WEATHER_SUN" }],
+    })).ok).toBe(true)
+    const first = render(<LogDetail date={DATE} />)
+
+    await user.click(screen.getByRole("button", { name: "일지 꾸미기 열기" }))
+    const movable = screen.getByRole("button", { name: /맑은 날 선택됨/u })
+    fireEvent.keyDown(movable, { key: "ArrowLeft" })
+
+    expect(loadDecorationState().pagePlacements[0]?.transform).toEqual({
+      xPercent: 84,
+      yPercent: 14,
+      scale: 1,
+      rotationDeg: 0,
+    })
+    first.unmount()
+    render(<LogDetail date={DATE} />)
+    expect(screen.getByTestId("journal-slot-top-corner").closest<HTMLElement>(".decorated-journal-page__free-item")).toHaveStyle({ left: "84%" })
   })
 })
