@@ -8,6 +8,7 @@ import {
   decorationCatalogItem,
   decorationStateSchema,
   loadDecorationState,
+  parseStoredDecorationState,
 } from "../domain/decorations"
 import {
   applyJournalDecoration,
@@ -148,5 +149,45 @@ describe("emoji sticker decoration contract", () => {
 
     // 전용 슬롯 3칸이 전부이며 이모지 전 품목이 그 3칸만 호환한다.
     expect(EMOJI_STICKER_SLOTS).toHaveLength(3)
+  })
+
+  it("keeps legacy slots intact and renders a moved sticker from normalized page coordinates", () => {
+    const state = decorationStateSchema.parse({
+      ...createEmptyDecorationState(),
+      pagePlacements: [{
+        date: "2026-08-29",
+        slot: "BODY_STICKER_1",
+        itemId: "EMOJI_FIRE",
+        transform: { xPercent: 72, yPercent: 34, scale: 1.4, rotationDeg: 12 },
+      }],
+    })
+
+    const { container } = render(
+      <DecoratedJournalPageFrame date="2026-08-29" state={state}>
+        <p>오늘 훈련 기록</p>
+      </DecoratedJournalPageFrame>,
+    )
+
+    const freeItem = container.querySelector<HTMLElement>(".decorated-journal-page__free-item")
+    expect(freeItem).not.toBeNull()
+    expect(freeItem).toHaveStyle({ left: "72%", top: "34%" })
+    expect(freeItem?.style.transform).toContain("rotate(12deg)")
+    expect(freeItem?.style.transform).toContain("scale(1.4)")
+    expect(screen.queryByTestId("journal-sticker-rail")).toBeNull()
+  })
+
+  it("drops only an invalid free transform while preserving the saved decoration", () => {
+    const base = createEmptyDecorationState()
+    const stored = parseStoredDecorationState(JSON.stringify({
+      ...base,
+      pagePlacements: [{
+        date: "2026-08-29",
+        slot: "BODY_STICKER_1",
+        itemId: "EMOJI_FIRE",
+        transform: { xPercent: 999, yPercent: 34, scale: 1, rotationDeg: 0 },
+      }],
+    }))
+
+    expect(stored?.pagePlacements).toEqual([{ date: "2026-08-29", slot: "BODY_STICKER_1", itemId: "EMOJI_FIRE" }])
   })
 })

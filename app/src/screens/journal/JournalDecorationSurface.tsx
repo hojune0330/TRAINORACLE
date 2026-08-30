@@ -11,12 +11,13 @@ import {
   readDecorationStateSerialized,
   saveDecorationStateIfCurrent,
 } from "../../domain/decorations"
-import type { DecorationCatalogItem, DecorationSlot, DecorationState } from "../../domain/decorations"
+import type { DecorationCatalogItem, DecorationPlacementTransform, DecorationSlot, DecorationState } from "../../domain/decorations"
 import {
   applyJournalDecoration,
   previewJournalDecoration,
   removeJournalDecoration,
   resolveJournalDecorationSlot,
+  updateJournalDecorationTransform,
 } from "../../domain/journal-decoration-state"
 import { withJosa } from "../../domain/korean-josa"
 import { JournalDecorationToolbar } from "./JournalDecorationToolbar"
@@ -42,10 +43,12 @@ export function JournalDecorationSurface({
   const [storageVersion, setStorageVersion] = React.useState(() => readDecorationStateSerialized())
   const [preview, setPreview] = React.useState<DecorationState | null>(null)
   const [open, setOpen] = React.useState(false)
+  const [drawerOpen, setDrawerOpen] = React.useState(false)
   const [notice, setNotice] = React.useState("")
   const [undoState, setUndoState] = React.useState<DecorationState | null>(null)
   const [replacement, setReplacement] = React.useState<Replacement | null>(null)
   const [previewItemId, setPreviewItemId] = React.useState<string | null>(null)
+  const [selectedSlot, setSelectedSlot] = React.useState<DecorationSlot | null>(null)
   const visible = preview ?? canonical
   const items = DECORATION_CATALOG.filter((item) => (
     isThemeDecorationId(item.id)
@@ -98,51 +101,88 @@ export function JournalDecorationSurface({
         return
       }
     }
-    commit(applyJournalDecoration(canonical, item, date, slot), `${withJosa(item.name, "을/를")} 저장했어요.`)
+    const next = applyJournalDecoration(canonical, item, date, slot)
+    if (commit(next, `${withJosa(item.name, "을/를")} 저장했어요.`)) {
+      const resolvedSlot = resolveJournalDecorationSlot(canonical, item, date, slot)
+      if (resolvedSlot !== undefined) setSelectedSlot(resolvedSlot)
+      setDrawerOpen(false)
+    }
   }
 
   const close = (): void => {
     setOpen(false)
+    setDrawerOpen(false)
     setPreview(null)
     setPreviewItemId(null)
     setReplacement(null)
+    setSelectedSlot(null)
     setNotice("")
+  }
+
+  const transformPlacement = (slot: DecorationSlot, transform: DecorationPlacementTransform): void => {
+    setSelectedSlot(slot)
+    commit(updateJournalDecorationTransform(canonical, date, slot, transform), "위치와 크기를 저장했어요.")
   }
 
   return (
     <>
-      <JournalDecorationToolbar
-        hasEntries={hasEntries}
-        items={items}
-        open={open}
-        activeItemIds={activeItemIds}
-        canUndo={undoState !== null}
-        notice={notice}
-        previewItemId={previewItemId}
-        onOpen={() => setOpen(true)}
-        onClose={close}
-        onPreview={(item, slot) => {
-          setPreview(previewJournalDecoration(canonical, item, date, slot))
-          setPreviewItemId(item.id)
-          setNotice("")
-        }}
-        onApply={apply}
-        onRemove={(item) => commit(removeJournalDecoration(canonical, item, date), `${withJosa(item.name, "을/를")} 제거했어요.`)}
-        onUndo={() => {
-          const previous = undoState
-          if (previous !== null && saveDecorationStateIfCurrent(previous, storageVersion).ok) {
-            setCanonical(previous)
-            setStorageVersion(JSON.stringify(previous))
-            setPreview(null)
-            setUndoState(null)
-            setPreviewItemId(null)
-            setNotice("이전 꾸미기로 되돌렸어요.")
-          } else {
-            setNotice("꾸미기를 저장하지 못했어요. 일지는 그대로예요.")
-          }
-        }}
-      />
-      <DecoratedJournalPageFrame date={date} state={visible} pageTopRef={pageTopRef}>{children}</DecoratedJournalPageFrame>
+      <div className={`journal-decoration-workspace${open ? " journal-decoration-workspace--open" : ""}`} role={open ? "dialog" : undefined} aria-label={open ? "이 일지 꾸미기" : undefined} aria-modal={open ? "true" : undefined}>
+        <JournalDecorationToolbar
+          hasEntries={hasEntries}
+          items={items}
+          open={open}
+          drawerOpen={drawerOpen}
+          activeItemIds={activeItemIds}
+          canUndo={undoState !== null}
+          notice={notice}
+          previewItemId={previewItemId}
+          onOpen={() => {
+            setOpen(true)
+            setDrawerOpen(false)
+          }}
+          onDrawerOpen={() => setDrawerOpen(true)}
+          onDrawerClose={() => setDrawerOpen(false)}
+          onClose={close}
+          onPreview={(item, slot) => {
+            setPreview(previewJournalDecoration(canonical, item, date, slot))
+            setPreviewItemId(item.id)
+            setNotice("")
+          }}
+          onApply={apply}
+          onRemove={(item) => {
+            if (commit(removeJournalDecoration(canonical, item, date), `${withJosa(item.name, "을/를")} 제거했어요.`)) {
+              setSelectedSlot(null)
+              setDrawerOpen(false)
+            }
+          }}
+          onUndo={() => {
+            const previous = undoState
+            if (previous !== null && saveDecorationStateIfCurrent(previous, storageVersion).ok) {
+              setCanonical(previous)
+              setStorageVersion(JSON.stringify(previous))
+              setPreview(null)
+              setUndoState(null)
+              setPreviewItemId(null)
+              setSelectedSlot(null)
+              setNotice("이전 꾸미기로 되돌렸어요.")
+            } else {
+              setNotice("꾸미기를 저장하지 못했어요. 일지는 그대로예요.")
+            }
+          }}
+        />
+        <DecoratedJournalPageFrame
+          date={date}
+          state={visible}
+          pageTopRef={pageTopRef}
+          editable={open && preview === null}
+          selectedSlot={selectedSlot}
+          onSelectPlacement={(slot) => {
+            setSelectedSlot(slot)
+            setDrawerOpen(false)
+          }}
+          onTransformPlacement={transformPlacement}
+        >{children}</DecoratedJournalPageFrame>
+      </div>
       {replacement !== null && (
         <JournalConfirmationDialog
           title="꾸미기 교체 확인"
@@ -154,7 +194,11 @@ export function JournalDecorationSurface({
               applyJournalDecoration(canonical, replacement.item, date, replacement.slot),
               `${withJosa(replacement.item.name, "으로/로")} 교체했어요.`,
             )
-            if (ok) setReplacement(null)
+            if (ok) {
+              setSelectedSlot(replacement.slot)
+              setDrawerOpen(false)
+              setReplacement(null)
+            }
             return ok
           }}
         />

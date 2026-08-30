@@ -40,9 +40,12 @@ test("keeps a zero-point starter decoration on the real diary through refresh an
   await page.goto("/?app=1")
   await page.getByRole("button", { name: /Zero point decoration check.*상세 열기/u }).click()
   await page.getByRole("button", { name: "일지 꾸미기 열기" }).click()
+  await page.getByRole("button", { name: "모든 꾸미기 도구" }).click()
   await page.getByRole("button", { name: "맑은 날 오른쪽 위에 사용" }).click()
 
   await expect(page.getByTestId("journal-slot-top-corner")).toBeVisible()
+  await expect(page.locator(".journal-decoration-toolbar")).toHaveAttribute("data-open", "false")
+  await page.getByRole("button", { name: "꾸미기 완료" }).click()
   const reservedRailGeometry = await page.evaluate(() => {
     const sticker = document.querySelector<HTMLElement>('[data-testid="journal-slot-top-corner"]')
     const content = document.querySelector<HTMLElement>('[data-testid="decorated-journal-content"]')
@@ -68,6 +71,7 @@ test("keeps a zero-point starter decoration on the real diary through refresh an
   await expect(page.getByTestId("journal-slot-top-corner")).toBeVisible()
 
   await page.getByRole("button", { name: "일지 꾸미기 열기" }).click()
+  await page.getByRole("button", { name: "모든 꾸미기 도구" }).click()
   await page.getByRole("button", { name: "맑은 날 제거" }).click()
 
   await expect(page.getByTestId("journal-slot-top-corner")).toHaveCount(0)
@@ -120,13 +124,17 @@ test("keeps three emoji stickers in a reserved rail outside journal text", async
   await page.goto("/?app=1")
   await page.getByRole("button", { name: /Emoji safe rail check.*상세 열기/u }).click()
   await page.getByRole("button", { name: "일지 꾸미기 열기" }).click()
+  await page.getByRole("button", { name: "이모지 스티커 도구" }).click()
   await page.getByRole("button", { name: "불꽃 이모지 붙이기" }).click()
+  await page.getByRole("button", { name: "이모지 스티커 도구" }).click()
   await page.getByRole("button", { name: "메달 이모지 붙이기" }).click()
+  await page.getByRole("button", { name: "이모지 스티커 도구" }).click()
   await page.getByRole("button", { name: "바나나 이모지 붙이기" }).click()
 
   await expect(page.getByTestId("journal-slot-body-sticker-1")).toBeVisible()
   await expect(page.getByTestId("journal-slot-body-sticker-2")).toBeVisible()
   await expect(page.getByTestId("journal-slot-body-sticker-3")).toBeVisible()
+  await page.getByRole("button", { name: "꾸미기 완료" }).click()
 
   const geometry = await page.evaluate(() => {
     const content = document.querySelector<HTMLElement>('[data-testid="decorated-journal-content"]')
@@ -152,4 +160,88 @@ test("keeps three emoji stickers in a reserved rail outside journal text", async
   expect(geometry?.stickersInsideRail).toBe(true)
   expect(geometry?.railIgnoresPointers).toBe(true)
   expect(geometry?.documentFits).toBe(true)
+})
+
+test("drags and resizes a decoration on the full-screen diary canvas and keeps it after refresh", async ({ page }) => {
+  await page.addInitScript(() => {
+    const now = new Date()
+    const date = [
+      now.getFullYear(),
+      String(now.getMonth() + 1).padStart(2, "0"),
+      String(now.getDate()).padStart(2, "0"),
+    ].join("-")
+    window.localStorage.setItem("trainoracle.journal.v1", JSON.stringify([{
+      id: "free-decoration-entry",
+      kind: "post-session",
+      date,
+      savedAt: `${date}T09:00:00.000Z`,
+      syncState: "local",
+      system: "base",
+      title: "Free decoration movement check",
+      distanceKm: "5",
+      durationMin: "30",
+      avgPace: "6:00",
+      rpe: 4,
+      memo: "",
+      fieldProvenance: {
+        distanceKm: { provenance: "EXPLICIT" },
+        durationMin: { provenance: "EXPLICIT" },
+        avgPace: { provenance: "EXPLICIT" },
+        rpe: { provenance: "EXPLICIT" },
+      },
+    }]))
+  })
+
+  await page.setViewportSize({ width: 375, height: 667 })
+  await page.goto("/?app=1")
+  await page.getByRole("button", { name: /Free decoration movement check.*상세 열기/u }).click()
+  await page.getByRole("button", { name: "일지 꾸미기 열기" }).click()
+  await page.getByRole("button", { name: "모든 꾸미기 도구" }).click()
+  await page.getByRole("button", { name: "맑은 날 오른쪽 위에 사용" }).click()
+
+  const movable = page.getByRole("button", { name: /맑은 날 선택됨/u })
+  const start = await movable.boundingBox()
+  expect(start).not.toBeNull()
+  if (start === null) return
+  await page.mouse.move(start.x + start.width / 2, start.y + start.height / 2)
+  await page.mouse.down()
+  await page.mouse.move(start.x + start.width / 2 - 52, start.y + start.height / 2 + 64, { steps: 6 })
+  await page.mouse.up()
+
+  const moved = await expect.poll(() => page.evaluate(() => {
+    const raw = window.localStorage.getItem("trainoracle.decorations.v2")
+    const state = raw === null ? null : JSON.parse(raw) as { pagePlacements?: Array<{ transform?: { xPercent: number; yPercent: number } }> }
+    return state?.pagePlacements?.[0]?.transform ?? null
+  })).not.toBeNull()
+  void moved
+
+  const resize = page.getByRole("button", { name: "맑은 날 크기 조절" })
+  const resizeBox = await resize.boundingBox()
+  expect(resizeBox).not.toBeNull()
+  if (resizeBox === null) return
+  await page.mouse.move(resizeBox.x + resizeBox.width / 2, resizeBox.y + resizeBox.height / 2)
+  await page.mouse.down()
+  await page.mouse.move(resizeBox.x + resizeBox.width / 2 + 36, resizeBox.y + resizeBox.height / 2 + 36, { steps: 5 })
+  await page.mouse.up()
+
+  await expect.poll(() => page.evaluate(() => {
+    const raw = window.localStorage.getItem("trainoracle.decorations.v2")
+    const state = raw === null ? null : JSON.parse(raw) as { pagePlacements?: Array<{ transform?: { scale: number } }> }
+    return state?.pagePlacements?.[0]?.transform?.scale ?? 0
+  })).toBeGreaterThan(1)
+
+  const savedTransform = await page.evaluate(() => {
+    const raw = window.localStorage.getItem("trainoracle.decorations.v2")
+    const state = raw === null ? null : JSON.parse(raw) as { pagePlacements?: Array<{ transform?: unknown }> }
+    return state?.pagePlacements?.[0]?.transform ?? null
+  })
+  await page.getByRole("button", { name: "꾸미기 완료" }).click()
+  await page.reload()
+  await page.getByRole("button", { name: /Free decoration movement check.*상세 열기/u }).click()
+  await expect(page.locator(".decorated-journal-page__free-item--readonly")).toBeVisible()
+  expect(await page.evaluate(() => {
+    const raw = window.localStorage.getItem("trainoracle.decorations.v2")
+    const state = raw === null ? null : JSON.parse(raw) as { pagePlacements?: Array<{ transform?: unknown }> }
+    return state?.pagePlacements?.[0]?.transform ?? null
+  })).toEqual(savedTransform)
 })

@@ -37,12 +37,13 @@ export type {
 } from "./decoration-catalog"
 export {
   createEmptyDecorationState,
+  decorationPlacementTransformSchema,
   decorationStateSchema,
   isCompatiblePlacement,
   migrateLegacyDecorationState,
   parseStoredDecorationState,
 } from "./decoration-schema"
-export type { DecorationPagePlacement, DecorationState } from "./decoration-schema"
+export type { DecorationPagePlacement, DecorationPlacementTransform, DecorationState } from "./decoration-schema"
 export {
   DECORATION_STORAGE_KEY_V1,
   DECORATION_STORAGE_KEY_V2,
