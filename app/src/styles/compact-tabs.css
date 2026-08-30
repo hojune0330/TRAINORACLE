@@ -88,9 +88,10 @@
 }
 
 /* Keep enough trailing scroll range to align the diary paper after the
- * example header becomes 20px shorter (64px -> 44px). */
+ * example header becomes 20px shorter (64px -> 44px), including small
+ * cross-platform font-metric differences at the maximum scroll position. */
 .minji-page {
-  padding-bottom: calc(48px + env(safe-area-inset-bottom));
+  padding-bottom: calc(64px + env(safe-area-inset-bottom));
 }
 
 .decoration-shop--open .decoration-shop__header {

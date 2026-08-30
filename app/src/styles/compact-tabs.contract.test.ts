@@ -23,7 +23,7 @@ describe("compact tab density", () => {
   it("keeps a 44px target around a 32px visible tab face", () => {
     expect(compactTabsCss).toMatch(/\.app-compact-tab\s*\{[\s\S]*min-height:\s*var\(--app-touch-min\)\s*!important/u)
     expect(compactTabsCss).toMatch(/\.app-compact-tab::before\s*\{[\s\S]*inset:\s*6px 0/u)
-    expect(compactTabsCss).toContain("padding-bottom: calc(48px + env(safe-area-inset-bottom))")
+    expect(compactTabsCss).toContain("padding-bottom: calc(64px + env(safe-area-inset-bottom))")
     expect(compactTabsCss).toMatch(/\.decoration-shop--open \.decoration-shop__header\.decoration-shop__header--collapsed\s*\{[\s\S]*max-height:\s*0/u)
   })
 
