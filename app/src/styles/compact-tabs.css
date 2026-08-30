@@ -90,13 +90,22 @@
 /* Keep enough trailing scroll range to align the diary paper after the
  * example header becomes 20px shorter (64px -> 44px). */
 .minji-page {
-  padding-bottom: calc(42px + env(safe-area-inset-bottom));
+  padding-bottom: calc(48px + env(safe-area-inset-bottom));
 }
 
 .decoration-shop--open .decoration-shop__header {
   min-height: var(--app-touch-min);
   max-height: calc(var(--app-touch-min) + env(safe-area-inset-top));
   padding: env(safe-area-inset-top) 12px 0;
+}
+
+@media (max-width: 759px) {
+  .decoration-shop--open .decoration-shop__header.decoration-shop__header--collapsed {
+    min-height: 0;
+    max-height: 0;
+    padding-block: 0;
+    border-bottom: 0;
+  }
 }
 
 .journal-decoration-toolbar > header {
