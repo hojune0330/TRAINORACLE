@@ -84,13 +84,16 @@ describe("AppShell journal archive routing", () => {
   })
 
   it("returns a Minji example opened from home back to home", async () => {
+    window.localStorage.clear()
     const user = userEvent.setup()
     render(<AppShell />)
 
     await user.click(screen.getByRole("button", { name: /민지의 예시 일지 보기/u }))
     await user.click(await screen.findByRole("button", { name: /돌아가기/u }))
 
-    expect(screen.getByRole("heading", { name: "내 기록" })).toBeVisible()
+    expect(screen.getByRole("heading", {
+      name: "달리기 일지를 남기고, 내 기록으로 훈련 계획을 받아요.",
+    })).toBeVisible()
   })
 
   it("opens the journal archive from the dedicated journal tab", async () => {

@@ -219,7 +219,8 @@ export function Home({
       {model.homeMode !== "WELCOME" && (
         <DecorationShop
           earnedPoints={engagement.points}
-          showPreview={entries.length > 0}
+          showPreview={false}
+          hasJournalEntries={entries.length > 0}
           onSpentPointsChange={setSpentPoints}
         />
       )}

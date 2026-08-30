@@ -34,7 +34,6 @@ export function buildTrainingHomeViewModel(
   const visibleAnalysis = analysisEntries.filter((entry) => isValidIsoDate(entry.date) && entry.date <= today)
   const todayCount = visibleEntries.filter((entry) => entry.date === today).length
   const journalDays = new Set(visibleEntries.map((entry) => entry.date)).size
-  const analysisDays = new Set(visibleAnalysis.map((entry) => entry.date)).size
   const week = thisWeekStats([...visibleAnalysis], today)
   const briefing = buildBriefing(visibleAnalysis, today)
   const nextTraining = nextTrainingFor(plan, today)
@@ -65,7 +64,9 @@ export function buildTrainingHomeViewModel(
       : week.distanceKm > 0
         ? `이번 주 ${week.sessions}회 · ${week.distanceKm}km`
         : `이번 주 ${week.sessions}회 · 입력된 거리 없음`,
-    showMinjiPrompt: analysisDays < 7,
+    // 민지 예시는 기록 전 기대 모습을 보여 주는 온보딩이다. 실제 기록을
+    // 하나라도 남긴 뒤에는 내 기록이 첫 화면의 주인공이어야 한다.
+    showMinjiPrompt: visibleEntries.length === 0,
     nextTraining,
     briefing,
   }

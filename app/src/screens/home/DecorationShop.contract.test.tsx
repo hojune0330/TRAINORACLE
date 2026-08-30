@@ -26,6 +26,14 @@ describe("decoration shop surface", () => {
     expect(screen.queryByRole("region", { name: "꾸미기 미리보기" })).toBeNull()
   })
 
+  it("keeps returning users on their own journal flow instead of replaying a large sample preview", () => {
+    render(<DecorationShop earnedPoints={8} showPreview={false} hasJournalEntries />)
+
+    expect(screen.getByText("내 기록에 꾸미기")).toBeVisible()
+    expect(screen.getByText("꾸미기 보관함 · 사용 가능 8P")).toBeVisible()
+    expect(screen.queryByRole("region", { name: "꾸미기 미리보기" })).toBeNull()
+  })
+
   it("opens a keyboard-closable editor with the preview and catalog controls separated", async () => {
     const user = userEvent.setup()
     render(<DecorationShop earnedPoints={0} />)

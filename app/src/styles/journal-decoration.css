@@ -205,7 +205,7 @@
   bottom: 0;
   left: 0;
   z-index: 55;
-  max-height: min(52dvh, 520px);
+  max-height: min(66dvh, 620px);
   margin: 0;
   border-top: 1px solid var(--ink);
   padding: 0 16px max(12px, env(safe-area-inset-bottom));
@@ -228,10 +228,8 @@
 }
 
 .journal-decoration-toolbar > header {
-  position: sticky;
-  top: 0;
-  z-index: 2;
-  min-height: 60px;
+  position: static;
+  min-height: 50px;
   margin-inline: -16px;
   padding: 8px 16px;
   border-bottom: 1px solid var(--line);
@@ -264,15 +262,15 @@
 .journal-decoration-toolbar__items article {
   min-width: 0;
   border: 1px solid var(--hair);
-  padding: 8px;
+  padding: 6px;
   display: grid;
-  grid-template-columns: 46px minmax(0, 1fr);
-  gap: 8px;
+  grid-template-columns: 40px minmax(0, 1fr);
+  gap: 6px;
 }
 
 .journal-decoration-toolbar__items article:has(.journal-decoration-toolbar__previewing) { border-color: var(--ink-blue); }
 
-.journal-decoration-toolbar__items img { width: 46px; height: 46px; object-fit: contain; }
+.journal-decoration-toolbar__items img { width: 40px; height: 40px; object-fit: contain; }
 
 /*
  * 이모지 스티커 그리드: 44px 터치 타깃(계약 §6), 유니코드 텍스트 렌더.
@@ -327,6 +325,7 @@
     max-height: 100dvh;
     border-left: 1px solid var(--line);
   }
+  .journal-decoration-toolbar > header { position: sticky; top: 0; z-index: 2; }
 }
 
 @media (max-width: 350px) {

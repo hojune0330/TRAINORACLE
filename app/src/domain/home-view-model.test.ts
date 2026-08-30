@@ -293,7 +293,13 @@ describe("training home view model", () => {
     const model = buildTrainingHomeViewModel(importedEntries, [], null, "2026-08-03")
 
     expect(model.analysisSummary).toBe("분석에 쓸 직접 입력 기록이 없어요")
-    expect(model.showMinjiPrompt).toBe(true)
+    expect(model.showMinjiPrompt).toBe(false)
+  })
+
+  it("hides the example prompt after the first real journal record", () => {
+    const model = buildTrainingHomeViewModel([entry], [], null, "2026-08-03")
+
+    expect(model.showMinjiPrompt).toBe(false)
   })
 
   it("does not claim all direct input is missing when it only falls outside this week", () => {
