@@ -145,14 +145,14 @@ function emojiStickerItems(): readonly DecorationCatalogItem[] {
 }
 
 export const DECORATION_CATALOG = [
-  { id: "THEME_TRACK_NOTEBOOK", name: "트랙 노트", typeLabel: "페이지 테마", description: "기록을 차분하게 읽는 기본 테마예요.", fallbackLabel: "트랙 노트 미리보기", assetPath: "decorations/theme-track-notebook.webp", category: "THEME", compatibleSlots: [], cost: 0, starterOwned: true },
-  { id: "INK_NAVY", name: "남색 잉크", typeLabel: "글자색", description: "조용하고 또렷한 기본 잉크색이에요.", fallbackLabel: "남색 잉크 예시", assetPath: "decorations/ink-navy.webp", category: "INK", compatibleSlots: [], cost: 0, starterOwned: true },
-  { id: "STICKER_WEATHER_SUN", name: "맑은 날", typeLabel: "스티커", description: "가벼운 날씨를 보여 주는 스티커예요.", fallbackLabel: "맑은 날 예시", assetPath: "decorations/sticker-weather-sun.webp", category: "STICKER", compatibleSlots: ["TOP_CORNER", "BODY_MARGIN"], cost: 0, starterOwned: true },
-  { id: "STAMP_REST_DAY", name: "푹 쉬었어요", typeLabel: "도장", description: "회복과 쉼을 보여 주는 도장이에요.", fallbackLabel: "푹 쉬었어요 예시", assetPath: "decorations/stamp-rest-day.webp", category: "STAMP", compatibleSlots: ["PAGE_FOOTER"], cost: 0, starterOwned: true },
-  { id: "TAPE_CHECKER", name: "체크 테이프", typeLabel: "마스킹 테이프", description: "페이지의 시작을 정리하는 테이프예요.", fallbackLabel: "체크 테이프 예시", assetPath: "decorations/tape-checker.webp", category: "TAPE", compatibleSlots: ["HEADER_TAPE"], cost: 0, starterOwned: true },
-  { id: "THEME_SKY_JOURNAL", name: "하늘 일지 테마", typeLabel: "페이지 테마", description: "회복 페이지에 어울리는 맑은 배경이에요.", fallbackLabel: "하늘 일지 테마 예시", assetPath: "decorations/theme-sky-journal.webp", category: "THEME", compatibleSlots: [], cost: 12, starterOwned: false },
-  { id: "STICKER_FINISH_LINE", name: "결승선 스티커", typeLabel: "스티커", description: "기록의 마무리를 보여 주는 스티커예요.", fallbackLabel: "결승선 스티커 예시", assetPath: "decorations/sticker-finish-line.webp", category: "STICKER", compatibleSlots: ["TOP_CORNER", "BODY_MARGIN"], cost: 8, starterOwned: false },
-  { id: "AVATAR_START_LINE", name: "출발선 아바타", typeLabel: "아바타", description: "일지 첫머리에 출발선을 표시하는 작은 아바타예요.", fallbackLabel: "출발선 아바타 예시", assetPath: "decorations/avatar-start-line.webp", category: "AVATAR", compatibleSlots: [], cost: 20, starterOwned: false },
+  { id: "THEME_TRACK_NOTEBOOK", name: "트랙 노트", typeLabel: "페이지 테마", description: "줄노트처럼 훈련 내용을 차분하게 정리해요.", fallbackLabel: "트랙 노트 미리보기", assetPath: "decorations/theme-track-notebook.webp", category: "THEME", compatibleSlots: [], cost: 0, starterOwned: true },
+  { id: "INK_NAVY", name: "남색 잉크", typeLabel: "글자색", description: "일지 본문을 또렷한 남색으로 보여 줘요.", fallbackLabel: "남색 잉크 예시", assetPath: "decorations/ink-navy.webp", category: "INK", compatibleSlots: [], cost: 0, starterOwned: true },
+  { id: "STICKER_WEATHER_SUN", name: "맑은 날", typeLabel: "스티커", description: "맑았던 날의 일지 위쪽에 붙이는 스티커예요.", fallbackLabel: "맑은 날 예시", assetPath: "decorations/sticker-weather-sun.webp", category: "STICKER", compatibleSlots: ["TOP_CORNER", "BODY_MARGIN"], cost: 0, starterOwned: true },
+  { id: "STAMP_REST_DAY", name: "푹 쉬었어요", typeLabel: "도장", description: "휴식이나 회복을 기록한 날에 찍는 도장이에요.", fallbackLabel: "푹 쉬었어요 예시", assetPath: "decorations/stamp-rest-day.webp", category: "STAMP", compatibleSlots: ["PAGE_FOOTER"], cost: 0, starterOwned: true },
+  { id: "TAPE_CHECKER", name: "체크 테이프", typeLabel: "마스킹 테이프", description: "페이지 위쪽을 구분하는 체크무늬 테이프예요.", fallbackLabel: "체크 테이프 예시", assetPath: "decorations/tape-checker.webp", category: "TAPE", compatibleSlots: ["HEADER_TAPE"], cost: 0, starterOwned: true },
+  { id: "THEME_SKY_JOURNAL", name: "하늘 일지 테마", typeLabel: "페이지 테마", description: "하늘색 배경으로 회복 기록을 정리해요.", fallbackLabel: "하늘 일지 테마 예시", assetPath: "decorations/theme-sky-journal.webp", category: "THEME", compatibleSlots: [], cost: 12, starterOwned: false },
+  { id: "STICKER_FINISH_LINE", name: "결승선 스티커", typeLabel: "스티커", description: "경기나 중요한 훈련을 마친 날에 붙여요.", fallbackLabel: "결승선 스티커 예시", assetPath: "decorations/sticker-finish-line.webp", category: "STICKER", compatibleSlots: ["TOP_CORNER", "BODY_MARGIN"], cost: 8, starterOwned: false },
+  { id: "AVATAR_START_LINE", name: "출발선 아바타", typeLabel: "아바타", description: "출발선에 선 러너를 일지 위쪽에 보여 줘요.", fallbackLabel: "출발선 아바타 예시", assetPath: "decorations/avatar-start-line.webp", category: "AVATAR", compatibleSlots: [], cost: 20, starterOwned: false },
   ...emojiStickerItems(),
 ] as const satisfies readonly DecorationCatalogItem[]
 
