@@ -37,6 +37,19 @@
 
 .journal-reader-position strong { color: var(--ink); font-family: var(--sans); font-size: 12px; font-weight: 600; }
 .journal-reader-position span { color: var(--ink-3); font-family: var(--mono); font-size: 9px; }
+.journal-reader-position__track {
+  width: 46px;
+  height: 2px;
+  display: block;
+  overflow: hidden;
+  background: var(--hair);
+}
+.journal-reader-position__track > b {
+  height: 100%;
+  display: block;
+  background: var(--brand);
+  transition: width 220ms var(--ease-out-strong);
+}
 
 /*
  * 미감 개선 2026-08-29: 하드코딩 #fffdf8 → var(--paper).
@@ -146,6 +159,7 @@
 
 @media (prefers-reduced-motion: reduce) {
   .decorated-journal-page__emoji { animation: none; }
+  .journal-reader-position__track > b { transition: none; }
 }
 
 .decorated-journal-page__asset-fallback {

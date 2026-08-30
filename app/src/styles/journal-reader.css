@@ -1,17 +1,55 @@
-.journal-day-reader {
+.journal-page-turn-surface {
+  --journal-swipe-offset: 0px;
   touch-action: pan-y;
+  overscroll-behavior-x: contain;
+}
+
+.journal-page-turn-surface .decorated-journal-page {
+  transform: translate3d(var(--journal-swipe-offset), 0, 0);
+  transition: transform 180ms var(--ease-out-strong);
+}
+
+.journal-page-turn-surface[data-swipe-active="true"] .decorated-journal-page {
+  transition: none;
+}
+
+.journal-page-scroll-target {
+  scroll-margin-block-start: 12px;
 }
 
 .journal-reader-page {
-  animation: journal-page-arrive 160ms ease-out;
+  animation: journal-page-arrive 200ms var(--ease-out-strong);
+}
+
+.journal-page-turn-surface[data-page-turn-direction="next"] .journal-reader-page {
+  animation-name: journal-page-arrive-next;
+}
+
+.journal-page-turn-surface[data-page-turn-direction="previous"] .journal-reader-page {
+  animation-name: journal-page-arrive-previous;
 }
 
 @keyframes journal-page-arrive {
-  from { opacity: 0.55; transform: translateX(5px); }
+  from { opacity: 0.58; transform: translateX(0); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes journal-page-arrive-next {
+  from { opacity: 0.58; transform: translateX(8px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes journal-page-arrive-previous {
+  from { opacity: 0.58; transform: translateX(-8px); }
   to { opacity: 1; transform: translateX(0); }
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .journal-page-turn-surface .decorated-journal-page {
+    transform: none;
+    transition: none;
+  }
+
   .journal-reader-page {
     animation: none;
   }

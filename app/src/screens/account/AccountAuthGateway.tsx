@@ -18,6 +18,7 @@ import {
 } from "../../domain/account/auth-onboarding"
 import type { AuthMethod } from "../../domain/account/auth-onboarding"
 import { formatBirthDateInput } from "./birth-date-input"
+import { useActiveContentScroll } from "../../hooks/useActiveContentScroll"
 
 type GatewayStep = "method" | "eligibility" | "email" | "email-sent" | "phone" | "phone-code" | "under14"
 
@@ -48,6 +49,8 @@ export function AccountAuthGateway({
   const [phoneResendSeconds, setPhoneResendSeconds] = React.useState(0)
   const [busy, setBusy] = React.useState(false)
   const [notice, setNotice] = React.useState<string | null>(null)
+  const activeStepRef = React.useRef<HTMLDivElement>(null)
+  useActiveContentScroll(step, activeStepRef, undefined, true)
 
   React.useEffect(() => {
     if (phoneResendSeconds <= 0) return
@@ -157,7 +160,7 @@ export function AccountAuthGateway({
   }
 
   return (
-    <div className="account-auth" data-step={step}>
+    <div ref={activeStepRef} className="account-auth active-content-scroll-target" data-step={step}>
       {step === "method" && (
         <>
           <div className="account-auth__intro">

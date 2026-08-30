@@ -10,6 +10,7 @@ type DecoratedJournalPageFrameProps = {
   readonly date: string
   readonly state: DecorationState
   readonly children: React.ReactNode
+  readonly pageTopRef?: React.Ref<HTMLDivElement>
 }
 
 const SLOT_TEST_IDS = {
@@ -61,7 +62,7 @@ function DecorationAsset({
   )
 }
 
-export function DecoratedJournalPageFrame({ date, state, children }: DecoratedJournalPageFrameProps) {
+export function DecoratedJournalPageFrame({ date, state, children, pageTopRef }: DecoratedJournalPageFrameProps) {
   const theme = decorationCatalogItem(state.equipped.themeId)
   const avatar = state.equipped.avatarId === null
     ? undefined
@@ -99,7 +100,12 @@ export function DecoratedJournalPageFrame({ date, state, children }: DecoratedJo
         </div>
       )}
       <div className="decorated-journal-page__body" data-has-side-rail={bodyMargin !== undefined ? "true" : undefined}>
-        <div key={date} className="decorated-journal-page__content journal-reader-page" data-testid="decorated-journal-content">
+        <div
+          key={date}
+          ref={pageTopRef}
+          className="decorated-journal-page__content journal-reader-page journal-page-scroll-target"
+          data-testid="decorated-journal-content"
+        >
           {children}
         </div>
         {bodyMargin !== undefined && (

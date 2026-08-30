@@ -3,6 +3,8 @@ import { ChevronRight, X } from "lucide-react"
 import { DecoratedJournalPageFrame } from "../../components/DecoratedJournalPageFrame"
 import { JournalPageNavigator } from "../../components/JournalPageNavigator"
 import { decorationCatalogItem } from "../../domain/decoration-catalog"
+import { useActiveContentScroll } from "../../hooks/useActiveContentScroll"
+import { useJournalPageTurn } from "../../hooks/useJournalPageTurn"
 import { MINJI_JOURNAL_PAGES, minjiDecorationState } from "./minji-journal-data"
 import type { MinjiJournalPage } from "./minji-journal-data"
 
@@ -10,15 +12,6 @@ export function MinjiJournal({ onWriteLog }: { readonly onWriteLog?: () => void 
   const [selectedIndex, setSelectedIndex] = React.useState<number | null>(null)
   const openerIndexRef = React.useRef<number | null>(null)
   const headingRef = React.useRef<HTMLHeadingElement>(null)
-
-  React.useEffect(() => {
-    if (selectedIndex === null) return
-    document.documentElement.scrollTop = 0
-    document.body.scrollTop = 0
-    const appScrollRegion = document.querySelector<HTMLElement>(".app-scroll-region")
-    if (appScrollRegion !== null) appScrollRegion.scrollTop = 0
-    headingRef.current?.focus({ preventScroll: true })
-  }, [selectedIndex])
 
   const closePage = React.useCallback(() => {
     setSelectedIndex(null)
@@ -131,8 +124,11 @@ type MinjiPageProps = {
 function MinjiPage({ page, position, headingRef, onClose, onPrevious, onNext, onWriteLog }: MinjiPageProps) {
   const [openNotationPageId, setOpenNotationPageId] = React.useState<MinjiJournalPage["id"] | null>(null)
   const [openQuestionPageId, setOpenQuestionPageId] = React.useState<MinjiJournalPage["id"] | null>(null)
+  const pageTopRef = React.useRef<HTMLDivElement>(null)
   const notationOpen = openNotationPageId === page.id
   const questionOpen = openQuestionPageId === page.id
+  const pageTurn = useJournalPageTurn({ onPrevious, onNext })
+  useActiveContentScroll(page.id, pageTopRef, headingRef)
 
   React.useEffect(() => {
     setOpenNotationPageId(null)
@@ -151,12 +147,20 @@ function MinjiPage({ page, position, headingRef, onClose, onPrevious, onNext, on
   })
 
   return (
-    <article className="minji-page" aria-labelledby="minji-page-title">
+    <article
+      className="minji-page journal-page-turn-surface"
+      aria-labelledby="minji-page-title"
+      aria-roledescription="좌우로 넘길 수 있는 예시 일지"
+      data-page-turn-direction={pageTurn.direction}
+      data-swipe-active={pageTurn.isDragging ? "true" : undefined}
+      style={{ "--journal-swipe-offset": `${pageTurn.dragOffset}px` } as React.CSSProperties}
+      {...pageTurn.touchHandlers}
+    >
       <header className="minji-page__header">
         <div><span>가상 기록 · 예시 꾸미기</span><small>{position} / {MINJI_JOURNAL_PAGES.length}</small></div>
         <button type="button" onClick={onClose} aria-label="민지의 일지 닫기" title="닫기"><X aria-hidden="true" size={20} /></button>
       </header>
-      <DecoratedJournalPageFrame date={page.date} state={state}>
+      <DecoratedJournalPageFrame date={page.date} state={state} pageTopRef={pageTopRef}>
         <div className="minji-page__body">
           <div className="minji-page__when">{page.date} · {page.when}</div>
           <h1 id="minji-page-title" ref={headingRef} tabIndex={-1}>{page.title}</h1>
@@ -194,7 +198,12 @@ function MinjiPage({ page, position, headingRef, onClose, onPrevious, onNext, on
           )}
         </div>
       </DecoratedJournalPageFrame>
-      <JournalPageNavigator position={position} total={MINJI_JOURNAL_PAGES.length} onPrevious={onPrevious} onNext={onNext} />
+      <JournalPageNavigator
+        position={position}
+        total={MINJI_JOURNAL_PAGES.length}
+        onPrevious={onPrevious === undefined ? undefined : pageTurn.goPrevious}
+        onNext={onNext === undefined ? undefined : pageTurn.goNext}
+      />
       {onNext === undefined && <button type="button" className="minji-page__write" onClick={onWriteLog}>내 첫 페이지 적기</button>}
     </article>
   )

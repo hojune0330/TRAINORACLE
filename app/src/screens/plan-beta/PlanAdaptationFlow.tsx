@@ -26,6 +26,7 @@ import { TermHelp } from "../../components/TermHelp"
 import { loadEntries } from "../../domain/journal-store"
 import { derivePlanCycleResponse } from "../../domain/plan-cycle-response"
 import type { JournalEntry } from "../../domain/journal-schema"
+import { useActiveContentScroll } from "../../hooks/useActiveContentScroll"
 
 type Step = "closed" | "reason" | "cycle" | "record" | "safety" | "choice" | "review" | "result" | "pending"
 type Reason = "PB_SB" | "EXPLICIT_REQUEST"
@@ -60,6 +61,7 @@ export function PlanAdaptationFlow({
   const [busy, setBusy] = React.useState(false)
   const [pending, setPending] = React.useState<PendingNextFrameSuccessor | null>(null)
   const [pendingState, setPendingState] = React.useState<PlanBetaState | null>(null)
+  const activeStepRef = React.useRef<HTMLDivElement>(null)
   const pendingReady = pendingState === state
   const matchingPending = pendingReady ? pending : null
   const records = React.useMemo(
@@ -70,6 +72,7 @@ export function PlanAdaptationFlow({
     () => derivePlanCycleResponse(onLoadEntries(), state),
     [onLoadEntries, state],
   )
+  useActiveContentScroll(step === "closed" ? null : step, activeStepRef)
 
   React.useEffect(() => {
     let current = true
@@ -172,7 +175,7 @@ export function PlanAdaptationFlow({
       </button>
 
       {step !== "closed" && (
-        <div className="plan-adaptation__panel" aria-live="polite">
+        <div ref={activeStepRef} className="plan-adaptation__panel active-content-scroll-target" aria-live="polite">
           {step === "reason" && (
             <DecisionStep title="조정 이유를 선택해 주세요" onBack={reset}>
               <p className="plan-adaptation__term-help">

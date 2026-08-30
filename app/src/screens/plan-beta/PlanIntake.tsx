@@ -52,6 +52,7 @@ const PREVIEW_REFINEMENTS: readonly {
 type PlanIntakeProps = {
   readonly step: IntakeStep
   readonly draft: IntakeDraft
+  readonly questionRef?: React.RefObject<HTMLDivElement>
   readonly onBack: () => void
   readonly onGoal: (distanceM: PlanBetaIntake["eventDistanceM"]) => void
   readonly onDivision: (division: CompetitionDivision) => void
@@ -77,6 +78,7 @@ type PlanIntakeProps = {
 export function PlanIntake({
   step,
   draft,
+  questionRef,
   onBack,
   onGoal,
   onDivision,
@@ -165,7 +167,7 @@ export function PlanIntake({
           ))}
         </div>
       )}
-      <div className="plan-eyebrow">{meta.eyebrow}</div>
+      <div ref={questionRef} className="plan-eyebrow active-content-scroll-target">{meta.eyebrow}</div>
       <div className="plan-heading-row">
         <h1 id="plan-intake-title">{meta.title}</h1>
         {meta.helpTerm !== null && <TermHelp term={meta.helpTerm} />}

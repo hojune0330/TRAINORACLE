@@ -50,6 +50,7 @@ import {
 } from "../domain/account/plan-cloud-backup"
 import type { PlanCloudPersistenceState } from "../domain/account/plan-cloud-backup"
 import type { PlannedSessionLogDraft } from "../domain/planned-session-link"
+import { useActiveContentScroll } from "../hooks/useActiveContentScroll"
 
 export function PlanBeta({
   onWriteLog,
@@ -106,6 +107,7 @@ export function PlanBeta({
   const [prescriptionBinding, setPrescriptionBinding] = React.useState<
     Omit<CandidatePrescriptionBinding, "generated">
   >({ kind: "fallback", code: "PACE_TARGET_FALLBACK_NO_EXPLICIT_ANCHOR" })
+  const intakeQuestionRef = React.useRef<HTMLDivElement>(null)
   const viewKey = notationReaderOpen
     ? "notation-reader"
     : stored !== null
@@ -119,9 +121,16 @@ export function PlanBeta({
         : `intake-${step}`
 
   React.useLayoutEffect(() => {
+    if (viewKey.startsWith("intake-")) return
     const scrollRegion = document.querySelector<HTMLElement>(".app-scroll-region")
     if (scrollRegion !== null) scrollRegion.scrollTop = 0
   }, [viewKey])
+  useActiveContentScroll(
+    viewKey.startsWith("intake-") ? viewKey : null,
+    intakeQuestionRef,
+    undefined,
+    true,
+  )
 
   React.useEffect(() => {
     if (stored !== null || !planCloudBackupEnabled()) {
@@ -408,6 +417,7 @@ export function PlanBeta({
       <PlanIntake
         key={step}
         step={step}
+        questionRef={intakeQuestionRef}
         draft={draft}
         onBack={() => setStep(previousIntakeStep(step, draft.eventGroup))}
         onJump={(target) => setStep(target)}

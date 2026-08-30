@@ -20,6 +20,7 @@ import { inputStyle } from "./input-style"
 import { FormSec, TopBar } from "./shared"
 import { StickyBar } from "./StickyBar"
 import type { EntryFormProps } from "./shared"
+import { useActiveContentScroll } from "../../hooks/useActiveContentScroll"
 
 type RaceStage = "pre" | "post"
 
@@ -40,6 +41,8 @@ export function RaceForm({ onBack, onDone, targetDate, initialEntry }: EntryForm
   const [paceError, setPaceError] = React.useState<string | null>(null)
   const [saveError, setSaveError] = React.useState(false)
   const memo = usePurposeScopedMemo(initial?.memo ?? "", initial?.memoPurpose)
+  const stageRef = React.useRef<HTMLDivElement>(null)
+  useActiveContentScroll(stage, stageRef, undefined, true)
 
   const persist = async () => {
     const hasPaceInput = paceMinutes.trim() !== "" || paceSeconds.trim() !== ""
@@ -84,7 +87,7 @@ export function RaceForm({ onBack, onDone, targetDate, initialEntry }: EntryForm
       <RaceHeader date={entryDate} isToday={entryDate === todayISO()} />
       <StageTabs stage={stage} onChange={setStage} />
 
-      <div key={stage} className="journal-flow-stage">
+      <div key={stage} ref={stageRef} className="journal-flow-stage active-content-scroll-target">
         {stage === "pre" ? (
           <RacePreChecks
           tension={tension}

@@ -18,6 +18,12 @@ test("moves from a choice to the next question and gives a clear journal save co
 
   await page.getByRole("button", { name: /^1500m/u }).click()
   await expect(page.getByRole("heading", { name: "현재 참가하거나 준비 중인 부문이 있나요?" })).toBeVisible()
+  await expect.poll(() => page.locator(".plan-eyebrow").evaluate((element) => (
+    Math.round(element.getBoundingClientRect().top)
+  ))).toBeLessThanOrEqual(testInfo.project.name === "reduced-motion" ? 160 : 48)
+  if (testInfo.project.name !== "reduced-motion") {
+    await expect.poll(() => page.locator(".app-scroll-region").evaluate((element) => element.scrollTop)).toBeGreaterThan(0)
+  }
   const nextAnimation = await page.locator(".plan-intake").evaluate((element) => getComputedStyle(element).animationName)
   expect(nextAnimation).toBe(testInfo.project.name === "reduced-motion" ? "none" : "flow-stage-enter")
 

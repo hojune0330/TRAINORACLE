@@ -7,6 +7,7 @@ import { PickStage, ReviewStage, SavedStage } from "./import-activities/ImportSt
 import type { ReadFailure } from "./import-activities/ImportStages"
 import { mono, secondaryBtn } from "./import-activities/styles"
 import { ActivityFileReadError, MAX_IMPORT_FILE_BYTES, readActivityFileText } from "./import-activities/read-file"
+import { useActiveContentScroll } from "../hooks/useActiveContentScroll"
 
 type Stage =
   | { readonly step: "pick" }
@@ -23,6 +24,8 @@ export function ImportActivities({ onBack, onOpenLog }: {
   const [busy, setBusy] = React.useState(false)
   const fileInputRef = React.useRef<HTMLInputElement>(null)
   const readControllerRef = React.useRef<AbortController | null>(null)
+  const stageRef = React.useRef<HTMLDivElement>(null)
+  useActiveContentScroll(stage.step, stageRef, undefined, true)
 
   React.useEffect(() => () => readControllerRef.current?.abort(), [])
 
@@ -113,34 +116,36 @@ export function ImportActivities({ onBack, onOpenLog }: {
         </div>
       </div>
 
-      {stage.step === "pick" && (
-        <PickStage
-          busy={busy}
-          failure={failure}
-          fileInputRef={fileInputRef}
-          onFile={handleFile}
-          onCancel={cancelRead}
-        />
-      )}
+      <div key={stage.step} ref={stageRef} className="active-stage-content active-content-scroll-target">
+        {stage.step === "pick" && (
+          <PickStage
+            busy={busy}
+            failure={failure}
+            fileInputRef={fileInputRef}
+            onFile={handleFile}
+            onCancel={cancelRead}
+          />
+        )}
 
-      {stage.step === "review" && (
-        <ReviewStage
-          drafts={stage.drafts}
-          result={stage.result}
-          selected={selected}
-          onToggle={toggle}
-          onSave={handleSave}
-          onRestart={() => { setStage({ step: "pick" }); setSelected(new Set()) }}
-        />
-      )}
+        {stage.step === "review" && (
+          <ReviewStage
+            drafts={stage.drafts}
+            result={stage.result}
+            selected={selected}
+            onToggle={toggle}
+            onSave={handleSave}
+            onRestart={() => { setStage({ step: "pick" }); setSelected(new Set()) }}
+          />
+        )}
 
-      {stage.step === "saved" && (
-        <SavedStage
-          outcome={stage.outcome}
-          onOpenLog={onOpenLog}
-          onRestart={() => { setStage({ step: "pick" }); setSelected(new Set()); setFailure(null) }}
-        />
-      )}
+        {stage.step === "saved" && (
+          <SavedStage
+            outcome={stage.outcome}
+            onOpenLog={onOpenLog}
+            onRestart={() => { setStage({ step: "pick" }); setSelected(new Set()); setFailure(null) }}
+          />
+        )}
+      </div>
     </div>
   )
 }
