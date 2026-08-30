@@ -1,0 +1,113 @@
+/*
+ * Compact navigation density
+ *
+ * The visible tab face is 32px high, while every button keeps a 44px touch
+ * target. This reclaims vertical space without making mobile taps unreliable.
+ * Answer controls such as RPE and training-purpose choices do not use these
+ * classes and intentionally keep their existing size.
+ */
+.app-compact-tabs {
+  gap: 4px !important;
+  min-height: var(--app-touch-min);
+  border: 0 !important;
+}
+
+.app-compact-tab {
+  position: relative;
+  isolation: isolate;
+  min-width: 0;
+  min-height: var(--app-touch-min) !important;
+  padding: 0 8px !important;
+  border: 0 !important;
+  background: transparent !important;
+  color: var(--ink-2) !important;
+  font-family: var(--sans) !important;
+  font-size: 11px !important;
+  font-weight: 600;
+  line-height: 1.2;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.app-compact-tab::before {
+  content: "";
+  position: absolute;
+  inset: 6px 0;
+  z-index: -1;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  background: var(--surface);
+}
+
+.app-compact-tab > span {
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+  white-space: nowrap;
+}
+
+.app-compact-tab[aria-pressed="true"] {
+  color: var(--bg) !important;
+}
+
+.app-compact-tab[aria-pressed="true"]::before {
+  border-color: var(--ink);
+  background: var(--ink);
+}
+
+.app-compact-tab:focus-visible {
+  outline: 2px solid var(--ink-blue);
+  outline-offset: -4px;
+}
+
+.journal-archive__mode-tabs,
+.monthly-trend__tabs {
+  margin: 14px 20px 0;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.monthly-trend__tabs {
+  margin: 0;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+/* The persistent five-tab bar is shared by every app screen. */
+.app-tab-bar__button svg {
+  width: 13px;
+  height: 13px;
+}
+
+/* Compact the top rails used by journal examples and decoration tools. */
+.minji-page__header {
+  min-height: var(--app-touch-min);
+  padding: 0 12px 0 16px;
+}
+
+.decoration-shop--open .decoration-shop__header {
+  min-height: var(--app-touch-min);
+  max-height: calc(var(--app-touch-min) + env(safe-area-inset-top));
+  padding: env(safe-area-inset-top) 12px 0;
+}
+
+.journal-decoration-toolbar > header {
+  min-height: var(--app-touch-min);
+  padding-block: 0;
+}
+
+.minji-page__header > button svg,
+.decoration-shop__header > button svg,
+.journal-decoration-toolbar__icon svg {
+  width: 14px;
+  height: 14px;
+}
+
+@media (max-width: 759px) {
+  .decoration-studio__situation-tabs.app-compact-tabs,
+  .decoration-studio__context-filter.app-compact-tabs {
+    display: contents;
+  }
+}

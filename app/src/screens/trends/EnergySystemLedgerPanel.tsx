@@ -108,15 +108,16 @@ export function EnergySystemLedgerPanel({
         몸을 측정한 결과가 아니라, 훈련 후 일지에서 직접 고른 주된 목적을 모아 보여줘요.
       </p>
 
-      <div className="energy-ledger__periods" aria-label="에너지 시스템 분석 기간">
+      <div className="energy-ledger__periods app-compact-tabs" aria-label="에너지 시스템 분석 기간">
         {PERIODS.map((option) => (
           <button
+            className="app-compact-tab"
             type="button"
             key={option.value}
             aria-pressed={period === option.value}
             onClick={() => setPeriod(option.value)}
           >
-            {option.label}
+            <span>{option.label}</span>
           </button>
         ))}
       </div>

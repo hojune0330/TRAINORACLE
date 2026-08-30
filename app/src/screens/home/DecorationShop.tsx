@@ -83,11 +83,11 @@ export function DecorationShop({
         </span>
         {open ? (
           <button ref={closeButtonRef} type="button" onClick={close} aria-label="꾸미기 닫기" title="꾸미기 닫기" tabIndex={headerCollapsed ? -1 : 0}>
-            <X aria-hidden="true" size={18} />
+            <X aria-hidden="true" size={14} />
           </button>
         ) : (
           <button type="button" onClick={openStudio} aria-label="꾸미기 열기">
-            <Palette aria-hidden="true" size={18} />
+            <Palette aria-hidden="true" size={14} />
             꾸미기
           </button>
         )}

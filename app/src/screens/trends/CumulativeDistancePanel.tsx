@@ -171,14 +171,15 @@ function PeriodToggle({ label, value, options, suffix, onChange }: {
   readonly onChange: (value: number) => void
 }) {
   return (
-    <div className="distance-overview__toggle" role="group" aria-label={label}>
+    <div className="distance-overview__toggle app-compact-tabs" role="group" aria-label={label}>
       {options.map((option) => (
         <button
           key={option}
+          className="app-compact-tab"
           type="button"
           aria-pressed={value === option}
           onClick={() => onChange(option)}
-        >{option}{suffix}</button>
+        ><span>{option}{suffix}</span></button>
       ))}
     </div>
   )

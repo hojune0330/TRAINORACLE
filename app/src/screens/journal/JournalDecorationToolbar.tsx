@@ -100,7 +100,7 @@ export function JournalDecorationToolbar(props: JournalDecorationToolbarProps) {
           <span>{props.hasEntries ? "미리 본 뒤 저장해요." : "기록이 없는 날에는 테마만 미리 볼 수 있어요."}</span>
         </div>
         <button ref={closeButtonRef} type="button" className="journal-decoration-toolbar__icon" onClick={props.onClose} aria-label="일지 꾸미기 닫기">
-          <X aria-hidden="true" size={17} />
+          <X aria-hidden="true" size={14} />
         </button>
       </header>
       <div className="journal-decoration-toolbar__items">

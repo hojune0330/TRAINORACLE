@@ -46,7 +46,7 @@ export function TabBar({ tab, onTab }: {
             aria-current={active ? "page" : undefined}
             data-active={active ? "true" : "false"}
           >
-            <Icon aria-hidden="true" size={17} strokeWidth={1.8} />
+            <Icon aria-hidden="true" size={13} strokeWidth={1.9} />
             <span>{label}</span>
           </button>
         )

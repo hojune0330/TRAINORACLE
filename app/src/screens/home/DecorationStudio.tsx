@@ -202,17 +202,17 @@ export function DecorationStudio({
         >
           <div className="decoration-studio__controls">
             <div className="decoration-studio__tab-rail">
-              <div className="decoration-studio__situation-tabs" aria-label="꾸미기 모음">
+              <div className="decoration-studio__situation-tabs app-compact-tabs" aria-label="꾸미기 모음">
                 {SITUATION_TABS.filter((tab) => ["RECOMMENDED", "RECENT", "FAVORITES", "ALL"].includes(tab.id)).map((tab) => (
-                  <button key={tab.id} type="button" aria-pressed={situation === tab.id} onClick={() => changeSituation(tab.id)}>
-                    {tab.label.replace(" 조합", "")}
+                  <button className="app-compact-tab" key={tab.id} type="button" aria-pressed={situation === tab.id} onClick={() => changeSituation(tab.id)}>
+                    <span>{tab.label.replace(" 조합", "")}</span>
                   </button>
                 ))}
               </div>
-              <div className="decoration-studio__context-filter" aria-label="오늘의 상황으로 찾기">
+              <div className="decoration-studio__context-filter app-compact-tabs" aria-label="오늘의 상황으로 찾기">
                 {SITUATION_TABS.filter((tab) => ["WEATHER", "RECOVERY", "COMPETITION", "SEASON"].includes(tab.id)).map((tab) => (
-                  <button key={tab.id} type="button" aria-pressed={situation === tab.id} onClick={() => changeSituation(tab.id)}>
-                    {tab.label}
+                  <button className="app-compact-tab" key={tab.id} type="button" aria-pressed={situation === tab.id} onClick={() => changeSituation(tab.id)}>
+                    <span>{tab.label}</span>
                   </button>
                 ))}
               </div>
