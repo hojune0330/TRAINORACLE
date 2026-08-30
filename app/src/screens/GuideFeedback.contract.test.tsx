@@ -26,9 +26,9 @@ describe("guide feedback entry", () => {
     render(<Guide />)
 
     expect(screen.getByRole("heading", { name: "민지의 일지" })).toBeVisible()
-    await user.click(screen.getByRole("button", { name: /2개월.*잠이 부족했던 날의 기록/u }))
+    await user.click(screen.getByRole("button", { name: /2개월.*5시간 잔 다음 날, RPE 8/u }))
 
-    expect(screen.getByRole("heading", { name: "잠이 부족했던 날의 기록" })).toBeVisible()
+    expect(screen.getByRole("heading", { name: "5시간 잔 다음 날, RPE 8" })).toBeVisible()
     expect(screen.getByText(/잠 때문이라고 확정할 수는 없어요/u)).toBeVisible()
     expect(screen.queryByText(/상관관계/u)).toBeNull()
 
@@ -40,7 +40,7 @@ describe("guide feedback entry", () => {
     const user = userEvent.setup()
     render(<Guide />)
 
-    await user.click(screen.getByRole("button", { name: /2개월.*잠이 부족했던 날의 기록/u }))
+    await user.click(screen.getByRole("button", { name: /2개월.*5시간 잔 다음 날, RPE 8/u }))
     fireEvent.keyDown(window, { key: "Escape" })
 
     expect(screen.getByRole("heading", { name: "민지의 일지" })).toBeVisible()
@@ -50,7 +50,7 @@ describe("guide feedback entry", () => {
     const user = userEvent.setup()
     render(<Guide />)
 
-    await user.click(screen.getByRole("button", { name: /10개월.*같은 훈련, 달라진 느낌/u }))
+    await user.click(screen.getByRole("button", { name: /10개월.*같은 1000m 반복, RPE 9에서 6/u }))
     expect(screen.getByText("민지의 가상 예시이며 따라 하는 훈련계획이 아니에요.")).toBeVisible()
     await user.click(screen.getByRole("button", { name: "훈련 표시 쉽게 보기" }))
 

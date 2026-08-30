@@ -11,13 +11,39 @@ async function swipeJournalLeft(page: import("@playwright/test").Page): Promise<
   })
 }
 
-async function expectDiaryContentAtReadableTop(page: import("@playwright/test").Page): Promise<void> {
-  await expect.poll(() => page.getByTestId("decorated-journal-content").evaluate((element) => (
-    Math.round(element.getBoundingClientRect().top)
-  ))).toBeLessThanOrEqual(96)
-  await expect.poll(() => page.getByTestId("decorated-journal-content").evaluate((element) => (
-    Math.round(element.getBoundingClientRect().top)
-  ))).toBeGreaterThanOrEqual(0)
+async function expectDecoratedPaperAtReadableTop(page: import("@playwright/test").Page): Promise<void> {
+  const readGeometry = () => page.evaluate(() => {
+    const region = document.querySelector<HTMLElement>(".app-scroll-region")
+    const header = document.querySelector<HTMLElement>(".minji-page__header")
+    const headerLabel = header?.querySelector<HTMLElement>("span")
+    const closeButton = header?.querySelector<HTMLElement>("button")
+    const guideBack = document.querySelector<HTMLElement>(".guide-screen__back")
+    const paper = document.querySelector<HTMLElement>(".minji-page > .decorated-journal-page")
+    if (region === null || header === null || headerLabel === null || headerLabel === undefined
+      || closeButton === null || closeButton === undefined || guideBack === null || paper === null) return null
+    const regionTop = Math.round(region.getBoundingClientRect().top)
+    return {
+      closeButtonBottom: Math.round(closeButton.getBoundingClientRect().bottom),
+      guideBackBottom: Math.round(guideBack.getBoundingClientRect().bottom),
+      headerLabelBottom: Math.round(headerLabel.getBoundingClientRect().bottom),
+      paperTop: Math.round(paper.getBoundingClientRect().top),
+      regionTop,
+    }
+  })
+  await expect.poll(async () => {
+    const geometry = await readGeometry()
+    if (geometry === null) return false
+    const paperOffset = geometry.paperTop - geometry.regionTop
+    return paperOffset >= 0 && paperOffset <= 12
+  }).toBe(true)
+  const geometry = await readGeometry()
+  expect(geometry).not.toBeNull()
+  if (geometry === null) return
+  expect(geometry.guideBackBottom).toBeLessThanOrEqual(geometry.regionTop)
+  expect(geometry.headerLabelBottom).toBeLessThanOrEqual(geometry.regionTop)
+  expect(geometry.closeButtonBottom).toBeLessThanOrEqual(geometry.regionTop)
+  expect(geometry.paperTop).toBeGreaterThanOrEqual(geometry.regionTop)
+  expect(geometry.paperTop).toBeLessThanOrEqual(geometry.regionTop + 12)
 }
 
 test("opens Minji's diary as a readable page stack", async ({ page }, testInfo) => {
@@ -49,23 +75,22 @@ test("opens Minji's diary as a readable page stack", async ({ page }, testInfo) 
   })
   expect(previewGeometry).not.toBeNull()
   expect(previewGeometry?.previewBottom).toBeLessThanOrEqual(previewGeometry?.listTop ?? 0)
-  const pageButton = page.getByRole("button", { name: /첫날.*처음 적은 한 줄/u })
+  const pageButton = page.getByRole("button", { name: /첫날.*4\.6km를 달린 첫 기록/u })
   await pageButton.click()
-  await expect(page.getByRole("heading", { name: "처음 적은 한 줄" })).toBeFocused()
-  await expect(page.getByText("가상 기록 · 예시 꾸미기")).toBeVisible()
+  await expect(page.getByRole("heading", { name: "4.6km를 달린 첫 기록" })).toBeFocused()
   expect(await page.evaluate(() => window.scrollY)).toBe(0)
-  await expectDiaryContentAtReadableTop(page)
-  await expect(page.getByText("시간 30분")).toBeVisible()
+  await expectDecoratedPaperAtReadableTop(page)
+  await expect(page.getByTestId("journal-slot-top-corner")).toBeVisible()
+  await expect(page.getByText("시간 30분", { exact: true })).toBeVisible()
   await expect(page.getByRole("heading", { name: "이 페이지에 쓴 꾸미기" })).toBeVisible()
   for (let pageNumber = 2; pageNumber <= 6; pageNumber += 1) {
     if (pageNumber === 2) await swipeJournalLeft(page)
     else await page.getByRole("button", { name: "다음 일지" }).click()
     await expect(page.getByText(`${pageNumber} / 6`).first()).toBeVisible()
-    await expect(page.getByText("가상 기록 · 예시 꾸미기")).toBeVisible()
     expect(await page.evaluate(() => window.scrollY)).toBe(0)
-    await expectDiaryContentAtReadableTop(page)
+    await expectDecoratedPaperAtReadableTop(page)
     if (pageNumber === 4) {
-      await expect(page.getByText("무릎이 신경 쓰이는 날의 상태를 남겼어요.")).toBeVisible()
+      await expect(page.getByText("걷기와 계단에서 느낀 오른쪽 무릎 불편함을 적었어요.")).toBeVisible()
     }
   }
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true)
