@@ -35,29 +35,15 @@ export function MonthlyTrendSection({
   return (
     <section aria-label="최근 4개월 추이" style={{ padding: "26px 20px 0" }}>
       <SectionLb>— 4 MONTHS · 설명 통계</SectionLb>
-      <div role="group" aria-label="추이 항목" style={{
-        display: "grid",
-        gridTemplateColumns: "repeat(4, minmax(0, 1fr))",
-        border: "1px solid var(--ink)",
-      }}>
-        {TREND_METRIC_OPTIONS.map((item, index) => (
+      <div className="monthly-trend__tabs app-compact-tabs" role="group" aria-label="추이 항목">
+        {TREND_METRIC_OPTIONS.map((item) => (
           <button
+            className="app-compact-tab"
             key={item.metric}
             type="button"
             aria-pressed={item.metric === metric}
             onClick={() => setMetric(item.metric)}
-            style={{
-              minWidth: 0,
-              minHeight: 44,
-              border: 0,
-              borderRight: index < TREND_METRIC_OPTIONS.length - 1 ? "1px solid var(--line)" : 0,
-              background: item.metric === metric ? "var(--ink)" : "transparent",
-              color: item.metric === metric ? "var(--bg)" : "var(--ink-2)",
-              fontFamily: "var(--mono)",
-              fontSize: 10,
-              cursor: "pointer",
-            }}
-          >{item.buttonLabel}</button>
+          ><span>{item.buttonLabel}</span></button>
         ))}
       </div>
 

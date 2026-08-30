@@ -232,9 +232,9 @@ function TermDetail({
         <p>{entry.short}</p>
       </header>
 
-      <div className="training-term__mode" aria-label="설명 수준">
-        <button type="button" aria-pressed={mode === "EASY"} onClick={() => onModeChange("EASY")}>쉬운 설명</button>
-        <button type="button" aria-pressed={mode === "PRO"} onClick={() => onModeChange("PRO")}>전문 설명</button>
+      <div className="training-term__mode app-compact-tabs" aria-label="설명 수준">
+        <button className="app-compact-tab" type="button" aria-pressed={mode === "EASY"} onClick={() => onModeChange("EASY")}><span>쉬운 설명</span></button>
+        <button className="app-compact-tab" type="button" aria-pressed={mode === "PRO"} onClick={() => onModeChange("PRO")}><span>전문 설명</span></button>
       </div>
 
       <div className="training-term__sections">

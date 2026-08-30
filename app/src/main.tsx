@@ -22,6 +22,7 @@ import "./styles/minji-showcase.css"
 import "./styles/account-auth.css"
 import "./styles/training-content.css"
 import "./styles/training-lexicon.css"
+import "./styles/compact-tabs.css"
 
 const showP3PaceHarness = import.meta.env.DEV
   && new URLSearchParams(window.location.search).get("p3-pace-fixture") === "1"

@@ -158,7 +158,7 @@ function MinjiPage({ page, position, headingRef, onClose, onPrevious, onNext, on
     >
       <header className="minji-page__header">
         <div><span>가상 기록 · 예시 꾸미기</span><small>{position} / {MINJI_JOURNAL_PAGES.length}</small></div>
-        <button type="button" onClick={onClose} aria-label="민지의 일지 닫기" title="닫기"><X aria-hidden="true" size={20} /></button>
+        <button type="button" onClick={onClose} aria-label="민지의 일지 닫기" title="닫기"><X aria-hidden="true" size={14} /></button>
       </header>
       <DecoratedJournalPageFrame date={page.date} state={state} frameTopRef={paperTopRef}>
         <div className="minji-page__body">

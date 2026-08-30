@@ -638,7 +638,7 @@ button, input, textarea, select { font: inherit; letter-spacing: inherit; }
 .app-tab-bar__button {
   min-width: 0;
   min-height: var(--app-tab-height);
-  padding: var(--space-2) 0 var(--space-1);
+  padding: 2px 0 1px;
   border: 0;
   background: transparent;
   color: var(--ink-2);
@@ -647,7 +647,7 @@ button, input, textarea, select { font: inherit; letter-spacing: inherit; }
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: var(--space-1);
+  gap: 1px;
 }
 
 .app-tab-bar__button[data-active="true"] {

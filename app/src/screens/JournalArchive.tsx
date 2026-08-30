@@ -132,12 +132,12 @@ export function JournalArchive({
         </div>
       </header>
 
-      <div style={{ margin: "14px 20px 0", display: "grid", gridTemplateColumns: "1fr 1fr", border: "1px solid var(--line)" }}>
-        <button type="button" aria-pressed={activeMode === "CALENDAR"} onClick={() => changeMode("CALENDAR")} style={modeButtonStyle(activeMode === "CALENDAR")}>
-          월간 달력
+      <div className="journal-archive__mode-tabs app-compact-tabs">
+        <button className="app-compact-tab" type="button" aria-pressed={activeMode === "CALENDAR"} onClick={() => changeMode("CALENDAR")}>
+          <span>월간 달력</span>
         </button>
-        <button type="button" aria-pressed={activeMode === "CYCLE"} onClick={() => changeMode("CYCLE")} style={modeButtonStyle(activeMode === "CYCLE")}>
-          9.5일 주기
+        <button className="app-compact-tab" type="button" aria-pressed={activeMode === "CYCLE"} onClick={() => changeMode("CYCLE")}>
+          <span>9.5일 주기</span>
         </button>
       </div>
 
@@ -194,16 +194,4 @@ export function JournalArchive({
       )}
     </div>
   )
-}
-
-function modeButtonStyle(active: boolean): React.CSSProperties {
-  return {
-    minHeight: 44,
-    border: 0,
-    background: active ? "var(--ink)" : "var(--surface)",
-    color: active ? "var(--bg)" : "var(--ink)",
-    cursor: "pointer",
-    fontFamily: "var(--sans)",
-    fontSize: 13,
-  }
 }
