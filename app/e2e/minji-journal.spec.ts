@@ -34,7 +34,11 @@ async function expectDecoratedPaperAtReadableTop(page: import("@playwright/test"
     const geometry = await readGeometry()
     if (geometry === null) return false
     const paperOffset = geometry.paperTop - geometry.regionTop
-    return paperOffset >= 0 && paperOffset <= 12
+    return paperOffset >= 0
+      && paperOffset <= 12
+      && geometry.guideBackBottom <= geometry.regionTop
+      && geometry.headerLabelBottom <= geometry.regionTop
+      && geometry.closeButtonBottom <= geometry.regionTop
   }).toBe(true)
   const geometry = await readGeometry()
   expect(geometry).not.toBeNull()
