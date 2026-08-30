@@ -11,6 +11,7 @@ type DecoratedJournalPageFrameProps = {
   readonly state: DecorationState
   readonly children: React.ReactNode
   readonly pageTopRef?: React.Ref<HTMLDivElement>
+  readonly frameTopRef?: React.Ref<HTMLElement>
 }
 
 const SLOT_TEST_IDS = {
@@ -62,7 +63,7 @@ function DecorationAsset({
   )
 }
 
-export function DecoratedJournalPageFrame({ date, state, children, pageTopRef }: DecoratedJournalPageFrameProps) {
+export function DecoratedJournalPageFrame({ date, state, children, pageTopRef, frameTopRef }: DecoratedJournalPageFrameProps) {
   const theme = decorationCatalogItem(state.equipped.themeId)
   const avatar = state.equipped.avatarId === null
     ? undefined
@@ -85,6 +86,7 @@ export function DecoratedJournalPageFrame({ date, state, children, pageTopRef }:
 
   return (
     <section
+      ref={frameTopRef}
       className="decorated-journal-page"
       data-theme-id={state.equipped.themeId}
       data-ink-id={state.equipped.inkId}

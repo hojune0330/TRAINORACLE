@@ -27,24 +27,24 @@ describe("Minji journal fixed page frame", () => {
     const user = userEvent.setup()
     render(<MinjiJournal />)
 
-    await user.click(screen.getByRole("button", { name: /첫날.*처음 적은 한 줄/u }))
-    await user.click(screen.getByRole("button", { name: "이 정도만 적어도 될까?" }))
-    expect(screen.getByText("괜찮아요. 기억하고 싶은 사실 한두 개만 남겨도 충분해요.")).toBeVisible()
+    await user.click(screen.getByRole("button", { name: /첫날.*4\.6km를 달린 첫 기록/u }))
+    await user.click(screen.getByRole("button", { name: "거리와 시간만 적어도 될까?" }))
+    expect(screen.getByText("네. 오늘 확인한 사실만 적고 모르는 항목은 비워도 돼요.")).toBeVisible()
 
     await user.click(screen.getByRole("button", { name: "다음 일지" }))
 
-    expect(screen.queryByText("괜찮아요. 기억하고 싶은 사실 한두 개만 남겨도 충분해요.")).toBeNull()
+    expect(screen.queryByText("네. 오늘 확인한 사실만 적고 모르는 항목은 비워도 돼요.")).toBeNull()
 
     await user.click(screen.getByRole("button", { name: "이전 일지" }))
 
-    expect(screen.queryByText("괜찮아요. 기억하고 싶은 사실 한두 개만 남겨도 충분해요.")).toBeNull()
+    expect(screen.queryByText("네. 오늘 확인한 사실만 적고 모르는 항목은 비워도 돼요.")).toBeNull()
   })
 
   it("keeps fixed chrome mounted while only the dated page content changes", async () => {
     const user = userEvent.setup()
     render(<MinjiJournal />)
 
-    await user.click(screen.getByRole("button", { name: /첫날.*처음 적은 한 줄/u }))
+    await user.click(screen.getByRole("button", { name: /첫날.*4\.6km를 달린 첫 기록/u }))
     const navigator = screen.getByRole("navigation", { name: "날짜별 일지 넘기기" })
     const datedPage = screen.getByTestId("decorated-journal-content")
     const fixedFrame = datedPage.closest(".decorated-journal-page")
@@ -66,7 +66,7 @@ describe("Minji journal fixed page frame", () => {
     })
     render(<MinjiJournal />)
 
-    await user.click(screen.getByRole("button", { name: /첫날.*처음 적은 한 줄/u }))
+    await user.click(screen.getByRole("button", { name: /첫날.*4\.6km를 달린 첫 기록/u }))
     const page = document.querySelector<HTMLElement>(".minji-page")
     expect(page).not.toBeNull()
     if (page === null) return
@@ -85,14 +85,15 @@ describe("Minji journal fixed page frame", () => {
       block: "start",
       inline: "nearest",
     }))
+    expect(scrollIntoView.mock.instances.at(-1)).toBe(document.querySelector(".minji-page > .decorated-journal-page"))
     expect(page.style.getPropertyValue("--journal-swipe-offset")).toBe("0px")
   })
 
   it("does not turn a page when the gesture begins on a page control", async () => {
     const user = userEvent.setup()
     render(<MinjiJournal />)
-    await user.click(screen.getByRole("button", { name: /첫날.*처음 적은 한 줄/u }))
-    const disclosure = screen.getByRole("button", { name: "이 정도만 적어도 될까?" })
+    await user.click(screen.getByRole("button", { name: /첫날.*4\.6km를 달린 첫 기록/u }))
+    const disclosure = screen.getByRole("button", { name: "거리와 시간만 적어도 될까?" })
 
     fireEvent.touchStart(disclosure, { changedTouches: [{ clientX: 250, clientY: 220 }] })
     fireEvent.touchEnd(disclosure, { changedTouches: [{ clientX: 120, clientY: 222 }] })

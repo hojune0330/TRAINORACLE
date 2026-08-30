@@ -1440,9 +1440,6 @@ button, input, textarea, select { font: inherit; letter-spacing: inherit; }
 
 .minji-page { min-height: 100%; padding-bottom: 20px; }
 .minji-page__header {
-  position: sticky;
-  top: 0;
-  z-index: 8;
   min-height: 64px;
   padding: 10px 18px 10px 20px;
   display: flex;
@@ -1451,10 +1448,9 @@ button, input, textarea, select { font: inherit; letter-spacing: inherit; }
   border-bottom: 1px solid var(--ink);
   background: var(--bg);
 }
-.minji-page .journal-page-scroll-target { scroll-margin-block-start: 64px; }
 .minji-page__header > div { display: grid; gap: 3px; font-family: var(--mono); font-size: 9.5px; color: var(--ink-3); }
 .minji-page__body { padding: 26px 20px 12px; }
-.minji-page h1 { margin-top: 7px; font-size: 24px; line-height: 1.25; }
+.minji-page h1 { margin-top: 7px; font-size: 24px; line-height: 1.25; text-wrap: balance; }
 .minji-page__situation { margin: 12px 0 0; font-family: var(--sans); font-size: 13.5px; line-height: 1.65; color: var(--ink-2); }
 .minji-page blockquote {
   margin: 18px 0 0;

@@ -51,7 +51,7 @@ export function MinjiJournal({ onWriteLog }: { readonly onWriteLog?: () => void 
     <section className="minji-index" aria-labelledby="minji-index-title">
       <div className="minji-index__eyebrow">가상 기록 · 예시 꾸미기</div>
       <h1 id="minji-index-title">민지의 일지</h1>
-      <p>처음의 짧은 기록부터, 쉬는 날과 다시 보는 날까지. 여섯 장의 예시를 펼쳐 보세요.</p>
+      <p>거리·시간·RPE, 쉬는 날, 통증, 경기 기록이 쌓이는 여섯 장을 차례로 보세요.</p>
       <MinjiIndexPreview />
       <div className="minji-index__stack" aria-label="민지의 예시 일지 목록">
         {MINJI_JOURNAL_PAGES.map((page, index) => (
@@ -124,11 +124,11 @@ type MinjiPageProps = {
 function MinjiPage({ page, position, headingRef, onClose, onPrevious, onNext, onWriteLog }: MinjiPageProps) {
   const [openNotationPageId, setOpenNotationPageId] = React.useState<MinjiJournalPage["id"] | null>(null)
   const [openQuestionPageId, setOpenQuestionPageId] = React.useState<MinjiJournalPage["id"] | null>(null)
-  const pageTopRef = React.useRef<HTMLDivElement>(null)
+  const paperTopRef = React.useRef<HTMLElement>(null)
   const notationOpen = openNotationPageId === page.id
   const questionOpen = openQuestionPageId === page.id
   const pageTurn = useJournalPageTurn({ onPrevious, onNext })
-  useActiveContentScroll(page.id, pageTopRef, headingRef)
+  useActiveContentScroll(page.id, paperTopRef, headingRef)
 
   React.useEffect(() => {
     setOpenNotationPageId(null)
@@ -160,11 +160,11 @@ function MinjiPage({ page, position, headingRef, onClose, onPrevious, onNext, on
         <div><span>가상 기록 · 예시 꾸미기</span><small>{position} / {MINJI_JOURNAL_PAGES.length}</small></div>
         <button type="button" onClick={onClose} aria-label="민지의 일지 닫기" title="닫기"><X aria-hidden="true" size={20} /></button>
       </header>
-      <DecoratedJournalPageFrame date={page.date} state={state} pageTopRef={pageTopRef}>
+      <DecoratedJournalPageFrame date={page.date} state={state} frameTopRef={paperTopRef}>
         <div className="minji-page__body">
           <div className="minji-page__when">{page.date} · {page.when}</div>
           <h1 id="minji-page-title" ref={headingRef} tabIndex={-1}>{page.title}</h1>
-          <div className="minji-page__vibe" aria-label="이날의 분위기">
+          <div className="minji-page__vibe" aria-label="기분, 몸 상태, 날씨">
             <span>기분 <strong>{page.mood}</strong></span>
             <span>몸 상태 <strong>{page.bodyCondition}</strong></span>
             <span>날씨 <strong>{page.weather}</strong></span>
