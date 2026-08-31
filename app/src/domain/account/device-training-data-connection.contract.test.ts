@@ -5,7 +5,7 @@ import {
 } from "../athlete-records"
 import { PLAN_BETA_STORAGE_KEY } from "../plan-beta-store"
 import { stateFixture } from "../plan-beta-store.test-fixture"
-import { DECORATION_STORAGE_KEY_V1, DECORATION_STORAGE_KEY_V2 } from "../decoration-store"
+import { DECORATION_STORAGE_KEY_V1, DECORATION_STORAGE_KEY_V2, DECORATION_STORAGE_KEY_V3 } from "../decoration-store"
 import { createEmptyDecorationState, parseStoredDecorationState } from "../decoration-schema"
 import {
   connectDeviceTrainingData,
@@ -191,7 +191,8 @@ describe("explicit device training data connection", () => {
 
     expect(result).toMatchObject({ ok: true, decorations: "connected" })
     expect(window.localStorage.getItem(DECORATION_STORAGE_KEY_V2)).toBeNull()
-    expect(window.localStorage.getItem(accountScopedStorageKeyFor(DECORATION_STORAGE_KEY_V2, USER_ID))).toBe(serialized)
+    /* P4 스키마 v3부터 계정 이동 대상 키는 v3다 — 소스의 v2/v1 키는 이동 후 제거된다. */
+    expect(window.localStorage.getItem(accountScopedStorageKeyFor(DECORATION_STORAGE_KEY_V3, USER_ID))).toBe(serialized)
   })
 
   it("treats an account default as empty but preserves two meaningful decoration histories", () => {
@@ -219,7 +220,7 @@ describe("explicit device training data connection", () => {
     expect(window.localStorage.getItem(accountScopedStorageKeyFor(DECORATION_STORAGE_KEY_V2, USER_ID))).toBe(account)
   })
 
-  it("normalizes a legacy device decoration payload into account v2 storage", () => {
+  it("normalizes a legacy device decoration payload into account v3 storage", () => {
     window.localStorage.setItem(DECORATION_STORAGE_KEY_V1, JSON.stringify({
       version: 1,
       spentPoints: 12,
@@ -228,11 +229,11 @@ describe("explicit device training data connection", () => {
     }))
 
     const result = connectDeviceTrainingData(USER_ID, TODAY)
-    const target = window.localStorage.getItem(accountScopedStorageKeyFor(DECORATION_STORAGE_KEY_V2, USER_ID))
+    const target = window.localStorage.getItem(accountScopedStorageKeyFor(DECORATION_STORAGE_KEY_V3, USER_ID))
 
     expect(result).toMatchObject({ ok: true, decorations: "connected" })
     expect(target).not.toBeNull()
-    expect(JSON.parse(target!)).toMatchObject({ version: 2, spentPoints: 12 })
+    expect(JSON.parse(target!)).toMatchObject({ version: 3, spentPoints: 12 })
     expect(window.localStorage.getItem(DECORATION_STORAGE_KEY_V1)).toBeNull()
   })
 })

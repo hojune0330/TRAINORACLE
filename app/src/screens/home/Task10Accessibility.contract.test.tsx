@@ -56,16 +56,19 @@ describe("task 10 mobile accessibility contract", () => {
     expect(navigationRule).toContain("min-width: var(--app-touch-min)")
   })
 
-  it("keeps decorations in reserved rails instead of covering journal text", () => {
+  it("keeps free-placement decorations from stealing taps over journal text", () => {
+    /* P4 v3: 예약 레일 대신 자유 배치 레이어 — 읽기 화면에서는 레이어와
+     * 읽기 전용 아이템이 pointer-events: none이라 본문 터치를 절대 가로채지 않는다. */
     const bodyRule = journalDecorationCss.match(/\.decorated-journal-page__body\s*\{[^}]*\}/u)?.[0] ?? ""
     const decorationRule = journalDecorationCss.match(/\.decorated-journal-page__avatar,[\s\S]*?\.decorated-journal-page__slot\s*\{[^}]*\}/u)?.[0] ?? ""
-    const mobileRule = journalDecorationCss.match(/@media \(max-width: 480px\)[\s\S]*?\.decorated-journal-page__side-rail\s*\{[^}]*\}/u)?.[0] ?? ""
+    const freeLayerRule = journalDecorationCss.match(/\.decorated-journal-page__free-layer\s*\{[^}]*\}/u)?.[0] ?? ""
+    const readonlyRule = journalDecorationCss.match(/\.decorated-journal-page__free-item--readonly\s*\{[^}]*\}/u)?.[0] ?? ""
 
     expect(bodyRule).toContain("display: grid")
     expect(decorationRule).not.toContain("position: absolute")
     expect(decorationRule).toContain("pointer-events: none")
-    expect(mobileRule).toContain("grid-template-columns: minmax(0, 1fr)")
-    expect(mobileRule).toContain("border-top: 1px dashed var(--hair)")
+    expect(freeLayerRule).toContain("pointer-events: none")
+    expect(readonlyRule).toContain("pointer-events: none")
   })
 
   it("removes animation and transition motion for reduced-motion users", () => {

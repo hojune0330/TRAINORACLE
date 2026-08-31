@@ -1,20 +1,11 @@
 import { BookOpen, Check, ChevronDown, Eye, Palette, PenLine, Redo2, Smile, Trash2, Undo2, X } from "lucide-react"
 import React from "react"
-import type { DecorationCatalogItem, DecorationSlot } from "../../domain/decorations"
-
-const SLOT_LABELS: Readonly<Record<DecorationSlot, string>> = {
-  HEADER_TAPE: "머리말",
-  TOP_CORNER: "오른쪽 위",
-  BODY_MARGIN: "본문 옆",
-  PAGE_FOOTER: "페이지 아래",
-  BODY_STICKER_1: "본문 스티커 ①",
-  BODY_STICKER_2: "본문 스티커 ②",
-  BODY_STICKER_3: "본문 스티커 ③",
-}
+import { MAX_DECORATION_ITEMS_PER_PAGE } from "../../domain/decorations"
+import type { DecorationCatalogItem } from "../../domain/decorations"
 
 /*
  * 이모지 스티커는 48종이라 행 목록 대신 44px 터치 타깃 그리드로 보여 준다.
- * 탭 = 붙이기(빈 칸 자동 배정), 붙은 것을 다시 탭 = 떼기.
+ * 탭 = 페이지에 붙이기(자유 배치, 최상단), 붙은 것을 다시 탭 = 전부 떼기.
  * 유니코드 텍스트 렌더 전용 — 이미지 자산 없음.
  */
 function EmojiStickerGrid({
@@ -31,7 +22,7 @@ function EmojiStickerGrid({
   if (items.length === 0) return null
   return (
     <div className="journal-decoration-toolbar__emoji-section">
-      <small>이모지 스티커 · 한 페이지에 3개까지</small>
+      <small>{`이모지 스티커 · 한 페이지에 장식 ${MAX_DECORATION_ITEMS_PER_PAGE}개까지`}</small>
       <div className="journal-decoration-toolbar__emoji-grid" role="group" aria-label="이모지 스티커">
         {items.map((item) => {
           const active = activeItemIds.has(item.id)
@@ -62,12 +53,12 @@ type JournalDecorationToolbarProps = {
   readonly canRedo: boolean
   readonly notice: string
   readonly previewItemId: string | null
-  readonly onApply: (item: DecorationCatalogItem, slot?: DecorationSlot) => void
+  readonly onApply: (item: DecorationCatalogItem) => void
   readonly onClose: () => void
   readonly onDrawerClose: () => void
   readonly onDrawerOpen: () => void
   readonly onOpen: () => void
-  readonly onPreview: (item: DecorationCatalogItem, slot?: DecorationSlot) => void
+  readonly onPreview: (item: DecorationCatalogItem) => void
   readonly onRemove: (item: DecorationCatalogItem) => void
   readonly onUndo: () => void
   readonly onRedo: () => void
@@ -149,24 +140,24 @@ export function JournalDecorationToolbar(props: JournalDecorationToolbarProps) {
         </header>
         <div className="journal-decoration-toolbar__items">
           {visibleItems.filter((item) => item.category !== "EMOJI_STICKER").map((item) => {
-            const slot = item.compatibleSlots[0]
-            const position = slot === undefined ? "" : `${SLOT_LABELS[slot]}에 `
+            const placeable = item.compatibleSlots.length > 0
             const active = props.activeItemIds.has(item.id)
             return (
               <article key={item.id}>
                 <img src={`${import.meta.env.BASE_URL}${item.assetPath}`} alt="" />
                 <div><small>{item.typeLabel}</small><strong>{item.name}</strong></div>
                 <div className="journal-decoration-toolbar__actions">
-                  <button type="button" onClick={() => props.onPreview(item, slot)} aria-label={`${item.name} ${position}미리보기`}>
+                  <button type="button" onClick={() => props.onPreview(item)} aria-label={`${item.name} 미리보기`}>
                     <Eye aria-hidden="true" size={14} /> 미리보기
                   </button>
-                  {props.hasEntries && active && item.compatibleSlots.length > 0 && (
+                  {props.hasEntries && active && placeable && (
                     <button type="button" onClick={() => props.onRemove(item)} aria-label={`${item.name} 제거`}>
                       <Trash2 aria-hidden="true" size={14} /> 제거
                     </button>
                   )}
-                  {props.hasEntries && !active && props.activeItemIds.has(`owned:${item.id}`) && (
-                    <button type="button" onClick={() => props.onApply(item, slot)} aria-label={`${item.name} ${position}사용`}>
+                  {/* v3: 배치형은 복수 허용이라 이미 붙어 있어도 더 붙일 수 있다. 테마·글자색·아바타는 비활성일 때만. */}
+                  {props.hasEntries && props.activeItemIds.has(`owned:${item.id}`) && (placeable || !active) && (
+                    <button type="button" onClick={() => props.onApply(item)} aria-label={`${item.name} 사용`}>
                       사용
                     </button>
                   )}

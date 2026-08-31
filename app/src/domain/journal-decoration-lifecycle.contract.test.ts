@@ -36,7 +36,7 @@ function seedPlacement(): void {
   const base = createEmptyDecorationState()
   const state = decorationStateSchema.parse({
     ...base,
-    pagePlacements: [{ date: DATE, slot: "TOP_CORNER", itemId: "STICKER_WEATHER_SUN" }],
+    pages: [{ date: DATE, items: [{ itemId: "STICKER_WEATHER_SUN", transform: { xPercent: 86, yPercent: 14, scale: 1, rotationDeg: 0 } }] }],
   })
   if (!saveDecorationState(state).ok) throw new Error("decoration fixture save failed")
 }
@@ -57,7 +57,7 @@ describe("journal decoration placement lifecycle", () => {
     // Then
     expect(entriesForDate(DATE)).toEqual([])
     expect(loadTrash()).toHaveLength(1)
-    expect(loadDecorationState().pagePlacements).toHaveLength(1)
+    expect(loadDecorationState().pages).toHaveLength(1)
   })
 
   it("keeps the date decoration when a trashed journal entry is restored", () => {
@@ -71,7 +71,7 @@ describe("journal decoration placement lifecycle", () => {
 
     // Then
     expect(entriesForDate(DATE)).toHaveLength(1)
-    expect(loadDecorationState().pagePlacements).toHaveLength(1)
+    expect(loadDecorationState().pages).toHaveLength(1)
   })
 
   it("removes the date decoration after the last recoverable entry is permanently deleted", () => {
@@ -85,7 +85,7 @@ describe("journal decoration placement lifecycle", () => {
 
     // Then
     expect(loadTrash()).toEqual([])
-    expect(loadDecorationState().pagePlacements).toEqual([])
+    expect(loadDecorationState().pages).toEqual([])
   })
 
   it("retains the date decoration when another active entry remains on that date", () => {
@@ -100,7 +100,7 @@ describe("journal decoration placement lifecycle", () => {
 
     // Then
     expect(entriesForDate(DATE)).toHaveLength(1)
-    expect(loadDecorationState().pagePlacements).toHaveLength(1)
+    expect(loadDecorationState().pages).toHaveLength(1)
   })
 
   it("removes the date decoration when the last trash entry expires after 30 days", () => {
@@ -114,6 +114,6 @@ describe("journal decoration placement lifecycle", () => {
     expect(purgeExpiredTrash(afterRetention)).toBe(1)
 
     // Then
-    expect(loadDecorationState().pagePlacements).toEqual([])
+    expect(loadDecorationState().pages).toEqual([])
   })
 })

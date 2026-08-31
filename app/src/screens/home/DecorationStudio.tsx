@@ -1,6 +1,5 @@
 import { BookOpen, Check, ChevronDown, Heart, HeartOff, MinusCircle, Palette, PenLine, Smile, Sparkles } from "lucide-react"
 import React from "react"
-import { JournalConfirmationDialog } from "../../components/JournalConfirmationDialog"
 import {
   DECORATION_CATALOG,
   EMOJI_STICKER_GROUPS,
@@ -12,11 +11,11 @@ import {
   saveDecorationStateIfCurrent,
   toggleFavoriteDecoration,
 } from "../../domain/decorations"
-import type { DecorationCatalogItem, DecorationPlacementTransform, DecorationSlot, DecorationState } from "../../domain/decorations"
+import type { DecorationCatalogItem, DecorationPlacementTransform, DecorationState } from "../../domain/decorations"
 import { withJosa } from "../../domain/korean-josa"
 import { DecorationStudioItem } from "./DecorationStudioItem"
 import { DecorationStudioPreview } from "./DecorationStudioPreview"
-import { resolveJournalDecorationSlot } from "../../domain/journal-decoration-state"
+import { journalDecorationItems } from "../../domain/journal-decoration-state"
 import { updateJournalDecorationTransform } from "../../domain/journal-decoration-state"
 import {
   DECORATION_PRESETS,
@@ -37,12 +36,6 @@ type PreviewSelection =
   | { readonly kind: "ITEM"; readonly item: DecorationCatalogItem }
   | { readonly kind: "PRESET"; readonly preset: DecorationPreset }
   | null
-
-type Replacement = {
-  readonly item: DecorationCatalogItem
-  readonly previous: DecorationCatalogItem
-  readonly slot: DecorationSlot
-}
 
 type PreviewMotionDirection = "BACKWARD" | "FORWARD" | "STAY"
 
@@ -76,9 +69,8 @@ export function DecorationStudio({
   const [situation, setSituation] = React.useState<SituationTabId>("RECOMMENDED")
   const [type, setType] = React.useState<TypeFilterId>("ALL")
   const [selection, setSelection] = React.useState<PreviewSelection>(null)
-  const [replacement, setReplacement] = React.useState<Replacement | null>(null)
   const [toolsOpen, setToolsOpen] = React.useState(false)
-  const [selectedSlot, setSelectedSlot] = React.useState<DecorationSlot | null>(null)
+  const [selectedIndex, setSelectedIndex] = React.useState<number | null>(null)
   const [previewMotionDirection, setPreviewMotionDirection] = React.useState<PreviewMotionDirection>("STAY")
   const previewDate = date
   const base = state
@@ -176,7 +168,7 @@ export function DecorationStudio({
   const changeDate = (nextDate: string) => {
     setPreviewMotionDirection(nextDate === date ? "STAY" : nextDate > date ? "FORWARD" : "BACKWARD")
     setSelection(null)
-    setSelectedSlot(null)
+    setSelectedIndex(null)
     onDateChange(nextDate)
   }
 
@@ -191,9 +183,9 @@ export function DecorationStudio({
     onCatalogScrolled?.(false)
   }
 
-  const transformPlacement = (slot: DecorationSlot, transform: DecorationPlacementTransform) => {
-    setSelectedSlot(slot)
-    persist(updateJournalDecorationTransform(state, date, slot, transform), "위치와 크기를 저장했어요.")
+  const transformPlacement = (index: number, transform: DecorationPlacementTransform) => {
+    setSelectedIndex(index)
+    persist(updateJournalDecorationTransform(state, date, index, transform), "위치와 크기를 저장했어요.")
   }
 
   const use = (item: DecorationCatalogItem) => {
@@ -201,22 +193,15 @@ export function DecorationStudio({
       onNotice("기록이 있는 날짜에만 날짜 장식을 저장할 수 있어요. 지금은 미리보기만 가능해요.")
       return
     }
-    if (isPlacementDecorationId(item.id)) {
-      /* 이모지는 빈 칸 자동 배정과 같은 규칙으로 교체 대상을 찾는다. */
-      const slot = resolveJournalDecorationSlot(state, item, date)
-      const current = slot === undefined ? undefined : state.pagePlacements.find((placement) => placement.date === date && placement.slot === slot)
-      const previous = current === undefined ? undefined : DECORATION_CATALOG.find((candidate) => candidate.id === current.itemId)
-      if (slot !== undefined && previous !== undefined && previous.id !== item.id) {
-        setReplacement({ item, previous, slot })
-        return
-      }
-    }
+    /* v3 자유 배치: 교체 확인 없이 배열 끝(최상단)에 추가된다. */
+    const nextIndex = journalDecorationItems(state, date).length
     const next = useOwnedDecorationItem(state, item, date)
+    if (next === null && isPlacementDecorationId(item.id)) {
+      onNotice("한 페이지에 붙일 수 있는 장식이 가득 찼어요.")
+      return
+    }
     if (persist(next, `${withJosa(item.name, "을/를")} 사용했어요.`)) {
-      if (isPlacementDecorationId(item.id)) {
-        const slot = resolveJournalDecorationSlot(state, item, date)
-        if (slot !== undefined) setSelectedSlot(slot)
-      }
+      if (isPlacementDecorationId(item.id)) setSelectedIndex(nextIndex)
       setSelection(null)
       closeTools()
     }
@@ -234,10 +219,10 @@ export function DecorationStudio({
         onNextDate={() => changeDate(moveDecorationDate(date, 1))}
         onToday={() => changeDate(today)}
         editable={selection === null}
-        selectedSlot={selectedSlot}
+        selectedIndex={selectedIndex}
         motionDirection={previewMotionDirection}
-        onSelectPlacement={(slot) => {
-          setSelectedSlot(slot)
+        onSelectPlacement={(index) => {
+          setSelectedIndex(index)
           closeTools()
         }}
         onTransformPlacement={transformPlacement}
@@ -343,7 +328,7 @@ export function DecorationStudio({
                         onClick={() => {
                           if (active) {
                             if (persist(removeDecorationItem(state, item, date), `${withJosa(item.name, "을/를")} 제거했어요.`)) {
-                              setSelectedSlot(null)
+                              setSelectedIndex(null)
                               closeTools()
                             }
                           } else use(item)
@@ -380,7 +365,7 @@ export function DecorationStudio({
                 selectedRemovable ? (
                   <button type="button" onClick={() => {
                     if (persist(removeDecorationItem(state, selectedItem, date), `${withJosa(selectedItem.name, "을/를")} 제거했어요.`)) {
-                      setSelectedSlot(null)
+                      setSelectedIndex(null)
                       setSelection(null)
                       closeTools()
                     }
@@ -398,24 +383,6 @@ export function DecorationStudio({
           <p className="decoration-studio__preset-note"><strong>{selection.preset.name}</strong> 조합을 미리 보고 있어요. 마음에 드는 항목을 아래에서 하나씩 고를 수 있어요.</p>
         )}
       </div>
-      {replacement !== null && (
-        <JournalConfirmationDialog
-          title="꾸미기를 바꿀까요?"
-          description={`${replacement.previous.name} 대신 ${withJosa(replacement.item.name, "을/를")} 이 칸에 놓아요.`}
-          confirmLabel="바꾸기"
-          onCancel={() => setReplacement(null)}
-          onConfirm={() => {
-            const ok = persist(useOwnedDecorationItem(state, replacement.item, date), `${withJosa(replacement.item.name, "을/를")} 사용했어요.`)
-            if (ok) {
-              setSelectedSlot(replacement.slot)
-              setSelection(null)
-              closeTools()
-              setReplacement(null)
-            }
-            return ok
-          }}
-        />
-      )}
     </div>
   )
 }

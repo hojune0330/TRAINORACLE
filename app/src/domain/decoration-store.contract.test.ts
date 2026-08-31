@@ -3,7 +3,10 @@ import {
   DECORATION_IDS,
   DECORATION_STORAGE_KEY_V1,
   DECORATION_STORAGE_KEY_V2,
+  DECORATION_STORAGE_KEY_V2_BACKUP,
+  DECORATION_STORAGE_KEY_V3,
   PAID_DECORATION_IDS,
+  V2_SLOT_DEFAULT_TRANSFORMS,
   loadDecorationState,
   purchaseDecoration,
   rememberDecorationUse,
@@ -20,8 +23,8 @@ import type { DecorationState } from "./decorations"
 const ownedAfterLoad = (paidOwned: readonly string[] = []) =>
   DECORATION_IDS.filter((id) => !(PAID_DECORATION_IDS as readonly string[]).includes(id) || paidOwned.includes(id))
 
-const EMPTY_V2: DecorationState = {
-  version: 2,
+const EMPTY_V3: DecorationState = {
+  version: 3,
   spentPoints: 0,
   ownedItemIds: ownedAfterLoad(),
   equipped: {
@@ -33,20 +36,22 @@ const EMPTY_V2: DecorationState = {
     favoriteItemIds: [],
     recentItemIds: [],
   },
-  pagePlacements: [],
+  pages: [],
   pointMeaning: "NON_ECONOMIC_NON_TRANSFERABLE_BETA",
 }
 
 beforeEach(() => window.localStorage.clear())
 afterEach(() => vi.restoreAllMocks())
 
-describe("decoration V1 to V2 migration", () => {
-  it("initializes the exact seven-field V2 state when both keys are absent", () => {
+describe("decoration V1/V2 to V3 migration", () => {
+  it("initializes the exact seven-field V3 state when no keys are present", () => {
     const state = loadDecorationState()
 
-    expect(state).toEqual(EMPTY_V2)
-    expect(JSON.parse(window.localStorage.getItem(DECORATION_STORAGE_KEY_V2) ?? "null")).toEqual(EMPTY_V2)
+    expect(state).toEqual(EMPTY_V3)
+    expect(JSON.parse(window.localStorage.getItem(DECORATION_STORAGE_KEY_V3) ?? "null")).toEqual(EMPTY_V3)
     expect(window.localStorage.getItem(DECORATION_STORAGE_KEY_V1)).toBeNull()
+    expect(window.localStorage.getItem(DECORATION_STORAGE_KEY_V2)).toBeNull()
+    expect(window.localStorage.getItem(DECORATION_STORAGE_KEY_V2_BACKUP)).toBeNull()
   })
 
   it("preserves partial legacy ownership, spend, and the original V1 bytes", () => {
@@ -65,94 +70,128 @@ describe("decoration V1 to V2 migration", () => {
     expect(window.localStorage.getItem(DECORATION_STORAGE_KEY_V1)).toBe(legacyBytes)
   })
 
-  it("migrates a valid zero-purchase V1 without inventing spend", () => {
-    const legacyBytes = JSON.stringify({
-      version: 1,
+  it("migrates V2 placements into ordered V3 coordinates and keeps the V2 bytes plus a one-time backup", () => {
+    const v2Bytes = JSON.stringify({
+      version: 2,
+      spentPoints: 20,
+      ownedItemIds: [...ownedAfterLoad(["STICKER_FINISH_LINE"])],
+      equipped: { themeId: "THEME_TRACK_NOTEBOOK", inkId: "INK_NAVY", avatarId: null },
+      library: { favoriteItemIds: [], recentItemIds: [] },
+      pagePlacements: [
+        { date: "2026-08-03", slot: "PAGE_FOOTER", itemId: "STAMP_REST_DAY" },
+        { date: "2026-08-03", slot: "HEADER_TAPE", itemId: "TAPE_CHECKER" },
+        { date: "2026-08-03", slot: "BODY_STICKER_2", itemId: "EMOJI_SUN" },
+      ],
+      pointMeaning: "NON_ECONOMIC_NON_TRANSFERABLE_BETA",
+    })
+    window.localStorage.setItem(DECORATION_STORAGE_KEY_V2, v2Bytes)
+
+    const state = loadDecorationState()
+
+    /* 슬롯 → 좌표 변환표 적용 + 레이어 순서: HEADER_TAPE → PAGE_FOOTER → BODY_STICKER_2 */
+    expect(state.pages).toEqual([
+      {
+        date: "2026-08-03",
+        items: [
+          { itemId: "TAPE_CHECKER", transform: V2_SLOT_DEFAULT_TRANSFORMS.HEADER_TAPE },
+          { itemId: "STAMP_REST_DAY", transform: V2_SLOT_DEFAULT_TRANSFORMS.PAGE_FOOTER },
+          { itemId: "EMOJI_SUN", transform: V2_SLOT_DEFAULT_TRANSFORMS.BODY_STICKER_2 },
+        ],
+      },
+    ])
+    expect(window.localStorage.getItem(DECORATION_STORAGE_KEY_V2)).toBe(v2Bytes)
+    expect(window.localStorage.getItem(DECORATION_STORAGE_KEY_V2_BACKUP)).toBe(v2Bytes)
+    expect(JSON.parse(window.localStorage.getItem(DECORATION_STORAGE_KEY_V3) ?? "null")).toEqual(state)
+  })
+
+  it("never overwrites an existing V2 backup on repeated migrations", () => {
+    const originalBytes = JSON.stringify({
+      version: 2,
       spentPoints: 0,
-      ownedItemIds: [],
+      ownedItemIds: ownedAfterLoad(),
+      equipped: { themeId: "THEME_TRACK_NOTEBOOK", inkId: "INK_NAVY", avatarId: null },
+      library: { favoriteItemIds: [], recentItemIds: [] },
+      pagePlacements: [{ date: "2026-08-03", slot: "TOP_CORNER", itemId: "STICKER_WEATHER_SUN" }],
       pointMeaning: "NON_ECONOMIC_NON_TRANSFERABLE_BETA",
     })
-    window.localStorage.setItem(DECORATION_STORAGE_KEY_V1, legacyBytes)
+    window.localStorage.setItem(DECORATION_STORAGE_KEY_V2, originalBytes)
+    loadDecorationState()
 
-    const state = loadDecorationState()
+    /* v3 키가 사라진 뒤 v2가 바뀌어도 백업은 최초 원본을 유지한다. */
+    window.localStorage.removeItem(DECORATION_STORAGE_KEY_V3)
+    const changedBytes = originalBytes.replace("STICKER_WEATHER_SUN", "STICKER_FINISH_LINE")
+    window.localStorage.setItem(DECORATION_STORAGE_KEY_V2, changedBytes)
+    loadDecorationState()
 
-    expect(state).toEqual(EMPTY_V2)
-    expect(window.localStorage.getItem(DECORATION_STORAGE_KEY_V1)).toBe(legacyBytes)
-    expect(window.localStorage.getItem(DECORATION_STORAGE_KEY_V2)).toBe(JSON.stringify(EMPTY_V2))
+    expect(window.localStorage.getItem(DECORATION_STORAGE_KEY_V2_BACKUP)).toBe(originalBytes)
   })
 
-  it("preserves every recognized legacy purchase and ignores an unknown legacy item", () => {
-    const legacyBytes = JSON.stringify({
-      version: 1,
-      spentPoints: 40,
-      ownedItemIds: ["THEME_SKY_JOURNAL", "STICKER_FINISH_LINE", "AVATAR_START_LINE", "UNKNOWN_ITEM"],
-      pointMeaning: "NON_ECONOMIC_NON_TRANSFERABLE_BETA",
-    })
-    window.localStorage.setItem(DECORATION_STORAGE_KEY_V1, legacyBytes)
-
-    const state = loadDecorationState()
-
-    expect(state.ownedItemIds).toEqual(ownedAfterLoad(["THEME_SKY_JOURNAL", "STICKER_FINISH_LINE", "AVATAR_START_LINE"]))
-    expect(state.spentPoints).toBe(40)
-    expect(window.localStorage.getItem(DECORATION_STORAGE_KEY_V1)).toBe(legacyBytes)
-  })
-
-  it("uses valid V2 as authoritative without merging a conflicting V1", () => {
+  it("uses valid V3 as authoritative without reading a conflicting V2", () => {
     const authoritative = {
-      ...EMPTY_V2,
+      ...EMPTY_V3,
       spentPoints: 12,
       ownedItemIds: ownedAfterLoad(["THEME_SKY_JOURNAL"]),
     }
-    window.localStorage.setItem(DECORATION_STORAGE_KEY_V2, JSON.stringify(authoritative))
-    window.localStorage.setItem(DECORATION_STORAGE_KEY_V1, JSON.stringify({
-      version: 1,
+    window.localStorage.setItem(DECORATION_STORAGE_KEY_V3, JSON.stringify(authoritative))
+    window.localStorage.setItem(DECORATION_STORAGE_KEY_V2, JSON.stringify({
+      version: 2,
       spentPoints: 40,
       ownedItemIds: ["AVATAR_START_LINE"],
+      equipped: { themeId: "THEME_TRACK_NOTEBOOK", inkId: "INK_NAVY", avatarId: null },
+      library: { favoriteItemIds: [], recentItemIds: [] },
+      pagePlacements: [],
       pointMeaning: "NON_ECONOMIC_NON_TRANSFERABLE_BETA",
     }))
 
     expect(loadDecorationState()).toEqual(authoritative)
+    expect(window.localStorage.getItem(DECORATION_STORAGE_KEY_V2_BACKUP)).toBeNull()
   })
 
-  it("skips unknown V2 item rows without erasing valid ownership and placement", () => {
+  it("skips unknown V3 item rows without erasing valid ownership and placement", () => {
+    const transform = { xPercent: 50, yPercent: 50, scale: 1, rotationDeg: 0 }
     const stored = JSON.stringify({
-      ...EMPTY_V2,
+      ...EMPTY_V3,
       spentPoints: 8,
       ownedItemIds: [...ownedAfterLoad(["STICKER_FINISH_LINE"]), "UNKNOWN_OWNED"],
       library: {
         favoriteItemIds: ["STICKER_FINISH_LINE", "UNKNOWN_FAVORITE"],
         recentItemIds: ["UNKNOWN_RECENT", "STICKER_FINISH_LINE"],
       },
-      pagePlacements: [
-        { date: "2026-08-03", slot: "TOP_CORNER", itemId: "STICKER_FINISH_LINE" },
-        { date: "2026-08-03", slot: "BODY_MARGIN", itemId: "UNKNOWN_PLACEMENT" },
-        { date: "2026-08-03", slot: "PAGE_FOOTER", itemId: "STAMP_REST_DAY", x: 10 },
+      pages: [
+        {
+          date: "2026-08-03",
+          items: [
+            { itemId: "STICKER_FINISH_LINE", transform },
+            { itemId: "UNKNOWN_PLACEMENT", transform },
+            { itemId: "STAMP_REST_DAY" },
+          ],
+        },
       ],
     })
-    window.localStorage.setItem(DECORATION_STORAGE_KEY_V2, stored)
+    window.localStorage.setItem(DECORATION_STORAGE_KEY_V3, stored)
 
     const state = loadDecorationState()
 
     expect(state.ownedItemIds).toEqual(ownedAfterLoad(["STICKER_FINISH_LINE"]))
     expect(state.library.favoriteItemIds).toEqual(["STICKER_FINISH_LINE"])
     expect(state.library.recentItemIds).toEqual(["STICKER_FINISH_LINE"])
-    expect(state.pagePlacements).toEqual([
-      { date: "2026-08-03", slot: "TOP_CORNER", itemId: "STICKER_FINISH_LINE" },
+    expect(state.pages).toEqual([
+      { date: "2026-08-03", items: [{ itemId: "STICKER_FINISH_LINE", transform }] },
     ])
-    expect(window.localStorage.getItem(DECORATION_STORAGE_KEY_V2)).toBe(stored)
+    expect(window.localStorage.getItem(DECORATION_STORAGE_KEY_V3)).toBe(stored)
   })
 
   it("leaves malformed V1 untouched and does not promote it", () => {
     const malformed = "{broken-v1"
     window.localStorage.setItem(DECORATION_STORAGE_KEY_V1, malformed)
 
-    expect(loadDecorationState()).toEqual(EMPTY_V2)
+    expect(loadDecorationState()).toEqual(EMPTY_V3)
     expect(window.localStorage.getItem(DECORATION_STORAGE_KEY_V1)).toBe(malformed)
-    expect(window.localStorage.getItem(DECORATION_STORAGE_KEY_V2)).toBeNull()
+    expect(window.localStorage.getItem(DECORATION_STORAGE_KEY_V3)).toBeNull()
   })
 
-  it("leaves malformed V2 and legacy V1 untouched without rerunning migration", () => {
-    const malformed = "{broken-v2"
+  it("leaves malformed V3 and older keys untouched without rerunning migration", () => {
+    const malformed = "{broken-v3"
     const legacyBytes = JSON.stringify({
       version: 1,
       spentPoints: 8,
@@ -160,41 +199,41 @@ describe("decoration V1 to V2 migration", () => {
       pointMeaning: "NON_ECONOMIC_NON_TRANSFERABLE_BETA",
     })
     window.localStorage.setItem(DECORATION_STORAGE_KEY_V1, legacyBytes)
-    window.localStorage.setItem(DECORATION_STORAGE_KEY_V2, malformed)
+    window.localStorage.setItem(DECORATION_STORAGE_KEY_V3, malformed)
 
-    expect(loadDecorationState()).toEqual(EMPTY_V2)
-    expect(window.localStorage.getItem(DECORATION_STORAGE_KEY_V2)).toBe(malformed)
+    expect(loadDecorationState()).toEqual(EMPTY_V3)
+    expect(window.localStorage.getItem(DECORATION_STORAGE_KEY_V3)).toBe(malformed)
     expect(window.localStorage.getItem(DECORATION_STORAGE_KEY_V1)).toBe(legacyBytes)
   })
 
-  it("refuses a purchase without overwriting malformed V2 bytes", () => {
-    const malformed = "{broken-v2"
-    window.localStorage.setItem(DECORATION_STORAGE_KEY_V2, malformed)
+  it("refuses a purchase without overwriting malformed V3 bytes", () => {
+    const malformed = "{broken-v3"
+    window.localStorage.setItem(DECORATION_STORAGE_KEY_V3, malformed)
     const fallback = loadDecorationState()
 
     const result = purchaseDecoration(20, fallback, "STICKER_FINISH_LINE", malformed)
 
     expect(result).toMatchObject({ kind: "SAVE_FAILED", code: "INVALID_STATE" })
-    expect(window.localStorage.getItem(DECORATION_STORAGE_KEY_V2)).toBe(malformed)
+    expect(window.localStorage.getItem(DECORATION_STORAGE_KEY_V3)).toBe(malformed)
   })
 
   it("refuses paid ownership that has not spent enough points", () => {
     const inconsistent = JSON.stringify({
-      ...EMPTY_V2,
+      ...EMPTY_V3,
       spentPoints: 0,
       ownedItemIds: ownedAfterLoad(["AVATAR_START_LINE"]),
     })
-    window.localStorage.setItem(DECORATION_STORAGE_KEY_V2, inconsistent)
+    window.localStorage.setItem(DECORATION_STORAGE_KEY_V3, inconsistent)
     const fallback = loadDecorationState()
 
     const result = purchaseDecoration(20, fallback, "STICKER_FINISH_LINE", inconsistent)
 
     expect(result).toMatchObject({ kind: "SAVE_FAILED", code: "INVALID_STATE" })
-    expect(window.localStorage.getItem(DECORATION_STORAGE_KEY_V2)).toBe(inconsistent)
+    expect(window.localStorage.getItem(DECORATION_STORAGE_KEY_V3)).toBe(inconsistent)
   })
 })
 
-describe("decoration V2 verified writes", () => {
+describe("decoration V3 verified writes", () => {
   it("caps recents at eight, moves a repeat to the front, and keeps favorites unique", () => {
     const recentIds = [
       "THEME_TRACK_NOTEBOOK",
@@ -207,7 +246,7 @@ describe("decoration V2 verified writes", () => {
       "AVATAR_START_LINE",
     ] as const
     const ownAll: DecorationState = {
-      ...EMPTY_V2,
+      ...EMPTY_V3,
       spentPoints: 40,
       ownedItemIds: ownedAfterLoad(["THEME_SKY_JOURNAL", "STICKER_FINISH_LINE", "AVATAR_START_LINE"]),
     }
@@ -232,69 +271,69 @@ describe("decoration V2 verified writes", () => {
 
   it("returns a typed failure and keeps the previous state when storage throws", () => {
     loadDecorationState()
-    const before = window.localStorage.getItem(DECORATION_STORAGE_KEY_V2)
+    const before = window.localStorage.getItem(DECORATION_STORAGE_KEY_V3)
     vi.spyOn(Storage.prototype, "setItem").mockImplementation(() => {
       throw new DOMException("full", "QuotaExceededError")
     })
 
-    const result = saveDecorationState({ ...EMPTY_V2, spentPoints: 1 })
+    const result = saveDecorationState({ ...EMPTY_V3, spentPoints: 1 })
 
     expect(result).toEqual({ ok: false, code: "WRITE_FAILED" })
-    expect(window.localStorage.getItem(DECORATION_STORAGE_KEY_V2)).toBe(before)
+    expect(window.localStorage.getItem(DECORATION_STORAGE_KEY_V3)).toBe(before)
   })
 
   it("detects a silent write omission through exact readback", () => {
     loadDecorationState()
     vi.spyOn(Storage.prototype, "setItem").mockImplementation(() => undefined)
 
-    const result = saveDecorationState({ ...EMPTY_V2, spentPoints: 1 })
+    const result = saveDecorationState({ ...EMPTY_V3, spentPoints: 1 })
 
     expect(result).toEqual({ ok: false, code: "READBACK_MISMATCH" })
   })
 
   it("restores the previous bytes when a write is corrupted before readback", () => {
     loadDecorationState()
-    const before = window.localStorage.getItem(DECORATION_STORAGE_KEY_V2)
+    const before = window.localStorage.getItem(DECORATION_STORAGE_KEY_V3)
     const setItem = window.localStorage.setItem.bind(window.localStorage)
     vi.spyOn(Storage.prototype, "setItem").mockImplementation((key, value) => {
-      if (key === DECORATION_STORAGE_KEY_V2 && value.includes('"spentPoints":1')) {
+      if (key === DECORATION_STORAGE_KEY_V3 && value.includes('"spentPoints":1')) {
         setItem(key, "{corrupted}")
         return
       }
       setItem(key, value)
     })
 
-    const result = saveDecorationState({ ...EMPTY_V2, spentPoints: 1 })
+    const result = saveDecorationState({ ...EMPTY_V3, spentPoints: 1 })
 
     expect(result).toEqual({ ok: false, code: "READBACK_MISMATCH" })
-    expect(window.localStorage.getItem(DECORATION_STORAGE_KEY_V2)).toBe(before)
+    expect(window.localStorage.getItem(DECORATION_STORAGE_KEY_V3)).toBe(before)
   })
 
   it("rejects a stale snapshot instead of overwriting a newer tab state", () => {
     loadDecorationState()
-    const expected = window.localStorage.getItem(DECORATION_STORAGE_KEY_V2)
-    expect(saveDecorationState({ ...EMPTY_V2, spentPoints: 4 }).ok).toBe(true)
+    const expected = window.localStorage.getItem(DECORATION_STORAGE_KEY_V3)
+    expect(saveDecorationState({ ...EMPTY_V3, spentPoints: 4 }).ok).toBe(true)
 
-    const result = saveDecorationStateIfCurrent({ ...EMPTY_V2, spentPoints: 8 }, expected)
+    const result = saveDecorationStateIfCurrent({ ...EMPTY_V3, spentPoints: 8 }, expected)
 
     expect(result).toEqual({ ok: false, code: "STALE_STATE" })
-    expect(JSON.parse(window.localStorage.getItem(DECORATION_STORAGE_KEY_V2) ?? "null").spentPoints).toBe(4)
+    expect(JSON.parse(window.localStorage.getItem(DECORATION_STORAGE_KEY_V3) ?? "null").spentPoints).toBe(4)
   })
 
   it("rejects forbidden journal and symptom fields before writing", () => {
     loadDecorationState()
-    const before = window.localStorage.getItem(DECORATION_STORAGE_KEY_V2)
+    const before = window.localStorage.getItem(DECORATION_STORAGE_KEY_V3)
 
-    const result = saveDecorationState({ ...EMPTY_V2, memo: "private", pain: 9 })
+    const result = saveDecorationState({ ...EMPTY_V3, memo: "private", pain: 9 })
 
     expect(result).toEqual({ ok: false, code: "INVALID_STATE" })
-    expect(window.localStorage.getItem(DECORATION_STORAGE_KEY_V2)).toBe(before)
+    expect(window.localStorage.getItem(DECORATION_STORAGE_KEY_V3)).toBe(before)
   })
 
   it("does not report a purchase when persistence fails", () => {
     const current = loadDecorationState()
     const legacyBefore = window.localStorage.getItem(DECORATION_STORAGE_KEY_V1)
-    const v2Before = window.localStorage.getItem(DECORATION_STORAGE_KEY_V2)
+    const v3Before = window.localStorage.getItem(DECORATION_STORAGE_KEY_V3)
     vi.spyOn(Storage.prototype, "setItem").mockImplementation(() => undefined)
 
     const result = purchaseDecoration(20, current, "STICKER_FINISH_LINE")
@@ -302,6 +341,6 @@ describe("decoration V2 verified writes", () => {
     expect(result.kind).toBe("SAVE_FAILED")
     expect(result.state).toEqual(current)
     expect(window.localStorage.getItem(DECORATION_STORAGE_KEY_V1)).toBe(legacyBefore)
-    expect(window.localStorage.getItem(DECORATION_STORAGE_KEY_V2)).toBe(v2Before)
+    expect(window.localStorage.getItem(DECORATION_STORAGE_KEY_V3)).toBe(v3Before)
   })
 })

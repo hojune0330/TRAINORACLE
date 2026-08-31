@@ -21,8 +21,9 @@ describe("Minji journal showcase data", () => {
       expect(page.weather).not.toHaveLength(0)
       expect(page.decorationPreset.name).not.toHaveLength(0)
       expect(page.decorationPreset.placements).not.toHaveLength(0)
-      expect(new Set(page.decorationPreset.placements.map((placement) => placement.slot)).size)
-        .toBe(page.decorationPreset.placements.length)
+      for (const placement of page.decorationPreset.placements) {
+        expect(placement.transform).toBeDefined()
+      }
     }
   })
 

@@ -9,6 +9,8 @@ import {
 import {
   DECORATION_STORAGE_KEY_V1,
   DECORATION_STORAGE_KEY_V2,
+  DECORATION_STORAGE_KEY_V2_BACKUP,
+  DECORATION_STORAGE_KEY_V3,
 } from "../decoration-store"
 import {
   createEmptyDecorationState,
@@ -91,7 +93,11 @@ function recordSnapshots(userId: string, storage: NonNullable<ReturnType<typeof 
 }
 
 function decorationSnapshots(userId: string, storage: NonNullable<ReturnType<typeof storages>>): StorageSnapshot[] {
-  return snapshotBundle(userId, [DECORATION_STORAGE_KEY_V1, DECORATION_STORAGE_KEY_V2], storage.local)
+  return snapshotBundle(
+    userId,
+    [DECORATION_STORAGE_KEY_V1, DECORATION_STORAGE_KEY_V2, DECORATION_STORAGE_KEY_V2_BACKUP, DECORATION_STORAGE_KEY_V3],
+    storage.local,
+  )
 }
 
 function decorationStateFromSnapshots(
@@ -99,9 +105,15 @@ function decorationStateFromSnapshots(
   side: "source" | "target",
 ): { readonly kind: "none" | "invalid" | "loaded"; readonly state?: DecorationState } {
   const value = (snapshot: StorageSnapshot) => side === "source" ? snapshot.sourceValue : snapshot.targetValue
+  const v3 = snapshots.find((snapshot) => snapshot.sourceKey === DECORATION_STORAGE_KEY_V3)
   const v2 = snapshots.find((snapshot) => snapshot.sourceKey === DECORATION_STORAGE_KEY_V2)
   const v1 = snapshots.find((snapshot) => snapshot.sourceKey === DECORATION_STORAGE_KEY_V1)
-  if (v2 === undefined || v1 === undefined) return { kind: "invalid" }
+  if (v3 === undefined || v2 === undefined || v1 === undefined) return { kind: "invalid" }
+  const v3Value = value(v3)
+  if (v3Value !== null) {
+    const state = parseStoredDecorationState(v3Value)
+    return state === null ? { kind: "invalid" } : { kind: "loaded", state }
+  }
   const v2Value = value(v2)
   if (v2Value !== null) {
     const state = parseStoredDecorationState(v2Value)
@@ -121,12 +133,12 @@ function moveDecorationState(
   snapshots: readonly StorageSnapshot[],
   state: DecorationState,
 ): { readonly ok: boolean; readonly rollbackComplete: boolean } {
-  const v2 = snapshots.find((snapshot) => snapshot.sourceKey === DECORATION_STORAGE_KEY_V2)
-  if (v2 === undefined) return { ok: false, rollbackComplete: true }
+  const v3 = snapshots.find((snapshot) => snapshot.sourceKey === DECORATION_STORAGE_KEY_V3)
+  if (v3 === undefined) return { ok: false, rollbackComplete: true }
   try {
     const serialized = JSON.stringify(state)
-    v2.storage.setItem(v2.targetKey, serialized)
-    if (v2.storage.getItem(v2.targetKey) !== serialized) throw new Error("decoration target write failed")
+    v3.storage.setItem(v3.targetKey, serialized)
+    if (v3.storage.getItem(v3.targetKey) !== serialized) throw new Error("decoration target write failed")
     for (const snapshot of snapshots) {
       snapshot.storage.removeItem(snapshot.sourceKey)
       if (snapshot.storage.getItem(snapshot.sourceKey) !== null) throw new Error("decoration source removal failed")

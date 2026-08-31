@@ -36,19 +36,27 @@ export type {
   ThemeDecorationId,
 } from "./decoration-catalog"
 export {
+  MAX_DECORATION_ITEMS_PER_PAGE,
+  V2_SLOT_DEFAULT_TRANSFORMS,
   createEmptyDecorationState,
   decorationPlacementTransformSchema,
   decorationStateSchema,
   isCompatiblePlacement,
   migrateLegacyDecorationState,
   parseStoredDecorationState,
+  parseStoredDecorationStateV2,
+  parseStoredDecorationStateV3,
 } from "./decoration-schema"
-export type { DecorationPagePlacement, DecorationPlacementTransform, DecorationState } from "./decoration-schema"
+export type { DecorationPage, DecorationPageItem, DecorationPlacementTransform, DecorationState } from "./decoration-schema"
 export {
   DECORATION_STORAGE_KEY_V1,
   DECORATION_STORAGE_KEY_V2,
+  DECORATION_STORAGE_KEY_V2_BACKUP,
+  DECORATION_STORAGE_KEY_V3,
   activeDecorationStorageKeyV1,
   activeDecorationStorageKeyV2,
+  activeDecorationStorageKeyV2Backup,
+  activeDecorationStorageKeyV3,
   decorationItemOwned,
   loadDecorationState,
   readDecorationStateSerialized,

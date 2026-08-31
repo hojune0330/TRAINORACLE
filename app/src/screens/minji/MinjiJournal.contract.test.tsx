@@ -14,7 +14,7 @@ describe("Minji journal fixed page frame", () => {
       ...page,
       decorationPreset: {
         ...page.decorationPreset,
-        placements: [{ slot: "BODY_STICKER_1" as const, itemId: "EMOJI_SUN" as const }],
+        placements: [{ itemId: "EMOJI_SUN" as const, transform: { xPercent: 24, yPercent: 84, scale: 1, rotationDeg: -4 } }],
       },
     }
     const { container } = render(<MinjiIndexDecorationThumbnail page={emojiPage} />)

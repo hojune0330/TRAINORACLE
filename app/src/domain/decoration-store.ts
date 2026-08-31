@@ -8,13 +8,17 @@ import {
   createEmptyDecorationState,
   decorationStateSchema,
   migrateLegacyDecorationState,
-  parseStoredDecorationState,
+  parseStoredDecorationStateV2,
+  parseStoredDecorationStateV3,
 } from "./decoration-schema"
 import type { DecorationState } from "./decoration-schema"
 import { accountScopedStorageKey } from "./account/local-account-scope"
 
 export const DECORATION_STORAGE_KEY_V1 = "trainoracle.decorations.v1"
 export const DECORATION_STORAGE_KEY_V2 = "trainoracle.decorations.v2"
+export const DECORATION_STORAGE_KEY_V3 = "trainoracle.decorations.v3"
+/* v2 → v3 자동 마이그레이션 시 원본 v2 문자열을 1회 보존한다 (계약 §3). */
+export const DECORATION_STORAGE_KEY_V2_BACKUP = "trainoracle.decorations.v2-backup"
 
 export function activeDecorationStorageKeyV1(): string {
   return accountScopedStorageKey(DECORATION_STORAGE_KEY_V1)
@@ -24,10 +28,18 @@ export function activeDecorationStorageKeyV2(): string {
   return accountScopedStorageKey(DECORATION_STORAGE_KEY_V2)
 }
 
+export function activeDecorationStorageKeyV3(): string {
+  return accountScopedStorageKey(DECORATION_STORAGE_KEY_V3)
+}
+
+export function activeDecorationStorageKeyV2Backup(): string {
+  return accountScopedStorageKey(DECORATION_STORAGE_KEY_V2_BACKUP)
+}
+
 export function readDecorationStateSerialized(): string | null {
   const storage = currentStorage()
   if (storage === null) return null
-  const result = readStorage(storage, activeDecorationStorageKeyV2())
+  const result = readStorage(storage, activeDecorationStorageKeyV3())
   return result.ok ? result.value : null
 }
 
@@ -77,14 +89,14 @@ export function saveDecorationStateIfCurrent(
   if (!parsed.success) return { ok: false, code: "INVALID_STATE" }
   const storage = currentStorage()
   if (storage === null) return { ok: false, code: "STORAGE_UNAVAILABLE" }
-  const storageKey = activeDecorationStorageKeyV2()
+  const storageKey = activeDecorationStorageKeyV3()
   const serialized = JSON.stringify(parsed.data)
   const previous = readStorage(storage, storageKey)
   if (!previous.ok) return { ok: false, code: "STORAGE_UNAVAILABLE" }
   if (expectedSerialized !== undefined && previous.value !== expectedSerialized) {
     return { ok: false, code: "STALE_STATE" }
   }
-  if (previous.value !== null && parseStoredDecorationState(previous.value) === null) {
+  if (previous.value !== null && parseStoredDecorationStateV3(previous.value) === null) {
     return { ok: false, code: "INVALID_STATE" }
   }
 
@@ -103,7 +115,7 @@ export function saveDecorationStateIfCurrent(
   if (!readback.ok || readback.value !== serialized) {
     return rollback() ? { ok: false, code: "READBACK_MISMATCH" } : { ok: false, code: "ROLLBACK_FAILED" }
   }
-  const verified = parseStoredDecorationState(readback.value)
+  const verified = parseStoredDecorationStateV3(readback.value)
   if (verified !== null) return { ok: true }
   return rollback() ? { ok: false, code: "READBACK_MISMATCH" } : { ok: false, code: "ROLLBACK_FAILED" }
 }
@@ -127,10 +139,24 @@ export function loadDecorationState(): DecorationState {
   const storage = currentStorage()
   if (storage === null) return fallback
 
+  /* 1) v3 키가 있으면 그대로 쓴다 — v2 키는 보지 않는다 (계약 §3). */
+  const v3 = readStorage(storage, activeDecorationStorageKeyV3())
+  if (!v3.ok) return fallback
+  if (v3.value !== null) return parseStoredDecorationStateV3(v3.value) ?? fallback
+
+  /* 2) v2 → v3 마이그레이션: 원본 문자열을 .v2-backup에 1회 보존한 뒤 변환한다. v2 키는 지우지 않는다. */
   const v2 = readStorage(storage, activeDecorationStorageKeyV2())
   if (!v2.ok) return fallback
-  if (v2.value !== null) return parseStoredDecorationState(v2.value) ?? fallback
+  if (v2.value !== null) {
+    preserveV2Backup(storage, v2.value)
+    const migrated = parseStoredDecorationStateV2(v2.value)
+    if (migrated === null) return fallback
+    /* 저장 실패해도 메모리 상태로는 동작한다 — 다음 저장 성공 시 v3 키가 생긴다. */
+    saveDecorationState(migrated)
+    return migrated
+  }
 
+  /* 3) v1 레거시 마이그레이션 (현행 유지). */
   const v1 = readStorage(storage, activeDecorationStorageKeyV1())
   if (!v1.ok) return fallback
   if (v1.value !== null) {
@@ -142,6 +168,19 @@ export function loadDecorationState(): DecorationState {
 
   saveDecorationState(fallback)
   return fallback
+}
+
+/* 이미 백업이 있으면 덮어쓰지 않는다 — 최초 마이그레이션 시점의 원본만 남긴다. */
+function preserveV2Backup(storage: Storage, original: string): void {
+  const key = activeDecorationStorageKeyV2Backup()
+  const existing = readStorage(storage, key)
+  if (!existing.ok || existing.value !== null) return
+  try {
+    storage.setItem(key, original)
+  } catch (error) {
+    if (!(error instanceof DOMException || error instanceof Error)) throw error
+    /* 백업 기록 실패는 마이그레이션을 막지 않는다 — v2 키 자체가 그대로 남아 있다. */
+  }
 }
 
 export function rememberDecorationUse(state: DecorationState, itemId: DecorationId): DecorationState {

@@ -1,5 +1,5 @@
 import { DecoratedJournalPageFrame } from "../../components/DecoratedJournalPageFrame"
-import type { DecorationPlacementTransform, DecorationSlot, DecorationState } from "../../domain/decorations"
+import type { DecorationPlacementTransform, DecorationState } from "../../domain/decorations"
 
 export function DecorationStudioPreview({
   date,
@@ -11,7 +11,7 @@ export function DecorationStudioPreview({
   onNextDate,
   onToday,
   editable = false,
-  selectedSlot = null,
+  selectedIndex = null,
   motionDirection = "STAY",
   onSelectPlacement,
   onTransformPlacement,
@@ -25,10 +25,10 @@ export function DecorationStudioPreview({
   readonly onNextDate?: () => void
   readonly onToday?: () => void
   readonly editable?: boolean
-  readonly selectedSlot?: DecorationSlot | null
+  readonly selectedIndex?: number | null
   readonly motionDirection?: "BACKWARD" | "FORWARD" | "STAY"
-  readonly onSelectPlacement?: (slot: DecorationSlot) => void
-  readonly onTransformPlacement?: (slot: DecorationSlot, transform: DecorationPlacementTransform) => void
+  readonly onSelectPlacement?: (index: number) => void
+  readonly onTransformPlacement?: (index: number, transform: DecorationPlacementTransform) => void
 }) {
   return (
     <section className="decoration-studio-preview" role="region" aria-label="꾸미기 미리보기">
@@ -64,7 +64,7 @@ export function DecorationStudioPreview({
           date={date}
           state={state}
           editable={editable}
-          selectedSlot={selectedSlot}
+          selectedIndex={selectedIndex}
           onSelectPlacement={onSelectPlacement}
           onTransformPlacement={onTransformPlacement}
         >

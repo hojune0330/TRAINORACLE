@@ -2,7 +2,6 @@ import { z } from "zod"
 import {
   AVATAR_DECORATION_IDS,
   DECORATION_IDS,
-  DECORATION_SLOTS,
   INK_DECORATION_IDS,
   PLACEMENT_DECORATION_IDS,
   STARTER_DECORATION_IDS,
@@ -23,7 +22,6 @@ const decorationIdSchema = z.enum(DECORATION_IDS)
 const themeIdSchema = z.enum(THEME_DECORATION_IDS)
 const inkIdSchema = z.enum(INK_DECORATION_IDS)
 const avatarIdSchema = z.enum(AVATAR_DECORATION_IDS)
-const slotSchema = z.enum(DECORATION_SLOTS)
 const placementItemIdSchema = z.enum(PLACEMENT_DECORATION_IDS)
 const isoDateSchema = z.string().refine((value) => {
   if (!/^\d{4}-\d{2}-\d{2}$/u.test(value)) return false
@@ -37,20 +35,34 @@ const isoDateSchema = z.string().refine((value) => {
     && date.getUTCDate() === day
 }, "invalid calendar date")
 
+/*
+ * v3 범위 (마이그레이션 계약 §2 C4~C6): 위치 4~96%, 크기 0.3~3.0, 회전 ±180°.
+ * -180과 180은 시각적으로 같지만 정규화하지 않는다 — 저장·복원 왕복 안정성이 우선이다.
+ */
 export const decorationPlacementTransformSchema = z.object({
   xPercent: z.number().min(4).max(96),
   yPercent: z.number().min(4).max(96),
-  scale: z.number().min(0.6).max(2),
-  rotationDeg: z.number().min(-45).max(45),
+  scale: z.number().min(0.3).max(3),
+  rotationDeg: z.number().min(-180).max(180),
 }).strict().readonly()
+
+/* 페이지당 상한 (계약 §2 C1) — 저장 크기 팽창과 렌더 부하 방어선. */
+export const MAX_DECORATION_ITEMS_PER_PAGE = 24
 
 const uniqueIds = (ids: readonly string[]): boolean => new Set(ids).size === ids.length
 
-const pagePlacementSchema = z.object({
-  date: isoDateSchema,
-  slot: slotSchema,
+/*
+ * v3 자유 배치 (계약 §2): 슬롯 없음, 같은 아이템 복수 허용,
+ * 배열 순서 = 렌더 순서(마지막이 최상단), transform 필수.
+ */
+const pageItemSchema = z.object({
   itemId: placementItemIdSchema,
-  transform: decorationPlacementTransformSchema.optional(),
+  transform: decorationPlacementTransformSchema,
+}).strict().readonly()
+
+const decorationPageSchema = z.object({
+  date: isoDateSchema,
+  items: z.array(pageItemSchema).min(1).max(MAX_DECORATION_ITEMS_PER_PAGE).readonly(),
 }).strict().readonly()
 
 const equippedSchema = z.object({
@@ -65,12 +77,12 @@ const librarySchema = z.object({
 }).strict().readonly()
 
 export const decorationStateSchema = z.object({
-  version: z.literal(2),
+  version: z.literal(3),
   spentPoints: z.number().int().nonnegative(),
   ownedItemIds: z.array(decorationIdSchema).refine(uniqueIds).readonly(),
   equipped: equippedSchema,
   library: librarySchema,
-  pagePlacements: z.array(pagePlacementSchema).readonly(),
+  pages: z.array(decorationPageSchema).readonly(),
   pointMeaning: pointMeaningSchema,
 }).strict().superRefine((state, context) => {
   const owned = new Set(state.ownedItemIds)
@@ -90,7 +102,7 @@ export const decorationStateSchema = z.object({
     ...(state.equipped.avatarId === null ? [] : [state.equipped.avatarId]),
     ...state.library.favoriteItemIds,
     ...state.library.recentItemIds,
-    ...state.pagePlacements.map((placement) => placement.itemId),
+    ...state.pages.flatMap((page) => page.items.map((item) => item.itemId)),
   ]
   for (const itemId of referenced) {
     if (isPaidDecorationId(itemId) && !owned.has(itemId)) {
@@ -98,21 +110,67 @@ export const decorationStateSchema = z.object({
     }
   }
 
-  const occupiedSlots = new Set<string>()
-  for (const placement of state.pagePlacements) {
-    const key = `${placement.date}:${placement.slot}`
-    if (occupiedSlots.has(key)) context.addIssue({ code: "custom", message: `duplicate slot ${key}` })
-    occupiedSlots.add(key)
-    const item = decorationCatalogItem(placement.itemId)
-    if (item === undefined || !item.compatibleSlots.some((slot) => slot === placement.slot)) {
-      context.addIssue({ code: "custom", message: `incompatible slot ${key}` })
-    }
+  const seenDates = new Set<string>()
+  for (const page of state.pages) {
+    if (seenDates.has(page.date)) context.addIssue({ code: "custom", message: `duplicate page ${page.date}` })
+    seenDates.add(page.date)
   }
 }).readonly()
 
 export type DecorationState = z.infer<typeof decorationStateSchema>
-export type DecorationPagePlacement = z.infer<typeof pagePlacementSchema>
+export type DecorationPage = z.infer<typeof decorationPageSchema>
+export type DecorationPageItem = z.infer<typeof pageItemSchema>
 export type DecorationPlacementTransform = z.infer<typeof decorationPlacementTransformSchema>
+
+/* ── v2 → v3 변환표 (계약 §3): 슬롯 기본 좌표. v2 렌더 레이어 순서와 동일한 고정 순서. ── */
+const V2_SLOT_ORDER = [
+  "HEADER_TAPE",
+  "TOP_CORNER",
+  "BODY_MARGIN",
+  "PAGE_FOOTER",
+  "BODY_STICKER_1",
+  "BODY_STICKER_2",
+  "BODY_STICKER_3",
+] as const
+
+export const V2_SLOT_DEFAULT_TRANSFORMS: Readonly<Record<DecorationSlot, DecorationPlacementTransform>> = {
+  HEADER_TAPE: { xPercent: 50, yPercent: 9, scale: 1, rotationDeg: 0 },
+  TOP_CORNER: { xPercent: 86, yPercent: 14, scale: 1, rotationDeg: 0 },
+  BODY_MARGIN: { xPercent: 88, yPercent: 48, scale: 1, rotationDeg: 0 },
+  PAGE_FOOTER: { xPercent: 50, yPercent: 91, scale: 1, rotationDeg: 0 },
+  BODY_STICKER_1: { xPercent: 24, yPercent: 84, scale: 1, rotationDeg: -4 },
+  BODY_STICKER_2: { xPercent: 50, yPercent: 84, scale: 1, rotationDeg: 3 },
+  BODY_STICKER_3: { xPercent: 76, yPercent: 84, scale: 1, rotationDeg: -2 },
+}
+
+/* ── 저장 원본(신뢰 불가) 파서들 ── */
+
+const storedV3ShapeSchema = z.object({
+  version: z.literal(3),
+  spentPoints: z.number().int().nonnegative(),
+  ownedItemIds: z.array(z.string()),
+  equipped: z.object({
+    themeId: z.string(),
+    inkId: z.string(),
+    avatarId: z.string().nullable(),
+  }).strict(),
+  library: z.object({
+    favoriteItemIds: z.array(z.string()),
+    recentItemIds: z.array(z.string()),
+  }).strict(),
+  pages: z.array(z.unknown()),
+  pointMeaning: pointMeaningSchema,
+}).strict()
+
+const storedV3PageShapeSchema = z.object({
+  date: isoDateSchema,
+  items: z.array(z.unknown()),
+}).strict()
+
+const storedV3ItemShapeSchema = z.object({
+  itemId: z.string(),
+  transform: z.unknown(),
+}).strict()
 
 const storedV2ShapeSchema = z.object({
   version: z.literal(2),
@@ -131,7 +189,8 @@ const storedV2ShapeSchema = z.object({
   pointMeaning: pointMeaningSchema,
 }).strict()
 
-const storedPlacementShapeSchema = z.object({
+/* v2 transform 범위(크기 0.6~2, 회전 ±45)는 v3 범위의 부분집합 — v3 스키마로 그대로 검증한다. */
+const storedV2PlacementShapeSchema = z.object({
   date: isoDateSchema,
   slot: z.string(),
   itemId: z.string(),
@@ -164,11 +223,78 @@ function uniqueUsableIds(ids: readonly string[], owned: ReadonlySet<DecorationId
   return result
 }
 
-function normalizedPlacements(rows: readonly unknown[], owned: ReadonlySet<DecorationId>): DecorationPagePlacement[] {
-  const result: DecorationPagePlacement[] = []
+function normalizedOwnedIds(ids: readonly string[]): DecorationId[] {
+  return DECORATION_IDS.filter((itemId) => !isPaidDecorationId(itemId) || ids.includes(itemId))
+}
+
+function normalizedEquipped(input: { themeId: string; inkId: string; avatarId: string | null }, owned: ReadonlySet<DecorationId>) {
+  const themeId = isThemeDecorationId(input.themeId) && owned.has(input.themeId)
+    ? input.themeId
+    : "THEME_TRACK_NOTEBOOK"
+  const inkId = isInkDecorationId(input.inkId) ? input.inkId : "INK_NAVY"
+  const avatarId = input.avatarId !== null
+    && isAvatarDecorationId(input.avatarId)
+    && owned.has(input.avatarId)
+    ? input.avatarId
+    : null
+  return { themeId, inkId, avatarId }
+}
+
+/* v3 페이지 정규화: 깨진 아이템은 건너뛰고, 상한 초과분은 뒤에서 자르고, 빈 페이지는 버린다. */
+function normalizedPages(rows: readonly unknown[], owned: ReadonlySet<DecorationId>): DecorationPage[] {
+  const result: DecorationPage[] = []
+  const seenDates = new Set<string>()
+  for (const row of rows) {
+    const page = storedV3PageShapeSchema.safeParse(row)
+    if (!page.success) continue
+    if (seenDates.has(page.data.date)) continue
+    seenDates.add(page.data.date)
+    const items: DecorationPageItem[] = []
+    for (const candidate of page.data.items) {
+      if (items.length >= MAX_DECORATION_ITEMS_PER_PAGE) break
+      const item = storedV3ItemShapeSchema.safeParse(candidate)
+      if (!item.success) continue
+      const { itemId, transform } = item.data
+      if (!isPlacementDecorationId(itemId)) continue
+      if (isPaidDecorationId(itemId) && !owned.has(itemId)) continue
+      const parsedTransform = decorationPlacementTransformSchema.safeParse(transform)
+      if (!parsedTransform.success) continue
+      items.push({ itemId, transform: parsedTransform.data })
+    }
+    if (items.length > 0) result.push({ date: page.data.date, items })
+  }
+  return result
+}
+
+function normalizeStoredV3(input: z.infer<typeof storedV3ShapeSchema>): DecorationState | null {
+  const ownedItemIds = normalizedOwnedIds(input.ownedItemIds)
+  const owned = new Set(ownedItemIds)
+  const normalized = {
+    version: 3,
+    spentPoints: input.spentPoints,
+    ownedItemIds,
+    equipped: normalizedEquipped(input.equipped, owned),
+    library: {
+      favoriteItemIds: uniqueUsableIds(input.library.favoriteItemIds, owned),
+      recentItemIds: uniqueUsableIds(input.library.recentItemIds, owned).slice(0, 8),
+    },
+    pages: normalizedPages(input.pages, owned),
+    pointMeaning: input.pointMeaning,
+  }
+  const parsed = decorationStateSchema.safeParse(normalized)
+  return parsed.success ? parsed.data : null
+}
+
+/*
+ * v2 → v3 마이그레이션 (계약 §3): placement에 transform이 있으면 그대로,
+ * 없으면 슬롯 기본 좌표. 같은 날짜의 슬롯들은 v2 레이어 순서로 배열에 쌓는다.
+ */
+function migratedPagesFromV2(rows: readonly unknown[], owned: ReadonlySet<DecorationId>): DecorationPage[] {
+  type V2Row = { readonly date: string; readonly slot: DecorationSlot; readonly itemId: PlacementDecorationId; readonly transform: DecorationPlacementTransform | undefined }
+  const valid: V2Row[] = []
   const occupiedSlots = new Set<string>()
   for (const row of rows) {
-    const parsed = storedPlacementShapeSchema.safeParse(row)
+    const parsed = storedV2PlacementShapeSchema.safeParse(row)
     if (!parsed.success) continue
     const { date, slot, itemId, transform } = parsed.data
     if (!isDecorationSlot(slot) || !isPlacementDecorationId(itemId)) continue
@@ -179,42 +305,32 @@ function normalizedPlacements(rows: readonly unknown[], owned: ReadonlySet<Decor
     if (occupiedSlots.has(key)) continue
     occupiedSlots.add(key)
     const parsedTransform = decorationPlacementTransformSchema.safeParse(transform)
-    result.push({
-      date,
-      slot,
-      itemId,
-      ...(parsedTransform.success ? { transform: parsedTransform.data } : {}),
-    })
+    valid.push({ date, slot, itemId, transform: parsedTransform.success ? parsedTransform.data : undefined })
   }
-  return result
-}
-
-function normalizedOwnedIds(ids: readonly string[]): DecorationId[] {
-  return DECORATION_IDS.filter((itemId) => !isPaidDecorationId(itemId) || ids.includes(itemId))
+  const dates = [...new Set(valid.map((row) => row.date))]
+  return dates.map((date) => ({
+    date,
+    items: V2_SLOT_ORDER.flatMap((slot) => {
+      const row = valid.find((candidate) => candidate.date === date && candidate.slot === slot)
+      if (row === undefined) return []
+      return [{ itemId: row.itemId, transform: row.transform ?? V2_SLOT_DEFAULT_TRANSFORMS[slot] }]
+    }),
+  })).filter((page) => page.items.length > 0)
 }
 
 function normalizeStoredV2(input: z.infer<typeof storedV2ShapeSchema>): DecorationState | null {
   const ownedItemIds = normalizedOwnedIds(input.ownedItemIds)
   const owned = new Set(ownedItemIds)
-  const themeId = isThemeDecorationId(input.equipped.themeId) && owned.has(input.equipped.themeId)
-    ? input.equipped.themeId
-    : "THEME_TRACK_NOTEBOOK"
-  const inkId = isInkDecorationId(input.equipped.inkId) ? input.equipped.inkId : "INK_NAVY"
-  const avatarId = input.equipped.avatarId !== null
-    && isAvatarDecorationId(input.equipped.avatarId)
-    && owned.has(input.equipped.avatarId)
-    ? input.equipped.avatarId
-    : null
   const normalized = {
-    version: 2,
+    version: 3,
     spentPoints: input.spentPoints,
     ownedItemIds,
-    equipped: { themeId, inkId, avatarId },
+    equipped: normalizedEquipped(input.equipped, owned),
     library: {
       favoriteItemIds: uniqueUsableIds(input.library.favoriteItemIds, owned),
       recentItemIds: uniqueUsableIds(input.library.recentItemIds, owned).slice(0, 8),
     },
-    pagePlacements: normalizedPlacements(input.pagePlacements, owned),
+    pages: migratedPagesFromV2(input.pagePlacements, owned),
     pointMeaning: input.pointMeaning,
   }
   const parsed = decorationStateSchema.safeParse(normalized)
@@ -223,28 +339,41 @@ function normalizeStoredV2(input: z.infer<typeof storedV2ShapeSchema>): Decorati
 
 export function createEmptyDecorationState(): DecorationState {
   const parsed = decorationStateSchema.parse({
-    version: 2,
+    version: 3,
     spentPoints: 0,
     ownedItemIds: [...STARTER_DECORATION_IDS],
     equipped: { themeId: "THEME_TRACK_NOTEBOOK", inkId: "INK_NAVY", avatarId: null },
     library: { favoriteItemIds: [], recentItemIds: [] },
-    pagePlacements: [],
+    pages: [],
     pointMeaning: "NON_ECONOMIC_NON_TRANSFERABLE_BETA",
   })
   return parsed
 }
 
-export function parseStoredDecorationState(raw: string): DecorationState | null {
+/** v3 저장 원본을 파싱한다 — v3 키 전용. */
+export function parseStoredDecorationStateV3(raw: string): DecorationState | null {
+  const json = parseJson(raw)
+  const parsed = storedV3ShapeSchema.safeParse(json)
+  return parsed.success ? normalizeStoredV3(parsed.data) : null
+}
+
+/** v2 저장 원본(또는 v2 백업 파일 섹션)을 읽어 v3 상태로 마이그레이션한다. */
+export function parseStoredDecorationStateV2(raw: string): DecorationState | null {
   const json = parseJson(raw)
   const parsed = storedV2ShapeSchema.safeParse(json)
   return parsed.success ? normalizeStoredV2(parsed.data) : null
+}
+
+/** 저장 원본을 버전 무관하게 읽는다 — v3 우선, 실패 시 v2 마이그레이션 시도. */
+export function parseStoredDecorationState(raw: string): DecorationState | null {
+  return parseStoredDecorationStateV3(raw) ?? parseStoredDecorationStateV2(raw)
 }
 
 export function migrateLegacyDecorationState(raw: string): DecorationState | null {
   const json = parseJson(raw)
   const parsed = legacyStateSchema.safeParse(json)
   if (!parsed.success) return null
-  /* 보유 목록 순서는 v2 로드 경로와 동일하게 카탈로그 순서로 통일한다. */
+  /* 보유 목록 순서는 저장 로드 경로와 동일하게 카탈로그 순서로 통일한다. */
   const candidate = {
     ...createEmptyDecorationState(),
     spentPoints: parsed.data.spentPoints,

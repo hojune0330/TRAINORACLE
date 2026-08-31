@@ -8,10 +8,10 @@ import {
 } from "./decorations"
 
 const DECORATION_STORAGE_KEY_V1 = "trainoracle.decorations.v1"
-const DECORATION_STORAGE_KEY_V2 = "trainoracle.decorations.v2"
+const DECORATION_STORAGE_KEY_V3 = "trainoracle.decorations.v3"
 
 const EMPTY_DECORATION_STATE = {
-  version: 2,
+  version: 3,
   spentPoints: 0,
   ownedItemIds: [
     "THEME_TRACK_NOTEBOOK",
@@ -31,7 +31,7 @@ const EMPTY_DECORATION_STATE = {
     favoriteItemIds: [],
     recentItemIds: [],
   },
-  pagePlacements: [],
+  pages: [],
   pointMeaning: "NON_ECONOMIC_NON_TRANSFERABLE_BETA",
 } as const
 
@@ -148,7 +148,7 @@ describe("beta decoration shop", () => {
     expect(result.remainingPoints).toBe(12)
   })
 
-  it("persists purchases only under the authoritative V2 decoration storage key", () => {
+  it("persists purchases only under the authoritative V3 decoration storage key", () => {
     // Given
     const initialState = loadDecorationState()
 
@@ -157,8 +157,8 @@ describe("beta decoration shop", () => {
 
     // Then
     expect(window.localStorage.length).toBe(1)
-    expect(window.localStorage.key(0)).toBe(DECORATION_STORAGE_KEY_V2)
-    expect(window.localStorage.getItem(DECORATION_STORAGE_KEY_V2)).toBe(JSON.stringify(result.state))
+    expect(window.localStorage.key(0)).toBe(DECORATION_STORAGE_KEY_V3)
+    expect(window.localStorage.getItem(DECORATION_STORAGE_KEY_V3)).toBe(JSON.stringify(result.state))
   })
 
   it("does not purchase when earned points are insufficient", () => {
@@ -172,7 +172,7 @@ describe("beta decoration shop", () => {
     expect(loadDecorationState()).toEqual(EMPTY_DECORATION_STATE)
   })
 
-  it("falls back to the safe V2 state while keeping malformed V1 JSON", () => {
+  it("falls back to the safe V3 state while keeping malformed V1 JSON", () => {
     // Given
     const malformed = "{not-json"
     window.localStorage.setItem(DECORATION_STORAGE_KEY_V1, malformed)
@@ -183,10 +183,10 @@ describe("beta decoration shop", () => {
     // Then
     expect(state).toEqual(EMPTY_DECORATION_STATE)
     expect(window.localStorage.getItem(DECORATION_STORAGE_KEY_V1)).toBe(malformed)
-    expect(window.localStorage.getItem(DECORATION_STORAGE_KEY_V2)).toBeNull()
+    expect(window.localStorage.getItem(DECORATION_STORAGE_KEY_V3)).toBeNull()
   })
 
-  it("falls back to the safe V2 state when the legacy shape is incomplete", () => {
+  it("falls back to the safe V3 state when the legacy shape is incomplete", () => {
     // Given
     const stale = JSON.stringify({
       version: 1,
@@ -201,7 +201,7 @@ describe("beta decoration shop", () => {
     // Then
     expect(state).toEqual(EMPTY_DECORATION_STATE)
     expect(window.localStorage.getItem(DECORATION_STORAGE_KEY_V1)).toBe(stale)
-    expect(window.localStorage.getItem(DECORATION_STORAGE_KEY_V2)).toBeNull()
+    expect(window.localStorage.getItem(DECORATION_STORAGE_KEY_V3)).toBeNull()
   })
 
   it("does not carry D9, analysis, or training-plan authority in decoration data", () => {
@@ -226,6 +226,6 @@ describe("beta decoration shop", () => {
       ownedItemIds: [...EMPTY_DECORATION_STATE.ownedItemIds, "STICKER_FINISH_LINE"],
     })
     expect(window.localStorage.getItem(DECORATION_STORAGE_KEY_V1)).toBe(legacyBytes)
-    expect(window.localStorage.getItem(DECORATION_STORAGE_KEY_V2)).toBe(JSON.stringify(result.state))
+    expect(window.localStorage.getItem(DECORATION_STORAGE_KEY_V3)).toBe(JSON.stringify(result.state))
   })
 })
