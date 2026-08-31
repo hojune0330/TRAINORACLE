@@ -51,6 +51,22 @@ import {
 import type { PlanCloudPersistenceState } from "../domain/account/plan-cloud-backup"
 import type { PlannedSessionLogDraft } from "../domain/planned-session-link"
 import { useActiveContentScroll } from "../hooks/useActiveContentScroll"
+import { useOrderedStepMotion } from "../hooks/useOrderedStepMotion"
+
+const INTAKE_MOTION_ORDER: readonly IntakeStep[] = [
+  "goal",
+  "division",
+  "experience",
+  "safety",
+  "preview",
+  "focus",
+  "template",
+  "days",
+  "frame-length",
+  "training-time",
+  "two-a-day",
+  "race-date",
+]
 
 export function PlanBeta({
   onWriteLog,
@@ -108,6 +124,7 @@ export function PlanBeta({
     Omit<CandidatePrescriptionBinding, "generated">
   >({ kind: "fallback", code: "PACE_TARGET_FALLBACK_NO_EXPLICIT_ANCHOR" })
   const intakeQuestionRef = React.useRef<HTMLDivElement>(null)
+  const intakeMotion = useOrderedStepMotion(step, INTAKE_MOTION_ORDER)
   const viewKey = notationReaderOpen
     ? "notation-reader"
     : stored !== null
@@ -417,6 +434,7 @@ export function PlanBeta({
       <PlanIntake
         key={step}
         step={step}
+        motion={intakeMotion}
         questionRef={intakeQuestionRef}
         draft={draft}
         onBack={() => setStep(previousIntakeStep(step, draft.eventGroup))}

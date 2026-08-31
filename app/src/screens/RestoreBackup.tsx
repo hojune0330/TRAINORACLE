@@ -20,6 +20,7 @@ import type {
   BackupReadResult, DecorationRestoreMode, RestoreMode, RestoreOutcome, RestorePlan,
 } from "../domain/restore/backup-file"
 import { useActiveContentScroll } from "../hooks/useActiveContentScroll"
+import { useOrderedStepMotion } from "../hooks/useOrderedStepMotion"
 
 const mono: React.CSSProperties = { fontFamily: "var(--mono)" }
 
@@ -50,6 +51,7 @@ export function RestoreBackup({ onBack, onOpenHome }: {
   const [busy, setBusy] = React.useState(false)
   const busyRef = React.useRef(false)
   const stageRef = React.useRef<HTMLDivElement>(null)
+  const stageMotion = useOrderedStepMotion(stage.step, ["pick", "review", "done", "failed"])
   useActiveContentScroll(stage.step, stageRef, undefined, true)
 
   const handleFile = async (file: File) => {
@@ -124,7 +126,12 @@ export function RestoreBackup({ onBack, onOpenHome }: {
         </div>
       </div>
 
-      <div key={stage.step} ref={stageRef} className="active-stage-content active-content-scroll-target">
+      <div
+        key={stage.step}
+        ref={stageRef}
+        className="active-stage-content active-content-scroll-target"
+        data-flow-direction={stageMotion}
+      >
         {stage.step === "pick" && (
           <PickStage busy={busy} failure={failure} onFile={handleFile} />
         )}

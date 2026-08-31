@@ -21,6 +21,7 @@ import { FormSec, TopBar } from "./shared"
 import { StickyBar } from "./StickyBar"
 import type { EntryFormProps } from "./shared"
 import { useActiveContentScroll } from "../../hooks/useActiveContentScroll"
+import { useOrderedStepMotion } from "../../hooks/useOrderedStepMotion"
 
 type RaceStage = "pre" | "post"
 
@@ -42,6 +43,7 @@ export function RaceForm({ onBack, onDone, targetDate, initialEntry }: EntryForm
   const [saveError, setSaveError] = React.useState(false)
   const memo = usePurposeScopedMemo(initial?.memo ?? "", initial?.memoPurpose)
   const stageRef = React.useRef<HTMLDivElement>(null)
+  const stageMotion = useOrderedStepMotion(stage, ["pre", "post"])
   useActiveContentScroll(stage, stageRef, undefined, true)
 
   const persist = async () => {
@@ -87,7 +89,12 @@ export function RaceForm({ onBack, onDone, targetDate, initialEntry }: EntryForm
       <RaceHeader date={entryDate} isToday={entryDate === todayISO()} />
       <StageTabs stage={stage} onChange={setStage} />
 
-      <div key={stage} ref={stageRef} className="journal-flow-stage active-content-scroll-target">
+      <div
+        key={stage}
+        ref={stageRef}
+        className="journal-flow-stage active-stage-content active-content-scroll-target"
+        data-flow-direction={stageMotion}
+      >
         {stage === "pre" ? (
           <RacePreChecks
           tension={tension}

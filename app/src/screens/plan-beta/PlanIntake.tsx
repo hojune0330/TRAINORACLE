@@ -51,6 +51,7 @@ const PREVIEW_REFINEMENTS: readonly {
 
 type PlanIntakeProps = {
   readonly step: IntakeStep
+  readonly motion?: "initial" | "forward" | "backward" | "replace"
   readonly draft: IntakeDraft
   readonly questionRef?: React.RefObject<HTMLDivElement>
   readonly onBack: () => void
@@ -77,6 +78,7 @@ type PlanIntakeProps = {
 }
 export function PlanIntake({
   step,
+  motion = "initial",
   draft,
   questionRef,
   onBack,
@@ -142,7 +144,11 @@ export function PlanIntake({
   })
   const detailedTemplates = resolveDetailedPlanTemplateOptions(draft)
   return (
-    <section className="plan-intake" aria-labelledby="plan-intake-title">
+    <section
+      className="plan-intake active-stage-content"
+      data-flow-direction={motion}
+      aria-labelledby="plan-intake-title"
+    >
       <button className="plan-back" type="button" onClick={onBack}>
         <ArrowLeft aria-hidden="true" size={17} />
         이전

@@ -24,6 +24,13 @@ import {
   viewForPlannedSessionDraft,
   viewForTab,
 } from "./domain/app-shell-state"
+import {
+  screenMotion as resolveScreenMotion,
+  tabMotion,
+  type AppScreenDescriptor,
+  type AppScreenMotion,
+} from "./domain/screen-motion"
+import { AppLoadingState } from "./components/AppLoadingState"
 
 const JOURNAL_REWARD_MESSAGE = {
   AWARDED: "기록한 날 +4P가 반영됐어요.",
@@ -48,6 +55,16 @@ export function AppShell() {
   const scrollRegionRef = React.useRef<HTMLElement>(null)
   const [utilityView, setUtilityView] = React.useState<"more" | "guide" | "minji" | "content" | null>(null)
   const [utilityOrigin, setUtilityOrigin] = React.useState<"home" | "more">("more")
+  const pendingScreenMotionRef = React.useRef<Exclude<AppScreenMotion, "initial" | "none"> | null>(null)
+  const runViewTransition = React.useCallback((
+    motion: Exclude<AppScreenMotion, "initial" | "none">,
+    update: () => void,
+  ) => {
+    // The remounted app-flow-stage supplies the non-blocking CSS transition.
+    // Native document snapshots block rapid follow-up taps on mobile.
+    pendingScreenMotionRef.current = motion
+    update()
+  }, [])
 
   React.useEffect(() => {
     if (!accountFeatureEnabled()) {
@@ -82,17 +99,21 @@ export function AppShell() {
   }, [])
 
   const goHome = () => {
-    setAthleteRecordsOpen(false)
-    setUtilityView(null)
-    setV(INITIAL_VIEW_STATE)
+    runViewTransition("pop", () => {
+      setAthleteRecordsOpen(false)
+      setUtilityView(null)
+      setV(INITIAL_VIEW_STATE)
+    })
   }
   const goHomeAfterSave = (savedEntry: JournalEntry, reviewMessage?: string, detailDate?: string) => {
     const receipt = createSavedFactReceipt(savedEntry)
     const reward = awardJournalEntry(savedEntry, todayISO())
     const rewardMessage = JOURNAL_REWARD_MESSAGE[reward.kind]
-    setUtilityView(null)
-    setV(detailDate === undefined ? INITIAL_VIEW_STATE : viewForJournalReturn(v))
-    setSavedToast({ count: localOnlyCount(), phase: "enter", receipt, reviewMessage, rewardMessage })
+    runViewTransition("replace", () => {
+      setUtilityView(null)
+      setV(detailDate === undefined ? INITIAL_VIEW_STATE : viewForJournalReturn(v))
+      setSavedToast({ count: localOnlyCount(), phase: "enter", receipt, reviewMessage, rewardMessage })
+    })
     void trackProductEvent("JOURNAL_SAVED")
   }
 
@@ -126,9 +147,11 @@ export function AppShell() {
   ])
   const goTab = (tab: AppTab) => {
     if (!shouldResetTabView(v, tab, utilityView !== null || athleteRecordsOpen)) return
-    setAthleteRecordsOpen(false)
-    setUtilityView(null)
-    setV(viewForTab(tab))
+    runViewTransition(tabMotion(v.tab, tab), () => {
+      setAthleteRecordsOpen(false)
+      setUtilityView(null)
+      setV(viewForTab(tab))
+    })
   }
   const goTrendsFromReceipt = () => {
     setSavedToast(null)
@@ -147,27 +170,56 @@ export function AppShell() {
     athleteRecordsOpen ? "records" : "",
   ].join(":")
 
-  const openRestore = () => setV(s => ({
-    ...s,
-    tab: "home",
-    accountOpen: false,
-    importOpen: false,
-    restoreOpen: true,
-    archiveSelection: null,
-  }))
+  const screenDepth = v.detailDate !== null
+    || v.accountOpen
+    || v.restoreOpen
+    || v.importOpen
+    || athleteRecordsOpen
+    || v.entryType !== "choose"
+    ? 1
+    : utilityView === null
+      ? 0
+      : utilityView === "more" || utilityOrigin === "home"
+        ? 1
+        : 2
+  const currentScreen: AppScreenDescriptor = {
+    key: screenKey,
+    tab: v.tab,
+    depth: screenDepth,
+  }
+  const previousScreenRef = React.useRef<AppScreenDescriptor | null>(null)
+  const currentScreenMotion = previousScreenRef.current === null
+    ? "initial"
+    : pendingScreenMotionRef.current ?? resolveScreenMotion(previousScreenRef.current, currentScreen)
+  React.useLayoutEffect(() => {
+    previousScreenRef.current = currentScreen
+    pendingScreenMotionRef.current = null
+  }, [screenKey, v.tab, screenDepth])
+
+  const openRestore = () => runViewTransition("push", () => {
+    setUtilityView(null)
+    setV(s => ({
+      ...s,
+      tab: "home",
+      accountOpen: false,
+      importOpen: false,
+      restoreOpen: true,
+      archiveSelection: null,
+    }))
+  })
 
   const detailScreen = (onBack: () => void, withReader = false) => {
     const common = {
       date: v.detailDate ?? "",
       onBack,
-      onAddEntry: (date: string) => setV(s => viewForJournalDraft(s, date)),
-      onEditEntry: (entry: JournalEntry) => setV(s => viewForJournalDraft(s, entry.date, entry)),
+      onAddEntry: (date: string) => runViewTransition("push", () => setV(s => viewForJournalDraft(s, date))),
+      onEditEntry: (entry: JournalEntry) => runViewTransition("push", () => setV(s => viewForJournalDraft(s, entry.date, entry))),
     }
     return withReader ? (
       <DeferredMobileScreens.JournalDayReader
         {...common}
         entries={loadEntries()}
-        onDateChange={(detailDate) => setV(s => ({ ...s, detailDate }))}
+        onDateChange={(detailDate) => runViewTransition("replace", () => setV(s => ({ ...s, detailDate })))}
       />
     ) : <DeferredMobileScreens.LogDetail {...common} />
   }
@@ -176,62 +228,59 @@ export function AppShell() {
   if (v.tab === "home" && v.restoreOpen) {
     screen = (
       <DeferredMobileScreens.RestoreBackup
-        onBack={() => setV(s => ({ ...s, restoreOpen: false }))}
+        onBack={() => runViewTransition("pop", () => setV(s => ({ ...s, restoreOpen: false })))}
         onOpenHome={goHome}
       />
     )
   } else if (v.tab === "home" && v.accountOpen && accountEnabled) {
     screen = (
       <DeferredMobileScreens.Account
-        onBack={() => setV(s => ({ ...s, accountOpen: false }))}
-        onOpenImport={() => setV(s => ({ ...s, tab: "log", accountOpen: false, importOpen: true }))}
+        onBack={() => runViewTransition("pop", () => setV(s => ({ ...s, accountOpen: false })))}
+        onOpenImport={() => runViewTransition("tab-forward", () => setV(s => ({ ...s, tab: "log", accountOpen: false, importOpen: true })))}
         onOpenRestore={openRestore}
       />
     )
   } else if (v.tab === "home" && utilityView === "more") {
     screen = (
       <DeferredMobileScreens.More
-        onBack={() => setUtilityView(null)}
-        onOpenMinji={() => { setUtilityOrigin("more"); setUtilityView("minji") }}
-        onOpenGuide={() => { setUtilityOrigin("more"); setUtilityView("guide") }}
-        onOpenContent={() => setUtilityView("content")}
-        onOpenAccount={accountEnabled ? () => setV(s => ({ ...s, accountOpen: true })) : undefined}
-        onOpenRestore={() => {
-          setUtilityView(null)
-          openRestore()
-        }}
+        onBack={() => runViewTransition("pop", () => setUtilityView(null))}
+        onOpenMinji={() => runViewTransition("push", () => { setUtilityOrigin("more"); setUtilityView("minji") })}
+        onOpenGuide={() => runViewTransition("push", () => { setUtilityOrigin("more"); setUtilityView("guide") })}
+        onOpenContent={() => runViewTransition("push", () => setUtilityView("content"))}
+        onOpenAccount={accountEnabled ? () => runViewTransition("push", () => setV(s => ({ ...s, accountOpen: true }))) : undefined}
+        onOpenRestore={openRestore}
       />
     )
   } else if (v.tab === "home" && utilityView === "content") {
-    screen = <DeferredMobileScreens.TrainingContent onBack={() => setUtilityView(null)} />
+    screen = <DeferredMobileScreens.TrainingContent onBack={() => runViewTransition("pop", () => setUtilityView(null))} />
   } else if (v.tab === "home" && (utilityView === "guide" || utilityView === "minji")) {
     screen = <DeferredMobileScreens.Guide
       initialSection={utilityView}
-      onBack={() => setUtilityView(utilityOrigin === "home" ? null : "more")}
-      onWriteLog={() => { setUtilityView(null); setV(viewForTab("log")) }}
+      onBack={() => runViewTransition("pop", () => setUtilityView(utilityOrigin === "home" ? null : "more"))}
+      onWriteLog={() => runViewTransition("tab-forward", () => { setUtilityView(null); setV(viewForTab("log")) })}
     />
   } else if (v.tab === "home") {
     screen = v.detailDate !== null
-      ? detailScreen(() => setV(s => ({ ...s, detailDate: null })), true)
+      ? detailScreen(() => runViewTransition("pop", () => setV(s => ({ ...s, detailDate: null }))), true)
       : (
         <Home
-          onWriteLog={(entryType) => setV(s => ({ ...s, tab: "log", entryType: entryType ?? "choose" }))}
-          onOpenDay={(date) => setV(s => ({ ...s, detailDate: date }))}
+          onWriteLog={(entryType) => runViewTransition("tab-forward", () => setV(s => ({ ...s, tab: "log", entryType: entryType ?? "choose" })))}
+          onOpenDay={(date) => runViewTransition("push", () => setV(s => ({ ...s, detailDate: date })))}
           onOpenArchive={() => {
-            setV({ ...viewForTab("journal"), journalMode: "CALENDAR" })
+            runViewTransition("tab-forward", () => setV({ ...viewForTab("journal"), journalMode: "CALENDAR" }))
           }}
-          onOpenGuide={() => { setUtilityOrigin("home"); setUtilityView("minji") }}
-          onOpenPlan={() => setV(viewForTab("plan"))}
-          onOpenTrends={() => setV(viewForTab("trends"))}
-          onOpenMore={() => setUtilityView("more")}
-          onOpenAccount={accountEnabled ? () => setV(s => ({ ...s, accountOpen: true })) : undefined}
-          onOpenContent={() => setUtilityView("content")}
+          onOpenGuide={() => runViewTransition("push", () => { setUtilityOrigin("home"); setUtilityView("minji") })}
+          onOpenPlan={() => goTab("plan")}
+          onOpenTrends={() => goTab("trends")}
+          onOpenMore={() => runViewTransition("push", () => setUtilityView("more"))}
+          onOpenAccount={accountEnabled ? () => runViewTransition("push", () => setV(s => ({ ...s, accountOpen: true }))) : undefined}
+          onOpenContent={() => runViewTransition("push", () => setUtilityView("content"))}
         />
       )
   } else if (v.tab === "journal") {
     const selection = v.archiveSelection ?? { selectedMonth: null, selectedWeekStart: null }
     screen = v.detailDate !== null
-      ? detailScreen(() => setV(s => ({ ...s, detailDate: null })), true)
+      ? detailScreen(() => runViewTransition("pop", () => setV(s => ({ ...s, detailDate: null }))), true)
       : (
         <DeferredMobileScreens.JournalArchive
           entries={loadEntries()}
@@ -243,28 +292,28 @@ export function AppShell() {
           onCycleAnchorChange={(cycleAnchor) => setV(s => ({ ...s, cycleAnchor, cycleIndex: 0 }))}
           onCycleIndexChange={(cycleIndex) => setV(s => ({ ...s, cycleIndex }))}
           onSelectionChange={(archiveSelection) => setV(s => ({ ...s, archiveSelection }))}
-          onOpenDay={(detailDate) => setV(s => ({ ...s, detailDate }))}
+          onOpenDay={(detailDate) => runViewTransition("push", () => setV(s => ({ ...s, detailDate })))}
           onBack={goHome}
-          onWriteLog={() => setV(viewForTab("log"))}
+          onWriteLog={() => goTab("log")}
         />
       )
   } else if (v.tab === "plan") {
     screen = athleteRecordsOpen ? (
-      <DeferredMobileScreens.AthleteRecords onBack={() => setAthleteRecordsOpen(false)} />
+      <DeferredMobileScreens.AthleteRecords onBack={() => runViewTransition("pop", () => setAthleteRecordsOpen(false))} />
     ) : (
       <>
         <DeferredMobileScreens.PlanProposalInbox />
         <DeferredMobileScreens.PlanBeta
-          onManageRecords={() => setAthleteRecordsOpen(true)}
-          onWriteLog={(entryType) => setV(viewForTab("log", entryType))}
-          onWritePlannedSessionLog={(draft) => setV((state) => viewForPlannedSessionDraft(state, draft))}
+          onManageRecords={() => runViewTransition("push", () => setAthleteRecordsOpen(true))}
+          onWriteLog={(entryType) => runViewTransition("tab-backward", () => setV(viewForTab("log", entryType)))}
+          onWritePlannedSessionLog={(draft) => runViewTransition("tab-backward", () => setV((state) => viewForPlannedSessionDraft(state, draft)))}
         />
       </>
     )
   } else if (v.tab === "log" && v.importOpen) {
     screen = (
       <DeferredMobileScreens.ImportActivities
-        onBack={() => setV(s => ({ ...s, importOpen: false }))}
+        onBack={() => runViewTransition("pop", () => setV(s => ({ ...s, importOpen: false })))}
         onOpenLog={goHome}
       />
     )
@@ -278,14 +327,14 @@ export function AppShell() {
         onBack={v.entryType === "choose"
           ? v.journalDraft === undefined
             ? goHome
-            : () => setV(viewForJournalReturn(v))
+            : () => runViewTransition("pop", () => setV(viewForJournalReturn(v)))
           : v.journalDraft?.initialEntry !== undefined
-            ? () => setV(viewForJournalReturn(v))
-            : () => setV(s => ({ ...s, entryType: "choose" }))}
-        onOpenImport={() => setV(s => ({ ...s, importOpen: true }))}
+            ? () => runViewTransition("pop", () => setV(viewForJournalReturn(v)))
+            : () => runViewTransition("pop", () => setV(s => ({ ...s, entryType: "choose" })))}
+        onOpenImport={() => runViewTransition("push", () => setV(s => ({ ...s, importOpen: true })))}
         onDone={(picked, savedEntry, reviewMessage) => {
           if (v.entryType === "choose") {
-            setV(s => ({ ...s, entryType: picked }))
+            runViewTransition("push", () => setV(s => ({ ...s, entryType: picked })))
           } else if (savedEntry !== undefined) {
             goHomeAfterSave(savedEntry, reviewMessage, v.journalDraft?.date)
           }
@@ -296,7 +345,7 @@ export function AppShell() {
     screen = (
       <DeferredMobileScreens.Trends
         onBack={goHome}
-        onWriteLog={() => setV(viewForTab("log"))}
+        onWriteLog={() => goTab("log")}
       />
     )
   }
@@ -315,10 +364,11 @@ export function AppShell() {
       onTab={goTab}
       hideTabBar={false}
     >
-      <React.Suspense fallback={<p role="status">화면을 불러오는 중이에요.</p>}>
+      <React.Suspense fallback={<AppLoadingState />}>
         <div
           key={`${screenKey}:account-scope-${accountScopeRevision}`}
           className="app-flow-stage"
+          data-motion={currentScreenMotion}
         >
           {screen}
         </div>
