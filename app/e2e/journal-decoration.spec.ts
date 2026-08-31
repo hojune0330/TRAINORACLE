@@ -321,3 +321,72 @@ test("deletes a selected decoration on the canvas and deselects on empty-space t
     return state?.pagePlacements?.length ?? -1
   })).toBe(1)
 })
+
+test("snaps a dragged decoration to the center guideline magnet", async ({ page }) => {
+  await page.addInitScript(() => {
+    const now = new Date()
+    const date = [
+      now.getFullYear(),
+      String(now.getMonth() + 1).padStart(2, "0"),
+      String(now.getDate()).padStart(2, "0"),
+    ].join("-")
+    window.localStorage.setItem("trainoracle.journal.v1", JSON.stringify([{
+      id: "pinch-decoration-entry",
+      kind: "post-session",
+      date,
+      savedAt: `${date}T09:00:00.000Z`,
+      syncState: "local",
+      system: "base",
+      title: "Pinch gesture check",
+      distanceKm: "5",
+      durationMin: "30",
+      avgPace: "6:00",
+      rpe: 4,
+      memo: "",
+      fieldProvenance: {
+        distanceKm: { provenance: "EXPLICIT" },
+        durationMin: { provenance: "EXPLICIT" },
+        avgPace: { provenance: "EXPLICIT" },
+        rpe: { provenance: "EXPLICIT" },
+      },
+    }]))
+  })
+
+  await page.setViewportSize({ width: 375, height: 667 })
+  await page.goto("/?app=1")
+  await page.getByRole("button", { name: /Pinch gesture check.*상세 열기/u }).click()
+  await page.getByRole("button", { name: "일지 꾸미기 열기" }).click()
+  await page.getByRole("button", { name: "모든 꾸미기 도구" }).click()
+  await page.getByRole("button", { name: "맑은 날 오른쪽 위에 사용" }).click()
+
+  const movable = page.getByRole("button", { name: /맑은 날 선택됨/u })
+  await expect(movable).toBeVisible()
+
+  /*
+   * 핀치(두 손가락 크기+비틀기)는 합성 PointerEvent로는 use-gesture 경로를 안정적으로 못 탄다.
+   * 계약: 실기기 QA 체크리스트 항목으로 검증한다 (마스터 플랜 §3 P2 검증 게이트).
+   */
+
+  /* 드래그로 50% 근처(±2%)에 놓으면 중앙 자석이 붙어 정확히 50에 저장된다. */
+  const frame = page.locator(".decorated-journal-page")
+  const frameBox = await frame.boundingBox()
+  expect(frameBox).not.toBeNull()
+  if (frameBox === null) return
+  const start = await movable.boundingBox()
+  expect(start).not.toBeNull()
+  if (start === null) return
+  const targetX = frameBox.x + frameBox.width * 0.51
+  const targetY = frameBox.y + frameBox.height * 0.51
+  await page.mouse.move(start.x + start.width / 2, start.y + start.height / 2)
+  await page.mouse.down()
+  await page.mouse.move(targetX, targetY, { steps: 8 })
+  /* 자석이 붙은 동안 가이드라인이 보인다. */
+  await expect(page.getByTestId("journal-decoration-guides")).toBeVisible()
+  await page.mouse.up()
+
+  await expect.poll(() => page.evaluate(() => {
+    const raw = window.localStorage.getItem("trainoracle.decorations.v2")
+    const state = raw === null ? null : JSON.parse(raw) as { pagePlacements?: Array<{ transform?: { xPercent: number; yPercent: number } }> }
+    return state?.pagePlacements?.[0]?.transform?.xPercent ?? 0
+  })).toBe(50)
+})
