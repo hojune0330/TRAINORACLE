@@ -8,6 +8,7 @@ import type { ReadFailure } from "./import-activities/ImportStages"
 import { mono, secondaryBtn } from "./import-activities/styles"
 import { ActivityFileReadError, MAX_IMPORT_FILE_BYTES, readActivityFileText } from "./import-activities/read-file"
 import { useActiveContentScroll } from "../hooks/useActiveContentScroll"
+import { useOrderedStepMotion } from "../hooks/useOrderedStepMotion"
 
 type Stage =
   | { readonly step: "pick" }
@@ -25,6 +26,7 @@ export function ImportActivities({ onBack, onOpenLog }: {
   const fileInputRef = React.useRef<HTMLInputElement>(null)
   const readControllerRef = React.useRef<AbortController | null>(null)
   const stageRef = React.useRef<HTMLDivElement>(null)
+  const stageMotion = useOrderedStepMotion(stage.step, ["pick", "review", "saved"])
   useActiveContentScroll(stage.step, stageRef, undefined, true)
 
   React.useEffect(() => () => readControllerRef.current?.abort(), [])
@@ -116,7 +118,12 @@ export function ImportActivities({ onBack, onOpenLog }: {
         </div>
       </div>
 
-      <div key={stage.step} ref={stageRef} className="active-stage-content active-content-scroll-target">
+      <div
+        key={stage.step}
+        ref={stageRef}
+        className="active-stage-content active-content-scroll-target"
+        data-flow-direction={stageMotion}
+      >
         {stage.step === "pick" && (
           <PickStage
             busy={busy}

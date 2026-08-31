@@ -221,6 +221,7 @@ test("keeps youth and adult 5K eligibility and dose identical", async ({ browser
     await bindFirstRecord(page)
     await expect(page.getByText(/5×1000m @5000m RP.*r150.*JOG/u).first()).toBeVisible()
     await page.getByRole("button", { name: /시간 조절 계획 선택하기/u }).click()
+    await expectActivePlanHeading(page)
 
     storedDoses.push(await page.evaluate(() => {
       const raw = window.localStorage.getItem("trainoracle.plan-beta.v1")

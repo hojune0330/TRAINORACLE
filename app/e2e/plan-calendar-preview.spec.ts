@@ -42,6 +42,7 @@ test("shows a dated AM and PM plan before selection and after reload", async ({ 
   await expect(candidateDay).toContainText("오후")
   await expect(candidateDay).toContainText("오후 회복 운동")
   await page.getByRole("button", { name: /선택하기/u }).first().click()
+  await expect(page.getByRole("heading", { name: "9일 훈련 계획" })).toBeVisible()
   await page.reload()
   await page.getByRole("navigation", { name: "내 기록 살펴보기" }).getByRole("button", { name: /^훈련 계획/u }).click()
 

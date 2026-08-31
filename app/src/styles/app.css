@@ -659,6 +659,48 @@ button, input, textarea, select { font: inherit; letter-spacing: inherit; }
   overflow-y: auto;
 }
 
+.app-loading-state {
+  min-height: min(62dvh, 520px);
+  padding: var(--space-8) var(--space-5);
+  box-sizing: border-box;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: var(--space-2);
+  color: var(--ink);
+  background: var(--bg);
+  text-align: center;
+  animation: ui-fade-in var(--dur-fast) var(--ease-out-strong) both;
+}
+
+.app-loading-state--fullscreen {
+  min-height: 100dvh;
+}
+
+.app-loading-state strong,
+.app-loading-state span {
+  font-family: var(--sans);
+  letter-spacing: 0;
+}
+
+.app-loading-state strong {
+  font-size: var(--fs-body);
+}
+
+.app-loading-state span {
+  color: var(--ink-3);
+  font-size: var(--fs-body-sm);
+}
+
+.app-loading-state i {
+  width: 72px;
+  height: 2px;
+  margin-top: var(--space-2);
+  background: var(--brand);
+  transform-origin: left center;
+  animation: loading-line-enter var(--dur-slow) var(--ease-out-strong) both;
+}
+
 .active-content-scroll-target {
   scroll-margin-block-start: 16px;
 }
@@ -668,11 +710,26 @@ button, input, textarea, select { font: inherit; letter-spacing: inherit; }
   animation: flow-stage-enter var(--dur-base) var(--ease-out-strong) both;
 }
 
+.active-stage-content[data-flow-direction="forward"] {
+  animation-name: flow-stage-forward;
+}
+
+.active-stage-content[data-flow-direction="backward"] {
+  animation-name: flow-stage-backward;
+}
+
 /* 화면 전체 래퍼에 transform을 주면 하단 고정 버튼의 기준점이 바뀐다.
    탭 전환은 짧게 밝아지고, 선택 단계 안쪽만 아주 조금 정착한다. */
 .app-flow-stage {
   min-width: 0;
   animation: ui-fade-in var(--dur-fast) var(--ease-out-strong) both;
+}
+
+.app-flow-stage[data-motion="push"],
+.app-flow-stage[data-motion="pop"],
+.app-flow-stage[data-motion="tab-forward"],
+.app-flow-stage[data-motion="tab-backward"] {
+  animation-name: app-screen-enter;
 }
 
 .journal-flow-stage {
@@ -716,6 +773,10 @@ button, input, textarea, select { font: inherit; letter-spacing: inherit; }
 .app-tab-bar__button[data-active="true"] {
   background: var(--ink);
   color: var(--bg);
+}
+
+.app-tab-bar__button[data-active="true"] svg {
+  animation: tab-icon-settle var(--dur-base) var(--ease-out-strong) both;
 }
 
 .app-tab-bar__button span {
@@ -1148,6 +1209,7 @@ button, input, textarea, select { font: inherit; letter-spacing: inherit; }
 .training-home__welcome-title {
   word-break: keep-all;
   overflow-wrap: break-word;
+  animation: welcome-title-enter var(--dur-slow) var(--ease-out-strong) both;
 }
 
 .training-home__welcome-title-phrase {
@@ -1192,6 +1254,7 @@ button, input, textarea, select { font: inherit; letter-spacing: inherit; }
   display: grid;
   gap: var(--space-2);
   padding: var(--space-4) var(--space-5) 0;
+  animation: welcome-actions-enter var(--dur-slow) var(--ease-out-strong) 60ms both;
 }
 
 .training-home__welcome-actions .training-home__primary {
@@ -1939,6 +2002,41 @@ button:not(:disabled):not([aria-disabled="true"]):active {
 @keyframes flow-stage-enter {
   from { opacity: 0.65; transform: translateY(6px); }
   to { opacity: 1; transform: none; }
+}
+
+@keyframes flow-stage-forward {
+  from { opacity: 0.65; transform: translateX(8px); }
+  to { opacity: 1; transform: none; }
+}
+
+@keyframes flow-stage-backward {
+  from { opacity: 0.65; transform: translateX(-8px); }
+  to { opacity: 1; transform: none; }
+}
+
+@keyframes app-screen-enter {
+  from { opacity: 0.35; }
+  to { opacity: 1; }
+}
+
+@keyframes tab-icon-settle {
+  from { opacity: 0.65; transform: translateY(2px) scale(0.9); }
+  to { opacity: 1; transform: none; }
+}
+
+@keyframes welcome-title-enter {
+  from { opacity: 0.45; transform: translateY(8px); }
+  to { opacity: 1; transform: none; }
+}
+
+@keyframes welcome-actions-enter {
+  from { opacity: 0.45; transform: translateY(6px); }
+  to { opacity: 1; transform: none; }
+}
+
+@keyframes loading-line-enter {
+  from { opacity: 0.35; transform: scaleX(0.18); }
+  to { opacity: 1; transform: scaleX(1); }
 }
 
 @keyframes confirmation-check {

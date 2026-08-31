@@ -1,4 +1,4 @@
-import { act, cleanup, fireEvent, render, screen, within } from "@testing-library/react"
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react"
 import { readFileSync } from "node:fs"
 import { afterEach, describe, expect, it, vi } from "vitest"
 import { AppShell, SavedToast } from "../AppShell"
@@ -114,6 +114,22 @@ describe("motion CSS contract", () => {
     expect(appCss).not.toContain("scroll-jacking")
   })
 
+  it("labels every route change without blocking live fixed controls", () => {
+    expect(appCss).not.toContain("view-transition-name: app-screen")
+    expect(appCss).not.toContain("::view-transition-new")
+    expect(appCss).toContain('.app-flow-stage[data-motion="tab-forward"]')
+    expect(appCss).toContain('.app-flow-stage[data-motion="tab-backward"]')
+    expect(appCss).toContain("animation-name: app-screen-enter")
+    expect(appCss).not.toContain("infinite")
+  })
+
+  it("welcomes once and settles the active tab without animating every element", () => {
+    expect(appCss).toContain("welcome-title-enter var(--dur-slow)")
+    expect(appCss).toContain("welcome-actions-enter var(--dur-slow)")
+    expect(appCss).toContain('.app-tab-bar__button[data-active="true"] svg')
+    expect(appCss).toContain("tab-icon-settle var(--dur-base)")
+  })
+
   it("removes spatial movement when reduced motion is requested", () => {
     expect(appCss).toContain("@media (prefers-reduced-motion: reduce)")
     expect(appCss).toContain("animation-name: ui-fade-in")
@@ -225,5 +241,24 @@ describe("saved toast motion structure", () => {
     } finally {
       vi.useRealTimers()
     }
+  })
+})
+
+describe("app screen direction structure", () => {
+  it("labels the first screen and bottom-tab travel direction", async () => {
+    window.localStorage.clear()
+    const view = render(<AppShell />)
+    expect(view.container.querySelector(".app-flow-stage")).toHaveAttribute("data-motion", "initial")
+
+    const tabBar = screen.getByRole("navigation", { name: "주 탭" })
+    fireEvent.click(within(tabBar).getByRole("button", { name: "계획" }))
+    await waitFor(() => {
+      expect(view.container.querySelector(".app-flow-stage")).toHaveAttribute("data-motion", "tab-forward")
+    })
+
+    fireEvent.click(within(tabBar).getByRole("button", { name: "홈" }))
+    await waitFor(() => {
+      expect(view.container.querySelector(".app-flow-stage")).toHaveAttribute("data-motion", "tab-backward")
+    })
   })
 })

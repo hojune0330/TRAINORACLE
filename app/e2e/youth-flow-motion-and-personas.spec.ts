@@ -38,7 +38,7 @@ test("moves from a choice to the next question and gives a clear journal save co
   await expect(page.getByRole("heading", { name: "현재 참가하거나 준비 중인 부문이 있나요?" })).toBeVisible()
   await expectActiveQuestionAtReadingPosition(page)
   const nextAnimation = await page.locator(".plan-intake").evaluate((element) => getComputedStyle(element).animationName)
-  expect(nextAnimation).toBe(testInfo.project.name === "reduced-motion" ? "none" : "flow-stage-enter")
+  expect(nextAnimation).toBe(testInfo.project.name === "reduced-motion" ? "none" : "flow-stage-forward")
 
   await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "경기기록" }).click()
   await page.getByRole("button", { name: /훈련 후/u }).click()
