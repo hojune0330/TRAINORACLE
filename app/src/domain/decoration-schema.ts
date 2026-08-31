@@ -15,6 +15,11 @@ import {
   isPlacementDecorationId,
   isThemeDecorationId,
 } from "./decoration-catalog"
+import {
+  TEXT_INK_IDS,
+  TEXT_STICKER_ITEM_ID,
+  TEXT_STICKER_MAX_LENGTH,
+} from "./decoration-catalog"
 import type { DecorationId, DecorationSlot, PlacementDecorationId } from "./decoration-catalog"
 
 const pointMeaningSchema = z.literal("NON_ECONOMIC_NON_TRANSFERABLE_BETA")
@@ -55,10 +60,28 @@ const uniqueIds = (ids: readonly string[]): boolean => new Set(ids).size === ids
  * v3 자유 배치 (계약 §2): 슬롯 없음, 같은 아이템 복수 허용,
  * 배열 순서 = 렌더 순서(마지막이 최상단), transform 필수.
  */
-const pageItemSchema = z.object({
+const catalogPageItemSchema = z.object({
   itemId: placementItemIdSchema,
   transform: decorationPlacementTransformSchema,
 }).strict().readonly()
+
+/*
+ * 텍스트 스티커 (P5 계약 §1): 사용자 입력 텍스트 1~20자(trim 후 판정) +
+ * 전용 잉크 6색. strict 판별 유니온으로 일반 아이템에 text 오염을 막는다 (T10).
+ */
+export const textStickerTextSchema = z.string()
+  .min(1)
+  .max(TEXT_STICKER_MAX_LENGTH)
+  .refine((value) => value.trim().length > 0, "blank text")
+const textInkIdSchema = z.enum(TEXT_INK_IDS)
+const textPageItemSchema = z.object({
+  itemId: z.literal(TEXT_STICKER_ITEM_ID),
+  text: textStickerTextSchema,
+  inkId: textInkIdSchema,
+  transform: decorationPlacementTransformSchema,
+}).strict().readonly()
+
+const pageItemSchema = z.union([catalogPageItemSchema, textPageItemSchema])
 
 const decorationPageSchema = z.object({
   date: isoDateSchema,
@@ -120,6 +143,11 @@ export const decorationStateSchema = z.object({
 export type DecorationState = z.infer<typeof decorationStateSchema>
 export type DecorationPage = z.infer<typeof decorationPageSchema>
 export type DecorationPageItem = z.infer<typeof pageItemSchema>
+export type DecorationTextPageItem = z.infer<typeof textPageItemSchema>
+
+export function isTextStickerPageItem(item: DecorationPageItem): item is DecorationTextPageItem {
+  return item.itemId === TEXT_STICKER_ITEM_ID
+}
 export type DecorationPlacementTransform = z.infer<typeof decorationPlacementTransformSchema>
 
 /* ── v2 → v3 변환표 (계약 §3): 슬롯 기본 좌표. v2 렌더 레이어 순서와 동일한 고정 순서. ── */
@@ -169,6 +197,13 @@ const storedV3PageShapeSchema = z.object({
 
 const storedV3ItemShapeSchema = z.object({
   itemId: z.string(),
+  transform: z.unknown(),
+}).strict()
+
+const storedV3TextItemShapeSchema = z.object({
+  itemId: z.literal(TEXT_STICKER_ITEM_ID),
+  text: z.string(),
+  inkId: z.string(),
   transform: z.unknown(),
 }).strict()
 
@@ -252,6 +287,13 @@ function normalizedPages(rows: readonly unknown[], owned: ReadonlySet<Decoration
     const items: DecorationPageItem[] = []
     for (const candidate of page.data.items) {
       if (items.length >= MAX_DECORATION_ITEMS_PER_PAGE) break
+      /* 텍스트 스티커 먼저 시도 — text/inkId 필드가 있으면 이 경로만 유효하다 (P5 T10). */
+      const textItem = storedV3TextItemShapeSchema.safeParse(candidate)
+      if (textItem.success) {
+        const parsed = textPageItemSchema.safeParse(textItem.data)
+        if (parsed.success) items.push(parsed.data)
+        continue
+      }
       const item = storedV3ItemShapeSchema.safeParse(candidate)
       if (!item.success) continue
       const { itemId, transform } = item.data

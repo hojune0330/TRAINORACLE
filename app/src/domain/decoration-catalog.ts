@@ -157,7 +157,40 @@ export const DECORATION_CATALOG = [
 ] as const satisfies readonly DecorationCatalogItem[]
 
 
+/*
+ * ── 텍스트 스티커 (P5 계약 §1) ──
+ * 사용자 입력 텍스트 아이템. 상점·보유·비용 개념이 없는 사용자 콘텐츠라
+ * 카탈로그 배치 ID 집합에 넣지 않고 전용 리터럴로 분리한다 (계약 T1).
+ */
+export const TEXT_STICKER_ITEM_ID = "TEXT_STICKER" as const
+export const TEXT_STICKER_MAX_LENGTH = 20
+
+/* 전용 잉크 팔레트 6색 (계약 T5) — 종이 톤(--paper #F7F3E8) 위 대비 4.5:1 이상. */
+export const TEXT_INK_IDS = [
+  "TEXT_INK_NAVY",
+  "TEXT_INK_BLACK",
+  "TEXT_INK_RED",
+  "TEXT_INK_GREEN",
+  "TEXT_INK_VIOLET",
+  "TEXT_INK_ORANGE",
+] as const
+export type TextInkId = (typeof TEXT_INK_IDS)[number]
+
+export const TEXT_INK_DEFINITIONS: readonly { readonly id: TextInkId; readonly name: string; readonly color: string }[] = [
+  { id: "TEXT_INK_NAVY", name: "남색", color: "#1F3A5F" },
+  { id: "TEXT_INK_BLACK", name: "먹색", color: "#26241F" },
+  { id: "TEXT_INK_RED", name: "다홍", color: "#B3372E" },
+  { id: "TEXT_INK_GREEN", name: "초록", color: "#2E6B4F" },
+  { id: "TEXT_INK_VIOLET", name: "보라", color: "#5B4A8A" },
+  { id: "TEXT_INK_ORANGE", name: "주황", color: "#B4632A" },
+]
+
+export function textInkColor(inkId: TextInkId): string {
+  return TEXT_INK_DEFINITIONS.find((definition) => definition.id === inkId)?.color ?? "#1F3A5F"
+}
+
 function includesValue<T extends string>(values: readonly T[], candidate: string): candidate is T { return values.includes(candidate as T) }
+export function isTextInkId(candidate: string): candidate is TextInkId { return includesValue(TEXT_INK_IDS, candidate) }
 export function isDecorationId(candidate: string): candidate is DecorationId { return includesValue(DECORATION_IDS, candidate) }
 export function isPaidDecorationId(candidate: string): candidate is PaidDecorationId { return includesValue(PAID_DECORATION_IDS, candidate) }
 export function isThemeDecorationId(candidate: string): candidate is ThemeDecorationId { return includesValue(THEME_DECORATION_IDS, candidate) }

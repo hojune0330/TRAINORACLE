@@ -1,11 +1,14 @@
 import {
   MAX_DECORATION_ITEMS_PER_PAGE,
+  TEXT_STICKER_ITEM_ID,
   decorationStateSchema,
   isAvatarDecorationId,
   isInkDecorationId,
   isPlacementDecorationId,
+  isTextStickerPageItem,
   isThemeDecorationId,
   rememberDecorationUse,
+  textStickerTextSchema,
 } from "./decorations"
 import type {
   DecorationCatalogItem,
@@ -14,6 +17,7 @@ import type {
   DecorationPlacementTransform,
   DecorationState,
   PlacementDecorationId,
+  TextInkId,
 } from "./decorations"
 
 /*
@@ -105,10 +109,11 @@ export function duplicateJournalDecorationAt(
   const source = items[index]
   if (source === undefined) return null
   if (!canAppendJournalDecoration(state, date)) return null
+  /* 텍스트 스티커의 text/inkId까지 통째로 보존해야 한다 (P5 계약 §3 게이트 4). */
   const parsed = decorationStateSchema.safeParse(withPageItems(state, date, [
     ...items,
     {
-      itemId: source.itemId,
+      ...source,
       transform: {
         ...source.transform,
         xPercent: Math.min(96, source.transform.xPercent + 4),
@@ -116,6 +121,59 @@ export function duplicateJournalDecorationAt(
       },
     },
   ]))
+  return parsed.success ? parsed.data : null
+}
+
+/*
+ * 텍스트 스티커 부착 (P5 계약 §1 T7): 24개 상한을 카탈로그 아이템과 공유한다.
+ * 텍스트는 스키마(1~20자, trim 후 비어있지 않음)로 검증 — 실패 시 null.
+ */
+export function appendJournalTextSticker(
+  state: DecorationState,
+  date: string,
+  text: string,
+  inkId: TextInkId,
+  transform?: DecorationPlacementTransform,
+): DecorationState | null {
+  if (!canAppendJournalDecoration(state, date)) return null
+  const parsedText = textStickerTextSchema.safeParse(text)
+  if (!parsedText.success) return null
+  const items = journalDecorationItems(state, date)
+  const parsed = decorationStateSchema.safeParse(withPageItems(state, date, [
+    ...items,
+    {
+      itemId: TEXT_STICKER_ITEM_ID,
+      text: parsedText.data,
+      inkId,
+      transform: transform ?? defaultJournalDecorationTransform(state, date),
+    },
+  ]))
+  return parsed.success ? parsed.data : null
+}
+
+/*
+ * 텍스트 스티커 재편집 (P5 계약 §2 U4): 위치·크기·회전은 건드리지 않고
+ * text/inkId만 바꾼다. 대상이 텍스트 스티커가 아니면 null.
+ */
+export function updateJournalTextSticker(
+  state: DecorationState,
+  date: string,
+  index: number,
+  text: string,
+  inkId: TextInkId,
+): DecorationState | null {
+  const items = journalDecorationItems(state, date)
+  const target = items[index]
+  if (target === undefined || !isTextStickerPageItem(target)) return null
+  const parsedText = textStickerTextSchema.safeParse(text)
+  if (!parsedText.success) return null
+  const parsed = decorationStateSchema.safeParse(withPageItems(
+    state,
+    date,
+    items.map((item, candidate) => (candidate === index
+      ? { ...target, text: parsedText.data, inkId }
+      : item)),
+  ))
   return parsed.success ? parsed.data : null
 }
 
