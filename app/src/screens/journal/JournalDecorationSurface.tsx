@@ -178,11 +178,17 @@ export function JournalDecorationSurface({
     showNotice(direction === "UNDO" ? "이전 꾸미기로 되돌렸어요." : "되돌리기를 취소했어요.")
   }
 
-  /* Ctrl+Z / Ctrl+Y(또는 Ctrl+Shift+Z) — 편집기가 열려 있을 때만. */
+  /* Ctrl+Z / Ctrl+Y(또는 Ctrl+Shift+Z) — 편집기가 열려 있을 때만.
+   * 글 스티커 입력창처럼 편집 가능한 대상에 포커스가 있으면 건드리지 않는다:
+   * 타이핑 취소(Ctrl+Z)가 장식 Undo로 변질되면 입력 내용과 캔버스가 함께 어긋난다. */
   React.useEffect(() => {
     if (!open) return
     const onKeyDown = (event: KeyboardEvent) => {
       if (!(event.ctrlKey || event.metaKey)) return
+      const target = event.target
+      if (target instanceof HTMLElement && (
+        target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.isContentEditable
+      )) return
       const key = event.key.toLowerCase()
       if (key === "z" && !event.shiftKey) {
         event.preventDefault()

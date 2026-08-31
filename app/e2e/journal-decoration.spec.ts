@@ -441,3 +441,120 @@ test("migrates a v2-only decoration store to v3 on load and preserves the origin
   expect(migrated.backupCreated).toBe(true)
   expect(consoleErrors).toEqual([])
 })
+
+/*
+ * 감사 열린 항목(P2) 마감: 날짜 이동을 포함한 복사·붙여넣기 전체 UI 자동화.
+ * 날짜 A에서 복사 → 날짜 넘기기 → 날짜 B에 붙여넣기 → 두 날짜 모두 저장 확인 →
+ * 새로고침 뒤 세션 클립보드가 소멸해 붙여넣기 경로가 사라지는 경계까지 검증한다.
+ */
+test("copies a decoration on one date and pastes it onto another, and the clipboard dies on refresh", async ({ page }) => {
+  const consoleErrors: string[] = []
+  page.on("console", (message) => {
+    if (message.type() === "error") consoleErrors.push(message.text())
+  })
+  page.on("pageerror", (error) => consoleErrors.push(error.message))
+
+  /* 이틀치 일지를 심는다: 오늘(B)과 어제(A). */
+  await page.addInitScript(() => {
+    const toKey = (value: Date) => [
+      value.getFullYear(),
+      String(value.getMonth() + 1).padStart(2, "0"),
+      String(value.getDate()).padStart(2, "0"),
+    ].join("-")
+    const today = new Date()
+    const yesterday = new Date(today.getTime() - 24 * 60 * 60 * 1000)
+    const entry = (id: string, title: string, date: string) => ({
+      id,
+      kind: "post-session",
+      date,
+      savedAt: `${date}T09:00:00.000Z`,
+      syncState: "local",
+      system: "base",
+      title,
+      distanceKm: "5",
+      durationMin: "30",
+      avgPace: "6:00",
+      rpe: 4,
+      memo: "",
+      fieldProvenance: {
+        distanceKm: { provenance: "EXPLICIT" },
+        durationMin: { provenance: "EXPLICIT" },
+        avgPace: { provenance: "EXPLICIT" },
+        rpe: { provenance: "EXPLICIT" },
+      },
+    })
+    window.localStorage.setItem("trainoracle.journal.v1", JSON.stringify([
+      entry("cross-date-b", "Cross date target", toKey(today)),
+      entry("cross-date-a", "Cross date source", toKey(yesterday)),
+    ]))
+  })
+
+  await page.setViewportSize({ width: 375, height: 667 })
+  await page.goto("/?app=1")
+
+  /* 날짜 A(어제)로 이동해 장식을 붙이고 복사한다. */
+  await page.getByRole("button", { name: /Cross date source.*상세 열기/u }).click()
+  await page.getByRole("button", { name: "일지 꾸미기 열기" }).click()
+  await page.getByRole("button", { name: "이모지 스티커 도구" }).click()
+  await page.getByRole("button", { name: /불꽃 이모지 붙이기/u }).click()
+  await page.getByRole("button", { name: "선택한 장식 복사" }).click()
+  await page.getByRole("button", { name: "꾸미기 완료" }).click()
+
+  /* 날짜 B(오늘)로 넘겨 세션 클립보드에서 붙여넣는다. */
+  await page.getByRole("button", { name: /다음 일지/u }).click()
+  await expect(page.getByText("Cross date target")).toBeVisible()
+  await page.getByRole("button", { name: "일지 꾸미기 열기" }).click()
+  await page.getByRole("button", { name: "복사한 장식 붙여넣기" }).click()
+  await expect(page.getByRole("status")).toContainText("복사한 장식을 붙였어요")
+
+  const pages = await page.evaluate((key) => {
+    const raw = window.localStorage.getItem(key)
+    const state = raw === null ? null : JSON.parse(raw) as {
+      pages?: Array<{ date: string; items?: Array<{ itemId: string }> }>
+    }
+    return (state?.pages ?? []).map((entry) => ({
+      date: entry.date,
+      itemIds: (entry.items ?? []).map((item) => item.itemId),
+    }))
+  }, DECORATION_KEY_V3)
+  const withFire = pages.filter((entry) => entry.itemIds.includes("EMOJI_FIRE"))
+  expect(withFire).toHaveLength(2)
+  expect(new Set(withFire.map((entry) => entry.date)).size).toBe(2)
+
+  /* 새로고침 = 세션 클립보드 소멸. 선택이 없으면 붙여넣기 경로 자체가 사라진다. */
+  await page.reload()
+  await page.getByRole("button", { name: /Cross date target.*상세 열기/u }).click()
+  await page.getByRole("button", { name: "일지 꾸미기 열기" }).click()
+  await expect(page.getByRole("button", { name: "복사한 장식 붙여넣기" })).toHaveCount(0)
+  expect(consoleErrors).toEqual([])
+})
+
+/*
+ * 글 스티커 입력 중 Ctrl+Z는 타이핑 취소지 장식 Undo가 아니다.
+ * 입력창에 포커스가 있을 때 편집기 전역 단축키가 캔버스를 되돌리면
+ * 사용자는 보이지 않는 곳에서 장식을 잃는다.
+ */
+test("does not hijack Ctrl+Z as decoration undo while typing in the text sticker input", async ({ page }) => {
+  await seedEntry(page, "undo-guard-entry", "Undo guard check")
+
+  await page.setViewportSize({ width: 375, height: 667 })
+  await page.goto("/?app=1")
+  await page.getByRole("button", { name: /Undo guard check.*상세 열기/u }).click()
+  await page.getByRole("button", { name: "일지 꾸미기 열기" }).click()
+  await page.getByRole("button", { name: "이모지 스티커 도구" }).click()
+  await page.getByRole("button", { name: /불꽃 이모지 붙이기/u }).click()
+
+  await page.getByRole("button", { name: "글 스티커 도구" }).click()
+  const input = page.getByTestId("journal-text-sticker-input")
+  await input.fill("화이팅")
+  await input.press("Control+z")
+
+  /* 시트는 열려 있고, 캔버스 장식은 되돌려지지 않았다. */
+  await expect(page.getByTestId("journal-text-sticker-sheet")).toBeVisible()
+  await expect(page.getByRole("status").filter({ hasText: "이전 꾸미기로 되돌렸어요" })).toHaveCount(0)
+  const fireKept = await page.evaluate((key) => {
+    const raw = window.localStorage.getItem(key)
+    return raw?.includes('"itemId":"EMOJI_FIRE"') ?? false
+  }, DECORATION_KEY_V3)
+  expect(fireKept).toBe(true)
+})
