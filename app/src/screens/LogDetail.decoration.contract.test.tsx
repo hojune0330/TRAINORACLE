@@ -335,6 +335,35 @@ describe("real journal decoration surface", () => {
     expect(movable.closest(".decorated-journal-page__free-item")).not.toHaveAttribute("data-selected")
   })
 
+  it("resets scale and rotation to defaults on double tap while keeping position", async () => {
+    const user = userEvent.setup()
+    storeEntries([session("one")])
+    const base = createEmptyDecorationState()
+    expect(saveDecorationState(decorationStateSchema.parse({
+      ...base,
+      pagePlacements: [{
+        date: DATE,
+        slot: "TOP_CORNER",
+        itemId: "STICKER_WEATHER_SUN",
+        transform: { xPercent: 30, yPercent: 40, scale: 1.6, rotationDeg: 21 },
+      }],
+    })).ok).toBe(true)
+    render(<LogDetail date={DATE} />)
+
+    await user.click(screen.getByRole("button", { name: "일지 꾸미기 열기" }))
+    const movable = screen.getByRole("button", { name: /맑은 날 선택됨/u })
+    /* 더블탭(300ms 내 두 번) → 크기 1.0 / 회전 0°, 위치는 그대로 */
+    fireEvent.click(movable)
+    fireEvent.click(movable)
+
+    expect(loadDecorationState().pagePlacements[0]?.transform).toEqual({
+      xPercent: 30,
+      yPercent: 40,
+      scale: 1,
+      rotationDeg: 0,
+    })
+  })
+
   it("rounds committed transforms to the precision contract (0.1% / 0.05 / 1deg)", async () => {
     const user = userEvent.setup()
     storeEntries([session("one")])

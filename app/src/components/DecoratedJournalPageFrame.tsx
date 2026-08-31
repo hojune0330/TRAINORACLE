@@ -1,4 +1,4 @@
-import { useDrag } from "@use-gesture/react"
+import { useDrag, useGesture } from "@use-gesture/react"
 import { Maximize2, RotateCw, X } from "lucide-react"
 import React from "react"
 import { DECORATION_SLOTS, decorationCatalogItem } from "../domain/decorations"
@@ -75,11 +75,31 @@ function DecorationAsset({
 
 const clamp = (value: number, minimum: number, maximum: number): number => Math.min(maximum, Math.max(minimum, value))
 
+/* 회전 스냅: 15° 배수에 ±3° 자석 (마스터 플랜 §2.3) — 자석 밖에서는 자유롭게 벗어난다. */
+const snapRotation = (deg: number): number => {
+  const nearest = Math.round(deg / 15) * 15
+  return Math.abs(deg - nearest) <= 3 ? nearest : deg
+}
+
+/* 중앙 가이드라인 자석: 50%에서 ±2% 이내면 정중앙으로 붙는다. */
+const CENTER_MAGNET_PERCENT = 2
+const snapCenter = (percent: number): { value: number; snapped: boolean } => (
+  Math.abs(percent - 50) <= CENTER_MAGNET_PERCENT
+    ? { value: 50, snapped: true }
+    : { value: percent, snapped: false }
+)
+
+type Guides = { readonly vertical: boolean; readonly horizontal: boolean }
+
 type GestureAnchor = {
   readonly pageRect: DOMRect
   readonly startTransform: DecorationPlacementTransform
   readonly startDistance: number
   readonly startAngle: number
+}
+
+type PinchAnchor = {
+  readonly startTransform: DecorationPlacementTransform
 }
 
 /*
@@ -95,6 +115,7 @@ function EditableDecorationPlacement({
   onTransform,
   onDelete,
   onDeselect,
+  onGuides,
 }: {
   readonly item: DecorationCatalogItem
   readonly slot: DecorationSlot
@@ -104,6 +125,7 @@ function EditableDecorationPlacement({
   readonly onTransform: (transform: DecorationPlacementTransform) => void
   readonly onDelete: () => void
   readonly onDeselect: () => void
+  readonly onGuides: (guides: Guides) => void
 }) {
   const itemRef = React.useRef<HTMLDivElement | null>(null)
   const draftRef = React.useRef(transform)
@@ -156,22 +178,62 @@ function EditableDecorationPlacement({
       frameRef.current = null
     }
     paint(draftRef.current)
+    onGuides({ vertical: false, horizontal: false })
     onTransform(draftRef.current)
-  }, [paint, onTransform])
+  }, [paint, onTransform, onGuides])
 
-  const bindMove = useDrag(({ first, last, tap, movement: [movementX, movementY], initial: [initialX, initialY], memo }) => {
-    if (tap) return memo as GestureAnchor | null
-    const start = first ? anchor(initialX, initialY) : (memo as GestureAnchor | null)
-    if (start === null || start === undefined) return null
-    if (first) onSelect()
-    schedule({
-      ...start.startTransform,
-      xPercent: clamp(start.startTransform.xPercent + (movementX / start.pageRect.width) * 100, 4, 96),
-      yPercent: clamp(start.startTransform.yPercent + (movementY / start.pageRect.height) * 100, 4, 96),
-    })
-    if (last) finish()
-    return start
-  }, { filterTaps: true, pointer: { capture: true } })
+  /* 더블탭 리셋: 크기 1.0 / 회전 0° (위치는 유지). 확인 없이, 되돌리기가 안전망. */
+  const lastTapRef = React.useRef(0)
+  const handleTap = React.useCallback(() => {
+    const now = Date.now()
+    if (now - lastTapRef.current < 300) {
+      lastTapRef.current = 0
+      const reset = { ...draftRef.current, scale: 1, rotationDeg: 0 }
+      draftRef.current = reset
+      paint(reset)
+      onTransform(reset)
+      return
+    }
+    lastTapRef.current = now
+    onSelect()
+  }, [paint, onTransform, onSelect])
+
+  const bindItem = useGesture({
+    onDrag: ({ first, last, tap, pinching, cancel, movement: [movementX, movementY], initial: [initialX, initialY], memo }) => {
+      if (pinching) {
+        cancel()
+        return memo as GestureAnchor | null
+      }
+      if (tap) return memo as GestureAnchor | null
+      const start = first ? anchor(initialX, initialY) : (memo as GestureAnchor | null)
+      if (start === null || start === undefined) return null
+      if (first) onSelect()
+      const rawX = clamp(start.startTransform.xPercent + (movementX / start.pageRect.width) * 100, 4, 96)
+      const rawY = clamp(start.startTransform.yPercent + (movementY / start.pageRect.height) * 100, 4, 96)
+      const snappedX = snapCenter(rawX)
+      const snappedY = snapCenter(rawY)
+      onGuides({ vertical: snappedX.snapped, horizontal: snappedY.snapped })
+      schedule({ ...start.startTransform, xPercent: snappedX.value, yPercent: snappedY.value })
+      if (last) finish()
+      return start
+    },
+    /*
+     * 핀치 = 두 손가락 크기 + 비틀기 회전 동시 (use-gesture가 da=[distance, angle]로 제공).
+     * 회전에는 15° 자석 스냅이 붙는다.
+     */
+    onPinch: ({ first, last, movement: [scaleRatio, angleDelta], memo }) => {
+      const start = first ? { startTransform: draftRef.current } : (memo as PinchAnchor | null)
+      if (start === null || start === undefined) return null
+      if (first) onSelect()
+      schedule({
+        ...start.startTransform,
+        scale: clamp(start.startTransform.scale * scaleRatio, 0.6, 2),
+        rotationDeg: clamp(snapRotation(start.startTransform.rotationDeg + angleDelta), -45, 45),
+      })
+      if (last) finish()
+      return start
+    },
+  }, { drag: { filterTaps: true, pointer: { capture: true } } })
 
   const bindResize = useDrag(({ event, first, last, xy: [pointerX, pointerY], initial: [initialX, initialY], memo }) => {
     event.stopPropagation()
@@ -192,7 +254,10 @@ function EditableDecorationPlacement({
     const centerX = start.pageRect.left + (start.startTransform.xPercent / 100) * start.pageRect.width
     const centerY = start.pageRect.top + (start.startTransform.yPercent / 100) * start.pageRect.height
     const angle = Math.atan2(pointerY - centerY, pointerX - centerX) * 180 / Math.PI
-    schedule({ ...start.startTransform, rotationDeg: clamp(start.startTransform.rotationDeg + angle - start.startAngle, -45, 45) })
+    schedule({
+      ...start.startTransform,
+      rotationDeg: clamp(snapRotation(start.startTransform.rotationDeg + angle - start.startAngle), -45, 45),
+    })
     if (last) finish()
     return start
   }, { pointer: { capture: true } })
@@ -234,7 +299,7 @@ function EditableDecorationPlacement({
 
   return (
     <div
-      {...bindMove()}
+      {...bindItem()}
       ref={itemRef}
       className="decorated-journal-page__free-item"
       data-category={item.category}
@@ -247,8 +312,8 @@ function EditableDecorationPlacement({
       } as React.CSSProperties}
       role="button"
       tabIndex={0}
-      aria-label={`${item.name} 선택됨. 드래그해 옮기고 손잡이로 크기와 각도를 바꿔요. Delete 키로 삭제해요.`}
-      onClick={onSelect}
+      aria-label={`${item.name} 선택됨. 드래그로 옮기고 두 손가락으로 크기와 각도를 바꿔요. 두 번 탭하면 원래 크기로 돌아가고 Delete 키로 삭제해요.`}
+      onClick={handleTap}
       onKeyDown={keyboardTransform}
     >
       <DecorationAsset
@@ -298,6 +363,8 @@ export function DecoratedJournalPageFrame({
   onDeselectPlacement,
   onDeletePlacement,
 }: DecoratedJournalPageFrameProps) {
+  /* 드래그 중 중앙 자석이 붙은 축에만 가이드라인을 그린다. */
+  const [guides, setGuides] = React.useState<Guides>({ vertical: false, horizontal: false })
   const theme = decorationCatalogItem(state.equipped.themeId)
   const avatar = state.equipped.avatarId === null
     ? undefined
@@ -379,6 +446,12 @@ export function DecoratedJournalPageFrame({
           <DecorationAsset item={pageFooter.item} className="decorated-journal-page__slot decorated-journal-page__slot--page-footer" testId={SLOT_TEST_IDS.PAGE_FOOTER} />
         </div>
       )}
+      {editable && (guides.vertical || guides.horizontal) && (
+        <div className="decorated-journal-page__guides" aria-hidden="true" data-testid="journal-decoration-guides">
+          {guides.vertical && <span className="decorated-journal-page__guide decorated-journal-page__guide--vertical" />}
+          {guides.horizontal && <span className="decorated-journal-page__guide decorated-journal-page__guide--horizontal" />}
+        </div>
+      )}
       {freePlacements.length > 0 && (
         <div className="decorated-journal-page__free-layer" data-editable={editable ? "true" : undefined}>
           {freePlacements.map((placement) => {
@@ -415,6 +488,7 @@ export function DecoratedJournalPageFrame({
                 onTransform={(next) => onTransformPlacement(placement.slot, next)}
                 onDelete={() => onDeletePlacement?.(placement.slot)}
                 onDeselect={() => onDeselectPlacement?.()}
+                onGuides={setGuides}
               />
             )
           })}
