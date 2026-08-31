@@ -1,8 +1,8 @@
 {
   "kind": "TRAINORACLE_PAGES_DEPLOYMENT",
-  "sourceSha": "e14d8d308702433a7f9a5044ddaf257bbc94e348",
-  "previousPagesSha": "204904adc97feb7fdfbd3a9d1a22e3af96370919",
-  "workflowRunId": "33397072225",
+  "sourceSha": "d629d008da31e08df7f2f1beb582c083685736d6",
+  "previousPagesSha": "0da0da3706cb69a94a72f89b9d531364e87cc705",
+  "workflowRunId": "33399127007",
   "workflowAttempt": "1",
-  "deployedAt": "2026-08-31T13:48:14.362Z"
+  "deployedAt": "2026-08-31T14:08:40.581Z"
 }
