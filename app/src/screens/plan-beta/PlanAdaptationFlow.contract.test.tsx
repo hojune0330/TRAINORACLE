@@ -1,6 +1,6 @@
 import { cleanup, render, screen, waitFor, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
-import { afterEach, beforeEach, describe, expect, it } from "vitest"
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import type { AthleteRecord } from "../../domain/athlete-records"
 import {
   createSelfReportedAthleteRecord,
@@ -25,9 +25,13 @@ const TEMPLATE_5000 = {
   version: APPROVAL_5000.templateVersion,
   fingerprint: APPROVAL_5000.templateContentFingerprint,
 } as const
+const TEST_SYSTEM_TIME = new Date("2026-08-18T12:00:00.000Z")
 let locksDescriptor: PropertyDescriptor | undefined
 
 beforeEach(() => {
+  /* PB/SB recency and active-frame fixtures must not expire when the calendar advances. */
+  vi.useFakeTimers({ toFake: ["Date"] })
+  vi.setSystemTime(TEST_SYSTEM_TIME)
   window.localStorage.clear()
   window.sessionStorage.clear()
   locksDescriptor = Object.getOwnPropertyDescriptor(navigator, "locks")
@@ -45,6 +49,7 @@ afterEach(() => {
   if (locksDescriptor === undefined) Reflect.deleteProperty(navigator, "locks")
   else Object.defineProperty(navigator, "locks", locksDescriptor)
   cleanup()
+  vi.useRealTimers()
 })
 
 describe("next-frame adaptation flow", () => {

@@ -1,23 +1,22 @@
-import { BookOpen, Check, ChevronDown, Eye, Palette, PenLine, Redo2, Smile, Trash2, Type, Undo2, X } from "lucide-react"
+import { BookOpen, Check, ChevronDown, ClipboardPaste, Copy, Eye, Layers2, Palette, PenLine, Redo2, Smile, Trash2, Type, Undo2, X } from "lucide-react"
 import React from "react"
 import { MAX_DECORATION_ITEMS_PER_PAGE } from "../../domain/decorations"
 import type { DecorationCatalogItem } from "../../domain/decorations"
 
 /*
  * 이모지 스티커는 48종이라 행 목록 대신 44px 터치 타깃 그리드로 보여 준다.
- * 탭 = 페이지에 붙이기(자유 배치, 최상단), 붙은 것을 다시 탭 = 전부 떼기.
+ * 탭 = 페이지에 한 개 더 붙이기(자유 배치, 최상단).
+ * 붙인 장식의 삭제는 캔버스 선택 손잡이에서만 수행해 팔레트 탭이 파괴 동작이 되지 않게 한다.
  * 유니코드 텍스트 렌더 전용 — 이미지 자산 없음.
  */
 function EmojiStickerGrid({
   items,
-  activeItemIds,
+  pageItemCounts,
   onApply,
-  onRemove,
 }: {
   readonly items: readonly DecorationCatalogItem[]
-  readonly activeItemIds: ReadonlySet<string>
+  readonly pageItemCounts: ReadonlyMap<string, number>
   readonly onApply: (item: DecorationCatalogItem) => void
-  readonly onRemove: (item: DecorationCatalogItem) => void
 }) {
   if (items.length === 0) return null
   return (
@@ -25,16 +24,17 @@ function EmojiStickerGrid({
       <small>{`이모지 스티커 · 한 페이지에 장식 ${MAX_DECORATION_ITEMS_PER_PAGE}개까지`}</small>
       <div className="journal-decoration-toolbar__emoji-grid" role="group" aria-label="이모지 스티커">
         {items.map((item) => {
-          const active = activeItemIds.has(item.id)
+          const count = pageItemCounts.get(item.id) ?? 0
           return (
             <button
               key={item.id}
               type="button"
-              aria-pressed={active}
-              aria-label={`${item.name} 이모지 ${active ? "떼기" : "붙이기"}`}
-              onClick={() => (active ? onRemove(item) : onApply(item))}
+              data-used={count > 0 ? "true" : undefined}
+              aria-label={`${item.name} 이모지 붙이기${count > 0 ? `, 현재 ${count}개` : ""}`}
+              onClick={() => onApply(item)}
             >
               <span aria-hidden="true">{item.emoji}</span>
+              {count > 0 && <b aria-hidden="true">{count}</b>}
             </button>
           )
         })}
@@ -49,8 +49,12 @@ type JournalDecorationToolbarProps = {
   readonly open: boolean
   readonly drawerOpen: boolean
   readonly activeItemIds: ReadonlySet<string>
+  readonly pageItemCounts: ReadonlyMap<string, number>
   readonly canUndo: boolean
   readonly canRedo: boolean
+  readonly selectedIndex: number | null
+  readonly placementCount: number
+  readonly clipboardAvailable: boolean
   readonly notice: string
   readonly previewItemId: string | null
   readonly onApply: (item: DecorationCatalogItem) => void
@@ -62,6 +66,10 @@ type JournalDecorationToolbarProps = {
   readonly onRemove: (item: DecorationCatalogItem) => void
   readonly onUndo: () => void
   readonly onRedo: () => void
+  readonly onMoveBackward: () => void
+  readonly onMoveForward: () => void
+  readonly onCopySelected: () => void
+  readonly onPaste: () => void
   /* P5: 기록이 있는 날에만 제공된다 — 없으면 도크에 버튼을 그리지 않는다. */
   readonly onOpenTextSticker?: () => void
 }
@@ -71,9 +79,15 @@ export function JournalDecorationToolbar(props: JournalDecorationToolbarProps) {
   const drawerRef = React.useRef<HTMLElement>(null)
   const [toolFilter, setToolFilter] = React.useState<"ALL" | "EMOJI_STICKER" | "THEME" | "INK">("ALL")
 
+  const wasOpenRef = React.useRef(false)
+
+  React.useEffect(() => {
+    if (props.open && !wasOpenRef.current) closeButtonRef.current?.focus()
+    wasOpenRef.current = props.open
+  }, [props.open])
+
   React.useEffect(() => {
     if (!props.open) return
-    closeButtonRef.current?.focus()
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key !== "Escape") return
       if (props.drawerOpen) props.onDrawerClose()
@@ -88,7 +102,7 @@ export function JournalDecorationToolbar(props: JournalDecorationToolbarProps) {
     if (drawer === null) return
     if (props.drawerOpen) drawer.removeAttribute("inert")
     else drawer.setAttribute("inert", "")
-  }, [props.drawerOpen])
+  }, [props.drawerOpen, props.open])
 
   if (!props.open) {
     return (
@@ -114,13 +128,15 @@ export function JournalDecorationToolbar(props: JournalDecorationToolbarProps) {
       <header className="journal-decoration-editor__topbar" data-decoration-interaction="true">
         <button ref={closeButtonRef} type="button" onClick={props.onClose} aria-label="꾸미기 편집기 닫기" title="닫기"><X aria-hidden="true" size={18} /></button>
         <span><strong>이 일지 꾸미기</strong><small>장식을 눌러 옮기고 모서리로 크기를 바꿔요.</small></span>
-        {props.canUndo && (
-          <button type="button" onClick={props.onUndo} aria-label="꾸미기 되돌리기" title="되돌리기"><Undo2 aria-hidden="true" size={18} /></button>
-        )}
-        {props.canRedo && (
-          <button type="button" onClick={props.onRedo} aria-label="꾸미기 다시 실행" title="다시 실행"><Redo2 aria-hidden="true" size={18} /></button>
-        )}
-        <button type="button" onClick={props.onClose} aria-label="꾸미기 완료" title="완료"><Check aria-hidden="true" size={18} /></button>
+        <div className="journal-decoration-editor__topbar-actions">
+          {props.canUndo && (
+            <button type="button" onClick={props.onUndo} aria-label="꾸미기 되돌리기" title="되돌리기"><Undo2 aria-hidden="true" size={18} /></button>
+          )}
+          {props.canRedo && (
+            <button type="button" onClick={props.onRedo} aria-label="꾸미기 다시 실행" title="다시 실행"><Redo2 aria-hidden="true" size={18} /></button>
+          )}
+          <button type="button" onClick={props.onClose} aria-label="꾸미기 완료" title="완료"><Check aria-hidden="true" size={18} /></button>
+        </div>
       </header>
 
       {props.notice !== "" && <p className="journal-decoration-editor__notice" role="status" aria-live="polite">{props.notice}</p>}
@@ -134,6 +150,21 @@ export function JournalDecorationToolbar(props: JournalDecorationToolbarProps) {
         <button type="button" aria-label="페이지 테마 도구" aria-pressed={props.drawerOpen && toolFilter === "THEME"} onClick={() => chooseTool("THEME")}><BookOpen aria-hidden="true" size={19} /><span>테마</span></button>
         <button type="button" aria-label="글자색 도구" aria-pressed={props.drawerOpen && toolFilter === "INK"} onClick={() => chooseTool("INK")}><PenLine aria-hidden="true" size={19} /><span>글자</span></button>
       </nav>
+
+      {!props.drawerOpen && (props.selectedIndex !== null || props.clipboardAvailable) && (
+        <div className="journal-decoration-editor__selection-actions" role="toolbar" aria-label="선택한 장식 편집">
+          {props.selectedIndex !== null && (
+            <>
+              <button type="button" disabled={props.selectedIndex <= 0} onClick={props.onMoveBackward} aria-label="선택한 장식을 한 칸 뒤로 보내기"><Layers2 aria-hidden="true" size={16} /><span>뒤로</span></button>
+              <button type="button" disabled={props.selectedIndex >= props.placementCount - 1} onClick={props.onMoveForward} aria-label="선택한 장식을 한 칸 앞으로 가져오기"><Layers2 aria-hidden="true" size={16} /><span>앞으로</span></button>
+              <button type="button" onClick={props.onCopySelected} aria-label="선택한 장식 복사"><Copy aria-hidden="true" size={16} /><span>복사</span></button>
+            </>
+          )}
+          {props.clipboardAvailable && (
+            <button type="button" onClick={props.onPaste} aria-label="복사한 장식 붙여넣기"><ClipboardPaste aria-hidden="true" size={16} /><span>붙이기</span></button>
+          )}
+        </div>
+      )}
 
       <section ref={drawerRef} className="journal-decoration-toolbar" data-open={props.drawerOpen ? "true" : "false"} aria-label="꾸미기 도구 선택" aria-hidden={props.drawerOpen ? undefined : "true"} data-decoration-interaction="true">
         <header>
@@ -174,9 +205,8 @@ export function JournalDecorationToolbar(props: JournalDecorationToolbarProps) {
         </div>
         <EmojiStickerGrid
           items={visibleItems.filter((item) => item.category === "EMOJI_STICKER")}
-          activeItemIds={props.activeItemIds}
+          pageItemCounts={props.pageItemCounts}
           onApply={props.onApply}
-          onRemove={props.onRemove}
         />
       </section>
     </>

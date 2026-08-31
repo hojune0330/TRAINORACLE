@@ -1,6 +1,7 @@
 import {
   MAX_DECORATION_ITEMS_PER_PAGE,
   TEXT_STICKER_ITEM_ID,
+  decorationCatalogItem,
   decorationStateSchema,
   isAvatarDecorationId,
   isInkDecorationId,
@@ -21,13 +22,46 @@ import type {
 } from "./decorations"
 
 /*
- * v3 새 배치 기본 좌표: 페이지 중앙 부근. 연속 배치가 완전히 겹치지 않게
- * 페이지의 현재 아이템 수로 약간의 지터를 준다 (계약 §6).
+ * v3 새 배치 기본 좌표: 24개 상한까지 서로 다른 지점에 놓는다.
+ * 중앙에 3%씩 겹치던 이전 방식은 여섯 번째부터 완전히 같은 자리에 놓여
+ * 사용자가 "붙이기 실패"로 오해할 수 있었다. 가장자리부터 채워 본문을
+ * 덜 가리고, 붙인 직후 선택된 장식을 바로 찾을 수 있게 한다.
  */
-export function defaultJournalDecorationTransform(state: DecorationState, date: string): DecorationPlacementTransform {
+const JOURNAL_DECORATION_SPAWN_POINTS = [
+  [18, 18], [82, 18], [18, 82], [82, 82],
+  [50, 18], [18, 50], [82, 50], [50, 82],
+  [30, 24], [70, 24], [24, 36], [76, 36],
+  [24, 64], [76, 64], [30, 76], [70, 76],
+  [42, 26], [58, 26], [26, 44], [74, 44],
+  [26, 56], [74, 56], [42, 74], [58, 74],
+] as const
+
+const JOURNAL_WIDE_DECORATION_SPAWN_POINTS = [
+  [38, 14], [50, 14], [62, 14],
+  [38, 24], [50, 24], [62, 24],
+  [38, 34], [50, 34], [62, 34],
+  [38, 44], [50, 44], [62, 44],
+  [38, 56], [50, 56], [62, 56],
+  [38, 66], [50, 66], [62, 66],
+  [38, 76], [50, 76], [62, 76],
+  [38, 86], [50, 86], [62, 86],
+] as const
+
+export function defaultJournalDecorationTransform(
+  state: DecorationState,
+  date: string,
+  itemId?: DecorationPageItem["itemId"],
+): DecorationPlacementTransform {
   const count = journalDecorationItems(state, date).length
-  const jitter = (count % 5) * 3
-  return { xPercent: 44 + jitter, yPercent: 44 + jitter, scale: 1, rotationDeg: 0 }
+  const catalogItem = itemId === undefined || itemId === TEXT_STICKER_ITEM_ID
+    ? undefined
+    : decorationCatalogItem(itemId)
+  const points = itemId === TEXT_STICKER_ITEM_ID || catalogItem?.category === "TAPE"
+    ? JOURNAL_WIDE_DECORATION_SPAWN_POINTS
+    : JOURNAL_DECORATION_SPAWN_POINTS
+  const point = points[count % points.length] ?? points[0]
+  const [xPercent, yPercent] = point
+  return { xPercent, yPercent, scale: 1, rotationDeg: 0 }
 }
 
 /*
@@ -77,7 +111,7 @@ export function appendJournalDecoration(
   const items = journalDecorationItems(state, date)
   const parsed = decorationStateSchema.safeParse(withPageItems(state, date, [
     ...items,
-    { itemId, transform: transform ?? defaultJournalDecorationTransform(state, date) },
+    { itemId, transform: transform ?? defaultJournalDecorationTransform(state, date, itemId) },
   ]))
   return parsed.success ? parsed.data : null
 }
@@ -145,9 +179,33 @@ export function appendJournalTextSticker(
       itemId: TEXT_STICKER_ITEM_ID,
       text: parsedText.data,
       inkId,
-      transform: transform ?? defaultJournalDecorationTransform(state, date),
+      transform: transform ?? defaultJournalDecorationTransform(state, date, TEXT_STICKER_ITEM_ID),
     },
   ]))
+  return parsed.success ? parsed.data : null
+}
+
+/*
+ * 세션 복사판 붙여넣기: 이모지·장식·글 스티커의 내용과 모양은 보존하되,
+ * 대상 날짜의 다음 빈 시작점에 놓는다. OS 클립보드나 영구 저장소에는 쓰지 않는다.
+ */
+export function appendJournalDecorationItem(
+  state: DecorationState,
+  date: string,
+  source: DecorationPageItem,
+): DecorationState | null {
+  if (!canAppendJournalDecoration(state, date)) return null
+  const items = journalDecorationItems(state, date)
+  const spawn = defaultJournalDecorationTransform(state, date, source.itemId)
+  const copied = {
+    ...source,
+    transform: {
+      ...spawn,
+      scale: source.transform.scale,
+      rotationDeg: source.transform.rotationDeg,
+    },
+  }
+  const parsed = decorationStateSchema.safeParse(withPageItems(state, date, [...items, copied]))
   return parsed.success ? parsed.data : null
 }
 
@@ -233,7 +291,7 @@ function candidateState(
   const items = journalDecorationItems(state, date)
   return withPageItems(state, date, [
     ...items,
-    { itemId: item.id, transform: defaultJournalDecorationTransform(state, date) },
+    { itemId: item.id, transform: defaultJournalDecorationTransform(state, date, item.id) },
   ])
 }
 
