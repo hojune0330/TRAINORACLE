@@ -270,6 +270,11 @@
   color: var(--danger, #b3261e);
 }
 .decorated-journal-page__transform-handle--delete::before { border-color: var(--danger, #b3261e); }
+.decorated-journal-page__transform-handle--duplicate {
+  left: -26px;
+  bottom: -26px;
+  transform-origin: bottom left;
+}
 .decorated-journal-page__free-item:focus-visible,
 .decorated-journal-page__transform-handle:focus-visible { outline: 3px solid var(--focus-ring, var(--ink-blue)); outline-offset: 3px; }
 

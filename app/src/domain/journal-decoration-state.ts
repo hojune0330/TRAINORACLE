@@ -41,6 +41,52 @@ export function roundJournalDecorationTransform(transform: DecorationPlacementTr
   }
 }
 
+/*
+ * 캔버스 위 복제: 선택 장식을 빈 호환 슬롯으로 +4%,+4% 오프셋 복사한다 (마스터 플랜 §2.4).
+ * v2 슬롯 모델에서는 이모지 스티커(호환 슬롯 3칸)만 복제 여지가 있다 — 빈 칸이 없으면 null.
+ */
+export function duplicateJournalDecorationAt(
+  state: DecorationState,
+  date: string,
+  slot: DecorationSlot,
+): DecorationState | null {
+  const source = state.pagePlacements.find((candidate) => candidate.date === date && candidate.slot === slot)
+  if (source === undefined || !isEmojiStickerId(source.itemId)) return null
+  const occupied = new Set(
+    state.pagePlacements.filter((placement) => placement.date === date).map((placement) => placement.slot),
+  )
+  const emptySlot = (["BODY_STICKER_1", "BODY_STICKER_2", "BODY_STICKER_3"] as const)
+    .find((candidate) => !occupied.has(candidate))
+  if (emptySlot === undefined) return null
+  const sourceTransform = source.transform ?? DEFAULT_PLACEMENT_TRANSFORMS[slot]
+  const parsed = decorationStateSchema.safeParse({
+    ...state,
+    pagePlacements: [
+      ...state.pagePlacements,
+      {
+        date,
+        slot: emptySlot,
+        itemId: source.itemId,
+        transform: {
+          ...sourceTransform,
+          xPercent: Math.min(96, sourceTransform.xPercent + 4),
+          yPercent: Math.min(96, sourceTransform.yPercent + 4),
+        },
+      },
+    ],
+  })
+  return parsed.success ? parsed.data : null
+}
+
+/* 복제 결과가 어느 슬롯으로 갔는지 알아야 선택을 옮길 수 있다. */
+export function nextFreeEmojiSlot(state: DecorationState, date: string): DecorationSlot | undefined {
+  const occupied = new Set(
+    state.pagePlacements.filter((placement) => placement.date === date).map((placement) => placement.slot),
+  )
+  return (["BODY_STICKER_1", "BODY_STICKER_2", "BODY_STICKER_3"] as const)
+    .find((candidate) => !occupied.has(candidate))
+}
+
 /* 캔버스 위 삭제: 같은 아이템이 다른 슬롯에 있어도 해당 슬롯 하나만 제거한다. */
 export function removeJournalDecorationAt(
   state: DecorationState,
