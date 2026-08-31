@@ -8,7 +8,7 @@ import { JournalPageNavigator } from "./JournalPageNavigator"
 afterEach(cleanup)
 
 describe("decorated journal page frame", () => {
-  it("renders the chosen theme, avatar, and only the selected date's fixed-slot decorations", () => {
+  it("renders the chosen theme, avatar, and only the selected date's free-placement decorations", () => {
     const state = decorationStateSchema.parse({
       ...createEmptyDecorationState(),
       ownedItemIds: [
@@ -23,10 +23,18 @@ describe("decorated journal page frame", () => {
         inkId: "INK_NAVY",
         avatarId: "AVATAR_START_LINE",
       },
-      pagePlacements: [
-        { date: "2026-08-01", slot: "HEADER_TAPE", itemId: "TAPE_CHECKER" },
-        { date: "2026-08-01", slot: "TOP_CORNER", itemId: "STICKER_FINISH_LINE" },
-        { date: "2026-07-31", slot: "PAGE_FOOTER", itemId: "STAMP_REST_DAY" },
+      pages: [
+        {
+          date: "2026-08-01",
+          items: [
+            { itemId: "TAPE_CHECKER", transform: { xPercent: 50, yPercent: 9, scale: 1, rotationDeg: 0 } },
+            { itemId: "STICKER_FINISH_LINE", transform: { xPercent: 86, yPercent: 14, scale: 1, rotationDeg: 0 } },
+          ],
+        },
+        {
+          date: "2026-07-31",
+          items: [{ itemId: "STAMP_REST_DAY", transform: { xPercent: 50, yPercent: 91, scale: 1, rotationDeg: 0 } }],
+        },
       ],
     })
 
@@ -38,9 +46,10 @@ describe("decorated journal page frame", () => {
 
     expect(screen.getByTestId("journal-page-theme")).toHaveAttribute("src", expect.stringContaining("theme-sky-journal.webp"))
     expect(screen.getByTestId("journal-page-avatar")).toHaveAttribute("src", expect.stringContaining("avatar-start-line.webp"))
-    expect(screen.getByTestId("journal-slot-header-tape")).toBeVisible()
-    expect(screen.getByTestId("journal-slot-top-corner")).toBeVisible()
-    expect(screen.queryByTestId("journal-slot-page-footer")).not.toBeInTheDocument()
+    expect(screen.getByTestId("journal-decoration-item-0")).toBeVisible()
+    expect(screen.getByTestId("journal-decoration-item-1")).toBeVisible()
+    /* 2026-07-31 페이지의 도장은 이 날짜에 그리지 않는다. */
+    expect(screen.queryByTestId("journal-decoration-item-2")).not.toBeInTheDocument()
     expect(screen.getByText("오늘 훈련 기록")).toBeVisible()
   })
 })

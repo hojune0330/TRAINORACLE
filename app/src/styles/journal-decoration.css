@@ -76,14 +76,12 @@
 }
 
 .decorated-journal-page__body { position: relative; z-index: 1; display: grid; grid-template-columns: minmax(0, 1fr); }
-.decorated-journal-page__body[data-has-side-rail="true"] { grid-template-columns: minmax(0, 1fr) 68px; }
 .decorated-journal-page__content { min-width: 0; min-height: 360px; }
 .decorated-journal-page[data-ink-id="INK_NAVY"] .decorated-journal-page__content { color: var(--ink-blue); }
 
 /*
- * Decorations live in reserved rails. They never overlay journal text, even
- * when Korean copy wraps or text zoom is enabled. Saved slot IDs stay stable;
- * only the responsive rendering position changes.
+ * v3부터 장식은 자유 배치 레이어(free-layer) 하나로만 그린다.
+ * 상단 레일은 아바타(착용 아이템) 전용으로만 남는다.
  */
 .decorated-journal-page__avatar,
 .decorated-journal-page__slot {
@@ -107,34 +105,6 @@
 }
 .decorated-journal-page__top-rail > span { min-width: 0; display: grid; place-items: center; }
 .decorated-journal-page__avatar { width: 46px; height: 46px; }
-.decorated-journal-page__slot--header-tape { width: min(100%, 260px); height: 42px; }
-.decorated-journal-page__slot--top-corner { width: 58px; height: 58px; }
-.decorated-journal-page__side-rail { min-width: 0; padding: 18px 7px; display: flex; justify-content: center; align-items: flex-start; pointer-events: none; }
-.decorated-journal-page__slot--body-margin { position: sticky; top: 18px; width: 54px; height: 54px; }
-.decorated-journal-page__footer-rail { position: relative; z-index: 1; min-height: 78px; display: grid; place-items: center; padding: 6px 12px; box-sizing: border-box; pointer-events: none; }
-.decorated-journal-page__slot--page-footer { width: 66px; height: 66px; }
-
-/*
- * 이모지 스티커는 본문 아래의 전용 레일에만 놓는다. 세 칸은 저장 슬롯과
- * 일대일 대응하며, 글이 길어지거나 확대되어도 본문 위로 겹치지 않는다.
- */
-.decorated-journal-page__sticker-rail {
-  position: relative;
-  z-index: 1;
-  min-height: 60px;
-  padding: 8px 18px;
-  display: grid;
-  grid-template-columns: repeat(3, minmax(44px, 1fr));
-  align-items: center;
-  gap: 8px;
-  border-top: 1px dashed var(--hair);
-  box-sizing: border-box;
-  pointer-events: none;
-}
-.decorated-journal-page__sticker-cell { min-width: 0; min-height: 44px; display: grid; place-items: center; }
-.decorated-journal-page__slot--body-sticker-1 { --emoji-rot: -4deg; font-size: 28px; }
-.decorated-journal-page__slot--body-sticker-2 { --emoji-rot: 3deg; font-size: 24px; }
-.decorated-journal-page__slot--body-sticker-3 { --emoji-rot: -2deg; font-size: 20px; }
 
 /*
  * 이모지는 유니코드 텍스트 렌더(플랫폼 이모지 폰트 위임).
@@ -439,15 +409,6 @@
 
 @media (max-width: 480px) {
   .journal-decoration-toolbar__items { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .decorated-journal-page__body[data-has-side-rail="true"] { grid-template-columns: minmax(0, 1fr); }
-  .decorated-journal-page__side-rail {
-    min-height: 68px;
-    padding: 7px 12px;
-    align-items: center;
-    justify-content: flex-end;
-    border-top: 1px dashed var(--hair);
-  }
-  .decorated-journal-page__slot--body-margin { position: static; width: 54px; height: 54px; }
 }
 
 @media (min-width: 760px) {
@@ -469,8 +430,6 @@
   .journal-reader-nav button span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
   .decorated-journal-page__avatar { width: 40px; height: 40px; }
   .decorated-journal-page__top-rail { grid-template-columns: 48px minmax(0, 1fr) 50px; padding-inline: 8px; }
-  .decorated-journal-page__slot--top-corner { width: 48px; height: 48px; }
-  .decorated-journal-page__slot--body-margin { width: 48px; height: 48px; }
 }
 
 @media (prefers-reduced-motion: reduce) {

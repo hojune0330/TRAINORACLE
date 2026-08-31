@@ -3,37 +3,37 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest"
 import {
   DECORATION_STORAGE_KEY_V2,
   EMOJI_STICKER_IDS,
-  EMOJI_STICKER_SLOTS,
+  MAX_DECORATION_ITEMS_PER_PAGE,
   createEmptyDecorationState,
-  decorationCatalogItem,
   decorationStateSchema,
   loadDecorationState,
   parseStoredDecorationState,
 } from "../domain/decorations"
 import {
-  applyJournalDecoration,
-  resolveJournalDecorationSlot,
+  appendJournalDecoration,
+  canAppendJournalDecoration,
+  journalDecorationItems,
 } from "../domain/journal-decoration-state"
 import { DecoratedJournalPageFrame } from "./DecoratedJournalPageFrame"
 
 afterEach(cleanup)
 beforeEach(() => window.localStorage.clear())
 
+const T = (x: number, y: number, scale = 1, rotationDeg = 0) =>
+  ({ xPercent: x, yPercent: y, scale, rotationDeg }) as const
+
 /*
- * 이모지 스티커 V1 계약 (검수 계약 2026-08-29):
+ * 이모지 스티커 v3 계약 (스키마 v3 마이그레이션 계약 §2):
  * 1) 유니코드 텍스트로만 렌더 — 벤더 아트워크 이미지 로드 금지.
- * 2) 페이지당 최대 3개 — 전용 슬롯 3칸으로 구조적 강제.
- * 3) 빈 칸 자동 배정 — 첫 번째 비어 있는 스티커 칸에 붙는다.
- * 4) 기존 v2 저장 상태도 마이그레이션 없이 48종을 자동 획득한다.
- * 5) 스티커는 날짜(페이지)에 붙는다 — 메모·항목과 무상관.
+ * 2) 페이지당 최대 24개 — 슬롯 없는 자유 배치, 같은 이모지 복수 허용.
+ * 3) 기존 v2 저장 상태는 자동 마이그레이션되며 48종을 자동 획득한다.
+ * 4) 스티커는 날짜(페이지)에 붙는다 — 메모·항목과 무상관.
  */
 describe("emoji sticker decoration contract", () => {
   it("renders emoji stickers as unicode text spans, never as image assets", () => {
     const state = decorationStateSchema.parse({
       ...createEmptyDecorationState(),
-      pagePlacements: [
-        { date: "2026-08-29", slot: "BODY_STICKER_1", itemId: "EMOJI_FIRE" },
-      ],
+      pages: [{ date: "2026-08-29", items: [{ itemId: "EMOJI_FIRE", transform: T(24, 84) }] }],
     })
 
     render(
@@ -42,7 +42,7 @@ describe("emoji sticker decoration contract", () => {
       </DecoratedJournalPageFrame>,
     )
 
-    const sticker = screen.getByTestId("journal-slot-body-sticker-1")
+    const sticker = screen.getByTestId("journal-decoration-asset-0")
     expect(sticker.tagName).toBe("SPAN")
     expect(sticker).toHaveTextContent("🔥")
     expect(sticker).not.toHaveAttribute("src")
@@ -50,58 +50,66 @@ describe("emoji sticker decoration contract", () => {
     expect(document.querySelectorAll("img[src*='emoji']")).toHaveLength(0)
   })
 
-  it("caps emoji stickers at three per page through the three dedicated slots", () => {
+  it("allows duplicate emoji on one page and caps a page at 24 items", () => {
     const base = createEmptyDecorationState()
-    const full = decorationStateSchema.parse({
-      ...base,
-      pagePlacements: [
-        { date: "2026-08-29", slot: "BODY_STICKER_1", itemId: "EMOJI_SUN" },
-        { date: "2026-08-29", slot: "BODY_STICKER_2", itemId: "EMOJI_MEDAL" },
-        { date: "2026-08-29", slot: "BODY_STICKER_3", itemId: "EMOJI_RICE" },
-      ],
-    })
 
-    // 슬롯 중복(같은 날짜·같은 칸)은 스키마가 거부한다.
+    // 같은 이모지 복수 배치는 유효하다 (계약 §2 C3).
     const duplicated = decorationStateSchema.safeParse({
       ...base,
-      pagePlacements: [
-        { date: "2026-08-29", slot: "BODY_STICKER_1", itemId: "EMOJI_SUN" },
-        { date: "2026-08-29", slot: "BODY_STICKER_1", itemId: "EMOJI_FIRE" },
-      ],
+      pages: [{
+        date: "2026-08-29",
+        items: [
+          { itemId: "EMOJI_SUN", transform: T(24, 84) },
+          { itemId: "EMOJI_SUN", transform: T(50, 84) },
+        ],
+      }],
     })
-    expect(duplicated.success).toBe(false)
+    expect(duplicated.success).toBe(true)
 
-    // 세 칸이 가득 차면 네 번째 이모지는 첫 칸 교체로만 가능하다(자동 배정이 첫 칸을 돌려줌).
-    const fourth = decorationCatalogItem("EMOJI_HEART")
-    expect(fourth).toBeDefined()
-    expect(resolveJournalDecorationSlot(full, fourth!, "2026-08-29")).toBe("BODY_STICKER_1")
-    const replaced = applyJournalDecoration(full, fourth!, "2026-08-29")
-    expect(replaced).not.toBeNull()
-    expect(replaced!.pagePlacements.filter((placement) => placement.date === "2026-08-29")).toHaveLength(3)
+    // 24개를 초과한 페이지는 스키마가 거부한다 (계약 §2 C1).
+    const overCap = decorationStateSchema.safeParse({
+      ...base,
+      pages: [{
+        date: "2026-08-29",
+        items: Array.from({ length: MAX_DECORATION_ITEMS_PER_PAGE + 1 }, (_, index) => ({
+          itemId: "EMOJI_SUN",
+          transform: T(4 + (index % 20) * 4, 4 + Math.floor(index / 20) * 10),
+        })),
+      }],
+    })
+    expect(overCap.success).toBe(false)
+
+    // append API도 24개에서 멈춘다.
+    let state = decorationStateSchema.parse(base)
+    for (let count = 0; count < MAX_DECORATION_ITEMS_PER_PAGE; count += 1) {
+      const next = appendJournalDecoration(state, "2026-08-29", "EMOJI_SUN")
+      expect(next).not.toBeNull()
+      state = next!
+    }
+    expect(canAppendJournalDecoration(state, "2026-08-29")).toBe(false)
+    expect(appendJournalDecoration(state, "2026-08-29", "EMOJI_FIRE")).toBeNull()
+    expect(journalDecorationItems(state, "2026-08-29")).toHaveLength(MAX_DECORATION_ITEMS_PER_PAGE)
   })
 
-  it("assigns the first free sticker slot automatically", () => {
-    const item = decorationCatalogItem("EMOJI_SHOE")
-    expect(item).toBeDefined()
-    const empty = createEmptyDecorationState()
+  it("appends to the end of the page array so the newest sticker renders topmost", () => {
+    const empty = decorationStateSchema.parse(createEmptyDecorationState())
 
-    // 빈 페이지 → 첫 칸.
-    expect(resolveJournalDecorationSlot(empty, item!, "2026-08-29")).toBe("BODY_STICKER_1")
+    const first = appendJournalDecoration(empty, "2026-08-29", "EMOJI_SUN")
+    expect(first).not.toBeNull()
+    const second = appendJournalDecoration(first!, "2026-08-29", "EMOJI_SHOE")
+    expect(second).not.toBeNull()
 
-    // 첫 칸이 차 있으면 → 둘째 칸. 다른 날짜의 배치는 세지 않는다.
-    const oneUsed = decorationStateSchema.parse({
-      ...empty,
-      pagePlacements: [
-        { date: "2026-08-29", slot: "BODY_STICKER_1", itemId: "EMOJI_SUN" },
-        { date: "2026-08-28", slot: "BODY_STICKER_2", itemId: "EMOJI_MOON" },
-      ],
-    })
-    const applied = applyJournalDecoration(oneUsed, item!, "2026-08-29")
-    expect(applied).not.toBeNull()
-    expect(applied!.pagePlacements).toContainEqual({ date: "2026-08-29", slot: "BODY_STICKER_2", itemId: "EMOJI_SHOE" })
+    const items = journalDecorationItems(second!, "2026-08-29")
+    expect(items.map((item) => item.itemId)).toEqual(["EMOJI_SUN", "EMOJI_SHOE"])
+
+    // 다른 날짜의 배치는 이 페이지에 끼어들지 않는다.
+    const otherDate = appendJournalDecoration(second!, "2026-08-28", "EMOJI_MOON")
+    expect(otherDate).not.toBeNull()
+    expect(journalDecorationItems(otherDate!, "2026-08-29")).toHaveLength(2)
+    expect(journalDecorationItems(otherDate!, "2026-08-28")).toHaveLength(1)
   })
 
-  it("auto-grants all 48 emoji stickers to previously stored v2 states without a migration", () => {
+  it("auto-grants all 48 emoji stickers when migrating a previously stored v2 state", () => {
     // Given: 이모지 도입 전에 저장된 v2 상태(이모지 미보유).
     const legacyV2 = {
       version: 2,
@@ -123,42 +131,34 @@ describe("emoji sticker decoration contract", () => {
     }
     expect(state.ownedItemIds).toContain("STICKER_FINISH_LINE")
     expect(state.spentPoints).toBe(8)
-    expect(state.version).toBe(2)
+    expect(state.version).toBe(3)
   })
 
   it("attaches stickers to the date only, with no reference to memos or entries", () => {
-    // 배치 레코드는 date/slot/itemId 세 필드뿐 — 메모·항목 식별자가 끼어들 수 없다.
+    // 배치 레코드는 itemId/transform 두 필드뿐 — 메모·항목 식별자가 끼어들 수 없다.
     const state = decorationStateSchema.parse({
       ...createEmptyDecorationState(),
-      pagePlacements: [
-        { date: "2026-08-29", slot: "BODY_STICKER_1", itemId: "EMOJI_CLOVER" },
-      ],
+      pages: [{ date: "2026-08-29", items: [{ itemId: "EMOJI_CLOVER", transform: T(24, 84) }] }],
     })
-    expect(Object.keys(state.pagePlacements[0]!).sort()).toEqual(["date", "itemId", "slot"])
+    expect(Object.keys(state.pages[0]!.items[0]!).sort()).toEqual(["itemId", "transform"])
 
-    // 메모 식별자를 끼워 넣은 배치는 스키마가 그대로 통과시키지 않는다(알 수 없는 키 제거 또는 거부).
+    // 메모 식별자를 끼워 넣은 배치는 스키마가 거부한다 (strict).
     const smuggled = decorationStateSchema.safeParse({
       ...createEmptyDecorationState(),
-      pagePlacements: [
-        { date: "2026-08-29", slot: "BODY_STICKER_1", itemId: "EMOJI_CLOVER", memoId: "secret-1" },
-      ],
+      pages: [{
+        date: "2026-08-29",
+        items: [{ itemId: "EMOJI_CLOVER", transform: T(24, 84), memoId: "secret-1" }],
+      }],
     })
-    if (smuggled.success) {
-      expect(Object.keys(smuggled.data.pagePlacements[0]!)).not.toContain("memoId")
-    }
-
-    // 전용 슬롯 3칸이 전부이며 이모지 전 품목이 그 3칸만 호환한다.
-    expect(EMOJI_STICKER_SLOTS).toHaveLength(3)
+    expect(smuggled.success).toBe(false)
   })
 
-  it("keeps legacy slots intact and renders a moved sticker from normalized page coordinates", () => {
+  it("renders a sticker from normalized page coordinates with rotation and scale", () => {
     const state = decorationStateSchema.parse({
       ...createEmptyDecorationState(),
-      pagePlacements: [{
+      pages: [{
         date: "2026-08-29",
-        slot: "BODY_STICKER_1",
-        itemId: "EMOJI_FIRE",
-        transform: { xPercent: 72, yPercent: 34, scale: 1.4, rotationDeg: 12 },
+        items: [{ itemId: "EMOJI_FIRE", transform: T(72, 34, 1.4, 12) }],
       }],
     })
 
@@ -176,18 +176,41 @@ describe("emoji sticker decoration contract", () => {
     expect(screen.queryByTestId("journal-sticker-rail")).toBeNull()
   })
 
-  it("drops only an invalid free transform while preserving the saved decoration", () => {
+  it("round-trips boundary scale and rotation values without normalization", () => {
+    const boundary = {
+      ...createEmptyDecorationState(),
+      pages: [{
+        date: "2026-08-29",
+        items: [
+          { itemId: "EMOJI_FIRE", transform: T(4, 96, 0.3, -180) },
+          { itemId: "EMOJI_SUN", transform: T(96, 4, 3, 180) },
+        ],
+      }],
+    }
+    const stored = parseStoredDecorationState(JSON.stringify(decorationStateSchema.parse(boundary)))
+
+    expect(stored).not.toBeNull()
+    expect(stored!.pages[0]!.items[0]!.transform).toEqual(T(4, 96, 0.3, -180))
+    expect(stored!.pages[0]!.items[1]!.transform).toEqual(T(96, 4, 3, 180))
+  })
+
+  it("drops only an item with an out-of-range transform while preserving the rest of the page", () => {
     const base = createEmptyDecorationState()
     const stored = parseStoredDecorationState(JSON.stringify({
       ...base,
-      pagePlacements: [{
+      version: 3,
+      pages: [{
         date: "2026-08-29",
-        slot: "BODY_STICKER_1",
-        itemId: "EMOJI_FIRE",
-        transform: { xPercent: 999, yPercent: 34, scale: 1, rotationDeg: 0 },
+        items: [
+          { itemId: "EMOJI_FIRE", transform: T(999, 34) },
+          { itemId: "EMOJI_SUN", transform: T(50, 50) },
+        ],
       }],
     }))
 
-    expect(stored?.pagePlacements).toEqual([{ date: "2026-08-29", slot: "BODY_STICKER_1", itemId: "EMOJI_FIRE" }])
+    expect(stored).not.toBeNull()
+    expect(stored!.pages).toEqual([
+      { date: "2026-08-29", items: [{ itemId: "EMOJI_SUN", transform: T(50, 50) }] },
+    ])
   })
 })

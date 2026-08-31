@@ -84,7 +84,7 @@ test("opens Minji's diary as a readable page stack", async ({ page }, testInfo) 
   await expect(page.getByRole("heading", { name: "4.6km를 달린 첫 기록" })).toBeFocused()
   expect(await page.evaluate(() => window.scrollY)).toBe(0)
   await expectDecoratedPaperAtReadableTop(page)
-  await expect(page.getByTestId("journal-slot-top-corner")).toBeVisible()
+  await expect(page.getByTestId("journal-decoration-item-0")).toBeVisible()
   await expect(page.getByText("시간 30분", { exact: true })).toBeVisible()
   await expect(page.getByRole("heading", { name: "이 페이지에 쓴 꾸미기" })).toBeVisible()
   for (let pageNumber = 2; pageNumber <= 6; pageNumber += 1) {

@@ -1,7 +1,8 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
-import { DECORATION_STORAGE_KEY_V2, parseStoredDecorationState } from "../../domain/decorations"
+import { DECORATION_STORAGE_KEY_V3, parseStoredDecorationState } from "../../domain/decorations"
+import { journalDecorationItems } from "../../domain/journal-decoration-state"
 import { todayISO } from "../../domain/journal-store"
 import { DecorationShop } from "./DecorationShop"
 import { moveDecorationDate } from "./decoration-studio-model"
@@ -235,7 +236,7 @@ describe("decoration shop surface", () => {
     render(<DecorationShop earnedPoints={0} hasEntriesForDate={() => true} />)
     const today = todayISO()
     const previousDate = moveDecorationDate(today, -1)
-    const before = window.localStorage.getItem(DECORATION_STORAGE_KEY_V2)
+    const before = window.localStorage.getItem(DECORATION_STORAGE_KEY_V3)
     const beforeState = parseStoredDecorationState(before ?? "")
 
     fireEvent.click(screen.getByRole("button", { name: "꾸미기 열기" }))
@@ -245,21 +246,19 @@ describe("decoration shop surface", () => {
 
     expect(screen.getByTestId("decoration-date-current")).toHaveTextContent(previousDate)
     expect(screen.getByText(/조합을 미리 보고 있어요/u)).toBeVisible()
-    expect(window.localStorage.getItem(DECORATION_STORAGE_KEY_V2)).toBe(before)
+    expect(window.localStorage.getItem(DECORATION_STORAGE_KEY_V3)).toBe(before)
 
     fireEvent.click(screen.getByRole("button", { name: "맑은 날 미리보기" }))
     fireEvent.click(screen.getByTestId("decoration-item-use-STICKER_WEATHER_SUN"))
 
-    const after = window.localStorage.getItem(DECORATION_STORAGE_KEY_V2)
+    const after = window.localStorage.getItem(DECORATION_STORAGE_KEY_V3)
     const afterState = parseStoredDecorationState(after ?? "")
-    expect(JSON.stringify(afterState?.pagePlacements.filter((placement) => placement.date === today))).toBe(
-      JSON.stringify(beforeState?.pagePlacements.filter((placement) => placement.date === today)),
+    expect(JSON.stringify(afterState === null ? [] : journalDecorationItems(afterState, today))).toBe(
+      JSON.stringify(beforeState === null ? [] : journalDecorationItems(beforeState, today)),
     )
-    expect(afterState?.pagePlacements).toContainEqual({
-      date: previousDate,
-      slot: "TOP_CORNER",
-      itemId: "STICKER_WEATHER_SUN",
-    })
+    expect(afterState === null ? [] : journalDecorationItems(afterState, previousDate)).toContainEqual(
+      expect.objectContaining({ itemId: "STICKER_WEATHER_SUN" }),
+    )
   })
 
   it("does not save a date decoration for an empty date", async () => {
@@ -270,6 +269,6 @@ describe("decoration shop surface", () => {
     await userEvent.click(screen.getByTestId("decoration-item-use-STICKER_WEATHER_SUN"))
 
     expect(screen.getByRole("status")).toHaveTextContent("기록이 있는 날짜에만")
-    expect(parseStoredDecorationState(window.localStorage.getItem(DECORATION_STORAGE_KEY_V2) ?? "")?.pagePlacements).toEqual([])
+    expect(parseStoredDecorationState(window.localStorage.getItem(DECORATION_STORAGE_KEY_V3) ?? "")?.pages).toEqual([])
   })
 })

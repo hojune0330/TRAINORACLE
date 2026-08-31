@@ -7,7 +7,7 @@ import {
   isThemeDecorationId,
   rememberDecorationUse,
 } from "../../domain/decorations"
-import { resolveJournalDecorationSlot } from "../../domain/journal-decoration-state"
+import { appendJournalDecoration, journalDecorationItems } from "../../domain/journal-decoration-state"
 import type {
   DecorationCatalogItem,
   DecorationId,
@@ -94,15 +94,8 @@ export function previewDecorationItem(
   if (isInkDecorationId(item.id)) return { ...state, equipped: { ...state.equipped, inkId: item.id } }
   if (isAvatarDecorationId(item.id)) return { ...state, equipped: { ...state.equipped, avatarId: item.id } }
   if (!isPlacementDecorationId(item.id)) return state
-  const slot = resolveJournalDecorationSlot(state, item, date)
-  if (slot === undefined) return state
-  return {
-    ...state,
-    pagePlacements: [
-      ...state.pagePlacements.filter((placement) => placement.date !== date || placement.slot !== slot),
-      { date, slot, itemId: item.id },
-    ],
-  }
+  /* v3 자유 배치: 배열 끝에 추가(최상단). 상한 초과면 원본 그대로 돌려준다. */
+  return appendJournalDecoration(state, date, item.id) ?? state
 }
 
 export function previewDecorationPreset(
@@ -139,7 +132,11 @@ export function removeDecorationItem(
   } else if (isAvatarDecorationId(item.id)) {
     next = { ...state, equipped: { ...state.equipped, avatarId: null } }
   } else if (isPlacementDecorationId(item.id)) {
-    next = { ...state, pagePlacements: state.pagePlacements.filter((placement) => placement.date !== date || placement.itemId !== item.id) }
+    {
+    const items = journalDecorationItems(state, date).filter((candidate) => candidate.itemId !== item.id)
+    const others = state.pages.filter((page) => page.date !== date)
+    next = { ...state, pages: items.length === 0 ? others : [...others, { date, items }] }
+  }
   }
   const parsed = decorationStateSchema.safeParse(next)
   return parsed.success ? parsed.data : null
@@ -150,7 +147,7 @@ export function decorationItemActive(state: DecorationState, item: DecorationCat
   if (isInkDecorationId(item.id)) return state.equipped.inkId === item.id
   if (isAvatarDecorationId(item.id)) return state.equipped.avatarId === item.id
   return isPlacementDecorationId(item.id)
-    && state.pagePlacements.some((placement) => placement.date === date && placement.itemId === item.id)
+    && journalDecorationItems(state, date).some((placement) => placement.itemId === item.id)
 }
 
 export function missingPresetItems(state: DecorationState, preset: DecorationPreset): number {

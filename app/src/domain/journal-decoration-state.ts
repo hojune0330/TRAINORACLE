@@ -1,7 +1,7 @@
 import {
+  MAX_DECORATION_ITEMS_PER_PAGE,
   decorationStateSchema,
   isAvatarDecorationId,
-  isEmojiStickerId,
   isInkDecorationId,
   isPlacementDecorationId,
   isThemeDecorationId,
@@ -9,23 +9,21 @@ import {
 } from "./decorations"
 import type {
   DecorationCatalogItem,
+  DecorationPage,
+  DecorationPageItem,
   DecorationPlacementTransform,
-  DecorationSlot,
   DecorationState,
+  PlacementDecorationId,
 } from "./decorations"
 
-const DEFAULT_PLACEMENT_TRANSFORMS: Readonly<Record<DecorationSlot, DecorationPlacementTransform>> = {
-  HEADER_TAPE: { xPercent: 50, yPercent: 9, scale: 1, rotationDeg: 0 },
-  TOP_CORNER: { xPercent: 86, yPercent: 14, scale: 1, rotationDeg: 0 },
-  BODY_MARGIN: { xPercent: 88, yPercent: 48, scale: 1, rotationDeg: 0 },
-  PAGE_FOOTER: { xPercent: 50, yPercent: 91, scale: 1, rotationDeg: 0 },
-  BODY_STICKER_1: { xPercent: 24, yPercent: 84, scale: 1, rotationDeg: -4 },
-  BODY_STICKER_2: { xPercent: 50, yPercent: 84, scale: 1, rotationDeg: 3 },
-  BODY_STICKER_3: { xPercent: 76, yPercent: 84, scale: 1, rotationDeg: -2 },
-}
-
-export function defaultJournalDecorationTransform(slot: DecorationSlot): DecorationPlacementTransform {
-  return DEFAULT_PLACEMENT_TRANSFORMS[slot]
+/*
+ * v3 새 배치 기본 좌표: 페이지 중앙 부근. 연속 배치가 완전히 겹치지 않게
+ * 페이지의 현재 아이템 수로 약간의 지터를 준다 (계약 §6).
+ */
+export function defaultJournalDecorationTransform(state: DecorationState, date: string): DecorationPlacementTransform {
+  const count = journalDecorationItems(state, date).length
+  const jitter = (count % 5) * 3
+  return { xPercent: 44 + jitter, yPercent: 44 + jitter, scale: 1, rotationDeg: 0 }
 }
 
 /*
@@ -41,113 +39,128 @@ export function roundJournalDecorationTransform(transform: DecorationPlacementTr
   }
 }
 
+export function journalDecorationPage(state: DecorationState, date: string): DecorationPage | undefined {
+  return state.pages.find((page) => page.date === date)
+}
+
+export function journalDecorationItems(state: DecorationState, date: string): readonly DecorationPageItem[] {
+  return journalDecorationPage(state, date)?.items ?? []
+}
+
+export function canAppendJournalDecoration(state: DecorationState, date: string): boolean {
+  return journalDecorationItems(state, date).length < MAX_DECORATION_ITEMS_PER_PAGE
+}
+
+/* 페이지의 items 배열을 교체한다. 빈 배열이면 페이지 행 자체를 지운다 (계약 §2 C9). */
+function withPageItems(state: DecorationState, date: string, items: readonly DecorationPageItem[]): unknown {
+  const others = state.pages.filter((page) => page.date !== date)
+  return {
+    ...state,
+    pages: items.length === 0 ? others : [...others, { date, items }],
+  }
+}
+
 /*
- * 캔버스 위 복제: 선택 장식을 빈 호환 슬롯으로 +4%,+4% 오프셋 복사한다 (마스터 플랜 §2.4).
- * v2 슬롯 모델에서는 이모지 스티커(호환 슬롯 3칸)만 복제 여지가 있다 — 빈 칸이 없으면 null.
+ * 배열 끝에 추가 = 최상단 렌더 (계약 §2 C2). 24개 상한 초과 시 null.
+ */
+export function appendJournalDecoration(
+  state: DecorationState,
+  date: string,
+  itemId: PlacementDecorationId,
+  transform?: DecorationPlacementTransform,
+): DecorationState | null {
+  if (!canAppendJournalDecoration(state, date)) return null
+  const items = journalDecorationItems(state, date)
+  const parsed = decorationStateSchema.safeParse(withPageItems(state, date, [
+    ...items,
+    { itemId, transform: transform ?? defaultJournalDecorationTransform(state, date) },
+  ]))
+  return parsed.success ? parsed.data : null
+}
+
+/* 캔버스 위 삭제: 해당 인덱스 하나만 제거한다. */
+export function removeJournalDecorationAt(
+  state: DecorationState,
+  date: string,
+  index: number,
+): DecorationState | null {
+  const items = journalDecorationItems(state, date)
+  if (index < 0 || index >= items.length) return null
+  const parsed = decorationStateSchema.safeParse(
+    withPageItems(state, date, items.filter((_, candidate) => candidate !== index)),
+  )
+  return parsed.success ? parsed.data : null
+}
+
+/*
+ * 캔버스 위 복제 (계약 §6): v3에서는 전 품목 복제 가능. +4%,+4% 오프셋(96 캡),
+ * 복제본은 배열 끝(최상단)에 붙는다. 상한 초과 시 null.
  */
 export function duplicateJournalDecorationAt(
   state: DecorationState,
   date: string,
-  slot: DecorationSlot,
+  index: number,
 ): DecorationState | null {
-  const source = state.pagePlacements.find((candidate) => candidate.date === date && candidate.slot === slot)
-  if (source === undefined || !isEmojiStickerId(source.itemId)) return null
-  const occupied = new Set(
-    state.pagePlacements.filter((placement) => placement.date === date).map((placement) => placement.slot),
-  )
-  const emptySlot = (["BODY_STICKER_1", "BODY_STICKER_2", "BODY_STICKER_3"] as const)
-    .find((candidate) => !occupied.has(candidate))
-  if (emptySlot === undefined) return null
-  const sourceTransform = source.transform ?? DEFAULT_PLACEMENT_TRANSFORMS[slot]
-  const parsed = decorationStateSchema.safeParse({
-    ...state,
-    pagePlacements: [
-      ...state.pagePlacements,
-      {
-        date,
-        slot: emptySlot,
-        itemId: source.itemId,
-        transform: {
-          ...sourceTransform,
-          xPercent: Math.min(96, sourceTransform.xPercent + 4),
-          yPercent: Math.min(96, sourceTransform.yPercent + 4),
-        },
+  const items = journalDecorationItems(state, date)
+  const source = items[index]
+  if (source === undefined) return null
+  if (!canAppendJournalDecoration(state, date)) return null
+  const parsed = decorationStateSchema.safeParse(withPageItems(state, date, [
+    ...items,
+    {
+      itemId: source.itemId,
+      transform: {
+        ...source.transform,
+        xPercent: Math.min(96, source.transform.xPercent + 4),
+        yPercent: Math.min(96, source.transform.yPercent + 4),
       },
-    ],
-  })
-  return parsed.success ? parsed.data : null
-}
-
-/* 복제 결과가 어느 슬롯으로 갔는지 알아야 선택을 옮길 수 있다. */
-export function nextFreeEmojiSlot(state: DecorationState, date: string): DecorationSlot | undefined {
-  const occupied = new Set(
-    state.pagePlacements.filter((placement) => placement.date === date).map((placement) => placement.slot),
-  )
-  return (["BODY_STICKER_1", "BODY_STICKER_2", "BODY_STICKER_3"] as const)
-    .find((candidate) => !occupied.has(candidate))
-}
-
-/* 캔버스 위 삭제: 같은 아이템이 다른 슬롯에 있어도 해당 슬롯 하나만 제거한다. */
-export function removeJournalDecorationAt(
-  state: DecorationState,
-  date: string,
-  slot: DecorationSlot,
-): DecorationState | null {
-  const placement = state.pagePlacements.find((candidate) => candidate.date === date && candidate.slot === slot)
-  if (placement === undefined) return null
-  const parsed = decorationStateSchema.safeParse({
-    ...state,
-    pagePlacements: state.pagePlacements.filter(
-      (candidate) => candidate.date !== date || candidate.slot !== slot,
-    ),
-  })
+    },
+  ]))
   return parsed.success ? parsed.data : null
 }
 
 export function updateJournalDecorationTransform(
   state: DecorationState,
   date: string,
-  slot: DecorationSlot,
+  index: number,
   transform: DecorationPlacementTransform,
 ): DecorationState | null {
-  const placement = state.pagePlacements.find((candidate) => candidate.date === date && candidate.slot === slot)
-  if (placement === undefined) return null
-  const parsed = decorationStateSchema.safeParse({
-    ...state,
-    pagePlacements: state.pagePlacements.map((candidate) => (
-      candidate.date === date && candidate.slot === slot
-        ? { ...candidate, transform }
-        : candidate
-    )),
-  })
+  const items = journalDecorationItems(state, date)
+  if (items[index] === undefined) return null
+  const parsed = decorationStateSchema.safeParse(withPageItems(
+    state,
+    date,
+    items.map((item, candidate) => (candidate === index ? { ...item, transform } : item)),
+  ))
   return parsed.success ? parsed.data : null
 }
 
 /*
- * 이모지 스티커는 전용 슬롯 3칸 중 비어 있는 첫 칸을 고른다.
- * 세 칸이 모두 차면 첫 칸을 돌려줘서 교체 확인 흐름을 타게 한다.
- * 다른 장식은 기존처럼 첫 호환 슬롯을 쓴다.
+ * z-순서 이동 (계약 §6): from 위치의 아이템을 to 위치로 옮긴다.
+ * 맨 앞(0) = 최하단, 맨 뒤(length-1) = 최상단.
  */
-export function resolveJournalDecorationSlot(
+export function reorderJournalDecoration(
   state: DecorationState,
-  item: DecorationCatalogItem,
   date: string,
-  slot?: DecorationSlot,
-): DecorationSlot | undefined {
-  if (slot !== undefined) return slot
-  if (!isEmojiStickerId(item.id)) return item.compatibleSlots[0]
-  const occupied = new Set(
-    state.pagePlacements.filter((placement) => placement.date === date).map((placement) => placement.slot),
-  )
-  return item.compatibleSlots.find((candidate) => !occupied.has(candidate)) ?? item.compatibleSlots[0]
+  from: number,
+  to: number,
+): DecorationState | null {
+  const items = journalDecorationItems(state, date)
+  if (from < 0 || from >= items.length || to < 0 || to >= items.length) return null
+  if (from === to) return state
+  const moved = [...items]
+  const [item] = moved.splice(from, 1)
+  if (item === undefined) return null
+  moved.splice(to, 0, item)
+  const parsed = decorationStateSchema.safeParse(withPageItems(state, date, moved))
+  return parsed.success ? parsed.data : null
 }
 
 function candidateState(
   state: DecorationState,
   item: DecorationCatalogItem,
   date: string,
-  slot?: DecorationSlot,
-): unknown {
+): DecorationState | unknown | null {
   if (isThemeDecorationId(item.id)) {
     return { ...state, equipped: { ...state.equipped, themeId: item.id } }
   }
@@ -158,24 +171,20 @@ function candidateState(
     return { ...state, equipped: { ...state.equipped, avatarId: item.id } }
   }
   if (!isPlacementDecorationId(item.id)) return state
-  const targetSlot = resolveJournalDecorationSlot(state, item, date, slot)
-  if (targetSlot === undefined || !item.compatibleSlots.includes(targetSlot)) return null
-  return {
-    ...state,
-    pagePlacements: [
-      ...state.pagePlacements.filter((placement) => placement.date !== date || placement.slot !== targetSlot),
-      { date, slot: targetSlot, itemId: item.id },
-    ],
-  }
+  if (!canAppendJournalDecoration(state, date)) return null
+  const items = journalDecorationItems(state, date)
+  return withPageItems(state, date, [
+    ...items,
+    { itemId: item.id, transform: defaultJournalDecorationTransform(state, date) },
+  ])
 }
 
 export function previewJournalDecoration(
   state: DecorationState,
   item: DecorationCatalogItem,
   date: string,
-  slot?: DecorationSlot,
 ): DecorationState | null {
-  const candidate = candidateState(state, item, date, slot)
+  const candidate = candidateState(state, item, date)
   if (candidate === null) return null
   if (isThemeDecorationId(item.id)) {
     return { ...state, equipped: { ...state.equipped, themeId: item.id } }
@@ -194,25 +203,23 @@ export function applyJournalDecoration(
   state: DecorationState,
   item: DecorationCatalogItem,
   date: string,
-  slot?: DecorationSlot,
 ): DecorationState | null {
   if (!state.ownedItemIds.includes(item.id)) return null
-  const previewed = previewJournalDecoration(state, item, date, slot)
+  const previewed = previewJournalDecoration(state, item, date)
   if (previewed === null) return null
   return rememberDecorationUse(previewed, item.id)
 }
 
+/* 도구 서랍의 "제거": 이 날짜에서 해당 아이템을 전부 뗀다. */
 export function removeJournalDecoration(
   state: DecorationState,
   item: DecorationCatalogItem,
   date: string,
 ): DecorationState | null {
   if (!isPlacementDecorationId(item.id)) return null
-  const parsed = decorationStateSchema.safeParse({
-    ...state,
-    pagePlacements: state.pagePlacements.filter(
-      (placement) => placement.date !== date || placement.itemId !== item.id,
-    ),
-  })
+  const items = journalDecorationItems(state, date)
+  const parsed = decorationStateSchema.safeParse(
+    withPageItems(state, date, items.filter((candidate) => candidate.itemId !== item.id)),
+  )
   return parsed.success ? parsed.data : null
 }

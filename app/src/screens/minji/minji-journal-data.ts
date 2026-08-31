@@ -1,8 +1,10 @@
 import { createEmptyDecorationState } from "../../domain/decoration-schema"
-import type { DecorationPagePlacement, DecorationState } from "../../domain/decoration-schema"
+import type { DecorationPageItem, DecorationState } from "../../domain/decoration-schema"
+import { V2_SLOT_DEFAULT_TRANSFORMS } from "../../domain/decoration-schema"
+import type { DecorationSlot } from "../../domain/decoration-catalog"
 import type { AvatarDecorationId, InkDecorationId, PlacementDecorationId, ThemeDecorationId } from "../../domain/decoration-catalog"
 
-export type MinjiDecorationPreset = { readonly name: string; readonly themeId: ThemeDecorationId; readonly inkId: InkDecorationId; readonly avatarId: AvatarDecorationId | null; readonly placements: readonly Omit<DecorationPagePlacement, "date">[] }
+export type MinjiDecorationPreset = { readonly name: string; readonly themeId: ThemeDecorationId; readonly inkId: InkDecorationId; readonly avatarId: AvatarDecorationId | null; readonly placements: readonly DecorationPageItem[] }
 export type MinjiJournalPage = {
   readonly id: "DAY_ONE" | "WEEK_THREE" | "MONTH_TWO" | "MONTH_SIX" | "MONTH_TEN" | "MONTH_FOURTEEN"
   readonly when: string
@@ -23,8 +25,9 @@ export type MinjiJournalPage = {
   readonly notation?: { readonly raw: string; readonly lines: readonly string[] }
 }
 
-const placement = (slot: DecorationPagePlacement["slot"], itemId: PlacementDecorationId): Omit<DecorationPagePlacement, "date"> => ({ slot, itemId })
-const preset = (name: string, themeId: ThemeDecorationId, placements: readonly Omit<DecorationPagePlacement, "date">[], avatarId: AvatarDecorationId | null = null): MinjiDecorationPreset => ({ name, themeId, inkId: "INK_NAVY", avatarId, placements })
+/* 쇼케이스 프리셋은 v2 슬롯 기본 좌표를 그대로 v3 transform으로 쓴다 — 시각 결과 동일. */
+const placement = (slot: DecorationSlot, itemId: PlacementDecorationId): DecorationPageItem => ({ itemId, transform: V2_SLOT_DEFAULT_TRANSFORMS[slot] })
+const preset = (name: string, themeId: ThemeDecorationId, placements: readonly DecorationPageItem[], avatarId: AvatarDecorationId | null = null): MinjiDecorationPreset => ({ name, themeId, inkId: "INK_NAVY", avatarId, placements })
 const pages = [
   { id: "DAY_ONE", when: "첫날", date: "2025-03-02", title: "4.6km를 달린 첫 기록", preview: "거리 4.6km, 시간 30분, RPE 4를 적었어요.", mood: "첫 기록을 남겨 뿌듯함", bodyCondition: "다리에 불편함 없음", weather: "맑음 · 약한 바람", situation: "동네 코스에서 4.6km를 30분 동안 천천히 달리고 거리·시간·RPE를 적었어요.", quote: "처음 10분은 다리가 뻣뻣했지만, 뒤에는 편하게 달렸다.", facts: ["거리 4.6km", "시간 30분", "힘든 정도(RPE) 4/10"], discovery: "첫 기록에 거리 4.6km, 시간 30분, RPE 4가 남았어요.", question: { label: "거리와 시간만 적어도 될까?", answer: "네. 오늘 확인한 사실만 적고 모르는 항목은 비워도 돼요." }, decorationPreset: preset("햇살 스티커", "THEME_TRACK_NOTEBOOK", [placement("TOP_CORNER", "STICKER_WEATHER_SUN")]) },
   { id: "WEEK_THREE", when: "3주", date: "2025-03-23", title: "훈련 4일과 휴식 3일", preview: "7일 동안 달린 날과 쉰 날을 모두 적었어요.", mood: "쉬기로 정해서 마음이 편함", bodyCondition: "다리에 피로가 조금 남음", weather: "흐림 · 약한 바람", situation: "월·화·목·토요일에는 훈련했고, 나머지 3일은 쉬었다고 적었어요.", quote: "다리에 피로가 남아 오늘은 쉬었다. 내일 아침 상태를 다시 적겠다.", facts: ["훈련 4일", "휴식 3일", "기록한 날 7일"], discovery: "7일 중 훈련 4일과 휴식 3일을 바로 확인할 수 있어요.", question: { label: "쉬는 날도 적어야 할까?", answer: "쉬었다고 적어 두면 일주일 동안 훈련한 날과 쉰 날을 정확히 셀 수 있어요." }, decorationPreset: preset("체크 테이프와 휴식 도장", "THEME_TRACK_NOTEBOOK", [placement("HEADER_TAPE", "TAPE_CHECKER"), placement("PAGE_FOOTER", "STAMP_REST_DAY")]) },
@@ -34,4 +37,4 @@ const pages = [
   { id: "MONTH_FOURTEEN", when: "14개월", date: "2026-05-03", title: "경기 전 확인한 세 경기 기록", preview: "이전 세 경기 기록과 경기 전 몸 상태를 확인했어요.", mood: "경기가 기다려지고 조금 긴장됨", bodyCondition: "통증 없음 · 몸이 가벼움", weather: "맑음 · 바람 적음", situation: "다음 경기를 앞두고 이전 세 경기의 기록, 통증, 경기 전 기분을 다시 확인했어요.", quote: "지난 경기 전에는 잠을 7시간 잤고 통증이 없었다. 이번에도 전날 일찍 자려고 한다.", facts: ["개인 최고 기록(PB) 16:10.44", "이전 기록 16:42.18", "경기 3개 비교"], discovery: "세 경기의 기록과 경기 전 몸 상태를 한 화면에서 비교할 수 있어요.", question: { label: "지난 경기 기록대로 준비하면 될까?", answer: "같은 결과를 보장하지 않아요. 수면·통증·기분처럼 이번 준비와 비교할 항목을 확인하는 데 써요." }, decorationPreset: preset("출발선 아바타와 결승선 스티커", "THEME_SKY_JOURNAL", [placement("HEADER_TAPE", "TAPE_CHECKER"), placement("BODY_MARGIN", "STICKER_FINISH_LINE")], "AVATAR_START_LINE") },
 ] as const satisfies readonly MinjiJournalPage[]
 export const MINJI_JOURNAL_PAGES: readonly MinjiJournalPage[] = pages
-export function minjiDecorationState(page: MinjiJournalPage): DecorationState { const base = createEmptyDecorationState(); return { ...base, ownedItemIds: [...base.ownedItemIds, "THEME_SKY_JOURNAL", "STICKER_FINISH_LINE", "AVATAR_START_LINE"], equipped: { themeId: page.decorationPreset.themeId, inkId: page.decorationPreset.inkId, avatarId: page.decorationPreset.avatarId }, pagePlacements: page.decorationPreset.placements.map((item) => ({ ...item, date: page.date })) } }
+export function minjiDecorationState(page: MinjiJournalPage): DecorationState { const base = createEmptyDecorationState(); return { ...base, ownedItemIds: [...base.ownedItemIds, "THEME_SKY_JOURNAL", "STICKER_FINISH_LINE", "AVATAR_START_LINE"], equipped: { themeId: page.decorationPreset.themeId, inkId: page.decorationPreset.inkId, avatarId: page.decorationPreset.avatarId }, pages: page.decorationPreset.placements.length === 0 ? [] : [{ date: page.date, items: page.decorationPreset.placements }] } }

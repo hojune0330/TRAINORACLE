@@ -25,11 +25,11 @@ export function pruneUnusedJournalDecorations(
   const candidates = new Set(candidateDates)
   const recoverable = new Set(recoverableTrashDates)
   const current = loadDecorationState()
-  const pagePlacements = current.pagePlacements.filter((placement) => (
-    !candidates.has(placement.date)
-    || activeDates.has(placement.date)
-    || recoverable.has(placement.date)
+  const pages = current.pages.filter((page) => (
+    !candidates.has(page.date)
+    || activeDates.has(page.date)
+    || recoverable.has(page.date)
   ))
-  if (pagePlacements.length === current.pagePlacements.length) return true
-  return saveDecorationState({ ...current, pagePlacements }).ok
+  if (pages.length === current.pages.length) return true
+  return saveDecorationState({ ...current, pages }).ok
 }

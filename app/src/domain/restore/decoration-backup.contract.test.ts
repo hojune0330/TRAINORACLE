@@ -42,9 +42,14 @@ function decoratedState() {
       favoriteItemIds: ["STICKER_WEATHER_SUN"],
       recentItemIds: ["TAPE_CHECKER", "STICKER_WEATHER_SUN"],
     },
-    pagePlacements: [
-      { date: "2026-08-03", slot: "TOP_CORNER", itemId: "STICKER_WEATHER_SUN" },
-      { date: "2026-08-03", slot: "HEADER_TAPE", itemId: "TAPE_CHECKER" },
+    pages: [
+      {
+        date: "2026-08-03",
+        items: [
+          { itemId: "STICKER_WEATHER_SUN", transform: { xPercent: 86, yPercent: 14, scale: 1, rotationDeg: 0 } },
+          { itemId: "TAPE_CHECKER", transform: { xPercent: 50, yPercent: 9, scale: 1, rotationDeg: 0 } },
+        ],
+      },
     ],
   } as const
 }
@@ -71,7 +76,7 @@ afterEach(() => {
 })
 
 describe("explicit full backup decoration section", () => {
-  it("includes V2 decoration state only in the explicit full backup", () => {
+  it("includes V3 decoration state only in the explicit full backup", () => {
     expect(saveDecorationState(decoratedState()).ok).toBe(true)
     saveEntry(post("one"))
 
@@ -79,9 +84,9 @@ describe("explicit full backup decoration section", () => {
     const full = exportEntriesJSON({ includeRawMemos: true })
 
     expect(safe).not.toMatch(/"decorations"\s*:/u)
-    expect(full).toContain('"format": "trainoracle.journal.full-backup.v2"')
+    expect(full).toContain('"format": "trainoracle.journal.full-backup.v3"')
     expect(full).toContain('"decorations": {')
-    expect(full).toContain('"version": 2')
+    expect(full).toContain('"version": 3')
     expect(full).toContain('"itemId": "STICKER_WEATHER_SUN"')
   })
 
@@ -130,6 +135,46 @@ describe("explicit full backup decoration section", () => {
     expect(loadEntries().map((entry) => entry.id)).toEqual(["one"])
   })
 
+  it("restores a legacy V2 full backup by migrating slot placements to V3 coordinates", async () => {
+    // 계약 §5: 이미 내보낸 v2 백업 파일은 계속 복원 가능해야 한다.
+    const v2Backup = JSON.stringify({
+      app: "TRAINORACLE",
+      format: "trainoracle.journal.full-backup.v2",
+      exportedAt: "2026-08-03T10:00:00.000Z",
+      entries: [post("from-v2")],
+      decorations: {
+        version: 2,
+        spentPoints: 0,
+        ownedItemIds: createEmptyDecorationState().ownedItemIds,
+        equipped: { themeId: "THEME_TRACK_NOTEBOOK", inkId: "INK_NAVY", avatarId: null },
+        library: { favoriteItemIds: [], recentItemIds: [] },
+        pagePlacements: [
+          { date: "2026-08-03", slot: "TOP_CORNER", itemId: "STICKER_WEATHER_SUN" },
+        ],
+        pointMeaning: "NON_ECONOMIC_NON_TRANSFERABLE_BETA",
+      },
+    })
+    const read = readBackupFile(v2Backup)
+
+    expect(read.recognized).toBe(true)
+    expect(read.decorationStatus).toBe("included")
+    expect(read.decorationPlacementCount).toBe(1)
+
+    const outcome = await restoreBackupFile(read, buildRestorePlan(read.entries), "keep-existing", "replace")
+
+    expect(outcome.decorationRestore).toBe("RESTORED")
+    const restored = loadDecorationState()
+    expect(restored.version).toBe(3)
+    expect(restored.pages).toEqual([
+      {
+        date: "2026-08-03",
+        items: [{ itemId: "STICKER_WEATHER_SUN", transform: { xPercent: 86, yPercent: 14, scale: 1, rotationDeg: 0 } }],
+      },
+    ])
+    /* 복원은 .v2-backup 키를 건드리지 않는다 (계약 §5). */
+    expect(window.localStorage.getItem("trainoracle.decorations.v2-backup")).toBeNull()
+  })
+
   it("keeps current decorations unless replacement is explicitly selected", async () => {
     const current = decoratedState()
     expect(saveDecorationState(current).ok).toBe(true)
@@ -140,7 +185,7 @@ describe("explicit full backup decoration section", () => {
     }
     const read = readBackupFile(JSON.stringify({
       app: "TRAINORACLE",
-      format: "trainoracle.journal.full-backup.v2",
+      format: "trainoracle.journal.full-backup.v3",
       entries: [post("restore")],
       decorations: backup,
     }))
@@ -156,7 +201,7 @@ describe("explicit full backup decoration section", () => {
     const state = createEmptyDecorationState()
     const read = readBackupFile(JSON.stringify({
       app: "TRAINORACLE",
-      format: "trainoracle.journal.full-backup.v2",
+      format: "trainoracle.journal.full-backup.v3",
       entries: [],
       decorations: {
         ...state,
@@ -173,7 +218,7 @@ describe("explicit full backup decoration section", () => {
   it("skips invalid decoration state while preserving journal restoration", async () => {
     const invalid = JSON.stringify({
       app: "TRAINORACLE",
-      format: "trainoracle.journal.full-backup.v2",
+      format: "trainoracle.journal.full-backup.v3",
       exportedAt: "2026-08-03T10:00:00.000Z",
       entries: [post("valid-journal")],
       decorations: { ...decoratedState(), version: 99 },
@@ -195,7 +240,7 @@ describe("explicit full backup decoration section", () => {
     const read = readBackupFile(backup)
     const setItem = window.localStorage.setItem.bind(window.localStorage)
     vi.spyOn(Storage.prototype, "setItem").mockImplementation((key, value) => {
-      if (key === "trainoracle.decorations.v2") throw new DOMException("quota")
+      if (key === "trainoracle.decorations.v3") throw new DOMException("quota")
       setItem(key, value)
     })
 
@@ -211,7 +256,7 @@ describe("explicit full backup decoration section", () => {
     const before = storageBytes()
     const backup = JSON.stringify({
       app: "TRAINORACLE",
-      format: "trainoracle.journal.full-backup.v2",
+      format: "trainoracle.journal.full-backup.v3",
       exportedAt: "2026-08-03T10:00:00.000Z",
       entries: [post("restored")],
       decorations: createEmptyDecorationState(),
@@ -238,7 +283,7 @@ describe("explicit full backup decoration section", () => {
     expect(saveDecorationState(decoratedState()).ok).toBe(true)
     const backup = JSON.stringify({
       app: "TRAINORACLE",
-      format: "trainoracle.journal.full-backup.v2",
+      format: "trainoracle.journal.full-backup.v3",
       exportedAt: "2026-08-03T10:00:00.000Z",
       entries: [post("restored")],
       decorations: createEmptyDecorationState(),

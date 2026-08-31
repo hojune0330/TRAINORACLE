@@ -85,8 +85,8 @@
   box-sizing: border-box;
 }
 
-/* The stacked preview uses the same safe rails as a full diary page, but at
- * thumbnail scale so the cards cannot extend over the selectable list below. */
+/* The stacked preview renders the same free-placement layer as a full diary
+ * page, but at thumbnail scale so decorations stay proportional to the card. */
 .minji-showcase-preview .decorated-journal-page__top-rail {
   min-height: 32px;
   height: 32px;
@@ -100,42 +100,29 @@
   height: 25px;
 }
 
-.minji-showcase-preview .decorated-journal-page__slot--header-tape {
-  width: min(100%, 110px);
-  height: 22px;
+.minji-showcase-preview .decorated-journal-page__free-item {
+  width: 30px;
+  height: 30px;
 }
 
-.minji-showcase-preview .decorated-journal-page__slot--top-corner {
-  width: 27px;
-  height: 27px;
+.minji-showcase-preview .decorated-journal-page__free-item[data-category="EMOJI_STICKER"] {
+  width: 24px;
+  height: 24px;
 }
 
-.minji-showcase-preview .decorated-journal-page__body[data-has-side-rail="true"] {
-  grid-template-columns: minmax(0, 1fr) 34px;
+.minji-showcase-preview .decorated-journal-page__free-item[data-category="TAPE"] {
+  width: 96px;
+  height: 24px;
 }
 
-.minji-showcase-preview .decorated-journal-page__side-rail {
-  min-height: 0;
-  padding: 4px 3px;
-  align-items: center;
-  border-top: 0;
+.minji-showcase-preview .decorated-journal-page__free-item[data-category="STAMP"],
+.minji-showcase-preview .decorated-journal-page__free-item[data-category="STICKER"] {
+  width: 30px;
+  height: 30px;
 }
 
-.minji-showcase-preview .decorated-journal-page__slot--body-margin {
-  position: static;
-  width: 28px;
-  height: 28px;
-}
-
-.minji-showcase-preview .decorated-journal-page__footer-rail {
-  min-height: 32px;
-  height: 32px;
-  padding: 2px 7px;
-}
-
-.minji-showcase-preview .decorated-journal-page__slot--page-footer {
-  width: 28px;
-  height: 28px;
+.minji-showcase-preview .decorated-journal-page__free-asset.decorated-journal-page__emoji {
+  font-size: 18px;
 }
 
 .minji-showcase-preview .decorated-journal-page__content > span,

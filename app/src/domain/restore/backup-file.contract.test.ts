@@ -22,7 +22,7 @@ import { createRecoveryCode } from "../account/private-note-crypto"
 import { saveSessionRecoveryCode } from "../account/private-note-sync"
 import { toUploadPayload } from "../account/sync-local"
 import {
-  FULL_FORMAT, SAFE_FORMAT, buildRestorePlan, readBackupFile, restoreEntries,
+  FULL_FORMAT_V3, SAFE_FORMAT, buildRestorePlan, readBackupFile, restoreEntries,
 } from "./backup-file"
 
 function post(id: string, overrides: Partial<PostSessionEntry> = {}): PostSessionEntry {
@@ -331,7 +331,8 @@ describe("전체 왕복 — 내보내고 지우고 되돌린다", () => {
 
     // Then — 상수와 실제 출력이 갈라지면 복원이 조용히 깨진다
     expect(exportEntriesJSON()).toContain(SAFE_FORMAT)
-    expect(exportEntriesJSON({ includeRawMemos: true })).toContain(FULL_FORMAT)
+    /* P4부터 메모 포함 내보내기는 v3 형식 태그를 쓴다 (마이그레이션 계약 §5). */
+    expect(exportEntriesJSON({ includeRawMemos: true })).toContain(FULL_FORMAT_V3)
   })
 })
 

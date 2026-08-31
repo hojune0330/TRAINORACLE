@@ -1,14 +1,13 @@
 import { useDrag, useGesture } from "@use-gesture/react"
 import { Copy, Maximize2, RotateCw, X } from "lucide-react"
 import React from "react"
-import { DECORATION_SLOTS, decorationCatalogItem } from "../domain/decorations"
+import { decorationCatalogItem } from "../domain/decorations"
 import type {
   DecorationCatalogItem,
   DecorationPlacementTransform,
-  DecorationSlot,
   DecorationState,
 } from "../domain/decorations"
-import { defaultJournalDecorationTransform } from "../domain/journal-decoration-state"
+import { journalDecorationItems } from "../domain/journal-decoration-state"
 
 type DecoratedJournalPageFrameProps = {
   readonly date: string
@@ -17,23 +16,13 @@ type DecoratedJournalPageFrameProps = {
   readonly pageTopRef?: React.Ref<HTMLDivElement>
   readonly frameTopRef?: React.Ref<HTMLElement>
   readonly editable?: boolean
-  readonly selectedSlot?: DecorationSlot | null
-  readonly onSelectPlacement?: (slot: DecorationSlot) => void
-  readonly onTransformPlacement?: (slot: DecorationSlot, transform: DecorationPlacementTransform) => void
+  readonly selectedIndex?: number | null
+  readonly onSelectPlacement?: (index: number) => void
+  readonly onTransformPlacement?: (index: number, transform: DecorationPlacementTransform) => void
   readonly onDeselectPlacement?: () => void
-  readonly onDeletePlacement?: (slot: DecorationSlot) => void
-  readonly onDuplicatePlacement?: (slot: DecorationSlot) => void
+  readonly onDeletePlacement?: (index: number) => void
+  readonly onDuplicatePlacement?: (index: number) => void
 }
-
-const SLOT_TEST_IDS = {
-  HEADER_TAPE: "journal-slot-header-tape",
-  TOP_CORNER: "journal-slot-top-corner",
-  BODY_MARGIN: "journal-slot-body-margin",
-  PAGE_FOOTER: "journal-slot-page-footer",
-  BODY_STICKER_1: "journal-slot-body-sticker-1",
-  BODY_STICKER_2: "journal-slot-body-sticker-2",
-  BODY_STICKER_3: "journal-slot-body-sticker-3",
-} as const satisfies Record<DecorationSlot, string>
 
 function DecorationAsset({
   item,
@@ -76,6 +65,11 @@ function DecorationAsset({
 
 const clamp = (value: number, minimum: number, maximum: number): number => Math.min(maximum, Math.max(minimum, value))
 
+/* v3 조작 범위 (마이그레이션 계약 §2 C4~C5). */
+const MIN_SCALE = 0.3
+const MAX_SCALE = 3
+const MAX_ROTATION = 180
+
 /* 회전 스냅: 15° 배수에 ±3° 자석 (마스터 플랜 §2.3) — 자석 밖에서는 자유롭게 벗어난다. */
 const snapRotation = (deg: number): number => {
   const nearest = Math.round(deg / 15) * 15
@@ -109,7 +103,7 @@ type PinchAnchor = {
  */
 function EditableDecorationPlacement({
   item,
-  slot,
+  index,
   transform,
   selected,
   onSelect,
@@ -120,7 +114,7 @@ function EditableDecorationPlacement({
   onGuides,
 }: {
   readonly item: DecorationCatalogItem
-  readonly slot: DecorationSlot
+  readonly index: number
   readonly transform: DecorationPlacementTransform
   readonly selected: boolean
   readonly onSelect: () => void
@@ -230,8 +224,8 @@ function EditableDecorationPlacement({
       if (first) onSelect()
       schedule({
         ...start.startTransform,
-        scale: clamp(start.startTransform.scale * scaleRatio, 0.6, 2),
-        rotationDeg: clamp(snapRotation(start.startTransform.rotationDeg + angleDelta), -45, 45),
+        scale: clamp(start.startTransform.scale * scaleRatio, MIN_SCALE, MAX_SCALE),
+        rotationDeg: clamp(snapRotation(start.startTransform.rotationDeg + angleDelta), -MAX_ROTATION, MAX_ROTATION),
       })
       if (last) finish()
       return start
@@ -245,7 +239,7 @@ function EditableDecorationPlacement({
     const centerX = start.pageRect.left + (start.startTransform.xPercent / 100) * start.pageRect.width
     const centerY = start.pageRect.top + (start.startTransform.yPercent / 100) * start.pageRect.height
     const distance = Math.max(8, Math.hypot(pointerX - centerX, pointerY - centerY))
-    schedule({ ...start.startTransform, scale: clamp(start.startTransform.scale * (distance / start.startDistance), 0.6, 2) })
+    schedule({ ...start.startTransform, scale: clamp(start.startTransform.scale * (distance / start.startDistance), MIN_SCALE, MAX_SCALE) })
     if (last) finish()
     return start
   }, { pointer: { capture: true } })
@@ -259,7 +253,7 @@ function EditableDecorationPlacement({
     const angle = Math.atan2(pointerY - centerY, pointerX - centerX) * 180 / Math.PI
     schedule({
       ...start.startTransform,
-      rotationDeg: clamp(snapRotation(start.startTransform.rotationDeg + angle - start.startAngle), -45, 45),
+      rotationDeg: clamp(snapRotation(start.startTransform.rotationDeg + angle - start.startAngle), -MAX_ROTATION, MAX_ROTATION),
     })
     if (last) finish()
     return start
@@ -291,11 +285,11 @@ function EditableDecorationPlacement({
       ArrowRight: { xPercent: clamp(draft.xPercent + step, 4, 96) },
       ArrowUp: { yPercent: clamp(draft.yPercent - step, 4, 96) },
       ArrowDown: { yPercent: clamp(draft.yPercent + step, 4, 96) },
-      "+": { scale: clamp(draft.scale + 0.05, 0.6, 2) },
-      "=": { scale: clamp(draft.scale + 0.05, 0.6, 2) },
-      "-": { scale: clamp(draft.scale - 0.05, 0.6, 2) },
-      "[": { rotationDeg: clamp(draft.rotationDeg - 1, -45, 45) },
-      "]": { rotationDeg: clamp(draft.rotationDeg + 1, -45, 45) },
+      "+": { scale: clamp(draft.scale + 0.05, MIN_SCALE, MAX_SCALE) },
+      "=": { scale: clamp(draft.scale + 0.05, MIN_SCALE, MAX_SCALE) },
+      "-": { scale: clamp(draft.scale - 0.05, MIN_SCALE, MAX_SCALE) },
+      "[": { rotationDeg: clamp(draft.rotationDeg - 1, -MAX_ROTATION, MAX_ROTATION) },
+      "]": { rotationDeg: clamp(draft.rotationDeg + 1, -MAX_ROTATION, MAX_ROTATION) },
     }
     const update = moves[event.key]
     if (update === undefined) return
@@ -313,6 +307,7 @@ function EditableDecorationPlacement({
       className="decorated-journal-page__free-item"
       data-category={item.category}
       data-selected={selected ? "true" : undefined}
+      data-testid={`journal-decoration-item-${index}`}
       style={{
         left: `${transform.xPercent}%`,
         top: `${transform.yPercent}%`,
@@ -327,8 +322,8 @@ function EditableDecorationPlacement({
     >
       <DecorationAsset
         item={item}
-        className={`decorated-journal-page__slot decorated-journal-page__free-asset decorated-journal-page__slot--${slot.toLowerCase().replaceAll("_", "-")}`}
-        testId={SLOT_TEST_IDS[slot]}
+        className="decorated-journal-page__slot decorated-journal-page__free-asset"
+        testId={`journal-decoration-asset-${index}`}
       />
       {selected && (
         <>
@@ -341,17 +336,15 @@ function EditableDecorationPlacement({
               onDelete()
             }}
           ><X aria-hidden="true" size={15} /></button>
-          {item.category === "EMOJI_STICKER" && (
-            <button
-              type="button"
-              className="decorated-journal-page__transform-handle decorated-journal-page__transform-handle--duplicate"
-              aria-label={`${item.name} 복제`}
-              onClick={(event) => {
-                event.stopPropagation()
-                onDuplicate()
-              }}
-            ><Copy aria-hidden="true" size={15} /></button>
-          )}
+          <button
+            type="button"
+            className="decorated-journal-page__transform-handle decorated-journal-page__transform-handle--duplicate"
+            aria-label={`${item.name} 복제`}
+            onClick={(event) => {
+              event.stopPropagation()
+              onDuplicate()
+            }}
+          ><Copy aria-hidden="true" size={15} /></button>
           <button
             {...bindRotate()}
             type="button"
@@ -377,7 +370,7 @@ export function DecoratedJournalPageFrame({
   pageTopRef,
   frameTopRef,
   editable = false,
-  selectedSlot = null,
+  selectedIndex = null,
   onSelectPlacement,
   onTransformPlacement,
   onDeselectPlacement,
@@ -390,23 +383,14 @@ export function DecoratedJournalPageFrame({
   const avatar = state.equipped.avatarId === null
     ? undefined
     : decorationCatalogItem(state.equipped.avatarId)
-  const placements = DECORATION_SLOTS.flatMap((slot) => {
-    const placement = state.pagePlacements.find((candidate) => candidate.date === date && candidate.slot === slot)
-    if (placement === undefined) return []
+  /*
+   * v3 단일 렌더 경로: 배열 순서 그대로 자유 레이어에 쌓는다 (계약 §2 C2 — 뒤가 위).
+   * v2의 슬롯 레일은 마이그레이션이 좌표로 변환하므로 더 이상 필요 없다.
+   */
+  const placements = journalDecorationItems(state, date).flatMap((placement, index) => {
     const item = decorationCatalogItem(placement.itemId)
-    return item === undefined ? [] : [{ item, slot, transform: placement.transform }]
+    return item === undefined ? [] : [{ item, index, transform: placement.transform }]
   })
-  const freePlacements = placements.filter((placement) => editable || placement.transform !== undefined)
-  const fixedPlacements = placements.filter((placement) => !editable && placement.transform === undefined)
-  const placementFor = (slot: DecorationSlot) => fixedPlacements.find((placement) => placement.slot === slot)
-  const headerTape = placementFor("HEADER_TAPE")
-  const topCorner = placementFor("TOP_CORNER")
-  const bodyMargin = placementFor("BODY_MARGIN")
-  const pageFooter = placementFor("PAGE_FOOTER")
-  const stickerSlots = (["BODY_STICKER_1", "BODY_STICKER_2", "BODY_STICKER_3"] as const)
-    .map((slot) => ({ slot, placement: placementFor(slot) }))
-  const hasTopRail = avatar !== undefined || headerTape !== undefined || topCorner !== undefined
-  const hasStickerRail = stickerSlots.some(({ placement }) => placement !== undefined)
 
   return (
     <section
@@ -416,7 +400,7 @@ export function DecoratedJournalPageFrame({
       data-ink-id={state.equipped.inkId}
       onPointerDown={editable && onDeselectPlacement !== undefined
         ? (event) => {
-          /* 빈 곳 탭 = 선택 해제 (상용 편집기 관욵). 장식이나 손잡이 위는 제외한다. */
+          /* 빈 곳 탭 = 선택 해제 (상용 편집기 관례). 장식이나 손잡이 위는 제외한다. */
           const target = event.target as HTMLElement
           if (target.closest(".decorated-journal-page__free-item") === null) onDeselectPlacement()
         }
@@ -425,14 +409,12 @@ export function DecoratedJournalPageFrame({
       {theme !== undefined && (
         <DecorationAsset item={theme} className="decorated-journal-page__theme" testId="journal-page-theme" />
       )}
-      {hasTopRail && (
+      {avatar !== undefined && (
         <div className="decorated-journal-page__top-rail" aria-hidden="true">
-          <span>{avatar !== undefined && <DecorationAsset item={avatar} className="decorated-journal-page__avatar" testId="journal-page-avatar" />}</span>
-          <span>{headerTape !== undefined && <DecorationAsset item={headerTape.item} className="decorated-journal-page__slot decorated-journal-page__slot--header-tape" testId={SLOT_TEST_IDS.HEADER_TAPE} />}</span>
-          <span>{topCorner !== undefined && <DecorationAsset item={topCorner.item} className="decorated-journal-page__slot decorated-journal-page__slot--top-corner" testId={SLOT_TEST_IDS.TOP_CORNER} />}</span>
+          <span><DecorationAsset item={avatar} className="decorated-journal-page__avatar" testId="journal-page-avatar" /></span>
         </div>
       )}
-      <div className="decorated-journal-page__body" data-has-side-rail={bodyMargin !== undefined ? "true" : undefined}>
+      <div className="decorated-journal-page__body">
         <div
           key={date}
           ref={pageTopRef}
@@ -441,75 +423,50 @@ export function DecoratedJournalPageFrame({
         >
           {children}
         </div>
-        {bodyMargin !== undefined && (
-          <aside className="decorated-journal-page__side-rail" aria-hidden="true">
-            <DecorationAsset item={bodyMargin.item} className="decorated-journal-page__slot decorated-journal-page__slot--body-margin" testId={SLOT_TEST_IDS.BODY_MARGIN} />
-          </aside>
-        )}
       </div>
-      {hasStickerRail && (
-        <div className="decorated-journal-page__sticker-rail" data-testid="journal-sticker-rail" aria-hidden="true">
-          {stickerSlots.map(({ slot, placement }) => (
-            <span key={slot} className="decorated-journal-page__sticker-cell">
-              {placement !== undefined && (
-                <DecorationAsset
-                  item={placement.item}
-                  className={`decorated-journal-page__slot decorated-journal-page__slot--${slot.toLowerCase().replaceAll("_", "-")}`}
-                  testId={SLOT_TEST_IDS[slot]}
-                />
-              )}
-            </span>
-          ))}
-        </div>
-      )}
-      {pageFooter !== undefined && (
-        <div className="decorated-journal-page__footer-rail" aria-hidden="true">
-          <DecorationAsset item={pageFooter.item} className="decorated-journal-page__slot decorated-journal-page__slot--page-footer" testId={SLOT_TEST_IDS.PAGE_FOOTER} />
-        </div>
-      )}
       {editable && (guides.vertical || guides.horizontal) && (
         <div className="decorated-journal-page__guides" aria-hidden="true" data-testid="journal-decoration-guides">
           {guides.vertical && <span className="decorated-journal-page__guide decorated-journal-page__guide--vertical" />}
           {guides.horizontal && <span className="decorated-journal-page__guide decorated-journal-page__guide--horizontal" />}
         </div>
       )}
-      {freePlacements.length > 0 && (
+      {placements.length > 0 && (
         <div className="decorated-journal-page__free-layer" data-editable={editable ? "true" : undefined}>
-          {freePlacements.map((placement) => {
-            const transform = placement.transform ?? defaultJournalDecorationTransform(placement.slot)
+          {placements.map((placement) => {
             if (!editable || onSelectPlacement === undefined || onTransformPlacement === undefined) {
               return (
                 <div
-                  key={placement.slot}
+                  key={placement.index}
                   className="decorated-journal-page__free-item decorated-journal-page__free-item--readonly"
                   data-category={placement.item.category}
+                  data-testid={`journal-decoration-item-${placement.index}`}
                   style={{
-                    left: `${transform.xPercent}%`,
-                    top: `${transform.yPercent}%`,
-                    transform: `translate(-50%, -50%) rotate(${transform.rotationDeg}deg) scale(${transform.scale})`,
+                    left: `${placement.transform.xPercent}%`,
+                    top: `${placement.transform.yPercent}%`,
+                    transform: `translate(-50%, -50%) rotate(${placement.transform.rotationDeg}deg) scale(${placement.transform.scale})`,
                   }}
                   aria-hidden="true"
                 >
                   <DecorationAsset
                     item={placement.item}
-                    className={`decorated-journal-page__slot decorated-journal-page__free-asset decorated-journal-page__slot--${placement.slot.toLowerCase().replaceAll("_", "-")}`}
-                    testId={SLOT_TEST_IDS[placement.slot]}
+                    className="decorated-journal-page__slot decorated-journal-page__free-asset"
+                    testId={`journal-decoration-asset-${placement.index}`}
                   />
                 </div>
               )
             }
             return (
               <EditableDecorationPlacement
-                key={placement.slot}
+                key={placement.index}
                 item={placement.item}
-                slot={placement.slot}
-                transform={transform}
-                selected={selectedSlot === placement.slot}
-                onSelect={() => onSelectPlacement(placement.slot)}
-                onTransform={(next) => onTransformPlacement(placement.slot, next)}
-                onDelete={() => onDeletePlacement?.(placement.slot)}
+                index={placement.index}
+                transform={placement.transform}
+                selected={selectedIndex === placement.index}
+                onSelect={() => onSelectPlacement(placement.index)}
+                onTransform={(next) => onTransformPlacement(placement.index, next)}
+                onDelete={() => onDeletePlacement?.(placement.index)}
                 onDeselect={() => onDeselectPlacement?.()}
-                onDuplicate={() => onDuplicatePlacement?.(placement.slot)}
+                onDuplicate={() => onDuplicatePlacement?.(placement.index)}
                 onGuides={setGuides}
               />
             )

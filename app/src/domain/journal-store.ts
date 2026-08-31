@@ -438,7 +438,7 @@ export function exportEntriesJSON(options: JournalExportOptions = {}): string {
     return JSON.stringify(
       {
         app: "TRAINORACLE",
-        format: "trainoracle.journal.full-backup.v2",
+        format: "trainoracle.journal.full-backup.v3",
         exportMode: "OWNER_FULL_BACKUP",
         exportedAt: new Date().toISOString(),
         entries: entriesForOwnerFullBackup(),
