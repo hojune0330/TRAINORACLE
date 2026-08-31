@@ -10,6 +10,10 @@ export {
   PAID_DECORATION_IDS,
   PLACEMENT_DECORATION_IDS,
   STARTER_DECORATION_IDS,
+  TEXT_INK_DEFINITIONS,
+  TEXT_INK_IDS,
+  TEXT_STICKER_ITEM_ID,
+  TEXT_STICKER_MAX_LENGTH,
   THEME_DECORATION_IDS,
   decorationCatalogItem,
   isAvatarDecorationId,
@@ -20,7 +24,9 @@ export {
   isInkDecorationId,
   isPaidDecorationId,
   isPlacementDecorationId,
+  isTextInkId,
   isThemeDecorationId,
+  textInkColor,
 } from "./decoration-catalog"
 export type {
   AvatarDecorationId,
@@ -33,6 +39,7 @@ export type {
   InkDecorationId,
   PaidDecorationId,
   PlacementDecorationId,
+  TextInkId,
   ThemeDecorationId,
 } from "./decoration-catalog"
 export {
@@ -42,12 +49,20 @@ export {
   decorationPlacementTransformSchema,
   decorationStateSchema,
   isCompatiblePlacement,
+  isTextStickerPageItem,
   migrateLegacyDecorationState,
   parseStoredDecorationState,
   parseStoredDecorationStateV2,
   parseStoredDecorationStateV3,
+  textStickerTextSchema,
 } from "./decoration-schema"
-export type { DecorationPage, DecorationPageItem, DecorationPlacementTransform, DecorationState } from "./decoration-schema"
+export type {
+  DecorationPage,
+  DecorationPageItem,
+  DecorationPlacementTransform,
+  DecorationState,
+  DecorationTextPageItem,
+} from "./decoration-schema"
 export {
   DECORATION_STORAGE_KEY_V1,
   DECORATION_STORAGE_KEY_V2,

@@ -11,8 +11,10 @@ import {
   readDecorationStateSerialized,
   saveDecorationStateIfCurrent,
 } from "../../domain/decorations"
-import type { DecorationCatalogItem, DecorationPlacementTransform, DecorationState } from "../../domain/decorations"
+import { isTextStickerPageItem } from "../../domain/decorations"
+import type { DecorationCatalogItem, DecorationPlacementTransform, DecorationState, TextInkId } from "../../domain/decorations"
 import {
+  appendJournalTextSticker,
   applyJournalDecoration,
   duplicateJournalDecorationAt,
   journalDecorationItems,
@@ -21,9 +23,16 @@ import {
   removeJournalDecorationAt,
   roundJournalDecorationTransform,
   updateJournalDecorationTransform,
+  updateJournalTextSticker,
 } from "../../domain/journal-decoration-state"
 import { withJosa } from "../../domain/korean-josa"
 import { JournalDecorationToolbar } from "./JournalDecorationToolbar"
+import { JournalTextStickerSheet } from "./JournalTextStickerSheet"
+
+/* 입력 시트 상태: 새로 만들기 또는 기존 인덱스 재편집 (P5 U2/U4). */
+type TextSheetState =
+  | { readonly mode: "CREATE" }
+  | { readonly mode: "EDIT"; readonly index: number; readonly text: string; readonly inkId: TextInkId }
 
 export function JournalDecorationSurface({
   date,
@@ -47,6 +56,7 @@ export function JournalDecorationSurface({
   const [future, setFuture] = React.useState<readonly DecorationState[]>([])
   const [previewItemId, setPreviewItemId] = React.useState<string | null>(null)
   const [selectedIndex, setSelectedIndex] = React.useState<number | null>(null)
+  const [textSheet, setTextSheet] = React.useState<TextSheetState | null>(null)
   const visible = preview ?? canonical
   const items = DECORATION_CATALOG.filter((item) => (
     isThemeDecorationId(item.id)
@@ -151,7 +161,40 @@ export function JournalDecorationSurface({
     setPreview(null)
     setPreviewItemId(null)
     setSelectedIndex(null)
+    setTextSheet(null)
     setNotice("")
+  }
+
+  /* 텍스트 스티커 입력 시트 오픈 (P5 U1): 24개 상한은 붙이기 전에 미리 안내한다. */
+  const openTextSheetForCreate = (): void => {
+    if (pageItems.length >= MAX_DECORATION_ITEMS_PER_PAGE) {
+      setNotice(`한 페이지에 ${MAX_DECORATION_ITEMS_PER_PAGE}개까지 붙일 수 있어요.`)
+      return
+    }
+    setDrawerOpen(false)
+    setTextSheet({ mode: "CREATE" })
+  }
+
+  /* 더블탭·연필 손잡이 양쪽에서 호출 (P5 U4/U5). */
+  const openTextSheetForEdit = (index: number): void => {
+    const target = pageItems[index]
+    if (target === undefined || !isTextStickerPageItem(target)) return
+    setSelectedIndex(index)
+    setTextSheet({ mode: "EDIT", index, text: target.text, inkId: target.inkId })
+  }
+
+  const confirmTextSheet = (text: string, inkId: TextInkId): void => {
+    if (textSheet === null) return
+    if (textSheet.mode === "CREATE") {
+      if (commit(appendJournalTextSticker(canonical, date, text.trim(), inkId), "글 스티커를 붙였어요. 드래그로 옮겨 보세요.")) {
+        setSelectedIndex(pageItems.length)
+        setTextSheet(null)
+      }
+      return
+    }
+    if (commit(updateJournalTextSticker(canonical, date, textSheet.index, text.trim(), inkId), "글 스티커를 고쳤어요.")) {
+      setTextSheet(null)
+    }
   }
 
   const transformPlacement = (index: number, transform: DecorationPlacementTransform): void => {
@@ -178,7 +221,9 @@ export function JournalDecorationSurface({
   const deletePlacement = (index: number): void => {
     const placement = pageItems[index]
     const item = placement === undefined ? undefined : DECORATION_CATALOG.find((candidate) => candidate.id === placement.itemId)
-    const label = item === undefined ? "꾸미기" : item.name
+    const label = placement !== undefined && isTextStickerPageItem(placement)
+      ? "글 스티커"
+      : item === undefined ? "꾸미기" : item.name
     if (commit(removeJournalDecorationAt(canonical, date, index), `${withJosa(label, "을/를")} 지웠어요. 되돌리기로 복구할 수 있어요.`)) {
       setSelectedIndex(null)
     }
@@ -217,7 +262,17 @@ export function JournalDecorationSurface({
         }}
         onUndo={() => timeTravel("UNDO")}
         onRedo={() => timeTravel("REDO")}
+        onOpenTextSticker={hasEntries ? openTextSheetForCreate : undefined}
       />
+      {textSheet !== null && (
+        <JournalTextStickerSheet
+          mode={textSheet.mode}
+          initialText={textSheet.mode === "EDIT" ? textSheet.text : ""}
+          initialInkId={textSheet.mode === "EDIT" ? textSheet.inkId : "TEXT_INK_NAVY"}
+          onConfirm={confirmTextSheet}
+          onClose={() => setTextSheet(null)}
+        />
+      )}
       <DecoratedJournalPageFrame
         date={date}
         state={visible}
@@ -232,6 +287,7 @@ export function JournalDecorationSurface({
         onDeselectPlacement={() => setSelectedIndex(null)}
         onDeletePlacement={deletePlacement}
         onDuplicatePlacement={duplicatePlacement}
+        onEditTextPlacement={openTextSheetForEdit}
       >{children}</DecoratedJournalPageFrame>
     </div>
   )

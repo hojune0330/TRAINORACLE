@@ -577,6 +577,143 @@
 .journal-decoration-workspace--open .journal-decoration-toolbar[data-open="true"] > div { animation-delay: 45ms; }
 .journal-decoration-workspace--open .journal-decoration-toolbar[data-open="true"] > footer { animation-delay: 80ms; }
 
+/*
+ * 텍스트 스티커 (P5 계약 U7): span 텍스트 노드, 기본 16px × scale(부모 transform에 위임),
+ * 한 줄 고정(nowrap). 아이템 박스는 내용 폭에 맞춘다.
+ */
+.decorated-journal-page__free-item[data-category="TEXT_STICKER"] {
+  width: max-content;
+  height: auto;
+  min-width: 28px;
+  min-height: 28px;
+  padding: 2px 6px;
+}
+.decorated-journal-page__text-sticker {
+  width: auto !important;
+  height: auto !important;
+  font-family: var(--sans);
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1.3;
+  white-space: nowrap;
+  letter-spacing: -0.01em;
+  text-shadow: 0 0 1px color-mix(in srgb, var(--paper, #fff) 55%, transparent);
+}
+.decorated-journal-page__transform-handle--edit-text {
+  top: -26px;
+  left: 50%;
+  transform: translateX(-50%) scale(calc(1 / var(--item-scale, 1)));
+  transform-origin: top center;
+}
+
+/* 텍스트 스티커 입력 시트 (P5 계약 U2): 하단 시트, 도크 위에 뜬다. */
+.journal-text-sticker-sheet {
+  position: fixed;
+  right: 0;
+  bottom: calc(58px + env(safe-area-inset-bottom));
+  left: 0;
+  z-index: 78;
+  display: grid;
+  gap: 12px;
+  padding: 14px 16px 16px;
+  border-top: 1px solid var(--ink);
+  background: var(--surface);
+  animation: decoration-tools-content-enter var(--dur-base) var(--ease-out-strong) backwards;
+}
+.journal-text-sticker-sheet > header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.journal-text-sticker-sheet > header strong { font-size: 14px; }
+.journal-text-sticker-sheet > header button {
+  width: 44px;
+  height: 44px;
+  min-width: 44px;
+  display: grid;
+  place-items: center;
+  margin: -10px -10px -10px 0;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--ink-2);
+  cursor: pointer;
+}
+.journal-text-sticker-sheet__field {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 10px;
+}
+.journal-text-sticker-sheet__field input {
+  min-height: 44px;
+  padding: 0 12px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--surface-2, var(--surface));
+  color: var(--ink);
+  font-family: var(--sans);
+  font-size: 16px;
+}
+.journal-text-sticker-sheet__field input:focus-visible { outline: 2px solid var(--ink-blue); outline-offset: 1px; }
+.journal-text-sticker-sheet__field small {
+  min-width: 44px;
+  color: var(--ink-2);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+/* 44px 스와치 (계약 U2): 시각 원은 32px, 히트 영역은 44px. */
+.journal-text-sticker-sheet__inks { display: flex; gap: 4px; }
+.journal-text-sticker-sheet__ink {
+  position: relative;
+  width: 44px;
+  height: 44px;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+}
+.journal-text-sticker-sheet__ink::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 32px;
+  height: 32px;
+  border: 2px solid color-mix(in srgb, var(--text-ink) 55%, var(--surface));
+  border-radius: 50%;
+  background: var(--text-ink);
+  box-sizing: border-box;
+  transform: translate(-50%, -50%);
+}
+/* 그림자 금지 계약(visual-system) 준수: 선택 링은 outline으로 그린다. */
+.journal-text-sticker-sheet__ink[aria-pressed="true"]::before {
+  border-color: var(--surface);
+  outline: 2px solid var(--ink);
+  outline-offset: 1px;
+}
+.journal-text-sticker-sheet__ink:focus-visible { outline: 2px solid var(--ink-blue); outline-offset: 2px; }
+.journal-text-sticker-sheet__confirm {
+  min-height: 46px;
+  border: 1px solid var(--ink);
+  border-radius: 12px;
+  background: var(--ink);
+  color: var(--surface);
+  font-family: var(--sans);
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.journal-text-sticker-sheet__confirm:disabled {
+  border-color: var(--line);
+  background: var(--surface-2, var(--surface));
+  color: var(--ink-3, var(--ink-2));
+  cursor: not-allowed;
+}
+
 @keyframes decoration-canvas-enter {
   from { opacity: 0.62; transform: translateY(8px); }
   to { opacity: 1; transform: translateY(0); }
@@ -607,6 +744,7 @@
     transform: translateX(calc(100% + 24px));
   }
   .journal-decoration-editor__dock { left: auto; width: min(440px, 42vw); box-sizing: border-box; }
+  .journal-text-sticker-sheet { left: auto; width: min(440px, 42vw); box-sizing: border-box; border-left: 1px solid var(--line); }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -615,5 +753,7 @@
   .journal-decoration-workspace--open > .decorated-journal-page,
   .journal-decoration-editor__notice,
   .journal-decoration-workspace--open .journal-decoration-toolbar,
-  .journal-decoration-workspace--open .journal-decoration-toolbar * { animation: none !important; transition: none !important; }
+  .journal-decoration-workspace--open .journal-decoration-toolbar *,
+  .journal-text-sticker-sheet,
+  .journal-text-sticker-sheet * { animation: none !important; transition: none !important; }
 }

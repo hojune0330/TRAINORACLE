@@ -1,13 +1,29 @@
 import { useDrag, useGesture } from "@use-gesture/react"
-import { Copy, Maximize2, RotateCw, X } from "lucide-react"
+import { Copy, Maximize2, Pencil, RotateCw, X } from "lucide-react"
 import React from "react"
-import { decorationCatalogItem } from "../domain/decorations"
+import { decorationCatalogItem, isTextStickerPageItem, textInkColor } from "../domain/decorations"
 import type {
   DecorationCatalogItem,
   DecorationPlacementTransform,
   DecorationState,
+  TextInkId,
 } from "../domain/decorations"
 import { journalDecorationItems } from "../domain/journal-decoration-state"
+
+/*
+ * 프레임이 그리는 자유 배치 비주얼: 카탈로그 아이템 또는 텍스트 스티커 (P5).
+ * 텍스트 스티커는 카탈로그 조회 없이 text/inkId로 직접 렌더한다.
+ */
+type PlacementVisual =
+  | { readonly kind: "catalog"; readonly item: DecorationCatalogItem }
+  | { readonly kind: "text"; readonly text: string; readonly inkId: TextInkId }
+
+const visualCategory = (visual: PlacementVisual): string => (
+  visual.kind === "text" ? "TEXT_STICKER" : visual.item.category
+)
+const visualName = (visual: PlacementVisual): string => (
+  visual.kind === "text" ? "글 스티커" : visual.item.name
+)
 
 type DecoratedJournalPageFrameProps = {
   readonly date: string
@@ -22,6 +38,42 @@ type DecoratedJournalPageFrameProps = {
   readonly onDeselectPlacement?: () => void
   readonly onDeletePlacement?: (index: number) => void
   readonly onDuplicatePlacement?: (index: number) => void
+  readonly onEditTextPlacement?: (index: number) => void
+}
+
+/* 텍스트 스티커 본문 (P5 계약 U7): span 텍스트 노드, 잉크 색, 줄바꿈 없음. */
+function TextStickerAsset({
+  text,
+  inkId,
+  testId,
+}: {
+  readonly text: string
+  readonly inkId: TextInkId
+  readonly testId: string
+}) {
+  return (
+    <span
+      className="decorated-journal-page__slot decorated-journal-page__free-asset decorated-journal-page__text-sticker"
+      data-testid={testId}
+      style={{ color: textInkColor(inkId) }}
+      aria-hidden="true"
+    >
+      {text}
+    </span>
+  )
+}
+
+function PlacementAsset({ visual, index }: { readonly visual: PlacementVisual; readonly index: number }) {
+  if (visual.kind === "text") {
+    return <TextStickerAsset text={visual.text} inkId={visual.inkId} testId={`journal-decoration-asset-${index}`} />
+  }
+  return (
+    <DecorationAsset
+      item={visual.item}
+      className="decorated-journal-page__slot decorated-journal-page__free-asset"
+      testId={`journal-decoration-asset-${index}`}
+    />
+  )
 }
 
 function DecorationAsset({
@@ -102,7 +154,7 @@ type PinchAnchor = {
  * (60fps 계약 — 마스터 플랜 §2.2). 저장 커밋은 손을 뗄 때 1회만 일어난다.
  */
 function EditableDecorationPlacement({
-  item,
+  visual,
   index,
   transform,
   selected,
@@ -111,9 +163,10 @@ function EditableDecorationPlacement({
   onDelete,
   onDeselect,
   onDuplicate,
+  onEditText,
   onGuides,
 }: {
-  readonly item: DecorationCatalogItem
+  readonly visual: PlacementVisual
   readonly index: number
   readonly transform: DecorationPlacementTransform
   readonly selected: boolean
@@ -122,6 +175,7 @@ function EditableDecorationPlacement({
   readonly onDelete: () => void
   readonly onDeselect: () => void
   readonly onDuplicate: () => void
+  readonly onEditText?: () => void
   readonly onGuides: (guides: Guides) => void
 }) {
   const itemRef = React.useRef<HTMLDivElement | null>(null)
@@ -179,12 +233,19 @@ function EditableDecorationPlacement({
     onTransform(draftRef.current)
   }, [paint, onTransform, onGuides])
 
-  /* 더블탭 리셋: 크기 1.0 / 회전 0° (위치는 유지). 확인 없이, 되돌리기가 안전망. */
+  /*
+   * 더블탭: 일반 장식 = 크기 1.0 / 회전 0° 리셋 (위치 유지, 되돌리기가 안전망).
+   * 텍스트 스티커 = 재편집 시트 열기 (P5 계약 U4 — 리셋이 아니다).
+   */
   const lastTapRef = React.useRef(0)
   const handleTap = React.useCallback(() => {
     const now = Date.now()
     if (now - lastTapRef.current < 300) {
       lastTapRef.current = 0
+      if (visual.kind === "text") {
+        onEditText?.()
+        return
+      }
       const reset = { ...draftRef.current, scale: 1, rotationDeg: 0 }
       draftRef.current = reset
       paint(reset)
@@ -193,7 +254,7 @@ function EditableDecorationPlacement({
     }
     lastTapRef.current = now
     onSelect()
-  }, [paint, onTransform, onSelect])
+  }, [paint, onTransform, onSelect, onEditText, visual.kind])
 
   const bindItem = useGesture({
     onDrag: ({ first, last, tap, pinching, cancel, movement: [movementX, movementY], initial: [initialX, initialY], memo }) => {
@@ -305,7 +366,7 @@ function EditableDecorationPlacement({
       {...bindItem()}
       ref={itemRef}
       className="decorated-journal-page__free-item"
-      data-category={item.category}
+      data-category={visualCategory(visual)}
       data-selected={selected ? "true" : undefined}
       data-testid={`journal-decoration-item-${index}`}
       style={{
@@ -316,21 +377,19 @@ function EditableDecorationPlacement({
       } as React.CSSProperties}
       role="button"
       tabIndex={0}
-      aria-label={`${item.name} 선택됨. 드래그로 옮기고 두 손가락으로 크기와 각도를 바꿔요. 두 번 탭하면 원래 크기로 돌아가고 Delete 키로 삭제해요.`}
+      aria-label={visual.kind === "text"
+        ? `글 스티커: ${visual.text}. 드래그로 옮기고 두 손가락으로 크기와 각도를 바꿔요. 두 번 탭하면 글을 고치고 Delete 키로 삭제해요.`
+        : `${visual.item.name} 선택됨. 드래그로 옮기고 두 손가락으로 크기와 각도를 바꿔요. 두 번 탭하면 원래 크기로 돌아가고 Delete 키로 삭제해요.`}
       onClick={handleTap}
       onKeyDown={keyboardTransform}
     >
-      <DecorationAsset
-        item={item}
-        className="decorated-journal-page__slot decorated-journal-page__free-asset"
-        testId={`journal-decoration-asset-${index}`}
-      />
+      <PlacementAsset visual={visual} index={index} />
       {selected && (
         <>
           <button
             type="button"
             className="decorated-journal-page__transform-handle decorated-journal-page__transform-handle--delete"
-            aria-label={`${item.name} 삭제`}
+            aria-label={`${visualName(visual)} 삭제`}
             onClick={(event) => {
               event.stopPropagation()
               onDelete()
@@ -339,23 +398,36 @@ function EditableDecorationPlacement({
           <button
             type="button"
             className="decorated-journal-page__transform-handle decorated-journal-page__transform-handle--duplicate"
-            aria-label={`${item.name} 복제`}
+            aria-label={`${visualName(visual)} 복제`}
             onClick={(event) => {
               event.stopPropagation()
               onDuplicate()
             }}
           ><Copy aria-hidden="true" size={15} /></button>
+          {/* 텍스트 스티커 전용 연필 손잡이 (P5 계약 U5): 더블탭 대체 경로, 44px 히트. 복제(T8)와 공존. */}
+          {visual.kind === "text" && onEditText !== undefined && (
+            <button
+              type="button"
+              className="decorated-journal-page__transform-handle decorated-journal-page__transform-handle--edit-text"
+              aria-label="글 스티커 글 고치기"
+              data-testid={`journal-decoration-edit-text-${index}`}
+              onClick={(event) => {
+                event.stopPropagation()
+                onEditText()
+              }}
+            ><Pencil aria-hidden="true" size={15} /></button>
+          )}
           <button
             {...bindRotate()}
             type="button"
             className="decorated-journal-page__transform-handle decorated-journal-page__transform-handle--rotate"
-            aria-label={`${item.name} 회전`}
+            aria-label={`${visualName(visual)} 회전`}
           ><RotateCw aria-hidden="true" size={15} /></button>
           <button
             {...bindResize()}
             type="button"
             className="decorated-journal-page__transform-handle decorated-journal-page__transform-handle--resize"
-            aria-label={`${item.name} 크기 조절`}
+            aria-label={`${visualName(visual)} 크기 조절`}
           ><Maximize2 aria-hidden="true" size={15} /></button>
         </>
       )}
@@ -376,6 +448,7 @@ export function DecoratedJournalPageFrame({
   onDeselectPlacement,
   onDeletePlacement,
   onDuplicatePlacement,
+  onEditTextPlacement,
 }: DecoratedJournalPageFrameProps) {
   /* 드래그 중 중앙 자석이 붙은 축에만 가이드라인을 그린다. */
   const [guides, setGuides] = React.useState<Guides>({ vertical: false, horizontal: false })
@@ -388,8 +461,20 @@ export function DecoratedJournalPageFrame({
    * v2의 슬롯 레일은 마이그레이션이 좌표로 변환하므로 더 이상 필요 없다.
    */
   const placements = journalDecorationItems(state, date).flatMap((placement, index) => {
+    if (isTextStickerPageItem(placement)) {
+      /* 텍스트 스티커는 카탈로그 조회 없이 자체 데이터로 그린다 (P5). */
+      return [{
+        visual: { kind: "text", text: placement.text, inkId: placement.inkId } as PlacementVisual,
+        index,
+        transform: placement.transform,
+      }]
+    }
     const item = decorationCatalogItem(placement.itemId)
-    return item === undefined ? [] : [{ item, index, transform: placement.transform }]
+    return item === undefined ? [] : [{
+      visual: { kind: "catalog", item } as PlacementVisual,
+      index,
+      transform: placement.transform,
+    }]
   })
 
   return (
@@ -438,7 +523,7 @@ export function DecoratedJournalPageFrame({
                 <div
                   key={placement.index}
                   className="decorated-journal-page__free-item decorated-journal-page__free-item--readonly"
-                  data-category={placement.item.category}
+                  data-category={visualCategory(placement.visual)}
                   data-testid={`journal-decoration-item-${placement.index}`}
                   style={{
                     left: `${placement.transform.xPercent}%`,
@@ -447,18 +532,14 @@ export function DecoratedJournalPageFrame({
                   }}
                   aria-hidden="true"
                 >
-                  <DecorationAsset
-                    item={placement.item}
-                    className="decorated-journal-page__slot decorated-journal-page__free-asset"
-                    testId={`journal-decoration-asset-${placement.index}`}
-                  />
+                  <PlacementAsset visual={placement.visual} index={placement.index} />
                 </div>
               )
             }
             return (
               <EditableDecorationPlacement
                 key={placement.index}
-                item={placement.item}
+                visual={placement.visual}
                 index={placement.index}
                 transform={placement.transform}
                 selected={selectedIndex === placement.index}
@@ -467,6 +548,7 @@ export function DecoratedJournalPageFrame({
                 onDelete={() => onDeletePlacement?.(placement.index)}
                 onDeselect={() => onDeselectPlacement?.()}
                 onDuplicate={() => onDuplicatePlacement?.(placement.index)}
+                onEditText={onEditTextPlacement === undefined ? undefined : () => onEditTextPlacement(placement.index)}
                 onGuides={setGuides}
               />
             )

@@ -1,4 +1,4 @@
-import { BookOpen, Check, ChevronDown, Eye, Palette, PenLine, Redo2, Smile, Trash2, Undo2, X } from "lucide-react"
+import { BookOpen, Check, ChevronDown, Eye, Palette, PenLine, Redo2, Smile, Trash2, Type, Undo2, X } from "lucide-react"
 import React from "react"
 import { MAX_DECORATION_ITEMS_PER_PAGE } from "../../domain/decorations"
 import type { DecorationCatalogItem } from "../../domain/decorations"
@@ -62,6 +62,8 @@ type JournalDecorationToolbarProps = {
   readonly onRemove: (item: DecorationCatalogItem) => void
   readonly onUndo: () => void
   readonly onRedo: () => void
+  /* P5: 기록이 있는 날에만 제공된다 — 없으면 도크에 버튼을 그리지 않는다. */
+  readonly onOpenTextSticker?: () => void
 }
 
 export function JournalDecorationToolbar(props: JournalDecorationToolbarProps) {
@@ -126,6 +128,9 @@ export function JournalDecorationToolbar(props: JournalDecorationToolbarProps) {
       <nav className="journal-decoration-editor__dock" aria-label="일지 꾸미기 도구" data-decoration-interaction="true">
         <button type="button" aria-label="모든 꾸미기 도구" aria-pressed={props.drawerOpen && toolFilter === "ALL"} onClick={() => chooseTool("ALL")}><Palette aria-hidden="true" size={19} /><span>모두</span></button>
         <button type="button" aria-label="이모지 스티커 도구" aria-pressed={props.drawerOpen && toolFilter === "EMOJI_STICKER"} onClick={() => chooseTool("EMOJI_STICKER")}><Smile aria-hidden="true" size={19} /><span>스티커</span></button>
+        {props.onOpenTextSticker !== undefined && (
+          <button type="button" aria-label="글 스티커 도구" onClick={props.onOpenTextSticker}><Type aria-hidden="true" size={19} /><span>글</span></button>
+        )}
         <button type="button" aria-label="페이지 테마 도구" aria-pressed={props.drawerOpen && toolFilter === "THEME"} onClick={() => chooseTool("THEME")}><BookOpen aria-hidden="true" size={19} /><span>테마</span></button>
         <button type="button" aria-label="글자색 도구" aria-pressed={props.drawerOpen && toolFilter === "INK"} onClick={() => chooseTool("INK")}><PenLine aria-hidden="true" size={19} /><span>글자</span></button>
       </nav>
