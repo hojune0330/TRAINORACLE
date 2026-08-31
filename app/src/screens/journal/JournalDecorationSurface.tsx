@@ -14,6 +14,8 @@ import {
 import type { DecorationCatalogItem, DecorationPlacementTransform, DecorationSlot, DecorationState } from "../../domain/decorations"
 import {
   applyJournalDecoration,
+  duplicateJournalDecorationAt,
+  nextFreeEmojiSlot,
   previewJournalDecoration,
   removeJournalDecoration,
   removeJournalDecorationAt,
@@ -47,7 +49,9 @@ export function JournalDecorationSurface({
   const [open, setOpen] = React.useState(false)
   const [drawerOpen, setDrawerOpen] = React.useState(false)
   const [notice, setNotice] = React.useState("")
-  const [undoState, setUndoState] = React.useState<DecorationState | null>(null)
+  /* Undo/Redo: past/future 스택 각 20단계 (마스터 플랜 §2.4) — 이력은 세션 메모리에만 산다. */
+  const [past, setPast] = React.useState<readonly DecorationState[]>([])
+  const [future, setFuture] = React.useState<readonly DecorationState[]>([])
   const [replacement, setReplacement] = React.useState<Replacement | null>(null)
   const [previewItemId, setPreviewItemId] = React.useState<string | null>(null)
   const [selectedSlot, setSelectedSlot] = React.useState<DecorationSlot | null>(null)
@@ -83,7 +87,8 @@ export function JournalDecorationSurface({
       } else setNotice("꾸미기를 저장하지 못했어요. 일지는 그대로예요.")
       return false
     }
-    setUndoState(canonical)
+    setPast((stack) => [...stack.slice(-19), canonical])
+    setFuture([])
     setCanonical(next)
     setStorageVersion(JSON.stringify(next))
     setPreview(null)
@@ -91,6 +96,48 @@ export function JournalDecorationSurface({
     setNotice(successMessage)
     return true
   }
+
+  /* Undo/Redo 공통: 대상 상태를 저장하고 스택을 반대쪽으로 옮긴다. 저장 실패 시 스택 보존. */
+  const timeTravel = (direction: "UNDO" | "REDO"): void => {
+    const source = direction === "UNDO" ? past : future
+    const target = source[source.length - 1]
+    if (target === undefined) return
+    if (!saveDecorationStateIfCurrent(target, storageVersion).ok) {
+      setNotice("꾸미기를 저장하지 못했어요. 일지는 그대로예요.")
+      return
+    }
+    if (direction === "UNDO") {
+      setPast((stack) => stack.slice(0, -1))
+      setFuture((stack) => [...stack.slice(-19), canonical])
+    } else {
+      setFuture((stack) => stack.slice(0, -1))
+      setPast((stack) => [...stack.slice(-19), canonical])
+    }
+    setCanonical(target)
+    setStorageVersion(JSON.stringify(target))
+    setPreview(null)
+    setPreviewItemId(null)
+    setSelectedSlot(null)
+    setNotice(direction === "UNDO" ? "이전 꾸미기로 되돌렸어요." : "되돌리기를 취소했어요.")
+  }
+
+  /* Ctrl+Z / Ctrl+Y(또는 Ctrl+Shift+Z) — 편집기가 열려 있을 때만. */
+  React.useEffect(() => {
+    if (!open) return
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (!(event.ctrlKey || event.metaKey)) return
+      const key = event.key.toLowerCase()
+      if (key === "z" && !event.shiftKey) {
+        event.preventDefault()
+        timeTravel("UNDO")
+      } else if (key === "y" || (key === "z" && event.shiftKey)) {
+        event.preventDefault()
+        timeTravel("REDO")
+      }
+    }
+    window.addEventListener("keydown", onKeyDown)
+    return () => window.removeEventListener("keydown", onKeyDown)
+  })
 
   const apply = (item: DecorationCatalogItem, slot?: DecorationSlot): void => {
     /* 이모지는 빈 칸 자동 배정 결과를 기준으로 교체 확인을 한다. */
@@ -130,6 +177,18 @@ export function JournalDecorationSurface({
     )
   }
 
+  const duplicatePlacement = (slot: DecorationSlot): void => {
+    const targetSlot = nextFreeEmojiSlot(canonical, date)
+    const next = duplicateJournalDecorationAt(canonical, date, slot)
+    if (next === null) {
+      setNotice("복제할 빈 자리가 없어요. 이모지는 한 페이지에 3개까지예요.")
+      return
+    }
+    if (commit(next, "복제했어요. 새 스티커를 옮겨 보세요.") && targetSlot !== undefined) {
+      setSelectedSlot(targetSlot)
+    }
+  }
+
   const deletePlacement = (slot: DecorationSlot): void => {
     const placement = canonical.pagePlacements.find((candidate) => candidate.date === date && candidate.slot === slot)
     const item = placement === undefined ? undefined : DECORATION_CATALOG.find((candidate) => candidate.id === placement.itemId)
@@ -148,7 +207,8 @@ export function JournalDecorationSurface({
           open={open}
           drawerOpen={drawerOpen}
           activeItemIds={activeItemIds}
-          canUndo={undoState !== null}
+          canUndo={past.length > 0}
+          canRedo={future.length > 0}
           notice={notice}
           previewItemId={previewItemId}
           onOpen={() => {
@@ -170,20 +230,8 @@ export function JournalDecorationSurface({
               setDrawerOpen(false)
             }
           }}
-          onUndo={() => {
-            const previous = undoState
-            if (previous !== null && saveDecorationStateIfCurrent(previous, storageVersion).ok) {
-              setCanonical(previous)
-              setStorageVersion(JSON.stringify(previous))
-              setPreview(null)
-              setUndoState(null)
-              setPreviewItemId(null)
-              setSelectedSlot(null)
-              setNotice("이전 꾸미기로 되돌렸어요.")
-            } else {
-              setNotice("꾸미기를 저장하지 못했어요. 일지는 그대로예요.")
-            }
-          }}
+          onUndo={() => timeTravel("UNDO")}
+          onRedo={() => timeTravel("REDO")}
         />
         <DecoratedJournalPageFrame
           date={date}
@@ -198,6 +246,7 @@ export function JournalDecorationSurface({
           onTransformPlacement={transformPlacement}
           onDeselectPlacement={() => setSelectedSlot(null)}
           onDeletePlacement={deletePlacement}
+          onDuplicatePlacement={duplicatePlacement}
         >{children}</DecoratedJournalPageFrame>
       </div>
       {replacement !== null && (

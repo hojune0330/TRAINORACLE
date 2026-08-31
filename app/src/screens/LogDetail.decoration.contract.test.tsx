@@ -364,6 +364,105 @@ describe("real journal decoration surface", () => {
     })
   })
 
+  it("redoes an undone change and clears redo on a new edit", async () => {
+    const user = userEvent.setup()
+    storeEntries([session("one")])
+    const base = createEmptyDecorationState()
+    expect(saveDecorationState(decorationStateSchema.parse({
+      ...base,
+      pagePlacements: [{ date: DATE, slot: "TOP_CORNER", itemId: "STICKER_WEATHER_SUN" }],
+    })).ok).toBe(true)
+    render(<LogDetail date={DATE} />)
+
+    await user.click(screen.getByRole("button", { name: "일지 꾸미기 열기" }))
+    const movable = screen.getByRole("button", { name: /맑은 날 선택됨/u })
+    /* 1) 이동 → 2) Undo → 3) Redo 로 동일 상태 복원 */
+    fireEvent.keyDown(movable, { key: "ArrowLeft", shiftKey: true })
+    expect(loadDecorationState().pagePlacements[0]?.transform?.xPercent).toBe(84)
+
+    await user.click(screen.getByRole("button", { name: "꾸미기 되돌리기" }))
+    expect(loadDecorationState().pagePlacements[0]?.transform).toBeUndefined()
+
+    await user.click(screen.getByRole("button", { name: "꾸미기 다시 실행" }))
+    expect(loadDecorationState().pagePlacements[0]?.transform?.xPercent).toBe(84)
+
+    /* Redo 후 새 편집 → future 스택이 비워져 다시 실행 버튼이 사라진다. */
+    await user.click(screen.getByRole("button", { name: "꾸미기 되돌리기" }))
+    fireEvent.keyDown(screen.getByRole("button", { name: /맑은 날 선택됨/u }), { key: "ArrowRight" })
+    expect(screen.queryByRole("button", { name: "꾸미기 다시 실행" })).toBeNull()
+  })
+
+  it("supports Ctrl+Z / Ctrl+Y keyboard history while the editor is open", async () => {
+    const user = userEvent.setup()
+    storeEntries([session("one")])
+    const base = createEmptyDecorationState()
+    expect(saveDecorationState(decorationStateSchema.parse({
+      ...base,
+      pagePlacements: [{ date: DATE, slot: "TOP_CORNER", itemId: "STICKER_WEATHER_SUN" }],
+    })).ok).toBe(true)
+    render(<LogDetail date={DATE} />)
+
+    await user.click(screen.getByRole("button", { name: "일지 꾸미기 열기" }))
+    const movable = screen.getByRole("button", { name: /맑은 날 선택됨/u })
+    fireEvent.keyDown(movable, { key: "ArrowLeft", shiftKey: true })
+    expect(loadDecorationState().pagePlacements[0]?.transform?.xPercent).toBe(84)
+
+    fireEvent.keyDown(window, { key: "z", ctrlKey: true })
+    expect(loadDecorationState().pagePlacements[0]?.transform).toBeUndefined()
+    fireEvent.keyDown(window, { key: "y", ctrlKey: true })
+    expect(loadDecorationState().pagePlacements[0]?.transform?.xPercent).toBe(84)
+  })
+
+  it("duplicates an emoji sticker to the next free slot with a +4% offset", async () => {
+    const user = userEvent.setup()
+    storeEntries([session("one")])
+    const base = createEmptyDecorationState()
+    expect(saveDecorationState(decorationStateSchema.parse({
+      ...base,
+      pagePlacements: [{
+        date: DATE,
+        slot: "BODY_STICKER_1",
+        itemId: "EMOJI_FIRE",
+        transform: { xPercent: 40, yPercent: 40, scale: 1.2, rotationDeg: 10 },
+      }],
+    })).ok).toBe(true)
+    render(<LogDetail date={DATE} />)
+
+    await user.click(screen.getByRole("button", { name: "일지 꾸미기 열기" }))
+    const movable = screen.getByRole("button", { name: /불꽃 선택됨/u })
+    await user.click(movable)
+    await user.click(screen.getByRole("button", { name: "불꽃 복제" }))
+
+    const placements = loadDecorationState().pagePlacements
+    expect(placements).toHaveLength(2)
+    const copy = placements.find((placement) => placement.slot === "BODY_STICKER_2")
+    expect(copy?.itemId).toBe("EMOJI_FIRE")
+    expect(copy?.transform).toEqual({ xPercent: 44, yPercent: 44, scale: 1.2, rotationDeg: 10 })
+  })
+
+  it("refuses to duplicate when all emoji slots are full and explains why", async () => {
+    const user = userEvent.setup()
+    storeEntries([session("one")])
+    const base = createEmptyDecorationState()
+    expect(saveDecorationState(decorationStateSchema.parse({
+      ...base,
+      pagePlacements: [
+        { date: DATE, slot: "BODY_STICKER_1", itemId: "EMOJI_FIRE" },
+        { date: DATE, slot: "BODY_STICKER_2", itemId: "EMOJI_FIRE" },
+        { date: DATE, slot: "BODY_STICKER_3", itemId: "EMOJI_FIRE" },
+      ],
+    })).ok).toBe(true)
+    render(<LogDetail date={DATE} />)
+
+    await user.click(screen.getByRole("button", { name: "일지 꾸미기 열기" }))
+    const stickers = screen.getAllByRole("button", { name: /불꽃 선택됨/u })
+    await user.click(stickers[0] as HTMLElement)
+    await user.click(screen.getByRole("button", { name: "불꽃 복제" }))
+
+    expect(loadDecorationState().pagePlacements).toHaveLength(3)
+    expect(screen.getByRole("status")).toHaveTextContent("복제할 빈 자리가 없어요.")
+  })
+
   it("rounds committed transforms to the precision contract (0.1% / 0.05 / 1deg)", async () => {
     const user = userEvent.setup()
     storeEntries([session("one")])

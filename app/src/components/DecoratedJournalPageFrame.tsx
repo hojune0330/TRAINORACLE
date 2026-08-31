@@ -1,5 +1,5 @@
 import { useDrag, useGesture } from "@use-gesture/react"
-import { Maximize2, RotateCw, X } from "lucide-react"
+import { Copy, Maximize2, RotateCw, X } from "lucide-react"
 import React from "react"
 import { DECORATION_SLOTS, decorationCatalogItem } from "../domain/decorations"
 import type {
@@ -22,6 +22,7 @@ type DecoratedJournalPageFrameProps = {
   readonly onTransformPlacement?: (slot: DecorationSlot, transform: DecorationPlacementTransform) => void
   readonly onDeselectPlacement?: () => void
   readonly onDeletePlacement?: (slot: DecorationSlot) => void
+  readonly onDuplicatePlacement?: (slot: DecorationSlot) => void
 }
 
 const SLOT_TEST_IDS = {
@@ -115,6 +116,7 @@ function EditableDecorationPlacement({
   onTransform,
   onDelete,
   onDeselect,
+  onDuplicate,
   onGuides,
 }: {
   readonly item: DecorationCatalogItem
@@ -125,6 +127,7 @@ function EditableDecorationPlacement({
   readonly onTransform: (transform: DecorationPlacementTransform) => void
   readonly onDelete: () => void
   readonly onDeselect: () => void
+  readonly onDuplicate: () => void
   readonly onGuides: (guides: Guides) => void
 }) {
   const itemRef = React.useRef<HTMLDivElement | null>(null)
@@ -275,6 +278,12 @@ function EditableDecorationPlacement({
       onDelete()
       return
     }
+    if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "d") {
+      event.preventDefault()
+      event.stopPropagation()
+      onDuplicate()
+      return
+    }
     const draft = draftRef.current
     const step = event.shiftKey ? 2 : 0.5
     const moves: Partial<Record<string, Partial<DecorationPlacementTransform>>> = {
@@ -332,6 +341,17 @@ function EditableDecorationPlacement({
               onDelete()
             }}
           ><X aria-hidden="true" size={15} /></button>
+          {item.category === "EMOJI_STICKER" && (
+            <button
+              type="button"
+              className="decorated-journal-page__transform-handle decorated-journal-page__transform-handle--duplicate"
+              aria-label={`${item.name} 복제`}
+              onClick={(event) => {
+                event.stopPropagation()
+                onDuplicate()
+              }}
+            ><Copy aria-hidden="true" size={15} /></button>
+          )}
           <button
             {...bindRotate()}
             type="button"
@@ -362,6 +382,7 @@ export function DecoratedJournalPageFrame({
   onTransformPlacement,
   onDeselectPlacement,
   onDeletePlacement,
+  onDuplicatePlacement,
 }: DecoratedJournalPageFrameProps) {
   /* 드래그 중 중앙 자석이 붙은 축에만 가이드라인을 그린다. */
   const [guides, setGuides] = React.useState<Guides>({ vertical: false, horizontal: false })
@@ -488,6 +509,7 @@ export function DecoratedJournalPageFrame({
                 onTransform={(next) => onTransformPlacement(placement.slot, next)}
                 onDelete={() => onDeletePlacement?.(placement.slot)}
                 onDeselect={() => onDeselectPlacement?.()}
+                onDuplicate={() => onDuplicatePlacement?.(placement.slot)}
                 onGuides={setGuides}
               />
             )

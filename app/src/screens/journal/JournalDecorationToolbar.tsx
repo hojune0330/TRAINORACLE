@@ -1,4 +1,4 @@
-import { BookOpen, Check, ChevronDown, Eye, Palette, PenLine, Smile, Trash2, Undo2, X } from "lucide-react"
+import { BookOpen, Check, ChevronDown, Eye, Palette, PenLine, Redo2, Smile, Trash2, Undo2, X } from "lucide-react"
 import React from "react"
 import type { DecorationCatalogItem, DecorationSlot } from "../../domain/decorations"
 
@@ -59,6 +59,7 @@ type JournalDecorationToolbarProps = {
   readonly drawerOpen: boolean
   readonly activeItemIds: ReadonlySet<string>
   readonly canUndo: boolean
+  readonly canRedo: boolean
   readonly notice: string
   readonly previewItemId: string | null
   readonly onApply: (item: DecorationCatalogItem, slot?: DecorationSlot) => void
@@ -69,6 +70,7 @@ type JournalDecorationToolbarProps = {
   readonly onPreview: (item: DecorationCatalogItem, slot?: DecorationSlot) => void
   readonly onRemove: (item: DecorationCatalogItem) => void
   readonly onUndo: () => void
+  readonly onRedo: () => void
 }
 
 export function JournalDecorationToolbar(props: JournalDecorationToolbarProps) {
@@ -121,6 +123,9 @@ export function JournalDecorationToolbar(props: JournalDecorationToolbarProps) {
         <span><strong>이 일지 꾸미기</strong><small>장식을 눌러 옮기고 모서리로 크기를 바꿔요.</small></span>
         {props.canUndo && (
           <button type="button" onClick={props.onUndo} aria-label="꾸미기 되돌리기" title="되돌리기"><Undo2 aria-hidden="true" size={18} /></button>
+        )}
+        {props.canRedo && (
+          <button type="button" onClick={props.onRedo} aria-label="꾸미기 다시 실행" title="다시 실행"><Redo2 aria-hidden="true" size={18} /></button>
         )}
         <button type="button" onClick={props.onClose} aria-label="꾸미기 완료" title="완료"><Check aria-hidden="true" size={18} /></button>
       </header>
