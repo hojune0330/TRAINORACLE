@@ -1,4 +1,5 @@
-import { Maximize2, RotateCw } from "lucide-react"
+import { useDrag } from "@use-gesture/react"
+import { Maximize2, RotateCw, X } from "lucide-react"
 import React from "react"
 import { DECORATION_SLOTS, decorationCatalogItem } from "../domain/decorations"
 import type {
@@ -19,6 +20,8 @@ type DecoratedJournalPageFrameProps = {
   readonly selectedSlot?: DecorationSlot | null
   readonly onSelectPlacement?: (slot: DecorationSlot) => void
   readonly onTransformPlacement?: (slot: DecorationSlot, transform: DecorationPlacementTransform) => void
+  readonly onDeselectPlacement?: () => void
+  readonly onDeletePlacement?: (slot: DecorationSlot) => void
 }
 
 const SLOT_TEST_IDS = {
@@ -72,17 +75,17 @@ function DecorationAsset({
 
 const clamp = (value: number, minimum: number, maximum: number): number => Math.min(maximum, Math.max(minimum, value))
 
-type PointerGesture = {
-  readonly kind: "MOVE" | "RESIZE" | "ROTATE"
-  readonly pointerId: number
+type GestureAnchor = {
   readonly pageRect: DOMRect
-  readonly startClientX: number
-  readonly startClientY: number
   readonly startTransform: DecorationPlacementTransform
   readonly startDistance: number
   readonly startAngle: number
 }
 
+/*
+ * 제스처 중에는 React 리렌더 없이 ref + requestAnimationFrame으로 style.transform만 갱신한다.
+ * (60fps 계약 — 마스터 플랜 §2.2). 저장 커밋은 손을 뗄 때 1회만 일어난다.
+ */
 function EditableDecorationPlacement({
   item,
   slot,
@@ -90,6 +93,8 @@ function EditableDecorationPlacement({
   selected,
   onSelect,
   onTransform,
+  onDelete,
+  onDeselect,
 }: {
   readonly item: DecorationCatalogItem
   readonly slot: DecorationSlot
@@ -97,114 +102,154 @@ function EditableDecorationPlacement({
   readonly selected: boolean
   readonly onSelect: () => void
   readonly onTransform: (transform: DecorationPlacementTransform) => void
+  readonly onDelete: () => void
+  readonly onDeselect: () => void
 }) {
-  const [draft, setDraft] = React.useState(transform)
+  const itemRef = React.useRef<HTMLDivElement | null>(null)
   const draftRef = React.useRef(transform)
-  const gestureRef = React.useRef<PointerGesture | null>(null)
+  const frameRef = React.useRef<number | null>(null)
+
+  const paint = React.useCallback((next: DecorationPlacementTransform) => {
+    const node = itemRef.current
+    if (node === null) return
+    node.style.left = `${next.xPercent}%`
+    node.style.top = `${next.yPercent}%`
+    node.style.transform = `translate(-50%, -50%) rotate(${next.rotationDeg}deg) scale(${next.scale})`
+    node.style.setProperty("--item-scale", `${next.scale}`)
+  }, [])
+
+  const schedule = React.useCallback((next: DecorationPlacementTransform) => {
+    draftRef.current = next
+    if (frameRef.current !== null) return
+    frameRef.current = requestAnimationFrame(() => {
+      frameRef.current = null
+      paint(draftRef.current)
+    })
+  }, [paint])
 
   React.useEffect(() => {
-    setDraft(transform)
     draftRef.current = transform
-  }, [transform])
+    paint(transform)
+    return () => {
+      if (frameRef.current !== null) cancelAnimationFrame(frameRef.current)
+      frameRef.current = null
+    }
+  }, [transform, paint])
 
-  const updateDraft = (next: DecorationPlacementTransform) => {
-    draftRef.current = next
-    setDraft(next)
-  }
-
-  const beginGesture = (kind: PointerGesture["kind"], event: React.PointerEvent<HTMLElement>) => {
-    if (event.button !== 0) return
-    const page = event.currentTarget.closest<HTMLElement>(".decorated-journal-page")
-    if (page === null) return
-    event.preventDefault()
-    event.stopPropagation()
-    onSelect()
-    event.currentTarget.setPointerCapture(event.pointerId)
+  const anchor = React.useCallback((clientX: number, clientY: number): GestureAnchor | null => {
+    const page = itemRef.current?.closest<HTMLElement>(".decorated-journal-page")
+    if (page === undefined || page === null) return null
     const pageRect = page.getBoundingClientRect()
     const centerX = pageRect.left + (draftRef.current.xPercent / 100) * pageRect.width
     const centerY = pageRect.top + (draftRef.current.yPercent / 100) * pageRect.height
-    gestureRef.current = {
-      kind,
-      pointerId: event.pointerId,
+    return {
       pageRect,
-      startClientX: event.clientX,
-      startClientY: event.clientY,
       startTransform: draftRef.current,
-      startDistance: Math.max(16, Math.hypot(event.clientX - centerX, event.clientY - centerY)),
-      startAngle: Math.atan2(event.clientY - centerY, event.clientX - centerX) * 180 / Math.PI,
+      startDistance: Math.max(16, Math.hypot(clientX - centerX, clientY - centerY)),
+      startAngle: Math.atan2(clientY - centerY, clientX - centerX) * 180 / Math.PI,
     }
-  }
+  }, [])
 
-  const moveGesture = (event: React.PointerEvent<HTMLElement>) => {
-    const gesture = gestureRef.current
-    if (gesture === null || gesture.pointerId !== event.pointerId) return
-    event.preventDefault()
-    const { pageRect, startTransform } = gesture
-    if (gesture.kind === "MOVE") {
-      updateDraft({
-        ...startTransform,
-        xPercent: clamp(startTransform.xPercent + ((event.clientX - gesture.startClientX) / pageRect.width) * 100, 4, 96),
-        yPercent: clamp(startTransform.yPercent + ((event.clientY - gesture.startClientY) / pageRect.height) * 100, 4, 96),
-      })
-      return
+  const finish = React.useCallback(() => {
+    if (frameRef.current !== null) {
+      cancelAnimationFrame(frameRef.current)
+      frameRef.current = null
     }
-    const centerX = pageRect.left + (startTransform.xPercent / 100) * pageRect.width
-    const centerY = pageRect.top + (startTransform.yPercent / 100) * pageRect.height
-    if (gesture.kind === "RESIZE") {
-      const distance = Math.max(8, Math.hypot(event.clientX - centerX, event.clientY - centerY))
-      updateDraft({ ...startTransform, scale: clamp(startTransform.scale * (distance / gesture.startDistance), 0.6, 2) })
-      return
-    }
-    const angle = Math.atan2(event.clientY - centerY, event.clientX - centerX) * 180 / Math.PI
-    updateDraft({ ...startTransform, rotationDeg: clamp(startTransform.rotationDeg + angle - gesture.startAngle, -45, 45) })
-  }
-
-  const finishGesture = (event: React.PointerEvent<HTMLElement>) => {
-    const gesture = gestureRef.current
-    if (gesture === null || gesture.pointerId !== event.pointerId) return
-    event.preventDefault()
-    event.stopPropagation()
-    gestureRef.current = null
+    paint(draftRef.current)
     onTransform(draftRef.current)
-  }
+  }, [paint, onTransform])
+
+  const bindMove = useDrag(({ first, last, tap, movement: [movementX, movementY], initial: [initialX, initialY], memo }) => {
+    if (tap) return memo as GestureAnchor | null
+    const start = first ? anchor(initialX, initialY) : (memo as GestureAnchor | null)
+    if (start === null || start === undefined) return null
+    if (first) onSelect()
+    schedule({
+      ...start.startTransform,
+      xPercent: clamp(start.startTransform.xPercent + (movementX / start.pageRect.width) * 100, 4, 96),
+      yPercent: clamp(start.startTransform.yPercent + (movementY / start.pageRect.height) * 100, 4, 96),
+    })
+    if (last) finish()
+    return start
+  }, { filterTaps: true, pointer: { capture: true } })
+
+  const bindResize = useDrag(({ event, first, last, xy: [pointerX, pointerY], initial: [initialX, initialY], memo }) => {
+    event.stopPropagation()
+    const start = first ? anchor(initialX, initialY) : (memo as GestureAnchor | null)
+    if (start === null || start === undefined) return null
+    const centerX = start.pageRect.left + (start.startTransform.xPercent / 100) * start.pageRect.width
+    const centerY = start.pageRect.top + (start.startTransform.yPercent / 100) * start.pageRect.height
+    const distance = Math.max(8, Math.hypot(pointerX - centerX, pointerY - centerY))
+    schedule({ ...start.startTransform, scale: clamp(start.startTransform.scale * (distance / start.startDistance), 0.6, 2) })
+    if (last) finish()
+    return start
+  }, { pointer: { capture: true } })
+
+  const bindRotate = useDrag(({ event, first, last, xy: [pointerX, pointerY], initial: [initialX, initialY], memo }) => {
+    event.stopPropagation()
+    const start = first ? anchor(initialX, initialY) : (memo as GestureAnchor | null)
+    if (start === null || start === undefined) return null
+    const centerX = start.pageRect.left + (start.startTransform.xPercent / 100) * start.pageRect.width
+    const centerY = start.pageRect.top + (start.startTransform.yPercent / 100) * start.pageRect.height
+    const angle = Math.atan2(pointerY - centerY, pointerX - centerX) * 180 / Math.PI
+    schedule({ ...start.startTransform, rotationDeg: clamp(start.startTransform.rotationDeg + angle - start.startAngle, -45, 45) })
+    if (last) finish()
+    return start
+  }, { pointer: { capture: true } })
 
   const keyboardTransform = (event: React.KeyboardEvent<HTMLDivElement>) => {
+    if (event.key === "Escape") {
+      /* 선택 상태의 Escape는 해제만 한다 — 편집기 전체 닫기(툴바 window 핸들러)로 새지 않게 막는다. */
+      event.preventDefault()
+      event.stopPropagation()
+      onDeselect()
+      return
+    }
+    if (event.key === "Delete" || event.key === "Backspace") {
+      event.preventDefault()
+      onDelete()
+      return
+    }
+    const draft = draftRef.current
+    const step = event.shiftKey ? 2 : 0.5
     const moves: Partial<Record<string, Partial<DecorationPlacementTransform>>> = {
-      ArrowLeft: { xPercent: clamp(draft.xPercent - 2, 4, 96) },
-      ArrowRight: { xPercent: clamp(draft.xPercent + 2, 4, 96) },
-      ArrowUp: { yPercent: clamp(draft.yPercent - 2, 4, 96) },
-      ArrowDown: { yPercent: clamp(draft.yPercent + 2, 4, 96) },
-      "+": { scale: clamp(draft.scale + 0.1, 0.6, 2) },
-      "=": { scale: clamp(draft.scale + 0.1, 0.6, 2) },
-      "-": { scale: clamp(draft.scale - 0.1, 0.6, 2) },
+      ArrowLeft: { xPercent: clamp(draft.xPercent - step, 4, 96) },
+      ArrowRight: { xPercent: clamp(draft.xPercent + step, 4, 96) },
+      ArrowUp: { yPercent: clamp(draft.yPercent - step, 4, 96) },
+      ArrowDown: { yPercent: clamp(draft.yPercent + step, 4, 96) },
+      "+": { scale: clamp(draft.scale + 0.05, 0.6, 2) },
+      "=": { scale: clamp(draft.scale + 0.05, 0.6, 2) },
+      "-": { scale: clamp(draft.scale - 0.05, 0.6, 2) },
+      "[": { rotationDeg: clamp(draft.rotationDeg - 1, -45, 45) },
+      "]": { rotationDeg: clamp(draft.rotationDeg + 1, -45, 45) },
     }
     const update = moves[event.key]
     if (update === undefined) return
     event.preventDefault()
     const next = { ...draft, ...update }
-    updateDraft(next)
+    draftRef.current = next
+    paint(next)
     onTransform(next)
   }
 
   return (
     <div
+      {...bindMove()}
+      ref={itemRef}
       className="decorated-journal-page__free-item"
       data-category={item.category}
       data-selected={selected ? "true" : undefined}
       style={{
-        left: `${draft.xPercent}%`,
-        top: `${draft.yPercent}%`,
-        transform: `translate(-50%, -50%) rotate(${draft.rotationDeg}deg) scale(${draft.scale})`,
-      }}
+        left: `${transform.xPercent}%`,
+        top: `${transform.yPercent}%`,
+        transform: `translate(-50%, -50%) rotate(${transform.rotationDeg}deg) scale(${transform.scale})`,
+        "--item-scale": `${transform.scale}`,
+      } as React.CSSProperties}
       role="button"
       tabIndex={0}
-      aria-label={`${item.name} 선택됨. 드래그해 옮기고 모서리 손잡이로 크기와 각도를 바꿔요.`}
+      aria-label={`${item.name} 선택됨. 드래그해 옮기고 손잡이로 크기와 각도를 바꿔요. Delete 키로 삭제해요.`}
       onClick={onSelect}
       onKeyDown={keyboardTransform}
-      onPointerDown={(event) => beginGesture("MOVE", event)}
-      onPointerMove={moveGesture}
-      onPointerUp={finishGesture}
-      onPointerCancel={finishGesture}
     >
       <DecorationAsset
         item={item}
@@ -215,21 +260,24 @@ function EditableDecorationPlacement({
         <>
           <button
             type="button"
+            className="decorated-journal-page__transform-handle decorated-journal-page__transform-handle--delete"
+            aria-label={`${item.name} 삭제`}
+            onClick={(event) => {
+              event.stopPropagation()
+              onDelete()
+            }}
+          ><X aria-hidden="true" size={15} /></button>
+          <button
+            {...bindRotate()}
+            type="button"
             className="decorated-journal-page__transform-handle decorated-journal-page__transform-handle--rotate"
             aria-label={`${item.name} 회전`}
-            onPointerDown={(event) => beginGesture("ROTATE", event)}
-            onPointerMove={moveGesture}
-            onPointerUp={finishGesture}
-            onPointerCancel={finishGesture}
           ><RotateCw aria-hidden="true" size={15} /></button>
           <button
+            {...bindResize()}
             type="button"
             className="decorated-journal-page__transform-handle decorated-journal-page__transform-handle--resize"
             aria-label={`${item.name} 크기 조절`}
-            onPointerDown={(event) => beginGesture("RESIZE", event)}
-            onPointerMove={moveGesture}
-            onPointerUp={finishGesture}
-            onPointerCancel={finishGesture}
           ><Maximize2 aria-hidden="true" size={15} /></button>
         </>
       )}
@@ -247,6 +295,8 @@ export function DecoratedJournalPageFrame({
   selectedSlot = null,
   onSelectPlacement,
   onTransformPlacement,
+  onDeselectPlacement,
+  onDeletePlacement,
 }: DecoratedJournalPageFrameProps) {
   const theme = decorationCatalogItem(state.equipped.themeId)
   const avatar = state.equipped.avatarId === null
@@ -276,6 +326,13 @@ export function DecoratedJournalPageFrame({
       className="decorated-journal-page"
       data-theme-id={state.equipped.themeId}
       data-ink-id={state.equipped.inkId}
+      onPointerDown={editable && onDeselectPlacement !== undefined
+        ? (event) => {
+          /* 빈 곳 탭 = 선택 해제 (상용 편집기 관욵). 장식이나 손잡이 위는 제외한다. */
+          const target = event.target as HTMLElement
+          if (target.closest(".decorated-journal-page__free-item") === null) onDeselectPlacement()
+        }
+        : undefined}
     >
       {theme !== undefined && (
         <DecorationAsset item={theme} className="decorated-journal-page__theme" testId="journal-page-theme" />
@@ -356,6 +413,8 @@ export function DecoratedJournalPageFrame({
                 selected={selectedSlot === placement.slot}
                 onSelect={() => onSelectPlacement(placement.slot)}
                 onTransform={(next) => onTransformPlacement(placement.slot, next)}
+                onDelete={() => onDeletePlacement?.(placement.slot)}
+                onDeselect={() => onDeselectPlacement?.()}
               />
             )
           })}

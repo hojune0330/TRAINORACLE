@@ -16,7 +16,9 @@ import {
   applyJournalDecoration,
   previewJournalDecoration,
   removeJournalDecoration,
+  removeJournalDecorationAt,
   resolveJournalDecorationSlot,
+  roundJournalDecorationTransform,
   updateJournalDecorationTransform,
 } from "../../domain/journal-decoration-state"
 import { withJosa } from "../../domain/korean-josa"
@@ -121,7 +123,20 @@ export function JournalDecorationSurface({
 
   const transformPlacement = (slot: DecorationSlot, transform: DecorationPlacementTransform): void => {
     setSelectedSlot(slot)
-    commit(updateJournalDecorationTransform(canonical, date, slot, transform), "위치와 크기를 저장했어요.")
+    /* 저장 직전 라운딩(0.1% · 0.05 · 1°) — 제스처 중 부드러움은 유지하고 저장만 정규화한다. */
+    commit(
+      updateJournalDecorationTransform(canonical, date, slot, roundJournalDecorationTransform(transform)),
+      "위치와 크기를 저장했어요.",
+    )
+  }
+
+  const deletePlacement = (slot: DecorationSlot): void => {
+    const placement = canonical.pagePlacements.find((candidate) => candidate.date === date && candidate.slot === slot)
+    const item = placement === undefined ? undefined : DECORATION_CATALOG.find((candidate) => candidate.id === placement.itemId)
+    const label = item === undefined ? "꾸미기" : item.name
+    if (commit(removeJournalDecorationAt(canonical, date, slot), `${withJosa(label, "을/를")} 지웠어요. 되돌리기로 복구할 수 있어요.`)) {
+      setSelectedSlot(null)
+    }
   }
 
   return (
@@ -181,6 +196,8 @@ export function JournalDecorationSurface({
             setDrawerOpen(false)
           }}
           onTransformPlacement={transformPlacement}
+          onDeselectPlacement={() => setSelectedSlot(null)}
+          onDeletePlacement={deletePlacement}
         >{children}</DecoratedJournalPageFrame>
       </div>
       {replacement !== null && (

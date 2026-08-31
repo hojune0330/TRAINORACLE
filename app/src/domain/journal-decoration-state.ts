@@ -28,6 +28,36 @@ export function defaultJournalDecorationTransform(slot: DecorationSlot): Decorat
   return DEFAULT_PLACEMENT_TRANSFORMS[slot]
 }
 
+/*
+ * 저장 정밀도 계약(마스터 플랜 §2.1): 위치 0.1%, 크기 0.05 스텝, 회전 정수 1°.
+ * 제스처 중에는 원시 값으로 부드럽게 움직이고, 커밋 직전에만 라운딩한다.
+ */
+export function roundJournalDecorationTransform(transform: DecorationPlacementTransform): DecorationPlacementTransform {
+  return {
+    xPercent: Math.round(transform.xPercent * 10) / 10,
+    yPercent: Math.round(transform.yPercent * 10) / 10,
+    scale: Math.round(transform.scale * 20) / 20,
+    rotationDeg: Math.round(transform.rotationDeg),
+  }
+}
+
+/* 캔버스 위 삭제: 같은 아이템이 다른 슬롯에 있어도 해당 슬롯 하나만 제거한다. */
+export function removeJournalDecorationAt(
+  state: DecorationState,
+  date: string,
+  slot: DecorationSlot,
+): DecorationState | null {
+  const placement = state.pagePlacements.find((candidate) => candidate.date === date && candidate.slot === slot)
+  if (placement === undefined) return null
+  const parsed = decorationStateSchema.safeParse({
+    ...state,
+    pagePlacements: state.pagePlacements.filter(
+      (candidate) => candidate.date !== date || candidate.slot !== slot,
+    ),
+  })
+  return parsed.success ? parsed.data : null
+}
+
 export function updateJournalDecorationTransform(
   state: DecorationState,
   date: string,
