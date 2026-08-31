@@ -245,3 +245,79 @@ test("drags and resizes a decoration on the full-screen diary canvas and keeps i
     return state?.pagePlacements?.[0]?.transform ?? null
   })).toEqual(savedTransform)
 })
+
+test("deletes a selected decoration on the canvas and deselects on empty-space tap", async ({ page }) => {
+  await page.addInitScript(() => {
+    const now = new Date()
+    const date = [
+      now.getFullYear(),
+      String(now.getMonth() + 1).padStart(2, "0"),
+      String(now.getDate()).padStart(2, "0"),
+    ].join("-")
+    window.localStorage.setItem("trainoracle.journal.v1", JSON.stringify([{
+      id: "delete-decoration-entry",
+      kind: "post-session",
+      date,
+      savedAt: `${date}T09:00:00.000Z`,
+      syncState: "local",
+      system: "base",
+      title: "Canvas delete check",
+      distanceKm: "5",
+      durationMin: "30",
+      avgPace: "6:00",
+      rpe: 4,
+      memo: "",
+      fieldProvenance: {
+        distanceKm: { provenance: "EXPLICIT" },
+        durationMin: { provenance: "EXPLICIT" },
+        avgPace: { provenance: "EXPLICIT" },
+        rpe: { provenance: "EXPLICIT" },
+      },
+    }]))
+  })
+
+  await page.setViewportSize({ width: 375, height: 667 })
+  await page.goto("/?app=1")
+  await page.getByRole("button", { name: /Canvas delete check.*상세 열기/u }).click()
+  await page.getByRole("button", { name: "일지 꾸미기 열기" }).click()
+  await page.getByRole("button", { name: "모든 꾸미기 도구" }).click()
+  await page.getByRole("button", { name: "맑은 날 오른쪽 위에 사용" }).click()
+
+  const movable = page.getByRole("button", { name: /맑은 날 선택됨/u })
+  await expect(movable).toBeVisible()
+  await movable.click()
+
+  /* 44px 터치 계약: 삭제/회전/크기 손잡이의 히트 영역이 전부 44px 이상이어야 한다. */
+  for (const name of ["맑은 날 삭제", "맑은 날 회전", "맑은 날 크기 조절"]) {
+    const handle = page.getByRole("button", { name })
+    const box = await handle.boundingBox()
+    expect(box, `${name} bounding box`).not.toBeNull()
+    if (box === null) continue
+    expect(box.width, `${name} width`).toBeGreaterThanOrEqual(43)
+    expect(box.height, `${name} height`).toBeGreaterThanOrEqual(43)
+  }
+
+  /* 빈 곳 탭 → 선택 해제되어 손잡이가 사라진다. */
+  const frame = page.locator(".decorated-journal-page")
+  const frameBox = await frame.boundingBox()
+  expect(frameBox).not.toBeNull()
+  if (frameBox === null) return
+  await page.mouse.click(frameBox.x + 12, frameBox.y + frameBox.height / 2)
+  await expect(page.getByRole("button", { name: "맑은 날 삭제" })).toHaveCount(0)
+
+  /* 다시 선택 후 캔버스 위 삭제 → 저장소에서도 사라지고 되돌리기로 복구된다. */
+  await movable.click()
+  await page.getByRole("button", { name: "맑은 날 삭제" }).click()
+  await expect.poll(() => page.evaluate(() => {
+    const raw = window.localStorage.getItem("trainoracle.decorations.v2")
+    const state = raw === null ? null : JSON.parse(raw) as { pagePlacements?: unknown[] }
+    return state?.pagePlacements?.length ?? -1
+  })).toBe(0)
+
+  await page.getByRole("button", { name: "꾸미기 되돌리기" }).click()
+  await expect.poll(() => page.evaluate(() => {
+    const raw = window.localStorage.getItem("trainoracle.decorations.v2")
+    const state = raw === null ? null : JSON.parse(raw) as { pagePlacements?: unknown[] }
+    return state?.pagePlacements?.length ?? -1
+  })).toBe(1)
+})

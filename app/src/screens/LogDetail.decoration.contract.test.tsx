@@ -251,7 +251,8 @@ describe("real journal decoration surface", () => {
 
     await user.click(screen.getByRole("button", { name: "일지 꾸미기 열기" }))
     const movable = screen.getByRole("button", { name: /맑은 날 선택됨/u })
-    fireEvent.keyDown(movable, { key: "ArrowLeft" })
+    /* 정밀 이동 계약: 화살표 0.5%, Shift+화살표 2% (마스터 플랜 §2.3) */
+    fireEvent.keyDown(movable, { key: "ArrowLeft", shiftKey: true })
 
     expect(loadDecorationState().pagePlacements[0]?.transform).toEqual({
       xPercent: 84,
@@ -259,8 +260,103 @@ describe("real journal decoration surface", () => {
       scale: 1,
       rotationDeg: 0,
     })
+    fireEvent.keyDown(movable, { key: "ArrowLeft" })
+    expect(loadDecorationState().pagePlacements[0]?.transform?.xPercent).toBe(83.5)
+
     first.unmount()
     render(<LogDetail date={DATE} />)
-    expect(screen.getByTestId("journal-slot-top-corner").closest<HTMLElement>(".decorated-journal-page__free-item")).toHaveStyle({ left: "84%" })
+    expect(screen.getByTestId("journal-slot-top-corner").closest<HTMLElement>(".decorated-journal-page__free-item")).toHaveStyle({ left: "83.5%" })
+  })
+
+  it("deletes the selected decoration from the canvas with the on-canvas button", async () => {
+    const user = userEvent.setup()
+    storeEntries([session("one")])
+    const base = createEmptyDecorationState()
+    expect(saveDecorationState(decorationStateSchema.parse({
+      ...base,
+      pagePlacements: [{ date: DATE, slot: "TOP_CORNER", itemId: "STICKER_WEATHER_SUN" }],
+    })).ok).toBe(true)
+    render(<LogDetail date={DATE} />)
+
+    await user.click(screen.getByRole("button", { name: "일지 꾸미기 열기" }))
+    await user.click(screen.getByRole("button", { name: /맑은 날 선택됨/u }))
+    await user.click(screen.getByRole("button", { name: "맑은 날 삭제" }))
+
+    expect(loadDecorationState().pagePlacements).toEqual([])
+    expect(screen.getByRole("status")).toHaveTextContent("맑은 날을 지웠어요. 되돌리기로 복구할 수 있어요.")
+    /* 삭제는 확인창 없이 즉시, 되돌리기가 안전망이다. */
+    await user.click(screen.getByRole("button", { name: "꾸미기 되돌리기" }))
+    expect(loadDecorationState().pagePlacements).toHaveLength(1)
+  })
+
+  it("deletes the selected decoration with the Delete key", async () => {
+    const user = userEvent.setup()
+    storeEntries([session("one")])
+    const base = createEmptyDecorationState()
+    expect(saveDecorationState(decorationStateSchema.parse({
+      ...base,
+      pagePlacements: [{ date: DATE, slot: "TOP_CORNER", itemId: "STICKER_WEATHER_SUN" }],
+    })).ok).toBe(true)
+    render(<LogDetail date={DATE} />)
+
+    await user.click(screen.getByRole("button", { name: "일지 꾸미기 열기" }))
+    const movable = screen.getByRole("button", { name: /맑은 날 선택됨/u })
+    await user.click(movable)
+    fireEvent.keyDown(movable, { key: "Delete" })
+
+    expect(loadDecorationState().pagePlacements).toEqual([])
+  })
+
+  it("deselects the decoration when tapping empty page space or pressing Escape", async () => {
+    const user = userEvent.setup()
+    storeEntries([session("one")])
+    const base = createEmptyDecorationState()
+    expect(saveDecorationState(decorationStateSchema.parse({
+      ...base,
+      pagePlacements: [{ date: DATE, slot: "TOP_CORNER", itemId: "STICKER_WEATHER_SUN" }],
+    })).ok).toBe(true)
+    const { container } = render(<LogDetail date={DATE} />)
+
+    await user.click(screen.getByRole("button", { name: "일지 꾸미기 열기" }))
+    const movable = screen.getByRole("button", { name: /맑은 날 선택됨/u })
+    await user.click(movable)
+    expect(movable.closest(".decorated-journal-page__free-item")).toHaveAttribute("data-selected", "true")
+
+    /* Escape로 해제 */
+    fireEvent.keyDown(movable, { key: "Escape" })
+    expect(movable.closest(".decorated-journal-page__free-item")).not.toHaveAttribute("data-selected")
+
+    /* 다시 선택 후 빈 곳 탭으로 해제 */
+    await user.click(movable)
+    expect(movable.closest(".decorated-journal-page__free-item")).toHaveAttribute("data-selected", "true")
+    const page = container.querySelector(".decorated-journal-page")
+    expect(page).not.toBeNull()
+    if (page !== null) fireEvent.pointerDown(page)
+    expect(movable.closest(".decorated-journal-page__free-item")).not.toHaveAttribute("data-selected")
+  })
+
+  it("rounds committed transforms to the precision contract (0.1% / 0.05 / 1deg)", async () => {
+    const user = userEvent.setup()
+    storeEntries([session("one")])
+    const base = createEmptyDecorationState()
+    expect(saveDecorationState(decorationStateSchema.parse({
+      ...base,
+      pagePlacements: [{
+        date: DATE,
+        slot: "TOP_CORNER",
+        itemId: "STICKER_WEATHER_SUN",
+        transform: { xPercent: 50, yPercent: 50, scale: 1, rotationDeg: 0 },
+      }],
+    })).ok).toBe(true)
+    render(<LogDetail date={DATE} />)
+
+    await user.click(screen.getByRole("button", { name: "일지 꾸미기 열기" }))
+    const movable = screen.getByRole("button", { name: /맑은 날 선택됨/u })
+    fireEvent.keyDown(movable, { key: "+" })
+
+    const saved = loadDecorationState().pagePlacements[0]?.transform
+    expect(saved?.scale).toBe(1.05)
+    expect(Number.isInteger((saved?.rotationDeg ?? 0))).toBe(true)
+    expect(Math.round((saved?.xPercent ?? 0) * 10) / 10).toBe(saved?.xPercent)
   })
 })

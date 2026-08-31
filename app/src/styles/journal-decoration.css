@@ -183,6 +183,8 @@
   outline: 2px solid var(--ink-blue);
   outline-offset: 3px;
   background: color-mix(in srgb, var(--surface) 18%, transparent);
+  /* 제스처 대상에만 합성 레이어 승격 — 전체 부여 시 메모리 낭비 (마스터 플랜 §2.2) */
+  will-change: transform;
 }
 .decorated-journal-page__free-item[data-selected="true"][data-category="EMOJI_STICKER"] .decorated-journal-page__emoji {
   animation: journal-emoji-selected 480ms var(--ease-out-strong) both;
@@ -201,24 +203,46 @@
   font-size: 38px;
   transform: none;
 }
+/*
+ * 44px 터치 계약: 버튼 자체가 44px 히트 영역이고, 시각 원(36px)은 ::before로 그린다.
+ * 아이템 scale은 역보정해 손잡이가 항상 같은 크기를 유지한다.
+ */
 .decorated-journal-page__transform-handle {
   position: absolute;
-  width: 36px;
-  height: 36px;
-  min-width: 36px;
-  min-height: 36px;
+  width: 44px;
+  height: 44px;
+  min-width: 44px;
+  min-height: 44px;
   padding: 0;
   display: grid;
   place-items: center;
-  border: 1px solid var(--ink-blue);
-  border-radius: 50%;
-  background: var(--surface);
+  border: none;
+  background: transparent;
   color: var(--ink-blue);
   touch-action: none;
   cursor: pointer;
+  transform: scale(calc(1 / var(--item-scale, 1)));
 }
-.decorated-journal-page__transform-handle--rotate { top: -22px; right: -22px; }
-.decorated-journal-page__transform-handle--resize { right: -22px; bottom: -22px; }
+.decorated-journal-page__transform-handle::before {
+  content: "";
+  position: absolute;
+  width: 36px;
+  height: 36px;
+  border: 1px solid var(--ink-blue);
+  border-radius: 50%;
+  background: var(--surface);
+  box-sizing: border-box;
+}
+.decorated-journal-page__transform-handle > svg { position: relative; }
+.decorated-journal-page__transform-handle--rotate { top: -26px; right: -26px; transform-origin: top right; }
+.decorated-journal-page__transform-handle--resize { right: -26px; bottom: -26px; transform-origin: bottom right; }
+.decorated-journal-page__transform-handle--delete {
+  top: -26px;
+  left: -26px;
+  transform-origin: top left;
+  color: var(--danger, #b3261e);
+}
+.decorated-journal-page__transform-handle--delete::before { border-color: var(--danger, #b3261e); }
 .decorated-journal-page__free-item:focus-visible,
 .decorated-journal-page__transform-handle:focus-visible { outline: 3px solid var(--focus-ring, var(--ink-blue)); outline-offset: 3px; }
 
