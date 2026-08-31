@@ -8,7 +8,26 @@ import type {
   DecorationState,
   TextInkId,
 } from "../domain/decorations"
+import {
+  clampToCenterBounds,
+  inertiaCarryPx,
+  inertiaProgress,
+  INERTIA_DECAY_MS,
+  rotatedAabbHalfExtents,
+  rotationAwareCenterBounds,
+} from "../domain/decoration-gesture-math"
 import { journalDecorationItems } from "../domain/journal-decoration-state"
+
+/* P6 마감 (마스터 플랜 §3-19): 스냅이 걸리는 순간만 10ms 진동 — 지원 기기 한정. */
+function hapticTick(): void {
+  if (typeof navigator === "undefined" || typeof navigator.vibrate !== "function") return
+  navigator.vibrate(10)
+}
+
+function prefersReducedMotion(): boolean {
+  if (typeof window === "undefined" || typeof window.matchMedia !== "function") return false
+  return window.matchMedia("(prefers-reduced-motion: reduce)").matches
+}
 
 /*
  * 프레임이 그리는 자유 배치 비주얼: 카탈로그 아이템 또는 텍스트 스티커 (P5).
@@ -123,9 +142,9 @@ const MAX_SCALE = 3
 const MAX_ROTATION = 180
 
 /* 회전 스냅: 15° 배수에 ±3° 자석 (마스터 플랜 §2.3) — 자석 밖에서는 자유롭게 벗어난다. */
-const snapRotation = (deg: number): number => {
+const snapRotation = (deg: number): { readonly value: number; readonly snapped: boolean } => {
   const nearest = Math.round(deg / 15) * 15
-  return Math.abs(deg - nearest) <= 3 ? nearest : deg
+  return Math.abs(deg - nearest) <= 3 ? { value: nearest, snapped: true } : { value: deg, snapped: false }
 }
 
 /* 중앙 가이드라인 자석: 50%에서 ±2% 이내면 정중앙으로 붙는다. */
@@ -181,6 +200,46 @@ function EditableDecorationPlacement({
   const itemRef = React.useRef<HTMLDivElement | null>(null)
   const draftRef = React.useRef(transform)
   const frameRef = React.useRef<number | null>(null)
+  /* P6: 스냅 진입 엣지 감지(햇틱은 걸리는 순간 1회만)와 관성 rAF 핸들. */
+  const snapStateRef = React.useRef({ x: false, y: false, rotation: false })
+  const inertiaFrameRef = React.useRef<number | null>(null)
+
+  const cancelInertia = React.useCallback(() => {
+    if (inertiaFrameRef.current !== null) {
+      cancelAnimationFrame(inertiaFrameRef.current)
+      inertiaFrameRef.current = null
+    }
+  }, [])
+
+  /* 햇틱 계약 (P6 §3-19): 자석이 "걸리는" 전이에만 1회 진동. 해제·유지 중에는 안 울린다. */
+  const feelSnap = React.useCallback((axis: "x" | "y" | "rotation", snapped: boolean) => {
+    const previous = snapStateRef.current[axis]
+    snapStateRef.current[axis] = snapped
+    if (snapped && !previous) hapticTick()
+  }, [])
+
+  /*
+   * 회전 인지 AABB 중심 허용 범위 (P6 §3-20): 현재 크기·회전으로 경계 상자를 구해
+   * 아이템 전체가 4% 마진 안에 머무는 중심 범위로 좁힌다. 측정 불가 시 스키마 기본 범위.
+   */
+  const centerBounds = React.useCallback((pageRect: DOMRect, scale: number, rotationDeg: number) => {
+    const node = itemRef.current
+    if (node === null || pageRect.width <= 0 || pageRect.height <= 0) {
+      return {
+        x: { minPercent: 4, maxPercent: 96 },
+        y: { minPercent: 4, maxPercent: 96 },
+      }
+    }
+    const { halfWidthPx, halfHeightPx } = rotatedAabbHalfExtents(
+      node.offsetWidth * scale,
+      node.offsetHeight * scale,
+      rotationDeg,
+    )
+    return {
+      x: rotationAwareCenterBounds((halfWidthPx / pageRect.width) * 100),
+      y: rotationAwareCenterBounds((halfHeightPx / pageRect.height) * 100),
+    }
+  }, [])
 
   const paint = React.useCallback((next: DecorationPlacementTransform) => {
     const node = itemRef.current
@@ -206,8 +265,9 @@ function EditableDecorationPlacement({
     return () => {
       if (frameRef.current !== null) cancelAnimationFrame(frameRef.current)
       frameRef.current = null
+      cancelInertia()
     }
-  }, [transform, paint])
+  }, [transform, paint, cancelInertia])
 
   const anchor = React.useCallback((clientX: number, clientY: number): GestureAnchor | null => {
     const page = itemRef.current?.closest<HTMLElement>(".decorated-journal-page")
@@ -228,10 +288,51 @@ function EditableDecorationPlacement({
       cancelAnimationFrame(frameRef.current)
       frameRef.current = null
     }
+    snapStateRef.current = { x: false, y: false, rotation: false }
     paint(draftRef.current)
     onGuides({ vertical: false, horizontal: false })
     onTransform(draftRef.current)
   }, [paint, onTransform, onGuides])
+
+  /*
+   * 드래그 놓기 관성 (P6 §3-19): 속도 기반 40ms 선형 감속 이월 후 커밋 1회.
+   * reduced-motion이면 제거. 이월 중에도 회전 인지 경계를 벗어나지 않는다.
+   */
+  const finishWithInertia = React.useCallback((
+    pageRect: DOMRect,
+    velocity: readonly [number, number],
+    direction: readonly [number, number],
+  ) => {
+    const carryXPx = inertiaCarryPx(velocity[0], direction[0])
+    const carryYPx = inertiaCarryPx(velocity[1], direction[1])
+    if (prefersReducedMotion() || (carryXPx === 0 && carryYPx === 0)) {
+      finish()
+      return
+    }
+    const origin = draftRef.current
+    const bounds = centerBounds(pageRect, origin.scale, origin.rotationDeg)
+    const carryXPercent = (carryXPx / pageRect.width) * 100
+    const carryYPercent = (carryYPx / pageRect.height) * 100
+    const startedAt = performance.now()
+    const step = () => {
+      const progress = inertiaProgress(performance.now() - startedAt)
+      const next = {
+        ...origin,
+        xPercent: clampToCenterBounds(origin.xPercent + carryXPercent * progress, bounds.x),
+        yPercent: clampToCenterBounds(origin.yPercent + carryYPercent * progress, bounds.y),
+      }
+      draftRef.current = next
+      paint(next)
+      if (progress < 1) {
+        inertiaFrameRef.current = requestAnimationFrame(step)
+        return
+      }
+      inertiaFrameRef.current = null
+      finish()
+    }
+    cancelInertia()
+    inertiaFrameRef.current = requestAnimationFrame(step)
+  }, [finish, paint, centerBounds, cancelInertia])
 
   /*
    * 더블탭: 일반 장식 = 크기 1.0 / 회전 0° 리셋 (위치 유지, 되돌리기가 안전망).
@@ -257,7 +358,7 @@ function EditableDecorationPlacement({
   }, [paint, onTransform, onSelect, onEditText, visual.kind])
 
   const bindItem = useGesture({
-    onDrag: ({ first, last, tap, pinching, cancel, movement: [movementX, movementY], initial: [initialX, initialY], memo }) => {
+    onDrag: ({ first, last, tap, pinching, cancel, movement: [movementX, movementY], initial: [initialX, initialY], velocity, direction, memo }) => {
       if (pinching) {
         cancel()
         return memo as GestureAnchor | null
@@ -265,14 +366,25 @@ function EditableDecorationPlacement({
       if (tap) return memo as GestureAnchor | null
       const start = first ? anchor(initialX, initialY) : (memo as GestureAnchor | null)
       if (start === null || start === undefined) return null
-      if (first) onSelect()
-      const rawX = clamp(start.startTransform.xPercent + (movementX / start.pageRect.width) * 100, 4, 96)
-      const rawY = clamp(start.startTransform.yPercent + (movementY / start.pageRect.height) * 100, 4, 96)
+      if (first) {
+        cancelInertia()
+        onSelect()
+      }
+      /* P6 §3-20: 회전 인지 AABB로 중심 허용 범위를 좁혀 아이템 전체가 4% 마진 안에 머무른다. */
+      const bounds = centerBounds(start.pageRect, start.startTransform.scale, start.startTransform.rotationDeg)
+      const rawX = clampToCenterBounds(start.startTransform.xPercent + (movementX / start.pageRect.width) * 100, bounds.x)
+      const rawY = clampToCenterBounds(start.startTransform.yPercent + (movementY / start.pageRect.height) * 100, bounds.y)
       const snappedX = snapCenter(rawX)
       const snappedY = snapCenter(rawY)
+      feelSnap("x", snappedX.snapped)
+      feelSnap("y", snappedY.snapped)
       onGuides({ vertical: snappedX.snapped, horizontal: snappedY.snapped })
       schedule({ ...start.startTransform, xPercent: snappedX.value, yPercent: snappedY.value })
-      if (last) finish()
+      if (last) {
+        /* 자석에 붙은 채 놓으면 관성 없이 즉시 커밋 — 스냅이 관성보다 우선이다. */
+        if (snappedX.snapped || snappedY.snapped) finish()
+        else finishWithInertia(start.pageRect, velocity, direction)
+      }
       return start
     },
     /*
@@ -282,11 +394,16 @@ function EditableDecorationPlacement({
     onPinch: ({ first, last, movement: [scaleRatio, angleDelta], memo }) => {
       const start = first ? { startTransform: draftRef.current } : (memo as PinchAnchor | null)
       if (start === null || start === undefined) return null
-      if (first) onSelect()
+      if (first) {
+        cancelInertia()
+        onSelect()
+      }
+      const rotation = snapRotation(start.startTransform.rotationDeg + angleDelta)
+      feelSnap("rotation", rotation.snapped)
       schedule({
         ...start.startTransform,
         scale: clamp(start.startTransform.scale * scaleRatio, MIN_SCALE, MAX_SCALE),
-        rotationDeg: clamp(snapRotation(start.startTransform.rotationDeg + angleDelta), -MAX_ROTATION, MAX_ROTATION),
+        rotationDeg: clamp(rotation.value, -MAX_ROTATION, MAX_ROTATION),
       })
       if (last) finish()
       return start
@@ -312,9 +429,11 @@ function EditableDecorationPlacement({
     const centerX = start.pageRect.left + (start.startTransform.xPercent / 100) * start.pageRect.width
     const centerY = start.pageRect.top + (start.startTransform.yPercent / 100) * start.pageRect.height
     const angle = Math.atan2(pointerY - centerY, pointerX - centerX) * 180 / Math.PI
+    const rotation = snapRotation(start.startTransform.rotationDeg + angle - start.startAngle)
+    feelSnap("rotation", rotation.snapped)
     schedule({
       ...start.startTransform,
-      rotationDeg: clamp(snapRotation(start.startTransform.rotationDeg + angle - start.startAngle), -MAX_ROTATION, MAX_ROTATION),
+      rotationDeg: clamp(rotation.value, -MAX_ROTATION, MAX_ROTATION),
     })
     if (last) finish()
     return start
