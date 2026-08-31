@@ -38,6 +38,7 @@ import {
 import { PLAN_BETA_MUTATION_LOCK_NAME } from "./plan-mutation-lock"
 
 const ACTIVE_KEY = "trainoracle.plan-beta.v1"
+const TEST_SYSTEM_TIME = new Date("2026-08-18T12:00:00.000Z")
 let locksDescriptor: PropertyDescriptor | undefined
 const fiveKApproval = DETAILED_PRESCRIPTION_APPROVALS.find((approval) => approval.targetEventDistanceM === 5000)
 if (fiveKApproval === undefined) throw new TypeError("Expected approved 5000m fixture")
@@ -48,6 +49,9 @@ const fiveKTemplateRef = {
 } as const
 
 beforeEach(() => {
+  /* PB/SB recency and active-frame fixtures must not expire when the calendar advances. */
+  vi.useFakeTimers({ toFake: ["Date"] })
+  vi.setSystemTime(TEST_SYSTEM_TIME)
   window.localStorage.clear()
   window.sessionStorage.clear()
   locksDescriptor = Object.getOwnPropertyDescriptor(navigator, "locks")
@@ -66,6 +70,7 @@ afterEach(() => {
   if (locksDescriptor === undefined) Reflect.deleteProperty(navigator, "locks")
   else Object.defineProperty(navigator, "locks", locksDescriptor)
   vi.restoreAllMocks()
+  vi.useRealTimers()
 })
 
 describe("next-frame adaptation UI adapter", () => {

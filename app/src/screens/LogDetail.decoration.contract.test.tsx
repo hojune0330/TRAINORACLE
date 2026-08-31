@@ -85,9 +85,9 @@ describe("real journal decoration surface", () => {
     await openJournalDecorationTools()
     await user.click(screen.getByRole("button", { name: "맑은 날 사용" }))
 
-    // Then: 새 장식은 기본 좌표(44%,44%)로 배열 끝에 붙는다.
+    // Then: 첫 장식은 첫 번째 격자 좌표에 붙고 배열 끝(최상단)에 놓인다.
     expect(pageItems()).toEqual([
-      { itemId: "STICKER_WEATHER_SUN", transform: T(44, 44) },
+      { itemId: "STICKER_WEATHER_SUN", transform: T(18, 18) },
     ])
     expect(screen.getByTestId("journal-decoration-item-0")).toBeVisible()
 
@@ -154,7 +154,7 @@ describe("real journal decoration surface", () => {
 
     // Then
     expect(pageItems()).toEqual([
-      { itemId: "STICKER_WEATHER_SUN", transform: T(44, 44) },
+      { itemId: "STICKER_WEATHER_SUN", transform: T(18, 18) },
     ])
     expect(screen.getByTestId("journal-decoration-item-0")).toBeVisible()
 
@@ -166,7 +166,7 @@ describe("real journal decoration surface", () => {
 
     // Then
     expect(pageItems()).toEqual([
-      { itemId: "STICKER_WEATHER_SUN", transform: T(44, 44) },
+      { itemId: "STICKER_WEATHER_SUN", transform: T(18, 18) },
     ])
     expect(screen.getByTestId("journal-decoration-item-0")).toBeVisible()
   })
@@ -251,7 +251,9 @@ describe("real journal decoration surface", () => {
     const first = render(<LogDetail date={DATE} />)
 
     await user.click(screen.getByRole("button", { name: "일지 꾸미기 열기" }))
-    const movable = screen.getByRole("button", { name: /맑은 날 선택됨/u })
+    const movable = screen.getByTestId("journal-decoration-item-0")
+    await user.click(movable)
+    expect(movable).toHaveAttribute("aria-label", expect.stringContaining("선택됨"))
     /* 정밀 이동 계약: 화살표 0.5%, Shift+화살표 2% (마스터 플랜 §2.3) */
     fireEvent.keyDown(movable, { key: "ArrowLeft", shiftKey: true })
 
@@ -271,7 +273,7 @@ describe("real journal decoration surface", () => {
     render(<LogDetail date={DATE} />)
 
     await user.click(screen.getByRole("button", { name: "일지 꾸미기 열기" }))
-    await user.click(screen.getByRole("button", { name: /맑은 날 선택됨/u }))
+    await user.click(screen.getByTestId("journal-decoration-item-0"))
     await user.click(screen.getByRole("button", { name: "맑은 날 삭제" }))
 
     expect(loadDecorationState().pages).toEqual([])
@@ -288,7 +290,7 @@ describe("real journal decoration surface", () => {
     render(<LogDetail date={DATE} />)
 
     await user.click(screen.getByRole("button", { name: "일지 꾸미기 열기" }))
-    const movable = screen.getByRole("button", { name: /맑은 날 선택됨/u })
+    const movable = screen.getByTestId("journal-decoration-item-0")
     await user.click(movable)
     fireEvent.keyDown(movable, { key: "Delete" })
 
@@ -302,7 +304,7 @@ describe("real journal decoration surface", () => {
     const { container } = render(<LogDetail date={DATE} />)
 
     await user.click(screen.getByRole("button", { name: "일지 꾸미기 열기" }))
-    const movable = screen.getByRole("button", { name: /맑은 날 선택됨/u })
+    const movable = screen.getByTestId("journal-decoration-item-0")
     await user.click(movable)
     expect(movable.closest(".decorated-journal-page__free-item")).toHaveAttribute("data-selected", "true")
 
@@ -326,7 +328,7 @@ describe("real journal decoration surface", () => {
     render(<LogDetail date={DATE} />)
 
     await user.click(screen.getByRole("button", { name: "일지 꾸미기 열기" }))
-    const movable = screen.getByRole("button", { name: /맑은 날 선택됨/u })
+    const movable = screen.getByTestId("journal-decoration-item-0")
     /* 더블탭(300ms 내 두 번) → 크기 1.0 / 회전 0°, 위치는 그대로 */
     fireEvent.click(movable)
     fireEvent.click(movable)
@@ -341,7 +343,8 @@ describe("real journal decoration surface", () => {
     render(<LogDetail date={DATE} />)
 
     await user.click(screen.getByRole("button", { name: "일지 꾸미기 열기" }))
-    const movable = screen.getByRole("button", { name: /맑은 날 선택됨/u })
+    const movable = screen.getByTestId("journal-decoration-item-0")
+    await user.click(movable)
     /* 1) 이동 → 2) Undo → 3) Redo 로 동일 상태 복원 */
     fireEvent.keyDown(movable, { key: "ArrowLeft", shiftKey: true })
     expect(pageItems()[0]?.transform.xPercent).toBe(84)
@@ -354,7 +357,7 @@ describe("real journal decoration surface", () => {
 
     /* Redo 후 새 편집 → future 스택이 비워져 다시 실행 버튼이 사라진다. */
     await user.click(screen.getByRole("button", { name: "꾸미기 되돌리기" }))
-    fireEvent.keyDown(screen.getByRole("button", { name: /맑은 날 선택됨/u }), { key: "ArrowRight" })
+    fireEvent.keyDown(screen.getByTestId("journal-decoration-item-0"), { key: "ArrowRight" })
     expect(screen.queryByRole("button", { name: "꾸미기 다시 실행" })).toBeNull()
   })
 
@@ -365,7 +368,8 @@ describe("real journal decoration surface", () => {
     render(<LogDetail date={DATE} />)
 
     await user.click(screen.getByRole("button", { name: "일지 꾸미기 열기" }))
-    const movable = screen.getByRole("button", { name: /맑은 날 선택됨/u })
+    const movable = screen.getByTestId("journal-decoration-item-0")
+    await user.click(movable)
     fireEvent.keyDown(movable, { key: "ArrowLeft", shiftKey: true })
     expect(pageItems()[0]?.transform.xPercent).toBe(84)
 
@@ -382,7 +386,7 @@ describe("real journal decoration surface", () => {
     render(<LogDetail date={DATE} />)
 
     await user.click(screen.getByRole("button", { name: "일지 꾸미기 열기" }))
-    const movable = screen.getByRole("button", { name: /불꽃 선택됨/u })
+    const movable = screen.getByTestId("journal-decoration-item-0")
     await user.click(movable)
     await user.click(screen.getByRole("button", { name: "불꽃 복제" }))
 
@@ -402,7 +406,7 @@ describe("real journal decoration surface", () => {
     render(<LogDetail date={DATE} />)
 
     await user.click(screen.getByRole("button", { name: "일지 꾸미기 열기" }))
-    const stickers = screen.getAllByRole("button", { name: /불꽃 선택됨/u })
+    const stickers = screen.getAllByRole("button", { name: /불꽃\./u })
     await user.click(stickers[0] as HTMLElement)
     await user.click(screen.getAllByRole("button", { name: "불꽃 복제" })[0] as HTMLElement)
 
@@ -454,7 +458,8 @@ describe("real journal decoration surface", () => {
     render(<LogDetail date={DATE} />)
 
     await user.click(screen.getByRole("button", { name: "일지 꾸미기 열기" }))
-    const movable = screen.getByRole("button", { name: /맑은 날 선택됨/u })
+    const movable = screen.getByTestId("journal-decoration-item-0")
+    await user.click(movable)
     fireEvent.keyDown(movable, { key: "+" })
 
     const saved = pageItems()[0]?.transform

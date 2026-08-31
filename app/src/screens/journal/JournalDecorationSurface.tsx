@@ -14,6 +14,7 @@ import {
 import { isTextStickerPageItem } from "../../domain/decorations"
 import type { DecorationCatalogItem, DecorationPlacementTransform, DecorationState, TextInkId } from "../../domain/decorations"
 import {
+  appendJournalDecorationItem,
   appendJournalTextSticker,
   applyJournalDecoration,
   duplicateJournalDecorationAt,
@@ -21,10 +22,15 @@ import {
   previewJournalDecoration,
   removeJournalDecoration,
   removeJournalDecorationAt,
+  reorderJournalDecoration,
   roundJournalDecorationTransform,
   updateJournalDecorationTransform,
   updateJournalTextSticker,
 } from "../../domain/journal-decoration-state"
+import {
+  copyJournalDecorationToSession,
+  readJournalDecorationFromSession,
+} from "../../domain/journal-decoration-clipboard"
 import { withJosa } from "../../domain/korean-josa"
 import { JournalDecorationToolbar } from "./JournalDecorationToolbar"
 import { JournalTextStickerSheet } from "./JournalTextStickerSheet"
@@ -33,6 +39,11 @@ import { JournalTextStickerSheet } from "./JournalTextStickerSheet"
 type TextSheetState =
   | { readonly mode: "CREATE" }
   | { readonly mode: "EDIT"; readonly index: number; readonly text: string; readonly inkId: TextInkId }
+
+type DecorationNotice = {
+  readonly text: string
+  readonly persistent: boolean
+}
 
 export function JournalDecorationSurface({
   date,
@@ -50,13 +61,16 @@ export function JournalDecorationSurface({
   const [preview, setPreview] = React.useState<DecorationState | null>(null)
   const [open, setOpen] = React.useState(false)
   const [drawerOpen, setDrawerOpen] = React.useState(false)
-  const [notice, setNotice] = React.useState("")
+  const [notice, setNotice] = React.useState<DecorationNotice | null>(null)
   /* Undo/Redo: past/future 스택 각 20단계 (마스터 플랜 §2.4) — 이력은 세션 메모리에만 산다. */
   const [past, setPast] = React.useState<readonly DecorationState[]>([])
   const [future, setFuture] = React.useState<readonly DecorationState[]>([])
   const [previewItemId, setPreviewItemId] = React.useState<string | null>(null)
   const [selectedIndex, setSelectedIndex] = React.useState<number | null>(null)
   const [textSheet, setTextSheet] = React.useState<TextSheetState | null>(null)
+  const [clipboardAvailable, setClipboardAvailable] = React.useState(() => readJournalDecorationFromSession() !== null)
+  const workspaceRef = React.useRef<HTMLDivElement>(null)
+  const focusBeforeOpenRef = React.useRef<HTMLElement | null>(null)
   const visible = preview ?? canonical
   const items = DECORATION_CATALOG.filter((item) => (
     isThemeDecorationId(item.id)
@@ -65,6 +79,8 @@ export function JournalDecorationSurface({
     || (hasEntries && isPlacementDecorationId(item.id) && canonical.ownedItemIds.includes(item.id))
   ))
   const pageItems = journalDecorationItems(canonical, date)
+  const pageItemCounts = new Map<string, number>()
+  for (const item of pageItems) pageItemCounts.set(item.itemId, (pageItemCounts.get(item.itemId) ?? 0) + 1)
   const activeItemIds = new Set<string>([
     ...canonical.ownedItemIds.map((itemId) => `owned:${itemId}`),
     canonical.equipped.themeId,
@@ -73,11 +89,49 @@ export function JournalDecorationSurface({
     ...pageItems.map((item) => item.itemId),
   ])
 
+  const showNotice = (text: string, persistent = false): void => setNotice({ text, persistent })
+
+  React.useEffect(() => {
+    if (notice === null || notice.persistent) return
+    const timer = window.setTimeout(() => {
+      setNotice((current) => (current === notice ? null : current))
+    }, 2200)
+    return () => window.clearTimeout(timer)
+  }, [notice])
+
+  /* 모달 편집기 밖의 앱 탐색으로 Tab 초점이 새지 않게 한다. 캡처 단계에서 막아 첫 키 입력도 놓치지 않는다. */
+  const trapFocus = (event: { readonly key: string; readonly shiftKey: boolean; preventDefault: () => void }): void => {
+    if (event.key !== "Tab") return
+    const root = workspaceRef.current
+    if (root === null) return
+    const focusable = Array.from(root.querySelectorAll<HTMLElement>(
+      'button:not([disabled]), input:not([disabled]), [href], [tabindex]:not([tabindex="-1"])',
+    )).filter((element) => element.closest("[inert]") === null && element.getAttribute("aria-hidden") !== "true")
+    const first = focusable.at(0)
+    const last = focusable.at(-1)
+    if (first === undefined || last === undefined) return
+    const active = document.activeElement
+    if (event.shiftKey && (active === first || !root.contains(active))) {
+      event.preventDefault()
+      last.focus()
+    } else if (!event.shiftKey && (active === last || !root.contains(active))) {
+      event.preventDefault()
+      first.focus()
+    }
+  }
+
+  React.useLayoutEffect(() => {
+    if (!open) return
+    const onKeyDown = (event: KeyboardEvent) => trapFocus(event)
+    document.addEventListener("keydown", onKeyDown, true)
+    return () => document.removeEventListener("keydown", onKeyDown, true)
+  })
+
   const commit = (next: DecorationState | null, successMessage: string): boolean => {
     if (next === null) {
       setPreview(null)
       setPreviewItemId(null)
-      setNotice("꾸미기를 저장하지 못했어요. 일지는 그대로예요.")
+      showNotice("꾸미기를 저장하지 못했어요. 일지는 그대로예요.", true)
       return false
     }
     const saved = saveDecorationStateIfCurrent(next, storageVersion)
@@ -86,8 +140,8 @@ export function JournalDecorationSurface({
         const latest = loadDecorationState()
         setCanonical(latest)
         setStorageVersion(readDecorationStateSerialized())
-        setNotice("다른 화면에서 꾸미기가 바뀌어 최신 상태를 다시 불러왔어요.")
-      } else setNotice("꾸미기를 저장하지 못했어요. 일지는 그대로예요.")
+        showNotice("다른 화면에서 꾸미기가 바뀌어 최신 상태를 다시 불러왔어요.", true)
+      } else showNotice("꾸미기를 저장하지 못했어요. 일지는 그대로예요.", true)
       return false
     }
     setPast((stack) => [...stack.slice(-19), canonical])
@@ -96,7 +150,7 @@ export function JournalDecorationSurface({
     setStorageVersion(JSON.stringify(next))
     setPreview(null)
     setPreviewItemId(null)
-    setNotice(successMessage)
+    showNotice(successMessage)
     return true
   }
 
@@ -106,7 +160,7 @@ export function JournalDecorationSurface({
     const target = source[source.length - 1]
     if (target === undefined) return
     if (!saveDecorationStateIfCurrent(target, storageVersion).ok) {
-      setNotice("꾸미기를 저장하지 못했어요. 일지는 그대로예요.")
+      showNotice("꾸미기를 저장하지 못했어요. 일지는 그대로예요.", true)
       return
     }
     if (direction === "UNDO") {
@@ -121,7 +175,7 @@ export function JournalDecorationSurface({
     setPreview(null)
     setPreviewItemId(null)
     setSelectedIndex(null)
-    setNotice(direction === "UNDO" ? "이전 꾸미기로 되돌렸어요." : "되돌리기를 취소했어요.")
+    showNotice(direction === "UNDO" ? "이전 꾸미기로 되돌렸어요." : "되돌리기를 취소했어요.")
   }
 
   /* Ctrl+Z / Ctrl+Y(또는 Ctrl+Shift+Z) — 편집기가 열려 있을 때만. */
@@ -145,7 +199,7 @@ export function JournalDecorationSurface({
   /* v3 자유 배치: 슬롯 점유·교체 확인이 사라졌다 — 탭 = 배열 끝에 추가(최상단). */
   const apply = (item: DecorationCatalogItem): void => {
     if (isPlacementDecorationId(item.id) && pageItems.length >= MAX_DECORATION_ITEMS_PER_PAGE) {
-      setNotice(`한 페이지에 ${MAX_DECORATION_ITEMS_PER_PAGE}개까지 붙일 수 있어요.`)
+      showNotice(`한 페이지에 ${MAX_DECORATION_ITEMS_PER_PAGE}개까지 붙일 수 있어요.`, true)
       return
     }
     const next = applyJournalDecoration(canonical, item, date)
@@ -162,13 +216,14 @@ export function JournalDecorationSurface({
     setPreviewItemId(null)
     setSelectedIndex(null)
     setTextSheet(null)
-    setNotice("")
+    setNotice(null)
+    window.requestAnimationFrame(() => focusBeforeOpenRef.current?.focus())
   }
 
   /* 텍스트 스티커 입력 시트 오픈 (P5 U1): 24개 상한은 붙이기 전에 미리 안내한다. */
   const openTextSheetForCreate = (): void => {
     if (pageItems.length >= MAX_DECORATION_ITEMS_PER_PAGE) {
-      setNotice(`한 페이지에 ${MAX_DECORATION_ITEMS_PER_PAGE}개까지 붙일 수 있어요.`)
+      showNotice(`한 페이지에 ${MAX_DECORATION_ITEMS_PER_PAGE}개까지 붙일 수 있어요.`, true)
       return
     }
     setDrawerOpen(false)
@@ -210,7 +265,7 @@ export function JournalDecorationSurface({
   const duplicatePlacement = (index: number): void => {
     const next = duplicateJournalDecorationAt(canonical, date, index)
     if (next === null) {
-      setNotice(`복제할 자리가 없어요. 한 페이지에 ${MAX_DECORATION_ITEMS_PER_PAGE}개까지예요.`)
+      showNotice(`복제할 자리가 없어요. 한 페이지에 ${MAX_DECORATION_ITEMS_PER_PAGE}개까지예요.`, true)
       return
     }
     if (commit(next, "복제했어요. 새 장식을 옮겨 보세요.")) {
@@ -229,19 +284,57 @@ export function JournalDecorationSurface({
     }
   }
 
+  const moveSelected = (direction: "BACKWARD" | "FORWARD"): void => {
+    if (selectedIndex === null) return
+    const target = direction === "BACKWARD" ? selectedIndex - 1 : selectedIndex + 1
+    const next = reorderJournalDecoration(canonical, date, selectedIndex, target)
+    if (commit(next, direction === "BACKWARD" ? "장식을 한 칸 뒤로 보냈어요." : "장식을 한 칸 앞으로 가져왔어요.")) {
+      setSelectedIndex(target)
+    }
+  }
+
+  const copySelected = (): void => {
+    if (selectedIndex === null) return
+    const selected = pageItems[selectedIndex]
+    if (selected === undefined) return
+    copyJournalDecorationToSession(selected)
+    setClipboardAvailable(true)
+    showNotice("장식을 복사했어요. 다른 날짜에서도 붙일 수 있어요.")
+  }
+
+  const pasteCopied = (): void => {
+    const copied = readJournalDecorationFromSession()
+    if (copied === null) {
+      setClipboardAvailable(false)
+      return
+    }
+    if (pageItems.length >= MAX_DECORATION_ITEMS_PER_PAGE) {
+      showNotice(`붙일 자리가 없어요. 한 페이지에 ${MAX_DECORATION_ITEMS_PER_PAGE}개까지예요.`, true)
+      return
+    }
+    if (commit(appendJournalDecorationItem(canonical, date, copied), "복사한 장식을 붙였어요.")) {
+      setSelectedIndex(pageItems.length)
+    }
+  }
+
   return (
-    <div className={`journal-decoration-workspace${open ? " journal-decoration-workspace--open" : ""}`} role={open ? "dialog" : undefined} aria-label={open ? "이 일지 꾸미기" : undefined} aria-modal={open ? "true" : undefined}>
+    <div ref={workspaceRef} className={`journal-decoration-workspace${open ? " journal-decoration-workspace--open" : ""}`} role={open ? "dialog" : undefined} aria-label={open ? "이 일지 꾸미기" : undefined} aria-modal={open ? "true" : undefined}>
       <JournalDecorationToolbar
         hasEntries={hasEntries}
         items={items}
         open={open}
         drawerOpen={drawerOpen}
         activeItemIds={activeItemIds}
+        pageItemCounts={pageItemCounts}
         canUndo={past.length > 0}
         canRedo={future.length > 0}
-        notice={notice}
+        selectedIndex={selectedIndex}
+        placementCount={pageItems.length}
+        clipboardAvailable={clipboardAvailable}
+        notice={notice?.text ?? ""}
         previewItemId={previewItemId}
         onOpen={() => {
+          focusBeforeOpenRef.current = document.activeElement instanceof HTMLElement ? document.activeElement : null
           setOpen(true)
           setDrawerOpen(false)
         }}
@@ -251,7 +344,8 @@ export function JournalDecorationSurface({
         onPreview={(item) => {
           setPreview(previewJournalDecoration(canonical, item, date))
           setPreviewItemId(item.id)
-          setNotice("")
+          setSelectedIndex(null)
+          setNotice(null)
         }}
         onApply={apply}
         onRemove={(item) => {
@@ -262,6 +356,10 @@ export function JournalDecorationSurface({
         }}
         onUndo={() => timeTravel("UNDO")}
         onRedo={() => timeTravel("REDO")}
+        onMoveBackward={() => moveSelected("BACKWARD")}
+        onMoveForward={() => moveSelected("FORWARD")}
+        onCopySelected={copySelected}
+        onPaste={pasteCopied}
         onOpenTextSticker={hasEntries ? openTextSheetForCreate : undefined}
       />
       {textSheet !== null && (

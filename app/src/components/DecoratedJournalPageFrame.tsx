@@ -165,6 +165,7 @@ type GestureAnchor = {
 }
 
 type PinchAnchor = {
+  readonly pageRect: DOMRect
   readonly startTransform: DecorationPlacementTransform
 }
 
@@ -240,6 +241,37 @@ function EditableDecorationPlacement({
       y: rotationAwareCenterBounds((halfHeightPx / pageRect.height) * 100),
     }
   }, [])
+
+  /*
+   * 확대·회전으로 AABB가 종이보다 커지는 경우에는 요청 크기 자체를 줄인다.
+   * 위치만 4~96%로 제한해서는 큰 장식의 바깥 부분을 되찾을 수 없기 때문이다.
+   */
+  const constrainToPage = React.useCallback((
+    next: DecorationPlacementTransform,
+    pageRect: DOMRect,
+  ): DecorationPlacementTransform => {
+    const node = itemRef.current
+    let scale = clamp(next.scale, MIN_SCALE, MAX_SCALE)
+    const rotationDeg = clamp(next.rotationDeg, -MAX_ROTATION, MAX_ROTATION)
+    if (node !== null && pageRect.width > 0 && pageRect.height > 0) {
+      const atUnitScale = rotatedAabbHalfExtents(node.offsetWidth, node.offsetHeight, rotationDeg)
+      const maxByWidth = atUnitScale.halfWidthPx <= 0
+        ? MAX_SCALE
+        : (pageRect.width * 0.46) / atUnitScale.halfWidthPx
+      const maxByHeight = atUnitScale.halfHeightPx <= 0
+        ? MAX_SCALE
+        : (pageRect.height * 0.46) / atUnitScale.halfHeightPx
+      scale = clamp(scale, MIN_SCALE, Math.max(MIN_SCALE, Math.min(MAX_SCALE, maxByWidth, maxByHeight)))
+    }
+    const bounds = centerBounds(pageRect, scale, rotationDeg)
+    return {
+      ...next,
+      xPercent: clampToCenterBounds(next.xPercent, bounds.x),
+      yPercent: clampToCenterBounds(next.yPercent, bounds.y),
+      scale,
+      rotationDeg,
+    }
+  }, [centerBounds])
 
   const paint = React.useCallback((next: DecorationPlacementTransform) => {
     const node = itemRef.current
@@ -347,7 +379,11 @@ function EditableDecorationPlacement({
         onEditText?.()
         return
       }
-      const reset = { ...draftRef.current, scale: 1, rotationDeg: 0 }
+      const page = itemRef.current?.closest<HTMLElement>(".decorated-journal-page")
+      const rawReset = { ...draftRef.current, scale: 1, rotationDeg: 0 }
+      const reset = page === undefined || page === null
+        ? rawReset
+        : constrainToPage(rawReset, page.getBoundingClientRect())
       draftRef.current = reset
       paint(reset)
       onTransform(reset)
@@ -355,7 +391,7 @@ function EditableDecorationPlacement({
     }
     lastTapRef.current = now
     onSelect()
-  }, [paint, onTransform, onSelect, onEditText, visual.kind])
+  }, [paint, onTransform, onSelect, onEditText, visual.kind, constrainToPage])
 
   const bindItem = useGesture({
     onDrag: ({ first, last, tap, pinching, cancel, movement: [movementX, movementY], initial: [initialX, initialY], velocity, direction, memo }) => {
@@ -392,7 +428,10 @@ function EditableDecorationPlacement({
      * 회전에는 15° 자석 스냅이 붙는다.
      */
     onPinch: ({ first, last, movement: [scaleRatio, angleDelta], memo }) => {
-      const start = first ? { startTransform: draftRef.current } : (memo as PinchAnchor | null)
+      const page = itemRef.current?.closest<HTMLElement>(".decorated-journal-page")
+      const start = first && page !== undefined && page !== null
+        ? { pageRect: page.getBoundingClientRect(), startTransform: draftRef.current }
+        : (memo as PinchAnchor | null)
       if (start === null || start === undefined) return null
       if (first) {
         cancelInertia()
@@ -400,11 +439,11 @@ function EditableDecorationPlacement({
       }
       const rotation = snapRotation(start.startTransform.rotationDeg + angleDelta)
       feelSnap("rotation", rotation.snapped)
-      schedule({
+      schedule(constrainToPage({
         ...start.startTransform,
         scale: clamp(start.startTransform.scale * scaleRatio, MIN_SCALE, MAX_SCALE),
         rotationDeg: clamp(rotation.value, -MAX_ROTATION, MAX_ROTATION),
-      })
+      }, start.pageRect))
       if (last) finish()
       return start
     },
@@ -417,7 +456,10 @@ function EditableDecorationPlacement({
     const centerX = start.pageRect.left + (start.startTransform.xPercent / 100) * start.pageRect.width
     const centerY = start.pageRect.top + (start.startTransform.yPercent / 100) * start.pageRect.height
     const distance = Math.max(8, Math.hypot(pointerX - centerX, pointerY - centerY))
-    schedule({ ...start.startTransform, scale: clamp(start.startTransform.scale * (distance / start.startDistance), MIN_SCALE, MAX_SCALE) })
+    schedule(constrainToPage({
+      ...start.startTransform,
+      scale: clamp(start.startTransform.scale * (distance / start.startDistance), MIN_SCALE, MAX_SCALE),
+    }, start.pageRect))
     if (last) finish()
     return start
   }, { pointer: { capture: true } })
@@ -431,10 +473,10 @@ function EditableDecorationPlacement({
     const angle = Math.atan2(pointerY - centerY, pointerX - centerX) * 180 / Math.PI
     const rotation = snapRotation(start.startTransform.rotationDeg + angle - start.startAngle)
     feelSnap("rotation", rotation.snapped)
-    schedule({
+    schedule(constrainToPage({
       ...start.startTransform,
       rotationDeg: clamp(rotation.value, -MAX_ROTATION, MAX_ROTATION),
-    })
+    }, start.pageRect))
     if (last) finish()
     return start
   }, { pointer: { capture: true } })
@@ -474,7 +516,11 @@ function EditableDecorationPlacement({
     const update = moves[event.key]
     if (update === undefined) return
     event.preventDefault()
-    const next = { ...draft, ...update }
+    const rawNext = { ...draft, ...update }
+    const page = itemRef.current?.closest<HTMLElement>(".decorated-journal-page")
+    const next = page === undefined || page === null
+      ? rawNext
+      : constrainToPage(rawNext, page.getBoundingClientRect())
     draftRef.current = next
     paint(next)
     onTransform(next)
@@ -496,9 +542,10 @@ function EditableDecorationPlacement({
       } as React.CSSProperties}
       role="button"
       tabIndex={0}
+      aria-pressed={selected}
       aria-label={visual.kind === "text"
-        ? `글 스티커: ${visual.text}. 드래그로 옮기고 두 손가락으로 크기와 각도를 바꿔요. 두 번 탭하면 글을 고치고 Delete 키로 삭제해요.`
-        : `${visual.item.name} 선택됨. 드래그로 옮기고 두 손가락으로 크기와 각도를 바꿔요. 두 번 탭하면 원래 크기로 돌아가고 Delete 키로 삭제해요.`}
+        ? `글 스티커: ${visual.text}${selected ? ", 선택됨" : ""}. 드래그로 옮기고 두 손가락으로 크기와 각도를 바꿔요. 두 번 탭하면 글을 고치고 Delete 키로 삭제해요.`
+        : `${visual.item.name}${selected ? " 선택됨" : ""}. 드래그로 옮기고 두 손가락으로 크기와 각도를 바꿔요. 두 번 탭하면 원래 크기로 돌아가고 Delete 키로 삭제해요.`}
       onClick={handleTap}
       onKeyDown={keyboardTransform}
     >
@@ -571,6 +618,13 @@ export function DecoratedJournalPageFrame({
 }: DecoratedJournalPageFrameProps) {
   /* 드래그 중 중앙 자석이 붙은 축에만 가이드라인을 그린다. */
   const [guides, setGuides] = React.useState<Guides>({ vertical: false, horizontal: false })
+  const contentBodyRef = React.useRef<HTMLDivElement>(null)
+  React.useEffect(() => {
+    const body = contentBodyRef.current
+    if (body === null) return
+    if (editable) body.setAttribute("inert", "")
+    else body.removeAttribute("inert")
+  }, [editable])
   const theme = decorationCatalogItem(state.equipped.themeId)
   const avatar = state.equipped.avatarId === null
     ? undefined
@@ -618,7 +672,7 @@ export function DecoratedJournalPageFrame({
           <span><DecorationAsset item={avatar} className="decorated-journal-page__avatar" testId="journal-page-avatar" /></span>
         </div>
       )}
-      <div className="decorated-journal-page__body">
+      <div ref={contentBodyRef} className="decorated-journal-page__body">
         <div
           key={date}
           ref={pageTopRef}

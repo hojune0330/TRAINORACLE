@@ -387,6 +387,7 @@
   gap: 4px;
 }
 .journal-decoration-toolbar__emoji-grid button {
+  position: relative;
   min-width: 44px;
   min-height: 44px;
   padding: 0;
@@ -398,7 +399,22 @@
   line-height: 1;
   user-select: none;
 }
-.journal-decoration-toolbar__emoji-grid button[aria-pressed="true"] { border: 1.5px solid var(--ink-blue); }
+.journal-decoration-toolbar__emoji-grid button[data-used="true"] { border: 1.5px solid var(--ink-blue); }
+.journal-decoration-toolbar__emoji-grid button > b {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  min-width: 15px;
+  height: 15px;
+  padding: 0 3px;
+  border-radius: 8px;
+  background: var(--ink-blue);
+  color: var(--surface);
+  font-family: var(--sans);
+  font-size: 9px;
+  line-height: 15px;
+  font-weight: 700;
+}
 .journal-decoration-toolbar__items article > div { min-width: 0; display: grid; align-content: center; }
 .journal-decoration-toolbar__items small { color: var(--ink-4); font-size: 9px; }
 .journal-decoration-toolbar__items strong { overflow-wrap: anywhere; font-size: 12px; }
@@ -470,12 +486,18 @@
   min-height: calc(52px + env(safe-area-inset-top));
   padding: max(4px, env(safe-area-inset-top)) 8px 4px;
   display: grid;
-  grid-template-columns: 44px minmax(0, 1fr) 44px 44px;
+  grid-template-columns: 44px minmax(0, 1fr) auto;
   align-items: center;
   gap: 2px;
   border-bottom: 1px solid var(--line);
   background: color-mix(in srgb, var(--surface) 96%, transparent);
   backdrop-filter: blur(12px);
+}
+.journal-decoration-editor__topbar-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  min-width: 44px;
 }
 .journal-decoration-editor__topbar > span { min-width: 0; display: grid; gap: 1px; }
 .journal-decoration-editor__topbar strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13px; }
@@ -542,6 +564,43 @@
   animation: decoration-notice-enter var(--dur-base) var(--ease-out-strong) backwards;
 }
 
+/* 선택 직후에만 나타나는 짧은 레이어 도구. 팔레트와 겹칠 때는 팔레트가 우선한다. */
+.journal-decoration-editor__selection-actions {
+  position: fixed;
+  right: 8px;
+  bottom: calc(62px + env(safe-area-inset-bottom));
+  left: 8px;
+  z-index: 74;
+  min-height: 46px;
+  padding: 3px;
+  display: flex;
+  justify-content: center;
+  gap: 2px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--surface) 97%, transparent);
+  backdrop-filter: blur(12px);
+  animation: decoration-tools-content-enter var(--dur-base) var(--ease-out-strong) backwards;
+}
+.journal-decoration-editor__selection-actions button {
+  min-width: 54px;
+  min-height: 44px;
+  padding: 0 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--ink-2);
+  font-family: var(--sans);
+  font-size: 10px;
+  cursor: pointer;
+}
+.journal-decoration-editor__selection-actions button:disabled { opacity: 0.34; cursor: default; }
+.journal-decoration-editor__selection-actions button:focus-visible { outline: 2px solid var(--ink-blue); outline-offset: 1px; }
+
 .journal-decoration-workspace--open .journal-decoration-toolbar {
   position: fixed;
   top: auto;
@@ -550,7 +609,7 @@
   left: 0;
   z-index: 75;
   width: auto;
-  max-height: min(62dvh, 580px);
+  max-height: min(44dvh, 380px);
   margin: 0;
   padding: 0 16px;
   border: 0;
@@ -740,6 +799,12 @@
     border-left: 1px solid var(--line);
     transform: translateX(0);
   }
+  .journal-decoration-editor__selection-actions {
+    right: 12px;
+    left: auto;
+    width: min(416px, calc(42vw - 24px));
+    box-sizing: border-box;
+  }
   .journal-decoration-workspace--open .journal-decoration-toolbar[data-open="false"] {
     transform: translateX(calc(100% + 24px));
   }
@@ -750,6 +815,7 @@
 @media (prefers-reduced-motion: reduce) {
   .journal-decoration-editor__dock *,
   .journal-decoration-editor__topbar *,
+  .journal-decoration-editor__selection-actions,
   .journal-decoration-workspace--open > .decorated-journal-page,
   .journal-decoration-editor__notice,
   .journal-decoration-workspace--open .journal-decoration-toolbar,

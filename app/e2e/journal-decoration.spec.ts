@@ -131,6 +131,104 @@ test("stacks three emoji stickers as free items without breaking the page layout
   expect(savedItemIds).toEqual(["EMOJI_FIRE", "EMOJI_MEDAL", "EMOJI_BANANA"])
 })
 
+test("adds the same emoji twice instead of treating the palette as a destructive toggle", async ({ page }) => {
+  await seedEntry(page, "repeat-emoji-entry", "Repeat emoji check")
+
+  await page.setViewportSize({ width: 375, height: 667 })
+  await page.goto("/?app=1")
+  await page.getByRole("button", { name: /Repeat emoji check.*상세 열기/u }).click()
+  await page.getByRole("button", { name: "일지 꾸미기 열기" }).click()
+  await page.getByRole("button", { name: "이모지 스티커 도구" }).click()
+  await page.getByRole("button", { name: /불꽃 이모지 붙이기/u }).click()
+  await page.getByRole("button", { name: "이모지 스티커 도구" }).click()
+  await expect(page.getByRole("button", { name: /불꽃 이모지 붙이기, 현재 1개/u })).toBeVisible()
+  await page.getByRole("button", { name: /불꽃 이모지 붙이기, 현재 1개/u }).click()
+
+  await expect(page.locator('[data-category="EMOJI_STICKER"]')).toHaveCount(2)
+  const fireCount = await page.evaluate((key) => {
+    const raw = window.localStorage.getItem(key)
+    const state = raw === null ? null : JSON.parse(raw) as { pages?: Array<{ items?: Array<{ itemId: string }> }> }
+    return state?.pages?.[0]?.items?.filter((item) => item.itemId === "EMOJI_FIRE").length ?? 0
+  }, DECORATION_KEY_V3)
+  expect(fireCount).toBe(2)
+})
+
+test("keeps the mobile canvas visible, traps focus, and keeps all topbar actions on one row", async ({ page }) => {
+  await seedEntry(page, "compact-tools-entry", "Compact tools check")
+
+  await page.setViewportSize({ width: 375, height: 667 })
+  await page.goto("/?app=1")
+  await page.getByRole("button", { name: /Compact tools check.*상세 열기/u }).click()
+  await page.getByRole("button", { name: "일지 꾸미기 열기" }).click()
+
+  await expect(page.getByRole("button", { name: "꾸미기 편집기 닫기" })).toBeFocused()
+  await expect(page.locator(".journal-decoration-toolbar")).toHaveAttribute("inert", "")
+  await page.getByRole("button", { name: "글자색 도구" }).focus()
+  await page.keyboard.press("Tab")
+  await expect(page.getByRole("button", { name: "꾸미기 편집기 닫기" })).toBeFocused()
+
+  await page.getByRole("button", { name: "이모지 스티커 도구" }).click()
+  const drawerGeometry = await page.evaluate(() => {
+    const drawer = document.querySelector<HTMLElement>(".journal-decoration-toolbar")
+    const frame = document.querySelector<HTMLElement>(".decorated-journal-page")
+    if (drawer === null || frame === null) return null
+    const drawerRect = drawer.getBoundingClientRect()
+    const frameRect = frame.getBoundingClientRect()
+    return {
+      drawerHeight: drawerRect.height,
+      drawerTop: drawerRect.top,
+      viewportHeight: window.innerHeight,
+      visibleCanvasHeight: Math.max(0, Math.min(drawerRect.top, frameRect.bottom) - Math.max(frameRect.top, 0)),
+    }
+  })
+  expect(drawerGeometry).not.toBeNull()
+  expect(drawerGeometry?.drawerHeight ?? 999).toBeLessThanOrEqual(667 * 0.45)
+  expect(drawerGeometry?.visibleCanvasHeight ?? 0).toBeGreaterThan(220)
+
+  await page.getByRole("button", { name: /불꽃 이모지 붙이기/u }).click()
+  await page.getByRole("button", { name: "이모지 스티커 도구" }).click()
+  await page.getByRole("button", { name: /메달 이모지 붙이기/u }).click()
+  await page.getByRole("button", { name: "꾸미기 되돌리기" }).click()
+  await expect(page.getByRole("button", { name: "꾸미기 다시 실행" })).toBeVisible()
+
+  const topbarRows = await page.locator(".journal-decoration-editor__topbar").evaluate((topbar) => {
+    const top = topbar.getBoundingClientRect()
+    const actions = Array.from(topbar.querySelectorAll<HTMLElement>("button")).map((button) => button.getBoundingClientRect())
+    return {
+      height: top.height,
+      allInside: actions.every((rect) => rect.top >= top.top - 1 && rect.bottom <= top.bottom + 1),
+    }
+  })
+  expect(topbarRows.height).toBeLessThanOrEqual(64)
+  expect(topbarRows.allInside).toBe(true)
+})
+
+test("reorders, copies, and pastes the selected decoration with explicit canvas actions", async ({ page }) => {
+  await seedEntry(page, "layer-actions-entry", "Layer actions check")
+
+  await page.setViewportSize({ width: 375, height: 667 })
+  await page.goto("/?app=1")
+  await page.getByRole("button", { name: /Layer actions check.*상세 열기/u }).click()
+  await page.getByRole("button", { name: "일지 꾸미기 열기" }).click()
+  await page.getByRole("button", { name: "이모지 스티커 도구" }).click()
+  await page.getByRole("button", { name: /불꽃 이모지 붙이기/u }).click()
+  await page.getByRole("button", { name: "이모지 스티커 도구" }).click()
+  await page.getByRole("button", { name: /메달 이모지 붙이기/u }).click()
+
+  await page.getByRole("button", { name: "선택한 장식을 한 칸 뒤로 보내기" }).click()
+  await page.getByRole("button", { name: "선택한 장식 복사" }).click()
+  await page.getByRole("button", { name: "복사한 장식 붙여넣기" }).click()
+
+  const savedItemIds = await page.evaluate((key) => {
+    const raw = window.localStorage.getItem(key)
+    const state = raw === null ? null : JSON.parse(raw) as { pages?: Array<{ items?: Array<{ itemId: string }> }> }
+    return state?.pages?.[0]?.items?.map((item) => item.itemId) ?? []
+  }, DECORATION_KEY_V3)
+  expect(savedItemIds).toEqual(["EMOJI_MEDAL", "EMOJI_FIRE", "EMOJI_MEDAL"])
+  await expect(page.getByRole("status")).toContainText("복사한 장식을 붙였어요")
+  await expect(page.getByRole("status")).toHaveCount(0, { timeout: 4_000 })
+})
+
 test("drags and resizes a decoration on the full-screen diary canvas and keeps it after refresh", async ({ page }) => {
   await seedEntry(page, "free-decoration-entry", "Free decoration movement check")
 
@@ -162,7 +260,7 @@ test("drags and resizes a decoration on the full-screen diary canvas and keeps i
   if (resizeBox === null) return
   await page.mouse.move(resizeBox.x + resizeBox.width / 2, resizeBox.y + resizeBox.height / 2)
   await page.mouse.down()
-  await page.mouse.move(resizeBox.x + resizeBox.width / 2 + 36, resizeBox.y + resizeBox.height / 2 + 36, { steps: 5 })
+  await page.mouse.move(resizeBox.x + resizeBox.width / 2 + 160, resizeBox.y + resizeBox.height / 2 + 160, { steps: 8 })
   await page.mouse.up()
 
   await expect.poll(() => page.evaluate((key) => {
@@ -170,6 +268,17 @@ test("drags and resizes a decoration on the full-screen diary canvas and keeps i
     const state = raw === null ? null : JSON.parse(raw) as { pages?: Array<{ items?: Array<{ transform?: { scale: number } }> }> }
     return state?.pages?.[0]?.items?.[0]?.transform?.scale ?? 0
   }, DECORATION_KEY_V3)).toBeGreaterThan(1)
+
+  const containment = await page.evaluate(() => {
+    const frame = document.querySelector<HTMLElement>(".decorated-journal-page")
+    const item = document.querySelector<HTMLElement>('[data-testid="journal-decoration-item-0"]')
+    if (frame === null || item === null) return null
+    const frameRect = frame.getBoundingClientRect()
+    const itemRect = item.getBoundingClientRect()
+    return itemRect.left >= frameRect.left - 1 && itemRect.right <= frameRect.right + 1
+      && itemRect.top >= frameRect.top - 1 && itemRect.bottom <= frameRect.bottom + 1
+  })
+  expect(containment).toBe(true)
 
   const savedTransform = await page.evaluate((key) => {
     const raw = window.localStorage.getItem(key)
@@ -199,7 +308,7 @@ test("deletes a selected decoration on the canvas and deselects on empty-space t
 
   const movable = page.getByRole("button", { name: /맑은 날 선택됨/u })
   await expect(movable).toBeVisible()
-  await movable.click()
+  await page.getByTestId("journal-decoration-item-0").click()
 
   /* 44px 터치 계약: 삭제/복제/회전/크기 손잡이의 히트 영역이 전부 44px 이상이어야 한다. */
   for (const name of ["맑은 날 삭제", "맑은 날 복제", "맑은 날 회전", "맑은 날 크기 조절"]) {
@@ -220,7 +329,7 @@ test("deletes a selected decoration on the canvas and deselects on empty-space t
   await expect(page.getByRole("button", { name: "맑은 날 삭제" })).toHaveCount(0)
 
   /* 다시 선택 후 캔버스 위 삭제 → 저장소에서도 사라지고 되돌리기로 복구된다. */
-  await movable.click()
+  await page.getByTestId("journal-decoration-item-0").click()
   await page.getByRole("button", { name: "맑은 날 삭제" }).click()
   await expect.poll(() => page.evaluate((key) => {
     const raw = window.localStorage.getItem(key)
