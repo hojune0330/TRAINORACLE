@@ -7,7 +7,7 @@ test.beforeEach(({}, testInfo) => {
   )
 })
 
-test("prioritizes the real journal and keeps the compact decoration editor usable", async ({ page }, testInfo) => {
+test("routes the home decoration card into the real journal editor with points", async ({ page }, testInfo) => {
   const isDesktop = testInfo.project.name === "desktop-chromium"
   const consoleErrors: string[] = []
   page.on("console", (message) => {
@@ -17,13 +17,16 @@ test("prioritizes the real journal and keeps the compact decoration editor usabl
 
   await page.addInitScript(() => {
     const now = new Date()
-    const date = [
-      now.getFullYear(),
-      String(now.getMonth() + 1).padStart(2, "0"),
-      String(now.getDate()).padStart(2, "0"),
+    const iso = (d: Date) => [
+      d.getFullYear(),
+      String(d.getMonth() + 1).padStart(2, "0"),
+      String(d.getDate()).padStart(2, "0"),
     ].join("-")
+    const date = iso(now)
+    const yesterday = new Date(now)
+    yesterday.setDate(yesterday.getDate() - 1)
     window.localStorage.setItem("trainoracle.journal.v1", JSON.stringify([{
-      id: "decoration-studio-ux-entry",
+      id: "decoration-unified-entry",
       kind: "post-session",
       date,
       savedAt: `${date}T09:00:00.000Z`,
@@ -42,74 +45,27 @@ test("prioritizes the real journal and keeps the compact decoration editor usabl
         rpe: { provenance: "EXPLICIT" },
       },
     }]))
+    /* 일지 2일 = 8P — 결승선 스티커(8P) 구매를 실제 편집기 서랍에서 검증한다. */
+    window.localStorage.setItem("trainoracle.engagement.v2", JSON.stringify({
+      version: 2,
+      visitDates: [],
+      journalDates: [date, iso(yesterday)],
+      pointMeaning: "NON_ECONOMIC_NON_TRANSFERABLE_BETA",
+    }))
   })
 
   await page.goto("/?app=1")
-  await expect(page.getByText("꾸미기 보관함", { exact: false })).toBeVisible()
+  /* 홈 카드는 이제 진입 카드 — 별도 편집 화면이나 placeholder 미리보기가 없다. */
+  await expect(page.getByRole("heading", { name: "꾸미기 보관함 · 사용 가능 8P" })).toBeVisible()
   await expect(page.getByRole("region", { name: "꾸미기 미리보기" })).toHaveCount(0)
+  await expect(page.getByRole("dialog")).toHaveCount(0)
   await page.getByRole("button", { name: "꾸미기 열기" }).click()
 
-  const studio = page.getByRole("dialog", { name: /일지 꾸미기 · 사용 가능/u })
-  await expect(studio).toBeVisible()
-  await expect(page.getByRole("region", { name: "꾸미기 미리보기" })).toBeVisible()
-  await expect(page.getByRole("combobox", { name: "꾸미기 종류" })).toHaveCount(0)
-  await page.getByRole("button", { name: "모든 꾸미기 도구" }).click()
-  await expect(page.getByRole("combobox", { name: "꾸미기 종류" })).toBeVisible()
+  /* 오늘 일지 상세로 이동해 진짜 페이지 위에서 편집기가 자동으로 열린다. */
+  const editor = page.getByRole("dialog", { name: "이 일지 꾸미기" })
+  await expect(editor).toBeVisible()
+  await expect(page.getByText("꾸미기 화면 점검")).toBeVisible()
 
-  const studioGeometry = await page.evaluate(() => {
-    const dialog = document.querySelector<HTMLElement>(".decoration-shop--open")
-    const catalog = document.querySelector<HTMLElement>(".decoration-studio__catalog")
-    const firstCard = document.querySelector<HTMLElement>(".decoration-shop__item")
-    const navigation = document.querySelector<HTMLElement>(".app-tab-bar")
-    if (dialog === null || catalog === null || firstCard === null || navigation === null) return null
-    const dialogRect = dialog.getBoundingClientRect()
-    return {
-      dialogTop: dialogRect.top,
-      dialogBottom: dialogRect.bottom,
-      catalogScrollable: catalog.scrollHeight > catalog.clientHeight,
-      cardWidth: firstCard.getBoundingClientRect().width,
-      buttonCount: dialog.querySelectorAll("button").length,
-      navigationHidden: getComputedStyle(navigation).visibility === "hidden",
-      pageFits: document.documentElement.scrollWidth <= window.innerWidth,
-    }
-  })
-  expect(studioGeometry).not.toBeNull()
-  if (isDesktop) {
-    expect(studioGeometry?.dialogTop ?? 0).toBeGreaterThan(0)
-    expect(studioGeometry?.dialogBottom ?? 900).toBeLessThan(900)
-  } else {
-    expect(studioGeometry?.dialogTop).toBe(0)
-    expect(studioGeometry?.dialogBottom).toBe(568)
-  }
-  expect(studioGeometry?.catalogScrollable).toBe(true)
-  expect(studioGeometry?.cardWidth ?? 0).toBeGreaterThan(130)
-  expect(studioGeometry?.buttonCount ?? 999).toBeLessThan(85)
-  expect(studioGeometry?.navigationHidden).toBe(true)
-  expect(studioGeometry?.pageFits).toBe(true)
-
-  if (!isDesktop) {
-    const catalog = page.locator(".decoration-studio__catalog")
-    await catalog.evaluate((element) => { element.scrollTop = 120 })
-    await expect(studio).toHaveAttribute("data-header-collapsed", "true")
-    await expect(page.locator(".decoration-shop__header")).toHaveCSS("max-height", "0px")
-    await page.getByRole("button", { name: "꾸미기 도구 숨기기" }).click()
-    await expect(studio).toHaveAttribute("data-header-collapsed", "false")
-    await expect(page.getByRole("button", { name: "꾸미기 닫기" })).toBeVisible()
-    await page.getByRole("button", { name: "모든 꾸미기 도구" }).click()
-  }
-
-  await page.getByRole("button", { name: "결승선 스티커 미리보기" }).click()
-  await expect(page.getByRole("region", { name: "선택한 꾸미기" })).toContainText("결승선 스티커")
-  await expect(page.getByRole("button", { name: "결승선 스티커 8P로 받기" })).toBeVisible()
-
-  if (!isDesktop) {
-    await page.locator(".decoration-studio__catalog").evaluate((element) => { element.scrollTop = 0 })
-    await expect(studio).toHaveAttribute("data-header-collapsed", "false")
-  }
-  await page.getByRole("button", { name: "꾸미기 닫기" }).click()
-  await page.getByRole("button", { name: /꾸미기 화면 점검.*상세 열기/u }).click()
-  await page.getByRole("button", { name: "일지 꾸미기 열기" }).click()
-  await expect(page.getByRole("dialog", { name: "이 일지 꾸미기" })).toBeVisible()
   await expect(page.locator(".journal-decoration-toolbar")).toHaveAttribute("data-open", "false")
   await page.getByRole("button", { name: "모든 꾸미기 도구" }).click()
   await expect(page.locator(".journal-decoration-toolbar")).toHaveAttribute("data-open", "true")
@@ -145,5 +101,19 @@ test("prioritizes the real journal and keeps the compact decoration editor usabl
   }
   expect(drawerGeometry?.navigationHidden).toBe(true)
   expect(drawerGeometry?.pageFits).toBe(true)
+
+  /* 포인트 구매도 이 서랍에서 바로 — 잔액 표시와 받기 버튼. */
+  await expect(page.getByText("베타 포인트 · 사용 가능 8P")).toBeVisible()
+  await page.getByRole("button", { name: "결승선 스티커 8P로 받기" }).click()
+  await expect(page.getByText("받았어요. 0P가 남았어요.")).toBeVisible()
+  await expect(page.getByRole("button", { name: "결승선 스티커 8P로 받기" })).toHaveCount(0)
+  await expect(page.getByText("베타 포인트 · 사용 가능 0P")).toBeVisible()
+
+  /* 자동-열기 인텐트는 1회용 — 새로고침 뒤에는 저절로 열리지 않는다. */
+  await page.reload()
+  await page.getByRole("button", { name: /꾸미기 화면 점검.*상세 열기/u }).click()
+  await expect(page.getByRole("dialog", { name: "이 일지 꾸미기" })).toHaveCount(0)
+  await expect(page.getByRole("button", { name: "일지 꾸미기 열기" })).toBeVisible()
+
   expect(consoleErrors).toEqual([])
 })

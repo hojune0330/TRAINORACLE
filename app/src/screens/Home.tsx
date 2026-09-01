@@ -47,6 +47,8 @@ export type HomeProps = {
   readonly onOpenMore?: () => void
   readonly onOpenAccount?: () => void
   readonly onOpenContent?: () => void
+  /* 홈 꾸미기 카드 → 오늘 일지 상세에서 편집기 자동 열기. */
+  readonly onDecorateToday?: () => void
 }
 
 export function Home({
@@ -59,6 +61,7 @@ export function Home({
   onOpenMore,
   onOpenAccount,
   onOpenContent,
+  onDecorateToday,
 }: HomeProps) {
   const [revision, setRevision] = React.useState(0)
   const entries = React.useMemo(() => loadEntries(), [revision])
@@ -220,9 +223,9 @@ export function Home({
       {model.homeMode !== "WELCOME" && (
         <DecorationShop
           earnedPoints={engagement.points}
-          showPreview={false}
           hasJournalEntries={entries.length > 0}
           onSpentPointsChange={setSpentPoints}
+          onDecorateToday={onDecorateToday}
         />
       )}
 

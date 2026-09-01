@@ -38,15 +38,16 @@ describe("task 10 mobile accessibility contract", () => {
     expect(dismissalRule).toContain("flex: 0 0 var(--app-touch-min)")
   })
 
-  it("keeps the decoration studio icon-only close control at the touch minimum", () => {
+  it("keeps the home decoration entry control at the touch minimum", () => {
     const toggleRule = decorationStudioCss.match(/\.decoration-shop__header > button\s*\{[^}]*\}/u)?.[0] ?? ""
 
     expect(toggleRule).toContain("min-width: var(--app-touch-min)")
     expect(toggleRule).toContain("min-height: var(--app-touch-min)")
   })
 
-  it("keeps decoration item layout owned by the studio stylesheet only", () => {
-    expect(decorationStudioCss).toMatch(/\.decoration-shop__item\s*\{/u)
+  it("keeps legacy studio item layout out of every stylesheet after the editor merge", () => {
+    /* 2026-09-01 통합: 홈 전용 꾸미기 편집 화면이 사라져 카달로그 카드 규칙도 함께 제거됐다. */
+    expect(decorationStudioCss).not.toMatch(/\.decoration-shop__item\s*\{/u)
     expect(planBetaCss).not.toMatch(/\.decoration-shop__item\s*\{/u)
   })
 

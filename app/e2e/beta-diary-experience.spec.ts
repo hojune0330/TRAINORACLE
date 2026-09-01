@@ -49,9 +49,12 @@ test("uses the diary context, decoration, cycle archive, and easy FAQ as one flo
   await expect(page.getByText("위치정보를 사용하지 않아요.")).toBeVisible()
 
   await expect(page.getByRole("heading", { name: "꾸미기 보관함 · 사용 가능 32P" })).toBeVisible()
+  /* 홈 카드는 이제 오늘 일지 상세로 이동해 진짜 편집기를 바로 연다. */
   await page.getByRole("button", { name: "꾸미기 열기" }).click()
-  await expect(page.getByRole("button", { name: "꾸미기 닫기" })).toBeVisible()
-  await page.getByRole("button", { name: "꾸미기 닫기" }).click()
+  await expect(page.getByRole("dialog", { name: "이 일지 꾸미기" })).toBeVisible()
+  await page.getByRole("button", { name: "꾸미기 완료" }).click()
+  await page.getByRole("button", { name: "← 뒤로" }).click()
+  await expect(page.getByRole("heading", { name: "꾸미기 보관함 · 사용 가능 32P" })).toBeVisible()
 
   await page.getByRole("button", { name: "전체 보기" }).click()
   await page.getByRole("button", { name: "9.5일 주기" }).click()

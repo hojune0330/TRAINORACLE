@@ -8,11 +8,12 @@ import {
   isPlacementDecorationId,
   isThemeDecorationId,
   loadDecorationState,
+  purchaseDecoration,
   readDecorationStateSerialized,
   saveDecorationStateIfCurrent,
 } from "../../domain/decorations"
 import { isTextStickerPageItem } from "../../domain/decorations"
-import type { DecorationCatalogItem, DecorationPlacementTransform, DecorationState, TextInkId } from "../../domain/decorations"
+import type { DecorationCatalogItem, DecorationId, DecorationPlacementTransform, DecorationState, TextInkId } from "../../domain/decorations"
 import {
   appendJournalDecorationItem,
   appendJournalTextSticker,
@@ -31,6 +32,12 @@ import {
   copyJournalDecorationToSession,
   readJournalDecorationFromSession,
 } from "../../domain/journal-decoration-clipboard"
+import {
+  clearJournalDecorationAutoOpen,
+  pendingJournalDecorationAutoOpenDate,
+} from "../../domain/journal-decoration-intent"
+import { loadEngagementSummary } from "../../domain/engagement"
+import { todayISO } from "../../domain/journal-store"
 import { withJosa } from "../../domain/korean-josa"
 import { JournalDecorationToolbar } from "./JournalDecorationToolbar"
 import { JournalTextStickerSheet } from "./JournalTextStickerSheet"
@@ -59,7 +66,8 @@ export function JournalDecorationSurface({
   const [canonical, setCanonical] = React.useState(loadDecorationState)
   const [storageVersion, setStorageVersion] = React.useState(() => readDecorationStateSerialized())
   const [preview, setPreview] = React.useState<DecorationState | null>(null)
-  const [open, setOpen] = React.useState(false)
+  /* 홈 "꾸미기 열기" → 오늘 일지로 이동해 바로 편집 시작 (레거시 별도 화면 통합). */
+  const [open, setOpen] = React.useState(() => pendingJournalDecorationAutoOpenDate() === date)
   const [drawerOpen, setDrawerOpen] = React.useState(false)
   const [notice, setNotice] = React.useState<DecorationNotice | null>(null)
   /* Undo/Redo: past/future 스택 각 20단계 (마스터 플랜 §2.4) — 이력은 세션 메모리에만 산다. */
@@ -71,13 +79,28 @@ export function JournalDecorationSurface({
   const [clipboardAvailable, setClipboardAvailable] = React.useState(() => readJournalDecorationFromSession() !== null)
   const workspaceRef = React.useRef<HTMLDivElement>(null)
   const focusBeforeOpenRef = React.useRef<HTMLElement | null>(null)
+  /* 포인트 구매가 편집기 서랍으로 들어왔다 — 드래그 중 매 렌더 재계산을 피해 열 때만 읽는다. */
+  const [earnedPoints, setEarnedPoints] = React.useState(() => loadEngagementSummary(todayISO()).points)
+  React.useEffect(() => {
+    if (open) setEarnedPoints(loadEngagementSummary(todayISO()).points)
+  }, [open])
+  const availablePoints = Math.max(0, earnedPoints - canonical.spentPoints)
+  /* 자동-열기 인텐트는 1회용 — 소비 후 지워 새로고침·재진입 시 저절로 열리지 않게 한다. */
+  React.useEffect(() => {
+    if (pendingJournalDecorationAutoOpenDate() === date) clearJournalDecorationAutoOpen()
+  }, [date])
   const visible = preview ?? canonical
+  const owned = (itemId: DecorationId): boolean => canonical.ownedItemIds.includes(itemId)
+  /* 보유 항목 + 아직 없는 유료 항목(받기 버튼으로 노출) — 레거시 상점 기능 통합. */
   const items = DECORATION_CATALOG.filter((item) => (
     isThemeDecorationId(item.id)
-    || (isInkDecorationId(item.id) && canonical.ownedItemIds.includes(item.id))
-    || (isAvatarDecorationId(item.id) && canonical.ownedItemIds.includes(item.id))
-    || (hasEntries && isPlacementDecorationId(item.id) && canonical.ownedItemIds.includes(item.id))
+    || (isInkDecorationId(item.id) && (owned(item.id) || !item.starterOwned))
+    || (isAvatarDecorationId(item.id) && (owned(item.id) || !item.starterOwned))
+    || (hasEntries && isPlacementDecorationId(item.id) && (owned(item.id) || !item.starterOwned))
   ))
+  const purchasableItemIds = new Set(
+    items.filter((item) => !item.starterOwned && !owned(item.id)).map((item) => item.id),
+  )
   const pageItems = journalDecorationItems(canonical, date)
   const pageItemCounts = new Map<string, number>()
   for (const item of pageItems) pageItemCounts.set(item.itemId, (pageItemCounts.get(item.itemId) ?? 0) + 1)
@@ -215,6 +238,27 @@ export function JournalDecorationSurface({
     }
   }
 
+  /* 포인트 구매(레거시 상점 이식): 구매는 장식 배치가 아니므로 undo 스택에 넣지 않는다. */
+  const purchase = (item: DecorationCatalogItem): void => {
+    const result = purchaseDecoration(earnedPoints, canonical, item.id, storageVersion)
+    if (result.kind === "PURCHASED") {
+      setCanonical(result.state)
+      setStorageVersion(JSON.stringify(result.state))
+      showNotice(`받았어요. ${result.remainingPoints}P가 남았어요.`)
+    } else if (result.kind === "INSUFFICIENT_POINTS") {
+      showNotice(`포인트가 ${item.cost - result.remainingPoints}P 더 필요해요. 오늘 방문 확인은 1P, 훈련·회복 기록을 남긴 날은 4P가 쌓여요.`, true)
+    } else if (result.kind === "SAVE_FAILED") {
+      if (result.code === "STALE_STATE") {
+        const latest = loadDecorationState()
+        setCanonical(latest)
+        setStorageVersion(readDecorationStateSerialized())
+        showNotice("다른 화면에서 꾸미기가 바뀌어 최신 상태를 다시 불러왔어요.", true)
+      } else showNotice("저장하지 못했어요. 다시 시도해 주세요.", true)
+    } else {
+      showNotice(result.kind === "ALREADY_OWNED" ? "이미 가지고 있어요." : "꾸미기 항목을 찾지 못했어요.", true)
+    }
+  }
+
   const close = (): void => {
     setOpen(false)
     setDrawerOpen(false)
@@ -331,6 +375,8 @@ export function JournalDecorationSurface({
         open={open}
         drawerOpen={drawerOpen}
         activeItemIds={activeItemIds}
+        availablePoints={availablePoints}
+        purchasableItemIds={purchasableItemIds}
         pageItemCounts={pageItemCounts}
         canUndo={past.length > 0}
         canRedo={future.length > 0}
@@ -354,6 +400,7 @@ export function JournalDecorationSurface({
           setNotice(null)
         }}
         onApply={apply}
+        onPurchase={purchase}
         onRemove={(item) => {
           if (commit(removeJournalDecoration(canonical, item, date), `${withJosa(item.name, "을/를")} 제거했어요.`)) {
             setSelectedIndex(null)

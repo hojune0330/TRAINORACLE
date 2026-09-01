@@ -9,6 +9,7 @@ import { accountFeatureEnabled } from "./domain/account/config"
 import { loadEntries, localOnlyCount, todayISO } from "./domain/journal-store"
 import type { JournalEntry } from "./domain/journal-store"
 import { awardJournalEntry, type EngagementAwardResult } from "./domain/engagement"
+import { requestJournalDecorationAutoOpen } from "./domain/journal-decoration-intent"
 import { createSavedFactReceipt } from "./domain/save-receipt"
 import { trackProductEvent } from "./domain/account/product-analytics-service"
 import { currentUser, onAuthChange } from "./domain/account/auth"
@@ -266,6 +267,12 @@ export function AppShell() {
         <Home
           onWriteLog={(entryType) => runViewTransition("tab-forward", () => setV(s => ({ ...s, tab: "log", entryType: entryType ?? "choose" })))}
           onOpenDay={(date) => runViewTransition("push", () => setV(s => ({ ...s, detailDate: date })))}
+          onDecorateToday={() => {
+            /* 홈 꾸미기 카드: 오늘 일지 상세로 이동하며 편집기 자동 열기를 예약한다. */
+            const date = todayISO()
+            requestJournalDecorationAutoOpen(date)
+            runViewTransition("push", () => setV(s => ({ ...s, detailDate: date })))
+          }}
           onOpenArchive={() => {
             runViewTransition("tab-forward", () => setV({ ...viewForTab("journal"), journalMode: "CALENDAR" }))
           }}

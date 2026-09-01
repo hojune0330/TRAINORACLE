@@ -49,6 +49,9 @@ type JournalDecorationToolbarProps = {
   readonly open: boolean
   readonly drawerOpen: boolean
   readonly activeItemIds: ReadonlySet<string>
+  /* 레거시 홈 스튜디오 통합: 포인트 구매가 편집기 서랍으로 들어왔다. */
+  readonly availablePoints: number
+  readonly purchasableItemIds: ReadonlySet<string>
   readonly pageItemCounts: ReadonlyMap<string, number>
   readonly canUndo: boolean
   readonly canRedo: boolean
@@ -58,6 +61,7 @@ type JournalDecorationToolbarProps = {
   readonly notice: string
   readonly previewItemId: string | null
   readonly onApply: (item: DecorationCatalogItem) => void
+  readonly onPurchase: (item: DecorationCatalogItem) => void
   readonly onClose: () => void
   readonly onDrawerClose: () => void
   readonly onDrawerOpen: () => void
@@ -171,6 +175,7 @@ export function JournalDecorationToolbar(props: JournalDecorationToolbarProps) {
           <div>
             <strong>꾸미기 도구</strong>
             <span>{props.hasEntries ? "고른 뒤 일지에서 직접 옮길 수 있어요." : "기록이 없는 날에는 테마만 미리 볼 수 있어요."}</span>
+            <small className="journal-decoration-toolbar__points">베타 포인트 · 사용 가능 {props.availablePoints}P</small>
           </div>
           <button type="button" className="journal-decoration-toolbar__icon" onClick={props.onDrawerClose} aria-label="꾸미기 도구 숨기기"><ChevronDown aria-hidden="true" size={19} /></button>
         </header>
@@ -186,6 +191,12 @@ export function JournalDecorationToolbar(props: JournalDecorationToolbarProps) {
                   <button type="button" onClick={() => props.onPreview(item)} aria-label={`${item.name} 미리보기`}>
                     <Eye aria-hidden="true" size={14} /> 미리보기
                   </button>
+                  {/* 아직 없는 항목은 이 자리에서 바로 받는다 — 별도 상점 화면 없음. */}
+                  {props.purchasableItemIds.has(item.id) && (
+                    <button type="button" onClick={() => props.onPurchase(item)} aria-label={`${item.name} ${item.cost}P로 받기`}>
+                      {item.cost}P로 받기
+                    </button>
+                  )}
                   {props.hasEntries && active && placeable && (
                     <button type="button" onClick={() => props.onRemove(item)} aria-label={`${item.name} 제거`}>
                       <Trash2 aria-hidden="true" size={14} /> 제거
