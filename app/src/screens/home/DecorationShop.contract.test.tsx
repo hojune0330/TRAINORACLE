@@ -1,11 +1,8 @@
-import { cleanup, fireEvent, render, screen } from "@testing-library/react"
+import { cleanup, render, screen } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
-import { DECORATION_STORAGE_KEY_V3, parseStoredDecorationState } from "../../domain/decorations"
-import { journalDecorationItems } from "../../domain/journal-decoration-state"
-import { todayISO } from "../../domain/journal-store"
+import { createEmptyDecorationState, decorationStateSchema, saveDecorationState } from "../../domain/decorations"
 import { DecorationShop } from "./DecorationShop"
-import { moveDecorationDate } from "./decoration-studio-model"
 
 beforeEach(() => window.localStorage.clear())
 afterEach(() => {
@@ -13,262 +10,63 @@ afterEach(() => {
   vi.restoreAllMocks()
 })
 
-async function openAllStudioTools(): Promise<void> {
-  await userEvent.click(screen.getByRole("button", { name: "모든 꾸미기 도구" }))
-}
-
-function openAllStudioToolsSync(): void {
-  fireEvent.click(screen.getByRole("button", { name: "모든 꾸미기 도구" }))
-}
-
-describe("decoration shop surface", () => {
-  it("PIN: shows the exact zero-point balance in the current shop summary", () => {
+/*
+ * 2026-09-01 통합 계약: 홈 꾸미기 카드는 더 이상 자체 편집 화면을 열지 않는다.
+ * 구형 홈 스튜디오는 실제 기록 대신 자리표시 문구를 그려 "쓴 글이 연동 안 된다"는
+ * 혼란을 만들었다 — 이제 카드는 오늘 일지 상세의 진짜 편집기로 안내만 한다.
+ */
+describe("home decoration entry card", () => {
+  it("PIN: shows the exact zero-point balance in the card summary", () => {
     render(<DecorationShop earnedPoints={0} />)
 
-    expect(screen.getByText("일지 꾸미기 · 사용 가능 0P")).toBeVisible()
+    expect(screen.getByText("꾸미기 보관함 · 사용 가능 0P")).toBeVisible()
   })
 
-  it("keeps the first-record entry compact until a journal page exists", () => {
-    render(<DecorationShop earnedPoints={0} showPreview={false} />)
+  it("subtracts persisted spending from the earned balance", () => {
+    const spent = decorationStateSchema.parse({ ...createEmptyDecorationState(), spentPoints: 8 })
+    expect(saveDecorationState(spent).ok).toBe(true)
 
-    expect(screen.getByRole("button", { name: "꾸미기 열기" })).toBeVisible()
-    expect(screen.queryByRole("region", { name: "꾸미기 미리보기" })).toBeNull()
+    render(<DecorationShop earnedPoints={20} />)
+
+    expect(screen.getByText("꾸미기 보관함 · 사용 가능 12P")).toBeVisible()
   })
 
-  it("keeps returning users on their own journal flow instead of replaying a large sample preview", () => {
-    render(<DecorationShop earnedPoints={8} showPreview={false} hasJournalEntries />)
+  it("reports persisted spending back to the home balance", () => {
+    const spent = decorationStateSchema.parse({ ...createEmptyDecorationState(), spentPoints: 8 })
+    expect(saveDecorationState(spent).ok).toBe(true)
+    let reported = -1
+
+    render(<DecorationShop earnedPoints={20} onSpentPointsChange={(value) => { reported = value }} />)
+
+    expect(reported).toBe(8)
+  })
+
+  it("hands off to the real journal editor instead of opening its own editing screen", async () => {
+    const user = userEvent.setup()
+    const onDecorateToday = vi.fn()
+    render(<DecorationShop earnedPoints={4} hasJournalEntries onDecorateToday={onDecorateToday} />)
 
     expect(screen.getByText("내 기록에 꾸미기")).toBeVisible()
-    expect(screen.getByText("꾸미기 보관함 · 사용 가능 8P")).toBeVisible()
+    expect(screen.getByText(/오늘 일지 위에서 바로 꾸며요/u)).toBeVisible()
+    await user.click(screen.getByRole("button", { name: "꾸미기 열기" }))
+
+    expect(onDecorateToday).toHaveBeenCalledTimes(1)
+    /* 자체 편집 다이얼로그·자리표시 미리보기는 존재하지 않는다. */
+    expect(screen.queryByRole("dialog")).toBeNull()
     expect(screen.queryByRole("region", { name: "꾸미기 미리보기" })).toBeNull()
+    expect(screen.queryByText(/꾸미기만 먼저 시험해 봐요/u)).toBeNull()
   })
 
-  it("opens a keyboard-closable editor with the preview and catalog controls separated", async () => {
-    const user = userEvent.setup()
-    render(<DecorationShop earnedPoints={0} />)
+  it("never suggests cash value for beta points", () => {
+    render(<DecorationShop earnedPoints={20} hasJournalEntries />)
 
-    await user.click(screen.getByRole("button", { name: "꾸미기 열기" }))
-
-    expect(screen.getByRole("dialog", { name: "일지 꾸미기 · 사용 가능 0P" })).toBeVisible()
-    expect(screen.getByRole("button", { name: "꾸미기 닫기" })).toHaveFocus()
-    expect(screen.getByRole("region", { name: "꾸미기 미리보기" })).toBeVisible()
-    expect(screen.queryByRole("combobox", { name: "꾸미기 종류" })).toBeNull()
-    await openAllStudioTools()
-    expect(screen.getByRole("combobox", { name: "꾸미기 종류" })).toBeVisible()
-    expect(document.querySelector(".decoration-studio__catalog")).not.toBeNull()
-
-    await user.keyboard("{Escape}")
-    expect(screen.queryByRole("dialog", { name: /일지 꾸미기/u })).toBeNull()
-  })
-
-  it("keeps item commands in one action area after an item is selected", async () => {
-    const user = userEvent.setup()
-    render(<DecorationShop earnedPoints={20} />)
-    await user.click(screen.getByRole("button", { name: "꾸미기 열기" }))
-    await openAllStudioTools()
-
-    expect(screen.queryByRole("region", { name: "선택한 꾸미기" })).toBeNull()
-    await user.click(screen.getByRole("button", { name: "결승선 스티커 미리보기" }))
-
-    const actionArea = screen.getByRole("region", { name: "선택한 꾸미기" })
-    expect(actionArea).toHaveTextContent("결승선 스티커")
-    expect(screen.getAllByRole("button").length).toBeLessThan(85)
-    expect(screen.getByRole("button", { name: "결승선 스티커 8P로 받기" })).toBeVisible()
-  })
-
-  it("shows eight visual previews including five starter items and never suggests cash value", () => {
-    const { container } = render(<DecorationShop earnedPoints={20} />)
     expect(screen.getByText(/현금으로 바꾸거나 다른 사람에게 보낼 수 없어요/u)).toBeVisible()
-    fireEvent.click(screen.getByRole("button", { name: "꾸미기 열기" }))
-    openAllStudioToolsSync()
-
-    expect(screen.getByRole("dialog", { name: "일지 꾸미기 · 사용 가능 20P" })).toBeVisible()
-    expect(screen.getByText("트랙 노트")).toBeVisible()
-    expect(screen.getByText("남색 잉크")).toBeVisible()
-    expect(screen.getByText("맑은 날")).toBeVisible()
-    expect(screen.getByText("푹 쉬었어요")).toBeVisible()
-    expect(screen.getByText("체크 테이프")).toBeVisible()
-    expect(screen.getByText("하늘 일지 테마")).toBeVisible()
-    expect(screen.getByText("결승선 스티커")).toBeVisible()
-    expect(screen.getByText("출발선 아바타")).toBeVisible()
-    expect(container.querySelectorAll(".decoration-shop__item img")).toHaveLength(8)
-    fireEvent.click(screen.getByRole("button", { name: "트랙 노트 미리보기" }))
-    expect(screen.getByRole("button", { name: "트랙 노트 사용 중" })).toBeVisible()
-    fireEvent.click(screen.getByRole("button", { name: "하늘 일지 테마 미리보기" }))
-    expect(screen.getByRole("button", { name: "하늘 일지 테마 12P로 받기" })).toBeVisible()
   })
 
-  it("shows a named fallback when an asset cannot load", () => {
-    const { container } = render(<DecorationShop earnedPoints={20} />)
-    fireEvent.click(screen.getByRole("button", { name: "꾸미기 열기" }))
-    openAllStudioToolsSync()
-    const firstPreview = container.querySelector(".decoration-shop__item img")
-    expect(firstPreview).not.toBeNull()
-    if (firstPreview === null) return
+  it("keeps the first-record state compact and honest before any journal exists", () => {
+    render(<DecorationShop earnedPoints={0} hasJournalEntries={false} onDecorateToday={() => undefined} />)
 
-    fireEvent.error(firstPreview)
-
-    expect(screen.getByRole("img", { name: "트랙 노트 미리보기" })).toBeVisible()
-  })
-
-  it("keeps a purchased item after reopening the shop", async () => {
-    const first = render(<DecorationShop earnedPoints={20} />)
-    await userEvent.click(screen.getByRole("button", { name: "꾸미기 열기" }))
-    await openAllStudioTools()
-    await userEvent.click(screen.getByRole("button", { name: "결승선 스티커 미리보기" }))
-    await userEvent.click(screen.getByRole("button", { name: "결승선 스티커 8P로 받기" }))
-    expect(screen.getByRole("button", { name: "결승선 스티커 사용하기" })).toBeVisible()
-
-    first.unmount()
-    render(<DecorationShop earnedPoints={20} />)
-    await userEvent.click(screen.getByRole("button", { name: "꾸미기 열기" }))
-    await openAllStudioTools()
-    await userEvent.click(screen.getByRole("button", { name: "결승선 스티커 미리보기" }))
-    expect(screen.getByRole("button", { name: "결승선 스티커 사용하기" })).toBeVisible()
-  })
-
-  it("reports spent points to the home balance after a verified purchase", async () => {
-    let spentPoints = 0
-    render(<DecorationShop earnedPoints={20} onSpentPointsChange={(spent) => { spentPoints = spent }} />)
-    await userEvent.click(screen.getByRole("button", { name: "꾸미기 열기" }))
-    await openAllStudioTools()
-    await userEvent.click(screen.getByRole("button", { name: "결승선 스티커 미리보기" }))
-    await userEvent.click(screen.getByRole("button", { name: "결승선 스티커 8P로 받기" }))
-
-    expect(spentPoints).toBe(8)
-  })
-
-  it("does not claim success when purchase storage silently fails", async () => {
-    render(<DecorationShop earnedPoints={20} />)
-    await userEvent.click(screen.getByRole("button", { name: "꾸미기 열기" }))
-    await openAllStudioTools()
-    vi.spyOn(Storage.prototype, "setItem").mockImplementation(() => undefined)
-
-    await userEvent.click(screen.getByRole("button", { name: "결승선 스티커 미리보기" }))
-    await userEvent.click(screen.getByRole("button", { name: "결승선 스티커 8P로 받기" }))
-
-    expect(screen.getByRole("status")).toHaveTextContent("저장하지 못했어요. 다시 시도해 주세요.")
-    expect(screen.queryByText(/받았어요/u)).toBeNull()
-  })
-
-  it("states the exact shortfall and safe ways to earn it", async () => {
-    render(<DecorationShop earnedPoints={4} />)
-    await userEvent.click(screen.getByRole("button", { name: "꾸미기 열기" }))
-    await openAllStudioTools()
-    await userEvent.click(screen.getByRole("button", { name: "결승선 스티커 미리보기" }))
-    await userEvent.click(screen.getByRole("button", { name: "결승선 스티커 8P로 받기" }))
-
-    expect(screen.getByRole("status")).toHaveTextContent("포인트가 4P 더 필요해요.")
-    expect(screen.getByRole("status")).toHaveTextContent("오늘 방문 확인은 1P")
-    expect(screen.getByRole("status")).toHaveTextContent("훈련·회복 기록을 남긴 날은 4P")
-  })
-
-  it("keeps viewing simple until the palette opens the studio", async () => {
-    render(<DecorationShop earnedPoints={0} />)
-
-    expect(screen.getByText("보기")).toBeVisible()
-    expect(screen.queryByRole("button", { name: "추천" })).toBeNull()
-
-    await userEvent.click(screen.getByRole("button", { name: "꾸미기 열기" }))
-    await openAllStudioTools()
-
-    for (const name of ["추천", "최근 사용", "즐겨찾기", "날씨", "회복", "경기", "계절", "모두"]) {
-      expect(screen.getByRole("button", { name })).toBeVisible()
-    }
-    for (const name of ["가벼운 날", "회복한 날", "비 오는 날", "경기 날"]) {
-      expect(screen.getByRole("button", { name: `${name} 미리보기` })).toBeVisible()
-    }
-  })
-
-  it("tries an unowned item without changing storage and restores the page when closed", async () => {
-    render(<DecorationShop earnedPoints={0} />)
-    const before = window.localStorage.getItem("trainoracle.decorations.v2")
-    await userEvent.click(screen.getByRole("button", { name: "꾸미기 열기" }))
-    await openAllStudioTools()
-
-    await userEvent.click(screen.getByRole("button", { name: "하늘 일지 테마 미리보기" }))
-
-    expect(screen.getByRole("region", { name: "꾸미기 미리보기" })).toHaveTextContent("하늘 일지 테마 미리보기 중")
-    expect(window.localStorage.getItem("trainoracle.decorations.v2")).toBe(before)
-
-    await userEvent.click(screen.getByRole("button", { name: "꾸미기 닫기" }))
-
-    expect(screen.queryByText("하늘 일지 테마 미리보기 중")).toBeNull()
-    expect(window.localStorage.getItem("trainoracle.decorations.v2")).toBe(before)
-  })
-
-  it("lets a zero-point user apply a starter and keeps favorites and recents after reopening", async () => {
-    const first = render(<DecorationShop earnedPoints={0} hasEntriesForDate={() => true} />)
-    await userEvent.click(screen.getByRole("button", { name: "꾸미기 열기" }))
-    await openAllStudioTools()
-    await userEvent.click(screen.getByRole("button", { name: "맑은 날 미리보기" }))
-    await userEvent.click(screen.getByRole("button", { name: "맑은 날 즐겨찾기" }))
-    await userEvent.click(screen.getByRole("button", { name: "맑은 날 바로 사용" }))
-
-    expect(screen.getByRole("status")).toHaveTextContent("맑은 날을 사용했어요.")
-    first.unmount()
-
-    render(<DecorationShop earnedPoints={0} hasEntriesForDate={() => true} />)
-    await userEvent.click(screen.getByRole("button", { name: "꾸미기 열기" }))
-    await openAllStudioTools()
-    await userEvent.click(screen.getByRole("button", { name: "최근 사용" }))
-    await userEvent.click(screen.getByRole("button", { name: "맑은 날 미리보기" }))
-    expect(screen.getByRole("button", { name: "맑은 날 제거" })).toBeVisible()
-    await userEvent.click(screen.getByRole("button", { name: "즐겨찾기" }))
-    await userEvent.click(screen.getByRole("button", { name: "맑은 날 미리보기" }))
-    expect(screen.getByRole("button", { name: "맑은 날 즐겨찾기 해제" })).toBeVisible()
-  })
-
-  it("does not claim a starter was applied when verified storage fails", async () => {
-    render(<DecorationShop earnedPoints={0} hasEntriesForDate={() => true} />)
-    await userEvent.click(screen.getByRole("button", { name: "꾸미기 열기" }))
-    await openAllStudioTools()
-    vi.spyOn(Storage.prototype, "setItem").mockImplementation(() => undefined)
-
-    await userEvent.click(screen.getByRole("button", { name: "맑은 날 미리보기" }))
-    await userEvent.click(screen.getByRole("button", { name: "맑은 날 바로 사용" }))
-
-    expect(screen.getByRole("status")).toHaveTextContent("꾸미기를 저장하지 못했어요. 일지는 그대로예요.")
-    expect(screen.queryByText("맑은 날을 사용했어요.")).toBeNull()
-  })
-
-  it("saves a starter only for the explicitly selected previous date", () => {
-    render(<DecorationShop earnedPoints={0} hasEntriesForDate={() => true} />)
-    const today = todayISO()
-    const previousDate = moveDecorationDate(today, -1)
-    const before = window.localStorage.getItem(DECORATION_STORAGE_KEY_V3)
-    const beforeState = parseStoredDecorationState(before ?? "")
-
-    fireEvent.click(screen.getByRole("button", { name: "꾸미기 열기" }))
-    openAllStudioToolsSync()
-    fireEvent.click(screen.getByTestId("decoration-date-previous"))
-    fireEvent.click(screen.getByTestId("decoration-preset-LIGHT_DAY"))
-
-    expect(screen.getByTestId("decoration-date-current")).toHaveTextContent(previousDate)
-    expect(screen.getByText(/조합을 미리 보고 있어요/u)).toBeVisible()
-    expect(window.localStorage.getItem(DECORATION_STORAGE_KEY_V3)).toBe(before)
-
-    fireEvent.click(screen.getByRole("button", { name: "맑은 날 미리보기" }))
-    fireEvent.click(screen.getByTestId("decoration-item-use-STICKER_WEATHER_SUN"))
-
-    const after = window.localStorage.getItem(DECORATION_STORAGE_KEY_V3)
-    const afterState = parseStoredDecorationState(after ?? "")
-    expect(JSON.stringify(afterState === null ? [] : journalDecorationItems(afterState, today))).toBe(
-      JSON.stringify(beforeState === null ? [] : journalDecorationItems(beforeState, today)),
-    )
-    expect(afterState === null ? [] : journalDecorationItems(afterState, previousDate)).toContainEqual(
-      expect.objectContaining({ itemId: "STICKER_WEATHER_SUN" }),
-    )
-  })
-
-  it("does not save a date decoration for an empty date", async () => {
-    render(<DecorationShop earnedPoints={0} />)
-    await userEvent.click(screen.getByRole("button", { name: "꾸미기 열기" }))
-    await openAllStudioTools()
-    await userEvent.click(screen.getByRole("button", { name: "맑은 날 미리보기" }))
-    await userEvent.click(screen.getByTestId("decoration-item-use-STICKER_WEATHER_SUN"))
-
-    expect(screen.getByRole("status")).toHaveTextContent("기록이 있는 날짜에만")
-    expect(parseStoredDecorationState(window.localStorage.getItem(DECORATION_STORAGE_KEY_V3) ?? "")?.pages).toEqual([])
+    expect(screen.getByText("첫 기록 뒤 시작")).toBeVisible()
+    expect(screen.getByText(/일지를 하나 남기면 그 페이지 위에서 바로 꾸밀 수 있어요/u)).toBeVisible()
   })
 })

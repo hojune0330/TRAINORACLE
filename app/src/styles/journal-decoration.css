@@ -350,6 +350,8 @@
 }
 
 .journal-decoration-toolbar > header div { display: grid; gap: 3px; }
+/* 포인트 잔액: 홈 상점 통합 후 받기 버튼 옆에서 바로 보이는 유일한 잔액 표시. */
+.journal-decoration-toolbar__points { color: var(--ink-3); font-size: var(--fs-caption); }
 .journal-decoration-toolbar > header strong { font-size: 14px; }
 .journal-decoration-toolbar > header span,
 .journal-decoration-toolbar > footer span { color: var(--ink-3); font-size: 11px; line-height: 1.45; }

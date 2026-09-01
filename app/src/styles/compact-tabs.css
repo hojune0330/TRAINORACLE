@@ -96,20 +96,8 @@
   padding-bottom: calc(128px + env(safe-area-inset-bottom));
 }
 
-.decoration-shop--open .decoration-shop__header {
-  min-height: var(--app-touch-min);
-  max-height: calc(var(--app-touch-min) + env(safe-area-inset-top));
-  padding: env(safe-area-inset-top) 12px 0;
-}
-
-@media (max-width: 759px) {
-  .decoration-shop--open .decoration-shop__header.decoration-shop__header--collapsed {
-    min-height: 0;
-    max-height: 0;
-    padding-block: 0;
-    border-bottom: 0;
-  }
-}
+/* 홈 꾸미기 편집 모달(구 decoration-shop--open)은 일지 상세 편집기로 통합돼
+ * 접힘 헤더 규칙이 사라졌다 — 홈 카드 헤더는 decoration-studio.css 가 소유한다. */
 
 .journal-decoration-toolbar > header {
   min-height: var(--app-touch-min);
@@ -123,9 +111,3 @@
   height: 14px;
 }
 
-@media (max-width: 759px) {
-  .decoration-studio__situation-tabs.app-compact-tabs,
-  .decoration-studio__context-filter.app-compact-tabs {
-    display: contents;
-  }
-}

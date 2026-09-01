@@ -53,24 +53,21 @@ test("keeps decoration and oracle motion brief, directional, and optional", asyn
     expect(oracleAnimations.every((animation) => animation.duration === "0.3s")).toBe(true)
   }
 
+  /* 홈 카드는 이제 진짜 일지 편집기로 라우팅 — 편집기 진입/서랍 모션이 짧고 방향성이 있어야 한다. */
   await mainTabs.getByRole("button", { name: "홈" }).click()
   await page.getByRole("button", { name: "꾸미기 열기" }).click()
-  const canvas = page.locator(".decoration-studio-preview__canvas")
-  await expect(canvas).toHaveAttribute("data-motion-direction", "STAY")
+  await expect(page.getByRole("dialog", { name: "이 일지 꾸미기" })).toBeVisible()
+
+  const canvasAnimation = await page.locator(".journal-decoration-workspace--open > .decorated-journal-page")
+    .evaluate((element) => getComputedStyle(element).animationName)
+  expect(canvasAnimation).toBe(testInfo.project.name === "reduced-motion" ? "none" : "decoration-canvas-enter")
 
   await page.getByRole("button", { name: "이모지 스티커 도구" }).click()
-  const controlsAnimation = await page.locator(".decoration-studio__controls").evaluate((element) => (
-    getComputedStyle(element).animationName
-  ))
-  expect(controlsAnimation).toBe(testInfo.project.name === "reduced-motion" ? "none" : "decoration-tool-enter")
-  await page.getByRole("button", { name: "꾸미기 도구 숨기기" }).click()
-
-  await page.getByTestId("decoration-date-next").click()
-  await expect(canvas).toHaveAttribute("data-motion-direction", "FORWARD")
-  const pageAnimation = await canvas.evaluate((element) => getComputedStyle(element).animationName)
-  expect(pageAnimation).toBe(testInfo.project.name === "reduced-motion" ? "none" : "decoration-page-forward")
-
-  await page.getByTestId("decoration-date-previous").click()
-  await expect(canvas).toHaveAttribute("data-motion-direction", "BACKWARD")
+  const drawerContentAnimation = await page
+    .locator('.journal-decoration-toolbar[data-open="true"] > header')
+    .evaluate((element) => getComputedStyle(element).animationName)
+  expect(drawerContentAnimation).toBe(
+    testInfo.project.name === "reduced-motion" ? "none" : "decoration-tools-content-enter",
+  )
   expect(await page.locator("body").evaluate((body) => body.scrollWidth <= window.innerWidth)).toBe(true)
 })

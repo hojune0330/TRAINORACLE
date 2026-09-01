@@ -8,7 +8,6 @@ const main = readFileSync("src/main.tsx", "utf8")
 const compactTabSurfaces = [
   "src/screens/JournalArchive.tsx",
   "src/screens/TrainingLexicon.tsx",
-  "src/screens/home/DecorationStudio.tsx",
   "src/screens/trends/CumulativeDistancePanel.tsx",
   "src/screens/trends/EnergySystemLedgerPanel.tsx",
   "src/screens/trends/MonthlyTrendSection.tsx",
@@ -26,7 +25,8 @@ describe("compact tab density", () => {
     /* P4 v3 자유 배치로 슬롯 레일이 사라져 예시 일지가 짧아졌다 — 최대 스크롤
      * 위치에서 종이를 읽기 상단에 맞추려면 128px 여유가 필요하다. */
     expect(compactTabsCss).toContain("padding-bottom: calc(128px + env(safe-area-inset-bottom))")
-    expect(compactTabsCss).toMatch(/\.decoration-shop--open \.decoration-shop__header\.decoration-shop__header--collapsed\s*\{[\s\S]*max-height:\s*0/u)
+    /* 2026-09-01 통합: 홈 꾸미기 편집 모달이 사라져 접힘 헤더 규칙도 함께 제거됐다. */
+    expect(compactTabsCss).not.toContain(".decoration-shop--open")
   })
 
   it("uses the shared density rule on every audited tab surface", () => {

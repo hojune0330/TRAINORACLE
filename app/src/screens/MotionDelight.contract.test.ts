@@ -9,9 +9,10 @@ describe("decoration and oracle motion contract", () => {
   it("uses brief transform and opacity motion without continuous loops", () => {
     expect(appCss).toContain("oracle-insight-enter var(--dur-slow) var(--ease-out-strong) backwards")
     expect(appCss).toContain("oracle-evidence-enter var(--dur-base) var(--ease-out-strong) backwards")
-    expect(studioCss).toContain("decoration-page-forward")
-    expect(studioCss).toContain("decoration-page-backward")
-    expect(studioCss).toContain("decoration-emoji-confirm var(--dur-slow) var(--ease-out-strong) both")
+    /* 홈 전용 꾸미기 편집 화면 통합(2026-09-01) 후 페이지 넘김·이모지 모션은
+     * 일지 편집기(journal-decoration.css)가 소유한다. */
+    expect(journalCss).toContain("decoration-canvas-enter")
+    expect(journalCss).toContain("decoration-tools-content-enter")
     expect(journalCss).toContain("journal-emoji-selected 480ms var(--ease-out-strong) both")
 
     const motionCss = `${appCss}\n${studioCss}\n${journalCss}`
@@ -19,7 +20,7 @@ describe("decoration and oracle motion contract", () => {
     const keyframes = motionCss.match(
       /@keyframes (?:oracle|decoration|journal-emoji-selected)[^{]*\{[\s\S]*?^\}/gmu,
     ) ?? []
-    expect(keyframes.length).toBeGreaterThanOrEqual(11)
+    expect(keyframes.length).toBeGreaterThanOrEqual(8)
     for (const keyframe of keyframes) {
       expect(keyframe).not.toMatch(/\b(?:width|height|top|left|right|bottom)\s*:/iu)
     }
@@ -41,7 +42,5 @@ describe("decoration and oracle motion contract", () => {
     expect(journalCss).toContain("animation: decoration-canvas-enter")
     expect(journalCss).toContain("transform: translateY(calc(100% + 72px))")
     expect(journalCss).toContain("visibility: hidden")
-    expect(studioCss).toContain('data-motion-direction="FORWARD"')
-    expect(studioCss).toContain('data-motion-direction="BACKWARD"')
   })
 })
