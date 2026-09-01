@@ -88,7 +88,7 @@
   display: block;
   object-fit: contain;
   pointer-events: none;
-  filter: drop-shadow(0 1px 2px rgba(30, 30, 30, 0.18));
+  filter: none;
 }
 
 .decorated-journal-page__top-rail {
@@ -108,7 +108,7 @@
 
 /*
  * 이모지는 유니코드 텍스트 렌더(플랫폼 이모지 폰트 위임).
- * __slot의 drop-shadow는 이미지 자산용이므로 이모지에서는 해제(A1: 그림자 없음).
+ * 이미지와 이모지 모두 종이 위 평면 인쇄물처럼 그림자 없이 그린다.
  * 부착 모션: scale 1.15→1, 220ms, 1회 — CSS만 사용 (계약 §5.4).
  */
 .decorated-journal-page__emoji {

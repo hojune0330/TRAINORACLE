@@ -113,8 +113,13 @@ describe("real journal decoration surface", () => {
     expect(screen.getByRole("button", { name: "도장" })).toBeVisible()
     expect(screen.getByRole("button", { name: "테이프" })).toBeVisible()
     expect(screen.getByRole("button", { name: "아바타" })).toBeVisible()
+    expect(screen.getByRole("button", { name: "꾸미기 재료 도구" })).toBeVisible()
     expect(container.querySelectorAll(".journal-decoration-toolbar__material-tile").length).toBe(36)
     expect(screen.queryByRole("button", { name: /제거/u })).not.toBeInTheDocument()
+
+    await user.click(screen.getByRole("button", { name: "꾸미기 재료 도구" }))
+    expect(screen.getByRole("button", { name: "맑은 날 붙이기" })).toBeVisible()
+    expect(screen.queryByRole("button", { name: /^기본 · 트랙 노트/u })).not.toBeInTheDocument()
   })
 
   it("expands a paid item confirmation inline and explains insufficient points", async () => {

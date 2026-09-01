@@ -46,6 +46,7 @@ describe("shared visual system", () => {
     expect(source).not.toMatch(/borderLeft\s*:\s*["'`]\s*[34]px\s+solid/iu)
     expect(cssShadows).toEqual([])
     expect(inlineShadows).toEqual([])
+    expect(source).not.toMatch(/filter\s*:\s*drop-shadow/iu)
     expect(tokens).toContain("--shadow-frame: none")
     expect(tokens).toContain("--shadow-subtle: none")
   })

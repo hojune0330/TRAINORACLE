@@ -4,12 +4,14 @@ import {
   ChevronDown,
   ClipboardPaste,
   Copy,
+  LayoutGrid,
   Layers2,
   LockKeyhole,
   Palette,
   PenLine,
   Redo2,
   Smile,
+  Sticker,
   Type,
   Undo2,
   UserRoundX,
@@ -21,6 +23,7 @@ import type { DecorationCatalogItem } from "../../domain/decorations"
 
 type DrawerFilter =
   | "ALL"
+  | "MATERIALS"
   | "STICKER"
   | "STAMP"
   | "TAPE"
@@ -29,7 +32,7 @@ type DrawerFilter =
   | "INK"
   | "EMOJI_STICKER"
 
-type MaterialCategory = Exclude<DrawerFilter, "ALL" | "EMOJI_STICKER">
+type MaterialCategory = Exclude<DrawerFilter, "ALL" | "MATERIALS" | "EMOJI_STICKER">
 
 const DRAWER_FILTERS: readonly { readonly id: DrawerFilter; readonly label: string }[] = [
   { id: "ALL", label: "전체" },
@@ -58,6 +61,12 @@ const MATERIAL_CATEGORY_LABELS: Readonly<Record<MaterialCategory, string>> = {
   THEME: "테마",
   AVATAR: "아바타",
   INK: "글자색",
+}
+
+function materialDisplayName(item: DecorationCatalogItem): string {
+  if (item.id === "THEME_TRACK_NOTEBOOK") return "기본 · 트랙 노트"
+  if (item.id === "INK_NAVY") return "기본 · 남색 잉크"
+  return item.name
 }
 
 /*
@@ -169,6 +178,7 @@ function MaterialTile({
       : item.compatibleSlots.length > 0
         ? "붙이기"
         : active ? "적용 중" : "적용하기"
+  const displayName = materialDisplayName(item)
 
   return (
     <button
@@ -177,7 +187,7 @@ function MaterialTile({
       data-active={active ? "true" : undefined}
       data-blocked={blockedReason === null ? undefined : "true"}
       data-previewing={previewing ? "true" : undefined}
-      aria-label={`${item.name} ${statusLabel}`}
+      aria-label={`${displayName} ${statusLabel}`}
       aria-pressed={item.compatibleSlots.length === 0 ? active : undefined}
       aria-disabled={blockedReason === null ? undefined : "true"}
       title={item.description}
@@ -204,7 +214,7 @@ function MaterialTile({
           ? <span className="journal-decoration-toolbar__ink-swatch" />
           : <img src={`${import.meta.env.BASE_URL}${item.assetPath}`} alt="" draggable="false" loading="lazy" />}
       </span>
-      <span className="journal-decoration-toolbar__material-name">{item.name}</span>
+      <span className="journal-decoration-toolbar__material-name">{displayName}</span>
       {!owned && (
         <span className="journal-decoration-toolbar__material-cost" aria-hidden="true">
           <LockKeyhole size={12} /> {item.cost}P
@@ -358,12 +368,13 @@ export function JournalDecorationToolbar(props: JournalDecorationToolbarProps) {
   }
 
   const renderMaterialCategory = (category: MaterialCategory): React.ReactNode => {
-    if (toolFilter !== "ALL" && toolFilter !== category) return null
+    const partOfMaterialDrawer = category === "STICKER" || category === "STAMP" || category === "TAPE"
+    if (toolFilter !== "ALL" && toolFilter !== category && !(toolFilter === "MATERIALS" && partOfMaterialDrawer)) return null
     const categoryItems = props.items.filter((item) => item.category === category)
     if (categoryItems.length === 0) return null
     return (
       <React.Fragment key={category}>
-        {toolFilter === "ALL" && <h3 className="journal-decoration-toolbar__section-title">{MATERIAL_CATEGORY_LABELS[category]}</h3>}
+        {(toolFilter === "ALL" || toolFilter === "MATERIALS") && <h3 className="journal-decoration-toolbar__section-title">{MATERIAL_CATEGORY_LABELS[category]}</h3>}
         {category === "AVATAR" && props.hasEntries && (
           <button
             type="button"
@@ -426,8 +437,9 @@ export function JournalDecorationToolbar(props: JournalDecorationToolbarProps) {
       {props.notice !== "" && <p className="journal-decoration-editor__notice" role="status" aria-live="polite">{props.notice}</p>}
 
       <nav className="journal-decoration-editor__dock" aria-label="일지 꾸미기 도구" data-decoration-interaction="true">
-        <button type="button" aria-label="모든 꾸미기 도구" aria-pressed={props.drawerOpen && toolFilter === "ALL"} onClick={() => chooseTool("ALL")}><Palette aria-hidden="true" size={19} /><span>모두</span></button>
-        <button type="button" aria-label="이모지 스티커 도구" aria-pressed={props.drawerOpen && toolFilter === "EMOJI_STICKER"} onClick={() => chooseTool("EMOJI_STICKER")}><Smile aria-hidden="true" size={19} /><span>스티커</span></button>
+        <button type="button" aria-label="모든 꾸미기 도구" aria-pressed={props.drawerOpen && toolFilter === "ALL"} onClick={() => chooseTool("ALL")}><LayoutGrid aria-hidden="true" size={19} /><span>전체</span></button>
+        <button type="button" aria-label="꾸미기 재료 도구" aria-pressed={props.drawerOpen && toolFilter === "MATERIALS"} onClick={() => chooseTool("MATERIALS")}><Sticker aria-hidden="true" size={19} /><span>재료</span></button>
+        <button type="button" aria-label="이모지 스티커 도구" aria-pressed={props.drawerOpen && toolFilter === "EMOJI_STICKER"} onClick={() => chooseTool("EMOJI_STICKER")}><Smile aria-hidden="true" size={19} /><span>이모지</span></button>
         {props.onOpenTextSticker !== undefined && (
           <button type="button" aria-label="글 스티커 도구" onClick={props.onOpenTextSticker}><Type aria-hidden="true" size={19} /><span>글</span></button>
         )}
