@@ -1,29 +1,46 @@
 import assert from "node:assert/strict"
-import { readFile, stat } from "node:fs/promises"
+import { readFile, readdir, stat } from "node:fs/promises"
 import { test } from "node:test"
 
 const assetDirectory = new URL("../../app/public/decorations/", import.meta.url)
-const expectedFiles = [
-  "avatar-start-line.webp",
-  "ink-navy.webp",
-  "stamp-rest-day.webp",
-  "sticker-finish-line.webp",
-  "sticker-weather-sun.webp",
-  "tape-checker.webp",
-  "theme-sky-journal.webp",
-  "theme-track-notebook.webp",
-]
-
 const expectedDimensions = new Map([
-  ["avatar-start-line.webp", [256, 256]],
-  ["ink-navy.webp", [256, 256]],
-  ["stamp-rest-day.webp", [256, 256]],
-  ["sticker-finish-line.webp", [256, 256]],
-  ["sticker-weather-sun.webp", [256, 256]],
-  ["tape-checker.webp", [512, 128]],
-  ["theme-sky-journal.webp", [512, 512]],
   ["theme-track-notebook.webp", [512, 512]],
+  ["theme-sky-journal.webp", [512, 512]],
+  ["theme-grid-field.webp", [512, 512]],
+  ["theme-dawn-run.webp", [512, 512]],
+  ["theme-forest-trail.webp", [512, 512]],
+  ["theme-race-day.webp", [512, 512]],
+  ["tape-checker.webp", [512, 128]],
+  ["tape-sage-solid.webp", [512, 128]],
+  ["tape-diagonal.webp", [512, 128]],
+  ["tape-dot-grid.webp", [512, 128]],
+  ["tape-track-lane.webp", [512, 128]],
+  ["tape-mountain.webp", [512, 128]],
+  ["sticker-weather-sun.webp", [256, 256]],
+  ["sticker-finish-line.webp", [256, 256]],
+  ["sticker-running-shoe.webp", [256, 256]],
+  ["sticker-water-bottle.webp", [256, 256]],
+  ["sticker-stopwatch-doodle.webp", [256, 256]],
+  ["sticker-heart-rate.webp", [256, 256]],
+  ["sticker-trail-tree.webp", [256, 256]],
+  ["sticker-medal-ribbon.webp", [256, 256]],
+  ["sticker-night-moon.webp", [256, 256]],
+  ["sticker-bandage-care.webp", [256, 256]],
+  ["stamp-rest-day.webp", [256, 256]],
+  ["stamp-done-check.webp", [256, 256]],
+  ["stamp-personal-best.webp", [256, 256]],
+  ["stamp-early-bird.webp", [256, 256]],
+  ["stamp-rain-run.webp", [256, 256]],
+  ["stamp-long-run.webp", [256, 256]],
+  ["stamp-interval.webp", [256, 256]],
+  ["stamp-recovery.webp", [256, 256]],
+  ["ink-navy.webp", [256, 256]],
+  ["avatar-start-line.webp", [256, 256]],
+  ["avatar-easy-jog.webp", [256, 256]],
+  ["avatar-sprinter.webp", [256, 256]],
+  ["avatar-stretching.webp", [256, 256]],
 ])
+const expectedFiles = [...expectedDimensions.keys()]
 
 function readWebpDimensions(bytes, fileName) {
   const chunk = bytes.subarray(12, 16).toString("ascii")
@@ -40,7 +57,10 @@ function readWebpDimensions(bytes, fileName) {
   throw new Error(`${fileName} has unsupported WebP chunk ${chunk}`)
 }
 
-test("beta decoration assets stay complete, valid, and lightweight", async () => {
+test("expanded decoration assets stay complete, valid, and lightweight", async () => {
+  const diskFiles = (await readdir(assetDirectory)).filter((fileName) => fileName.endsWith(".webp")).sort()
+  assert.deepEqual(diskFiles, [...expectedFiles].sort(), "asset directory must match the catalog asset set exactly")
+
   const files = await Promise.all(expectedFiles.map(async (fileName) => {
     const fileUrl = new URL(fileName, assetDirectory)
     const [bytes, metadata] = await Promise.all([readFile(fileUrl), stat(fileUrl)])
@@ -51,6 +71,6 @@ test("beta decoration assets stay complete, valid, and lightweight", async () =>
     return { fileName, size: metadata.size }
   }))
 
-  assert.equal(files.length, 8)
-  assert.ok(files.reduce((total, file) => total + file.size, 0) <= 500 * 1024)
+  assert.equal(files.length, 35)
+  assert.ok(files.reduce((total, file) => total + file.size, 0) <= 2 * 1024 * 1024)
 })
