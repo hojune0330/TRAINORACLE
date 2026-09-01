@@ -379,8 +379,8 @@ and runtime evidence are reviewed separately.
 ```yaml
 quick_log_contract:
   patched_from: SPEC_TAP_FIRST_LOGGING.md
-  contract_status: SPEC_ONLY_OWNER_ADOPTION_PENDING
-  runtime_implementation_status: NOT_CLAIMED
+  contract_status: OWNER_ADOPTED_2026_09_02
+  runtime_implementation_status: POST_SESSION_QUICK_V1_IMPLEMENTED_PENDING_RELEASE_EVIDENCE
   canonical_promotion_status: NOT_CLAIMED
   issue_closure_status: NOT_CLAIMED
 
@@ -391,10 +391,17 @@ quick_log_contract:
     detail:
       entry_behavior: existing_full_form
     shared_invariants:
-      JournalEntry_schema: identical
+      JournalEntry_existing_fields: backward_compatible
       save_path: same_saveEntry()
-      existing_field_addition_deletion_or_type_change: forbidden
+      existing_field_deletion_or_type_change: forbidden
+      optional_progressive_capture_fields:
+        - captureDepth
+        - activityOutcome
+        - activitySlot
+        - rpeBand
+        - objectiveDataState
       quick_to_detail_value_handoff: preserve_current_values
+      quick_to_detail_identity: same_entry_id
 
   tap_counting:
     counted_event: one_deliberate_user_tap_that_selects_changes_or_confirms_a_value_or_command
@@ -457,6 +464,21 @@ quick_log_contract:
     quick_mode_can_bypass_safety_evaluation: false
     no_pain_action_requires_explicit_current_entry_tap: true
     favorable_checkin_or_completion_state_can_clear_D9_or_Safety_Gate: false
+
+  rpe_band_boundary:
+    values: [RPE_1_2, RPE_3_4, RPE_5_6, RPE_7_8, RPE_9_10, UNKNOWN]
+    midpoint_conversion: forbidden
+    exact_rpe_field_when_only_band_selected: 0
+    unknown_provenance: MISSING
+
+  external_objective_reconciliation:
+    automatic_merge: forbidden
+    user_confirmation_required: true
+    same_date_single_waiting_quick_candidate_may_be_offered: true
+    multiple_waiting_quick_candidates: do_not_guess
+    existing_objective_value_overwrite: forbidden
+    merged_fields: [distanceKm, durationMin, avgPace]
+    never_infer_from_device: [rpe, rpeBand, mood, painParts, activityOutcome]
 ```
 
 Quick mode changes interaction cost, not storage truth or safety authority. It must preserve the visible ink stack across each automatic transition, and the accumulated values must remain editable without treating a transition, animation, preset ordering, or prior record as a new athlete fact.

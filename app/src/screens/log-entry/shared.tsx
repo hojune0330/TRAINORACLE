@@ -5,6 +5,7 @@ import type { JournalEntry } from "../../domain/journal-store"
 import type { PlannedSessionLink } from "../../domain/planned-session-link"
 
 export type JournalEntryType = "post-session" | "evening" | "race"
+export type LogEntryType = "quick-session" | JournalEntryType
 
 export interface EntryFormProps {
   readonly onBack?: () => void

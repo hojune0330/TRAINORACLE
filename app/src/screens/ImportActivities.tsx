@@ -1,7 +1,7 @@
 import React from "react"
 import { parseActivityFile } from "../domain/import/activity-file"
 import type { ActivityParseResult } from "../domain/import/activity-file"
-import { buildImportDrafts, saveImportedActivities } from "../domain/import/import-draft"
+import { buildImportDrafts, confirmImportDrafts } from "../domain/import/import-draft"
 import type { ImportDraft, ImportFormat, ImportSaveResult } from "../domain/import/import-draft"
 import { PickStage, ReviewStage, SavedStage } from "./import-activities/ImportStages"
 import type { ReadFailure } from "./import-activities/ImportStages"
@@ -89,13 +89,11 @@ export function ImportActivities({ onBack, onOpenLog }: {
 
   const handleSave = () => {
     if (stage.step !== "review") return
-    const chosen = stage.drafts
-      .filter((_, index) => selected.has(index))
-      .map((draft) => draft.activity)
+    const chosen = stage.drafts.filter((_, index) => selected.has(index))
     if (chosen.length === 0) return
 
     const format = importFormat(stage.result.format)
-    const outcome = saveImportedActivities(chosen, format)
+    const outcome = confirmImportDrafts(chosen, format)
     setStage({ step: "saved", outcome })
   }
 

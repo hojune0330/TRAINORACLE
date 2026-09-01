@@ -129,6 +129,13 @@ activity_confirmation:
   automatic_merge: forbidden
   automatic_overwrite: forbidden
   confirmed_provenance: DERIVED_EXTERNAL_PROVIDER
+  explicit_existing_journal_reconciliation:
+    allowed_only_after_user_selects_candidate: true
+    candidate_rule: exact_same_date_and_single_WAITING_quick_entry_or_existing_similarity_match
+    multiple_same_date_waiting_entries: no_automatic_candidate
+    preserve_entry_id: true
+    existing_objective_value_overwrite: forbidden
+    subjective_value_inference: forbidden
 ```
 
 Until a provider-specific confirmation UI and provenance rule are accepted, imported

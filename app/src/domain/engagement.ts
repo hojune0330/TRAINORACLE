@@ -177,7 +177,8 @@ function browserStorage(): Storage | null {
 
 export function toEngagementJournalRef(entry: JournalEntry): EngagementJournalRef | null {
   const qualifies = entry.kind === "post-session"
-    ? entry.system === "rest"
+    ? entry.activityOutcome !== undefined
+      || entry.system === "rest"
       || entry.title.trim() !== ""
       || entry.distanceKm.trim() !== ""
       || entry.durationMin.trim() !== ""

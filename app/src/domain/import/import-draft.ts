@@ -11,7 +11,7 @@
 import type { ImportedActivity } from "./activity-file"
 import type { FieldProvenanceMap } from "../field-provenance"
 import type { JournalEntry, PostSessionEntry } from "../journal-schema"
-import { loadEntries, newEntryId, saveEntry } from "../journal-store"
+import { loadEntries, newEntryId, saveEntry, updateEntry } from "../journal-store"
 
 /** 가져오기 파생 입력 토큰 — 일지 필드가 아니라 "파일에서 왔다"는 표시 */
 export const IMPORT_DERIVED_FROM = ["import:activity-file"] as const
@@ -26,6 +26,8 @@ export type ImportDraft = {
 
 export type ImportSaveResult = {
   readonly saved: number
+  readonly merged?: number
+  readonly conflicts?: number
   readonly failed: number
   readonly total: number
 }
@@ -62,7 +64,19 @@ export function buildImportDrafts(
         && entry.date === activity.date
         && looksLikeSameActivity(entry, activity),
     )
-    return { activity, duplicateOf: duplicate?.id ?? null }
+    if (duplicate !== undefined) return { activity, duplicateOf: duplicate.id }
+
+    // A quick record deliberately has no distance or time yet. Offer it only
+    // when there is exactly one waiting record on that date; two-a-day entries
+    // are ambiguous and must remain separate until the athlete chooses one.
+    const waitingQuickEntries = existing.filter(
+      (entry): entry is PostSessionEntry => entry.kind === "post-session"
+        && entry.date === activity.date
+        && entry.captureDepth === "QUICK"
+        && entry.objectiveDataState === "WAITING"
+        && !hasObjectiveValue(entry),
+    )
+    return { activity, duplicateOf: waitingQuickEntries.length === 1 ? waitingQuickEntries[0]?.id ?? null : null }
   })
 }
 
@@ -84,6 +98,76 @@ function importedProvenance(activity: ImportedActivity, format: ImportFormat): F
     // RPE·주관 감각은 파일에 없다 — 사용자가 직접 채울 몫으로 비워 둔다.
     rpe: { provenance: "MISSING" },
   }
+}
+
+function hasObjectiveValue(entry: PostSessionEntry): boolean {
+  return entry.distanceKm.trim() !== ""
+    || entry.durationMin.trim() !== ""
+    || entry.avgPace.trim() !== ""
+}
+
+export type ImportDraftConfirmationResult = ImportSaveResult & {
+  readonly merged: number
+  readonly conflicts: number
+}
+
+/**
+ * A selected duplicate means "add the external objective facts to this exact journal".
+ * Existing objective facts are never overwritten. A conflict stays visible for review.
+ */
+export function confirmImportDrafts(
+  drafts: readonly ImportDraft[],
+  format: ImportFormat,
+): ImportDraftConfirmationResult {
+  let saved = 0
+  let merged = 0
+  let conflicts = 0
+  let failed = 0
+  let total = loadEntries().length
+
+  for (const draft of drafts) {
+    if (draft.duplicateOf === null) {
+      const result = saveImportedActivity(draft.activity, format)
+      if (result.ok) saved += 1
+      else failed += 1
+      total = result.total
+      continue
+    }
+
+    const current = loadEntries().find(
+      (entry): entry is PostSessionEntry => entry.kind === "post-session" && entry.id === draft.duplicateOf,
+    )
+    if (current === undefined) {
+      failed += 1
+      continue
+    }
+    if (hasObjectiveValue(current)) {
+      conflicts += 1
+      continue
+    }
+
+    const imported = importedProvenance(draft.activity, format)
+    const next: PostSessionEntry = {
+      ...current,
+      savedAt: new Date(Math.max(Date.now(), Date.parse(current.savedAt) + 1)).toISOString(),
+      objectiveDataState: "CONFIRMED",
+      distanceKm: draft.activity.distanceKm,
+      durationMin: draft.activity.durationMin,
+      avgPace: draft.activity.avgPace,
+      fieldProvenance: {
+        ...(current.fieldProvenance ?? {}),
+        distanceKm: imported.distanceKm ?? { provenance: "MISSING" },
+        durationMin: imported.durationMin ?? { provenance: "MISSING" },
+        avgPace: imported.avgPace ?? { provenance: "MISSING" },
+      },
+    }
+    const result = updateEntry(next, current.savedAt)
+    if (result.ok) merged += 1
+    else failed += 1
+    total = result.total
+  }
+
+  return { saved, merged, conflicts, failed, total }
 }
 
 /** 가져온 활동 1건을 저장할 post-session 일지로 변환 (저장은 하지 않음) */

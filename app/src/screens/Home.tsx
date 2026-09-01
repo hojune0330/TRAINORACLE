@@ -28,7 +28,8 @@ import { CumulativeDistancePanel } from "./trends/CumulativeDistancePanel"
 import { EnergySystemLedgerPanel } from "./trends/EnergySystemLedgerPanel"
 import { TrashBin } from "./home/TrashBin"
 import { TrainingContentTeaser } from "./home/TrainingContentTeaser"
-import type { JournalEntryType } from "./log-entry/shared"
+import { JournalThenNow } from "./home/JournalThenNow"
+import type { LogEntryType } from "./log-entry/shared"
 
 const VISIT_NOTICE = {
   AWARDED: "오늘 방문 +1P가 반영됐어요.",
@@ -38,7 +39,7 @@ const VISIT_NOTICE = {
 } satisfies Record<EngagementAwardResult["kind"], string>
 
 export type HomeProps = {
-  readonly onWriteLog?: (entryType?: JournalEntryType) => void
+  readonly onWriteLog?: (entryType?: LogEntryType) => void
   readonly onOpenDay?: (date: string) => void
   readonly onOpenArchive?: () => void
   readonly onOpenGuide?: () => void
@@ -179,6 +180,7 @@ export function Home({
         recentJournal={(
           <section className="training-home__recent" aria-label="최근 기록">
             <DeviceJournal onOpenDay={onOpenDay} onOpenArchive={onOpenArchive} />
+            <JournalThenNow onOpenDay={onOpenDay} />
           </section>
         )}
       />

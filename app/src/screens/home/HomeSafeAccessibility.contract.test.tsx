@@ -296,7 +296,7 @@ describe("home journal controls", () => {
     await user.click(openPlan)
     await user.click(openGuide)
 
-    expect(onWriteLog).toHaveBeenCalledWith("post-session")
+    expect(onWriteLog).toHaveBeenCalledWith("quick-session")
     expect(onOpenPlan).toHaveBeenCalledTimes(1)
     expect(onOpenGuide).toHaveBeenCalledTimes(1)
   })

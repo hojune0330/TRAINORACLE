@@ -49,7 +49,7 @@ test("keeps the welcome home clear and usable on narrow phones", async ({ page }
   }
 
   await page.getByRole("button", { name: "오늘 기록 남기기" }).click()
-  await expect(page.getByRole("heading", { name: "훈련 후 · 기록" })).toBeVisible()
+  await expect(page.getByRole("heading", { name: "오늘 어떻게 움직였나요?" })).toBeVisible()
   await expect(page.getByRole("button", { name: "← 뒤로" })).toBeInViewport()
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true)
   // the chooser is reached via the "경기기록" tab bar button (§3-3)

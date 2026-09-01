@@ -69,8 +69,12 @@ test("moves a first visitor from WELCOME to JOURNAL after a real first save", as
   })).toBeVisible()
 
   await page.getByRole("button", { name: "오늘 기록 남기기" }).click()
-  await expect(page.getByRole("heading", { name: "훈련 후 · 기록" })).toBeVisible()
-  await page.getByRole("button", { name: /^저장/u }).click()
+  await expect(page.getByRole("heading", { name: "오늘 어떻게 움직였나요?" })).toBeVisible()
+  await page.getByRole("button", { name: "계획한 훈련을 했어요" }).click()
+  await page.getByRole("button", { name: "한 번" }).click()
+  await page.getByRole("button", { name: /5~6/u }).click()
+  await expect(page.getByRole("heading", { name: "오늘 기록을 남겼어요." })).toBeVisible()
+  await page.getByRole("button", { name: "완료", exact: true }).click()
 
   await expect.poll(async () => page.evaluate(() => {
     const stored = localStorage.getItem("trainoracle.journal.v1")

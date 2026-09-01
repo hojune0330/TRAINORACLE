@@ -27,6 +27,12 @@ export type GoalPace = {
 
 export type JournalKind = "post-session" | "evening" | "race"
 
+export type JournalCaptureDepth = "QUICK" | "DETAILED"
+export type ActivityOutcome = "COMPLETED" | "LIGHT_ACTIVITY" | "RESTED" | "SKIPPED"
+export type ActivitySlot = "SINGLE" | "AM" | "PM"
+export type RpeBand = "RPE_1_2" | "RPE_3_4" | "RPE_5_6" | "RPE_7_8" | "RPE_9_10" | "UNKNOWN"
+export type ObjectiveDataState = "NONE" | "WAITING" | "REVIEW_REQUIRED" | "CONFIRMED" | "CONFLICT"
+
 export type JournalEntryBase = {
   readonly id: string
   readonly kind: JournalKind
@@ -42,6 +48,11 @@ type PurposeScopedMemo = {
 
 export type PostSessionEntry = JournalEntryBase & PurposeScopedMemo & {
   readonly kind: "post-session"
+  readonly captureDepth?: JournalCaptureDepth
+  readonly activityOutcome?: ActivityOutcome
+  readonly activitySlot?: ActivitySlot
+  readonly rpeBand?: RpeBand
+  readonly objectiveDataState?: ObjectiveDataState
   readonly system: string
   readonly title: string
   readonly distanceKm: string
@@ -130,6 +141,11 @@ const postSessionSchema: z.ZodType<PostSessionEntry> = z.object({
   ...baseShape,
   ...purposeShape,
   kind: z.literal("post-session"),
+  captureDepth: z.enum(["QUICK", "DETAILED"]).optional(),
+  activityOutcome: z.enum(["COMPLETED", "LIGHT_ACTIVITY", "RESTED", "SKIPPED"]).optional(),
+  activitySlot: z.enum(["SINGLE", "AM", "PM"]).optional(),
+  rpeBand: z.enum(["RPE_1_2", "RPE_3_4", "RPE_5_6", "RPE_7_8", "RPE_9_10", "UNKNOWN"]).optional(),
+  objectiveDataState: z.enum(["NONE", "WAITING", "REVIEW_REQUIRED", "CONFIRMED", "CONFLICT"]).optional(),
   system: z.string(),
   title: z.string(),
   distanceKm: z.string(),

@@ -2,13 +2,13 @@
 
 ```yaml
 package_id: TO-QUICK-LOG-TAP-BUDGET-001
-status: DRAFT_FOR_REVIEW
-runtime_implementation: NOT_CLAIMED
+status: RUNTIME_TEST_PACKAGE_ACTIVE
+runtime_implementation: POST_SESSION_QUICK_V1_IMPLEMENTED_PENDING_RELEASE_EVIDENCE
 viewport: 375x667
 applies_to: proposed quick mode and current detail mode
 ```
 
-This is a manual verification package for a future quick-log implementation. It does not claim that quick mode, the `[QUICKLOG]` marker, or any preset is currently in the app.
+This package verifies the implemented post-session quick path and remains a future package for evening and race quick paths. The `[QUICKLOG]` marker is runtime evidence only when captured from an actual execution.
 
 ## Happy Paths
 
@@ -19,6 +19,7 @@ This is a manual verification package for a future quick-log implementation. It 
 | evening | entry -> sleep -> quality -> mood -> pain -> weight -> HR -> save | 7 | `taps <= 7` |
 | evening, no pain | entry -> sleep -> quality -> no-pain -> save | 4 | `taps <= 4` |
 | race pre | entry -> tension -> condition -> pace -> save | 4 | `taps <= 4` |
+| post-session quick v1 | entry -> outcome -> single/AM/PM -> RPE band -> save | 4 | `taps <= 4` |
 
 An automatic transition after an answer does not add a tap. Every answered value must remain visible and editable in place after a transition.
 

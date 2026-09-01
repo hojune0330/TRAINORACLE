@@ -339,6 +339,7 @@ export function AppShell() {
             ? () => runViewTransition("pop", () => setV(viewForJournalReturn(v)))
             : () => runViewTransition("pop", () => setV(s => ({ ...s, entryType: "choose" })))}
         onOpenImport={() => runViewTransition("push", () => setV(s => ({ ...s, importOpen: true })))}
+        onContinueDetailed={(entry) => runViewTransition("replace", () => setV((state) => viewForJournalDraft(state, entry.date, entry)))}
         onDone={(picked, savedEntry, reviewMessage) => {
           if (v.entryType === "choose") {
             runViewTransition("push", () => setV(s => ({ ...s, entryType: picked })))

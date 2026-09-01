@@ -146,6 +146,11 @@ export function ReviewStage({ drafts, result, selected, onToggle, onSave, onRest
                     activity.avgPace === "" ? null : `${activity.avgPace}/km`,
                   ].filter((part) => part !== null).join(" · ") || "기록 값 없음"}
                 </span>
+                {draft.duplicateOf !== null && (
+                  <span style={{ display: "block", fontFamily: "var(--sans)", fontSize: 11, color: "var(--ink-2)", marginTop: 4 }}>
+                    선택하면 기존 일지에 거리·시간을 더해요. 이미 적은 값은 덮어쓰지 않아요.
+                  </span>
+                )}
               </span>
             </label>
           )
@@ -168,7 +173,8 @@ export function SavedStage({ outcome, onOpenLog, onRestart }: {
   readonly onOpenLog?: () => void
   readonly onRestart: () => void
 }) {
-  const resultLabel = outcome.saved === 0
+  const completed = outcome.saved + (outcome.merged ?? 0)
+  const resultLabel = completed === 0
     ? "가져오기 실패"
     : outcome.failed > 0
       ? "일부 완료"
@@ -177,7 +183,17 @@ export function SavedStage({ outcome, onOpenLog, onRestart }: {
     <div style={{ marginTop: 20, display: "flex", flexDirection: "column", gap: 14 }}>
       <div data-testid="import-saved" style={{ border: "1px solid var(--ink)", background: "var(--surface)", padding: "14px 16px" }}>
         <div style={{ ...mono, fontSize: 10, color: "var(--ink-3)", letterSpacing: "0.1em" }}>{resultLabel}</div>
-        <div style={{ fontFamily: "var(--sans)", fontSize: 16, fontWeight: 500, marginTop: 5 }}>{outcome.saved}건을 일지에 저장했어요</div>
+        <div style={{ fontFamily: "var(--sans)", fontSize: 16, fontWeight: 500, marginTop: 5 }}>
+          새 일지 {outcome.saved}건 저장 · 기존 일지 {outcome.merged ?? 0}건 보완
+        </div>
+        <div style={{ ...mono, fontSize: 10, color: "var(--ink-3)", marginTop: 4 }}>
+          {outcome.saved + (outcome.merged ?? 0)}건을 일지에 저장했어요
+        </div>
+        {(outcome.conflicts ?? 0) > 0 && (
+          <div style={{ ...mono, fontSize: 10.5, color: "var(--ink-2)", lineHeight: 1.6, marginTop: 6 }}>
+            {outcome.conflicts}건은 이미 거리나 시간이 있어 합치지 않았어요. 기존 값과 가져온 값을 직접 비교해 주세요.
+          </div>
+        )}
         {outcome.failed > 0 && (
           <div style={{ ...mono, fontSize: 10.5, color: "var(--pain-5)", lineHeight: 1.6, marginTop: 6 }}>
             {outcome.failed}건은 저장하지 못했어요 — 기기 저장 공간이 가득 찼을 수 있어요. 공간을 비운 뒤 다시 시도해 주세요.

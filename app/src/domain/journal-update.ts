@@ -1,4 +1,4 @@
-import { hasImportedField } from "./field-provenance"
+import { hasImportedField, isImportedField } from "./field-provenance"
 import type { FieldProvenanceMap } from "./field-provenance"
 import { journalStorage, writeJournalEntries } from "./journal-local-storage"
 import { isPrivateMemoEntry, removePrivateMemoWithJournalEntries } from "./private-memo-vault"
@@ -35,10 +35,13 @@ function provenanceValues(entry: JournalEntry): Readonly<Record<string, unknown>
   switch (entry.kind) {
     case "post-session":
       return {
+        activityOutcome: entry.activityOutcome,
+        activitySlot: entry.activitySlot,
         distanceKm: entry.distanceKm,
         durationMin: entry.durationMin,
         avgPace: entry.avgPace,
         rpe: entry.rpe,
+        rpeBand: entry.rpeBand,
         plannedRpe: entry.intensityAssessment?.plannedRpe,
         objectiveComponents: entry.intensityAssessment?.objectiveComponents,
       }
@@ -64,6 +67,14 @@ function provenanceValues(entry: JournalEntry): Readonly<Record<string, unknown>
 function sameStructuredValue(left: unknown, right: unknown): boolean {
   if (Object.is(left, right)) return true
   return JSON.stringify(left) === JSON.stringify(right)
+}
+
+function keepsImportedObjectiveFacts(previous: JournalEntry, next: JournalEntry): boolean {
+  if (previous.kind !== "post-session" || next.kind !== "post-session") return true
+  const fields = ["distanceKm", "durationMin", "avgPace"] as const
+  return fields.every((field) => !isImportedField(field, previous.fieldProvenance)
+    || (sameStructuredValue(previous[field], next[field])
+      && sameStructuredValue(previous.fieldProvenance?.[field], next.fieldProvenance?.[field])))
 }
 
 function mergeProvenance(
@@ -120,7 +131,8 @@ export function updateEntry(entry: unknown, expectedSavedAt: string): UpdateEntr
   if (entryIndex < 0) return { ok: false, total: entries.length }
   const previous = entries[entryIndex]
   if (previous === undefined) return { ok: false, total: entries.length }
-  if (previous.syncState !== "local" || hasImportedField(previous.fieldProvenance)) {
+  if (previous.syncState !== "local"
+    || (hasImportedField(previous.fieldProvenance) && !keepsImportedObjectiveFacts(previous, nextEntry))) {
     return { ok: false, total: entries.length }
   }
   if (previous.savedAt !== expectedSavedAt) return { ok: false, total: entries.length }

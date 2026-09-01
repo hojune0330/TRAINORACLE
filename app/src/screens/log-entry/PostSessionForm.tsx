@@ -52,14 +52,28 @@ export function PostSessionForm({ onBack, onDone, targetDate, initialEntry, plan
     const entry: JournalEntry = {
       id: initial?.id ?? newEntryId(), kind: "post-session", date: entryDate,
       savedAt: nextJournalSavedAt(initial?.savedAt), syncState: "local",
+      captureDepth: "DETAILED",
+      ...(initial?.activityOutcome === undefined ? {} : { activityOutcome: initial.activityOutcome }),
+      ...(initial?.activitySlot === undefined ? {} : { activitySlot: initial.activitySlot }),
+      ...(initial?.rpeBand === undefined ? {} : { rpeBand: initial.rpeBand }),
+      ...(initial?.objectiveDataState === undefined ? {} : { objectiveDataState: initial.objectiveDataState }),
       system, title, distanceKm, durationMin, avgPace, rpe, memo: memo.text,
       ...(intensity.assessment === undefined ? {} : { intensityAssessment: intensity.assessment }),
       ...(planLink === undefined ? {} : { plannedSessionLink: planLink }),
       fieldProvenance: {
+        ...(initial?.activityOutcome === undefined ? {} : { activityOutcome: explicitOrMissing(true) }),
+        ...(initial?.activitySlot === undefined ? {} : { activitySlot: explicitOrMissing(true) }),
+        ...(initial?.rpeBand === undefined ? {} : { rpeBand: explicitOrMissing(true) }),
         system: explicitOrMissing(system !== ""),
-        distanceKm: explicitOrMissing(distanceKm.trim() !== ""),
-        durationMin: explicitOrMissing(durationMin.trim() !== ""),
-        avgPace: explicitOrMissing(avgPace.trim() !== ""),
+        distanceKm: initial?.distanceKm === distanceKm && initial.fieldProvenance?.distanceKm !== undefined
+          ? initial.fieldProvenance.distanceKm
+          : explicitOrMissing(distanceKm.trim() !== ""),
+        durationMin: initial?.durationMin === durationMin && initial.fieldProvenance?.durationMin !== undefined
+          ? initial.fieldProvenance.durationMin
+          : explicitOrMissing(durationMin.trim() !== ""),
+        avgPace: initial?.avgPace === avgPace && initial.fieldProvenance?.avgPace !== undefined
+          ? initial.fieldProvenance.avgPace
+          : explicitOrMissing(avgPace.trim() !== ""),
         rpe: explicitOrMissing(rpe > 0),
         plannedRpe: explicitOrMissing(intensity.plannedRpe > 0),
         objectiveComponents: explicitOrMissing(intensity.objectiveComponents.length > 0),

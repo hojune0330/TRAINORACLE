@@ -3,7 +3,7 @@ import type { ReactNode } from "react"
 import type { TrainingHomeViewModel } from "../../domain/home-view-model"
 import { prescriptionLabel, sessionLabel, sessionSlotLabel } from "../plan-beta/labels"
 import type { PlanSession } from "@impl/plan-generator/types"
-import type { JournalEntryType } from "../log-entry/shared"
+import type { LogEntryType } from "../log-entry/shared"
 
 /** 홈 "다음 훈련" 카드용 축약 처방 라벨 — "거리·목표 페이스는 지정하지 않음" 같은
  * 저가치 단서는 카드에서 생략한다 (상세는 훈련 계획 화면에서 확인). */
@@ -13,7 +13,7 @@ export function nextTrainingPrescriptionLabel(session: PlanSession): string {
 
 type TrainingHomeProps = {
   readonly model: TrainingHomeViewModel
-  readonly onWriteLog?: (entryType?: JournalEntryType) => void
+  readonly onWriteLog?: (entryType?: LogEntryType) => void
   readonly onOpenArchive?: () => void
   readonly onOpenToday?: () => void
   readonly onOpenGuide?: () => void
@@ -93,7 +93,7 @@ export function TrainingHome({
       ) : (
         <>
           <p>{model.todayMessage}</p>
-          <button className="training-home__primary" type="button" onClick={() => onWriteLog?.("post-session")}>
+          <button className="training-home__primary" type="button" onClick={() => onWriteLog?.("quick-session")}>
             <PencilLine aria-hidden="true" size={19} />
             <span>오늘 기록하기</span>
             <ChevronRight aria-hidden="true" size={18} />
@@ -149,7 +149,7 @@ export function TrainingHome({
         {model.homeMode === "WELCOME" && (
           <>
             <div className="training-home__welcome-actions">
-              <button className="training-home__primary" type="button" onClick={() => onWriteLog?.("post-session")}>
+              <button className="training-home__primary" type="button" onClick={() => onWriteLog?.("quick-session")}>
                 <PencilLine aria-hidden="true" size={19} />
                 <span>오늘 기록 남기기</span>
                 <ChevronRight aria-hidden="true" size={18} />
