@@ -18,10 +18,10 @@ import {
   appendJournalDecorationItem,
   appendJournalTextSticker,
   applyJournalDecoration,
+  clearJournalAvatarDecoration,
   duplicateJournalDecorationAt,
   journalDecorationItems,
   previewJournalDecoration,
-  removeJournalDecoration,
   removeJournalDecorationAt,
   reorderJournalDecoration,
   roundJournalDecorationTransform,
@@ -91,12 +91,13 @@ export function JournalDecorationSurface({
   }, [date])
   const visible = preview ?? canonical
   const owned = (itemId: DecorationId): boolean => canonical.ownedItemIds.includes(itemId)
-  /* 보유 항목 + 아직 없는 유료 항목(받기 버튼으로 노출) — 레거시 상점 기능 통합. */
+  /* 재료 서랍은 카탈로그 전체를 보여 준다. 기록 없음·24개 상한은 항목을
+   * 숨기지 않고 dim + 사유 안내로 표현해 사용자가 재료의 존재를 알게 한다. */
   const items = DECORATION_CATALOG.filter((item) => (
     isThemeDecorationId(item.id)
-    || (isInkDecorationId(item.id) && (owned(item.id) || !item.starterOwned))
-    || (isAvatarDecorationId(item.id) && (owned(item.id) || !item.starterOwned))
-    || (hasEntries && isPlacementDecorationId(item.id) && (owned(item.id) || !item.starterOwned))
+    || isInkDecorationId(item.id)
+    || isAvatarDecorationId(item.id)
+    || isPlacementDecorationId(item.id)
   ))
   const purchasableItemIds = new Set(
     items.filter((item) => !item.starterOwned && !owned(item.id)).map((item) => item.id),
@@ -108,11 +109,16 @@ export function JournalDecorationSurface({
     ...canonical.ownedItemIds.map((itemId) => `owned:${itemId}`),
     canonical.equipped.themeId,
     canonical.equipped.inkId,
-    ...(canonical.equipped.avatarId === null ? [] : [canonical.equipped.avatarId]),
+    ...(canonical.equipped.avatarId === null ? ["avatar:none"] : [canonical.equipped.avatarId]),
     ...pageItems.map((item) => item.itemId),
   ])
 
   const showNotice = (text: string, persistent = false): void => setNotice({ text, persistent })
+
+  const clearPreview = (): void => {
+    setPreview(null)
+    setPreviewItemId(null)
+  }
 
   React.useEffect(() => {
     if (notice === null || notice.persistent) return
@@ -391,7 +397,10 @@ export function JournalDecorationSurface({
           setDrawerOpen(false)
         }}
         onDrawerOpen={() => setDrawerOpen(true)}
-        onDrawerClose={() => setDrawerOpen(false)}
+        onDrawerClose={() => {
+          setDrawerOpen(false)
+          clearPreview()
+        }}
         onClose={close}
         onPreview={(item) => {
           setPreview(previewJournalDecoration(canonical, item, date))
@@ -399,10 +408,12 @@ export function JournalDecorationSurface({
           setSelectedIndex(null)
           setNotice(null)
         }}
+        onPreviewEnd={clearPreview}
+        onUnavailable={(message) => showNotice(message, true)}
         onApply={apply}
         onPurchase={purchase}
-        onRemove={(item) => {
-          if (commit(removeJournalDecoration(canonical, item, date), `${withJosa(item.name, "을/를")} 제거했어요.`)) {
+        onClearAvatar={() => {
+          if (commit(clearJournalAvatarDecoration(canonical), "아바타를 기본 상태로 바꿨어요.")) {
             setSelectedIndex(null)
             setDrawerOpen(false)
           }
