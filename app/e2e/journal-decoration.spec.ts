@@ -49,7 +49,7 @@ test("keeps a zero-point starter decoration on the real diary through refresh an
   await page.getByRole("button", { name: /Zero point decoration check.*상세 열기/u }).click()
   await page.getByRole("button", { name: "일지 꾸미기 열기" }).click()
   await page.getByRole("button", { name: "모든 꾸미기 도구" }).click()
-  await page.getByRole("button", { name: "맑은 날 사용" }).click()
+  await page.getByRole("button", { name: "맑은 날 붙이기" }).click()
 
   await expect(page.getByTestId("journal-decoration-item-0")).toBeVisible()
   await expect(page.locator(".journal-decoration-toolbar")).toHaveAttribute("data-open", "false")
@@ -65,8 +65,8 @@ test("keeps a zero-point starter decoration on the real diary through refresh an
   await expect(page.getByTestId("journal-decoration-item-0")).toBeVisible()
 
   await page.getByRole("button", { name: "일지 꾸미기 열기" }).click()
-  await page.getByRole("button", { name: "모든 꾸미기 도구" }).click()
-  await page.getByRole("button", { name: "맑은 날 제거" }).click()
+  await page.getByTestId("journal-decoration-item-0").click()
+  await page.getByRole("button", { name: "맑은 날 삭제" }).click()
 
   await expect(page.getByTestId("journal-decoration-item-0")).toHaveCount(0)
   await expect.poll(() => page.evaluate((key) => {
@@ -81,6 +81,44 @@ test("keeps a zero-point starter decoration on the real diary through refresh an
     return raw?.includes('"itemId":"STICKER_WEATHER_SUN"') ?? false
   }, DECORATION_KEY_V3)).toBe(true)
   expect(consoleErrors).toEqual([])
+})
+
+test("uses a three-column material drawer with inline purchase and temporary hover preview", async ({ page }) => {
+  await seedEntry(page, "material-drawer-entry", "Material drawer check")
+
+  await page.setViewportSize({ width: 320, height: 568 })
+  await page.goto("/?app=1")
+  await page.getByRole("button", { name: /Material drawer check.*상세 열기/u }).click()
+  await page.getByRole("button", { name: "일지 꾸미기 열기" }).click()
+  await page.getByRole("button", { name: "모든 꾸미기 도구" }).click()
+
+  const drawer = page.getByRole("region", { name: "꾸미기 재료 서랍" })
+  await expect(drawer).toBeVisible()
+  await expect(drawer.getByRole("group", { name: "꾸미기 재료 종류" })).toBeVisible()
+  await expect(drawer.locator(".journal-decoration-toolbar__material-tile")).toHaveCount(36)
+  expect(await drawer.locator(".journal-decoration-toolbar__items").evaluate((element) => (
+    getComputedStyle(element).gridTemplateColumns.split(" ").length
+  ))).toBe(3)
+  await expect(drawer.getByRole("button", { name: /제거/u })).toHaveCount(0)
+
+  await drawer.getByRole("button", { name: "결승선 스티커 8P로 받기" }).click()
+  const confirmation = drawer.getByRole("group", { name: "결승선 스티커 받기 확인" })
+  await expect(confirmation).toContainText(/P 더 필요해요/u)
+  await expect(confirmation.getByRole("button", { name: "8P로 받기" })).toBeDisabled()
+
+  await drawer.getByRole("button", { name: "하늘 일지 테마 12P로 받기" }).hover()
+  await page.waitForTimeout(650)
+  await expect(page.locator("[data-testid='journal-page-theme']").locator("xpath=ancestor::section[1]")).toHaveAttribute("data-theme-id", "THEME_SKY_JOURNAL")
+  await drawer.getByRole("button", { name: "테마", exact: true }).hover()
+  await expect(page.locator("[data-testid='journal-page-theme']").locator("xpath=ancestor::section[1]")).toHaveAttribute("data-theme-id", "THEME_TRACK_NOTEBOOK")
+
+  const dawnTheme = drawer.getByRole("button", { name: "새벽 러닝 12P로 받기" })
+  await dawnTheme.dispatchEvent("pointerdown", { pointerType: "touch", pointerId: 1, isPrimary: true })
+  await page.waitForTimeout(450)
+  await expect(page.locator("[data-testid='journal-page-theme']").locator("xpath=ancestor::section[1]")).toHaveAttribute("data-theme-id", "THEME_DAWN_RUN")
+  await dawnTheme.dispatchEvent("pointerup", { pointerType: "touch", pointerId: 1, isPrimary: true })
+  await expect(page.locator("[data-testid='journal-page-theme']").locator("xpath=ancestor::section[1]")).toHaveAttribute("data-theme-id", "THEME_TRACK_NOTEBOOK")
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true)
 })
 
 test("stacks three emoji stickers as free items without breaking the page layout", async ({ page }) => {
@@ -237,7 +275,7 @@ test("drags and resizes a decoration on the full-screen diary canvas and keeps i
   await page.getByRole("button", { name: /Free decoration movement check.*상세 열기/u }).click()
   await page.getByRole("button", { name: "일지 꾸미기 열기" }).click()
   await page.getByRole("button", { name: "모든 꾸미기 도구" }).click()
-  await page.getByRole("button", { name: "맑은 날 사용" }).click()
+  await page.getByRole("button", { name: "맑은 날 붙이기" }).click()
 
   const movable = page.getByRole("button", { name: /맑은 날 선택됨/u })
   const start = await movable.boundingBox()
@@ -304,7 +342,7 @@ test("deletes a selected decoration on the canvas and deselects on empty-space t
   await page.getByRole("button", { name: /Canvas delete check.*상세 열기/u }).click()
   await page.getByRole("button", { name: "일지 꾸미기 열기" }).click()
   await page.getByRole("button", { name: "모든 꾸미기 도구" }).click()
-  await page.getByRole("button", { name: "맑은 날 사용" }).click()
+  await page.getByRole("button", { name: "맑은 날 붙이기" }).click()
 
   const movable = page.getByRole("button", { name: /맑은 날 선택됨/u })
   await expect(movable).toBeVisible()
@@ -353,7 +391,7 @@ test("snaps a dragged decoration to the center guideline magnet", async ({ page 
   await page.getByRole("button", { name: /Pinch gesture check.*상세 열기/u }).click()
   await page.getByRole("button", { name: "일지 꾸미기 열기" }).click()
   await page.getByRole("button", { name: "모든 꾸미기 도구" }).click()
-  await page.getByRole("button", { name: "맑은 날 사용" }).click()
+  await page.getByRole("button", { name: "맑은 날 붙이기" }).click()
 
   const movable = page.getByRole("button", { name: /맑은 날 선택됨/u })
   await expect(movable).toBeVisible()

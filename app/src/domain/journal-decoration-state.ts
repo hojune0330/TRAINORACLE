@@ -326,6 +326,16 @@ export function applyJournalDecoration(
   return rememberDecorationUse(previewed, item.id)
 }
 
+/* 아바타 카테고리의 "기본으로" 선택. 서랍에서 항목을 제거하지 않고
+ * 전환형 장식만 명시적으로 비운다. */
+export function clearJournalAvatarDecoration(state: DecorationState): DecorationState | null {
+  const parsed = decorationStateSchema.safeParse({
+    ...state,
+    equipped: { ...state.equipped, avatarId: null },
+  })
+  return parsed.success ? parsed.data : null
+}
+
 /* 도구 서랍의 "제거": 이 날짜에서 해당 아이템을 전부 뗀다. */
 export function removeJournalDecoration(
   state: DecorationState,

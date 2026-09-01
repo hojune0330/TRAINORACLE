@@ -4,6 +4,7 @@ import {
   appendJournalDecoration,
   appendJournalDecorationItem,
   appendJournalTextSticker,
+  clearJournalAvatarDecoration,
   journalDecorationItems,
   reorderJournalDecoration,
 } from "./journal-decoration-state"
@@ -87,5 +88,21 @@ describe("decoration persona hardening", () => {
       "EMOJI_MEDAL",
       "EMOJI_FIRE",
     ])
+  })
+
+  it("clears only the equipped avatar when the drawer default tile is selected", () => {
+    const state = createEmptyDecorationState()
+    const equipped = {
+      ...state,
+      equipped: { ...state.equipped, avatarId: "AVATAR_EASY_JOG" as const },
+    }
+    const cleared = clearJournalAvatarDecoration(equipped)
+
+    expect(cleared?.equipped).toEqual({
+      ...equipped.equipped,
+      avatarId: null,
+    })
+    expect(cleared?.ownedItemIds).toEqual(equipped.ownedItemIds)
+    expect(cleared?.pages).toEqual(equipped.pages)
   })
 })

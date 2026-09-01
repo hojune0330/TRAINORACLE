@@ -49,7 +49,7 @@ function seedPage(items: readonly { itemId: string; transform: ReturnType<typeof
     ...base,
     ownedItemIds: [...base.ownedItemIds, ...extraOwned],
     spentPoints,
-    pages: [{ date: DATE, items }],
+    pages: items.length === 0 ? [] : [{ date: DATE, items }],
   })
   if (!saveDecorationState(state).ok) throw new Error("decoration fixture save failed")
 }
@@ -83,7 +83,7 @@ describe("real journal decoration surface", () => {
     // When
     await user.click(screen.getByRole("button", { name: "일지 꾸미기 열기" }))
     await openJournalDecorationTools()
-    await user.click(screen.getByRole("button", { name: "맑은 날 사용" }))
+    await user.click(screen.getByRole("button", { name: "맑은 날 붙이기" }))
 
     // Then: 첫 장식은 첫 번째 격자 좌표에 붙고 배열 끝(최상단)에 놓인다.
     expect(pageItems()).toEqual([
@@ -99,6 +99,62 @@ describe("real journal decoration surface", () => {
     expect(screen.queryByTestId("journal-decoration-item-0")).not.toBeInTheDocument()
   })
 
+  it("shows a visual material drawer with category chips and no removal action", async () => {
+    const user = userEvent.setup()
+    storeEntries([session("one")])
+    seedPage([{ itemId: "STICKER_WEATHER_SUN", transform: T(18, 18) }])
+    const { container } = render(<LogDetail date={DATE} />)
+
+    await user.click(screen.getByRole("button", { name: "일지 꾸미기 열기" }))
+    await openJournalDecorationTools()
+
+    expect(screen.getByRole("group", { name: "꾸미기 재료 종류" })).toBeVisible()
+    expect(screen.getByRole("button", { name: "스티커" })).toBeVisible()
+    expect(screen.getByRole("button", { name: "도장" })).toBeVisible()
+    expect(screen.getByRole("button", { name: "테이프" })).toBeVisible()
+    expect(screen.getByRole("button", { name: "아바타" })).toBeVisible()
+    expect(container.querySelectorAll(".journal-decoration-toolbar__material-tile").length).toBe(36)
+    expect(screen.queryByRole("button", { name: /제거/u })).not.toBeInTheDocument()
+  })
+
+  it("expands a paid item confirmation inline and explains insufficient points", async () => {
+    const user = userEvent.setup()
+    storeEntries([session("one")])
+    render(<LogDetail date={DATE} />)
+
+    await user.click(screen.getByRole("button", { name: "일지 꾸미기 열기" }))
+    await openJournalDecorationTools()
+    await user.click(screen.getByRole("button", { name: "결승선 스티커 8P로 받기" }))
+
+    const confirmation = screen.getByRole("group", { name: "결승선 스티커 받기 확인" })
+    expect(confirmation).toBeVisible()
+    expect(confirmation).toHaveTextContent("8P 더 필요해요.")
+    expect(screen.getByRole("button", { name: "8P로 받기" })).toBeDisabled()
+    expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument()
+  })
+
+  it("clears an equipped avatar through the category default tile", async () => {
+    const user = userEvent.setup()
+    storeEntries([session("one")])
+    const base = createEmptyDecorationState()
+    const state = decorationStateSchema.parse({
+      ...base,
+      ownedItemIds: [...base.ownedItemIds, "AVATAR_START_LINE"],
+      spentPoints: 20,
+      equipped: { ...base.equipped, avatarId: "AVATAR_START_LINE" },
+    })
+    if (!saveDecorationState(state).ok) throw new Error("avatar fixture save failed")
+    render(<LogDetail date={DATE} />)
+
+    await user.click(screen.getByRole("button", { name: "일지 꾸미기 열기" }))
+    await openJournalDecorationTools()
+    await user.click(screen.getByRole("button", { name: "아바타" }))
+    await user.click(screen.getByRole("button", { name: "아바타 없음 적용하기" }))
+
+    expect(loadDecorationState().equipped.avatarId).toBeNull()
+    expect(screen.getByRole("status")).toHaveTextContent("아바타를 기본 상태로 바꿨어요.")
+  })
+
   it("stacks a second decoration on top instead of asking to replace", async () => {
     // Given: v3 자유 배치 — 교체 확인 다이얼로그가 존재하지 않는다 (계약 §6).
     const user = userEvent.setup()
@@ -109,7 +165,7 @@ describe("real journal decoration surface", () => {
     // When
     await user.click(screen.getByRole("button", { name: "일지 꾸미기 열기" }))
     await openJournalDecorationTools()
-    await user.click(screen.getByRole("button", { name: "결승선 스티커 사용" }))
+    await user.click(screen.getByRole("button", { name: "결승선 스티커 붙이기" }))
 
     // Then: 둘 다 남고, 나중 것이 배열 끝(최상단)이다.
     expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument()
@@ -129,8 +185,8 @@ describe("real journal decoration surface", () => {
 
     // When
     await user.click(screen.getByRole("button", { name: "일지 꾸미기 열기" }))
-    await openJournalDecorationTools()
-    await user.click(screen.getByRole("button", { name: "체크 테이프 제거" }))
+    await user.click(screen.getByTestId("journal-decoration-item-0"))
+    await user.click(screen.getByRole("button", { name: "체크 테이프 삭제" }))
     view.unmount()
     render(<LogDetail date={DATE} />)
 
@@ -148,7 +204,7 @@ describe("real journal decoration surface", () => {
     // When
     await user.click(screen.getByRole("button", { name: "일지 꾸미기 열기" }))
     await openJournalDecorationTools()
-    await user.click(screen.getByRole("button", { name: "맑은 날 사용" }))
+    await user.click(screen.getByRole("button", { name: "맑은 날 붙이기" }))
     first.unmount()
     render(<LogDetail date={DATE} />)
 
@@ -160,8 +216,8 @@ describe("real journal decoration surface", () => {
 
     // When
     await user.click(screen.getByRole("button", { name: "일지 꾸미기 열기" }))
-    await openJournalDecorationTools()
-    await user.click(screen.getByRole("button", { name: "맑은 날 제거" }))
+    await user.click(screen.getByTestId("journal-decoration-item-0"))
+    await user.click(screen.getByRole("button", { name: "맑은 날 삭제" }))
     await user.click(screen.getByRole("button", { name: "꾸미기 되돌리기" }))
 
     // Then
@@ -174,6 +230,7 @@ describe("real journal decoration surface", () => {
   it("allows only global theme preview on a date without a journal entry", async () => {
     // Given
     const user = userEvent.setup()
+    seedPage([], ["THEME_SKY_JOURNAL"], 12)
     render(<LogDetail date={DATE} />)
 
     // When
@@ -181,12 +238,14 @@ describe("real journal decoration surface", () => {
     await openJournalDecorationTools()
 
     // Then
-    expect(screen.getByText("기록이 없는 날에는 테마만 미리 볼 수 있어요.")).toBeVisible()
-    expect(screen.getByRole("button", { name: "하늘 일지 테마 미리보기" })).toBeVisible()
-    await user.click(screen.getByRole("button", { name: "하늘 일지 테마 미리보기" }))
+    expect(screen.getByText("기록을 남기기 전에는 테마만 미리 볼 수 있어요.")).toBeVisible()
+    expect(screen.getByRole("button", { name: "하늘 일지 테마 적용하기" })).toBeVisible()
+    await user.click(screen.getByRole("button", { name: "하늘 일지 테마 적용하기" }))
     expect(screen.getByTestId("journal-page-theme").closest("section")).toHaveAttribute("data-theme-id", "THEME_SKY_JOURNAL")
-    expect(screen.queryByRole("button", { name: "하늘 일지 테마 사용하기" })).not.toBeInTheDocument()
-    expect(screen.queryByRole("button", { name: "맑은 날 사용" })).not.toBeInTheDocument()
+    const blockedSticker = screen.getByRole("button", { name: /^맑은 날 사용할 수 없음/u })
+    expect(blockedSticker).toHaveAttribute("aria-disabled", "true")
+    await user.click(blockedSticker)
+    expect(screen.getByRole("status")).toHaveTextContent("기록을 먼저 남기면 붙일 수 있어요.")
   })
 
   it("cancels an unsaved preview when the reader changes dates", async () => {
@@ -204,8 +263,10 @@ describe("real journal decoration surface", () => {
     )
     await user.click(screen.getByRole("button", { name: "일지 꾸미기 열기" }))
     await openJournalDecorationTools()
-    await user.click(screen.getByRole("button", { name: "하늘 일지 테마 미리보기" }))
-    expect(screen.getByText("하늘 일지 테마 미리보기 중")).toBeVisible()
+    const skyTheme = screen.getByRole("button", { name: "하늘 일지 테마 12P로 받기" })
+    fireEvent.pointerEnter(skyTheme, { pointerType: "mouse" })
+    await new Promise((resolve) => window.setTimeout(resolve, 650))
+    expect(screen.getByTestId("journal-page-theme").closest("section")).toHaveAttribute("data-theme-id", "THEME_SKY_JOURNAL")
 
     // When
     cleanup()
@@ -219,7 +280,7 @@ describe("real journal decoration surface", () => {
     )
 
     // Then
-    expect(screen.queryByText("하늘 일지 테마 미리보기 중")).not.toBeInTheDocument()
+    expect(screen.getByTestId("journal-page-theme").closest("section")).toHaveAttribute("data-theme-id", "THEME_TRACK_NOTEBOOK")
     expect(loadDecorationState().equipped.themeId).toBe("THEME_TRACK_NOTEBOOK")
   })
 
@@ -237,7 +298,7 @@ describe("real journal decoration surface", () => {
     // When
     await user.click(screen.getByRole("button", { name: "일지 꾸미기 열기" }))
     await openJournalDecorationTools()
-    await user.click(screen.getByRole("button", { name: "맑은 날 사용" }))
+    await user.click(screen.getByRole("button", { name: "맑은 날 붙이기" }))
 
     // Then
     expect(screen.getByRole("status")).toHaveTextContent("꾸미기를 저장하지 못했어요. 일지는 그대로예요.")
@@ -427,7 +488,7 @@ describe("real journal decoration surface", () => {
 
     await user.click(screen.getByRole("button", { name: "일지 꾸미기 열기" }))
     await openJournalDecorationTools()
-    await user.click(screen.getByRole("button", { name: "맑은 날 사용" }))
+    await user.click(screen.getByRole("button", { name: /^맑은 날 사용할 수 없음/u }))
 
     expect(pageItems()).toHaveLength(MAX_DECORATION_ITEMS_PER_PAGE)
     expect(screen.getByRole("status")).toHaveTextContent(

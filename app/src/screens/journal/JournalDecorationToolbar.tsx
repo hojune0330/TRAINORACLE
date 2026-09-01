@@ -1,27 +1,87 @@
-import { BookOpen, Check, ChevronDown, ClipboardPaste, Copy, Eye, Layers2, Palette, PenLine, Redo2, Smile, Trash2, Type, Undo2, X } from "lucide-react"
+import {
+  BookOpen,
+  Check,
+  ChevronDown,
+  ClipboardPaste,
+  Copy,
+  Layers2,
+  LockKeyhole,
+  Palette,
+  PenLine,
+  Redo2,
+  Smile,
+  Type,
+  Undo2,
+  UserRoundX,
+  X,
+} from "lucide-react"
 import React from "react"
 import { MAX_DECORATION_ITEMS_PER_PAGE } from "../../domain/decorations"
 import type { DecorationCatalogItem } from "../../domain/decorations"
 
+type DrawerFilter =
+  | "ALL"
+  | "STICKER"
+  | "STAMP"
+  | "TAPE"
+  | "THEME"
+  | "AVATAR"
+  | "INK"
+  | "EMOJI_STICKER"
+
+type MaterialCategory = Exclude<DrawerFilter, "ALL" | "EMOJI_STICKER">
+
+const DRAWER_FILTERS: readonly { readonly id: DrawerFilter; readonly label: string }[] = [
+  { id: "ALL", label: "전체" },
+  { id: "STICKER", label: "스티커" },
+  { id: "STAMP", label: "도장" },
+  { id: "TAPE", label: "테이프" },
+  { id: "THEME", label: "테마" },
+  { id: "AVATAR", label: "아바타" },
+  { id: "INK", label: "글자색" },
+  { id: "EMOJI_STICKER", label: "이모지" },
+]
+
+const MATERIAL_CATEGORY_ORDER: readonly MaterialCategory[] = [
+  "STICKER",
+  "STAMP",
+  "TAPE",
+  "THEME",
+  "AVATAR",
+  "INK",
+]
+
+const MATERIAL_CATEGORY_LABELS: Readonly<Record<MaterialCategory, string>> = {
+  STICKER: "스티커",
+  STAMP: "도장",
+  TAPE: "테이프",
+  THEME: "테마",
+  AVATAR: "아바타",
+  INK: "글자색",
+}
+
 /*
- * 이모지 스티커는 48종이라 행 목록 대신 44px 터치 타깃 그리드로 보여 준다.
- * 탭 = 페이지에 한 개 더 붙이기(자유 배치, 최상단).
- * 붙인 장식의 삭제는 캔버스 선택 손잡이에서만 수행해 팔레트 탭이 파괴 동작이 되지 않게 한다.
- * 유니코드 텍스트 렌더 전용 — 이미지 자산 없음.
+ * 이모지 스티커는 기존 48종 전용 레일을 유지한다. 재료 서랍 안에서도
+ * 44px 터치 타깃과 페이지 배치 수를 그대로 보여 준다.
  */
 function EmojiStickerGrid({
   items,
   pageItemCounts,
+  blockedReason,
   onApply,
+  onUnavailable,
 }: {
   readonly items: readonly DecorationCatalogItem[]
   readonly pageItemCounts: ReadonlyMap<string, number>
+  readonly blockedReason: string | null
   readonly onApply: (item: DecorationCatalogItem) => void
+  readonly onUnavailable: (message: string) => void
 }) {
   if (items.length === 0) return null
   return (
-    <div className="journal-decoration-toolbar__emoji-section">
-      <small>{`이모지 스티커 · 한 페이지에 장식 ${MAX_DECORATION_ITEMS_PER_PAGE}개까지`}</small>
+    <section className="journal-decoration-toolbar__emoji-section" aria-labelledby="decoration-emoji-title">
+      <h3 id="decoration-emoji-title">이모지 스티커</h3>
+      <small>{`한 페이지에 장식 ${MAX_DECORATION_ITEMS_PER_PAGE}개까지`}</small>
       <div className="journal-decoration-toolbar__emoji-grid" role="group" aria-label="이모지 스티커">
         {items.map((item) => {
           const count = pageItemCounts.get(item.id) ?? 0
@@ -30,8 +90,10 @@ function EmojiStickerGrid({
               key={item.id}
               type="button"
               data-used={count > 0 ? "true" : undefined}
-              aria-label={`${item.name} 이모지 붙이기${count > 0 ? `, 현재 ${count}개` : ""}`}
-              onClick={() => onApply(item)}
+              data-blocked={blockedReason === null ? undefined : "true"}
+              aria-disabled={blockedReason === null ? undefined : "true"}
+              aria-label={`${item.name} 이모지 붙이기${count > 0 ? `, 현재 ${count}개` : ""}${blockedReason === null ? "" : `, ${blockedReason}`}`}
+              onClick={() => blockedReason === null ? onApply(item) : onUnavailable(blockedReason)}
             >
               <span aria-hidden="true">{item.emoji}</span>
               {count > 0 && <b aria-hidden="true">{count}</b>}
@@ -39,7 +101,120 @@ function EmojiStickerGrid({
           )
         })}
       </div>
-    </div>
+    </section>
+  )
+}
+
+function MaterialTile({
+  item,
+  active,
+  owned,
+  count,
+  previewing,
+  blockedReason,
+  onActivate,
+  onPreview,
+  onPreviewEnd,
+}: {
+  readonly item: DecorationCatalogItem
+  readonly active: boolean
+  readonly owned: boolean
+  readonly count: number
+  readonly previewing: boolean
+  readonly blockedReason: string | null
+  readonly onActivate: () => void
+  readonly onPreview: () => void
+  readonly onPreviewEnd: () => void
+}) {
+  const timerRef = React.useRef<number | null>(null)
+  const previewingRef = React.useRef(false)
+  const suppressClickRef = React.useRef(false)
+  const onPreviewRef = React.useRef(onPreview)
+  const onPreviewEndRef = React.useRef(onPreviewEnd)
+
+  React.useEffect(() => { onPreviewRef.current = onPreview }, [onPreview])
+  React.useEffect(() => { onPreviewEndRef.current = onPreviewEnd }, [onPreviewEnd])
+
+  const stopTimer = (): void => {
+    if (timerRef.current !== null) window.clearTimeout(timerRef.current)
+    timerRef.current = null
+  }
+
+  const endPreview = (): void => {
+    stopTimer()
+    if (!previewingRef.current) return
+    previewingRef.current = false
+    onPreviewEndRef.current()
+  }
+
+  const schedulePreview = (delay: number, suppressClick: boolean): void => {
+    if (blockedReason !== null) return
+    stopTimer()
+    timerRef.current = window.setTimeout(() => {
+      previewingRef.current = true
+      suppressClickRef.current = suppressClick
+      onPreviewRef.current()
+    }, delay)
+  }
+
+  React.useEffect(() => () => {
+    stopTimer()
+    if (previewingRef.current) onPreviewEndRef.current()
+  }, [])
+
+  const statusLabel = blockedReason !== null
+    ? `사용할 수 없음, ${blockedReason}`
+    : !owned
+      ? `${item.cost}P로 받기`
+      : item.compatibleSlots.length > 0
+        ? "붙이기"
+        : active ? "적용 중" : "적용하기"
+
+  return (
+    <button
+      type="button"
+      className="journal-decoration-toolbar__material-tile"
+      data-active={active ? "true" : undefined}
+      data-blocked={blockedReason === null ? undefined : "true"}
+      data-previewing={previewing ? "true" : undefined}
+      aria-label={`${item.name} ${statusLabel}`}
+      aria-pressed={item.compatibleSlots.length === 0 ? active : undefined}
+      aria-disabled={blockedReason === null ? undefined : "true"}
+      title={item.description}
+      onContextMenu={(event) => event.preventDefault()}
+      onPointerEnter={(event) => {
+        if (event.pointerType === "mouse") schedulePreview(600, false)
+      }}
+      onPointerLeave={endPreview}
+      onPointerDown={(event) => {
+        if (event.pointerType !== "mouse") schedulePreview(400, true)
+      }}
+      onPointerUp={endPreview}
+      onPointerCancel={endPreview}
+      onClick={() => {
+        if (suppressClickRef.current) {
+          suppressClickRef.current = false
+          return
+        }
+        onActivate()
+      }}
+    >
+      <span className="journal-decoration-toolbar__material-preview" data-category={item.category} aria-hidden="true">
+        {item.category === "INK"
+          ? <span className="journal-decoration-toolbar__ink-swatch" />
+          : <img src={`${import.meta.env.BASE_URL}${item.assetPath}`} alt="" draggable="false" loading="lazy" />}
+      </span>
+      <span className="journal-decoration-toolbar__material-name">{item.name}</span>
+      {!owned && (
+        <span className="journal-decoration-toolbar__material-cost" aria-hidden="true">
+          <LockKeyhole size={12} /> {item.cost}P
+        </span>
+      )}
+      {owned && active && item.compatibleSlots.length === 0 && (
+        <span className="journal-decoration-toolbar__material-check" aria-hidden="true"><Check size={12} /></span>
+      )}
+      {count > 0 && <b className="journal-decoration-toolbar__material-count" aria-hidden="true">{count}</b>}
+    </button>
   )
 }
 
@@ -49,7 +224,6 @@ type JournalDecorationToolbarProps = {
   readonly open: boolean
   readonly drawerOpen: boolean
   readonly activeItemIds: ReadonlySet<string>
-  /* 레거시 홈 스튜디오 통합: 포인트 구매가 편집기 서랍으로 들어왔다. */
   readonly availablePoints: number
   readonly purchasableItemIds: ReadonlySet<string>
   readonly pageItemCounts: ReadonlyMap<string, number>
@@ -67,28 +241,33 @@ type JournalDecorationToolbarProps = {
   readonly onDrawerOpen: () => void
   readonly onOpen: () => void
   readonly onPreview: (item: DecorationCatalogItem) => void
-  readonly onRemove: (item: DecorationCatalogItem) => void
+  readonly onPreviewEnd: () => void
+  readonly onUnavailable: (message: string) => void
+  readonly onClearAvatar: () => void
   readonly onUndo: () => void
   readonly onRedo: () => void
   readonly onMoveBackward: () => void
   readonly onMoveForward: () => void
   readonly onCopySelected: () => void
   readonly onPaste: () => void
-  /* P5: 기록이 있는 날에만 제공된다 — 없으면 도크에 버튼을 그리지 않는다. */
   readonly onOpenTextSticker?: () => void
 }
 
 export function JournalDecorationToolbar(props: JournalDecorationToolbarProps) {
   const closeButtonRef = React.useRef<HTMLButtonElement>(null)
   const drawerRef = React.useRef<HTMLElement>(null)
-  const [toolFilter, setToolFilter] = React.useState<"ALL" | "EMOJI_STICKER" | "THEME" | "INK">("ALL")
-
+  const [toolFilter, setToolFilter] = React.useState<DrawerFilter>("ALL")
+  const [pendingPurchaseId, setPendingPurchaseId] = React.useState<string | null>(null)
   const wasOpenRef = React.useRef(false)
 
   React.useEffect(() => {
     if (props.open && !wasOpenRef.current) closeButtonRef.current?.focus()
     wasOpenRef.current = props.open
   }, [props.open])
+
+  React.useEffect(() => {
+    if (!props.drawerOpen) setPendingPurchaseId(null)
+  }, [props.drawerOpen])
 
   React.useEffect(() => {
     if (!props.open) return
@@ -119,13 +298,114 @@ export function JournalDecorationToolbar(props: JournalDecorationToolbarProps) {
     )
   }
 
-  const chooseTool = (filter: typeof toolFilter) => {
+  const chooseTool = (filter: DrawerFilter) => {
     setToolFilter(filter)
+    setPendingPurchaseId(null)
     props.onDrawerOpen()
   }
-  const visibleItems = toolFilter === "ALL"
-    ? props.items
-    : props.items.filter((item) => item.category === toolFilter)
+
+  const placementBlockedReason = !props.hasEntries
+    ? "기록을 먼저 남기면 붙일 수 있어요."
+    : props.placementCount >= MAX_DECORATION_ITEMS_PER_PAGE
+      ? `한 페이지에 ${MAX_DECORATION_ITEMS_PER_PAGE}개까지 붙일 수 있어요.`
+      : null
+
+  const blockedReasonFor = (item: DecorationCatalogItem): string | null => {
+    if (item.compatibleSlots.length > 0) return placementBlockedReason
+    if (!props.hasEntries && item.category !== "THEME") return "기록을 먼저 남기면 사용할 수 있어요."
+    return null
+  }
+
+  const activateItem = (item: DecorationCatalogItem): void => {
+    const blockedReason = blockedReasonFor(item)
+    if (blockedReason !== null) {
+      props.onUnavailable(blockedReason)
+      return
+    }
+    if (props.purchasableItemIds.has(item.id)) {
+      setPendingPurchaseId(item.id)
+      return
+    }
+    if (!props.hasEntries) {
+      props.onPreview(item)
+      return
+    }
+    props.onApply(item)
+  }
+
+  const renderPurchaseRow = (item: DecorationCatalogItem): React.ReactNode => {
+    if (pendingPurchaseId !== item.id) return null
+    const missingPoints = Math.max(0, item.cost - props.availablePoints)
+    return (
+      <div className="journal-decoration-toolbar__purchase-row" role="group" aria-label={`${item.name} 받기 확인`}>
+        <span>
+          <strong>{item.name}</strong>
+          <small>{missingPoints > 0 ? `${missingPoints}P 더 필요해요.` : `${item.cost}P를 사용해 받을까요?`}</small>
+        </span>
+        <button
+          type="button"
+          disabled={missingPoints > 0}
+          onClick={() => {
+            props.onPurchase(item)
+            setPendingPurchaseId(null)
+          }}
+        >
+          {item.cost}P로 받기
+        </button>
+        <button type="button" onClick={() => setPendingPurchaseId(null)}>취소</button>
+      </div>
+    )
+  }
+
+  const renderMaterialCategory = (category: MaterialCategory): React.ReactNode => {
+    if (toolFilter !== "ALL" && toolFilter !== category) return null
+    const categoryItems = props.items.filter((item) => item.category === category)
+    if (categoryItems.length === 0) return null
+    return (
+      <React.Fragment key={category}>
+        {toolFilter === "ALL" && <h3 className="journal-decoration-toolbar__section-title">{MATERIAL_CATEGORY_LABELS[category]}</h3>}
+        {category === "AVATAR" && props.hasEntries && (
+          <button
+            type="button"
+            className="journal-decoration-toolbar__material-tile journal-decoration-toolbar__material-tile--none"
+            data-active={props.activeItemIds.has("avatar:none") ? "true" : undefined}
+            aria-label="아바타 없음 적용하기"
+            aria-pressed={props.activeItemIds.has("avatar:none")}
+            onClick={props.onClearAvatar}
+          >
+            <span className="journal-decoration-toolbar__material-preview" aria-hidden="true"><UserRoundX size={30} /></span>
+            <span className="journal-decoration-toolbar__material-name">아바타 없음</span>
+            {props.activeItemIds.has("avatar:none") && (
+              <span className="journal-decoration-toolbar__material-check" aria-hidden="true"><Check size={12} /></span>
+            )}
+          </button>
+        )}
+        {categoryItems.map((item) => {
+          const owned = !props.purchasableItemIds.has(item.id)
+          const blockedReason = blockedReasonFor(item)
+          return (
+            <React.Fragment key={item.id}>
+              <MaterialTile
+                item={item}
+                active={props.activeItemIds.has(item.id)}
+                owned={owned}
+                count={props.pageItemCounts.get(item.id) ?? 0}
+                previewing={props.previewItemId === item.id}
+                blockedReason={blockedReason}
+                onActivate={() => activateItem(item)}
+                onPreview={() => props.onPreview(item)}
+                onPreviewEnd={props.onPreviewEnd}
+              />
+              {renderPurchaseRow(item)}
+            </React.Fragment>
+          )
+        })}
+      </React.Fragment>
+    )
+  }
+
+  const emojiItems = props.items.filter((item) => item.category === "EMOJI_STICKER")
+  const showEmoji = toolFilter === "ALL" || toolFilter === "EMOJI_STICKER"
 
   return (
     <>
@@ -170,55 +450,55 @@ export function JournalDecorationToolbar(props: JournalDecorationToolbarProps) {
         </div>
       )}
 
-      <section ref={drawerRef} className="journal-decoration-toolbar" data-open={props.drawerOpen ? "true" : "false"} aria-label="꾸미기 도구 선택" aria-hidden={props.drawerOpen ? undefined : "true"} data-decoration-interaction="true">
+      <section
+        ref={drawerRef}
+        className="journal-decoration-toolbar"
+        data-open={props.drawerOpen ? "true" : "false"}
+        aria-label="꾸미기 재료 서랍"
+        aria-hidden={props.drawerOpen ? undefined : "true"}
+        data-decoration-interaction="true"
+      >
+        <div className="journal-decoration-toolbar__grabber" aria-hidden="true" />
         <header>
           <div>
-            <strong>꾸미기 도구</strong>
-            <span>{props.hasEntries ? "고른 뒤 일지에서 직접 옮길 수 있어요." : "기록이 없는 날에는 테마만 미리 볼 수 있어요."}</span>
+            <strong>재료 서랍</strong>
+            <span>{props.hasEntries ? "재료를 눌러 바로 붙여 보세요." : "기록을 남기기 전에는 테마만 미리 볼 수 있어요."}</span>
             <small className="journal-decoration-toolbar__points">베타 포인트 · 사용 가능 {props.availablePoints}P</small>
           </div>
-          <button type="button" className="journal-decoration-toolbar__icon" onClick={props.onDrawerClose} aria-label="꾸미기 도구 숨기기"><ChevronDown aria-hidden="true" size={19} /></button>
+          <button type="button" className="journal-decoration-toolbar__icon" onClick={props.onDrawerClose} aria-label="재료 서랍 숨기기"><ChevronDown aria-hidden="true" size={19} /></button>
         </header>
-        <div className="journal-decoration-toolbar__items">
-          {visibleItems.filter((item) => item.category !== "EMOJI_STICKER").map((item) => {
-            const placeable = item.compatibleSlots.length > 0
-            const active = props.activeItemIds.has(item.id)
-            return (
-              <article key={item.id}>
-                <img src={`${import.meta.env.BASE_URL}${item.assetPath}`} alt="" />
-                <div><small>{item.typeLabel}</small><strong>{item.name}</strong></div>
-                <div className="journal-decoration-toolbar__actions">
-                  <button type="button" onClick={() => props.onPreview(item)} aria-label={`${item.name} 미리보기`}>
-                    <Eye aria-hidden="true" size={14} /> 미리보기
-                  </button>
-                  {/* 아직 없는 항목은 이 자리에서 바로 받는다 — 별도 상점 화면 없음. */}
-                  {props.purchasableItemIds.has(item.id) && (
-                    <button type="button" onClick={() => props.onPurchase(item)} aria-label={`${item.name} ${item.cost}P로 받기`}>
-                      {item.cost}P로 받기
-                    </button>
-                  )}
-                  {props.hasEntries && active && placeable && (
-                    <button type="button" onClick={() => props.onRemove(item)} aria-label={`${item.name} 제거`}>
-                      <Trash2 aria-hidden="true" size={14} /> 제거
-                    </button>
-                  )}
-                  {/* v3: 배치형은 복수 허용이라 이미 붙어 있어도 더 붙일 수 있다. 테마·글자색·아바타는 비활성일 때만. */}
-                  {props.hasEntries && props.activeItemIds.has(`owned:${item.id}`) && (placeable || !active) && (
-                    <button type="button" onClick={() => props.onApply(item)} aria-label={`${item.name} 사용`}>
-                      사용
-                    </button>
-                  )}
-                </div>
-                {props.previewItemId === item.id && <span className="journal-decoration-toolbar__previewing">{item.name} 미리보기 중</span>}
-              </article>
-            )
-          })}
+
+        <div className="journal-decoration-toolbar__filters" role="group" aria-label="꾸미기 재료 종류">
+          {DRAWER_FILTERS.map((filter) => (
+            <button
+              key={filter.id}
+              type="button"
+              aria-pressed={toolFilter === filter.id}
+              onClick={() => {
+                setToolFilter(filter.id)
+                setPendingPurchaseId(null)
+              }}
+            >
+              {filter.label}
+            </button>
+          ))}
         </div>
-        <EmojiStickerGrid
-          items={visibleItems.filter((item) => item.category === "EMOJI_STICKER")}
-          pageItemCounts={props.pageItemCounts}
-          onApply={props.onApply}
-        />
+
+        {toolFilter !== "EMOJI_STICKER" && (
+          <div className="journal-decoration-toolbar__items">
+            {MATERIAL_CATEGORY_ORDER.map(renderMaterialCategory)}
+          </div>
+        )}
+
+        {showEmoji && (
+          <EmojiStickerGrid
+            items={emojiItems}
+            pageItemCounts={props.pageItemCounts}
+            blockedReason={placementBlockedReason}
+            onApply={props.onApply}
+            onUnavailable={props.onUnavailable}
+          />
+        )}
       </section>
     </>
   )
