@@ -102,11 +102,16 @@ test("routes the home decoration card into the real journal editor with points",
   expect(drawerGeometry?.navigationHidden).toBe(true)
   expect(drawerGeometry?.pageFits).toBe(true)
 
-  /* 포인트 구매도 이 서랍에서 바로 — 잔액 표시와 받기 버튼. */
+  /* 포인트 구매는 타일 선택 뒤 같은 자리의 확인 행에서 한 번 더 확인한다. */
   await expect(page.getByText("베타 포인트 · 사용 가능 8P")).toBeVisible()
   await page.getByRole("button", { name: "결승선 스티커 8P로 받기" }).click()
+  const purchaseConfirmation = page.getByRole("group", { name: "결승선 스티커 받기 확인" })
+  await expect(purchaseConfirmation).toBeVisible()
+  await expect(purchaseConfirmation.getByText("8P를 사용해 받을까요?")).toBeVisible()
+  await purchaseConfirmation.getByRole("button", { name: "8P로 받기" }).click()
   await expect(page.getByText("받았어요. 0P가 남았어요.")).toBeVisible()
   await expect(page.getByRole("button", { name: "결승선 스티커 8P로 받기" })).toHaveCount(0)
+  await expect(page.getByRole("button", { name: "결승선 스티커 붙이기" })).toBeVisible()
   await expect(page.getByText("베타 포인트 · 사용 가능 0P")).toBeVisible()
 
   /* 자동-열기 인텐트는 1회용 — 새로고침 뒤에는 저절로 열리지 않는다. */
