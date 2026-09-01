@@ -5,7 +5,7 @@ import { More } from "./More"
 afterEach(cleanup)
 
 describe("more public documents", () => {
-  it("keeps device status and both legal documents one tap away", () => {
+  it("keeps device status, legal documents, and sticker sources one tap away", () => {
     render(<More onBack={vi.fn()} onOpenMinji={vi.fn()} onOpenGuide={vi.fn()} />)
 
     expect(screen.getByRole("link", { name: /^기기 연동 상태/u })).toHaveAttribute(
@@ -20,6 +20,10 @@ describe("more public documents", () => {
     expect(screen.getByRole("link", { name: /^이용약관/u })).toHaveAttribute(
       "href",
       "./legal/terms.html",
+    )
+    expect(screen.getByRole("link", { name: /^스티커·오픈소스 출처/u })).toHaveAttribute(
+      "href",
+      "./legal/open-source.html",
     )
   })
 })

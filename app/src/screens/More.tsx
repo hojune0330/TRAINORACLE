@@ -1,4 +1,4 @@
-import { ArrowLeft, BookOpen, CircleHelp, MessageSquareText, Newspaper, ScrollText, ShieldCheck, Watch } from "lucide-react"
+import { ArrowLeft, BookOpen, CircleHelp, MessageSquareText, Newspaper, ScrollText, ShieldCheck, Sticker, Watch } from "lucide-react"
 import { DataSafetyNotice } from "../components/DataSafetyNotice"
 import { feedbackConfig } from "../domain/feedback/feedback-config"
 import { SafeJournalExport } from "./home/DeviceJournal"
@@ -53,6 +53,10 @@ export function More({
         <a className="more-screen__row" href="./legal/terms.html" target="_blank" rel="noreferrer">
           <ScrollText aria-hidden="true" size={19} />
           <span><strong>이용약관</strong><small>계정·기기 저장·훈련 계획 이용 기준을 확인해요</small></span>
+        </a>
+        <a className="more-screen__row" href="./legal/open-source.html" target="_blank" rel="noreferrer">
+          <Sticker aria-hidden="true" size={19} />
+          <span><strong>스티커·오픈소스 출처</strong><small>귀여운 스티커의 원본과 이용 조건을 확인해요</small></span>
         </a>
       </div>
 

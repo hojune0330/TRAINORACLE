@@ -4,6 +4,9 @@ import { beforeEach, describe, expect, it } from "vitest"
 import {
   DECORATION_CATALOG,
   DECORATION_IDS,
+  CUTE_STICKER_GROUPS,
+  CUTE_STICKER_IDS,
+  CUTE_STICKER_PRICE,
   EMOJI_STICKER_IDS,
   EMOJI_STICKER_SLOTS,
   PAID_DECORATION_IDS,
@@ -11,9 +14,11 @@ import {
   loadDecorationState,
   purchaseDecoration,
 } from "./decorations"
+import type { DecorationCatalogItem } from "./decorations"
 
 const DECORATION_STORAGE_KEY_V1 = "trainoracle.decorations.v1"
 const DECORATION_STORAGE_KEY_V3 = "trainoracle.decorations.v3"
+const CATALOG: readonly DecorationCatalogItem[] = DECORATION_CATALOG
 
 const EMPTY_DECORATION_STATE = {
   version: 3,
@@ -52,8 +57,8 @@ describe("beta decoration shop", () => {
     }
   })
 
-  it("locks 34 illustrated materials plus one ink swatch to the item-level brief", () => {
-    const materials = DECORATION_CATALOG.filter((item) => item.category !== "EMOJI_STICKER")
+  it("keeps the original 34 illustrated materials plus one ink swatch unchanged", () => {
+    const materials = CATALOG.filter((item) => item.category !== "EMOJI_STICKER" && item.collection !== "OPEN_CUTE_V1")
     const categoryCounts = Object.fromEntries(
       ["THEME", "TAPE", "STICKER", "STAMP", "INK", "AVATAR"].map((category) => [
         category,
@@ -67,8 +72,9 @@ describe("beta decoration shop", () => {
     expect(categoryCounts).toEqual({ THEME: 6, TAPE: 6, STICKER: 10, STAMP: 8, INK: 1, AVATAR: 4 })
     expect(materials.filter((item) => item.starterOwned)).toHaveLength(16)
     expect(materials.filter((item) => !item.starterOwned)).toHaveLength(19)
-    expect(materials.map((item) => item.id)).toEqual(DECORATION_IDS.filter((id) => !EMOJI_STICKER_IDS.includes(id as never)))
-    expect(materials.filter((item) => !item.starterOwned).map((item) => item.id)).toEqual([...PAID_DECORATION_IDS])
+    expect(materials.map((item) => item.id)).toEqual(DECORATION_IDS.filter((id) => !EMOJI_STICKER_IDS.includes(id as never) && !CUTE_STICKER_IDS.includes(id as never)))
+    expect(materials.filter((item) => !item.starterOwned).map((item) => item.id))
+      .toEqual(PAID_DECORATION_IDS.filter((id) => !CUTE_STICKER_IDS.includes(id as never)))
     expect(materials.filter((item) => item.starterOwned).map((item) => item.id).sort())
       .toEqual(STARTER_DECORATION_IDS.filter((id) => !EMOJI_STICKER_IDS.includes(id as never)).sort())
     expect(new Set(materials.map((item) => item.id)).size).toBe(materials.length)
@@ -113,6 +119,30 @@ describe("beta decoration shop", () => {
     })
   })
 
+  it("ships a separate 28-item cute sticker collection at one fixed 4P price", () => {
+    const cuteItems = CATALOG.filter((item) => item.collection === "OPEN_CUTE_V1")
+    const groupCounts = Object.fromEntries(CUTE_STICKER_GROUPS.map((group) => [
+      group.id,
+      cuteItems.filter((item) => item.cuteGroup === group.id).length,
+    ]))
+
+    expect(cuteItems.map((item) => item.id)).toEqual([...CUTE_STICKER_IDS])
+    expect(cuteItems).toHaveLength(28)
+    expect(groupCounts).toEqual({
+      RUNNING_TOOLS: 6,
+      MOOD_RECOVERY: 6,
+      WEATHER_TIME: 6,
+      CHEER_ACHIEVEMENT: 6,
+      DOODLE_FRIENDS: 4,
+    })
+    expect(cuteItems.filter((item) => item.licenseRef === "FLUENT_EMOJI_FLAT_MIT")).toHaveLength(24)
+    expect(cuteItems.filter((item) => item.licenseRef === "OPEN_PEEPS_CC0")).toHaveLength(4)
+    expect(cuteItems.every((item) => item.category === "STICKER")).toBe(true)
+    expect(cuteItems.every((item) => item.cost === CUTE_STICKER_PRICE && !item.starterOwned)).toBe(true)
+    expect(cuteItems.every((item) => PAID_DECORATION_IDS.includes(item.id as never))).toBe(true)
+    expect(cuteItems.filter((item) => !existsSync(resolve(process.cwd(), "public", item.assetPath)))).toEqual([])
+  })
+
   it("ships 48 free emoji stickers rendered as unicode text with no bundled artwork", () => {
     // Given / When
     const emojiItems: readonly import("./decorations").DecorationCatalogItem[] = DECORATION_CATALOG.filter((item) => item.category === "EMOJI_STICKER")
@@ -139,6 +169,15 @@ describe("beta decoration shop", () => {
     expect(result.state.ownedItemIds).toEqual([...EMPTY_DECORATION_STATE.ownedItemIds, "STICKER_FINISH_LINE"])
     expect(result.state.spentPoints).toBe(8)
     expect(result.remainingPoints).toBe(12)
+  })
+
+  it("charges the fixed 4P price for an open-license cute sticker", () => {
+    const result = purchaseDecoration(9, loadDecorationState(), "CUTE_PEEP_HUMMING")
+
+    expect(result.kind).toBe("PURCHASED")
+    expect(result.state.ownedItemIds.at(-1)).toBe("CUTE_PEEP_HUMMING")
+    expect(result.state.spentPoints).toBe(CUTE_STICKER_PRICE)
+    expect(result.remainingPoints).toBe(5)
   })
 
   it("persists purchases only under the authoritative V3 decoration storage key", () => {

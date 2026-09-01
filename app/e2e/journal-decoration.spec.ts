@@ -121,6 +121,57 @@ test("uses a three-column material drawer with inline purchase and temporary hov
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true)
 })
 
+test("opens the cute sticker subcollection and buys one at the fixed 4P price", async ({ page }) => {
+  await seedEntry(page, "cute-sticker-entry", "Cute sticker check")
+  await page.addInitScript(() => {
+    const now = new Date()
+    const date = [
+      now.getFullYear(),
+      String(now.getMonth() + 1).padStart(2, "0"),
+      String(now.getDate()).padStart(2, "0"),
+    ].join("-")
+    window.localStorage.setItem("trainoracle.engagement.v2", JSON.stringify({
+      version: 2,
+      visitDates: [],
+      journalDates: [date],
+      pointMeaning: "NON_ECONOMIC_NON_TRANSFERABLE_BETA",
+    }))
+  })
+
+  await page.setViewportSize({ width: 320, height: 568 })
+  await page.goto("/?app=1")
+  await page.getByRole("button", { name: /Cute sticker check.*상세 열기/u }).click()
+  await page.getByRole("button", { name: "일지 꾸미기 열기" }).click()
+  await page.getByRole("button", { name: "꾸미기 재료 도구" }).click()
+
+  const drawer = page.getByRole("region", { name: "꾸미기 재료 서랍" })
+  const collectionEntry = drawer.getByRole("button", { name: "귀여운 스티커 28종 보기, 한 개 4포인트" })
+  await expect(collectionEntry).toBeVisible()
+  await collectionEntry.click()
+
+  await expect(drawer.getByRole("heading", { name: "귀여운 스티커" })).toBeVisible()
+  await expect(drawer.getByText("28종 · 한 개 4P")).toBeVisible()
+  await expect(drawer.getByRole("group", { name: "꾸미기 재료 종류" })).toHaveCount(0)
+  await expect(drawer.locator(".journal-decoration-toolbar__material-tile")).toHaveCount(28)
+  await drawer.getByText("그림 출처 보기").click()
+  await expect(drawer.getByRole("link", { name: "자산 출처와 라이선스" })).toHaveAttribute("href", /legal\/open-source\.html$/u)
+
+  await drawer.getByRole("button", { name: "콧노래 친구 4P로 받기" }).click()
+  const purchase = drawer.getByRole("group", { name: "콧노래 친구 받기 확인" })
+  await expect(purchase.getByRole("button", { name: "4P로 받기" })).toBeEnabled()
+  await purchase.getByRole("button", { name: "4P로 받기" }).click()
+  await expect(page.getByRole("status")).toContainText("받았어요. 0P가 남았어요.")
+
+  await drawer.getByRole("button", { name: "콧노래 친구 붙이기" }).click()
+  await expect(page.getByTestId("journal-decoration-item-0")).toBeVisible()
+  await expect.poll(() => page.evaluate((key) => {
+    const raw = window.localStorage.getItem(key)
+    return raw?.includes('"itemId":"CUTE_PEEP_HUMMING"')
+      && raw.includes('"spentPoints":4')
+  }, DECORATION_KEY_V3)).toBe(true)
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true)
+})
+
 test("stacks three emoji stickers as free items without breaking the page layout", async ({ page }) => {
   await seedEntry(page, "emoji-free-stack-entry", "Emoji free stack check")
 

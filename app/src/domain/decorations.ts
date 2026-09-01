@@ -1,5 +1,8 @@
 export {
   AVATAR_DECORATION_IDS,
+  CUTE_STICKER_GROUPS,
+  CUTE_STICKER_IDS,
+  CUTE_STICKER_PRICE,
   DECORATION_CATALOG,
   DECORATION_IDS,
   DECORATION_SLOTS,
@@ -18,6 +21,7 @@ export {
   TEXT_STICKER_ITEM_ID,
   TEXT_STICKER_MAX_LENGTH,
   THEME_DECORATION_IDS,
+  TRAINORACLE_STICKER_IDS,
   decorationCatalogItem,
   isAvatarDecorationId,
   isDecorationId,
@@ -33,6 +37,8 @@ export {
 } from "./decoration-catalog"
 export type {
   AvatarDecorationId,
+  CuteStickerGroupId,
+  CuteStickerId,
   DecorationCatalogItem,
   DecorationId,
   DecorationSlot,

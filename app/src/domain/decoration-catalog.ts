@@ -31,11 +31,26 @@ export const TAPE_DECORATION_IDS = [
   "TAPE_CHECKER", "TAPE_SAGE_SOLID", "TAPE_DIAGONAL",
   "TAPE_DOT_GRID", "TAPE_TRACK_LANE", "TAPE_MOUNTAIN",
 ] as const
-export const STICKER_DECORATION_IDS = [
+export const TRAINORACLE_STICKER_IDS = [
   "STICKER_WEATHER_SUN", "STICKER_FINISH_LINE", "STICKER_RUNNING_SHOE",
   "STICKER_WATER_BOTTLE", "STICKER_STOPWATCH_DOODLE", "STICKER_HEART_RATE",
   "STICKER_TRAIL_TREE", "STICKER_MEDAL_RIBBON", "STICKER_NIGHT_MOON",
   "STICKER_BANDAGE_CARE",
+] as const
+export const CUTE_STICKER_IDS = [
+  "CUTE_FLUENT_RUNNING_SHOE", "CUTE_FLUENT_STOPWATCH", "CUTE_FLUENT_RUNNING_SHIRT",
+  "CUTE_FLUENT_FINISH_FLAG", "CUTE_FLUENT_SPORTS_MEDAL", "CUTE_FLUENT_MOUNTAIN",
+  "CUTE_FLUENT_RED_HEART", "CUTE_FLUENT_DROPLET", "CUTE_FLUENT_BANDAGE",
+  "CUTE_FLUENT_HOT_BEVERAGE", "CUTE_FLUENT_HERB", "CUTE_FLUENT_BLUE_HEART",
+  "CUTE_FLUENT_SUN", "CUTE_FLUENT_RAIN_CLOUD", "CUTE_FLUENT_MOON",
+  "CUTE_FLUENT_SPARKLES", "CUTE_FLUENT_FIRE", "CUTE_FLUENT_ALARM_CLOCK",
+  "CUTE_FLUENT_TROPHY", "CUTE_FLUENT_PARTY_POPPER", "CUTE_FLUENT_STAR",
+  "CUTE_FLUENT_CHECK", "CUTE_FLUENT_BULLSEYE", "CUTE_FLUENT_HUNDRED",
+  "CUTE_PEEP_HUMMING", "CUTE_PEEP_HELLO", "CUTE_PEEP_HEART", "CUTE_PEEP_SPARKLE",
+] as const
+export const STICKER_DECORATION_IDS = [
+  ...TRAINORACLE_STICKER_IDS,
+  ...CUTE_STICKER_IDS,
 ] as const
 export const STAMP_DECORATION_IDS = [
   "STAMP_REST_DAY", "STAMP_DONE_CHECK", "STAMP_PERSONAL_BEST", "STAMP_EARLY_BIRD",
@@ -46,7 +61,7 @@ export const AVATAR_DECORATION_IDS = [
   "AVATAR_START_LINE", "AVATAR_EASY_JOG", "AVATAR_SPRINTER", "AVATAR_STRETCHING",
 ] as const
 
-/* 34개 그림 자산 + 이미지 대신 색으로 보여 주는 INK_NAVY 스와치 1개. */
+/* TrainOracle 그림 34개 + 오픈 라이선스 그림 28개 + INK_NAVY 스와치 1개. */
 export const DECORATION_IDS = [
   ...THEME_DECORATION_IDS,
   ...TAPE_DECORATION_IDS,
@@ -71,6 +86,7 @@ export const PAID_DECORATION_IDS = [
   "TAPE_DOT_GRID", "TAPE_TRACK_LANE", "TAPE_MOUNTAIN",
   "STICKER_FINISH_LINE", "STICKER_HEART_RATE", "STICKER_TRAIL_TREE",
   "STICKER_MEDAL_RIBBON", "STICKER_NIGHT_MOON",
+  ...CUTE_STICKER_IDS,
   "STAMP_PERSONAL_BEST", "STAMP_EARLY_BIRD", "STAMP_RAIN_RUN", "STAMP_LONG_RUN",
   "STAMP_INTERVAL", "AVATAR_START_LINE", "AVATAR_SPRINTER",
 ] as const
@@ -84,10 +100,21 @@ export type PaidDecorationId = (typeof PAID_DECORATION_IDS)[number]
 export type ThemeDecorationId = (typeof THEME_DECORATION_IDS)[number]
 export type TapeDecorationId = (typeof TAPE_DECORATION_IDS)[number]
 export type StickerDecorationId = (typeof STICKER_DECORATION_IDS)[number]
+export type CuteStickerId = (typeof CUTE_STICKER_IDS)[number]
 export type StampDecorationId = (typeof STAMP_DECORATION_IDS)[number]
 export type InkDecorationId = (typeof INK_DECORATION_IDS)[number]
 export type AvatarDecorationId = (typeof AVATAR_DECORATION_IDS)[number]
 export type PlacementDecorationId = (typeof PLACEMENT_DECORATION_IDS)[number]
+
+export const CUTE_STICKER_PRICE = 4 as const
+export const CUTE_STICKER_GROUPS = [
+  { id: "RUNNING_TOOLS", label: "달리기·도구" },
+  { id: "MOOD_RECOVERY", label: "기분·회복" },
+  { id: "WEATHER_TIME", label: "날씨·시간" },
+  { id: "CHEER_ACHIEVEMENT", label: "응원·성취" },
+  { id: "DOODLE_FRIENDS", label: "낙서 친구" },
+] as const
+export type CuteStickerGroupId = (typeof CUTE_STICKER_GROUPS)[number]["id"]
 
 export const EMOJI_STICKER_GROUPS = [
   { id: "WEATHER_SEASON", label: "날씨·계절" },
@@ -114,6 +141,10 @@ export type DecorationCatalogItem = {
   readonly emoji?: string
   /** EMOJI_STICKER 전용: 픽커 그룹. */
   readonly emojiGroup?: EmojiStickerGroupId
+  /** 오픈 라이선스 귀여운 스티커 컬렉션 전용 메타데이터. */
+  readonly collection?: "OPEN_CUTE_V1"
+  readonly cuteGroup?: CuteStickerGroupId
+  readonly licenseRef?: "FLUENT_EMOJI_FLAT_MIT" | "OPEN_PEEPS_CC0"
 }
 
 type EmojiStickerDefinition = {
@@ -121,6 +152,64 @@ type EmojiStickerDefinition = {
   readonly emoji: string
   readonly name: string
   readonly group: EmojiStickerGroupId
+}
+
+type CuteStickerDefinition = {
+  readonly id: CuteStickerId
+  readonly name: string
+  readonly description: string
+  readonly fileName: string
+  readonly group: CuteStickerGroupId
+  readonly licenseRef: "FLUENT_EMOJI_FLAT_MIT" | "OPEN_PEEPS_CC0"
+}
+
+const CUTE_STICKER_DEFINITIONS: readonly CuteStickerDefinition[] = [
+  { id: "CUTE_FLUENT_RUNNING_SHOE", name: "알록달록 러닝화", description: "달린 날을 가볍게 표시하는 러닝화예요.", fileName: "cute-fluent-running-shoe.webp", group: "RUNNING_TOOLS", licenseRef: "FLUENT_EMOJI_FLAT_MIT" },
+  { id: "CUTE_FLUENT_STOPWATCH", name: "동글 스톱워치", description: "기록을 재거나 반복 훈련을 한 날에 붙여요.", fileName: "cute-fluent-stopwatch.webp", group: "RUNNING_TOOLS", licenseRef: "FLUENT_EMOJI_FLAT_MIT" },
+  { id: "CUTE_FLUENT_RUNNING_SHIRT", name: "러닝 셔츠", description: "러닝복을 챙긴 날의 일지에 붙여요.", fileName: "cute-fluent-running-shirt.webp", group: "RUNNING_TOOLS", licenseRef: "FLUENT_EMOJI_FLAT_MIT" },
+  { id: "CUTE_FLUENT_FINISH_FLAG", name: "결승 깃발", description: "경기나 중요한 훈련을 마친 날에 붙여요.", fileName: "cute-fluent-finish-flag.webp", group: "RUNNING_TOOLS", licenseRef: "FLUENT_EMOJI_FLAT_MIT" },
+  { id: "CUTE_FLUENT_SPORTS_MEDAL", name: "반짝 메달", description: "완주나 기억하고 싶은 성취를 표시해요.", fileName: "cute-fluent-sports-medal.webp", group: "RUNNING_TOOLS", licenseRef: "FLUENT_EMOJI_FLAT_MIT" },
+  { id: "CUTE_FLUENT_MOUNTAIN", name: "초록 산", description: "언덕이나 트레일을 달린 날에 붙여요.", fileName: "cute-fluent-mountain.webp", group: "RUNNING_TOOLS", licenseRef: "FLUENT_EMOJI_FLAT_MIT" },
+  { id: "CUTE_FLUENT_RED_HEART", name: "빨간 하트", description: "좋았던 순간을 하트로 남겨요.", fileName: "cute-fluent-red-heart.webp", group: "MOOD_RECOVERY", licenseRef: "FLUENT_EMOJI_FLAT_MIT" },
+  { id: "CUTE_FLUENT_DROPLET", name: "파란 물방울", description: "수분 보충이나 땀 흘린 날을 표시해요.", fileName: "cute-fluent-droplet.webp", group: "MOOD_RECOVERY", licenseRef: "FLUENT_EMOJI_FLAT_MIT" },
+  { id: "CUTE_FLUENT_BANDAGE", name: "파란 반창고", description: "몸을 돌보고 회복한 날에 붙여요.", fileName: "cute-fluent-bandage.webp", group: "MOOD_RECOVERY", licenseRef: "FLUENT_EMOJI_FLAT_MIT" },
+  { id: "CUTE_FLUENT_HOT_BEVERAGE", name: "따뜻한 한 잔", description: "훈련 뒤 천천히 쉬어 간 날에 붙여요.", fileName: "cute-fluent-hot-beverage.webp", group: "MOOD_RECOVERY", licenseRef: "FLUENT_EMOJI_FLAT_MIT" },
+  { id: "CUTE_FLUENT_HERB", name: "초록 새싹", description: "회복하거나 다시 시작한 날을 표시해요.", fileName: "cute-fluent-herb.webp", group: "MOOD_RECOVERY", licenseRef: "FLUENT_EMOJI_FLAT_MIT" },
+  { id: "CUTE_FLUENT_BLUE_HEART", name: "파란 하트", description: "차분했던 하루의 기분을 남겨요.", fileName: "cute-fluent-blue-heart.webp", group: "MOOD_RECOVERY", licenseRef: "FLUENT_EMOJI_FLAT_MIT" },
+  { id: "CUTE_FLUENT_SUN", name: "웃는 해", description: "맑고 밝았던 날에 붙여요.", fileName: "cute-fluent-sun.webp", group: "WEATHER_TIME", licenseRef: "FLUENT_EMOJI_FLAT_MIT" },
+  { id: "CUTE_FLUENT_RAIN_CLOUD", name: "비구름", description: "비 오는 날의 훈련이나 하루를 표시해요.", fileName: "cute-fluent-rain-cloud.webp", group: "WEATHER_TIME", licenseRef: "FLUENT_EMOJI_FLAT_MIT" },
+  { id: "CUTE_FLUENT_MOON", name: "노란 초승달", description: "밤에 달리거나 늦게 기록한 날에 붙여요.", fileName: "cute-fluent-moon.webp", group: "WEATHER_TIME", licenseRef: "FLUENT_EMOJI_FLAT_MIT" },
+  { id: "CUTE_FLUENT_SPARKLES", name: "반짝이", description: "기억하고 싶은 부분을 반짝이로 꾸며요.", fileName: "cute-fluent-sparkles.webp", group: "WEATHER_TIME", licenseRef: "FLUENT_EMOJI_FLAT_MIT" },
+  { id: "CUTE_FLUENT_FIRE", name: "활활 불꽃", description: "열심히 해낸 순간을 표시해요.", fileName: "cute-fluent-fire.webp", group: "WEATHER_TIME", licenseRef: "FLUENT_EMOJI_FLAT_MIT" },
+  { id: "CUTE_FLUENT_ALARM_CLOCK", name: "빨간 알람시계", description: "이른 훈련이나 약속한 시간을 표시해요.", fileName: "cute-fluent-alarm-clock.webp", group: "WEATHER_TIME", licenseRef: "FLUENT_EMOJI_FLAT_MIT" },
+  { id: "CUTE_FLUENT_TROPHY", name: "작은 트로피", description: "스스로 칭찬하고 싶은 날에 붙여요.", fileName: "cute-fluent-trophy.webp", group: "CHEER_ACHIEVEMENT", licenseRef: "FLUENT_EMOJI_FLAT_MIT" },
+  { id: "CUTE_FLUENT_PARTY_POPPER", name: "축하 폭죽", description: "목표를 마치거나 기쁜 일이 있던 날에 붙여요.", fileName: "cute-fluent-party-popper.webp", group: "CHEER_ACHIEVEMENT", licenseRef: "FLUENT_EMOJI_FLAT_MIT" },
+  { id: "CUTE_FLUENT_STAR", name: "노란 별", description: "마음에 드는 기록 옆에 별을 붙여요.", fileName: "cute-fluent-star.webp", group: "CHEER_ACHIEVEMENT", licenseRef: "FLUENT_EMOJI_FLAT_MIT" },
+  { id: "CUTE_FLUENT_CHECK", name: "초록 체크", description: "약속한 일을 마친 날에 체크해요.", fileName: "cute-fluent-check.webp", group: "CHEER_ACHIEVEMENT", licenseRef: "FLUENT_EMOJI_FLAT_MIT" },
+  { id: "CUTE_FLUENT_BULLSEYE", name: "목표 정중앙", description: "목표에 가까워진 순간을 표시해요.", fileName: "cute-fluent-bullseye.webp", group: "CHEER_ACHIEVEMENT", licenseRef: "FLUENT_EMOJI_FLAT_MIT" },
+  { id: "CUTE_FLUENT_HUNDRED", name: "백점", description: "오늘의 만족스러운 기록에 붙여요.", fileName: "cute-fluent-hundred.webp", group: "CHEER_ACHIEVEMENT", licenseRef: "FLUENT_EMOJI_FLAT_MIT" },
+  { id: "CUTE_PEEP_HUMMING", name: "콧노래 친구", description: "기분 좋았던 하루에 낙서 친구를 붙여요.", fileName: "cute-peep-humming.webp", group: "DOODLE_FRIENDS", licenseRef: "OPEN_PEEPS_CC0" },
+  { id: "CUTE_PEEP_HELLO", name: "반가운 친구", description: "가볍게 인사하고 싶은 페이지에 붙여요.", fileName: "cute-peep-hello.webp", group: "DOODLE_FRIENDS", licenseRef: "OPEN_PEEPS_CC0" },
+  { id: "CUTE_PEEP_HEART", name: "설레는 친구", description: "마음에 든 순간을 낙서 친구로 남겨요.", fileName: "cute-peep-heart.webp", group: "DOODLE_FRIENDS", licenseRef: "OPEN_PEEPS_CC0" },
+  { id: "CUTE_PEEP_SPARKLE", name: "눈 반짝 친구", description: "새로운 목표나 기대되는 날에 붙여요.", fileName: "cute-peep-sparkle.webp", group: "DOODLE_FRIENDS", licenseRef: "OPEN_PEEPS_CC0" },
+]
+
+function cuteStickerItems(): readonly DecorationCatalogItem[] {
+  return CUTE_STICKER_DEFINITIONS.map((definition) => ({
+    id: definition.id,
+    name: definition.name,
+    typeLabel: "귀여운 스티커",
+    description: definition.description,
+    fallbackLabel: `${definition.name} 스티커 예시`,
+    assetPath: `decorations/${definition.fileName}`,
+    category: "STICKER" as const,
+    compatibleSlots: ["TOP_CORNER", "BODY_MARGIN"] as const,
+    cost: CUTE_STICKER_PRICE,
+    starterOwned: false,
+    collection: "OPEN_CUTE_V1" as const,
+    cuteGroup: definition.group,
+    licenseRef: definition.licenseRef,
+  }))
 }
 
 /*
@@ -221,6 +310,7 @@ export const DECORATION_CATALOG = [
   { id: "STICKER_MEDAL_RIBBON", name: "완주 메달", typeLabel: "스티커", description: "레이스 완주나 기억할 성취가 있던 날에 붙여요.", fallbackLabel: "완주 메달 스티커 예시", assetPath: "decorations/sticker-medal-ribbon.webp", category: "STICKER", compatibleSlots: ["TOP_CORNER", "BODY_MARGIN"], cost: 8, starterOwned: false },
   { id: "STICKER_NIGHT_MOON", name: "야간 러닝 달", typeLabel: "스티커", description: "밤에 달린 기록을 초승달과 별로 표시해요.", fallbackLabel: "야간 러닝 달 스티커 예시", assetPath: "decorations/sticker-night-moon.webp", category: "STICKER", compatibleSlots: ["TOP_CORNER", "BODY_MARGIN"], cost: 4, starterOwned: false },
   { id: "STICKER_BANDAGE_CARE", name: "회복 반창고", typeLabel: "스티커", description: "회복과 몸 돌봄을 우선한 날에 붙여요.", fallbackLabel: "회복 반창고 스티커 예시", assetPath: "decorations/sticker-bandage-care.webp", category: "STICKER", compatibleSlots: ["TOP_CORNER", "BODY_MARGIN"], cost: 0, starterOwned: true },
+  ...cuteStickerItems(),
 
   { id: "STAMP_REST_DAY", name: "푹 쉬었어요", typeLabel: "도장", description: "휴식이나 회복을 기록한 날에 찍는 도장이에요.", fallbackLabel: "푹 쉬었어요 예시", assetPath: "decorations/stamp-rest-day.webp", category: "STAMP", compatibleSlots: ["PAGE_FOOTER"], cost: 0, starterOwned: true },
   { id: "STAMP_DONE_CHECK", name: "해냈다", typeLabel: "도장", description: "계획한 기록을 마친 날에 체크 도장을 남겨요.", fallbackLabel: "해냈다 도장 예시", assetPath: "decorations/stamp-done-check.webp", category: "STAMP", compatibleSlots: ["PAGE_FOOTER"], cost: 0, starterOwned: true },
