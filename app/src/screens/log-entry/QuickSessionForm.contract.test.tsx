@@ -1,7 +1,14 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { cleanup, fireEvent, render, screen } from "@testing-library/react"
-import { loadEntries } from "../../domain/journal-store"
+import { loadAnalysisEntries, loadEntries } from "../../domain/journal-store"
 import { QuickSessionForm } from "./QuickSessionForm"
+
+function finishPerformedSession(rpe = 6): void {
+  fireEvent.click(screen.getByRole("button", { name: "운동을 마쳤어요" }))
+  fireEvent.click(screen.getByRole("button", { name: "오후" }))
+  fireEvent.click(screen.getByRole("button", { name: new RegExp(`RPE ${rpe},`) }))
+  fireEvent.click(screen.getByRole("button", { name: "없어요" }))
+}
 
 describe("quick session journal contract", () => {
   beforeEach(() => {
@@ -13,13 +20,11 @@ describe("quick session journal contract", () => {
     vi.restoreAllMocks()
   })
 
-  it("finishes a common path in two answers and keeps the RPE band exact", () => {
+  it("stores an exact one-tap RPE that is immediately eligible for descriptive analysis", () => {
     const onDone = vi.fn()
     render(<QuickSessionForm onDone={onDone} />)
 
-    fireEvent.click(screen.getByRole("button", { name: "계획한 훈련을 했어요" }))
-    fireEvent.click(screen.getByRole("button", { name: "한 번" }))
-    fireEvent.click(screen.getByRole("button", { name: /5~6/ }))
+    finishPerformedSession(6)
 
     expect(screen.getByRole("heading", { name: "오늘 기록을 남겼어요." })).toBeVisible()
     const [entry] = loadEntries()
@@ -27,55 +32,127 @@ describe("quick session journal contract", () => {
       kind: "post-session",
       captureDepth: "QUICK",
       activityOutcome: "COMPLETED",
-      activitySlot: "SINGLE",
-      rpeBand: "RPE_5_6",
-      rpe: 0,
-      distanceKm: "",
-      durationMin: "",
+      activitySlot: "PM",
+      rpe: 6,
+      painCheckStatus: "NO_SIGNAL_REPORTED",
       objectiveDataState: "WAITING",
+      planExecutionRelation: "NOT_APPLICABLE",
       fieldProvenance: {
-        rpe: { provenance: "MISSING" },
+        rpe: { provenance: "EXPLICIT" },
+        painCheckStatus: { provenance: "EXPLICIT" },
         distanceKm: { provenance: "MISSING" },
-        durationMin: { provenance: "MISSING" },
+        plannedSessionLink: { provenance: "MISSING" },
+        planExecutionRelation: {
+          provenance: "DERIVED",
+          derivedFrom: ["activityOutcome", "plannedSessionLink"],
+          derivationRuleId: "QUICK_PLAN_EXECUTION_RELATION_V2",
+        },
       },
     })
+    expect(entry?.kind === "post-session" ? entry.rpeBand : undefined).toBeUndefined()
+    expect(loadAnalysisEntries()).toHaveLength(1)
 
     fireEvent.click(screen.getByRole("button", { name: "완료" }))
     expect(onDone).toHaveBeenCalledWith(expect.objectContaining({ id: entry?.id }))
   })
 
-  it("does not invent an effort value when the athlete chooses 모르겠어요", () => {
+  it("finishes rest without asking for a time, RPE, or objective data", () => {
     render(<QuickSessionForm />)
 
     fireEvent.click(screen.getByRole("button", { name: "오늘은 쉬었어요" }))
-    fireEvent.click(screen.getByRole("button", { name: "한 번" }))
-    fireEvent.click(screen.getByRole("button", { name: /모르겠어요/ }))
 
     const [entry] = loadEntries()
     expect(entry).toMatchObject({
       activityOutcome: "RESTED",
-      rpeBand: "UNKNOWN",
+      objectiveDataState: "NONE",
       rpe: 0,
-      fieldProvenance: {
-        rpeBand: { provenance: "MISSING" },
-        rpe: { provenance: "MISSING" },
-      },
+    })
+    expect(entry?.kind === "post-session" ? entry.activitySlot : undefined).toBeUndefined()
+    expect(entry?.kind === "post-session" ? entry.rpeBand : undefined).toBeUndefined()
+  })
+
+  it("keeps 모르겠어요 missing instead of inventing an effort value", () => {
+    render(<QuickSessionForm />)
+
+    fireEvent.click(screen.getByRole("button", { name: "가볍게 움직였어요" }))
+    fireEvent.click(screen.getByRole("button", { name: "시간 미지정" }))
+    fireEvent.click(screen.getByRole("button", { name: "모르겠어요 · RPE는 비워 둘게요" }))
+    fireEvent.click(screen.getByRole("button", { name: "없어요" }))
+
+    expect(loadEntries()[0]).toMatchObject({
+      activitySlot: "UNSPECIFIED",
+      rpe: 0,
+      fieldProvenance: { rpe: { provenance: "MISSING" } },
     })
   })
 
-  it("hands the saved entry to detail editing without creating another id", () => {
+  it("hands the same saved id to detailed editing", () => {
     const onContinueDetailed = vi.fn()
     render(<QuickSessionForm onContinueDetailed={onContinueDetailed} />)
 
-    fireEvent.click(screen.getByRole("button", { name: "가볍게 움직였어요" }))
-    fireEvent.click(screen.getByRole("button", { name: "오전" }))
-    fireEvent.click(screen.getByRole("button", { name: /3~4/ }))
+    finishPerformedSession(4)
     fireEvent.click(screen.getByRole("button", { name: "일지 더 쓰기" }))
 
     const [entry] = loadEntries()
     expect(loadEntries()).toHaveLength(1)
-    expect(entry).toMatchObject({ activitySlot: "AM" })
     expect(onContinueDetailed).toHaveBeenCalledWith(expect.objectContaining({ id: entry?.id }))
+  })
+
+  it("allows a saved choice to be corrected without creating a duplicate", () => {
+    render(<QuickSessionForm />)
+    finishPerformedSession(6)
+    const original = loadEntries()[0]
+
+    fireEvent.click(screen.getByRole("button", { name: "방금 기록 수정" }))
+    fireEvent.click(screen.getByRole("button", { name: "하던 운동을 일부만 했어요" }))
+    fireEvent.click(screen.getByRole("button", { name: "오전" }))
+    fireEvent.click(screen.getByRole("button", { name: /RPE 7,/ }))
+    fireEvent.click(screen.getByRole("button", { name: "없어요" }))
+
+    expect(loadEntries()).toHaveLength(1)
+    expect(loadEntries()[0]).toMatchObject({
+      id: original?.id,
+      activityOutcome: "PARTIAL",
+      activitySlot: "AM",
+      rpe: 7,
+    })
+  })
+
+  it("removes performed-only facts when a saved activity is corrected to rest", () => {
+    render(<QuickSessionForm />)
+    finishPerformedSession(6)
+
+    fireEvent.click(screen.getByRole("button", { name: "방금 기록 수정" }))
+    fireEvent.click(screen.getByRole("button", { name: "오늘은 쉬었어요" }))
+
+    const [entry] = loadEntries()
+    expect(entry).toMatchObject({ activityOutcome: "RESTED", objectiveDataState: "NONE", rpe: 0 })
+    if (entry?.kind !== "post-session") throw new Error("Expected post-session entry")
+    expect(entry.activitySlot).toBeUndefined()
+    expect(entry.painCheckStatus).toBeUndefined()
+    expect(entry.painParts).toBeUndefined()
+    expect(entry.fieldProvenance?.activitySlot).toBeUndefined()
+    expect(entry.fieldProvenance?.painCheckStatus).toBeUndefined()
+    expect(entry.fieldProvenance?.painParts).toBeUndefined()
+  })
+
+  it("requires a structured body area when the athlete reports discomfort", () => {
+    render(<QuickSessionForm />)
+    fireEvent.click(screen.getByRole("button", { name: "운동을 마쳤어요" }))
+    fireEvent.click(screen.getByRole("button", { name: "오전" }))
+    fireEvent.click(screen.getByRole("button", { name: /RPE 5,/ }))
+    fireEvent.click(screen.getByRole("button", { name: "있어요" }))
+    fireEvent.click(screen.getByRole("button", { name: "이 상태로 기록" }))
+
+    expect(screen.getByRole("alert")).toHaveTextContent("하나 이상")
+    expect(loadEntries()).toHaveLength(0)
+
+    fireEvent.click(screen.getByRole("button", { name: /오른 무릎, 통증 없음/ }))
+    fireEvent.click(screen.getByRole("button", { name: "이 상태로 기록" }))
+    expect(loadEntries()[0]).toMatchObject({
+      painCheckStatus: "SIGNAL_REPORTED",
+      painParts: { rKnee: 1 },
+    })
   })
 
   it("shows no success state when local storage rejects the write", () => {
@@ -84,24 +161,10 @@ describe("quick session journal contract", () => {
     })
     render(<QuickSessionForm />)
 
-    fireEvent.click(screen.getByRole("button", { name: "훈련을 건너뛰었어요" }))
-    fireEvent.click(screen.getByRole("button", { name: "오후" }))
-    fireEvent.click(screen.getByRole("button", { name: /모르겠어요/ }))
+    fireEvent.click(screen.getByRole("button", { name: "오늘은 쉬었어요" }))
 
     expect(screen.queryByRole("heading", { name: "오늘 기록을 남겼어요." })).toBeNull()
     expect(screen.getByRole("alert")).toHaveTextContent("저장하지 못했어요")
     setItem.mockRestore()
-  })
-
-  it("locks the written choices after saving so the same action cannot create a duplicate", () => {
-    render(<QuickSessionForm />)
-
-    fireEvent.click(screen.getByRole("button", { name: "계획한 훈련을 했어요" }))
-    fireEvent.click(screen.getByRole("button", { name: "한 번" }))
-    fireEvent.click(screen.getByRole("button", { name: /5~6/ }))
-
-    expect(screen.getByRole("button", { name: /훈련 완료/ })).toBeDisabled()
-    expect(screen.getByRole("button", { name: /RPE 5~6/ })).toBeDisabled()
-    expect(loadEntries()).toHaveLength(1)
   })
 })

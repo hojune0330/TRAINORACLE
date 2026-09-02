@@ -121,6 +121,7 @@ This table records files found in the repository at the time of this index updat
 | `SPEC_SOURCE_ACCEPTANCE_DECISION_ROUND3.md` | root | DECIDED | Analysis/Visualization, Daily Brief/Inbox, Microcycle/Calendar, and Plan Output Rationale Privacy accepted as working sources only; not canonical promotion or issue closure. |
 | `SPEC_SOURCE_ACCEPTANCE_DECISION_ROUND4.md` | root | DECIDED | Media/Transient Capture, Race Record/Historical Recall, and Metric Algorithm accepted as working sources only; METRIC §6 formulas remain unaccepted. |
 | `SPEC_SOURCE_ACCEPTANCE_DECISION_ROUND5.md` | root | DECIDED | Work Order 004 outputs accepted as working-source amendments only; legacy v1 kit is idea source only; no canonical promotion, issue closure, or runtime evidence. |
+| `SPEC_QUICK_PROGRESSIVE_JOURNAL_V2_DECISION.md` | root | OWNER_APPROVED_WORKING_DIRECTION | Exact-RPE quick journal, structured body check, same-ID detail continuation, explicit plan-link, device-candidate, reward, and navigation boundaries. Local branch work is not merge, release, canonical, or runtime evidence. |
 | D9 runtime evidence | `runtime-evidence/d9-evaluator/` | RUNTIME_EVIDENCE_PRESENT | Actual local D9 evaluator run evidence exists; downstream issue closure still requires target review/recount and owner approval. |
 | Work Order 002 Task 2 output | `SPEC_SCREEN_TRACEABILITY_MATRIX.md` | MERGED / UPDATED_BY_ORDER_004 | Screen/spec traceability matrix; originally documented five `GAP_SPEC_MISSING` rows, now recounts those rows as `RESOLVED_BY_SOURCE(ROUND4)` without claiming implementation completion. |
 | Work Order 002 Task 1 output | `SPEC_SOURCE_ACCEPTANCE_REVIEW_ROUND3.md` | MERGED | Round 3 review packet; decisions issued separately by `SPEC_SOURCE_ACCEPTANCE_DECISION_ROUND3.md`. |
@@ -168,6 +169,7 @@ These files are active SPEC candidates, but each file's own metadata and open-is
 | File | Current repository path | Treatment |
 |---|---|---|
 | `D9_SAFETY_EVALUATOR_V2_1_1_TEST_PACKAGE.md` | `specs/test-packages/D9_SAFETY_EVALUATOR_V2_1_1_TEST_PACKAGE.md` | Candidate package only. Markdown PASS/self-check is not runtime evidence. |
+| `QUICK_LOG_TAP_BUDGET_TEST_PACKAGE.md` | `specs/test-packages/QUICK_LOG_TAP_BUDGET_TEST_PACKAGE.md` | V2 local test package. Runtime PASS requires output from the matching final build. |
 
 ---
 
@@ -286,6 +288,7 @@ Bare D-rule references are forbidden in new SPEC work.
 25. Begin App Bridge/API schema contracts and runtime evidence only after preserving the safety core chain and resolving the owner decisions called out by the account/sync drafts.
 26. Review `specs/reconstruct/DOUBLE_SESSION_BETA_SAFETY_CONTRACT.md` (v0.3) before treating local AM/PM display as a dated calendar or a numeric prescription. Read its §0 status notice and §10 change history first: the v0.1 rule that a PM session must be RPE 1-2 recovery only and the v0.2 PM recovery-session count cap for an entire frame are **not** current guidance for a full two-a-day schedule explicitly chosen by the athlete. `OWNER_DECISION_FULL_TWO_A_DAY_2026_08_12.md` governs that scope. Do not cite the retired caps to remove a directly selected second slot. Still binding: explicit consent (`DSB-INV-001`), the two-sessions-per-day cap (`DSB-INV-004`), no make-up sessions (`DSB-INV-007`), the RPE-only boundary (`DSB-INV-008`), and the disclosure-and-edit precondition for special days (`DSB-INV-009`). Four open issues; three remain canonical blockers. **No CI job validates any `DSB-INV-*` rule**, so verify against the storage gate and generator code, not the document alone.
 27. Review `specs/reconstruct/PLAN_BACKUP_PUBLIC_PROFILE_AND_SHARING_SPEC.md` before changing plan backup or public sharing. Private plan payloads and public summary projections are separate stores; a friend link grants no coaching, journal, safety, or plan-mutation authority.
+28. Read `SPEC_QUICK_PROGRESSIVE_JOURNAL_V2_DECISION.md` with Daily Log §7B before quick-journal changes. New quick entries use exact RPE or MISSING, preserve explicit plan links only, require a structured post-activity body check, and never treat rest/skip as a device merge candidate.
 
 ---
 
@@ -310,6 +313,7 @@ Important starting points:
 - `SPEC_FILE_TRUTH_GUARD.md`
 - `SPEC_LEGACY_ALIGNMENT_AND_DAILY_LOG_PLAN.md`
 - `RACE_SELFCHECK_FIELDS_DECISION.md`
+- `SPEC_QUICK_PROGRESSIVE_JOURNAL_V2_DECISION.md`
 - `ACCOUNT_FEDERATION_DECISION.md`
 - `ATHLETETIME_INTEGRATION_REVIEW.md`
 - `LAUNCH_BACKEND_AND_ACCOUNT_PLAN.md`

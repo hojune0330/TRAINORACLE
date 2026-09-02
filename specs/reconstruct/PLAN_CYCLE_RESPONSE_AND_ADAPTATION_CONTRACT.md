@@ -26,6 +26,9 @@ does not redefine, `TRAINING_PLAN_FORMATION_AND_ADAPTATION_SPEC.md`.
 Only a structured post-session entry may contribute when its immutable
 `plannedSessionLink` matches the active candidate and session identity. The first
 runtime version uses only an explicitly entered RPE and the stored planned RPE range.
+Quick capture is eligible under this same rule only when it stores one exact RPE with
+`EXPLICIT` provenance and the immutable planned-session link. A quick RPE band, missing
+RPE, generic quick entry, or device-derived effort remains excluded.
 
 The following are excluded: raw diary or memo text, including the existence of a
 private memo; pain or symptom clauses; entries without a matching planned-session

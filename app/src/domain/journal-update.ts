@@ -35,8 +35,13 @@ function provenanceValues(entry: JournalEntry): Readonly<Record<string, unknown>
   switch (entry.kind) {
     case "post-session":
       return {
+        system: entry.system,
         activityOutcome: entry.activityOutcome,
         activitySlot: entry.activitySlot,
+        planExecutionRelation: entry.planExecutionRelation,
+        painCheckStatus: entry.painCheckStatus,
+        painParts: entry.painParts,
+        plannedSessionLink: entry.plannedSessionLink,
         distanceKm: entry.distanceKm,
         durationMin: entry.durationMin,
         avgPace: entry.avgPace,
@@ -94,6 +99,7 @@ function mergeProvenance(
   ])
 
   for (const field of fields) {
+    if (nextValues[field] === undefined && nextProvenance[field] === undefined) continue
     const selected = sameStructuredValue(previousValues[field], nextValues[field])
       ? previousProvenance[field]
       : nextProvenance[field]

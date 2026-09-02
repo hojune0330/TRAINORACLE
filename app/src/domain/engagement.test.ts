@@ -220,6 +220,33 @@ describe("safe local engagement", () => {
     })
   })
 
+  it("keeps a backfilled journal visible without granting spendable points", () => {
+    const oldRest: PostSessionEntry = {
+      id: "old-rest",
+      kind: "post-session",
+      date: "2026-07-20",
+      savedAt: "2026-07-24T12:00:00.000Z",
+      syncState: "local",
+      activityOutcome: "RESTED",
+      system: "rest",
+      title: "휴식",
+      distanceKm: "",
+      durationMin: "",
+      avgPace: "",
+      rpe: 0,
+      memo: "",
+    }
+
+    expect(toEngagementJournalRef(oldRest)).toEqual({ date: "2026-07-20", kind: "post-session" })
+    expect(awardJournalEntry(oldRest, "2026-07-24")).toMatchObject({
+      kind: "INELIGIBLE",
+      awardedPoints: 0,
+      summary: { points: 0 },
+    })
+    expect(reconcileJournalAwards([{ date: "2026-07-20", kind: "post-session" }], "2026-07-24"))
+      .toMatchObject({ points: 0, journalDays: 0 })
+  })
+
   it("fails closed to an empty state when stored data is malformed", () => {
     window.localStorage.setItem(ENGAGEMENT_STORAGE_KEY, "{broken")
 

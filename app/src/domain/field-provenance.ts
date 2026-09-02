@@ -27,7 +27,8 @@ export type ProvenanceEntryKind = "post-session" | "evening" | "race"
 const ENTRY_PROVENANCE_FIELDS: Readonly<Record<ProvenanceEntryKind, readonly string[]>> = {
   "post-session": [
     "system", "distanceKm", "durationMin", "avgPace", "rpe", "rpeBand",
-    "activityOutcome", "activitySlot", "plannedRpe", "objectiveComponents",
+    "activityOutcome", "activitySlot", "planExecutionRelation", "painCheckStatus",
+    "painParts", "plannedSessionLink", "plannedRpe", "objectiveComponents",
   ],
   evening: ["sleepH", "sleepQuality", "weightKg", "restingHr", "painParts", "mood"],
   race: ["tension", "condition", "mood", "goalPace"],
@@ -108,6 +109,13 @@ export function hasImportedField(provenance: FieldProvenanceMap | undefined): bo
 
 export function explicitOrMissing(hasValue: boolean): ExplicitFieldProvenance | MissingFieldProvenance {
   return hasValue ? { provenance: FIELD_PROVENANCE.explicit } : { provenance: FIELD_PROVENANCE.missing }
+}
+
+export function derivedProvenance(
+  derivedFrom: readonly string[],
+  derivationRuleId: string,
+): DerivedFieldProvenance {
+  return { provenance: FIELD_PROVENANCE.derived, derivedFrom, derivationRuleId }
 }
 
 export function isValidEntryFieldProvenance(kind: ProvenanceEntryKind, provenance: FieldProvenanceMap): boolean {

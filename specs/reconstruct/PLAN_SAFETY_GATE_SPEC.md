@@ -314,6 +314,8 @@ daily_log_input_boundary:
     - structured_sleep
     - structured_readiness
     - structured_body_area_signals
+    - structured_post_activity_pain_check_status
+    - structured_activity_outcome
     - nonSensitiveReasonCodes
     - extractionVersion
     - completedSessionRef
@@ -338,6 +340,7 @@ daily_log_input_boundary:
     may_clear_D9_UNKNOWN: false
     may_clear_existing_Safety_Gate_block: false
     may_turn_D9_CLEARED_into_medical_clearance: false
+    quick_completion_or_no_pain_can_clear_any_block: false
 ```
 
 If Daily Check-in context is stale, missing, internally conflicting, or contains structured concerning signals, Safety Gate may become more conservative. Good sleep, low RPE, "feels fine" statements, clean body-area signals, or favorable readiness values cannot reverse an `ACTIVE`, `UNKNOWN`, or blocked result.

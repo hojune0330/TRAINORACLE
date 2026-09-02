@@ -29,7 +29,7 @@ test("audits empty home and chooser touch actions", async ({ page }, testInfo) =
   await page.getByRole("button", { name: "오늘 기록 남기기" }).click()
   await auditTouchTargets(page, [
     { name: "quick.back", locator: page.getByRole("button", { name: "← 뒤로" }) },
-    { name: "quick.outcome", locator: page.getByRole("button", { name: /^(계획한 훈련을 했어요|가볍게 움직였어요|오늘은 쉬었어요|훈련을 건너뛰었어요)$/u }), count: 4, heightOnly: true },
+    { name: "quick.outcome", locator: page.getByRole("button", { name: /^(운동을 마쳤어요|하던 운동을 일부만 했어요|가볍게 움직였어요|오늘은 쉬었어요|하려던 운동을 건너뛰었어요)$/u }), count: 5, heightOnly: true },
   ])
   await expectNoHorizontalOverflow(page)
   // the chooser is reached via the "경기기록" tab bar button

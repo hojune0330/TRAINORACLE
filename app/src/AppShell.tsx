@@ -20,6 +20,7 @@ import {
 import {
   INITIAL_VIEW_STATE,
   shouldResetTabView,
+  tabForChrome,
   viewForJournalDraft,
   viewForJournalReturn,
   viewForPlannedSessionDraft,
@@ -362,7 +363,7 @@ export function AppShell() {
     <AppShellFrame
       scrollRegionRef={scrollRegionRef}
       savedToast={savedToast}
-      tab={v.tab}
+      tab={tabForChrome(v)}
       onDismissToast={() => setSavedToast(null)}
       onOpenTrends={goTrendsFromReceipt}
       onOpenBackup={() => {

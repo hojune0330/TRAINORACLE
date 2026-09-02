@@ -5,8 +5,8 @@ document_metadata:
   doc_id: trainoracle-spec-013-daily-log-and-checkin
   spec_id: DAILY_LOG_AND_CHECKIN_SPEC
   title: TrainOracle Daily Log And Check-in Spec
-  version: "0.2"
-  round: RT1_RECONSTRUCT
+  version: "0.3"
+  round: RT2_QUICK_PROGRESSIVE_V2
   status: RECONSTRUCTED_DRAFT_FOR_REVIEW
   owner: COACH_HOJUNE
   owner_english_name: hojune jang
@@ -378,9 +378,11 @@ and runtime evidence are reviewed separately.
 
 ```yaml
 quick_log_contract:
-  patched_from: SPEC_TAP_FIRST_LOGGING.md
+  patched_from:
+    - SPEC_TAP_FIRST_LOGGING.md
+    - SPEC_QUICK_PROGRESSIVE_JOURNAL_V2_DECISION.md
   contract_status: OWNER_ADOPTED_2026_09_02
-  runtime_implementation_status: POST_SESSION_QUICK_V1_IMPLEMENTED_PENDING_RELEASE_EVIDENCE
+  runtime_implementation_status: LOCAL_BRANCH_IMPLEMENTED_UNMERGED_UNRELEASED
   canonical_promotion_status: NOT_CLAIMED
   issue_closure_status: NOT_CLAIMED
 
@@ -400,6 +402,10 @@ quick_log_contract:
         - activitySlot
         - rpeBand
         - objectiveDataState
+        - planExecutionRelation
+        - painCheckStatus
+        - painParts
+        - plannedSessionLink
       quick_to_detail_value_handoff: preserve_current_values
       quick_to_detail_identity: same_entry_id
 
@@ -412,7 +418,9 @@ quick_log_contract:
   budgets:
     post_session_quick:
       maximum_taps: 5
-      same_kind_prefill_maximum_taps: 3
+      performed_no_pain_path_including_entry_point: 5
+      rested_or_skipped_path_including_entry_point: 2
+      positive_pain_path: SAFETY_EXCEPTION_REQUIRES_BODY_AREA_AND_EXPLICIT_SAVE
       maximum_screen_transitions: 2
     evening_quick:
       maximum_taps: 7
@@ -465,7 +473,31 @@ quick_log_contract:
     no_pain_action_requires_explicit_current_entry_tap: true
     favorable_checkin_or_completion_state_can_clear_D9_or_Safety_Gate: false
 
+  post_session_v2_outcomes:
+    values: [COMPLETED, PARTIAL, LIGHT_ACTIVITY, RESTED, SKIPPED]
+    performed_values: [COMPLETED, PARTIAL, LIGHT_ACTIVITY]
+    rested_or_skipped_require_activitySlot: false
+    rested_or_skipped_require_rpe: false
+    rested_or_skipped_objectiveDataState: NONE
+    performed_requires_explicit_pain_check: true
+
+  activity_slot_v2:
+    write_values: [UNSPECIFIED, AM, PM]
+    legacy_read_only_value: SINGLE
+    silent_time_inference: forbidden
+
+  exact_rpe_v2:
+    write_values: integer_1_to_10_or_MISSING
+    one_tap_exact_selection: true
+    rpeBand_new_write: forbidden
+    exact_rpe_and_rpeBand_on_same_new_entry: forbidden
+    legacy_rpeBand_read_and_display: allowed_with_approximate_label
+    missing_rpe_value: 0
+    missing_rpe_provenance: MISSING
+    analysis_eligibility: EXPLICIT_exact_rpe_only
+
   rpe_band_boundary:
+    status: LEGACY_READ_COMPATIBILITY_ONLY_AFTER_V2
     values: [RPE_1_2, RPE_3_4, RPE_5_6, RPE_7_8, RPE_9_10, UNKNOWN]
     midpoint_conversion: forbidden
     exact_rpe_field_when_only_band_selected: 0
@@ -475,10 +507,46 @@ quick_log_contract:
     automatic_merge: forbidden
     user_confirmation_required: true
     same_date_single_waiting_quick_candidate_may_be_offered: true
+    rested_or_skipped_quick_candidate: forbidden
     multiple_waiting_quick_candidates: do_not_guess
     existing_objective_value_overwrite: forbidden
     merged_fields: [distanceKm, durationMin, avgPace]
     never_infer_from_device: [rpe, rpeBand, mood, painParts, activityOutcome]
+
+  planned_session_linkage:
+    generic_quick_entry_auto_link: forbidden
+    explicit_plan_session_CTA_required: true
+    quick_capture_may_preserve_exact_link: true
+    relation_values: [AS_PLANNED, MODIFIED, NOT_APPLICABLE, UNKNOWN]
+    relation_is_derived_from: [activityOutcome, plannedSessionLink]
+    same_date_title_or_RPE_inference: forbidden
+
+  correction_and_progression:
+    saved_choice_correction: update_same_entry_id
+    quick_to_detail: update_same_entry_id
+    duplicate_creation_for_same_correction: forbidden
+    correction_to_RESTED_or_SKIPPED:
+      clear_performed_only_values:
+        - activitySlot
+        - painCheckStatus
+        - painParts
+        - system
+        - distanceKm
+        - durationMin
+        - avgPace
+        - rpe
+        - rpeBand
+        - intensityAssessment
+      objectiveDataState: NONE
+      clear_matching_performed_only_provenance: true
+      stale_performed_fact_retention: forbidden
+    historical_backfill_may_create_spendable_daily_reward: false
+
+  analysis_projection:
+    explicit_structured_outcome_without_RPE_may_remain_a_day_record: true
+    RESTED_or_SKIPPED_counts_as_performed_session: false
+    RESTED_or_SKIPPED_may_inflate_distance_or_RPE_average: false
+    recorded_day_continuity_may_include_explicit_RESTED_or_SKIPPED: true
 ```
 
 Quick mode changes interaction cost, not storage truth or safety authority. It must preserve the visible ink stack across each automatic transition, and the accumulated values must remain editable without treating a transition, animation, preset ordering, or prior record as a new athlete fact.
@@ -566,6 +634,10 @@ data_provenance_contract:
   privacy_and_safety:
     fieldProvenance_may_store_raw_memo_symptom_evidence_or_private_text: false
     derivedFrom_contains_field_identifiers_not_values: true
+    analysis_projection_user_authored_session_title: blank
+    structured_context_requires_its_own_eligible_provenance: true
+    one_eligible_field_may_carry_other_ineligible_fields_into_analysis: false
+    unregistered_derived_planExecutionRelation_may_enter_analysis: false
     provenance_can_clear_D9_or_Safety_Gate: false
     free_text_favorable_checkin_template_or_good_physio_can_clear_D9_risk: false
     daily_log_still_cannot_bypass_RVE_or_Safety_Gate: true
@@ -1090,6 +1162,10 @@ These are this reconstructed document's own issues. They do not change issue cou
 | Analyzable note may raise local transient review but cannot clear risk | PASS |
 | Sanitized transient assessment is not persisted or used as plan evidence | PASS |
 | Owner-approved purpose selector remains app-local with no server or plan authority | PASS |
+| Quick V2 stores exact RPE or MISSING and does not create a new RPE band | PASS |
+| Rest and skip entries contain no invented slot, RPE, or waiting device activity | PASS |
+| Positive pain follows a safety exception instead of the ordinary tap budget | PASS |
+| Generic quick entry cannot infer a plan link | PASS |
 | Race self-check fields remain an interim local projection, not a canonical subtype | PASS |
 | Shadow-mode disclosure direction does not activate shadow runtime | PASS |
 | `D9_ACTIVE` / `D9_UNKNOWN` cannot be cleared by check-in | PASS |

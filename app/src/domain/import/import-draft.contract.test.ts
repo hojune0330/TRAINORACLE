@@ -174,7 +174,10 @@ describe("import duplicate detection", () => {
       id: "quick-1",
       captureDepth: "QUICK",
       activityOutcome: "COMPLETED",
+      activitySlot: "AM",
       objectiveDataState: "WAITING",
+      planExecutionRelation: "NOT_APPLICABLE",
+      painCheckStatus: "NO_SIGNAL_REPORTED",
       system: "",
       title: "훈련 완료",
       distanceKm: "",
@@ -183,6 +186,15 @@ describe("import duplicate detection", () => {
       rpe: 0,
       fieldProvenance: {
         activityOutcome: { provenance: "EXPLICIT" },
+        activitySlot: { provenance: "EXPLICIT" },
+        plannedSessionLink: { provenance: "MISSING" },
+        planExecutionRelation: {
+          provenance: "DERIVED",
+          derivedFrom: ["activityOutcome", "plannedSessionLink"],
+          derivationRuleId: "QUICK_PLAN_EXECUTION_RELATION_V2",
+        },
+        painCheckStatus: { provenance: "EXPLICIT" },
+        painParts: { provenance: "MISSING" },
         distanceKm: { provenance: "MISSING" },
         durationMin: { provenance: "MISSING" },
         avgPace: { provenance: "MISSING" },
@@ -219,6 +231,31 @@ describe("import duplicate detection", () => {
     }
     expect(updateEntry(updated, merged.savedAt).ok).toBe(true)
     expect(loadEntries()[0]).toMatchObject({ id: "quick-1", distanceKm: "10.00", rpe: 6 })
+  })
+
+  it("휴식과 건너뜀 빠른 기록은 기기 활동 병합 후보가 아니다", () => {
+    const rest = existingSession({
+      id: "rest-1",
+      captureDepth: "QUICK",
+      activityOutcome: "RESTED",
+      activitySlot: undefined,
+      objectiveDataState: "NONE",
+      planExecutionRelation: "NOT_APPLICABLE",
+      system: "",
+      title: "휴식",
+      distanceKm: "",
+      durationMin: "",
+      avgPace: "",
+      rpe: 0,
+      fieldProvenance: {
+        activityOutcome: { provenance: "EXPLICIT" },
+        planExecutionRelation: { provenance: "EXPLICIT" },
+        rpe: { provenance: "MISSING" },
+      },
+    })
+
+    const [draft] = buildImportDrafts([activity()], [rest])
+    expect(draft?.duplicateOf).toBeNull()
   })
 
   it("기존 객관값이 있으면 가져온 값으로 덮어쓰지 않는다", () => {

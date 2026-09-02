@@ -71,7 +71,7 @@ export function recordDailyVisit(today: string): EngagementAwardResult {
 
 export function awardJournalEntry(entry: JournalEntry, today: string): EngagementAwardResult {
   const ref = toEngagementJournalRef(entry)
-  if (ref === null || !validAwardDate(ref.date, today)) {
+  if (ref === null || ref.date !== today || !validAwardDate(ref.date, today)) {
     return { kind: "INELIGIBLE", awardedPoints: 0, summary: loadEngagementSummary(today) }
   }
   return awardDate("JOURNAL", ref.date, today)
@@ -84,7 +84,7 @@ export function reconcileJournalAwards(
   const current = readState()
   const journalDates = validDistinctDates([
     ...current.journalDates,
-    ...journalRefs.map((entry) => entry.date),
+    ...journalRefs.filter((entry) => entry.date === today).map((entry) => entry.date),
   ], today)
   if (journalDates.length === validDistinctDates(current.journalDates, today).length) {
     return summaryFor(current, today)

@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest"
 import {
   INITIAL_VIEW_STATE,
   shouldResetTabView,
+  tabForChrome,
   viewForJournalReturn,
   viewForPlannedSessionDraft,
 } from "./app-shell-state"
@@ -41,7 +42,7 @@ describe("app shell return state", () => {
     const view = viewForPlannedSessionDraft(INITIAL_VIEW_STATE, draft)
     expect(view).toMatchObject({
       tab: "log",
-      entryType: "post-session",
+      entryType: "quick-session",
       detailDate: draft.date,
       journalDraft: {
         date: draft.date,
@@ -50,6 +51,19 @@ describe("app shell return state", () => {
       },
     })
     expect(viewForJournalReturn(view).tab).toBe("plan")
+  })
+})
+
+describe("bottom navigation context", () => {
+  it.each(["quick-session", "post-session", "evening"] as const)(
+    "shows %s as journal work instead of a race record",
+    (entryType) => {
+      expect(tabForChrome({ ...INITIAL_VIEW_STATE, tab: "log", entryType })).toBe("journal")
+    },
+  )
+
+  it("keeps the race form under the race-record tab", () => {
+    expect(tabForChrome({ ...INITIAL_VIEW_STATE, tab: "log", entryType: "race" })).toBe("log")
   })
 })
 

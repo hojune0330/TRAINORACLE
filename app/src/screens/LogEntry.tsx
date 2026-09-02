@@ -43,6 +43,8 @@ export function LogEntry({ entryType = "choose", onBack, onDone, onOpenImport, o
       key={draftKey}
       onBack={onBack}
       targetDate={targetDate}
+      initialEntry={initialEntry?.kind === "post-session" ? initialEntry : undefined}
+      plannedSessionLink={plannedSessionLink}
       onDone={(entry) => onDone?.("post-session", entry)}
       onContinueDetailed={onContinueDetailed}
     />

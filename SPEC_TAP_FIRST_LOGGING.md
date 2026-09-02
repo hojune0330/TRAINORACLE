@@ -1,15 +1,24 @@
-# SPEC_TAP_FIRST_LOGGING — 전방위 "터치 몇 번이면 끝" 일지 (토스식)
+# SPEC_TAP_FIRST_LOGGING.md
 
 ```yaml
 spec_metadata:
+  doc_id: trainoracle-spec-tap-first-logging
   spec_id: SPEC_TAP_FIRST_LOGGING
+  title: 전방위 터치 몇 번이면 끝 일지 설계 이력
+  version: "2.1"
+  round: RT3_QUICK_PROGRESSIVE_V2_SUPERSESSION
+  owner: COACH_HOJUNE
+  open_issues_total: 0
+  canonical_blocking_count: 0
+  executed_tests_total: 0
+  canonical_promotion_allowed: false
   issued_by: TOTAL_RESPONSIBILITY_HOLDER
   issue_date: "2026-07-12"
   revision: v2 (2026-07-12) — 페르소나 리뷰(reports/review/TAP_FIRST_V1_PERSONA_REVIEW.md)로
     v1의 화면 쪼개기 과잉·축적 피드백 부재를 반려하고 §2를 전면 교체.
     사장님 추가 지시 — "토스는 선택하고 넘어가면서 효과나 디테일로 '넘어가고 있다/
     반영되고 있다'를 UI로 인식시킨다. 계속 누르거나 넘어가서 쌓아두고 싶게끔."
-  status: OWNER_APPROVED_RUNTIME_IMPLEMENTATION_IN_PROGRESS
+  status: HISTORICAL_SOURCE_PARTIALLY_SUPERSEDED
   owner_directive: >
     "모든 부분이 토스처럼 간단해야 돼. 일지도 터치 몇 번으로 작성이 끝나기도 하자.
     글을 적는 게 당연히 좋지만 어떤 날은 그냥 터치만 몇 번 하고 끝내고 싶은 날도 있거든.
@@ -174,3 +183,16 @@ spec_metadata:
 - 저장 완료 스탬프와 완료 화면은 `saveEntry()` 성공 영수증 뒤에만 표시한다.
 - 같은 날짜의 빠른 기록이 정확히 하나이고 객관값이 비어 있을 때만 외부 활동을 병합 후보로 제시한다. 사용자가 선택·확인해야 하며 두 개 이상이면 추정하지 않는다.
 - 이미 거리·시간·페이스가 있으면 외부 값으로 덮어쓰지 않고 충돌로 남긴다.
+
+## 7. V2 supersession notice
+
+`SPEC_QUICK_PROGRESSIVE_JOURNAL_V2_DECISION.md` supersedes the runtime-design details
+in §6 where they conflict. In particular, new quick entries use one exact RPE value or
+`MISSING`, do not write a new `rpeBand`, do not write `SINGLE`, require an explicit
+structured body check after performed activity, exclude rest/skip from device merge
+candidates, and preserve a plan link only from an explicit plan-session action.
+
+This file remains the historical tap-first interaction source. The supersession does
+not claim canonical promotion, release evidence, or downstream issue closure.
+
+[DRAFT_COMPLETE]

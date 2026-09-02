@@ -28,6 +28,10 @@ function isPostSession(entry: AnalysisJournalEntry): entry is AnalysisPostSessio
   return entry.kind === "post-session"
 }
 
+function isPerformedSession(entry: AnalysisPostSessionEntry): boolean {
+  return entry.activityOutcome !== "RESTED" && entry.activityOutcome !== "SKIPPED"
+}
+
 /** [fromISO, toISO] 폐구간의 엔트리 */
 export function entriesBetween(fromISO: string, toISO: string, all?: AnalysisJournalEntry[]): AnalysisJournalEntry[] {
   const src = all ?? loadAnalysisEntries()
@@ -39,7 +43,9 @@ export function thisWeekStats(all?: AnalysisJournalEntry[], referenceDate = toda
   const today = referenceDate
   const start = weekStartOf(today)
   const wk = entriesBetween(start, today, all)
-  const sessions = wk.filter(isPostSession)
+  // A rest/skip choice is useful evidence that the athlete recorded the day, but it is
+  // not a performed training session and must not inflate session count or RPE averages.
+  const sessions = wk.filter(isPostSession).filter(isPerformedSession)
   let dist = 0
   let rpeSum = 0
   let rpeN = 0

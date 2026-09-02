@@ -10,12 +10,13 @@ test.beforeEach(async ({ page }) => {
 
 test("finishes a quick journal and deepens the same record without duplication", async ({ page }, testInfo) => {
   await page.getByRole("button", { name: "오늘 기록 남기기" }).click()
-  await expect(page.getByRole("heading", { name: "오늘 어떻게 움직였나요?" })).toBeVisible()
+  await expect(page.getByRole("heading", { name: "오늘 운동은 어떻게 됐나요?" })).toBeVisible()
   await page.screenshot({ path: testInfo.outputPath("quick-journal-start.png"), fullPage: true })
 
-  await page.getByRole("button", { name: "계획한 훈련을 했어요" }).click()
+  await page.getByRole("button", { name: "운동을 마쳤어요" }).click()
   await page.getByRole("button", { name: "오후" }).click()
-  await page.getByRole("button", { name: /5~6/u }).click()
+  await page.getByRole("button", { name: /RPE 6,/u }).click()
+  await page.getByRole("button", { name: "없어요" }).click()
   await expect(page.getByRole("heading", { name: "오늘 기록을 남겼어요." })).toBeVisible()
 
   const quick = await page.evaluate((key) => JSON.parse(window.localStorage.getItem(key) ?? "[]"), JOURNAL_KEY)
@@ -24,14 +25,15 @@ test("finishes a quick journal and deepens the same record without duplication",
     captureDepth: "QUICK",
     activityOutcome: "COMPLETED",
     activitySlot: "PM",
-    rpeBand: "RPE_5_6",
-    rpe: 0,
+    rpe: 6,
+    painCheckStatus: "NO_SIGNAL_REPORTED",
   })
+  expect(quick[0].rpeBand).toBeUndefined()
   const id = quick[0].id as string
 
   await page.getByRole("button", { name: "일지 더 쓰기" }).click()
   await expect(page.getByText("훈련 후 · 기록", { exact: true })).toBeVisible()
-  await expect(page.getByLabel("세션 제목")).toHaveValue("훈련 완료")
+  await expect(page.getByLabel("세션 제목")).toHaveValue("운동 완료")
   await page.getByLabel("거리 (km)").fill("6.2")
   await page.getByRole("button", { name: "수정 저장" }).click()
 
@@ -45,10 +47,23 @@ test("removes spatial quick-journal motion when reduced motion is requested", as
   await page.emulateMedia({ reducedMotion: "reduce" })
   await page.getByRole("button", { name: "오늘 기록 남기기" }).click()
   await page.getByRole("button", { name: "오늘은 쉬었어요" }).click()
-  await page.getByRole("button", { name: "한 번" }).click()
-  await page.getByRole("button", { name: /모르겠어요/u }).click()
 
   const stamp = page.locator(".quick-log__stamp")
   await expect(stamp).toBeVisible()
   await expect(stamp).toHaveCSS("animation-name", "none")
+})
+
+test("keeps each newly opened choice reachable on a 375x667 phone", async ({ page }) => {
+  await page.setViewportSize({ width: 375, height: 667 })
+  await page.getByRole("button", { name: "오늘 기록 남기기" }).click()
+  await page.getByRole("button", { name: "운동을 마쳤어요" }).click()
+
+  const slot = page.getByRole("button", { name: "오전" })
+  await expect(slot).toBeInViewport()
+  await slot.click()
+  await page.getByRole("button", { name: /RPE 7,/u }).click()
+
+  const safety = page.getByRole("heading", { name: "운동 후 불편하거나 아픈 곳이 있나요?" })
+  await expect(safety).toBeInViewport()
+  await expect(safety).toBeFocused()
 })

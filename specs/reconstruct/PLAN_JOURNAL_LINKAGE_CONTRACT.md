@@ -64,6 +64,8 @@ PlannedSessionLinkV1:
 
 1. Only a session present exactly once in the stored active plan may create a link.
 2. The athlete must explicitly choose `이 훈련 일지 쓰기` from that session.
+   This action may open the quick post-session flow first; capture depth does not weaken
+   or replace the exact stored link.
 3. REST-only rows do not offer a post-session training journal action.
 4. One visible journal result may reference one `plannedSessionId` in V1.
 5. A journal edit may change performed facts but may not add, remove, or replace its plan link.
@@ -95,6 +97,8 @@ The journal link is self-identifying, but the current plan archive does not yet 
 7. Journal edits preserve the exact link.
 8. Existing unlinked journals remain readable and writable.
 9. Safe export and authenticated sync preserve the structured link without raw memo text.
+10. A generic quick entry cannot acquire a link from date, title, energy label, RPE,
+    device activity, or later similarity matching.
 
 ## 9. Non-Authority
 

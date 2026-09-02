@@ -1,7 +1,7 @@
 import React from "react"
 import { IndexCard } from "../../components/JournalPrimitives"
 import { compactDate, dowOf, nowClock } from "../../domain/dates"
-import { explicitOrMissing } from "../../domain/field-provenance"
+import { derivedProvenance, explicitOrMissing } from "../../domain/field-provenance"
 import {
   newEntryId,
   nextJournalSavedAt,
@@ -19,6 +19,41 @@ import { FormSec, TopBar, useSectionTouchOrder } from "./shared"
 import { StickyBar } from "./StickyBar"
 import type { EntryFormProps } from "./shared"
 import { JOURNAL_ENERGY_SYSTEM_OPTIONS } from "../../domain/energy-system-taxonomy"
+import { painLevelsRequireReview } from "../../safety/memo-safety"
+import { BodyDiagram, PainReviewBanner } from "./BodyDiagram"
+
+const DETAILED_OUTCOMES = [
+  ["COMPLETED", "완료"],
+  ["PARTIAL", "일부 완료"],
+  ["LIGHT_ACTIVITY", "가벼운 운동"],
+  ["RESTED", "휴식"],
+  ["SKIPPED", "건너뜀"],
+] as const
+
+const DETAILED_SLOTS = [
+  ["UNSPECIFIED", "시간 미지정"],
+  ["AM", "오전"],
+  ["PM", "오후"],
+] as const
+
+const OUTCOME_TITLES = {
+  COMPLETED: "운동 완료",
+  PARTIAL: "일부 완료",
+  LIGHT_ACTIVITY: "가벼운 운동",
+  RESTED: "휴식",
+  SKIPPED: "건너뜀",
+} as const
+const GENERATED_OUTCOME_TITLES = new Set<string>(Object.values(OUTCOME_TITLES))
+
+type DetailedOutcome = (typeof DETAILED_OUTCOMES)[number][0]
+
+function isPerformedOutcome(outcome: DetailedOutcome | undefined): boolean {
+  return outcome === "COMPLETED" || outcome === "PARTIAL" || outcome === "LIGHT_ACTIVITY"
+}
+
+function isNonPerformedOutcome(outcome: DetailedOutcome | undefined): boolean {
+  return outcome === "RESTED" || outcome === "SKIPPED"
+}
 
 export function PostSessionForm({ onBack, onDone, targetDate, initialEntry, plannedSessionLink }: EntryFormProps) {
   const initial = initialEntry?.kind === "post-session" ? initialEntry : undefined
@@ -26,6 +61,14 @@ export function PostSessionForm({ onBack, onDone, targetDate, initialEntry, plan
   const entryDate = initial?.date ?? targetDate ?? todayISO()
   const planLink = initial?.plannedSessionLink ?? plannedSessionLink
   const [rpe, setRpe] = React.useState(() => initial?.rpe ?? 0)
+  const [activityOutcome, setActivityOutcome] = React.useState(() => initial?.activityOutcome)
+  const [activitySlot, setActivitySlot] = React.useState<"UNSPECIFIED" | "AM" | "PM" | undefined>(() => {
+    if (initial?.activitySlot === "AM" || initial?.activitySlot === "PM") return initial.activitySlot
+    if (initial?.activitySlot === "SINGLE" || initial?.activitySlot === "UNSPECIFIED") return "UNSPECIFIED"
+    return undefined
+  })
+  const [painCheckStatus, setPainCheckStatus] = React.useState(() => initial?.painCheckStatus ?? "UNANSWERED")
+  const [painParts, setPainParts] = React.useState<Record<string, number>>(() => ({ ...(initial?.painParts ?? {}) }))
   const [saveError, setSaveError] = React.useState(false)
   const [system, setSystem] = React.useState(() => (
     initial?.fieldProvenance?.system?.provenance === "EXPLICIT" ? initial.system : ""
@@ -36,6 +79,8 @@ export function PostSessionForm({ onBack, onDone, targetDate, initialEntry, plan
   const [avgPace, setAvgPace] = React.useState(() => initial?.avgPace ?? "")
   const intensity = useIntensityAssessment(initial?.intensityAssessment)
   const memo = usePurposeScopedMemo(initial?.memo ?? "", initial?.memoPurpose)
+  const didNotPerform = isNonPerformedOutcome(activityOutcome)
+  const recordsPerformance = !didNotPerform
 
   // "다음 구획을 건드렸다" 판정은 화면이 한다 (오너 결정 2026-07-28 "건드릴 때").
   // FormSec 안에 넣지 않는 이유: 무엇이 "다음" 인지는 화면 순서가 정하는
@@ -49,34 +94,75 @@ export function PostSessionForm({ onBack, onDone, targetDate, initialEntry, plan
   const persist = async () => {
     const memoPreparation = memo.prepareForSave()
     if (!memoPreparation.ready) return
+    if (recordsPerformance && painCheckStatus === "SIGNAL_REPORTED"
+      && !Object.values(painParts).some((level) => level > 0)) {
+      setSaveError(true)
+      return
+    }
+    const didPerform = isPerformedOutcome(activityOutcome)
+    const planExecutionRelation = activityOutcome === undefined
+      ? initial?.planExecutionRelation
+      : planLink === undefined
+        ? "NOT_APPLICABLE" as const
+        : activityOutcome === "COMPLETED" ? "AS_PLANNED" as const : "MODIFIED" as const
+    const persistedSystem = didNotPerform ? "" : system
+    const persistedDistanceKm = didNotPerform ? "" : distanceKm
+    const persistedDurationMin = didNotPerform ? "" : durationMin
+    const persistedAvgPace = didNotPerform ? "" : avgPace
+    const persistedRpe = didNotPerform ? 0 : rpe
+    const persistedObjectiveDataState = didNotPerform ? "NONE" as const : initial?.objectiveDataState
     const entry: JournalEntry = {
       id: initial?.id ?? newEntryId(), kind: "post-session", date: entryDate,
       savedAt: nextJournalSavedAt(initial?.savedAt), syncState: "local",
       captureDepth: "DETAILED",
-      ...(initial?.activityOutcome === undefined ? {} : { activityOutcome: initial.activityOutcome }),
-      ...(initial?.activitySlot === undefined ? {} : { activitySlot: initial.activitySlot }),
-      ...(initial?.rpeBand === undefined ? {} : { rpeBand: initial.rpeBand }),
-      ...(initial?.objectiveDataState === undefined ? {} : { objectiveDataState: initial.objectiveDataState }),
-      system, title, distanceKm, durationMin, avgPace, rpe, memo: memo.text,
-      ...(intensity.assessment === undefined ? {} : { intensityAssessment: intensity.assessment }),
+      ...(activityOutcome === undefined ? {} : { activityOutcome }),
+      ...(didPerform && activitySlot !== undefined ? { activitySlot } : {}),
+      ...(recordsPerformance && persistedRpe === 0 && initial?.rpeBand !== undefined
+        ? { rpeBand: initial.rpeBand }
+        : {}),
+      ...(persistedObjectiveDataState === undefined ? {} : { objectiveDataState: persistedObjectiveDataState }),
+      ...(planExecutionRelation === undefined ? {} : { planExecutionRelation }),
+      ...(!recordsPerformance || painCheckStatus === "UNANSWERED" ? {} : { painCheckStatus }),
+      ...(recordsPerformance && painCheckStatus === "SIGNAL_REPORTED" ? { painParts } : {}),
+      system: persistedSystem,
+      title,
+      distanceKm: persistedDistanceKm,
+      durationMin: persistedDurationMin,
+      avgPace: persistedAvgPace,
+      rpe: persistedRpe,
+      memo: memo.text,
+      ...(recordsPerformance && intensity.assessment !== undefined
+        ? { intensityAssessment: intensity.assessment }
+        : {}),
       ...(planLink === undefined ? {} : { plannedSessionLink: planLink }),
       fieldProvenance: {
-        ...(initial?.activityOutcome === undefined ? {} : { activityOutcome: explicitOrMissing(true) }),
-        ...(initial?.activitySlot === undefined ? {} : { activitySlot: explicitOrMissing(true) }),
-        ...(initial?.rpeBand === undefined ? {} : { rpeBand: explicitOrMissing(true) }),
-        system: explicitOrMissing(system !== ""),
-        distanceKm: initial?.distanceKm === distanceKm && initial.fieldProvenance?.distanceKm !== undefined
+        ...(activityOutcome === undefined ? {} : { activityOutcome: explicitOrMissing(true) }),
+        ...(didPerform && activitySlot !== undefined ? { activitySlot: explicitOrMissing(true) } : {}),
+        plannedSessionLink: explicitOrMissing(planLink !== undefined),
+        ...(planExecutionRelation === undefined ? {} : {
+          planExecutionRelation: derivedProvenance(
+            ["activityOutcome", "plannedSessionLink"],
+            "QUICK_PLAN_EXECUTION_RELATION_V2",
+          ),
+        }),
+        ...(!recordsPerformance || painCheckStatus === "UNANSWERED" ? {} : { painCheckStatus: explicitOrMissing(true) }),
+        ...(!recordsPerformance || painCheckStatus === "UNANSWERED" ? {} : { painParts: explicitOrMissing(Object.values(painParts).some((level) => level > 0)) }),
+        ...(recordsPerformance && persistedRpe === 0 && initial?.rpeBand !== undefined
+          ? { rpeBand: initial.fieldProvenance?.rpeBand ?? explicitOrMissing(true) }
+          : {}),
+        system: explicitOrMissing(persistedSystem !== ""),
+        distanceKm: recordsPerformance && initial?.distanceKm === persistedDistanceKm && initial.fieldProvenance?.distanceKm !== undefined
           ? initial.fieldProvenance.distanceKm
-          : explicitOrMissing(distanceKm.trim() !== ""),
-        durationMin: initial?.durationMin === durationMin && initial.fieldProvenance?.durationMin !== undefined
+          : explicitOrMissing(persistedDistanceKm.trim() !== ""),
+        durationMin: recordsPerformance && initial?.durationMin === persistedDurationMin && initial.fieldProvenance?.durationMin !== undefined
           ? initial.fieldProvenance.durationMin
-          : explicitOrMissing(durationMin.trim() !== ""),
-        avgPace: initial?.avgPace === avgPace && initial.fieldProvenance?.avgPace !== undefined
+          : explicitOrMissing(persistedDurationMin.trim() !== ""),
+        avgPace: recordsPerformance && initial?.avgPace === persistedAvgPace && initial.fieldProvenance?.avgPace !== undefined
           ? initial.fieldProvenance.avgPace
-          : explicitOrMissing(avgPace.trim() !== ""),
-        rpe: explicitOrMissing(rpe > 0),
-        plannedRpe: explicitOrMissing(intensity.plannedRpe > 0),
-        objectiveComponents: explicitOrMissing(intensity.objectiveComponents.length > 0),
+          : explicitOrMissing(persistedAvgPace.trim() !== ""),
+        rpe: explicitOrMissing(persistedRpe > 0),
+        ...(recordsPerformance ? { plannedRpe: explicitOrMissing(intensity.plannedRpe > 0) } : {}),
+        ...(recordsPerformance ? { objectiveComponents: explicitOrMissing(intensity.objectiveComponents.length > 0) } : {}),
       },
       ...(memo.text.trim() !== "" && memo.purpose !== undefined ? { memoPurpose: memo.purpose } : {}),
     }
@@ -103,7 +189,33 @@ export function PostSessionForm({ onBack, onDone, targetDate, initialEntry, plan
         </div>
       )}
 
-      <FormSec lb="강도 시스템" help="energy-system">
+      {activityOutcome !== undefined && (
+        <FormSec lb="빠르게 남긴 운동 결과">
+          <div className="journal-progressive-edit" role="group" aria-label="운동 결과 수정">
+            {DETAILED_OUTCOMES.map(([value, label]) => (
+              <button
+                key={value}
+                type="button"
+                aria-pressed={activityOutcome === value}
+                onClick={() => {
+                  setActivityOutcome(value)
+                  setTitle((current) => GENERATED_OUTCOME_TITLES.has(current) ? OUTCOME_TITLES[value] : current)
+                  setSaveError(false)
+                }}
+              >{label}</button>
+            ))}
+          </div>
+          {(activityOutcome === "COMPLETED" || activityOutcome === "PARTIAL" || activityOutcome === "LIGHT_ACTIVITY") && (
+            <div className="journal-progressive-edit" role="group" aria-label="운동 시간대 수정">
+              {DETAILED_SLOTS.map(([value, label]) => (
+                <button key={value} type="button" aria-pressed={activitySlot === value} onClick={() => setActivitySlot(value)}>{label}</button>
+              ))}
+            </div>
+          )}
+        </FormSec>
+      )}
+
+      {recordsPerformance && <FormSec lb="강도 시스템" help="energy-system">
         <div className="journal-energy-picker">
           {JOURNAL_ENERGY_SYSTEM_OPTIONS.map((energySystem) => (
             <button
@@ -123,12 +235,12 @@ export function PostSessionForm({ onBack, onDone, targetDate, initialEntry, plan
             </button>
           ))}
         </div>
-      </FormSec>
+      </FormSec>}
 
       <FormSec lb="세션 제목">
         <input aria-label="세션 제목" type="text" value={title} onChange={(event) => setTitle(event.target.value)} style={inputStyle()} />
       </FormSec>
-      <FormSec lb="거리 · 시간 · 평균 페이스" help="pace">
+      {recordsPerformance && <FormSec lb="거리 · 시간 · 평균 페이스" help="pace">
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8 }}>
           <input aria-label="거리 (km)" type="text" value={distanceKm} onChange={(event) => setDistanceKm(event.target.value)} style={{ ...inputStyle(), fontFamily: "var(--mono)", textAlign: "right" }} />
           <input aria-label="시간 (분)" type="text" value={durationMin} onChange={(event) => setDurationMin(event.target.value)} style={{ ...inputStyle(), fontFamily: "var(--mono)", textAlign: "right" }} />
@@ -141,7 +253,7 @@ export function PostSessionForm({ onBack, onDone, targetDate, initialEntry, plan
         <p style={{ margin: "6px 0 0", fontFamily: "var(--sans)", fontSize: 11, color: "var(--ink-3)", lineHeight: 1.5 }}>
           예: 5'30&quot; 또는 5:30 (분:초)
         </p>
-      </FormSec>
+      </FormSec>}
 
       {/*
         RPE 구획은 버튼 10개 + 눈금 글자로 175px 다. 답을 고른 뒤에는
@@ -151,7 +263,7 @@ export function PostSessionForm({ onBack, onDone, targetDate, initialEntry, plan
         `미선택` 을 넣지 않고 undefined 를 준다. 판정 문구가 아니라 "값이 없다"
         는 뜻이고, 값이 없으면 접혀서는 안 된다.
       */}
-      <FormSec
+      {recordsPerformance && <FormSec
         lb="RPE · 주관 강도"
         help="rpe"
         collapsible
@@ -173,13 +285,26 @@ export function PostSessionForm({ onBack, onDone, targetDate, initialEntry, plan
         <div style={{ display: "flex", justifyContent: "space-between", marginTop: 4, fontFamily: "var(--mono)", fontSize: 9, color: "var(--ink-4)", letterSpacing: "0.06em" }}>
           <span>매우 쉬움</span><span>최대</span>
         </div>
-      </FormSec>
+      </FormSec>}
 
-      <IntensityAssessmentField
+      {recordsPerformance && <FormSec lb="운동 후 몸 상태">
+        <div className="journal-progressive-edit" role="group" aria-label="운동 후 불편함 확인">
+          <button type="button" aria-pressed={painCheckStatus === "NO_SIGNAL_REPORTED"} onClick={() => { setPainCheckStatus("NO_SIGNAL_REPORTED"); setPainParts({}) }}>불편한 곳 없음</button>
+          <button type="button" aria-pressed={painCheckStatus === "SIGNAL_REPORTED"} onClick={() => setPainCheckStatus("SIGNAL_REPORTED")}>불편한 곳 있음</button>
+        </div>
+        {painCheckStatus === "SIGNAL_REPORTED" && (
+          <>
+            <BodyDiagram selected={painParts} onChange={setPainParts} />
+            {painLevelsRequireReview(painParts) && <PainReviewBanner />}
+          </>
+        )}
+      </FormSec>}
+
+      {recordsPerformance && <IntensityAssessmentField
         controller={intensity}
         reportedRpe={rpe}
         onSectionTouch={touchOrder.touch}
-      />
+      />}
 
       <FormSec lb="메모 · 손글씨처럼" onTouch={() => touchOrder.touch("memo")}>
         <PurposeScopedMemoField

@@ -17,6 +17,7 @@ export function journalRpeLabel(entry: PostSessionEntry): string | null {
 export function quickOutcomeLabel(entry: PostSessionEntry): string | null {
   switch (entry.activityOutcome) {
     case "COMPLETED": return "훈련 완료"
+    case "PARTIAL": return "일부 완료"
     case "LIGHT_ACTIVITY": return "가벼운 운동"
     case "RESTED": return "휴식"
     case "SKIPPED": return "건너뜀"

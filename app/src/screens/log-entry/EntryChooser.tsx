@@ -13,7 +13,7 @@ interface EntryChooserProps {
 }
 
 const ENTRY_OPTIONS = [
-  { id: "quick-session", t: "빠르게 기록", d: "오늘 한 것과 몸의 느낌만", meta: "QUICK · 3번", mark: "✓" },
+  { id: "quick-session", t: "빠르게 기록", d: "운동 결과·RPE·몸 상태만", meta: "QUICK · 2~5번", mark: "✓" },
   { id: "post-session", t: "훈련 후", d: "방금 끝낸 세션 기록", meta: "POST · ~1분", mark: "↻" },
   { id: "evening", t: "회복 · 하루 마무리", d: "쉬는 날도 그대로 · 수면·감정·통증 체크", meta: "EVENING · ~2분", mark: "☾" },
   { id: "race", t: "경기 직전/직후", d: "기록·심박·감정", meta: "RACE · ~30초", mark: "▲" },

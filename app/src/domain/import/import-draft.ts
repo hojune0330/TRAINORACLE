@@ -73,6 +73,8 @@ export function buildImportDrafts(
       (entry): entry is PostSessionEntry => entry.kind === "post-session"
         && entry.date === activity.date
         && entry.captureDepth === "QUICK"
+        && entry.activityOutcome !== "RESTED"
+        && entry.activityOutcome !== "SKIPPED"
         && entry.objectiveDataState === "WAITING"
         && !hasObjectiveValue(entry),
     )
