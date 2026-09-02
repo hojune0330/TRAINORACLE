@@ -77,7 +77,7 @@ export const ENERGY_INTENT_LABELS: Record<PlannedEnergyIntent, {
   },
   GLY_INTENT: {
     title: "짧은 고강도 반복 · GLY",
-    detail: "짧고 강한 구간을 충분한 회복과 함께 반복하는 목적이에요. 스피드 자체나 모든 빠른 달리기를 뜻하지 않아요.",
+    detail: "높은 에너지 요구에 대응하는 해당과정을 겨냥해요. 운동 길이·출력·회복 조건에 따라 자극이 달라지며, 모든 빠른 달리기를 뜻하지 않아요.",
     term: "gly",
   },
   ATP_PC_INTENT: {
@@ -170,7 +170,7 @@ export function sessionGuidance(session: PlanSession): string {
       return "놓친 훈련을 보충하지 않는 날입니다. 쉬거나 일상 수준으로 가볍게 움직이세요."
     case "EASY":
       return session.plannedEnergyIntent === "RECOVERY_INTENT"
-        ? "표시된 총 시간 동안 RPE 1~2로 움직이세요. 빨리 걷기, 걷는 속도보다 조금 빠른 조깅, 천천히 자전거 타기, 완만한 산길 걷기처럼 숨이 편한 움직임이면 됩니다."
+        ? `표시된 총 시간 동안 RPE ${session.prescription.rpe.minimum}~${session.prescription.rpe.maximum}로 움직이세요. 빨리 걷기, 걷는 속도보다 조금 빠른 조깅, 천천히 자전거 타기, 완만한 산길 걷기처럼 숨이 편한 움직임이면 됩니다.`
         : "표시된 총 시간 동안 RPE 3~4로 달리세요. 땀이 나고 숨은 조금 차도 친구와 대화하거나 전화 통화는 가능한 정도입니다. 워치의 Zone 2와 같은 뜻으로 단정하지는 않습니다."
     case "QUALITY":
       return qualityGuidance(session.plannedEnergyIntent)
@@ -256,7 +256,7 @@ function qualityGuidance(intent: PlannedEnergyIntent): string {
     case "ATP_PC_INTENT":
       return "오늘 시간은 준비·짧은 가속·충분한 회복·정리를 모두 합친 값입니다. 100·200·400m 전용 스프린트 처방이나 목표 기록은 만들지 않습니다."
     case "MIXED_INTENT":
-      return "표시된 총 시간 동안 RPE 6~7로 달리세요. 한 가지 에너지 목적의 상세 처방이 아니라 섞어 하는 강도 안내이며, 반복·거리·페이스는 아직 정하지 않았습니다."
+      return "총 시간은 준비·강한 구간·회복·정리를 포함합니다. 전체를 같은 강도로 계속 달리는 뜻이 아니며, 구간별 목적·반복·거리·회복이 확정된 복합 처방은 아닙니다."
     case "RECOVERY_INTENT":
     case "BASE_INTENT":
       return "표시된 목적과 RPE 범위를 벗어나지 않도록 조절하세요. 상세 반복·거리·페이스는 아직 정하지 않았습니다."

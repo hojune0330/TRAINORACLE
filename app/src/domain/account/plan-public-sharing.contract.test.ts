@@ -4,6 +4,7 @@ import { describe, expect, it } from "vitest"
 import { stateFixture } from "../plan-beta-store.test-fixture"
 import { planBetaStateV3Schema } from "../plan-beta-schema"
 import { publicPlanCardFromState } from "./public-profile"
+import { createExplanationReceipt } from "../training-explanation-receipt"
 
 const migration = readFileSync(
   resolve(process.cwd(), "../supabase/migrations/0029_plan_backup_public_profiles.sql"),
@@ -61,5 +62,12 @@ describe("plan backup and public sharing contract", () => {
     expect(publicTableSection).not.toContain("plan_payload jsonb")
     expect(publicTableSection).not.toContain("journal_entries")
     expect(publicTableSection).not.toContain("encrypted_private_notes")
+  })
+
+  it("never adds private explanation references to public cards", () => {
+    const state = stateFixture()
+    const withReceipt = planBetaStateV3Schema.parse({ ...state, explanationReceipt: createExplanationReceipt(state.activePlan, state.generatedAt) })
+    expect(publicPlanCardFromState(withReceipt)).toEqual(publicPlanCardFromState(planBetaStateV3Schema.parse(state)))
+    expect(JSON.stringify(publicPlanCardFromState(withReceipt))).not.toMatch(/Fingerprint|Receipt|capturedAt|athlete-record/u)
   })
 })

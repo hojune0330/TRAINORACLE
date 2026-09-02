@@ -30,7 +30,8 @@ import { eventDistanceLabel } from "./plan-intake-navigation"
 import type { PlanCurrentCheck } from "../../domain/plan-beta-flow"
 import type { StoredPaceTargetPrescription } from "../../domain/plan-session-schema"
 import { PlanAdaptationFlow } from "./PlanAdaptationFlow"
-import { todayISO } from "../../domain/journal-store"
+import { todayISO, loadEntries } from "../../domain/journal-store"
+import { collectSessionExplanationEvidence } from "../../domain/session-explanation-evidence"
 import { isValidIsoDate, isoShift, isoToDate } from "../../domain/dates"
 import { isPlanFrameCompletionEligible } from "../../domain/plan-successor-activation"
 import { PERIODIZATION_PHASE_LABELS } from "../../domain/periodization-lineage"
@@ -179,6 +180,14 @@ export function ActivePlan({
         startDate={startDate}
         frameLengthDays={frameLengthDays}
         sessions={activePlan.sessions}
+        explanationContext={{
+          plan: activePlan,
+          kind: "SAVED",
+          generatedAt: state.generatedAt,
+          receipt: state.version === 3 ? state.explanationReceipt : undefined,
+          frameOrdinal: state.version === 3 ? state.periodization?.frameOrdinal : undefined,
+        }}
+        loadEvidence={(session) => collectSessionExplanationEvidence(loadEntries(), state, session)}
         showRpeGuide={false}
         timelineHeading="날짜별 훈련"
         displayMode="swipe"

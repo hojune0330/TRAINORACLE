@@ -81,6 +81,7 @@ export function CandidateSection({
               startDate={startDate}
               frameLengthDays={frameLengthDays}
               sessions={candidate.sessions}
+              explanationContext={{ plan: candidate, kind: "CANDIDATE" }}
             />
           </div>
         </>

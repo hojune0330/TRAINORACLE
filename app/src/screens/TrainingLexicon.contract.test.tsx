@@ -21,7 +21,8 @@ describe("TrainOracle training lexicon", () => {
     const user = userEvent.setup()
     render(<TrainingLexicon initialTerm="gly" />)
 
-    expect(screen.getByText(/짧고 강한 구간을 충분한 회복과 함께/u)).toBeVisible()
+    expect(screen.getByText(/짧고 강한 구간과 목적에 맞는 회복을 함께/u)).toBeVisible()
+    expect(screen.queryByText(/짧고 강한 구간을 충분한 회복과 함께/u)).toBeNull()
     expect(screen.queryByText(/해당과정의 기여가 커질 수 있지만/u)).toBeNull()
 
     await user.click(screen.getByRole("button", { name: "전문 설명" }))

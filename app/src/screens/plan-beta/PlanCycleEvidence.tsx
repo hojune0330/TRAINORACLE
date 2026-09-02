@@ -1,7 +1,7 @@
 import type { PlanCycleResponse } from "../../domain/plan-cycle-response"
 import type { PlanJournalComparison } from "../../domain/plan-journal-evidence"
 
-const COMPARISON_LABELS: Record<PlanJournalComparison, string> = {
+export const COMPARISON_LABELS: Record<PlanJournalComparison, string> = {
   WITHIN_RANGE: "계획 범위 안",
   ABOVE_RANGE: "계획보다 높음",
   BELOW_RANGE: "계획보다 낮음",

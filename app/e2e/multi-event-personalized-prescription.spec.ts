@@ -148,6 +148,17 @@ for (const fixture of cases) {
     await expect(selectedSession.getByText(fixture.work).first()).toBeVisible()
     await expect(selectedSession.getByText(fixture.recovery).first()).toBeVisible()
     await expect(selectedSession.getByText(fixture.notation).first()).toBeVisible()
+    await selectedSession.getByRole("button", { name: "이 훈련을 하는 이유", exact: true }).first().click()
+    const explanation = page.getByRole("dialog")
+    await expect(explanation.getByText(fixture.notation).first()).toBeVisible()
+    await explanation.getByRole("tab", { name: "이유·근거" }).click()
+    await expect(explanation.getByText("저장된 처방과 설명 버전이 일치해요.")).toBeVisible()
+    await expect(explanation.getByRole("heading", { name: "회복을 이렇게 넣은 이유", exact: true })).toBeAttached()
+    await expect(explanation.getByText(new RegExp(`실제로 사용한 기준 기록: ${fixture.eventDistanceM}m`, "u"))).toBeAttached()
+    if (process.env.CAPTURE_PLAN_QA === "1") {
+      await page.screenshot({ path: testInfo.outputPath(`explanation-${fixture.eventDistanceM}m.png`) })
+    }
+    await explanation.getByRole("button", { name: "훈련 일정으로 돌아가기" }).click()
 
     await page.reload()
     await page.getByRole("navigation", { name: "주 탭" })

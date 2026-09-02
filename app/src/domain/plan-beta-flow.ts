@@ -1,5 +1,6 @@
 import { evaluateD9ColloquialLayer } from "@impl/d9/evaluator"
 import { assertNever } from "@impl/shared/assert-never"
+import { createExplanationReceipt } from "./training-explanation-receipt"
 import {
   generatePlanCandidates,
   selectPlanCandidate,
@@ -324,6 +325,7 @@ export function selectPlanForActivation(
       generatedAt,
       periodization,
       athleteEvidence,
+      explanationReceipt: createExplanationReceipt(result.activePlan, generatedAt),
     },
   }
 }

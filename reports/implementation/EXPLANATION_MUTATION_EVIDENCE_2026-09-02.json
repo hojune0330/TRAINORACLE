@@ -1,0 +1,113 @@
+{
+  "runAt": "2026-09-02T09:30:05.972Z",
+  "scope": "synthetic fixtures only",
+  "cases": [
+    {
+      "id": "IGNORE_PLAN_BINDING",
+      "caught": true,
+      "expectedFailure": "rejects a stale or altered plan explanation receipt",
+      "failedTestNames": [
+        "prescription-bound explanations rejects a stale or altered plan explanation receipt without losing the plan"
+      ],
+      "sourceSha256": "932658919ec2d484e529f571252365798a1822534d9aab3c9d21b34ffdc7e1c0"
+    },
+    {
+      "id": "IGNORE_CONTENT_VERSION",
+      "caught": true,
+      "expectedFailure": "rejects a stale or altered content",
+      "failedTestNames": [
+        "prescription-bound explanations rejects a stale or altered content explanation receipt without losing the plan",
+        "prescription-bound explanations a changed composed sentence invalidates its old receipt even with the same version label"
+      ],
+      "sourceSha256": "932658919ec2d484e529f571252365798a1822534d9aab3c9d21b34ffdc7e1c0"
+    },
+    {
+      "id": "FABRICATED_HISTORICAL_REASON",
+      "caught": true,
+      "expectedFailure": "keeps old plans readable",
+      "failedTestNames": [
+        "prescription-bound explanations keeps old plans readable and never invents an original explanation",
+        "prescription-bound explanations content changes invalidate old explanations, progress does not"
+      ],
+      "sourceSha256": "aa2ec5edaa974e75a0d71b1e84ce21d4a8dee1d283952360067e026f7c626a01"
+    },
+    {
+      "id": "HARDCODED_REPETITIONS",
+      "caught": true,
+      "expectedFailure": "uses the exact prescription",
+      "failedTestNames": [
+        "prescription-bound explanations uses the exact prescription and receipt for '800-current-7d'",
+        "prescription-bound explanations uses the exact prescription and receipt for '1500-current-9d-double'",
+        "prescription-bound explanations uses the exact prescription and receipt for '3000-current-10d'",
+        "prescription-bound explanations uses the exact prescription and receipt for '5000-current-10d-daily-double-morning'",
+        "prescription-bound explanations uses the exact prescription and receipt for '5000-current-10d-daily-double-evening'"
+      ],
+      "sourceSha256": "6a396a29a2387b9664c3fa93caa1dd9edfcb218522c5497c15249d3bdf9fe718"
+    },
+    {
+      "id": "HARDCODED_RECOVERY",
+      "caught": true,
+      "expectedFailure": "uses the exact prescription",
+      "failedTestNames": [
+        "prescription-bound explanations uses the exact prescription and receipt for '800-current-7d'",
+        "prescription-bound explanations uses the exact prescription and receipt for '1500-current-9d-double'",
+        "prescription-bound explanations uses the exact prescription and receipt for '3000-current-10d'",
+        "prescription-bound explanations uses the exact prescription and receipt for '5000-current-10d-daily-double-morning'",
+        "prescription-bound explanations uses the exact prescription and receipt for '5000-current-10d-daily-double-evening'"
+      ],
+      "sourceSha256": "6a396a29a2387b9664c3fa93caa1dd9edfcb218522c5497c15249d3bdf9fe718"
+    },
+    {
+      "id": "READ_UNRELATED_FREE_TEXT",
+      "caught": true,
+      "expectedFailure": "does not read injected free text",
+      "failedTestNames": [
+        "prescription-bound explanations uses the exact prescription and receipt for '800-current-7d'",
+        "prescription-bound explanations uses the exact prescription and receipt for '1500-current-9d-double'",
+        "prescription-bound explanations uses the exact prescription and receipt for '3000-current-10d'",
+        "prescription-bound explanations uses the exact prescription and receipt for '5000-current-10d-daily-double-morning'",
+        "prescription-bound explanations uses the exact prescription and receipt for '5000-current-10d-daily-double-evening'",
+        "prescription-bound explanations rejects a stale or altered version explanation receipt without losing the plan",
+        "prescription-bound explanations rejects a stale or altered content explanation receipt without losing the plan",
+        "prescription-bound explanations rejects a stale or altered plan explanation receipt without losing the plan",
+        "prescription-bound explanations rejects a stale or altered time explanation receipt without losing the plan",
+        "prescription-bound explanations a changed composed sentence invalidates its old receipt even with the same version label",
+        "prescription-bound explanations content changes invalidate old explanations, progress does not",
+        "prescription-bound explanations does not read injected free text from a plan or a receipt source",
+        "prescription-bound explanations labels current frame position separately from the stored explanation receipt"
+      ],
+      "sourceSha256": "932658919ec2d484e529f571252365798a1822534d9aab3c9d21b34ffdc7e1c0"
+    },
+    {
+      "id": "REUSE_STALE_JOURNAL",
+      "caught": true,
+      "expectedFailure": "refreshes exact generation evidence",
+      "failedTestNames": [
+        "session explanation review regressions refreshes exact generation evidence without keeping the previous RPE"
+      ],
+      "sourceSha256": "cc18c81e8e58c3e441b2f89ac18572ade0c9d05c3a365e9cc1b80a74e708594a"
+    },
+    {
+      "id": "IGNORE_JOURNAL_GENERATION",
+      "caught": true,
+      "expectedFailure": "refreshes exact generation evidence",
+      "failedTestNames": [
+        "session explanation review regressions refreshes exact generation evidence without keeping the previous RPE"
+      ],
+      "sourceSha256": "cc18c81e8e58c3e441b2f89ac18572ade0c9d05c3a365e9cc1b80a74e708594a"
+    },
+    {
+      "id": "IGNORE_TEMPLATE_COMPOSITION",
+      "caught": true,
+      "expectedFailure": "does not reuse",
+      "failedTestNames": [
+        "existing template-specific explanation boundaries does not reuse 'MD-800-01' prose for a changed composition",
+        "existing template-specific explanation boundaries does not reuse 'MD-1500-01' prose for a changed composition",
+        "existing template-specific explanation boundaries does not reuse 'MD-3000-01' prose for a changed composition",
+        "existing template-specific explanation boundaries does not reuse 'V2-SEED-05' prose for a changed composition"
+      ],
+      "sourceSha256": "e28821e89cbf011c5f6fb3789d20232ca7301de64f2130d1c2e7a582d5f8ddfb"
+    }
+  ],
+  "restored": true
+}
