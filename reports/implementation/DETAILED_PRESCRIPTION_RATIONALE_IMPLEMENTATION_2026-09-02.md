@@ -162,4 +162,11 @@ impl: node ../app/node_modules/typescript/bin/tsc --noEmit --baseUrl ../app/node
 9종 모두 차단됐고 파일 복구가 확인됐다. Windows 체크아웃의 줄 끝 변환 때문에 원본 바이트 SHA는 달라질 수 있다.
 실제 앱/코어 소스의 Git 내용은 `b19cb9c`와 동일하다. 새 head의 CI는 재실행 대상으로 남는다.
 
+### 8.2 후보 비교 및 모바일 회귀 후속
+
+이어진 작업은 [MAIN 비교 후속 보고](MAIN_METHOD_COMPARISON_FOLLOWUP_2026-09-02.md)에 분리했다.
+기존 A/B의 실제 처방 차이를 화면에 연결하고, 같은 RPE 봉투와 같은 명시적 방법을 구분했다.
+선행 CI의 모바일 높이 실패는 [일지 회귀 수정 보고](QUICK_JOURNAL_SCROLL_CI_REPAIR_2026-09-02.md)에 있다.
+이 후속 구현으로 §6의 실제 두 MAIN 활성화나 일반 시퀀스 저장·선택이 완료된 것은 아니다.
+
 [DRAFT_COMPLETE]

@@ -1,0 +1,157 @@
+{
+  "runAt": "2026-09-02T13:52:59.802Z",
+  "scope": "synthetic fixtures only",
+  "cases": [
+    {
+      "id": "IGNORE_PLAN_BINDING",
+      "caught": true,
+      "expectedFailure": "rejects a stale or altered plan explanation receipt",
+      "failedTestNames": [
+        "prescription-bound explanations rejects a stale or altered plan explanation receipt without losing the plan"
+      ],
+      "sourceSha256": "9b959f46c6904c466dc53c41ed14367e8ebc29e1d3ba8f29300cf83bd593bdf1"
+    },
+    {
+      "id": "IGNORE_CONTENT_VERSION",
+      "caught": true,
+      "expectedFailure": "rejects a stale or altered content",
+      "failedTestNames": [
+        "prescription-bound explanations rejects a stale or altered content explanation receipt without losing the plan",
+        "prescription-bound explanations a changed composed sentence invalidates its old receipt even with the same version label"
+      ],
+      "sourceSha256": "9b959f46c6904c466dc53c41ed14367e8ebc29e1d3ba8f29300cf83bd593bdf1"
+    },
+    {
+      "id": "FABRICATED_HISTORICAL_REASON",
+      "caught": true,
+      "expectedFailure": "keeps old plans readable",
+      "failedTestNames": [
+        "prescription-bound explanations keeps old plans readable and never invents an original explanation",
+        "prescription-bound explanations content changes invalidate old explanations, progress does not"
+      ],
+      "sourceSha256": "888a268885834f706ae28f9a5eed09105a330cd2a1ab800cb2d6f25f3a1e2fe5"
+    },
+    {
+      "id": "HARDCODED_REPETITIONS",
+      "caught": true,
+      "expectedFailure": "uses the exact prescription",
+      "failedTestNames": [
+        "prescription-bound explanations uses the exact prescription and receipt for '800-current-7d'",
+        "prescription-bound explanations uses the exact prescription and receipt for '1500-current-9d-double'",
+        "prescription-bound explanations uses the exact prescription and receipt for '3000-current-10d'",
+        "prescription-bound explanations uses the exact prescription and receipt for '5000-current-10d-daily-double-morning'",
+        "prescription-bound explanations uses the exact prescription and receipt for '5000-current-10d-daily-double-evening'"
+      ],
+      "sourceSha256": "4e862cf0f8ca6eec8e418aef76c293b3edfa4df0fb4f0276042bc1eb4d1cf515"
+    },
+    {
+      "id": "HARDCODED_RECOVERY",
+      "caught": true,
+      "expectedFailure": "uses the exact prescription",
+      "failedTestNames": [
+        "prescription-bound explanations uses the exact prescription and receipt for '800-current-7d'",
+        "prescription-bound explanations uses the exact prescription and receipt for '1500-current-9d-double'",
+        "prescription-bound explanations uses the exact prescription and receipt for '3000-current-10d'",
+        "prescription-bound explanations uses the exact prescription and receipt for '5000-current-10d-daily-double-morning'",
+        "prescription-bound explanations uses the exact prescription and receipt for '5000-current-10d-daily-double-evening'"
+      ],
+      "sourceSha256": "4e862cf0f8ca6eec8e418aef76c293b3edfa4df0fb4f0276042bc1eb4d1cf515"
+    },
+    {
+      "id": "READ_UNRELATED_FREE_TEXT",
+      "caught": true,
+      "expectedFailure": "does not read injected free text",
+      "failedTestNames": [
+        "prescription-bound explanations uses the exact prescription and receipt for '800-current-7d'",
+        "prescription-bound explanations uses the exact prescription and receipt for '1500-current-9d-double'",
+        "prescription-bound explanations uses the exact prescription and receipt for '3000-current-10d'",
+        "prescription-bound explanations uses the exact prescription and receipt for '5000-current-10d-daily-double-morning'",
+        "prescription-bound explanations uses the exact prescription and receipt for '5000-current-10d-daily-double-evening'",
+        "prescription-bound explanations rejects a stale or altered version explanation receipt without losing the plan",
+        "prescription-bound explanations rejects a stale or altered content explanation receipt without losing the plan",
+        "prescription-bound explanations rejects a stale or altered plan explanation receipt without losing the plan",
+        "prescription-bound explanations rejects a stale or altered time explanation receipt without losing the plan",
+        "prescription-bound explanations a changed composed sentence invalidates its old receipt even with the same version label",
+        "prescription-bound explanations content changes invalidate old explanations, progress does not",
+        "prescription-bound explanations does not read injected free text from a plan or a receipt source",
+        "prescription-bound explanations labels current frame position separately from the stored explanation receipt"
+      ],
+      "sourceSha256": "9b959f46c6904c466dc53c41ed14367e8ebc29e1d3ba8f29300cf83bd593bdf1"
+    },
+    {
+      "id": "REUSE_STALE_JOURNAL",
+      "caught": true,
+      "expectedFailure": "refreshes exact generation evidence",
+      "failedTestNames": [
+        "session explanation review regressions refreshes exact generation evidence without keeping the previous RPE"
+      ],
+      "sourceSha256": "b5c4f68a94a94ded186d44d3bd42d2e0e86dcffddd45b70a22731b6204884ae3"
+    },
+    {
+      "id": "IGNORE_JOURNAL_GENERATION",
+      "caught": true,
+      "expectedFailure": "refreshes exact generation evidence",
+      "failedTestNames": [
+        "session explanation review regressions refreshes exact generation evidence without keeping the previous RPE"
+      ],
+      "sourceSha256": "b5c4f68a94a94ded186d44d3bd42d2e0e86dcffddd45b70a22731b6204884ae3"
+    },
+    {
+      "id": "IGNORE_TEMPLATE_COMPOSITION",
+      "caught": true,
+      "expectedFailure": "does not reuse",
+      "failedTestNames": [
+        "existing template-specific explanation boundaries does not reuse 'MD-800-01' prose for a changed composition",
+        "existing template-specific explanation boundaries does not reuse 'MD-1500-01' prose for a changed composition",
+        "existing template-specific explanation boundaries does not reuse 'MD-3000-01' prose for a changed composition",
+        "existing template-specific explanation boundaries does not reuse 'V2-SEED-05' prose for a changed composition"
+      ],
+      "sourceSha256": "0ff555038aeb16bc0fc35c2d915753b3064ccf133209982c508df061244f0e6f"
+    },
+    {
+      "id": "TREAT_RPE_ENVELOPE_AS_METHOD",
+      "caught": true,
+      "expectedFailure": "RPE envelopes can match as values",
+      "failedTestNames": [
+        "actual MAIN comparison, not candidate-label comparison compares every real '1500-current-9d-double' slot without inventing a second method",
+        "actual MAIN comparison, not candidate-label comparison compares every real '3000-current-10d' slot without inventing a second method",
+        "actual MAIN comparison, not candidate-label comparison compares every real '5000-current-10d-daily-double-morning' slot without inventing a second method",
+        "actual MAIN comparison, not candidate-label comparison compares every real '5000-current-10d-daily-double-evening' slot without inventing a second method",
+        "actual MAIN comparison, not candidate-label comparison RPE envelopes can match as values without being two explicit methods"
+      ],
+      "sourceSha256": "abb2e7172595bc3519caaaf87ec7e91b086e0504b2e455ad27031643b811831a"
+    },
+    {
+      "id": "IGNORE_CHANGED_PACE_TARGET",
+      "caught": true,
+      "expectedFailure": "athlete pace changes dose",
+      "failedTestNames": [
+        "actual MAIN comparison, not candidate-label comparison athlete pace changes dose, not MAIN method"
+      ],
+      "sourceSha256": "abb2e7172595bc3519caaaf87ec7e91b086e0504b2e455ad27031643b811831a"
+    },
+    {
+      "id": "HARDCODE_COMPARISON_RECOVERY",
+      "caught": true,
+      "expectedFailure": "compares every real",
+      "failedTestNames": [
+        "actual MAIN comparison, not candidate-label comparison compares every real '800-current-7d' slot without inventing a second method",
+        "actual MAIN comparison, not candidate-label comparison compares every real '1500-current-9d-double' slot without inventing a second method",
+        "actual MAIN comparison, not candidate-label comparison compares every real '3000-current-10d' slot without inventing a second method",
+        "actual MAIN comparison, not candidate-label comparison compares every real '5000-current-10d-daily-double-morning' slot without inventing a second method",
+        "actual MAIN comparison, not candidate-label comparison compares every real '5000-current-10d-daily-double-evening' slot without inventing a second method"
+      ],
+      "sourceSha256": "abb2e7172595bc3519caaaf87ec7e91b086e0504b2e455ad27031643b811831a"
+    },
+    {
+      "id": "IGNORE_COMPARISON_FRAME",
+      "caught": true,
+      "expectedFailure": "frame mismatch blocks",
+      "failedTestNames": [
+        "actual MAIN comparison, not candidate-label comparison frame mismatch blocks a shared-work claim"
+      ],
+      "sourceSha256": "abb2e7172595bc3519caaaf87ec7e91b086e0504b2e455ad27031643b811831a"
+    }
+  ],
+  "restored": true
+}

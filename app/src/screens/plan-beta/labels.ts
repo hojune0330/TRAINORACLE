@@ -102,12 +102,12 @@ export function candidateLabel(
   if (kind === "CONSERVATIVE") {
     return {
       title: "최소 시간 계획",
-      detail: `고른 ${ENERGY_INTENT_LABELS[selectedEnergyIntent].title} 목적에 맞춘 주요 훈련의 종류·횟수·RPE는 계획안 A와 같아요. 조정할 수 있는 쉬운 훈련만 각 시간 범위의 가장 짧은 값으로 정해요.`,
+      detail: `고른 ${ENERGY_INTENT_LABELS[selectedEnergyIntent].title} 목적의 주요 훈련과 함께, 조정할 수 있는 쉬운 훈련만 각 시간 범위의 가장 짧은 값으로 정해요.`,
     }
   }
   return {
     title: "시간 조절 계획",
-    detail: `고른 ${ENERGY_INTENT_LABELS[selectedEnergyIntent].title} 목적에 맞춘 주요 훈련의 종류·횟수·RPE는 계획안 B와 같아요. 쉬운 훈련은 표시된 시간 범위 안에서 직접 조절해요.`,
+    detail: `고른 ${ENERGY_INTENT_LABELS[selectedEnergyIntent].title} 목적의 주요 훈련과 함께, 쉬운 훈련은 표시된 시간 범위 안에서 직접 조절해요.`,
   }
 }
 

@@ -397,4 +397,29 @@ exact existing numeric adoptions and safety; DEFER activation without exact dose
 and applicability acceptance. Existing runtime counts are historical, not evidence
 for this extension.
 
+### 12.1 Candidate Comparison Projection
+
+Candidate comparison reads the actual session prescriptions, not candidate names.
+Match MAIN sessions by day and AM/PM slot; also compare event, selected purpose and
+per-session purpose before making a shared-work claim. A missing or duplicated slot,
+different context or unreadable structure cannot be labelled identical.
+
+Distinguish exact same prescribed work from the same method with changed dose and
+from a structurally different method awaiting pair review. Repetition-only changes
+are not a second method; a changed athlete anchor is not a different method either.
+RPE/time envelopes without explicit repeat units remain structurally uncomparable,
+even when both saved envelopes match. Never translate these into invented intervals.
+
+The comparison exposes work, recovery, target intensity, available time information
+and limitations in that order. Do not call a pace-target prescription an RPE target.
+Whole-session time envelopes are not main-work time, and uncomputed elapsed time is
+not zero. Identical work can be displayed once, with matching day/slot references.
+Structural differences do not authorize selection, activation or equivalent-effect
+claims; existing runtime adoption gates remain unchanged.
+
+Derived comparison/sequence views are not separately persisted as a second source
+of prescription authority. Existing stored prescriptions and explanation receipts
+remain authoritative. This addition does not activate new templates or close the
+two-distinct-MAIN-method delivery gap.
+
 [DRAFT_COMPLETE]
