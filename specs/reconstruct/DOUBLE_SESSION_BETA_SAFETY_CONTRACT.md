@@ -5,7 +5,7 @@ document_metadata:
   doc_id: trainoracle-spec-035-double-session-beta-safety
   spec_id: DOUBLE_SESSION_BETA_SAFETY_CONTRACT
   title: TrainOracle Double Session Beta Safety Contract
-  version: "0.3"
+  version: "0.4"
   round: RT1_OWNER_APPROVED_LOCAL_BETA_BOUNDARY
   status: DRAFT_FOR_REVIEW
   owner: COACH_HOJUNE
@@ -18,7 +18,7 @@ document_metadata:
   self_check_is_runtime_evidence: false
   final_marker_required: "[DRAFT_COMPLETE]"
   machine_validated: false
-  machine_validation_note: "No CI validator, test, or lint rule enforces any DSB-INV-* rule."
+  machine_validation_note: "Full DSB vector coverage is not established here; targeted generation, storage and detailed-prescription tests exist. See the 2026-09-02 audit."
   governing_owner_decision: OWNER_DECISION_FULL_TWO_A_DAY_2026_08_12.md
   prior_owner_decision: OWNER_DECISION_SESSION_SLOT_INTENSITY_2026_08_06.md
   governing_owner_decision_date: "2026-08-12"
@@ -31,9 +31,10 @@ document_metadata:
 
 > **이 문서의 규칙을 인용하거나 구현하기 전에 이 절을 먼저 읽으세요.**
 
-- **이 문서는 기계 검증되지 않습니다.** `DSB-INV-*` 불변식을 확인하는 CI 검증기,
-  테스트, 린트 규칙이 하나도 없습니다 (`executed_tests_total: 0`,
-  `machine_validated: false`). 따라서 코드와 이 문서가 **조용히 어긋날 수
+- **이 문서 전체의 검증 완료를 주장하지 않습니다.** 생성·저장·상세 처방의
+  개별 테스트는 존재합니다. 과거의 "테스트가 하나도 없다"는 문장은 현재
+  구현의 증거가 아닙니다. 이 문서의 전체 벡터 실행 증거는 별도입니다
+  (`executed_tests_total: 0`, `machine_validated: false`). 코드와 문서는 **어긋날 수
   있습니다.** 실제 코드 동작을 확인해야 할 때는 이 문서만 믿지 말고 저장 관문
   구현(`app/src/domain/plan-beta-schema.ts`의 `planBetaStateSchema`
   `superRefine`)과 생성기(`impl/src/plan-generator/session-builder.ts`)를 함께
@@ -139,7 +140,7 @@ from the original draft.
 | `DSB-INV-005` | Full two-a-day selection | When an athlete explicitly selects `RECOVERY_PM_ALLOWED`, every available training day has two distinct slots. There is no separate PM `RECOVERY_INTENT` count cap for this user-selected full schedule. This does **not** create a numeric prescription, a second automatic `QUALITY` session, a catch-up session, or a medical clearance. | `OWNER_DECISION_FULL_TWO_A_DAY_2026_08_12.md` — replaces v0.1 recovery-session frame cap for the explicit full two-a-day schedule |
 | `DSB-INV-006` | Availability meaning | An available day includes recovery movement. `EVERY_DAY` does not create extra quality days; existing quality-day rules remain unchanged. | v0.1 (unchanged) |
 | `DSB-INV-007` | No compensation | A skipped or incomplete AM/PM session is not moved, duplicated, or added to a later day. A second session is never created to make up for a missed one. | v0.1 (unchanged) |
-| `DSB-INV-008` | RPE-only boundary | Any beta session, AM or PM, may show only duration range, RPE range, intent, and plain-language guidance. It must not show derived pace, repetitions, distance, or recovery intervals. | v0.1; subject widened from "PM output" to "any beta session" 2026-08-06 |
+| `DSB-INV-008` | Default RPE and separately adopted detail | The default AM/PM prescription is RPE and duration. A separately adopted detailed template may replace one eligible QUALITY prescription only after its exact template, components, event, experience, current same-event anchor and safety gates pass. An AM/PM slot is not additional template authority. | Default v0.1; exact four identities from Template Library §16A and 2026-08-17 activation decisions |
 | `DSB-INV-009` | Special-day disclosure and edit flow | A day that carries an unusual load — two `QUALITY` sessions, or two competition exposures — is permitted **only if both hold**: (a) the screen states plainly, at that day, that the day is unusual; and (b) the athlete has a flow to review and modify or remove it before or after confirmation. If either is missing, the generator and the storage gate must not allow the day. | OD-SLOT-8 (2026-08-06), new in v0.2 |
 
 `DSB-INV-009` is **not satisfied by the current implementation.** As of
@@ -220,7 +221,7 @@ retain these regression vectors:
 | V-9 | stored snapshot with two same-day `QUALITY` sessions | storage loader **rejects** it while `B-17` is unshipped; after `B-17`, accepted only with the disclosure and edit flow | `DSB-INV-003`, `DSB-INV-009` |
 | V-10 | stored snapshot with three sessions on one day, or a duplicate `(day, slot)` | storage loader **rejects** the snapshot | `DSB-INV-004` |
 | V-11 | older slot-less snapshot | loader reads every legacy session as AM and the mode as single-session; **no PM is synthesized** | §3 migration |
-| V-12 | any PM session's prescription | `RPE_TIME_RANGE` only; no pace, reps, distance, or intervals | `DSB-INV-008` |
+| V-12 | PM detailed prescription | Accept only the separately adopted exact template after every detailed gate; otherwise retain the RPE fallback. Do not create a second QUALITY session or a new numerical variant. | `DSB-INV-008`, `DSB-INV-003` |
 
 **Fixture-validity discipline.** A gate test suite in which *every* case expects
 rejection proves nothing — an always-reject gate, or a fixture that is malformed
@@ -229,8 +230,8 @@ at least one vector must assert **acceptance**, and it must be run in the same
 suite as the rejection vectors.
 
 Passing a local test does not create runtime evidence for an upstream contract,
-canonical promotion, or issue closure. **No CI job currently runs these
-vectors** (see §0).
+canonical promotion, or issue closure. Full named-vector coverage must be checked
+against actual test output; historical absence statements are not current evidence.
 
 ## 8. Open Issues
 
@@ -268,6 +269,16 @@ its upstream specs, not against them.
 각 판에서 무엇이 바뀌었는지와, **은퇴한 규칙의 v0.1 원문**을 남겨 둡니다.
 과거 보고서·작업지시서가 옛 규칙을 인용한 부분을 해석할 때만 쓰세요. 아래
 "은퇴 원문"은 **현재 유효한 지침이 아닙니다.**
+
+### v0.4 — 2026-09-02
+
+기존 상세 처방 승인과 충돌하던 모든 AM/PM의 절대 RPE-only 문구를 기본 경로와
+별도 승인 경로로 나눴다. 근거는 `TEMPLATE_LIBRARY_SPEC.md` §16A와
+`reports/review/MIDDLE_DISTANCE_RUNTIME_ACTIVATION_DECISION_2026-08-17.md`,
+`reports/review/V2_SEED_05_OWNER_ADOPTION_DECISION_2026-08-17.md`다.
+추가 템플릿·두 QUALITY 특별일·수치 증량은 승인하지 않는다. 이슈 4개와 차단
+3개는 모두 그대로 OPEN이며, 문서의 정본 지위와 운영 증거도 변경하지 않는다.
+과거 §0의 테스트 부재 단정은 전체 계약 검증 미완과 개별 테스트 존재로 구분했다.
 
 ### v0.3 — 2026-08-12
 

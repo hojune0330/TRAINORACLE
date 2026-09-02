@@ -201,6 +201,31 @@ the sync UI. A future schema may add a non-sensitive redaction state such as
 `memo_server_state: local_only`; its absence in the first beta must not be
 interpreted as permission to infer, request, or upload the omitted text.
 
+### 6.4 Current-Beta Serializer Boundary
+
+`app/src/domain/account/sync-local.ts` `toUploadPayload` must enforce the
+structured-only boundary itself, including when called outside the public sync
+flow. A stored or caller-supplied `shareTrainingNotes: true` is legacy state,
+not authority to include raw text. Neither consent flag nor memo purpose may
+bypass the existing `toExportJournalEntry` structured projection.
+
+- Omit `memo`, `note`, and `memoPurpose` for every journal kind and memo purpose,
+  including legacy entries without a purpose. Never spread the original entry
+  into an upload payload.
+- Preserve the existing projection's structured training fields, field provenance,
+  and `plannedSessionLink`; this correction does not expand the upload schema.
+- Return `null` when the existing projection finds no exportable structured
+  signal. A memo-only entry must not become uploadable through stale consent.
+- Leave the source entry and locally stored memo unchanged. Keep the existing
+  consent storage shape for compatibility; it cannot authorize memo upload.
+
+Account restore may restore the structured record, but must not depend on a new
+upload carrying raw memo text. This serializer correction does not authorize
+deletion of existing server or device data, migrations, encrypted memo release,
+or changes to retention policy. The draft status and all open issues remain
+unchanged; focused regression and mutation results are separate implementation
+evidence, not public-release or canonical-promotion evidence.
+
 ---
 
 ## 7. Account And Consent Boundary

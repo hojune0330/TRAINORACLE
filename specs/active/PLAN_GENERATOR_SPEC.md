@@ -353,6 +353,22 @@ until then `COACH_REQUIRED` is read-only and local adaptation is not synchronize
 
 ## 3. Implementation Boundary
 
+### 3.0 Bounded Implementation Alignment (2026-09-02)
+
+The complete contract below is not a claim that every input already reaches the
+product. Current local-beta generation uses profile/intake, D9/RVE/Safety Gate,
+explicitly selected approved template/record, and recent-journal availability.
+Journal availability is not a classified load history. The RPE comparison and its
+exact link/exclusion rules are owned by
+`../reconstruct/PLAN_CYCLE_RESPONSE_AND_ADAPTATION_CONTRACT.md` §2.1.
+
+The owner-approved development tracks extend detailed choice and structured
+evidence in bounded stages. This does not adopt undefined RULE_SPEC thresholds,
+activate draft catalogue entries, or turn plan intent into actual classification.
+The current four detailed identities remain governed by Template Library §16A.
+Current-plan comparisons must not read a historical prescription from today's
+active plan. Automatic dose progression remains forbidden.
+
 The Plan Generator sits after app-bridge storage and before coach-facing final plan approval.
 
 It reads:

@@ -145,6 +145,8 @@ export function characterizeExistingAdaptiveGuards({ formation, generator, proje
 }
 
 export function validateAdaptiveReplanningPolicy({ formation, generator, projection, coachRuleset, design }) {
+  [formation, generator, projection, coachRuleset, design] = [formation, generator, projection, coachRuleset, design]
+    .map(document => document.replace(/\r\n/gu, "\n"))
   characterizeExistingAdaptiveGuards({ formation, generator, projection, coachRuleset })
   samePolicy(parsePolicy(formation, "formation"), "formation")
   samePolicy(parsePolicy(generator, "generator"), "generator")
