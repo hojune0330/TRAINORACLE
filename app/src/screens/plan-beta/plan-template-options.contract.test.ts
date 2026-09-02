@@ -14,30 +14,37 @@ describe("explicit detailed plan template options", () => {
     notation,
   ) => {
     const option = resolveDetailedPlanTemplateOption(
-      { eventDistanceM, trainingFocus },
+      { eventDistanceM, trainingFocus, experienceBand: "EXPERIENCED" },
       "2026-08-24T09:00:00.000Z",
     )
 
     expect(option?.ref.templateId).toBe(templateId)
     expect(option?.notation).toBe(notation)
+    expect(option?.mainSummary).toMatch(/총 \d+회/u)
+    expect(option?.preparationSummary).toContain("준비 15분")
   })
 
   it("does not show a mismatched or expired detailed template", () => {
     expect(resolveDetailedPlanTemplateOption(
-      { eventDistanceM: 1500, trainingFocus: "VO2_INTENT" },
+      { eventDistanceM: 1500, trainingFocus: "VO2_INTENT", experienceBand: "EXPERIENCED" },
       "2026-08-24T09:00:00.000Z",
     )).toBeNull()
     expect(resolveDetailedPlanTemplateOption(
-      { eventDistanceM: 5000, trainingFocus: "VO2_INTENT" },
+      { eventDistanceM: 5000, trainingFocus: "VO2_INTENT", experienceBand: "EXPERIENCED" },
       "2028-08-24T09:00:00.000Z",
     )).toBeNull()
   })
 
   it("returns an ordered list so more than one independently approved method can be offered", () => {
     const options = resolveDetailedPlanTemplateOptions(
-      { eventDistanceM: 5000, trainingFocus: "VO2_INTENT" },
+      { eventDistanceM: 5000, trainingFocus: "VO2_INTENT", experienceBand: "EXPERIENCED" },
       "2026-08-24T09:00:00.000Z",
     )
     expect(options.map(option => option.ref.templateId)).toEqual(["V2-SEED-05"])
+    expect(options[0]).toMatchObject({ mainSummary: "1000m 5회 · 총 5회", recoverySummary: "반복 사이 2분 30초 조깅" })
+  })
+
+  it.each([undefined, "NEW_TO_RUNNING", "DEVELOPING"] as const)("does not offer experienced-only templates to %s", (experienceBand) => {
+    expect(resolveDetailedPlanTemplateOptions({ eventDistanceM: 5000, trainingFocus: "VO2_INTENT", experienceBand }, "2026-09-02T00:00:00.000Z")).toEqual([])
   })
 })

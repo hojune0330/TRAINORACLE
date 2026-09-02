@@ -27,6 +27,7 @@ import { loadEntries } from "../../domain/journal-store"
 import { derivePlanCycleResponse } from "../../domain/plan-cycle-response"
 import type { JournalEntry } from "../../domain/journal-schema"
 import { useActiveContentScroll } from "../../hooks/useActiveContentScroll"
+import { PlanCycleEvidence } from "./PlanCycleEvidence"
 
 type Step = "closed" | "reason" | "cycle" | "record" | "safety" | "choice" | "review" | "result" | "pending"
 type Reason = "PB_SB" | "EXPLICIT_REQUEST"
@@ -70,7 +71,7 @@ export function PlanAdaptationFlow({
   )
   const cycleResponse = React.useMemo(
     () => derivePlanCycleResponse(onLoadEntries(), state),
-    [onLoadEntries, state],
+    [onLoadEntries, state, step],
   )
   useActiveContentScroll(step === "closed" ? null : step, activeStepRef)
 
@@ -204,11 +205,7 @@ export function PlanAdaptationFlow({
 
           {step === "cycle" && (
             <DecisionStep title="이번 주기 기록 요약" onBack={() => setStep("reason")}>
-              <div className="plan-adaptation__evidence">
-                <strong>{cycleResponse.headline}</strong>
-                {cycleResponse.evidence.map((item) => <p key={item}>{item}</p>)}
-                <small>일지 원문·비밀 메모·통증 문장은 읽지 않으며, 이 결과만으로 훈련량을 늘리지 않아요.</small>
-              </div>
+              <PlanCycleEvidence response={cycleResponse} />
               {cycleResponse.recommendation === "REDUCE_OR_REVIEW"
                 && state.activePlan.candidateKind === "BALANCED" && (
                 <PlanChoice
@@ -219,15 +216,11 @@ export function PlanAdaptationFlow({
                 />
               )}
               <PlanChoice
-                title={cycleResponse.recommendation === "MAINTAIN_OR_VARY_METHOD" ? "현재 수준을 유지하고 방법을 다양화" : "현재 기준 유지"}
-                detail={cycleResponse.recommendation === "MAINTAIN_OR_VARY_METHOD"
-                  ? "훈련량은 올리지 않아요. 다음 계획에서 현재 제공할 수 있는 다른 상세 세션이 있으면 계획안으로 비교합니다."
-                  : "새 계획안을 저장하지 않고 현재 계획과 다음 계획 기준을 유지해요."}
+                title="현재 기준 유지"
+                detail="새 계획안을 저장하지 않고 현재 계획과 다음 계획 기준을 유지해요. 다른 훈련법으로 자동 교체하지 않아요."
                 selected={false}
                 onClick={() => {
-                  setMessage(cycleResponse.recommendation === "MAINTAIN_OR_VARY_METHOD"
-                    ? "훈련량은 그대로 유지해요. 현재 제공할 수 있는 다른 상세 세션이 있을 때만 다음 계획안에서 방법을 바꿔 안내해요."
-                    : "현재 기준을 유지해요. 강도·양·횟수는 바꾸지 않았습니다.")
+                  setMessage("현재 기준을 유지해요. 강도·양·횟수와 훈련법은 바꾸지 않았습니다.")
                   setStep("result")
                 }}
               />

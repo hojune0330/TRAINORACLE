@@ -76,6 +76,17 @@ async function reachExactEventCandidates(
   await page.getByRole("button", { name: /통증은 없고 몸 상태는 평소와 같아요/u }).click()
   await page.getByRole("button", { name: "내 계획 완성하기" }).click()
   await page.getByRole("button", { name: focus }).click()
+  const detailChoice = page.getByRole("button", {
+    name: new RegExp(`${eventDistanceM}m 경기 페이스 상세 훈련 포함`, "u"),
+  })
+  await expect(detailChoice).toContainText("반복 사이")
+  await page.getByText("준비·정리와 훈련 표기 보기").click()
+  await expect(page.getByText(/준비 15분 RPE/u)).toBeVisible()
+  await expect(page.locator(".plan-detailed-prescription code")).toBeVisible()
+  if (process.env.CAPTURE_PLAN_QA === "1") {
+    await detailChoice.scrollIntoViewIfNeeded()
+    await page.screenshot({ path: test.info().outputPath(`template-choice-${eventDistanceM}m.png`) })
+  }
   await page.getByRole("button", {
     name: new RegExp(`${eventDistanceM}m 경기 페이스 상세 훈련 포함`, "u"),
   }).click()

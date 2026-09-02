@@ -216,7 +216,7 @@ describe("exact event and explicit detail selection", () => {
     render(
       <PlanIntake
         step="template"
-        draft={{ eventGroup: "MIDDLE_DISTANCE", eventDistanceM: 1500, trainingFocus: "MIXED_INTENT" }}
+        draft={{ eventGroup: "MIDDLE_DISTANCE", eventDistanceM: 1500, trainingFocus: "MIXED_INTENT", experienceBand: "EXPERIENCED" }}
         onBack={vi.fn()}
         onGoal={vi.fn()}
         onDivision={vi.fn()}
@@ -236,7 +236,11 @@ describe("exact event and explicit detail selection", () => {
 
     expect(screen.getByRole("button", { name: /RPE 기준으로 받기/u })).toBeVisible()
     const detailed = screen.getByRole("button", { name: /1500m 경기 페이스 상세 훈련 포함/u })
-    expect(detailed).toHaveTextContent("3×500m @1500m RP · r180″ STAND")
+    expect(detailed).toHaveTextContent("500m 3회 · 총 3회 · 반복 사이 3분 서서 쉬기")
+    await user.click(screen.getByText("준비·정리와 훈련 표기 보기"))
+    expect(screen.getByText("3×500m @1500m RP · r180″ STAND")).toBeVisible()
+    expect(screen.getByText(/준비 15분 RPE/u)).toBeVisible()
+    expect(onTemplate).not.toHaveBeenCalled()
     await user.click(detailed)
     expect(onTemplate).toHaveBeenCalledWith(expect.objectContaining({ templateId: "MD-1500-01" }))
   })

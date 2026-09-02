@@ -1,18 +1,10 @@
 import { expect, test } from "@playwright/test"
 import type { Page } from "@playwright/test"
-import path from "node:path"
 import { selectNineDayProjection } from "./plan-flow"
 import { expectActivePlanHeading, openActiveSessionDetails } from "./active-plan-flow"
 
 test.use({ serviceWorkers: "block" })
 const appPath = process.env.PLAYWRIGHT_APP_PATH ?? "/"
-
-
-const evidenceDir = path.resolve(
-  process.cwd(),
-  "../.omo/evidence/personalized-auto-prescription/task-6-personalized-auto-prescription",
-)
-
 const currentRecords = [
   {
     schemaVersion: 1,
@@ -179,7 +171,7 @@ for (const viewport of [
     await assertKeyboardFocus(page)
     await assertEvidenceHelpDoesNotOverlap(page)
     await page.screenshot({
-      path: path.join(evidenceDir, `${viewport.name}-candidates.png`),
+      path: test.info().outputPath(`${viewport.name}-candidates.png`),
       fullPage: true,
     })
 
@@ -201,7 +193,7 @@ for (const viewport of [
     await assertViewportIntegrity(page)
     await assertTouchTargets(page)
     await page.screenshot({
-      path: path.join(evidenceDir, `${viewport.name}-active.png`),
+      path: test.info().outputPath(`${viewport.name}-active.png`),
       fullPage: true,
     })
     expect(browserErrors).toEqual([])
@@ -287,7 +279,7 @@ test("keeps stale evidence RPE-only", async ({ page }) => {
   await picker.getByRole("button", { name: "이 기록으로 개인 페이스 적용" }).click()
   await expect(picker).toContainText("선택한 기록일이 현재 기준 범위를 벗어났어요")
   await expect(page.getByText(/5×1000m @5000m RP/u)).toHaveCount(0)
-  await page.screenshot({ path: path.join(evidenceDir, "mobile-375x667-stale.png"), fullPage: true })
+  await page.screenshot({ path: test.info().outputPath("mobile-375x667-stale.png"), fullPage: true })
 })
 
 test("keeps missing evidence RPE-only", async ({ page }) => {
@@ -308,6 +300,6 @@ test("D9 blocks before candidates", async ({ page }) => {
   await page.getByRole("button", { name: /통증.*부상.*몸 이상/u }).click()
   await expect(page.getByRole("heading", { name: "지금은 계획을 멈췄어요" })).toBeVisible()
   await expect(page.getByText("선택 가능한 계획 2가지")).toHaveCount(0)
-  await page.screenshot({ path: path.join(evidenceDir, "mobile-375x667-d9-blocked.png"), fullPage: true })
+  await page.screenshot({ path: test.info().outputPath("mobile-375x667-d9-blocked.png"), fullPage: true })
   await assertViewportIntegrity(page)
 })

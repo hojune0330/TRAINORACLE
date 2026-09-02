@@ -162,11 +162,9 @@ export function mergeEntries(
 
 export function toUploadPayload(
   entry: JournalEntry,
-  consent: SyncConsent,
+  _consent: SyncConsent,
 ): Record<string, unknown> | null {
-  if (consent.shareTrainingNotes && entry.memoPurpose === "ANALYZABLE_TRAINING_NOTE") {
-    return { ...entry }
-  }
+  // Legacy consent cannot bypass the structured-only beta boundary.
   const safe = toExportJournalEntry(entry)
   return safe === null ? null : { ...safe }
 }

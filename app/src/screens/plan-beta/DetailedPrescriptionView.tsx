@@ -52,7 +52,7 @@ export function DetailedPrescriptionView({ prescription }: { readonly prescripti
         <strong>준비</strong>
         <span>
           {warmup.easyDurationMinutes}분 RPE {warmup.rpeMin}-{warmup.rpeMax} 쉬운 움직임 ·
-          20초 점진 가속 {warmup.strides.repetitions}회, 사이 <span className="plan-session-term">40초</span> 걷기/조깅
+          {" "}{warmup.strides.durationSeconds}초 점진 가속 {warmup.strides.repetitions}회, 사이 <span className="plan-session-term">{warmup.strides.recoverySeconds}초</span> 걷기/조깅
         </span>
       </p>
       <p>

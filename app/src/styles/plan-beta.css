@@ -2689,11 +2689,11 @@
 .plan-adaptation__evidence strong,
 .plan-adaptation__evidence p,
 .plan-adaptation__evidence small { display: block; }
-.plan-adaptation__evidence strong { font-size: 14px; }
+.plan-adaptation__evidence strong { font-size: var(--fs-body); }
 .plan-adaptation__evidence p {
   margin: var(--space-2) 0 0;
   color: var(--ink-2);
-  font-size: 11.5px;
+  font-size: var(--fs-body-sm);
   line-height: 1.55;
 }
 .plan-adaptation__evidence small {
@@ -2701,7 +2701,29 @@
   padding-top: var(--space-3);
   border-top: var(--bw-line) solid var(--line);
   color: var(--ink-3);
-  font-family: var(--mono);
-  font-size: 9px;
+  font-family: var(--sans);
+  font-size: var(--fs-caption);
   line-height: 1.55;
+}
+.plan-adaptation__evidence details { margin-top: var(--space-3); }
+.plan-adaptation__evidence summary {
+  min-height: var(--app-touch-min);
+  padding: var(--space-3) 0;
+  font-size: var(--fs-body-sm);
+  cursor: pointer;
+}
+.plan-adaptation__evidence summary:focus-visible {
+  outline: var(--bw-line) solid var(--brand);
+  outline-offset: var(--space-1);
+}
+.plan-adaptation__evidence ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.plan-adaptation__evidence li {
+  padding: var(--space-3) 0;
+  border-top: var(--bw-line) solid var(--line);
+  word-break: keep-all;
+  overflow-wrap: anywhere;
 }
