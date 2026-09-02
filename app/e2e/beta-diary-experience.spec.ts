@@ -1,13 +1,14 @@
 import { expect, test } from "@playwright/test"
 
-test("uses the diary context, decoration, cycle archive, and easy FAQ as one flow", async ({ page }) => {
+for (const hasEarnedHistory of [false, true]) {
+test(`uses the diary flow with ${hasEarnedHistory ? "previously earned" : "no backfilled"} points`, async ({ page }) => {
   const consoleErrors: string[] = []
   page.on("console", (message) => {
     if (message.type() === "error") consoleErrors.push(message.text())
   })
   page.on("pageerror", (error) => consoleErrors.push(error.message))
 
-  await page.addInitScript(() => {
+  await page.addInitScript((earnedHistory) => {
     const entries = Array.from({ length: 8 }, (_, index) => {
       const day = new Date()
       day.setDate(day.getDate() - (index + 1))
@@ -38,7 +39,15 @@ test("uses the diary context, decoration, cycle archive, and easy FAQ as one flo
       }
     })
     window.localStorage.setItem("trainoracle.journal.v1", JSON.stringify(entries))
-  })
+    if (earnedHistory) {
+      window.localStorage.setItem("trainoracle.engagement.v2", JSON.stringify({
+        version: 2,
+        visitDates: [],
+        journalDates: entries.map((entry) => entry.date),
+        pointMeaning: "NON_ECONOMIC_NON_TRANSFERABLE_BETA",
+      }))
+    }
+  }, hasEarnedHistory)
 
   await page.goto("/?app=1&uitest=1")
 
@@ -48,13 +57,15 @@ test("uses the diary context, decoration, cycle archive, and easy FAQ as one flo
   await expect(page.getByRole("button", { name: "기분 좋음" })).toHaveAttribute("aria-pressed", "true")
   await expect(page.getByText("위치정보를 사용하지 않아요.")).toBeVisible()
 
-  await expect(page.getByRole("heading", { name: "꾸미기 보관함 · 사용 가능 32P" })).toBeVisible()
+  // Historical entries stay visible; only a stored award history supplies past points.
+  const balanceHeading = `꾸미기 보관함 · 사용 가능 ${hasEarnedHistory ? 32 : 0}P`
+  await expect(page.getByRole("heading", { name: balanceHeading })).toBeVisible()
   /* 홈 카드는 이제 오늘 일지 상세로 이동해 진짜 편집기를 바로 연다. */
   await page.getByRole("button", { name: "꾸미기 열기" }).click()
   await expect(page.getByRole("dialog", { name: "이 일지 꾸미기" })).toBeVisible()
   await page.getByRole("button", { name: "꾸미기 완료" }).click()
   await page.getByRole("button", { name: "← 뒤로" }).click()
-  await expect(page.getByRole("heading", { name: "꾸미기 보관함 · 사용 가능 32P" })).toBeVisible()
+  await expect(page.getByRole("heading", { name: balanceHeading })).toBeVisible()
 
   await page.getByRole("button", { name: "전체 보기" }).click()
   await page.getByRole("button", { name: "9.5일 주기" }).click()
@@ -82,3 +93,4 @@ test("uses the diary context, decoration, cycle archive, and easy FAQ as one flo
   }
   expect(consoleErrors).toEqual([])
 })
+}
