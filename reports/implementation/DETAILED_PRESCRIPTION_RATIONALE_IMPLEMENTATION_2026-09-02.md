@@ -145,8 +145,21 @@ impl: node ../app/node_modules/typescript/bin/tsc --noEmit --baseUrl ../app/node
 실제 자체 호스팅 Pretendard 파일(2,057,688 bytes)과 로컬 HTTP 200 응답을 확인했다.
 
 선행 변경은 [PR #314](https://github.com/hojune0330/TRAINORACLE/pull/314)에 보존했다.
-이번 구현은 `codex/prescription-rationale-integration`에서 #314를 기준으로 후속 PR을 만든다.
+이번 구현은 [PR #315](https://github.com/hojune0330/TRAINORACLE/pull/315)로 올렸으며 #314를 기준으로 한다.
 현재 head의 CI·Fable UX·코어/과학 내용 검수 판정과 병합·배포는 해당 PR에 별도 기록한다.
 검수 단계가 끝나기 전 현재 문서만으로 병합·공개 배포 완료를 선언하지 않는다.
+
+### 8.1 선행 CI 실패 후속 처리
+
+#314의 첫 app-browser는 과거 일지 8건만 불러온 테스트가 32P를 기대해 실패했다.
+현재 스펙의 소급 포인트 금지와 충돌한 오래된 테스트였고, 로컬에서도 동일하게 재현했다.
+지급 규칙은 수정하지 않고 0P(과거 일지만 있음)와 32P(기존 적립 이력도 있음)를 각각 검사했다.
+테스트·보고서 수정 커밋 `b7d24ed`를 #314에 먼저 올리고 #315에 병합해 받았다.
+[실패 원인 및 수정 증거](QUICK_JOURNAL_CI_FOLLOWUP_2026-09-02.md)를 함께 확인한다.
+
+동기화 후 프로덕션 빌드와 일지/처방 설명의 16개 브라우저 시나리오가 통과했다.
+기존 9종 변조 증거는 보존하고 [동기화 후 재실행 결과](EXPLANATION_MUTATION_POST_SYNC_2026-09-02.json)를 추가했다.
+9종 모두 차단됐고 파일 복구가 확인됐다. Windows 체크아웃의 줄 끝 변환 때문에 원본 바이트 SHA는 달라질 수 있다.
+실제 앱/코어 소스의 Git 내용은 `b19cb9c`와 동일하다. 새 head의 CI는 재실행 대상으로 남는다.
 
 [DRAFT_COMPLETE]
