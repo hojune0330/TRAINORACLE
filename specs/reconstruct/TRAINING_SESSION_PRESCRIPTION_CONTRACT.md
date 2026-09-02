@@ -5,7 +5,7 @@ document_metadata:
   doc_id: trainoracle-spec-training-session-prescription
   status: RECONSTRUCTED_WITH_OWNER_ADOPTED_V2_SEED_05
   owner: COACH_HOJUNE
-  version: "0.3"
+  version: "0.4"
   local_original_found: false
   reconstructed_from_current_product_and_review_sources: true
   restored_original: false
@@ -364,5 +364,37 @@ runtime_sync:
 `OWNER-NOTATION-001` remains an unbound parser regression fixture. Its notation must
 not be mistaken for an activated athlete prescription, even though a different exact
 5000 m template identity is allowlisted above.
+
+## 12. Structured Sequence And Rationale Extension (2026-09-02)
+
+Owner-approved direction: support distance, duration and ordered mixed work blocks
+with explicit work targets, repetitions, within-block recovery and between-block
+recovery. A typed sequence is a representation contract, not activation authority.
+Unknown distance or duration stays unknown; never infer one merely from the other.
+Uniform V1 prescriptions retain their identity, arithmetic and accepted components.
+
+Every session explanation binds its exact session/prescription content, explanation
+version, template identity/version and source references. Numbers are rendered from
+the prescription, not independently authored prose. Changing work or recovery must
+invalidate an old explanation snapshot. Missing historical explanations do not
+authorize invented historical selection reasons or rewriting an accepted plan.
+
+Candidate method distinction excludes label-only, unit-only, repetition-count-only
+and warmup-only differences. Different main-work structure or repeat unit requires
+an explicit reviewed pair rationale. Method difference is not proof of equal dose
+or physiological effect. Target is two valid same-purpose methods, never two copies
+or two sessions the athlete is required to perform. A missing second adopted method
+is an open delivery gap, not permission to manufacture one.
+
+Keep 800 m through marathon scope and age-neutral/self-service authority. Short
+work may be placed when its reviewed eligibility and cycle purpose fit, without
+adding duplicate warmup strides or automatically increasing frequency/volume.
+100-400 m specialist activation remains excluded. Existing specific template
+adoption and source-review requirements remain in force.
+
+Change ledger: ADD typed sequences and content-bound rationale; KEEP V1 storage,
+exact existing numeric adoptions and safety; DEFER activation without exact dose
+and applicability acceptance. Existing runtime counts are historical, not evidence
+for this extension.
 
 [DRAFT_COMPLETE]

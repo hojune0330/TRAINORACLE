@@ -1414,4 +1414,27 @@ upload_allowed: false
 canonical_promotion_allowed: false
 ```
 
+## 26. Integrated Session Explanation Direction (2026-09-02)
+
+Every offered session requires purpose, energy-supply context where applicable,
+work/recovery rationale, cycle role, expected adaptation/limitations and evidence.
+Read-only explanation derives actual numbers from the exact selected prescription.
+The lexicon defines terms; reviewed training profiles define design intent; plan
+reason codes and input references define actual selection/placement reasons.
+Do not describe an unused journal or record as a prescription input.
+
+The product target is two genuinely different same-purpose MAIN methods for each
+supported/accepted event-purpose scope. Existing BALANCED/CONSERVATIVE support-time
+variants are not two distinct MAIN methods. A second method is offered only after
+its exact template and applicability pass existing adoption gates; do not pad the
+list with repetition-only changes. Short distance/time work for 800 m through
+marathon is part of this direction when applicable, not blanket sprint activation.
+
+Explanations cannot authorize doses, choose a plan, clear safety, or increase demand.
+Existing selections, age-neutral eligibility, two-a-day support and frame lineage
+remain unchanged. Legacy plans remain readable with honest missing-rationale status.
+Change ledger: ADD rationale completeness and candidate distinction; KEEP existing
+numeric authority; DEFER unadopted dose combinations. No issue count or status is
+changed by this direction alone.
+
 [DRAFT_COMPLETE]
