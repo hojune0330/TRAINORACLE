@@ -17,6 +17,18 @@ import { FormSec } from "./shared"
 afterEach(cleanup)
 
 describe("FormSec 접기 — 기존 화면 보호", () => {
+  it("compact only reduces whitespace and keeps the same controls", async () => {
+    const user = userEvent.setup()
+    const { container, rerender } = render(<FormSec lb="몸 상태"><input aria-label="값" defaultValue="유지" /></FormSec>)
+    expect(container.firstElementChild).toHaveStyle({ padding: "18px 20px 0" })
+    rerender(<FormSec compact lb="몸 상태" collapsible><input aria-label="값" defaultValue="유지" /></FormSec>)
+    expect(container.firstElementChild).toHaveStyle({ padding: "4px 20px 0" })
+    expect(screen.getByRole("button")).toHaveStyle({ minHeight: "44px" })
+    await user.click(screen.getByRole("button"))
+    await user.click(screen.getByRole("button"))
+    expect(screen.getByLabelText("값")).toHaveValue("유지")
+  })
+
   it("collapsible 을 주지 않으면 접기 버튼이 아예 없고 내용이 보인다", () => {
     render(
       <FormSec lb="긴장도 · 선택 사항">

@@ -190,7 +190,7 @@ export function PostSessionForm({ onBack, onDone, targetDate, initialEntry, plan
       )}
 
       {activityOutcome !== undefined && (
-        <FormSec lb="빠르게 남긴 운동 결과">
+        <FormSec compact lb="빠르게 남긴 운동 결과">
           <div className="journal-progressive-edit" role="group" aria-label="운동 결과 수정">
             {DETAILED_OUTCOMES.map(([value, label]) => (
               <button
@@ -215,7 +215,7 @@ export function PostSessionForm({ onBack, onDone, targetDate, initialEntry, plan
         </FormSec>
       )}
 
-      {recordsPerformance && <FormSec lb="강도 시스템" help="energy-system">
+      {recordsPerformance && <FormSec compact lb="강도 시스템" help="energy-system">
         <div className="journal-energy-picker">
           {JOURNAL_ENERGY_SYSTEM_OPTIONS.map((energySystem) => (
             <button
@@ -237,10 +237,10 @@ export function PostSessionForm({ onBack, onDone, targetDate, initialEntry, plan
         </div>
       </FormSec>}
 
-      <FormSec lb="세션 제목">
+      <FormSec compact lb="세션 제목">
         <input aria-label="세션 제목" type="text" value={title} onChange={(event) => setTitle(event.target.value)} style={inputStyle()} />
       </FormSec>
-      {recordsPerformance && <FormSec lb="거리 · 시간 · 평균 페이스" help="pace">
+      {recordsPerformance && <FormSec compact lb="거리 · 시간 · 평균 페이스" help="pace">
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8 }}>
           <input aria-label="거리 (km)" type="text" value={distanceKm} onChange={(event) => setDistanceKm(event.target.value)} style={{ ...inputStyle(), fontFamily: "var(--mono)", textAlign: "right" }} />
           <input aria-label="시간 (분)" type="text" value={durationMin} onChange={(event) => setDurationMin(event.target.value)} style={{ ...inputStyle(), fontFamily: "var(--mono)", textAlign: "right" }} />
@@ -264,6 +264,7 @@ export function PostSessionForm({ onBack, onDone, targetDate, initialEntry, plan
         는 뜻이고, 값이 없으면 접혀서는 안 된다.
       */}
       {recordsPerformance && <FormSec
+        compact
         lb="RPE · 주관 강도"
         help="rpe"
         collapsible
@@ -287,7 +288,7 @@ export function PostSessionForm({ onBack, onDone, targetDate, initialEntry, plan
         </div>
       </FormSec>}
 
-      {recordsPerformance && <FormSec lb="운동 후 몸 상태">
+      {recordsPerformance && <FormSec compact lb="운동 후 몸 상태">
         <div className="journal-progressive-edit" role="group" aria-label="운동 후 불편함 확인">
           <button type="button" aria-pressed={painCheckStatus === "NO_SIGNAL_REPORTED"} onClick={() => { setPainCheckStatus("NO_SIGNAL_REPORTED"); setPainParts({}) }}>불편한 곳 없음</button>
           <button type="button" aria-pressed={painCheckStatus === "SIGNAL_REPORTED"} onClick={() => setPainCheckStatus("SIGNAL_REPORTED")}>불편한 곳 있음</button>
@@ -306,7 +307,7 @@ export function PostSessionForm({ onBack, onDone, targetDate, initialEntry, plan
         onSectionTouch={touchOrder.touch}
       />}
 
-      <FormSec lb="메모 · 손글씨처럼" onTouch={() => touchOrder.touch("memo")}>
+      <FormSec compact lb="메모 · 손글씨처럼" onTouch={() => touchOrder.touch("memo")}>
         <PurposeScopedMemoField
           controller={memo}
           fieldId="post-session-memo"
