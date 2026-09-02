@@ -24,6 +24,8 @@ import { PaceEvidenceFlow } from "./PaceEvidenceFlow"
 import { RacePlacementNotice } from "./RacePlacementNotice"
 import { comparePlanMainWork } from "../../domain/plan-main-comparison"
 import { MainWorkComparison } from "./MainWorkComparison"
+import { PlanMethodPicker } from "./PlanMethodPicker"
+import { resolveDetailedPlanTemplateOptions } from "./plan-template-options"
 
 export function PlanCandidates({
   generated,
@@ -37,6 +39,8 @@ export function PlanCandidates({
   onSelectRecord,
   onCompareRecord,
   onConfirmRecord,
+  onChangeMethod,
+  onSelectionDetailsChange,
   onBack,
   onSelect,
 }: {
@@ -51,6 +55,8 @@ export function PlanCandidates({
   readonly onSelectRecord: (recordId: string) => void
   readonly onCompareRecord: (recordId: string | null) => void
   readonly onConfirmRecord: () => void
+  readonly onChangeMethod?: (reference: PlanBetaIntake["selectedDetailedTemplateRef"]) => void
+  readonly onSelectionDetailsChange?: () => void
   readonly onBack: () => void
   readonly onSelect: (selection: CandidateSelection) => void
 }) {
@@ -89,6 +95,11 @@ export function PlanCandidates({
           : "최근 일지가 있는지만 확인했어요. 일지의 거리, RPE, 메모는 이번 베타 계획의 시간이나 강도를 바꾸지 않습니다."}
       </p>
       <RacePlacementNotice state={generated.racePlacement} />
+      {onChangeMethod !== undefined && <PlanMethodPicker
+        options={resolveDetailedPlanTemplateOptions(intake)}
+        selected={intake.selectedDetailedTemplateRef}
+        onChange={onChangeMethod}
+      />}
       {intake.selectedDetailedTemplateRef !== null
         && (intake.eventGroup === "FIVE_K" || intake.eventGroup === "MIDDLE_DISTANCE")
         && intake.experienceBand === "EXPERIENCED"
@@ -149,7 +160,10 @@ export function PlanCandidates({
           value={startDate}
           aria-label="계획 시작 날짜"
           aria-describedby="plan-start-date-help"
-          onChange={(event) => setStartDate(event.target.value)}
+          onChange={(event) => {
+            if (event.target.value !== startDate) onSelectionDetailsChange?.()
+            setStartDate(event.target.value)
+          }}
         />
         <small id="plan-start-date-help">
           고른 날짜부터 실제 달력에 맞춰 보여드려요.
@@ -172,7 +186,7 @@ export function PlanCandidates({
       )}
       {detailedEvidencePending && !recordConfirmationPending && (
         <p className="plan-start-date-error" role="alert">
-          상세 훈련을 선택했어요. 위에서 같은 종목의 현재 기록을 고르고 확인하거나, 질문으로 돌아가 RPE 기준을 골라 주세요.
+          상세 훈련을 선택했어요. 같은 종목의 현재 기록을 고르고 확인해 주세요. 기록 없이 받으려면 위의 훈련 방법 선택에서 시간·RPE 기준으로 바꿀 수 있어요.
         </p>
       )}
       <div className="plan-candidate-list">

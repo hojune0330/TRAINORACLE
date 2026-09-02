@@ -169,4 +169,11 @@ impl: node ../app/node_modules/typescript/bin/tsc --noEmit --baseUrl ../app/node
 선행 CI의 모바일 높이 실패는 [일지 회귀 수정 보고](QUICK_JOURNAL_SCROLL_CI_REPAIR_2026-09-02.md)에 있다.
 이 후속 구현으로 §6의 실제 두 MAIN 활성화나 일반 시퀀스 저장·선택이 완료된 것은 아니다.
 
+### 8.3 방법 선택 및 거리 회복 후속
+
+[방법 선택·거리 회복 보고](MAIN_METHOD_SELECTION_AND_DISTANCE_RECOVERY_2026-09-02.md)에
+후보 화면의 명시적 방법 변경, 기록 재확인, 오래된 저장 무효화, v2 거리/종료 회복과
+독립 리뷰 결과를 남겼다. [두 번째 방법 출처 패킷](../review/SECOND_MAIN_METHOD_SOURCE_REVIEW_PACKET_2026-09-02.md)은
+조사와 실제 채택을 분리한다. 신규 수치 템플릿 활성화는 0개이며 §6의 범위 확대는 계속 남는다.
+
 [DRAFT_COMPLETE]

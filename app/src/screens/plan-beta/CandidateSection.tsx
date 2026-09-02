@@ -1,3 +1,4 @@
+import { useId } from "react"
 import { Check, ChevronDown } from "lucide-react"
 import type { PlanGenerationSuccess } from "@impl/plan-generator/types"
 import { TermHelp } from "../../components/TermHelp"
@@ -26,6 +27,7 @@ export function CandidateSection({
   readonly onToggleSchedule: () => void
   readonly onSelect: () => void
 }) {
+  const localId = useId()
   const label = candidateLabel(candidate.kind, candidate.selectedEnergyIntent)
   const purposeStatus = candidatePurposeStatus(candidate.kind)
   const optionLetter = candidate.kind === "BALANCED" ? "A" : "B"
@@ -33,12 +35,13 @@ export function CandidateSection({
   const hasDetailedPrescription = candidate.sessions.some(
     (session) => session.prescription.kind === "PACE_TARGET",
   )
-  const scheduleId = `candidate-schedule-${candidate.candidateId}`
+  const headingId = `candidate-heading-${localId}`
+  const scheduleId = `candidate-schedule-${localId}`
   return (
-    <article className="plan-candidate" aria-labelledby={`candidate-${candidate.candidateId}`}>
+    <article className="plan-candidate" aria-labelledby={headingId}>
       <header>
         <span>계획안 {optionLetter}</span>
-        <h2 id={`candidate-${candidate.candidateId}`}>{label.title}</h2>
+        <h2 id={headingId}>{label.title}</h2>
         <p>{label.detail}</p>
         <p className={`plan-candidate-purpose plan-candidate-purpose--${purposeStatus.tone}`}>
           <strong>{purposeStatus.label}</strong>

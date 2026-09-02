@@ -1,22 +1,28 @@
 import type { PrescriptionSequence, PrescriptionSequenceNode, SequenceRecovery } from "@impl/prescription/sequence"
-import { deriveSequenceTotals } from "@impl/prescription/sequence"
+import { deriveSequenceRecoveryDistanceTotals, deriveSequenceTotals } from "@impl/prescription/sequence"
 import { secondsText } from "../../domain/session-explanation"
 
 const MODES: Record<SequenceRecovery["mode"], string> = {
   WALK: "걷기", JOG: "가벼운 조깅", STAND: "서서 쉬기", WALK_OR_JOG: "걷기 또는 조깅",
   FULL_RECOVERY: "회복 상태에 맞춰 쉬기", COACH_DEFINED: "지도자가 정한 방식", NOT_APPLICABLE: "별도 회복 없음",
+  ACTIVE_ROLL_ON: "속도를 낮춰 이어 달리기",
 }
 
 export function PrescriptionStructure({ sequence }: { readonly sequence: PrescriptionSequence }) {
   const totals = deriveSequenceTotals(sequence)
+  const recoveryDistances = sequence.version === 2 ? deriveSequenceRecoveryDistanceTotals(sequence) : null
   return (
     <div className="prescription-structure">
       {([ ["준비", sequence.warmup], ["본운동", sequence.main], ["정리", sequence.cooldown] ] as const).map(([label, nodes]) => (
-        nodes.length === 0 ? null : <div key={label}><h4>{label}</h4><SequenceNodes nodes={nodes} /></div>
+        nodes.length === 0 ? null : <div key={label}><h4>{label}</h4><SequenceNodes nodes={nodes} />
+          {label === "본운동" && sequence.version === 2 && sequence.terminalRecovery && sequence.terminalRecovery.mode !== "NOT_APPLICABLE" &&
+            <p>마지막 본운동 뒤: <Recovery recovery={sequence.terminalRecovery} /></p>}
+        </div>
       ))}
       <p className="session-explanation__note">
         본운동 거리: {totals.qualityDistanceM === null ? "거리 미지정" : `${totals.qualityDistanceM}m`}
         {" · "}본운동에 연결된 회복: {totals.plannedRecoverySeconds === null ? "시간 미지정" : secondsText(totals.plannedRecoverySeconds)}
+        {recoveryDistances?.plannedRecoveryDistanceM != null && recoveryDistances.plannedRecoveryDistanceM > 0 && ` · 회복 거리 ${recoveryDistances.plannedRecoveryDistanceM}m`}
       </p>
       {totals.mainSessionTotalExcludingWarmupCooldown === null && <p className="session-explanation__note">거리와 시간을 임의로 환산하지 않아 전체 수행시간은 확정하지 않아요. 준비·정리는 본운동 합계에 더하지 않았어요.</p>}
     </div>
@@ -41,5 +47,5 @@ function SequenceNodes({ nodes }: { readonly nodes: readonly PrescriptionSequenc
 }
 
 function Recovery({ recovery }: { readonly recovery: SequenceRecovery }) {
-  return <>{recovery.seconds === null ? "시간 미지정" : secondsText(recovery.seconds)} {MODES[recovery.mode]}</>
+  return <>{"distanceM" in recovery ? `${recovery.distanceM}m` : recovery.seconds === null ? "시간 미지정" : secondsText(recovery.seconds)} {MODES[recovery.mode]}</>
 }

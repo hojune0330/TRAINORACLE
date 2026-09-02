@@ -2766,3 +2766,55 @@
   word-break: keep-all;
   overflow-wrap: anywhere;
 }
+
+.plan-method-picker {
+  border-block: var(--bw-line) solid var(--line);
+  margin-block: var(--space-4);
+  font-size: 0.9375rem;
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+}
+.plan-method-picker > summary {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: var(--app-touch-min);
+  padding-block: var(--space-3);
+  cursor: pointer;
+  list-style: none;
+}
+.plan-method-picker > summary::-webkit-details-marker { display: none; }
+.plan-method-picker > summary > svg { flex: none; }
+.plan-method-picker > summary > span { flex: 1; min-width: 0; }
+.plan-method-picker small { display: block; font-size: 0.8125rem; line-height: 1.55; color: var(--ink-2); }
+.plan-method-picker > summary small { margin-top: var(--space-1); }
+.plan-method-picker[open] .plan-method-picker__chevron { transform: rotate(180deg); }
+.plan-method-picker fieldset { border: 0; padding: 0; margin: 0; min-width: 0; }
+.plan-method-picker legend {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+.plan-method-picker__option {
+  display: flex;
+  gap: var(--space-3);
+  align-items: flex-start;
+  min-height: var(--app-touch-min);
+  padding: var(--space-3) var(--space-2);
+  border-top: var(--bw-line) solid var(--line);
+  cursor: pointer;
+}
+.plan-method-picker__option input { flex: none; width: 18px; height: 18px; margin: var(--space-1) 0 0; accent-color: var(--brand); }
+.plan-method-picker__option > span { min-width: 0; }
+.plan-method-picker__option strong { font-weight: 600; }
+.plan-method-picker__option small { margin-top: var(--space-1); }
+.plan-method-picker p { font-size: 0.8125rem; line-height: 1.55; margin: var(--space-3) 0; color: var(--ink-2); }
+.plan-method-picker .plan-method-picker__limit { color: var(--ink-3); }
+.plan-method-picker > summary:focus-visible,
+.plan-method-picker__option:focus-within { outline: var(--bw-line) solid var(--brand); outline-offset: var(--space-1); }

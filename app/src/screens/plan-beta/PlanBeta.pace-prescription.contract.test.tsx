@@ -1,8 +1,9 @@
-import { cleanup, render, screen, within } from "@testing-library/react"
+import { act, cleanup, fireEvent, render, screen, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
-import { afterEach, beforeEach, describe, expect, it } from "vitest"
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { ATHLETE_RECORDS_STORAGE_KEY } from "../../domain/athlete-records"
 import { PlanBeta } from "../PlanBeta"
+import * as mutationLock from "../../domain/plan-mutation-lock"
 
 const RECORDS = [
   {
@@ -39,7 +40,7 @@ beforeEach(() => {
   window.localStorage.setItem(ATHLETE_RECORDS_STORAGE_KEY, JSON.stringify(RECORDS))
 })
 
-afterEach(cleanup)
+afterEach(() => { cleanup(); vi.restoreAllMocks() })
 
 async function reachCandidates(): Promise<void> {
   const user = userEvent.setup()
@@ -60,6 +61,73 @@ async function reachCandidates(): Promise<void> {
 }
 
 describe("production detailed prescription experience", () => {
+  it("changes method in place, preserves the start date, and requires pace reconfirmation", async () => {
+    const user = userEvent.setup()
+    render(<PlanBeta />)
+    await reachCandidates()
+    const picker = screen.getByRole("region", { name: "개인 페이스 기준 기록" })
+    await user.click(within(picker).getByRole("button", { name: /개인 최고.*18분 31초/u }))
+    await user.click(within(picker).getByRole("button", { name: "이 기록으로 개인 페이스 적용" }))
+    for (const article of document.querySelectorAll(".plan-candidate")) {
+      const labelledBy = article.getAttribute("aria-labelledby")!
+      expect(labelledBy).not.toMatch(/[\s{}"\[\]]/u)
+      expect(document.getElementById(labelledBy)?.tagName).toBe("H2")
+    }
+    fireEvent.change(screen.getByLabelText("계획 시작 날짜"), { target: { value: "2026-09-10" } })
+    await user.click(screen.getByText("훈련 방법 선택"))
+    await user.click(screen.getByRole("radio", { name: /시간·RPE 기준으로 받기/u }))
+    expect(screen.queryByRole("region", { name: "개인 페이스 기준 기록" })).toBeNull()
+    expect(screen.queryByText(/5×1000m @5000m RP/u)).toBeNull()
+    expect(screen.getByLabelText("계획 시작 날짜")).toHaveValue("2026-09-10")
+    expect(screen.getByRole("button", { name: /시간 조절 계획 선택하기/u })).toBeEnabled()
+    await user.click(screen.getByRole("radio", { name: /1000m 5회/u }))
+    expect(screen.getByRole("button", { name: /시간 조절 계획 선택하기/u })).toBeDisabled()
+    expect(screen.queryByText(/5×1000m @5000m RP/u)).toBeNull()
+    expect(screen.queryByText(/직접 고르고 확인한 현재.*기록으로 한 강도 세션의 상세 페이스/u)).toBeNull()
+    expect(screen.queryByText(/선택하고 확인한.*기록만 상세 페이스 계산에 사용/u)).toBeNull()
+    const again = screen.getByRole("region", { name: "개인 페이스 기준 기록" })
+    expect(within(again).getByText(/기준 기록.*18분 31초/u)).toBeVisible()
+    await user.click(within(again).getByRole("button", { name: "이 기록으로 개인 페이스 적용" }))
+    expect(screen.getByRole("button", { name: /시간 조절 계획 선택하기/u })).toBeEnabled()
+    await user.click(screen.getByRole("button", { name: /시간 조절 계획 선택하기/u }))
+    await screen.findByRole("heading", { name: /9일 훈련 계획/u })
+    const stored = JSON.parse(localStorage.getItem("trainoracle.plan-beta.v1")!)
+    expect(stored.intake.startDate).toBe("2026-09-10")
+    expect(stored.intake.selectedDetailedTemplateRef.templateId).toBe("V2-SEED-05")
+    expect(stored.activePlan.sessions.filter((session: { prescription: { kind: string } }) => session.prescription.kind === "PACE_TARGET")).toHaveLength(1)
+  }, 15_000)
+
+  it.each(["method", "record", "back", "date", "unmount"] as const)("invalidates an outstanding save after changing %s", async change => {
+    const user = userEvent.setup()
+    const view = render(<PlanBeta />)
+    await reachCandidates()
+    const picker = screen.getByRole("region", { name: "개인 페이스 기준 기록" })
+    await user.click(within(picker).getByRole("button", { name: /개인 최고.*18분 31초/u }))
+    await user.click(within(picker).getByRole("button", { name: "이 기록으로 개인 페이스 적용" }))
+    let release: (() => void) | undefined
+    const lock: mutationLock.PlanMutationLockManager = {
+      request: <T,>(_name: string, _options: unknown, callback: (lock: object | null) => T | Promise<T>) =>
+        new Promise<T>(resolve => { release = () => { resolve(callback({})) } }),
+    }
+    vi.spyOn(mutationLock, "getPlanMutationLockManager").mockReturnValue(lock)
+    await user.click(screen.getByRole("button", { name: /시간 조절 계획 선택하기/u }))
+    expect(release).toBeTypeOf("function")
+    if (change === "method") {
+      await user.click(screen.getByText("훈련 방법 선택"))
+      await user.click(screen.getByRole("radio", { name: /시간·RPE 기준으로 받기/u }))
+    } else if (change === "record") {
+      await user.click(within(picker).getByRole("button", { name: /^시즌 최고.*19분/u }))
+    } else if (change === "date") {
+      fireEvent.change(screen.getByLabelText("계획 시작 날짜"), { target: { value: "2026-09-15" } })
+    } else if (change === "unmount") {
+      view.unmount()
+    } else await user.click(screen.getByRole("button", { name: "질문 다시 보기" }))
+    await act(async () => { release!() })
+    expect(localStorage.getItem("trainoracle.plan-beta.v1")).toBeNull()
+    expect(screen.queryByRole("heading", { name: /9일 훈련 계획/u })).toBeNull()
+    expect(screen.queryByRole("button", { name: "계획 다시 저장하기" })).toBeNull()
+  }, 15_000)
+
   it("binds only the confirmed record and preserves the exact prescription after reload", async () => {
     const user = userEvent.setup()
     const firstRender = render(<PlanBeta />)

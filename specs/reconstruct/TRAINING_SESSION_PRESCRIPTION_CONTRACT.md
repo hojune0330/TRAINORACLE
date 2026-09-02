@@ -422,4 +422,52 @@ of prescription authority. Existing stored prescriptions and explanation receipt
 remain authoritative. This addition does not activate new templates or close the
 two-distinct-MAIN-method delivery gap.
 
+### 12.2 Explicit Method Changes Before Selection
+
+The candidate screen may change the explicitly selected, currently authorized
+template without restarting the intake. Preserve event, purpose, experience,
+availability, frame, AM/PM preference and the chosen start date. A method change
+regenerates candidates through the existing safety and eligibility gates; it does
+not edit a stored plan, increase MAIN exposure, or silently select another record.
+
+Changing to a detailed method invalidates the previous pace confirmation. Keep the
+record visibly selected for convenience, but calculate and activate its new target
+only after explicit reconfirmation. RPE-only is an alternate prescription basis,
+not a second detailed MAIN method. Do not invent a second method when only one is
+adopted. An unavailable/expired/mismatched template is rejected, not substituted.
+
+Draft changes invalidate outstanding saves and storage retries. Check the draft
+revision again inside the mutation lock, immediately before persistence. If the
+user changes the record/method/start date or returns to intake while a save waits for that
+lock, the old candidate must not become active later. Historical plans and their
+explanation receipts remain unchanged.
+
+Change ledger: ADD candidate-stage explicit choice and stale-save invalidation;
+KEEP exact template adoption, source/transfer review and numeric allowlists;
+DEFER unaccepted second-method doses. No approval or issue closure is implied.
+
+### 12.3 Distance-Based Recovery Representation
+
+Sequence version 2 adds an explicit positive `distanceM` to a recovery segment,
+with `seconds: null`. Version 1 remains unchanged and rejects this new field.
+Distance recovery permits WALK, JOG, WALK_OR_JOG or ACTIVE_ROLL_ON; standing and
+NOT_APPLICABLE cannot carry a recovery distance. ACTIVE_ROLL_ON describes movement
+continued between work bouts and is not silently renamed JOG or assigned a pace.
+
+Distance and duration are exclusive prescribed recovery units. Do not convert a
+100 m recovery to 100 seconds or derive recovery time from the work/race pace.
+MAIN work distance excludes recovery distance. Report repetition, set, transition and terminal
+recovery distances separately; a total with an unknown component remains unknown.
+An absent recovery occurrence is zero occurrences, not missing data. Existing
+time-based totals and version 1 serialization retain their original shape.
+
+As in version 1, between-repeat recovery occurs N-1 times; a last child's unused
+recoveryAfter is not appended. Version 2 requires an explicit root `terminalRecovery`
+for recovery after the final MAIN work and before cooldown, including an explicit
+NOT_APPLICABLE when none is prescribed. Version 1 rejects this field. Count that
+occurrence separately and include it in recovery totals, never in MAIN work distance.
+Do not infer final recovery from an unused recoveryAfter or count it again as cooldown.
+Structural comparison includes recovery unit, amount and mode. This representation
+does not adopt a source example or allow it through the athlete plan schema.
+
 [DRAFT_COMPLETE]

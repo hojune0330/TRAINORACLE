@@ -12,6 +12,10 @@ export function planErrorMessage(errorCode: string): string {
       return "다른 계획 변경 작업이 진행 중이거나 안전한 저장 잠금을 사용할 수 없어요. 잠시 뒤 다시 시도해 주세요."
     case "STALE_BASE":
       return "다른 화면에서 계획이 이미 바뀌었어요. 현재 계획을 다시 연 뒤 확인해 주세요."
+    case "STALE_CANDIDATE_SELECTION":
+      return "훈련 방법이나 기준 기록이 바뀌어 이전 저장을 취소했어요. 지금 보이는 계획을 확인한 뒤 선택해 주세요."
+    case "DETAILED_TEMPLATE_AUTHORITY_UNAVAILABLE":
+      return "선택한 상세 훈련을 지금 적용할 수 없어요. 현재 제공되는 방법을 다시 골라 주세요."
     default:
       return `계획을 만들지 못했어요 · ${errorCode}`
   }

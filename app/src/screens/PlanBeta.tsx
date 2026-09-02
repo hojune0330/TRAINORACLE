@@ -52,6 +52,7 @@ import type { PlanCloudPersistenceState } from "../domain/account/plan-cloud-bac
 import type { PlannedSessionLogDraft } from "../domain/planned-session-link"
 import { useActiveContentScroll } from "../hooks/useActiveContentScroll"
 import { useOrderedStepMotion } from "../hooks/useOrderedStepMotion"
+import { resolvePlanMethodChange } from "../domain/plan-method-selection"
 
 const INTAKE_MOTION_ORDER: readonly IntakeStep[] = [
   "goal",
@@ -120,6 +121,8 @@ export function PlanBeta({
   const [selectedRecordId, setSelectedRecordId] = React.useState<string | null>(null)
   const [comparisonRecordId, setComparisonRecordId] = React.useState<string | null>(null)
   const [recordConfirmationPending, setRecordConfirmationPending] = React.useState(false)
+  const draftRevision = React.useRef(0)
+  React.useEffect(() => () => { draftRevision.current += 1 }, [])
   const [prescriptionBinding, setPrescriptionBinding] = React.useState<
     Omit<CandidatePrescriptionBinding, "generated">
   >({ kind: "fallback", code: "PACE_TARGET_FALLBACK_NO_EXPLICIT_ANCHOR" })
@@ -199,6 +202,8 @@ export function PlanBeta({
     recordId: string | null = null,
     raceDate?: string,
   ) => {
+    draftRevision.current += 1
+    setRetrySelection(null)
     if (currentCheck === null) {
       setErrorCode(null)
       setStep("safety")
@@ -254,10 +259,33 @@ export function PlanBeta({
     if (generatedIntake !== null) generateCandidates(generatedIntake)
   }
 
+  const changeMethod = (reference: PlanBetaIntake["selectedDetailedTemplateRef"]) => {
+    if (generatedIntake === null) return
+    const change = resolvePlanMethodChange(generatedIntake, reference)
+    if (change.kind === "unchanged") return
+    draftRevision.current += 1
+    setRetrySelection(null)
+    if (change.kind === "rejected") {
+      setGenerated(null)
+      setGate(null)
+      setErrorCode(change.code)
+      setStep("template")
+      return
+    }
+    setDraft(change.intake)
+    setComparisonRecordId(null)
+    setRecordConfirmationPending(reference !== null && selectedRecordId !== null)
+    // A previously confirmed record is never silently rebound to another method.
+    generateCandidates(change.intake)
+  }
+
   const saveCandidate = async (
     selection: CandidateSelection,
     activeGenerated: PlanGenerationSuccess,
   ) => {
+    if (recordConfirmationPending
+        || (generatedIntake?.selectedDetailedTemplateRef != null && prescriptionBinding.kind !== "bound")) return
+    const revision = draftRevision.current
     const safety = currentCheck === null ? null : evaluatePlanSafety(currentCheck)
     if (safety === null || safety.kind === "blocked") {
       setGenerated(null)
@@ -278,7 +306,9 @@ export function PlanBeta({
       safety.gate,
       generatedIntake,
       generatedEvidence,
+      () => draftRevision.current === revision,
     )
+    if (draftRevision.current !== revision) return
     switch (result.kind) {
       case "saved":
         setErrorCode(null)
@@ -389,6 +419,11 @@ export function PlanBeta({
           recordConfirmationPending={recordConfirmationPending}
           onSelectRecord={selectRecord}
           onCompareRecord={setComparisonRecordId}
+          onChangeMethod={changeMethod}
+          onSelectionDetailsChange={() => {
+            draftRevision.current += 1
+            setRetrySelection(null)
+          }}
           onConfirmRecord={() => {
             if (selectedRecordId !== null) {
               setRecordConfirmationPending(false)
@@ -396,6 +431,7 @@ export function PlanBeta({
             }
           }}
           onBack={() => {
+            draftRevision.current += 1
             setGenerated(null)
             setGate(null)
             setErrorCode(null)

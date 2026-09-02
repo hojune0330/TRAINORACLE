@@ -23,6 +23,13 @@ const cases = [
   { id: "IGNORE_CHANGED_PACE_TARGET", file: "src/domain/plan-main-comparison.ts", from: "p.targetRepSeconds, p.repetitionRecoverySeconds", to: "0, p.repetitionRecoverySeconds", testFile: "src/domain/plan-main-comparison.contract.test.ts", testName: "athlete pace changes dose" },
   { id: "HARDCODE_COMPARISON_RECOVERY", file: "src/domain/plan-main-comparison.ts", from: "${totals.repetitionRecoveryOccurrences}번", to: "99번", testFile: "src/domain/plan-main-comparison.contract.test.ts", testName: "compares every real" },
   { id: "IGNORE_COMPARISON_FRAME", file: "src/domain/plan-main-comparison.ts", from: "a.frame.lengthDays === b.frame.lengthDays && a.frame.projectionLengthDays === b.frame.projectionLengthDays", to: "true", testFile: "src/domain/plan-main-comparison.contract.test.ts", testName: "frame mismatch blocks" },
+  { id: "IGNORE_LOCK_DRAFT_REVISION", file: "src/screens/plan-beta/plan-selection.ts", from: "if (!isCurrentDraft()) {", to: "if (false) {", testFile: "src/screens/plan-beta/plan-selection-revision.contract.test.ts", testName: "does not save an old draft that changes while waiting for the lock" },
+  { id: "IGNORE_UI_DRAFT_REVISION", file: "src/screens/PlanBeta.tsx", from: "() => draftRevision.current === revision,", to: "() => true,", testFile: "src/screens/plan-beta/PlanBeta.pace-prescription.contract.test.tsx", testName: "invalidates an outstanding save after changing date" },
+  { id: "REUSE_UNCONFIRMED_METHOD_RECORD", file: "src/screens/PlanBeta.tsx", from: "generateCandidates(change.intake)", to: "generateCandidates(change.intake, selectedRecordId)", testFile: "src/screens/plan-beta/PlanBeta.pace-prescription.contract.test.tsx", testName: "changes method in place, preserves the start date, and requires pace reconfirmation" },
+  { id: "USE_RAW_CANDIDATE_DOM_ID", file: "src/screens/plan-beta/CandidateSection.tsx", from: "const headingId = `candidate-heading-${localId}`", to: "const headingId = `candidate-heading-${candidate.candidateId}`", testFile: "src/screens/plan-beta/PlanBeta.pace-prescription.contract.test.tsx", testName: "changes method in place, preserves the start date, and requires pace reconfirmation" },
+  { id: "CONVERT_RECOVERY_METRES_TO_SECONDS", file: "../impl/src/prescription/sequence.ts", from: "add(target.seconds, recovery.seconds, count, path)", to: "add(target.seconds, \"distanceM\" in recovery ? recovery.distanceM : recovery.seconds, count, path)", cwd: "../impl", testFile: "src/prescription/sequence-distance-recovery.test.ts", testName: "represents a 15 x 400m" },
+  { id: "OMIT_EXPLICIT_TERMINAL_RECOVERY", file: "../impl/src/prescription/sequence.ts", from: "if (sequence.version === 1) return undefined", to: "if (sequence.version === 1 || sequence.version === 2) return undefined", cwd: "../impl", testFile: "src/prescription/sequence-distance-recovery.test.ts", testName: "represents the 12 x 400m" },
+  { id: "IGNORE_RECOVERY_DISTANCE_DIFFERENCE", file: "../impl/src/prescription/sequence.ts", from: "a.mode === b.mode && a.seconds === b.seconds && aDistanceM === bDistanceM", to: "a.mode === b.mode && a.seconds === b.seconds", cwd: "../impl", testFile: "src/prescription/sequence-distance-recovery.test.ts", testName: "distinguishes recovery distance and unit changes" },
 ]
 const hash = text => createHash("sha256").update(text).digest("hex")
 const originals = new Map([...new Set(cases.map(item => item.file))].map(file => [file, readFileSync(resolve(root, file), "utf8")]))
@@ -37,7 +44,7 @@ try {
     writeFileSync(target, original.replace(item.from, item.to))
     let result
     try {
-      result = spawnSync(process.execPath, [resolve(root, "node_modules/vitest/vitest.mjs"), "run", item.testFile ?? test, "--reporter=json", `--outputFile=${resultFile}`], { cwd: root, encoding: "utf8", timeout: 60_000 })
+      result = spawnSync(process.execPath, [resolve(root, "node_modules/vitest/vitest.mjs"), "run", item.testFile ?? test, "--reporter=json", `--outputFile=${resultFile}`], { cwd: resolve(root, item.cwd ?? "."), encoding: "utf8", timeout: 60_000 })
     } finally {
       writeFileSync(target, original)
     }
