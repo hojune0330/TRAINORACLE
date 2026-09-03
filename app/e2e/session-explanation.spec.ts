@@ -1,6 +1,7 @@
 import { expect, test } from "@playwright/test"
 import { stateFixture } from "../src/domain/plan-beta-store.test-fixture"
 import { createExplanationReceipt } from "../src/domain/training-explanation-receipt"
+import { undersizedInteractiveTargets } from "./touch-audit"
 
 test.use({ serviceWorkers: "block" })
 
@@ -36,6 +37,9 @@ for (const legacy of [false, true]) {
     for (const heading of ["훈련 목적", "몸이 에너지를 공급하는 방식", "거리·시간·강도·반복을 이렇게 정한 이유", "회복을 이렇게 넣은 이유", "이번 주기에서 맡는 역할", "기대하는 변화와 한계", "실제로 사용한 내 정보", "연구·코칭 근거"]) {
       await expect(reader.getByRole("heading", { name: heading, exact: true })).toBeAttached()
     }
+    await reader.locator(".session-explanation__term > summary").click()
+    await expect(reader.getByRole("link", { name: /용어집에서 더 읽기/u })).toBeVisible()
+    await expect.poll(() => undersizedInteractiveTargets(reader)).toEqual([])
     await reader.getByRole("tab", { name: "주기·기록" }).click()
     await expect(reader.getByText(/미기록을 0이나 훈련 실패로 계산하지 않아요/u)).toBeAttached()
     await reader.getByRole("tab", { name: "주기·기록" }).press("Home")

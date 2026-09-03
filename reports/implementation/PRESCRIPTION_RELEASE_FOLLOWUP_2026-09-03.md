@@ -4,7 +4,7 @@
 doc_id: trainoracle-prescription-release-followup-20260903
 status: VALIDATION_IN_PROGRESS_NOT_DEPLOYED
 owner: COACH_HOJUNE
-version: "0.3"
+version: "0.4"
 baseline_head: 7caaa911e8c2ce54c2896826d95547848b3e83b0
 verified_recommendation_head: d34874f220cb80639d65ca42a51596712c3531dc
 predecessor_pr: 314
@@ -118,5 +118,35 @@ canonical_promotion_allowed: false
 두 브랜치의 연결 이력을 유지해 선행 변경을 먼저 합친다. main 기준 diff에서
 선행 일지 변경이 반복 표시되거나 빠지지 않는지 검사하며, 이미 승인된 훈련
 내용이나 메모·가져온 값의 프라이버시 규칙을 이 과정에서 재정의하지 않는다.
+
+## 6. 최종 통합 검수와 링크 터치 후속
+
+`eacfd87`은 선행 `275bb82`까지 포함한다. 앱·코어 소스는 `f46bdee`와 동일하며,
+통합 빌드와 관련 브라우저 44/44가 통과했다. 이 head의 전체 앱 검사도 UTC/KST
+각 2130/2130, 출시 11/11, 기기 10/10으로 통과했다. 선행의 최종 전체 검사는 UTC/KST
+각 1990/1990, 출시 11/11, 기기 10/10이었다. 서로 겹치는 실행은 합산하지 않는다.
+
+이 head와 선행 head 사이 전체 diff의 독립 소프트웨어 검수에서 P2 한 건이
+남았다. 설명 화면의 독립 용어집·출처 링크가 44px보다 작고 터치 검사에서
+`a[href]`가 제외돼 있었다. 처방 결합·시퀀스·선택 revision·메모 프라이버시·
+고정 회복 설명에서는 추가 재현 가능한 P1/P2가 보고되지 않았다.
+
+- 새 검사 `audits independent links including links revealed inside details`는
+  수정 전 도우미가 24px/43px 링크를 놓쳐 빈 배열을 반환하는 실패를 확인했다.
+- 링크를 검사에 포함하고 수정 전 앱 빌드에 실행한
+  `version-bound explanation is readable and returns to the same session`은
+  용어집 19px, 독립 출처 링크 두 개 28px를 검출해 실패했다.
+- 설명 화면의 독립 링크는 44px 이상 클릭 영역을 갖도록 보완했다. 글자 크기를
+  억지로 키우거나 처방 숫자·계산·저장 규칙을 변경하는 작업이 아니다.
+- 기본 글자 크기에서 용어 설명을 펼친 상태의 모든 링크를 검사하고, 기존
+  200% 글자·키보드·복귀 위치 검사도 유지한다.
+
+CSS 보완 후 빌드와 브라우저 타입 검사가 통과했다. 독립 재검수는 새 격리
+브라우저에서 320/375/1280px 기본 16px 글자의 용어집·출처 링크 44px 이상,
+실제 하단 패딩 히트 영역, 가로 넘침·페이지 오류 없음, 저장 계획 불변을
+확인하고 해당 수정 범위를 승인했다. Fable·과학 검수의 서명은 아니다.
+
+실행 중인 관련 브라우저 최종 결과와 최신 CI·공개 배포 판정은 이 보고서에
+연결한 PR #315의 최종 head 댓글에 추가한다. 실패 재현을 통과 증거로 쓰지 않는다.
 
 [DRAFT_COMPLETE]

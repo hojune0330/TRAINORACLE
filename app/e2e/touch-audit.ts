@@ -15,7 +15,7 @@ export function meetsTouchContract(width: number, height: number) {
 
 export async function undersizedInteractiveTargets(root: Locator) {
   return root.evaluate(container => [...container.querySelectorAll<HTMLElement>(
-    "button, input, select, summary, [role='button']",
+    "button, input, select, summary, a[href], [role='button']",
   )].flatMap(element => {
     // Native radio/checkbox labels activate the control; measure that real hit area.
     const label = element instanceof HTMLInputElement && ["radio", "checkbox"].includes(element.type)

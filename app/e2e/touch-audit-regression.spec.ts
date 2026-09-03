@@ -1,6 +1,27 @@
 import { expect, test } from "@playwright/test"
 import { undersizedInteractiveTargets } from "./touch-audit"
 
+test("audits independent links including links revealed inside details", async ({ page }) => {
+  await page.setContent(`
+    <style>
+      a { display:block; width:100px; height:44px; }
+      #small-link { height:24px; }
+      #narrow-link { width:43px; }
+      summary { width:100px; height:44px; }
+    </style>
+    <a href="#valid">Valid link</a>
+    <a id="small-link" href="#small">Small link</a>
+    <a id="narrow-link" href="#narrow">Narrow link</a>
+    <a style="height:20px">Not a link</a>
+    <details><summary>Reveal link</summary><a href="#hidden" style="height:24px">Revealed link</a></details>
+  `)
+  expect((await undersizedInteractiveTargets(page.locator("body"))).map(item => item.label)).toEqual(["Small link", "Narrow link"])
+  await page.getByText("Reveal link", { exact: true }).click()
+  expect((await undersizedInteractiveTargets(page.locator("body"))).map(item => item.label)).toEqual(["Small link", "Narrow link", "Revealed link"])
+  await page.getByRole("link", { name: "Valid link" }).click({ position: { x: 80, y: 40 } })
+  await expect.poll(() => page.evaluate(() => location.hash)).toBe("#valid")
+})
+
 test("measures native label hit areas without accepting small or unrelated targets", async ({ page }) => {
   await page.setContent(`
     <style>
