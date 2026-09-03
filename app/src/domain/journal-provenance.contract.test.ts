@@ -67,12 +67,148 @@ describe("journal provenance rollout boundary", () => {
     expect(loadAnalysisEntries()).toEqual([
       expect.objectContaining({
         id: "mixed-provenance",
+        system: "",
+        title: "",
         distanceKm: "8",
         durationMin: "",
         avgPace: "",
         rpe: 0,
       }),
     ])
+  })
+
+  it("does not let unprovenanced context or a raw title piggyback on an eligible RPE", () => {
+    const rawTitle = "오늘 몸이 무거워서 계획을 바꿨어요"
+    const entry = {
+      ...legacyPostSession("structured-context-boundary"),
+      captureDepth: "QUICK",
+      activityOutcome: "COMPLETED",
+      activitySlot: "PM",
+      objectiveDataState: "WAITING",
+      planExecutionRelation: "NOT_APPLICABLE",
+      painCheckStatus: "NO_SIGNAL_REPORTED",
+      title: rawTitle,
+      rpe: 6,
+      fieldProvenance: {
+        system: { provenance: FIELD_PROVENANCE.missing },
+        activityOutcome: { provenance: FIELD_PROVENANCE.missing },
+        activitySlot: { provenance: FIELD_PROVENANCE.missing },
+        painCheckStatus: { provenance: FIELD_PROVENANCE.missing },
+        plannedSessionLink: { provenance: FIELD_PROVENANCE.missing },
+        planExecutionRelation: {
+          provenance: FIELD_PROVENANCE.derived,
+          derivedFrom: ["activityOutcome", "plannedSessionLink"],
+          derivationRuleId: "QUICK_PLAN_EXECUTION_RELATION_V2",
+        },
+        distanceKm: { provenance: FIELD_PROVENANCE.missing },
+        durationMin: { provenance: FIELD_PROVENANCE.missing },
+        avgPace: { provenance: FIELD_PROVENANCE.missing },
+        rpe: { provenance: FIELD_PROVENANCE.explicit },
+      },
+    } satisfies JournalEntry
+
+    expect(saveEntry(entry).ok).toBe(true)
+    const [projected] = loadAnalysisEntries()
+    expect(projected).toMatchObject({
+      id: "structured-context-boundary",
+      system: "",
+      title: "",
+      rpe: 6,
+    })
+    expect(projected).not.toHaveProperty("activityOutcome")
+    expect(projected).not.toHaveProperty("activitySlot")
+    expect(projected).not.toHaveProperty("painCheckStatus")
+    expect(projected).not.toHaveProperty("planExecutionRelation")
+    expect(projected).not.toHaveProperty("plannedSessionLink")
+    expect(JSON.stringify(projected)).not.toContain(rawTitle)
+  })
+
+  it("keeps explicitly answered structured context while excluding derived plan relation", () => {
+    const entry = {
+      ...legacyPostSession("explicit-structured-context"),
+      captureDepth: "QUICK",
+      activityOutcome: "COMPLETED",
+      activitySlot: "AM",
+      objectiveDataState: "WAITING",
+      planExecutionRelation: "NOT_APPLICABLE",
+      painCheckStatus: "NO_SIGNAL_REPORTED",
+      rpe: 5,
+      fieldProvenance: {
+        system: { provenance: FIELD_PROVENANCE.explicit },
+        activityOutcome: { provenance: FIELD_PROVENANCE.explicit },
+        activitySlot: { provenance: FIELD_PROVENANCE.explicit },
+        painCheckStatus: { provenance: FIELD_PROVENANCE.explicit },
+        painParts: { provenance: FIELD_PROVENANCE.missing },
+        plannedSessionLink: { provenance: FIELD_PROVENANCE.missing },
+        planExecutionRelation: {
+          provenance: FIELD_PROVENANCE.derived,
+          derivedFrom: ["activityOutcome", "plannedSessionLink"],
+          derivationRuleId: "QUICK_PLAN_EXECUTION_RELATION_V2",
+        },
+        distanceKm: { provenance: FIELD_PROVENANCE.missing },
+        durationMin: { provenance: FIELD_PROVENANCE.missing },
+        avgPace: { provenance: FIELD_PROVENANCE.missing },
+        rpe: { provenance: FIELD_PROVENANCE.explicit },
+      },
+    } satisfies JournalEntry
+
+    expect(saveEntry(entry).ok).toBe(true)
+    const [projected] = loadAnalysisEntries()
+    expect(projected).toMatchObject({
+      system: "lt",
+      activityOutcome: "COMPLETED",
+      activitySlot: "AM",
+      painCheckStatus: "NO_SIGNAL_REPORTED",
+      rpe: 5,
+    })
+    expect(projected).not.toHaveProperty("planExecutionRelation")
+  })
+
+  it("keeps an explicit rest day in analysis without counting it as a training session", () => {
+    const entry = {
+      ...legacyPostSession("explicit-rest-day"),
+      captureDepth: "QUICK",
+      activityOutcome: "RESTED",
+      objectiveDataState: "NONE",
+      planExecutionRelation: "NOT_APPLICABLE",
+      system: "",
+      title: "휴식",
+      distanceKm: "",
+      durationMin: "",
+      avgPace: "",
+      rpe: 0,
+      fieldProvenance: {
+        activityOutcome: { provenance: FIELD_PROVENANCE.explicit },
+        system: { provenance: FIELD_PROVENANCE.missing },
+        distanceKm: { provenance: FIELD_PROVENANCE.missing },
+        durationMin: { provenance: FIELD_PROVENANCE.missing },
+        avgPace: { provenance: FIELD_PROVENANCE.missing },
+        rpe: { provenance: FIELD_PROVENANCE.missing },
+        plannedSessionLink: { provenance: FIELD_PROVENANCE.missing },
+        planExecutionRelation: {
+          provenance: FIELD_PROVENANCE.derived,
+          derivedFrom: ["activityOutcome", "plannedSessionLink"],
+          derivationRuleId: "QUICK_PLAN_EXECUTION_RELATION_V2",
+        },
+      },
+    } satisfies JournalEntry
+
+    expect(saveEntry(entry).ok).toBe(true)
+    expect(loadAnalysisEntries()).toEqual([
+      expect.objectContaining({
+        id: "explicit-rest-day",
+        activityOutcome: "RESTED",
+        title: "",
+        distanceKm: "",
+        rpe: 0,
+      }),
+    ])
+    expect(thisWeekStats(loadAnalysisEntries(), "2026-07-14")).toEqual({
+      sessions: 0,
+      distanceKm: 0,
+      avgRpe: null,
+      daysLogged: 1,
+    })
   })
 
   it("projects explicit intensity evidence without exposing a private memo", async () => {

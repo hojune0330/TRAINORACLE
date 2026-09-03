@@ -20,6 +20,7 @@ import {
 import {
   INITIAL_VIEW_STATE,
   shouldResetTabView,
+  tabForChrome,
   viewForJournalDraft,
   viewForJournalReturn,
   viewForPlannedSessionDraft,
@@ -339,6 +340,7 @@ export function AppShell() {
             ? () => runViewTransition("pop", () => setV(viewForJournalReturn(v)))
             : () => runViewTransition("pop", () => setV(s => ({ ...s, entryType: "choose" })))}
         onOpenImport={() => runViewTransition("push", () => setV(s => ({ ...s, importOpen: true })))}
+        onContinueDetailed={(entry) => runViewTransition("replace", () => setV((state) => viewForJournalDraft(state, entry.date, entry)))}
         onDone={(picked, savedEntry, reviewMessage) => {
           if (v.entryType === "choose") {
             runViewTransition("push", () => setV(s => ({ ...s, entryType: picked })))
@@ -361,7 +363,7 @@ export function AppShell() {
     <AppShellFrame
       scrollRegionRef={scrollRegionRef}
       savedToast={savedToast}
-      tab={v.tab}
+      tab={tabForChrome(v)}
       onDismissToast={() => setSavedToast(null)}
       onOpenTrends={goTrendsFromReceipt}
       onOpenBackup={() => {

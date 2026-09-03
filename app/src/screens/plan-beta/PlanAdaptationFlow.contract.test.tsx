@@ -15,6 +15,10 @@ import {
 import { saveSelectedPlanCandidate } from "./plan-selection"
 import { PlanAdaptationFlow } from "./PlanAdaptationFlow"
 import { PLAN_BETA_MUTATION_LOCK_NAME } from "../../domain/plan-mutation-lock"
+import { createPlannedSessionLogDraft } from "../../domain/planned-session-link"
+import { derivePlanCycleResponse } from "../../domain/plan-cycle-response"
+import type { PostSessionEntry } from "../../domain/journal-schema"
+import type { PlanSession } from "@impl/plan-generator/types"
 
 const APPROVAL_5000 = DETAILED_PRESCRIPTION_APPROVALS.find(
   (approval) => approval.targetEventDistanceM === 5000,
@@ -53,6 +57,39 @@ afterEach(() => {
 })
 
 describe("next-frame adaptation flow", () => {
+  it("shows detailed-session RPE as an observation without inventing a planned RPE", async () => {
+    const { state } = await createBoundActivePlan()
+    const session = state.activePlan.sessions.find(item => item.prescription.kind === "PACE_TARGET")
+    if (session === undefined) throw new Error("detailed fixture missing")
+    const result = derivePlanCycleResponse([cycleEntry(state, session, 7)], state)
+    expect(result).toMatchObject({ signal: "NO_COMPARABLE_RESULTS", comparableRpeCount: 0 })
+    expect(result.rows[0]).toMatchObject({ actualRpe: 7, plannedRpe: null, comparison: "NO_PLANNED_RPE" })
+  })
+
+  it("requires an explicit request and safety confirmation after repeated higher-effort evidence", async () => {
+    const user = userEvent.setup()
+    const { state } = await createBoundActivePlan()
+    const sessions = state.activePlan.sessions.filter(item => item.prescription.kind === "RPE_TIME_RANGE").slice(0, 2)
+    expect(sessions).toHaveLength(2)
+    const entries = sessions.map(session => cycleEntry(state, session, 9))
+    const onPrepare = vi.fn(async () => ({ kind: "unavailable" as const, code: "TEST_ONLY" }))
+    const before = JSON.stringify(state)
+    render(<PlanAdaptationFlow state={state} onLoadEntries={() => entries} onPrepare={onPrepare} />)
+    await openAdaptation(user)
+    await user.click(screen.getByRole("button", { name: /이번 주기 수행 기록을 볼래요/u }))
+    expect(screen.getByText("반복 기록의 RPE가 계획보다 높았어요")).toBeVisible()
+    await user.click(screen.getByText("훈련별 비교 근거 2건"))
+    expect(screen.getAllByText("계획보다 높음")).toHaveLength(2)
+    expect(onPrepare).not.toHaveBeenCalled()
+    await user.click(screen.getByRole("button", { name: /훈련량을 줄인 계획안 확인/u }))
+    expect(screen.getByRole("heading", { name: "현재 몸 상태를 확인해 주세요" })).toBeVisible()
+    expect(onPrepare).not.toHaveBeenCalled()
+    await user.click(screen.getByRole("button", { name: /통증은 없고 몸 상태는 평소와 같아요/u }))
+    await user.click(screen.getByRole("button", { name: /훈련량을 조금 줄인 다음 계획/u }))
+    await waitFor(() => expect(onPrepare).toHaveBeenCalledTimes(1))
+    expect(onPrepare).toHaveBeenCalledWith(expect.objectContaining({ reason: "EXPLICIT_REQUEST", state }))
+    expect(JSON.stringify(state)).toBe(before)
+  })
   it("shows linked-cycle evidence without reading private text or increasing training", async () => {
     const user = userEvent.setup()
     const { state } = await createBoundActivePlan()
@@ -236,6 +273,17 @@ describe("next-frame adaptation flow", () => {
     expect(window.localStorage.getItem("trainoracle.plan-beta.v1")).toBe(activeBytes)
   })
 })
+
+function cycleEntry(state: PlanBetaState, session: PlanSession, rpe: number): PostSessionEntry {
+  const draft = createPlannedSessionLogDraft(state, session, new Date().toISOString())
+  if (draft === null) throw new Error("cycle entry link missing")
+  return {
+    id: `cycle-${session.day}-${session.slot}`, kind: "post-session", date: draft.date,
+    savedAt: new Date().toISOString(), syncState: "local", system: "", title: "",
+    distanceKm: "", durationMin: "", avgPace: "", memo: "", rpe,
+    fieldProvenance: { rpe: { provenance: "EXPLICIT" } }, plannedSessionLink: draft.link,
+  }
+}
 
 async function openAdaptation(user: ReturnType<typeof userEvent.setup>): Promise<void> {
   const action = screen.getByRole("button", { name: "다음 계획 조정하기" })

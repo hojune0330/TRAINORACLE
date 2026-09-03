@@ -25,12 +25,11 @@ test("audits empty home and chooser touch actions", async ({ page }, testInfo) =
   ])
   await expect(page.getByRole("navigation", { name: "주 탭" })).toBeVisible()
   await expectNoHorizontalOverflow(page)
-  // home CTA now goes straight to the post-session form (§3-3)
+  // 홈의 주 행동은 세부 입력 전에 빠른 기록으로 시작한다.
   await page.getByRole("button", { name: "오늘 기록 남기기" }).click()
   await auditTouchTargets(page, [
-    { name: "post.back", locator: page.getByRole("button", { name: "← 뒤로" }) },
-    // 짧은 화면 표시는 코드만 쓰되 접근 이름은 한글 뜻까지 보존한다.
-    { name: "post.energy", locator: page.getByRole("button", { name: /^(REC 회복 운동|BASE 기초 지구력|LT 지속 페이스|VO₂ 강한 유산소 반복|GLY 짧은 고강도 반복|ATP-PC 스피드·가속|MIX 여러 강도 조합)$/u }), count: 7, heightOnly: true },
+    { name: "quick.back", locator: page.getByRole("button", { name: "← 뒤로" }) },
+    { name: "quick.outcome", locator: page.getByRole("button", { name: /^(운동을 마쳤어요|하던 운동을 일부만 했어요|가볍게 움직였어요|오늘은 쉬었어요|하려던 운동을 건너뛰었어요)$/u }), count: 5, heightOnly: true },
   ])
   await expectNoHorizontalOverflow(page)
   // the chooser is reached via the "경기기록" tab bar button

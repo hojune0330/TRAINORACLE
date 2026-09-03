@@ -49,6 +49,21 @@ export function viewForTab(tab: AppTab, entryType: EntryType = "choose"): AppVie
 }
 
 /**
+ * 기록 작성 화면이 저장될 실제 영역을 하단 탭에 표시한다.
+ *
+ * 내부 라우팅은 모든 작성 폼을 `log`에 모아 두지만, 운동 후 기록과 하루
+ * 마무리는 경기 기록이 아니라 일지에 쌓인다. 내부 구현 탭을 그대로
+ * 강조하면 사용자가 일반 운동을 경기로 저장하는 것처럼 오해할 수 있다.
+ */
+export function tabForChrome(state: AppViewState): AppTab {
+  if (
+    state.tab === "log"
+    && ["quick-session", "post-session", "evening"].includes(state.entryType)
+  ) return "journal"
+  return state.tab
+}
+
+/**
  * 탭바에서 이미 열려 있는 탭을 다시 눌렀을 때, 그 탭을 초기화해야 하는가.
  *
  * 두 요구가 정면으로 부딪히는 자리다.
@@ -122,7 +137,7 @@ export function viewForPlannedSessionDraft(
   return {
     ...state,
     tab: "log",
-    entryType: "post-session",
+    entryType: "quick-session",
     detailDate: draft.date,
     journalDraft: {
       date: draft.date,

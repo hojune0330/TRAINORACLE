@@ -129,7 +129,20 @@ activity_confirmation:
   automatic_merge: forbidden
   automatic_overwrite: forbidden
   confirmed_provenance: DERIVED_EXTERNAL_PROVIDER
+  explicit_existing_journal_reconciliation:
+    allowed_only_after_user_selects_candidate: true
+    candidate_rule: exact_same_date_and_single_WAITING_performed_quick_entry_or_existing_similarity_match
+    rested_or_skipped_quick_entry: never_candidate
+    multiple_same_date_waiting_entries: no_automatic_candidate
+    preserve_entry_id: true
+    existing_objective_value_overwrite: forbidden
+    subjective_value_inference: forbidden
 ```
+
+User confirmation selects a reconciliation target; it does not transform imported
+objective values into athlete-entered facts. Provider-derived values remain excluded
+from analysis and plan generation until a separately accepted provider trust and
+provenance rule exists.
 
 Until a provider-specific confirmation UI and provenance rule are accepted, imported
 activity remains excluded from statistics, trend analysis, Oracle content, safety logic,

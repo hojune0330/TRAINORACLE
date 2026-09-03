@@ -112,7 +112,7 @@ describe("home journal controls", () => {
     expect(screen.getByRole("button", { name: /내 일지.*1일.*1개의 기록/u })).toBeVisible()
     expect(screen.getByRole("button", { name: /훈련 계획/u })).toBeVisible()
     expect(screen.getByRole("button", { name: /분석/u })).toBeVisible()
-    expect(screen.getByText("꾸미기 보관함 · 사용 가능 4P")).toBeVisible()
+    expect(screen.getByText("꾸미기 보관함 · 사용 가능 0P")).toBeVisible()
     expect(screen.queryByRole("button", { name: "민지의 예시 일지 보기" })).toBeNull()
     expect(screen.queryByRole("region", { name: "꾸미기 미리보기" })).toBeNull()
     const serviceChoices = within(screen.getByRole("navigation", { name: "내 기록 살펴보기" })).getAllByRole("button")
@@ -207,7 +207,7 @@ describe("home journal controls", () => {
     render(<Home />)
     const recentEntry = screen.getByRole("button", { name: /훈련 후.*시드 템포런.*상세/u })
     const services = screen.getByRole("navigation", { name: "내 기록 살펴보기" })
-    const decorationEntry = screen.getByText("꾸미기 보관함 · 사용 가능 4P")
+    const decorationEntry = screen.getByText("꾸미기 보관함 · 사용 가능 0P")
 
     // When
     const servicesPosition = recentEntry.compareDocumentPosition(services)
@@ -296,7 +296,7 @@ describe("home journal controls", () => {
     await user.click(openPlan)
     await user.click(openGuide)
 
-    expect(onWriteLog).toHaveBeenCalledWith("post-session")
+    expect(onWriteLog).toHaveBeenCalledWith("quick-session")
     expect(onOpenPlan).toHaveBeenCalledTimes(1)
     expect(onOpenGuide).toHaveBeenCalledTimes(1)
   })

@@ -49,7 +49,7 @@ test("keeps the welcome home clear and usable on narrow phones", async ({ page }
   }
 
   await page.getByRole("button", { name: "오늘 기록 남기기" }).click()
-  await expect(page.getByRole("heading", { name: "훈련 후 · 기록" })).toBeVisible()
+  await expect(page.getByRole("heading", { name: "오늘 운동은 어떻게 됐나요?" })).toBeVisible()
   await expect(page.getByRole("button", { name: "← 뒤로" })).toBeInViewport()
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true)
   // the chooser is reached via the "경기기록" tab bar button (§3-3)
@@ -85,7 +85,8 @@ test("shows a returning athlete's latest entry before the decoration studio", as
   await page.goto("/")
   const recentEntry = page.getByRole("button", { name: /훈련 후.*아침 템포런.*상세/u })
   const services = page.getByRole("navigation", { name: "내 기록 살펴보기" })
-  const decorationEntry = page.getByText("꾸미기 보관함 · 사용 가능 4P")
+  // 과거 날짜를 뒤늦게 넣은 기록에는 포인트를 소급 지급하지 않는다.
+  const decorationEntry = page.getByText("꾸미기 보관함 · 사용 가능 0P")
 
   // When: the athlete opens the first home screen.
   await expect(recentEntry).toBeVisible()

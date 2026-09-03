@@ -133,6 +133,21 @@ export function samePlannedSessionLink(
   return JSON.stringify(left) === JSON.stringify(right)
 }
 
+export function resolveCurrentPlannedSession(
+  state: PlanBetaState,
+  value: unknown,
+): PlanSession | null {
+  const parsed = plannedSessionLinkSchema.safeParse(value)
+  if (!parsed.success) return null
+  const link = parsed.data
+  const session = state.activePlan.sessions.find(
+    (candidate) => candidate.day === link.sessionDay && candidate.slot === link.sessionSlot,
+  )
+  if (session === undefined) return null
+  const expected = createPlannedSessionLogDraft(state, session, link.linkedAt)
+  return expected?.link.plannedSessionId === link.plannedSessionId ? session : null
+}
+
 function plannedSessionId(input: {
   readonly planVersionId: string
   readonly candidateFingerprint: string

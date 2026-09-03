@@ -8,7 +8,7 @@ import {
 } from "./validate-adaptive-replanning-policy.mjs"
 
 const root = resolve(import.meta.dirname, "../..")
-const read = (path) => readFileSync(resolve(root, path), "utf8")
+const read = (path) => readFileSync(resolve(root, path), "utf8").replace(/\r\n/gu, "\n")
 
 function documents() {
   return {
@@ -46,6 +46,19 @@ test("accepts the bounded origin-scoped next-frame policy", () => {
     authority: { SELF_SERVICE: "SELF", COACH_AUTHORED: "COACH_REQUIRED" },
     allIssuesOpen: true,
   })
+})
+
+test("accepts the same policy with Windows line endings without weakening prose checks", () => {
+  const lf = documents()
+  const crlf = Object.fromEntries(Object.entries(lf).map(([key, value]) => [key, value.replace(/\n/gu, "\r\n")]))
+  assert.deepEqual(validateAdaptiveReplanningPolicy(crlf), validateAdaptiveReplanningPolicy(lf))
+  crlf.formation = replaceExact(
+    crlf.formation,
+    "it cannot increase\r\n  demand or move fixed or already-due work.",
+    "it may increase\r\n  demand or move fixed or already-due work.",
+    "CRLF normative prose",
+  )
+  assert.throws(() => validateAdaptiveReplanningPolicy(crlf), /normative policy/u)
 })
 
 test("rejects a restored global coach-only SYSTEM selection policy", () => {

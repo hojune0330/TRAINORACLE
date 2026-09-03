@@ -5,6 +5,7 @@ import { TermHelp } from "../components/TermHelp"
 import type { TermId } from "../domain/glossary"
 import { ENERGY_SYSTEM_META, type EnergySystemKey } from "../domain/energy-system-taxonomy"
 import type { JournalEntry, PostSessionEntry, EveningEntry, RaceEntry } from "../domain/journal-store"
+import { journalRpeLabel } from "../domain/quick-journal"
 import { entriesForDate, deleteEntry, restoreDeletedEntry } from "../domain/journal-store"
 import { TRASH_RETENTION_DAYS } from "../domain/journal-trash"
 import { hasImportedField } from "../domain/field-provenance"
@@ -160,14 +161,17 @@ function LogDetailJournal({ date, onBack, onAddEntry, onEditEntry, readerControl
 
       {/* 훈련 세션 (실데이터) */}
       {sessions.map((s, index) => {
-        const meta = SYSTEM_META[s.system] ?? { c: "??", n: s.system, cls: "rest", term: "rec" as const }
+        const meta = s.system === ""
+          ? { c: "LOG", n: "빠른 기록", cls: "rest", term: null }
+          : SYSTEM_META[s.system] ?? { c: "??", n: s.system, cls: "rest", term: null }
+        const shownRpe = journalRpeLabel(s)
         return (
           <div key={`post-session-${s.id}-${index}`} style={{ padding: "24px 20px 0" }}>
             <SectionLb action={savedClock(s.savedAt)}>— TRAINING SESSION</SectionLb>
             <div style={{ background: "var(--surface)", border: "1px solid var(--ink)", padding: "14px 16px" }}>
               <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
                 <span className={`etag ${meta.cls}`}><span className="d"></span><span className="c">{meta.c}</span><span className="n">{meta.n}</span></span>
-                <TermHelp term={meta.term} />
+                {meta.term !== null && <TermHelp term={meta.term} />}
                 <SyncChip />
                 {hasImportedField(s.fieldProvenance) && <ImportedChip />}
               </div>
@@ -179,7 +183,7 @@ function LogDetailJournal({ date, onBack, onAddEntry, onEditEntry, readerControl
                   ["거리", s.distanceKm || "—", "km"],
                   ["시간", s.durationMin || "—", "min"],
                   ["평균 페이스", s.avgPace || "—", "/km"],
-                  ["RPE", s.rpe > 0 ? String(s.rpe) : "—", "/10"],
+                  ["RPE", shownRpe ?? "—", shownRpe === null ? "" : "/10"],
                 ] as const).map(([l, v, u], i, a) => (
                   <div key={i} style={{ padding: "10px 8px 10px 0", borderRight: i < a.length - 1 ? "1px solid var(--hair)" : 0, paddingLeft: i > 0 ? 8 : 0 }}>
                     <div style={{ fontFamily: "var(--mono)", fontSize: 8.5, color: "var(--ink-3)", letterSpacing: "0.14em", textTransform: "uppercase" }}>{l}{l === "RPE" && <TermHelp term="rpe" />}</div>

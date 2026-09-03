@@ -207,10 +207,17 @@ Owner-approved app-local pilot decisions:
   race self-check, structured target pace, purpose-scoped memo, provenance limitation,
   and 2026-07-14 owner-authorized Codex handoff boundaries. It does not grant canonical,
   Formation, Plan Generator, sync, or shadow-runtime authority.
+- [`SPEC_QUICK_PROGRESSIVE_JOURNAL_V2_DECISION.md`](./SPEC_QUICK_PROGRESSIVE_JOURNAL_V2_DECISION.md)
+  records exact-RPE quick capture, structured post-activity body checks, same-ID
+  correction/detail continuation, explicit plan linkage, device-candidate exclusions,
+  historical reward boundaries, and correct `일지`/`경기기록` navigation context. The
+  current implementation is local branch work, not merge, release, canonical promotion,
+  issue closure, or accepted runtime evidence.
 
 Candidate test package:
 
 - [`specs/test-packages/D9_SAFETY_EVALUATOR_V2_1_1_TEST_PACKAGE.md`](./specs/test-packages/D9_SAFETY_EVALUATOR_V2_1_1_TEST_PACKAGE.md)
+- [`specs/test-packages/QUICK_LOG_TAP_BUDGET_TEST_PACKAGE.md`](./specs/test-packages/QUICK_LOG_TAP_BUDGET_TEST_PACKAGE.md)
 
 Legacy references:
 

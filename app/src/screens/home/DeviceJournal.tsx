@@ -10,6 +10,7 @@ import {
 } from "../../domain/journal-store"
 import type { JournalEntry } from "../../domain/journal-store"
 import { hasImportedField } from "../../domain/field-provenance"
+import { journalRpeLabel, quickOutcomeLabel } from "../../domain/quick-journal"
 
 type DeviceJournalProps = {
   readonly onOpenDay?: (date: string) => void
@@ -43,10 +44,12 @@ function entryHeadline(entry: JournalEntry): string {
 
 function entrySub(entry: JournalEntry): string {
   if (entry.kind === "post-session") {
+    const rpe = journalRpeLabel(entry)
     return [
       entry.distanceKm ? `${entry.distanceKm}km` : null,
       entry.durationMin ? `${entry.durationMin}min` : null,
-      entry.rpe > 0 ? `RPE ${entry.rpe}` : null,
+      rpe === null ? null : `RPE ${rpe}`,
+      quickOutcomeLabel(entry),
     ].filter(Boolean).join(" · ") || "훈련 후"
   }
   if (entry.kind === "race") return [entry.rank, entry.result].filter(Boolean).join(" · ")

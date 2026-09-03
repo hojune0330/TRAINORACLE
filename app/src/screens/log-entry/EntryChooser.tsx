@@ -2,17 +2,18 @@ import React from "react"
 import { compactDate, dowOf, nowClock } from "../../domain/dates"
 import { entriesForDate, todayISO } from "../../domain/journal-store"
 import { TopBar } from "./shared"
-import type { JournalEntryType } from "./shared"
+import type { LogEntryType } from "./shared"
 
 interface EntryChooserProps {
   readonly onBack?: () => void
-  readonly onPick?: (entryType: JournalEntryType) => void
+  readonly onPick?: (entryType: LogEntryType) => void
   readonly targetDate?: string
   /** 워치 내보내기 파일 가져오기 — 직접 쓰기의 대안 진입점 */
   readonly onOpenImport?: () => void
 }
 
 const ENTRY_OPTIONS = [
+  { id: "quick-session", t: "빠르게 기록", d: "운동 결과·RPE·몸 상태만", meta: "QUICK · 2~5번", mark: "✓" },
   { id: "post-session", t: "훈련 후", d: "방금 끝낸 세션 기록", meta: "POST · ~1분", mark: "↻" },
   { id: "evening", t: "회복 · 하루 마무리", d: "쉬는 날도 그대로 · 수면·감정·통증 체크", meta: "EVENING · ~2분", mark: "☾" },
   { id: "race", t: "경기 직전/직후", d: "기록·심박·감정", meta: "RACE · ~30초", mark: "▲" },

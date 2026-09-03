@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest"
-import { memoPurposeOf, parseJournalEntry, parseTargetPaceInput } from "./journal-schema"
+import { memoPurposeOf, parseJournalEntry, parseJournalEntryForWrite, parseTargetPaceInput } from "./journal-schema"
 
 describe("parseTargetPaceInput", () => {
   it("returns a seconds-per-kilometer value when minutes and seconds are valid", () => {
@@ -106,5 +106,127 @@ describe("post-session intensity assessment persistence", () => {
     expect(parsed?.kind).toBe("post-session")
     if (parsed?.kind !== "post-session") throw new TypeError("Expected a post-session entry")
     expect(parsed.intensityAssessment).toEqual(entry.intensityAssessment)
+  })
+})
+
+describe("quick progressive journal write invariants", () => {
+  const quick = {
+    id: "quick-v2",
+    kind: "post-session" as const,
+    date: "2026-09-02",
+    savedAt: "2026-09-02T01:00:00.000Z",
+    syncState: "local" as const,
+    captureDepth: "QUICK" as const,
+    activityOutcome: "COMPLETED" as const,
+    activitySlot: "AM" as const,
+    objectiveDataState: "WAITING" as const,
+    planExecutionRelation: "NOT_APPLICABLE" as const,
+    painCheckStatus: "NO_SIGNAL_REPORTED" as const,
+    system: "",
+    title: "운동 완료",
+    distanceKm: "",
+    durationMin: "",
+    avgPace: "",
+    rpe: 6,
+    memo: "",
+    fieldProvenance: {
+      activityOutcome: { provenance: "EXPLICIT" as const },
+      activitySlot: { provenance: "EXPLICIT" as const },
+      plannedSessionLink: { provenance: "MISSING" as const },
+      planExecutionRelation: {
+        provenance: "DERIVED" as const,
+        derivedFrom: ["activityOutcome", "plannedSessionLink"],
+        derivationRuleId: "QUICK_PLAN_EXECUTION_RELATION_V2",
+      },
+      painCheckStatus: { provenance: "EXPLICIT" as const },
+      painParts: { provenance: "MISSING" as const },
+      rpe: { provenance: "EXPLICIT" as const },
+    },
+  }
+
+  it("accepts a performed quick entry with exact RPE and an explicit body check", () => {
+    expect(parseJournalEntryForWrite(quick)).not.toBeNull()
+  })
+
+  it.each([
+    ["exact RPE plus band", { rpeBand: "RPE_5_6" }],
+    ["performed without body check", { painCheckStatus: "UNANSWERED" }],
+    ["confirmed without objective facts", { objectiveDataState: "CONFIRMED" }],
+    ["plan relation without link", { planExecutionRelation: "AS_PLANNED" }],
+  ])("rejects %s", (_label, mutation) => {
+    expect(parseJournalEntryForWrite({ ...quick, ...mutation })).toBeNull()
+  })
+
+  it("accepts rest only when effort, slot, and waiting objective state are absent", () => {
+    const rest = {
+      ...quick,
+      activityOutcome: "RESTED",
+      activitySlot: undefined,
+      objectiveDataState: "NONE",
+      painCheckStatus: undefined,
+      rpe: 0,
+      fieldProvenance: {
+        activityOutcome: { provenance: "EXPLICIT" as const },
+        plannedSessionLink: { provenance: "MISSING" as const },
+        planExecutionRelation: {
+          provenance: "DERIVED" as const,
+          derivedFrom: ["activityOutcome", "plannedSessionLink"],
+          derivationRuleId: "QUICK_PLAN_EXECUTION_RELATION_V2",
+        },
+        rpe: { provenance: "MISSING" as const },
+      },
+    }
+    expect(parseJournalEntryForWrite(rest)).not.toBeNull()
+    expect(parseJournalEntryForWrite({ ...rest, activitySlot: "PM" })).toBeNull()
+    expect(parseJournalEntryForWrite({ ...rest, rpe: 2 })).toBeNull()
+    expect(parseJournalEntryForWrite({ ...rest, system: "base" })).toBeNull()
+    expect(parseJournalEntryForWrite({ ...rest, distanceKm: "5" })).toBeNull()
+    expect(parseJournalEntryForWrite({
+      ...rest,
+      intensityAssessment: { schemaVersion: 1, plannedRpe: 6, objectiveComponents: [] },
+    })).toBeNull()
+    expect(parseJournalEntryForWrite({
+      ...rest,
+      fieldProvenance: {
+        ...rest.fieldProvenance,
+        activitySlot: { provenance: "EXPLICIT" },
+      },
+    })).toBeNull()
+    expect(parseJournalEntryForWrite({
+      ...rest,
+      fieldProvenance: {
+        ...rest.fieldProvenance,
+        system: { provenance: "EXPLICIT" },
+      },
+    })).toBeNull()
+    expect(parseJournalEntryForWrite({
+      ...rest,
+      fieldProvenance: {
+        ...rest.fieldProvenance,
+        plannedRpe: { provenance: "MISSING" },
+      },
+    })).toBeNull()
+  })
+
+  it("keeps old band-only quick entries readable without accepting them as new V2 writes", () => {
+    const legacy = {
+      ...quick,
+      activitySlot: "SINGLE",
+      painCheckStatus: undefined,
+      rpe: 0,
+      rpeBand: "RPE_5_6",
+    }
+    expect(parseJournalEntry(legacy)).not.toBeNull()
+    expect(parseJournalEntryForWrite(legacy)).toBeNull()
+  })
+
+  it("rejects a relation falsely labelled as directly entered", () => {
+    expect(parseJournalEntryForWrite({
+      ...quick,
+      fieldProvenance: {
+        ...quick.fieldProvenance,
+        planExecutionRelation: { provenance: "EXPLICIT" },
+      },
+    })).toBeNull()
   })
 })

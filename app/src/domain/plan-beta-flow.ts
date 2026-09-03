@@ -422,6 +422,9 @@ function entryRequiresReview(entry: JournalEntry): boolean {
   if (entry.kind === "evening" && painLevelsRequireReview(entry.painParts)) {
     return true
   }
+  if (entry.kind === "post-session" && painLevelsRequireReview(entry.painParts ?? {})) {
+    return true
+  }
 
   const rawText = entry.kind === "evening" ? entry.note : entry.memo
   return assessPurposeScopedMemo(rawText, entry.memoPurpose)
@@ -437,6 +440,8 @@ function structuredJournalSource(
   const sessions = entries.filter(
     (entry): entry is PostSessionEntry =>
       entry.kind === "post-session"
+      && entry.activityOutcome !== "RESTED"
+      && entry.activityOutcome !== "SKIPPED"
       && isValidIsoDate(entry.date)
       && entry.date >= from
       && entry.date <= today,

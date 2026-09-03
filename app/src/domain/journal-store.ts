@@ -3,6 +3,7 @@ import type { JournalEntry } from "./journal-schema"
 import { hasValueExcludedFromAnalysis, toAnalysisJournalEntry, toExportJournalEntry } from "./safe-export"
 import type { AnalysisJournalEntry, SafeJournalEntry } from "./safe-export"
 import { hasImportedField } from "./field-provenance"
+import { canEditJournalEntry, keepsImportedObjectiveFacts, preserveJournalProvenance } from "./journal-edit-policy"
 import { recordTombstone, removeTombstone } from "./account/tombstone"
 import { moveToTrash, takeFromTrash } from "./journal-trash"
 import { JOURNAL_STORAGE_KEY, journalStorage, writeJournalEntries } from "./journal-local-storage"
@@ -189,8 +190,8 @@ export async function updatePrivateEntry(
   if (matchingEntries.length !== 1) return { ok: false, total: entries.length }
   const previous = matchingEntries[0]
   if (previous === undefined
-    || previous.syncState !== "local"
-    || hasImportedField(previous.fieldProvenance)
+    || !canEditJournalEntry(previous)
+    || !keepsImportedObjectiveFacts(previous, nextEntry)
     || previous.savedAt !== expectedSavedAt
     || previous.kind !== nextEntry.kind
     || previous.date !== nextEntry.date
@@ -203,11 +204,12 @@ export async function updatePrivateEntry(
   const recoveryCode = loadSessionRecoveryCode()
   if (localStorage === null || recoveryCode === null) return { ok: false, total: entries.length }
 
-  const nextEntries = entries.map((current) => current.id === nextEntry.id ? nextEntry : current)
+  const preservedEntry = preserveJournalProvenance(previous, nextEntry)
+  const nextEntries = entries.map((current) => current.id === nextEntry.id ? preservedEntry : current)
   const ok = await savePrivateMemoWithJournalShell(
     localStorage,
     nextEntries,
-    nextEntry,
+    preservedEntry,
     recoveryCode,
     snapshot.raw,
   )
@@ -593,7 +595,7 @@ export function todayISO(date: Date = new Date()): string {
   return `${date.getFullYear()}-${padded(date.getMonth() + 1)}-${padded(date.getDate())}`
 }
 
-export { nextJournalSavedAt, updateEntry } from "./journal-update"
+export { nextJournalSavedAt, updateEntry, updateEntryPreservingMemo } from "./journal-update"
 export type { UpdateEntryResult } from "./journal-update"
 
 export const LOCAL_SAVE_NOTICE = "이 기기에 저장됐어요"

@@ -2,7 +2,7 @@ import React from "react"
 import { SectionLb } from "../../components/JournalPrimitives"
 import { compactDate } from "../../domain/dates"
 import type { ActivityParseResult } from "../../domain/import/activity-file"
-import type { ImportDraft, ImportSaveResult } from "../../domain/import/import-draft"
+import type { ImportDraft, ImportSaveIntent, ImportSaveResult } from "../../domain/import/import-draft"
 import { mono, primaryBtn, secondaryBtn } from "./styles"
 import { TermHelp } from "../../components/TermHelp"
 
@@ -91,15 +91,18 @@ export function PickStage({ busy, failure, fileInputRef, onFile, onCancel }: {
   )
 }
 
-export function ReviewStage({ drafts, result, selected, onToggle, onSave, onRestart }: {
+export function ReviewStage({ drafts, result, selected, intents, onIntent, onToggle, onSave, onRestart }: {
   readonly drafts: readonly ImportDraft[]
   readonly result: ActivityParseResult
   readonly selected: ReadonlySet<number>
+  readonly intents: ReadonlyMap<number, ImportSaveIntent>
+  readonly onIntent: (index: number, intent: ImportSaveIntent | undefined) => void
   readonly onToggle: (index: number) => void
   readonly onSave: () => void
   readonly onRestart: () => void
 }) {
   const chosenCount = drafts.filter((_, index) => selected.has(index)).length
+  const missingIntent = drafts.some((_, index) => selected.has(index) && !intents.has(index))
   return (
     <div style={{ marginTop: 20, display: "flex", flexDirection: "column", gap: 14 }}>
       <p style={{ fontFamily: "var(--sans)", fontSize: 13, lineHeight: 1.65, color: "var(--ink-2)", margin: 0 }}>
@@ -114,20 +117,22 @@ export function ReviewStage({ drafts, result, selected, onToggle, onSave, onRest
       <div style={{ borderTop: "1px solid var(--ink)", borderBottom: "1px solid var(--ink)" }}>
         {drafts.map((draft, index) => {
           const { activity } = draft
+          const intent = intents.get(index)
           return (
-            <label key={`${activity.date}-${index}`} data-testid="import-draft-row" style={{
-              display: "grid", gridTemplateColumns: "24px 1fr", gap: 10,
+            <div key={`${activity.date}-${index}`} data-testid="import-draft-row" style={{
+              display: "grid", gridTemplateColumns: "44px 1fr", gap: 10,
               alignItems: "start", padding: "12px 2px", minHeight: 44,
               borderBottom: index < drafts.length - 1 ? "1px dashed var(--hair)" : 0,
-              cursor: "pointer",
             }}>
-              <input
-                type="checkbox"
-                checked={selected.has(index)}
-                onChange={() => onToggle(index)}
-                aria-label={`${compactDate(activity.date)} ${activity.name} 가져오기`}
-                style={{ width: 20, height: 20, marginTop: 2 }}
-              />
+              <label style={{ display: "flex", alignItems: "center", justifyContent: "center", width: 44, height: 44, cursor: "pointer" }}>
+                <input
+                  type="checkbox"
+                  checked={selected.has(index)}
+                  onChange={() => onToggle(index)}
+                  aria-label={`${compactDate(activity.date)} ${activity.name} 가져오기`}
+                  style={{ width: 20, height: 20, margin: 0 }}
+                />
+              </label>
               <span style={{ minWidth: 0 }}>
                 <span style={{ display: "flex", alignItems: "baseline", gap: 8, flexWrap: "wrap" }}>
                   <span style={{ ...mono, fontSize: 10, color: "var(--ink-3)", letterSpacing: "0.1em" }}>{compactDate(activity.date)}</span>
@@ -146,17 +151,36 @@ export function ReviewStage({ drafts, result, selected, onToggle, onSave, onRest
                     activity.avgPace === "" ? null : `${activity.avgPace}/km`,
                   ].filter((part) => part !== null).join(" · ") || "기록 값 없음"}
                 </span>
+                {selected.has(index) && <select
+                  aria-label={`${activity.name} 저장 방식`}
+                  value={intent?.kind === "SAVE_SEPARATE" ? "separate" : intent?.entryId ?? ""}
+                  onChange={(event) => {
+                    const value = event.target.value
+                    const target = draft.reconciliationCandidates.find((candidate) => candidate.id === value)
+                    onIntent(index, value === "separate" ? { kind: "SAVE_SEPARATE" }
+                      : target === undefined ? undefined
+                        : { kind: "ADD_TO_EXISTING", entryId: target.id, expectedSavedAt: target.savedAt })
+                  }}
+                  style={{ width: "100%", minWidth: 0, minHeight: 44, marginTop: 8, fontFamily: "var(--sans)", fontSize: 13 }}
+                >
+                  <option value="">저장 방식 선택</option>
+                  <option value="separate">새 일지로 저장</option>
+                  {draft.reconciliationCandidates.map((candidate) => <option key={candidate.id} value={candidate.id}>
+                    기존 일지 보완 · {candidate.activitySlot === "AM" ? "오전" : candidate.activitySlot === "PM" ? "오후" : "시간 미지정"} · {candidate.title}
+                  </option>)}
+                </select>}
               </span>
-            </label>
+            </div>
           )
         })}
       </div>
       <div style={{ ...mono, fontSize: 10, color: "var(--ink-4)", lineHeight: 1.65 }}>
-        RPE<TermHelp term="rpe" />와 메모는 파일에 없어요 — 저장한 뒤 일지에서 직접 채워 주세요.
+        기존 일지를 보완하면 RPE<TermHelp term="rpe" />와 메모는 계속 수정할 수 있어요.
+        새 일지로 가져온 활동은 현재 읽기 전용이에요.
         가져온 숫자는 <b>주간 통계·추이·훈련계획에는 들어가지 않아요</b> (직접 확인한 값만 분석에 쓰는 원칙).
       </div>
-      <button type="button" style={primaryBtn} disabled={chosenCount === 0} onClick={onSave}>
-        {chosenCount === 0 ? "저장할 활동을 골라 주세요" : `고른 ${chosenCount}건 일지에 저장`}
+      <button type="button" style={primaryBtn} disabled={chosenCount === 0 || missingIntent} onClick={onSave}>
+        {chosenCount === 0 ? "저장할 활동을 골라 주세요" : missingIntent ? "저장 방식을 골라 주세요" : `고른 ${chosenCount}건 일지에 저장`}
       </button>
       <button type="button" style={secondaryBtn} onClick={onRestart}>다른 파일 고르기</button>
     </div>
@@ -168,23 +192,35 @@ export function SavedStage({ outcome, onOpenLog, onRestart }: {
   readonly onOpenLog?: () => void
   readonly onRestart: () => void
 }) {
-  const resultLabel = outcome.saved === 0
+  const completed = outcome.saved + (outcome.merged ?? 0)
+  const resultLabel = completed === 0
     ? "가져오기 실패"
-    : outcome.failed > 0
+    : outcome.failed > 0 || (outcome.conflicts ?? 0) > 0
       ? "일부 완료"
       : "가져오기 완료"
   return (
     <div style={{ marginTop: 20, display: "flex", flexDirection: "column", gap: 14 }}>
       <div data-testid="import-saved" style={{ border: "1px solid var(--ink)", background: "var(--surface)", padding: "14px 16px" }}>
         <div style={{ ...mono, fontSize: 10, color: "var(--ink-3)", letterSpacing: "0.1em" }}>{resultLabel}</div>
-        <div style={{ fontFamily: "var(--sans)", fontSize: 16, fontWeight: 500, marginTop: 5 }}>{outcome.saved}건을 일지에 저장했어요</div>
+        <div style={{ fontFamily: "var(--sans)", fontSize: 16, fontWeight: 500, marginTop: 5 }}>
+          새 일지 {outcome.saved}건 저장 · 기존 일지 {outcome.merged ?? 0}건 보완
+        </div>
+        <div style={{ ...mono, fontSize: 10, color: "var(--ink-3)", marginTop: 4 }}>
+          {outcome.saved + (outcome.merged ?? 0)}건을 일지에 저장했어요
+        </div>
+        {(outcome.conflicts ?? 0) > 0 && (
+          <div style={{ ...mono, fontSize: 10.5, color: "var(--ink-2)", lineHeight: 1.6, marginTop: 6 }}>
+            {outcome.conflicts}건은 기존 일지가 변경됐거나 보완할 수 없는 상태라 합치지 않았어요. 기존 기록은 그대로예요.
+          </div>
+        )}
         {outcome.failed > 0 && (
           <div style={{ ...mono, fontSize: 10.5, color: "var(--pain-5)", lineHeight: 1.6, marginTop: 6 }}>
             {outcome.failed}건은 저장하지 못했어요 — 기기 저장 공간이 가득 찼을 수 있어요. 공간을 비운 뒤 다시 시도해 주세요.
           </div>
         )}
         <div style={{ ...mono, fontSize: 10, color: "var(--ink-4)", lineHeight: 1.65, marginTop: 8 }}>
-          가져온 일지에는 <b>가져옴</b> 표시가 붙어요. RPE<TermHelp term="rpe" />·메모를 채우면 그 값은 직접 입력한 기록으로 분석에 쓰여요.
+          가져온 값에는 <b>가져옴</b> 표시가 붙어요. 기존 일지에 직접 입력한 RPE<TermHelp term="rpe" />는 분석에 쓸 수 있고, 가져온 값과 메모 원문은 분석에 포함되지 않아요.
+          {outcome.saved > 0 && " 새 일지로 가져온 활동은 현재 읽기 전용이에요."}
         </div>
       </div>
       {onOpenLog && <button type="button" style={primaryBtn} onClick={onOpenLog}>일지에서 확인하기</button>}

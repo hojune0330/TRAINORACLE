@@ -284,20 +284,29 @@ export function PlanIntake({
               onClick={() => onTemplate(null)}
             />
             {detailedTemplates.map((detailedTemplate, index) => (
-              <Choice
-                key={`${detailedTemplate.ref.templateId}@${detailedTemplate.ref.version}`}
-                title={detailedTemplates.length > 1
-                  ? `${detailedTemplate.targetEventDistanceM}m 상세 훈련 ${index + 1}`
-                  : `${detailedTemplate.targetEventDistanceM}m 경기 페이스 상세 훈련 포함`}
-                detail={`${detailedTemplate.notation} · 같은 종목의 현재 기록을 직접 확인하면 반복 목표 시간을 계산`}
-                selected={draft.selectedDetailedTemplateRef?.templateId === detailedTemplate.ref.templateId
-                  && draft.selectedDetailedTemplateRef.version === detailedTemplate.ref.version}
-                onClick={() => onTemplate(detailedTemplate.ref)}
-              />
+              <div key={`${detailedTemplate.ref.templateId}@${detailedTemplate.ref.version}`}>
+                <Choice
+                  title={detailedTemplates.length > 1
+                    ? `${detailedTemplate.targetEventDistanceM}m 상세 훈련 ${index + 1}`
+                    : `${detailedTemplate.targetEventDistanceM}m 경기 페이스 상세 훈련 포함`}
+                  detail={`${detailedTemplate.mainSummary} · ${detailedTemplate.recoverySummary} · 같은 종목의 현재 기록으로 목표 시간을 계산`}
+                  selected={draft.selectedDetailedTemplateRef?.templateId === detailedTemplate.ref.templateId
+                    && draft.selectedDetailedTemplateRef.version === detailedTemplate.ref.version}
+                  onClick={() => onTemplate(detailedTemplate.ref)}
+                />
+                <details className="plan-detailed-prescription">
+                  <summary>준비·정리와 훈련 표기 보기</summary>
+                  <p>{detailedTemplate.preparationSummary}</p>
+                  <p><code>{detailedTemplate.notation}</code><TermHelp term="training-notation" /></p>
+                  <p>현재 기록을 직접 확인한 뒤 한 주요 훈련에 적용해요. 다른 날의 반복 수나 훈련량을 자동으로 늘리지 않아요.</p>
+                </details>
+              </div>
             ))}
             {detailedTemplates.length === 0 && (
               <p className="plan-choice-note" role="status">
-                지금 고른 종목·훈련 목적에는 활성화된 상세 훈련표가 없어요. RPE 기준 계획은 그대로 받을 수 있어요.
+                {draft.experienceBand !== "EXPERIENCED"
+                  ? "지금 고른 경험 범위에 맞는 상세 반복 훈련은 아직 제공하지 않아요. RPE 기준으로 시간과 강도를 안내받을 수 있어요."
+                  : "지금 고른 종목·훈련 목적에는 활성화된 상세 훈련표가 없어요. RPE 기준 계획은 그대로 받을 수 있어요."}
               </p>
             )}
           </>

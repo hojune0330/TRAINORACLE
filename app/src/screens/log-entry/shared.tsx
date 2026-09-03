@@ -5,6 +5,7 @@ import type { JournalEntry } from "../../domain/journal-store"
 import type { PlannedSessionLink } from "../../domain/planned-session-link"
 
 export type JournalEntryType = "post-session" | "evening" | "race"
+export type LogEntryType = "quick-session" | JournalEntryType
 
 export interface EntryFormProps {
   readonly onBack?: () => void
@@ -103,6 +104,7 @@ export function FormSec({
   onTouch,
   summary,
   expandHint = "펼치기",
+  compact = false,
 }: {
   readonly lb: string
   readonly help?: TermId
@@ -130,6 +132,7 @@ export function FormSec({
   readonly summary?: string
   /** 접힌 줄 오른쪽에 보일 안내. 예: "+ 추가" */
   readonly expandHint?: string
+  readonly compact?: boolean
 }) {
   // 처음 그릴 때 이미 답이 있으면 펼친 채로 시작한다. 답이 있는데 접혀
   // 있으면 사용자가 이미 넣은 값을 못 본다.
@@ -180,11 +183,13 @@ export function FormSec({
   const wrap = (inner: ReactNode) => onTouch === undefined ? inner : (
     <div onPointerDownCapture={onTouch} onFocusCapture={onTouch}>{inner}</div>
   )
+  const sectionPadding = compact ? "4px 20px 0" : "18px 20px 0"
+  const contentGap = compact ? 4 : 8
 
   if (!collapsible) {
     return (
-      <div style={{ padding: "18px 20px 0" }}>
-        <div style={{ ...SECTION_LABEL_STYLE, marginBottom: 8 }}>
+      <div style={{ padding: sectionPadding }}>
+        <div style={{ ...SECTION_LABEL_STYLE, marginBottom: contentGap }}>
           {lb}{help && <TermHelp term={help} />}
         </div>
         {wrap(children)}
@@ -193,10 +198,10 @@ export function FormSec({
   }
 
   return (
-    <div style={{ padding: "18px 20px 0" }}>
+    <div style={{ padding: sectionPadding }}>
       <div
         className={open ? undefined : "formsec--collapsed"}
-        style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: open ? 8 : 0 }}
+        style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: open ? contentGap : 0 }}
       >
         <button
           type="button"

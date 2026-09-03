@@ -50,6 +50,14 @@ function toSafeJournalEntry(entry: JournalEntry): SafeJournalEntry {
         date: entry.date,
         savedAt: entry.savedAt,
         syncState: "local",
+        ...(entry.captureDepth === undefined ? {} : { captureDepth: entry.captureDepth }),
+        ...(entry.activityOutcome === undefined ? {} : { activityOutcome: entry.activityOutcome }),
+        ...(entry.activitySlot === undefined ? {} : { activitySlot: entry.activitySlot }),
+        ...(entry.rpeBand === undefined ? {} : { rpeBand: entry.rpeBand }),
+        ...(entry.objectiveDataState === undefined ? {} : { objectiveDataState: entry.objectiveDataState }),
+        ...(entry.planExecutionRelation === undefined ? {} : { planExecutionRelation: entry.planExecutionRelation }),
+        ...(entry.painCheckStatus === undefined ? {} : { painCheckStatus: entry.painCheckStatus }),
+        ...(entry.painParts === undefined ? {} : { painParts: entry.painParts }),
         system: entry.system,
         title: entry.title,
         distanceKm: entry.distanceKm,
@@ -105,7 +113,17 @@ function hasEligibleAnalysisField(entry: PostSessionEntry | EveningEntry): boole
         || (entry.intensityAssessment.objectiveComponents.length > 0
           && isEligibleForAnalysis("objectiveComponents", entry.fieldProvenance)))
     return hasIntensity
-      || ["distanceKm", "durationMin", "avgPace", "rpe"]
+      || [
+        "system",
+        "distanceKm",
+        "durationMin",
+        "avgPace",
+        "rpe",
+        "activityOutcome",
+        "activitySlot",
+        "painCheckStatus",
+        "painParts",
+      ]
         .some((fieldName) => isEligibleForAnalysis(fieldName, entry.fieldProvenance))
   }
   return ["sleepH", "sleepQuality", "weightKg", "restingHr", "painParts", "mood"]
@@ -141,6 +159,7 @@ export function hasValueExcludedFromAnalysis(entry: JournalEntry): boolean {
       || excluded(entry.durationMin.trim() !== "", "durationMin")
       || excluded(entry.avgPace.trim() !== "", "avgPace")
       || excluded(entry.rpe > 0, "rpe")
+      || excluded(Object.values(entry.painParts ?? {}).some((level) => level > 0), "painParts")
       || excluded(entry.intensityAssessment?.plannedRpe !== undefined, "plannedRpe")
       || excluded((entry.intensityAssessment?.objectiveComponents.length ?? 0) > 0, "objectiveComponents")
   }
@@ -153,6 +172,7 @@ export function hasValueExcludedFromAnalysis(entry: JournalEntry): boolean {
 }
 
 function toAnalysisPostSessionEntry(entry: PostSessionEntry): AnalysisPostSessionEntry {
+  const eligible = (fieldName: string) => isEligibleForAnalysis(fieldName, entry.fieldProvenance)
   const plannedRpe = isEligibleForAnalysis("plannedRpe", entry.fieldProvenance)
     ? entry.intensityAssessment?.plannedRpe
     : undefined
@@ -172,13 +192,31 @@ function toAnalysisPostSessionEntry(entry: PostSessionEntry): AnalysisPostSessio
     date: entry.date,
     savedAt: entry.savedAt,
     syncState: "local",
-    system: entry.system,
-    title: entry.title,
-    distanceKm: isEligibleForAnalysis("distanceKm", entry.fieldProvenance) ? entry.distanceKm : "",
-    durationMin: isEligibleForAnalysis("durationMin", entry.fieldProvenance) ? entry.durationMin : "",
-    avgPace: isEligibleForAnalysis("avgPace", entry.fieldProvenance) ? entry.avgPace : "",
-    rpe: isEligibleForAnalysis("rpe", entry.fieldProvenance) ? entry.rpe : 0,
-    ...(entry.plannedSessionLink === undefined ? {} : { plannedSessionLink: entry.plannedSessionLink }),
+    system: eligible("system") ? entry.system : "",
+    // The user-authored session title is local diary text, not analysis evidence.
+    title: "",
+    distanceKm: eligible("distanceKm") ? entry.distanceKm : "",
+    durationMin: eligible("durationMin") ? entry.durationMin : "",
+    avgPace: eligible("avgPace") ? entry.avgPace : "",
+    rpe: eligible("rpe") ? entry.rpe : 0,
+    ...(entry.activityOutcome !== undefined && eligible("activityOutcome")
+      ? { activityOutcome: entry.activityOutcome }
+      : {}),
+    ...(entry.activitySlot !== undefined && eligible("activitySlot")
+      ? { activitySlot: entry.activitySlot }
+      : {}),
+    ...(entry.planExecutionRelation !== undefined && eligible("planExecutionRelation")
+      ? { planExecutionRelation: entry.planExecutionRelation }
+      : {}),
+    ...(entry.painCheckStatus !== undefined && eligible("painCheckStatus")
+      ? { painCheckStatus: entry.painCheckStatus }
+      : {}),
+    ...(eligible("painParts")
+      ? { painParts: entry.painParts ?? {} }
+      : {}),
+    ...(entry.plannedSessionLink !== undefined && eligible("plannedSessionLink")
+      ? { plannedSessionLink: entry.plannedSessionLink }
+      : {}),
     ...(intensityAssessment === undefined ? {} : { intensityAssessment }),
   }
 }
@@ -245,6 +283,9 @@ function hasExportableStructuredSignal(entry: JournalEntry): boolean {
       || entry.durationMin.trim() !== ""
       || entry.avgPace.trim() !== ""
       || entry.rpe > 0
+      || entry.activityOutcome !== undefined
+      || entry.painCheckStatus !== undefined
+      || Object.values(entry.painParts ?? {}).some((level) => level > 0)
       || entry.intensityAssessment?.plannedRpe !== undefined
       || (entry.intensityAssessment?.objectiveComponents.length ?? 0) > 0
   }

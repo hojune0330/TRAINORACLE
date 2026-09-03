@@ -1,15 +1,24 @@
-# SPEC_TAP_FIRST_LOGGING — 전방위 "터치 몇 번이면 끝" 일지 (토스식)
+# SPEC_TAP_FIRST_LOGGING.md
 
 ```yaml
 spec_metadata:
+  doc_id: trainoracle-spec-tap-first-logging
   spec_id: SPEC_TAP_FIRST_LOGGING
+  title: 전방위 터치 몇 번이면 끝 일지 설계 이력
+  version: "2.1"
+  round: RT3_QUICK_PROGRESSIVE_V2_SUPERSESSION
+  owner: COACH_HOJUNE
+  open_issues_total: 0
+  canonical_blocking_count: 0
+  executed_tests_total: 0
+  canonical_promotion_allowed: false
   issued_by: TOTAL_RESPONSIBILITY_HOLDER
   issue_date: "2026-07-12"
   revision: v2 (2026-07-12) — 페르소나 리뷰(reports/review/TAP_FIRST_V1_PERSONA_REVIEW.md)로
     v1의 화면 쪼개기 과잉·축적 피드백 부재를 반려하고 §2를 전면 교체.
     사장님 추가 지시 — "토스는 선택하고 넘어가면서 효과나 디테일로 '넘어가고 있다/
     반영되고 있다'를 UI로 인식시킨다. 계속 누르거나 넘어가서 쌓아두고 싶게끔."
-  status: PLAN_AWAITING_OWNER_APPROVAL
+  status: HISTORICAL_SOURCE_PARTIALLY_SUPERSEDED
   owner_directive: >
     "모든 부분이 토스처럼 간단해야 돼. 일지도 터치 몇 번으로 작성이 끝나기도 하자.
     글을 적는 게 당연히 좋지만 어떤 날은 그냥 터치만 몇 번 하고 끝내고 싶은 날도 있거든.
@@ -141,7 +150,7 @@ spec_metadata:
 
 ## 3. 불변식 (안전·계약)
 
-1. **JournalEntry 스키마 불변** — 퀵 모드는 같은 `saveEntry()` 경로. 빈 문자열 필드 허용은 기존과 동일.
+1. **기존 JournalEntry 하위호환** — 퀵 모드는 같은 `saveEntry()` 경로를 사용하며 기존 필드를 삭제·재해석하지 않는다. `captureDepth`, `activityOutcome`, `activitySlot`, `rpeBand`, `objectiveDataState`는 점진형 기록 상태를 보존하는 선택 필드로만 추가한다.
 2. **통증 4~5 REVIEW 배너**: 퀵 통증 화면에도 동일 노출. 안전 판정 해제 없음.
 3. **memo_policy §8**: 자유 입력은 여전히 기기 전용 + PrivacyNote. 퀵에서 메모를 "선택"으로 강등하는 것이지 정책 변경 아님.
 4. 훈련량 부추김 금지: 프리셋 칩은 직전 값 중심 정렬(큰 값 유도 금지), 완료 화면 문구 심사 대상.
@@ -163,3 +172,27 @@ spec_metadata:
 - **P1**: 훈련 후 퀵 모드 (가장 빈번·효과 최대) + "지난 훈련 그대로"
 - **P2**: 하루 마무리 퀵 + 경기 직전 state 연결·퀵
 - **P3**: 경기 직후 기록 휠, 스마트 진입점 정렬, athletetime 커뮤니티 작성 플로우 터치 감사
+
+## 6. 2026-09-02 Owner-approved runtime delta
+
+- 홈의 기본 `오늘 기록`은 `빠르게 기록`으로 진입한다.
+- 공통 경로는 `활동 결과 -> 한 번/오전/오후 -> RPE 범위 -> 저장`이며 홈 진입을 포함해 4탭이다. 시간대는 기본값으로 추정하지 않고 사용자가 직접 고른다.
+- RPE 범위는 정확한 숫자의 대체값이 아니다. `5~6`을 5.5 또는 6으로 바꾸지 않는다.
+- `모르겠어요`는 `rpeBand=UNKNOWN`, `rpe=0`, provenance `MISSING`으로 저장한다.
+- 빠른 기록 저장 후 `일지 더 쓰기`는 새 항목을 만들지 않고 같은 ID를 상세 폼에서 갱신한다.
+- 저장 완료 스탬프와 완료 화면은 `saveEntry()` 성공 영수증 뒤에만 표시한다.
+- 같은 날짜의 빠른 기록이 정확히 하나이고 객관값이 비어 있을 때만 외부 활동을 병합 후보로 제시한다. 사용자가 선택·확인해야 하며 두 개 이상이면 추정하지 않는다.
+- 이미 거리·시간·페이스가 있으면 외부 값으로 덮어쓰지 않고 충돌로 남긴다.
+
+## 7. V2 supersession notice
+
+`SPEC_QUICK_PROGRESSIVE_JOURNAL_V2_DECISION.md` supersedes the runtime-design details
+in §6 where they conflict. In particular, new quick entries use one exact RPE value or
+`MISSING`, do not write a new `rpeBand`, do not write `SINGLE`, require an explicit
+structured body check after performed activity, exclude rest/skip from device merge
+candidates, and preserve a plan link only from an explicit plan-session action.
+
+This file remains the historical tap-first interaction source. The supersession does
+not claim canonical promotion, release evidence, or downstream issue closure.
+
+[DRAFT_COMPLETE]

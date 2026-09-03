@@ -27,6 +27,14 @@ export type GoalPace = {
 
 export type JournalKind = "post-session" | "evening" | "race"
 
+export type JournalCaptureDepth = "QUICK" | "DETAILED"
+export type ActivityOutcome = "COMPLETED" | "PARTIAL" | "LIGHT_ACTIVITY" | "RESTED" | "SKIPPED"
+export type ActivitySlot = "UNSPECIFIED" | "AM" | "PM" | "SINGLE"
+export type RpeBand = "RPE_1_2" | "RPE_3_4" | "RPE_5_6" | "RPE_7_8" | "RPE_9_10" | "UNKNOWN"
+export type ObjectiveDataState = "NONE" | "WAITING" | "REVIEW_REQUIRED" | "CONFIRMED" | "CONFLICT"
+export type PlanExecutionRelation = "AS_PLANNED" | "MODIFIED" | "NOT_APPLICABLE" | "UNKNOWN"
+export type PainCheckStatus = "NO_SIGNAL_REPORTED" | "SIGNAL_REPORTED" | "UNANSWERED"
+
 export type JournalEntryBase = {
   readonly id: string
   readonly kind: JournalKind
@@ -42,6 +50,14 @@ type PurposeScopedMemo = {
 
 export type PostSessionEntry = JournalEntryBase & PurposeScopedMemo & {
   readonly kind: "post-session"
+  readonly captureDepth?: JournalCaptureDepth
+  readonly activityOutcome?: ActivityOutcome
+  readonly activitySlot?: ActivitySlot
+  readonly rpeBand?: RpeBand
+  readonly objectiveDataState?: ObjectiveDataState
+  readonly planExecutionRelation?: PlanExecutionRelation
+  readonly painCheckStatus?: PainCheckStatus
+  readonly painParts?: Readonly<Record<string, number>>
   readonly system: string
   readonly title: string
   readonly distanceKm: string
@@ -130,6 +146,14 @@ const postSessionSchema: z.ZodType<PostSessionEntry> = z.object({
   ...baseShape,
   ...purposeShape,
   kind: z.literal("post-session"),
+  captureDepth: z.enum(["QUICK", "DETAILED"]).optional(),
+  activityOutcome: z.enum(["COMPLETED", "PARTIAL", "LIGHT_ACTIVITY", "RESTED", "SKIPPED"]).optional(),
+  activitySlot: z.enum(["UNSPECIFIED", "AM", "PM", "SINGLE"]).optional(),
+  rpeBand: z.enum(["RPE_1_2", "RPE_3_4", "RPE_5_6", "RPE_7_8", "RPE_9_10", "UNKNOWN"]).optional(),
+  objectiveDataState: z.enum(["NONE", "WAITING", "REVIEW_REQUIRED", "CONFIRMED", "CONFLICT"]).optional(),
+  planExecutionRelation: z.enum(["AS_PLANNED", "MODIFIED", "NOT_APPLICABLE", "UNKNOWN"]).optional(),
+  painCheckStatus: z.enum(["NO_SIGNAL_REPORTED", "SIGNAL_REPORTED", "UNANSWERED"]).optional(),
+  painParts: z.record(z.string(), z.number().int().min(0).max(5)).optional(),
   system: z.string(),
   title: z.string(),
   distanceKm: z.string(),
@@ -197,6 +221,176 @@ const journalEntryWriteSchema = journalEntrySchema.superRefine((entry, context) 
       message: "Nonempty journal text requires an explicit memo purpose.",
       path: ["memoPurpose"],
     })
+  }
+
+  if (entry.kind === "post-session") {
+    const performed = entry.activityOutcome === "COMPLETED"
+      || entry.activityOutcome === "PARTIAL"
+      || entry.activityOutcome === "LIGHT_ACTIVITY"
+    const didNotPerform = entry.activityOutcome === "RESTED" || entry.activityOutcome === "SKIPPED"
+    const hasPain = Object.values(entry.painParts ?? {}).some((level) => level > 0)
+    const hasObjectiveValue = entry.distanceKm.trim() !== ""
+      || entry.durationMin.trim() !== ""
+      || entry.avgPace.trim() !== ""
+
+    if (entry.rpe > 0 && entry.rpeBand !== undefined) {
+      context.addIssue({
+        code: "custom",
+        message: "Exact RPE and an RPE band cannot describe the same entry.",
+        path: ["rpeBand"],
+      })
+    }
+
+    if (entry.captureDepth === "QUICK" && entry.activityOutcome === undefined) {
+      context.addIssue({
+        code: "custom",
+        message: "Quick journal entries require an explicit activity outcome.",
+        path: ["activityOutcome"],
+      })
+    }
+
+    if (entry.captureDepth === "QUICK" && performed) {
+      if (entry.activitySlot === undefined || entry.activitySlot === "SINGLE") {
+        context.addIssue({
+          code: "custom",
+          message: "Performed quick entries require an explicit time choice.",
+          path: ["activitySlot"],
+        })
+      }
+      if (entry.objectiveDataState !== "WAITING" && entry.objectiveDataState !== "CONFIRMED") {
+        context.addIssue({
+          code: "custom",
+          message: "Performed quick entries must declare whether objective data is waiting or confirmed.",
+          path: ["objectiveDataState"],
+        })
+      }
+      if (entry.painCheckStatus === undefined || entry.painCheckStatus === "UNANSWERED") {
+        context.addIssue({
+          code: "custom",
+          message: "Performed quick entries require an explicit post-activity body check.",
+          path: ["painCheckStatus"],
+        })
+      }
+    }
+
+    if (didNotPerform) {
+      if (entry.activitySlot !== undefined || entry.rpe !== 0 || entry.rpeBand !== undefined) {
+        context.addIssue({
+          code: "custom",
+          message: "Rested or skipped entries cannot contain a time slot or effort value.",
+          path: ["activityOutcome"],
+        })
+      }
+      if (entry.objectiveDataState !== "NONE") {
+        context.addIssue({
+          code: "custom",
+          message: "Rested or skipped entries have no waiting objective activity data.",
+          path: ["objectiveDataState"],
+        })
+      }
+      if (entry.system.trim() !== ""
+        || entry.distanceKm.trim() !== ""
+        || entry.durationMin.trim() !== ""
+        || entry.avgPace.trim() !== ""
+        || entry.intensityAssessment !== undefined) {
+        context.addIssue({
+          code: "custom",
+          message: "Rested or skipped entries cannot retain performed-session facts.",
+          path: ["activityOutcome"],
+        })
+      }
+      if (entry.painCheckStatus !== undefined || entry.painParts !== undefined) {
+        context.addIssue({
+          code: "custom",
+          message: "Rested or skipped entries cannot retain a post-activity body check.",
+          path: ["painCheckStatus"],
+        })
+      }
+      if (["activitySlot", "painCheckStatus", "painParts"].some(
+        (field) => entry.fieldProvenance?.[field] !== undefined,
+      )) {
+        context.addIssue({
+          code: "custom",
+          message: "Rested or skipped entries cannot retain provenance for questions they did not answer.",
+          path: ["fieldProvenance"],
+        })
+      }
+      if (["system", "distanceKm", "durationMin", "avgPace", "rpe"].some(
+        (field) => {
+          const provenance = entry.fieldProvenance?.[field]
+          return provenance !== undefined && provenance.provenance !== "MISSING"
+        },
+      ) || ["rpeBand", "plannedRpe", "objectiveComponents"].some(
+        (field) => entry.fieldProvenance?.[field] !== undefined,
+      )) {
+        context.addIssue({
+          code: "custom",
+          message: "Rested or skipped entries may retain only missing provenance for cleared performed-session facts.",
+          path: ["fieldProvenance"],
+        })
+      }
+    }
+
+    if (entry.painCheckStatus === "SIGNAL_REPORTED" && !hasPain) {
+      context.addIssue({
+        code: "custom",
+        message: "A reported body signal requires at least one structured body-area level.",
+        path: ["painParts"],
+      })
+    }
+    if (entry.painCheckStatus === "NO_SIGNAL_REPORTED" && hasPain) {
+      context.addIssue({
+        code: "custom",
+        message: "A no-signal check cannot coexist with a positive body-area level.",
+        path: ["painCheckStatus"],
+      })
+    }
+
+    if (entry.objectiveDataState === "CONFIRMED" && !hasObjectiveValue) {
+      context.addIssue({
+        code: "custom",
+        message: "Confirmed objective data requires at least one objective value.",
+        path: ["objectiveDataState"],
+      })
+    }
+
+    if ((entry.planExecutionRelation === "AS_PLANNED" || entry.planExecutionRelation === "MODIFIED")
+      && entry.plannedSessionLink === undefined) {
+      context.addIssue({
+        code: "custom",
+        message: "A plan execution relation requires an explicit planned-session link.",
+        path: ["planExecutionRelation"],
+      })
+    }
+    if (entry.planExecutionRelation === "NOT_APPLICABLE" && entry.plannedSessionLink !== undefined) {
+      context.addIssue({
+        code: "custom",
+        message: "A linked planned session cannot be marked not applicable.",
+        path: ["planExecutionRelation"],
+      })
+    }
+
+    if (entry.planExecutionRelation !== undefined) {
+      const relationProvenance = entry.fieldProvenance?.planExecutionRelation
+      const linkProvenance = entry.fieldProvenance?.plannedSessionLink
+      const expectedLinkProvenance = entry.plannedSessionLink === undefined ? "MISSING" : "EXPLICIT"
+      if (relationProvenance?.provenance !== "DERIVED"
+        || relationProvenance.derivationRuleId !== "QUICK_PLAN_EXECUTION_RELATION_V2"
+        || relationProvenance.derivedFrom.join("|") !== "activityOutcome|plannedSessionLink") {
+        context.addIssue({
+          code: "custom",
+          message: "Plan execution relation must be derived from the chosen outcome and explicit plan link.",
+          path: ["fieldProvenance", "planExecutionRelation"],
+        })
+      }
+      if (linkProvenance?.provenance !== expectedLinkProvenance) {
+        context.addIssue({
+          code: "custom",
+          message: "Planned-session link provenance must match whether an explicit link exists.",
+          path: ["fieldProvenance", "plannedSessionLink"],
+        })
+      }
+    }
   }
 
   if (entry.fieldProvenance === undefined) return

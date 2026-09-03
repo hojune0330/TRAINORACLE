@@ -8,11 +8,12 @@
 import { beforeEach, describe, expect, it } from "vitest"
 import { lifetimeStats, thisWeekStats } from "../aggregates"
 import { hasImportedField, isImportedField } from "../field-provenance"
-import { loadAnalysisEntries, loadEntries, saveEntry } from "../journal-store"
+import { loadAnalysisEntries, loadEntries, saveEntry, updateEntry } from "../journal-store"
 import type { PostSessionEntry } from "../journal-store"
 import type { ImportedActivity } from "./activity-file"
 import {
   buildImportDrafts,
+  confirmImportDrafts,
   saveImportedActivities,
   saveImportedActivity,
   toImportedEntry,
@@ -166,5 +167,110 @@ describe("import duplicate detection", () => {
 
     expect(saveImportedActivity(activity(), "tcx").ok).toBe(true)
     expect(loadEntries()).toHaveLength(2)
+  })
+
+  it("사용자가 확인한 파일 기록은 같은 빠른 일지의 객관값을 보완한다", () => {
+    const quick = existingSession({
+      id: "quick-1",
+      captureDepth: "QUICK",
+      activityOutcome: "COMPLETED",
+      activitySlot: "AM",
+      objectiveDataState: "WAITING",
+      planExecutionRelation: "NOT_APPLICABLE",
+      painCheckStatus: "NO_SIGNAL_REPORTED",
+      system: "",
+      title: "훈련 완료",
+      distanceKm: "",
+      durationMin: "",
+      avgPace: "",
+      rpe: 0,
+      fieldProvenance: {
+        activityOutcome: { provenance: "EXPLICIT" },
+        activitySlot: { provenance: "EXPLICIT" },
+        plannedSessionLink: { provenance: "MISSING" },
+        planExecutionRelation: {
+          provenance: "DERIVED",
+          derivedFrom: ["activityOutcome", "plannedSessionLink"],
+          derivationRuleId: "QUICK_PLAN_EXECUTION_RELATION_V2",
+        },
+        painCheckStatus: { provenance: "EXPLICIT" },
+        painParts: { provenance: "MISSING" },
+        distanceKm: { provenance: "MISSING" },
+        durationMin: { provenance: "MISSING" },
+        avgPace: { provenance: "MISSING" },
+        rpe: { provenance: "MISSING" },
+      },
+    })
+    expect(saveEntry(quick).ok).toBe(true)
+    const [draft] = buildImportDrafts([activity()], [quick])
+    if (draft === undefined) throw new Error("missing draft")
+
+    const result = confirmImportDrafts([{
+      draft, intent: { kind: "ADD_TO_EXISTING", entryId: quick.id, expectedSavedAt: quick.savedAt },
+    }], "tcx")
+
+    expect(result).toMatchObject({ saved: 0, merged: 1, conflicts: 0, failed: 0 })
+    expect(loadEntries()).toHaveLength(1)
+    expect(loadEntries()[0]).toMatchObject({
+      id: "quick-1",
+      objectiveDataState: "CONFIRMED",
+      distanceKm: "10.00",
+      durationMin: "50",
+      avgPace: "5:00",
+      rpe: 0,
+    })
+
+    const merged = loadEntries()[0]
+    if (merged?.kind !== "post-session") throw new Error("missing merged entry")
+    const updated = {
+      ...merged,
+      savedAt: new Date(Date.parse(merged.savedAt) + 1).toISOString(),
+      rpe: 6,
+      fieldProvenance: {
+        ...(merged.fieldProvenance ?? {}),
+        rpe: { provenance: "EXPLICIT" as const },
+      },
+    }
+    expect(updateEntry(updated, merged.savedAt).ok).toBe(true)
+    expect(loadEntries()[0]).toMatchObject({ id: "quick-1", distanceKm: "10.00", rpe: 6 })
+  })
+
+  it("휴식과 건너뜀 빠른 기록은 기기 활동 병합 후보가 아니다", () => {
+    const rest = existingSession({
+      id: "rest-1",
+      captureDepth: "QUICK",
+      activityOutcome: "RESTED",
+      activitySlot: undefined,
+      objectiveDataState: "NONE",
+      planExecutionRelation: "NOT_APPLICABLE",
+      system: "",
+      title: "휴식",
+      distanceKm: "",
+      durationMin: "",
+      avgPace: "",
+      rpe: 0,
+      fieldProvenance: {
+        activityOutcome: { provenance: "EXPLICIT" },
+        planExecutionRelation: { provenance: "EXPLICIT" },
+        rpe: { provenance: "MISSING" },
+      },
+    })
+
+    const [draft] = buildImportDrafts([activity()], [rest])
+    expect(draft?.duplicateOf).toBeNull()
+  })
+
+  it("기존 객관값이 있으면 가져온 값으로 덮어쓰지 않는다", () => {
+    const existing = existingSession({ distanceKm: "5.00", durationMin: "25" })
+    expect(saveEntry(existing).ok).toBe(true)
+    const [draft] = buildImportDrafts([activity({ distanceKm: "5.10", durationMin: "26" })], [existing])
+    if (draft === undefined) throw new Error("missing draft")
+
+    const result = confirmImportDrafts([{
+      draft, intent: { kind: "ADD_TO_EXISTING", entryId: existing.id, expectedSavedAt: existing.savedAt },
+    }], "tcx")
+
+    expect(result).toMatchObject({ merged: 0, conflicts: 1, failed: 0 })
+    expect(loadEntries()[0]).toMatchObject({ distanceKm: "5.00", durationMin: "25" })
   })
 })

@@ -1,8 +1,8 @@
 import React from "react"
 import { parseActivityFile } from "../domain/import/activity-file"
 import type { ActivityParseResult } from "../domain/import/activity-file"
-import { buildImportDrafts, saveImportedActivities } from "../domain/import/import-draft"
-import type { ImportDraft, ImportFormat, ImportSaveResult } from "../domain/import/import-draft"
+import { buildImportDrafts, confirmImportDrafts } from "../domain/import/import-draft"
+import type { ImportDraft, ImportDraftSelection, ImportFormat, ImportSaveIntent, ImportSaveResult } from "../domain/import/import-draft"
 import { PickStage, ReviewStage, SavedStage } from "./import-activities/ImportStages"
 import type { ReadFailure } from "./import-activities/ImportStages"
 import { mono, secondaryBtn } from "./import-activities/styles"
@@ -22,6 +22,7 @@ export function ImportActivities({ onBack, onOpenLog }: {
   const [stage, setStage] = React.useState<Stage>({ step: "pick" })
   const [failure, setFailure] = React.useState<ReadFailure>(null)
   const [selected, setSelected] = React.useState<ReadonlySet<number>>(new Set())
+  const [intents, setIntents] = React.useState<ReadonlyMap<number, ImportSaveIntent>>(new Map())
   const [busy, setBusy] = React.useState(false)
   const fileInputRef = React.useRef<HTMLInputElement>(null)
   const readControllerRef = React.useRef<AbortController | null>(null)
@@ -64,10 +65,11 @@ export function ImportActivities({ onBack, onOpenLog }: {
     }
 
     const drafts = buildImportDrafts(result.activities)
-    // 중복으로 보이는 항목은 기본 해제 — 사용자가 직접 켜야 저장된다.
-    setSelected(new Set(
-      drafts.flatMap((draft, index) => (draft.duplicateOf === null ? [index] : [])),
+    const separate = drafts.flatMap((draft, index) => (
+      draft.duplicateOf === null && draft.reconciliationCandidates.length === 0 ? [index] : []
     ))
+    setSelected(new Set(separate))
+    setIntents(new Map(separate.map((index) => [index, { kind: "SAVE_SEPARATE" }])))
     setStage({ step: "review", drafts, result })
   }
 
@@ -89,13 +91,17 @@ export function ImportActivities({ onBack, onOpenLog }: {
 
   const handleSave = () => {
     if (stage.step !== "review") return
-    const chosen = stage.drafts
-      .filter((_, index) => selected.has(index))
-      .map((draft) => draft.activity)
+    const chosen: ImportDraftSelection[] = []
+    for (const [index, draft] of stage.drafts.entries()) {
+      if (!selected.has(index)) continue
+      const intent = intents.get(index)
+      if (intent === undefined) return
+      chosen.push({ draft, intent })
+    }
     if (chosen.length === 0) return
 
     const format = importFormat(stage.result.format)
-    const outcome = saveImportedActivities(chosen, format)
+    const outcome = confirmImportDrafts(chosen, format)
     setStage({ step: "saved", outcome })
   }
 
@@ -139,6 +145,13 @@ export function ImportActivities({ onBack, onOpenLog }: {
             drafts={stage.drafts}
             result={stage.result}
             selected={selected}
+            intents={intents}
+            onIntent={(index, intent) => setIntents((current) => {
+              const next = new Map(current)
+              if (intent === undefined) next.delete(index)
+              else next.set(index, intent)
+              return next
+            })}
             onToggle={toggle}
             onSave={handleSave}
             onRestart={() => { setStage({ step: "pick" }); setSelected(new Set()) }}

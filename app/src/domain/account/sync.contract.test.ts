@@ -1,12 +1,15 @@
 // 계정·동기화 계약 테스트
 // 1) mergeEntries: id 기준 LWW(savedAt), 동률 로컬 승리, 단독 항목 보존
 // 2) 동의 상태: 기본 OFF, 저장/복원, 깨진 JSON에도 안전 기본값
-// 3) 업로드 페이로드: 기본은 메모 원문 제거(safe-export), 토글 ON일 때만 포함
+// 3) 업로드 페이로드: 과거 동의값과 관계없이 구조화 필드만 포함
 // 4) replaceAllEntries: fail-closed (유효 항목만 기록)
 // 5) feature flag OFF: 인증 함수가 안전한 실패값 반환
 import { beforeEach, describe, expect, it } from "vitest"
 import type { JournalEntry, PostSessionEntry } from "../journal-schema"
 import { loadEntries, replaceAllEntries } from "../journal-store"
+import { canonicalJsonFingerprint } from "@impl/plan-generator/candidate-identity"
+import { fromStructuredJournalPayload } from "../safe-export"
+import type { SafeJournalEntry } from "../safe-export"
 import {
   loadSyncConsent, mergeEntries, saveSyncConsent, toUploadPayload,
 } from "./sync"
@@ -96,32 +99,122 @@ describe("동기화 동의 상태 — 메모 목적 분리", () => {
   })
 })
 
-describe("업로드 페이로드 — 메모 목적별 경계", () => {
-  it("훈련 메모 공유를 끄면 memo/memoPurpose가 제거된다", () => {
-    const payload = toUploadPayload(post("a", "2026-07-20T10:00:00.000Z"), {
-      enabled: true, shareTrainingNotes: false,
+const uploadBase = {
+  id: "structured-upload",
+  date: "2026-07-20",
+  savedAt: "2026-07-20T10:00:00.000Z",
+  syncState: "local" as const,
+}
+
+const structuredUploads: SafeJournalEntry[] = [
+  {
+    ...uploadBase, kind: "post-session", system: "base", title: "Easy run",
+    distanceKm: "8", durationMin: "45", avgPace: "5:30", rpe: 4,
+    fieldProvenance: { distanceKm: { provenance: "EXPLICIT" } },
+  },
+  {
+    ...uploadBase, kind: "evening", sleepH: 8, sleepQuality: 4,
+    weightKg: "60", restingHr: "50", painParts: {}, mood: 4,
+    fieldProvenance: { sleepH: { provenance: "EXPLICIT" } },
+  },
+  {
+    ...uploadBase, kind: "race", stage: "post", record: "20:00", rank: "3",
+    result: "Finished", tension: 3, condition: 4, mood: 4,
+    goalPace: { schemaVersion: 1, unit: "seconds_per_kilometer", secondsPerKm: 240 },
+    fieldProvenance: { condition: { provenance: "EXPLICIT" } },
+  },
+]
+
+const memoOnlyUploads: JournalEntry[] = [
+  post("memo-only", uploadBase.savedAt, {
+    system: "", title: "", distanceKm: "", durationMin: "", avgPace: "", rpe: 0,
+  }),
+  {
+    ...uploadBase, kind: "evening", sleepH: 0, sleepQuality: 0,
+    weightKg: "", restingHr: "", painParts: {}, mood: 0, note: "Local note only",
+  },
+  {
+    ...uploadBase, kind: "race", stage: "post", record: "", rank: "",
+    result: "", memo: "Local memo only",
+  },
+]
+
+describe.each([false, true])("structured-only upload: shareTrainingNotes=%s", (shareTrainingNotes) => {
+  describe.each([undefined, "PRIVATE_SELF_ONLY", "ANALYZABLE_TRAINING_NOTE"] as const)(
+    "memoPurpose=%s",
+    (memoPurpose) => {
+      it.each(structuredUploads)("omits raw text and restores only structured $kind fields", (structured) => {
+        const rawText = "Synthetic local-only text"
+        const entry: JournalEntry = structured.kind === "evening"
+          ? { ...structured, note: rawText, memoPurpose }
+          : { ...structured, memo: rawText, memoPurpose }
+        const before = JSON.stringify(entry)
+
+        const payload = toUploadPayload(entry, { enabled: true, shareTrainingNotes })
+
+        expect(payload).toEqual(structured)
+        expect(payload).not.toHaveProperty("memo")
+        expect(payload).not.toHaveProperty("note")
+        expect(payload).not.toHaveProperty("memoPurpose")
+        expect(fromStructuredJournalPayload(payload)).toEqual({
+          ...structured, [structured.kind === "evening" ? "note" : "memo"]: "",
+        })
+        expect(JSON.stringify(entry)).toBe(before)
+      })
+
+      it.each(memoOnlyUploads)("does not upload a memo-only $kind entry", (base) => {
+        const entry = { ...base, memoPurpose }
+        const before = JSON.stringify(entry)
+
+        expect(toUploadPayload(entry, { enabled: true, shareTrainingNotes })).toBeNull()
+        expect(JSON.stringify(entry)).toBe(before)
+      })
+    },
+  )
+
+  it("preserves a plan-only link and quick training fields without local memo changes", () => {
+    const target = {
+      planVersionId: `sha256:${"a".repeat(64)}`,
+      candidateFingerprint: `sha256:${"b".repeat(64)}`,
+      sessionContentFingerprint: `sha256:${"c".repeat(64)}`,
+      plannedDate: uploadBase.date, sessionDay: 1, sessionSlot: "PM" as const,
+      plannedRole: "EASY" as const, plannedEnergyIntent: "BASE_INTENT" as const,
+    }
+    const entry = post("linked-upload", uploadBase.savedAt, {
+      system: "", title: "", distanceKm: "", durationMin: "", avgPace: "", rpe: 0,
+      plannedSessionLink: {
+        ...target, schemaVersion: 1,
+        plannedSessionId: canonicalJsonFingerprint("trainoracle.planned-session.v1", target),
+        linkSource: "ATHLETE_SELECTED_FROM_PLAN", linkedAt: uploadBase.savedAt,
+      },
     })
-    expect(payload).not.toBeNull()
-    expect(payload).not.toHaveProperty("memo")
-    expect(payload).not.toHaveProperty("memoPurpose")
-    expect(payload).toHaveProperty("rpe", 4)
-  })
+    expect(replaceAllEntries([entry]).ok).toBe(true)
+    const localBefore = window.localStorage.getItem(JOURNAL_KEY)
+    expect(saveSyncConsent({ enabled: true, shareTrainingNotes })).toBe(true)
 
-  it("훈련 메모 공유를 켜면 훈련 메모 원문만 포함된다", () => {
-    const payload = toUploadPayload(post("a", "2026-07-20T10:00:00.000Z"), {
-      enabled: true, shareTrainingNotes: true,
-    })
-    expect(payload).toHaveProperty("memo", "오늘 메모")
-  })
+    const payload = toUploadPayload(entry, loadSyncConsent())
+    const { memo: _memo, memoPurpose: _memoPurpose, ...expected } = entry
 
-  it("나만의 메모 원문은 공유 설정과 관계없이 구조화 페이로드에서 제외된다", () => {
-    const payload = toUploadPayload(post("a", "2026-07-20T10:00:00.000Z", {
-      memo: "절대 공유하지 않을 일기",
-      memoPurpose: "PRIVATE_SELF_ONLY",
-    }), { enabled: true, shareTrainingNotes: true })
+    expect(payload).toEqual(expected)
+    expect(fromStructuredJournalPayload(payload)).toEqual({ ...expected, memo: "" })
+    expect(window.localStorage.getItem(JOURNAL_KEY)).toBe(localBefore)
+    expect(loadSyncConsent()).toEqual({ enabled: true, shareTrainingNotes })
 
-    expect(payload).not.toHaveProperty("memo")
-    expect(payload).not.toHaveProperty("memoPurpose")
+    const quickFields = {
+      captureDepth: "QUICK", activityOutcome: "COMPLETED", activitySlot: "PM",
+      rpeBand: "RPE_3_4", objectiveDataState: "WAITING", planExecutionRelation: "AS_PLANNED",
+      painCheckStatus: "NO_SIGNAL_REPORTED", painParts: {},
+      fieldProvenance: {
+        plannedSessionLink: { provenance: "EXPLICIT" },
+        activityOutcome: { provenance: "EXPLICIT" },
+        planExecutionRelation: {
+          provenance: "DERIVED", derivationRuleId: "QUICK_PLAN_EXECUTION_RELATION_V2",
+          derivedFrom: ["activityOutcome", "plannedSessionLink"],
+        },
+      },
+    } satisfies Partial<PostSessionEntry>
+    expect(toUploadPayload({ ...entry, ...quickFields }, loadSyncConsent()))
+      .toEqual({ ...expected, ...quickFields })
   })
 })
 
