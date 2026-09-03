@@ -112,9 +112,8 @@ test("shows a duplicate warning unchecked instead of merging silently", async ({
 
   const checkbox = page.getByRole("checkbox")
   const label = checkbox.locator("..")
-  const box = await label.boundingBox()
-  expect(box?.width ?? 0).toBeGreaterThanOrEqual(44)
-  expect(box?.height ?? 0).toBeGreaterThanOrEqual(44)
+  await expect.poll(async () => (await label.boundingBox())?.width ?? 0).toBeGreaterThanOrEqual(44)
+  await expect.poll(async () => (await label.boundingBox())?.height ?? 0).toBeGreaterThanOrEqual(44)
   await label.click({ position: { x: 3, y: 22 } })
   await expect(checkbox).toBeChecked()
   await expect(page.getByRole("button", { name: "저장 방식을 골라 주세요" })).toBeDisabled()
