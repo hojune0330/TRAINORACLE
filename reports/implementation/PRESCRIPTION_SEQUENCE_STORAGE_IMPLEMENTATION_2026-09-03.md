@@ -2,9 +2,9 @@
 
 ```yaml
 doc_id: trainoracle-prescription-sequence-storage-20260903
-status: REVIEW_FIXES_LOCAL_RECHECK_IN_PROGRESS
+status: LOCAL_VERIFIED_SERVER_PUBLIC_GATE_OPEN
 owner: COACH_HOJUNE
-version: "0.2"
+version: "0.3"
 base_sha: a3d2b2717b2a2479bc183f7bf58ce3923b3c9d14
 branch: codex/prescription-sequence-storage
 new_numeric_templates: 0
@@ -128,7 +128,7 @@ P1 두 건으로 CHANGES_REQUIRED를 반환했다. [PR #316 검수 기록](https
 수정했다. 휴식 세션에 처방을 붙이는 형태로 추론되지 않도록 QUALITY 조건을
 명시했다. 수정 후 앱/코어/e2e 타입 검사와 빌드를 통과했다.
 새 빌드는 `PlanBeta-C96qrWlw.js`, `public-profile-DNx97rOz.js`다.
-전체 앱과 관련 브라우저 재검사는 이 체크포인트에서 진행 중이다.
+전체 앱과 관련 브라우저 재검사 결과는 §7에 추가한다.
 
 ### 서버 후속 관문
 
@@ -139,6 +139,36 @@ P1 두 건으로 CHANGES_REQUIRED를 반환했다. [PR #316 검수 기록](https
 OI-PPPS-IDENTIFIER-001을 OPEN으로 추가했고, 실제 이슈 표는 6개 OPEN/4개 canonical
 blocking으로 재계수했다. 이 작업은 공개 기능을 켜거나 데이터 삭제를 승인하지 않는다.
 
-수정본의 소프트웨어 재검수, 최종 CI, main 병합과 배포는 아직 별도 확인 대상이다.
+수정본의 소프트웨어 재검수는 아래 §7에 기록한다. 최종 CI, main 병합과 배포는
+아직 별도 확인 대상이다.
+
+## 7. 수정 후 로컬 완료 체크포인트
+
+검사 대상 구현 SHA: `cff7ab1d7010cd8f8a425f12c4695a68a668faad`.
+본 절을 추가하면서 제품 코드나 테스트 입력을 다시 바꾸지 않았다.
+
+| 검사 | 최종 관측 결과 |
+|---|---|
+| 앱 전체 UTC | 256파일 / 2187개 PASS |
+| 앱 전체 KST | 256파일 / 2187개 PASS |
+| release-env / device-integration | `npm test`의 후속 명령 포함 exit 0 |
+| 코어 전체 / 타입 | 750개 PASS / tsc exit 0 |
+| 앱 / e2e 타입 | tsc exit 0 |
+| 최종 빌드 | PASS, 위 §6 번들 |
+| 최종 관련 브라우저 | 36개 PASS, 4개 프로젝트, 4.0분 |
+| 시각 확인 | 375px/1440px 방법 화면과 저장 구조 안내 캡처 확인; 실제 모바일 기기는 아님 |
+
+두 시간대의 같은 시험을 4374개의 서로 다른 기능 시험으로 합산하지 않는다.
+공개 전송 시험은 mock 인자 검증이며 실제 Supabase 서버 쓰기가 아니다.
+local preview는 검수 후 종료했다. 작업자가 사용하던 다른 worktree나 증거는 삭제하지 않았다.
+
+PR: <https://github.com/hojune0330/TRAINORACLE/pull/316>.
+Sol high는 위 구현 SHA를 다시 정적으로 검토해 **로컬 차단 결함 없음**으로
+판정했다. 공동 변조와 공개 ID 원문 전송 경로가 수정됐음을 확인했지만 테스트를
+독립 재실행하지는 않았다. 부모의 실행 결과와 모델의 코드 검토를 별개로 기록한다.
+이는 Fable UX, 코치, 스포츠과학자 또는 서버 운영자의 승인서가 아니다.
+
+원격 CI와 최종 PR head는 PR의 SHA별 댓글에서 확인한다. 이 문서는 로컬 통과를
+main 병합·배포로 승격하지 않으며, OI-PPPS-IDENTIFIER-001도 OPEN이다.
 
 [DRAFT_COMPLETE]
