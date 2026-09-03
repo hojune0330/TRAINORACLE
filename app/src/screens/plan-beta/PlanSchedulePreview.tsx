@@ -16,6 +16,9 @@ import {
 } from "./labels"
 import { DetailedPrescriptionView } from "./DetailedPrescriptionView"
 import { PlanFlowCodeHelp } from "./PlanFlowCodeHelp"
+import { SessionExplanationEntry } from "./SessionExplanation"
+import type { SessionExplanationContext } from "../../domain/session-explanation"
+import type { SessionExplanationEvidence } from "../../domain/session-explanation-evidence"
 
 const WEEKDAYS = ["일요일", "월요일", "화요일", "수요일", "목요일", "금요일", "토요일"] as const
 type FrameLengthDays = 7 | 9 | 9.5 | 10
@@ -45,6 +48,8 @@ export function PlanSchedulePreview({
   showRpeGuide = true,
   timelineHeading,
   displayMode = "stack",
+  explanationContext,
+  loadEvidence,
 }: {
   readonly startDate: string
   readonly frameLengthDays?: FrameLengthDays
@@ -54,6 +59,8 @@ export function PlanSchedulePreview({
   readonly showRpeGuide?: boolean
   readonly timelineHeading?: string
   readonly displayMode?: ScheduleDisplayMode
+  readonly explanationContext?: SessionExplanationContext
+  readonly loadEvidence?: (session: PlanSession) => SessionExplanationEvidence | null
 }) {
   const validStartDate = isValidIsoDate(startDate)
   const dayCount = Math.ceil(frameLengthDays)
@@ -186,6 +193,8 @@ export function PlanSchedulePreview({
                       key={`${session.day}-${session.slot}`}
                       date={date}
                       session={session}
+                      explanationContext={explanationContext}
+                      loadEvidence={loadEvidence}
                       compact={displayMode === "swipe"}
                       footer={renderSessionFooter?.(session)}
                     />
@@ -215,11 +224,15 @@ function PlanSessionPreview({
   session,
   compact,
   footer,
+  explanationContext,
+  loadEvidence,
 }: {
   readonly date: string
   readonly session: PlanSession
   readonly compact: boolean
   readonly footer?: ReactNode
+  readonly explanationContext?: SessionExplanationContext
+  readonly loadEvidence?: (session: PlanSession) => SessionExplanationEvidence | null
 }) {
   const flow = sessionFlowLabel(session)
   const details = (
@@ -271,6 +284,7 @@ function PlanSessionPreview({
         <small className={session.role === "REST" ? "plan-session-help" : "plan-session-metric"}>
           {prescriptionLabel(session)}
         </small>
+        <SessionExplanationEntry session={session} context={explanationContext} loadEvidence={loadEvidence} />
         {compact ? (
           <details className="plan-day-card__details">
             <summary>{sessionSlotLabel(session.slot)} 훈련 방법과 기록</summary>

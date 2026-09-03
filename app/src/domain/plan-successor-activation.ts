@@ -1,4 +1,5 @@
 import { z } from "zod"
+import { createExplanationReceipt } from "./training-explanation-receipt"
 import {
   canonicalJson,
   canonicalJsonSha256,
@@ -526,6 +527,7 @@ function buildActivatedSuccessorState(
   const parsed = planBetaStateV3Schema.safeParse({
     ...preview,
     generatedAt: activatedAt,
+    explanationReceipt: createExplanationReceipt(preview.activePlan, activatedAt),
     intake: { ...preview.intake, startDate: localDate },
     progress: [],
     periodization,

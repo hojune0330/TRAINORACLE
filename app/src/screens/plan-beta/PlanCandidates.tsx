@@ -22,6 +22,10 @@ import { CandidateSection } from "./CandidateSection"
 import type { CandidateSelection } from "./plan-selection"
 import { PaceEvidenceFlow } from "./PaceEvidenceFlow"
 import { RacePlacementNotice } from "./RacePlacementNotice"
+import { comparePlanMainWork } from "../../domain/plan-main-comparison"
+import { MainWorkComparison } from "./MainWorkComparison"
+import { PlanMethodPicker } from "./PlanMethodPicker"
+import { resolveDetailedPlanTemplateOptions } from "./plan-template-options"
 
 export function PlanCandidates({
   generated,
@@ -35,6 +39,8 @@ export function PlanCandidates({
   onSelectRecord,
   onCompareRecord,
   onConfirmRecord,
+  onChangeMethod,
+  onSelectionDetailsChange,
   onBack,
   onSelect,
 }: {
@@ -49,6 +55,8 @@ export function PlanCandidates({
   readonly onSelectRecord: (recordId: string) => void
   readonly onCompareRecord: (recordId: string | null) => void
   readonly onConfirmRecord: () => void
+  readonly onChangeMethod?: (reference: PlanBetaIntake["selectedDetailedTemplateRef"]) => void
+  readonly onSelectionDetailsChange?: () => void
   readonly onBack: () => void
   readonly onSelect: (selection: CandidateSelection) => void
 }) {
@@ -87,6 +95,11 @@ export function PlanCandidates({
           : "최근 일지가 있는지만 확인했어요. 일지의 거리, RPE, 메모는 이번 베타 계획의 시간이나 강도를 바꾸지 않습니다."}
       </p>
       <RacePlacementNotice state={generated.racePlacement} />
+      {onChangeMethod !== undefined && <PlanMethodPicker
+        options={resolveDetailedPlanTemplateOptions(intake)}
+        selected={intake.selectedDetailedTemplateRef}
+        onChange={onChangeMethod}
+      />}
       {intake.selectedDetailedTemplateRef !== null
         && (intake.eventGroup === "FIVE_K" || intake.eventGroup === "MIDDLE_DISTANCE")
         && intake.experienceBand === "EXPERIENCED"
@@ -147,7 +160,10 @@ export function PlanCandidates({
           value={startDate}
           aria-label="계획 시작 날짜"
           aria-describedby="plan-start-date-help"
-          onChange={(event) => setStartDate(event.target.value)}
+          onChange={(event) => {
+            if (event.target.value !== startDate) onSelectionDetailsChange?.()
+            setStartDate(event.target.value)
+          }}
         />
         <small id="plan-start-date-help">
           고른 날짜부터 실제 달력에 맞춰 보여드려요.
@@ -170,7 +186,7 @@ export function PlanCandidates({
       )}
       {detailedEvidencePending && !recordConfirmationPending && (
         <p className="plan-start-date-error" role="alert">
-          상세 훈련을 선택했어요. 위에서 같은 종목의 현재 기록을 고르고 확인하거나, 질문으로 돌아가 RPE 기준을 골라 주세요.
+          상세 훈련을 선택했어요. 같은 종목의 현재 기록을 고르고 확인해 주세요. 기록 없이 받으려면 위의 훈련 방법 선택에서 시간·RPE 기준으로 바꿀 수 있어요.
         </p>
       )}
       <div className="plan-candidate-list">
@@ -198,19 +214,26 @@ function CandidateComparison({
 }) {
   const sharedCandidate = candidates[0]
   const selectedIntentLabel = ENERGY_INTENT_LABELS[sharedCandidate.selectedEnergyIntent].title
+  const comparison = comparePlanMainWork(candidates[0], candidates[1])
 
   return (
     <section className="plan-candidate-comparison" aria-label="두 계획 핵심 비교">
-      <h2>고른 목표는 같고, 쉬운 훈련 시간만 달라요</h2>
+      <h2>{comparison.easyDurationOnly ? "고른 목표는 같고, 쉬운 훈련 시간만 달라요" : "두 계획의 본운동 구성을 확인하세요"}</h2>
       <p className="plan-candidate-comparison__intro">
-        두 계획 모두 주요 훈련 목적인 &lsquo;{selectedIntentLabel}&rsquo;
-        <TermHelp term={ENERGY_INTENT_LABELS[sharedCandidate.selectedEnergyIntent].term} />을 같은 횟수와 RPE로 넣었어요.
-        여기서 쉬운 훈련은 기초 달리기와 회복 운동을 말해요.
+        {comparison.sameMainValues ? <>
+          두 계획 모두 주요 훈련 목적은 &lsquo;{selectedIntentLabel}&rsquo;
+          <TermHelp term={ENERGY_INTENT_LABELS[sharedCandidate.selectedEnergyIntent].term} />이에요.
+          {comparison.hasDetailed
+            ? " 상세 처방이 있는 본운동의 반복·회복·목표 페이스가 같아요."
+            : " 같은 날·시간대에 같은 시간·RPE 범위를 넣었어요. 구체적인 반복과 회복 방법이 정해진 것은 아니에요."}
+          {comparison.hasDetailed && comparison.hasUnspecified && " 구간이 미지정인 다른 본운동은 시간·RPE 범위만 같아요."}
+          {" "}여기서 쉬운 훈련은 기초 달리기와 회복 운동을 말해요.
+        </> : "일정이나 본운동의 수치가 달라 공통 구성이라고 단정할 수 없어요."}
       </p>
-      <div className="plan-candidate-comparison__shared">
-        <strong>두 계획 공통</strong>
+      {comparison.easyDurationOnly && <div className="plan-candidate-comparison__shared">
+        <strong>두 계획의 공통 일정</strong>
         <span>{candidateSharedSessionSummary(sharedCandidate)}</span>
-      </div>
+      </div>}
       <div className="plan-candidate-comparison__options">
         {candidates.map((candidate) => {
           const label = candidateLabel(candidate.kind, candidate.selectedEnergyIntent)
@@ -225,9 +248,11 @@ function CandidateComparison({
           )
         })}
       </div>
+      <MainWorkComparison comparison={comparison} />
       <p className="plan-candidate-comparison__note">
-        두 합계의 차이는 조절할 수 있는 쉬운 훈련을 A에서는 시간 범위로, B에서는 가장 짧은 시간으로 계산해서 생겨요.
-        주요 훈련이 더 많거나 세지는 차이는 아니에요.
+        {comparison.easyDurationOnly
+          ? "두 합계의 차이는 조절할 수 있는 쉬운 훈련을 A에서는 시간 범위로, B에서는 가장 짧은 시간으로 계산해서 생겨요. 주요 훈련이 더 많거나 세지는 차이는 아니에요."
+          : "시간 합계만으로 훈련 방법이나 부담이 같다고 판단하지 않아요."}
       </p>
     </section>
   )

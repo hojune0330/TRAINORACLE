@@ -4,7 +4,7 @@
 doc_id: trainoracle-spec-016-plan-output-rationale-privacy
 spec_id: PLAN_OUTPUT_RATIONALE_PRIVACY_SPEC
 title: TrainOracle Plan Output Rationale Privacy Spec
-version: "0.1"
+version: "0.2"
 round: RT1_PRODUCTIZATION_DRAFT
 status: DRAFT_FOR_REVIEW
 owner: COACH_HOJUNE
@@ -588,5 +588,29 @@ Issue closure requires accepted source spec, target patch, target open-issue rec
 | Forbids private external LLM use | PASS |
 | Cannot create/select plan options | PASS |
 | Cannot clear D9 or Safety Gate blocks | PASS |
+
+## 23. Session Explanation Binding (2026-09-02)
+
+Extend rationale items with read-only session/component references, template and
+explanation versions, and the exact prescription fingerprint. Scientific/public
+source references remain separate from private athlete evidence references.
+Deterministic localized profiles plus structured plan values provide the first
+implementation; external LLM inference is neither required nor authorized.
+
+Explanation completeness covers purpose, metabolic context, work, recovery, cycle
+role, expected adaptation/limitations and evidence. Only inputs actually consumed
+by the selected plan path may be claimed as selection inputs. Journal observations
+that were not consumed are labeled observations, never retrospective reasons.
+
+Missing/stale explanation data does not delete or mutate a valid stored prescription.
+Show the general profile and the missing plan-specific provenance explicitly. New
+template release requires a complete explanation profile; missing explanation is
+not athlete ineligibility. Public sharing and safe exports must not include private
+plan rationale by default. Existing raw-text, consent, audience and safety rules
+apply to every new tab, diagram, tooltip and source reference.
+
+Change ledger: ADD session-scoped binding and completeness; KEEP all privacy and
+audience restrictions; DEFER server endpoints and human/scientific approvals not
+actually obtained. No open issue is closed by this amendment.
 
 [DRAFT_COMPLETE]

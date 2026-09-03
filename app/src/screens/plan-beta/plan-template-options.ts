@@ -69,7 +69,7 @@ export function resolveDetailedPlanTemplateOptions(
       notation: authority.approval.notation,
       targetEventDistanceM: eventDistanceM,
       trainingFocus,
-      mainSummary: `${work} ${notation.repetitionsPerSet}회${notation.setCount > 1 ? `씩 ${notation.setCount}세트` : ""} · 총 ${totalRepetitions}회`,
+      mainSummary: `${work} ${notation.repetitionsPerSet}회${notation.setCount > 1 ? `씩 ${notation.setCount}세트 · 총 ${totalRepetitions}회` : ""}`,
       recoverySummary: recovery.join(" · "),
       preparationSummary: `준비 ${warmup.easyDurationMinutes}분 RPE ${warmup.rpeMin}-${warmup.rpeMax}, ${warmup.strides.durationSeconds}초 점진 가속 ${warmup.strides.repetitions}회와 사이 ${warmup.strides.recoverySeconds}초 걷기/조깅 · 정리 ${cooldown.easyDurationMinutes}분 RPE ${cooldown.rpeMin}-${cooldown.rpeMax}`,
     }]

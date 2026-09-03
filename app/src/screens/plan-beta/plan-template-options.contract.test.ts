@@ -20,7 +20,7 @@ describe("explicit detailed plan template options", () => {
 
     expect(option?.ref.templateId).toBe(templateId)
     expect(option?.notation).toBe(notation)
-    expect(option?.mainSummary).toMatch(/총 \d+회/u)
+    expect(option?.mainSummary).toMatch(/^\d+m \d+회$/u)
     expect(option?.preparationSummary).toContain("준비 15분")
   })
 
@@ -41,7 +41,7 @@ describe("explicit detailed plan template options", () => {
       "2026-08-24T09:00:00.000Z",
     )
     expect(options.map(option => option.ref.templateId)).toEqual(["V2-SEED-05"])
-    expect(options[0]).toMatchObject({ mainSummary: "1000m 5회 · 총 5회", recoverySummary: "반복 사이 2분 30초 조깅" })
+    expect(options[0]).toMatchObject({ mainSummary: "1000m 5회", recoverySummary: "반복 사이 2분 30초 조깅" })
   })
 
   it.each([undefined, "NEW_TO_RUNNING", "DEVELOPING"] as const)("does not offer experienced-only templates to %s", (experienceBand) => {

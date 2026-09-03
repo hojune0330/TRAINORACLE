@@ -50,4 +50,13 @@ test("creates a mobile marathon beta plan without inventing pace numbers", async
   await expect.poll(() => page.locator(".app-scroll-region").evaluate(
     (element) => element.scrollWidth <= element.clientWidth,
   )).toBe(true)
+  await page.getByRole("button", { name: "시간 조절 계획 선택하기", exact: true }).click()
+  await page.getByRole("button", { name: "이 훈련을 하는 이유", exact: true }).first().click()
+  const reader = page.getByRole("dialog")
+  await reader.getByRole("tab", { name: "이유·근거" }).click()
+  await expect(reader.getByText(/대상 종목은 42195m/u)).toBeAttached()
+  await expect(reader.getByText(/개인 경기 기록으로 시간·RPE·페이스를 계산한 처방은 아니에요/u)).toBeAttached()
+  await reader.getByRole("tab", { name: "주기·기록" }).click()
+  await expect(reader.getByText(/미기록을 0이나 훈련 실패로 계산하지 않아요/u)).toBeAttached()
+  await reader.getByRole("button", { name: "훈련 일정으로 돌아가기" }).click()
 })

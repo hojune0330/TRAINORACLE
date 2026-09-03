@@ -5,7 +5,7 @@ document_metadata:
   doc_id: trainoracle-spec-training-terminology-and-explanation
   spec_id: TRAINING_TERMINOLOGY_AND_EXPLANATION_SPEC
   title: Training Terminology And Explanation Spec
-  version: "1.0"
+  version: "1.1"
   round: RT1
   status: DRAFT_FOR_REVIEW
   owner: COACH_HOJUNE
@@ -177,5 +177,38 @@ Self-checks and markdown assertions are not runtime evidence.
 - Lactate shuttle and aerobic-use context: https://pubmed.ncbi.nlm.nih.gov/32444344/
 - Carbohydrate and fat oxidation context: https://pubmed.ncbi.nlm.nih.gov/32747792/
 - Traditional anaerobic terminology and interaction: https://pubmed.ncbi.nlm.nih.gov/11547894/
+
+## 12. Owner-Approved Integrated Explanation Direction (2026-09-02)
+
+Every offered session, including BASE, LT, VO2, GLY, ATP-PC, MIX, REC, OFF,
+warmup and cooldown, must expose its purpose and an explanation appropriate to its
+actual prescription. This approval is product implementation authority, not a
+scientific reviewer signature, template-dose adoption, or canonical promotion.
+
+The explanation has three separate owners: this lexicon defines terms; a reviewed
+training profile defines the intended stimulus and applicability; the actual plan
+defines numbers, selected inputs and placement. Do not infer individual physiology
+from a planned intent or substitute a technique benefit for a metabolic purpose.
+
+Required sections are purpose, energy-supply context, work-structure rationale,
+recovery rationale, cycle role, expected adaptation/limitations and evidence.
+Non-applicable sections state why. REC/OFF and technical or strength activities
+must not be forced into a metabolic-pathway label. GLY does not universally imply
+complete recovery; the actual recovery duration and mode must be displayed.
+
+Use compact inline purpose, existing short term help and a full session view with
+Method / Reason-and-evidence / Cycle-and-records tabs. Easy and professional modes
+share the same prescription; professional mode adds detail rather than removing
+essential instructions from easy mode. Return navigation restores focus and scroll.
+
+The runtime must distinguish general mechanism, template design intention, and
+actually used athlete inputs. No real-time LLM invents efficacy, doses, or reasons.
+Raw private notes are not explanation inputs. Scientific sources carry study type,
+population, scope limitations and review status; a URL alone is not an approval.
+
+Change ledger: ADD mandatory session explanations and three-layer ownership;
+MODIFY generic GLY recovery wording; KEEP existing term IDs, privacy and safety;
+DEFER unsupported individual physiological predictions and unreviewed doses.
+Open-issue counts above remain unchanged; this section closes no issue.
 
 [DRAFT_COMPLETE]

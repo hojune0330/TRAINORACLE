@@ -145,12 +145,12 @@ export const GLOSSARY: Record<TermId, GlossaryEntry> = {
   },
   gly: {
     label: "짧은 고강도 반복", code: "GLY", category: "TRAINING_INTENT", aliases: ["해당계", "무산소 젖산", "Glycolytic"],
-    short: "짧고 강한 구간을 충분한 회복과 함께 반복해 해당과정의 부담을 다루는 훈련 목적이에요.",
+    short: "짧고 강한 구간과 목적에 맞는 회복을 함께 구성해 해당과정의 부담을 다뤄요. 회복 시간과 방식은 실제 처방에 따라 달라집니다.",
     namingOrigin: "GLY는 Glycolytic의 줄임말로, 포도당을 분해해 ATP를 만드는 해당과정에서 가져온 이름이에요.",
     pathwayContext: "해당과정의 기여가 커질 수 있지만 인원질과 산화 대사도 동시에 작동해요.",
     lactateContext: "젖산은 단순한 노폐물이 아니며 다른 조직에서 다시 연료로 쓰일 수 있어요. '무산소 젖산'은 익숙한 옛 표현으로만 함께 검색됩니다.",
     substrateContext: "주요 출발 연료는 탄수화물 계열이지만 화면만으로 실제 사용 비율을 측정할 수 없어요.",
-    notMeaning: "스피드 자체를 뜻하지 않으며 모든 빠른 달리기를 GLY로 분류하지 않아요.",
+    notMeaning: "스피드 자체를 뜻하지 않으며 모든 빠른 달리기를 GLY로 분류하지 않아요. 모든 GLY 훈련이 완전 회복을 요구하는 것도 아니에요.",
     relatedTerms: ["glycolytic", "lactate", "carbohydrate-metabolism"], sourceRefs: [SOURCES.lactate, SOURCES.terminology], reviewedAt: "2026-08-29",
   },
   atp: {

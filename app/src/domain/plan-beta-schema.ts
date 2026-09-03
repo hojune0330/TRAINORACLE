@@ -26,6 +26,7 @@ import { DETAILED_PRESCRIPTION_APPROVALS } from "./detailed-prescription-approva
 import { formatElapsedMonths, SEASON_WINDOW_MONTHS } from "./athlete-record-display"
 import { athleteRecordIdSchema } from "./athlete-records"
 import { periodizationContextSchema } from "./periodization-lineage"
+import { explanationReceiptSchema } from "./training-explanation-receipt"
 
 const planEventGroupSchema = z.enum([
   "MIDDLE_DISTANCE",
@@ -224,6 +225,8 @@ const activePlanV3Schema = activePlanSchema.extend({
 }).strict()
 const planBetaStateV3BaseSchema = z.object({
   version: z.literal(3),
+  // Corrupt or newer explanation metadata must not destroy a valid saved prescription.
+  explanationReceipt: explanationReceiptSchema.optional().catch(undefined),
   intake: planIntakeSchema,
   progress: z.array(progressSchema),
   generatedAt: z.string().datetime(),

@@ -4,7 +4,7 @@
 doc_id: PLAN_CYCLE_RESPONSE_AND_ADAPTATION_CONTRACT
 spec_id: TO-PLAN-CYCLE-RESPONSE-001
 title: TrainOracle Repeated Cycle Response And Adaptation Contract
-version: 1.1
+version: 1.2
 round: RT2_CORE_EVIDENCE_INTEGRITY
 status: DRAFT_FOR_REVIEW
 owner: TrainOracle Product Owner
@@ -105,5 +105,23 @@ detailed-pace observations without a planned RPE, and below-range accounting.
 | `OI-PCR-METHOD-VARIATION-001` | YES | OPEN | At least two accepted same-scope detailed methods and rotation rules. |
 | `OI-PCR-MULTI-METRIC-001` | NO | OPEN | Qualified adoption before duration, split, or objective-component response is used. |
 | `OI-PCR-LONGITUDINAL-001` | NO | OPEN | Prospective evidence before any efficacy or improvement claim. |
+
+## 10. Explanation And Method-Choice Boundary (2026-09-02)
+
+Session explanation separates planned stimulus, linked actual record and observed
+change. Completed checkmarks do not manufacture actual duration/distance or prove
+physiological adaptation. Sparse training history does not diagnose an energy-system
+deficit. Preserve the exact plan/session linkage and exclusion reasons.
+
+Same-method repetition in a later cycle is allowed for comparison. Two method
+options belong to an explicitly selected future plan; they are not automatic
+progression or authority to edit the active frame. A method switch must disclose
+all dose differences and pass the accepted successor/transform rules. It cannot
+relabel multiple intensity/volume/frequency changes as a single harmless change.
+Until a specific reviewed transform exists, show explanation/comparison only.
+
+Change ledger: ADD explanation provenance and method distinction; KEEP current
+adaptation limits and immutable active plans; DEFER unaccepted transforms and
+efficacy claims. All existing open issues remain open.
 
 [DRAFT_COMPLETE]

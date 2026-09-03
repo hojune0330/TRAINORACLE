@@ -5,7 +5,7 @@ document_metadata:
   doc_id: trainoracle-spec-training-session-prescription
   status: RECONSTRUCTED_WITH_OWNER_ADOPTED_V2_SEED_05
   owner: COACH_HOJUNE
-  version: "0.3"
+  version: "0.5"
   local_original_found: false
   reconstructed_from_current_product_and_review_sources: true
   restored_original: false
@@ -364,5 +364,156 @@ runtime_sync:
 `OWNER-NOTATION-001` remains an unbound parser regression fixture. Its notation must
 not be mistaken for an activated athlete prescription, even though a different exact
 5000 m template identity is allowlisted above.
+
+## 12. Structured Sequence And Rationale Extension (2026-09-02)
+
+Owner-approved direction: support distance, duration and ordered mixed work blocks
+with explicit work targets, repetitions, within-block recovery and between-block
+recovery. A typed sequence is a representation contract, not activation authority.
+Unknown distance or duration stays unknown; never infer one merely from the other.
+Uniform V1 prescriptions retain their identity, arithmetic and accepted components.
+
+Every session explanation binds its exact session/prescription content, explanation
+version, template identity/version and source references. Numbers are rendered from
+the prescription, not independently authored prose. Changing work or recovery must
+invalidate an old explanation snapshot. Missing historical explanations do not
+authorize invented historical selection reasons or rewriting an accepted plan.
+
+Candidate method distinction excludes label-only, unit-only, repetition-count-only
+and warmup-only differences. Different main-work structure or repeat unit requires
+an explicit reviewed pair rationale. Method difference is not proof of equal dose
+or physiological effect. Target is two valid same-purpose methods, never two copies
+or two sessions the athlete is required to perform. A missing second adopted method
+is an open delivery gap, not permission to manufacture one.
+
+Keep 800 m through marathon scope and age-neutral/self-service authority. Short
+work may be placed when its reviewed eligibility and cycle purpose fit, without
+adding duplicate warmup strides or automatically increasing frequency/volume.
+100-400 m specialist activation remains excluded. Existing specific template
+adoption and source-review requirements remain in force.
+
+Change ledger: ADD typed sequences and content-bound rationale; KEEP V1 storage,
+exact existing numeric adoptions and safety; DEFER activation without exact dose
+and applicability acceptance. Existing runtime counts are historical, not evidence
+for this extension.
+
+### 12.1 Candidate Comparison Projection
+
+Candidate comparison reads the actual session prescriptions, not candidate names.
+Match MAIN sessions by day and AM/PM slot; also compare event, selected purpose and
+per-session purpose before making a shared-work claim. A missing or duplicated slot,
+different context or unreadable structure cannot be labelled identical.
+
+Distinguish exact same prescribed work from the same method with changed dose and
+from a structurally different method awaiting pair review. Repetition-only changes
+are not a second method; a changed athlete anchor is not a different method either.
+RPE/time envelopes without explicit repeat units remain structurally uncomparable,
+even when both saved envelopes match. Never translate these into invented intervals.
+
+The comparison exposes work, recovery, target intensity, available time information
+and limitations in that order. Do not call a pace-target prescription an RPE target.
+Whole-session time envelopes are not main-work time, and uncomputed elapsed time is
+not zero. Identical work can be displayed once, with matching day/slot references.
+Structural differences do not authorize selection, activation or equivalent-effect
+claims; existing runtime adoption gates remain unchanged.
+
+Derived comparison/sequence views are not separately persisted as a second source
+of prescription authority. Existing stored prescriptions and explanation receipts
+remain authoritative. This addition does not activate new templates or close the
+two-distinct-MAIN-method delivery gap.
+
+### 12.2 Explicit Method Changes Before Selection
+
+The candidate screen may change the explicitly selected, currently authorized
+template without restarting the intake. Preserve event, purpose, experience,
+availability, frame, AM/PM preference and the chosen start date. A method change
+regenerates candidates through the existing safety and eligibility gates; it does
+not edit a stored plan, increase MAIN exposure, or silently select another record.
+
+Changing to a detailed method invalidates the previous pace confirmation. Keep the
+record visibly selected for convenience, but calculate and activate its new target
+only after explicit reconfirmation. RPE-only is an alternate prescription basis,
+not a second detailed MAIN method. Do not invent a second method when only one is
+adopted. An unavailable/expired/mismatched template is rejected, not substituted.
+
+Draft changes invalidate outstanding saves and storage retries. Check the draft
+revision again inside the mutation lock, immediately before persistence. If the
+user changes the record/method/start date or returns to intake while a save waits for that
+lock, the old candidate must not become active later. Historical plans and their
+explanation receipts remain unchanged.
+
+Change ledger: ADD candidate-stage explicit choice and stale-save invalidation;
+KEEP exact template adoption, source/transfer review and numeric allowlists;
+DEFER unaccepted second-method doses. No approval or issue closure is implied.
+
+### 12.3 Distance-Based Recovery Representation
+
+Sequence version 2 adds an explicit positive `distanceM` to a recovery segment,
+with `seconds: null`. Version 1 remains unchanged and rejects this new field.
+Distance recovery permits WALK, JOG, WALK_OR_JOG or ACTIVE_ROLL_ON; standing and
+NOT_APPLICABLE cannot carry a recovery distance. ACTIVE_ROLL_ON describes movement
+continued between work bouts and is not silently renamed JOG or assigned a pace.
+
+Distance and duration are exclusive prescribed recovery units. Do not convert a
+100 m recovery to 100 seconds or derive recovery time from the work/race pace.
+MAIN work distance excludes recovery distance. Report repetition, set, transition and terminal
+recovery distances separately; a total with an unknown component remains unknown.
+An absent recovery occurrence is zero occurrences, not missing data. Existing
+time-based totals and version 1 serialization retain their original shape.
+
+As in version 1, between-repeat recovery occurs N-1 times; a last child's unused
+recoveryAfter is not appended. Version 2 requires an explicit root `terminalRecovery`
+for recovery after the final MAIN work and before cooldown, including an explicit
+NOT_APPLICABLE when none is prescribed. Version 1 rejects this field. Count that
+occurrence separately and include it in recovery totals, never in MAIN work distance.
+Do not infer final recovery from an unused recoveryAfter or count it again as cooldown.
+Structural comparison includes recovery unit, amount and mode. This representation
+does not adopt a source example or allow it through the athlete plan schema.
+
+### 12.4 Visible Record-Based Recommendations (Owner Amendment 2026-09-03)
+
+The owner requested numeric recommended repetition times and recovery guidance,
+with a visible, tappable explanation rather than withholding usable numbers by
+default. The owner also authorized researching and applying suitable formulas.
+This is not acceptance of the separate 12 x 400 m example or its exact dose.
+
+For the currently adopted PACE_TARGET templates, show the existing unrounded
+same-event calculation using the existing seconds-v1 display rounding. Identify it
+as an approximate recommendation, not a guarantee of today's capability. Put a
+visible `추천 기준` control with a help icon beside the prescription, and retain a
+short condition/weather limitation even when the explanation is collapsed.
+The control must be keyboard-operable and at least 44 CSS pixels high. Do not hide
+the only explanation entry inside a lower safety/technical section or hover-only UI.
+
+Expanded content identifies the selected record/date and verification state, the
+actual calculation inputs/result, rounding, template identity/version, and limits.
+It reads the same prescription as the displayed work and recovery. It must update
+when that prescription changes and must not add memo text, automatically select a
+faster record, or retrospectively claim a new model produced a saved old plan.
+
+Recovery time/mode remain visible with the work. Explain whether recovery comes
+from a reviewed fixed template, an explicit ratio rule, or a distance instruction.
+Current adopted templates use fixed template recovery: it is not individualized
+by the record and does not automatically shrink when the athlete becomes faster.
+Do not assign seconds to distance-only recovery using work pace. A later recovery
+time estimate requires a stated recovery-speed assumption/model and must preserve
+the prescribed recovery distance and uncertainty.
+
+Formula expansion is now an authorized development direction, not a reason to
+return all users to RPE-only. Each implemented model must declare its purpose,
+source, coefficients, applicability, limitations, version, and independently
+checked numeric examples before runtime wiring. Race-equivalence models such as
+Riegel are not threshold/interval/recovery formulas. VDOT training paces are not
+interchangeable with simple same-event splits. A caution marker cannot authorize
+a fabricated coefficient, missing record, safety bypass or unreviewed template.
+Keep goal references separate from current-capability recommendations.
+
+Research and implementation scope are recorded in
+`reports/review/RECORD_BASED_PACE_RECOMMENDATION_DECISION_2026-09-03.md`.
+Change ledger: MODIFY numeric pace presentation into a visible recommendation;
+ADD formula research/application direction and transparent recovery provenance;
+KEEP existing numeric values, safety, youth/self-service scope and historic plans.
+No new template activation, canonical promotion, issue closure or production
+deployment is implied by this amendment.
 
 [DRAFT_COMPLETE]

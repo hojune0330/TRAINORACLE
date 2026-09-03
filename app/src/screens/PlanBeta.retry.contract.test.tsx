@@ -1,7 +1,8 @@
-import { cleanup, render, screen } from "@testing-library/react"
+import { act, cleanup, fireEvent, render, screen } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { PlanBeta } from "./PlanBeta"
+import * as mutationLock from "../domain/plan-mutation-lock"
 
 beforeEach(() => {
   window.localStorage.clear()
@@ -30,6 +31,34 @@ async function generatePlanCandidates(): Promise<void> {
 }
 
 describe("plan candidate save retry", () => {
+  it("cancels a pending storage retry after the start date changes", async () => {
+    const user = userEvent.setup()
+    render(<PlanBeta />)
+    await generatePlanCandidates()
+    const realSetItem = Storage.prototype.setItem
+    let writes = 0
+    vi.spyOn(Storage.prototype, "setItem").mockImplementation(function (this: Storage, key: string, value: string) {
+      if (key === "trainoracle.plan-beta.v1" && ++writes === 1) throw new Error("QuotaExceededError")
+      return realSetItem.call(this, key, value)
+    })
+    await user.click(screen.getAllByRole("button", { name: /선택하기/u })[0]!)
+    expect(screen.getByRole("button", { name: "계획 다시 저장하기" })).toBeVisible()
+    let release: (() => void) | undefined
+    const lock: mutationLock.PlanMutationLockManager = {
+      request: <T,>(_name: string, _options: unknown, callback: (lock: object | null) => T | Promise<T>) =>
+        new Promise<T>(resolve => { release = () => { resolve(callback({})) } }),
+    }
+    vi.spyOn(mutationLock, "getPlanMutationLockManager").mockReturnValue(lock)
+    await user.click(screen.getByRole("button", { name: "계획 다시 저장하기" }))
+    expect(release).toBeTypeOf("function")
+    fireEvent.change(screen.getByLabelText("계획 시작 날짜"), { target: { value: "2026-09-15" } })
+    await act(async () => { release!() })
+    expect(writes).toBe(1)
+    expect(localStorage.getItem("trainoracle.plan-beta.v1")).toBeNull()
+    expect(screen.queryByRole("heading", { name: /9일 훈련 계획/u })).toBeNull()
+    expect(screen.queryByRole("button", { name: "계획 다시 저장하기" })).toBeNull()
+  }, 15_000)
+
   it("offers a direct retry when the selected plan cannot be stored", async () => {
     // Given: a generated candidate and a storage write that fails once.
     render(<PlanBeta />)

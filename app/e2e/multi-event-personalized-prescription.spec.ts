@@ -32,7 +32,7 @@ const cases = [
     notation: /10×200m @800m RP.*r60.*STAND/u,
     summary: "총 10회 · 주요 구간 2000m · 200m당 31초",
     execution: "준비, 10회 본운동과 9번의 사이 회복, 정리 순서로 진행하세요.",
-    work: "200m를 31초 목표로 10회 · 주요 구간 거리 2000m",
+    work: "200m를 약 31초 기준으로 10회 · 주요 구간 거리 2000m",
     recovery: "9번 · 매번 60초 서서 쉬기 · 총 540초",
   },
   {
@@ -41,7 +41,7 @@ const cases = [
     notation: /3×500m @1500m RP.*r180.*STAND/u,
     summary: "총 3회 · 주요 구간 1500m · 500m당 1분 22초",
     execution: "준비, 3회 본운동과 2번의 사이 회복, 정리 순서로 진행하세요.",
-    work: "500m를 1분 22초 목표로 3회 · 주요 구간 거리 1500m",
+    work: "500m를 약 1분 22초 기준으로 3회 · 주요 구간 거리 1500m",
     recovery: "2번 · 매번 180초 서서 쉬기 · 총 360초",
   },
   {
@@ -50,7 +50,7 @@ const cases = [
     notation: /4×800m @3000m RP.*r180.*WALK/u,
     summary: "총 4회 · 주요 구간 3200m · 800m당 2분 43초",
     execution: "준비, 4회 본운동과 3번의 사이 회복, 정리 순서로 진행하세요.",
-    work: "800m를 2분 43초 목표로 4회 · 주요 구간 거리 3200m",
+    work: "800m를 약 2분 43초 기준으로 4회 · 주요 구간 거리 3200m",
     recovery: "3번 · 매번 180초 걷기 · 총 540초",
   },
 ] as const
@@ -148,6 +148,17 @@ for (const fixture of cases) {
     await expect(selectedSession.getByText(fixture.work).first()).toBeVisible()
     await expect(selectedSession.getByText(fixture.recovery).first()).toBeVisible()
     await expect(selectedSession.getByText(fixture.notation).first()).toBeVisible()
+    await selectedSession.getByRole("button", { name: "이 훈련을 하는 이유", exact: true }).first().click()
+    const explanation = page.getByRole("dialog")
+    await expect(explanation.getByText(fixture.notation).first()).toBeVisible()
+    await explanation.getByRole("tab", { name: "이유·근거" }).click()
+    await expect(explanation.getByText("저장된 처방과 설명 버전이 일치해요.")).toBeVisible()
+    await expect(explanation.getByRole("heading", { name: "회복을 이렇게 넣은 이유", exact: true })).toBeAttached()
+    await expect(explanation.getByText(new RegExp(`실제로 사용한 기준 기록: ${fixture.eventDistanceM}m`, "u"))).toBeAttached()
+    if (process.env.CAPTURE_PLAN_QA === "1") {
+      await page.screenshot({ path: testInfo.outputPath(`explanation-${fixture.eventDistanceM}m.png`) })
+    }
+    await explanation.getByRole("button", { name: "훈련 일정으로 돌아가기" }).click()
 
     await page.reload()
     await page.getByRole("navigation", { name: "주 탭" })

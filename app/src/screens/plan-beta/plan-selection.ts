@@ -40,7 +40,9 @@ export async function saveSelectedPlanCandidate(
   gate: SafetyGateDecision,
   intake: PlanBetaIntake | null,
   athleteEvidence: PlanAthleteEvidence,
+  isCurrentDraft: () => boolean = () => true,
 ): Promise<CandidateSaveResult> {
+  if (!isCurrentDraft()) return { kind: "rejected", code: "STALE_CANDIDATE_SELECTION" }
   if (intake === null || !isValidIsoDate(selection.startDate)) {
     return { kind: "rejected", code: "MINIMUM_PROFILE_INCOMPLETE" }
   }
@@ -72,6 +74,9 @@ export async function saveSelectedPlanCandidate(
       async (lock) => {
         if (lock === null) {
           return { kind: "rejected", code: "MUTATION_LOCK_UNAVAILABLE" } as const
+        }
+        if (!isCurrentDraft()) {
+          return { kind: "rejected", code: "STALE_CANDIDATE_SELECTION" } as const
         }
         if (!localAccountScopeIsCurrent(accountScope)) {
           return { kind: "rejected", code: "PLAN_STORAGE_STATE_UNCERTAIN" } as const
