@@ -2,6 +2,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { parsePrescriptionSequence } from "@impl/prescription/sequence"
 import { projectPacePrescriptionSequence } from "@impl/prescription/pace-sequence"
 import { isVerifiedPlanCandidate } from "@impl/plan-generator/adaptation"
+import { selectPlanCandidate } from "@impl/plan-generator/selection"
+import type { PlanCandidate } from "@impl/plan-generator/types"
 import { hasValidCandidateIdentity, projectPlanCandidate, rebindCandidatePairIdentity } from "@impl/plan-generator/candidate-identity"
 import { generatePlanFromDraft, selectPlanForActivation } from "./plan-beta-flow"
 import { RUNTIME_CASES, TODAY, draftFor, saveCurrentRecord } from "./prescription-quality-matrix.test-fixtures"
@@ -29,7 +31,7 @@ function selectedPlan(fixture = RUNTIME_CASES[0] as typeof RUNTIME_CASES[number]
   if (selection.kind !== "selected" || selection.state.version !== 3) throw new Error("Expected selected V3 plan")
   const session = selection.state.activePlan.sessions.find(item => item.prescription.kind === "PACE_TARGET")
   if (session === undefined || session.prescription.kind !== "PACE_TARGET") throw new Error("Expected detailed MAIN")
-  return { state: selection.state, session, prescription: session.prescription, gate: result.gate, candidates: result.generated.candidates }
+  return { state: selection.state, session, prescription: session.prescription, gate: result.gate, candidates: result.generated.candidates, generated: result.generated, intake: result.intake }
 }
 
 function withRecomputedFingerprint(input: Record<string, unknown>): Record<string, unknown> {
@@ -105,7 +107,7 @@ describe("prescription-bound V2 sequence persistence", () => {
     const [candidate] = rebindCandidatePairIdentity([{
       ...candidates[0],
       detailedPrescriptionFingerprint: forged.prescriptionFingerprint as string,
-      sessions: candidates[0].sessions.map(item => item.prescription.kind === "PACE_TARGET"
+      sessions: candidates[0].sessions.map(item => item.role === "QUALITY" && item.prescription.kind === "PACE_TARGET"
         ? { ...item, prescription: forged as unknown as StoredPaceTargetPrescription } : item),
     }, candidates[1]])
     expect(hasValidCandidateIdentity(candidate.candidateId, projectPlanCandidate(candidate))).toBe(true)
@@ -126,6 +128,53 @@ describe("prescription-bound V2 sequence persistence", () => {
     if (mutation === "unknown-key") changed.sequence.memo = "PRIVATE_TEXT_MUST_NOT_PASS"
     if (mutation === "empty-main") changed.sequence.main = []
     expect(schemas.paceTargetPlanItemSchema.safeParse(withRecomputedFingerprint(changed)).success).toBe(false)
+  })
+
+  it.each(RUNTIME_CASES.flatMap(fixture => [
+    "repetitions", "distance", "recovery-seconds", "recovery-mode", "sets",
+  ].map(mutation => ({ ...fixture, mutation }))))("rejects coordinated source and sequence mutation: $caseId / $mutation", fixture => {
+    const { prescription, generated, gate, intake } = selectedPlan(fixture)
+    const changed = mutablePrescription(prescription)
+    if (fixture.mutation === "repetitions") changed.repetitionsPerSet *= 2
+    if (fixture.mutation === "distance") changed.repetitionDistanceM += 100
+    if (fixture.mutation === "recovery-seconds") changed.repetitionRecoverySeconds += 1
+    if (fixture.mutation === "recovery-mode") changed.repetitionRecoveryMode = changed.repetitionRecoveryMode === "WALK" ? "JOG" : "WALK"
+    if (fixture.mutation === "sets") {
+      changed.setCount = 2
+      changed.setRecoverySeconds = 180
+      changed.setRecoveryMode = "JOG"
+    }
+    const totalRepetitions = changed.setCount * changed.repetitionsPerSet
+    const repetitionRecoveryOccurrences = changed.setCount * (changed.repetitionsPerSet - 1)
+    const setRecoveryOccurrences = changed.setCount - 1
+    Object.assign(changed.totals, {
+      totalRepetitions,
+      qualityDistanceM: totalRepetitions * changed.repetitionDistanceM,
+      repetitionRecoveryOccurrences,
+      repetitionRecoveryTotalSeconds: repetitionRecoveryOccurrences * changed.repetitionRecoverySeconds,
+      setRecoveryOccurrences,
+      setRecoveryTotalSeconds: setRecoveryOccurrences * (changed.setRecoverySeconds ?? 0),
+      plannedRecoverySeconds: repetitionRecoveryOccurrences * changed.repetitionRecoverySeconds + setRecoveryOccurrences * (changed.setRecoverySeconds ?? 0),
+    })
+    changed.targetRepSeconds = changed.selectedAnchor.performanceSeconds * changed.repetitionDistanceM / changed.targetEventDistanceM
+    changed.sequence = projectPacePrescriptionSequence(changed as unknown as StoredPaceTargetPrescription)
+    expect(changed.sequence).not.toBeNull()
+    expect(parsePrescriptionSequence(changed.sequence).kind).toBe("parsed")
+    const forged = withRecomputedFingerprint(changed) as unknown as StoredPaceTargetPrescription
+    const replacePrescription = (candidate: PlanCandidate): PlanCandidate => ({
+      ...candidate,
+      detailedPrescriptionFingerprint: forged.prescriptionFingerprint,
+      sessions: candidate.sessions.map(session => session.role === "QUALITY" && session.prescription.kind === "PACE_TARGET" ? { ...session, prescription: forged } : session),
+    })
+    const candidates = rebindCandidatePairIdentity([
+      replacePrescription(generated.candidates[0]), replacePrescription(generated.candidates[1]),
+    ])
+    const forgedGenerated = { ...generated, candidates, pairId: candidates[0].pairId }
+    expect(hasValidCandidateIdentity(candidates[0].candidateId, projectPlanCandidate(candidates[0]))).toBe(true)
+    expect(schemas.paceTargetPlanItemSchema.safeParse(forged).success).toBe(false)
+    expect(isVerifiedPlanCandidate(candidates[0])).toBe(false)
+    expect(selectPlanCandidate({ kind: "PLAN_BETA_SELECTION_REQUEST", generatedPlan: forgedGenerated, selectedCandidateId: candidates[0].candidateId, actor: "SELF", safetyGate: gate }).kind).toBe("rejected")
+    expect(selectPlanForActivation(candidates[0].candidateId, forgedGenerated, gate, intake).kind).toBe("rejected")
   })
 
   it("retains damaged plan bytes and refuses a guessed replacement", () => {

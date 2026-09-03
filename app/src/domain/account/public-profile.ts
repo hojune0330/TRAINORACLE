@@ -28,6 +28,7 @@ const cardRowSchema = z.object({
   card_payload: cardPayloadSchema,
   updated_at: z.string(),
 })
+const PUBLIC_PLAN_CARD_ID_DOMAIN = "trainoracle.public-plan-card-id.v1"
 
 export type PublicAthleteProfile = {
   readonly userId: string
@@ -128,6 +129,8 @@ export async function publishActivePlanCard(
   if (client === null) return { ok: false, message: "계정 기능을 사용할 수 없어요." }
   const { data: sessionData } = await client.auth.getSession()
   if (sessionData.session?.user.id !== userId) return { ok: false, message: "로그인 정보를 다시 확인해 주세요." }
+  const publicPlanId = await publicPlanCardId(userId, parsed.data.activePlan.candidateId)
+  if (publicPlanId === null) return { ok: false, message: "계획 공유 카드를 안전하게 준비하지 못했어요." }
   const profile = await loadOwnPublicProfile(userId)
   if (profile === null || !profile.isPublic) {
     return { ok: false, message: "먼저 공개 프로필을 켜 주세요." }
@@ -136,7 +139,7 @@ export async function publishActivePlanCard(
     .from("public_plan_share_cards")
     .select("share_slug")
     .eq("user_id", userId)
-    .eq("plan_id", parsed.data.activePlan.candidateId)
+    .eq("plan_id", publicPlanId)
     .maybeSingle()
   const shareSlug = typeof existing.data?.share_slug === "string"
     ? existing.data.share_slug
@@ -144,7 +147,7 @@ export async function publishActivePlanCard(
   const card = publicPlanCardFromState(parsed.data)
   const { error } = await client.from("public_plan_share_cards").upsert({
     user_id: userId,
-    plan_id: parsed.data.activePlan.candidateId,
+    plan_id: publicPlanId,
     share_slug: shareSlug,
     card_payload: card,
     is_public: true,
@@ -232,4 +235,16 @@ function randomShareSlug(): string {
   const bytes = new Uint8Array(10)
   crypto.getRandomValues(bytes)
   return Array.from(bytes, value => value.toString(16).padStart(2, "0")).join("")
+}
+
+async function publicPlanCardId(userId: string, candidateId: string): Promise<string | null> {
+  if (typeof crypto === "undefined" || crypto.subtle === undefined) return null
+  try {
+    const source = new TextEncoder().encode(`${PUBLIC_PLAN_CARD_ID_DOMAIN}\0${userId}\0${candidateId}`)
+    const digest = await crypto.subtle.digest("SHA-256", source)
+    const hash = Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, "0")).join("")
+    return `public-plan-card:v1:sha256:${hash}`
+  } catch {
+    return null
+  }
 }

@@ -4,12 +4,12 @@
 doc_id: PLAN_BACKUP_PUBLIC_PROFILE_AND_SHARING_SPEC
 spec_id: TO-PLAN-PUBLIC-SHARING
 title: Plan Backup, Public Profile, and Friend Sharing Contract
-version: 0.1
-round: RT1_IMPLEMENTATION_ALIGNMENT
+version: 0.2
+round: RT2_PUBLIC_IDENTIFIER_BOUNDARY
 status: RECONSTRUCTED_DRAFT_FOR_REVIEW
 owner: TrainOracle
-open_issues_total: 5
-canonical_blocking_count: 3
+open_issues_total: 6
+canonical_blocking_count: 4
 ```
 
 ## 1. Purpose
@@ -107,6 +107,33 @@ The card must not contain or derive a public representation of:
 - memo, comment, or evidence text;
 - D9 reason codes or safety snapshots.
 
+### 5.1 Public Identifiers And Transport (2026-09-03)
+
+The allowlist applies to the entire public transport and row, not only
+`card_payload`. Private candidate IDs may embed canonical prescription JSON,
+sequence structure and selected-record references. Never send those IDs as public
+`plan_id`, a lookup/filter parameter, a share URL or analytics metadata.
+
+Use a separately derived opaque public identifier scoped to the authenticated
+owner and the exact private plan. Repeating publication must address the same
+card. The private candidate ID, saved plan and explanation identity remain unchanged.
+Identifier derivation failure must stop publication; falling back to the raw ID is
+forbidden. A one-way identifier is pseudonymous, not a claim of anonymous data.
+
+Tests inspect all outgoing query arguments and complete write objects using a
+realistically generated detailed plan. Checking the displayed card or payload
+alone is insufficient.
+
+A fixed client does not remove or repair old rows. Before public-sharing release,
+inspect existing identifiers through an authorized server operation, restrict unsafe
+rows, and verify old clients cannot write content-bearing public identifiers. Retain
+private plans and do not bulk delete user data. No production cleanup or server
+verification is implied by this contract amendment.
+
+Change ledger: ADD public identifier/transport boundary and historical-row gate;
+KEEP private identities, explicit publication and capability switches. No canonical
+promotion, issue closure or feature activation.
+
 ## 6. Safety and Authority Boundaries
 
 - Public sharing cannot clear or alter D9 state.
@@ -137,5 +164,6 @@ The card must not contain or derive a public representation of:
 | OI-PPPS-DELETE-001 | Verify account deletion cascades through plan backups, profiles, and cards. | OPEN | YES |
 | OI-PPPS-ABUSE-001 | Define handle/report/rate-limit operations before broad public discovery. | OPEN | NO |
 | OI-PPPS-HISTORY-001 | Decide whether archived plan history should be restorable as history, never active state. | OPEN | NO |
+| OI-PPPS-IDENTIFIER-001 | Verify opaque identifiers at the server boundary, restrict/remediate any legacy content-bearing public IDs, and reject old-client unsafe writes before public-sharing release. | OPEN | YES |
 
 [DRAFT_COMPLETE]

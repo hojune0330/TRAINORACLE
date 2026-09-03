@@ -2,9 +2,9 @@
 
 ```yaml
 doc_id: trainoracle-prescription-sequence-storage-20260903
-status: LOCAL_VERIFIED_REVIEW_PENDING
+status: REVIEW_FIXES_LOCAL_RECHECK_IN_PROGRESS
 owner: COACH_HOJUNE
-version: "0.1"
+version: "0.2"
 base_sha: a3d2b2717b2a2479bc183f7bf58ce3923b3c9d14
 branch: codex/prescription-sequence-storage
 new_numeric_templates: 0
@@ -54,7 +54,9 @@ production_deployment: NOT_PERFORMED
 바꾼 경우의 거부 테스트는 별도로 추가했다. 과거 판정을 그대로 통과시키려고
 제품의 불일치 검사를 제거하지 않았다.
 
-## 4. 실행 증거
+## 4. 최초 구현 실행 증거
+
+아래는 독립 검수 전 실행 기록이다. 이 통과 기록으로 §6의 발견을 부정하지 않는다.
 
 | 검사 | 관측 결과 |
 |---|---|
@@ -91,7 +93,8 @@ Terra의 코어 V1 주입도 7개 실패 후 원복/통과로 보고됐으나 �
 
 - Terra high: 코어 projector, 타입 확장, 직접 코어 테스트의 제한된 구현.
 - 주 작업자: 스펙, 앱/코어 입력 검증 연결, 화면, 저장/백업/위조 테스트 통합.
-- 독립 소프트웨어 검수: 이 보고서 시점 대기. Fable/코치/스포츠과학 검수로 부르지 않는다.
+- 독립 소프트웨어 검수: 첫 head는 CHANGES_REQUIRED. §6의 수정 후 새 head 재검수가 필요하다.
+  Fable/코치/스포츠과학 검수로 부르지 않는다.
 - 관련 없는 두 worktree, 기존 증거와 사용자 데이터는 수정/삭제하지 않았다.
 - 배포 상태는 로컬 통과와 별개이며 PR의 최종 SHA/CI/병합/배포 증거로만 갱신한다.
 
@@ -100,5 +103,42 @@ Terra의 코어 V1 주입도 7개 실패 후 원복/통과로 보고됐으나 �
 현재 V2 snapshot은 기존 PACE_TARGET에서만 생성된다. 12x400m+100m roll-on이나
 다른 시간형/복합형이 선수에게 선택 가능해졌다는 뜻이 아니다. 선택지 확대를
 이유로 강도·양·빈도를 늘리는 동작은 추가하지 않았다.
+
+## 6. 독립 검수 발견과 수정
+
+Sol high는 `41756173370247b1945ae9ff12ad6c4259a1aa2f`를 독립 검수해
+P1 두 건으로 CHANGES_REQUIRED를 반환했다. [PR #316 검수 기록](https://github.com/hojune0330/TRAINORACLE/pull/316#issuecomment-5525239661)을 따른다.
+
+1. **원본과 구조의 공동 변조:** 기존 코어는 승인 메타데이터와 내부 일관성은
+   확인했지만 반복·거리·회복을 승인된 표기식과 직접 대조하지 않았다. 원본,
+   합계, sequence와 두 후보의 식별자를 모두 바꾸면 코어 선택은 통과했다.
+   앱 저장과 START는 거부했으므로 실행 전체 우회라고 기록하지 않는다.
+   코어가 승인 표기 파서 결과와 수치/합계를 대조하도록 수정했다. 부모가 만든
+   네 종목/다섯 조건의 공동 변조 25개가 수정 전 실제 실패, 수정 후 통과했다.
+   별도 코어 750개, 저장/비교/매트릭스 89개, 파서 정합성 60개도 재통과했다.
+2. **공개 ID의 내용 노출:** `canonical-json-v1`은 전체 내용 문자열이다.
+   그것을 포함한 candidateId를 공개 카드 `plan_id`로 보냈다. 기존 payload-only
+   테스트는 이 경로를 놓쳤다. 공개 조회/쓰기에는 소유자와 계획에 묶인 별도
+   `public-plan-card:v1:sha256:` ID를 사용하고, 생성 실패 때 원문 폴백을 금지했다.
+   Terra의 수정 전 노출 테스트 실패 보고 후, 부모는 실제 상세 계획의 전송 인자,
+   반복 게시, 다른 소유자, 기능 비활성, 인증 불일치, 비공개 프로필, crypto 없음/실패를
+   포함한 15개 집중 검사를 직접 재실행해 통과를 확인했다.
+
+추가한 변조 테스트의 TypeScript 역할 구분이 불충분해 타입 검사가 실패한 것도
+수정했다. 휴식 세션에 처방을 붙이는 형태로 추론되지 않도록 QUALITY 조건을
+명시했다. 수정 후 앱/코어/e2e 타입 검사와 빌드를 통과했다.
+새 빌드는 `PlanBeta-C96qrWlw.js`, `public-profile-DNx97rOz.js`다.
+전체 앱과 관련 브라우저 재검사는 이 체크포인트에서 진행 중이다.
+
+### 서버 후속 관문
+
+공개 공유 수정은 **새 클라이언트가 보내는 데이터**의 수리다. 과거 서버 행의
+존재·노출은 확인하지 않았고 정리도 하지 않았다. 과거 원문 ID 행을 이번 변경이
+자동 덮어쓰거나 삭제하지 않으므로, 공유 공개 전에 서버 식별자 점검과 구 클라이언트
+쓰기 방어가 필요하다. [공유 계약](../../specs/reconstruct/PLAN_BACKUP_PUBLIC_PROFILE_AND_SHARING_SPEC.md)
+OI-PPPS-IDENTIFIER-001을 OPEN으로 추가했고, 실제 이슈 표는 6개 OPEN/4개 canonical
+blocking으로 재계수했다. 이 작업은 공개 기능을 켜거나 데이터 삭제를 승인하지 않는다.
+
+수정본의 소프트웨어 재검수, 최종 CI, main 병합과 배포는 아직 별도 확인 대상이다.
 
 [DRAFT_COMPLETE]

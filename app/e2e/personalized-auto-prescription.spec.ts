@@ -180,6 +180,7 @@ for (const viewport of [
     const reader = page.getByRole("dialog")
     await expect(reader.getByText("계획을 만들 때 저장한 운동·회복 순서예요.", { exact: true })).toBeVisible()
     await expect(reader.getByText("운동과 회복 순서", { exact: true })).toBeVisible()
+    await reader.getByText("운동과 회복 순서", { exact: true }).scrollIntoViewIfNeeded()
     await page.screenshot({ path: test.info().outputPath(`${viewport.name}-stored-sequence.png`) })
     await reader.getByRole("button", { name: "훈련 일정으로 돌아가기" }).click()
     expect(await page.evaluate(() => {

@@ -528,8 +528,13 @@ remain in the same prescription, without deriving time from recovery distance.
 This is a versioned structural snapshot, not an independently editable second
 prescription. On creation, reload, backup restore and START/RESTART checks, its
 parsed structure must exactly match the deterministic projection of the approved
-prescription. Checking its hash alone is insufficient: changing its repetition,
-recovery, target reference or label and recomputing a hash must still fail.
+prescription. First compare the original source fields and totals to the approved
+template notation; agreement between two equally modified representations is not
+approval. App storage, core candidate verification and selection must all reject
+coordinated source/sequence changes even after both identities are recomputed.
+`canonical-json-v1` is a content-bearing identity, not an opaque cryptographic hash.
+Checking an identity alone is insufficient: changing repetition, recovery, target
+reference or label and recomputing an identity must still fail.
 Unknown keys, invalid sequence versions and injected text are rejected, not stripped
 into an apparently valid prescription. Existing approval and safety checks remain
 mandatory; a valid generic sequence alone cannot enter the athlete plan schema.
@@ -545,8 +550,11 @@ New sequence-bearing prescriptions bind candidate and explanation identities thr
 the existing full-prescription fingerprints. A change to method or selected record
 creates a new prescription through existing confirmation and eligibility gates.
 Explicit account-scoped backups preserve the private snapshot; public summary cards
-do not acquire sequences, anchor references or explanation evidence. No account or
-server capability is enabled by this storage extension.
+do not acquire sequences, anchor references or explanation evidence in any field,
+including IDs and lookup parameters. Public card IDs must be separately derived
+opaque identifiers, not private candidate IDs. Old public rows require an explicit
+server audit/remediation gate; a corrected client is not proof that existing rows
+were sanitized. No account or server capability is enabled by this extension.
 
 This increment connects existing numerical prescriptions to V2 snapshot persistence,
 reload, execution authorization and the method reader. It does not claim activation

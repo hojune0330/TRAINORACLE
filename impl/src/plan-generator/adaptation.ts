@@ -1,5 +1,7 @@
 import { assertNever } from "../shared/assert-never"
 import { matchesPacePrescriptionSequence, type PaceSequenceSource } from "../prescription/pace-sequence"
+import { parsePrescriptionNotation } from "../prescription/notation"
+import { derivePrescriptionTotals } from "../prescription/totals"
 import {
   continuityContextIdentity,
   continuityIdentityFromCandidateId,
@@ -684,11 +686,23 @@ function hasApprovedPrescriptionReferenceBinding(value: Record<string, unknown>)
   const sports = value["sportsScienceEvidence"]
   const population = value["populationApplicabilityEvidence"]
   const scope = value["scope"]
+  const parsedNotation = parsePrescriptionNotation(approved.notation)
+  if (parsedNotation.kind !== "parsed") return false
+  const notation = parsedNotation.notation
   return value["manifestVersion"] === "1"
     && value["templateId"] === templateId
     && value["templateVersion"] === "1.0.0"
     && value["templateContentFingerprint"] === approved.fingerprint
     && value["notation"] === approved.notation
+    && value["setCount"] === notation.setCount
+    && value["repetitionsPerSet"] === notation.repetitionsPerSet
+    && value["repetitionDistanceM"] === notation.repetitionDistanceM
+    && value["targetEventDistanceM"] === notation.paceTargetEventDistanceM
+    && value["repetitionRecoverySeconds"] === notation.repetitionRecoverySeconds
+    && value["repetitionRecoveryMode"] === notation.repetitionRecoveryMode
+    && value["setRecoverySeconds"] === notation.setRecoverySeconds
+    && value["setRecoveryMode"] === notation.setRecoveryMode
+    && canonicalJson(value["totals"]) === canonicalJson(derivePrescriptionTotals(notation))
     && value["displayRoundingPolicyVersion"] === "seconds-v1"
     && value["sourceDecisionId"] === sourceDecisionId
     && value["sourceEvidenceRef"] === sourceEvidenceRef
