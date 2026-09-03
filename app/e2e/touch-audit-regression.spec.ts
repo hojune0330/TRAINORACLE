@@ -36,3 +36,23 @@ test("audits revealed controls but not descendants hidden by collapsed details",
   await page.getByText("Reveal", { exact: true }).click()
   expect((await undersizedInteractiveTargets(page.locator("body"))).map(item => item.label)).toEqual(["Small"])
 })
+
+test("audits visible labels even when their native inputs are transparent", async ({ page }) => {
+  await page.setContent(`
+    <style>
+      input { width:18px; height:18px; margin:0; opacity:0; }
+      label { display:block; width:100px; height:44px; }
+      #small-label { width:43px; }
+      #hidden-label { opacity:0; }
+    </style>
+    <label for="large-input">Large visible label</label><input id="large-input" type="checkbox">
+    <label id="small-label"><input id="small-input" type="checkbox">Small visible label</label>
+    <label id="hidden-label"><input type="checkbox">Hidden label</label>
+  `)
+  await page.getByText("Small visible label", { exact: true }).click()
+  await expect(page.locator("#small-input")).toBeChecked()
+  await page.getByText("Large visible label", { exact: true }).click()
+  await expect(page.locator("#large-input")).toBeChecked()
+  const failures = await undersizedInteractiveTargets(page.locator("body"))
+  expect(failures).toEqual([{ label: "Small visible label", width: 43, height: 44 }])
+})

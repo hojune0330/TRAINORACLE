@@ -17,13 +17,13 @@ export async function undersizedInteractiveTargets(root: Locator) {
   return root.evaluate(container => [...container.querySelectorAll<HTMLElement>(
     "button, input, select, summary, [role='button']",
   )].flatMap(element => {
-    if (!element.checkVisibility({ visibilityProperty: true, opacityProperty: true })) return []
     // Native radio/checkbox labels activate the control; measure that real hit area.
     const label = element instanceof HTMLInputElement && ["radio", "checkbox"].includes(element.type)
       ? [...element.labels ?? []].find(candidate => candidate.control === element
         && candidate.checkVisibility({ visibilityProperty: true, opacityProperty: true })
         && getComputedStyle(candidate).pointerEvents !== "none")
       : undefined
+    if (!label && !element.checkVisibility({ visibilityProperty: true, opacityProperty: true })) return []
     const rect = (label ?? element).getBoundingClientRect()
     if (rect.width === 0 || rect.height === 0) return []
     return rect.width >= 44 && rect.height >= 44 ? [] : [{
