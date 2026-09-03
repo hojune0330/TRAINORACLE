@@ -202,7 +202,7 @@ describe("ImportActivities — 확인 단계", () => {
     expect(loadEntries()).toHaveLength(1)
   })
 
-  it("RPE·메모 미포함과 통계 제외를 미리 알린다", async () => {
+  it("기존 일지 보완과 새 가져오기 편집 범위 및 통계 제외를 미리 알린다", async () => {
     // Given
     const user = userEvent.setup()
     render(<ImportActivities />)
@@ -211,7 +211,8 @@ describe("ImportActivities — 확인 단계", () => {
     await pickFile(user, upload(tcxFile([tcxLap("2026-07-20T06:00:00Z", 10000, 3000)])))
 
     // Then
-    await waitFor(() => expect(screen.getByText(/RPE와 메모는 파일에 없어요/u)).toBeVisible())
+    await waitFor(() => expect(screen.getByText(/기존 일지를 보완하면 RPE/u)).toBeVisible())
+    expect(screen.getByText(/새 일지로 가져온 활동은 현재 읽기 전용이에요/u)).toBeVisible()
     expect(screen.getByText(/주간 통계·추이·훈련계획에는 들어가지 않아요/u)).toBeVisible()
   })
 })

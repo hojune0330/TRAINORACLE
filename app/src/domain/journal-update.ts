@@ -1,5 +1,4 @@
-import { hasImportedField, isImportedField } from "./field-provenance"
-import type { FieldProvenanceMap } from "./field-provenance"
+import { canEditJournalEntry, keepsImportedObjectiveFacts, preserveJournalProvenance } from "./journal-edit-policy"
 import { journalStorage, writeJournalEntries } from "./journal-local-storage"
 import { isPrivateMemoEntry, removePrivateMemoWithJournalEntries } from "./private-memo-vault"
 import { parseJournalEntryForWrite } from "./journal-schema"
@@ -31,90 +30,6 @@ function hasNewerSavedAt(previous: JournalEntry, next: JournalEntry): boolean {
     && (!Number.isFinite(previousTime) || nextTime > previousTime)
 }
 
-function provenanceValues(entry: JournalEntry): Readonly<Record<string, unknown>> {
-  switch (entry.kind) {
-    case "post-session":
-      return {
-        system: entry.system,
-        activityOutcome: entry.activityOutcome,
-        activitySlot: entry.activitySlot,
-        planExecutionRelation: entry.planExecutionRelation,
-        painCheckStatus: entry.painCheckStatus,
-        painParts: entry.painParts,
-        plannedSessionLink: entry.plannedSessionLink,
-        distanceKm: entry.distanceKm,
-        durationMin: entry.durationMin,
-        avgPace: entry.avgPace,
-        rpe: entry.rpe,
-        rpeBand: entry.rpeBand,
-        plannedRpe: entry.intensityAssessment?.plannedRpe,
-        objectiveComponents: entry.intensityAssessment?.objectiveComponents,
-      }
-    case "evening":
-      return {
-        sleepH: entry.sleepH,
-        sleepQuality: entry.sleepQuality,
-        weightKg: entry.weightKg,
-        restingHr: entry.restingHr,
-        painParts: entry.painParts,
-        mood: entry.mood,
-      }
-    case "race":
-      return {
-        tension: entry.tension,
-        condition: entry.condition,
-        mood: entry.mood,
-        goalPace: entry.goalPace,
-      }
-  }
-}
-
-function sameStructuredValue(left: unknown, right: unknown): boolean {
-  if (Object.is(left, right)) return true
-  return JSON.stringify(left) === JSON.stringify(right)
-}
-
-function keepsImportedObjectiveFacts(previous: JournalEntry, next: JournalEntry): boolean {
-  if (previous.kind !== "post-session" || next.kind !== "post-session") return true
-  const fields = ["distanceKm", "durationMin", "avgPace"] as const
-  return fields.every((field) => !isImportedField(field, previous.fieldProvenance)
-    || (sameStructuredValue(previous[field], next[field])
-      && sameStructuredValue(previous.fieldProvenance?.[field], next.fieldProvenance?.[field])))
-}
-
-function mergeProvenance(
-  previous: JournalEntry,
-  next: JournalEntry,
-): FieldProvenanceMap | undefined {
-  const previousProvenance = previous.fieldProvenance
-  if (previousProvenance === undefined) return undefined
-
-  const nextProvenance = next.fieldProvenance ?? {}
-  const previousValues = provenanceValues(previous)
-  const nextValues = provenanceValues(next)
-  const merged: Record<string, FieldProvenanceMap[string]> = {}
-  const fields = new Set([
-    ...Object.keys(previousProvenance),
-    ...Object.keys(nextProvenance),
-  ])
-
-  for (const field of fields) {
-    if (nextValues[field] === undefined && nextProvenance[field] === undefined) continue
-    const selected = sameStructuredValue(previousValues[field], nextValues[field])
-      ? previousProvenance[field]
-      : nextProvenance[field]
-    if (selected !== undefined) merged[field] = selected
-  }
-  return merged
-}
-
-function preserveProvenance(previous: JournalEntry, next: JournalEntry): JournalEntry {
-  const fieldProvenance = mergeProvenance(previous, next)
-  if (fieldProvenance !== undefined) return { ...next, fieldProvenance }
-  const { fieldProvenance: _discardedProvenance, ...legacyEntry } = next
-  return legacyEntry
-}
-
 export function nextJournalSavedAt(previousSavedAt?: string): string {
   const previousTime = previousSavedAt === undefined ? Number.NaN : Date.parse(previousSavedAt)
   const nextTime = Number.isFinite(previousTime)
@@ -124,6 +39,15 @@ export function nextJournalSavedAt(previousSavedAt?: string): string {
 }
 
 export function updateEntry(entry: unknown, expectedSavedAt: string): UpdateEntryResult {
+  return updateEntryWithMemoMode(entry, expectedSavedAt, "EDIT")
+}
+
+/** Source reconciliation must not interpret a private storage shell as a memo deletion. */
+export function updateEntryPreservingMemo(entry: unknown, expectedSavedAt: string): UpdateEntryResult {
+  return updateEntryWithMemoMode(entry, expectedSavedAt, "PRESERVE")
+}
+
+function updateEntryWithMemoMode(entry: unknown, expectedSavedAt: string, memoMode: "EDIT" | "PRESERVE"): UpdateEntryResult {
   const snapshot = loadJournalEntriesSnapshot()
   const entries = snapshot.entries
   const nextEntry = parseJournalEntryForWrite(entry)
@@ -137,20 +61,25 @@ export function updateEntry(entry: unknown, expectedSavedAt: string): UpdateEntr
   if (entryIndex < 0) return { ok: false, total: entries.length }
   const previous = entries[entryIndex]
   if (previous === undefined) return { ok: false, total: entries.length }
-  if (previous.syncState !== "local"
-    || (hasImportedField(previous.fieldProvenance) && !keepsImportedObjectiveFacts(previous, nextEntry))) {
+  if (!canEditJournalEntry(previous) || !keepsImportedObjectiveFacts(previous, nextEntry)) {
     return { ok: false, total: entries.length }
   }
   if (previous.savedAt !== expectedSavedAt) return { ok: false, total: entries.length }
   if (!keepsImmutableIdentity(previous, nextEntry)) return { ok: false, total: entries.length }
   if (!hasNewerSavedAt(previous, nextEntry)) return { ok: false, total: entries.length }
 
+  const previousText = previous.kind === "evening" ? previous.note : previous.memo
+  const nextText = nextEntry.kind === "evening" ? nextEntry.note : nextEntry.memo
+  if (memoMode === "PRESERVE"
+    && (previousText !== nextText || previous.memoPurpose !== nextEntry.memoPurpose)) {
+    return { ok: false, total: entries.length }
+  }
+
   const localStorage = journalStorage()
   if (localStorage === null) return { ok: false, total: entries.length }
   const nextEntries = entries.slice()
-  nextEntries[entryIndex] = preserveProvenance(previous, nextEntry)
-  const nextText = nextEntry.kind === "evening" ? nextEntry.note : nextEntry.memo
-  const removesPrivateMemo = isPrivateMemoEntry(previous)
+  nextEntries[entryIndex] = preserveJournalProvenance(previous, nextEntry)
+  const removesPrivateMemo = memoMode === "EDIT" && isPrivateMemoEntry(previous)
     && (!isPrivateMemoEntry(nextEntry) || nextText.trim() === "")
   const ok = removesPrivateMemo
     ? removePrivateMemoWithJournalEntries(localStorage, nextEntries, previous.id, snapshot.raw)

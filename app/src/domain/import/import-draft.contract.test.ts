@@ -205,7 +205,9 @@ describe("import duplicate detection", () => {
     const [draft] = buildImportDrafts([activity()], [quick])
     if (draft === undefined) throw new Error("missing draft")
 
-    const result = confirmImportDrafts([draft], "tcx")
+    const result = confirmImportDrafts([{
+      draft, intent: { kind: "ADD_TO_EXISTING", entryId: quick.id, expectedSavedAt: quick.savedAt },
+    }], "tcx")
 
     expect(result).toMatchObject({ saved: 0, merged: 1, conflicts: 0, failed: 0 })
     expect(loadEntries()).toHaveLength(1)
@@ -264,7 +266,9 @@ describe("import duplicate detection", () => {
     const [draft] = buildImportDrafts([activity({ distanceKm: "5.10", durationMin: "26" })], [existing])
     if (draft === undefined) throw new Error("missing draft")
 
-    const result = confirmImportDrafts([draft], "tcx")
+    const result = confirmImportDrafts([{
+      draft, intent: { kind: "ADD_TO_EXISTING", entryId: existing.id, expectedSavedAt: existing.savedAt },
+    }], "tcx")
 
     expect(result).toMatchObject({ merged: 0, conflicts: 1, failed: 0 })
     expect(loadEntries()[0]).toMatchObject({ distanceKm: "5.00", durationMin: "25" })

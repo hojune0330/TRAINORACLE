@@ -1,15 +1,11 @@
 import type { JournalEntry } from "../domain/journal-store"
-import { hasImportedField } from "../domain/field-provenance"
+import { canEditJournalEntry } from "../domain/journal-edit-policy"
 
 type JournalDetailActionsProps = {
   readonly date: string
   readonly entries: readonly JournalEntry[]
   readonly onAddEntry?: (date: string) => void
   readonly onEditEntry?: (entry: JournalEntry) => void
-}
-
-function canEdit(entry: JournalEntry): boolean {
-  return entry.syncState === "local" && !hasImportedField(entry.fieldProvenance)
 }
 
 function hasDuplicateId(entries: readonly JournalEntry[], id: string): boolean {
@@ -64,7 +60,7 @@ export function JournalDetailActions({
   onAddEntry,
   onEditEntry,
 }: JournalDetailActionsProps) {
-  const editableEntries = entries.filter((entry) => canEdit(entry) && !hasDuplicateId(entries, entry.id))
+  const editableEntries = entries.filter((entry) => canEditJournalEntry(entry) && !hasDuplicateId(entries, entry.id))
   if (onAddEntry === undefined && (onEditEntry === undefined || editableEntries.length === 0)) return null
 
   return (
