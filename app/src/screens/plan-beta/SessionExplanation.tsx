@@ -103,6 +103,11 @@ function SessionExplanationReader({ session, context, loadEvidence, onClose }: P
             )}
             <section><h3>운동과 회복 순서</h3>
               <p className="session-explanation__note">순서도예요. 칸의 길이는 운동 시간이나 에너지 비율을 뜻하지 않아요.</p>
+              {context?.kind === "SAVED" && sequence !== null && (
+                <p className="session-explanation__note">{session.prescription.kind === "PACE_TARGET" && session.prescription.sequence !== undefined
+                  ? "계획을 만들 때 저장한 운동·회복 순서예요."
+                  : "저장된 처방을 순서도로 보여드려요. 이전 계획에 새 훈련을 추가하지 않아요."}</p>
+              )}
               {sequence !== null ? <PrescriptionStructure sequence={sequence} /> : <ol className="session-explanation__sequence">
                 {explanation.components.map((component) => <li key={component.id}><strong>{component.label}</strong><span>{component.method}</span><small>{component.recovery}</small></li>)}
               </ol>}

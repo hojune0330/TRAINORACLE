@@ -165,11 +165,27 @@ for (const viewport of [
 
     await page.getByRole("button", { name: /시간 조절 계획 선택하기/u }).click()
     await expectActivePlanHeading(page)
+    const storedSequence = await page.evaluate(() => {
+      const state = JSON.parse(localStorage.getItem("trainoracle.plan-beta.v1")!)
+      const p = state.activePlan.sessions.find((s: { prescription: { kind: string } }) => s.prescription.kind === "PACE_TARGET").prescription
+      if (p.sequence?.version !== 2) throw new Error("Expected stored V2 sequence")
+      return JSON.stringify(p.sequence)
+    })
     await page.reload()
     await page.getByRole("navigation", { name: "주 탭" })
       .getByRole("button", { name: "계획" })
       .click()
     const activeSession = await openActiveSessionDetails(page, /5×1000m @5000m RP.*r150.*JOG/u)
+    await activeSession.getByRole("button", { name: "이 훈련을 하는 이유", exact: true }).click()
+    const reader = page.getByRole("dialog")
+    await expect(reader.getByText("계획을 만들 때 저장한 운동·회복 순서예요.", { exact: true })).toBeVisible()
+    await expect(reader.getByText("운동과 회복 순서", { exact: true })).toBeVisible()
+    await page.screenshot({ path: test.info().outputPath(`${viewport.name}-stored-sequence.png`) })
+    await reader.getByRole("button", { name: "훈련 일정으로 돌아가기" }).click()
+    expect(await page.evaluate(() => {
+      const state = JSON.parse(localStorage.getItem("trainoracle.plan-beta.v1")!)
+      return JSON.stringify(state.activePlan.sessions.find((s: { prescription: { kind: string } }) => s.prescription.kind === "PACE_TARGET").prescription.sequence)
+    })).toBe(storedSequence)
     await activeSession.getByText("시작 전 확인").click()
     await expect(page.getByRole("button", {
       name: "통증 없고 평소와 같음 · 다시 시작 확인",

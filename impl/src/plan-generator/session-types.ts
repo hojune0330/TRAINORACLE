@@ -7,6 +7,7 @@ import type {
   PrescriptionOperationalComponents,
   V2Seed05StopConditionCode,
 } from "../prescription/types"
+import type { PrescriptionSequence } from "../prescription/sequence"
 
 export const PLAN_SESSION_SLOTS = ["AM", "PM"] as const
 
@@ -100,6 +101,7 @@ export type PaceTargetPlanPrescription = {
   readonly stopCodes: readonly V2Seed05StopConditionCode[]
   readonly fallbackCode: "RPE_ONLY_CONTROLLED"
   readonly prescriptionFingerprint: string
+  readonly sequence?: PrescriptionSequence
 }
 
 type PaceTargetCurrentAnchorBase = {

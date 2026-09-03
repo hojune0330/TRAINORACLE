@@ -2,6 +2,8 @@ import { beforeEach, describe, expect, it, vi } from "vitest"
 import { stateFixture } from "../plan-beta-store.test-fixture"
 import { planBetaStateV3Schema } from "../plan-beta-schema"
 import { setActiveLocalAccount } from "./local-journal-ownership"
+import { generatePlanFromDraft, selectPlanForActivation } from "../plan-beta-flow"
+import { RUNTIME_CASES, TODAY, draftFor, saveCurrentRecord } from "../prescription-quality-matrix.test-fixtures"
 
 let savedRow: Record<string, unknown> | null = null
 
@@ -26,7 +28,7 @@ vi.mock("./supabase-client", () => ({
     },
     from: () => ({
       upsert: (row: Record<string, unknown>) => {
-        savedRow = row
+        savedRow = JSON.parse(JSON.stringify(row)) as Record<string, unknown>
         return Promise.resolve({ data: null, error: null })
       },
       select: () => ({
@@ -72,6 +74,28 @@ beforeEach(() => {
 })
 
 describe("active plan cloud backup", () => {
+  it("round-trips a bound V2 structure through the private backup payload", async () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(TODAY)
+    try {
+      const fixture = RUNTIME_CASES[1]
+      const selectedRecordId = saveCurrentRecord(fixture.eventDistanceM, fixture.performanceSeconds)
+      const result = generatePlanFromDraft(draftFor(fixture), "NO_KNOWN_RISK", { selectedRecordId })
+      if (result.kind !== "generated") throw new Error("Expected candidate")
+      const selected = selectPlanForActivation(result.generated.candidates[0].candidateId, result.generated, result.gate, result.intake)
+      if (selected.kind !== "selected" || selected.state.version !== 3) throw new Error("Expected V3 plan")
+      const p = selected.state.activePlan.sessions.find(item => item.prescription.kind === "PACE_TARGET")?.prescription
+      if (p?.kind !== "PACE_TARGET") throw new Error("Expected detailed prescription")
+      expect(p.sequence?.version).toBe(2)
+      await expect(backupActivePlanToServer(selected.state)).resolves.toEqual({ kind: "saved" })
+      await expect(loadLatestPlanFromServer()).resolves.toEqual({ kind: "loaded", state: selected.state })
+      expect(savedRow).toMatchObject({ user_id: "user-1", schema_version: 3 })
+      expect(JSON.stringify(savedRow)).toContain('"terminalRecovery":{"mode":"NOT_APPLICABLE","seconds":null}')
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+
   it("stores only a validated v3 plan for the signed-in local account", async () => {
     const state = planBetaStateV3Schema.parse(stateFixture())
 

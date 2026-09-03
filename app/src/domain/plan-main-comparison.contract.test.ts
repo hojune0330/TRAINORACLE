@@ -16,7 +16,13 @@ function pair(fixture: MatrixCase = RUNTIME_CASES[0]): readonly [PlanCandidate, 
 
 function changePace(candidate: PlanCandidate, change: (p: PaceTargetPlanPrescription) => PaceTargetPlanPrescription): PlanCandidate {
   return { ...candidate, sessions: candidate.sessions.map((session) => session.prescription.kind === "PACE_TARGET"
-    ? { ...session, prescription: change(session.prescription) } as PlanSession : session) }
+    ? { ...session, prescription: withoutStoredSequence(change(session.prescription)) } as PlanSession : session) }
+}
+
+function withoutStoredSequence(prescription: PaceTargetPlanPrescription): PaceTargetPlanPrescription {
+  // These are non-activatable comparison fixtures, not edits to bound saved plans.
+  const { sequence: _sequence, ...legacy } = prescription
+  return legacy
 }
 
 function detailedRow(a: PlanCandidate, b: PlanCandidate) {

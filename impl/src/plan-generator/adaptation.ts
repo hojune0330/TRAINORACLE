@@ -1,4 +1,5 @@
 import { assertNever } from "../shared/assert-never"
+import { matchesPacePrescriptionSequence, type PaceSequenceSource } from "../prescription/pace-sequence"
 import {
   continuityContextIdentity,
   continuityIdentityFromCandidateId,
@@ -627,7 +628,8 @@ const FIVE_K_COMPONENT_REFS = [
 ] as const
 
 function isPaceTargetPrescription(value: Record<string, unknown>): boolean {
-  if (!hasExactKeys(value, PACE_TARGET_KEYS)) return false
+  const hasSequence = Object.prototype.hasOwnProperty.call(value, "sequence")
+  if (!hasExactKeys(value, hasSequence ? [...PACE_TARGET_KEYS, "sequence"] : PACE_TARGET_KEYS)) return false
   const strings = ["manifestVersion", "templateId", "templateVersion", "templateContentFingerprint", "notation", "sourceDecisionId", "sourceEvidenceRef", "approvalDecisionId", "ownerAuthorityDecisionId", "displayRoundingPolicyVersion", "prescriptionFingerprint"]
   if (!strings.every((key) => typeof value[key] === "string" && value[key].length > 0)
       || typeof value["templateContentFingerprint"] !== "string" || !SHA256_PATTERN.test(value["templateContentFingerprint"])
@@ -644,6 +646,8 @@ function isPaceTargetPrescription(value: Record<string, unknown>): boolean {
   return isRecord(anchor) && anchor["eventDistanceM"] === value["targetEventDistanceM"]
     && hasApprovedPrescriptionReferenceBinding(value)
     && isConsistentPaceTarget(value)
+    // Source fields have passed the exact operational/number checks above.
+    && (!hasSequence || matchesPacePrescriptionSequence(value as unknown as PaceSequenceSource, value["sequence"]))
 }
 
 function isEvidenceIdentity(value: unknown): boolean {
