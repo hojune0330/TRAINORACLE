@@ -4,7 +4,7 @@
 doc_id: trainoracle-prescription-release-followup-20260903
 status: VALIDATION_IN_PROGRESS_NOT_DEPLOYED
 owner: COACH_HOJUNE
-version: "0.2"
+version: "0.3"
 baseline_head: 7caaa911e8c2ce54c2896826d95547848b3e83b0
 verified_recommendation_head: d34874f220cb80639d65ca42a51596712c3531dc
 predecessor_pr: 314
@@ -101,5 +101,22 @@ canonical_promotion_allowed: false
 현재 상세 방법은 네 종목 조건에 각 하나이며, 시간/RPE 표현을 두 번째
 방법으로 세지 않는다. 미채택 12x400m를 활성화하지 않았다. 추천 시간은
 기존 동일 종목 경기 평균 속도 환산이며 고정 회복을 개인 최적값으로 부르지 않는다.
+
+## 5. 선행 수정본 연결 체크포인트
+
+위 §3의 검사 표는 추천 화면 검증 당시의 스냅샷이다. 이후 #314의 세 P2를
+수정하고 독립 재검수에서 발견된 기존 비밀 메모 소실 P1까지 보완하여
+`20360c3`으로 푸시했다. 수정 범위에 대한 독립 재검수에서 추가 P1/P2는
+발견되지 않았다. 이것을 Fable 또는 사람의 검수 서명으로 바꾸어 쓰지 않는다.
+
+- 간편→상세→파일 보완→직접 입력값 수정 경로 및 같은 id 유지 확인.
+- 잠금/해제 상태 모두 기존 비밀 메모 암호문 보존과 원문 복원 확인.
+- 관련 55/55, 저장·출처·비밀 메모 확대 77/77, 최종 브라우저 16/16 통과.
+- 상세 기록: [선행 수정 보고서](QUICK_JOURNAL_RECONCILIATION_REPAIR_2026-09-03.md).
+- 최종 통합 head의 CI와 main 병합·배포 확인은 여전히 별도 절차다.
+
+두 브랜치의 연결 이력을 유지해 선행 변경을 먼저 합친다. main 기준 diff에서
+선행 일지 변경이 반복 표시되거나 빠지지 않는지 검사하며, 이미 승인된 훈련
+내용이나 메모·가져온 값의 프라이버시 규칙을 이 과정에서 재정의하지 않는다.
 
 [DRAFT_COMPLETE]
