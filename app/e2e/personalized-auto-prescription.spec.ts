@@ -2,6 +2,7 @@ import { expect, test } from "@playwright/test"
 import type { Page } from "@playwright/test"
 import { selectNineDayProjection } from "./plan-flow"
 import { expectActivePlanHeading, openActiveSessionDetails } from "./active-plan-flow"
+import { undersizedInteractiveTargets } from "./touch-audit"
 
 test.use({ serviceWorkers: "block" })
 const appPath = process.env.PLAYWRIGHT_APP_PATH ?? "/"
@@ -89,20 +90,7 @@ async function assertKeyboardFocus(page: Page): Promise<void> {
 }
 
 async function assertTouchTargets(page: Page): Promise<void> {
-  const undersized = await page.evaluate(() => [...document.querySelectorAll<HTMLElement>(
-    "button, input, select, summary, [role='button']",
-  )].flatMap((element) => {
-    const rect = element.getBoundingClientRect()
-    if (rect.width === 0 || rect.height === 0) return []
-    return rect.width >= 44 && rect.height >= 44
-      ? []
-      : [{
-          label: element.getAttribute("aria-label") ?? element.textContent?.trim().slice(0, 60) ?? element.tagName,
-          width: Math.round(rect.width),
-          height: Math.round(rect.height),
-        }]
-  }))
-  expect(undersized).toEqual([])
+  expect(await undersizedInteractiveTargets(page.locator("body"))).toEqual([])
 }
 
 async function assertEvidenceHelpDoesNotOverlap(page: Page): Promise<void> {

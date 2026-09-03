@@ -1517,6 +1517,8 @@
   gap: var(--space-2);
   font-size: var(--fs-body-sm);
   line-height: 1.5;
+  word-break: keep-all;
+  overflow-wrap: anywhere;
 }
 
 .plan-detailed-prescription__notation {
@@ -1546,6 +1548,62 @@
 .plan-detailed-prescription details ul {
   margin: 0 0 var(--space-2);
   padding-left: var(--space-5);
+}
+
+.plan-pace-recommendation {
+  min-width: 0;
+  padding-block: var(--space-1) var(--space-2);
+  border-bottom: var(--bw-line) solid var(--hair);
+}
+
+.plan-pace-recommendation details summary {
+  gap: var(--space-2);
+  flex-wrap: wrap;
+  color: var(--brand);
+  font-weight: 600;
+}
+
+.plan-pace-recommendation summary svg {
+  flex: 0 0 auto;
+}
+
+.plan-pace-recommendation summary:focus-visible {
+  outline: 2px solid var(--brand);
+  outline-offset: 2px;
+}
+
+.plan-pace-recommendation__badge {
+  color: var(--ink-2);
+  font-size: var(--fs-caption);
+  font-weight: 500;
+}
+
+.plan-pace-recommendation__notice {
+  margin: 0;
+  color: var(--ink-2);
+  font-size: var(--fs-body-sm);
+  line-height: 1.5;
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+}
+
+.plan-pace-recommendation dl {
+  margin: 0 0 var(--space-3);
+  display: grid;
+  gap: var(--space-1);
+  overflow-wrap: anywhere;
+}
+
+.plan-pace-recommendation dt {
+  margin-top: var(--space-2);
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.plan-pace-recommendation dd {
+  margin: 0 0 var(--space-2);
+  line-height: 1.6;
+  word-break: keep-all;
 }
 
 @media (max-width: 420px) {

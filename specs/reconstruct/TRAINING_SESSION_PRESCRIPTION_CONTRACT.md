@@ -5,7 +5,7 @@ document_metadata:
   doc_id: trainoracle-spec-training-session-prescription
   status: RECONSTRUCTED_WITH_OWNER_ADOPTED_V2_SEED_05
   owner: COACH_HOJUNE
-  version: "0.4"
+  version: "0.5"
   local_original_found: false
   reconstructed_from_current_product_and_review_sources: true
   restored_original: false
@@ -469,5 +469,51 @@ occurrence separately and include it in recovery totals, never in MAIN work dist
 Do not infer final recovery from an unused recoveryAfter or count it again as cooldown.
 Structural comparison includes recovery unit, amount and mode. This representation
 does not adopt a source example or allow it through the athlete plan schema.
+
+### 12.4 Visible Record-Based Recommendations (Owner Amendment 2026-09-03)
+
+The owner requested numeric recommended repetition times and recovery guidance,
+with a visible, tappable explanation rather than withholding usable numbers by
+default. The owner also authorized researching and applying suitable formulas.
+This is not acceptance of the separate 12 x 400 m example or its exact dose.
+
+For the currently adopted PACE_TARGET templates, show the existing unrounded
+same-event calculation using the existing seconds-v1 display rounding. Identify it
+as an approximate recommendation, not a guarantee of today's capability. Put a
+visible `추천 기준` control with a help icon beside the prescription, and retain a
+short condition/weather limitation even when the explanation is collapsed.
+The control must be keyboard-operable and at least 44 CSS pixels high. Do not hide
+the only explanation entry inside a lower safety/technical section or hover-only UI.
+
+Expanded content identifies the selected record/date and verification state, the
+actual calculation inputs/result, rounding, template identity/version, and limits.
+It reads the same prescription as the displayed work and recovery. It must update
+when that prescription changes and must not add memo text, automatically select a
+faster record, or retrospectively claim a new model produced a saved old plan.
+
+Recovery time/mode remain visible with the work. Explain whether recovery comes
+from a reviewed fixed template, an explicit ratio rule, or a distance instruction.
+Current adopted templates use fixed template recovery: it is not individualized
+by the record and does not automatically shrink when the athlete becomes faster.
+Do not assign seconds to distance-only recovery using work pace. A later recovery
+time estimate requires a stated recovery-speed assumption/model and must preserve
+the prescribed recovery distance and uncertainty.
+
+Formula expansion is now an authorized development direction, not a reason to
+return all users to RPE-only. Each implemented model must declare its purpose,
+source, coefficients, applicability, limitations, version, and independently
+checked numeric examples before runtime wiring. Race-equivalence models such as
+Riegel are not threshold/interval/recovery formulas. VDOT training paces are not
+interchangeable with simple same-event splits. A caution marker cannot authorize
+a fabricated coefficient, missing record, safety bypass or unreviewed template.
+Keep goal references separate from current-capability recommendations.
+
+Research and implementation scope are recorded in
+`reports/review/RECORD_BASED_PACE_RECOMMENDATION_DECISION_2026-09-03.md`.
+Change ledger: MODIFY numeric pace presentation into a visible recommendation;
+ADD formula research/application direction and transparent recovery provenance;
+KEEP existing numeric values, safety, youth/self-service scope and historic plans.
+No new template activation, canonical promotion, issue closure or production
+deployment is implied by this amendment.
 
 [DRAFT_COMPLETE]

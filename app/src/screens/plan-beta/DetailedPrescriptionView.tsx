@@ -2,6 +2,7 @@ import type { PlanSession } from "@impl/plan-generator/types"
 import { TermHelp } from "../../components/TermHelp"
 import { formatRecordTime } from "../../domain/athlete-record-display"
 import { formatTrainingSeconds } from "./labels"
+import { PaceRecommendation } from "./PaceRecommendation"
 
 type Detailed = Extract<PlanSession["prescription"], { readonly kind: "PACE_TARGET" }>
 
@@ -20,12 +21,13 @@ export function DetailedPrescriptionView({ prescription }: { readonly prescripti
         <strong>본운동</strong>
         <span>
           {prescription.setCount > 1 && `${prescription.setCount}세트 · 세트마다 `}
-          {prescription.repetitionDistanceM}m를 {formatTrainingSeconds(prescription.targetRepSeconds)} 목표로
+          {prescription.repetitionDistanceM}m를 약 {formatTrainingSeconds(prescription.targetRepSeconds)} 기준으로
           {" "}{prescription.repetitionsPerSet}회
           {prescription.setCount > 1 && ` · 총 ${prescription.totals.totalRepetitions}회`}
           {" · "}주요 구간 거리 {prescription.totals.qualityDistanceM}m
         </span>
       </p>
+      <PaceRecommendation prescription={prescription} />
       {prescription.repetitionRecoverySeconds !== null && (
         <p>
           <strong>반복 사이 회복</strong>

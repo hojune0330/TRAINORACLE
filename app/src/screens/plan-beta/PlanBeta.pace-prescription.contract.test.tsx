@@ -85,6 +85,7 @@ describe("production detailed prescription experience", () => {
     expect(screen.queryByText(/5×1000m @5000m RP/u)).toBeNull()
     expect(screen.queryByText(/직접 고르고 확인한 현재.*기록으로 한 강도 세션의 상세 페이스/u)).toBeNull()
     expect(screen.queryByText(/선택하고 확인한.*기록만 상세 페이스 계산에 사용/u)).toBeNull()
+    expect(screen.queryByText("추천 기준")).toBeNull()
     const again = screen.getByRole("region", { name: "개인 페이스 기준 기록" })
     expect(within(again).getByText(/기준 기록.*18분 31초/u)).toBeVisible()
     await user.click(within(again).getByRole("button", { name: "이 기록으로 개인 페이스 적용" }))
@@ -150,8 +151,13 @@ describe("production detailed prescription experience", () => {
     expect(within(schedule).getByText("총 5회 · 주요 구간 5000m · 1000m당 3분 42초")).toBeVisible()
     expect(within(schedule).getAllByText(/5회.*5000m/u)).not.toHaveLength(0)
     expect(within(schedule).getByText(/4번.*150초.*조깅.*600초/u)).toBeVisible()
+    expect(within(schedule).getByText("추천 기준")).toBeVisible()
+    await user.click(within(schedule).getByText("추천 기준"))
+    expect(within(schedule).getByText("1,111초 × 1000m ÷ 5000m")).toBeVisible()
+    expect(within(schedule).getByText(/계산값 약 222.2초/u)).toBeVisible()
+    await user.click(within(schedule).getByText("추천 기준"))
     await user.click(within(schedule).getByText("기준 기록·중단·낮춤 규칙 보기"))
-    expect(within(schedule).getByText(/5000m.*18분 31초.*2026-05-10/u)).toBeVisible()
+    expect(within(schedule).getByText(/^기준 기록 · 5000m.*18분 31초.*2026-05-10/u)).toBeVisible()
 
     await user.click(screen.getByRole("button", { name: /시간 조절 계획 선택하기/u }))
     await screen.findByRole("heading", { name: /9일 훈련 계획/u })
@@ -189,7 +195,7 @@ describe("production detailed prescription experience", () => {
     const reloadedSession = await openDetailedActiveSession(user)
     expect(within(reloadedSession).getByText(/5×1000m @5000m RP.*r150.*JOG/u)).toBeVisible()
     await user.click(within(reloadedSession).getByText("기준 기록·중단·낮춤 규칙 보기"))
-    expect(within(reloadedSession).getByText(/5000m.*18분 31초.*2026-05-10/u)).toBeVisible()
+    expect(within(reloadedSession).getByText(/^기준 기록 · 5000m.*18분 31초.*2026-05-10/u)).toBeVisible()
   }, 15_000)
 
   it("clears the execution allowance message on every recorded outcome", async () => {
