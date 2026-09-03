@@ -1,7 +1,8 @@
 import React from "react"
 import { IndexCard } from "../../components/JournalPrimitives"
 import { compactDate, dowOf, nowClock } from "../../domain/dates"
-import { derivedProvenance, explicitOrMissing } from "../../domain/field-provenance"
+import { derivedProvenance, explicitOrMissing, isImportedField } from "../../domain/field-provenance"
+import { IMPORTED_OBJECTIVE_FIELDS } from "../../domain/journal-edit-policy"
 import {
   newEntryId,
   nextJournalSavedAt,
@@ -81,6 +82,7 @@ export function PostSessionForm({ onBack, onDone, targetDate, initialEntry, plan
   const memo = usePurposeScopedMemo(initial?.memo ?? "", initial?.memoPurpose)
   const didNotPerform = isNonPerformedOutcome(activityOutcome)
   const recordsPerformance = !didNotPerform
+  const importedObjective = IMPORTED_OBJECTIVE_FIELDS.some((field) => isImportedField(field, initial?.fieldProvenance))
 
   // "다음 구획을 건드렸다" 판정은 화면이 한다 (오너 결정 2026-07-28 "건드릴 때").
   // FormSec 안에 넣지 않는 이유: 무엇이 "다음" 인지는 화면 순서가 정하는
@@ -197,6 +199,7 @@ export function PostSessionForm({ onBack, onDone, targetDate, initialEntry, plan
                 key={value}
                 type="button"
                 aria-pressed={activityOutcome === value}
+                disabled={importedObjective && isNonPerformedOutcome(value)}
                 onClick={() => {
                   setActivityOutcome(value)
                   setTitle((current) => GENERATED_OUTCOME_TITLES.has(current) ? OUTCOME_TITLES[value] : current)
@@ -205,6 +208,7 @@ export function PostSessionForm({ onBack, onDone, targetDate, initialEntry, plan
               >{label}</button>
             ))}
           </div>
+          {importedObjective && <p role="note">가져온 활동 값이 있어 휴식·건너뜀으로 변경할 수 없는 기록이에요.</p>}
           {(activityOutcome === "COMPLETED" || activityOutcome === "PARTIAL" || activityOutcome === "LIGHT_ACTIVITY") && (
             <div className="journal-progressive-edit" role="group" aria-label="운동 시간대 수정">
               {DETAILED_SLOTS.map(([value, label]) => (
@@ -242,13 +246,14 @@ export function PostSessionForm({ onBack, onDone, targetDate, initialEntry, plan
       </FormSec>
       {recordsPerformance && <FormSec compact lb="거리 · 시간 · 평균 페이스" help="pace">
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8 }}>
-          <input aria-label="거리 (km)" type="text" value={distanceKm} onChange={(event) => setDistanceKm(event.target.value)} style={{ ...inputStyle(), fontFamily: "var(--mono)", textAlign: "right" }} />
-          <input aria-label="시간 (분)" type="text" value={durationMin} onChange={(event) => setDurationMin(event.target.value)} style={{ ...inputStyle(), fontFamily: "var(--mono)", textAlign: "right" }} />
-          <input aria-label="평균 페이스 (/km)" type="text" value={avgPace} onChange={(event) => setAvgPace(event.target.value)} style={{ ...inputStyle(), fontFamily: "var(--mono)", textAlign: "right" }} />
+          <input aria-label="거리 (km)" readOnly={isImportedField("distanceKm", initial?.fieldProvenance)} type="text" value={distanceKm} onChange={(event) => setDistanceKm(event.target.value)} style={{ ...inputStyle(), fontFamily: "var(--mono)", textAlign: "right" }} />
+          <input aria-label="시간 (분)" readOnly={isImportedField("durationMin", initial?.fieldProvenance)} type="text" value={durationMin} onChange={(event) => setDurationMin(event.target.value)} style={{ ...inputStyle(), fontFamily: "var(--mono)", textAlign: "right" }} />
+          <input aria-label="평균 페이스 (/km)" readOnly={isImportedField("avgPace", initial?.fieldProvenance)} type="text" value={avgPace} onChange={(event) => setAvgPace(event.target.value)} style={{ ...inputStyle(), fontFamily: "var(--mono)", textAlign: "right" }} />
         </div>
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, marginTop: 4, fontFamily: "var(--mono)", fontSize: 9, color: "var(--ink-3)", letterSpacing: "0.06em" }}>
           <span>km</span><span>min</span><span>/km</span>
         </div>
+        {importedObjective && <p role="note">파일에서 가져온 거리·시간·페이스는 읽기 전용이에요.</p>}
         {/* WORK_ORDER_UX2 §3-2 (D-06): 페이스 입력 형식 가이드 — 파서 철거가 아니라 안내 */}
         <p style={{ margin: "6px 0 0", fontFamily: "var(--sans)", fontSize: 11, color: "var(--ink-3)", lineHeight: 1.5 }}>
           예: 5'30&quot; 또는 5:30 (분:초)

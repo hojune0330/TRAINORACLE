@@ -11,7 +11,8 @@
 import type { ImportedActivity } from "./activity-file"
 import type { FieldProvenanceMap } from "../field-provenance"
 import type { JournalEntry, PostSessionEntry } from "../journal-schema"
-import { loadEntries, newEntryId, saveEntry, updateEntry } from "../journal-store"
+import { loadEntries, newEntryId, saveEntry, updateEntryPreservingMemo } from "../journal-store"
+import { canEditJournalEntry } from "../journal-edit-policy"
 
 /** 가져오기 파생 입력 토큰 — 일지 필드가 아니라 "파일에서 왔다"는 표시 */
 export const IMPORT_DERIVED_FROM = ["import:activity-file"] as const
@@ -22,7 +23,14 @@ export type ImportDraft = {
   readonly activity: ImportedActivity
   /** 같은 날 비슷한 활동의 기존 일지 id — 있으면 UI가 "이미 있는 것 같아요" 표시 */
   readonly duplicateOf: string | null
+  readonly reconciliationCandidates: readonly Pick<PostSessionEntry, "id" | "savedAt" | "activitySlot" | "title">[]
 }
+
+export type ImportSaveIntent =
+  | { readonly kind: "SAVE_SEPARATE" }
+  | { readonly kind: "ADD_TO_EXISTING"; readonly entryId: string; readonly expectedSavedAt: string }
+
+export type ImportDraftSelection = { readonly draft: ImportDraft; readonly intent: ImportSaveIntent }
 
 export type ImportSaveResult = {
   readonly saved: number
@@ -64,21 +72,13 @@ export function buildImportDrafts(
         && entry.date === activity.date
         && looksLikeSameActivity(entry, activity),
     )
-    if (duplicate !== undefined) return { activity, duplicateOf: duplicate.id }
-
-    // A quick record deliberately has no distance or time yet. Offer it only
-    // when there is exactly one waiting record on that date; two-a-day entries
-    // are ambiguous and must remain separate until the athlete chooses one.
-    const waitingQuickEntries = existing.filter(
-      (entry): entry is PostSessionEntry => entry.kind === "post-session"
-        && entry.date === activity.date
-        && entry.captureDepth === "QUICK"
-        && entry.activityOutcome !== "RESTED"
-        && entry.activityOutcome !== "SKIPPED"
-        && entry.objectiveDataState === "WAITING"
-        && !hasObjectiveValue(entry),
-    )
-    return { activity, duplicateOf: waitingQuickEntries.length === 1 ? waitingQuickEntries[0]?.id ?? null : null }
+    // Capture depth is not identity. AM/PM candidates stay unselected until
+    // the athlete chooses one exact entry and confirms its saved revision.
+    const reconciliationCandidates = existing
+      .filter((entry): entry is PostSessionEntry => isWaitingCandidate(entry, activity.date)
+        && existing.filter((other) => other.id === entry.id).length === 1)
+      .map(({ id, savedAt, activitySlot, title }) => ({ id, savedAt, activitySlot, title }))
+    return { activity, duplicateOf: duplicate?.id ?? null, reconciliationCandidates }
   })
 }
 
@@ -108,17 +108,26 @@ function hasObjectiveValue(entry: PostSessionEntry): boolean {
     || entry.avgPace.trim() !== ""
 }
 
+function isWaitingCandidate(entry: JournalEntry, date: string): entry is PostSessionEntry {
+  return entry.kind === "post-session"
+    && entry.date === date
+    && canEditJournalEntry(entry)
+    && (entry.activityOutcome === "COMPLETED" || entry.activityOutcome === "PARTIAL" || entry.activityOutcome === "LIGHT_ACTIVITY")
+    && entry.objectiveDataState === "WAITING"
+    && !hasObjectiveValue(entry)
+}
+
 export type ImportDraftConfirmationResult = ImportSaveResult & {
   readonly merged: number
   readonly conflicts: number
 }
 
 /**
- * A selected duplicate means "add the external objective facts to this exact journal".
- * Existing objective facts are never overwritten. A conflict stays visible for review.
+ * Similarity is only a warning. Reconciliation requires a separate, explicit
+ * target and revision; neither stale choices nor conflicts overwrite facts.
  */
 export function confirmImportDrafts(
-  drafts: readonly ImportDraft[],
+  selections: readonly ImportDraftSelection[],
   format: ImportFormat,
 ): ImportDraftConfirmationResult {
   let saved = 0
@@ -127,8 +136,8 @@ export function confirmImportDrafts(
   let failed = 0
   let total = loadEntries().length
 
-  for (const draft of drafts) {
-    if (draft.duplicateOf === null) {
+  for (const { draft, intent } of selections) {
+    if (intent?.kind === "SAVE_SEPARATE") {
       const result = saveImportedActivity(draft.activity, format)
       if (result.ok) saved += 1
       else failed += 1
@@ -136,14 +145,15 @@ export function confirmImportDrafts(
       continue
     }
 
-    const current = loadEntries().find(
-      (entry): entry is PostSessionEntry => entry.kind === "post-session" && entry.id === draft.duplicateOf,
-    )
-    if (current === undefined) {
+    if (intent?.kind !== "ADD_TO_EXISTING") {
       failed += 1
       continue
     }
-    if (hasObjectiveValue(current)) {
+    const matches = loadEntries().filter((entry) => entry.id === intent.entryId)
+    const current = matches[0]
+    if (matches.length !== 1 || current === undefined
+      || !isWaitingCandidate(current, draft.activity.date)
+      || current.savedAt !== intent.expectedSavedAt) {
       conflicts += 1
       continue
     }
@@ -163,7 +173,7 @@ export function confirmImportDrafts(
         avgPace: imported.avgPace ?? { provenance: "MISSING" },
       },
     }
-    const result = updateEntry(next, current.savedAt)
+    const result = updateEntryPreservingMemo(next, current.savedAt)
     if (result.ok) merged += 1
     else failed += 1
     total = result.total

@@ -5,8 +5,8 @@ document_metadata:
   doc_id: trainoracle-owner-decision-quick-progressive-journal-v2
   spec_id: SPEC_QUICK_PROGRESSIVE_JOURNAL_V2_DECISION
   title: TrainOracle Quick Progressive Journal V2 Decision
-  version: "1.0"
-  round: RT1
+  version: "1.1"
+  round: RT2
   status: OWNER_APPROVED_WORKING_DIRECTION
   owner: COACH_HOJUNE
   open_issues_total: 0
@@ -99,12 +99,32 @@ detailed capture depths do not change the identity or authority of an existing l
 
 ## 5. Device Reconciliation Boundary
 
-A performed quick entry with objective state `WAITING` may be offered as a same-date
-candidate only after the athlete selects and confirms the imported activity. Rest and
-skip are never candidates. Multiple candidates are not guessed. Existing values are not
-overwritten. Confirmation does not turn provider-derived facts into athlete-entered
-facts, and imported values remain excluded from analysis or planning until a separate
-provider trust and provenance rule is accepted.
+A performed entry originating in quick capture, including its later `DETAILED`
+continuation, with objective state `WAITING` and no objective values may be offered as a
+same-date candidate. Capture depth does not change its identity. Rest and skip are never
+candidates. Multiple AM/PM candidates are not guessed.
+
+The athlete explicitly chooses either a new separate journal or one existing journal to
+complete. Date/distance similarity is only a warning, not authority to force merging.
+Reconciliation checks the selected journal id and saved revision again when saving;
+stale, ambiguous, wrong-date, or already-completed targets do not overwrite facts.
+
+After reconciliation, the mixed-origin journal remains editable for athlete-authored
+subjective fields and diary text. Imported objective values and their provenance remain
+read-only at both the form and ordinary/private storage boundaries. Existing plan links
+remain immutable. Changing such a record to rest/skip cannot silently erase imported
+facts; the form explains why that change is unavailable. Standalone imported journals
+remain read-only in this release and the UI must not promise otherwise.
+
+Confirmation does not turn provider-derived facts into athlete-entered facts, and
+imported values remain excluded from analysis or planning until a separate provider
+trust and provenance rule is accepted. An unchanged derived value does not become
+explicit merely because the athlete saves a private memo.
+
+Device reconciliation never edits diary text or its purpose. It preserves any existing
+private-memo ciphertext unchanged, even while the memo is locked. A storage shell's
+empty memo is not a deletion request. A dedicated memo-preserving write rejects changes
+to memo text or purpose; explicit diary editing/deletion retains its separate behavior.
 
 ## 6. Safety And Privacy
 
@@ -146,5 +166,11 @@ This decision is not release evidence, provider approval, medical judgment, safe
 clearance, automatic-adaptation authority, canonical promotion, or downstream issue
 closure. Runtime claims require matching test output from the final commit and deployed
 artifact.
+
+## 10. Change Record
+
+| Version | Change | Preserved |
+|---|---|---|
+| 1.1 | Clarifies same-identity detailed continuation, explicit separate/reconcile choice, revision checks, and mixed-origin edit protections after the #314 independent review | Existing quick tap flow, safety and memo boundaries, imported-value analysis exclusion, canonical and issue-closure status |
 
 [DRAFT_COMPLETE]
