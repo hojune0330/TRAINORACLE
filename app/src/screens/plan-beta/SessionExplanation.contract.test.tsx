@@ -8,6 +8,7 @@ import { collectSessionExplanationEvidence, type SessionExplanationEvidence } fr
 import type { PostSessionEntry } from "../../domain/journal-schema"
 import { FIELD_PROVENANCE } from "../../domain/field-provenance"
 import { SessionExplanationEntry } from "./SessionExplanation"
+import { sessionExecutionSteps } from "./labels"
 
 const originalShowModal = Object.getOwnPropertyDescriptor(HTMLDialogElement.prototype, "showModal")
 const originalScrollTo = Object.getOwnPropertyDescriptor(Element.prototype, "scrollTo")
@@ -61,6 +62,20 @@ function paceSession(): PlanSession {
 }
 
 describe("session explanation review regressions", () => {
+  it.each(["LT_INTENT", "VO2_INTENT", "GLY_INTENT", "ATP_PC_INTENT", "MIXED_INTENT"] as const)("preserves %s performance and stopping guidance within one RPE flow", async (intent) => {
+    const session: PlanSession = { day: 1, slot: "AM", role: "QUALITY", plannedEnergyIntent: intent, prescription: { kind: "RPE_TIME_RANGE", durationMinutes: { minimum: 30, maximum: 40 }, rpe: { minimum: 6, maximum: 7 } } }
+    render(<SessionExplanationEntry session={session} />)
+    await userEvent.click(screen.getByRole("button", { name: "훈련 방법과 이유" }))
+    const reader = screen.getByRole("dialog")
+    const flow = reader.querySelector(".session-explanation__sequence")!
+    expect(reader.querySelectorAll(".session-explanation__sequence")).toHaveLength(1)
+    expect(flow.children).toHaveLength(3)
+    for (const step of sessionExecutionSteps(session)) expect(flow).toHaveTextContent(step.detail.replace(/\s+/gu, " "))
+    expect(flow).toHaveTextContent("세션 시간 안내 (구간 미지정)")
+    expect(flow).toHaveTextContent("반복 길이·횟수와 회복 초수는 이 계획에 저장되지 않았어요.")
+    expect(reader.querySelector(".prescription-structure")).toBeNull()
+  })
+
   it("leads a detailed prescription with its selected-record recommendation and one complete performance order", async () => {
     render(<SessionExplanationEntry session={paceSession()} />)
     await userEvent.click(screen.getByRole("button", { name: "훈련 방법과 이유" }))

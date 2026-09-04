@@ -8,7 +8,7 @@ import { explainSession, explanationProfile, type SessionExplanationContext } fr
 import type { SessionExplanationEvidence } from "../../domain/session-explanation-evidence"
 import { COMPARISON_LABELS } from "./PlanCycleEvidence"
 import { DetailedPrescriptionView } from "./DetailedPrescriptionView"
-import { prescriptionLabel, sessionLabel, sessionExecution } from "./labels"
+import { prescriptionLabel, sessionLabel, sessionExecution, sessionExecutionSteps } from "./labels"
 import { sessionPrescriptionSequence } from "../../domain/session-prescription-sequence"
 import { PrescriptionStructure } from "./PrescriptionStructure"
 import "../../styles/session-explanation.css"
@@ -48,6 +48,7 @@ function SessionExplanationReader({ session, context, loadEvidence, onClose }: P
   const id = React.useId()
   const explanation = explainSession(session, context)
   const sequence = sessionPrescriptionSequence(session)
+  const executionGuidance = new Map(sessionExecutionSteps(session).map((step) => [step.title, step.detail]))
   const term = GLOSSARY[explanation.profile.termId]
   const evidenceMatches = evidence !== null && context?.kind === "SAVED"
     && evidence.candidateId === context.plan.candidateId && evidence.generatedAt === context.generatedAt
@@ -99,7 +100,10 @@ function SessionExplanationReader({ session, context, loadEvidence, onClose }: P
               <p className="session-explanation__metric">{sessionExecution(session)}</p>
               {session.prescription.kind === "PACE_TARGET" && <DetailedPrescriptionView prescription={session.prescription} variant="sequence-lead" />}
               {sequence !== null ? <PrescriptionStructure sequence={sequence} /> : <ol className="session-explanation__sequence">
-                {explanation.components.map((component) => <li key={component.id}><strong>{component.label}</strong><span>{component.method}</span><small>{component.recovery}</small></li>)}
+                {explanation.components.map((component) => {
+                  const guidance = executionGuidance.get(component.id === "main" ? "본운동" : component.label)
+                  return <li key={component.id}><strong>{component.label}</strong><span>{component.method}</span>{guidance !== undefined && <span>{guidance}</span>}<small>{component.recovery}</small></li>
+                })}
               </ol>}
               <p className="session-explanation__note">순서도예요. 칸의 길이는 운동 시간이나 에너지 비율을 뜻하지 않아요.</p>
               {context?.kind === "SAVED" && sequence !== null && (
