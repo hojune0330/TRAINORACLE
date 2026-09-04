@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test"
 
-test("keeps explicit energy records separate from legacy defaults across home and analysis", async ({ page }) => {
+test("keeps explicit energy records separate from legacy defaults across home and analysis", async ({ page }, testInfo) => {
   await page.addInitScript(() => {
     const now = new Date()
     const date = [
@@ -56,7 +56,7 @@ test("keeps explicit energy records separate from legacy defaults across home an
 
   const analysis = page.getByRole("region", { name: "에너지 시스템 누적" })
   await expect(analysis.getByRole("img", { name: /LT 지속 페이스 1회/u })).toBeVisible()
-  await expect(analysis.getByText("40분 · 8km · RPE 6", { exact: true })).toBeVisible()
+  await expect(analysis.getByText("40분 (1회 기록) · 8km (1회 기록) · RPE 6 (1회 기록)", { exact: true })).toBeVisible()
   await expect(analysis.getByText(/직접 선택 1건 · 제외 1건/u)).toBeVisible()
   await analysis.getByRole("button", { name: "24주" }).click()
   await expect(analysis.getByRole("button", { name: "24주" })).toHaveAttribute("aria-pressed", "true")
@@ -66,4 +66,5 @@ test("keeps explicit energy records separate from legacy defaults across home an
     return document.documentElement.scrollWidth <= window.innerWidth
       && (scrollRegion === null || scrollRegion.scrollWidth <= scrollRegion.clientWidth)
   })).toBe(true)
+  await page.screenshot({ path: testInfo.outputPath("analysis-integrity.png"), fullPage: true })
 })

@@ -40,6 +40,7 @@ export type StructuredJournalInput =
     }
 
 export type StructuredJournalObservation = {
+  readonly acceptedExplicitFields?: readonly string[]
   readonly sourceRef: {
     readonly sourceKind: StructuredJournalInput["sourceKind"]
     readonly sourceId: string
@@ -108,7 +109,9 @@ function sourceTrust(provenance: FieldProvenanceMap | undefined): ObservationTru
 }
 
 function hasSessionSignal(entry: Extract<JournalEntry, { readonly kind: "post-session" }>): boolean {
-  return positiveDistance(entry.distanceKm) !== null
+  return (entry.fieldProvenance?.system?.provenance === "EXPLICIT"
+      && journalSystemToEnergySystem(entry.system) !== null)
+    || positiveDistance(entry.distanceKm) !== null
     || positiveDuration(entry.durationMin) !== null
     || parsePaceText(entry.avgPace) !== null
     || entry.rpe > 0
@@ -254,6 +257,8 @@ export function projectStructuredJournalObservation(
   return {
     sourceRef,
     loggedOn: input.loggedOn,
+    acceptedExplicitFields: ["system", "distanceKm", "durationMin", "rpe"]
+      .filter(field => input.fieldProvenance?.[field]?.provenance === "EXPLICIT"),
     energySystem: journalSystemToEnergySystem(input.system ?? ""),
     distanceKm,
     durationMin,

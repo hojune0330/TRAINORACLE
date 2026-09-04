@@ -94,7 +94,7 @@ describe("personal oracle explanation contract", () => {
 
     expect(result.structuredSourceCount).toBe(0)
     expect(result.insights.find((item) => item.id === "DISTANCE_FLOW")?.headline).toContain("아직")
-    expect(result.insights.find((item) => item.id === "ENERGY_COVERAGE")?.headline).toContain("아직")
+    expect(result.insights.find((item) => item.id === "ENERGY_COVERAGE")?.headline).toContain("기록은 있지만")
   })
 
   it("names every jointly most frequent system as a tie", () => {

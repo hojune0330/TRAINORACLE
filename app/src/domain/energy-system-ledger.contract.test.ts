@@ -107,7 +107,8 @@ describe("energy system ledger contract", () => {
 
     expect(ledger.rows.find((row) => row.key === "VO2")?.journalSessionCount).toBe(1)
     expect(ledger.rows.find((row) => row.key === "LT")?.journalSessionCount).toBe(0)
-    expect(ledger.duplicateSourceCount).toBe(3)
+    expect(ledger.duplicateSourceCount).toBe(1)
+    expect(ledger.conflictingSourceCount).toBe(1)
     expect(ledger.reasonCodes).toContain("IDENTICAL_DUPLICATE_SOURCE")
     expect(ledger.reasonCodes).toContain("CONFLICTING_SOURCE_ID")
   })

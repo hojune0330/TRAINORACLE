@@ -1,5 +1,6 @@
 import { isValidIsoDate, isoShift } from "./dates"
 import type { StructuredJournalObservation } from "./journal-observation"
+import { acceptsExplicitField } from "./analysis-field-eligibility"
 import {
   ENERGY_SYSTEM_KEYS,
   plannedIntentToEnergySystem,
@@ -23,6 +24,8 @@ export type EnergyLedgerRow = {
   readonly durationMinutes: number | null
   readonly distanceKm: number | null
   readonly rpeSampleCount: number
+  readonly distanceSampleCount: number
+  readonly durationSampleCount: number
   readonly meanRpe: number | null
 }
 
@@ -33,6 +36,8 @@ export type EnergySystemLedger = {
   readonly includedSourceCount: number
   readonly excludedSourceCount: number
   readonly duplicateSourceCount: number
+  readonly conflictingSourceCount: number
+  readonly sourceRefs: readonly StructuredJournalObservation["sourceRef"][]
   readonly coverage: "DATA" | "PARTIAL" | "MISSING"
   readonly reasonCodes: readonly (
     | "STRUCTURED_EXPLICIT_SYSTEM"
@@ -80,15 +85,14 @@ function metricIsExplicit(
   observation: StructuredJournalObservation,
   field: "distanceKm" | "durationMin" | "rpe",
 ): boolean {
-  return observation.fieldProvenance[field] === "EXPLICIT"
+  return acceptsExplicitField(observation, field)
 }
 
 function eligibleSystemObservation(observation: StructuredJournalObservation): boolean {
   return observation.sourceRef.sourceKind === "SESSION_RESULT_RECORD"
     && observation.energySystem !== undefined
     && observation.energySystem !== null
-    && observation.fieldProvenance.system === "EXPLICIT"
-    && observation.sourceRef.trustState === "ACCEPTED"
+    && acceptsExplicitField(observation, "system")
 }
 
 function sourceSignature(observation: StructuredJournalObservation): string {
@@ -103,6 +107,7 @@ function sourceSignature(observation: StructuredJournalObservation): string {
     rpe: observation.rpe,
     rpeProvenance: observation.fieldProvenance.rpe,
     trustState: observation.sourceRef.trustState,
+    acceptedExplicitFields: [...(observation.acceptedExplicitFields ?? [])].sort(),
   })
 }
 
@@ -154,13 +159,14 @@ export function buildEnergySystemLedger(
     && observation.loggedOn >= window.startDate
     && observation.loggedOn <= window.endDate
   ))
-  let excludedSourceCount = scopedSessions.filter((observation) => !eligibleSystemObservation(observation)).length
+  let excludedSourceCount = 0
+  let conflictingSourceCount = 0
   let duplicateSourceCount = 0
   let hasIdenticalDuplicate = false
   let hasConflict = false
   const eligibleById = new Map<string, StructuredJournalObservation[]>()
 
-  for (const observation of scopedSessions.filter(eligibleSystemObservation)) {
+  for (const observation of scopedSessions) {
     const id = `${observation.sourceRef.sourceKind}:${observation.sourceRef.sourceId}`
     const group = eligibleById.get(id)
     if (group === undefined) eligibleById.set(id, [observation])
@@ -174,7 +180,7 @@ export function buildEnergySystemLedger(
     const signatures = new Set(group.map(sourceSignature))
     if (signatures.size > 1) {
       hasConflict = true
-      duplicateSourceCount += group.length
+      conflictingSourceCount += 1
       excludedSourceCount += 1
       continue
     }
@@ -182,7 +188,8 @@ export function buildEnergySystemLedger(
       hasIdenticalDuplicate = true
       duplicateSourceCount += group.length - 1
     }
-    accepted.push(first)
+    if (eligibleSystemObservation(first)) accepted.push(first)
+    else excludedSourceCount += 1
   }
 
   const accumulators = emptyRows()
@@ -215,6 +222,8 @@ export function buildEnergySystemLedger(
       durationMinutes: row.durationCount === 0 ? null : round1(row.duration),
       distanceKm: row.distanceCount === 0 ? null : round1(row.distance),
       rpeSampleCount: row.rpeCount,
+      distanceSampleCount: row.distanceCount,
+      durationSampleCount: row.durationCount,
       meanRpe: row.rpeCount === 0 ? null : round1(row.rpe / row.rpeCount),
     }
   })
@@ -232,6 +241,8 @@ export function buildEnergySystemLedger(
     includedSourceCount: accepted.length,
     excludedSourceCount,
     duplicateSourceCount,
+    conflictingSourceCount,
+    sourceRefs: accepted.map(item => item.sourceRef),
     coverage: accepted.length === 0
       ? "MISSING"
       : excludedSourceCount > 0 || duplicateSourceCount > 0

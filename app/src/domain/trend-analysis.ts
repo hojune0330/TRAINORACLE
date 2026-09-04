@@ -7,6 +7,7 @@ import type {
   StructuredJournalObservation,
 } from "./journal-observation"
 import { pad2 } from "./dates"
+import { acceptsExplicitField } from "./analysis-field-eligibility"
 
 export type TrendMetric =
   | "DISTANCE_KM"
@@ -138,8 +139,11 @@ function isEligible(
   metric: TrendMetric,
 ): boolean {
   if (!metricApplies(observation, metric) || metricValue(observation, metric) === null) return false
-  if (observation.sourceRef.trustState === "MISSING"
-    || observation.sourceRef.trustState === "SOURCE_NOT_VERIFIED") return false
+  if (observation.sourceRef.trustState === "MISSING") return false
+  if (observation.sourceRef.trustState === "SOURCE_NOT_VERIFIED") {
+    const field = metric === "DISTANCE_KM" ? "distanceKm" : metric === "RPE" ? "rpe" : null
+    if (field === null || !acceptsExplicitField(observation, field)) return false
+  }
 
   const provenance = metricProvenance(observation, metric)
   if (provenance === "EXPLICIT") return true
