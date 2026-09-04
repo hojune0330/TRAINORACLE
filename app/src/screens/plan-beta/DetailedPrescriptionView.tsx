@@ -20,6 +20,10 @@ export function DetailedPrescriptionView({ prescription, variant = "default" }: 
   if (variant === "sequence-lead") {
     return (
       <div className="plan-detailed-prescription plan-detailed-prescription--sequence-lead">
+        <p className="plan-detailed-prescription__notation">
+          <code>{prescription.notation}</code>
+          <TermHelp term="training-notation" />
+        </p>
         <p>
           <strong>개인 추천 시간</strong>
           <span>{prescription.repetitionDistanceM}m당 약 {formatTrainingSeconds(prescription.targetRepSeconds)} · 직접 선택한 {anchor.eventDistanceM}m {formatRecordTime(anchor.performanceSeconds)} 기준</span>

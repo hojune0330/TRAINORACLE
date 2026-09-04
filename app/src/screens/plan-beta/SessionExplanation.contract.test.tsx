@@ -37,6 +37,7 @@ function paceSession(): PlanSession {
     plannedEnergyIntent: "VO2_INTENT",
     prescription: {
       kind: "PACE_TARGET",
+      notation: '5×1000m @5000m RP r150" JOG',
       templateId: "V2-SEED-05",
       templateVersion: "1.0.0",
       templateContentFingerprint: "sha256:ad4a8c436a5a6e7a9c81342d79b359d84b1b8ea1034f9589141429eea8d0e42a",
@@ -86,6 +87,8 @@ describe("session explanation review regressions", () => {
     expect(screen.getByText("개인 추천 시간")).toBeVisible()
     expect(screen.getByText(/1000m당 약 3분 42초.*5000m 18분 30초 기준/u)).toBeVisible()
     expect(screen.getByText("추천 기준")).toBeVisible()
+    expect(reader.querySelectorAll(".plan-detailed-prescription__notation")).toHaveLength(1)
+    expect(reader.querySelector(".plan-detailed-prescription__notation code")).toHaveTextContent('5×1000m @5000m RP r150" JOG')
     expect(reader).not.toHaveTextContent("오늘 할 훈련")
     expect(reader).toHaveTextContent("준비")
     expect(reader).toHaveTextContent("반복 사이: 150초 가벼운 조깅 · 4번")
