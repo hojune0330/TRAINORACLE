@@ -1,5 +1,5 @@
 import type { PlanCandidate, PlanSession } from "@impl/plan-generator/types"
-import { compareMainMethods, deriveSequenceTotals } from "@impl/prescription/sequence"
+import { compareMainMethods, deriveSequenceTotals, describeMainMethodDifferences, type MainMethodDifferenceCode } from "@impl/prescription/sequence"
 import { sessionPrescriptionSequence } from "./session-prescription-sequence"
 import { secondsText } from "./session-explanation-content"
 
@@ -22,6 +22,7 @@ export type MainComparisonRow = {
   readonly b: MainPrescriptionView | null
   readonly samePrescribedValues: boolean
   readonly methodRelation: MainMethodRelation
+  readonly methodDifferences: readonly MainMethodDifferenceCode[]
 }
 
 const slotKey = (session: PlanSession) => `${session.day}:${session.slot}`
@@ -71,12 +72,15 @@ function mainView(session: QualitySession): MainPrescriptionView | null {
   }
 }
 
-function relation(a: QualitySession, b: QualitySession): MainMethodRelation {
-  if (!sameContext(a, b)) return "CONTEXT_MISMATCH"
+function methodComparison(a: QualitySession, b: QualitySession): Pick<MainComparisonRow, "methodRelation" | "methodDifferences"> {
+  if (!sameContext(a, b)) return { methodRelation: "CONTEXT_MISMATCH", methodDifferences: [] }
   const aSequence = sessionPrescriptionSequence(a)
   const bSequence = sessionPrescriptionSequence(b)
-  if (aSequence === null || bSequence === null) return "UNSPECIFIED"
-  return compareMainMethods(aSequence, bSequence).kind === "same" ? "SAME" : "DIFFERENT_REQUIRES_REVIEW"
+  if (aSequence === null || bSequence === null) return { methodRelation: "UNSPECIFIED", methodDifferences: [] }
+  return {
+    methodRelation: compareMainMethods(aSequence, bSequence).kind === "same" ? "SAME" : "DIFFERENT_REQUIRES_REVIEW",
+    methodDifferences: describeMainMethodDifferences(aSequence, bSequence),
+  }
 }
 
 /** Read-only comparison. No IDs, athlete records, notes, new dose or activation authority. */
@@ -101,7 +105,7 @@ export function comparePlanMainWork(a: ComparisonPlan, b: ComparisonPlan) {
     return {
       key, day: position.day, slot: position.slot, a: aView, b: bView,
       samePrescribedValues: comparable && JSON.stringify(prescribedValues(left)) === JSON.stringify(prescribedValues(right)),
-      methodRelation: !comparable ? "CONTEXT_MISMATCH" : relation(left, right),
+      ...(!comparable ? { methodRelation: "CONTEXT_MISMATCH" as const, methodDifferences: [] } : methodComparison(left, right)),
     }
   })
   // The global easy-time-only sentence also requires identical support and operational components.

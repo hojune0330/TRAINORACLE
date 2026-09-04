@@ -599,4 +599,28 @@ Change ledger: ADD record-management return and visible fallback intent; MODIFY
 reader hierarchy; KEEP all numerical prescriptions, safety, privacy and old plans.
 Open issues remain open; release evidence is recorded separately.
 
+### 12.7 MAIN Difference Inspection (2026-09-05)
+
+The existing read-only method comparison may expose bounded difference codes for
+main-work structure, work unit, target definition, recovery, and terminal recovery.
+Derive these from the same normalized sequence projection as method equality.
+Ignore labels, IDs, athlete anchor references, warmup/cooldown and repetition-only
+changes when deciding method distinction. Different counts may still change dose.
+
+Compare only matching event, purpose and schedule contexts in the athlete-facing
+view. Missing structure or mismatched context produces no asserted difference list.
+The list describes where the prescription differs, not which method is better,
+equally demanding, scientifically accepted or eligible for activation. It must not
+return raw node labels, athlete references or explanation prose as difference codes.
+
+Source-transcription fixtures can validate different recovery units and a terminal
+recovery without becoming selectable templates. For the separately reviewed
+12 x 400 m example, preserve 11 between-repeat recoveries and one terminal recovery;
+do not infer seconds from 100 m or classify its intent by its race-pace notation.
+Exact dose, purpose, population and transfer acceptance remain separate decisions.
+
+Change ledger: ADD inspectable structural differences; KEEP adopted templates,
+numeric and privacy boundaries; DEFER source-example activation and pair acceptance.
+No issue closure or canonical promotion.
+
 [DRAFT_COMPLETE]
