@@ -218,16 +218,20 @@ function parseProfile(value: unknown): PublicAthleteProfile | null {
 }
 
 export function publicPlanCardFromState(state: PlanBetaStateV3): z.infer<typeof cardPayloadSchema> {
-  const completed = state.progress.filter(item => item.state === "COMPLETED").length
-  const total = state.activePlan.sessions.length
+  const frame = state.activePlan.frame
+  const frameLengthDays = "projectionLengthDays" in frame ? frame.projectionLengthDays ?? frame.lengthDays : frame.lengthDays
+  const visibleTraining = state.activePlan.sessions.filter(session => session.day <= Math.ceil(frameLengthDays) && session.role !== "REST")
+  const completed = visibleTraining.filter(session => state.progress.some(item =>
+    item.sessionDay === session.day && item.sessionSlot === session.slot && item.state === "COMPLETED")).length
+  const total = visibleTraining.length
   return {
-    title: `${state.activePlan.eventDistanceM}m ${state.activePlan.frame.lengthDays}일 훈련 계획`,
+    title: `${state.activePlan.eventDistanceM}m ${frameLengthDays}일 훈련 계획`,
     eventLabel: `${state.activePlan.eventDistanceM}m`,
-    frameLengthDays: state.activePlan.frame.lengthDays,
-    qualitySessionCount: state.activePlan.sessions.filter(session => session.role === "QUALITY").length,
+    frameLengthDays,
+    qualitySessionCount: visibleTraining.filter(session => session.role === "QUALITY").length,
     completedSessionCount: completed,
     totalSessionCount: total,
-    badgeLabel: completed === 0 ? "계획 시작" : completed >= total ? "주기 완료" : `${completed}회 완료`,
+    badgeLabel: completed === 0 ? "계획 공유" : `훈련 ${completed}회 완료`,
   }
 }
 

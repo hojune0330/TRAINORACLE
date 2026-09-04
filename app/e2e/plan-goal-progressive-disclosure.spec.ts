@@ -51,7 +51,7 @@ test("creates a mobile marathon beta plan without inventing pace numbers", async
     (element) => element.scrollWidth <= element.clientWidth,
   )).toBe(true)
   await page.getByRole("button", { name: "시간 조절 계획 선택하기", exact: true }).click()
-  await page.getByRole("button", { name: "이 훈련을 하는 이유", exact: true }).first().click()
+  await page.getByRole("button", { name: "훈련 방법과 이유", exact: true }).first().click()
   const reader = page.getByRole("dialog")
   await reader.getByRole("tab", { name: "이유·근거" }).click()
   await expect(reader.getByText(/대상 종목은 42195m/u)).toBeAttached()

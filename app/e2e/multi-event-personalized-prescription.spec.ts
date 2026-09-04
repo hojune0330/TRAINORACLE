@@ -148,7 +148,7 @@ for (const fixture of cases) {
     await expect(selectedSession.getByText(fixture.work).first()).toBeVisible()
     await expect(selectedSession.getByText(fixture.recovery).first()).toBeVisible()
     await expect(selectedSession.getByText(fixture.notation).first()).toBeVisible()
-    await selectedSession.getByRole("button", { name: "이 훈련을 하는 이유", exact: true }).first().click()
+    await selectedSession.getByRole("button", { name: "훈련 방법과 이유", exact: true }).first().click()
     const explanation = page.getByRole("dialog")
     await expect(explanation.getByText(fixture.notation).first()).toBeVisible()
     await explanation.getByRole("tab", { name: "이유·근거" }).click()

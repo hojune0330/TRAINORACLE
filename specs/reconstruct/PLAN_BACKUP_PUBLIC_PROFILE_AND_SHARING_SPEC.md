@@ -4,8 +4,8 @@
 doc_id: PLAN_BACKUP_PUBLIC_PROFILE_AND_SHARING_SPEC
 spec_id: TO-PLAN-PUBLIC-SHARING
 title: Plan Backup, Public Profile, and Friend Sharing Contract
-version: 0.2
-round: RT2_PUBLIC_IDENTIFIER_BOUNDARY
+version: 0.3
+round: RT3_VISIBLE_TRAINING_SUMMARY
 status: RECONSTRUCTED_DRAFT_FOR_REVIEW
 owner: TrainOracle
 open_issues_total: 6
@@ -133,6 +133,19 @@ verification is implied by this contract amendment.
 Change ledger: ADD public identifier/transport boundary and historical-row gate;
 KEEP private identities, explicit publication and capability switches. No canonical
 promotion, issue closure or feature activation.
+
+### 5.2 Visible Training Summary (2026-09-04)
+
+Use the same projection length that the athlete sees in the plan calendar. Count
+only visible non-REST training occurrences; an unshown carry-over day and REST rows
+are not sessions the athlete failed to complete. Count an explicit COMPLETED mark
+only when both day and slot match one of those occurrences.
+
+The badge says `훈련 N회 완료`, or `계획 공유` with no completed training.
+It must not claim `주기 완료`: calendar progression, honest rest/skip records, and
+completed exercise are different facts. Do not expose or infer pain/review states
+from the badge. This display amendment does not enable sharing or change plan
+progress, next-frame eligibility, the payload allowlist, or any open issue.
 
 ## 6. Safety and Authority Boundaries
 

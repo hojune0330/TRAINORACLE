@@ -5,7 +5,7 @@ document_metadata:
   doc_id: trainoracle-spec-training-session-prescription
   status: RECONSTRUCTED_WITH_OWNER_ADOPTED_V2_SEED_05
   owner: COACH_HOJUNE
-  version: "0.6"
+  version: "0.7"
   local_original_found: false
   reconstructed_from_current_product_and_review_sources: true
   restored_original: false
@@ -566,5 +566,37 @@ new execution evidence belongs in the implementation report for this increment.
 Change ledger: ADD bound sequence persistence and exact-content validation; KEEP
 legacy plans, numeric adoptions, privacy and safety; DEFER new doses, formula models
 and generic-method activation. No canonical promotion or issue closure.
+
+### 12.6 Candidate And Reader Journey (Owner-Approved Improvement 2026-09-04)
+
+The athlete can add a race result from the detailed candidate comparison and
+return to that comparison without re-entering the event, division, experience,
+method, frequency, or selected start date. Keep this unfinished navigation state
+within the current plan screen; it is not a saved active plan or a safety receipt.
+On return, reload records, invalidate the old numeric binding and any pending save,
+and re-evaluate safety/authority through the existing generator. Require explicit
+record selection and confirmation even when exactly one result exists.
+
+Missing or old records have an immediate add/manage action and a clearly labelled
+alternative to choose time/RPE. Label record-date eligibility before confirmation
+using the same currentness rule as binding; do not invent a new freshness cutoff.
+Previewing a valid-dated schedule does not require permission to save it. A missing
+record or binding error still prevents saving the requested detailed plan.
+
+If runtime authority fails, the safe preview may use RPE, but retain the athlete's
+requested detailed method and show the failure. Never silently clear their choice
+to make the fallback saveable. Only an explicit method switch may authorize the
+ordinary RPE path. Do not add authority, dose, or source approval through this UX rule.
+
+The full-screen reader entry is `훈련 방법과 이유`, with `방법` as its default tab.
+Lead with one accurate ordered method, keep the visible recommendation control,
+and avoid repeating the same work/recovery structure before showing its sequence.
+Keep `이유·근거` and `주기·기록`, keyboard operation, selected-session return,
+and legacy explanation limitations. Numeric prescriptions and fingerprints do not
+change because their presentation is rearranged.
+
+Change ledger: ADD record-management return and visible fallback intent; MODIFY
+reader hierarchy; KEEP all numerical prescriptions, safety, privacy and old plans.
+Open issues remain open; release evidence is recorded separately.
 
 [DRAFT_COMPLETE]

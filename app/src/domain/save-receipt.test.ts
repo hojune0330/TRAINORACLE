@@ -37,7 +37,7 @@ describe("saved fact receipt precedence", () => {
     const receipt = createSavedFactReceipt(entry)
 
     // Then
-    expect(receipt).toEqual({ kind: "pain", moodAlsoSaved: true })
+    expect(receipt).toEqual({ kind: "pain", savedDate: "2026-07-23", moodAlsoSaved: true })
   })
 
   it("uses distance only when the saved value is explicit and positive", () => {
@@ -66,7 +66,7 @@ describe("saved fact receipt precedence", () => {
     const receipt = createSavedFactReceipt(entry)
 
     // Then
-    expect(receipt).toEqual({ kind: "distance", distanceKm: 8 })
+    expect(receipt).toEqual({ kind: "distance", savedDate: "2026-07-23", distanceKm: 8 })
   })
 
   it("falls back to local-save confirmation when no structured fact was entered", () => {
@@ -91,6 +91,6 @@ describe("saved fact receipt precedence", () => {
     const receipt = createSavedFactReceipt(entry)
 
     // Then
-    expect(receipt).toEqual({ kind: "generic" })
+    expect(receipt).toEqual({ kind: "generic", savedDate: "2026-07-23" })
   })
 })

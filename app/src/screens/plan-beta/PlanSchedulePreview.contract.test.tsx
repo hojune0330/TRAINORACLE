@@ -126,6 +126,22 @@ describe("plan schedule preview", () => {
     expect(screen.getByText("1/10")).toBeVisible()
   })
 
+  it("returns a linked journal to its exact DAY and AM/PM session", () => {
+    render(
+      <PlanSchedulePreview
+        startDate="2026-08-17"
+        sessions={sessions}
+        displayMode="swipe"
+        focusSession={{ day: 1, slot: "PM" }}
+      />,
+    )
+
+    expect(screen.getByRole("group", {
+      name: "8월 17일 월요일 오후 세션 · 일지에서 돌아온 세션",
+    })).toHaveAttribute("data-returned-session", "true")
+    expect(screen.getByText("1/10")).toBeVisible()
+  })
+
   it("presents notation, plain execution, and optional RPE detail in order", async () => {
     const user = userEvent.setup()
     render(<PlanSchedulePreview startDate="2026-08-17" sessions={sessions.slice(0, 1)} />)

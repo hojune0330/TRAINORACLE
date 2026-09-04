@@ -11,6 +11,8 @@ import {
 import type { LucideIcon } from "lucide-react"
 import { LOCAL_SAVE_NOTICE, SYNC_UPSELL_NOTICE } from "../domain/journal-store"
 import type { SavedFactReceipt } from "../domain/save-receipt"
+import { isWithinTrailingDays, isoToDate } from "../domain/dates"
+import { todayISO } from "../domain/journal-store"
 
 export type AppTab = "home" | "journal" | "log" | "plan" | "trends"
 export type ToastPhase = "enter" | "exit"
@@ -119,32 +121,41 @@ function receiptPresentation(receipt: SavedFactReceipt): {
   readonly detail: string
   readonly actionLabel?: string
 } {
+  const dateLabel = receipt.savedDate === undefined ? undefined : savedDateLabel(receipt.savedDate)
+  const canOpenRecentTrends = receipt.savedDate !== undefined
+    && isWithinTrailingDays(receipt.savedDate, todayISO(), 28)
   switch (receipt.kind) {
     case "pain":
       return {
-        title: "통증 기록이 저장됐어요",
+        title: `${dateLabel === undefined ? "" : `${dateLabel} `}통증 기록이 저장됐어요`,
         detail: receipt.moodAlsoSaved
-          ? "기분도 함께 저장됐어요. 통증 추이에서 다시 볼 수 있어요."
-          : "통증 추이에서 다시 볼 수 있어요.",
-        actionLabel: "통증 추이 보기",
+          ? "기분도 함께 저장됐어요."
+          : "선택한 날짜의 통증 기록을 저장했어요.",
+        ...(canOpenRecentTrends ? { actionLabel: "통증 추이 보기" } : {}),
       }
     case "mood":
       return {
-        title: "기분 기록이 저장됐어요",
-        detail: "최근 28일 기분 추이에 오늘 기록이 더해졌어요.",
-        actionLabel: "기분 추이 보기",
+        title: `${dateLabel === undefined ? "" : `${dateLabel} `}기분 기록이 저장됐어요`,
+        detail: "선택한 날짜의 기분을 저장했어요.",
+        ...(canOpenRecentTrends ? { actionLabel: "기분 추이 보기" } : {}),
       }
     case "distance":
       return {
-        title: `${receipt.distanceKm} km가 이번 주 거리에 반영됐어요`,
-        detail: "직접 입력한 거리만 합산했어요.",
-        actionLabel: "거리 추이 보기",
+        title: `${dateLabel === undefined ? "" : `${dateLabel} `}${receipt.distanceKm} km를 저장했어요`,
+        detail: "직접 입력한 거리만 기록했어요.",
+        ...(canOpenRecentTrends ? { actionLabel: "거리 추이 보기" } : {}),
       }
     case "generic":
       return {
-        title: LOCAL_SAVE_NOTICE,
+        title: dateLabel === undefined ? LOCAL_SAVE_NOTICE : `${dateLabel} 기록을 남겼어요.`,
         detail: SYNC_UPSELL_NOTICE,
         actionLabel: "백업 안내 보기",
       }
   }
+}
+
+function savedDateLabel(date: string): string {
+  if (date === todayISO()) return "오늘"
+  const localDate = isoToDate(date)
+  return `${localDate.getMonth() + 1}월 ${localDate.getDate()}일`
 }

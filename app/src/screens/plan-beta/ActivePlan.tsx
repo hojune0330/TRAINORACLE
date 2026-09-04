@@ -30,12 +30,14 @@ import { eventDistanceLabel } from "./plan-intake-navigation"
 import type { PlanCurrentCheck } from "../../domain/plan-beta-flow"
 import type { StoredPaceTargetPrescription } from "../../domain/plan-session-schema"
 import { PlanAdaptationFlow } from "./PlanAdaptationFlow"
-import { todayISO, loadEntries } from "../../domain/journal-store"
+import { todayISO, loadEntries, type PostSessionEntry } from "../../domain/journal-store"
 import { collectSessionExplanationEvidence } from "../../domain/session-explanation-evidence"
 import { isValidIsoDate, isoShift, isoToDate } from "../../domain/dates"
 import { isPlanFrameCompletionEligible } from "../../domain/plan-successor-activation"
 import { PERIODIZATION_PHASE_LABELS } from "../../domain/periodization-lineage"
 import type { PlanCloudPersistenceState } from "../../domain/account/plan-cloud-backup"
+import type { PlannedSessionLogDraft } from "../../domain/planned-session-link"
+import { resolveCurrentPlannedSession, samePlannedSessionLink } from "../../domain/planned-session-link"
 
 const PROGRESS_ACTIONS: readonly {
   readonly state: PlanProgressState
@@ -57,6 +59,7 @@ export function ActivePlan({
   onCheckDetailedExecution,
   showCreatedCelebration = false,
   onWriteSessionLog,
+  returnToSession,
 }: {
   readonly state: PlanBetaState
   readonly cloudPersistence?: PlanCloudPersistenceState
@@ -71,6 +74,7 @@ export function ActivePlan({
   ) => void
   readonly showCreatedCelebration?: boolean
   readonly onWriteSessionLog?: (session: PlanSession) => void
+  readonly returnToSession?: PlannedSessionLogDraft["link"]
 }) {
   const [hasPendingSuccessor, setHasPendingSuccessor] = React.useState(false)
   const [showActivationCheck, setShowActivationCheck] = React.useState(false)
@@ -102,6 +106,14 @@ export function ActivePlan({
   const planAdjustment = activePlan.candidateKind === "CONSERVATIVE"
     ? "쉬운 훈련은 가장 짧은 시간으로 구성"
     : "쉬운 훈련은 표시 범위 안에서 조절"
+  const returnedSession = returnToSession === undefined
+    ? null
+    : resolveCurrentPlannedSession(state, returnToSession)
+  const returnedJournal = returnedSession === null || returnToSession === undefined
+    ? undefined
+    : loadEntries().find((entry): entry is PostSessionEntry => entry.kind === "post-session"
+      && entry.date === returnToSession.plannedDate
+      && samePlannedSessionLink(entry.plannedSessionLink, returnToSession))
 
   React.useEffect(() => {
     if (!showCreatedCelebration) return
@@ -188,6 +200,7 @@ export function ActivePlan({
           frameOrdinal: state.version === 3 ? state.periodization?.frameOrdinal : undefined,
         }}
         loadEvidence={(session) => collectSessionExplanationEvidence(loadEntries(), state, session)}
+        focusSession={returnedSession ?? undefined}
         showRpeGuide={false}
         timelineHeading="날짜별 훈련"
         displayMode="swipe"
@@ -257,6 +270,14 @@ export function ActivePlan({
           const detailedPrescription = session.prescription.kind === "PACE_TARGET"
             ? session.prescription
             : null
+          const isReturnedSession = returnedSession !== null
+            && session.day === returnedSession.day
+            && session.slot === returnedSession.slot
+          const canMarkReturnedSessionCompleted = isReturnedSession
+            && current === undefined
+            && returnedJournal?.activityOutcome === "COMPLETED"
+            && returnedJournal.activitySlot === session.slot
+            && returnedJournal.painCheckStatus === "NO_SIGNAL_REPORTED"
           return (
             <>
               {detailedPrescription !== null && (
@@ -312,6 +333,11 @@ export function ActivePlan({
                   이 훈련 일지 쓰기
                 </button>
               )}
+              {isReturnedSession && returnedJournal !== undefined && (
+                <p className="active-plan__journal-return" role="status">
+                  일지를 저장했어요. 계획의 진행 기록은 별도예요.
+                </p>
+              )}
               <div
                 className="active-plan__actions"
                 role="group"
@@ -321,6 +347,9 @@ export function ActivePlan({
                   <button
                     type="button"
                     key={progressState}
+                    className={canMarkReturnedSessionCompleted && progressState === "COMPLETED"
+                      ? "active-plan__journal-progress-action"
+                      : undefined}
                     aria-pressed={current === progressState}
                     onClick={() => onProgress({
                       sessionDay: session.day,
@@ -329,7 +358,9 @@ export function ActivePlan({
                     })}
                   >
                     <Icon aria-hidden="true" size={15} />
-                    {PROGRESS_LABELS[progressState]}
+                    {canMarkReturnedSessionCompleted && progressState === "COMPLETED"
+                      ? "계획에도 완료 표시"
+                      : PROGRESS_LABELS[progressState]}
                   </button>
                 ))}
               </div>

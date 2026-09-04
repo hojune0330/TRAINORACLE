@@ -50,6 +50,7 @@ export function PlanSchedulePreview({
   displayMode = "stack",
   explanationContext,
   loadEvidence,
+  focusSession,
 }: {
   readonly startDate: string
   readonly frameLengthDays?: FrameLengthDays
@@ -61,12 +62,16 @@ export function PlanSchedulePreview({
   readonly displayMode?: ScheduleDisplayMode
   readonly explanationContext?: SessionExplanationContext
   readonly loadEvidence?: (session: PlanSession) => SessionExplanationEvidence | null
+  readonly focusSession?: Pick<PlanSession, "day" | "slot">
 }) {
   const validStartDate = isValidIsoDate(startDate)
   const dayCount = Math.ceil(frameLengthDays)
   const days = validStartDate ? buildScheduleDays(startDate, sessions, dayCount) : []
   const today = todayISO()
-  const initialDayIndex = Math.max(0, days.findIndex((day) => day.date === today))
+  const focusedDayIndex = focusSession === undefined
+    ? -1
+    : days.findIndex((day) => day.day === focusSession.day && day.sessions.some((session) => session.slot === focusSession.slot))
+  const initialDayIndex = focusedDayIndex >= 0 ? focusedDayIndex : Math.max(0, days.findIndex((day) => day.date === today))
   const [activeDayIndex, setActiveDayIndex] = React.useState(initialDayIndex)
   const scheduleId = React.useId()
   const scheduleRef = React.useRef<HTMLOListElement>(null)
@@ -90,6 +95,13 @@ export function PlanSchedulePreview({
     }
     target.scrollIntoView?.({ behavior: "smooth", block: "start" })
   }, [days.length, displayMode])
+
+  React.useEffect(() => {
+    if (focusedDayIndex < 0) return
+    moveToDay(focusedDayIndex)
+    const returnedSession = scheduleRef.current?.querySelector<HTMLElement>("[data-returned-session='true']")
+    returnedSession?.scrollIntoView?.({ behavior: "auto", block: "center", inline: "nearest" })
+  }, [focusedDayIndex, focusSession?.slot, moveToDay])
 
   const syncActiveDay = React.useCallback(() => {
     if (displayMode !== "swipe") return
@@ -197,6 +209,7 @@ export function PlanSchedulePreview({
                       loadEvidence={loadEvidence}
                       compact={displayMode === "swipe"}
                       footer={renderSessionFooter?.(session)}
+                      returnedFromJournal={focusSession?.day === session.day && focusSession.slot === session.slot}
                     />
                   ))}
                   {daySessions.length === 0 && (
@@ -226,6 +239,7 @@ function PlanSessionPreview({
   footer,
   explanationContext,
   loadEvidence,
+  returnedFromJournal = false,
 }: {
   readonly date: string
   readonly session: PlanSession
@@ -233,6 +247,7 @@ function PlanSessionPreview({
   readonly footer?: ReactNode
   readonly explanationContext?: SessionExplanationContext
   readonly loadEvidence?: (session: PlanSession) => SessionExplanationEvidence | null
+  readonly returnedFromJournal?: boolean
 }) {
   const flow = sessionFlowLabel(session)
   const details = (
@@ -269,7 +284,8 @@ function PlanSessionPreview({
       className="plan-day-card__session"
       data-flow-kind={flow.kind}
       role="group"
-      aria-label={`${calendarDateLabel(date)} ${sessionSlotLabel(session.slot)} 세션`}
+      aria-label={`${calendarDateLabel(date)} ${sessionSlotLabel(session.slot)} 세션${returnedFromJournal ? " · 일지에서 돌아온 세션" : ""}`}
+      data-returned-session={returnedFromJournal ? "true" : undefined}
     >
       <header>
         <span className="plan-schedule-preview__slot">{sessionSlotLabel(session.slot)}</span>
@@ -286,7 +302,7 @@ function PlanSessionPreview({
         </small>
         <SessionExplanationEntry session={session} context={explanationContext} loadEvidence={loadEvidence} />
         {compact ? (
-          <details className="plan-day-card__details">
+          <details className="plan-day-card__details" open={returnedFromJournal}>
             <summary>{sessionSlotLabel(session.slot)} 훈련 방법과 기록</summary>
             <div>{details}</div>
           </details>

@@ -8,7 +8,7 @@ import { explainSession, explanationProfile, type SessionExplanationContext } fr
 import type { SessionExplanationEvidence } from "../../domain/session-explanation-evidence"
 import { COMPARISON_LABELS } from "./PlanCycleEvidence"
 import { DetailedPrescriptionView } from "./DetailedPrescriptionView"
-import { prescriptionLabel, sessionLabel, sessionExecution, sessionExecutionSteps } from "./labels"
+import { prescriptionLabel, sessionLabel, sessionExecution } from "./labels"
 import { sessionPrescriptionSequence } from "../../domain/session-prescription-sequence"
 import { PrescriptionStructure } from "./PrescriptionStructure"
 import "../../styles/session-explanation.css"
@@ -28,7 +28,7 @@ export function SessionExplanationEntry(props: Props) {
       <p>{explanationProfile(props.session).purpose}</p>
       <button type="button" onClick={() => setOpen(true)} aria-haspopup="dialog">
         <BookOpen aria-hidden="true" size={17} />
-        이 훈련을 하는 이유
+        훈련 방법과 이유
         <ChevronRight aria-hidden="true" size={16} />
       </button>
       {open && createPortal(<SessionExplanationReader {...props} onClose={() => setOpen(false)} />, document.body)}
@@ -95,22 +95,18 @@ function SessionExplanationReader({ session, context, loadEvidence, onClose }: P
       <div ref={content} className="session-explanation__content" role="tabpanel" id={`${id}-panel`} aria-labelledby={`${id}-tab-${TABS.indexOf(tab)}`} tabIndex={0}>
         {tab === "방법" && (
           <>
-            <section><h3>오늘 할 훈련</h3><p className="session-explanation__metric">{prescriptionLabel(session)}</p><p>{sessionExecution(session)}</p></section>
-            {session.prescription.kind === "PACE_TARGET" ? <DetailedPrescriptionView prescription={session.prescription} /> : (
-              <ol className="session-explanation__steps">
-                {sessionExecutionSteps(session).map((step) => <li key={step.title}><strong>{step.title}</strong><p>{step.detail}</p></li>)}
-              </ol>
-            )}
-            <section><h3>운동과 회복 순서</h3>
+            <section className="session-explanation__method-flow"><h3>수행 순서</h3>
+              <p className="session-explanation__metric">{sessionExecution(session)}</p>
+              {session.prescription.kind === "PACE_TARGET" && <DetailedPrescriptionView prescription={session.prescription} variant="sequence-lead" />}
+              {sequence !== null ? <PrescriptionStructure sequence={sequence} /> : <ol className="session-explanation__sequence">
+                {explanation.components.map((component) => <li key={component.id}><strong>{component.label}</strong><span>{component.method}</span><small>{component.recovery}</small></li>)}
+              </ol>}
               <p className="session-explanation__note">순서도예요. 칸의 길이는 운동 시간이나 에너지 비율을 뜻하지 않아요.</p>
               {context?.kind === "SAVED" && sequence !== null && (
                 <p className="session-explanation__note">{session.prescription.kind === "PACE_TARGET" && session.prescription.sequence !== undefined
                   ? "계획을 만들 때 저장한 운동·회복 순서예요."
                   : "저장된 처방을 순서도로 보여드려요. 이전 계획에 새 훈련을 추가하지 않아요."}</p>
               )}
-              {sequence !== null ? <PrescriptionStructure sequence={sequence} /> : <ol className="session-explanation__sequence">
-                {explanation.components.map((component) => <li key={component.id}><strong>{component.label}</strong><span>{component.method}</span><small>{component.recovery}</small></li>)}
-              </ol>}
             </section>
             {session.prescription.kind === "RPE_TIME_RANGE" && session.role === "QUALITY" && <p className="session-explanation__notice">상세 반복·구간별 시간은 아직 정해지지 않은 RPE 안내예요. 총 시간을 고강도 본운동 시간으로 사용하지 마세요.</p>}
             <button className="session-explanation__next" type="button" onClick={() => selectTab("이유·근거")}>이렇게 구성한 이유<ChevronRight size={18} aria-hidden="true" /></button>

@@ -6,10 +6,28 @@ import { PaceRecommendation } from "./PaceRecommendation"
 
 type Detailed = Extract<PlanSession["prescription"], { readonly kind: "PACE_TARGET" }>
 
-export function DetailedPrescriptionView({ prescription }: { readonly prescription: Detailed }) {
+type Props = {
+  readonly prescription: Detailed
+  /** The reader already renders the complete ordered structure below this lead. */
+  readonly variant?: "default" | "sequence-lead"
+}
+
+export function DetailedPrescriptionView({ prescription, variant = "default" }: Props) {
   const warmup = prescription.operationalComponents.warmup
   const cooldown = prescription.operationalComponents.cooldown
   const anchor = prescription.selectedAnchor
+
+  if (variant === "sequence-lead") {
+    return (
+      <div className="plan-detailed-prescription plan-detailed-prescription--sequence-lead">
+        <p>
+          <strong>개인 추천 시간</strong>
+          <span>{prescription.repetitionDistanceM}m당 약 {formatTrainingSeconds(prescription.targetRepSeconds)} · 직접 선택한 {anchor.eventDistanceM}m {formatRecordTime(anchor.performanceSeconds)} 기준</span>
+        </p>
+        <PaceRecommendation prescription={prescription} />
+      </div>
+    )
+  }
 
   return (
     <div className="plan-detailed-prescription">

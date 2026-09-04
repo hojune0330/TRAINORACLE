@@ -202,7 +202,11 @@ describe("detailed prescription runtime authority", () => {
       kind: "fallback",
       code: "PACE_TARGET_FALLBACK_AUTHORITY_OR_COMPONENT",
     })
-    expect(result.intake.selectedDetailedTemplateRef).toBeNull()
+    expect(result.intake.selectedDetailedTemplateRef).toEqual({
+      templateId: "V2-SEED-05",
+      version: "1.0.0",
+      fingerprint: `sha256:${"a".repeat(64)}`,
+    })
     expect(result.generated.candidates).toHaveLength(2)
     expect(result.generated.candidates.every((candidate) => (
       candidate.selectedDetailedTemplateRef === null
@@ -238,7 +242,11 @@ describe("detailed prescription runtime authority", () => {
       kind: "fallback",
       code: "PACE_TARGET_FALLBACK_AUTHORITY_OR_COMPONENT",
     })
-    expect(result.intake.selectedDetailedTemplateRef).toBeNull()
+    expect(result.intake.selectedDetailedTemplateRef).toEqual({
+      templateId: baseline.templateId,
+      version: baseline.templateVersion,
+      fingerprint: baseline.templateContentFingerprint,
+    })
     expect(result.generated.candidates.every((candidate) => (
       candidate.sessions.every((session) => session.prescription.kind !== "PACE_TARGET")
     ))).toBe(true)

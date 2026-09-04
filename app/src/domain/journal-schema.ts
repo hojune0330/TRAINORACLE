@@ -374,12 +374,18 @@ const journalEntryWriteSchema = journalEntrySchema.superRefine((entry, context) 
       const relationProvenance = entry.fieldProvenance?.planExecutionRelation
       const linkProvenance = entry.fieldProvenance?.plannedSessionLink
       const expectedLinkProvenance = entry.plannedSessionLink === undefined ? "MISSING" : "EXPLICIT"
+      const relationInputs = relationProvenance?.provenance === "DERIVED"
+        ? relationProvenance.derivedFrom.join("|")
+        : undefined
       if (relationProvenance?.provenance !== "DERIVED"
         || relationProvenance.derivationRuleId !== "QUICK_PLAN_EXECUTION_RELATION_V2"
-        || relationProvenance.derivedFrom.join("|") !== "activityOutcome|plannedSessionLink") {
+        // Legacy records were derived before AM/PM became a relation input. Keep them readable
+        // and editable without rewriting history; new saves use the three-input derivation.
+        || (relationInputs !== "activityOutcome|plannedSessionLink"
+          && relationInputs !== "activityOutcome|activitySlot|plannedSessionLink")) {
         context.addIssue({
           code: "custom",
-          message: "Plan execution relation must be derived from the chosen outcome and explicit plan link.",
+          message: "Plan execution relation must be derived from the chosen outcome, slot, and explicit plan link.",
           path: ["fieldProvenance", "planExecutionRelation"],
         })
       }

@@ -1,6 +1,6 @@
 import React from "react"
 import { Check, ChevronRight, FilePenLine, RotateCcw } from "lucide-react"
-import { compactDate, dowOf } from "../../domain/dates"
+import { compactDate, dowOf, isoToDate } from "../../domain/dates"
 import { derivedProvenance, explicitOrMissing } from "../../domain/field-provenance"
 import {
   newEntryId,
@@ -11,6 +11,7 @@ import {
   type PostSessionEntry,
 } from "../../domain/journal-store"
 import type { PlannedSessionLink } from "../../domain/planned-session-link"
+import { derivePlanExecutionRelation } from "../../domain/plan-execution-relation"
 import { useActiveContentScroll } from "../../hooks/useActiveContentScroll"
 import { useOrderedStepMotion } from "../../hooks/useOrderedStepMotion"
 import { painLevelsRequireReview } from "../../safety/memo-safety"
@@ -127,9 +128,7 @@ export function QuickSessionForm({
     const objectiveDataState = didPerform
       ? base?.objectiveDataState === "CONFIRMED" ? "CONFIRMED" : "WAITING"
       : "NONE"
-    const relation = planLink === undefined
-      ? "NOT_APPLICABLE"
-      : next.outcome === "COMPLETED" ? "AS_PLANNED" : "MODIFIED"
+    const relation = derivePlanExecutionRelation(next.outcome, next.slot ?? undefined, planLink)
     const {
       rpeBand: _legacyRpeBand,
       activitySlot: _previousSlot,
@@ -172,7 +171,7 @@ export function QuickSessionForm({
         ...(didPerform ? { activitySlot: explicitOrMissing(next.slot !== null) } : {}),
         plannedSessionLink: explicitOrMissing(planLink !== undefined),
         planExecutionRelation: derivedProvenance(
-          ["activityOutcome", "plannedSessionLink"],
+          ["activityOutcome", "activitySlot", "plannedSessionLink"],
           "QUICK_PLAN_EXECUTION_RELATION_V2",
         ),
         ...(didPerform ? { painCheckStatus: explicitOrMissing(next.painStatus !== "UNANSWERED") } : {}),
@@ -294,7 +293,7 @@ export function QuickSessionForm({
         {planLink !== undefined && <div className="quick-log__plan-source">계획 DAY {planLink.sessionDay} · {planLink.sessionSlot === "AM" ? "오전" : "오후"}</div>}
         <div className="quick-log__ink-stack" aria-live="polite">
           {outcomeLabel === undefined && <span className="quick-log__empty">누르면 여기에 기록돼요.</span>}
-          {outcomeLabel !== undefined && <button type="button" onClick={() => setStep("activity")}><span>오늘</span><strong>{outcomeLabel}</strong></button>}
+          {outcomeLabel !== undefined && <button type="button" onClick={() => setStep("activity")}><span>{savedDateLabel(date)}</span><strong>{outcomeLabel}</strong></button>}
           {slot !== null && <button type="button" onClick={() => setStep("activity")}><span>시간</span><strong>{slotLabel}</strong></button>}
           {effortAnswered && performed(outcome) && <button type="button" onClick={() => setStep("effort")}><span>몸의 느낌</span><strong>{rpe > 0 ? `RPE ${rpe}` : "미기록"}</strong></button>}
           {painStatus !== "UNANSWERED" && <button type="button" onClick={() => setStep("effort")}><span>몸 상태</span><strong>{painStatus === "SIGNAL_REPORTED" ? "불편한 곳 있음" : "불편한 곳 없음"}</strong></button>}
@@ -311,7 +310,7 @@ export function QuickSessionForm({
         {step === "activity" && (
           <section aria-labelledby="quick-activity-title">
             <small>1 / 2</small>
-            <h1 id="quick-activity-title">오늘 운동은 어떻게 됐나요?</h1>
+            <h1 id="quick-activity-title">{savedDateLabel(date)} 운동은 어떻게 됐나요?</h1>
             <div className="quick-log__choices">
               {outcomes.map((item) => <button key={item.value} type="button" aria-pressed={outcome === item.value} onClick={() => selectOutcome(item.value)}><span>{item.label}</span><ChevronRight aria-hidden="true" /></button>)}
             </div>
@@ -359,11 +358,11 @@ export function QuickSessionForm({
         )}
         {step === "saved" && savedEntry !== null && (
           <section className="quick-log__complete" aria-labelledby="quick-saved-title">
-            <small>오늘 기록</small>
-            <h1 id="quick-saved-title">오늘 기록을 남겼어요.</h1>
+            <small>{savedDateLabel(savedEntry.date)} 기록</small>
+            <h1 id="quick-saved-title">{savedReceiptLabel(savedEntry.date)}</h1>
             <p>{performed(savedEntry.activityOutcome ?? null)
               ? "거리와 시간은 워치 기록이 들어오면 확인한 뒤 같은 일지에 더할 수 있어요."
-              : "쉬거나 건너뛴 날도 오늘의 기록으로 남았어요."}</p>
+              : "쉬거나 건너뛴 내용도 선택한 날짜에 저장했어요."}</p>
             <button className="quick-log__primary" type="button" onClick={() => onDone?.(savedEntry)}>완료</button>
             <button className="quick-log__secondary" type="button" onClick={() => onContinueDetailed?.(savedEntry)}><FilePenLine aria-hidden="true" /><span>일지 더 쓰기</span></button>
             <button className="quick-log__secondary" type="button" onClick={() => { setTaps(0); setStep("activity") }}><RotateCcw aria-hidden="true" /><span>방금 기록 수정</span></button>
@@ -372,4 +371,14 @@ export function QuickSessionForm({
       </div>
     </div>
   )
+}
+
+function savedDateLabel(date: string): string {
+  if (date === todayISO()) return "오늘"
+  const localDate = isoToDate(date)
+  return `${localDate.getMonth() + 1}월 ${localDate.getDate()}일`
+}
+
+function savedReceiptLabel(date: string): string {
+  return `${savedDateLabel(date)} 기록을 남겼어요.`
 }

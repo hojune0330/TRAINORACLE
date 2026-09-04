@@ -11,6 +11,7 @@ import {
 } from "./labels"
 import { PlanSchedulePreview } from "./PlanSchedulePreview"
 import { eventDistanceLabel } from "./plan-intake-navigation"
+import { isValidIsoDate } from "../../domain/dates"
 
 export function CandidateSection({
   candidate,
@@ -66,7 +67,7 @@ export function CandidateSection({
           </span>
         </div>
       </header>
-      {canSelect && (
+      {isValidIsoDate(startDate) && (
         <>
           <button
             className="plan-candidate-schedule-toggle"

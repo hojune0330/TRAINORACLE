@@ -62,7 +62,7 @@ vi.mock("./supabase-client", () => ({
   __resetSupabaseForTest: () => {},
 }))
 
-import { publishActivePlanCard } from "./public-profile"
+import { publicPlanCardFromState, publishActivePlanCard } from "./public-profile"
 
 function publicPlanShareCardsTable() {
   return {
@@ -159,6 +159,24 @@ afterEach(() => {
 })
 
 describe("public plan-card publication privacy boundary", () => {
+  it("counts visible training only and never equates completed exercise with cycle completion", () => {
+    const { state } = detailedStoredPlan(1)
+    const frame = state.activePlan.frame
+    const days = "projectionLengthDays" in frame ? frame.projectionLengthDays ?? frame.lengthDays : frame.lengthDays
+    const visible = state.activePlan.sessions.filter(session => session.day <= Math.ceil(days) && session.role !== "REST")
+    const allMarked = { ...state, progress: state.activePlan.sessions.map(session => ({
+      sessionDay: session.day, sessionSlot: session.slot, state: "COMPLETED" as const,
+    })) }
+    expect(publicPlanCardFromState(allMarked)).toMatchObject({
+      frameLengthDays: days, totalSessionCount: visible.length,
+      completedSessionCount: visible.length, badgeLabel: `훈련 ${visible.length}회 완료`,
+    })
+    expect(publicPlanCardFromState({ ...state, progress: [] }).badgeLabel).toBe("계획 공유")
+    const skipped = { ...allMarked, progress: allMarked.progress.map(item => ({ ...item, state: "SKIPPED" as const })) }
+    const pain = { ...allMarked, progress: allMarked.progress.map(item => ({ ...item, state: "PAIN_CHECKIN" as const })) }
+    expect(publicPlanCardFromState(pain)).toEqual(publicPlanCardFromState(skipped))
+    expect(publicPlanCardFromState(allMarked).badgeLabel).not.toContain("주기 완료")
+  })
   it("uses an opaque public id for every share-card query and write from a detailed stored plan", async () => {
     const { state, prescription } = detailedStoredPlan(1)
     const forbidden = [

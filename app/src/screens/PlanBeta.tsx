@@ -53,6 +53,9 @@ import type { PlannedSessionLogDraft } from "../domain/planned-session-link"
 import { useActiveContentScroll } from "../hooks/useActiveContentScroll"
 import { useOrderedStepMotion } from "../hooks/useOrderedStepMotion"
 import { resolvePlanMethodChange } from "../domain/plan-method-selection"
+import { todayISO } from "../domain/journal-store"
+
+const AthleteRecords = React.lazy(() => import("./AthleteRecords").then(module => ({ default: module.AthleteRecords })))
 
 const INTAKE_MOTION_ORDER: readonly IntakeStep[] = [
   "goal",
@@ -73,10 +76,12 @@ export function PlanBeta({
   onWriteLog,
   onManageRecords,
   onWritePlannedSessionLog,
+  returnToSession,
 }: {
   readonly onWriteLog?: (entryType?: JournalEntryType) => void
   readonly onManageRecords?: () => void
   readonly onWritePlannedSessionLog?: (draft: PlannedSessionLogDraft) => void
+  readonly returnToSession?: PlannedSessionLogDraft["link"]
 }) {
   const [stored, setStored] = React.useState<PlanBetaState | null>(
     () => loadPlanBetaState(),
@@ -117,7 +122,10 @@ export function PlanBeta({
   const [retrySelection, setRetrySelection] = React.useState<CandidateSelection | null>(null)
   const [notationReaderOpen, setNotationReaderOpen] = React.useState(false)
   const [celebrateActivePlan, setCelebrateActivePlan] = React.useState(false)
-  const [athleteRecords] = React.useState(() => loadAthleteRecords())
+  const [athleteRecords, setAthleteRecords] = React.useState(() => loadAthleteRecords())
+  const [recordsOpen, setRecordsOpen] = React.useState(false)
+  const [recordReturnCount, setRecordReturnCount] = React.useState(0)
+  const [candidateStartDate, setCandidateStartDate] = React.useState(todayISO)
   const [selectedRecordId, setSelectedRecordId] = React.useState<string | null>(null)
   const [comparisonRecordId, setComparisonRecordId] = React.useState<string | null>(null)
   const [recordConfirmationPending, setRecordConfirmationPending] = React.useState(false)
@@ -128,7 +136,9 @@ export function PlanBeta({
   >({ kind: "fallback", code: "PACE_TARGET_FALLBACK_NO_EXPLICIT_ANCHOR" })
   const intakeQuestionRef = React.useRef<HTMLDivElement>(null)
   const intakeMotion = useOrderedStepMotion(step, INTAKE_MOTION_ORDER)
-  const viewKey = notationReaderOpen
+  const viewKey = recordsOpen
+    ? "records"
+    : notationReaderOpen
     ? "notation-reader"
     : stored !== null
     ? "active"
@@ -323,6 +333,21 @@ export function PlanBeta({
     }
   }
 
+  if (recordsOpen) {
+    return <React.Suspense fallback={<p role="status">경기 기록을 열고 있어요.</p>}>
+      <AthleteRecords onBack={() => {
+        setAthleteRecords(loadAthleteRecords())
+        setSelectedRecordId(null)
+        setComparisonRecordId(null)
+        setRecordConfirmationPending(false)
+        setRecordsOpen(false)
+        setRecordReturnCount(count => count + 1)
+        // Re-evaluate current safety and authority; never reuse the old bound numbers.
+        if (generatedIntake !== null) generateCandidates(generatedIntake, null, targetRaceDate || undefined)
+      }} />
+    </React.Suspense>
+  }
+
   if (notationReaderOpen) {
     return <NotationReader onBack={() => setNotationReaderOpen(false)} />
   }
@@ -355,6 +380,7 @@ export function PlanBeta({
           )
         }}
         onWritePlannedSessionLog={onWritePlannedSessionLog}
+        returnToSession={returnToSession}
       />
     )
   }
@@ -417,6 +443,14 @@ export function PlanBeta({
           comparisonRecordId={comparisonRecordId}
           prescriptionBinding={prescriptionBinding}
           recordConfirmationPending={recordConfirmationPending}
+          startDateValue={candidateStartDate}
+          onStartDateChange={setCandidateStartDate}
+          recordReturnCount={recordReturnCount}
+          onManageRecords={() => {
+            draftRevision.current += 1
+            setRetrySelection(null)
+            setRecordsOpen(true)
+          }}
           onSelectRecord={selectRecord}
           onCompareRecord={setComparisonRecordId}
           onChangeMethod={changeMethod}

@@ -33,7 +33,6 @@ import {
   type AppScreenMotion,
 } from "./domain/screen-motion"
 import { AppLoadingState } from "./components/AppLoadingState"
-
 const JOURNAL_REWARD_MESSAGE = {
   AWARDED: "기록한 날 +4P가 반영됐어요.",
   ALREADY_AWARDED: "오늘의 다른 기록도 함께 모였어요. 이 날짜의 4P는 이미 반영돼 있어요.",
@@ -315,6 +314,7 @@ export function AppShell() {
           onManageRecords={() => runViewTransition("push", () => setAthleteRecordsOpen(true))}
           onWriteLog={(entryType) => runViewTransition("tab-backward", () => setV(viewForTab("log", entryType)))}
           onWritePlannedSessionLog={(draft) => runViewTransition("tab-backward", () => setV((state) => viewForPlannedSessionDraft(state, draft)))}
+          returnToSession={v.returnToSession}
         />
       </>
     )
@@ -336,7 +336,7 @@ export function AppShell() {
           ? v.journalDraft === undefined
             ? goHome
             : () => runViewTransition("pop", () => setV(viewForJournalReturn(v)))
-          : v.journalDraft?.initialEntry !== undefined
+          : v.journalDraft?.initialEntry !== undefined || v.journalDraft?.plannedSessionLink !== undefined
             ? () => runViewTransition("pop", () => setV(viewForJournalReturn(v)))
             : () => runViewTransition("pop", () => setV(s => ({ ...s, entryType: "choose" })))}
         onOpenImport={() => runViewTransition("push", () => setV(s => ({ ...s, importOpen: true })))}

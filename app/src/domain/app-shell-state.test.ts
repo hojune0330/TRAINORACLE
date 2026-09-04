@@ -3,6 +3,7 @@ import {
   INITIAL_VIEW_STATE,
   shouldResetTabView,
   tabForChrome,
+  viewForJournalDraft,
   viewForJournalReturn,
   viewForPlannedSessionDraft,
 } from "./app-shell-state"
@@ -51,6 +52,36 @@ describe("app shell return state", () => {
       },
     })
     expect(viewForJournalReturn(view).tab).toBe("plan")
+  })
+
+  it("keeps the exact planned DAY and AM/PM link through detailed continuation", () => {
+    const plan = stateFixture()
+    const session = plan.activePlan.sessions[0]
+    if (session === undefined) throw new Error("Missing fixture session")
+    const draft = createPlannedSessionLogDraft(plan, session, "2026-08-28T03:00:00.000Z")
+    if (draft === null) throw new Error("Missing planned session draft")
+
+    const quick = viewForPlannedSessionDraft(INITIAL_VIEW_STATE, draft)
+    const detailed = viewForJournalDraft(quick, draft.date)
+    expect(viewForJournalReturn(detailed)).toMatchObject({
+      tab: "plan",
+      returnToSession: draft.link,
+    })
+  })
+
+  it("returns a cancelled planned journal to its exact plan session without inventing a save", () => {
+    const plan = stateFixture()
+    const session = plan.activePlan.sessions[0]
+    if (session === undefined) throw new Error("Missing fixture session")
+    const draft = createPlannedSessionLogDraft(plan, session, "2026-08-28T03:00:00.000Z")
+    if (draft === null) throw new Error("Missing planned session draft")
+
+    const view = viewForPlannedSessionDraft(INITIAL_VIEW_STATE, draft)
+    expect(viewForJournalReturn(view)).toMatchObject({
+      tab: "plan",
+      returnToSession: draft.link,
+    })
+    expect(viewForJournalReturn(view)).not.toHaveProperty("journalDraft")
   })
 })
 
