@@ -123,7 +123,7 @@ function LogDetailJournal({ date, onBack, onAddEntry, onEditEntry, readerControl
           border: "1px solid var(--ink)", background: "var(--surface)",
           display: "grid", gridTemplateColumns: "1fr auto", gap: 10, alignItems: "center",
         }}>
-          <div style={{ fontFamily: "var(--mono)", fontSize: 10, color: "var(--ink-2)", lineHeight: 1.6 }}>
+          <div style={{ fontFamily: "var(--mono)", fontSize: "var(--fs-mono-xs)", color: "var(--ink-2)", lineHeight: 1.6 }}>
             {justDeleted.label} 일지를 지웠어요.
             {justDeleted.trashed
               ? ` 휴지통에 ${TRASH_RETENTION_DAYS}일 동안 남아 있어요.`
@@ -139,7 +139,7 @@ function LogDetailJournal({ date, onBack, onAddEntry, onEditEntry, readerControl
               style={{
                 minHeight: 44, padding: "0 12px",
                 border: "1px solid var(--ink)", background: "var(--ink)", color: "var(--bg)",
-                fontFamily: "var(--mono)", fontSize: 10.5, fontWeight: 600, cursor: "pointer",
+                fontFamily: "var(--mono)", fontSize: "var(--fs-mono-sm)", fontWeight: 600, cursor: "pointer",
                 whiteSpace: "nowrap",
               }}
             >되돌리기</button>
@@ -152,7 +152,7 @@ function LogDetailJournal({ date, onBack, onAddEntry, onEditEntry, readerControl
           <div className="hand" style={{ fontSize: 22, color: "var(--pencil)", lineHeight: 1.35 }}>
             이 날의 일지는 아직 비어 있어요.
           </div>
-          <div style={{ marginTop: 12, fontFamily: "var(--mono)", fontSize: 10.5, color: "var(--ink-3)", letterSpacing: "0.04em", lineHeight: 1.6 }}>
+          <div style={{ marginTop: 12, fontFamily: "var(--mono)", fontSize: "var(--fs-mono-sm)", color: "var(--ink-3)", letterSpacing: "0.04em", lineHeight: 1.6 }}>
             오늘 일지는 홈 → 일지 쓰기에서 1분이면 남길 수 있어요.<br />
             어떤 모습으로 쌓이는지 궁금하면 가이드 탭의 예시 일지를 봐 주세요.
           </div>
@@ -186,8 +186,8 @@ function LogDetailJournal({ date, onBack, onAddEntry, onEditEntry, readerControl
                   ["RPE", shownRpe ?? "—", shownRpe === null ? "" : "/10"],
                 ] as const).map(([l, v, u], i, a) => (
                   <div key={i} style={{ padding: "10px 8px 10px 0", borderRight: i < a.length - 1 ? "1px solid var(--hair)" : 0, paddingLeft: i > 0 ? 8 : 0 }}>
-                    <div style={{ fontFamily: "var(--mono)", fontSize: 8.5, color: "var(--ink-3)", letterSpacing: "0.14em", textTransform: "uppercase" }}>{l}{l === "RPE" && <TermHelp term="rpe" />}</div>
-                    <div style={{ fontFamily: "var(--mono)", fontSize: 14, fontWeight: 500, color: "var(--ink)", marginTop: 3, letterSpacing: "-0.01em" }}>{v}<span style={{ fontSize: 9, color: "var(--ink-3)", fontWeight: 400, marginLeft: 2 }}>{u}</span></div>
+                    <div style={{ fontFamily: "var(--mono)", fontSize: "var(--fs-mono-xs)", color: "var(--ink-3)", letterSpacing: "0.14em", textTransform: "uppercase" }}>{l}{l === "RPE" && <TermHelp term="rpe" />}</div>
+                    <div style={{ fontFamily: "var(--mono)", fontSize: 14, fontWeight: 500, color: "var(--ink)", marginTop: 3, letterSpacing: "-0.01em" }}>{v}<span style={{ fontSize: "var(--fs-mono-xs)", color: "var(--ink-3)", fontWeight: 400, marginLeft: 2 }}>{u}</span></div>
                   </div>
                 ))}
               </div>
@@ -204,7 +204,7 @@ function LogDetailJournal({ date, onBack, onAddEntry, onEditEntry, readerControl
           <SectionLb action={savedClock(r.savedAt)}>— RACE · {r.stage === "pre" ? "직전" : "직후"}</SectionLb>
           <div style={{ border: "2px solid var(--ink-blue)", background: "var(--paper)", padding: "14px 16px" }}>
             <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between" }}>
-              <span style={{ fontFamily: "var(--mono)", fontSize: 10.5, fontWeight: 600, color: "var(--ink-blue)", letterSpacing: "0.14em", textTransform: "uppercase" }}>RACE DAY</span>
+              <span style={{ fontFamily: "var(--mono)", fontSize: "var(--fs-mono-sm)", fontWeight: 600, color: "var(--ink-blue)", letterSpacing: "0.14em", textTransform: "uppercase" }}>RACE DAY</span>
               <SyncChip />
             </div>
             {r.record && (
@@ -249,10 +249,10 @@ function LogDetailJournal({ date, onBack, onAddEntry, onEditEntry, readerControl
                 marginTop: 10, padding: "11px 13px",
                 border: "1px solid var(--pain-5)", background: "var(--surface)",
               }}>
-                <div style={{ fontFamily: "var(--mono)", fontSize: 10, fontWeight: 600, color: "var(--pain-5)", letterSpacing: "0.14em" }}>
+                <div style={{ fontFamily: "var(--mono)", fontSize: "var(--fs-mono-xs)", fontWeight: 600, color: "var(--pain-5)", letterSpacing: "0.14em" }}>
                   REVIEW · 통증 4 이상 기록됨<TermHelp term="review" />
                 </div>
-                <div style={{ marginTop: 6, fontFamily: "var(--mono)", fontSize: 10, color: "var(--ink-2)", letterSpacing: "0.03em", lineHeight: 1.6 }}>
+                <div style={{ marginTop: 6, fontFamily: "var(--mono)", fontSize: "var(--fs-mono-xs)", color: "var(--ink-2)", letterSpacing: "0.03em", lineHeight: 1.6 }}>
                   이 날 강한 통증이 적혀 있어요. 통증이 계속되면 훈련 전에 지도자·보호자와 꼭 상의해 주세요. 기록은 그대로 보관돼요.
                 </div>
               </div>
@@ -262,7 +262,7 @@ function LogDetailJournal({ date, onBack, onAddEntry, onEditEntry, readerControl
       })}
 
       {entries.length > 0 && (
-        <div style={{ padding: "24px 20px 8px", fontFamily: "var(--mono)", fontSize: 9.5, color: "var(--ink-4)", letterSpacing: "0.06em", lineHeight: 1.6 }}>
+        <div style={{ padding: "24px 20px 8px", fontFamily: "var(--mono)", fontSize: "var(--fs-mono-xs)", color: "var(--ink-4)", letterSpacing: "0.06em", lineHeight: 1.6 }}>
           이 페이지는 이 기기에만 저장돼 있어요. 온라인 보관·기기 이동은 계정 연동 후에 할 수 있어요.
         </div>
       )}

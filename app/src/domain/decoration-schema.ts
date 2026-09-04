@@ -7,6 +7,7 @@ import {
   STARTER_DECORATION_IDS,
   THEME_DECORATION_IDS,
   decorationCatalogItem,
+  minimumSpentPointsForOwned,
   isAvatarDecorationId,
   isDecorationId,
   isDecorationSlot,
@@ -112,10 +113,8 @@ export const decorationStateSchema = z.object({
   for (const starterId of STARTER_DECORATION_IDS) {
     if (!owned.has(starterId)) context.addIssue({ code: "custom", message: `missing starter ${starterId}` })
   }
-  const minimumSpentPoints = state.ownedItemIds.reduce(
-    (total, itemId) => total + (decorationCatalogItem(itemId)?.cost ?? 0),
-    0,
-  )
+  /* 보상·시즌 지급분은 0, 컬렉션은 번들 할인을 인정한 하한 — 계산은 카탈로그의 단일 함수에 위임한다. */
+  const minimumSpentPoints = minimumSpentPointsForOwned(state.ownedItemIds)
   if (state.spentPoints < minimumSpentPoints) {
     context.addIssue({ code: "custom", message: "paid ownership exceeds spent points" })
   }

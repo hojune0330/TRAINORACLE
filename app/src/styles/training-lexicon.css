@@ -46,7 +46,7 @@
 .training-lexicon__frequent > div,
 .training-term__related > div { display: flex; flex-wrap: wrap; gap: 8px; }
 .training-lexicon__frequent button,
-.training-term__related button { min-height: 44px; padding: 8px 11px; border: 1px solid var(--line); border-radius: 4px; background: var(--surface); color: var(--ink); font: 600 13px/1.25 var(--sans); cursor: pointer; }
+.training-term__related button { min-height: 44px; padding: 8px 11px; border: 1px solid var(--line); border-radius: var(--r-md); background: var(--surface); color: var(--ink); font: 600 13px/1.25 var(--sans); cursor: pointer; }
 .training-lexicon__frequent small,
 .training-term__related small { margin-left: 6px; color: var(--ink-3); font: 700 10px/1 var(--mono); }
 

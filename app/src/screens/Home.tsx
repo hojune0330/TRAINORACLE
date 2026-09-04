@@ -110,8 +110,14 @@ export function Home({
   const [spentPoints, setSpentPoints] = React.useState(() => loadDecorationState().spentPoints)
   const decorationState = loadDecorationState()
   const availablePoints = Math.max(0, engagement.points - spentPoints)
+  /* "다음 목표"는 포인트로 살 수 있는 것만 — 보상·시즌 지급분(cost 0)이나 신규 제공이 끝난 RETIRED 항목은 후보가 아니다. */
   const nextRewardItem = DECORATION_CATALOG
-    .filter((item) => !item.starterOwned && !decorationState.ownedItemIds.includes(item.id))
+    .filter((item) => (
+      !item.starterOwned
+      && !decorationState.ownedItemIds.includes(item.id)
+      && item.availability === "ACTIVE"
+      && (item.acquisition.kind === "POINTS" || item.acquisition.kind === "BUNDLE")
+    ))
     .sort((left, right) => left.cost - right.cost)[0]
   const nextReward = nextRewardItem === undefined ? null : {
     name: nextRewardItem.name,

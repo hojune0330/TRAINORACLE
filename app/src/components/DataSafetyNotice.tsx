@@ -41,7 +41,7 @@ export function DataSafetyNotice({ onOpenAccount }: {
               marginTop: 8, minHeight: 44, padding: "0 14px",
               fontFamily: "var(--sans)", fontSize: 12.5, fontWeight: 600,
               color: "var(--bg)", background: "var(--ink)",
-              border: 0, borderRadius: 6, cursor: "pointer",
+              border: 0, borderRadius: "var(--r-md)", cursor: "pointer",
             }}
           >
             계정 연동으로 일지 지키기

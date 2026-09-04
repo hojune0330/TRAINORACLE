@@ -7,13 +7,17 @@ import {
   isInkDecorationId,
   isPlacementDecorationId,
   isThemeDecorationId,
+  claimRewardDecorations,
+  collectionById,
+  collectionVisibleInShop,
   loadDecorationState,
+  purchaseCollectionBundle,
   purchaseDecoration,
   readDecorationStateSerialized,
   saveDecorationStateIfCurrent,
 } from "../../domain/decorations"
 import { isTextStickerPageItem } from "../../domain/decorations"
-import type { DecorationCatalogItem, DecorationId, DecorationPlacementTransform, DecorationState, TextInkId } from "../../domain/decorations"
+import type { DecorationCatalogItem, DecorationCollection, DecorationId, DecorationPlacementTransform, DecorationState, TextInkId } from "../../domain/decorations"
 import {
   appendJournalDecorationItem,
   appendJournalTextSticker,
@@ -81,8 +85,26 @@ export function JournalDecorationSurface({
   const focusBeforeOpenRef = React.useRef<HTMLElement | null>(null)
   /* 포인트 구매가 편집기 서랍으로 들어왔다 — 드래그 중 매 렌더 재계산을 피해 열 때만 읽는다. */
   const [earnedPoints, setEarnedPoints] = React.useState(() => loadEngagementSummary(todayISO()).points)
+  const today = todayISO()
   React.useEffect(() => {
-    if (open) setEarnedPoints(loadEngagementSummary(todayISO()).points)
+    if (!open) return
+    const summary = loadEngagementSummary(today)
+    setEarnedPoints(summary.points)
+    /* 보상·시즌 아이템 자동 지급: 열 때 한 번만 판정하고, 배치 이력이 아니라 undo 스택에 넣지 않는다. */
+    const claim = claimRewardDecorations(
+      canonical,
+      { journalDays: summary.journalDays, visitDays: summary.visitDays },
+      today,
+      storageVersion,
+    )
+    if (claim.kind === "CLAIMED") {
+      setCanonical(claim.state)
+      setStorageVersion(JSON.stringify(claim.state))
+      const names = claim.items.slice(0, 2).map((item) => item.name).join(", ")
+      const extra = claim.items.length > 2 ? ` 외 ${claim.items.length - 2}종` : ""
+      setNotice({ text: `활동 보상으로 ${withJosa(`${names}${extra}`, "을/를")} 받았어요.`, persistent: true })
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- 열릴 때 한 번만 판정한다.
   }, [open])
   const availablePoints = Math.max(0, earnedPoints - canonical.spentPoints)
   /* 자동-열기 인텐트는 1회용 — 소비 후 지워 새로고침·재진입 시 저절로 열리지 않게 한다. */
@@ -98,7 +120,13 @@ export function JournalDecorationSurface({
     || isInkDecorationId(item.id)
     || isAvatarDecorationId(item.id)
     || isPlacementDecorationId(item.id)
-  ))
+  )).filter((item) => {
+    /* retire-never-delete: 은퇴·시즌 종료·라이선스 만료 아이템은 보유한 것만 남기고, 미보유분은 상점에서 거둔다. */
+    if (item.starterOwned || owned(item.id)) return true
+    if (item.availability !== "ACTIVE") return false
+    const collection = item.collection === undefined ? undefined : collectionById(item.collection)
+    return collection === undefined || collectionVisibleInShop(collection, today)
+  })
   const purchasableItemIds = new Set(
     items.filter((item) => !item.starterOwned && !owned(item.id)).map((item) => item.id),
   )
@@ -254,14 +282,45 @@ export function JournalDecorationSurface({
     } else if (result.kind === "INSUFFICIENT_POINTS") {
       showNotice(`포인트가 ${item.cost - result.remainingPoints}P 더 필요해요. 오늘 방문 확인은 1P, 훈련·회복 기록을 남긴 날은 4P가 쌓여요.`, true)
     } else if (result.kind === "SAVE_FAILED") {
-      if (result.code === "STALE_STATE") {
-        const latest = loadDecorationState()
-        setCanonical(latest)
-        setStorageVersion(readDecorationStateSerialized())
-        showNotice("다른 화면에서 꾸미기가 바뀌어 최신 상태를 다시 불러왔어요.", true)
-      } else showNotice("저장하지 못했어요. 다시 시도해 주세요.", true)
+      recoverFromSaveFailure(result.code)
+    } else if (result.kind === "NOT_PURCHASABLE") {
+      showNotice(
+        result.reason === "RETIRED"
+          ? "지금은 받을 수 없는 재료예요. 이미 받은 것은 그대로 쓸 수 있어요."
+          : result.reason === "SEASON"
+            ? "기간 안에 자동으로 받는 시즌 재료예요."
+            : "포인트가 아니라 활동 보상으로 받는 재료예요.",
+        true,
+      )
     } else {
       showNotice(result.kind === "ALREADY_OWNED" ? "이미 가지고 있어요." : "꾸미기 항목을 찾지 못했어요.", true)
+    }
+  }
+
+  const recoverFromSaveFailure = (code: string): void => {
+    if (code === "STALE_STATE") {
+      const latest = loadDecorationState()
+      setCanonical(latest)
+      setStorageVersion(readDecorationStateSerialized())
+      showNotice("다른 화면에서 꾸미기가 바뀌어 최신 상태를 다시 불러왔어요.", true)
+    } else showNotice("저장하지 못했어요. 다시 시도해 주세요.", true)
+  }
+
+  /* 컬렉션 일괄 구매 — 개별 구매와 같이 undo 스택 밖에서 저장한다. */
+  const purchaseBundle = (collection: DecorationCollection): void => {
+    const result = purchaseCollectionBundle(earnedPoints, canonical, collection.id, today, storageVersion)
+    if (result.kind === "PURCHASED") {
+      setCanonical(result.state)
+      setStorageVersion(JSON.stringify(result.state))
+      showNotice(`${collection.title} ${result.itemIds.length}종을 받았어요. ${result.remainingPoints}P가 남았어요.`)
+    } else if (result.kind === "INSUFFICIENT_POINTS") {
+      showNotice(`포인트가 ${result.cost - result.remainingPoints}P 더 필요해요.`, true)
+    } else if (result.kind === "SAVE_FAILED") {
+      recoverFromSaveFailure(result.code)
+    } else if (result.kind === "ALREADY_OWNED") {
+      showNotice("이 컬렉션은 이미 모두 가지고 있어요.", true)
+    } else {
+      showNotice("지금은 한 번에 받을 수 없는 컬렉션이에요.", true)
     }
   }
 
@@ -412,6 +471,8 @@ export function JournalDecorationSurface({
         onUnavailable={(message) => showNotice(message, true)}
         onApply={apply}
         onPurchase={purchase}
+        onPurchaseBundle={purchaseBundle}
+        today={today}
         onClearAvatar={() => {
           if (commit(clearJournalAvatarDecoration(canonical), "아바타를 기본 상태로 바꿨어요.")) {
             setSelectedIndex(null)
