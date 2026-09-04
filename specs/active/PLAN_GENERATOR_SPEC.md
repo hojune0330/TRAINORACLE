@@ -1222,6 +1222,13 @@ stored for later. All Section 11 issues remain OPEN.
 
 ## 12. Test Cases
 
+> Historical self-check table, not the current runtime acceptance suite. Original
+> rows and PASS labels are preserved as history. In particular PG-TC-031's default
+> three-option expectation does not govern the current two-candidate beta. Current
+> A/B schedule count, per-MAIN method count and activation scope are separated in
+> [TRAINING_PLAN_CURRENT_SCOPE.md](../../TRAINING_PLAN_CURRENT_SCOPE.md).
+> Section 26's two-method product target is not a claim that two methods are active.
+
 | ID | Group | Expected | Status |
 |---|---|---|---|
 | `PG-TC-001` | integrity | First line is `# PLAN_GENERATOR_SPEC.md`. | PASS |
@@ -1436,5 +1443,19 @@ remain unchanged. Legacy plans remain readable with honest missing-rationale sta
 Change ledger: ADD rationale completeness and candidate distinction; KEEP existing
 numeric authority; DEFER unadopted dose combinations. No issue count or status is
 changed by this direction alone.
+
+## 27. Support Disclosure And Scope Separation (2026-09-05)
+
+The owner approved reconciling current implementation scope before expanding MAIN
+methods. The plan intake may expose a collapsed, read-only support view derived from
+the same currently authorized template options used by selection. Evaluate the
+selected experience and evaluation time; do not count draft or expired identities,
+RPE-only guidance, or A/B support-duration variants as additional detailed methods.
+
+List event and purpose together. A method count across different purposes does not
+establish a reviewed same-purpose pair. A supported template is not permission to
+save: current record, explicit selection, safety and persistence gates still apply.
+Keep ordinary RPE plans available without presenting missing detailed methods as an
+athlete's inability. No dose, authority, source acceptance or old plan is changed.
 
 [DRAFT_COMPLETE]

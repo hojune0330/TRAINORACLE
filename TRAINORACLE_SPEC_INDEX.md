@@ -17,6 +17,9 @@ registry_note: "Counts apply only to this registry document. Source SPEC issue c
 
 ## 0. Easy Start
 
+Current training-plan support, scoped adoption and remaining implementation gates:
+[`TRAINING_PLAN_CURRENT_SCOPE.md`](./TRAINING_PLAN_CURRENT_SCOPE.md).
+
 If this repository feels too dense, start with [`SPEC_OVERVIEW_FOR_HOJUNE.md`](./SPEC_OVERVIEW_FOR_HOJUNE.md).
 
 That document explains, in plain Korean:
