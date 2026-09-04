@@ -39,6 +39,7 @@ export function PlanActiveState({
   onStateChange,
   onArchived,
   onWritePlannedSessionLog,
+  returnToSession,
 }: {
   readonly state: PlanBetaState
   readonly cloudPersistence?: PlanCloudPersistenceState
@@ -47,6 +48,7 @@ export function PlanActiveState({
   readonly onStateChange: (state: PlanBetaState) => void
   readonly onArchived: (intake: StoredPlanBetaIntake) => void
   readonly onWritePlannedSessionLog?: (draft: PlannedSessionLogDraft) => void
+  readonly returnToSession?: PlannedSessionLogDraft["link"]
 }) {
   const [error, setError] = React.useState<string | null>(null)
   const [retry, setRetry] = React.useState<PersistenceRetry | null>(null)
@@ -204,6 +206,7 @@ export function PlanActiveState({
         onActivateNextFrame={(nextCurrentCheck) => void activateNextFrame(nextCurrentCheck)}
         onCheckDetailedExecution={checkDetailedExecution}
         onWriteSessionLog={onWritePlannedSessionLog === undefined ? undefined : writePlannedSessionLog}
+        returnToSession={returnToSession}
       />
       {executionMessage !== null && (
         <div className="plan-execution-status" role="status">{executionMessage}</div>

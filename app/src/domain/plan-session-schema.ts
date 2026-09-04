@@ -2,6 +2,8 @@ import { z } from "zod"
 import type { SafetyGateDecision } from "@impl/safety-gate/gate"
 import { parsePrescriptionNotation } from "@impl/prescription/notation"
 import { derivePrescriptionTotals } from "@impl/prescription/totals"
+import { parsePrescriptionSequence } from "@impl/prescription/sequence"
+import { matchesPacePrescriptionSequence, projectPacePrescriptionSequence } from "@impl/prescription/pace-sequence"
 import {
   DETAILED_PRESCRIPTION_APPROVALS,
   resolveDetailedPrescriptionApproval,
@@ -134,6 +136,14 @@ const evidenceIdentitySchema = z.object({
   decisionRef: z.string().min(1),
   fingerprint: fingerprintSchema,
 }).strict()
+const storedSequenceSchema = z.unknown().transform((input, context) => {
+  const parsed = parsePrescriptionSequence(input)
+  if (parsed.kind !== "parsed" || parsed.sequence.version !== 2) {
+    context.addIssue({ code: "custom", message: "Stored sequence must be a valid V2 structure." })
+    return z.NEVER
+  }
+  return parsed.sequence
+})
 const paceTargetContentShape = {
   kind: z.literal("PACE_TARGET"),
   manifestVersion: z.string().min(1),
@@ -170,6 +180,7 @@ const paceTargetContentShape = {
   totals: totalsSchema,
   stopCodes: z.array(stopCodeSchema).length(4).readonly(),
   fallbackCode: z.literal("RPE_ONLY_CONTROLLED"),
+  sequence: storedSequenceSchema.optional(),
 }
 const paceTargetContentBaseSchema = z.object(paceTargetContentShape).strict()
 type StoredPaceTargetContent = z.infer<typeof paceTargetContentBaseSchema>
@@ -203,6 +214,11 @@ function validateStoredPaceTargetContent(
   ))
   if (approval === undefined || !approvalMatchesStoredPrescription(approval, value)) {
     addStoredIssue(context, [], "Stored prescription metadata must match an approved manifest entry.")
+  }
+  if (value.sequence !== undefined) {
+    if (!matchesPacePrescriptionSequence(value, value.sequence)) {
+      addStoredIssue(context, ["sequence"], "Stored sequence must match the approved prescription exactly.")
+    }
   }
   const anchor = value.selectedAnchor
   const elapsedLabels = new Set(
@@ -295,9 +311,12 @@ export function createStoredPaceTargetPrescription(
 ): StoredPaceTargetPrescription | null {
   const content = paceTargetContentSchema.safeParse(input)
   if (!content.success) return null
+  const sequence = content.data.sequence ?? projectPacePrescriptionSequence(content.data)
+  if (sequence === null) return null
+  const withSequence = { ...content.data, sequence }
   const parsed = paceTargetPlanItemSchema.safeParse({
-    ...content.data,
-    prescriptionFingerprint: storedPrescriptionFingerprint(content.data),
+    ...withSequence,
+    prescriptionFingerprint: storedPrescriptionFingerprint(withSequence),
   })
   return parsed.success ? parsed.data : null
 }

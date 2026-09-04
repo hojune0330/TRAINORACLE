@@ -41,6 +41,10 @@ export function PlanCandidates({
   onConfirmRecord,
   onChangeMethod,
   onSelectionDetailsChange,
+  onManageRecords,
+  startDateValue,
+  onStartDateChange,
+  recordReturnCount,
   onBack,
   onSelect,
 }: {
@@ -57,10 +61,15 @@ export function PlanCandidates({
   readonly onConfirmRecord: () => void
   readonly onChangeMethod?: (reference: PlanBetaIntake["selectedDetailedTemplateRef"]) => void
   readonly onSelectionDetailsChange?: () => void
+  readonly onManageRecords?: () => void
+  readonly startDateValue?: string
+  readonly onStartDateChange?: (value: string) => void
+  readonly recordReturnCount?: number
   readonly onBack: () => void
   readonly onSelect: (selection: CandidateSelection) => void
 }) {
-  const [startDate, setStartDate] = React.useState(todayISO)
+  const [localStartDate, setLocalStartDate] = React.useState(todayISO)
+  const startDate = startDateValue ?? localStartDate
   const [expandedCandidateId, setExpandedCandidateId] = React.useState<string | null>(
     generated.candidates[0]?.candidateId ?? null,
   )
@@ -113,6 +122,9 @@ export function PlanCandidates({
           onSelectRecord={onSelectRecord}
           onCompareRecord={onCompareRecord}
           onConfirm={onConfirmRecord}
+          onManageRecords={onManageRecords}
+          onUseRpe={onChangeMethod === undefined ? undefined : () => onChangeMethod(null)}
+          recordReturnCount={recordReturnCount}
         />
       )}
       <CandidateComparison candidates={generated.candidates} />
@@ -162,7 +174,8 @@ export function PlanCandidates({
           aria-describedby="plan-start-date-help"
           onChange={(event) => {
             if (event.target.value !== startDate) onSelectionDetailsChange?.()
-            setStartDate(event.target.value)
+            setLocalStartDate(event.target.value)
+            onStartDateChange?.(event.target.value)
           }}
         />
         <small id="plan-start-date-help">

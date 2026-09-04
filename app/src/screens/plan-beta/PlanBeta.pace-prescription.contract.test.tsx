@@ -4,6 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { ATHLETE_RECORDS_STORAGE_KEY } from "../../domain/athlete-records"
 import { PlanBeta } from "../PlanBeta"
 import * as mutationLock from "../../domain/plan-mutation-lock"
+import * as authorityModule from "../../domain/detailed-prescription-runtime-authority"
 
 const RECORDS = [
   {
@@ -61,6 +62,51 @@ async function reachCandidates(): Promise<void> {
 }
 
 describe("production detailed prescription experience", () => {
+  it("adds a missing record in place without losing answers or the selected start date", async () => {
+    localStorage.removeItem(ATHLETE_RECORDS_STORAGE_KEY)
+    const user = userEvent.setup()
+    render(<PlanBeta />)
+    await reachCandidates()
+    fireEvent.change(screen.getByLabelText("계획 시작 날짜"), { target: { value: "2026-09-10" } })
+    expect(screen.getByRole("button", { name: /시간 조절 계획 선택하기/u })).toBeDisabled()
+    expect(screen.getByRole("button", { name: "계획안 A 일정 접기" })).toBeEnabled()
+    await user.click(screen.getByRole("button", { name: "경기 기록 추가·관리" }))
+    await screen.findByRole("heading", { name: "내 경기 기록" })
+    await user.type(screen.getByLabelText("기록 분"), "18")
+    await user.type(screen.getByLabelText("기록 초"), "31")
+    await user.type(screen.getByLabelText("달성일"), "2026-09-01")
+    await user.click(screen.getByRole("button", { name: "기록 저장" }))
+    await user.click(screen.getByRole("button", { name: "계획으로" }))
+    expect(screen.getByRole("heading", { name: "두 계획에서 하나를 골라보세요" })).toBeVisible()
+    expect(screen.getByLabelText("계획 시작 날짜")).toHaveValue("2026-09-10")
+    expect(screen.getByRole("button", { name: /시간 조절 계획 선택하기/u })).toBeDisabled()
+    const picker = screen.getByRole("region", { name: "개인 페이스 기준 기록" })
+    const record = within(picker).getByRole("button", { name: /개인 최고.*18분 31초/u })
+    expect(record).toHaveAttribute("aria-pressed", "false")
+    await user.click(record)
+    await user.click(within(picker).getByRole("button", { name: "이 기록으로 개인 페이스 적용" }))
+    await user.click(screen.getByRole("button", { name: /시간 조절 계획 선택하기/u }))
+    await screen.findByRole("heading", { name: /9일 훈련 계획/u })
+    const saved = JSON.parse(localStorage.getItem("trainoracle.plan-beta.v1")!)
+    expect(saved.intake).toMatchObject({ eventDistanceM: 5000, competitionDivision: "OPEN", experienceBand: "EXPERIENCED", requestedFrameLength: 9, startDate: "2026-09-10" })
+    expect(saved.activePlan.sessions.filter((session: { prescription: { kind: string } }) => session.prescription.kind === "PACE_TARGET")).toHaveLength(1)
+  }, 20_000)
+
+  it("does not erase the requested detailed method when authority becomes unavailable", async () => {
+    const user = userEvent.setup()
+    render(<PlanBeta />)
+    await reachCandidates()
+    vi.spyOn(authorityModule, "resolveDetailedPrescriptionRuntimeAuthority").mockReturnValue({ kind: "fallback", code: "RUNTIME_AUTHORITY_UNAVAILABLE" })
+    const picker = screen.getByRole("region", { name: "개인 페이스 기준 기록" })
+    await user.click(within(picker).getByRole("button", { name: /개인 최고.*18분 31초/u }))
+    expect(screen.getByRole("region", { name: "개인 페이스 기준 기록" })).toBeVisible()
+    expect(screen.getByText(/상세 처방을 연결하는 중 문제가 생겨/u)).toBeVisible()
+    expect(screen.getByRole("button", { name: /시간 조절 계획 선택하기/u })).toBeDisabled()
+    expect(localStorage.getItem("trainoracle.plan-beta.v1")).toBeNull()
+    await user.click(screen.getByRole("button", { name: "기록 없이 시간·RPE 계획 받기" }))
+    expect(screen.getByRole("button", { name: /시간 조절 계획 선택하기/u })).toBeEnabled()
+  }, 15_000)
+
   it("changes method in place, preserves the start date, and requires pace reconfirmation", async () => {
     const user = userEvent.setup()
     render(<PlanBeta />)
@@ -275,7 +321,7 @@ describe("production detailed prescription experience", () => {
     render(<PlanBeta />)
     await reachCandidates()
 
-    expect(screen.getByText(/사용할 수 있는 경기 기록이 없어 RPE 계획/u)).toBeVisible()
+    expect(screen.getByText(/이 종목의 경기 기록이 아직 없어요/u)).toBeVisible()
     expect(screen.queryByText(/5×1000m @5000m RP/u)).toBeNull()
   })
 

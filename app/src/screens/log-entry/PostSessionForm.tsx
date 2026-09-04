@@ -22,6 +22,7 @@ import type { EntryFormProps } from "./shared"
 import { JOURNAL_ENERGY_SYSTEM_OPTIONS } from "../../domain/energy-system-taxonomy"
 import { painLevelsRequireReview } from "../../safety/memo-safety"
 import { BodyDiagram, PainReviewBanner } from "./BodyDiagram"
+import { derivePlanExecutionRelation } from "../../domain/plan-execution-relation"
 
 const DETAILED_OUTCOMES = [
   ["COMPLETED", "완료"],
@@ -104,9 +105,7 @@ export function PostSessionForm({ onBack, onDone, targetDate, initialEntry, plan
     const didPerform = isPerformedOutcome(activityOutcome)
     const planExecutionRelation = activityOutcome === undefined
       ? initial?.planExecutionRelation
-      : planLink === undefined
-        ? "NOT_APPLICABLE" as const
-        : activityOutcome === "COMPLETED" ? "AS_PLANNED" as const : "MODIFIED" as const
+      : derivePlanExecutionRelation(activityOutcome, activitySlot, planLink)
     const persistedSystem = didNotPerform ? "" : system
     const persistedDistanceKm = didNotPerform ? "" : distanceKm
     const persistedDurationMin = didNotPerform ? "" : durationMin
@@ -143,7 +142,7 @@ export function PostSessionForm({ onBack, onDone, targetDate, initialEntry, plan
         plannedSessionLink: explicitOrMissing(planLink !== undefined),
         ...(planExecutionRelation === undefined ? {} : {
           planExecutionRelation: derivedProvenance(
-            ["activityOutcome", "plannedSessionLink"],
+            ["activityOutcome", "activitySlot", "plannedSessionLink"],
             "QUICK_PLAN_EXECUTION_RELATION_V2",
           ),
         }),

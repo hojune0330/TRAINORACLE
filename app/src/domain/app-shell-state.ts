@@ -15,6 +15,7 @@ export type AppViewState = {
   readonly journalMode: "CALENDAR" | "CYCLE"
   readonly cycleAnchor: string | null
   readonly cycleIndex: number
+  readonly returnToSession?: PlannedSessionLogDraft["link"]
   readonly journalDraft?: {
     readonly date: string
     readonly initialEntry?: JournalEntry
@@ -108,6 +109,9 @@ export function viewForJournalReturn(state: AppViewState): AppViewState {
     journalMode: state.journalMode,
     cycleAnchor: state.cycleAnchor,
     cycleIndex: state.cycleIndex,
+    ...(draft.returnTab === "plan" && draft.plannedSessionLink !== undefined
+      ? { returnToSession: draft.plannedSessionLink }
+      : {}),
   }
 }
 
@@ -116,6 +120,10 @@ export function viewForJournalDraft(
   date: string,
   initialEntry?: JournalEntry,
 ): AppViewState {
+  const existingDraft = state.journalDraft
+  const existingEntryLink = initialEntry?.kind === "post-session"
+    ? initialEntry.plannedSessionLink
+    : undefined
   return {
     ...state,
     tab: "log",
@@ -124,8 +132,11 @@ export function viewForJournalDraft(
     journalDraft: {
       date,
       ...(initialEntry === undefined ? {} : { initialEntry }),
-      returnTab: state.tab === "journal" ? "journal" : "home",
-      archiveSelection: state.archiveSelection,
+      returnTab: existingDraft?.returnTab ?? (state.tab === "journal" ? "journal" : "home"),
+      archiveSelection: existingDraft?.archiveSelection ?? state.archiveSelection,
+      ...(existingEntryLink === undefined && existingDraft?.plannedSessionLink === undefined
+        ? {}
+        : { plannedSessionLink: existingEntryLink ?? existingDraft?.plannedSessionLink }),
     },
   }
 }

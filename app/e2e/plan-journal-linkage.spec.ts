@@ -39,8 +39,10 @@ test("links one explicitly selected plan session to its journal without copying 
   expect(JSON.stringify(stored.journal[0].plannedSessionLink)).not.toContain(state.activePlan.candidateId)
   expect(stored.plan.progress).toEqual([])
 
-  await page.getByText("오전 훈련 방법과 기록", { exact: true }).click()
-  await page.getByRole("button", { name: "완료", exact: true }).click()
+  const returnedSession = page.getByRole("group", { name: /오전 세션 · 일지에서 돌아온 세션/u })
+  await expect(returnedSession).toBeVisible()
+  await expect(returnedSession).toBeInViewport()
+  await page.getByRole("button", { name: "계획에도 완료 표시", exact: true }).click()
   await expect.poll(() => page.evaluate(() => JSON.parse(
     window.localStorage.getItem("trainoracle.plan-beta.v1") ?? "null",
   )?.progress)).toEqual([{ sessionDay: 1, sessionSlot: "AM", state: "COMPLETED" }])

@@ -56,7 +56,7 @@ test("shows a dated AM and PM plan before selection and after reload", async ({ 
   await expect(page.getByLabel("9일 훈련 흐름")).toContainText("회복")
   await expect(page.getByRole("group", { name: /훈련 2개/u })).toHaveCount(3)
   await expect.poll(() => page.evaluate(() => window.localStorage.getItem("trainoracle.plan-beta.v1"))).toContain("2026-08-17")
-  await activeDay.getByRole("button", { name: "이 훈련을 하는 이유", exact: true }).nth(1).click()
+  await activeDay.getByRole("button", { name: "훈련 방법과 이유", exact: true }).nth(1).click()
   const reader = page.getByRole("dialog")
   await expect(reader.getByText("9일차 · 오후", { exact: true })).toBeVisible()
   await reader.getByRole("tab", { name: "이유·근거" }).click()

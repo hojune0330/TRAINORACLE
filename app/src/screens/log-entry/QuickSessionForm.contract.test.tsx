@@ -2,6 +2,9 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { cleanup, fireEvent, render, screen } from "@testing-library/react"
 import { loadAnalysisEntries, loadEntries } from "../../domain/journal-store"
 import { QuickSessionForm } from "./QuickSessionForm"
+import { createPlannedSessionLogDraft } from "../../domain/planned-session-link"
+import { stateFixture } from "../../domain/plan-beta-store.test-fixture"
+import { collectPlanJournalEvidence } from "../../domain/plan-journal-evidence"
 
 function finishPerformedSession(rpe = 6): void {
   fireEvent.click(screen.getByRole("button", { name: "운동을 마쳤어요" }))
@@ -42,9 +45,9 @@ describe("quick session journal contract", () => {
         painCheckStatus: { provenance: "EXPLICIT" },
         distanceKm: { provenance: "MISSING" },
         plannedSessionLink: { provenance: "MISSING" },
-        planExecutionRelation: {
-          provenance: "DERIVED",
-          derivedFrom: ["activityOutcome", "plannedSessionLink"],
+          planExecutionRelation: {
+            provenance: "DERIVED",
+            derivedFrom: ["activityOutcome", "activitySlot", "plannedSessionLink"],
           derivationRuleId: "QUICK_PLAN_EXECUTION_RELATION_V2",
         },
       },
@@ -166,5 +169,50 @@ describe("quick session journal contract", () => {
     expect(screen.queryByRole("heading", { name: "오늘 기록을 남겼어요." })).toBeNull()
     expect(screen.getByRole("alert")).toHaveTextContent("저장하지 못했어요")
     setItem.mockRestore()
+  })
+
+  it("names the selected future date in the saved receipt", () => {
+    render(<QuickSessionForm targetDate="2026-09-08" />)
+
+    fireEvent.click(screen.getByRole("button", { name: "오늘은 쉬었어요" }))
+
+    expect(screen.getByRole("heading", { name: "9월 8일 기록을 남겼어요." })).toBeVisible()
+  })
+
+  it("records a completed linked session in the other AM/PM slot as modified", () => {
+    const plan = stateFixture()
+    const session = plan.activePlan.sessions[0]
+    if (session === undefined) throw new Error("Missing fixture session")
+    const draft = createPlannedSessionLogDraft(plan, session, "2026-08-28T03:00:00.000Z")
+    if (draft === null) throw new Error("Missing planned session draft")
+    const otherSlot = draft.link.sessionSlot === "AM" ? "오후" : "오전"
+
+    render(<QuickSessionForm targetDate={draft.date} plannedSessionLink={draft.link} />)
+    fireEvent.click(screen.getByRole("button", { name: "계획대로 마쳤어요" }))
+    fireEvent.click(screen.getByRole("button", { name: otherSlot }))
+    fireEvent.click(screen.getByRole("button", { name: /RPE 6,/ }))
+    fireEvent.click(screen.getByRole("button", { name: "없어요" }))
+
+    expect(loadEntries()[0]).toMatchObject({ planExecutionRelation: "MODIFIED" })
+  })
+
+  it("keeps an unspecified linked AM/PM slot unknown rather than changed", () => {
+    const plan = stateFixture()
+    const session = plan.activePlan.sessions[0]
+    if (session === undefined) throw new Error("Missing fixture session")
+    const draft = createPlannedSessionLogDraft(plan, session, "2026-08-28T03:00:00.000Z")
+    if (draft === null) throw new Error("Missing planned session draft")
+
+    render(<QuickSessionForm targetDate={draft.date} plannedSessionLink={draft.link} />)
+    fireEvent.click(screen.getByRole("button", { name: "계획대로 마쳤어요" }))
+    fireEvent.click(screen.getByRole("button", { name: "시간 미지정" }))
+    fireEvent.click(screen.getByRole("button", { name: /RPE 6,/ }))
+    fireEvent.click(screen.getByRole("button", { name: "없어요" }))
+
+    expect(loadEntries()[0]).toMatchObject({
+      activitySlot: "UNSPECIFIED",
+      planExecutionRelation: "UNKNOWN",
+    })
+    expect(collectPlanJournalEvidence(loadEntries(), plan).rows[0]?.comparison).not.toBe("CHANGED_SESSION")
   })
 })

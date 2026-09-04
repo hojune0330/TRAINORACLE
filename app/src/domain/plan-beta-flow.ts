@@ -218,7 +218,9 @@ export function generatePlanFromDraft(
         generated: binding.generated,
         prescriptionBinding: { kind: binding.kind, code: binding.code },
         gate: safetyGate,
-        intake: effectiveIntake,
+        // The preview can fall back, but the athlete's requested method must remain
+        // visible and require an explicit switch before an RPE-only plan is saved.
+        intake,
         athleteEvidence,
       }
       }

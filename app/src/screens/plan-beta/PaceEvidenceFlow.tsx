@@ -1,5 +1,7 @@
 import React from "react"
-import { Check, RefreshCw } from "lucide-react"
+import { Check, Plus, RefreshCw } from "lucide-react"
+import { deriveRecordCurrentness } from "../../domain/pace-target-evidence"
+import { useActiveContentScroll } from "../../hooks/useActiveContentScroll"
 import type { AthleteRecord } from "../../domain/athlete-records"
 import {
   athleteRecordAuthorityCopy,
@@ -19,6 +21,9 @@ type Props = {
   readonly onSelectRecord: (recordId: string) => void
   readonly onCompareRecord: (recordId: string | null) => void
   readonly onConfirm: () => void
+  readonly onManageRecords?: () => void
+  readonly onUseRpe?: () => void
+  readonly recordReturnCount?: number
 }
 
 export function PaceEvidenceFlow({
@@ -30,7 +35,12 @@ export function PaceEvidenceFlow({
   onSelectRecord,
   onCompareRecord,
   onConfirm,
+  onManageRecords,
+  onUseRpe,
+  recordReturnCount = 0,
 }: Props) {
+  const sectionRef = React.useRef<HTMLElement>(null)
+  useActiveContentScroll(recordReturnCount > 0 ? recordReturnCount : null, sectionRef, sectionRef)
   const shouldFocusResult = React.useRef(false)
   const statusRef = React.useRef<HTMLParagraphElement>(null)
   React.useEffect(() => {
@@ -50,14 +60,14 @@ export function PaceEvidenceFlow({
     ))
 
   return (
-    <section className="pace-evidence-flow" aria-label="개인 페이스 기준 기록">
+    <section ref={sectionRef} tabIndex={-1} className="pace-evidence-flow" aria-label="개인 페이스 기준 기록">
       <header>
-        <span>선택 사항 · 저장된 기록</span>
+        <span>상세 페이스를 위한 기록 선택</span>
         <h2>개인 페이스 기준 기록</h2>
         <p>기록이 하나여도 자동으로 고르지 않아요. 선택한 기록만 계획의 기준이 됩니다.</p>
       </header>
       {usable.length === 0 ? (
-        <p className="pace-evidence-fallback">사용할 수 있는 경기 기록이 없어 RPE 계획안을 그대로 유지해요.</p>
+        <p className="pace-evidence-fallback">이 종목의 경기 기록이 아직 없어요. 기록을 추가하면 고른 조건과 시작 날짜를 유지한 채 돌아옵니다. 기록 없이 시간·RPE 계획을 받을 수도 있어요.</p>
       ) : (
         <>
           <div className="plan-choice-list" role="group" aria-label="기준 기록 선택">
@@ -65,7 +75,7 @@ export function PaceEvidenceFlow({
               <PlanChoice
                 key={record.id}
                 title={recordTitle(record)}
-                detail={recordDetail(record)}
+                detail={`${recordDetail(record)} · ${currentnessLabel(record)}`}
                 selected={record.id === selectedRecordId}
                 onClick={() => {
                   onSelectRecord(record.id)
@@ -78,6 +88,7 @@ export function PaceEvidenceFlow({
             <div className="pace-evidence-confirmation">
               <strong>기준 기록 · {recordTitle(selected)}</strong>
               <span>{selected.achievedOn} · {athleteRecordAuthorityCopy(selected)}</span>
+              {deriveRecordCurrentness(selected, new Date()) !== "CURRENT" && <p>이 기록은 현재 페이스 계산에 사용하지 않아요. 최근 기록을 추가하거나 시간·RPE 계획을 선택해 주세요.</p>}
               {comparisonOptions.length > 0 && (
                 <details>
                   <summary>다른 같은 종목 기록과 비교</summary>
@@ -112,6 +123,10 @@ export function PaceEvidenceFlow({
           )}
         </>
       )}
+      {onManageRecords !== undefined && <button type="button" className="plan-text-action" onClick={onManageRecords}>
+        <Plus aria-hidden="true" size={18} />경기 기록 추가·관리
+      </button>}
+      {onUseRpe !== undefined && <button type="button" className="plan-text-action" onClick={onUseRpe}>기록 없이 시간·RPE 계획 받기</button>}
       <BindingStatus binding={binding} statusRef={statusRef} />
     </section>
   )
@@ -155,4 +170,10 @@ function recordTitle(record: AthleteRecord): string {
 
 function recordDetail(record: AthleteRecord): string {
   return `${record.achievedOn ?? "달성일 없음"} · ${athleteRecordAuthorityCopy(record)}`
+}
+
+function currentnessLabel(record: AthleteRecord): string {
+  const currentness = deriveRecordCurrentness(record, new Date())
+  return currentness === "CURRENT" ? "기록일 기준 범위 안" : currentness === "STALE"
+    ? "오래된 기록 · 현재 페이스 계산 제외" : "기록일 확인 필요 · 현재 페이스 계산 제외"
 }

@@ -5,7 +5,7 @@ document_metadata:
   doc_id: trainoracle-spec-training-session-prescription
   status: RECONSTRUCTED_WITH_OWNER_ADOPTED_V2_SEED_05
   owner: COACH_HOJUNE
-  version: "0.5"
+  version: "0.7"
   local_original_found: false
   reconstructed_from_current_product_and_review_sources: true
   restored_original: false
@@ -515,5 +515,88 @@ ADD formula research/application direction and transparent recovery provenance;
 KEEP existing numeric values, safety, youth/self-service scope and historic plans.
 No new template activation, canonical promotion, issue closure or production
 deployment is implied by this amendment.
+
+### 12.5 Prescription-Bound Sequence Storage (2026-09-03)
+
+Newly created, already-adopted PACE_TARGET prescriptions include a version 2
+`sequence` snapshot inside the prescription fingerprint. It preserves the exact
+warmup, strides, nested sets, work, between-repeat/set recovery and cooldown.
+The existing templates prescribe no separate terminal recovery; store explicit
+NOT_APPLICABLE rather than inferring one. Target seconds and their selected record
+remain in the same prescription, without deriving time from recovery distance.
+
+This is a versioned structural snapshot, not an independently editable second
+prescription. On creation, reload, backup restore and START/RESTART checks, its
+parsed structure must exactly match the deterministic projection of the approved
+prescription. First compare the original source fields and totals to the approved
+template notation; agreement between two equally modified representations is not
+approval. App storage, core candidate verification and selection must all reject
+coordinated source/sequence changes even after both identities are recomputed.
+`canonical-json-v1` is a content-bearing identity, not an opaque cryptographic hash.
+Checking an identity alone is insufficient: changing repetition, recovery, target
+reference or label and recomputing an identity must still fail.
+Unknown keys, invalid sequence versions and injected text are rejected, not stripped
+into an apparently valid prescription. Existing approval and safety checks remain
+mandatory; a valid generic sequence alone cannot enter the athlete plan schema.
+
+Old prescriptions without `sequence` remain valid in their original shape. Reading,
+backing up or recording progress must not add a snapshot, change their fingerprint,
+candidate identity or explanation receipt. The method reader may derive the existing
+legacy view but must not claim that view was stored when the old plan was generated.
+An invalid stored plan is preserved in storage for recovery, never overwritten with
+a guessed replacement or silently upgraded into a new prescription.
+
+New sequence-bearing prescriptions bind candidate and explanation identities through
+the existing full-prescription fingerprints. A change to method or selected record
+creates a new prescription through existing confirmation and eligibility gates.
+Explicit account-scoped backups preserve the private snapshot; public summary cards
+do not acquire sequences, anchor references or explanation evidence in any field,
+including IDs and lookup parameters. Public card IDs must be separately derived
+opaque identifiers, not private candidate IDs. Old public rows require an explicit
+server audit/remediation gate; a corrected client is not proof that existing rows
+were sanitized. No account or server capability is enabled by this extension.
+
+This increment connects existing numerical prescriptions to V2 snapshot persistence,
+reload, execution authorization and the method reader. It does not claim activation
+of arbitrary distance/time/compound methods, interval-by-interval execution tracking,
+or a second accepted MAIN. Those require their own exact template/target review and
+remaining runtime wiring. Existing unit/execution counts above are historical;
+new execution evidence belongs in the implementation report for this increment.
+
+Change ledger: ADD bound sequence persistence and exact-content validation; KEEP
+legacy plans, numeric adoptions, privacy and safety; DEFER new doses, formula models
+and generic-method activation. No canonical promotion or issue closure.
+
+### 12.6 Candidate And Reader Journey (Owner-Approved Improvement 2026-09-04)
+
+The athlete can add a race result from the detailed candidate comparison and
+return to that comparison without re-entering the event, division, experience,
+method, frequency, or selected start date. Keep this unfinished navigation state
+within the current plan screen; it is not a saved active plan or a safety receipt.
+On return, reload records, invalidate the old numeric binding and any pending save,
+and re-evaluate safety/authority through the existing generator. Require explicit
+record selection and confirmation even when exactly one result exists.
+
+Missing or old records have an immediate add/manage action and a clearly labelled
+alternative to choose time/RPE. Label record-date eligibility before confirmation
+using the same currentness rule as binding; do not invent a new freshness cutoff.
+Previewing a valid-dated schedule does not require permission to save it. A missing
+record or binding error still prevents saving the requested detailed plan.
+
+If runtime authority fails, the safe preview may use RPE, but retain the athlete's
+requested detailed method and show the failure. Never silently clear their choice
+to make the fallback saveable. Only an explicit method switch may authorize the
+ordinary RPE path. Do not add authority, dose, or source approval through this UX rule.
+
+The full-screen reader entry is `훈련 방법과 이유`, with `방법` as its default tab.
+Lead with one accurate ordered method, keep the visible recommendation control,
+and avoid repeating the same work/recovery structure before showing its sequence.
+Keep `이유·근거` and `주기·기록`, keyboard operation, selected-session return,
+and legacy explanation limitations. Numeric prescriptions and fingerprints do not
+change because their presentation is rearranged.
+
+Change ledger: ADD record-management return and visible fallback intent; MODIFY
+reader hierarchy; KEEP all numerical prescriptions, safety, privacy and old plans.
+Open issues remain open; release evidence is recorded separately.
 
 [DRAFT_COMPLETE]

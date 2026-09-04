@@ -30,6 +30,15 @@ export function isValidIsoDate(value: string): boolean {
     && parsed.getDate() === day
 }
 
+/** `asOfDate`를 포함하는 최근 일수의 로컬 날짜 폐구간인지 확인한다. */
+export function isWithinTrailingDays(date: string, asOfDate: string, dayCount: number): boolean {
+  if (!isValidIsoDate(date)
+    || !isValidIsoDate(asOfDate)
+    || !Number.isInteger(dayCount)
+    || dayCount <= 0) return false
+  return date >= isoShift(asOfDate, -(dayCount - 1)) && date <= asOfDate
+}
+
 /** "2026 · 07 · 10" — IndexCard 헤더용 */
 export function cardDate(iso: string): string {
   const [y, m, d] = iso.split("-")

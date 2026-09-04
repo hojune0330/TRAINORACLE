@@ -2545,6 +2545,10 @@
   color: var(--ink);
 }
 
+.active-plan__actions .active-plan__journal-progress-action {
+  min-height: 44px;
+}
+
 .active-plan__continuity {
   margin-top: var(--space-6);
   padding-block: var(--space-4);

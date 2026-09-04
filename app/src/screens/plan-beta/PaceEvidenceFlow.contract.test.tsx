@@ -87,6 +87,23 @@ function ConfirmingFlow() {
 }
 
 describe("explicit pace evidence selection", () => {
+  it("labels old records before confirmation and offers an immediate record or RPE route", async () => {
+    const onManageRecords = vi.fn()
+    const onUseRpe = vi.fn()
+    const user = userEvent.setup()
+    render(<PaceEvidenceFlow eventDistanceM={5000}
+      records={[{ ...RECORDS[0]!, purpose: "PERSONAL_BEST", seasonId: null, achievedOn: "2020-01-01" }]}
+      selectedRecordId={null} comparisonRecordId={null}
+      binding={{ kind: "fallback", code: "PACE_TARGET_FALLBACK_NO_EXPLICIT_ANCHOR" }}
+      onSelectRecord={vi.fn()} onCompareRecord={vi.fn()} onConfirm={vi.fn()}
+      onManageRecords={onManageRecords} onUseRpe={onUseRpe} />)
+    expect(screen.getByRole("button", { name: /개인 최고/u })).toHaveTextContent("오래된 기록 · 현재 페이스 계산 제외")
+    await user.click(screen.getByRole("button", { name: "경기 기록 추가·관리" }))
+    await user.click(screen.getByRole("button", { name: "기록 없이 시간·RPE 계획 받기" }))
+    expect(onManageRecords).toHaveBeenCalledOnce()
+    expect(onUseRpe).toHaveBeenCalledOnce()
+  })
+
   it("does not auto-select even one stored result", () => {
     render(<PaceEvidenceFlow
       eventDistanceM={5000}

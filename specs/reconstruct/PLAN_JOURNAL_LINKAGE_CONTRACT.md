@@ -36,9 +36,23 @@ invariants:
   journal_result_does_not_auto_mark_progress: true
   planned_intent_is_not_actual_energy_classification: true
   linked_journal_does_not_prove_prescription_execution: true
+  plan_progress_is_explicit_after_linked_journal: true
 ```
 
 The plan may say `LT_INTENT`; the journal energy field remains missing until the athlete explicitly chooses an actual system. A linked journal may describe a modified or stopped session without changing the accepted plan snapshot.
+
+Saving any journal never changes a progress mark. A returned journal may offer an explicit
+`COMPLETED` progress action only when the current active-plan occurrence still resolves exactly,
+the linked journal is `COMPLETED`, its selected AM/PM slot matches the linked slot, it has an
+explicit `NO_SIGNAL_REPORTED` body check, and no progress mark already exists. This is a UI
+choice using the ordinary progress command; it is not a safety clearance or automatic completion.
+
+`planExecutionRelation` is derived from `activityOutcome`, `activitySlot`, and the exact planned
+link. `AS_PLANNED` requires `COMPLETED` and an AM/PM slot equal to the linked planned slot.
+Any non-completed linked outcome or a selected opposite AM/PM slot is `MODIFIED`. A completed
+linked journal with an unspecified or missing AM/PM slot is `UNKNOWN`, not a claimed change. An
+unlinked journal is `NOT_APPLICABLE`. Existing stored journals are not rewritten merely because
+this derivation is clarified.
 
 ## 3. Link Record
 

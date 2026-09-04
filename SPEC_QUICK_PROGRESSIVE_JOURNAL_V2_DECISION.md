@@ -69,7 +69,7 @@ truth_contract:
   planExecutionRelation:
     values: [AS_PLANNED, MODIFIED, NOT_APPLICABLE, UNKNOWN]
     provenance: DERIVED
-    derived_from: [activityOutcome, plannedSessionLink]
+    derived_from: [activityOutcome, activitySlot, plannedSessionLink]
   correction_to_RESTED_or_SKIPPED:
     clear_performed_only_values:
       - activitySlot
@@ -96,6 +96,13 @@ Only the athlete's explicit action on one visible planned session may attach the
 immutable planned-session link. A generic quick record never receives a link from date,
 title, RPE, energy label, device activity, or later similarity matching. Quick and
 detailed capture depths do not change the identity or authority of an existing link.
+
+For a linked result, `AS_PLANNED` requires both `COMPLETED` and a selected AM/PM slot equal
+to the linked plan slot. A completed result recorded in the other slot, or with another outcome,
+is `MODIFIED`. A completed result with an unspecified or missing slot is `UNKNOWN`, not a claim
+that the session changed. This keeps an explicit opposite-slot result aligned with the comparison
+surface's `CHANGED_SESSION` result without treating missing as changed. The clarification applies
+to new or edited saves only and does not rewrite historical records.
 
 ## 5. Device Reconciliation Boundary
 

@@ -1,4 +1,7 @@
 import { assertNever } from "../shared/assert-never"
+import { matchesPacePrescriptionSequence, type PaceSequenceSource } from "../prescription/pace-sequence"
+import { parsePrescriptionNotation } from "../prescription/notation"
+import { derivePrescriptionTotals } from "../prescription/totals"
 import {
   continuityContextIdentity,
   continuityIdentityFromCandidateId,
@@ -627,7 +630,8 @@ const FIVE_K_COMPONENT_REFS = [
 ] as const
 
 function isPaceTargetPrescription(value: Record<string, unknown>): boolean {
-  if (!hasExactKeys(value, PACE_TARGET_KEYS)) return false
+  const hasSequence = Object.prototype.hasOwnProperty.call(value, "sequence")
+  if (!hasExactKeys(value, hasSequence ? [...PACE_TARGET_KEYS, "sequence"] : PACE_TARGET_KEYS)) return false
   const strings = ["manifestVersion", "templateId", "templateVersion", "templateContentFingerprint", "notation", "sourceDecisionId", "sourceEvidenceRef", "approvalDecisionId", "ownerAuthorityDecisionId", "displayRoundingPolicyVersion", "prescriptionFingerprint"]
   if (!strings.every((key) => typeof value[key] === "string" && value[key].length > 0)
       || typeof value["templateContentFingerprint"] !== "string" || !SHA256_PATTERN.test(value["templateContentFingerprint"])
@@ -644,6 +648,8 @@ function isPaceTargetPrescription(value: Record<string, unknown>): boolean {
   return isRecord(anchor) && anchor["eventDistanceM"] === value["targetEventDistanceM"]
     && hasApprovedPrescriptionReferenceBinding(value)
     && isConsistentPaceTarget(value)
+    // Source fields have passed the exact operational/number checks above.
+    && (!hasSequence || matchesPacePrescriptionSequence(value as unknown as PaceSequenceSource, value["sequence"]))
 }
 
 function isEvidenceIdentity(value: unknown): boolean {
@@ -680,11 +686,23 @@ function hasApprovedPrescriptionReferenceBinding(value: Record<string, unknown>)
   const sports = value["sportsScienceEvidence"]
   const population = value["populationApplicabilityEvidence"]
   const scope = value["scope"]
+  const parsedNotation = parsePrescriptionNotation(approved.notation)
+  if (parsedNotation.kind !== "parsed") return false
+  const notation = parsedNotation.notation
   return value["manifestVersion"] === "1"
     && value["templateId"] === templateId
     && value["templateVersion"] === "1.0.0"
     && value["templateContentFingerprint"] === approved.fingerprint
     && value["notation"] === approved.notation
+    && value["setCount"] === notation.setCount
+    && value["repetitionsPerSet"] === notation.repetitionsPerSet
+    && value["repetitionDistanceM"] === notation.repetitionDistanceM
+    && value["targetEventDistanceM"] === notation.paceTargetEventDistanceM
+    && value["repetitionRecoverySeconds"] === notation.repetitionRecoverySeconds
+    && value["repetitionRecoveryMode"] === notation.repetitionRecoveryMode
+    && value["setRecoverySeconds"] === notation.setRecoverySeconds
+    && value["setRecoveryMode"] === notation.setRecoveryMode
+    && canonicalJson(value["totals"]) === canonicalJson(derivePrescriptionTotals(notation))
     && value["displayRoundingPolicyVersion"] === "seconds-v1"
     && value["sourceDecisionId"] === sourceDecisionId
     && value["sourceEvidenceRef"] === sourceEvidenceRef
