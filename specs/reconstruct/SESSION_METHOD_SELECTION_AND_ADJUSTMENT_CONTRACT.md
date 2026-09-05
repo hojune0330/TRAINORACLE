@@ -4,11 +4,14 @@
 doc_id: trainoracle-session-method-selection-and-adjustment
 spec_id: SESSION_METHOD_SELECTION_AND_ADJUSTMENT_CONTRACT
 title: TrainOracle Session Method Selection And Adjustment Contract
-version: "0.1"
+version: "0.2"
 round: RT1_OWNER_APPROVED_IMPLEMENTATION_DIRECTION
 status: ACTIVE_IMPLEMENTATION_CONTRACT
 product_direction: OWNER_APPROVED_IMPLEMENTATION_DIRECTION
 decision_basis: USER_TASK_BRIEF_2026_09_05
+accepted_amendment: USER_TASK_BRIEF_2026_09_06
+reconciled_on: 2026-09-06
+inspected_baseline_sha: 985669328dbcc7738afc9f390c9c325769b8251c
 owner: COACH_HOJUNE
 open_issues_total: 4
 canonical_blocking_count: 0
@@ -59,6 +62,9 @@ The approved direction is:
   workouts. A/B schedule candidates are a separate concept.
 - Recommendations are deterministic, explainable and non-binding. The actor can
   select another eligible configuration and inspect its actual work/recovery.
+- Neutral recommendation is the default; variety/repeat are optional explicit
+  preferences. Display-candidate diversity is separate from repeat placement:
+  the same method may occupy distinct slots only under an exact reviewed policy.
 - Structure comes from finite reviewed presets. Scalar adjustments are constrained
   by versioned, field-specific rules; there is no free-form workout constructor.
 - Selection and adjustment use draft/apply/cancel, exact arithmetic, content-bound
@@ -95,13 +101,18 @@ inside the 30-entry energy-system catalogue. The three MD refs are separately ad
 identities, not three extra rows in that catalogue. Exact fingerprint, record,
 event/purpose/experience, authority and safety checks still determine actual use.
 
-Current end-user runtime supports one detailed session per candidate with selectable
-placement on an eligible MAIN occurrence. The core and app transaction boundary can
+At the inspected PR #318 baseline, end-user runtime supports one detailed session
+per candidate with selectable placement on an eligible MAIN occurrence.
+The core and app transaction boundary can
 represent and atomically validate multiple structurally distinct detailed sessions,
 but the end-user multi-slot selector remains pending exact per-slot applicability,
 exposure, cross-slot interaction and independently adopted method evidence.
 The prior first-QUALITY-only placement is historical, not the current limit. One
 detailed method per accepted event-purpose scope remains the numeric baseline.
+The baseline's cross-slot distinct-method rejection is an implementation limitation,
+not the accepted scheduling rule: section 4 and the dated section 17 decision govern
+policy-bound repeat placement. This documentation pass does not claim that code
+already implements that amendment.
 Sequence V2 representation and structural comparison do not imply arbitrary method
 activation. Current status reports are historical snapshots; they do not cap the
 approved direction at a fixed pair.
@@ -133,6 +144,16 @@ method. Structurally different configurations may share a family. Do not generat
 new families to inflate counts. No source entry acquires an executable family,
 configuration or preset identity merely by appearing in the readiness matrix.
 
+Family and configuration IDs are independent identities with an explicit versioned
+relationship, not aliases derived by splitting a template ID or a mandatory 1:1
+mapping. A family stays stable when a reviewed configuration is added or revised;
+a configuration retains its own exact content/version and applicability. The PR #318
+adapter currently uses `templateId` for both `familyId` and `configurationId`.
+That compatibility convention is not the future registry contract. Expansion needs
+an explicit versioned legacy-template-to-family/configuration mapping. Do not
+rewrite stored original refs, reset apparent experience when a configuration ID
+changes, merge unrelated families, or guess mappings for unresolved legacy refs.
+
 Independent review replaces a mandatory pair-approval data dependency for future
 choice. A claim that two options are same-purpose substitutes, or have equivalent
 effects/burden, still needs its own support. Compatibility with the slot's reviewed
@@ -154,6 +175,33 @@ replace support work, or duplicate warmup strides. All MAIN slots can be prepare
 per-slot detail is not restricted to the first QUALITY in the approved design.
 Until the exact multi-slot policy is supplied, implement selection of the one
 detailed session's placement without duplicating its dose across multiple MAINs.
+
+Display-candidate diversity is not a cross-slot uniqueness requirement. A reviewed
+method may be explicitly selected again at a distinct existing slot, but only when
+a versioned placement policy authorizes that exact configuration, slot/frame scope,
+exposure accounting, cross-slot interactions and applicable safety constraints.
+The placement receipt must bind the policy identity/version, review evidence and
+the explicit choices. Missing, expired, revoked, out-of-scope or failed policy
+validation rejects the entire multi-placement transaction. No arbitrary spacing
+threshold or unrestricted repeat permission is created here.
+
+Duplicate slots always reject, including repeated references to the same occurrence.
+Distinct slots with the same method are a policy decision, not fake display
+diversity; distinct methods also still require the placement policy. Revalidate
+this distinction at candidate binding, save/reload/restore and execution/adaptation
+boundaries. Neither optional `PREFER_REPEAT` nor a recommendation grants placement
+authority. The PR #318 blanket same-method/same-structure rejection remains a
+known baseline gap addressed by the main code author's policy-bound foundation.
+
+The parent's 2026-09-06 implementation direction is one central detailed-MAIN
+placement-policy gate shared by binder, schema and adaptation. The reviewed runtime
+multi-placement registry must remain empty without accepted frame-combination
+evidence. Keep the existing approved single-method path and supported old-plan
+compatibility. Generic core test policies may permit repeated exact configurations
+to verify this contract; they are synthetic fixtures, not runtime approvals and
+must not populate that registry. A shared gate is integration foundation, not live
+multi-MAIN selection or completed adjustment persistence. This paragraph records
+the parent's direction, not independently executed evidence of the new code.
 
 Display day and AM/PM as human context, not the sole identity. A planned occurrence
 content fingerprint changes when its prescription changes; the editing slot ID
@@ -198,17 +246,34 @@ not a fabricated recommendation. Missing exact inputs suppress only the unsuppor
 numeric output/choice; maintain existing authorized RPE access without relabelling
 it a second detailed method. Do not silently save RPE in place of requested detail.
 
-Current live recommendation wiring first checks exact template eligibility and
-then uses neutral history: `history: []`, `repeatPreference: NEUTRAL`, with equal
-caller priorities after filtering. It must not claim that journal history selected
-the recommendation. The core prepares history-aware repeat/variety ranking as a
-separate capability, not a live history integration: eligibility, purpose and
-context precedence come first, optional explicit repeat/variety preference then
-uses eligible observed performed counts, and stable catalogue order breaks ties.
-Selected counts remain distinct from performed counts. Missing/not-performed
-history is not evidence of zero exposure. Any later live history wiring needs
-scoped, deduplicated exact-occurrence evidence and the owning privacy/safety gates;
-no invented recent-N penalty or time window is introduced.
+Current baseline observation (PR #318, rechecked 2026-09-06):
+`plan-template-options.ts` filters exact eligibility, calls `loadPlanMethodHistory`
+for the selected event and passes structured archived history to the core. New
+archives write v4 per-PACE_TARGET-slot rows; v3 selection-only refs map to a missing
+outcome, never inferred completion. The earlier `history: []` / core-only-history
+description was an initial 2026-09-05 snapshot and is superseded as current state.
+The baseline caller defaults to `PREFER_VARIETY` and supplies equal zero eligibility,
+purpose and context priorities after filtering. It is not an implemented model of
+neighboring load, cycle goals or recovery, and one accepted same-scope method cannot
+demonstrate visible multi-method ranking differences.
+
+Accepted requirement (2026-09-06): default to `NEUTRAL`; offer `PREFER_VARIETY` and
+`PREFER_REPEAT` only as optional explicit preferences, without an extra mandatory
+intake step. Retain eligible structured history even in neutral mode; neutral means
+no repeat/variety tie-break, not empty history. Eligibility, purpose and reviewed
+context precedence come first, the optional preference then uses the permitted
+self-reported completion counts, and stable `catalogOrder` breaks remaining ties.
+Show the actual inputs/reasons and missing coverage without claiming unimplemented
+context. Recommendation is neither automatic selection nor a scheduling policy.
+
+Representative display candidates should expose genuine structural alternatives
+(currently up to two, with all eligible options inspectable). Same-structure or
+count-only configurations must not inflate that diversity. This presentation rule
+must not force distinct methods across separately reviewed schedule slots.
+Selected counts, self-reported completion and measured adherence remain separate
+(section 11). Missing/not-performed history is not evidence of zero exposure.
+History use requires scoped, deduplicated exact-occurrence evidence and the owning
+privacy/safety gates; no invented recent-N penalty or time window is introduced.
 
 Same-method reuse in later cycles is valid. Diversity is an option, not mandatory
 rotation or exposure. Historical counts, planned intent or low observed RPE do not
@@ -378,6 +443,16 @@ snapshots under existing scope. Public cards/export summaries do not acquire anc
 refs, private candidate fingerprints, sequence content or explanation evidence in
 IDs or payloads. No new account/server sync is authorized.
 
+Preserve the existing rolling archive semantics: the current store retains the
+latest 18 archived plan/frame summaries, across events before event filtering.
+This is not 18 method occurrences, a fixed 24-week/recent-N-day observation window,
+or an immutable lifetime ledger of full original prescriptions. The core uses all
+history supplied by that bounded archive; disclose actual coverage and missingness.
+Do not enlarge, erase, reinterpret or backfill that archive as part of this feature.
+Retained original plans/backups keep their exact supported content and lineage;
+new immutable prescription snapshots and any longer-term ledger need their own
+versioned storage integration, not a claim that v4 summaries already contain them.
+
 ## 11. Planned, Actual, Youth And Privacy
 
 The planned occurrence carries its immutable prescription/version. A later actual
@@ -385,6 +460,16 @@ record links to that exact occurrence, not today's active plan or only its date.
 Completion marks do not create actual distance, duration, split, recovery or proof
 that the prescription was followed. Modified/partial/skipped/rested results and
 duplicate/conflicting links retain explicit relations and exclusions.
+
+In the PR #318 v4 adapter, `COMPLETED` maps to stored `PERFORMED`. This is
+self-reported completion of a planned occurrence, not measured adherence to its
+method, pace, repetitions or recovery. `RESTED`, `SKIPPED` and `PAIN_CHECKIN` map to
+`NOT_PERFORMED`; no response maps to `MISSING`. These are recorded progress states,
+not proof of all activity or non-exposure. Preserve the serialized enums for old
+data compatibility and label their evidence meaning honestly. Measured adherence
+requires separately eligible actual measurements, exact prescription/occurrence
+linkage and a reviewed comparison; never fill actual metrics from planned values
+or promote these counts into adaptation, efficacy or physiological evidence.
 
 PACE_TARGET RPE is an observation unless an adopted planned RPE comparison exists.
 Do not invent that range, classify measured physiology from intended energy labels,
@@ -418,7 +503,7 @@ clearance. No recommendation or user confirmation overrides these conditions.
 | Source/configuration preparation | Group original protocol location, access state, exact structure, target, recovery, scope and operational deviations for every entry | Continue evidence preparation without repeated feature-approval prompts; absent evidence remains absent |
 | Adjustment preparation | Per-family/configuration scalar domains, finite presets, coupling/rotation/transform evidence and explicit unsupported fields | Engine/editor implementation is approved; no invented numeric bounds or executable unreviewed rules |
 | UI/core implementation | Selectable placement of one detailed session, live history-aware deterministic recommendations, bounded editor transactions and content validation | Implemented foundation; no concurrent detailed-dose duplication in the live UI |
-| Multi-slot/storage integration | Atomic multi-placement transaction, aggregate candidate identity, versioned history snapshots, restore/execution and actual linkage | Core/app boundary prepared; exact multi-slot policy and at least two independently adopted same-scope methods remain required before live enablement |
+| Multi-slot/storage integration | Atomic multi-placement transaction, aggregate candidate identity, versioned history snapshots, restore/execution and actual linkage | Core/app boundary prepared; exact policy and end-to-end evidence required for every placement, including explicit same-method repeats. A genuinely different alternative additionally requires independent same-scope adoption |
 | Verification | Positive/negative and mutation evidence, storage/reload/restore, cancellation races, desktop/mobile reader/editor journeys | Required evidence tied to exact artifacts; implementation reports own observed results |
 
 Source extraction, exact operational choices, scientific/population review,
@@ -437,13 +522,21 @@ runtime results or additions to the historical issue/test counts in peer documen
 |---|---|
 | Current single-detail placement | One eligible shared day/AM/PM target receives the exact adopted dose; a second concurrent detail, ambiguous target or mismatched scope rejects |
 | Concurrent multi-slot detail without exact policy | Remains unavailable; eventual multi-slot cases below do not authorize enabling it early |
+| Same method, distinct slots, exact reviewed repeat policy | Explicit choices may bind only within policy scope; atomic save/reload/restore/execution checks preserve both occurrences and original plans |
+| Same method, distinct slots, absent/expired/revoked/out-of-scope policy | Atomic reject with no partial writes; repeat preference alone is insufficient |
+| Shared binder/schema/adaptation gate with empty runtime registry | Generic core repeat-policy fixtures can pass their scoped tests; runtime multi-placement remains unavailable, and existing single-method/old-plan compatibility remains supported |
+| Duplicate slot under any method or policy | Always reject; no duplicate occurrence or exposure |
+| Display diversity versus scheduled repeats | Same-structure/count-only display options do not inflate diversity; that rule cannot blanket-reject independently authorized repeat placements |
 | Multiple MAINs, AM/PM, candidate reorder | Independent choices remain on stable slots; no first-QUALITY-only or index binding |
 | Change one method/preset | Only target slot draft changes; other MAINs, support, frame and exposure count remain intact |
 | Delete/insert/move/ambiguous slot | No automatic ordinal remap; invalidate/review exact crosswalk and confirmations |
 | More than a fixed pair; count-only variants | Independently eligible configurations work without pair IDs; method diversity is not inflated |
 | Same versioned catalogue/order, context and assessments | Same eligible results/recommendations/reasons; stable catalogue-order tie-break, never lexical IDs |
 | Equal-priority entries with deliberately different ID order | Catalogue order wins; an intentional catalogue reorder is a changed input, not nondeterminism |
-| Live archived history versus repeat/variety capability | Live path reads only structured archived plan-method outcomes; selected/performed/not-performed/missing remain distinct, and variety preference changes ranking only |
+| Neutral default and optional repeat/variety | Neutral retains structured history without a repeat/variety tie-break; explicit preference changes only eligible ordering, never selection, dose or placement authority |
+| Live archived history and completion semantics | v4 rows and legacy selection-only/MISSING stay distinct; COMPLETED/PERFORMED is self-report, not measured adherence or zero-filled actual metrics |
+| Independent family/configuration mapping | Reviewed configuration changes preserve stable family identity through explicit mapping; original refs remain intact and unknown mappings stay unresolved |
+| Bounded archive and old original plans | Latest 18 plan/frame summaries retain existing order/limit and legacy compatibility; no fixed-week claim, lifetime-ledger claim or historical prescription rewrite |
 | Missing source/rule/default, unusable protocol | No invented numeric recommendation, preset, coefficient or approval |
 | Invalid scalar/coupled configuration | Atomic reject; no clamping, hidden higher dose or unsupported lower-repeat sibling |
 | Uniform/nested/unequal work and terminal recovery | Exact occurrence arithmetic; parent boundary replaces child recovery; no double-count |
@@ -470,7 +563,7 @@ are independent and unchanged; grouped catalogue gap IDs remain work-packet labe
 | `OI-SMSA-MULTI-SLOT-POLICY-001` | OPEN | NO | Exact per-slot applicability, exposure, cross-slot interactions and schema/lineage policy before concurrent detailed sessions; current one-detail placement remains valid. |
 | `OI-SMSA-CONFIGURATION-EVIDENCE-001` | OPEN | NO | Exact usable source, configuration/components, target and population/operational evidence for each new selectable method; unusable entries remain excluded. |
 | `OI-SMSA-ADJUSTMENT-EVIDENCE-001` | OPEN | NO | Exact scalar/preset domains, coupled constraints and successor/rotation rules with real evidence and version binding; no inferred range or dose. |
-| `OI-SMSA-INTEGRATION-EVIDENCE-001` | OPEN | NO | Artifact-bound UI/core/storage/reload/cancel-race/actual-linkage evidence for each enabled scope, including separate evidence before live history-aware ranking; partial checks do not close full integration. |
+| `OI-SMSA-INTEGRATION-EVIDENCE-001` | OPEN | NO | Artifact-bound UI/core/storage/reload/cancel-race/actual-linkage evidence for each enabled scope. v4 history wiring exists; neutral preference UX, policy-bound repeats, identity mapping and any measured-adherence extension still need their own evidence. Partial checks do not close full integration. |
 
 Recount: four issue rows, all OPEN, zero YES in the canonical-blocking column.
 Existing single-detail placement tests do not close concurrent multi-slot or
@@ -497,22 +590,27 @@ exact-dose/scalar/model activation. Scientific approval where evidence is absent
 canonical promotion and issue closure are not implied. The catalogue readiness
 report holds the grouped gaps; implementation reports own completion evidence.
 
-## 16. 2026-09-05 Implementation Observation
+## 16. 2026-09-05 Implementation Observation (Historical)
 
-The following implementation state was observed after the contract was written. It
-does not change the four OPEN issue rows or grant new dose/template authority.
+The following is the recorded post-contract, pre-merge implementation snapshot,
+later delivered in PR #318. App/core/browser counts below are not rerun by this
+documentation pass; fresh document checks are in the implementation report section 9.
+It does not change the four OPEN issue rows or grant new dose/template authority.
+Current requirements and remaining differences are in sections 3-5, 10-11 and 17.
 
 - Archived plan history now writes version 4 method rows for each PACE_TARGET slot.
-  `COMPLETED` is observed performance; `RESTED`, `SKIPPED` and `PAIN_CHECKIN` are
+  `COMPLETED` maps to `PERFORMED` (self-reported completion, not measured adherence);
+  `RESTED`, `SKIPPED` and `PAIN_CHECKIN` are
   not-performed; no answer remains missing. Legacy selection is never backfilled as
   performed.
 - The live method option resolver consumes this structured history. The default
-  variety preference affects deterministic ordering only and cannot add, select or
-  alter a session.
+  variety preference affected deterministic ordering only and could not add, select
+  or alter a session. Section 17 supersedes that default with neutral.
 - Candidate identity and storage validation can represent more than one detailed
   session using an aggregate fingerprint. Every placement is re-authorized, must
   target an exact existing MAIN slot, and must use a unique structurally different
-  method. Any failed placement rejects the whole transaction.
+  method in that implementation. Any failed placement rejects the whole transaction.
+  This blanket distinct-method guard is not the section 17 repeat-placement policy.
 - The live product still exposes one exact detailed method per currently accepted
   event-purpose scope. Therefore the multi-placement API is an evidence-gated
   integration foundation, not proof that users can choose two methods today.
@@ -521,6 +619,46 @@ does not change the four OPEN issue rows or grant new dose/template authority.
   the editor is not exposed as an inert control when no executable policy exists.
 - Local verification observed 818 core tests, 2,298 app tests, four targeted browser
   journeys, TypeScript checks, production build and the existing 43 document
-  mutation tests passing. Independent review and remote CI remain separate gates.
+  mutation tests passing. These are recorded local results, not full activation
+  evidence. Subsequent merge/CI/deployment history is recorded below.
+
+## 17. Accepted Engineering Decision (2026-09-06)
+
+Decision ID: `TO-SMSA-ENGINEERING-2026-09-06-001`.
+Status: `ACCEPTED_ENGINEERING_DECISION`.
+Authority: the user's explicit approved implementation task in this conversation;
+this is not a scientific review or a new exact-dose/placement-policy approval.
+
+- ADD: neutral recommendation default and optional explicit variety/repeat; keep
+  structured v4 history available and disclose only inputs actually used.
+- MODIFY: separate representative display diversity from per-slot scheduling.
+  Same-method reuse at distinct slots is permitted only under explicit reviewed,
+  versioned placement policy and explicit selection; duplicate slots always reject.
+- FOUNDATION: binder/schema/adaptation share a central
+  detailed-MAIN placement-policy gate. Without accepted frame-combination evidence,
+  the reviewed runtime multi-placement registry stays empty. Generic core repeat
+  test policies are not runtime approval. Preserve the approved single-method path
+  and existing-plan compatibility; do not claim live multi-MAIN/adjustment completion.
+- CLARIFY: independent family/configuration identities and versioned legacy mapping;
+  self-reported completion is not measured adherence. Preserve old original plans
+  and the latest-18-plan/frame-summary archive semantics without fabricated history.
+- KEEP: exact four-ref baseline, safety/privacy, youth/self-use, no automatic dose
+  increase, no fabricated scientific approval, and all four OPEN implementation
+  issues with zero canonical blockers. Grouped evidence preparation is still work
+  to perform, not completed merely by listing gaps.
+- EVIDENCE: the documentation reconciliation itself is not runtime evidence.
+  The integrated work and its remaining gates are tracked in the
+  [2026-09-06 workflow report](../../reports/implementation/SESSION_METHOD_WORKFLOW_PROGRESS_2026-09-06.md).
+
+Read-only `gh` verification on 2026-09-06 confirmed
+[PR #318](https://github.com/hojune0330/TRAINORACLE/pull/318) MERGED into main at
+`985669328dbcc7738afc9f390c9c325769b8251c` on `2026-09-05T08:18:44Z`.
+[CI 33954914850](https://github.com/hojune0330/TRAINORACLE/actions/runs/33954914850)
+is completed/success on that exact SHA, including `deploy-pages`. This is verified
+delivery history, not a claim that the SHA is still remote main or the currently
+served public UI. See the
+[implementation report](../../reports/implementation/SESSION_METHOD_SELECTION_IMPLEMENTATION_2026-09-05.md)
+section 9 for job/timestamp boundaries. No new runtime tests, public-screen check,
+source protocol review or issue closure is implied by this reconciliation.
 
 [DRAFT_COMPLETE]

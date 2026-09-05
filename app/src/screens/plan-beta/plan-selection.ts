@@ -12,6 +12,7 @@ import type {
 import type { PlanGenerationSuccess } from "@impl/plan-generator/types"
 import type { SafetyGateDecision } from "@impl/safety-gate/gate"
 import { isValidIsoDate } from "../../domain/dates"
+import { mainDraftStillMatches, snapshotPlanMainDraft } from "../../domain/plan-main-draft"
 import {
   adaptationScopeForCandidate,
   savePlanAdaptationContext,
@@ -46,6 +47,8 @@ export async function saveSelectedPlanCandidate(
   if (intake === null || !isValidIsoDate(selection.startDate)) {
     return { kind: "rejected", code: "MINIMUM_PROFILE_INCOMPLETE" }
   }
+  const draftSnapshot = snapshotPlanMainDraft(generated, intake, selection.startDate)
+  if (draftSnapshot === null) return { kind: "rejected", code: "STALE_CANDIDATE_SELECTION" }
   const selected = selectPlanForActivation(selection.candidateId, generated, gate, {
     ...intake,
     startDate: selection.startDate,
@@ -75,7 +78,7 @@ export async function saveSelectedPlanCandidate(
         if (lock === null) {
           return { kind: "rejected", code: "MUTATION_LOCK_UNAVAILABLE" } as const
         }
-        if (!isCurrentDraft()) {
+        if (!isCurrentDraft() || !mainDraftStillMatches(draftSnapshot, generated, intake, selection.startDate)) {
           return { kind: "rejected", code: "STALE_CANDIDATE_SELECTION" } as const
         }
         if (!localAccountScopeIsCurrent(accountScope)) {

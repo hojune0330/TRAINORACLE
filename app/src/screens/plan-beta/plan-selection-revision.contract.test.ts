@@ -58,4 +58,25 @@ describe("candidate save revision inside the mutation lock", () => {
     expect(localStorage.getItem("trainoracle.plan-beta.v1")).toBeNull()
     expect(Object.entries(localStorage)).toEqual(beforeStorage)
   })
+  it("rejects changed candidate content even if a caller forgets to advance its revision", async () => {
+    const plan = generated()
+    const mutable = structuredClone(plan.generated)
+    let release: (() => void) | undefined
+    const lock: mutationLock.PlanMutationLockManager = {
+      request: <T,>(_name: string, _options: unknown, callback: (lock: object | null) => T | Promise<T>) =>
+        new Promise<T>(resolve => { release = () => { resolve(callback({})) } }),
+    }
+    vi.spyOn(mutationLock, "getPlanMutationLockManager").mockReturnValue(lock)
+    const save = saveSelectedPlanCandidate(
+      { candidateId: mutable.candidates[0].candidateId, startDate: "2026-09-10" },
+      mutable, plan.gate, plan.intake, plan.athleteEvidence, () => true,
+    )
+    expect(release).toBeTypeOf("function")
+    const session = mutable.candidates[0].sessions.find(item => item.prescription.kind === "RPE_TIME_RANGE")!
+    if (session.prescription.kind !== "RPE_TIME_RANGE") throw new Error("Missing duration fixture")
+    Object.assign(session.prescription.durationMinutes, { maximum: 999 })
+    release!()
+    await expect(save).resolves.toEqual({ kind: "rejected", code: "STALE_CANDIDATE_SELECTION" })
+    expect(localStorage.getItem("trainoracle.plan-beta.v1")).toBeNull()
+  })
 })

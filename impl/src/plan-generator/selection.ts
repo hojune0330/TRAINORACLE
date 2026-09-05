@@ -1,6 +1,7 @@
 import { assertNever } from "../shared/assert-never"
 import { isRecord, parseSafetyGate } from "./input-values"
 import { isVerifiedPlanCandidate } from "./adaptation"
+import { isReviewedMainPlacement } from "./main-placement-policy"
 import { isSupportOnlyCandidatePair } from "./support-only-candidate-pair"
 import type {
   BetaActivePlanSnapshot,
@@ -153,6 +154,8 @@ function isGeneratedPlan(value: unknown): value is PlanGenerationSuccess {
     const second: unknown = candidates[1]
     return isVerifiedPlanCandidate(first)
       && isVerifiedPlanCandidate(second)
+      && isReviewedMainPlacement(first)
+      && isReviewedMainPlacement(second)
       && first.pairId === pairId
       && second.pairId === pairId
       && first.selectionAuthority === selectionAuthority
