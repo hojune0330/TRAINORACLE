@@ -467,6 +467,15 @@ Completion marks do not create actual distance, duration, split, recovery or pro
 that the prescription was followed. Modified/partial/skipped/rested results and
 duplicate/conflicting links retain explicit relations and exclusions.
 
+The active-plan observation reader may project directly entered, explicitly
+provenanced distance, duration, pace and RPE from exact linked structured journals.
+Missing fields remain null; imported or derived values require their separate
+eligibility path. Identical duplicate records count once; conflicting records
+suppress numeric observations rather than selecting an arbitrary result.
+No split, recovery measurement or adherence verdict is inferred. Original plan
+snapshots are required; v4 archive summaries cannot reconstruct old prescriptions.
+This projection does not read memo text or grant recommendation authority.
+
 In the PR #318 v4 adapter, `COMPLETED` maps to stored `PERFORMED`. This is
 self-reported completion of a planned occurrence, not measured adherence to its
 method, pace, repetitions or recovery. `RESTED`, `SKIPPED` and `PAIN_CHECKIN` map to
@@ -554,6 +563,7 @@ runtime results or additions to the historical issue/test counts in peer documen
 | Modified/partial/skipped actual; duplicate link | Preserve exact occurrence/version and exclusions; no invented actual metrics or target RPE |
 | Youth/self-use and coach-owned template | Existing age-neutral scope and owner-specific selection/processing gates both remain |
 | D9/hold changes during edit/apply | Block at atomic recheck; no fallback save that changes the requested method silently |
+| Safety or authority changes while awaiting the storage lock | Re-read safety and re-authorize the exact selection inside the lock immediately before writes. No prior successful preview may substitute for this check. |
 | Raw memo content and metadata, public projection | Zero method/ranking/dose signal; no private identity/sequence leak |
 
 ## 14. Open Implementation Issues

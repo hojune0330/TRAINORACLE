@@ -62,7 +62,7 @@ export function PlanMethodPicker({ options, selected, onChange, repeatPreference
         {showAll ? "추천 훈련만 보기" : `다른 훈련 보기 (${options.length - initialOptions.length})`}
       </button>}
       {coverage === null && <p role="status">보관된 계획 이력을 읽지 못해 추천 횟수를 표시하지 않았어요. 저장된 원본은 변경하지 않았어요.</p>}
-      {coverage !== undefined && coverage !== null && <details>
+      {coverage !== undefined && coverage !== null && <details className="plan-method-picker__history">
         <summary>추천에 참고한 이력</summary>
         <p>보관된 계획 {coverage.retainedPlans}개 중 같은 종목 {coverage.matchingPlans}개를 확인했어요. 전체 종목을 합쳐 최근 18개 계획까지 보관해요.</p>
         {coverage.earliestArchive !== null && coverage.latestArchive !== null && <p>계획 보관 날짜 (UTC): {coverage.earliestArchive.slice(0, 10)} ~ {coverage.latestArchive.slice(0, 10)}</p>}
