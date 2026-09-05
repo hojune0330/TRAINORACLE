@@ -37,6 +37,10 @@ test("selects a later MAIN, confirms pace, saves and reloads the exact slot", as
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
   await page.screenshot({ path: test.info().outputPath("method-history-coverage.png") })
   await page.locator("summary").filter({ hasText: "훈련 방법 선택" }).click()
+  await page.getByRole("button", { name: "이 훈련을 개인 페이스로 받기" }).last().click()
+  await expect(page.getByText("두 계획안의 상세 훈련 위치를 이 날짜로 옮겨요.", { exact: false })).toBeVisible()
+  await page.getByRole("button", { name: "변경 취소" }).click()
+  await expect(page.getByRole("button", { name: "이 날짜에 적용" })).toHaveCount(0)
   await page.locator("summary").filter({ hasText: "상세 훈련을 적용할 날" }).click()
   const slots = page.getByRole("group", { name: "개인 페이스로 안내받을 주요 훈련" })
   const choices = slots.getByRole("radio")
@@ -44,6 +48,7 @@ test("selects a later MAIN, confirms pace, saves and reloads the exact slot", as
   const last = choices.last()
   await last.check()
   await expect(last).toBeChecked()
+  await page.getByRole("button", { name: "이 날짜에 적용" }).click()
   await slots.scrollIntoViewIfNeeded()
   await page.screenshot({ path: test.info().outputPath("session-target.png") })
   if (test.info().project.name === "touch-narrow") {

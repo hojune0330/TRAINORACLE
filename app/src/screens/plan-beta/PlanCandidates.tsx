@@ -226,6 +226,9 @@ export function PlanCandidates({
             key={candidate.candidateId}
             candidate={candidate}
             startDate={startDate}
+            detailedTargets={intake.selectedDetailedTemplateRef === null ? [] : listDetailedSessionTargets(generated)}
+            detailedTarget={detailedSessionTarget}
+            onChangeSessionTarget={onChangeSessionTarget}
             canSelect={canSelect}
             expanded={expandedCandidateId === candidate.candidateId}
             onToggleSchedule={() => setExpandedCandidateId((current) =>

@@ -12,6 +12,9 @@ export function PlanSessionTargetPicker({ targets, selected, startDate, onChange
   const id = React.useId()
   const unavailable = selected !== null && !targets.some(target => samePlanSessionTarget(selected, target))
   const current = unavailable ? null : selected ?? targets[0] ?? null
+  const [draft, setDraft] = React.useState<PlanSessionTarget | null>(null)
+  const scope = `${startDate}:${targets.map(target => `${target.day}:${target.slot}`).join(",")}:${current?.day}:${current?.slot}`
+  React.useEffect(() => { setDraft(null) }, [scope])
   if (targets.length < 2 && !unavailable) return null
   return <details className="plan-method-picker">
     <summary><CalendarDays size={16} aria-hidden="true" /><span>상세 훈련을 적용할 날<small>{current === null ? "선택 필요" : targetLabel(current, startDate)}</small></span><ChevronDown className="plan-method-picker__chevron" size={16} aria-hidden="true" /></summary>
@@ -20,11 +23,16 @@ export function PlanSessionTargetPicker({ targets, selected, startDate, onChange
       <legend>개인 페이스로 안내받을 주요 훈련</legend>
       {targets.map(target => <label className="plan-method-picker__option" key={`${target.day}:${target.slot}`}>
         <input type="radio" name={`${id}-target`}
-          checked={samePlanSessionTarget(current, target)}
-          onChange={() => onChange(target)} />
+          checked={samePlanSessionTarget(draft ?? current, target)}
+          onChange={() => setDraft(target)} />
         <span><strong>{targetLabel(target, startDate)}</strong></span>
       </label>)}
     </fieldset>
+    {draft !== null && !samePlanSessionTarget(draft, current) && <div>
+      <p role="status">아직 계획에 적용하지 않았어요. 적용 후 기준 기록을 다시 확인해 주세요.</p>
+      <button type="button" className="plan-text-action" onClick={() => { onChange(draft); setDraft(null) }}>이 날짜에 적용</button>
+      <button type="button" className="plan-text-action" onClick={() => setDraft(null)}>변경 취소</button>
+    </div>}
     <p id={`${id}-help`}>고른 날의 주요 훈련에 상세 방법을 적용해요. 현재는 계획당 한 번 적용하며, 다른 날의 시간·RPE 안내는 유지해요.</p>
   </details>
 }
