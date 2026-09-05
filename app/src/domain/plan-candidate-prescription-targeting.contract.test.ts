@@ -10,6 +10,7 @@ import { createPlannedSessionLogDraft, resolveCurrentPlannedSession } from "./pl
 import { loadEntries } from "./journal-store"
 import {
   bindDetailedPrescriptionCandidates,
+  bindDetailedPrescriptionPlacements,
   type DetailedPrescriptionTarget,
 } from "./plan-candidate-prescription"
 
@@ -205,5 +206,26 @@ describe("approved detailed prescription per-session binding", () => {
     expectTargetFallback(input, target, bound.generated)
     expectTargetFallback(input, main(input.generated.candidates[0], 0), bound.generated)
     expect(bind(input, undefined, bound.generated).generated).toBe(bound.generated)
+  })
+
+  it("rejects two slots that reuse the same approved method instead of presenting fake variety", () => {
+    const input = baseline()
+    const first = main(input.generated.candidates[0], 0)
+    const second = main(input.generated.candidates[0], 1)
+    const before = JSON.stringify(input.generated)
+    const result = bindDetailedPrescriptionPlacements(
+      input.generated,
+      input.intake,
+      input.gate,
+      [first, second].map(target => ({
+        selectedRecordId: selection.selectedRecordId,
+        selectedTemplateRef: DRAFT.selectedDetailedTemplateRef,
+        target: { day: target.day, slot: target.slot },
+      })),
+      TODAY,
+    )
+    expect(result).toMatchObject({ kind: "fallback", code: "PACE_TARGET_FALLBACK_NO_ELIGIBLE_QUALITY" })
+    expect(result.generated).toBe(input.generated)
+    expect(JSON.stringify(input.generated)).toBe(before)
   })
 })

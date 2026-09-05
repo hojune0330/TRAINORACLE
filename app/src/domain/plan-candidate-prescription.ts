@@ -1,10 +1,13 @@
 import { z } from "zod"
 import {
+  bindDetailedPrescriptionCandidateSet,
   bindOneDetailedPrescriptionCandidate,
+  type DetailedPrescriptionPlacement,
   type DetailedPrescriptionTarget,
 } from "@impl/plan-generator/candidates"
 import { rebindCandidatePairIdentity } from "@impl/plan-generator/candidate-identity"
 import type { PlanGenerationSuccess } from "@impl/plan-generator/types"
+import type { DetailedTemplateRef, PaceTargetPlanPrescription } from "@impl/plan-generator/types"
 import type { SafetyGateDecision } from "@impl/safety-gate/gate"
 import { loadAthleteRecords } from "./athlete-records"
 import { prepareDetailedPrescription } from "./detailed-prescription"
@@ -22,6 +25,20 @@ export type { DetailedPrescriptionTarget } from "@impl/plan-generator/candidates
 const selectionSchema = z.object({
   selectedRecordId: z.string().min(1).max(128),
 }).strict()
+
+const placementSelectionSchema = selectionSchema.extend({
+  selectedTemplateRef: z.object({
+    templateId: z.string().min(1),
+    version: z.string().min(1),
+    fingerprint: z.string().min(1),
+  }).strict(),
+  target: z.object({
+    day: z.number().int().positive(),
+    slot: z.enum(["AM", "PM"]),
+  }).strict(),
+}).strict()
+
+export type DetailedPrescriptionPlacementSelection = z.infer<typeof placementSelectionSchema>
 
 export type CandidatePrescriptionFallbackCode =
   | "PACE_TARGET_FALLBACK_NO_EXPLICIT_ANCHOR"
@@ -56,65 +73,43 @@ function fallback(
   return Object.freeze({ kind: "fallback", code, generated })
 }
 
-export function bindDetailedPrescriptionCandidates(
-  generated: PlanGenerationSuccess,
+type PreparedPrescription =
+  | { readonly kind: "prepared"; readonly prescription: PaceTargetPlanPrescription }
+  | { readonly kind: "fallback"; readonly code: CandidatePrescriptionFallbackCode }
+
+function preparePrescription(
   intake: PlanBetaIntake,
   safetyGate: SafetyGateDecision,
   selection: unknown,
   evaluatedAt: Date,
-  target?: DetailedPrescriptionTarget,
-): CandidatePrescriptionBinding {
-  if (safetyGate.kind === "blocked") {
-    return fallback(generated, "PACE_TARGET_FALLBACK_SAFETY_GATE")
-  }
-  const selectedTemplate = intake.selectedDetailedTemplateRef
-  if (selectedTemplate === null) {
-    return fallback(generated, "PACE_TARGET_FALLBACK_NO_EXPLICIT_TEMPLATE")
-  }
-  if (selection === undefined) {
-    return fallback(generated, "PACE_TARGET_FALLBACK_NO_EXPLICIT_ANCHOR")
-  }
+  selectedTemplate: DetailedTemplateRef | null,
+): PreparedPrescription {
+  if (safetyGate.kind === "blocked") return { kind: "fallback", code: "PACE_TARGET_FALLBACK_SAFETY_GATE" }
+  if (selectedTemplate === null) return { kind: "fallback", code: "PACE_TARGET_FALLBACK_NO_EXPLICIT_TEMPLATE" }
+  if (selection === undefined) return { kind: "fallback", code: "PACE_TARGET_FALLBACK_NO_EXPLICIT_ANCHOR" }
   const parsedSelection = selectionSchema.safeParse(selection)
-  if (!parsedSelection.success) {
-    return fallback(generated, "PACE_TARGET_FALLBACK_INVALID_SELECTION")
-  }
-  const record = loadAthleteRecords(evaluatedAt).find(
-    (candidate) => candidate.id === parsedSelection.data.selectedRecordId,
-  )
-  if (record === undefined || record.purpose === "RACE_GOAL") {
-    return fallback(generated, "PACE_TARGET_FALLBACK_ANCHOR_UNAVAILABLE")
-  }
+  if (!parsedSelection.success) return { kind: "fallback", code: "PACE_TARGET_FALLBACK_INVALID_SELECTION" }
+  const record = loadAthleteRecords(evaluatedAt).find(candidate => candidate.id === parsedSelection.data.selectedRecordId)
+  if (record === undefined || record.purpose === "RACE_GOAL") return { kind: "fallback", code: "PACE_TARGET_FALLBACK_ANCHOR_UNAVAILABLE" }
   const freshness = deriveRecordCurrentness(record, evaluatedAt)
-  if (freshness !== "CURRENT") {
-    return fallback(generated, "PACE_TARGET_FALLBACK_ANCHOR_NOT_CURRENT")
-  }
-  const supportedTarget = record.eventDistanceM === intake.eventDistanceM
-  if (!supportedTarget) {
-    return fallback(generated, "PACE_TARGET_FALLBACK_EVENT_SCOPE")
-  }
-  if (intake.experienceBand !== "EXPERIENCED") {
-    return fallback(generated, "PACE_TARGET_FALLBACK_EXPERIENCE_SCOPE")
-  }
-
+  if (freshness !== "CURRENT") return { kind: "fallback", code: "PACE_TARGET_FALLBACK_ANCHOR_NOT_CURRENT" }
+  if (record.eventDistanceM !== intake.eventDistanceM) return { kind: "fallback", code: "PACE_TARGET_FALLBACK_EVENT_SCOPE" }
+  if (intake.experienceBand !== "EXPERIENCED") return { kind: "fallback", code: "PACE_TARGET_FALLBACK_EXPERIENCE_SCOPE" }
   const authority = resolveDetailedPrescriptionRuntimeAuthority({
     selectedTemplateRef: selectedTemplate,
     targetEventDistanceM: intake.eventDistanceM,
     selectedEnergyIntent: intake.trainingFocus,
     evaluatedAt: evaluatedAt.toISOString(),
   })
-  if (authority.kind === "fallback") {
-    return fallback(generated, "PACE_TARGET_FALLBACK_AUTHORITY_OR_COMPONENT")
-  }
+  if (authority.kind === "fallback") return { kind: "fallback", code: "PACE_TARGET_FALLBACK_AUTHORITY_OR_COMPONENT" }
   const approval = authority.approval
   if (!approval.eligibleEventGroups.includes(intake.eventGroup)
       || approval.populationApplicability.scope !== "YOUTH_AND_ADULT") {
-    return fallback(generated, "PACE_TARGET_FALLBACK_AUTHORITY_OR_COMPONENT")
+    return { kind: "fallback", code: "PACE_TARGET_FALLBACK_AUTHORITY_OR_COMPONENT" }
   }
   const anchor = toRuntimeAnchor(record, freshness)
   const snapshot = toCurrentSnapshot(record, freshness, evaluatedAt)
-  if (snapshot === null) {
-    return fallback(generated, "PACE_TARGET_FALLBACK_ANCHOR_UNAVAILABLE")
-  }
+  if (snapshot === null) return { kind: "fallback", code: "PACE_TARGET_FALLBACK_ANCHOR_UNAVAILABLE" }
   const detailed = prepareDetailedPrescription({
     detailedPrescriptionEnabled: true,
     selectedEnergyIntent: intake.trainingFocus,
@@ -135,14 +130,9 @@ export function bindDetailedPrescriptionCandidates(
     displayRoundingPolicyVersion: "seconds-v1",
     safetyGate,
   })
-  if (
-    detailed === null
-    || detailed.prescription.repetitionDistanceM === null
-    || detailed.totals.qualityDistanceM === null
-  ) {
-    return fallback(generated, "PACE_TARGET_FALLBACK_AUTHORITY_OR_COMPONENT")
+  if (detailed === null || detailed.prescription.repetitionDistanceM === null || detailed.totals.qualityDistanceM === null) {
+    return { kind: "fallback", code: "PACE_TARGET_FALLBACK_AUTHORITY_OR_COMPONENT" }
   }
-
   const trusted = detailed.approval
   const stored = createStoredPaceTargetPrescription({
     kind: "PACE_TARGET",
@@ -189,17 +179,35 @@ export function bindDetailedPrescriptionCandidates(
     stopCodes: trusted.canonicalTemplateContent.operationalComponents.stopConditions.codes,
     fallbackCode: "RPE_ONLY_CONTROLLED",
   })
-  if (stored === null) {
-    return fallback(generated, "PACE_TARGET_FALLBACK_STORED_SCHEMA")
-  }
+  return stored === null
+    ? { kind: "fallback", code: "PACE_TARGET_FALLBACK_STORED_SCHEMA" }
+    : { kind: "prepared", prescription: stored }
+}
+
+export function bindDetailedPrescriptionCandidates(
+  generated: PlanGenerationSuccess,
+  intake: PlanBetaIntake,
+  safetyGate: SafetyGateDecision,
+  selection: unknown,
+  evaluatedAt: Date,
+  target?: DetailedPrescriptionTarget,
+): CandidatePrescriptionBinding {
+  const prepared = preparePrescription(
+    intake,
+    safetyGate,
+    selection,
+    evaluatedAt,
+    intake.selectedDetailedTemplateRef,
+  )
+  if (prepared.kind === "fallback") return fallback(generated, prepared.code)
 
   if (generated.candidates.some((candidate) => (
     candidate.selectedEnergyIntent !== intake.trainingFocus
   ))) {
     return fallback(generated, "PACE_TARGET_FALLBACK_NO_ELIGIBLE_QUALITY")
   }
-  const balanced = bindOneDetailedPrescriptionCandidate(generated.candidates[0], stored, target)
-  const conservative = bindOneDetailedPrescriptionCandidate(generated.candidates[1], stored, target)
+  const balanced = bindOneDetailedPrescriptionCandidate(generated.candidates[0], prepared.prescription, target)
+  const conservative = bindOneDetailedPrescriptionCandidate(generated.candidates[1], prepared.prescription, target)
   if (balanced === null || conservative === null) {
     return fallback(generated, "PACE_TARGET_FALLBACK_NO_ELIGIBLE_QUALITY")
   }
@@ -215,6 +223,52 @@ export function bindDetailedPrescriptionCandidates(
         ...generated.audit,
         codes: Object.freeze([
           ...generated.audit.codes.filter((code) => code !== "BETA_DURATION_RPE_ONLY"),
+          "PACE_TARGET_BOUND" as const,
+        ]),
+      }),
+    }),
+  })
+}
+
+export function bindDetailedPrescriptionPlacements(
+  generated: PlanGenerationSuccess,
+  intake: PlanBetaIntake,
+  safetyGate: SafetyGateDecision,
+  selections: readonly DetailedPrescriptionPlacementSelection[],
+  evaluatedAt: Date,
+): CandidatePrescriptionBinding {
+  const parsed = z.array(placementSelectionSchema).min(1).max(3).safeParse(selections)
+  if (!parsed.success) return fallback(generated, "PACE_TARGET_FALLBACK_INVALID_SELECTION")
+  if (generated.candidates.some(candidate => candidate.selectedEnergyIntent !== intake.trainingFocus)) {
+    return fallback(generated, "PACE_TARGET_FALLBACK_NO_ELIGIBLE_QUALITY")
+  }
+  const placements: DetailedPrescriptionPlacement[] = []
+  for (const selection of parsed.data) {
+    const prepared = preparePrescription(
+      intake,
+      safetyGate,
+      { selectedRecordId: selection.selectedRecordId },
+      evaluatedAt,
+      selection.selectedTemplateRef,
+    )
+    if (prepared.kind === "fallback") return fallback(generated, prepared.code)
+    placements.push(Object.freeze({ target: selection.target, prescription: prepared.prescription }))
+  }
+  const balanced = bindDetailedPrescriptionCandidateSet(generated.candidates[0], placements)
+  const conservative = bindDetailedPrescriptionCandidateSet(generated.candidates[1], placements)
+  if (balanced === null || conservative === null) return fallback(generated, "PACE_TARGET_FALLBACK_NO_ELIGIBLE_QUALITY")
+  const candidates = rebindCandidatePairIdentity([balanced, conservative])
+  return Object.freeze({
+    kind: "bound",
+    code: "PACE_TARGET_BOUND",
+    generated: Object.freeze({
+      ...generated,
+      pairId: candidates[0].pairId,
+      candidates,
+      audit: Object.freeze({
+        ...generated.audit,
+        codes: Object.freeze([
+          ...generated.audit.codes.filter(code => code !== "BETA_DURATION_RPE_ONLY"),
           "PACE_TARGET_BOUND" as const,
         ]),
       }),

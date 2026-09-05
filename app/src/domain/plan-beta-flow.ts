@@ -299,9 +299,19 @@ export function selectPlanForActivation(
   if (canonicalCandidate === undefined) {
     return { kind: "rejected", code: "CANDIDATE_NOT_FOUND" }
   }
-  if (canonicalCandidate.selectedDetailedTemplateRef !== null) {
+  const detailedReferences = canonicalCandidate.sessions.flatMap(session => session.prescription.kind === "PACE_TARGET"
+    ? [{
+        templateId: session.prescription.templateId,
+        version: session.prescription.templateVersion,
+        fingerprint: session.prescription.templateContentFingerprint,
+      }]
+    : [])
+  const authorityReferences = detailedReferences.length === 0 && canonicalCandidate.selectedDetailedTemplateRef !== null
+    ? [canonicalCandidate.selectedDetailedTemplateRef]
+    : detailedReferences
+  for (const selectedTemplateRef of authorityReferences) {
     const authority = resolveDetailedPrescriptionRuntimeAuthority({
-      selectedTemplateRef: canonicalCandidate.selectedDetailedTemplateRef,
+      selectedTemplateRef,
       targetEventDistanceM: canonicalCandidate.eventDistanceM,
       selectedEnergyIntent: canonicalCandidate.selectedEnergyIntent,
       evaluatedAt: evaluatedAt.toISOString(),

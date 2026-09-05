@@ -279,7 +279,7 @@ test("shows a truthful distance receipt and opens the real trend", async ({ page
   const receipt = page.getByRole("status")
   await expect(receipt).toContainText("8 km")
   await receipt.getByRole("button", { name: "거리 추이 보기" }).click()
-  await expect(page.getByRole("heading", { name: "분석" })).toBeVisible()
+  await expect(page.getByRole("heading", { name: "분석", exact: true })).toBeVisible()
   const distance = page.getByRole("region", { name: "누적 거리와 변화" })
   await expect(distance.getByLabel(/이번 주, 8킬로미터, 기록 1건/u)).toBeVisible()
   await expect(distance.getByText(/1건 반영/u).first()).toBeVisible()

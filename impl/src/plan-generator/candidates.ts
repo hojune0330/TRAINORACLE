@@ -1,6 +1,9 @@
 import { assertNever } from "../shared/assert-never"
+import { projectPacePrescriptionSequence } from "../prescription/pace-sequence"
+import { compareMainMethods, type PrescriptionSequence } from "../prescription/sequence"
 import {
   continuityContextIdentity,
+  detailedPrescriptionFingerprintFromSessions,
   deriveCandidateId,
   projectPlanCandidate,
   rebindCandidatePairIdentity,
@@ -17,6 +20,10 @@ import type { CompiledExposureLedger } from "./exposure-ledger"
 import type { PaceTargetPlanPrescription, PlanSession } from "./session-types"
 
 export type DetailedPrescriptionTarget = Pick<PlanSession, "day" | "slot">
+export type DetailedPrescriptionPlacement = {
+  readonly target: DetailedPrescriptionTarget
+  readonly prescription: PaceTargetPlanPrescription
+}
 
 export type SelectableExposureLedger = Extract<
   CompiledExposureLedger,
@@ -225,6 +232,74 @@ export function bindOneDetailedPrescriptionCandidate(
     sessions: Object.freeze(sessions),
   })
   return target === undefined ? bound : Object.freeze({
+    ...bound,
+    candidateId: deriveCandidateId(bound.candidateId, projectPlanCandidate(bound)),
+  })
+}
+
+export function bindDetailedPrescriptionCandidateSet(
+  candidate: PlanCandidate,
+  placements: readonly DetailedPrescriptionPlacement[],
+): PlanCandidate | null {
+  if (placements.length === 0 || candidate.sessions.some(session => session.prescription.kind === "PACE_TARGET")) return null
+  const targetKeys = new Set<string>()
+  const methodKeys = new Set<string>()
+  const indexes: number[] = []
+  const methodSequences: PrescriptionSequence[] = []
+  for (const [placementIndex, placement] of placements.entries()) {
+    const target = placement.target
+    if (target === null || typeof target !== "object" || !Number.isInteger(target.day) || target.day < 1
+        || (target.slot !== "AM" && target.slot !== "PM")) return null
+    const targetKey = `${target.day}:${target.slot}`
+    const methodKey = `${placement.prescription.templateId}@${placement.prescription.templateVersion}:${placement.prescription.templateContentFingerprint}`
+    if (targetKeys.has(targetKey) || methodKeys.has(methodKey)) return null
+    const sequence = placement.prescription.sequence ?? projectPacePrescriptionSequence(placement.prescription)
+    if (sequence === null || methodSequences.some(existing => compareMainMethods(existing, sequence).kind !== "different")) return null
+    targetKeys.add(targetKey)
+    methodKeys.add(methodKey)
+    methodSequences.push(sequence)
+    const matches = candidate.sessions.flatMap((session, index) => session.day === target.day && session.slot === target.slot ? [index] : [])
+    if (matches.length !== 1) return null
+    const sessionIndex = matches[0]
+    if (sessionIndex === undefined) return null
+    const session = candidate.sessions[sessionIndex]
+    const prescription = placement.prescription
+    const eventDistanceM = supportedEventDistance(prescription.targetEventDistanceM)
+    if (session === undefined || session.role !== "QUALITY" || session.prescription.kind !== "RPE_TIME_RANGE"
+        || session.plannedEnergyIntent !== candidate.selectedEnergyIntent || eventDistanceM === null
+        || candidate.eventGroup !== prescription.scope.eventGroup || candidate.eventDistanceM !== eventDistanceM) return null
+    if (placementIndex === 0 && (candidate.selectedDetailedTemplateRef === null
+        || candidate.selectedDetailedTemplateRef.templateId !== prescription.templateId
+        || candidate.selectedDetailedTemplateRef.version !== prescription.templateVersion
+        || candidate.selectedDetailedTemplateRef.fingerprint !== prescription.templateContentFingerprint)) return null
+    indexes.push(sessionIndex)
+  }
+  const byIndex = new Map(indexes.map((index, placementIndex) => [index, placements[placementIndex]?.prescription] as const))
+  const sessions = Object.freeze(candidate.sessions.map((session, index) => {
+    const prescription = byIndex.get(index)
+    return prescription === undefined || session.role !== "QUALITY"
+      ? session
+      : Object.freeze({ ...session, prescription })
+  }))
+  const detailedPrescriptionFingerprint = detailedPrescriptionFingerprintFromSessions(sessions)
+  if (detailedPrescriptionFingerprint === null) return null
+  const bound = Object.freeze({
+    ...candidate,
+    eventDistanceM: supportedEventDistance(placements[0]?.prescription.targetEventDistanceM ?? Number.NaN) ?? candidate.eventDistanceM,
+    beta: Object.freeze({
+      ...candidate.beta,
+      prescriptionBasis: placements.length === 1
+        ? "ONE_TRUSTED_DETAILED_SESSION" as const
+        : "MULTIPLE_TRUSTED_DETAILED_SESSIONS" as const,
+    }),
+    detailedPrescriptionFingerprint,
+    rationaleCodes: Object.freeze([
+      ...candidate.rationaleCodes.filter(code => code !== "BETA_DURATION_RPE_ONLY"),
+      "PACE_TARGET_BOUND" as const,
+    ]),
+    sessions,
+  })
+  return Object.freeze({
     ...bound,
     candidateId: deriveCandidateId(bound.candidateId, projectPlanCandidate(bound)),
   })

@@ -165,7 +165,7 @@ export type PlanCandidate = {
   readonly confidence: "LIMITED"
   readonly beta: {
     readonly designation: "BETA"
-    readonly prescriptionBasis: "DURATION_RPE_ONLY" | "ONE_TRUSTED_DETAILED_SESSION"
+    readonly prescriptionBasis: "DURATION_RPE_ONLY" | "ONE_TRUSTED_DETAILED_SESSION" | "MULTIPLE_TRUSTED_DETAILED_SESSIONS"
     readonly formationMethodClaim: "NOT_UNIVERSAL"
   }
   readonly detailedPrescriptionFingerprint: string | null

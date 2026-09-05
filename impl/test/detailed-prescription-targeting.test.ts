@@ -1,12 +1,18 @@
 import { describe, expect, it } from "vitest"
 import manifest from "../../app/src/domain/detailed-prescription-manifest.json"
 import {
+  bindDetailedPrescriptionCandidateSet,
   bindOneDetailedPrescriptionCandidate,
   type DetailedPrescriptionTarget,
 } from "../src/plan-generator/candidates"
 import { generatePlanCandidates } from "../src/plan-generator/generator"
 import type { PaceTargetPlanPrescription, PlanSession } from "../src/plan-generator/session-types"
 import type { PlanCandidate } from "../src/plan-generator/types"
+import {
+  detailedPrescriptionFingerprintFromSessions,
+  hasValidCandidateIdentity,
+  projectPlanCandidate,
+} from "../src/plan-generator/candidate-identity"
 import { baseRequest, expectGenerated } from "./fixtures/plan-beta-request"
 
 const approval = manifest.approvals.find((entry) => entry.templateId === "V2-SEED-05")
@@ -188,5 +194,56 @@ describe("detailed prescription exact session targeting", () => {
     expect(bindOneDetailedPrescriptionCandidate(
       { ...candidate, ...change }, prescription, mains(candidate).second,
     )).toBeNull()
+  })
+
+  it("binds two structurally different reviewed placements without changing another MAIN", () => {
+    const candidate = fixture()
+    const { first, second } = mains(candidate)
+    const alternative = Object.freeze({
+      ...prescription,
+      templateId: "PLACEMENT-FIXTURE-B",
+      templateContentFingerprint: `sha256:${"b".repeat(64)}`,
+      notation: "10×500m @5000m RP · r60″ JOG",
+      setCount: 1,
+      repetitionsPerSet: 10,
+      repetitionDistanceM: 500,
+      targetRepSeconds: 111.1,
+      prescriptionFingerprint: "placement-test-fingerprint-b",
+    })
+    const result = bindDetailedPrescriptionCandidateSet(candidate, [
+      { target: first, prescription },
+      { target: second, prescription: alternative },
+    ])
+    expect(result).not.toBeNull()
+    if (result === null) throw new Error("Multiple placement binding failed")
+    expect(result.sessions.filter(session => session.prescription.kind === "PACE_TARGET")).toHaveLength(2)
+    expect(result.beta.prescriptionBasis).toBe("MULTIPLE_TRUSTED_DETAILED_SESSIONS")
+    expect(result.detailedPrescriptionFingerprint).toMatch(/^sha256:[a-f0-9]{64}$/u)
+    expect(detailedPrescriptionFingerprintFromSessions([...result.sessions].reverse()))
+      .toBe(result.detailedPrescriptionFingerprint)
+    expect(hasValidCandidateIdentity(result.candidateId, projectPlanCandidate(result))).toBe(true)
+  })
+
+  it("rejects duplicate targets, duplicate methods and ID-only fake alternatives", () => {
+    const candidate = fixture()
+    const { first, second } = mains(candidate)
+    const renamedOnly = Object.freeze({
+      ...prescription,
+      templateId: "RENAMED-ONLY",
+      templateContentFingerprint: `sha256:${"c".repeat(64)}`,
+      prescriptionFingerprint: "renamed-only-fingerprint",
+    })
+    expect(bindDetailedPrescriptionCandidateSet(candidate, [
+      { target: first, prescription },
+      { target: first, prescription: renamedOnly },
+    ])).toBeNull()
+    expect(bindDetailedPrescriptionCandidateSet(candidate, [
+      { target: first, prescription },
+      { target: second, prescription },
+    ])).toBeNull()
+    expect(bindDetailedPrescriptionCandidateSet(candidate, [
+      { target: first, prescription },
+      { target: second, prescription: renamedOnly },
+    ])).toBeNull()
   })
 })

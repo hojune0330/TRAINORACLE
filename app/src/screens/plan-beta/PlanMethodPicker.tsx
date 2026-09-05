@@ -32,7 +32,7 @@ export function PlanMethodPicker({ options, selected, onChange }: {
             <input type="radio" name={`${id}-method`}
               checked={sameDetailedTemplateReference(selected, option.ref)}
               onChange={() => onChange(option.ref)} />
-            <span><strong>{option.mainSummary}</strong><small>{option.recoverySummary}</small><small>현재 {option.targetEventDistanceM}m 기록의 경기 페이스</small></span>
+            <span><strong>{option.mainSummary}</strong><small>{option.recoverySummary}</small><small>현재 {option.targetEventDistanceM}m 기록의 경기 페이스</small>{option.recommendationReason !== undefined && <small>{option.recommendationReason}</small>}</span>
           </label>
         ))}
       </fieldset>

@@ -137,13 +137,19 @@ export function canonicalJsonFingerprint(domain: string, value: unknown): string
   return `sha256:${sha256Hex(`${domain}\0${canonicalJson(value)}`)}`
 }
 
+export function detailedPrescriptionFingerprintFromSessions(
+  sessions: readonly PlanSession[],
+): string | null {
+  const details = sessions.flatMap(session => session.prescription.kind === "PACE_TARGET"
+    ? [{ day: session.day, slot: session.slot, fingerprint: session.prescription.prescriptionFingerprint }]
+    : []).sort((left, right) => left.day - right.day || left.slot.localeCompare(right.slot))
+  if (details.length === 0) return null
+  if (details.length === 1) return details[0]?.fingerprint ?? null
+  return canonicalJsonFingerprint("trainoracle.multi-detailed-prescription.v1", details)
+}
+
 function detailedFingerprint(projection: PlanCandidateIdentityProjection): string | null {
-  const fingerprints = projection.sessions.flatMap((session) => (
-    session.prescription.kind === "PACE_TARGET"
-      ? [session.prescription.prescriptionFingerprint]
-      : []
-  ))
-  return fingerprints.length === 1 ? fingerprints[0] ?? null : null
+  return detailedPrescriptionFingerprintFromSessions(projection.sessions)
 }
 
 function candidateBaseId(candidateId: string): string {
