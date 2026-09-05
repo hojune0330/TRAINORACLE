@@ -2,6 +2,22 @@
 
 This directory is reserved for required TrainOracle contracts that were missing, source-not-verified, or reconstructed during SPEC inventory and continuation passes.
 
+## Owner-Approved Engineering Contract (2026-09-05)
+
+[SESSION_METHOD_SELECTION_AND_ADJUSTMENT_CONTRACT.md](SESSION_METHOD_SELECTION_AND_ADJUSTMENT_CONTRACT.md)
+is an `ACTIVE_IMPLEMENTATION_CONTRACT` for the approved multi-method engineering
+direction, not an attempted restoration of a missing historical original. Its
+Korean overview separates current one-detail selectable placement from eventual
+concurrent per-MAIN choices. New exact doses/scalar domains/scientific approvals
+remain gated. Four local implementation issues are explicitly counted in its
+section 14; they do not alter other documents' issue counts.
+
+The [30-entry source/readiness matrix](../../reports/review/SESSION_METHOD_CATALOG_READINESS_2026-09-05.md)
+and [source-map entry](../legacy-reference/SOURCE_MAP.md#6-세션-방법-구현-소스-연결-2026-09-05)
+provide exact local source ownership and grouped gaps. The reconstruction-only
+instructions below remain applicable to missing-original reconstruction, not a
+reason to downgrade this separately approved engineering contract.
+
 Current reconstructed drafts:
 
 - `RULE_VALIDATION_ENGINE_CONTRACT.md` (`RECONSTRUCTED_DRAFT_FOR_REVIEW`; not original restored, not canonical, not runtime evidence)

@@ -2,6 +2,7 @@ import type {
   PlanContinuityInput,
   PlanProgressState,
 } from "@impl/plan-generator/types"
+import type { MethodHistoryEntry } from "@impl/prescription/method-recommendation"
 import { recordPlanProgress } from "@impl/plan-generator/generator"
 import {
   parsePlanBetaState,
@@ -33,6 +34,11 @@ import type {
   StoredPlanHistory,
   StoredPlanProgress,
 } from "./plan-beta-schema"
+import {
+  deriveStoredPlanMethodHistory,
+  methodReferenceFromTemplate,
+  recommendationHistoryFromStored,
+} from "./plan-method-history"
 export type {
   PlanBetaIntake,
   PlanBetaState,
@@ -281,7 +287,7 @@ export function archiveAndClearActivePlan(state: PlanBetaState): PlanArchiveResu
   }
 
   const history: StoredPlanHistory = {
-    version: 3,
+    version: 4,
     candidateId: state.activePlan.candidateId,
     pairId: state.activePlan.pairId,
     candidateKind: state.activePlan.candidateKind,
@@ -290,6 +296,10 @@ export function archiveAndClearActivePlan(state: PlanBetaState): PlanArchiveResu
     ...(state.periodization === undefined ? {} : { periodization: state.periodization }),
     frameLengthDays: state.activePlan.frame.lengthDays,
     progress: state.progress,
+    methodHistory: deriveStoredPlanMethodHistory({
+      sessions: state.activePlan.sessions,
+      progress: state.progress,
+    }),
     archivedAt: new Date().toISOString(),
   }
   let oldHistory: string | null = null
@@ -411,6 +421,20 @@ export function loadPreviousContinuity(): PlanContinuityInput | undefined {
       count: latest.progress.filter((item) => item.state === state).length,
     })),
   }
+}
+
+export function loadPlanMethodHistory(eventDistanceM?: number): readonly MethodHistoryEntry[] {
+  return Object.freeze(loadPlanHistory().flatMap(history => {
+    if (eventDistanceM !== undefined && "eventDistanceM" in history && history.eventDistanceM !== eventDistanceM) return []
+    if ("methodHistory" in history) return recommendationHistoryFromStored(history.methodHistory)
+    if ("selectedDetailedTemplateRef" in history && history.selectedDetailedTemplateRef !== null) {
+      return [Object.freeze({
+        selected: methodReferenceFromTemplate(history.selectedDetailedTemplateRef),
+        performed: Object.freeze({ status: "MISSING" as const }),
+      })]
+    }
+    return []
+  }))
 }
 
 function loadPlanHistory(): readonly StoredPlanHistory[] {

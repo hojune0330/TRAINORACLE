@@ -2,6 +2,7 @@ import { z } from "zod"
 import {
   continuityContextIdentity,
   continuityIdentityFromCandidateId,
+  detailedPrescriptionFingerprintFromSessions,
   hasValidCandidateIdentity,
   hasValidCandidatePairIdentity,
   pairIdHasBase,
@@ -13,6 +14,8 @@ import {
   ADAPTATION_TRANSFORM_REGISTRY_VERSION,
 } from "@impl/plan-generator/adaptation-transform-registry"
 import { RVE_NON_SENSITIVE_REASON_CODES } from "@impl/rve/signal"
+import { projectPacePrescriptionSequence } from "@impl/prescription/pace-sequence"
+import { compareMainMethods, type PrescriptionSequence } from "@impl/prescription/sequence"
 import {
   activePlanSchema,
   frameLengthSchema,
@@ -164,7 +167,23 @@ const planHistoryV3Schema = legacyPlanHistorySchema.extend({
   periodization: periodizationContextSchema.optional(),
 }).strict()
 
-export const planHistorySchema = z.union([planHistoryV3Schema, legacyPlanHistorySchema])
+const planMethodHistoryEntrySchema = z.object({
+  sessionDay: z.number().int().positive(),
+  sessionSlot: sessionSlotSchema,
+  selectedDetailedTemplateRef: detailedTemplateRefSchema,
+  outcome: z.enum(["PERFORMED", "NOT_PERFORMED", "MISSING"]),
+}).strict()
+
+const planHistoryV4Schema = legacyPlanHistorySchema.extend({
+  version: z.literal(4),
+  pairId: z.string().regex(/^plan-pair:v3:/u),
+  eventDistanceM: supportedPlanEventDistanceSchema,
+  selectedDetailedTemplateRef: detailedTemplateRefSchema.nullable(),
+  methodHistory: z.array(planMethodHistoryEntrySchema).readonly(),
+  periodization: periodizationContextSchema.optional(),
+}).strict()
+
+export const planHistorySchema = z.union([planHistoryV4Schema, planHistoryV3Schema, legacyPlanHistorySchema])
 
 const planAthleteEvidenceSchema = z.object({
   storedRecordCount: z.number().int().nonnegative(),
@@ -250,6 +269,32 @@ const planBetaStateV3BaseSchema = z.object({
     addIssue(context, ["activePlan", "selectedDetailedTemplateRef"], "Active template selection must match intake.")
   }
   const reference = state.activePlan.selectedDetailedTemplateRef
+  const detailedPrescriptions = state.activePlan.sessions.flatMap(session => (
+    session.prescription.kind === "PACE_TARGET" ? [session.prescription] : []
+  ))
+  if (detailedPrescriptions.length > 0) {
+    const primaryMatchCount = reference === null ? 0 : detailedPrescriptions.filter(prescription => (
+      prescription.templateId === reference.templateId
+      && prescription.templateVersion === reference.version
+      && prescription.templateContentFingerprint === reference.fingerprint
+    )).length
+    if (primaryMatchCount !== 1) {
+      addIssue(context, ["activePlan", "selectedDetailedTemplateRef"], "Active primary template must match exactly one detailed session.")
+    }
+    const methodKeys = new Set<string>()
+    const sequences: PrescriptionSequence[] = []
+    for (const [index, prescription] of detailedPrescriptions.entries()) {
+      const methodKey = `${prescription.templateId}@${prescription.templateVersion}:${prescription.templateContentFingerprint}`
+      const sequence = prescription.sequence ?? projectPacePrescriptionSequence(prescription)
+      if (methodKeys.has(methodKey) || sequence === null
+          || sequences.some(existing => compareMainMethods(existing, sequence).kind !== "different")) {
+        addIssue(context, ["activePlan", "sessions", index, "prescription"], "Active detailed MAIN methods must be unique and structurally different.")
+      } else {
+        methodKeys.add(methodKey)
+        sequences.push(sequence)
+      }
+    }
+  }
   const templateIdentity = reference === null
     ? "rpe-only"
     : `${reference.templateId.toLowerCase()}.${reference.version}.${reference.fingerprint.slice("sha256:".length)}`
@@ -436,7 +481,7 @@ const planCandidateObjectSchema = z.object({
   selectedEnergyIntent: plannedEnergyIntentSchema,
   sourceMode: z.enum(["PROFILE_ONLY", "JOURNAL_CONTEXT_ONLY"]),
   confidence: z.literal("LIMITED"),
-  beta: z.object({ designation: z.literal("BETA"), prescriptionBasis: z.enum(["DURATION_RPE_ONLY", "ONE_TRUSTED_DETAILED_SESSION"]), formationMethodClaim: z.literal("NOT_UNIVERSAL") }).strict(),
+  beta: z.object({ designation: z.literal("BETA"), prescriptionBasis: z.enum(["DURATION_RPE_ONLY", "ONE_TRUSTED_DETAILED_SESSION", "MULTIPLE_TRUSTED_DETAILED_SESSIONS"]), formationMethodClaim: z.literal("NOT_UNIVERSAL") }).strict(),
   detailedPrescriptionFingerprint: z.string().min(1).nullable(),
   continuityContext: z.union([
     z.object({ kind: z.literal("NO_PREVIOUS_FRAME_CONTEXT") }).strict(),
@@ -451,19 +496,14 @@ const planCandidateObjectSchema = z.object({
 export const planAdaptationCandidateSchema = canonicalJsonTreeSchema.pipe(planCandidateObjectSchema).superRefine((candidate, context) => {
   const marker = ":pace-target:"
   const markerIndex = candidate.candidateId.indexOf(marker)
-  const detailedFingerprints = candidate.sessions.flatMap((session) => (
-    session.prescription.kind === "PACE_TARGET"
-      ? [session.prescription.prescriptionFingerprint]
-      : []
-  ))
-  const expectedDetailedFingerprint = detailedFingerprints.length === 1
-    ? detailedFingerprints[0]
-    : null
-  const expectedBasis = expectedDetailedFingerprint === null
+  const detailedSessionCount = candidate.sessions.filter(session => session.prescription.kind === "PACE_TARGET").length
+  const expectedDetailedFingerprint = detailedPrescriptionFingerprintFromSessions(candidate.sessions)
+  const expectedBasis = detailedSessionCount === 0
     ? "DURATION_RPE_ONLY"
-    : "ONE_TRUSTED_DETAILED_SESSION"
-  if (detailedFingerprints.length > 1
-    || candidate.detailedPrescriptionFingerprint !== expectedDetailedFingerprint
+    : detailedSessionCount === 1
+      ? "ONE_TRUSTED_DETAILED_SESSION"
+      : "MULTIPLE_TRUSTED_DETAILED_SESSIONS"
+  if (candidate.detailedPrescriptionFingerprint !== expectedDetailedFingerprint
     || candidate.beta.prescriptionBasis !== expectedBasis
     || (expectedDetailedFingerprint === null
       ? markerIndex >= 0
@@ -493,14 +533,31 @@ export const planAdaptationCandidateSchema = canonicalJsonTreeSchema.pipe(planCa
   if (!candidate.candidateId.includes(`:${candidate.mainExposureLedger.countedExposureIds.join("-")}:`)) {
     addIssue(context, ["candidateId"], "Candidate exposure identity mismatch.")
   }
+  const primaryMatchCount = reference === null ? 0 : candidate.sessions.filter(session => (
+    session.prescription.kind === "PACE_TARGET"
+    && session.prescription.templateId === reference.templateId
+    && session.prescription.templateVersion === reference.version
+    && session.prescription.templateContentFingerprint === reference.fingerprint
+  )).length
+  if (detailedSessionCount > 0 && primaryMatchCount !== 1) {
+    addIssue(context, ["selectedDetailedTemplateRef"], "Primary template reference must match exactly one detailed session.")
+  }
+  const detailedMethodKeys = new Set<string>()
+  const detailedMethodSequences: PrescriptionSequence[] = []
   for (const [index, session] of candidate.sessions.entries()) {
     if (session.prescription.kind !== "PACE_TARGET") continue
     const prescription = session.prescription
-    if (reference === null
-        || prescription.templateId !== reference.templateId
-        || prescription.templateVersion !== reference.version
-        || prescription.templateContentFingerprint !== reference.fingerprint) {
-      addIssue(context, ["sessions", index, "prescription"], "Prescription must match the selected template reference.")
+    const methodKey = `${prescription.templateId}@${prescription.templateVersion}:${prescription.templateContentFingerprint}`
+    if (detailedMethodKeys.has(methodKey)) {
+      addIssue(context, ["sessions", index, "prescription"], "Detailed MAIN methods must be independently selected, not duplicated.")
+    }
+    detailedMethodKeys.add(methodKey)
+    const sequence = prescription.sequence ?? projectPacePrescriptionSequence(prescription)
+    if (sequence === null
+        || detailedMethodSequences.some(existing => compareMainMethods(existing, sequence).kind !== "different")) {
+      addIssue(context, ["sessions", index, "prescription"], "Detailed MAIN methods must differ in their actual work and recovery structure.")
+    } else {
+      detailedMethodSequences.push(sequence)
     }
     const approval = DETAILED_PRESCRIPTION_APPROVALS.find((item) => (
       item.templateId === prescription.templateId

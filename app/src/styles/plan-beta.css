@@ -2878,5 +2878,18 @@
 .plan-method-picker__option small { margin-top: var(--space-1); }
 .plan-method-picker p { font-size: 0.8125rem; line-height: 1.55; margin: var(--space-3) 0; color: var(--ink-2); }
 .plan-method-picker .plan-method-picker__limit { color: var(--ink-3); }
+.plan-support-coverage { margin-block: var(--space-4); border-block: var(--bw-line) solid var(--line); }
+.plan-support-coverage > summary { display: flex; align-items: center; gap: var(--space-2); min-height: 44px; cursor: pointer; font-size: var(--fs-body); font-weight: 600; }
+.plan-support-coverage > summary > svg { flex: none; }
+.plan-support-coverage > summary:focus-visible { outline: var(--bw-line) solid var(--brand); outline-offset: var(--space-1); }
+.plan-support-coverage p, .plan-support-coverage table { font-size: var(--fs-body); line-height: 1.6; }
+.plan-support-coverage p { margin-block: var(--space-3); }
+.plan-support-coverage table { width: 100%; table-layout: fixed; border-collapse: collapse; }
+.plan-support-coverage caption { text-align: left; padding-block: var(--space-2); font-weight: 600; }
+.plan-support-coverage th, .plan-support-coverage td { text-align: left; vertical-align: top; padding: var(--space-2); border-bottom: var(--bw-line) solid var(--line); overflow-wrap: anywhere; }
+.plan-support-coverage th:first-child { width: 30%; }
+.plan-support-coverage td strong, .plan-support-coverage td span { display: block; }
+.plan-support-coverage td strong { font-weight: 600; }
+.plan-support-coverage td div + div { margin-top: var(--space-2); }
 .plan-method-picker > summary:focus-visible,
 .plan-method-picker__option:focus-within { outline: var(--bw-line) solid var(--brand); outline-offset: var(--space-1); }

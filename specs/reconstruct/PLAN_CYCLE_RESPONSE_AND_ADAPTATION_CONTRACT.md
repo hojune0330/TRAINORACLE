@@ -124,4 +124,30 @@ Change ledger: ADD explanation provenance and method distinction; KEEP current
 adaptation limits and immutable active plans; DEFER unaccepted transforms and
 efficacy claims. All existing open issues remain open.
 
+## 11. Independent Slot Methods And Approved Implementation (2026-09-05)
+
+[SESSION_METHOD_SELECTION_AND_ADJUSTMENT_CONTRACT](SESSION_METHOD_SELECTION_AND_ADJUSTMENT_CONTRACT.md)
+binds the approved multi-method engineering direction. Section 10's two options and
+OI-PCR-METHOD-VARIATION-001's minimum evidence requirement are not a fixed-pair
+architecture or a licence to rotate automatically. Independent reviewed families
+and configurations may be prepared across the full catalogue; exact source and
+adjustment gaps live in the linked readiness report, not new approval claims.
+
+Current runtime provides one detailed session with selectable MAIN placement.
+Concurrent detailed choices for every MAIN are the eventual target and require an
+exact per-slot applicability/exposure/interaction policy. A future method choice
+replaces its intended occurrence only; no extra exposure, catch-up, automatic dose
+increase or active-frame mutation is authorized. A successor still needs the
+existing exact versioned transform and its single-dimension constraints.
+
+Recommendation is not application. Draft/apply/cancel and plan acceptance are
+separate; snapshots preserve configuration/rule/source versions and planned-session
+lineage. Actual records link to the exact historical prescription, not a slot's
+new content or today's active plan. Maintain all modified/partial/duplicate/missing
+evidence exclusions and do not invent a planned RPE for PACE_TARGET.
+
+Engineering approval is not scientific, efficacy or dose approval. No raw memo or
+metadata enters the response loop. Youth/self-use and safety/processing gates stay
+unchanged. All three section 7 issue rows and the one canonical blocker remain OPEN.
+
 [DRAFT_COMPLETE]

@@ -54,6 +54,7 @@ import {
   advancePeriodizationContext,
   createInitialPeriodizationContext,
 } from "./periodization-lineage"
+import { deriveStoredPlanMethodHistory } from "./plan-method-history"
 
 export { PLAN_BETA_MUTATION_LOCK_NAME } from "./plan-mutation-lock"
 export const PLAN_SUCCESSOR_ACTIVATION_RECEIPT_STORAGE_KEY = "trainoracle.plan-beta.adaptation-activation.v1"
@@ -243,7 +244,7 @@ async function activateInsideLock(
   const history = parseHistory(snapshots.history)
   if (history === null) return { kind: "rejected", code: "MALFORMED_INPUT" }
   const nextHistory: StoredPlanHistory = {
-    version: 3,
+    version: 4,
     candidateId: active.activePlan.candidateId,
     pairId: active.activePlan.pairId,
     candidateKind: active.activePlan.candidateKind,
@@ -252,6 +253,10 @@ async function activateInsideLock(
     ...(active.periodization === undefined ? {} : { periodization: active.periodization }),
     frameLengthDays: active.activePlan.frame.lengthDays,
     progress: visibleProgress(active),
+    methodHistory: deriveStoredPlanMethodHistory({
+      sessions: active.activePlan.sessions,
+      progress: visibleProgress(active),
+    }),
     archivedAt: input.activatedAt,
   }
   const nextContext = contextSchema.safeParse({

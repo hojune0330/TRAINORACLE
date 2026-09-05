@@ -526,3 +526,31 @@ export function compareMainMethods(a: PrescriptionSequence, b: PrescriptionSeque
   const same = JSON.stringify(mainMethodProjection(validated(a))) === JSON.stringify(mainMethodProjection(validated(b)))
   return same ? Object.freeze({ kind: "same", requiresReview: false }) : Object.freeze({ kind: "different", requiresReview: true })
 }
+
+const MAIN_METHOD_DIFFERENCE_CODES = ["WORK_STRUCTURE", "WORK_UNIT", "TARGET", "RECOVERY", "TERMINAL_RECOVERY"] as const
+export type MainMethodDifferenceCode = typeof MAIN_METHOD_DIFFERENCE_CODES[number]
+
+/** Structural facts only. Neither acceptance, scope matching nor dose equivalence. */
+export function describeMainMethodDifferences(a: PrescriptionSequence, b: PrescriptionSequence): readonly MainMethodDifferenceCode[] {
+  const left = mainMethodProjection(validated(a))
+  const right = mainMethodProjection(validated(b))
+  const differences = new Set<MainMethodDifferenceCode>()
+  const equal = (x: unknown, y: unknown) => JSON.stringify(x) === JSON.stringify(y)
+  function inspect(nodes: readonly MainMethodNode[], other: readonly MainMethodNode[]): void {
+    if (nodes.length !== other.length) differences.add("WORK_STRUCTURE")
+    nodes.forEach((node, index) => {
+      const next = other[index]
+      if (next === undefined) return
+      if (!equal(node.recoveryBetweenRepeats, next.recoveryBetweenRepeats)
+        || !equal(node.recoveryAfter, next.recoveryAfter)) differences.add("RECOVERY")
+      if (node.kind === "group" && next.kind === "group") inspect(node.children, next.children)
+      else if (node.kind === "segment" && next.kind === "segment") {
+        if (!equal(node.work, next.work)) differences.add("WORK_UNIT")
+        if (!equal(node.target, next.target)) differences.add("TARGET")
+      } else differences.add("WORK_STRUCTURE")
+    })
+  }
+  inspect(left.main, right.main)
+  if (!sameRecovery(left.terminalRecovery, right.terminalRecovery)) differences.add("TERMINAL_RECOVERY")
+  return Object.freeze(MAIN_METHOD_DIFFERENCE_CODES.filter(code => differences.has(code)))
+}

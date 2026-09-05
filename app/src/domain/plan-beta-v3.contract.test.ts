@@ -7,6 +7,7 @@ import { selectPlanCandidate } from "@impl/plan-generator/selection"
 import { DETAILED_PRESCRIPTION_APPROVALS } from "./detailed-prescription-approvals"
 import { createSelfReportedAthleteRecord, saveAthleteRecord } from "./athlete-records"
 import { loadPlanBetaState, savePlanBetaState } from "./plan-beta-store"
+import { planBetaStateV3Schema } from "./plan-beta-schema"
 
 const NOW = new Date("2026-08-23T03:00:00.000Z")
 const DRAFT = {
@@ -212,6 +213,46 @@ describe("stored plan v3 target and preview boundary", () => {
       && candidate.detailedPrescriptionFingerprint?.startsWith("canonical-json-v1:") === true
       && candidate.sessions.filter((session) => session.prescription.kind === "PACE_TARGET").length === 1
     ))).toBe(true)
+  })
+
+  it("rejects an active detailed plan whose primary template no longer matches its session", () => {
+    const record = createSelfReportedAthleteRecord({
+      id: "00000000-0000-4000-8000-000000001501",
+      purpose: "RECENT_RESULT",
+      eventDistanceM: 1500,
+      performanceSeconds: 245,
+      achievedOn: "2026-08-10",
+      seasonId: null,
+    }, NOW)
+    if (record === null) throw new TypeError("Expected valid same-event fixture")
+    expect(saveAthleteRecord(record, NOW).ok).toBe(true)
+    const result = generatePlanFromDraft({
+      ...DRAFT,
+      experienceBand: "EXPERIENCED",
+      trainingFocus: "MIXED_INTENT",
+      selectedDetailedTemplateRef: TEMPLATE_1500,
+    }, "NO_KNOWN_RISK", { selectedRecordId: record.id })
+    if (result.kind !== "generated") throw new TypeError("Expected generated detailed fixture")
+    const selected = selectPlanForActivation(
+      result.generated.candidates[0].candidateId,
+      result.generated,
+      result.gate,
+      result.intake,
+      result.athleteEvidence,
+    )
+    if (selected.kind !== "selected") throw new TypeError("Expected selected detailed fixture")
+    const forged = {
+      ...selected.state,
+      activePlan: {
+        ...selected.state.activePlan,
+        selectedDetailedTemplateRef: { ...TEMPLATE_1500, templateId: "MD-1500-FORGED" },
+      },
+      intake: {
+        ...selected.state.intake,
+        selectedDetailedTemplateRef: { ...TEMPLATE_1500, templateId: "MD-1500-FORGED" },
+      },
+    }
+    expect(planBetaStateV3Schema.safeParse(forged).success).toBe(false)
   })
 
   it("invalidates coordinated candidate and pair mutations at selection", () => {

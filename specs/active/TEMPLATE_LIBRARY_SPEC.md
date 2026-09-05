@@ -894,4 +894,37 @@ storage_rules:
   direct_runtime_test_claim_allowed: false
 ```
 
+## 23. Independent Family And Configuration Preparation (2026-09-05)
+
+The owner-approved implementation direction is bound by
+[SESSION_METHOD_SELECTION_AND_ADJUSTMENT_CONTRACT](../reconstruct/SESSION_METHOD_SELECTION_AND_ADJUSTMENT_CONTRACT.md).
+Method families, independently reviewed configurations, finite structure presets
+and constrained scalar-rule versions supplement this library's ownership/lifecycle
+model; they do not replace it or introduce athlete-owned private templates.
+
+No fixed pair, global A/B method switch or all-pairs approval matrix is required.
+Every selectable configuration independently binds exact template content/version,
+components, source/operational adaptation, applicability and authority. Same-purpose
+eligibility and any equivalent-effect claim remain evidence-bound. Repetition-only
+variants may be configurations of one method, not extra method families.
+
+Prepare all 30 entries in the
+[actual local readiness matrix](../../reports/review/SESSION_METHOD_CATALOG_READINESS_2026-09-05.md).
+It retains each source tier, machine-notation state, lifecycle and gap. Research
+visibility, a parser-readable notation, a source range or a downshift label is not
+an active configuration or an editable scalar domain. Unusable studies/protocols
+remain excluded; support states are not additional MAIN methods. Exact missing
+source/adjustment evidence is consolidated, not converted into runtime approval.
+
+Section 16A's four exact refs and fingerprints remain the numeric baseline. Only
+V2-SEED-05 is within the 30-entry catalogue; the three MD adoptions are separate.
+Current selectable placement still allows only one detailed session per candidate.
+Concurrent multi-slot detail awaits its exact policy, despite the eventual per-MAIN
+selection target. Existing fixed doses are not unlocked by this engineering contract.
+
+Preserve age-neutral youth/adult eligibility, SYSTEM self-selection after gates,
+TENANT/COACH capability checks and separate guardian/privacy processing authority.
+No raw memo or private metadata becomes a library input. This addition preserves
+section 17's four open rows, counts, historical checks and canonical status.
+
 [DRAFT_COMPLETE]

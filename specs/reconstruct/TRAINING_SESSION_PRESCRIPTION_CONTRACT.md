@@ -599,4 +599,70 @@ Change ledger: ADD record-management return and visible fallback intent; MODIFY
 reader hierarchy; KEEP all numerical prescriptions, safety, privacy and old plans.
 Open issues remain open; release evidence is recorded separately.
 
+### 12.7 MAIN Difference Inspection (2026-09-05)
+
+The existing read-only method comparison may expose bounded difference codes for
+main-work structure, work unit, target definition, recovery, and terminal recovery.
+Derive these from the same normalized sequence projection as method equality.
+Ignore labels, IDs, athlete anchor references, warmup/cooldown and repetition-only
+changes when deciding method distinction. Different counts may still change dose.
+
+Compare only matching event, purpose and schedule contexts in the athlete-facing
+view. Missing structure or mismatched context produces no asserted difference list.
+The list describes where the prescription differs, not which method is better,
+equally demanding, scientifically accepted or eligible for activation. It must not
+return raw node labels, athlete references or explanation prose as difference codes.
+
+Source-transcription fixtures can validate different recovery units and a terminal
+recovery without becoming selectable templates. For the separately reviewed
+12 x 400 m example, preserve 11 between-repeat recoveries and one terminal recovery;
+do not infer seconds from 100 m or classify its intent by its race-pace notation.
+Exact dose, purpose, population and transfer acceptance remain separate decisions.
+
+Change ledger: ADD inspectable structural differences; KEEP adopted templates,
+numeric and privacy boundaries; DEFER source-example activation and pair acceptance.
+No issue closure or canonical promotion.
+
+### 12.8 Independent Methods And Bounded Adjustment (2026-09-05)
+
+The full engineering implementation direction is approved and bound by
+[SESSION_METHOD_SELECTION_AND_ADJUSTMENT_CONTRACT](SESSION_METHOD_SELECTION_AND_ADJUSTMENT_CONTRACT.md).
+This does not grant new exact doses, scalar ranges, coefficients, scientific
+approval or blanket activation. Earlier two-method/pair-review wording in section
+12 is retained as history, not a fixed-pair product/data-model requirement. Each
+configuration needs independent purpose/scope/content acceptance; claims of
+equivalent effect or burden still require their own evidence.
+
+Current runtime supports choosing the placement of one detailed session per
+candidate. Multiple concurrent detailed sessions remain pending exact per-slot
+policy. The eventual contract targets every MAIN independently with stable slot
+lineage, not an index or first-QUALITY-only global method. Day and AM/PM identify
+placement context; content-bound planned occurrence IDs change with prescriptions
+and must remain distinct from stable editing slots.
+
+Use finite reviewed structures and field-specific scalar rules with exact units,
+domains, coupling and source/review versions. No source range or generic sequence
+parser authorizes editing. Existing fixed-dose four-ref prescriptions retain their
+exact content checks and atomic RPE fallback; section 5's prohibition on arbitrary
+runtime repetition arithmetic remains. A later exact rule must not bypass these
+checks by recomputing two tampered source/sequence identities.
+
+Draft/apply/cancel and separate plan acceptance preserve all other slots and old
+accepted plans. Revalidate context, anchor confirmation, safety, authority and draft
+revision inside the apply/save lock. Stale/cancelled retries cannot activate later.
+Bind new snapshots to configuration/preset/rule/model/source versions, resolved
+unrounded values, sequence, totals and explanation. Do not backfill legacy plans
+or invent historical selection reasons.
+
+The linked contract section 7 owns the extension's exact recovery accounting:
+N-1 repeat gaps, parent-set boundary replacement, sibling transitions and explicit
+terminal recovery. Keep distance and time distinct; unknown is not zero. Its
+12x400m roll-on arithmetic remains an unadopted source example, not a VO2 approval.
+
+Method changes never automatically increase dose, duplicate MAIN exposures, clear
+D9 or turn planned values into actual results. Youth/self-use and separate data
+processing guards remain. The
+[readiness matrix](../../reports/review/SESSION_METHOD_CATALOG_READINESS_2026-09-05.md)
+records grouped exact evidence gaps without changing source states or issue history.
+
 [DRAFT_COMPLETE]

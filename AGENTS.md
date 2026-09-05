@@ -49,7 +49,7 @@
 |---|---|---|
 | `intensity-summary.ts`, `intensity-assessment.ts` | [`specs/active/SESSION_INTENSITY_ASSESSMENT_SPEC.md`](./specs/active/SESSION_INTENSITY_ASSESSMENT_SPEC.md) | ✅ 활성 |
 | `athlete-record-display.ts`, `athlete-records.ts` | [`WORK_ORDER_P1_ATHLETE_RECORDS.md`](./WORK_ORDER_P1_ATHLETE_RECORDS.md) (작업지시·구속력 있음), [`specs/active/ATHLETE_PROFILE_SPEC.md`](./specs/active/ATHLETE_PROFILE_SPEC.md) | ⚠️ 초안 |
-| `pace-target-evidence.ts`, `pace-target-plan.ts` | [`WORK_ORDER_P3_PACE_WIRING.md`](./WORK_ORDER_P3_PACE_WIRING.md), [`DECISION_BRIEFING_PERSONAL_PACE.md`](./DECISION_BRIEFING_PERSONAL_PACE.md) | ⛔ 오너 결정 대기 |
+| `pace-target-evidence.ts`, `pace-target-plan.ts`, `plan-candidate-prescription.ts` | [`specs/active/TEMPLATE_LIBRARY_SPEC.md` §16A](./specs/active/TEMPLATE_LIBRARY_SPEC.md#16a-2026-08-24-beta-runtime-allowlist), [`specs/reconstruct/TRAINING_SESSION_PRESCRIPTION_CONTRACT.md`](./specs/reconstruct/TRAINING_SESSION_PRESCRIPTION_CONTRACT.md), [`TRAINING_PLAN_CURRENT_SCOPE.md`](./TRAINING_PLAN_CURRENT_SCOPE.md) | 제한적 채택: 현재 allowlist만. P3 지시서와 최초 결정 브리핑은 역사적 맥락 |
 | `plan-beta-*.ts`, `plan-proposals.ts`, `plan-session-schema.ts` | [`specs/active/PLAN_GENERATOR_SPEC.md`](./specs/active/PLAN_GENERATOR_SPEC.md), [`TRAINING_PLAN_METHOD_DECISION.md`](./TRAINING_PLAN_METHOD_DECISION.md) | ⚠️ 초안 |
 | `objective-fatigue-evidence.ts`, `fatigue-vector.ts` | [`specs/reconstruct/OBJECTIVE_FATIGUE_EVIDENCE_CONTRACT.md`](./specs/reconstruct/OBJECTIVE_FATIGUE_EVIDENCE_CONTRACT.md) | ⚠️ 비런타임 초안 |
 | 위험신호·안전 게이트 관련 무엇이든 | [`specs/active/RULE_SPEC_D1_D9.md`](./specs/active/RULE_SPEC_D1_D9.md) | 🟡 업로드 준비 |
@@ -75,9 +75,14 @@ grep -m1 "^status:" specs/active/<파일>.md
 |---|---|
 | `ACTIVE_IMPLEMENTATION_CONTRACT` | **가능.** 구현이 이 계약을 지켜야 한다 |
 | `READY_FOR_UPLOAD` / 표기 없음 | **현재 동작 파악용으로만.** 바꾸려면 오너 확인 |
-| `DRAFT_FOR_REVIEW`, `DRAFT_NON_RUNTIME_CONTRACT`, `QUALIFIED_REVIEW_PENDING` | **불가.** 초안이다. 특히 `canonical_promotion_allowed: false`면 확정 규칙이 아니다 |
+| `DRAFT_FOR_REVIEW`, `DRAFT_NON_RUNTIME_CONTRACT`, `QUALIFIED_REVIEW_PENDING` | 미채택 조항은 **불가**. 별도 정확한 채택 결정이 있는 좁은 범위만 그 결정을 따른다. `canonical_promotion_allowed: false`는 문서 정본 승격 금지이며 별도 런타임 채택의 존재 여부와 구분한다 |
 
-**초안을 근거로 런타임 동작을 바꾸지 않는다.** 초안과 현재 구현이 다르면
+**초안의 지위와 별도 채택된 조항의 실행 범위를 구분한다.** 문서 전체가 초안이어도
+명시적인 오너 채택·정확한 템플릿 정체성·런타임 허용 목록이 있는 좁은 범위는
+그 채택을 따른다. 다른 조항이나 신규 용량까지 승인되었다고 확대하지 않는다.
+현재 계획 범위는 [`TRAINING_PLAN_CURRENT_SCOPE.md`](./TRAINING_PLAN_CURRENT_SCOPE.md)를 읽는다.
+
+**미채택 초안을 근거로 런타임 동작을 바꾸지 않는다.** 초안과 현재 구현이 다르면
 그건 버그가 아니라 **미결정 사항**이다. 고치지 말고 차이를 보고한다.
 초안에 적힌 값을 확정 규칙으로 착각하는 것은 North Star §5 사례 5와
 같은 종류의 실수다.

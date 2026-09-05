@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it } from "vitest"
 import {
   archiveAndClearActivePlan,
+  loadPlanMethodHistory,
   savePlanBetaState,
 } from "./plan-beta-store"
 import { planHistoryListSchema } from "./plan-beta-schema"
@@ -34,6 +35,33 @@ describe("plan history retention", () => {
     expect(archiveAndClearActivePlan(secondFrame)).toMatchObject({ ok: true })
 
     // Then: each completed frame remains in the local history.
-    expect(readStoredHistory()).toHaveLength(2)
+    const history = readStoredHistory()
+    expect(history).toHaveLength(2)
+    expect(history.every(row => "version" in row && row.version === 4)).toBe(true)
+    expect(history.every(row => (
+      "version" in row && row.version === 4 && row.methodHistory.length === 0
+    ))).toBe(true)
+  })
+
+  it("keeps legacy method selection without pretending it was performed", () => {
+    window.localStorage.setItem(HISTORY_KEY, JSON.stringify([{
+      version: 3,
+      candidateId: "legacy-candidate",
+      pairId: "plan-pair:v3:legacy",
+      candidateKind: "BALANCED",
+      eventDistanceM: 5000,
+      selectedDetailedTemplateRef: {
+        templateId: "V2-SEED-05",
+        version: "1.0.0",
+        fingerprint: `sha256:${"a".repeat(64)}`,
+      },
+      frameLengthDays: 9.5,
+      progress: [{ sessionDay: 2, sessionSlot: "AM", state: "COMPLETED" }],
+      archivedAt: "2026-09-05T00:00:00.000Z",
+    }]))
+    expect(loadPlanMethodHistory(5000)).toMatchObject([{
+      selected: { familyId: "V2-SEED-05" },
+      performed: { status: "MISSING" },
+    }])
   })
 })

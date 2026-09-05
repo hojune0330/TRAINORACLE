@@ -40,7 +40,7 @@ function toActivity(candidate: unknown): ImportedActivity | null {
     name: text(parsed.data.name) || "가져온 활동",
     sport: text(parsed.data.sport) || "unknown",
     distanceKm: distanceKm > 0 ? distanceKm.toFixed(2) : "",
-    durationMin: durationMin > 0 ? String(Math.round(durationMin)) : "",
+    durationMin: durationMin > 0 ? String(durationMin) : "",
     avgPace: paceOf(distanceKm, durationMin),
   }
 }

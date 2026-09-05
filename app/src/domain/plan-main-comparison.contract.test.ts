@@ -3,6 +3,10 @@ import type { PaceTargetPlanPrescription, PlanCandidate, PlanSession } from "@im
 import { comparePlanMainWork } from "./plan-main-comparison"
 import { generatePlanFromDraft } from "./plan-beta-flow"
 import { RUNTIME_CASES, TODAY, draftFor, saveCurrentRecord, type MatrixCase } from "./prescription-quality-matrix.test-fixtures"
+import { describeMainMethodDifferences, deriveSequenceTotals, deriveSequenceRecoveryDistanceTotals, type PrescriptionSequence } from "@impl/prescription/sequence"
+import { sessionPrescriptionSequence } from "./session-prescription-sequence"
+import { planSessionSchema } from "./plan-session-schema"
+import { resolveDetailedPlanTemplateOptions } from "../screens/plan-beta/plan-template-options"
 
 beforeEach(() => { localStorage.clear(); vi.useFakeTimers(); vi.setSystemTime(TODAY) })
 afterEach(() => { vi.useRealTimers() })
@@ -33,6 +37,36 @@ function detailedRow(a: PlanCandidate, b: PlanCandidate) {
 }
 
 describe("actual MAIN comparison, not candidate-label comparison", () => {
+  it("compares the source example against the real 5000m template but rejects it as a stored prescription", () => {
+    const fixture = RUNTIME_CASES.find(item => item.eventDistanceM === 5000)!
+    const [a] = pair(fixture)
+    const actual = a.sessions.find(session => session.prescription.kind === "PACE_TARGET")!
+    const current = sessionPrescriptionSequence(actual)!
+    const none = { mode: "NOT_APPLICABLE", seconds: null } as const
+    const rollOn = { mode: "ACTIVE_ROLL_ON", seconds: null, distanceM: 100 } as const
+    const source: PrescriptionSequence = {
+      kind: "PRESCRIPTION_SEQUENCE", version: 2, id: "SOURCE-REVIEW-ONLY", label: null,
+      warmup: [], cooldown: [], terminalRecovery: rollOn, main: [{
+        kind: "segment", id: "source-main", label: null, repeatCount: 12,
+        work: { kind: "distance", distanceM: 400, durationSeconds: null },
+        target: { kind: "RACE_PACE", eventDistanceM: 5000, anchorRef: null },
+        recoveryBetweenRepeats: rollOn, recoveryAfter: none,
+      }],
+    }
+    expect(describeMainMethodDifferences(current, source)).toEqual(["WORK_UNIT", "RECOVERY", "TERMINAL_RECOVERY"])
+    expect(deriveSequenceTotals(current)).toMatchObject({ totalRepetitions: 5, qualityDistanceM: 5000, plannedRecoverySeconds: 600 })
+    expect(deriveSequenceTotals(source)).toMatchObject({ qualityDistanceM: 4800, repetitionRecoveryOccurrences: 11,
+      terminalRecoveryOccurrences: 1, plannedRecoverySeconds: null })
+    expect(deriveSequenceRecoveryDistanceTotals(source).plannedRecoveryDistanceM).toBe(1200)
+    expect(planSessionSchema.safeParse(actual).success).toBe(true)
+    const forged = planSessionSchema.safeParse({ ...actual, prescription: { ...actual.prescription, sequence: source } })
+    expect(forged.success).toBe(false)
+    if (forged.success) throw new Error("Source-only sequence entered the athlete plan")
+    expect(forged.error.issues.some(issue => issue.path.join(".") === "prescription.sequence")).toBe(true)
+    const options = resolveDetailedPlanTemplateOptions({ eventDistanceM: 5000, trainingFocus: "VO2_INTENT", experienceBand: "EXPERIENCED" }, TODAY.toISOString())
+    expect(options.map(option => option.ref.templateId)).toEqual(["V2-SEED-05"])
+  })
+
   it.each(RUNTIME_CASES)("compares every real $caseId slot without inventing a second method", (fixture) => {
     const [a, b] = pair(fixture)
     const before = JSON.stringify([a, b])
@@ -46,6 +80,7 @@ describe("actual MAIN comparison, not candidate-label comparison", () => {
     const p = paceSession.prescription
     const row = result.rows.find((row) => row.a?.kind === "PACE_TARGET")!
     expect(row.methodRelation).toBe("SAME")
+    expect(row.methodDifferences).toEqual([])
     expect(row.a?.work).toContain(`${p.repetitionDistanceM}m`)
     expect(row.a?.work).toContain(`총 ${p.totals.totalRepetitions}회`)
     expect(row.a?.recovery).toContain(`총 ${p.totals.repetitionRecoveryOccurrences}번`)
@@ -64,6 +99,7 @@ describe("actual MAIN comparison, not candidate-label comparison", () => {
     const { result, row } = detailedRow(a, changePace(b, change))
     expect(row.samePrescribedValues).toBe(false)
     expect(row.methodRelation).toBe("SAME")
+    expect(row.methodDifferences).toEqual([])
     expect(result.easyDurationOnly).toBe(false)
   })
 
@@ -77,6 +113,7 @@ describe("actual MAIN comparison, not candidate-label comparison", () => {
     const { result, row } = detailedRow(a, changePace(b, change))
     expect(row.samePrescribedValues).toBe(false)
     expect(row.methodRelation).toBe("DIFFERENT_REQUIRES_REVIEW")
+    expect(row.methodDifferences).toEqual([_name === "repeat unit" ? "WORK_UNIT" : _name === "target event" ? "TARGET" : "RECOVERY"])
     expect(result.sameMainPrescription).toBe(false)
     expect(result.easyDurationOnly).toBe(false)
   })
@@ -128,6 +165,7 @@ describe("actual MAIN comparison, not candidate-label comparison", () => {
     expect(result.sameMainPrescription).toBe(false)
     expect(result.easyDurationOnly).toBe(false)
     expect(result.rows.some((row) => row.methodRelation === "CONTEXT_MISMATCH")).toBe(true)
+    expect(result.rows.filter(row => row.methodRelation === "CONTEXT_MISMATCH").every(row => row.methodDifferences.length === 0)).toBe(true)
   })
 
   it("RPE envelopes can match as values without being two explicit methods", () => {

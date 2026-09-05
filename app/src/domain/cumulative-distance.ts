@@ -1,6 +1,7 @@
 import { isValidIsoDate, isoShift, pad2, weekStartOf } from "./dates"
 import type { StructuredJournalObservation } from "./journal-observation"
 import { eligibleMetricValue } from "./trend-analysis"
+import { acceptsExplicitField } from "./analysis-field-eligibility"
 
 export const CUMULATIVE_DISTANCE_FORMULA_VERSION = "CUMULATIVE_DISTANCE_SUM_V1" as const
 
@@ -34,6 +35,7 @@ export type CumulativeDistanceSummary = {
   readonly includedSourceCount: number
   readonly excludedSourceCount: number
   readonly duplicateSourceCount: number
+  readonly conflictingSourceCount: number
   readonly coverage: "DATA" | "PARTIAL" | "MISSING"
   readonly sourceRefs: readonly StructuredJournalObservation["sourceRef"][]
   readonly reasonCodes: readonly CumulativeDistanceReasonCode[]
@@ -61,6 +63,7 @@ function sourceSignature(observation: StructuredJournalObservation): string {
     distanceKm: observation.distanceKm,
     provenance: observation.fieldProvenance.distanceKm,
     trustState: observation.sourceRef.trustState,
+    explicitDistanceAccepted: acceptsExplicitField(observation, "distanceKm"),
   })
 }
 
@@ -100,6 +103,7 @@ export function cumulativeDistance(
   const included: { readonly observation: StructuredJournalObservation; readonly value: number }[] = []
   let excludedSourceCount = 0
   let duplicateSourceCount = 0
+  let conflictingSourceCount = 0
   let hasIdenticalDuplicate = false
   let hasConflict = false
 
@@ -113,7 +117,7 @@ export function cumulativeDistance(
     const signatures = new Set(group.map(sourceSignature))
     if (signatures.size > 1) {
       excludedSourceCount += 1
-      duplicateSourceCount += group.length - 1
+      conflictingSourceCount += 1
       hasConflict = true
       continue
     }
@@ -123,8 +127,8 @@ export function cumulativeDistance(
     if (first.distanceKm === null && first.fieldProvenance.distanceKm === "MISSING") {
       continue
     }
-    const value = eligibleMetricValue(first, "DISTANCE_KM")
-    if (first.sourceRef.trustState !== "ACCEPTED"
+    const value = acceptsExplicitField(first, "distanceKm") ? first.distanceKm : eligibleMetricValue(first, "DISTANCE_KM")
+    if (!acceptsExplicitField(first, "distanceKm")
       || value === null
       || !Number.isFinite(value)
       || value <= 0) {
@@ -150,6 +154,7 @@ export function cumulativeDistance(
     includedSourceCount: included.length,
     excludedSourceCount,
     duplicateSourceCount,
+    conflictingSourceCount,
     coverage: included.length === 0
       ? "MISSING"
       : excludedSourceCount > 0 || duplicateSourceCount > 0

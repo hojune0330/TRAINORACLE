@@ -26,6 +26,8 @@ import { comparePlanMainWork } from "../../domain/plan-main-comparison"
 import { MainWorkComparison } from "./MainWorkComparison"
 import { PlanMethodPicker } from "./PlanMethodPicker"
 import { resolveDetailedPlanTemplateOptions } from "./plan-template-options"
+import { listDetailedSessionTargets, type PlanSessionTarget } from "../../domain/plan-session-target"
+import { PlanSessionTargetPicker } from "./PlanSessionTargetPicker"
 
 export function PlanCandidates({
   generated,
@@ -40,6 +42,8 @@ export function PlanCandidates({
   onCompareRecord,
   onConfirmRecord,
   onChangeMethod,
+  detailedSessionTarget = null,
+  onChangeSessionTarget,
   onSelectionDetailsChange,
   onManageRecords,
   startDateValue,
@@ -60,6 +64,8 @@ export function PlanCandidates({
   readonly onCompareRecord: (recordId: string | null) => void
   readonly onConfirmRecord: () => void
   readonly onChangeMethod?: (reference: PlanBetaIntake["selectedDetailedTemplateRef"]) => void
+  readonly detailedSessionTarget?: PlanSessionTarget | null
+  readonly onChangeSessionTarget?: (target: PlanSessionTarget) => void
   readonly onSelectionDetailsChange?: () => void
   readonly onManageRecords?: () => void
   readonly startDateValue?: string
@@ -113,6 +119,10 @@ export function PlanCandidates({
         && (intake.eventGroup === "FIVE_K" || intake.eventGroup === "MIDDLE_DISTANCE")
         && intake.experienceBand === "EXPERIENCED"
         && (
+        <>
+        {onChangeSessionTarget !== undefined && <PlanSessionTargetPicker
+          targets={listDetailedSessionTargets(generated)} selected={detailedSessionTarget}
+          startDate={startDate} onChange={onChangeSessionTarget} />}
         <PaceEvidenceFlow
           records={athleteRecords}
           eventDistanceM={intake.eventDistanceM}
@@ -126,6 +136,7 @@ export function PlanCandidates({
           onUseRpe={onChangeMethod === undefined ? undefined : () => onChangeMethod(null)}
           recordReturnCount={recordReturnCount}
         />
+        </>
       )}
       <CandidateComparison candidates={generated.candidates} />
       <div className="plan-source-strip">

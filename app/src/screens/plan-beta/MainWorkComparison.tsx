@@ -1,5 +1,11 @@
 import { ChevronDown } from "lucide-react"
 import type { comparePlanMainWork, MainComparisonRow, MainPrescriptionView } from "../../domain/plan-main-comparison"
+import type { MainMethodDifferenceCode } from "@impl/prescription/sequence"
+
+const DIFFERENCE_LABELS: Record<MainMethodDifferenceCode, string> = {
+  WORK_STRUCTURE: "본운동의 순서·묶음", WORK_UNIT: "한 번에 달리는 거리·시간",
+  TARGET: "목표 강도의 기준", RECOVERY: "반복·세트·구간 사이 회복", TERMINAL_RECOVERY: "마지막 본운동 뒤 회복",
+}
 
 const FIELDS = [
   ["work", "운동 구간"], ["recovery", "회복"], ["intensity", "목표 강도"],
@@ -15,6 +21,9 @@ export function MainWorkComparison({ comparison }: { readonly comparison: Return
         <section key={row.key} aria-label={`${row.day}일차 ${row.slot === "AM" ? "오전" : "오후"} 본운동 비교`}>
           <h3>{row.day}일차 · {row.slot === "AM" ? "오전" : "오후"}</h3>
           <p className="plan-main-comparison__status">{statusText(row)}</p>
+          {row.methodRelation === "DIFFERENT_REQUIRES_REVIEW" && row.methodDifferences.length > 0 && (
+            <p>다른 부분: {row.methodDifferences.map(code => DIFFERENCE_LABELS[code]).join(" · ")}</p>
+          )}
           {row.samePrescribedValues && row.a !== null ? (
             <MethodValues label={row.a.kind === "RPE_TIME_RANGE" ? "A·B 시간·RPE 공통" : "A·B 공통"} view={row.a} />
           ) : (

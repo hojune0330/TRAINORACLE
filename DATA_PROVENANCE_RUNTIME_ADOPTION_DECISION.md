@@ -16,6 +16,10 @@ scope:
 
 ## What Is Implemented Here
 
+2026-09-04 scoped amendment: [Analysis integrity adoption](./ANALYSIS_INTEGRITY_ADOPTION_2026-09-04.md)
+preserves independent explicit fields when other fields are imported. It does not
+register external derivation rules or change safety/plan authority.
+
 - 훈련 후, 저녁 체크인, 경기 화면은 값마다 `EXPLICIT` 또는 `MISSING`을 함께 저장한다.
 - 현재 허가된 파생 규칙 목록은 비어 있다. 따라서 앱은 `DERIVED`를 분석에 쓰지 않는다.
 - 출처 메타데이터가 없거나 잘못되어도 기존 기록은 일지에서 볼 수 있다. 다만 분석, 추이, 미래 Formation 입력에서는 제외한다.

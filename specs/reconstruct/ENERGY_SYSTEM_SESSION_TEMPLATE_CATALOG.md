@@ -1314,4 +1314,30 @@ activation_requirements:
     - no_D9_ACTIVE_or_UNKNOWN_bypass
 ```
 
+## 11. Whole-Catalogue Method Preparation (2026-09-05)
+
+The approved engineering direction is
+[SESSION_METHOD_SELECTION_AND_ADJUSTMENT_CONTRACT](SESSION_METHOD_SELECTION_AND_ADJUSTMENT_CONTRACT.md).
+Prepare independent method families/configurations, finite structure presets and
+constrained scalar-rule evidence across every existing entry, not fixed pairs.
+The [30-entry readiness matrix](../../reports/review/SESSION_METHOD_CATALOG_READINESS_2026-09-05.md)
+preserves exact IDs/versions, source/access/parser states and grouped gaps. Its
+preparation categories are not newly registered or activated method identities.
+
+All catalogue records above remain unchanged: one ACTIVE/ELIGIBLE and 29
+DRAFT/REVIEW_REQUIRED. The wider four-ref runtime allowlist includes three separate
+MD identities outside this catalogue. Research visibility, generic sequence support,
+source ranges and named downshifts still do not authorize selection or adjustments.
+REJECTED_OR_UNUSABLE entries are audit-only; support states are not extra MAINs.
+
+Historical draft `minorAllowed: false` and empty eligibility arrays preserve the
+absence of an accepted mapping; they do not override current age-neutral youth and
+self-use policy or remove separate guardian/privacy processing requirements. New
+mapping needs exact applicability evidence, not a blanket age exclusion or multiplier.
+
+Current one-detailed-session placement and eventual per-MAIN multi-slot detail are
+separate. No numerical value, source tier, lifecycle, scientific approval or existing
+runtime adoption is changed by this preparation reference. Missing exact source
+and adjustment evidence is grouped work, not repeated feature-approval requests.
+
 [DRAFT_COMPLETE]

@@ -122,4 +122,14 @@ No issue is closed by this draft or by local tests.
 - D9, plan generation, template activation, account sharing and reward code remain
   untouched.
 
+## Scoped owner amendment: 2026-09-04
+
+[Analysis integrity adoption](../../ANALYSIS_INTEGRITY_ADOPTION_2026-09-04.md)
+supersedes the whole-observation ACCEPTED requirement only for independently
+attested EXPLICIT fields in a mixed-source journal. Imported values remain excluded.
+It also defines unique-source/conflict/identical-copy counts, per-metric sample
+counts, both-period coverage and proportional chart length. All other authority,
+privacy, issue status and formula boundaries above remain unchanged. This is a
+scoped implementation amendment, not canonical promotion or runtime evidence.
+
 [DRAFT_COMPLETE]

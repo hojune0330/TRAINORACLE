@@ -1,10 +1,16 @@
 import { assertNever } from "../shared/assert-never"
-import { matchesPacePrescriptionSequence, type PaceSequenceSource } from "../prescription/pace-sequence"
+import {
+  matchesPacePrescriptionSequence,
+  projectPacePrescriptionSequence,
+  type PaceSequenceSource,
+} from "../prescription/pace-sequence"
 import { parsePrescriptionNotation } from "../prescription/notation"
+import { compareMainMethods, type PrescriptionSequence } from "../prescription/sequence"
 import { derivePrescriptionTotals } from "../prescription/totals"
 import {
   continuityContextIdentity,
   continuityIdentityFromCandidateId,
+  detailedPrescriptionFingerprintFromSessions,
   hasValidCandidateIdentity,
   pairIdHasBase,
   projectPlanCandidate,
@@ -424,26 +430,42 @@ function isPlanCandidate(value: unknown): value is PlanCandidate {
       || !Array.isArray(value["rationaleCodes"]) || !isDenseArray(value["rationaleCodes"])
       || !value["rationaleCodes"].every((code) => typeof code === "string" && PLAN_BETA_CODES.has(code))
       || !hasValidSessionLayout(value["sessions"])) return false
-  const detailedFingerprints = value["sessions"].flatMap((session) => (
-    session.prescription.kind === "PACE_TARGET"
-      ? [session.prescription.prescriptionFingerprint]
-      : []
-  ))
-  const expectedDetailedFingerprint = detailedFingerprints.length === 1
-    ? detailedFingerprints[0]
-    : null
-  if (detailedFingerprints.length > 1
-      || value["detailedPrescriptionFingerprint"] !== expectedDetailedFingerprint
+  const detailedSessionCount = value["sessions"].filter(session => session.prescription.kind === "PACE_TARGET").length
+  const expectedDetailedFingerprint = detailedPrescriptionFingerprintFromSessions(value["sessions"])
+  if (value["detailedPrescriptionFingerprint"] !== expectedDetailedFingerprint
       || !isCandidateId(value["candidateId"], expectedDetailedFingerprint)
       || !isRecord(value["beta"])
-      || value["beta"]["prescriptionBasis"] !== (expectedDetailedFingerprint === null
+      || value["beta"]["prescriptionBasis"] !== (detailedSessionCount === 0
         ? "DURATION_RPE_ONLY"
-        : "ONE_TRUSTED_DETAILED_SESSION")) return false
+        : detailedSessionCount === 1
+          ? "ONE_TRUSTED_DETAILED_SESSION"
+          : "MULTIPLE_TRUSTED_DETAILED_SESSIONS")) return false
+  const reference = value["selectedDetailedTemplateRef"]
+  const detailedPrescriptions = value["sessions"].flatMap(session => (
+    session.prescription.kind === "PACE_TARGET" ? [session.prescription] : []
+  ))
+  if (detailedPrescriptions.length > 0) {
+    if (reference === null || detailedPrescriptions.filter(prescription => (
+      prescription.templateId === reference.templateId
+      && prescription.templateVersion === reference.version
+      && prescription.templateContentFingerprint === reference.fingerprint
+    )).length !== 1) return false
+
+    const methodKeys = new Set<string>()
+    const sequences: PrescriptionSequence[] = []
+    for (const prescription of detailedPrescriptions) {
+      const methodKey = `${prescription.templateId}@${prescription.templateVersion}:${prescription.templateContentFingerprint}`
+      const sequence = prescription.sequence ?? projectPacePrescriptionSequence(prescription)
+      if (methodKeys.has(methodKey) || sequence === null
+          || sequences.some(existing => compareMainMethods(existing, sequence).kind !== "different")) return false
+      methodKeys.add(methodKey)
+      sequences.push(sequence)
+    }
+  }
   const eventIdentity = `:event-${value["eventDistanceM"] ?? "unbound"}:`
   const ledger = value["mainExposureLedger"]
   if (!isExposureLedger(ledger)) return false
   const exposureIdentity = `:${ledger.countedExposureIds.join("-")}:`
-  const reference = value["selectedDetailedTemplateRef"]
   const templateIdentity = reference === null
     ? "rpe-only"
     : `${reference.templateId.toLowerCase()}.${reference.version}.${reference.fingerprint.slice("sha256:".length)}`
@@ -469,10 +491,7 @@ function isPlanCandidate(value: unknown): value is PlanCandidate {
     && (reference === null || selectedEnergyIntent === expectedDetailedIntent)
     && value["sessions"].every((session) => session.prescription.kind !== "PACE_TARGET"
     || (session.prescription.scope.eventGroup === value["eventGroup"]
-      && reference !== null
-      && session.prescription.templateId === reference.templateId
-      && session.prescription.templateVersion === reference.version
-      && session.prescription.templateContentFingerprint === reference.fingerprint))
+      && session.prescription.targetEventDistanceM === value["eventDistanceM"]))
 }
 
 function isDetailedTemplateRef(value: unknown): value is DetailedTemplateRef | null {
@@ -513,7 +532,7 @@ function isBoundedRange(value: unknown, minimum: number, maximum: number): boole
 
 function isCandidateBeta(value: unknown): boolean {
   return isRecord(value) && hasExactKeys(value, ["designation", "prescriptionBasis", "formationMethodClaim"])
-    && value["designation"] === "BETA" && (value["prescriptionBasis"] === "DURATION_RPE_ONLY" || value["prescriptionBasis"] === "ONE_TRUSTED_DETAILED_SESSION")
+    && value["designation"] === "BETA" && (value["prescriptionBasis"] === "DURATION_RPE_ONLY" || value["prescriptionBasis"] === "ONE_TRUSTED_DETAILED_SESSION" || value["prescriptionBasis"] === "MULTIPLE_TRUSTED_DETAILED_SESSIONS")
     && value["formationMethodClaim"] === "NOT_UNIVERSAL"
 }
 

@@ -37,17 +37,16 @@ type PersonalOracleInput = {
   readonly planState: PlanBetaState | null
 }
 
-function recentAcceptedSessions(
+function recentInsightSourceCount(
   observations: readonly StructuredJournalObservation[],
   startDate: string,
   endDate: string,
-): readonly StructuredJournalObservation[] {
-  return observations.filter((observation) => (
-    observation.sourceRef.sourceKind === "SESSION_RESULT_RECORD"
-    && observation.sourceRef.trustState === "ACCEPTED"
-    && observation.loggedOn >= startDate
-    && observation.loggedOn <= endDate
-  ))
+): number {
+  const energy = buildEnergySystemLedger(observations, energyLedgerWindow("RECENT_8_WEEKS", endDate))
+  const midpoint = isoShift(endDate, -27)
+  const distanceRefs = [[startDate, isoShift(midpoint, -1)], [midpoint, endDate]].flatMap(([start, end]) =>
+    cumulativeDistance(observations, { kind: "RECENT_MONTH", startDate: start!, endDate: end!, precision: "LOCAL_DATE" }).sourceRefs)
+  return new Set([...energy.sourceRefs, ...distanceRefs].map(ref => `${ref.sourceKind}:${ref.sourceId}`)).size
 }
 
 function distanceInsight(
@@ -69,26 +68,30 @@ function distanceInsight(
     endDate: previousEnd,
     precision: "LOCAL_DATE",
   })
+  const evidence = [
+    `최근 4주 (${currentStart}~${today}) 반영 ${current.includedSourceCount}건 · 제외 ${current.excludedSourceCount}건 · 중복 사본 ${current.duplicateSourceCount}개 · 충돌 ${current.conflictingSourceCount}건`,
+    `그 전 4주 (${previousStart}~${previousEnd}) 반영 ${previous.includedSourceCount}건 · 제외 ${previous.excludedSourceCount}건 · 중복 사본 ${previous.duplicateSourceCount}개 · 충돌 ${previous.conflictingSourceCount}건`,
+  ].join(" / ")
 
   if (current.totalKm === null) {
     return {
       id: "DISTANCE_FLOW",
       title: "최근 달린 거리",
-      headline: "직접 적은 거리 기록이 아직 없어요",
+      headline: current.excludedSourceCount > 0 ? "거리 기록이 있지만 아직 분석에 사용할 수 없어요" : "직접 적은 거리 기록이 아직 없어요",
       detail: "거리를 적으면 최근 4주와 그 전 4주를 같은 기준으로 나란히 보여드려요.",
-      evidence: `최근 4주 반영 0건 · 제외 ${current.excludedSourceCount}건`,
+      evidence,
     }
   }
 
   const comparison = previous.totalKm === null
-    ? "그 전 4주는 비교할 기록이 없어요."
+    ? previous.excludedSourceCount > 0 ? "그 전 4주는 기록이 있지만 분석 기준을 충족하지 못했어요." : "그 전 4주는 비교할 기록이 없어요."
     : `그 전 4주 ${previous.totalKm} km와 함께 확인할 수 있어요.`
   return {
     id: "DISTANCE_FLOW",
     title: "최근 달린 거리",
     headline: `최근 4주 ${current.totalKm} km`,
-    detail: `${comparison} 거리가 늘거나 줄었다는 사실만 보여주며, 다음 훈련량을 자동으로 바꾸지는 않아요.`,
-    evidence: `최근 4주 반영 ${current.includedSourceCount}건 · 제외 ${current.excludedSourceCount}건`,
+    detail: `${comparison} 분석에 포함된 거리의 비교예요. 일부 기록이 빠졌을 수 있으며 다음 훈련량을 자동으로 바꾸지는 않아요.`,
+    evidence,
   }
 }
 
@@ -102,7 +105,7 @@ function energyInsight(
     return {
       id: "ENERGY_COVERAGE",
       title: "훈련 목적의 구성",
-      headline: "직접 고른 에너지 시스템 기록이 아직 없어요",
+      headline: ledger.excludedSourceCount > 0 ? "기록은 있지만 분석에 사용할 훈련 목적을 확인하지 못했어요" : "직접 고른 에너지 시스템 기록이 아직 없어요",
       detail: "훈련 후 주된 목적을 고르면 8주 동안 어떤 유형을 얼마나 경험했는지 모아 보여드려요.",
       evidence: `최근 8주 반영 0건 · 제외 ${ledger.excludedSourceCount}건`,
     }
@@ -120,7 +123,7 @@ function energyInsight(
     title: "훈련 목적의 구성",
     headline: `최근 8주 ${used.length}가지 유형을 기록했어요`,
     detail: `${frequencyDetail} 자주 또는 적게 기록됐다는 사실이며, 강점·약점이나 부족 판정은 아니에요.`,
-    evidence: `직접 선택 ${ledger.includedSourceCount}건 · 제외 ${ledger.excludedSourceCount}건 · 중복 ${ledger.duplicateSourceCount}건`,
+    evidence: `직접 선택 ${ledger.includedSourceCount}건 · 제외 ${ledger.excludedSourceCount}건 · 중복 사본 ${ledger.duplicateSourceCount}개 · 충돌 ${ledger.conflictingSourceCount}건`,
   }
 }
 
@@ -150,8 +153,7 @@ export function derivePersonalOracle({
   planState,
 }: PersonalOracleInput): PersonalOracleExplanation {
   const startDate = isoShift(today, -55)
-  const acceptedSessions = recentAcceptedSessions(observations, startDate, today)
-  const structuredSourceCount = acceptedSessions.length
+  const structuredSourceCount = recentInsightSourceCount(observations, startDate, today)
   const maturity: PersonalOracleMaturity = structuredSourceCount === 0 && planState === null
     ? "EMPTY"
     : structuredSourceCount < 4

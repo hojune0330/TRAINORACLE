@@ -1222,6 +1222,13 @@ stored for later. All Section 11 issues remain OPEN.
 
 ## 12. Test Cases
 
+> Historical self-check table, not the current runtime acceptance suite. Original
+> rows and PASS labels are preserved as history. In particular PG-TC-031's default
+> three-option expectation does not govern the current two-candidate beta. Current
+> A/B schedule count, per-MAIN method count and activation scope are separated in
+> [TRAINING_PLAN_CURRENT_SCOPE.md](../../TRAINING_PLAN_CURRENT_SCOPE.md).
+> Section 26's two-method product target is not a claim that two methods are active.
+
 | ID | Group | Expected | Status |
 |---|---|---|---|
 | `PG-TC-001` | integrity | First line is `# PLAN_GENERATOR_SPEC.md`. | PASS |
@@ -1436,5 +1443,58 @@ remain unchanged. Legacy plans remain readable with honest missing-rationale sta
 Change ledger: ADD rationale completeness and candidate distinction; KEEP existing
 numeric authority; DEFER unadopted dose combinations. No issue count or status is
 changed by this direction alone.
+
+## 27. Support Disclosure And Scope Separation (2026-09-05)
+
+The owner approved reconciling current implementation scope before expanding MAIN
+methods. The plan intake may expose a collapsed, read-only support view derived from
+the same currently authorized template options used by selection. Evaluate the
+selected experience and evaluation time; do not count draft or expired identities,
+RPE-only guidance, or A/B support-duration variants as additional detailed methods.
+
+List event and purpose together. A method count across different purposes does not
+establish a reviewed same-purpose pair. A supported template is not permission to
+save: current record, explicit selection, safety and persistence gates still apply.
+Keep ordinary RPE plans available without presenting missing detailed methods as an
+athlete's inability. No dose, authority, source acceptance or old plan is changed.
+
+## 28. Approved Independent Session Method Implementation (2026-09-05)
+
+[SESSION_METHOD_SELECTION_AND_ADJUSTMENT_CONTRACT](../reconstruct/SESSION_METHOD_SELECTION_AND_ADJUSTMENT_CONTRACT.md)
+is the binding engineering direction for method choice, deterministic recommendation,
+reviewed preset/scalar adjustment and draft/apply/cancel. Its implementation approval
+is not new exact-dose or scientific approval. This extension does not change this
+document's canonical status, historical test claims, machine policies or issue table.
+
+Sections 26-27's two-method/pair language describes the earlier delivery target,
+not a fixed cardinality or required pair ID. Prepare independent method families
+and configurations for all catalogue entries. An eligible configuration needs its
+own exact content/applicability evidence, not a hard-coded A/B partner. A/B schedule
+options, configuration count and structurally distinct MAIN-method count remain
+separate; labels and repetition-only differences do not create method diversity.
+
+Current runtime supports selecting the placement of one detailed session on an
+eligible MAIN occurrence. Multiple concurrent detailed sessions require an exact
+per-slot applicability/exposure/interaction policy before enablement. The eventual
+target is an independent choice for every MAIN, not first-QUALITY-only binding or
+copying one detailed dose onto all slots. Use stable slot lineage and explicit
+crosswalks; day/AM/PM supplies context, never array-index reassignment.
+
+Recommendations filter exact authority, scope, lifecycle, eligibility, safety and
+record requirements first and use versioned deterministic policy/tie-breaks. They
+do not select or apply a plan. Edit only an isolated slot draft; apply atomically
+rechecks its base/draft revision, complete plan constraints and all gates. Cancel,
+record/method/start-date changes and intake return invalidate queued applies/saves.
+Plan acceptance is a separate explicit action; old accepted plans remain immutable.
+
+Finite reviewed presets and exact scalar rules are not a free numeric editor or
+permission to bypass the unchanged adaptation machine policy. No automatic dose
+increase, new reduced-repeat sibling, additional MAIN, catch-up or multi-dimension
+successor transformation is introduced. Planned versus actual remains explicit;
+memo content/metadata is excluded. Youth/self-use and owner-scoped authority remain.
+
+The [30-entry local readiness matrix](../../reports/review/SESSION_METHOD_CATALOG_READINESS_2026-09-05.md)
+holds source/configuration/adjustment gaps as grouped preparation work, not runtime
+approvals or repeated requests to approve the feature. No Open Issue is closed.
 
 [DRAFT_COMPLETE]

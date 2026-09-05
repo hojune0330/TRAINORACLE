@@ -10,7 +10,7 @@ export type ImportedActivity = {
   readonly sport: string
   /** km, 소수 2자리 문자열 (기존 일지 필드와 동일 표현) */
   readonly distanceKm: string
-  /** 분, 정수 문자열 */
+  /** 분, 원본 소수 정밀도 유지 */
   readonly durationMin: string
   /** m:ss/km 표현 — 거리·시간 둘 다 있을 때만 파생, 아니면 "" */
   readonly avgPace: string
@@ -74,7 +74,7 @@ function toActivity(
     name: name.trim() || "가져온 활동",
     sport: sport.trim() || "unknown",
     distanceKm: distanceMeters > 0 ? (distanceMeters / 1000).toFixed(2) : "",
-    durationMin: seconds > 0 ? String(Math.round(seconds / 60)) : "",
+    durationMin: seconds > 0 ? String(seconds / 60) : "",
     avgPace: paceOf(distanceMeters, seconds),
   }
 }

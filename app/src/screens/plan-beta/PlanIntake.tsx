@@ -32,6 +32,7 @@ import {
 } from "./plan-intake-navigation"
 import type { RefinementStep } from "./plan-intake-navigation"
 import { resolveDetailedPlanTemplateOptions } from "./plan-template-options"
+import { PlanSupportCoverage } from "./PlanSupportCoverage"
 
 export type IntakeStep = MetaIntakeStep | "frame-length" | "race-date" | "preview"
 
@@ -309,6 +310,7 @@ export function PlanIntake({
                   : "지금 고른 종목·훈련 목적에는 활성화된 상세 훈련표가 없어요. RPE 기준 계획은 그대로 받을 수 있어요."}
               </p>
             )}
+            <PlanSupportCoverage experienceBand={draft.experienceBand} />
           </>
         )}
         {step === "days" && (

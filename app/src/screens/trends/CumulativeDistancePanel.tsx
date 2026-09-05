@@ -75,9 +75,15 @@ export function CumulativeDistancePanel({
             <div key={item.label}>
               <span>{item.label}</span>
               <strong>{distanceText(item.summary)}<small>{item.summary.totalKm === null ? "" : " km"}</small></strong>
+              <small>반영 {item.summary.includedSourceCount}건 · 제외 {item.summary.excludedSourceCount}건</small>
             </div>
           ))}
         </div>
+        <details className="distance-overview__details">
+          <summary>집계 근거 보기</summary>
+          {items.map(item => <p key={item.label}>{item.label}: {item.summary.window.startDate}~{item.summary.window.endDate} · 중복 사본 {item.summary.duplicateSourceCount}개 · 충돌 {item.summary.conflictingSourceCount}건</p>)}
+          <p>가져온 값과 출처가 확인되지 않은 값은 아직 제외해요. 기간별 건수는 서로 겹칠 수 있어 더하지 않아요.</p>
+        </details>
         {items.every((item) => item.summary.totalKm === null) && (
           <p className="distance-overview__empty">훈련 후 거리를 직접 적으면 주·월·연간 합계가 여기서 시작돼요.</p>
         )}
@@ -158,7 +164,7 @@ function DistanceTotal({ label, summary }: {
     <div aria-label={`${label}, ${distanceAccessibleText(summary)}`}>
       <span>{label}</span>
       <strong>{distanceText(summary)}<small>{summary.totalKm === null ? "" : " km"}</small></strong>
-      <em>{summary.totalKm === null ? "기록 없음" : `${summary.includedSourceCount}건 반영`}</em>
+      <em>{summary.includedSourceCount}건 반영 · {summary.excludedSourceCount}건 제외</em>
     </div>
   )
 }
@@ -192,7 +198,7 @@ function DistanceSeries({ title, buckets, labelForBucket, control }: {
   readonly control: React.ReactNode
 }) {
   const values = buckets.flatMap((bucket) => bucket.totalKm === null ? [] : [bucket.totalKm])
-  const max = Math.max(...values, 1)
+  const max = Math.max(...values, 0) || 1
   const excluded = buckets.reduce((sum, bucket) => sum + bucket.excludedSourceCount, 0)
 
   return (
@@ -212,7 +218,7 @@ function DistanceSeries({ title, buckets, labelForBucket, control }: {
             <span>{bucket.totalKm === null ? "—" : bucket.totalKm}</span>
             <i
               data-missing={bucket.totalKm === null ? "true" : "false"}
-              style={{ height: bucket.totalKm === null ? 8 : `${Math.max(12, (bucket.totalKm / max) * 72)}px` }}
+              style={{ height: bucket.totalKm === null ? 0 : `${(bucket.totalKm / max) * 72}px` }}
             />
             <small>{labelForBucket(bucket.label)}</small>
           </div>

@@ -4,6 +4,14 @@ import { resolveDetailedPrescriptionRuntimeAuthority } from "../../domain/detail
 import type { PlanBetaIntake } from "../../domain/plan-beta-store"
 import { parsePrescriptionNotation } from "@impl/prescription/notation"
 import { formatTrainingSeconds } from "./labels"
+import {
+  recommendMethods,
+  type MethodFamily,
+  type MethodHistoryEntry,
+  type RepeatPreference,
+} from "@impl/prescription/method-recommendation"
+import { parsePrescriptionSequence, type SequenceRecovery } from "@impl/prescription/sequence"
+import { loadPlanMethodHistory } from "../../domain/plan-beta-store"
 
 export type DetailedPlanTemplateOption = {
   readonly ref: PlanBetaIntake["selectedDetailedTemplateRef"] & object
@@ -13,6 +21,10 @@ export type DetailedPlanTemplateOption = {
   readonly mainSummary: string
   readonly recoverySummary: string
   readonly preparationSummary: string
+  readonly recommended?: boolean
+  readonly recommendationReason?: string
+  readonly observedPerformedCount?: number
+  readonly selectedCount?: number
 }
 
 export function resolveDetailedPlanTemplateOption(
@@ -25,6 +37,8 @@ export function resolveDetailedPlanTemplateOption(
 export function resolveDetailedPlanTemplateOptions(
   draft: Pick<Partial<PlanBetaIntake>, "eventDistanceM" | "trainingFocus" | "experienceBand">,
   evaluatedAt = new Date().toISOString(),
+  history: readonly MethodHistoryEntry[] = loadPlanMethodHistory(draft.eventDistanceM),
+  repeatPreference: RepeatPreference = "PREFER_VARIETY",
 ): readonly DetailedPlanTemplateOption[] {
   if (draft.eventDistanceM === undefined || draft.trainingFocus === undefined || draft.experienceBand === undefined) return []
   const eventDistanceM = draft.eventDistanceM
@@ -34,7 +48,8 @@ export function resolveDetailedPlanTemplateOptions(
     candidate.targetEventDistanceM === eventDistanceM
     && candidate.eligibleExperienceBands.includes(experienceBand)
   ))
-  return approvals.flatMap((approval): DetailedPlanTemplateOption[] => {
+  const catalog: MethodFamily[] = []
+  const options = approvals.flatMap((approval): DetailedPlanTemplateOption[] => {
     const ref = {
       templateId: approval.templateId,
       version: approval.templateVersion,
@@ -50,6 +65,29 @@ export function resolveDetailedPlanTemplateOptions(
     const parsed = parsePrescriptionNotation(authority.approval.notation)
     if (parsed.kind !== "parsed") return []
     const notation = parsed.notation
+    const noRecovery: SequenceRecovery = { mode: "NOT_APPLICABLE", seconds: null }
+    const recoveryFor = (seconds: number | null, mode: typeof notation.repetitionRecoveryMode): SequenceRecovery => (
+      mode === "NOT_APPLICABLE" ? noRecovery : { seconds, mode }
+    )
+    const sequence = parsePrescriptionSequence({
+      kind: "PRESCRIPTION_SEQUENCE", version: 2, id: approval.templateId, label: null,
+      warmup: [], cooldown: [], terminalRecovery: noRecovery,
+      main: [{ kind: "group", id: "sets", label: null, repeatCount: notation.setCount,
+        recoveryAfter: noRecovery, recoveryBetweenRepeats: recoveryFor(notation.setRecoverySeconds, notation.setRecoveryMode),
+        children: [{ kind: "segment", id: "work", label: null, repeatCount: notation.repetitionsPerSet,
+          work: notation.repetitionDistanceM === null
+            ? { kind: "duration", distanceM: null, durationSeconds: notation.repetitionDurationSeconds }
+            : { kind: "distance", distanceM: notation.repetitionDistanceM, durationSeconds: null },
+          target: { kind: "RACE_PACE", eventDistanceM: notation.paceTargetEventDistanceM, anchorRef: null },
+          recoveryAfter: noRecovery,
+          recoveryBetweenRepeats: recoveryFor(notation.repetitionRecoverySeconds, notation.repetitionRecoveryMode),
+        }],
+      }],
+    })
+    if (sequence.kind !== "parsed") return []
+    catalog.push({ familyId: approval.templateId, reviewRef: approval.approvalDecisionId,
+      configurations: [{ configurationId: approval.templateId, version: approval.templateVersion, sequence: sequence.sequence }],
+    })
     const components = authority.approval.canonicalTemplateContent.operationalComponents
     const warmup = components.warmup
     const cooldown = components.cooldown
@@ -72,6 +110,34 @@ export function resolveDetailedPlanTemplateOptions(
       mainSummary: `${work} ${notation.repetitionsPerSet}회${notation.setCount > 1 ? `씩 ${notation.setCount}세트 · 총 ${totalRepetitions}회` : ""}`,
       recoverySummary: recovery.join(" · "),
       preparationSummary: `준비 ${warmup.easyDurationMinutes}분 RPE ${warmup.rpeMin}-${warmup.rpeMax}, ${warmup.strides.durationSeconds}초 점진 가속 ${warmup.strides.repetitions}회와 사이 ${warmup.strides.recoverySeconds}초 걷기/조깅 · 정리 ${cooldown.easyDurationMinutes}분 RPE ${cooldown.rpeMin}-${cooldown.rpeMax}`,
+    }]
+  })
+  const ranked = recommendMethods({ catalog, assessments: catalog.flatMap(family => family.configurations.map(configuration => ({
+    familyId: family.familyId, configurationId: configuration.configurationId, version: configuration.version,
+    eligibility: "ELIGIBLE" as const, eligibilityPriority: 0, purposePriority: 0, contextPriority: 0,
+  }))), history, repeatPreference })
+  if (ranked.kind !== "recommended") return []
+  return ranked.eligible.flatMap(method => {
+    const option = options.find(item => item.ref.templateId === method.configurationId && item.ref.version === method.version)
+    if (option === undefined) return []
+    const isRecommended = ranked.defaults.some(item => (
+      item.familyId === method.familyId && item.configurationId === method.configurationId && item.version === method.version
+    ))
+    const otherFamilies = ranked.eligible.filter(item => item.familyId !== method.familyId)
+    const leastPerformed = Math.min(...ranked.eligible.map(item => item.observedPerformedCount))
+    const recommendationReason = isRecommended
+      ? otherFamilies.length === 0
+        ? "현재 조건에서 검토가 끝난 상세 방법"
+        : repeatPreference === "PREFER_VARIETY" && method.observedPerformedCount === leastPerformed
+          ? "완료 기록이 적은 방법을 먼저 제안"
+          : "현재 조건과 목적에 맞는 우선 제안"
+      : undefined
+    return [{
+      ...option,
+      recommended: isRecommended,
+      recommendationReason,
+      observedPerformedCount: method.observedPerformedCount,
+      selectedCount: method.selectedCount,
     }]
   })
 }

@@ -53,7 +53,7 @@ export function EnergySystemLedgerPanel({
   const plan = React.useMemo(() => summarizeCurrentPlanEnergy(planState), [planState])
 
   if (mode === "compact") {
-    const actualRows = ledger.rows.filter((row) => row.journalSessionCount > 0)
+    const actualRows = ledger.rows.filter((row) => row.journalSessionCount > 0 && row.key !== "MIXED_UNALLOCATED")
     const mixed = ledger.rows.find((row) => row.key === "MIXED_UNALLOCATED")
     const mixedMeta = ENERGY_SYSTEM_META.MIXED_UNALLOCATED
     return (
@@ -70,10 +70,10 @@ export function EnergySystemLedgerPanel({
           )}
         </div>
         {ledger.coverage === "MISSING" ? (
-          <p className="energy-ledger__empty">직접 고른 에너지 시스템 기록이 아직 없어요.</p>
+          <p className="energy-ledger__empty">{ledger.excludedSourceCount > 0 ? "기록은 있지만 분석에 사용할 훈련 목적을 확인하지 못했어요." : "직접 고른 에너지 시스템 기록이 아직 없어요."}</p>
         ) : (
           <div className="energy-ledger__compact-list">
-            {actualRows.slice(0, 4).map((row) => (
+            {actualRows.map((row) => (
               <EnergyCompactRow key={row.key} energyKey={row.key} count={row.journalSessionCount} />
             ))}
           </div>
@@ -81,6 +81,10 @@ export function EnergySystemLedgerPanel({
         <p className="energy-ledger__mixed-note">
           {mixedMeta.code} {mixedMeta.shortLabel} {ledger.coverage === "MISSING" ? "—" : `${mixed?.journalSessionCount ?? 0}회`}
         </p>
+        <details className="energy-ledger__coverage">
+          <summary>집계 근거 · 반영 {ledger.includedSourceCount}건 · 제외 {ledger.excludedSourceCount}건</summary>
+          <p>중복 사본 {ledger.duplicateSourceCount}개 · 충돌 {ledger.conflictingSourceCount}건. 일지에서 직접 고른 주된 목적의 횟수예요. 실제 대사 기여율은 아니에요.</p>
+        </details>
         {plan !== null && (
           <p className="energy-ledger__plan-brief">
             현재 계획 예정 {plan.plannedSessionCount}회 · 완료 표시 {plan.completedMarkCount}회
@@ -134,14 +138,14 @@ export function EnergySystemLedgerPanel({
               {ledger.coverage === "MISSING" ? (
                 <span className="energy-ledger__bar-missing" />
               ) : row.journalSessionCount > 0 ? (
-                <span className="energy-ledger__bar-fill" style={{ width: `${Math.max(12, (row.journalSessionCount / maxCount) * 100)}%` }} />
+                <span className="energy-ledger__bar-fill" style={{ width: `${(row.journalSessionCount / maxCount) * 100}%` }} />
               ) : null}
             </div>
             <strong className="energy-ledger__count">
               {ledger.coverage === "MISSING" ? "—" : `${row.journalSessionCount}회`}
             </strong>
             <span className="energy-ledger__metrics">
-              {metricText(row.durationMinutes, "분")} · {metricText(row.distanceKm, "km")} · RPE {row.meanRpe ?? "미기록"}
+              {row.journalSessionCount === 0 ? "분석에 포함된 해당 목적의 기록 없음" : <>{metricText(row.durationMinutes, "분")} ({row.durationSampleCount}회 기록) · {metricText(row.distanceKm, "km")} ({row.distanceSampleCount}회 기록) · RPE {row.meanRpe ?? "미기록"} ({row.rpeSampleCount}회 기록)</>}
             </span>
           </div>
         ))}
@@ -154,13 +158,14 @@ export function EnergySystemLedgerPanel({
           label: `${ENERGY_SYSTEM_META[row.key].code} ${ENERGY_SYSTEM_META[row.key].shortLabel}`,
           value: ledger.coverage === "MISSING"
             ? "직접 선택한 기록 없음"
-            : `${row.journalSessionCount}회 · ${metricText(row.durationMinutes, "분")} · ${metricText(row.distanceKm, "km")} · RPE ${row.meanRpe ?? "미기록"}`,
+            : `${row.journalSessionCount}회 · ${metricText(row.durationMinutes, "분")} (${row.durationSampleCount}회 기록) · ${metricText(row.distanceKm, "km")} (${row.distanceSampleCount}회 기록) · RPE ${row.meanRpe ?? "미기록"} (${row.rpeSampleCount}회 기록)`,
         }))}
       />
 
       <p className="energy-ledger__coverage">
-        직접 선택 {ledger.includedSourceCount}건 · 제외 {ledger.excludedSourceCount}건 · 중복 {ledger.duplicateSourceCount}건
+        직접 선택 {ledger.includedSourceCount}건 · 제외 {ledger.excludedSourceCount}건 · 중복 사본 {ledger.duplicateSourceCount}개 · 충돌 {ledger.conflictingSourceCount}건
       </p>
+      <p className="energy-ledger__boundary">시간과 거리는 해당 목적으로 기록한 세션의 합계예요. 준비·회복·정리가 포함될 수 있고, 한 대사 경로만 사용한 시간은 아니에요. RPE는 입력된 기록의 단순 평균이에요.</p>
 
       <CurrentPlanEnergy plan={plan} />
       <p className="energy-ledger__boundary">

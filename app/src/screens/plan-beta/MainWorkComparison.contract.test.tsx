@@ -10,10 +10,20 @@ const view: MainPrescriptionView = {
   kind: "PACE_TARGET", work: "1세트 × (10회 × 200m) · 총 10회", recovery: "반복 사이 60초 서서 쉬기 · 총 9번",
   intensity: "800m 기록 기준 · 200m마다 목표 30.5초", time: "전체 수행시간 미산정", limitation: "효과나 부담이 같다는 뜻은 아니에요.",
 }
-const row: MainComparisonRow = { key: "2:PM", day: 2, slot: "PM", a: view, b: view, samePrescribedValues: true, methodRelation: "SAME" }
+const row: MainComparisonRow = { key: "2:PM", day: 2, slot: "PM", a: view, b: view, samePrescribedValues: true, methodRelation: "SAME", methodDifferences: [] }
 const comparison = { contextMatches: true, easyDurationOnly: true, sameMainValues: true, sameMainPrescription: true, hasDetailed: true, hasUnspecified: false, rows: [row] }
 
 describe("MAIN comparison presentation", () => {
+  it("names structural differences without claiming a reviewed alternative", async () => {
+    const user = userEvent.setup()
+    render(<MainWorkComparison comparison={{ ...comparison, rows: [{ ...row, samePrescribedValues: false,
+      methodRelation: "DIFFERENT_REQUIRES_REVIEW", methodDifferences: ["WORK_UNIT", "RECOVERY", "TERMINAL_RECOVERY"],
+    }] }} />)
+    await user.click(screen.getByText("본운동 방법 비교"))
+    expect(screen.getByText("다른 부분: 한 번에 달리는 거리·시간 · 반복·세트·구간 사이 회복 · 마지막 본운동 뒤 회복")).toBeVisible()
+    expect(screen.getByText(/두 방법의 적용 범위와 차이를 검토해야/u)).toBeVisible()
+  })
+
   it("starts compact and expands actual shared work once", async () => {
     const user = userEvent.setup()
     render(<MainWorkComparison comparison={comparison} />)

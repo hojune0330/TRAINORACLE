@@ -4,6 +4,7 @@ import { afterEach, describe, expect, it } from "vitest"
 import type { StructuredJournalObservation } from "../../domain/journal-observation"
 import { stateFixture } from "../../domain/plan-beta-store.test-fixture"
 import { EnergySystemLedgerPanel } from "./EnergySystemLedgerPanel"
+import { ENERGY_SYSTEM_KEYS } from "../../domain/energy-system-taxonomy"
 
 afterEach(cleanup)
 
@@ -40,6 +41,19 @@ function observation(): StructuredJournalObservation {
 }
 
 describe("energy system ledger UI", () => {
+  it("does not hide later categories in compact mode or repeat MIX", () => {
+    const observations = ENERGY_SYSTEM_KEYS.map((key, index) => ({ ...observation(), energySystem: key, sourceRef: { ...observation().sourceRef, sourceId: String(index) } }))
+    const { container } = render(<EnergySystemLedgerPanel observations={observations} today="2026-08-28" planState={null} mode="compact" />)
+    expect(container.querySelectorAll(".energy-ledger__compact-row")).toHaveLength(6)
+    expect(screen.getByText("ATP-PC")).toBeVisible()
+    expect(screen.getAllByText("MIX 여러 강도 조합 1회")).toHaveLength(1)
+  })
+  it("uses exact proportional bar length for rare purposes", () => {
+    const observations = Array.from({ length: 20 }, (_, index) => ({ ...observation(), sourceRef: { ...observation().sourceRef, sourceId: String(index) } }))
+    observations.push({ ...observation(), energySystem: "ATP_PC", sourceRef: { ...observation().sourceRef, sourceId: "rare" } })
+    const { container } = render(<EnergySystemLedgerPanel observations={observations} today="2026-08-28" planState={null} mode="full" />)
+    expect(container.querySelector(".energy-ledger__row--atp-pc .energy-ledger__bar-fill")).toHaveStyle({ width: "5%" })
+  })
   it("shows every system, honest metrics, mixed-unallocated, and an accessible table", async () => {
     const user = userEvent.setup()
     render(<EnergySystemLedgerPanel
@@ -51,7 +65,7 @@ describe("energy system ledger UI", () => {
 
     const region = screen.getByRole("region", { name: "에너지 시스템 누적" })
     expect(within(region).getByRole("img", { name: /LT 지속 페이스 1회/u })).toBeVisible()
-    expect(within(region).getByText("40분 · 8km · RPE 6")).toBeVisible()
+    expect(within(region).getByText("40분 (1회 기록) · 8km (1회 기록) · RPE 6 (1회 기록)")).toBeVisible()
     expect(within(region).getByRole("img", { name: /MIX 여러 강도 조합 0회/u })).toBeVisible()
     expect(within(region).getByRole("table", { name: "에너지 시스템별 일지 누적" })).toBeInTheDocument()
     expect(within(region).getByText(/예정 1회 · 완료 표시 0회/u)).toBeVisible()
