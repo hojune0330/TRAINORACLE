@@ -7,6 +7,25 @@ import type { PostSessionEntry } from "../src/domain/journal-schema"
 
 test.use({ serviceWorkers: "block" })
 
+for (const journal of ["{broken-json", '[{"invalid":"journal"}]']) {
+  test(`unreadable journal is not reported as no linked activity: ${journal}`, async ({ page }) => {
+    const state = stateFixture()
+    await page.addInitScript(({ plan, raw }) => {
+      localStorage.setItem("trainoracle.plan-beta.v1", JSON.stringify(plan))
+      localStorage.setItem("trainoracle.journal.v1", raw)
+    }, { plan: state, raw: journal })
+    await page.goto("/?app=1")
+    await page.getByRole("navigation", { name: "내 기록 살펴보기" }).getByRole("button", { name: /^훈련 계획/u }).click()
+    await page.getByRole("button", { name: "훈련 방법과 이유", exact: true }).first().click()
+    const reader = page.getByRole("dialog")
+    await reader.getByRole("tab", { name: "주기·기록" }).click()
+    await expect(reader.getByText(/조회하지 못한 상태를 일지가 없는 것으로 판단하지 않아요/u)).toBeVisible()
+    await expect(reader.getByText(/이 훈련과 연결된 일지가 아직 없어요/u)).toHaveCount(0)
+    expect(await page.evaluate(() => localStorage.getItem("trainoracle.journal.v1"))).toBe(journal)
+    expect(await page.evaluate(() => JSON.parse(localStorage.getItem("trainoracle.plan-beta.v1")!))).toEqual(state)
+  })
+}
+
 test("exact linked observations survive reload without implying prescription adherence", async ({ page }, testInfo) => {
   const state = stateFixture()
   const draft = createPlannedSessionLogDraft(state, state.activePlan.sessions[0]!, state.generatedAt)!

@@ -475,6 +475,11 @@ suppress numeric observations rather than selecting an arbitrary result.
 No split, recovery measurement or adherence verdict is inferred. Original plan
 snapshots are required; v4 archive summaries cannot reconstruct old prescriptions.
 This projection does not read memo text or grant recommendation authority.
+The reader must preserve journal storage read completeness before projection.
+A storage exception, malformed JSON or rejected record is unavailable evidence,
+not an empty journal. Do not show partial surviving rows as a complete observation
+set, or rewrite the original data to make this read succeed. A genuinely complete
+empty scoped read may report no linked journal.
 
 In the PR #318 v4 adapter, `COMPLETED` maps to stored `PERFORMED`. This is
 self-reported completion of a planned occurrence, not measured adherence to its
