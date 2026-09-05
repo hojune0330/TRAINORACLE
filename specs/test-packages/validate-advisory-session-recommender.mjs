@@ -25,8 +25,8 @@ const eventGroups = new Set(["SPRINT", "MIDDLE_DISTANCE", "LONG_DISTANCE", "ROAD
 const performanceUnits = new Set(["MILLISECONDS", "SECONDS", "DISTANCE_METERS"]);
 const identifierPattern = /^[A-Z0-9][A-Z0-9._-]*$/u;
 const expectedSourceCounts = new Map([
-  ["DIRECT_SOURCE_EXAMPLE", 6],
-  ["SOURCE_ADAPTED", 9],
+  ["DIRECT_SOURCE_EXAMPLE", 5],
+  ["SOURCE_ADAPTED", 10],
   ["POPULATION_INDIRECT", 6],
   ["PRODUCT_VARIANT", 4],
   ["REJECTED_OR_UNUSABLE", 5],
@@ -191,6 +191,10 @@ let runtimeCandidateCount = 0;
 for (const block of blocks) {
   const templateId = block.match(/^- templateId: ([^\r\n]+)/mu)?.[1] ?? "MISSING";
   const sourceTier = getField(block, "sourceVerificationStatus");
+  if (templateId === "LT-SEED-03") {
+    failUnless(sourceTier === "SOURCE_ADAPTED", "LT-SEED-03 must remain SOURCE_ADAPTED: miles are not 1600m");
+    failUnless(getField(block, "transferLimitations").includes("4 x 1 mile, not 4 x 1600m"), "LT-SEED-03 must disclose the source distance adaptation");
+  }
   failUnless(expectedSourceCounts.has(sourceTier), `${templateId} has unknown source tier ${sourceTier}`);
   if (sourceCounts.has(sourceTier)) sourceCounts.set(sourceTier, sourceCounts.get(sourceTier) + 1);
   if (templateId === "V2-SEED-05") {
