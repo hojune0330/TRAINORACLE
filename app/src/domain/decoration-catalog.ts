@@ -1,3 +1,20 @@
+import {
+  COLLECTION_ITEM_IDS,
+  DECORATION_COLLECTIONS,
+  acquisitionCost,
+  collectionAssetPath,
+  collectionBundleCost,
+  collectionItemAcquisition,
+  collectionItemAvailability,
+} from "./decoration-collections"
+import type {
+  DecorationAcquisition,
+  DecorationAvailability,
+  DecorationCollection,
+  DecorationCollectionId,
+  LicenseId,
+} from "./decoration-collections"
+
 /*
  * 이모지 스티커 전용 슬롯 3칸: 종이 다이어리의 "칸에 붙이는 스티커" 감성.
  * 슬롯이 3칸뿐이라 페이지당 이모지 밀도 상한(3개)이 스키마 수준에서
@@ -37,20 +54,14 @@ export const TRAINORACLE_STICKER_IDS = [
   "STICKER_TRAIL_TREE", "STICKER_MEDAL_RIBBON", "STICKER_NIGHT_MOON",
   "STICKER_BANDAGE_CARE",
 ] as const
-export const CUTE_STICKER_IDS = [
-  "CUTE_FLUENT_RUNNING_SHOE", "CUTE_FLUENT_STOPWATCH", "CUTE_FLUENT_RUNNING_SHIRT",
-  "CUTE_FLUENT_FINISH_FLAG", "CUTE_FLUENT_SPORTS_MEDAL", "CUTE_FLUENT_MOUNTAIN",
-  "CUTE_FLUENT_RED_HEART", "CUTE_FLUENT_DROPLET", "CUTE_FLUENT_BANDAGE",
-  "CUTE_FLUENT_HOT_BEVERAGE", "CUTE_FLUENT_HERB", "CUTE_FLUENT_BLUE_HEART",
-  "CUTE_FLUENT_SUN", "CUTE_FLUENT_RAIN_CLOUD", "CUTE_FLUENT_MOON",
-  "CUTE_FLUENT_SPARKLES", "CUTE_FLUENT_FIRE", "CUTE_FLUENT_ALARM_CLOCK",
-  "CUTE_FLUENT_TROPHY", "CUTE_FLUENT_PARTY_POPPER", "CUTE_FLUENT_STAR",
-  "CUTE_FLUENT_CHECK", "CUTE_FLUENT_BULLSEYE", "CUTE_FLUENT_HUNDRED",
-  "CUTE_PEEP_HUMMING", "CUTE_PEEP_HELLO", "CUTE_PEEP_HEART", "CUTE_PEEP_SPARKLE",
-] as const
+/*
+ * 컬렉션 아이템(귀여운 스티커·시즌·굿즈·라이선스 캐릭터)은 `decoration-collections.ts` 레지스트리에서 파생한다.
+ * 모두 종이 스티커(TOP_CORNER/BODY_MARGIN)로 붙이는 배치형 아이템이다.
+ * retire-never-delete: RETIRED 컬렉션도 여기에 그대로 남아 저장된 배치가 계속 파싱·렌더된다.
+ */
 export const STICKER_DECORATION_IDS = [
   ...TRAINORACLE_STICKER_IDS,
-  ...CUTE_STICKER_IDS,
+  ...COLLECTION_ITEM_IDS,
 ] as const
 export const STAMP_DECORATION_IDS = [
   "STAMP_REST_DAY", "STAMP_DONE_CHECK", "STAMP_PERSONAL_BEST", "STAMP_EARLY_BIRD",
@@ -61,7 +72,11 @@ export const AVATAR_DECORATION_IDS = [
   "AVATAR_START_LINE", "AVATAR_EASY_JOG", "AVATAR_SPRINTER", "AVATAR_STRETCHING",
 ] as const
 
-/* TrainOracle 그림 34개 + 오픈 라이선스 그림 28개 + INK_NAVY 스와치 1개. */
+/*
+ * TrainOracle 자체 그림 34개(§2.2 문구용품 스타일) + INK_NAVY 스와치 1개
+ * + 레지스트리 컬렉션(현재 OPEN_CUTE_V1 28개, 오픈 라이선스 이모지풍 — 기본 재료와 스타일이 다른 것이 의도).
+ * 새 컬렉션은 `DECORATION_COLLECTIONS`에 한 항목을 추가하면 이 id 집합·zod enum·카탈로그에 자동으로 들어온다.
+ */
 export const DECORATION_IDS = [
   ...THEME_DECORATION_IDS,
   ...TAPE_DECORATION_IDS,
@@ -81,12 +96,16 @@ export const STARTER_DECORATION_IDS = [
   "INK_NAVY", "AVATAR_EASY_JOG", "AVATAR_STRETCHING",
   ...EMOJI_STICKER_IDS,
 ] as const
+/*
+ * "PAID" = 기본 제공이 아니어서 보유(ownedItemIds) 확인이 필요한 아이템.
+ * 포인트 구매뿐 아니라 보상(REWARD)·시즌(SEASON) 지급도 여기 포함된다 — 실제 차감액은 `acquisition`으로 판단한다.
+ */
 export const PAID_DECORATION_IDS = [
   "THEME_SKY_JOURNAL", "THEME_DAWN_RUN", "THEME_FOREST_TRAIL", "THEME_RACE_DAY",
   "TAPE_DOT_GRID", "TAPE_TRACK_LANE", "TAPE_MOUNTAIN",
   "STICKER_FINISH_LINE", "STICKER_HEART_RATE", "STICKER_TRAIL_TREE",
   "STICKER_MEDAL_RIBBON", "STICKER_NIGHT_MOON",
-  ...CUTE_STICKER_IDS,
+  ...COLLECTION_ITEM_IDS,
   "STAMP_PERSONAL_BEST", "STAMP_EARLY_BIRD", "STAMP_RAIN_RUN", "STAMP_LONG_RUN",
   "STAMP_INTERVAL", "AVATAR_START_LINE", "AVATAR_SPRINTER",
 ] as const
@@ -100,21 +119,10 @@ export type PaidDecorationId = (typeof PAID_DECORATION_IDS)[number]
 export type ThemeDecorationId = (typeof THEME_DECORATION_IDS)[number]
 export type TapeDecorationId = (typeof TAPE_DECORATION_IDS)[number]
 export type StickerDecorationId = (typeof STICKER_DECORATION_IDS)[number]
-export type CuteStickerId = (typeof CUTE_STICKER_IDS)[number]
 export type StampDecorationId = (typeof STAMP_DECORATION_IDS)[number]
 export type InkDecorationId = (typeof INK_DECORATION_IDS)[number]
 export type AvatarDecorationId = (typeof AVATAR_DECORATION_IDS)[number]
 export type PlacementDecorationId = (typeof PLACEMENT_DECORATION_IDS)[number]
-
-export const CUTE_STICKER_PRICE = 4 as const
-export const CUTE_STICKER_GROUPS = [
-  { id: "RUNNING_TOOLS", label: "달리기·도구" },
-  { id: "MOOD_RECOVERY", label: "기분·회복" },
-  { id: "WEATHER_TIME", label: "날씨·시간" },
-  { id: "CHEER_ACHIEVEMENT", label: "응원·성취" },
-  { id: "DOODLE_FRIENDS", label: "낙서 친구" },
-] as const
-export type CuteStickerGroupId = (typeof CUTE_STICKER_GROUPS)[number]["id"]
 
 export const EMOJI_STICKER_GROUPS = [
   { id: "WEATHER_SEASON", label: "날씨·계절" },
@@ -135,16 +143,37 @@ export type DecorationCatalogItem = {
   readonly assetPath: string
   readonly category: "THEME" | "INK" | "STICKER" | "STAMP" | "TAPE" | "AVATAR" | "EMOJI_STICKER"
   readonly compatibleSlots: readonly DecorationSlot[]
+  /** `acquisition`에서 파생된 포인트 차감액(보상·시즌·기본 제공은 0). */
   readonly cost: number
   readonly starterOwned: boolean
+  /** 획득 경로. 상점 버튼 문구·보상 자동 지급·번들 계산이 여기서 나온다. */
+  readonly acquisition: DecorationAcquisition
+  /** RETIRED면 상점에 신규 노출하지 않고, 보유·배치되어 있는 것은 그대로 렌더한다. */
+  readonly availability: DecorationAvailability
+  /** `LICENSES` 레지스트리 참조. 기본 재료는 자체 제작. */
+  readonly licenseId: LicenseId
   /** EMOJI_STICKER 전용: NFC 정규화된 유니코드 문자. 텍스트로만 렌더한다. */
   readonly emoji?: string
   /** EMOJI_STICKER 전용: 픽커 그룹. */
   readonly emojiGroup?: EmojiStickerGroupId
-  /** 오픈 라이선스 귀여운 스티커 컬렉션 전용 메타데이터. */
-  readonly collection?: "OPEN_CUTE_V1"
-  readonly cuteGroup?: CuteStickerGroupId
-  readonly licenseRef?: "FLUENT_EMOJI_FLAT_MIT" | "OPEN_PEEPS_CC0"
+  /** 컬렉션 아이템 전용: 소속 컬렉션과 컬렉션 내 그룹. */
+  readonly collection?: DecorationCollectionId
+  readonly collectionGroup?: string
+}
+
+/** 기본 재료 행: 획득 경로·라이선스는 cost/starterOwned에서 일괄 파생한다. */
+type BaseMaterialRow = Omit<
+  DecorationCatalogItem,
+  "acquisition" | "availability" | "licenseId" | "emoji" | "emojiGroup" | "collection" | "collectionGroup"
+>
+
+function baseMaterial(row: BaseMaterialRow): DecorationCatalogItem {
+  return {
+    ...row,
+    acquisition: row.starterOwned ? { kind: "STARTER" } : { kind: "POINTS", cost: row.cost },
+    availability: "ACTIVE",
+    licenseId: "TRAINORACLE_IN_HOUSE",
+  }
 }
 
 type EmojiStickerDefinition = {
@@ -154,62 +183,32 @@ type EmojiStickerDefinition = {
   readonly group: EmojiStickerGroupId
 }
 
-type CuteStickerDefinition = {
-  readonly id: CuteStickerId
-  readonly name: string
-  readonly description: string
-  readonly fileName: string
-  readonly group: CuteStickerGroupId
-  readonly licenseRef: "FLUENT_EMOJI_FLAT_MIT" | "OPEN_PEEPS_CC0"
+/** 레지스트리 컬렉션 한 개 → 카탈로그 행. 가격·노출·라이선스는 전부 레지스트리에서 파생한다. */
+function collectionItems(collection: DecorationCollection): readonly DecorationCatalogItem[] {
+  return collection.items.map((definition) => {
+    const acquisition = collectionItemAcquisition(collection, definition)
+    return {
+      id: definition.id as DecorationId,
+      name: definition.name,
+      typeLabel: collection.title,
+      description: definition.description,
+      fallbackLabel: `${definition.name} 스티커 예시`,
+      assetPath: collectionAssetPath(collection, definition),
+      category: "STICKER" as const,
+      compatibleSlots: ["TOP_CORNER", "BODY_MARGIN"] as const,
+      cost: acquisitionCost(acquisition),
+      starterOwned: false,
+      acquisition,
+      availability: collectionItemAvailability(collection, definition),
+      licenseId: definition.licenseId,
+      collection: collection.id as DecorationCollectionId,
+      collectionGroup: definition.group,
+    }
+  })
 }
 
-const CUTE_STICKER_DEFINITIONS: readonly CuteStickerDefinition[] = [
-  { id: "CUTE_FLUENT_RUNNING_SHOE", name: "알록달록 러닝화", description: "달린 날을 가볍게 표시하는 러닝화예요.", fileName: "cute-fluent-running-shoe.webp", group: "RUNNING_TOOLS", licenseRef: "FLUENT_EMOJI_FLAT_MIT" },
-  { id: "CUTE_FLUENT_STOPWATCH", name: "동글 스톱워치", description: "기록을 재거나 반복 훈련을 한 날에 붙여요.", fileName: "cute-fluent-stopwatch.webp", group: "RUNNING_TOOLS", licenseRef: "FLUENT_EMOJI_FLAT_MIT" },
-  { id: "CUTE_FLUENT_RUNNING_SHIRT", name: "러닝 셔츠", description: "러닝복을 챙긴 날의 일지에 붙여요.", fileName: "cute-fluent-running-shirt.webp", group: "RUNNING_TOOLS", licenseRef: "FLUENT_EMOJI_FLAT_MIT" },
-  { id: "CUTE_FLUENT_FINISH_FLAG", name: "결승 깃발", description: "경기나 중요한 훈련을 마친 날에 붙여요.", fileName: "cute-fluent-finish-flag.webp", group: "RUNNING_TOOLS", licenseRef: "FLUENT_EMOJI_FLAT_MIT" },
-  { id: "CUTE_FLUENT_SPORTS_MEDAL", name: "반짝 메달", description: "완주나 기억하고 싶은 성취를 표시해요.", fileName: "cute-fluent-sports-medal.webp", group: "RUNNING_TOOLS", licenseRef: "FLUENT_EMOJI_FLAT_MIT" },
-  { id: "CUTE_FLUENT_MOUNTAIN", name: "초록 산", description: "언덕이나 트레일을 달린 날에 붙여요.", fileName: "cute-fluent-mountain.webp", group: "RUNNING_TOOLS", licenseRef: "FLUENT_EMOJI_FLAT_MIT" },
-  { id: "CUTE_FLUENT_RED_HEART", name: "빨간 하트", description: "좋았던 순간을 하트로 남겨요.", fileName: "cute-fluent-red-heart.webp", group: "MOOD_RECOVERY", licenseRef: "FLUENT_EMOJI_FLAT_MIT" },
-  { id: "CUTE_FLUENT_DROPLET", name: "파란 물방울", description: "수분 보충이나 땀 흘린 날을 표시해요.", fileName: "cute-fluent-droplet.webp", group: "MOOD_RECOVERY", licenseRef: "FLUENT_EMOJI_FLAT_MIT" },
-  { id: "CUTE_FLUENT_BANDAGE", name: "파란 반창고", description: "몸을 돌보고 회복한 날에 붙여요.", fileName: "cute-fluent-bandage.webp", group: "MOOD_RECOVERY", licenseRef: "FLUENT_EMOJI_FLAT_MIT" },
-  { id: "CUTE_FLUENT_HOT_BEVERAGE", name: "따뜻한 한 잔", description: "훈련 뒤 천천히 쉬어 간 날에 붙여요.", fileName: "cute-fluent-hot-beverage.webp", group: "MOOD_RECOVERY", licenseRef: "FLUENT_EMOJI_FLAT_MIT" },
-  { id: "CUTE_FLUENT_HERB", name: "초록 새싹", description: "회복하거나 다시 시작한 날을 표시해요.", fileName: "cute-fluent-herb.webp", group: "MOOD_RECOVERY", licenseRef: "FLUENT_EMOJI_FLAT_MIT" },
-  { id: "CUTE_FLUENT_BLUE_HEART", name: "파란 하트", description: "차분했던 하루의 기분을 남겨요.", fileName: "cute-fluent-blue-heart.webp", group: "MOOD_RECOVERY", licenseRef: "FLUENT_EMOJI_FLAT_MIT" },
-  { id: "CUTE_FLUENT_SUN", name: "웃는 해", description: "맑고 밝았던 날에 붙여요.", fileName: "cute-fluent-sun.webp", group: "WEATHER_TIME", licenseRef: "FLUENT_EMOJI_FLAT_MIT" },
-  { id: "CUTE_FLUENT_RAIN_CLOUD", name: "비구름", description: "비 오는 날의 훈련이나 하루를 표시해요.", fileName: "cute-fluent-rain-cloud.webp", group: "WEATHER_TIME", licenseRef: "FLUENT_EMOJI_FLAT_MIT" },
-  { id: "CUTE_FLUENT_MOON", name: "노란 초승달", description: "밤에 달리거나 늦게 기록한 날에 붙여요.", fileName: "cute-fluent-moon.webp", group: "WEATHER_TIME", licenseRef: "FLUENT_EMOJI_FLAT_MIT" },
-  { id: "CUTE_FLUENT_SPARKLES", name: "반짝이", description: "기억하고 싶은 부분을 반짝이로 꾸며요.", fileName: "cute-fluent-sparkles.webp", group: "WEATHER_TIME", licenseRef: "FLUENT_EMOJI_FLAT_MIT" },
-  { id: "CUTE_FLUENT_FIRE", name: "활활 불꽃", description: "열심히 해낸 순간을 표시해요.", fileName: "cute-fluent-fire.webp", group: "WEATHER_TIME", licenseRef: "FLUENT_EMOJI_FLAT_MIT" },
-  { id: "CUTE_FLUENT_ALARM_CLOCK", name: "빨간 알람시계", description: "이른 훈련이나 약속한 시간을 표시해요.", fileName: "cute-fluent-alarm-clock.webp", group: "WEATHER_TIME", licenseRef: "FLUENT_EMOJI_FLAT_MIT" },
-  { id: "CUTE_FLUENT_TROPHY", name: "작은 트로피", description: "스스로 칭찬하고 싶은 날에 붙여요.", fileName: "cute-fluent-trophy.webp", group: "CHEER_ACHIEVEMENT", licenseRef: "FLUENT_EMOJI_FLAT_MIT" },
-  { id: "CUTE_FLUENT_PARTY_POPPER", name: "축하 폭죽", description: "목표를 마치거나 기쁜 일이 있던 날에 붙여요.", fileName: "cute-fluent-party-popper.webp", group: "CHEER_ACHIEVEMENT", licenseRef: "FLUENT_EMOJI_FLAT_MIT" },
-  { id: "CUTE_FLUENT_STAR", name: "노란 별", description: "마음에 드는 기록 옆에 별을 붙여요.", fileName: "cute-fluent-star.webp", group: "CHEER_ACHIEVEMENT", licenseRef: "FLUENT_EMOJI_FLAT_MIT" },
-  { id: "CUTE_FLUENT_CHECK", name: "초록 체크", description: "약속한 일을 마친 날에 체크해요.", fileName: "cute-fluent-check.webp", group: "CHEER_ACHIEVEMENT", licenseRef: "FLUENT_EMOJI_FLAT_MIT" },
-  { id: "CUTE_FLUENT_BULLSEYE", name: "목표 정중앙", description: "목표에 가까워진 순간을 표시해요.", fileName: "cute-fluent-bullseye.webp", group: "CHEER_ACHIEVEMENT", licenseRef: "FLUENT_EMOJI_FLAT_MIT" },
-  { id: "CUTE_FLUENT_HUNDRED", name: "백점", description: "오늘의 만족스러운 기록에 붙여요.", fileName: "cute-fluent-hundred.webp", group: "CHEER_ACHIEVEMENT", licenseRef: "FLUENT_EMOJI_FLAT_MIT" },
-  { id: "CUTE_PEEP_HUMMING", name: "콧노래 친구", description: "기분 좋았던 하루에 낙서 친구를 붙여요.", fileName: "cute-peep-humming.webp", group: "DOODLE_FRIENDS", licenseRef: "OPEN_PEEPS_CC0" },
-  { id: "CUTE_PEEP_HELLO", name: "반가운 친구", description: "가볍게 인사하고 싶은 페이지에 붙여요.", fileName: "cute-peep-hello.webp", group: "DOODLE_FRIENDS", licenseRef: "OPEN_PEEPS_CC0" },
-  { id: "CUTE_PEEP_HEART", name: "설레는 친구", description: "마음에 든 순간을 낙서 친구로 남겨요.", fileName: "cute-peep-heart.webp", group: "DOODLE_FRIENDS", licenseRef: "OPEN_PEEPS_CC0" },
-  { id: "CUTE_PEEP_SPARKLE", name: "눈 반짝 친구", description: "새로운 목표나 기대되는 날에 붙여요.", fileName: "cute-peep-sparkle.webp", group: "DOODLE_FRIENDS", licenseRef: "OPEN_PEEPS_CC0" },
-]
-
-function cuteStickerItems(): readonly DecorationCatalogItem[] {
-  return CUTE_STICKER_DEFINITIONS.map((definition) => ({
-    id: definition.id,
-    name: definition.name,
-    typeLabel: "귀여운 스티커",
-    description: definition.description,
-    fallbackLabel: `${definition.name} 스티커 예시`,
-    assetPath: `decorations/${definition.fileName}`,
-    category: "STICKER" as const,
-    compatibleSlots: ["TOP_CORNER", "BODY_MARGIN"] as const,
-    cost: CUTE_STICKER_PRICE,
-    starterOwned: false,
-    collection: "OPEN_CUTE_V1" as const,
-    cuteGroup: definition.group,
-    licenseRef: definition.licenseRef,
-  }))
+function allCollectionItems(): readonly DecorationCatalogItem[] {
+  return DECORATION_COLLECTIONS.flatMap((collection) => collectionItems(collection))
 }
 
 /*
@@ -280,55 +279,58 @@ function emojiStickerItems(): readonly DecorationCatalogItem[] {
     compatibleSlots: EMOJI_STICKER_SLOTS,
     cost: 0,
     starterOwned: true,
+    acquisition: { kind: "STARTER" } as const,
+    availability: "ACTIVE" as const,
+    licenseId: "TRAINORACLE_IN_HOUSE" as const,
     emoji: definition.emoji.normalize("NFC"),
     emojiGroup: definition.group,
   }))
 }
 
 export const DECORATION_CATALOG = [
-  { id: "THEME_TRACK_NOTEBOOK", name: "트랙 노트", typeLabel: "페이지 테마", description: "줄노트처럼 훈련 내용을 차분하게 정리해요.", fallbackLabel: "트랙 노트 미리보기", assetPath: "decorations/theme-track-notebook.webp", category: "THEME", compatibleSlots: [], cost: 0, starterOwned: true },
-  { id: "THEME_SKY_JOURNAL", name: "하늘 일지 테마", typeLabel: "페이지 테마", description: "하늘색 배경으로 회복 기록을 정리해요.", fallbackLabel: "하늘 일지 테마 예시", assetPath: "decorations/theme-sky-journal.webp", category: "THEME", compatibleSlots: [], cost: 12, starterOwned: false },
-  { id: "THEME_GRID_FIELD", name: "모눈 연습장", typeLabel: "페이지 테마", description: "옅은 모눈 위에 훈련 수치와 메모를 반듯하게 정리해요.", fallbackLabel: "모눈 연습장 미리보기", assetPath: "decorations/theme-grid-field.webp", category: "THEME", compatibleSlots: [], cost: 0, starterOwned: true },
-  { id: "THEME_DAWN_RUN", name: "새벽 러닝", typeLabel: "페이지 테마", description: "동트는 수평선을 아래에만 얹어 본문 여백을 지켜요.", fallbackLabel: "새벽 러닝 테마 미리보기", assetPath: "decorations/theme-dawn-run.webp", category: "THEME", compatibleSlots: [], cost: 12, starterOwned: false },
-  { id: "THEME_FOREST_TRAIL", name: "숲길 트레일", typeLabel: "페이지 테마", description: "아래 모서리의 숲 선화로 트레일 기록을 구분해요.", fallbackLabel: "숲길 트레일 테마 미리보기", assetPath: "decorations/theme-forest-trail.webp", category: "THEME", compatibleSlots: [], cost: 12, starterOwned: false },
-  { id: "THEME_RACE_DAY", name: "레이스 데이", typeLabel: "페이지 테마", description: "체커 리본 모서리로 경기 날 기록을 표시해요.", fallbackLabel: "레이스 데이 테마 미리보기", assetPath: "decorations/theme-race-day.webp", category: "THEME", compatibleSlots: [], cost: 12, starterOwned: false },
+  baseMaterial({ id: "THEME_TRACK_NOTEBOOK", name: "트랙 노트", typeLabel: "페이지 테마", description: "줄노트처럼 훈련 내용을 차분하게 정리해요.", fallbackLabel: "트랙 노트 미리보기", assetPath: "decorations/theme-track-notebook.webp", category: "THEME", compatibleSlots: [], cost: 0, starterOwned: true }),
+  baseMaterial({ id: "THEME_SKY_JOURNAL", name: "하늘 일지 테마", typeLabel: "페이지 테마", description: "하늘색 배경으로 회복 기록을 정리해요.", fallbackLabel: "하늘 일지 테마 예시", assetPath: "decorations/theme-sky-journal.webp", category: "THEME", compatibleSlots: [], cost: 12, starterOwned: false }),
+  baseMaterial({ id: "THEME_GRID_FIELD", name: "모눈 연습장", typeLabel: "페이지 테마", description: "옅은 모눈 위에 훈련 수치와 메모를 반듯하게 정리해요.", fallbackLabel: "모눈 연습장 미리보기", assetPath: "decorations/theme-grid-field.webp", category: "THEME", compatibleSlots: [], cost: 0, starterOwned: true }),
+  baseMaterial({ id: "THEME_DAWN_RUN", name: "새벽 러닝", typeLabel: "페이지 테마", description: "동트는 수평선을 아래에만 얹어 본문 여백을 지켜요.", fallbackLabel: "새벽 러닝 테마 미리보기", assetPath: "decorations/theme-dawn-run.webp", category: "THEME", compatibleSlots: [], cost: 12, starterOwned: false }),
+  baseMaterial({ id: "THEME_FOREST_TRAIL", name: "숲길 트레일", typeLabel: "페이지 테마", description: "아래 모서리의 숲 선화로 트레일 기록을 구분해요.", fallbackLabel: "숲길 트레일 테마 미리보기", assetPath: "decorations/theme-forest-trail.webp", category: "THEME", compatibleSlots: [], cost: 12, starterOwned: false }),
+  baseMaterial({ id: "THEME_RACE_DAY", name: "레이스 데이", typeLabel: "페이지 테마", description: "체커 리본 모서리로 경기 날 기록을 표시해요.", fallbackLabel: "레이스 데이 테마 미리보기", assetPath: "decorations/theme-race-day.webp", category: "THEME", compatibleSlots: [], cost: 12, starterOwned: false }),
 
-  { id: "TAPE_CHECKER", name: "체크 테이프", typeLabel: "마스킹 테이프", description: "페이지 위쪽을 구분하는 차분한 체크무늬 테이프예요.", fallbackLabel: "체크 테이프 예시", assetPath: "decorations/tape-checker.webp", category: "TAPE", compatibleSlots: ["HEADER_TAPE"], cost: 0, starterOwned: true },
-  { id: "TAPE_SAGE_SOLID", name: "세이지 무지", typeLabel: "마스킹 테이프", description: "옅은 세이지색 종이 테이프로 기록 영역을 담백하게 나눠요.", fallbackLabel: "세이지 무지 테이프 예시", assetPath: "decorations/tape-sage-solid.webp", category: "TAPE", compatibleSlots: ["HEADER_TAPE"], cost: 0, starterOwned: true },
-  { id: "TAPE_DIAGONAL", name: "사선 줄무늬", typeLabel: "마스킹 테이프", description: "가는 남색 사선으로 페이지 위쪽에 리듬을 더해요.", fallbackLabel: "사선 줄무늬 테이프 예시", assetPath: "decorations/tape-diagonal.webp", category: "TAPE", compatibleSlots: ["HEADER_TAPE"], cost: 0, starterOwned: true },
-  { id: "TAPE_DOT_GRID", name: "점 테이프", typeLabel: "마스킹 테이프", description: "작은 도트가 반복되는 종이 테이프예요.", fallbackLabel: "점 테이프 예시", assetPath: "decorations/tape-dot-grid.webp", category: "TAPE", compatibleSlots: ["HEADER_TAPE"], cost: 4, starterOwned: false },
-  { id: "TAPE_TRACK_LANE", name: "트랙 레인", typeLabel: "마스킹 테이프", description: "트랙 레인 선으로 육상 훈련일을 또렷하게 표시해요.", fallbackLabel: "트랙 레인 테이프 예시", assetPath: "decorations/tape-track-lane.webp", category: "TAPE", compatibleSlots: ["HEADER_TAPE"], cost: 8, starterOwned: false },
-  { id: "TAPE_MOUNTAIN", name: "능선 테이프", typeLabel: "마스킹 테이프", description: "낮은 산 능선 선화가 이어지는 테이프예요.", fallbackLabel: "능선 테이프 예시", assetPath: "decorations/tape-mountain.webp", category: "TAPE", compatibleSlots: ["HEADER_TAPE"], cost: 8, starterOwned: false },
+  baseMaterial({ id: "TAPE_CHECKER", name: "체크 테이프", typeLabel: "마스킹 테이프", description: "페이지 위쪽을 구분하는 차분한 체크무늬 테이프예요.", fallbackLabel: "체크 테이프 예시", assetPath: "decorations/tape-checker.webp", category: "TAPE", compatibleSlots: ["HEADER_TAPE"], cost: 0, starterOwned: true }),
+  baseMaterial({ id: "TAPE_SAGE_SOLID", name: "세이지 무지", typeLabel: "마스킹 테이프", description: "옅은 세이지색 종이 테이프로 기록 영역을 담백하게 나눠요.", fallbackLabel: "세이지 무지 테이프 예시", assetPath: "decorations/tape-sage-solid.webp", category: "TAPE", compatibleSlots: ["HEADER_TAPE"], cost: 0, starterOwned: true }),
+  baseMaterial({ id: "TAPE_DIAGONAL", name: "사선 줄무늬", typeLabel: "마스킹 테이프", description: "가는 남색 사선으로 페이지 위쪽에 리듬을 더해요.", fallbackLabel: "사선 줄무늬 테이프 예시", assetPath: "decorations/tape-diagonal.webp", category: "TAPE", compatibleSlots: ["HEADER_TAPE"], cost: 0, starterOwned: true }),
+  baseMaterial({ id: "TAPE_DOT_GRID", name: "점 테이프", typeLabel: "마스킹 테이프", description: "작은 도트가 반복되는 종이 테이프예요.", fallbackLabel: "점 테이프 예시", assetPath: "decorations/tape-dot-grid.webp", category: "TAPE", compatibleSlots: ["HEADER_TAPE"], cost: 4, starterOwned: false }),
+  baseMaterial({ id: "TAPE_TRACK_LANE", name: "트랙 레인", typeLabel: "마스킹 테이프", description: "트랙 레인 선으로 육상 훈련일을 또렷하게 표시해요.", fallbackLabel: "트랙 레인 테이프 예시", assetPath: "decorations/tape-track-lane.webp", category: "TAPE", compatibleSlots: ["HEADER_TAPE"], cost: 8, starterOwned: false }),
+  baseMaterial({ id: "TAPE_MOUNTAIN", name: "능선 테이프", typeLabel: "마스킹 테이프", description: "낮은 산 능선 선화가 이어지는 테이프예요.", fallbackLabel: "능선 테이프 예시", assetPath: "decorations/tape-mountain.webp", category: "TAPE", compatibleSlots: ["HEADER_TAPE"], cost: 8, starterOwned: false }),
 
-  { id: "STICKER_WEATHER_SUN", name: "맑은 날", typeLabel: "스티커", description: "맑았던 날의 일지 여백에 붙이는 날씨 스티커예요.", fallbackLabel: "맑은 날 예시", assetPath: "decorations/sticker-weather-sun.webp", category: "STICKER", compatibleSlots: ["TOP_CORNER", "BODY_MARGIN"], cost: 0, starterOwned: true },
-  { id: "STICKER_FINISH_LINE", name: "결승선 스티커", typeLabel: "스티커", description: "경기나 중요한 훈련을 마친 날에 붙여요.", fallbackLabel: "결승선 스티커 예시", assetPath: "decorations/sticker-finish-line.webp", category: "STICKER", compatibleSlots: ["TOP_CORNER", "BODY_MARGIN"], cost: 8, starterOwned: false },
-  { id: "STICKER_RUNNING_SHOE", name: "러닝화 한 켤레", typeLabel: "스티커", description: "달린 날을 바로 알아볼 수 있는 러닝화 스티커예요.", fallbackLabel: "러닝화 스티커 예시", assetPath: "decorations/sticker-running-shoe.webp", category: "STICKER", compatibleSlots: ["TOP_CORNER", "BODY_MARGIN"], cost: 0, starterOwned: true },
-  { id: "STICKER_WATER_BOTTLE", name: "물병", typeLabel: "스티커", description: "수분 보충을 기억하고 싶은 날에 붙여요.", fallbackLabel: "물병 스티커 예시", assetPath: "decorations/sticker-water-bottle.webp", category: "STICKER", compatibleSlots: ["TOP_CORNER", "BODY_MARGIN"], cost: 0, starterOwned: true },
-  { id: "STICKER_STOPWATCH_DOODLE", name: "스톱워치 낙서", typeLabel: "스티커", description: "기록을 재거나 반복 훈련을 한 날에 붙여요.", fallbackLabel: "스톱워치 스티커 예시", assetPath: "decorations/sticker-stopwatch-doodle.webp", category: "STICKER", compatibleSlots: ["TOP_CORNER", "BODY_MARGIN"], cost: 0, starterOwned: true },
-  { id: "STICKER_HEART_RATE", name: "심박 곡선", typeLabel: "스티커", description: "심박 흐름을 살펴본 날에 붙이는 한 줄 곡선이에요.", fallbackLabel: "심박 곡선 스티커 예시", assetPath: "decorations/sticker-heart-rate.webp", category: "STICKER", compatibleSlots: ["TOP_CORNER", "BODY_MARGIN"], cost: 4, starterOwned: false },
-  { id: "STICKER_TRAIL_TREE", name: "가로수", typeLabel: "스티커", description: "공원이나 숲길을 달린 날에 어울리는 나무 스티커예요.", fallbackLabel: "가로수 스티커 예시", assetPath: "decorations/sticker-trail-tree.webp", category: "STICKER", compatibleSlots: ["TOP_CORNER", "BODY_MARGIN"], cost: 4, starterOwned: false },
-  { id: "STICKER_MEDAL_RIBBON", name: "완주 메달", typeLabel: "스티커", description: "레이스 완주나 기억할 성취가 있던 날에 붙여요.", fallbackLabel: "완주 메달 스티커 예시", assetPath: "decorations/sticker-medal-ribbon.webp", category: "STICKER", compatibleSlots: ["TOP_CORNER", "BODY_MARGIN"], cost: 8, starterOwned: false },
-  { id: "STICKER_NIGHT_MOON", name: "야간 러닝 달", typeLabel: "스티커", description: "밤에 달린 기록을 초승달과 별로 표시해요.", fallbackLabel: "야간 러닝 달 스티커 예시", assetPath: "decorations/sticker-night-moon.webp", category: "STICKER", compatibleSlots: ["TOP_CORNER", "BODY_MARGIN"], cost: 4, starterOwned: false },
-  { id: "STICKER_BANDAGE_CARE", name: "회복 반창고", typeLabel: "스티커", description: "회복과 몸 돌봄을 우선한 날에 붙여요.", fallbackLabel: "회복 반창고 스티커 예시", assetPath: "decorations/sticker-bandage-care.webp", category: "STICKER", compatibleSlots: ["TOP_CORNER", "BODY_MARGIN"], cost: 0, starterOwned: true },
-  ...cuteStickerItems(),
+  baseMaterial({ id: "STICKER_WEATHER_SUN", name: "맑은 날", typeLabel: "스티커", description: "맑았던 날의 일지 여백에 붙이는 날씨 스티커예요.", fallbackLabel: "맑은 날 예시", assetPath: "decorations/sticker-weather-sun.webp", category: "STICKER", compatibleSlots: ["TOP_CORNER", "BODY_MARGIN"], cost: 0, starterOwned: true }),
+  baseMaterial({ id: "STICKER_FINISH_LINE", name: "결승선 스티커", typeLabel: "스티커", description: "경기나 중요한 훈련을 마친 날에 붙여요.", fallbackLabel: "결승선 스티커 예시", assetPath: "decorations/sticker-finish-line.webp", category: "STICKER", compatibleSlots: ["TOP_CORNER", "BODY_MARGIN"], cost: 8, starterOwned: false }),
+  baseMaterial({ id: "STICKER_RUNNING_SHOE", name: "러닝화 한 켤레", typeLabel: "스티커", description: "달린 날을 바로 알아볼 수 있는 러닝화 스티커예요.", fallbackLabel: "러닝화 스티커 예시", assetPath: "decorations/sticker-running-shoe.webp", category: "STICKER", compatibleSlots: ["TOP_CORNER", "BODY_MARGIN"], cost: 0, starterOwned: true }),
+  baseMaterial({ id: "STICKER_WATER_BOTTLE", name: "물병", typeLabel: "스티커", description: "수분 보충을 기억하고 싶은 날에 붙여요.", fallbackLabel: "물병 스티커 예시", assetPath: "decorations/sticker-water-bottle.webp", category: "STICKER", compatibleSlots: ["TOP_CORNER", "BODY_MARGIN"], cost: 0, starterOwned: true }),
+  baseMaterial({ id: "STICKER_STOPWATCH_DOODLE", name: "스톱워치 낙서", typeLabel: "스티커", description: "기록을 재거나 반복 훈련을 한 날에 붙여요.", fallbackLabel: "스톱워치 스티커 예시", assetPath: "decorations/sticker-stopwatch-doodle.webp", category: "STICKER", compatibleSlots: ["TOP_CORNER", "BODY_MARGIN"], cost: 0, starterOwned: true }),
+  baseMaterial({ id: "STICKER_HEART_RATE", name: "심박 곡선", typeLabel: "스티커", description: "심박 흐름을 살펴본 날에 붙이는 한 줄 곡선이에요.", fallbackLabel: "심박 곡선 스티커 예시", assetPath: "decorations/sticker-heart-rate.webp", category: "STICKER", compatibleSlots: ["TOP_CORNER", "BODY_MARGIN"], cost: 4, starterOwned: false }),
+  baseMaterial({ id: "STICKER_TRAIL_TREE", name: "가로수", typeLabel: "스티커", description: "공원이나 숲길을 달린 날에 어울리는 나무 스티커예요.", fallbackLabel: "가로수 스티커 예시", assetPath: "decorations/sticker-trail-tree.webp", category: "STICKER", compatibleSlots: ["TOP_CORNER", "BODY_MARGIN"], cost: 4, starterOwned: false }),
+  baseMaterial({ id: "STICKER_MEDAL_RIBBON", name: "완주 메달", typeLabel: "스티커", description: "레이스 완주나 기억할 성취가 있던 날에 붙여요.", fallbackLabel: "완주 메달 스티커 예시", assetPath: "decorations/sticker-medal-ribbon.webp", category: "STICKER", compatibleSlots: ["TOP_CORNER", "BODY_MARGIN"], cost: 8, starterOwned: false }),
+  baseMaterial({ id: "STICKER_NIGHT_MOON", name: "야간 러닝 달", typeLabel: "스티커", description: "밤에 달린 기록을 초승달과 별로 표시해요.", fallbackLabel: "야간 러닝 달 스티커 예시", assetPath: "decorations/sticker-night-moon.webp", category: "STICKER", compatibleSlots: ["TOP_CORNER", "BODY_MARGIN"], cost: 4, starterOwned: false }),
+  baseMaterial({ id: "STICKER_BANDAGE_CARE", name: "회복 반창고", typeLabel: "스티커", description: "회복과 몸 돌봄을 우선한 날에 붙여요.", fallbackLabel: "회복 반창고 스티커 예시", assetPath: "decorations/sticker-bandage-care.webp", category: "STICKER", compatibleSlots: ["TOP_CORNER", "BODY_MARGIN"], cost: 0, starterOwned: true }),
+  ...allCollectionItems(),
 
-  { id: "STAMP_REST_DAY", name: "푹 쉬었어요", typeLabel: "도장", description: "휴식이나 회복을 기록한 날에 찍는 도장이에요.", fallbackLabel: "푹 쉬었어요 예시", assetPath: "decorations/stamp-rest-day.webp", category: "STAMP", compatibleSlots: ["PAGE_FOOTER"], cost: 0, starterOwned: true },
-  { id: "STAMP_DONE_CHECK", name: "해냈다", typeLabel: "도장", description: "계획한 기록을 마친 날에 체크 도장을 남겨요.", fallbackLabel: "해냈다 도장 예시", assetPath: "decorations/stamp-done-check.webp", category: "STAMP", compatibleSlots: ["PAGE_FOOTER"], cost: 0, starterOwned: true },
-  { id: "STAMP_PERSONAL_BEST", name: "자기 최고", typeLabel: "도장", description: "개인 최고 기록을 남긴 날에 월계수 도장을 찍어요.", fallbackLabel: "자기 최고 도장 예시", assetPath: "decorations/stamp-personal-best.webp", category: "STAMP", compatibleSlots: ["PAGE_FOOTER"], cost: 8, starterOwned: false },
-  { id: "STAMP_EARLY_BIRD", name: "새벽 기상", typeLabel: "도장", description: "이른 시간에 움직인 날을 떠오르는 해로 표시해요.", fallbackLabel: "새벽 기상 도장 예시", assetPath: "decorations/stamp-early-bird.webp", category: "STAMP", compatibleSlots: ["PAGE_FOOTER"], cost: 4, starterOwned: false },
-  { id: "STAMP_RAIN_RUN", name: "우중 완주", typeLabel: "도장", description: "비 오는 날 달린 기록에 빗방울과 발자국을 남겨요.", fallbackLabel: "우중 완주 도장 예시", assetPath: "decorations/stamp-rain-run.webp", category: "STAMP", compatibleSlots: ["PAGE_FOOTER"], cost: 4, starterOwned: false },
-  { id: "STAMP_LONG_RUN", name: "롱런", typeLabel: "도장", description: "긴 거리를 달린 날에 이어지는 길 도장을 찍어요.", fallbackLabel: "롱런 도장 예시", assetPath: "decorations/stamp-long-run.webp", category: "STAMP", compatibleSlots: ["PAGE_FOOTER"], cost: 4, starterOwned: false },
-  { id: "STAMP_INTERVAL", name: "인터벌", typeLabel: "도장", description: "빠른 구간과 회복을 반복한 날에 파형 도장을 찍어요.", fallbackLabel: "인터벌 도장 예시", assetPath: "decorations/stamp-interval.webp", category: "STAMP", compatibleSlots: ["PAGE_FOOTER"], cost: 4, starterOwned: false },
-  { id: "STAMP_RECOVERY", name: "회복 완료", typeLabel: "도장", description: "몸을 돌보고 회복 기록을 마친 날에 새싹 도장을 찍어요.", fallbackLabel: "회복 완료 도장 예시", assetPath: "decorations/stamp-recovery.webp", category: "STAMP", compatibleSlots: ["PAGE_FOOTER"], cost: 0, starterOwned: true },
+  baseMaterial({ id: "STAMP_REST_DAY", name: "푹 쉬었어요", typeLabel: "도장", description: "휴식이나 회복을 기록한 날에 찍는 도장이에요.", fallbackLabel: "푹 쉬었어요 예시", assetPath: "decorations/stamp-rest-day.webp", category: "STAMP", compatibleSlots: ["PAGE_FOOTER"], cost: 0, starterOwned: true }),
+  baseMaterial({ id: "STAMP_DONE_CHECK", name: "해냈다", typeLabel: "도장", description: "계획한 기록을 마친 날에 체크 도장을 남겨요.", fallbackLabel: "해냈다 도장 예시", assetPath: "decorations/stamp-done-check.webp", category: "STAMP", compatibleSlots: ["PAGE_FOOTER"], cost: 0, starterOwned: true }),
+  baseMaterial({ id: "STAMP_PERSONAL_BEST", name: "자기 최고", typeLabel: "도장", description: "개인 최고 기록을 남긴 날에 월계수 도장을 찍어요.", fallbackLabel: "자기 최고 도장 예시", assetPath: "decorations/stamp-personal-best.webp", category: "STAMP", compatibleSlots: ["PAGE_FOOTER"], cost: 8, starterOwned: false }),
+  baseMaterial({ id: "STAMP_EARLY_BIRD", name: "새벽 기상", typeLabel: "도장", description: "이른 시간에 움직인 날을 떠오르는 해로 표시해요.", fallbackLabel: "새벽 기상 도장 예시", assetPath: "decorations/stamp-early-bird.webp", category: "STAMP", compatibleSlots: ["PAGE_FOOTER"], cost: 4, starterOwned: false }),
+  baseMaterial({ id: "STAMP_RAIN_RUN", name: "우중 완주", typeLabel: "도장", description: "비 오는 날 달린 기록에 빗방울과 발자국을 남겨요.", fallbackLabel: "우중 완주 도장 예시", assetPath: "decorations/stamp-rain-run.webp", category: "STAMP", compatibleSlots: ["PAGE_FOOTER"], cost: 4, starterOwned: false }),
+  baseMaterial({ id: "STAMP_LONG_RUN", name: "롱런", typeLabel: "도장", description: "긴 거리를 달린 날에 이어지는 길 도장을 찍어요.", fallbackLabel: "롱런 도장 예시", assetPath: "decorations/stamp-long-run.webp", category: "STAMP", compatibleSlots: ["PAGE_FOOTER"], cost: 4, starterOwned: false }),
+  baseMaterial({ id: "STAMP_INTERVAL", name: "인터벌", typeLabel: "도장", description: "빠른 구간과 회복을 반복한 날에 파형 도장을 찍어요.", fallbackLabel: "인터벌 도장 예시", assetPath: "decorations/stamp-interval.webp", category: "STAMP", compatibleSlots: ["PAGE_FOOTER"], cost: 4, starterOwned: false }),
+  baseMaterial({ id: "STAMP_RECOVERY", name: "회복 완료", typeLabel: "도장", description: "몸을 돌보고 회복 기록을 마친 날에 새싹 도장을 찍어요.", fallbackLabel: "회복 완료 도장 예시", assetPath: "decorations/stamp-recovery.webp", category: "STAMP", compatibleSlots: ["PAGE_FOOTER"], cost: 0, starterOwned: true }),
 
-  { id: "INK_NAVY", name: "남색 잉크", typeLabel: "글자색", description: "일지 본문을 또렷한 남색으로 보여 줘요.", fallbackLabel: "남색 잉크 예시", assetPath: "decorations/ink-navy.webp", category: "INK", compatibleSlots: [], cost: 0, starterOwned: true },
+  baseMaterial({ id: "INK_NAVY", name: "남색 잉크", typeLabel: "글자색", description: "일지 본문을 또렷한 남색으로 보여 줘요.", fallbackLabel: "남색 잉크 예시", assetPath: "decorations/ink-navy.webp", category: "INK", compatibleSlots: [], cost: 0, starterOwned: true }),
 
-  { id: "AVATAR_START_LINE", name: "출발선 아바타", typeLabel: "아바타", description: "출발선에 선 러너를 일지 위쪽에 보여 줘요.", fallbackLabel: "출발선 아바타 예시", assetPath: "decorations/avatar-start-line.webp", category: "AVATAR", compatibleSlots: [], cost: 20, starterOwned: false },
-  { id: "AVATAR_EASY_JOG", name: "조깅 아바타", typeLabel: "아바타", description: "편안하게 조깅하는 중립 러너 동작을 보여 줘요.", fallbackLabel: "조깅 아바타 예시", assetPath: "decorations/avatar-easy-jog.webp", category: "AVATAR", compatibleSlots: [], cost: 0, starterOwned: true },
-  { id: "AVATAR_SPRINTER", name: "스퍼트 아바타", typeLabel: "아바타", description: "빠르게 가속하는 중립 러너 동작을 보여 줘요.", fallbackLabel: "스퍼트 아바타 예시", assetPath: "decorations/avatar-sprinter.webp", category: "AVATAR", compatibleSlots: [], cost: 20, starterOwned: false },
-  { id: "AVATAR_STRETCHING", name: "스트레칭 아바타", typeLabel: "아바타", description: "훈련 뒤 몸을 푸는 중립 러너 동작을 보여 줘요.", fallbackLabel: "스트레칭 아바타 예시", assetPath: "decorations/avatar-stretching.webp", category: "AVATAR", compatibleSlots: [], cost: 0, starterOwned: true },
+  baseMaterial({ id: "AVATAR_START_LINE", name: "출발선 아바타", typeLabel: "아바타", description: "출발선에 선 러너를 일지 위쪽에 보여 줘요.", fallbackLabel: "출발선 아바타 예시", assetPath: "decorations/avatar-start-line.webp", category: "AVATAR", compatibleSlots: [], cost: 20, starterOwned: false }),
+  baseMaterial({ id: "AVATAR_EASY_JOG", name: "조깅 아바타", typeLabel: "아바타", description: "편안하게 조깅하는 중립 러너 동작을 보여 줘요.", fallbackLabel: "조깅 아바타 예시", assetPath: "decorations/avatar-easy-jog.webp", category: "AVATAR", compatibleSlots: [], cost: 0, starterOwned: true }),
+  baseMaterial({ id: "AVATAR_SPRINTER", name: "스퍼트 아바타", typeLabel: "아바타", description: "빠르게 가속하는 중립 러너 동작을 보여 줘요.", fallbackLabel: "스퍼트 아바타 예시", assetPath: "decorations/avatar-sprinter.webp", category: "AVATAR", compatibleSlots: [], cost: 20, starterOwned: false }),
+  baseMaterial({ id: "AVATAR_STRETCHING", name: "스트레칭 아바타", typeLabel: "아바타", description: "훈련 뒤 몸을 푸는 중립 러너 동작을 보여 줘요.", fallbackLabel: "스트레칭 아바타 예시", assetPath: "decorations/avatar-stretching.webp", category: "AVATAR", compatibleSlots: [], cost: 0, starterOwned: true }),
   ...emojiStickerItems(),
-] as const satisfies readonly DecorationCatalogItem[]
+] satisfies readonly DecorationCatalogItem[]
 
 
 /*
@@ -375,3 +377,34 @@ export function isDecorationSlot(candidate: string): candidate is DecorationSlot
 export function isEmojiStickerId(candidate: string): candidate is EmojiStickerId { return includesValue(EMOJI_STICKER_IDS, candidate) }
 export function isEmojiStickerSlot(candidate: string): candidate is EmojiStickerSlot { return includesValue(EMOJI_STICKER_SLOTS, candidate) }
 export function decorationCatalogItem(itemId: string): DecorationCatalogItem | undefined { return DECORATION_CATALOG.find((item) => item.id === itemId) }
+
+/**
+ * 보유 목록으로부터 "적어도 이만큼은 포인트를 썼어야 한다"를 계산한다.
+ * 저장 스키마의 `spentPoints` 하한 검증과 store의 구매 경로가 같은 함수를 쓴다.
+ *
+ * 컬렉션은 번들 할인이 있으므로 개별 합계가 아니라 `min(번들가, 개별 합계)`를 하한으로 잡는다 —
+ * 번들로 산 사용자가 "개별 합계보다 적게 썼다"는 이유로 스키마에 걸리지 않게 한다.
+ * REWARD/SEASON 지급분은 `acquisitionCost() = 0`이라 어느 쪽에도 잡히지 않는다.
+ */
+export function minimumSpentPointsForOwned(ownedItemIds: readonly string[]): number {
+  const owned = new Set(ownedItemIds)
+  let total = 0
+  for (const collection of DECORATION_COLLECTIONS) {
+    const ownedInCollection = new Set(collection.items.filter((item) => owned.has(item.id)).map((item) => item.id))
+    if (ownedInCollection.size === 0) continue
+    const individual = [...ownedInCollection].reduce((sum, itemId) => {
+      const item = decorationCatalogItem(itemId)
+      return sum + (item === undefined ? 0 : acquisitionCost(item.acquisition))
+    }, 0)
+    // 보유분이 "번들로 받았을 수 있는 묶음"이라면 번들가가 하한. 아니면 개별 합계.
+    const notOwned = new Set(collection.items.filter((item) => !owned.has(item.id)).map((item) => item.id))
+    const bundleForOwned = collectionBundleCost(collection, notOwned)
+    total += bundleForOwned === undefined ? individual : Math.min(individual, bundleForOwned)
+  }
+  for (const itemId of owned) {
+    const item = decorationCatalogItem(itemId)
+    if (item === undefined || item.collection !== undefined) continue
+    total += acquisitionCost(item.acquisition)
+  }
+  return total
+}

@@ -5,6 +5,7 @@ import {
   ChevronDown,
   ClipboardPaste,
   Copy,
+  Gift,
   LayoutGrid,
   Layers2,
   LockKeyhole,
@@ -20,11 +21,15 @@ import {
 } from "lucide-react"
 import React from "react"
 import {
-  CUTE_STICKER_GROUPS,
-  CUTE_STICKER_PRICE,
+  DECORATION_COLLECTIONS,
   MAX_DECORATION_ITEMS_PER_PAGE,
+  acquisitionLabel,
+  collectionBundleCost,
+  collectionItemsByGroup,
+  collectionSubtitle,
+  collectionVisibleInShop,
 } from "../../domain/decorations"
-import type { DecorationCatalogItem } from "../../domain/decorations"
+import type { DecorationCatalogItem, DecorationCollection } from "../../domain/decorations"
 
 type DrawerFilter =
   | "ALL"
@@ -72,6 +77,18 @@ function materialDisplayName(item: DecorationCatalogItem): string {
   if (item.id === "THEME_TRACK_NOTEBOOK") return "기본 · 트랙 노트"
   if (item.id === "INK_NAVY") return "기본 · 남색 잉크"
   return item.name
+}
+
+/** 컬렉션 진입 카드 접근성 라벨 날개: "한 개 4포인트" / "활동 보상" / "기간 한정 무료". */
+function collectionEntryHint(collection: DecorationCollection): string {
+  const acquisition = collection.defaultAcquisition
+  if (acquisition.kind === "POINTS" || acquisition.kind === "BUNDLE") return `한 개 ${acquisition.cost}포인트`
+  if (acquisition.kind === "REWARD") return "활동 보상"
+  return "기간 한정 무료"
+}
+
+function pointAcquisition(item: DecorationCatalogItem): boolean {
+  return item.acquisition.kind === "POINTS" || item.acquisition.kind === "BUNDLE"
 }
 
 /*
@@ -179,7 +196,7 @@ function MaterialTile({
   const statusLabel = blockedReason !== null
     ? `사용할 수 없음, ${blockedReason}`
     : !owned
-      ? `${item.cost}P로 받기`
+      ? acquisitionLabel(item.acquisition)
       : item.compatibleSlots.length > 0
         ? "붙이기"
         : active ? "적용 중" : "적용하기"
@@ -222,7 +239,9 @@ function MaterialTile({
       <span className="journal-decoration-toolbar__material-name">{displayName}</span>
       {!owned && (
         <span className="journal-decoration-toolbar__material-cost" aria-hidden="true">
-          <LockKeyhole size={12} /> {item.cost}P
+          {pointAcquisition(item)
+            ? <><LockKeyhole size={12} /> {item.cost}P</>
+            : <><Gift size={12} /> {item.acquisition.kind === "SEASON" ? "시즌" : "보상"}</>}
         </span>
       )}
       {owned && active && item.compatibleSlots.length === 0 && (
@@ -249,8 +268,11 @@ type JournalDecorationToolbarProps = {
   readonly clipboardAvailable: boolean
   readonly notice: string
   readonly previewItemId: string | null
+  /** 오늘(ISO) — 컬렉션 시즌·은퇴·라이선스 만료 판정에 쓴다. */
+  readonly today: string
   readonly onApply: (item: DecorationCatalogItem) => void
   readonly onPurchase: (item: DecorationCatalogItem) => void
+  readonly onPurchaseBundle: (collection: DecorationCollection) => void
   readonly onClose: () => void
   readonly onDrawerClose: () => void
   readonly onDrawerOpen: () => void
@@ -272,8 +294,10 @@ export function JournalDecorationToolbar(props: JournalDecorationToolbarProps) {
   const closeButtonRef = React.useRef<HTMLButtonElement>(null)
   const drawerRef = React.useRef<HTMLElement>(null)
   const [toolFilter, setToolFilter] = React.useState<DrawerFilter>("ALL")
-  const [cuteCollectionOpen, setCuteCollectionOpen] = React.useState(false)
+  /* 현재 펼쳤진 컬렉션 id. 레지스트리에 컬렉션이 늘어도 이 상태 하나로 동작한다. */
+  const [openCollectionId, setOpenCollectionId] = React.useState<string | null>(null)
   const [pendingPurchaseId, setPendingPurchaseId] = React.useState<string | null>(null)
+  const [pendingBundleId, setPendingBundleId] = React.useState<string | null>(null)
   const wasOpenRef = React.useRef(false)
 
   React.useEffect(() => {
@@ -284,7 +308,8 @@ export function JournalDecorationToolbar(props: JournalDecorationToolbarProps) {
   React.useEffect(() => {
     if (!props.drawerOpen) {
       setPendingPurchaseId(null)
-      setCuteCollectionOpen(false)
+      setPendingBundleId(null)
+      setOpenCollectionId(null)
     }
   }, [props.drawerOpen])
 
@@ -320,7 +345,8 @@ export function JournalDecorationToolbar(props: JournalDecorationToolbarProps) {
   const chooseTool = (filter: DrawerFilter) => {
     setToolFilter(filter)
     setPendingPurchaseId(null)
-    setCuteCollectionOpen(false)
+    setPendingBundleId(null)
+    setOpenCollectionId(null)
     props.onDrawerOpen()
   }
 
@@ -355,6 +381,18 @@ export function JournalDecorationToolbar(props: JournalDecorationToolbarProps) {
 
   const renderPurchaseRow = (item: DecorationCatalogItem): React.ReactNode => {
     if (pendingPurchaseId !== item.id) return null
+    if (!pointAcquisition(item)) {
+      /* 보상·시즌 아이템은 포인트로 살 수 없다 — 받는 조건만 알려 준다. */
+      return (
+        <div className="journal-decoration-toolbar__purchase-row" role="group" aria-label={`${item.name} 받는 조건`}>
+          <span>
+            <strong>{item.name}</strong>
+            <small>{acquisitionLabel(item.acquisition)}</small>
+          </span>
+          <button type="button" onClick={() => setPendingPurchaseId(null)}>닫기</button>
+        </div>
+      )
+    }
     const missingPoints = Math.max(0, item.cost - props.availablePoints)
     return (
       <div className="journal-decoration-toolbar__purchase-row" role="group" aria-label={`${item.name} 받기 확인`}>
@@ -380,7 +418,7 @@ export function JournalDecorationToolbar(props: JournalDecorationToolbarProps) {
   const renderMaterialCategory = (category: MaterialCategory): React.ReactNode => {
     const partOfMaterialDrawer = category === "STICKER" || category === "STAMP" || category === "TAPE"
     if (toolFilter !== "ALL" && toolFilter !== category && !(toolFilter === "MATERIALS" && partOfMaterialDrawer)) return null
-    const categoryItems = props.items.filter((item) => item.category === category && item.collection !== "OPEN_CUTE_V1")
+    const categoryItems = props.items.filter((item) => item.category === category && item.collection === undefined)
     if (categoryItems.length === 0) return null
     return (
       <React.Fragment key={category}>
@@ -426,40 +464,98 @@ export function JournalDecorationToolbar(props: JournalDecorationToolbarProps) {
   }
 
   const emojiItems = props.items.filter((item) => item.category === "EMOJI_STICKER")
-  const cuteItems = props.items.filter((item) => item.collection === "OPEN_CUTE_V1")
   const showEmoji = toolFilter === "ALL" || toolFilter === "EMOJI_STICKER"
-  const showCuteCollectionEntry = cuteItems.length > 0
-    && (toolFilter === "ALL" || toolFilter === "MATERIALS" || toolFilter === "STICKER")
+  const showCollectionEntries = toolFilter === "ALL" || toolFilter === "MATERIALS" || toolFilter === "STICKER"
+  /*
+   * 진입 카드를 보일 컬렉션: 상점 노출 중이거나(ACTIVE·시즌 내·라이선스 유효), 은퇴했어도 이미 보유한 아이템이 있으면
+   * (retire-never-delete) 계속 붙일 수 있게 들어가는 길을 남건다. Surface가 은퇴·미보유 아이템은 items에서 이미 걸렀다.
+   */
+  const collectionsWithItems = DECORATION_COLLECTIONS
+    .map((collection) => ({ collection, items: props.items.filter((item) => item.collection === collection.id) }))
+    .filter(({ items }) => items.length > 0)
+  const openCollection = collectionsWithItems.find(({ collection }) => collection.id === openCollectionId)
 
-  const renderCuteCollection = (): React.ReactNode => (
-    <section className="journal-decoration-toolbar__cute-collection" aria-labelledby="cute-sticker-collection-title">
+  const renderBundleRow = (collection: DecorationCollection, items: readonly DecorationCatalogItem[]): React.ReactNode => {
+    if (collection.bundle === undefined || !collectionVisibleInShop(collection, props.today)) return null
+    const ownedIds = new Set(items.filter((item) => !props.purchasableItemIds.has(item.id)).map((item) => item.id))
+    const remaining = items.filter((item) => props.purchasableItemIds.has(item.id) && pointAcquisition(item) && item.availability === "ACTIVE")
+    if (remaining.length < 2) return null
+    const cost = collectionBundleCost(collection, ownedIds) ?? 0
+    const missingPoints = Math.max(0, cost - props.availablePoints)
+    const pending = pendingBundleId === collection.id
+    return (
+      <div className="journal-decoration-toolbar__bundle">
+        {!pending
+          ? (
+              <button
+                type="button"
+                className="journal-decoration-toolbar__bundle-button"
+                aria-label={`${collection.title} 남은 ${remaining.length}종 한 번에 받기, ${cost}포인트`}
+                onClick={() => {
+                  setPendingPurchaseId(null)
+                  setPendingBundleId(collection.id)
+                }}
+              >
+                <Gift aria-hidden="true" size={14} />
+                <span>{`남은 ${remaining.length}종 한 번에 받기`}</span>
+                <b>{`${cost}P`}</b>
+              </button>
+            )
+          : (
+              <div className="journal-decoration-toolbar__purchase-row" role="group" aria-label={`${collection.title} 한 번에 받기 확인`}>
+                <span>
+                  <strong>{`${collection.title} ${remaining.length}종`}</strong>
+                  <small>{missingPoints > 0 ? `${missingPoints}P 더 필요해요.` : `${cost}P를 사용해 모두 받을까요?`}</small>
+                </span>
+                <button
+                  type="button"
+                  disabled={missingPoints > 0}
+                  onClick={() => {
+                    props.onPurchaseBundle(collection)
+                    setPendingBundleId(null)
+                  }}
+                >
+                  {`${cost}P로 모두 받기`}
+                </button>
+                <button type="button" onClick={() => setPendingBundleId(null)}>취소</button>
+              </div>
+            )}
+      </div>
+    )
+  }
+
+  const renderCollection = (collection: DecorationCollection, items: readonly DecorationCatalogItem[]): React.ReactNode => (
+    <section className="journal-decoration-toolbar__collection" aria-labelledby="decoration-collection-title">
       <header>
         <button
           type="button"
           className="journal-decoration-toolbar__collection-back"
           onClick={() => {
-            setCuteCollectionOpen(false)
+            setOpenCollectionId(null)
             setPendingPurchaseId(null)
+            setPendingBundleId(null)
           }}
         >
           <ArrowLeft aria-hidden="true" size={16} />
           TrainOracle 재료
         </button>
         <div>
-          <h3 id="cute-sticker-collection-title">귀여운 스티커</h3>
-          <p>{`${cuteItems.length}종 · 한 개 ${CUTE_STICKER_PRICE}P`}</p>
+          <h3 id="decoration-collection-title">{collection.title}</h3>
+          <p>{collectionSubtitle(collection)}</p>
         </div>
       </header>
 
+      {renderBundleRow(collection, items)}
+
       <details className="journal-decoration-toolbar__source-note">
         <summary>그림 출처 보기</summary>
-        <p>Microsoft Fluent Emoji Flat과 Open Peeps의 오픈 라이선스 그림을 사용했어요.</p>
-        <a href={`${import.meta.env.BASE_URL}legal/open-source.html`} target="_blank" rel="noreferrer">자산 출처와 라이선스</a>
+        <p>{collection.sourceNote}</p>
+        <a href={`${import.meta.env.BASE_URL}legal/open-source.html#${collection.id}`} target="_blank" rel="noreferrer">자산 출처와 라이선스</a>
       </details>
 
       <div className="journal-decoration-toolbar__items">
-        {CUTE_STICKER_GROUPS.flatMap((group) => {
-          const groupItems = cuteItems.filter((item) => item.cuteGroup === group.id)
+        {collectionItemsByGroup(collection).flatMap(({ group }) => {
+          const groupItems = items.filter((item) => item.collectionGroup === group.id)
           if (groupItems.length === 0) return []
           return [
             <h4 className="journal-decoration-toolbar__section-title" key={`${group.id}-title`}>{group.label}</h4>,
@@ -515,7 +611,7 @@ export function JournalDecorationToolbar(props: JournalDecorationToolbarProps) {
           <button type="button" aria-label="글 스티커 도구" onClick={props.onOpenTextSticker}><Type aria-hidden="true" size={19} /><span>글</span></button>
         )}
         <button type="button" aria-label="페이지 테마 도구" aria-pressed={props.drawerOpen && toolFilter === "THEME"} onClick={() => chooseTool("THEME")}><BookOpen aria-hidden="true" size={19} /><span>테마</span></button>
-        <button type="button" aria-label="글자색 도구" aria-pressed={props.drawerOpen && toolFilter === "INK"} onClick={() => chooseTool("INK")}><PenLine aria-hidden="true" size={19} /><span>글자</span></button>
+        <button type="button" aria-label="글자색 도구" aria-pressed={props.drawerOpen && toolFilter === "INK"} onClick={() => chooseTool("INK")}><PenLine aria-hidden="true" size={19} /><span>글자색</span></button>
       </nav>
 
       {!props.drawerOpen && (props.selectedIndex !== null || props.clipboardAvailable) && (
@@ -545,14 +641,15 @@ export function JournalDecorationToolbar(props: JournalDecorationToolbarProps) {
         <header>
           <div>
             <strong>재료 서랍</strong>
-            <span>{props.hasEntries ? "재료를 눌러 바로 붙여 보세요." : "기록을 남기기 전에는 테마만 미리 볼 수 있어요."}</span>
+            {/* 포인트를 제목 줄에 붙여 서랍 헤더를 두 줄로 줄인다 — 타일 그리드 노출 면적 확보. */}
             <small className="journal-decoration-toolbar__points">베타 포인트 · 사용 가능 {props.availablePoints}P</small>
+            <span>{props.hasEntries ? "재료를 눌러 바로 붙여 보세요." : "기록을 남기기 전에는 테마만 미리 볼 수 있어요."}</span>
           </div>
           <button type="button" className="journal-decoration-toolbar__icon" onClick={props.onDrawerClose} aria-label="재료 서랍 숨기기"><ChevronDown aria-hidden="true" size={19} /></button>
         </header>
 
-        {cuteCollectionOpen
-          ? renderCuteCollection()
+        {openCollection !== undefined
+          ? renderCollection(openCollection.collection, openCollection.items)
           : (
               <>
                 <div className="journal-decoration-toolbar__filters" role="group" aria-label="꾸미기 재료 종류">
@@ -575,30 +672,36 @@ export function JournalDecorationToolbar(props: JournalDecorationToolbarProps) {
                   <div className="journal-decoration-toolbar__items">
                     {MATERIAL_CATEGORY_ORDER.flatMap((category) => [
                       renderMaterialCategory(category),
-                      ...(category === "STICKER" && showCuteCollectionEntry
-                        ? [
-                            <button
-                              type="button"
-                              className="journal-decoration-toolbar__collection-entry"
-                              key="open-cute-collection"
-                              onClick={() => {
-                                setCuteCollectionOpen(true)
-                                setPendingPurchaseId(null)
-                              }}
-                              aria-label={`귀여운 스티커 ${cuteItems.length}종 보기, 한 개 ${CUTE_STICKER_PRICE}포인트`}
-                            >
-                              <span className="journal-decoration-toolbar__collection-preview" aria-hidden="true">
-                                {cuteItems.slice(0, 4).map((item) => (
-                                  <img key={item.id} src={`${import.meta.env.BASE_URL}${item.assetPath}`} alt="" draggable="false" />
-                                ))}
-                              </span>
-                              <span>
-                                <strong>귀여운 스티커</strong>
-                                <small>{`${cuteItems.length}종 · 모두 ${CUTE_STICKER_PRICE}P`}</small>
-                              </span>
-                              <span aria-hidden="true">보기</span>
-                            </button>,
-                          ]
+                      ...(category === "STICKER" && showCollectionEntries
+                        ? collectionsWithItems.map(({ collection, items }) => {
+                            const previewItems = collection.entryPreviewItemIds
+                              .map((itemId) => items.find((item) => item.id === itemId))
+                              .filter((item): item is DecorationCatalogItem => item !== undefined)
+                            const preview = previewItems.length > 0 ? previewItems : items.slice(0, 4)
+                            return (
+                              <button
+                                type="button"
+                                className="journal-decoration-toolbar__collection-entry"
+                                key={`open-collection-${collection.id}`}
+                                onClick={() => {
+                                  setOpenCollectionId(collection.id)
+                                  setPendingPurchaseId(null)
+                                }}
+                                aria-label={`${collection.title} ${items.length}종 보기, ${collectionEntryHint(collection)}`}
+                              >
+                                <span className="journal-decoration-toolbar__collection-preview" aria-hidden="true">
+                                  {preview.slice(0, 4).map((item) => (
+                                    <img key={item.id} src={`${import.meta.env.BASE_URL}${item.assetPath}`} alt="" draggable="false" loading="lazy" />
+                                  ))}
+                                </span>
+                                <span>
+                                  <strong>{collection.title}</strong>
+                                  <small>{collectionSubtitle(collection)}</small>
+                                </span>
+                                <span aria-hidden="true">보기</span>
+                              </button>
+                            )
+                          })
                         : []),
                     ])}
                   </div>

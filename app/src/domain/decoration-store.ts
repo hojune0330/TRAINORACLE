@@ -2,8 +2,18 @@ import {
   DECORATION_CATALOG,
   isDecorationId,
   isPaidDecorationId,
+  minimumSpentPointsForOwned,
 } from "./decoration-catalog"
-import type { DecorationId } from "./decoration-catalog"
+import type { DecorationCatalogItem, DecorationId } from "./decoration-catalog"
+import {
+  acquisitionCost,
+  collectionBundleCost,
+  collectionById,
+  collectionVisibleInShop,
+  rewardRuleById,
+  withinSeason,
+} from "./decoration-collections"
+import type { RewardSignals } from "./decoration-collections"
 import {
   createEmptyDecorationState,
   decorationStateSchema,
@@ -53,6 +63,8 @@ export type DecorationPurchase =
   | { readonly kind: "ALREADY_OWNED"; readonly state: DecorationState; readonly remainingPoints: number }
   | { readonly kind: "INSUFFICIENT_POINTS"; readonly state: DecorationState; readonly remainingPoints: number }
   | { readonly kind: "UNKNOWN_ITEM"; readonly state: DecorationState; readonly remainingPoints: number }
+  /** 포인트로 살 수 없는 아이템: 은퇴(RETIRED)·보상 전용(REWARD)·시즌 지급(SEASON). */
+  | { readonly kind: "NOT_PURCHASABLE"; readonly state: DecorationState; readonly remainingPoints: number; readonly reason: "RETIRED" | "REWARD" | "SEASON" | "STARTER" }
   | {
     readonly kind: "SAVE_FAILED"
     readonly state: DecorationState
@@ -201,6 +213,10 @@ export function toggleFavoriteDecoration(state: DecorationState, itemId: Decorat
   })
 }
 
+/**
+ * 포인트 구매(POINTS/BUNDLE 개별 가격). REWARD·SEASON 아이템은 포인트로 살 수 없고(NOT_PURCHASABLE),
+ * RETIRED 아이템은 신규 획득이 막힌다 — 보유분 렌더는 스키마가 따로 보장한다.
+ */
 export function purchaseDecoration(
   earnedPoints: number,
   state: DecorationState,
@@ -216,6 +232,10 @@ export function purchaseDecoration(
     return { kind: "ALREADY_OWNED", state, remainingPoints: available }
   }
   if (!isPaidDecorationId(itemId)) return { kind: "UNKNOWN_ITEM", state, remainingPoints: available }
+  if (item.availability !== "ACTIVE") return { kind: "NOT_PURCHASABLE", state, remainingPoints: available, reason: "RETIRED" }
+  if (item.acquisition.kind !== "POINTS" && item.acquisition.kind !== "BUNDLE") {
+    return { kind: "NOT_PURCHASABLE", state, remainingPoints: available, reason: item.acquisition.kind }
+  }
   if (available < item.cost) return { kind: "INSUFFICIENT_POINTS", state, remainingPoints: available }
 
   const next = decorationStateSchema.parse({
@@ -226,6 +246,110 @@ export function purchaseDecoration(
   const saved = saveDecorationStateIfCurrent(next, expectedSerialized)
   if (!saved.ok) return { kind: "SAVE_FAILED", state, remainingPoints: available, code: saved.code }
   return { kind: "PURCHASED", state: next, remainingPoints: available - item.cost }
+}
+
+export type DecorationBundlePurchase =
+  | { readonly kind: "PURCHASED"; readonly state: DecorationState; readonly remainingPoints: number; readonly itemIds: readonly DecorationId[]; readonly cost: number }
+  | { readonly kind: "ALREADY_OWNED"; readonly state: DecorationState; readonly remainingPoints: number }
+  | { readonly kind: "INSUFFICIENT_POINTS"; readonly state: DecorationState; readonly remainingPoints: number; readonly cost: number }
+  | { readonly kind: "UNKNOWN_COLLECTION"; readonly state: DecorationState; readonly remainingPoints: number }
+  | { readonly kind: "NOT_PURCHASABLE"; readonly state: DecorationState; readonly remainingPoints: number }
+  | {
+    readonly kind: "SAVE_FAILED"
+    readonly state: DecorationState
+    readonly remainingPoints: number
+    readonly code: DecorationSaveFailureCode
+  }
+
+/**
+ * 컬렉션 일괄 구매. 남은 POINTS/BUNDLE 아이템을 한 번에 받고, 청구액은 `collectionBundleCost`
+ * (번들 가격과 남은 개별 합계 중 싼 쪽). REWARD·SEASON 아이템은 번들에 들어가지 않는다.
+ */
+export function purchaseCollectionBundle(
+  earnedPoints: number,
+  state: DecorationState,
+  collectionId: string,
+  today: string,
+  expectedSerialized?: string | null,
+): DecorationBundlePurchase {
+  const available = Math.max(0, earnedPoints - state.spentPoints)
+  const collection = collectionById(collectionId)
+  if (collection === undefined) return { kind: "UNKNOWN_COLLECTION", state, remainingPoints: available }
+  if (collection.bundle === undefined || !collectionVisibleInShop(collection, today)) {
+    return { kind: "NOT_PURCHASABLE", state, remainingPoints: available }
+  }
+  const owned = new Set<string>(state.ownedItemIds)
+  const itemIds = DECORATION_CATALOG
+    .filter((item): item is DecorationCatalogItem & { readonly id: DecorationId } => (
+      item.collection === collection.id
+      && !owned.has(item.id)
+      && item.availability === "ACTIVE"
+      && (item.acquisition.kind === "POINTS" || item.acquisition.kind === "BUNDLE")
+    ))
+    .map((item) => item.id)
+  if (itemIds.length === 0) return { kind: "ALREADY_OWNED", state, remainingPoints: available }
+  const cost = collectionBundleCost(collection, owned) ?? 0
+  if (available < cost) return { kind: "INSUFFICIENT_POINTS", state, remainingPoints: available, cost }
+
+  const next = decorationStateSchema.parse({
+    ...state,
+    spentPoints: state.spentPoints + cost,
+    ownedItemIds: [...state.ownedItemIds, ...itemIds],
+  })
+  const saved = saveDecorationStateIfCurrent(next, expectedSerialized)
+  if (!saved.ok) return { kind: "SAVE_FAILED", state, remainingPoints: available, code: saved.code }
+  return { kind: "PURCHASED", state: next, remainingPoints: available - cost, itemIds, cost }
+}
+
+export type DecorationRewardClaim =
+  | { readonly kind: "NOTHING_TO_CLAIM"; readonly state: DecorationState }
+  | { readonly kind: "CLAIMED"; readonly state: DecorationState; readonly items: readonly DecorationCatalogItem[] }
+  | { readonly kind: "SAVE_FAILED"; readonly state: DecorationState; readonly code: DecorationSaveFailureCode }
+
+/** 지급 조건이 충족된 REWARD/SEASON 아이템 목록(순수 함수 — UI 안내·테스트용). */
+export function claimableRewardDecorations(
+  state: DecorationState,
+  signals: RewardSignals,
+  today: string,
+): readonly DecorationCatalogItem[] {
+  const owned = new Set<string>(state.ownedItemIds)
+  return DECORATION_CATALOG.filter((item) => {
+    if (owned.has(item.id) || item.starterOwned || item.availability !== "ACTIVE") return false
+    if (item.collection !== undefined) {
+      const collection = collectionById(item.collection)
+      if (collection === undefined || !collectionVisibleInShop(collection, today)) return false
+    }
+    const acquisition = item.acquisition
+    if (acquisition.kind === "REWARD") return rewardRuleById(acquisition.ruleId)?.satisfied(signals) ?? false
+    if (acquisition.kind === "SEASON") return withinSeason({ from: acquisition.from, to: acquisition.to }, today)
+    return false
+  })
+}
+
+/**
+ * 활동 신호로 보상·시즌 아이템을 자동 지급한다. 포인트를 차감하지 않으므로 `spentPoints`는 그대로고,
+ * 스키마의 최소 사용 포인트 검증도 이 아이템들을 합산하지 않는다(acquisitionCost = 0).
+ */
+export function claimRewardDecorations(
+  state: DecorationState,
+  signals: RewardSignals,
+  today: string,
+  expectedSerialized?: string | null,
+): DecorationRewardClaim {
+  const items = claimableRewardDecorations(state, signals, today)
+  if (items.length === 0) return { kind: "NOTHING_TO_CLAIM", state }
+  const next = decorationStateSchema.parse({
+    ...state,
+    ownedItemIds: [...state.ownedItemIds, ...items.map((item) => item.id)],
+  })
+  const saved = saveDecorationStateIfCurrent(next, expectedSerialized)
+  if (!saved.ok) return { kind: "SAVE_FAILED", state, code: saved.code }
+  return { kind: "CLAIMED", state: next, items }
+}
+
+/** 보유 아이템의 최소 포인트 차감 합계 — 스키마 검증과 같은 함수를 쓴다(번들 할인 인정). */
+export function minimumSpentPointsFor(ownedItemIds: readonly string[]): number {
+  return minimumSpentPointsForOwned(ownedItemIds)
 }
 
 export function decorationItemOwned(state: DecorationState, itemId: DecorationId): boolean {

@@ -14,6 +14,8 @@
     "test:unit:kst": "vitest run -c vitest.config.kst.ts",
     "test:release-env": "node --test scripts/validate-hosted-release-env.test.mjs",
     "test:device-integration": "node --test scripts/validate-device-integration.test.mjs",
+    "collection-docs": "node scripts/generate-collection-docs.mjs",
+    "collection-docs:check": "node scripts/generate-collection-docs.mjs --check",
     "test:watch": "vitest",
     "test:e2e:adaptive-next-frame": "node e2e/run-adaptive-next-frame.mjs",
     "test:e2e": "npm run build && node e2e/run-full-suite.mjs"

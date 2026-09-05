@@ -95,24 +95,24 @@ export function DeviceJournal({ onOpenDay, onOpenArchive }: DeviceJournalProps) 
               <span aria-hidden="true" style={{ fontFamily: "var(--mono)", fontSize: 15, color: "var(--brand)", lineHeight: 1 }}>{meta.mark}</span>
               <span style={{ minWidth: 0 }}>
                 <span style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
-                  <span style={{ fontFamily: "var(--mono)", fontSize: 10, color: "var(--ink-3)", letterSpacing: "0.04em" }}>{journalDateLabel(entry.date)}</span>
-                  <span style={{ fontFamily: "var(--mono)", fontSize: 9.5, color: "var(--ink-4)", letterSpacing: "0.08em" }}>{meta.label}</span>
+                  <span style={{ fontFamily: "var(--mono)", fontSize: "var(--fs-mono-xs)", color: "var(--ink-3)", letterSpacing: "0.04em" }}>{journalDateLabel(entry.date)}</span>
+                  <span style={{ fontFamily: "var(--mono)", fontSize: "var(--fs-mono-xs)", color: "var(--ink-4)", letterSpacing: "0.08em" }}>{meta.label}</span>
                 </span>
                 <span style={{
                   display: "block", fontFamily: "var(--sans)", fontSize: 14, fontWeight: 500, color: "var(--ink)",
                   marginTop: 3, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
                 }}>{headline}</span>
-                <span style={{ display: "block", fontFamily: "var(--mono)", fontSize: 10, color: "var(--ink-3)", marginTop: 2 }}>{entrySub(entry)}</span>
+                <span style={{ display: "block", fontFamily: "var(--mono)", fontSize: "var(--fs-mono-xs)", color: "var(--ink-3)", marginTop: 2 }}>{entrySub(entry)}</span>
               </span>
               <span style={{ display: "grid", gap: 3, justifyItems: "end" }}>
                 <span style={{
-                  fontFamily: "var(--mono)", fontSize: 8.5, letterSpacing: "0.1em",
+                  fontFamily: "var(--mono)", fontSize: "var(--fs-mono-xs)", letterSpacing: "0.1em",
                   color: "var(--ink-4)",
                   border: "1px solid var(--hair)", padding: "2px 5px", whiteSpace: "nowrap",
                 }}>이 기기</span>
                 {hasImportedField(entry.fieldProvenance) && (
                   <span data-testid="imported-chip" style={{
-                    fontFamily: "var(--mono)", fontSize: 8.5, letterSpacing: "0.1em",
+                    fontFamily: "var(--mono)", fontSize: "var(--fs-mono-xs)", letterSpacing: "0.1em",
                     color: "var(--ink-2)",
                     border: "1px solid var(--line)", padding: "2px 5px", whiteSpace: "nowrap",
                   }}>가져옴</span>
@@ -142,17 +142,17 @@ export function SafeJournalExport({ onOpenRestore }: {
       <button type="button" onClick={downloadSafeJournalExport} aria-describedby={EXPORT_DESCRIPTION_ID} style={{
         background: "transparent", border: 0, cursor: "pointer", padding: 0,
         minHeight: 44,
-        fontFamily: "var(--mono)", fontSize: 9.5, color: "var(--ink-4)",
+        fontFamily: "var(--mono)", fontSize: "var(--fs-mono-xs)", color: "var(--ink-4)",
         letterSpacing: "0.08em", textDecoration: "underline", textUnderlineOffset: 3,
       }}>내 일지 데이터 내려받기 (JSON)</button>
-      <div id={EXPORT_DESCRIPTION_ID} style={{ marginTop: 4, fontFamily: "var(--mono)", fontSize: 9, color: "var(--ink-4)", lineHeight: 1.5 }}>
+      <div id={EXPORT_DESCRIPTION_ID} style={{ marginTop: 4, fontFamily: "var(--mono)", fontSize: "var(--fs-mono-xs)", color: "var(--ink-4)", lineHeight: 1.5 }}>
         메모 원문과 메모 목적은 제외해요 · 파일은 이 기기에만 저장되고 어디로도 전송되지 않아요
       </div>
       {summary.skipped > 0 && (
         <div data-testid="safe-export-skipped" style={{
           marginTop: 8, padding: "8px 10px",
           border: "1px solid var(--line)", background: "transparent",
-          fontFamily: "var(--mono)", fontSize: 9.5, color: "var(--ink-2)", lineHeight: 1.65,
+          fontFamily: "var(--mono)", fontSize: "var(--fs-mono-xs)", color: "var(--ink-2)", lineHeight: 1.65,
         }}>
           수치 없이 메모만 쓴 일지 {summary.skipped}개는 이 파일에 들어가지 않아요.
           메모를 빼면 남는 내용이 없기 때문이에요.
@@ -164,7 +164,7 @@ export function SafeJournalExport({ onOpenRestore }: {
       <button type="button" onClick={() => setIsFullExportDialogOpen(true)} style={{
         background: "transparent", border: 0, cursor: "pointer", padding: "8px 0 0",
         minHeight: 44,
-        fontFamily: "var(--mono)", fontSize: 9.5, color: "var(--ink-4)",
+        fontFamily: "var(--mono)", fontSize: "var(--fs-mono-xs)", color: "var(--ink-4)",
         letterSpacing: "0.08em", textDecoration: "underline", textUnderlineOffset: 3,
       }}>메모 포함 파일 내보내기 (JSON)</button>
       {onOpenRestore && (
@@ -173,10 +173,10 @@ export function SafeJournalExport({ onOpenRestore }: {
             display: "block",
             background: "transparent", border: 0, cursor: "pointer", padding: "8px 0 0",
             minHeight: 44,
-            fontFamily: "var(--mono)", fontSize: 9.5, color: "var(--ink-4)",
+            fontFamily: "var(--mono)", fontSize: "var(--fs-mono-xs)", color: "var(--ink-4)",
             letterSpacing: "0.08em", textDecoration: "underline", textUnderlineOffset: 3,
           }}>내려받은 백업 되돌리기</button>
-          <div style={{ marginTop: 4, fontFamily: "var(--mono)", fontSize: 9, color: "var(--ink-4)", lineHeight: 1.5 }}>
+          <div style={{ marginTop: 4, fontFamily: "var(--mono)", fontSize: "var(--fs-mono-xs)", color: "var(--ink-4)", lineHeight: 1.5 }}>
             지금 있는 일지는 그대로 두고 백업에 있는 것만 더해요 · 파일은 이 기기에서만 읽어요
           </div>
         </>
@@ -234,7 +234,7 @@ function FullExportDialog({ onCancel, onConfirm }: {
     }}>
       <div style={{ width: "min(100%, 360px)", background: "var(--bg)", border: "1px solid var(--ink)", padding: 18 }}>
         <div id="full-export-title" style={{ fontFamily: "var(--sans)", fontSize: 17, fontWeight: 600, color: "var(--ink)" }}>메모까지 포함할까요?</div>
-        <div style={{ marginTop: 8, fontFamily: "var(--mono)", fontSize: 10.5, color: "var(--ink-2)", lineHeight: 1.65 }}>
+        <div style={{ marginTop: 8, fontFamily: "var(--mono)", fontSize: "var(--fs-mono-sm)", color: "var(--ink-2)", lineHeight: 1.65 }}>
           이 파일에는 메모 원문과 메모 목적이 함께 들어가요. 받을 사람을 확인한 뒤 파일을 만들어요.
         </div>
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginTop: 18 }}>

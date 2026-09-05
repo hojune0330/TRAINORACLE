@@ -202,7 +202,7 @@ export function Account({ onBack, onOpenImport, onOpenRestore }: {
         </div>
       ) : (
         <div style={{ marginTop: 20, display: "flex", flexDirection: "column", gap: 16 }}>
-          <div style={{ border: "1px solid var(--line)", borderRadius: 4, padding: "14px 16px" }}>
+          <div style={{ border: "1px solid var(--line)", borderRadius: "var(--r-md)", padding: "14px 16px" }}>
             <div style={{ ...mono, fontSize: 10, color: "var(--ink-3)", letterSpacing: 0 }}>로그인됨</div>
             <div style={{ fontFamily: "var(--sans)", fontSize: 15, fontWeight: 600, marginTop: 4, letterSpacing: 0 }}>
               {user.email ?? (user.phone ? maskPhoneNumber(user.phone) : "연락처 미공개")}
@@ -233,7 +233,7 @@ export function Account({ onBack, onOpenImport, onOpenRestore }: {
           <AccountSyncPanel userId={user.id} />
 
           <SectionLb>기기 데이터 가져오기</SectionLb>
-          <div data-testid="import-teaser" style={{ border: "1px solid var(--line)", borderRadius: 4, padding: "12px 14px" }}>
+          <div data-testid="import-teaser" style={{ border: "1px solid var(--line)", borderRadius: "var(--r-md)", padding: "12px 14px" }}>
             <div style={{ fontFamily: "var(--sans)", fontSize: 13.5, fontWeight: 600 }}>워치 기록을 파일로 가져올 수 있어요</div>
             <p style={{ fontFamily: "var(--sans)", fontSize: 12, lineHeight: 1.6, color: "var(--ink-2)", margin: "6px 0 0" }}>
               가민 커넥트 등에서 활동을 TCX·GPX로 내보내면 거리·시간·평균 페이스가 채워진 일지 초안이 만들어져요.

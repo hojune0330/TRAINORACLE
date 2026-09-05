@@ -9,6 +9,14 @@ import { loadDecorationState } from "../../domain/decorations"
  * 이제 이 카드는 오늘 일지 상세로 이동해 진짜 페이지 위에서
  * P1~P6 편집기를 바로 연다. 포인트 구매도 그 편집기 서랍으로 옮겼다.
  */
+/* 홈 카드 미리보기: 시작 재료 중 스티커·도장 4점 (문구용품 스타일). */
+const HOME_PREVIEW_ASSETS = [
+  "sticker-weather-sun.webp",
+  "sticker-running-shoe.webp",
+  "stamp-done-check.webp",
+  "sticker-water-bottle.webp",
+] as const
+
 export function DecorationShop({
   earnedPoints,
   hasJournalEntries = true,
@@ -41,6 +49,11 @@ export function DecorationShop({
           </button>
         )}
       </header>
+      <div className="decoration-shop__preview" aria-hidden="true">
+        {HOME_PREVIEW_ASSETS.map((asset) => (
+          <img key={asset} src={`${import.meta.env.BASE_URL}decorations/${asset}`} alt="" draggable="false" loading="lazy" />
+        ))}
+      </div>
       <p>
         {hasJournalEntries
           ? "오늘 일지 위에서 바로 꾸며요. 베타 포인트는 꾸미기에만 써요 — 현금으로 바꾸거나 다른 사람에게 보낼 수 없어요."

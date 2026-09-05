@@ -100,7 +100,7 @@ export function JournalArchive({
             width: 44,
             height: 44,
             border: "1px solid var(--line)",
-            borderRadius: 8,
+            borderRadius: "var(--r-md)",
             display: "grid",
             placeItems: "center",
             background: "transparent",
@@ -108,12 +108,12 @@ export function JournalArchive({
             cursor: "pointer",
           }}
         >
-          <ArrowLeft aria-hidden="true" size={19} />
+          <ArrowLeft aria-hidden="true" size={18} />
         </button>
         <div style={{ minWidth: 0 }}>
           <div style={{
             fontFamily: "var(--mono)",
-            fontSize: 9.5,
+            fontSize: "var(--fs-mono-xs)",
             color: "var(--ink-3)",
             letterSpacing: "0.14em",
           }}>
@@ -122,7 +122,7 @@ export function JournalArchive({
           <h1 style={{
             margin: "3px 0 0",
             fontFamily: "var(--sans)",
-            fontSize: 21,
+            fontSize: "var(--fs-app-section-title)",
             lineHeight: 1.25,
             fontWeight: 600,
             overflowWrap: "anywhere",

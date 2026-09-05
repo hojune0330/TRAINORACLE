@@ -154,7 +154,7 @@ test("opens the cute sticker subcollection and buys one at the fixed 4P price", 
   await expect(drawer.getByRole("group", { name: "꾸미기 재료 종류" })).toHaveCount(0)
   await expect(drawer.locator(".journal-decoration-toolbar__material-tile")).toHaveCount(28)
   await drawer.getByText("그림 출처 보기").click()
-  await expect(drawer.getByRole("link", { name: "자산 출처와 라이선스" })).toHaveAttribute("href", /legal\/open-source\.html$/u)
+  await expect(drawer.getByRole("link", { name: "자산 출처와 라이선스" })).toHaveAttribute("href", /legal\/open-source\.html#OPEN_CUTE_V1$/u)
 
   await drawer.getByRole("button", { name: "콧노래 친구 4P로 받기" }).click()
   const purchase = drawer.getByRole("group", { name: "콧노래 친구 받기 확인" })
@@ -414,7 +414,8 @@ test("deletes a selected decoration on the canvas and deselects on empty-space t
   const frameBox = await frame.boundingBox()
   expect(frameBox).not.toBeNull()
   if (frameBox === null) return
-  await page.mouse.click(frameBox.x + 12, frameBox.y + frameBox.height * 0.2)
+  /* 스폰(18%,28%)과 손잡이를 피해 종이 왼쪽 여백 중앙을 탭한다. */
+  await page.mouse.click(frameBox.x + 12, frameBox.y + frameBox.height * 0.5)
   await expect(page.getByRole("button", { name: "맑은 날 삭제" })).toHaveCount(0)
 
   /* 다시 선택 후 캔버스 위 삭제 → 저장소에서도 사라지고 되돌리기로 복구된다. */

@@ -87,7 +87,7 @@ describe("real journal decoration surface", () => {
 
     // Then: 첫 장식은 첫 번째 격자 좌표에 붙고 배열 끝(최상단)에 놓인다.
     expect(pageItems()).toEqual([
-      { itemId: "STICKER_WEATHER_SUN", transform: T(18, 18) },
+      { itemId: "STICKER_WEATHER_SUN", transform: T(18, 28) },
     ])
     expect(screen.getByTestId("journal-decoration-item-0")).toBeVisible()
 
@@ -102,7 +102,7 @@ describe("real journal decoration surface", () => {
   it("shows a visual material drawer with category chips and no removal action", async () => {
     const user = userEvent.setup()
     storeEntries([session("one")])
-    seedPage([{ itemId: "STICKER_WEATHER_SUN", transform: T(18, 18) }])
+    seedPage([{ itemId: "STICKER_WEATHER_SUN", transform: T(18, 28) }])
     const { container } = render(<LogDetail date={DATE} />)
 
     await user.click(screen.getByRole("button", { name: "일지 꾸미기 열기" }))
@@ -215,7 +215,7 @@ describe("real journal decoration surface", () => {
 
     // Then
     expect(pageItems()).toEqual([
-      { itemId: "STICKER_WEATHER_SUN", transform: T(18, 18) },
+      { itemId: "STICKER_WEATHER_SUN", transform: T(18, 28) },
     ])
     expect(screen.getByTestId("journal-decoration-item-0")).toBeVisible()
 
@@ -227,7 +227,7 @@ describe("real journal decoration surface", () => {
 
     // Then
     expect(pageItems()).toEqual([
-      { itemId: "STICKER_WEATHER_SUN", transform: T(18, 18) },
+      { itemId: "STICKER_WEATHER_SUN", transform: T(18, 28) },
     ])
     expect(screen.getByTestId("journal-decoration-item-0")).toBeVisible()
   })

@@ -2,19 +2,25 @@ import { existsSync } from "node:fs"
 import { resolve } from "node:path"
 import { beforeEach, describe, expect, it } from "vitest"
 import {
+  COLLECTION_ITEM_IDS,
   DECORATION_CATALOG,
+  DECORATION_COLLECTIONS,
   DECORATION_IDS,
-  CUTE_STICKER_GROUPS,
-  CUTE_STICKER_IDS,
-  CUTE_STICKER_PRICE,
   EMOJI_STICKER_IDS,
   EMOJI_STICKER_SLOTS,
+  LICENSES,
+  OPEN_CUTE_V1,
   PAID_DECORATION_IDS,
   STARTER_DECORATION_IDS,
+  collectionSubtitle,
+  decorationStateSchema,
   loadDecorationState,
   purchaseDecoration,
 } from "./decorations"
 import type { DecorationCatalogItem } from "./decorations"
+
+const CUTE_STICKER_IDS: readonly string[] = OPEN_CUTE_V1.items.map((item) => item.id)
+const CUTE_STICKER_PRICE = 4
 
 const DECORATION_STORAGE_KEY_V1 = "trainoracle.decorations.v1"
 const DECORATION_STORAGE_KEY_V3 = "trainoracle.decorations.v3"
@@ -58,7 +64,7 @@ describe("beta decoration shop", () => {
   })
 
   it("keeps the original 34 illustrated materials plus one ink swatch unchanged", () => {
-    const materials = CATALOG.filter((item) => item.category !== "EMOJI_STICKER" && item.collection !== "OPEN_CUTE_V1")
+    const materials = CATALOG.filter((item) => item.category !== "EMOJI_STICKER" && item.collection === undefined)
     const categoryCounts = Object.fromEntries(
       ["THEME", "TAPE", "STICKER", "STAMP", "INK", "AVATAR"].map((category) => [
         category,
@@ -79,6 +85,8 @@ describe("beta decoration shop", () => {
       .toEqual(STARTER_DECORATION_IDS.filter((id) => !EMOJI_STICKER_IDS.includes(id as never)).sort())
     expect(new Set(materials.map((item) => item.id)).size).toBe(materials.length)
     expect(materials.every((item) => /^decorations\/[a-z0-9-]+\.webp$/u.test(item.assetPath))).toBe(true)
+    expect(materials.every((item) => item.licenseId === "TRAINORACLE_IN_HOUSE" && item.availability === "ACTIVE")).toBe(true)
+    expect(materials.every((item) => (item.starterOwned ? item.acquisition.kind === "STARTER" : item.acquisition.kind === "POINTS"))).toBe(true)
     expect(materials.filter((item) => !existsSync(resolve(process.cwd(), "public", item.assetPath))).map((item) => item.assetPath)).toEqual([])
     expect(prices).toEqual({
       THEME_TRACK_NOTEBOOK: 0,
@@ -121,9 +129,9 @@ describe("beta decoration shop", () => {
 
   it("ships a separate 28-item cute sticker collection at one fixed 4P price", () => {
     const cuteItems = CATALOG.filter((item) => item.collection === "OPEN_CUTE_V1")
-    const groupCounts = Object.fromEntries(CUTE_STICKER_GROUPS.map((group) => [
+    const groupCounts = Object.fromEntries(OPEN_CUTE_V1.groups.map((group) => [
       group.id,
-      cuteItems.filter((item) => item.cuteGroup === group.id).length,
+      cuteItems.filter((item) => item.collectionGroup === group.id).length,
     ]))
 
     expect(cuteItems.map((item) => item.id)).toEqual([...CUTE_STICKER_IDS])
@@ -135,12 +143,48 @@ describe("beta decoration shop", () => {
       CHEER_ACHIEVEMENT: 6,
       DOODLE_FRIENDS: 4,
     })
-    expect(cuteItems.filter((item) => item.licenseRef === "FLUENT_EMOJI_FLAT_MIT")).toHaveLength(24)
-    expect(cuteItems.filter((item) => item.licenseRef === "OPEN_PEEPS_CC0")).toHaveLength(4)
+    expect(cuteItems.filter((item) => item.licenseId === "FLUENT_EMOJI_FLAT_MIT")).toHaveLength(24)
+    expect(cuteItems.filter((item) => item.licenseId === "OPEN_PEEPS_CC0")).toHaveLength(4)
     expect(cuteItems.every((item) => item.category === "STICKER")).toBe(true)
     expect(cuteItems.every((item) => item.cost === CUTE_STICKER_PRICE && !item.starterOwned)).toBe(true)
+    expect(cuteItems.every((item) => item.acquisition.kind === "POINTS" && item.availability === "ACTIVE")).toBe(true)
     expect(cuteItems.every((item) => PAID_DECORATION_IDS.includes(item.id as never))).toBe(true)
+    expect(cuteItems.every((item) => item.assetPath.startsWith("collections/open-cute-v1/"))).toBe(true)
     expect(cuteItems.filter((item) => !existsSync(resolve(process.cwd(), "public", item.assetPath)))).toEqual([])
+    expect(collectionSubtitle(OPEN_CUTE_V1)).toBe("28종 · 한 개 4P")
+  })
+
+  it("derives every collection item id and license from the registry", () => {
+    // Given: 레지스트리에 등록된 모든 컬렉션
+    const registryIds = DECORATION_COLLECTIONS.flatMap((collection) => collection.items.map((item) => item.id))
+    const licenseIds = new Set(LICENSES.map((license) => license.id))
+
+    // Then: 카탈로그 id 집합·유료 id 집합에 자동 편입되고, 모든 라이선스 참조가 레지스트리에 존재한다.
+    expect([...COLLECTION_ITEM_IDS]).toEqual(registryIds)
+    expect(registryIds.every((id) => DECORATION_IDS.includes(id as never))).toBe(true)
+    expect(registryIds.every((id) => PAID_DECORATION_IDS.includes(id as never))).toBe(true)
+    expect(new Set(registryIds).size).toBe(registryIds.length)
+    for (const collection of DECORATION_COLLECTIONS) {
+      expect(collection.items.every((item) => licenseIds.has(item.licenseId))).toBe(true)
+      expect(collection.items.every((item) => collection.groups.some((group) => group.id === item.group))).toBe(true)
+      expect(collection.entryPreviewItemIds.every((id) => collection.items.some((item) => item.id === id))).toBe(true)
+      expect(collection.items.every((item) => typeof item.sha256 === "string" && /^[0-9a-f]{64}$/u.test(item.sha256))).toBe(true)
+    }
+    expect(CATALOG.every((item) => licenseIds.has(item.licenseId))).toBe(true)
+  })
+
+  it("keeps a stored state valid even if an owned collection item is retired later", () => {
+    // Given: 귀여운 스티커를 구매해 배치한 상태 (retire-never-delete: 카탈로그에 id가 남아 있어야 한다)
+    const purchased = purchaseDecoration(4, loadDecorationState(), "CUTE_PEEP_HUMMING")
+    expect(purchased.kind).toBe("PURCHASED")
+    const withPage = {
+      ...purchased.state,
+      pages: [{ date: "2026-09-01", items: [{ itemId: "CUTE_PEEP_HUMMING", transform: { xPercent: 50, yPercent: 50, scale: 1, rotationDeg: 0 } }] }],
+    }
+
+    // Then: 스키마는 availability와 무관하게 보유·배치를 그대로 파싱한다.
+    const parsed = decorationStateSchema.safeParse(withPage)
+    expect(parsed.success).toBe(true)
   })
 
   it("ships 48 free emoji stickers rendered as unicode text with no bundled artwork", () => {
