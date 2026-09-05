@@ -95,9 +95,11 @@ inside the 30-entry energy-system catalogue. The three MD refs are separately ad
 identities, not three extra rows in that catalogue. Exact fingerprint, record,
 event/purpose/experience, authority and safety checks still determine actual use.
 
-Current runtime supports one detailed session per candidate with selectable placement
-on an eligible MAIN occurrence. Multiple concurrent detailed sessions remain pending
-an exact per-slot policy covering applicability, exposure and cross-slot interactions.
+Current end-user runtime supports one detailed session per candidate with selectable
+placement on an eligible MAIN occurrence. The core and app transaction boundary can
+represent and atomically validate multiple structurally distinct detailed sessions,
+but the end-user multi-slot selector remains pending exact per-slot applicability,
+exposure, cross-slot interaction and independently adopted method evidence.
 The prior first-QUALITY-only placement is historical, not the current limit. One
 detailed method per accepted event-purpose scope remains the numeric baseline.
 Sequence V2 representation and structural comparison do not imply arbitrary method
@@ -415,8 +417,8 @@ clearance. No recommendation or user confirmation overrides these conditions.
 | Whole catalogue | Exactly 30 local IDs with source/version/lifecycle/parser states and per-entry gaps; separate four-ref baseline and outside-catalogue examples | All entries are in preparation scope, including unusable audit records |
 | Source/configuration preparation | Group original protocol location, access state, exact structure, target, recovery, scope and operational deviations for every entry | Continue evidence preparation without repeated feature-approval prompts; absent evidence remains absent |
 | Adjustment preparation | Per-family/configuration scalar domains, finite presets, coupling/rotation/transform evidence and explicit unsupported fields | Engine/editor implementation is approved; no invented numeric bounds or executable unreviewed rules |
-| UI/core implementation | Selectable placement of one detailed session, deterministic recommendations, bounded editor transactions and content validation | Approved implementation work; no concurrent detailed-dose duplication |
-| Multi-slot/storage integration | Independent per-MAIN generation, versioned snapshots, restore/execution and actual linkage | Approved direction; exact multi-slot policy, content authority and owning-schema extensions required before enabling that behavior |
+| UI/core implementation | Selectable placement of one detailed session, live history-aware deterministic recommendations, bounded editor transactions and content validation | Implemented foundation; no concurrent detailed-dose duplication in the live UI |
+| Multi-slot/storage integration | Atomic multi-placement transaction, aggregate candidate identity, versioned history snapshots, restore/execution and actual linkage | Core/app boundary prepared; exact multi-slot policy and at least two independently adopted same-scope methods remain required before live enablement |
 | Verification | Positive/negative and mutation evidence, storage/reload/restore, cancellation races, desktop/mobile reader/editor journeys | Required evidence tied to exact artifacts; implementation reports own observed results |
 
 Source extraction, exact operational choices, scientific/population review,
@@ -441,7 +443,7 @@ runtime results or additions to the historical issue/test counts in peer documen
 | More than a fixed pair; count-only variants | Independently eligible configurations work without pair IDs; method diversity is not inflated |
 | Same versioned catalogue/order, context and assessments | Same eligible results/recommendations/reasons; stable catalogue-order tie-break, never lexical IDs |
 | Equal-priority entries with deliberately different ID order | Catalogue order wins; an intentional catalogue reorder is a changed input, not nondeterminism |
-| Live neutral history versus core repeat/variety capability | Live path claims no history use; core keeps selected/performed/missing distinct and does not authorize live history ingestion |
+| Live archived history versus repeat/variety capability | Live path reads only structured archived plan-method outcomes; selected/performed/not-performed/missing remain distinct, and variety preference changes ranking only |
 | Missing source/rule/default, unusable protocol | No invented numeric recommendation, preset, coefficient or approval |
 | Invalid scalar/coupled configuration | Atomic reject; no clamping, hidden higher dose or unsupported lower-repeat sibling |
 | Uniform/nested/unequal work and terminal recovery | Exact occurrence arithmetic; parent boundary replaces child recovery; no double-count |
@@ -494,5 +496,31 @@ above. PENDING EXACT EVIDENCE: concurrent multi-slot detail policy and new
 exact-dose/scalar/model activation. Scientific approval where evidence is absent,
 canonical promotion and issue closure are not implied. The catalogue readiness
 report holds the grouped gaps; implementation reports own completion evidence.
+
+## 16. 2026-09-05 Implementation Observation
+
+The following implementation state was observed after the contract was written. It
+does not change the four OPEN issue rows or grant new dose/template authority.
+
+- Archived plan history now writes version 4 method rows for each PACE_TARGET slot.
+  `COMPLETED` is observed performance; `RESTED`, `SKIPPED` and `PAIN_CHECKIN` are
+  not-performed; no answer remains missing. Legacy selection is never backfilled as
+  performed.
+- The live method option resolver consumes this structured history. The default
+  variety preference affects deterministic ordering only and cannot add, select or
+  alter a session.
+- Candidate identity and storage validation can represent more than one detailed
+  session using an aggregate fingerprint. Every placement is re-authorized, must
+  target an exact existing MAIN slot, and must use a unique structurally different
+  method. Any failed placement rejects the whole transaction.
+- The live product still exposes one exact detailed method per currently accepted
+  event-purpose scope. Therefore the multi-placement API is an evidence-gated
+  integration foundation, not proof that users can choose two methods today.
+- The adjustment engine and editor remain capability-gated. No reviewed scalar
+  values, `+/-` step, coupled recovery rule or new configuration was invented, and
+  the editor is not exposed as an inert control when no executable policy exists.
+- Local verification observed 818 core tests, 2,298 app tests, four targeted browser
+  journeys, TypeScript checks, production build and the existing 43 document
+  mutation tests passing. Independent review and remote CI remain separate gates.
 
 [DRAFT_COMPLETE]
