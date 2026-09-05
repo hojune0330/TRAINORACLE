@@ -3,6 +3,7 @@ import type {
   PlanProgressState,
 } from "@impl/plan-generator/types"
 import type { MethodHistoryEntry } from "@impl/prescription/method-recommendation"
+import { summarizePlanMethodCoverage } from "./plan-method-coverage"
 import { recordPlanProgress } from "@impl/plan-generator/generator"
 import {
   parsePlanBetaState,
@@ -424,7 +425,13 @@ export function loadPreviousContinuity(): PlanContinuityInput | undefined {
 }
 
 export function loadPlanMethodHistory(eventDistanceM?: number): readonly MethodHistoryEntry[] {
-  return Object.freeze(loadPlanHistory().flatMap(history => {
+  return loadPlanMethodHistorySnapshot(eventDistanceM).history
+}
+
+export function loadPlanMethodHistorySnapshot(eventDistanceM?: number) {
+  const loaded = readPlanHistory()
+  const rows = loaded ?? []
+  const history = Object.freeze(rows.flatMap(history => {
     if (eventDistanceM !== undefined && "eventDistanceM" in history && history.eventDistanceM !== eventDistanceM) return []
     if ("methodHistory" in history) return recommendationHistoryFromStored(history.methodHistory)
     if ("selectedDetailedTemplateRef" in history && history.selectedDetailedTemplateRef !== null) {
@@ -435,18 +442,23 @@ export function loadPlanMethodHistory(eventDistanceM?: number): readonly MethodH
     }
     return []
   }))
+  return Object.freeze({ history, coverage: loaded === null ? null : summarizePlanMethodCoverage(rows, eventDistanceM) })
 }
 
 function loadPlanHistory(): readonly StoredPlanHistory[] {
-  if (typeof window === "undefined") return []
+  return readPlanHistory() ?? []
+}
+
+function readPlanHistory(): readonly StoredPlanHistory[] | null {
+  if (typeof window === "undefined") return null
   try {
     const raw = window.localStorage.getItem(accountScopedStorageKey(HISTORY_KEY))
     if (raw === null) return []
     const json: unknown = JSON.parse(raw)
     const parsed = planHistoryListSchema.safeParse(json)
-    return parsed.success ? parsed.data : []
+    return parsed.success ? parsed.data : null
   } catch {
-    return []
+    return null
   }
 }
 

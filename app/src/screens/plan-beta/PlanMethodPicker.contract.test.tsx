@@ -9,6 +9,22 @@ const options = resolveDetailedPlanTemplateOptions({ eventDistanceM: 5000, train
 afterEach(cleanup)
 
 describe("candidate method picker", () => {
+  it("does not label a storage read failure as zero completions", () => {
+    render(<PlanMethodPicker options={options.map(option => ({ ...option, historyCoverage: null }))} selected={null} onChange={vi.fn()} />)
+    fireEvent.click(screen.getByText("훈련 방법 선택"))
+    expect(screen.getByRole("status")).toHaveTextContent("이력을 읽지 못해")
+    expect(screen.queryByText(/자기보고 완료 0회/u)).toBeNull()
+  })
+  it("keeps archive coverage behind a disclosure and distinguishes it from actual training dates", () => {
+    render(<PlanMethodPicker options={options} selected={null} onChange={vi.fn()} />)
+    fireEvent.click(screen.getByText("훈련 방법 선택"))
+    const summary = screen.getByText("추천에 참고한 이력")
+    expect(summary.closest("details")).not.toHaveAttribute("open")
+    fireEvent.click(summary)
+    expect(screen.getByText(/전체 종목을 합쳐 최근 18개 계획/u)).toBeVisible()
+    expect(screen.getByText(/실제 훈련 날짜와 연속 관찰 기간/u)).toBeVisible()
+    expect(screen.queryByText(/계획 보관 날짜/u)).toBeNull()
+  })
   it("starts compact and tells the truth about the one detailed method", () => {
     const { container } = render(<PlanMethodPicker options={options} selected={null} onChange={vi.fn()} />)
     expect(container.querySelector("details")).not.toHaveAttribute("open")

@@ -69,7 +69,7 @@ MAIN 식별자는 날짜·프레임·종목·목적·경험·실제 슬롯 배�
 | M09 | NOT_STARTED | 세트 분할·회복 추가 시 모든 구간과 총량·시간을 재계산하고 이유/근거 버전 갱신. 이전 수치에 새 설명만 덧씌우지 않음 |
 | M10 | NOT_STARTED | 조정 취소·만료·다른 탭·계정 전환·quota 실패·중복 클릭에서 기존 계획 원자적 보존. 숫자/설명/이력이 따로 저장되지 않음 |
 | M11 | PARTIAL | 선택·자기보고 완료·실제 일지 수행을 분리. 실제 계획 링크가 맞는 기록만 관찰값에 연결. 미기록은 0이 아님 |
-| M12 | PARTIAL | 과거 최근 18개 계획 요약은 24주 전수 이력이 아님. 실제 관찰 시작/종료일·누락·범위 제한을 보여준 뒤 반복 선호만 제한적으로 반영 |
+| M12 | COVERAGE_UI_IMPLEMENTED_ACTUAL_DATES_UNAVAILABLE | 동일 스냅샷 기반 보관 범위·종목·미기록·미확인 방법 표시 구현. 보관 날짜는 실제 훈련 날짜가 아님을 표시. 실제 관찰 날짜·장기 원장 연결은 별도 미완 |
 | M13 | NOT_STARTED | 800/1500/3000 및 10K/하프/마라톤의 적격 목적 조합 확장. 각 종목을 개별 통과표로 관리하며 지원하지 않는 페이스를 발명하지 않음 |
 | M14 | NOT_STARTED | 초보 마라톤·청소년 중거리·하루 2회 선수의 실제 여정: 선택→기록 확인→조정→저장→수행→일지→다음 주기 |
 | M15 | NOT_STARTED | 320/375px, 200% 글자, 키보드, reduced motion, A/B 비교·긴 설명 복귀 위치. Fable UX 검수와 코어/과학 검수를 분리 |
@@ -118,9 +118,38 @@ test로 검증했고 운영 카탈로그에 가짜 방법을 넣지 않았다.
   차단했다. 해당 회귀 테스트 47/47 PASS, CI 계약 단계의 Node 명령 28개 PASS.
 - 첫 명령 추출은 배포 단계 명령까지 포함하여 잘못된 작업 디렉터리에서 종료됐다.
   계약 단계만 한정해 다시 실행한 결과가 위 28개 PASS다. 배포 검증으로 주장하지 않는다.
-- 이 후속 커밋의 GitHub CI는 푸시 후 별도 확인 대상이다.
+- 후속 커밋 `d8b2554`의 GitHub CI는 실행 `33977623783` 및 `33977627087`에서
+  contract-tests/app-quality/app-browser 모두 PASS를 확인했다. deploy-pages는
+  PR에서 skip이며, 아래 M12 추가 코드의 CI 결과는 아니다.
 
-## 7. 이어 읽을 실제 문서
+## 7. M12 후속 구현 및 자체 리뷰
+
+- 추천 입력과 범위 설명을 같은 저장소 읽기 결과에서 만든다. 주입한 테스트 이력에는
+  로컬의 날짜나 범위를 빌려 붙이지 않는다. 원본 저장 JSON과 18개 보관 상한은 유지한다.
+- 방법 선택의 `추천에 참고한 이력`을 열면 보관 계획 수, 동일 종목 계획 수,
+  종목 불명 과거 계획, 미기록 결과, 매핑 불명 참조를 볼 수 있다.
+- 날짜는 명시적으로 UTC 보관 날짜다. 실제 운동 날짜와 연속 관찰 기간 또는
+  24주 분석으로 표시하지 않는다. 진행 중인 계획은 여전히 포함되지 않는다.
+- 자체 리뷰에서 읽기 실패를 빈 배열로 처리하던 경계를 발견했다. 새 범위 표시에서는
+  `coverage: null`로 구분하고 0회 대신 읽기 실패 안내를 표시한다. 원본은 지우지 않는다.
+- 결함 주입: 미기록 대신 완료를 세도록 바꿨을 때 최초 테스트는 두 상태가 각각
+  1건이라 실패하지 않았다. 서로 다른 개수로 fixture를 보강한 뒤 다음 두 테스트가
+  실제 실패함을 확인하고 정상 코드를 복원했다:
+  `separates missing outcomes, unknown references and event coverage without mutating history`,
+  `uses the same stored snapshot for recommendation counts and coverage`.
+- 정상 복원 후 대상 4파일 28테스트 PASS. 앱 TypeScript, e2e TypeScript, build PASS.
+  대상 Playwright 4프로젝트 PASS: desktop/mobile/320px/reduced-motion에서 범위 설명
+  열기, 후반 MAIN 선택, 1111초 기록 확인, 저장 및 새로고침을 실행했다.
+  320px 캡처를 직접 확인했고 가로 넘침이 없었다.
+- 전체 첫 실행은 2,332 PASS / 1 timeout. 실패명은
+  `keeps the chosen date when the first plan save fails and the athlete retries`.
+  제한 시간 변경 없이 해당 파일을 재실행해 3/3 PASS. 이후 브라우저와 겹치지 않는
+  전체 재실행은 271파일 / 2,333 PASS, 실패 0이다. 일회성 timeout의 원인을
+  확정하지 않으며 최초 실패 기록도 보존한다.
+- 새 방법, 조정 범위, 다중 MAIN 정책 또는 실제 관찰기간은 이번 변경으로 활성화하지 않았다.
+  M01~M10 등의 미완 상태를 이 UI 변경으로 완료 처리하지 않는다.
+
+## 8. 이어 읽을 실제 문서
 
 - [현재 지원 범위](../../TRAINING_PLAN_CURRENT_SCOPE.md)
 - [선택·조정 계약](../../specs/reconstruct/SESSION_METHOD_SELECTION_AND_ADJUSTMENT_CONTRACT.md)

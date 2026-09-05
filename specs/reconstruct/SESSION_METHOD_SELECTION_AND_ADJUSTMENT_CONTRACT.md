@@ -449,6 +449,12 @@ This is not 18 method occurrences, a fixed 24-week/recent-N-day observation wind
 or an immutable lifetime ledger of full original prescriptions. The core uses all
 history supplied by that bounded archive; disclose actual coverage and missingness.
 Do not enlarge, erase, reinterpret or backfill that archive as part of this feature.
+Coverage disclosure uses the same loaded archive snapshot as recommendation input.
+Show total retained plans, same-event plans, legacy plans with unknown event,
+unmapped template references and missing self-reported outcomes separately.
+Archive timestamps describe archiving only, not training dates or a continuous
+observation interval. If actual session dates are unavailable, state that limitation.
+Injected history without coverage metadata must not borrow dates from local storage.
 Retained original plans/backups keep their exact supported content and lineage;
 new immutable prescription snapshots and any longer-term ledger need their own
 versioned storage integration, not a claim that v4 summaries already contain them.

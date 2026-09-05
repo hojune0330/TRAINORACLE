@@ -12,7 +12,8 @@ import {
   type RepeatPreference,
 } from "@impl/prescription/method-recommendation"
 import { parsePrescriptionSequence, type SequenceRecovery } from "@impl/prescription/sequence"
-import { loadPlanMethodHistory } from "../../domain/plan-beta-store"
+import { loadPlanMethodHistorySnapshot } from "../../domain/plan-beta-store"
+import type { PlanMethodCoverage } from "../../domain/plan-method-coverage"
 import { resolvePlanMethodMapping } from "../../domain/plan-method-registry"
 
 export type DetailedPlanTemplateOption = {
@@ -29,6 +30,7 @@ export type DetailedPlanTemplateOption = {
   readonly selectedCount?: number
   readonly method?: MethodReference
   readonly mappingVersion?: string
+  readonly historyCoverage?: PlanMethodCoverage | null
 }
 
 export function resolveDetailedPlanTemplateOption(
@@ -41,10 +43,12 @@ export function resolveDetailedPlanTemplateOption(
 export function resolveDetailedPlanTemplateOptions(
   draft: Pick<Partial<PlanBetaIntake>, "eventDistanceM" | "trainingFocus" | "experienceBand">,
   evaluatedAt = new Date().toISOString(),
-  history: readonly MethodHistoryEntry[] = loadPlanMethodHistory(draft.eventDistanceM),
+  history?: readonly MethodHistoryEntry[],
   repeatPreference: RepeatPreference = "NEUTRAL",
 ): readonly DetailedPlanTemplateOption[] {
   if (draft.eventDistanceM === undefined || draft.trainingFocus === undefined || draft.experienceBand === undefined) return []
+  const snapshot = history === undefined ? loadPlanMethodHistorySnapshot(draft.eventDistanceM) : null
+  const effectiveHistory = history ?? snapshot!.history
   const eventDistanceM = draft.eventDistanceM
   const trainingFocus = draft.trainingFocus
   const experienceBand = draft.experienceBand
@@ -128,7 +132,7 @@ export function resolveDetailedPlanTemplateOptions(
   const ranked = recommendMethods({ catalog, assessments: catalog.flatMap(family => family.configurations.map(configuration => ({
     familyId: family.familyId, configurationId: configuration.configurationId, version: configuration.version,
     eligibility: "ELIGIBLE" as const, eligibilityPriority: 0, purposePriority: 0, contextPriority: 0,
-  }))), history, repeatPreference })
+  }))), history: effectiveHistory, repeatPreference })
   if (ranked.kind !== "recommended") return []
   return ranked.eligible.flatMap(method => {
     const option = options.find(item => item.method?.familyId === method.familyId
@@ -154,6 +158,7 @@ export function resolveDetailedPlanTemplateOptions(
       recommendationReason,
       observedPerformedCount: method.observedPerformedCount,
       selectedCount: method.selectedCount,
+      ...(snapshot === null ? {} : { historyCoverage: snapshot.coverage }),
     }]
   })
 }
