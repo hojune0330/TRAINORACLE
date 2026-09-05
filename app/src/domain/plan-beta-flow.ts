@@ -53,6 +53,7 @@ import {
   type CandidatePrescriptionBinding,
 } from "./plan-candidate-prescription"
 import { createInitialPeriodizationContext } from "./periodization-lineage"
+import type { PlanSessionTarget } from "./plan-session-target"
 
 export type PlanCurrentCheck = "NO_KNOWN_RISK" | "REVIEW_REQUIRED"
 
@@ -125,6 +126,7 @@ export function generatePlanFromDraft(
   draft: PlanDraftInput,
   currentCheck: PlanCurrentCheck,
   prescriptionSelection?: unknown,
+  detailedSessionTarget?: PlanSessionTarget,
 ): PlanDraftGeneration {
   const draftKeys = new Set([
     "eventGroup", "eventDistanceM", "competitionDivision", "experienceBand",
@@ -212,6 +214,7 @@ export function generatePlanFromDraft(
               safetyGate,
               prescriptionSelection,
               evaluatedAt,
+              detailedSessionTarget,
             )
       return {
         kind: "generated",

@@ -154,3 +154,18 @@ L0_current_spec_baselines:
 **작성**: 진도군청 육상팀 운영 매니저  
 **작성일**: 2026-05-06  
 **버전**: 3.0
+
+## 6. 세션 방법 구현 소스 연결 (2026-09-05)
+
+이 절은 현재 계약을 찾기 위한 추가 색인이다. 위 역사적 정본 매핑·개수·검수
+이력을 변경하거나 새 문서를 과거 정본으로 소급 등록하지 않는다.
+
+| 문서 | 정확한 근거·소유 범위 | 상태 구분 |
+|---|---|---|
+| [세션 방법 선택·조정 계약](../reconstruct/SESSION_METHOD_SELECTION_AND_ADJUSTMENT_CONTRACT.md) | 2026-09-05 오너 승인 구현 방향; Plan Generator·Template Library·상세 처방·주기 계약을 연결 | 구속력 있는 엔지니어링 계약. 새 용량·과학 승인 아님 |
+| [30개 출처 준비표](../../reports/review/SESSION_METHOD_CATALOG_READINESS_2026-09-05.md) | [로컬 카탈로그](../reconstruct/ENERGY_SYSTEM_SESSION_TEMPLATE_CATALOG.md)의 정확한 ID·버전·등급·표기와 근거 공백 | 로컬 정적 감사. 원문 재검증·선수용 활성화 아님 |
+| [현재 네 정체성](../active/TEMPLATE_LIBRARY_SPEC.md#16a-2026-08-24-beta-runtime-allowlist) | 기존 매니페스트·런타임 권한의 정확한 ref와 fingerprint | 현재 채택 범위. 30개 전체나 동시 복수 상세 세션 승인 아님 |
+
+추천의 최종 동률 순서는 버전이 연결된 안정적 카탈로그 순서다. 현재 화면 연결은
+정확한 적격성 확인 후 중립 이력을 사용한다. 이력 기반 반복·변화 순위는 코어
+준비와 실제 이력 연결을 구분하며, 자세한 계약·검사 경계는 위 문서에서 확인한다.

@@ -1,6 +1,8 @@
 import { assertNever } from "../shared/assert-never"
 import {
   continuityContextIdentity,
+  deriveCandidateId,
+  projectPlanCandidate,
   rebindCandidatePairIdentity,
 } from "./candidate-identity"
 import { makeCandidateSessions } from "./session-builder"
@@ -12,7 +14,9 @@ import type {
   SupportedPlanEventDistanceM,
 } from "./types"
 import type { CompiledExposureLedger } from "./exposure-ledger"
-import type { PaceTargetPlanPrescription } from "./session-types"
+import type { PaceTargetPlanPrescription, PlanSession } from "./session-types"
+
+export type DetailedPrescriptionTarget = Pick<PlanSession, "day" | "slot">
 
 export type SelectableExposureLedger = Extract<
   CompiledExposureLedger,
@@ -165,13 +169,29 @@ function candidateEventDistance(
 export function bindOneDetailedPrescriptionCandidate(
   candidate: PlanCandidate,
   prescription: PaceTargetPlanPrescription,
+  target?: DetailedPrescriptionTarget,
 ): PlanCandidate | null {
-  const qualityIndex = candidate.sessions.findIndex((session) => (
-    session.role === "QUALITY" && session.prescription.kind === "RPE_TIME_RANGE"
-  ))
+  // Placement selection does not authorize another copy of the detailed dose.
+  if (candidate.sessions.some((session) => session.prescription.kind === "PACE_TARGET")) return null
+  if (target !== undefined && (
+    target === null || typeof target !== "object"
+    || !Number.isInteger(target.day) || target.day < 1
+    || (target.slot !== "AM" && target.slot !== "PM")
+  )) return null
+  const qualityIndex = candidate.sessions.findIndex((session) => target === undefined
+    ? session.role === "QUALITY" && session.prescription.kind === "RPE_TIME_RANGE"
+    : session.day === target.day && session.slot === target.slot)
   if (qualityIndex < 0) return null
+  const selected = candidate.sessions[qualityIndex]
+  if (selected === undefined || selected.role !== "QUALITY"
+      || selected.prescription.kind !== "RPE_TIME_RANGE"
+      || selected.plannedEnergyIntent !== candidate.selectedEnergyIntent) return null
+  if (candidate.sessions.filter((session) => (
+    session.day === selected.day && session.slot === selected.slot
+  )).length !== 1) return null
   const eventDistanceM = supportedEventDistance(prescription.targetEventDistanceM)
   if (eventDistanceM === null) return null
+  if (candidate.eventGroup !== prescription.scope.eventGroup) return null
   if (candidate.eventDistanceM !== null
       && candidate.eventDistanceM !== eventDistanceM) return null
   if (candidate.selectedDetailedTemplateRef === null
@@ -186,7 +206,7 @@ export function bindOneDetailedPrescriptionCandidate(
       prescription,
     })
   })
-  return Object.freeze({
+  const bound: PlanCandidate = Object.freeze({
     ...candidate,
     candidateId: `${candidate.candidateId.replace(
       ":event-unbound:",
@@ -203,6 +223,10 @@ export function bindOneDetailedPrescriptionCandidate(
       "PACE_TARGET_BOUND" as const,
     ]),
     sessions: Object.freeze(sessions),
+  })
+  return target === undefined ? bound : Object.freeze({
+    ...bound,
+    candidateId: deriveCandidateId(bound.candidateId, projectPlanCandidate(bound)),
   })
 }
 

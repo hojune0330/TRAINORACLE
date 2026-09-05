@@ -1973,4 +1973,40 @@ does not settle the full formation, governance, safety, calendar, or production 
 | Open issue count is 11 and canonical blocker count is 10 | PASS |
 | Final marker is the final line | PASS |
 
+## 17. Approved Per-MAIN Method Direction (2026-09-05)
+
+The binding engineering contract is
+[SESSION_METHOD_SELECTION_AND_ADJUSTMENT_CONTRACT](SESSION_METHOD_SELECTION_AND_ADJUSTMENT_CONTRACT.md).
+Its independent family/configuration and draft/apply/cancel direction is approved
+for implementation; exact new doses, scientific approvals and concurrent multi-slot
+detail policies are not inferred. This does not promote the full reconstructed
+Formation model or activate proposed registries elsewhere in this document.
+
+Formation owns frame/MAIN exposure and placement; the method editor replaces a
+configuration within that skeleton. Current runtime supports choosing the placement
+of one detailed session per candidate. Eventual independent choices for every MAIN
+need exact per-slot applicability, exposure and cross-slot policy before simultaneous
+detail is enabled. Never multiply an adopted single-session dose across a frame
+because its sequence can be represented.
+
+Separate stable editing-slot identity from the content-bound planned occurrence.
+Preserve choices only through an explicit unambiguous lineage crosswalk; changed
+frame/start date/availability/purpose invalidates old confirmation and saves.
+Independent configurations are not fixed A/B pairs; schedule candidate counts and
+MAIN-method diversity remain different dimensions. Recommendation consumes only
+eligible structured context under versioned deterministic policy, not raw notes,
+private metadata, a universal fatigue score or an invented source ranking.
+
+Apply validates all affected frame constraints atomically and never overwrites an
+accepted plan. New snapshots retain exact source/configuration/preset/rule/model
+versions, while old versions and actual-result links stay intact. Existing
+one-dimension successor transforms, no automatic progression, no catch-up and
+separate youth/self-use/processing authority are preserved. Method variation cannot
+hide changes in intensity, volume and frequency behind a single label.
+
+The [30-entry readiness matrix](../../reports/review/SESSION_METHOD_CATALOG_READINESS_2026-09-05.md)
+consolidates source/adjustment gaps without adding runtime authority. Section 15's
+11 issue rows and 10 canonical blockers, existing machine policies, historical
+vectors and canonical status are unchanged.
+
 [DRAFT_COMPLETE]

@@ -4,6 +4,8 @@ import { resolveDetailedPrescriptionRuntimeAuthority } from "../../domain/detail
 import type { PlanBetaIntake } from "../../domain/plan-beta-store"
 import { parsePrescriptionNotation } from "@impl/prescription/notation"
 import { formatTrainingSeconds } from "./labels"
+import { recommendMethods, type MethodFamily } from "@impl/prescription/method-recommendation"
+import { parsePrescriptionSequence, type SequenceRecovery } from "@impl/prescription/sequence"
 
 export type DetailedPlanTemplateOption = {
   readonly ref: PlanBetaIntake["selectedDetailedTemplateRef"] & object
@@ -13,6 +15,7 @@ export type DetailedPlanTemplateOption = {
   readonly mainSummary: string
   readonly recoverySummary: string
   readonly preparationSummary: string
+  readonly recommended?: boolean
 }
 
 export function resolveDetailedPlanTemplateOption(
@@ -34,7 +37,8 @@ export function resolveDetailedPlanTemplateOptions(
     candidate.targetEventDistanceM === eventDistanceM
     && candidate.eligibleExperienceBands.includes(experienceBand)
   ))
-  return approvals.flatMap((approval): DetailedPlanTemplateOption[] => {
+  const catalog: MethodFamily[] = []
+  const options = approvals.flatMap((approval): DetailedPlanTemplateOption[] => {
     const ref = {
       templateId: approval.templateId,
       version: approval.templateVersion,
@@ -50,6 +54,29 @@ export function resolveDetailedPlanTemplateOptions(
     const parsed = parsePrescriptionNotation(authority.approval.notation)
     if (parsed.kind !== "parsed") return []
     const notation = parsed.notation
+    const noRecovery: SequenceRecovery = { mode: "NOT_APPLICABLE", seconds: null }
+    const recoveryFor = (seconds: number | null, mode: typeof notation.repetitionRecoveryMode): SequenceRecovery => (
+      mode === "NOT_APPLICABLE" ? noRecovery : { seconds, mode }
+    )
+    const sequence = parsePrescriptionSequence({
+      kind: "PRESCRIPTION_SEQUENCE", version: 2, id: approval.templateId, label: null,
+      warmup: [], cooldown: [], terminalRecovery: noRecovery,
+      main: [{ kind: "group", id: "sets", label: null, repeatCount: notation.setCount,
+        recoveryAfter: noRecovery, recoveryBetweenRepeats: recoveryFor(notation.setRecoverySeconds, notation.setRecoveryMode),
+        children: [{ kind: "segment", id: "work", label: null, repeatCount: notation.repetitionsPerSet,
+          work: notation.repetitionDistanceM === null
+            ? { kind: "duration", distanceM: null, durationSeconds: notation.repetitionDurationSeconds }
+            : { kind: "distance", distanceM: notation.repetitionDistanceM, durationSeconds: null },
+          target: { kind: "RACE_PACE", eventDistanceM: notation.paceTargetEventDistanceM, anchorRef: null },
+          recoveryAfter: noRecovery,
+          recoveryBetweenRepeats: recoveryFor(notation.repetitionRecoverySeconds, notation.repetitionRecoveryMode),
+        }],
+      }],
+    })
+    if (sequence.kind !== "parsed") return []
+    catalog.push({ familyId: approval.templateId, reviewRef: approval.approvalDecisionId,
+      configurations: [{ configurationId: approval.templateId, version: approval.templateVersion, sequence: sequence.sequence }],
+    })
     const components = authority.approval.canonicalTemplateContent.operationalComponents
     const warmup = components.warmup
     const cooldown = components.cooldown
@@ -73,6 +100,17 @@ export function resolveDetailedPlanTemplateOptions(
       recoverySummary: recovery.join(" · "),
       preparationSummary: `준비 ${warmup.easyDurationMinutes}분 RPE ${warmup.rpeMin}-${warmup.rpeMax}, ${warmup.strides.durationSeconds}초 점진 가속 ${warmup.strides.repetitions}회와 사이 ${warmup.strides.recoverySeconds}초 걷기/조깅 · 정리 ${cooldown.easyDurationMinutes}분 RPE ${cooldown.rpeMin}-${cooldown.rpeMax}`,
     }]
+  })
+  const ranked = recommendMethods({ catalog, assessments: catalog.flatMap(family => family.configurations.map(configuration => ({
+    familyId: family.familyId, configurationId: configuration.configurationId, version: configuration.version,
+    eligibility: "ELIGIBLE" as const, eligibilityPriority: 0, purposePriority: 0, contextPriority: 0,
+  }))), history: [], repeatPreference: "NEUTRAL" })
+  if (ranked.kind !== "recommended") return []
+  return ranked.eligible.flatMap(method => {
+    const option = options.find(item => item.ref.templateId === method.configurationId && item.ref.version === method.version)
+    return option === undefined ? [] : [{ ...option, recommended: ranked.defaults.some(item => (
+      item.familyId === method.familyId && item.configurationId === method.configurationId && item.version === method.version
+    )) }]
   })
 }
 

@@ -48,4 +48,17 @@ describe("candidate method picker", () => {
     expect(onChange).toHaveBeenCalledWith(alternate.ref)
     expect(screen.queryByText(/현재 1개/u)).toBeNull()
   })
+  it("keeps additional choices accessible and preserves a selected non-default method", () => {
+    const extra = { ...options[0]!, recommended: false, ref: { ...options[0]!.ref, templateId: "UI-EXTRA-ONLY" }, mainSummary: "추가 방법 예시" }
+    const props = { options: [...options, extra], onChange: vi.fn() }
+    const view = render(<PlanMethodPicker {...props} selected={options[0]!.ref} />)
+    fireEvent.click(screen.getByText("훈련 방법 선택"))
+    expect(screen.queryByRole("radio", { name: /추가 방법 예시/u })).toBeNull()
+    fireEvent.click(screen.getByRole("button", { name: "다른 훈련 보기 (1)" }))
+    fireEvent.click(screen.getByRole("radio", { name: /추가 방법 예시/u }))
+    expect(props.onChange).toHaveBeenCalledWith(extra.ref)
+    view.rerender(<PlanMethodPicker {...props} selected={extra.ref} />)
+    fireEvent.click(screen.getByRole("button", { name: "추천 훈련만 보기" }))
+    expect(screen.getByRole("radio", { name: /추가 방법 예시/u })).toBeChecked()
+  })
 })

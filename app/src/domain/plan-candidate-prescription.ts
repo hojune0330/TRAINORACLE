@@ -1,5 +1,8 @@
 import { z } from "zod"
-import { bindOneDetailedPrescriptionCandidate } from "@impl/plan-generator/candidates"
+import {
+  bindOneDetailedPrescriptionCandidate,
+  type DetailedPrescriptionTarget,
+} from "@impl/plan-generator/candidates"
 import { rebindCandidatePairIdentity } from "@impl/plan-generator/candidate-identity"
 import type { PlanGenerationSuccess } from "@impl/plan-generator/types"
 import type { SafetyGateDecision } from "@impl/safety-gate/gate"
@@ -13,6 +16,8 @@ import {
   toCurrentSnapshot,
   toRuntimeAnchor,
 } from "./pace-target-evidence"
+
+export type { DetailedPrescriptionTarget } from "@impl/plan-generator/candidates"
 
 const selectionSchema = z.object({
   selectedRecordId: z.string().min(1).max(128),
@@ -57,6 +62,7 @@ export function bindDetailedPrescriptionCandidates(
   safetyGate: SafetyGateDecision,
   selection: unknown,
   evaluatedAt: Date,
+  target?: DetailedPrescriptionTarget,
 ): CandidatePrescriptionBinding {
   if (safetyGate.kind === "blocked") {
     return fallback(generated, "PACE_TARGET_FALLBACK_SAFETY_GATE")
@@ -187,8 +193,13 @@ export function bindDetailedPrescriptionCandidates(
     return fallback(generated, "PACE_TARGET_FALLBACK_STORED_SCHEMA")
   }
 
-  const balanced = bindOneDetailedPrescriptionCandidate(generated.candidates[0], stored)
-  const conservative = bindOneDetailedPrescriptionCandidate(generated.candidates[1], stored)
+  if (generated.candidates.some((candidate) => (
+    candidate.selectedEnergyIntent !== intake.trainingFocus
+  ))) {
+    return fallback(generated, "PACE_TARGET_FALLBACK_NO_ELIGIBLE_QUALITY")
+  }
+  const balanced = bindOneDetailedPrescriptionCandidate(generated.candidates[0], stored, target)
+  const conservative = bindOneDetailedPrescriptionCandidate(generated.candidates[1], stored, target)
   if (balanced === null || conservative === null) {
     return fallback(generated, "PACE_TARGET_FALLBACK_NO_ELIGIBLE_QUALITY")
   }

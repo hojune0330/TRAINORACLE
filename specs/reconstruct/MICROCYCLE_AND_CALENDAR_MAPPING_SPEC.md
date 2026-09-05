@@ -643,4 +643,24 @@ partial UI/runtime evidence only and closes no issue.
 | Requires source refs and uncertainty states | PASS |
 | Forbids raw text/private note storage | PASS |
 
+## 22. Method Slot Identity And Projection (2026-09-05)
+
+[SESSION_METHOD_SELECTION_AND_ADJUSTMENT_CONTRACT](SESSION_METHOD_SELECTION_AND_ADJUSTMENT_CONTRACT.md)
+binds the approved engineering direction for eventual independent per-MAIN methods.
+Calendar mapping remains projection-only. A stable editing slot maps to an exact
+frame/plan-version/planned occurrence; its day and AM/PM context is not a method ID
+or permission to migrate a choice by array index. Method changes invalidate content
+identities and draft confirmations without rewriting accepted historical sessions.
+
+Current selectable placement concerns one detailed session per candidate. It does
+not enable several concurrent detailed sessions, add MAINs or authorize moving an
+accepted plan. Exact multi-slot policy and owning-schema bindings remain required.
+Schedule/date changes need an explicit one-to-one slot crosswalk or fresh review;
+ambiguous/missing slots reject rather than silently remap. Actual records retain
+their original occurrence/version link, even when later plans use the same method.
+
+No calendar placement, cycle position, elapsed interval or recommendation implies
+recovery, efficacy or automatic progression. Existing timezone, safety, youth,
+privacy, accepted-only projection, issue rows/counts and historical checks remain.
+
 [DRAFT_COMPLETE]

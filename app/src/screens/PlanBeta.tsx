@@ -37,6 +37,7 @@ import type { CandidateSelection } from "./plan-beta/plan-selection"
 import { planErrorMessage } from "./plan-beta/plan-feedback"
 import { loadAthleteRecords } from "../domain/athlete-records"
 import type { CandidatePrescriptionBinding } from "../domain/plan-candidate-prescription"
+import { samePlanSessionTarget, type PlanSessionTarget } from "../domain/plan-session-target"
 import {
   divisionForGoal,
   eventGroupForDistance,
@@ -127,6 +128,7 @@ export function PlanBeta({
   const [recordReturnCount, setRecordReturnCount] = React.useState(0)
   const [candidateStartDate, setCandidateStartDate] = React.useState(todayISO)
   const [selectedRecordId, setSelectedRecordId] = React.useState<string | null>(null)
+  const [detailedSessionTarget, setDetailedSessionTarget] = React.useState<PlanSessionTarget | null>(null)
   const [comparisonRecordId, setComparisonRecordId] = React.useState<string | null>(null)
   const [recordConfirmationPending, setRecordConfirmationPending] = React.useState(false)
   const draftRevision = React.useRef(0)
@@ -211,6 +213,7 @@ export function PlanBeta({
     nextDraft: Partial<PlanBetaIntake>,
     recordId: string | null = null,
     raceDate?: string,
+    sessionTarget: PlanSessionTarget | null = detailedSessionTarget,
   ) => {
     draftRevision.current += 1
     setRetrySelection(null)
@@ -223,6 +226,7 @@ export function PlanBeta({
       raceDate === undefined ? nextDraft : { ...nextDraft, targetRaceDate: raceDate },
       currentCheck,
       recordId === null ? undefined : { selectedRecordId: recordId },
+      sessionTarget ?? undefined,
     )
     switch (result.kind) {
       case "blocked":
@@ -365,6 +369,12 @@ export function PlanBeta({
         celebrateOnMount={celebrateActivePlan}
         onStateChange={setStored}
         onArchived={(intake) => {
+          draftRevision.current += 1
+          setDetailedSessionTarget(null)
+          setSelectedRecordId(null)
+          setComparisonRecordId(null)
+          setRecordConfirmationPending(false)
+          setRetrySelection(null)
           setCelebrateActivePlan(false)
           setStored(null)
           setDraft(intake)
@@ -454,6 +464,13 @@ export function PlanBeta({
           onSelectRecord={selectRecord}
           onCompareRecord={setComparisonRecordId}
           onChangeMethod={changeMethod}
+          detailedSessionTarget={detailedSessionTarget}
+          onChangeSessionTarget={(target) => {
+            if (samePlanSessionTarget(detailedSessionTarget, target)) return
+            setDetailedSessionTarget(target)
+            setRecordConfirmationPending(selectedRecordId !== null)
+            generateCandidates(generatedIntake, null, undefined, target)
+          }}
           onSelectionDetailsChange={() => {
             draftRevision.current += 1
             setRetrySelection(null)
@@ -471,6 +488,7 @@ export function PlanBeta({
             setErrorCode(null)
             setRetrySelection(null)
             setSelectedRecordId(null)
+            setDetailedSessionTarget(null)
             setComparisonRecordId(null)
             setRecordConfirmationPending(false)
             setStep("race-date")
