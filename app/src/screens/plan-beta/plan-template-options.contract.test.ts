@@ -50,7 +50,7 @@ describe("explicit detailed plan template options", () => {
   })
 
   it("passes observed selection and performance history into the live recommendation", () => {
-    const method = { familyId: "V2-SEED-05", configurationId: "V2-SEED-05", version: "1.0.0" }
+    const method = { familyId: "race-pace-distance-repetitions", configurationId: "V2-SEED-05", version: "1.0.0" }
     const options = resolveDetailedPlanTemplateOptions(
       { eventDistanceM: 5000, trainingFocus: "VO2_INTENT", experienceBand: "EXPERIENCED" },
       "2026-09-05T00:00:00.000Z",
@@ -89,6 +89,7 @@ describe("explicit detailed plan template options", () => {
       }],
       archivedAt: "2026-09-05T00:00:00.000Z",
     }]))
+    const storedBefore = window.localStorage.getItem("trainoracle.plan-beta.history.v1")
     const options = resolveDetailedPlanTemplateOptions(
       { eventDistanceM: 5000, trainingFocus: "VO2_INTENT", experienceBand: "EXPERIENCED" },
       "2026-09-05T01:00:00.000Z",
@@ -98,6 +99,7 @@ describe("explicit detailed plan template options", () => {
       observedPerformedCount: 1,
       selectedCount: 1,
     })
+    expect(window.localStorage.getItem("trainoracle.plan-beta.history.v1")).toBe(storedBefore)
   })
 
   it.each([undefined, "NEW_TO_RUNNING", "DEVELOPING"] as const)("does not offer experienced-only templates to %s", (experienceBand) => {

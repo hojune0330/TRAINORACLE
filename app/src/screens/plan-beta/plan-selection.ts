@@ -1,4 +1,4 @@
-import { selectPlanForActivation } from "../../domain/plan-beta-flow"
+import { evaluatePlanSafety, selectPlanForActivation } from "../../domain/plan-beta-flow"
 import type { PlanAthleteEvidence } from "../../domain/plan-beta-flow"
 import {
   activePlanBetaStorageKey,
@@ -11,7 +11,11 @@ import type {
 } from "../../domain/plan-beta-store"
 import type { PlanGenerationSuccess } from "@impl/plan-generator/types"
 import type { SafetyGateDecision } from "@impl/safety-gate/gate"
+import { canonicalJsonFingerprint } from "@impl/plan-generator/candidate-identity"
+import { hasCanonicalJsonTree } from "../../domain/plan-beta-schema"
+import { planAnchorsStillCurrent } from "../../domain/plan-anchor-reconfirmation"
 import { isValidIsoDate } from "../../domain/dates"
+import { mainDraftStillMatches, snapshotPlanMainDraft } from "../../domain/plan-main-draft"
 import {
   adaptationScopeForCandidate,
   savePlanAdaptationContext,
@@ -46,6 +50,14 @@ export async function saveSelectedPlanCandidate(
   if (intake === null || !isValidIsoDate(selection.startDate)) {
     return { kind: "rejected", code: "MINIMUM_PROFILE_INCOMPLETE" }
   }
+  const draftSnapshot = snapshotPlanMainDraft(generated, intake, selection.startDate)
+  if (draftSnapshot === null) return { kind: "rejected", code: "STALE_CANDIDATE_SELECTION" }
+  const requestFingerprint = () => {
+    const request = { selection, intake, athleteEvidence, gate }
+    return hasCanonicalJsonTree(request) ? canonicalJsonFingerprint("plan-save-request-v1", request) : null
+  }
+  const originalRequest = requestFingerprint()
+  if (originalRequest === null) return { kind: "rejected", code: "STALE_CANDIDATE_SELECTION" }
   const selected = selectPlanForActivation(selection.candidateId, generated, gate, {
     ...intake,
     startDate: selection.startDate,
@@ -60,9 +72,6 @@ export async function saveSelectedPlanCandidate(
     return { kind: "rejected", code: "CANDIDATE_NOT_FOUND" }
   }
   const adaptationScope = adaptationScopeForCandidate(canonicalCandidate)
-  const state = adaptationScope === null
-    ? selected.state
-    : { ...selected.state, adaptationScope }
   const accountScope = localAccountScopeSnapshot()
   const locks = getPlanMutationLockManager()
   if (locks === null) return { kind: "rejected", code: "MUTATION_LOCK_UNAVAILABLE" }
@@ -75,7 +84,8 @@ export async function saveSelectedPlanCandidate(
         if (lock === null) {
           return { kind: "rejected", code: "MUTATION_LOCK_UNAVAILABLE" } as const
         }
-        if (!isCurrentDraft()) {
+        if (!isCurrentDraft() || requestFingerprint() !== originalRequest
+            || !mainDraftStillMatches(draftSnapshot, generated, intake, selection.startDate)) {
           return { kind: "rejected", code: "STALE_CANDIDATE_SELECTION" } as const
         }
         if (!localAccountScopeIsCurrent(accountScope)) {
@@ -96,6 +106,22 @@ export async function saveSelectedPlanCandidate(
           return { kind: "rejected", code: "STALE_BASE" } as const
         }
         const previousActive = null
+
+        // The preview gate and template authority may be stale after waiting for a lock.
+        const safety = evaluatePlanSafety(gate.kind === "passed" ? "NO_KNOWN_RISK" : "REVIEW_REQUIRED")
+        if (safety.kind === "blocked") return { kind: "rejected", code: safety.code } as const
+        if (!planAnchorsStillCurrent(canonicalCandidate, new Date())) {
+          return { kind: "rejected", code: "PACE_ANCHOR_RECONFIRMATION_REQUIRED" } as const
+        }
+        const currentSelection = selectPlanForActivation(selection.candidateId, generated, gate, {
+          ...intake, startDate: selection.startDate,
+        }, athleteEvidence)
+        if (currentSelection.kind !== "selected") {
+          return { kind: "rejected", code: currentSelection.code } as const
+        }
+        const state = adaptationScope === null
+          ? currentSelection.state
+          : { ...currentSelection.state, adaptationScope }
 
         const saved = savePlanBetaState(state)
         if (!saved.ok) {

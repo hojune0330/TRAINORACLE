@@ -8,10 +8,13 @@ import {
   recommendMethods,
   type MethodFamily,
   type MethodHistoryEntry,
+  type MethodReference,
   type RepeatPreference,
 } from "@impl/prescription/method-recommendation"
 import { parsePrescriptionSequence, type SequenceRecovery } from "@impl/prescription/sequence"
-import { loadPlanMethodHistory } from "../../domain/plan-beta-store"
+import { loadPlanMethodHistorySnapshot } from "../../domain/plan-beta-store"
+import type { PlanMethodCoverage } from "../../domain/plan-method-coverage"
+import { resolvePlanMethodMapping } from "../../domain/plan-method-registry"
 
 export type DetailedPlanTemplateOption = {
   readonly ref: PlanBetaIntake["selectedDetailedTemplateRef"] & object
@@ -25,6 +28,9 @@ export type DetailedPlanTemplateOption = {
   readonly recommendationReason?: string
   readonly observedPerformedCount?: number
   readonly selectedCount?: number
+  readonly method?: MethodReference
+  readonly mappingVersion?: string
+  readonly historyCoverage?: PlanMethodCoverage | null
 }
 
 export function resolveDetailedPlanTemplateOption(
@@ -37,10 +43,12 @@ export function resolveDetailedPlanTemplateOption(
 export function resolveDetailedPlanTemplateOptions(
   draft: Pick<Partial<PlanBetaIntake>, "eventDistanceM" | "trainingFocus" | "experienceBand">,
   evaluatedAt = new Date().toISOString(),
-  history: readonly MethodHistoryEntry[] = loadPlanMethodHistory(draft.eventDistanceM),
-  repeatPreference: RepeatPreference = "PREFER_VARIETY",
+  history?: readonly MethodHistoryEntry[],
+  repeatPreference: RepeatPreference = "NEUTRAL",
 ): readonly DetailedPlanTemplateOption[] {
   if (draft.eventDistanceM === undefined || draft.trainingFocus === undefined || draft.experienceBand === undefined) return []
+  const snapshot = history === undefined ? loadPlanMethodHistorySnapshot(draft.eventDistanceM) : null
+  const effectiveHistory = history ?? snapshot!.history
   const eventDistanceM = draft.eventDistanceM
   const trainingFocus = draft.trainingFocus
   const experienceBand = draft.experienceBand
@@ -55,6 +63,8 @@ export function resolveDetailedPlanTemplateOptions(
       version: approval.templateVersion,
       fingerprint: approval.templateContentFingerprint,
     }
+    const mapping = resolvePlanMethodMapping(ref)
+    if (mapping === null) return []
     const authority = resolveDetailedPrescriptionRuntimeAuthority({
       selectedTemplateRef: ref,
       targetEventDistanceM: eventDistanceM,
@@ -85,9 +95,14 @@ export function resolveDetailedPlanTemplateOptions(
       }],
     })
     if (sequence.kind !== "parsed") return []
-    catalog.push({ familyId: approval.templateId, reviewRef: approval.approvalDecisionId,
-      configurations: [{ configurationId: approval.templateId, version: approval.templateVersion, sequence: sequence.sequence }],
-    })
+    const configuration = { configurationId: mapping.method.configurationId, version: mapping.method.version, sequence: sequence.sequence }
+    const familyIndex = catalog.findIndex(family => family.familyId === mapping.method.familyId)
+    if (familyIndex === -1) {
+      catalog.push({ familyId: mapping.method.familyId, reviewRef: approval.approvalDecisionId, configurations: [configuration] })
+    } else {
+      const family = catalog[familyIndex]!
+      catalog[familyIndex] = { ...family, configurations: [...family.configurations, configuration] }
+    }
     const components = authority.approval.canonicalTemplateContent.operationalComponents
     const warmup = components.warmup
     const cooldown = components.cooldown
@@ -104,6 +119,8 @@ export function resolveDetailedPlanTemplateOptions(
     ]
     return [{
       ref,
+      method: mapping.method,
+      mappingVersion: mapping.mappingVersion,
       notation: authority.approval.notation,
       targetEventDistanceM: eventDistanceM,
       trainingFocus,
@@ -115,10 +132,11 @@ export function resolveDetailedPlanTemplateOptions(
   const ranked = recommendMethods({ catalog, assessments: catalog.flatMap(family => family.configurations.map(configuration => ({
     familyId: family.familyId, configurationId: configuration.configurationId, version: configuration.version,
     eligibility: "ELIGIBLE" as const, eligibilityPriority: 0, purposePriority: 0, contextPriority: 0,
-  }))), history, repeatPreference })
+  }))), history: effectiveHistory, repeatPreference })
   if (ranked.kind !== "recommended") return []
   return ranked.eligible.flatMap(method => {
-    const option = options.find(item => item.ref.templateId === method.configurationId && item.ref.version === method.version)
+    const option = options.find(item => item.method?.familyId === method.familyId
+      && item.method.configurationId === method.configurationId && item.method.version === method.version)
     if (option === undefined) return []
     const isRecommended = ranked.defaults.some(item => (
       item.familyId === method.familyId && item.configurationId === method.configurationId && item.version === method.version
@@ -129,8 +147,10 @@ export function resolveDetailedPlanTemplateOptions(
       ? otherFamilies.length === 0
         ? "현재 조건에서 검토가 끝난 상세 방법"
         : repeatPreference === "PREFER_VARIETY" && method.observedPerformedCount === leastPerformed
-          ? "완료 기록이 적은 방법을 먼저 제안"
-          : "현재 조건과 목적에 맞는 우선 제안"
+          ? "계획 세션의 자기보고 완료 기록이 적은 방법을 먼저 제안"
+          : repeatPreference === "PREFER_REPEAT"
+            ? "계획 세션의 자기보고 완료 기록이 많은 방법을 먼저 제안"
+            : "현재 조건과 목적에 맞는 목록 순서 · 우열을 뜻하지 않아요"
       : undefined
     return [{
       ...option,
@@ -138,6 +158,7 @@ export function resolveDetailedPlanTemplateOptions(
       recommendationReason,
       observedPerformedCount: method.observedPerformedCount,
       selectedCount: method.selectedCount,
+      ...(snapshot === null ? {} : { historyCoverage: snapshot.coverage }),
     }]
   })
 }

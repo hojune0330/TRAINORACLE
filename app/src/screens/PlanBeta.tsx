@@ -331,6 +331,21 @@ export function PlanBeta({
         setStored(result.state)
         return
       case "rejected":
+        if (result.code === "RECENT_JOURNAL_REQUIRES_REVIEW" || result.code === "CURRENT_CHECK_REQUIRES_REVIEW") {
+          setGenerated(null)
+          setGate(null)
+          setCurrentCheck(null)
+          setRetrySelection(null)
+          setBlocked(true)
+          return
+        }
+        if (result.code === "PACE_ANCHOR_RECONFIRMATION_REQUIRED") {
+          setAthleteRecords(loadAthleteRecords())
+          setSelectedRecordId(null)
+          setComparisonRecordId(null)
+          setRecordConfirmationPending(true)
+          if (generatedIntake !== null) generateCandidates(generatedIntake)
+        }
         setErrorCode(result.code)
         setRetrySelection(result.code === "PLAN_STORAGE_WRITE_FAILED" ? selection : null)
         return

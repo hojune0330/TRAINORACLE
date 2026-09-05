@@ -1,6 +1,7 @@
 import type { DetailedTemplateRef } from "@impl/plan-generator/types"
 import type { MethodHistoryEntry, MethodReference } from "@impl/prescription/method-recommendation"
 import type { StoredPlanProgress } from "./plan-beta-schema"
+import { resolvePlanMethodMapping } from "./plan-method-registry"
 
 export type StoredPlanMethodHistory = {
   readonly sessionDay: number
@@ -25,12 +26,8 @@ type MethodHistorySource = {
   readonly progress: readonly StoredPlanProgress[]
 }
 
-export function methodReferenceFromTemplate(reference: DetailedTemplateRef): MethodReference {
-  return Object.freeze({
-    familyId: reference.templateId,
-    configurationId: reference.templateId,
-    version: reference.version,
-  })
+export function methodReferenceFromTemplate(reference: DetailedTemplateRef): MethodReference | null {
+  return resolvePlanMethodMapping(reference)?.method ?? null
 }
 
 export function deriveStoredPlanMethodHistory(source: MethodHistorySource): readonly StoredPlanMethodHistory[] {
@@ -57,13 +54,15 @@ export function deriveStoredPlanMethodHistory(source: MethodHistorySource): read
 }
 
 export function recommendationHistoryFromStored(rows: readonly StoredPlanMethodHistory[]): readonly MethodHistoryEntry[] {
-  return Object.freeze(rows.map(row => {
+  return Object.freeze(rows.flatMap(row => {
     const method = methodReferenceFromTemplate(row.selectedDetailedTemplateRef)
-    return Object.freeze({
+    // Unmapped planned references stay stored, but cannot establish family exposure.
+    if (method === null) return []
+    return [Object.freeze({
       selected: method,
       performed: row.outcome === "PERFORMED"
         ? Object.freeze({ status: "PERFORMED" as const, method })
         : Object.freeze({ status: row.outcome }),
-    })
+    })]
   }))
 }

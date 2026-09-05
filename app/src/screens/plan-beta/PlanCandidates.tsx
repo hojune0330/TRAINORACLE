@@ -28,6 +28,7 @@ import { PlanMethodPicker } from "./PlanMethodPicker"
 import { resolveDetailedPlanTemplateOptions } from "./plan-template-options"
 import { listDetailedSessionTargets, type PlanSessionTarget } from "../../domain/plan-session-target"
 import { PlanSessionTargetPicker } from "./PlanSessionTargetPicker"
+import type { RepeatPreference } from "@impl/prescription/method-recommendation"
 
 export function PlanCandidates({
   generated,
@@ -74,6 +75,10 @@ export function PlanCandidates({
   readonly onBack: () => void
   readonly onSelect: (selection: CandidateSelection) => void
 }) {
+  const [repeatPreference, setRepeatPreference] = React.useState<RepeatPreference>("NEUTRAL")
+  React.useEffect(() => {
+    setRepeatPreference("NEUTRAL")
+  }, [intake.eventGroup, intake.eventDistanceM, intake.trainingFocus, intake.experienceBand])
   const [localStartDate, setLocalStartDate] = React.useState(todayISO)
   const startDate = startDateValue ?? localStartDate
   const [expandedCandidateId, setExpandedCandidateId] = React.useState<string | null>(
@@ -111,9 +116,11 @@ export function PlanCandidates({
       </p>
       <RacePlacementNotice state={generated.racePlacement} />
       {onChangeMethod !== undefined && <PlanMethodPicker
-        options={resolveDetailedPlanTemplateOptions(intake)}
+        options={resolveDetailedPlanTemplateOptions(intake, undefined, undefined, repeatPreference)}
         selected={intake.selectedDetailedTemplateRef}
         onChange={onChangeMethod}
+        repeatPreference={repeatPreference}
+        onRepeatPreferenceChange={setRepeatPreference}
       />}
       {intake.selectedDetailedTemplateRef !== null
         && (intake.eventGroup === "FIVE_K" || intake.eventGroup === "MIDDLE_DISTANCE")
@@ -219,6 +226,9 @@ export function PlanCandidates({
             key={candidate.candidateId}
             candidate={candidate}
             startDate={startDate}
+            detailedTargets={intake.selectedDetailedTemplateRef === null ? [] : listDetailedSessionTargets(generated)}
+            detailedTarget={detailedSessionTarget}
+            onChangeSessionTarget={onChangeSessionTarget}
             canSelect={canSelect}
             expanded={expandedCandidateId === candidate.candidateId}
             onToggleSchedule={() => setExpandedCandidateId((current) =>

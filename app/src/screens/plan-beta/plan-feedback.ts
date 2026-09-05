@@ -16,6 +16,11 @@ export function planErrorMessage(errorCode: string): string {
       return "훈련 방법이나 기준 기록이 바뀌어 이전 저장을 취소했어요. 지금 보이는 계획을 확인한 뒤 선택해 주세요."
     case "DETAILED_TEMPLATE_AUTHORITY_UNAVAILABLE":
       return "선택한 상세 훈련을 지금 적용할 수 없어요. 현재 제공되는 방법을 다시 골라 주세요."
+    case "PACE_ANCHOR_RECONFIRMATION_REQUIRED":
+      return "선택했던 경기 기록이 바뀌었거나 현재 기준으로 사용할 수 없어요. 기준 기록을 다시 확인한 뒤 계획을 선택해 주세요."
+    case "RECENT_JOURNAL_REQUIRES_REVIEW":
+    case "CURRENT_CHECK_REQUIRES_REVIEW":
+      return "저장 전에 몸 상태를 다시 확인해야 해요. 최근 기록과 현재 몸 상태를 확인한 뒤 진행해 주세요."
     default:
       return `계획을 만들지 못했어요 · ${errorCode}`
   }

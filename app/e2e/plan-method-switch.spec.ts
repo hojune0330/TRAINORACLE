@@ -62,7 +62,7 @@ test("switches method in place and saves only the reconfirmed prescription", asy
   await page.getByRole("button", { name: /하루 두 번 운동할게요/u }).click()
   await page.getByRole("button", { name: "날짜 없이 계획안 보기" }).click()
   const method = page.locator(".plan-method-picker")
-  const summary = method.locator("summary")
+  const summary = method.locator(":scope > summary")
   await expect(method).not.toHaveAttribute("open")
   await summary.focus()
   await summary.press("Enter")

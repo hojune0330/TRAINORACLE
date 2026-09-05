@@ -5,6 +5,8 @@ doc_id: trainoracle-session-method-catalog-readiness-2026-09-05
 status: LOCAL_SOURCE_PREPARATION_NOT_RUNTIME_APPROVAL
 inspected_on: 2026-09-05
 base_sha: ee7a91e3edbb2da38782717ecc46ce9c18b29a69
+reconciled_on: 2026-09-06
+implementation_baseline_sha: 985669328dbcc7738afc9f390c9c325769b8251c
 inventory_rows: 30
 runtime_baseline_refs: 4
 new_runtime_activations: 0
@@ -12,6 +14,10 @@ new_scientific_approvals: 0
 external_sources_reopened_in_this_slice: false
 repository_delivery: SEPARATE_IMPLEMENTATION_REPORT
 ```
+
+The inventory/source-review metadata above is the historical 2026-09-05 preparation
+snapshot. The 2026-09-06 reconciliation updates implementation context only; it
+does not reopen original sources or upgrade any source/science/activation state.
 
 ## 1. Outcome And Evidence Boundary
 
@@ -264,14 +270,29 @@ event/intent matching, and rejection when a candidate already has PACE_TARGET.
 This supersedes the old first-QUALITY-only limitation as current design context,
 but static code inspection is not runtime-test or deployment evidence.
 
-The final core tie-break in `impl/src/prescription/method-recommendation.ts` is
+Rechecked at PR #318 main `985669328dbcc7738afc9f390c9c325769b8251c` on 2026-09-06:
+the final core tie-break in `impl/src/prescription/method-recommendation.ts` is
 stable `catalogOrder`, not lexical IDs. The live wiring in
-`app/src/screens/plan-beta/plan-template-options.ts` filters exact eligibility
-before calling the core with `history: []` and `repeatPreference: NEUTRAL`.
-History-aware ranking is prepared in core only; no live journal-history use is
-claimed. The binding contract section 5 and its acceptance cases distinguish them.
+`app/src/screens/plan-beta/plan-template-options.ts` filters exact eligibility,
+loads structured event-scoped archived method history and passes it to the core.
+`plan-beta-store.ts` writes v4 per-detailed-slot rows; legacy selection-only refs
+retain a missing outcome. The old `history: []` / core-only description was an
+initial 2026-09-05 snapshot, not the merged implementation.
 
-### Observed Documentation Checks
+The merged caller uses `PREFER_VARIETY` by default with equal zero caller priorities
+after eligibility filtering. The accepted 2026-09-06 contract requires `NEUTRAL`
+default and optional explicit variety/repeat, without discarding history in neutral
+mode. Neither wiring nor a completion count proves neighboring-load, cycle-goal or
+recovery-aware recommendation. `COMPLETED` stored as `PERFORMED` is self-report,
+not measured adherence. The current archive retains the latest 18 plan/frame
+summaries before event filtering; it is not 18 method occurrences, a fixed 24-week
+window or a full original-plan lifetime ledger. Old original plans and refs remain
+unchanged. The binding contract sections 3-5 and 10-11 define these distinctions.
+
+### Historical Documentation Checks (2026-09-05)
+
+These are the original slice's recorded results, not reruns or completion claims
+for the 2026-09-06 accepted amendment. Its acceptance cases remain requirements.
 
 | Check | Observed result / limit |
 |---|---|
@@ -294,5 +315,39 @@ The existing seven SPEC final markers stay last; discovery links are added throu
 in `specs/legacy-reference/SOURCE_MAP.md`. The source map's historical mappings and
 counts are preserved. No new source protocol or scientific review was accepted by
 these documentation checks.
+
+## 9. Accepted Engineering Follow-Up (2026-09-06)
+
+The user's approved task is recorded as `TO-SMSA-ENGINEERING-2026-09-06-001` in
+[the binding contract](../../specs/reconstruct/SESSION_METHOD_SELECTION_AND_ADJUSTMENT_CONTRACT.md)
+section 17. Neutral default and optional explicit variety/repeat are accepted
+engineering direction, not new ranking science or dose authority.
+
+Display-candidate diversity and per-slot repeat scheduling are separate. The same
+reviewed exact configuration may be chosen at distinct slots only under an explicit
+reviewed, versioned placement policy covering the frame combination, exposure and
+cross-slot interactions. Duplicate slots always reject. The parent's reported
+implementation direction is a central detailed-MAIN placement-policy gate shared
+by binder, schema and adaptation. The runtime reviewed multi-placement registry
+remains empty without accepted frame-combination evidence; the existing approved
+single-method path remains supported. Generic core test policies permitting repeats
+are synthetic contract fixtures, never runtime approval or live multi-MAIN evidence.
+
+Family and configuration IDs are independent and need explicit versioned mappings;
+the current `templateId` alias is a compatibility adapter, not an expanded registry.
+G-BINDING includes that mapping, the shared placement gate and persistence/restore
+compatibility. G-SCOPE includes exact frame-combination review; G-ADJUST still needs
+real approved adjustment content. Listing these gaps does not finish their evidence
+preparation or complete the user-facing multi-MAIN/adjustment workflow. All 30 source
+rows, four baseline refs and OPEN issues retain their states.
+
+Read-only `gh` verification on 2026-09-06 confirmed
+[PR #318](https://github.com/hojune0330/TRAINORACLE/pull/318) MERGED into main
+`985669328dbcc7738afc9f390c9c325769b8251c`, and
+[CI 33954914850](https://github.com/hojune0330/TRAINORACLE/actions/runs/33954914850)
+completed/success on that SHA, including `deploy-pages`. These are historical
+delivery facts, not current public-UI or new-feature activation verification. The
+[implementation report](../implementation/SESSION_METHOD_SELECTION_IMPLEMENTATION_2026-09-05.md)
+section 9 records exact dates/jobs and the documentation-only verification boundary.
 
 [DRAFT_COMPLETE]

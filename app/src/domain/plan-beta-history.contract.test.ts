@@ -6,6 +6,7 @@ import {
 } from "./plan-beta-store"
 import { planHistoryListSchema } from "./plan-beta-schema"
 import { stateFixture } from "./plan-beta-store.test-fixture"
+import { PLAN_METHOD_REGISTRY } from "./plan-method-registry"
 
 const HISTORY_KEY = "trainoracle.plan-beta.history.v1"
 
@@ -50,18 +51,26 @@ describe("plan history retention", () => {
       pairId: "plan-pair:v3:legacy",
       candidateKind: "BALANCED",
       eventDistanceM: 5000,
-      selectedDetailedTemplateRef: {
-        templateId: "V2-SEED-05",
-        version: "1.0.0",
-        fingerprint: `sha256:${"a".repeat(64)}`,
-      },
+      selectedDetailedTemplateRef: PLAN_METHOD_REGISTRY[0]!.templateRef,
       frameLengthDays: 9.5,
       progress: [{ sessionDay: 2, sessionSlot: "AM", state: "COMPLETED" }],
       archivedAt: "2026-09-05T00:00:00.000Z",
     }]))
     expect(loadPlanMethodHistory(5000)).toMatchObject([{
-      selected: { familyId: "V2-SEED-05" },
+      selected: { familyId: "race-pace-distance-repetitions", configurationId: "V2-SEED-05" },
       performed: { status: "MISSING" },
     }])
+  })
+  it("preserves an unknown legacy reference without assigning it a guessed family", () => {
+    const reference = { templateId: "V2-SEED-05", version: "1.0.0", fingerprint: `sha256:${"a".repeat(64)}` }
+    const raw = JSON.stringify([{
+      version: 3, candidateId: "legacy-candidate", pairId: "plan-pair:v3:legacy", candidateKind: "BALANCED",
+      eventDistanceM: 5000, selectedDetailedTemplateRef: reference, frameLengthDays: 9.5, progress: [],
+      archivedAt: "2026-09-05T00:00:00.000Z",
+    }])
+    localStorage.setItem(HISTORY_KEY, raw)
+    expect(loadPlanMethodHistory(5000)).toMatchObject([{ selected: null, performed: { status: "MISSING" } }])
+    expect(readStoredHistory()[0]).toMatchObject({ selectedDetailedTemplateRef: reference })
+    expect(localStorage.getItem(HISTORY_KEY)).toBe(raw)
   })
 })

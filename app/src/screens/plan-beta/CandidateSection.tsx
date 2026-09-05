@@ -1,4 +1,4 @@
-import { useId } from "react"
+import { useEffect, useId, useState } from "react"
 import { Check, ChevronDown } from "lucide-react"
 import type { PlanGenerationSuccess } from "@impl/plan-generator/types"
 import { TermHelp } from "../../components/TermHelp"
@@ -12,6 +12,7 @@ import {
 import { PlanSchedulePreview } from "./PlanSchedulePreview"
 import { eventDistanceLabel } from "./plan-intake-navigation"
 import { isValidIsoDate } from "../../domain/dates"
+import { samePlanSessionTarget, type PlanSessionTarget } from "../../domain/plan-session-target"
 
 export function CandidateSection({
   candidate,
@@ -20,6 +21,9 @@ export function CandidateSection({
   expanded,
   onToggleSchedule,
   onSelect,
+  detailedTargets = [],
+  detailedTarget = null,
+  onChangeSessionTarget,
 }: {
   readonly candidate: PlanGenerationSuccess["candidates"][number]
   readonly startDate: string
@@ -27,8 +31,14 @@ export function CandidateSection({
   readonly expanded: boolean
   readonly onToggleSchedule: () => void
   readonly onSelect: () => void
+  readonly detailedTargets?: readonly PlanSessionTarget[]
+  readonly detailedTarget?: PlanSessionTarget | null
+  readonly onChangeSessionTarget?: (target: PlanSessionTarget) => void
 }) {
   const localId = useId()
+  const [pendingTarget, setPendingTarget] = useState<PlanSessionTarget | null>(null)
+  const currentTarget = detailedTarget ?? detailedTargets[0] ?? null
+  useEffect(() => { setPendingTarget(null) }, [candidate, startDate, detailedTarget])
   const label = candidateLabel(candidate.kind, candidate.selectedEnergyIntent)
   const purposeStatus = candidatePurposeStatus(candidate.kind)
   const optionLetter = candidate.kind === "BALANCED" ? "A" : "B"
@@ -86,6 +96,17 @@ export function CandidateSection({
               frameLengthDays={frameLengthDays}
               sessions={candidate.sessions}
               explanationContext={{ plan: candidate, kind: "CANDIDATE" }}
+              renderSessionFooter={onChangeSessionTarget === undefined ? undefined : (session) => {
+                const target = detailedTargets.find(item => samePlanSessionTarget(item, session))
+                if (target === undefined) return null
+                if (samePlanSessionTarget(currentTarget, target)) return <p role="status">개인 페이스 적용 대상으로 고른 훈련</p>
+                if (samePlanSessionTarget(pendingTarget, target)) return <div>
+                  <p>두 계획안의 상세 훈련 위치를 이 날짜로 옮겨요. 훈련을 추가하지 않으며, 적용 후 기준 기록을 다시 확인해야 해요.</p>
+                  <button type="button" className="plan-text-action" onClick={() => { onChangeSessionTarget(target); setPendingTarget(null) }}>이 날짜에 적용</button>
+                  <button type="button" className="plan-text-action" onClick={() => setPendingTarget(null)}>변경 취소</button>
+                </div>
+                return <button type="button" className="plan-text-action" onClick={() => setPendingTarget(target)}>이 훈련을 개인 페이스로 받기</button>
+              }}
             />
           </div>
         </>
