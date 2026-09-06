@@ -12,7 +12,7 @@ export type SourceAdjustmentOfferInput = {
   readonly current: ConfigurationReference
   readonly contextKey: string
   readonly resolutionRevision: string
-  readonly anchor: { readonly eventDistanceM: number; readonly sourceRef: string }
+  readonly anchor: { readonly eventDistanceM: number; readonly sourceRef: string; readonly contentFingerprint: string }
   readonly nowMs: number
 }
 
@@ -26,7 +26,7 @@ const referenceKeys = ["familyId", "configurationId", "version", "contentIdentit
 
 function exactInputShape(input: SourceAdjustmentOfferInput): boolean {
   return exact(input, ["authority", "policy", "current", "contextKey", "resolutionRevision", "anchor", "nowMs"])
-    && exact(input.anchor, ["eventDistanceM", "sourceRef"])
+    && exact(input.anchor, ["eventDistanceM", "sourceRef", "contentFingerprint"])
     && exact(input.policy, ["policyId", "version", "contentIdentity"])
     && exact(input.current, referenceKeys)
     && exact(input.authority, ["catalog", "policies"])
@@ -57,7 +57,8 @@ function withAnchor(sequence: PrescriptionSequence, anchor: SourceAdjustmentOffe
 export function prepareSourceAdjustmentOffer(input: SourceAdjustmentOfferInput) {
   try {
     if (!hasCanonicalJsonTree(input) || !exactInputShape(input) || !text(input.contextKey) || !text(input.resolutionRevision)
-      || !text(input.anchor.sourceRef) || !Number.isFinite(input.anchor.eventDistanceM) || input.anchor.eventDistanceM <= 0
+      || !text(input.anchor.sourceRef) || !/^sha256:[a-f0-9]{64}$/.test(input.anchor.contentFingerprint)
+      || !Number.isFinite(input.anchor.eventDistanceM) || input.anchor.eventDistanceM <= 0
       || !Number.isFinite(input.nowMs)) return unavailable("INVALID_RESOLUTION_CONTEXT")
     const sourcePolicy = input.authority.policies.find(item => item.policyId === input.policy.policyId && item.version === input.policy.version)
     if (sourcePolicy === undefined || !same(adjustmentPolicyReference(sourcePolicy), input.policy)) return unavailable("POLICY_MISMATCH")

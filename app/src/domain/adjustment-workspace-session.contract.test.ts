@@ -158,7 +158,7 @@ describe("tab-scoped adjustment workspace persistence", () => {
     const f = adjustmentCommitFixture()
     const source = { authority: f.authority, policy: f.policy, current: f.base.prescription.configuration,
       contextKey: f.base.contextKey, resolutionRevision: f.base.revision,
-      anchor: { eventDistanceM: 5000, sourceRef: "TEST-ANCHOR" }, nowMs: 151 }
+      anchor: { eventDistanceM: 5000, sourceRef: "TEST-ANCHOR", contentFingerprint: `sha256:${"a".repeat(64)}` }, nowMs: 151 }
     const offer = prepareSourceAdjustmentOffer(source)
     if (offer.kind !== "available") throw Error(offer.code)
     const base = { ...f.base, contextKey: offer.contextKey, prescription: offer.current,

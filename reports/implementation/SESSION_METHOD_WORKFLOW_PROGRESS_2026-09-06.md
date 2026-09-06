@@ -480,4 +480,22 @@ M11/M12는 앞으로 보관하는 정확한 원본의 일지 비교까지 진척
 초안을 명시적으로 소비/정리하고, 새 baseline을 여는 화면 연결은 남아 있다.
 확정 계획/일지 원본으로 보존하는 영속 형식 및 실제 운영 정책 연결도 여전히 미완이다.
 
+## 20. 조정된 구간의 개인 목표값 연결
+
+- 실제 저장 형식이 flat PACE_TARGET에 묶인 부분을 확인했다. 기존 검증을
+  완화하지 않고 별도 candidate-only projection을 추가해 distance/time/mixed
+  각 구간을 기존 원본 개인 기록과 연결한다.
+- 같은 종목의 RP 거리형은 소수 초를 그대로 계산한다. 시간형 이동 거리나
+  sprint/effort 숫자를 만들지 않는다. 원본 준비·정리 및 조정 구간 구조를 보존한다.
+- 기록 ID가 그대로인 수정도 잡도록 source offer에 anchor 내용 지문을 추가하고
+  target resolver에서 원본 anchor로 재계산한다. 기존 비활성 시험 초안은 현재
+  문맥이 달라지면 재확인이 필요하며 active plan은 변경하지 않는다.
+- 새 구성 설명이 없는데 기존 설명을 붙이지 않는다. 해당 구성 설명 필요 상태를
+  반환한다. 실제 active-plan 저장과 UI 적용 완료가 아니다.
+- 전체 앱 288파일 / 2,549 PASS, TypeScript/build PASS. 동일 ID의 기록 내용
+  지문을 제외한 결함 주입은 1 FAIL로 검출됐고 정상 복원했다. 임시 조정 저장의
+  Chromium 5항목도 다시 통과했다.
+- [개인 목표값 연결 검토 보고서](../review/ADJUSTED_METHOD_TARGET_RESOLUTION_REVIEW_2026-09-06.md)에
+  실행 결과·타입 오류 정정·남은 형식 전환을 기록한다.
+
 [DRAFT_COMPLETE]

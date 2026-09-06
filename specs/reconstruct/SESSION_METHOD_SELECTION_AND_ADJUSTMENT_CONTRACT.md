@@ -4,7 +4,7 @@
 doc_id: trainoracle-session-method-selection-and-adjustment
 spec_id: SESSION_METHOD_SELECTION_AND_ADJUSTMENT_CONTRACT
 title: TrainOracle Session Method Selection And Adjustment Contract
-version: "0.7"
+version: "0.8"
 round: RT1_OWNER_APPROVED_IMPLEMENTATION_DIRECTION
 status: ACTIVE_IMPLEMENTATION_CONTRACT
 product_direction: OWNER_APPROVED_IMPLEMENTATION_DIRECTION
@@ -457,6 +457,28 @@ policy references separately named. Do not infer reverse or transitive permissio
 Before consuming an applied resolved receipt, rebuild the offer from the current
 trusted source authority and revalidate the exact source edge and resolved receipt.
 An empty eligible edge set is unavailable, never a no-op editor or synthetic offer.
+
+The resolved context must include the validated anchor content fingerprint, not
+only its record ID. Updating a performance while keeping the ID invalidates an old
+receipt even if a caller fails to change its separate candidate revision. A target
+resolution consuming the source offer independently recomputes this fingerprint
+from the exact original validated prescription's selected anchor.
+
+For current same-event RACE_PACE only, a distance segment's unrounded target seconds
+are current performance seconds multiplied by segment distance divided by event
+distance. Time segments preserve their explicit work duration and do not acquire a
+fabricated covered distance. EFFORT_GUIDANCE and SPRINT_REFERENCE do not inherit a
+race-pace numeric target. Preserve nested work/recovery structure and keep structural
+totals distinct from pace-based estimates or actual performance. Unknown values
+remain null. Existing preparation/cooldown components are copied unchanged; source
+MAIN adjustment authority does not authorize replacing these components.
+
+This projection must use a separately named candidate-only kind, not rewrite the
+legacy PACE_TARGET flat fields with incompatible mixed/time values. Its identity
+binds the original resolution, new source configuration, exact sequence, segment
+targets and anchor content. The adjusted source configuration needs its own matching
+explanation; never fall back to the original explanation as though the work/recovery
+were unchanged. This projection alone cannot be saved as an accepted active plan.
 
 The commit adapter must obtain a fresh explicit account/safety/candidate eligibility
 decision from its owner, not derive permission from source-policy validity alone.

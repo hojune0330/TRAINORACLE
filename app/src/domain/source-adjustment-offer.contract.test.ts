@@ -29,7 +29,7 @@ function fixture(): SourceAdjustmentOfferInput {
   const authority: AdjustmentAuthority = { policies: [policy], catalog: [{ familyId: "TEST-FAMILY", reviewRef: "TEST-NOT-APPROVAL",
     configurations: sequences.map((s, i) => ({ configurationId: `TEST-${i}`, version: "1", sequence: s })) }] }
   return { authority, policy: adjustmentPolicyReference(policy), current: references[0]!, contextKey: policy.contextKey,
-    resolutionRevision: "TEST-CANDIDATE-REVISION-1", anchor: { eventDistanceM: 5000, sourceRef: "athlete-record:TEST-ONLY" }, nowMs: 150 }
+    resolutionRevision: "TEST-CANDIDATE-REVISION-1", anchor: { eventDistanceM: 5000, sourceRef: "athlete-record:TEST-ONLY", contentFingerprint: `sha256:${"a".repeat(64)}` }, nowMs: 150 }
 }
 
 function available(input = fixture()) {
@@ -100,15 +100,16 @@ describe("exact source edges to independently resolved adjustment offers", () =>
 
   it.each([
     { contextKey: "other-slot" }, { resolutionRevision: "" },
-    { anchor: { eventDistanceM: 1500, sourceRef: "athlete-record:OTHER" } },
-    { anchor: { eventDistanceM: 5000, sourceRef: "" } },
+    { anchor: { eventDistanceM: 1500, sourceRef: "athlete-record:OTHER", contentFingerprint: `sha256:${"a".repeat(64)}` } },
+    { anchor: { eventDistanceM: 5000, sourceRef: "", contentFingerprint: `sha256:${"a".repeat(64)}` } },
   ])("rejects incompatible source/context %j", change => {
     expect(prepareSourceAdjustmentOffer({ ...fixture(), ...change }).kind).toBe("unavailable")
   })
 
   it.each([
     { resolutionRevision: "NEXT-REVISION" },
-    { anchor: { eventDistanceM: 5000, sourceRef: "athlete-record:OTHER" } },
+    { anchor: { eventDistanceM: 5000, sourceRef: "athlete-record:OTHER", contentFingerprint: `sha256:${"a".repeat(64)}` } },
+    { anchor: { eventDistanceM: 5000, sourceRef: "athlete-record:TEST-ONLY", contentFingerprint: `sha256:${"b".repeat(64)}` } },
   ])("does not replay a receipt after the live resolution context changes %j", change => {
     const input = fixture()
     expect(revalidateSourceAdjustmentApplication({ ...input, ...change }, apply(input).receipt).kind).toBe("unavailable")
