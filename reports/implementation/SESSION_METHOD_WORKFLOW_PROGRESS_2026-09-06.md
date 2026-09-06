@@ -65,7 +65,7 @@ MAIN 식별자는 날짜·프레임·종목·목적·경험·실제 슬롯 배�
 | M05 | FRAME_SCOPE_LIFECYCLE_GATE_PARTIAL | 정확한 프레임·전체 배치·비상세 처방 문맥과 유효기간·철회·검토 참조 검증 구현. 적격 구성은 독립 집합으로 평가. 실제 운영 정책 내용·선택 receipt 영속화·실행 경계 전체 전달은 미완 |
 | M06 | SINGLE_DETAIL_TARGET_UI_PARTIAL | A/B별 단일 상세 위치의 독립 적용·취소·재확인 구현(섹션 12). 같은 조건의 서로 다른 2방법과 여러 MAIN의 동시 상세 선택은 미완 |
 | M07 | SINGLE_DETAIL_SAVE_LINK_PARTIAL | 단일 상세 위치와 정확한 record anchor의 저장·새로고침 검증. 모든 MAIN의 구성별 원본·조정 receipt 저장과 버전별 복원은 미완 |
-| M08 | SOURCE_RESOLUTION_AND_COMMIT_HOST_PARTIAL | onApply receipt 재검사·단일 workspace CAS host와 공통 원본/개인 계산 binding 구현(섹션 13, 17). production offer/adapter와 실제 조정 후보 저장 연결은 미완. scalar 범위를 새로 승인하지 않음 |
+| M08 | SOURCE_OFFER_COMMIT_ADAPTER_PARTIAL | onApply receipt 재검사·workspace CAS host·원본/개인 binding·원본 전환 offer/commit adapter 구현(섹션 13, 17, 18). 운영 정책 공급자와 실제 조정 후보 저장 연결은 미완. scalar 범위를 새로 승인하지 않음 |
 | M09 | TOTALS_RECEIPT_REVALIDATION_PARTIAL | 구간·회복·총량·시간·설명 binding의 독립 재계산 구현. 실제 채택된 전환의 공개 조정·저장·재조회는 미완 |
 | M10 | SAVE_REVALIDATION_AND_REPLAY_PARTIAL | 잠금 후 요청·anchor·안전·템플릿 재검사 및 동일 초기 저장의 무변경 재시도 구현(섹션 14). 다중 키 물리적 원자성·잠금 미사용 탭·실제 조정 전체 연결은 미완 |
 | M11 | ACTIVE_AND_ARCHIVED_ORIGINAL_OBSERVATION_PARTIAL | 현재 계획 및 앞으로 보관하는 V5 원본의 정확한 링크로 실제 거리·시간·페이스·RPE 표시. 일지에서 과거 처방 비교 진입 구현. 반복별 측정·추천 소비는 미완 |
@@ -427,5 +427,31 @@ M11/M12는 앞으로 보관하는 정확한 원본의 일지 비교까지 진척
 - 남은 것은 이 binding을 사용하는 실제 허용 전환 offer, source edge에서 개인화된
   before/after를 재현하는 adapter, 버전별 조정 저장 및 사용자 조정 여정이다.
   source/resolved 구분만으로 M08 전체 완료나 새 조정 활성화를 주장하지 않는다.
+
+## 18. 원본 조정 전환과 저장 절차 연결
+
+- `prepareSourceAdjustmentOffer`는 현재 원본에서 직접 허용된 모든 전환만
+  가져온다. A/B 고정 짝, 역방향·연쇄 변경 허용, 자기 자신으로 바꾸는 가짜
+  선택지는 만들지 않는다. 원본의 정책 수명과 근거 참조를 그대로 유지한다.
+- 같은 종목의 명시적 RACE_PACE placeholder에 현재 record anchor 참조를
+  연결하고 현재 후보/슬롯 revision을 별도 문맥 지문으로 묶는다. 개인 목표 초
+  계산·거리/시간 환산·회복값 변경을 이 모듈에서 새로 수행하지 않는다.
+- `createSourceAdjustmentCommitAdapter`는 기존 controller/host와 연결한다.
+  설명을 정확한 원본 구성에서 가져와 resolved 구성에 결속한다. 운영자가
+  제공하는 현재 계정·안전·후보 허용 판정을 진입과 저장 잠금 안에서 재검사한다.
+- 저장 직전 원본 authority로 offer/receipt를 다시 계산한다. 기다리는 사이의
+  만료·철회·후보 revision·허용 상태 변경은 저장 0건과 기존 snapshot 보존으로
+  처리한다. 같은 명시 요청의 재시도는 한 번만 저장한다.
+- 합성 구성으로 연결 대상 3파일 50 PASS를 직접 확인했다. 실제 운영 조정값,
+  개인 새 페이스, 운영 정책은 추가하지 않았다. owner가 제공할 실제 저장소의
+  잠금/원자성이나 공개 조정 여정의 완료를 이 결과로 주장하지 않는다.
+- 전체 앱 286파일 / 2,518 PASS, TypeScript 및 build PASS. revision 결속을
+  제거하면 2 FAIL로 검출됐고, 정상 복원 후 대상 50 PASS를 재확인했다.
+- 전체 회귀 결과와 추가 검수는
+  [원본 조정 연결 검토 보고서](../review/SOURCE_ADJUSTMENT_COMMIT_ADAPTER_REVIEW_2026-09-06.md)에 기록한다.
+
+다음 순서는 실제 후보 저장 형식과 연결할 versioned adapter, 운영 정책 공급자,
+정확한 구성 채택, 사용자 조정·복원·일지 비교의 종단 검증이다. M01~M16의
+미완 항목을 삭제하거나 전체 완료로 바꾸지 않는다.
 
 [DRAFT_COMPLETE]

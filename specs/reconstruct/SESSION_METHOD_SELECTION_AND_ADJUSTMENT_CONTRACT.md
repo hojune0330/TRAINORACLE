@@ -4,7 +4,7 @@
 doc_id: trainoracle-session-method-selection-and-adjustment
 spec_id: SESSION_METHOD_SELECTION_AND_ADJUSTMENT_CONTRACT
 title: TrainOracle Session Method Selection And Adjustment Contract
-version: "0.5"
+version: "0.6"
 round: RT1_OWNER_APPROVED_IMPLEMENTATION_DIRECTION
 status: ACTIVE_IMPLEMENTATION_CONTRACT
 product_direction: OWNER_APPROVED_IMPLEMENTATION_DIRECTION
@@ -447,6 +447,24 @@ identity changes when any of these changes; it is not a new method family or dos
 This binding is not a signature, new scientific approval or export permission.
 Existing archived prescriptions without this projection remain readable; do not
 rewrite their saved fingerprints or infer new explanations retrospectively.
+
+The source-to-resolved adjustment offer must preserve an exact directed edge.
+Resolve only explicit source RACE_PACE anchor placeholders for the same event;
+this adapter does not calculate new pace, convert distance/time or change recovery.
+Bind the caller's current candidate/slot revision and anchor to a separate resolved
+context. Preserve source policy lifetime and evidence, and keep source and resolved
+policy references separately named. Do not infer reverse or transitive permission.
+Before consuming an applied resolved receipt, rebuild the offer from the current
+trusted source authority and revalidate the exact source edge and resolved receipt.
+An empty eligible edge set is unavailable, never a no-op editor or synthetic offer.
+
+The commit adapter must obtain a fresh explicit account/safety/candidate eligibility
+decision from its owner, not derive permission from source-policy validity alone.
+Check it before exposing the environment and again inside the owner's mutation
+lock. Resolve each explanation from one exact source configuration binding; missing,
+duplicate or malformed bindings cannot be substituted by another configuration's
+explanation. Source policy changes while waiting for the lock invalidate the apply.
+The adapter supplies no persistence, new dose or operating policy by itself.
 
 Editing an already accepted plan opens a proposed successor, not an in-place
 prescription edit. Current-frame safety holds and separately authorized recovery
