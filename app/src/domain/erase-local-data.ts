@@ -61,6 +61,7 @@ const ACCOUNT_SCOPED_LOCAL_KEYS = [
 ] as const
 const ACCOUNT_SCOPED_SESSION_KEYS = [
   "trainoracle.plan-beta.previous-intake.v1",
+  "trainoracle.plan-adjustment.workspace.v1",
   PRIVATE_NOTE_RECOVERY_STORAGE_KEY,
 ] as const
 

@@ -4,7 +4,7 @@
 doc_id: trainoracle-session-method-selection-and-adjustment
 spec_id: SESSION_METHOD_SELECTION_AND_ADJUSTMENT_CONTRACT
 title: TrainOracle Session Method Selection And Adjustment Contract
-version: "0.6"
+version: "0.7"
 round: RT1_OWNER_APPROVED_IMPLEMENTATION_DIRECTION
 status: ACTIVE_IMPLEMENTATION_CONTRACT
 product_direction: OWNER_APPROVED_IMPLEMENTATION_DIRECTION
@@ -465,6 +465,27 @@ lock. Resolve each explanation from one exact source configuration binding; miss
 duplicate or malformed bindings cannot be substituted by another configuration's
 explanation. Source policy changes while waiting for the lock invalidate the apply.
 The adapter supplies no persistence, new dose or operating policy by itself.
+
+An explicitly opened editor may retain one version-1 pending workspace per account
+in the current tab's sessionStorage. Its envelope contains the exact unmodified
+candidate/slot baseline and the latest applied workspace state; it is neither an
+active plan nor an archive. Restore only against the independently reconstructed
+current candidate baseline and current authority, never a baseline or policy read
+from the saved envelope alone. A stored apply must pass the existing exact replay
+checks for numeric content, explanation, receipt and revision before restoration.
+
+Opening a different candidate/slot or revision must not overwrite the pending
+workspace. Explicit discard clears only the exact opened snapshot. After a pending
+apply is consumed by a separately validated candidate update, discard it before
+opening a new baseline; this envelope is not a growing action history. Account
+switches invalidate an open handle; anonymous drafts are not transferred at login.
+Read/write failures and malformed storage preserve unknown bytes and deny reuse.
+Use the existing cooperating mutation lock and verify the single-key write. If a
+write cannot be confirmed, do not acknowledge success or overwrite newer content
+with rollback guesses. Include all account-scoped drafts in erase-all. No cloud,
+backup, export, active-plan mutation or extra archive retention is added. Browser
+session restoration may preserve sessionStorage; do not promise deletion at a
+fixed time or treat it as a security/consent boundary.
 
 Editing an already accepted plan opens a proposed successor, not an in-place
 prescription edit. Current-frame safety holds and separately authorized recovery

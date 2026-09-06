@@ -64,7 +64,7 @@ MAIN 식별자는 날짜·프레임·종목·목적·경험·실제 슬롯 배�
 | M04 | NOT_STARTED | 승인된 후보를 독립 family/configuration으로 등록. 연구 전사, 과학/현장 적용 검토, 실제 runtime 등록을 각각 기록 |
 | M05 | FRAME_SCOPE_LIFECYCLE_GATE_PARTIAL | 정확한 프레임·전체 배치·비상세 처방 문맥과 유효기간·철회·검토 참조 검증 구현. 적격 구성은 독립 집합으로 평가. 실제 운영 정책 내용·선택 receipt 영속화·실행 경계 전체 전달은 미완 |
 | M06 | SINGLE_DETAIL_TARGET_UI_PARTIAL | A/B별 단일 상세 위치의 독립 적용·취소·재확인 구현(섹션 12). 같은 조건의 서로 다른 2방법과 여러 MAIN의 동시 상세 선택은 미완 |
-| M07 | SINGLE_DETAIL_SAVE_LINK_PARTIAL | 단일 상세 위치와 정확한 record anchor의 저장·새로고침 검증. 모든 MAIN의 구성별 원본·조정 receipt 저장과 버전별 복원은 미완 |
+| M07 | ACTIVE_SELECTION_AND_SESSION_DRAFT_RESTORE_PARTIAL | 단일 상세 위치/record anchor의 활성 계획 저장·복원과 별도 계정별 임시 조정 초안의 버전/receipt 복원 구현(섹션 19). 모든 MAIN의 조정 결과를 확정 계획으로 저장하는 경로는 미완 |
 | M08 | SOURCE_OFFER_COMMIT_ADAPTER_PARTIAL | onApply receipt 재검사·workspace CAS host·원본/개인 binding·원본 전환 offer/commit adapter 구현(섹션 13, 17, 18). 운영 정책 공급자와 실제 조정 후보 저장 연결은 미완. scalar 범위를 새로 승인하지 않음 |
 | M09 | TOTALS_RECEIPT_REVALIDATION_PARTIAL | 구간·회복·총량·시간·설명 binding의 독립 재계산 구현. 실제 채택된 전환의 공개 조정·저장·재조회는 미완 |
 | M10 | SAVE_REVALIDATION_AND_REPLAY_PARTIAL | 잠금 후 요청·anchor·안전·템플릿 재검사 및 동일 초기 저장의 무변경 재시도 구현(섹션 14). 다중 키 물리적 원자성·잠금 미사용 탭·실제 조정 전체 연결은 미완 |
@@ -453,5 +453,31 @@ M11/M12는 앞으로 보관하는 정확한 원본의 일지 비교까지 진척
 다음 순서는 실제 후보 저장 형식과 연결할 versioned adapter, 운영 정책 공급자,
 정확한 구성 채택, 사용자 조정·복원·일지 비교의 종단 검증이다. M01~M16의
 미완 항목을 삭제하거나 전체 완료로 바꾸지 않는다.
+
+## 19. 임시 조정 초안의 저장·복원
+
+- 버전 1 envelope로 현재 후보의 원본 baseline과 적용된 workspace snapshot을
+  현재 탭의 계정별 sessionStorage 한 항목에 보관한다. 확정 계획·archive·서버
+  백업·내보내기에는 넣지 않는다. 새 후보가 기존 초안을 자동 덮어쓰지 않는다.
+- 복원은 현재 후보에서 독립적으로 가져온 baseline 및 현재 authority를 기준으로
+  한다. 저장된 policy를 승인 근거로 읽지 않으며, 변경된 상태는 기존 controller의
+  정확한 replay 검사로 숫자·설명·receipt·revision을 다시 검증한다.
+- 기존 mutation lock 안에서 단일 키 비교/쓰기/재확인한다. 저장 실패는 성공으로
+  알리지 않고, 손상·다른 버전·다른 후보의 바이트는 자동 삭제/덮어쓰기하지 않는다.
+- 계정 전환은 열린 handle을 무효화한다. 익명 초안의 자동 계정 이전은 없다.
+  취소는 정확히 열린 초안만 삭제하며, 내 데이터 전체 삭제에도 계정별 키를 포함한다.
+- 연결 4파일 68 PASS. 새 session 계약 시험 18개에는 source offer → source
+  adapter → session CAS → 재개까지의 합성 통합을 포함한다.
+- Chromium native Web Locks/sessionStorage의 저장·reload/replay·별도 탭 격리·
+  잠금 거부·취소 5항목 PASS. 시험 페이지/번들은 로컬 intercept만 사용했고 실제
+  사용자 데이터와 외부 통신은 없었다. 운영 화면 E2E와 구분한다.
+- 상세 결과와 보완 기록:
+  [임시 조정 저장 검토 보고서](../review/ADJUSTMENT_WORKSPACE_SESSION_REVIEW_2026-09-06.md).
+- 전체 앱 287파일 / 2,536 PASS. TypeScript/build PASS. 저장 버전 검사 제거는
+  1 FAIL로 검출됐고 정상 코드를 복원했다. 운영 화면 연결 완료로 확대하지 않는다.
+
+이 기능은 한 후보에서 적용한 변경을 이어보는 임시 초안이다. 후보 변경 수용 후
+초안을 명시적으로 소비/정리하고, 새 baseline을 여는 화면 연결은 남아 있다.
+확정 계획/일지 원본으로 보존하는 영속 형식 및 실제 운영 정책 연결도 여전히 미완이다.
 
 [DRAFT_COMPLETE]

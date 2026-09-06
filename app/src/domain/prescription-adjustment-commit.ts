@@ -1,5 +1,5 @@
 import { canonicalJsonFingerprint } from "@impl/plan-generator/candidate-identity"
-import { revalidateAdjustmentReceipt } from "@impl/prescription/prescription-adjustment"
+import { configurationReference, revalidateAdjustmentReceipt } from "@impl/prescription/prescription-adjustment"
 import type { AdjustmentAuthority, AdjustmentReceipt, ConfigurationReference, PrescriptionSnapshot } from "@impl/prescription/prescription-adjustment"
 import { hasCanonicalJsonTree } from "./plan-beta-schema"
 
@@ -66,6 +66,26 @@ function validState(state: AdjustmentCommitState): boolean {
     && [state.candidateLineageId, state.mainSlotId, state.contextKey, state.revision].every(text)
     && (state.lastCommit === null || keysOnly(state.lastCommit, ["intentId", "receipt"]))
     && same(state.explanation.configuration, state.prescription.configuration)
+}
+
+/** Validate an unmodified editor baseline against the current trusted environment.
+ * Persisted workspaces never supply their own authority or explanations.
+ */
+export function validateInitialAdjustmentWorkspace(base: AdjustmentCommitState, environment: AdjustmentCommitEnvironment): boolean {
+  try {
+    if (fingerprint(base) === null || fingerprint(environment) === null || !validState(base)
+        || base.lastCommit !== null || !environment.allowed || environment.contextKey !== base.contextKey) return false
+    const configurations = environment.authority.catalog.flatMap(family => family.configurations.map(configuration => ({ family, configuration })))
+      .filter(({ family, configuration }) => family.familyId === base.prescription.configuration.familyId
+        && configuration.configurationId === base.prescription.configuration.configurationId
+        && configuration.version === base.prescription.configuration.version)
+    if (configurations.length !== 1) return false
+    const { configuration } = configurations[0]!
+    const reference = configurationReference(base.prescription.configuration, configuration.sequence)
+    if (!same(base.prescription, { configuration: reference, sequence: configuration.sequence })) return false
+    const bindings = environment.explanations.filter(item => same(item.configuration, reference))
+    return bindings.length === 1 && same(bindings[0], base.explanation)
+  } catch { return false }
 }
 
 /** Bridges editor receipts to one immutable CAS snapshot. No dose defaults,
