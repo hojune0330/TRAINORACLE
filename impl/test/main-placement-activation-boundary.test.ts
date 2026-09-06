@@ -45,12 +45,18 @@ function legacyPlacement(): placement.MainPlacementContext {
       },
     } as unknown as PlanSession
   })
-  return { eventDistanceM: 5000, selectedEnergyIntent: "VO2_INTENT", selectedDetailedTemplateRef: refs[0]!, sessions }
+  return { eventDistanceM: 5000, selectedEnergyIntent: "VO2_INTENT", selectedDetailedTemplateRef: refs[0]!, sessions,
+    evaluatedAt: "2026-09-06T03:00:00.000Z",
+    frame: { formationKind: "LOCAL_CIVIL_9_5", lengthDays: 9.5, slotCount: 19, projectionLengthDays: 9, continuity: { kind: "STANDARD_FRAME" } } }
 }
 
 function syntheticPolicy(context: placement.MainPlacementContext): placement.ReviewedMainPlacementPolicy {
+  const frameScopeFingerprint = placement.mainPlacementFrameScopeFingerprint({ ...context, athleteExperienceBand: "EXPERIENCED" })
+  if (frameScopeFingerprint === null) throw new Error("Invalid test frame")
   return {
     policyId: "TEST-ONLY-NOT-ACTIVATION", version: "1", reviewRef: "test-only:placement",
+    exposureReviewRef: "test-only:exposure", interactionReviewRef: "test-only:interaction", safetyReviewRef: "test-only:safety",
+    validFrom: "2026-09-01T00:00:00.000Z", validUntil: "2026-09-10T00:00:00.000Z", revokedAt: null, frameScopeFingerprint,
     eventDistanceM: 5000, energyIntent: "VO2_INTENT", experienceBand: "EXPERIENCED", population: "YOUTH_AND_ADULT",
     allowedTemplates: context.sessions.flatMap(session => session.prescription.kind === "PACE_TARGET" ? [{
       templateId: session.prescription.templateId, version: session.prescription.templateVersion,
@@ -140,5 +146,102 @@ describe("legacy MAIN reading versus new activation", () => {
     expect(await verifyPlanAdaptationProposal(result.proposal)).toBe(true)
     expect(policy).not.toHaveBeenCalledWith(request.baseCandidate)
     expect(policy).toHaveBeenCalledWith(request.proposedCandidate)
+  })
+})
+
+describe("reviewed multi-MAIN frame scope and lifecycle", () => {
+  function reviewedFixture() {
+    const context: placement.MainPlacementContext = { ...legacyPlacement(), athleteExperienceBand: "EXPERIENCED" }
+    const policy = syntheticPolicy(context)
+    expect(placement.isReviewedMainPlacement(context, [policy])).toBe(true)
+    return { context, policy }
+  }
+
+  it.each([
+    ["2026-09-01T00:00:00.000Z", true],
+    ["2026-09-09T23:59:59.999Z", true],
+    ["2026-08-31T23:59:59.999Z", false],
+    ["2026-09-10T00:00:00.000Z", false],
+    ["2026-09-06", false], ["invalid", false], [undefined, false],
+  ] as const)("evaluates the explicit timestamp %s without a clock fallback", (evaluatedAt, expected) => {
+    const { context, policy } = reviewedFixture()
+    const { evaluatedAt: _originalTime, ...withoutTime } = context
+    expect(placement.isReviewedMainPlacement(evaluatedAt === undefined ? withoutTime : { ...context, evaluatedAt }, [policy])).toBe(expected)
+  })
+
+  it.each([
+    { validFrom: "invalid" }, { validUntil: "invalid" },
+    { validFrom: "2026-09-10T00:00:00.000Z" },
+    { revokedAt: "2026-09-02T00:00:00.000Z" },
+    { revokedAt: "2026-09-20T00:00:00.000Z" },
+    { exposureReviewRef: " " }, { interactionReviewRef: "" }, { safetyReviewRef: "" },
+    { frameScopeFingerprint: `sha256:${"0".repeat(64)}` },
+  ])("rejects invalid or withdrawn policy metadata %j", patch => {
+    const { context, policy } = reviewedFixture()
+    expect(placement.isReviewedMainPlacement(context, [{ ...policy, ...patch }])).toBe(false)
+  })
+
+  it.each(["validFrom", "validUntil", "revokedAt", "frameScopeFingerprint", "exposureReviewRef", "interactionReviewRef", "safetyReviewRef"])(
+    "does not treat a missing %s as unlimited authority", field => {
+      const { context, policy } = reviewedFixture()
+      const incomplete = { ...policy } as Record<string, unknown>
+      delete incomplete[field]
+      expect(placement.isReviewedMainPlacement(context, [incomplete as placement.ReviewedMainPlacementPolicy])).toBe(false)
+    },
+  )
+
+  it("rejects reuse on another projection, slot layout or remaining session prescription", () => {
+    const { context, policy } = reviewedFixture()
+    const frame = context.frame!
+    if (!("formationKind" in frame)) throw new Error("Expected canonical frame")
+    expect(placement.isReviewedMainPlacement({ ...context, frame: { ...frame, projectionLengthDays: 10 } }, [policy])).toBe(false)
+    const { frame: _originalFrame, ...withoutFrame } = context
+    expect(placement.isReviewedMainPlacement(withoutFrame, [policy])).toBe(false)
+    const moved = context.sessions.map((session, index) => index === 1 ? { ...session, slot: "PM" as const } : session)
+    expect(placement.isReviewedMainPlacement({ ...context, sessions: moved }, [policy])).toBe(false)
+    const support: PlanSession = { day: 1, slot: "AM", role: "EASY", plannedEnergyIntent: "BASE_INTENT",
+      prescription: { kind: "RPE_TIME_RANGE", rpe: { minimum: 2, maximum: 4 }, durationMinutes: { minimum: 20, maximum: 30 } } }
+    const withSupport = { ...context, sessions: [...context.sessions, support] }
+    expect(placement.isReviewedMainPlacement(withSupport, [policy])).toBe(false)
+    const supportPolicy = syntheticPolicy(withSupport)
+    expect(placement.isReviewedMainPlacement(withSupport, [supportPolicy])).toBe(true)
+    const changedSupport: PlanSession = { ...support, prescription: { ...support.prescription, durationMinutes: { minimum: 20, maximum: 31 } } }
+    expect(placement.isReviewedMainPlacement({ ...withSupport, sessions: [...context.sessions, changedSupport] }, [supportPolicy])).toBe(false)
+  })
+
+  it("is order-independent without treating labels or individual pace as frame approval", () => {
+    const { context, policy } = reviewedFixture()
+    const before = JSON.stringify(context)
+    expect(placement.isReviewedMainPlacement({ ...context, sessions: [...context.sessions].reverse() }, [policy])).toBe(true)
+    const changedPace = context.sessions.map(session => session.prescription.kind === "PACE_TARGET"
+      ? { ...session, prescription: { ...session.prescription, targetRepSeconds: 123.45, notation: "fixture label", selectedAnchor: { private: "NOT-IN-SCOPE" } } }
+      : session) as unknown as readonly PlanSession[]
+    expect(placement.mainPlacementFrameScopeFingerprint({ ...context, sessions: changedPace })).toBe(policy.frameScopeFingerprint)
+    expect(JSON.stringify(context)).toBe(before)
+    expect(placement.REVIEWED_MAIN_PLACEMENT_POLICIES).toEqual([])
+  })
+
+  it("rejects duplicate addresses across detailed and non-detailed sessions and out-of-frame days", () => {
+    const { context, policy } = reviewedFixture()
+    const sameAddress: PlanSession = { day: 3, slot: "AM", role: "REST", plannedEnergyIntent: "RECOVERY_INTENT", prescription: { kind: "REST" } }
+    expect(placement.mainPlacementFrameScopeFingerprint({ ...context, sessions: [...context.sessions, sameAddress] })).toBeNull()
+    expect(placement.isReviewedMainPlacement({ ...context, sessions: [...context.sessions, sameAddress] }, [policy])).toBe(false)
+    const outside = context.sessions.map((session, index) => index === 1 ? { ...session, day: 10, slot: "PM" as const } : session)
+    expect(placement.mainPlacementFrameScopeFingerprint({ ...context, sessions: outside })).toBeNull()
+  })
+
+  it("rejects non-finite support values instead of hashing them as null", () => {
+    const { context } = reviewedFixture()
+    const support: PlanSession = { day: 1, slot: "AM", role: "EASY", plannedEnergyIntent: "BASE_INTENT",
+      prescription: { kind: "RPE_TIME_RANGE", rpe: { minimum: 2, maximum: 4 }, durationMinutes: { minimum: 20, maximum: Number.NaN } } }
+    expect(placement.mainPlacementFrameScopeFingerprint({ ...context, sessions: [...context.sessions, support] })).toBeNull()
+  })
+
+  it("does not impose a new clock or lifecycle policy on the existing single-detail path", () => {
+    const context = legacyPlacement()
+    const { evaluatedAt: _time, frame: _frame, ...oldContext } = context
+    expect(placement.isReviewedMainPlacement({ ...oldContext, sessions: [context.sessions[0]!] })).toBe(true)
+    expect(placement.isStoredMainPlacement(context)).toBe(true)
+    expect(placement.REVIEWED_MAIN_PLACEMENT_POLICIES).toEqual([])
   })
 })

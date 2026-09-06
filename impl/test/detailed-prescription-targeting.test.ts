@@ -8,7 +8,7 @@ import {
 import { generatePlanCandidates } from "../src/plan-generator/generator"
 import type { PaceTargetPlanPrescription, PlanSession } from "../src/plan-generator/session-types"
 import type { PlanCandidate } from "../src/plan-generator/types"
-import { isReviewedMainPlacement, isStoredMainPlacement, type ReviewedMainPlacementPolicy } from "../src/plan-generator/main-placement-policy"
+import { isReviewedMainPlacement, isStoredMainPlacement, mainPlacementFrameScopeFingerprint, type ReviewedMainPlacementPolicy } from "../src/plan-generator/main-placement-policy"
 import {
   detailedPrescriptionFingerprintFromSessions,
   hasValidCandidateIdentity,
@@ -24,9 +24,16 @@ const templateRef = {
   fingerprint: approval.templateContentFingerprint,
 }
 
+const EVALUATED_AT = "2026-09-06T03:00:00.000Z"
 function testPolicy(templates = [templateRef]): ReviewedMainPlacementPolicy {
+  const candidate = fixture()
+  const frameScopeFingerprint = mainPlacementFrameScopeFingerprint({ ...candidate, athleteExperienceBand: "EXPERIENCED",
+    sessions: candidate.sessions.map(session => session.role === "QUALITY" ? { ...session, prescription } : session) })
+  if (frameScopeFingerprint === null) throw new Error("Invalid test scope")
   return {
     policyId: "SYNTHETIC-NOT-RUNTIME", version: "1", reviewRef: "test-only:not-scientific-evidence",
+    exposureReviewRef: "test-only:exposure", interactionReviewRef: "test-only:interaction", safetyReviewRef: "test-only:safety",
+    validFrom: "2026-09-01T00:00:00.000Z", validUntil: "2026-09-10T00:00:00.000Z", revokedAt: null, frameScopeFingerprint,
     eventDistanceM: 5000, energyIntent: "VO2_INTENT", experienceBand: "EXPERIENCED",
     population: "YOUTH_AND_ADULT", allowedTemplates: templates,
     maximumDetailedSessions: 2, minimumSeparationSlots: 2, allowRepeatedConfiguration: false,
@@ -226,7 +233,7 @@ describe("detailed prescription exact session targeting", () => {
     ], [testPolicy([templateRef, {
       templateId: alternative.templateId, version: alternative.templateVersion,
       fingerprint: alternative.templateContentFingerprint,
-    }])], "EXPERIENCED")
+    }])], "EXPERIENCED", EVALUATED_AT)
     expect(result).not.toBeNull()
     if (result === null) throw new Error("Multiple placement binding failed")
     expect(result.sessions.filter(session => session.prescription.kind === "PACE_TARGET")).toHaveLength(2)
@@ -246,23 +253,23 @@ describe("detailed prescription exact session targeting", () => {
     const policy = { ...testPolicy(), allowRepeatedConfiguration: true }
     expect(bindDetailedPrescriptionCandidateSet(candidate, placements)).toBeNull()
     expect(bindDetailedPrescriptionCandidateSet(candidate, placements, [testPolicy()])).toBeNull()
-    const result = bindDetailedPrescriptionCandidateSet(candidate, placements, [policy], "EXPERIENCED")
+    const result = bindDetailedPrescriptionCandidateSet(candidate, placements, [policy], "EXPERIENCED", EVALUATED_AT)
     expect(result).not.toBeNull()
     if (result === null) throw new Error("Test placement policy did not apply")
     expect(result.sessions.filter(session => session.prescription.kind === "PACE_TARGET")).toHaveLength(2)
-    expect(isReviewedMainPlacement({ ...result, athleteExperienceBand: "EXPERIENCED" }, [policy])).toBe(true)
+    expect(isReviewedMainPlacement({ ...result, athleteExperienceBand: "EXPERIENCED", evaluatedAt: EVALUATED_AT }, [policy])).toBe(true)
     expect(isReviewedMainPlacement(result, [policy])).toBe(false)
     expect(isReviewedMainPlacement({ ...result, athleteExperienceBand: "DEVELOPING" }, [policy])).toBe(false)
     expect(isReviewedMainPlacement(result)).toBe(false)
     expect(isStoredMainPlacement(result)).toBe(false)
-    expect(bindDetailedPrescriptionCandidateSet(candidate, [...placements].reverse(), [policy], "EXPERIENCED")?.detailedPrescriptionFingerprint)
+    expect(bindDetailedPrescriptionCandidateSet(candidate, [...placements].reverse(), [policy], "EXPERIENCED", EVALUATED_AT)?.detailedPrescriptionFingerprint)
       .toBe(result.detailedPrescriptionFingerprint)
     for (const change of [
       { reviewRef: "" }, { version: "" }, { eventDistanceM: 3000 }, { energyIntent: "GLY_INTENT" },
       { maximumDetailedSessions: 1 }, { minimumSeparationSlots: 100 }, { minimumSeparationSlots: 0 },
       { allowedTemplates: [{ ...templateRef, fingerprint: "stale" }] },
     ]) {
-      expect(bindDetailedPrescriptionCandidateSet(candidate, placements, [{ ...policy, ...change }], "EXPERIENCED")).toBeNull()
+      expect(bindDetailedPrescriptionCandidateSet(candidate, placements, [{ ...policy, ...change }], "EXPERIENCED", EVALUATED_AT)).toBeNull()
     }
   })
 

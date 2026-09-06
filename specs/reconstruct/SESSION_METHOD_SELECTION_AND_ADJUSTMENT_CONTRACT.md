@@ -4,7 +4,7 @@
 doc_id: trainoracle-session-method-selection-and-adjustment
 spec_id: SESSION_METHOD_SELECTION_AND_ADJUSTMENT_CONTRACT
 title: TrainOracle Session Method Selection And Adjustment Contract
-version: "0.3"
+version: "0.4"
 round: RT1_OWNER_APPROVED_IMPLEMENTATION_DIRECTION
 status: ACTIVE_IMPLEMENTATION_CONTRACT
 product_direction: OWNER_APPROVED_IMPLEMENTATION_DIRECTION
@@ -195,6 +195,17 @@ The placement receipt must bind the policy identity/version, review evidence and
 the explicit choices. Missing, expired, revoked, out-of-scope or failed policy
 validation rejects the entire multi-placement transaction. No arbitrary spacing
 threshold or unrestricted repeat permission is created here.
+
+The policy gate requires a caller-supplied evaluation timestamp, a nonempty
+valid-from/valid-until interval and a null revocation marker for new multi-placement.
+Missing lifecycle fields do not mean unlimited approval. Time is not inferred from
+the device clock inside the pure core. Bind the policy to the exact canonical frame,
+session layout and non-detailed prescription context. The scope projection excludes
+private anchors, labels and resolved individual target pace; those remain subject
+to the separate prescription authority and content checks. Detailed configuration
+references are evaluated against the policy's independent allowed set, not a fixed
+A/B pairing. Explicit exposure/interaction/safety review references are required.
+The existing single-detail and historical-read paths do not acquire new prerequisites.
 
 Duplicate slots always reject, including repeated references to the same occurrence.
 Distinct slots with the same method are a policy decision, not fake display

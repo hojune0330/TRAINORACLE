@@ -241,6 +241,7 @@ export function bindDetailedPrescriptionCandidateSet(
   placements: readonly DetailedPrescriptionPlacement[],
   placementPolicies?: readonly ReviewedMainPlacementPolicy[],
   athleteExperienceBand?: "NEW_TO_RUNNING" | "DEVELOPING" | "EXPERIENCED",
+  evaluatedAt?: string,
 ): PlanCandidate | null {
   if (placements.length === 0 || candidate.sessions.some(session => session.prescription.kind === "PACE_TARGET")) return null
   const targetKeys = new Set<string>()
@@ -276,7 +277,7 @@ export function bindDetailedPrescriptionCandidateSet(
   const placementContext = athleteExperienceBand === undefined
     ? { ...candidate, sessions }
     : { ...candidate, sessions, athleteExperienceBand }
-  if (!isReviewedMainPlacement(placementContext, placementPolicies)) return null
+  if (!isReviewedMainPlacement(evaluatedAt === undefined ? placementContext : { ...placementContext, evaluatedAt }, placementPolicies)) return null
   const bound = Object.freeze({
     ...candidate,
     eventDistanceM: supportedEventDistance(placements[0]?.prescription.targetEventDistanceM ?? Number.NaN) ?? candidate.eventDistanceM,
