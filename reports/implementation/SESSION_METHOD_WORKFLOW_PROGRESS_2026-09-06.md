@@ -65,7 +65,7 @@ MAIN 식별자는 날짜·프레임·종목·목적·경험·실제 슬롯 배�
 | M05 | FRAME_SCOPE_LIFECYCLE_GATE_PARTIAL | 정확한 프레임·전체 배치·비상세 처방 문맥과 유효기간·철회·검토 참조 검증 구현. 적격 구성은 독립 집합으로 평가. 실제 운영 정책 내용·선택 receipt 영속화·실행 경계 전체 전달은 미완 |
 | M06 | SINGLE_DETAIL_TARGET_UI_PARTIAL | A/B별 단일 상세 위치의 독립 적용·취소·재확인 구현(섹션 12). 같은 조건의 서로 다른 2방법과 여러 MAIN의 동시 상세 선택은 미완 |
 | M07 | SINGLE_DETAIL_SAVE_LINK_PARTIAL | 단일 상세 위치와 정확한 record anchor의 저장·새로고침 검증. 모든 MAIN의 구성별 원본·조정 receipt 저장과 버전별 복원은 미완 |
-| M08 | COMMIT_HOST_FOUNDATION_ONLY | onApply receipt 재검사·단일 workspace CAS host 구현(섹션 13). production offer/adapter와 실제 후보 저장 연결은 미완. scalar 범위를 새로 승인하지 않음 |
+| M08 | SOURCE_RESOLUTION_AND_COMMIT_HOST_PARTIAL | onApply receipt 재검사·단일 workspace CAS host와 공통 원본/개인 계산 binding 구현(섹션 13, 17). production offer/adapter와 실제 조정 후보 저장 연결은 미완. scalar 범위를 새로 승인하지 않음 |
 | M09 | TOTALS_RECEIPT_REVALIDATION_PARTIAL | 구간·회복·총량·시간·설명 binding의 독립 재계산 구현. 실제 채택된 전환의 공개 조정·저장·재조회는 미완 |
 | M10 | SAVE_REVALIDATION_AND_REPLAY_PARTIAL | 잠금 후 요청·anchor·안전·템플릿 재검사 및 동일 초기 저장의 무변경 재시도 구현(섹션 14). 다중 키 물리적 원자성·잠금 미사용 탭·실제 조정 전체 연결은 미완 |
 | M11 | ACTIVE_AND_ARCHIVED_ORIGINAL_OBSERVATION_PARTIAL | 현재 계획 및 앞으로 보관하는 V5 원본의 정확한 링크로 실제 거리·시간·페이스·RPE 표시. 일지에서 과거 처방 비교 진입 구현. 반복별 측정·추천 소비는 미완 |
@@ -405,5 +405,27 @@ M11/M12는 앞으로 보관하는 정확한 원본의 일지 비교까지 진척
 - M05는 부분 구현이다. 실제 운영 정책 수용, 정책 identity/선택 receipt 저장,
   저장·복원·실행·다음 주기 경계 전체의 평가 문맥 연결은 남아 있다.
   [범위와 유효기간 검토 보고서](../review/MAIN_PLACEMENT_POLICY_SCOPE_REVIEW_2026-09-06.md)
+
+## 17. 원본 구성과 개인 목표값 연결
+
+- 추천 목록의 source sequence 생성을 공통 `readPlanMethodDefinition`으로 옮겼다.
+  기존 4개 정확한 ref의 본운동 구조를 읽으며 개인 기록·anchor ID는 포함하지 않는다.
+  source configuration 지문과 독립 family/configuration 매핑을 함께 반환한다.
+- `resolvePlanMethodPrescription`은 기존 저장 스키마로 숫자·원본 manifest·sequence를
+  먼저 검증한다. 이어 source configuration, 전체 개인 처방 지문, anchor 내용 지문,
+  반올림하지 않은 목표 초, 실제 sequence, 설명 버전·내용 지문·근거를 구분해 묶는다.
+- 실제 후보 생성은 이 연결이 없으면 기존 시간·RPE 후보로 되돌린다. 임의의 숫자를
+  다시 쓰거나 저장 검증을 완화하지 않는다. 권한/안전/기록 검사는 기존 경로가 담당한다.
+- 과거 sequence 없는 처방은 읽기용 투영만 만들고 원본·저장 fingerprint를 수정하지
+  않는다. 반환값은 로컬 조정 adapter용이며 공개 export나 새 저장 필드로 추가하지 않았다.
+- 대상 3파일 50 PASS. 소수 초 4종목, 서로 다른 기록의 동일 source identity,
+  설명 내용 변경, 수치/회복 변조, getter/추가 메모 필드, registry 원본 보존을 검사했다.
+  후보 연결 검사를 끄면 2 FAIL로 실제 검출됨을 확인하고 정상 코드로 복원했다.
+- 최종 전체 앱 285파일 2492 PASS, 실제 desktop/320px 4종목 생성·저장·새로고침
+  및 위치 선택 12 PASS. app/e2e 타입과 build 및 두 계약 validator PASS.
+  [원본·개인 계산 연결 검토 보고서](../review/SOURCE_RESOLVED_METHOD_BINDING_REVIEW_2026-09-06.md)
+- 남은 것은 이 binding을 사용하는 실제 허용 전환 offer, source edge에서 개인화된
+  before/after를 재현하는 adapter, 버전별 조정 저장 및 사용자 조정 여정이다.
+  source/resolved 구분만으로 M08 전체 완료나 새 조정 활성화를 주장하지 않는다.
 
 [DRAFT_COMPLETE]

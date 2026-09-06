@@ -11,10 +11,9 @@ import {
   type MethodReference,
   type RepeatPreference,
 } from "@impl/prescription/method-recommendation"
-import { parsePrescriptionSequence, type SequenceRecovery } from "@impl/prescription/sequence"
 import { loadPlanMethodHistorySnapshot } from "../../domain/plan-beta-store"
 import type { PlanMethodCoverage } from "../../domain/plan-method-coverage"
-import { resolvePlanMethodMapping } from "../../domain/plan-method-registry"
+import { readPlanMethodDefinition } from "../../domain/plan-method-definition"
 
 export type DetailedPlanTemplateOption = {
   readonly ref: PlanBetaIntake["selectedDetailedTemplateRef"] & object
@@ -63,8 +62,9 @@ export function resolveDetailedPlanTemplateOptions(
       version: approval.templateVersion,
       fingerprint: approval.templateContentFingerprint,
     }
-    const mapping = resolvePlanMethodMapping(ref)
-    if (mapping === null) return []
+    const definition = readPlanMethodDefinition(ref)
+    if (definition === null) return []
+    const mapping = definition.mapping
     const authority = resolveDetailedPrescriptionRuntimeAuthority({
       selectedTemplateRef: ref,
       targetEventDistanceM: eventDistanceM,
@@ -75,27 +75,7 @@ export function resolveDetailedPlanTemplateOptions(
     const parsed = parsePrescriptionNotation(authority.approval.notation)
     if (parsed.kind !== "parsed") return []
     const notation = parsed.notation
-    const noRecovery: SequenceRecovery = { mode: "NOT_APPLICABLE", seconds: null }
-    const recoveryFor = (seconds: number | null, mode: typeof notation.repetitionRecoveryMode): SequenceRecovery => (
-      mode === "NOT_APPLICABLE" ? noRecovery : { seconds, mode }
-    )
-    const sequence = parsePrescriptionSequence({
-      kind: "PRESCRIPTION_SEQUENCE", version: 2, id: approval.templateId, label: null,
-      warmup: [], cooldown: [], terminalRecovery: noRecovery,
-      main: [{ kind: "group", id: "sets", label: null, repeatCount: notation.setCount,
-        recoveryAfter: noRecovery, recoveryBetweenRepeats: recoveryFor(notation.setRecoverySeconds, notation.setRecoveryMode),
-        children: [{ kind: "segment", id: "work", label: null, repeatCount: notation.repetitionsPerSet,
-          work: notation.repetitionDistanceM === null
-            ? { kind: "duration", distanceM: null, durationSeconds: notation.repetitionDurationSeconds }
-            : { kind: "distance", distanceM: notation.repetitionDistanceM, durationSeconds: null },
-          target: { kind: "RACE_PACE", eventDistanceM: notation.paceTargetEventDistanceM, anchorRef: null },
-          recoveryAfter: noRecovery,
-          recoveryBetweenRepeats: recoveryFor(notation.repetitionRecoverySeconds, notation.repetitionRecoveryMode),
-        }],
-      }],
-    })
-    if (sequence.kind !== "parsed") return []
-    const configuration = { configurationId: mapping.method.configurationId, version: mapping.method.version, sequence: sequence.sequence }
+    const configuration = definition.configuration
     const familyIndex = catalog.findIndex(family => family.familyId === mapping.method.familyId)
     if (familyIndex === -1) {
       catalog.push({ familyId: mapping.method.familyId, reviewRef: approval.approvalDecisionId, configurations: [configuration] })

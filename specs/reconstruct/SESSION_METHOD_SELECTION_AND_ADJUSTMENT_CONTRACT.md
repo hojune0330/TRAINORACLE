@@ -4,7 +4,7 @@
 doc_id: trainoracle-session-method-selection-and-adjustment
 spec_id: SESSION_METHOD_SELECTION_AND_ADJUSTMENT_CONTRACT
 title: TrainOracle Session Method Selection And Adjustment Contract
-version: "0.4"
+version: "0.5"
 round: RT1_OWNER_APPROVED_IMPLEMENTATION_DIRECTION
 status: ACTIVE_IMPLEMENTATION_CONTRACT
 product_direction: OWNER_APPROVED_IMPLEMENTATION_DIRECTION
@@ -437,6 +437,16 @@ An editor unmount or abandonment invalidates a queued apply. A saved-but-unconfi
 response may replay only the exact prior intent and matching stored receipt without
 a second write. This workspace transaction grants no new active-plan storage shape,
 retention duration, template dose, policy or runtime activation authority.
+
+Source configuration identity must not contain athlete anchor IDs, resolved pace
+or session occurrence IDs. The recommendation catalogue and adjustment preparation
+must read the same exact source configuration. A separately named local resolution
+binding connects that source to the exact stored prescription, unrounded target,
+anchor-content fingerprint and explanation version/evidence references. Resolution
+identity changes when any of these changes; it is not a new method family or dose.
+This binding is not a signature, new scientific approval or export permission.
+Existing archived prescriptions without this projection remain readable; do not
+rewrite their saved fingerprints or infer new explanations retrospectively.
 
 Editing an already accepted plan opens a proposed successor, not an in-place
 prescription edit. Current-frame safety holds and separately authorized recovery
