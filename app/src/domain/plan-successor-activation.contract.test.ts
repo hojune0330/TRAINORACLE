@@ -20,6 +20,7 @@ import {
 import {
   planAdaptationProposalSchema,
   planBetaStateV3Schema,
+  planHistorySchema,
   type PlanBetaStateV3,
 } from "./plan-beta-schema"
 import {
@@ -92,6 +93,10 @@ describe("accepted successor activation", () => {
     expect(window.sessionStorage.getItem(PREVIOUS_INTAKE_KEY)).toBe(before.activeIntake)
     const history = JSON.parse(window.localStorage.getItem(HISTORY_KEY) ?? "[]")
     expect(history).toHaveLength(1)
+    expect(history[0]).toMatchObject({ version: 5, archiveReason: "SUCCESSOR", originalPlan: fixture.state })
+    expect(history[0].originalPlan).toEqual(fixture.state)
+    expect(history[0].progress).toEqual(fixture.state.progress.filter(row => row.sessionDay <= projectionLength))
+    expect(planHistorySchema.safeParse(history[0]).success).toBe(true)
     expect(history[0].periodization).toMatchObject({ frameOrdinal: 1, phase: "BASE" })
     expect(JSON.parse(window.localStorage.getItem(CONTEXT_KEY) ?? "{}").activeCandidateId)
       .toBe(fixture.successorCandidateId)

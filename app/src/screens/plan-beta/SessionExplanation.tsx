@@ -16,6 +16,7 @@ import "../../styles/session-explanation.css"
 
 type Props = {
   readonly session: PlanSession
+  readonly returnLabel?: string
   readonly context?: SessionExplanationContext
   readonly loadEvidence?: (session: PlanSession) => SessionExplanationEvidence | null
 }
@@ -37,7 +38,7 @@ export function SessionExplanationEntry(props: Props) {
   )
 }
 
-function SessionExplanationReader({ session, context, loadEvidence, onClose }: Props & { readonly onClose: () => void }) {
+function SessionExplanationReader({ session, context, loadEvidence, returnLabel = "훈련 일정으로 돌아가기", onClose }: Props & { readonly onClose: () => void }) {
   const [tab, setTab] = React.useState<Tab>("방법")
   const [expert, setExpert] = React.useState(false)
   const evidence = React.useMemo(() => {
@@ -76,7 +77,7 @@ function SessionExplanationReader({ session, context, loadEvidence, onClose }: P
   return (
     <dialog ref={dialog} className="session-explanation" aria-labelledby={`${id}-title`} onCancel={onClose}>
       <header className="session-explanation__header">
-        <button type="button" className="session-explanation__back" onClick={onClose} aria-label="훈련 일정으로 돌아가기">
+        <button type="button" className="session-explanation__back" onClick={onClose} aria-label={returnLabel}>
           <ArrowLeft size={21} aria-hidden="true" />
         </button>
         <div><small>{session.day}일차 · {session.slot === "AM" ? "오전" : "오후"}</small><h2 id={`${id}-title`}>{sessionLabel(session)}</h2></div>

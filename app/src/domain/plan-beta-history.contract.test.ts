@@ -38,9 +38,9 @@ describe("plan history retention", () => {
     // Then: each completed frame remains in the local history.
     const history = readStoredHistory()
     expect(history).toHaveLength(2)
-    expect(history.every(row => "version" in row && row.version === 4)).toBe(true)
+    expect(history.every(row => "version" in row && row.version === 5)).toBe(true)
     expect(history.every(row => (
-      "version" in row && row.version === 4 && row.methodHistory.length === 0
+      "version" in row && row.version === 5 && row.methodHistory.length === 0
     ))).toBe(true)
   })
 

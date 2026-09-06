@@ -30,6 +30,7 @@ import {
   planAdaptationEnvelopeSchema,
   planBetaStateV3Schema,
   planHistoryListSchema,
+  planHistorySchema,
 } from "./plan-beta-schema"
 import type {
   PendingNextFrameSuccessor,
@@ -54,7 +55,7 @@ import {
   advancePeriodizationContext,
   createInitialPeriodizationContext,
 } from "./periodization-lineage"
-import { deriveStoredPlanMethodHistory } from "./plan-method-history"
+import { planHistorySnapshotContent } from "./plan-history-snapshot-content"
 
 export { PLAN_BETA_MUTATION_LOCK_NAME } from "./plan-mutation-lock"
 export const PLAN_SUCCESSOR_ACTIVATION_RECEIPT_STORAGE_KEY = "trainoracle.plan-beta.adaptation-activation.v1"
@@ -243,22 +244,9 @@ async function activateInsideLock(
   const nextStateHash = await canonicalJsonSha256("trainoracle.plan-beta-state.v1", nextState)
   const history = parseHistory(snapshots.history)
   if (history === null) return { kind: "rejected", code: "MALFORMED_INPUT" }
-  const nextHistory: StoredPlanHistory = {
-    version: 4,
-    candidateId: active.activePlan.candidateId,
-    pairId: active.activePlan.pairId,
-    candidateKind: active.activePlan.candidateKind,
-    eventDistanceM: active.activePlan.eventDistanceM,
-    selectedDetailedTemplateRef: active.activePlan.selectedDetailedTemplateRef,
-    ...(active.periodization === undefined ? {} : { periodization: active.periodization }),
-    frameLengthDays: active.activePlan.frame.lengthDays,
-    progress: visibleProgress(active),
-    methodHistory: deriveStoredPlanMethodHistory({
-      sessions: active.activePlan.sessions,
-      progress: visibleProgress(active),
-    }),
-    archivedAt: input.activatedAt,
-  }
+  const archive = planHistorySchema.safeParse(planHistorySnapshotContent(active, input.activatedAt, "SUCCESSOR"))
+  if (!archive.success) return { kind: "rejected", code: "MALFORMED_INPUT" }
+  const nextHistory = archive.data
   const nextContext = contextSchema.safeParse({
     ...context,
     activeCandidateId: nextState.activePlan.candidateId,
@@ -555,11 +543,6 @@ function frameIsComplete(state: PlanBetaStateV3, localDate: string): boolean {
   return startDate !== undefined
     && finalDay > 0
     && localDate > addCalendarDays(startDate, finalDay - 1)
-}
-
-function visibleProgress(state: PlanBetaStateV3) {
-  const visibleDays = projectedVisibleDays(state)
-  return state.progress.filter((progress) => progress.sessionDay <= visibleDays)
 }
 
 function projectedVisibleDays(state: PlanBetaStateV3): number {

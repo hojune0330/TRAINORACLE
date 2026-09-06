@@ -1,5 +1,6 @@
 import { z } from "zod"
 import {
+  canonicalJsonFingerprint,
   continuityContextIdentity,
   continuityIdentityFromCandidateId,
   detailedPrescriptionFingerprintFromSessions,
@@ -29,6 +30,7 @@ import { formatElapsedMonths, SEASON_WINDOW_MONTHS } from "./athlete-record-disp
 import { athleteRecordIdSchema } from "./athlete-records"
 import { periodizationContextSchema } from "./periodization-lineage"
 import { explanationReceiptSchema } from "./training-explanation-receipt"
+import { planHistorySnapshotContent } from "./plan-history-snapshot-content"
 
 const planEventGroupSchema = z.enum([
   "MIDDLE_DISTANCE",
@@ -181,8 +183,6 @@ const planHistoryV4Schema = legacyPlanHistorySchema.extend({
   methodHistory: z.array(planMethodHistoryEntrySchema).readonly(),
   periodization: periodizationContextSchema.optional(),
 }).strict()
-
-export const planHistorySchema = z.union([planHistoryV4Schema, planHistoryV3Schema, legacyPlanHistorySchema])
 
 const planAthleteEvidenceSchema = z.object({
   storedRecordCount: z.number().int().nonnegative(),
@@ -417,6 +417,20 @@ export const planBetaStateV2Schema = canonicalJsonTreeSchema.pipe(
 export const planBetaStateV3Schema = canonicalJsonTreeSchema.pipe(
   planBetaStateV3BaseSchema.superRefine(validatePlanBetaState),
 )
+const planHistoryV5Schema = planHistoryV4Schema.extend({
+  version: z.literal(5),
+  archiveReason: z.enum(["MANUAL", "SUCCESSOR"]),
+  originalPlan: planBetaStateV3Schema,
+  originalPlanFingerprint: z.string().regex(/^sha256:[a-f0-9]{64}$/u),
+}).strict().superRefine((entry, context) => {
+  const expected = planHistorySnapshotContent(entry.originalPlan, entry.archivedAt, entry.archiveReason)
+  if (canonicalJsonFingerprint("plan-history-v5", entry) !== canonicalJsonFingerprint("plan-history-v5", expected)) {
+    addIssue(context, ["originalPlan"], "Archive summary and original content must match exactly.")
+  }
+})
+export const planHistorySchema = canonicalJsonTreeSchema.pipe(z.union([
+  planHistoryV5Schema, planHistoryV4Schema, planHistoryV3Schema, legacyPlanHistorySchema,
+]))
 const planBetaStateSchema = z.union([
   planBetaStateV3Schema,
   planBetaStateV2Schema,

@@ -1,4 +1,7 @@
 .session-explanation-entry { margin-block: 8px 12px; }
+.journal-original-plan { margin-block: 12px; border-block-start: 1px solid var(--line); font-family: var(--sans); letter-spacing: 0; }
+.journal-original-plan > summary { min-height: 44px; padding-block: 12px; font-size: 0.875rem; line-height: 1.5; color: var(--ink); cursor: pointer; overflow-wrap: anywhere; }
+.journal-original-plan > p { margin-block: 4px 8px; font-size: 0.875rem; line-height: 1.6; color: var(--ink-2); overflow-wrap: anywhere; }
 .session-explanation-entry p { margin: 4px 0; font-size: 0.875rem; line-height: 1.6; color: var(--ink-2); }
 .session-explanation-entry button, .session-explanation__next { min-height: 44px; display: inline-flex; align-items: center; gap: 8px; padding: 6px 0; border: 0; background: transparent; color: var(--brand); text-align: start; font: inherit; cursor: pointer; }
 .session-explanation {

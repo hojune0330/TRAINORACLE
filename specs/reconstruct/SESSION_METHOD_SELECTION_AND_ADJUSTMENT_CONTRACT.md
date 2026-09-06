@@ -4,7 +4,7 @@
 doc_id: trainoracle-session-method-selection-and-adjustment
 spec_id: SESSION_METHOD_SELECTION_AND_ADJUSTMENT_CONTRACT
 title: TrainOracle Session Method Selection And Adjustment Contract
-version: "0.2"
+version: "0.3"
 round: RT1_OWNER_APPROVED_IMPLEMENTATION_DIRECTION
 status: ACTIVE_IMPLEMENTATION_CONTRACT
 product_direction: OWNER_APPROVED_IMPLEMENTATION_DIRECTION
@@ -482,7 +482,8 @@ latest 18 archived plan/frame summaries, across events before event filtering.
 This is not 18 method occurrences, a fixed 24-week/recent-N-day observation window,
 or an immutable lifetime ledger of full original prescriptions. The core uses all
 history supplied by that bounded archive; disclose actual coverage and missingness.
-Do not enlarge, erase, reinterpret or backfill that archive as part of this feature.
+Do not enlarge its retention limit, erase old entries outside that limit, or backfill
+old summaries. Section 10A defines the versioned original-content addition for new entries.
 Coverage disclosure uses the same loaded archive snapshot as recommendation input.
 Show total retained plans, same-event plans, legacy plans with unknown event,
 unmapped template references and missing self-reported outcomes separately.
@@ -493,6 +494,32 @@ Retained original plans/backups keep their exact supported content and lineage;
 new immutable prescription snapshots and any longer-term ledger need their own
 versioned storage integration, not a claim that v4 summaries already contain them.
 
+### 10A. Bounded V5 Original-Plan Integration
+
+The approved immutable-snapshot work uses a new version-5 history entry for future
+archives. Keep the existing account-scoped history key and latest-18-plan limit,
+applied across events before filtering. This is not a longer retention period or a
+new lifetime ledger. Do not upgrade, reconstruct or backfill legacy/v3/v4 summaries.
+
+Each new entry includes the supported original version-3 plan, its content hash,
+archive reason (manual archive or accepted successor) and the existing summary.
+The hash is content integrity, not independent approval. Validate the original plan
+with its owning schema and exact candidate/template identities; recompute the
+summary from that original. Manual archives retain their existing progress summary;
+successor archives retain their existing visible-projection progress summary while
+preserving the complete original separately. Preserve original capture time, dates,
+AM/PM, prescription sequence, anchors, lineage and explanation metadata as supported
+by the owning plan schema. Never substitute the currently active plan for an older
+linked occurrence. Unknown originals remain unavailable, not inferred from summary.
+
+No memo, symptom text, new measurement, external LLM input, public-card field or
+new server-sync payload is introduced. Existing account isolation, device-data
+removal and local erasure apply to the same scoped key. Eviction remains the existing
+18-plan rule. Invalid/unreadable history prevents archive replacement; it must not
+be treated as an empty list and overwritten. A read-only history consumer reports
+the number of retained original plans separately from summaries without originals.
+Reading old originals grants no execution, recommendation or new adjustment authority.
+
 ## 11. Planned, Actual, Youth And Privacy
 
 The planned occurrence carries its immutable prescription/version. A later actual
@@ -501,7 +528,7 @@ Completion marks do not create actual distance, duration, split, recovery or pro
 that the prescription was followed. Modified/partial/skipped/rested results and
 duplicate/conflicting links retain explicit relations and exclusions.
 
-The active-plan observation reader may project directly entered, explicitly
+The active-plan and exact archived-original observation readers may project directly entered, explicitly
 provenanced distance, duration, pace and RPE from exact linked structured journals.
 Missing fields remain null; imported or derived values require their separate
 eligibility path. Identical duplicate records count once; conflicting records
@@ -590,7 +617,7 @@ runtime results or additions to the historical issue/test counts in peer documen
 | Neutral default and optional repeat/variety | Neutral retains structured history without a repeat/variety tie-break; explicit preference changes only eligible ordering, never selection, dose or placement authority |
 | Live archived history and completion semantics | v4 rows and legacy selection-only/MISSING stay distinct; COMPLETED/PERFORMED is self-report, not measured adherence or zero-filled actual metrics |
 | Independent family/configuration mapping | Reviewed configuration changes preserve stable family identity through explicit mapping; original refs remain intact and unknown mappings stay unresolved |
-| Bounded archive and old original plans | Latest 18 plan/frame summaries retain existing order/limit and legacy compatibility; no fixed-week claim, lifetime-ledger claim or historical prescription rewrite |
+| Bounded archive and old original plans | Latest 18 plan/frame entries retain existing order/limit and legacy compatibility; new V5 originals validate against their exact summaries; no fixed-week claim, lifetime-ledger claim or reconstruction of missing originals |
 | Missing source/rule/default, unusable protocol | No invented numeric recommendation, preset, coefficient or approval |
 | Invalid scalar/coupled configuration | Atomic reject; no clamping, hidden higher dose or unsupported lower-repeat sibling |
 | Uniform/nested/unequal work and terminal recovery | Exact occurrence arithmetic; parent boundary replaces child recovery; no double-count |

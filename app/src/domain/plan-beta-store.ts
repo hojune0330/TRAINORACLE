@@ -7,6 +7,7 @@ import { summarizePlanMethodCoverage } from "./plan-method-coverage"
 import { recordPlanProgress } from "@impl/plan-generator/generator"
 import {
   parsePlanBetaState,
+  planHistorySchema,
   planBetaStateV3Schema,
   planHistoryListSchema,
   planIntakeSchema,
@@ -36,10 +37,10 @@ import type {
   StoredPlanProgress,
 } from "./plan-beta-schema"
 import {
-  deriveStoredPlanMethodHistory,
   methodReferenceFromTemplate,
   recommendationHistoryFromStored,
 } from "./plan-method-history"
+import { planHistorySnapshotContent } from "./plan-history-snapshot-content"
 export type {
   PlanBetaIntake,
   PlanBetaState,
@@ -287,22 +288,6 @@ export function archiveAndClearActivePlan(state: PlanBetaState): PlanArchiveResu
     }
   }
 
-  const history: StoredPlanHistory = {
-    version: 4,
-    candidateId: state.activePlan.candidateId,
-    pairId: state.activePlan.pairId,
-    candidateKind: state.activePlan.candidateKind,
-    eventDistanceM: state.activePlan.eventDistanceM,
-    selectedDetailedTemplateRef: state.activePlan.selectedDetailedTemplateRef,
-    ...(state.periodization === undefined ? {} : { periodization: state.periodization }),
-    frameLengthDays: state.activePlan.frame.lengthDays,
-    progress: state.progress,
-    methodHistory: deriveStoredPlanMethodHistory({
-      sessions: state.activePlan.sessions,
-      progress: state.progress,
-    }),
-    archivedAt: new Date().toISOString(),
-  }
   let oldHistory: string | null = null
   let oldIntake: string | null = null
   let oldActive: string | null = null
@@ -316,8 +301,10 @@ export function archiveAndClearActivePlan(state: PlanBetaState): PlanArchiveResu
     oldIntake = window.sessionStorage.getItem(previousIntakeKey)
     oldActive = window.localStorage.getItem(activeKey)
     snapshotsCaptured = true
-    const previous = loadPlanHistory()
-    const stagedHistory = JSON.stringify([history, ...previous].slice(0, 18))
+    const previous = readPlanHistory()
+    if (previous === null) throw new Error("Plan history is unavailable")
+    const history = planHistorySchema.parse(planHistorySnapshotContent(state, new Date().toISOString(), "MANUAL"))
+    const stagedHistory = JSON.stringify(planHistoryListSchema.parse([history, ...previous].slice(0, 18)))
     const stagedIntake = JSON.stringify(state.intake)
     window.localStorage.setItem(historyKey, stagedHistory)
     if (window.localStorage.getItem(historyKey) !== stagedHistory) {
@@ -426,6 +413,18 @@ export function loadPreviousContinuity(): PlanContinuityInput | undefined {
 
 export function loadPlanMethodHistory(eventDistanceM?: number): readonly MethodHistoryEntry[] {
   return loadPlanMethodHistorySnapshot(eventDistanceM).history
+}
+
+/** Scoped, read-only originals. Legacy summaries cannot reconstruct prescriptions. */
+export function readArchivedOriginalPlans() {
+  const rows = readPlanHistory()
+  if (rows === null) return { kind: "unavailable" as const }
+  return {
+    kind: "loaded" as const,
+    retainedPlans: rows.length,
+    missingOriginals: rows.filter(row => !("originalPlan" in row)).length,
+    plans: rows.flatMap(row => "originalPlan" in row ? [row.originalPlan] : []),
+  }
 }
 
 export function loadPlanMethodHistorySnapshot(eventDistanceM?: number) {
