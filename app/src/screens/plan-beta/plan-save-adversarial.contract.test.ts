@@ -188,16 +188,17 @@ describe("adversarial plan save transaction", () => {
     expect(localStorage.getItem(PLAN_ADAPTATION_CONTEXT_STORAGE_KEY)).toBeNull()
   })
 
-  it("rejects a second delayed save after the first transaction commits without overwriting", async () => {
+  it("acknowledges an identical second delayed save without overwriting the first transaction", async () => {
     const plan = generated()
     const release = delayedLock()
     const first = save(plan)
     const second = save(plan)
     release()
-    expect((await first).kind).toBe("saved")
+    const saved = await first
+    expect(saved.kind).toBe("saved")
     const before = Object.entries(localStorage)
     release()
-    await expect(second).resolves.toEqual({ kind: "rejected", code: "STALE_BASE" })
+    await expect(second).resolves.toEqual(saved)
     expect(Object.entries(localStorage)).toEqual(before)
   })
 })

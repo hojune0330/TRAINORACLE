@@ -16,6 +16,7 @@ import { hasCanonicalJsonTree } from "../../domain/plan-beta-schema"
 import { planAnchorsStillCurrent } from "../../domain/plan-anchor-reconfirmation"
 import { isValidIsoDate } from "../../domain/dates"
 import { mainDraftStillMatches, snapshotPlanMainDraft } from "../../domain/plan-main-draft"
+import { loadPlanAdaptationContext } from "../../domain/plan-adaptation-ui-context"
 import {
   adaptationScopeForCandidate,
   savePlanAdaptationContext,
@@ -102,9 +103,6 @@ export async function saveSelectedPlanCandidate(
         if (previousRead.kind === "invalid") {
           return { kind: "rejected", code: "INVALID_STORED_PLAN" } as const
         }
-        if (previousRead.kind === "loaded") {
-          return { kind: "rejected", code: "STALE_BASE" } as const
-        }
         const previousActive = null
 
         // The preview gate and template authority may be stale after waiting for a lock.
@@ -122,6 +120,35 @@ export async function saveSelectedPlanCandidate(
         const state = adaptationScope === null
           ? currentSelection.state
           : { ...currentSelection.state, adaptationScope }
+
+        if (previousRead.kind === "loaded") {
+          // Retry only the exact untouched selection. Rebuild at its original time
+          // after checking current authority above; never reset progress or dates.
+          const previous = previousRead.state
+          if (previous.version !== 3 || previous.progress.length !== 0
+              || Date.parse(previous.generatedAt) > Date.now()) {
+            return { kind: "rejected", code: "STALE_BASE" } as const
+          }
+          const originalSelection = selectPlanForActivation(selection.candidateId, generated, gate, {
+            ...intake, startDate: selection.startDate,
+          }, athleteEvidence, new Date(previous.generatedAt))
+          if (originalSelection.kind !== "selected") {
+            return { kind: "rejected", code: "STALE_BASE" } as const
+          }
+          const originalState = adaptationScope === null
+            ? originalSelection.state
+            : { ...originalSelection.state, adaptationScope }
+          if (!sameStoredContent(previous, originalState)) {
+            return { kind: "rejected", code: "STALE_BASE" } as const
+          }
+          if (adaptationScope !== null && !sameStoredContent(
+            loadPlanAdaptationContext(canonicalCandidate.candidateId),
+            { version: 1, activeCandidateId: canonicalCandidate.candidateId, candidates: generated.candidates },
+          )) {
+            return { kind: "rejected", code: "PLAN_STORAGE_STATE_UNCERTAIN" } as const
+          }
+          return { kind: "saved", state: previous } as const
+        }
 
         const saved = savePlanBetaState(state)
         if (!saved.ok) {
@@ -152,6 +179,12 @@ export async function saveSelectedPlanCandidate(
   } catch {
     return { kind: "rejected", code: "MUTATION_LOCK_UNAVAILABLE" }
   }
+}
+
+function sameStoredContent(left: unknown, right: unknown): boolean {
+  return hasCanonicalJsonTree(left) && hasCanonicalJsonTree(right)
+    && canonicalJsonFingerprint("plan-selection-replay-v1", left)
+      === canonicalJsonFingerprint("plan-selection-replay-v1", right)
 }
 
 function restoreStorageValue(storage: Storage, key: string, value: string | null): boolean {

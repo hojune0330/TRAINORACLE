@@ -404,6 +404,17 @@ persistence; do not let a queued stale request activate later. Exact replay is
 idempotent; reuse of an idempotency key with changed content is rejected. Cancel
 invalidates queued applies as well as the visible editor state.
 
+For the existing initial-plan storage path, an identical retry may return the
+already stored, untouched version-3 selection without another plan/context write.
+Recheck current account, draft, safety, anchor and template authority first. Rebuild
+the expected selection using its original capture time and compare the entire
+snapshot, including dates, cycle lineage, evidence and explanation receipt. Any
+progress, changed request or future capture time prevents this replay. If the
+selection requires an adaptation context, that exact complete candidate context
+must also exist; a missing, invalid or conflicting context is an uncertain save,
+not permission to acknowledge success or silently repair it. This read-only retry
+does not make the existing multi-key browser storage physically atomic.
+
 The editor-to-candidate commit host must independently recompute submitted receipt
 totals, differences and before/after content, checking the trusted policy both at
 the explicit action timestamp and immediately before the write. Future action

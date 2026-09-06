@@ -63,16 +63,16 @@ MAIN 식별자는 날짜·프레임·종목·목적·경험·실제 슬롯 배�
 | M03 | SOURCE_GAPS_RECORDED | 30행 전체와 중거리 참조의 정확한 회복·대상·주기·조정값 빈칸을 근거 보고의 행별 기준으로 해소. 수치 없는 것은 0으로 바꾸지 않음 |
 | M04 | NOT_STARTED | 승인된 후보를 독립 family/configuration으로 등록. 연구 전사, 과학/현장 적용 검토, 실제 runtime 등록을 각각 기록 |
 | M05 | NOT_STARTED | 프레임별 적격성·경험·기존 부담·간격·반복 가능 정책. 한 정책이 특정 A/B 짝만 가리키지 않고 적격 구성 집합을 평가 |
-| M06 | FOUNDATION_ONLY | 각 MAIN의 독립 초안 선택 UI. 기본 2방법·전체 목록 확장·선택 유지·명시적 재확인. 하나라도 부적격이면 전체 적용 거부 |
-| M07 | FOUNDATION_ONLY | 세션별 선택과 기록 anchor를 저장 스냅샷에 결합. 새로고침·과거 버전·오전/오후·날짜 변경 후 잘못된 슬롯 자동 대체 금지 |
-| M08 | NOT_STARTED | 실제 조정 editor의 onApply를 앱 저장 경로에 연결. 근거가 있는 finite configuration만 먼저, scalar는 범위·단위·증분·연동 회복 승인 후 |
-| M09 | NOT_STARTED | 세트 분할·회복 추가 시 모든 구간과 총량·시간을 재계산하고 이유/근거 버전 갱신. 이전 수치에 새 설명만 덧씌우지 않음 |
-| M10 | SAVE_REVALIDATION_IMPLEMENTED_PARTIAL | 저장 잠금 획득 후 요청·기록 anchor·안전·템플릿 권한 재확인 구현. 다중 키의 물리적 원자성·잠금 미사용 다른 탭·실제 조정 editor 전 구간은 미완 |
+| M06 | SINGLE_DETAIL_TARGET_UI_PARTIAL | A/B별 단일 상세 위치의 독립 적용·취소·재확인 구현(섹션 12). 같은 조건의 서로 다른 2방법과 여러 MAIN의 동시 상세 선택은 미완 |
+| M07 | SINGLE_DETAIL_SAVE_LINK_PARTIAL | 단일 상세 위치와 정확한 record anchor의 저장·새로고침 검증. 모든 MAIN의 구성별 원본·조정 receipt 저장과 버전별 복원은 미완 |
+| M08 | COMMIT_HOST_FOUNDATION_ONLY | onApply receipt 재검사·단일 workspace CAS host 구현(섹션 13). production offer/adapter와 실제 후보 저장 연결은 미완. scalar 범위를 새로 승인하지 않음 |
+| M09 | TOTALS_RECEIPT_REVALIDATION_PARTIAL | 구간·회복·총량·시간·설명 binding의 독립 재계산 구현. 실제 채택된 전환의 공개 조정·저장·재조회는 미완 |
+| M10 | SAVE_REVALIDATION_AND_REPLAY_PARTIAL | 잠금 후 요청·anchor·안전·템플릿 재검사 및 동일 초기 저장의 무변경 재시도 구현(섹션 14). 다중 키 물리적 원자성·잠금 미사용 탭·실제 조정 전체 연결은 미완 |
 | M11 | ACTIVE_PLAN_OBSERVATION_UI_IMPLEMENTED_PARTIAL | 현재 원본 계획의 정확한 링크로 실제 거리·시간·페이스·RPE 표시. 부분/변경/중복/충돌 구분. 과거 원본 장기 보관·반복별 측정·추천 소비는 미완 |
 | M12 | COVERAGE_UI_IMPLEMENTED_ACTUAL_DATES_UNAVAILABLE | 동일 스냅샷 기반 보관 범위·종목·미기록·미확인 방법 표시 구현. 보관 날짜는 실제 훈련 날짜가 아님을 표시. 실제 관찰 날짜·장기 원장 연결은 별도 미완 |
 | M13 | NOT_STARTED | 800/1500/3000 및 10K/하프/마라톤의 적격 목적 조합 확장. 각 종목을 개별 통과표로 관리하며 지원하지 않는 페이스를 발명하지 않음 |
-| M14 | NOT_STARTED | 초보 마라톤·청소년 중거리·하루 2회 선수의 실제 여정: 선택→기록 확인→조정→저장→수행→일지→다음 주기 |
-| M15 | NOT_STARTED | 320/375px, 200% 글자, 키보드, reduced motion, A/B 비교·긴 설명 복귀 위치. Fable UX 검수와 코어/과학 검수를 분리 |
+| M14 | BASELINE_SEVEN_EVENT_JOURNEY_PARTIAL | 기존 7종목 생성·저장·일지·제한된 archive 시험과 단일 상세 선택 브라우저 검증 완료. 실제 조정 및 다음 주기까지의 전체 여정은 미완 |
+| M15 | BASELINE_BROWSER_REVIEW_PARTIAL | 단일 상세 선택의 desktop/320px 및 일부 200% 글자 검증 완료. 375px·키보드·reduced motion·조정·긴 설명 복귀의 전체 조합과 Fable 최종 검수는 미완 |
 | M16 | NOT_STARTED | 각 적용 PR의 검수→병합→CI→공개 화면 확인. 단위 테스트 PASS나 연구 문서를 배포/전체 완료로 바꾸지 않음 |
 
 M01~M03은 추가 제품 승인 질문을 반복할 일이 아니라 이미 승인된 조사·검토 작업이다.
@@ -333,5 +333,34 @@ receipt 재검사, 단일 snapshot commit 및 저장 계층 결속. 실제 신�
 - 다음 실제 작업: source configuration과 개인 기록으로 해석된 sequence의
   identity를 구분한 production offer/adapter, 버전별 저장 계약과 정확한
   후보 투영 검증. 현재 4개 고정 baseline에 새 용량을 덧씌우지 않는다.
+
+## 14. 초기 계획 저장의 정확한 재시도
+
+- 저장 성공 후 응답만 놓친 동일 요청은 기존 snapshot을 그대로 반환한다.
+  새 generatedAt/주기 계보/설명 receipt를 만들거나 계획·context를 다시 쓰지 않는다.
+  기존 저장소 사용 가능 여부를 확인하는 `__to_probe__` 임시 점검은 유지한다.
+- 현재 계정·초안·안전·기록·템플릿 권한을 확인한 뒤, 원래 저장 시각으로
+  재구성한 전체 예상 상태와 실제 저장 상태를 비교한다. 날짜·후보·근거 변경,
+  이미 기록한 진행 상태, 미래 저장 시각은 재시도로 인정하지 않는다.
+- 필요한 adaptation context가 없거나 손상되거나 다른 후보를 가리키면
+  성공으로 반환하거나 자동 복구하지 않고 `PLAN_STORAGE_STATE_UNCERTAIN`을 유지한다.
+- 재시도 회귀 18 PASS. 재시도 성공 반환을 고의로 제거한 변조 실행은
+  양성 5건이 모두 실패했다(13건 필터 제외). 변조는 즉시 원복했다.
+- 기존 동시 저장 공격 시험 1건의 기대값은 동일 요청 거부에서 동일 결과 반환으로
+  변경했다. 원본 저장 내용 불변 검사는 유지한다. 이 변경을 한 뒤 최종 재실행한다.
+- 새 빌드의 실제 화면 6 PASS: desktop/320px에서 공유 target, A만, B만의
+  선택·기록 확인·저장·새로고침, 원본 222.2초와 슬롯 유지, 가로 넘침 및 pageerror 없음.
+- 추가 실제 두 탭 시험 4 PASS: desktop/320px의 동일 선택 재시도 및 날짜가
+  다른 선택 거부. 같은 browser context의 두 탭, 실제 Web Locks와 localStorage를
+  사용했다. 첫 저장 뒤 두 번째 요청이 전체 계획/context를 바꾸지 않음을 확인했다.
+  처음 2건 실행의 1 FAIL은 새로고침이 홈으로 돌아가는 실제 동작을 시험에서
+  누락한 것이었다. 계획 탭으로 재진입하도록 시험을 고친 뒤 4건 모두 통과했다.
+  저장 도중 브라우저 강제 종료나 네트워크 응답 유실을 재현한 것은 아니다.
+- 타입 검사/build/e2e 타입 검사 PASS. 전체 앱 최종 실행은
+  `--maxWorkers=4`에서 282파일 / 2454 PASS, exit 0이다.
+  첫 전체 실행의 2453 PASS / 옛 기대값 1 FAIL도 위 검토 보고서에 남겼다.
+
+신규 훈련 구성/전환 승인, host의 public 연결, 다중 키 원자성, 전체 계획 완료,
+PR 병합 또는 공개 배포를 이 패킷의 결과로 주장하지 않는다.
 
 [DRAFT_COMPLETE]
