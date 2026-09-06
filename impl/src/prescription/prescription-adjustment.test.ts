@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest"
-import { adjustmentPolicyReference, applyAdjustmentDraft, configurationReference, createAdjustmentDraft, resetAdjustmentDraft } from "./prescription-adjustment"
+import { adjustmentPolicyReference, applyAdjustmentDraft, configurationReference, createAdjustmentDraft, resetAdjustmentDraft, revalidateAdjustmentReceipt } from "./prescription-adjustment"
 import type { AdjustmentAuthority, AdjustmentDraft, PrescriptionSnapshot, ReviewedAdjustmentPolicy } from "./prescription-adjustment"
 import type { PrescriptionSequence, PrescriptionSequenceNode, PrescriptionSequenceSegment, SequenceRecovery } from "./sequence"
 
@@ -42,6 +42,31 @@ function apply(input = fixture(), pending = draft(input)) {
 }
 
 describe("synthetic exact-configuration adjustment", () => {
+  it("revalidates the receipt at commit time without replacing its original explicit-action time", () => {
+    const input = fixture()
+    const applied = apply(input)
+    if (applied.kind !== "applied") throw new Error(applied.code)
+    const result = revalidateAdjustmentReceipt({ authority: input.authority, current: input.current,
+      contextKey: input.contextKey, receipt: applied.receipt, nowMs: 151 })
+    expect(result).toEqual(applied)
+  })
+
+  it.each([99, 149, 200, Number.NaN])("rejects invalid commit time %s even for a valid old receipt", nowMs => {
+    const input = fixture()
+    const applied = apply(input)
+    if (applied.kind !== "applied") throw new Error(applied.code)
+    expect(revalidateAdjustmentReceipt({ authority: input.authority, current: input.current,
+      contextKey: input.contextKey, receipt: applied.receipt, nowMs }).kind).toBe("rejected")
+  })
+
+  it("rejects a valid receipt after policy revocation", () => {
+    const input = fixture()
+    const applied = apply(input)
+    if (applied.kind !== "applied") throw new Error(applied.code)
+    expect(revalidateAdjustmentReceipt({ authority: { ...input.authority, policies: [] }, current: input.current,
+      contextKey: input.contextKey, receipt: applied.receipt, nowMs: 151 }).kind).toBe("rejected")
+  })
+
   it("creates a draft without applying and resets pending intent without mutating a plan", () => {
     const input = fixture()
     const serialized = JSON.stringify(input)

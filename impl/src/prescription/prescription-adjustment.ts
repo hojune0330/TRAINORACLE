@@ -242,3 +242,35 @@ export function applyAdjustmentDraft(input: {
     return reject("DRAFT_MISMATCH")
   }
 }
+
+/** Recompute every receipt field before an application transaction consumes it.
+ * A content hash is not authority; the independent registry is checked at both
+ * the original explicit action and the current commit time.
+ */
+export function revalidateAdjustmentReceipt(input: {
+  readonly authority: AdjustmentAuthority
+  readonly receipt: AdjustmentReceipt
+  readonly current: PrescriptionSnapshot
+  readonly contextKey: string
+  readonly nowMs: number
+}): AdjustmentApplyResult {
+  try {
+    canonical(input)
+    const { receipt } = input
+    if (!Number.isFinite(receipt.appliedAtMs) || receipt.appliedAtMs > input.nowMs) return reject("DRAFT_MISMATCH")
+    const draft: AdjustmentDraft = {
+      kind: "PRESCRIPTION_ADJUSTMENT_DRAFT", policy: receipt.policy,
+      contextKey: receipt.contextKey, before: receipt.before, after: receipt.after,
+    }
+    const original = applyAdjustmentDraft({ authority: input.authority, draft,
+      current: input.current, contextKey: input.contextKey,
+      nowMs: receipt.appliedAtMs, action: receipt.action })
+    if (original.kind === "rejected") return original
+    if (!same(original.receipt, receipt)) return reject("DRAFT_MISMATCH")
+    const live = applyAdjustmentDraft({ authority: input.authority, draft,
+      current: input.current, contextKey: input.contextKey,
+      nowMs: input.nowMs, action: "USER_EXPLICIT" })
+    if (live.kind === "rejected") return live
+    return original
+  } catch { return reject("DRAFT_MISMATCH") }
+}

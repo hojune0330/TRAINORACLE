@@ -404,6 +404,18 @@ persistence; do not let a queued stale request activate later. Exact replay is
 idempotent; reuse of an idempotency key with changed content is rejected. Cancel
 invalidates queued applies as well as the visible editor state.
 
+The editor-to-candidate commit host must independently recompute submitted receipt
+totals, differences and before/after content, checking the trusted policy both at
+the explicit action timestamp and immediately before the write. Future action
+timestamps, expired/revoked policy, missing or duplicate versioned explanation
+bindings reject the transaction. Bind numbers, explanation references and receipt
+in one immutable workspace revision; field-by-field writes are not this contract.
+The owner-provided compare-and-swap adapter must revalidate under its actual lock.
+An editor unmount or abandonment invalidates a queued apply. A saved-but-unconfirmed
+response may replay only the exact prior intent and matching stored receipt without
+a second write. This workspace transaction grants no new active-plan storage shape,
+retention duration, template dose, policy or runtime activation authority.
+
 Editing an already accepted plan opens a proposed successor, not an in-place
 prescription edit. Current-frame safety holds and separately authorized recovery
 actions keep their existing owning contracts; this editor does not enable new ones.

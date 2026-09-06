@@ -303,4 +303,35 @@ receipt 재검사, 단일 snapshot commit 및 저장 계층 결속. 실제 신�
 전환은 검토된 registry가 있을 때만 활성화하고 시험용 권한을 운영에 넣지 않는다.
 기존 네 ref의 청소년/자율 사용자 범위는 그대로 유지한다.
 
+## 13. 조정 적용 host와 단일 snapshot commit 기반
+
+- `revalidateAdjustmentReceipt`가 전달된 before/after, 모든 합계/delta와
+  구조 차이를 원래 동작 시점 및 현재 시점의 독립 registry로 재검산한다.
+  원래 명시 적용 시각을 현재 시각으로 바꿔 쓰지 않는다.
+- `prescription-adjustment-commit.ts`는 후보 계보/MAIN slot/context/revision을
+  묶은 workspace snapshot을 CAS 한 번으로 교체한다. 처방, 설명 버전과
+  근거 참조, receipt가 한 snapshot에 들어가며 부분 필드 저장을 하지 않는다.
+  실제 CAS/lock 구현은 소비 저장소의 책임이며 이 모듈이 localStorage의
+  다중 키 원자성을 제공한다고 주장하지 않는다.
+- `PrescriptionAdjustmentCommitHost`는 기존 editor의 적용/취소를 이
+  controller에 연결한다. 열 때의 base revision을 유지하고, 실패한 draft는
+  재시도할 수 있다. 화면 unmount/취소는 대기 중인 write를 무효화한다.
+- 안전/context/권한 변경을 write lock 안에서 재확인한다. 중복 적용은
+  한 요청으로 합치고, 저장 후 응답 유실은 정확한 receipt를 재검사하여
+  write 없이 replay한다. getter 및 허용되지 않은 메모 필드의 유입을 거부한다.
+- 합성 registry를 사용하는 app 연결 시험 42 PASS, impl 전체 831 PASS.
+  이 수치는 실제 선수를 대상으로 한 처방 검증이나 신규 source 채택이 아니다.
+  타입 검사와 build 결과는 아래 실행 기록에 별도로 보존한다.
+- 최종 타입 검사/build PASS. 기존 font 경로 및 chunk 크기 경고는 남아 있다.
+  [자체 검토 보고서](../review/ADJUSTMENT_COMMIT_HOST_SELF_REVIEW_2026-09-06.md)에
+  공격 검토 수정점과 production 연결에서 아직 검증되지 않은 범위를 남겼다.
+- **아직 public `PlanBeta`에서 이 host를 열지 않는다.** 실제 적격 전환이
+  없는 버튼을 노출하지 않았다. 기존 PACE_TARGET 저장 스키마를 generic
+  조정 snapshot으로 대체하지 않았으며, 시험용 권한/용량은 운영 manifest에
+  들어가지 않았다. 따라서 M08/M09 공통 host 기반은 구현됐지만 실제 공개
+  후보 저장·재조회와 신규 구성 활성화가 완료된 것은 아니다.
+- 다음 실제 작업: source configuration과 개인 기록으로 해석된 sequence의
+  identity를 구분한 production offer/adapter, 버전별 저장 계약과 정확한
+  후보 투영 검증. 현재 4개 고정 baseline에 새 용량을 덧씌우지 않는다.
+
 [DRAFT_COMPLETE]
