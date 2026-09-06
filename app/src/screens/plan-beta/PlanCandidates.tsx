@@ -26,7 +26,7 @@ import { comparePlanMainWork } from "../../domain/plan-main-comparison"
 import { MainWorkComparison } from "./MainWorkComparison"
 import { PlanMethodPicker } from "./PlanMethodPicker"
 import { resolveDetailedPlanTemplateOptions } from "./plan-template-options"
-import { listDetailedSessionTargets, type PlanSessionTarget } from "../../domain/plan-session-target"
+import { listDetailedSessionTargets, type PlanSessionTarget, type CandidateSessionTargets } from "../../domain/plan-session-target"
 import { PlanSessionTargetPicker } from "./PlanSessionTargetPicker"
 import type { RepeatPreference } from "@impl/prescription/method-recommendation"
 
@@ -45,6 +45,8 @@ export function PlanCandidates({
   onChangeMethod,
   detailedSessionTarget = null,
   onChangeSessionTarget,
+  candidateSessionTargets = {},
+  onChangeCandidateSessionTarget,
   onSelectionDetailsChange,
   onManageRecords,
   startDateValue,
@@ -67,6 +69,8 @@ export function PlanCandidates({
   readonly onChangeMethod?: (reference: PlanBetaIntake["selectedDetailedTemplateRef"]) => void
   readonly detailedSessionTarget?: PlanSessionTarget | null
   readonly onChangeSessionTarget?: (target: PlanSessionTarget) => void
+  readonly candidateSessionTargets?: CandidateSessionTargets
+  readonly onChangeCandidateSessionTarget?: (kind: PlanGenerationSuccess["candidates"][number]["kind"], target: PlanSessionTarget) => void
   readonly onSelectionDetailsChange?: () => void
   readonly onManageRecords?: () => void
   readonly startDateValue?: string
@@ -76,21 +80,19 @@ export function PlanCandidates({
   readonly onSelect: (selection: CandidateSelection) => void
 }) {
   const [repeatPreference, setRepeatPreference] = React.useState<RepeatPreference>("NEUTRAL")
+  const [targetDraftPending, setTargetDraftPending] = React.useState(false)
   React.useEffect(() => {
     setRepeatPreference("NEUTRAL")
   }, [intake.eventGroup, intake.eventDistanceM, intake.trainingFocus, intake.experienceBand])
   const [localStartDate, setLocalStartDate] = React.useState(todayISO)
   const startDate = startDateValue ?? localStartDate
-  const [expandedCandidateId, setExpandedCandidateId] = React.useState<string | null>(
-    generated.candidates[0]?.candidateId ?? null,
+  const [expandedCandidateKind, setExpandedCandidateKind] = React.useState<PlanGenerationSuccess["candidates"][number]["kind"] | null>(
+    generated.candidates[0]?.kind ?? null,
   )
-  React.useEffect(() => {
-    setExpandedCandidateId(generated.candidates[0]?.candidateId ?? null)
-  }, [generated])
   const hasValidStartDate = isValidIsoDate(startDate)
   const detailedEvidencePending = intake.selectedDetailedTemplateRef !== null
     && prescriptionBinding.kind !== "bound"
-  const canSelect = hasValidStartDate && !recordConfirmationPending && !detailedEvidencePending
+  const canSelect = hasValidStartDate && !recordConfirmationPending && !detailedEvidencePending && !targetDraftPending
   const selectedRecord = athleteRecords.find((record) => record.id === selectedRecordId)
   const selectedEventLabel = selectedRecord === undefined
     ? "선택한 종목"
@@ -127,8 +129,9 @@ export function PlanCandidates({
         && intake.experienceBand === "EXPERIENCED"
         && (
         <>
-        {onChangeSessionTarget !== undefined && <PlanSessionTargetPicker
+        {onChangeSessionTarget !== undefined && Object.keys(candidateSessionTargets).length === 0 && <PlanSessionTargetPicker
           targets={listDetailedSessionTargets(generated)} selected={detailedSessionTarget}
+          onPendingChange={setTargetDraftPending}
           startDate={startDate} onChange={onChangeSessionTarget} />}
         <PaceEvidenceFlow
           records={athleteRecords}
@@ -223,16 +226,16 @@ export function PlanCandidates({
       <div className="plan-candidate-list">
         {generated.candidates.map((candidate) => (
           <CandidateSection
-            key={candidate.candidateId}
+            key={candidate.kind}
             candidate={candidate}
             startDate={startDate}
             detailedTargets={intake.selectedDetailedTemplateRef === null ? [] : listDetailedSessionTargets(generated)}
-            detailedTarget={detailedSessionTarget}
-            onChangeSessionTarget={onChangeSessionTarget}
+            detailedTarget={candidateSessionTargets[candidate.kind] ?? detailedSessionTarget}
+            onChangeSessionTarget={onChangeCandidateSessionTarget === undefined ? undefined : target => onChangeCandidateSessionTarget(candidate.kind, target)}
             canSelect={canSelect}
-            expanded={expandedCandidateId === candidate.candidateId}
-            onToggleSchedule={() => setExpandedCandidateId((current) =>
-              current === candidate.candidateId ? null : candidate.candidateId)}
+            expanded={expandedCandidateKind === candidate.kind}
+            onToggleSchedule={() => setExpandedCandidateKind((current) =>
+              current === candidate.kind ? null : candidate.kind)}
             onSelect={() => onSelect({ candidateId: candidate.candidateId, startDate })}
           />
         ))}

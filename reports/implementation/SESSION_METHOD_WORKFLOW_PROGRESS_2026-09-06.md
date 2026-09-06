@@ -266,4 +266,41 @@ test로 검증했고 운영 카탈로그에 가짜 방법을 넣지 않았다.
   다음 엔지니어링은 후보별 초안 격리 및 조정 host의 검증된 전환 연결이다.
   신규 처방값을 만들거나 승인된 기존 단일 상세 경로를 재승인 대기로 돌리지 않는다.
 
+## 12. 후보별 단일 상세 배치 분리
+
+섹션 11의 공유 target만 제공하던 범위를 확장했다. 후보 카드의 적용은
+BALANCED/CONSERVATIVE별 독립 target map을 사용한다. 기존 공통 날짜 선택은
+두 후보를 함께 고르는 명시 동작으로 유지하며, 독립 편집 이후에는 숨긴다.
+한 후보의 선택은 다른 후보의 세션, 처방 수치 및 candidate identity를
+변경하지 않는다. 두 후보를 묶는 pair identity는 새 내용에 맞춰 갱신한다.
+
+- 스펙 섹션 4에 최초 수동 선택과 자동 support-only 적응의 경계를 명시했다.
+- 실제 반례: 기존 selection 검증기가 독립 target 후보를
+  STALE_CANDIDATE_FINGERPRINT로 거부했다. 최초 선택용 검증만 분리했다.
+  정확히 한 상세 처방씩, 동일한 MAIN 처방 집합, 동일 layout와 support
+  차이 규칙을 요구한다. 기존 자동 적응 검증은 그대로 남겼다.
+- 적용/취소 전에는 해당 후보 확정을 막는다. 공통 target 초안도 미적용
+  상태에서 최종 계획을 확정하지 못한다. 후보 UI는 변경되는 hash가 아닌
+  후보 종류를 기준으로 펼침 상태를 유지한다.
+- candidate 정렬이 달라도 scope/slot identity는 유지하며,
+  content snapshot 변경 검사는 계속 별도로 수행한다.
+- 신규 반례는 잘못된 주소, 재해시한 용량 변조, 다른 후보 오염,
+  자동 support-only 적응으로의 우회, candidate 순서 변경을 포함한다.
+- 관련 app 5파일 25 PASS. impl 전체 27파일 825 PASS.
+  타입 검사, e2e 타입 검사, build PASS. 기존 font/chunk 경고는 유지된다.
+- 브라우저 6 PASS: 공통 target, A만 편집, B만 편집의 세 경로를
+  desktop-chromium/320px touch-narrow에서 확인했다. 기록 확인, 수락,
+  실제 저장/새로고침, 222.2초 원본 보존과 가로 넘침 없음이 포함된다.
+- 전체 앱 기본 동시성 실행은 2399 PASS/13 FAIL이었다. 12건은 5초 timeout,
+  한 건은 archive 화면 질의 실패였다. --maxWorkers=4 재실행 결과는 아래에
+  별도 기록하며 실패를 지우거나 과거 CI 결과로 대체하지 않는다.
+- 동일 작업트리의 --maxWorkers=4 재실행은 279파일/2412 PASS,
+  exit 0으로 완료했다. timeout/단언 변경 없이 동시성만 변경했다.
+
+M06/M07/M10의 단일 상세 배치 연결이 진척되었으며 전체 완료는 아니다.
+다음: 기존 조정 engine/editor의 candidate transaction host, 현재 상태와
+receipt 재검사, 단일 snapshot commit 및 저장 계층 결속. 실제 신규 dose
+전환은 검토된 registry가 있을 때만 활성화하고 시험용 권한을 운영에 넣지 않는다.
+기존 네 ref의 청소년/자율 사용자 범위는 그대로 유지한다.
+
 [DRAFT_COMPLETE]

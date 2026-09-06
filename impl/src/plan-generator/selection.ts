@@ -2,7 +2,7 @@ import { assertNever } from "../shared/assert-never"
 import { isRecord, parseSafetyGate } from "./input-values"
 import { isVerifiedPlanCandidate } from "./adaptation"
 import { isReviewedMainPlacement } from "./main-placement-policy"
-import { isSupportOnlyCandidatePair } from "./support-only-candidate-pair"
+import { isInitialCandidatePair } from "./support-only-candidate-pair"
 import type {
   BetaActivePlanSnapshot,
   CanonicalPlanFrame,
@@ -252,7 +252,7 @@ function generatedPlanGuard(value: unknown):
     }
   }
 
-  if (!isSupportOnlyCandidatePair(value.candidates[0], value.candidates[1])) {
+  if (!isInitialCandidatePair(value.candidates[0], value.candidates[1])) {
     return { kind: "rejected", code: "STALE_CANDIDATE_FINGERPRINT" }
   }
 

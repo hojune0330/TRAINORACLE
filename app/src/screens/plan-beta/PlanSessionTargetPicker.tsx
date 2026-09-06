@@ -3,11 +3,12 @@ import { CalendarDays, ChevronDown } from "lucide-react"
 import { isValidIsoDate, isoShift } from "../../domain/dates"
 import { samePlanSessionTarget, type PlanSessionTarget } from "../../domain/plan-session-target"
 
-export function PlanSessionTargetPicker({ targets, selected, startDate, onChange }: {
+export function PlanSessionTargetPicker({ targets, selected, startDate, onChange, onPendingChange }: {
   readonly targets: readonly PlanSessionTarget[]
   readonly selected: PlanSessionTarget | null
   readonly startDate: string
   readonly onChange: (target: PlanSessionTarget) => void
+  readonly onPendingChange?: (pending: boolean) => void
 }) {
   const id = React.useId()
   const unavailable = selected !== null && !targets.some(target => samePlanSessionTarget(selected, target))
@@ -15,6 +16,11 @@ export function PlanSessionTargetPicker({ targets, selected, startDate, onChange
   const [draft, setDraft] = React.useState<PlanSessionTarget | null>(null)
   const scope = `${startDate}:${targets.map(target => `${target.day}:${target.slot}`).join(",")}:${current?.day}:${current?.slot}`
   React.useEffect(() => { setDraft(null) }, [scope])
+  const hasPendingDraft = draft !== null && !samePlanSessionTarget(draft, current)
+  React.useEffect(() => {
+    onPendingChange?.(hasPendingDraft)
+    return () => onPendingChange?.(false)
+  }, [hasPendingDraft, onPendingChange])
   if (targets.length < 2 && !unavailable) return null
   return <details className="plan-method-picker">
     <summary><CalendarDays size={16} aria-hidden="true" /><span>상세 훈련을 적용할 날<small>{current === null ? "선택 필요" : targetLabel(current, startDate)}</small></span><ChevronDown className="plan-method-picker__chevron" size={16} aria-hidden="true" /></summary>

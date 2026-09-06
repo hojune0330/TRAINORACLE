@@ -5,7 +5,7 @@ function sameJson(left: unknown, right: unknown): boolean {
   return JSON.stringify(left) === JSON.stringify(right)
 }
 
-function sharedCandidateContent(candidate: PlanCandidate): unknown {
+function sharedCandidateContent(candidate: PlanCandidate) {
   return {
     pairId: candidate.pairId,
     eventGroup: candidate.eventGroup,
@@ -40,12 +40,36 @@ export function isSupportOnlyCandidatePair(
   balanced: PlanCandidate,
   conservative: PlanCandidate,
 ): boolean {
+  return checkCandidatePair(balanced, conservative, false)
+}
+
+/** Initial explicit selection may place the same approved single MAIN independently.
+ * Adaptation continues to use the strict support-only predicate above.
+ */
+export function isInitialCandidatePair(balanced: PlanCandidate, conservative: PlanCandidate): boolean {
+  if (isSupportOnlyCandidatePair(balanced, conservative)) return true
+  const main = (candidate: PlanCandidate) => candidate.sessions.filter(session => session.role === "QUALITY")
+  const left = main(balanced)
+  const right = main(conservative)
+  if (left.filter(session => session.prescription.kind === "PACE_TARGET").length !== 1
+      || right.filter(session => session.prescription.kind === "PACE_TARGET").length !== 1) return false
+  const work = (sessions: readonly PlanSession[]) => sessions.map(session => JSON.stringify({
+    purpose: session.plannedEnergyIntent, prescription: session.prescription,
+  })).sort()
+  if (!sameJson(work(left), work(right))) return false
+  return checkCandidatePair(balanced, conservative, true)
+}
+
+function checkCandidatePair(balanced: PlanCandidate, conservative: PlanCandidate, independentMain: boolean): boolean {
+  const shared = (candidate: PlanCandidate) => independentMain
+    ? { ...sharedCandidateContent(candidate), detailedPrescriptionFingerprint: null }
+    : sharedCandidateContent(candidate)
   if (
     !hasValidCandidatePairIdentity(balanced, conservative)
     || balanced.kind !== "BALANCED"
     || conservative.kind !== "CONSERVATIVE"
     || balanced.sessions.length !== conservative.sessions.length
-    || !sameJson(sharedCandidateContent(balanced), sharedCandidateContent(conservative))
+    || !sameJson(shared(balanced), shared(conservative))
   ) {
     return false
   }
@@ -63,6 +87,7 @@ export function isSupportOnlyCandidatePair(
       return false
     }
     if (session.role !== "EASY") {
+      if (independentMain && session.role === "QUALITY") continue
       if (!sameJson(session, shorter)) return false
       continue
     }

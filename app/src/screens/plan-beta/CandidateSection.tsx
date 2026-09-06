@@ -101,7 +101,7 @@ export function CandidateSection({
                 if (target === undefined) return null
                 if (samePlanSessionTarget(currentTarget, target)) return <p role="status">개인 페이스 적용 대상으로 고른 훈련</p>
                 if (samePlanSessionTarget(pendingTarget, target)) return <div>
-                  <p>두 계획안의 상세 훈련 위치를 이 날짜로 옮겨요. 훈련을 추가하지 않으며, 적용 후 기준 기록을 다시 확인해야 해요.</p>
+                  <p>이 계획안의 상세 훈련 위치만 이 날짜로 옮겨요. 다른 계획안은 그대로 두고, 적용 후 기준 기록을 다시 확인해야 해요.</p>
                   <button type="button" className="plan-text-action" onClick={() => { onChangeSessionTarget(target); setPendingTarget(null) }}>이 날짜에 적용</button>
                   <button type="button" className="plan-text-action" onClick={() => setPendingTarget(null)}>변경 취소</button>
                 </div>
@@ -114,7 +114,7 @@ export function CandidateSection({
       <button
         className="plan-select-action"
         type="button"
-        disabled={!canSelect}
+        disabled={!canSelect || pendingTarget !== null}
         onClick={onSelect}
       >
         <Check aria-hidden="true" size={18} />

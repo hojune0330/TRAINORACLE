@@ -16,14 +16,18 @@ it("uses an explicit apply/cancel transaction on the exact schedule slot", () =>
   const candidate = result.generated.candidates[0]
   const before = JSON.stringify(candidate)
   const onChange = vi.fn()
-  const props = { candidate, startDate: "2026-09-06", canSelect: false, expanded: true,
+  const props = { candidate, startDate: "2026-09-06", canSelect: true, expanded: true,
     onToggleSchedule: vi.fn(), onSelect: vi.fn(), detailedTargets: targets,
     onChangeSessionTarget: onChange }
   const view = render(<CandidateSection {...props} />)
   const choose = () => fireEvent.click(screen.getAllByRole("button", { name: "이 훈련을 개인 페이스로 받기" }).at(-1)!)
+  const acceptPlan = screen.getByRole("button", { name: "시간 조절 계획 선택하기" })
+  expect(acceptPlan).toBeEnabled()
   choose()
+  expect(acceptPlan).toBeDisabled()
   expect(onChange).not.toHaveBeenCalled()
   fireEvent.click(screen.getByRole("button", { name: "변경 취소" }))
+  expect(acceptPlan).toBeEnabled()
   expect(JSON.stringify(candidate)).toBe(before)
   choose()
   fireEvent.click(screen.getByRole("button", { name: "이 날짜에 적용" }))

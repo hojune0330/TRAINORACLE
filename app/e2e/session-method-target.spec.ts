@@ -4,7 +4,7 @@ import { expectActivePlanHeading } from "./active-plan-flow"
 
 test.use({ serviceWorkers: "block" })
 
-test("selects a later MAIN, confirms pace, saves and reloads the exact slot", async ({ page }) => {
+for (const mode of ["shared", "candidate-only", "candidate-B"] as const) test(`${mode}: selects a later MAIN, confirms pace, saves and reloads the exact slot`, async ({ page }) => {
   const errors: string[] = []
   page.on("pageerror", error => errors.push(error.message))
   await page.addInitScript(() => {
@@ -38,9 +38,16 @@ test("selects a later MAIN, confirms pace, saves and reloads the exact slot", as
   await page.screenshot({ path: test.info().outputPath("method-history-coverage.png") })
   await page.locator("summary").filter({ hasText: "훈련 방법 선택" }).click()
   await page.getByRole("button", { name: "이 훈련을 개인 페이스로 받기" }).last().click()
-  await expect(page.getByText("두 계획안의 상세 훈련 위치를 이 날짜로 옮겨요.", { exact: false })).toBeVisible()
+  await expect(page.getByText("이 계획안의 상세 훈련 위치만 이 날짜로 옮겨요.", { exact: false })).toBeVisible()
   await page.getByRole("button", { name: "변경 취소" }).click()
   await expect(page.getByRole("button", { name: "이 날짜에 적용" })).toHaveCount(0)
+  if (mode !== "shared") {
+    if (mode === "candidate-B") await page.getByRole("button", { name: "계획안 B 일정 펼치기" }).click()
+    await page.getByRole("button", { name: "이 훈련을 개인 페이스로 받기" }).last().click()
+    await page.getByRole("button", { name: "이 날짜에 적용" }).click()
+    await expect(page.locator("summary").filter({ hasText: "상세 훈련을 적용할 날" })).toHaveCount(0)
+    if (mode === "candidate-B") await expect(page.getByRole("button", { name: "계획안 B 일정 접기" })).toBeVisible()
+  } else {
   await page.locator("summary").filter({ hasText: "상세 훈련을 적용할 날" }).click()
   const slots = page.getByRole("group", { name: "개인 페이스로 안내받을 주요 훈련" })
   const choices = slots.getByRole("radio")
@@ -58,11 +65,12 @@ test("selects a later MAIN, confirms pace, saves and reloads the exact slot", as
     await page.screenshot({ path: test.info().outputPath("session-target-large-text.png") })
     await page.evaluate(() => { document.documentElement.style.fontSize = "" })
   }
+  }
   const evidence = page.getByRole("region", { name: "개인 페이스 기준 기록" })
   await evidence.getByRole("button", { name: /개인 최고.*18분 31초/u }).click()
   await evidence.getByRole("button", { name: "이 기록으로 개인 페이스 적용" }).click()
   await expect(evidence.getByRole("status")).toContainText("상세 훈련 수치를 적용")
-  await page.getByRole("button", { name: /시간 조절 계획 선택하기/u }).click()
+  await page.getByRole("button", { name: mode === "candidate-B" ? /최소 시간 계획 선택하기/u : /시간 조절 계획 선택하기/u }).click()
   await expectActivePlanHeading(page)
   const read = () => page.evaluate(() => {
     const value = localStorage.getItem("trainoracle.plan-beta.v1")

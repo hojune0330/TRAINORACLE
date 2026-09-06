@@ -41,9 +41,12 @@ describe("detailed session target choice", () => {
   })
   it("cancels an unapplied choice without changing the plan", () => {
     const onChange = vi.fn()
-    render(<PlanSessionTargetPicker targets={targets} selected={null} startDate="2026-09-05" onChange={onChange} />)
+    const onPendingChange = vi.fn()
+    render(<PlanSessionTargetPicker targets={targets} selected={null} startDate="2026-09-05" onChange={onChange} onPendingChange={onPendingChange} />)
     fireEvent.click(screen.getByRole("radio", { name: "09/09 (수) 오후", hidden: true }))
+    expect(onPendingChange).toHaveBeenLastCalledWith(true)
     fireEvent.click(screen.getByRole("button", { name: "변경 취소", hidden: true }))
+    expect(onPendingChange).toHaveBeenLastCalledWith(false)
     expect(onChange).not.toHaveBeenCalled()
     expect(screen.getByRole("radio", { name: "09/06 (일) 오전", hidden: true })).toBeChecked()
   })

@@ -33,7 +33,8 @@ export function snapshotPlanMainDraft(
       eventDistanceM: intake.eventDistanceM,
       experienceBand: intake.experienceBand,
       trainingFocus: intake.trainingFocus,
-      candidates: generated.candidates.map(candidate => ({
+      candidates: [...generated.candidates].sort((a, b) => a.kind.localeCompare(b.kind)).map(candidate => ({
+        kind: candidate.kind,
         frame: candidate.frame,
         continuityContext: candidate.continuityContext,
         layout: candidate.sessions.map(session => ({

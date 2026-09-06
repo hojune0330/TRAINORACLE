@@ -1,6 +1,7 @@
-import type { PlanGenerationSuccess } from "@impl/plan-generator/types"
+import type { PlanCandidateKind, PlanGenerationSuccess } from "@impl/plan-generator/types"
 
 export type PlanSessionTarget = { readonly day: number; readonly slot: "AM" | "PM" }
+export type CandidateSessionTargets = Readonly<Partial<Record<PlanCandidateKind, PlanSessionTarget>>>
 
 export function samePlanSessionTarget(left: PlanSessionTarget | null, right: PlanSessionTarget | null): boolean {
   return left === null || right === null ? left === right : left.day === right.day && left.slot === right.slot

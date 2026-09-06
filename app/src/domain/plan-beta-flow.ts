@@ -127,6 +127,7 @@ export function generatePlanFromDraft(
   currentCheck: PlanCurrentCheck,
   prescriptionSelection?: unknown,
   detailedSessionTarget?: PlanSessionTarget,
+  candidateSessionTargets?: import("./plan-session-target").CandidateSessionTargets,
 ): PlanDraftGeneration {
   const draftKeys = new Set([
     "eventGroup", "eventDistanceM", "competitionDivision", "experienceBand",
@@ -215,6 +216,7 @@ export function generatePlanFromDraft(
               prescriptionSelection,
               evaluatedAt,
               detailedSessionTarget,
+              candidateSessionTargets,
             )
       return {
         kind: "generated",

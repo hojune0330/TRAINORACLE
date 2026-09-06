@@ -176,6 +176,17 @@ per-slot detail is not restricted to the first QUALITY in the approved design.
 Until the exact multi-slot policy is supplied, implement selection of the one
 detailed session's placement without duplicating its dose across multiple MAINs.
 
+Initial candidate acceptance may preserve separate single-detail target choices
+for BALANCED and CONSERVATIVE. Each candidate must independently pass current
+template, anchor, placement, content-identity and safety checks. Their MAIN
+prescription multiset must remain equal for this bounded placement-only path;
+only the selected placement may differ. Existing support duration differences
+remain exact. This does not authorize new methods, doses or multiple detailed
+sessions in one candidate. Automatic support-only adaptation keeps its stricter
+same-MAIN-position/content rule; initial manual selection must not relax that
+adaptation rule. Applying a candidate's target must not modify the other
+candidate's sessions. Reconfirm the record before final plan acceptance.
+
 Display-candidate diversity is not a cross-slot uniqueness requirement. A reviewed
 method may be explicitly selected again at a distinct existing slot, but only when
 a versioned placement policy authorizes that exact configuration, slot/frame scope,
