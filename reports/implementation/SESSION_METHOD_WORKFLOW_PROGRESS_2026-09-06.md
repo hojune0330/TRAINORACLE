@@ -2153,4 +2153,51 @@ UI4 PASS, 타입 검사 PASS. 비교 문구를 포함한 실제 분리 컴포넌
 시간 안내/개인 가능시간 구분에 대한 직전 오너 질문은 답변 대기이며, 자동 목표
 계속 메시지를 정책 승인으로 읽지 않는다.
 
+## 123. 실제 진입 공급자 독립 검토와 우선순위 교정
+
+읽기 전용 하위 검토자가 AppShell.tsx:313, PlanBeta.tsx:617,
+multi-adjustment-entry-v3.ts:7, adjusted-plan-multi-candidate-v3.ts:13,
+adjusted-plan-multi-review-v3.ts:49/78을 대조했다. 총괄도 AppShell/PlanBeta 호출부를
+다시 읽어 resolver 미주입을 확인했다. 신규 운영 배열만 채우면 완료라는 설명은
+불충분하다. 현재 사용자 진입점에서 다중 편집 공급자를 주입하지 않는다.
+
+우선 구현 순서는 다음과 같다. 전체 종목·경험 범위를 축소하는 것이 아니라
+실제 연결을 먼저 검증한 뒤 같은 공급자로 승인 범위를 확장한다.
+
+1. 기존 승인 자료만 읽는 provider를 구현한다. generated/intake/evidence/gate/
+   currentCheck/candidateId/startDate로 주소별 준비안과 선택지를 구성한다. 현재 시각,
+   계정과 안전·기록 재검사는 readReview/readReviewForEdits에서 새로 읽는다.
+2. provider가 RPE bindings, 전체 배치 policies, 저장 locks를 명시적으로 공급한다.
+   배열을 채웠다는 이유로 다른 함수의 기본 []가 바뀐다고 가정하지 않는다.
+   미승인 자료를 런타임에서 승인 policy로 만들어 주입하지 않는다.
+3. 최초 선택과 다음 주기에 동일 계약으로 연결한다. 동작 증거는 실제 호출부에서
+   서로 다른 MAIN 선택→두 주소 독립 조정→적용/취소→최종 저장→재조회→일지 원본→
+   다음 주기 재진입이다. 단일 컴포넌트 또는 합성 직접 함수 호출과 구분한다.
+4. 전체 배치 fingerprint 정책은 기존 경계다. 날짜/종목/주기/수정 조합을 무제한
+   미리 열거해 해결하거나 개별 승인만으로 전체 승인을 만들지 않는다. 지원할 정책
+   범위와 검토 단위를 문서화하고 필요하면 별도 오너 결정을 요청한다.
+
+독립 검토는 provider 누락을 확인했지만 정상 배치의 조합 폭증/실패까지 실행
+재현한 것은 아니다. 이를 확정된 성능 결함으로 기록하지 않는다. 구현 승인을
+대신하거나 훈련 수치 채택으로 사용하지 않는다. 현재 전체 목표는 미완이다.
+
+## 124. 현재 검토 자료에서 편집 진입을 만드는 provider adapter
+
+createReviewedMultiAdjustmentProviderV3를 추가했다. 주어진 context와 현재 자료 reader로
+seed/최신readReview/readReviewForEdits를 구성하고, 정확한 후보/시작일/현재시각과
+전체 배치 검토를 확인한다. RPE bindings와 policies를 명시적으로 전달한다. 계정
+변경과 자료 철회 후 기존 entry는 거부한다. 이 어댑터는 승인 policy를 생성하지 않는다.
+
+합성 검토 자료로 실제 matching entry 경로를 검사했고 관련 통합53 PASS, 타입 PASS다.
+reader 구현과 AppShell 운영 주입은 아직 없다. 어댑터가 있다는 사실을 운영 공급자
+전체 완성으로 표시하지 않는다. 저장/일지/다음주기 실제 앱 검증도 여전히 남는다.
+
+## 125. 공급자 어댑터를 실제 PlanBeta 다음 주기 경로에 적용한 시험
+
+기존 다음 주기 UI 시험에서 완성된 entry를 직접 반환하던 mock을 제거하고,
+createReviewedMultiAdjustmentProviderV3에 합성 현재 검토 자료 reader를 전달했다.
+PlanBeta의 현재 일정→다음 주기 준비→통증 확인→후보→여러 MAIN 화면→전체 확인→
+최종 저장→일정 재조회와 이전 원본 보관을 유지했다. targeted1 PASS/52 SKIP이며
+전체53 재실행 결과가 아니다. 실제 AppShell의 운영 주입 및 자료 reader는 미완이다.
+
 [DRAFT_COMPLETE]

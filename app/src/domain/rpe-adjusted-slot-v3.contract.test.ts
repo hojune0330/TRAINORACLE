@@ -38,6 +38,7 @@ import { matchingMultiAdjustmentEntryV3 } from "../screens/plan-beta/multi-adjus
 import { backupMultiPlanSnapshotV3, loadLatestMultiPlanSnapshotV3, restoreMultiPlanServerHistoryV3 } from "./account/multi-plan-cloud-backup-v3"
 import { restoreMultiPlanAsCurrentV3 } from "./multi-plan-active-restore-v3"
 import { readCurrentMultiRestoreReviewV3 } from "./multi-plan-restore-review-v3"
+import { createReviewedMultiAdjustmentProviderV3 } from "../screens/plan-beta/reviewed-multi-adjustment-provider-v3"
 
 const dialogShow = Object.getOwnPropertyDescriptor(HTMLDialogElement.prototype, "showModal")
 const dialogClose = Object.getOwnPropertyDescriptor(HTMLDialogElement.prototype, "close")
@@ -140,6 +141,29 @@ it("routes only the exact generated candidate and every matching MAIN into the m
   expect(matchingMultiAdjustmentEntryV3(() => { throw Error("UNAVAILABLE") }, context)).toBeNull()
   expect(matchingMultiAdjustmentEntryV3(undefined, context)).toBeNull()
   expect(localStorage.getItem(activePlanBetaStorageKey())).toBeNull()
+})
+
+it("builds a current editor entry from reviewed materials and stops after revocation or account change", () => {
+  const input = storageFixture()
+  const context = { generated: input.request.generated, gate: input.request.gate, intake: input.request.intake,
+    athleteEvidence: input.request.athleteEvidence, currentCheck: input.request.currentCheck,
+    candidateId: input.request.preparations[0]!.candidate.candidateId, startDate: "2026-09-08" }
+  let available = true
+  const readMaterials = vi.fn((_context, _changes, at: Date) => available ? { ...input.readReview(),
+    preparations: input.readReview().preparations.map(p => ({ ...p, source: { ...p.source, nowMs: at.getTime() } })) } : null)
+  const resolver = createReviewedMultiAdjustmentProviderV3({ readMaterials, locks: input.locks, now: () => TODAY })
+  const entry = matchingMultiAdjustmentEntryV3(resolver, context)
+  expect(entry).not.toBeNull()
+  expect(entry!.seed).toEqual(input.request)
+  expect(entry!.readReview().rpeBindings).toEqual(input.readReview().rpeBindings)
+  expect(entry!.readReviewForEdits(entry!.seed, []).policies).toEqual(input.readReview().policies)
+  expect(localStorage.getItem(activePlanBetaStorageKey())).toBeNull()
+  available = false
+  expect(() => entry!.readReview()).toThrow("CURRENT_MULTI_MATERIALS_UNAVAILABLE")
+  expect(resolver(context)).toBeNull()
+  available = true
+  setActiveLocalAccount("another-owner")
+  expect(() => entry!.readReview()).toThrow("STALE_MULTI_PROVIDER")
 })
 
 it.each(["saved", "wrong-session", "account-during-auth", "account-after-send", "write-error", "missing-evidence"])("backs up only the owned validated multi snapshot: %s", async scenario => {
@@ -465,8 +489,8 @@ async function successorStorageFixture() {
 
 it("opens the next cycle from the schedule and saves through candidate, multi edit, and final confirmation", async () => {
   const f = await successorStorageFixture(), before = localStorage.getItem(activePlanBetaStorageKey())
-  const resolver = vi.fn(() => ({ seed: f.input.request, readReview: f.input.readReview, locks: f.input.locks,
-    readReviewForEdits: f.input.readReview }))
+  const readMaterials = vi.fn(() => f.input.readReview())
+  const resolver = vi.fn(createReviewedMultiAdjustmentProviderV3({ readMaterials, locks: f.input.locks }))
   render(React.createElement(PlanBeta, { readMultiAdjustedEvidenceV3: () => f.retained, multiAdjustmentResolverV3: resolver }))
   fireEvent.click(screen.getByRole("button", { name: "다음 훈련 주기 준비" }))
   expect(screen.getByRole("button", { name: "다음 계획 비교하기" })).toBeDisabled()
@@ -476,6 +500,7 @@ it("opens the next cycle from the schedule and saves through candidate, multi ed
   expect(localStorage.getItem(activePlanBetaStorageKey())).toBe(before)
   fireEvent.click(screen.getAllByRole("button", { name: /구성 확인$/ })[0]!)
   expect(resolver).toHaveBeenCalledOnce()
+  expect(readMaterials).toHaveBeenCalled()
   expect(screen.getByRole("heading", { name: "주요 훈련을 하나씩 확인해 주세요" })).toBeTruthy()
   fireEvent.click(screen.getByRole("button", { name: "전체 확인으로" }))
   expect(localStorage.getItem(activePlanBetaStorageKey())).toBe(before)
