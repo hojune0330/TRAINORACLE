@@ -1,0 +1,8 @@
+.adjusted-next-flow { overflow-wrap: anywhere; min-width: 0; }
+.adjusted-next-flow button { display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 44px; max-width: 100%; white-space: normal; }
+.adjusted-next-flow form { display: grid; gap: 12px; max-width: 560px; }
+.adjusted-next-flow input[type="date"], .adjusted-next-flow select { width: 100%; min-width: 0; min-height: 44px; box-sizing: border-box; font: inherit; color: var(--ink); background: var(--paper); }
+.adjusted-next-flow fieldset { min-width: 0; padding: 12px 0; border: 0; }
+.adjusted-next-flow fieldset label { display: flex; align-items: center; gap: 8px; min-height: 44px; }
+.adjusted-next-candidate { border-top: 1px solid var(--line); margin-top: 20px; padding-block: 16px; }
+.adjusted-next-candidate summary { cursor: pointer; min-height: 44px; display: flex; align-items: center; }

@@ -1,7 +1,6 @@
 import { z } from "zod"
 import { canonicalJsonFingerprint } from "@impl/plan-generator/candidate-identity"
 import type { PlanSession } from "@impl/plan-generator/types"
-import type { PlanBetaState } from "./plan-beta-schema"
 import { isValidIsoDate, isoShift } from "./dates"
 
 const fingerprintSchema = z.string().regex(/^sha256:[a-f0-9]{64}$/u)
@@ -70,9 +69,21 @@ export type PlannedSessionLogDraft = {
   readonly link: PlannedSessionLink
 }
 
-export function createPlannedSessionLogDraft(
-  state: PlanBetaState,
-  session: PlanSession,
+/** Identity projection of an already validated plan. Creating a link never grants
+ * selection, storage or execution authority to a candidate or its prescription.
+ */
+export type LinkablePlanSession = Pick<PlanSession, "day" | "slot" | "role" | "plannedEnergyIntent"> & {
+  readonly prescription: unknown
+}
+export type PlannedSessionLinkState<Session extends LinkablePlanSession> = {
+  readonly intake: { readonly startDate?: string }
+  readonly generatedAt: string
+  readonly activePlan: { readonly candidateId: string; readonly sessions: readonly Session[] }
+}
+
+export function createPlannedSessionLogDraft<Session extends LinkablePlanSession>(
+  state: PlannedSessionLinkState<Session>,
+  session: Session,
   linkedAt: string,
 ): PlannedSessionLogDraft | null {
   const startDate = state.intake.startDate ?? state.generatedAt.slice(0, 10)
@@ -133,10 +144,10 @@ export function samePlannedSessionLink(
   return JSON.stringify(left) === JSON.stringify(right)
 }
 
-export function resolveCurrentPlannedSession(
-  state: PlanBetaState,
+export function resolveCurrentPlannedSession<Session extends LinkablePlanSession>(
+  state: PlannedSessionLinkState<Session>,
   value: unknown,
-): PlanSession | null {
+): Session | null {
   const parsed = plannedSessionLinkSchema.safeParse(value)
   if (!parsed.success) return null
   const link = parsed.data

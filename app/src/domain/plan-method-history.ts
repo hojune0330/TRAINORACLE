@@ -1,6 +1,8 @@
 import type { DetailedTemplateRef } from "@impl/plan-generator/types"
 import type { MethodHistoryEntry, MethodReference } from "@impl/prescription/method-recommendation"
 import type { StoredPlanProgress } from "./plan-beta-schema"
+import { resolvePlanMethodMapping } from "./plan-method-registry"
+import type { StoredAdjustedPlanState } from "./adjusted-plan-storage-schema"
 
 export type StoredPlanMethodHistory = {
   readonly sessionDay: number
@@ -25,12 +27,8 @@ type MethodHistorySource = {
   readonly progress: readonly StoredPlanProgress[]
 }
 
-export function methodReferenceFromTemplate(reference: DetailedTemplateRef): MethodReference {
-  return Object.freeze({
-    familyId: reference.templateId,
-    configurationId: reference.templateId,
-    version: reference.version,
-  })
+export function methodReferenceFromTemplate(reference: DetailedTemplateRef): MethodReference | null {
+  return resolvePlanMethodMapping(reference)?.method ?? null
 }
 
 export function deriveStoredPlanMethodHistory(source: MethodHistorySource): readonly StoredPlanMethodHistory[] {
@@ -57,13 +55,34 @@ export function deriveStoredPlanMethodHistory(source: MethodHistorySource): read
 }
 
 export function recommendationHistoryFromStored(rows: readonly StoredPlanMethodHistory[]): readonly MethodHistoryEntry[] {
-  return Object.freeze(rows.map(row => {
+  return Object.freeze(rows.flatMap(row => {
     const method = methodReferenceFromTemplate(row.selectedDetailedTemplateRef)
-    return Object.freeze({
+    // Unmapped planned references stay stored, but cannot establish family exposure.
+    if (method === null) return []
+    return [Object.freeze({
       selected: method,
       performed: row.outcome === "PERFORMED"
         ? Object.freeze({ status: "PERFORMED" as const, method })
         : Object.freeze({ status: row.outcome }),
-    })
+    })]
+  }))
+}
+
+/** Only call after the adjusted original has passed retained-evidence validation.
+ * The configured method, not its pre-adjustment template, is the selected fact. */
+export function recommendationHistoryFromAdjusted(state: StoredAdjustedPlanState): readonly MethodHistoryEntry[] {
+  const progress = new Map(state.progress.map(item => [`${item.sessionDay}:${item.sessionSlot}`, item.state]))
+  return Object.freeze(state.selection.activePlan.sessions.flatMap(session => {
+    if (session.prescription.kind !== "ADJUSTED_METHOD") {
+      return recommendationHistoryFromStored(deriveStoredPlanMethodHistory({ sessions: [{
+        day: session.day, slot: session.slot, prescription: session.prescription,
+      }], progress: state.progress }))
+    }
+    const { familyId, configurationId, version } = session.prescription.snapshot.projection.source.to
+    const method = Object.freeze({ familyId, configurationId, version })
+    const outcome = progress.get(`${session.day}:${session.slot}`)
+    return [Object.freeze({ selected: method, performed: outcome === "COMPLETED"
+      ? Object.freeze({ status: "PERFORMED" as const, method })
+      : Object.freeze({ status: outcome === undefined ? "MISSING" as const : "NOT_PERFORMED" as const }) })]
   }))
 }

@@ -33,6 +33,17 @@ beforeEach(() => {
   window.sessionStorage.clear()
 })
 
+it("erases adjusted originals for guest and every account without parsing private content", () => {
+  const keys = ["trainoracle.adjusted-plan-originals.v1",
+    "trainoracle.adjusted-plan-originals.v1.account.athlete-a",
+    "trainoracle.adjusted-plan-originals.v1.account.athlete-b"]
+  for (const key of keys) localStorage.setItem(key, "{unreadable-private-original")
+  localStorage.setItem("another-app-data", "keep")
+  eraseAllLocalData()
+  for (const key of keys) expect(localStorage.getItem(key)).toBeNull()
+  expect(localStorage.getItem("another-app-data")).toBe("keep")
+})
+
 function seed(): void {
   window.localStorage.setItem(JOURNAL, JSON.stringify([{ id: "a" }, { id: "b" }]))
   window.localStorage.setItem(

@@ -1,14 +1,20 @@
 import { thisWeekStats } from "./aggregates"
 import type { JournalEntry } from "./journal-schema"
 import type { AnalysisJournalEntry } from "./safe-export"
-import type { PlanBetaState } from "./plan-beta-store"
 import type { VersionedStoredPlanSession } from "./plan-session-schema"
+import type { AdjustedCandidateSession } from "./adjusted-plan-candidate"
 import { isoShift, isValidIsoDate } from "./dates"
 
+type HomeSession = VersionedStoredPlanSession | AdjustedCandidateSession
+export type HomePlan = {
+  readonly intake: { readonly startDate?: string; readonly eventGroup?: string }
+  readonly activePlan: { readonly sessions: readonly HomeSession[] }
+  readonly progress?: readonly { readonly sessionDay: number; readonly sessionSlot: "AM" | "PM"; readonly state: string }[]
+}
 export type NextTraining = {
   readonly date: string
-  readonly session: Exclude<VersionedStoredPlanSession, { readonly role: "REST" }>
-  readonly laterSameDaySession: Exclude<VersionedStoredPlanSession, { readonly role: "REST" }> | null
+  readonly session: Exclude<HomeSession, { readonly role: "REST" }>
+  readonly laterSameDaySession: Exclude<HomeSession, { readonly role: "REST" }> | null
 }
 
 export type TrainingHomeViewModel = {
@@ -28,7 +34,7 @@ export type TrainingHomeViewModel = {
 export function buildTrainingHomeViewModel(
   entries: readonly JournalEntry[],
   analysisEntries: readonly AnalysisJournalEntry[],
-  plan: PlanBetaState | null,
+  plan: HomePlan | null,
   today: string,
 ): TrainingHomeViewModel {
   const visibleEntries = entries.filter((entry) => isValidIsoDate(entry.date) && entry.date <= today)
@@ -74,11 +80,12 @@ export function buildTrainingHomeViewModel(
   }
 }
 
-function nextTrainingFor(plan: PlanBetaState | null, today: string): NextTraining | null {
+function nextTrainingFor(plan: HomePlan | null, today: string): NextTraining | null {
   const startDate = plan?.intake.startDate
   if (plan === null || startDate === undefined || !isValidIsoDate(startDate)) return null
 
   const planned = plan.activePlan.sessions
+    .filter(session => !plan.progress?.some(item => item.sessionDay === session.day && item.sessionSlot === session.slot))
     .flatMap((session) => session.role === "REST"
       ? []
       : [{ date: isoShift(startDate, session.day - 1), session }])

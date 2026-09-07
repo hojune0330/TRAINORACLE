@@ -15,6 +15,7 @@ import { RaceSelfCheckSummary, SavedMemo } from "./log-entry/SavedEntryContext"
 import { CheckinRow, EntryDeleteRow, ImportedChip, SyncChip, TopBar2 } from "./journal-detail-primitives"
 import { JournalDetailActions } from "./journal-detail-actions"
 import { JournalDecorationSurface } from "./journal/JournalDecorationSurface"
+import { JournalOriginalPlan } from "./journal/JournalOriginalPlan"
 
 export type LogDetailVariant = "A" | "B"
 
@@ -192,6 +193,7 @@ function LogDetailJournal({ date, onBack, onAddEntry, onEditEntry, readerControl
                 ))}
               </div>
               <SavedMemo entry={s} text={s.memo} fontSize={19} />
+              <JournalOriginalPlan entry={s} />
               <EntryDeleteRow entryId={s.id} onDelete={() => setPendingDelete({ id: s.id, label: "훈련" })} />
             </div>
           </div>

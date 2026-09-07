@@ -139,6 +139,33 @@ test("one trusted runtime template stays outside the inert advisory path", () =>
   );
 });
 
+test("rejects compensated source relabeling even when all tier counts match", async () => {
+  const result = await validateWith({ catalogReplacement: {
+    from: /[\s\S]+/u,
+    to: (text) => {
+      const first = applyRequiredReplacement(text, {
+        from: /(- templateId: BA-SEED-01\b[\s\S]*?sourceVerificationStatus: )DIRECT_SOURCE_EXAMPLE/u,
+        to: "$1SOURCE_ADAPTED",
+      }, "base tier");
+      return applyRequiredReplacement(first, {
+        from: /(- templateId: LT-SEED-03\b[\s\S]*?sourceVerificationStatus: )SOURCE_ADAPTED/u,
+        to: "$1DIRECT_SOURCE_EXAMPLE",
+      }, "threshold tier");
+    },
+  } });
+  assert.equal(result.status, 1);
+  assert.match(result.stderr, /LT-SEED-03 must remain SOURCE_ADAPTED/u);
+  assert.doesNotMatch(result.stderr, /must contain exactly \d+ entries/u);
+});
+
+test("rejects missing source distance adaptation disclosure", async () => {
+  const result = await validateWith({ catalogReplacement: {
+    from: "4 x 1 mile, not 4 x 1600m", to: "4 x 1600m",
+  } });
+  assert.equal(result.status, 1);
+  assert.match(result.stderr, /must disclose the source distance adaptation/u);
+});
+
 for (const [pool, visible] of [[2, 2], [3, 3], [4, 3]]) {
   test(`eligible pool ${pool} exposes exactly ${visible} advisory candidates`, async () => {
     const result = await validateWith({ fixture: readyFixture(pool, visible) });

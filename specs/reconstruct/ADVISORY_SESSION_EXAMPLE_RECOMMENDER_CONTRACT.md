@@ -19,10 +19,11 @@ an eligible future catalog. It is not a Plan Generator, Template Library
 activation path, safety evaluator, calendar writer, validator, or execution
 workflow.
 
-The current Energy System Session Template Catalog contains exactly 30 entries,
-all `DRAFT` and `REVIEW_REQUIRED`, with runtime-ineligible empty event and
-experience eligibility arrays. Therefore the current catalog produces no eligible
-recommendation candidates. Isolated future fixtures may prove successful result
+The current Energy System Session Template Catalog contains exactly 30 entries:
+one separately approved `V2-SEED-05` runtime entry and 29 `DRAFT` entries with
+`REVIEW_REQUIRED` and empty event and experience eligibility arrays. This advisory
+contract activates none of them and produces no advisory recommendation
+candidates. Isolated future fixtures may prove successful result
 cardinality, but they do not activate, alter, or make the current catalog eligible.
 
 No `app/` or `impl/` implementation change is authorized by this contract.
@@ -176,14 +177,16 @@ context-pending notation may gain fixed machine notation.
 
 ### 4.2 Catalog research preview binding
 
-The catalog's `Research Preview Visibility Policy` admits exactly the 6
-`DIRECT_SOURCE_EXAMPLE` and 9 `SOURCE_ADAPTED` records to a 15-record
+The catalog's `Research Preview Visibility Policy` admits exactly the 5
+`DIRECT_SOURCE_EXAMPLE` and 10 `SOURCE_ADAPTED` records to a 15-record
 documentation-only research view. The 6 `POPULATION_INDIRECT`, 4
 `PRODUCT_VARIANT`, and 5 `REJECTED_OR_UNUSABLE` records are excluded before
 counting, ranking, or explanation. `sourceTierVisibleForResearchPreview: true`
-is not runtime eligibility: all 30 catalog records remain `DRAFT`,
-`REVIEW_REQUIRED`, with empty event and experience arrays, so the current catalog
-still has 0 runtime candidates and no eligibility bypass.
+is not runtime eligibility: 29 records remain `DRAFT` and `REVIEW_REQUIRED`,
+with empty event and experience arrays. The single separately approved runtime
+entry requires its trusted manifest; this advisory path still has 0 candidates.
+The 2026-09-06 source correction reclassifies `LT-SEED-03` as adapted because
+the source specifies 4 x 1 mile, not 4 x 1600m. No dose or activation is changed.
 
 The catalog's LT, VO2, and GLY research preview groups are audit-only references
 to existing direct/adapted IDs. They are not recommendations and cannot establish

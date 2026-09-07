@@ -1,11 +1,10 @@
 import { assertNever } from "../shared/assert-never"
 import {
   matchesPacePrescriptionSequence,
-  projectPacePrescriptionSequence,
   type PaceSequenceSource,
 } from "../prescription/pace-sequence"
 import { parsePrescriptionNotation } from "../prescription/notation"
-import { compareMainMethods, type PrescriptionSequence } from "../prescription/sequence"
+import { isReviewedMainPlacement, isStoredMainPlacement } from "./main-placement-policy"
 import { derivePrescriptionTotals } from "../prescription/totals"
 import {
   continuityContextIdentity,
@@ -201,6 +200,7 @@ export async function verifyPlanAdaptationProposal(proposal: unknown): Promise<b
   const triggerSnapshot = parseTrigger(proposal["triggerSnapshot"])
   const safetyGate = parseSafetyGate(proposal["safetyGate"]) ?? null
   if (baseCandidate === null || successorCandidate === null || triggerSnapshot === null || safetyGate === null) return false
+  if (!isReviewedMainPlacement(successorCandidate)) return false
   const { proposalId, proposalHash, ...content } = proposal
   const expectedProposalHash = await canonicalJsonSha256("trainoracle.plan-adaptation-proposal.v1", content)
   const transform = resolveRegisteredAdaptationTransform(baseCandidate, successorCandidate, triggerSnapshot.kind)
@@ -285,6 +285,7 @@ async function createPlanAdaptationProposalUnchecked(candidate: unknown): Promis
   if (hasUnsupportedNumericEvent(candidate)) return { kind: "rejected", code: "UNSUPPORTED_EVENT" }
   const request = parseAdaptationRequest(candidate)
   if (request === null || containsPrivateKey(candidate)) return { kind: "rejected", code: "MALFORMED_INPUT" }
+  if (!isReviewedMainPlacement(request.proposedCandidate)) return { kind: "rejected", code: "UNAPPROVED_TRANSFORM" }
   const candidateEventDistanceM = request.baseCandidate.eventDistanceM
   if (candidateEventDistanceM === null
       || candidateEventDistanceM !== request.proposedCandidate.eventDistanceM
@@ -441,27 +442,12 @@ function isPlanCandidate(value: unknown): value is PlanCandidate {
           ? "ONE_TRUSTED_DETAILED_SESSION"
           : "MULTIPLE_TRUSTED_DETAILED_SESSIONS")) return false
   const reference = value["selectedDetailedTemplateRef"]
-  const detailedPrescriptions = value["sessions"].flatMap(session => (
-    session.prescription.kind === "PACE_TARGET" ? [session.prescription] : []
-  ))
-  if (detailedPrescriptions.length > 0) {
-    if (reference === null || detailedPrescriptions.filter(prescription => (
-      prescription.templateId === reference.templateId
-      && prescription.templateVersion === reference.version
-      && prescription.templateContentFingerprint === reference.fingerprint
-    )).length !== 1) return false
-
-    const methodKeys = new Set<string>()
-    const sequences: PrescriptionSequence[] = []
-    for (const prescription of detailedPrescriptions) {
-      const methodKey = `${prescription.templateId}@${prescription.templateVersion}:${prescription.templateContentFingerprint}`
-      const sequence = prescription.sequence ?? projectPacePrescriptionSequence(prescription)
-      if (methodKeys.has(methodKey) || sequence === null
-          || sequences.some(existing => compareMainMethods(existing, sequence).kind !== "different")) return false
-      methodKeys.add(methodKey)
-      sequences.push(sequence)
-    }
-  }
+  if (!isStoredMainPlacement({
+    eventDistanceM: parseSupportedEvent(value["eventDistanceM"]),
+    selectedEnergyIntent,
+    selectedDetailedTemplateRef: reference,
+    sessions: value["sessions"],
+  })) return false
   const eventIdentity = `:event-${value["eventDistanceM"] ?? "unbound"}:`
   const ledger = value["mainExposureLedger"]
   if (!isExposureLedger(ledger)) return false

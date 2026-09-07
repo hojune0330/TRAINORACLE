@@ -10,6 +10,7 @@ import type {
   PlanCandidate,
   PlanGenerationSuccess,
   SupportedPlanEventDistanceM,
+  PlanContinuityInput,
 } from "@impl/plan-generator/types"
 import type { RacePlacementState } from "@impl/plan-generator/race-placement"
 import raceDateRetentionAuthority from "../../../reports/review/RACE_DATE_RETENTION_AUTHORITY.json"
@@ -31,7 +32,12 @@ import type {
 import { loadEntriesForPlanSafety, todayISO } from "./journal-store"
 import {
   loadPreviousContinuity,
+  readPlanBetaStateFromStorage,
 } from "./plan-beta-store"
+import { prepareAdjustedNextFrame } from "./adjusted-plan-continuity"
+import { RETAINED_ADJUSTED_PLAN_EVIDENCE } from "./adjusted-plan-storage-schema"
+import type { RetainedAdjustedPlanEvidence } from "./selected-adjusted-plan-content"
+import { localAccountScopeSnapshot, localAccountScopeIsCurrent } from "./account/local-account-scope"
 import { divisionForGoal } from "../screens/plan-beta/plan-intake-navigation"
 import { createPlanFormation } from "./plan-beta-formation"
 import type {
@@ -127,6 +133,59 @@ export function generatePlanFromDraft(
   currentCheck: PlanCurrentCheck,
   prescriptionSelection?: unknown,
   detailedSessionTarget?: PlanSessionTarget,
+  candidateSessionTargets?: import("./plan-session-target").CandidateSessionTargets,
+): PlanDraftGeneration {
+  return generatePlanDraftWithContinuity(draft, currentCheck, prescriptionSelection,
+    detailedSessionTarget, candidateSessionTargets, loadPreviousContinuity())
+}
+
+/** A preview leaves the predecessor active. Its distinct result cannot be
+ * mistaken for an already accepted successor by the existing save flow. */
+export function generateAdjustedNextFrameFromDraft(input: {
+  readonly draft: PlanDraftInput
+  readonly currentCheck: PlanCurrentCheck
+  readonly expectedPredecessorFingerprint: string
+  readonly prescriptionSelection?: unknown
+  readonly detailedSessionTarget?: PlanSessionTarget
+  readonly candidateSessionTargets?: import("./plan-session-target").CandidateSessionTargets
+}, retained: readonly RetainedAdjustedPlanEvidence[] = RETAINED_ADJUSTED_PLAN_EVIDENCE) {
+  const reject = (code: string) => ({ kind: "rejected" as const, code })
+  try {
+    if (!hasCanonicalJsonTree(input) || !Reflect.ownKeys(input).every(key => typeof key === "string" &&
+      ["draft", "currentCheck", "expectedPredecessorFingerprint", "prescriptionSelection", "detailedSessionTarget", "candidateSessionTargets"].includes(key))) {
+      return reject("MALFORMED_INPUT")
+    }
+    const account = localAccountScopeSnapshot()
+    const previous = readPlanBetaStateFromStorage(retained)
+    if (previous.kind !== "adjusted_loaded") return reject("ADJUSTED_PREDECESSOR_UNAVAILABLE")
+    const evaluatedAt = new Date()
+    const nextStartDate = input.draft.startDate ?? todayISO(evaluatedAt)
+    const prepared = prepareAdjustedNextFrame({ previous: previous.state,
+      expectedFingerprint: input.expectedPredecessorFingerprint, nextStartDate,
+      currentCheck: input.currentCheck }, retained, evaluatedAt)
+    if (prepared.kind !== "prepared") return prepared
+    const draft = generatePlanDraftWithContinuity({ ...input.draft, startDate: nextStartDate },
+      input.currentCheck, input.prescriptionSelection, input.detailedSessionTarget,
+      input.candidateSessionTargets, prepared.context.continuity, nextStartDate)
+    if (draft.kind !== "generated") return draft
+    if (draft.intake.eventDistanceM !== previous.state.selection.activePlan.eventDistanceM) return reject("SUCCESSOR_EVENT_CHANGED")
+    const current = readPlanBetaStateFromStorage(retained)
+    if (!localAccountScopeIsCurrent(account) || current.kind !== "adjusted_loaded"
+      || current.state.contentFingerprint !== previous.state.contentFingerprint) return reject("STALE_BASE")
+    return { kind: "adjusted_next_frame_draft" as const,
+      draft: { ...draft, intake: { ...draft.intake, startDate: nextStartDate } }, continuity: prepared.context,
+      requiredNextGate: "REVIEWED_SUCCESSOR_TRANSACTION" as const }
+  } catch { return reject("INVALID_CONTINUITY_INPUT") }
+}
+
+function generatePlanDraftWithContinuity(
+  draft: PlanDraftInput,
+  currentCheck: PlanCurrentCheck,
+  prescriptionSelection: unknown,
+  detailedSessionTarget: PlanSessionTarget | undefined,
+  candidateSessionTargets: import("./plan-session-target").CandidateSessionTargets | undefined,
+  continuity: PlanContinuityInput | undefined,
+  formationStartDate?: string,
 ): PlanDraftGeneration {
   const draftKeys = new Set([
     "eventGroup", "eventDistanceM", "competitionDivision", "experienceBand",
@@ -180,7 +239,7 @@ export function generatePlanFromDraft(
       trainingTimePreference: effectiveIntake.trainingTimePreference,
     },
     formation: createPlanFormation(
-      todayISO(evaluatedAt),
+      formationStartDate ?? todayISO(evaluatedAt),
       availableTrainingDays,
       effectiveIntake.experienceBand,
     ),
@@ -190,7 +249,7 @@ export function generatePlanFromDraft(
     ...(draft.targetRaceDate === undefined ? {} : { targetRaceDate: draft.targetRaceDate }),
     journalSource: safety.journalSource,
     selectionAuthority: "SELF",
-    continuity: loadPreviousContinuity(),
+    continuity,
   })
 
   switch (result.kind) {
@@ -215,6 +274,7 @@ export function generatePlanFromDraft(
               prescriptionSelection,
               evaluatedAt,
               detailedSessionTarget,
+              candidateSessionTargets,
             )
       return {
         kind: "generated",

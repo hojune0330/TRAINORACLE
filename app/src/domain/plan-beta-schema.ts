@@ -1,5 +1,6 @@
 import { z } from "zod"
 import {
+  canonicalJsonFingerprint,
   continuityContextIdentity,
   continuityIdentityFromCandidateId,
   detailedPrescriptionFingerprintFromSessions,
@@ -14,8 +15,7 @@ import {
   ADAPTATION_TRANSFORM_REGISTRY_VERSION,
 } from "@impl/plan-generator/adaptation-transform-registry"
 import { RVE_NON_SENSITIVE_REASON_CODES } from "@impl/rve/signal"
-import { projectPacePrescriptionSequence } from "@impl/prescription/pace-sequence"
-import { compareMainMethods, type PrescriptionSequence } from "@impl/prescription/sequence"
+import { isStoredMainPlacement } from "@impl/plan-generator/main-placement-policy"
 import {
   activePlanSchema,
   frameLengthSchema,
@@ -30,6 +30,7 @@ import { formatElapsedMonths, SEASON_WINDOW_MONTHS } from "./athlete-record-disp
 import { athleteRecordIdSchema } from "./athlete-records"
 import { periodizationContextSchema } from "./periodization-lineage"
 import { explanationReceiptSchema } from "./training-explanation-receipt"
+import { planHistorySnapshotContent } from "./plan-history-snapshot-content"
 
 const planEventGroupSchema = z.enum([
   "MIDDLE_DISTANCE",
@@ -183,8 +184,6 @@ const planHistoryV4Schema = legacyPlanHistorySchema.extend({
   periodization: periodizationContextSchema.optional(),
 }).strict()
 
-export const planHistorySchema = z.union([planHistoryV4Schema, planHistoryV3Schema, legacyPlanHistorySchema])
-
 const planAthleteEvidenceSchema = z.object({
   storedRecordCount: z.number().int().nonnegative(),
   goalRecordCount: z.number().int().nonnegative(),
@@ -272,28 +271,8 @@ const planBetaStateV3BaseSchema = z.object({
   const detailedPrescriptions = state.activePlan.sessions.flatMap(session => (
     session.prescription.kind === "PACE_TARGET" ? [session.prescription] : []
   ))
-  if (detailedPrescriptions.length > 0) {
-    const primaryMatchCount = reference === null ? 0 : detailedPrescriptions.filter(prescription => (
-      prescription.templateId === reference.templateId
-      && prescription.templateVersion === reference.version
-      && prescription.templateContentFingerprint === reference.fingerprint
-    )).length
-    if (primaryMatchCount !== 1) {
-      addIssue(context, ["activePlan", "selectedDetailedTemplateRef"], "Active primary template must match exactly one detailed session.")
-    }
-    const methodKeys = new Set<string>()
-    const sequences: PrescriptionSequence[] = []
-    for (const [index, prescription] of detailedPrescriptions.entries()) {
-      const methodKey = `${prescription.templateId}@${prescription.templateVersion}:${prescription.templateContentFingerprint}`
-      const sequence = prescription.sequence ?? projectPacePrescriptionSequence(prescription)
-      if (methodKeys.has(methodKey) || sequence === null
-          || sequences.some(existing => compareMainMethods(existing, sequence).kind !== "different")) {
-        addIssue(context, ["activePlan", "sessions", index, "prescription"], "Active detailed MAIN methods must be unique and structurally different.")
-      } else {
-        methodKeys.add(methodKey)
-        sequences.push(sequence)
-      }
-    }
+  if (detailedPrescriptions.length > 0 && !isStoredMainPlacement(state.activePlan)) {
+    addIssue(context, ["activePlan", "sessions"], "Active detailed MAIN placement must match a reviewed policy or the legacy V3 read contract.")
   }
   const templateIdentity = reference === null
     ? "rpe-only"
@@ -438,6 +417,20 @@ export const planBetaStateV2Schema = canonicalJsonTreeSchema.pipe(
 export const planBetaStateV3Schema = canonicalJsonTreeSchema.pipe(
   planBetaStateV3BaseSchema.superRefine(validatePlanBetaState),
 )
+const planHistoryV5Schema = planHistoryV4Schema.extend({
+  version: z.literal(5),
+  archiveReason: z.enum(["MANUAL", "SUCCESSOR"]),
+  originalPlan: planBetaStateV3Schema,
+  originalPlanFingerprint: z.string().regex(/^sha256:[a-f0-9]{64}$/u),
+}).strict().superRefine((entry, context) => {
+  const expected = planHistorySnapshotContent(entry.originalPlan, entry.archivedAt, entry.archiveReason)
+  if (canonicalJsonFingerprint("plan-history-v5", entry) !== canonicalJsonFingerprint("plan-history-v5", expected)) {
+    addIssue(context, ["originalPlan"], "Archive summary and original content must match exactly.")
+  }
+})
+export const planHistorySchema = canonicalJsonTreeSchema.pipe(z.union([
+  planHistoryV5Schema, planHistoryV4Schema, planHistoryV3Schema, legacyPlanHistorySchema,
+]))
 const planBetaStateSchema = z.union([
   planBetaStateV3Schema,
   planBetaStateV2Schema,
@@ -539,26 +532,15 @@ export const planAdaptationCandidateSchema = canonicalJsonTreeSchema.pipe(planCa
     && session.prescription.templateVersion === reference.version
     && session.prescription.templateContentFingerprint === reference.fingerprint
   )).length
-  if (detailedSessionCount > 0 && primaryMatchCount !== 1) {
-    addIssue(context, ["selectedDetailedTemplateRef"], "Primary template reference must match exactly one detailed session.")
+  if (detailedSessionCount > 0 && primaryMatchCount < 1) {
+    addIssue(context, ["selectedDetailedTemplateRef"], "Primary template reference must match a detailed session.")
   }
-  const detailedMethodKeys = new Set<string>()
-  const detailedMethodSequences: PrescriptionSequence[] = []
+  if (!isStoredMainPlacement(candidate)) {
+    addIssue(context, ["sessions"], "Detailed MAIN placement must match a reviewed policy or the legacy V3 read contract.")
+  }
   for (const [index, session] of candidate.sessions.entries()) {
     if (session.prescription.kind !== "PACE_TARGET") continue
     const prescription = session.prescription
-    const methodKey = `${prescription.templateId}@${prescription.templateVersion}:${prescription.templateContentFingerprint}`
-    if (detailedMethodKeys.has(methodKey)) {
-      addIssue(context, ["sessions", index, "prescription"], "Detailed MAIN methods must be independently selected, not duplicated.")
-    }
-    detailedMethodKeys.add(methodKey)
-    const sequence = prescription.sequence ?? projectPacePrescriptionSequence(prescription)
-    if (sequence === null
-        || detailedMethodSequences.some(existing => compareMainMethods(existing, sequence).kind !== "different")) {
-      addIssue(context, ["sessions", index, "prescription"], "Detailed MAIN methods must differ in their actual work and recovery structure.")
-    } else {
-      detailedMethodSequences.push(sequence)
-    }
     const approval = DETAILED_PRESCRIPTION_APPROVALS.find((item) => (
       item.templateId === prescription.templateId
       && item.templateVersion === prescription.templateVersion

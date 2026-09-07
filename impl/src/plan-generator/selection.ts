@@ -1,7 +1,8 @@
 import { assertNever } from "../shared/assert-never"
 import { isRecord, parseSafetyGate } from "./input-values"
 import { isVerifiedPlanCandidate } from "./adaptation"
-import { isSupportOnlyCandidatePair } from "./support-only-candidate-pair"
+import { isReviewedMainPlacement } from "./main-placement-policy"
+import { isInitialCandidatePair } from "./support-only-candidate-pair"
 import type {
   BetaActivePlanSnapshot,
   CanonicalPlanFrame,
@@ -88,7 +89,8 @@ function copySession(session: PlanSession): PlanSession {
   }
 }
 
-function createActiveSnapshot(
+/** Content projection only. Selection authority is checked by selectPlanCandidate. */
+export function createActiveSnapshot(
   candidate: PlanCandidate,
   actor: "SELF" | "COACH",
 ): BetaActivePlanSnapshot {
@@ -153,6 +155,8 @@ function isGeneratedPlan(value: unknown): value is PlanGenerationSuccess {
     const second: unknown = candidates[1]
     return isVerifiedPlanCandidate(first)
       && isVerifiedPlanCandidate(second)
+      && isReviewedMainPlacement(first)
+      && isReviewedMainPlacement(second)
       && first.pairId === pairId
       && second.pairId === pairId
       && first.selectionAuthority === selectionAuthority
@@ -249,7 +253,7 @@ function generatedPlanGuard(value: unknown):
     }
   }
 
-  if (!isSupportOnlyCandidatePair(value.candidates[0], value.candidates[1])) {
+  if (!isInitialCandidatePair(value.candidates[0], value.candidates[1])) {
     return { kind: "rejected", code: "STALE_CANDIDATE_FINGERPRINT" }
   }
 

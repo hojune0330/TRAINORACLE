@@ -2,7 +2,7 @@ import React from "react"
 import { TermHelp } from "../components/TermHelp"
 import { buildTrainingHomeViewModel } from "../domain/home-view-model"
 import { loadEntries, todayISO } from "../domain/journal-store"
-import { loadPlanBetaState } from "../domain/plan-beta-store"
+import { readPlanBetaStateFromStorage } from "../domain/plan-beta-store"
 import { toAnalysisJournalEntry } from "../domain/safe-export"
 import type { AnalysisJournalEntry } from "../domain/safe-export"
 import { compactDate, isoShift } from "../domain/dates"
@@ -74,7 +74,11 @@ export function Home({
     [entries],
   )
   const today = todayISO()
-  const planState = loadPlanBetaState()
+  const planRead = readPlanBetaStateFromStorage()
+  const planState = planRead.kind === "loaded" ? planRead.state : null
+  const adjustedPlan = planRead.kind === "adjusted_loaded"
+    ? { ...planRead.state.selection, progress: planRead.state.progress } : null
+  const homePlan = adjustedPlan ?? planState
   const observations = React.useMemo(
     () => projectStructuredJournalObservations(entries),
     [entries],
@@ -83,20 +87,20 @@ export function Home({
     () => summarizeToDateDistances(observations, today),
     [observations, today],
   )
-  const baseModel = buildTrainingHomeViewModel(entries, analysisEntries, planState, today)
+  const baseModel = buildTrainingHomeViewModel(entries, analysisEntries, homePlan, today)
   const model = {
     ...baseModel,
     analysisSummary: toDateDistance.week.totalKm === null
       ? baseModel.analysisSummary
       : `이번 주 ${toDateDistance.week.totalKm}km · 직접 입력 ${toDateDistance.week.includedSourceCount}건`,
   }
-  const planFrame = planState?.activePlan.frame
+  const planFrame = homePlan?.activePlan.frame
   const planVisibleLength = planFrame === undefined
     ? undefined
     : "projectionLengthDays" in planFrame
       ? planFrame.projectionLengthDays ?? planFrame.lengthDays
       : planFrame.lengthDays
-  const planWindow = activePlanDateWindow(planState?.intake.startDate, planVisibleLength)
+  const planWindow = activePlanDateWindow(homePlan?.intake.startDate, planVisibleLength)
   const engagementRefs = React.useMemo(
     () => entries.flatMap((entry) => {
       const ref = toEngagementJournalRef(entry)
@@ -166,6 +170,9 @@ export function Home({
 
   return (
     <div className="training-home-screen">
+      {adjustedPlan?.progress.some(item => item.state === "PAIN_CHECKIN") && <p role="alert">
+        계획에 통증 확인 기록이 있어요. 다음 훈련 전에 몸 상태를 확인하고 지도자·보호자와 상의해 주세요.
+      </p>}
       <TrainingHome
         model={model}
         onWriteLog={onWriteLog}
@@ -185,7 +192,7 @@ export function Home({
         )}
       />
 
-      {(entries.length > 0 || planState !== null) && (
+      {(entries.length > 0 || homePlan !== null) && (
         <CumulativeDistancePanel
           observations={observations}
           today={today}
@@ -195,11 +202,11 @@ export function Home({
         />
       )}
 
-      {(entries.length > 0 || planState !== null) && (
+      {(entries.length > 0 || homePlan !== null) && (
         <TrainingContentTeaser onOpen={onOpenContent} />
       )}
 
-      {(entries.length > 0 || planState !== null) && (
+      {(entries.length > 0 || homePlan !== null) && (
         <EnergySystemLedgerPanel
           observations={observations}
           today={today}

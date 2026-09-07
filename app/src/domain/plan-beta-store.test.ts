@@ -13,6 +13,7 @@ import type { PlanBetaState } from "./plan-beta-store"
 import { stateFixture } from "./plan-beta-store.test-fixture"
 import { PLAN_BETA_MUTATION_LOCK_NAME } from "./plan-mutation-lock"
 import { deriveCandidateId } from "@impl/plan-generator/candidate-identity"
+import { generatePlanFromDraft, selectPlanForActivation } from "./plan-beta-flow"
 
 let locksDescriptor: PropertyDescriptor | undefined
 
@@ -517,8 +518,13 @@ describe("plan beta local store", () => {
   })
 
   it("retains only structured progress as next-frame continuity", () => {
+    const generated = generatePlanFromDraft(stateFixture().intake, "NO_KNOWN_RISK")
+    if (generated.kind !== "generated") throw new Error("Expected generated plan")
+    const selected = selectPlanForActivation(generated.generated.candidates[0].candidateId,
+      generated.generated, generated.gate, generated.intake)
+    if (selected.kind !== "selected") throw new Error("Expected selected plan")
     const state = updateStoredProgress(
-      updateStoredProgress(stateFixture(), {
+      updateStoredProgress(selected.state, {
         sessionDay: 1,
         sessionSlot: "AM",
         state: "COMPLETED",
@@ -530,7 +536,7 @@ describe("plan beta local store", () => {
       },
     )
 
-    archiveAndClearActivePlan(state)
+    expect(archiveAndClearActivePlan(state).ok).toBe(true)
 
     expect(loadPlanBetaState()).toBeNull()
     expect(loadPreviousContinuity()).toEqual({

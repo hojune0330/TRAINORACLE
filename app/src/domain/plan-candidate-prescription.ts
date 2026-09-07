@@ -14,6 +14,7 @@ import { prepareDetailedPrescription } from "./detailed-prescription"
 import { resolveDetailedPrescriptionRuntimeAuthority } from "./detailed-prescription-runtime-authority"
 import type { PlanBetaIntake } from "./plan-beta-schema"
 import { createStoredPaceTargetPrescription } from "./plan-session-schema"
+import { resolvePlanMethodPrescription } from "./plan-method-resolution"
 import {
   deriveRecordCurrentness,
   toCurrentSnapshot,
@@ -179,9 +180,11 @@ function preparePrescription(
     stopCodes: trusted.canonicalTemplateContent.operationalComponents.stopConditions.codes,
     fallbackCode: "RPE_ONLY_CONTROLLED",
   })
-  return stored === null
-    ? { kind: "fallback", code: "PACE_TARGET_FALLBACK_STORED_SCHEMA" }
-    : { kind: "prepared", prescription: stored }
+  if (stored === null) return { kind: "fallback", code: "PACE_TARGET_FALLBACK_STORED_SCHEMA" }
+  if (resolvePlanMethodPrescription(stored) === null) {
+    return { kind: "fallback", code: "PACE_TARGET_FALLBACK_AUTHORITY_OR_COMPONENT" }
+  }
+  return { kind: "prepared", prescription: stored }
 }
 
 export function bindDetailedPrescriptionCandidates(
@@ -191,7 +194,13 @@ export function bindDetailedPrescriptionCandidates(
   selection: unknown,
   evaluatedAt: Date,
   target?: DetailedPrescriptionTarget,
+  candidateTargets?: import("./plan-session-target").CandidateSessionTargets,
 ): CandidatePrescriptionBinding {
+  const targets = z.object({
+    BALANCED: z.object({ day: z.number().int().positive(), slot: z.enum(["AM", "PM"]) }).strict().optional(),
+    CONSERVATIVE: z.object({ day: z.number().int().positive(), slot: z.enum(["AM", "PM"]) }).strict().optional(),
+  }).strict().safeParse(candidateTargets ?? {})
+  if (!targets.success) return fallback(generated, "PACE_TARGET_FALLBACK_INVALID_SELECTION")
   const prepared = preparePrescription(
     intake,
     safetyGate,
@@ -206,8 +215,8 @@ export function bindDetailedPrescriptionCandidates(
   ))) {
     return fallback(generated, "PACE_TARGET_FALLBACK_NO_ELIGIBLE_QUALITY")
   }
-  const balanced = bindOneDetailedPrescriptionCandidate(generated.candidates[0], prepared.prescription, target)
-  const conservative = bindOneDetailedPrescriptionCandidate(generated.candidates[1], prepared.prescription, target)
+  const balanced = bindOneDetailedPrescriptionCandidate(generated.candidates[0], prepared.prescription, targets.data.BALANCED ?? target)
+  const conservative = bindOneDetailedPrescriptionCandidate(generated.candidates[1], prepared.prescription, targets.data.CONSERVATIVE ?? target)
   if (balanced === null || conservative === null) {
     return fallback(generated, "PACE_TARGET_FALLBACK_NO_ELIGIBLE_QUALITY")
   }

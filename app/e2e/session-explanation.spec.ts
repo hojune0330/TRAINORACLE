@@ -2,8 +2,63 @@ import { expect, test } from "@playwright/test"
 import { stateFixture } from "../src/domain/plan-beta-store.test-fixture"
 import { createExplanationReceipt } from "../src/domain/training-explanation-receipt"
 import { undersizedInteractiveTargets } from "./touch-audit"
+import { createPlannedSessionLogDraft } from "../src/domain/planned-session-link"
+import type { PostSessionEntry } from "../src/domain/journal-schema"
 
 test.use({ serviceWorkers: "block" })
+
+for (const journal of ["{broken-json", '[{"invalid":"journal"}]']) {
+  test(`unreadable journal is not reported as no linked activity: ${journal}`, async ({ page }) => {
+    const state = stateFixture()
+    await page.addInitScript(({ plan, raw }) => {
+      localStorage.setItem("trainoracle.plan-beta.v1", JSON.stringify(plan))
+      localStorage.setItem("trainoracle.journal.v1", raw)
+    }, { plan: state, raw: journal })
+    await page.goto("/?app=1")
+    await page.getByRole("navigation", { name: "내 기록 살펴보기" }).getByRole("button", { name: /^훈련 계획/u }).click()
+    await page.getByRole("button", { name: "훈련 방법과 이유", exact: true }).first().click()
+    const reader = page.getByRole("dialog")
+    await reader.getByRole("tab", { name: "주기·기록" }).click()
+    await expect(reader.getByText(/조회하지 못한 상태를 일지가 없는 것으로 판단하지 않아요/u)).toBeVisible()
+    await expect(reader.getByText(/이 훈련과 연결된 일지가 아직 없어요/u)).toHaveCount(0)
+    expect(await page.evaluate(() => localStorage.getItem("trainoracle.journal.v1"))).toBe(journal)
+    expect(await page.evaluate(() => JSON.parse(localStorage.getItem("trainoracle.plan-beta.v1")!))).toEqual(state)
+  })
+}
+
+test("exact linked observations survive reload without implying prescription adherence", async ({ page }, testInfo) => {
+  const state = stateFixture()
+  const draft = createPlannedSessionLogDraft(state, state.activePlan.sessions[0]!, state.generatedAt)!
+  const entry: PostSessionEntry = { id: "linked-observation", kind: "post-session", date: draft.date,
+    savedAt: state.generatedAt, syncState: "local", system: "base", title: "", memo: "PRIVATE_SENTINEL",
+    distanceKm: "3.2", durationMin: "18", avgPace: "5:37", rpe: 4,
+    activityOutcome: "PARTIAL", planExecutionRelation: "MODIFIED", plannedSessionLink: draft.link,
+    fieldProvenance: { distanceKm: { provenance: "EXPLICIT" }, durationMin: { provenance: "EXPLICIT" },
+      avgPace: { provenance: "EXPLICIT" }, rpe: { provenance: "EXPLICIT" } } }
+  await page.addInitScript(({ plan, journal }) => {
+    if (!localStorage.getItem("trainoracle.plan-beta.v1")) localStorage.setItem("trainoracle.plan-beta.v1", JSON.stringify(plan))
+    if (!localStorage.getItem("trainoracle.journal.v1")) localStorage.setItem("trainoracle.journal.v1", JSON.stringify([journal]))
+  }, { plan: state, journal: entry })
+  await page.goto("/?app=1")
+  for (const reload of [false, true]) {
+    if (reload) await page.reload()
+    await page.getByRole("navigation", { name: "내 기록 살펴보기" }).getByRole("button", { name: /^훈련 계획/u }).click()
+    await page.getByRole("button", { name: "훈련 방법과 이유", exact: true }).first().click()
+    const reader = page.getByRole("dialog")
+    await reader.getByRole("tab", { name: "주기·기록" }).click()
+    await expect(reader.getByText("3.2km", { exact: true })).toBeVisible()
+    await expect(reader.getByText("18분", { exact: true })).toBeVisible()
+    await expect(reader.getByText("직접 기록한 RPE 4", { exact: true })).toBeVisible()
+    await expect(reader.getByText("계획의 일부를 수행한 기록", { exact: true })).toBeVisible()
+    await expect(reader.getByText(/반복별 기록과 회복 구간은 확인하지 않았어요/u)).toBeVisible()
+    await expect(reader.getByText("PRIVATE_SENTINEL")).toHaveCount(0)
+    await expect.poll(() => reader.evaluate(node => node.scrollWidth <= node.clientWidth + 1)).toBe(true)
+    if (reload) {
+      await reader.getByText("직접 기록한 RPE 4", { exact: true }).scrollIntoViewIfNeeded()
+      await page.screenshot({ path: testInfo.outputPath("linked-actual-observations.png") })
+    }
+  }
+})
 
 for (const legacy of [false, true]) {
   test(`${legacy ? "legacy" : "version-bound"} explanation is readable and returns to the same session`, async ({ page }, testInfo) => {

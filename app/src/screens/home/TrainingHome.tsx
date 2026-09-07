@@ -3,12 +3,21 @@ import type { ReactNode } from "react"
 import type { TrainingHomeViewModel } from "../../domain/home-view-model"
 import { prescriptionLabel, sessionLabel, sessionSlotLabel } from "../plan-beta/labels"
 import type { PlanSession } from "@impl/plan-generator/types"
+import type { AdjustedCandidateSession } from "../../domain/adjusted-plan-candidate"
+import { deriveSequenceTotals } from "@impl/prescription/sequence"
 import type { LogEntryType } from "../log-entry/shared"
 
 /** 홈 "다음 훈련" 카드용 축약 처방 라벨 — "거리·목표 페이스는 지정하지 않음" 같은
  * 저가치 단서는 카드에서 생략한다 (상세는 훈련 계획 화면에서 확인). */
-export function nextTrainingPrescriptionLabel(session: PlanSession): string {
-  return prescriptionLabel(session).replace(/\s*·\s*거리⁠·⁠목표\s페이스는 지정하지 않음$/u, "")
+export function nextTrainingPrescriptionLabel(session: PlanSession | AdjustedCandidateSession): string {
+  if (session.prescription.kind === "ADJUSTED_METHOD") {
+    const totals = deriveSequenceTotals(session.prescription.snapshot.projection.sequence)
+    return ["선택한 조정 구성",
+      totals.totalRepetitions === null ? null : `본운동 ${totals.totalRepetitions}회`,
+      totals.qualityDistanceM === null ? null : `${totals.qualityDistanceM}m`,
+      "구간별 시간·회복 확인"].filter(Boolean).join(" · ")
+  }
+  return prescriptionLabel(session as PlanSession).replace(/\s*·\s*거리⁠·⁠목표\s페이스는 지정하지 않음$/u, "")
 }
 
 type TrainingHomeProps = {

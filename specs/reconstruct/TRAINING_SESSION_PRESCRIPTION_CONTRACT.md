@@ -665,4 +665,27 @@ processing guards remain. The
 [readiness matrix](../../reports/review/SESSION_METHOD_CATALOG_READINESS_2026-09-05.md)
 records grouped exact evidence gaps without changing source states or issue history.
 
+## 14. Owner-Reviewed Operational Adoption (2026-09-07)
+
+Under `TO-OWNER-TRAINING-REVIEW-ROUTE-2026-09-07`, an implementer prepares an
+exact source/applicability review packet and the owner makes the final adoption
+decision. Independent external coaching/science review is not the only allowed
+route. Never claim independent expert review or credentials that were not obtained.
+See [the process decision](../../reports/review/OWNER_TRAINING_ADOPTION_REVIEW_ROUTE_2026-09-07.md)
+and [selection contract section 18](SESSION_METHOD_SELECTION_AND_ADJUSTMENT_CONTRACT.md).
+
+The `OWNER_REVIEWED_OPERATIONAL_ADOPTION` runtime lane binds the packet identity,
+version and owner-approved fingerprint to the entire exact approval record,
+template identity, event, intent, decision identity and validity window. The process
+decision alone cannot serve as the final exact adoption decision. Registry entries
+are reviewed repository artifacts, not user-provided browser data or signatures
+verified merely by a hash. Other manifest, applicability and safety checks remain.
+
+This increment adds the lane to the existing flat-prescription authority resolver;
+it does not extend that resolver's four-event representation to arbitrary mixed or
+adjusted prescriptions. Those need their dedicated storage and selection integration.
+The owner-reviewed registry remains empty until exact packets receive final approval.
+KEEP existing baseline values, original-plan compatibility, youth/self-use, D9,
+privacy, no automatic dose escalation and issue states. No new activation is implied.
+
 [DRAFT_COMPLETE]

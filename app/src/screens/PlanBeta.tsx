@@ -18,6 +18,8 @@ import {
   loadPlanBetaState,
   loadPreviousIntake,
   savePlanBetaState,
+  readPlanBetaStateFromStorage,
+  activePlanBetaStorageKey,
 } from "../domain/plan-beta-store"
 import type {
   PlanBetaIntake,
@@ -37,7 +39,7 @@ import type { CandidateSelection } from "./plan-beta/plan-selection"
 import { planErrorMessage } from "./plan-beta/plan-feedback"
 import { loadAthleteRecords } from "../domain/athlete-records"
 import type { CandidatePrescriptionBinding } from "../domain/plan-candidate-prescription"
-import { samePlanSessionTarget, type PlanSessionTarget } from "../domain/plan-session-target"
+import { samePlanSessionTarget, type PlanSessionTarget, type CandidateSessionTargets } from "../domain/plan-session-target"
 import {
   divisionForGoal,
   eventGroupForDistance,
@@ -55,6 +57,21 @@ import { useActiveContentScroll } from "../hooks/useActiveContentScroll"
 import { useOrderedStepMotion } from "../hooks/useOrderedStepMotion"
 import { resolvePlanMethodChange } from "../domain/plan-method-selection"
 import { todayISO } from "../domain/journal-store"
+import { onLocalJournalScopeChange } from "../domain/account/local-journal-ownership"
+import { localAccountScopeSnapshot } from "../domain/account/local-account-scope"
+import { AdjustedPlanSchedule } from "./plan-beta/AdjustedPlanSchedule"
+import { AdjustedPlanEditFlow } from "./plan-beta/AdjustedPlanEditFlow"
+import { matchingAdjustmentEntry } from "./plan-beta/adjustment-entry"
+import { AdjustedPlanNextFlow, readOperatingAdjustedEvidence } from "./plan-beta/AdjustedPlanNextFlow"
+import { exportAdjustedPlanBackup } from "../domain/adjusted-plan-backup"
+import { AdjustedPlanImport } from "./plan-beta/AdjustedPlanImport"
+
+type AdjustmentEntry = Pick<React.ComponentProps<typeof AdjustedPlanEditFlow>, "seed" | "readReview" | "locks">
+export type PlanAdjustmentResolver = (context: {
+  generated: PlanGenerationSuccess; gate: SafetyGateDecision; intake: PlanBetaIntake;
+  athleteEvidence: PlanAthleteEvidence; currentCheck: PlanCurrentCheck;
+  candidateId: string; startDate: string;
+}) => AdjustmentEntry | null
 
 const AthleteRecords = React.lazy(() => import("./AthleteRecords").then(module => ({ default: module.AthleteRecords })))
 
@@ -73,17 +90,77 @@ const INTAKE_MOTION_ORDER: readonly IntakeStep[] = [
   "race-date",
 ]
 
-export function PlanBeta({
+export function PlanBeta(props: Omit<React.ComponentProps<typeof LegacyPlanBeta>, "onAdjustedStored"> & {
+  readonly readAdjustedEvidence?: React.ComponentProps<typeof AdjustedPlanNextFlow>["readEvidence"]
+}) {
+  const readEvidence = props.readAdjustedEvidence ?? readOperatingAdjustedEvidence
+  const readCurrent = React.useCallback(() => readPlanBetaStateFromStorage(readEvidence()), [readEvidence])
+  const [read, setRead] = React.useState(readCurrent)
+  const [nextOpen, setNextOpen] = React.useState(false)
+  const [importOpen, setImportOpen] = React.useState(false)
+  const [revision, setRevision] = React.useState(0)
+  React.useEffect(() => {
+    const refresh = () => { setImportOpen(false); setNextOpen(false); setRead(readCurrent()); setRevision(value => value + 1) }
+    const onStorage = (event: StorageEvent) => {
+      if (event.key === null) { refresh(); return }
+      if (event.key !== activePlanBetaStorageKey()) return
+      // Keep an in-progress legacy candidate mounted; its save gate checks the current stored plan.
+      setRead(readCurrent())
+    }
+    const unsubscribe = onLocalJournalScopeChange(refresh)
+    window.addEventListener("storage", onStorage)
+    return () => { unsubscribe(); window.removeEventListener("storage", onStorage) }
+  }, [readCurrent])
+  if (importOpen) return <AdjustedPlanImport readEvidence={readEvidence}
+    onBack={() => { setImportOpen(false); setRead(readCurrent()) }} />
+  if (read.kind === "adjusted_loaded" && nextOpen) return <AdjustedPlanNextFlow
+    key={`${localAccountScopeSnapshot()}:${read.state.contentFingerprint}`}
+    loaded={read} adjustmentResolver={props.adjustmentResolver} readEvidence={readEvidence}
+    onBack={() => { setNextOpen(false); setRead(readCurrent()) }}
+    onSaved={() => { setNextOpen(false); setRead(readCurrent()) }} />
+  if (read.kind === "adjusted_loaded") return <AdjustedPlanSchedule
+    key={`${localAccountScopeSnapshot()}:${read.state.selection.contentFingerprint}`}
+    onStoredChange={() => setRead(readCurrent())}
+    onExportPlan={() => exportAdjustedPlanBackup(read.state.contentFingerprint, readEvidence())}
+    onImportPlan={() => setImportOpen(true)}
+    onPrepareNext={() => {
+      const current = readCurrent()
+      setRead(current)
+      if (current.kind === "adjusted_loaded" && current.state.contentFingerprint === read.state.contentFingerprint) setNextOpen(true)
+    }}
+    loaded={read} onWritePlannedSessionLog={props.onWritePlannedSessionLog === undefined ? undefined : draft => {
+      const current = readCurrent()
+      if (current.kind !== "adjusted_loaded" || current.state.contentFingerprint !== read.state.contentFingerprint) {
+        setRead(current)
+        return
+      }
+      props.onWritePlannedSessionLog?.(draft)
+    }} returnToSession={props.returnToSession} />
+  if (read.kind === "invalid" || read.kind === "storage_error") return <section>
+    <h1>저장된 계획을 확인하지 못했어요</h1>
+    <p role="alert">계획을 지우거나 새 계획으로 바꾸지 않았어요. 다시 확인해 주세요.</p>
+    <button type="button" onClick={() => setRead(readCurrent())}>다시 확인</button>
+  </section>
+  return <><LegacyPlanBeta key={revision} {...props} onAdjustedStored={() => setRead(readCurrent())} />
+    <button className="plan-file-import" type="button" onClick={() => setImportOpen(true)}>개인 계획 파일 불러오기</button></>
+}
+
+function LegacyPlanBeta({
   onWriteLog,
   onManageRecords,
   onWritePlannedSessionLog,
   returnToSession,
+  adjustmentResolver,
+  onAdjustedStored,
 }: {
   readonly onWriteLog?: (entryType?: JournalEntryType) => void
   readonly onManageRecords?: () => void
   readonly onWritePlannedSessionLog?: (draft: PlannedSessionLogDraft) => void
   readonly returnToSession?: PlannedSessionLogDraft["link"]
+  readonly adjustmentResolver?: PlanAdjustmentResolver
+  readonly onAdjustedStored: () => void
 }) {
+  const [adjusting, setAdjusting] = React.useState<{ entry: AdjustmentEntry; revision: number } | null>(null)
   const [stored, setStored] = React.useState<PlanBetaState | null>(
     () => loadPlanBetaState(),
   )
@@ -129,6 +206,7 @@ export function PlanBeta({
   const [candidateStartDate, setCandidateStartDate] = React.useState(todayISO)
   const [selectedRecordId, setSelectedRecordId] = React.useState<string | null>(null)
   const [detailedSessionTarget, setDetailedSessionTarget] = React.useState<PlanSessionTarget | null>(null)
+  const [candidateSessionTargets, setCandidateSessionTargets] = React.useState<CandidateSessionTargets>({})
   const [comparisonRecordId, setComparisonRecordId] = React.useState<string | null>(null)
   const [recordConfirmationPending, setRecordConfirmationPending] = React.useState(false)
   const draftRevision = React.useRef(0)
@@ -214,6 +292,7 @@ export function PlanBeta({
     recordId: string | null = null,
     raceDate?: string,
     sessionTarget: PlanSessionTarget | null = detailedSessionTarget,
+    candidateTargets: CandidateSessionTargets = candidateSessionTargets,
   ) => {
     draftRevision.current += 1
     setRetrySelection(null)
@@ -227,6 +306,7 @@ export function PlanBeta({
       currentCheck,
       recordId === null ? undefined : { selectedRecordId: recordId },
       sessionTarget ?? undefined,
+      candidateTargets,
     )
     switch (result.kind) {
       case "blocked":
@@ -331,6 +411,21 @@ export function PlanBeta({
         setStored(result.state)
         return
       case "rejected":
+        if (result.code === "RECENT_JOURNAL_REQUIRES_REVIEW" || result.code === "CURRENT_CHECK_REQUIRES_REVIEW") {
+          setGenerated(null)
+          setGate(null)
+          setCurrentCheck(null)
+          setRetrySelection(null)
+          setBlocked(true)
+          return
+        }
+        if (result.code === "PACE_ANCHOR_RECONFIRMATION_REQUIRED") {
+          setAthleteRecords(loadAthleteRecords())
+          setSelectedRecordId(null)
+          setComparisonRecordId(null)
+          setRecordConfirmationPending(true)
+          if (generatedIntake !== null) generateCandidates(generatedIntake)
+        }
         setErrorCode(result.code)
         setRetrySelection(result.code === "PLAN_STORAGE_WRITE_FAILED" ? selection : null)
         return
@@ -371,6 +466,7 @@ export function PlanBeta({
         onArchived={(intake) => {
           draftRevision.current += 1
           setDetailedSessionTarget(null)
+          setCandidateSessionTargets({})
           setSelectedRecordId(null)
           setComparisonRecordId(null)
           setRecordConfirmationPending(false)
@@ -441,11 +537,31 @@ export function PlanBeta({
     )
   }
 
+  if (adjusting !== null) return <AdjustedPlanEditFlow {...adjusting.entry}
+    isCurrentDraft={() => draftRevision.current === adjusting.revision}
+    onCancel={() => setAdjusting(null)} onSaved={() => { setAdjusting(null); onAdjustedStored() }} />
+
   if (generated !== null && gate !== null && generatedIntake !== null && generatedEvidence !== null) {
+    const adjustmentActions: Record<string, () => void> = {}
+    if (adjustmentResolver !== undefined && currentCheck !== null && !recordConfirmationPending) {
+      for (const candidate of generated.candidates) {
+        try {
+        const context = { generated, gate, intake: generatedIntake, athleteEvidence: generatedEvidence,
+          currentCheck, candidateId: candidate.candidateId, startDate: candidateStartDate }
+        const entry = matchingAdjustmentEntry(adjustmentResolver, context)
+        if (entry === null) continue
+        adjustmentActions[candidate.candidateId] = () => setAdjusting({ entry, revision: draftRevision.current })
+        } catch {
+          // A broken review provider must not remove the original candidates.
+          continue
+        }
+      }
+    }
     return (
       <>
         <PlanCandidates
           generated={generated}
+          adjustmentActions={adjustmentActions}
           intake={generatedIntake}
           athleteEvidence={generatedEvidence}
           athleteRecords={athleteRecords}
@@ -465,11 +581,19 @@ export function PlanBeta({
           onCompareRecord={setComparisonRecordId}
           onChangeMethod={changeMethod}
           detailedSessionTarget={detailedSessionTarget}
+          candidateSessionTargets={candidateSessionTargets}
+          onChangeCandidateSessionTarget={(kind, target) => {
+            const targets = { ...candidateSessionTargets, [kind]: target }
+            setCandidateSessionTargets(targets)
+            setRecordConfirmationPending(selectedRecordId !== null)
+            generateCandidates(generatedIntake, null, undefined, detailedSessionTarget, targets)
+          }}
           onChangeSessionTarget={(target) => {
-            if (samePlanSessionTarget(detailedSessionTarget, target)) return
+            if (samePlanSessionTarget(detailedSessionTarget, target) && Object.keys(candidateSessionTargets).length === 0) return
+            setCandidateSessionTargets({})
             setDetailedSessionTarget(target)
             setRecordConfirmationPending(selectedRecordId !== null)
-            generateCandidates(generatedIntake, null, undefined, target)
+            generateCandidates(generatedIntake, null, undefined, target, {})
           }}
           onSelectionDetailsChange={() => {
             draftRevision.current += 1
@@ -489,6 +613,7 @@ export function PlanBeta({
             setRetrySelection(null)
             setSelectedRecordId(null)
             setDetailedSessionTarget(null)
+            setCandidateSessionTargets({})
             setComparisonRecordId(null)
             setRecordConfirmationPending(false)
             setStep("race-date")

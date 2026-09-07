@@ -5,7 +5,7 @@ document_metadata:
   doc_id: trainoracle-spec-energy-system-session-template-catalog
   status: RECONSTRUCTED_WITH_ONE_OWNER_ADOPTED_TEMPLATE
   owner: COACH_HOJUNE
-  version: "0.2"
+  version: "0.3"
   local_original_found: false
   reconstructed_from_current_review_sources: true
   executed_tests_total: 36
@@ -480,7 +480,7 @@ research_preview_group_invariants:
   version: "0.1"
   lifecycleStatus: DRAFT
   eligibilityStatus: REVIEW_REQUIRED
-  sourceVerificationStatus: DIRECT_SOURCE_EXAMPLE
+  sourceVerificationStatus: SOURCE_ADAPTED
   planningIntent: LT_INTENT
   plainKoreanName: "1600미터 크루즈 반복 4회"
   coachingTerm: "Cruise intervals"
@@ -493,7 +493,7 @@ research_preview_group_invariants:
   plainKoreanReading: "1600미터를 같은 역치 느낌으로 네 번 달리고, 사이마다 1분 쉽니다."
   sourceRefs: [SRC-VDOT-CRUISE]
   sourcePopulation: "VDOT coaching article example."
-  transferLimitations: "Source cautions against faster pace; no universal volume claim."
+  transferLimitations: "Source example is 4 x 1 mile, not 4 x 1600m. Track-distance adaptation requires separate review; recovery mode is not stated. Source cautions against faster pace; no universal volume claim."
   allowedEventGroups: []
   draftCandidateEventGroups: [MIDDLE_DISTANCE, LONG_DISTANCE, ROAD_RUNNING]
   allowedExperienceBands: []
@@ -1339,5 +1339,24 @@ Current one-detailed-session placement and eventual per-MAIN multi-slot detail a
 separate. No numerical value, source tier, lifecycle, scientific approval or existing
 runtime adoption is changed by this preparation reference. Missing exact source
 and adjustment evidence is grouped work, not repeated feature-approval requests.
+
+## 12. Source Accuracy Correction (2026-09-06)
+
+The [new 30-entry source review](../../reports/research/SESSION_METHOD_PROTOCOL_EVIDENCE_2026-09-06.md)
+separates directly accessed full text, indexed extracts and unsuccessful access.
+It does not activate another template or invent missing fields.
+
+- MODIFY: `LT-SEED-03` source status is `SOURCE_ADAPTED`, not a direct example.
+  The [original coaching article](https://news.vdoto2.com/2025/06/get-the-most-out-of-your-threshold-training/)
+  gives 4 x 1 mile with one-minute recovery. The stored 1600m draft, its original
+  version and totals remain unchanged; this is provenance correction, not dose approval.
+- KEEP: all 30 IDs, existing numerical prescriptions, one ACTIVE/ELIGIBLE entry,
+  29 DRAFT/REVIEW_REQUIRED entries and the four-ref external runtime allowlist.
+- PENDING: the report also identifies AP-SEED-02/03 as partial blocks of one
+  experimental session. Do not infer independent effectiveness from that source.
+  Newly extracted source values require a separately reviewed configuration before
+  changing the draft prescription, its totals or its runtime availability.
+- Historical metadata test counts above remain their earlier execution record.
+  Current checks and remaining workflow work belong to the dated implementation report.
 
 [DRAFT_COMPLETE]

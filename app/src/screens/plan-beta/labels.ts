@@ -118,7 +118,7 @@ export const PROGRESS_LABELS: Record<PlanProgressState, string> = {
   PAIN_CHECKIN: "통증 체크",
 }
 
-export function sessionLabel(session: PlanSession): string {
+export function sessionLabel(session: Pick<PlanSession, "role" | "slot" | "plannedEnergyIntent">): string {
   switch (session.role) {
     case "REST":
       return "휴식일"

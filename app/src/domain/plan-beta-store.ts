@@ -3,9 +3,11 @@ import type {
   PlanProgressState,
 } from "@impl/plan-generator/types"
 import type { MethodHistoryEntry } from "@impl/prescription/method-recommendation"
+import { summarizePlanMethodCoverage } from "./plan-method-coverage"
 import { recordPlanProgress } from "@impl/plan-generator/generator"
 import {
   parsePlanBetaState,
+  planHistorySchema,
   planBetaStateV3Schema,
   planHistoryListSchema,
   planIntakeSchema,
@@ -35,10 +37,14 @@ import type {
   StoredPlanProgress,
 } from "./plan-beta-schema"
 import {
-  deriveStoredPlanMethodHistory,
   methodReferenceFromTemplate,
   recommendationHistoryFromStored,
+  recommendationHistoryFromAdjusted,
 } from "./plan-method-history"
+import { readAdjustedOriginalPlans } from "./adjusted-plan-archive"
+import { planHistorySnapshotContent } from "./plan-history-snapshot-content"
+import { readStoredAdjustedPlanState, RETAINED_ADJUSTED_PLAN_EVIDENCE } from "./adjusted-plan-storage-schema"
+import type { RetainedAdjustedPlanEvidence } from "./adjusted-plan-selection"
 export type {
   PlanBetaIntake,
   PlanBetaState,
@@ -58,6 +64,11 @@ export function activePlanBetaStorageKey(): string {
   return accountScopedStorageKey(PLAN_BETA_STORAGE_KEY)
 }
 
+function isAdjustedStoredEnvelope(raw: string | null): boolean {
+  if (raw === null) return false
+  try { return JSON.parse(raw)?.version === 4 } catch { return false }
+}
+
 export type PlanStorageResult =
   | { readonly ok: true }
   | {
@@ -68,6 +79,7 @@ export type PlanStorageResult =
 
 export type PlanBetaStateReadResult =
   | { readonly kind: "loaded"; readonly state: PlanBetaState }
+  | (Omit<Extract<ReturnType<typeof readStoredAdjustedPlanState>, { kind: "loaded" }>, "kind"> & { readonly kind: "adjusted_loaded" })
   | { readonly kind: "missing" }
   | { readonly kind: "invalid" }
   | { readonly kind: "storage_error" }
@@ -123,12 +135,15 @@ export function loadVersionedPlanBetaState(): PlanBetaState | null {
   return result.kind === "loaded" ? result.state : null
 }
 
-export function readPlanBetaStateFromStorage(): PlanBetaStateReadResult {
-  return readPlanBetaStateForAccount(localAccountScopeSnapshot())
+export function readPlanBetaStateFromStorage(
+  retained: readonly RetainedAdjustedPlanEvidence[] = RETAINED_ADJUSTED_PLAN_EVIDENCE,
+): PlanBetaStateReadResult {
+  return readPlanBetaStateForAccount(localAccountScopeSnapshot(), retained)
 }
 
 export function readPlanBetaStateForAccount(
   accountScope: string | null,
+  retained: readonly RetainedAdjustedPlanEvidence[] = RETAINED_ADJUSTED_PLAN_EVIDENCE,
 ): PlanBetaStateReadResult {
   if (typeof window === "undefined") return { kind: "storage_error" }
   const storageKey = accountScopedStorageKeyFor(PLAN_BETA_STORAGE_KEY, accountScope)
@@ -142,6 +157,10 @@ export function readPlanBetaStateForAccount(
 
   try {
     const json: unknown = JSON.parse(raw)
+    if (json !== null && typeof json === "object" && "version" in json && json.version === 4) {
+      const adjusted = readStoredAdjustedPlanState(json, retained)
+      return adjusted.kind === "loaded" ? { ...adjusted, kind: "adjusted_loaded" } : { kind: "invalid" }
+    }
     const state = parsePlanBetaState(json)
     return state === null ? { kind: "invalid" } : { kind: "loaded", state }
   } catch {
@@ -166,6 +185,10 @@ export function savePlanBetaState(
   try {
     previous = window.localStorage.getItem(storageKey)
     previousCaptured = true
+    // A stale legacy caller must not overwrite a newer adjusted-plan envelope.
+    if (isAdjustedStoredEnvelope(previous)) {
+      return { ok: false, code: "PLAN_STORAGE_WRITE_FAILED", rollbackComplete: true }
+    }
     const serialized = JSON.stringify(parsed.data)
     window.localStorage.setItem(storageKey, serialized)
     if (window.localStorage.getItem(storageKey) !== serialized) {
@@ -286,22 +309,6 @@ export function archiveAndClearActivePlan(state: PlanBetaState): PlanArchiveResu
     }
   }
 
-  const history: StoredPlanHistory = {
-    version: 4,
-    candidateId: state.activePlan.candidateId,
-    pairId: state.activePlan.pairId,
-    candidateKind: state.activePlan.candidateKind,
-    eventDistanceM: state.activePlan.eventDistanceM,
-    selectedDetailedTemplateRef: state.activePlan.selectedDetailedTemplateRef,
-    ...(state.periodization === undefined ? {} : { periodization: state.periodization }),
-    frameLengthDays: state.activePlan.frame.lengthDays,
-    progress: state.progress,
-    methodHistory: deriveStoredPlanMethodHistory({
-      sessions: state.activePlan.sessions,
-      progress: state.progress,
-    }),
-    archivedAt: new Date().toISOString(),
-  }
   let oldHistory: string | null = null
   let oldIntake: string | null = null
   let oldActive: string | null = null
@@ -314,9 +321,14 @@ export function archiveAndClearActivePlan(state: PlanBetaState): PlanArchiveResu
     oldHistory = window.localStorage.getItem(historyKey)
     oldIntake = window.sessionStorage.getItem(previousIntakeKey)
     oldActive = window.localStorage.getItem(activeKey)
+    if (isAdjustedStoredEnvelope(oldActive)) {
+      return { ok: false, code: "PLAN_ARCHIVE_WRITE_FAILED", rollbackComplete: true }
+    }
     snapshotsCaptured = true
-    const previous = loadPlanHistory()
-    const stagedHistory = JSON.stringify([history, ...previous].slice(0, 18))
+    const previous = readPlanHistory()
+    if (previous === null) throw new Error("Plan history is unavailable")
+    const history = planHistorySchema.parse(planHistorySnapshotContent(state, new Date().toISOString(), "MANUAL"))
+    const stagedHistory = JSON.stringify(planHistoryListSchema.parse([history, ...previous].slice(0, 18)))
     const stagedIntake = JSON.stringify(state.intake)
     window.localStorage.setItem(historyKey, stagedHistory)
     if (window.localStorage.getItem(historyKey) !== stagedHistory) {
@@ -424,7 +436,27 @@ export function loadPreviousContinuity(): PlanContinuityInput | undefined {
 }
 
 export function loadPlanMethodHistory(eventDistanceM?: number): readonly MethodHistoryEntry[] {
-  return Object.freeze(loadPlanHistory().flatMap(history => {
+  return loadPlanMethodHistorySnapshot(eventDistanceM).history
+}
+
+/** Scoped, read-only originals. Legacy summaries cannot reconstruct prescriptions. */
+export function readArchivedOriginalPlans() {
+  const rows = readPlanHistory()
+  if (rows === null) return { kind: "unavailable" as const }
+  return {
+    kind: "loaded" as const,
+    retainedPlans: rows.length,
+    missingOriginals: rows.filter(row => !("originalPlan" in row)).length,
+    plans: rows.flatMap(row => "originalPlan" in row ? [row.originalPlan] : []),
+  }
+}
+
+export function loadPlanMethodHistorySnapshot(eventDistanceM?: number,
+  retained: readonly RetainedAdjustedPlanEvidence[] = RETAINED_ADJUSTED_PLAN_EVIDENCE,
+) {
+  const loaded = readPlanHistory()
+  const rows = loaded ?? []
+  const history = Object.freeze(rows.flatMap(history => {
     if (eventDistanceM !== undefined && "eventDistanceM" in history && history.eventDistanceM !== eventDistanceM) return []
     if ("methodHistory" in history) return recommendationHistoryFromStored(history.methodHistory)
     if ("selectedDetailedTemplateRef" in history && history.selectedDetailedTemplateRef !== null) {
@@ -435,18 +467,53 @@ export function loadPlanMethodHistory(eventDistanceM?: number): readonly MethodH
     }
     return []
   }))
+  const archive = readAdjustedOriginalPlans(retained)
+  const active = archive.kind === "loaded" && archive.entries.length > 0 ? readPlanBetaStateFromStorage(retained) : null
+  const unreadableActive = active?.kind === "invalid" || active?.kind === "storage_error"
+  const activeId = active?.kind === "adjusted_loaded" ? active.state.selection.activePlan.candidateId
+    : active?.kind === "loaded" ? active.state.activePlan.candidateId : null
+  // Retaining an active original is not yet a completed past frame. Do not count
+  // its older progress snapshot, or a duplicate legacy row, as another exposure.
+  const legacyIds = new Set(rows.map(row => row.candidateId))
+  const adjusted = archive.kind === "loaded" && !unreadableActive
+    ? archive.entries.filter(row => row.state.selection.activePlan.candidateId !== activeId
+      && !legacyIds.has(row.state.selection.activePlan.candidateId)) : []
+  const matching = adjusted.filter(row => eventDistanceM === undefined
+    || row.state.selection.activePlan.eventDistanceM === eventDistanceM)
+  const adjustedHistory = matching.flatMap(row => recommendationHistoryFromAdjusted(row.state))
+  const baseCoverage = summarizePlanMethodCoverage(rows, eventDistanceM)
+  const dates = [baseCoverage.earliestArchive, baseCoverage.latestArchive,
+    ...matching.map(row => row.archivedAt)].filter((date): date is string => date !== null).sort()
+  const coverage = loaded === null || archive.kind !== "loaded" || unreadableActive ? null : Object.freeze({
+    ...baseCoverage, retainedPlans: baseCoverage.retainedPlans + adjusted.length,
+    matchingPlans: baseCoverage.matchingPlans + matching.length,
+    missingOutcomes: baseCoverage.missingOutcomes + matching.reduce((count, row) => count
+      + row.state.selection.activePlan.sessions.filter(session =>
+        (session.prescription.kind === "PACE_TARGET" || session.prescription.kind === "ADJUSTED_METHOD")
+        && !row.state.progress.some(item => item.sessionDay === session.day && item.sessionSlot === session.slot)).length, 0),
+    unmappedReferences: baseCoverage.unmappedReferences + matching.reduce((count, row) => count
+      + row.state.selection.activePlan.sessions.filter(session => session.prescription.kind === "PACE_TARGET"
+        && methodReferenceFromTemplate({ templateId: session.prescription.templateId,
+          version: session.prescription.templateVersion, fingerprint: session.prescription.templateContentFingerprint }) === null).length, 0),
+    earliestArchive: dates[0] ?? null, latestArchive: dates.at(-1) ?? null,
+  })
+  return Object.freeze({ history: Object.freeze([...history, ...adjustedHistory]), coverage })
 }
 
 function loadPlanHistory(): readonly StoredPlanHistory[] {
-  if (typeof window === "undefined") return []
+  return readPlanHistory() ?? []
+}
+
+function readPlanHistory(): readonly StoredPlanHistory[] | null {
+  if (typeof window === "undefined") return null
   try {
     const raw = window.localStorage.getItem(accountScopedStorageKey(HISTORY_KEY))
     if (raw === null) return []
     const json: unknown = JSON.parse(raw)
     const parsed = planHistoryListSchema.safeParse(json)
-    return parsed.success ? parsed.data : []
+    return parsed.success ? parsed.data : null
   } catch {
-    return []
+    return null
   }
 }
 
