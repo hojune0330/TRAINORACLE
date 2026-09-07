@@ -34,6 +34,7 @@ import { saveSelectedMultiAdjustedSuccessorV3 } from "./multi-adjusted-plan-succ
 import { MultiAdjustedPlanApplyReviewV3 } from "../screens/plan-beta/MultiAdjustedPlanApplyReviewV3"
 import { MultiAdjustedPlanEditFlowV3 } from "../screens/plan-beta/MultiAdjustedPlanEditFlowV3"
 import { stageMultiAdjustmentV3 } from "./stage-multi-adjustment-v3"
+import { matchingMultiAdjustmentEntryV3 } from "../screens/plan-beta/multi-adjustment-entry-v3"
 
 const dialogShow = Object.getOwnPropertyDescriptor(HTMLDialogElement.prototype, "showModal")
 const dialogClose = Object.getOwnPropertyDescriptor(HTMLDialogElement.prototype, "close")
@@ -116,6 +117,27 @@ function storageFixture(supplied?: Extract<ReturnType<typeof generatePlanFromDra
   return { request, locks, isCurrentDraft: () => true,
     readReview: () => ({ preparations: inputs, rpeBindings: bindings, policies: [policy], retained }) }
 }
+
+it("routes only the exact generated candidate and every matching MAIN into the multi editor", () => {
+  const input = storageFixture()
+  const entry = { seed: input.request, readReview: input.readReview, locks: input.locks, readReviewForEdits: input.readReview }
+  const context = { generated: input.request.generated, gate: input.request.gate, intake: input.request.intake,
+    athleteEvidence: input.request.athleteEvidence, currentCheck: input.request.currentCheck,
+    candidateId: input.request.preparations[0]!.candidate.candidateId, startDate: "2026-09-08" }
+  const match = (value = entry, requested = context) => matchingMultiAdjustmentEntryV3(() => value, requested)
+  expect(match()).toBe(entry)
+  expect(match(entry, { ...context, candidateId: "UNKNOWN" })).toBeNull()
+  expect(match(entry, { ...context, startDate: "2026-09-09" })).toBeNull()
+  expect(match({ ...entry, seed: { ...entry.seed, preparations: [] } })).toBeNull()
+  expect(match({ ...entry, seed: { ...entry.seed, preparations: entry.seed.preparations.map((p, i) =>
+    i === 1 ? { ...p, startDate: "2026-09-09" } : p) } })).toBeNull()
+  const altered = { ...entry.seed, preparations: entry.seed.preparations.map((p, i) =>
+    i === 1 ? { ...p, candidate: { ...p.candidate, candidateId: "OTHER" } } : p) }
+  expect(match({ ...entry, seed: altered })).toBeNull()
+  expect(matchingMultiAdjustmentEntryV3(() => { throw Error("UNAVAILABLE") }, context)).toBeNull()
+  expect(matchingMultiAdjustmentEntryV3(undefined, context)).toBeNull()
+  expect(localStorage.getItem(activePlanBetaStorageKey())).toBeNull()
+})
 
 it("writes and independently reads a real multi-slot V6 plan, replaying the same unprogressed selection", async () => {
   const input = storageFixture(), result = await saveSelectedMultiAdjustedPlanV6(input)
@@ -297,6 +319,53 @@ async function successorStorageFixture() {
   return { previous: previous.state, input: { ...next, expectedPredecessorFingerprint: previous.state.contentFingerprint,
     readReview: () => ({ ...review, retained }) }, retained, later }
 }
+
+it("opens the next cycle from the schedule and saves through candidate, multi edit, and final confirmation", async () => {
+  const f = await successorStorageFixture(), before = localStorage.getItem(activePlanBetaStorageKey())
+  const resolver = vi.fn(() => ({ seed: f.input.request, readReview: f.input.readReview, locks: f.input.locks,
+    readReviewForEdits: f.input.readReview }))
+  render(React.createElement(PlanBeta, { readMultiAdjustedEvidenceV3: () => f.retained, multiAdjustmentResolverV3: resolver }))
+  fireEvent.click(screen.getByRole("button", { name: "다음 훈련 주기 준비" }))
+  expect(screen.getByRole("button", { name: "다음 계획 비교하기" })).toBeDisabled()
+  fireEvent.click(screen.getByRole("radio", { name: "알고 있는 통증이나 이상이 없어요" }))
+  fireEvent.click(screen.getByRole("button", { name: "다음 계획 비교하기" }))
+  expect(screen.getByRole("heading", { name: "다음 계획을 비교해 주세요" })).toBeTruthy()
+  expect(localStorage.getItem(activePlanBetaStorageKey())).toBe(before)
+  fireEvent.click(screen.getAllByRole("button", { name: /구성 확인$/ })[0]!)
+  expect(resolver).toHaveBeenCalledOnce()
+  expect(screen.getByRole("heading", { name: "주요 훈련을 하나씩 확인해 주세요" })).toBeTruthy()
+  fireEvent.click(screen.getByRole("button", { name: "전체 확인으로" }))
+  expect(localStorage.getItem(activePlanBetaStorageKey())).toBe(before)
+  await act(async () => { fireEvent.click(screen.getByRole("button", { name: "이 구성으로 계획 저장" })) })
+  expect(screen.getByRole("heading", { name: "내 훈련 일정" })).toBeTruthy()
+  const current = readPlanBetaStateFromStorage([], [], f.retained)
+  expect(current).toMatchObject({ kind: "multi_adjusted_v3_loaded", state: { selection: {
+    continuation: { predecessorFingerprint: f.previous.contentFingerprint } } } })
+  expect(localStorage.getItem(activePlanBetaStorageKey())).not.toBe(before)
+  expect(readMultiAdjustedOriginalPlansV3(f.retained)).toMatchObject({ kind: "loaded", entries: [{ state: f.previous }] })
+})
+
+it.each(["missing-provider", "invalid-provider", "review-required"])("preserves the current schedule when the next UI has %s", async scenario => {
+  const f = await successorStorageFixture(), before = localStorage.getItem(activePlanBetaStorageKey())
+  render(React.createElement(PlanBeta, { readMultiAdjustedEvidenceV3: () => f.retained,
+    multiAdjustmentResolverV3: scenario === "missing-provider" ? undefined : () => null }))
+  fireEvent.click(screen.getByRole("button", { name: "다음 훈련 주기 준비" }))
+  fireEvent.click(screen.getByRole("radio", { name: scenario === "review-required"
+    ? "통증·이상이 있거나 잘 모르겠어요" : "알고 있는 통증이나 이상이 없어요" }))
+  fireEvent.click(screen.getByRole("button", { name: "다음 계획 비교하기" }))
+  if (scenario === "missing-provider") {
+    for (const button of screen.getAllByRole("button", { name: /구성 확인$/ })) expect(button).toBeDisabled()
+  } else if (scenario === "invalid-provider") {
+    fireEvent.click(screen.getAllByRole("button", { name: /구성 확인$/ })[0]!)
+    expect(screen.getByRole("alert")).toHaveTextContent("훈련 구성과 근거를 확인하지 못했어요")
+  } else {
+    expect(screen.queryByRole("heading", { name: "다음 계획을 비교해 주세요" })).toBeNull()
+    expect(screen.getByRole("alert")).toBeTruthy()
+  }
+  expect(localStorage.getItem(activePlanBetaStorageKey())).toBe(before)
+  fireEvent.click(screen.getByRole("button", { name: "현재 일정으로" }))
+  expect(screen.getByRole("heading", { name: "내 훈련 일정" })).toBeTruthy()
+})
 
 it("archives the actual predecessor before saving a multi-plan successor and preserves both readable originals", async () => {
   const f = await successorStorageFixture()

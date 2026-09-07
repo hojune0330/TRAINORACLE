@@ -4,7 +4,7 @@
 doc_id: trainoracle-session-method-selection-and-adjustment
 spec_id: SESSION_METHOD_SELECTION_AND_ADJUSTMENT_CONTRACT
 title: TrainOracle Session Method Selection And Adjustment Contract
-version: "0.59"
+version: "0.60"
 round: RT1_OWNER_APPROVED_IMPLEMENTATION_DIRECTION
 status: ACTIVE_IMPLEMENTATION_CONTRACT
 product_direction: OWNER_APPROVED_IMPLEMENTATION_DIRECTION
@@ -1757,5 +1757,23 @@ REVIEWED_MULTI_SUCCESSOR_V3_TRANSACTION으로 원본 보관/현재 근거 검토
 변경안으로 복원한다. 이를 기준 구성으로 조용히 대체하지 않는다. 검토가 만료되거나
 목록에서 빠진 경우 안내하고 적용을 비활성화한다. 초기 선택이 열린 뒤 바뀌면
 현재 편집을 무효화한다. 재개 후 추가 변경 없이 취소하면 버리기 확인을 반복하지 않는다.
+
+### 21.40 실제 후보에서 다중 편집으로 진입
+
+다중 편집 진입점은 생성 결과, 선수 입력, 사용 근거, 안전 확인 및 시작일을 현재
+후보와 대조한다. 모든 preparation이 같은 선택 후보와 시작일을 가리켜야 하며,
+빈 preparation 또는 공급자 오류는 편집 진입 불가로 처리한다. 진입 가능 여부의
+판정 자체는 계획을 저장하거나 훈련 구성을 승인하지 않는다. 기존 단일 편집과
+공존하되 유효한 다중 편집 진입점이 있으면 이를 우선한다. 실제 운영 공급자 및
+검토 자료 등록과 브라우저 전체 흐름 검증은 별도 완료 조건으로 유지한다.
+
+### 21.41 다중 후속 주기의 화면 경계
+
+현재 일정에서 다음 시작일/현재 몸 상태/사용할 기록을 명시적으로 선택한다. 실제
+저장된 이전 계획을 대조해 후속 후보를 생성하며 비교/편집 중 기존 일정은 유지한다.
+다중 진입 검사를 통과한 후보만 주소별 편집과 전체 확인으로 연결한다. 최종 저장은
+후속 transaction을 사용하고 이전 원본 보관 및 계보 전진을 확인한 뒤 일정으로 돌아간다.
+미기록을 완료로 간주하지 않으며 근거 미제공/불일치/몸 상태 검토 필요 시 저장하지 않는다.
+합성 자료 기반 화면 통합 시험은 운영 구성 승인이나 모바일 브라우저 검수를 대체하지 않는다.
 
 [DRAFT_COMPLETE]

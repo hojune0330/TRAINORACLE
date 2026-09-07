@@ -13,11 +13,12 @@ import { todayISO } from "../../domain/journal-store"
 import "./AdjustedPlanSchedule.css"
 
 type Loaded = Extract<ReturnType<typeof readStoredMultiAdjustedPlanV6>, { kind: "loaded" }>
-export function MultiAdjustedPlanScheduleV3({ loaded, readEvidence, onStoredChange, onWritePlannedSessionLog, returnToSession, onImportPlan }: {
+export function MultiAdjustedPlanScheduleV3({ loaded, readEvidence, onStoredChange, onWritePlannedSessionLog, returnToSession, onImportPlan, onPrepareNext }: {
   readonly loaded: Loaded; readonly readEvidence: () => readonly RetainedMultiAdjustedEvidenceV3[];
   readonly onStoredChange: () => void; readonly onWritePlannedSessionLog?: (draft: PlannedSessionLogDraft) => void;
   readonly returnToSession?: PlannedSessionLogDraft["link"];
   readonly onImportPlan?: () => void;
+  readonly onPrepareNext?: () => void;
 }) {
   const plan = loaded.state.selection, start = plan.intake.startDate ?? plan.generatedAt.slice(0, 10)
   const days = [...new Set(plan.activePlan.sessions.map(s => s.day))].sort((a, b) => a - b)
@@ -64,7 +65,8 @@ export function MultiAdjustedPlanScheduleV3({ loaded, readEvidence, onStoredChan
       </section>
     })}
     {error && <p role="alert">{error}</p>}
-    <details><summary>저장과 이용 안내</summary><p>현재 이 기기에 저장된 계획이에요. 서버 보관과 다음 주기 연결은 준비 중이에요.</p>
+    {onPrepareNext && <button type="button" disabled={saving} onClick={onPrepareNext}><RefreshCw size={18} aria-hidden="true" />다음 훈련 주기 준비</button>}
+    <details><summary>저장과 이용 안내</summary><p>현재 이 기기에 저장된 계획이에요. 서버 보관은 준비 중이에요.</p>
       <p>개인 보관 파일에는 훈련 계획과 진행 상태, 페이스 계산에 사용한 기록이 포함될 수 있어요. 메모는 포함하지 않아요. 다른 사람에게 공유하지 마세요.</p>
       <button type="button" onClick={() => {
         let url: string | undefined

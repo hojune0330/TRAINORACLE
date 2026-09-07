@@ -74,6 +74,9 @@ import type { RetainedAdjustedPlanEvidenceV3 } from "../domain/selected-adjusted
 import { AdjustedPlanNextFlowV3 } from "./plan-beta/AdjustedPlanNextFlowV3"
 import { matchingAdjustmentEntryV3, type PlanAdjustmentResolverV3, type AdjustmentEntryV3 } from "./plan-beta/adjustment-entry-v3"
 import { AdjustedPlanEditFlowV3 } from "./plan-beta/AdjustedPlanEditFlowV3"
+import { MultiAdjustedPlanEditFlowV3 } from "./plan-beta/MultiAdjustedPlanEditFlowV3"
+import { MultiAdjustedPlanNextFlowV3 } from "./plan-beta/MultiAdjustedPlanNextFlowV3"
+import { matchingMultiAdjustmentEntryV3, type PlanMultiAdjustmentResolverV3, type MultiAdjustmentEditorEntryV3 } from "./plan-beta/multi-adjustment-entry-v3"
 const readOperatingV3Evidence = () => RETAINED_ADJUSTED_PLAN_EVIDENCE_V3
 const readOperatingMultiV3Evidence = () => RETAINED_MULTI_ADJUSTED_EVIDENCE_V3
 
@@ -127,9 +130,15 @@ export function PlanBeta(props: Omit<React.ComponentProps<typeof LegacyPlanBeta>
     window.addEventListener("storage", onStorage)
     return () => { unsubscribe(); window.removeEventListener("storage", onStorage) }
   }, [readCurrent])
+  if (read.kind === "multi_adjusted_v3_loaded" && nextOpen && !importOpen) return <MultiAdjustedPlanNextFlowV3
+    key={`${localAccountScopeSnapshot()}:${read.state.contentFingerprint}`}
+    loaded={read} resolver={props.multiAdjustmentResolverV3} readEvidence={readMultiV3Evidence}
+    onBack={() => { setNextOpen(false); setRead(readCurrent()) }}
+    onSaved={() => { setNextOpen(false); setRead(readCurrent()) }} />
   if (read.kind === "multi_adjusted_v3_loaded" && !importOpen) return <MultiAdjustedPlanScheduleV3
     key={`${localAccountScopeSnapshot()}:${read.state.selection.contentFingerprint}`}
     loaded={{ ...read, kind: "loaded" }} readEvidence={readMultiV3Evidence} onStoredChange={() => setRead(readCurrent())} onImportPlan={() => setImportOpen(true)}
+    onPrepareNext={() => { setRead(readCurrent()); setNextOpen(true) }}
     returnToSession={props.returnToSession} onWritePlannedSessionLog={props.onWritePlannedSessionLog === undefined ? undefined : draft => {
       const current = readCurrent()
       if (current.kind !== "multi_adjusted_v3_loaded" || current.state.contentFingerprint !== read.state.contentFingerprint) {
@@ -197,6 +206,7 @@ function LegacyPlanBeta({
   returnToSession,
   adjustmentResolver,
   adjustmentResolverV3,
+  multiAdjustmentResolverV3,
   onAdjustedStored,
 }: {
   readonly onWriteLog?: (entryType?: JournalEntryType) => void
@@ -205,10 +215,12 @@ function LegacyPlanBeta({
   readonly returnToSession?: PlannedSessionLogDraft["link"]
   readonly adjustmentResolver?: PlanAdjustmentResolver
   readonly adjustmentResolverV3?: PlanAdjustmentResolverV3
+  readonly multiAdjustmentResolverV3?: PlanMultiAdjustmentResolverV3
   readonly onAdjustedStored: () => void
 }) {
   const [adjusting, setAdjusting] = React.useState<{ entry: AdjustmentEntry; revision: number } | null>(null)
   const [adjustingV3, setAdjustingV3] = React.useState<{ entry: AdjustmentEntryV3; revision: number } | null>(null)
+  const [adjustingMultiV3, setAdjustingMultiV3] = React.useState<{ entry: MultiAdjustmentEditorEntryV3; revision: number } | null>(null)
   const [stored, setStored] = React.useState<PlanBetaState | null>(
     () => loadPlanBetaState(),
   )
@@ -585,6 +597,9 @@ function LegacyPlanBeta({
     )
   }
 
+  if (adjustingMultiV3 !== null) return <MultiAdjustedPlanEditFlowV3 {...adjustingMultiV3.entry}
+    isCurrentDraft={() => draftRevision.current === adjustingMultiV3.revision}
+    onCancel={() => setAdjustingMultiV3(null)} onSaved={() => { setAdjustingMultiV3(null); onAdjustedStored() }} />
   if (adjustingV3 !== null) return <AdjustedPlanEditFlowV3 {...adjustingV3.entry}
     isCurrentDraft={() => draftRevision.current === adjustingV3.revision}
     onCancel={() => setAdjustingV3(null)} onSaved={() => { setAdjustingV3(null); onAdjustedStored() }} />
@@ -594,11 +609,16 @@ function LegacyPlanBeta({
 
   if (generated !== null && gate !== null && generatedIntake !== null && generatedEvidence !== null) {
     const adjustmentActions: Record<string, () => void> = {}
-    if ((adjustmentResolver !== undefined || adjustmentResolverV3 !== undefined) && currentCheck !== null && !recordConfirmationPending) {
+    if ((adjustmentResolver !== undefined || adjustmentResolverV3 !== undefined || multiAdjustmentResolverV3 !== undefined) && currentCheck !== null && !recordConfirmationPending) {
       for (const candidate of generated.candidates) {
         try {
         const context = { generated, gate, intake: generatedIntake, athleteEvidence: generatedEvidence,
           currentCheck, candidateId: candidate.candidateId, startDate: candidateStartDate }
+        const multiEntry = matchingMultiAdjustmentEntryV3(multiAdjustmentResolverV3, context)
+        if (multiEntry) {
+          adjustmentActions[candidate.candidateId] = () => setAdjustingMultiV3({ entry: multiEntry, revision: draftRevision.current })
+          continue
+        }
         const entryV3 = matchingAdjustmentEntryV3(adjustmentResolverV3, context)
         if (entryV3) {
           adjustmentActions[candidate.candidateId] = () => setAdjustingV3({ entry: entryV3, revision: draftRevision.current })
