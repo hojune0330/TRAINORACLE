@@ -76,6 +76,7 @@ import { matchingAdjustmentEntryV3, type PlanAdjustmentResolverV3, type Adjustme
 import { AdjustedPlanEditFlowV3 } from "./plan-beta/AdjustedPlanEditFlowV3"
 import { MultiAdjustedPlanEditFlowV3 } from "./plan-beta/MultiAdjustedPlanEditFlowV3"
 import { MultiAdjustedPlanNextFlowV3 } from "./plan-beta/MultiAdjustedPlanNextFlowV3"
+import { MultiPlanCloudControlsV3 } from "./plan-beta/MultiPlanCloudControlsV3"
 import { matchingMultiAdjustmentEntryV3, type PlanMultiAdjustmentResolverV3, type MultiAdjustmentEditorEntryV3 } from "./plan-beta/multi-adjustment-entry-v3"
 const readOperatingV3Evidence = () => RETAINED_ADJUSTED_PLAN_EVIDENCE_V3
 const readOperatingMultiV3Evidence = () => RETAINED_MULTI_ADJUSTED_EVIDENCE_V3
@@ -108,6 +109,7 @@ export function PlanBeta(props: Omit<React.ComponentProps<typeof LegacyPlanBeta>
   readonly readAdjustedEvidence?: React.ComponentProps<typeof AdjustedPlanNextFlow>["readEvidence"]
   readonly readAdjustedEvidenceV3?: () => readonly RetainedAdjustedPlanEvidenceV3[]
   readonly readMultiAdjustedEvidenceV3?: () => readonly RetainedMultiAdjustedEvidenceV3[]
+  readonly readMultiRestoreReviewV3?: React.ComponentProps<typeof MultiPlanCloudControlsV3>["readRestoreReview"]
   readonly adjustmentResolverV3?: PlanAdjustmentResolverV3
 }) {
   const readEvidence = props.readAdjustedEvidence ?? readOperatingAdjustedEvidence
@@ -196,6 +198,8 @@ export function PlanBeta(props: Omit<React.ComponentProps<typeof LegacyPlanBeta>
     <button type="button" onClick={() => setRead(readCurrent())}>다시 확인</button>
   </section>
   return <><LegacyPlanBeta key={revision} {...props} onAdjustedStored={() => setRead(readCurrent())} />
+    {read.kind === "missing" && <MultiPlanCloudControlsV3 fingerprint={null} readEvidence={readMultiV3Evidence}
+      readRestoreReview={props.readMultiRestoreReviewV3} onCurrentRestored={() => setRead(readCurrent())} />}
     <button className="plan-file-import" type="button" onClick={() => setImportOpen(true)}>개인 계획 파일 불러오기</button></>
 }
 
