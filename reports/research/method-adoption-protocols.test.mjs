@@ -1,6 +1,6 @@
 import test from "node:test"
 import assert from "node:assert/strict"
-import { METHOD_ADOPTION_PROTOCOLS as protocols, METHOD_ADOPTION_VARIANTS as variants, expandProposal, summarizeProposal } from "./method-adoption-protocols.mjs"
+import { METHOD_ADOPTION_PROTOCOLS as protocols, METHOD_ADOPTION_VARIANTS as variants, expandProposal, summarizeProposal, assembleProposalSession } from "./method-adoption-protocols.mjs"
 
 const get = id => [...protocols, ...variants].find(p => p.id === id)
 const summary = id => summarizeProposal(get(id))
@@ -101,4 +101,32 @@ test("owner notation 2x(10x400m) r60 R180 totals 20 reps, 8000m and 1260s", () =
   assert.equal(s.totalSeconds, null)
   // Structural arithmetic only: this fixture is not added to the proposal catalog.
   assert.equal(protocols.some(row => row.id === p.id), false)
+})
+test("support proposal has explicit final transition and exact elapsed time", () => {
+  const session = assembleProposalSession(get("P-LT-B"))
+  assert.equal(session.warmup.reduce((sum, s) => sum + s.value, 0), 1160)
+  assert.equal(session.warmup.at(-1).value, 60)
+  assert.equal(session.cooldown[0].value, 600)
+  assert.equal(session.supportSeconds, 1760)
+  assert.equal(session.totalSeconds, 3020)
+  assert.equal(session.applicabilityReviewed, false)
+  assert.equal(session.executionAuthority, "NONE")
+  assert.deepEqual(session.main, expandProposal(get("P-LT-B")))
+})
+test("BASE REC OFF do not acquire a second warmup or extra workout", () => {
+  for (const id of ["P-BASE-C", "P-BASE-B", "P-REC-W", "P-OFF"]) {
+    const session = assembleProposalSession(get(id))
+    assert.equal(session.supportSeconds, 0)
+    assert.deepEqual(session.warmup, [])
+    assert.deepEqual(session.cooldown, [])
+    assert.equal(session.supportRef, null)
+    assert.equal(session.totalSeconds, summary(id).totalSeconds)
+  }
+})
+test("distance main never becomes a made-up whole-session duration", () => {
+  const session = assembleProposalSession(get("P-ATP-F"))
+  assert.equal(session.supportSeconds, 1760)
+  assert.equal(session.totalSeconds, null)
+  session.warmup[0].value = 1
+  assert.equal(assembleProposalSession(get("P-ATP-F")).warmup[0].value, 900)
 })

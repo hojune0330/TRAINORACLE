@@ -95,3 +95,34 @@ export const METHOD_ADOPTION_VARIANTS = [
   ...[4, 5].map(reps => ({ ...base("P-ATP-A"), id: `P-ATP-A-${reps}`, parentId: "P-ATP-A", reps })),
   { ...base("P-RHYTHM-400"), id: "P-RHYTHM-400-2X6", parentId: "P-RHYTHM-400", sets: 2, reps: 6, setRest: time(180, "EASY_RUN") },
 ]
+
+export const MAIN_SUPPORT_PROPOSAL = {
+  id: "P-SUPPORT-MAIN-01", version: "0.1", status: "OWNER_ADOPTION_PENDING",
+  executionAuthority: "NONE",
+  warmup: [
+    { ...time(900, "EASY_RUN"), cue: "RPE 2-3" },
+    ...Array.from({ length: 4 }, (_, index) => [
+      { ...time(20, "BUILDUP"), cue: "PROGRESSIVE_NOT_ALL_OUT" },
+      { ...time(index === 3 ? 60 : 40, "WALK"), cue: "WALK_OR_JOG" },
+    ]).flat(),
+  ],
+  cooldown: [{ ...time(600, "EASY_RUN"), cue: "RPE 1-2" }],
+}
+
+export function assembleProposalSession(p) {
+  const main = expandProposal(p)
+  const summary = summarizeProposal(p)
+  // Source conditions, population and frame placement remain separate review gates.
+  const supported = ["LT", "VO2", "ATP-PC", "GLY", "MIX"].includes(p.family)
+  const support = supported ? structuredClone(MAIN_SUPPORT_PROPOSAL) : null
+  const warmup = support?.warmup ?? []
+  const cooldown = support?.cooldown ?? []
+  const supportSeconds = [...warmup, ...cooldown].reduce((sum, s) => sum + s.value, 0)
+  return {
+    id: p.id, executionAuthority: "NONE", supportRef: support ? { id: support.id, version: support.version } : null,
+    supportPolicy: supported ? "PROPOSED_SEPARATE_SUPPORT" : "NO_ADDITIONAL_SUPPORT",
+    warmup, main, cooldown, supportSeconds,
+    totalSeconds: summary.totalSeconds === null ? null : summary.totalSeconds + supportSeconds,
+    applicabilityReviewed: false,
+  }
+}
