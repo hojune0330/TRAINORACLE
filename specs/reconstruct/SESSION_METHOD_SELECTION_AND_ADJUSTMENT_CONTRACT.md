@@ -4,7 +4,7 @@
 doc_id: trainoracle-session-method-selection-and-adjustment
 spec_id: SESSION_METHOD_SELECTION_AND_ADJUSTMENT_CONTRACT
 title: TrainOracle Session Method Selection And Adjustment Contract
-version: "0.13"
+version: "0.14"
 round: RT1_OWNER_APPROVED_IMPLEMENTATION_DIRECTION
 status: ACTIVE_IMPLEMENTATION_CONTRACT
 product_direction: OWNER_APPROVED_IMPLEMENTATION_DIRECTION
@@ -989,5 +989,21 @@ data. The initial adjusted storage path remains unavailable to users until its o
 adoption and UI flow are complete. Progress recording, adjusted archives/next-frame
 continuity, cloud compatibility and complete browser journeys require separate
 implementation evidence; the partial storage/journal path does not close these gates.
+
+### 20.1 Explicit adjusted progress
+
+Record completion/rest/skipping/pain as an explicit user outcome, not a measured
+distance, duration, pace or inferred adherence. Preserve the immutable selected
+prescription and its reasons. Validate the exact day/slot and current whole-envelope
+fingerprint under the same account-scoped mutation lock. Do not mark a REST session
+as completed exercise. A pain check-in cannot be erased through these outcome
+buttons; separate reviewed safety handling remains required. Recording an outcome
+does not grant execution or next-cycle adaptation authority.
+
+Read back written bytes and roll back only the transaction's own bytes on failure.
+Account change, stale content or absent lock rejects without a success display.
+Progress updates must preserve the displayed date and must not create journal
+measurements or send private notes. Full archive and next-cycle integration remain
+separate gates; this outcome recorder does not imply their completion.
 
 [DRAFT_COMPLETE]

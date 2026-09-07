@@ -25,3 +25,20 @@
   gap: 8px;
   min-height: 44px;
 }
+.adjusted-plan-schedule [role="group"] {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-block: 12px;
+}
+.adjusted-plan-schedule [role="group"] button {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.adjusted-plan-schedule [role="group"] button[aria-pressed="true"] {
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}

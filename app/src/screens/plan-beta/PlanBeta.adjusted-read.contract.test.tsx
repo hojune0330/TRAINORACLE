@@ -15,6 +15,12 @@ vi.mock("../../domain/plan-beta-store", async importOriginal => {
   const original = await importOriginal<typeof import("../../domain/plan-beta-store")>()
   return { ...original, readPlanBetaStateFromStorage: () => original.readPlanBetaStateFromStorage(context.retained) }
 })
+vi.mock("../../domain/adjusted-plan-progress", async importOriginal => {
+  const original = await importOriginal<typeof import("../../domain/adjusted-plan-progress")>()
+  return { ...original, saveAdjustedPlanProgress: (input: Parameters<typeof original.saveAdjustedPlanProgress>[0]) =>
+    original.saveAdjustedPlanProgress({ ...input, retained: context.retained,
+      locks: { request: async (_n, _o, callback) => callback({}) } }) }
+})
 beforeEach(() => { localStorage.clear(); sessionStorage.clear(); setActiveLocalAccount(null); vi.useFakeTimers(); vi.setSystemTime(TODAY) })
 afterEach(() => { cleanup(); vi.restoreAllMocks(); vi.useRealTimers(); context.retained = [] })
 async function save() {
@@ -71,4 +77,17 @@ it("rechecks storage on journal click even without a storage event", async () =>
   fireEvent.click(screen.getAllByRole("button", { name: "이 훈련 일지 쓰기" })[0]!)
   expect(onWrite).not.toHaveBeenCalled()
   expect(screen.getByRole("alert")).toBeVisible()
+})
+it("records an explicit outcome from PlanBeta without moving the selected date or changing the prescription", async () => {
+  const { link, saved } = await save()
+  render(<PlanBeta returnToSession={link.link} />)
+  const group = screen.getByRole("group", { name: "오전 진행 기록" })
+  const complete = within(group).getByRole("button", { name: "완료" })
+  await act(async () => { fireEvent.click(complete) })
+  expect(screen.getByText(/400m당 약/)).toBeVisible()
+  expect(within(screen.getByRole("group", { name: "오전 진행 기록" })).getByRole("button", { name: "완료" }))
+    .toHaveAttribute("aria-pressed", "true")
+  const stored = JSON.parse(localStorage.getItem(activePlanBetaStorageKey())!)
+  expect(stored.selection).toEqual(saved.state.selection)
+  expect(stored.progress).toEqual([{ sessionDay: link.link.sessionDay, sessionSlot: "AM", state: "COMPLETED" }])
 })

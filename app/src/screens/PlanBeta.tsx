@@ -87,7 +87,8 @@ export function PlanBeta(props: React.ComponentProps<typeof LegacyPlanBeta>) {
     return () => { unsubscribe(); window.removeEventListener("storage", refresh) }
   }, [])
   if (read.kind === "adjusted_loaded") return <AdjustedPlanSchedule
-    key={`${localAccountScopeSnapshot()}:${read.state.contentFingerprint}`}
+    key={`${localAccountScopeSnapshot()}:${read.state.selection.contentFingerprint}`}
+    onStoredChange={() => setRead(readPlanBetaStateFromStorage())}
     loaded={read} onWritePlannedSessionLog={props.onWritePlannedSessionLog === undefined ? undefined : draft => {
       const current = readPlanBetaStateFromStorage()
       if (current.kind !== "adjusted_loaded" || current.state.contentFingerprint !== read.state.contentFingerprint) {

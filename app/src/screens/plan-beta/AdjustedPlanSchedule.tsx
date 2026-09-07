@@ -1,18 +1,20 @@
 import React from "react"
-import { PenLine } from "lucide-react"
+import { PenLine, Check, CircleMinus, RefreshCw, HeartPulse } from "lucide-react"
 import type { PlanBetaStateReadResult } from "../../domain/plan-beta-store"
 import { createPlannedSessionLogDraft, resolveCurrentPlannedSession, type PlannedSessionLogDraft } from "../../domain/planned-session-link"
 import { isoShift } from "../../domain/dates"
 import { todayISO } from "../../domain/journal-store"
-import { ENERGY_INTENT_LABELS } from "./labels"
+import { ENERGY_INTENT_LABELS, PROGRESS_LABELS } from "./labels"
+import { saveAdjustedPlanProgress } from "../../domain/adjusted-plan-progress"
 import { TermHelp } from "../../components/TermHelp"
 import { AdjustedJournalOriginalPlan } from "../journal/AdjustedJournalOriginalPlan"
 import "./AdjustedPlanSchedule.css"
 
-export function AdjustedPlanSchedule({ loaded, onWritePlannedSessionLog, returnToSession }: {
+export function AdjustedPlanSchedule({ loaded, onWritePlannedSessionLog, returnToSession, onStoredChange }: {
   readonly loaded: Extract<PlanBetaStateReadResult, { kind: "adjusted_loaded" }>
   readonly onWritePlannedSessionLog?: (draft: PlannedSessionLogDraft) => void
   readonly returnToSession?: PlannedSessionLogDraft["link"]
+  readonly onStoredChange: () => void
 }) {
   const plan = loaded.state.selection
   const start = plan.intake.startDate ?? plan.generatedAt.slice(0, 10)
@@ -22,6 +24,7 @@ export function AdjustedPlanSchedule({ loaded, onWritePlannedSessionLog, returnT
     return linked?.day ?? days.find(value => isoShift(start, value - 1) === todayISO()) ?? days[0]!
   })
   const [error, setError] = React.useState<string | null>(null)
+  const [saving, setSaving] = React.useState(false)
   const date = isoShift(start, day - 1)
   return <section className="plan-active adjusted-plan-schedule" aria-labelledby="adjusted-plan-title">
     <h1 id="adjusted-plan-title">내 훈련 일정</h1>
@@ -34,10 +37,28 @@ export function AdjustedPlanSchedule({ loaded, onWritePlannedSessionLog, returnT
     {plan.activePlan.sessions.filter(session => session.day === day)
       .sort((a, b) => a.slot.localeCompare(b.slot)).map(session => {
       const label = ENERGY_INTENT_LABELS[session.plannedEnergyIntent]
+      const recorded = loaded.state.progress.find(item => item.sessionDay === day && item.sessionSlot === session.slot)
       return <section key={session.slot} aria-label={`${session.slot === "AM" ? "오전" : "오후"} 훈련`}>
         <h3>{session.slot === "AM" ? "오전" : "오후"} · {session.role === "REST" ? "휴식" : label.title}</h3>
         <TermHelp term={label.term} />
         <AdjustedJournalOriginalPlan session={session} explanation={loaded.explanation} context="plan" />
+        <p role="status">{recorded === undefined ? "아직 진행 기록이 없어요." : PROGRESS_LABELS[recorded.state]}</p>
+        <div role="group" aria-label={`${session.slot === "AM" ? "오전" : "오후"} 진행 기록`}>
+          {([{ state: "COMPLETED", Icon: Check }, { state: "RESTED", Icon: CircleMinus },
+            { state: "SKIPPED", Icon: RefreshCw }, { state: "PAIN_CHECKIN", Icon: HeartPulse }] as const)
+            .filter(item => session.role !== "REST" || item.state !== "COMPLETED").map(({ state, Icon }) =>
+              <button type="button" key={state} disabled={saving} aria-pressed={recorded?.state === state}
+                onClick={async () => {
+                  setSaving(true); setError(null)
+                  const result = await saveAdjustedPlanProgress({ expectedFingerprint: loaded.state.contentFingerprint,
+                    progress: { sessionDay: day, sessionSlot: session.slot, state } })
+                  setSaving(false)
+                  if (result.kind === "saved") onStoredChange()
+                  else setError(result.code === "PAIN_REVIEW_REQUIRED"
+                    ? "통증 확인 기록은 완료나 휴식으로 바꾸지 않아요. 몸 상태를 먼저 확인해 주세요."
+                    : "진행 기록을 저장하지 못했어요. 계획을 다시 열어 현재 상태를 확인해 주세요.")
+                }}><Icon size={16} aria-hidden="true" />{PROGRESS_LABELS[state]}</button>)}
+        </div>
         {onWritePlannedSessionLog !== undefined && <button type="button" onClick={() => {
           const draft = createPlannedSessionLogDraft(plan, session, new Date().toISOString())
           if (draft === null) { setError("이 훈련의 연결 정보를 확인하지 못했어요. 일지는 열지 않았어요."); return }
