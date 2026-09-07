@@ -8,6 +8,7 @@ import { JournalOriginalPlan } from "../screens/journal/JournalOriginalPlan"
 import { saveEntry, loadEntries } from "./journal-store"
 import { MEMO_PURPOSE, type PostSessionEntry } from "./journal-schema"
 import { createPlannedSessionLogDraft } from "./planned-session-link"
+import { readAdjustedOriginalPlansV3, retainAdjustedOriginalPlanV3, ADJUSTED_PLAN_ARCHIVE_V3_KEY, parseAdjustedOriginalArchiveV3 } from "./adjusted-plan-archive-v3"
 import { sequenceV3ContentIdentity } from "@impl/prescription/sequence-v3-comparison"
 import { adjustedMethodV3FixtureWithCandidate } from "./adjusted-method-resolution-v3.test-fixtures"
 import { resolveAdjustedCandidateScope } from "./adjusted-plan-candidate"
@@ -205,11 +206,13 @@ it("links a real journal to V3 and renders its original without copying planned 
   const slot = saved.state.selection.activePlan.sessions.find(s => s.prescription.kind === "ADJUSTED_METHOD_V3")!
   const draft = createPlannedSessionLogDraft(saved.state.selection, slot, TODAY.toISOString())!
   const onWrite = vi.fn()
+  vi.spyOn(mutationLocks, "getPlanMutationLockManager").mockReturnValue(input.locks!)
   const view = render(React.createElement(PlanBeta, { readAdjustedEvidenceV3: () => [retained],
     returnToSession: draft.link, onWritePlannedSessionLog: onWrite }))
-  fireEvent.click(within(screen.getByRole("region", { name: `${slot.slot === "AM" ? "오전" : "오후"} 훈련` }))
-    .getByRole("button", { name: "이 훈련 일지 쓰기" }))
+  await act(async () => { fireEvent.click(within(screen.getByRole("region", { name: `${slot.slot === "AM" ? "오전" : "오후"} 훈련` }))
+    .getByRole("button", { name: "이 훈련 일지 쓰기" })) })
   expect(onWrite).toHaveBeenCalledWith(draft)
+  expect(readAdjustedOriginalPlansV3([retained], TODAY)).toMatchObject({ kind: "loaded", entries: [{ state: saved.state }] })
   expect(Object.keys(draft).sort()).toEqual(["date", "link"])
   view.unmount()
   const entry: PostSessionEntry = { id: "synthetic-v3-journal", kind: "post-session", date: draft.date,
@@ -222,6 +225,8 @@ it("links a real journal to V3 and renders its original without copying planned 
   expect(loaded.distanceKm).toBe("")
   const originalRead = originalPlans.readJournalOriginalPlan
   expect(originalRead(loaded, [], [retained])).toMatchObject({ kind: "matched_adjusted_v3", session: slot })
+  localStorage.removeItem(activePlanBetaStorageKey())
+  expect(originalRead(loaded, [], [retained])).toMatchObject({ kind: "matched_adjusted_v3", source: "ARCHIVED", session: slot })
   vi.spyOn(originalPlans, "readJournalOriginalPlan").mockImplementation(e => originalRead(e, [], [retained]))
   const getter = vi.fn(() => "PRIVATE-NOTE-NOT-ANALYSIS")
   Object.defineProperty(loaded, "memo", { enumerable: true, get: getter })
@@ -234,4 +239,32 @@ it("links a real journal to V3 and renders its original without copying planned 
   expect(screen.queryByText("PRIVATE-NOTE-NOT-ANALYSIS")).toBeNull()
   act(() => setActiveLocalAccount("other"))
   expect(screen.queryByText(/200m당 약/)).toBeNull()
+})
+it("does not archive stale state and rejects corrupt or unsupported retained originals", async () => {
+  const { input, retained } = storeInput()
+  const saved = await saveSelectedAdjustedPlanV3(input)
+  if (saved.kind !== "saved") throw Error(saved.code)
+  expect(await retainAdjustedOriginalPlanV3("stale", { retained: [retained], locks: input.locks })).toMatchObject({ code: "STALE_BASE" })
+  expect(localStorage.getItem(ADJUSTED_PLAN_ARCHIVE_V3_KEY)).toBeNull()
+  expect(await retainAdjustedOriginalPlanV3(saved.state.contentFingerprint, { retained: [retained], locks: input.locks })).toMatchObject({ kind: "retained" })
+  const raw = localStorage.getItem(ADJUSTED_PLAN_ARCHIVE_V3_KEY)!
+  expect(await retainAdjustedOriginalPlanV3(saved.state.contentFingerprint, { retained: [retained], locks: input.locks })).toMatchObject({ kind: "retained" })
+  expect(localStorage.getItem(ADJUSTED_PLAN_ARCHIVE_V3_KEY)).toBe(raw)
+  expect(parseAdjustedOriginalArchiveV3(raw, [], TODAY).kind).toBe("invalid")
+  const changed = JSON.parse(raw)
+  changed.entries[0].state.progress = [{ sessionDay: 999, sessionSlot: "AM", state: "COMPLETED" }]
+  expect(parseAdjustedOriginalArchiveV3(JSON.stringify(changed), [retained], TODAY).kind).toBe("invalid")
+})
+it("does not open linked journal when preserving the original fails", async () => {
+  const { input, retained } = storeInput()
+  const saved = await saveSelectedAdjustedPlanV3(input)
+  if (saved.kind !== "saved") throw Error(saved.code)
+  const slot = saved.state.selection.activePlan.sessions.find(s => s.prescription.kind === "ADJUSTED_METHOD_V3")!
+  const draft = createPlannedSessionLogDraft(saved.state.selection, slot, TODAY.toISOString())!, onWrite = vi.fn()
+  vi.spyOn(mutationLocks, "getPlanMutationLockManager").mockReturnValue(null)
+  render(React.createElement(PlanBeta, { readAdjustedEvidenceV3: () => [retained], returnToSession: draft.link, onWritePlannedSessionLog: onWrite }))
+  await act(async () => { fireEvent.click(within(screen.getByRole("region", { name: `${slot.slot === "AM" ? "오전" : "오후"} 훈련` }))
+    .getByRole("button", { name: "이 훈련 일지 쓰기" })) })
+  expect(onWrite).not.toHaveBeenCalled()
+  expect(screen.getByRole("alert")).toHaveTextContent("계획 원본을 보관하지 못했어요")
 })

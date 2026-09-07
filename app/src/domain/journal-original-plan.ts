@@ -5,7 +5,8 @@ import { readArchivedOriginalPlans, readPlanBetaStateFromStorage } from "./plan-
 import { RETAINED_ADJUSTED_PLAN_EVIDENCE, readStoredAdjustedPlanState } from "./adjusted-plan-storage-schema"
 import type { RetainedAdjustedPlanEvidence } from "./adjusted-plan-selection"
 import { readAdjustedOriginalPlans } from "./adjusted-plan-archive"
-import { RETAINED_ADJUSTED_PLAN_EVIDENCE_V3 } from "./adjusted-plan-storage-v5"
+import { RETAINED_ADJUSTED_PLAN_EVIDENCE_V3, readStoredAdjustedPlanStateV5 } from "./adjusted-plan-storage-v5"
+import { readAdjustedOriginalPlansV3 } from "./adjusted-plan-archive-v3"
 import type { RetainedAdjustedPlanEvidenceV3 } from "./selected-adjusted-plan-v3"
 
 /** Lookup only: no current-plan substitution, writes, activation or memo access. */
@@ -34,6 +35,14 @@ export function readJournalOriginalPlan(entry: PostSessionEntry,
     if (session !== null) return { kind: "matched" as const, source: "ACTIVE" as const, state: active.state, session }
   }
   const adjustedArchive = readAdjustedOriginalPlans(retained)
+  const v3Archive = readAdjustedOriginalPlansV3(retainedV3)
+  if (v3Archive.kind === "loaded") for (const item of v3Archive.entries) {
+    const session = resolveCurrentPlannedSession(item.state.selection, parsed.data)
+    if (session === null) continue
+    const checked = readStoredAdjustedPlanStateV5(item.state, retainedV3)
+    if (checked.kind === "loaded") return { kind: "matched_adjusted_v3" as const, source: "ARCHIVED" as const,
+      state: checked.state, session, explanation: checked.explanation }
+  }
   if (adjustedArchive.kind === "loaded") for (const item of adjustedArchive.entries) {
     const session = resolveCurrentPlannedSession(item.state.selection, parsed.data)
     if (session !== null) {

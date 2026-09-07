@@ -4,7 +4,7 @@
 doc_id: trainoracle-session-method-selection-and-adjustment
 spec_id: SESSION_METHOD_SELECTION_AND_ADJUSTMENT_CONTRACT
 title: TrainOracle Session Method Selection And Adjustment Contract
-version: "0.39"
+version: "0.40"
 round: RT1_OWNER_APPROVED_IMPLEMENTATION_DIRECTION
 status: ACTIVE_IMPLEMENTATION_CONTRACT
 product_direction: OWNER_APPROVED_IMPLEMENTATION_DIRECTION
@@ -1488,5 +1488,22 @@ reconstruction and exact link resolution. Reuse the schedule's prescription view
 so numbers, recovery order and explanation do not drift. Clear displayed data on
 account/storage change. Do not read memo while resolving or displaying the original.
 V3 archived-original lookup, backup and successor preservation remain separate work.
+
+### 21.19 V3 journal original retention
+
+Before opening a linked journal, retain the exact active version-5 plan in the
+account-scoped V3 original archive under the plan mutation lock. Verify the active
+fingerprint, account and both keys before/after writing. Failure leaves the active
+plan unchanged and does not open a journal claiming a preserved original.
+
+Archive entries require full independent reconstruction, unique selection identity
+and valid archive timestamps. Repeated retention is idempotent. Keep the existing
+18-entry bound but reject capacity overflow instead of silently removing an old
+journal's original. Archive expansion/export policy remains follow-up work.
+
+Journal lookup checks this archive after active-plan lookup and matches the exact
+immutable link. Guest and account-scoped archive keys are included in explicit
+device-data erasure without parsing private content. This does not implement the
+successor transaction or backup import/export yet.
 
 [DRAFT_COMPLETE]

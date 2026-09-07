@@ -8,6 +8,7 @@ import { createPlannedSessionLogDraft, resolveCurrentPlannedSession, type Planne
 import { ENERGY_INTENT_LABELS, PROGRESS_LABELS } from "./labels"
 import { isoShift } from "../../domain/dates"
 import { todayISO } from "../../domain/journal-store"
+import { retainAdjustedOriginalPlanV3 } from "../../domain/adjusted-plan-archive-v3"
 import "./AdjustedPlanSchedule.css"
 
 type Loaded = Extract<ReturnType<typeof readStoredAdjustedPlanStateV5>, { kind: "loaded" }>
@@ -47,10 +48,16 @@ export function AdjustedPlanScheduleV3({ loaded, readEvidence, onStoredChange, o
             } catch { setError("저장하지 못했어요. 현재 계획을 다시 확인해 주세요.") }
             finally { setSaving(false) }
           }}><Icon size={16} aria-hidden="true" />{PROGRESS_LABELS[state]}</button>)}</div>
-        {onWritePlannedSessionLog && <button type="button" onClick={() => {
+        {onWritePlannedSessionLog && <button type="button" disabled={saving} onClick={async () => {
           const draft = createPlannedSessionLogDraft(plan, session, new Date().toISOString())
           if (draft === null) { setError("훈련 연결 정보를 확인하지 못했어요. 일지는 열지 않았어요."); return }
-          onWritePlannedSessionLog(draft)
+          setSaving(true); setError(null)
+          try {
+            const result = await retainAdjustedOriginalPlanV3(loaded.state.contentFingerprint, { retained: readEvidence() })
+            if (result.kind !== "retained") { setError("계획 원본을 보관하지 못했어요. 연결된 일지는 아직 열지 않았어요."); return }
+            onWritePlannedSessionLog(draft)
+          } catch { setError("계획 원본을 보관하지 못했어요. 다시 시도해 주세요.") }
+          finally { setSaving(false) }
         }}><PenLine size={18} aria-hidden="true" />이 훈련 일지 쓰기</button>}
       </section>
     })}
