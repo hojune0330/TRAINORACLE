@@ -620,4 +620,22 @@ V.O2 2025 원문에서 단위를 직접 확인했다. VDOT 전체 공식 또는 
 남은 사항: I/전 종목 모델, 전체 프레임/구성/설명 최종 패킷, 실제 조정 선택·저장·
 일지·차기 주기 통합. M01~M16 및 모든 미완 항목 유지.
 
+## 29. 누적 변경 재시험과 Git 인계 (2026-09-07)
+
+검증 코드 HEAD: `f4c9ec7`. PR #319를 직접 조회해 open/draft/not merged 및 원격
+head `ea2e532`를 확인한 후, 누적 로컬 커밋을 같은 브랜치로 푸시했다.
+
+- 전체 app vitest: **292파일 / 2,616 PASS**, 실패 0, exit 0. 시작 15:12:27,
+  실행 290.54초. 기존 ErrorBoundary/feedback 복구 시험의 의도적 stderr와 구분했다.
+- `npm run build`: PASS. Pretendard 경로 해석과 500kB 초과 청크 경고는 남아 있다.
+- 기존 v2 authority validator: PASS, 기존 활성 템플릿 4개 및 쓰기 버전 3 유지.
+- 신규 브라우저 여정 시험·새 수치 활성화·병합·배포는 이번에 수행하지 않았다.
+- 이전 연구 인계 §8의 외부 전문가 전용 경로 해석은 후속 §10에서 새 오너 절차로
+  연결했다. 과거 원문·실패·검증 기록은 수정하지 않고 보존했다.
+
+실제 통합점 재확인: `saveSelectedPlanCandidate`는 기존 생성 후보/PlanBetaState만
+저장하고, `readJournalOriginalPlan`은 기존 active/archive 계획과 일지 링크만 읽는다.
+새 ADJUSTED_PLAN_CANDIDATE는 이 둘에 아직 연결되지 않았다. 검토 준비 및 녹색
+시험 결과로 그 간격을 완료 처리하지 않는다. 전체 목표와 M01~M16은 계속 진행 중이다.
+
 [DRAFT_COMPLETE]
