@@ -2,11 +2,13 @@
 
 ```yaml
 doc_id: trainoracle-session-method-release-and-remaining-2026-09-07
-status: BROWSER_REGRESSION_FIX_AWAITING_CI
+status: PR319_DEPLOYED_PR320_IMPLEMENTATION_IN_PROGRESS
 goal_complete: false
 pr: https://github.com/hojune0330/TRAINORACLE/pull/319
-verified_pushed_head: 0a1936f516a50250ce1a03406e48c8733b2ef82b
-verified_base_main: 985669328dbcc7738afc9f390c9c325769b8251c
+verified_deployed_main: 9585426645f013f9d7f9ed52070e509aa26ce8a4
+deployment_run: 34124267802
+followup_pr: https://github.com/hojune0330/TRAINORACLE/pull/320
+verified_followup_pushed_head: 1729da6
 new_operating_adjustment_policies: 0
 new_operating_main_placement_policies: 0
 owner_exact_packet_approval: NOT_REQUESTED_YET
@@ -15,16 +17,18 @@ canonical_promotion: false
 
 ## 1. 배포와 목표 완료는 다르다
 
-오너가 푸시·배포, 정확한 잔여 작업 보고, 계속 구현을 요청했다. 위 head를 원격에
-푸시했고 PR을 검토 가능 상태로 전환했다. 이 문서 작성 시점에는 CI 진행 중이며
-병합·공개 배포 완료를 주장하지 않는다. 첫 CI 브라우저 실패로 병합·배포를 멈추고
-실제 결함 두 가지를 수정했다. 마지막 실제 결과는 아래에 갱신한다.
+오너가 푸시·배포, 정확한 잔여 작업 보고, 계속 구현을 요청했다. PR #319는 브라우저
+결함 수정 후 병합됐고 위 main 커밋의 3개 검사 및 deploy-pages가 모두 SUCCESS다.
+공개 배포 영수증도 같은 sourceSha와 runId다. 375x667 Chromium 첫 화면에서 H1 표시,
+가로 넘침 없음, pageerror 0을 확인했다. PR #320 후속 구현은 별도이며 아직 미배포다.
 
 이번 범위에는 기존 선택·저장·일지 경로 개선과 새 V3 복합 처방의 구조·조정·근거·
 후보 계산 기반이 포함된다. 새 운영 승인 registry를 채우지는 않았다. 따라서 이
 PR을 배포해도 모든 종목의 두 후보/자유 조정이 즉시 공개되는 것은 아니다.
 
 ## 2. 남은 여섯 묶음
+
+아래 표와 M01~M16은 PR #319 출발점 기록으로 보존한다. 최신 진척은 §6이 우선한다.
 
 | 묶음 | 이미 있는 부분 | 실제로 마쳐야 할 부분 |
 |---|---|---|
@@ -82,5 +86,21 @@ PR을 배포해도 모든 종목의 두 후보/자유 조정이 즉시 공개되
 새 훈련 수치 승인을 대신하지 않는다. 외부 전문가 독립 승인을 지어내지 않는다.
 현재 승인 범위의 청소년·혼자 운동·하루 2회는 임의로 제거하지 않는다.
 메모 원문 접근/전송, 미기록의 0 변환, 자동 양·강도·빈도 증가는 추가하지 않는다.
+
+## 6. PR #320 최신 진척과 실제 잔여 관문
+
+- V3 전체 계획 검토, 명시적 선택, version 5 저장/읽기, 진행 상태 저장, 일정 화면을
+  구현했다. 운영 근거 registry는 비어 있어 합성 검토 근거로 시험한 상태다.
+- V3 일지 원본 연결·18개 원본 보관·개인 백업/가져오기와 화면 연결을 구현했다.
+  가져오기는 과거 보관함만 변경하며 현재 계획을 활성화하지 않는다.
+- V3 다음 주기 준비 문맥을 추가했다. 미기록과 기간 경과를 구분하고 자동 완료나
+  증량을 하지 않는다. 실제 후속 선택·저장 교체·화면은 아직 미완이다.
+- 이번 추가 검사: 기존/V3 연속 주기 2파일 33 PASS, 타입 PASS. 전체 CI와 새 V3
+  사용자 여정은 별도 관문이다. 앞선 검증 수치와 합산해 전체 통과로 표시하지 않는다.
+
+다음 순서: (1) V3 후속 선택/원본 보관/교체 (2) 편집 진입과 여러 MAIN 독립 선택
+(3) 정확한 근거·수치·조정 경계의 최종 승인 자료 및 승인 후 운영 등록
+(4) 서버 호환성과 장기 원본 정책 (5) 실제 종목·모바일·접근성 전체 여정 검수
+(6) 후속 PR 검수·병합·배포 확인. 어떤 단계도 이 문서로 완료 처리하지 않는다.
 
 [DRAFT_COMPLETE]

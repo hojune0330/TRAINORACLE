@@ -22,6 +22,8 @@ import { selectAdjustedPlanForActivationV3, readSelectedAdjustedPlanV3 } from ".
 import { saveSelectedAdjustedPlanV3, readStoredAdjustedPlanStateV5, encodeStoredAdjustedPlanStateV5 } from "./adjusted-plan-storage-v5"
 import { activePlanBetaStorageKey } from "./plan-beta-store"
 import { saveAdjustedPlanProgressV3 } from "./adjusted-plan-progress"
+import { prepareAdjustedNextFrameV3 } from "./adjusted-plan-continuity"
+import { isoShift } from "./dates"
 
 beforeEach(() => { localStorage.clear(); sessionStorage.clear(); setActiveLocalAccount(null); vi.useFakeTimers(); vi.setSystemTime(TODAY) })
 afterEach(() => { cleanup(); vi.restoreAllMocks(); vi.useRealTimers() })
@@ -92,6 +94,58 @@ function storeInput() {
     locks: { request: async (_name, _options, callback) => callback({}) } }
   return { ...f, input }
 }
+it("prepares V3 next-cycle history without changing the plan or treating missing outcomes as completed", async () => {
+  const { input, retained } = storeInput()
+  const saved = await saveSelectedAdjustedPlanV3(input)
+  if (saved.kind !== "saved") throw Error(saved.code)
+  const state = saved.state, start = state.selection.intake.startDate!
+  const request = { previous: state, expectedFingerprint: state.contentFingerprint,
+    nextStartDate: start, currentCheck: "NO_KNOWN_RISK" as const }
+  const before = localStorage.getItem(activePlanBetaStorageKey())
+  expect(prepareAdjustedNextFrameV3(request, [retained], new Date(`${start}T12:00:00`)))
+    .toMatchObject({ code: "INCOMPLETE_FRAME" })
+  const next = isoShift(start, Math.max(...state.selection.activePlan.sessions.map(s => s.day)))
+  const at = new Date(`${next}T12:00:00`)
+  const prepared = prepareAdjustedNextFrameV3({ ...request, nextStartDate: next }, [retained], at)
+  expect(prepared).toMatchObject({ kind: "prepared", context: {
+    completionBasis: "DISPLAYED_FRAME_ELAPSED", executionAuthority: "NONE", storageState: "NOT_SAVED",
+    predecessorFingerprint: state.contentFingerprint,
+    periodization: { programLineageId: state.selection.periodization.programLineageId, frameOrdinal: 2 },
+  } })
+  if (prepared.kind !== "prepared") throw Error(prepared.code)
+  expect(prepared.context.missingRequiredOutcomes).toBeGreaterThan(0)
+  expect(prepared.context.continuity.progressStateCounts.every(row => row.count === 0)).toBe(true)
+  expect(localStorage.getItem(activePlanBetaStorageKey())).toBe(before)
+  expect(prepareAdjustedNextFrameV3({ ...request, nextStartDate: next }, [], at)).toMatchObject({ code: "INVALID_STORED_PLAN" })
+  expect(prepareAdjustedNextFrameV3({ ...request, nextStartDate: next, expectedFingerprint: "stale" }, [retained], at))
+    .toMatchObject({ code: "STALE_BASE" })
+})
+it("preserves V3 explicit outcomes and pain holds across next-cycle preparation", () => {
+  const { request, policy, retained } = fixture()
+  const selected = selectAdjustedPlanForActivationV3(request, [policy], TODAY)
+  if (selected.kind !== "selected_adjusted") throw Error(selected.code)
+  const sessions = selected.state.activePlan.sessions.filter(s => s.role !== "REST")
+  const start = selected.state.intake.startDate!, at = new Date(`${start}T12:00:00`)
+  for (const pain of [false, true]) {
+    const progress = sessions.map((s, i) => ({ sessionDay: s.day, sessionSlot: s.slot,
+      state: pain && i === 0 ? "PAIN_CHECKIN" as const : "SKIPPED" as const }))
+    const encoded = encodeStoredAdjustedPlanStateV5(selected.state, progress, TODAY.toISOString(), [retained], at)
+    if (encoded.kind !== "encoded") throw Error("encode")
+    const context = { previous: encoded.state, expectedFingerprint: encoded.state.contentFingerprint,
+      nextStartDate: start, currentCheck: "NO_KNOWN_RISK" as const }
+    const result = prepareAdjustedNextFrameV3(context, [retained], at)
+    if (pain) expect(result).toMatchObject({ code: "ACTIVE_HOLD" })
+    else {
+      expect(result).toMatchObject({ kind: "prepared", context: { completionBasis: "EXPLICIT_OUTCOMES", missingRequiredOutcomes: 0 } })
+      if (result.kind === "prepared") expect(result.context.continuity.progressStateCounts.find(r => r.state === "SKIPPED")?.count).toBe(sessions.length)
+    }
+    expect(prepareAdjustedNextFrameV3({ ...context, currentCheck: "REVIEW_REQUIRED" }, [retained], at).kind).toBe("rejected")
+    const getter = vi.fn(() => "private")
+    expect(prepareAdjustedNextFrameV3(Object.defineProperty({ ...context }, "memo", { enumerable: true, get: getter }), [retained], at))
+      .toMatchObject({ code: "INVALID_CONTINUITY_INPUT" })
+    expect(getter).not.toHaveBeenCalled()
+  }
+})
 it("writes and reloads exact V3 bytes in the real active storage key and acknowledges identical replay", async () => {
   const { input, retained } = storeInput()
   const result = await saveSelectedAdjustedPlanV3(input)

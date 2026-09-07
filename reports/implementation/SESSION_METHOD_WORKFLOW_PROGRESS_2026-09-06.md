@@ -1498,4 +1498,21 @@ V3 active/원본 archive를 독립 근거로 검증하는 personal-backup.v3를 
 V3 suite 19 PASS. 기존 backup/import/화면 3파일 8 PASS, 타입·diff 검사 PASS.
 스펙 v0.41 반영. 서버 동기화, successor transaction 및 편집 진입은 계속 남았다.
 
+## 71. 공개 배포 확인·V3 다음 주기 준비 (2026-09-07)
+
+PR #319 main 9585426645f013f9d7f9ed52070e509aa26ce8a4의 실행 34124267802에서
+contract-tests/app-quality/app-browser/deploy-pages 모두 SUCCESS를 확인했다.
+공개 trainoracle-deploy-receipt.json의 sourceSha/runId도 일치한다. 375x667 공개
+첫 화면을 실제 Chromium으로 열어 H1 표시, 가로 넘침 없음, pageerror 0을 확인했다.
+이는 첫 화면 smoke이며 V3 전체 여정 검증이 아니다.
+
+후속 PR #320에 1729da6까지 푸시했다. V3 개인 원본 보관·백업/가져오기는 아직
+main 배포 범위가 아니다. V3 다음 주기 준비를 기존 판정 로직과 공유하도록 추가했다.
+독립 과거 근거·현재 지문·시작일·현재 위험·기존 통증 확인을 검사하고 누락과 수행을
+분리한다. 기간 경과는 완료를 생성하지 않는다. 계보 전진은 읽기 전용 문맥이다.
+
+기존 연속 주기와 V3 계약 2파일 33 PASS, 타입 검사 PASS. 스펙 v0.42.
+후속 계획 선택·원본 보관과 현재 계획 교체 transaction, 편집 진입, 여러 MAIN 독립
+선택, 운영 구성 최종 승인·등록, 서버 연결 및 전체 실제 여정 검수는 계속 남았다.
+
 [DRAFT_COMPLETE]

@@ -4,7 +4,7 @@
 doc_id: trainoracle-session-method-selection-and-adjustment
 spec_id: SESSION_METHOD_SELECTION_AND_ADJUSTMENT_CONTRACT
 title: TrainOracle Session Method Selection And Adjustment Contract
-version: "0.41"
+version: "0.42"
 round: RT1_OWNER_APPROVED_IMPLEMENTATION_DIRECTION
 status: ACTIVE_IMPLEMENTATION_CONTRACT
 product_direction: OWNER_APPROVED_IMPLEMENTATION_DIRECTION
@@ -1519,5 +1519,17 @@ Revalidate evidence inside the mutation lock. Preserve existing local originals 
 duplicate selection identity and never replace active-plan bytes. Reject over-capacity
 imports without eviction. Verify writes and roll back only this transaction's content.
 Imported originals support journal lookup but grant no execution or selection authority.
+
+## 21.21 V3 후속 주기 준비
+
+V3 저장 계획을 독립 보존 근거로 읽고, 현재 저장 지문·현재 안전 확인·시작일을
+검사한 뒤 표시된 세션의 수행 상태만 다음 주기 문맥으로 전달한다. 기존 형식과
+판정 로직은 공유하되 V3 문맥 지문은 별도 namespace를 사용한다.
+
+표시 기간이 지나도 미기록을 완료로 바꾸지 않는다. 누락 수와 기간 경과 근거를
+분리한다. 통증 확인은 현재 위험 없음 응답으로 해제하지 않는다. 계보는 한 단계만
+전진하며 이 준비 결과는 NONE / NOT_SAVED다. 준비 성공은 추천 증가, 후속 계획
+승인 또는 현재 계획 교체 권한이 아니다. 후속 선택·원본 보관·교체 transaction 및
+화면 연결은 별도 완료 관문으로 유지한다.
 
 [DRAFT_COMPLETE]
