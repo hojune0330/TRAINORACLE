@@ -3,7 +3,7 @@
 ```yaml
 doc_id: trainoracle-session-method-owner-adoption-packet-2026-09-07
 packet_id: TO-METHOD-ADOPTION-2026-09-07
-version: "0.11"
+version: "0.12"
 status: SOURCE_REVIEWED_PACKET_IN_PREPARATION
 review_process: TO-OWNER-TRAINING-REVIEW-ROUTE-2026-09-07
 owner_exact_packet_approval: NOT_REQUESTED_YET
@@ -569,5 +569,17 @@ P-VO2-2-5 감소안을 연구 참고 계산에 포함한다. 새 용량이나 �
 채택 근거 결속이 필요하며 이 가변 연구 함수를 실행 처방 공급자로 사용하지 않는다.
 
 연구 시험 23 PASS. 기존 승인/안전/개인기록 현재성 확인/전체 주기 검토는 유지한다.
+
+## 21. 참고 페이스의 출처와 입력 추적 구분
+
+연구 모델 v0.3은 VDOT 홈페이지를 공식 출처처럼 보이게 하는 source/sourceSection을
+제거하고 배경 참고로 분리한다. 산출식은 동일 종목 평균 페이스 산술이며, 이 값을
+시간형 고강도 반복의 참고로 제시하는 것은 제품 코칭 제안이다. VDOT의 검증된
+I 모델이나 논문이 이 배치 용량을 입증한 것으로 표시하지 않는다.
+
+결과에는 protocolId, JOG 회복 방식, 사용한 기록초/종목/입력 목적을 함께 남긴다.
+freshness 문자열은 호출자의 주장일 뿐 실제 기록 신원 검증이 아니므로
+verifiedRecordIdentity는 false다. 운영의 계정/원본 기록/현재성 검사를 대신하지 않는다.
+메모나 다른 선수 식별자는 입력/결과에 추가하지 않는다. 관련 시험 5 PASS.
 
 [DRAFT_COMPLETE]

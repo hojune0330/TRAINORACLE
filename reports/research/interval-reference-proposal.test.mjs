@@ -12,6 +12,12 @@ test("arbitrary and fractional seconds retain exact race arithmetic, not rounded
     assert.equal(r.measuredVo2maxPace, false)
     assert.equal(r.executionAuthority, "NONE")
     assert.equal(r.sourceConditionAssessment, "NOT_PERFORMED")
+    assert.equal(r.protocolId, input.protocolId)
+    assert.equal(r.recoveryMode, "JOG")
+    assert.equal(r.provenance.inputPerformanceSeconds, seconds)
+    assert.equal(r.provenance.verifiedRecordIdentity, false)
+    assert.equal(r.provenance.backgroundIsFormulaSource, false)
+    assert.equal(r.provenance.derivation, "SAME_EVENT_RACE_AVERAGE_ARITHMETIC")
   }
 })
 test("work and rest come from exact configuration, never the athlete pace", () => {

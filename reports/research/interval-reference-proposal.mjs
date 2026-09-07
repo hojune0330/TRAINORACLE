@@ -1,9 +1,12 @@
 import { METHOD_ADOPTION_PROTOCOLS, METHOD_ADOPTION_VARIANTS, expandProposal } from "./method-adoption-protocols.mjs"
 // A coaching fallback reference, not VDOT or an estimate of measured vVO2max.
 export const INTERVAL_REFERENCE_PROPOSAL = Object.freeze({
-  modelId: "TO-HARD-5K-RP-REFERENCE", version: "0.2",
-  status: "OWNER_ADOPTION_PENDING", source: "https://vdoto2.com/",
-  sourceSection: "Interval Pace",
+  modelId: "TO-HARD-5K-RP-REFERENCE", version: "0.3",
+  status: "OWNER_ADOPTION_PENDING",
+  derivation: "SAME_EVENT_RACE_AVERAGE_ARITHMETIC",
+  adoptionBasis: "PRODUCT_COACHING_PROPOSAL_NOT_VALIDATED_I_MODEL",
+  backgroundReference: "https://vdoto2.com/",
+  backgroundIsFormulaSource: false,
 })
 const supportedIds = new Set(["P-VO2-2", "P-VO2-3", "P-VO2-4", "P-VO2-2-4", "P-VO2-2-5"])
 function readPrescription(id) {
@@ -30,9 +33,19 @@ export function calculateIntervalReferenceProposal(input) {
   return {
     kind: "research_reference", executionAuthority: "NONE",
     modelId: INTERVAL_REFERENCE_PROPOSAL.modelId, modelVersion: INTERVAL_REFERENCE_PROPOSAL.version,
+    protocolId: input.protocolId,
+    provenance: {
+      derivation: INTERVAL_REFERENCE_PROPOSAL.derivation,
+      adoptionBasis: INTERVAL_REFERENCE_PROPOSAL.adoptionBasis,
+      backgroundIsFormulaSource: false,
+      inputEventDistanceM: 5000, inputPerformanceSeconds: input.performanceSeconds,
+      inputPurpose: input.purpose, freshnessClaim: input.freshness,
+      verifiedRecordIdentity: false,
+    },
     referenceKind: "CURRENT_5K_RACE_PACE_NOT_MEASURED_I",
     secondsPerKm, secondsPer400m,
     prescription: { ...prescription, finalRecoverySeconds: null },
+    recoveryMode: "JOG",
     paceChangesRecovery: false, measuredVo2maxPace: false,
     sourceConditionAssessment: "NOT_PERFORMED",
   }
