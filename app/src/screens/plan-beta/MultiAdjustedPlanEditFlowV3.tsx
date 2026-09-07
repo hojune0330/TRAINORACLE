@@ -11,6 +11,7 @@ import { PrescriptionAdjustmentEditorV3, type AdjustmentOrderedChoicesV3 } from 
 import { MultiAdjustedPlanApplyReviewV3, type MultiAdjustmentEntryV3 } from "./MultiAdjustedPlanApplyReviewV3"
 import { AdjustedPrescriptionV3 } from "./AdjustedPrescriptionV3"
 import { isoShift } from "../../domain/dates"
+import { JournalConfirmationDialog } from "../../components/JournalConfirmationDialog"
 
 const hash = (value: unknown) => canonicalJsonFingerprint("trainoracle.multi-edit-flow.v3", value)
 export function MultiAdjustedPlanEditFlowV3({ seed, readReview, locks, readReviewForEdits, orderedChoicesFor,
@@ -25,6 +26,7 @@ export function MultiAdjustedPlanEditFlowV3({ seed, readReview, locks, readRevie
   const [changes, setChanges] = React.useState<readonly AddressedAdjustmentV3[]>([])
   const [editing, setEditing] = React.useState<AddressedAdjustmentV3["address"] | null>(null)
   const [confirming, setConfirming] = React.useState(false)
+  const [discarding, setDiscarding] = React.useState(false)
   const current = () => isCurrentDraft() && hash(seed) === opened.identity && expectedPredecessorFingerprint === opened.predecessor
   const review = () => changes.length ? readReviewForEdits(request, changes) : readReview()
   if (confirming) return <MultiAdjustedPlanApplyReviewV3 seed={request} readReview={review} locks={locks}
@@ -56,7 +58,11 @@ export function MultiAdjustedPlanEditFlowV3({ seed, readReview, locks, readRevie
       }} />
   }
   return <section className="adjusted-next-flow">
-    <button type="button" onClick={onCancel}><ArrowLeft size={18} aria-hidden="true" />후보로 돌아가기</button>
+    {discarding && <JournalConfirmationDialog title="변경안을 버리고 돌아갈까요?"
+      description="이 화면에서 바꾼 구성만 없어져요. 저장된 현재 계획은 바뀌지 않아요."
+      confirmLabel="변경안 버리고 돌아가기" onCancel={() => setDiscarding(false)}
+      onConfirm={() => { setDiscarding(false); onCancel(); return true }} />}
+    <button type="button" onClick={() => changes.length ? setDiscarding(true) : onCancel()}><ArrowLeft size={18} aria-hidden="true" />후보로 돌아가기</button>
     <h1>주요 훈련을 하나씩 확인해 주세요</h1>
     <p role="status">{changes.length ? `변경한 주요 훈련 ${changes.length}개 · 아직 저장하지 않았어요.` : "아직 저장하지 않은 계획이에요."}</p>
     {prepared?.kind === "prepared" ? prepared.candidate.sessions.filter(s => prepared.candidate.changedSlots.some(c => c.day === s.day && c.slot === s.slot)).map(session => <section key={`${session.day}:${session.slot}`} aria-label="고른 주요 훈련">
