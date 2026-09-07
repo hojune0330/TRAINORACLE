@@ -65,6 +65,10 @@ import { matchingAdjustmentEntry } from "./plan-beta/adjustment-entry"
 import { AdjustedPlanNextFlow, readOperatingAdjustedEvidence } from "./plan-beta/AdjustedPlanNextFlow"
 import { exportAdjustedPlanBackup } from "../domain/adjusted-plan-backup"
 import { AdjustedPlanImport } from "./plan-beta/AdjustedPlanImport"
+import { AdjustedPlanScheduleV3 } from "./plan-beta/AdjustedPlanScheduleV3"
+import { RETAINED_ADJUSTED_PLAN_EVIDENCE_V3 } from "../domain/adjusted-plan-storage-v5"
+import type { RetainedAdjustedPlanEvidenceV3 } from "../domain/selected-adjusted-plan-v3"
+const readOperatingV3Evidence = () => RETAINED_ADJUSTED_PLAN_EVIDENCE_V3
 
 type AdjustmentEntry = Pick<React.ComponentProps<typeof AdjustedPlanEditFlow>, "seed" | "readReview" | "locks">
 export type PlanAdjustmentResolver = (context: {
@@ -92,9 +96,11 @@ const INTAKE_MOTION_ORDER: readonly IntakeStep[] = [
 
 export function PlanBeta(props: Omit<React.ComponentProps<typeof LegacyPlanBeta>, "onAdjustedStored"> & {
   readonly readAdjustedEvidence?: React.ComponentProps<typeof AdjustedPlanNextFlow>["readEvidence"]
+  readonly readAdjustedEvidenceV3?: () => readonly RetainedAdjustedPlanEvidenceV3[]
 }) {
   const readEvidence = props.readAdjustedEvidence ?? readOperatingAdjustedEvidence
-  const readCurrent = React.useCallback(() => readPlanBetaStateFromStorage(readEvidence()), [readEvidence])
+  const readV3Evidence = props.readAdjustedEvidenceV3 ?? readOperatingV3Evidence
+  const readCurrent = React.useCallback(() => readPlanBetaStateFromStorage(readEvidence(), readV3Evidence()), [readEvidence, readV3Evidence])
   const [read, setRead] = React.useState(readCurrent)
   const [nextOpen, setNextOpen] = React.useState(false)
   const [importOpen, setImportOpen] = React.useState(false)
@@ -111,6 +117,9 @@ export function PlanBeta(props: Omit<React.ComponentProps<typeof LegacyPlanBeta>
     window.addEventListener("storage", onStorage)
     return () => { unsubscribe(); window.removeEventListener("storage", onStorage) }
   }, [readCurrent])
+  if (read.kind === "adjusted_v3_loaded") return <AdjustedPlanScheduleV3
+    key={`${localAccountScopeSnapshot()}:${read.state.selection.contentFingerprint}`}
+    loaded={{ ...read, kind: "loaded" }} readEvidence={readV3Evidence} onStoredChange={() => setRead(readCurrent())} />
   if (importOpen) return <AdjustedPlanImport readEvidence={readEvidence}
     onBack={() => { setImportOpen(false); setRead(readCurrent()) }} />
   if (read.kind === "adjusted_loaded" && nextOpen) return <AdjustedPlanNextFlow

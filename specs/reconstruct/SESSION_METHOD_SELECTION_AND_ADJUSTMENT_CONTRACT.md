@@ -4,7 +4,7 @@
 doc_id: trainoracle-session-method-selection-and-adjustment
 spec_id: SESSION_METHOD_SELECTION_AND_ADJUSTMENT_CONTRACT
 title: TrainOracle Session Method Selection And Adjustment Contract
-version: "0.37"
+version: "0.38"
 round: RT1_OWNER_APPROVED_IMPLEMENTATION_DIRECTION
 status: ACTIVE_IMPLEMENTATION_CONTRACT
 product_direction: OWNER_APPROVED_IMPLEMENTATION_DIRECTION
@@ -1460,5 +1460,19 @@ not derive journal measurements from planned targets. Identical outcomes are
 idempotent. Revalidate stored content before writing, verify ownership after writing,
 and restore only this transaction's bytes on failure. A stale view cannot update
 newer progress. UI and journal routing must consume this version-aware transaction.
+
+### 21.17 V3 stored schedule route
+
+The account-aware reader dispatches envelope version 5 to the retained V3 evidence
+registry and returns adjusted_v3_loaded only after full reconstruction. Missing
+evidence or invalid bytes remain invalid, not a blank intake. PlanBeta renders a
+separate V3 schedule with both daily slots, actual ordered work/recovery nodes,
+stored record-derived target times, and bound explanation. Final recoveryAfter is
+shown once after the node's repetitions, including the last node in a phase.
+
+Progress buttons call the version-aware transaction and preserve selected day on
+refresh. Reopening restores persisted outcomes. Account change removes prior
+athlete values. This read/progress surface does not itself supply catalog approval,
+an editor entry, journal linkage, export or successor controls; these remain required.
 
 [DRAFT_COMPLETE]

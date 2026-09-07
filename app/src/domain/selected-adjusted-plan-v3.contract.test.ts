@@ -1,4 +1,8 @@
 import { beforeEach, afterEach, expect, it, vi } from "vitest"
+import React from "react"
+import { render, screen, fireEvent, act, cleanup, within } from "@testing-library/react"
+import { PlanBeta } from "../screens/PlanBeta"
+import * as mutationLocks from "./plan-mutation-lock"
 import { sequenceV3ContentIdentity } from "@impl/prescription/sequence-v3-comparison"
 import { adjustedMethodV3FixtureWithCandidate } from "./adjusted-method-resolution-v3.test-fixtures"
 import { resolveAdjustedCandidateScope } from "./adjusted-plan-candidate"
@@ -13,7 +17,7 @@ import { activePlanBetaStorageKey } from "./plan-beta-store"
 import { saveAdjustedPlanProgressV3 } from "./adjusted-plan-progress"
 
 beforeEach(() => { localStorage.clear(); sessionStorage.clear(); setActiveLocalAccount(null); vi.useFakeTimers(); vi.setSystemTime(TODAY) })
-afterEach(() => { vi.restoreAllMocks(); vi.useRealTimers() })
+afterEach(() => { cleanup(); vi.restoreAllMocks(); vi.useRealTimers() })
 function fixture() {
   const { candidate, resolution, generation } = adjustedMethodV3FixtureWithCandidate(undefined, undefined, undefined, TODAY.getTime())
   const slot = candidate.sessions.find(s => s.prescription.kind === "PACE_TARGET")!
@@ -161,4 +165,31 @@ it("rejects progress accessors before parsing them", async () => {
     "state", { enumerable: true, get: getter })
   expect(await saveAdjustedPlanProgressV3({ expectedFingerprint: "test", progress })).toMatchObject({ code: "INVALID_PROGRESS" })
   expect(getter).not.toHaveBeenCalled()
+})
+it("opens saved V3 in the real plan screen, records an outcome and restores it without changing targets", async () => {
+  const { input, retained } = storeInput()
+  const saved = await saveSelectedAdjustedPlanV3(input)
+  if (saved.kind !== "saved") throw Error(saved.code)
+  vi.spyOn(mutationLocks, "getPlanMutationLockManager").mockReturnValue(input.locks!)
+  const props = { readAdjustedEvidenceV3: () => [retained] }
+  const view = render(React.createElement(PlanBeta, props))
+  expect(screen.getByRole("heading", { name: "내 훈련 일정" })).toBeVisible()
+  const slot = saved.state.selection.activePlan.sessions.find(s => s.prescription.kind === "ADJUSTED_METHOD_V3")!
+  const start = new Date(`${saved.state.selection.intake.startDate}T12:00:00`)
+  start.setDate(start.getDate() + slot.day - 1)
+  const dateLabel = `${String(start.getMonth() + 1).padStart(2, "0")}/${String(start.getDate()).padStart(2, "0")}`
+  fireEvent.click(within(screen.getByRole("navigation", { name: "훈련 날짜" })).getByRole("button", { name: dateLabel }))
+  expect(screen.getByText(/200m당 약/)).toBeVisible()
+  expect(screen.getByText("걷기 · 100m")).toBeVisible()
+  const groupName = `${slot.slot === "AM" ? "오전" : "오후"} 진행 기록`
+  await act(async () => { fireEvent.click(within(screen.getByRole("group", { name: groupName })).getByRole("button", { name: "건너뜀" })) })
+  expect(within(screen.getByRole("group", { name: groupName })).getByRole("button", { name: "건너뜀" })).toHaveAttribute("aria-pressed", "true")
+  expect(screen.getByText(/200m당 약/)).toBeVisible()
+  view.unmount()
+  render(React.createElement(PlanBeta, props))
+  fireEvent.click(within(screen.getByRole("navigation", { name: "훈련 날짜" })).getByRole("button", { name: dateLabel }))
+  expect(within(screen.getByRole("group", { name: groupName })).getByRole("button", { name: "건너뜀" })).toHaveAttribute("aria-pressed", "true")
+  expect(screen.getByText(/200m당 약/)).toBeVisible()
+  act(() => setActiveLocalAccount("another"))
+  expect(screen.queryByText(/200m당 약/)).toBeNull()
 })
