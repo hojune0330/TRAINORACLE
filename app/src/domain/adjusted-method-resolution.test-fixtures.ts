@@ -6,7 +6,7 @@ import { readPlanMethodDefinition } from "./plan-method-definition"
 import { generatePlanFromDraft } from "./plan-beta-flow"
 import { draftFor, RUNTIME_CASES, saveCurrentRecord } from "./prescription-quality-matrix.test-fixtures"
 
-export function adjustedMethodResolutionFixture(event: typeof RUNTIME_CASES[number] = RUNTIME_CASES[3]!, work: SequenceWork = { kind: "distance", distanceM: 400, durationSeconds: null }, transform?: (sequence: PrescriptionSequence) => PrescriptionSequence) {
+export function adjustedMethodFixtureWithCandidate(event: typeof RUNTIME_CASES[number] = RUNTIME_CASES[3]!, work: SequenceWork = { kind: "distance", distanceM: 400, durationSeconds: null }, transform?: (sequence: PrescriptionSequence) => PrescriptionSequence) {
   const selectedRecordId = saveCurrentRecord(event.eventDistanceM, event.performanceSeconds + 0.137)
   const generated = generatePlanFromDraft(draftFor(event), "NO_KNOWN_RISK", { selectedRecordId })
   if (generated.kind !== "generated") throw Error("Expected generated original")
@@ -40,5 +40,9 @@ export function adjustedMethodResolutionFixture(event: typeof RUNTIME_CASES[numb
   const applied = applyAdjustmentDraft({ authority: offer.authority, draft: draft.draft, current: offer.current,
     contextKey: offer.contextKey, nowMs: 151, action: "USER_EXPLICIT" })
   if (applied.kind !== "applied") throw Error(applied.code)
-  return { original, source, receipt: applied.receipt }
+  return { candidate: generated.generated.candidates[0], resolution: { original, source, receipt: applied.receipt } }
+}
+
+export function adjustedMethodResolutionFixture(...args: Parameters<typeof adjustedMethodFixtureWithCandidate>) {
+  return adjustedMethodFixtureWithCandidate(...args).resolution
 }

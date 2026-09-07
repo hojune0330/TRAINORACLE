@@ -4,7 +4,7 @@
 doc_id: trainoracle-session-method-selection-and-adjustment
 spec_id: SESSION_METHOD_SELECTION_AND_ADJUSTMENT_CONTRACT
 title: TrainOracle Session Method Selection And Adjustment Contract
-version: "0.9"
+version: "0.10"
 round: RT1_OWNER_APPROVED_IMPLEMENTATION_DIRECTION
 status: ACTIVE_IMPLEMENTATION_CONTRACT
 product_direction: OWNER_APPROVED_IMPLEMENTATION_DIRECTION
@@ -637,6 +637,28 @@ the new representation before enabling it. Existing PACE_TARGET flat-schema
 validation must not be weakened to pretend time/mixed work is a flat distance set.
 Missing trusted old versions leave the raw stored content intact for recovery;
 they do not authorize guessed historical explanations or replacement prescriptions.
+
+### 10C. Staged Candidate Assembly
+
+Bind an adjusted snapshot to the exact current original candidate, selected plan
+start date and one existing detailed QUALITY day/AM/PM address. The candidate's
+owning schema and identity must validate first. Match the snapshot's original
+prescription to that exact session; a matching opaque slot ID alone is insufficient.
+Changed candidate content or calendar start invalidates the previous binding.
+
+Assemble a separate ADJUSTED_PLAN_CANDIDATE with NOT_ACCEPTED and selection
+authority NONE. Replace exactly the addressed session prescription with its
+ADJUSTED_METHOD snapshot while preserving role, purpose, all other sessions,
+frame and continuity. Do not add sessions, distribute an adjustment over other
+MAIN slots, edit a saved active plan, or reuse the original candidate ID as the
+new content's identity. The staged payload has its own content fingerprint.
+
+The staged representation is deliberately not accepted by the existing flat
+PlanCandidate storage/activation parser. Its next gate is complete current plan
+selection revalidation, including real applicability/placement/adjustment policy,
+record/account/safety context and exposure accounting. Assembly is not that gate.
+No UI control may claim the staged candidate was saved or started before its
+owning schema, execution, explanation, archive and journal consumers are connected.
 
 ## 11. Planned, Actual, Youth And Privacy
 
