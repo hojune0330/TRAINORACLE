@@ -4,7 +4,7 @@
 doc_id: trainoracle-session-method-selection-and-adjustment
 spec_id: SESSION_METHOD_SELECTION_AND_ADJUSTMENT_CONTRACT
 title: TrainOracle Session Method Selection And Adjustment Contract
-version: "0.15"
+version: "0.16"
 round: RT1_OWNER_APPROVED_IMPLEMENTATION_DIRECTION
 status: ACTIVE_IMPLEMENTATION_CONTRACT
 product_direction: OWNER_APPROVED_IMPLEMENTATION_DIRECTION
@@ -1019,5 +1019,21 @@ it does not substitute a current plan or match explanations by a label/ID alone.
 This retention API is not next-cycle selection, activation, cloud synchronization,
 or completed account-data lifecycle support. Those integrations remain required
 before operating activation. No memory of a review or copied hash grants authority.
+
+### 20.3 Adjusted method history for later recommendations
+
+After retained-evidence validation, historical adjusted sessions contribute the
+exact selected source configuration (family, configuration, version), not the
+pre-adjustment template. Keep COMPLETED as user-reported PERFORMED, unanswered as
+MISSING, and rest/skipping/pain as NOT_PERFORMED. None is a measured execution
+verification or a physiological diagnosis. Do not infer actual distance or pace.
+
+The existing next-candidate method-history reader consumes these records alongside
+legacy archives. Filter by account and event, exclude a retained copy of the active
+plan and duplicate candidate identities, and report the combined retained coverage.
+Unavailable retained evidence/corrupt archives make coverage unknown, not zero.
+Historical exposure is a recommendation input only; it cannot activate a method,
+increase workload, or replace current eligibility/safety review. This read path
+does not itself archive/clear an active plan or advance periodization lineage.
 
 [DRAFT_COMPLETE]

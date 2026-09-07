@@ -39,7 +39,9 @@ import type {
 import {
   methodReferenceFromTemplate,
   recommendationHistoryFromStored,
+  recommendationHistoryFromAdjusted,
 } from "./plan-method-history"
+import { readAdjustedOriginalPlans } from "./adjusted-plan-archive"
 import { planHistorySnapshotContent } from "./plan-history-snapshot-content"
 import { readStoredAdjustedPlanState, RETAINED_ADJUSTED_PLAN_EVIDENCE } from "./adjusted-plan-storage-schema"
 import type { RetainedAdjustedPlanEvidence } from "./adjusted-plan-selection"
@@ -449,7 +451,9 @@ export function readArchivedOriginalPlans() {
   }
 }
 
-export function loadPlanMethodHistorySnapshot(eventDistanceM?: number) {
+export function loadPlanMethodHistorySnapshot(eventDistanceM?: number,
+  retained: readonly RetainedAdjustedPlanEvidence[] = RETAINED_ADJUSTED_PLAN_EVIDENCE,
+) {
   const loaded = readPlanHistory()
   const rows = loaded ?? []
   const history = Object.freeze(rows.flatMap(history => {
@@ -463,7 +467,37 @@ export function loadPlanMethodHistorySnapshot(eventDistanceM?: number) {
     }
     return []
   }))
-  return Object.freeze({ history, coverage: loaded === null ? null : summarizePlanMethodCoverage(rows, eventDistanceM) })
+  const archive = readAdjustedOriginalPlans(retained)
+  const active = archive.kind === "loaded" && archive.entries.length > 0 ? readPlanBetaStateFromStorage(retained) : null
+  const unreadableActive = active?.kind === "invalid" || active?.kind === "storage_error"
+  const activeId = active?.kind === "adjusted_loaded" ? active.state.selection.activePlan.candidateId
+    : active?.kind === "loaded" ? active.state.activePlan.candidateId : null
+  // Retaining an active original is not yet a completed past frame. Do not count
+  // its older progress snapshot, or a duplicate legacy row, as another exposure.
+  const legacyIds = new Set(rows.map(row => row.candidateId))
+  const adjusted = archive.kind === "loaded" && !unreadableActive
+    ? archive.entries.filter(row => row.state.selection.activePlan.candidateId !== activeId
+      && !legacyIds.has(row.state.selection.activePlan.candidateId)) : []
+  const matching = adjusted.filter(row => eventDistanceM === undefined
+    || row.state.selection.activePlan.eventDistanceM === eventDistanceM)
+  const adjustedHistory = matching.flatMap(row => recommendationHistoryFromAdjusted(row.state))
+  const baseCoverage = summarizePlanMethodCoverage(rows, eventDistanceM)
+  const dates = [baseCoverage.earliestArchive, baseCoverage.latestArchive,
+    ...matching.map(row => row.archivedAt)].filter((date): date is string => date !== null).sort()
+  const coverage = loaded === null || archive.kind !== "loaded" || unreadableActive ? null : Object.freeze({
+    ...baseCoverage, retainedPlans: baseCoverage.retainedPlans + adjusted.length,
+    matchingPlans: baseCoverage.matchingPlans + matching.length,
+    missingOutcomes: baseCoverage.missingOutcomes + matching.reduce((count, row) => count
+      + row.state.selection.activePlan.sessions.filter(session =>
+        (session.prescription.kind === "PACE_TARGET" || session.prescription.kind === "ADJUSTED_METHOD")
+        && !row.state.progress.some(item => item.sessionDay === session.day && item.sessionSlot === session.slot)).length, 0),
+    unmappedReferences: baseCoverage.unmappedReferences + matching.reduce((count, row) => count
+      + row.state.selection.activePlan.sessions.filter(session => session.prescription.kind === "PACE_TARGET"
+        && methodReferenceFromTemplate({ templateId: session.prescription.templateId,
+          version: session.prescription.templateVersion, fingerprint: session.prescription.templateContentFingerprint }) === null).length, 0),
+    earliestArchive: dates[0] ?? null, latestArchive: dates.at(-1) ?? null,
+  })
+  return Object.freeze({ history: Object.freeze([...history, ...adjustedHistory]), coverage })
 }
 
 function loadPlanHistory(): readonly StoredPlanHistory[] {
