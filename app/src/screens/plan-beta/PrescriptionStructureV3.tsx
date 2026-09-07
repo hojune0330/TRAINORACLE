@@ -20,7 +20,12 @@ function Nodes({ nodes, phase }: { readonly nodes: readonly SequenceNodeV3[]; re
       {node.work.kind === "distance" ? node.work.distanceM === null ? "거리 미지정" : `${node.work.distanceM}m`
         : node.work.durationSeconds === null ? "운동 시간 미지정" : durationText(node.work.durationSeconds)}
       {node.target.kind === "RACE_PACE" && node.target.eventDistanceM !== null && ` · ${node.target.eventDistanceM}m 기준 페이스`}
+      {node.target.kind === "RACE_PACE" && node.target.eventDistanceM === null && " · 기준 경기 거리 미지정"}
       {node.target.kind === "EFFORT_GUIDANCE" && node.target.cue !== null && ` · ${effortText(node.target.cue)}`}
+      {node.target.kind === "EFFORT_GUIDANCE" && node.target.cue === null && " · 구체적인 강도 안내 미지정"}
+      {node.target.kind === "SPRINT_REFERENCE" && (node.target.reference === null
+        ? " · 단거리 수행 기준 미연결 · 목표 속도를 지정한 구간은 아니에요."
+        : " · 단거리 수행 기준 연결됨 · 이 표기만으로 목표 속도가 정해지지는 않아요.")}
     </p>}
     {node.repeatCount > 1 && node.recoveryBetweenRepeats.length > 0 && <div>
       <span>{node.kind === "group" && node.repeatUnit === "SET" ? "세트" : "반복"} 사이마다 아래 순서로 회복 · {node.repeatCount - 1}번</span>
