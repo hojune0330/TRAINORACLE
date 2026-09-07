@@ -4,7 +4,7 @@
 doc_id: trainoracle-session-method-selection-and-adjustment
 spec_id: SESSION_METHOD_SELECTION_AND_ADJUSTMENT_CONTRACT
 title: TrainOracle Session Method Selection And Adjustment Contract
-version: "0.17"
+version: "0.18"
 round: RT1_OWNER_APPROVED_IMPLEMENTATION_DIRECTION
 status: ACTIVE_IMPLEMENTATION_CONTRACT
 product_direction: OWNER_APPROVED_IMPLEMENTATION_DIRECTION
@@ -1055,5 +1055,20 @@ This preparation does not clear/archive/replace the active state or grant numeri
 adjustment/selection/execution authority. The later owning transaction must recheck
 the same predecessor, safety, target review and account under the mutation lock;
 it cannot save a previously prepared context as an approval receipt.
+
+### 20.5 Next-frame candidate generation
+
+Generate successor previews from the currently stored, retained-evidence-validated
+adjusted predecessor. Capture the account and whole-envelope fingerprint, prepare
+continuity with current safety, and re-read both after generation. A changed account
+or predecessor rejects the entire preview. A different event requires a new program
+decision instead of silently carrying the same lineage into that event.
+
+Use the existing candidate generator and prescription binding, replacing only its
+legacy prior-frame input with the verified predecessor outcome context. Keep the
+normal fresh-plan entry unchanged. Return a distinct next-frame draft result with
+its context and required successor-transaction gate; do not return a saved/active
+result or erase the old plan while comparing candidates. A successful preview is
+not a reviewed adjusted configuration or a durable successor activation.
 
 [DRAFT_COMPLETE]

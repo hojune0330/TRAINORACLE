@@ -959,4 +959,33 @@ reader가 초기 주기 전용으로 제한된 부분도 함께 확장해야 한
 단순 제거하면 계보 초기화 또는 검증 우회가 되므로 저장/읽기 시험을 함께 요구한다.
 운영 resolver/정확한 수치 최종 승인/서버·백업/전체 브라우저 검수도 여전히 남는다.
 
+## 43. 검증된 조정 원본으로 실제 다음 후보 생성 (2026-09-07)
+
+generateAdjustedNextFrameFromDraft를 기존 생성기에 연결했다. 현재 계정의 실제
+active v4를 읽고 예상 지문/안전/완료 조건을 확인한 다음, 기존 legacy 이력 대신
+검증된 이전 진행 횟수를 생성기에 전달한다. 생성 후 계정과 active 지문을 다시
+확인한다. 다른 종목은 같은 프로그램의 successor로 조용히 이어 붙이지 않는다.
+
+출력은 일반 generated 결과와 구분되는 adjusted_next_frame_draft이며 전용
+REVIEWED_SUCCESSOR_TRANSACTION을 요구한다. 이전 계획은 계속 active로 남는다.
+후보가 생성됐다고 이전 조정 구성이 다음 후보에 자동 채택되는 것은 아니다.
+조정 후보의 검토/비교 및 최종 저장·계보 reader 확장은 별도 남은 관문이다.
+
+신규 실제 생성 시험은 후보 2개에 이전 결과 횟수 전달, 무교체, 생성 도중 원본
+변경, active 없음/지문 변경/종목 변경을 검사했다. 전체 앱 vitest는 날짜 보정 전
+303파일 2688 PASS, 실패/보류 0, exit 0이었다. 로컬 JSON:
+app/test-results/adjusted-next-generation-review.json.
+
+추가 검토에서 다음 시작일이 있어도 formation은 오늘을 사용하고, completeIntake가
+시작일을 제거하는 경로를 발견했다. successor 경로의 내부 formation 기준일을
+예약 날짜로 전달하고 반환 intake에도 같은 날짜를 보존했다. 이 경로의 신규
+시험은 수정 도중 실제 실패했으며, 수정 후 관련 3파일 37 PASS 및 타입 검사 PASS.
+날짜 보정 뒤 전체 2688개를 다시 실행했다고 주장하지 않는다. 일반 신규 계획의
+기존 날짜 동작은 이번 변경에서 별도로 바꾸지 않았다.
+
+PR #319를 직접 조회해 Draft/open/미병합, base 9856693 및 변경 전 head ebe99fb를
+확인했다. 작업은 같은 브랜치로 계속하며 검수/병합/배포 완료를 주장하지 않는다.
+다음 작업은 이 distinct draft를 검토된 조정 후보 선택으로 넘기고, 보관/새 선택
+저장/전진 계보/과거 읽기를 하나의 successor 경로로 완성하는 것이다.
+
 [DRAFT_COMPLETE]

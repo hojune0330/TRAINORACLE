@@ -8,6 +8,10 @@ import { isoShift } from "./dates"
 import { TODAY } from "./prescription-quality-matrix.test-fixtures"
 import type { StoredPlanProgress } from "./plan-beta-schema"
 import type { AdjustedFixtureSchedule } from "./adjusted-method-resolution.test-fixtures"
+import { generateAdjustedNextFrameFromDraft } from "./plan-beta-flow"
+import { activePlanBetaStorageKey } from "./plan-beta-store"
+import { loadAthleteRecords } from "./athlete-records"
+import * as formation from "./plan-beta-formation"
 
 beforeEach(() => { localStorage.clear(); sessionStorage.clear(); setActiveLocalAccount(null); vi.useFakeTimers(); vi.setSystemTime(TODAY) })
 afterEach(() => { vi.restoreAllMocks(); vi.useRealTimers() })
@@ -104,4 +108,72 @@ it.each([7, 9, 10] as const)("keeps both slots and only the displayed %s-day pro
   const visible = sessions.filter(session => session.day <= requestedFrameLength)
   expect(result.context.continuity.progressStateCounts.reduce((sum, row) => sum + row.count, 0)).toBe(visible.length)
   expect(result.context.missingRequiredOutcomes).toBe(0)
+})
+
+it("generates real next candidates from the stored adjusted predecessor without replacing it", () => {
+  const { state, retained, at, sessions } = setup()
+  localStorage.setItem(activePlanBetaStorageKey(), JSON.stringify(state))
+  vi.setSystemTime(at)
+  const stored = localStorage.getItem(activePlanBetaStorageKey())
+  const record = loadAthleteRecords(at)[0]!
+  const result = generateAdjustedNextFrameFromDraft({ draft: state.selection.intake,
+    currentCheck: "NO_KNOWN_RISK", expectedPredecessorFingerprint: state.contentFingerprint,
+    prescriptionSelection: { selectedRecordId: record.id } }, retained)
+  expect(result.kind).toBe("adjusted_next_frame_draft")
+  if (result.kind !== "adjusted_next_frame_draft") throw Error(result.code)
+  expect(result.requiredNextGate).toBe("REVIEWED_SUCCESSOR_TRANSACTION")
+  expect(result.draft.generated.candidates).toHaveLength(2)
+  for (const candidate of result.draft.generated.candidates) {
+    expect(candidate.continuityContext).toEqual({
+      kind: "PREVIOUS_FRAME_CONTEXT_RETAINED", previousCandidateKind: state.selection.activePlan.candidateKind,
+      progressStateCounts: [{ state: "COMPLETED", count: 1 }, { state: "RESTED", count: 0 },
+        { state: "SKIPPED", count: sessions.length - 1 }, { state: "PAIN_CHECKIN", count: 0 }],
+    })
+  }
+  expect(result.continuity.periodization.frameOrdinal).toBe(2)
+  expect(localStorage.getItem(activePlanBetaStorageKey())).toBe(stored)
+})
+
+it("rejects next generation if the stored predecessor changes during generation", () => {
+  const { state, retained, at } = setup()
+  const key = activePlanBetaStorageKey()
+  localStorage.setItem(key, JSON.stringify(state))
+  vi.setSystemTime(at)
+  const read = Storage.prototype.getItem
+  let activeReads = 0
+  vi.spyOn(Storage.prototype, "getItem").mockImplementation(function(this: Storage, name) {
+    if (this === localStorage && name === key && ++activeReads > 1) return "{changed-by-another-tab"
+    return read.call(this, name)
+  })
+  expect(generateAdjustedNextFrameFromDraft({ draft: state.selection.intake, currentCheck: "NO_KNOWN_RISK",
+    expectedPredecessorFingerprint: state.contentFingerprint }, retained)).toMatchObject({ code: "STALE_BASE" })
+})
+
+it("does not generate a successor without the actual active predecessor or after changing event", () => {
+  const { state, retained, at } = setup()
+  vi.setSystemTime(at)
+  const input = { draft: state.selection.intake, currentCheck: "NO_KNOWN_RISK" as const,
+    expectedPredecessorFingerprint: state.contentFingerprint }
+  expect(generateAdjustedNextFrameFromDraft(input, retained)).toMatchObject({ code: "ADJUSTED_PREDECESSOR_UNAVAILABLE" })
+  localStorage.setItem(activePlanBetaStorageKey(), JSON.stringify(state))
+  expect(generateAdjustedNextFrameFromDraft({ ...input, expectedPredecessorFingerprint: "changed" }, retained))
+    .toMatchObject({ code: "STALE_BASE" })
+  expect(generateAdjustedNextFrameFromDraft({ ...input, draft: { ...input.draft, eventGroup: "MIDDLE_DISTANCE", eventDistanceM: 1500 } }, retained))
+    .toMatchObject({ code: "SUCCESSOR_EVENT_CHANGED" })
+})
+
+it("uses the requested future start date for the actual formation, not today's date", () => {
+  const { state, retained, at, start } = setup()
+  localStorage.setItem(activePlanBetaStorageKey(), JSON.stringify(state))
+  vi.setSystemTime(at)
+  const nextStart = isoShift(start, 3)
+  const create = vi.spyOn(formation, "createPlanFormation")
+  const result = generateAdjustedNextFrameFromDraft({ draft: { ...state.selection.intake, startDate: nextStart },
+    currentCheck: "NO_KNOWN_RISK", expectedPredecessorFingerprint: state.contentFingerprint }, retained)
+  expect(result.kind).toBe("adjusted_next_frame_draft")
+  expect(create).toHaveBeenCalledWith(nextStart, expect.any(Array), state.selection.intake.experienceBand)
+  if (result.kind === "adjusted_next_frame_draft") {
+    expect(result.draft.intake.startDate).toBe(nextStart)
+    expect(result.continuity.nextStartDate).toBe(nextStart)
+  }
 })
