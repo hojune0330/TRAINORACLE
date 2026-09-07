@@ -59,6 +59,15 @@ import { todayISO } from "../domain/journal-store"
 import { onLocalJournalScopeChange } from "../domain/account/local-journal-ownership"
 import { localAccountScopeSnapshot } from "../domain/account/local-account-scope"
 import { AdjustedPlanSchedule } from "./plan-beta/AdjustedPlanSchedule"
+import { AdjustedPlanEditFlow } from "./plan-beta/AdjustedPlanEditFlow"
+import { canonicalJsonFingerprint } from "@impl/plan-generator/candidate-identity"
+
+type AdjustmentEntry = Pick<React.ComponentProps<typeof AdjustedPlanEditFlow>, "seed" | "readReview" | "locks">
+export type PlanAdjustmentResolver = (context: {
+  generated: PlanGenerationSuccess; gate: SafetyGateDecision; intake: PlanBetaIntake;
+  athleteEvidence: PlanAthleteEvidence; currentCheck: PlanCurrentCheck;
+  candidateId: string; startDate: string;
+}) => AdjustmentEntry | null
 
 const AthleteRecords = React.lazy(() => import("./AthleteRecords").then(module => ({ default: module.AthleteRecords })))
 
@@ -77,7 +86,7 @@ const INTAKE_MOTION_ORDER: readonly IntakeStep[] = [
   "race-date",
 ]
 
-export function PlanBeta(props: React.ComponentProps<typeof LegacyPlanBeta>) {
+export function PlanBeta(props: Omit<React.ComponentProps<typeof LegacyPlanBeta>, "onAdjustedStored">) {
   const [read, setRead] = React.useState(readPlanBetaStateFromStorage)
   const [revision, setRevision] = React.useState(0)
   React.useEffect(() => {
@@ -102,7 +111,7 @@ export function PlanBeta(props: React.ComponentProps<typeof LegacyPlanBeta>) {
     <p role="alert">계획을 지우거나 새 계획으로 바꾸지 않았어요. 다시 확인해 주세요.</p>
     <button type="button" onClick={() => setRead(readPlanBetaStateFromStorage())}>다시 확인</button>
   </section>
-  return <LegacyPlanBeta key={revision} {...props} />
+  return <LegacyPlanBeta key={revision} {...props} onAdjustedStored={() => setRead(readPlanBetaStateFromStorage())} />
 }
 
 function LegacyPlanBeta({
@@ -110,12 +119,17 @@ function LegacyPlanBeta({
   onManageRecords,
   onWritePlannedSessionLog,
   returnToSession,
+  adjustmentResolver,
+  onAdjustedStored,
 }: {
   readonly onWriteLog?: (entryType?: JournalEntryType) => void
   readonly onManageRecords?: () => void
   readonly onWritePlannedSessionLog?: (draft: PlannedSessionLogDraft) => void
   readonly returnToSession?: PlannedSessionLogDraft["link"]
+  readonly adjustmentResolver?: PlanAdjustmentResolver
+  readonly onAdjustedStored: () => void
 }) {
+  const [adjusting, setAdjusting] = React.useState<{ entry: AdjustmentEntry; revision: number } | null>(null)
   const [stored, setStored] = React.useState<PlanBetaState | null>(
     () => loadPlanBetaState(),
   )
@@ -492,11 +506,36 @@ function LegacyPlanBeta({
     )
   }
 
+  if (adjusting !== null) return <AdjustedPlanEditFlow {...adjusting.entry}
+    isCurrentDraft={() => draftRevision.current === adjusting.revision}
+    onCancel={() => setAdjusting(null)} onSaved={() => { setAdjusting(null); onAdjustedStored() }} />
+
   if (generated !== null && gate !== null && generatedIntake !== null && generatedEvidence !== null) {
+    const adjustmentActions: Record<string, () => void> = {}
+    if (adjustmentResolver !== undefined && currentCheck !== null && !recordConfirmationPending) {
+      for (const candidate of generated.candidates) {
+        try {
+        const context = { generated, gate, intake: generatedIntake, athleteEvidence: generatedEvidence,
+          currentCheck, candidateId: candidate.candidateId, startDate: candidateStartDate }
+        const entry = adjustmentResolver(context)
+        if (entry === null) continue
+        const same = (a: unknown, b: unknown) => canonicalJsonFingerprint("adjustment-entry.v1", a) === canonicalJsonFingerprint("adjustment-entry.v1", b)
+        if (!same(entry.seed.generated, generated) || !same(entry.seed.preparation.candidate, candidate)
+          || !same(entry.seed.intake, generatedIntake) || !same(entry.seed.athleteEvidence, generatedEvidence)
+          || entry.seed.currentCheck !== currentCheck || !same(entry.seed.gate, gate)
+          || entry.seed.preparation.startDate !== candidateStartDate) continue
+        adjustmentActions[candidate.candidateId] = () => setAdjusting({ entry, revision: draftRevision.current })
+        } catch {
+          // A broken review provider must not remove the original candidates.
+          continue
+        }
+      }
+    }
     return (
       <>
         <PlanCandidates
           generated={generated}
+          adjustmentActions={adjustmentActions}
           intake={generatedIntake}
           athleteEvidence={generatedEvidence}
           athleteRecords={athleteRecords}

@@ -8,6 +8,22 @@ import { CandidateSection } from "./CandidateSection"
 
 afterEach(cleanup)
 
+it("only offers adjustment through an explicit available action and respects pending selection", () => {
+  const result = generatePlanFromDraft(draftFor(RUNTIME_CASES[3]!), "NO_KNOWN_RISK")
+  if (result.kind !== "generated") throw Error("Expected candidate fixture")
+  const props = { candidate: result.generated.candidates[0], startDate: "2026-09-07",
+    canSelect: true, expanded: false, onToggleSchedule: vi.fn(), onSelect: vi.fn() }
+  const view = render(<CandidateSection {...props} />)
+  expect(screen.queryByRole("button", { name: "훈련 구성 조정하기" })).toBeNull()
+  const adjust = vi.fn()
+  view.rerender(<CandidateSection {...props} onAdjust={adjust} />)
+  fireEvent.click(screen.getByRole("button", { name: "훈련 구성 조정하기" }))
+  expect(adjust).toHaveBeenCalledOnce()
+  expect(props.onSelect).not.toHaveBeenCalled()
+  view.rerender(<CandidateSection {...props} onAdjust={adjust} canSelect={false} />)
+  expect(screen.getByRole("button", { name: "훈련 구성 조정하기" })).toBeDisabled()
+})
+
 it("uses an explicit apply/cancel transaction on the exact schedule slot", () => {
   const result = generatePlanFromDraft(draftFor(RUNTIME_CASES[3]!), "NO_KNOWN_RISK")
   if (result.kind !== "generated") throw new Error("Expected candidate fixture")

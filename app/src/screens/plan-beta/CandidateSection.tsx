@@ -1,5 +1,5 @@
 import { useEffect, useId, useState } from "react"
-import { Check, ChevronDown } from "lucide-react"
+import { Check, ChevronDown, SlidersHorizontal } from "lucide-react"
 import type { PlanGenerationSuccess } from "@impl/plan-generator/types"
 import { TermHelp } from "../../components/TermHelp"
 import { candidatePurposeStatus } from "./candidate-purpose-status"
@@ -21,6 +21,7 @@ export function CandidateSection({
   expanded,
   onToggleSchedule,
   onSelect,
+  onAdjust,
   detailedTargets = [],
   detailedTarget = null,
   onChangeSessionTarget,
@@ -31,6 +32,7 @@ export function CandidateSection({
   readonly expanded: boolean
   readonly onToggleSchedule: () => void
   readonly onSelect: () => void
+  readonly onAdjust?: () => void
   readonly detailedTargets?: readonly PlanSessionTarget[]
   readonly detailedTarget?: PlanSessionTarget | null
   readonly onChangeSessionTarget?: (target: PlanSessionTarget) => void
@@ -111,6 +113,10 @@ export function CandidateSection({
           </div>
         </>
       )}
+      {onAdjust !== undefined && <button type="button" className="plan-text-action"
+        disabled={!canSelect || pendingTarget !== null} onClick={onAdjust}>
+        <SlidersHorizontal size={18} aria-hidden="true" />훈련 구성 조정하기
+      </button>}
       <button
         className="plan-select-action"
         type="button"

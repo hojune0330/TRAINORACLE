@@ -54,6 +54,7 @@ export function PlanCandidates({
   recordReturnCount,
   onBack,
   onSelect,
+  adjustmentActions = {},
 }: {
   readonly generated: PlanGenerationSuccess
   readonly intake: PlanBetaIntake
@@ -78,6 +79,7 @@ export function PlanCandidates({
   readonly recordReturnCount?: number
   readonly onBack: () => void
   readonly onSelect: (selection: CandidateSelection) => void
+  readonly adjustmentActions?: Readonly<Record<string, (() => void) | undefined>>
 }) {
   const [repeatPreference, setRepeatPreference] = React.useState<RepeatPreference>("NEUTRAL")
   const [targetDraftPending, setTargetDraftPending] = React.useState(false)
@@ -237,6 +239,7 @@ export function PlanCandidates({
             onToggleSchedule={() => setExpandedCandidateKind((current) =>
               current === candidate.kind ? null : candidate.kind)}
             onSelect={() => onSelect({ candidateId: candidate.candidateId, startDate })}
+            onAdjust={adjustmentActions[candidate.candidateId]}
           />
         ))}
       </div>
