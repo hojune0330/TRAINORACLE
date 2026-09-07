@@ -27,10 +27,21 @@ export function MultiAdjustedPlanEditFlowV3({ seed, readReview, locks, readRevie
   const [editing, setEditing] = React.useState<AddressedAdjustmentV3["address"] | null>(null)
   const [confirming, setConfirming] = React.useState(false)
   const [discarding, setDiscarding] = React.useState(false)
+  const leaving = React.useRef(false)
+  React.useEffect(() => {
+    if (!changes.length) return
+    const preventLoss = (event: BeforeUnloadEvent) => {
+      if (leaving.current) return
+      event.preventDefault()
+      event.returnValue = ""
+    }
+    window.addEventListener("beforeunload", preventLoss)
+    return () => window.removeEventListener("beforeunload", preventLoss)
+  }, [changes.length])
   const current = () => isCurrentDraft() && hash(seed) === opened.identity && expectedPredecessorFingerprint === opened.predecessor
   const review = () => changes.length ? readReviewForEdits(request, changes) : readReview()
   if (confirming) return <MultiAdjustedPlanApplyReviewV3 seed={request} readReview={review} locks={locks}
-    isCurrentDraft={current} onSaved={onSaved} onCancel={() => setConfirming(false)} expectedPredecessorFingerprint={expectedPredecessorFingerprint} />
+    isCurrentDraft={current} onSaved={state => { leaving.current = true; onSaved(state) }} onCancel={() => setConfirming(false)} expectedPredecessorFingerprint={expectedPredecessorFingerprint} />
   let live: MultiAdjustedLiveReviewV3 | null = null
   try { live = review() } catch { /* Show the unavailable state without inventing review data. */ }
   const prepared = live === null ? null : prepareMultiAdjustedPlanCandidateV3(request.preparations, live.rpeBindings)
@@ -61,7 +72,7 @@ export function MultiAdjustedPlanEditFlowV3({ seed, readReview, locks, readRevie
     {discarding && <JournalConfirmationDialog title="변경안을 버리고 돌아갈까요?"
       description="이 화면에서 바꾼 구성만 없어져요. 저장된 현재 계획은 바뀌지 않아요."
       confirmLabel="변경안 버리고 돌아가기" onCancel={() => setDiscarding(false)}
-      onConfirm={() => { setDiscarding(false); onCancel(); return true }} />}
+      onConfirm={() => { leaving.current = true; setDiscarding(false); onCancel(); return true }} />}
     <button type="button" onClick={() => changes.length ? setDiscarding(true) : onCancel()}><ArrowLeft size={18} aria-hidden="true" />후보로 돌아가기</button>
     <h1>주요 훈련을 하나씩 확인해 주세요</h1>
     <p role="status">{changes.length ? `변경한 주요 훈련 ${changes.length}개 · 아직 저장하지 않았어요.` : "아직 저장하지 않은 계획이에요."}</p>
