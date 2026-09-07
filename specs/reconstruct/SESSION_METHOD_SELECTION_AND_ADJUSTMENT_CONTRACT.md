@@ -4,7 +4,7 @@
 doc_id: trainoracle-session-method-selection-and-adjustment
 spec_id: SESSION_METHOD_SELECTION_AND_ADJUSTMENT_CONTRACT
 title: TrainOracle Session Method Selection And Adjustment Contract
-version: "0.32"
+version: "0.33"
 round: RT1_OWNER_APPROVED_IMPLEMENTATION_DIRECTION
 status: ACTIVE_IMPLEMENTATION_CONTRACT
 product_direction: OWNER_APPROVED_IMPLEMENTATION_DIRECTION
@@ -1379,5 +1379,19 @@ original binding, source/context/anchor fingerprints and required explanation bi
 The combined support/MAIN explanation, candidate snapshot/storage and journal consumer
 must explicitly consume this projection before current app use; projection alone is
 not activation or final-plan selection.
+
+### 21.12 V3 candidate slot assembly
+
+The V3 candidate entry point uses the existing validated whole-candidate scope,
+start date and exact day/AM-PM address. Revalidate the MAIN snapshot against current
+source/explanation, then recompute the full V3 projection from the actual original
+PACE_TARGET at that address. Never accept a caller-supplied numeric projection.
+
+Replace only that QUALITY slot with ADJUSTED_METHOD_V3 containing the checked MAIN
+snapshot and full projection/fingerprint. Preserve all other sessions, frame and
+continuity context. Use candidate schemaVersion 3 and its separate content namespace.
+Keep NOT_ACCEPTED / selectionAuthority NONE / FULL_PLAN_SELECTION_REVALIDATION.
+Legacy candidate parsers must not accept this format by accident. This assembly
+does not write storage or resolve the version-aware plan acceptance gate.
 
 [DRAFT_COMPLETE]
