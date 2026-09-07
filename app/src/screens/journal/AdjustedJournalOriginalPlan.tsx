@@ -8,11 +8,12 @@ import { formatTrainingSeconds } from "../plan-beta/labels"
 export function AdjustedJournalOriginalPlan({ session, explanation, context = "journal" }: {
   readonly session: AdjustedCandidateSession
   readonly explanation: ResolvedAdjustedExplanation
-  readonly context?: "journal" | "plan"
+  readonly context?: "journal" | "plan" | "preview"
 }) {
   const prescription = session.prescription
   return <section aria-label="당시 계획한 훈련">
     <p>{context === "journal" ? "이 일지에 연결된 당시 계획이에요. 실제 운동 기록과는 별도로 표시해요."
+      : context === "preview" ? "선택한 변경안이에요. 아래 저장 버튼을 눌러야 계획에 적용돼요."
       : "저장할 때 선택한 훈련 구성이에요. 실제 수행 기록과는 별도로 표시해요."}</p>
     {prescription.kind === "ADJUSTED_METHOD" ? <>
       <PrescriptionStructure sequence={prescription.snapshot.projection.sequence} />
