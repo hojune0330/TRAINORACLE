@@ -1485,4 +1485,17 @@ archive는 독립 근거로 전체 재구성하고 중복/시각/손상을 검�
 guest/복수 계정 v1·v3 원본 삭제를 포함한 삭제 계약 19 PASS. 타입 검사 PASS.
 스펙 v0.40. 다음 주기 transaction, 백업/가져오기 연결은 계속 미완이다.
 
+## 70. V3 개인 백업·가져오기 화면 연결 (2026-09-07)
+
+V3 active/원본 archive를 독립 근거로 검증하는 personal-backup.v3를 추가했다.
+일정 안내에서 경고 후 다운로드하며 기존 가져오기 화면이 V1/V3 reader를 구분한다.
+본인 파일 확인 후 matching importer가 lock 안에서 재검증하고 과거 보관함에만
+추가한다. 기존 원본 우선/중복 미추가, active bytes 불변, capacity 초과 중단,
+계정/요청 변경 및 쓰기 확인 실패 시 자신의 변경만 복구한다.
+
+파일 왕복과 실제 PlanBeta→가져오기 화면→파일 선택→확인→보관함 추가를 검사했다.
+현재 일정 불변, 개인 메모 미포함, own-file 확인/오래된 요청/변조 파일 거부 포함
+V3 suite 19 PASS. 기존 backup/import/화면 3파일 8 PASS, 타입·diff 검사 PASS.
+스펙 v0.41 반영. 서버 동기화, successor transaction 및 편집 진입은 계속 남았다.
+
 [DRAFT_COMPLETE]

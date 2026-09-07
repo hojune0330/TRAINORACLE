@@ -6,13 +6,18 @@ import { localAccountScopeSnapshot } from "../../domain/account/local-account-sc
 import { readOperatingAdjustedEvidence } from "./AdjustedPlanNextFlow"
 import type { RetainedAdjustedPlanEvidence } from "../../domain/selected-adjusted-plan-content"
 import type { PlanMutationLockManager } from "../../domain/plan-mutation-lock"
+import { readAdjustedPlanBackupV3, importAdjustedPlanHistoryV3 } from "../../domain/adjusted-plan-backup-v3"
+import { RETAINED_ADJUSTED_PLAN_EVIDENCE_V3 } from "../../domain/adjusted-plan-storage-v5"
+import type { RetainedAdjustedPlanEvidenceV3 } from "../../domain/selected-adjusted-plan-v3"
+const operatingV3Evidence = () => RETAINED_ADJUSTED_PLAN_EVIDENCE_V3
 
-export function AdjustedPlanImport({ readEvidence = readOperatingAdjustedEvidence, onBack, locks }: {
+export function AdjustedPlanImport({ readEvidence = readOperatingAdjustedEvidence, readEvidenceV3 = operatingV3Evidence, onBack, locks }: {
   readonly readEvidence?: () => readonly RetainedAdjustedPlanEvidence[];
+  readonly readEvidenceV3?: () => readonly RetainedAdjustedPlanEvidenceV3[];
   readonly onBack: () => void; readonly locks?: PlanMutationLockManager;
 }) {
   const [account] = React.useState(localAccountScopeSnapshot)
-  const [file, setFile] = React.useState<{ raw: string; count: number } | null>(null)
+  const [file, setFile] = React.useState<{ raw: string; count: number; v3: boolean } | null>(null)
   const [confirmed, setConfirmed] = React.useState(false)
   const [busy, setBusy] = React.useState(false)
   const [message, setMessage] = React.useState<string | null>(null)
@@ -32,9 +37,10 @@ export function AdjustedPlanImport({ readEvidence = readOperatingAdjustedEvidenc
       try {
         const raw = await selected.text()
         if (ticket !== revision.current || account !== localAccountScopeSnapshot()) return
-        const read = readAdjustedPlanBackup(raw, readEvidence())
+        const v3 = readAdjustedPlanBackupV3(raw, readEvidenceV3())
+        const read = v3.kind === "read_only" ? v3 : readAdjustedPlanBackup(raw, readEvidence())
         if (read.kind !== "read_only") { setMessage("계획 원본과 검토 자료를 확인하지 못했어요. 파일을 저장하지 않았어요."); return }
-        setFile({ raw, count: new Set([...read.entries.map(item => item.state.selection.contentFingerprint), read.active.selection.contentFingerprint]).size })
+        setFile({ raw, v3: v3.kind === "read_only", count: new Set([...read.entries.map(item => item.state.selection.contentFingerprint), read.active.selection.contentFingerprint]).size })
       } catch { if (ticket === revision.current && account === localAccountScopeSnapshot()) setMessage("파일을 읽지 못했어요.") }
     }} />
     {file && <>
@@ -43,8 +49,10 @@ export function AdjustedPlanImport({ readEvidence = readOperatingAdjustedEvidenc
       <button type="button" disabled={!confirmed || busy} onClick={async () => {
         const ticket = revision.current
         setBusy(true); setMessage(null)
-        const result = await importAdjustedPlanHistory({ raw: file.raw, confirmsOwnFile: confirmed, readEvidence, locks,
-          isCurrentRequest: () => ticket === revision.current && account === localAccountScopeSnapshot() })
+        const request = { raw: file.raw, confirmsOwnFile: confirmed, locks,
+          isCurrentRequest: () => ticket === revision.current && account === localAccountScopeSnapshot() }
+        const result = file.v3 ? await importAdjustedPlanHistoryV3({ ...request, readEvidence: readEvidenceV3 })
+          : await importAdjustedPlanHistory({ ...request, readEvidence })
         if (ticket !== revision.current || account !== localAccountScopeSnapshot()) return
         setBusy(false)
         if (result.kind === "restored_history") {

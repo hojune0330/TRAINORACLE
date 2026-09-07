@@ -9,6 +9,7 @@ import { saveEntry, loadEntries } from "./journal-store"
 import { MEMO_PURPOSE, type PostSessionEntry } from "./journal-schema"
 import { createPlannedSessionLogDraft } from "./planned-session-link"
 import { readAdjustedOriginalPlansV3, retainAdjustedOriginalPlanV3, ADJUSTED_PLAN_ARCHIVE_V3_KEY, parseAdjustedOriginalArchiveV3 } from "./adjusted-plan-archive-v3"
+import { exportAdjustedPlanBackupV3, readAdjustedPlanBackupV3, importAdjustedPlanHistoryV3 } from "./adjusted-plan-backup-v3"
 import { sequenceV3ContentIdentity } from "@impl/prescription/sequence-v3-comparison"
 import { adjustedMethodV3FixtureWithCandidate } from "./adjusted-method-resolution-v3.test-fixtures"
 import { resolveAdjustedCandidateScope } from "./adjusted-plan-candidate"
@@ -267,4 +268,41 @@ it("does not open linked journal when preserving the original fails", async () =
     .getByRole("button", { name: "이 훈련 일지 쓰기" })) })
   expect(onWrite).not.toHaveBeenCalled()
   expect(screen.getByRole("alert")).toHaveTextContent("계획 원본을 보관하지 못했어요")
+})
+it("exports and imports V3 originals without activating a file or changing an existing plan", async () => {
+  const { input, retained } = storeInput(), saved = await saveSelectedAdjustedPlanV3(input)
+  if (saved.kind !== "saved") throw Error(saved.code)
+  const output = exportAdjustedPlanBackupV3(saved.state.contentFingerprint, [retained], TODAY)
+  if (output.kind !== "exported") throw Error("export")
+  expect(readAdjustedPlanBackupV3(output.raw, [retained], TODAY)).toMatchObject({ kind: "read_only", executionAuthority: "NONE", storageState: "NOT_RESTORED" })
+  expect(output.raw).not.toContain('"memo"')
+  localStorage.setItem(activePlanBetaStorageKey(), "EXISTING-PLAN-NOT-REPLACED")
+  const request = { raw: output.raw, confirmsOwnFile: true, isCurrentRequest: () => true, readEvidence: () => [retained], locks: input.locks }
+  expect(await importAdjustedPlanHistoryV3({ ...request, confirmsOwnFile: false })).toMatchObject({ code: "OWN_FILE_CONFIRMATION_REQUIRED" })
+  expect(await importAdjustedPlanHistoryV3(request)).toMatchObject({ kind: "restored_history", added: 1, activePlanChanged: false })
+  expect(await importAdjustedPlanHistoryV3(request)).toMatchObject({ kind: "restored_history", added: 0 })
+  expect(localStorage.getItem(activePlanBetaStorageKey())).toBe("EXISTING-PLAN-NOT-REPLACED")
+  expect(readAdjustedOriginalPlansV3([retained], TODAY)).toMatchObject({ kind: "loaded", entries: [{ state: saved.state }] })
+  const changed = JSON.parse(output.raw); changed.memo = "private"
+  expect(readAdjustedPlanBackupV3(JSON.stringify(changed), [retained], TODAY).kind).toBe("invalid")
+  expect(await importAdjustedPlanHistoryV3({ ...request, isCurrentRequest: () => false })).toMatchObject({ code: "STALE_IMPORT" })
+})
+it("opens the shared import screen from V3 and requires confirmation before restoring history", async () => {
+  const { input, retained } = storeInput(), saved = await saveSelectedAdjustedPlanV3(input)
+  if (saved.kind !== "saved") throw Error(saved.code)
+  const output = exportAdjustedPlanBackupV3(saved.state.contentFingerprint, [retained], TODAY)
+  if (output.kind !== "exported") throw Error("export")
+  vi.spyOn(mutationLocks, "getPlanMutationLockManager").mockReturnValue(input.locks!)
+  render(React.createElement(PlanBeta, { readAdjustedEvidenceV3: () => [retained] }))
+  fireEvent.click(screen.getByText("저장과 이용 안내"))
+  fireEvent.click(screen.getByRole("button", { name: "개인 계획 파일 불러오기" }))
+  expect(screen.getByRole("heading", { name: "계획 원본 불러오기" })).toBeVisible()
+  const file = new File([output.raw], "plan.json", { type: "application/json" })
+  Object.defineProperty(file, "text", { value: async () => output.raw })
+  await act(async () => { fireEvent.change(screen.getByLabelText("개인 보관용 계획 파일"), { target: { files: [file] } }) })
+  expect(screen.getByRole("button", { name: "과거 원본 보관함에 추가" })).toBeDisabled()
+  fireEvent.click(screen.getByRole("checkbox"))
+  await act(async () => { fireEvent.click(screen.getByRole("button", { name: "과거 원본 보관함에 추가" })) })
+  expect(screen.getByRole("status")).toHaveTextContent("훈련 일정은 바뀌지 않았어요")
+  expect(JSON.parse(localStorage.getItem(activePlanBetaStorageKey())!)).toEqual(saved.state)
 })

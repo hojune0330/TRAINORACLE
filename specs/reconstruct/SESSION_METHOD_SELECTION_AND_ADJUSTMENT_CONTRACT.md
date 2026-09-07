@@ -4,7 +4,7 @@
 doc_id: trainoracle-session-method-selection-and-adjustment
 spec_id: SESSION_METHOD_SELECTION_AND_ADJUSTMENT_CONTRACT
 title: TrainOracle Session Method Selection And Adjustment Contract
-version: "0.40"
+version: "0.41"
 round: RT1_OWNER_APPROVED_IMPLEMENTATION_DIRECTION
 status: ACTIVE_IMPLEMENTATION_CONTRACT
 product_direction: OWNER_APPROVED_IMPLEMENTATION_DIRECTION
@@ -1505,5 +1505,19 @@ Journal lookup checks this archive after active-plan lookup and matches the exac
 immutable link. Guest and account-scoped archive keys are included in explicit
 device-data erasure without parsing private content. This does not implement the
 successor transaction or backup import/export yet.
+
+### 21.20 V3 personal backup and historical import
+
+The V3 personal backup includes the verified version-5 active plan and V3 original
+archive, using a separate format/fingerprint namespace. Export must recheck account
+and both source bytes; the file includes personal pace evidence and progress but no
+memo. Show the personal-file warning before download.
+
+The shared import UI recognizes V1 and V3 through their independent readers, requires
+explicit own-file confirmation, and dispatches to the matching history importer.
+Revalidate evidence inside the mutation lock. Preserve existing local originals on
+duplicate selection identity and never replace active-plan bytes. Reject over-capacity
+imports without eviction. Verify writes and roll back only this transaction's content.
+Imported originals support journal lookup but grant no execution or selection authority.
 
 [DRAFT_COMPLETE]
