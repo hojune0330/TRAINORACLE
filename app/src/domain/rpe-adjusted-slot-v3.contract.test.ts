@@ -122,6 +122,16 @@ function storageFixture(supplied?: Extract<ReturnType<typeof generatePlanFromDra
     readReview: () => ({ preparations: inputs, rpeBindings: bindings, policies: [policy], retained }) }
 }
 
+it("reuses structural review scope across start dates while retaining distinct session snapshots", () => {
+  const first = storageFixture(undefined, TODAY, "2026-09-08")
+  const later = storageFixture(undefined, TODAY, "2026-09-09")
+  const a = first.readReview(), b = later.readReview()
+  expect(a.rpeBindings.map(x => x.scopeFingerprint)).toEqual(b.rpeBindings.map(x => x.scopeFingerprint))
+  expect(a.policies.map(x => x.scopeFingerprint)).toEqual(b.policies.map(x => x.scopeFingerprint))
+  expect(a.preparations[0]!.rawSnapshot).not.toBe(b.preparations[0]!.rawSnapshot)
+  expect(checkMultiAdjustedPlanReviewV3(b.preparations, later.request.intake.experienceBand, a.rpeBindings, a.policies).kind).toBe("reviewed_scope")
+})
+
 it("routes only the exact generated candidate and every matching MAIN into the multi editor", () => {
   const input = storageFixture()
   const entry = { seed: input.request, readReview: input.readReview, locks: input.locks, readReviewForEdits: input.readReview }
