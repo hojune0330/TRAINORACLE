@@ -4,7 +4,7 @@
 doc_id: trainoracle-session-method-selection-and-adjustment
 spec_id: SESSION_METHOD_SELECTION_AND_ADJUSTMENT_CONTRACT
 title: TrainOracle Session Method Selection And Adjustment Contract
-version: "0.60"
+version: "0.61"
 round: RT1_OWNER_APPROVED_IMPLEMENTATION_DIRECTION
 status: ACTIVE_IMPLEMENTATION_CONTRACT
 product_direction: OWNER_APPROVED_IMPLEMENTATION_DIRECTION
@@ -1775,5 +1775,15 @@ REVIEWED_MULTI_SUCCESSOR_V3_TRANSACTION으로 원본 보관/현재 근거 검토
 후속 transaction을 사용하고 이전 원본 보관 및 계보 전진을 확인한 뒤 일정으로 돌아간다.
 미기록을 완료로 간주하지 않으며 근거 미제공/불일치/몸 상태 검토 필요 시 저장하지 않는다.
 합성 자료 기반 화면 통합 시험은 운영 구성 승인이나 모바일 브라우저 검수를 대체하지 않는다.
+
+### 21.42 다중 계획 서버 스냅샷 저장 준비
+
+V6 개인 계획을 전송하기 전에 실제 계정별 현재 저장값과 독립 보존 근거로 읽는다.
+인증 세션의 사용자와 로컬 계정이 같아야 하며 인증 대기 후 계정/계획/근거를 다시
+확인한다. 서버 행 식별자는 전체 상태 지문에 연결한 불변 스냅샷으로 두고 기존 행을
+덮어쓰지 않는다. 요청 후 계정/계획이 바뀌면 현재 화면에 저장 성공을 표시하지 않는다.
+이후 검증된 서버 조회와 명시적 복원은 별도 경로이며 저장 응답으로 실행 권한을 주지 않는다.
+서버 스키마 확장은 기존 V3와 소유자별 RLS/기능 권한을 유지한다. 마이그레이션 파일,
+합성 클라이언트 시험, 실제 DB 적용 및 RLS 왕복 시험은 각각 다른 증거로 기록한다.
 
 [DRAFT_COMPLETE]

@@ -35,6 +35,7 @@ import { MultiAdjustedPlanApplyReviewV3 } from "../screens/plan-beta/MultiAdjust
 import { MultiAdjustedPlanEditFlowV3 } from "../screens/plan-beta/MultiAdjustedPlanEditFlowV3"
 import { stageMultiAdjustmentV3 } from "./stage-multi-adjustment-v3"
 import { matchingMultiAdjustmentEntryV3 } from "../screens/plan-beta/multi-adjustment-entry-v3"
+import { backupMultiPlanSnapshotV3 } from "./account/multi-plan-cloud-backup-v3"
 
 const dialogShow = Object.getOwnPropertyDescriptor(HTMLDialogElement.prototype, "showModal")
 const dialogClose = Object.getOwnPropertyDescriptor(HTMLDialogElement.prototype, "close")
@@ -137,6 +138,33 @@ it("routes only the exact generated candidate and every matching MAIN into the m
   expect(matchingMultiAdjustmentEntryV3(() => { throw Error("UNAVAILABLE") }, context)).toBeNull()
   expect(matchingMultiAdjustmentEntryV3(undefined, context)).toBeNull()
   expect(localStorage.getItem(activePlanBetaStorageKey())).toBeNull()
+})
+
+it.each(["saved", "wrong-session", "account-during-auth", "account-after-send", "write-error", "missing-evidence"])("backs up only the owned validated multi snapshot: %s", async scenario => {
+  setActiveLocalAccount("cloud-owner")
+  const input = storageFixture(), saved = await saveSelectedMultiAdjustedPlanV6(input)
+  if (saved.kind !== "saved") throw Error("Missing saved plan")
+  const sent = vi.fn(async () => {
+    if (scenario === "account-after-send") setActiveLocalAccount("other-owner")
+    return { error: scenario === "write-error" ? { message: "test" } : null }
+  })
+  type Client = NonNullable<Awaited<ReturnType<NonNullable<Parameters<typeof backupMultiPlanSnapshotV3>[2]>["client"]>>>
+  const client = { auth: { getSession: async () => {
+    if (scenario === "account-during-auth") setActiveLocalAccount("other-owner")
+    return { data: { session: { user: { id: scenario === "wrong-session" ? "other-owner" : "cloud-owner" } } }, error: null }
+  } }, from: () => ({ upsert: sent }) } as unknown as Client
+  const result = await backupMultiPlanSnapshotV3(saved.state.contentFingerprint,
+    () => scenario === "missing-evidence" ? [] : input.readReview().retained,
+    { enabled: () => true, client: async () => client })
+  if (["wrong-session", "account-during-auth", "missing-evidence"].includes(scenario)) {
+    expect(result.kind).toBe("unavailable"); expect(sent).not.toHaveBeenCalled()
+  } else {
+    expect(sent).toHaveBeenCalledOnce()
+    expect(result.kind).toBe(scenario === "saved" ? "saved" : scenario === "write-error" ? "failed" : "stale_response")
+    expect(sent).toHaveBeenCalledWith({ user_id: "cloud-owner", plan_id: `multi-v6:${saved.state.contentFingerprint}`,
+      schema_version: 6, plan_payload: saved.state, saved_at: saved.state.updatedAt },
+    { onConflict: "user_id,plan_id", ignoreDuplicates: true })
+  }
 })
 
 it("writes and independently reads a real multi-slot V6 plan, replaying the same unprogressed selection", async () => {
