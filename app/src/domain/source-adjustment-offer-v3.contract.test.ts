@@ -3,7 +3,7 @@ import { adjustmentPolicyReference } from "@impl/prescription/prescription-adjus
 import { applyAdjustmentDraftV3, configurationReferenceV3, createAdjustmentDraftV3 } from "@impl/prescription/prescription-adjustment-v3"
 import type { PrescriptionSequenceV3, SequenceNodeV3 } from "@impl/prescription/sequence-v3"
 import { sequenceV3ContentIdentity } from "@impl/prescription/sequence-v3-comparison"
-import { createAdjustedMethodSnapshotV3, readAdjustedMethodSnapshotV3 } from "./adjusted-method-snapshot-v3"
+import { createAdjustedMethodSnapshotV3, readAdjustedMethodSnapshotV3, revalidateAdjustedMethodSnapshotV3 } from "./adjusted-method-snapshot-v3"
 import { prepareSourceAdjustmentOfferV3, revalidateSourceAdjustmentApplicationV3 } from "./source-adjustment-offer"
 import type { SourceAdjustmentOfferInput } from "./source-adjustment-offer"
 
@@ -123,6 +123,22 @@ it("connects exact source application to explanation snapshot and historical rea
     scope: { candidateLineageId: "candidate:1", mainSlotId: "main:2" } }
   const snapshot = createAdjustedMethodSnapshotV3({ ...retained, receipt: checked.receipt, current: offer.current })
   if (snapshot.kind !== "prepared") throw Error(snapshot.code)
+  const raw = JSON.stringify(snapshot.snapshot)
+  const candidateInput = { source: input, scope: retained.scope, explanation }
+  expect(revalidateAdjustedMethodSnapshotV3(raw, candidateInput)).toMatchObject({ kind: "candidate_ready",
+    executionAuthority: "NONE", requiredNextGate: "FULL_PLAN_SELECTION_REVALIDATION", snapshot: snapshot.snapshot,
+    source: checked.source, resolutionContextKey: offer.contextKey })
+  for (const source of [{ ...input, nowMs: 201 }, { ...input, resolutionRevision: "other-candidate" },
+    { ...input, anchor: { ...input.anchor, contentFingerprint: `sha256:${"b".repeat(64)}` } },
+    { ...input, authority: { catalog: input.authority.catalog, policies: [] } }]) {
+    expect(revalidateAdjustedMethodSnapshotV3(raw, { ...candidateInput, source }).kind).toBe("unavailable")
+  }
+  expect(revalidateAdjustedMethodSnapshotV3(raw, { ...candidateInput,
+    explanation: { ...explanation, recoveryRationale: "new explanation" } }).kind).toBe("unavailable")
+  expect(revalidateAdjustedMethodSnapshotV3(raw, { ...candidateInput,
+    scope: { ...retained.scope, mainSlotId: "other-slot" } }).kind).toBe("unavailable")
+  expect(revalidateAdjustedMethodSnapshotV3(raw, { ...candidateInput,
+    memo: "private" } as typeof candidateInput).kind).toBe("unavailable")
   expect(readAdjustedMethodSnapshotV3(JSON.stringify(snapshot.snapshot), { ...retained, nowMs: 201 }))
     .toMatchObject({ kind: "historical", executionAuthority: "NONE" })
   expect(revalidateSourceAdjustmentApplicationV3({ ...input, nowMs: 201 }, checked.receipt).kind).toBe("unavailable")

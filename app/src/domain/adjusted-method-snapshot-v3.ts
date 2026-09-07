@@ -2,9 +2,11 @@ import { canonicalJsonFingerprint } from "@impl/plan-generator/candidate-identit
 import { revalidateAdjustmentReceiptV3 } from "@impl/prescription/prescription-adjustment-v3"
 import type { AdjustmentAuthorityV3, AdjustmentReceiptV3, PrescriptionSnapshotV3 } from "@impl/prescription/prescription-adjustment-v3"
 import { sequenceV3ContentIdentity } from "@impl/prescription/sequence-v3-comparison"
-import type { SequenceNodeV3 } from "@impl/prescription/sequence-v3"
+import type { PrescriptionSequenceV3, SequenceNodeV3 } from "@impl/prescription/sequence-v3"
 import { hasCanonicalJsonTree } from "./plan-beta-schema"
 import type { ResolvedAdjustedExplanation } from "./adjusted-method-snapshot"
+import { prepareSourceAdjustmentOfferV3, revalidateSourceAdjustmentApplicationV3 } from "./source-adjustment-offer"
+import type { SourceAdjustmentOfferInput } from "./source-adjustment-offer"
 
 export type ReviewedAdjustedExplanationV3 = ResolvedAdjustedExplanation & {
   readonly sequenceContentIdentity: string
@@ -77,4 +79,30 @@ export function readAdjustedMethodSnapshotV3(raw: string, retained: Omit<Input, 
     if (prepared.kind !== "prepared" || !same(prepared.snapshot, snapshot)) return unavailable("V3_SNAPSHOT_EVIDENCE_MISMATCH")
     return { kind: "historical" as const, executionAuthority: "NONE" as const, snapshot: prepared.snapshot }
   } catch { return unavailable("INVALID_V3_SNAPSHOT") }
+}
+
+export type AdjustedMethodSnapshotV3 = Extract<ReturnType<typeof createAdjustedMethodSnapshotV3>, { kind: "prepared" }>["snapshot"]
+
+/** Historical contents never supply current authority. Rebuild from live source
+ * before admitting this snapshot to the separate full-plan selection gate.
+ */
+export function revalidateAdjustedMethodSnapshotV3(raw: string, input: {
+  readonly source: SourceAdjustmentOfferInput<PrescriptionSequenceV3>
+  readonly scope: Scope
+  readonly explanation: ReviewedAdjustedExplanationV3
+}) {
+  try {
+    if (!hasCanonicalJsonTree(input) || !exact(input, ["source", "scope", "explanation"])) return unavailable("INVALID_V3_CANDIDATE_CONTEXT")
+    const offer = prepareSourceAdjustmentOfferV3(input.source)
+    if (offer.kind !== "available") return offer
+    const read = readAdjustedMethodSnapshotV3(raw, { authority: offer.authority, contextKey: offer.contextKey,
+      nowMs: input.source.nowMs, scope: input.scope, explanation: input.explanation })
+    if (read.kind !== "historical") return read
+    if (!same(read.snapshot.original, offer.current)) return unavailable("V3_ORIGINAL_SOURCE_MISMATCH")
+    const current = revalidateSourceAdjustmentApplicationV3(input.source, read.snapshot.receipt)
+    if (current.kind !== "applied") return current
+    return { kind: "candidate_ready" as const, executionAuthority: "NONE" as const,
+      requiredNextGate: "FULL_PLAN_SELECTION_REVALIDATION" as const,
+      snapshot: read.snapshot, source: current.source, resolutionContextKey: current.resolutionContextKey }
+  } catch { return unavailable("INVALID_V3_CANDIDATE_CONTEXT") }
 }

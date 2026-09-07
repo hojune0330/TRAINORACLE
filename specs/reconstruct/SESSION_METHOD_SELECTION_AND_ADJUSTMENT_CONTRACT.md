@@ -4,7 +4,7 @@
 doc_id: trainoracle-session-method-selection-and-adjustment
 spec_id: SESSION_METHOD_SELECTION_AND_ADJUSTMENT_CONTRACT
 title: TrainOracle Session Method Selection And Adjustment Contract
-version: "0.30"
+version: "0.31"
 round: RT1_OWNER_APPROVED_IMPLEMENTATION_DIRECTION
 status: ACTIVE_IMPLEMENTATION_CONTRACT
 product_direction: OWNER_APPROVED_IMPLEMENTATION_DIRECTION
@@ -1327,5 +1327,26 @@ record and frame. Arbitrary browser input cannot authorize that context. Active-
 storage, journal version dispatch and public activation remain separate required
 gates. Explanation snapshot historical read remains historical/NONE after expiry;
 that read does not override fresh source application rejection.
+
+### 21.10 V3 historical snapshot to current candidate gate
+
+Current use must call the source-backed snapshot revalidation entry point, not the
+historical reader alone. Rebuild the offer from independently supplied current
+source context and authority, read the exact snapshot with that derived authority
+and explanation, match its original to the current resolved source, then revalidate
+the receipt against the current source again. Preserve the saved snapshot unchanged.
+
+Return candidate_ready with executionAuthority NONE and requiredNextGate
+FULL_PLAN_SELECTION_REVALIDATION. Include the exact source transition and resolution
+context for downstream comparison. This is neither plan acceptance nor a store write.
+Changed source record contents, candidate revision, explanation, scope, revoked or
+expired authority must reject current use even when a separately retained historical
+registry can still read the snapshot. Saved files cannot provide their own registry.
+
+Existing PACE_TARGET source definitions and V3 configurations remain different
+namespaces. The active-candidate integration must explicitly bind the approved source
+versions; do not infer preparation roles or final recovery semantics through a silent
+legacy-to-V3 conversion. Full-plan safety, support-component authority, explicit
+selection and storage compatibility remain required after this snapshot gate.
 
 [DRAFT_COMPLETE]

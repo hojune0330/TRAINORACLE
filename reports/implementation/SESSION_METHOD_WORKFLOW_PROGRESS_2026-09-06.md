@@ -1318,4 +1318,21 @@ source adapter,후보저장schema와일지화면의V3통합은남아있다. 새d
 전체 완료를 주장하지 않는다. 다음 실행은 이 adapter를 실제 처방 projection 및
 후보 저장 경로에 연결하는 것이다.
 
+## 60. V3 과거 보관본의 현재 후보 재검사 (2026-09-07)
+
+revalidateAdjustedMethodSnapshotV3를 추가했다. 현재 독립 source에서 offer를 다시
+생성하고, 그 권한/문맥으로 보관본과 설명을 읽은 다음 원본 일치와 현재 receipt를
+재검사한다. 통과해도 candidate_ready / executionAuthority NONE이며 다음 관문은
+FULL_PLAN_SELECTION_REVALIDATION이다. 보관본 자체나 활성 계획을 수정하지 않는다.
+
+실제 V3 source 적용 → snapshot → 현재 후보 검사까지 같은 통합 fixture에서
+실행했다. 현재 통과, 만료/철회/기록 내용 변경/후보 변경 거부, 설명 변경/다른 슬롯/
+추가 메모 거부를 확인했다. 같은 보관본은 독립 보존 권한으로 만료 후에도 과거 읽기가
+가능하지만 현재 후보 적용에는 실패한다. 관련 5파일 76 PASS, 앱 타입 검사 PASS.
+
+스펙 v0.31 §21.10 반영. 기존 plan-method-definition은 V2 MAIN 원본을 만들며
+현재 후보는 PACE_TARGET이다. 이를 V3로 조용히 재해석하지 않고 정확한 source 버전과
+지원 구간의 명시적 연결이 필요하다. 다음은 이 경계를 해결한 수치 projection과
+후보/활성 저장 version dispatch이다. 운영 활성화/일지 화면/공개 배포 완료는 아니다.
+
 [DRAFT_COMPLETE]
