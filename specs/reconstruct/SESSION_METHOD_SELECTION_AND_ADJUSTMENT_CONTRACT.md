@@ -4,7 +4,7 @@
 doc_id: trainoracle-session-method-selection-and-adjustment
 spec_id: SESSION_METHOD_SELECTION_AND_ADJUSTMENT_CONTRACT
 title: TrainOracle Session Method Selection And Adjustment Contract
-version: "0.24"
+version: "0.25"
 round: RT1_OWNER_APPROVED_IMPLEMENTATION_DIRECTION
 status: ACTIVE_IMPLEMENTATION_CONTRACT
 product_direction: OWNER_APPROVED_IMPLEMENTATION_DIRECTION
@@ -1205,5 +1205,31 @@ An exact owner-approved protocol still needs its complete lossless operating map
   every ordered component and target; mutation must invalidate its exact identity.
 - Legacy V1/V2 examples and identities remain unchanged.
 - A parser PASS or a test that demonstrates an old limitation is not a completed fix.
+
+### 21.4 V3 representation contract
+
+V3 is a separately parsed version, not a permissive change to V1/V2. Its root keeps
+warmup/main/cooldown. Segment roles are WORK, BUILDUP and PREPARATION. Group
+repeatUnit is SET, REPETITION or SEQUENCE. A REPETITION group owns its block count
+and must contain target work; nested SET/REPETITION ownership inside it is invalid.
+Keep work-segment count separate from repetition-block count.
+
+recoveryBetweenRepeats and recoveryAfter are ordered lists of scalar recovery steps.
+Empty lists mean no prescribed recovery. Each step retains its own mode and either
+duration or distance; WALK_OR_STAND is explicit. For each node, between-repetition
+recovery occurs count-1 times, then recoveryAfter occurs once after all repetitions,
+including at phase/set end. A parent's repetitions multiply its children's complete
+ordered structure. This does not redefine legacy recoveryAfter.
+
+Aggregates separate WORK/BUILDUP/PREPARATION and each phase. Known recovery seconds
+and distance may be shown as known components when complete totals are unavailable;
+they must not be presented as complete recovery or used to pass source dose limits.
+Unknown duration/distance never becomes zero. Enforce representation bounds even
+when an earlier unknown component makes the total unavailable. No dose authority is
+created by parsing or aggregate calculation.
+
+The standalone V3 parser/totals are implemented; dispatch into operating candidates,
+method comparison, explanation, snapshots, journal and persistence remains a separate
+required integration. V3 cannot fall through to a V2 decoder or numeric alternative.
 
 [DRAFT_COMPLETE]
