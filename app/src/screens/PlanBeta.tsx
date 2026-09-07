@@ -19,6 +19,7 @@ import {
   loadPreviousIntake,
   savePlanBetaState,
   readPlanBetaStateFromStorage,
+  activePlanBetaStorageKey,
 } from "../domain/plan-beta-store"
 import type {
   PlanBetaIntake,
@@ -100,9 +101,15 @@ export function PlanBeta(props: Omit<React.ComponentProps<typeof LegacyPlanBeta>
   const [revision, setRevision] = React.useState(0)
   React.useEffect(() => {
     const refresh = () => { setImportOpen(false); setNextOpen(false); setRead(readCurrent()); setRevision(value => value + 1) }
+    const onStorage = (event: StorageEvent) => {
+      if (event.key === null) { refresh(); return }
+      if (event.key !== activePlanBetaStorageKey()) return
+      // Keep an in-progress legacy candidate mounted; its save gate checks the current stored plan.
+      setRead(readCurrent())
+    }
     const unsubscribe = onLocalJournalScopeChange(refresh)
-    window.addEventListener("storage", refresh)
-    return () => { unsubscribe(); window.removeEventListener("storage", refresh) }
+    window.addEventListener("storage", onStorage)
+    return () => { unsubscribe(); window.removeEventListener("storage", onStorage) }
   }, [readCurrent])
   if (importOpen) return <AdjustedPlanImport readEvidence={readEvidence}
     onBack={() => { setImportOpen(false); setRead(readCurrent()) }} />
@@ -135,7 +142,7 @@ export function PlanBeta(props: Omit<React.ComponentProps<typeof LegacyPlanBeta>
     <button type="button" onClick={() => setRead(readCurrent())}>다시 확인</button>
   </section>
   return <><LegacyPlanBeta key={revision} {...props} onAdjustedStored={() => setRead(readCurrent())} />
-    <button type="button" onClick={() => setImportOpen(true)}>개인 계획 파일 불러오기</button></>
+    <button className="plan-file-import" type="button" onClick={() => setImportOpen(true)}>개인 계획 파일 불러오기</button></>
 }
 
 function LegacyPlanBeta({

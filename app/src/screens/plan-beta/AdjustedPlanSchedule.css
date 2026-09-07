@@ -1,3 +1,8 @@
+.plan-file-import,
+.adjusted-plan-schedule details button {
+  min-height: 44px;
+  min-width: 44px;
+}
 .adjusted-plan-schedule nav {
   display: flex;
   gap: 4px;
