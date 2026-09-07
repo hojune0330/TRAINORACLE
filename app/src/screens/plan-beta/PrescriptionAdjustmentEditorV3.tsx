@@ -15,6 +15,7 @@ export type AdjustmentOrderedChoicesV3 = {
   readonly configurations: readonly ConfigurationReference[]
 }
 type Props = {
+  readonly sessionLabel?: string
   readonly authority: AdjustmentAuthorityV3
   readonly current: PrescriptionSnapshotV3
   readonly policy: AdjustmentPolicyReference
@@ -143,7 +144,7 @@ export function PrescriptionAdjustmentEditorV3(props: Props) {
   const blocked = applying || stale || !opened.current
   return createPortal(<dialog ref={dialog} className="prescription-adjustment" role={discarding ? "alertdialog" : "dialog"}
     aria-modal="true" aria-busy={applying} aria-labelledby={`${id}-${discarding ? "discard" : "title"}`}
-    aria-describedby={discarding ? `${id}-discard-description` : undefined}
+    aria-describedby={discarding ? `${id}-discard-description` : props.sessionLabel ? `${id}-session` : undefined}
     onCancel={event => { event.preventDefault(); if (discarding) setDiscarding(false); else requestCancel() }}>
     {discarding ? <div className="prescription-adjustment__discard">
       <h2 id={`${id}-discard`}>변경안을 버릴까요?</h2><p id={`${id}-discard-description`}>아직 저장하지 않은 변경안만 없어져요. 기존 계획은 유지돼요.</p>
@@ -156,6 +157,7 @@ export function PrescriptionAdjustmentEditorV3(props: Props) {
         <button type="button" className="prescription-adjustment__icon" title="변경안 초기화" aria-label="변경안 초기화" disabled={!draft || applying} onClick={reset}><RotateCcw size={18} aria-hidden="true" /></button>
       </header>
       <div className="prescription-adjustment__content">
+        {props.sessionLabel && <p id={`${id}-session`}>{props.sessionLabel}</p>}
         {stale && <p role="alert">현재 훈련이나 적용 조건이 바뀌었어요. 닫은 뒤 다시 열어 주세요.</p>}
         {error && <p role="alert">{error}</p>}
         <fieldset disabled={blocked} className="prescription-adjustment__choices"><legend>훈련 구성</legend>

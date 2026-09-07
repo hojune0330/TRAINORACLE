@@ -39,6 +39,7 @@ export function MultiAdjustedPlanEditFlowV3({ seed, readReview, locks, readRevie
       ? prepareUnanchoredAdjustmentOfferV3({ ...source.source, nowMs: Date.now() })
       : prepareSourceAdjustmentOfferV3({ ...source.source, nowMs: Date.now() })
     if (offer?.kind === "available") return <PrescriptionAdjustmentEditorV3 key={`${editing.day}:${editing.slot}`}
+      sessionLabel={`${isoShift(request.preparations[0]!.startDate, editing.day - 1)} · ${editing.slot === "AM" ? "오전" : "오후"}`}
       authority={offer.authority} current={offer.current} policy={offer.policy} contextKey={offer.contextKey}
       initialConfiguration={selected?.kind === "ADJUSTED_METHOD_V3" ? selected.snapshot.receipt.after.configuration : undefined}
       now={Date.now} orderedChoices={orderedChoicesFor?.(editing)} onCancel={() => setEditing(null)}
@@ -57,6 +58,7 @@ export function MultiAdjustedPlanEditFlowV3({ seed, readReview, locks, readRevie
   return <section className="adjusted-next-flow">
     <button type="button" onClick={onCancel}><ArrowLeft size={18} aria-hidden="true" />후보로 돌아가기</button>
     <h1>주요 훈련을 하나씩 확인해 주세요</h1>
+    <p role="status">{changes.length ? `변경한 주요 훈련 ${changes.length}개 · 아직 저장하지 않았어요.` : "아직 저장하지 않은 계획이에요."}</p>
     {prepared?.kind === "prepared" ? prepared.candidate.sessions.filter(s => prepared.candidate.changedSlots.some(c => c.day === s.day && c.slot === s.slot)).map(session => <section key={`${session.day}:${session.slot}`} aria-label="고른 주요 훈련">
       <h2>{isoShift(prepared.candidate.startDate, session.day - 1)} · {session.slot === "AM" ? "오전" : "오후"}</h2>
       <AdjustedPrescriptionV3 session={session} explanation={request.preparations.find(p => p.address.day === session.day && p.address.slot === session.slot)?.explanation} />
