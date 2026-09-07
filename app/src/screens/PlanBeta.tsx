@@ -69,7 +69,8 @@ import { AdjustedPlanScheduleV3 } from "./plan-beta/AdjustedPlanScheduleV3"
 import { RETAINED_ADJUSTED_PLAN_EVIDENCE_V3 } from "../domain/adjusted-plan-storage-v5"
 import type { RetainedAdjustedPlanEvidenceV3 } from "../domain/selected-adjusted-plan-v3"
 import { AdjustedPlanNextFlowV3 } from "./plan-beta/AdjustedPlanNextFlowV3"
-import type { PlanAdjustmentResolverV3 } from "./plan-beta/adjustment-entry-v3"
+import { matchingAdjustmentEntryV3, type PlanAdjustmentResolverV3, type AdjustmentEntryV3 } from "./plan-beta/adjustment-entry-v3"
+import { AdjustedPlanEditFlowV3 } from "./plan-beta/AdjustedPlanEditFlowV3"
 const readOperatingV3Evidence = () => RETAINED_ADJUSTED_PLAN_EVIDENCE_V3
 
 type AdjustmentEntry = Pick<React.ComponentProps<typeof AdjustedPlanEditFlow>, "seed" | "readReview" | "locks">
@@ -179,6 +180,7 @@ function LegacyPlanBeta({
   onWritePlannedSessionLog,
   returnToSession,
   adjustmentResolver,
+  adjustmentResolverV3,
   onAdjustedStored,
 }: {
   readonly onWriteLog?: (entryType?: JournalEntryType) => void
@@ -186,9 +188,11 @@ function LegacyPlanBeta({
   readonly onWritePlannedSessionLog?: (draft: PlannedSessionLogDraft) => void
   readonly returnToSession?: PlannedSessionLogDraft["link"]
   readonly adjustmentResolver?: PlanAdjustmentResolver
+  readonly adjustmentResolverV3?: PlanAdjustmentResolverV3
   readonly onAdjustedStored: () => void
 }) {
   const [adjusting, setAdjusting] = React.useState<{ entry: AdjustmentEntry; revision: number } | null>(null)
+  const [adjustingV3, setAdjustingV3] = React.useState<{ entry: AdjustmentEntryV3; revision: number } | null>(null)
   const [stored, setStored] = React.useState<PlanBetaState | null>(
     () => loadPlanBetaState(),
   )
@@ -565,17 +569,25 @@ function LegacyPlanBeta({
     )
   }
 
+  if (adjustingV3 !== null) return <AdjustedPlanEditFlowV3 {...adjustingV3.entry}
+    isCurrentDraft={() => draftRevision.current === adjustingV3.revision}
+    onCancel={() => setAdjustingV3(null)} onSaved={() => { setAdjustingV3(null); onAdjustedStored() }} />
   if (adjusting !== null) return <AdjustedPlanEditFlow {...adjusting.entry}
     isCurrentDraft={() => draftRevision.current === adjusting.revision}
     onCancel={() => setAdjusting(null)} onSaved={() => { setAdjusting(null); onAdjustedStored() }} />
 
   if (generated !== null && gate !== null && generatedIntake !== null && generatedEvidence !== null) {
     const adjustmentActions: Record<string, () => void> = {}
-    if (adjustmentResolver !== undefined && currentCheck !== null && !recordConfirmationPending) {
+    if ((adjustmentResolver !== undefined || adjustmentResolverV3 !== undefined) && currentCheck !== null && !recordConfirmationPending) {
       for (const candidate of generated.candidates) {
         try {
         const context = { generated, gate, intake: generatedIntake, athleteEvidence: generatedEvidence,
           currentCheck, candidateId: candidate.candidateId, startDate: candidateStartDate }
+        const entryV3 = matchingAdjustmentEntryV3(adjustmentResolverV3, context)
+        if (entryV3) {
+          adjustmentActions[candidate.candidateId] = () => setAdjustingV3({ entry: entryV3, revision: draftRevision.current })
+          continue
+        }
         const entry = matchingAdjustmentEntry(adjustmentResolver, context)
         if (entry === null) continue
         adjustmentActions[candidate.candidateId] = () => setAdjusting({ entry, revision: draftRevision.current })

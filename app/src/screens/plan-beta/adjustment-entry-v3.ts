@@ -4,10 +4,14 @@ import type { PlanAdjustmentResolver } from "../PlanBeta"
 import type { AdjustedPlanSelectionRequestV3 } from "../../domain/selected-adjusted-plan-v3"
 import type { AdjustedPlanLiveReviewV3 } from "../../domain/adjusted-plan-storage-v5"
 import type { PlanMutationLockManager } from "../../domain/plan-mutation-lock"
+import type { AdjustmentReceiptV3 } from "@impl/prescription/prescription-adjustment-v3"
+import type { AdjustmentOrderedChoicesV3 } from "./PrescriptionAdjustmentEditorV3"
 
 export type AdjustmentEntryV3 = {
   readonly seed: AdjustedPlanSelectionRequestV3
   readonly readReview: () => AdjustedPlanLiveReviewV3
+  readonly readAdjustmentReview?: (receipt: AdjustmentReceiptV3) => AdjustedPlanLiveReviewV3
+  readonly orderedChoices?: readonly AdjustmentOrderedChoicesV3[]
   readonly locks?: PlanMutationLockManager | null
 }
 export type PlanAdjustmentResolverV3 = (context: Parameters<PlanAdjustmentResolver>[0]) => AdjustmentEntryV3 | null
