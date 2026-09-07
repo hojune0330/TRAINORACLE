@@ -40,6 +40,7 @@ import { restoreMultiPlanAsCurrentV3 } from "./multi-plan-active-restore-v3"
 import { readCurrentMultiRestoreReviewV3 } from "./multi-plan-restore-review-v3"
 import { createReviewedMultiAdjustmentProviderV3, type CurrentMultiMaterialsReaderV3 } from "../screens/plan-beta/reviewed-multi-adjustment-provider-v3"
 import { assembleReviewedMultiMaterialsV3 } from "./assemble-reviewed-multi-materials-v3"
+import { readMultiPlanMethodHistoryV3 } from "./multi-plan-method-history-v3"
 
 const dialogShow = Object.getOwnPropertyDescriptor(HTMLDialogElement.prototype, "showModal")
 const dialogClose = Object.getOwnPropertyDescriptor(HTMLDialogElement.prototype, "close")
@@ -157,6 +158,29 @@ it("assembles current date snapshots and exact explanations from independent rev
     .toMatchObject({ kind: "unavailable", code: "EXACT_CONFIGURATION_EXPLANATION_REQUIRED" })
   expect(assembleReviewedMultiMaterialsV3({ ...input, slots: input.slots.map(s => ({ ...s, explanations: [s.explanations[0]!, s.explanations[0]!] })) }, TODAY))
     .toMatchObject({ kind: "unavailable", code: "EXACT_CONFIGURATION_EXPLANATION_REQUIRED" })
+})
+
+it.each(["COMPLETED", "RESTED", "SKIPPED", "PAIN_CHECKIN"] as const)("reads owned method history without equating pain or missing with nonperformance: %s", async outcome => {
+  const f = storageFixture(), saved = await saveSelectedMultiAdjustedPlanV6(f)
+  if (saved.kind !== "saved") throw Error(saved.code)
+  const first = saved.state.selection.activePlan.sessions.find(s => s.prescription.kind === "ADJUSTED_METHOD_V3")!
+  const encoded = encodeStoredMultiAdjustedPlanV6(saved.state.selection,
+    [{ sessionDay: first.day, sessionSlot: first.slot, state: outcome }], TODAY.toISOString(), f.readReview().retained, TODAY)
+  if (encoded.kind !== "encoded") throw Error("Encoding failed")
+  localStorage.setItem(activePlanBetaStorageKey(), encoded.raw)
+  const archived = await retainMultiAdjustedOriginalPlanV3(encoded.state.contentFingerprint, { retained: f.readReview().retained, locks: f.locks })
+  expect(archived.kind).not.toBe("rejected")
+  const originals = readMultiAdjustedOriginalPlansV3(f.readReview().retained)
+  if (originals.kind !== "loaded") throw Error("Archive unavailable")
+  expect(originals.entries).toHaveLength(1)
+  const result = readMultiPlanMethodHistoryV3(f.request.intake.eventDistanceM, f.readReview().retained)
+  if (result.kind !== "read") throw Error("History unavailable")
+  expect(result.history).toHaveLength(f.request.preparations.length)
+  expect(result.history[0]!.performed.status).toBe(outcome === "COMPLETED" ? "PERFORMED" : outcome === "PAIN_CHECKIN" ? "MISSING" : "NOT_PERFORMED")
+  expect(result.history.slice(1).every(h => h.performed.status === "MISSING")).toBe(true)
+  expect(readMultiPlanMethodHistoryV3(42195, f.readReview().retained)).toMatchObject({ kind: "read", history: [] })
+  setActiveLocalAccount("different-account")
+  expect(readMultiPlanMethodHistoryV3(f.request.intake.eventDistanceM, f.readReview().retained)).toMatchObject({ kind: "read", history: [] })
 })
 
 it("routes only the exact generated candidate and every matching MAIN into the multi editor", () => {
