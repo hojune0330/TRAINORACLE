@@ -642,8 +642,16 @@ it("changes one MAIN to a structurally different set method and preserves its ex
       const scope = multiAdjustedPlanReviewScopeV3(preparations, preparations[0]!.experienceBand, rpeBindings)
       if (scope.kind !== "scope") throw Error(scope.code)
       const policies = [{ ...initialReview.policies[0]!, scopeFingerprint: scope.scopeFingerprint }]
-      latestReview = { preparations, rpeBindings, policies, retained: [{ rpeBindings, policies,
-        slots: preparations.map(p => ({ address: p.address, authority: p.source.authority, explanation: p.explanation })) }] }
+      const assembled = assembleReviewedMultiMaterialsV3({ candidate: preparations[0]!.candidate,
+        startDate: preparations[0]!.startDate, experienceBand: preparations[0]!.experienceBand,
+        changes, rpeBindings, policies, retained: [],
+        slots: preparations.map(p => {
+          const original = initialReview.preparations.find(i => i.address.day === p.address.day && i.address.slot === p.address.slot)!
+          return { address: p.address, source: p.source, experienceBand: p.experienceBand,
+            initialReceipt: JSON.parse(original.rawSnapshot).receipt, explanations: [p.explanation] }
+        }) }, TODAY)
+      if (assembled.kind !== "prepared") throw Error(assembled.code)
+      latestReview = assembled.review as typeof initialReview
       return latestReview
     }, isCurrentDraft: () => true, onSaved, onCancel: vi.fn() }))
   fireEvent.click(screen.getAllByRole("button", { name: "이 훈련 구성 바꾸기" })[0]!)
