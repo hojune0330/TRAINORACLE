@@ -4,7 +4,7 @@
 doc_id: trainoracle-session-method-selection-and-adjustment
 spec_id: SESSION_METHOD_SELECTION_AND_ADJUSTMENT_CONTRACT
 title: TrainOracle Session Method Selection And Adjustment Contract
-version: "0.26"
+version: "0.27"
 round: RT1_OWNER_APPROVED_IMPLEMENTATION_DIRECTION
 status: ACTIVE_IMPLEMENTATION_CONTRACT
 product_direction: OWNER_APPROVED_IMPLEMENTATION_DIRECTION
@@ -1246,5 +1246,22 @@ the separate trainoracle.prescription-sequence.v3 namespace. Unlike method compa
 it includes counts, selected references, labels and all phases. It is a content
 identity, not an expert signature, authorization token or privacy-safe public string.
 Validate before comparing or identifying. Keep historical V1/V2 namespaces unchanged.
+
+### 21.6 Shared recommendation policy for V3
+
+The V3 entry point shares the existing recommendation ordering/history algorithm,
+with V3 parsing and MAIN comparison. Keep legacy entry-point types and behavior.
+Do not mix versions in a catalog or implicitly translate V3 into a legacy receipt.
+
+Eligibility, purpose and context priorities precede repeat/variety preference.
+Only performed history changes performed counts; selected, missing and not-performed
+remain distinct. Missing assessments do not grant eligibility. Default selection
+still needs two distinct families with structurally different MAIN methods; a
+count-only copy is not the second method. If fewer exist, report the actual result.
+
+The caller must provide independently reviewed catalog/assessments and appropriately
+scoped history. ReviewRef strings and a recommendation result are not adoption or
+safety authority. The operating provider and versioned adjustment/storage path must
+still be integrated before public use.
 
 [DRAFT_COMPLETE]

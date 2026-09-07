@@ -1,17 +1,20 @@
 import { compareMainMethods, parsePrescriptionSequence } from "./sequence"
 import type { PrescriptionSequence } from "./sequence"
+import { parsePrescriptionSequenceV3 } from "./sequence-v3"
+import type { PrescriptionSequenceV3 } from "./sequence-v3"
+import { compareMainMethodsV3 } from "./sequence-v3-comparison"
 
 /** Caller-supplied reviewed catalog, never an adoption decision made by this module. */
-export type MethodConfiguration = {
+export type MethodConfiguration<S = PrescriptionSequence> = {
   readonly configurationId: string
   readonly version: string
-  readonly sequence: PrescriptionSequence
+  readonly sequence: S
 }
 
-export type MethodFamily = {
+export type MethodFamily<S = PrescriptionSequence> = {
   readonly familyId: string
   readonly reviewRef: string
-  readonly configurations: readonly MethodConfiguration[]
+  readonly configurations: readonly MethodConfiguration<S>[]
 }
 
 export type MethodReference = {
@@ -40,8 +43,8 @@ export type MethodHistoryEntry = {
 
 export type RepeatPreference = "NEUTRAL" | "PREFER_REPEAT" | "PREFER_VARIETY"
 
-export type RecommendedMethod = MethodReference & {
-  readonly sequence: PrescriptionSequence
+export type RecommendedMethod<S = PrescriptionSequence> = MethodReference & {
+  readonly sequence: S
   readonly eligibilityPriority: number
   readonly purposePriority: number
   readonly contextPriority: number
@@ -50,12 +53,12 @@ export type RecommendedMethod = MethodReference & {
   readonly selectedCount: number
 }
 
-export type MethodRecommendationResult =
+export type MethodRecommendationResult<S = PrescriptionSequence> =
   | { readonly kind: "rejected"; readonly code: "INVALID_CATALOG" | "INVALID_ASSESSMENTS" | "INVALID_HISTORY" | "INVALID_PREFERENCE" }
   | {
       readonly kind: "recommended"
-      readonly eligible: readonly RecommendedMethod[]
-      readonly defaults: readonly RecommendedMethod[]
+      readonly eligible: readonly RecommendedMethod<S>[]
+      readonly defaults: readonly RecommendedMethod<S>[]
       readonly historyCoverage: { readonly entries: number; readonly missing: number; readonly notPerformed: number }
     }
 
@@ -67,17 +70,31 @@ const validRef = (value: MethodReference): boolean => nonempty(value.familyId) &
  * Selected is not performed. Counts describe observed facts, not proof of non-exposure.
  * The caller must scope/deduplicate history and evaluate safety/eligibility beforehand.
  */
-export function recommendMethods(input: {
-  readonly catalog: readonly MethodFamily[]
+type RecommendationInput<S> = {
+  readonly catalog: readonly MethodFamily<S>[]
   readonly assessments: readonly MethodAssessment[]
   readonly history: readonly MethodHistoryEntry[]
   readonly repeatPreference: RepeatPreference
-}): MethodRecommendationResult {
+}
+
+export function recommendMethods(input: RecommendationInput<PrescriptionSequence>): MethodRecommendationResult {
+  return recommendWithCodec(input, parsePrescriptionSequence, compareMainMethods)
+}
+
+/** Same eligibility/history policy, separate lossless V3 catalog. No implicit migration. */
+export function recommendMethodsV3(input: RecommendationInput<PrescriptionSequenceV3>): MethodRecommendationResult<PrescriptionSequenceV3> {
+  return recommendWithCodec(input, parsePrescriptionSequenceV3, compareMainMethodsV3)
+}
+
+function recommendWithCodec<S>(input: RecommendationInput<S>,
+  parse: (input: unknown) => { readonly kind: "parsed"; readonly sequence: S } | { readonly kind: "rejected" },
+  compare: (a: S, b: S) => { readonly kind: "same" | "different" },
+): MethodRecommendationResult<S> {
   if (!["NEUTRAL", "PREFER_REPEAT", "PREFER_VARIETY"].includes(input.repeatPreference)) {
     return { kind: "rejected", code: "INVALID_PREFERENCE" }
   }
   const families = new Set<string>()
-  const configurations = new Map<string, MethodReference & { readonly sequence: PrescriptionSequence; readonly catalogOrder: number }>()
+  const configurations = new Map<string, MethodReference & { readonly sequence: S; readonly catalogOrder: number }>()
   let order = 0
   for (const family of input.catalog) {
     if (!nonempty(family.familyId) || !nonempty(family.reviewRef) || families.has(family.familyId) || family.configurations.length === 0) {
@@ -86,13 +103,13 @@ export function recommendMethods(input: {
     families.add(family.familyId)
     for (const config of family.configurations) {
       const ref = { familyId: family.familyId, configurationId: config.configurationId, version: config.version }
-      const parsed = parsePrescriptionSequence(config.sequence)
+      const parsed = parse(config.sequence)
       if (!validRef(ref) || configurations.has(key(ref)) || parsed.kind === "rejected") return { kind: "rejected", code: "INVALID_CATALOG" }
       configurations.set(key(ref), { ...ref, sequence: parsed.sequence, catalogOrder: order++ })
     }
   }
   const seen = new Set<string>()
-  const eligible: RecommendedMethod[] = []
+  const eligible: RecommendedMethod<S>[] = []
   const performed = new Map<string, number>()
   const selected = new Map<string, number>()
   let missing = 0
@@ -136,10 +153,10 @@ export function recommendMethods(input: {
     || (input.repeatPreference === "PREFER_REPEAT" ? b.observedPerformedCount - a.observedPerformedCount
       : input.repeatPreference === "PREFER_VARIETY" ? a.observedPerformedCount - b.observedPerformedCount : 0)
     || a.catalogOrder - b.catalogOrder)
-  const defaults: RecommendedMethod[] = []
+  const defaults: RecommendedMethod<S>[] = []
   for (const candidate of eligible) {
     if (defaults.every(other => other.familyId !== candidate.familyId
-      && compareMainMethods(other.sequence, candidate.sequence).kind === "different")) defaults.push(candidate)
+      && compare(other.sequence, candidate.sequence).kind === "different")) defaults.push(candidate)
     if (defaults.length === 2) break
   }
   return Object.freeze({
