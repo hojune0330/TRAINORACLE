@@ -3,11 +3,11 @@ import { adjustedPlanReviewScope } from "./adjusted-plan-review-policy"
 import type { ReviewedAdjustedPlanPolicy } from "./adjusted-plan-review-policy"
 import type { AdjustedPlanSelectionRequest, RetainedAdjustedPlanEvidence } from "./adjusted-plan-selection"
 import { TODAY } from "./prescription-quality-matrix.test-fixtures"
-import type { AdjustedFixtureSchedule } from "./adjusted-method-resolution.test-fixtures"
+import type { AdjustedFixtureSchedule, AdjustedFixtureGeneration } from "./adjusted-method-resolution.test-fixtures"
 
-export function adjustedPlanSelectionFixture(schedule: AdjustedFixtureSchedule = {}) {
-  const now = TODAY.getTime()
-  const { preparation, generation } = adjustedSelectionFixture(undefined, now, schedule)
+export function adjustedPlanSelectionFixture(schedule: AdjustedFixtureSchedule = {}, generationOverride?: AdjustedFixtureGeneration, evaluatedAt = TODAY) {
+  const now = evaluatedAt.getTime()
+  const { preparation, generation } = adjustedSelectionFixture(undefined, now, schedule, generationOverride)
   const scope = adjustedPlanReviewScope(preparation, generation.intake.experienceBand)
   if (scope.kind !== "scope") throw Error(scope.code)
   const policy: ReviewedAdjustedPlanPolicy = {

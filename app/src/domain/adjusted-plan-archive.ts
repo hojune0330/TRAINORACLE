@@ -39,6 +39,20 @@ export function readAdjustedOriginalPlans(retained = RETAINED_ADJUSTED_PLAN_EVID
   catch { return invalid() }
 }
 
+/** Pure staging for the owning mutation transaction; does not acquire a lock or write. */
+export function prepareAdjustedOriginalArchive(raw: string | null, state: StoredAdjustedPlanState,
+  retained: readonly RetainedAdjustedPlanEvidence[], now: Date) {
+  const archive = parse(raw, retained, now)
+  const checked = readStoredAdjustedPlanState(state, retained, now)
+  if (archive.kind !== "loaded" || checked.kind !== "loaded") return invalid()
+  const same = archive.entries.find(item => item.state.selection.contentFingerprint === checked.state.selection.contentFingerprint)
+  if (same?.state.contentFingerprint === checked.state.contentFingerprint && raw !== null) return { kind: "prepared" as const, raw }
+  const entries = [...archive.entries.filter(item => item !== same), { archivedAt: now.toISOString(), state: checked.state }]
+    .sort((a, b) => a.archivedAt.localeCompare(b.archivedAt)).slice(-18)
+  const content = { version: 1, entries }
+  return { kind: "prepared" as const, raw: JSON.stringify({ ...content, contentFingerprint: hash(content) }) }
+}
+
 /** Retains the current original without deleting/replacing the active plan.
  * Advancing a cycle remains a separate transaction and authority check. */
 export async function retainAdjustedOriginalPlan(expectedFingerprint: string, options: {
@@ -63,15 +77,12 @@ export async function retainAdjustedOriginalPlan(expectedFingerprint: string, op
         const activeRaw = storage.getItem(activeKey)
         const now = new Date()
         const active = readStoredAdjustedPlanState(activeRaw === null ? null : JSON.parse(activeRaw), retained, now)
-        const archive = parse(before, retained, now)
-        if (active.kind !== "loaded" || archive.kind !== "loaded") return reject("INVALID_STORED_PLAN")
+        if (active.kind !== "loaded") return reject("INVALID_STORED_PLAN")
         if (active.state.contentFingerprint !== expectedFingerprint) return reject("STALE_BASE")
-        const same = archive.entries.find(item => item.state.selection.contentFingerprint === active.state.selection.contentFingerprint)
-        if (same?.state.contentFingerprint === expectedFingerprint) return { kind: "retained" as const }
-        const entries = [...archive.entries.filter(item => item !== same), { archivedAt: now.toISOString(), state: active.state }]
-          .sort((a, b) => a.archivedAt.localeCompare(b.archivedAt)).slice(-18)
-        const content = { version: 1, entries }
-        next = JSON.stringify({ ...content, contentFingerprint: hash(content) })
+        const archive = prepareAdjustedOriginalArchive(before, active.state, retained, now)
+        if (archive.kind !== "prepared") return reject("INVALID_STORED_PLAN")
+        if (archive.raw === before) return { kind: "retained" as const }
+        next = archive.raw
         if (!localAccountScopeIsCurrent(scope) || storage.getItem(key) !== before || storage.getItem(activeKey) !== activeRaw) return reject("STALE_BASE")
         storage.setItem(key, next)
         if (storage.getItem(key) !== next || storage.getItem(activeKey) !== activeRaw || !localAccountScopeIsCurrent(scope)) throw Error("Unconfirmed archive")

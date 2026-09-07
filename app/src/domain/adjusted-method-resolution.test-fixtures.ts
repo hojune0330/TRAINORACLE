@@ -7,10 +7,11 @@ import { generatePlanFromDraft } from "./plan-beta-flow"
 import { draftFor, RUNTIME_CASES, saveCurrentRecord } from "./prescription-quality-matrix.test-fixtures"
 import type { PlanBetaIntake } from "./plan-beta-schema"
 export type AdjustedFixtureSchedule = Partial<Pick<PlanBetaIntake, "requestedFrameLength" | "secondSessionMode">>
+export type AdjustedFixtureGeneration = Extract<ReturnType<typeof generatePlanFromDraft>, { kind: "generated" }>
 
-export function adjustedMethodFixtureWithCandidate(event: typeof RUNTIME_CASES[number] = RUNTIME_CASES[3]!, work: SequenceWork = { kind: "distance", distanceM: 400, durationSeconds: null }, transform?: (sequence: PrescriptionSequence) => PrescriptionSequence, nowMs = 151, schedule: AdjustedFixtureSchedule = {}) {
-  const selectedRecordId = saveCurrentRecord(event.eventDistanceM, event.performanceSeconds + 0.137)
-  const generated = generatePlanFromDraft({ ...draftFor(event), ...schedule }, "NO_KNOWN_RISK", { selectedRecordId })
+export function adjustedMethodFixtureWithCandidate(event: typeof RUNTIME_CASES[number] = RUNTIME_CASES[3]!, work: SequenceWork = { kind: "distance", distanceM: 400, durationSeconds: null }, transform?: (sequence: PrescriptionSequence) => PrescriptionSequence, nowMs = 151, schedule: AdjustedFixtureSchedule = {}, generationOverride?: AdjustedFixtureGeneration) {
+  const selectedRecordId = generationOverride === undefined ? saveCurrentRecord(event.eventDistanceM, event.performanceSeconds + 0.137) : undefined
+  const generated = generationOverride ?? generatePlanFromDraft({ ...draftFor(event), ...schedule }, "NO_KNOWN_RISK", { selectedRecordId })
   if (generated.kind !== "generated") throw Error("Expected generated original")
   const original = generated.generated.candidates[0].sessions.find(session => session.prescription.kind === "PACE_TARGET")?.prescription
   if (original?.kind !== "PACE_TARGET") throw Error("Expected original prescription")

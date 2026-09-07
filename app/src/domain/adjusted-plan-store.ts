@@ -1,10 +1,11 @@
 import { canonicalJsonFingerprint } from "@impl/plan-generator/candidate-identity"
 import { hasCanonicalJsonTree } from "./plan-beta-schema"
 import { activePlanBetaStorageKey } from "./plan-beta-store"
-import { localAccountScopeIsCurrent, localAccountScopeSnapshot } from "./account/local-account-scope"
+import { localAccountScopeIsCurrent, localAccountScopeSnapshot, accountScopedStorageKey } from "./account/local-account-scope"
 import { getPlanMutationLockManager, PLAN_BETA_MUTATION_LOCK_NAME } from "./plan-mutation-lock"
 import type { PlanMutationLockManager } from "./plan-mutation-lock"
-import { selectAdjustedPlanForActivation } from "./adjusted-plan-selection"
+import { selectAdjustedPlanForActivation, selectAdjustedPlanSuccessor } from "./adjusted-plan-selection"
+import { ADJUSTED_PLAN_ARCHIVE_KEY, prepareAdjustedOriginalArchive } from "./adjusted-plan-archive"
 import type { AdjustedPlanSelectionRequest, RetainedAdjustedPlanEvidence, SelectedAdjustedPlanState } from "./adjusted-plan-selection"
 import { encodeStoredAdjustedPlanState, readStoredAdjustedPlanState } from "./adjusted-plan-storage-schema"
 import type { ReviewedAdjustedPlanPolicy } from "./adjusted-plan-review-policy"
@@ -81,4 +82,80 @@ export async function saveSelectedAdjustedPlan(input: {
       }
     })
   } catch { return reject("ADJUSTED_PLAN_SAVE_UNAVAILABLE") }
+}
+
+/** Archives the verified predecessor before replacing active bytes, all under
+ * the same lock. A failed confirmation restores only this transaction's writes. */
+export async function saveSelectedAdjustedSuccessor(input: {
+  readonly request: AdjustedPlanSelectionRequest
+  readonly expectedPredecessorFingerprint: string
+  readonly readReview: () => LiveReview
+  readonly isCurrentDraft: () => boolean
+  readonly locks?: PlanMutationLockManager | null
+}) {
+  try {
+    if (!input.isCurrentDraft() || !hasCanonicalJsonTree(input.request)) return reject("STALE_CANDIDATE_SELECTION")
+    const openingHash = hash(input.request)
+    const request = structuredClone(input.request)
+    const expected = input.expectedPredecessorFingerprint
+    const account = localAccountScopeSnapshot()
+    const activeKey = activePlanBetaStorageKey()
+    const archiveKey = accountScopedStorageKey(ADJUSTED_PLAN_ARCHIVE_KEY)
+    const locks = input.locks === undefined ? getPlanMutationLockManager() : input.locks
+    if (locks === null) return reject("MUTATION_LOCK_UNAVAILABLE")
+    return await locks.request(PLAN_BETA_MUTATION_LOCK_NAME, { mode: "exclusive", ifAvailable: true }, lock => {
+      if (lock === null) return reject("MUTATION_LOCK_UNAVAILABLE")
+      const current = () => input.isCurrentDraft() && localAccountScopeIsCurrent(account)
+        && input.expectedPredecessorFingerprint === expected
+        && hasCanonicalJsonTree(input.request) && hash(input.request) === openingHash
+      if (!current()) return reject("STALE_CANDIDATE_SELECTION")
+      const writes: { key: string; before: string | null; after: string }[] = []
+      let beforeActive: string | null | undefined
+      let beforeArchive: string | null | undefined
+      try {
+        const storage = window.localStorage
+        beforeActive = storage.getItem(activeKey)
+        beforeArchive = storage.getItem(archiveKey)
+        const live = input.readReview()
+        if (!hasCanonicalJsonTree(live)) return reject("INVALID_ADJUSTED_REVIEW")
+        const now = new Date()
+        const predecessor = readStoredAdjustedPlanState(beforeActive === null ? null : JSON.parse(beforeActive), live.retained, now)
+        if (predecessor.kind !== "loaded") return reject("INVALID_STORED_PLAN")
+        if (predecessor.state.contentFingerprint !== expected) return reject("STALE_BASE")
+        const selected = selectAdjustedPlanSuccessor({ ...request, preparation: { ...request.preparation,
+          source: live.source, explanation: live.explanation } }, predecessor.state, expected, live.retained, live.policies, now)
+        if (selected.kind !== "selected_adjusted") return selected
+        const encoded = encodeStoredAdjustedPlanState(selected.state, [], now.toISOString(), live.retained, now)
+        if (encoded.kind !== "encoded") return reject("ADJUSTED_PLAN_STORAGE_VALIDATION_FAILED")
+        const archive = prepareAdjustedOriginalArchive(beforeArchive, predecessor.state, live.retained, now)
+        if (archive.kind !== "prepared") return reject("INVALID_STORED_ARCHIVE")
+        if (!current() || storage.getItem(activeKey) !== beforeActive || storage.getItem(archiveKey) !== beforeArchive) return reject("STALE_BASE")
+        for (const write of [{ key: archiveKey, before: beforeArchive, after: archive.raw },
+          { key: activeKey, before: beforeActive, after: encoded.raw }]) {
+          if (!current() || storage.getItem(write.key) !== write.before
+            || writes.some(saved => storage.getItem(saved.key) !== saved.after)) throw Error("Changed successor transaction")
+          writes.push(write)
+          storage.setItem(write.key, write.after)
+          if (storage.getItem(write.key) !== write.after || !current()) throw Error("Unconfirmed successor write")
+        }
+        if (writes.some(write => storage.getItem(write.key) !== write.after) || !current()) throw Error("Changed successor transaction")
+        return { kind: "saved" as const, state: encoded.state, predecessorFingerprint: expected }
+      } catch {
+        try {
+          const storage = window.localStorage
+          let restored = true
+          for (const write of [...writes].reverse()) {
+            const actual = storage.getItem(write.key)
+            if (actual === write.after) {
+              if (write.before === null) storage.removeItem(write.key); else storage.setItem(write.key, write.before)
+            }
+            if (storage.getItem(write.key) !== write.before) restored = false
+          }
+          if (beforeActive !== undefined && storage.getItem(activeKey) !== beforeActive) restored = false
+          if (beforeArchive !== undefined && storage.getItem(archiveKey) !== beforeArchive) restored = false
+          return reject(restored ? "SUCCESSOR_STORAGE_WRITE_FAILED" : "PLAN_STORAGE_STATE_UNCERTAIN")
+        } catch { return reject("PLAN_STORAGE_STATE_UNCERTAIN") }
+      }
+    })
+  } catch { return reject("ADJUSTED_SUCCESSOR_SAVE_UNAVAILABLE") }
 }

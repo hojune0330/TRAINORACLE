@@ -16,24 +16,27 @@ const fingerprint = (value: unknown) => canonicalJsonFingerprint("trainoracle.ad
 
 /** The owning candidate flow supplies a current whole-plan context and trusted
  * configuration-specific reviews. Editor Apply stages; final Apply saves. */
-export function AdjustedPlanEditFlow({ seed, readReview, isCurrentDraft, onSaved, onCancel, locks }: {
+export function AdjustedPlanEditFlow({ seed, readReview, isCurrentDraft, onSaved, onCancel, locks, expectedPredecessorFingerprint }: {
   readonly seed: AdjustedPlanSelectionRequest
   readonly readReview: (receipt: AdjustmentReceipt) => Review
   readonly isCurrentDraft: () => boolean
   readonly onSaved: (state: StoredAdjustedPlanState) => void
   readonly onCancel: () => void
   readonly locks?: SaveInput["locks"]
+  readonly expectedPredecessorFingerprint?: string
 }) {
   const [opened] = React.useState(() => structuredClone(seed))
   const openingIdentity = React.useRef(fingerprint(seed))
+  const openingPredecessor = React.useRef(expectedPredecessorFingerprint)
   const live = React.useRef({ seed, isCurrentDraft, readReview })
   live.current = { seed, isCurrentDraft, readReview }
   const [staged, setStaged] = React.useState<{ request: AdjustedPlanSelectionRequest; receipt: AdjustmentReceipt } | null>(null)
   const offer = prepareSourceAdjustmentOffer({ ...opened.preparation.source, nowMs: Date.now() })
   const current = () => live.current.isCurrentDraft() && fingerprint(live.current.seed) === openingIdentity.current
+    && expectedPredecessorFingerprint === openingPredecessor.current
   if (staged !== null) return <AdjustedPlanApplyReview request={staged.request}
     readReview={() => live.current.readReview(staged.receipt)} isCurrentDraft={current}
-    locks={locks} onSaved={onSaved} onCancel={onCancel} />
+    locks={locks} onSaved={onSaved} onCancel={onCancel} expectedPredecessorFingerprint={expectedPredecessorFingerprint} />
   if (offer.kind !== "available") return <section>
     <p role="alert">지금 적용할 수 있는 조정 구성을 확인하지 못했어요. 계획은 바뀌지 않았어요.</p>
     <button type="button" onClick={onCancel}>돌아가기</button>

@@ -4,7 +4,7 @@
 doc_id: trainoracle-session-method-selection-and-adjustment
 spec_id: SESSION_METHOD_SELECTION_AND_ADJUSTMENT_CONTRACT
 title: TrainOracle Session Method Selection And Adjustment Contract
-version: "0.18"
+version: "0.19"
 round: RT1_OWNER_APPROVED_IMPLEMENTATION_DIRECTION
 status: ACTIVE_IMPLEMENTATION_CONTRACT
 product_direction: OWNER_APPROVED_IMPLEMENTATION_DIRECTION
@@ -1070,5 +1070,26 @@ normal fresh-plan entry unchanged. Return a distinct next-frame draft result wit
 its context and required successor-transaction gate; do not return a saved/active
 result or erase the old plan while comparing candidates. A successful preview is
 not a reviewed adjusted configuration or a durable successor activation.
+
+### 20.6 Successor selection and retained lineage
+
+A successor selection must validate the actual predecessor v4 with retained source
+evidence, its expected fingerprint, current safety, completion basis, same event,
+and exact generated continuity counts. Re-run ordinary candidate/anchor/whole-frame
+review checks as well. The initial selection path continues rejecting successors.
+
+The selected successor retains a continuation record containing predecessor envelope
+and selection fingerprints and the prior periodization context. Advance the existing
+lineage exactly once instead of creating a new program. Historical reconstruction
+validates this record and the next context deterministically without treating local
+fingerprints as signatures or proof of independently verified training performance.
+Periodization metadata does not grant dose/phase adaptation authority. The owning
+write transaction must bind the continuation to the actual stored predecessor;
+historical reading alone cannot authorize a replacement or attest a full archive chain.
+
+Initial stored selections remain byte-compatible: absent continuation means initial
+origin only. A prior-frame candidate with absent/malformed continuation, or an initial
+candidate with continuation, is invalid. Archive and active writes must be confirmed
+under one account/mutation lock with rollback limited to the transaction's own bytes.
 
 [DRAFT_COMPLETE]

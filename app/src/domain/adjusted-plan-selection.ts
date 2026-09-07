@@ -9,6 +9,10 @@ import { checkAdjustedPlanReviewPolicy, REVIEWED_ADJUSTED_PLAN_POLICIES } from "
 import type { ReviewedAdjustedPlanPolicy } from "./adjusted-plan-review-policy"
 import type { prepareAdjustedPlanCandidate } from "./adjusted-plan-candidate"
 import { assembleAdjustedPlanSelection, adjustedPlanSelectionFingerprint as hash } from "./selected-adjusted-plan-content"
+import type { AdjustedPlanContinuation } from "./selected-adjusted-plan-content"
+import { readStoredAdjustedPlanState } from "./adjusted-plan-storage-schema"
+import { prepareAdjustedNextFrame } from "./adjusted-plan-continuity"
+import type { RetainedAdjustedPlanEvidence } from "./selected-adjusted-plan-content"
 export { readSelectedAdjustedPlan } from "./selected-adjusted-plan-content"
 export type { SelectedAdjustedPlanState, RetainedAdjustedPlanEvidence } from "./selected-adjusted-plan-content"
 
@@ -34,6 +38,34 @@ export function selectAdjustedPlanForActivation(
   policies: readonly ReviewedAdjustedPlanPolicy[] = REVIEWED_ADJUSTED_PLAN_POLICIES,
   evaluatedAt: Date = new Date(),
 ) {
+  return selectAdjustedPlan(request, policies, evaluatedAt)
+}
+
+/** The caller supplies the actual stored predecessor, never a draft's claim. */
+export function selectAdjustedPlanSuccessor(request: AdjustedPlanSelectionRequest, previous: unknown,
+  expectedPredecessorFingerprint: string, retained: readonly RetainedAdjustedPlanEvidence[],
+  policies: readonly ReviewedAdjustedPlanPolicy[], evaluatedAt = new Date()) {
+  try {
+    if (!hasCanonicalJsonTree(request)) return reject("INVALID_ADJUSTED_SELECTION")
+    const before = readStoredAdjustedPlanState(previous, retained, evaluatedAt)
+    if (before.kind !== "loaded") return reject("INVALID_STORED_PLAN")
+    const prepared = prepareAdjustedNextFrame({ previous: before.state,
+      expectedFingerprint: expectedPredecessorFingerprint, nextStartDate: request.preparation.startDate,
+      currentCheck: request.currentCheck }, retained, evaluatedAt)
+    if (prepared.kind !== "prepared") return prepared
+    if (before.state.selection.activePlan.eventDistanceM !== request.preparation.candidate.eventDistanceM) return reject("SUCCESSOR_EVENT_CHANGED")
+    const expected = { kind: "PREVIOUS_FRAME_CONTEXT_RETAINED", ...prepared.context.continuity }
+    if (hash(expected) !== hash(request.preparation.candidate.continuityContext)) return reject("SUCCESSOR_CONTINUITY_CHANGED")
+    return selectAdjustedPlan(request, policies, evaluatedAt, {
+      predecessorFingerprint: before.state.contentFingerprint,
+      predecessorSelectionFingerprint: before.state.selection.contentFingerprint,
+      previousPeriodization: before.state.selection.periodization,
+    })
+  } catch { return reject("INVALID_ADJUSTED_SELECTION") }
+}
+
+function selectAdjustedPlan(request: AdjustedPlanSelectionRequest,
+  policies: readonly ReviewedAdjustedPlanPolicy[], evaluatedAt: Date, continuation?: AdjustedPlanContinuation) {
   try {
     if (!hasCanonicalJsonTree(request) || !Number.isFinite(evaluatedAt.getTime())
         || request.action !== "USER_EXPLICIT" || Reflect.ownKeys(request).length !== 8
@@ -59,10 +91,10 @@ export function selectAdjustedPlanForActivation(
     const review = checkAdjustedPlanReviewPolicy(preparation, intake.experienceBand, policies)
     if (review.kind !== "reviewed_scope") return reject(review.code)
     if (review.candidate.contentFingerprint !== input.expectedCandidateFingerprint) return reject("ADJUSTED_SELECTION_CHANGED")
-    if (review.candidate.continuityContext.kind !== "NO_PREVIOUS_FRAME_CONTEXT") {
+    if (review.candidate.continuityContext.kind !== "NO_PREVIOUS_FRAME_CONTEXT" && continuation === undefined) {
       return reject("ADJUSTED_SUCCESSOR_REQUIRES_CONTINUITY_TRANSACTION")
     }
 
-    return assembleAdjustedPlanSelection(parsed.data, preparation, review, evaluatedAt)
+    return assembleAdjustedPlanSelection(parsed.data, preparation, review, evaluatedAt, continuation)
   } catch { return reject("INVALID_ADJUSTED_SELECTION") }
 }
