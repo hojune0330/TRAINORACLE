@@ -4,9 +4,58 @@ import { activePlanBetaStorageKey } from "../plan-beta-store"
 import { activeLocalAccount } from "./local-journal-ownership"
 import { planCloudBackupEnabled } from "./plan-cloud-backup"
 import { supabase } from "./supabase-client"
+import { canonicalJsonFingerprint } from "@impl/plan-generator/candidate-identity"
+import { importMultiAdjustedPlanHistoryV3 } from "../multi-adjusted-plan-backup-v3"
+import type { PlanMutationLockManager } from "../plan-mutation-lock"
 
 type Dependencies = { readonly enabled: () => boolean; readonly client: typeof supabase }
 const operating: Dependencies = { enabled: planCloudBackupEnabled, client: supabase }
+
+export async function restoreMultiPlanServerHistoryV3(input: {
+  readonly snapshot: Extract<Awaited<ReturnType<typeof loadLatestMultiPlanSnapshotV3>>, { kind: "read_only" }>;
+  readonly confirmsRestore: boolean; readonly isCurrentRequest: () => boolean;
+  readonly readEvidence: () => readonly RetainedMultiAdjustedEvidenceV3[];
+  readonly locks?: PlanMutationLockManager | null;
+}) {
+  const owner = activeLocalAccount()
+  if (owner === null || input.snapshot.ownerId !== owner || input.confirmsRestore !== true)
+    return { kind: "rejected" as const, code: "OWNER_RESTORE_CONFIRMATION_REQUIRED" }
+  const content = { app: "TRAINORACLE", format: "trainoracle.multi-adjusted-plan.personal-backup.v3",
+    exportedAt: new Date().toISOString(), active: input.snapshot.state, archive: null }
+  const raw = JSON.stringify({ ...content, contentFingerprint: canonicalJsonFingerprint("trainoracle.multi-adjusted-plan-backup.v3", content) })
+  return importMultiAdjustedPlanHistoryV3({ raw, confirmsOwnFile: true, readEvidence: input.readEvidence, locks: input.locks,
+    isCurrentRequest: () => activeLocalAccount() === owner && input.confirmsRestore === true && input.isCurrentRequest() })
+}
+
+/** Reads a private historical snapshot only; caller must separately request restoration. */
+export async function loadLatestMultiPlanSnapshotV3(
+  readEvidence: () => readonly RetainedMultiAdjustedEvidenceV3[], dependencies: Dependencies = operating) {
+  const unavailable = () => ({ kind: "unavailable" as const })
+  try {
+    const owner = activeLocalAccount()
+    if (owner === null || !dependencies.enabled()) return unavailable()
+    const current = () => owner === activeLocalAccount() && dependencies.enabled()
+    const client = await dependencies.client()
+    if (!client || !current()) return unavailable()
+    const session = await client.auth.getSession()
+    if (session.error || session.data.session?.user.id !== owner || !current()) return unavailable()
+    const { data, error } = await client.from("saved_training_plans")
+      .select("user_id, plan_id, schema_version, plan_payload, saved_at")
+      .eq("user_id", owner).eq("schema_version", 6).is("archived_at", null)
+      .order("saved_at", { ascending: false }).order("plan_id", { ascending: false }).limit(1).maybeSingle()
+    if (!current()) return { kind: "stale_response" as const }
+    if (error) return { kind: "failed" as const }
+    if (!data) return unavailable()
+    if (data.user_id !== owner || data.schema_version !== 6) return { kind: "invalid" as const }
+    const read = readStoredMultiAdjustedPlanV6(data.plan_payload, readEvidence())
+    if (read.kind !== "loaded" || data.plan_id !== `multi-v6:${read.state.contentFingerprint}`
+      || typeof data.saved_at !== "string" || !Number.isFinite(Date.parse(data.saved_at))
+      || Date.parse(data.saved_at) !== Date.parse(read.state.updatedAt)) return { kind: "invalid" as const }
+    if (!current()) return { kind: "stale_response" as const }
+    return { kind: "read_only" as const, ownerId: owner, state: read.state,
+      executionAuthority: "NONE" as const, storageState: "NOT_RESTORED" as const }
+  } catch { return { kind: "failed" as const } }
+}
 
 /** An immutable server snapshot, not an activation or a restore operation. */
 export async function backupMultiPlanSnapshotV3(expectedFingerprint: string,

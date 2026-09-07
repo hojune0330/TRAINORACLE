@@ -4,7 +4,7 @@
 doc_id: trainoracle-session-method-selection-and-adjustment
 spec_id: SESSION_METHOD_SELECTION_AND_ADJUSTMENT_CONTRACT
 title: TrainOracle Session Method Selection And Adjustment Contract
-version: "0.61"
+version: "0.62"
 round: RT1_OWNER_APPROVED_IMPLEMENTATION_DIRECTION
 status: ACTIVE_IMPLEMENTATION_CONTRACT
 product_direction: OWNER_APPROVED_IMPLEMENTATION_DIRECTION
@@ -1785,5 +1785,14 @@ V6 개인 계획을 전송하기 전에 실제 계정별 현재 저장값과 독
 이후 검증된 서버 조회와 명시적 복원은 별도 경로이며 저장 응답으로 실행 권한을 주지 않는다.
 서버 스키마 확장은 기존 V3와 소유자별 RLS/기능 권한을 유지한다. 마이그레이션 파일,
 합성 클라이언트 시험, 실제 DB 적용 및 RLS 왕복 시험은 각각 다른 증거로 기록한다.
+
+### 21.43 서버 조회와 원본 보관함 복원
+
+서버 조회는 현재 인증 사용자와 schema_version=6, 미보관 행으로 범위를 제한한다.
+응답의 소유자/행 ID/상태 지문/저장 시각과 독립 근거를 검사하고 계정 변경 뒤의
+응답은 폐기한다. 읽기 결과는 READ_ONLY/NOT_RESTORED이며 저장 부작용을 갖지 않는다.
+본인 계정의 명시적 확인 뒤 원본 보관함으로 복원할 수 있다. 기존 개인 파일 복원의
+잠금/중복/용량/현재 일정 보존 규칙을 재사용한다. 현재 일정 복원이나 새 실행 권한
+부여는 이 원본 복원과 다르며 별도 구현·검증 없이는 완료로 표시하지 않는다.
 
 [DRAFT_COMPLETE]

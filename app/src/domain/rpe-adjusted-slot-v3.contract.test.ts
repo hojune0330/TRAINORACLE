@@ -35,7 +35,7 @@ import { MultiAdjustedPlanApplyReviewV3 } from "../screens/plan-beta/MultiAdjust
 import { MultiAdjustedPlanEditFlowV3 } from "../screens/plan-beta/MultiAdjustedPlanEditFlowV3"
 import { stageMultiAdjustmentV3 } from "./stage-multi-adjustment-v3"
 import { matchingMultiAdjustmentEntryV3 } from "../screens/plan-beta/multi-adjustment-entry-v3"
-import { backupMultiPlanSnapshotV3 } from "./account/multi-plan-cloud-backup-v3"
+import { backupMultiPlanSnapshotV3, loadLatestMultiPlanSnapshotV3, restoreMultiPlanServerHistoryV3 } from "./account/multi-plan-cloud-backup-v3"
 
 const dialogShow = Object.getOwnPropertyDescriptor(HTMLDialogElement.prototype, "showModal")
 const dialogClose = Object.getOwnPropertyDescriptor(HTMLDialogElement.prototype, "close")
@@ -165,6 +165,53 @@ it.each(["saved", "wrong-session", "account-during-auth", "account-after-send", 
       schema_version: 6, plan_payload: saved.state, saved_at: saved.state.updatedAt },
     { onConflict: "user_id,plan_id", ignoreDuplicates: true })
   }
+})
+
+it.each(["read", "wrong-owner", "wrong-id", "changed-payload", "changed-time", "changed-account", "missing-evidence"])("validates private cloud reads without restoring: %s", async scenario => {
+  setActiveLocalAccount("cloud-owner")
+  const input = storageFixture(), saved = await saveSelectedMultiAdjustedPlanV6(input)
+  if (saved.kind !== "saved") throw Error("Missing saved plan")
+  const before = localStorage.getItem(activePlanBetaStorageKey())
+  const payload = structuredClone(saved.state)
+  if (scenario === "changed-payload") payload.progress.push({ sessionDay: 999, sessionSlot: "AM", state: "COMPLETED" })
+  const row = { user_id: scenario === "wrong-owner" ? "other" : "cloud-owner", schema_version: 6,
+    plan_id: scenario === "wrong-id" ? "multi-v6:wrong" : `multi-v6:${saved.state.contentFingerprint}`,
+    plan_payload: payload, saved_at: scenario === "changed-time" ? "2020-01-01T00:00:00Z" : saved.state.updatedAt }
+  const eq = vi.fn(() => query), order = vi.fn(() => query)
+  const query = { select: () => query, eq, is: () => query, order, limit: () => query,
+    maybeSingle: async () => {
+      if (scenario === "changed-account") setActiveLocalAccount("other")
+      return { data: row, error: null }
+    } }
+  type Client = NonNullable<Awaited<ReturnType<NonNullable<Parameters<typeof loadLatestMultiPlanSnapshotV3>[1]>["client"]>>>
+  const client = { auth: { getSession: async () => ({ data: { session: { user: { id: "cloud-owner" } } }, error: null }) },
+    from: () => query } as unknown as Client
+  const result = await loadLatestMultiPlanSnapshotV3(() => scenario === "missing-evidence" ? [] : input.readReview().retained,
+    { enabled: () => true, client: async () => client })
+  expect(result.kind).toBe(scenario === "read" ? "read_only" : scenario === "changed-account" ? "stale_response" : "invalid")
+  expect(eq).toHaveBeenCalledWith("user_id", "cloud-owner")
+  expect(eq).toHaveBeenCalledWith("schema_version", 6)
+  if (result.kind === "read_only") expect(result).toMatchObject({ state: saved.state, executionAuthority: "NONE", storageState: "NOT_RESTORED" })
+  setActiveLocalAccount("cloud-owner")
+  expect(localStorage.getItem(activePlanBetaStorageKey())).toBe(before)
+})
+
+it("requires confirmation and the same owner to restore server history without replacing the active schedule", async () => {
+  setActiveLocalAccount("cloud-owner")
+  const f = storageFixture(), saved = await saveSelectedMultiAdjustedPlanV6(f)
+  if (saved.kind !== "saved") throw Error("Missing initial plan")
+  const before = localStorage.getItem(activePlanBetaStorageKey())
+  const snapshot = { kind: "read_only" as const, ownerId: "cloud-owner", state: saved.state,
+    executionAuthority: "NONE" as const, storageState: "NOT_RESTORED" as const }
+  const input = { snapshot, confirmsRestore: false, isCurrentRequest: () => true,
+    readEvidence: () => f.readReview().retained, locks: f.locks }
+  expect(await restoreMultiPlanServerHistoryV3(input)).toMatchObject({ code: "OWNER_RESTORE_CONFIRMATION_REQUIRED" })
+  expect(await restoreMultiPlanServerHistoryV3({ ...input, confirmsRestore: true })).toMatchObject({ kind: "restored_history", added: 1, activePlanChanged: false })
+  expect(localStorage.getItem(activePlanBetaStorageKey())).toBe(before)
+  expect(readMultiAdjustedOriginalPlansV3(f.readReview().retained)).toMatchObject({ kind: "loaded", entries: [{ state: saved.state }] })
+  expect(await restoreMultiPlanServerHistoryV3({ ...input, confirmsRestore: true })).toMatchObject({ kind: "restored_history", added: 0 })
+  setActiveLocalAccount("other-owner")
+  expect(await restoreMultiPlanServerHistoryV3({ ...input, confirmsRestore: true })).toMatchObject({ code: "OWNER_RESTORE_CONFIRMATION_REQUIRED" })
 })
 
 it("writes and independently reads a real multi-slot V6 plan, replaying the same unprogressed selection", async () => {
