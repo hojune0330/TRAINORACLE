@@ -1,7 +1,8 @@
 import { afterEach, beforeEach, expect, it, vi } from "vitest"
 import { createAdjustmentDraftV3, applyAdjustmentDraftV3 } from "@impl/prescription/prescription-adjustment-v3"
 import { sequenceV3ContentIdentity } from "@impl/prescription/sequence-v3-comparison"
-import { generatePlanFromDraft, selectPlanForActivation } from "./plan-beta-flow"
+import { generatePlanFromDraft, selectPlanForActivation, generateMultiAdjustedNextFrameV3FromDraft } from "./plan-beta-flow"
+import { prepareMultiAdjustedNextFrameV3 } from "./adjusted-plan-continuity"
 import { draftFor, RUNTIME_CASES, TODAY } from "./prescription-quality-matrix.test-fixtures"
 import { setActiveLocalAccount } from "./account/local-journal-ownership"
 import { unanchoredAdjustmentFixtureV3 } from "./unanchored-adjustment-v3.test-fixtures"
@@ -224,6 +225,35 @@ it("roundtrips a multi-plan backup into history only with explicit confirmation 
   await act(async () => { fireEvent.click(screen.getByRole("button", { name: "과거 원본 보관함에 추가" })) })
   expect(screen.getByRole("status").textContent).toContain("훈련 일정은 바뀌지 않았어요.")
   expect(localStorage.getItem(activePlanBetaStorageKey())).toBe(before)
+})
+
+it("prepares the next frame from actual multi-plan history without inventing missing outcomes or writing a successor", async () => {
+  const input = storageFixture(), saved = await saveSelectedMultiAdjustedPlanV6(input)
+  if (saved.kind !== "saved") throw Error("Initial save failed")
+  const retained = input.readReview().retained
+  const base = { previous: saved.state, expectedFingerprint: saved.state.contentFingerprint,
+    nextStartDate: "2026-09-30", currentCheck: "NO_KNOWN_RISK" as const }
+  expect(prepareMultiAdjustedNextFrameV3(base, retained, TODAY)).toMatchObject({ code: "FRAME_NOT_STARTED" })
+  expect(prepareMultiAdjustedNextFrameV3(base, retained,
+    new Date(`${saved.state.selection.intake.startDate}T12:00:00+09:00`))).toMatchObject({ code: "INCOMPLETE_FRAME" })
+  const later = new Date("2026-09-30T12:00:00+09:00")
+  vi.setSystemTime(later)
+  const prepared = prepareMultiAdjustedNextFrameV3(base, retained, later)
+  if (prepared.kind !== "prepared") throw Error(prepared.code)
+  expect(prepared.context.missingRequiredOutcomes).toBeGreaterThan(0)
+  expect(prepared.context.completionBasis).toBe("DISPLAYED_FRAME_ELAPSED")
+  expect(prepared.context.continuity.progressStateCounts.every(c => c.count === 0)).toBe(true)
+  expect(prepared.context.periodization.frameOrdinal).toBe(saved.state.selection.periodization.frameOrdinal + 1)
+  const before = localStorage.getItem(activePlanBetaStorageKey())
+  const next = generateMultiAdjustedNextFrameV3FromDraft({ draft: { ...input.request.intake, startDate: base.nextStartDate },
+    currentCheck: "NO_KNOWN_RISK", expectedPredecessorFingerprint: saved.state.contentFingerprint }, retained)
+  expect(next).toMatchObject({ kind: "multi_adjusted_next_frame_v3_draft", requiredNextGate: "REVIEWED_MULTI_SUCCESSOR_V3_TRANSACTION" })
+  expect(localStorage.getItem(activePlanBetaStorageKey())).toBe(before)
+  const slot = saved.state.selection.activePlan.sessions.find(s => s.role === "QUALITY")!
+  const pain = await saveMultiAdjustedPlanProgressV3({ expectedFingerprint: saved.state.contentFingerprint,
+    progress: { sessionDay: slot.day, sessionSlot: slot.slot, state: "PAIN_CHECKIN" }, retained, locks: input.locks })
+  if (pain.kind !== "saved") throw Error(pain.code)
+  expect(prepareMultiAdjustedNextFrameV3({ ...base, previous: pain.state, expectedFingerprint: pain.state.contentFingerprint }, retained, later)).toMatchObject({ code: "ACTIVE_HOLD" })
 })
 
 it.each(["expiry", "other-writer"])("handles %s during a real multi-plan write without overwriting another writer", async change => {

@@ -9,6 +9,8 @@ import { todayISO } from "./journal-store"
 import { hasCanonicalJsonTree } from "./plan-beta-schema"
 import { readStoredAdjustedPlanStateV5, RETAINED_ADJUSTED_PLAN_EVIDENCE_V3 } from "./adjusted-plan-storage-v5"
 import type { RetainedAdjustedPlanEvidenceV3 } from "./selected-adjusted-plan-v3"
+import { readStoredMultiAdjustedPlanV6, RETAINED_MULTI_ADJUSTED_EVIDENCE_V3 } from "./adjusted-plan-storage-v6"
+import type { RetainedMultiAdjustedEvidenceV3 } from "./selected-multi-adjusted-plan-v3"
 
 const rejected = (code: string) => ({ kind: "rejected" as const, code })
 const states: readonly PlanProgressState[] = ["COMPLETED", "RESTED", "SKIPPED", "PAIN_CHECKIN"]
@@ -34,8 +36,14 @@ export function prepareAdjustedNextFrameV3(input: ContinuityRequest,
     "trainoracle.adjusted-next-frame-context.v3")
 }
 
+export function prepareMultiAdjustedNextFrameV3(input: ContinuityRequest,
+  retained: readonly RetainedMultiAdjustedEvidenceV3[] = RETAINED_MULTI_ADJUSTED_EVIDENCE_V3, evaluatedAt = new Date()) {
+  return prepareNextFrame(input, value => readStoredMultiAdjustedPlanV6(value, retained, evaluatedAt), evaluatedAt,
+    "trainoracle.multi-adjusted-next-frame-context.v3")
+}
+
 function prepareNextFrame(input: ContinuityRequest,
-  readState: (value: unknown) => ReturnType<typeof readStoredAdjustedPlanState> | ReturnType<typeof readStoredAdjustedPlanStateV5>,
+  readState: (value: unknown) => ReturnType<typeof readStoredAdjustedPlanState> | ReturnType<typeof readStoredAdjustedPlanStateV5> | ReturnType<typeof readStoredMultiAdjustedPlanV6>,
   evaluatedAt: Date, namespace: string) {
   try {
     if (!hasCanonicalJsonTree(input) || Reflect.ownKeys(input).length !== 4

@@ -4,7 +4,7 @@
 doc_id: trainoracle-session-method-selection-and-adjustment
 spec_id: SESSION_METHOD_SELECTION_AND_ADJUSTMENT_CONTRACT
 title: TrainOracle Session Method Selection And Adjustment Contract
-version: "0.53"
+version: "0.54"
 round: RT1_OWNER_APPROVED_IMPLEMENTATION_DIRECTION
 status: ACTIVE_IMPLEMENTATION_CONTRACT
 product_direction: OWNER_APPROVED_IMPLEMENTATION_DIRECTION
@@ -1692,5 +1692,18 @@ multi-adjusted-plan.personal-backup.v3는 현재 version 6 계획과 별도 다�
 활성화하거나 변경하지 않는다. 이미 있는 선택 원본은 보존하고 18개 초과 시 자동
 삭제하지 않고 거부한다. 계정/요청/현재 계획/보관함의 변경은 쓰기 전후 확인한다.
 다중 파일의 독립 근거가 없으면 구형 형식으로 강제 변환하지 않고 거부한다.
+
+### 21.34 다중 계획의 다음 주기 후보 준비
+
+다중 version 6 원본에도 기존 시작일/보이는 프레임/명시적 결과/기간 경과/통증
+확인 규칙을 동일하게 적용한다. 다중 다음 문맥은 별도 지문 namespace로 결속한다.
+기간이 지났다는 이유로 미기록을 완료로 바꾸지 않는다. 주기 계보는 한 프레임만
+전진시키며 이 문맥이 훈련량이나 강도 증가 권한이 되지 않는다.
+
+실제 현재 계정의 다중 계획을 독립 조회하고 기존 생성기에 결과 집계를 전달한다.
+생성 전후 계정과 이전 계획 지문을 확인하며 종목을 바꾸는 요청은 거부한다.
+결과는 multi_adjusted_next_frame_v3_draft이고 현재 계획을 변경하지 않는다.
+REVIEWED_MULTI_SUCCESSOR_V3_TRANSACTION으로 원본 보관/현재 근거 검토/명시적
+선택/저장을 완료해야 후속 주기 적용으로 인정한다.
 
 [DRAFT_COMPLETE]

@@ -34,7 +34,9 @@ import {
   loadPreviousContinuity,
   readPlanBetaStateFromStorage,
 } from "./plan-beta-store"
-import { prepareAdjustedNextFrame, prepareAdjustedNextFrameV3 } from "./adjusted-plan-continuity"
+import { prepareAdjustedNextFrame, prepareAdjustedNextFrameV3, prepareMultiAdjustedNextFrameV3 } from "./adjusted-plan-continuity"
+import { RETAINED_MULTI_ADJUSTED_EVIDENCE_V3 } from "./adjusted-plan-storage-v6"
+import type { RetainedMultiAdjustedEvidenceV3 } from "./selected-multi-adjusted-plan-v3"
 import { RETAINED_ADJUSTED_PLAN_EVIDENCE } from "./adjusted-plan-storage-schema"
 import { RETAINED_ADJUSTED_PLAN_EVIDENCE_V3 } from "./adjusted-plan-storage-v5"
 import type { RetainedAdjustedPlanEvidenceV3 } from "./selected-adjusted-plan-v3"
@@ -207,6 +209,33 @@ export function generateAdjustedNextFrameV3FromDraft(input: Parameters<typeof ge
     return { kind: "adjusted_next_frame_v3_draft" as const,
       draft: { ...draft, intake: { ...draft.intake, startDate: nextStartDate } }, continuity: prepared.context,
       requiredNextGate: "REVIEWED_SUCCESSOR_V3_TRANSACTION" as const }
+  } catch { return reject("INVALID_CONTINUITY_INPUT") }
+}
+
+export function generateMultiAdjustedNextFrameV3FromDraft(input: Parameters<typeof generateAdjustedNextFrameFromDraft>[0],
+  retained: readonly RetainedMultiAdjustedEvidenceV3[] = RETAINED_MULTI_ADJUSTED_EVIDENCE_V3) {
+  const reject = (code: string) => ({ kind: "rejected" as const, code })
+  try {
+    if (!hasCanonicalJsonTree(input) || !Reflect.ownKeys(input).every(key => typeof key === "string" &&
+      ["draft", "currentCheck", "expectedPredecessorFingerprint", "prescriptionSelection", "detailedSessionTarget", "candidateSessionTargets"].includes(key))) return reject("MALFORMED_INPUT")
+    const account = localAccountScopeSnapshot(), previous = readPlanBetaStateFromStorage([], [], retained)
+    if (previous.kind !== "multi_adjusted_v3_loaded") return reject("ADJUSTED_PREDECESSOR_UNAVAILABLE")
+    const at = new Date(), nextStartDate = input.draft.startDate ?? todayISO(at)
+    const prepared = prepareMultiAdjustedNextFrameV3({ previous: previous.state,
+      expectedFingerprint: input.expectedPredecessorFingerprint, nextStartDate,
+      currentCheck: input.currentCheck }, retained, at)
+    if (prepared.kind !== "prepared") return prepared
+    const draft = generatePlanDraftWithContinuity({ ...input.draft, startDate: nextStartDate },
+      input.currentCheck, input.prescriptionSelection, input.detailedSessionTarget,
+      input.candidateSessionTargets, prepared.context.continuity, nextStartDate)
+    if (draft.kind !== "generated") return draft
+    if (draft.intake.eventDistanceM !== previous.state.selection.activePlan.eventDistanceM) return reject("SUCCESSOR_EVENT_CHANGED")
+    const current = readPlanBetaStateFromStorage([], [], retained)
+    if (!localAccountScopeIsCurrent(account) || current.kind !== "multi_adjusted_v3_loaded"
+      || current.state.contentFingerprint !== previous.state.contentFingerprint) return reject("STALE_BASE")
+    return { kind: "multi_adjusted_next_frame_v3_draft" as const,
+      draft: { ...draft, intake: { ...draft.intake, startDate: nextStartDate } }, continuity: prepared.context,
+      requiredNextGate: "REVIEWED_MULTI_SUCCESSOR_V3_TRANSACTION" as const }
   } catch { return reject("INVALID_CONTINUITY_INPUT") }
 }
 
