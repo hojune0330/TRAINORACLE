@@ -10,6 +10,8 @@ import { createAdjustedMethodSnapshotV3 } from "./adjusted-method-snapshot-v3"
 import { resolveQualityCandidateScope } from "./adjusted-plan-candidate"
 import { prepareRpeAdjustedSlotV3, rpeSourceBindingScopeV3, type RpeAdjustedSlotInputV3 } from "./rpe-adjusted-slot-v3"
 import { prepareMultiAdjustedPlanCandidateV3 } from "./adjusted-plan-multi-candidate-v3"
+import { multiAdjustedPlanReviewScopeV3, checkMultiAdjustedPlanReviewV3 } from "./adjusted-plan-multi-review-v3"
+import { selectMultiAdjustedPlanV3 } from "./selected-multi-adjusted-plan-v3"
 
 beforeEach(() => { localStorage.clear(); sessionStorage.clear(); setActiveLocalAccount(null); vi.useFakeTimers(); vi.setSystemTime(TODAY) })
 afterEach(() => { vi.restoreAllMocks(); vi.useRealTimers() })
@@ -17,7 +19,7 @@ function fixture() {
   const intake = { ...draftFor(RUNTIME_CASES[3]), selectedDetailedTemplateRef: null }
   const generated = generatePlanFromDraft(intake, "NO_KNOWN_RISK", {})
   if (generated.kind !== "generated") throw Error("No generated candidate")
-  const candidate = generated.generated.candidates[0], source = unanchoredAdjustmentFixtureV3()
+  const candidate = generated.generated.candidates[0], source = unanchoredAdjustmentFixtureV3(false, TODAY.getTime())
   const offer = prepareUnanchoredAdjustmentOfferV3(source)
   if (offer.kind !== "available") throw Error(offer.code)
   const draft = createAdjustmentDraftV3({ authority: offer.authority, current: offer.current, policy: offer.policy,
@@ -44,8 +46,8 @@ function fixture() {
     return result.scopeFingerprint
   })
   const bindings = [...new Set(scopes)].map((scopeFingerprint, i) => ({ bindingId: `TEST-${i}`, version: "1",
-    scopeFingerprint, reviewRef: "TEST_NOT_APPROVAL", validFromMs: 100, expiresAtMs: 200, revokedAtMs: null }))
-  return { inputs, bindings }
+    scopeFingerprint, reviewRef: "TEST_NOT_APPROVAL", validFromMs: source.nowMs - 50, expiresAtMs: source.nowMs + 50, revokedAtMs: null }))
+  return { inputs, bindings, generated }
 }
 
 it("connects every real generated RPE MAIN to independently scoped detailed content without any athlete record", () => {
@@ -70,4 +72,42 @@ it("requires a matching binding review and rejects expiration, relocation and ch
   expect(prepareRpeAdjustedSlotV3({ ...input, rawSnapshot: inputs[1]!.rawSnapshot }, bindings).kind).toBe("unavailable")
   expect(prepareRpeAdjustedSlotV3({ ...input, experienceBand: "NEW_TO_RUNNING" }, bindings).kind).toBe("unavailable")
   expect(prepareMultiAdjustedPlanCandidateV3([input, input], bindings)).toMatchObject({ code: "DUPLICATE_ADJUSTED_SLOT" })
+})
+
+it("requires a separate exact whole-plan review even when all individual bindings are accepted", () => {
+  const { inputs, bindings } = fixture(), experience = inputs[0]!.experienceBand
+  const scope = multiAdjustedPlanReviewScopeV3(inputs, experience, bindings)
+  if (scope.kind !== "scope") throw Error(scope.code)
+  expect(checkMultiAdjustedPlanReviewV3(inputs, experience, bindings)).toMatchObject({ code: "MULTI_PLAN_CONFIGURATION_REVIEW_REQUIRED" })
+  const policy = { scopeVersion: "MULTI_STRUCTURAL_V3" as const, policyId: "TEST", version: "1", scopeFingerprint: scope.scopeFingerprint,
+    configurationReviewRef: "TEST-C", exposureReviewRef: "TEST-E", interactionReviewRef: "TEST-I", safetyReviewRef: "TEST-S",
+    validFromMs: TODAY.getTime() - 50, expiresAtMs: TODAY.getTime() + 50, revokedAtMs: null }
+  const result = checkMultiAdjustedPlanReviewV3(inputs, experience, bindings, [policy])
+  expect(result).toMatchObject({ kind: "reviewed_scope", executionAuthority: "NONE" })
+  expect(checkMultiAdjustedPlanReviewV3([...inputs].reverse(), experience, bindings, [policy])).toEqual(result)
+  expect(checkMultiAdjustedPlanReviewV3(inputs.slice(0, 1), experience, bindings, [policy]).kind).toBe("unavailable")
+  expect(checkMultiAdjustedPlanReviewV3(inputs, experience, bindings, [{ ...policy, revokedAtMs: 140 }]).kind).toBe("unavailable")
+  expect(checkMultiAdjustedPlanReviewV3(inputs, experience, bindings, [policy, policy])).toMatchObject({ code: "AMBIGUOUS_MULTI_PLAN_REVIEW" })
+  expect(checkMultiAdjustedPlanReviewV3(inputs, "NEW_TO_RUNNING", bindings, [policy])).toMatchObject({ code: "SOURCE_EXPERIENCE_MISMATCH" })
+})
+
+it("selects a real multi-slot candidate only after explicit action and current whole-plan review, without writing", () => {
+  const { inputs, bindings, generated } = fixture()
+  const scope = multiAdjustedPlanReviewScopeV3(inputs, inputs[0]!.experienceBand, bindings)
+  if (scope.kind !== "scope") throw Error(scope.code)
+  const policy = { scopeVersion: "MULTI_STRUCTURAL_V3" as const, policyId: "TEST", version: "1", scopeFingerprint: scope.scopeFingerprint,
+    configurationReviewRef: "TEST-C", exposureReviewRef: "TEST-E", interactionReviewRef: "TEST-I", safetyReviewRef: "TEST-S",
+    validFromMs: TODAY.getTime() - 50, expiresAtMs: TODAY.getTime() + 50, revokedAtMs: null }
+  const request = { action: "USER_EXPLICIT" as const, preparations: inputs, generated: generated.generated, gate: generated.gate,
+    intake: generated.intake, athleteEvidence: generated.athleteEvidence, currentCheck: "NO_KNOWN_RISK" as const,
+    expectedCandidateFingerprint: scope.candidate.contentFingerprint }
+  const write = vi.spyOn(Storage.prototype, "setItem")
+  const before = { ...localStorage }
+  const result = selectMultiAdjustedPlanV3(request, bindings, [policy], TODAY)
+  expect(result).toMatchObject({ kind: "selected_multi_adjusted", storageState: "NOT_SAVED" })
+  expect(write.mock.calls.every(([key]) => key === "__to_probe__")).toBe(true)
+  expect({ ...localStorage }).toEqual(before)
+  expect(selectMultiAdjustedPlanV3({ ...request, currentCheck: "REVIEW_REQUIRED" }, bindings, [policy], TODAY).kind).not.toBe("selected_multi_adjusted")
+  expect(selectMultiAdjustedPlanV3({ ...request, expectedCandidateFingerprint: "changed" }, bindings, [policy], TODAY)).toMatchObject({ code: "ADJUSTED_SELECTION_CHANGED" })
+  expect(selectMultiAdjustedPlanV3(request, bindings, [policy], new Date(TODAY.getTime() + 100)).kind).not.toBe("selected_multi_adjusted")
 })

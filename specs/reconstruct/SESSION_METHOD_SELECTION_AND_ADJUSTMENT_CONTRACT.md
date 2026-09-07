@@ -4,7 +4,7 @@
 doc_id: trainoracle-session-method-selection-and-adjustment
 spec_id: SESSION_METHOD_SELECTION_AND_ADJUSTMENT_CONTRACT
 title: TrainOracle Session Method Selection And Adjustment Contract
-version: "0.47"
+version: "0.48"
 round: RT1_OWNER_APPROVED_IMPLEMENTATION_DIRECTION
 status: ACTIVE_IMPLEMENTATION_CONTRACT
 product_direction: OWNER_APPROVED_IMPLEMENTATION_DIRECTION
@@ -1612,5 +1612,19 @@ identity 검사를 적용한다. 스냅샷은 원본 후보 계보와 MAIN 주�
 recordBasis=NOT_USED, segmentTargets=[]를 명시한다. 스냅샷 계보/주소 결속은 유지하고,
 다중 후보의 changedSlots에 binding 버전/지문도 보존한다. 단일 페이스 저장기로 우회하지
 않는다. 원본 RPE와 상세 운동의 부담이 동일하다고 주장하지 않는다.
+
+### 21.28 다중 전체 검토와 명시적 선택
+
+MULTI_STRUCTURAL_V3 검토 범위는 종목·경험·선택권한·목적·후보 종류·출처 모드·프레임·
+이전 주기 형태·MAIN 노출 횟수 및 전체 날짜/슬롯 배치를 포함한다. 바뀌지 않은 세션도
+포함한다. 변경한 각 주소에는 실제 검토된 from/to/정책, RPE binding 또는 페이스 적용
+대상 근거를 포함한다. 입력 순서는 동일한 범위로 정규화한다. 일부 변경만 남기면 다른
+계획 범위이므로 기존 전체 검토를 그대로 쓰지 않는다.
+
+정확히 하나의 유효한 구성/노출/상호작용/안전 검토 정책이 있어야 선택 단계로 넘어간다.
+명시적 선택은 원본 생성 결과, 현재 안전 상태와 기준 기록, 입력 조건, 예상 후보 지문을
+다시 확인한다. SELECTED_MULTI_ADJUSTED_PLAN은 NOT_SAVED이며 모든 주소의 원본 및
+출처 문맥과 설명 연결을 보존한다. 최초 주기 문맥만 이 경로로 선택하며 후속 주기는
+이전 원본을 읽는 별도 transaction으로 연결한다. 선택 성공은 실제 저장·배포 증거가 아니다.
 
 [DRAFT_COMPLETE]
