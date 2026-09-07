@@ -2306,4 +2306,21 @@ MultiAdjustedPlanEditFlowV3의 선택지 순서는 기본/완료 표시 많은 �
 관련 전체59/59 PASS(46.30초), 타입 및 diff 검사 통과. 공개 모바일 화면 검수,
 운영 승인 목록과 AppShell 주입, 개인 목표 강도·전체 배치 채택은 여전히 남았다.
 
+## 132. 편집기 실제 브라우저 검수
+
+check-prescription-editor-browser.mjs로 별도 Vite 빌드/루프백 미리보기에서
+실제 PrescriptionAdjustmentEditorV3를 검수했다. synthetic TEST_NOT_APPROVAL
+자료만 사용하고 envDir를 fixture 폴더로 한정했다. 운영 앱 빌드나 배포가 아니다.
+320/375/1440px × 일반/글자2배, 높이667px, reducedMotion=reduce의6조건에서
+펼치기→키보드 Space로 세트 구성 선택→접은 뒤 선택 유지→명시적 적용을 확인했다.
+최종 선택으로 생성된 노드에도 글자 확대를 다시 적용했다. 이는 CSS 글자 크기
+조작 검수이며 OS 글자 설정/Safari/실제 휴대폰 검증을 대신하지 않는다.
+
+6조건 전부 C2 적용, pageerror0, dialog와 내부 스크롤 영역 가로 넘침0.
+적용 버튼은 전 조건에서 화면 안에 있고 높이 최소44px였다.320px 글자2배와
+375px 일반 캡처를 직접 확인했다. 결과 JSON/대표 PNG2개를
+reports/implementation/evidence/prescription-editor-v3에 보존했다.
+검수용 서버/브라우저는 스크립트 종료 시 닫았다. 운영 승인과 AppShell 연결,
+전체 사용자 여정·공개 배포 확인은 여전히 별도 잔여 작업이다.
+
 [DRAFT_COMPLETE]

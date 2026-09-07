@@ -1,0 +1,113 @@
+{
+  "scope": "ISOLATED_EDITOR_SYNTHETIC_AUTHORITY_NOT_DEPLOYMENT",
+  "results": [
+    {
+      "width": 320,
+      "enlarged": false,
+      "errors": 0,
+      "client": 320,
+      "scroll": 320,
+      "contentDimensions": {
+        "client": 320,
+        "scroll": 320
+      },
+      "applyBounds": {
+        "x": 207.234375,
+        "y": 611,
+        "width": 96.765625,
+        "height": 44
+      },
+      "applied": "C2"
+    },
+    {
+      "width": 320,
+      "enlarged": true,
+      "errors": 0,
+      "client": 320,
+      "scroll": 320,
+      "contentDimensions": {
+        "client": 320,
+        "scroll": 320
+      },
+      "applyBounds": {
+        "x": 136.46875,
+        "y": 593.5,
+        "width": 167.53125,
+        "height": 61.5
+      },
+      "applied": "C2"
+    },
+    {
+      "width": 375,
+      "enlarged": false,
+      "errors": 0,
+      "client": 375,
+      "scroll": 375,
+      "contentDimensions": {
+        "client": 375,
+        "scroll": 375
+      },
+      "applyBounds": {
+        "x": 262.234375,
+        "y": 611,
+        "width": 96.765625,
+        "height": 44
+      },
+      "applied": "C2"
+    },
+    {
+      "width": 375,
+      "enlarged": true,
+      "errors": 0,
+      "client": 375,
+      "scroll": 375,
+      "contentDimensions": {
+        "client": 375,
+        "scroll": 375
+      },
+      "applyBounds": {
+        "x": 191.46875,
+        "y": 593.5,
+        "width": 167.53125,
+        "height": 61.5
+      },
+      "applied": "C2"
+    },
+    {
+      "width": 1440,
+      "enlarged": false,
+      "errors": 0,
+      "client": 1440,
+      "scroll": 1440,
+      "contentDimensions": {
+        "client": 1440,
+        "scroll": 1440
+      },
+      "applyBounds": {
+        "x": 1327.234375,
+        "y": 611,
+        "width": 96.765625,
+        "height": 44
+      },
+      "applied": "C2"
+    },
+    {
+      "width": 1440,
+      "enlarged": true,
+      "errors": 0,
+      "client": 1440,
+      "scroll": 1440,
+      "contentDimensions": {
+        "client": 1440,
+        "scroll": 1440
+      },
+      "applyBounds": {
+        "x": 1256.46875,
+        "y": 593.5,
+        "width": 167.53125,
+        "height": 61.5
+      },
+      "applied": "C2"
+    }
+  ]
+}
