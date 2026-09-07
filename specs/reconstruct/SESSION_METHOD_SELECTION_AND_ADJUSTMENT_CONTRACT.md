@@ -4,7 +4,7 @@
 doc_id: trainoracle-session-method-selection-and-adjustment
 spec_id: SESSION_METHOD_SELECTION_AND_ADJUSTMENT_CONTRACT
 title: TrainOracle Session Method Selection And Adjustment Contract
-version: "0.25"
+version: "0.26"
 round: RT1_OWNER_APPROVED_IMPLEMENTATION_DIRECTION
 status: ACTIVE_IMPLEMENTATION_CONTRACT
 product_direction: OWNER_APPROVED_IMPLEMENTATION_DIRECTION
@@ -1231,5 +1231,20 @@ created by parsing or aggregate calculation.
 The standalone V3 parser/totals are implemented; dispatch into operating candidates,
 method comparison, explanation, snapshots, journal and persistence remains a separate
 required integration. V3 cannot fall through to a V2 decoder or numeric alternative.
+
+### 21.5 V3 method comparison and exact identity
+
+V3 method comparison ignores IDs, labels, selected record/reference identifiers,
+repeat counts and support phases. Compare MAIN roles, work units/values, target
+semantics, group structure and every ordered recovery component, including final
+recovery. An empty unary wrapper is not a new method. Return factual difference
+codes and require review; a structural difference alone never proves eligibility,
+equal effect, appropriate dose or a second independently accepted method.
+
+Exact sequence identity uses the existing canonical-content identity helper under
+the separate trainoracle.prescription-sequence.v3 namespace. Unlike method comparison,
+it includes counts, selected references, labels and all phases. It is a content
+identity, not an expert signature, authorization token or privacy-safe public string.
+Validate before comparing or identifying. Keep historical V1/V2 namespaces unchanged.
 
 [DRAFT_COMPLETE]
