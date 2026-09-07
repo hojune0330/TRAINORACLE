@@ -655,7 +655,11 @@ it("changes one MAIN to a structurally different set method and preserves its ex
       return latestReview
     }, isCurrentDraft: () => true, onSaved, onCancel: vi.fn() }))
   fireEvent.click(screen.getAllByRole("button", { name: "이 훈련 구성 바꾸기" })[0]!)
+  expect(screen.queryByRole("radio", { name: "시험용 세트 구성" })).toBeNull()
+  fireEvent.click(screen.getByRole("button", { name: "다른 검토된 구성 보기" }))
   fireEvent.click(screen.getByRole("radio", { name: "시험용 세트 구성" }))
+  fireEvent.click(screen.getByRole("button", { name: "기본 선택지만 보기" }))
+  expect(screen.getByRole("radio", { name: "시험용 세트 구성" })).toBeChecked()
   expect(screen.getByRole("dialog", { name: "훈련 구성 조정" })).toHaveAccessibleDescription(/\d{4}-\d{2}-\d{2} · (오전|오후)/)
   await act(async () => { fireEvent.click(screen.getByRole("button", { name: "변경안 적용" })) })
   expect(localStorage.getItem(activePlanBetaStorageKey())).toBeNull()

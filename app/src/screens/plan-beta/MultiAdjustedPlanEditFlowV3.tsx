@@ -12,6 +12,7 @@ import { MultiAdjustedPlanApplyReviewV3, type MultiAdjustmentEntryV3 } from "./M
 import { AdjustedPrescriptionV3 } from "./AdjustedPrescriptionV3"
 import { isoShift } from "../../domain/dates"
 import { JournalConfirmationDialog } from "../../components/JournalConfirmationDialog"
+import { recommendMethodsV3 } from "@impl/prescription/method-recommendation"
 
 const hash = (value: unknown) => canonicalJsonFingerprint("trainoracle.multi-edit-flow.v3", value)
 export function MultiAdjustedPlanEditFlowV3({ seed, readReview, locks, readReviewForEdits, orderedChoicesFor,
@@ -51,11 +52,16 @@ export function MultiAdjustedPlanEditFlowV3({ seed, readReview, locks, readRevie
     const offer = source === undefined ? null : "experienceBand" in source
       ? prepareUnanchoredAdjustmentOfferV3({ ...source.source, nowMs: Date.now() })
       : prepareSourceAdjustmentOfferV3({ ...source.source, nowMs: Date.now() })
-    if (offer?.kind === "available") return <PrescriptionAdjustmentEditorV3 key={`${editing.day}:${editing.slot}`}
+    const recommendations = offer?.kind === "available" ? recommendMethodsV3({ catalog: offer.authority.catalog,
+      assessments: offer.targets.map(configuration => ({ ...configuration, eligibility: "ELIGIBLE" as const,
+        eligibilityPriority: 0, purposePriority: 0, contextPriority: 0 })), history: [], repeatPreference: "NEUTRAL" }) : null
+    if (offer?.kind === "available" && recommendations?.kind === "recommended") return <PrescriptionAdjustmentEditorV3 key={`${editing.day}:${editing.slot}`}
       sessionLabel={`${isoShift(request.preparations[0]!.startDate, editing.day - 1)} · ${editing.slot === "AM" ? "오전" : "오후"}`}
       authority={offer.authority} current={offer.current} policy={offer.policy} contextKey={offer.contextKey}
       initialConfiguration={selected?.kind === "ADJUSTED_METHOD_V3" ? selected.snapshot.receipt.after.configuration : undefined}
       now={Date.now} orderedChoices={orderedChoicesFor?.(editing)} onCancel={() => setEditing(null)}
+      primaryConfigurations={offer.targets.filter(ref => recommendations.defaults.some(choice => choice.familyId === ref.familyId
+        && choice.configurationId === ref.configurationId && choice.version === ref.version))}
       choices={offer.targets.map(configuration => ({ configuration, label: offer.authority.catalog.find(f => f.familyId === configuration.familyId)
         ?.configurations.find(c => c.configurationId === configuration.configurationId && c.version === configuration.version)?.sequence.label ?? "검토된 다른 구성" }))}
       onApply={(receipt, prescription) => {

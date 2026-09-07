@@ -21,6 +21,7 @@ type Props = {
   readonly policy: AdjustmentPolicyReference
   readonly contextKey: string
   readonly choices: readonly { readonly configuration: ConfigurationReference; readonly label: string }[]
+  readonly primaryConfigurations?: readonly ConfigurationReference[]
   readonly orderedChoices?: readonly AdjustmentOrderedChoicesV3[]
   readonly initialConfiguration?: ConfigurationReference
   readonly now: () => number
@@ -69,6 +70,7 @@ export function PrescriptionAdjustmentEditorV3(props: Props) {
   const [draft, setDraft] = React.useState<AdjustmentDraftV3 | null>(opened.initialDraft), [error, setError] = React.useState<string | null>(opened.initialError)
   const [discarding, setDiscarding] = React.useState(false), [closed, setClosed] = React.useState(false)
   const [applying, setApplying] = React.useState(false), [invalidated, setInvalidated] = React.useState(false)
+  const [showAllChoices, setShowAllChoices] = React.useState(false)
   const pending = React.useRef(false), completed = React.useRef(false), mounted = React.useRef(true)
   const latest = React.useRef(props); latest.current = props
   const dialog = React.useRef<HTMLDialogElement>(null), back = React.useRef<HTMLButtonElement>(null)
@@ -162,9 +164,15 @@ export function PrescriptionAdjustmentEditorV3(props: Props) {
         {error && <p role="alert">{error}</p>}
         <fieldset disabled={blocked} className="prescription-adjustment__choices"><legend>훈련 구성</legend>
           <label><input type="radio" name={`${id}-choice`} checked={!draft} onChange={reset} />현재 구성</label>
-          {props.choices.filter(c => !same(c.configuration, opened.current?.configuration)).map((choice, i) => <label key={`${i}-${choice.configuration.configurationId}`}>
+          {props.choices.filter(c => !same(c.configuration, opened.current?.configuration)
+            && (showAllChoices || props.primaryConfigurations === undefined || same(c.configuration, selected)
+              || props.primaryConfigurations.some(ref => same(ref, c.configuration)))).map((choice, i) => <label key={`${i}-${choice.configuration.configurationId}`}>
             <input type="radio" name={`${id}-choice`} checked={same(selected, choice.configuration)} onChange={() => choose(choice.configuration)} />{choice.label}</label>)}
         </fieldset>
+        {props.primaryConfigurations && props.choices.some(c => !same(c.configuration, opened.current?.configuration)
+          && !props.primaryConfigurations!.some(ref => same(ref, c.configuration))) && <button type="button"
+          disabled={blocked} aria-expanded={showAllChoices} onClick={() => setShowAllChoices(value => !value)}>
+          {showAllChoices ? "기본 선택지만 보기" : "다른 검토된 구성 보기"}</button>}
         {(props.orderedChoices ?? []).map((group, i) => {
           const index = group.configurations.findIndex(ref => same(ref, selected)), label = DIMENSIONS[group.dimension]
           const previous = index > 0 ? group.configurations[index - 1] : undefined
