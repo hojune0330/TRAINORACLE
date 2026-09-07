@@ -3,7 +3,7 @@
 ```yaml
 doc_id: trainoracle-session-method-owner-adoption-packet-2026-09-07
 packet_id: TO-METHOD-ADOPTION-2026-09-07
-version: "0.9"
+version: "0.10"
 status: SOURCE_REVIEWED_PACKET_IN_PREPARATION
 review_process: TO-OWNER-TRAINING-REVIEW-ROUTE-2026-09-07
 owner_exact_packet_approval: NOT_REQUESTED_YET
@@ -382,8 +382,8 @@ ADD: 16행/8변형 구조화와 실행 시험. KEEP: 전체 목표와 기존 구
 | 순서 | 정확한 제안 | 시간·성격 |
 |---|---|---|
 | 준비1 | 쉬운 달리기15분, RPE 2~3 | 900초, 본운동 아님 |
-| 준비2 | 점진 가속20초 4회, 첫 세 회 뒤 걷기/조깅40초 | 가속80초 + 회복120초; 전력질주 지시 아님 |
-| 전환 | 마지막 가속 뒤 걷기/조깅60초 | 기존 구성에 없는 별도 제품 제안; 회복 완료 보장 아님 |
+| 준비2 | 점진 가속20초 4회, 첫 세 회 뒤 걷기40초 | 가속80초 + 회복120초; 전력질주 지시 아님 |
+| 전환 | 마지막 가속 뒤 걷기60초 | 기존 구성에 없는 별도 제품 제안; 회복 완료 보장 아님 |
 | 본운동 | 선택한 구성 전체 | 그 구성의 마지막 회복 규칙 유지 |
 | 정리 | 쉬운 달리기10분, RPE 1~2 | 600초; 본운동 반복 회복으로 세지 않음 |
 
@@ -546,5 +546,13 @@ World Athletics의 speed-training-endurance-runners-benefits-limits 글은 검�
 
 ADD: 실제 구조 감사와 NHS 입문 예시 원문 확인. KEEP: 모든 기존 범위와 30개
 원본 카탈로그. PENDING: 54조합 보강, 완전한 설명·개인 강도·지원 구간·오너 채택.
+
+## 19. 지원 구간 표현 정합성 수정
+
+P-SUPPORT-MAIN-01 초안 v0.2는 기존 구조의 WALK와 안내를 일치시켰다.
+v0.1의 걷기/조깅 병기는 단일 구조와 불일치하므로 걷기로 수정했다. 조깅 회복을
+추가하려면 별도 구성으로 검토한다. 시간/반복/본운동 강도/적용 범위 변경은 없다.
+전체 세션 변환은 준비 및 정리 시간을 본운동과 분리하며 운영 권한은 NONE이다.
+이 수정은 검토 초안의 정합성 수리이지 오너의 수치 채택 승인이 아니다.
 
 [DRAFT_COMPLETE]

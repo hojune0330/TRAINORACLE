@@ -104,6 +104,8 @@ test("owner notation 2x(10x400m) r60 R180 totals 20 reps, 8000m and 1260s", () =
 })
 test("support proposal has explicit final transition and exact elapsed time", () => {
   const session = assembleProposalSession(get("P-LT-B"))
+  assert.equal(session.supportRef.version, "0.2")
+  assert.ok(session.warmup.filter(s => s.role === "WALK").every(s => s.cue === "WALK"))
   assert.equal(session.warmup.reduce((sum, s) => sum + s.value, 0), 1160)
   assert.equal(session.warmup.at(-1).value, 60)
   assert.equal(session.cooldown[0].value, 600)

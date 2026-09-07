@@ -1,11 +1,44 @@
 import { parsePrescriptionSequenceV3, type PrescriptionSequenceV3, type RecoveryStepV3, type SequenceNodeV3 } from "../../impl/src/prescription/sequence-v3"
-import { expandProposal } from "./method-adoption-protocols.mjs"
+import { expandProposal, assembleProposalSession } from "./method-adoption-protocols.mjs"
 
 type Part = { role: string; unit: string; value: number }
 export type PendingMethodProtocol = {
   id: string; family: string; method: string; sets: number; reps: number; work: Part[];
   between: Part | null; setRest: Part | null; afterEvery: Part | null;
   status: string; executionAuthority: string;
+}
+
+/** Keep the existing support proposal separate from the still-unprescribed main intensity. */
+export function representPendingWholeSessionV3(p: PendingMethodProtocol) {
+  const main = representPendingMethodV3(p)
+  if (main.kind !== "represented") return main
+  const source = assembleProposalSession(p)
+  const phase = (parts: typeof source.warmup, prefix: string): SequenceNodeV3[] => {
+    const nodes: SequenceNodeV3[] = []
+    for (const [index, part] of parts.entries()) {
+      if (part.unit !== "SECONDS") throw Error("UNSUPPORTED_SUPPORT_UNIT")
+      if (part.role === "WALK") {
+        const previous = nodes.at(-1)
+        if (!previous) throw Error("UNANCHORED_SUPPORT_RECOVERY")
+        nodes[nodes.length - 1] = { ...previous,
+          recoveryAfter: [...previous.recoveryAfter, { mode: "WALK", seconds: part.value }] }
+      } else {
+        if (part.role !== "EASY_RUN" && part.role !== "BUILDUP") throw Error("UNSUPPORTED_SUPPORT_ROLE")
+        nodes.push({ kind: "segment", id: `${prefix}-${index}`, label: null,
+          role: part.role === "BUILDUP" ? "BUILDUP" : "PREPARATION", repeatCount: 1,
+          work: { kind: "duration", durationSeconds: part.value, distanceM: null },
+          target: { kind: "EFFORT_GUIDANCE", cue: part.cue }, recoveryBetweenRepeats: [], recoveryAfter: [] })
+      }
+    }
+    return nodes
+  }
+  const parsed = parsePrescriptionSequenceV3({ ...main.sequence,
+    warmup: phase(source.warmup, "warmup"), cooldown: phase(source.cooldown, "cooldown") })
+  if (parsed.kind !== "parsed") throw Error("INVALID_WHOLE_SESSION_REPRESENTATION")
+  return { ...main, sequence: parsed.sequence, supportIncluded: source.supportRef !== null,
+    supportRef: source.supportRef, applicabilityReviewed: false as const,
+    supportReviewIssues: [...source.warmup, ...source.cooldown].some(p => p.role === "WALK" && p.cue === "WALK_OR_JOG")
+      ? ["SUPPORT_RECOVERY_MODE_CUE_MISMATCH"] : [] }
 }
 
 /** Review tooling only: no pace, effort prescription, eligibility or authority is inferred. */

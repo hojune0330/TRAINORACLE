@@ -1,7 +1,30 @@
 import { expect, it } from "vitest"
-import { METHOD_ADOPTION_PROTOCOLS, METHOD_ADOPTION_VARIANTS, expandProposal } from "../../../reports/research/method-adoption-protocols.mjs"
-import { representPendingMethodV3 } from "../../../reports/research/method-proposal-sequence-v3"
+import { METHOD_ADOPTION_PROTOCOLS, METHOD_ADOPTION_VARIANTS, expandProposal, assembleProposalSession } from "../../../reports/research/method-adoption-protocols.mjs"
+import { representPendingMethodV3, representPendingWholeSessionV3 } from "../../../reports/research/method-proposal-sequence-v3"
 import { deriveSequenceV3Totals } from "@impl/prescription/sequence-v3"
+
+it("includes existing support without counting preparation as main work or dropping final recovery", () => {
+  for (const p of [...METHOD_ADOPTION_PROTOCOLS, ...METHOD_ADOPTION_VARIANTS]) {
+    const result = representPendingWholeSessionV3(p)
+    if (result.kind !== "represented") continue
+    const source = assembleProposalSession(p)
+    const totals = deriveSequenceV3Totals(result.sequence)
+    expect(result).toMatchObject({ executionAuthority: "NONE", applicabilityReviewed: false, targetStatus: "NOT_PRESCRIBED" })
+    expect(result.supportRef).toEqual(source.supportRef)
+    expect(totals.warmup.totalSeconds! + totals.cooldown.totalSeconds!, p.id).toBe(source.supportSeconds)
+    expect(totals.warmup.workSeconds, p.id).toBe(0)
+    expect(totals.cooldown.workSeconds, p.id).toBe(0)
+    if (source.supportRef) {
+      expect(result.supportReviewIssues).toEqual([])
+      expect(result.supportRef?.version).toBe("0.2")
+      expect(totals.warmup).toMatchObject({ preparationSeconds: 900, buildupSeconds: 80, recoverySeconds: 180, recoverySteps: 4 })
+      expect(totals.cooldown.preparationSeconds).toBe(600)
+    } else expect(result.supportReviewIssues).toEqual([])
+    const mainOnly = representPendingMethodV3(p)
+    if (mainOnly.kind !== "represented") throw Error("Missing main")
+    expect(totals.main, p.id).toEqual(deriveSequenceV3Totals(mainOnly.sequence).main)
+  }
+})
 
 it("represents every existing pending protocol and variant without activation or invented targets", () => {
   for (const proposal of [...METHOD_ADOPTION_PROTOCOLS, ...METHOD_ADOPTION_VARIANTS]) {

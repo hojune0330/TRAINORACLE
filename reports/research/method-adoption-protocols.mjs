@@ -97,13 +97,13 @@ export const METHOD_ADOPTION_VARIANTS = [
 ]
 
 export const MAIN_SUPPORT_PROPOSAL = {
-  id: "P-SUPPORT-MAIN-01", version: "0.1", status: "OWNER_ADOPTION_PENDING",
+  id: "P-SUPPORT-MAIN-01", version: "0.2", status: "OWNER_ADOPTION_PENDING",
   executionAuthority: "NONE",
   warmup: [
     { ...time(900, "EASY_RUN"), cue: "RPE 2-3" },
     ...Array.from({ length: 4 }, (_, index) => [
       { ...time(20, "BUILDUP"), cue: "PROGRESSIVE_NOT_ALL_OUT" },
-      { ...time(index === 3 ? 60 : 40, "WALK"), cue: "WALK_OR_JOG" },
+      { ...time(index === 3 ? 60 : 40, "WALK"), cue: "WALK" },
     ]).flat(),
   ],
   cooldown: [{ ...time(600, "EASY_RUN"), cue: "RPE 1-2" }],
