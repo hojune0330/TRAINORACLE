@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, expect, it, vi } from "vitest"
 import { createAdjustmentDraftV3, applyAdjustmentDraftV3 } from "@impl/prescription/prescription-adjustment-v3"
 import { sequenceV3ContentIdentity } from "@impl/prescription/sequence-v3-comparison"
-import { generatePlanFromDraft } from "./plan-beta-flow"
+import { generatePlanFromDraft, selectPlanForActivation } from "./plan-beta-flow"
 import { draftFor, RUNTIME_CASES, TODAY } from "./prescription-quality-matrix.test-fixtures"
 import { setActiveLocalAccount } from "./account/local-journal-ownership"
 import { unanchoredAdjustmentFixtureV3 } from "./unanchored-adjustment-v3.test-fixtures"
@@ -11,7 +11,11 @@ import { resolveQualityCandidateScope } from "./adjusted-plan-candidate"
 import { prepareRpeAdjustedSlotV3, rpeSourceBindingScopeV3, type RpeAdjustedSlotInputV3 } from "./rpe-adjusted-slot-v3"
 import { prepareMultiAdjustedPlanCandidateV3 } from "./adjusted-plan-multi-candidate-v3"
 import { multiAdjustedPlanReviewScopeV3, checkMultiAdjustedPlanReviewV3 } from "./adjusted-plan-multi-review-v3"
-import { selectMultiAdjustedPlanV3 } from "./selected-multi-adjusted-plan-v3"
+import { selectMultiAdjustedPlanV3, readSelectedMultiAdjustedPlanV3 } from "./selected-multi-adjusted-plan-v3"
+import { canonicalJsonFingerprint } from "@impl/plan-generator/candidate-identity"
+import { saveSelectedMultiAdjustedPlanV6, readStoredMultiAdjustedPlanV6 } from "./adjusted-plan-storage-v6"
+import { activePlanBetaStorageKey, savePlanBetaState } from "./plan-beta-store"
+import type { PlanMutationLockManager } from "./plan-mutation-lock"
 
 beforeEach(() => { localStorage.clear(); sessionStorage.clear(); setActiveLocalAccount(null); vi.useFakeTimers(); vi.setSystemTime(TODAY) })
 afterEach(() => { vi.restoreAllMocks(); vi.useRealTimers() })
@@ -65,6 +69,64 @@ it("connects every real generated RPE MAIN to independently scoped detailed cont
   }
   expect(result.candidate.selectionAuthority).toBe("NONE")
 })
+
+function storageFixture() {
+  const { inputs, bindings, generated } = fixture()
+  const scope = multiAdjustedPlanReviewScopeV3(inputs, inputs[0]!.experienceBand, bindings)
+  if (scope.kind !== "scope") throw Error(scope.code)
+  const policy = { scopeVersion: "MULTI_STRUCTURAL_V3" as const, policyId: "TEST", version: "1", scopeFingerprint: scope.scopeFingerprint,
+    configurationReviewRef: "TEST-C", exposureReviewRef: "TEST-E", interactionReviewRef: "TEST-I", safetyReviewRef: "TEST-S",
+    validFromMs: TODAY.getTime() - 50, expiresAtMs: TODAY.getTime() + 50, revokedAtMs: null }
+  const request = { action: "USER_EXPLICIT" as const, preparations: inputs, generated: generated.generated, gate: generated.gate,
+    intake: generated.intake, athleteEvidence: generated.athleteEvidence, currentCheck: "NO_KNOWN_RISK" as const,
+    expectedCandidateFingerprint: scope.candidate.contentFingerprint }
+  const retained = [{ slots: inputs.map(i => ({ address: i.address, authority: i.source.authority, explanation: i.explanation })),
+    rpeBindings: bindings, policies: [policy] }]
+  const locks: PlanMutationLockManager = { request: async (_n, _o, callback) => callback({}) }
+  return { request, locks, isCurrentDraft: () => true,
+    readReview: () => ({ preparations: inputs, rpeBindings: bindings, policies: [policy], retained }) }
+}
+
+it("writes and independently reads a real multi-slot V6 plan, replaying the same unprogressed selection", async () => {
+  const input = storageFixture(), result = await saveSelectedMultiAdjustedPlanV6(input)
+  expect(result).toMatchObject({ kind: "saved", replayed: false })
+  const raw = localStorage.getItem(activePlanBetaStorageKey())!
+  expect(readStoredMultiAdjustedPlanV6(JSON.parse(raw), input.readReview().retained, TODAY)).toMatchObject({ kind: "loaded", executionAuthority: "NONE" })
+  expect(readStoredMultiAdjustedPlanV6(JSON.parse(raw), [], TODAY).kind).toBe("invalid")
+  expect(await saveSelectedMultiAdjustedPlanV6(input)).toMatchObject({ kind: "saved", replayed: true })
+  expect(localStorage.getItem(activePlanBetaStorageKey())).toBe(raw)
+  const original = selectPlanForActivation(input.request.preparations[0]!.candidate.candidateId, input.request.generated,
+    input.request.gate, { ...input.request.intake, startDate: input.request.preparations[0]!.startDate }, input.request.athleteEvidence, TODAY)
+  if (original.kind !== "selected") throw Error("Original selection failed")
+  expect(savePlanBetaState(original.state).ok).toBe(false)
+  expect(localStorage.getItem(activePlanBetaStorageKey())).toBe(raw)
+})
+
+it.each(["expiry", "other-writer"])("handles %s during a real multi-plan write without overwriting another writer", async change => {
+  const input = storageFixture(), original = Storage.prototype.setItem, key = activePlanBetaStorageKey()
+  let injected = false
+  vi.spyOn(Storage.prototype, "setItem").mockImplementation(function(this: Storage, name, value) {
+    original.call(this, name, value)
+    if (name === key && !injected) {
+      injected = true
+      if (change === "expiry") vi.setSystemTime(new Date(TODAY.getTime() + 100))
+      else original.call(this, key, "OTHER_WRITER")
+    }
+  })
+  const result = await saveSelectedMultiAdjustedPlanV6(input)
+  expect(injected).toBe(true)
+  expect(result).toMatchObject({ code: change === "expiry" ? "PLAN_STORAGE_WRITE_FAILED" : "PLAN_STORAGE_STATE_UNCERTAIN" })
+  expect(localStorage.getItem(key)).toBe(change === "expiry" ? null : "OTHER_WRITER")
+})
+
+it("rejects account changes while waiting for the multi-plan lock", async () => {
+  const input = storageFixture(), key = activePlanBetaStorageKey()
+  expect(await saveSelectedMultiAdjustedPlanV6({ ...input, locks: { request: async (_n, _o, callback) => {
+    setActiveLocalAccount("other"); return callback({})
+  } } })).toMatchObject({ code: "STALE_CANDIDATE_SELECTION" })
+  expect(localStorage.getItem(key)).toBeNull()
+  expect(localStorage.getItem(activePlanBetaStorageKey())).toBeNull()
+})
 it("requires a matching binding review and rejects expiration, relocation and changed experience", () => {
   const { inputs, bindings } = fixture(), input = inputs[0]!
   expect(prepareRpeAdjustedSlotV3(input)).toMatchObject({ kind: "unavailable", code: "RPE_SOURCE_BINDING_REVIEW_REQUIRED" })
@@ -110,4 +172,21 @@ it("selects a real multi-slot candidate only after explicit action and current w
   expect(selectMultiAdjustedPlanV3({ ...request, currentCheck: "REVIEW_REQUIRED" }, bindings, [policy], TODAY).kind).not.toBe("selected_multi_adjusted")
   expect(selectMultiAdjustedPlanV3({ ...request, expectedCandidateFingerprint: "changed" }, bindings, [policy], TODAY)).toMatchObject({ code: "ADJUSTED_SELECTION_CHANGED" })
   expect(selectMultiAdjustedPlanV3(request, bindings, [policy], new Date(TODAY.getTime() + 100)).kind).not.toBe("selected_multi_adjusted")
+  if (result.kind !== "selected_multi_adjusted") throw Error(result.code)
+  const evidence = { slots: inputs.map(i => ({ address: i.address, authority: i.source.authority, explanation: i.explanation })),
+    rpeBindings: bindings, policies: [policy] }
+  const future = new Date(TODAY.getTime() + 1000)
+  expect(readSelectedMultiAdjustedPlanV3(result.state, evidence, future)).toMatchObject({ kind: "read_only", executionAuthority: "NONE", state: result.state })
+  expect(readSelectedMultiAdjustedPlanV3(result.state, { ...evidence, slots: evidence.slots.slice(1) }, future).kind).not.toBe("read_only")
+  const tampered = structuredClone(result.state)
+  const changed = tampered.activePlan.sessions.find(s => s.prescription.kind === "ADJUSTED_METHOD_V3")!
+  if (changed.prescription.kind !== "ADJUSTED_METHOD_V3") throw Error("No adjusted slot")
+  const altered = { ...tampered, activePlan: { ...tampered.activePlan, sessions: tampered.activePlan.sessions.map(s => s === changed
+    ? { ...s, prescription: { ...changed.prescription, projectionFingerprint: "changed" } } : s) } }
+  const { contentFingerprint: _fingerprint, ...content } = altered
+  const forged = { ...content, contentFingerprint: canonicalJsonFingerprint("trainoracle.multi-plan-selection.v3", content) }
+  expect(readSelectedMultiAdjustedPlanV3(forged, evidence, future)).toMatchObject({ code: "MULTI_PLAN_CONTENT_MISMATCH" })
+  const read = vi.spyOn(Storage.prototype, "getItem").mockImplementation(() => { throw Error("No live storage in historical read") })
+  expect(readSelectedMultiAdjustedPlanV3(result.state, evidence, future).kind).toBe("read_only")
+  expect(read).not.toHaveBeenCalled()
 })

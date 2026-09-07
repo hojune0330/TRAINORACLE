@@ -4,7 +4,7 @@
 doc_id: trainoracle-session-method-selection-and-adjustment
 spec_id: SESSION_METHOD_SELECTION_AND_ADJUSTMENT_CONTRACT
 title: TrainOracle Session Method Selection And Adjustment Contract
-version: "0.48"
+version: "0.49"
 round: RT1_OWNER_APPROVED_IMPLEMENTATION_DIRECTION
 status: ACTIVE_IMPLEMENTATION_CONTRACT
 product_direction: OWNER_APPROVED_IMPLEMENTATION_DIRECTION
@@ -1626,5 +1626,21 @@ MULTI_STRUCTURAL_V3 검토 범위는 종목·경험·선택권한·목적·후�
 다시 확인한다. SELECTED_MULTI_ADJUSTED_PLAN은 NOT_SAVED이며 모든 주소의 원본 및
 출처 문맥과 설명 연결을 보존한다. 최초 주기 문맥만 이 경로로 선택하며 후속 주기는
 이전 원본을 읽는 별도 transaction으로 연결한다. 선택 성공은 실제 저장·배포 증거가 아니다.
+
+### 21.29 다중 선택의 독립 복원과 version 6 저장
+
+과거 조회는 선택 당시 시간과 별도 보존한 주소별 구성 authority/설명, RPE binding,
+전체 정책으로 재구성한다. 현재 선수 저장소 조회나 현재 활성화 권한을 요구하지 않는다.
+주소별 근거는 정확히 하나여야 하며 전체 재구성 결과가 저장 내용과 같아야 한다.
+변조자가 외부 지문을 다시 계산해도 원본 projection/설명이 다르면 거부한다.
+
+version 6은 다중 선택, 진행 상태, 갱신시각, 내용 지문을 보존한다. 진행 주소의 중복과
+없는 세션 참조를 거부한다. 최초 저장은 계정별 계획 lock 안에서 현재 요청, 안전/기록,
+전체 검토 및 근거 동일성을 쓰기 전후 재확인한다. 동일한 미진행 선택 재요청만 멱등
+성공하며 기존 다른 계획을 덮지 않는다. 실패 시 자기 쓰기만 제거하고 다른 작성자의
+값을 보존한다. 구형 저장/보관 경로는 version 6을 덮어쓰지 않는다.
+
+이 저장 경로의 구현은 전체 소비자 연결과 별개다. 공통 reader·다중 일정 UI·일지·
+백업·서버·후속 주기는 version 6을 독립 지원해야 운영 활성화할 수 있다.
 
 [DRAFT_COMPLETE]
