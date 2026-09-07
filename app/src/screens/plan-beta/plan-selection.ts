@@ -97,6 +97,7 @@ export async function saveSelectedPlanCandidate(
         }
 
         const previousRead = readPlanBetaStateFromStorage()
+        if (previousRead.kind === "adjusted_loaded") return { kind: "rejected", code: "STALE_BASE" } as const
         if (previousRead.kind === "storage_error") {
           return { kind: "rejected", code: "PLAN_STORAGE_STATE_UNCERTAIN" } as const
         }

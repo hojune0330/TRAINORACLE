@@ -1,30 +1,11 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
-import { adjustedSelectionFixture } from "./adjusted-plan-candidate.test-fixtures"
-import { adjustedPlanReviewScope } from "./adjusted-plan-review-policy"
-import type { ReviewedAdjustedPlanPolicy } from "./adjusted-plan-review-policy"
 import { selectAdjustedPlanForActivation } from "./adjusted-plan-selection"
-import type { AdjustedPlanSelectionRequest } from "./adjusted-plan-selection"
+import { adjustedPlanSelectionFixture as fixture } from "./adjusted-plan-selection.test-fixtures"
 import { createPlannedSessionLogDraft, resolveCurrentPlannedSession } from "./planned-session-link"
 import { setActiveLocalAccount } from "./account/local-journal-ownership"
 import { TODAY } from "./prescription-quality-matrix.test-fixtures"
 
 const now = TODAY.getTime()
-function fixture() {
-  const { preparation, generation } = adjustedSelectionFixture(undefined, now)
-  const scope = adjustedPlanReviewScope(preparation, generation.intake.experienceBand)
-  if (scope.kind !== "scope") throw Error(scope.code)
-  const policy: ReviewedAdjustedPlanPolicy = {
-    policyId: "TEST-REVIEW", version: "1", scopeFingerprint: scope.scopeFingerprint,
-    configurationReviewRef: "TEST-NOT-APPROVAL", exposureReviewRef: "TEST-EXPOSURE",
-    interactionReviewRef: "TEST-INTERACTION", safetyReviewRef: "TEST-SAFETY",
-    validFromMs: now - 51, expiresAtMs: now + 49, revokedAtMs: null,
-  }
-  const request: AdjustedPlanSelectionRequest = { action: "USER_EXPLICIT", preparation,
-    generated: generation.generated, gate: generation.gate, intake: generation.intake,
-    athleteEvidence: generation.athleteEvidence, currentCheck: "NO_KNOWN_RISK",
-    expectedCandidateFingerprint: scope.candidate.contentFingerprint }
-  return { request, policy }
-}
 beforeEach(() => { localStorage.clear(); sessionStorage.clear(); setActiveLocalAccount(null); vi.useFakeTimers(); vi.setSystemTime(TODAY) })
 afterEach(() => { vi.restoreAllMocks(); vi.useRealTimers() })
 

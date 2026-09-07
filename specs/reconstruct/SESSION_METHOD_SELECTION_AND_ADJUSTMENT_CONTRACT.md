@@ -4,7 +4,7 @@
 doc_id: trainoracle-session-method-selection-and-adjustment
 spec_id: SESSION_METHOD_SELECTION_AND_ADJUSTMENT_CONTRACT
 title: TrainOracle Session Method Selection And Adjustment Contract
-version: "0.12"
+version: "0.13"
 round: RT1_OWNER_APPROVED_IMPLEMENTATION_DIRECTION
 status: ACTIVE_IMPLEMENTATION_CONTRACT
 product_direction: OWNER_APPROVED_IMPLEMENTATION_DIRECTION
@@ -956,5 +956,38 @@ repeat the selection operation or turn expired approval into current permission.
 Initial selection and next-frame continuation must not reset one another's lineage.
 All prior requirements and OPEN issues remain; this boundary enables engineering
 integration, not activation of unapproved numerical configurations.
+
+## 20. Versioned Adjusted Active Storage And Journal Read
+
+The adjusted active-plan envelope uses `version: 4`, independently of historical
+archive format version numbers. It contains one immutable selected-plan snapshot,
+separate session progress, update time and a content fingerprint. The snapshot
+contains the actual adjusted sequence and exact original-candidate provenance.
+Do not coerce adjusted content into the legacy flat `PACE_TARGET` write schema.
+
+The owning save transaction uses the existing account-scoped active-plan key and
+plan mutation lock. Recheck live review context after acquiring the lock. Cancellation,
+changed draft/account, changed stored bytes and existing different plans reject;
+an untouched identical selection may be replayed without resetting time or progress.
+Failed-write rollback must not remove another writer's content. Legacy writes cannot
+overwrite the newer envelope.
+
+Historical reading reconstructs content with separately retained trusted source,
+explanation and review versions at the original acceptance time. It does not load a
+newer athlete record to recalculate old targets. Keep retained adopted versions even
+after current-use expiry/revocation; current approval and historical evidence are
+different registries. Saved hashes/references alone are not trusted evidence.
+Missing retained evidence reports unreadable content without modifying stored bytes.
+
+Journal lookup consumes the common exact session link. Show the selected adjusted
+structure and retained explanation as planned values, never measured performance.
+Memo text is not an input to this lookup or explanation. Scope changes clear the
+display. Reading history grants no present execution or adaptation authority.
+
+Engineering integration does not populate operating/retained registries with test
+data. The initial adjusted storage path remains unavailable to users until its owner
+adoption and UI flow are complete. Progress recording, adjusted archives/next-frame
+continuity, cloud compatibility and complete browser journeys require separate
+implementation evidence; the partial storage/journal path does not close these gates.
 
 [DRAFT_COMPLETE]

@@ -1,6 +1,5 @@
 import type { PlanGenerationSuccess } from "@impl/plan-generator/types"
 import type { SafetyGateDecision } from "@impl/safety-gate/gate"
-import { canonicalJsonFingerprint } from "@impl/plan-generator/candidate-identity"
 import { hasCanonicalJsonTree, planBetaStateV3Schema } from "./plan-beta-schema"
 import type { PlanBetaIntake } from "./plan-beta-schema"
 import { evaluatePlanSafety, selectPlanForActivation } from "./plan-beta-flow"
@@ -9,7 +8,9 @@ import { planAnchorsStillCurrent } from "./plan-anchor-reconfirmation"
 import { checkAdjustedPlanReviewPolicy, REVIEWED_ADJUSTED_PLAN_POLICIES } from "./adjusted-plan-review-policy"
 import type { ReviewedAdjustedPlanPolicy } from "./adjusted-plan-review-policy"
 import type { prepareAdjustedPlanCandidate } from "./adjusted-plan-candidate"
-import { createInitialPeriodizationContext } from "./periodization-lineage"
+import { assembleAdjustedPlanSelection, adjustedPlanSelectionFingerprint as hash } from "./selected-adjusted-plan-content"
+export { readSelectedAdjustedPlan } from "./selected-adjusted-plan-content"
+export type { SelectedAdjustedPlanState, RetainedAdjustedPlanEvidence } from "./selected-adjusted-plan-content"
 
 type Preparation = Parameters<typeof prepareAdjustedPlanCandidate>[0]
 export type AdjustedPlanSelectionRequest = {
@@ -22,7 +23,6 @@ export type AdjustedPlanSelectionRequest = {
   readonly currentCheck: PlanCurrentCheck
   readonly expectedCandidateFingerprint: string
 }
-const hash = (value: unknown) => canonicalJsonFingerprint("trainoracle.adjusted-plan-selection.v1", value)
 const reject = (code: string) => ({ kind: "rejected" as const, code })
 
 /** The owning UI/store calls this under its account/plan mutation lock. Source
@@ -63,34 +63,6 @@ export function selectAdjustedPlanForActivation(
       return reject("ADJUSTED_SUCCESSOR_REQUIRES_CONTINUITY_TRANSACTION")
     }
 
-    const candidateId = `adjusted-plan:v1:${review.candidate.contentFingerprint.slice("sha256:".length)}`
-    const generatedAt = evaluatedAt.toISOString()
-    const periodization = createInitialPeriodizationContext(candidateId, generatedAt)
-    if (periodization === null) return reject("INVALID_ADJUSTED_SELECTION")
-    // Pair/template selection references describe the original generator input,
-    // not adjustment authority. Do not let old sibling adaptation reuse them.
-    const { pairId, selectedDetailedTemplateRef, ...originalActive } = parsed.data.activePlan
-    const content = {
-      kind: "SELECTED_ADJUSTED_PLAN" as const,
-      schemaVersion: 1 as const,
-      intake, generatedAt, progress: [] as typeof parsed.data.progress,
-      athleteEvidence: input.athleteEvidence, periodization,
-      activePlan: { ...originalActive, candidateId, sessions: review.candidate.sessions },
-      adjustment: {
-        originalCandidate: preparation.candidate,
-        originalPairId: pairId,
-        originalSelectedDetailedTemplateRef: selectedDetailedTemplateRef,
-        selectedCandidateFingerprint: review.candidate.contentFingerprint,
-        changedSlot: review.candidate.changedSlot,
-        reviewScopeFingerprint: review.scopeFingerprint,
-        reviewPolicy: review.policy,
-        acceptedAt: generatedAt,
-      },
-    }
-    return { kind: "selected_adjusted" as const, storageState: "NOT_SAVED" as const,
-      state: structuredClone({ ...content, contentFingerprint: hash(content) }) }
+    return assembleAdjustedPlanSelection(parsed.data, preparation, review, evaluatedAt)
   } catch { return reject("INVALID_ADJUSTED_SELECTION") }
 }
-
-export type SelectedAdjustedPlanState = Extract<ReturnType<typeof selectAdjustedPlanForActivation>,
-  { kind: "selected_adjusted" }>["state"]

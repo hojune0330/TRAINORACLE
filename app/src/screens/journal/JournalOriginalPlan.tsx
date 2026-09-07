@@ -5,6 +5,7 @@ import { onLocalJournalScopeChange } from "../../domain/account/local-journal-ow
 import { loadEntriesForPlanSafety } from "../../domain/journal-store"
 import { collectSessionExplanationEvidence } from "../../domain/session-explanation-evidence"
 import { SessionExplanationEntry } from "../plan-beta/SessionExplanation"
+import { AdjustedJournalOriginalPlan } from "./AdjustedJournalOriginalPlan"
 
 export function JournalOriginalPlan({ entry }: { readonly entry: PostSessionEntry }) {
   const [lookup, setLookup] = React.useState<ReturnType<typeof readJournalOriginalPlan> | null>(null)
@@ -36,7 +37,8 @@ export function JournalOriginalPlan({ entry }: { readonly entry: PostSessionEntr
         return journal.status === "complete"
           ? collectSessionExplanationEvidence(journal.entries, matched.state, session) : null
       }} />
-    </> : lookup !== null && <p>{lookup.kind === "missing"
+    </> : lookup?.kind === "matched_adjusted" ? <AdjustedJournalOriginalPlan session={lookup.session} explanation={lookup.explanation} />
+      : lookup !== null && <p>{lookup.kind === "missing"
       ? "이 일지와 연결된 계획 원본이 기기에 없어요. 예전 요약 기록만으로 훈련 내용을 다시 만들지는 않아요."
       : "연결된 계획을 읽지 못했어요. 저장된 데이터는 변경하지 않았어요."}</p>}
   </details>

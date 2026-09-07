@@ -41,6 +41,8 @@ import {
   recommendationHistoryFromStored,
 } from "./plan-method-history"
 import { planHistorySnapshotContent } from "./plan-history-snapshot-content"
+import { readStoredAdjustedPlanState, RETAINED_ADJUSTED_PLAN_EVIDENCE } from "./adjusted-plan-storage-schema"
+import type { RetainedAdjustedPlanEvidence } from "./adjusted-plan-selection"
 export type {
   PlanBetaIntake,
   PlanBetaState,
@@ -60,6 +62,11 @@ export function activePlanBetaStorageKey(): string {
   return accountScopedStorageKey(PLAN_BETA_STORAGE_KEY)
 }
 
+function isAdjustedStoredEnvelope(raw: string | null): boolean {
+  if (raw === null) return false
+  try { return JSON.parse(raw)?.version === 4 } catch { return false }
+}
+
 export type PlanStorageResult =
   | { readonly ok: true }
   | {
@@ -70,6 +77,7 @@ export type PlanStorageResult =
 
 export type PlanBetaStateReadResult =
   | { readonly kind: "loaded"; readonly state: PlanBetaState }
+  | (Omit<Extract<ReturnType<typeof readStoredAdjustedPlanState>, { kind: "loaded" }>, "kind"> & { readonly kind: "adjusted_loaded" })
   | { readonly kind: "missing" }
   | { readonly kind: "invalid" }
   | { readonly kind: "storage_error" }
@@ -125,12 +133,15 @@ export function loadVersionedPlanBetaState(): PlanBetaState | null {
   return result.kind === "loaded" ? result.state : null
 }
 
-export function readPlanBetaStateFromStorage(): PlanBetaStateReadResult {
-  return readPlanBetaStateForAccount(localAccountScopeSnapshot())
+export function readPlanBetaStateFromStorage(
+  retained: readonly RetainedAdjustedPlanEvidence[] = RETAINED_ADJUSTED_PLAN_EVIDENCE,
+): PlanBetaStateReadResult {
+  return readPlanBetaStateForAccount(localAccountScopeSnapshot(), retained)
 }
 
 export function readPlanBetaStateForAccount(
   accountScope: string | null,
+  retained: readonly RetainedAdjustedPlanEvidence[] = RETAINED_ADJUSTED_PLAN_EVIDENCE,
 ): PlanBetaStateReadResult {
   if (typeof window === "undefined") return { kind: "storage_error" }
   const storageKey = accountScopedStorageKeyFor(PLAN_BETA_STORAGE_KEY, accountScope)
@@ -144,6 +155,10 @@ export function readPlanBetaStateForAccount(
 
   try {
     const json: unknown = JSON.parse(raw)
+    if (json !== null && typeof json === "object" && "version" in json && json.version === 4) {
+      const adjusted = readStoredAdjustedPlanState(json, retained)
+      return adjusted.kind === "loaded" ? { ...adjusted, kind: "adjusted_loaded" } : { kind: "invalid" }
+    }
     const state = parsePlanBetaState(json)
     return state === null ? { kind: "invalid" } : { kind: "loaded", state }
   } catch {
@@ -168,6 +183,10 @@ export function savePlanBetaState(
   try {
     previous = window.localStorage.getItem(storageKey)
     previousCaptured = true
+    // A stale legacy caller must not overwrite a newer adjusted-plan envelope.
+    if (isAdjustedStoredEnvelope(previous)) {
+      return { ok: false, code: "PLAN_STORAGE_WRITE_FAILED", rollbackComplete: true }
+    }
     const serialized = JSON.stringify(parsed.data)
     window.localStorage.setItem(storageKey, serialized)
     if (window.localStorage.getItem(storageKey) !== serialized) {
@@ -300,6 +319,9 @@ export function archiveAndClearActivePlan(state: PlanBetaState): PlanArchiveResu
     oldHistory = window.localStorage.getItem(historyKey)
     oldIntake = window.sessionStorage.getItem(previousIntakeKey)
     oldActive = window.localStorage.getItem(activeKey)
+    if (isAdjustedStoredEnvelope(oldActive)) {
+      return { ok: false, code: "PLAN_ARCHIVE_WRITE_FAILED", rollbackComplete: true }
+    }
     snapshotsCaptured = true
     const previous = readPlanHistory()
     if (previous === null) throw new Error("Plan history is unavailable")

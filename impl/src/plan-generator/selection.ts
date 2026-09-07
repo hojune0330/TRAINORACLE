@@ -89,7 +89,8 @@ function copySession(session: PlanSession): PlanSession {
   }
 }
 
-function createActiveSnapshot(
+/** Content projection only. Selection authority is checked by selectPlanCandidate. */
+export function createActiveSnapshot(
   candidate: PlanCandidate,
   actor: "SELF" | "COACH",
 ): BetaActivePlanSnapshot {
