@@ -4,6 +4,7 @@ export const METHOD_ADOPTION_VARIANTS: PendingMethodProtocol[]
 export function expandProposal(p: PendingMethodProtocol): { role: string; unit: string; value: number; boundary: string; set: number; rep: number }[]
 export function assembleProposalSession(p: PendingMethodProtocol): {
   supportRef: { id: string; version: string } | null;
+  main: ReturnType<typeof expandProposal>;
   warmup: { role: string; unit: string; value: number; cue: string }[];
   cooldown: { role: string; unit: string; value: number; cue: string }[];
   supportSeconds: number; totalSeconds: number | null;

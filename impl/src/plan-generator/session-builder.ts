@@ -28,7 +28,7 @@ export type CandidateSessionBuildInput = {
   readonly qualityDays: readonly number[]
 }
 
-function rangesFor(experienceBand: ExperienceBand): ExperienceRanges {
+export function rangesFor(experienceBand: ExperienceBand): ExperienceRanges {
   switch (experienceBand) {
     case "NEW_TO_RUNNING":
       return {

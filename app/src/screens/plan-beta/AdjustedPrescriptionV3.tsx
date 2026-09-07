@@ -13,7 +13,9 @@ export function AdjustedPrescriptionV3({ session, explanation }: {
   if (p.kind === "REST") return <p>운동을 쉬는 날이에요.</p>
   if (p.kind !== "ADJUSTED_METHOD_V3") return <p>{p.durationMinutes.minimum}~{p.durationMinutes.maximum}분 · RPE {p.rpe.minimum}~{p.rpe.maximum}</p>
   return <>
-    <PrescriptionStructureV3 sequence={p.projection.sequence} />
+    <PrescriptionStructureV3 sequence={p.projection.sequence}
+      originalDurationMinutes={"originalPrescription" in p.projection && p.projection.originalPrescription.kind === "RPE_TIME_RANGE"
+        ? p.projection.originalPrescription.durationMinutes : undefined} />
     {p.projection.segmentTargets.length > 0 && <><h4>저장 당시 기록으로 계산한 참고 시간</h4>
     <ul>{p.projection.segmentTargets.map(target => <li key={target.segmentId}>
       {target.distanceM !== null && target.targetRepSeconds !== null ? `${target.distanceM}m당 약 ${formatTrainingSeconds(target.targetRepSeconds)}`

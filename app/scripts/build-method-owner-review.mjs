@@ -9,6 +9,7 @@ try {
   const { METHOD_ADOPTION_PROTOCOLS, METHOD_ADOPTION_VARIANTS } = await server.ssrLoadModule("/reports/research/method-adoption-protocols.mjs")
   const { previewPendingMethodExplanation } = await server.ssrLoadModule("/reports/research/method-explanation-preview-v3.ts")
   const { auditAllPendingMainChoices } = await server.ssrLoadModule("/reports/research/method-choice-coverage-v3.ts")
+  const { previewMethodDurationFit } = await server.ssrLoadModule("/reports/research/method-duration-fit-v3.ts")
   const protocols = [...METHOD_ADOPTION_PROTOCOLS, ...METHOD_ADOPTION_VARIANTS]
   const text = value => String(value).replaceAll("|", "\\|").replaceAll("\n", " ")
   const amount = p => p ? `${p.value}${p.unit === "SECONDS" ? "초" : "m"} ${p.role}` : "없음"
@@ -45,7 +46,15 @@ try {
       `| 준비 구간 시간(초) | ${number(e.exactStructure.totals.warmup.totalSeconds)} |`,
       `| 정리 구간 시간(초) | ${number(e.exactStructure.totals.cooldown.totalSeconds)} |`, "",
       "확인된 회복량은 부분합입니다. 거리·시간이 섞이면 전체 회복량과 다를 수 있습니다.", "")
-    lines.push("### 공통 설명 근거", "", ...e.generalExplanation.sources.map(s =>
+    const fitLabels = { NOT_APPLICABLE: "해당 없음", EXCEEDS_EXISTING_RANGE: "기존 상한 초과", DURATION_UNRESOLVED: "전체 시간 미산출", BELOW_EXISTING_RANGE: "기존 하한 미만", WITHIN_EXISTING_RANGE: "기존 시간 범위 안" }
+    const experiences = [["NEW_TO_RUNNING", "처음 시작"], ["DEVELOPING", "훈련 경험 있음"], ["EXPERIENCED", "훈련 경험 많음"]]
+    lines.push("### 기존 일정 시간과 비교", "", "| 경험 | 기존 범위(분) | 시간 비교 | 최소 초과(초) |", "|---|---|---|---|",
+      ...experiences.map(([experience, label]) => {
+        const fit = previewMethodDurationFit(p, experience)
+        const range = fit.existingRangeSeconds
+        return `| ${label} | ${range ? `${range.minimum / 60}~${range.maximum / 60}` : "해당 없음"} | ${fitLabels[fit.status]} | ${fit.excessAtLeastSeconds ?? "해당 없음"} |`
+      }), "", "기본 후보의 기존 시간 범위와 비교한 값입니다. 개인의 가능한 시간, 보수적 후보, 앞뒤 훈련 적합성은 별도입니다. 범위 안이어도 제공 승인이 아니며, 범위 밖이라고 운동을 자동 추가하거나 삭제하지 않습니다.", "",
+      "### 공통 설명 근거", "", ...e.generalExplanation.sources.map(s =>
       `- ${text(s.title)}${s.url ? `: ${s.url}` : ""} / ${text(s.population)} / ${text(s.applicability)}`), "",
       "### 적용되지 않는 항목", "", ...(e.notApplicable.length ? e.notApplicable.map(item => `- ${item.item}: ${item.reason}`) : ["없음. 해당 훈련의 구성과 회복 근거를 검토해야 합니다."]), "",
       "### 채택 전 남은 검토", "", ...e.pending.map(item => `- ${item}`), "")
