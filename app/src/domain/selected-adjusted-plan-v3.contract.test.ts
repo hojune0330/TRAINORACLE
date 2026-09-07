@@ -8,6 +8,8 @@ import { setActiveLocalAccount } from "./account/local-journal-ownership"
 import { TODAY } from "./prescription-quality-matrix.test-fixtures"
 import { adjustedPlanReviewScopeV3 } from "./adjusted-plan-review-v3"
 import { selectAdjustedPlanForActivationV3, readSelectedAdjustedPlanV3 } from "./selected-adjusted-plan-v3"
+import { saveSelectedAdjustedPlanV3, readStoredAdjustedPlanStateV5, encodeStoredAdjustedPlanStateV5 } from "./adjusted-plan-storage-v5"
+import { activePlanBetaStorageKey } from "./plan-beta-store"
 
 beforeEach(() => { localStorage.clear(); sessionStorage.clear(); setActiveLocalAccount(null); vi.useFakeTimers(); vi.setSystemTime(TODAY) })
 afterEach(() => { vi.restoreAllMocks(); vi.useRealTimers() })
@@ -68,4 +70,60 @@ it("rejects altered stored targets, missing retained evidence, future capture an
   expect(readSelectedAdjustedPlanV3(selected.state, { ...retained, policies: [] }, TODAY).kind).toBe("rejected")
   expect(readSelectedAdjustedPlanV3(selected.state, retained, new Date(TODAY.getTime() - 1)).kind).toBe("rejected")
   expect(readSelectedAdjustedPlanV3({ ...selected.state, memo: "private" }, retained, TODAY).kind).toBe("rejected")
+})
+
+function storeInput() {
+  const f = fixture()
+  const input: Parameters<typeof saveSelectedAdjustedPlanV3>[0] = { request: f.request, isCurrentDraft: () => true,
+    readReview: () => ({ source: f.request.preparation.source, explanation: f.retained.explanation,
+      policies: [f.policy], retained: [f.retained] }),
+    locks: { request: async (_name, _options, callback) => callback({}) } }
+  return { ...f, input }
+}
+it("writes and reloads exact V3 bytes in the real active storage key and acknowledges identical replay", async () => {
+  const { input, retained } = storeInput()
+  const result = await saveSelectedAdjustedPlanV3(input)
+  if (result.kind !== "saved") throw Error(result.code)
+  const raw = localStorage.getItem(activePlanBetaStorageKey())!
+  expect(JSON.parse(raw).version).toBe(5)
+  expect(readStoredAdjustedPlanStateV5(JSON.parse(raw), [retained], TODAY)).toMatchObject({ kind: "loaded", state: result.state })
+  expect(await saveSelectedAdjustedPlanV3(input)).toMatchObject({ kind: "saved", replayed: true })
+  expect(localStorage.getItem(activePlanBetaStorageKey())).toBe(raw)
+})
+it("preserves an existing plan and refuses missing locks or changed accounts", async () => {
+  const { input } = storeInput(), key = activePlanBetaStorageKey()
+  localStorage.setItem(key, "EXISTING_PLAN")
+  expect((await saveSelectedAdjustedPlanV3(input)).kind).toBe("rejected")
+  expect(localStorage.getItem(key)).toBe("EXISTING_PLAN")
+  expect(await saveSelectedAdjustedPlanV3({ ...input, locks: null })).toMatchObject({ code: "MUTATION_LOCK_UNAVAILABLE" })
+  expect(await saveSelectedAdjustedPlanV3({ ...input, locks: { request: async (_n, _o, callback) => {
+    setActiveLocalAccount("other"); return callback({})
+  } } })).toMatchObject({ code: "STALE_CANDIDATE_SELECTION" })
+  expect(localStorage.getItem(key)).toBe("EXISTING_PLAN")
+})
+it("rolls back only its own failed write and preserves another writer's replacement", async () => {
+  for (const replace of [false, true]) {
+    localStorage.clear(); setActiveLocalAccount(null)
+    const { input } = storeInput(), key = activePlanBetaStorageKey(), originalSet = Storage.prototype.setItem
+    const spy = vi.spyOn(Storage.prototype, "setItem").mockImplementation(function (this: Storage, k, value) {
+      originalSet.call(this, k, replace && k === key ? "OTHER_WRITER" : value)
+      if (k === key) throw Error("write confirmation failure")
+    })
+    expect((await saveSelectedAdjustedPlanV3(input)).kind).toBe("rejected")
+    expect(localStorage.getItem(key)).toBe(replace ? "OTHER_WRITER" : null)
+    spy.mockRestore()
+  }
+})
+it("validates stored progress addresses, duplicate outcomes, timestamps and evidence uniqueness", () => {
+  const { request, policy, retained } = fixture()
+  const selected = selectAdjustedPlanForActivationV3(request, [policy], TODAY)
+  if (selected.kind !== "selected_adjusted") throw Error(selected.code)
+  const session = selected.state.activePlan.sessions[0]!
+  const progress = { sessionDay: session.day, sessionSlot: session.slot, state: "SKIPPED" as const }
+  expect(encodeStoredAdjustedPlanStateV5(selected.state, [progress], TODAY.toISOString(), [retained], TODAY).kind).toBe("encoded")
+  for (const entries of [[progress, progress], [{ ...progress, sessionDay: 999 }]]) {
+    expect(encodeStoredAdjustedPlanStateV5(selected.state, entries, TODAY.toISOString(), [retained], TODAY).kind).toBe("invalid")
+  }
+  expect(encodeStoredAdjustedPlanStateV5(selected.state, [], TODAY.toISOString(), [retained, retained], TODAY).kind).toBe("invalid")
+  expect(encodeStoredAdjustedPlanStateV5(selected.state, [], new Date(TODAY.getTime() + 1).toISOString(), [retained], TODAY).kind).toBe("invalid")
 })

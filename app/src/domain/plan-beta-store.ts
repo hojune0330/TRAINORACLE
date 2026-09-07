@@ -66,7 +66,7 @@ export function activePlanBetaStorageKey(): string {
 
 function isAdjustedStoredEnvelope(raw: string | null): boolean {
   if (raw === null) return false
-  try { return JSON.parse(raw)?.version === 4 } catch { return false }
+  try { return [4, 5].includes(JSON.parse(raw)?.version) } catch { return false }
 }
 
 export type PlanStorageResult =

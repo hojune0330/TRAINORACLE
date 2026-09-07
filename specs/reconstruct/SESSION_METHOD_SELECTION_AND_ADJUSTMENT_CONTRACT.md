@@ -4,7 +4,7 @@
 doc_id: trainoracle-session-method-selection-and-adjustment
 spec_id: SESSION_METHOD_SELECTION_AND_ADJUSTMENT_CONTRACT
 title: TrainOracle Session Method Selection And Adjustment Contract
-version: "0.35"
+version: "0.36"
 round: RT1_OWNER_APPROVED_IMPLEMENTATION_DIRECTION
 status: ACTIVE_IMPLEMENTATION_CONTRACT
 product_direction: OWNER_APPROVED_IMPLEMENTATION_DIRECTION
@@ -1428,5 +1428,24 @@ target and compare the complete reconstructed content, not only its checksum.
 Reject future timestamps, changed targets, extra fields or missing retained evidence.
 Historical read does not fetch current records, authorize execution, or activate an
 imported plan. Storage, active UI and successor consumers remain separate obligations.
+
+### 21.15 V3 persistence envelope and first selection transaction
+
+V3 selected content uses storage envelope version 5, distinct from version 4's
+legacy adjusted selection. Reconstruct selected content against one retained
+evidence match; validate every progress address, duplicate outcomes, exact update
+timestamp and full content fingerprint. Missing observations remain absent.
+
+Write to the existing account-scoped active-plan key under the same plan mutation
+lock. Re-read current authority inside the lock and run explicit selection again.
+Recheck account, draft identity and previous bytes before writing and confirming.
+Do not overwrite any existing plan; identical unprogressed replay is acknowledged
+without a new write. On failed confirmation remove only this transaction's own
+bytes, never another writer's replacement. Legacy mutation paths must recognize
+version 5 as protected adjusted content rather than treat it as an empty plan.
+
+Keep UI entry inactive until version-5 read/progress/journal consumers are wired.
+Engineering tests exercise real storage with synthetic evidence, not an operating
+template approval. Server sync and successor archive transactions remain required.
 
 [DRAFT_COMPLETE]
