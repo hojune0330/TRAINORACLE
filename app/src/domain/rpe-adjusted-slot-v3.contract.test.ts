@@ -50,11 +50,11 @@ afterEach(() => {
     else Reflect.deleteProperty(HTMLDialogElement.prototype, key)
   }
 })
-function fixture(supplied?: Extract<ReturnType<typeof generatePlanFromDraft>, { kind: "generated" }>, at = TODAY, startDate = "2026-09-08") {
+function fixture(supplied?: Extract<ReturnType<typeof generatePlanFromDraft>, { kind: "generated" }>, at = TODAY, startDate = "2026-09-08", includeSets = false) {
   const intake = { ...draftFor(RUNTIME_CASES[3]), selectedDetailedTemplateRef: null }
   const generated = supplied ?? generatePlanFromDraft(intake, "NO_KNOWN_RISK", {})
   if (generated.kind !== "generated") throw Error("No generated candidate")
-  const candidate = generated.generated.candidates[0], source = unanchoredAdjustmentFixtureV3(false, at.getTime())
+  const candidate = generated.generated.candidates[0], source = unanchoredAdjustmentFixtureV3(false, at.getTime(), includeSets)
   const offer = prepareUnanchoredAdjustmentOfferV3(source)
   if (offer.kind !== "available") throw Error(offer.code)
   const draft = createAdjustmentDraftV3({ authority: offer.authority, current: offer.current, policy: offer.policy,
@@ -101,8 +101,8 @@ it("connects every real generated RPE MAIN to independently scoped detailed cont
   expect(result.candidate.selectionAuthority).toBe("NONE")
 })
 
-function storageFixture(supplied?: Extract<ReturnType<typeof generatePlanFromDraft>, { kind: "generated" }>, at = TODAY, startDate = "2026-09-08") {
-  const { inputs, bindings, generated } = fixture(supplied, at, startDate)
+function storageFixture(supplied?: Extract<ReturnType<typeof generatePlanFromDraft>, { kind: "generated" }>, at = TODAY, startDate = "2026-09-08", includeSets = false) {
+  const { inputs, bindings, generated } = fixture(supplied, at, startDate, includeSets)
   const scope = multiAdjustedPlanReviewScopeV3(inputs, inputs[0]!.experienceBand, bindings)
   if (scope.kind !== "scope") throw Error(scope.code)
   const policy = { scopeVersion: "MULTI_STRUCTURAL_V3" as const, policyId: "TEST", version: "1", scopeFingerprint: scope.scopeFingerprint,
@@ -397,6 +397,61 @@ it.each(["initial", "successor"])("requires explicit final confirmation in the %
   await act(async () => { fireEvent.click(screen.getByRole("button", { name: "이 구성으로 계획 저장" })) })
   expect(onSaved).toHaveBeenCalledOnce()
   expect(readPlanBetaStateFromStorage([], [], input.readReview().retained)).toMatchObject({ kind: "multi_adjusted_v3_loaded", state: onSaved.mock.calls[0]![0] })
+})
+
+it("changes one MAIN to a structurally different set method and preserves its exact recovery explanation through save", async () => {
+  const input = storageFixture(undefined, TODAY, "2026-09-08", true), initialReview = input.readReview()
+  let latestReview = initialReview
+  const onSaved = vi.fn()
+  render(React.createElement(MultiAdjustedPlanEditFlowV3, { seed: input.request, readReview: input.readReview, locks: input.locks,
+    readReviewForEdits: (request, changes) => {
+      const preparations = request.preparations.map(p => {
+        const change = changes.find(c => c.address.day === p.address.day && c.address.slot === p.address.slot)
+        if (!change) return p as RpeAdjustedSlotInputV3
+        const source = p.source as RpeAdjustedSlotInputV3["source"]
+        const offer = prepareUnanchoredAdjustmentOfferV3(source)
+        if (offer.kind !== "available") throw Error(offer.code)
+        const explanation = { ...p.explanation, configuration: change.receipt.after.configuration,
+          version: "TEST-SET-2", recoveryRationale: "시험: 반복 사이 걷기 30초, 세트 사이 정지 120초",
+          sequenceContentIdentity: sequenceV3ContentIdentity(change.receipt.after.sequence), nodeIds: ["sets", "work"] }
+        const snapshot = createAdjustedMethodSnapshotV3({ authority: offer.authority, current: offer.current,
+          receipt: change.receipt, contextKey: offer.contextKey, nowMs: TODAY.getTime(),
+          scope: resolveQualityCandidateScope(p.candidate, p.address, p.startDate)!, explanation })
+        if (snapshot.kind !== "prepared") throw Error(snapshot.code)
+        return { ...p, source, explanation, rawSnapshot: JSON.stringify(snapshot.snapshot) } as RpeAdjustedSlotInputV3
+      })
+      const rpeBindings = preparations.map((p, i) => {
+        const scope = rpeSourceBindingScopeV3(p)
+        if (scope.kind !== "scope") throw Error(scope.code)
+        return { ...initialReview.rpeBindings[0]!, bindingId: `SET-TEST-${i}`, scopeFingerprint: scope.scopeFingerprint }
+      }).filter((binding, i, all) => all.findIndex(b => b.scopeFingerprint === binding.scopeFingerprint) === i)
+      const scope = multiAdjustedPlanReviewScopeV3(preparations, preparations[0]!.experienceBand, rpeBindings)
+      if (scope.kind !== "scope") throw Error(scope.code)
+      const policies = [{ ...initialReview.policies[0]!, scopeFingerprint: scope.scopeFingerprint }]
+      latestReview = { preparations, rpeBindings, policies, retained: [{ rpeBindings, policies,
+        slots: preparations.map(p => ({ address: p.address, authority: p.source.authority, explanation: p.explanation })) }] }
+      return latestReview
+    }, isCurrentDraft: () => true, onSaved, onCancel: vi.fn() }))
+  fireEvent.click(screen.getAllByRole("button", { name: "이 훈련 구성 바꾸기" })[0]!)
+  fireEvent.click(screen.getByRole("radio", { name: "시험용 세트 구성" }))
+  await act(async () => { fireEvent.click(screen.getByRole("button", { name: "변경안 적용" })) })
+  expect(localStorage.getItem(activePlanBetaStorageKey())).toBeNull()
+  fireEvent.click(screen.getByRole("button", { name: "전체 확인으로" }))
+  await act(async () => { fireEvent.click(screen.getByRole("button", { name: "이 구성으로 계획 저장" })) })
+  expect(onSaved).toHaveBeenCalledOnce()
+  const read = readPlanBetaStateFromStorage([], [], latestReview.retained)
+  if (read.kind !== "multi_adjusted_v3_loaded") throw Error("Saved set plan is unreadable")
+  const adjusted = read.state.selection.activePlan.sessions.filter(s => s.prescription.kind === "ADJUSTED_METHOD_V3")
+  const first = adjusted[0]!.prescription
+  if (first.kind !== "ADJUSTED_METHOD_V3") throw Error("Missing first MAIN")
+  expect(first.projection.structuralTotals.main).toMatchObject({ workSeconds: 120, recoverySeconds: 180 })
+  expect(first.snapshot.receipt.after.configuration.configurationId).toBe("C2")
+  for (const other of adjusted.slice(1)) {
+    if (other.prescription.kind !== "ADJUSTED_METHOD_V3") throw Error("Missing other MAIN")
+    expect(other.prescription.snapshot.receipt.after.configuration.configurationId).toBe("C1")
+    expect(other.prescription.projection.structuralTotals.main).toMatchObject({ workSeconds: 120, recoverySeconds: 120 })
+  }
+  expect(read.explanations[0]!.explanation.recoveryRationale).toBe("시험: 반복 사이 걷기 30초, 세트 사이 정지 120초")
 })
 
 it("stages one addressed editor receipt without replacing the other MAIN and saves only after the final screen", async () => {
