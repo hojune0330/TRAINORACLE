@@ -4,7 +4,7 @@
 doc_id: trainoracle-session-method-selection-and-adjustment
 spec_id: SESSION_METHOD_SELECTION_AND_ADJUSTMENT_CONTRACT
 title: TrainOracle Session Method Selection And Adjustment Contract
-version: "0.43"
+version: "0.44"
 round: RT1_OWNER_APPROVED_IMPLEMENTATION_DIRECTION
 status: ACTIVE_IMPLEMENTATION_CONTRACT
 product_direction: OWNER_APPROVED_IMPLEMENTATION_DIRECTION
@@ -1552,5 +1552,18 @@ V3 저장 계획을 독립 보존 근거로 읽고, 현재 저장 지문·현재
 확인 → 명시적 저장 → 새 일정으로 이어진다. 돌아가기는 저장하지 않으며, 검토된 구성
 공급자가 없으면 비교까지만 제공하고 저장 가능으로 표시하지 않는다. source registry의
 운영 활성화와 숫자 조정 편집기, 여러 MAIN 독립 선택은 별도 완료 관문이다.
+
+### 21.23 여러 MAIN 변경안의 독립 조립
+
+같은 원본 후보와 시작일에 연결된 여러 변경안을 각각 재검증한 뒤 한 후보로 조립한다.
+각 날짜/AM/PM 주소는 한 번만 나타나야 한다. 원본이 다른 후보, 중복 주소, 잘못된
+스냅샷 또는 하나라도 만료된 근거가 있으면 전체 조립을 거부한다. 입력 배열 순서는
+의미를 바꾸지 않으며 날짜/슬롯 순으로 정규화한다. 변경하지 않은 세션은 그대로 유지한다.
+
+각 구간의 설명·근거·projection은 해당 주소에 따로 연결한다. 한 구간의 설명을 다른
+구간에 공유하지 않는다. 조립 결과는 MULTI_ADJUSTED_PLAN_CANDIDATE / NOT_ACCEPTED /
+NONE이며 단일 변경 후보와 다른 식별 namespace를 사용한다. 개별 조정 승인들의 합을
+전체 계획 승인으로 취급하지 않는다. 전체 노출·배치·상호작용 검토, 명시적 선택, 저장,
+일지/후속 주기 소비는 이 다중 후보 형식을 지원해야 하며 단일 후보 저장기로 우회하지 않는다.
 
 [DRAFT_COMPLETE]
