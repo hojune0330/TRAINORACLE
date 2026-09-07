@@ -42,6 +42,8 @@ export function previewMethodScope(context) {
     const reasons = []
     if (!s.eventDistances.includes(context.eventDistanceM)) reasons.push("OUTSIDE_PROPOSED_EVENT_SCOPE")
     if (!s.experience.includes(context.experience)) reasons.push("OUTSIDE_PROPOSED_EXPERIENCE_SCOPE")
+    if (!s.population.includes(context.population)) reasons.push("OUTSIDE_PROPOSED_POPULATION_SCOPE")
+    if (!s.actor.includes(context.actor)) reasons.push("OUTSIDE_PROPOSED_ACTOR_SCOPE")
     return {
       id: protocol.id, scopeMatch: reasons.length === 0, reasons,
       replacementRole: s.replacementRole, executionAuthority: "NONE",

@@ -21,6 +21,23 @@ test("age and self/coached modes do not silently remove candidate scope", () => 
     assert.deepEqual(previewMethodScope({ ...context, population, actor }), previewMethodScope(context))
   }
 })
+
+test("explicit population and actor restrictions are honored independently", () => {
+  const s = PROPOSED_METHOD_SCOPES.find(s => s.id === "P-VO2-2")
+  const population = s.population, actor = s.actor
+  const row = c => previewMethodScope(c).rows.find(r => r.id === s.id)
+  try {
+    s.population = ["ADULT"]
+    assert.deepEqual(row(context).reasons, ["OUTSIDE_PROPOSED_POPULATION_SCOPE"])
+    assert.equal(row(context).scopeMatch, false)
+    assert.equal(row({ ...context, population: "ADULT" }).scopeMatch, true)
+    s.actor = ["COACH_REQUIRED"]
+    assert.deepEqual(row(context).reasons, ["OUTSIDE_PROPOSED_POPULATION_SCOPE", "OUTSIDE_PROPOSED_ACTOR_SCOPE"])
+    assert.deepEqual(row({ ...context, population: "ADULT" }).reasons, ["OUTSIDE_PROPOSED_ACTOR_SCOPE"])
+    assert.equal(row({ ...context, population: "ADULT", actor: "COACH_REQUIRED" }).scopeMatch, true)
+    assert.equal(row(context).executionAuthority, "NONE")
+  } finally { s.population = population; s.actor = actor }
+})
 test("seven event groups retain VO2 coverage while sprint specialists stay out of scope", () => {
   for (const eventDistanceM of [800,1500,3000,5000,10000,21097,42195]) {
     assert.equal(previewMethodScope({ ...context, eventDistanceM }).rows.filter(r => r.scopeMatch).length, 3)
