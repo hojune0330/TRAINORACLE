@@ -4,7 +4,7 @@
 doc_id: trainoracle-session-method-selection-and-adjustment
 spec_id: SESSION_METHOD_SELECTION_AND_ADJUSTMENT_CONTRACT
 title: TrainOracle Session Method Selection And Adjustment Contract
-version: "0.14"
+version: "0.15"
 round: RT1_OWNER_APPROVED_IMPLEMENTATION_DIRECTION
 status: ACTIVE_IMPLEMENTATION_CONTRACT
 product_direction: OWNER_APPROVED_IMPLEMENTATION_DIRECTION
@@ -1005,5 +1005,19 @@ Account change, stale content or absent lock rejects without a success display.
 Progress updates must preserve the displayed date and must not create journal
 measurements or send private notes. Full archive and next-cycle integration remain
 separate gates; this outcome recorder does not imply their completion.
+
+### 20.2 Retained adjusted originals
+
+The account-scoped adjusted-original archive retains at most 18 verified v4
+snapshots with canonical archive timestamps and whole-envelope fingerprints.
+Retention is idempotent for the same saved state and never clears the active key.
+Use the existing plan mutation lock, verify both active and archive bytes, and
+roll back only owned archive bytes on failure. Unreadable archives are not replaced.
+
+Journal lookup uses the immutable session link and revalidates retained versions;
+it does not substitute a current plan or match explanations by a label/ID alone.
+This retention API is not next-cycle selection, activation, cloud synchronization,
+or completed account-data lifecycle support. Those integrations remain required
+before operating activation. No memory of a review or copied hash grants authority.
 
 [DRAFT_COMPLETE]
