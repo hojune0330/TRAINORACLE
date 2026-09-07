@@ -1,11 +1,33 @@
 import { parsePrescriptionSequenceV3, type PrescriptionSequenceV3, type RecoveryStepV3, type SequenceNodeV3 } from "../../impl/src/prescription/sequence-v3"
 import { expandProposal, assembleProposalSession } from "./method-adoption-protocols.mjs"
+import { proposeMethodExecutionGuidance } from "./method-execution-guidance-proposal.mjs"
 
 type Part = { role: string; unit: string; value: number }
 export type PendingMethodProtocol = {
   id: string; family: string; method: string; sets: number; reps: number; work: Part[];
   between: Part | null; setRest: Part | null; afterEvery: Part | null;
   status: string; executionAuthority: string;
+}
+
+/** Exact review sequence only; proposed cues do not grant execution authority. */
+export function representPendingCoachingWholeSessionV3(p: PendingMethodProtocol) {
+  const representation = representPendingWholeSessionV3(p)
+  const guidance = proposeMethodExecutionGuidance(p)
+  if (representation.kind !== "represented") return { ...representation, guidance }
+  const mapNode = (node: SequenceNodeV3): SequenceNodeV3 => {
+    if (node.kind === "group") return { ...node, children: node.children.map(mapNode) }
+    const instruction = guidance.segments.find(part => part.role === node.role)?.instruction
+    if (!instruction) throw Error("MISSING_PROPOSED_SEGMENT_GUIDANCE")
+    const effort = node.role === "WORK" ? guidance.effortProposal.work : null
+    const cue = effort ? [effort.cue,
+      ...(effort.rpe ? [`본운동 체감 노력 제안 RPE ${effort.rpe.join("~")}`] : [])] : [instruction]
+    return { ...node, target: { kind: "EFFORT_GUIDANCE", cue: cue.join(" ") } }
+  }
+  const parsed = parsePrescriptionSequenceV3({ ...representation.sequence,
+    main: representation.sequence.main.map(mapNode) })
+  if (parsed.kind !== "parsed") throw Error("INVALID_COACHING_PROPOSAL_REPRESENTATION")
+  return { ...representation, sequence: parsed.sequence,
+    targetStatus: "COACHING_PROPOSAL_NOT_ADOPTED" as const, guidance }
 }
 
 /** Keep the existing support proposal separate from the still-unprescribed main intensity. */

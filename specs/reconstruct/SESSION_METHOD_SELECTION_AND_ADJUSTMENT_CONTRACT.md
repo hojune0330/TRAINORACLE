@@ -4,7 +4,7 @@
 doc_id: trainoracle-session-method-selection-and-adjustment
 spec_id: SESSION_METHOD_SELECTION_AND_ADJUSTMENT_CONTRACT
 title: TrainOracle Session Method Selection And Adjustment Contract
-version: "0.64"
+version: "0.65"
 round: RT1_OWNER_APPROVED_IMPLEMENTATION_DIRECTION
 status: ACTIVE_IMPLEMENTATION_CONTRACT
 product_direction: OWNER_APPROVED_IMPLEMENTATION_DIRECTION
@@ -1813,5 +1813,15 @@ V6 개인 계획을 전송하기 전에 실제 계정별 현재 저장값과 독
 보존하고 새 계획 생성이나 새 주기 전진으로 처리하지 않는다. 쓰기 실패 시 본인이
 쓴 값만 되돌리고 다른 작성자의 값은 보존한다. 다른 현재 일정과 충돌하는 경우의
 명시적 비교/교체 UI는 별도 구현 범위로 남긴다.
+
+### 21.45 채택 검토본의 구간별 노력 안내 연결
+
+검토용 구성에서도 본운동 노력 제안과 정확한 운동 구간을 연결한다. 짧은 수행
+안내는 구간 target에, 방법별 상세 안내와 한계는 같은 검토본의 설명에 보존한다.
+이 내용과 버전을 검토본 지문에 포함하며 문구 변화로 처방 구조의 다양성을
+부풀리지 않는다. 운동/회복 수치 및 준비/정리 구성은 안내 연결로 변경하지 않는다.
+기존 세션 전체 RPE와 본운동 노력 제안, 개인 측정값은 구분한다. 제안의 연결은
+실행 권한이나 오너 채택이 아니며 OFF에 운동 강도를 발명하지 않는다.
+검토본에는 명시적 구간 필드만 복사하고 부가 메모/증상/식별 필드를 포함하지 않는다.
 
 [DRAFT_COMPLETE]

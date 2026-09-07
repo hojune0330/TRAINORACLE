@@ -1,6 +1,36 @@
 import { expect, it } from "vitest"
 import { METHOD_ADOPTION_PROTOCOLS, METHOD_ADOPTION_VARIANTS } from "../../../reports/research/method-adoption-protocols.mjs"
 import { previewPendingMethodExplanation } from "../../../reports/research/method-explanation-preview-v3"
+import { representPendingWholeSessionV3 } from "../../../reports/research/method-proposal-sequence-v3"
+import type { SequenceNodeV3 } from "../../../impl/src/prescription/sequence-v3"
+
+it("binds proposed work cues without changing geometry, recovery or support", () => {
+  const stripTargets = (nodes: readonly SequenceNodeV3[]): unknown[] => nodes.map(node => {
+    if (node.kind === "group") return { ...node, children: stripTargets(node.children) }
+    const { target: _target, ...rest } = node
+    return rest
+  })
+  for (const p of [...METHOD_ADOPTION_PROTOCOLS, ...METHOD_ADOPTION_VARIANTS]) {
+    const raw = representPendingWholeSessionV3(p)
+    const result = previewPendingMethodExplanation(p).exactStructure.representation
+    expect(result.executionAuthority).toBe("NONE")
+    if (raw.kind !== "represented" || result.kind !== "represented") {
+      expect(result.kind).toBe(raw.kind)
+      expect(result.guidance.effortProposal.status).toBe("NOT_APPLICABLE")
+      continue
+    }
+    expect(result.targetStatus).toBe("COACHING_PROPOSAL_NOT_ADOPTED")
+    expect(stripTargets(result.sequence.main)).toEqual(stripTargets(raw.sequence.main))
+    expect(result.sequence.warmup).toEqual(raw.sequence.warmup)
+    expect(result.sequence.cooldown).toEqual(raw.sequence.cooldown)
+    expect(JSON.stringify(result.sequence.main)).not.toContain("강도 미결정")
+    expect(result.guidance.effortProposal.sessionRpeTarget).toBeNull()
+    if (p.family === "ATP-PC") {
+      expect(result.guidance.effortProposal.work?.rpe).toBeNull()
+      expect(JSON.stringify(result.sequence.main)).not.toContain("체감 노력 제안 RPE")
+    }
+  }
+})
 
 it("separates non-applicable rest-day dose from still-required placement and adoption", () => {
   const rest = METHOD_ADOPTION_PROTOCOLS.find(p => p.family === "OFF")!

@@ -60,7 +60,8 @@ export function proposeMethodExecutionGuidance(p) {
     segments: parts.map(part => {
       const instruction = part.role === "WORK" ? work[p.family] : roles[part.role]
       if (!instruction) throw Error("UNEXPLAINED_SEGMENT_ROLE")
-      return { ...part, instruction }
+      const { role, unit, value, boundary, set, rep } = part
+      return { role, unit, value, boundary, set, rep, instruction }
     }),
     offReason: p.family === "OFF" ? "계획된 운동 구간이 없습니다. 실제 활동이나 몸 상태를 0으로 기록하지 않습니다." : null,
     pending: p.family === "OFF" ? ["OWNER_ADOPTION", "WHOLE_CYCLE_PLACEMENT"]

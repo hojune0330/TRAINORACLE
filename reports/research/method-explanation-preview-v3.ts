@@ -2,7 +2,7 @@ import { TRAINING_EXPLANATION_PROFILES, EXPLANATION_SOURCES } from "../../app/sr
 import type { PlannedEnergyIntent } from "../../impl/src/plan-generator/types"
 import { canonicalJsonFingerprint } from "../../impl/src/plan-generator/candidate-identity"
 import { deriveSequenceV3Totals } from "../../impl/src/prescription/sequence-v3"
-import { representPendingWholeSessionV3, type PendingMethodProtocol } from "./method-proposal-sequence-v3"
+import { representPendingCoachingWholeSessionV3, type PendingMethodProtocol } from "./method-proposal-sequence-v3"
 import { expandProposal } from "./method-adoption-protocols.mjs"
 import { METHOD_DESIGN_RATIONALES } from "./method-design-rationales-v3"
 import { rpeForIntent } from "../../impl/src/plan-generator/session-builder"
@@ -19,7 +19,7 @@ export function previewPendingMethodExplanation(p: PendingMethodProtocol) {
   const general = TRAINING_EXPLANATION_PROFILES[key]
   const rationale = METHOD_DESIGN_RATIONALES[p.method]
   if (!rationale) throw Error("MISSING_METHOD_RATIONALE")
-  const representation = representPendingWholeSessionV3(p)
+  const representation = representPendingCoachingWholeSessionV3(p)
   const noExercise = representation.kind === "no_exercise"
   const sources = general.sourceIds.map(id => {
     const source = EXPLANATION_SOURCES[id]
@@ -27,7 +27,7 @@ export function previewPendingMethodExplanation(p: PendingMethodProtocol) {
     return source
   })
   const content = {
-    version: "0.2", protocolId: p.id, method: p.method,
+    version: "0.3", protocolId: p.id, method: p.method,
     executionAuthority: "NONE" as const, status: "REVIEW_PREVIEW_NOT_ADOPTED" as const,
     generalExplanation: { scope: "TRAINING_FAMILY_NOT_EXACT_DOSE" as const, profile: general, sources },
     intensityReview: key === "REST" ? {
