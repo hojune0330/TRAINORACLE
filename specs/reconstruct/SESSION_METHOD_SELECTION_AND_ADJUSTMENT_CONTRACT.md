@@ -4,7 +4,7 @@
 doc_id: trainoracle-session-method-selection-and-adjustment
 spec_id: SESSION_METHOD_SELECTION_AND_ADJUSTMENT_CONTRACT
 title: TrainOracle Session Method Selection And Adjustment Contract
-version: "0.28"
+version: "0.29"
 round: RT1_OWNER_APPROVED_IMPLEMENTATION_DIRECTION
 status: ACTIVE_IMPLEMENTATION_CONTRACT
 product_direction: OWNER_APPROVED_IMPLEMENTATION_DIRECTION
@@ -1281,5 +1281,25 @@ every field, then recheck the independent registry at the current time. Removed
 policies, expiry, context changes, stale originals and forged totals reject.
 Do not invent reverse edges. This operation returns a prepared adjusted prescription;
 it does not write an active plan or replace plan-level safety/selection validation.
+
+### 21.8 V3 explanation-bound historical snapshot
+
+Snapshot schemaVersion 3 binds the complete V3 adjustment receipt, exact original,
+context, candidate lineage/main slot, capture time and independently supplied
+explanation version. The explanation covers all sequence node IDs, including
+support/group nodes, and matches the full sequence identity and target configuration.
+Missing/duplicate coverage or a stale explanation identity rejects creation.
+
+Store explanation references and a content fingerprint, not a trusted registry or
+user memo. Require the existing purpose, energy/work/recovery rationale, cycle role,
+expectation, limitations, observation and evidence fields. This validates exact
+binding and coverage, not scientific accuracy of text or a new source adoption.
+
+Historical read reconstructs using independently retained policy/explanation versions
+at capture time and compares the complete saved object. Capture cannot be in the
+future; scope/context and all fields must match. Return historical/NONE, not current
+execution permission. Current candidate save must separately revalidate live source,
+anchor, safety and authority. The application caller owns binding the opaque context
+to actual athlete/record/frame; arbitrary browser-provided context is not authority.
 
 [DRAFT_COMPLETE]

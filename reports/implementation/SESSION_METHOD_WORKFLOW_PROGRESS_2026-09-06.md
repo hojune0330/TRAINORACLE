@@ -1280,4 +1280,19 @@ V3구성참조와버전3초안/receipt를구현했다. 기존descriptor-safe can
 실제운영승인registry는채우지않았다. 다음은source/explanation/snapshot과기존
 활성계획·일지·다음주기경로로V3receipt를전달하는통합이며,이번상태를공개완료로보지않는다.
 
+## 58. V3 설명 결속 snapshot과 과거 읽기 (2026-09-07)
+
+app domain에 버전3 snapshot생성/과거읽기를추가했다. 실제V3receipt를재검사하고
+설명과목표구성/전체sequenceidentity/문맥을일치시킨다. 모든구간/그룹nodeId를중복없이
+포괄해야한다. 설명본문대신참조와해시를저장하며독립보존설명/정책을읽기시다시요구한다.
+기존필수설명항목을재사용했다. 문장자체의과학적진실성을parser가검증한다는뜻은아니다.
+
+새4개+기존snapshot27개,2파일31 PASS,앱타입검사PASS. 실제V3조정→snapshot→
+직렬화→만료후과거읽기,현재신규생성만료거부,설명/node범위/근거중복오류,별도슬롯,
+보존근거없음,미래시각,수치변조,미허용memo필드를검사했다. 과거읽기는NONE이다.
+
+스펙v0.29§21.8에반영했다. 실제선수/기록/프레임에opaque문맥을결속하는운영공급자,
+source adapter,후보저장schema와일지화면의V3통합은남아있다. 새domain함수만으로
+현재일정/일지UI까지완료됐다고하지않는다. 운영registry는여전히비활성이다.
+
 [DRAFT_COMPLETE]
