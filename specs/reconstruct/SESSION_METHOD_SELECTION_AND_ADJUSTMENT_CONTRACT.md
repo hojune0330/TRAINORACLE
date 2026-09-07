@@ -4,7 +4,7 @@
 doc_id: trainoracle-session-method-selection-and-adjustment
 spec_id: SESSION_METHOD_SELECTION_AND_ADJUSTMENT_CONTRACT
 title: TrainOracle Session Method Selection And Adjustment Contract
-version: "0.42"
+version: "0.43"
 round: RT1_OWNER_APPROVED_IMPLEMENTATION_DIRECTION
 status: ACTIVE_IMPLEMENTATION_CONTRACT
 product_direction: OWNER_APPROVED_IMPLEMENTATION_DIRECTION
@@ -1531,5 +1531,26 @@ V3 저장 계획을 독립 보존 근거로 읽고, 현재 저장 지문·현재
 전진하며 이 준비 결과는 NONE / NOT_SAVED다. 준비 성공은 추천 증가, 후속 계획
 승인 또는 현재 계획 교체 권한이 아니다. 후속 선택·원본 보관·교체 transaction 및
 화면 연결은 별도 완료 관문으로 유지한다.
+
+### 21.22 V3 후속 선택·원본 보관·일정 전환
+
+후속 생성은 검증된 version-5 이전 계획에서 읽은 수행 문맥을 동일 생성기에 전달한다.
+결과는 adjusted_next_frame_v3_draft이며 선택/저장 완료가 아니다. 종목 변경이나
+계정/이전 지문 변경은 거부한다. 최초 계획 저장 경로로 후속 계획을 저장할 수 없다.
+
+명시적 최종 확인 후 같은 계획 mutation lock 안에서 실제 이전 계획과 근거를 다시
+읽는다. 현재 기록, 안전 상태, 검토 정책, 전체 계획 문맥을 검사하고 이전 지문과
+계보를 새 계획 identity에 포함한다. 과거 읽기는 보존 근거로 재구성하며 현재 활성화
+권한으로 취급하지 않는다. 새 주기 진행 상태는 빈 배열이며 미기록을 완료로 채우지 않는다.
+
+이전 원본을 V3 archive에 먼저 보관하고 active 값을 교체한다. 각 쓰기 전후 계정·
+요청·저장값과 현재 기록·안전·검토 근거의 동일성/유효기간을 재확인한다. 실패 시 이번 작업이 쓴 값만 복구하며 다른 작성자의 값은
+덮어쓰지 않는다. 18개 원본 한도에서는 자동 삭제 없이 중단한다. localStorage의 두
+키 쓰기를 데이터베이스 수준의 원자적 transaction이나 서버 동기화로 설명하지 않는다.
+
+화면은 현재 일정 → 시작일/몸 상태/기준 기록 → 후보 비교 → 정확한 구성과 전체 일정
+확인 → 명시적 저장 → 새 일정으로 이어진다. 돌아가기는 저장하지 않으며, 검토된 구성
+공급자가 없으면 비교까지만 제공하고 저장 가능으로 표시하지 않는다. source registry의
+운영 활성화와 숫자 조정 편집기, 여러 MAIN 독립 선택은 별도 완료 관문이다.
 
 [DRAFT_COMPLETE]

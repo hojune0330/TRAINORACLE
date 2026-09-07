@@ -15,12 +15,12 @@ type ReviewedScope = Extract<ReturnType<typeof checkAdjustedPlanReviewPolicy>, {
 export const adjustedPlanSelectionFingerprint = (value: unknown) => canonicalJsonFingerprint("trainoracle.adjusted-plan-selection.v1", value)
 const hash = adjustedPlanSelectionFingerprint
 const reject = (code: string) => ({ kind: "rejected" as const, code })
-const continuationSchema = z.object({
+export const adjustedPlanContinuationSchema = z.object({
   predecessorFingerprint: z.string().regex(/^sha256:[a-f0-9]{64}$/u),
   predecessorSelectionFingerprint: z.string().regex(/^sha256:[a-f0-9]{64}$/u),
   previousPeriodization: periodizationContextSchema,
 }).strict()
-export type AdjustedPlanContinuation = z.infer<typeof continuationSchema>
+export type AdjustedPlanContinuation = z.infer<typeof adjustedPlanContinuationSchema>
 
 /** Content assembly only; the caller owns current selection or historical validation. */
 export function assembleAdjustedPlanSelection(base: PlanBetaStateV3, preparation: Preparation, review: ReviewedScope, evaluatedAt: Date,
@@ -28,7 +28,7 @@ export function assembleAdjustedPlanSelection(base: PlanBetaStateV3, preparation
   if (base.athleteEvidence === undefined) return reject("ADJUSTED_PLAN_EVIDENCE_MISSING")
   const priorFrame = preparation.candidate.continuityContext.kind === "PREVIOUS_FRAME_CONTEXT_RETAINED"
   if (priorFrame !== (continuation !== undefined)) return reject("INVALID_ADJUSTED_CONTINUATION")
-  const checkedContinuation = continuation === undefined ? undefined : continuationSchema.safeParse(continuation)
+  const checkedContinuation = continuation === undefined ? undefined : adjustedPlanContinuationSchema.safeParse(continuation)
   if (checkedContinuation !== undefined && !checkedContinuation.success) return reject("INVALID_ADJUSTED_CONTINUATION")
   const retainedContinuation = checkedContinuation?.success ? checkedContinuation.data : undefined
   const identity = retainedContinuation === undefined ? review.candidate.contentFingerprint

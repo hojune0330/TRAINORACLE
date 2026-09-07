@@ -1,5 +1,5 @@
 import React from "react"
-import { Check, CircleMinus, RefreshCw, HeartPulse, PenLine, Download, FileUp } from "lucide-react"
+import { Check, CircleMinus, RefreshCw, HeartPulse, PenLine, Download, FileUp, ArrowRight } from "lucide-react"
 import type { readStoredAdjustedPlanStateV5 } from "../../domain/adjusted-plan-storage-v5"
 import { saveAdjustedPlanProgressV3 } from "../../domain/adjusted-plan-progress"
 import type { RetainedAdjustedPlanEvidenceV3 } from "../../domain/selected-adjusted-plan-v3"
@@ -13,11 +13,12 @@ import { exportAdjustedPlanBackupV3 } from "../../domain/adjusted-plan-backup-v3
 import "./AdjustedPlanSchedule.css"
 
 type Loaded = Extract<ReturnType<typeof readStoredAdjustedPlanStateV5>, { kind: "loaded" }>
-export function AdjustedPlanScheduleV3({ loaded, readEvidence, onStoredChange, onWritePlannedSessionLog, returnToSession, onImportPlan }: {
+export function AdjustedPlanScheduleV3({ loaded, readEvidence, onStoredChange, onWritePlannedSessionLog, returnToSession, onImportPlan, onPrepareNext }: {
   readonly loaded: Loaded; readonly readEvidence: () => readonly RetainedAdjustedPlanEvidenceV3[]; readonly onStoredChange: () => void;
   readonly onWritePlannedSessionLog?: (draft: PlannedSessionLogDraft) => void;
   readonly returnToSession?: PlannedSessionLogDraft["link"];
   readonly onImportPlan?: () => void;
+  readonly onPrepareNext?: () => void;
 }) {
   const plan = loaded.state.selection, start = plan.intake.startDate ?? plan.generatedAt.slice(0, 10)
   const days = [...new Set(plan.activePlan.sessions.map(s => s.day))].sort((a, b) => a - b)
@@ -64,6 +65,8 @@ export function AdjustedPlanScheduleV3({ loaded, readEvidence, onStoredChange, o
       </section>
     })}
     {error && <p role="alert">{error}</p>}
+    {onPrepareNext && <button type="button" disabled={saving} onClick={onPrepareNext}>
+      <ArrowRight size={18} aria-hidden="true" />다음 훈련 주기 준비</button>}
     <details><summary>저장과 이용 안내</summary><p>현재 이 기기에 저장된 계획이에요. 서버 보관은 아직 연결 중이에요.</p>
       <p>개인 보관 파일에는 페이스 계산에 사용한 기록과 진행 상태가 포함돼요. 메모는 포함하지 않아요. 다른 사람에게 공유하지 마세요.</p>
       <button type="button" onClick={() => {

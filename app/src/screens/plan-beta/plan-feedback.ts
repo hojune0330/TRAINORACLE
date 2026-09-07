@@ -14,6 +14,17 @@ export function planErrorMessage(errorCode: string): string {
       return "현재 입력만으로는 계획안을 만들지 않아요. 훈련 내용을 검토한 뒤 초안으로 이어집니다."
     case "PLAN_STORAGE_WRITE_FAILED":
       return "계획을 이 기기에 저장하지 못했어요. 화면은 바뀌지 않았고 다시 시도할 수 있어요."
+    case "SUCCESSOR_STORAGE_WRITE_FAILED":
+      return "다음 계획을 저장하지 못해 이전 일정으로 되돌렸어요. 다시 시도할 수 있어요."
+    case "ARCHIVE_CAPACITY_REACHED":
+      return "이 기기의 계획 원본 보관함이 가득 찼어요. 이전 원본은 지우지 않았고 다음 계획도 아직 저장하지 않았어요."
+    case "INVALID_STORED_ARCHIVE":
+      return "이전 계획 보관함을 확인하지 못해 다음 일정으로 바꾸지 않았어요. 저장된 원본을 다시 확인해 주세요."
+    case "PLAN_CONFIGURATION_REVIEW_REQUIRED":
+    case "ADJUSTED_PLAN_STORAGE_VALIDATION_FAILED":
+    case "ADJUSTED_SELECTION_CHANGED":
+    case "SUCCESSOR_CONTINUITY_CHANGED":
+      return "선택한 구성이나 검토 기준이 달라져 저장하지 않았어요. 후보로 돌아가 다시 확인해 주세요."
     case "PLAN_STORAGE_STATE_UNCERTAIN":
       return "계획 저장을 되돌렸는지 확인할 수 없어요. 이 화면을 새로 열어 현재 계획을 확인해 주세요."
     case "INVALID_STORED_PLAN":

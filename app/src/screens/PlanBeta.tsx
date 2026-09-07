@@ -68,6 +68,8 @@ import { AdjustedPlanImport } from "./plan-beta/AdjustedPlanImport"
 import { AdjustedPlanScheduleV3 } from "./plan-beta/AdjustedPlanScheduleV3"
 import { RETAINED_ADJUSTED_PLAN_EVIDENCE_V3 } from "../domain/adjusted-plan-storage-v5"
 import type { RetainedAdjustedPlanEvidenceV3 } from "../domain/selected-adjusted-plan-v3"
+import { AdjustedPlanNextFlowV3 } from "./plan-beta/AdjustedPlanNextFlowV3"
+import type { PlanAdjustmentResolverV3 } from "./plan-beta/adjustment-entry-v3"
 const readOperatingV3Evidence = () => RETAINED_ADJUSTED_PLAN_EVIDENCE_V3
 
 type AdjustmentEntry = Pick<React.ComponentProps<typeof AdjustedPlanEditFlow>, "seed" | "readReview" | "locks">
@@ -97,6 +99,7 @@ const INTAKE_MOTION_ORDER: readonly IntakeStep[] = [
 export function PlanBeta(props: Omit<React.ComponentProps<typeof LegacyPlanBeta>, "onAdjustedStored"> & {
   readonly readAdjustedEvidence?: React.ComponentProps<typeof AdjustedPlanNextFlow>["readEvidence"]
   readonly readAdjustedEvidenceV3?: () => readonly RetainedAdjustedPlanEvidenceV3[]
+  readonly adjustmentResolverV3?: PlanAdjustmentResolverV3
 }) {
   const readEvidence = props.readAdjustedEvidence ?? readOperatingAdjustedEvidence
   const readV3Evidence = props.readAdjustedEvidenceV3 ?? readOperatingV3Evidence
@@ -117,9 +120,18 @@ export function PlanBeta(props: Omit<React.ComponentProps<typeof LegacyPlanBeta>
     window.addEventListener("storage", onStorage)
     return () => { unsubscribe(); window.removeEventListener("storage", onStorage) }
   }, [readCurrent])
+  if (read.kind === "adjusted_v3_loaded" && nextOpen && !importOpen) return <AdjustedPlanNextFlowV3
+    key={`${localAccountScopeSnapshot()}:${read.state.contentFingerprint}`}
+    loaded={read} resolver={props.adjustmentResolverV3} readEvidence={readV3Evidence}
+    onBack={() => { setNextOpen(false); setRead(readCurrent()) }}
+    onSaved={() => { setNextOpen(false); setRead(readCurrent()) }} />
   if (read.kind === "adjusted_v3_loaded" && !importOpen) return <AdjustedPlanScheduleV3
     key={`${localAccountScopeSnapshot()}:${read.state.selection.contentFingerprint}`}
     loaded={{ ...read, kind: "loaded" }} readEvidence={readV3Evidence} onStoredChange={() => setRead(readCurrent())}
+    onPrepareNext={() => {
+      const current = readCurrent(); setRead(current)
+      if (current.kind === "adjusted_v3_loaded" && current.state.contentFingerprint === read.state.contentFingerprint) setNextOpen(true)
+    }}
     onImportPlan={() => setImportOpen(true)} returnToSession={props.returnToSession} onWritePlannedSessionLog={props.onWritePlannedSessionLog === undefined ? undefined : draft => {
       const current = readCurrent()
       if (current.kind !== "adjusted_v3_loaded" || current.state.contentFingerprint !== read.state.contentFingerprint) {

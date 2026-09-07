@@ -51,7 +51,7 @@ export function encodeStoredAdjustedPlanStateV5(selection: SelectedAdjustedPlanS
   return read.kind === "loaded" ? { kind: "encoded" as const, state: read.state, raw: JSON.stringify(read.state) } : invalid()
 }
 
-type LiveReview = { readonly source: AdjustedPlanSelectionRequestV3["preparation"]["source"];
+export type AdjustedPlanLiveReviewV3 = { readonly source: AdjustedPlanSelectionRequestV3["preparation"]["source"];
   readonly explanation: AdjustedPlanSelectionRequestV3["preparation"]["explanation"];
   readonly policies: readonly ReviewedAdjustedPlanPolicyV3[]; readonly retained: readonly RetainedAdjustedPlanEvidenceV3[] }
 function sameChoice(state: SelectedAdjustedPlanStateV3) {
@@ -62,7 +62,7 @@ function sameChoice(state: SelectedAdjustedPlanStateV3) {
 
 /** Version-aware active-plan writer. No UI entry until its read/progress consumers are connected. */
 export async function saveSelectedAdjustedPlanV3(input: { readonly request: AdjustedPlanSelectionRequestV3;
-  readonly readReview: () => LiveReview; readonly isCurrentDraft: () => boolean; readonly locks?: PlanMutationLockManager | null }) {
+  readonly readReview: () => AdjustedPlanLiveReviewV3; readonly isCurrentDraft: () => boolean; readonly locks?: PlanMutationLockManager | null }) {
   try {
     if (!input.isCurrentDraft() || !hasCanonicalJsonTree(input.request)) return reject("STALE_CANDIDATE_SELECTION")
     const opening = hash(input.request), request = structuredClone(input.request), account = localAccountScopeSnapshot()
