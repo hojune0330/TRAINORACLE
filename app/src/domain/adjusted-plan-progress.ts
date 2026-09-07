@@ -6,6 +6,8 @@ import { encodeStoredAdjustedPlanState, readStoredAdjustedPlanState, RETAINED_AD
 import type { RetainedAdjustedPlanEvidence } from "./selected-adjusted-plan-content"
 import { encodeStoredAdjustedPlanStateV5, readStoredAdjustedPlanStateV5, RETAINED_ADJUSTED_PLAN_EVIDENCE_V3 } from "./adjusted-plan-storage-v5"
 import type { RetainedAdjustedPlanEvidenceV3 } from "./selected-adjusted-plan-v3"
+import { encodeStoredMultiAdjustedPlanV6, readStoredMultiAdjustedPlanV6, RETAINED_MULTI_ADJUSTED_EVIDENCE_V3 } from "./adjusted-plan-storage-v6"
+import type { RetainedMultiAdjustedEvidenceV3 } from "./selected-multi-adjusted-plan-v3"
 
 const rejected = (code: string) => ({ kind: "rejected" as const, code })
 
@@ -33,6 +35,18 @@ export async function saveAdjustedPlanProgressV3(input: {
   return saveVersionedProgress(input, {
     read: (value, at) => { const result = readStoredAdjustedPlanStateV5(value, retained, at); return result.kind === "loaded" ? result.state : null },
     encode: (selection, progress, at) => { const result = encodeStoredAdjustedPlanStateV5(selection, progress, at.toISOString(), retained, at);
+      return result.kind === "encoded" ? result : null },
+  })
+}
+
+export async function saveMultiAdjustedPlanProgressV3(input: {
+  readonly expectedFingerprint: string; readonly progress: StoredPlanProgress;
+  readonly retained?: readonly RetainedMultiAdjustedEvidenceV3[]; readonly locks?: PlanMutationLockManager | null;
+}) {
+  const retained = input.retained ?? RETAINED_MULTI_ADJUSTED_EVIDENCE_V3
+  return saveVersionedProgress(input, {
+    read: (value, at) => { const result = readStoredMultiAdjustedPlanV6(value, retained, at); return result.kind === "loaded" ? result.state : null },
+    encode: (selection, progress, at) => { const result = encodeStoredMultiAdjustedPlanV6(selection, progress, at.toISOString(), retained, at);
       return result.kind === "encoded" ? result : null },
   })
 }

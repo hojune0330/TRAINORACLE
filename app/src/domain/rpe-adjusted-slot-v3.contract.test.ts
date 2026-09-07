@@ -14,7 +14,8 @@ import { multiAdjustedPlanReviewScopeV3, checkMultiAdjustedPlanReviewV3 } from "
 import { selectMultiAdjustedPlanV3, readSelectedMultiAdjustedPlanV3 } from "./selected-multi-adjusted-plan-v3"
 import { canonicalJsonFingerprint } from "@impl/plan-generator/candidate-identity"
 import { saveSelectedMultiAdjustedPlanV6, readStoredMultiAdjustedPlanV6 } from "./adjusted-plan-storage-v6"
-import { activePlanBetaStorageKey, savePlanBetaState } from "./plan-beta-store"
+import { activePlanBetaStorageKey, savePlanBetaState, readPlanBetaStateFromStorage } from "./plan-beta-store"
+import { saveMultiAdjustedPlanProgressV3 } from "./adjusted-plan-progress"
 import type { PlanMutationLockManager } from "./plan-mutation-lock"
 
 beforeEach(() => { localStorage.clear(); sessionStorage.clear(); setActiveLocalAccount(null); vi.useFakeTimers(); vi.setSystemTime(TODAY) })
@@ -100,6 +101,34 @@ it("writes and independently reads a real multi-slot V6 plan, replaying the same
   if (original.kind !== "selected") throw Error("Original selection failed")
   expect(savePlanBetaState(original.state).ok).toBe(false)
   expect(localStorage.getItem(activePlanBetaStorageKey())).toBe(raw)
+})
+
+it("reads through the shared account store and records each adjusted MAIN independently without changing the prescription", async () => {
+  const input = storageFixture(), saved = await saveSelectedMultiAdjustedPlanV6(input)
+  if (saved.kind !== "saved") throw Error("Initial save failed")
+  const retained = input.readReview().retained
+  const read = () => readPlanBetaStateFromStorage([], [], retained)
+  expect(read()).toMatchObject({ kind: "multi_adjusted_v3_loaded", state: saved.state })
+  expect(readPlanBetaStateFromStorage().kind).toBe("invalid")
+  const slots = saved.state.selection.activePlan.sessions.filter(s => s.prescription.kind === "ADJUSTED_METHOD_V3")
+  expect(slots.length).toBeGreaterThan(1)
+  let fingerprint = saved.state.contentFingerprint
+  for (const [index, slot] of slots.entries()) {
+    const result = await saveMultiAdjustedPlanProgressV3({ expectedFingerprint: fingerprint, retained, locks: input.locks,
+      progress: { sessionDay: slot.day, sessionSlot: slot.slot, state: index === 0 ? "COMPLETED" : "PAIN_CHECKIN" } })
+    if (result.kind !== "saved") throw Error(result.code)
+    expect(result.state.selection).toEqual(saved.state.selection)
+    expect(result.state.progress).toHaveLength(index + 1)
+    fingerprint = result.state.contentFingerprint
+  }
+  const pain = slots[1]!
+  expect(await saveMultiAdjustedPlanProgressV3({ expectedFingerprint: fingerprint, retained, locks: input.locks,
+    progress: { sessionDay: pain.day, sessionSlot: pain.slot, state: "RESTED" } })).toMatchObject({ code: "PAIN_REVIEW_REQUIRED" })
+  expect(await saveMultiAdjustedPlanProgressV3({ expectedFingerprint: saved.state.contentFingerprint, retained, locks: input.locks,
+    progress: { sessionDay: slots[0]!.day, sessionSlot: slots[0]!.slot, state: "SKIPPED" } })).toMatchObject({ code: "STALE_BASE" })
+  expect(read()).toMatchObject({ kind: "multi_adjusted_v3_loaded", state: { contentFingerprint: fingerprint } })
+  setActiveLocalAccount("another-account")
+  expect(read().kind).toBe("missing")
 })
 
 it.each(["expiry", "other-writer"])("handles %s during a real multi-plan write without overwriting another writer", async change => {

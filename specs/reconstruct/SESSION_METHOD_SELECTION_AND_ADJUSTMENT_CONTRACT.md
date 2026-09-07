@@ -4,7 +4,7 @@
 doc_id: trainoracle-session-method-selection-and-adjustment
 spec_id: SESSION_METHOD_SELECTION_AND_ADJUSTMENT_CONTRACT
 title: TrainOracle Session Method Selection And Adjustment Contract
-version: "0.49"
+version: "0.50"
 round: RT1_OWNER_APPROVED_IMPLEMENTATION_DIRECTION
 status: ACTIVE_IMPLEMENTATION_CONTRACT
 product_direction: OWNER_APPROVED_IMPLEMENTATION_DIRECTION
@@ -1642,5 +1642,20 @@ version 6은 다중 선택, 진행 상태, 갱신시각, 내용 지문을 보존
 
 이 저장 경로의 구현은 전체 소비자 연결과 별개다. 공통 reader·다중 일정 UI·일지·
 백업·서버·후속 주기는 version 6을 독립 지원해야 운영 활성화할 수 있다.
+
+### 21.30 다중 저장의 공통 조회와 진행 기록
+
+공통 계정 저장소 reader는 version 6을 multi_adjusted_v3_loaded로 구분한다.
+주소별 보존 근거를 받지 못했거나 독립 복원에 실패하면 invalid이며 구형 계획으로
+강제 변환하지 않는다. 기존 조회 인자는 유지하고 다중 보존 근거를 별도 인자로 추가한다.
+
+진행 기록은 기존 계획 lock/계정/내용 지문 검사를 공유한다. 변경하는 것은 해당
+날짜·오전/오후의 명시적 진행 상태뿐이며 처방과 설명 원본은 불변이다. 다른 슬롯의
+기록은 보존한다. 통증 확인을 완료·휴식·건너뜀으로 바꾸지 않고 휴식 세션에 운동
+완료를 기록하지 않는다. 과거 검토 근거의 현재 만료가 과거 계획의 조회나 명시적
+결과 기록을 막지는 않는다. 이 경로는 새 훈련 활성화 권한을 부여하지 않는다.
+
+공통 조회 및 진행 writer 지원만으로 일정 UI, 원본 보관, 일지, 백업, 서버, 후속
+주기까지 완료했다고 판단하지 않는다. 이 소비자 연결은 각각 검증한다.
 
 [DRAFT_COMPLETE]
