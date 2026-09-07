@@ -11,6 +11,10 @@
         "client": 320,
         "scroll": 320
       },
+      "layoutDimensions": {
+        "client": 320,
+        "scroll": 320
+      },
       "applyBounds": {
         "x": 207.234375,
         "y": 611,
@@ -26,6 +30,10 @@
       "client": 320,
       "scroll": 320,
       "contentDimensions": {
+        "client": 320,
+        "scroll": 320
+      },
+      "layoutDimensions": {
         "client": 320,
         "scroll": 320
       },
@@ -47,6 +55,10 @@
         "client": 375,
         "scroll": 375
       },
+      "layoutDimensions": {
+        "client": 375,
+        "scroll": 375
+      },
       "applyBounds": {
         "x": 262.234375,
         "y": 611,
@@ -62,6 +74,10 @@
       "client": 375,
       "scroll": 375,
       "contentDimensions": {
+        "client": 375,
+        "scroll": 375
+      },
+      "layoutDimensions": {
         "client": 375,
         "scroll": 375
       },
@@ -83,6 +99,10 @@
         "client": 1440,
         "scroll": 1440
       },
+      "layoutDimensions": {
+        "client": 1440,
+        "scroll": 1440
+      },
       "applyBounds": {
         "x": 1327.234375,
         "y": 611,
@@ -98,6 +118,10 @@
       "client": 1440,
       "scroll": 1440,
       "contentDimensions": {
+        "client": 1440,
+        "scroll": 1440
+      },
+      "layoutDimensions": {
         "client": 1440,
         "scroll": 1440
       },

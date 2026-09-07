@@ -25,18 +25,18 @@ try {
     await page.goto(`http://127.0.0.1:${address.port}/e2e/fixtures/prescription-editor-v3.html`)
     await page.getByRole("button", { name: "편집기 열기" }).click()
     await page.getByRole("dialog", { name: "훈련 구성 조정" }).waitFor()
-    const enlargeText = () => page.evaluate(() => {
-      for (const element of document.querySelectorAll("dialog *")) {
+    const enlargeText = (selector = "dialog *") => page.evaluate(selector => {
+      for (const element of document.querySelectorAll(selector)) {
         element.style.removeProperty("font-size")
         element.style.removeProperty("line-height")
       }
-      const sizes = [...document.querySelectorAll("dialog *")].map(element => ({ element,
+      const sizes = [...document.querySelectorAll(selector)].map(element => ({ element,
         size: parseFloat(getComputedStyle(element).fontSize), line: getComputedStyle(element).lineHeight }))
       for (const { element, size, line } of sizes) {
         element.style.setProperty("font-size", `${size * 2}px`, "important")
         if (line !== "normal") element.style.setProperty("line-height", `${parseFloat(line) * 2}px`, "important")
       }
-    })
+    }, selector)
     if (enlarged) await enlargeText()
     assert.equal(await page.getByRole("radio", { name: "시험용 세트 구성" }).count(), 0)
     await page.getByRole("button", { name: "다른 검토된 구성 보기" }).click()
@@ -58,8 +58,17 @@ try {
     await page.getByRole("button", { name: "변경안 적용" }).click()
     assert.equal(await page.getByRole("status").textContent(), "적용: C2")
     assert.equal(await page.getByRole("dialog").count(), 0)
+    const layoutSummary = page.getByRole("region", { name: "조정 전후 훈련 배치" })
+    await layoutSummary.waitFor()
+    await layoutSummary.getByText("주요 훈련 날짜 보기").click()
+    if (enlarged) await enlargeText(".multi-plan-layout-summary *")
+    const layoutDimensions = await layoutSummary.evaluate(element => ({ client: element.clientWidth, scroll: element.scrollWidth }))
+    assert.ok(layoutDimensions.scroll <= layoutDimensions.client + 1, JSON.stringify({ width, enlarged, layoutDimensions }))
+    assert.equal(await layoutSummary.getByText("2026-09-10 오후").count(), 1)
+    await layoutSummary.scrollIntoViewIfNeeded()
+    await page.screenshot({ path: resolve(output, `layout-${width}-${enlarged ? "large" : "normal"}.png`), fullPage: true })
     assert.deepEqual(errors, [])
-    results.push({ width, enlarged, errors: errors.length, ...dimensions, contentDimensions, applyBounds, applied: "C2" })
+    results.push({ width, enlarged, errors: errors.length, ...dimensions, contentDimensions, layoutDimensions, applyBounds, applied: "C2" })
     await page.close()
   }
   await writeFile(resolve(output, "results.json"), JSON.stringify({ scope: "ISOLATED_EDITOR_SYNTHETIC_AUTHORITY_NOT_DEPLOYMENT", results }, null, 2))

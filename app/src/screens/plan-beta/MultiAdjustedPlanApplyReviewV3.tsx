@@ -7,6 +7,7 @@ import { saveSelectedMultiAdjustedSuccessorV3 } from "../../domain/multi-adjuste
 import type { MultiAdjustedPlanSelectionRequestV3 } from "../../domain/selected-multi-adjusted-plan-v3"
 import type { PlanMutationLockManager } from "../../domain/plan-mutation-lock"
 import { AdjustedPrescriptionV3 } from "./AdjustedPrescriptionV3"
+import { MultiPlanLayoutSummaryV3 } from "./MultiPlanLayoutSummaryV3"
 import { isoShift } from "../../domain/dates"
 import { planErrorMessage } from "./plan-feedback"
 import { useActiveContentScroll } from "../../hooks/useActiveContentScroll"
@@ -59,6 +60,8 @@ export function MultiAdjustedPlanApplyReviewV3({ seed, readReview, locks, isCurr
     <p>{opened.expectedPredecessorFingerprint === undefined ? "아직 저장하지 않았어요. 날짜와 훈련 방법을 확인해 주세요."
       : "아직 이전 계획을 유지하고 있어요. 저장하면 이전 원본과 일지 연결은 보관하고 다음 일정으로 전환해요."}</p>
     {prepared.kind === "prepared" ? <>
+      <MultiPlanLayoutSummaryV3 before={opened.request.preparations[0]!.candidate.sessions}
+        after={prepared.candidate.sessions} startDate={prepared.candidate.startDate} />
       {prepared.candidate.sessions.filter(s => prepared.candidate.changedSlots.some(c => c.day === s.day && c.slot === s.slot)).map(session =>
         <section key={`${session.day}-${session.slot}`} aria-label="적용할 훈련">
           <h2>{isoShift(prepared.candidate.startDate, session.day - 1)} · {session.slot === "AM" ? "오전" : "오후"}</h2>
