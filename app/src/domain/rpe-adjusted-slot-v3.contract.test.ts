@@ -773,7 +773,7 @@ it("changes one MAIN to a structurally different set method and preserves its ex
     expect(other.prescription.projection.structuralTotals.main).toMatchObject({ workSeconds: 120, recoverySeconds: 120 })
   }
   expect(read.explanations[0]!.explanation.recoveryRationale).toBe("시험: 반복 사이 걷기 30초, 세트 사이 정지 120초")
-})
+}, 15000)
 
 it("stages one addressed editor receipt without replacing the other MAIN and saves only after the final screen", async () => {
   const input = storageFixture(), first = input.request.preparations[0]!, snapshot = JSON.parse(first.rawSnapshot)

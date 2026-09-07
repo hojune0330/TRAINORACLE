@@ -12,6 +12,8 @@ try {
   const { previewMethodDurationFit } = await server.ssrLoadModule("/reports/research/method-duration-fit-v3.ts")
   const { proposeMethodExecutionGuidance } = await server.ssrLoadModule("/reports/research/method-execution-guidance-proposal.mjs")
   const { previewPendingMethodCombinations } = await server.ssrLoadModule("/reports/research/method-combination-review.mjs")
+  const { buildPendingOwnerReviewBundleV3 } = await server.ssrLoadModule("/reports/research/method-owner-review-bundle-v3.ts")
+  const bundle = buildPendingOwnerReviewBundleV3()
   const protocols = [...METHOD_ADOPTION_PROTOCOLS, ...METHOD_ADOPTION_VARIANTS]
   const text = value => String(value).replaceAll("|", "\\|").replaceAll("\n", " ")
   const amount = p => p ? `${p.value}${p.unit === "SECONDS" ? "초" : "m"} ${p.role}` : "없음"
@@ -21,6 +23,7 @@ try {
     "runtime_activation: false", `configuration_count: ${protocols.length}`, "```", "",
     "## 읽는 기준", "",
     "이 문서는 코드의 검토 초안을 모은 자료입니다. 실제 제공 승인이나 완성된 개인 처방이 아닙니다.",
+    `검토 묶음 지문: \`${bundle.contentFingerprint}\`. 정확한 구성·설명·대상은 METHOD_OWNER_REVIEW_BUNDLE_V3.json에 함께 고정합니다. 지문은 승인이나 과학적 타당성 증명이 아닙니다.`,
     "공통 에너지 설명은 정확한 용량의 입증과 다릅니다. 본운동 노력 제안은 구간과 연결되지만 아직 수행 대상으로 채택된 값이 아닙니다.",
     "시간형의 미산출 거리를 0으로 읽지 않습니다. 서로 다른 후보의 총부담이나 효과가 같다는 뜻도 아닙니다.",
     "재생성: app에서 node scripts/build-method-owner-review.mjs. 생성 문서를 직접 고치지 않고 원본을 수정합니다.", ""]
@@ -96,5 +99,6 @@ try {
     "개별 강도, 정확한 용량 근거, 현재 주기 배치, 오너 최종 승인, 운영 연결과 전체 사용자 흐름 검증은 별도입니다.",
     "검토 카드 수를 완료된 처방 수로 계산하지 않습니다.", "", "[DRAFT_COMPLETE]", "")
   await writeFile(resolve(root, "reports/review/METHOD_CONFIGURATION_REVIEW_CARDS_V3.md"), lines.join("\n"), "utf8")
+  await writeFile(resolve(root, "reports/review/METHOD_OWNER_REVIEW_BUNDLE_V3.json"), JSON.stringify(bundle, null, 2) + "\n", "utf8")
   console.log(JSON.stringify({ configurationCount: protocols.length, unresolvedScopeRows: gaps.length, runtimeActivation: false }))
 } finally { await server.close() }

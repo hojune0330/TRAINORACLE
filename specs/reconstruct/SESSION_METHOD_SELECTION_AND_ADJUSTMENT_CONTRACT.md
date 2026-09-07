@@ -4,7 +4,7 @@
 doc_id: trainoracle-session-method-selection-and-adjustment
 spec_id: SESSION_METHOD_SELECTION_AND_ADJUSTMENT_CONTRACT
 title: TrainOracle Session Method Selection And Adjustment Contract
-version: "0.67"
+version: "0.68"
 round: RT1_OWNER_APPROVED_IMPLEMENTATION_DIRECTION
 status: ACTIVE_IMPLEMENTATION_CONTRACT
 product_direction: OWNER_APPROVED_IMPLEMENTATION_DIRECTION
@@ -1841,5 +1841,14 @@ V6 개인 계획을 전송하기 전에 실제 계정별 현재 저장값과 독
 구간 수행 가능성, 지원 구간 포함 전체 시간, 노력 안내와 주기 배치의 검토 상태를
 설명 지문과 승인 자료에 함께 남긴다. 경험 구분만으로 적합성을 보장하지 않는다.
 정확한 입문 숫자는 별도 채택 패킷을 따르며 본 조항이 수치를 승인하지 않는다.
+
+### 21.48 채택 요청 내용의 고정
+
+정확한 구성/설명/제안 대상은 하나의 검토 묶음과 내용 지문으로 제시한다. 변형은
+원형의 대상 참조를 명시하고 누락/중복 대상 정의를 허용하지 않는다. 구간 회복이나
+대상이 바뀌면 새 내용으로 다시 검토한다. 기존 묶음은 새 소스 변경에 따라 소급
+변경되지 않는다. 묶음은 승인 레코드가 아니며 미완 결정과 제외 범위를 표시한다.
+개인 기록/메모를 이 공개 검토 묶음에 포함하지 않는다. 전체 조합과 개인 페이스
+모델의 승인을 구성 묶음 존재로 대신하지 않는다.
 
 [DRAFT_COMPLETE]
