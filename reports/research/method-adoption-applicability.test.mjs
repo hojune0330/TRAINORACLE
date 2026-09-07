@@ -6,7 +6,7 @@ const context = { eventDistanceM: 5000, experience: "EXPERIENCED", population: "
 test("every proposed protocol has exactly one pending scope", () => {
   assert.equal(PROPOSED_METHOD_SCOPES.length, METHOD_ADOPTION_PROTOCOLS.length)
   assert.deepEqual(PROPOSED_METHOD_SCOPES.map(s => s.id).sort(), METHOD_ADOPTION_PROTOCOLS.map(s => s.id).sort())
-  assert.equal(new Set(PROPOSED_METHOD_SCOPES.map(s => s.id)).size, 16)
+  assert.equal(new Set(PROPOSED_METHOD_SCOPES.map(s => s.id)).size, 17)
   assert.ok(PROPOSED_METHOD_SCOPES.every(s => s.status === "OWNER_ADOPTION_PENDING"))
 })
 test("purpose returns all independent proposed candidates, not one paired alternative", () => {
@@ -32,7 +32,7 @@ test("long distance does not erase GLY purpose; flying skill proposal remains se
   assert.equal(gly.rows.length, 2)
   assert.ok(gly.rows.every(r => r.scopeMatch && r.requiredReviews.includes("WHOLE_FRAME_PLACEMENT")))
   const atp = previewMethodScope({ ...context, experience: "DEVELOPING", family: "ATP-PC" })
-  assert.deepEqual(atp.rows.filter(r => r.scopeMatch).map(r => r.id), ["P-ATP-A"])
+  assert.deepEqual(atp.rows.filter(r => r.scopeMatch).map(r => r.id), ["P-ATP-A", "P-ATP-T"])
 })
 test("no record is not zero or a global exclusion; unknown experience is not inferred", () => {
   const base = previewMethodScope({ ...context, family: "BASE", experience: "NEW_TO_RUNNING" })

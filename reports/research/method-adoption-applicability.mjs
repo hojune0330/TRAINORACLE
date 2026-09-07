@@ -16,6 +16,7 @@ export const PROPOSED_METHOD_SCOPES = [
   ...scope(["P-RHYTHM-300"], [800, 1500, 3000, 5000], trained, "MAIN"),
   ...scope(["P-VO2-2", "P-VO2-3", "P-VO2-4"], events, trained, "MAIN"),
   ...scope(["P-ATP-A"], events, trained, "MAIN"),
+  ...scope(["P-ATP-T"], events, trained, "MAIN"),
   ...scope(["P-ATP-F"], events, ["EXPERIENCED"], "MAIN"),
   ...scope(["P-GLY-D", "P-GLY-S"], events, trained, "MAIN"),
   ...scope(["P-REC-W"], events, allExperience, "REC"),

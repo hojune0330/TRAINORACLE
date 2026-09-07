@@ -3,7 +3,7 @@
 ```yaml
 doc_id: trainoracle-session-method-owner-adoption-packet-2026-09-07
 packet_id: TO-METHOD-ADOPTION-2026-09-07
-version: "0.12"
+version: "0.13"
 status: SOURCE_REVIEWED_PACKET_IN_PREPARATION
 review_process: TO-OWNER-TRAINING-REVIEW-ROUTE-2026-09-07
 owner_exact_packet_approval: NOT_REQUESTED_YET
@@ -581,5 +581,24 @@ I 모델이나 논문이 이 배치 용량을 입증한 것으로 표시하지 �
 freshness 문자열은 호출자의 주장일 뿐 실제 기록 신원 검증이 아니므로
 verifiedRecordIdentity는 false다. 운영의 계정/원본 기록/현재성 검사를 대신하지 않는다.
 메모나 다른 선수 식별자는 입력/결과에 추가하지 않는다. 관련 시험 5 PASS.
+
+## 22. ATP-PC 시간형 독립 후보 추가 제안
+
+P-ATP-T: 6초 4회, 사이 180초 걷기 또는 정지 3회, 마지막 반복 회복 없음.
+본운동24초/회복540초, 본운동 블록564초다. 거리는 미지정이며 기존20m 가속에서
+시간으로 환산한 값이 아니다. 거리형과 운동 단위/회복/구성이 다른 독립 후보다.
+대상 제안은 800m~마라톤 DEVELOPING/EXPERIENCED, 청소년/성인 및 SELF/COACH_REQUIRED다.
+선택권한 정책과 안전 판단은 기존 규칙을 유지한다. 정확한 출력/가속 지침과 준비
+구간 포함 전체 주기 배치 검토는 아직 남는다. 단순히 6초라는 이유로 강도가 정해지지 않는다.
+
+2026-09-08 PubMed 본문 직접 요청은 내용이 없었고, 검색에서 확인한
+[Dawson 1997 초록](https://pubmed.ncbi.nlm.nih.gov/9241025/)의 실험은 단일/반복
+6초 최대 사이클 운동이다. 달리기6초4회/180초 회복의 직접 처방 근거가 아니다.
+본 숫자는 코칭 제안이며 실험의 회복 스케줄이나 효과를 복사하지 않았다.
+기존 에너지 설명의 여러 경로 관여/개인 완전 회복 미보장 경계를 유지한다.
+
+자료는 기본17/변형8로 증가했다. DEVELOPING ATP-PC의 구조 선택지7조합이 보강돼
+미확보 조합은 54에서47(연령/권한 포함216에서188)로 바뀐다. 구조 보강이지
+과학적 채택/개인 적용/운영 활성화 완료가 아니다. 기존 §18 감사는 당시 이력으로 유지한다.
 
 [DRAFT_COMPLETE]

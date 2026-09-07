@@ -19,6 +19,7 @@ export const METHOD_ADOPTION_PROTOCOLS = [
   protocol("P-VO2-4", "VO2", "FOUR_MINUTE", 1, 4, [time(240)], time(180, "JOG"), null),
   protocol("P-ATP-A", "ATP-PC", "STANDING_ACCELERATION", 1, 6, [distance(20)], time(120, "WALK_OR_STAND"), null),
   protocol("P-ATP-F", "ATP-PC", "FLYING_SEGMENT", 1, 4, [distance(20, "BUILDUP"), distance(10)], time(240, "WALK_OR_STAND"), null),
+  protocol("P-ATP-T", "ATP-PC", "TIMED_ACCELERATION", 1, 4, [time(6)], time(180, "WALK_OR_STAND"), null),
   protocol("P-GLY-D", "GLY", "UNBROKEN_REPEATS", 1, 6, [distance(200)], time(120, "WALK"), null),
   protocol("P-GLY-S", "GLY", "SET_REPEATS", 2, 3, [distance(200)], time(120, "WALK"), time(300, "WALK_OR_STAND")),
   protocol("P-REC-W", "REC", "WALK", 1, 1, [time(900)], null, null),

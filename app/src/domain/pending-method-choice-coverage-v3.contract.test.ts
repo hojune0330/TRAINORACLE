@@ -8,14 +8,14 @@ it("audits every event, experience, population and actor without granting eligib
   expect(rows.every(r => r.executionAuthority === "NONE" && r.scientificAdoption === "NOT_ESTABLISHED")).toBe(true)
   const gaps = rows.filter(r => r.coverage === "MISSING_DISTINCT_MAIN_OPTIONS")
   expect(gaps.filter(r => r.context.experience === "NEW_TO_RUNNING")).toHaveLength(140)
-  expect(gaps.filter(r => r.context.experience === "DEVELOPING" && r.context.family === "ATP-PC")).toHaveLength(28)
+  expect(gaps.filter(r => r.context.experience === "DEVELOPING" && r.context.family === "ATP-PC")).toHaveLength(0)
   expect(gaps.filter(r => r.context.experience === "DEVELOPING" && r.context.family === "MIX")).toHaveLength(28)
   expect(gaps.filter(r => r.context.experience === "EXPERIENCED" && r.context.family === "MIX")).toHaveLength(20)
-  expect(gaps).toHaveLength(216)
+  expect(gaps).toHaveLength(188)
 })
 it("reports sparse ATP and MIX scopes rather than counting repeat variants as methods", () => {
   const context = { eventDistanceM: 42195, experience: "DEVELOPING", population: "ADULT", actor: "SELF", family: "ATP-PC" }
-  expect(auditPendingMethodChoices(context)).toMatchObject({ methodIds: ["P-ATP-A"], coverage: "MISSING_DISTINCT_MAIN_OPTIONS" })
+  expect(auditPendingMethodChoices(context)).toMatchObject({ methodIds: ["P-ATP-A", "P-ATP-T"], coverage: "STRUCTURAL_OPTIONS_PRESENT" })
   expect(auditPendingMethodChoices({ ...context, experience: "EXPERIENCED" })).toMatchObject({ coverage: "STRUCTURAL_OPTIONS_PRESENT" })
   expect(auditPendingMethodChoices({ ...context, family: "MIX", experience: "EXPERIENCED" })).toMatchObject({ methodIds: ["P-RHYTHM-400"], coverage: "MISSING_DISTINCT_MAIN_OPTIONS" })
   expect(auditPendingMethodChoices({ ...context, family: "OFF" }).coverage).toBe("NOT_A_MAIN_TWO_CHOICE_REQUIREMENT")
