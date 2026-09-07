@@ -3,7 +3,7 @@
 ```yaml
 doc_id: trainoracle-session-method-owner-adoption-packet-2026-09-07
 packet_id: TO-METHOD-ADOPTION-2026-09-07
-version: "0.8"
+version: "0.9"
 status: SOURCE_REVIEWED_PACKET_IN_PREPARATION
 review_process: TO-OWNER-TRAINING-REVIEW-ROUTE-2026-09-07
 owner_exact_packet_approval: NOT_REQUESTED_YET
@@ -519,5 +519,32 @@ PB/SB도 현재성 확인이 필요하며 목표기록·타종목기록·오래�
 
 ADD: 출처가 명시된5km 참고 경로·숫자/체감 구분. KEEP: 기존 LT모델과 모든 종목
 개인화 목표. PENDING: 정확한 채택·설명버전/프레임/운영 연결. 활성화0건.
+
+## 18. 선택지 공백 재계수와 초보 도입 근거
+
+2026-09-08 기준 기존 적용 초안을 V3 구조로 비교했다. 종목/경험/MAIN 목적의
+105조합 중 54조합에서 서로 다른 두 방법이 없다. NEW_TO_RUNNING 35,
+DEVELOPING ATP-PC 7 및 MIX 7, EXPERIENCED MIX 5다. 연령군과 선택권한을
+함께 전개하면 420행 중 216행이다. 이는 과학적 금지나 새 운영 제한이 아니다.
+범위와 계산은 [선택지 감사 코드](../research/method-choice-coverage-v3.ts)에 있다.
+구조 차이가 있다고 개인에게 적절한 용량이라는 뜻도 아니다.
+
+초보 근거 재확인: [NHS Couch to 5K 원문](https://www.nhs.uk/better-health/get-active/get-running-with-couch-to-5k/couch-to-5k-running-plan/)
+Week 1은 편한 달리기 60초 8회, 사이 걷기 90초 7회, 앞뒤 걷기 각 5분이다.
+따라서 달리기 480초 + 사이 걷기 630초 + 앞뒤 600초 = 1710초(28분30초)다.
+이 자료는 쉬운 달리기 도입의 근거이지 LT/VO2/GLY 용량의 근거가 아니다.
+기존 30분 BASE보다 짧은 구간의 도입 후보 준비에 활용할 수 있지만 자동 채택하지 않는다.
+원문의 주 단위 증가는 본 서비스의 자동 증량 정책으로 복사하지 않는다.
+
+World Athletics의 speed-training-endurance-runners-benefits-limits 글은 검색 결과만
+확인했고 본문 요청은 403이었다. 상세 용량 근거로 채택하지 않았다.
+
+다음 제작에서는 BASE 입문안을 고강도 목적의 두 번째 후보로 잘못 분류해 공백을
+닫지 않는다. 초보 MAIN, DEVELOPING ATP-PC, 종목별 MIX의 실제 두 방법은
+각각 강도·회복·대상·주기 적합성 자료로 준비한다. 오너에게는 적용할 정확한 구성과
+근거 한계를 함께 제시하며 현재 범위 변경이나 수치 승인이 있었다고 간주하지 않는다.
+
+ADD: 실제 구조 감사와 NHS 입문 예시 원문 확인. KEEP: 모든 기존 범위와 30개
+원본 카탈로그. PENDING: 54조합 보강, 완전한 설명·개인 강도·지원 구간·오너 채택.
 
 [DRAFT_COMPLETE]
