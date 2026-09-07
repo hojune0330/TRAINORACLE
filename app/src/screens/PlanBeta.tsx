@@ -60,7 +60,8 @@ import { onLocalJournalScopeChange } from "../domain/account/local-journal-owner
 import { localAccountScopeSnapshot } from "../domain/account/local-account-scope"
 import { AdjustedPlanSchedule } from "./plan-beta/AdjustedPlanSchedule"
 import { AdjustedPlanEditFlow } from "./plan-beta/AdjustedPlanEditFlow"
-import { canonicalJsonFingerprint } from "@impl/plan-generator/candidate-identity"
+import { matchingAdjustmentEntry } from "./plan-beta/adjustment-entry"
+import { AdjustedPlanNextFlow, readOperatingAdjustedEvidence } from "./plan-beta/AdjustedPlanNextFlow"
 
 type AdjustmentEntry = Pick<React.ComponentProps<typeof AdjustedPlanEditFlow>, "seed" | "readReview" | "locks">
 export type PlanAdjustmentResolver = (context: {
@@ -86,20 +87,35 @@ const INTAKE_MOTION_ORDER: readonly IntakeStep[] = [
   "race-date",
 ]
 
-export function PlanBeta(props: Omit<React.ComponentProps<typeof LegacyPlanBeta>, "onAdjustedStored">) {
-  const [read, setRead] = React.useState(readPlanBetaStateFromStorage)
+export function PlanBeta(props: Omit<React.ComponentProps<typeof LegacyPlanBeta>, "onAdjustedStored"> & {
+  readonly readAdjustedEvidence?: React.ComponentProps<typeof AdjustedPlanNextFlow>["readEvidence"]
+}) {
+  const readEvidence = props.readAdjustedEvidence ?? readOperatingAdjustedEvidence
+  const readCurrent = React.useCallback(() => readPlanBetaStateFromStorage(readEvidence()), [readEvidence])
+  const [read, setRead] = React.useState(readCurrent)
+  const [nextOpen, setNextOpen] = React.useState(false)
   const [revision, setRevision] = React.useState(0)
   React.useEffect(() => {
-    const refresh = () => { setRead(readPlanBetaStateFromStorage()); setRevision(value => value + 1) }
+    const refresh = () => { setNextOpen(false); setRead(readCurrent()); setRevision(value => value + 1) }
     const unsubscribe = onLocalJournalScopeChange(refresh)
     window.addEventListener("storage", refresh)
     return () => { unsubscribe(); window.removeEventListener("storage", refresh) }
-  }, [])
+  }, [readCurrent])
+  if (read.kind === "adjusted_loaded" && nextOpen) return <AdjustedPlanNextFlow
+    key={`${localAccountScopeSnapshot()}:${read.state.contentFingerprint}`}
+    loaded={read} adjustmentResolver={props.adjustmentResolver} readEvidence={readEvidence}
+    onBack={() => { setNextOpen(false); setRead(readCurrent()) }}
+    onSaved={() => { setNextOpen(false); setRead(readCurrent()) }} />
   if (read.kind === "adjusted_loaded") return <AdjustedPlanSchedule
     key={`${localAccountScopeSnapshot()}:${read.state.selection.contentFingerprint}`}
-    onStoredChange={() => setRead(readPlanBetaStateFromStorage())}
+    onStoredChange={() => setRead(readCurrent())}
+    onPrepareNext={() => {
+      const current = readCurrent()
+      setRead(current)
+      if (current.kind === "adjusted_loaded" && current.state.contentFingerprint === read.state.contentFingerprint) setNextOpen(true)
+    }}
     loaded={read} onWritePlannedSessionLog={props.onWritePlannedSessionLog === undefined ? undefined : draft => {
-      const current = readPlanBetaStateFromStorage()
+      const current = readCurrent()
       if (current.kind !== "adjusted_loaded" || current.state.contentFingerprint !== read.state.contentFingerprint) {
         setRead(current)
         return
@@ -109,9 +125,9 @@ export function PlanBeta(props: Omit<React.ComponentProps<typeof LegacyPlanBeta>
   if (read.kind === "invalid" || read.kind === "storage_error") return <section>
     <h1>저장된 계획을 확인하지 못했어요</h1>
     <p role="alert">계획을 지우거나 새 계획으로 바꾸지 않았어요. 다시 확인해 주세요.</p>
-    <button type="button" onClick={() => setRead(readPlanBetaStateFromStorage())}>다시 확인</button>
+    <button type="button" onClick={() => setRead(readCurrent())}>다시 확인</button>
   </section>
-  return <LegacyPlanBeta key={revision} {...props} onAdjustedStored={() => setRead(readPlanBetaStateFromStorage())} />
+  return <LegacyPlanBeta key={revision} {...props} onAdjustedStored={() => setRead(readCurrent())} />
 }
 
 function LegacyPlanBeta({
@@ -517,13 +533,8 @@ function LegacyPlanBeta({
         try {
         const context = { generated, gate, intake: generatedIntake, athleteEvidence: generatedEvidence,
           currentCheck, candidateId: candidate.candidateId, startDate: candidateStartDate }
-        const entry = adjustmentResolver(context)
+        const entry = matchingAdjustmentEntry(adjustmentResolver, context)
         if (entry === null) continue
-        const same = (a: unknown, b: unknown) => canonicalJsonFingerprint("adjustment-entry.v1", a) === canonicalJsonFingerprint("adjustment-entry.v1", b)
-        if (!same(entry.seed.generated, generated) || !same(entry.seed.preparation.candidate, candidate)
-          || !same(entry.seed.intake, generatedIntake) || !same(entry.seed.athleteEvidence, generatedEvidence)
-          || entry.seed.currentCheck !== currentCheck || !same(entry.seed.gate, gate)
-          || entry.seed.preparation.startDate !== candidateStartDate) continue
         adjustmentActions[candidate.candidateId] = () => setAdjusting({ entry, revision: draftRevision.current })
         } catch {
           // A broken review provider must not remove the original candidates.

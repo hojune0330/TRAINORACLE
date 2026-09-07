@@ -4,7 +4,7 @@
 doc_id: trainoracle-session-method-selection-and-adjustment
 spec_id: SESSION_METHOD_SELECTION_AND_ADJUSTMENT_CONTRACT
 title: TrainOracle Session Method Selection And Adjustment Contract
-version: "0.20"
+version: "0.21"
 round: RT1_OWNER_APPROVED_IMPLEMENTATION_DIRECTION
 status: ACTIVE_IMPLEMENTATION_CONTRACT
 product_direction: OWNER_APPROVED_IMPLEMENTATION_DIRECTION
@@ -1110,5 +1110,23 @@ safety. Structural review is not adaptation authority or evidence of completion.
 Each v2 scope requires its own exact owner adoption after evidence review. Unknown
 versions and multiple matching policies fail closed. No operational policy is
 activated by this schema extension. Historical v1 records remain reconstructible.
+
+### 20.8 Mounted successor flow
+
+The active adjusted schedule opens a separate next-frame draft view without clearing
+the active plan. Require an explicit current-body check and explicit record selection
+before using a record for pace; never silently reuse the old record selection.
+Keep the original event and schedule preferences, with an explicit next start date.
+
+Compare freshly generated candidates before opening their reviewed adjustment editor.
+The provider seed must match the displayed generation, candidate, intake, athlete
+evidence, safety gate, check and start date. Missing or mismatched provider entries
+cannot fall through to legacy active-plan selection. Show the unavailable state.
+
+Capture the account and complete predecessor fingerprint. Recheck on generation,
+editor entry and save; account/storage events invalidate an open draft. Cancellation
+returns to the existing schedule. Only the reviewed successor transaction may archive
+and replace the active plan, after a separate final confirmation. The UI must not
+describe a generated preview as an already saved next plan.
 
 [DRAFT_COMPLETE]
