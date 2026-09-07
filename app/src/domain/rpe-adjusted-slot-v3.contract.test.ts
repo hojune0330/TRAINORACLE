@@ -31,6 +31,7 @@ import * as mutationLocks from "./plan-mutation-lock"
 import { exportMultiAdjustedPlanBackupV3, readMultiAdjustedPlanBackupV3, importMultiAdjustedPlanHistoryV3 } from "./multi-adjusted-plan-backup-v3"
 import { AdjustedPlanImport } from "../screens/plan-beta/AdjustedPlanImport"
 import { saveSelectedMultiAdjustedSuccessorV3 } from "./multi-adjusted-plan-successor-v3"
+import { MultiAdjustedPlanApplyReviewV3 } from "../screens/plan-beta/MultiAdjustedPlanApplyReviewV3"
 
 beforeEach(() => { localStorage.clear(); sessionStorage.clear(); setActiveLocalAccount(null); vi.useFakeTimers(); vi.setSystemTime(TODAY) })
 afterEach(() => { cleanup(); vi.restoreAllMocks(); vi.useRealTimers() })
@@ -292,6 +293,27 @@ it("archives the actual predecessor before saving a multi-plan successor and pre
   expect(readMultiAdjustedOriginalPlansV3(f.retained)).toMatchObject({ kind: "loaded", entries: [{ state: f.previous }] })
   expect(saved.state.progress).toEqual([])
   expect(await saveSelectedMultiAdjustedSuccessorV3(f.input)).toMatchObject({ code: "STALE_BASE" })
+})
+
+it.each(["initial", "successor"])("requires explicit final confirmation in the %s multi-plan review screen", async mode => {
+  const successor = mode === "successor" ? await successorStorageFixture() : null
+  const input = successor?.input ?? storageFixture()
+  const before = localStorage.getItem(activePlanBetaStorageKey()), onSaved = vi.fn(), onCancel = vi.fn()
+  const props = { seed: input.request, readReview: input.readReview, locks: input.locks,
+    isCurrentDraft: input.isCurrentDraft, onSaved, onCancel,
+    expectedPredecessorFingerprint: successor?.previous.contentFingerprint }
+  render(React.createElement(MultiAdjustedPlanApplyReviewV3, props))
+  expect(screen.getAllByRole("region", { name: "적용할 훈련" })).toHaveLength(input.request.preparations.length)
+  expect(localStorage.getItem(activePlanBetaStorageKey())).toBe(before)
+  fireEvent.click(screen.getByRole("button", { name: "후보로 돌아가기" }))
+  expect(onCancel).toHaveBeenCalledOnce()
+  expect(onSaved).not.toHaveBeenCalled()
+  expect(localStorage.getItem(activePlanBetaStorageKey())).toBe(before)
+  cleanup()
+  render(React.createElement(MultiAdjustedPlanApplyReviewV3, props))
+  await act(async () => { fireEvent.click(screen.getByRole("button", { name: "이 구성으로 계획 저장" })) })
+  expect(onSaved).toHaveBeenCalledOnce()
+  expect(readPlanBetaStateFromStorage([], [], input.readReview().retained)).toMatchObject({ kind: "multi_adjusted_v3_loaded", state: onSaved.mock.calls[0]![0] })
 })
 
 it.each(["archive-expiry", "active-expiry", "active-other-writer"])("rolls back own successor writes for %s", async scenario => {

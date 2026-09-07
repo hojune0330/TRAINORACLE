@@ -4,7 +4,7 @@
 doc_id: trainoracle-session-method-selection-and-adjustment
 spec_id: SESSION_METHOD_SELECTION_AND_ADJUSTMENT_CONTRACT
 title: TrainOracle Session Method Selection And Adjustment Contract
-version: "0.56"
+version: "0.57"
 round: RT1_OWNER_APPROVED_IMPLEMENTATION_DIRECTION
 status: ACTIVE_IMPLEMENTATION_CONTRACT
 product_direction: OWNER_APPROVED_IMPLEMENTATION_DIRECTION
@@ -1728,5 +1728,15 @@ REVIEWED_MULTI_SUCCESSOR_V3_TRANSACTION으로 원본 보관/현재 근거 검토
 작성자가 바꾼 값은 보존하고 상태 불확실로 보고한다. 기존 계획과 원본 보관소가
 모두 전 상태로 돌아갔을 때만 복구된 저장 실패로 보고한다. 동일 이전 지문을
 재사용한 중복 적용은 STALE_BASE로 거부하며 새로운 주기를 추가 생성하지 않는다.
+
+### 21.37 다중 최종 확인 화면
+
+최종 확인은 변경한 각 MAIN의 날짜/슬롯/방법/설명을 보여주고 전체 일정도 별도로
+열어볼 수 있게 한다. 처음 열린 요청을 보존하며 현재 요청이 달라지거나 화면이
+종료되면 그 요청을 저장하지 않는다. 뒤로 가기는 저장하지 않는다.
+
+명시적 저장 버튼은 최초/후속 저장 경로를 구분하고 현재 검토 자료를 다시 읽는다.
+중복 클릭을 막고 실제 저장 성공 후에만 완료 콜백을 전달한다. 해당 화면 컴포넌트의
+완료와 전체 후보 편집 흐름의 운영 연결은 별도 검증 대상이다.
 
 [DRAFT_COMPLETE]
