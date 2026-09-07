@@ -12,7 +12,7 @@ import { resolveQualityCandidateScope } from "./adjusted-plan-candidate"
 import { prepareRpeAdjustedSlotV3, rpeSourceBindingScopeV3, type RpeAdjustedSlotInputV3 } from "./rpe-adjusted-slot-v3"
 import { prepareMultiAdjustedPlanCandidateV3 } from "./adjusted-plan-multi-candidate-v3"
 import { multiAdjustedPlanReviewScopeV3, checkMultiAdjustedPlanReviewV3 } from "./adjusted-plan-multi-review-v3"
-import { selectMultiAdjustedPlanV3, readSelectedMultiAdjustedPlanV3 } from "./selected-multi-adjusted-plan-v3"
+import { selectMultiAdjustedPlanV3, readSelectedMultiAdjustedPlanV3, selectMultiAdjustedPlanSuccessorV3 } from "./selected-multi-adjusted-plan-v3"
 import { canonicalJsonFingerprint } from "@impl/plan-generator/candidate-identity"
 import { saveSelectedMultiAdjustedPlanV6, readStoredMultiAdjustedPlanV6 } from "./adjusted-plan-storage-v6"
 import { activePlanBetaStorageKey, savePlanBetaState, readPlanBetaStateFromStorage } from "./plan-beta-store"
@@ -33,11 +33,11 @@ import { AdjustedPlanImport } from "../screens/plan-beta/AdjustedPlanImport"
 
 beforeEach(() => { localStorage.clear(); sessionStorage.clear(); setActiveLocalAccount(null); vi.useFakeTimers(); vi.setSystemTime(TODAY) })
 afterEach(() => { cleanup(); vi.restoreAllMocks(); vi.useRealTimers() })
-function fixture() {
+function fixture(supplied?: Extract<ReturnType<typeof generatePlanFromDraft>, { kind: "generated" }>, at = TODAY, startDate = "2026-09-08") {
   const intake = { ...draftFor(RUNTIME_CASES[3]), selectedDetailedTemplateRef: null }
-  const generated = generatePlanFromDraft(intake, "NO_KNOWN_RISK", {})
+  const generated = supplied ?? generatePlanFromDraft(intake, "NO_KNOWN_RISK", {})
   if (generated.kind !== "generated") throw Error("No generated candidate")
-  const candidate = generated.generated.candidates[0], source = unanchoredAdjustmentFixtureV3(false, TODAY.getTime())
+  const candidate = generated.generated.candidates[0], source = unanchoredAdjustmentFixtureV3(false, at.getTime())
   const offer = prepareUnanchoredAdjustmentOfferV3(source)
   if (offer.kind !== "available") throw Error(offer.code)
   const draft = createAdjustmentDraftV3({ authority: offer.authority, current: offer.current, policy: offer.policy,
@@ -51,7 +51,7 @@ function fixture() {
     recoveryRationale: "test", cycleRole: "test", expectedAdaptation: "test", limitations: "test", observation: "test",
     evidenceRefs: ["TEST"], sequenceContentIdentity: sequenceV3ContentIdentity(applied.prescription.sequence), nodeIds: ["work"] }
   const inputs: RpeAdjustedSlotInputV3[] = candidate.sessions.filter(s => s.role === "QUALITY").map(session => {
-    const address = { day: session.day, slot: session.slot }, startDate = "2026-09-08"
+    const address = { day: session.day, slot: session.slot }
     const scope = resolveQualityCandidateScope(candidate, address, startDate)!
     const snapshot = createAdjustedMethodSnapshotV3({ authority: offer.authority, current: offer.current, receipt: applied.receipt,
       contextKey: offer.contextKey, nowMs: source.nowMs, scope, explanation })
@@ -84,13 +84,13 @@ it("connects every real generated RPE MAIN to independently scoped detailed cont
   expect(result.candidate.selectionAuthority).toBe("NONE")
 })
 
-function storageFixture() {
-  const { inputs, bindings, generated } = fixture()
+function storageFixture(supplied?: Extract<ReturnType<typeof generatePlanFromDraft>, { kind: "generated" }>, at = TODAY, startDate = "2026-09-08") {
+  const { inputs, bindings, generated } = fixture(supplied, at, startDate)
   const scope = multiAdjustedPlanReviewScopeV3(inputs, inputs[0]!.experienceBand, bindings)
   if (scope.kind !== "scope") throw Error(scope.code)
   const policy = { scopeVersion: "MULTI_STRUCTURAL_V3" as const, policyId: "TEST", version: "1", scopeFingerprint: scope.scopeFingerprint,
     configurationReviewRef: "TEST-C", exposureReviewRef: "TEST-E", interactionReviewRef: "TEST-I", safetyReviewRef: "TEST-S",
-    validFromMs: TODAY.getTime() - 50, expiresAtMs: TODAY.getTime() + 50, revokedAtMs: null }
+    validFromMs: at.getTime() - 50, expiresAtMs: at.getTime() + 50, revokedAtMs: null }
   const request = { action: "USER_EXPLICIT" as const, preparations: inputs, generated: generated.generated, gate: generated.gate,
     intake: generated.intake, athleteEvidence: generated.athleteEvidence, currentCheck: "NO_KNOWN_RISK" as const,
     expectedCandidateFingerprint: scope.candidate.contentFingerprint }
@@ -248,6 +248,18 @@ it("prepares the next frame from actual multi-plan history without inventing mis
   const next = generateMultiAdjustedNextFrameV3FromDraft({ draft: { ...input.request.intake, startDate: base.nextStartDate },
     currentCheck: "NO_KNOWN_RISK", expectedPredecessorFingerprint: saved.state.contentFingerprint }, retained)
   expect(next).toMatchObject({ kind: "multi_adjusted_next_frame_v3_draft", requiredNextGate: "REVIEWED_MULTI_SUCCESSOR_V3_TRANSACTION" })
+  expect(localStorage.getItem(activePlanBetaStorageKey())).toBe(before)
+  if (next.kind !== "multi_adjusted_next_frame_v3_draft") throw Error("No next draft")
+  const successorInput = storageFixture(next.draft, later, base.nextStartDate), review = successorInput.readReview()
+  expect(selectMultiAdjustedPlanV3(successorInput.request, review.rpeBindings, review.policies, later)).toMatchObject({ code: "ADJUSTED_SUCCESSOR_REQUIRES_CONTINUITY_TRANSACTION" })
+  const selected = selectMultiAdjustedPlanSuccessorV3(successorInput.request, saved.state, saved.state.contentFingerprint,
+    retained, review.rpeBindings, review.policies, later)
+  if (selected.kind !== "selected_multi_adjusted") throw Error(selected.code)
+  expect(selected.state.continuation?.predecessorFingerprint).toBe(saved.state.contentFingerprint)
+  expect(selected.state.periodization.frameOrdinal).toBe(saved.state.selection.periodization.frameOrdinal + 1)
+  expect(readSelectedMultiAdjustedPlanV3(selected.state, review.retained[0]!, later)).toMatchObject({ kind: "read_only", state: selected.state })
+  expect(selectMultiAdjustedPlanSuccessorV3(successorInput.request, saved.state, "wrong", retained,
+    review.rpeBindings, review.policies, later)).toMatchObject({ code: "STALE_BASE" })
   expect(localStorage.getItem(activePlanBetaStorageKey())).toBe(before)
   const slot = saved.state.selection.activePlan.sessions.find(s => s.role === "QUALITY")!
   const pain = await saveMultiAdjustedPlanProgressV3({ expectedFingerprint: saved.state.contentFingerprint,

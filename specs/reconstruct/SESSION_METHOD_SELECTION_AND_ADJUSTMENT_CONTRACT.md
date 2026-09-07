@@ -4,7 +4,7 @@
 doc_id: trainoracle-session-method-selection-and-adjustment
 spec_id: SESSION_METHOD_SELECTION_AND_ADJUSTMENT_CONTRACT
 title: TrainOracle Session Method Selection And Adjustment Contract
-version: "0.54"
+version: "0.55"
 round: RT1_OWNER_APPROVED_IMPLEMENTATION_DIRECTION
 status: ACTIVE_IMPLEMENTATION_CONTRACT
 product_direction: OWNER_APPROVED_IMPLEMENTATION_DIRECTION
@@ -1705,5 +1705,16 @@ multi-adjusted-plan.personal-backup.v3는 현재 version 6 계획과 별도 다�
 결과는 multi_adjusted_next_frame_v3_draft이고 현재 계획을 변경하지 않는다.
 REVIEWED_MULTI_SUCCESSOR_V3_TRANSACTION으로 원본 보관/현재 근거 검토/명시적
 선택/저장을 완료해야 후속 주기 적용으로 인정한다.
+
+### 21.35 다중 후속 선택과 과거 복원
+
+다중 후속 선택은 실제 이전 version 6 원본을 독립 조회하고 주기 준비 규칙을
+재실행한다. 종목과 다음 후보의 이전 결과 집계가 일치해야 한다. 이전 계획 지문,
+선택 지문, 이전 주기 계보를 continuation으로 결속하고 후보 식별자에도 포함한다.
+최초 선택 경로는 후속 후보를 거부하며 후속 선택 경로는 잘못된 이전 지문을 거부한다.
+
+전체 구성 검토와 현재 선수 근거 재검사를 통과한 후에만 NOT_SAVED 후속 선택을
+만든다. 과거 조회는 저장 당시 continuation을 검증해 동일한 계보를 재구성한다.
+이는 저장 권한이 아니며 원본 보관과 현재 계획 교체의 transaction은 별도 수행한다.
 
 [DRAFT_COMPLETE]

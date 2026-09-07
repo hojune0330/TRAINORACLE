@@ -6,7 +6,10 @@ import { hasCanonicalJsonTree, planAdaptationCandidateSchema, planBetaStateV3Sch
 import { createActiveSnapshot } from "@impl/plan-generator/selection"
 import type { AdjustmentAuthorityV3 } from "@impl/prescription/prescription-adjustment-v3"
 import type { ReviewedAdjustedExplanationV3 } from "./adjusted-method-snapshot-v3"
-import { createInitialPeriodizationContext } from "./periodization-lineage"
+import { createInitialPeriodizationContext, advancePeriodizationContext } from "./periodization-lineage"
+import { adjustedPlanContinuationSchema, type AdjustedPlanContinuation } from "./selected-adjusted-plan-content"
+import { prepareMultiAdjustedNextFrameV3 } from "./adjusted-plan-continuity"
+import { readStoredMultiAdjustedPlanV6 } from "./adjusted-plan-storage-v6"
 
 export type MultiAdjustedPlanSelectionRequestV3 = Omit<AdjustedPlanSelectionRequest, "preparation"> & {
   readonly preparations: MultiAdjustedPreparationV3
@@ -17,6 +20,35 @@ const hash = (value: unknown) => canonicalJsonFingerprint("trainoracle.multi-pla
 /** Explicit selection only. The account transaction and version-aware read must precede storage. */
 export function selectMultiAdjustedPlanV3(request: MultiAdjustedPlanSelectionRequestV3,
   rpeBindings: readonly ReviewedRpeSourceBindingV3[], policies: readonly ReviewedMultiAdjustedPlanPolicyV3[], at = new Date()) {
+  return selectMulti(request, rpeBindings, policies, at)
+}
+
+export function selectMultiAdjustedPlanSuccessorV3(request: MultiAdjustedPlanSelectionRequestV3, previous: unknown,
+  expectedPredecessorFingerprint: string, retained: readonly RetainedMultiAdjustedEvidenceV3[],
+  rpeBindings: readonly ReviewedRpeSourceBindingV3[], policies: readonly ReviewedMultiAdjustedPlanPolicyV3[], at = new Date()) {
+  try {
+    if (!hasCanonicalJsonTree(request) || !request.preparations.length) return reject("INVALID_MULTI_SELECTION")
+    const before = readStoredMultiAdjustedPlanV6(previous, retained, at)
+    if (before.kind !== "loaded") return reject("INVALID_STORED_PLAN")
+    const first = request.preparations[0]!
+    const prepared = prepareMultiAdjustedNextFrameV3({ previous: before.state,
+      expectedFingerprint: expectedPredecessorFingerprint, nextStartDate: first.startDate,
+      currentCheck: request.currentCheck }, retained, at)
+    if (prepared.kind !== "prepared") return prepared
+    if (before.state.selection.activePlan.eventDistanceM !== first.candidate.eventDistanceM) return reject("SUCCESSOR_EVENT_CHANGED")
+    const expected = { kind: "PREVIOUS_FRAME_CONTEXT_RETAINED", ...prepared.context.continuity }
+    if (hash(expected) !== hash(first.candidate.continuityContext)) return reject("SUCCESSOR_CONTINUITY_CHANGED")
+    return selectMulti(request, rpeBindings, policies, at, {
+      predecessorFingerprint: before.state.contentFingerprint,
+      predecessorSelectionFingerprint: before.state.selection.contentFingerprint,
+      previousPeriodization: before.state.selection.periodization,
+    })
+  } catch { return reject("INVALID_MULTI_SELECTION") }
+}
+
+function selectMulti(request: MultiAdjustedPlanSelectionRequestV3,
+  rpeBindings: readonly ReviewedRpeSourceBindingV3[], policies: readonly ReviewedMultiAdjustedPlanPolicyV3[], at: Date,
+  continuation?: AdjustedPlanContinuation) {
   try {
     if (!hasCanonicalJsonTree(request) || !Number.isFinite(at.getTime()) || !Array.isArray(request.preparations)
       || !request.preparations.length) return reject("INVALID_MULTI_SELECTION")
@@ -32,17 +64,23 @@ export function selectMultiAdjustedPlanV3(request: MultiAdjustedPlanSelectionReq
     const review = checkMultiAdjustedPlanReviewV3(inputs, original.base.intake.experienceBand, rpeBindings, policies)
     if (review.kind !== "reviewed_scope") return reject(review.code)
     if (review.candidate.contentFingerprint !== request.expectedCandidateFingerprint) return reject("ADJUSTED_SELECTION_CHANGED")
-    if (review.candidate.continuityContext.kind !== "NO_PREVIOUS_FRAME_CONTEXT") return reject("ADJUSTED_SUCCESSOR_REQUIRES_CONTINUITY_TRANSACTION")
-    return assemble(original.base, inputs, review, at)
+    if (review.candidate.continuityContext.kind !== "NO_PREVIOUS_FRAME_CONTEXT" && continuation === undefined) return reject("ADJUSTED_SUCCESSOR_REQUIRES_CONTINUITY_TRANSACTION")
+    return assemble(original.base, inputs, review, at, continuation)
   } catch { return reject("INVALID_MULTI_SELECTION") }
 }
 
 type Review = Extract<ReturnType<typeof checkMultiAdjustedPlanReviewV3>, { kind: "reviewed_scope" }>
-function assemble(base: PlanBetaStateV3, inputs: MultiAdjustedPreparationV3, review: Review, at: Date) {
+function assemble(base: PlanBetaStateV3, inputs: MultiAdjustedPreparationV3, review: Review, at: Date, continuation?: AdjustedPlanContinuation) {
     const first = inputs[0]!
-    if (review.candidate.continuityContext.kind !== "NO_PREVIOUS_FRAME_CONTEXT") return reject("ADJUSTED_SUCCESSOR_REQUIRES_CONTINUITY_TRANSACTION")
-    const candidateId = `multi-adjusted-plan:v3:${review.candidate.contentFingerprint.slice(7)}`
-    const generatedAt = at.toISOString(), periodization = createInitialPeriodizationContext(candidateId, generatedAt)
+    const priorFrame = review.candidate.continuityContext.kind === "PREVIOUS_FRAME_CONTEXT_RETAINED"
+    if (priorFrame !== (continuation !== undefined)) return reject("INVALID_ADJUSTED_CONTINUATION")
+    const checked = continuation === undefined ? undefined : adjustedPlanContinuationSchema.safeParse(continuation)
+    if (checked !== undefined && !checked.success) return reject("INVALID_ADJUSTED_CONTINUATION")
+    const retained = checked?.success ? checked.data : undefined
+    const identity = retained === undefined ? review.candidate.contentFingerprint : hash({ candidate: review.candidate.contentFingerprint, continuation: retained })
+    const candidateId = `multi-adjusted-plan:v3:${identity.slice(7)}`
+    const generatedAt = at.toISOString(), periodization = retained === undefined
+      ? createInitialPeriodizationContext(candidateId, generatedAt) : advancePeriodizationContext(retained.previousPeriodization, generatedAt)
     if (!periodization || !base.athleteEvidence) return reject("INVALID_MULTI_SELECTION")
     const { pairId, selectedDetailedTemplateRef, ...active } = base.activePlan
     const sources = inputs.map(input => {
@@ -51,6 +89,7 @@ function assemble(base: PlanBetaStateV3, inputs: MultiAdjustedPreparationV3, rev
     }).sort((a, b) => a.address.day - b.address.day || a.address.slot.localeCompare(b.address.slot))
     const content = { kind: "SELECTED_MULTI_ADJUSTED_PLAN" as const, schemaVersion: 3 as const,
       intake: base.intake, generatedAt, athleteEvidence: base.athleteEvidence, periodization,
+      ...(retained === undefined ? {} : { continuation: retained }),
       activePlan: { ...active, candidateId, sessions: review.candidate.sessions },
       adjustments: { originalCandidate: first.candidate, originalPairId: pairId,
         originalSelectedDetailedTemplateRef: selectedDetailedTemplateRef, sources,
@@ -96,7 +135,7 @@ export function readSelectedMultiAdjustedPlanV3(value: unknown, evidence: Retain
     if (base.intake.trainingFocus !== original.selectedEnergyIntent) return reject("INVALID_MULTI_PLAN_ORIGIN")
     const review = checkMultiAdjustedPlanReviewV3(inputs, base.intake.experienceBand, evidence.rpeBindings, evidence.policies)
     if (review.kind !== "reviewed_scope") return reject("RETAINED_MULTI_EVIDENCE_UNAVAILABLE")
-    const rebuilt = assemble(base, inputs, review, accepted)
+    const rebuilt = assemble(base, inputs, review, accepted, stored.continuation)
     if (rebuilt.kind !== "selected_multi_adjusted" || hash(rebuilt.state) !== hash(stored)) return reject("MULTI_PLAN_CONTENT_MISMATCH")
     return { kind: "read_only" as const, executionAuthority: "NONE" as const, state: rebuilt.state,
       explanations: structuredClone(evidence.slots.map(e => ({ address: e.address, explanation: e.explanation }))) }
