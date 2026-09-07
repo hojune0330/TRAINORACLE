@@ -4,7 +4,7 @@
 doc_id: trainoracle-session-method-selection-and-adjustment
 spec_id: SESSION_METHOD_SELECTION_AND_ADJUSTMENT_CONTRACT
 title: TrainOracle Session Method Selection And Adjustment Contract
-version: "0.16"
+version: "0.17"
 round: RT1_OWNER_APPROVED_IMPLEMENTATION_DIRECTION
 status: ACTIVE_IMPLEMENTATION_CONTRACT
 product_direction: OWNER_APPROVED_IMPLEMENTATION_DIRECTION
@@ -1035,5 +1035,25 @@ Unavailable retained evidence/corrupt archives make coverage unknown, not zero.
 Historical exposure is a recommendation input only; it cannot activate a method,
 increase workload, or replace current eligibility/safety review. This read path
 does not itself archive/clear an active plan or advance periodization lineage.
+
+### 20.4 Adjusted next-frame preparation
+
+Validate the complete prior v4 envelope against retained evidence before deriving
+continuity. Match the expected whole-envelope fingerprint, recheck current safety,
+and retain any prior pain hold. Completion follows the displayed frame: every
+non-rest slot has an explicit terminal outcome, or the displayed final date has
+passed. Missing outcomes stay missing when time alone permits moving on. Do not
+infer completion for the hidden part of a shorter projection or drop AM/PM slots.
+
+The preview retains the program lineage and advances exactly one display frame
+using the existing periodization rules. It is not proof that 9.5 elapsed days were
+completed. Preserve the predecessor fingerprint, exact outcome counts, missing
+slot count and completion basis. The next start date cannot precede the current
+local date, and a future plan cannot be completed before its start date.
+
+This preparation does not clear/archive/replace the active state or grant numeric
+adjustment/selection/execution authority. The later owning transaction must recheck
+the same predecessor, safety, target review and account under the mutation lock;
+it cannot save a previously prepared context as an approval receipt.
 
 [DRAFT_COMPLETE]

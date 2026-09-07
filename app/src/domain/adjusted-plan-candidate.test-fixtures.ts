@@ -1,11 +1,11 @@
 import { RUNTIME_CASES } from "./prescription-quality-matrix.test-fixtures"
-import { adjustedMethodFixtureWithCandidate } from "./adjusted-method-resolution.test-fixtures"
+import { adjustedMethodFixtureWithCandidate, type AdjustedFixtureSchedule } from "./adjusted-method-resolution.test-fixtures"
 import { resolveAdjustedMethodPrescription } from "./adjusted-method-resolution"
 import { createAdjustedMethodSnapshot } from "./adjusted-method-snapshot"
 import { resolveAdjustedCandidateScope } from "./adjusted-plan-candidate"
 
-export function adjustedSelectionFixture(event: typeof RUNTIME_CASES[number] = RUNTIME_CASES[3]!, nowMs = 151) {
-  const { candidate, resolution, generation } = adjustedMethodFixtureWithCandidate(event, undefined, undefined, nowMs)
+export function adjustedSelectionFixture(event: typeof RUNTIME_CASES[number] = RUNTIME_CASES[3]!, nowMs = 151, schedule: AdjustedFixtureSchedule = {}) {
+  const { candidate, resolution, generation } = adjustedMethodFixtureWithCandidate(event, undefined, undefined, nowMs, schedule)
   const session = candidate.sessions.find(item => item.prescription.kind === "PACE_TARGET")!
   const address = { day: session.day, slot: session.slot }
   const startDate = "2026-09-07"

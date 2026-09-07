@@ -5,10 +5,12 @@ import { resolvePlanMethodPrescription } from "./plan-method-resolution"
 import { readPlanMethodDefinition } from "./plan-method-definition"
 import { generatePlanFromDraft } from "./plan-beta-flow"
 import { draftFor, RUNTIME_CASES, saveCurrentRecord } from "./prescription-quality-matrix.test-fixtures"
+import type { PlanBetaIntake } from "./plan-beta-schema"
+export type AdjustedFixtureSchedule = Partial<Pick<PlanBetaIntake, "requestedFrameLength" | "secondSessionMode">>
 
-export function adjustedMethodFixtureWithCandidate(event: typeof RUNTIME_CASES[number] = RUNTIME_CASES[3]!, work: SequenceWork = { kind: "distance", distanceM: 400, durationSeconds: null }, transform?: (sequence: PrescriptionSequence) => PrescriptionSequence, nowMs = 151) {
+export function adjustedMethodFixtureWithCandidate(event: typeof RUNTIME_CASES[number] = RUNTIME_CASES[3]!, work: SequenceWork = { kind: "distance", distanceM: 400, durationSeconds: null }, transform?: (sequence: PrescriptionSequence) => PrescriptionSequence, nowMs = 151, schedule: AdjustedFixtureSchedule = {}) {
   const selectedRecordId = saveCurrentRecord(event.eventDistanceM, event.performanceSeconds + 0.137)
-  const generated = generatePlanFromDraft(draftFor(event), "NO_KNOWN_RISK", { selectedRecordId })
+  const generated = generatePlanFromDraft({ ...draftFor(event), ...schedule }, "NO_KNOWN_RISK", { selectedRecordId })
   if (generated.kind !== "generated") throw Error("Expected generated original")
   const original = generated.generated.candidates[0].sessions.find(session => session.prescription.kind === "PACE_TARGET")?.prescription
   if (original?.kind !== "PACE_TARGET") throw Error("Expected original prescription")
