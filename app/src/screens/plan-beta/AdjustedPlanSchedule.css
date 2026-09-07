@@ -1,0 +1,27 @@
+.adjusted-plan-schedule nav {
+  display: flex;
+  gap: 4px;
+  overflow-x: auto;
+  padding: 4px 0 8px;
+}
+.adjusted-plan-schedule nav button {
+  flex: 0 0 auto;
+  min-width: 52px;
+  min-height: 44px;
+}
+.adjusted-plan-schedule nav button[aria-pressed="true"] {
+  text-decoration: underline;
+  text-underline-offset: 6px;
+  font-weight: 700;
+}
+.adjusted-plan-schedule > section {
+  padding-block: 16px;
+  border-bottom: 1px solid var(--line);
+  overflow-wrap: anywhere;
+}
+.adjusted-plan-schedule > section > button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+}

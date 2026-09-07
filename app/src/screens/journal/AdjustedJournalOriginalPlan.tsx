@@ -5,13 +5,15 @@ import { DetailedPrescriptionView } from "../plan-beta/DetailedPrescriptionView"
 import { formatTrainingSeconds } from "../plan-beta/labels"
 
 /** Historical comparison only: no apply/start controls or inferred actual values. */
-export function AdjustedJournalOriginalPlan({ session, explanation }: {
+export function AdjustedJournalOriginalPlan({ session, explanation, context = "journal" }: {
   readonly session: AdjustedCandidateSession
   readonly explanation: ResolvedAdjustedExplanation
+  readonly context?: "journal" | "plan"
 }) {
   const prescription = session.prescription
   return <section aria-label="당시 계획한 훈련">
-    <p>이 일지에 연결된 당시 계획이에요. 실제 운동 기록과는 별도로 표시해요.</p>
+    <p>{context === "journal" ? "이 일지에 연결된 당시 계획이에요. 실제 운동 기록과는 별도로 표시해요."
+      : "저장할 때 선택한 훈련 구성이에요. 실제 수행 기록과는 별도로 표시해요."}</p>
     {prescription.kind === "ADJUSTED_METHOD" ? <>
       <PrescriptionStructure sequence={prescription.snapshot.projection.sequence} />
       {prescription.snapshot.projection.segmentTargets.length > 0 && <div>

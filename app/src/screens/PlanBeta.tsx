@@ -18,6 +18,7 @@ import {
   loadPlanBetaState,
   loadPreviousIntake,
   savePlanBetaState,
+  readPlanBetaStateFromStorage,
 } from "../domain/plan-beta-store"
 import type {
   PlanBetaIntake,
@@ -55,6 +56,9 @@ import { useActiveContentScroll } from "../hooks/useActiveContentScroll"
 import { useOrderedStepMotion } from "../hooks/useOrderedStepMotion"
 import { resolvePlanMethodChange } from "../domain/plan-method-selection"
 import { todayISO } from "../domain/journal-store"
+import { onLocalJournalScopeChange } from "../domain/account/local-journal-ownership"
+import { localAccountScopeSnapshot } from "../domain/account/local-account-scope"
+import { AdjustedPlanSchedule } from "./plan-beta/AdjustedPlanSchedule"
 
 const AthleteRecords = React.lazy(() => import("./AthleteRecords").then(module => ({ default: module.AthleteRecords })))
 
@@ -73,7 +77,34 @@ const INTAKE_MOTION_ORDER: readonly IntakeStep[] = [
   "race-date",
 ]
 
-export function PlanBeta({
+export function PlanBeta(props: React.ComponentProps<typeof LegacyPlanBeta>) {
+  const [read, setRead] = React.useState(readPlanBetaStateFromStorage)
+  const [revision, setRevision] = React.useState(0)
+  React.useEffect(() => {
+    const refresh = () => { setRead(readPlanBetaStateFromStorage()); setRevision(value => value + 1) }
+    const unsubscribe = onLocalJournalScopeChange(refresh)
+    window.addEventListener("storage", refresh)
+    return () => { unsubscribe(); window.removeEventListener("storage", refresh) }
+  }, [])
+  if (read.kind === "adjusted_loaded") return <AdjustedPlanSchedule
+    key={`${localAccountScopeSnapshot()}:${read.state.contentFingerprint}`}
+    loaded={read} onWritePlannedSessionLog={props.onWritePlannedSessionLog === undefined ? undefined : draft => {
+      const current = readPlanBetaStateFromStorage()
+      if (current.kind !== "adjusted_loaded" || current.state.contentFingerprint !== read.state.contentFingerprint) {
+        setRead(current)
+        return
+      }
+      props.onWritePlannedSessionLog?.(draft)
+    }} returnToSession={props.returnToSession} />
+  if (read.kind === "invalid" || read.kind === "storage_error") return <section>
+    <h1>저장된 계획을 확인하지 못했어요</h1>
+    <p role="alert">계획을 지우거나 새 계획으로 바꾸지 않았어요. 다시 확인해 주세요.</p>
+    <button type="button" onClick={() => setRead(readPlanBetaStateFromStorage())}>다시 확인</button>
+  </section>
+  return <LegacyPlanBeta key={revision} {...props} />
+}
+
+function LegacyPlanBeta({
   onWriteLog,
   onManageRecords,
   onWritePlannedSessionLog,
