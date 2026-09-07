@@ -144,6 +144,34 @@ const delegatedAuthoritySchema = z.object({
 
 export type DelegatedDetailedPrescriptionAuthority = z.infer<typeof delegatedAuthoritySchema>
 
+const ownerReviewedAuthoritySchema = z.object({
+  schemaVersion: z.literal(1),
+  kind: z.literal("OWNER_REVIEWED_OPERATIONAL_ADOPTION"),
+  processDecisionId: z.literal("TO-OWNER-TRAINING-REVIEW-ROUTE-2026-09-07"),
+  packetId: z.string().trim().min(1),
+  packetVersion: z.string().trim().min(1),
+  packetFingerprint: fingerprintSchema,
+  sourceDigests: sourceDigestsSchema,
+  implementationReviewRef: z.string().trim().min(1),
+  ownerDecisionId: z.string().trim().min(1),
+  ownerEvidenceRef: z.string().trim().min(1),
+  ownerApprovedPacketFingerprint: fingerprintSchema,
+  approvalRecordFingerprint: fingerprintSchema,
+  selectedTemplateRef: templateRefSchema,
+  targetEventDistanceM: supportedEventSchema,
+  compatibleIntent: z.enum(PLANNED_ENERGY_INTENTS),
+  independentExternalReviewClaimed: z.literal(false),
+  verdict: z.literal("APPROVE"),
+  decidedAt: instantSchema,
+  expiresAt: instantSchema,
+  revokedAt: instantSchema.nullable(),
+}).strict()
+
+export type OwnerReviewedDetailedPrescriptionAuthority = z.infer<typeof ownerReviewedAuthoritySchema>
+export const OWNER_APPROVAL_RECORD_FINGERPRINT_DOMAIN = "trainoracle.owner-reviewed-approval-record.v1"
+// Entries are reviewed repository artifacts, never supplied by browser storage or form input.
+const OWNER_REVIEWED_RUNTIME_AUTHORITIES: readonly OwnerReviewedDetailedPrescriptionAuthority[] = Object.freeze([])
+
 export type DetailedPrescriptionRuntimeAuthorityRequest = {
   readonly selectedTemplateRef: DetailedTemplateRef | null
   readonly targetEventDistanceM: number
@@ -154,7 +182,7 @@ export type DetailedPrescriptionRuntimeAuthorityRequest = {
 export type DetailedPrescriptionRuntimeAuthorityResult =
   | {
       readonly kind: "authorized"
-      readonly source: "BASELINE_OWNER_APPROVAL" | "DELEGATED_DUAL_REVIEW"
+      readonly source: "BASELINE_OWNER_APPROVAL" | "DELEGATED_DUAL_REVIEW" | "OWNER_REVIEWED_OPERATIONAL_ADOPTION"
       readonly approval: DetailedPrescriptionApprovalRecord
     }
   | {
@@ -326,6 +354,36 @@ export function delegatedDetailedPrescriptionAuthorityMatches(
     && receiptIsCurrent(science, evaluatedAt)
 }
 
+export function ownerReviewedDetailedPrescriptionAuthorityMatches(
+  value: unknown,
+  request: DetailedPrescriptionRuntimeAuthorityRequest,
+  approval: DetailedPrescriptionApprovalRecord,
+): boolean {
+  const parsed = ownerReviewedAuthoritySchema.safeParse(value)
+  if (!parsed.success || request.selectedTemplateRef === null) return false
+  const authority = parsed.data
+  const evaluatedAt = Date.parse(request.evaluatedAt)
+  return Number.isFinite(evaluatedAt)
+    && approvalIsCurrent(approval, evaluatedAt)
+    && referenceMatches(authority.selectedTemplateRef, request.selectedTemplateRef)
+    && authority.selectedTemplateRef.templateId === approval.templateId
+    && authority.selectedTemplateRef.version === approval.templateVersion
+    && authority.selectedTemplateRef.fingerprint === approval.templateContentFingerprint
+    && authority.targetEventDistanceM === request.targetEventDistanceM
+    && authority.targetEventDistanceM === approval.targetEventDistanceM
+    && authority.compatibleIntent === request.selectedEnergyIntent
+    && authority.packetFingerprint === authority.ownerApprovedPacketFingerprint
+    && authority.ownerDecisionId !== authority.processDecisionId
+    && authority.ownerDecisionId === approval.approvalDecisionId
+    && authority.approvalRecordFingerprint === canonicalJsonFingerprint(
+      OWNER_APPROVAL_RECORD_FINGERPRINT_DOMAIN, approval,
+    )
+    && authority.decidedAt === approval.decidedAt
+    && Date.parse(authority.decidedAt) <= evaluatedAt
+    && evaluatedAt < Date.parse(authority.expiresAt)
+    && authority.revokedAt === null
+}
+
 export function resolveDetailedPrescriptionRuntimeAuthority(
   request: DetailedPrescriptionRuntimeAuthorityRequest,
 ): DetailedPrescriptionRuntimeAuthorityResult {
@@ -352,6 +410,16 @@ export function resolveDetailedPrescriptionRuntimeAuthority(
   )
   if (baselineApproved) {
     return { kind: "authorized", source: "BASELINE_OWNER_APPROVAL", approval }
+  }
+
+  const ownerReviewed = OWNER_REVIEWED_RUNTIME_AUTHORITIES.filter((candidate) => (
+    ownerReviewedDetailedPrescriptionAuthorityMatches(candidate, request, approval)
+  ))
+  if (ownerReviewed.length === 1) {
+    return { kind: "authorized", source: "OWNER_REVIEWED_OPERATIONAL_ADOPTION", approval }
+  }
+  if (ownerReviewed.length > 1) {
+    return { kind: "fallback", code: "RUNTIME_AUTHORITY_UNAVAILABLE" }
   }
 
   const delegated = DELEGATED_RUNTIME_AUTHORITIES.find((candidate) => (

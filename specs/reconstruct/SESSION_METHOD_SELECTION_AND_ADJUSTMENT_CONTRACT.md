@@ -4,7 +4,7 @@
 doc_id: trainoracle-session-method-selection-and-adjustment
 spec_id: SESSION_METHOD_SELECTION_AND_ADJUSTMENT_CONTRACT
 title: TrainOracle Session Method Selection And Adjustment Contract
-version: "0.10"
+version: "0.11"
 round: RT1_OWNER_APPROVED_IMPLEMENTATION_DIRECTION
 status: ACTIVE_IMPLEMENTATION_CONTRACT
 product_direction: OWNER_APPROVED_IMPLEMENTATION_DIRECTION
@@ -660,6 +660,34 @@ record/account/safety context and exposure accounting. Assembly is not that gate
 No UI control may claim the staged candidate was saved or started before its
 owning schema, execution, explanation, archive and journal consumers are connected.
 
+### 10D. Complete Adjusted-Frame Review Scope
+
+The new adjusted representation must not pass the old PACE_TARGET-only placement
+filter by disappearing from its detailed-session count. Its review scope includes
+the event/purpose, actual experience matching the original source scope, source
+population and selection actor, candidate kind, frame/continuity, exposure ledger,
+unchanged operational-component refs and every session address/role/purpose.
+Preserve surrounding RPE/time doses in the scope. Bind the source/target exact
+configuration and source adjustment-policy reference of the changed MAIN.
+
+Keep personal record IDs and resolved target seconds out of this configuration
+review projection. They remain bound and revalidated in the individual candidate,
+snapshot and current-record selection checks. Calendar start is independently
+bound by section 10C; it is not permission to reuse an old snapshot on a new date.
+
+Look up exactly one applicable entry from an independently trusted registry with
+configuration, exposure, interaction and safety review references; exact scope;
+valid-from/expiry and revocation. Reject duplicate policy ID/version identities,
+including a conflicting revoked duplicate. Missing lifecycle/reference/scope data
+does not mean a default permit. The runtime registry remains empty until actual
+operating evidence is supplied. Synthetic TEST entries never populate it.
+
+The result reviewed_scope carries execution authority NONE. This is a versioned
+configuration-scope check, not verification that named humans signed the refs,
+a D9 decision, current account/anchor check, final selection receipt or storage
+transaction. The owning full-plan selection gate must still perform those checks
+under its lock and must not treat this partial result as permission to save/start.
+
 ## 11. Planned, Actual, Youth And Privacy
 
 The planned occurrence carries its immutable prescription/version. A later actual
@@ -882,5 +910,30 @@ served public UI. See the
 [implementation report](../../reports/implementation/SESSION_METHOD_SELECTION_IMPLEMENTATION_2026-09-05.md)
 section 9 for job/timestamp boundaries. No new runtime tests, public-screen check,
 source protocol review or issue closure is implied by this reconciliation.
+
+## 18. Owner-Reviewed Adoption Route (2026-09-07)
+
+Decision ID: `TO-OWNER-TRAINING-REVIEW-ROUTE-2026-09-07`.
+Status: `OWNER_APPROVED_REVIEW_PROCESS`.
+The owner explicitly chose evidence preparation followed by owner final approval.
+See the [decision record](../../reports/review/OWNER_TRAINING_ADOPTION_REVIEW_ROUTE_2026-09-07.md).
+
+For future exact configurations and adjustment policies, source and applicability
+review by the implementer followed by recorded owner approval is an allowed
+`OWNER_REVIEWED_OPERATIONAL_ADOPTION` route. Requirements elsewhere in this
+contract for reviewed evidence do not require external experts as the only route.
+Independent external review remains a distinct route when actually obtained.
+Neither route may misrepresent reviewer identity, credentials or independence.
+
+An owner adoption packet must identify its version and content fingerprint,
+exact work/recovery structure, intensity model, applicable populations and events,
+adjustment bounds, combined-placement constraints, explanations, sources and limits.
+Approval of this process does not approve an unseen packet or its numerical values.
+Existing four exact adopted configurations remain unchanged. Runtime wiring for
+the new route is pending; test fixtures and reference strings are not approval.
+
+KEEP: D9, privacy, current-record checks, explicit selection, storage compatibility,
+no automatic dose escalation, and all four OPEN issues. This section changes the
+review process only; it is neither canonical promotion nor implementation completion.
 
 [DRAFT_COMPLETE]

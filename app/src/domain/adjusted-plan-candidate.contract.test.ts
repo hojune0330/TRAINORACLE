@@ -1,32 +1,13 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { setActiveLocalAccount } from "./account/local-journal-ownership"
 import { RUNTIME_CASES, TODAY } from "./prescription-quality-matrix.test-fixtures"
-import { adjustedMethodFixtureWithCandidate } from "./adjusted-method-resolution.test-fixtures"
-import { resolveAdjustedMethodPrescription } from "./adjusted-method-resolution"
 import { createAdjustedMethodSnapshot } from "./adjusted-method-snapshot"
 import { prepareAdjustedPlanCandidate, resolveAdjustedCandidateScope } from "./adjusted-plan-candidate"
 import { planAdaptationCandidateSchema } from "./plan-beta-schema"
+import { adjustedCandidateFixture as fixture } from "./adjusted-plan-candidate.test-fixtures"
 
 beforeEach(() => { localStorage.clear(); sessionStorage.clear(); setActiveLocalAccount(null); vi.useFakeTimers(); vi.setSystemTime(TODAY) })
 afterEach(() => { vi.restoreAllMocks(); vi.useRealTimers() })
-
-function fixture(event: typeof RUNTIME_CASES[number] = RUNTIME_CASES[3]!) {
-  const { candidate, resolution } = adjustedMethodFixtureWithCandidate(event)
-  const session = candidate.sessions.find(item => item.prescription.kind === "PACE_TARGET")!
-  const address = { day: session.day, slot: session.slot }
-  const startDate = "2026-09-07"
-  const scope = resolveAdjustedCandidateScope(candidate, address, startDate)
-  if (scope === null) throw Error("Expected original scope")
-  const resolved = resolveAdjustedMethodPrescription(resolution)
-  if (resolved.kind !== "resolved") throw Error(resolved.code)
-  const explanation = { configuration: resolved.projection.source.to, resolutionContextKey: resolved.projection.resolutionContextKey,
-    version: "TEST-1", reviewRef: "TEST-NOT-APPROVAL", purpose: "TEST purpose", energySupply: "TEST energy",
-    workRationale: "TEST work", recoveryRationale: "TEST recovery", cycleRole: "TEST cycle", expectedAdaptation: "TEST expectation",
-    limitations: "TEST limit", observation: "TEST observation", evidenceRefs: ["TEST-SOURCE"] }
-  const snapshot = createAdjustedMethodSnapshot({ ...resolution, scope, explanation })
-  if (snapshot.kind !== "prepared") throw Error(snapshot.code)
-  return { candidate, address, startDate, rawSnapshot: JSON.stringify(snapshot.snapshot), source: resolution.source, explanation }
-}
 
 describe("adjusted candidate assembly", () => {
   it.each(RUNTIME_CASES.slice(0, 4))("$eventDistanceM replaces exactly one MAIN without mutating the original", event => {
