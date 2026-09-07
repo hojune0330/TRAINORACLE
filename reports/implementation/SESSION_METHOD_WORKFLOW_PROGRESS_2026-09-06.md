@@ -2200,4 +2200,18 @@ PlanBeta의 현재 일정→다음 주기 준비→통증 확인→후보→여�
 최종 저장→일정 재조회와 이전 원본 보관을 유지했다. targeted1 PASS/52 SKIP이며
 전체53 재실행 결과가 아니다. 실제 AppShell의 운영 주입 및 자료 reader는 미완이다.
 
+## 126. 기존 승인 템플릿과 새 조정 권한의 구분
+
+detailed-prescription-manifest.json을 직접 읽어 V2-SEED-05 및 MD-800-01/
+MD-1500-01/MD-3000-01 네 승인 행과 각1.0.0, EXPERIENCED 범위를 확인했다.
+이는 JSON의 승인 행 확인이며 이번에 전체 개인 적격성을 실행 재판정한 것은 아니다.
+기존 detailed-prescription-approvals.ts는 원본 template 내용과 owner 근거를 검사한다.
+새 ReviewedAdjustmentPolicy는 정확한 from/to 구성과 context 및 기간을 요구하고,
+전체 배치 정책은 그 위의 별도 검토다. 원본 승인 행에서 새로운 세트회복·조정 edge·
+여러 MAIN 배치 권한을 추론해 채우지 않는다. 기존 경로를 새 승인 대기로 바꾸지도 않는다.
+
+원격34157167640/dee9f7d는 contract-tests와 app-quality 성공,
+app-browser101853257097 진행 중으로 확인했다. 이후 로컬 공급자 변경의 CI 증거와
+구분한다. 운영 자료 reader가 원본 승인만으로 조정 권한을 생성하지 않도록 경계를 유지한다.
+
 [DRAFT_COMPLETE]
