@@ -3,7 +3,7 @@
 ```yaml
 doc_id: trainoracle-session-method-owner-adoption-packet-2026-09-07
 packet_id: TO-METHOD-ADOPTION-2026-09-07
-version: "0.6"
+version: "0.7"
 status: SOURCE_REVIEWED_PACKET_IN_PREPARATION
 review_process: TO-OWNER-TRAINING-REVIEW-ROUTE-2026-09-07
 owner_exact_packet_approval: NOT_REQUESTED_YET
@@ -420,5 +420,60 @@ OFF는 운동 없는 계획 상태이며 준비·정리도 없다. 이미 별도
 
 ADD: 정확한 지원 구성과 기존 대비60초 차이. KEEP: 기존 계획·청소년/독립 사용자·
 오전오후·전체 범위. PENDING: 구성별 전체 세션 채택. 운영 활성화0건.
+
+## 16. 구성별 대상 범위와 독립 후보 검토 (v0.7)
+
+아래 범위는 근거 검토 후 오너가 결정할 **제품 적용 제안**이다. 연령·경험 등으로
+연구 효과가 증명되었다는 뜻이 아니다. 원문 대상과 제품 대상은 별도 필드로 유지한다.
+개인 종목은 현재 엔진의 800/1500/3000/5000/10000/21097/42195m를 사용한다.
+100~400m 전문 계획은 기존 범위 밖이다. 하프 표시 거리를 새 상수로 바꾸지 않는다.
+
+| 구성 | 제안 종목 | 제안 경험 범위 | 교체 위치 |
+|---|---|---|---|
+| BASE-C/B | 전체7종목 | 모든 경험 | 기존 BASE 세션 |
+| LT-C/B/S | 전체7종목 | DEVELOPING/EXPERIENCED | 같은 목적의 MAIN |
+| RHYTHM-400 | 3000m 이상 | EXPERIENCED | MIX MAIN |
+| RHYTHM-300 | 800~5000m | DEVELOPING/EXPERIENCED | MIX MAIN |
+| VO2-2/3/4 | 전체7종목 | DEVELOPING/EXPERIENCED | 같은 목적의 MAIN |
+| ATP-A | 전체7종목 | DEVELOPING/EXPERIENCED | ATP-PC MAIN |
+| ATP-F | 전체7종목 | EXPERIENCED | ATP-PC MAIN |
+| GLY-D/S | 전체7종목 | DEVELOPING/EXPERIENCED | GLY MAIN |
+| REC-W / OFF | 전체7종목 | 모든 경험 | 기존 REC / OFF |
+
+모든 행에서 청소년/성인·SELF/COACH_REQUIRED를 같은 범위로 검토한다. 이 표가
+COACH_REQUIRED의 실제 선택 권한을 SELF로 바꾸지는 않는다. 나이·성별 배수로
+용량을 새로 만들지 않는다. 종목이 장거리라고 해당계 목적을 지우지 않지만 현재
+800m RP 참고값은 실제 현재800m 기록이 있어야 하며 마라톤 기록을 대입하지 않는다.
+
+처음 달리는 사용자에게 현재 준비된 모든 고강도 원형이 적합하다고 승인받는 표는
+아니다. 해당 경험 범위의 공백은 별도 도입 구성 작업으로 남긴다. 회복일에 고강도를
+추가하거나 등록된 후보 수에 맞춰 MAIN 빈도를 늘리지 않는다. 경험은 기록 유무로
+추정하지 않는다. 경기 기록이 없는 숙련자도 존재하므로 미기록은 일괄 제외 조건이 아니다.
+
+### 16.1 고정 짝 없는 목록
+
+[검토용 범위 데이터](../research/method-adoption-applicability.mjs)는 목적별
+전체 독립 원형을 나열하고 적합/범위 밖 사유를 함께 남긴다. 이전 훈련 ID를 키로
+상대 훈련 하나만 찾지 않는다. 반복 횟수 변형은 여기서 독립 후보로 세지 않는다.
+결과는 NONE이며 정확한 오너 채택·전체 프레임 배치·현재 입력/안전 검사를 요구한다.
+
+이 조회는 추천 순위·실제 적격성 resolver가 아니다. SOURCE_REVIEW와 실제
+scopeFingerprint/selection receipt를 대체하지 않는다. 코칭 필요 모드의 권한,
+날짜·앞뒤 MAIN·가속을 포함한 전체 지원 구간·경기/테이퍼·오전오후를 실제 생성
+프레임에서 재검토해야 한다. 배치 검토 전에는 기존 RPE 세션을 덮어쓰지 않는다.
+
+### 16.2 검증과 드러난 공백
+
+범위 시험6개 PASS. 총16행과 범위1:1, VO2 독립3개, 이전 선택에 따른 목록 고정
+없음, 청소년/SELF 동일 범위, 전체7종목과100~400범위 밖, 장거리GLY 유지, ATP-F
+경험 조건, 미기록과 경험미상 분리를 확인했다. 실제 사용자 적합성 검증은 아니다.
+
+RHYTHM은 종목에 따라 둘 중 한 구성만 이 초안 범위에 들어갈 수 있다. 또한
+DEVELOPING ATP는 현재 한 구성뿐이다. 이를 억지로2개라 세거나 같은 구성의
+횟수만 바꿔 두 번째 방법이라고 하지 않는다. 기존30행에서 추가 독립 원형의
+회복/근거를 완성해야 한다. 최종2후보 요구는 여전히 미완이며 범위를 축소하지 않는다.
+
+ADD: 전16행 대상 제안·목적별 독립 조회·공백 확인. KEEP: 기존 승인 정책과 전체
+목표. PENDING: 공백 구성/정확한 프레임 배치/최종 승인/실제 운영 연결.
 
 [DRAFT_COMPLETE]
