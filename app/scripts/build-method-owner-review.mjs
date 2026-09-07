@@ -29,9 +29,11 @@ try {
     "재생성: app에서 node scripts/build-method-owner-review.mjs. 생성 문서를 직접 고치지 않고 원본을 수정합니다.", ""]
   for (const p of protocols) {
     const e = previewPendingMethodExplanation(p)
+    const scope = bundle.items.find(item => item.id === p.id).scope
     const guidance = proposeMethodExecutionGuidance(p)
     const main = e.exactStructure.totals?.main
     lines.push(`## ${p.id}`, "", `- 목적 분류: ${p.family} / 방법: ${p.method}`,
+      `- 제안 대상(미승인): 종목 ${scope.eventDistances.join(", ")}m / 경험 ${scope.experience.join(", ")} / 연령군 ${scope.population.join(", ")} / 선택 ${scope.actor.join(", ")}`,
       ...(p.id.startsWith("P-INTRO-") ? ["- 입문 범위 검토 제안: 정확한 수치의 초보 대상 검증은 미확립. 기존 공통 준비/정리의 적합성과 구간 수행 가능성을 별도 검토하며 자동 제공하지 않음."] : []),
       `- 본운동 단위: ${p.work.map(amount).join(" + ") || "계획된 운동 없음"}`,
       `- 반복: 세트당 ${p.reps}회 / 세트 ${p.sets}개`,
@@ -54,18 +56,21 @@ try {
     if (effort.work) lines.push("### 본운동 노력 채택안", "",
       effort.work.rpe ? `본운동 체감 노력 제안: RPE ${effort.work.rpe.join("~")}` : "고출력·동작의 질 기준: 세션 RPE를 목표 속도로 바꾸지 않음",
       "", effort.work.cue, "", effort.work.adjustment, "", effort.recovery.cue, "", effort.boundary, "",
+      ...[...new Map(effort.recovery.targets.map(t => [t.role, t])).values()].map(t =>
+        `- ${t.role} 회복 노력: ${t.rpe ? `RPE ${t.rpe.join("~")}` : "숫자 미지정"}. ${t.cue}`), "",
       "이 수치는 원문에서 복사한 생리학적 경계가 아니라 오너 채택을 요청할 제품 코칭 선택입니다. 개인 초·페이스와 세션 전체 RPE는 별도이며, 아직 운영에 적용하지 않았습니다.", "")
     if (main) lines.push("### 수량 확인", "", "| 구분 | 값 |", "|---|---|",
       `| 본운동 거리(m) | ${number(main.workDistanceM)} |`, `| 본운동 시간(초) | ${number(main.workSeconds)} |`,
-      `| 확인된 회복 거리(m) | ${main.knownRecoveryDistanceM} |`, `| 확인된 회복 시간(초) | ${main.knownRecoverySeconds} |`,
+      `| 전체 회복 거리(m) | ${number(main.recoveryDistanceM)} |`, `| 전체 회복 시간(초) | ${number(main.recoverySeconds)} |`,
+      `| 거리로 지정된 회복 부분합(m) | ${main.knownRecoveryDistanceM} |`, `| 시간으로 지정된 회복 부분합(초) | ${main.knownRecoverySeconds} |`,
       `| 본운동 블록 전체 시간(초) | ${number(main.totalSeconds)} |`,
       `| 준비 구간 시간(초) | ${number(e.exactStructure.totals.warmup.totalSeconds)} |`,
       `| 정리 구간 시간(초) | ${number(e.exactStructure.totals.cooldown.totalSeconds)} |`, "",
-      "확인된 회복량은 부분합입니다. 거리·시간이 섞이면 전체 회복량과 다를 수 있습니다.", "")
+      "부분합0은 해당 단위로 지정한 회복이 없다는 뜻이지 실제 회복 시간·거리가0이라는 뜻이 아닙니다. 미산출 전체값은 환산하지 않습니다.", "")
     const fitLabels = { NOT_APPLICABLE: "해당 없음", EXCEEDS_EXISTING_RANGE: "기존 상한 초과", DURATION_UNRESOLVED: "전체 시간 미산출", BELOW_EXISTING_RANGE: "기존 하한 미만", WITHIN_EXISTING_RANGE: "기존 시간 범위 안" }
     const experiences = [["NEW_TO_RUNNING", "처음 시작"], ["DEVELOPING", "훈련 경험 있음"], ["EXPERIENCED", "훈련 경험 많음"]]
     lines.push("### 기존 일정 시간과 비교", "", "| 경험 | 기존 범위(분) | 시간 비교 | 최소 초과(초) |", "|---|---|---|---|",
-      ...experiences.map(([experience, label]) => {
+      ...experiences.filter(([experience]) => scope.experience.includes(experience)).map(([experience, label]) => {
         const fit = previewMethodDurationFit(p, experience)
         const range = fit.existingRangeSeconds
         return `| ${label} | ${range ? `${range.minimum / 60}~${range.maximum / 60}` : "해당 없음"} | ${fitLabels[fit.status]} | ${fit.excessAtLeastSeconds ?? "해당 없음"} |`

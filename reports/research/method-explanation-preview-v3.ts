@@ -27,7 +27,7 @@ export function previewPendingMethodExplanation(p: PendingMethodProtocol) {
     return source
   })
   const content = {
-    version: "0.4", protocolId: p.id, method: p.method,
+    version: "0.5", protocolId: p.id, method: p.method,
     executionAuthority: "NONE" as const, status: "REVIEW_PREVIEW_NOT_ADOPTED" as const,
     generalExplanation: { scope: "TRAINING_FAMILY_NOT_EXACT_DOSE" as const, profile: general, sources },
     intensityReview: key === "REST" ? {
@@ -48,9 +48,10 @@ export function previewPendingMethodExplanation(p: PendingMethodProtocol) {
       { item: "EXACT_WORK_AND_INTENSITY_RATIONALE", reason: "계획된 운동 구간이 없어 운동 강도나 반복량을 정하지 않습니다." },
       { item: "EXACT_RECOVERY_RATIONALE", reason: "반복 사이 회복 구간이 없습니다. 휴식일의 주기 배치 이유와 회복 완료 여부는 별개입니다." },
     ] : [],
-    pending: [...(noExercise ? [] : ["EXACT_WORK_AND_INTENSITY_RATIONALE", "EXACT_RECOVERY_RATIONALE"]), "CURRENT_CYCLE_PLACEMENT",
+    pending: [...new Set([...representation.guidance.pending,
+      ...(noExercise ? [] : ["EXACT_WORK_AND_INTENSITY_RATIONALE", "EXACT_RECOVERY_RATIONALE"]), "CURRENT_CYCLE_PLACEMENT",
       "INDIVIDUAL_APPLICABILITY", "EXACT_OWNER_ADOPTION",
-      ...(p.id.startsWith("P-INTRO-") ? ["INTRO_SEGMENT_READINESS", "INTRO_SUPPORT_APPLICABILITY", "INTRO_EFFORT_APPLICABILITY"] : [])],
+      ...(p.id.startsWith("P-INTRO-") ? ["INTRO_SEGMENT_READINESS", "INTRO_SUPPORT_APPLICABILITY", "INTRO_EFFORT_APPLICABILITY"] : [])])],
   }
   // A detached review snapshot cannot change when the source catalog is edited later.
   return structuredClone({ ...content, contentFingerprint: canonicalJsonFingerprint("pending-method-explanation-v3", content) })

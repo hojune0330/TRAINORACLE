@@ -4,7 +4,7 @@
 doc_id: trainoracle-session-method-selection-and-adjustment
 spec_id: SESSION_METHOD_SELECTION_AND_ADJUSTMENT_CONTRACT
 title: TrainOracle Session Method Selection And Adjustment Contract
-version: "0.68"
+version: "0.69"
 round: RT1_OWNER_APPROVED_IMPLEMENTATION_DIRECTION
 status: ACTIVE_IMPLEMENTATION_CONTRACT
 product_direction: OWNER_APPROVED_IMPLEMENTATION_DIRECTION
@@ -1850,5 +1850,15 @@ V6 개인 계획을 전송하기 전에 실제 계정별 현재 저장값과 독
 변경되지 않는다. 묶음은 승인 레코드가 아니며 미완 결정과 제외 범위를 표시한다.
 개인 기록/메모를 이 공개 검토 묶음에 포함하지 않는다. 전체 조합과 개인 페이스
 모델의 승인을 구성 묶음 존재로 대신하지 않는다.
+
+### 21.49 승인용 표현과 원본 검토 상태의 일치
+
+검토 전용 조립기는 본운동뿐 아니라 지원 구성도 미채택/NONE 상태인지 검사한다.
+다른 상태의 자료를 같은 검토안으로 조용히 포함하지 않는다. 중첩 수행 안내의
+미완 항목은 설명 및 전체 승인 체크리스트까지 누락 없이 전달한다.
+경험별 시간 비교는 해당 구성의 명시된 제안 범위 안에서 제공하며 범위를 함께 표시한다.
+회복 거리/시간의 전체 미산출과 지정 단위 부분합을 구분한다. 회복 노력은 실제
+구간 위치/방식에 연결하고 모든 회복에 하나의 RPE를 부여하지 않는다.
+이 표현 보정은 정확한 운동 수치, 대상, 운영 권한의 채택 또는 변경이 아니다.
 
 [DRAFT_COMPLETE]

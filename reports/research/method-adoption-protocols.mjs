@@ -129,6 +129,9 @@ export function assembleProposalSession(p) {
   // Source conditions, population and frame placement remain separate review gates.
   const supported = ["LT", "VO2", "ATP-PC", "GLY", "MIX"].includes(p.family)
   const support = supported ? structuredClone(MAIN_SUPPORT_PROPOSAL) : null
+  if (support && (support.status !== "OWNER_ADOPTION_PENDING" || support.executionAuthority !== "NONE")) {
+    throw Error("NOT_PENDING_SUPPORT")
+  }
   const warmup = support?.warmup ?? []
   const cooldown = support?.cooldown ?? []
   const supportSeconds = [...warmup, ...cooldown].reduce((sum, s) => sum + s.value, 0)

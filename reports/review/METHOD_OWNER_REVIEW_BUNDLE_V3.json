@@ -1,6 +1,6 @@
 {
   "kind": "METHOD_OWNER_REVIEW_BUNDLE_V3",
-  "version": "1",
+  "version": "2",
   "executionAuthority": "NONE",
   "ownerDecision": "NOT_GRANTED",
   "scope": "PROPOSED_CONFIGURATIONS_EXPLANATIONS_AND_POPULATIONS",
@@ -36,7 +36,7 @@
         "status": "OWNER_ADOPTION_PENDING"
       },
       "explanation": {
-        "version": "0.4",
+        "version": "0.5",
         "protocolId": "P-BASE-C",
         "method": "CONTINUOUS",
         "executionAuthority": "NONE",
@@ -169,7 +169,7 @@
             "applicabilityReviewed": false,
             "supportReviewIssues": [],
             "guidance": {
-              "version": "0.2",
+              "version": "0.3",
               "protocolId": "P-BASE-C",
               "status": "COACHING_PROPOSAL_NOT_ADOPTED",
               "executionAuthority": "NONE",
@@ -187,11 +187,9 @@
                   "adjustment": "대화하기 어려우면 속도를 낮춥니다. 시간을 채우려고 강도를 올리지 않습니다."
                 },
                 "recovery": {
-                  "rpe": [
-                    1,
-                    3
-                  ],
-                  "cue": "걷기·쉬운 조깅·정지는 원래 구간 표시를 따릅니다. 숨참이 즉시 이 숫자로 내려가야 한다는 뜻은 아닙니다."
+                  "rpe": null,
+                  "cue": "회복 방식과 노력 안내는 아래 실제 회복 구간별 제안을 따릅니다. 모든 회복을 하나의 RPE로 지정하지 않습니다.",
+                  "targets": []
                 },
                 "sessionRpeTarget": null,
                 "measuredPhysiology": false,
@@ -276,13 +274,17 @@
         "personalEvidence": [],
         "notApplicable": [],
         "pending": [
+          "OWNER_ADOPTION",
+          "EFFORT_TARGET_APPLICABILITY",
+          "PERSONAL_PACE_WHERE_SUPPORTED",
+          "WHOLE_CYCLE_PLACEMENT",
           "EXACT_WORK_AND_INTENSITY_RATIONALE",
           "EXACT_RECOVERY_RATIONALE",
           "CURRENT_CYCLE_PLACEMENT",
           "INDIVIDUAL_APPLICABILITY",
           "EXACT_OWNER_ADOPTION"
         ],
-        "contentFingerprint": "sha256:865dfba27af376671e158e948fc0789ca9ec6631af00551d16e57674a25a03f7"
+        "contentFingerprint": "sha256:cdf1ec8db7688de850c128310268dc58afd3ced8fad79c1e941bbc498efa0b70"
       }
     },
     {
@@ -316,7 +318,7 @@
         "status": "OWNER_ADOPTION_PENDING"
       },
       "explanation": {
-        "version": "0.4",
+        "version": "0.5",
         "protocolId": "P-BASE-B",
         "method": "WALK_BREAKS",
         "executionAuthority": "NONE",
@@ -486,7 +488,7 @@
             "applicabilityReviewed": false,
             "supportReviewIssues": [],
             "guidance": {
-              "version": "0.2",
+              "version": "0.3",
               "protocolId": "P-BASE-B",
               "status": "COACHING_PROPOSAL_NOT_ADOPTED",
               "executionAuthority": "NONE",
@@ -504,11 +506,38 @@
                   "adjustment": "대화하기 어려우면 속도를 낮춥니다. 시간을 채우려고 강도를 올리지 않습니다."
                 },
                 "recovery": {
-                  "rpe": [
-                    1,
-                    3
-                  ],
-                  "cue": "걷기·쉬운 조깅·정지는 원래 구간 표시를 따릅니다. 숨참이 즉시 이 숫자로 내려가야 한다는 뜻은 아닙니다."
+                  "rpe": null,
+                  "cue": "회복 방식과 노력 안내는 아래 실제 회복 구간별 제안을 따릅니다. 모든 회복을 하나의 RPE로 지정하지 않습니다.",
+                  "targets": [
+                    {
+                      "partIndex": 1,
+                      "role": "WALK",
+                      "unit": "SECONDS",
+                      "value": 60,
+                      "boundary": "BETWEEN_REPS",
+                      "set": 1,
+                      "rep": 1,
+                      "rpe": [
+                        1,
+                        3
+                      ],
+                      "cue": "회복 움직임의 체감 노력 제안입니다. 숨참이 즉시 이 수치로 낮아져야 한다는 뜻은 아닙니다."
+                    },
+                    {
+                      "partIndex": 3,
+                      "role": "WALK",
+                      "unit": "SECONDS",
+                      "value": 60,
+                      "boundary": "BETWEEN_REPS",
+                      "set": 1,
+                      "rep": 2,
+                      "rpe": [
+                        1,
+                        3
+                      ],
+                      "cue": "회복 움직임의 체감 노력 제안입니다. 숨참이 즉시 이 수치로 낮아져야 한다는 뜻은 아닙니다."
+                    }
+                  ]
                 },
                 "sessionRpeTarget": null,
                 "measuredPhysiology": false,
@@ -629,13 +658,17 @@
         "personalEvidence": [],
         "notApplicable": [],
         "pending": [
+          "OWNER_ADOPTION",
+          "EFFORT_TARGET_APPLICABILITY",
+          "PERSONAL_PACE_WHERE_SUPPORTED",
+          "WHOLE_CYCLE_PLACEMENT",
           "EXACT_WORK_AND_INTENSITY_RATIONALE",
           "EXACT_RECOVERY_RATIONALE",
           "CURRENT_CYCLE_PLACEMENT",
           "INDIVIDUAL_APPLICABILITY",
           "EXACT_OWNER_ADOPTION"
         ],
-        "contentFingerprint": "sha256:af593825ceb4540efaa9f8e6479d5a5e030f40f63b35fa46f30848a0be2d3cab"
+        "contentFingerprint": "sha256:4fd5931f4418597c04cb2c4e095417dadd7daa791975bf6793f62f7218d6d991"
       }
     },
     {
@@ -668,7 +701,7 @@
         "status": "OWNER_ADOPTION_PENDING"
       },
       "explanation": {
-        "version": "0.4",
+        "version": "0.5",
         "protocolId": "P-LT-C",
         "method": "CONTINUOUS",
         "executionAuthority": "NONE",
@@ -934,7 +967,7 @@
             "applicabilityReviewed": false,
             "supportReviewIssues": [],
             "guidance": {
-              "version": "0.2",
+              "version": "0.3",
               "protocolId": "P-LT-C",
               "status": "COACHING_PROPOSAL_NOT_ADOPTED",
               "executionAuthority": "NONE",
@@ -952,11 +985,9 @@
                   "adjustment": "첫 구간부터 끝까지 유지하기 어려우면 속도를 낮춥니다. 회복이 있는 분할형도 전력 반복으로 바꾸지 않습니다."
                 },
                 "recovery": {
-                  "rpe": [
-                    1,
-                    3
-                  ],
-                  "cue": "걷기·쉬운 조깅·정지는 원래 구간 표시를 따릅니다. 숨참이 즉시 이 숫자로 내려가야 한다는 뜻은 아닙니다."
+                  "rpe": null,
+                  "cue": "회복 방식과 노력 안내는 아래 실제 회복 구간별 제안을 따릅니다. 모든 회복을 하나의 RPE로 지정하지 않습니다.",
+                  "targets": []
                 },
                 "sessionRpeTarget": null,
                 "measuredPhysiology": false,
@@ -1041,13 +1072,17 @@
         "personalEvidence": [],
         "notApplicable": [],
         "pending": [
+          "OWNER_ADOPTION",
+          "EFFORT_TARGET_APPLICABILITY",
+          "PERSONAL_PACE_WHERE_SUPPORTED",
+          "WHOLE_CYCLE_PLACEMENT",
           "EXACT_WORK_AND_INTENSITY_RATIONALE",
           "EXACT_RECOVERY_RATIONALE",
           "CURRENT_CYCLE_PLACEMENT",
           "INDIVIDUAL_APPLICABILITY",
           "EXACT_OWNER_ADOPTION"
         ],
-        "contentFingerprint": "sha256:35bc828b9e1a69cc9388fc6bb78d1e8a8aa5f165fb24ec9f28660e568e7e734d"
+        "contentFingerprint": "sha256:66b8a880da104eccd56ef46928ee9c1f1f02ed4213a582070a499127e9e2f4fe"
       }
     },
     {
@@ -1080,7 +1115,7 @@
         "status": "OWNER_ADOPTION_PENDING"
       },
       "explanation": {
-        "version": "0.4",
+        "version": "0.5",
         "protocolId": "P-LT-B",
         "method": "LONG_SPLIT",
         "executionAuthority": "NONE",
@@ -1367,7 +1402,7 @@
             "applicabilityReviewed": false,
             "supportReviewIssues": [],
             "guidance": {
-              "version": "0.2",
+              "version": "0.3",
               "protocolId": "P-LT-B",
               "status": "COACHING_PROPOSAL_NOT_ADOPTED",
               "executionAuthority": "NONE",
@@ -1385,11 +1420,24 @@
                   "adjustment": "첫 구간부터 끝까지 유지하기 어려우면 속도를 낮춥니다. 회복이 있는 분할형도 전력 반복으로 바꾸지 않습니다."
                 },
                 "recovery": {
-                  "rpe": [
-                    1,
-                    3
-                  ],
-                  "cue": "걷기·쉬운 조깅·정지는 원래 구간 표시를 따릅니다. 숨참이 즉시 이 숫자로 내려가야 한다는 뜻은 아닙니다."
+                  "rpe": null,
+                  "cue": "회복 방식과 노력 안내는 아래 실제 회복 구간별 제안을 따릅니다. 모든 회복을 하나의 RPE로 지정하지 않습니다.",
+                  "targets": [
+                    {
+                      "partIndex": 1,
+                      "role": "JOG",
+                      "unit": "SECONDS",
+                      "value": 60,
+                      "boundary": "BETWEEN_REPS",
+                      "set": 1,
+                      "rep": 1,
+                      "rpe": [
+                        1,
+                        3
+                      ],
+                      "cue": "회복 움직임의 체감 노력 제안입니다. 숨참이 즉시 이 수치로 낮아져야 한다는 뜻은 아닙니다."
+                    }
+                  ]
                 },
                 "sessionRpeTarget": null,
                 "measuredPhysiology": false,
@@ -1492,13 +1540,17 @@
         "personalEvidence": [],
         "notApplicable": [],
         "pending": [
+          "OWNER_ADOPTION",
+          "EFFORT_TARGET_APPLICABILITY",
+          "PERSONAL_PACE_WHERE_SUPPORTED",
+          "WHOLE_CYCLE_PLACEMENT",
           "EXACT_WORK_AND_INTENSITY_RATIONALE",
           "EXACT_RECOVERY_RATIONALE",
           "CURRENT_CYCLE_PLACEMENT",
           "INDIVIDUAL_APPLICABILITY",
           "EXACT_OWNER_ADOPTION"
         ],
-        "contentFingerprint": "sha256:9c80a597b5c682a61e4e90d4533395cbc87cecc96b5761f59036443bfd787911"
+        "contentFingerprint": "sha256:44ebe5f60b0850e3b15ad45e67e1361395f8389ce3a05da325c87f3026ae101b"
       }
     },
     {
@@ -1531,7 +1583,7 @@
         "status": "OWNER_ADOPTION_PENDING"
       },
       "explanation": {
-        "version": "0.4",
+        "version": "0.5",
         "protocolId": "P-LT-S",
         "method": "SHORT_SPLIT",
         "executionAuthority": "NONE",
@@ -1834,7 +1886,7 @@
             "applicabilityReviewed": false,
             "supportReviewIssues": [],
             "guidance": {
-              "version": "0.2",
+              "version": "0.3",
               "protocolId": "P-LT-S",
               "status": "COACHING_PROPOSAL_NOT_ADOPTED",
               "executionAuthority": "NONE",
@@ -1852,11 +1904,38 @@
                   "adjustment": "첫 구간부터 끝까지 유지하기 어려우면 속도를 낮춥니다. 회복이 있는 분할형도 전력 반복으로 바꾸지 않습니다."
                 },
                 "recovery": {
-                  "rpe": [
-                    1,
-                    3
-                  ],
-                  "cue": "걷기·쉬운 조깅·정지는 원래 구간 표시를 따릅니다. 숨참이 즉시 이 숫자로 내려가야 한다는 뜻은 아닙니다."
+                  "rpe": null,
+                  "cue": "회복 방식과 노력 안내는 아래 실제 회복 구간별 제안을 따릅니다. 모든 회복을 하나의 RPE로 지정하지 않습니다.",
+                  "targets": [
+                    {
+                      "partIndex": 1,
+                      "role": "JOG",
+                      "unit": "SECONDS",
+                      "value": 60,
+                      "boundary": "BETWEEN_REPS",
+                      "set": 1,
+                      "rep": 1,
+                      "rpe": [
+                        1,
+                        3
+                      ],
+                      "cue": "회복 움직임의 체감 노력 제안입니다. 숨참이 즉시 이 수치로 낮아져야 한다는 뜻은 아닙니다."
+                    },
+                    {
+                      "partIndex": 3,
+                      "role": "JOG",
+                      "unit": "SECONDS",
+                      "value": 60,
+                      "boundary": "BETWEEN_REPS",
+                      "set": 1,
+                      "rep": 2,
+                      "rpe": [
+                        1,
+                        3
+                      ],
+                      "cue": "회복 움직임의 체감 노력 제안입니다. 숨참이 즉시 이 수치로 낮아져야 한다는 뜻은 아닙니다."
+                    }
+                  ]
                 },
                 "sessionRpeTarget": null,
                 "measuredPhysiology": false,
@@ -1977,13 +2056,17 @@
         "personalEvidence": [],
         "notApplicable": [],
         "pending": [
+          "OWNER_ADOPTION",
+          "EFFORT_TARGET_APPLICABILITY",
+          "PERSONAL_PACE_WHERE_SUPPORTED",
+          "WHOLE_CYCLE_PLACEMENT",
           "EXACT_WORK_AND_INTENSITY_RATIONALE",
           "EXACT_RECOVERY_RATIONALE",
           "CURRENT_CYCLE_PLACEMENT",
           "INDIVIDUAL_APPLICABILITY",
           "EXACT_OWNER_ADOPTION"
         ],
-        "contentFingerprint": "sha256:081abb65020390f84f0a8f61fd69f70469ed6f19c071ee1beff11699add5af3c"
+        "contentFingerprint": "sha256:dbde099c56f0e9f33794ed73036394b3c49f091c0daa68698b749a5bd2d8393c"
       }
     },
     {
@@ -2013,7 +2096,7 @@
         "status": "OWNER_ADOPTION_PENDING"
       },
       "explanation": {
-        "version": "0.4",
+        "version": "0.5",
         "protocolId": "P-RHYTHM-400",
         "method": "ROLL_ON_400",
         "executionAuthority": "NONE",
@@ -2479,7 +2562,7 @@
             "applicabilityReviewed": false,
             "supportReviewIssues": [],
             "guidance": {
-              "version": "0.2",
+              "version": "0.3",
               "protocolId": "P-RHYTHM-400",
               "status": "COACHING_PROPOSAL_NOT_ADOPTED",
               "executionAuthority": "NONE",
@@ -2497,11 +2580,142 @@
                   "adjustment": "느린 구간을 경쟁하지 않습니다. 뒤의 빠른 구간을 위해 느린 구간까지 강도를 올리지 않습니다."
                 },
                 "recovery": {
-                  "rpe": [
-                    1,
-                    3
-                  ],
-                  "cue": "걷기·쉬운 조깅·정지는 원래 구간 표시를 따릅니다. 숨참이 즉시 이 숫자로 내려가야 한다는 뜻은 아닙니다."
+                  "rpe": null,
+                  "cue": "회복 방식과 노력 안내는 아래 실제 회복 구간별 제안을 따릅니다. 모든 회복을 하나의 RPE로 지정하지 않습니다.",
+                  "targets": [
+                    {
+                      "partIndex": 1,
+                      "role": "ROLL_ON",
+                      "unit": "METERS",
+                      "value": 100,
+                      "boundary": "AFTER_EVERY",
+                      "set": 1,
+                      "rep": 1,
+                      "rpe": null,
+                      "cue": "숫자 RPE를 지정하지 않습니다. 이 구간의 회복 방식과 속도 감소 안내를 따릅니다."
+                    },
+                    {
+                      "partIndex": 3,
+                      "role": "ROLL_ON",
+                      "unit": "METERS",
+                      "value": 100,
+                      "boundary": "AFTER_EVERY",
+                      "set": 1,
+                      "rep": 2,
+                      "rpe": null,
+                      "cue": "숫자 RPE를 지정하지 않습니다. 이 구간의 회복 방식과 속도 감소 안내를 따릅니다."
+                    },
+                    {
+                      "partIndex": 5,
+                      "role": "ROLL_ON",
+                      "unit": "METERS",
+                      "value": 100,
+                      "boundary": "AFTER_EVERY",
+                      "set": 1,
+                      "rep": 3,
+                      "rpe": null,
+                      "cue": "숫자 RPE를 지정하지 않습니다. 이 구간의 회복 방식과 속도 감소 안내를 따릅니다."
+                    },
+                    {
+                      "partIndex": 7,
+                      "role": "ROLL_ON",
+                      "unit": "METERS",
+                      "value": 100,
+                      "boundary": "AFTER_EVERY",
+                      "set": 1,
+                      "rep": 4,
+                      "rpe": null,
+                      "cue": "숫자 RPE를 지정하지 않습니다. 이 구간의 회복 방식과 속도 감소 안내를 따릅니다."
+                    },
+                    {
+                      "partIndex": 9,
+                      "role": "ROLL_ON",
+                      "unit": "METERS",
+                      "value": 100,
+                      "boundary": "AFTER_EVERY",
+                      "set": 1,
+                      "rep": 5,
+                      "rpe": null,
+                      "cue": "숫자 RPE를 지정하지 않습니다. 이 구간의 회복 방식과 속도 감소 안내를 따릅니다."
+                    },
+                    {
+                      "partIndex": 11,
+                      "role": "ROLL_ON",
+                      "unit": "METERS",
+                      "value": 100,
+                      "boundary": "AFTER_EVERY",
+                      "set": 1,
+                      "rep": 6,
+                      "rpe": null,
+                      "cue": "숫자 RPE를 지정하지 않습니다. 이 구간의 회복 방식과 속도 감소 안내를 따릅니다."
+                    },
+                    {
+                      "partIndex": 13,
+                      "role": "ROLL_ON",
+                      "unit": "METERS",
+                      "value": 100,
+                      "boundary": "AFTER_EVERY",
+                      "set": 1,
+                      "rep": 7,
+                      "rpe": null,
+                      "cue": "숫자 RPE를 지정하지 않습니다. 이 구간의 회복 방식과 속도 감소 안내를 따릅니다."
+                    },
+                    {
+                      "partIndex": 15,
+                      "role": "ROLL_ON",
+                      "unit": "METERS",
+                      "value": 100,
+                      "boundary": "AFTER_EVERY",
+                      "set": 1,
+                      "rep": 8,
+                      "rpe": null,
+                      "cue": "숫자 RPE를 지정하지 않습니다. 이 구간의 회복 방식과 속도 감소 안내를 따릅니다."
+                    },
+                    {
+                      "partIndex": 17,
+                      "role": "ROLL_ON",
+                      "unit": "METERS",
+                      "value": 100,
+                      "boundary": "AFTER_EVERY",
+                      "set": 1,
+                      "rep": 9,
+                      "rpe": null,
+                      "cue": "숫자 RPE를 지정하지 않습니다. 이 구간의 회복 방식과 속도 감소 안내를 따릅니다."
+                    },
+                    {
+                      "partIndex": 19,
+                      "role": "ROLL_ON",
+                      "unit": "METERS",
+                      "value": 100,
+                      "boundary": "AFTER_EVERY",
+                      "set": 1,
+                      "rep": 10,
+                      "rpe": null,
+                      "cue": "숫자 RPE를 지정하지 않습니다. 이 구간의 회복 방식과 속도 감소 안내를 따릅니다."
+                    },
+                    {
+                      "partIndex": 21,
+                      "role": "ROLL_ON",
+                      "unit": "METERS",
+                      "value": 100,
+                      "boundary": "AFTER_EVERY",
+                      "set": 1,
+                      "rep": 11,
+                      "rpe": null,
+                      "cue": "숫자 RPE를 지정하지 않습니다. 이 구간의 회복 방식과 속도 감소 안내를 따릅니다."
+                    },
+                    {
+                      "partIndex": 23,
+                      "role": "ROLL_ON",
+                      "unit": "METERS",
+                      "value": 100,
+                      "boundary": "AFTER_EVERY",
+                      "set": 1,
+                      "rep": 12,
+                      "rpe": null,
+                      "cue": "숫자 RPE를 지정하지 않습니다. 이 구간의 회복 방식과 속도 감소 안내를 따릅니다."
+                    }
+                  ]
                 },
                 "sessionRpeTarget": null,
                 "measuredPhysiology": false,
@@ -2793,13 +3007,17 @@
         "personalEvidence": [],
         "notApplicable": [],
         "pending": [
+          "OWNER_ADOPTION",
+          "EFFORT_TARGET_APPLICABILITY",
+          "PERSONAL_PACE_WHERE_SUPPORTED",
+          "WHOLE_CYCLE_PLACEMENT",
           "EXACT_WORK_AND_INTENSITY_RATIONALE",
           "EXACT_RECOVERY_RATIONALE",
           "CURRENT_CYCLE_PLACEMENT",
           "INDIVIDUAL_APPLICABILITY",
           "EXACT_OWNER_ADOPTION"
         ],
-        "contentFingerprint": "sha256:302c4c112f0e85b70e682864eef00d1c3708bd2720281d525e22c72e412042c9"
+        "contentFingerprint": "sha256:2d1d91d7f346ea1d8a743ed8194eaca0ada3b5caca5f9fae0e1369061143e7b9"
       }
     },
     {
@@ -2829,7 +3047,7 @@
         "status": "OWNER_ADOPTION_PENDING"
       },
       "explanation": {
-        "version": "0.4",
+        "version": "0.5",
         "protocolId": "P-RHYTHM-300",
         "method": "ROLL_ON_SETS_300",
         "executionAuthority": "NONE",
@@ -3231,7 +3449,7 @@
             "applicabilityReviewed": false,
             "supportReviewIssues": [],
             "guidance": {
-              "version": "0.2",
+              "version": "0.3",
               "protocolId": "P-RHYTHM-300",
               "status": "COACHING_PROPOSAL_NOT_ADOPTED",
               "executionAuthority": "NONE",
@@ -3249,11 +3467,104 @@
                   "adjustment": "느린 구간을 경쟁하지 않습니다. 뒤의 빠른 구간을 위해 느린 구간까지 강도를 올리지 않습니다."
                 },
                 "recovery": {
-                  "rpe": [
-                    1,
-                    3
-                  ],
-                  "cue": "걷기·쉬운 조깅·정지는 원래 구간 표시를 따릅니다. 숨참이 즉시 이 숫자로 내려가야 한다는 뜻은 아닙니다."
+                  "rpe": null,
+                  "cue": "회복 방식과 노력 안내는 아래 실제 회복 구간별 제안을 따릅니다. 모든 회복을 하나의 RPE로 지정하지 않습니다.",
+                  "targets": [
+                    {
+                      "partIndex": 1,
+                      "role": "ROLL_ON",
+                      "unit": "METERS",
+                      "value": 100,
+                      "boundary": "AFTER_EVERY",
+                      "set": 1,
+                      "rep": 1,
+                      "rpe": null,
+                      "cue": "숫자 RPE를 지정하지 않습니다. 이 구간의 회복 방식과 속도 감소 안내를 따릅니다."
+                    },
+                    {
+                      "partIndex": 3,
+                      "role": "ROLL_ON",
+                      "unit": "METERS",
+                      "value": 100,
+                      "boundary": "AFTER_EVERY",
+                      "set": 1,
+                      "rep": 2,
+                      "rpe": null,
+                      "cue": "숫자 RPE를 지정하지 않습니다. 이 구간의 회복 방식과 속도 감소 안내를 따릅니다."
+                    },
+                    {
+                      "partIndex": 4,
+                      "role": "EASY_RUN",
+                      "unit": "SECONDS",
+                      "value": 120,
+                      "boundary": "BETWEEN_SETS",
+                      "set": 1,
+                      "rep": 2,
+                      "rpe": [
+                        1,
+                        3
+                      ],
+                      "cue": "회복 움직임의 체감 노력 제안입니다. 숨참이 즉시 이 수치로 낮아져야 한다는 뜻은 아닙니다."
+                    },
+                    {
+                      "partIndex": 6,
+                      "role": "ROLL_ON",
+                      "unit": "METERS",
+                      "value": 100,
+                      "boundary": "AFTER_EVERY",
+                      "set": 2,
+                      "rep": 1,
+                      "rpe": null,
+                      "cue": "숫자 RPE를 지정하지 않습니다. 이 구간의 회복 방식과 속도 감소 안내를 따릅니다."
+                    },
+                    {
+                      "partIndex": 8,
+                      "role": "ROLL_ON",
+                      "unit": "METERS",
+                      "value": 100,
+                      "boundary": "AFTER_EVERY",
+                      "set": 2,
+                      "rep": 2,
+                      "rpe": null,
+                      "cue": "숫자 RPE를 지정하지 않습니다. 이 구간의 회복 방식과 속도 감소 안내를 따릅니다."
+                    },
+                    {
+                      "partIndex": 9,
+                      "role": "EASY_RUN",
+                      "unit": "SECONDS",
+                      "value": 120,
+                      "boundary": "BETWEEN_SETS",
+                      "set": 2,
+                      "rep": 2,
+                      "rpe": [
+                        1,
+                        3
+                      ],
+                      "cue": "회복 움직임의 체감 노력 제안입니다. 숨참이 즉시 이 수치로 낮아져야 한다는 뜻은 아닙니다."
+                    },
+                    {
+                      "partIndex": 11,
+                      "role": "ROLL_ON",
+                      "unit": "METERS",
+                      "value": 100,
+                      "boundary": "AFTER_EVERY",
+                      "set": 3,
+                      "rep": 1,
+                      "rpe": null,
+                      "cue": "숫자 RPE를 지정하지 않습니다. 이 구간의 회복 방식과 속도 감소 안내를 따릅니다."
+                    },
+                    {
+                      "partIndex": 13,
+                      "role": "ROLL_ON",
+                      "unit": "METERS",
+                      "value": 100,
+                      "boundary": "AFTER_EVERY",
+                      "set": 3,
+                      "rep": 2,
+                      "rpe": null,
+                      "cue": "숫자 RPE를 지정하지 않습니다. 이 구간의 회복 방식과 속도 감소 안내를 따릅니다."
+                    }
+                  ]
                 },
                 "sessionRpeTarget": null,
                 "measuredPhysiology": false,
@@ -3455,13 +3766,17 @@
         "personalEvidence": [],
         "notApplicable": [],
         "pending": [
+          "OWNER_ADOPTION",
+          "EFFORT_TARGET_APPLICABILITY",
+          "PERSONAL_PACE_WHERE_SUPPORTED",
+          "WHOLE_CYCLE_PLACEMENT",
           "EXACT_WORK_AND_INTENSITY_RATIONALE",
           "EXACT_RECOVERY_RATIONALE",
           "CURRENT_CYCLE_PLACEMENT",
           "INDIVIDUAL_APPLICABILITY",
           "EXACT_OWNER_ADOPTION"
         ],
-        "contentFingerprint": "sha256:320366fed47e0c494e177c30dd1e03983f8959bc2123001ece863b872e20c88f"
+        "contentFingerprint": "sha256:b1a270d9686d0ed832b00c66319c08f3ef7435b98281c8d0dd7a557eb26489fd"
       }
     },
     {
@@ -3494,7 +3809,7 @@
         "status": "OWNER_ADOPTION_PENDING"
       },
       "explanation": {
-        "version": "0.4",
+        "version": "0.5",
         "protocolId": "P-RHYTHM-T",
         "method": "TIMED_RHYTHM",
         "executionAuthority": "NONE",
@@ -3863,7 +4178,7 @@
             "applicabilityReviewed": false,
             "supportReviewIssues": [],
             "guidance": {
-              "version": "0.2",
+              "version": "0.3",
               "protocolId": "P-RHYTHM-T",
               "status": "COACHING_PROPOSAL_NOT_ADOPTED",
               "executionAuthority": "NONE",
@@ -3881,11 +4196,94 @@
                   "adjustment": "느린 구간을 경쟁하지 않습니다. 뒤의 빠른 구간을 위해 느린 구간까지 강도를 올리지 않습니다."
                 },
                 "recovery": {
-                  "rpe": [
-                    1,
-                    3
-                  ],
-                  "cue": "걷기·쉬운 조깅·정지는 원래 구간 표시를 따릅니다. 숨참이 즉시 이 숫자로 내려가야 한다는 뜻은 아닙니다."
+                  "rpe": null,
+                  "cue": "회복 방식과 노력 안내는 아래 실제 회복 구간별 제안을 따릅니다. 모든 회복을 하나의 RPE로 지정하지 않습니다.",
+                  "targets": [
+                    {
+                      "partIndex": 1,
+                      "role": "EASY_RUN",
+                      "unit": "SECONDS",
+                      "value": 60,
+                      "boundary": "AFTER_EVERY",
+                      "set": 1,
+                      "rep": 1,
+                      "rpe": [
+                        1,
+                        3
+                      ],
+                      "cue": "회복 움직임의 체감 노력 제안입니다. 숨참이 즉시 이 수치로 낮아져야 한다는 뜻은 아닙니다."
+                    },
+                    {
+                      "partIndex": 3,
+                      "role": "EASY_RUN",
+                      "unit": "SECONDS",
+                      "value": 60,
+                      "boundary": "AFTER_EVERY",
+                      "set": 1,
+                      "rep": 2,
+                      "rpe": [
+                        1,
+                        3
+                      ],
+                      "cue": "회복 움직임의 체감 노력 제안입니다. 숨참이 즉시 이 수치로 낮아져야 한다는 뜻은 아닙니다."
+                    },
+                    {
+                      "partIndex": 5,
+                      "role": "EASY_RUN",
+                      "unit": "SECONDS",
+                      "value": 60,
+                      "boundary": "AFTER_EVERY",
+                      "set": 1,
+                      "rep": 3,
+                      "rpe": [
+                        1,
+                        3
+                      ],
+                      "cue": "회복 움직임의 체감 노력 제안입니다. 숨참이 즉시 이 수치로 낮아져야 한다는 뜻은 아닙니다."
+                    },
+                    {
+                      "partIndex": 7,
+                      "role": "EASY_RUN",
+                      "unit": "SECONDS",
+                      "value": 60,
+                      "boundary": "AFTER_EVERY",
+                      "set": 1,
+                      "rep": 4,
+                      "rpe": [
+                        1,
+                        3
+                      ],
+                      "cue": "회복 움직임의 체감 노력 제안입니다. 숨참이 즉시 이 수치로 낮아져야 한다는 뜻은 아닙니다."
+                    },
+                    {
+                      "partIndex": 9,
+                      "role": "EASY_RUN",
+                      "unit": "SECONDS",
+                      "value": 60,
+                      "boundary": "AFTER_EVERY",
+                      "set": 1,
+                      "rep": 5,
+                      "rpe": [
+                        1,
+                        3
+                      ],
+                      "cue": "회복 움직임의 체감 노력 제안입니다. 숨참이 즉시 이 수치로 낮아져야 한다는 뜻은 아닙니다."
+                    },
+                    {
+                      "partIndex": 11,
+                      "role": "EASY_RUN",
+                      "unit": "SECONDS",
+                      "value": 60,
+                      "boundary": "AFTER_EVERY",
+                      "set": 1,
+                      "rep": 6,
+                      "rpe": [
+                        1,
+                        3
+                      ],
+                      "cue": "회복 움직임의 체감 노력 제안입니다. 숨참이 즉시 이 수치로 낮아져야 한다는 뜻은 아닙니다."
+                    }
+                  ]
                 },
                 "sessionRpeTarget": null,
                 "measuredPhysiology": false,
@@ -4069,13 +4467,17 @@
         "personalEvidence": [],
         "notApplicable": [],
         "pending": [
+          "OWNER_ADOPTION",
+          "EFFORT_TARGET_APPLICABILITY",
+          "PERSONAL_PACE_WHERE_SUPPORTED",
+          "WHOLE_CYCLE_PLACEMENT",
           "EXACT_WORK_AND_INTENSITY_RATIONALE",
           "EXACT_RECOVERY_RATIONALE",
           "CURRENT_CYCLE_PLACEMENT",
           "INDIVIDUAL_APPLICABILITY",
           "EXACT_OWNER_ADOPTION"
         ],
-        "contentFingerprint": "sha256:bb825f2a6bd5c57f4980206612d2feed5416bfc46d111eb73ed255f98d83c98d"
+        "contentFingerprint": "sha256:6f49fe2c233186bb26309a3efee50141c392d3cb96868c7419d9fdd8132d5877"
       }
     },
     {
@@ -4108,7 +4510,7 @@
         "status": "OWNER_ADOPTION_PENDING"
       },
       "explanation": {
-        "version": "0.4",
+        "version": "0.5",
         "protocolId": "P-RHYTHM-TS",
         "method": "TIMED_RHYTHM_SETS",
         "executionAuthority": "NONE",
@@ -4557,7 +4959,7 @@
             "applicabilityReviewed": false,
             "supportReviewIssues": [],
             "guidance": {
-              "version": "0.2",
+              "version": "0.3",
               "protocolId": "P-RHYTHM-TS",
               "status": "COACHING_PROPOSAL_NOT_ADOPTED",
               "executionAuthority": "NONE",
@@ -4575,11 +4977,164 @@
                   "adjustment": "느린 구간을 경쟁하지 않습니다. 뒤의 빠른 구간을 위해 느린 구간까지 강도를 올리지 않습니다."
                 },
                 "recovery": {
-                  "rpe": [
-                    1,
-                    3
-                  ],
-                  "cue": "걷기·쉬운 조깅·정지는 원래 구간 표시를 따릅니다. 숨참이 즉시 이 숫자로 내려가야 한다는 뜻은 아닙니다."
+                  "rpe": null,
+                  "cue": "회복 방식과 노력 안내는 아래 실제 회복 구간별 제안을 따릅니다. 모든 회복을 하나의 RPE로 지정하지 않습니다.",
+                  "targets": [
+                    {
+                      "partIndex": 1,
+                      "role": "EASY_RUN",
+                      "unit": "SECONDS",
+                      "value": 60,
+                      "boundary": "AFTER_EVERY",
+                      "set": 1,
+                      "rep": 1,
+                      "rpe": [
+                        1,
+                        3
+                      ],
+                      "cue": "회복 움직임의 체감 노력 제안입니다. 숨참이 즉시 이 수치로 낮아져야 한다는 뜻은 아닙니다."
+                    },
+                    {
+                      "partIndex": 3,
+                      "role": "EASY_RUN",
+                      "unit": "SECONDS",
+                      "value": 60,
+                      "boundary": "AFTER_EVERY",
+                      "set": 1,
+                      "rep": 2,
+                      "rpe": [
+                        1,
+                        3
+                      ],
+                      "cue": "회복 움직임의 체감 노력 제안입니다. 숨참이 즉시 이 수치로 낮아져야 한다는 뜻은 아닙니다."
+                    },
+                    {
+                      "partIndex": 5,
+                      "role": "EASY_RUN",
+                      "unit": "SECONDS",
+                      "value": 60,
+                      "boundary": "AFTER_EVERY",
+                      "set": 1,
+                      "rep": 3,
+                      "rpe": [
+                        1,
+                        3
+                      ],
+                      "cue": "회복 움직임의 체감 노력 제안입니다. 숨참이 즉시 이 수치로 낮아져야 한다는 뜻은 아닙니다."
+                    },
+                    {
+                      "partIndex": 6,
+                      "role": "EASY_RUN",
+                      "unit": "SECONDS",
+                      "value": 180,
+                      "boundary": "BETWEEN_SETS",
+                      "set": 1,
+                      "rep": 3,
+                      "rpe": [
+                        1,
+                        3
+                      ],
+                      "cue": "회복 움직임의 체감 노력 제안입니다. 숨참이 즉시 이 수치로 낮아져야 한다는 뜻은 아닙니다."
+                    },
+                    {
+                      "partIndex": 8,
+                      "role": "EASY_RUN",
+                      "unit": "SECONDS",
+                      "value": 60,
+                      "boundary": "AFTER_EVERY",
+                      "set": 2,
+                      "rep": 1,
+                      "rpe": [
+                        1,
+                        3
+                      ],
+                      "cue": "회복 움직임의 체감 노력 제안입니다. 숨참이 즉시 이 수치로 낮아져야 한다는 뜻은 아닙니다."
+                    },
+                    {
+                      "partIndex": 10,
+                      "role": "EASY_RUN",
+                      "unit": "SECONDS",
+                      "value": 60,
+                      "boundary": "AFTER_EVERY",
+                      "set": 2,
+                      "rep": 2,
+                      "rpe": [
+                        1,
+                        3
+                      ],
+                      "cue": "회복 움직임의 체감 노력 제안입니다. 숨참이 즉시 이 수치로 낮아져야 한다는 뜻은 아닙니다."
+                    },
+                    {
+                      "partIndex": 12,
+                      "role": "EASY_RUN",
+                      "unit": "SECONDS",
+                      "value": 60,
+                      "boundary": "AFTER_EVERY",
+                      "set": 2,
+                      "rep": 3,
+                      "rpe": [
+                        1,
+                        3
+                      ],
+                      "cue": "회복 움직임의 체감 노력 제안입니다. 숨참이 즉시 이 수치로 낮아져야 한다는 뜻은 아닙니다."
+                    },
+                    {
+                      "partIndex": 13,
+                      "role": "EASY_RUN",
+                      "unit": "SECONDS",
+                      "value": 180,
+                      "boundary": "BETWEEN_SETS",
+                      "set": 2,
+                      "rep": 3,
+                      "rpe": [
+                        1,
+                        3
+                      ],
+                      "cue": "회복 움직임의 체감 노력 제안입니다. 숨참이 즉시 이 수치로 낮아져야 한다는 뜻은 아닙니다."
+                    },
+                    {
+                      "partIndex": 15,
+                      "role": "EASY_RUN",
+                      "unit": "SECONDS",
+                      "value": 60,
+                      "boundary": "AFTER_EVERY",
+                      "set": 3,
+                      "rep": 1,
+                      "rpe": [
+                        1,
+                        3
+                      ],
+                      "cue": "회복 움직임의 체감 노력 제안입니다. 숨참이 즉시 이 수치로 낮아져야 한다는 뜻은 아닙니다."
+                    },
+                    {
+                      "partIndex": 17,
+                      "role": "EASY_RUN",
+                      "unit": "SECONDS",
+                      "value": 60,
+                      "boundary": "AFTER_EVERY",
+                      "set": 3,
+                      "rep": 2,
+                      "rpe": [
+                        1,
+                        3
+                      ],
+                      "cue": "회복 움직임의 체감 노력 제안입니다. 숨참이 즉시 이 수치로 낮아져야 한다는 뜻은 아닙니다."
+                    },
+                    {
+                      "partIndex": 19,
+                      "role": "EASY_RUN",
+                      "unit": "SECONDS",
+                      "value": 60,
+                      "boundary": "AFTER_EVERY",
+                      "set": 3,
+                      "rep": 3,
+                      "rpe": [
+                        1,
+                        3
+                      ],
+                      "cue": "회복 움직임의 체감 노력 제안입니다. 숨참이 즉시 이 수치로 낮아져야 한다는 뜻은 아닙니다."
+                    }
+                  ]
                 },
                 "sessionRpeTarget": null,
                 "measuredPhysiology": false,
@@ -4835,13 +5390,17 @@
         "personalEvidence": [],
         "notApplicable": [],
         "pending": [
+          "OWNER_ADOPTION",
+          "EFFORT_TARGET_APPLICABILITY",
+          "PERSONAL_PACE_WHERE_SUPPORTED",
+          "WHOLE_CYCLE_PLACEMENT",
           "EXACT_WORK_AND_INTENSITY_RATIONALE",
           "EXACT_RECOVERY_RATIONALE",
           "CURRENT_CYCLE_PLACEMENT",
           "INDIVIDUAL_APPLICABILITY",
           "EXACT_OWNER_ADOPTION"
         ],
-        "contentFingerprint": "sha256:cd991f11f208e272a8b4ff07c2dba8cb0f212f5e182bc9a83a00130cb4e85647"
+        "contentFingerprint": "sha256:0d2f729253fb065f7052bb07869c62e13be7c1825f68cce8980e566f137bbace"
       }
     },
     {
@@ -4874,7 +5433,7 @@
         "status": "OWNER_ADOPTION_PENDING"
       },
       "explanation": {
-        "version": "0.4",
+        "version": "0.5",
         "protocolId": "P-VO2-2",
         "method": "TWO_MINUTE",
         "executionAuthority": "NONE",
@@ -5225,7 +5784,7 @@
             "applicabilityReviewed": false,
             "supportReviewIssues": [],
             "guidance": {
-              "version": "0.2",
+              "version": "0.3",
               "protocolId": "P-VO2-2",
               "status": "COACHING_PROPOSAL_NOT_ADOPTED",
               "executionAuthority": "NONE",
@@ -5243,11 +5802,80 @@
                   "adjustment": "짧은 반복이라고 더 빠르게 달리지 않습니다. 참고 거리보다 정해진 운동 시간이 종료 기준입니다."
                 },
                 "recovery": {
-                  "rpe": [
-                    1,
-                    3
-                  ],
-                  "cue": "걷기·쉬운 조깅·정지는 원래 구간 표시를 따릅니다. 숨참이 즉시 이 숫자로 내려가야 한다는 뜻은 아닙니다."
+                  "rpe": null,
+                  "cue": "회복 방식과 노력 안내는 아래 실제 회복 구간별 제안을 따릅니다. 모든 회복을 하나의 RPE로 지정하지 않습니다.",
+                  "targets": [
+                    {
+                      "partIndex": 1,
+                      "role": "JOG",
+                      "unit": "SECONDS",
+                      "value": 60,
+                      "boundary": "BETWEEN_REPS",
+                      "set": 1,
+                      "rep": 1,
+                      "rpe": [
+                        1,
+                        3
+                      ],
+                      "cue": "회복 움직임의 체감 노력 제안입니다. 숨참이 즉시 이 수치로 낮아져야 한다는 뜻은 아닙니다."
+                    },
+                    {
+                      "partIndex": 3,
+                      "role": "JOG",
+                      "unit": "SECONDS",
+                      "value": 60,
+                      "boundary": "BETWEEN_REPS",
+                      "set": 1,
+                      "rep": 2,
+                      "rpe": [
+                        1,
+                        3
+                      ],
+                      "cue": "회복 움직임의 체감 노력 제안입니다. 숨참이 즉시 이 수치로 낮아져야 한다는 뜻은 아닙니다."
+                    },
+                    {
+                      "partIndex": 5,
+                      "role": "JOG",
+                      "unit": "SECONDS",
+                      "value": 60,
+                      "boundary": "BETWEEN_REPS",
+                      "set": 1,
+                      "rep": 3,
+                      "rpe": [
+                        1,
+                        3
+                      ],
+                      "cue": "회복 움직임의 체감 노력 제안입니다. 숨참이 즉시 이 수치로 낮아져야 한다는 뜻은 아닙니다."
+                    },
+                    {
+                      "partIndex": 7,
+                      "role": "JOG",
+                      "unit": "SECONDS",
+                      "value": 60,
+                      "boundary": "BETWEEN_REPS",
+                      "set": 1,
+                      "rep": 4,
+                      "rpe": [
+                        1,
+                        3
+                      ],
+                      "cue": "회복 움직임의 체감 노력 제안입니다. 숨참이 즉시 이 수치로 낮아져야 한다는 뜻은 아닙니다."
+                    },
+                    {
+                      "partIndex": 9,
+                      "role": "JOG",
+                      "unit": "SECONDS",
+                      "value": 60,
+                      "boundary": "BETWEEN_REPS",
+                      "set": 1,
+                      "rep": 5,
+                      "rpe": [
+                        1,
+                        3
+                      ],
+                      "cue": "회복 움직임의 체감 노력 제안입니다. 숨참이 즉시 이 수치로 낮아져야 한다는 뜻은 아닙니다."
+                    }
+                  ]
                 },
                 "sessionRpeTarget": null,
                 "measuredPhysiology": false,
@@ -5422,13 +6050,17 @@
         "personalEvidence": [],
         "notApplicable": [],
         "pending": [
+          "OWNER_ADOPTION",
+          "EFFORT_TARGET_APPLICABILITY",
+          "PERSONAL_PACE_WHERE_SUPPORTED",
+          "WHOLE_CYCLE_PLACEMENT",
           "EXACT_WORK_AND_INTENSITY_RATIONALE",
           "EXACT_RECOVERY_RATIONALE",
           "CURRENT_CYCLE_PLACEMENT",
           "INDIVIDUAL_APPLICABILITY",
           "EXACT_OWNER_ADOPTION"
         ],
-        "contentFingerprint": "sha256:7578dee546d2de352a19c873a033a867167e8b7a295e7d12d9b304f3cba5b5c4"
+        "contentFingerprint": "sha256:b2d301549fa2ddc83830e5b3f0924c5593aab2770c530329d3a4d29e8dd97603"
       }
     },
     {
@@ -5461,7 +6093,7 @@
         "status": "OWNER_ADOPTION_PENDING"
       },
       "explanation": {
-        "version": "0.4",
+        "version": "0.5",
         "protocolId": "P-VO2-3",
         "method": "THREE_MINUTE",
         "executionAuthority": "NONE",
@@ -5796,7 +6428,7 @@
             "applicabilityReviewed": false,
             "supportReviewIssues": [],
             "guidance": {
-              "version": "0.2",
+              "version": "0.3",
               "protocolId": "P-VO2-3",
               "status": "COACHING_PROPOSAL_NOT_ADOPTED",
               "executionAuthority": "NONE",
@@ -5814,11 +6446,66 @@
                   "adjustment": "짧은 반복이라고 더 빠르게 달리지 않습니다. 참고 거리보다 정해진 운동 시간이 종료 기준입니다."
                 },
                 "recovery": {
-                  "rpe": [
-                    1,
-                    3
-                  ],
-                  "cue": "걷기·쉬운 조깅·정지는 원래 구간 표시를 따릅니다. 숨참이 즉시 이 숫자로 내려가야 한다는 뜻은 아닙니다."
+                  "rpe": null,
+                  "cue": "회복 방식과 노력 안내는 아래 실제 회복 구간별 제안을 따릅니다. 모든 회복을 하나의 RPE로 지정하지 않습니다.",
+                  "targets": [
+                    {
+                      "partIndex": 1,
+                      "role": "JOG",
+                      "unit": "SECONDS",
+                      "value": 120,
+                      "boundary": "BETWEEN_REPS",
+                      "set": 1,
+                      "rep": 1,
+                      "rpe": [
+                        1,
+                        3
+                      ],
+                      "cue": "회복 움직임의 체감 노력 제안입니다. 숨참이 즉시 이 수치로 낮아져야 한다는 뜻은 아닙니다."
+                    },
+                    {
+                      "partIndex": 3,
+                      "role": "JOG",
+                      "unit": "SECONDS",
+                      "value": 120,
+                      "boundary": "BETWEEN_REPS",
+                      "set": 1,
+                      "rep": 2,
+                      "rpe": [
+                        1,
+                        3
+                      ],
+                      "cue": "회복 움직임의 체감 노력 제안입니다. 숨참이 즉시 이 수치로 낮아져야 한다는 뜻은 아닙니다."
+                    },
+                    {
+                      "partIndex": 5,
+                      "role": "JOG",
+                      "unit": "SECONDS",
+                      "value": 120,
+                      "boundary": "BETWEEN_REPS",
+                      "set": 1,
+                      "rep": 3,
+                      "rpe": [
+                        1,
+                        3
+                      ],
+                      "cue": "회복 움직임의 체감 노력 제안입니다. 숨참이 즉시 이 수치로 낮아져야 한다는 뜻은 아닙니다."
+                    },
+                    {
+                      "partIndex": 7,
+                      "role": "JOG",
+                      "unit": "SECONDS",
+                      "value": 120,
+                      "boundary": "BETWEEN_REPS",
+                      "set": 1,
+                      "rep": 4,
+                      "rpe": [
+                        1,
+                        3
+                      ],
+                      "cue": "회복 움직임의 체감 노력 제안입니다. 숨참이 즉시 이 수치로 낮아져야 한다는 뜻은 아닙니다."
+                    }
+                  ]
                 },
                 "sessionRpeTarget": null,
                 "measuredPhysiology": false,
@@ -5975,13 +6662,17 @@
         "personalEvidence": [],
         "notApplicable": [],
         "pending": [
+          "OWNER_ADOPTION",
+          "EFFORT_TARGET_APPLICABILITY",
+          "PERSONAL_PACE_WHERE_SUPPORTED",
+          "WHOLE_CYCLE_PLACEMENT",
           "EXACT_WORK_AND_INTENSITY_RATIONALE",
           "EXACT_RECOVERY_RATIONALE",
           "CURRENT_CYCLE_PLACEMENT",
           "INDIVIDUAL_APPLICABILITY",
           "EXACT_OWNER_ADOPTION"
         ],
-        "contentFingerprint": "sha256:794178d11341644a713ec4d1ee69c1b405adc2cc7a738b2c763d926df909a895"
+        "contentFingerprint": "sha256:d162ca5cf55276d0d2bfbb67a1fe6a46abb99eae65b46b8e43f0abc3f4fd152e"
       }
     },
     {
@@ -6014,7 +6705,7 @@
         "status": "OWNER_ADOPTION_PENDING"
       },
       "explanation": {
-        "version": "0.4",
+        "version": "0.5",
         "protocolId": "P-VO2-4",
         "method": "FOUR_MINUTE",
         "executionAuthority": "NONE",
@@ -6333,7 +7024,7 @@
             "applicabilityReviewed": false,
             "supportReviewIssues": [],
             "guidance": {
-              "version": "0.2",
+              "version": "0.3",
               "protocolId": "P-VO2-4",
               "status": "COACHING_PROPOSAL_NOT_ADOPTED",
               "executionAuthority": "NONE",
@@ -6351,11 +7042,52 @@
                   "adjustment": "짧은 반복이라고 더 빠르게 달리지 않습니다. 참고 거리보다 정해진 운동 시간이 종료 기준입니다."
                 },
                 "recovery": {
-                  "rpe": [
-                    1,
-                    3
-                  ],
-                  "cue": "걷기·쉬운 조깅·정지는 원래 구간 표시를 따릅니다. 숨참이 즉시 이 숫자로 내려가야 한다는 뜻은 아닙니다."
+                  "rpe": null,
+                  "cue": "회복 방식과 노력 안내는 아래 실제 회복 구간별 제안을 따릅니다. 모든 회복을 하나의 RPE로 지정하지 않습니다.",
+                  "targets": [
+                    {
+                      "partIndex": 1,
+                      "role": "JOG",
+                      "unit": "SECONDS",
+                      "value": 180,
+                      "boundary": "BETWEEN_REPS",
+                      "set": 1,
+                      "rep": 1,
+                      "rpe": [
+                        1,
+                        3
+                      ],
+                      "cue": "회복 움직임의 체감 노력 제안입니다. 숨참이 즉시 이 수치로 낮아져야 한다는 뜻은 아닙니다."
+                    },
+                    {
+                      "partIndex": 3,
+                      "role": "JOG",
+                      "unit": "SECONDS",
+                      "value": 180,
+                      "boundary": "BETWEEN_REPS",
+                      "set": 1,
+                      "rep": 2,
+                      "rpe": [
+                        1,
+                        3
+                      ],
+                      "cue": "회복 움직임의 체감 노력 제안입니다. 숨참이 즉시 이 수치로 낮아져야 한다는 뜻은 아닙니다."
+                    },
+                    {
+                      "partIndex": 5,
+                      "role": "JOG",
+                      "unit": "SECONDS",
+                      "value": 180,
+                      "boundary": "BETWEEN_REPS",
+                      "set": 1,
+                      "rep": 3,
+                      "rpe": [
+                        1,
+                        3
+                      ],
+                      "cue": "회복 움직임의 체감 노력 제안입니다. 숨참이 즉시 이 수치로 낮아져야 한다는 뜻은 아닙니다."
+                    }
+                  ]
                 },
                 "sessionRpeTarget": null,
                 "measuredPhysiology": false,
@@ -6494,13 +7226,17 @@
         "personalEvidence": [],
         "notApplicable": [],
         "pending": [
+          "OWNER_ADOPTION",
+          "EFFORT_TARGET_APPLICABILITY",
+          "PERSONAL_PACE_WHERE_SUPPORTED",
+          "WHOLE_CYCLE_PLACEMENT",
           "EXACT_WORK_AND_INTENSITY_RATIONALE",
           "EXACT_RECOVERY_RATIONALE",
           "CURRENT_CYCLE_PLACEMENT",
           "INDIVIDUAL_APPLICABILITY",
           "EXACT_OWNER_ADOPTION"
         ],
-        "contentFingerprint": "sha256:6022e134fd01c6dae4fa36f62c95d81bcfbe0332147dd438a0e25447f83eff48"
+        "contentFingerprint": "sha256:c54468db38da24525e36907d249ed19124f5a0dadd275b62bedc7a54487ce6ed"
       }
     },
     {
@@ -6533,7 +7269,7 @@
         "status": "OWNER_ADOPTION_PENDING"
       },
       "explanation": {
-        "version": "0.4",
+        "version": "0.5",
         "protocolId": "P-ATP-A",
         "method": "STANDING_ACCELERATION",
         "executionAuthority": "NONE",
@@ -6894,7 +7630,7 @@
             "applicabilityReviewed": false,
             "supportReviewIssues": [],
             "guidance": {
-              "version": "0.2",
+              "version": "0.3",
               "protocolId": "P-ATP-A",
               "status": "COACHING_PROPOSAL_NOT_ADOPTED",
               "executionAuthority": "NONE",
@@ -6909,11 +7645,65 @@
                   "adjustment": "힘을 더 줘도 가속이나 동작이 뚜렷하게 나빠지면 남은 반복을 억지로 채우지 않습니다. 숨이 덜 찬다는 이유로 반복을 추가하지 않습니다."
                 },
                 "recovery": {
-                  "rpe": [
-                    1,
-                    3
-                  ],
-                  "cue": "걷기·쉬운 조깅·정지는 원래 구간 표시를 따릅니다. 숨참이 즉시 이 숫자로 내려가야 한다는 뜻은 아닙니다."
+                  "rpe": null,
+                  "cue": "회복 방식과 노력 안내는 아래 실제 회복 구간별 제안을 따릅니다. 모든 회복을 하나의 RPE로 지정하지 않습니다.",
+                  "targets": [
+                    {
+                      "partIndex": 1,
+                      "role": "WALK_OR_STAND",
+                      "unit": "SECONDS",
+                      "value": 120,
+                      "boundary": "BETWEEN_REPS",
+                      "set": 1,
+                      "rep": 1,
+                      "rpe": null,
+                      "cue": "숫자 RPE를 지정하지 않습니다. 이 구간의 회복 방식과 속도 감소 안내를 따릅니다."
+                    },
+                    {
+                      "partIndex": 3,
+                      "role": "WALK_OR_STAND",
+                      "unit": "SECONDS",
+                      "value": 120,
+                      "boundary": "BETWEEN_REPS",
+                      "set": 1,
+                      "rep": 2,
+                      "rpe": null,
+                      "cue": "숫자 RPE를 지정하지 않습니다. 이 구간의 회복 방식과 속도 감소 안내를 따릅니다."
+                    },
+                    {
+                      "partIndex": 5,
+                      "role": "WALK_OR_STAND",
+                      "unit": "SECONDS",
+                      "value": 120,
+                      "boundary": "BETWEEN_REPS",
+                      "set": 1,
+                      "rep": 3,
+                      "rpe": null,
+                      "cue": "숫자 RPE를 지정하지 않습니다. 이 구간의 회복 방식과 속도 감소 안내를 따릅니다."
+                    },
+                    {
+                      "partIndex": 7,
+                      "role": "WALK_OR_STAND",
+                      "unit": "SECONDS",
+                      "value": 120,
+                      "boundary": "BETWEEN_REPS",
+                      "set": 1,
+                      "rep": 4,
+                      "rpe": null,
+                      "cue": "숫자 RPE를 지정하지 않습니다. 이 구간의 회복 방식과 속도 감소 안내를 따릅니다."
+                    },
+                    {
+                      "partIndex": 9,
+                      "role": "WALK_OR_STAND",
+                      "unit": "SECONDS",
+                      "value": 120,
+                      "boundary": "BETWEEN_REPS",
+                      "set": 1,
+                      "rep": 5,
+                      "rpe": null,
+                      "cue": "숫자 RPE를 지정하지 않습니다. 이 구간의 회복 방식과 속도 감소 안내를 따릅니다."
+                    }
+                  ]
                 },
                 "sessionRpeTarget": null,
                 "measuredPhysiology": false,
@@ -7088,13 +7878,17 @@
         "personalEvidence": [],
         "notApplicable": [],
         "pending": [
+          "OWNER_ADOPTION",
+          "EFFORT_TARGET_APPLICABILITY",
+          "PERSONAL_PACE_WHERE_SUPPORTED",
+          "WHOLE_CYCLE_PLACEMENT",
           "EXACT_WORK_AND_INTENSITY_RATIONALE",
           "EXACT_RECOVERY_RATIONALE",
           "CURRENT_CYCLE_PLACEMENT",
           "INDIVIDUAL_APPLICABILITY",
           "EXACT_OWNER_ADOPTION"
         ],
-        "contentFingerprint": "sha256:a0b93fedb111e10ac46a641f25cdfe2d5a96fd4f0d49cbc850d4f59dc7f84a2f"
+        "contentFingerprint": "sha256:877d0eef6a1fcf34b61cfa3798feaa420119c88d54c2a955b7eee7b535432cb7"
       }
     },
     {
@@ -7126,7 +7920,7 @@
         "status": "OWNER_ADOPTION_PENDING"
       },
       "explanation": {
-        "version": "0.4",
+        "version": "0.5",
         "protocolId": "P-ATP-F",
         "method": "FLYING_SEGMENT",
         "executionAuthority": "NONE",
@@ -7505,7 +8299,7 @@
             "applicabilityReviewed": false,
             "supportReviewIssues": [],
             "guidance": {
-              "version": "0.2",
+              "version": "0.3",
               "protocolId": "P-ATP-F",
               "status": "COACHING_PROPOSAL_NOT_ADOPTED",
               "executionAuthority": "NONE",
@@ -7520,11 +8314,43 @@
                   "adjustment": "힘을 더 줘도 가속이나 동작이 뚜렷하게 나빠지면 남은 반복을 억지로 채우지 않습니다. 숨이 덜 찬다는 이유로 반복을 추가하지 않습니다."
                 },
                 "recovery": {
-                  "rpe": [
-                    1,
-                    3
-                  ],
-                  "cue": "걷기·쉬운 조깅·정지는 원래 구간 표시를 따릅니다. 숨참이 즉시 이 숫자로 내려가야 한다는 뜻은 아닙니다."
+                  "rpe": null,
+                  "cue": "회복 방식과 노력 안내는 아래 실제 회복 구간별 제안을 따릅니다. 모든 회복을 하나의 RPE로 지정하지 않습니다.",
+                  "targets": [
+                    {
+                      "partIndex": 2,
+                      "role": "WALK_OR_STAND",
+                      "unit": "SECONDS",
+                      "value": 240,
+                      "boundary": "BETWEEN_REPS",
+                      "set": 1,
+                      "rep": 1,
+                      "rpe": null,
+                      "cue": "숫자 RPE를 지정하지 않습니다. 이 구간의 회복 방식과 속도 감소 안내를 따릅니다."
+                    },
+                    {
+                      "partIndex": 5,
+                      "role": "WALK_OR_STAND",
+                      "unit": "SECONDS",
+                      "value": 240,
+                      "boundary": "BETWEEN_REPS",
+                      "set": 1,
+                      "rep": 2,
+                      "rpe": null,
+                      "cue": "숫자 RPE를 지정하지 않습니다. 이 구간의 회복 방식과 속도 감소 안내를 따릅니다."
+                    },
+                    {
+                      "partIndex": 8,
+                      "role": "WALK_OR_STAND",
+                      "unit": "SECONDS",
+                      "value": 240,
+                      "boundary": "BETWEEN_REPS",
+                      "set": 1,
+                      "rep": 3,
+                      "rpe": null,
+                      "cue": "숫자 RPE를 지정하지 않습니다. 이 구간의 회복 방식과 속도 감소 안내를 따릅니다."
+                    }
+                  ]
                 },
                 "sessionRpeTarget": null,
                 "measuredPhysiology": false,
@@ -7699,13 +8525,17 @@
         "personalEvidence": [],
         "notApplicable": [],
         "pending": [
+          "OWNER_ADOPTION",
+          "EFFORT_TARGET_APPLICABILITY",
+          "PERSONAL_PACE_WHERE_SUPPORTED",
+          "WHOLE_CYCLE_PLACEMENT",
           "EXACT_WORK_AND_INTENSITY_RATIONALE",
           "EXACT_RECOVERY_RATIONALE",
           "CURRENT_CYCLE_PLACEMENT",
           "INDIVIDUAL_APPLICABILITY",
           "EXACT_OWNER_ADOPTION"
         ],
-        "contentFingerprint": "sha256:94ca35d14d836b62ecfff248a4235cb7446ebf3855b9cb82250cc20271be29c1"
+        "contentFingerprint": "sha256:38b30554929e23c2965f95edfbd73cfb640d566c5e805880ce0d984ffb198d9a"
       }
     },
     {
@@ -7738,7 +8568,7 @@
         "status": "OWNER_ADOPTION_PENDING"
       },
       "explanation": {
-        "version": "0.4",
+        "version": "0.5",
         "protocolId": "P-ATP-T",
         "method": "TIMED_ACCELERATION",
         "executionAuthority": "NONE",
@@ -8067,7 +8897,7 @@
             "applicabilityReviewed": false,
             "supportReviewIssues": [],
             "guidance": {
-              "version": "0.2",
+              "version": "0.3",
               "protocolId": "P-ATP-T",
               "status": "COACHING_PROPOSAL_NOT_ADOPTED",
               "executionAuthority": "NONE",
@@ -8082,11 +8912,43 @@
                   "adjustment": "힘을 더 줘도 가속이나 동작이 뚜렷하게 나빠지면 남은 반복을 억지로 채우지 않습니다. 숨이 덜 찬다는 이유로 반복을 추가하지 않습니다."
                 },
                 "recovery": {
-                  "rpe": [
-                    1,
-                    3
-                  ],
-                  "cue": "걷기·쉬운 조깅·정지는 원래 구간 표시를 따릅니다. 숨참이 즉시 이 숫자로 내려가야 한다는 뜻은 아닙니다."
+                  "rpe": null,
+                  "cue": "회복 방식과 노력 안내는 아래 실제 회복 구간별 제안을 따릅니다. 모든 회복을 하나의 RPE로 지정하지 않습니다.",
+                  "targets": [
+                    {
+                      "partIndex": 1,
+                      "role": "WALK_OR_STAND",
+                      "unit": "SECONDS",
+                      "value": 180,
+                      "boundary": "BETWEEN_REPS",
+                      "set": 1,
+                      "rep": 1,
+                      "rpe": null,
+                      "cue": "숫자 RPE를 지정하지 않습니다. 이 구간의 회복 방식과 속도 감소 안내를 따릅니다."
+                    },
+                    {
+                      "partIndex": 3,
+                      "role": "WALK_OR_STAND",
+                      "unit": "SECONDS",
+                      "value": 180,
+                      "boundary": "BETWEEN_REPS",
+                      "set": 1,
+                      "rep": 2,
+                      "rpe": null,
+                      "cue": "숫자 RPE를 지정하지 않습니다. 이 구간의 회복 방식과 속도 감소 안내를 따릅니다."
+                    },
+                    {
+                      "partIndex": 5,
+                      "role": "WALK_OR_STAND",
+                      "unit": "SECONDS",
+                      "value": 180,
+                      "boundary": "BETWEEN_REPS",
+                      "set": 1,
+                      "rep": 3,
+                      "rpe": null,
+                      "cue": "숫자 RPE를 지정하지 않습니다. 이 구간의 회복 방식과 속도 감소 안내를 따릅니다."
+                    }
+                  ]
                 },
                 "sessionRpeTarget": null,
                 "measuredPhysiology": false,
@@ -8225,13 +9087,17 @@
         "personalEvidence": [],
         "notApplicable": [],
         "pending": [
+          "OWNER_ADOPTION",
+          "EFFORT_TARGET_APPLICABILITY",
+          "PERSONAL_PACE_WHERE_SUPPORTED",
+          "WHOLE_CYCLE_PLACEMENT",
           "EXACT_WORK_AND_INTENSITY_RATIONALE",
           "EXACT_RECOVERY_RATIONALE",
           "CURRENT_CYCLE_PLACEMENT",
           "INDIVIDUAL_APPLICABILITY",
           "EXACT_OWNER_ADOPTION"
         ],
-        "contentFingerprint": "sha256:6daa6f7bb91fda3baf5cf32c96e2e9d28ea1401e1fc3dca50383a02a6866aba5"
+        "contentFingerprint": "sha256:8d6830455351c43a5e2d7870ffc9e28e6291a69f704df6c2ef0863436f550905"
       }
     },
     {
@@ -8264,7 +9130,7 @@
         "status": "OWNER_ADOPTION_PENDING"
       },
       "explanation": {
-        "version": "0.4",
+        "version": "0.5",
         "protocolId": "P-GLY-D",
         "method": "UNBROKEN_REPEATS",
         "executionAuthority": "NONE",
@@ -8635,7 +9501,7 @@
             "applicabilityReviewed": false,
             "supportReviewIssues": [],
             "guidance": {
-              "version": "0.2",
+              "version": "0.3",
               "protocolId": "P-GLY-D",
               "status": "COACHING_PROPOSAL_NOT_ADOPTED",
               "executionAuthority": "NONE",
@@ -8653,11 +9519,80 @@
                   "adjustment": "피로로 동작이 무너지면 반복을 중단합니다. 세트 회복을 추가한 구성도 더 빠르게 달리라는 허가가 아닙니다."
                 },
                 "recovery": {
-                  "rpe": [
-                    1,
-                    3
-                  ],
-                  "cue": "걷기·쉬운 조깅·정지는 원래 구간 표시를 따릅니다. 숨참이 즉시 이 숫자로 내려가야 한다는 뜻은 아닙니다."
+                  "rpe": null,
+                  "cue": "회복 방식과 노력 안내는 아래 실제 회복 구간별 제안을 따릅니다. 모든 회복을 하나의 RPE로 지정하지 않습니다.",
+                  "targets": [
+                    {
+                      "partIndex": 1,
+                      "role": "WALK",
+                      "unit": "SECONDS",
+                      "value": 120,
+                      "boundary": "BETWEEN_REPS",
+                      "set": 1,
+                      "rep": 1,
+                      "rpe": [
+                        1,
+                        3
+                      ],
+                      "cue": "회복 움직임의 체감 노력 제안입니다. 숨참이 즉시 이 수치로 낮아져야 한다는 뜻은 아닙니다."
+                    },
+                    {
+                      "partIndex": 3,
+                      "role": "WALK",
+                      "unit": "SECONDS",
+                      "value": 120,
+                      "boundary": "BETWEEN_REPS",
+                      "set": 1,
+                      "rep": 2,
+                      "rpe": [
+                        1,
+                        3
+                      ],
+                      "cue": "회복 움직임의 체감 노력 제안입니다. 숨참이 즉시 이 수치로 낮아져야 한다는 뜻은 아닙니다."
+                    },
+                    {
+                      "partIndex": 5,
+                      "role": "WALK",
+                      "unit": "SECONDS",
+                      "value": 120,
+                      "boundary": "BETWEEN_REPS",
+                      "set": 1,
+                      "rep": 3,
+                      "rpe": [
+                        1,
+                        3
+                      ],
+                      "cue": "회복 움직임의 체감 노력 제안입니다. 숨참이 즉시 이 수치로 낮아져야 한다는 뜻은 아닙니다."
+                    },
+                    {
+                      "partIndex": 7,
+                      "role": "WALK",
+                      "unit": "SECONDS",
+                      "value": 120,
+                      "boundary": "BETWEEN_REPS",
+                      "set": 1,
+                      "rep": 4,
+                      "rpe": [
+                        1,
+                        3
+                      ],
+                      "cue": "회복 움직임의 체감 노력 제안입니다. 숨참이 즉시 이 수치로 낮아져야 한다는 뜻은 아닙니다."
+                    },
+                    {
+                      "partIndex": 9,
+                      "role": "WALK",
+                      "unit": "SECONDS",
+                      "value": 120,
+                      "boundary": "BETWEEN_REPS",
+                      "set": 1,
+                      "rep": 5,
+                      "rpe": [
+                        1,
+                        3
+                      ],
+                      "cue": "회복 움직임의 체감 노력 제안입니다. 숨참이 즉시 이 수치로 낮아져야 한다는 뜻은 아닙니다."
+                    }
+                  ]
                 },
                 "sessionRpeTarget": null,
                 "measuredPhysiology": false,
@@ -8832,13 +9767,17 @@
         "personalEvidence": [],
         "notApplicable": [],
         "pending": [
+          "OWNER_ADOPTION",
+          "EFFORT_TARGET_APPLICABILITY",
+          "PERSONAL_PACE_WHERE_SUPPORTED",
+          "WHOLE_CYCLE_PLACEMENT",
           "EXACT_WORK_AND_INTENSITY_RATIONALE",
           "EXACT_RECOVERY_RATIONALE",
           "CURRENT_CYCLE_PLACEMENT",
           "INDIVIDUAL_APPLICABILITY",
           "EXACT_OWNER_ADOPTION"
         ],
-        "contentFingerprint": "sha256:171ba059fe272e609f82394e1f0b86e9f129ca39ebcfb391518c61b83621ae67"
+        "contentFingerprint": "sha256:196776da4de197896d693919b5f4685fe863e5f24c8c9aa3bae22968625050ae"
       }
     },
     {
@@ -8871,7 +9810,7 @@
         "status": "OWNER_ADOPTION_PENDING"
       },
       "explanation": {
-        "version": "0.4",
+        "version": "0.5",
         "protocolId": "P-GLY-S",
         "method": "SET_REPEATS",
         "executionAuthority": "NONE",
@@ -9258,7 +10197,7 @@
             "applicabilityReviewed": false,
             "supportReviewIssues": [],
             "guidance": {
-              "version": "0.2",
+              "version": "0.3",
               "protocolId": "P-GLY-S",
               "status": "COACHING_PROPOSAL_NOT_ADOPTED",
               "executionAuthority": "NONE",
@@ -9276,11 +10215,77 @@
                   "adjustment": "피로로 동작이 무너지면 반복을 중단합니다. 세트 회복을 추가한 구성도 더 빠르게 달리라는 허가가 아닙니다."
                 },
                 "recovery": {
-                  "rpe": [
-                    1,
-                    3
-                  ],
-                  "cue": "걷기·쉬운 조깅·정지는 원래 구간 표시를 따릅니다. 숨참이 즉시 이 숫자로 내려가야 한다는 뜻은 아닙니다."
+                  "rpe": null,
+                  "cue": "회복 방식과 노력 안내는 아래 실제 회복 구간별 제안을 따릅니다. 모든 회복을 하나의 RPE로 지정하지 않습니다.",
+                  "targets": [
+                    {
+                      "partIndex": 1,
+                      "role": "WALK",
+                      "unit": "SECONDS",
+                      "value": 120,
+                      "boundary": "BETWEEN_REPS",
+                      "set": 1,
+                      "rep": 1,
+                      "rpe": [
+                        1,
+                        3
+                      ],
+                      "cue": "회복 움직임의 체감 노력 제안입니다. 숨참이 즉시 이 수치로 낮아져야 한다는 뜻은 아닙니다."
+                    },
+                    {
+                      "partIndex": 3,
+                      "role": "WALK",
+                      "unit": "SECONDS",
+                      "value": 120,
+                      "boundary": "BETWEEN_REPS",
+                      "set": 1,
+                      "rep": 2,
+                      "rpe": [
+                        1,
+                        3
+                      ],
+                      "cue": "회복 움직임의 체감 노력 제안입니다. 숨참이 즉시 이 수치로 낮아져야 한다는 뜻은 아닙니다."
+                    },
+                    {
+                      "partIndex": 5,
+                      "role": "WALK_OR_STAND",
+                      "unit": "SECONDS",
+                      "value": 300,
+                      "boundary": "BETWEEN_SETS",
+                      "set": 1,
+                      "rep": 3,
+                      "rpe": null,
+                      "cue": "숫자 RPE를 지정하지 않습니다. 이 구간의 회복 방식과 속도 감소 안내를 따릅니다."
+                    },
+                    {
+                      "partIndex": 7,
+                      "role": "WALK",
+                      "unit": "SECONDS",
+                      "value": 120,
+                      "boundary": "BETWEEN_REPS",
+                      "set": 2,
+                      "rep": 1,
+                      "rpe": [
+                        1,
+                        3
+                      ],
+                      "cue": "회복 움직임의 체감 노력 제안입니다. 숨참이 즉시 이 수치로 낮아져야 한다는 뜻은 아닙니다."
+                    },
+                    {
+                      "partIndex": 9,
+                      "role": "WALK",
+                      "unit": "SECONDS",
+                      "value": 120,
+                      "boundary": "BETWEEN_REPS",
+                      "set": 2,
+                      "rep": 2,
+                      "rpe": [
+                        1,
+                        3
+                      ],
+                      "cue": "회복 움직임의 체감 노력 제안입니다. 숨참이 즉시 이 수치로 낮아져야 한다는 뜻은 아닙니다."
+                    }
+                  ]
                 },
                 "sessionRpeTarget": null,
                 "measuredPhysiology": false,
@@ -9455,13 +10460,17 @@
         "personalEvidence": [],
         "notApplicable": [],
         "pending": [
+          "OWNER_ADOPTION",
+          "EFFORT_TARGET_APPLICABILITY",
+          "PERSONAL_PACE_WHERE_SUPPORTED",
+          "WHOLE_CYCLE_PLACEMENT",
           "EXACT_WORK_AND_INTENSITY_RATIONALE",
           "EXACT_RECOVERY_RATIONALE",
           "CURRENT_CYCLE_PLACEMENT",
           "INDIVIDUAL_APPLICABILITY",
           "EXACT_OWNER_ADOPTION"
         ],
-        "contentFingerprint": "sha256:ffba7d96565162429a5627aae80acd8b82901ec3e03ffd18f8024c31cb06cd22"
+        "contentFingerprint": "sha256:010e76d7d16beb637ea198071f17c26f19978d49d2d782d0a52d2a54247188b0"
       }
     },
     {
@@ -9495,7 +10504,7 @@
         "status": "OWNER_ADOPTION_PENDING"
       },
       "explanation": {
-        "version": "0.4",
+        "version": "0.5",
         "protocolId": "P-REC-W",
         "method": "WALK",
         "executionAuthority": "NONE",
@@ -9618,7 +10627,7 @@
             "applicabilityReviewed": false,
             "supportReviewIssues": [],
             "guidance": {
-              "version": "0.2",
+              "version": "0.3",
               "protocolId": "P-REC-W",
               "status": "COACHING_PROPOSAL_NOT_ADOPTED",
               "executionAuthority": "NONE",
@@ -9636,11 +10645,9 @@
                   "adjustment": "회복 운동을 완료해도 회복이 끝났다고 판단하지 않습니다."
                 },
                 "recovery": {
-                  "rpe": [
-                    1,
-                    3
-                  ],
-                  "cue": "걷기·쉬운 조깅·정지는 원래 구간 표시를 따릅니다. 숨참이 즉시 이 숫자로 내려가야 한다는 뜻은 아닙니다."
+                  "rpe": null,
+                  "cue": "회복 방식과 노력 안내는 아래 실제 회복 구간별 제안을 따릅니다. 모든 회복을 하나의 RPE로 지정하지 않습니다.",
+                  "targets": []
                 },
                 "sessionRpeTarget": null,
                 "measuredPhysiology": false,
@@ -9725,13 +10732,17 @@
         "personalEvidence": [],
         "notApplicable": [],
         "pending": [
+          "OWNER_ADOPTION",
+          "EFFORT_TARGET_APPLICABILITY",
+          "PERSONAL_PACE_WHERE_SUPPORTED",
+          "WHOLE_CYCLE_PLACEMENT",
           "EXACT_WORK_AND_INTENSITY_RATIONALE",
           "EXACT_RECOVERY_RATIONALE",
           "CURRENT_CYCLE_PLACEMENT",
           "INDIVIDUAL_APPLICABILITY",
           "EXACT_OWNER_ADOPTION"
         ],
-        "contentFingerprint": "sha256:7d21d40cc23a4dad6c76815fc3ed7b2bad2dcbdc4085ce8007915d9d00fcab96"
+        "contentFingerprint": "sha256:1969b4c46f4f91c3a285a8a719eddbc21cdbbe7e1309a73a50d70b822df73cc1"
       }
     },
     {
@@ -9765,7 +10776,7 @@
         "status": "OWNER_ADOPTION_PENDING"
       },
       "explanation": {
-        "version": "0.4",
+        "version": "0.5",
         "protocolId": "P-OFF",
         "method": "NO_PLANNED_EXERCISE",
         "executionAuthority": "NONE",
@@ -9832,7 +10843,7 @@
             "id": "P-OFF",
             "executionAuthority": "NONE",
             "guidance": {
-              "version": "0.2",
+              "version": "0.3",
               "protocolId": "P-OFF",
               "status": "COACHING_PROPOSAL_NOT_ADOPTED",
               "executionAuthority": "NONE",
@@ -9867,11 +10878,13 @@
           }
         ],
         "pending": [
+          "OWNER_ADOPTION",
+          "WHOLE_CYCLE_PLACEMENT",
           "CURRENT_CYCLE_PLACEMENT",
           "INDIVIDUAL_APPLICABILITY",
           "EXACT_OWNER_ADOPTION"
         ],
-        "contentFingerprint": "sha256:6a52389e9a17e0a7c211bb7a6c609b6e16c61d3a10c00a7f7567596115e44f0d"
+        "contentFingerprint": "sha256:0e67cac2dc9c673f0d68532a1b6d50687fddbf91a719a59e1a447341dd94420b"
       }
     },
     {
@@ -9903,7 +10916,7 @@
         "status": "OWNER_ADOPTION_PENDING"
       },
       "explanation": {
-        "version": "0.4",
+        "version": "0.5",
         "protocolId": "P-INTRO-LT-C",
         "method": "CONTINUOUS",
         "executionAuthority": "NONE",
@@ -10169,7 +11182,7 @@
             "applicabilityReviewed": false,
             "supportReviewIssues": [],
             "guidance": {
-              "version": "0.2",
+              "version": "0.3",
               "protocolId": "P-INTRO-LT-C",
               "status": "COACHING_PROPOSAL_NOT_ADOPTED",
               "executionAuthority": "NONE",
@@ -10187,11 +11200,9 @@
                   "adjustment": "첫 구간부터 끝까지 유지하기 어려우면 속도를 낮춥니다. 회복이 있는 분할형도 전력 반복으로 바꾸지 않습니다."
                 },
                 "recovery": {
-                  "rpe": [
-                    1,
-                    3
-                  ],
-                  "cue": "걷기·쉬운 조깅·정지는 원래 구간 표시를 따릅니다. 숨참이 즉시 이 숫자로 내려가야 한다는 뜻은 아닙니다."
+                  "rpe": null,
+                  "cue": "회복 방식과 노력 안내는 아래 실제 회복 구간별 제안을 따릅니다. 모든 회복을 하나의 RPE로 지정하지 않습니다.",
+                  "targets": []
                 },
                 "sessionRpeTarget": null,
                 "measuredPhysiology": false,
@@ -10276,6 +11287,10 @@
         "personalEvidence": [],
         "notApplicable": [],
         "pending": [
+          "OWNER_ADOPTION",
+          "EFFORT_TARGET_APPLICABILITY",
+          "PERSONAL_PACE_WHERE_SUPPORTED",
+          "WHOLE_CYCLE_PLACEMENT",
           "EXACT_WORK_AND_INTENSITY_RATIONALE",
           "EXACT_RECOVERY_RATIONALE",
           "CURRENT_CYCLE_PLACEMENT",
@@ -10285,7 +11300,7 @@
           "INTRO_SUPPORT_APPLICABILITY",
           "INTRO_EFFORT_APPLICABILITY"
         ],
-        "contentFingerprint": "sha256:374e29a63bcf5a3bd3dcca179aa79ab35ad234dc77e510598810c309e8b29d3b"
+        "contentFingerprint": "sha256:21dba58a475ddc2823c3b78f920dc4eae4b5b4db0be81397f38efa75ab65c113"
       }
     },
     {
@@ -10317,7 +11332,7 @@
         "status": "OWNER_ADOPTION_PENDING"
       },
       "explanation": {
-        "version": "0.4",
+        "version": "0.5",
         "protocolId": "P-INTRO-LT-S",
         "method": "SHORT_SPLIT",
         "executionAuthority": "NONE",
@@ -10604,7 +11619,7 @@
             "applicabilityReviewed": false,
             "supportReviewIssues": [],
             "guidance": {
-              "version": "0.2",
+              "version": "0.3",
               "protocolId": "P-INTRO-LT-S",
               "status": "COACHING_PROPOSAL_NOT_ADOPTED",
               "executionAuthority": "NONE",
@@ -10622,11 +11637,24 @@
                   "adjustment": "첫 구간부터 끝까지 유지하기 어려우면 속도를 낮춥니다. 회복이 있는 분할형도 전력 반복으로 바꾸지 않습니다."
                 },
                 "recovery": {
-                  "rpe": [
-                    1,
-                    3
-                  ],
-                  "cue": "걷기·쉬운 조깅·정지는 원래 구간 표시를 따릅니다. 숨참이 즉시 이 숫자로 내려가야 한다는 뜻은 아닙니다."
+                  "rpe": null,
+                  "cue": "회복 방식과 노력 안내는 아래 실제 회복 구간별 제안을 따릅니다. 모든 회복을 하나의 RPE로 지정하지 않습니다.",
+                  "targets": [
+                    {
+                      "partIndex": 1,
+                      "role": "JOG",
+                      "unit": "SECONDS",
+                      "value": 60,
+                      "boundary": "BETWEEN_REPS",
+                      "set": 1,
+                      "rep": 1,
+                      "rpe": [
+                        1,
+                        3
+                      ],
+                      "cue": "회복 움직임의 체감 노력 제안입니다. 숨참이 즉시 이 수치로 낮아져야 한다는 뜻은 아닙니다."
+                    }
+                  ]
                 },
                 "sessionRpeTarget": null,
                 "measuredPhysiology": false,
@@ -10729,6 +11757,10 @@
         "personalEvidence": [],
         "notApplicable": [],
         "pending": [
+          "OWNER_ADOPTION",
+          "EFFORT_TARGET_APPLICABILITY",
+          "PERSONAL_PACE_WHERE_SUPPORTED",
+          "WHOLE_CYCLE_PLACEMENT",
           "EXACT_WORK_AND_INTENSITY_RATIONALE",
           "EXACT_RECOVERY_RATIONALE",
           "CURRENT_CYCLE_PLACEMENT",
@@ -10738,7 +11770,7 @@
           "INTRO_SUPPORT_APPLICABILITY",
           "INTRO_EFFORT_APPLICABILITY"
         ],
-        "contentFingerprint": "sha256:4969bfc935b0c75f2a86bff64f88ee4bed8b30a1cea21289f447538ce8755d53"
+        "contentFingerprint": "sha256:d8229c44b10f0c1c34d48801455b48ac474c7cc1766621950a1bf6b8e471e4a3"
       }
     },
     {
@@ -10770,7 +11802,7 @@
         "status": "OWNER_ADOPTION_PENDING"
       },
       "explanation": {
-        "version": "0.4",
+        "version": "0.5",
         "protocolId": "P-INTRO-VO2-2",
         "method": "TWO_MINUTE",
         "executionAuthority": "NONE",
@@ -11073,7 +12105,7 @@
             "applicabilityReviewed": false,
             "supportReviewIssues": [],
             "guidance": {
-              "version": "0.2",
+              "version": "0.3",
               "protocolId": "P-INTRO-VO2-2",
               "status": "COACHING_PROPOSAL_NOT_ADOPTED",
               "executionAuthority": "NONE",
@@ -11091,11 +12123,38 @@
                   "adjustment": "짧은 반복이라고 더 빠르게 달리지 않습니다. 참고 거리보다 정해진 운동 시간이 종료 기준입니다."
                 },
                 "recovery": {
-                  "rpe": [
-                    1,
-                    3
-                  ],
-                  "cue": "걷기·쉬운 조깅·정지는 원래 구간 표시를 따릅니다. 숨참이 즉시 이 숫자로 내려가야 한다는 뜻은 아닙니다."
+                  "rpe": null,
+                  "cue": "회복 방식과 노력 안내는 아래 실제 회복 구간별 제안을 따릅니다. 모든 회복을 하나의 RPE로 지정하지 않습니다.",
+                  "targets": [
+                    {
+                      "partIndex": 1,
+                      "role": "JOG",
+                      "unit": "SECONDS",
+                      "value": 90,
+                      "boundary": "BETWEEN_REPS",
+                      "set": 1,
+                      "rep": 1,
+                      "rpe": [
+                        1,
+                        3
+                      ],
+                      "cue": "회복 움직임의 체감 노력 제안입니다. 숨참이 즉시 이 수치로 낮아져야 한다는 뜻은 아닙니다."
+                    },
+                    {
+                      "partIndex": 3,
+                      "role": "JOG",
+                      "unit": "SECONDS",
+                      "value": 90,
+                      "boundary": "BETWEEN_REPS",
+                      "set": 1,
+                      "rep": 2,
+                      "rpe": [
+                        1,
+                        3
+                      ],
+                      "cue": "회복 움직임의 체감 노력 제안입니다. 숨참이 즉시 이 수치로 낮아져야 한다는 뜻은 아닙니다."
+                    }
+                  ]
                 },
                 "sessionRpeTarget": null,
                 "measuredPhysiology": false,
@@ -11216,6 +12275,10 @@
         "personalEvidence": [],
         "notApplicable": [],
         "pending": [
+          "OWNER_ADOPTION",
+          "EFFORT_TARGET_APPLICABILITY",
+          "PERSONAL_PACE_WHERE_SUPPORTED",
+          "WHOLE_CYCLE_PLACEMENT",
           "EXACT_WORK_AND_INTENSITY_RATIONALE",
           "EXACT_RECOVERY_RATIONALE",
           "CURRENT_CYCLE_PLACEMENT",
@@ -11225,7 +12288,7 @@
           "INTRO_SUPPORT_APPLICABILITY",
           "INTRO_EFFORT_APPLICABILITY"
         ],
-        "contentFingerprint": "sha256:813b515a077285196896ed6b032637a20ea39635d85567e735213c28bcc41f3e"
+        "contentFingerprint": "sha256:9dacb8a22ac6c86e8f553ac6c0e35cb7ee5aff600c7164a107c81b3585dab2b2"
       }
     },
     {
@@ -11257,7 +12320,7 @@
         "status": "OWNER_ADOPTION_PENDING"
       },
       "explanation": {
-        "version": "0.4",
+        "version": "0.5",
         "protocolId": "P-INTRO-VO2-3",
         "method": "THREE_MINUTE",
         "executionAuthority": "NONE",
@@ -11544,7 +12607,7 @@
             "applicabilityReviewed": false,
             "supportReviewIssues": [],
             "guidance": {
-              "version": "0.2",
+              "version": "0.3",
               "protocolId": "P-INTRO-VO2-3",
               "status": "COACHING_PROPOSAL_NOT_ADOPTED",
               "executionAuthority": "NONE",
@@ -11562,11 +12625,24 @@
                   "adjustment": "짧은 반복이라고 더 빠르게 달리지 않습니다. 참고 거리보다 정해진 운동 시간이 종료 기준입니다."
                 },
                 "recovery": {
-                  "rpe": [
-                    1,
-                    3
-                  ],
-                  "cue": "걷기·쉬운 조깅·정지는 원래 구간 표시를 따릅니다. 숨참이 즉시 이 숫자로 내려가야 한다는 뜻은 아닙니다."
+                  "rpe": null,
+                  "cue": "회복 방식과 노력 안내는 아래 실제 회복 구간별 제안을 따릅니다. 모든 회복을 하나의 RPE로 지정하지 않습니다.",
+                  "targets": [
+                    {
+                      "partIndex": 1,
+                      "role": "JOG",
+                      "unit": "SECONDS",
+                      "value": 120,
+                      "boundary": "BETWEEN_REPS",
+                      "set": 1,
+                      "rep": 1,
+                      "rpe": [
+                        1,
+                        3
+                      ],
+                      "cue": "회복 움직임의 체감 노력 제안입니다. 숨참이 즉시 이 수치로 낮아져야 한다는 뜻은 아닙니다."
+                    }
+                  ]
                 },
                 "sessionRpeTarget": null,
                 "measuredPhysiology": false,
@@ -11669,6 +12745,10 @@
         "personalEvidence": [],
         "notApplicable": [],
         "pending": [
+          "OWNER_ADOPTION",
+          "EFFORT_TARGET_APPLICABILITY",
+          "PERSONAL_PACE_WHERE_SUPPORTED",
+          "WHOLE_CYCLE_PLACEMENT",
           "EXACT_WORK_AND_INTENSITY_RATIONALE",
           "EXACT_RECOVERY_RATIONALE",
           "CURRENT_CYCLE_PLACEMENT",
@@ -11678,7 +12758,7 @@
           "INTRO_SUPPORT_APPLICABILITY",
           "INTRO_EFFORT_APPLICABILITY"
         ],
-        "contentFingerprint": "sha256:5a30fce80dd62b29d49aa318dc750f9de45cf9de88fdc6df4490cbee3c6563a2"
+        "contentFingerprint": "sha256:163b7987803281deef78ba4ca810f33d2b86ab672125c8f346e9c0f4df36e636"
       }
     },
     {
@@ -11710,7 +12790,7 @@
         "status": "OWNER_ADOPTION_PENDING"
       },
       "explanation": {
-        "version": "0.4",
+        "version": "0.5",
         "protocolId": "P-INTRO-ATP-A",
         "method": "STANDING_ACCELERATION",
         "executionAuthority": "NONE",
@@ -12039,7 +13119,7 @@
             "applicabilityReviewed": false,
             "supportReviewIssues": [],
             "guidance": {
-              "version": "0.2",
+              "version": "0.3",
               "protocolId": "P-INTRO-ATP-A",
               "status": "COACHING_PROPOSAL_NOT_ADOPTED",
               "executionAuthority": "NONE",
@@ -12054,11 +13134,43 @@
                   "adjustment": "힘을 더 줘도 가속이나 동작이 뚜렷하게 나빠지면 남은 반복을 억지로 채우지 않습니다. 숨이 덜 찬다는 이유로 반복을 추가하지 않습니다."
                 },
                 "recovery": {
-                  "rpe": [
-                    1,
-                    3
-                  ],
-                  "cue": "걷기·쉬운 조깅·정지는 원래 구간 표시를 따릅니다. 숨참이 즉시 이 숫자로 내려가야 한다는 뜻은 아닙니다."
+                  "rpe": null,
+                  "cue": "회복 방식과 노력 안내는 아래 실제 회복 구간별 제안을 따릅니다. 모든 회복을 하나의 RPE로 지정하지 않습니다.",
+                  "targets": [
+                    {
+                      "partIndex": 1,
+                      "role": "WALK_OR_STAND",
+                      "unit": "SECONDS",
+                      "value": 120,
+                      "boundary": "BETWEEN_REPS",
+                      "set": 1,
+                      "rep": 1,
+                      "rpe": null,
+                      "cue": "숫자 RPE를 지정하지 않습니다. 이 구간의 회복 방식과 속도 감소 안내를 따릅니다."
+                    },
+                    {
+                      "partIndex": 3,
+                      "role": "WALK_OR_STAND",
+                      "unit": "SECONDS",
+                      "value": 120,
+                      "boundary": "BETWEEN_REPS",
+                      "set": 1,
+                      "rep": 2,
+                      "rpe": null,
+                      "cue": "숫자 RPE를 지정하지 않습니다. 이 구간의 회복 방식과 속도 감소 안내를 따릅니다."
+                    },
+                    {
+                      "partIndex": 5,
+                      "role": "WALK_OR_STAND",
+                      "unit": "SECONDS",
+                      "value": 120,
+                      "boundary": "BETWEEN_REPS",
+                      "set": 1,
+                      "rep": 3,
+                      "rpe": null,
+                      "cue": "숫자 RPE를 지정하지 않습니다. 이 구간의 회복 방식과 속도 감소 안내를 따릅니다."
+                    }
+                  ]
                 },
                 "sessionRpeTarget": null,
                 "measuredPhysiology": false,
@@ -12197,6 +13309,10 @@
         "personalEvidence": [],
         "notApplicable": [],
         "pending": [
+          "OWNER_ADOPTION",
+          "EFFORT_TARGET_APPLICABILITY",
+          "PERSONAL_PACE_WHERE_SUPPORTED",
+          "WHOLE_CYCLE_PLACEMENT",
           "EXACT_WORK_AND_INTENSITY_RATIONALE",
           "EXACT_RECOVERY_RATIONALE",
           "CURRENT_CYCLE_PLACEMENT",
@@ -12206,7 +13322,7 @@
           "INTRO_SUPPORT_APPLICABILITY",
           "INTRO_EFFORT_APPLICABILITY"
         ],
-        "contentFingerprint": "sha256:5a0f691830fba9ca5e936d7b2adb9547b825e3d1bef23f74422a4445ab18b274"
+        "contentFingerprint": "sha256:9e62bd3d243443bcff11815b1ee52fac3d13af4cef4ea452f5c99ae54c990c79"
       }
     },
     {
@@ -12238,7 +13354,7 @@
         "status": "OWNER_ADOPTION_PENDING"
       },
       "explanation": {
-        "version": "0.4",
+        "version": "0.5",
         "protocolId": "P-INTRO-ATP-T",
         "method": "TIMED_ACCELERATION",
         "executionAuthority": "NONE",
@@ -12551,7 +13667,7 @@
             "applicabilityReviewed": false,
             "supportReviewIssues": [],
             "guidance": {
-              "version": "0.2",
+              "version": "0.3",
               "protocolId": "P-INTRO-ATP-T",
               "status": "COACHING_PROPOSAL_NOT_ADOPTED",
               "executionAuthority": "NONE",
@@ -12566,11 +13682,32 @@
                   "adjustment": "힘을 더 줘도 가속이나 동작이 뚜렷하게 나빠지면 남은 반복을 억지로 채우지 않습니다. 숨이 덜 찬다는 이유로 반복을 추가하지 않습니다."
                 },
                 "recovery": {
-                  "rpe": [
-                    1,
-                    3
-                  ],
-                  "cue": "걷기·쉬운 조깅·정지는 원래 구간 표시를 따릅니다. 숨참이 즉시 이 숫자로 내려가야 한다는 뜻은 아닙니다."
+                  "rpe": null,
+                  "cue": "회복 방식과 노력 안내는 아래 실제 회복 구간별 제안을 따릅니다. 모든 회복을 하나의 RPE로 지정하지 않습니다.",
+                  "targets": [
+                    {
+                      "partIndex": 1,
+                      "role": "WALK_OR_STAND",
+                      "unit": "SECONDS",
+                      "value": 180,
+                      "boundary": "BETWEEN_REPS",
+                      "set": 1,
+                      "rep": 1,
+                      "rpe": null,
+                      "cue": "숫자 RPE를 지정하지 않습니다. 이 구간의 회복 방식과 속도 감소 안내를 따릅니다."
+                    },
+                    {
+                      "partIndex": 3,
+                      "role": "WALK_OR_STAND",
+                      "unit": "SECONDS",
+                      "value": 180,
+                      "boundary": "BETWEEN_REPS",
+                      "set": 1,
+                      "rep": 2,
+                      "rpe": null,
+                      "cue": "숫자 RPE를 지정하지 않습니다. 이 구간의 회복 방식과 속도 감소 안내를 따릅니다."
+                    }
+                  ]
                 },
                 "sessionRpeTarget": null,
                 "measuredPhysiology": false,
@@ -12691,6 +13828,10 @@
         "personalEvidence": [],
         "notApplicable": [],
         "pending": [
+          "OWNER_ADOPTION",
+          "EFFORT_TARGET_APPLICABILITY",
+          "PERSONAL_PACE_WHERE_SUPPORTED",
+          "WHOLE_CYCLE_PLACEMENT",
           "EXACT_WORK_AND_INTENSITY_RATIONALE",
           "EXACT_RECOVERY_RATIONALE",
           "CURRENT_CYCLE_PLACEMENT",
@@ -12700,7 +13841,7 @@
           "INTRO_SUPPORT_APPLICABILITY",
           "INTRO_EFFORT_APPLICABILITY"
         ],
-        "contentFingerprint": "sha256:e89d63b284a084735853a61550d3fffd1bbb36d387c6085a85b66ba43c00687c"
+        "contentFingerprint": "sha256:b37e650491cc190f28aae49b0b853289c95f508aa84308b7ee8c914a330bf9cf"
       }
     },
     {
@@ -12732,7 +13873,7 @@
         "status": "OWNER_ADOPTION_PENDING"
       },
       "explanation": {
-        "version": "0.4",
+        "version": "0.5",
         "protocolId": "P-INTRO-GLY-D",
         "method": "UNBROKEN_REPEATS",
         "executionAuthority": "NONE",
@@ -13071,7 +14212,7 @@
             "applicabilityReviewed": false,
             "supportReviewIssues": [],
             "guidance": {
-              "version": "0.2",
+              "version": "0.3",
               "protocolId": "P-INTRO-GLY-D",
               "status": "COACHING_PROPOSAL_NOT_ADOPTED",
               "executionAuthority": "NONE",
@@ -13089,11 +14230,52 @@
                   "adjustment": "피로로 동작이 무너지면 반복을 중단합니다. 세트 회복을 추가한 구성도 더 빠르게 달리라는 허가가 아닙니다."
                 },
                 "recovery": {
-                  "rpe": [
-                    1,
-                    3
-                  ],
-                  "cue": "걷기·쉬운 조깅·정지는 원래 구간 표시를 따릅니다. 숨참이 즉시 이 숫자로 내려가야 한다는 뜻은 아닙니다."
+                  "rpe": null,
+                  "cue": "회복 방식과 노력 안내는 아래 실제 회복 구간별 제안을 따릅니다. 모든 회복을 하나의 RPE로 지정하지 않습니다.",
+                  "targets": [
+                    {
+                      "partIndex": 1,
+                      "role": "WALK",
+                      "unit": "SECONDS",
+                      "value": 120,
+                      "boundary": "BETWEEN_REPS",
+                      "set": 1,
+                      "rep": 1,
+                      "rpe": [
+                        1,
+                        3
+                      ],
+                      "cue": "회복 움직임의 체감 노력 제안입니다. 숨참이 즉시 이 수치로 낮아져야 한다는 뜻은 아닙니다."
+                    },
+                    {
+                      "partIndex": 3,
+                      "role": "WALK",
+                      "unit": "SECONDS",
+                      "value": 120,
+                      "boundary": "BETWEEN_REPS",
+                      "set": 1,
+                      "rep": 2,
+                      "rpe": [
+                        1,
+                        3
+                      ],
+                      "cue": "회복 움직임의 체감 노력 제안입니다. 숨참이 즉시 이 수치로 낮아져야 한다는 뜻은 아닙니다."
+                    },
+                    {
+                      "partIndex": 5,
+                      "role": "WALK",
+                      "unit": "SECONDS",
+                      "value": 120,
+                      "boundary": "BETWEEN_REPS",
+                      "set": 1,
+                      "rep": 3,
+                      "rpe": [
+                        1,
+                        3
+                      ],
+                      "cue": "회복 움직임의 체감 노력 제안입니다. 숨참이 즉시 이 수치로 낮아져야 한다는 뜻은 아닙니다."
+                    }
+                  ]
                 },
                 "sessionRpeTarget": null,
                 "measuredPhysiology": false,
@@ -13232,6 +14414,10 @@
         "personalEvidence": [],
         "notApplicable": [],
         "pending": [
+          "OWNER_ADOPTION",
+          "EFFORT_TARGET_APPLICABILITY",
+          "PERSONAL_PACE_WHERE_SUPPORTED",
+          "WHOLE_CYCLE_PLACEMENT",
           "EXACT_WORK_AND_INTENSITY_RATIONALE",
           "EXACT_RECOVERY_RATIONALE",
           "CURRENT_CYCLE_PLACEMENT",
@@ -13241,7 +14427,7 @@
           "INTRO_SUPPORT_APPLICABILITY",
           "INTRO_EFFORT_APPLICABILITY"
         ],
-        "contentFingerprint": "sha256:e4a7c961dda667c5426f1c9dfd673507c2b242b456bdcd09c8d6b04f3f24f5f9"
+        "contentFingerprint": "sha256:066985eb3a124bac2b6bf62b615e23998ba2f12767be62ff73eae3f0c737d62a"
       }
     },
     {
@@ -13273,7 +14459,7 @@
         "status": "OWNER_ADOPTION_PENDING"
       },
       "explanation": {
-        "version": "0.4",
+        "version": "0.5",
         "protocolId": "P-INTRO-GLY-S",
         "method": "SET_REPEATS",
         "executionAuthority": "NONE",
@@ -13628,7 +14814,7 @@
             "applicabilityReviewed": false,
             "supportReviewIssues": [],
             "guidance": {
-              "version": "0.2",
+              "version": "0.3",
               "protocolId": "P-INTRO-GLY-S",
               "status": "COACHING_PROPOSAL_NOT_ADOPTED",
               "executionAuthority": "NONE",
@@ -13646,11 +14832,49 @@
                   "adjustment": "피로로 동작이 무너지면 반복을 중단합니다. 세트 회복을 추가한 구성도 더 빠르게 달리라는 허가가 아닙니다."
                 },
                 "recovery": {
-                  "rpe": [
-                    1,
-                    3
-                  ],
-                  "cue": "걷기·쉬운 조깅·정지는 원래 구간 표시를 따릅니다. 숨참이 즉시 이 숫자로 내려가야 한다는 뜻은 아닙니다."
+                  "rpe": null,
+                  "cue": "회복 방식과 노력 안내는 아래 실제 회복 구간별 제안을 따릅니다. 모든 회복을 하나의 RPE로 지정하지 않습니다.",
+                  "targets": [
+                    {
+                      "partIndex": 1,
+                      "role": "WALK",
+                      "unit": "SECONDS",
+                      "value": 90,
+                      "boundary": "BETWEEN_REPS",
+                      "set": 1,
+                      "rep": 1,
+                      "rpe": [
+                        1,
+                        3
+                      ],
+                      "cue": "회복 움직임의 체감 노력 제안입니다. 숨참이 즉시 이 수치로 낮아져야 한다는 뜻은 아닙니다."
+                    },
+                    {
+                      "partIndex": 3,
+                      "role": "WALK_OR_STAND",
+                      "unit": "SECONDS",
+                      "value": 240,
+                      "boundary": "BETWEEN_SETS",
+                      "set": 1,
+                      "rep": 2,
+                      "rpe": null,
+                      "cue": "숫자 RPE를 지정하지 않습니다. 이 구간의 회복 방식과 속도 감소 안내를 따릅니다."
+                    },
+                    {
+                      "partIndex": 5,
+                      "role": "WALK",
+                      "unit": "SECONDS",
+                      "value": 90,
+                      "boundary": "BETWEEN_REPS",
+                      "set": 2,
+                      "rep": 1,
+                      "rpe": [
+                        1,
+                        3
+                      ],
+                      "cue": "회복 움직임의 체감 노력 제안입니다. 숨참이 즉시 이 수치로 낮아져야 한다는 뜻은 아닙니다."
+                    }
+                  ]
                 },
                 "sessionRpeTarget": null,
                 "measuredPhysiology": false,
@@ -13789,6 +15013,10 @@
         "personalEvidence": [],
         "notApplicable": [],
         "pending": [
+          "OWNER_ADOPTION",
+          "EFFORT_TARGET_APPLICABILITY",
+          "PERSONAL_PACE_WHERE_SUPPORTED",
+          "WHOLE_CYCLE_PLACEMENT",
           "EXACT_WORK_AND_INTENSITY_RATIONALE",
           "EXACT_RECOVERY_RATIONALE",
           "CURRENT_CYCLE_PLACEMENT",
@@ -13798,7 +15026,7 @@
           "INTRO_SUPPORT_APPLICABILITY",
           "INTRO_EFFORT_APPLICABILITY"
         ],
-        "contentFingerprint": "sha256:8e19e4cccca17ebcb298eabed4e99c328451fd21517b80632cc9f423e23ba7e7"
+        "contentFingerprint": "sha256:8cf8033e175fe576dd51ff0c33d583aa00640e159bc82ed7f88842382a7a33f9"
       }
     },
     {
@@ -13830,7 +15058,7 @@
         "status": "OWNER_ADOPTION_PENDING"
       },
       "explanation": {
-        "version": "0.4",
+        "version": "0.5",
         "protocolId": "P-INTRO-MIX-T",
         "method": "TIMED_RHYTHM",
         "executionAuthority": "NONE",
@@ -14167,7 +15395,7 @@
             "applicabilityReviewed": false,
             "supportReviewIssues": [],
             "guidance": {
-              "version": "0.2",
+              "version": "0.3",
               "protocolId": "P-INTRO-MIX-T",
               "status": "COACHING_PROPOSAL_NOT_ADOPTED",
               "executionAuthority": "NONE",
@@ -14185,11 +15413,66 @@
                   "adjustment": "느린 구간을 경쟁하지 않습니다. 뒤의 빠른 구간을 위해 느린 구간까지 강도를 올리지 않습니다."
                 },
                 "recovery": {
-                  "rpe": [
-                    1,
-                    3
-                  ],
-                  "cue": "걷기·쉬운 조깅·정지는 원래 구간 표시를 따릅니다. 숨참이 즉시 이 숫자로 내려가야 한다는 뜻은 아닙니다."
+                  "rpe": null,
+                  "cue": "회복 방식과 노력 안내는 아래 실제 회복 구간별 제안을 따릅니다. 모든 회복을 하나의 RPE로 지정하지 않습니다.",
+                  "targets": [
+                    {
+                      "partIndex": 1,
+                      "role": "EASY_RUN",
+                      "unit": "SECONDS",
+                      "value": 60,
+                      "boundary": "AFTER_EVERY",
+                      "set": 1,
+                      "rep": 1,
+                      "rpe": [
+                        1,
+                        3
+                      ],
+                      "cue": "회복 움직임의 체감 노력 제안입니다. 숨참이 즉시 이 수치로 낮아져야 한다는 뜻은 아닙니다."
+                    },
+                    {
+                      "partIndex": 3,
+                      "role": "EASY_RUN",
+                      "unit": "SECONDS",
+                      "value": 60,
+                      "boundary": "AFTER_EVERY",
+                      "set": 1,
+                      "rep": 2,
+                      "rpe": [
+                        1,
+                        3
+                      ],
+                      "cue": "회복 움직임의 체감 노력 제안입니다. 숨참이 즉시 이 수치로 낮아져야 한다는 뜻은 아닙니다."
+                    },
+                    {
+                      "partIndex": 5,
+                      "role": "EASY_RUN",
+                      "unit": "SECONDS",
+                      "value": 60,
+                      "boundary": "AFTER_EVERY",
+                      "set": 1,
+                      "rep": 3,
+                      "rpe": [
+                        1,
+                        3
+                      ],
+                      "cue": "회복 움직임의 체감 노력 제안입니다. 숨참이 즉시 이 수치로 낮아져야 한다는 뜻은 아닙니다."
+                    },
+                    {
+                      "partIndex": 7,
+                      "role": "EASY_RUN",
+                      "unit": "SECONDS",
+                      "value": 60,
+                      "boundary": "AFTER_EVERY",
+                      "set": 1,
+                      "rep": 4,
+                      "rpe": [
+                        1,
+                        3
+                      ],
+                      "cue": "회복 움직임의 체감 노력 제안입니다. 숨참이 즉시 이 수치로 낮아져야 한다는 뜻은 아닙니다."
+                    }
+                  ]
                 },
                 "sessionRpeTarget": null,
                 "measuredPhysiology": false,
@@ -14337,6 +15620,10 @@
         "personalEvidence": [],
         "notApplicable": [],
         "pending": [
+          "OWNER_ADOPTION",
+          "EFFORT_TARGET_APPLICABILITY",
+          "PERSONAL_PACE_WHERE_SUPPORTED",
+          "WHOLE_CYCLE_PLACEMENT",
           "EXACT_WORK_AND_INTENSITY_RATIONALE",
           "EXACT_RECOVERY_RATIONALE",
           "CURRENT_CYCLE_PLACEMENT",
@@ -14346,7 +15633,7 @@
           "INTRO_SUPPORT_APPLICABILITY",
           "INTRO_EFFORT_APPLICABILITY"
         ],
-        "contentFingerprint": "sha256:0859d556123736a1c0ddd10fbd1d001b73748c9c86230b5464c8a2e6d2ea331e"
+        "contentFingerprint": "sha256:3a536f3d290d9e790231b27c4ef54738fd70d408845acc389a39c29637ea489b"
       }
     },
     {
@@ -14378,7 +15665,7 @@
         "status": "OWNER_ADOPTION_PENDING"
       },
       "explanation": {
-        "version": "0.4",
+        "version": "0.5",
         "protocolId": "P-INTRO-MIX-S",
         "method": "TIMED_RHYTHM_SETS",
         "executionAuthority": "NONE",
@@ -14771,7 +16058,7 @@
             "applicabilityReviewed": false,
             "supportReviewIssues": [],
             "guidance": {
-              "version": "0.2",
+              "version": "0.3",
               "protocolId": "P-INTRO-MIX-S",
               "status": "COACHING_PROPOSAL_NOT_ADOPTED",
               "executionAuthority": "NONE",
@@ -14789,11 +16076,108 @@
                   "adjustment": "느린 구간을 경쟁하지 않습니다. 뒤의 빠른 구간을 위해 느린 구간까지 강도를 올리지 않습니다."
                 },
                 "recovery": {
-                  "rpe": [
-                    1,
-                    3
-                  ],
-                  "cue": "걷기·쉬운 조깅·정지는 원래 구간 표시를 따릅니다. 숨참이 즉시 이 숫자로 내려가야 한다는 뜻은 아닙니다."
+                  "rpe": null,
+                  "cue": "회복 방식과 노력 안내는 아래 실제 회복 구간별 제안을 따릅니다. 모든 회복을 하나의 RPE로 지정하지 않습니다.",
+                  "targets": [
+                    {
+                      "partIndex": 1,
+                      "role": "EASY_RUN",
+                      "unit": "SECONDS",
+                      "value": 60,
+                      "boundary": "AFTER_EVERY",
+                      "set": 1,
+                      "rep": 1,
+                      "rpe": [
+                        1,
+                        3
+                      ],
+                      "cue": "회복 움직임의 체감 노력 제안입니다. 숨참이 즉시 이 수치로 낮아져야 한다는 뜻은 아닙니다."
+                    },
+                    {
+                      "partIndex": 3,
+                      "role": "EASY_RUN",
+                      "unit": "SECONDS",
+                      "value": 60,
+                      "boundary": "AFTER_EVERY",
+                      "set": 1,
+                      "rep": 2,
+                      "rpe": [
+                        1,
+                        3
+                      ],
+                      "cue": "회복 움직임의 체감 노력 제안입니다. 숨참이 즉시 이 수치로 낮아져야 한다는 뜻은 아닙니다."
+                    },
+                    {
+                      "partIndex": 5,
+                      "role": "EASY_RUN",
+                      "unit": "SECONDS",
+                      "value": 60,
+                      "boundary": "AFTER_EVERY",
+                      "set": 1,
+                      "rep": 3,
+                      "rpe": [
+                        1,
+                        3
+                      ],
+                      "cue": "회복 움직임의 체감 노력 제안입니다. 숨참이 즉시 이 수치로 낮아져야 한다는 뜻은 아닙니다."
+                    },
+                    {
+                      "partIndex": 6,
+                      "role": "EASY_RUN",
+                      "unit": "SECONDS",
+                      "value": 120,
+                      "boundary": "BETWEEN_SETS",
+                      "set": 1,
+                      "rep": 3,
+                      "rpe": [
+                        1,
+                        3
+                      ],
+                      "cue": "회복 움직임의 체감 노력 제안입니다. 숨참이 즉시 이 수치로 낮아져야 한다는 뜻은 아닙니다."
+                    },
+                    {
+                      "partIndex": 8,
+                      "role": "EASY_RUN",
+                      "unit": "SECONDS",
+                      "value": 60,
+                      "boundary": "AFTER_EVERY",
+                      "set": 2,
+                      "rep": 1,
+                      "rpe": [
+                        1,
+                        3
+                      ],
+                      "cue": "회복 움직임의 체감 노력 제안입니다. 숨참이 즉시 이 수치로 낮아져야 한다는 뜻은 아닙니다."
+                    },
+                    {
+                      "partIndex": 10,
+                      "role": "EASY_RUN",
+                      "unit": "SECONDS",
+                      "value": 60,
+                      "boundary": "AFTER_EVERY",
+                      "set": 2,
+                      "rep": 2,
+                      "rpe": [
+                        1,
+                        3
+                      ],
+                      "cue": "회복 움직임의 체감 노력 제안입니다. 숨참이 즉시 이 수치로 낮아져야 한다는 뜻은 아닙니다."
+                    },
+                    {
+                      "partIndex": 12,
+                      "role": "EASY_RUN",
+                      "unit": "SECONDS",
+                      "value": 60,
+                      "boundary": "AFTER_EVERY",
+                      "set": 2,
+                      "rep": 3,
+                      "rpe": [
+                        1,
+                        3
+                      ],
+                      "cue": "회복 움직임의 체감 노력 제안입니다. 숨참이 즉시 이 수치로 낮아져야 한다는 뜻은 아닙니다."
+                    }
+                  ]
                 },
                 "sessionRpeTarget": null,
                 "measuredPhysiology": false,
@@ -14986,6 +16370,10 @@
         "personalEvidence": [],
         "notApplicable": [],
         "pending": [
+          "OWNER_ADOPTION",
+          "EFFORT_TARGET_APPLICABILITY",
+          "PERSONAL_PACE_WHERE_SUPPORTED",
+          "WHOLE_CYCLE_PLACEMENT",
           "EXACT_WORK_AND_INTENSITY_RATIONALE",
           "EXACT_RECOVERY_RATIONALE",
           "CURRENT_CYCLE_PLACEMENT",
@@ -14995,7 +16383,7 @@
           "INTRO_SUPPORT_APPLICABILITY",
           "INTRO_EFFORT_APPLICABILITY"
         ],
-        "contentFingerprint": "sha256:8c07acfbb3194ca28588ccb68afc21992fa60cca7ddf01208af10ec76e152a2e"
+        "contentFingerprint": "sha256:e1755b99cbb0f672b1c10c6031ebc0d1d22a20b488069ba1fc88a9e156f0a81d"
       }
     },
     {
@@ -15029,7 +16417,7 @@
         "status": "OWNER_ADOPTION_PENDING"
       },
       "explanation": {
-        "version": "0.4",
+        "version": "0.5",
         "protocolId": "P-BASE-C-1200",
         "method": "CONTINUOUS",
         "executionAuthority": "NONE",
@@ -15162,7 +16550,7 @@
             "applicabilityReviewed": false,
             "supportReviewIssues": [],
             "guidance": {
-              "version": "0.2",
+              "version": "0.3",
               "protocolId": "P-BASE-C-1200",
               "status": "COACHING_PROPOSAL_NOT_ADOPTED",
               "executionAuthority": "NONE",
@@ -15180,11 +16568,9 @@
                   "adjustment": "대화하기 어려우면 속도를 낮춥니다. 시간을 채우려고 강도를 올리지 않습니다."
                 },
                 "recovery": {
-                  "rpe": [
-                    1,
-                    3
-                  ],
-                  "cue": "걷기·쉬운 조깅·정지는 원래 구간 표시를 따릅니다. 숨참이 즉시 이 숫자로 내려가야 한다는 뜻은 아닙니다."
+                  "rpe": null,
+                  "cue": "회복 방식과 노력 안내는 아래 실제 회복 구간별 제안을 따릅니다. 모든 회복을 하나의 RPE로 지정하지 않습니다.",
+                  "targets": []
                 },
                 "sessionRpeTarget": null,
                 "measuredPhysiology": false,
@@ -15269,13 +16655,17 @@
         "personalEvidence": [],
         "notApplicable": [],
         "pending": [
+          "OWNER_ADOPTION",
+          "EFFORT_TARGET_APPLICABILITY",
+          "PERSONAL_PACE_WHERE_SUPPORTED",
+          "WHOLE_CYCLE_PLACEMENT",
           "EXACT_WORK_AND_INTENSITY_RATIONALE",
           "EXACT_RECOVERY_RATIONALE",
           "CURRENT_CYCLE_PLACEMENT",
           "INDIVIDUAL_APPLICABILITY",
           "EXACT_OWNER_ADOPTION"
         ],
-        "contentFingerprint": "sha256:037995fde23d0ceea00e67496ce222c3859d4f3333f3ffdc0114fd9a68fabb36"
+        "contentFingerprint": "sha256:cc3f14ebe40a61ed33f9ba583208a60bb0db14a4b45eba1dd59ade1288371743"
       }
     },
     {
@@ -15309,7 +16699,7 @@
         "status": "OWNER_ADOPTION_PENDING"
       },
       "explanation": {
-        "version": "0.4",
+        "version": "0.5",
         "protocolId": "P-BASE-C-1500",
         "method": "CONTINUOUS",
         "executionAuthority": "NONE",
@@ -15442,7 +16832,7 @@
             "applicabilityReviewed": false,
             "supportReviewIssues": [],
             "guidance": {
-              "version": "0.2",
+              "version": "0.3",
               "protocolId": "P-BASE-C-1500",
               "status": "COACHING_PROPOSAL_NOT_ADOPTED",
               "executionAuthority": "NONE",
@@ -15460,11 +16850,9 @@
                   "adjustment": "대화하기 어려우면 속도를 낮춥니다. 시간을 채우려고 강도를 올리지 않습니다."
                 },
                 "recovery": {
-                  "rpe": [
-                    1,
-                    3
-                  ],
-                  "cue": "걷기·쉬운 조깅·정지는 원래 구간 표시를 따릅니다. 숨참이 즉시 이 숫자로 내려가야 한다는 뜻은 아닙니다."
+                  "rpe": null,
+                  "cue": "회복 방식과 노력 안내는 아래 실제 회복 구간별 제안을 따릅니다. 모든 회복을 하나의 RPE로 지정하지 않습니다.",
+                  "targets": []
                 },
                 "sessionRpeTarget": null,
                 "measuredPhysiology": false,
@@ -15549,13 +16937,17 @@
         "personalEvidence": [],
         "notApplicable": [],
         "pending": [
+          "OWNER_ADOPTION",
+          "EFFORT_TARGET_APPLICABILITY",
+          "PERSONAL_PACE_WHERE_SUPPORTED",
+          "WHOLE_CYCLE_PLACEMENT",
           "EXACT_WORK_AND_INTENSITY_RATIONALE",
           "EXACT_RECOVERY_RATIONALE",
           "CURRENT_CYCLE_PLACEMENT",
           "INDIVIDUAL_APPLICABILITY",
           "EXACT_OWNER_ADOPTION"
         ],
-        "contentFingerprint": "sha256:f70b2f9fb4c5576e278f2acbf1eae3621e29792c32b778e7653cf067a1483461"
+        "contentFingerprint": "sha256:95b412b1984a1ecb6fd9e19f9bfb036d813b4fd0cc81fc78926a0fc1cec5d354"
       }
     },
     {
@@ -15588,7 +16980,7 @@
         "status": "OWNER_ADOPTION_PENDING"
       },
       "explanation": {
-        "version": "0.4",
+        "version": "0.5",
         "protocolId": "P-LT-B-480",
         "method": "LONG_SPLIT",
         "executionAuthority": "NONE",
@@ -15875,7 +17267,7 @@
             "applicabilityReviewed": false,
             "supportReviewIssues": [],
             "guidance": {
-              "version": "0.2",
+              "version": "0.3",
               "protocolId": "P-LT-B-480",
               "status": "COACHING_PROPOSAL_NOT_ADOPTED",
               "executionAuthority": "NONE",
@@ -15893,11 +17285,24 @@
                   "adjustment": "첫 구간부터 끝까지 유지하기 어려우면 속도를 낮춥니다. 회복이 있는 분할형도 전력 반복으로 바꾸지 않습니다."
                 },
                 "recovery": {
-                  "rpe": [
-                    1,
-                    3
-                  ],
-                  "cue": "걷기·쉬운 조깅·정지는 원래 구간 표시를 따릅니다. 숨참이 즉시 이 숫자로 내려가야 한다는 뜻은 아닙니다."
+                  "rpe": null,
+                  "cue": "회복 방식과 노력 안내는 아래 실제 회복 구간별 제안을 따릅니다. 모든 회복을 하나의 RPE로 지정하지 않습니다.",
+                  "targets": [
+                    {
+                      "partIndex": 1,
+                      "role": "JOG",
+                      "unit": "SECONDS",
+                      "value": 60,
+                      "boundary": "BETWEEN_REPS",
+                      "set": 1,
+                      "rep": 1,
+                      "rpe": [
+                        1,
+                        3
+                      ],
+                      "cue": "회복 움직임의 체감 노력 제안입니다. 숨참이 즉시 이 수치로 낮아져야 한다는 뜻은 아닙니다."
+                    }
+                  ]
                 },
                 "sessionRpeTarget": null,
                 "measuredPhysiology": false,
@@ -16000,13 +17405,17 @@
         "personalEvidence": [],
         "notApplicable": [],
         "pending": [
+          "OWNER_ADOPTION",
+          "EFFORT_TARGET_APPLICABILITY",
+          "PERSONAL_PACE_WHERE_SUPPORTED",
+          "WHOLE_CYCLE_PLACEMENT",
           "EXACT_WORK_AND_INTENSITY_RATIONALE",
           "EXACT_RECOVERY_RATIONALE",
           "CURRENT_CYCLE_PLACEMENT",
           "INDIVIDUAL_APPLICABILITY",
           "EXACT_OWNER_ADOPTION"
         ],
-        "contentFingerprint": "sha256:8e3a7fcbd068e212080d619669b6c4d9eb1d4fb970c62f98c52ddc17475ffc05"
+        "contentFingerprint": "sha256:3c6b2eaea7110b992451ed30154ba556b8ed0292dc920c8c548646e4151b2bed"
       }
     },
     {
@@ -16039,7 +17448,7 @@
         "status": "OWNER_ADOPTION_PENDING"
       },
       "explanation": {
-        "version": "0.4",
+        "version": "0.5",
         "protocolId": "P-VO2-2-4",
         "method": "TWO_MINUTE",
         "executionAuthority": "NONE",
@@ -16358,7 +17767,7 @@
             "applicabilityReviewed": false,
             "supportReviewIssues": [],
             "guidance": {
-              "version": "0.2",
+              "version": "0.3",
               "protocolId": "P-VO2-2-4",
               "status": "COACHING_PROPOSAL_NOT_ADOPTED",
               "executionAuthority": "NONE",
@@ -16376,11 +17785,52 @@
                   "adjustment": "짧은 반복이라고 더 빠르게 달리지 않습니다. 참고 거리보다 정해진 운동 시간이 종료 기준입니다."
                 },
                 "recovery": {
-                  "rpe": [
-                    1,
-                    3
-                  ],
-                  "cue": "걷기·쉬운 조깅·정지는 원래 구간 표시를 따릅니다. 숨참이 즉시 이 숫자로 내려가야 한다는 뜻은 아닙니다."
+                  "rpe": null,
+                  "cue": "회복 방식과 노력 안내는 아래 실제 회복 구간별 제안을 따릅니다. 모든 회복을 하나의 RPE로 지정하지 않습니다.",
+                  "targets": [
+                    {
+                      "partIndex": 1,
+                      "role": "JOG",
+                      "unit": "SECONDS",
+                      "value": 60,
+                      "boundary": "BETWEEN_REPS",
+                      "set": 1,
+                      "rep": 1,
+                      "rpe": [
+                        1,
+                        3
+                      ],
+                      "cue": "회복 움직임의 체감 노력 제안입니다. 숨참이 즉시 이 수치로 낮아져야 한다는 뜻은 아닙니다."
+                    },
+                    {
+                      "partIndex": 3,
+                      "role": "JOG",
+                      "unit": "SECONDS",
+                      "value": 60,
+                      "boundary": "BETWEEN_REPS",
+                      "set": 1,
+                      "rep": 2,
+                      "rpe": [
+                        1,
+                        3
+                      ],
+                      "cue": "회복 움직임의 체감 노력 제안입니다. 숨참이 즉시 이 수치로 낮아져야 한다는 뜻은 아닙니다."
+                    },
+                    {
+                      "partIndex": 5,
+                      "role": "JOG",
+                      "unit": "SECONDS",
+                      "value": 60,
+                      "boundary": "BETWEEN_REPS",
+                      "set": 1,
+                      "rep": 3,
+                      "rpe": [
+                        1,
+                        3
+                      ],
+                      "cue": "회복 움직임의 체감 노력 제안입니다. 숨참이 즉시 이 수치로 낮아져야 한다는 뜻은 아닙니다."
+                    }
+                  ]
                 },
                 "sessionRpeTarget": null,
                 "measuredPhysiology": false,
@@ -16519,13 +17969,17 @@
         "personalEvidence": [],
         "notApplicable": [],
         "pending": [
+          "OWNER_ADOPTION",
+          "EFFORT_TARGET_APPLICABILITY",
+          "PERSONAL_PACE_WHERE_SUPPORTED",
+          "WHOLE_CYCLE_PLACEMENT",
           "EXACT_WORK_AND_INTENSITY_RATIONALE",
           "EXACT_RECOVERY_RATIONALE",
           "CURRENT_CYCLE_PLACEMENT",
           "INDIVIDUAL_APPLICABILITY",
           "EXACT_OWNER_ADOPTION"
         ],
-        "contentFingerprint": "sha256:3635320bac0118fd6831f2b21327bba21baf8310dd0c47b528cdf2af056cb567"
+        "contentFingerprint": "sha256:9b1151a68188301ff82d6aabfd13c232c7bc2e4fe3e6b65d375c58cdff1d7ef5"
       }
     },
     {
@@ -16558,7 +18012,7 @@
         "status": "OWNER_ADOPTION_PENDING"
       },
       "explanation": {
-        "version": "0.4",
+        "version": "0.5",
         "protocolId": "P-VO2-2-5",
         "method": "TWO_MINUTE",
         "executionAuthority": "NONE",
@@ -16893,7 +18347,7 @@
             "applicabilityReviewed": false,
             "supportReviewIssues": [],
             "guidance": {
-              "version": "0.2",
+              "version": "0.3",
               "protocolId": "P-VO2-2-5",
               "status": "COACHING_PROPOSAL_NOT_ADOPTED",
               "executionAuthority": "NONE",
@@ -16911,11 +18365,66 @@
                   "adjustment": "짧은 반복이라고 더 빠르게 달리지 않습니다. 참고 거리보다 정해진 운동 시간이 종료 기준입니다."
                 },
                 "recovery": {
-                  "rpe": [
-                    1,
-                    3
-                  ],
-                  "cue": "걷기·쉬운 조깅·정지는 원래 구간 표시를 따릅니다. 숨참이 즉시 이 숫자로 내려가야 한다는 뜻은 아닙니다."
+                  "rpe": null,
+                  "cue": "회복 방식과 노력 안내는 아래 실제 회복 구간별 제안을 따릅니다. 모든 회복을 하나의 RPE로 지정하지 않습니다.",
+                  "targets": [
+                    {
+                      "partIndex": 1,
+                      "role": "JOG",
+                      "unit": "SECONDS",
+                      "value": 60,
+                      "boundary": "BETWEEN_REPS",
+                      "set": 1,
+                      "rep": 1,
+                      "rpe": [
+                        1,
+                        3
+                      ],
+                      "cue": "회복 움직임의 체감 노력 제안입니다. 숨참이 즉시 이 수치로 낮아져야 한다는 뜻은 아닙니다."
+                    },
+                    {
+                      "partIndex": 3,
+                      "role": "JOG",
+                      "unit": "SECONDS",
+                      "value": 60,
+                      "boundary": "BETWEEN_REPS",
+                      "set": 1,
+                      "rep": 2,
+                      "rpe": [
+                        1,
+                        3
+                      ],
+                      "cue": "회복 움직임의 체감 노력 제안입니다. 숨참이 즉시 이 수치로 낮아져야 한다는 뜻은 아닙니다."
+                    },
+                    {
+                      "partIndex": 5,
+                      "role": "JOG",
+                      "unit": "SECONDS",
+                      "value": 60,
+                      "boundary": "BETWEEN_REPS",
+                      "set": 1,
+                      "rep": 3,
+                      "rpe": [
+                        1,
+                        3
+                      ],
+                      "cue": "회복 움직임의 체감 노력 제안입니다. 숨참이 즉시 이 수치로 낮아져야 한다는 뜻은 아닙니다."
+                    },
+                    {
+                      "partIndex": 7,
+                      "role": "JOG",
+                      "unit": "SECONDS",
+                      "value": 60,
+                      "boundary": "BETWEEN_REPS",
+                      "set": 1,
+                      "rep": 4,
+                      "rpe": [
+                        1,
+                        3
+                      ],
+                      "cue": "회복 움직임의 체감 노력 제안입니다. 숨참이 즉시 이 수치로 낮아져야 한다는 뜻은 아닙니다."
+                    }
+                  ]
                 },
                 "sessionRpeTarget": null,
                 "measuredPhysiology": false,
@@ -17072,13 +18581,17 @@
         "personalEvidence": [],
         "notApplicable": [],
         "pending": [
+          "OWNER_ADOPTION",
+          "EFFORT_TARGET_APPLICABILITY",
+          "PERSONAL_PACE_WHERE_SUPPORTED",
+          "WHOLE_CYCLE_PLACEMENT",
           "EXACT_WORK_AND_INTENSITY_RATIONALE",
           "EXACT_RECOVERY_RATIONALE",
           "CURRENT_CYCLE_PLACEMENT",
           "INDIVIDUAL_APPLICABILITY",
           "EXACT_OWNER_ADOPTION"
         ],
-        "contentFingerprint": "sha256:1af887f29068f754482ee199ebb09ae6808c229597eb19552b635daf9d714558"
+        "contentFingerprint": "sha256:8490a98d3bfa5beed4366578bfb96ccca947e68a7b4e525d86b7c7a3926904b0"
       }
     },
     {
@@ -17111,7 +18624,7 @@
         "status": "OWNER_ADOPTION_PENDING"
       },
       "explanation": {
-        "version": "0.4",
+        "version": "0.5",
         "protocolId": "P-ATP-A-4",
         "method": "STANDING_ACCELERATION",
         "executionAuthority": "NONE",
@@ -17440,7 +18953,7 @@
             "applicabilityReviewed": false,
             "supportReviewIssues": [],
             "guidance": {
-              "version": "0.2",
+              "version": "0.3",
               "protocolId": "P-ATP-A-4",
               "status": "COACHING_PROPOSAL_NOT_ADOPTED",
               "executionAuthority": "NONE",
@@ -17455,11 +18968,43 @@
                   "adjustment": "힘을 더 줘도 가속이나 동작이 뚜렷하게 나빠지면 남은 반복을 억지로 채우지 않습니다. 숨이 덜 찬다는 이유로 반복을 추가하지 않습니다."
                 },
                 "recovery": {
-                  "rpe": [
-                    1,
-                    3
-                  ],
-                  "cue": "걷기·쉬운 조깅·정지는 원래 구간 표시를 따릅니다. 숨참이 즉시 이 숫자로 내려가야 한다는 뜻은 아닙니다."
+                  "rpe": null,
+                  "cue": "회복 방식과 노력 안내는 아래 실제 회복 구간별 제안을 따릅니다. 모든 회복을 하나의 RPE로 지정하지 않습니다.",
+                  "targets": [
+                    {
+                      "partIndex": 1,
+                      "role": "WALK_OR_STAND",
+                      "unit": "SECONDS",
+                      "value": 120,
+                      "boundary": "BETWEEN_REPS",
+                      "set": 1,
+                      "rep": 1,
+                      "rpe": null,
+                      "cue": "숫자 RPE를 지정하지 않습니다. 이 구간의 회복 방식과 속도 감소 안내를 따릅니다."
+                    },
+                    {
+                      "partIndex": 3,
+                      "role": "WALK_OR_STAND",
+                      "unit": "SECONDS",
+                      "value": 120,
+                      "boundary": "BETWEEN_REPS",
+                      "set": 1,
+                      "rep": 2,
+                      "rpe": null,
+                      "cue": "숫자 RPE를 지정하지 않습니다. 이 구간의 회복 방식과 속도 감소 안내를 따릅니다."
+                    },
+                    {
+                      "partIndex": 5,
+                      "role": "WALK_OR_STAND",
+                      "unit": "SECONDS",
+                      "value": 120,
+                      "boundary": "BETWEEN_REPS",
+                      "set": 1,
+                      "rep": 3,
+                      "rpe": null,
+                      "cue": "숫자 RPE를 지정하지 않습니다. 이 구간의 회복 방식과 속도 감소 안내를 따릅니다."
+                    }
+                  ]
                 },
                 "sessionRpeTarget": null,
                 "measuredPhysiology": false,
@@ -17598,13 +19143,17 @@
         "personalEvidence": [],
         "notApplicable": [],
         "pending": [
+          "OWNER_ADOPTION",
+          "EFFORT_TARGET_APPLICABILITY",
+          "PERSONAL_PACE_WHERE_SUPPORTED",
+          "WHOLE_CYCLE_PLACEMENT",
           "EXACT_WORK_AND_INTENSITY_RATIONALE",
           "EXACT_RECOVERY_RATIONALE",
           "CURRENT_CYCLE_PLACEMENT",
           "INDIVIDUAL_APPLICABILITY",
           "EXACT_OWNER_ADOPTION"
         ],
-        "contentFingerprint": "sha256:c93d5ae22fa51deb74054a593bad0ae8da9d3d4ca1917816d09e073d0701c461"
+        "contentFingerprint": "sha256:ece9348d23d4d47609ba9a83e5032c03fbd0be0f858921c82b36def79401668d"
       }
     },
     {
@@ -17637,7 +19186,7 @@
         "status": "OWNER_ADOPTION_PENDING"
       },
       "explanation": {
-        "version": "0.4",
+        "version": "0.5",
         "protocolId": "P-ATP-A-5",
         "method": "STANDING_ACCELERATION",
         "executionAuthority": "NONE",
@@ -17982,7 +19531,7 @@
             "applicabilityReviewed": false,
             "supportReviewIssues": [],
             "guidance": {
-              "version": "0.2",
+              "version": "0.3",
               "protocolId": "P-ATP-A-5",
               "status": "COACHING_PROPOSAL_NOT_ADOPTED",
               "executionAuthority": "NONE",
@@ -17997,11 +19546,54 @@
                   "adjustment": "힘을 더 줘도 가속이나 동작이 뚜렷하게 나빠지면 남은 반복을 억지로 채우지 않습니다. 숨이 덜 찬다는 이유로 반복을 추가하지 않습니다."
                 },
                 "recovery": {
-                  "rpe": [
-                    1,
-                    3
-                  ],
-                  "cue": "걷기·쉬운 조깅·정지는 원래 구간 표시를 따릅니다. 숨참이 즉시 이 숫자로 내려가야 한다는 뜻은 아닙니다."
+                  "rpe": null,
+                  "cue": "회복 방식과 노력 안내는 아래 실제 회복 구간별 제안을 따릅니다. 모든 회복을 하나의 RPE로 지정하지 않습니다.",
+                  "targets": [
+                    {
+                      "partIndex": 1,
+                      "role": "WALK_OR_STAND",
+                      "unit": "SECONDS",
+                      "value": 120,
+                      "boundary": "BETWEEN_REPS",
+                      "set": 1,
+                      "rep": 1,
+                      "rpe": null,
+                      "cue": "숫자 RPE를 지정하지 않습니다. 이 구간의 회복 방식과 속도 감소 안내를 따릅니다."
+                    },
+                    {
+                      "partIndex": 3,
+                      "role": "WALK_OR_STAND",
+                      "unit": "SECONDS",
+                      "value": 120,
+                      "boundary": "BETWEEN_REPS",
+                      "set": 1,
+                      "rep": 2,
+                      "rpe": null,
+                      "cue": "숫자 RPE를 지정하지 않습니다. 이 구간의 회복 방식과 속도 감소 안내를 따릅니다."
+                    },
+                    {
+                      "partIndex": 5,
+                      "role": "WALK_OR_STAND",
+                      "unit": "SECONDS",
+                      "value": 120,
+                      "boundary": "BETWEEN_REPS",
+                      "set": 1,
+                      "rep": 3,
+                      "rpe": null,
+                      "cue": "숫자 RPE를 지정하지 않습니다. 이 구간의 회복 방식과 속도 감소 안내를 따릅니다."
+                    },
+                    {
+                      "partIndex": 7,
+                      "role": "WALK_OR_STAND",
+                      "unit": "SECONDS",
+                      "value": 120,
+                      "boundary": "BETWEEN_REPS",
+                      "set": 1,
+                      "rep": 4,
+                      "rpe": null,
+                      "cue": "숫자 RPE를 지정하지 않습니다. 이 구간의 회복 방식과 속도 감소 안내를 따릅니다."
+                    }
+                  ]
                 },
                 "sessionRpeTarget": null,
                 "measuredPhysiology": false,
@@ -18158,13 +19750,17 @@
         "personalEvidence": [],
         "notApplicable": [],
         "pending": [
+          "OWNER_ADOPTION",
+          "EFFORT_TARGET_APPLICABILITY",
+          "PERSONAL_PACE_WHERE_SUPPORTED",
+          "WHOLE_CYCLE_PLACEMENT",
           "EXACT_WORK_AND_INTENSITY_RATIONALE",
           "EXACT_RECOVERY_RATIONALE",
           "CURRENT_CYCLE_PLACEMENT",
           "INDIVIDUAL_APPLICABILITY",
           "EXACT_OWNER_ADOPTION"
         ],
-        "contentFingerprint": "sha256:bd551da429ab0ed22d965660bea987ec4c6afaf215efa28dd9dee69735423409"
+        "contentFingerprint": "sha256:a83b84bbad1c030024b30a31737788e2fd74738c48bd4e0a948c11bc348dcdf6"
       }
     },
     {
@@ -18194,7 +19790,7 @@
         "status": "OWNER_ADOPTION_PENDING"
       },
       "explanation": {
-        "version": "0.4",
+        "version": "0.5",
         "protocolId": "P-RHYTHM-400-2X6",
         "method": "ROLL_ON_400",
         "executionAuthority": "NONE",
@@ -18684,7 +20280,7 @@
             "applicabilityReviewed": false,
             "supportReviewIssues": [],
             "guidance": {
-              "version": "0.2",
+              "version": "0.3",
               "protocolId": "P-RHYTHM-400-2X6",
               "status": "COACHING_PROPOSAL_NOT_ADOPTED",
               "executionAuthority": "NONE",
@@ -18702,11 +20298,156 @@
                   "adjustment": "느린 구간을 경쟁하지 않습니다. 뒤의 빠른 구간을 위해 느린 구간까지 강도를 올리지 않습니다."
                 },
                 "recovery": {
-                  "rpe": [
-                    1,
-                    3
-                  ],
-                  "cue": "걷기·쉬운 조깅·정지는 원래 구간 표시를 따릅니다. 숨참이 즉시 이 숫자로 내려가야 한다는 뜻은 아닙니다."
+                  "rpe": null,
+                  "cue": "회복 방식과 노력 안내는 아래 실제 회복 구간별 제안을 따릅니다. 모든 회복을 하나의 RPE로 지정하지 않습니다.",
+                  "targets": [
+                    {
+                      "partIndex": 1,
+                      "role": "ROLL_ON",
+                      "unit": "METERS",
+                      "value": 100,
+                      "boundary": "AFTER_EVERY",
+                      "set": 1,
+                      "rep": 1,
+                      "rpe": null,
+                      "cue": "숫자 RPE를 지정하지 않습니다. 이 구간의 회복 방식과 속도 감소 안내를 따릅니다."
+                    },
+                    {
+                      "partIndex": 3,
+                      "role": "ROLL_ON",
+                      "unit": "METERS",
+                      "value": 100,
+                      "boundary": "AFTER_EVERY",
+                      "set": 1,
+                      "rep": 2,
+                      "rpe": null,
+                      "cue": "숫자 RPE를 지정하지 않습니다. 이 구간의 회복 방식과 속도 감소 안내를 따릅니다."
+                    },
+                    {
+                      "partIndex": 5,
+                      "role": "ROLL_ON",
+                      "unit": "METERS",
+                      "value": 100,
+                      "boundary": "AFTER_EVERY",
+                      "set": 1,
+                      "rep": 3,
+                      "rpe": null,
+                      "cue": "숫자 RPE를 지정하지 않습니다. 이 구간의 회복 방식과 속도 감소 안내를 따릅니다."
+                    },
+                    {
+                      "partIndex": 7,
+                      "role": "ROLL_ON",
+                      "unit": "METERS",
+                      "value": 100,
+                      "boundary": "AFTER_EVERY",
+                      "set": 1,
+                      "rep": 4,
+                      "rpe": null,
+                      "cue": "숫자 RPE를 지정하지 않습니다. 이 구간의 회복 방식과 속도 감소 안내를 따릅니다."
+                    },
+                    {
+                      "partIndex": 9,
+                      "role": "ROLL_ON",
+                      "unit": "METERS",
+                      "value": 100,
+                      "boundary": "AFTER_EVERY",
+                      "set": 1,
+                      "rep": 5,
+                      "rpe": null,
+                      "cue": "숫자 RPE를 지정하지 않습니다. 이 구간의 회복 방식과 속도 감소 안내를 따릅니다."
+                    },
+                    {
+                      "partIndex": 11,
+                      "role": "ROLL_ON",
+                      "unit": "METERS",
+                      "value": 100,
+                      "boundary": "AFTER_EVERY",
+                      "set": 1,
+                      "rep": 6,
+                      "rpe": null,
+                      "cue": "숫자 RPE를 지정하지 않습니다. 이 구간의 회복 방식과 속도 감소 안내를 따릅니다."
+                    },
+                    {
+                      "partIndex": 12,
+                      "role": "EASY_RUN",
+                      "unit": "SECONDS",
+                      "value": 180,
+                      "boundary": "BETWEEN_SETS",
+                      "set": 1,
+                      "rep": 6,
+                      "rpe": [
+                        1,
+                        3
+                      ],
+                      "cue": "회복 움직임의 체감 노력 제안입니다. 숨참이 즉시 이 수치로 낮아져야 한다는 뜻은 아닙니다."
+                    },
+                    {
+                      "partIndex": 14,
+                      "role": "ROLL_ON",
+                      "unit": "METERS",
+                      "value": 100,
+                      "boundary": "AFTER_EVERY",
+                      "set": 2,
+                      "rep": 1,
+                      "rpe": null,
+                      "cue": "숫자 RPE를 지정하지 않습니다. 이 구간의 회복 방식과 속도 감소 안내를 따릅니다."
+                    },
+                    {
+                      "partIndex": 16,
+                      "role": "ROLL_ON",
+                      "unit": "METERS",
+                      "value": 100,
+                      "boundary": "AFTER_EVERY",
+                      "set": 2,
+                      "rep": 2,
+                      "rpe": null,
+                      "cue": "숫자 RPE를 지정하지 않습니다. 이 구간의 회복 방식과 속도 감소 안내를 따릅니다."
+                    },
+                    {
+                      "partIndex": 18,
+                      "role": "ROLL_ON",
+                      "unit": "METERS",
+                      "value": 100,
+                      "boundary": "AFTER_EVERY",
+                      "set": 2,
+                      "rep": 3,
+                      "rpe": null,
+                      "cue": "숫자 RPE를 지정하지 않습니다. 이 구간의 회복 방식과 속도 감소 안내를 따릅니다."
+                    },
+                    {
+                      "partIndex": 20,
+                      "role": "ROLL_ON",
+                      "unit": "METERS",
+                      "value": 100,
+                      "boundary": "AFTER_EVERY",
+                      "set": 2,
+                      "rep": 4,
+                      "rpe": null,
+                      "cue": "숫자 RPE를 지정하지 않습니다. 이 구간의 회복 방식과 속도 감소 안내를 따릅니다."
+                    },
+                    {
+                      "partIndex": 22,
+                      "role": "ROLL_ON",
+                      "unit": "METERS",
+                      "value": 100,
+                      "boundary": "AFTER_EVERY",
+                      "set": 2,
+                      "rep": 5,
+                      "rpe": null,
+                      "cue": "숫자 RPE를 지정하지 않습니다. 이 구간의 회복 방식과 속도 감소 안내를 따릅니다."
+                    },
+                    {
+                      "partIndex": 24,
+                      "role": "ROLL_ON",
+                      "unit": "METERS",
+                      "value": 100,
+                      "boundary": "AFTER_EVERY",
+                      "set": 2,
+                      "rep": 6,
+                      "rpe": null,
+                      "cue": "숫자 RPE를 지정하지 않습니다. 이 구간의 회복 방식과 속도 감소 안내를 따릅니다."
+                    }
+                  ]
                 },
                 "sessionRpeTarget": null,
                 "measuredPhysiology": false,
@@ -19007,13 +20748,17 @@
         "personalEvidence": [],
         "notApplicable": [],
         "pending": [
+          "OWNER_ADOPTION",
+          "EFFORT_TARGET_APPLICABILITY",
+          "PERSONAL_PACE_WHERE_SUPPORTED",
+          "WHOLE_CYCLE_PLACEMENT",
           "EXACT_WORK_AND_INTENSITY_RATIONALE",
           "EXACT_RECOVERY_RATIONALE",
           "CURRENT_CYCLE_PLACEMENT",
           "INDIVIDUAL_APPLICABILITY",
           "EXACT_OWNER_ADOPTION"
         ],
-        "contentFingerprint": "sha256:8e8b51ccf8a9fccc80198460b4fb6dc1eb4acac2a7a4ed8e2d782c853ed2512a"
+        "contentFingerprint": "sha256:220c536bcd6e89c7b89e2c79601e3b139ffa4572f0ebb3592b4a1d17eda98100"
       }
     }
   ],
@@ -19031,7 +20776,18 @@
     "WHOLE_FRAME_AND_COMBINATION_RULES",
     "INDIVIDUAL_TIME_LIMIT_VS_INITIAL_ESTIMATE",
     "PERSONAL_REFERENCE_MODELS",
-    "INTRO_SEGMENT_READINESS"
+    "INTRO_SEGMENT_READINESS",
+    "OWNER_ADOPTION",
+    "EFFORT_TARGET_APPLICABILITY",
+    "PERSONAL_PACE_WHERE_SUPPORTED",
+    "WHOLE_CYCLE_PLACEMENT",
+    "EXACT_WORK_AND_INTENSITY_RATIONALE",
+    "EXACT_RECOVERY_RATIONALE",
+    "CURRENT_CYCLE_PLACEMENT",
+    "INDIVIDUAL_APPLICABILITY",
+    "EXACT_OWNER_ADOPTION",
+    "INTRO_SUPPORT_APPLICABILITY",
+    "INTRO_EFFORT_APPLICABILITY"
   ],
-  "contentFingerprint": "sha256:02d7a39dc23b70ad3c9ac99f94969c26fcc00f6bdb8df8c0460da785a095cff3"
+  "contentFingerprint": "sha256:1f57e6db5e52ed946b2e627b3c2c92a322bfbe7788485822a44fe94ae449ddf0"
 }

@@ -43,7 +43,18 @@ function effortProposal(p) {
   return {
     status: "PRODUCT_COACHING_CHOICE_OWNER_PENDING", scale: "SUBJECTIVE_0_TO_10_WORK_BOUT",
     work: structuredClone(effort),
-    recovery: { rpe: [1, 3], cue: "걷기·쉬운 조깅·정지는 원래 구간 표시를 따릅니다. 숨참이 즉시 이 숫자로 내려가야 한다는 뜻은 아닙니다." },
+    recovery: {
+      rpe: null,
+      cue: "회복 방식과 노력 안내는 아래 실제 회복 구간별 제안을 따릅니다. 모든 회복을 하나의 RPE로 지정하지 않습니다.",
+      targets: expandProposal(p).flatMap((part, partIndex) => {
+        if (part.role === "WORK" || part.role === "BUILDUP") return []
+        const rpe = ["WALK", "JOG", "EASY_RUN"].includes(part.role) ? [1, 3] : null
+        return [{ partIndex, role: part.role, unit: part.unit, value: part.value,
+          boundary: part.boundary, set: part.set, rep: part.rep, rpe,
+          cue: rpe ? "회복 움직임의 체감 노력 제안입니다. 숨참이 즉시 이 수치로 낮아져야 한다는 뜻은 아닙니다."
+            : "숫자 RPE를 지정하지 않습니다. 이 구간의 회복 방식과 속도 감소 안내를 따릅니다." }]
+      }),
+    },
     sessionRpeTarget: null, measuredPhysiology: false, automaticDoseChange: false,
     boundary: "이 범위는 본운동의 체감 노력 제안입니다. 개인 젖산역치·VO2max·최대속도를 측정하거나 보장하지 않습니다. 통증·이상 시 기존 안전 절차가 우선합니다.",
   }
@@ -53,7 +64,7 @@ export function proposeMethodExecutionGuidance(p) {
   const parts = expandProposal(p)
   if (p.family !== "OFF" && !work[p.family]) throw Error("UNKNOWN_GUIDANCE_FAMILY")
   return {
-    version: "0.2", protocolId: p.id, status: "COACHING_PROPOSAL_NOT_ADOPTED", executionAuthority: "NONE",
+    version: "0.3", protocolId: p.id, status: "COACHING_PROPOSAL_NOT_ADOPTED", executionAuthority: "NONE",
     scientificDoseValidation: false, personalPaceCalculated: false,
     effortProposal: effortProposal(p),
     methodCue: methods[p.method] ?? null,

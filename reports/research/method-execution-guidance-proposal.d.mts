@@ -18,7 +18,8 @@ export function proposeMethodExecutionGuidance(p: PendingMethodProtocol): {
     status: "PRODUCT_COACHING_CHOICE_OWNER_PENDING";
     scale: "SUBJECTIVE_0_TO_10_WORK_BOUT";
     work: WorkEffort;
-    recovery: { rpe: [number, number]; cue: string };
+    recovery: { rpe: null; cue: string;
+      targets: (ReturnType<typeof expandProposal>[number] & { partIndex: number; rpe: [number, number] | null; cue: string })[] };
     sessionRpeTarget: null;
     measuredPhysiology: false;
     automaticDoseChange: false;

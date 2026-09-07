@@ -38,7 +38,7 @@ it("separates non-applicable rest-day dose from still-required placement and ado
   expect(result.notApplicable.map(item => item.item)).toEqual([
     "EXACT_WORK_AND_INTENSITY_RATIONALE", "EXACT_RECOVERY_RATIONALE",
   ])
-  expect(result.pending).toEqual(["CURRENT_CYCLE_PLACEMENT", "INDIVIDUAL_APPLICABILITY", "EXACT_OWNER_ADOPTION"])
+  expect(result.pending).toEqual(["OWNER_ADOPTION", "WHOLE_CYCLE_PLACEMENT", "CURRENT_CYCLE_PLACEMENT", "INDIVIDUAL_APPLICABILITY", "EXACT_OWNER_ADOPTION"])
   expect(result.executionAuthority).toBe("NONE")
   expect(result.intensityReview.range).toBeNull()
   for (const p of METHOD_ADOPTION_PROTOCOLS.filter(p => p.family !== "OFF")) {

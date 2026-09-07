@@ -1,7 +1,28 @@
 import { expect, it } from "vitest"
 import { buildPendingOwnerReviewBundleV3 } from "../../../reports/research/method-owner-review-bundle-v3"
-import { METHOD_ADOPTION_PROTOCOLS } from "../../../reports/research/method-adoption-protocols.mjs"
+import { METHOD_ADOPTION_PROTOCOLS, MAIN_SUPPORT_PROPOSAL } from "../../../reports/research/method-adoption-protocols.mjs"
 import { PROPOSED_METHOD_SCOPES } from "../../../reports/research/method-adoption-applicability.mjs"
+
+it("rejects support authority changes instead of silently keeping the same review identity", () => {
+  const status = MAIN_SUPPORT_PROPOSAL.status, authority = MAIN_SUPPORT_PROPOSAL.executionAuthority
+  try {
+    MAIN_SUPPORT_PROPOSAL.status = "ACTIVE"
+    expect(() => buildPendingOwnerReviewBundleV3()).toThrow("NOT_PENDING_SUPPORT")
+    MAIN_SUPPORT_PROPOSAL.status = status
+    MAIN_SUPPORT_PROPOSAL.executionAuthority = "ACTIVE"
+    expect(() => buildPendingOwnerReviewBundleV3()).toThrow("NOT_PENDING_SUPPORT")
+  } finally { MAIN_SUPPORT_PROPOSAL.status = status; MAIN_SUPPORT_PROPOSAL.executionAuthority = authority }
+})
+
+it("includes every nested pending review in the owner decision checklist", () => {
+  const bundle = buildPendingOwnerReviewBundleV3()
+  for (const item of bundle.items) {
+    for (const pending of item.explanation.exactStructure.representation.guidance.pending) {
+      expect(item.explanation.pending).toContain(pending)
+    }
+    for (const pending of item.explanation.pending) expect(bundle.unresolvedDecisions).toContain(pending)
+  }
+})
 
 it("freezes all proposed configurations and inherited scopes without granting approval", () => {
   const result = buildPendingOwnerReviewBundleV3()
