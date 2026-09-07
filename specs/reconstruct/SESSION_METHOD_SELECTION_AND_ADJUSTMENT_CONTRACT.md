@@ -4,7 +4,7 @@
 doc_id: trainoracle-session-method-selection-and-adjustment
 spec_id: SESSION_METHOD_SELECTION_AND_ADJUSTMENT_CONTRACT
 title: TrainOracle Session Method Selection And Adjustment Contract
-version: "0.22"
+version: "0.23"
 round: RT1_OWNER_APPROVED_IMPLEMENTATION_DIRECTION
 status: ACTIVE_IMPLEMENTATION_CONTRACT
 product_direction: OWNER_APPROVED_IMPLEMENTATION_DIRECTION
@@ -1144,5 +1144,19 @@ archive validation and valid timestamps. File-provided review strings cannot gra
 authority. Reading is historical only and writes nothing; it does not restore an
 active plan or bypass current adoption/safety gates. Until the separate restore UI
 and transaction are implemented, the download copy must state that limitation.
+
+### 20.10 Explicit historical import
+
+Personal-file import restores historical originals for journal linkage, not an active
+plan. Require the user's explicit confirmation that the file belongs to the current
+user; the file is not an identity credential. Revalidate against retained application
+evidence under the plan mutation lock. Do not import registry authority from the file.
+
+Keep existing originals and active state unchanged. Identical selection identities
+retain the existing progress version, including conflicts; report those skips. Never
+silently prune existing or incoming originals to fit the 18-entry archive limit: reject
+an over-capacity import. A missing active plan remains missing after history import.
+Check account, active bytes, archive bytes and current request before/after the write;
+rollback only this operation's bytes. Cancelled or stale file reads cannot import.
 
 [DRAFT_COMPLETE]

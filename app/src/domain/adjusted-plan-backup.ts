@@ -24,7 +24,7 @@ export function readAdjustedPlanBackup(raw: string, retained: readonly RetainedA
     if (active.kind !== "loaded" || archive.kind !== "loaded") return invalid()
     const content = { app: "TRAINORACLE", format: FORMAT, exportedAt: value.exportedAt, active: active.state, archive: value.archive }
     if (hash({ ...content, contentFingerprint: hash(content) }) !== hash(value)) return invalid()
-    return { kind: "read_only" as const, active: active.state, entries: archive.entries,
+    return { kind: "read_only" as const, exportedAt: value.exportedAt as string, active: active.state, entries: archive.entries,
       executionAuthority: "NONE" as const, storageState: "NOT_RESTORED" as const }
   } catch { return invalid() }
 }

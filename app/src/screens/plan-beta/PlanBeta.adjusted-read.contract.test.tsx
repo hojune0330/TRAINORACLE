@@ -88,7 +88,7 @@ it("downloads a separate personal plan file only after the explicit download act
     render(<PlanBeta readAdjustedEvidence={() => context.retained} />)
     expect(create).not.toHaveBeenCalled()
     fireEvent.click(screen.getByText("저장과 이용 안내"))
-    expect(screen.getByText(/앱에서 다시 불러오는 화면은 아직 준비 중/)).toBeVisible()
+    expect(screen.getByText(/현재 일정으로 자동 적용하지 않아요/)).toBeVisible()
     fireEvent.click(screen.getByRole("button", { name: "개인 보관용 계획 파일 받기" }))
     expect(create).toHaveBeenCalledTimes(1)
     expect(click).toHaveBeenCalledTimes(1)

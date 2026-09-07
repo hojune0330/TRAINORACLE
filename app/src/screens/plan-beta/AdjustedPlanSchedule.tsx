@@ -11,13 +11,14 @@ import { TermHelp } from "../../components/TermHelp"
 import { AdjustedJournalOriginalPlan } from "../journal/AdjustedJournalOriginalPlan"
 import "./AdjustedPlanSchedule.css"
 
-export function AdjustedPlanSchedule({ loaded, onWritePlannedSessionLog, returnToSession, onStoredChange, onPrepareNext, onExportPlan }: {
+export function AdjustedPlanSchedule({ loaded, onWritePlannedSessionLog, returnToSession, onStoredChange, onPrepareNext, onExportPlan, onImportPlan }: {
   readonly loaded: Extract<PlanBetaStateReadResult, { kind: "adjusted_loaded" }>
   readonly onWritePlannedSessionLog?: (draft: PlannedSessionLogDraft) => void
   readonly returnToSession?: PlannedSessionLogDraft["link"]
   readonly onStoredChange: () => void
   readonly onPrepareNext?: () => void
   readonly onExportPlan?: () => ReturnType<typeof exportAdjustedPlanBackup>
+  readonly onImportPlan?: () => void
 }) {
   const plan = loaded.state.selection
   const start = plan.intake.startDate ?? plan.generatedAt.slice(0, 10)
@@ -77,7 +78,7 @@ export function AdjustedPlanSchedule({ loaded, onWritePlannedSessionLog, returnT
       <p>이 조정 계획은 현재 이 기기에 저장돼 있어요. 서버 보관은 아직 연결 중이에요.</p>
       <p>이 화면의 수치는 저장 당시의 계획이며, 지금 몸 상태에 대한 새 판단이나 훈련 시작 승인은 아니에요.</p>
       {onExportPlan && <>
-        <p>개인 보관 파일에는 페이스 계산에 사용한 기록과 훈련 진행 상태가 포함돼요. 메모는 포함하지 않아요. 다른 사람에게 공유하지 마세요. 앱에서 다시 불러오는 화면은 아직 준비 중이에요.</p>
+        <p>개인 보관 파일에는 페이스 계산에 사용한 기록과 훈련 진행 상태가 포함돼요. 메모는 포함하지 않아요. 다른 사람에게 공유하지 마세요. 불러온 계획은 과거 원본으로 보관하며 현재 일정으로 자동 적용하지 않아요.</p>
         <button type="button" onClick={() => {
           const result = onExportPlan()
           if (result.kind !== "exported") { setError("계획 원본을 확인하지 못해 파일을 만들지 않았어요."); return }
@@ -91,6 +92,7 @@ export function AdjustedPlanSchedule({ loaded, onWritePlannedSessionLog, returnT
           finally { if (url) { const downloadUrl = url; window.setTimeout(() => URL.revokeObjectURL(downloadUrl), 1000) } }
         }}><Download size={18} aria-hidden="true" />개인 보관용 계획 파일 받기</button>
       </>}
+      {onImportPlan && <button type="button" onClick={onImportPlan}>개인 계획 파일 불러오기</button>}
     </details>
   </section>
 }

@@ -63,6 +63,7 @@ import { AdjustedPlanEditFlow } from "./plan-beta/AdjustedPlanEditFlow"
 import { matchingAdjustmentEntry } from "./plan-beta/adjustment-entry"
 import { AdjustedPlanNextFlow, readOperatingAdjustedEvidence } from "./plan-beta/AdjustedPlanNextFlow"
 import { exportAdjustedPlanBackup } from "../domain/adjusted-plan-backup"
+import { AdjustedPlanImport } from "./plan-beta/AdjustedPlanImport"
 
 type AdjustmentEntry = Pick<React.ComponentProps<typeof AdjustedPlanEditFlow>, "seed" | "readReview" | "locks">
 export type PlanAdjustmentResolver = (context: {
@@ -95,13 +96,16 @@ export function PlanBeta(props: Omit<React.ComponentProps<typeof LegacyPlanBeta>
   const readCurrent = React.useCallback(() => readPlanBetaStateFromStorage(readEvidence()), [readEvidence])
   const [read, setRead] = React.useState(readCurrent)
   const [nextOpen, setNextOpen] = React.useState(false)
+  const [importOpen, setImportOpen] = React.useState(false)
   const [revision, setRevision] = React.useState(0)
   React.useEffect(() => {
-    const refresh = () => { setNextOpen(false); setRead(readCurrent()); setRevision(value => value + 1) }
+    const refresh = () => { setImportOpen(false); setNextOpen(false); setRead(readCurrent()); setRevision(value => value + 1) }
     const unsubscribe = onLocalJournalScopeChange(refresh)
     window.addEventListener("storage", refresh)
     return () => { unsubscribe(); window.removeEventListener("storage", refresh) }
   }, [readCurrent])
+  if (importOpen) return <AdjustedPlanImport readEvidence={readEvidence}
+    onBack={() => { setImportOpen(false); setRead(readCurrent()) }} />
   if (read.kind === "adjusted_loaded" && nextOpen) return <AdjustedPlanNextFlow
     key={`${localAccountScopeSnapshot()}:${read.state.contentFingerprint}`}
     loaded={read} adjustmentResolver={props.adjustmentResolver} readEvidence={readEvidence}
@@ -111,6 +115,7 @@ export function PlanBeta(props: Omit<React.ComponentProps<typeof LegacyPlanBeta>
     key={`${localAccountScopeSnapshot()}:${read.state.selection.contentFingerprint}`}
     onStoredChange={() => setRead(readCurrent())}
     onExportPlan={() => exportAdjustedPlanBackup(read.state.contentFingerprint, readEvidence())}
+    onImportPlan={() => setImportOpen(true)}
     onPrepareNext={() => {
       const current = readCurrent()
       setRead(current)
@@ -129,7 +134,8 @@ export function PlanBeta(props: Omit<React.ComponentProps<typeof LegacyPlanBeta>
     <p role="alert">계획을 지우거나 새 계획으로 바꾸지 않았어요. 다시 확인해 주세요.</p>
     <button type="button" onClick={() => setRead(readCurrent())}>다시 확인</button>
   </section>
-  return <LegacyPlanBeta key={revision} {...props} onAdjustedStored={() => setRead(readCurrent())} />
+  return <><LegacyPlanBeta key={revision} {...props} onAdjustedStored={() => setRead(readCurrent())} />
+    <button type="button" onClick={() => setImportOpen(true)}>개인 계획 파일 불러오기</button></>
 }
 
 function LegacyPlanBeta({
