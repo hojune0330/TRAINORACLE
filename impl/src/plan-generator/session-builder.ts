@@ -71,7 +71,7 @@ function restSession(day: number, slot: PlanSessionSlot = "AM"): PlanSession {
   })
 }
 
-function rpeForIntent(intent: PlannedEnergyIntent): RpeTimeRange["rpe"] {
+export function rpeForIntent(intent: PlannedEnergyIntent): RpeTimeRange["rpe"] {
   switch (intent) {
     case "RECOVERY_INTENT":
       return { minimum: 1, maximum: 2 }

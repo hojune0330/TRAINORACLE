@@ -3,7 +3,7 @@
 ```yaml
 doc_id: trainoracle-session-method-owner-adoption-packet-2026-09-07
 packet_id: TO-METHOD-ADOPTION-2026-09-07
-version: "0.13"
+version: "0.14"
 status: SOURCE_REVIEWED_PACKET_IN_PREPARATION
 review_process: TO-OWNER-TRAINING-REVIEW-ROUTE-2026-09-07
 owner_exact_packet_approval: NOT_REQUESTED_YET
@@ -600,5 +600,26 @@ P-ATP-T: 6초 4회, 사이 180초 걷기 또는 정지 3회, 마지막 반복 �
 자료는 기본17/변형8로 증가했다. DEVELOPING ATP-PC의 구조 선택지7조합이 보강돼
 미확보 조합은 54에서47(연령/권한 포함216에서188)로 바뀐다. 구조 보강이지
 과학적 채택/개인 적용/운영 활성화 완료가 아니다. 기존 §18 감사는 당시 이력으로 유지한다.
+
+## 23. 시간형 복합 리듬 구성 보강
+
+2026-09-08 [NSCA PTQ 6.4 Fartlek Training](https://www.nsca.com/contentassets/72230d64e1ba49b19301767b42f17323/ptq-6.4.1-fartlek-training-with-personal-training-clients.pdf)
+원문을 확인했다. 빠른/느린 달리기를 바꾸는 원리와 경험에 따른 구성 조절을 참고한다.
+원문의 시간대별 에너지 시스템 단정이나 광범위한 효능 주장을 그대로 채택하지 않는다.
+아래 수치는 원문 예시의 복제가 아니라 제품 코칭 제안이다.
+
+| ID | 본운동 | 회복 | 블록 합계 |
+|---|---|---|---|
+| P-RHYTHM-T | 120초 6회 | 매회 뒤 쉬운 달리기60초, 마지막 포함 | 운동720초+회복360초=1080초 |
+| P-RHYTHM-TS | 60초 3회씩3세트 | 매회 뒤 쉬운 달리기60초, 세트 사이 추가180초 2회 | 운동540초+회복900초=1440초 |
+
+거리 환산/고정 페이스/개인 에너지 기여율은 미지정이다. MIX 분류는 리듬 전환의
+코칭 목적이며 여러 경로의 비율이 실측되었다는 뜻이 아니다. 정확한 본운동 강도와
+쉬운 달리기 안내, 준비구간 포함 전체 배치의 검토는 남는다. 기존 MAIN 대체 제안으로
+전 종목 DEVELOPING/EXPERIENCED에 제안하며 자동 추가하지 않는다.
+
+기본19/변형8이다. 구조상 두 방법 미확보는 NEW_TO_RUNNING 35개 조합(140행)으로
+남는다. 나머지 조합도 실제 적합성/용량 승인 완료는 아니다. 앞선 감사 숫자는 당시
+이력으로 유지한다. 고정 쌍 없이 해당 목적의 전체 후보에 추가했다.
 
 [DRAFT_COMPLETE]

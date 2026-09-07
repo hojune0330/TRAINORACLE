@@ -4,10 +4,10 @@ import { METHOD_ADOPTION_PROTOCOLS as protocols, METHOD_ADOPTION_VARIANTS as var
 
 const get = id => [...protocols, ...variants].find(p => p.id === id)
 const summary = id => summarizeProposal(get(id))
-test("all seventeen packet rows and eight finite variants remain review only", () => {
-  assert.equal(protocols.length, 17)
+test("all nineteen packet rows and eight finite variants remain review only", () => {
+  assert.equal(protocols.length, 19)
   assert.equal(variants.length, 8)
-  assert.equal(new Set([...protocols, ...variants].map(p => p.id)).size, 25)
+  assert.equal(new Set([...protocols, ...variants].map(p => p.id)).size, 27)
   for (const p of [...protocols, ...variants]) {
     assert.equal(summarizeProposal(p).executionAuthority, "NONE")
     assert.equal(p.status, "OWNER_ADOPTION_PENDING")
@@ -21,6 +21,7 @@ test("all time-based original totals match the packet independently", () => {
     ["P-VO2-2",720,300,1020], ["P-VO2-3",900,480,1380], ["P-VO2-4",960,540,1500],
     ["P-REC-W",900,null,900],
     ["P-ATP-T",24,540,564],
+    ["P-RHYTHM-T",720,360,1080], ["P-RHYTHM-TS",540,900,1440],
   ]) {
     const s = summary(id)
     assert.equal(s.work.SECONDS, work, id)

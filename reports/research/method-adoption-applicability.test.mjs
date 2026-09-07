@@ -6,7 +6,7 @@ const context = { eventDistanceM: 5000, experience: "EXPERIENCED", population: "
 test("every proposed protocol has exactly one pending scope", () => {
   assert.equal(PROPOSED_METHOD_SCOPES.length, METHOD_ADOPTION_PROTOCOLS.length)
   assert.deepEqual(PROPOSED_METHOD_SCOPES.map(s => s.id).sort(), METHOD_ADOPTION_PROTOCOLS.map(s => s.id).sort())
-  assert.equal(new Set(PROPOSED_METHOD_SCOPES.map(s => s.id)).size, 17)
+  assert.equal(new Set(PROPOSED_METHOD_SCOPES.map(s => s.id)).size, 19)
   assert.ok(PROPOSED_METHOD_SCOPES.every(s => s.status === "OWNER_ADOPTION_PENDING"))
 })
 test("purpose returns all independent proposed candidates, not one paired alternative", () => {

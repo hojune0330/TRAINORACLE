@@ -14,6 +14,8 @@ export const METHOD_ADOPTION_PROTOCOLS = [
   protocol("P-LT-S", "LT", "SHORT_SPLIT", 1, 3, [time(420)], time(60, "JOG"), null),
   protocol("P-RHYTHM-400", "MIX", "ROLL_ON_400", 1, 12, [distance(400)], null, null, distance(100, "ROLL_ON")),
   protocol("P-RHYTHM-300", "MIX", "ROLL_ON_SETS_300", 3, 2, [distance(300)], null, time(120, "EASY_RUN"), distance(100, "ROLL_ON")),
+  protocol("P-RHYTHM-T", "MIX", "TIMED_RHYTHM", 1, 6, [time(120)], null, null, time(60, "EASY_RUN")),
+  protocol("P-RHYTHM-TS", "MIX", "TIMED_RHYTHM_SETS", 3, 3, [time(60)], null, time(180, "EASY_RUN"), time(60, "EASY_RUN")),
   protocol("P-VO2-2", "VO2", "TWO_MINUTE", 1, 6, [time(120)], time(60, "JOG"), null),
   protocol("P-VO2-3", "VO2", "THREE_MINUTE", 1, 5, [time(180)], time(120, "JOG"), null),
   protocol("P-VO2-4", "VO2", "FOUR_MINUTE", 1, 4, [time(240)], time(180, "JOG"), null),

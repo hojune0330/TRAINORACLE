@@ -2,6 +2,16 @@ type Rationale = { work: string; recovery: string; tradeoff: string }
 
 // Product coaching hypotheses for review, not claims that these exact doses are optimal.
 export const METHOD_DESIGN_RATIONALES: Readonly<Record<string, Rationale>> = {
+  TIMED_RHYTHM: {
+    work: "거리를 재지 않아도 되도록 정해진 시간 동안 달리고 쉬운 달리기로 전환하는 구성이에요.",
+    recovery: "모든 본운동 구간 뒤에 쉬운 달리기가 있으며 마지막 구간 뒤에도 포함돼요.",
+    tradeoff: "트랙 표시 없이 수행할 수 있지만 종료 신호를 확인해야 해요. 회복 달리기도 전체 운동시간에 포함돼요.",
+  },
+  TIMED_RHYTHM_SETS: {
+    work: "짧은 시간 구간과 쉬운 달리기를 세트로 묶어 리듬을 바꾸는 제안이에요.",
+    recovery: "세트 마지막 쉬운 달리기 뒤에 추가 세트 회복이 있어요. 구간 회복과 세트 회복을 따로 확인해요.",
+    tradeoff: "세트마다 긴 전환 구간이 있지만 회복시간이 더해져요. 본운동 시간이 짧다고 전체 세션도 짧다고 볼 수는 없어요.",
+  },
   TIMED_ACCELERATION: {
     work: "거리가 아니라 짧은 시간을 끝점으로 삼아 높은 출력을 다루는 제안이에요. 정해진 거리까지 억지로 가속을 연장하지 않아요.",
     recovery: "각 구간 사이 걷거나 서서 쉬어요. 이 시간이 개인의 인산크레아틴 재충전을 완료한다는 뜻은 아니에요.",
