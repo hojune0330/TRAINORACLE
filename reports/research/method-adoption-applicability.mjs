@@ -22,6 +22,9 @@ export const PROPOSED_METHOD_SCOPES = [
   ...scope(["P-GLY-D", "P-GLY-S"], events, trained, "MAIN"),
   ...scope(["P-REC-W"], events, allExperience, "REC"),
   ...scope(["P-OFF"], events, allExperience, "OFF"),
+  ...scope(["P-INTRO-LT-C", "P-INTRO-LT-S", "P-INTRO-VO2-2", "P-INTRO-VO2-3",
+    "P-INTRO-ATP-A", "P-INTRO-ATP-T", "P-INTRO-GLY-D", "P-INTRO-GLY-S",
+    "P-INTRO-MIX-T", "P-INTRO-MIX-S"], events, ["NEW_TO_RUNNING"], "MAIN"),
 ]
 
 export function previewMethodScope(context) {
@@ -42,7 +45,8 @@ export function previewMethodScope(context) {
     return {
       id: protocol.id, scopeMatch: reasons.length === 0, reasons,
       replacementRole: s.replacementRole, executionAuthority: "NONE",
-      requiredReviews: ["EXACT_OWNER_ADOPTION", "WHOLE_FRAME_PLACEMENT", "CURRENT_INPUT_AND_SAFETY"],
+      requiredReviews: ["EXACT_OWNER_ADOPTION", "WHOLE_FRAME_PLACEMENT", "CURRENT_INPUT_AND_SAFETY",
+        ...(protocol.id.startsWith("P-INTRO-") ? ["INTRO_SEGMENT_READINESS", "INTRO_SUPPORT_APPLICABILITY", "INTRO_EFFORT_APPLICABILITY"] : [])],
       recordAbsenceExcludes: false,
     }
   })

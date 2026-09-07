@@ -26,6 +26,17 @@ export const METHOD_ADOPTION_PROTOCOLS = [
   protocol("P-GLY-S", "GLY", "SET_REPEATS", 2, 3, [distance(200)], time(120, "WALK"), time(300, "WALK_OR_STAND")),
   protocol("P-REC-W", "REC", "WALK", 1, 1, [time(900)], null, null),
   protocol("P-OFF", "OFF", "NO_PLANNED_EXERCISE", 0, 0, [], null, null),
+  // Introduction-scope coaching proposals, not published beginner prescriptions.
+  protocol("P-INTRO-LT-C", "LT", "CONTINUOUS", 1, 1, [time(480)], null, null),
+  protocol("P-INTRO-LT-S", "LT", "SHORT_SPLIT", 1, 2, [time(240)], time(60, "JOG"), null),
+  protocol("P-INTRO-VO2-2", "VO2", "TWO_MINUTE", 1, 3, [time(120)], time(90, "JOG"), null),
+  protocol("P-INTRO-VO2-3", "VO2", "THREE_MINUTE", 1, 2, [time(180)], time(120, "JOG"), null),
+  protocol("P-INTRO-ATP-A", "ATP-PC", "STANDING_ACCELERATION", 1, 4, [distance(20)], time(120, "WALK_OR_STAND"), null),
+  protocol("P-INTRO-ATP-T", "ATP-PC", "TIMED_ACCELERATION", 1, 3, [time(6)], time(180, "WALK_OR_STAND"), null),
+  protocol("P-INTRO-GLY-D", "GLY", "UNBROKEN_REPEATS", 1, 4, [distance(100)], time(120, "WALK"), null),
+  protocol("P-INTRO-GLY-S", "GLY", "SET_REPEATS", 2, 2, [distance(150)], time(90, "WALK"), time(240, "WALK_OR_STAND")),
+  protocol("P-INTRO-MIX-T", "MIX", "TIMED_RHYTHM", 1, 4, [time(60)], null, null, time(60, "EASY_RUN")),
+  protocol("P-INTRO-MIX-S", "MIX", "TIMED_RHYTHM_SETS", 2, 3, [time(30)], null, time(120, "EASY_RUN"), time(60, "EASY_RUN")),
 ]
 
 const roles = new Set(["WORK", "BUILDUP", "WALK", "JOG", "EASY_RUN", "WALK_OR_STAND", "ROLL_ON"])

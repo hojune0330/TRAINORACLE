@@ -29,6 +29,7 @@ try {
     const guidance = proposeMethodExecutionGuidance(p)
     const main = e.exactStructure.totals?.main
     lines.push(`## ${p.id}`, "", `- 목적 분류: ${p.family} / 방법: ${p.method}`,
+      ...(p.id.startsWith("P-INTRO-") ? ["- 입문 범위 검토 제안: 정확한 수치의 초보 대상 검증은 미확립. 기존 공통 준비/정리의 적합성과 구간 수행 가능성을 별도 검토하며 자동 제공하지 않음."] : []),
       `- 본운동 단위: ${p.work.map(amount).join(" + ") || "계획된 운동 없음"}`,
       `- 반복: 세트당 ${p.reps}회 / 세트 ${p.sets}개`,
       `- 반복 사이: ${amount(p.between)}`,

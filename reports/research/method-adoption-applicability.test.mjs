@@ -6,7 +6,7 @@ const context = { eventDistanceM: 5000, experience: "EXPERIENCED", population: "
 test("every proposed protocol has exactly one pending scope", () => {
   assert.equal(PROPOSED_METHOD_SCOPES.length, METHOD_ADOPTION_PROTOCOLS.length)
   assert.deepEqual(PROPOSED_METHOD_SCOPES.map(s => s.id).sort(), METHOD_ADOPTION_PROTOCOLS.map(s => s.id).sort())
-  assert.equal(new Set(PROPOSED_METHOD_SCOPES.map(s => s.id)).size, 19)
+  assert.equal(new Set(PROPOSED_METHOD_SCOPES.map(s => s.id)).size, 29)
   assert.ok(PROPOSED_METHOD_SCOPES.every(s => s.status === "OWNER_ADOPTION_PENDING"))
 })
 test("purpose returns all independent proposed candidates, not one paired alternative", () => {
@@ -29,8 +29,8 @@ test("seven event groups retain VO2 coverage while sprint specialists stay out o
 })
 test("long distance does not erase GLY purpose; flying skill proposal remains separate", () => {
   const gly = previewMethodScope({ ...context, eventDistanceM: 42195, family: "GLY" })
-  assert.equal(gly.rows.length, 2)
-  assert.ok(gly.rows.every(r => r.scopeMatch && r.requiredReviews.includes("WHOLE_FRAME_PLACEMENT")))
+  assert.equal(gly.rows.filter(r => r.scopeMatch).length, 2)
+  assert.ok(gly.rows.every(r => r.requiredReviews.includes("WHOLE_FRAME_PLACEMENT")))
   const atp = previewMethodScope({ ...context, experience: "DEVELOPING", family: "ATP-PC" })
   assert.deepEqual(atp.rows.filter(r => r.scopeMatch).map(r => r.id), ["P-ATP-A", "P-ATP-T"])
 })

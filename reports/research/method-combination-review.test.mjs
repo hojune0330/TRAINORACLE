@@ -15,11 +15,12 @@ test("enumerates all configurations, repeated methods and partial preservation w
   assert.equal(result.executionAuthority, "NONE")
   assert.deepEqual(previewPendingMethodCombinations(context, [...slots].reverse()), result)
 })
-test("retains absent beginner coverage instead of substituting trained prescriptions", () => {
+test("uses explicit introduction proposals without substituting trained prescriptions", () => {
   const result = previewPendingMethodCombinations({ ...context, experience: "NEW_TO_RUNNING" }, slots)
-  assert.equal(result.combinationCount, "0")
-  assert.equal(result.missingSlotChoices.length, 3)
-  assert.deepEqual(result.combinations, [])
+  assert.equal(result.combinationCount, "26")
+  assert.equal(result.missingSlotChoices.length, 0)
+  assert.ok(result.choices.every(s => s.configurationIds.every(id => id.startsWith("P-INTRO-"))))
+  assert.equal(result.executionAuthority, "NONE")
 })
 test("uses each slot purpose independently and caps enumeration without truncating the reported count", () => {
   const result = previewPendingMethodCombinations(context, [{ ...slots[0], family: "GLY" }, { day: 4, slot: "PM", family: "VO2" }])

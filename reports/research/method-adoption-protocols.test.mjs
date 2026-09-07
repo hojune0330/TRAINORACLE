@@ -4,14 +4,29 @@ import { METHOD_ADOPTION_PROTOCOLS as protocols, METHOD_ADOPTION_VARIANTS as var
 
 const get = id => [...protocols, ...variants].find(p => p.id === id)
 const summary = id => summarizeProposal(get(id))
-test("all nineteen packet rows and eight finite variants remain review only", () => {
-  assert.equal(protocols.length, 19)
+test("all twenty-nine packet rows and eight finite variants remain review only", () => {
+  assert.equal(protocols.length, 29)
   assert.equal(variants.length, 8)
-  assert.equal(new Set([...protocols, ...variants].map(p => p.id)).size, 27)
+  assert.equal(new Set([...protocols, ...variants].map(p => p.id)).size, 37)
   for (const p of [...protocols, ...variants]) {
     assert.equal(summarizeProposal(p).executionAuthority, "NONE")
     assert.equal(p.status, "OWNER_ADOPTION_PENDING")
     assert.equal(Object.hasOwn(p, "pairedWith"), false)
+  }
+})
+test("introduction proposals retain independently calculated work and recovery totals", () => {
+  for (const [id, workSeconds, workMeters, recoverySeconds, elapsed] of [
+    ["P-INTRO-LT-C",480,null,null,480], ["P-INTRO-LT-S",480,null,60,540],
+    ["P-INTRO-VO2-2",360,null,180,540], ["P-INTRO-VO2-3",360,null,120,480],
+    ["P-INTRO-ATP-A",null,80,360,null], ["P-INTRO-ATP-T",18,null,360,378],
+    ["P-INTRO-GLY-D",null,400,360,null], ["P-INTRO-GLY-S",null,600,420,null],
+    ["P-INTRO-MIX-T",240,null,240,480], ["P-INTRO-MIX-S",180,null,480,660],
+  ]) {
+    const s = summary(id)
+    assert.deepEqual(s.work, { SECONDS: workSeconds, METERS: workMeters }, id)
+    assert.equal(s.recovery.SECONDS, recoverySeconds, id)
+    assert.equal(s.totalSeconds, elapsed, id)
+    assert.equal(s.executionAuthority, "NONE")
   }
 })
 test("all time-based original totals match the packet independently", () => {

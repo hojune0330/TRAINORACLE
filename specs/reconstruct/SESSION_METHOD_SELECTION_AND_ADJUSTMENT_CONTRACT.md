@@ -4,7 +4,7 @@
 doc_id: trainoracle-session-method-selection-and-adjustment
 spec_id: SESSION_METHOD_SELECTION_AND_ADJUSTMENT_CONTRACT
 title: TrainOracle Session Method Selection And Adjustment Contract
-version: "0.66"
+version: "0.67"
 round: RT1_OWNER_APPROVED_IMPLEMENTATION_DIRECTION
 status: ACTIVE_IMPLEMENTATION_CONTRACT
 product_direction: OWNER_APPROVED_IMPLEMENTATION_DIRECTION
@@ -1832,5 +1832,14 @@ V6 개인 계획을 전송하기 전에 실제 계정별 현재 저장값과 독
 현재 목록에서 철회해도 과거 버전을 함께 삭제하지 않으며, 과거 읽기 성공으로
 새 적용 권한을 얻지 않는다. 화면에서 편집/저장할 때마다 현재 목록을 다시 확인한다.
 공급자 구현 또는 합성 시험 목록은 실제 운영 카탈로그 채택을 의미하지 않는다.
+
+### 21.47 입문 구성 제안의 검토 지위
+
+입문 사용자용 상세 MAIN 제안도 독립적인 운동 단위/회복/구조 차이를 검사한다.
+경험자용 제안의 적격 범위를 자동 확대하거나 BASE 도입안을 다른 고강도 목적의
+두 번째 방법으로 세지 않는다. 검토 제안 수와 실제 채택 수는 분리한다.
+구간 수행 가능성, 지원 구간 포함 전체 시간, 노력 안내와 주기 배치의 검토 상태를
+설명 지문과 승인 자료에 함께 남긴다. 경험 구분만으로 적합성을 보장하지 않는다.
+정확한 입문 숫자는 별도 채택 패킷을 따르며 본 조항이 수치를 승인하지 않는다.
 
 [DRAFT_COMPLETE]
