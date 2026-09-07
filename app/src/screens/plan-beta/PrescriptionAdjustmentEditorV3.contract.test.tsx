@@ -48,6 +48,25 @@ const row = (name: string) => within(within(screen.getByRole("table", { name: "�
   .getByRole("rowheader", { name }).closest("tr")!).getAllByRole("cell").map(c => c.textContent)
 
 describe("V3 adjustment editor", () => {
+  it("restores the previously selected configuration and closes an unchanged reopened editor without a discard prompt", () => {
+    const { props, refs } = fixture()
+    render(<PrescriptionAdjustmentEditorV3 {...props} initialConfiguration={refs[1]} />)
+    expect(screen.getByRole("radio", { name: "시험 구성" })).toBeChecked()
+    expect(row("본운동 시간")).toEqual(["78초", "52초", "-26초"])
+    fireEvent.click(screen.getAllByRole("button", { name: "취소" })[0]!)
+    expect(props.onCancel).toHaveBeenCalledOnce()
+    expect(props.onApply).not.toHaveBeenCalled()
+    expect(screen.queryByRole("button", { name: "변경안 버리기" })).toBeNull()
+  })
+
+  it("does not silently substitute the baseline when the prior selection can no longer be reviewed", () => {
+    const { props, refs } = fixture()
+    render(<PrescriptionAdjustmentEditorV3 {...props} initialConfiguration={refs[1]} now={() => 250} />)
+    expect(screen.getByText(/앞서 고른 구성을 현재 검토 기준에서 확인하지 못했어요/)).toBeTruthy()
+    expect(screen.getByRole("button", { name: "변경안 적용" })).toBeDisabled()
+    expect(props.onApply).not.toHaveBeenCalled()
+  })
+
   it("keeps unknown recovery duration unknown and applies only an explicit reviewed configuration", async () => {
     const { props, refs } = fixture(), original = JSON.stringify(props.current)
     render(<PrescriptionAdjustmentEditorV3 {...props} />)

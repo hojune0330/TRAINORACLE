@@ -4,7 +4,7 @@
 doc_id: trainoracle-session-method-selection-and-adjustment
 spec_id: SESSION_METHOD_SELECTION_AND_ADJUSTMENT_CONTRACT
 title: TrainOracle Session Method Selection And Adjustment Contract
-version: "0.58"
+version: "0.59"
 round: RT1_OWNER_APPROVED_IMPLEMENTATION_DIRECTION
 status: ACTIVE_IMPLEMENTATION_CONTRACT
 product_direction: OWNER_APPROVED_IMPLEMENTATION_DIRECTION
@@ -1750,5 +1750,12 @@ REVIEWED_MULTI_SUCCESSOR_V3_TRANSACTION으로 원본 보관/현재 근거 검토
 임의로 만들거나 receipt만 보고 용량/적격성을 승인하지 않는다. 최종 확인에서만
 실제 저장을 요청하며, 반복 편집 시 현재 선택 표시와 운영 선택지 다양성은 별도
 사용성 및 계약 검수에 포함한다.
+
+### 21.39 반복 편집의 선택 복원
+
+편집창을 다시 열면 앞서 선택한 구성 참조를 현재 검토 범위에서 재검증하여 초기
+변경안으로 복원한다. 이를 기준 구성으로 조용히 대체하지 않는다. 검토가 만료되거나
+목록에서 빠진 경우 안내하고 적용을 비활성화한다. 초기 선택이 열린 뒤 바뀌면
+현재 편집을 무효화한다. 재개 후 추가 변경 없이 취소하면 버리기 확인을 반복하지 않는다.
 
 [DRAFT_COMPLETE]

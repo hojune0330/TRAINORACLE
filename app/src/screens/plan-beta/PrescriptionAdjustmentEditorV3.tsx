@@ -21,6 +21,7 @@ type Props = {
   readonly contextKey: string
   readonly choices: readonly { readonly configuration: ConfigurationReference; readonly label: string }[]
   readonly orderedChoices?: readonly AdjustmentOrderedChoicesV3[]
+  readonly initialConfiguration?: ConfigurationReference
   readonly now: () => number
   readonly onApply: (receipt: AdjustmentReceiptV3, prescription: PrescriptionSnapshotV3) => void | Promise<void>
   readonly onCancel: () => void
@@ -50,10 +51,21 @@ function metric(value: number | null, unit: string) { return value === null ? "�
 export function PrescriptionAdjustmentEditorV3(props: Props) {
   const [opened] = React.useState(() => {
     const parsed = parsePrescriptionSequenceV3(props.current.sequence)
+    let initialDraft: AdjustmentDraftV3 | null = null, initialError: string | null = null
+    if (props.initialConfiguration && !same(props.initialConfiguration, props.current.configuration)) {
+      try {
+        const result = props.choices.some(c => same(c.configuration, props.initialConfiguration))
+          ? createAdjustmentDraftV3({ authority: props.authority, policy: props.policy, contextKey: props.contextKey,
+            current: props.current, target: props.initialConfiguration, nowMs: props.now() }) : null
+        if (result?.kind === "draft") initialDraft = result.draft
+        else initialError = "앞서 고른 구성을 현재 검토 기준에서 확인하지 못했어요. 닫은 뒤 다시 확인해 주세요."
+      } catch { initialError = "앞서 고른 구성을 읽지 못했어요. 닫은 뒤 다시 확인해 주세요." }
+    }
     return { currentIdentity: identity(props.current), policyIdentity: identity(props.policy), contextKey: props.contextKey,
+      initialConfigurationIdentity: identity(props.initialConfiguration ?? null), initialDraft, initialError,
       current: parsed.kind === "parsed" ? { configuration: { ...props.current.configuration }, sequence: parsed.sequence } : null }
   })
-  const [draft, setDraft] = React.useState<AdjustmentDraftV3 | null>(null), [error, setError] = React.useState<string | null>(null)
+  const [draft, setDraft] = React.useState<AdjustmentDraftV3 | null>(opened.initialDraft), [error, setError] = React.useState<string | null>(opened.initialError)
   const [discarding, setDiscarding] = React.useState(false), [closed, setClosed] = React.useState(false)
   const [applying, setApplying] = React.useState(false), [invalidated, setInvalidated] = React.useState(false)
   const pending = React.useRef(false), completed = React.useRef(false), mounted = React.useRef(true)
@@ -62,8 +74,9 @@ export function PrescriptionAdjustmentEditorV3(props: Props) {
   const keepEditing = React.useRef<HTMLButtonElement>(null), discardOpener = React.useRef<HTMLElement | null>(null)
   const id = React.useId()
   const changed = (live: Props) => opened.currentIdentity === null || identity(live.current) !== opened.currentIdentity
+    || identity(live.initialConfiguration ?? null) !== opened.initialConfigurationIdentity
     || identity(live.policy) !== opened.policyIdentity || live.contextKey !== opened.contextKey
-  const stale = invalidated || changed(props)
+  const stale = invalidated || opened.initialError !== null || changed(props)
   React.useEffect(() => { if (stale) setInvalidated(true) }, [stale])
   React.useEffect(() => { mounted.current = true; return () => { mounted.current = false } }, [])
   React.useEffect(() => {
@@ -86,7 +99,7 @@ export function PrescriptionAdjustmentEditorV3(props: Props) {
   }
   const requestCancel = () => {
     if (pending.current || completed.current) return
-    if (!draft) { cancel(); return }
+    if (!draft || same(draft.after.configuration, opened.initialDraft?.after.configuration)) { cancel(); return }
     discardOpener.current = document.activeElement instanceof HTMLElement ? document.activeElement : back.current
     setDiscarding(true)
   }

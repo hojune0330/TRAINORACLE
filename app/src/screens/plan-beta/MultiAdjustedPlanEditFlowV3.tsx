@@ -33,12 +33,14 @@ export function MultiAdjustedPlanEditFlowV3({ seed, readReview, locks, readRevie
   try { live = review() } catch { /* Show the unavailable state without inventing review data. */ }
   const prepared = live === null ? null : prepareMultiAdjustedPlanCandidateV3(request.preparations, live.rpeBindings)
   if (editing && live) {
+    const selected = prepared?.kind === "prepared" ? prepared.candidate.sessions.find(s => s.day === editing.day && s.slot === editing.slot)?.prescription : undefined
     const source = live.preparations.find(p => p.address.day === editing.day && p.address.slot === editing.slot)
     const offer = source === undefined ? null : "experienceBand" in source
       ? prepareUnanchoredAdjustmentOfferV3({ ...source.source, nowMs: Date.now() })
       : prepareSourceAdjustmentOfferV3({ ...source.source, nowMs: Date.now() })
     if (offer?.kind === "available") return <PrescriptionAdjustmentEditorV3 key={`${editing.day}:${editing.slot}`}
       authority={offer.authority} current={offer.current} policy={offer.policy} contextKey={offer.contextKey}
+      initialConfiguration={selected?.kind === "ADJUSTED_METHOD_V3" ? selected.snapshot.receipt.after.configuration : undefined}
       now={Date.now} orderedChoices={orderedChoicesFor?.(editing)} onCancel={() => setEditing(null)}
       choices={offer.targets.map(configuration => ({ configuration, label: offer.authority.catalog.find(f => f.familyId === configuration.familyId)
         ?.configurations.find(c => c.configurationId === configuration.configurationId && c.version === configuration.version)?.sequence.label ?? "검토된 다른 구성" }))}
