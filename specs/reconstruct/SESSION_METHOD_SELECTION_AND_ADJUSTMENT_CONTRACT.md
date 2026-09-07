@@ -4,7 +4,7 @@
 doc_id: trainoracle-session-method-selection-and-adjustment
 spec_id: SESSION_METHOD_SELECTION_AND_ADJUSTMENT_CONTRACT
 title: TrainOracle Session Method Selection And Adjustment Contract
-version: "0.55"
+version: "0.56"
 round: RT1_OWNER_APPROVED_IMPLEMENTATION_DIRECTION
 status: ACTIVE_IMPLEMENTATION_CONTRACT
 product_direction: OWNER_APPROVED_IMPLEMENTATION_DIRECTION
@@ -1716,5 +1716,17 @@ REVIEWED_MULTI_SUCCESSOR_V3_TRANSACTION으로 원본 보관/현재 근거 검토
 전체 구성 검토와 현재 선수 근거 재검사를 통과한 후에만 NOT_SAVED 후속 선택을
 만든다. 과거 조회는 저장 당시 continuation을 검증해 동일한 계보를 재구성한다.
 이는 저장 권한이 아니며 원본 보관과 현재 계획 교체의 transaction은 별도 수행한다.
+
+### 21.36 다중 후속 원본 보관 및 현재 계획 교체
+
+후속 저장은 현재 계정 계획 lock 안에서 실제 이전 원본을 다시 조회한다. 이전
+지문, 현재 요청, 주소별 구성 근거, 전체 검토, 안전 및 기준 기록을 재확인하고
+이전 원본 보관소를 먼저 쓴 뒤 현재 계획을 교체한다. 각 쓰기 전후에도 같은 검사를
+수행한다. 원본 보관 용량이 차거나 어느 단계가 실패하면 성공으로 반환하지 않는다.
+
+실패 복구는 해당 transaction이 쓴 값과 현재 값이 같은 키에만 적용한다. 다른
+작성자가 바꾼 값은 보존하고 상태 불확실로 보고한다. 기존 계획과 원본 보관소가
+모두 전 상태로 돌아갔을 때만 복구된 저장 실패로 보고한다. 동일 이전 지문을
+재사용한 중복 적용은 STALE_BASE로 거부하며 새로운 주기를 추가 생성하지 않는다.
 
 [DRAFT_COMPLETE]

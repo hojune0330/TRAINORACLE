@@ -30,6 +30,7 @@ import { PlanBeta } from "../screens/PlanBeta"
 import * as mutationLocks from "./plan-mutation-lock"
 import { exportMultiAdjustedPlanBackupV3, readMultiAdjustedPlanBackupV3, importMultiAdjustedPlanHistoryV3 } from "./multi-adjusted-plan-backup-v3"
 import { AdjustedPlanImport } from "../screens/plan-beta/AdjustedPlanImport"
+import { saveSelectedMultiAdjustedSuccessorV3 } from "./multi-adjusted-plan-successor-v3"
 
 beforeEach(() => { localStorage.clear(); sessionStorage.clear(); setActiveLocalAccount(null); vi.useFakeTimers(); vi.setSystemTime(TODAY) })
 afterEach(() => { cleanup(); vi.restoreAllMocks(); vi.useRealTimers() })
@@ -266,6 +267,50 @@ it("prepares the next frame from actual multi-plan history without inventing mis
     progress: { sessionDay: slot.day, sessionSlot: slot.slot, state: "PAIN_CHECKIN" }, retained, locks: input.locks })
   if (pain.kind !== "saved") throw Error(pain.code)
   expect(prepareMultiAdjustedNextFrameV3({ ...base, previous: pain.state, expectedFingerprint: pain.state.contentFingerprint }, retained, later)).toMatchObject({ code: "ACTIVE_HOLD" })
+})
+
+async function successorStorageFixture() {
+  const first = storageFixture(), previous = await saveSelectedMultiAdjustedPlanV6(first)
+  if (previous.kind !== "saved") throw Error("Initial save failed")
+  const later = new Date("2026-09-30T12:00:00+09:00")
+  vi.setSystemTime(later)
+  const generated = generateMultiAdjustedNextFrameV3FromDraft({ draft: { ...first.request.intake, startDate: "2026-09-30" },
+    currentCheck: "NO_KNOWN_RISK", expectedPredecessorFingerprint: previous.state.contentFingerprint }, first.readReview().retained)
+  if (generated.kind !== "multi_adjusted_next_frame_v3_draft") throw Error("Next generation failed")
+  const next = storageFixture(generated.draft, later, "2026-09-30")
+  const review = next.readReview(), retained = [...first.readReview().retained, ...review.retained]
+  return { previous: previous.state, input: { ...next, expectedPredecessorFingerprint: previous.state.contentFingerprint,
+    readReview: () => ({ ...review, retained }) }, retained, later }
+}
+
+it("archives the actual predecessor before saving a multi-plan successor and preserves both readable originals", async () => {
+  const f = await successorStorageFixture()
+  const saved = await saveSelectedMultiAdjustedSuccessorV3(f.input)
+  if (saved.kind !== "saved") throw Error(saved.code)
+  expect(saved.state.selection.continuation?.predecessorFingerprint).toBe(f.previous.contentFingerprint)
+  expect(readPlanBetaStateFromStorage([], [], f.retained)).toMatchObject({ kind: "multi_adjusted_v3_loaded", state: saved.state })
+  expect(readMultiAdjustedOriginalPlansV3(f.retained)).toMatchObject({ kind: "loaded", entries: [{ state: f.previous }] })
+  expect(saved.state.progress).toEqual([])
+  expect(await saveSelectedMultiAdjustedSuccessorV3(f.input)).toMatchObject({ code: "STALE_BASE" })
+})
+
+it.each(["archive-expiry", "active-expiry", "active-other-writer"])("rolls back own successor writes for %s", async scenario => {
+  const f = await successorStorageFixture(), key = activePlanBetaStorageKey(), before = localStorage.getItem(key)
+  const original = Storage.prototype.setItem
+  let injected = false
+  vi.spyOn(Storage.prototype, "setItem").mockImplementation(function(this: Storage, name, value) {
+    original.call(this, name, value)
+    const target = scenario === "archive-expiry" ? name.includes("multi-adjusted-plan-originals") : name === key
+    if (target && !injected) {
+      injected = true
+      if (scenario === "active-other-writer") original.call(this, key, "OTHER_WRITER")
+      else vi.setSystemTime(new Date(f.later.getTime() + 100))
+    }
+  })
+  expect(await saveSelectedMultiAdjustedSuccessorV3(f.input)).toMatchObject({ code: scenario === "active-other-writer" ? "PLAN_STORAGE_STATE_UNCERTAIN" : "SUCCESSOR_STORAGE_WRITE_FAILED" })
+  expect(injected).toBe(true)
+  expect(localStorage.getItem(key)).toBe(scenario === "active-other-writer" ? "OTHER_WRITER" : before)
+  expect(readMultiAdjustedOriginalPlansV3(f.retained)).toMatchObject({ kind: "loaded", entries: [] })
 })
 
 it.each(["expiry", "other-writer"])("handles %s during a real multi-plan write without overwriting another writer", async change => {
