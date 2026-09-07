@@ -62,6 +62,7 @@ import { AdjustedPlanSchedule } from "./plan-beta/AdjustedPlanSchedule"
 import { AdjustedPlanEditFlow } from "./plan-beta/AdjustedPlanEditFlow"
 import { matchingAdjustmentEntry } from "./plan-beta/adjustment-entry"
 import { AdjustedPlanNextFlow, readOperatingAdjustedEvidence } from "./plan-beta/AdjustedPlanNextFlow"
+import { exportAdjustedPlanBackup } from "../domain/adjusted-plan-backup"
 
 type AdjustmentEntry = Pick<React.ComponentProps<typeof AdjustedPlanEditFlow>, "seed" | "readReview" | "locks">
 export type PlanAdjustmentResolver = (context: {
@@ -109,6 +110,7 @@ export function PlanBeta(props: Omit<React.ComponentProps<typeof LegacyPlanBeta>
   if (read.kind === "adjusted_loaded") return <AdjustedPlanSchedule
     key={`${localAccountScopeSnapshot()}:${read.state.selection.contentFingerprint}`}
     onStoredChange={() => setRead(readCurrent())}
+    onExportPlan={() => exportAdjustedPlanBackup(read.state.contentFingerprint, readEvidence())}
     onPrepareNext={() => {
       const current = readCurrent()
       setRead(current)

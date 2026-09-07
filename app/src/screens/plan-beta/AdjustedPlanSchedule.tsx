@@ -1,5 +1,6 @@
 import React from "react"
-import { PenLine, Check, CircleMinus, RefreshCw, HeartPulse, ArrowRight } from "lucide-react"
+import { PenLine, Check, CircleMinus, RefreshCw, HeartPulse, ArrowRight, Download } from "lucide-react"
+import type { exportAdjustedPlanBackup } from "../../domain/adjusted-plan-backup"
 import type { PlanBetaStateReadResult } from "../../domain/plan-beta-store"
 import { createPlannedSessionLogDraft, resolveCurrentPlannedSession, type PlannedSessionLogDraft } from "../../domain/planned-session-link"
 import { isoShift } from "../../domain/dates"
@@ -10,12 +11,13 @@ import { TermHelp } from "../../components/TermHelp"
 import { AdjustedJournalOriginalPlan } from "../journal/AdjustedJournalOriginalPlan"
 import "./AdjustedPlanSchedule.css"
 
-export function AdjustedPlanSchedule({ loaded, onWritePlannedSessionLog, returnToSession, onStoredChange, onPrepareNext }: {
+export function AdjustedPlanSchedule({ loaded, onWritePlannedSessionLog, returnToSession, onStoredChange, onPrepareNext, onExportPlan }: {
   readonly loaded: Extract<PlanBetaStateReadResult, { kind: "adjusted_loaded" }>
   readonly onWritePlannedSessionLog?: (draft: PlannedSessionLogDraft) => void
   readonly returnToSession?: PlannedSessionLogDraft["link"]
   readonly onStoredChange: () => void
   readonly onPrepareNext?: () => void
+  readonly onExportPlan?: () => ReturnType<typeof exportAdjustedPlanBackup>
 }) {
   const plan = loaded.state.selection
   const start = plan.intake.startDate ?? plan.generatedAt.slice(0, 10)
@@ -74,6 +76,21 @@ export function AdjustedPlanSchedule({ loaded, onWritePlannedSessionLog, returnT
     <details><summary>저장과 이용 안내</summary>
       <p>이 조정 계획은 현재 이 기기에 저장돼 있어요. 서버 보관은 아직 연결 중이에요.</p>
       <p>이 화면의 수치는 저장 당시의 계획이며, 지금 몸 상태에 대한 새 판단이나 훈련 시작 승인은 아니에요.</p>
+      {onExportPlan && <>
+        <p>개인 보관 파일에는 페이스 계산에 사용한 기록과 훈련 진행 상태가 포함돼요. 메모는 포함하지 않아요. 다른 사람에게 공유하지 마세요. 앱에서 다시 불러오는 화면은 아직 준비 중이에요.</p>
+        <button type="button" onClick={() => {
+          const result = onExportPlan()
+          if (result.kind !== "exported") { setError("계획 원본을 확인하지 못해 파일을 만들지 않았어요."); return }
+          let url: string | undefined
+          try {
+            url = URL.createObjectURL(new Blob([result.raw], { type: "application/json" }))
+            const link = document.createElement("a")
+            link.href = url; link.download = `trainoracle-plan-${todayISO()}.json`
+            link.click(); setError(null)
+          } catch { setError("계획 파일을 내려받지 못했어요. 저장된 계획은 그대로예요.") }
+          finally { if (url) { const downloadUrl = url; window.setTimeout(() => URL.revokeObjectURL(downloadUrl), 1000) } }
+        }}><Download size={18} aria-hidden="true" />개인 보관용 계획 파일 받기</button>
+      </>}
     </details>
   </section>
 }

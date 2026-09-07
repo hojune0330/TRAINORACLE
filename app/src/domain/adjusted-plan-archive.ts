@@ -10,7 +10,7 @@ export const ADJUSTED_PLAN_ARCHIVE_KEY = "trainoracle.adjusted-plan-originals.v1
 type Entry = { readonly archivedAt: string; readonly state: StoredAdjustedPlanState }
 const hash = (value: unknown) => canonicalJsonFingerprint("trainoracle.adjusted-original-archive.v1", value)
 const invalid = () => ({ kind: "invalid" as const })
-function parse(raw: string | null, retained: readonly RetainedAdjustedPlanEvidence[], now: Date) {
+export function parseAdjustedOriginalArchive(raw: string | null, retained: readonly RetainedAdjustedPlanEvidence[], now: Date) {
   if (raw === null) return { kind: "loaded" as const, entries: [] as readonly Entry[] }
   try {
     const value = JSON.parse(raw)
@@ -35,14 +35,14 @@ function parse(raw: string | null, retained: readonly RetainedAdjustedPlanEviden
 }
 
 export function readAdjustedOriginalPlans(retained = RETAINED_ADJUSTED_PLAN_EVIDENCE, now = new Date()) {
-  try { return parse(window.localStorage.getItem(accountScopedStorageKey(ADJUSTED_PLAN_ARCHIVE_KEY)), retained, now) }
+  try { return parseAdjustedOriginalArchive(window.localStorage.getItem(accountScopedStorageKey(ADJUSTED_PLAN_ARCHIVE_KEY)), retained, now) }
   catch { return invalid() }
 }
 
 /** Pure staging for the owning mutation transaction; does not acquire a lock or write. */
 export function prepareAdjustedOriginalArchive(raw: string | null, state: StoredAdjustedPlanState,
   retained: readonly RetainedAdjustedPlanEvidence[], now: Date) {
-  const archive = parse(raw, retained, now)
+  const archive = parseAdjustedOriginalArchive(raw, retained, now)
   const checked = readStoredAdjustedPlanState(state, retained, now)
   if (archive.kind !== "loaded" || checked.kind !== "loaded") return invalid()
   const same = archive.entries.find(item => item.state.selection.contentFingerprint === checked.state.selection.contentFingerprint)

@@ -4,7 +4,7 @@
 doc_id: trainoracle-session-method-selection-and-adjustment
 spec_id: SESSION_METHOD_SELECTION_AND_ADJUSTMENT_CONTRACT
 title: TrainOracle Session Method Selection And Adjustment Contract
-version: "0.21"
+version: "0.22"
 round: RT1_OWNER_APPROVED_IMPLEMENTATION_DIRECTION
 status: ACTIVE_IMPLEMENTATION_CONTRACT
 product_direction: OWNER_APPROVED_IMPLEMENTATION_DIRECTION
@@ -1128,5 +1128,21 @@ editor entry and save; account/storage events invalidate an open draft. Cancella
 returns to the existing schedule. Only the reviewed successor transaction may archive
 and replace the active plan, after a separate final confirmation. The UI must not
 describe a generated preview as an already saved next plan.
+
+### 20.9 Personal plan-file export
+
+An explicit owner download may export the validated active v4 and the retained
+adjusted-original archive together in a separate personal file. Do not add these
+private pace inputs and progress records to the existing share-safe journal format.
+Warn that the file contains personal training/record data; exclude journal memo
+access, account identifiers and trusted-registry contents. Keep both storage keys
+and the account unchanged across the read or reject the export visibly.
+
+The file has a versioned format, export time and complete-content fingerprint.
+Reading requires independently retained application evidence for every plan, exact
+archive validation and valid timestamps. File-provided review strings cannot grant
+authority. Reading is historical only and writes nothing; it does not restore an
+active plan or bypass current adoption/safety gates. Until the separate restore UI
+and transaction are implemented, the download copy must state that limitation.
 
 [DRAFT_COMPLETE]

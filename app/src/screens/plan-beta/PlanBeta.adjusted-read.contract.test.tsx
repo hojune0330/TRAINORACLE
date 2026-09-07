@@ -78,6 +78,26 @@ it("rechecks storage on journal click even without a storage event", async () =>
   expect(onWrite).not.toHaveBeenCalled()
   expect(screen.getByRole("alert")).toBeVisible()
 })
+it("downloads a separate personal plan file only after the explicit download action", async () => {
+  const { saved } = await save()
+  const descriptor = Object.getOwnPropertyDescriptor(URL, "createObjectURL")
+  const create = vi.fn(() => "blob:test-plan")
+  Object.defineProperty(URL, "createObjectURL", { configurable: true, value: create })
+  const click = vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(() => {})
+  try {
+    render(<PlanBeta readAdjustedEvidence={() => context.retained} />)
+    expect(create).not.toHaveBeenCalled()
+    fireEvent.click(screen.getByText("저장과 이용 안내"))
+    expect(screen.getByText(/앱에서 다시 불러오는 화면은 아직 준비 중/)).toBeVisible()
+    fireEvent.click(screen.getByRole("button", { name: "개인 보관용 계획 파일 받기" }))
+    expect(create).toHaveBeenCalledTimes(1)
+    expect(click).toHaveBeenCalledTimes(1)
+    expect(JSON.parse(localStorage.getItem(activePlanBetaStorageKey())!).selection).toEqual(saved.state.selection)
+  } finally {
+    if (descriptor) Object.defineProperty(URL, "createObjectURL", descriptor)
+    else Reflect.deleteProperty(URL, "createObjectURL")
+  }
+})
 it("records an explicit outcome from PlanBeta without moving the selected date or changing the prescription", async () => {
   const { link, saved } = await save()
   render(<PlanBeta returnToSession={link.link} />)
