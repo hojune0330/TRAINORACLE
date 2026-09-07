@@ -4,7 +4,7 @@
 doc_id: trainoracle-session-method-selection-and-adjustment
 spec_id: SESSION_METHOD_SELECTION_AND_ADJUSTMENT_CONTRACT
 title: TrainOracle Session Method Selection And Adjustment Contract
-version: "0.51"
+version: "0.52"
 round: RT1_OWNER_APPROVED_IMPLEMENTATION_DIRECTION
 status: ACTIVE_IMPLEMENTATION_CONTRACT
 product_direction: OWNER_APPROVED_IMPLEMENTATION_DIRECTION
@@ -1671,5 +1671,15 @@ version 6은 다중 선택, 진행 상태, 갱신시각, 내용 지문을 보존
 설명은 같은 날짜와 슬롯의 설명으로 선택하며 메모를 읽거나 계획 수치를 실제 일지
 측정값으로 채우지 않는다. 기록 기반 목표가 없는 시간/RPE 처방에는 기록으로
 계산했다는 안내를 표시하지 않는다. 로컬 전체 삭제 대상에 새 보관소도 포함한다.
+
+### 21.32 다중 일정 화면의 결과 기록과 일지 진입
+
+다중 저장 상태는 별도 일정 화면에서 날짜별 오전/오후를 함께 읽는다. 선택한 슬롯의
+설명만 연결하며, 진행 기록 변경 후 저장 상태를 새로 조회한다. 일지 진입은 같은
+현재 계획의 원본 보관 성공 이후에만 실행하며 상위 화면에서도 현재 내용 지문을
+재확인한다. 계정 또는 계획 변경 시 과거 화면의 일지 진입 요청을 전달하지 않는다.
+
+서버 보관/백업/다음 주기 연결이 미구현인 동안 완료된 기능처럼 버튼을 제공하지
+않는다. 이 임시 상태를 전체 계획의 완료나 승인 범위 축소로 간주하지 않는다.
 
 [DRAFT_COMPLETE]

@@ -23,8 +23,10 @@ import { readJournalOriginalPlan } from "./journal-original-plan"
 import { saveEntry, loadEntries } from "./journal-store"
 import { MEMO_PURPOSE, type PostSessionEntry } from "./journal-schema"
 import React from "react"
-import { render, screen, cleanup } from "@testing-library/react"
+import { render, screen, cleanup, act, fireEvent, within } from "@testing-library/react"
 import { AdjustedPrescriptionV3 } from "../screens/plan-beta/AdjustedPrescriptionV3"
+import { PlanBeta } from "../screens/PlanBeta"
+import * as mutationLocks from "./plan-mutation-lock"
 
 beforeEach(() => { localStorage.clear(); sessionStorage.clear(); setActiveLocalAccount(null); vi.useFakeTimers(); vi.setSystemTime(TODAY) })
 afterEach(() => { cleanup(); vi.restoreAllMocks(); vi.useRealTimers() })
@@ -171,6 +173,26 @@ it("retains a multi-plan journal original and reads the exact slot after the act
   expect(loaded.distanceKm).toBe("")
   setActiveLocalAccount("another-account")
   expect(readJournalOriginalPlan(loaded, [], [], retained).kind).toBe("unavailable")
+})
+
+it("opens the actual multi-plan schedule, records a slot and archives its original before handing off to the journal", async () => {
+  const input = storageFixture(), saved = await saveSelectedMultiAdjustedPlanV6(input)
+  if (saved.kind !== "saved") throw Error("Initial save failed")
+  const retained = input.readReview().retained
+  const slot = saved.state.selection.activePlan.sessions.find(s => s.prescription.kind === "ADJUSTED_METHOD_V3")!
+  const draft = createPlannedSessionLogDraft(saved.state.selection, slot, TODAY.toISOString())!
+  vi.spyOn(mutationLocks, "getPlanMutationLockManager").mockReturnValue(input.locks)
+  const onWrite = vi.fn()
+  render(React.createElement(PlanBeta, { readMultiAdjustedEvidenceV3: () => retained, returnToSession: draft.link,
+    onWritePlannedSessionLog: onWrite }))
+  expect(screen.getByRole("heading", { name: "내 훈련 일정" })).toBeTruthy()
+  const region = () => within(screen.getByRole("region", { name: `${slot.slot === "AM" ? "오전" : "오후"} 훈련` }))
+  await act(async () => { fireEvent.click(region().getByRole("button", { name: "완료" })) })
+  const current = readPlanBetaStateFromStorage([], [], retained)
+  expect(current).toMatchObject({ kind: "multi_adjusted_v3_loaded", state: { progress: [{ sessionDay: slot.day, sessionSlot: slot.slot, state: "COMPLETED" }] } })
+  await act(async () => { fireEvent.click(region().getByRole("button", { name: "이 훈련 일지 쓰기" })) })
+  expect(onWrite).toHaveBeenCalledWith(draft)
+  expect(readMultiAdjustedOriginalPlansV3(retained, TODAY)).toMatchObject({ kind: "loaded", entries: [{ state: current.kind === "multi_adjusted_v3_loaded" ? current.state : null }] })
 })
 
 it.each(["expiry", "other-writer"])("handles %s during a real multi-plan write without overwriting another writer", async change => {
