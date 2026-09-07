@@ -4,7 +4,7 @@
 doc_id: trainoracle-session-method-selection-and-adjustment
 spec_id: SESSION_METHOD_SELECTION_AND_ADJUSTMENT_CONTRACT
 title: TrainOracle Session Method Selection And Adjustment Contract
-version: "0.29"
+version: "0.30"
 round: RT1_OWNER_APPROVED_IMPLEMENTATION_DIRECTION
 status: ACTIVE_IMPLEMENTATION_CONTRACT
 product_direction: OWNER_APPROVED_IMPLEMENTATION_DIRECTION
@@ -1301,5 +1301,31 @@ future; scope/context and all fields must match. Return historical/NONE, not cur
 execution permission. Current candidate save must separately revalidate live source,
 anchor, safety and authority. The application caller owns binding the opaque context
 to actual athlete/record/frame; arbitrary browser-provided context is not authority.
+
+### 21.9 V3 source-to-record adjustment binding
+
+The V3 source offer uses the shared legacy source-edge validation algorithm with
+version-specific sequence binding, configuration identity and receipt validation.
+Keep legacy namespaces/results unchanged. V3 uses distinct resolved-context and
+source-authority fingerprint namespaces. Do not convert V1/V2 sources implicitly.
+
+Only bind an empty RACE_PACE anchor placeholder for the exact same event. Reject
+pre-bound private references, even when they equal the current record identifier.
+Preserve all work roles, phase contents, repetitions and ordered recovery steps.
+Binding a record must not calculate a new distance, intensity or recovery duration.
+
+The derived context includes source context, candidate resolution revision and the
+record's content fingerprint as well as its identifier/event. On application, rebuild
+the offer from the current independent source registry and revalidate the complete
+V3 receipt. Changed record contents, scope revision, removed edges and expired
+policies cannot replay a previously derived authority. Offer every direct permitted
+target; do not invent reverse/transitive edges or force a single paired alternative.
+
+This is an application-domain adapter, not the trusted operating provider. The
+provider must derive scope and record fingerprint from the actual current athlete,
+record and frame. Arbitrary browser input cannot authorize that context. Active-plan
+storage, journal version dispatch and public activation remain separate required
+gates. Explanation snapshot historical read remains historical/NONE after expiry;
+that read does not override fresh source application rejection.
 
 [DRAFT_COMPLETE]
