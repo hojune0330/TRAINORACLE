@@ -1425,4 +1425,16 @@ adjusted-plan-storage-v5가 V3 선택을 저장 envelope version 5로 보관한�
 연결하지 않았으며 기본 읽기/진행 화면/일지/후속 주기 소비가 남았다. 따라서
 저장 함수 구현을 사용자 전체 흐름의 완료로 보고하지 않는다. PR #319 CI는 별도다.
 
+## 66. V3 진행 기록 저장 연결 (2026-09-07)
+
+기존 조정 계획과 V3가 같은 progress transaction을 사용하도록 공통화했다.
+버전별 codec만 분리하고 계정·lock·현재 지문·세션 주소·통증 유지·쓰기 확인과
+자신의 쓰기만 복구하는 원칙을 공유한다. 입력의 plain-data 검사를 parser보다
+먼저 수행해 getter가 검증 과정에서 실행되지 않도록 보완했다.
+
+V3 실제 저장 후 COMPLETED/RESTED/SKIPPED/PAIN_CHECKIN 각각 저장·재조회,
+원본 처방 불변, 통증 상태 해제 거부, stale 지문 거부, getter 미실행을 검사했다.
+기존 progress와 함께 2파일 18 PASS. 공통화 후 타입 검사 PASS. 스펙 v0.37 반영.
+사용자 UI에서 V3를 여는 경로와 일지/후속 주기 연결은 계속 남아 있다.
+
 [DRAFT_COMPLETE]

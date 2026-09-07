@@ -10,6 +10,7 @@ import { adjustedPlanReviewScopeV3 } from "./adjusted-plan-review-v3"
 import { selectAdjustedPlanForActivationV3, readSelectedAdjustedPlanV3 } from "./selected-adjusted-plan-v3"
 import { saveSelectedAdjustedPlanV3, readStoredAdjustedPlanStateV5, encodeStoredAdjustedPlanStateV5 } from "./adjusted-plan-storage-v5"
 import { activePlanBetaStorageKey } from "./plan-beta-store"
+import { saveAdjustedPlanProgressV3 } from "./adjusted-plan-progress"
 
 beforeEach(() => { localStorage.clear(); sessionStorage.clear(); setActiveLocalAccount(null); vi.useFakeTimers(); vi.setSystemTime(TODAY) })
 afterEach(() => { vi.restoreAllMocks(); vi.useRealTimers() })
@@ -126,4 +127,38 @@ it("validates stored progress addresses, duplicate outcomes, timestamps and evid
   }
   expect(encodeStoredAdjustedPlanStateV5(selected.state, [], TODAY.toISOString(), [retained, retained], TODAY).kind).toBe("invalid")
   expect(encodeStoredAdjustedPlanStateV5(selected.state, [], new Date(TODAY.getTime() + 1).toISOString(), [retained], TODAY).kind).toBe("invalid")
+})
+it.each(["COMPLETED", "RESTED", "SKIPPED", "PAIN_CHECKIN"] as const)("stores %s without changing prescription or inventing measurements", async state => {
+  const { input, retained } = storeInput()
+  const selected = await saveSelectedAdjustedPlanV3(input)
+  if (selected.kind !== "saved") throw Error(selected.code)
+  const slot = selected.state.selection.activePlan.sessions.find(s => s.role === "QUALITY")!
+  const result = await saveAdjustedPlanProgressV3({ expectedFingerprint: selected.state.contentFingerprint,
+    progress: { sessionDay: slot.day, sessionSlot: slot.slot, state }, retained: [retained], locks: input.locks })
+  if (result.kind !== "saved") throw Error(result.code)
+  expect(result.state.selection).toEqual(selected.state.selection)
+  expect(result.state.progress).toEqual([{ sessionDay: slot.day, sessionSlot: slot.slot, state }])
+  expect(readStoredAdjustedPlanStateV5(JSON.parse(localStorage.getItem(activePlanBetaStorageKey())!), [retained], TODAY))
+    .toMatchObject({ kind: "loaded", state: result.state })
+  if (state === "PAIN_CHECKIN") {
+    expect(await saveAdjustedPlanProgressV3({ expectedFingerprint: result.state.contentFingerprint,
+      progress: { sessionDay: slot.day, sessionSlot: slot.slot, state: "COMPLETED" }, retained: [retained], locks: input.locks }))
+      .toMatchObject({ code: "PAIN_REVIEW_REQUIRED" })
+  }
+})
+it("rejects stale progress without changing stored bytes", async () => {
+  const { input, retained } = storeInput()
+  const selected = await saveSelectedAdjustedPlanV3(input)
+  if (selected.kind !== "saved") throw Error(selected.code)
+  const slot = selected.state.selection.activePlan.sessions[0]!, raw = localStorage.getItem(activePlanBetaStorageKey())
+  expect(await saveAdjustedPlanProgressV3({ expectedFingerprint: "stale", progress: { sessionDay: slot.day,
+    sessionSlot: slot.slot, state: "SKIPPED" }, retained: [retained], locks: input.locks })).toMatchObject({ code: "STALE_BASE" })
+  expect(localStorage.getItem(activePlanBetaStorageKey())).toBe(raw)
+})
+it("rejects progress accessors before parsing them", async () => {
+  const getter = vi.fn(() => "COMPLETED")
+  const progress = Object.defineProperty({ sessionDay: 1, sessionSlot: "AM" as const, state: "COMPLETED" as const },
+    "state", { enumerable: true, get: getter })
+  expect(await saveAdjustedPlanProgressV3({ expectedFingerprint: "test", progress })).toMatchObject({ code: "INVALID_PROGRESS" })
+  expect(getter).not.toHaveBeenCalled()
 })

@@ -4,7 +4,7 @@
 doc_id: trainoracle-session-method-selection-and-adjustment
 spec_id: SESSION_METHOD_SELECTION_AND_ADJUSTMENT_CONTRACT
 title: TrainOracle Session Method Selection And Adjustment Contract
-version: "0.36"
+version: "0.37"
 round: RT1_OWNER_APPROVED_IMPLEMENTATION_DIRECTION
 status: ACTIVE_IMPLEMENTATION_CONTRACT
 product_direction: OWNER_APPROVED_IMPLEMENTATION_DIRECTION
@@ -1447,5 +1447,18 @@ version 5 as protected adjusted content rather than treat it as an empty plan.
 Keep UI entry inactive until version-5 read/progress/journal consumers are wired.
 Engineering tests exercise real storage with synthetic evidence, not an operating
 template approval. Server sync and successor archive transactions remain required.
+
+### 21.16 Version-aware progress mutation
+
+Versions 4 and 5 share one progress transaction and outcome rules, with separate
+content codecs. Validate plain data before parsing, then check account, mutation
+lock, exact active fingerprint and day/AM-PM address. REST cannot become COMPLETED.
+PAIN_CHECKIN cannot be replaced by another outcome through this pathway.
+
+Only explicit outcome state changes. Preserve selected prescription bytes and do
+not derive journal measurements from planned targets. Identical outcomes are
+idempotent. Revalidate stored content before writing, verify ownership after writing,
+and restore only this transaction's bytes on failure. A stale view cannot update
+newer progress. UI and journal routing must consume this version-aware transaction.
 
 [DRAFT_COMPLETE]
