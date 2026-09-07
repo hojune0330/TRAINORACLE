@@ -27,6 +27,37 @@ try {
     "공통 에너지 설명은 정확한 용량의 입증과 다릅니다. 본운동 노력 제안은 구간과 연결되지만 아직 수행 대상으로 채택된 값이 아닙니다.",
     "시간형의 미산출 거리를 0으로 읽지 않습니다. 서로 다른 후보의 총부담이나 효과가 같다는 뜻도 아닙니다.",
     "재생성: app에서 node scripts/build-method-owner-review.mjs. 생성 문서를 직접 고치지 않고 원본을 수정합니다.", ""]
+  const duration = seconds => seconds === null ? "미산출" : seconds === 0 ? "0초"
+    : [Math.floor(seconds / 60) ? `${Math.floor(seconds / 60)}분` : "", seconds % 60 ? `${seconds % 60}초` : ""].filter(Boolean).join(" ")
+  const roleLabels = { WORK: "달리기", BUILDUP: "가속 접근", WALK: "걷기", JOG: "조깅",
+    EASY_RUN: "쉬운 달리기", WALK_OR_STAND: "걷기 또는 정지", ROLL_ON: "속도를 낮춰 계속 달리기" }
+  const methodLabels = { CONTINUOUS: "연속 달리기", WALK_BREAKS: "걷기 회복 분할주", LONG_SPLIT: "긴 구간 분할주",
+    SHORT_SPLIT: "짧은 구간 분할주", ROLL_ON_400: "400m 리듬 반복", ROLL_ON_SETS_300: "300m 세트 리듬 반복",
+    TIMED_RHYTHM: "시간형 리듬 반복", TIMED_RHYTHM_SETS: "시간형 세트 리듬 반복", TWO_MINUTE: "2분 반복",
+    THREE_MINUTE: "3분 반복", FOUR_MINUTE: "4분 반복", STANDING_ACCELERATION: "서서 출발하는 가속",
+    FLYING_SEGMENT: "가속 후 빠른 구간", TIMED_ACCELERATION: "시간형 가속", UNBROKEN_REPEATS: "거리 반복",
+    SET_REPEATS: "세트형 거리 반복", WALK: "회복 걷기", NO_PLANNED_EXERCISE: "휴식" }
+  const experienceLabels = { NEW_TO_RUNNING: "입문", DEVELOPING: "경험 있음", EXPERIENCED: "경험 많음" }
+  const partLabel = part => `${part.unit === "SECONDS" ? duration(part.value) : `${part.value}m`} ${roleLabels[part.role]}`
+  lines.push(`## 빠르게 비교하는 전체 ${protocols.length}개`, "",
+    "모두 채택 전 제안입니다. 훈련명 링크를 누르면 정확한 대상·구간 설명·근거·남은 검토를 읽을 수 있습니다.",
+    "같은 분류라도 효과·부담이 같다는 뜻이 아니며, 아래 행들은 고정된 A/B 짝이 아닙니다.",
+    "전체 시간은 준비·본운동·회복·정리를 모두 포함합니다. 거리형 미산출은 짧다는 뜻이 아닙니다.", "",
+    "| 훈련 | 본운동 | 반복·세트 회복 | 본운동 노력 제안 | 전체 시간 | 경험 범위 |", "|---|---|---|---|---|---|")
+  for (const p of protocols) {
+    const item = bundle.items.find(item => item.id === p.id)
+    const totals = item.explanation.exactStructure.totals
+    const effort = item.explanation.exactStructure.representation.guidance.effortProposal.work
+    const mainWork = p.work.length ? `${p.work.map(part => partLabel(p.family === "REC" && part.role === "WORK" ? { ...part, role: "WALK" } : part)).join(" + ")} / ${p.reps}회${p.sets > 1 ? `씩 ${p.sets}세트` : ""}` : "계획된 운동 없음"
+    const recovery = [p.between ? `반복 사이 ${partLabel(p.between)}` : "",
+      p.afterEvery ? `매회 뒤 ${partLabel(p.afterEvery)}(마지막 포함)` : "",
+      p.setRest ? `세트 사이 추가 ${partLabel(p.setRest)}` : ""].filter(Boolean).join("; ") || "본운동 내 별도 회복 없음"
+    const allTime = totals && Object.values(totals).every(t => t.totalSeconds !== null)
+      ? duration(Object.values(totals).reduce((sum, t) => sum + t.totalSeconds, 0)) : totals ? "미산출" : "운동 시간 해당 없음"
+    if (!methodLabels[p.method]) throw Error("MISSING_REVIEW_METHOD_LABEL")
+    lines.push(`| [${p.family} · ${methodLabels[p.method]} (${p.id})](#${p.id.toLowerCase()}) | ${mainWork} | ${recovery} | ${effort ? effort.rpe ? `RPE ${effort.rpe.join("~")}` : "고출력·동작의 질, 숫자 미지정" : "해당 없음"} | ${allTime} | ${item.scope.experience.map(x => experienceLabels[x]).join(", ")} |`)
+  }
+  lines.push("", "이 표의 경험 범위는 수행 가능성 보장이 아닙니다. 청소년/성인, 혼자/코치 확인 및 종목의 정확한 제안 범위는 각 상세 카드에 표시합니다.", "")
   for (const p of protocols) {
     const e = previewPendingMethodExplanation(p)
     const scope = bundle.items.find(item => item.id === p.id).scope

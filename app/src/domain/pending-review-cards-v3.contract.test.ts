@@ -5,6 +5,21 @@ import { buildPendingOwnerReviewBundleV3 } from "../../../reports/research/metho
 const cards = readFileSync("../reports/review/METHOD_CONFIGURATION_REVIEW_CARDS_V3.md", "utf8").replaceAll("\r\n", "\n")
 const card = (id: string) => cards.split(`## ${id}\n`)[1]!.split("\n## ")[0]!
 
+it("preserves every configuration in the compact index with complete duration and correct recovery activity", () => {
+  const index = cards.split("## 빠르게 비교하는 전체 37개\n")[1]!.split("\n## P-")[0]!
+  const rows = index.split("\n").filter(line => line.startsWith("| ["))
+  const bundle = buildPendingOwnerReviewBundleV3()
+  expect(rows).toHaveLength(bundle.items.length)
+  for (const item of bundle.items) expect(rows.filter(row => row.includes(`(#${item.id.toLowerCase()})`))).toHaveLength(1)
+  const row = (id: string) => rows.find(row => row.includes(`(#${id.toLowerCase()})`))!
+  expect(row("P-INTRO-LT-C")).toContain("| 37분 20초 | 입문 |")
+  expect(row("P-LT-C")).toContain("| 49분 20초 | 경험 있음, 경험 많음 |")
+  expect(row("P-RHYTHM-400")).toContain("(마지막 포함)")
+  expect(row("P-RHYTHM-400")).toContain("| 미산출 |")
+  expect(row("P-REC-W")).toContain("15분 걷기")
+  expect(row("P-OFF")).toContain("운동 시간 해당 없음")
+})
+
 it("renders all current pending decisions and the exact bundle identity", () => {
   const bundle = buildPendingOwnerReviewBundleV3()
   expect(cards).toContain(bundle.contentFingerprint)

@@ -2,7 +2,7 @@
 
 ```yaml
 doc_id: trainoracle-method-owner-decisions-2026-09-08
-version: "1.0"
+version: "1.1"
 status: OWNER_DECISION_REQUEST
 owner_decision: NOT_RECEIVED
 runtime_activation: false
@@ -15,11 +15,15 @@ canonical_promotion: false
 정확한 내용 채택을 구분한 요청이다. 개발 진행 승인을 숫자/대상/배치의 승인으로
 확대하지 않는다. 승인된 정책부터 구현하며 전체 목표는 계속 유지한다.
 
-현재 검토 내용은 [37개 상세 카드](./METHOD_CONFIGURATION_REVIEW_CARDS_V3.md),
+현재 검토 내용은 [37개 전체 비교표와 상세 카드](./METHOD_CONFIGURATION_REVIEW_CARDS_V3.md#빠르게-비교하는-전체-37개),
 [정확한 검토 묶음](./METHOD_OWNER_REVIEW_BUNDLE_V3.json),
 [근거·한계 패킷](./SESSION_METHOD_OWNER_ADOPTION_PACKET_2026-09-07.md)에 있다.
 묶음의 contentFingerprint는 구성/회복/설명/대상 변경을 구분한다. 파일 존재나
 지문 일치는 승인, 과학적 타당성, 실제 배포의 증거가 아니다.
+
+비교표에는 본운동, 반복/세트 회복, 본운동 노력 제안, 준비/정리를 포함한 전체
+시간, 경험 범위가 있다. 원본37개를 요약으로 대체하지 않으며 각 행의 훈련명에서
+전체 설명/근거/대상으로 이동한다. 미산출 시간은0분 또는 짧은 시간으로 해석하지 않는다.
 
 ## 2. 지금 결정할 것: 예상 시간과 실제 가능한 시간
 
