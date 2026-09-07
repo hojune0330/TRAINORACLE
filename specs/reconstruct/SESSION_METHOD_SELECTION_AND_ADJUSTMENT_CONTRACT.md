@@ -4,7 +4,7 @@
 doc_id: trainoracle-session-method-selection-and-adjustment
 spec_id: SESSION_METHOD_SELECTION_AND_ADJUSTMENT_CONTRACT
 title: TrainOracle Session Method Selection And Adjustment Contract
-version: "0.33"
+version: "0.34"
 round: RT1_OWNER_APPROVED_IMPLEMENTATION_DIRECTION
 status: ACTIVE_IMPLEMENTATION_CONTRACT
 product_direction: OWNER_APPROVED_IMPLEMENTATION_DIRECTION
@@ -1393,5 +1393,20 @@ continuity context. Use candidate schemaVersion 3 and its separate content names
 Keep NOT_ACCEPTED / selectionAuthority NONE / FULL_PLAN_SELECTION_REVALIDATION.
 Legacy candidate parsers must not accept this format by accident. This assembly
 does not write storage or resolve the version-aware plan acceptance gate.
+
+### 21.13 V3 whole-plan review scope
+
+Before final selection, rebuild the V3 candidate and current source transition.
+Bind the reviewed scope to event, experience, population, selection actor, frame,
+continuity shape, MAIN exposure count, and every session's day/slot/role/intent and
+configuration. The changed slot references the unbound source configuration edge;
+do not publish athlete record IDs, personal target seconds, dates or memo in the
+reviewable scope. Exact personal values remain checked by candidate preparation.
+
+Use a separate STRUCTURAL_V3 scope and policy fingerprint namespace. Require one
+independently supplied, current, non-revoked policy with configuration, exposure,
+interaction and safety review references. Reject malformed or duplicate registry
+entries. A V1/V2 review cannot authorize V3. The operating registry starts empty.
+The result remains executionAuthority NONE and does not persist or start training.
 
 [DRAFT_COMPLETE]
