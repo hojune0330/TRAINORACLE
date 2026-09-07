@@ -4,7 +4,7 @@
 doc_id: trainoracle-session-method-selection-and-adjustment
 spec_id: SESSION_METHOD_SELECTION_AND_ADJUSTMENT_CONTRACT
 title: TrainOracle Session Method Selection And Adjustment Contract
-version: "0.27"
+version: "0.28"
 round: RT1_OWNER_APPROVED_IMPLEMENTATION_DIRECTION
 status: ACTIVE_IMPLEMENTATION_CONTRACT
 product_direction: OWNER_APPROVED_IMPLEMENTATION_DIRECTION
@@ -1263,5 +1263,23 @@ The caller must provide independently reviewed catalog/assessments and appropria
 scoped history. ReviewRef strings and a recommendation result are not adoption or
 safety authority. The operating provider and versioned adjustment/storage path must
 still be integrated before public use.
+
+### 21.7 V3 explicit adjustment and receipt
+
+V3 configuration references use trainoracle.method-configuration.v3. Drafts and
+receipts carry schemaVersion 3, exact before/after sequences and the independently
+supplied reviewed policy/context. No old receipt or policy edge is reinterpreted as
+a V3 transition. Every allowed edge must match registered complete configurations.
+
+Applying requires USER_EXPLICIT and rechecks the current original. Cancellation
+discards only the draft. The receipt includes phase-separated totals and numeric
+deltas; if either complete measure is unavailable, its delta remains null. Known
+component deltas must not be described as complete totals.
+
+Before consuming a receipt, reconstruct it at its original action time, compare
+every field, then recheck the independent registry at the current time. Removed
+policies, expiry, context changes, stale originals and forged totals reject.
+Do not invent reverse edges. This operation returns a prepared adjusted prescription;
+it does not write an active plan or replace plan-level safety/selection validation.
 
 [DRAFT_COMPLETE]

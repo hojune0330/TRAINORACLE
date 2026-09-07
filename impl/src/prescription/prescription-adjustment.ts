@@ -117,6 +117,9 @@ function canonical(value: unknown): string {
   return visit(value, 0)
 }
 
+/** Shared descriptor-safe validation for versioned adjustment state machines. */
+export function canonicalAdjustmentValue(value: unknown): string { return canonical(value) }
+
 // Opaque content hashes are not signatures/approval and remain private audit references.
 function fingerprint(domain: string, value: unknown): string {
   return canonicalJsonFingerprint(domain, JSON.parse(canonical(value)) as unknown)
