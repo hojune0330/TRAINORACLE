@@ -123,12 +123,28 @@ export const MAIN_SUPPORT_PROPOSAL = {
   cooldown: [{ ...time(600, "EASY_RUN"), cue: "RPE 1-2" }],
 }
 
-export function assembleProposalSession(p) {
+// Explicit comparison alternative; never selected merely because a user is a beginner.
+export const INTRO_MAIN_SUPPORT_PROPOSAL = {
+  id: "P-SUPPORT-INTRO-01", version: "0.1", status: "OWNER_ADOPTION_PENDING", executionAuthority: "NONE",
+  warmup: [
+    { ...time(300, "EASY_RUN"), cue: "RPE 2-3" },
+    ...Array.from({ length: 2 }, () => [
+      { ...time(20, "BUILDUP"), cue: "PROGRESSIVE_NOT_ALL_OUT" },
+      { ...time(60, "WALK"), cue: "WALK" },
+    ]).flat(),
+  ],
+  cooldown: [{ ...time(300, "EASY_RUN"), cue: "RPE 1-2" }],
+}
+
+export function assembleProposalSession(p, supportVariant = "EXISTING") {
+  if (!["EXISTING", "INTRO_COMPARISON"].includes(supportVariant)) throw Error("UNKNOWN_SUPPORT_VARIANT")
+  if (supportVariant === "INTRO_COMPARISON" && !p.id.startsWith("P-INTRO-")) throw Error("INTRO_SUPPORT_SCOPE_REQUIRED")
   const main = expandProposal(p)
   const summary = summarizeProposal(p)
   // Source conditions, population and frame placement remain separate review gates.
   const supported = ["LT", "VO2", "ATP-PC", "GLY", "MIX"].includes(p.family)
-  const support = supported ? structuredClone(MAIN_SUPPORT_PROPOSAL) : null
+  const support = supported ? structuredClone(supportVariant === "INTRO_COMPARISON"
+    ? INTRO_MAIN_SUPPORT_PROPOSAL : MAIN_SUPPORT_PROPOSAL) : null
   if (support && (support.status !== "OWNER_ADOPTION_PENDING" || support.executionAuthority !== "NONE")) {
     throw Error("NOT_PENDING_SUPPORT")
   }

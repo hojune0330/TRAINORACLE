@@ -1,6 +1,6 @@
 {
   "kind": "METHOD_OWNER_REVIEW_BUNDLE_V3",
-  "version": "2",
+  "version": "3",
   "executionAuthority": "NONE",
   "ownerDecision": "NOT_GRANTED",
   "scope": "PROPOSED_CONFIGURATIONS_EXPLANATIONS_AND_POPULATIONS",
@@ -20762,6 +20762,598 @@
       }
     }
   ],
+  "supportAlternatives": [
+    {
+      "protocolId": "P-INTRO-LT-C",
+      "supportRef": {
+        "id": "P-SUPPORT-INTRO-01",
+        "version": "0.1"
+      },
+      "status": "OWNER_ADOPTION_PENDING",
+      "executionAuthority": "NONE",
+      "warmup": [
+        {
+          "role": "EASY_RUN",
+          "unit": "SECONDS",
+          "value": 300,
+          "cue": "RPE 2-3"
+        },
+        {
+          "role": "BUILDUP",
+          "unit": "SECONDS",
+          "value": 20,
+          "cue": "PROGRESSIVE_NOT_ALL_OUT"
+        },
+        {
+          "role": "WALK",
+          "unit": "SECONDS",
+          "value": 60,
+          "cue": "WALK"
+        },
+        {
+          "role": "BUILDUP",
+          "unit": "SECONDS",
+          "value": 20,
+          "cue": "PROGRESSIVE_NOT_ALL_OUT"
+        },
+        {
+          "role": "WALK",
+          "unit": "SECONDS",
+          "value": 60,
+          "cue": "WALK"
+        }
+      ],
+      "cooldown": [
+        {
+          "role": "EASY_RUN",
+          "unit": "SECONDS",
+          "value": 300,
+          "cue": "RPE 1-2"
+        }
+      ],
+      "supportSeconds": 760,
+      "totalSeconds": 1240,
+      "replacesDefault": false,
+      "applicabilityReviewed": false,
+      "requiredReviews": [
+        "EXACT_SUPPORT_ADOPTION",
+        "INTRO_SUPPORT_APPLICABILITY",
+        "INTRO_SEGMENT_READINESS",
+        "WHOLE_CYCLE_PLACEMENT"
+      ]
+    },
+    {
+      "protocolId": "P-INTRO-LT-S",
+      "supportRef": {
+        "id": "P-SUPPORT-INTRO-01",
+        "version": "0.1"
+      },
+      "status": "OWNER_ADOPTION_PENDING",
+      "executionAuthority": "NONE",
+      "warmup": [
+        {
+          "role": "EASY_RUN",
+          "unit": "SECONDS",
+          "value": 300,
+          "cue": "RPE 2-3"
+        },
+        {
+          "role": "BUILDUP",
+          "unit": "SECONDS",
+          "value": 20,
+          "cue": "PROGRESSIVE_NOT_ALL_OUT"
+        },
+        {
+          "role": "WALK",
+          "unit": "SECONDS",
+          "value": 60,
+          "cue": "WALK"
+        },
+        {
+          "role": "BUILDUP",
+          "unit": "SECONDS",
+          "value": 20,
+          "cue": "PROGRESSIVE_NOT_ALL_OUT"
+        },
+        {
+          "role": "WALK",
+          "unit": "SECONDS",
+          "value": 60,
+          "cue": "WALK"
+        }
+      ],
+      "cooldown": [
+        {
+          "role": "EASY_RUN",
+          "unit": "SECONDS",
+          "value": 300,
+          "cue": "RPE 1-2"
+        }
+      ],
+      "supportSeconds": 760,
+      "totalSeconds": 1300,
+      "replacesDefault": false,
+      "applicabilityReviewed": false,
+      "requiredReviews": [
+        "EXACT_SUPPORT_ADOPTION",
+        "INTRO_SUPPORT_APPLICABILITY",
+        "INTRO_SEGMENT_READINESS",
+        "WHOLE_CYCLE_PLACEMENT"
+      ]
+    },
+    {
+      "protocolId": "P-INTRO-VO2-2",
+      "supportRef": {
+        "id": "P-SUPPORT-INTRO-01",
+        "version": "0.1"
+      },
+      "status": "OWNER_ADOPTION_PENDING",
+      "executionAuthority": "NONE",
+      "warmup": [
+        {
+          "role": "EASY_RUN",
+          "unit": "SECONDS",
+          "value": 300,
+          "cue": "RPE 2-3"
+        },
+        {
+          "role": "BUILDUP",
+          "unit": "SECONDS",
+          "value": 20,
+          "cue": "PROGRESSIVE_NOT_ALL_OUT"
+        },
+        {
+          "role": "WALK",
+          "unit": "SECONDS",
+          "value": 60,
+          "cue": "WALK"
+        },
+        {
+          "role": "BUILDUP",
+          "unit": "SECONDS",
+          "value": 20,
+          "cue": "PROGRESSIVE_NOT_ALL_OUT"
+        },
+        {
+          "role": "WALK",
+          "unit": "SECONDS",
+          "value": 60,
+          "cue": "WALK"
+        }
+      ],
+      "cooldown": [
+        {
+          "role": "EASY_RUN",
+          "unit": "SECONDS",
+          "value": 300,
+          "cue": "RPE 1-2"
+        }
+      ],
+      "supportSeconds": 760,
+      "totalSeconds": 1300,
+      "replacesDefault": false,
+      "applicabilityReviewed": false,
+      "requiredReviews": [
+        "EXACT_SUPPORT_ADOPTION",
+        "INTRO_SUPPORT_APPLICABILITY",
+        "INTRO_SEGMENT_READINESS",
+        "WHOLE_CYCLE_PLACEMENT"
+      ]
+    },
+    {
+      "protocolId": "P-INTRO-VO2-3",
+      "supportRef": {
+        "id": "P-SUPPORT-INTRO-01",
+        "version": "0.1"
+      },
+      "status": "OWNER_ADOPTION_PENDING",
+      "executionAuthority": "NONE",
+      "warmup": [
+        {
+          "role": "EASY_RUN",
+          "unit": "SECONDS",
+          "value": 300,
+          "cue": "RPE 2-3"
+        },
+        {
+          "role": "BUILDUP",
+          "unit": "SECONDS",
+          "value": 20,
+          "cue": "PROGRESSIVE_NOT_ALL_OUT"
+        },
+        {
+          "role": "WALK",
+          "unit": "SECONDS",
+          "value": 60,
+          "cue": "WALK"
+        },
+        {
+          "role": "BUILDUP",
+          "unit": "SECONDS",
+          "value": 20,
+          "cue": "PROGRESSIVE_NOT_ALL_OUT"
+        },
+        {
+          "role": "WALK",
+          "unit": "SECONDS",
+          "value": 60,
+          "cue": "WALK"
+        }
+      ],
+      "cooldown": [
+        {
+          "role": "EASY_RUN",
+          "unit": "SECONDS",
+          "value": 300,
+          "cue": "RPE 1-2"
+        }
+      ],
+      "supportSeconds": 760,
+      "totalSeconds": 1240,
+      "replacesDefault": false,
+      "applicabilityReviewed": false,
+      "requiredReviews": [
+        "EXACT_SUPPORT_ADOPTION",
+        "INTRO_SUPPORT_APPLICABILITY",
+        "INTRO_SEGMENT_READINESS",
+        "WHOLE_CYCLE_PLACEMENT"
+      ]
+    },
+    {
+      "protocolId": "P-INTRO-ATP-A",
+      "supportRef": {
+        "id": "P-SUPPORT-INTRO-01",
+        "version": "0.1"
+      },
+      "status": "OWNER_ADOPTION_PENDING",
+      "executionAuthority": "NONE",
+      "warmup": [
+        {
+          "role": "EASY_RUN",
+          "unit": "SECONDS",
+          "value": 300,
+          "cue": "RPE 2-3"
+        },
+        {
+          "role": "BUILDUP",
+          "unit": "SECONDS",
+          "value": 20,
+          "cue": "PROGRESSIVE_NOT_ALL_OUT"
+        },
+        {
+          "role": "WALK",
+          "unit": "SECONDS",
+          "value": 60,
+          "cue": "WALK"
+        },
+        {
+          "role": "BUILDUP",
+          "unit": "SECONDS",
+          "value": 20,
+          "cue": "PROGRESSIVE_NOT_ALL_OUT"
+        },
+        {
+          "role": "WALK",
+          "unit": "SECONDS",
+          "value": 60,
+          "cue": "WALK"
+        }
+      ],
+      "cooldown": [
+        {
+          "role": "EASY_RUN",
+          "unit": "SECONDS",
+          "value": 300,
+          "cue": "RPE 1-2"
+        }
+      ],
+      "supportSeconds": 760,
+      "totalSeconds": null,
+      "replacesDefault": false,
+      "applicabilityReviewed": false,
+      "requiredReviews": [
+        "EXACT_SUPPORT_ADOPTION",
+        "INTRO_SUPPORT_APPLICABILITY",
+        "INTRO_SEGMENT_READINESS",
+        "WHOLE_CYCLE_PLACEMENT"
+      ]
+    },
+    {
+      "protocolId": "P-INTRO-ATP-T",
+      "supportRef": {
+        "id": "P-SUPPORT-INTRO-01",
+        "version": "0.1"
+      },
+      "status": "OWNER_ADOPTION_PENDING",
+      "executionAuthority": "NONE",
+      "warmup": [
+        {
+          "role": "EASY_RUN",
+          "unit": "SECONDS",
+          "value": 300,
+          "cue": "RPE 2-3"
+        },
+        {
+          "role": "BUILDUP",
+          "unit": "SECONDS",
+          "value": 20,
+          "cue": "PROGRESSIVE_NOT_ALL_OUT"
+        },
+        {
+          "role": "WALK",
+          "unit": "SECONDS",
+          "value": 60,
+          "cue": "WALK"
+        },
+        {
+          "role": "BUILDUP",
+          "unit": "SECONDS",
+          "value": 20,
+          "cue": "PROGRESSIVE_NOT_ALL_OUT"
+        },
+        {
+          "role": "WALK",
+          "unit": "SECONDS",
+          "value": 60,
+          "cue": "WALK"
+        }
+      ],
+      "cooldown": [
+        {
+          "role": "EASY_RUN",
+          "unit": "SECONDS",
+          "value": 300,
+          "cue": "RPE 1-2"
+        }
+      ],
+      "supportSeconds": 760,
+      "totalSeconds": 1138,
+      "replacesDefault": false,
+      "applicabilityReviewed": false,
+      "requiredReviews": [
+        "EXACT_SUPPORT_ADOPTION",
+        "INTRO_SUPPORT_APPLICABILITY",
+        "INTRO_SEGMENT_READINESS",
+        "WHOLE_CYCLE_PLACEMENT"
+      ]
+    },
+    {
+      "protocolId": "P-INTRO-GLY-D",
+      "supportRef": {
+        "id": "P-SUPPORT-INTRO-01",
+        "version": "0.1"
+      },
+      "status": "OWNER_ADOPTION_PENDING",
+      "executionAuthority": "NONE",
+      "warmup": [
+        {
+          "role": "EASY_RUN",
+          "unit": "SECONDS",
+          "value": 300,
+          "cue": "RPE 2-3"
+        },
+        {
+          "role": "BUILDUP",
+          "unit": "SECONDS",
+          "value": 20,
+          "cue": "PROGRESSIVE_NOT_ALL_OUT"
+        },
+        {
+          "role": "WALK",
+          "unit": "SECONDS",
+          "value": 60,
+          "cue": "WALK"
+        },
+        {
+          "role": "BUILDUP",
+          "unit": "SECONDS",
+          "value": 20,
+          "cue": "PROGRESSIVE_NOT_ALL_OUT"
+        },
+        {
+          "role": "WALK",
+          "unit": "SECONDS",
+          "value": 60,
+          "cue": "WALK"
+        }
+      ],
+      "cooldown": [
+        {
+          "role": "EASY_RUN",
+          "unit": "SECONDS",
+          "value": 300,
+          "cue": "RPE 1-2"
+        }
+      ],
+      "supportSeconds": 760,
+      "totalSeconds": null,
+      "replacesDefault": false,
+      "applicabilityReviewed": false,
+      "requiredReviews": [
+        "EXACT_SUPPORT_ADOPTION",
+        "INTRO_SUPPORT_APPLICABILITY",
+        "INTRO_SEGMENT_READINESS",
+        "WHOLE_CYCLE_PLACEMENT"
+      ]
+    },
+    {
+      "protocolId": "P-INTRO-GLY-S",
+      "supportRef": {
+        "id": "P-SUPPORT-INTRO-01",
+        "version": "0.1"
+      },
+      "status": "OWNER_ADOPTION_PENDING",
+      "executionAuthority": "NONE",
+      "warmup": [
+        {
+          "role": "EASY_RUN",
+          "unit": "SECONDS",
+          "value": 300,
+          "cue": "RPE 2-3"
+        },
+        {
+          "role": "BUILDUP",
+          "unit": "SECONDS",
+          "value": 20,
+          "cue": "PROGRESSIVE_NOT_ALL_OUT"
+        },
+        {
+          "role": "WALK",
+          "unit": "SECONDS",
+          "value": 60,
+          "cue": "WALK"
+        },
+        {
+          "role": "BUILDUP",
+          "unit": "SECONDS",
+          "value": 20,
+          "cue": "PROGRESSIVE_NOT_ALL_OUT"
+        },
+        {
+          "role": "WALK",
+          "unit": "SECONDS",
+          "value": 60,
+          "cue": "WALK"
+        }
+      ],
+      "cooldown": [
+        {
+          "role": "EASY_RUN",
+          "unit": "SECONDS",
+          "value": 300,
+          "cue": "RPE 1-2"
+        }
+      ],
+      "supportSeconds": 760,
+      "totalSeconds": null,
+      "replacesDefault": false,
+      "applicabilityReviewed": false,
+      "requiredReviews": [
+        "EXACT_SUPPORT_ADOPTION",
+        "INTRO_SUPPORT_APPLICABILITY",
+        "INTRO_SEGMENT_READINESS",
+        "WHOLE_CYCLE_PLACEMENT"
+      ]
+    },
+    {
+      "protocolId": "P-INTRO-MIX-T",
+      "supportRef": {
+        "id": "P-SUPPORT-INTRO-01",
+        "version": "0.1"
+      },
+      "status": "OWNER_ADOPTION_PENDING",
+      "executionAuthority": "NONE",
+      "warmup": [
+        {
+          "role": "EASY_RUN",
+          "unit": "SECONDS",
+          "value": 300,
+          "cue": "RPE 2-3"
+        },
+        {
+          "role": "BUILDUP",
+          "unit": "SECONDS",
+          "value": 20,
+          "cue": "PROGRESSIVE_NOT_ALL_OUT"
+        },
+        {
+          "role": "WALK",
+          "unit": "SECONDS",
+          "value": 60,
+          "cue": "WALK"
+        },
+        {
+          "role": "BUILDUP",
+          "unit": "SECONDS",
+          "value": 20,
+          "cue": "PROGRESSIVE_NOT_ALL_OUT"
+        },
+        {
+          "role": "WALK",
+          "unit": "SECONDS",
+          "value": 60,
+          "cue": "WALK"
+        }
+      ],
+      "cooldown": [
+        {
+          "role": "EASY_RUN",
+          "unit": "SECONDS",
+          "value": 300,
+          "cue": "RPE 1-2"
+        }
+      ],
+      "supportSeconds": 760,
+      "totalSeconds": 1240,
+      "replacesDefault": false,
+      "applicabilityReviewed": false,
+      "requiredReviews": [
+        "EXACT_SUPPORT_ADOPTION",
+        "INTRO_SUPPORT_APPLICABILITY",
+        "INTRO_SEGMENT_READINESS",
+        "WHOLE_CYCLE_PLACEMENT"
+      ]
+    },
+    {
+      "protocolId": "P-INTRO-MIX-S",
+      "supportRef": {
+        "id": "P-SUPPORT-INTRO-01",
+        "version": "0.1"
+      },
+      "status": "OWNER_ADOPTION_PENDING",
+      "executionAuthority": "NONE",
+      "warmup": [
+        {
+          "role": "EASY_RUN",
+          "unit": "SECONDS",
+          "value": 300,
+          "cue": "RPE 2-3"
+        },
+        {
+          "role": "BUILDUP",
+          "unit": "SECONDS",
+          "value": 20,
+          "cue": "PROGRESSIVE_NOT_ALL_OUT"
+        },
+        {
+          "role": "WALK",
+          "unit": "SECONDS",
+          "value": 60,
+          "cue": "WALK"
+        },
+        {
+          "role": "BUILDUP",
+          "unit": "SECONDS",
+          "value": 20,
+          "cue": "PROGRESSIVE_NOT_ALL_OUT"
+        },
+        {
+          "role": "WALK",
+          "unit": "SECONDS",
+          "value": 60,
+          "cue": "WALK"
+        }
+      ],
+      "cooldown": [
+        {
+          "role": "EASY_RUN",
+          "unit": "SECONDS",
+          "value": 300,
+          "cue": "RPE 1-2"
+        }
+      ],
+      "supportSeconds": 760,
+      "totalSeconds": 1420,
+      "replacesDefault": false,
+      "applicabilityReviewed": false,
+      "requiredReviews": [
+        "EXACT_SUPPORT_ADOPTION",
+        "INTRO_SUPPORT_APPLICABILITY",
+        "INTRO_SEGMENT_READINESS",
+        "WHOLE_CYCLE_PLACEMENT"
+      ]
+    }
+  ],
   "excludes": [
     "OWNER_APPROVAL_RECORD",
     "RUNTIME_AUTHORITY",
@@ -20787,7 +21379,8 @@
     "INDIVIDUAL_APPLICABILITY",
     "EXACT_OWNER_ADOPTION",
     "INTRO_SUPPORT_APPLICABILITY",
-    "INTRO_EFFORT_APPLICABILITY"
+    "INTRO_EFFORT_APPLICABILITY",
+    "EXACT_SUPPORT_ADOPTION"
   ],
-  "contentFingerprint": "sha256:1f57e6db5e52ed946b2e627b3c2c92a322bfbe7788485822a44fe94ae449ddf0"
+  "contentFingerprint": "sha256:0f6f8aef3848d69aca0d674a4fb0138f64dc96c824a07d2126c957b944e9ae57"
 }

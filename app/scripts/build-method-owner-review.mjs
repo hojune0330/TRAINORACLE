@@ -58,6 +58,16 @@ try {
     lines.push(`| [${p.family} · ${methodLabels[p.method]} (${p.id})](#${p.id.toLowerCase()}) | ${mainWork} | ${recovery} | ${effort ? effort.rpe ? `RPE ${effort.rpe.join("~")}` : "고출력·동작의 질, 숫자 미지정" : "해당 없음"} | ${allTime} | ${item.scope.experience.map(x => experienceLabels[x]).join(", ")} |`)
   }
   lines.push("", "이 표의 경험 범위는 수행 가능성 보장이 아닙니다. 청소년/성인, 혼자/코치 확인 및 종목의 정확한 제안 범위는 각 상세 카드에 표시합니다.", "")
+  lines.push("## 입문 준비·정리 비교안", "",
+    "기존37개와 위 총시간은 그대로입니다. 아래는 아직 기본값을 바꾸지 않은 별도 코칭 제안이며 새로운 본운동 방법으로 세지 않습니다.",
+    "쉬운 준비5분 → 점진 가속20초2회(사이 걷기1분, 마지막 뒤 걷기1분) → 쉬운 정리5분. 지원 합계12분40초입니다.",
+    "본운동·반복·회복은 바꾸지 않습니다. 개인에게 충분한 준비라고 보장하지 않으며 정확한 채택과 적용성 검토가 필요합니다.",
+    "근거와 한계: SESSION_METHOD_OWNER_ADOPTION_PACKET_2026-09-07.md §30.", "",
+    "| 입문 구성 | 비교안 포함 전체 시간 | 지원 구성 | 상태 |", "|---|---|---|---|")
+  for (const item of bundle.supportAlternatives) {
+    lines.push(`| ${item.protocolId} | ${duration(item.totalSeconds)} | ${item.supportRef.id}@${item.supportRef.version} | 미채택 · 기존값 변경 없음 |`)
+  }
+  lines.push("")
   for (const p of protocols) {
     const e = previewPendingMethodExplanation(p)
     const scope = bundle.items.find(item => item.id === p.id).scope

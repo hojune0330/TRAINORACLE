@@ -6,7 +6,7 @@ const cards = readFileSync("../reports/review/METHOD_CONFIGURATION_REVIEW_CARDS_
 const card = (id: string) => cards.split(`## ${id}\n`)[1]!.split("\n## ")[0]!
 
 it("preserves every configuration in the compact index with complete duration and correct recovery activity", () => {
-  const index = cards.split("## 빠르게 비교하는 전체 37개\n")[1]!.split("\n## P-")[0]!
+  const index = cards.split("## 빠르게 비교하는 전체 37개\n")[1]!.split("\n## ")[0]!
   const rows = index.split("\n").filter(line => line.startsWith("| ["))
   const bundle = buildPendingOwnerReviewBundleV3()
   expect(rows).toHaveLength(bundle.items.length)
@@ -18,6 +18,14 @@ it("preserves every configuration in the compact index with complete duration an
   expect(row("P-RHYTHM-400")).toContain("| 미산출 |")
   expect(row("P-REC-W")).toContain("15분 걷기")
   expect(row("P-OFF")).toContain("운동 시간 해당 없음")
+})
+
+it("shows the separate support alternative without rewriting current default durations", () => {
+  const comparison = cards.split("## 입문 준비·정리 비교안\n")[1]!.split("\n## ")[0]!
+  expect(comparison).toContain("| P-INTRO-LT-C | 20분 40초 |")
+  expect(comparison).toContain("| P-INTRO-VO2-2 | 21분 40초 |")
+  expect(comparison).toContain("| P-INTRO-ATP-A | 미산출 |")
+  expect(comparison).toContain("미채택 · 기존값 변경 없음")
 })
 
 it("renders all current pending decisions and the exact bundle identity", () => {

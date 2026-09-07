@@ -1,7 +1,25 @@
 import { expect, it } from "vitest"
 import { buildPendingOwnerReviewBundleV3 } from "../../../reports/research/method-owner-review-bundle-v3"
-import { METHOD_ADOPTION_PROTOCOLS, MAIN_SUPPORT_PROPOSAL } from "../../../reports/research/method-adoption-protocols.mjs"
+import { METHOD_ADOPTION_PROTOCOLS, MAIN_SUPPORT_PROPOSAL, INTRO_MAIN_SUPPORT_PROPOSAL } from "../../../reports/research/method-adoption-protocols.mjs"
 import { PROPOSED_METHOD_SCOPES } from "../../../reports/research/method-adoption-applicability.mjs"
+
+it("binds explicit support alternatives without replacing or approving default configurations", () => {
+  const bundle = buildPendingOwnerReviewBundleV3()
+  expect(bundle.items).toHaveLength(37)
+  expect(bundle.supportAlternatives).toHaveLength(10)
+  const original = INTRO_MAIN_SUPPORT_PROPOSAL.cooldown[0]!.value
+  try {
+    INTRO_MAIN_SUPPORT_PROPOSAL.cooldown[0]!.value += 1
+    const changed = buildPendingOwnerReviewBundleV3()
+    expect(changed.contentFingerprint).not.toBe(bundle.contentFingerprint)
+    expect(changed.items).toEqual(bundle.items)
+  } finally { INTRO_MAIN_SUPPORT_PROPOSAL.cooldown[0]!.value = original }
+  for (const alternative of bundle.supportAlternatives) {
+    expect(alternative.replacesDefault).toBe(false)
+    expect(alternative.executionAuthority).toBe("NONE")
+    for (const review of alternative.requiredReviews) expect(bundle.unresolvedDecisions).toContain(review)
+  }
+})
 
 it("rejects support authority changes instead of silently keeping the same review identity", () => {
   const status = MAIN_SUPPORT_PROPOSAL.status, authority = MAIN_SUPPORT_PROPOSAL.executionAuthority

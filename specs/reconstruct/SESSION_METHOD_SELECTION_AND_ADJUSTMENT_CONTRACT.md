@@ -4,7 +4,7 @@
 doc_id: trainoracle-session-method-selection-and-adjustment
 spec_id: SESSION_METHOD_SELECTION_AND_ADJUSTMENT_CONTRACT
 title: TrainOracle Session Method Selection And Adjustment Contract
-version: "0.69"
+version: "0.70"
 round: RT1_OWNER_APPROVED_IMPLEMENTATION_DIRECTION
 status: ACTIVE_IMPLEMENTATION_CONTRACT
 product_direction: OWNER_APPROVED_IMPLEMENTATION_DIRECTION
@@ -1860,5 +1860,14 @@ V6 개인 계획을 전송하기 전에 실제 계정별 현재 저장값과 독
 회복 거리/시간의 전체 미산출과 지정 단위 부분합을 구분한다. 회복 노력은 실제
 구간 위치/방식에 연결하고 모든 회복에 하나의 RPE를 부여하지 않는다.
 이 표현 보정은 정확한 운동 수치, 대상, 운영 권한의 채택 또는 변경이 아니다.
+
+### 21.50 지원 구성 대안의 명시적 비교
+
+지원 구성의 비교안은 기존 본운동 구성 및 기본 지원과 별도로 식별한다. 연구
+도구의 명시적 선택으로 비교하며 경험 구분만으로 기존 계획을 조용히 바꾸지 않는다.
+지원 대안의 정확한 구간/총시간/대상 참조/미완 검토 항목을 검토 묶음에 포함한다.
+지원 구성 수를 독립적인 본운동 방법 수에 더하지 않는다. 본운동/반복/회복은
+비교 과정에서 보존하고 전체 시간 미산출도 유지한다. 구체적 지원 수치는 채택
+패킷의 별도 오너 판단 대상이며 본 조항이 이를 승인하거나 운영 활성화하지 않는다.
 
 [DRAFT_COMPLETE]

@@ -1,9 +1,43 @@
 import test from "node:test"
 import assert from "node:assert/strict"
-import { METHOD_ADOPTION_PROTOCOLS as protocols, METHOD_ADOPTION_VARIANTS as variants, expandProposal, summarizeProposal, assembleProposalSession } from "./method-adoption-protocols.mjs"
+import { METHOD_ADOPTION_PROTOCOLS as protocols, METHOD_ADOPTION_VARIANTS as variants, expandProposal, summarizeProposal, assembleProposalSession, INTRO_MAIN_SUPPORT_PROPOSAL } from "./method-adoption-protocols.mjs"
 
 const get = id => [...protocols, ...variants].find(p => p.id === id)
 const summary = id => summarizeProposal(get(id))
+
+test("introduction support comparison is explicit, exact and never replaces the existing default", () => {
+  const p = get("P-INTRO-LT-C"), before = assembleProposalSession(p)
+  const shorter = assembleProposalSession(p, "INTRO_COMPARISON")
+  assert.equal(shorter.supportRef.id, "P-SUPPORT-INTRO-01")
+  assert.equal(shorter.warmup.reduce((sum, part) => sum + part.value, 0), 460)
+  assert.equal(shorter.cooldown.reduce((sum, part) => sum + part.value, 0), 300)
+  assert.equal(shorter.supportSeconds, 760)
+  assert.equal(shorter.totalSeconds, 1240)
+  assert.deepEqual(shorter.main, before.main)
+  assert.equal(shorter.applicabilityReviewed, false)
+  assert.equal(shorter.executionAuthority, "NONE")
+  assert.deepEqual(assembleProposalSession(p), before)
+  assert.equal(before.supportSeconds, 1760)
+})
+
+test("support alternatives retain unknown distance durations and their explicit proposed scope", () => {
+  for (const p of protocols.filter(p => p.id.startsWith("P-INTRO-"))) {
+    const result = assembleProposalSession(p, "INTRO_COMPARISON")
+    assert.equal(result.supportSeconds, 760)
+    const mainSeconds = summarizeProposal(p).totalSeconds
+    assert.equal(result.totalSeconds, mainSeconds === null ? null : mainSeconds + 760)
+  }
+  assert.throws(() => assembleProposalSession(get("P-LT-C"), "INTRO_COMPARISON"), /INTRO_SUPPORT_SCOPE_REQUIRED/)
+  assert.throws(() => assembleProposalSession(get("P-INTRO-LT-C"), "INVALID"), /UNKNOWN_SUPPORT_VARIANT/)
+})
+
+test("support comparison cannot bypass its pending authority", () => {
+  const saved = INTRO_MAIN_SUPPORT_PROPOSAL.executionAuthority
+  try {
+    INTRO_MAIN_SUPPORT_PROPOSAL.executionAuthority = "EXECUTE"
+    assert.throws(() => assembleProposalSession(get("P-INTRO-LT-C"), "INTRO_COMPARISON"), /NOT_PENDING_SUPPORT/)
+  } finally { INTRO_MAIN_SUPPORT_PROPOSAL.executionAuthority = saved }
+})
 test("all twenty-nine packet rows and eight finite variants remain review only", () => {
   assert.equal(protocols.length, 29)
   assert.equal(variants.length, 8)
