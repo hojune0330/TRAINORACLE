@@ -11,6 +11,7 @@ try {
   const { auditAllPendingMainChoices } = await server.ssrLoadModule("/reports/research/method-choice-coverage-v3.ts")
   const { previewMethodDurationFit } = await server.ssrLoadModule("/reports/research/method-duration-fit-v3.ts")
   const { proposeMethodExecutionGuidance } = await server.ssrLoadModule("/reports/research/method-execution-guidance-proposal.mjs")
+  const { previewPendingMethodCombinations } = await server.ssrLoadModule("/reports/research/method-combination-review.mjs")
   const protocols = [...METHOD_ADOPTION_PROTOCOLS, ...METHOD_ADOPTION_VARIANTS]
   const text = value => String(value).replaceAll("|", "\\|").replaceAll("\n", " ")
   const amount = p => p ? `${p.value}${p.unit === "SECONDS" ? "초" : "m"} ${p.role}` : "없음"
@@ -71,6 +72,25 @@ try {
       "### 채택 전 남은 검토", "", ...e.pending.map(item => `- ${item}`), "")
   }
   const gaps = auditAllPendingMainChoices().filter(r => r.coverage === "MISSING_DISTINCT_MAIN_OPTIONS")
+  lines.push("## 조합 검토량", "", "아래는 목적이 같은 MAIN 2개 또는 3개를 가진 가상 배치의 구성 조합 수입니다.",
+    "기존 구성 유지, 일부만 변경, 같은 방법 반복 선택, 수치 변형을 포함하고 전부 기존 구성인 경우는 제외합니다.",
+    "종목7개에서의 최솟값~최댓값입니다. 예시 날짜1·4·7은 개수 계산용 주소이지 승인된 주기 배치가 아닙니다.",
+    "이 수치는 생성 가능한 운영 계획 수나 승인된 조합 수가 아닙니다.", "",
+    "| 경험 | 목적 | MAIN 2개 | MAIN 3개 |", "|---|---|---|---|")
+  for (const experience of ["NEW_TO_RUNNING", "DEVELOPING", "EXPERIENCED"]) {
+    for (const family of ["LT", "VO2", "ATP-PC", "GLY", "MIX"]) {
+      const counts = [2, 3].map(n => {
+        const values = [800, 1500, 3000, 5000, 10000, 21097, 42195].map(eventDistanceM =>
+          BigInt(previewPendingMethodCombinations({ eventDistanceM, experience, population: "YOUTH", actor: "SELF" },
+            [1, 4, 7].slice(0, n).map(day => ({ day, slot: "AM", family })), { materializeLimit: 0 }).combinationCount))
+        const min = values.reduce((a, b) => a < b ? a : b), max = values.reduce((a, b) => a > b ? a : b)
+        return min === max ? String(min) : `${min}~${max}`
+      })
+      lines.push(`| ${experience} | ${family} | ${counts[0]} | ${counts[1]} |`)
+    }
+  }
+  lines.push("", "0은 적합한 훈련이 없다는 생리학적 판단이 아니라, 현재 제안 목록에 해당 경험의 상세 구성이 없다는 뜻입니다.",
+    "전체 정책은 실제 원본 범위·배치·상호작용까지 별도로 검토해야 합니다. 이 목록은 정책 지문이나 승인을 만들지 않습니다.", "")
   lines.push("## 전체 미완 범위", "", `구조상 두 방법 미확보: ${gaps.length}행(연령군·선택권한 포함).`,
     "개별 강도, 정확한 용량 근거, 현재 주기 배치, 오너 최종 승인, 운영 연결과 전체 사용자 흐름 검증은 별도입니다.",
     "검토 카드 수를 완료된 처방 수로 계산하지 않습니다.", "", "[DRAFT_COMPLETE]", "")

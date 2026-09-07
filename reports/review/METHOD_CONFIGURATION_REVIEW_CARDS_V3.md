@@ -2619,6 +2619,34 @@ LT는 별도 에너지 시스템이 아니에요. 산화 대사와 해당과정 
 - INDIVIDUAL_APPLICABILITY
 - EXACT_OWNER_ADOPTION
 
+## 조합 검토량
+
+아래는 목적이 같은 MAIN 2개 또는 3개를 가진 가상 배치의 구성 조합 수입니다.
+기존 구성 유지, 일부만 변경, 같은 방법 반복 선택, 수치 변형을 포함하고 전부 기존 구성인 경우는 제외합니다.
+종목7개에서의 최솟값~최댓값입니다. 예시 날짜1·4·7은 개수 계산용 주소이지 승인된 주기 배치가 아닙니다.
+이 수치는 생성 가능한 운영 계획 수나 승인된 조합 수가 아닙니다.
+
+| 경험 | 목적 | MAIN 2개 | MAIN 3개 |
+|---|---|---|---|
+| NEW_TO_RUNNING | LT | 0 | 0 |
+| NEW_TO_RUNNING | VO2 | 0 | 0 |
+| NEW_TO_RUNNING | ATP-PC | 0 | 0 |
+| NEW_TO_RUNNING | GLY | 0 | 0 |
+| NEW_TO_RUNNING | MIX | 0 | 0 |
+| DEVELOPING | LT | 24 | 124 |
+| DEVELOPING | VO2 | 35 | 215 |
+| DEVELOPING | ATP-PC | 24 | 124 |
+| DEVELOPING | GLY | 8 | 26 |
+| DEVELOPING | MIX | 8~15 | 26~63 |
+| EXPERIENCED | LT | 24 | 124 |
+| EXPERIENCED | VO2 | 35 | 215 |
+| EXPERIENCED | ATP-PC | 35 | 215 |
+| EXPERIENCED | GLY | 8 | 26 |
+| EXPERIENCED | MIX | 15~35 | 63~215 |
+
+0은 적합한 훈련이 없다는 생리학적 판단이 아니라, 현재 제안 목록에 해당 경험의 상세 구성이 없다는 뜻입니다.
+전체 정책은 실제 원본 범위·배치·상호작용까지 별도로 검토해야 합니다. 이 목록은 정책 지문이나 승인을 만들지 않습니다.
+
 ## 전체 미완 범위
 
 구조상 두 방법 미확보: 140행(연령군·선택권한 포함).
