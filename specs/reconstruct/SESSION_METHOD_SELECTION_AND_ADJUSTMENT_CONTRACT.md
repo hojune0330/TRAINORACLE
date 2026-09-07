@@ -4,7 +4,7 @@
 doc_id: trainoracle-session-method-selection-and-adjustment
 spec_id: SESSION_METHOD_SELECTION_AND_ADJUSTMENT_CONTRACT
 title: TrainOracle Session Method Selection And Adjustment Contract
-version: "0.34"
+version: "0.35"
 round: RT1_OWNER_APPROVED_IMPLEMENTATION_DIRECTION
 status: ACTIVE_IMPLEMENTATION_CONTRACT
 product_direction: OWNER_APPROVED_IMPLEMENTATION_DIRECTION
@@ -1408,5 +1408,25 @@ independently supplied, current, non-revoked policy with configuration, exposure
 interaction and safety review references. Reject malformed or duplicate registry
 entries. A V1/V2 review cannot authorize V3. The operating registry starts empty.
 The result remains executionAuthority NONE and does not persist or start training.
+
+### 21.14 V3 explicit selection and historical content
+
+V3 selection uses the same current original-candidate, explicit action, safety,
+record reconfirmation and base-selection validation as the existing adjustment
+path. Refresh source time at selection, require the exact expected V3 candidate
+fingerprint, and apply the independent V3 whole-plan review. First-frame selection
+cannot silently accept a successor; successor use requires its continuity transaction.
+
+Preserve the original candidate, exact source context, adjusted sessions including
+numeric projection, review references and initial periodization in a version-3
+selected-content envelope. This representation remains NOT_SAVED until the owning
+version-aware persistence transaction completes.
+
+Historical reconstruction uses independently retained source authority, explanation
+and whole-plan reviews at the actual acceptance time. Recompute every adjusted
+target and compare the complete reconstructed content, not only its checksum.
+Reject future timestamps, changed targets, extra fields or missing retained evidence.
+Historical read does not fetch current records, authorize execution, or activate an
+imported plan. Storage, active UI and successor consumers remain separate obligations.
 
 [DRAFT_COMPLETE]
