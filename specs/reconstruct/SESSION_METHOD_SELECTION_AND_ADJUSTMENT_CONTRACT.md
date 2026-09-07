@@ -4,7 +4,7 @@
 doc_id: trainoracle-session-method-selection-and-adjustment
 spec_id: SESSION_METHOD_SELECTION_AND_ADJUSTMENT_CONTRACT
 title: TrainOracle Session Method Selection And Adjustment Contract
-version: "0.23"
+version: "0.24"
 round: RT1_OWNER_APPROVED_IMPLEMENTATION_DIRECTION
 status: ACTIVE_IMPLEMENTATION_CONTRACT
 product_direction: OWNER_APPROVED_IMPLEMENTATION_DIRECTION
@@ -1158,5 +1158,52 @@ silently prune existing or incoming originals to fit the 18-entry archive limit:
 an over-capacity import. A missing active plan remains missing after history import.
 Check account, active bytes, archive bytes and current request before/after the write;
 rollback only this operation's bytes. Cancelled or stale file reads cannot import.
+
+## 21. Lossless source-to-sequence integration
+
+Source-proposal arithmetic is not proof that the operating sequence can represent
+the same workout. Validate the complete ordered structure, units, segment roles,
+repetition meaning and terminal boundaries before creating a source configuration.
+An accepted parse alone is insufficient when it changes those semantics.
+
+### 21.1 Required representation additions
+
+The successor representation must support ordered compound recovery, for example
+100m active roll-on followed by 120 seconds easy recovery at a set boundary.
+Both components occur, in that order. Do not combine distance and seconds into one
+simultaneous target, drop one component, or label recovery as quality work.
+
+Retain buildup/preparation within a repeated MAIN block separately from its target
+work segment. Four repetitions of 20m buildup plus 10m fast work mean four blocks,
+80m buildup and 40m fast work, not eight fast repetitions or 120m fast distance.
+Provide separate aggregate fields instead of renaming legacy aggregate semantics.
+
+Represent WALK_OR_STAND explicitly when that is the reviewed recovery instruction.
+Do not silently replace it with STAND, WALK or an unspecified coach-defined mode.
+Recovery instructions remain instructions, not a claim of measured recovery.
+
+### 21.2 Version and activation boundaries
+
+Preserve V1/V2 parsing, historical fingerprints and their documented meaning of
+recoveryAfter. Add the new semantics through a versioned successor; do not change
+old last-child recoveryAfter into an always-executed recovery retroactively.
+Unsupported new sequences remain unactivated with a specific representation reason.
+Do not downgrade them to a different numeric workout to pass an old schema.
+
+The successor requires parser, totals, comparison, explanation binding, snapshot,
+candidate, selection/storage, journal original, backup and history compatibility
+checks before activation. New sequence engineering does not approve any dose.
+An exact owner-approved protocol still needs its complete lossless operating mapping.
+
+### 21.3 Verification obligations
+
+- Three sets of two 300m with 100m after every rep and an additional 120s between
+  sets retain 1800m work, 600m roll-on and 240s additional recovery, with unknown
+  complete recovery duration and no invented roll-on pace.
+- Four buildup/fast blocks retain block count and each role's distance separately.
+- Source proposal -> stored sequence -> historical read -> explanation preserves
+  every ordered component and target; mutation must invalidate its exact identity.
+- Legacy V1/V2 examples and identities remain unchanged.
+- A parser PASS or a test that demonstrates an old limitation is not a completed fix.
 
 [DRAFT_COMPLETE]
