@@ -3,6 +3,11 @@ import React from "react"
 import { render, screen, fireEvent, act, cleanup, within } from "@testing-library/react"
 import { PlanBeta } from "../screens/PlanBeta"
 import * as mutationLocks from "./plan-mutation-lock"
+import * as originalPlans from "./journal-original-plan"
+import { JournalOriginalPlan } from "../screens/journal/JournalOriginalPlan"
+import { saveEntry, loadEntries } from "./journal-store"
+import { MEMO_PURPOSE, type PostSessionEntry } from "./journal-schema"
+import { createPlannedSessionLogDraft } from "./planned-session-link"
 import { sequenceV3ContentIdentity } from "@impl/prescription/sequence-v3-comparison"
 import { adjustedMethodV3FixtureWithCandidate } from "./adjusted-method-resolution-v3.test-fixtures"
 import { resolveAdjustedCandidateScope } from "./adjusted-plan-candidate"
@@ -191,5 +196,42 @@ it("opens saved V3 in the real plan screen, records an outcome and restores it w
   expect(within(screen.getByRole("group", { name: groupName })).getByRole("button", { name: "건너뜀" })).toHaveAttribute("aria-pressed", "true")
   expect(screen.getByText(/200m당 약/)).toBeVisible()
   act(() => setActiveLocalAccount("another"))
+  expect(screen.queryByText(/200m당 약/)).toBeNull()
+})
+it("links a real journal to V3 and renders its original without copying planned measurements or reading memo", async () => {
+  const { input, retained } = storeInput()
+  const saved = await saveSelectedAdjustedPlanV3(input)
+  if (saved.kind !== "saved") throw Error(saved.code)
+  const slot = saved.state.selection.activePlan.sessions.find(s => s.prescription.kind === "ADJUSTED_METHOD_V3")!
+  const draft = createPlannedSessionLogDraft(saved.state.selection, slot, TODAY.toISOString())!
+  const onWrite = vi.fn()
+  const view = render(React.createElement(PlanBeta, { readAdjustedEvidenceV3: () => [retained],
+    returnToSession: draft.link, onWritePlannedSessionLog: onWrite }))
+  fireEvent.click(within(screen.getByRole("region", { name: `${slot.slot === "AM" ? "오전" : "오후"} 훈련` }))
+    .getByRole("button", { name: "이 훈련 일지 쓰기" }))
+  expect(onWrite).toHaveBeenCalledWith(draft)
+  expect(Object.keys(draft).sort()).toEqual(["date", "link"])
+  view.unmount()
+  const entry: PostSessionEntry = { id: "synthetic-v3-journal", kind: "post-session", date: draft.date,
+    savedAt: TODAY.toISOString(), syncState: "local", activitySlot: slot.slot, plannedSessionLink: draft.link,
+    system: "", title: "", memo: "PRIVATE-NOTE-NOT-ANALYSIS", memoPurpose: MEMO_PURPOSE.analyzableTrainingNote,
+    distanceKm: "", durationMin: "", avgPace: "", rpe: 0 }
+  expect(saveEntry(entry).ok).toBe(true)
+  const loaded = loadEntries().find(e => e.id === entry.id)!
+  if (loaded.kind !== "post-session") throw Error("journal kind")
+  expect(loaded.distanceKm).toBe("")
+  const originalRead = originalPlans.readJournalOriginalPlan
+  expect(originalRead(loaded, [], [retained])).toMatchObject({ kind: "matched_adjusted_v3", session: slot })
+  vi.spyOn(originalPlans, "readJournalOriginalPlan").mockImplementation(e => originalRead(e, [], [retained]))
+  const getter = vi.fn(() => "PRIVATE-NOTE-NOT-ANALYSIS")
+  Object.defineProperty(loaded, "memo", { enumerable: true, get: getter })
+  render(React.createElement(JournalOriginalPlan, { entry: loaded }))
+  const details = screen.getByText("계획한 훈련과 비교하기").closest("details")!
+  act(() => { details.open = true; fireEvent(details, new Event("toggle")) })
+  expect(screen.getByText(/200m당 약/)).toBeVisible()
+  expect(screen.getByText("걷기 · 100m")).toBeVisible()
+  expect(getter).not.toHaveBeenCalled()
+  expect(screen.queryByText("PRIVATE-NOTE-NOT-ANALYSIS")).toBeNull()
+  act(() => setActiveLocalAccount("other"))
   expect(screen.queryByText(/200m당 약/)).toBeNull()
 })

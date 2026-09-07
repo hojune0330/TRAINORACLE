@@ -6,6 +6,7 @@ import { loadEntriesForPlanSafety } from "../../domain/journal-store"
 import { collectSessionExplanationEvidence } from "../../domain/session-explanation-evidence"
 import { SessionExplanationEntry } from "../plan-beta/SessionExplanation"
 import { AdjustedJournalOriginalPlan } from "./AdjustedJournalOriginalPlan"
+import { AdjustedPrescriptionV3 } from "../plan-beta/AdjustedPrescriptionV3"
 
 export function JournalOriginalPlan({ entry }: { readonly entry: PostSessionEntry }) {
   const [lookup, setLookup] = React.useState<ReturnType<typeof readJournalOriginalPlan> | null>(null)
@@ -38,6 +39,10 @@ export function JournalOriginalPlan({ entry }: { readonly entry: PostSessionEntr
           ? collectSessionExplanationEvidence(journal.entries, matched.state, session) : null
       }} />
     </> : lookup?.kind === "matched_adjusted" ? <AdjustedJournalOriginalPlan session={lookup.session} explanation={lookup.explanation} />
+      : lookup?.kind === "matched_adjusted_v3" ? <>
+        <p>이 일지에 연결된 당시 계획이에요. 실제 운동 기록과는 별도로 표시해요.</p>
+        <AdjustedPrescriptionV3 session={lookup.session} explanation={lookup.explanation} />
+      </>
       : lookup !== null && <p>{lookup.kind === "missing"
       ? "이 일지와 연결된 계획 원본이 기기에 없어요. 예전 요약 기록만으로 훈련 내용을 다시 만들지는 않아요."
       : "연결된 계획을 읽지 못했어요. 저장된 데이터는 변경하지 않았어요."}</p>}

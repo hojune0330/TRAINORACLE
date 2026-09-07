@@ -4,7 +4,7 @@
 doc_id: trainoracle-session-method-selection-and-adjustment
 spec_id: SESSION_METHOD_SELECTION_AND_ADJUSTMENT_CONTRACT
 title: TrainOracle Session Method Selection And Adjustment Contract
-version: "0.38"
+version: "0.39"
 round: RT1_OWNER_APPROVED_IMPLEMENTATION_DIRECTION
 status: ACTIVE_IMPLEMENTATION_CONTRACT
 product_direction: OWNER_APPROVED_IMPLEMENTATION_DIRECTION
@@ -1474,5 +1474,19 @@ Progress buttons call the version-aware transaction and preserve selected day on
 refresh. Reopening restores persisted outcomes. Account change removes prior
 athlete values. This read/progress surface does not itself supply catalog approval,
 an editor entry, journal linkage, export or successor controls; these remain required.
+
+### 21.18 V3 active-plan journal linkage
+
+The V3 schedule creates the existing immutable planned-session identity from the
+validated selected plan and exact day/slot. Before opening the journal, re-read
+the account's active plan and require the same stored fingerprint. Pass only the
+date and link, not planned distance/time/RPE as performed measurements. Returning
+from the journal selects the matching planned day.
+
+Journal original lookup accepts a V3 active plan only after retained-evidence
+reconstruction and exact link resolution. Reuse the schedule's prescription view
+so numbers, recovery order and explanation do not drift. Clear displayed data on
+account/storage change. Do not read memo while resolving or displaying the original.
+V3 archived-original lookup, backup and successor preservation remain separate work.
 
 [DRAFT_COMPLETE]

@@ -5,17 +5,25 @@ import { readArchivedOriginalPlans, readPlanBetaStateFromStorage } from "./plan-
 import { RETAINED_ADJUSTED_PLAN_EVIDENCE, readStoredAdjustedPlanState } from "./adjusted-plan-storage-schema"
 import type { RetainedAdjustedPlanEvidence } from "./adjusted-plan-selection"
 import { readAdjustedOriginalPlans } from "./adjusted-plan-archive"
+import { RETAINED_ADJUSTED_PLAN_EVIDENCE_V3 } from "./adjusted-plan-storage-v5"
+import type { RetainedAdjustedPlanEvidenceV3 } from "./selected-adjusted-plan-v3"
 
 /** Lookup only: no current-plan substitution, writes, activation or memo access. */
 export function readJournalOriginalPlan(entry: PostSessionEntry,
-  retained: readonly RetainedAdjustedPlanEvidence[] = RETAINED_ADJUSTED_PLAN_EVIDENCE) {
+  retained: readonly RetainedAdjustedPlanEvidence[] = RETAINED_ADJUSTED_PLAN_EVIDENCE,
+  retainedV3: readonly RetainedAdjustedPlanEvidenceV3[] = RETAINED_ADJUSTED_PLAN_EVIDENCE_V3) {
   if (!isJournalVisible(entry.id)) return { kind: "unavailable" as const }
   const parsed = plannedSessionLinkSchema.safeParse(entry.plannedSessionLink)
   if (!parsed.success || entry.date !== parsed.data.plannedDate
       || ((entry.activitySlot === "AM" || entry.activitySlot === "PM") && entry.activitySlot !== parsed.data.sessionSlot)) {
     return { kind: "unavailable" as const }
   }
-  const active = readPlanBetaStateFromStorage(retained)
+  const active = readPlanBetaStateFromStorage(retained, retainedV3)
+  if (active.kind === "adjusted_v3_loaded") {
+    const session = resolveCurrentPlannedSession(active.state.selection, parsed.data)
+    if (session !== null) return { kind: "matched_adjusted_v3" as const, source: "ACTIVE" as const,
+      state: active.state, session, explanation: active.explanation }
+  }
   if (active.kind === "adjusted_loaded") {
     const session = resolveCurrentPlannedSession(active.state.selection, parsed.data)
     if (session !== null) return { kind: "matched_adjusted" as const, source: "ACTIVE" as const,
