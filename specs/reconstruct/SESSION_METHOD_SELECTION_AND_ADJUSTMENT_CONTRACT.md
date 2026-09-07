@@ -4,7 +4,7 @@
 doc_id: trainoracle-session-method-selection-and-adjustment
 spec_id: SESSION_METHOD_SELECTION_AND_ADJUSTMENT_CONTRACT
 title: TrainOracle Session Method Selection And Adjustment Contract
-version: "0.45"
+version: "0.46"
 round: RT1_OWNER_APPROVED_IMPLEMENTATION_DIRECTION
 status: ACTIVE_IMPLEMENTATION_CONTRACT
 product_direction: OWNER_APPROVED_IMPLEMENTATION_DIRECTION
@@ -1585,5 +1585,18 @@ RPE_TIME_RANGE는 기록 기반 페이스 처방이 아니므로 PACE_TARGET으�
 anchor를 넣지 않고 명시적인 비기록 기반 경로로 제공한다. 개인 페이스가 필요한 구간은
 별도 검증된 현재 기록을 사용하며 기록 없음과 검증 실패를 구분한다. 이 절은 연결 설계
 기준이며 시간/RPE 상세 변환이나 운영 활성화가 구현됐다는 증거가 아니다.
+
+### 21.26 비기록 기반 V3 조정 근거 경로
+
+UNANCHORED_SOURCE_V3는 anchor 필드를 갖지 않는다. 검토된 원본/목표 구성과 전이 정책,
+문맥 및 해석 revision을 사용하며 recordBasis는 NOT_USED다. 존재하지 않는 선수 기록이나
+0초 기록으로 기존 페이스 경로를 우회하지 않는다. 원본/목표의 준비·본운동·정리 모든
+구간에서 RACE_PACE 또는 지정된 SPRINT_REFERENCE가 있으면 기록 기반 경로를 요구한다.
+운동/회복 수치는 바꾸지 않으며 거리와 시간의 미지정 값을 그대로 보존한다.
+
+개별 구성 선택의 명시적 receipt를 현재 정책으로 다시 확인하고, 기존 V3 설명/구간
+identity 검사를 적용한다. 스냅샷은 원본 후보 계보와 MAIN 주소에 묶이며 설명이나 주소가
+달라지면 재사용을 거부한다. candidate_ready / NONE은 전체 계획 승인/저장 권한이 아니다.
+시간/RPE 원본에 대한 배치 결속, 다중 계획 저장과 운영 활성화는 별도 연결이 필요하다.
 
 [DRAFT_COMPLETE]
