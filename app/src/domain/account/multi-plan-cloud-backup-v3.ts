@@ -42,15 +42,19 @@ export async function loadLatestMultiPlanSnapshotV3(
     const { data, error } = await client.from("saved_training_plans")
       .select("user_id, plan_id, schema_version, plan_payload, saved_at")
       .eq("user_id", owner).eq("schema_version", 6).is("archived_at", null)
-      .order("saved_at", { ascending: false }).order("plan_id", { ascending: false }).limit(1).maybeSingle()
+      .order("saved_at", { ascending: false }).order("plan_id", { ascending: false }).limit(2)
     if (!current()) return { kind: "stale_response" as const }
     if (error) return { kind: "failed" as const }
-    if (!data) return unavailable()
-    if (data.user_id !== owner || data.schema_version !== 6) return { kind: "invalid" as const }
-    const read = readStoredMultiAdjustedPlanV6(data.plan_payload, readEvidence())
-    if (read.kind !== "loaded" || data.plan_id !== `multi-v6:${read.state.contentFingerprint}`
-      || typeof data.saved_at !== "string" || !Number.isFinite(Date.parse(data.saved_at))
-      || Date.parse(data.saved_at) !== Date.parse(read.state.updatedAt)) return { kind: "invalid" as const }
+    if (!Array.isArray(data)) return { kind: "invalid" as const }
+    if (!data.length) return unavailable()
+    const row = data[0]!
+    if (data.length > 1 && Date.parse(row.saved_at) === Date.parse(data[1]!.saved_at))
+      return { kind: "conflict" as const }
+    if (row.user_id !== owner || row.schema_version !== 6) return { kind: "invalid" as const }
+    const read = readStoredMultiAdjustedPlanV6(row.plan_payload, readEvidence())
+    if (read.kind !== "loaded" || row.plan_id !== `multi-v6:${read.state.contentFingerprint}`
+      || typeof row.saved_at !== "string" || !Number.isFinite(Date.parse(row.saved_at))
+      || Date.parse(row.saved_at) !== Date.parse(read.state.updatedAt)) return { kind: "invalid" as const }
     if (!current()) return { kind: "stale_response" as const }
     return { kind: "read_only" as const, ownerId: owner, state: read.state,
       executionAuthority: "NONE" as const, storageState: "NOT_RESTORED" as const }

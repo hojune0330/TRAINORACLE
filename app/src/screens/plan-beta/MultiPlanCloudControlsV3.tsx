@@ -38,6 +38,7 @@ export function MultiPlanCloudControlsV3({ fingerprint, readEvidence }: {
       const result = await loadLatestMultiPlanSnapshotV3(readEvidence)
       if (!current()) return
       if (result.kind === "read_only") setSnapshot(result)
+      else if (result.kind === "conflict") setMessage("같은 시각에 저장된 계획이 둘 이상이에요. 최근 계획을 임의로 고르지 않았어요. 원래 사용한 기기의 일정을 확인해 주세요.")
       else setMessage("불러올 수 있는 서버 계획을 확인하지 못했어요.")
     })}><CloudDownload size={18} aria-hidden="true" />서버의 최근 원본 확인</button>
     {snapshot && <div>

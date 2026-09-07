@@ -167,7 +167,7 @@ it.each(["saved", "wrong-session", "account-during-auth", "account-after-send", 
   }
 })
 
-it.each(["read", "wrong-owner", "wrong-id", "changed-payload", "changed-time", "changed-account", "missing-evidence"])("validates private cloud reads without restoring: %s", async scenario => {
+it.each(["read", "wrong-owner", "wrong-id", "changed-payload", "changed-time", "changed-account", "missing-evidence", "same-time"])("validates private cloud reads without restoring: %s", async scenario => {
   setActiveLocalAccount("cloud-owner")
   const input = storageFixture(), saved = await saveSelectedMultiAdjustedPlanV6(input)
   if (saved.kind !== "saved") throw Error("Missing saved plan")
@@ -178,17 +178,16 @@ it.each(["read", "wrong-owner", "wrong-id", "changed-payload", "changed-time", "
     plan_id: scenario === "wrong-id" ? "multi-v6:wrong" : `multi-v6:${saved.state.contentFingerprint}`,
     plan_payload: payload, saved_at: scenario === "changed-time" ? "2020-01-01T00:00:00Z" : saved.state.updatedAt }
   const eq = vi.fn(() => query), order = vi.fn(() => query)
-  const query = { select: () => query, eq, is: () => query, order, limit: () => query,
-    maybeSingle: async () => {
+  const query = { select: () => query, eq, is: () => query, order, limit: async () => {
       if (scenario === "changed-account") setActiveLocalAccount("other")
-      return { data: row, error: null }
+      return { data: scenario === "same-time" ? [row, { ...row, plan_id: "multi-v6:other" }] : [row], error: null }
     } }
   type Client = NonNullable<Awaited<ReturnType<NonNullable<Parameters<typeof loadLatestMultiPlanSnapshotV3>[1]>["client"]>>>
   const client = { auth: { getSession: async () => ({ data: { session: { user: { id: "cloud-owner" } } }, error: null }) },
     from: () => query } as unknown as Client
   const result = await loadLatestMultiPlanSnapshotV3(() => scenario === "missing-evidence" ? [] : input.readReview().retained,
     { enabled: () => true, client: async () => client })
-  expect(result.kind).toBe(scenario === "read" ? "read_only" : scenario === "changed-account" ? "stale_response" : "invalid")
+  expect(result.kind).toBe(scenario === "read" ? "read_only" : scenario === "changed-account" ? "stale_response" : scenario === "same-time" ? "conflict" : "invalid")
   expect(eq).toHaveBeenCalledWith("user_id", "cloud-owner")
   expect(eq).toHaveBeenCalledWith("schema_version", 6)
   if (result.kind === "read_only") expect(result).toMatchObject({ state: saved.state, executionAuthority: "NONE", storageState: "NOT_RESTORED" })
