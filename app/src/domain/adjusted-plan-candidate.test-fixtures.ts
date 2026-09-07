@@ -4,8 +4,8 @@ import { resolveAdjustedMethodPrescription } from "./adjusted-method-resolution"
 import { createAdjustedMethodSnapshot } from "./adjusted-method-snapshot"
 import { resolveAdjustedCandidateScope } from "./adjusted-plan-candidate"
 
-export function adjustedCandidateFixture(event: typeof RUNTIME_CASES[number] = RUNTIME_CASES[3]!) {
-  const { candidate, resolution } = adjustedMethodFixtureWithCandidate(event)
+export function adjustedSelectionFixture(event: typeof RUNTIME_CASES[number] = RUNTIME_CASES[3]!, nowMs = 151) {
+  const { candidate, resolution, generation } = adjustedMethodFixtureWithCandidate(event, undefined, undefined, nowMs)
   const session = candidate.sessions.find(item => item.prescription.kind === "PACE_TARGET")!
   const address = { day: session.day, slot: session.slot }
   const startDate = "2026-09-07"
@@ -19,5 +19,9 @@ export function adjustedCandidateFixture(event: typeof RUNTIME_CASES[number] = R
     limitations: "TEST limit", observation: "TEST observation", evidenceRefs: ["TEST-SOURCE"] }
   const snapshot = createAdjustedMethodSnapshot({ ...resolution, scope, explanation })
   if (snapshot.kind !== "prepared") throw Error(snapshot.code)
-  return { candidate, address, startDate, rawSnapshot: JSON.stringify(snapshot.snapshot), source: resolution.source, explanation }
+  return { generation, preparation: { candidate, address, startDate, rawSnapshot: JSON.stringify(snapshot.snapshot), source: resolution.source, explanation } }
+}
+
+export function adjustedCandidateFixture(event: typeof RUNTIME_CASES[number] = RUNTIME_CASES[3]!) {
+  return adjustedSelectionFixture(event).preparation
 }

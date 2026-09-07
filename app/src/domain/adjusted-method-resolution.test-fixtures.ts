@@ -6,7 +6,7 @@ import { readPlanMethodDefinition } from "./plan-method-definition"
 import { generatePlanFromDraft } from "./plan-beta-flow"
 import { draftFor, RUNTIME_CASES, saveCurrentRecord } from "./prescription-quality-matrix.test-fixtures"
 
-export function adjustedMethodFixtureWithCandidate(event: typeof RUNTIME_CASES[number] = RUNTIME_CASES[3]!, work: SequenceWork = { kind: "distance", distanceM: 400, durationSeconds: null }, transform?: (sequence: PrescriptionSequence) => PrescriptionSequence) {
+export function adjustedMethodFixtureWithCandidate(event: typeof RUNTIME_CASES[number] = RUNTIME_CASES[3]!, work: SequenceWork = { kind: "distance", distanceM: 400, durationSeconds: null }, transform?: (sequence: PrescriptionSequence) => PrescriptionSequence, nowMs = 151) {
   const selectedRecordId = saveCurrentRecord(event.eventDistanceM, event.performanceSeconds + 0.137)
   const generated = generatePlanFromDraft(draftFor(event), "NO_KNOWN_RISK", { selectedRecordId })
   if (generated.kind !== "generated") throw Error("Expected generated original")
@@ -26,21 +26,21 @@ export function adjustedMethodFixtureWithCandidate(event: typeof RUNTIME_CASES[n
   const to = configurationReference({ familyId: definition.mapping.method.familyId,
     configurationId: config.configurationId, version: config.version }, target)
   const policy = { policyId: "TEST-POLICY", version: "1", reviewRef: "TEST-NOT-APPROVAL", contextKey: "TEST-CANDIDATE-SLOT",
-    validFromMs: 100, expiresAtMs: 200, allowedEdges: [{ from: definition.reference, to }] }
+    validFromMs: nowMs - 51, expiresAtMs: nowMs + 49, allowedEdges: [{ from: definition.reference, to }] }
   const source = { authority: { catalog: [{ familyId: definition.mapping.method.familyId, reviewRef: "TEST-NOT-APPROVAL",
     configurations: [definition.configuration, config] }], policies: [policy] },
     policy: adjustmentPolicyReference(policy), current: definition.reference, contextKey: policy.contextKey,
     resolutionRevision: "TEST-REVISION", anchor: { eventDistanceM: original.selectedAnchor.eventDistanceM,
-      sourceRef: original.selectedAnchor.sourceRef, contentFingerprint: binding.resolved.anchorContentFingerprint }, nowMs: 151 }
+      sourceRef: original.selectedAnchor.sourceRef, contentFingerprint: binding.resolved.anchorContentFingerprint }, nowMs }
   const offer = prepareSourceAdjustmentOffer(source)
   if (offer.kind !== "available") throw Error(offer.code)
   const draft = createAdjustmentDraft({ authority: offer.authority, policy: offer.policy, current: offer.current,
-    target: offer.targets[0]!, contextKey: offer.contextKey, nowMs: 151 })
+    target: offer.targets[0]!, contextKey: offer.contextKey, nowMs })
   if (draft.kind !== "draft") throw Error(draft.code)
   const applied = applyAdjustmentDraft({ authority: offer.authority, draft: draft.draft, current: offer.current,
-    contextKey: offer.contextKey, nowMs: 151, action: "USER_EXPLICIT" })
+    contextKey: offer.contextKey, nowMs, action: "USER_EXPLICIT" })
   if (applied.kind !== "applied") throw Error(applied.code)
-  return { candidate: generated.generated.candidates[0], resolution: { original, source, receipt: applied.receipt } }
+  return { candidate: generated.generated.candidates[0], generation: generated, resolution: { original, source, receipt: applied.receipt } }
 }
 
 export function adjustedMethodResolutionFixture(...args: Parameters<typeof adjustedMethodFixtureWithCandidate>) {

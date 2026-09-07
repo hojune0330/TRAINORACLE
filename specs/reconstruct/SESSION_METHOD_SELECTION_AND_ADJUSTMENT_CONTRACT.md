@@ -4,7 +4,7 @@
 doc_id: trainoracle-session-method-selection-and-adjustment
 spec_id: SESSION_METHOD_SELECTION_AND_ADJUSTMENT_CONTRACT
 title: TrainOracle Session Method Selection And Adjustment Contract
-version: "0.11"
+version: "0.12"
 round: RT1_OWNER_APPROVED_IMPLEMENTATION_DIRECTION
 status: ACTIVE_IMPLEMENTATION_CONTRACT
 product_direction: OWNER_APPROVED_IMPLEMENTATION_DIRECTION
@@ -935,5 +935,26 @@ the new route is pending; test fixtures and reference strings are not approval.
 KEEP: D9, privacy, current-record checks, explicit selection, storage compatibility,
 no automatic dose escalation, and all four OPEN issues. This section changes the
 review process only; it is neither canonical promotion nor implementation completion.
+
+## 19. Adjusted Selection Integration Boundary
+
+The adjusted selection path must revalidate the canonical original candidate,
+current safety and original record, exact adjusted configuration, full-frame review
+scope and explicit user choice in one call. A previously prepared snapshot is not
+selection authority. Use current evaluation time, not the snapshot capture time.
+
+The selected result owns a distinct content-bound plan identity and the actual
+adjusted session sequence. Do not write the original flat PACE_TARGET prescription
+while displaying adjusted values. Retain the original candidate and review references
+as provenance, not as the selected session. Do not reuse the original pair's
+adaptation authority or old explanation receipt for the adjusted plan.
+
+Selection, persistence, execution and historical reading remain separate operations.
+The selected result is NOT_SAVED until the owning versioned store validates and
+confirms it under the current account/mutation lock. Historical reading must never
+repeat the selection operation or turn expired approval into current permission.
+Initial selection and next-frame continuation must not reset one another's lineage.
+All prior requirements and OPEN issues remain; this boundary enables engineering
+integration, not activation of unapproved numerical configurations.
 
 [DRAFT_COMPLETE]
