@@ -3,7 +3,7 @@
 ```yaml
 doc_id: trainoracle-session-method-owner-adoption-packet-2026-09-07
 packet_id: TO-METHOD-ADOPTION-2026-09-07
-version: "0.14"
+version: "0.15"
 status: SOURCE_REVIEWED_PACKET_IN_PREPARATION
 review_process: TO-OWNER-TRAINING-REVIEW-ROUTE-2026-09-07
 owner_exact_packet_approval: NOT_REQUESTED_YET
@@ -666,5 +666,20 @@ assemble-reviewed-multi-materials-v3.ts는 독립적으로 공급한 구성별 �
 이 조립 코드가 연구 초안을 읽어 자동으로 승인 자료를 만드는 것은 아니다.
 운영 목록 연결 전에는 위 표의 실제 반복 기준과 주기 배치 검토가 완료되어야 한다.
 일반적인 생리 기전 자료, 제품의 코칭 선택, 개별 선수에게 사용한 기록을 구분한다.
+
+## 25. 구간별 수행 지침 제안 보강
+
+method-execution-guidance-proposal.mjs의 코칭 제안을 생성 검토 카드에 연결했다.
+27개 구성의 순서·거리·운동초·회복초를 변경하지 않고 역할별 수행 안내를 붙인다.
+ATP-PC는 서서 출발하는 가속, 접근 뒤 플라잉, 시간형 가속을 구분한다.
+GLY의 목표 초와 허용할 기록 변화는 미확정임을 명시한다. VO2 시간형의 참고
+거리 때문에 운동 시간을 더 늘리는 해석을 피한다. MIX의 느린 구간과 빠른
+구간을 하나의 강도로 설명하지 않는다. OFF는 운동 없음과 실제 활동량0을 구분한다.
+
+생성 결과27개/runtimeActivation false/구조상 미확보140행이며,
+구간 원본 무변경 및 가속3형태 구분 시험2개 PASS다. 연구 용량 입증이나
+개인 강도 산출, 운영 채택을 뜻하지 않는다. 아직 준비 중인 채택 자료를
+완성된 자료의 오너 승인 대기로만 표현하지 않는다. 개인 강도 참조, 종목·
+경험별 적용 범위, 전체 주기 배치와 정확한 오너 채택은 남아 있다.
 
 [DRAFT_COMPLETE]

@@ -10,6 +10,7 @@ try {
   const { previewPendingMethodExplanation } = await server.ssrLoadModule("/reports/research/method-explanation-preview-v3.ts")
   const { auditAllPendingMainChoices } = await server.ssrLoadModule("/reports/research/method-choice-coverage-v3.ts")
   const { previewMethodDurationFit } = await server.ssrLoadModule("/reports/research/method-duration-fit-v3.ts")
+  const { proposeMethodExecutionGuidance } = await server.ssrLoadModule("/reports/research/method-execution-guidance-proposal.mjs")
   const protocols = [...METHOD_ADOPTION_PROTOCOLS, ...METHOD_ADOPTION_VARIANTS]
   const text = value => String(value).replaceAll("|", "\\|").replaceAll("\n", " ")
   const amount = p => p ? `${p.value}${p.unit === "SECONDS" ? "초" : "m"} ${p.role}` : "없음"
@@ -24,6 +25,7 @@ try {
     "재생성: app에서 node scripts/build-method-owner-review.mjs. 생성 문서를 직접 고치지 않고 원본을 수정합니다.", ""]
   for (const p of protocols) {
     const e = previewPendingMethodExplanation(p)
+    const guidance = proposeMethodExecutionGuidance(p)
     const main = e.exactStructure.totals?.main
     lines.push(`## ${p.id}`, "", `- 목적 분류: ${p.family} / 방법: ${p.method}`,
       `- 본운동 단위: ${p.work.map(amount).join(" + ") || "계획된 운동 없음"}`,
@@ -39,6 +41,10 @@ try {
       "### 구성과 회복 이유", "", text(e.methodDesign.work), "", text(e.methodDesign.recovery), "",
       "### 장단점과 한계", "", text(e.methodDesign.tradeoff), "",
       ...e.generalExplanation.profile.limitations.map(l => `- ${text(l)}`), "")
+    lines.push("### 구간별 수행 안내 채택 제안", "",
+      "아래 문구는 제품 코칭 제안입니다. 연구에서 입증된 개인 속도나 승인된 운영 강도가 아닙니다.",
+      ...(guidance.methodCue ? [guidance.methodCue] : []), ...(guidance.offReason ? [guidance.offReason] : []),
+      ...[...new Map(guidance.segments.map(s => [s.role, s.instruction])).entries()].map(([role, instruction]) => `- ${role}: ${instruction}`), "")
     if (main) lines.push("### 수량 확인", "", "| 구분 | 값 |", "|---|---|",
       `| 본운동 거리(m) | ${number(main.workDistanceM)} |`, `| 본운동 시간(초) | ${number(main.workSeconds)} |`,
       `| 확인된 회복 거리(m) | ${main.knownRecoveryDistanceM} |`, `| 확인된 회복 시간(초) | ${main.knownRecoverySeconds} |`,
