@@ -41,6 +41,8 @@ import { readCurrentMultiRestoreReviewV3 } from "./multi-plan-restore-review-v3"
 import { createReviewedMultiAdjustmentProviderV3, type CurrentMultiMaterialsReaderV3 } from "../screens/plan-beta/reviewed-multi-adjustment-provider-v3"
 import { assembleReviewedMultiMaterialsV3 } from "./assemble-reviewed-multi-materials-v3"
 import { readMultiPlanMethodHistoryV3 } from "./multi-plan-method-history-v3"
+import { MultiPlanEvidenceContext } from "../components/MultiPlanEvidenceContext"
+import { JournalOriginalPlan } from "../screens/journal/JournalOriginalPlan"
 
 const dialogShow = Object.getOwnPropertyDescriptor(HTMLDialogElement.prototype, "showModal")
 const dialogClose = Object.getOwnPropertyDescriptor(HTMLDialogElement.prototype, "close")
@@ -436,11 +438,17 @@ it("retains a multi-plan journal original and reads the exact slot after the act
   expect(getter).not.toHaveBeenCalled()
   if (original.kind !== "matched_multi_adjusted_v3") throw Error("Original missing")
   expect(original.explanation).toEqual(retained[0]!.slots.find(s => s.address.day === slot.day && s.address.slot === slot.slot)!.explanation)
-  render(React.createElement(AdjustedPrescriptionV3, { session: original.session, explanation: original.explanation }))
+  render(React.createElement(MultiPlanEvidenceContext.Provider, { value: () => retained },
+    React.createElement(JournalOriginalPlan, { entry: loaded })))
+  const details = screen.getByText("계획한 훈련과 비교하기").closest("details")!
+  details.open = true
+  fireEvent(details, new Event("toggle"))
   expect(screen.queryByText("저장 당시 기록으로 계산한 참고 시간")).toBeNull()
   expect(screen.getByText("이 훈련을 하는 이유")).toBeTruthy()
+  expect(getter).not.toHaveBeenCalled()
   expect(loaded.distanceKm).toBe("")
-  setActiveLocalAccount("another-account")
+  act(() => { setActiveLocalAccount("another-account") })
+  expect(details.open).toBe(false)
   expect(readJournalOriginalPlan(loaded, [], [], retained).kind).toBe("unavailable")
 })
 

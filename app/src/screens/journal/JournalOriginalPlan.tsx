@@ -7,14 +7,16 @@ import { collectSessionExplanationEvidence } from "../../domain/session-explanat
 import { SessionExplanationEntry } from "../plan-beta/SessionExplanation"
 import { AdjustedJournalOriginalPlan } from "./AdjustedJournalOriginalPlan"
 import { AdjustedPrescriptionV3 } from "../plan-beta/AdjustedPrescriptionV3"
+import { MultiPlanEvidenceContext } from "../../components/MultiPlanEvidenceContext"
 
 export function JournalOriginalPlan({ entry }: { readonly entry: PostSessionEntry }) {
+  const readMultiEvidence = React.useContext(MultiPlanEvidenceContext)
   const [lookup, setLookup] = React.useState<ReturnType<typeof readJournalOriginalPlan> | null>(null)
   const details = React.useRef<HTMLDetailsElement>(null)
   React.useEffect(() => {
     setLookup(null)
     if (details.current) details.current.open = false
-  }, [entry.id, entry.date, entry.activitySlot, entry.plannedSessionLink])
+  }, [entry.id, entry.date, entry.activitySlot, entry.plannedSessionLink, readMultiEvidence])
   React.useEffect(() => {
     const clear = () => { setLookup(null); if (details.current) details.current.open = false }
     const unsubscribe = onLocalJournalScopeChange(clear)
@@ -24,7 +26,9 @@ export function JournalOriginalPlan({ entry }: { readonly entry: PostSessionEntr
   if (entry.plannedSessionLink === undefined) return null
   const matched = lookup?.kind === "matched" ? lookup : null
   return <details className="journal-original-plan" ref={details} onToggle={event => {
-    setLookup(event.currentTarget.open ? readJournalOriginalPlan(entry) : null)
+    if (!event.currentTarget.open) { setLookup(null); return }
+    try { setLookup(readJournalOriginalPlan(entry, undefined, undefined, readMultiEvidence?.())) }
+    catch { setLookup({ kind: "unavailable" }) }
   }}>
     <summary>계획한 훈련과 비교하기</summary>
     {matched !== null ? <>
