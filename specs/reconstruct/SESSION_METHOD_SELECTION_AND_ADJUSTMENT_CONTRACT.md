@@ -4,7 +4,7 @@
 doc_id: trainoracle-session-method-selection-and-adjustment
 spec_id: SESSION_METHOD_SELECTION_AND_ADJUSTMENT_CONTRACT
 title: TrainOracle Session Method Selection And Adjustment Contract
-version: "0.44"
+version: "0.45"
 round: RT1_OWNER_APPROVED_IMPLEMENTATION_DIRECTION
 status: ACTIVE_IMPLEMENTATION_CONTRACT
 product_direction: OWNER_APPROVED_IMPLEMENTATION_DIRECTION
@@ -1565,5 +1565,25 @@ V3 저장 계획을 독립 보존 근거로 읽고, 현재 저장 지문·현재
 NONE이며 단일 변경 후보와 다른 식별 namespace를 사용한다. 개별 조정 승인들의 합을
 전체 계획 승인으로 취급하지 않는다. 전체 노출·배치·상호작용 검토, 명시적 선택, 저장,
 일지/후속 주기 소비는 이 다중 후보 형식을 지원해야 하며 단일 후보 저장기로 우회하지 않는다.
+
+### 21.24 최초 V3 저장의 현재 근거 재검사
+
+최초 저장과 동일 선택의 재요청도 후속 저장과 동일하게 현재 기록·안전·검토 근거를
+재확인한다. 검토 자료의 현재시각 외 내용 동일성, 정책 만료/철회, 현재 기록 존재를
+저장 직전/직후 및 재요청 성공 반환 전에 검사한다. 달라진 조건을 과거의 선택 성공으로
+덮지 않는다. 실패하면 이번에 쓴 값만 제거하고 다른 작성자의 값은 보존한다.
+
+### 21.25 시간/RPE 원본의 상세 구성 연결 설계 경계
+
+RPE_TIME_RANGE는 기록 기반 페이스 처방이 아니므로 PACE_TARGET으로 위장해 입력하지
+않는다. 원본의 시간 범위·RPE를 실제 운동 시간이나 반복 수로 단정하지 않는다.
+검토된 상세 구성은 종목·목적·경험·주기/주소와 원본 내용에 연결하고 원본과 함께
+보존한다. 구성별 회복·준비/정리·설명은 해당 구성의 검토 근거에서 읽으며 다른 MAIN의
+준비/정리나 개인 페이스를 자동 복사하지 않는다.
+
+개인 기록이 없는 구성도 지원할 수 있어야 한다. 이때 기준 기록을 발명하거나 가짜
+anchor를 넣지 않고 명시적인 비기록 기반 경로로 제공한다. 개인 페이스가 필요한 구간은
+별도 검증된 현재 기록을 사용하며 기록 없음과 검증 실패를 구분한다. 이 절은 연결 설계
+기준이며 시간/RPE 상세 변환이나 운영 활성화가 구현됐다는 증거가 아니다.
 
 [DRAFT_COMPLETE]

@@ -4,6 +4,9 @@ import { hasCanonicalJsonTree, progressSchema } from "./plan-beta-schema"
 import { readSelectedAdjustedPlanV3, selectAdjustedPlanForActivationV3 } from "./selected-adjusted-plan-v3"
 import type { SelectedAdjustedPlanStateV3, RetainedAdjustedPlanEvidenceV3, AdjustedPlanSelectionRequestV3 } from "./selected-adjusted-plan-v3"
 import type { ReviewedAdjustedPlanPolicyV3 } from "./adjusted-plan-review-v3"
+import { checkAdjustedPlanReviewPolicyV3 } from "./adjusted-plan-review-v3"
+import { planAnchorsStillCurrent } from "./plan-anchor-reconfirmation"
+import { evaluatePlanSafety } from "./plan-beta-flow"
 import { activePlanBetaStorageKey } from "./plan-beta-store"
 import { localAccountScopeSnapshot, localAccountScopeIsCurrent } from "./account/local-account-scope"
 import { getPlanMutationLockManager, PLAN_BETA_MUTATION_LOCK_NAME } from "./plan-mutation-lock"
@@ -82,18 +85,32 @@ export async function saveSelectedAdjustedPlanV3(input: { readonly request: Adju
         const selected = selectAdjustedPlanForActivationV3({ ...request, preparation: { ...request.preparation,
           source: live.source, explanation: live.explanation } }, live.policies, at)
         if (selected.kind !== "selected_adjusted") return selected
-        if (!current() || storage.getItem(key) !== previous) return reject("STALE_BASE")
+        const reviewIdentity = (review: AdjustedPlanLiveReviewV3) => hash({ ...review, source: { ...review.source, nowMs: 0 } })
+        const originalReview = reviewIdentity(live)
+        const authorized = () => {
+          if (!current()) return false
+          const fresh = input.readReview(), checkedAt = new Date()
+          if (!hasCanonicalJsonTree(fresh) || reviewIdentity(fresh) !== originalReview
+            || !planAnchorsStillCurrent(request.preparation.candidate, checkedAt)
+            || evaluatePlanSafety(request.currentCheck, checkedAt).kind !== "passed") return false
+          const review = checkAdjustedPlanReviewPolicyV3({ ...request.preparation,
+            source: { ...fresh.source, nowMs: checkedAt.getTime() }, explanation: fresh.explanation },
+          selected.state.intake.experienceBand, fresh.policies)
+          return review.kind === "reviewed_scope" && hash(review.policy) === hash(selected.state.adjustment.reviewPolicy)
+        }
+        if (!authorized() || storage.getItem(key) !== previous) return reject("STALE_BASE")
         if (previous !== null) {
           const old = readStoredAdjustedPlanStateV5(JSON.parse(previous), live.retained, at)
           if (old.kind !== "loaded" || old.state.progress.length || sameChoice(old.state.selection) !== sameChoice(selected.state)) return reject("STALE_BASE")
+          if (!authorized() || storage.getItem(key) !== previous) return reject("STALE_BASE")
           return { kind: "saved" as const, state: old.state, replayed: true }
         }
         const output = encodeStoredAdjustedPlanStateV5(selected.state, [], at.toISOString(), live.retained, at)
         if (output.kind !== "encoded") return reject("ADJUSTED_PLAN_STORAGE_VALIDATION_FAILED")
-        if (!current() || storage.getItem(key) !== previous) return reject("STALE_BASE")
+        if (!authorized() || storage.getItem(key) !== previous) return reject("STALE_BASE")
         written = output.raw
         storage.setItem(key, written)
-        if (storage.getItem(key) !== written || !current()) throw Error("Unconfirmed V3 plan write")
+        if (!authorized() || storage.getItem(key) !== written) throw Error("Unconfirmed V3 plan write")
         return { kind: "saved" as const, state: output.state, replayed: false }
       } catch {
         try {
