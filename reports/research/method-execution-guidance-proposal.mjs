@@ -24,12 +24,38 @@ const methods = {
   TIMED_ACCELERATION: "출발 뒤 정해진 초 동안 가속합니다. 특정 거리를 같은 시간 안에 채우라는 뜻은 아닙니다.",
 }
 
+// These subjective work-bout targets are product coaching choices, not a conversion
+// from session RPE, measured metabolic thresholds, or percentages of maximal speed.
+const efforts = {
+  BASE: { rpe: [3, 4], cue: "문장으로 대화할 수 있는 노력", adjustment: "대화하기 어려우면 속도를 낮춥니다. 시간을 채우려고 강도를 올리지 않습니다." },
+  LT: { rpe: [6, 7], cue: "힘들지만 정해진 구간 동안 고르게 유지하는 노력", adjustment: "첫 구간부터 끝까지 유지하기 어려우면 속도를 낮춥니다. 회복이 있는 분할형도 전력 반복으로 바꾸지 않습니다." },
+  VO2: { rpe: [7, 8], cue: "숨이 많이 차지만 다음 반복을 남겨 두는 강한 노력", adjustment: "짧은 반복이라고 더 빠르게 달리지 않습니다. 참고 거리보다 정해진 운동 시간이 종료 기준입니다." },
+  "ATP-PC": { rpe: null, cue: "빠르게 가속하고 높은 출력을 내되 동작의 질을 유지", adjustment: "힘을 더 줘도 가속이나 동작이 뚜렷하게 나빠지면 남은 반복을 억지로 채우지 않습니다. 숨이 덜 찬다는 이유로 반복을 추가하지 않습니다." },
+  GLY: { rpe: [8, 9], cue: "강한 노력으로 정해진 거리를 반복하되 첫 회 전력 기록 경쟁은 하지 않음", adjustment: "피로로 동작이 무너지면 반복을 중단합니다. 세트 회복을 추가한 구성도 더 빠르게 달리라는 허가가 아닙니다." },
+  MIX: { rpe: [6, 7], cue: "빠른 구간에서 유지 가능한 강한 리듬, 느린 구간에서 분명한 속도 감소", adjustment: "느린 구간을 경쟁하지 않습니다. 뒤의 빠른 구간을 위해 느린 구간까지 강도를 올리지 않습니다." },
+  REC: { rpe: [1, 2], cue: "편안한 걷기", adjustment: "회복 운동을 완료해도 회복이 끝났다고 판단하지 않습니다." },
+}
+
+function effortProposal(p) {
+  if (p.family === "OFF") return { status: "NOT_APPLICABLE", work: null, recovery: null, sessionRpeTarget: null }
+  const effort = efforts[p.family]
+  if (!effort) throw Error("UNKNOWN_EFFORT_FAMILY")
+  return {
+    status: "PRODUCT_COACHING_CHOICE_OWNER_PENDING", scale: "SUBJECTIVE_0_TO_10_WORK_BOUT",
+    work: structuredClone(effort),
+    recovery: { rpe: [1, 3], cue: "걷기·쉬운 조깅·정지는 원래 구간 표시를 따릅니다. 숨참이 즉시 이 숫자로 내려가야 한다는 뜻은 아닙니다." },
+    sessionRpeTarget: null, measuredPhysiology: false, automaticDoseChange: false,
+    boundary: "이 범위는 본운동의 체감 노력 제안입니다. 개인 젖산역치·VO2max·최대속도를 측정하거나 보장하지 않습니다. 통증·이상 시 기존 안전 절차가 우선합니다.",
+  }
+}
+
 export function proposeMethodExecutionGuidance(p) {
   const parts = expandProposal(p)
   if (p.family !== "OFF" && !work[p.family]) throw Error("UNKNOWN_GUIDANCE_FAMILY")
   return {
-    version: "0.1", protocolId: p.id, status: "COACHING_PROPOSAL_NOT_ADOPTED", executionAuthority: "NONE",
+    version: "0.2", protocolId: p.id, status: "COACHING_PROPOSAL_NOT_ADOPTED", executionAuthority: "NONE",
     scientificDoseValidation: false, personalPaceCalculated: false,
+    effortProposal: effortProposal(p),
     methodCue: methods[p.method] ?? null,
     segments: parts.map(part => {
       const instruction = part.role === "WORK" ? work[p.family] : roles[part.role]
@@ -37,6 +63,7 @@ export function proposeMethodExecutionGuidance(p) {
       return { ...part, instruction }
     }),
     offReason: p.family === "OFF" ? "계획된 운동 구간이 없습니다. 실제 활동이나 몸 상태를 0으로 기록하지 않습니다." : null,
-    pending: ["OWNER_ADOPTION", "INDIVIDUAL_INTENSITY_REFERENCE", "WHOLE_CYCLE_PLACEMENT"],
+    pending: p.family === "OFF" ? ["OWNER_ADOPTION", "WHOLE_CYCLE_PLACEMENT"]
+      : ["OWNER_ADOPTION", "EFFORT_TARGET_APPLICABILITY", "PERSONAL_PACE_WHERE_SUPPORTED", "WHOLE_CYCLE_PLACEMENT"],
   }
 }

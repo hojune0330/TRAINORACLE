@@ -21,3 +21,21 @@ test("ATP distance, flying, and timed methods retain different execution instruc
   assert.equal(new Set(cues).size, 3)
   assert.ok(cues.every(Boolean))
 })
+
+test("work effort is explicit without inventing sprint RPE, session targets or automatic increases", () => {
+  for (const p of [...METHOD_ADOPTION_PROTOCOLS, ...METHOD_ADOPTION_VARIANTS]) {
+    const result = proposeMethodExecutionGuidance(p).effortProposal
+    assert.equal(result.sessionRpeTarget, null)
+    if (p.family === "OFF") {
+      assert.equal(result.work, null)
+      assert.equal(result.recovery, null)
+      continue
+    }
+    assert.equal(result.automaticDoseChange, false)
+    assert.equal(result.measuredPhysiology, false)
+    assert.equal(result.status, "PRODUCT_COACHING_CHOICE_OWNER_PENDING")
+    assert.ok(result.work.adjustment.length > 0)
+    if (p.family === "ATP-PC") assert.equal(result.work.rpe, null)
+    else assert.ok(result.work.rpe[0] >= 1 && result.work.rpe[1] <= 9 && result.work.rpe[0] <= result.work.rpe[1])
+  }
+})

@@ -45,6 +45,11 @@ try {
       "아래 문구는 제품 코칭 제안입니다. 연구에서 입증된 개인 속도나 승인된 운영 강도가 아닙니다.",
       ...(guidance.methodCue ? [guidance.methodCue] : []), ...(guidance.offReason ? [guidance.offReason] : []),
       ...[...new Map(guidance.segments.map(s => [s.role, s.instruction])).entries()].map(([role, instruction]) => `- ${role}: ${instruction}`), "")
+    const effort = guidance.effortProposal
+    if (effort.work) lines.push("### 본운동 노력 채택안", "",
+      effort.work.rpe ? `본운동 체감 노력 제안: RPE ${effort.work.rpe.join("~")}` : "고출력·동작의 질 기준: 세션 RPE를 목표 속도로 바꾸지 않음",
+      "", effort.work.cue, "", effort.work.adjustment, "", effort.recovery.cue, "", effort.boundary, "",
+      "이 수치는 원문에서 복사한 생리학적 경계가 아니라 오너 채택을 요청할 제품 코칭 선택입니다. 개인 초·페이스와 세션 전체 RPE는 별도이며, 아직 운영에 적용하지 않았습니다.", "")
     if (main) lines.push("### 수량 확인", "", "| 구분 | 값 |", "|---|---|",
       `| 본운동 거리(m) | ${number(main.workDistanceM)} |`, `| 본운동 시간(초) | ${number(main.workSeconds)} |`,
       `| 확인된 회복 거리(m) | ${main.knownRecoveryDistanceM} |`, `| 확인된 회복 시간(초) | ${main.knownRecoverySeconds} |`,
