@@ -38,7 +38,8 @@ import { matchingMultiAdjustmentEntryV3 } from "../screens/plan-beta/multi-adjus
 import { backupMultiPlanSnapshotV3, loadLatestMultiPlanSnapshotV3, restoreMultiPlanServerHistoryV3 } from "./account/multi-plan-cloud-backup-v3"
 import { restoreMultiPlanAsCurrentV3 } from "./multi-plan-active-restore-v3"
 import { readCurrentMultiRestoreReviewV3 } from "./multi-plan-restore-review-v3"
-import { createReviewedMultiAdjustmentProviderV3 } from "../screens/plan-beta/reviewed-multi-adjustment-provider-v3"
+import { createReviewedMultiAdjustmentProviderV3, type CurrentMultiMaterialsReaderV3 } from "../screens/plan-beta/reviewed-multi-adjustment-provider-v3"
+import { assembleReviewedMultiMaterialsV3 } from "./assemble-reviewed-multi-materials-v3"
 
 const dialogShow = Object.getOwnPropertyDescriptor(HTMLDialogElement.prototype, "showModal")
 const dialogClose = Object.getOwnPropertyDescriptor(HTMLDialogElement.prototype, "close")
@@ -130,6 +131,32 @@ it("reuses structural review scope across start dates while retaining distinct s
   expect(a.policies.map(x => x.scopeFingerprint)).toEqual(b.policies.map(x => x.scopeFingerprint))
   expect(a.preparations[0]!.rawSnapshot).not.toBe(b.preparations[0]!.rawSnapshot)
   expect(checkMultiAdjustedPlanReviewV3(b.preparations, later.request.intake.experienceBand, a.rpeBindings, a.policies).kind).toBe("reviewed_scope")
+})
+
+it("assembles current date snapshots and exact explanations from independent reviewed sources", () => {
+  const f = storageFixture(), review = f.readReview()
+  const input = { candidate: review.preparations[0]!.candidate, startDate: "2026-09-09",
+    experienceBand: f.request.intake.experienceBand, changes: [], rpeBindings: review.rpeBindings, policies: review.policies, retained: review.retained,
+    slots: review.preparations.map(p => ({ address: p.address, source: p.source, experienceBand: p.experienceBand,
+      initialReceipt: JSON.parse(p.rawSnapshot).receipt, explanations: [p.explanation] })) }
+  const original = JSON.stringify(input)
+  const result = assembleReviewedMultiMaterialsV3(input, TODAY)
+  if (result.kind !== "prepared") throw Error(result.code)
+  expect(result.review.preparations).toHaveLength(review.preparations.length)
+  expect(result.review.preparations[0]!.startDate).toBe("2026-09-09")
+  expect(result.review.preparations[0]!.rawSnapshot).not.toBe(review.preparations[0]!.rawSnapshot)
+  expect(result.review.retained).toEqual(review.retained)
+  expect(JSON.stringify(input)).toBe(original)
+  expect(localStorage.getItem(activePlanBetaStorageKey())).toBeNull()
+  expect(assembleReviewedMultiMaterialsV3({ ...input, policies: [] }, TODAY)).toMatchObject({ kind: "unavailable" })
+  expect(assembleReviewedMultiMaterialsV3({ ...input, slots: [...input.slots, input.slots[0]!] }, TODAY))
+    .toMatchObject({ kind: "unavailable", code: "INVALID_MULTI_MATERIAL_ADDRESS" })
+  expect(assembleReviewedMultiMaterialsV3({ ...input, changes: [{ address: { day: 999, slot: "AM" }, receipt: input.slots[0]!.initialReceipt }] }, TODAY))
+    .toMatchObject({ kind: "unavailable", code: "INVALID_MULTI_MATERIAL_ADDRESS" })
+  expect(assembleReviewedMultiMaterialsV3({ ...input, slots: input.slots.map(s => ({ ...s, explanations: [] })) }, TODAY))
+    .toMatchObject({ kind: "unavailable", code: "EXACT_CONFIGURATION_EXPLANATION_REQUIRED" })
+  expect(assembleReviewedMultiMaterialsV3({ ...input, slots: input.slots.map(s => ({ ...s, explanations: [s.explanations[0]!, s.explanations[0]!] })) }, TODAY))
+    .toMatchObject({ kind: "unavailable", code: "EXACT_CONFIGURATION_EXPLANATION_REQUIRED" })
 })
 
 it("routes only the exact generated candidate and every matching MAIN into the multi editor", () => {
@@ -499,7 +526,16 @@ async function successorStorageFixture() {
 
 it("opens the next cycle from the schedule and saves through candidate, multi edit, and final confirmation", async () => {
   const f = await successorStorageFixture(), before = localStorage.getItem(activePlanBetaStorageKey())
-  const readMaterials = vi.fn(() => f.input.readReview())
+  const readMaterials = vi.fn<CurrentMultiMaterialsReaderV3>((context, changes, at) => {
+    const reviewed = f.input.readReview()
+    const candidate = context.generated.candidates.find(c => c.candidateId === context.candidateId)
+    if (!candidate) return null
+    const result = assembleReviewedMultiMaterialsV3({ candidate, startDate: context.startDate,
+      experienceBand: context.intake.experienceBand, changes, rpeBindings: reviewed.rpeBindings, policies: reviewed.policies, retained: reviewed.retained,
+      slots: reviewed.preparations.map(p => ({ address: p.address, source: p.source, experienceBand: p.experienceBand,
+        initialReceipt: JSON.parse(p.rawSnapshot).receipt, explanations: [p.explanation] })) }, at)
+    return result.kind === "prepared" ? result.review : null
+  })
   const resolver = vi.fn(createReviewedMultiAdjustmentProviderV3({ readMaterials, locks: f.input.locks }))
   render(React.createElement(PlanBeta, { readMultiAdjustedEvidenceV3: () => f.retained, multiAdjustmentResolverV3: resolver }))
   fireEvent.click(screen.getByRole("button", { name: "다음 훈련 주기 준비" }))
