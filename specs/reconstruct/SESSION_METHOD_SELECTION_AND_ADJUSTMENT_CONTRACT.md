@@ -4,7 +4,7 @@
 doc_id: trainoracle-session-method-selection-and-adjustment
 spec_id: SESSION_METHOD_SELECTION_AND_ADJUSTMENT_CONTRACT
 title: TrainOracle Session Method Selection And Adjustment Contract
-version: "0.65"
+version: "0.66"
 round: RT1_OWNER_APPROVED_IMPLEMENTATION_DIRECTION
 status: ACTIVE_IMPLEMENTATION_CONTRACT
 product_direction: OWNER_APPROVED_IMPLEMENTATION_DIRECTION
@@ -1823,5 +1823,14 @@ V6 개인 계획을 전송하기 전에 실제 계정별 현재 저장값과 독
 기존 세션 전체 RPE와 본운동 노력 제안, 개인 측정값은 구분한다. 제안의 연결은
 실행 권한이나 오너 채택이 아니며 OFF에 운동 강도를 발명하지 않는다.
 검토본에는 명시적 구간 필드만 복사하고 부가 메모/증상/식별 필드를 포함하지 않는다.
+
+### 21.46 현재 카탈로그와 과거 근거의 독립 공급
+
+운영 공급자는 현재 후보/시작일/경험과 정확한 전체 검토 정책에 맞는 자료 묶음을
+찾는다. 유효한 묶음이 하나일 때만 연결하고 없거나 여러 개가 일치하면 임의 선택하지
+않는다. 현재 자료와 과거 원본을 읽기 위한 보존 근거는 별도 목록으로 공급한다.
+현재 목록에서 철회해도 과거 버전을 함께 삭제하지 않으며, 과거 읽기 성공으로
+새 적용 권한을 얻지 않는다. 화면에서 편집/저장할 때마다 현재 목록을 다시 확인한다.
+공급자 구현 또는 합성 시험 목록은 실제 운영 카탈로그 채택을 의미하지 않는다.
 
 [DRAFT_COMPLETE]

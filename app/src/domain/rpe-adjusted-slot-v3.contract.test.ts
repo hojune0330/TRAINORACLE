@@ -40,7 +40,7 @@ import { restoreMultiPlanAsCurrentV3 } from "./multi-plan-active-restore-v3"
 import { readCurrentMultiRestoreReviewV3 } from "./multi-plan-restore-review-v3"
 import { createReviewedMultiAdjustmentProviderV3 } from "../screens/plan-beta/reviewed-multi-adjustment-provider-v3"
 import { assembleReviewedMultiMaterialsV3 } from "./assemble-reviewed-multi-materials-v3"
-import { createAssembledMultiPlanRuntimeV3 } from "../screens/plan-beta/assembled-multi-plan-runtime-v3"
+import { createAssembledMultiPlanRuntimeV3, createCatalogMultiPlanRuntimeV3, type ReviewedMultiRuntimeCatalogV3 } from "../screens/plan-beta/assembled-multi-plan-runtime-v3"
 import { readMultiPlanMethodHistoryV3 } from "./multi-plan-method-history-v3"
 import { MultiPlanEvidenceContext } from "../components/MultiPlanEvidenceContext"
 import { JournalOriginalPlan } from "../screens/journal/JournalOriginalPlan"
@@ -228,6 +228,30 @@ it("builds a current editor entry from reviewed materials and stops after revoca
   available = true
   setActiveLocalAccount("another-owner")
   expect(() => entry!.readReview()).toThrow("STALE_MULTI_PROVIDER")
+})
+
+it("selects a uniquely reviewed source catalog and preserves history after current withdrawal", async () => {
+  const f = storageFixture(), reviewed = f.readReview()
+  const sources = { rpeBindings: reviewed.rpeBindings, policies: reviewed.policies,
+    slots: reviewed.preparations.map(p => ({ address: p.address, source: p.source, experienceBand: p.experienceBand,
+      initialReceipt: JSON.parse(p.rawSnapshot).receipt, explanations: [p.explanation] })) }
+  let current: ReviewedMultiRuntimeCatalogV3["current"] = [{ ...sources, policies: [] }, sources]
+  const runtime = createCatalogMultiPlanRuntimeV3({ now: () => TODAY,
+    readCatalog: () => ({ current, retained: reviewed.retained }) })
+  const context = { generated: f.request.generated, gate: f.request.gate, intake: f.request.intake,
+    athleteEvidence: f.request.athleteEvidence, currentCheck: f.request.currentCheck,
+    candidateId: f.request.preparations[0]!.candidate.candidateId, startDate: f.request.preparations[0]!.startDate }
+  const entry = runtime.multiAdjustmentResolverV3!(context)
+  expect(entry).not.toBeNull()
+  const saved = await saveSelectedMultiAdjustedPlanV6({ request: entry!.seed,
+    readReview: entry!.readReview, isCurrentDraft: () => true, locks: f.locks })
+  expect(saved.kind).toBe("saved")
+  current = [sources, sources]
+  expect(runtime.multiAdjustmentResolverV3!(context)).toBeNull()
+  current = []
+  expect(runtime.multiAdjustmentResolverV3!(context)).toBeNull()
+  expect(() => entry!.readReview()).toThrow()
+  expect(readPlanBetaStateFromStorage([], [], runtime.readMultiAdjustedEvidenceV3!()).kind).toBe("multi_adjusted_v3_loaded")
 })
 
 it.each(["absent", "withdrawn-after-write"])("does not save a plan using transient evidence absent from the independent journal reader: %s", async mode => {
