@@ -4,7 +4,7 @@
 doc_id: trainoracle-session-method-selection-and-adjustment
 spec_id: SESSION_METHOD_SELECTION_AND_ADJUSTMENT_CONTRACT
 title: TrainOracle Session Method Selection And Adjustment Contract
-version: "0.31"
+version: "0.32"
 round: RT1_OWNER_APPROVED_IMPLEMENTATION_DIRECTION
 status: ACTIVE_IMPLEMENTATION_CONTRACT
 product_direction: OWNER_APPROVED_IMPLEMENTATION_DIRECTION
@@ -1348,5 +1348,36 @@ namespaces. The active-candidate integration must explicitly bind the approved s
 versions; do not infer preparation roles or final recovery semantics through a silent
 legacy-to-V3 conversion. Full-plan safety, support-component authority, explicit
 selection and storage compatibility remain required after this snapshot gate.
+
+### 21.11 Explicit existing pace-plan bridge and V3 numeric projection
+
+LEGACY_PACE_TARGET_TO_V3@1 accepts only a schema-validated existing PACE_TARGET whose
+template mapping and explanation resolve independently. It projects that exact source
+definition into the separate V3 configuration namespace. A V3 adjustment policy must
+explicitly reference that exact projected source; old policy edges are not reused.
+
+The restricted bridge maps the known MAIN source to WORK/SET and known support phases
+to PREPARATION/SEQUENCE while preserving IDs, labels, work, targets and repeat counts.
+NOT_APPLICABLE repeat recovery becomes an empty list; a scalar repeat recovery becomes
+a one-step list. Reject nonempty legacy recoveryAfter or terminalRecovery instead of
+changing conditional/final recovery semantics. This is not a general V2 migration.
+
+The V3 projection verifies the original's exact record identity/content against current
+source context, revalidates the adjustment receipt, and combines adjusted MAIN with
+the bridged original support phases. MAIN authority cannot replace support phases.
+Reject duplicate combined node IDs or any invalid resulting sequence.
+
+Only explicit same-event RACE_PACE segments receive record-derived targets. Preserve
+unrounded performanceSeconds * distanceM / eventDistanceM and seconds-per-km arithmetic.
+Retain the node role with each target. Duration work remains duration work without an
+invented covered distance; effort/sprint-reference nodes get no implied numeric pace.
+Ordered recovery remains unchanged. Structural phase totals remain distinct from pace
+estimates, with unknown values preserved.
+
+Return a version-3 CANDIDATE_PROJECTION_ONLY object with executionAuthority NONE, exact
+original binding, source/context/anchor fingerprints and required explanation binding.
+The combined support/MAIN explanation, candidate snapshot/storage and journal consumer
+must explicitly consume this projection before current app use; projection alone is
+not activation or final-plan selection.
 
 [DRAFT_COMPLETE]

@@ -1335,4 +1335,32 @@ FULL_PLAN_SELECTION_REVALIDATION이다. 보관본 자체나 활성 계획을 수
 지원 구간의 명시적 연결이 필요하다. 다음은 이 경계를 해결한 수치 projection과
 후보/활성 저장 version dispatch이다. 운영 활성화/일지 화면/공개 배포 완료는 아니다.
 
+## 61. 실제 기존 계획과 V3 복합 처방·개인 페이스 연결 (2026-09-07)
+
+projectLegacyPaceSourceV3 / resolveAdjustedMethodPrescriptionV3를 구현했다. 실제
+계획 생성 결과의 검증된 PACE_TARGET과 독립 template mapping에서만 출발한다.
+기존 원본의 정확한 V3 참조를 조정 정책이 명시해야 하며, 기존 정책을 재해석하지
+않는다. 준비/정리 구간은 유지하고 MAIN만 교체한다. 의미가 다른 legacy 구간 뒤
+회복/마지막 회복은 자동 변환하지 않는다. 임의 카탈로그 변환 함수가 아니다.
+
+정확한 현재 기록 지문과 source 적용을 재검사한 뒤 같은 종목 RACE_PACE의 반복
+시간을 반올림 없이 계산한다. 시간형은 실제 거리를 만들지 않는다. BUILDUP과
+SPRINT_REFERENCE를 같은 숫자 처방으로 뭉개지 않고 역할/구간을 보존한다. 회복
+순서와 phase별 합계는 실제 구조를 사용하며 준비/정리운동 변경은 별도 권한이 필요하다.
+
+실제 생성 fixture 800/1500/3000/5000m의 비정수 기록, 거리/시간/복합 구간,
+원본 보존, 지원 구간 보존, 기록/receipt 변조, 만료, 메모 getter를 검사했다.
+시험 자료의 중복 nodeId 및 같은 테스트 내 중복 기록 저장을 수정하고 테스트별
+격리를 회복했다. 타입의 기본값 단일 종목 추론도 전체 fixture 종목 union으로 수정했다.
+최종 관련 6파일 85 PASS, 앱 타입 검사 PASS.
+
+공격적 검수로 반복 시간을 Math.round하는 결함을 실제 코드에 잠시 주입했다.
+네 종목 모두 기대한 소수점 값과 달라 4 FAIL/5 SKIP, exit 1을 확인했다.
+주입 코드는 제거했고 관련 전체 85 PASS를 다시 확인했다. 이 실패는 정상 코드의
+미해결 실패가 아니라 테스트 검출력 확인이다.
+
+스펙 v0.32 §21.11 반영. 반환값은 CANDIDATE_PROJECTION_ONLY/NONE이다.
+V3 MAIN snapshot에 전체 준비/정리 설명과 projection을 결속하고 기존 후보/활성
+저장/일지 소비자에 연결하는 작업이 다음이다. 새 운영 채택/공개 배포는 하지 않았다.
+
 [DRAFT_COMPLETE]
