@@ -127,9 +127,9 @@ export function PlanBeta(props: Omit<React.ComponentProps<typeof LegacyPlanBeta>
     window.addEventListener("storage", onStorage)
     return () => { unsubscribe(); window.removeEventListener("storage", onStorage) }
   }, [readCurrent])
-  if (read.kind === "multi_adjusted_v3_loaded") return <MultiAdjustedPlanScheduleV3
+  if (read.kind === "multi_adjusted_v3_loaded" && !importOpen) return <MultiAdjustedPlanScheduleV3
     key={`${localAccountScopeSnapshot()}:${read.state.selection.contentFingerprint}`}
-    loaded={{ ...read, kind: "loaded" }} readEvidence={readMultiV3Evidence} onStoredChange={() => setRead(readCurrent())}
+    loaded={{ ...read, kind: "loaded" }} readEvidence={readMultiV3Evidence} onStoredChange={() => setRead(readCurrent())} onImportPlan={() => setImportOpen(true)}
     returnToSession={props.returnToSession} onWritePlannedSessionLog={props.onWritePlannedSessionLog === undefined ? undefined : draft => {
       const current = readCurrent()
       if (current.kind !== "multi_adjusted_v3_loaded" || current.state.contentFingerprint !== read.state.contentFingerprint) {
@@ -156,7 +156,7 @@ export function PlanBeta(props: Omit<React.ComponentProps<typeof LegacyPlanBeta>
       }
       props.onWritePlannedSessionLog?.(draft)
     }} />
-  if (importOpen) return <AdjustedPlanImport readEvidence={readEvidence} readEvidenceV3={readV3Evidence}
+  if (importOpen) return <AdjustedPlanImport readEvidence={readEvidence} readEvidenceV3={readV3Evidence} readMultiEvidenceV3={readMultiV3Evidence}
     onBack={() => { setImportOpen(false); setRead(readCurrent()) }} />
   if (read.kind === "adjusted_loaded" && nextOpen) return <AdjustedPlanNextFlow
     key={`${localAccountScopeSnapshot()}:${read.state.contentFingerprint}`}

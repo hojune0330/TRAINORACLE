@@ -1,5 +1,6 @@
 import React from "react"
-import { Check, CircleMinus, RefreshCw, HeartPulse, PenLine } from "lucide-react"
+import { Check, CircleMinus, RefreshCw, HeartPulse, PenLine, Download, FileUp } from "lucide-react"
+import { exportMultiAdjustedPlanBackupV3 } from "../../domain/multi-adjusted-plan-backup-v3"
 import type { readStoredMultiAdjustedPlanV6 } from "../../domain/adjusted-plan-storage-v6"
 import type { RetainedMultiAdjustedEvidenceV3 } from "../../domain/selected-multi-adjusted-plan-v3"
 import { saveMultiAdjustedPlanProgressV3 } from "../../domain/adjusted-plan-progress"
@@ -12,10 +13,11 @@ import { todayISO } from "../../domain/journal-store"
 import "./AdjustedPlanSchedule.css"
 
 type Loaded = Extract<ReturnType<typeof readStoredMultiAdjustedPlanV6>, { kind: "loaded" }>
-export function MultiAdjustedPlanScheduleV3({ loaded, readEvidence, onStoredChange, onWritePlannedSessionLog, returnToSession }: {
+export function MultiAdjustedPlanScheduleV3({ loaded, readEvidence, onStoredChange, onWritePlannedSessionLog, returnToSession, onImportPlan }: {
   readonly loaded: Loaded; readonly readEvidence: () => readonly RetainedMultiAdjustedEvidenceV3[];
   readonly onStoredChange: () => void; readonly onWritePlannedSessionLog?: (draft: PlannedSessionLogDraft) => void;
   readonly returnToSession?: PlannedSessionLogDraft["link"];
+  readonly onImportPlan?: () => void;
 }) {
   const plan = loaded.state.selection, start = plan.intake.startDate ?? plan.generatedAt.slice(0, 10)
   const days = [...new Set(plan.activePlan.sessions.map(s => s.day))].sort((a, b) => a - b)
@@ -62,6 +64,20 @@ export function MultiAdjustedPlanScheduleV3({ loaded, readEvidence, onStoredChan
       </section>
     })}
     {error && <p role="alert">{error}</p>}
-    <details><summary>저장과 이용 안내</summary><p>현재 이 기기에 저장된 계획이에요. 서버 보관과 다음 주기 연결은 준비 중이에요.</p></details>
+    <details><summary>저장과 이용 안내</summary><p>현재 이 기기에 저장된 계획이에요. 서버 보관과 다음 주기 연결은 준비 중이에요.</p>
+      <p>개인 보관 파일에는 훈련 계획과 진행 상태, 페이스 계산에 사용한 기록이 포함될 수 있어요. 메모는 포함하지 않아요. 다른 사람에게 공유하지 마세요.</p>
+      <button type="button" onClick={() => {
+        let url: string | undefined
+        try {
+          const result = exportMultiAdjustedPlanBackupV3(loaded.state.contentFingerprint, readEvidence())
+          if (result.kind !== "exported") { setError("계획 원본을 확인하지 못해 파일을 만들지 않았어요."); return }
+          url = URL.createObjectURL(new Blob([result.raw], { type: "application/json" }))
+          const link = document.createElement("a")
+          link.href = url; link.download = `trainoracle-multi-plan-${todayISO()}.json`; link.click(); setError(null)
+        } catch { setError("계획 파일을 내려받지 못했어요. 저장된 계획은 그대로예요.") }
+        finally { if (url) { const savedUrl = url; setTimeout(() => URL.revokeObjectURL(savedUrl), 1000) } }
+      }}><Download size={18} aria-hidden="true" />개인 보관용 계획 파일 받기</button>
+      {onImportPlan && <button type="button" onClick={onImportPlan}><FileUp size={18} aria-hidden="true" />개인 계획 파일 불러오기</button>}
+    </details>
   </section>
 }

@@ -27,6 +27,8 @@ import { render, screen, cleanup, act, fireEvent, within } from "@testing-librar
 import { AdjustedPrescriptionV3 } from "../screens/plan-beta/AdjustedPrescriptionV3"
 import { PlanBeta } from "../screens/PlanBeta"
 import * as mutationLocks from "./plan-mutation-lock"
+import { exportMultiAdjustedPlanBackupV3, readMultiAdjustedPlanBackupV3, importMultiAdjustedPlanHistoryV3 } from "./multi-adjusted-plan-backup-v3"
+import { AdjustedPlanImport } from "../screens/plan-beta/AdjustedPlanImport"
 
 beforeEach(() => { localStorage.clear(); sessionStorage.clear(); setActiveLocalAccount(null); vi.useFakeTimers(); vi.setSystemTime(TODAY) })
 afterEach(() => { cleanup(); vi.restoreAllMocks(); vi.useRealTimers() })
@@ -193,6 +195,35 @@ it("opens the actual multi-plan schedule, records a slot and archives its origin
   await act(async () => { fireEvent.click(region().getByRole("button", { name: "이 훈련 일지 쓰기" })) })
   expect(onWrite).toHaveBeenCalledWith(draft)
   expect(readMultiAdjustedOriginalPlansV3(retained, TODAY)).toMatchObject({ kind: "loaded", entries: [{ state: current.kind === "multi_adjusted_v3_loaded" ? current.state : null }] })
+})
+
+it("roundtrips a multi-plan backup into history only with explicit confirmation and retains an existing active plan", async () => {
+  const input = storageFixture(), saved = await saveSelectedMultiAdjustedPlanV6(input)
+  if (saved.kind !== "saved") throw Error("Initial save failed")
+  const retained = input.readReview().retained
+  const exported = exportMultiAdjustedPlanBackupV3(saved.state.contentFingerprint, retained, TODAY)
+  if (exported.kind !== "exported") throw Error("Export failed")
+  expect(readMultiAdjustedPlanBackupV3(exported.raw, retained, TODAY)).toMatchObject({ kind: "read_only", active: saved.state, executionAuthority: "NONE" })
+  expect(readMultiAdjustedPlanBackupV3(exported.raw, [], TODAY).kind).toBe("invalid")
+  const changed = JSON.parse(exported.raw)
+  changed.active.selection.activePlan.sessions[0].day = 999
+  expect(readMultiAdjustedPlanBackupV3(JSON.stringify(changed), retained, TODAY).kind).toBe("invalid")
+  const before = localStorage.getItem(activePlanBetaStorageKey())
+  const request = { raw: exported.raw, confirmsOwnFile: false, isCurrentRequest: () => true, readEvidence: () => retained, locks: input.locks }
+  expect(await importMultiAdjustedPlanHistoryV3(request)).toMatchObject({ code: "OWN_FILE_CONFIRMATION_REQUIRED" })
+  expect(await importMultiAdjustedPlanHistoryV3({ ...request, confirmsOwnFile: true })).toMatchObject({ kind: "restored_history", added: 1, activePlanChanged: false })
+  expect(await importMultiAdjustedPlanHistoryV3({ ...request, confirmsOwnFile: true })).toMatchObject({ kind: "restored_history", added: 0, keptExisting: 1 })
+  expect(localStorage.getItem(activePlanBetaStorageKey())).toBe(before)
+  expect(readMultiAdjustedOriginalPlansV3(retained, TODAY)).toMatchObject({ kind: "loaded", entries: [{ state: saved.state }] })
+  render(React.createElement(AdjustedPlanImport, { readMultiEvidenceV3: () => retained, locks: input.locks, onBack: vi.fn() }))
+  await act(async () => { fireEvent.change(screen.getByLabelText("개인 보관용 계획 파일"), {
+    target: { files: [{ size: exported.raw.length, text: async () => exported.raw }] },
+  }) })
+  expect(screen.getByRole("button", { name: "과거 원본 보관함에 추가" })).toBeDisabled()
+  fireEvent.click(screen.getByRole("checkbox"))
+  await act(async () => { fireEvent.click(screen.getByRole("button", { name: "과거 원본 보관함에 추가" })) })
+  expect(screen.getByRole("status").textContent).toContain("훈련 일정은 바뀌지 않았어요.")
+  expect(localStorage.getItem(activePlanBetaStorageKey())).toBe(before)
 })
 
 it.each(["expiry", "other-writer"])("handles %s during a real multi-plan write without overwriting another writer", async change => {

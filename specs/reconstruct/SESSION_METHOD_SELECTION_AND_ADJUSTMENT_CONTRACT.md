@@ -4,7 +4,7 @@
 doc_id: trainoracle-session-method-selection-and-adjustment
 spec_id: SESSION_METHOD_SELECTION_AND_ADJUSTMENT_CONTRACT
 title: TrainOracle Session Method Selection And Adjustment Contract
-version: "0.52"
+version: "0.53"
 round: RT1_OWNER_APPROVED_IMPLEMENTATION_DIRECTION
 status: ACTIVE_IMPLEMENTATION_CONTRACT
 product_direction: OWNER_APPROVED_IMPLEMENTATION_DIRECTION
@@ -1681,5 +1681,16 @@ version 6은 다중 선택, 진행 상태, 갱신시각, 내용 지문을 보존
 
 서버 보관/백업/다음 주기 연결이 미구현인 동안 완료된 기능처럼 버튼을 제공하지
 않는다. 이 임시 상태를 전체 계획의 완료나 승인 범위 축소로 간주하지 않는다.
+
+### 21.33 다중 계획 개인 보관 파일
+
+multi-adjusted-plan.personal-backup.v3는 현재 version 6 계획과 별도 다중 원본
+보관함을 담는다. 내보내기 시 독립 복원과 계정/현재 저장값 동일성을 확인한다.
+메모는 포함하지 않으며 개인 기록을 포함할 수 있는 비공개 보관용임을 안내한다.
+
+가져오기는 본인 파일 확인 후 현재 계정의 원본 보관함에만 추가한다. 현재 계획은
+활성화하거나 변경하지 않는다. 이미 있는 선택 원본은 보존하고 18개 초과 시 자동
+삭제하지 않고 거부한다. 계정/요청/현재 계획/보관함의 변경은 쓰기 전후 확인한다.
+다중 파일의 독립 근거가 없으면 구형 형식으로 강제 변환하지 않고 거부한다.
 
 [DRAFT_COMPLETE]
