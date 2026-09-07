@@ -4,7 +4,7 @@
 doc_id: trainoracle-session-method-selection-and-adjustment
 spec_id: SESSION_METHOD_SELECTION_AND_ADJUSTMENT_CONTRACT
 title: TrainOracle Session Method Selection And Adjustment Contract
-version: "0.19"
+version: "0.20"
 round: RT1_OWNER_APPROVED_IMPLEMENTATION_DIRECTION
 status: ACTIVE_IMPLEMENTATION_CONTRACT
 product_direction: OWNER_APPROVED_IMPLEMENTATION_DIRECTION
@@ -1091,5 +1091,24 @@ Initial stored selections remain byte-compatible: absent continuation means init
 origin only. A prior-frame candidate with absent/malformed continuation, or an initial
 candidate with continuation, is invalid. Archive and active writes must be confirmed
 under one account/mutation lock with rollback limited to the transaction's own bytes.
+
+### 20.7 Versioned reusable structural review
+
+Legacy policies without a scope version retain the exact v1 fingerprint and
+historical reading behavior. A new policy may explicitly opt into STRUCTURAL_V2;
+never reinterpret an existing approval as approving that broader scope.
+
+V2 retains event, population, experience, selection actor, source mode, frame,
+candidate kind, every session's day/slot/role/energy, exact configuration versions,
+support doses, unchanged components, and MAIN exposure count. It retains whether
+this is an initial or successor frame and the previous candidate kind. It excludes
+exposure identifiers and personal prior-outcome counts from the reusable
+review fingerprint only. The complete candidate and snapshot still bind these
+values, and successor selection must revalidate the actual predecessor and current
+safety. Structural review is not adaptation authority or evidence of completion.
+
+Each v2 scope requires its own exact owner adoption after evidence review. Unknown
+versions and multiple matching policies fail closed. No operational policy is
+activated by this schema extension. Historical v1 records remain reconstructible.
 
 [DRAFT_COMPLETE]

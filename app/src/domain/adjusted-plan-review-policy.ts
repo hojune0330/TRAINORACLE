@@ -4,7 +4,9 @@ import { prepareAdjustedPlanCandidate } from "./adjusted-plan-candidate"
 
 type Preparation = Parameters<typeof prepareAdjustedPlanCandidate>[0]
 type Experience = "NEW_TO_RUNNING" | "DEVELOPING" | "EXPERIENCED"
+export type AdjustedPlanReviewScopeVersion = "LEGACY_V1" | "STRUCTURAL_V2"
 export type ReviewedAdjustedPlanPolicy = {
+  readonly scopeVersion?: "STRUCTURAL_V2"
   readonly policyId: string
   readonly version: string
   readonly scopeFingerprint: string
@@ -19,7 +21,8 @@ export type ReviewedAdjustedPlanPolicy = {
 
 // Engineering support does not constitute a review of an operating configuration.
 export const REVIEWED_ADJUSTED_PLAN_POLICIES: readonly ReviewedAdjustedPlanPolicy[] = Object.freeze([])
-const hash = (value: unknown) => canonicalJsonFingerprint("trainoracle.adjusted-plan-review-scope.v1", value)
+const hash = (value: unknown, version: AdjustedPlanReviewScopeVersion) => canonicalJsonFingerprint(
+  version === "LEGACY_V1" ? "trainoracle.adjusted-plan-review-scope.v1" : "trainoracle.adjusted-plan-review-scope.v2", value)
 const unavailable = (code: string) => ({ kind: "unavailable" as const, code })
 const policyKeys = ["policyId", "version", "scopeFingerprint", "configurationReviewRef", "exposureReviewRef",
   "interactionReviewRef", "safetyReviewRef", "validFromMs", "expiresAtMs", "revokedAtMs"] as const
@@ -27,7 +30,9 @@ const policyKeys = ["policyId", "version", "scopeFingerprint", "configurationRev
 /** Reviewable configuration/frame scope without athlete record IDs or target times.
  * Exact personal values remain bound by the candidate/snapshot and current anchor gates.
  */
-export function adjustedPlanReviewScope(preparation: Preparation, experienceBand: Experience) {
+export function adjustedPlanReviewScope(preparation: Preparation, experienceBand: Experience,
+  version: AdjustedPlanReviewScopeVersion = "LEGACY_V1") {
+  if (version !== "LEGACY_V1" && version !== "STRUCTURAL_V2") return unavailable("INVALID_PLAN_REVIEW_SCOPE_VERSION")
   if (!["NEW_TO_RUNNING", "DEVELOPING", "EXPERIENCED"].includes(experienceBand)) return unavailable("EXPERIENCE_REQUIRED")
   const result = prepareAdjustedPlanCandidate(preparation)
   if (result.kind !== "prepared") return result
@@ -50,10 +55,15 @@ export function adjustedPlanReviewScope(preparation: Preparation, experienceBand
     selectedEnergyIntent: preparation.candidate.selectedEnergyIntent, experienceBand,
     population: original.prescription.scope.population, selectionActor: preparation.candidate.selectionAuthority,
     candidateKind: preparation.candidate.kind, frame: preparation.candidate.frame,
-    continuityContext: preparation.candidate.continuityContext,
-    sourceMode: preparation.candidate.sourceMode, mainExposureLedger: preparation.candidate.mainExposureLedger,
+    continuityContext: version === "STRUCTURAL_V2" && preparation.candidate.continuityContext.kind === "PREVIOUS_FRAME_CONTEXT_RETAINED"
+      ? { kind: preparation.candidate.continuityContext.kind, previousCandidateKind: preparation.candidate.continuityContext.previousCandidateKind }
+      : preparation.candidate.continuityContext,
+    sourceMode: preparation.candidate.sourceMode,
+    mainExposureLedger: version === "STRUCTURAL_V2"
+      ? { mainExposureCount: preparation.candidate.mainExposureLedger.mainExposureCount }
+      : preparation.candidate.mainExposureLedger,
     unchangedOperationalComponents: original.prescription.componentRefs, layout }
-  return { kind: "scope" as const, scope, scopeFingerprint: hash(scope), candidate: result.candidate }
+  return { kind: "scope" as const, scope, scopeFingerprint: hash(scope, version), candidate: result.candidate }
 }
 
 /** Trusted registry lookup, not a signature verifier or permission to save/start.
@@ -68,22 +78,27 @@ export function checkAdjustedPlanReviewPolicy(
     const reviewed = adjustedPlanReviewScope(preparation, experienceBand)
     if (reviewed.kind !== "scope") return reviewed
     if (!hasCanonicalJsonTree(policies) || !Array.isArray(policies)) return unavailable("INVALID_PLAN_REVIEW_REGISTRY")
+    if (policies.some(policy => policy === null || typeof policy !== "object")) return unavailable("INVALID_PLAN_REVIEW_REGISTRY")
+    const structural = policies.some(policy => policy.scopeVersion === "STRUCTURAL_V2")
+      ? adjustedPlanReviewScope(preparation, experienceBand, "STRUCTURAL_V2") : reviewed
+    if (structural.kind !== "scope") return structural
     const ids = policies.map(policy => JSON.stringify([policy.policyId, policy.version]))
     if (new Set(ids).size !== ids.length) return unavailable("AMBIGUOUS_PLAN_REVIEW_POLICY")
     const now = preparation.source.nowMs
     const matches = policies.filter(policy => policy !== null && typeof policy === "object"
-      && Reflect.ownKeys(policy).length === policyKeys.length
-      && Reflect.ownKeys(policy).every(key => typeof key === "string" && policyKeys.includes(key as typeof policyKeys[number]))
+      && (Object.hasOwn(policy, "scopeVersion") ? policy.scopeVersion === "STRUCTURAL_V2" : true)
+      && Reflect.ownKeys(policy).length === policyKeys.length + (Object.hasOwn(policy, "scopeVersion") ? 1 : 0)
+      && Reflect.ownKeys(policy).every(key => key === "scopeVersion" || typeof key === "string" && policyKeys.includes(key as typeof policyKeys[number]))
       && [policy.policyId, policy.version, policy.configurationReviewRef, policy.exposureReviewRef,
         policy.interactionReviewRef, policy.safetyReviewRef].every(value => typeof value === "string" && value.trim().length > 0)
-      && policy.scopeFingerprint === reviewed.scopeFingerprint
+      && policy.scopeFingerprint === (policy.scopeVersion === "STRUCTURAL_V2" ? structural.scopeFingerprint : reviewed.scopeFingerprint)
       && Number.isFinite(policy.validFromMs) && Number.isFinite(policy.expiresAtMs)
       && policy.validFromMs < policy.expiresAtMs && policy.validFromMs <= now && now < policy.expiresAtMs
       && policy.revokedAtMs === null)
     if (matches.length !== 1) return unavailable(matches.length === 0 ? "PLAN_CONFIGURATION_REVIEW_REQUIRED" : "AMBIGUOUS_PLAN_REVIEW_POLICY")
     const policy = matches[0]!
     return { kind: "reviewed_scope" as const, executionAuthority: "NONE" as const,
-      candidate: reviewed.candidate, scopeFingerprint: reviewed.scopeFingerprint,
+      candidate: reviewed.candidate, scopeFingerprint: policy.scopeFingerprint,
       policy: { policyId: policy.policyId, version: policy.version,
         contentFingerprint: canonicalJsonFingerprint("trainoracle.adjusted-plan-review-policy.v1", policy) } }
   } catch { return unavailable("INVALID_PLAN_REVIEW_CONTEXT") }
