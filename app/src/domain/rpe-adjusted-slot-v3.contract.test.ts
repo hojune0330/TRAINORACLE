@@ -38,8 +38,9 @@ import { matchingMultiAdjustmentEntryV3 } from "../screens/plan-beta/multi-adjus
 import { backupMultiPlanSnapshotV3, loadLatestMultiPlanSnapshotV3, restoreMultiPlanServerHistoryV3 } from "./account/multi-plan-cloud-backup-v3"
 import { restoreMultiPlanAsCurrentV3 } from "./multi-plan-active-restore-v3"
 import { readCurrentMultiRestoreReviewV3 } from "./multi-plan-restore-review-v3"
-import { createReviewedMultiAdjustmentProviderV3, type CurrentMultiMaterialsReaderV3 } from "../screens/plan-beta/reviewed-multi-adjustment-provider-v3"
+import { createReviewedMultiAdjustmentProviderV3 } from "../screens/plan-beta/reviewed-multi-adjustment-provider-v3"
 import { assembleReviewedMultiMaterialsV3 } from "./assemble-reviewed-multi-materials-v3"
+import { createAssembledMultiPlanRuntimeV3 } from "../screens/plan-beta/assembled-multi-plan-runtime-v3"
 import { readMultiPlanMethodHistoryV3 } from "./multi-plan-method-history-v3"
 import { MultiPlanEvidenceContext } from "../components/MultiPlanEvidenceContext"
 import { JournalOriginalPlan } from "../screens/journal/JournalOriginalPlan"
@@ -558,18 +559,15 @@ async function successorStorageFixture() {
 
 it("opens the next cycle from the schedule and saves through candidate, multi edit, and final confirmation", async () => {
   const f = await successorStorageFixture(), before = localStorage.getItem(activePlanBetaStorageKey())
-  const readMaterials = vi.fn<CurrentMultiMaterialsReaderV3>((context, changes, at) => {
-    const reviewed = f.input.readReview()
-    const candidate = context.generated.candidates.find(c => c.candidateId === context.candidateId)
-    if (!candidate) return null
-    const result = assembleReviewedMultiMaterialsV3({ candidate, startDate: context.startDate,
-      experienceBand: context.intake.experienceBand, changes, rpeBindings: reviewed.rpeBindings, policies: reviewed.policies, retained: reviewed.retained,
-      slots: reviewed.preparations.map(p => ({ address: p.address, source: p.source, experienceBand: p.experienceBand,
-        initialReceipt: JSON.parse(p.rawSnapshot).receipt, explanations: [p.explanation] })) }, at)
-    return result.kind === "prepared" ? result.review : null
-  })
-  const resolver = vi.fn(createReviewedMultiAdjustmentProviderV3({ readMaterials, locks: f.input.locks }))
-  render(React.createElement(PlanBeta, { readMultiAdjustedEvidenceV3: () => f.retained, multiAdjustmentResolverV3: resolver }))
+    const readSources = vi.fn(() => {
+      const reviewed = f.input.readReview()
+      return { rpeBindings: reviewed.rpeBindings, policies: reviewed.policies,
+        slots: reviewed.preparations.map(p => ({ address: p.address, source: p.source, experienceBand: p.experienceBand,
+          initialReceipt: JSON.parse(p.rawSnapshot).receipt, explanations: [p.explanation] })) }
+    })
+    const runtime = createAssembledMultiPlanRuntimeV3({ readSources, readRetained: () => f.retained })
+    const resolver = vi.fn(runtime.multiAdjustmentResolverV3!)
+    render(React.createElement(PlanBeta, { ...runtime, multiAdjustmentResolverV3: resolver }))
   fireEvent.click(screen.getByRole("button", { name: "다음 훈련 주기 준비" }))
   expect(screen.getByRole("button", { name: "다음 계획 비교하기" })).toBeDisabled()
   fireEvent.click(screen.getByRole("radio", { name: "알고 있는 통증이나 이상이 없어요" }))
@@ -578,7 +576,7 @@ it("opens the next cycle from the schedule and saves through candidate, multi ed
   expect(localStorage.getItem(activePlanBetaStorageKey())).toBe(before)
   fireEvent.click(screen.getAllByRole("button", { name: /구성 확인$/ })[0]!)
   expect(resolver).toHaveBeenCalledOnce()
-  expect(readMaterials).toHaveBeenCalled()
+    expect(readSources).toHaveBeenCalled()
   expect(screen.getByRole("heading", { name: "주요 훈련을 하나씩 확인해 주세요" })).toBeTruthy()
   fireEvent.click(screen.getByRole("button", { name: "전체 확인으로" }))
   expect(localStorage.getItem(activePlanBetaStorageKey())).toBe(before)

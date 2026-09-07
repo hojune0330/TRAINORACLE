@@ -2,6 +2,7 @@ import React from "react"
 import { cleanup, fireEvent, render, screen } from "@testing-library/react"
 import { afterEach, beforeEach, expect, it, vi } from "vitest"
 import { AppShell, type AppShellMultiPlanRuntime } from "./AppShell"
+import App from "./App"
 
 const { planProps } = vi.hoisted(() => ({ planProps: vi.fn() }))
 vi.mock("./DeferredMobileScreens", () => ({ DeferredMobileScreens: {
@@ -11,9 +12,9 @@ vi.mock("./DeferredMobileScreens", () => ({ DeferredMobileScreens: {
 beforeEach(() => { localStorage.clear(); sessionStorage.clear(); planProps.mockClear() })
 afterEach(cleanup)
 
-it.each([false, true])("forwards only explicitly supplied plan services through real shell navigation: %s", supplied => {
+it.each([false, true].flatMap(supplied => [App, AppShell].map(Component => ({ supplied, Component }))))("forwards only explicitly supplied plan services through application navigation: $supplied $Component.name", ({ supplied, Component }) => {
   const resolver = vi.fn(() => null), readEvidence = vi.fn(() => [])
-  render(<AppShell multiPlanRuntime={supplied ? {
+  render(<Component multiPlanRuntime={supplied ? {
     multiAdjustmentResolverV3: resolver, readMultiAdjustedEvidenceV3: readEvidence,
   } : undefined} />)
   fireEvent.click(screen.getByRole("button", { name: "계획" }))
