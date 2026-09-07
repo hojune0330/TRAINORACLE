@@ -14,7 +14,7 @@ import { prepareMultiAdjustedPlanCandidateV3 } from "./adjusted-plan-multi-candi
 import { multiAdjustedPlanReviewScopeV3, checkMultiAdjustedPlanReviewV3 } from "./adjusted-plan-multi-review-v3"
 import { selectMultiAdjustedPlanV3, readSelectedMultiAdjustedPlanV3, selectMultiAdjustedPlanSuccessorV3 } from "./selected-multi-adjusted-plan-v3"
 import { canonicalJsonFingerprint } from "@impl/plan-generator/candidate-identity"
-import { saveSelectedMultiAdjustedPlanV6, readStoredMultiAdjustedPlanV6 } from "./adjusted-plan-storage-v6"
+import { saveSelectedMultiAdjustedPlanV6, readStoredMultiAdjustedPlanV6, encodeStoredMultiAdjustedPlanV6 } from "./adjusted-plan-storage-v6"
 import { activePlanBetaStorageKey, savePlanBetaState, readPlanBetaStateFromStorage } from "./plan-beta-store"
 import { saveMultiAdjustedPlanProgressV3 } from "./adjusted-plan-progress"
 import type { PlanMutationLockManager } from "./plan-mutation-lock"
@@ -36,6 +36,7 @@ import { MultiAdjustedPlanEditFlowV3 } from "../screens/plan-beta/MultiAdjustedP
 import { stageMultiAdjustmentV3 } from "./stage-multi-adjustment-v3"
 import { matchingMultiAdjustmentEntryV3 } from "../screens/plan-beta/multi-adjustment-entry-v3"
 import { backupMultiPlanSnapshotV3, loadLatestMultiPlanSnapshotV3, restoreMultiPlanServerHistoryV3 } from "./account/multi-plan-cloud-backup-v3"
+import { restoreMultiPlanAsCurrentV3 } from "./multi-plan-active-restore-v3"
 
 const dialogShow = Object.getOwnPropertyDescriptor(HTMLDialogElement.prototype, "showModal")
 const dialogClose = Object.getOwnPropertyDescriptor(HTMLDialogElement.prototype, "close")
@@ -211,6 +212,60 @@ it("requires confirmation and the same owner to restore server history without r
   expect(await restoreMultiPlanServerHistoryV3({ ...input, confirmsRestore: true })).toMatchObject({ kind: "restored_history", added: 0 })
   setActiveLocalAccount("other-owner")
   expect(await restoreMultiPlanServerHistoryV3({ ...input, confirmsRestore: true })).toMatchObject({ code: "OWNER_RESTORE_CONFIRMATION_REQUIRED" })
+})
+
+it.each(["restore", "existing", "review-required", "expired", "missing-evidence", "wrong-owner"])("restores an active schedule only after fresh review: %s", async scenario => {
+  setActiveLocalAccount("restore-owner")
+  const f = storageFixture(), saved = await saveSelectedMultiAdjustedPlanV6(f)
+  if (saved.kind !== "saved") throw Error("Initial save failed")
+  const key = activePlanBetaStorageKey(), before = localStorage.getItem(key)
+  if (scenario !== "existing") localStorage.removeItem(key)
+  if (scenario === "expired") vi.setSystemTime(new Date(TODAY.getTime() + 100))
+  const result = await restoreMultiPlanAsCurrentV3({ ownerId: scenario === "wrong-owner" ? "other" : "restore-owner",
+    state: saved.state, confirmsRestore: true, currentCheck: scenario === "review-required" ? "REVIEW_REQUIRED" : "NO_KNOWN_RISK",
+    isCurrentRequest: () => true, locks: f.locks,
+    readReview: () => scenario === "missing-evidence" ? { ...f.readReview(), retained: [] } : f.readReview() })
+  if (scenario === "restore") {
+    expect(result).toMatchObject({ kind: "restored_current", state: saved.state, progressPreserved: true })
+    expect(readPlanBetaStateFromStorage([], [], f.readReview().retained)).toMatchObject({ kind: "multi_adjusted_v3_loaded", state: saved.state })
+  } else {
+    expect(result.kind).toBe("rejected")
+    expect(localStorage.getItem(key)).toBe(scenario === "existing" ? before : null)
+  }
+})
+
+it.each(["progress", "account-change", "other-writer", "throw-after-write"])("preserves recorded outcomes and contains restore writes: %s", async scenario => {
+  setActiveLocalAccount("restore-owner")
+  const f = storageFixture(), saved = await saveSelectedMultiAdjustedPlanV6(f)
+  if (saved.kind !== "saved") throw Error("Initial save failed")
+  const slots = f.request.preparations
+  const progress = [{ sessionDay: slots[0]!.address.day, sessionSlot: slots[0]!.address.slot, state: "COMPLETED" as const },
+    { sessionDay: slots[1]!.address.day, sessionSlot: slots[1]!.address.slot, state: "PAIN_CHECKIN" as const }]
+  const encoded = encodeStoredMultiAdjustedPlanV6(saved.state.selection, progress, saved.state.updatedAt, f.readReview().retained, TODAY)
+  if (encoded.kind !== "encoded") throw Error("Invalid progress fixture")
+  const key = activePlanBetaStorageKey()
+  localStorage.removeItem(key)
+  const write = Storage.prototype.setItem
+  let injected = false
+  vi.spyOn(Storage.prototype, "setItem").mockImplementation(function(this: Storage, name, value) {
+    write.call(this, name, value)
+    if (name !== key || injected || scenario === "progress") return
+    injected = true
+    if (scenario === "account-change") setActiveLocalAccount("other-owner")
+    if (scenario === "other-writer") write.call(this, name, "OTHER_WRITER")
+    if (scenario === "throw-after-write") throw Error("Injected storage failure")
+  })
+  const result = await restoreMultiPlanAsCurrentV3({ ownerId: "restore-owner", state: encoded.state,
+    confirmsRestore: true, currentCheck: "NO_KNOWN_RISK", isCurrentRequest: () => true,
+    readReview: f.readReview, locks: f.locks })
+  if (scenario === "progress") {
+    expect(result.kind).toBe("restored_current")
+    const read = readPlanBetaStateFromStorage([], [], f.readReview().retained)
+    expect(read).toMatchObject({ kind: "multi_adjusted_v3_loaded", state: { progress, selection: saved.state.selection } })
+  } else {
+    expect(result).toMatchObject({ kind: "rejected", code: scenario === "other-writer" ? "PLAN_STORAGE_STATE_UNCERTAIN" : "RESTORE_WRITE_FAILED" })
+    expect(localStorage.getItem(key)).toBe(scenario === "other-writer" ? "OTHER_WRITER" : null)
+  }
 })
 
 it("writes and independently reads a real multi-slot V6 plan, replaying the same unprogressed selection", async () => {

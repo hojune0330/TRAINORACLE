@@ -4,7 +4,7 @@
 doc_id: trainoracle-session-method-selection-and-adjustment
 spec_id: SESSION_METHOD_SELECTION_AND_ADJUSTMENT_CONTRACT
 title: TrainOracle Session Method Selection And Adjustment Contract
-version: "0.62"
+version: "0.63"
 round: RT1_OWNER_APPROVED_IMPLEMENTATION_DIRECTION
 status: ACTIVE_IMPLEMENTATION_CONTRACT
 product_direction: OWNER_APPROVED_IMPLEMENTATION_DIRECTION
@@ -1794,5 +1794,15 @@ V6 개인 계획을 전송하기 전에 실제 계정별 현재 저장값과 독
 본인 계정의 명시적 확인 뒤 원본 보관함으로 복원할 수 있다. 기존 개인 파일 복원의
 잠금/중복/용량/현재 일정 보존 규칙을 재사용한다. 현재 일정 복원이나 새 실행 권한
 부여는 이 원본 복원과 다르며 별도 구현·검증 없이는 완료로 표시하지 않는다.
+
+### 21.44 현재 일정으로의 복구
+
+현재 일정이 없는 기기에서 본인 계정의 명시적 확인으로 V6 상태를 복구할 수 있다.
+읽기 가능한 과거 원본이라는 조건만으로 허용하지 않는다. 현재 안전 확인과 기록,
+모든 조정 구성의 전체 검토 범위/정책을 재검증하고 저장 전후 같은 요청/계정인지
+확인한다. 기존 현재 일정이 있으면 덮어쓰지 않는다. 원래 날짜/계보/진행 결과를
+보존하고 새 계획 생성이나 새 주기 전진으로 처리하지 않는다. 쓰기 실패 시 본인이
+쓴 값만 되돌리고 다른 작성자의 값은 보존한다. 다른 현재 일정과 충돌하는 경우의
+명시적 비교/교체 UI는 별도 구현 범위로 남긴다.
 
 [DRAFT_COMPLETE]
