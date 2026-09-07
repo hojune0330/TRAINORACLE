@@ -37,6 +37,7 @@ import { stageMultiAdjustmentV3 } from "./stage-multi-adjustment-v3"
 import { matchingMultiAdjustmentEntryV3 } from "../screens/plan-beta/multi-adjustment-entry-v3"
 import { backupMultiPlanSnapshotV3, loadLatestMultiPlanSnapshotV3, restoreMultiPlanServerHistoryV3 } from "./account/multi-plan-cloud-backup-v3"
 import { restoreMultiPlanAsCurrentV3 } from "./multi-plan-active-restore-v3"
+import { readCurrentMultiRestoreReviewV3 } from "./multi-plan-restore-review-v3"
 
 const dialogShow = Object.getOwnPropertyDescriptor(HTMLDialogElement.prototype, "showModal")
 const dialogClose = Object.getOwnPropertyDescriptor(HTMLDialogElement.prototype, "close")
@@ -266,6 +267,19 @@ it.each(["progress", "account-change", "other-writer", "throw-after-write"])("pr
     expect(result).toMatchObject({ kind: "rejected", code: scenario === "other-writer" ? "PLAN_STORAGE_STATE_UNCERTAIN" : "RESTORE_WRITE_FAILED" })
     expect(localStorage.getItem(key)).toBe(scenario === "other-writer" ? "OTHER_WRITER" : null)
   }
+})
+
+it("reconstructs restore inputs from registered evidence without issuing new approvals", async () => {
+  const f = storageFixture(), saved = await saveSelectedMultiAdjustedPlanV6(f)
+  if (saved.kind !== "saved") throw Error("Initial save failed")
+  const registry = f.readReview()
+  const result = readCurrentMultiRestoreReviewV3(saved.state, registry, TODAY)
+  expect(result.preparations).toEqual(registry.preparations)
+  expect(result.policies).toBe(registry.policies)
+  expect(() => readCurrentMultiRestoreReviewV3(saved.state, { ...registry, policies: [] }, TODAY)).toThrow("CURRENT_RESTORE_REVIEW_REQUIRED")
+  expect(() => readCurrentMultiRestoreReviewV3(saved.state, { ...registry, retained: [] }, TODAY)).toThrow("RETAINED_MULTI_EVIDENCE_UNAVAILABLE")
+  expect(() => readCurrentMultiRestoreReviewV3(saved.state, registry, new Date(TODAY.getTime() + 100))).toThrow("CURRENT_RESTORE_REVIEW_REQUIRED")
+  expect(() => readCurrentMultiRestoreReviewV3(saved.state)).toThrow()
 })
 
 it("writes and independently reads a real multi-slot V6 plan, replaying the same unprogressed selection", async () => {
