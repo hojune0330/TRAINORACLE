@@ -1,6 +1,7 @@
 import { canonicalJsonFingerprint } from "@impl/plan-generator/candidate-identity"
 import { prepareAdjustedPlanCandidateV3 } from "./adjusted-plan-candidate"
 import { hasCanonicalJsonTree } from "./plan-beta-schema"
+import { prepareRpeAdjustedSlotV3, type RpeAdjustedSlotInputV3, type ReviewedRpeSourceBindingV3 } from "./rpe-adjusted-slot-v3"
 
 export type AdjustedSlotPreparationV3 = Parameters<typeof prepareAdjustedPlanCandidateV3>[0]
 const hash = (value: unknown) => canonicalJsonFingerprint("trainoracle.multi-adjusted-plan-candidate.v3", value)
@@ -8,12 +9,14 @@ const unavailable = (code: string) => ({ kind: "unavailable" as const, code })
 const addressKey = (address: { day: number; slot: string }) => `${address.day}:${address.slot}`
 
 /** Independently checked slots, not collective plan approval or storage authority. */
-export function prepareMultiAdjustedPlanCandidateV3(inputs: readonly AdjustedSlotPreparationV3[]) {
+export function prepareMultiAdjustedPlanCandidateV3(inputs: readonly (AdjustedSlotPreparationV3 | RpeAdjustedSlotInputV3)[],
+  rpeBindings: readonly ReviewedRpeSourceBindingV3[] = []) {
   try {
     if (!hasCanonicalJsonTree(inputs) || !Array.isArray(inputs) || inputs.length === 0) {
       return unavailable("INVALID_MULTI_ADJUSTMENT_INPUT")
     }
-    const prepared = inputs.map(input => prepareAdjustedPlanCandidateV3(input))
+    const prepared = inputs.map(input => "experienceBand" in input
+      ? prepareRpeAdjustedSlotV3(input, rpeBindings) : prepareAdjustedPlanCandidateV3(input))
     const failed = prepared.find(result => result.kind !== "prepared")
     if (failed) return failed
     const candidates = prepared.map(result => {
@@ -30,7 +33,8 @@ export function prepareMultiAdjustedPlanCandidateV3(inputs: readonly AdjustedSlo
     const ordered = candidates.map((candidate, i) => ({ candidate, explanation: inputs[i]!.explanation }))
       .sort((a, b) => a.candidate.changedSlot.day - b.candidate.changedSlot.day
         || a.candidate.changedSlot.slot.localeCompare(b.candidate.changedSlot.slot))
-    const changedSlots = ordered.map(({ candidate, explanation }) => ({ ...candidate.changedSlot, explanation }))
+    const changedSlots = ordered.map(({ candidate, explanation }) => ({ ...candidate.changedSlot, explanation,
+      ...("rpeBinding" in candidate ? { rpeBinding: candidate.rpeBinding } : {}) }))
     const replacements = new Map(ordered.map(({ candidate }) => [addressKey(candidate.changedSlot),
       candidate.sessions.find(session => addressKey(session) === addressKey(candidate.changedSlot))!]))
     const content = {

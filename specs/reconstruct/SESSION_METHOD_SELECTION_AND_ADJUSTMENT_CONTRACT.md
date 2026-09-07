@@ -4,7 +4,7 @@
 doc_id: trainoracle-session-method-selection-and-adjustment
 spec_id: SESSION_METHOD_SELECTION_AND_ADJUSTMENT_CONTRACT
 title: TrainOracle Session Method Selection And Adjustment Contract
-version: "0.46"
+version: "0.47"
 round: RT1_OWNER_APPROVED_IMPLEMENTATION_DIRECTION
 status: ACTIVE_IMPLEMENTATION_CONTRACT
 product_direction: OWNER_APPROVED_IMPLEMENTATION_DIRECTION
@@ -1598,5 +1598,19 @@ UNANCHORED_SOURCE_V3는 anchor 필드를 갖지 않는다. 검토된 원본/목�
 identity 검사를 적용한다. 스냅샷은 원본 후보 계보와 MAIN 주소에 묶이며 설명이나 주소가
 달라지면 재사용을 거부한다. candidate_ready / NONE은 전체 계획 승인/저장 권한이 아니다.
 시간/RPE 원본에 대한 배치 결속, 다중 계획 저장과 운영 활성화는 별도 연결이 필요하다.
+
+### 21.27 시간/RPE MAIN과 비기록 상세 구성의 결속
+
+원본 후보 전체 identity를 검증한 뒤 QUALITY 주소의 RPE_TIME_RANGE만 별도 경로로
+해석한다. 상세 구성의 원본/목표 reference와 전이 정책, 종목, 계획 목적, 해당 세션 목적,
+경험 수준, 원본 RPE/시간 범위를 구조적 binding scope로 만든다. 정확히 하나의 현재
+유효한 독립 공급 binding review가 있어야 후보를 준비한다. 빈 registry, 중복 식별자,
+만료/철회, 다른 경험 수준은 적용하지 않는다. 이 검사는 전체 계획 상호작용 승인이 아니다.
+
+원본 범위는 projection의 originalPrescription으로 보존한다. 새 운동/회복/준비/정리는
+검토된 상세 구성에서 그대로 읽으며 개인 페이스나 거리 환산은 만들지 않는다.
+recordBasis=NOT_USED, segmentTargets=[]를 명시한다. 스냅샷 계보/주소 결속은 유지하고,
+다중 후보의 changedSlots에 binding 버전/지문도 보존한다. 단일 페이스 저장기로 우회하지
+않는다. 원본 RPE와 상세 운동의 부담이 동일하다고 주장하지 않는다.
 
 [DRAFT_COMPLETE]
