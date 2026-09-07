@@ -4,7 +4,7 @@
 doc_id: trainoracle-session-method-selection-and-adjustment
 spec_id: SESSION_METHOD_SELECTION_AND_ADJUSTMENT_CONTRACT
 title: TrainOracle Session Method Selection And Adjustment Contract
-version: "0.50"
+version: "0.51"
 round: RT1_OWNER_APPROVED_IMPLEMENTATION_DIRECTION
 status: ACTIVE_IMPLEMENTATION_CONTRACT
 product_direction: OWNER_APPROVED_IMPLEMENTATION_DIRECTION
@@ -1657,5 +1657,19 @@ version 6은 다중 선택, 진행 상태, 갱신시각, 내용 지문을 보존
 
 공통 조회 및 진행 writer 지원만으로 일정 UI, 원본 보관, 일지, 백업, 서버, 후속
 주기까지 완료했다고 판단하지 않는다. 이 소비자 연결은 각각 검증한다.
+
+### 21.31 다중 계획 일지 원본 보관
+
+다중 선택 원본은 계정별 multi-adjusted-plan-originals.v3 보관소에 version 6
+상태로 저장한다. 기존 단일 원본을 변환하거나 덮지 않는다. 최대 18개이며 용량이
+차면 거부하고 과거 원본을 자동 삭제하지 않는다. 동일 선택의 진행 상태 갱신은
+기존 항목을 대체하되 선택 당시 처방과 설명은 바뀌지 않는다.
+
+보관은 계획 변경 lock 안에서 계정, 현재 계획 지문, 원본 보관소 값을 쓰기 전후
+대조한다. 실패 시 자기 쓰기만 되돌린다. 일지 연결은 실제 원본 보관 성공 후에
+개방해야 한다. 현재 계획이 없어져도 날짜/슬롯/내용 지문이 일치하는 원본만 찾는다.
+설명은 같은 날짜와 슬롯의 설명으로 선택하며 메모를 읽거나 계획 수치를 실제 일지
+측정값으로 채우지 않는다. 기록 기반 목표가 없는 시간/RPE 처방에는 기록으로
+계산했다는 안내를 표시하지 않는다. 로컬 전체 삭제 대상에 새 보관소도 포함한다.
 
 [DRAFT_COMPLETE]

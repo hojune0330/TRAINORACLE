@@ -48,6 +48,7 @@ const ACCOUNT_SCOPED_PLAN_LOCAL_KEYS = [
   "trainoracle.plan-cloud-archive.v1",
   "trainoracle.adjusted-plan-originals.v1",
   "trainoracle.adjusted-plan-originals.v3",
+  "trainoracle.multi-adjusted-plan-originals.v3",
 ] as const
 const ACCOUNT_SCOPED_LOCAL_KEYS = [
   ATHLETE_RECORDS_STORAGE_KEY,

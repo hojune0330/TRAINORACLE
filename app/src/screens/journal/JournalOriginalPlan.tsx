@@ -39,7 +39,7 @@ export function JournalOriginalPlan({ entry }: { readonly entry: PostSessionEntr
           ? collectSessionExplanationEvidence(journal.entries, matched.state, session) : null
       }} />
     </> : lookup?.kind === "matched_adjusted" ? <AdjustedJournalOriginalPlan session={lookup.session} explanation={lookup.explanation} />
-      : lookup?.kind === "matched_adjusted_v3" ? <>
+      : lookup?.kind === "matched_adjusted_v3" || lookup?.kind === "matched_multi_adjusted_v3" ? <>
         <p>이 일지에 연결된 당시 계획이에요. 실제 운동 기록과는 별도로 표시해요.</p>
         <AdjustedPrescriptionV3 session={lookup.session} explanation={lookup.explanation} />
       </>

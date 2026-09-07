@@ -8,18 +8,27 @@ import { readAdjustedOriginalPlans } from "./adjusted-plan-archive"
 import { RETAINED_ADJUSTED_PLAN_EVIDENCE_V3, readStoredAdjustedPlanStateV5 } from "./adjusted-plan-storage-v5"
 import { readAdjustedOriginalPlansV3 } from "./adjusted-plan-archive-v3"
 import type { RetainedAdjustedPlanEvidenceV3 } from "./selected-adjusted-plan-v3"
+import type { RetainedMultiAdjustedEvidenceV3 } from "./selected-multi-adjusted-plan-v3"
+import { readStoredMultiAdjustedPlanV6, RETAINED_MULTI_ADJUSTED_EVIDENCE_V3 } from "./adjusted-plan-storage-v6"
+import { readMultiAdjustedOriginalPlansV3 } from "./multi-adjusted-plan-archive-v3"
 
 /** Lookup only: no current-plan substitution, writes, activation or memo access. */
 export function readJournalOriginalPlan(entry: PostSessionEntry,
   retained: readonly RetainedAdjustedPlanEvidence[] = RETAINED_ADJUSTED_PLAN_EVIDENCE,
-  retainedV3: readonly RetainedAdjustedPlanEvidenceV3[] = RETAINED_ADJUSTED_PLAN_EVIDENCE_V3) {
+  retainedV3: readonly RetainedAdjustedPlanEvidenceV3[] = RETAINED_ADJUSTED_PLAN_EVIDENCE_V3,
+  retainedMultiV3: readonly RetainedMultiAdjustedEvidenceV3[] = RETAINED_MULTI_ADJUSTED_EVIDENCE_V3) {
   if (!isJournalVisible(entry.id)) return { kind: "unavailable" as const }
   const parsed = plannedSessionLinkSchema.safeParse(entry.plannedSessionLink)
   if (!parsed.success || entry.date !== parsed.data.plannedDate
       || ((entry.activitySlot === "AM" || entry.activitySlot === "PM") && entry.activitySlot !== parsed.data.sessionSlot)) {
     return { kind: "unavailable" as const }
   }
-  const active = readPlanBetaStateFromStorage(retained, retainedV3)
+  const active = readPlanBetaStateFromStorage(retained, retainedV3, retainedMultiV3)
+  if (active.kind === "multi_adjusted_v3_loaded") {
+    const session = resolveCurrentPlannedSession(active.state.selection, parsed.data)
+    if (session !== null) return { kind: "matched_multi_adjusted_v3" as const, source: "ACTIVE" as const,
+      state: active.state, session, explanation: active.explanations.find(e => e.address.day === session.day && e.address.slot === session.slot)?.explanation }
+  }
   if (active.kind === "adjusted_v3_loaded") {
     const session = resolveCurrentPlannedSession(active.state.selection, parsed.data)
     if (session !== null) return { kind: "matched_adjusted_v3" as const, source: "ACTIVE" as const,
@@ -36,6 +45,14 @@ export function readJournalOriginalPlan(entry: PostSessionEntry,
   }
   const adjustedArchive = readAdjustedOriginalPlans(retained)
   const v3Archive = readAdjustedOriginalPlansV3(retainedV3)
+  const multiArchive = readMultiAdjustedOriginalPlansV3(retainedMultiV3)
+  if (multiArchive.kind === "loaded") for (const item of multiArchive.entries) {
+    const session = resolveCurrentPlannedSession(item.state.selection, parsed.data)
+    if (session === null) continue
+    const checked = readStoredMultiAdjustedPlanV6(item.state, retainedMultiV3)
+    if (checked.kind === "loaded") return { kind: "matched_multi_adjusted_v3" as const, source: "ARCHIVED" as const,
+      state: checked.state, session, explanation: checked.explanations.find(e => e.address.day === session.day && e.address.slot === session.slot)?.explanation }
+  }
   if (v3Archive.kind === "loaded") for (const item of v3Archive.entries) {
     const session = resolveCurrentPlannedSession(item.state.selection, parsed.data)
     if (session === null) continue

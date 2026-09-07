@@ -17,9 +17,17 @@ import { saveSelectedMultiAdjustedPlanV6, readStoredMultiAdjustedPlanV6 } from "
 import { activePlanBetaStorageKey, savePlanBetaState, readPlanBetaStateFromStorage } from "./plan-beta-store"
 import { saveMultiAdjustedPlanProgressV3 } from "./adjusted-plan-progress"
 import type { PlanMutationLockManager } from "./plan-mutation-lock"
+import { retainMultiAdjustedOriginalPlanV3, readMultiAdjustedOriginalPlansV3 } from "./multi-adjusted-plan-archive-v3"
+import { createPlannedSessionLogDraft } from "./planned-session-link"
+import { readJournalOriginalPlan } from "./journal-original-plan"
+import { saveEntry, loadEntries } from "./journal-store"
+import { MEMO_PURPOSE, type PostSessionEntry } from "./journal-schema"
+import React from "react"
+import { render, screen, cleanup } from "@testing-library/react"
+import { AdjustedPrescriptionV3 } from "../screens/plan-beta/AdjustedPrescriptionV3"
 
 beforeEach(() => { localStorage.clear(); sessionStorage.clear(); setActiveLocalAccount(null); vi.useFakeTimers(); vi.setSystemTime(TODAY) })
-afterEach(() => { vi.restoreAllMocks(); vi.useRealTimers() })
+afterEach(() => { cleanup(); vi.restoreAllMocks(); vi.useRealTimers() })
 function fixture() {
   const intake = { ...draftFor(RUNTIME_CASES[3]), selectedDetailedTemplateRef: null }
   const generated = generatePlanFromDraft(intake, "NO_KNOWN_RISK", {})
@@ -129,6 +137,40 @@ it("reads through the shared account store and records each adjusted MAIN indepe
   expect(read()).toMatchObject({ kind: "multi_adjusted_v3_loaded", state: { contentFingerprint: fingerprint } })
   setActiveLocalAccount("another-account")
   expect(read().kind).toBe("missing")
+})
+
+it("retains a multi-plan journal original and reads the exact slot after the active plan is gone without reading memo", async () => {
+  setActiveLocalAccount("journal-owner")
+  const input = storageFixture(), saved = await saveSelectedMultiAdjustedPlanV6(input)
+  if (saved.kind !== "saved") throw Error("Initial save failed")
+  const retained = input.readReview().retained
+  const slot = saved.state.selection.activePlan.sessions.find(s => s.prescription.kind === "ADJUSTED_METHOD_V3")!
+  const draft = createPlannedSessionLogDraft(saved.state.selection, slot, TODAY.toISOString())!
+  expect(await retainMultiAdjustedOriginalPlanV3(saved.state.contentFingerprint, { retained, locks: input.locks })).toEqual({ kind: "retained" })
+  expect(await retainMultiAdjustedOriginalPlanV3(saved.state.contentFingerprint, { retained, locks: input.locks })).toEqual({ kind: "retained" })
+  expect(readMultiAdjustedOriginalPlansV3(retained, TODAY)).toMatchObject({ kind: "loaded", entries: [{ state: saved.state }] })
+  const entry: PostSessionEntry = { id: "synthetic-multi-journal", kind: "post-session", date: draft.date,
+    savedAt: TODAY.toISOString(), syncState: "local", activitySlot: slot.slot, plannedSessionLink: draft.link,
+    system: "", title: "", memo: "PRIVATE-NOTE", memoPurpose: MEMO_PURPOSE.analyzableTrainingNote,
+    distanceKm: "", durationMin: "", avgPace: "", rpe: 0 }
+  expect(saveEntry(entry).ok).toBe(true)
+  const loaded = loadEntries().find(e => e.id === entry.id)!
+  if (loaded.kind !== "post-session") throw Error("Wrong journal kind")
+  const getter = vi.fn(() => "PRIVATE-NOTE")
+  Object.defineProperty(loaded, "memo", { enumerable: true, get: getter })
+  expect(readJournalOriginalPlan(loaded, [], [], retained)).toMatchObject({ kind: "matched_multi_adjusted_v3", source: "ACTIVE", session: slot })
+  localStorage.removeItem(activePlanBetaStorageKey())
+  const original = readJournalOriginalPlan(loaded, [], [], retained)
+  expect(original).toMatchObject({ kind: "matched_multi_adjusted_v3", source: "ARCHIVED", session: slot })
+  expect(getter).not.toHaveBeenCalled()
+  if (original.kind !== "matched_multi_adjusted_v3") throw Error("Original missing")
+  expect(original.explanation).toEqual(retained[0]!.slots.find(s => s.address.day === slot.day && s.address.slot === slot.slot)!.explanation)
+  render(React.createElement(AdjustedPrescriptionV3, { session: original.session, explanation: original.explanation }))
+  expect(screen.queryByText("저장 당시 기록으로 계산한 참고 시간")).toBeNull()
+  expect(screen.getByText("이 훈련을 하는 이유")).toBeTruthy()
+  expect(loaded.distanceKm).toBe("")
+  setActiveLocalAccount("another-account")
+  expect(readJournalOriginalPlan(loaded, [], [], retained).kind).toBe("unavailable")
 })
 
 it.each(["expiry", "other-writer"])("handles %s during a real multi-plan write without overwriting another writer", async change => {
