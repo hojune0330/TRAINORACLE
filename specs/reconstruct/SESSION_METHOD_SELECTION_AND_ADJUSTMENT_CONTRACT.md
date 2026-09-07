@@ -4,7 +4,7 @@
 doc_id: trainoracle-session-method-selection-and-adjustment
 spec_id: SESSION_METHOD_SELECTION_AND_ADJUSTMENT_CONTRACT
 title: TrainOracle Session Method Selection And Adjustment Contract
-version: "0.8"
+version: "0.9"
 round: RT1_OWNER_APPROVED_IMPLEMENTATION_DIRECTION
 status: ACTIVE_IMPLEMENTATION_CONTRACT
 product_direction: OWNER_APPROVED_IMPLEMENTATION_DIRECTION
@@ -601,6 +601,42 @@ removal and local erasure apply to the same scoped key. Eviction remains the exi
 be treated as an empty list and overwritten. A read-only history consumer reports
 the number of retained original plans separately from summaries without originals.
 Reading old originals grants no execution, recommendation or new adjustment authority.
+
+### 10B. Adjusted Per-Session Snapshot Codec
+
+The private version-1 adjusted-method DTO binds the original supported prescription,
+candidate lineage and MAIN slot, source configuration/policy references, exact
+anchor-content context, adjustment receipt, resolved sequence/targets/totals and
+the independently supplied explanation version/content fingerprint. Keep the
+original unrounded values. The snapshot is not a new active-plan schema variant,
+storage key, plan selection receipt or new configuration approval.
+
+Require the adjusted configuration's exact explanation, including purpose, energy
+supply, work/recovery rationale, cycle role, expected adaptation, limitations,
+observation and evidence references. Persist its references and content fingerprint,
+not a second prose copy. A bound snapshot must not retain the projection's earlier
+"explanation required" placeholder. A missing, changed or mismatched explanation
+cannot be silently substituted with the original configuration's explanation.
+
+Historical reading requires independently trusted retained source and explanation
+versions. Recompute the original resolution, receipt, targets, structural totals and
+the complete snapshot content at capture time. Reject mismatched slot/context,
+future capture times, extra fields and coordinated payload/self-hash tampering.
+Saved authority strings are not a trusted registry; do not store an authority
+registry inside the snapshot and then trust it on reload.
+
+Historical readability carries execution authority NONE. Current candidate use
+requires a second check at the current time, so a historically valid expired policy
+does not authorize reuse. The owning plan still must revalidate current account,
+record, candidate lineage, complete placement and safety inside its selection lock.
+Neither a historical read nor candidate-ready codec result bypasses those gates.
+
+This codec performs no browser/server writes or public export. Full active-plan
+type/schema and all display, archive, journal and execution consumers must support
+the new representation before enabling it. Existing PACE_TARGET flat-schema
+validation must not be weakened to pretend time/mixed work is a flat distance set.
+Missing trusted old versions leave the raw stored content intact for recovery;
+they do not authorize guessed historical explanations or replacement prescriptions.
 
 ## 11. Planned, Actual, Youth And Privacy
 
