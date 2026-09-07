@@ -21,9 +21,12 @@ export function createAssembledMultiPlanRuntimeV3(options: {
         if (!candidate) return null
         const sources = options.readSources(context, at)
         if (!sources) return null
+        const retained = options.readRetained()
         const result = assembleReviewedMultiMaterialsV3({ ...sources, candidate, startDate: context.startDate,
-          experienceBand: context.intake.experienceBand, changes, retained: options.readRetained() }, at)
-        return result.kind === "prepared" ? result.review : null
+          experienceBand: context.intake.experienceBand, changes, retained }, at)
+        // Save must prove reconstruction with the same independent source used after
+        // save/reload. Assembly's transient currentEvidence is not durable authority.
+        return result.kind === "prepared" ? { ...result.review, retained } : null
       },
     }),
   }

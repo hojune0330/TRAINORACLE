@@ -4,7 +4,7 @@
 doc_id: trainoracle-session-method-selection-and-adjustment
 spec_id: SESSION_METHOD_SELECTION_AND_ADJUSTMENT_CONTRACT
 title: TrainOracle Session Method Selection And Adjustment Contract
-version: "0.63"
+version: "0.64"
 round: RT1_OWNER_APPROVED_IMPLEMENTATION_DIRECTION
 status: ACTIVE_IMPLEMENTATION_CONTRACT
 product_direction: OWNER_APPROVED_IMPLEMENTATION_DIRECTION
@@ -1628,6 +1628,15 @@ MULTI_STRUCTURAL_V3 검토 범위는 종목·경험·선택권한·목적·후�
 이전 원본을 읽는 별도 transaction으로 연결한다. 선택 성공은 실제 저장·배포 증거가 아니다.
 
 ### 21.29 다중 선택의 독립 복원과 version 6 저장
+
+저장 검증에 사용하는 retained 자료는 저장 후 일정·일지·이력 조회에 사용하는
+동일한 독립 공급원의 자료여야 한다. 조립 과정에서 만든 임시 currentEvidence만
+추가해 저장 성공을 만들고 독립 reader에는 없는 상태를 허용하지 않는다.
+독립 자료가 부족하면 쓰기 전에 거부하며, 쓰기 중 변경되면 기존 transaction의
+현재성 확인과 본인 쓰기 복구 규칙을 따른다. 이 요건은 브라우저의 임의 저장
+파일을 새 승인 authority로 신뢰하거나 미검토 자료를 자동 등록하는 허가가 아니다.
+운영 공급자는 재시작 뒤에도 필요한 과거 검토 버전을 공급해야 한다. 현재 유효성
+철회와 과거 읽기용 버전 삭제를 같은 동작으로 처리하지 않는다.
 
 과거 조회는 선택 당시 시간과 별도 보존한 주소별 구성 authority/설명, RPE binding,
 전체 정책으로 재구성한다. 현재 선수 저장소 조회나 현재 활성화 권한을 요구하지 않는다.

@@ -230,6 +230,31 @@ it("builds a current editor entry from reviewed materials and stops after revoca
   expect(() => entry!.readReview()).toThrow("STALE_MULTI_PROVIDER")
 })
 
+it.each(["absent", "withdrawn-after-write"])("does not save a plan using transient evidence absent from the independent journal reader: %s", async mode => {
+  const f = storageFixture(), reviewed = f.readReview()
+  let available = mode !== "absent"
+  const runtime = createAssembledMultiPlanRuntimeV3({ now: () => TODAY, readRetained: () => available ? reviewed.retained : [],
+    readSources: () => ({ rpeBindings: reviewed.rpeBindings, policies: reviewed.policies,
+      slots: reviewed.preparations.map(p => ({ address: p.address, source: p.source, experienceBand: p.experienceBand,
+        initialReceipt: JSON.parse(p.rawSnapshot).receipt, explanations: [p.explanation] })) }) })
+  const context = { generated: f.request.generated, gate: f.request.gate, intake: f.request.intake,
+    athleteEvidence: f.request.athleteEvidence, currentCheck: f.request.currentCheck,
+    candidateId: f.request.preparations[0]!.candidate.candidateId, startDate: "2026-09-08" }
+  const entry = runtime.multiAdjustmentResolverV3!(context)
+  expect(entry).not.toBeNull()
+  if (mode === "withdrawn-after-write") {
+    const write = Storage.prototype.setItem
+    vi.spyOn(Storage.prototype, "setItem").mockImplementation(function (this: Storage, key, value) {
+      write.call(this, key, value)
+      if (key === activePlanBetaStorageKey()) available = false
+    })
+  }
+  const result = await saveSelectedMultiAdjustedPlanV6({ request: entry!.seed, readReview: entry!.readReview,
+    isCurrentDraft: () => true, locks: f.locks })
+  expect(result).toMatchObject({ kind: "rejected", code: mode === "absent" ? "ADJUSTED_PLAN_STORAGE_VALIDATION_FAILED" : "PLAN_STORAGE_WRITE_FAILED" })
+  expect(localStorage.getItem(activePlanBetaStorageKey())).toBeNull()
+})
+
 it.each(["saved", "wrong-session", "account-during-auth", "account-after-send", "write-error", "missing-evidence"])("backs up only the owned validated multi snapshot: %s", async scenario => {
   setActiveLocalAccount("cloud-owner")
   const input = storageFixture(), saved = await saveSelectedMultiAdjustedPlanV6(input)
@@ -587,7 +612,9 @@ it("opens the next cycle from the schedule and saves through candidate, multi ed
     continuation: { predecessorFingerprint: f.previous.contentFingerprint } } } })
   expect(localStorage.getItem(activePlanBetaStorageKey())).not.toBe(before)
   expect(readMultiAdjustedOriginalPlansV3(f.retained)).toMatchObject({ kind: "loaded", entries: [{ state: f.previous }] })
-})
+// This includes predecessor creation, archival, generation, UI edits and locked save.
+// CI run 34164472896 exceeded the default 5s; retain all assertions with a bounded integration timeout.
+}, 15000)
 
 it.each(["missing-provider", "invalid-provider", "review-required"])("preserves the current schedule when the next UI has %s", async scenario => {
   const f = await successorStorageFixture(), before = localStorage.getItem(activePlanBetaStorageKey())
