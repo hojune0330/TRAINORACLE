@@ -4,7 +4,7 @@
 doc_id: trainoracle-session-method-selection-and-adjustment
 spec_id: SESSION_METHOD_SELECTION_AND_ADJUSTMENT_CONTRACT
 title: TrainOracle Session Method Selection And Adjustment Contract
-version: "0.57"
+version: "0.58"
 round: RT1_OWNER_APPROVED_IMPLEMENTATION_DIRECTION
 status: ACTIVE_IMPLEMENTATION_CONTRACT
 product_direction: OWNER_APPROVED_IMPLEMENTATION_DIRECTION
@@ -1738,5 +1738,17 @@ REVIEWED_MULTI_SUCCESSOR_V3_TRANSACTION으로 원본 보관/현재 근거 검토
 명시적 저장 버튼은 최초/후속 저장 경로를 구분하고 현재 검토 자료를 다시 읽는다.
 중복 클릭을 막고 실제 저장 성공 후에만 완료 콜백을 전달한다. 해당 화면 컴포넌트의
 완료와 전체 후보 편집 흐름의 운영 연결은 별도 검증 대상이다.
+
+### 21.38 주소별 편집과 전체 확인 연결
+
+편집 결과는 날짜/슬롯에 연결한 receipt로 처리한다. 같은 원본 후보/시작일/입력
+계열인지 확인하고 현재 검토된 source와 설명으로 스냅샷을 다시 만든다. 편집하지
+않은 다른 주소의 preparation은 그대로 보존한다. 전체 후보를 재조립해 새 지문을
+만들되 저장하지 않는다. 변경안 적용과 전체 계획 저장은 다른 행동이다.
+
+각 MAIN의 편집 결과별 검토 자료를 공급하는 경로를 분리한다. 검토 목록을 화면이
+임의로 만들거나 receipt만 보고 용량/적격성을 승인하지 않는다. 최종 확인에서만
+실제 저장을 요청하며, 반복 편집 시 현재 선택 표시와 운영 선택지 다양성은 별도
+사용성 및 계약 검수에 포함한다.
 
 [DRAFT_COMPLETE]

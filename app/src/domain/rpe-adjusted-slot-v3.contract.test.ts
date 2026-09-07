@@ -32,9 +32,23 @@ import { exportMultiAdjustedPlanBackupV3, readMultiAdjustedPlanBackupV3, importM
 import { AdjustedPlanImport } from "../screens/plan-beta/AdjustedPlanImport"
 import { saveSelectedMultiAdjustedSuccessorV3 } from "./multi-adjusted-plan-successor-v3"
 import { MultiAdjustedPlanApplyReviewV3 } from "../screens/plan-beta/MultiAdjustedPlanApplyReviewV3"
+import { MultiAdjustedPlanEditFlowV3 } from "../screens/plan-beta/MultiAdjustedPlanEditFlowV3"
+import { stageMultiAdjustmentV3 } from "./stage-multi-adjustment-v3"
 
-beforeEach(() => { localStorage.clear(); sessionStorage.clear(); setActiveLocalAccount(null); vi.useFakeTimers(); vi.setSystemTime(TODAY) })
-afterEach(() => { cleanup(); vi.restoreAllMocks(); vi.useRealTimers() })
+const dialogShow = Object.getOwnPropertyDescriptor(HTMLDialogElement.prototype, "showModal")
+const dialogClose = Object.getOwnPropertyDescriptor(HTMLDialogElement.prototype, "close")
+beforeEach(() => {
+  localStorage.clear(); sessionStorage.clear(); setActiveLocalAccount(null); vi.useFakeTimers(); vi.setSystemTime(TODAY)
+  Object.defineProperty(HTMLDialogElement.prototype, "showModal", { configurable: true, value() { this.setAttribute("open", "") } })
+  Object.defineProperty(HTMLDialogElement.prototype, "close", { configurable: true, value() { this.removeAttribute("open") } })
+})
+afterEach(() => {
+  cleanup(); vi.restoreAllMocks(); vi.useRealTimers()
+  for (const [key, descriptor] of [["showModal", dialogShow], ["close", dialogClose]] as const) {
+    if (descriptor) Object.defineProperty(HTMLDialogElement.prototype, key, descriptor)
+    else Reflect.deleteProperty(HTMLDialogElement.prototype, key)
+  }
+})
 function fixture(supplied?: Extract<ReturnType<typeof generatePlanFromDraft>, { kind: "generated" }>, at = TODAY, startDate = "2026-09-08") {
   const intake = { ...draftFor(RUNTIME_CASES[3]), selectedDetailedTemplateRef: null }
   const generated = supplied ?? generatePlanFromDraft(intake, "NO_KNOWN_RISK", {})
@@ -314,6 +328,27 @@ it.each(["initial", "successor"])("requires explicit final confirmation in the %
   await act(async () => { fireEvent.click(screen.getByRole("button", { name: "이 구성으로 계획 저장" })) })
   expect(onSaved).toHaveBeenCalledOnce()
   expect(readPlanBetaStateFromStorage([], [], input.readReview().retained)).toMatchObject({ kind: "multi_adjusted_v3_loaded", state: onSaved.mock.calls[0]![0] })
+})
+
+it("stages one addressed editor receipt without replacing the other MAIN and saves only after the final screen", async () => {
+  const input = storageFixture(), first = input.request.preparations[0]!, snapshot = JSON.parse(first.rawSnapshot)
+  const staged = stageMultiAdjustmentV3(input.request, { address: first.address, receipt: snapshot.receipt }, snapshot.receipt.after, input.readReview(), TODAY)
+  if (staged.kind !== "staged") throw Error(staged.code)
+  expect(staged.request.preparations.slice(1)).toEqual(input.request.preparations.slice(1))
+  expect(stageMultiAdjustmentV3(input.request, { address: { day: 999, slot: "AM" }, receipt: snapshot.receipt }, snapshot.receipt.after, input.readReview(), TODAY)).toMatchObject({ code: "INVALID_MULTI_EDIT_ADDRESS" })
+  const onSaved = vi.fn()
+  render(React.createElement(MultiAdjustedPlanEditFlowV3, { seed: input.request, readReview: input.readReview, locks: input.locks,
+    readReviewForEdits: request => ({ ...input.readReview(), preparations: request.preparations }),
+    isCurrentDraft: () => true, onSaved, onCancel: vi.fn() }))
+  expect(screen.getAllByRole("region", { name: "고른 주요 훈련" })).toHaveLength(input.request.preparations.length)
+  fireEvent.click(screen.getAllByRole("button", { name: "이 훈련 구성 바꾸기" })[0]!)
+  fireEvent.click(screen.getByRole("radio", { name: "검토된 다른 구성" }))
+  await act(async () => { fireEvent.click(screen.getByRole("button", { name: "변경안 적용" })) })
+  expect(localStorage.getItem(activePlanBetaStorageKey())).toBeNull()
+  fireEvent.click(screen.getByRole("button", { name: "전체 확인으로" }))
+  expect(onSaved).not.toHaveBeenCalled()
+  await act(async () => { fireEvent.click(screen.getByRole("button", { name: "이 구성으로 계획 저장" })) })
+  expect(onSaved).toHaveBeenCalledOnce()
 })
 
 it.each(["archive-expiry", "active-expiry", "active-other-writer"])("rolls back own successor writes for %s", async scenario => {

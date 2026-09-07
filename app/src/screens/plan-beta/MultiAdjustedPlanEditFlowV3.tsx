@@ -1,0 +1,66 @@
+import React from "react"
+import { ArrowLeft, ArrowRight, Pencil } from "lucide-react"
+import { canonicalJsonFingerprint } from "@impl/plan-generator/candidate-identity"
+import type { MultiAdjustedLiveReviewV3, StoredMultiAdjustedPlanStateV6 } from "../../domain/adjusted-plan-storage-v6"
+import type { MultiAdjustedPlanSelectionRequestV3 } from "../../domain/selected-multi-adjusted-plan-v3"
+import { stageMultiAdjustmentV3, type AddressedAdjustmentV3 } from "../../domain/stage-multi-adjustment-v3"
+import { prepareSourceAdjustmentOfferV3 } from "../../domain/source-adjustment-offer"
+import { prepareUnanchoredAdjustmentOfferV3 } from "../../domain/unanchored-adjustment-offer-v3"
+import { prepareMultiAdjustedPlanCandidateV3 } from "../../domain/adjusted-plan-multi-candidate-v3"
+import { PrescriptionAdjustmentEditorV3, type AdjustmentOrderedChoicesV3 } from "./PrescriptionAdjustmentEditorV3"
+import { MultiAdjustedPlanApplyReviewV3, type MultiAdjustmentEntryV3 } from "./MultiAdjustedPlanApplyReviewV3"
+import { AdjustedPrescriptionV3 } from "./AdjustedPrescriptionV3"
+import { isoShift } from "../../domain/dates"
+
+const hash = (value: unknown) => canonicalJsonFingerprint("trainoracle.multi-edit-flow.v3", value)
+export function MultiAdjustedPlanEditFlowV3({ seed, readReview, locks, readReviewForEdits, orderedChoicesFor,
+  isCurrentDraft, onSaved, onCancel, expectedPredecessorFingerprint }: MultiAdjustmentEntryV3 & {
+  readonly readReviewForEdits: (request: MultiAdjustedPlanSelectionRequestV3, changes: readonly AddressedAdjustmentV3[]) => MultiAdjustedLiveReviewV3;
+  readonly orderedChoicesFor?: (address: AddressedAdjustmentV3["address"]) => readonly AdjustmentOrderedChoicesV3[];
+  readonly isCurrentDraft: () => boolean; readonly onSaved: (state: StoredMultiAdjustedPlanStateV6) => void;
+  readonly onCancel: () => void; readonly expectedPredecessorFingerprint?: string;
+}) {
+  const [opened] = React.useState(() => ({ identity: hash(seed), predecessor: expectedPredecessorFingerprint }))
+  const [request, setRequest] = React.useState(() => structuredClone(seed))
+  const [changes, setChanges] = React.useState<readonly AddressedAdjustmentV3[]>([])
+  const [editing, setEditing] = React.useState<AddressedAdjustmentV3["address"] | null>(null)
+  const [confirming, setConfirming] = React.useState(false)
+  const current = () => isCurrentDraft() && hash(seed) === opened.identity && expectedPredecessorFingerprint === opened.predecessor
+  const review = () => changes.length ? readReviewForEdits(request, changes) : readReview()
+  if (confirming) return <MultiAdjustedPlanApplyReviewV3 seed={request} readReview={review} locks={locks}
+    isCurrentDraft={current} onSaved={onSaved} onCancel={() => setConfirming(false)} expectedPredecessorFingerprint={expectedPredecessorFingerprint} />
+  let live: MultiAdjustedLiveReviewV3 | null = null
+  try { live = review() } catch { /* Show the unavailable state without inventing review data. */ }
+  const prepared = live === null ? null : prepareMultiAdjustedPlanCandidateV3(request.preparations, live.rpeBindings)
+  if (editing && live) {
+    const source = live.preparations.find(p => p.address.day === editing.day && p.address.slot === editing.slot)
+    const offer = source === undefined ? null : "experienceBand" in source
+      ? prepareUnanchoredAdjustmentOfferV3({ ...source.source, nowMs: Date.now() })
+      : prepareSourceAdjustmentOfferV3({ ...source.source, nowMs: Date.now() })
+    if (offer?.kind === "available") return <PrescriptionAdjustmentEditorV3 key={`${editing.day}:${editing.slot}`}
+      authority={offer.authority} current={offer.current} policy={offer.policy} contextKey={offer.contextKey}
+      now={Date.now} orderedChoices={orderedChoicesFor?.(editing)} onCancel={() => setEditing(null)}
+      choices={offer.targets.map(configuration => ({ configuration, label: offer.authority.catalog.find(f => f.familyId === configuration.familyId)
+        ?.configurations.find(c => c.configurationId === configuration.configurationId && c.version === configuration.version)?.sequence.label ?? "검토된 다른 구성" }))}
+      onApply={(receipt, prescription) => {
+        if (!current()) throw Error("STALE_CANDIDATE_SELECTION")
+        const change = { address: editing, receipt }
+        const updated = [...changes.filter(c => c.address.day !== editing.day || c.address.slot !== editing.slot), change]
+        const fresh = readReviewForEdits(request, updated)
+        const staged = stageMultiAdjustmentV3(request, change, prescription, fresh)
+        if (staged.kind !== "staged") throw Error(staged.code)
+        setRequest(staged.request); setChanges(updated); setEditing(null)
+      }} />
+  }
+  return <section className="adjusted-next-flow">
+    <button type="button" onClick={onCancel}><ArrowLeft size={18} aria-hidden="true" />후보로 돌아가기</button>
+    <h1>주요 훈련을 하나씩 확인해 주세요</h1>
+    {prepared?.kind === "prepared" ? prepared.candidate.sessions.filter(s => prepared.candidate.changedSlots.some(c => c.day === s.day && c.slot === s.slot)).map(session => <section key={`${session.day}:${session.slot}`} aria-label="고른 주요 훈련">
+      <h2>{isoShift(prepared.candidate.startDate, session.day - 1)} · {session.slot === "AM" ? "오전" : "오후"}</h2>
+      <AdjustedPrescriptionV3 session={session} explanation={request.preparations.find(p => p.address.day === session.day && p.address.slot === session.slot)?.explanation} />
+      <button type="button" onClick={() => setEditing({ day: session.day, slot: session.slot })}><Pencil size={18} aria-hidden="true" />이 훈련 구성 바꾸기</button>
+    </section>) : <p role="alert">훈련 구성과 검토 자료를 확인하지 못했어요. 현재 계획은 바뀌지 않았어요.</p>}
+    {editing && <p role="alert">현재 적용할 조정 범위를 확인하지 못했어요.</p>}
+    <button type="button" disabled={prepared?.kind !== "prepared" || !current()} onClick={() => setConfirming(true)}><ArrowRight size={18} aria-hidden="true" />전체 확인으로</button>
+  </section>
+}
