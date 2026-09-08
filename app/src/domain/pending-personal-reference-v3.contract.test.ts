@@ -10,6 +10,7 @@ it("binds threshold explanation and record without altering duration or recovery
     expect(before.executionAuthority).toBe("NONE")
     expect(before.method.reference.measuredThreshold).toBe(false)
     expect(before.recordIdentityVerified).toBe(false)
+    expect(before.caveat).toContain("기록 신원과 현재성은 확인되지 않았어요")
     expect(before.contentFingerprint).not.toBe(after.contentFingerprint)
     expect(before.explanation).toEqual(after.explanation)
     expect(before.method.instructions.filter(p => p.role !== "WORK")).toEqual(after.method.instructions.filter(p => p.role !== "WORK"))

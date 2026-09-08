@@ -4036,12 +4036,12 @@ LT는 별도 에너지 시스템이 아니에요. 산화 대사와 해당과정 
 이 공식은 실제 역치 측정이 아닙니다. 입문/분할 구성의 적합성, 날씨, 개인 조건, 원문 주간량 조건과 최종 채택은 별도 검토입니다.
 원문: https://news.vdoto2.com/2025/06/get-the-most-out-of-your-threshold-training/
 
-- P-LT-C: `sha256:6344c7ca7efe006e7f84c574b89ec88d8b341bc5a71044bb1a7a74719c38fe2b`
-- P-LT-B: `sha256:b02e94d26fa256dd4769de196a3af28f4d64364bb7e7b46277a6081d94539bc9`
-- P-LT-S: `sha256:2fd5eee82ca89f2feee652d5d0fab6f934aa642a9a6579ce6c51bd0d1a88bdc1`
-- P-INTRO-LT-C: `sha256:e2dfc806f802b8f8db1609119a3d71e1500acb9fa027dceb24bb31a4a64dc7c0`
-- P-INTRO-LT-S: `sha256:d32607a0cd25d3e03fb1ab5ed81d02eb8e29f1e0d994e08caad70f2a0cdad262`
-- P-LT-B-480: `sha256:0a0e871eeba0b8fbd33dda16556491a93e83c32535ccd5600b225223a925f30c`
+- P-LT-C: `sha256:667f4dc7b9cdb2d8fb6071f3cb8571b54fc2ff29d6df61fb22b7e63d4db45871`
+- P-LT-B: `sha256:7a797fd1bab2cac757335de77bd215284abcf8a1d2f782bf60f605f9c80f2377`
+- P-LT-S: `sha256:91f0e993ef32451f762561c5910b5ddc05548e328815eb0d8d5597563dfb371a`
+- P-INTRO-LT-C: `sha256:f8b6db0347344f424a832a2e97962d529134c7cb6ef22a56ec9afc761ecce165`
+- P-INTRO-LT-S: `sha256:6a62745d3675ad2ba8d5d054e186ef1edca78d4a97d8149ace6e2c31268d2124`
+- P-LT-B-480: `sha256:cc0f91cacbc0d989c7c25a09eedfe5fc2bff9dba8e2d7913558af341a789e3d9`
 
 ## 전체 미완 범위
 

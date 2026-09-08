@@ -154,7 +154,21 @@ try {
   for (const example of thresholdExamples) {
     if (example.kind !== "threshold_personal_reference_review_preview") throw Error("MISSING_THRESHOLD_EXAMPLE")
     const p = example.method.protocol, ref = example.method.reference
-    lines.push(`| ${p.id} | ${duration(p.work[0].value)} × ${p.reps}회 | ${p.between ? `${duration(p.between.value)} ${roleLabels[p.between.role]} × ${p.reps - 1}회` : "본운동 내 없음"} | ${ref.secondsPerKm.map(n => n.toFixed(2)).join("~")} | ${ref.secondsPer400m.map(n => n.toFixed(2)).join("~")} |`)
+    const groupParts = parts => {
+      const groups = new Map()
+      for (const part of parts) {
+        const key = JSON.stringify([part.role, part.unit, part.value, part.boundary])
+        const found = groups.get(key)
+        if (found) found.count++
+        else groups.set(key, { ...part, count: 1 })
+      }
+      return [...groups.values()]
+    }
+    const work = groupParts(example.method.instructions.filter(part => part.role === "WORK"))
+      .map(part => `${duration(part.value)} × ${part.count}회`).join("; ")
+    const rest = groupParts(example.method.instructions.filter(part => part.role !== "WORK"))
+      .map(part => `${part.boundary === "BETWEEN_SETS" ? "세트 사이 " : ""}${duration(part.value)} ${roleLabels[part.role]} × ${part.count}회`).join("; ") || "본운동 내 없음"
+    lines.push(`| ${p.id} | ${work} | ${rest} | ${ref.secondsPerKm.map(n => n.toFixed(2)).join("~")} | ${ref.secondsPer400m.map(n => n.toFixed(2)).join("~")} |`)
   }
   lines.push("", "이 공식은 실제 역치 측정이 아닙니다. 입문/분할 구성의 적합성, 날씨, 개인 조건, 원문 주간량 조건과 최종 채택은 별도 검토입니다.",
     "원문: https://news.vdoto2.com/2025/06/get-the-most-out-of-your-threshold-training/", "",

@@ -14,7 +14,7 @@ export function previewPendingThresholdReferenceV3(input: IntervalReferenceInput
     method, explanation,
     pendingReviews: [...new Set([...method.reference.pendingReviews, ...explanation.pending])],
     recordIdentityVerified: false,
-    caveat: "현재 5km 기록으로 계산한 LT 참고 범위예요. 실제 역치를 측정한 값이 아니며, 날씨와 훈련 구성에 따른 검토가 필요해요.",
+    caveat: "입력으로 제공된 5km 기록 값으로 계산한 LT 참고 범위예요. 기록 신원과 현재성은 확인되지 않았어요. 실제 역치를 측정한 값이 아니며, 날씨와 훈련 구성에 따른 검토가 필요해요.",
   }
   return structuredClone({ ...content, contentFingerprint: canonicalJsonFingerprint("pending-threshold-reference-v3", content) })
 }
