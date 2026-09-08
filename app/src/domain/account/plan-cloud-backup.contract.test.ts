@@ -6,6 +6,25 @@ import { generatePlanFromDraft, selectPlanForActivation } from "../plan-beta-flo
 import { RUNTIME_CASES, TODAY, draftFor, saveCurrentRecord } from "../prescription-quality-matrix.test-fixtures"
 
 let savedRow: Record<string, unknown> | null = null
+let serverRows: Record<string, unknown>[] | null = null
+
+function selectQuery() {
+  const filters: [string, unknown][] = []
+  const query = {
+    eq: (key: string, value: unknown) => { filters.push([key, value]); return query },
+    is: (key: string, value: unknown) => { filters.push([key, value]); return query },
+    order: () => query,
+    limit: () => query,
+    maybeSingle: () => {
+      const rows = serverRows ?? (savedRow === null ? [] : [savedRow])
+      const row = rows.filter(item => filters.every(([key, value]) => (
+        value === null ? item[key] == null : item[key] === value
+      ))).sort((a, b) => String(b.saved_at).localeCompare(String(a.saved_at)))[0]
+      return Promise.resolve({ data: row ?? null, error: null })
+    },
+  }
+  return query
+}
 
 vi.mock("../product-features", () => ({
   productFeatures: () => ({
@@ -31,23 +50,7 @@ vi.mock("./supabase-client", () => ({
         savedRow = JSON.parse(JSON.stringify(row)) as Record<string, unknown>
         return Promise.resolve({ data: null, error: null })
       },
-      select: () => ({
-        eq: () => ({
-          is: () => ({
-            order: () => ({
-              limit: () => ({
-                maybeSingle: () => Promise.resolve({
-                  data: savedRow === null ? null : {
-                    plan_id: savedRow.plan_id,
-                    plan_payload: savedRow.plan_payload,
-                  },
-                  error: null,
-                }),
-              }),
-            }),
-          }),
-        }),
-      }),
+      select: selectQuery,
       update: (patch: Record<string, unknown>) => ({
         eq: () => ({
           eq: () => {
@@ -69,11 +72,28 @@ import {
 
 beforeEach(() => {
   savedRow = null
+  serverRows = null
   window.localStorage.clear()
   setActiveLocalAccount("user-1")
 })
 
 describe("active plan cloud backup", () => {
+  it("finds the latest V3 plan when a newer V6 snapshot exists", async () => {
+    const state = planBetaStateV3Schema.parse(stateFixture())
+    serverRows = [
+      { user_id: "user-1", schema_version: 6, plan_id: "multi-v6:newer", plan_payload: { version: 6 }, saved_at: "2026-09-08T02:00:00Z" },
+      { user_id: "user-1", schema_version: 3, plan_id: state.activePlan.candidateId, plan_payload: state, saved_at: "2026-09-08T01:00:00Z" },
+    ]
+    await expect(loadLatestPlanFromServer()).resolves.toEqual({ kind: "loaded", state })
+  })
+
+  it("leaves V6-only accounts to the separate V6 restore flow", async () => {
+    serverRows = [
+      { user_id: "user-1", schema_version: 6, plan_id: "multi-v6:only", plan_payload: { version: 6 }, saved_at: "2026-09-08T02:00:00Z" },
+    ]
+    await expect(loadLatestPlanFromServer()).resolves.toEqual({ kind: "unavailable" })
+  })
+
   it("round-trips a bound V2 structure through the private backup payload", async () => {
     vi.useFakeTimers()
     vi.setSystemTime(TODAY)
