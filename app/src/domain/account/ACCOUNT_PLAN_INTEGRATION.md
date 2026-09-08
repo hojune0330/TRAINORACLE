@@ -60,6 +60,13 @@ For custom independently retained source registries, create `createAccountPlanSe
 
 ## Measured Capacity
 
+Development follow-up (2026-09-08): `account-plan-collection-schema.ts` and
+`account-plan-collection-transfer.ts` now provide a separate partition codec and
+copy/verify/commit protocol. They are NOT connected to this service or the current
+gateway. The limits below still apply to actual current-service writes. See
+`reports/implementation/ACCOUNT_PLAN_PARTITION_DEVELOPMENT_2026-09-08.md` at repo root
+for verification and the remaining signed gateway/SQL/outbox integration.
+
 Synthetic actual versioned fixtures, UTF-8 JSON, distinct immutable plan IDs, no compression. These are fixture measurements, not a guaranteed plan count (real source content and progress vary).
 
 | Version | Packet bytes | Retained entries | Accepted body bytes | Next body bytes |

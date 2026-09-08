@@ -162,6 +162,13 @@ devices, interrupted transitions and new-device restoration. Transported evidenc
 still does not become independent approval. No partition implementation or new
 production migration has been executed at this checkpoint.
 
+Later development on the same date started the pure partition codec and transfer
+protocol. This does not change the frozen checkpoint above or remove the current
+service's byte limit. Follow-up evidence and explicitly unconnected parts are in
+`ACCOUNT_PLAN_PARTITION_DEVELOPMENT_2026-09-08.md` in this directory. Recovery-key
+custody was deferred by the owner; no production operation was performed as part
+of that follow-up.
+
 ### Remaining Operational Work
 
 After engineering review, the outstanding external operations are the exact
