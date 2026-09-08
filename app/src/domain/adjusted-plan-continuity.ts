@@ -7,24 +7,49 @@ import { advancePeriodizationContext } from "./periodization-lineage"
 import { isoShift, isValidIsoDate } from "./dates"
 import { todayISO } from "./journal-store"
 import { hasCanonicalJsonTree } from "./plan-beta-schema"
+import { readStoredAdjustedPlanStateV5, RETAINED_ADJUSTED_PLAN_EVIDENCE_V3 } from "./adjusted-plan-storage-v5"
+import type { RetainedAdjustedPlanEvidenceV3 } from "./selected-adjusted-plan-v3"
+import { readStoredMultiAdjustedPlanV6, RETAINED_MULTI_ADJUSTED_EVIDENCE_V3 } from "./adjusted-plan-storage-v6"
+import type { RetainedMultiAdjustedEvidenceV3 } from "./selected-multi-adjusted-plan-v3"
 
 const rejected = (code: string) => ({ kind: "rejected" as const, code })
 const states: readonly PlanProgressState[] = ["COMPLETED", "RESTED", "SKIPPED", "PAIN_CHECKIN"]
 
 /** Read-only preparation. Re-run under the eventual successor mutation lock;
  * this fingerprint binds context, not permission to write or change workload. */
-export function prepareAdjustedNextFrame(input: {
+type ContinuityRequest = {
   readonly previous: unknown
   readonly expectedFingerprint: string
   readonly nextStartDate: string
   readonly currentCheck: PlanCurrentCheck
-}, retained: readonly RetainedAdjustedPlanEvidence[] = RETAINED_ADJUSTED_PLAN_EVIDENCE,
-evaluatedAt = new Date()) {
+}
+
+export function prepareAdjustedNextFrame(input: ContinuityRequest,
+  retained: readonly RetainedAdjustedPlanEvidence[] = RETAINED_ADJUSTED_PLAN_EVIDENCE, evaluatedAt = new Date()) {
+  return prepareNextFrame(input, value => readStoredAdjustedPlanState(value, retained, evaluatedAt), evaluatedAt,
+    "trainoracle.adjusted-next-frame-context.v1")
+}
+
+export function prepareAdjustedNextFrameV3(input: ContinuityRequest,
+  retained: readonly RetainedAdjustedPlanEvidenceV3[] = RETAINED_ADJUSTED_PLAN_EVIDENCE_V3, evaluatedAt = new Date()) {
+  return prepareNextFrame(input, value => readStoredAdjustedPlanStateV5(value, retained, evaluatedAt), evaluatedAt,
+    "trainoracle.adjusted-next-frame-context.v3")
+}
+
+export function prepareMultiAdjustedNextFrameV3(input: ContinuityRequest,
+  retained: readonly RetainedMultiAdjustedEvidenceV3[] = RETAINED_MULTI_ADJUSTED_EVIDENCE_V3, evaluatedAt = new Date()) {
+  return prepareNextFrame(input, value => readStoredMultiAdjustedPlanV6(value, retained, evaluatedAt), evaluatedAt,
+    "trainoracle.multi-adjusted-next-frame-context.v3")
+}
+
+function prepareNextFrame(input: ContinuityRequest,
+  readState: (value: unknown) => ReturnType<typeof readStoredAdjustedPlanState> | ReturnType<typeof readStoredAdjustedPlanStateV5> | ReturnType<typeof readStoredMultiAdjustedPlanV6>,
+  evaluatedAt: Date, namespace: string) {
   try {
     if (!hasCanonicalJsonTree(input) || Reflect.ownKeys(input).length !== 4
       || !Reflect.ownKeys(input).every(key => typeof key === "string"
         && ["previous", "expectedFingerprint", "nextStartDate", "currentCheck"].includes(key))) return rejected("INVALID_CONTINUITY_INPUT")
-    const read = readStoredAdjustedPlanState(input.previous, retained, evaluatedAt)
+    const read = readState(input.previous)
     if (read.kind !== "loaded") return rejected("INVALID_STORED_PLAN")
     const previous = read.state
     if (previous.contentFingerprint !== input.expectedFingerprint) return rejected("STALE_BASE")
@@ -64,6 +89,6 @@ evaluatedAt = new Date()) {
       executionAuthority: "NONE" as const, storageState: "NOT_SAVED" as const,
     }
     return { kind: "prepared" as const, context: Object.freeze({ ...content,
-      contentFingerprint: canonicalJsonFingerprint("trainoracle.adjusted-next-frame-context.v1", content) }) }
+      contentFingerprint: canonicalJsonFingerprint(namespace, content) }) }
   } catch { return rejected("INVALID_CONTINUITY_INPUT") }
 }

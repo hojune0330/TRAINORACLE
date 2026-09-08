@@ -1,17 +1,66 @@
 import test from "node:test"
 import assert from "node:assert/strict"
-import { METHOD_ADOPTION_PROTOCOLS as protocols, METHOD_ADOPTION_VARIANTS as variants, expandProposal, summarizeProposal, assembleProposalSession } from "./method-adoption-protocols.mjs"
+import { METHOD_ADOPTION_PROTOCOLS as protocols, METHOD_ADOPTION_VARIANTS as variants, expandProposal, summarizeProposal, assembleProposalSession, INTRO_MAIN_SUPPORT_PROPOSAL } from "./method-adoption-protocols.mjs"
 
 const get = id => [...protocols, ...variants].find(p => p.id === id)
 const summary = id => summarizeProposal(get(id))
-test("all sixteen packet rows and eight finite variants remain review only", () => {
-  assert.equal(protocols.length, 16)
+
+test("introduction support comparison is explicit, exact and never replaces the existing default", () => {
+  const p = get("P-INTRO-LT-C"), before = assembleProposalSession(p)
+  const shorter = assembleProposalSession(p, "INTRO_COMPARISON")
+  assert.equal(shorter.supportRef.id, "P-SUPPORT-INTRO-01")
+  assert.equal(shorter.warmup.reduce((sum, part) => sum + part.value, 0), 460)
+  assert.equal(shorter.cooldown.reduce((sum, part) => sum + part.value, 0), 300)
+  assert.equal(shorter.supportSeconds, 760)
+  assert.equal(shorter.totalSeconds, 1240)
+  assert.deepEqual(shorter.main, before.main)
+  assert.equal(shorter.applicabilityReviewed, false)
+  assert.equal(shorter.executionAuthority, "NONE")
+  assert.deepEqual(assembleProposalSession(p), before)
+  assert.equal(before.supportSeconds, 1760)
+})
+
+test("support alternatives retain unknown distance durations and their explicit proposed scope", () => {
+  for (const p of protocols.filter(p => p.id.startsWith("P-INTRO-"))) {
+    const result = assembleProposalSession(p, "INTRO_COMPARISON")
+    assert.equal(result.supportSeconds, 760)
+    const mainSeconds = summarizeProposal(p).totalSeconds
+    assert.equal(result.totalSeconds, mainSeconds === null ? null : mainSeconds + 760)
+  }
+  assert.throws(() => assembleProposalSession(get("P-LT-C"), "INTRO_COMPARISON"), /INTRO_SUPPORT_SCOPE_REQUIRED/)
+  assert.throws(() => assembleProposalSession(get("P-INTRO-LT-C"), "INVALID"), /UNKNOWN_SUPPORT_VARIANT/)
+})
+
+test("support comparison cannot bypass its pending authority", () => {
+  const saved = INTRO_MAIN_SUPPORT_PROPOSAL.executionAuthority
+  try {
+    INTRO_MAIN_SUPPORT_PROPOSAL.executionAuthority = "EXECUTE"
+    assert.throws(() => assembleProposalSession(get("P-INTRO-LT-C"), "INTRO_COMPARISON"), /NOT_PENDING_SUPPORT/)
+  } finally { INTRO_MAIN_SUPPORT_PROPOSAL.executionAuthority = saved }
+})
+test("all twenty-nine packet rows and eight finite variants remain review only", () => {
+  assert.equal(protocols.length, 29)
   assert.equal(variants.length, 8)
-  assert.equal(new Set([...protocols, ...variants].map(p => p.id)).size, 24)
+  assert.equal(new Set([...protocols, ...variants].map(p => p.id)).size, 37)
   for (const p of [...protocols, ...variants]) {
     assert.equal(summarizeProposal(p).executionAuthority, "NONE")
     assert.equal(p.status, "OWNER_ADOPTION_PENDING")
     assert.equal(Object.hasOwn(p, "pairedWith"), false)
+  }
+})
+test("introduction proposals retain independently calculated work and recovery totals", () => {
+  for (const [id, workSeconds, workMeters, recoverySeconds, elapsed] of [
+    ["P-INTRO-LT-C",480,null,null,480], ["P-INTRO-LT-S",480,null,60,540],
+    ["P-INTRO-VO2-2",360,null,180,540], ["P-INTRO-VO2-3",360,null,120,480],
+    ["P-INTRO-ATP-A",null,80,360,null], ["P-INTRO-ATP-T",18,null,360,378],
+    ["P-INTRO-GLY-D",null,400,360,null], ["P-INTRO-GLY-S",null,600,420,null],
+    ["P-INTRO-MIX-T",240,null,240,480], ["P-INTRO-MIX-S",180,null,480,660],
+  ]) {
+    const s = summary(id)
+    assert.deepEqual(s.work, { SECONDS: workSeconds, METERS: workMeters }, id)
+    assert.equal(s.recovery.SECONDS, recoverySeconds, id)
+    assert.equal(s.totalSeconds, elapsed, id)
+    assert.equal(s.executionAuthority, "NONE")
   }
 })
 test("all time-based original totals match the packet independently", () => {
@@ -20,6 +69,8 @@ test("all time-based original totals match the packet independently", () => {
     ["P-LT-C",1200,null,1200], ["P-LT-B",1200,60,1260], ["P-LT-S",1260,120,1380],
     ["P-VO2-2",720,300,1020], ["P-VO2-3",900,480,1380], ["P-VO2-4",960,540,1500],
     ["P-REC-W",900,null,900],
+    ["P-ATP-T",24,540,564],
+    ["P-RHYTHM-T",720,360,1080], ["P-RHYTHM-TS",540,900,1440],
   ]) {
     const s = summary(id)
     assert.equal(s.work.SECONDS, work, id)
@@ -104,6 +155,8 @@ test("owner notation 2x(10x400m) r60 R180 totals 20 reps, 8000m and 1260s", () =
 })
 test("support proposal has explicit final transition and exact elapsed time", () => {
   const session = assembleProposalSession(get("P-LT-B"))
+  assert.equal(session.supportRef.version, "0.2")
+  assert.ok(session.warmup.filter(s => s.role === "WALK").every(s => s.cue === "WALK"))
   assert.equal(session.warmup.reduce((sum, s) => sum + s.value, 0), 1160)
   assert.equal(session.warmup.at(-1).value, 60)
   assert.equal(session.cooldown[0].value, 600)

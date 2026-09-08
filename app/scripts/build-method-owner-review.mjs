@@ -1,0 +1,183 @@
+import { createServer } from "vite"
+import { fileURLToPath } from "node:url"
+import { resolve } from "node:path"
+import { writeFile } from "node:fs/promises"
+
+const root = fileURLToPath(new URL("../../", import.meta.url))
+const server = await createServer({ configFile: false, root, cacheDir: resolve(root, "app/node_modules/.vite-owner-review"), server: { middlewareMode: true }, appType: "custom" })
+try {
+  const { METHOD_ADOPTION_PROTOCOLS, METHOD_ADOPTION_VARIANTS } = await server.ssrLoadModule("/reports/research/method-adoption-protocols.mjs")
+  const { previewPendingMethodExplanation } = await server.ssrLoadModule("/reports/research/method-explanation-preview-v3.ts")
+  const { auditAllPendingMainChoices } = await server.ssrLoadModule("/reports/research/method-choice-coverage-v3.ts")
+  const { previewMethodDurationFit } = await server.ssrLoadModule("/reports/research/method-duration-fit-v3.ts")
+  const { proposeMethodExecutionGuidance } = await server.ssrLoadModule("/reports/research/method-execution-guidance-proposal.mjs")
+  const { previewPendingMethodCombinations } = await server.ssrLoadModule("/reports/research/method-combination-review.mjs")
+  const { buildPendingOwnerReviewBundleV3 } = await server.ssrLoadModule("/reports/research/method-owner-review-bundle-v3.ts")
+  const bundle = buildPendingOwnerReviewBundleV3()
+  const { previewPendingThresholdReferenceV3 } = await server.ssrLoadModule("/reports/research/method-personal-reference-preview-v3.ts")
+  const protocols = [...METHOD_ADOPTION_PROTOCOLS, ...METHOD_ADOPTION_VARIANTS]
+  const text = value => String(value).replaceAll("|", "\\|").replaceAll("\n", " ")
+  const amount = p => p ? `${p.value}${p.unit === "SECONDS" ? "초" : "m"} ${p.role}` : "없음"
+  const number = value => value === null ? "미산출" : String(value)
+  const lines = ["# METHOD_CONFIGURATION_REVIEW_CARDS_V3.md", "", "```yaml",
+    'version: "0.1"', "status: GENERATED_OWNER_REVIEW_DRAFT", "owner_approval: NOT_GRANTED",
+    "runtime_activation: false", `configuration_count: ${protocols.length}`, "```", "",
+    "## 읽는 기준", "",
+    "이 문서는 코드의 검토 초안을 모은 자료입니다. 실제 제공 승인이나 완성된 개인 처방이 아닙니다.",
+    `검토 묶음 지문: \`${bundle.contentFingerprint}\`. 정확한 구성·설명·대상은 METHOD_OWNER_REVIEW_BUNDLE_V3.json에 함께 고정합니다. 지문은 승인이나 과학적 타당성 증명이 아닙니다.`,
+    "공통 에너지 설명은 정확한 용량의 입증과 다릅니다. 본운동 노력 제안은 구간과 연결되지만 아직 수행 대상으로 채택된 값이 아닙니다.",
+    "시간형의 미산출 거리를 0으로 읽지 않습니다. 서로 다른 후보의 총부담이나 효과가 같다는 뜻도 아닙니다.",
+    "재생성: app에서 node scripts/build-method-owner-review.mjs. 생성 문서를 직접 고치지 않고 원본을 수정합니다.", ""]
+  const duration = seconds => seconds === null ? "미산출" : seconds === 0 ? "0초"
+    : [Math.floor(seconds / 60) ? `${Math.floor(seconds / 60)}분` : "", seconds % 60 ? `${seconds % 60}초` : ""].filter(Boolean).join(" ")
+  const roleLabels = { WORK: "달리기", BUILDUP: "가속 접근", WALK: "걷기", JOG: "조깅",
+    EASY_RUN: "쉬운 달리기", WALK_OR_STAND: "걷기 또는 정지", ROLL_ON: "속도를 낮춰 계속 달리기" }
+  const methodLabels = { CONTINUOUS: "연속 달리기", WALK_BREAKS: "걷기 회복 분할주", LONG_SPLIT: "긴 구간 분할주",
+    SHORT_SPLIT: "짧은 구간 분할주", ROLL_ON_400: "400m 리듬 반복", ROLL_ON_SETS_300: "300m 세트 리듬 반복",
+    TIMED_RHYTHM: "시간형 리듬 반복", TIMED_RHYTHM_SETS: "시간형 세트 리듬 반복", TWO_MINUTE: "2분 반복",
+    THREE_MINUTE: "3분 반복", FOUR_MINUTE: "4분 반복", STANDING_ACCELERATION: "서서 출발하는 가속",
+    FLYING_SEGMENT: "가속 후 빠른 구간", TIMED_ACCELERATION: "시간형 가속", UNBROKEN_REPEATS: "거리 반복",
+    SET_REPEATS: "세트형 거리 반복", WALK: "회복 걷기", NO_PLANNED_EXERCISE: "휴식" }
+  const experienceLabels = { NEW_TO_RUNNING: "입문", DEVELOPING: "경험 있음", EXPERIENCED: "경험 많음" }
+  const partLabel = part => `${part.unit === "SECONDS" ? duration(part.value) : `${part.value}m`} ${roleLabels[part.role]}`
+  lines.push(`## 빠르게 비교하는 전체 ${protocols.length}개`, "",
+    "모두 채택 전 제안입니다. 훈련명 링크를 누르면 정확한 대상·구간 설명·근거·남은 검토를 읽을 수 있습니다.",
+    "같은 분류라도 효과·부담이 같다는 뜻이 아니며, 아래 행들은 고정된 A/B 짝이 아닙니다.",
+    "전체 시간은 준비·본운동·회복·정리를 모두 포함합니다. 거리형 미산출은 짧다는 뜻이 아닙니다.", "",
+    "| 훈련 | 본운동 | 반복·세트 회복 | 본운동 노력 제안 | 전체 시간 | 경험 범위 |", "|---|---|---|---|---|---|")
+  for (const p of protocols) {
+    const item = bundle.items.find(item => item.id === p.id)
+    const totals = item.explanation.exactStructure.totals
+    const effort = item.explanation.exactStructure.representation.guidance.effortProposal.work
+    const mainWork = p.work.length ? `${p.work.map(part => partLabel(p.family === "REC" && part.role === "WORK" ? { ...part, role: "WALK" } : part)).join(" + ")} / ${p.reps}회${p.sets > 1 ? `씩 ${p.sets}세트` : ""}` : "계획된 운동 없음"
+    const recovery = [p.between ? `반복 사이 ${partLabel(p.between)}` : "",
+      p.afterEvery ? `매회 뒤 ${partLabel(p.afterEvery)}(마지막 포함)` : "",
+      p.setRest ? `세트 사이 추가 ${partLabel(p.setRest)}` : ""].filter(Boolean).join("; ") || "본운동 내 별도 회복 없음"
+    const allTime = totals && Object.values(totals).every(t => t.totalSeconds !== null)
+      ? duration(Object.values(totals).reduce((sum, t) => sum + t.totalSeconds, 0)) : totals ? "미산출" : "운동 시간 해당 없음"
+    if (!methodLabels[p.method]) throw Error("MISSING_REVIEW_METHOD_LABEL")
+    lines.push(`| [${p.family} · ${methodLabels[p.method]} (${p.id})](#${p.id.toLowerCase()}) | ${mainWork} | ${recovery} | ${effort ? effort.rpe ? `RPE ${effort.rpe.join("~")}` : "고출력·동작의 질, 숫자 미지정" : "해당 없음"} | ${allTime} | ${item.scope.experience.map(x => experienceLabels[x]).join(", ")} |`)
+  }
+  lines.push("", "이 표의 경험 범위는 수행 가능성 보장이 아닙니다. 청소년/성인, 혼자/코치 확인 및 종목의 정확한 제안 범위는 각 상세 카드에 표시합니다.", "")
+  lines.push("## 입문 준비·정리 비교안", "",
+    "기존37개와 위 총시간은 그대로입니다. 아래는 아직 기본값을 바꾸지 않은 별도 코칭 제안이며 새로운 본운동 방법으로 세지 않습니다.",
+    "쉬운 준비5분 → 점진 가속20초2회(사이 걷기1분, 마지막 뒤 걷기1분) → 쉬운 정리5분. 지원 합계12분40초입니다.",
+    "본운동·반복·회복은 바꾸지 않습니다. 개인에게 충분한 준비라고 보장하지 않으며 정확한 채택과 적용성 검토가 필요합니다.",
+    "근거와 한계: SESSION_METHOD_OWNER_ADOPTION_PACKET_2026-09-07.md §30.", "",
+    "| 입문 구성 | 비교안 포함 전체 시간 | 지원 구성 | 상태 |", "|---|---|---|---|")
+  for (const item of bundle.supportAlternatives) {
+    lines.push(`| ${item.protocolId} | ${duration(item.totalSeconds)} | ${item.supportRef.id}@${item.supportRef.version} | 미채택 · 기존값 변경 없음 |`)
+  }
+  lines.push("")
+  for (const p of protocols) {
+    const e = previewPendingMethodExplanation(p)
+    const scope = bundle.items.find(item => item.id === p.id).scope
+    const guidance = proposeMethodExecutionGuidance(p)
+    const main = e.exactStructure.totals?.main
+    lines.push(`## ${p.id}`, "", `- 목적 분류: ${p.family} / 방법: ${p.method}`,
+      `- 제안 대상(미승인): 종목 ${scope.eventDistances.join(", ")}m / 경험 ${scope.experience.join(", ")} / 연령군 ${scope.population.join(", ")} / 선택 ${scope.actor.join(", ")}`,
+      ...(p.id.startsWith("P-INTRO-") ? ["- 입문 범위 검토 제안: 정확한 수치의 초보 대상 검증은 미확립. 기존 공통 준비/정리의 적합성과 구간 수행 가능성을 별도 검토하며 자동 제공하지 않음."] : []),
+      `- 본운동 단위: ${p.work.map(amount).join(" + ") || "계획된 운동 없음"}`,
+      `- 반복: 세트당 ${p.reps}회 / 세트 ${p.sets}개`,
+      `- 반복 사이: ${amount(p.between)}`,
+      `- 매 반복 뒤: ${amount(p.afterEvery)}${p.afterEvery ? " (마지막 반복 포함)" : ""}`,
+      `- 세트 사이 추가 회복: ${amount(p.setRest)}`,
+      `- 원본 구성 지문: \`${e.contentFingerprint}\``, "",
+      "### 목적과 에너지 공급", "", text(e.generalExplanation.profile.purpose), "", text(e.generalExplanation.profile.energyContext), "",
+      "### 기존 강도 기준과 적용 한계", "",
+      e.intensityReview.range ? `현재 엔진 안내: RPE ${e.intensityReview.range.minimum}~${e.intensityReview.range.maximum}` : "RPE 목표: 해당 없음",
+      "", text(e.intensityReview.explanation), "",
+      "### 구성과 회복 이유", "", text(e.methodDesign.work), "", text(e.methodDesign.recovery), "",
+      "### 장단점과 한계", "", text(e.methodDesign.tradeoff), "",
+      ...e.generalExplanation.profile.limitations.map(l => `- ${text(l)}`), "")
+    lines.push("### 구간별 수행 안내 채택 제안", "",
+      "아래 문구는 제품 코칭 제안입니다. 연구에서 입증된 개인 속도나 승인된 운영 강도가 아닙니다.",
+      ...(guidance.methodCue ? [guidance.methodCue] : []), ...(guidance.offReason ? [guidance.offReason] : []),
+      ...[...new Map(guidance.segments.map(s => [s.role, s.instruction])).entries()].map(([role, instruction]) => `- ${role}: ${instruction}`), "")
+    const effort = guidance.effortProposal
+    if (effort.work) lines.push("### 본운동 노력 채택안", "",
+      effort.work.rpe ? `본운동 체감 노력 제안: RPE ${effort.work.rpe.join("~")}` : "고출력·동작의 질 기준: 세션 RPE를 목표 속도로 바꾸지 않음",
+      "", effort.work.cue, "", effort.work.adjustment, "", effort.recovery.cue, "", effort.boundary, "",
+      ...[...new Map(effort.recovery.targets.map(t => [t.role, t])).values()].map(t =>
+        `- ${t.role} 회복 노력: ${t.rpe ? `RPE ${t.rpe.join("~")}` : "숫자 미지정"}. ${t.cue}`), "",
+      "이 수치는 원문에서 복사한 생리학적 경계가 아니라 오너 채택을 요청할 제품 코칭 선택입니다. 개인 초·페이스와 세션 전체 RPE는 별도이며, 아직 운영에 적용하지 않았습니다.", "")
+    if (main) lines.push("### 수량 확인", "", "| 구분 | 값 |", "|---|---|",
+      `| 본운동 거리(m) | ${number(main.workDistanceM)} |`, `| 본운동 시간(초) | ${number(main.workSeconds)} |`,
+      `| 전체 회복 거리(m) | ${number(main.recoveryDistanceM)} |`, `| 전체 회복 시간(초) | ${number(main.recoverySeconds)} |`,
+      `| 거리로 지정된 회복 부분합(m) | ${main.knownRecoveryDistanceM} |`, `| 시간으로 지정된 회복 부분합(초) | ${main.knownRecoverySeconds} |`,
+      `| 본운동 블록 전체 시간(초) | ${number(main.totalSeconds)} |`,
+      `| 준비 구간 시간(초) | ${number(e.exactStructure.totals.warmup.totalSeconds)} |`,
+      `| 정리 구간 시간(초) | ${number(e.exactStructure.totals.cooldown.totalSeconds)} |`, "",
+      "부분합0은 해당 단위로 지정한 회복이 없다는 뜻이지 실제 회복 시간·거리가0이라는 뜻이 아닙니다. 미산출 전체값은 환산하지 않습니다.", "")
+    const fitLabels = { NOT_APPLICABLE: "해당 없음", EXCEEDS_EXISTING_RANGE: "기존 상한 초과", DURATION_UNRESOLVED: "전체 시간 미산출", BELOW_EXISTING_RANGE: "기존 하한 미만", WITHIN_EXISTING_RANGE: "기존 시간 범위 안" }
+    const experiences = [["NEW_TO_RUNNING", "처음 시작"], ["DEVELOPING", "훈련 경험 있음"], ["EXPERIENCED", "훈련 경험 많음"]]
+    lines.push("### 기존 일정 시간과 비교", "", "| 경험 | 기존 범위(분) | 시간 비교 | 최소 초과(초) |", "|---|---|---|---|",
+      ...experiences.filter(([experience]) => scope.experience.includes(experience)).map(([experience, label]) => {
+        const fit = previewMethodDurationFit(p, experience)
+        const range = fit.existingRangeSeconds
+        return `| ${label} | ${range ? `${range.minimum / 60}~${range.maximum / 60}` : "해당 없음"} | ${fitLabels[fit.status]} | ${fit.excessAtLeastSeconds ?? "해당 없음"} |`
+      }), "", "기본 후보의 기존 시간 범위와 비교한 값입니다. 개인의 가능한 시간, 보수적 후보, 앞뒤 훈련 적합성은 별도입니다. 범위 안이어도 제공 승인이 아니며, 범위 밖이라고 운동을 자동 추가하거나 삭제하지 않습니다.", "",
+      "### 공통 설명 근거", "", ...e.generalExplanation.sources.map(s =>
+      `- ${text(s.title)}${s.url ? `: ${s.url}` : ""} / ${text(s.population)} / ${text(s.applicability)}`), "",
+      "### 적용되지 않는 항목", "", ...(e.notApplicable.length ? e.notApplicable.map(item => `- ${item.item}: ${item.reason}`) : ["없음. 해당 훈련의 구성과 회복 근거를 검토해야 합니다."]), "",
+      "### 채택 전 남은 검토", "", ...e.pending.map(item => `- ${item}`), "")
+  }
+  const gaps = auditAllPendingMainChoices().filter(r => r.coverage === "MISSING_DISTINCT_MAIN_OPTIONS")
+  lines.push("## 조합 검토량", "", "아래는 목적이 같은 MAIN 2개 또는 3개를 가진 가상 배치의 구성 조합 수입니다.",
+    "기존 구성 유지, 일부만 변경, 같은 방법 반복 선택, 수치 변형을 포함하고 전부 기존 구성인 경우는 제외합니다.",
+    "종목7개에서의 최솟값~최댓값입니다. 예시 날짜1·4·7은 개수 계산용 주소이지 승인된 주기 배치가 아닙니다.",
+    "이 수치는 생성 가능한 운영 계획 수나 승인된 조합 수가 아닙니다.", "",
+    "| 경험 | 목적 | MAIN 2개 | MAIN 3개 |", "|---|---|---|---|")
+  for (const experience of ["NEW_TO_RUNNING", "DEVELOPING", "EXPERIENCED"]) {
+    for (const family of ["LT", "VO2", "ATP-PC", "GLY", "MIX"]) {
+      const counts = [2, 3].map(n => {
+        const values = [800, 1500, 3000, 5000, 10000, 21097, 42195].map(eventDistanceM =>
+          BigInt(previewPendingMethodCombinations({ eventDistanceM, experience, population: "YOUTH", actor: "SELF" },
+            [1, 4, 7].slice(0, n).map(day => ({ day, slot: "AM", family })), { materializeLimit: 0 }).combinationCount))
+        const min = values.reduce((a, b) => a < b ? a : b), max = values.reduce((a, b) => a > b ? a : b)
+        return min === max ? String(min) : `${min}~${max}`
+      })
+      lines.push(`| ${experience} | ${family} | ${counts[0]} | ${counts[1]} |`)
+    }
+  }
+  lines.push("", "0은 적합한 훈련이 없다는 생리학적 판단이 아니라, 현재 제안 목록에 해당 경험의 상세 구성이 없다는 뜻입니다.",
+    "전체 정책은 실제 원본 범위·배치·상호작용까지 별도로 검토해야 합니다. 이 목록은 정책 지문이나 승인을 만들지 않습니다.", "")
+  const thresholdExamples = protocols.filter(p => p.family === "LT").map(p =>
+    previewPendingThresholdReferenceV3({ protocolId: p.id, eventDistanceM: 5000,
+      performanceSeconds: 1111.5, freshness: "CURRENT", purpose: "RECENT_RESULT" }))
+  lines.push("## LT 참고 페이스 연결 예시", "",
+    "가상 5km 기록 18분31.5초를 사용한 검토 예시입니다. 실제 선수 정보가 아니며 운영 채택 전입니다.",
+    "1마일당24~30초 오프셋을 km로 환산합니다. 표시는 소수 둘째 자리이며 원본 JSON은 반올림하지 않습니다.",
+    "아래 지문은 별도 LT 예시 묶음에 속하며 위37개 구성 승인 지문을 대신하지 않습니다.",
+    "거리 달성이 아니라 지정 시간이 종료 기준입니다. 회복 페이스는 계산하지 않습니다.", "",
+    "| 구성 | 본운동 | 회복 | 1km 참고 초 | 400m 참고 초 |", "|---|---|---|---|---|")
+  for (const example of thresholdExamples) {
+    if (example.kind !== "threshold_personal_reference_review_preview") throw Error("MISSING_THRESHOLD_EXAMPLE")
+    const p = example.method.protocol, ref = example.method.reference
+    const groupParts = parts => {
+      const groups = new Map()
+      for (const part of parts) {
+        const key = JSON.stringify([part.role, part.unit, part.value, part.boundary])
+        const found = groups.get(key)
+        if (found) found.count++
+        else groups.set(key, { ...part, count: 1 })
+      }
+      return [...groups.values()]
+    }
+    const work = groupParts(example.method.instructions.filter(part => part.role === "WORK"))
+      .map(part => `${duration(part.value)} × ${part.count}회`).join("; ")
+    const rest = groupParts(example.method.instructions.filter(part => part.role !== "WORK"))
+      .map(part => `${part.boundary === "BETWEEN_SETS" ? "세트 사이 " : ""}${duration(part.value)} ${roleLabels[part.role]} × ${part.count}회`).join("; ") || "본운동 내 없음"
+    lines.push(`| ${p.id} | ${work} | ${rest} | ${ref.secondsPerKm.map(n => n.toFixed(2)).join("~")} | ${ref.secondsPer400m.map(n => n.toFixed(2)).join("~")} |`)
+  }
+  lines.push("", "이 공식은 실제 역치 측정이 아닙니다. 입문/분할 구성의 적합성, 날씨, 개인 조건, 원문 주간량 조건과 최종 채택은 별도 검토입니다.",
+    "원문: https://news.vdoto2.com/2025/06/get-the-most-out-of-your-threshold-training/", "",
+    ...thresholdExamples.map(e => `- ${e.method.protocol.id}: \`${e.contentFingerprint}\``), "")
+  await writeFile(resolve(root, "reports/review/METHOD_THRESHOLD_REFERENCE_EXAMPLES_V3.json"), JSON.stringify(thresholdExamples, null, 2) + "\n", "utf8")
+  lines.push("## 전체 미완 범위", "", `구조상 두 방법 미확보: ${gaps.length}행(연령군·선택권한 포함).`,
+    "개별 강도, 정확한 용량 근거, 현재 주기 배치, 오너 최종 승인, 운영 연결과 전체 사용자 흐름 검증은 별도입니다.",
+    "검토 카드 수를 완료된 처방 수로 계산하지 않습니다.", "", "[DRAFT_COMPLETE]", "")
+  await writeFile(resolve(root, "reports/review/METHOD_CONFIGURATION_REVIEW_CARDS_V3.md"), lines.join("\n"), "utf8")
+  await writeFile(resolve(root, "reports/review/METHOD_OWNER_REVIEW_BUNDLE_V3.json"), JSON.stringify(bundle, null, 2) + "\n", "utf8")
+  console.log(JSON.stringify({ configurationCount: protocols.length, unresolvedScopeRows: gaps.length, runtimeActivation: false }))
+} finally { await server.close() }

@@ -25,12 +25,18 @@ const exactKeys = (value: object, expected: readonly string[]) => Reflect.ownKey
 
 /** The owner supplies a fresh original candidate. A saved candidate is not authority. */
 export function resolveAdjustedCandidateScope(candidate: PlanCandidate, address: Address, startDate: string) {
+  const scope = resolveQualityCandidateScope(candidate, address, startDate)
+  if (!scope || candidate.sessions.find(s => s.day === address.day && s.slot === address.slot)?.prescription.kind !== "PACE_TARGET") return null
+  return scope
+}
+
+export function resolveQualityCandidateScope(candidate: PlanCandidate, address: Address, startDate: string) {
   if (!hasCanonicalJsonTree(candidate) || !hasCanonicalJsonTree(address) || address === null || typeof address !== "object"
       || !exactKeys(address, ["day", "slot"]) || typeof startDate !== "string" || !isValidIsoDate(startDate)) return null
   const parsed = planAdaptationCandidateSchema.safeParse(candidate)
   if (!parsed.success) return null
   const sessions = parsed.data.sessions.filter(session => session.day === address.day && session.slot === address.slot)
-  if (sessions.length !== 1 || sessions[0]?.role !== "QUALITY" || sessions[0].prescription.kind !== "PACE_TARGET") return null
+  if (sessions.length !== 1 || sessions[0]?.role !== "QUALITY") return null
   const candidateLineageId = hash({ originalCandidateId: candidate.candidateId, originalContent: hash(candidate), startDate })
   return { candidateLineageId, mainSlotId: hash({ candidateLineageId, ...address }) }
 }

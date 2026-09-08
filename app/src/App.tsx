@@ -1,5 +1,5 @@
 import React from "react"
-import { AppShell, useIsMobileShell } from "./AppShell"
+import { AppShell, useIsMobileShell, type AppShellMultiPlanRuntime } from "./AppShell"
 import { productFeatures } from "./domain/product-features"
 import { AppLoadingState } from "./components/AppLoadingState"
 
@@ -9,7 +9,7 @@ const PublicProfilePage = React.lazy(async () => {
   return { default: module.PublicProfilePage }
 })
 
-export default function App() {
+export default function App({ multiPlanRuntime }: { readonly multiPlanRuntime?: AppShellMultiPlanRuntime } = {}) {
   const publicProfileHandle = typeof window === "undefined"
     ? null
     : new URLSearchParams(window.location.search).get("profile")
@@ -21,7 +21,7 @@ export default function App() {
     )
   }
   const appShell = useIsMobileShell()
-  if (appShell) return <AppShell />
+  if (appShell) return <AppShell multiPlanRuntime={multiPlanRuntime} />
   return (
     <React.Suspense fallback={<AppLoadingState fullScreen />}>
       <DesktopWorkspace />

@@ -61,6 +61,7 @@ export async function loadLatestPlanFromServer(): Promise<PlanCloudBackupResult>
       .from("saved_training_plans")
       .select("plan_id, plan_payload")
       .eq("user_id", ownerId)
+      .eq("schema_version", 3)
       .is("archived_at", null)
       .order("saved_at", { ascending: false })
       .limit(1)

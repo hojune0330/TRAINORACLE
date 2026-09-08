@@ -21,6 +21,7 @@ describe("quick session journal contract", () => {
   afterEach(() => {
     cleanup()
     vi.restoreAllMocks()
+    vi.useRealTimers()
   })
 
   it("stores an exact one-tap RPE that is immediately eligible for descriptive analysis", () => {
@@ -172,6 +173,8 @@ describe("quick session journal contract", () => {
   })
 
   it("names the selected future date in the saved receipt", () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date("2026-09-04T12:00:00"))
     render(<QuickSessionForm targetDate="2026-09-08" />)
 
     fireEvent.click(screen.getByRole("button", { name: "오늘은 쉬었어요" }))

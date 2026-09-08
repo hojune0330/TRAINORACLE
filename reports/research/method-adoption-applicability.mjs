@@ -14,12 +14,17 @@ export const PROPOSED_METHOD_SCOPES = [
   ...scope(["P-LT-C", "P-LT-B", "P-LT-S"], events, trained, "MAIN"),
   ...scope(["P-RHYTHM-400"], [3000, 5000, 10000, 21097, 42195], ["EXPERIENCED"], "MAIN"),
   ...scope(["P-RHYTHM-300"], [800, 1500, 3000, 5000], trained, "MAIN"),
+  ...scope(["P-RHYTHM-T", "P-RHYTHM-TS"], events, trained, "MAIN"),
   ...scope(["P-VO2-2", "P-VO2-3", "P-VO2-4"], events, trained, "MAIN"),
   ...scope(["P-ATP-A"], events, trained, "MAIN"),
+  ...scope(["P-ATP-T"], events, trained, "MAIN"),
   ...scope(["P-ATP-F"], events, ["EXPERIENCED"], "MAIN"),
   ...scope(["P-GLY-D", "P-GLY-S"], events, trained, "MAIN"),
   ...scope(["P-REC-W"], events, allExperience, "REC"),
   ...scope(["P-OFF"], events, allExperience, "OFF"),
+  ...scope(["P-INTRO-LT-C", "P-INTRO-LT-S", "P-INTRO-VO2-2", "P-INTRO-VO2-3",
+    "P-INTRO-ATP-A", "P-INTRO-ATP-T", "P-INTRO-GLY-D", "P-INTRO-GLY-S",
+    "P-INTRO-MIX-T", "P-INTRO-MIX-S"], events, ["NEW_TO_RUNNING"], "MAIN"),
 ]
 
 export function previewMethodScope(context) {
@@ -37,10 +42,13 @@ export function previewMethodScope(context) {
     const reasons = []
     if (!s.eventDistances.includes(context.eventDistanceM)) reasons.push("OUTSIDE_PROPOSED_EVENT_SCOPE")
     if (!s.experience.includes(context.experience)) reasons.push("OUTSIDE_PROPOSED_EXPERIENCE_SCOPE")
+    if (!s.population.includes(context.population)) reasons.push("OUTSIDE_PROPOSED_POPULATION_SCOPE")
+    if (!s.actor.includes(context.actor)) reasons.push("OUTSIDE_PROPOSED_ACTOR_SCOPE")
     return {
       id: protocol.id, scopeMatch: reasons.length === 0, reasons,
       replacementRole: s.replacementRole, executionAuthority: "NONE",
-      requiredReviews: ["EXACT_OWNER_ADOPTION", "WHOLE_FRAME_PLACEMENT", "CURRENT_INPUT_AND_SAFETY"],
+      requiredReviews: ["EXACT_OWNER_ADOPTION", "WHOLE_FRAME_PLACEMENT", "CURRENT_INPUT_AND_SAFETY",
+        ...(protocol.id.startsWith("P-INTRO-") ? ["INTRO_SEGMENT_READINESS", "INTRO_SUPPORT_APPLICABILITY", "INTRO_EFFORT_APPLICABILITY"] : [])],
       recordAbsenceExcludes: false,
     }
   })

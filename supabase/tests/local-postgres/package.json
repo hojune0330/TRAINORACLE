@@ -1,0 +1,7 @@
+{
+  "name": "trainoracle-local-db-rehearsal",
+  "private": true,
+  "type": "module",
+  "scripts": { "test": "node --test saved-plans-v6.test.mjs" },
+  "devDependencies": { "@electric-sql/pglite": "0.5.8" }
+}

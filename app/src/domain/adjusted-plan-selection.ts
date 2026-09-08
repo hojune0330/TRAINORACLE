@@ -64,8 +64,10 @@ export function selectAdjustedPlanSuccessor(request: AdjustedPlanSelectionReques
   } catch { return reject("INVALID_ADJUSTED_SELECTION") }
 }
 
-function selectAdjustedPlan(request: AdjustedPlanSelectionRequest,
-  policies: readonly ReviewedAdjustedPlanPolicy[], evaluatedAt: Date, continuation?: AdjustedPlanContinuation) {
+/** Shared current safety/record/original checks for version-specific adjustment selection. */
+export function prepareAdjustedOriginalSelection(request: Omit<AdjustedPlanSelectionRequest, "preparation"> & {
+  readonly preparation: Pick<Preparation, "candidate" | "startDate">
+}, evaluatedAt: Date) {
   try {
     if (!hasCanonicalJsonTree(request) || !Number.isFinite(evaluatedAt.getTime())
         || request.action !== "USER_EXPLICIT" || Reflect.ownKeys(request).length !== 8
@@ -74,7 +76,7 @@ function selectAdjustedPlan(request: AdjustedPlanSelectionRequest,
       return reject("INVALID_ADJUSTED_SELECTION")
     }
     const input = structuredClone(request)
-    const preparation = { ...input.preparation, source: { ...input.preparation.source, nowMs: evaluatedAt.getTime() } }
+    const preparation = input.preparation
     const originals = input.generated.candidates.filter(candidate => candidate.candidateId === preparation.candidate.candidateId)
     if (originals.length !== 1 || hash(originals[0]) !== hash(preparation.candidate)) return reject("STALE_ORIGINAL_CANDIDATE")
     if (input.intake.trainingFocus !== preparation.candidate.selectedEnergyIntent) return reject("SELECTION_INTAKE_CHANGED")
@@ -88,6 +90,18 @@ function selectAdjustedPlan(request: AdjustedPlanSelectionRequest,
     if (base.kind !== "selected") return base
     const parsed = planBetaStateV3Schema.safeParse(base.state)
     if (!parsed.success) return reject("INVALID_ORIGINAL_SELECTION")
+    return { kind: "original_selected" as const, base: parsed.data }
+  } catch { return reject("INVALID_ADJUSTED_SELECTION") }
+}
+
+function selectAdjustedPlan(request: AdjustedPlanSelectionRequest,
+  policies: readonly ReviewedAdjustedPlanPolicy[], evaluatedAt: Date, continuation?: AdjustedPlanContinuation) {
+  try {
+    const original = prepareAdjustedOriginalSelection(request, evaluatedAt)
+    if (original.kind !== "original_selected") return original
+    const input = structuredClone(request)
+    const preparation = { ...input.preparation, source: { ...input.preparation.source, nowMs: evaluatedAt.getTime() } }
+    const intake = original.base.intake
     const review = checkAdjustedPlanReviewPolicy(preparation, intake.experienceBand, policies)
     if (review.kind !== "reviewed_scope") return reject(review.code)
     if (review.candidate.contentFingerprint !== input.expectedCandidateFingerprint) return reject("ADJUSTED_SELECTION_CHANGED")
@@ -95,6 +109,6 @@ function selectAdjustedPlan(request: AdjustedPlanSelectionRequest,
       return reject("ADJUSTED_SUCCESSOR_REQUIRES_CONTINUITY_TRANSACTION")
     }
 
-    return assembleAdjustedPlanSelection(parsed.data, preparation, review, evaluatedAt, continuation)
+    return assembleAdjustedPlanSelection(original.base, preparation, review, evaluatedAt, continuation)
   } catch { return reject("INVALID_ADJUSTED_SELECTION") }
 }

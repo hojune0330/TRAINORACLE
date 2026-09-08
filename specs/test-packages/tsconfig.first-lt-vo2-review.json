@@ -1,0 +1,4 @@
+{
+  "extends": "../../app/tsconfig.json",
+  "include": ["../../reports/review/first-lt-vo2-full-plan-review.ts"]
+}

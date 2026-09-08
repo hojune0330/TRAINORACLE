@@ -4,6 +4,31 @@ import { calculateThresholdReferenceProposal as calculate } from "./threshold-re
 
 const input = { eventDistanceM: 5000, performanceSeconds: 1111, freshness: "CURRENT", purpose: "RECENT_RESULT" }
 
+test("malformed input does not throw or create a reference", () => {
+  for (const value of [undefined, null, [], 1111, "1111", true]) {
+    assert.deepEqual(calculate(value), { kind: "unavailable", executionAuthority: "NONE" })
+  }
+})
+
+test("reference preserves only used inputs and distinguishes arithmetic from applicability", () => {
+  const result = calculate({ ...input, memo: "DO_NOT_COPY", athleteId: "PRIVATE" })
+  assert.deepEqual(result.provenance.input, input)
+  assert.equal(result.provenance.recordIdentityVerified, false)
+  assert.equal(result.provenance.freshnessVerified, false)
+  assert.equal(result.provenance.sourceOffsetUnit, "SECONDS_PER_MILE")
+  assert.equal(result.applicability.status, "NOT_ASSESSED")
+  assert.equal(result.applicability.protocolBound, false)
+  assert.equal(result.applicability.durationAdjustmentApplied, false)
+  assert.equal(result.applicability.environmentAdjustmentApplied, false)
+  assert.equal(result.applicability.populationSuitabilityEstablished, false)
+  assert.ok(result.pendingReviews.includes("EXACT_PROTOCOL_BINDING"))
+  assert.ok(result.pendingReviews.includes("OWNER_ADOPTION"))
+  assert.equal(JSON.stringify(result).includes("DO_NOT_COPY"), false)
+  assert.equal(JSON.stringify(result).includes("PRIVATE"), false)
+  result.provenance.offsets[0] = 999
+  assert.equal(calculate(input).provenance.offsets[0], 24)
+})
+
 test("mile offset is converted before being added to kilometer pace", () => {
   const result = calculate(input)
   assert.equal(result.kind, "research_reference")

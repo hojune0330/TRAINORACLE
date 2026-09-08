@@ -33,6 +33,7 @@ import {
   type AppScreenMotion,
 } from "./domain/screen-motion"
 import { AppLoadingState } from "./components/AppLoadingState"
+import { MultiPlanEvidenceContext } from "./components/MultiPlanEvidenceContext"
 const JOURNAL_REWARD_MESSAGE = {
   AWARDED: "기록한 날 +4P가 반영됐어요.",
   ALREADY_AWARDED: "오늘의 다른 기록도 함께 모였어요. 이 날짜의 4P는 이미 반영돼 있어요.",
@@ -43,7 +44,10 @@ const JOURNAL_REWARD_MESSAGE = {
 const TOAST_READABLE_MS = 4000
 const TOAST_EXIT_MS = 150
 
-export function AppShell() {
+export type AppShellMultiPlanRuntime = Pick<React.ComponentProps<typeof DeferredMobileScreens.PlanBeta>,
+  "multiAdjustmentResolverV3" | "readMultiAdjustedEvidenceV3">
+
+export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: AppShellMultiPlanRuntime } = {}) {
   const [accountScopeRevision, setAccountScopeRevision] = React.useState(0)
   const [v, setV] = React.useState(() => {
     if (!accountFeatureEnabled() || typeof window === "undefined") return INITIAL_VIEW_STATE
@@ -311,6 +315,8 @@ export function AppShell() {
       <>
         <DeferredMobileScreens.PlanProposalInbox />
         <DeferredMobileScreens.PlanBeta
+          multiAdjustmentResolverV3={multiPlanRuntime?.multiAdjustmentResolverV3}
+          readMultiAdjustedEvidenceV3={multiPlanRuntime?.readMultiAdjustedEvidenceV3}
           onManageRecords={() => runViewTransition("push", () => setAthleteRecordsOpen(true))}
           onWriteLog={(entryType) => runViewTransition("tab-backward", () => setV(viewForTab("log", entryType)))}
           onWritePlannedSessionLog={(draft) => runViewTransition("tab-backward", () => setV((state) => viewForPlannedSessionDraft(state, draft)))}
@@ -360,6 +366,7 @@ export function AppShell() {
   }
 
   return (
+    <MultiPlanEvidenceContext.Provider value={multiPlanRuntime?.readMultiAdjustedEvidenceV3}>
     <AppShellFrame
       scrollRegionRef={scrollRegionRef}
       savedToast={savedToast}
@@ -383,6 +390,7 @@ export function AppShell() {
         </div>
       </React.Suspense>
     </AppShellFrame>
+    </MultiPlanEvidenceContext.Provider>
   )
 }
 

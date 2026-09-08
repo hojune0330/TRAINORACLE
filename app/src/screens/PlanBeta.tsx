@@ -65,6 +65,22 @@ import { matchingAdjustmentEntry } from "./plan-beta/adjustment-entry"
 import { AdjustedPlanNextFlow, readOperatingAdjustedEvidence } from "./plan-beta/AdjustedPlanNextFlow"
 import { exportAdjustedPlanBackup } from "../domain/adjusted-plan-backup"
 import { AdjustedPlanImport } from "./plan-beta/AdjustedPlanImport"
+import { AdjustedPlanScheduleV3 } from "./plan-beta/AdjustedPlanScheduleV3"
+import { MultiAdjustedPlanScheduleV3 } from "./plan-beta/MultiAdjustedPlanScheduleV3"
+import { RETAINED_MULTI_ADJUSTED_EVIDENCE_V3 } from "../domain/adjusted-plan-storage-v6"
+import type { RetainedMultiAdjustedEvidenceV3 } from "../domain/selected-multi-adjusted-plan-v3"
+import { RETAINED_ADJUSTED_PLAN_EVIDENCE_V3 } from "../domain/adjusted-plan-storage-v5"
+import type { RetainedAdjustedPlanEvidenceV3 } from "../domain/selected-adjusted-plan-v3"
+import { AdjustedPlanNextFlowV3 } from "./plan-beta/AdjustedPlanNextFlowV3"
+import { matchingAdjustmentEntryV3, type PlanAdjustmentResolverV3, type AdjustmentEntryV3 } from "./plan-beta/adjustment-entry-v3"
+import { AdjustedPlanEditFlowV3 } from "./plan-beta/AdjustedPlanEditFlowV3"
+import { MultiAdjustedPlanEditFlowV3 } from "./plan-beta/MultiAdjustedPlanEditFlowV3"
+import { MultiAdjustedPlanNextFlowV3 } from "./plan-beta/MultiAdjustedPlanNextFlowV3"
+import { MultiPlanCloudControlsV3 } from "./plan-beta/MultiPlanCloudControlsV3"
+import { readCurrentMultiRestoreReviewV3 } from "../domain/multi-plan-restore-review-v3"
+import { matchingMultiAdjustmentEntryV3, type PlanMultiAdjustmentResolverV3, type MultiAdjustmentEditorEntryV3 } from "./plan-beta/multi-adjustment-entry-v3"
+const readOperatingV3Evidence = () => RETAINED_ADJUSTED_PLAN_EVIDENCE_V3
+const readOperatingMultiV3Evidence = () => RETAINED_MULTI_ADJUSTED_EVIDENCE_V3
 
 type AdjustmentEntry = Pick<React.ComponentProps<typeof AdjustedPlanEditFlow>, "seed" | "readReview" | "locks">
 export type PlanAdjustmentResolver = (context: {
@@ -92,9 +108,15 @@ const INTAKE_MOTION_ORDER: readonly IntakeStep[] = [
 
 export function PlanBeta(props: Omit<React.ComponentProps<typeof LegacyPlanBeta>, "onAdjustedStored"> & {
   readonly readAdjustedEvidence?: React.ComponentProps<typeof AdjustedPlanNextFlow>["readEvidence"]
+  readonly readAdjustedEvidenceV3?: () => readonly RetainedAdjustedPlanEvidenceV3[]
+  readonly readMultiAdjustedEvidenceV3?: () => readonly RetainedMultiAdjustedEvidenceV3[]
+  readonly readMultiRestoreReviewV3?: React.ComponentProps<typeof MultiPlanCloudControlsV3>["readRestoreReview"]
+  readonly adjustmentResolverV3?: PlanAdjustmentResolverV3
 }) {
   const readEvidence = props.readAdjustedEvidence ?? readOperatingAdjustedEvidence
-  const readCurrent = React.useCallback(() => readPlanBetaStateFromStorage(readEvidence()), [readEvidence])
+  const readV3Evidence = props.readAdjustedEvidenceV3 ?? readOperatingV3Evidence
+  const readMultiV3Evidence = props.readMultiAdjustedEvidenceV3 ?? readOperatingMultiV3Evidence
+  const readCurrent = React.useCallback(() => readPlanBetaStateFromStorage(readEvidence(), readV3Evidence(), readMultiV3Evidence()), [readEvidence, readV3Evidence, readMultiV3Evidence])
   const [read, setRead] = React.useState(readCurrent)
   const [nextOpen, setNextOpen] = React.useState(false)
   const [importOpen, setImportOpen] = React.useState(false)
@@ -111,7 +133,42 @@ export function PlanBeta(props: Omit<React.ComponentProps<typeof LegacyPlanBeta>
     window.addEventListener("storage", onStorage)
     return () => { unsubscribe(); window.removeEventListener("storage", onStorage) }
   }, [readCurrent])
-  if (importOpen) return <AdjustedPlanImport readEvidence={readEvidence}
+  if (read.kind === "multi_adjusted_v3_loaded" && nextOpen && !importOpen) return <MultiAdjustedPlanNextFlowV3
+    key={`${localAccountScopeSnapshot()}:${read.state.contentFingerprint}`}
+    loaded={read} resolver={props.multiAdjustmentResolverV3} readEvidence={readMultiV3Evidence}
+    onBack={() => { setNextOpen(false); setRead(readCurrent()) }}
+    onSaved={() => { setNextOpen(false); setRead(readCurrent()) }} />
+  if (read.kind === "multi_adjusted_v3_loaded" && !importOpen) return <MultiAdjustedPlanScheduleV3
+    key={`${localAccountScopeSnapshot()}:${read.state.selection.contentFingerprint}`}
+    loaded={{ ...read, kind: "loaded" }} readEvidence={readMultiV3Evidence} onStoredChange={() => setRead(readCurrent())} onImportPlan={() => setImportOpen(true)}
+    onPrepareNext={() => { setRead(readCurrent()); setNextOpen(true) }}
+    returnToSession={props.returnToSession} onWritePlannedSessionLog={props.onWritePlannedSessionLog === undefined ? undefined : draft => {
+      const current = readCurrent()
+      if (current.kind !== "multi_adjusted_v3_loaded" || current.state.contentFingerprint !== read.state.contentFingerprint) {
+        setRead(current); return
+      }
+      props.onWritePlannedSessionLog?.(draft)
+    }} />
+  if (read.kind === "adjusted_v3_loaded" && nextOpen && !importOpen) return <AdjustedPlanNextFlowV3
+    key={`${localAccountScopeSnapshot()}:${read.state.contentFingerprint}`}
+    loaded={read} resolver={props.adjustmentResolverV3} readEvidence={readV3Evidence}
+    onBack={() => { setNextOpen(false); setRead(readCurrent()) }}
+    onSaved={() => { setNextOpen(false); setRead(readCurrent()) }} />
+  if (read.kind === "adjusted_v3_loaded" && !importOpen) return <AdjustedPlanScheduleV3
+    key={`${localAccountScopeSnapshot()}:${read.state.selection.contentFingerprint}`}
+    loaded={{ ...read, kind: "loaded" }} readEvidence={readV3Evidence} onStoredChange={() => setRead(readCurrent())}
+    onPrepareNext={() => {
+      const current = readCurrent(); setRead(current)
+      if (current.kind === "adjusted_v3_loaded" && current.state.contentFingerprint === read.state.contentFingerprint) setNextOpen(true)
+    }}
+    onImportPlan={() => setImportOpen(true)} returnToSession={props.returnToSession} onWritePlannedSessionLog={props.onWritePlannedSessionLog === undefined ? undefined : draft => {
+      const current = readCurrent()
+      if (current.kind !== "adjusted_v3_loaded" || current.state.contentFingerprint !== read.state.contentFingerprint) {
+        setRead(current); return
+      }
+      props.onWritePlannedSessionLog?.(draft)
+    }} />
+  if (importOpen) return <AdjustedPlanImport readEvidence={readEvidence} readEvidenceV3={readV3Evidence} readMultiEvidenceV3={readMultiV3Evidence}
     onBack={() => { setImportOpen(false); setRead(readCurrent()) }} />
   if (read.kind === "adjusted_loaded" && nextOpen) return <AdjustedPlanNextFlow
     key={`${localAccountScopeSnapshot()}:${read.state.contentFingerprint}`}
@@ -142,6 +199,8 @@ export function PlanBeta(props: Omit<React.ComponentProps<typeof LegacyPlanBeta>
     <button type="button" onClick={() => setRead(readCurrent())}>다시 확인</button>
   </section>
   return <><LegacyPlanBeta key={revision} {...props} onAdjustedStored={() => setRead(readCurrent())} />
+    {read.kind === "missing" && <MultiPlanCloudControlsV3 fingerprint={null} readEvidence={readMultiV3Evidence}
+      readRestoreReview={props.readMultiRestoreReviewV3 ?? readCurrentMultiRestoreReviewV3} onCurrentRestored={() => setRead(readCurrent())} />}
     <button className="plan-file-import" type="button" onClick={() => setImportOpen(true)}>개인 계획 파일 불러오기</button></>
 }
 
@@ -151,6 +210,8 @@ function LegacyPlanBeta({
   onWritePlannedSessionLog,
   returnToSession,
   adjustmentResolver,
+  adjustmentResolverV3,
+  multiAdjustmentResolverV3,
   onAdjustedStored,
 }: {
   readonly onWriteLog?: (entryType?: JournalEntryType) => void
@@ -158,9 +219,13 @@ function LegacyPlanBeta({
   readonly onWritePlannedSessionLog?: (draft: PlannedSessionLogDraft) => void
   readonly returnToSession?: PlannedSessionLogDraft["link"]
   readonly adjustmentResolver?: PlanAdjustmentResolver
+  readonly adjustmentResolverV3?: PlanAdjustmentResolverV3
+  readonly multiAdjustmentResolverV3?: PlanMultiAdjustmentResolverV3
   readonly onAdjustedStored: () => void
 }) {
   const [adjusting, setAdjusting] = React.useState<{ entry: AdjustmentEntry; revision: number } | null>(null)
+  const [adjustingV3, setAdjustingV3] = React.useState<{ entry: AdjustmentEntryV3; revision: number } | null>(null)
+  const [adjustingMultiV3, setAdjustingMultiV3] = React.useState<{ entry: MultiAdjustmentEditorEntryV3; revision: number } | null>(null)
   const [stored, setStored] = React.useState<PlanBetaState | null>(
     () => loadPlanBetaState(),
   )
@@ -537,17 +602,33 @@ function LegacyPlanBeta({
     )
   }
 
+  if (adjustingMultiV3 !== null) return <MultiAdjustedPlanEditFlowV3 {...adjustingMultiV3.entry}
+    isCurrentDraft={() => draftRevision.current === adjustingMultiV3.revision}
+    onCancel={() => setAdjustingMultiV3(null)} onSaved={() => { setAdjustingMultiV3(null); onAdjustedStored() }} />
+  if (adjustingV3 !== null) return <AdjustedPlanEditFlowV3 {...adjustingV3.entry}
+    isCurrentDraft={() => draftRevision.current === adjustingV3.revision}
+    onCancel={() => setAdjustingV3(null)} onSaved={() => { setAdjustingV3(null); onAdjustedStored() }} />
   if (adjusting !== null) return <AdjustedPlanEditFlow {...adjusting.entry}
     isCurrentDraft={() => draftRevision.current === adjusting.revision}
     onCancel={() => setAdjusting(null)} onSaved={() => { setAdjusting(null); onAdjustedStored() }} />
 
   if (generated !== null && gate !== null && generatedIntake !== null && generatedEvidence !== null) {
     const adjustmentActions: Record<string, () => void> = {}
-    if (adjustmentResolver !== undefined && currentCheck !== null && !recordConfirmationPending) {
+    if ((adjustmentResolver !== undefined || adjustmentResolverV3 !== undefined || multiAdjustmentResolverV3 !== undefined) && currentCheck !== null && !recordConfirmationPending) {
       for (const candidate of generated.candidates) {
         try {
         const context = { generated, gate, intake: generatedIntake, athleteEvidence: generatedEvidence,
           currentCheck, candidateId: candidate.candidateId, startDate: candidateStartDate }
+        const multiEntry = matchingMultiAdjustmentEntryV3(multiAdjustmentResolverV3, context)
+        if (multiEntry) {
+          adjustmentActions[candidate.candidateId] = () => setAdjustingMultiV3({ entry: multiEntry, revision: draftRevision.current })
+          continue
+        }
+        const entryV3 = matchingAdjustmentEntryV3(adjustmentResolverV3, context)
+        if (entryV3) {
+          adjustmentActions[candidate.candidateId] = () => setAdjustingV3({ entry: entryV3, revision: draftRevision.current })
+          continue
+        }
         const entry = matchingAdjustmentEntry(adjustmentResolver, context)
         if (entry === null) continue
         adjustmentActions[candidate.candidateId] = () => setAdjusting({ entry, revision: draftRevision.current })

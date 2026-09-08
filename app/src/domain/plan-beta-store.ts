@@ -45,6 +45,10 @@ import { readAdjustedOriginalPlans } from "./adjusted-plan-archive"
 import { planHistorySnapshotContent } from "./plan-history-snapshot-content"
 import { readStoredAdjustedPlanState, RETAINED_ADJUSTED_PLAN_EVIDENCE } from "./adjusted-plan-storage-schema"
 import type { RetainedAdjustedPlanEvidence } from "./adjusted-plan-selection"
+import { readStoredAdjustedPlanStateV5, RETAINED_ADJUSTED_PLAN_EVIDENCE_V3 } from "./adjusted-plan-storage-v5"
+import type { RetainedAdjustedPlanEvidenceV3 } from "./selected-adjusted-plan-v3"
+import { readStoredMultiAdjustedPlanV6, RETAINED_MULTI_ADJUSTED_EVIDENCE_V3 } from "./adjusted-plan-storage-v6"
+import type { RetainedMultiAdjustedEvidenceV3 } from "./selected-multi-adjusted-plan-v3"
 export type {
   PlanBetaIntake,
   PlanBetaState,
@@ -66,7 +70,7 @@ export function activePlanBetaStorageKey(): string {
 
 function isAdjustedStoredEnvelope(raw: string | null): boolean {
   if (raw === null) return false
-  try { return JSON.parse(raw)?.version === 4 } catch { return false }
+  try { return [4, 5, 6].includes(JSON.parse(raw)?.version) } catch { return false }
 }
 
 export type PlanStorageResult =
@@ -80,6 +84,8 @@ export type PlanStorageResult =
 export type PlanBetaStateReadResult =
   | { readonly kind: "loaded"; readonly state: PlanBetaState }
   | (Omit<Extract<ReturnType<typeof readStoredAdjustedPlanState>, { kind: "loaded" }>, "kind"> & { readonly kind: "adjusted_loaded" })
+  | (Omit<Extract<ReturnType<typeof readStoredAdjustedPlanStateV5>, { kind: "loaded" }>, "kind"> & { readonly kind: "adjusted_v3_loaded" })
+  | (Omit<Extract<ReturnType<typeof readStoredMultiAdjustedPlanV6>, { kind: "loaded" }>, "kind"> & { readonly kind: "multi_adjusted_v3_loaded" })
   | { readonly kind: "missing" }
   | { readonly kind: "invalid" }
   | { readonly kind: "storage_error" }
@@ -137,13 +143,17 @@ export function loadVersionedPlanBetaState(): PlanBetaState | null {
 
 export function readPlanBetaStateFromStorage(
   retained: readonly RetainedAdjustedPlanEvidence[] = RETAINED_ADJUSTED_PLAN_EVIDENCE,
+  retainedV3: readonly RetainedAdjustedPlanEvidenceV3[] = RETAINED_ADJUSTED_PLAN_EVIDENCE_V3,
+  retainedMultiV3: readonly RetainedMultiAdjustedEvidenceV3[] = RETAINED_MULTI_ADJUSTED_EVIDENCE_V3,
 ): PlanBetaStateReadResult {
-  return readPlanBetaStateForAccount(localAccountScopeSnapshot(), retained)
+  return readPlanBetaStateForAccount(localAccountScopeSnapshot(), retained, retainedV3, retainedMultiV3)
 }
 
 export function readPlanBetaStateForAccount(
   accountScope: string | null,
   retained: readonly RetainedAdjustedPlanEvidence[] = RETAINED_ADJUSTED_PLAN_EVIDENCE,
+  retainedV3: readonly RetainedAdjustedPlanEvidenceV3[] = RETAINED_ADJUSTED_PLAN_EVIDENCE_V3,
+  retainedMultiV3: readonly RetainedMultiAdjustedEvidenceV3[] = RETAINED_MULTI_ADJUSTED_EVIDENCE_V3,
 ): PlanBetaStateReadResult {
   if (typeof window === "undefined") return { kind: "storage_error" }
   const storageKey = accountScopedStorageKeyFor(PLAN_BETA_STORAGE_KEY, accountScope)
@@ -157,6 +167,14 @@ export function readPlanBetaStateForAccount(
 
   try {
     const json: unknown = JSON.parse(raw)
+    if (json !== null && typeof json === "object" && "version" in json && json.version === 6) {
+      const adjusted = readStoredMultiAdjustedPlanV6(json, retainedMultiV3)
+      return adjusted.kind === "loaded" ? { ...adjusted, kind: "multi_adjusted_v3_loaded" } : { kind: "invalid" }
+    }
+    if (json !== null && typeof json === "object" && "version" in json && json.version === 5) {
+      const adjusted = readStoredAdjustedPlanStateV5(json, retainedV3)
+      return adjusted.kind === "loaded" ? { ...adjusted, kind: "adjusted_v3_loaded" } : { kind: "invalid" }
+    }
     if (json !== null && typeof json === "object" && "version" in json && json.version === 4) {
       const adjusted = readStoredAdjustedPlanState(json, retained)
       return adjusted.kind === "loaded" ? { ...adjusted, kind: "adjusted_loaded" } : { kind: "invalid" }

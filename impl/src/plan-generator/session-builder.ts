@@ -28,7 +28,7 @@ export type CandidateSessionBuildInput = {
   readonly qualityDays: readonly number[]
 }
 
-function rangesFor(experienceBand: ExperienceBand): ExperienceRanges {
+export function rangesFor(experienceBand: ExperienceBand): ExperienceRanges {
   switch (experienceBand) {
     case "NEW_TO_RUNNING":
       return {
@@ -71,7 +71,7 @@ function restSession(day: number, slot: PlanSessionSlot = "AM"): PlanSession {
   })
 }
 
-function rpeForIntent(intent: PlannedEnergyIntent): RpeTimeRange["rpe"] {
+export function rpeForIntent(intent: PlannedEnergyIntent): RpeTimeRange["rpe"] {
   switch (intent) {
     case "RECOVERY_INTENT":
       return { minimum: 1, maximum: 2 }
