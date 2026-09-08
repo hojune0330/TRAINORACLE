@@ -29,6 +29,7 @@ jobs:
             runtime-evidence/d9-evaluator/package-lock.json
             impl/package-lock.json
             supabase/tests/local-postgres/package-lock.json
+            app/package-lock.json
 
       - name: Validate reasoning-tier work harness
         run: |
@@ -60,6 +61,10 @@ jobs:
           node specs/test-packages/validate-personalized-prescription-v2-taper-authority.mjs
           node --test specs/test-packages/validate-personalized-prescription-v2-race-placement.test.mjs
           node specs/test-packages/validate-personalized-prescription-v2-race-placement.mjs
+
+      - name: Install shared schema fixture compiler dependencies
+        working-directory: app
+        run: npm ci --ignore-scripts --no-audit --no-fund
 
       - name: Install isolated PostgreSQL rehearsal dependencies
         working-directory: supabase/tests/local-postgres

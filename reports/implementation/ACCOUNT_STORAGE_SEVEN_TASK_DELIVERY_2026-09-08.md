@@ -99,6 +99,14 @@ was skipped because it was a draft PR. New changes require fresh checks.
 
 ### Frozen Implementation Checkpoint
 
+- Checkpoint `ce607ccbc428ba1c7543c88a758c86de0f4dcd19` was committed and pushed to
+  PR #322. Its base was changed to main so the PR #320 cancellation fix is reviewed
+  together; neither PR was merged. The first CI contract job failed because its
+  clean runner lacked the app esbuild dependency used by shared fixture builders.
+  CI now installs the locked app compiler dependencies before the SQL rehearsal.
+  A successful local run on a dependency-populated workstation did not detect
+  this missing clean-runner setup; the failed job is retained as evidence.
+
 - All implementation workers completed their bounded edits and stopped their
   test servers. No production keys or real account data were used.
 - Parent production build and app/browser TypeScript checks passed. Browser
