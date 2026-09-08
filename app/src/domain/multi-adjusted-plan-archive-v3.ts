@@ -33,8 +33,8 @@ export function parseMultiAdjustedOriginalArchiveV3(raw: string | null, retained
 }
 export function readMultiAdjustedOriginalPlansV3(retained = RETAINED_MULTI_ADJUSTED_EVIDENCE_V3, at = new Date()) {
   if (accountPlansEnabled()) {
-    const document = accountPlanService()?.snapshot().confirmedDocument
-    if (!document) return invalid()
+    const view = accountPlanService()?.snapshot(), document = view?.confirmedDocument
+    if (!document || ("historyLoaded" in view && !view.historyLoaded)) return invalid()
     const entries: Entry[] = []
     for (const entry of document.data.plans) {
       if (!entry.archivedAt || entry.snapshot.state.version !== 6) continue

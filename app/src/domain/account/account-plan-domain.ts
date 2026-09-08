@@ -2,6 +2,15 @@ import { accountPlanService, accountPlansEnabled } from "./account-plan-service"
 import { accountPlanEntry, materializeAccountPlan, validateAccountPlanPacket, type AccountPlanPacket } from "./account-plan-document-schema"
 import { canonicalJsonFingerprint } from "@impl/plan-generator/candidate-identity"
 
+/** Full-history consumers must explicitly wait; a current-only projection is not an empty archive. */
+export async function ensureAccountPlanHistory(): Promise<boolean> {
+  if (!accountPlansEnabled()) return true
+  const service = accountPlanService()
+  if (!service) return false
+  const ready = "loadHistory" in service ? await service.loadHistory() : !!service.snapshot().confirmedDocument
+  return ready && accountPlanService() === service && !!service.snapshot().confirmedDocument
+}
+
 /** Capture the account baseline before waiting for the existing domain mutation lock. */
 export function captureAccountPlanWrite(activeKey: string) {
   if (!accountPlansEnabled()) return null
@@ -37,7 +46,9 @@ export function captureAccountPlanWrite(activeKey: string) {
 
 export async function importAccountPlanHistory(states: readonly unknown[], retained: readonly NonNullable<AccountPlanPacket["evidence"]>[], current: () => boolean) {
   const reject = (code: string) => ({ kind: "rejected" as const, code })
-  const service = accountPlanService(), view = service?.snapshot()
+  const service = accountPlanService()
+  if (!await ensureAccountPlanHistory() || accountPlanService() !== service || !current()) return reject("ACCOUNT_PLAN_STALE")
+  const view = service?.snapshot()
   if (!service || !view?.fingerprint || !current()) return reject("ACCOUNT_PLAN_STALE")
   const packets: AccountPlanPacket[] = []
   for (const state of states) {
@@ -63,7 +74,7 @@ export function accountPlanExportStorage(activeKey: string, archiveKey: string, 
   if (!accountPlansEnabled()) return localStorage
   return { getItem(key: string): string | null {
     const view = accountPlanService()?.snapshot(), document = view?.confirmedDocument
-    if (!document) throw Error("Account plan unavailable")
+    if (!document || ("historyLoaded" in view && !view.historyLoaded)) throw Error("Account plan history unavailable")
     if (key === activeKey) return view.currentPlan?.kind === "read_only" ? JSON.stringify(view.currentPlan.packet.state) : null
     if (key !== archiveKey) throw Error("Unexpected plan key")
     const entries = document.data.plans.filter(p => p.archivedAt && p.snapshot.state.version === version)

@@ -3,6 +3,11 @@ import { afterEach, expect, it, vi } from "vitest"
 import { AccountPlanStorageControls } from "./AccountPlanStorageControls"
 
 afterEach(cleanup)
+it("reports partitioned plan count without a false aggregate 500 kB capacity", () => {
+  render(<AccountPlanStorageControls status="READY" collectionCount={18} onRetry={vi.fn()} />)
+  expect(screen.getByText(/계정에 보관한 계획 18개/u)).toBeVisible()
+  expect(screen.queryByText(/kB/u)).toBeNull()
+})
 it("distinguishes pending, failed and evidence-required state without an activation control", () => {
   const retry = vi.fn()
   const ui = render(<AccountPlanStorageControls status="PENDING" onRetry={retry} />)

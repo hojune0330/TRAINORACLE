@@ -1,4 +1,7 @@
 import React from "react"
+import { ensureAccountPlanHistory } from "../../domain/account/account-plan-domain"
+import { localAccountScopeSnapshot } from "../../domain/account/local-account-scope"
+import { onLocalJournalScopeChange } from "../../domain/account/local-journal-ownership"
 import { accountPlansEnabled } from "../../domain/account/account-plan-service"
 import { Check, CircleMinus, RefreshCw, HeartPulse, PenLine, Download, FileUp, ArrowRight } from "lucide-react"
 import type { readStoredAdjustedPlanStateV5 } from "../../domain/adjusted-plan-storage-v5"
@@ -26,6 +29,15 @@ export function AdjustedPlanScheduleV3({ loaded, readEvidence, onStoredChange, o
   const [day, setDay] = React.useState(() => resolveCurrentPlannedSession(plan, returnToSession)?.day
     ?? days.find(d => isoShift(start, d - 1) === todayISO()) ?? days[0]!)
   const [error, setError] = React.useState<string | null>(null), [saving, setSaving] = React.useState(false)
+  const [exporting, setExporting] = React.useState(false), exportBusy = React.useRef(false)
+  const mounted = React.useRef(true), exportEpoch = React.useRef(0)
+  React.useEffect(() => {
+    mounted.current = true
+    const unsubscribe = onLocalJournalScopeChange(() => {
+      exportEpoch.current++; exportBusy.current = false; setExporting(false)
+    })
+    return () => { mounted.current = false; exportEpoch.current++; unsubscribe() }
+  }, [])
   const date = isoShift(start, day - 1), explanation = loaded.explanation
   return <section className="plan-active adjusted-plan-schedule" aria-labelledby="adjusted-v3-title">
     <h1 id="adjusted-v3-title">내 훈련 일정</h1><p>{start}부터 · {days.length}일 일정</p>
@@ -70,16 +82,33 @@ export function AdjustedPlanScheduleV3({ loaded, readEvidence, onStoredChange, o
       <ArrowRight size={18} aria-hidden="true" />다음 훈련 주기 준비</button>}
     <details><summary>저장과 이용 안내</summary><p>{accountPlansEnabled() ? "계정에서 확인한 계획이에요. 미전송 변경은 계정 저장 확인과 별도로 표시해요." : "현재 이 기기에 저장된 계획이에요. 서버 보관은 아직 연결 중이에요."}</p>
       <p>개인 보관 파일에는 페이스 계산에 사용한 기록과 진행 상태가 포함돼요. 메모는 포함하지 않아요. 다른 사람에게 공유하지 마세요.</p>
-      <button type="button" onClick={() => {
+      <button type="button" disabled={exporting} aria-busy={exporting} onClick={async () => {
+        if (exportBusy.current) return
+        const account = localAccountScopeSnapshot(), epoch = exportEpoch.current
+        const current = () => mounted.current && epoch === exportEpoch.current && account === localAccountScopeSnapshot()
+        exportBusy.current = true; setExporting(true); setError(null)
         let url: string | undefined
         try {
-          const result = exportAdjustedPlanBackupV3(loaded.state.contentFingerprint, readEvidence())
+          const ready = await ensureAccountPlanHistory()
+          if (!current()) return
+          if (!ready) { setError("전체 계획 이력을 확인하지 못해 파일을 만들지 않았어요. 다시 시도해 주세요."); return }
+          const evidence = readEvidence()
+          if (!current()) return
+          const result = exportAdjustedPlanBackupV3(loaded.state.contentFingerprint, evidence)
+          if (!current()) return
           if (result.kind !== "exported") { setError("계획 원본을 확인하지 못해 파일을 만들지 않았어요."); return }
           url = URL.createObjectURL(new Blob([result.raw], { type: "application/json" }))
           const link = document.createElement("a")
-          link.href = url; link.download = `trainoracle-plan-${todayISO()}.json`; link.click(); setError(null)
-        } catch { setError("계획 파일을 내려받지 못했어요. 저장된 계획은 그대로예요.") }
-        finally { if (url) { const savedUrl = url; setTimeout(() => URL.revokeObjectURL(savedUrl), 1000) } }
+          link.href = url; link.download = `trainoracle-plan-${todayISO()}.json`
+          if (!current()) return
+          link.click()
+          if (current()) setError(null)
+        } catch { if (current()) setError("계획 파일을 내려받지 못했어요. 저장된 계획은 그대로예요.") }
+        finally {
+          if (url) { const savedUrl = url; setTimeout(() => URL.revokeObjectURL(savedUrl), 1000) }
+          if (epoch === exportEpoch.current) exportBusy.current = false
+          if (current()) setExporting(false)
+        }
       }}><Download size={18} aria-hidden="true" />개인 보관용 계획 파일 받기</button>
       {onImportPlan && <button type="button" onClick={onImportPlan}><FileUp size={18} aria-hidden="true" />개인 계획 파일 불러오기</button>}
     </details>

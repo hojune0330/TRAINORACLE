@@ -1,4 +1,7 @@
 import React from "react"
+import { ensureAccountPlanHistory } from "../../domain/account/account-plan-domain"
+import { localAccountScopeSnapshot } from "../../domain/account/local-account-scope"
+import { onLocalJournalScopeChange } from "../../domain/account/local-journal-ownership"
 import { RETAINED_ADJUSTED_PLAN_EVIDENCE } from "../../domain/adjusted-plan-storage-schema"
 import type { RetainedAdjustedPlanEvidence } from "../../domain/selected-adjusted-plan-content"
 import { accountPlansEnabled } from "../../domain/account/account-plan-service"
@@ -33,6 +36,15 @@ export function AdjustedPlanSchedule({ loaded, onWritePlannedSessionLog, returnT
   })
   const [error, setError] = React.useState<string | null>(null)
   const [saving, setSaving] = React.useState(false)
+  const [exporting, setExporting] = React.useState(false), exportBusy = React.useRef(false)
+  const mounted = React.useRef(true), exportEpoch = React.useRef(0)
+  React.useEffect(() => {
+    mounted.current = true
+    const unsubscribe = onLocalJournalScopeChange(() => {
+      exportEpoch.current++; exportBusy.current = false; setExporting(false)
+    })
+    return () => { mounted.current = false; exportEpoch.current++; unsubscribe() }
+  }, [])
   const date = isoShift(start, day - 1)
   return <section className="plan-active adjusted-plan-schedule" aria-labelledby="adjusted-plan-title">
     <h1 id="adjusted-plan-title">내 훈련 일정</h1>
@@ -83,17 +95,31 @@ export function AdjustedPlanSchedule({ loaded, onWritePlannedSessionLog, returnT
       <p>이 화면의 수치는 저장 당시의 계획이며, 지금 몸 상태에 대한 새 판단이나 훈련 시작 승인은 아니에요.</p>
       {onExportPlan && <>
         <p>개인 보관 파일에는 페이스 계산에 사용한 기록과 훈련 진행 상태가 포함돼요. 메모는 포함하지 않아요. 다른 사람에게 공유하지 마세요. 불러온 계획은 과거 원본으로 보관하며 현재 일정으로 자동 적용하지 않아요.</p>
-        <button type="button" onClick={() => {
-          const result = onExportPlan()
-          if (result.kind !== "exported") { setError("계획 원본을 확인하지 못해 파일을 만들지 않았어요."); return }
+        <button type="button" disabled={exporting} aria-busy={exporting} onClick={async () => {
+          if (exportBusy.current) return
+          const account = localAccountScopeSnapshot(), epoch = exportEpoch.current
+          const current = () => mounted.current && epoch === exportEpoch.current && account === localAccountScopeSnapshot()
+          exportBusy.current = true; setExporting(true); setError(null)
           let url: string | undefined
           try {
+            const ready = await ensureAccountPlanHistory()
+            if (!current()) return
+            if (!ready) { setError("전체 계획 이력을 확인하지 못해 파일을 만들지 않았어요. 다시 시도해 주세요."); return }
+            const result = onExportPlan()
+            if (!current()) return
+            if (result.kind !== "exported") { setError("계획 원본을 확인하지 못해 파일을 만들지 않았어요."); return }
             url = URL.createObjectURL(new Blob([result.raw], { type: "application/json" }))
             const link = document.createElement("a")
             link.href = url; link.download = `trainoracle-plan-${todayISO()}.json`
-            link.click(); setError(null)
-          } catch { setError("계획 파일을 내려받지 못했어요. 저장된 계획은 그대로예요.") }
-          finally { if (url) { const downloadUrl = url; window.setTimeout(() => URL.revokeObjectURL(downloadUrl), 1000) } }
+            if (!current()) return
+            link.click()
+            if (current()) setError(null)
+          } catch { if (current()) setError("계획 파일을 내려받지 못했어요. 저장된 계획은 그대로예요.") }
+          finally {
+            if (url) { const downloadUrl = url; window.setTimeout(() => URL.revokeObjectURL(downloadUrl), 1000) }
+            if (epoch === exportEpoch.current) exportBusy.current = false
+            if (current()) setExporting(false)
+          }
         }}><Download size={18} aria-hidden="true" />개인 보관용 계획 파일 받기</button>
       </>}
       {onImportPlan && <button type="button" onClick={onImportPlan}>개인 계획 파일 불러오기</button>}

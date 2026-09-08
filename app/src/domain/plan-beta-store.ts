@@ -457,7 +457,9 @@ export async function archiveAndClearActivePlanWithLock(
 
 export function loadPreviousIntake(): StoredPlanBetaIntake | null {
   if (accountPlansEnabled()) {
-    const entries = accountPlanService()?.snapshot().confirmedDocument?.data.plans ?? []
+    const view = accountPlanService()?.snapshot()
+    if (!view?.confirmedDocument || ("historyLoaded" in view && !view.historyLoaded)) return null
+    const entries = view.confirmedDocument.data.plans
     const last = entries.filter(p => p.archivedAt !== null).sort((a, b) => b.archivedAt!.localeCompare(a.archivedAt!))[0]
     return last ? last.snapshot.state.version === 3 ? last.snapshot.state.intake : last.snapshot.state.selection.intake : null
   }
@@ -565,8 +567,8 @@ function loadPlanHistory(): readonly StoredPlanHistory[] {
 
 function readPlanHistory(): readonly StoredPlanHistory[] | null {
   if (accountPlansEnabled()) {
-    const document = accountPlanService()?.snapshot().confirmedDocument
-    if (!document) return null
+    const view = accountPlanService()?.snapshot(), document = view?.confirmedDocument
+    if (!document || ("historyLoaded" in view && !view.historyLoaded)) return null
     return document.data.plans.flatMap(entry => {
       const packet = materializeAccountPlan(entry)
       return entry.archivedAt && packet.state.version === 3

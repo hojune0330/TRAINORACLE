@@ -48,7 +48,7 @@ export function mockRecordServer<T = AccountJournalRecord>() {
               return {
                 auth: { getSession: async () => ({ data: { session: { user: { id: activeLocalAccount() } } }, error: null }) },
                 functions: { invoke: async (_name, options) => {
-                  const response = await fetch('/__record_api__', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+                  const response = await fetch(_name === 'account-plan-collection' ? '/__collection_api__' : '/__record_api__', { method: 'POST', headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ ownerId: activeLocalAccount(), request: options.body }) });
                   return response.ok ? { data: await response.json(), error: null } : { data: null, error: { context: response } };
                 } }

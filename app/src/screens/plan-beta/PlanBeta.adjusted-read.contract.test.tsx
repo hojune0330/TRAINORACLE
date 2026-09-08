@@ -97,7 +97,7 @@ it("downloads a separate personal plan file only after the explicit download act
     expect(create).not.toHaveBeenCalled()
     fireEvent.click(screen.getByText("저장과 이용 안내"))
     expect(screen.getByText(/현재 일정으로 자동 적용하지 않아요/)).toBeVisible()
-    fireEvent.click(screen.getByRole("button", { name: "개인 보관용 계획 파일 받기" }))
+    await act(async () => { fireEvent.click(screen.getByRole("button", { name: "개인 보관용 계획 파일 받기" })) })
     expect(create).toHaveBeenCalledTimes(1)
     expect(click).toHaveBeenCalledTimes(1)
     expect(JSON.parse(localStorage.getItem(activePlanBetaStorageKey())!).selection).toEqual(saved.state.selection)

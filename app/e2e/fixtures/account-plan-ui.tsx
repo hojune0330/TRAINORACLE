@@ -1,4 +1,8 @@
 import React from "react"
+import "../../../colors_and_type.css"
+import "../../../colors_and_type_journal.css"
+import "../../src/styles/app.css"
+import "../../src/styles/plan-beta.css"
 import { createRoot } from "react-dom/client"
 import { PlanBeta } from "../../src/screens/PlanBeta"
 import { Home } from "../../src/screens/Home"

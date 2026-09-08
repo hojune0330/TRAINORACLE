@@ -44,7 +44,7 @@ it("does not replace an unavailable old occurrence with the current plan", async
   expect(readJournalOriginalPlan(entry).kind).toBe("missing")
   render(<JournalOriginalPlan entry={entry} />)
   await open()
-  await screen.findByText(/계획 원본이 기기에 없어요/u)
+  await screen.findByText(/계획 원본을 찾지 못했어요/u)
   expect(screen.queryByRole("button", { name: /원본 상세/u })).toBeNull()
 })
 
@@ -61,7 +61,7 @@ it("does not label an unreadable current plan as an absent original", async () =
   render(<JournalOriginalPlan entry={entry} />)
   await open()
   await screen.findByText(/계획을 읽지 못했어요/u)
-  expect(screen.queryByText(/계획 원본이 기기에 없어요/u)).toBeNull()
+  expect(screen.queryByText(/계획 원본을 찾지 못했어요/u)).toBeNull()
   expect(localStorage.getItem("trainoracle.plan-beta.v1")).toBe("{broken")
 })
 

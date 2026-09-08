@@ -1,8 +1,48 @@
-# Task4 Account PLAN Integration
+# Account PLAN Integration
 
-Development unit only. No production switch, commit, secret access, account-journal core edit, or App.tsx edit.
+Development only. No production switch, real key provisioning, production DB migration or deployment.
 
-## Server Contract
+## Current Partitioned Runtime (2026-09-08)
+
+`accountPlanService()` now creates `createAccountPlanCollectionService` behind the existing
+account-journal feature gate. `createAccountPlanService` remains the monolithic legacy
+implementation for tests and exact old-outbox reconciliation. It is not a fallback writer
+once an authenticated collection exists.
+
+- SQL: `0037_account_plan_collection.sql`; Edge: `account-plan-collection`.
+- Physical immutable snapshot/progress parts remain at most 500,000 UTF-8 bytes. The
+  account index retains at most 100 plans without an aggregate 500,000-byte body limit.
+- Authenticated gateway actions: `readIndex`, `readPart`, `receipt`, `stage`, `commit`.
+  JWT owner, consent, existing feature gate, key material and signed SQL requests are
+  checked independently. Hashes and downloaded evidence never grant execution authority.
+- `mutate_account_plan_collection_attested` shares the legacy owner lock. It checks
+  references, revision, previous index/current pointer and immutable history before
+  atomically saving index/current pointer/receipt. Staging alone never activates a plan.
+- `hydrate()` fetches the index and current snapshot/progress first. `snapshot()` adds
+  `historyLoaded`, `historyStatus`, `totalPlans`, `migrationRequired`, `legacyPending`.
+  Its `confirmedDocument` may be a current-only projection, never a complete archive.
+- `loadHistory()` coalesces calls and yields between entries. `loadPlan(id)` reads one
+  referenced original without changing the current pointer or asserting full history.
+  History failure does not clear the confirmed current projection.
+- Full-history readers and exports must await `ensureAccountPlanHistory()`. Synchronous
+  archive readers reject a partial projection. PlanBeta requests history for archived
+  originals/new-plan continuity; JournalOriginalPlan requests it on comparison expansion.
+- The encrypted durable outbox stores parts and a small manifest separately. Retry keeps
+  the same immutable operation. Exact receipt replay settles only that operation and
+  cannot regress a newer observed server revision. A-B-A closes the old service instance.
+- `migrateLegacy()` copies the exact authenticated legacy document and revision; the old
+  document stays intact. Source-change recovery preserves the abandoned operation and
+  reopens the refreshed source for an explicit new migration.
+- An old owner-scoped local outbox blocks silent cutover. Its pending/conflict bytes must
+  be reconciled or explicitly preserved before collection writes. Another device's prior
+  cutover must not reopen the retired monolithic server writer.
+
+See `reports/implementation/ACCOUNT_PLAN_COLLECTION_INTEGRATION_2026-09-08.md` for exact
+executed tests, review findings and the remaining operational boundary. The sections
+below retain the earlier monolithic contract and measurements for migration reference;
+their single-document capacity is not the new collection's aggregate limit.
+
+## Legacy Server Contract
 
 - Import `validateAccountPlanDocument` and `validateAccountPlanDocumentUpdate` from `account-plan-document-schema.ts` into the parent-owned account-state aggregator.
 - Envelope: `{ version: 3, state: "ACCOUNT_STATE", kind: "PLAN", data: { schemaVersion: 1, currentPlanId, plans } }`.
@@ -12,7 +52,7 @@ Development unit only. No production switch, commit, secret access, account-jour
 - Update validation preserves all previous immutable snapshots and archived entries. Current pointer, progress, and archive change in one server CAS revision.
 - Build/check with the parent-owned `node scripts/build-account-state-validator.mjs [--check]`. The portable test proves no Supabase, live journal/plan store, or plan-beta-flow dependency is reachable.
 
-## Parent Runtime Calls
+## Legacy Runtime Calls
 
 `accountPlanService()` returns the current owner-scoped singleton when the existing account journal development flag is enabled. It subscribes to account scope changes and closes the old buffer without deleting persisted bytes. Mount/hydrate in the parent account lifecycle, not only on the plan tab.
 
@@ -50,7 +90,7 @@ For custom independently retained source registries, create `createAccountPlanSe
 - Unsupported IndexedDB initialization is FAILED, not empty or a legacy writer fallback. Controlled write rejections persist as REJECTED across mutation, import, retry and hydration; pending bytes remain intact, with no automatic repeated submission.
 - Import captures deep-cloned packets synchronously before queued/auth work. Duplicate immutable plan IDs with different progress reject the whole import as HISTORY_CONFLICT. Capacity failures are distinct CAPACITY results.
 
-## Remaining Boundaries
+## Historical Boundaries Before Collection Integration
 
 - Independent approved retained evidence retrieval, complete archived-template version distribution, actual A/B authentication/production gateway encryption, and real two-device production verification are not claimed by local mock-server tests.
 - The existing independent approved registries are empty: current-build accepted exact sources were not available to populate them. Historical display works, but restored adjusted plans are not thereby usable for starting training.
@@ -58,7 +98,7 @@ For custom independently retained source registries, create `createAccountPlanSe
 - Account successor branches are connected to existing fresh validators; full V3-V6 successor UI end-to-end coverage is not claimed by the initial/progress/archive UI tests below.
 - Stored document limits reject rather than prune. Full 18-frame / 24-week cloud retention is BLOCKED by the current single-document byte cap. A separately reviewed partitioned immutable-plan collection plus CAS pointer is the concrete follow-up; no cap increase or eviction is implemented.
 
-## Measured Capacity
+## Historical Monolithic Capacity
 
 Development follow-up (2026-09-08): `account-plan-collection-schema.ts` and
 `account-plan-collection-transfer.ts` now provide a separate partition codec and

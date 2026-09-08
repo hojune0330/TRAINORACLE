@@ -39,8 +39,8 @@ export function parseAdjustedOriginalArchive(raw: string | null, retained: reado
 
 export function readAdjustedOriginalPlans(retained = RETAINED_ADJUSTED_PLAN_EVIDENCE, now = new Date()) {
   if (accountPlansEnabled()) {
-    const document = accountPlanService()?.snapshot().confirmedDocument
-    if (!document) return invalid()
+    const view = accountPlanService()?.snapshot(), document = view?.confirmedDocument
+    if (!document || ("historyLoaded" in view && !view.historyLoaded)) return invalid()
     const entries: Entry[] = []
     for (const entry of document.data.plans) {
       if (!entry.archivedAt || entry.snapshot.state.version !== 4) continue

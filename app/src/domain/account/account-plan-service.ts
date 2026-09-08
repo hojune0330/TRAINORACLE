@@ -1,4 +1,5 @@
 import { z } from "zod"
+import { createAccountPlanCollectionService, type AccountPlanCollectionService } from "./account-plan-collection-service"
 import { accountJournalPreviewEnabled, requestAccountDocument } from "./account-journal-api"
 import { createAccountDocumentBuffer, type AccountJournalDraftBuffer, type AccountJournalConflictBuffer } from "./account-journal-draft-buffer"
 import { flushAccountJournalDraft, type DraftTransport } from "./account-journal-sync"
@@ -245,7 +246,7 @@ export function createAccountPlanService(input: {
   }
 }
 
-export type AccountPlanService = ReturnType<typeof createAccountPlanService>
+export type AccountPlanService = ReturnType<typeof createAccountPlanService> | AccountPlanCollectionService
 let singleton: AccountPlanService | null = null, owner: string | null = null, unsubscribe: (() => void) | null = null
 export function accountPlansEnabled() { return accountJournalPreviewEnabled() && activeLocalAccount() !== null }
 export function disposeAccountPlans() {
@@ -258,7 +259,7 @@ export function accountPlanService(): AccountPlanService | null {
   if (!user || !accountPlansEnabled()) { disposeAccountPlans(); return null }
   if (owner !== user || !singleton) {
     disposeAccountPlans(); owner = user
-    singleton = createAccountPlanService({ ownerId: user, isCurrent: () => owner === user && activeLocalAccount() === user && accountPlansEnabled(),
+    singleton = createAccountPlanCollectionService({ ownerId: user, isCurrent: () => owner === user && activeLocalAccount() === user && accountPlansEnabled(),
       changed: () => window.dispatchEvent(new Event(ACCOUNT_PLAN_EVENT)) })
     unsubscribe = onLocalJournalScopeChange(disposeAccountPlans)
   }

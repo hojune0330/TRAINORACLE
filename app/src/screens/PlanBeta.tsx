@@ -1,8 +1,10 @@
 import React from "react"
-import { ACCOUNT_PLAN_EVENT, accountPlanService } from "../domain/account/account-plan-service"
+import { ACCOUNT_PLAN_EVENT, accountPlanService, accountPlansEnabled } from "../domain/account/account-plan-service"
+import { ensureAccountPlanHistory } from "../domain/account/account-plan-domain"
 import { useAccountPlanRuntime } from "./plan-beta/useAccountPlanRuntime"
 import { AccountPlanStorageControls } from "./plan-beta/AccountPlanStorageControls"
 import { AccountPlanHistoricalView } from "./plan-beta/AccountPlanHistoricalView"
+import { AccountPlanLegacyRecovery } from "./plan-beta/AccountPlanLegacyRecovery"
 import { materializeAccountPlan, accountPlanCapacity } from "../domain/account/account-plan-document-schema"
 import { AlertTriangle, RotateCcw } from "lucide-react"
 import type {
@@ -115,14 +117,34 @@ export function PlanBeta(props: React.ComponentProps<typeof PlanBetaContent>) {
   const service = accountPlanService(), { view, retry } = useAccountPlanRuntime(service)
   const [error, setError] = React.useState<string | null>(null)
   const [archiveReview, setArchiveReview] = React.useState<{ fingerprint: string; planId: string } | null>(null)
+  React.useEffect(() => { setArchiveReview(null); setError(null) }, [service])
   const historical = view?.currentPlan?.kind === "evidence_required" ? view.currentPlan.packet : null
+  const collection = view && "historyLoaded" in view ? view : null
+  const needsHistoryForNewPlan = !!collection && !collection.currentPlan && !collection.historyLoaded && collection.totalPlans > 0
+  React.useEffect(() => {
+    if (needsHistoryForNewPlan && collection?.historyStatus === "IDLE") void ensureAccountPlanHistory()
+  }, [needsHistoryForNewPlan, collection?.historyStatus])
+  const historyCount = collection?.totalPlans ?? view?.confirmedDocument?.data.plans.length ?? 0
   return <>
     {view && <AccountPlanStorageControls status={view.status} evidenceRequired={historical !== null}
-      capacity={view.document ? accountPlanCapacity(view.document) : undefined}
+      capacity={!collection && view.document ? accountPlanCapacity(view.document) : undefined}
+      collectionCount={collection?.totalPlans}
+      retryAvailable={!collection?.legacyPending}
       onRetry={() => { void (view.status === "PENDING" ? retry() : service?.hydrate()) }}
-      onUseServer={() => { if (service && view.fingerprint) void service.useServerCurrent(view.fingerprint).then(result =>
-        setError(result === "ACCOUNT" ? null : "서버 계획을 확인하지 못했어요. 두 수정본은 그대로 보존돼 있어요.")) }} />}
+      onUseServer={collection?.legacyPending ? undefined : () => { if (service && view.fingerprint) void service.useServerCurrent(view.fingerprint).then(result => {
+        if (accountPlanService() === service) setError(result === "ACCOUNT" ? null : "서버 계획을 확인하지 못했어요. 두 수정본은 그대로 보존돼 있어요.")
+      }) }} />}
     {error && <p role="alert">{error}</p>}
+    {collection?.currentPlan && collection.historyStatus === "FAILED" && <p role="alert">이전 계획을 읽지 못해 다음 계획 준비를 멈췄어요. 현재 계획은 그대로 사용할 수 있어요. 다시 시도해 주세요.</p>}
+    {collection?.legacyPending && service && "recoverLegacyPending" in service && <AccountPlanLegacyRecovery service={service} view={collection} />}
+    {collection?.migrationRequired && !collection.legacyPending && <section aria-label="기존 계획 보관 방식 이전">
+      <p>기존 계정 계획을 계획별 저장 방식으로 옮길 수 있어요. 이전 원본은 삭제하지 않아요.</p>
+      <button type="button" disabled={!["READY", "EMPTY"].includes(collection.status)} onClick={async () => {
+        if (!service || !("migrateLegacy" in service)) return
+        const result = await service.migrateLegacy()
+        if (accountPlanService() === service) setError(result === "ACCOUNT" ? null : planErrorMessage(`ACCOUNT_PLAN_${result}`))
+      }}>원본 유지하고 저장 방식 이전</button>
+    </section>}
     {view?.currentPlan && view.fingerprint && <button type="button" disabled={view.status !== "READY"} onClick={() =>
       setArchiveReview({ fingerprint: view.fingerprint!, planId: view.currentPlan!.planId })}>현재 계획 보관</button>}
     {archiveReview && <section role="alertdialog" aria-label="현재 계획 보관 확인">
@@ -131,12 +153,20 @@ export function PlanBeta(props: React.ComponentProps<typeof PlanBetaContent>) {
       <button type="button" onClick={async () => {
         if (!service) return
         const result = await service.mutate({ kind: "ARCHIVE", planId: archiveReview.planId }, archiveReview.fingerprint)
+        if (accountPlanService() !== service) return
         setArchiveReview(null); setError(result === "ACCOUNT" ? null : planErrorMessage(`ACCOUNT_PLAN_${result}`))
       }}>보관하고 현재 계획 끝내기</button>
     </section>}
-    {historical ? <AccountPlanHistoricalView packet={historical} /> : <PlanBetaContent {...props} />}
-    {view?.confirmedDocument?.data.plans.some(p => p.archivedAt) && <details><summary>보관한 계획 원본</summary>
-      {view.confirmedDocument.data.plans.filter(p => p.archivedAt).map(p => <details key={p.planId}>
+    {collection?.legacyPending ? collection.currentPlan?.packet && <AccountPlanHistoricalView packet={collection.currentPlan.packet} verificationPending /> : needsHistoryForNewPlan ? <section aria-label="이전 계획 확인">
+      <p role="status">{collection?.historyStatus === "FAILED" ? "이전 계획을 읽지 못했어요. 기록이 없는 것으로 처리하지 않아요." : "다음 계획을 만들기 전에 이전 계획을 확인하고 있어요."}</p>
+      {collection?.historyStatus === "FAILED" && <button type="button" onClick={() => { void ensureAccountPlanHistory() }}>이전 계획 다시 불러오기</button>}
+    </section> : historical ? <AccountPlanHistoricalView packet={historical} /> : <PlanBetaContent {...props} />}
+    {historyCount > (view?.currentPlan ? 1 : 0) && <details onToggle={event => {
+      if (event.currentTarget.open) void ensureAccountPlanHistory()
+    }}><summary>보관한 계획 원본</summary>
+      {collection && !collection.historyLoaded && <p role="status">{collection.historyStatus === "FAILED" ? "과거 계획을 불러오지 못했어요. 원본은 그대로 보관돼 있어요." : "과거 계획을 불러오고 있어요."}</p>}
+      {collection?.historyStatus === "FAILED" && <button type="button" onClick={() => { void ensureAccountPlanHistory() }}>과거 계획 다시 불러오기</button>}
+      {view?.confirmedDocument?.data.plans.filter(p => p.archivedAt).map(p => <details key={p.planId}>
         <summary>{p.archivedAt!.slice(0, 10)} 보관</summary>
         <AccountPlanHistoricalView packet={materializeAccountPlan(p)} verificationPending={p.snapshot.evidence !== null} />
       </details>)}
@@ -159,6 +189,17 @@ function PlanBetaContent(props: Omit<React.ComponentProps<typeof LegacyPlanBeta>
   const [nextOpen, setNextOpen] = React.useState(false)
   const [importOpen, setImportOpen] = React.useState(false)
   const [revision, setRevision] = React.useState(0)
+  const prepareNext = async (kind: typeof read.kind) => {
+    const scope = localAccountScopeSnapshot()
+    const expected = read.kind === "adjusted_loaded" || read.kind === "adjusted_v3_loaded" || read.kind === "multi_adjusted_v3_loaded"
+      ? read.state.contentFingerprint : null
+    const ready = accountPlansEnabled() ? await ensureAccountPlanHistory() : true
+    if (localAccountScopeSnapshot() !== scope) return
+    if (!ready) return
+    const current = readCurrent(); setRead(current)
+    if ((current.kind === "adjusted_loaded" || current.kind === "adjusted_v3_loaded" || current.kind === "multi_adjusted_v3_loaded")
+      && current.kind === kind && current.state.contentFingerprint === expected) setNextOpen(true)
+  }
   React.useEffect(() => {
     const refresh = () => { setImportOpen(false); setNextOpen(false); setRead(readCurrent()); setRevision(value => value + 1) }
     const onStorage = (event: StorageEvent) => {
@@ -181,7 +222,7 @@ function PlanBetaContent(props: Omit<React.ComponentProps<typeof LegacyPlanBeta>
   if (read.kind === "multi_adjusted_v3_loaded" && !importOpen) return <MultiAdjustedPlanScheduleV3
     key={`${localAccountScopeSnapshot()}:${read.state.selection.contentFingerprint}`}
     loaded={{ ...read, kind: "loaded" }} readEvidence={readMultiV3Evidence} onStoredChange={() => setRead(readCurrent())} onImportPlan={() => setImportOpen(true)}
-    onPrepareNext={() => { setRead(readCurrent()); setNextOpen(true) }}
+    onPrepareNext={() => { void prepareNext("multi_adjusted_v3_loaded") }}
     returnToSession={props.returnToSession} onWritePlannedSessionLog={props.onWritePlannedSessionLog === undefined ? undefined : draft => {
       const current = readCurrent()
       if (current.kind !== "multi_adjusted_v3_loaded" || current.state.contentFingerprint !== read.state.contentFingerprint) {
@@ -197,10 +238,7 @@ function PlanBetaContent(props: Omit<React.ComponentProps<typeof LegacyPlanBeta>
   if (read.kind === "adjusted_v3_loaded" && !importOpen) return <AdjustedPlanScheduleV3
     key={`${localAccountScopeSnapshot()}:${read.state.selection.contentFingerprint}`}
     loaded={{ ...read, kind: "loaded" }} readEvidence={readV3Evidence} onStoredChange={() => setRead(readCurrent())}
-    onPrepareNext={() => {
-      const current = readCurrent(); setRead(current)
-      if (current.kind === "adjusted_v3_loaded" && current.state.contentFingerprint === read.state.contentFingerprint) setNextOpen(true)
-    }}
+    onPrepareNext={() => { void prepareNext("adjusted_v3_loaded") }}
     onImportPlan={() => setImportOpen(true)} returnToSession={props.returnToSession} onWritePlannedSessionLog={props.onWritePlannedSessionLog === undefined ? undefined : draft => {
       const current = readCurrent()
       if (current.kind !== "adjusted_v3_loaded" || current.state.contentFingerprint !== read.state.contentFingerprint) {
@@ -221,11 +259,7 @@ function PlanBetaContent(props: Omit<React.ComponentProps<typeof LegacyPlanBeta>
     onStoredChange={() => setRead(readCurrent())}
     onExportPlan={() => exportAdjustedPlanBackup(read.state.contentFingerprint, readEvidence())}
     onImportPlan={() => setImportOpen(true)}
-    onPrepareNext={() => {
-      const current = readCurrent()
-      setRead(current)
-      if (current.kind === "adjusted_loaded" && current.state.contentFingerprint === read.state.contentFingerprint) setNextOpen(true)
-    }}
+    onPrepareNext={() => { void prepareNext("adjusted_loaded") }}
     loaded={read} onWritePlannedSessionLog={props.onWritePlannedSessionLog === undefined ? undefined : draft => {
       const current = readCurrent()
       if (current.kind !== "adjusted_loaded" || current.state.contentFingerprint !== read.state.contentFingerprint) {

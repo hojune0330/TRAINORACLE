@@ -3,7 +3,8 @@ import { canonicalJsonFingerprint } from "@impl/plan-generator/candidate-identit
 import { hasCanonicalJsonTree, progressSchema } from "../plan-beta-schema"
 import {
   ACCOUNT_PLAN_MAX_BYTES, accountPlanDocumentSchema,
-  type AccountPlanDocument, type AccountPlanPacket,
+  accountPlanFingerprint, validateAccountPlanPacket,
+  type AccountPlanDocument, type AccountPlanPacket, type AccountPlanEntry,
 } from "./account-plan-document-schema"
 
 const fingerprint = z.string().regex(/^sha256:[a-f0-9]{64}$/u)
@@ -46,6 +47,66 @@ const partId = (kind: "PLAN_SNAPSHOT", planId: string) => hash({ kind, planId })
 const progressId = (part: Omit<AccountPlanProgressPart, "id">) => hash(part)
 const fits = (value: unknown) => new TextEncoder().encode(JSON.stringify(value)).byteLength <= ACCOUNT_PLAN_MAX_BYTES
 const clone = <T>(value: T): T => JSON.parse(JSON.stringify(value)) as T
+
+export const accountPlanCollectionPartHash = hash
+export { accountPlanFingerprint }
+
+export function validateAccountPlanCollectionIndex(value: unknown): value is AccountPlanCollectionIndex {
+  try {
+    if (!hasCanonicalJsonTree(value) || !fits(value) || !indexSchema.safeParse(value).success) return false
+    const index = value as AccountPlanCollectionIndex
+    const ids = new Set(index.plans.map(p => p.planId))
+    return ids.size === index.plans.length
+      && new Set(index.plans.map(p => p.progressId)).size === index.plans.length
+      && index.plans.every(p => p.snapshotId === partId("PLAN_SNAPSHOT", p.planId))
+      && (index.currentPlanId === null || ids.has(index.currentPlanId))
+  } catch { return false }
+}
+
+export function validateAccountPlanCollectionPart(value: unknown): value is AccountPlanSnapshotPart | AccountPlanProgressPart {
+  try {
+    if (!hasCanonicalJsonTree(value) || !fits(value)) return false
+    const part = value as AccountPlanSnapshotPart | AccountPlanProgressPart
+    if (part.kind === "PLAN_SNAPSHOT") return snapshotSchema.safeParse(value).success
+      && validateAccountPlanPacket(part.snapshot) && part.snapshot.state.progress.length === 0
+      && part.planId === accountPlanFingerprint(part.snapshot) && part.id === partId("PLAN_SNAPSHOT", part.planId)
+    if (!progressPartSchema.safeParse(value).success) return false
+    const progress = part as AccountPlanProgressPart
+    const { id, ...revision } = progress
+    const time = (v: string) => new Date(v).toISOString() === v && Date.parse(v) <= Date.now()
+    return id === progressId(revision) && progress.snapshotId === partId("PLAN_SNAPSHOT", progress.planId)
+      && time(progress.updatedAt) && (progress.archivedAt === null || time(progress.archivedAt) && progress.archivedAt >= progress.updatedAt)
+  } catch { return false }
+}
+
+/** One referenced entry only; this does not attest the other history entries or index owner. */
+export function validateAccountPlanCollectionEntry(indexValue: unknown, snapshotValue: unknown, progressValue: unknown): AccountPlanEntry | null {
+  if (!validateAccountPlanCollectionIndex(indexValue)
+    || !validateAccountPlanCollectionPart(snapshotValue) || snapshotValue.kind !== "PLAN_SNAPSHOT"
+    || !validateAccountPlanCollectionPart(progressValue) || progressValue.kind !== "PLAN_PROGRESS") return null
+  const ref = indexValue.plans.find(p => p.planId === snapshotValue.planId)
+  if (!ref || ref.snapshotId !== snapshotValue.id || ref.snapshotHash !== hash(snapshotValue)
+    || ref.progressId !== progressValue.id || ref.progressHash !== hash(progressValue)
+    || progressValue.planId !== snapshotValue.planId || progressValue.snapshotId !== snapshotValue.id) return null
+  const entry = { planId: snapshotValue.planId, snapshot: snapshotValue.snapshot,
+    progress: progressValue.progress, updatedAt: progressValue.updatedAt, archivedAt: progressValue.archivedAt }
+  const subset: AccountPlanDocument = { version: 3, state: "ACCOUNT_STATE", kind: "PLAN", data: {
+    schemaVersion: 1, currentPlanId: indexValue.currentPlanId === entry.planId ? entry.planId : null, plans: [entry] } }
+  return accountPlanDocumentSchema.safeParse(subset).success ? clone(entry) : null
+}
+
+export function validateAccountPlanCollectionUpdate(previous: unknown, next: unknown): boolean {
+  const before = joinAccountPlanCollection(previous), after = joinAccountPlanCollection(next)
+  if (!before || !after) return false
+  if (!before.data.plans.every(old => {
+    const newer = after.data.plans.find(p => p.planId === old.planId)
+    return !!newer && accountPlanFingerprint(newer.snapshot) === accountPlanFingerprint(old.snapshot)
+      && newer.updatedAt >= old.updatedAt
+      && (old.archivedAt === null || accountPlanFingerprint(old) === accountPlanFingerprint(newer))
+  })) return false
+  return before.data.currentPlanId === null || before.data.currentPlanId === after.data.currentPlanId
+    || after.data.plans.find(p => p.planId === before.data.currentPlanId)?.archivedAt !== null
+}
 
 /**
  * Pure data codec. Throws for invalid logical input or an oversized physical part;

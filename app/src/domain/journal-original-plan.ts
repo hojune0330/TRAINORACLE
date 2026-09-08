@@ -27,7 +27,7 @@ export function readJournalOriginalPlan(entry: PostSessionEntry,
     return { kind: "unavailable" as const }
   }
   if (accountPlansEnabled()) {
-    const document = accountPlanService()?.snapshot().confirmedDocument
+    const view = accountPlanService()?.snapshot(), document = view?.confirmedDocument
     if (!document) return { kind: "unavailable" as const }
     for (const item of document.data.plans) {
       const read = readAccountPlanHistorical(materializeAccountPlan(item))
@@ -50,7 +50,8 @@ export function readJournalOriginalPlan(entry: PostSessionEntry,
         explanation: read.explanations.find(e => e.address.day === session.day && e.address.slot === session.slot)?.explanation,
         source, sourceVerificationPending }
     }
-    return { kind: "missing" as const }
+    return view && "historyLoaded" in view && !view.historyLoaded
+      ? { kind: "unavailable" as const } : { kind: "missing" as const }
   }
   const active = readPlanBetaStateFromStorage(retained, retainedV3, retainedMultiV3)
   if (active.kind === "multi_adjusted_v3_loaded") {
