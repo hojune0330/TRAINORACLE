@@ -5,6 +5,20 @@ import { buildPendingOwnerReviewBundleV3 } from "../../../reports/research/metho
 const cards = readFileSync("../reports/review/METHOD_CONFIGURATION_REVIEW_CARDS_V3.md", "utf8").replaceAll("\r\n", "\n")
 const card = (id: string) => cards.split(`## ${id}\n`)[1]!.split("\n## ")[0]!
 
+it("renders threshold examples from exact review data without implying activation", () => {
+  const section = cards.split("## LT 참고 페이스 연결 예시\n")[1]!.split("\n## ")[0]!
+  const examples = JSON.parse(readFileSync("../reports/review/METHOD_THRESHOLD_REFERENCE_EXAMPLES_V3.json", "utf8"))
+  expect(examples).toHaveLength(6)
+  expect(section).toContain("가상 5km 기록 18분31.5초")
+  expect(section).toContain("운영 채택 전")
+  expect(section).toContain("| P-LT-B | 10분 × 2회 | 1분 조깅 × 1회 | 237.21~240.94 | 94.89~96.38 |")
+  for (const example of examples) {
+    expect(section).toContain(example.contentFingerprint)
+    expect(example.executionAuthority).toBe("NONE")
+    expect(example.method.reference.provenance.input.performanceSeconds).toBe(1111.5)
+  }
+})
+
 it("preserves every configuration in the compact index with complete duration and correct recovery activity", () => {
   const index = cards.split("## 빠르게 비교하는 전체 37개\n")[1]!.split("\n## ")[0]!
   const rows = index.split("\n").filter(line => line.startsWith("| ["))

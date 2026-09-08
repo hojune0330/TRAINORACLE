@@ -14,6 +14,7 @@ try {
   const { previewPendingMethodCombinations } = await server.ssrLoadModule("/reports/research/method-combination-review.mjs")
   const { buildPendingOwnerReviewBundleV3 } = await server.ssrLoadModule("/reports/research/method-owner-review-bundle-v3.ts")
   const bundle = buildPendingOwnerReviewBundleV3()
+  const { previewPendingThresholdReferenceV3 } = await server.ssrLoadModule("/reports/research/method-personal-reference-preview-v3.ts")
   const protocols = [...METHOD_ADOPTION_PROTOCOLS, ...METHOD_ADOPTION_VARIANTS]
   const text = value => String(value).replaceAll("|", "\\|").replaceAll("\n", " ")
   const amount = p => p ? `${p.value}${p.unit === "SECONDS" ? "초" : "m"} ${p.role}` : "없음"
@@ -141,6 +142,24 @@ try {
   }
   lines.push("", "0은 적합한 훈련이 없다는 생리학적 판단이 아니라, 현재 제안 목록에 해당 경험의 상세 구성이 없다는 뜻입니다.",
     "전체 정책은 실제 원본 범위·배치·상호작용까지 별도로 검토해야 합니다. 이 목록은 정책 지문이나 승인을 만들지 않습니다.", "")
+  const thresholdExamples = protocols.filter(p => p.family === "LT").map(p =>
+    previewPendingThresholdReferenceV3({ protocolId: p.id, eventDistanceM: 5000,
+      performanceSeconds: 1111.5, freshness: "CURRENT", purpose: "RECENT_RESULT" }))
+  lines.push("## LT 참고 페이스 연결 예시", "",
+    "가상 5km 기록 18분31.5초를 사용한 검토 예시입니다. 실제 선수 정보가 아니며 운영 채택 전입니다.",
+    "1마일당24~30초 오프셋을 km로 환산합니다. 표시는 소수 둘째 자리이며 원본 JSON은 반올림하지 않습니다.",
+    "아래 지문은 별도 LT 예시 묶음에 속하며 위37개 구성 승인 지문을 대신하지 않습니다.",
+    "거리 달성이 아니라 지정 시간이 종료 기준입니다. 회복 페이스는 계산하지 않습니다.", "",
+    "| 구성 | 본운동 | 회복 | 1km 참고 초 | 400m 참고 초 |", "|---|---|---|---|---|")
+  for (const example of thresholdExamples) {
+    if (example.kind !== "threshold_personal_reference_review_preview") throw Error("MISSING_THRESHOLD_EXAMPLE")
+    const p = example.method.protocol, ref = example.method.reference
+    lines.push(`| ${p.id} | ${duration(p.work[0].value)} × ${p.reps}회 | ${p.between ? `${duration(p.between.value)} ${roleLabels[p.between.role]} × ${p.reps - 1}회` : "본운동 내 없음"} | ${ref.secondsPerKm.map(n => n.toFixed(2)).join("~")} | ${ref.secondsPer400m.map(n => n.toFixed(2)).join("~")} |`)
+  }
+  lines.push("", "이 공식은 실제 역치 측정이 아닙니다. 입문/분할 구성의 적합성, 날씨, 개인 조건, 원문 주간량 조건과 최종 채택은 별도 검토입니다.",
+    "원문: https://news.vdoto2.com/2025/06/get-the-most-out-of-your-threshold-training/", "",
+    ...thresholdExamples.map(e => `- ${e.method.protocol.id}: \`${e.contentFingerprint}\``), "")
+  await writeFile(resolve(root, "reports/review/METHOD_THRESHOLD_REFERENCE_EXAMPLES_V3.json"), JSON.stringify(thresholdExamples, null, 2) + "\n", "utf8")
   lines.push("## 전체 미완 범위", "", `구조상 두 방법 미확보: ${gaps.length}행(연령군·선택권한 포함).`,
     "개별 강도, 정확한 용량 근거, 현재 주기 배치, 오너 최종 승인, 운영 연결과 전체 사용자 흐름 검증은 별도입니다.",
     "검토 카드 수를 완료된 처방 수로 계산하지 않습니다.", "", "[DRAFT_COMPLETE]", "")

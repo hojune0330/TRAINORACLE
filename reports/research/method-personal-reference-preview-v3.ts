@@ -2,6 +2,22 @@ import { calculateIntervalReferenceProposal, type IntervalReferenceInput } from 
 import { METHOD_ADOPTION_PROTOCOLS, METHOD_ADOPTION_VARIANTS } from "./method-adoption-protocols.mjs"
 import { previewPendingMethodExplanation } from "./method-explanation-preview-v3"
 import { canonicalJsonFingerprint } from "../../impl/src/plan-generator/candidate-identity"
+import { previewThresholdMethodReference } from "./threshold-method-reference-proposal.mjs"
+
+export function previewPendingThresholdReferenceV3(input: IntervalReferenceInput) {
+  const method = previewThresholdMethodReference(input)
+  if (method.kind !== "threshold_method_review_preview") return method
+  const explanation = previewPendingMethodExplanation(method.protocol)
+  const content = {
+    kind: "threshold_personal_reference_review_preview" as const,
+    executionAuthority: "NONE" as const,
+    method, explanation,
+    pendingReviews: [...new Set([...method.reference.pendingReviews, ...explanation.pending])],
+    recordIdentityVerified: false,
+    caveat: "현재 5km 기록으로 계산한 LT 참고 범위예요. 실제 역치를 측정한 값이 아니며, 날씨와 훈련 구성에 따른 검토가 필요해요.",
+  }
+  return structuredClone({ ...content, contentFingerprint: canonicalJsonFingerprint("pending-threshold-reference-v3", content) })
+}
 
 /** Reference arithmetic and exact method stay together, without claiming verified athlete data. */
 export function previewPendingIntervalReferenceV3(input: IntervalReferenceInput) {
