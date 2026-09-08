@@ -13,3 +13,6 @@
 .multi-plan-layout-summary dt { flex: 1 1 14ch; min-width: 0; word-break: keep-all; }
 .multi-plan-layout-summary dd { margin: 0; }
 .multi-plan-layout-summary li { margin-block: 8px; }
+.plan-availability-fields { display: grid; gap: var(--space-3); max-width: 560px; }
+.plan-availability-fields label { display: block; word-break: keep-all; }
+.plan-availability-fields input { width: 100%; min-width: 0; min-height: 44px; box-sizing: border-box; font: inherit; color: var(--ink); background: var(--paper); }

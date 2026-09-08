@@ -10,9 +10,11 @@ import { createInitialPeriodizationContext, advancePeriodizationContext } from "
 import { adjustedPlanContinuationSchema, type AdjustedPlanContinuation } from "./selected-adjusted-plan-content"
 import { prepareMultiAdjustedNextFrameV3 } from "./adjusted-plan-continuity"
 import { readStoredMultiAdjustedPlanV6 } from "./adjusted-plan-storage-v6"
+import { checkSessionAvailabilityV3, type SessionAvailabilityLimitV3 } from "./prescription-availability-v3"
 
 export type MultiAdjustedPlanSelectionRequestV3 = Omit<AdjustedPlanSelectionRequest, "preparation"> & {
   readonly preparations: MultiAdjustedPreparationV3
+  readonly availabilityLimits?: readonly SessionAvailabilityLimitV3[]
 }
 const reject = (code: string) => ({ kind: "rejected" as const, code })
 const hash = (value: unknown) => canonicalJsonFingerprint("trainoracle.multi-plan-selection.v3", value)
@@ -52,7 +54,7 @@ function selectMulti(request: MultiAdjustedPlanSelectionRequestV3,
   try {
     if (!hasCanonicalJsonTree(request) || !Number.isFinite(at.getTime()) || !Array.isArray(request.preparations)
       || !request.preparations.length) return reject("INVALID_MULTI_SELECTION")
-    const { preparations: sourceInputs, ...common } = structuredClone(request)
+    const { preparations: sourceInputs, availabilityLimits, ...common } = structuredClone(request)
     const first = sourceInputs[0]!
     const original = prepareAdjustedOriginalSelection({ ...common,
       preparation: { candidate: first.candidate, startDate: first.startDate } }, at)
@@ -65,12 +67,15 @@ function selectMulti(request: MultiAdjustedPlanSelectionRequestV3,
     if (review.kind !== "reviewed_scope") return reject(review.code)
     if (review.candidate.contentFingerprint !== request.expectedCandidateFingerprint) return reject("ADJUSTED_SELECTION_CHANGED")
     if (review.candidate.continuityContext.kind !== "NO_PREVIOUS_FRAME_CONTEXT" && continuation === undefined) return reject("ADJUSTED_SUCCESSOR_REQUIRES_CONTINUITY_TRANSACTION")
-    return assemble(original.base, inputs, review, at, continuation)
+    return assemble(original.base, inputs, review, at, continuation, availabilityLimits)
   } catch { return reject("INVALID_MULTI_SELECTION") }
 }
 
 type Review = Extract<ReturnType<typeof checkMultiAdjustedPlanReviewV3>, { kind: "reviewed_scope" }>
-function assemble(base: PlanBetaStateV3, inputs: MultiAdjustedPreparationV3, review: Review, at: Date, continuation?: AdjustedPlanContinuation) {
+function assemble(base: PlanBetaStateV3, inputs: MultiAdjustedPreparationV3, review: Review, at: Date, continuation?: AdjustedPlanContinuation,
+  availabilityLimits?: readonly SessionAvailabilityLimitV3[]) {
+    const availability = checkSessionAvailabilityV3(review.candidate.sessions, availabilityLimits)
+    if (availability.kind !== "checked") return availability
     const first = inputs[0]!
     const priorFrame = review.candidate.continuityContext.kind === "PREVIOUS_FRAME_CONTEXT_RETAINED"
     if (priorFrame !== (continuation !== undefined)) return reject("INVALID_ADJUSTED_CONTINUATION")
@@ -89,6 +94,7 @@ function assemble(base: PlanBetaStateV3, inputs: MultiAdjustedPreparationV3, rev
     }).sort((a, b) => a.address.day - b.address.day || a.address.slot.localeCompare(b.address.slot))
     const content = { kind: "SELECTED_MULTI_ADJUSTED_PLAN" as const, schemaVersion: 3 as const,
       intake: base.intake, generatedAt, athleteEvidence: base.athleteEvidence, periodization,
+      ...(availability.limits === undefined ? {} : { availabilityLimits: availability.limits }),
       ...(retained === undefined ? {} : { continuation: retained }),
       activePlan: { ...active, candidateId, sessions: review.candidate.sessions },
       adjustments: { originalCandidate: first.candidate, originalPairId: pairId,
@@ -135,7 +141,7 @@ export function readSelectedMultiAdjustedPlanV3(value: unknown, evidence: Retain
     if (base.intake.trainingFocus !== original.selectedEnergyIntent) return reject("INVALID_MULTI_PLAN_ORIGIN")
     const review = checkMultiAdjustedPlanReviewV3(inputs, base.intake.experienceBand, evidence.rpeBindings, evidence.policies)
     if (review.kind !== "reviewed_scope") return reject("RETAINED_MULTI_EVIDENCE_UNAVAILABLE")
-    const rebuilt = assemble(base, inputs, review, accepted, stored.continuation)
+    const rebuilt = assemble(base, inputs, review, accepted, stored.continuation, stored.availabilityLimits)
     if (rebuilt.kind !== "selected_multi_adjusted" || hash(rebuilt.state) !== hash(stored)) return reject("MULTI_PLAN_CONTENT_MISMATCH")
     return { kind: "read_only" as const, executionAuthority: "NONE" as const, state: rebuilt.state,
       explanations: structuredClone(evidence.slots.map(e => ({ address: e.address, explanation: e.explanation }))) }

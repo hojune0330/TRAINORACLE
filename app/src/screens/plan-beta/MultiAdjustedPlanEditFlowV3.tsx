@@ -30,9 +30,13 @@ export function MultiAdjustedPlanEditFlowV3({ seed, readReview, locks, readRevie
   const [confirming, setConfirming] = React.useState(false)
   const [discarding, setDiscarding] = React.useState(false)
   const [repeatPreference, setRepeatPreference] = React.useState<RepeatPreference>("NEUTRAL")
+  const [initialAvailability] = React.useState<Record<string, string>>(() => Object.fromEntries(
+    (seed.availabilityLimits ?? []).map(limit => [`${limit.day}:${limit.slot}`, String(limit.maximumSeconds / 60)])))
+  const [availabilityDraft, setAvailabilityDraft] = React.useState(initialAvailability)
+  const hasUnsavedChanges = changes.length > 0 || hash(availabilityDraft) !== hash(initialAvailability)
   const leaving = React.useRef(false)
   React.useEffect(() => {
-    if (!changes.length) return
+    if (!hasUnsavedChanges) return
     const preventLoss = (event: BeforeUnloadEvent) => {
       if (leaving.current) return
       event.preventDefault()
@@ -40,10 +44,11 @@ export function MultiAdjustedPlanEditFlowV3({ seed, readReview, locks, readRevie
     }
     window.addEventListener("beforeunload", preventLoss)
     return () => window.removeEventListener("beforeunload", preventLoss)
-  }, [changes.length])
+  }, [hasUnsavedChanges])
   const current = () => isCurrentDraft() && hash(seed) === opened.identity && expectedPredecessorFingerprint === opened.predecessor
   const review = () => changes.length ? readReviewForEdits(request, changes) : readReview()
   if (confirming) return <MultiAdjustedPlanApplyReviewV3 seed={request} readReview={review} locks={locks}
+    availabilityDraft={availabilityDraft} onAvailabilityDraftChange={setAvailabilityDraft}
     isCurrentDraft={current} onSaved={state => { leaving.current = true; onSaved(state) }} onCancel={() => setConfirming(false)} expectedPredecessorFingerprint={expectedPredecessorFingerprint} />
   let live: MultiAdjustedLiveReviewV3 | null = null
   try { live = review() } catch { /* Show the unavailable state without inventing review data. */ }
@@ -80,10 +85,10 @@ export function MultiAdjustedPlanEditFlowV3({ seed, readReview, locks, readRevie
   }
   return <section className="adjusted-next-flow">
     {discarding && <JournalConfirmationDialog title="변경안을 버리고 돌아갈까요?"
-      description="이 화면에서 바꾼 구성만 없어져요. 저장된 현재 계획은 바뀌지 않아요."
+      description="이 화면에서 바꾼 구성과 가능 시간 입력이 없어져요. 저장된 현재 계획은 바뀌지 않아요."
       confirmLabel="변경안 버리고 돌아가기" onCancel={() => setDiscarding(false)}
       onConfirm={() => { leaving.current = true; setDiscarding(false); onCancel(); return true }} />}
-    <button type="button" onClick={() => changes.length ? setDiscarding(true) : onCancel()}><ArrowLeft size={18} aria-hidden="true" />후보로 돌아가기</button>
+    <button type="button" onClick={() => hasUnsavedChanges ? setDiscarding(true) : onCancel()}><ArrowLeft size={18} aria-hidden="true" />후보로 돌아가기</button>
     <h1>주요 훈련을 하나씩 확인해 주세요</h1>
     <fieldset><legend>선택지 순서</legend>
       {([["NEUTRAL", "기본 순서"], ["PREFER_REPEAT", "완료 표시 많은 순"], ["PREFER_VARIETY", "완료 표시 적은 순"]] as const).map(([value, label]) =>

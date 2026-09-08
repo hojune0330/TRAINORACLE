@@ -47,11 +47,11 @@ export function PrescriptionStructureV3({ sequence, originalDurationMinutes }: {
       ? "전체 시간 미산출 · 시간이 정해지지 않은 구간이 있어요."
       : `계획된 전체 시간 ${Number.isInteger(totalSeconds) ? "" : "약 "}${formatTrainingSeconds(totalSeconds)} · 준비·회복·정리 포함`}</p>
     {originalDurationMinutes && <p aria-label="변경 전 시간과 비교">
-      변경 전 안내 {originalDurationMinutes.minimum}~{originalDurationMinutes.maximum}분.
+      처음 예상한 시간 {originalDurationMinutes.minimum}~{originalDurationMinutes.maximum}분.
       {totalSeconds === null ? " 현재 구성의 전체 시간이 미산출이라 시간 차이는 아직 비교할 수 없어요."
-        : totalSeconds > originalDurationMinutes.maximum * 60 ? ` 현재 구성은 기존 상한보다 약 ${formatTrainingSeconds(totalSeconds - originalDurationMinutes.maximum * 60)} 길어요.`
-          : totalSeconds < originalDurationMinutes.minimum * 60 ? ` 현재 구성은 기존 하한보다 약 ${formatTrainingSeconds(originalDurationMinutes.minimum * 60 - totalSeconds)} 짧아요.`
-            : " 현재 구성은 기존 시간 범위 안에 있어요."}
+        : totalSeconds > originalDurationMinutes.maximum * 60 ? ` 현재 구성은 처음 예상한 최대 시간보다 약 ${formatTrainingSeconds(totalSeconds - originalDurationMinutes.maximum * 60)} 길어요.`
+          : totalSeconds < originalDurationMinutes.minimum * 60 ? ` 현재 구성은 처음 예상한 최소 시간보다 약 ${formatTrainingSeconds(originalDurationMinutes.minimum * 60 - totalSeconds)} 짧아요.`
+            : " 현재 구성은 처음 예상한 시간 범위 안에 있어요."}
       {" 시간만 비교한 안내이며 훈련 강도나 효과가 같다는 뜻은 아니에요."}
     </p>}
     {([

@@ -45,6 +45,7 @@ import { readMultiPlanMethodHistoryV3 } from "./multi-plan-method-history-v3"
 import { MultiPlanEvidenceContext } from "../components/MultiPlanEvidenceContext"
 import { JournalOriginalPlan } from "../screens/journal/JournalOriginalPlan"
 import App from "../App"
+import { isoShift } from "./dates"
 
 const dialogShow = Object.getOwnPropertyDescriptor(HTMLDialogElement.prototype, "showModal")
 const dialogClose = Object.getOwnPropertyDescriptor(HTMLDialogElement.prototype, "close")
@@ -706,6 +707,66 @@ it("archives the actual predecessor before saving a multi-plan successor and pre
   expect(readMultiAdjustedOriginalPlansV3(f.retained)).toMatchObject({ kind: "loaded", entries: [{ state: f.previous }] })
   expect(saved.state.progress).toEqual([])
   expect(await saveSelectedMultiAdjustedSuccessorV3(f.input)).toMatchObject({ code: "STALE_BASE" })
+})
+
+it("enforces availability in selection and locked storage, retaining it in a readable original", async () => {
+  const input = storageFixture(), review = input.readReview(), address = input.request.preparations[0]!.address
+  const limit = { ...address, maximumSeconds: 239 }
+  const request = { ...input.request, availabilityLimits: [limit] }
+  expect(selectMultiAdjustedPlanV3(request, review.rpeBindings, review.policies, TODAY)).toMatchObject({ code: "AVAILABILITY_LIMIT_EXCEEDED" })
+  expect((await saveSelectedMultiAdjustedPlanV6({ ...input, request })).kind).toBe("rejected")
+  expect(localStorage.getItem(activePlanBetaStorageKey())).toBeNull()
+  const saved = await saveSelectedMultiAdjustedPlanV6({ ...input, request: { ...request, availabilityLimits: [{ ...limit, maximumSeconds: 240 }] } })
+  if (saved.kind !== "saved") throw Error(saved.code)
+  expect(saved.state.selection.availabilityLimits).toEqual([{ ...address, maximumSeconds: 240 }])
+  expect(readStoredMultiAdjustedPlanV6(saved.state, review.retained, TODAY).kind).toBe("loaded")
+  const { contentFingerprint: _hash, ...content } = { ...saved.state.selection, availabilityLimits: [limit] }
+  const tampered = { ...content, contentFingerprint: canonicalJsonFingerprint("trainoracle.multi-plan-selection.v3", content) }
+  expect(readSelectedMultiAdjustedPlanV3(tampered, review.retained[0]!, TODAY).kind).toBe("rejected")
+})
+
+it("offers optional per-slot limits, blocks invalid or short input, and saves explicit available time", async () => {
+  const input = storageFixture(), onSaved = vi.fn(), address = input.request.preparations[0]!.address
+  render(React.createElement(MultiAdjustedPlanApplyReviewV3, { seed: input.request, readReview: input.readReview,
+    locks: input.locks, isCurrentDraft: input.isCurrentDraft, onSaved, onCancel: vi.fn() }))
+  const detail = screen.getByText("가능 시간 정하기 · 선택").closest("details")!
+  detail.open = true
+  const field = screen.getByRole("textbox", { name: `${isoShift(input.request.preparations[0]!.startDate, address.day - 1)} · ${address.slot === "AM" ? "오전" : "오후"} 가능 시간 (분)` })
+  const save = screen.getByRole("button", { name: "이 구성으로 계획 저장" })
+  expect(save).toBeEnabled()
+  fireEvent.change(field, { target: { value: "1" } })
+  expect(save).toBeDisabled()
+  expect(screen.getByRole("alert")).toHaveTextContent("가능 시간을 넘어요")
+  fireEvent.change(field, { target: { value: "숫자 아님" } })
+  expect(field).toHaveAttribute("aria-invalid", "true")
+  expect(save).toBeDisabled()
+  fireEvent.change(field, { target: { value: "" } })
+  expect(save).toBeEnabled()
+  fireEvent.change(field, { target: { value: "4" } })
+  expect(save).toBeEnabled()
+  await act(async () => { fireEvent.click(save) })
+  expect(onSaved).toHaveBeenCalledOnce()
+  expect(onSaved.mock.calls[0]![0].selection.availabilityLimits).toEqual([{ ...address, maximumSeconds: 240 }])
+  expect(readPlanBetaStateFromStorage([], [], input.readReview().retained).kind).toBe("multi_adjusted_v3_loaded")
+})
+
+it("keeps available time when going back to edit and asks before discarding it", () => {
+  const input = storageFixture(), onCancel = vi.fn()
+  render(React.createElement(MultiAdjustedPlanEditFlowV3, { seed: input.request, readReview: input.readReview,
+    readReviewForEdits: () => input.readReview(), locks: input.locks, isCurrentDraft: input.isCurrentDraft,
+    onSaved: vi.fn(), onCancel }))
+  fireEvent.click(screen.getByRole("button", { name: "전체 확인으로" }))
+  screen.getByText("가능 시간 정하기 · 선택").closest("details")!.open = true
+  fireEvent.change(screen.getAllByRole("textbox", { name: /가능 시간 \(분\)/ })[0]!, { target: { value: "30" } })
+  fireEvent.click(screen.getByRole("button", { name: "후보로 돌아가기" }))
+  fireEvent.click(screen.getByRole("button", { name: "전체 확인으로" }))
+  screen.getByText("가능 시간 정하기 · 선택").closest("details")!.open = true
+  expect(screen.getAllByRole("textbox", { name: /가능 시간 \(분\)/ })[0]!).toHaveValue("30")
+  fireEvent.click(screen.getByRole("button", { name: "후보로 돌아가기" }))
+  fireEvent.click(screen.getByRole("button", { name: "후보로 돌아가기" }))
+  expect(screen.getByRole("alertdialog")).toHaveTextContent("변경안을 버리고 돌아갈까요?")
+  expect(onCancel).not.toHaveBeenCalled()
+  expect(localStorage.getItem(activePlanBetaStorageKey())).toBeNull()
 })
 
 it.each(["initial", "successor"])("requires explicit final confirmation in the %s multi-plan review screen", async mode => {

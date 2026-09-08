@@ -4,7 +4,7 @@
 doc_id: trainoracle-session-method-selection-and-adjustment
 spec_id: SESSION_METHOD_SELECTION_AND_ADJUSTMENT_CONTRACT
 title: TrainOracle Session Method Selection And Adjustment Contract
-version: "0.71"
+version: "0.72"
 round: RT1_OWNER_APPROVED_IMPLEMENTATION_DIRECTION
 status: ACTIVE_IMPLEMENTATION_CONTRACT
 product_direction: OWNER_APPROVED_IMPLEMENTATION_DIRECTION
@@ -16,6 +16,7 @@ owner: COACH_HOJUNE
 open_issues_total: 4
 canonical_blocking_count: 0
 engineering_implementation_authority: OWNER_APPROVED
+owner_adopted_support_components: ["P-SUPPORT-INTRO-01@0.1"]
 new_exact_dose_activation_authority: false
 template_activation_authority: false
 scientific_approval_granted_by_this_document: false
@@ -1883,5 +1884,30 @@ V6 개인 계획을 전송하기 전에 실제 계정별 현재 저장값과 독
 원본 숫자/구성/설명 변경은 검토 식별값에 반영한다. 별도 개인 참고 예시 묶음은
 기존 전체 구성 묶음의 승인 식별값을 대체하지 않는다. 본 조항은 특정 공식·수치의
 운영 채택이 아니며 새로운 페이스 모델은 기존 오너 최종 승인 절차를 따른다.
+
+### 21.52 예상 시간과 명시적 가능 시간의 분리 (오너 승인)
+
+2026-09-08의 "남은 결정 승인."은 직전에 요청한 시간 정책과 입문 지원 대안에
+한정한다. 처음 안내한 시간 범위는 예상치이며 저장을 막는 상한이 아니다.
+사용자가 날짜·오전/오후별로 직접 입력한 가능 시간만 해당 세션의 상한으로 삼는다.
+미입력은 제한 미지정이지 0분이 아니다. 0/음수/비유한 수/중복 또는 없는 슬롯은
+유효한 상한으로 받지 않는다. 준비·본운동·모든 회복·정리의 정확한 전체 시간을
+비교한다. 미산출 구간이 있으면 제한 안에 들어온다고 보장하거나 저장하지 않는다.
+상한 초과 시 다른 구성을 선택하거나 사용자가 상한을 수정하도록 하며, 자동 감량,
+회복 삭제, 거리의 임의 시간 환산은 하지 않는다. 저장 직전에도 같은 검사를 한다.
+
+상한은 선택한 계획 원본과 내용 지문에 보존한다. 기존 상한 없는 원본은 그대로
+읽는다. 백업·역사 읽기에서 재검증하고 다음 주기에 이전 날짜의 상한을 자동 이월하지
+않는다. 기본 시간 안내 범위만으로 개인의 가용 시간을 추정하지 않는다.
+
+### 21.53 입문 지원 대안의 한정 채택 (오너 승인)
+
+P-SUPPORT-INTRO-01 v0.1: 쉬운 준비 300초(RPE 2~3), 전력질주 아닌 점진 가속
+20초 후 걷기 60초를 2회, 쉬운 정리 300초(RPE 1~2)를 정확한 지원 대안으로
+채택한다. 마지막 걷기도 포함하여 총 760초다. 기존 지원 1760초는 보존한다.
+채택 기록은 과거 OWNER_ADOPTION_PENDING 검토 원본을 수정하지 않고 별도 버전으로
+둔다. 독립 전문가 승인이나 개인에게 충분한 준비라는 보장을 의미하지 않는다.
+본운동/전체 배치가 검토된 입문 범위에서 사용자가 명시적으로 선택해야 한다.
+지원 대안만으로 본운동, 모든 입문 고강도, 전체 조합, 페이스 모델을 활성화하지 않는다.
 
 [DRAFT_COMPLETE]
