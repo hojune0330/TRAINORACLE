@@ -79,7 +79,9 @@ async function doubleText(page: Page) {
 async function checkHistoryFit(page: Page) {
   const dimensions = await page.locator(".account-plan-history").evaluate(element => {
     const rect = element.getBoundingClientRect()
+    const legend = document.querySelector(".account-plan-runtime .plan-training-flow__legend")
     return { width: innerWidth, right: rect.right, scroll: document.documentElement.scrollWidth,
+      legendColumns: legend ? getComputedStyle(legend).gridTemplateColumns.split(" ").length : null,
       overflowing: [...document.querySelectorAll("main *")].filter(node => node.getBoundingClientRect().right > innerWidth + 1)
         .map(node => ({ tag: node.tagName, className: node.className, right: node.getBoundingClientRect().right })),
       font: parseFloat(getComputedStyle(element).fontSize),
@@ -90,6 +92,7 @@ async function checkHistoryFit(page: Page) {
   expect(dimensions.font).toBe(29)
   expect(dimensions.right).toBeLessThanOrEqual(dimensions.width)
   expect(dimensions.scroll, JSON.stringify(dimensions.overflowing)).toBeLessThanOrEqual(dimensions.width)
+  if (dimensions.legendColumns !== null && dimensions.width <= 375) expect(dimensions.legendColumns).toBe(1)
   for (const target of dimensions.targets) {
     expect(target.height).toBeGreaterThanOrEqual(44)
     expect(target.width).toBeGreaterThanOrEqual(44)
