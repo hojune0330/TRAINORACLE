@@ -44,6 +44,7 @@ import { createAssembledMultiPlanRuntimeV3, createCatalogMultiPlanRuntimeV3, typ
 import { readMultiPlanMethodHistoryV3 } from "./multi-plan-method-history-v3"
 import { MultiPlanEvidenceContext } from "../components/MultiPlanEvidenceContext"
 import { JournalOriginalPlan } from "../screens/journal/JournalOriginalPlan"
+import App from "../App"
 
 const dialogShow = Object.getOwnPropertyDescriptor(HTMLDialogElement.prototype, "showModal")
 const dialogClose = Object.getOwnPropertyDescriptor(HTMLDialogElement.prototype, "close")
@@ -253,6 +254,40 @@ it("selects a uniquely reviewed source catalog and preserves history after curre
   expect(() => entry!.readReview()).toThrow()
   expect(readPlanBetaStateFromStorage([], [], runtime.readMultiAdjustedEvidenceV3!()).kind).toBe("multi_adjusted_v3_loaded")
 })
+
+it("opens a saved multi-plan through real application navigation with independent retained evidence", async () => {
+  vi.useRealTimers()
+  vi.useFakeTimers({ toFake: ["Date"] })
+  vi.setSystemTime(TODAY)
+  const f = storageFixture(), reviewed = f.readReview()
+  const saved = await saveSelectedMultiAdjustedPlanV6(f)
+  if (saved.kind !== "saved") throw Error(saved.code)
+  const before = localStorage.getItem(activePlanBetaStorageKey())
+  await act(async () => {
+    render(React.createElement<NonNullable<Parameters<typeof App>[0]>>(App, { multiPlanRuntime: {
+      readMultiAdjustedEvidenceV3: () => reviewed.retained,
+    } }))
+  })
+  await act(async () => { fireEvent.click(screen.getByRole("button", { name: "계획" })) })
+  expect(await screen.findByRole("heading", { name: "내 훈련 일정" }, { timeout: 5000 })).toBeTruthy()
+  expect(localStorage.getItem(activePlanBetaStorageKey())).toBe(before)
+  expect(readPlanBetaStateFromStorage([], [], reviewed.retained).kind).toBe("multi_adjusted_v3_loaded")
+  const address = f.request.preparations[0]!.address
+  const slotName = address.slot === "AM" ? "오전" : "오후"
+  fireEvent.click(within(screen.getByRole("navigation", { name: "훈련 날짜" })).getAllByRole("button")[address.day - 1]!)
+  await act(async () => { fireEvent.click(within(screen.getByRole("region", { name: `${slotName} 훈련` })).getByRole("button", { name: "이 훈련 일지 쓰기" })) })
+  expect(screen.getByText(`계획 DAY ${address.day} · ${slotName}`)).toBeTruthy()
+  expect(loadEntries()).toEqual([])
+  expect(localStorage.getItem(activePlanBetaStorageKey())).toBe(before)
+  fireEvent.click(screen.getByRole("button", { name: "계획대로 마쳤어요" }))
+  fireEvent.click(screen.getByRole("button", { name: slotName }))
+  fireEvent.click(screen.getByRole("button", { name: /RPE 6,/ }))
+  fireEvent.click(screen.getByRole("button", { name: "없어요" }))
+  expect(loadEntries()).toHaveLength(1)
+  expect(loadEntries()[0]).toMatchObject({ activityOutcome: "COMPLETED", rpe: 6,
+    plannedSessionLink: { sessionDay: address.day, sessionSlot: address.slot } })
+  expect(localStorage.getItem(activePlanBetaStorageKey())).toBe(before)
+}, 15_000)
 
 it.each(["absent", "withdrawn-after-write"])("does not save a plan using transient evidence absent from the independent journal reader: %s", async mode => {
   const f = storageFixture(), reviewed = f.readReview()
