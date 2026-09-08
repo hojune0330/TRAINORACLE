@@ -4,7 +4,7 @@
 doc_id: trainoracle-session-method-selection-and-adjustment
 spec_id: SESSION_METHOD_SELECTION_AND_ADJUSTMENT_CONTRACT
 title: TrainOracle Session Method Selection And Adjustment Contract
-version: "0.70"
+version: "0.71"
 round: RT1_OWNER_APPROVED_IMPLEMENTATION_DIRECTION
 status: ACTIVE_IMPLEMENTATION_CONTRACT
 product_direction: OWNER_APPROVED_IMPLEMENTATION_DIRECTION
@@ -1869,5 +1869,19 @@ V6 개인 계획을 전송하기 전에 실제 계정별 현재 저장값과 독
 지원 구성 수를 독립적인 본운동 방법 수에 더하지 않는다. 본운동/반복/회복은
 비교 과정에서 보존하고 전체 시간 미산출도 유지한다. 구체적 지원 수치는 채택
 패킷의 별도 오너 판단 대상이며 본 조항이 이를 승인하거나 운영 활성화하지 않는다.
+
+### 21.51 개인 참고 페이스와 정확한 방법의 검토 연결
+
+연구 계산값을 방법에 연결할 때 실제 사용한 기록 값/단위/출처/공식 버전과 정확한
+운동·회복 구조를 함께 보존한다. 계산 성공, 기록 신원 확인, 개인 적용성, 운영 채택은
+서로 다른 상태다. 시간형은 지정 시간 종료를 유지하고 참고 거리 달성을 요구하지 않는다.
+본운동 페이스 공식에서 회복 속도나 회복 길이를 파생하지 않는다. 공식의 지속시간/
+환경/대상 한계와 미검토 조건을 설명 및 검토 묶음에서 누락하지 않는다.
+
+가상 기록을 사용한 공개 예시는 실제 선수 기록과 명시적으로 구분하며 사용한 입력만
+복사한다. 메모·선수 식별값은 포함하지 않는다. 표시 반올림과 원본 숫자를 분리하고
+원본 숫자/구성/설명 변경은 검토 식별값에 반영한다. 별도 개인 참고 예시 묶음은
+기존 전체 구성 묶음의 승인 식별값을 대체하지 않는다. 본 조항은 특정 공식·수치의
+운영 채택이 아니며 새로운 페이스 모델은 기존 오너 최종 승인 절차를 따른다.
 
 [DRAFT_COMPLETE]
