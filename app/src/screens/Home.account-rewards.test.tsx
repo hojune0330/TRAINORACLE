@@ -22,12 +22,13 @@ function result(ownerId = A, visit = false, spent = 0): AccountRewardResult {
     journalDays: 1, visitDays: visit ? 1 : 0, visitedToday: visit, journalRecordedToday: true } }
 }
 beforeEach(() => {
+  vi.useFakeTimers({ toFake: ["Date"] }); vi.setSystemTime(new Date("2026-09-08T03:00:00.000Z"))
   vi.stubEnv("VITE_FEATURE_ACCOUNT_JOURNAL", "true"); vi.stubEnv("VITE_KILL_ACCOUNT_JOURNAL", "false")
   localStorage.clear(); disposeAccountRewards(); setActiveLocalAccount(A)
   setAccountAuthState("RESOLVING")
   mocks.request.mockReset(); mocks.request.mockResolvedValue(result())
 })
-afterEach(() => { cleanup(); disposeAccountRewards(); setActiveLocalAccount(null); setAccountAuthState("RESOLVING"); vi.unstubAllEnvs() })
+afterEach(() => { cleanup(); disposeAccountRewards(); setActiveLocalAccount(null); setAccountAuthState("RESOLVING"); vi.unstubAllEnvs(); vi.useRealTimers() })
 
 function seedGuest() {
   const raw = JSON.stringify({ version: 2, visitDates: ["2026-09-01"], journalDates: ["2026-09-01"],
