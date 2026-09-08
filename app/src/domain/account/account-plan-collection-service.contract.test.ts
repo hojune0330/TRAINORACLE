@@ -21,12 +21,23 @@ function fixture(count = 3, version: 3 | 4 | 5 | 6 = 3) {
   return doc
 }
 function setup(server = collectionServer(), extra: Partial<AccountPlanCollectionServiceInput> = {}, stores = collectionMemoryBuffers()) {
-  const service = createAccountPlanCollectionService({ ownerId: COLLECTION_OWNER, isCurrent: () => true,
+  const service = createAccountPlanCollectionService({ runExclusive: async run => run(), ownerId: COLLECTION_OWNER, isCurrent: () => true,
     client: server.client, buffers: stores.dependencies, legacyBuffer: stores.legacy.buffer, yieldTask: tick, ...extra })
   return { service, server, stores }
 }
 const select = (packet = accountPlanPacketFixture(3)) => ({ kind: "SELECT" as const, packet,
   confirmsSelection: true as const, freshReview: () => true })
+
+it.each(["missing", "rejected"])("production lock %s never falls back to uncoordinated client or storage work", async mode => {
+  vi.stubGlobal("navigator", mode === "missing" ? {} : { locks: { request: vi.fn(async () => { throw Error("Denied") }) } })
+  const { service, server, stores } = setup(undefined, { runExclusive: undefined })
+  expect(await service.hydrate()).toBe(false)
+  expect(service.snapshot()).toMatchObject({ status: "FAILED", browserSupported: false, confirmedDocument: null })
+  expect(server.client.readIndex).not.toHaveBeenCalled()
+  expect(stores.manifests.writes).toHaveLength(0)
+  expect(stores.parts.writes).toHaveLength(0)
+  expect(stores.preparations.rows.size).toBe(0)
+})
 
 it("hydrates exactly the current two parts out of 18 and exposes an explicit partial confirmed projection", async () => {
   const doc = fixture(18), { service, server } = setup(collectionServer(doc))

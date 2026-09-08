@@ -30,6 +30,11 @@ once an authenticated collection exists.
   local queue even when transport ignores cancellation. This cannot undo a request
   already processed by the server. Retrying starts a fresh generation without waiting
   for the cancelled response; collection requests also have a 30-second deadline.
+- Production collection operations require owner-scoped Web Locks. Missing or refused
+  locks fail before client/storage operations and show an explicit browser-update
+  notice; there is no unlocked or legacy-writer fallback. The low-level buffer is
+  service-owned and does not support standalone concurrent mutation. `runExclusive`
+  is an explicit isolated-test port, never inferred from injected client/buffer ports.
 - History assembly retains each full entry validation and the ordered whole-document
   fingerprint, without a second physical read pass and a final bulk logical reparse.
 - Full-history readers and exports must await `ensureAccountPlanHistory()`. Synchronous

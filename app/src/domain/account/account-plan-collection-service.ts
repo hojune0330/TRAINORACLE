@@ -23,12 +23,14 @@ export type AccountPlanCollectionServiceInput = {
   readTrusted?: AccountPlanTrust; online?: () => boolean; changed?: () => void
   /** A monotonically changing authentication epoch also catches A -> B -> A between awaits. */
   epoch?: () => number; yieldTask?: () => Promise<void>; now?: () => string; operationId?: () => string
+  /** Explicit lock port for isolated tests; production always uses owner-scoped Web Locks. */
+  runExclusive?: <T>(run: () => Promise<T>) => Promise<T>
 }
 
 /** Confirmed projections only. Partial documents must never be interpreted as complete history. */
 export function createAccountPlanCollectionService(input: AccountPlanCollectionServiceInput) {
   const openingEpoch = input.epoch?.() ?? 0
-  let closed = false, invalidated = false, work: Promise<unknown> = Promise.resolve()
+  let closed = false, invalidated = false, lockUnavailable = false, work: Promise<unknown> = Promise.resolve()
   const current = () => {
     if (closed || invalidated) return false
     if (!input.isCurrent() || (input.epoch?.() ?? 0) !== openingEpoch) invalidated = true
@@ -73,9 +75,14 @@ export function createAccountPlanCollectionService(input: AccountPlanCollectionS
   function serialize<T>(run: () => Promise<T>, fallback: T, mapError?: (e: unknown) => T): Promise<T> {
     const next = work.catch(() => undefined).then(async () => {
       const execute = async () => { check(); return run() }
-      return globalThis.navigator?.locks
-        ? navigator.locks.request(`trainoracle-account-plan-collection:${input.ownerId}`, { mode: "exclusive" }, execute)
-        : execute()
+      if (input.runExclusive) return input.runExclusive(execute)
+      if (typeof globalThis.navigator?.locks?.request !== "function") throw Error("BROWSER_UNSUPPORTED")
+      let entered = false
+      try {
+        return await navigator.locks.request(`trainoracle-account-plan-collection:${input.ownerId}`, { mode: "exclusive" }, () => {
+          entered = true; lockUnavailable = false; return execute()
+        })
+      } catch (error) { if (!entered) lockUnavailable = true; throw error }
     }).catch(error => { const result = mapError?.(error); if (!mapError) failure(error); return result ?? fallback })
     work = next; return next
   }
@@ -83,6 +90,7 @@ export function createAccountPlanCollectionService(input: AccountPlanCollectionS
     const visible = current() ? confirmed : null
     const entry = visible?.data.plans.find(p => p.planId === visible.data.currentPlanId)
     return { status: current() ? status : "IDLE" as AccountPlanStatus,
+      browserSupported: !lockUnavailable && !!(input.runExclusive || typeof globalThis.navigator?.locks?.request === "function"),
       document: visible ? structuredClone(visible) : null, confirmedDocument: visible ? structuredClone(visible) : null,
       fingerprint: visible ? accountPlanFingerprint(visible) : null,
       currentPlan: entry ? { planId: entry.planId, ...readAccountPlanEntry(entry, input.readTrusted) } : null,

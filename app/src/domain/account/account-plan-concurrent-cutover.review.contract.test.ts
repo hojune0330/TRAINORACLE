@@ -4,7 +4,8 @@ import { TODAY } from '../prescription-quality-matrix.test-fixtures'
 import { accountPlanPacketFixture } from './account-plan.test-fixtures'
 import { accountPlanEntry, emptyAccountPlanDocument, type AccountPlanDocument } from './account-plan-document-schema'
 import { createAccountPlanService } from './account-plan-service'
-import { createAccountPlanCollectionService } from './account-plan-collection-service'
+import { createAccountPlanCollectionService as createService } from './account-plan-collection-service'
+const createAccountPlanCollectionService = (input: Parameters<typeof createService>[0]) => createService({ runExclusive: async run => run(), ...input })
 import { COLLECTION_OWNER, collectionMemoryStore, collectionMemoryBuffers, collectionServer } from './account-plan-collection.test-support'
 
 beforeEach(()=>{vi.stubGlobal('crypto',webcrypto);localStorage.clear();vi.useFakeTimers({toFake:['Date']});vi.setSystemTime(new Date(TODAY.getTime()+120000))})

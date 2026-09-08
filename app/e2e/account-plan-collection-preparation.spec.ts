@@ -1,5 +1,6 @@
 import { test, expect, type Page } from "@playwright/test"
 import type {} from "./fixtures/account-plan-collection-preparation"
+import type { AccountPlanCollectionClient } from "../src/domain/account/account-plan-collection-api"
 
 async function load(page: Page) {
   await page.goto("/__collection_preparation_test__")
@@ -36,7 +37,7 @@ test("native SELECT preparation survives first-snapshot scope close and page rel
     const isolated = await prep.read(h.other, () => true)
     const recovered = await prep.read(h.owner, () => true)
     prep.close()
-    return { error, intercepted, isolated, operationId: input.transfer.operationId,
+    return { error, intercepted, isolated, operationId: input.transfer.operationId, previous: input.transfer.previous!,
       expected: h.fingerprint(input.transfer), recovered: h.fingerprint(recovered?.transfer),
       rows: raw.rows.length, encrypted: raw.rows.every(row => row.ciphertext instanceof Uint8Array && row.iv.length === 12),
       keys: raw.keys.map(v => ({ native: v.key instanceof CryptoKey, extractable: v.key.extractable })) }
@@ -46,14 +47,24 @@ test("native SELECT preparation survives first-snapshot scope close and page rel
   expect(before.rows).toBe(6)
   expect(before.recovered).toBe(before.expected)
   await load(page)
-  const after = await page.evaluate(async () => {
+  const after = await page.evaluate(async previous => {
     const h = window.accountPreparationHarness, buffer = h.open()
+    const path = "/src/domain/account/account-plan-collection-service.ts"
+    const { createAccountPlanCollectionService } = await import(/* @vite-ignore */ path)
+    const client: AccountPlanCollectionClient = {
+      readIndex: async () => ({ revision: 1, index: previous.index }), readLegacy: async () => null,
+      readPart: async (_owner, kind, id) => [...previous.snapshots, ...previous.progress].find(part => part.kind === kind && part.id === id) ?? null, receipt: async () => null,
+      stage: async () => { throw Error("Unapproved replay") }, commit: async () => { throw Error("Unapproved replay") },
+    }
+    const service = createAccountPlanCollectionService({ ownerId: h.owner, isCurrent: () => true, client, buffer })
+    await service.hydrate()
     const view = await buffer.read(), pending = await buffer.pending()
-    buffer.close()
-    return { state: view?.state, operationId: pending?.operationId, transfer: h.fingerprint(pending),
+    const serviceStatus = service.snapshot().status
+    service.close()
+    return { serviceStatus, state: view?.state, operationId: pending?.operationId, transfer: h.fingerprint(pending),
       rows: (await h.raw()).rows.length }
-  })
-  expect(after).toEqual({ state: "PENDING", operationId: before.operationId, transfer: before.expected, rows: 0 })
+  }, before.previous)
+  expect(after).toEqual({ serviceStatus: "PENDING", state: "PENDING", operationId: before.operationId, transfer: before.expected, rows: 0 })
 })
 
 for (const fault of ["quota", "abort", "scope-close"] as const) {

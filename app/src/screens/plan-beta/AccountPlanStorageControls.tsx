@@ -26,12 +26,17 @@ export function AccountPlanHistoryControls({ status, progress, onRetry, onCancel
     </button>}
   </div>
 }
-export function AccountPlanStorageControls({ status, evidenceRequired = false, onRetry, onUseServer, capacity, collectionCount, retryAvailable = true }: {
+export function AccountPlanStorageControls({ status, evidenceRequired = false, onRetry, onUseServer, capacity, collectionCount, retryAvailable = true, browserSupported = true }: {
   status: AccountPlanStatus; evidenceRequired?: boolean; onRetry: () => void; onUseServer?: () => void;
   capacity?: { bytes: number; limit: number; plans: number };
   collectionCount?: number;
   retryAvailable?: boolean;
+  browserSupported?: boolean;
 }) {
+  if (!browserSupported) return <section className="account-plan-storage" aria-label="계획 계정 보관">
+    <p role="alert">이 브라우저에서는 계획을 안전하게 동기화할 수 없어요. 브라우저를 최신 버전으로 업데이트한 뒤 다시 열어 주세요.</p>
+    <p>기존 기록은 삭제하지 않았어요. 이 브라우저에 아직 보내지 못한 기록이 있다면 앱이나 브라우저 데이터를 지우지 마세요.</p>
+  </section>
   return <section className="account-plan-storage" aria-label="계획 계정 보관">
     <p role="status">{labels[status]}</p>
     {collectionCount !== undefined && <p>계정에 보관한 계획 {collectionCount}개 · 계획별로 나누어 안전하게 저장해요.</p>}

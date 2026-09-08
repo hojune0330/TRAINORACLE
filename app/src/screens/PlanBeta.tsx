@@ -164,6 +164,7 @@ export function PlanBeta(props: React.ComponentProps<typeof PlanBetaContent>) {
     {view && <AccountPlanStorageControls status={view.status} evidenceRequired={historical !== null}
       capacity={!collection && view.document ? accountPlanCapacity(view.document) : undefined}
       collectionCount={collection?.totalPlans}
+      browserSupported={collection?.browserSupported}
       retryAvailable={!collection?.legacyPending}
       onRetry={() => { void (view.status === "PENDING" ? retry() : service?.hydrate()) }}
       onUseServer={collection?.legacyPending ? undefined : () => { if (service && view.fingerprint) void service.useServerCurrent(view.fingerprint).then(result => {

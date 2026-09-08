@@ -33,8 +33,9 @@
 | 실제 PostgreSQL 17.6 독립 writer 2개 + observer | 5/5 PASS, 종료 확인 |
 | 생성 검증기 원본 일치 + Node | PASS, Node 2/2 |
 | TypeScript 및 프로덕션 빌드 | 앱 PASS, 빌드 PASS |
-| 최종 shared runner: 계획 서비스 + native 복구 | 14/14 PASS (29.6초) |
-| 최종 같은 명령의 모바일 runner | 6/6 PASS (23.3초) |
+| 최종 shared runner: 계획 서비스 + native 복구 + 두 탭 | 17/17 PASS (27.3초) |
+| 최종 같은 명령의 모바일 runner | 6/6 PASS (24.0초) |
+| Web Locks 필수화 후 서비스·이전 회귀 4파일 | 38/38 PASS |
 | 마지막 좁은 패치 후 buffer + preparation | 담당자 14/14 PASS, E2E TypeScript PASS |
 
 전체 해시 검사를 일부러 제거하면 `history rejects an invented whole-document
@@ -90,7 +91,26 @@ operation ID의 PENDING 상태가 복원됐다. quota·transaction abort·scope 
 실제 Chrome에서 100개 V3 계획의 202개 암호화 행이 각 물리 한도를 지키고
 복구됨을 확인했다. 브라우저 저장소 강제 축출이나 물리 전원 차단 시험은 아니다.
 
-최종 브라우저 통합 20건은 위 두 runner의 실제 실행이다. 독립 검수·원격 CI
+### 추가 P2: Web Locks 없는 경합 경로
+
+독립 검토에서 준비본 저장 중 다른 탭이 기준 manifest를 갱신하면 안전하게
+충돌을 감지하지만 진행을 회복하지 못하는 저수준 재현을 발견했다. 자동 덮어쓰기나
+원본 삭제를 추가하지 않고 production의 unlocked fallback을 제거했다.
+모든 서비스 작업은 같은 owner Web Lock 안에서 전체 완료를 기다린다.
+없는 API와 잠금 획득 실패는 요청/저장 전에 차단하며 명시적 브라우저 안내를
+표시한다. 격리 단위 시험만 명시적인 runExclusive port를 주입한다.
+
+실제 두 탭에서 A의 잠금 동안 B의 client 호출 0건과 대기 lock을 확인했고,
+A 완료 후 B가 EMPTY로 정상 진입했다. 없는/거절된 잠금 각각 요청 0건,
+새 IndexedDB 생성 0건을 확인했다. 재접속 복구도 저수준 read만 아니라 실제
+서비스 hydrate에서 같은 PENDING 작업으로 확인했다. 최초 서비스 복구 시험은
+합성 서버의 원본 부품 응답을 빠뜨려 INVALID였으며, 실제 서버 응답을 모사하도록
+fixture를 고친 뒤 통과했다. 런타임 검증을 완화하지 않았다.
+
+이 준비본 코드는 아직 미배포다. 저수준 buffer 직접 동시 접근은 지원 계약
+밖이며, 이후 새 호출부는 반드시 서비스의 owner lock을 통과해야 한다.
+
+최종 브라우저 통합 23건은 위 두 runner의 실제 실행이다. 독립 검수·원격 CI
 결과는 해당 실행 뒤 PR에 SHA와 함께 기록한다.
 서로 겹치는 검사 수를 합산하지 않는다. 빌드의 기존 폰트 경로·큰 청크 경고는
 남아 있으며 이번 계정 저장 변경의 공개 화면/실기기 배포 증거가 아니다.
