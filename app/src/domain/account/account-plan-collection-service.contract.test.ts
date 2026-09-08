@@ -80,6 +80,70 @@ it("failed history reads preserve the confirmed current and are retryable withou
   expect(await service.loadHistory()).toBe(true)
 })
 
+it("history validates the whole fingerprint without a second physical read pass", async () => {
+  const doc = fixture(), { service, stores } = setup(collectionServer(doc))
+  await service.hydrate()
+  vi.mocked(stores.parts.buffer.read).mockClear()
+  expect(await service.loadHistory()).toBe(true)
+  // Each part is read once and checked once when staging; no third read for final join.
+  expect(stores.parts.buffer.read).toHaveBeenCalledTimes(doc.data.plans.length * 4)
+  expect(service.snapshot().historyProgress).toEqual({ loaded: 3, total: 3 })
+  expect(service.snapshot().document).toEqual(doc)
+})
+
+it("history rejects an invented whole-document fingerprint despite valid individual entries", async () => {
+  const doc = fixture(), server = collectionServer(doc), original = server.index()!
+  vi.mocked(server.client.readIndex).mockResolvedValue({ revision: 1,
+    index: { ...original, documentFingerprint: `sha256:${"0".repeat(64)}` } })
+  const { service } = setup(server)
+  expect(await service.hydrate()).toBe(true)
+  const before = service.snapshot().confirmedDocument
+  expect(await service.loadHistory()).toBe(false)
+  expect(service.snapshot()).toMatchObject({ historyLoaded: false, historyStatus: "FAILED" })
+  expect(service.snapshot().confirmedDocument).toEqual(before)
+})
+
+it("cancelled history preserves current and ignores a late failed response before retry", async () => {
+  const doc = fixture(), { service, server } = setup(collectionServer(doc))
+  await service.hydrate()
+  const before = service.snapshot().confirmedDocument
+  let reject!: (error: unknown) => void, entered!: () => void
+  const started = new Promise<void>(resolve => { entered = resolve })
+  vi.mocked(server.client.readPart).mockImplementationOnce(() => {
+    entered(); return new Promise((_resolve, fail) => { reject = fail })
+  })
+  const pending = service.loadHistory()
+  await started
+  service.cancelHistory()
+  expect(service.snapshot()).toMatchObject({ historyStatus: "IDLE", historyLoaded: false,
+    historyProgress: { loaded: 0, total: 3 } })
+  const retry = service.loadHistory()
+  expect(retry).not.toBe(pending)
+  expect(await pending).toBe(false)
+  expect(service.snapshot().confirmedDocument).toEqual(before)
+  // Retry must finish while the cancelled transport is still unresolved.
+  expect(await retry).toBe(true)
+  reject(Error("UNAVAILABLE"))
+  await tick()
+  expect(service.snapshot().document).toEqual(doc)
+})
+
+it("cancel during a yielded history pass cannot publish a complete history or change the current plan", async () => {
+  const doc = fixture()
+  let cancel = false
+  const { service } = setup(collectionServer(doc), { yieldTask: async () => {
+    if (cancel) service.cancelHistory()
+    await tick()
+  } })
+  await service.hydrate(); const before = service.snapshot().confirmedDocument
+  cancel = true
+  expect(await service.loadHistory()).toBe(false)
+  expect(service.snapshot()).toMatchObject({ historyStatus: "IDLE", historyLoaded: false })
+  expect(service.snapshot().confirmedDocument).toEqual(before)
+  cancel = false
+  expect(await service.loadHistory()).toBe(true)
+})
+
 it("never treats failed index or legacy reads as an empty baseline", async () => {
   const { service, server } = setup()
   vi.mocked(server.client.readIndex).mockRejectedValueOnce({ code: "AUTH_REQUIRED" })

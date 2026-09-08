@@ -71,8 +71,13 @@ export async function requestAccountDocument<T>(
     if (!client) return { ok: false, code: "UNAVAILABLE" }
     const session = await client.auth.getSession()
     if (!current()) return { ok: false, code: "STALE_RESPONSE" }
-    if (session.error || session.data.session?.user.id !== ownerId) return { ok: false, code: "AUTH_REQUIRED" }
-    const { data, error } = await client.functions.invoke("account-journal", { body: request })
+    const token = session.data.session?.access_token
+    if (session.error || session.data.session?.user.id !== ownerId || typeof token !== "string"
+      || token.trim() !== token || !/^[A-Za-z0-9._~+\/-]+=*$/u.test(token)) return { ok: false, code: "AUTH_REQUIRED" }
+    // The SDK rereads auth before fetch; never let a later session select this request's owner.
+    const { data, error } = await client.functions.invoke("account-journal", {
+      body: request, headers: { Authorization: `Bearer ${token}` },
+    })
     let responseData: unknown = data
     if (!current()) return { ok: false, code: "STALE_RESPONSE" }
     if (error) {

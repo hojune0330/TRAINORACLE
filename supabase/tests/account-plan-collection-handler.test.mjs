@@ -13,6 +13,14 @@ const OWNER = 'a1111111-1111-4111-8111-111111111111';
 const OTHER = 'b2222222-2222-4222-8222-222222222222';
 const OP = 'c3333333-3333-4333-8333-333333333333';
 const OP2 = 'd4444444-4444-4444-8444-444444444444';
+test('Edge collection configuration delegates JWT checks to the explicit authenticated user gateway', async () => {
+  const config = await readFile(new URL('../config.toml', import.meta.url), 'utf8');
+  const entry = await readFile(new URL('../functions/account-plan-collection/index.ts', import.meta.url), 'utf8');
+  assert.match(config, /\[functions\.account-plan-collection\]\s*verify_jwt\s*=\s*false/u);
+  assert.match(entry, /client\.auth\.getUser\(token\)/u);
+  assert.match(entry, /if \(error \|\| !data\.user\) return null/u);
+  assert.doesNotMatch(entry, /SUPABASE_SERVICE_ROLE_KEY/u);
+});
 const ORIGIN = 'https://plan.example.test';
 const serialized = JSON.stringify({ activeKeyId: 'test', keys: { test: btoa('s'.repeat(32)) } });
 let handlerFactory = createAccountPlanCollectionHandler;
@@ -93,7 +101,7 @@ async function fixture(options = {}) {
   }));
   const stage = async collection => {
     for (const part of [...collection.snapshots, ...collection.progress])
-      await check(await request({ action: 'stage', part }), 200, { kind: 'staged' });
+      await check(await request({ action: 'stage', ownerId: OWNER, part }), 200, { kind: 'staged' });
   };
   return { request, handler, repo, material, calls, parts, receipts, stage, getIndex: () => index };
 }
@@ -104,6 +112,15 @@ async function check(response, status, expected) {
   if (expected !== undefined) assert.deepEqual(value, expected);
   return value;
 }
+
+test('stage rejects missing or mismatched intended owner before key access or storage', async () => {
+  const f = await fixture();
+  await check(await f.request({ action: 'stage', part: {} }), 400);
+  await check(await f.request({ action: 'stage', ownerId: OWNER, part: {} },
+    { headers: { Authorization: 'Bearer other' } }), 403);
+  assert.equal(f.calls.material, 0);
+  assert.equal(f.parts.size, 0);
+});
 
 test('stage/read/commit use real crypto, strip SQL partId and leave selection unchanged until commit', async () => {
   const f = await fixture(), collection = splitAccountPlanCollection(document());
@@ -166,7 +183,7 @@ test('stored part metadata, hash, identity, ciphertext and index plaintext misma
 
 test('strict HTTP actions, nested request keys, malformed JSON, byte bounds, methods and CORS', async () => {
   const f = await fixture(), r = command(splitAccountPlanCollection(document()));
-  for (const input of [{ action: 'status' }, { action: 'readIndex', ownerId: OWNER }, { action: 'stage', part: {}, ownerId: OWNER },
+  for (const input of [{ action: 'status' }, { action: 'readIndex', ownerId: OWNER }, { action: 'stage', part: {}, ownerId: OWNER, extra: true },
     { action: 'commit', request: { ...r, authorization: true } }, { action: 'readPart', partKind: 'PLAN', partId: OP }, []])
     await check(await f.request(input), 400, { error: 'INVALID_REQUEST' });
   await check(await f.request({ action: 'readIndex' }, { body: '{' }), 400, { error: 'INVALID_REQUEST' });
@@ -185,9 +202,9 @@ test('strict HTTP actions, nested request keys, malformed JSON, byte bounds, met
 
 test('stage rejects oversized/invalid part and accepts valid unselected progress without selection authority', async () => {
   const f = await fixture(), part = splitAccountPlanCollection(document()).progress[0];
-  await check(await f.request({ action: 'stage', part: { ...part, progress: ['x'.repeat(500_000)] } }), 422);
-  await check(await f.request({ action: 'stage', part: { ...part, id: accountPlanFingerprint('wrong') } }), 422);
-  await check(await f.request({ action: 'stage', part }), 200, { kind: 'staged' });
+  await check(await f.request({ action: 'stage', ownerId: OWNER, part: { ...part, progress: ['x'.repeat(500_000)] } }), 422);
+  await check(await f.request({ action: 'stage', ownerId: OWNER, part: { ...part, id: accountPlanFingerprint('wrong') } }), 422);
+  await check(await f.request({ action: 'stage', ownerId: OWNER, part }), 200, { kind: 'staged' });
   assert.equal(f.getIndex(), null);
   assert.equal(f.calls.commit, 0);
 });

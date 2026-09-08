@@ -77,7 +77,7 @@ export async function rejected(action: () => Promise<unknown>) {
 // and IndexedDB remain active. No external server or real session is used.
 export function httpTransport(handle: (request: AccountJournalRequest) => Promise<Response>, isCurrent = () => true) {
   const client = {
-    auth: { getSession: async () => ({ data: { session: { user: { id: owner } } }, error: null }) },
+    auth: { getSession: async () => ({ data: { session: { user: { id: owner }, access_token: "synthetic-token" } }, error: null }) },
     functions: { invoke: async (_name: string, options: { body: AccountJournalRequest }) => {
       const response = await handle(options.body)
       return response.ok ? { data: await response.json(), error: null }

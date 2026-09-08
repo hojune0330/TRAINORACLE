@@ -5,6 +5,8 @@ import { validateAccountPlanCollectionIndex, validateAccountPlanCollectionPart,
   type AccountPlanCollectionIndex, type AccountPlanSnapshotPart, type AccountPlanProgressPart,
   type AccountPlanCollectionParts, splitAccountPlanCollection } from "./account-plan-collection-schema"
 import { readAccountPlanCollectionTransfer, type AccountPlanCollectionTransfer } from "./account-plan-collection-transfer"
+import { createAccountPlanCollectionPreparationStore, type AccountPlanCollectionPreparationStore,
+  type AccountPlanCollectionPreparation } from "./account-plan-collection-preparation"
 
 export type AccountPlanCollectionPart = AccountPlanSnapshotPart | AccountPlanProgressPart
 export type AccountPlanCollectionManifest = {
@@ -31,6 +33,7 @@ export type AccountPlanCollectionBufferDependencies = {
   manifests?: AccountJournalConflictBuffer<AccountPlanCollectionManifest>
   parts?: AccountJournalConflictBuffer<AccountPlanCollectionPart>
   cutovers?: AccountJournalConflictBuffer<AccountPlanLegacyHandoff>
+  preparations?: AccountPlanCollectionPreparationStore
   yieldTask?: () => Promise<void>
 }
 const indexCodec = z.custom<AccountPlanCollectionIndex>(validateAccountPlanCollectionIndex)
@@ -69,12 +72,15 @@ export function createAccountPlanCollectionBuffer(ownerId: string, isCurrent: ()
   const parts = dependencies.parts ?? createAccountDocumentBuffer(z.custom<AccountPlanCollectionPart>(validateAccountPlanCollectionPart),
     "trainoracle-account-plan-collection-parts-v1")
   const cutovers = dependencies.cutovers ?? createAccountDocumentBuffer(handoffSchema, "trainoracle-account-plan-legacy-handoffs-v1")
+  const preparations = dependencies.preparations ?? createAccountPlanCollectionPreparationStore()
   const yieldTask = dependencies.yieldTask ?? accountPlanCollectionYield
   const documentId = accountPlanCollectionLocalId(["manifest", ownerId])
-  const check = () => { if (!isCurrent()) throw Error("STALE") }
+  let closed = false, recovery: Promise<void> | null = null
+  const current = () => !closed && isCurrent()
+  const check = () => { if (!current()) throw Error("STALE") }
   const partKey = (kind: AccountPlanCollectionPart["kind"], id: string) => accountPlanCollectionLocalId([kind, id])
   async function rawRead() { check(); const v = await manifests.read(ownerId, documentId); check(); return v }
-  async function read() {
+  async function readManifest() {
     const v = await rawRead()
     if (!v) return null
     const manifest = accountPlanCollectionManifestSchema.parse(v.draft)
@@ -111,27 +117,67 @@ export function createAccountPlanCollectionBuffer(ownerId: string, isCurrent: ()
     }
     return { index, snapshots, progress }
   }
+  async function publish({ transfer: captured, expectedSequence }: AccountPlanCollectionPreparation) {
+    check()
+    if (captured.ownerId !== ownerId || !readAccountPlanCollectionTransfer(captured)) throw Error("INVALID")
+    const manifest: AccountPlanCollectionManifest = { version: 1, previous: captured.previous?.index ?? null,
+      next: captured.next.index, operation: { ownerId, operationId: captured.operationId,
+        expectedRevision: captured.expectedRevision, legacy: captured.legacy } }
+    const same = (v: Awaited<ReturnType<typeof readManifest>>) => v
+      && accountPlanFingerprint(v.draft) === accountPlanFingerprint(manifest)
+    const writable = (v: Awaited<ReturnType<typeof readManifest>>) => {
+      if (!same(v) && ((v?.localSequence ?? 0) !== expectedSequence || v && v.state !== "DRAFT_ACKNOWLEDGED")) throw Error("CONFLICT")
+    }
+    writable(await readManifest())
+    for (const collection of [captured.previous, captured.next]) {
+      if (!collection) continue
+      for (const part of [...collection.snapshots, ...collection.progress]) {
+        await stage(part); await yieldTask(); check()
+      }
+    }
+    const old = await readManifest(); writable(old)
+    if (!same(old)) { await manifests.saveDraft(ownerId, documentId, manifest, expectedSequence); check() }
+    const durable = await readManifest()
+    if (!same(durable)) throw Error("CONFLICT")
+    if (!durable!.pending && durable!.state !== "DRAFT_ACKNOWLEDGED") {
+      await manifests.queue(ownerId, documentId, captured.operationId); check()
+    }
+    // Do not retire the preparation merely because writes returned: verify the exact
+    // durable manifest, fixed operation and every referenced payload before releasing it.
+    const verified = await readManifest()
+    if (!same(verified) || verified!.pending && (verified!.pending.operationId !== captured.operationId
+      || accountPlanFingerprint(verified!.pending.draft) !== accountPlanFingerprint(manifest))
+      || !verified!.pending && verified!.state !== "DRAFT_ACKNOWLEDGED") throw Error("CONFLICT")
+    if (!readAccountPlanCollectionTransfer({ version: 1, ...manifest.operation,
+      previous: manifest.previous ? await assemble(manifest.previous) : null, next: await assemble(manifest.next) })) throw Error("INVALID")
+    check()
+    await preparations.clear(ownerId, captured.operationId, current); check()
+  }
+  async function recover() {
+    check()
+    if (!recovery) {
+      recovery = (async () => {
+        const prepared = await preparations.read(ownerId, current); check()
+        if (prepared) await publish(prepared)
+      })().finally(() => { recovery = null })
+    }
+    await recovery; check()
+  }
+  async function read() { await recover(); return readManifest() }
   return {
     read, stage, readPart,
     async save(transfer: AccountPlanCollectionTransfer, expectedSequence: number) {
       check()
       const captured = structuredClone(transfer)
       if (!readAccountPlanCollectionTransfer(captured) || captured.ownerId !== ownerId) throw Error("INVALID")
-      // Previous parts remain available for restart validation and conflict recovery as well.
-      for (const collection of [captured.previous, captured.next]) {
-        if (!collection) continue
-        for (const part of [...collection.snapshots, ...collection.progress]) {
-          await stage(part); await yieldTask(); check()
-        }
-      }
-      const manifest: AccountPlanCollectionManifest = { version: 1, previous: captured.previous?.index ?? null,
-        next: captured.next.index, operation: { ownerId, operationId: captured.operationId,
-          expectedRevision: captured.expectedRevision, legacy: captured.legacy } }
       const old = await read()
       if ((old?.localSequence ?? 0) !== expectedSequence || old && old.state !== "DRAFT_ACKNOWLEDGED") throw Error("CONFLICT")
-      await manifests.saveDraft(ownerId, documentId, manifest, expectedSequence); check()
-      // The operation ID is already durable if the browser closes before queue completes.
-      await manifests.queue(ownerId, documentId, captured.operationId); check()
+      // The complete accepted intent becomes durable atomically before any part is
+      // staged. A stale scope may stop publication, never orphan the remaining input.
+      try {
+        await preparations.save({ transfer: captured, expectedSequence }, current); check()
+        await recover()
+      } catch (error) { check(); throw error }
     },
     async pending() {
       let view = await read()
@@ -219,7 +265,7 @@ export function createAccountPlanCollectionBuffer(ownerId: string, isCurrent: ()
       // A local handoff marker is not an ACK of the old operation. Its original DB stays untouched.
       await cutovers.saveDraft(ownerId, id, marker, 0); check()
     },
-    close() { manifests.close(); parts.close(); cutovers.close() },
+    close() { closed = true; preparations.close(); manifests.close(); parts.close(); cutovers.close() },
   }
 }
 export type AccountPlanCollectionBuffer = ReturnType<typeof createAccountPlanCollectionBuffer>

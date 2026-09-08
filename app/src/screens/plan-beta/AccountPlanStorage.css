@@ -1,4 +1,5 @@
 .account-plan-storage,
+.account-plan-history,
 .account-plan-legacy-recovery {
   padding: var(--space-4) var(--space-5);
   border-bottom: var(--bw-line) solid var(--line);
@@ -11,6 +12,7 @@
 }
 
 .account-plan-storage p,
+.account-plan-history p,
 .account-plan-legacy-recovery p {
   margin: 0 0 var(--space-3);
 }
@@ -39,6 +41,8 @@
 }
 
 .account-plan-storage button,
+.plan-file-import,
+.account-plan-history button,
 .account-plan-legacy-recovery button {
   display: inline-flex;
   align-items: center;
@@ -64,19 +68,50 @@
 }
 
 .account-plan-storage button:focus-visible,
+.account-plan-history :is(button, summary):focus-visible,
 .account-plan-legacy-recovery :is(button, summary):focus-visible {
   outline: 2px solid var(--ink);
   outline-offset: 3px;
 }
 
 .account-plan-storage button:disabled,
+.account-plan-history button:disabled,
 .account-plan-legacy-recovery button:disabled {
   opacity: 0.6;
   cursor: wait;
 }
 
+.account-plan-history summary {
+  min-height: var(--app-touch-min);
+  padding-block: var(--space-3);
+  cursor: pointer;
+}
+
+.account-plan-history details {
+  border-top: var(--bw-line) solid var(--line);
+}
+
+.account-plan-history :is(h1, h2) {
+  font-size: var(--fs-h3);
+  line-height: 1.5;
+}
+
+.account-plan-history-controls {
+  margin-block: var(--space-3);
+}
+
+.account-plan-history-controls svg {
+  flex-shrink: 0;
+}
+
 @media (min-width: 600px) {
   .account-plan-recovery-actions {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 360px) {
+  .account-plan-runtime .plan-training-flow__legend {
+    grid-template-columns: minmax(0, 1fr);
   }
 }

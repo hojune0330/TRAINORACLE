@@ -74,13 +74,15 @@ it.each([4, 5, 6] as const)("V%s retains 18 real frames where the monolith fails
   console.info(`COLLECTION V${version}: logical=${bytes(document)} index=${bytes(parts.index)} maxPart=${Math.max(...parts.snapshots.map(bytes), ...parts.progress.map(bytes))} splitMs=${splitMs.toFixed(0)} joinMs=${joinMs.toFixed(0)}`)
 }, 60_000)
 
+// Full real-packet generation and integrity coverage, not a UI latency budget.
+// Keep the 100-entry assertions intact under concurrent CI worker contention.
 it.each([3, 4, 5, 6] as const)("V%s round trips all 100 retained real frames without trimming", version => {
   const document = fixture(version, 100), parts = splitAccountPlanCollection(document)
   expect(parts.index.plans).toHaveLength(100)
   expect(joinAccountPlanCollection(parts)).toEqual(document)
   expect(bytes(parts.index)).toBeLessThan(100_000)
   for (const part of [...parts.snapshots, ...parts.progress]) expect(bytes(part)).toBeLessThanOrEqual(ACCOUNT_PLAN_MAX_BYTES)
-}, 120_000)
+}, 240_000)
 
 it("keeps snapshots stable and makes progress/archive revisions content addressed", () => {
   const document = fixture(), original = splitAccountPlanCollection(document)

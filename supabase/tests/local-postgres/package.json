@@ -2,6 +2,6 @@
   "name": "trainoracle-local-db-rehearsal",
   "private": true,
   "type": "module",
-  "scripts": { "test": "node --test *.test.mjs ../account-journal-crypto.test.mjs ../account-journal-handler.test.mjs" },
+  "scripts": { "test": "node --test *.test.mjs ../account-journal-crypto.test.mjs ../account-journal-handler.test.mjs ../account-plan-collection-handler.test.mjs ../account-plan-collection-owner-race.test.mjs ../concurrency/local-postgres-guard.test.mjs" },
   "devDependencies": { "@electric-sql/pglite": "0.5.8" }
 }

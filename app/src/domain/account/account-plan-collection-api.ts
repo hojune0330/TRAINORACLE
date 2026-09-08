@@ -27,6 +27,7 @@ const responseSchema = z.discriminatedUnion("kind", [
   z.object({ kind: z.literal("conflict") }).strict(),
 ])
 export interface AccountPlanCollectionClient extends AccountPlanCollectionPort {
+  readPart(ownerId: string, kind: Parameters<AccountPlanCollectionPort["readPart"]>[1], id: string, signal?: AbortSignal): Promise<unknown | null>
   readIndex(): Promise<{ revision: number; index: AccountPlanCollectionIndex } | null>
   readLegacy(): Promise<{ documentId: string; revision: number; document: AccountPlanDocument } | null>
 }
@@ -38,15 +39,21 @@ export function createAccountPlanCollectionClient(ownerId: string, isCurrent: ()
   const check = (requestedOwner = ownerId) => {
     if (requestedOwner !== ownerId || !current()) throw new AccountPlanCollectionError("STALE")
   }
-  async function invoke(body: object) {
-    check()
+  async function invoke(body: object, signal?: AbortSignal) {
+    const checkRequest = () => { check(); if (signal?.aborted) throw new AccountPlanCollectionError("STALE") }
+    checkRequest()
     const captured = structuredClone(body)
     try {
-      const client = await dependencies.client(); check()
+      const client = await dependencies.client(); checkRequest()
       if (!client) throw new AccountPlanCollectionError("UNAVAILABLE")
-      const session = await client.auth.getSession(); check()
-      if (session.error || session.data.session?.user.id !== ownerId) throw new AccountPlanCollectionError("AUTH_REQUIRED")
-      const { data, error } = await client.functions.invoke("account-plan-collection", { body: captured }); check()
+      const session = await client.auth.getSession(); checkRequest()
+      const token = session.data.session?.access_token
+      if (session.error || session.data.session?.user.id !== ownerId || typeof token !== "string" || !token.trim())
+        throw new AccountPlanCollectionError("AUTH_REQUIRED")
+      const { data, error } = await client.functions.invoke("account-plan-collection", {
+        body: captured, headers: { Authorization: `Bearer ${token}` }, timeout: 30_000,
+        ...(signal ? { signal } : {}),
+      }); checkRequest()
       let value: unknown = data
       if (error) {
         const status = error.context instanceof Response ? error.context.status : 0
@@ -73,9 +80,9 @@ export function createAccountPlanCollectionClient(ownerId: string, isCurrent: ()
       if (result.kind === "missing") return null
       return result.kind === "index" ? { revision: result.revision, index: result.index } : invalid()
     },
-    async readPart(requestedOwner, partKind, partId) {
+    async readPart(requestedOwner, partKind, partId, signal) {
       check(requestedOwner)
-      const result = await invoke({ action: "readPart", partKind, partId })
+      const result = await invoke({ action: "readPart", partKind, partId }, signal)
       if (result.kind === "missing") return null
       return result.kind === "part" && result.part.kind === partKind && result.part.id === partId ? result.part : invalid()
     },
@@ -88,7 +95,7 @@ export function createAccountPlanCollectionClient(ownerId: string, isCurrent: ()
     async stage(requestedOwner, part) {
       check(requestedOwner)
       if (!validateAccountPlanCollectionPart(part)) invalid()
-      if ((await invoke({ action: "stage", part })).kind !== "staged") invalid()
+      if ((await invoke({ action: "stage", ownerId, part })).kind !== "staged") invalid()
     },
     async commit(request) {
       check(request.ownerId)

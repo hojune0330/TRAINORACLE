@@ -2,10 +2,10 @@ import React from "react"
 import { ACCOUNT_PLAN_EVENT, accountPlanService, accountPlansEnabled } from "../domain/account/account-plan-service"
 import { ensureAccountPlanHistory } from "../domain/account/account-plan-domain"
 import { useAccountPlanRuntime } from "./plan-beta/useAccountPlanRuntime"
-import { AccountPlanStorageControls } from "./plan-beta/AccountPlanStorageControls"
+import { AccountPlanHistoryControls, AccountPlanStorageControls } from "./plan-beta/AccountPlanStorageControls"
 import { AccountPlanHistoricalView } from "./plan-beta/AccountPlanHistoricalView"
 import { AccountPlanLegacyRecovery } from "./plan-beta/AccountPlanLegacyRecovery"
-import { materializeAccountPlan, accountPlanCapacity } from "../domain/account/account-plan-document-schema"
+import { materializeAccountPlan, accountPlanCapacity, type AccountPlanEntry } from "../domain/account/account-plan-document-schema"
 import { AlertTriangle, RotateCcw } from "lucide-react"
 import type {
   PlanGenerationSuccess,
@@ -113,19 +113,54 @@ const INTAKE_MOTION_ORDER: readonly IntakeStep[] = [
   "race-date",
 ]
 
+function AccountPlanHistoryList({ plans }: { plans: AccountPlanEntry[] }) {
+  const [expanded, setExpanded] = React.useState<string | null>(null)
+  const [visibleCount, setVisibleCount] = React.useState(10)
+  return <>
+    {plans.slice(0, visibleCount).map(p => <details key={p.planId} open={expanded === p.planId}
+      onToggle={event => {
+        const open = event.currentTarget.open
+        setExpanded(current => open ? p.planId : current === p.planId ? null : current)
+      }}>
+      <summary>{p.archivedAt!.slice(0, 10)} 보관</summary>
+      {expanded === p.planId && <AccountPlanHistoricalView packet={materializeAccountPlan(p)} verificationPending={p.snapshot.evidence !== null} />}
+    </details>)}
+    {visibleCount < plans.length && <button type="button" onClick={() => setVisibleCount(count => count + 10)}>
+      보관한 계획 더 보기 ({Math.min(visibleCount, plans.length)}/{plans.length})
+    </button>}
+  </>
+}
+
 export function PlanBeta(props: React.ComponentProps<typeof PlanBetaContent>) {
   const service = accountPlanService(), { view, retry } = useAccountPlanRuntime(service)
   const [error, setError] = React.useState<string | null>(null)
   const [archiveReview, setArchiveReview] = React.useState<{ fingerprint: string; planId: string } | null>(null)
+  const [historyPanel, setHistoryPanel] = React.useState({ service, open: false, paused: false })
+  const historyOpen = historyPanel.service === service && historyPanel.open
+  const historyPaused = historyPanel.service === service && historyPanel.paused
   React.useEffect(() => { setArchiveReview(null); setError(null) }, [service])
   const historical = view?.currentPlan?.kind === "evidence_required" ? view.currentPlan.packet : null
   const collection = view && "historyLoaded" in view ? view : null
   const needsHistoryForNewPlan = !!collection && !collection.currentPlan && !collection.historyLoaded && collection.totalPlans > 0
   React.useEffect(() => {
-    if (needsHistoryForNewPlan && collection?.historyStatus === "IDLE") void ensureAccountPlanHistory()
-  }, [needsHistoryForNewPlan, collection?.historyStatus])
+    if (needsHistoryForNewPlan && !historyPaused && collection?.historyStatus === "IDLE") void ensureAccountPlanHistory()
+  }, [needsHistoryForNewPlan, historyPaused, collection?.historyStatus])
   const historyCount = collection?.totalPlans ?? view?.confirmedDocument?.data.plans.length ?? 0
-  return <>
+  const loadHistory = () => {
+    if (accountPlanService() !== service) return
+    setHistoryPanel({ service, open: historyOpen, paused: false })
+    void ensureAccountPlanHistory()
+  }
+  const cancelHistoryRequest = service && "cancelHistory" in service && typeof service.cancelHistory === "function" ? service.cancelHistory : undefined
+  const cancelHistory = cancelHistoryRequest ? () => {
+    if (accountPlanService() !== service) return
+    setHistoryPanel({ service, open: historyOpen, paused: true })
+    cancelHistoryRequest()
+  } : undefined
+  const historyControls = collection && <AccountPlanHistoryControls status={collection.historyStatus}
+    progress={collection.historyProgress}
+    onRetry={loadHistory} onCancel={cancelHistory} />
+  return <div className="account-plan-runtime">
     {view && <AccountPlanStorageControls status={view.status} evidenceRequired={historical !== null}
       capacity={!collection && view.document ? accountPlanCapacity(view.document) : undefined}
       collectionCount={collection?.totalPlans}
@@ -135,7 +170,8 @@ export function PlanBeta(props: React.ComponentProps<typeof PlanBetaContent>) {
         if (accountPlanService() === service) setError(result === "ACCOUNT" ? null : "서버 계획을 확인하지 못했어요. 두 수정본은 그대로 보존돼 있어요.")
       }) }} />}
     {error && <p role="alert">{error}</p>}
-    {collection?.currentPlan && collection.historyStatus === "FAILED" && <p role="alert">이전 계획을 읽지 못해 다음 계획 준비를 멈췄어요. 현재 계획은 그대로 사용할 수 있어요. 다시 시도해 주세요.</p>}
+    {collection?.currentPlan && !historyOpen && ["LOADING", "FAILED"].includes(collection.historyStatus) &&
+      <section className="account-plan-storage" aria-label="이전 계획 확인">{historyControls}</section>}
     {collection?.legacyPending && service && "recoverLegacyPending" in service && <AccountPlanLegacyRecovery service={service} view={collection} />}
     {collection?.migrationRequired && !collection.legacyPending && <section aria-label="기존 계획 보관 방식 이전">
       <p>기존 계정 계획을 계획별 저장 방식으로 옮길 수 있어요. 이전 원본은 삭제하지 않아요.</p>
@@ -157,21 +193,21 @@ export function PlanBeta(props: React.ComponentProps<typeof PlanBetaContent>) {
         setArchiveReview(null); setError(result === "ACCOUNT" ? null : planErrorMessage(`ACCOUNT_PLAN_${result}`))
       }}>보관하고 현재 계획 끝내기</button>
     </section>}
-    {collection?.legacyPending ? collection.currentPlan?.packet && <AccountPlanHistoricalView packet={collection.currentPlan.packet} verificationPending /> : needsHistoryForNewPlan ? <section aria-label="이전 계획 확인">
-      <p role="status">{collection?.historyStatus === "FAILED" ? "이전 계획을 읽지 못했어요. 기록이 없는 것으로 처리하지 않아요." : "다음 계획을 만들기 전에 이전 계획을 확인하고 있어요."}</p>
-      {collection?.historyStatus === "FAILED" && <button type="button" onClick={() => { void ensureAccountPlanHistory() }}>이전 계획 다시 불러오기</button>}
+    {collection?.legacyPending ? collection.currentPlan?.packet && <AccountPlanHistoricalView packet={collection.currentPlan.packet} verificationPending /> : needsHistoryForNewPlan ? <section className="account-plan-storage" aria-label="이전 계획 확인">
+      {!historyOpen && historyControls}
     </section> : historical ? <AccountPlanHistoricalView packet={historical} /> : <PlanBetaContent {...props} />}
-    {historyCount > (view?.currentPlan ? 1 : 0) && <details onToggle={event => {
-      if (event.currentTarget.open) void ensureAccountPlanHistory()
+    {historyCount > (view?.currentPlan ? 1 : 0) && <details className="account-plan-history" open={historyOpen} onToggle={event => {
+      const open = event.currentTarget.open
+      setHistoryPanel({ service, open, paused: historyPaused })
+      if (open && accountPlanService() === service && !historyPaused) void ensureAccountPlanHistory()
     }}><summary>보관한 계획 원본</summary>
-      {collection && !collection.historyLoaded && <p role="status">{collection.historyStatus === "FAILED" ? "과거 계획을 불러오지 못했어요. 원본은 그대로 보관돼 있어요." : "과거 계획을 불러오고 있어요."}</p>}
-      {collection?.historyStatus === "FAILED" && <button type="button" onClick={() => { void ensureAccountPlanHistory() }}>과거 계획 다시 불러오기</button>}
-      {view?.confirmedDocument?.data.plans.filter(p => p.archivedAt).map(p => <details key={p.planId}>
-        <summary>{p.archivedAt!.slice(0, 10)} 보관</summary>
-        <AccountPlanHistoricalView packet={materializeAccountPlan(p)} verificationPending={p.snapshot.evidence !== null} />
-      </details>)}
+      {historyOpen && <>
+        {historyControls}
+        {(!collection || collection.historyLoaded) && <AccountPlanHistoryList key={localAccountScopeSnapshot()}
+          plans={view?.confirmedDocument?.data.plans.filter(p => p.archivedAt) ?? []} />}
+      </>}
     </details>}
-  </>
+  </div>
 }
 
 function PlanBetaContent(props: Omit<React.ComponentProps<typeof LegacyPlanBeta>, "onAdjustedStored"> & {

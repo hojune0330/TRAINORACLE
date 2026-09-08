@@ -4,7 +4,7 @@ import { createAccountDocumentBuffer, type AccountJournalDraftBuffer, type Accou
 import type { DraftTransport } from "./account-journal-sync"
 import { createAccountPlanCollectionBuffer, accountPlanCollectionYield, accountPlanLegacySourceFingerprint,
   type AccountPlanCollectionBuffer, type AccountPlanCollectionBufferDependencies } from "./account-plan-collection-buffer"
-import { validateAccountPlanCollectionIndex, validateAccountPlanCollectionEntry, joinAccountPlanCollection, splitAccountPlanCollection,
+import { validateAccountPlanCollectionIndex, validateAccountPlanCollectionEntry, accountPlanCollectionPartHash, joinAccountPlanCollection, splitAccountPlanCollection,
   type AccountPlanCollectionIndex, type AccountPlanSnapshotPart, type AccountPlanProgressPart } from "./account-plan-collection-schema"
 import { prepareAccountPlanCollectionTransfer, transferAccountPlanCollection,
   } from "./account-plan-collection-transfer"
@@ -48,6 +48,8 @@ export function createAccountPlanCollectionService(input: AccountPlanCollectionS
   let legacyPreview: AccountJournalDraftView<AccountPlanDocument> | null = null, legacyHandoffRevision = 0
   let historyStatus: "IDLE" | "LOADING" | "READY" | "FAILED" = "IDLE"
   let historyWork: Promise<boolean> | null = null
+  let historyEpoch = 0, historyCompleted = 0
+  let historyController: AbortController | null = null
   let hydrationWork: Promise<boolean> | null = null
   try { buffer = input.buffer ?? createAccountPlanCollectionBuffer(input.ownerId, current, { ...input.buffers, yieldTask }) }
   catch { status = "FAILED" }
@@ -94,6 +96,8 @@ export function createAccountPlanCollectionService(input: AccountPlanCollectionS
       legacyPendingStatus: current() && legacyPending ? legacyPreview?.pending?.rejection ? "REJECTED" as const
         : legacyPreview?.blocked ? "CONFLICT" as const : "PENDING" as const : null,
       historyStatus: current() ? historyStatus : "IDLE" as typeof historyStatus,
+      historyProgress: { loaded: current() ? historyLoaded ? index?.plans.length ?? visible?.data.plans.length ?? 0 : historyCompleted : 0,
+        total: current() ? index?.plans.length ?? visible?.data.plans.length ?? 0 : 0 },
       capacity: { limit: 100, plans: current() ? index?.plans.length ?? visible?.data.plans.length ?? 0 : 0,
         exceeded: false, partByteLimit: 500_000, unit: "plans" as const } }
   }
@@ -130,18 +134,28 @@ export function createAccountPlanCollectionService(input: AccountPlanCollectionS
     }
     return view
   }
-  async function readEntry(target: AccountPlanCollectionIndex, planId: string, forceRemote = false) {
+  async function readEntry(target: AccountPlanCollectionIndex, planId: string, forceRemote = false, signal?: AbortSignal) {
+    const entryCheck = () => { check(); if (signal?.aborted) throw Error("CANCELLED") }
+    entryCheck()
     const ref = target.plans.find(p => p.planId === planId)
     if (!ref) return null
-    let s: unknown = forceRemote ? null : await local().readPart("PLAN_SNAPSHOT", ref.snapshotId); check()
-    if (!s) { s = await client.readPart(input.ownerId, "PLAN_SNAPSHOT", ref.snapshotId); check() }
-    let p: unknown = forceRemote ? null : await local().readPart("PLAN_PROGRESS", ref.progressId); check()
-    if (!p) { p = await client.readPart(input.ownerId, "PLAN_PROGRESS", ref.progressId); check() }
+    let s: unknown = forceRemote ? null : await local().readPart("PLAN_SNAPSHOT", ref.snapshotId); entryCheck()
+    if (!s) { s = await client.readPart(input.ownerId, "PLAN_SNAPSHOT", ref.snapshotId, signal); entryCheck() }
+    let p: unknown = forceRemote ? null : await local().readPart("PLAN_PROGRESS", ref.progressId); entryCheck()
+    if (!p) { p = await client.readPart(input.ownerId, "PLAN_PROGRESS", ref.progressId, signal); entryCheck() }
     const entry = validateAccountPlanCollectionEntry(target, s, p)
     if (!entry || entry.planId !== planId) throw Error("INVALID")
-    await local().stage(s as AccountPlanSnapshotPart); check()
-    await local().stage(p as AccountPlanProgressPart); check()
+    await local().stage(s as AccountPlanSnapshotPart); entryCheck()
+    await local().stage(p as AccountPlanProgressPart); entryCheck()
     return entry
+  }
+  function untilCancelled<T>(promise: Promise<T>, signal: AbortSignal): Promise<T> {
+    return new Promise((resolve, reject) => {
+      const abort = () => reject(Error("CANCELLED"))
+      if (signal.aborted) abort()
+      else signal.addEventListener("abort", abort, { once: true })
+      promise.then(resolve, reject).finally(() => signal.removeEventListener("abort", abort))
+    })
   }
   async function projection(target: AccountPlanCollectionIndex) {
     const document = emptyAccountPlanDocument()
@@ -153,25 +167,36 @@ export function createAccountPlanCollectionService(input: AccountPlanCollectionS
     }
     return document
   }
-  async function loadHistory() {
+  async function loadHistory(epoch = historyEpoch) {
     check()
+    if (epoch !== historyEpoch) return false
     if (!confirmed) return false
     if (historyLoaded) return true
     if (!index) throw Error("INVALID")
-    historyStatus = "LOADING"; change(status)
-    const target = index, snapshots: AccountPlanSnapshotPart[] = [], progress: AccountPlanProgressPart[] = []
+    const controller = new AbortController()
+    historyController = controller
+    historyCompleted = 0; historyStatus = "LOADING"; change(status)
+    const target = index, document = emptyAccountPlanDocument()
+    document.data.currentPlanId = target.currentPlanId
     for (const ref of target.plans) {
-      const entry = await readEntry(target, ref.planId); check()
-      if (!entry) throw Error("INVALID")
-      const s = await local().readPart("PLAN_SNAPSHOT", ref.snapshotId), p = await local().readPart("PLAN_PROGRESS", ref.progressId)
+      if (epoch !== historyEpoch) return false
+      let entry: AccountPlanEntry | null
+      try { entry = await untilCancelled(readEntry(target, ref.planId, false, controller.signal), controller.signal) }
+      catch (error) { if (epoch !== historyEpoch) return false; throw error }
       check()
-      if (s?.kind !== "PLAN_SNAPSHOT" || p?.kind !== "PLAN_PROGRESS") throw Error("INVALID")
-      snapshots.push(s); progress.push(p)
+      if (epoch !== historyEpoch) return false
+      if (!entry) throw Error("INVALID")
+      document.data.plans.push(entry)
+      historyCompleted = document.data.plans.length; change(status)
       await yieldTask(); check()
     }
-    const document = joinAccountPlanCollection({ index: target, snapshots, progress })
-    if (!document) throw Error("INVALID")
+    if (epoch !== historyEpoch) return false
+    // readEntry validates each exact reference and its full logical entry. The index
+    // enforces unique IDs/current membership; bind the ordered whole without rereading
+    // and revalidating every immutable snapshot in one blocking final pass.
+    if (accountPlanCollectionPartHash(document) !== target.documentFingerprint) throw Error("INVALID")
     confirmed = document; historyLoaded = true; historyStatus = "READY"; change(status)
+    if (historyController === controller) historyController = null
     return true
   }
   async function flush(review: () => boolean = () => false, guard: () => boolean = () => true,
@@ -402,11 +427,20 @@ export function createAccountPlanCollectionService(input: AccountPlanCollectionS
       return hydrationWork
     },
     loadHistory: (): Promise<boolean> => {
-      if (!historyWork) historyWork = serialize(loadHistory, false, () => {
-        if (current()) { historyStatus = "FAILED"; change(status) }
-        return false
-      }).finally(() => { historyWork = null })
+      if (!historyWork) {
+        const epoch = historyEpoch
+        const pending = serialize(() => loadHistory(epoch), false, () => {
+          if (current() && epoch === historyEpoch) { historyStatus = "FAILED"; change(status) }
+          return false
+        }).finally(() => { if (historyWork === pending) historyWork = null })
+        historyWork = pending
+      }
       return historyWork
+    },
+    cancelHistory() {
+      if (!current() || historyLoaded) return
+      historyEpoch++; historyWork = null; historyCompleted = 0; historyStatus = "IDLE"; change(status)
+      historyController?.abort(); historyController = null
     },
     loadPlan: (planId: string): Promise<AccountPlanEntry | null> => serialize(async () => {
       if (!confirmed) return null
@@ -507,6 +541,8 @@ export function createAccountPlanCollectionService(input: AccountPlanCollectionS
       change(index.plans.length ? "READY" : "EMPTY"); return "ACCOUNT"
     }, "FAILED", failure),
     close() {
+      historyEpoch++; historyWork = null; historyCompleted = 0
+      historyController?.abort(); historyController = null
       closed = true; confirmed = null; index = null; legacy = null; historyLoaded = false; legacyPending = false; legacyPreview = null
       buffer?.close(); if (legacyRuntime) legacyRuntime.close(); else legacyBuffer?.close()
     },

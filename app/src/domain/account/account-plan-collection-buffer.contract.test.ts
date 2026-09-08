@@ -22,13 +22,14 @@ function setup() {
   return { stores, open }
 }
 
-it("does not publish a manifest or queue when any physical staging transaction fails", async () => {
+it("recovers the entire prepared intent when a physical staging transaction fails", async () => {
   const { stores, open } = setup(), buffer = open(), op = transfer()
   vi.mocked(stores.parts.buffer.saveDraft).mockImplementationOnce(async () => { throw Error("Quota") })
   await expect(buffer.save(op, 0)).rejects.toThrow("Quota")
   expect(stores.manifests.writes).toHaveLength(0)
   expect(stores.manifests.buffer.queue).not.toHaveBeenCalled()
-  expect(await buffer.pending()).toBeNull()
+  expect(stores.preparations.rows.get(COLLECTION_OWNER)?.transfer).toEqual(op)
+  expect(await buffer.pending()).toEqual(op)
 })
 
 it("a crash between manifest durability and queue recovers exactly the same operation ID on reopen", async () => {
@@ -83,7 +84,7 @@ it("rejects payload-bearing manifests and preserves bounded references only", as
   expect(stores.parts.buffer.ack).not.toHaveBeenCalled()
 })
 
-it("scope loss during staging stops before manifest durability and keeps completed parts", async () => {
+it("scope loss during staging preserves the entire preparation for owner-scoped reopen", async () => {
   const { stores, open } = setup(), op = transfer()
   let current = true
   const buffer = open(() => current), save = stores.parts.buffer.saveDraft
@@ -99,4 +100,6 @@ it("scope loss during staging stops before manifest durability and keeps complet
   await expect(buffer.save(op, 0)).rejects.toThrow("STALE")
   expect(stores.parts.rows.size).toBe(1)
   expect(stores.manifests.writes).toHaveLength(0)
+  expect(stores.preparations.rows.get(COLLECTION_OWNER)?.transfer).toEqual(op)
+  expect(await open().pending()).toEqual(op)
 })

@@ -21,7 +21,7 @@
     "test:e2e:account-record-service": "playwright test --config playwright.account-record-service.config.ts",
     "test:e2e:account-conflict": "playwright test --config playwright.account-conflict.config.ts",
     "test:e2e:account-decoration": "playwright test --config playwright.account-decoration.config.ts",
-    "test:e2e:account-plan-service": "playwright test --config playwright.account-plan-service.config.ts",
+    "test:e2e:account-plan-service": "playwright test --config playwright.account-plan-service.config.ts && playwright test --config playwright.account-plan-service-mobile.config.ts",
     "test:e2e:form-input-autosave": "playwright test --config playwright.form-input-autosave.config.ts",
     "test:account-state-validator": "node scripts/build-account-state-validator.mjs --check && node scripts/build-account-plan-collection-validator.mjs --check && node --test scripts/account-state-validator.test.mjs",
     "test:account-record-validator": "node scripts/build-account-journal-record-validator.mjs --check && node --test scripts/account-journal-record-validator.test.mjs",

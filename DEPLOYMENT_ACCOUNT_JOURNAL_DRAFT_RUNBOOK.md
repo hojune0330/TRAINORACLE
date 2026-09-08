@@ -1,5 +1,9 @@
 # Account Journal Draft Gateway Deployment Runbook
 
+Current follow-up: [pre-key release and recovery runbook](ACCOUNT_STORAGE_PREKEY_RELEASE_RUNBOOK.md)
+includes SQL 0037, the plan collection gateway, exact deployment gates and stop/recovery
+procedures. The initial integration status below is historical, not the latest code inventory.
+
 Status: DRAFT AND FINAL JOURNAL INTEGRATION IN PROGRESS; NOT PRODUCTION READY.
 
 2026-09-08 update: owner approval to complete the implementation and deployment

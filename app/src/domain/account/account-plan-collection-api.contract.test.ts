@@ -1,5 +1,5 @@
 import { afterEach, expect, it, vi } from "vitest"
-import type { SupabaseClient } from "@supabase/supabase-js"
+import { createClient, type Session, type SupabaseClient } from "@supabase/supabase-js"
 import { createAccountPlanCollectionClient } from "./account-plan-collection-api"
 import { emptyAccountPlanDocument, accountPlanEntry } from "./account-plan-document-schema"
 import { splitAccountPlanCollection } from "./account-plan-collection-schema"
@@ -8,7 +8,7 @@ const OWNER = "11111111-1111-4111-8111-111111111111", OTHER = "22222222-2222-422
 afterEach(() => vi.restoreAllMocks())
 function dependencies(data: unknown, error: unknown = null) {
   const invoke = vi.fn().mockResolvedValue({ data, error })
-  const auth = { getSession: vi.fn().mockResolvedValue({ data: { session: { user: { id: OWNER } } }, error: null }) }
+  const auth = { getSession: vi.fn().mockResolvedValue({ data: { session: { access_token: "synthetic-token-A", user: { id: OWNER } } }, error: null }) }
   return { client: vi.fn().mockResolvedValue({ auth, functions: { invoke } } as unknown as SupabaseClient),
     owner: () => OWNER, invoke, auth }
 }
@@ -16,7 +16,8 @@ it("reads the compact index without downloading all plan bodies", async () => {
   const index = splitAccountPlanCollection(emptyAccountPlanDocument()).index
   const deps = dependencies({ kind: "index", revision: 1, index })
   expect(await createAccountPlanCollectionClient(OWNER, () => true, deps).readIndex()).toEqual({ revision: 1, index })
-  expect(deps.invoke).toHaveBeenCalledExactlyOnceWith("account-plan-collection", { body: { action: "readIndex" } })
+  expect(deps.invoke).toHaveBeenCalledExactlyOnceWith("account-plan-collection", {
+    body: { action: "readIndex" }, headers: { Authorization: "Bearer synthetic-token-A" }, timeout: 30_000 })
 })
 it("only explicit missing is empty; outages and wrong success shapes are not", async () => {
   expect(await createAccountPlanCollectionClient(OWNER, () => true, dependencies({ kind: "missing" })).readIndex()).toBeNull()
@@ -56,7 +57,8 @@ it("freezes stage content before session acquisition awaits", async () => {
   const write = client.stage(OWNER, part)
   part.planId = "changed"
   await write
-  expect(deps.invoke).toHaveBeenCalledWith("account-plan-collection", { body: { action: "stage", part: original } })
+  expect(deps.invoke).toHaveBeenCalledWith("account-plan-collection", {
+    body: { action: "stage", ownerId: OWNER, part: original }, headers: { Authorization: "Bearer synthetic-token-A" }, timeout: 30_000 })
 })
 it("does not treat a missing receipt property as an acknowledged write", async () => {
   const deps = dependencies({ kind: "receipt" })
@@ -72,4 +74,44 @@ it("an immutable-part conflict is a rejection, not an outage", async () => {
   const part = splitAccountPlanCollection(document).snapshots[0]!
   const deps = dependencies(null, { context: new Response(null, { status: 409 }) })
   await expect(createAccountPlanCollectionClient(OWNER, () => true, deps).stage(OWNER, part)).rejects.toMatchObject({ code: "REJECTED" })
+})
+
+it.each([false, true])("actual SDK keeps the captured stage owner and token when a later session changes (local change: %s)", async localChanged => {
+  const document = emptyAccountPlanDocument(); document.data.plans.push(accountPlanEntry(accountPlanPacketFixture(3)))
+  const part = splitAccountPlanCollection(document).snapshots[0]!
+  let owner = OWNER
+  const transport = vi.fn<typeof fetch>(async (url, options) => {
+    expect(String(url)).toBe("https://synthetic.invalid/functions/v1/account-plan-collection")
+    expect(new Headers(options?.headers).get("Authorization")).toBe("Bearer synthetic-token-A")
+    expect(JSON.parse(String(options?.body))).toEqual({ action: "stage", ownerId: OWNER, part })
+    return new Response('{"kind":"staged"}', { headers: { "Content-Type": "application/json" } })
+  })
+  const sdk = createClient("https://synthetic.invalid", "synthetic-anon", {
+    auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false, storageKey: `collection-race-${localChanged}` },
+    global: { fetch: transport },
+  })
+  await sdk.auth.initialize()
+  const session = (id: string, token: string) => ({ data: { session: { user: { id }, access_token: token } as Session }, error: null })
+  const reads = vi.spyOn(sdk.auth, "getSession").mockResolvedValueOnce(session(OWNER, "synthetic-token-A"))
+    .mockImplementation(async () => { if (localChanged) owner = OTHER; return session(OTHER, "synthetic-token-B") })
+  const write = createAccountPlanCollectionClient(OWNER, () => true, { client: async () => sdk, owner: () => owner }).stage(OWNER, part)
+  if (localChanged) await expect(write).rejects.toMatchObject({ code: "STALE" })
+  else await expect(write).resolves.toBeUndefined()
+  expect(reads).toHaveBeenCalledTimes(2)
+  expect(transport).toHaveBeenCalledTimes(1)
+})
+
+it("missing access token prevents every collection request before transport", async () => {
+  const deps = dependencies({ kind: "missing" })
+  deps.auth.getSession.mockResolvedValue({ data: { session: { user: { id: OWNER } } }, error: null })
+  await expect(createAccountPlanCollectionClient(OWNER, () => true, deps).readIndex()).rejects.toMatchObject({ code: "AUTH_REQUIRED" })
+  expect(deps.invoke).not.toHaveBeenCalled()
+})
+
+it("cancelled history before authentication completes cannot start a request", async () => {
+  const deps = dependencies({ kind: "missing" }), controller = new AbortController()
+  deps.client.mockImplementation(async () => { controller.abort(); return { auth: deps.auth, functions: { invoke: deps.invoke } } as unknown as SupabaseClient })
+  await expect(createAccountPlanCollectionClient(OWNER, () => true, deps).readPart(OWNER, "PLAN_SNAPSHOT", `sha256:${"a".repeat(64)}`, controller.signal))
+    .rejects.toMatchObject({ code: "STALE" })
+  expect(deps.invoke).not.toHaveBeenCalled()
 })

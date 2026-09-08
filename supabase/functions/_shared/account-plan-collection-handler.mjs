@@ -74,7 +74,7 @@ function parseAction(input) {
   const valid = input.action === 'readIndex' ? keys(input, ['action'])
     : input.action === 'readPart' ? keys(input, ['action', 'partKind', 'partId']) && partKind(input.partKind) && hash(input.partId)
       : input.action === 'receipt' ? keys(input, ['action', 'operationId']) && uuid(input.operationId)
-        : input.action === 'stage' ? keys(input, ['action', 'part'])
+        : input.action === 'stage' ? keys(input, ['action', 'ownerId', 'part']) && uuid(input.ownerId)
           : input.action === 'commit' ? keys(input, ['action', 'request']) && validCommit(input.request) : false;
   if (!valid) fail(400, 'INVALID_REQUEST');
   return input;
@@ -118,6 +118,7 @@ export function createAccountPlanCollectionHandler({ authenticate, getMaterial, 
       const { ownerId, repo } = session;
       const input = parseAction(await bodyJson(request));
       if (input.action === 'commit' && input.request.ownerId !== ownerId) fail(403, 'ACCESS_DENIED');
+      if (input.action === 'stage' && input.ownerId !== ownerId) fail(403, 'ACCESS_DENIED');
       const gate = async () => {
         const enabled = await repo.enabled(ownerId);
         if (enabled === false) fail(403, 'ACCESS_DENIED');

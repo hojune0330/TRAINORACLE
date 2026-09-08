@@ -1,4 +1,5 @@
 import { vi } from "vitest"
+import { createCollectionPreparationMemory } from "./account-plan-collection-preparation.test-support"
 import type { AccountJournalConflictArchive, AccountJournalConflictBuffer, AccountJournalDraftView } from "./account-journal-draft-buffer"
 import { accountPlanFingerprint, type AccountPlanDocument } from "./account-plan-document-schema"
 import { splitAccountPlanCollection, type AccountPlanCollectionIndex } from "./account-plan-collection-schema"
@@ -91,7 +92,9 @@ export function collectionMemoryBuffers() {
   const manifests = collectionMemoryStore<AccountPlanCollectionManifest>(), parts = collectionMemoryStore<AccountPlanCollectionPart>()
   const legacy = collectionMemoryStore<AccountPlanDocument>()
   const cutovers = collectionMemoryStore<AccountPlanLegacyHandoff>()
-  return { manifests, parts, legacy, cutovers, dependencies: { manifests: manifests.buffer, parts: parts.buffer, cutovers: cutovers.buffer } }
+  const preparations = createCollectionPreparationMemory()
+  return { manifests, parts, legacy, cutovers, preparations, dependencies: { manifests: manifests.buffer, parts: parts.buffer,
+    cutovers: cutovers.buffer, preparations: preparations.buffer } }
 }
 
 export function collectionServer(document: AccountPlanDocument | null = null) {

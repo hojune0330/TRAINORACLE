@@ -24,6 +24,14 @@ once an authenticated collection exists.
 - `loadHistory()` coalesces calls and yields between entries. `loadPlan(id)` reads one
   referenced original without changing the current pointer or asserting full history.
   History failure does not clear the confirmed current projection.
+- `historyProgress` reports verified entries, not estimated bytes. `cancelHistory()`
+  invalidates the history generation, preserves the current projection and encrypted
+  cache, and ignores late completion/failure. It sends an AbortSignal and releases the
+  local queue even when transport ignores cancellation. This cannot undo a request
+  already processed by the server. Retrying starts a fresh generation without waiting
+  for the cancelled response; collection requests also have a 30-second deadline.
+- History assembly retains each full entry validation and the ordered whole-document
+  fingerprint, without a second physical read pass and a final bulk logical reparse.
 - Full-history readers and exports must await `ensureAccountPlanHistory()`. Synchronous
   archive readers reject a partial projection. PlanBeta requests history for archived
   originals/new-plan continuity; JournalOriginalPlan requests it on comparison expansion.
