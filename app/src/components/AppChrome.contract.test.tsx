@@ -20,18 +20,26 @@ describe("AppChrome tab labels", () => {
 
 describe("saved receipt date wording", () => {
   it("names the selected future journal date instead of calling it today", () => {
+    vi.setSystemTime(new Date("2026-09-04T12:00:00"))
     render(<SavedToast count={0} phase="enter" receipt={{ kind: "generic", savedDate: "2026-09-08" }} />)
 
     expect(screen.getByRole("status")).toHaveTextContent("9월 8일 기록을 남겼어요.")
   })
 
   it("does not claim a future saved value is already in a current aggregation window", () => {
+    vi.setSystemTime(new Date("2026-09-04T12:00:00"))
     render(<SavedToast count={0} phase="enter" receipt={{ kind: "distance", savedDate: "2026-09-08", distanceKm: 3 }} />)
 
     const toast = screen.getByRole("status")
     expect(toast).toHaveTextContent("9월 8일 3 km를 저장했어요")
     expect(toast).not.toHaveTextContent("이번 주")
     expect(toast).not.toHaveTextContent("반영")
+  })
+
+  it("calls the saved date today only when the local calendar date matches", () => {
+    vi.setSystemTime(new Date("2026-09-08T12:00:00"))
+    render(<SavedToast count={0} phase="enter" receipt={{ kind: "generic", savedDate: "2026-09-08" }} />)
+    expect(screen.getByRole("status")).toHaveTextContent("오늘 기록을 남겼어요.")
   })
 
   it.each([
