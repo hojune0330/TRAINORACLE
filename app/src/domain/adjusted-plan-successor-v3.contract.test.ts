@@ -8,7 +8,8 @@ import { encodeStoredAdjustedPlanStateV5, readStoredAdjustedPlanStateV5, type St
 import { saveSelectedAdjustedSuccessorV3 } from "./adjusted-plan-successor-v3"
 import { generateAdjustedNextFrameV3FromDraft } from "./plan-beta-flow"
 import { activePlanBetaStorageKey, readPlanBetaStateFromStorage } from "./plan-beta-store"
-import { ADJUSTED_PLAN_ARCHIVE_V3_KEY, readAdjustedOriginalPlansV3, prepareAdjustedOriginalArchiveV3 } from "./adjusted-plan-archive-v3"
+import { ADJUSTED_PLAN_ARCHIVE_V3_KEY, readAdjustedOriginalPlansV3 } from "./adjusted-plan-archive-v3"
+import { canonicalJsonFingerprint } from "@impl/plan-generator/candidate-identity"
 import { accountScopedStorageKey } from "./account/local-account-scope"
 import { setActiveLocalAccount } from "./account/local-journal-ownership"
 import { loadAthleteRecords, activeAthleteRecordsStorageKey } from "./athlete-records"
@@ -187,26 +188,32 @@ it("keeps accounts isolated when the account changes while waiting for the lock"
 
 it("keeps all 18 existing originals and the current plan when archive capacity is reached", async () => {
   const first = adjustedPlanSelectionV3Fixture(), evidence = [first.retained]
-  let raw: string | null = null
+  const entries: Array<{ archivedAt: string; state: StoredAdjustedPlanStateV5 }> = []
   for (let i = 1; i <= 18; i++) {
     const at = new Date(TODAY.getTime() + i)
     const selected = selectAdjustedPlanForActivationV3(first.request, [first.policy], at)
     if (selected.kind !== "selected_adjusted") throw Error(selected.code)
     const encoded = encodeStoredAdjustedPlanStateV5(selected.state, [], at.toISOString(), evidence, at)
     if (encoded.kind !== "encoded") throw Error("archive fixture")
-    const prepared = prepareAdjustedOriginalArchiveV3(raw, encoded.state, evidence, at)
-    if (prepared.kind !== "prepared") throw Error("archive capacity fixture")
-    raw = prepared.raw
+    entries.push({ archivedAt: at.toISOString(), state: encoded.state })
   }
+  // Seed the capacity precondition once; the actual save still validates every
+  // original. Repeated archive appends here revalidated 1+...+18 unrelated prefixes.
+  const content = { version: 3, entries }
+  const raw = JSON.stringify({ ...content,
+    contentFingerprint: canonicalJsonFingerprint("trainoracle.adjusted-original-archive.v3", content) })
   const selected = selectAdjustedPlanForActivationV3(first.request, [first.policy], TODAY)
   if (selected.kind !== "selected_adjusted") throw Error(selected.code)
   const old = encodeStoredAdjustedPlanStateV5(selected.state, [], TODAY.toISOString(), evidence, TODAY)
   if (old.kind !== "encoded") throw Error("old")
   const archiveKey = accountScopedStorageKey(ADJUSTED_PLAN_ARCHIVE_V3_KEY)
   localStorage.setItem(activePlanBetaStorageKey(), old.raw)
-  localStorage.setItem(archiveKey, raw!)
+  localStorage.setItem(archiveKey, raw)
   const next = nextInput(old.state, evidence)
-  expect(readAdjustedOriginalPlansV3(next.retained)).toMatchObject({ kind: "loaded", entries: expect.any(Array) })
+  const loaded = readAdjustedOriginalPlansV3(next.retained)
+  expect(loaded.kind).toBe("loaded")
+  if (loaded.kind !== "loaded") throw Error("Invalid capacity fixture")
+  expect(loaded.entries).toHaveLength(18)
   expect(await saveSelectedAdjustedSuccessorV3(next.input)).toMatchObject({ code: "ARCHIVE_CAPACITY_REACHED" })
   expect(localStorage.getItem(activePlanBetaStorageKey())).toBe(old.raw)
   expect(localStorage.getItem(archiveKey)).toBe(raw)
