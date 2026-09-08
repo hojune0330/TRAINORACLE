@@ -4,10 +4,35 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { saveSyncConsent } from "../../domain/account/sync"
 import { AccountSyncPanel } from "./AccountSyncPanel"
 
-afterEach(cleanup)
-beforeEach(() => window.localStorage.clear())
+afterEach(() => { cleanup(); vi.unstubAllEnvs() })
+beforeEach(() => {
+  window.localStorage.clear()
+  vi.stubEnv("VITE_FEATURE_ACCOUNT_JOURNAL", "false")
+  vi.stubEnv("VITE_KILL_ACCOUNT_JOURNAL", "false")
+})
 
 describe("sync feature switch", () => {
+  it.each([false, true])("replaces old sync with information when account journals are on (legacy enabled=%s)", enabled => {
+    vi.stubEnv("VITE_FEATURE_ACCOUNT_JOURNAL", "true")
+    render(<AccountSyncPanel userId="athlete-a" enabled={enabled} />)
+    expect(screen.getByRole("status")).toHaveTextContent("기기 원본은 그대로 보관돼요")
+    expect(screen.queryByRole("button")).not.toBeInTheDocument()
+    expect(screen.queryByRole("checkbox")).not.toBeInTheDocument()
+  })
+
+  it("blocks a stale merge callback after the account flag turns on without a rerender", async () => {
+    const user = userEvent.setup()
+    const onPreview = vi.fn().mockResolvedValue({ ok: true, message: "Ready", localCount: 1, remoteJournalCount: 0, remotePrivateCount: 0 })
+    const onSync = vi.fn()
+    render(<AccountSyncPanel userId="athlete-a" enabled onPreview={onPreview} onSync={onSync} />)
+    await user.click(screen.getByRole("checkbox", { name: "동기화 켜기" }))
+    await user.click(screen.getByRole("button", { name: "합칠 내용 미리보기" }))
+    const merge = await screen.findByRole("button", { name: "확인한 내용 합치기" })
+    vi.stubEnv("VITE_FEATURE_ACCOUNT_JOURNAL", "true")
+    await user.click(merge)
+    expect(onSync).not.toHaveBeenCalled()
+  })
+
   it("keeps local journals available when sync is switched off", () => {
     render(<AccountSyncPanel userId="athlete-a" enabled={false} />)
 

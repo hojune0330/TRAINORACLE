@@ -1,3 +1,4 @@
+import React from "react"
 import { MobileFrame } from "./components/MobileFrame"
 import { todayISO } from "./domain/journal-store"
 import { Guide } from "./screens/Guide"
@@ -8,6 +9,11 @@ import { PlanBeta } from "./screens/PlanBeta"
 import { Trends } from "./screens/Trends"
 
 export default function DesktopWorkspace() {
+  const [, refreshAccountJournals] = React.useReducer((revision: number) => revision + 1, 0)
+  React.useEffect(() => {
+    window.addEventListener("trainoracle:account-journals-changed", refreshAccountJournals)
+    return () => window.removeEventListener("trainoracle:account-journals-changed", refreshAccountJournals)
+  }, [])
   return (
     <div style={{
       minHeight: "100vh",

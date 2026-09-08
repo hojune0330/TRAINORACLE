@@ -33,7 +33,8 @@ vi.mock("./supabase-client", () => ({
   __resetSupabaseForTest: () => {},
 }))
 
-vi.mock("../journal-store", () => ({
+vi.mock("../journal-store", async importOriginal => ({
+  ...await importOriginal<typeof import("../journal-store")>(),
   loadEntries: () => [],
   loadEntriesOwnedBy: () => [],
   replaceAllEntries: () => {

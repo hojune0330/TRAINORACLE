@@ -18,6 +18,8 @@
     "test:e2e:adaptive-next-frame": "node e2e/run-adaptive-next-frame.mjs",
     "test:e2e:account-draft-buffer": "playwright test --config playwright.account-draft-buffer.config.ts",
     "test:e2e:account-draft-panel": "playwright test --config playwright.account-draft-panel.config.ts",
+    "test:e2e:account-record-service": "playwright test --config playwright.account-record-service.config.ts",
+    "test:account-record-validator": "node scripts/build-account-journal-record-validator.mjs --check && node --test scripts/account-journal-record-validator.test.mjs",
     "test:e2e": "npm run build && node e2e/run-full-suite.mjs"
   },
   "dependencies": {

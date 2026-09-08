@@ -1,6 +1,7 @@
 import type { JournalEntry } from "../journal-schema"
 import { fromStructuredJournalPayload } from "../safe-export"
 import {
+  legacyJournalWritesBlocked,
   loadEntriesOwnedBy,
   replaceEntriesOwnedBy,
   replaceEntriesOwnedByWithPrivateMemos,
@@ -37,18 +38,25 @@ function remoteFailure(
 }
 
 export async function syncNow(userId: string): Promise<SyncOutcome> {
+  const cutoverMessage = "계정 일지 보관을 사용 중이라 이전 동기화는 실행하지 않았어요. 기기 원본은 그대로 보관돼요."
+  if (legacyJournalWritesBlocked(userId)) return failed(cutoverMessage)
   const localScope = activeLocalAccount()
   const client = await supabase()
+  if (legacyJournalWritesBlocked(userId)) return failed(cutoverMessage)
   if (client === null) return failed("계정 기능이 꺼져 있어요.")
   const failureCode = await sessionFailureCode(client, userId)
+  if (legacyJournalWritesBlocked(userId)) return failed(cutoverMessage)
   if (failureCode !== null) {
     return failed("Sync requires the matching signed-in account.", failureCode)
   }
   const storedConsent = loadSyncConsent(userId)
   if (!storedConsent.enabled) return failed("동기화가 꺼져 있어요. 먼저 동기화를 켜 주세요.")
   const completed = { pulled: 0, pushed: 0, deleted: 0, total: loadEntriesOwnedBy(userId).length }
+  const interruptedMessage = "계정 일지 보관으로 전환되어 이전 동기화를 중단했어요. 이미 반영된 작업과 기기 원본은 보존했어요."
   async function cancellation(): Promise<SyncOutcome | null> {
+    if (legacyJournalWritesBlocked(userId)) return { ok: false, message: interruptedMessage, ...completed }
     let code = await sessionFailureCode(client!, userId)
+    if (legacyJournalWritesBlocked(userId)) return { ok: false, message: interruptedMessage, ...completed }
     if (code === null && activeLocalAccount() !== localScope) code = "SESSION_TARGET_MISMATCH"
     if (code === null && loadSyncConsent(userId).enabled) return null
     // Cancellation stops the next operation; it cannot undo an acknowledged server write.

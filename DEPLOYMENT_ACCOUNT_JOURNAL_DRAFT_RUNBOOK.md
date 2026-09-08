@@ -1,6 +1,11 @@
 # Account Journal Draft Gateway Deployment Runbook
 
-Status: REVIEWABLE DRAFT GATEWAY; NOT PRODUCTION READY; DO NOT ACTIVATE.
+Status: DRAFT AND FINAL JOURNAL INTEGRATION IN PROGRESS; NOT PRODUCTION READY.
+
+2026-09-08 update: owner approval to complete the implementation and deployment
+has been received. Remaining engineering and target-environment work must not be
+reported as missing product approval. No live deployment or key provisioning has
+been completed by this integration update.
 
 This document is an operator checklist, not authorization to change a remote
 project, provision secrets, deploy, enable flags, or collect real journal content.
@@ -15,18 +20,20 @@ Read `AGENTS.md`, `PRODUCT_NORTH_STAR.md`, and
 The owner-approved storage exception does not authorize journal text in logs,
 telemetry, model context, analytics, coach views, or sharing.
 
-This gateway is standalone DRAFT storage and owner retrieval only. It does not
-implement final journal completion, statistics, rewards, plan recovery, stickers,
-legacy vault migration, full account synchronization, deletion, or retention.
+The gateway now accepts DRAFT and validated FINALIZED JOURNAL documents. Four
+existing forms use the new path when its frontend feature is enabled. Account
+history, delete and restore are implemented in migration 0034 and the gateway.
+Statistics consume the in-memory journal projection without private text. Rewards,
+plan recovery, stickers and full account cutover remain incomplete. Explicit
+legacy journal migration preserves device originals and is not a full vault migration.
 Service-managed encryption is NOT end-to-end encryption: the service can decrypt.
 Both PRIVATE and PERSONAL drafts remain owner-only through this gateway.
 
-**Production blocker: the approved 30-day revision/trash retention workflow is
-NOT implemented.** Migration 0033 stores the latest document plus operation
-proposals/receipts; that is not a 30-day history, trash, expiry, or restore system.
-There is no implemented automatic expiry or deletion path here. Do not advertise
-30-day recovery or silently prune operation rows to imitate it. Unresolved
-conflicts and idempotency receipts need separately reviewed lifecycle rules.
+**Production blocker: 0034 is not applied to the live target and automatic expiry
+execution is not configured.** Local tests cover 30-day revision/trash queries,
+delete/restore, expired-source rejection and a cleanup RPC. This is not evidence
+of production retention or backup recovery. Do not silently prune unresolved
+conflicts or idempotency receipts. Client legacy guards do not replace server cutover.
 
 ## 2. Dependencies And OFF Baseline
 
@@ -130,8 +137,11 @@ OPTIONS is the restricted CORS preflight, not an application action.
 | --- | --- |
 | `{action:'status'}` | `{kind:'ready'}` after auth, gates, and key readiness |
 | `{action:'read',documentId}` | `{kind:'document',documentId,revision,document}` |
-| `{action:'list',limit?,cursor?}` | `{kind:'list',documents:[{documentId,revision,document}],nextCursor}` |
+| `{action:'list',limit?,cursor?,collection?:'JOURNAL'}` | `{kind:'list',documents:[{documentId,revision,document}],nextCursor,deletedDocuments?}` |
 | `{action:'save',documentId,operationId,expectedRevision,document}` | 0033 saved or conflict receipt |
+| `{action:'history',documentId,collection?:'JOURNAL'}` | validated eligible versions with source revision and expiry |
+| `{action:'delete',documentId,operationId,expectedRevision}` | deleted or conflict receipt |
+| `{action:'restore',documentId,operationId,expectedRevision,sourceRevision}` | restored or conflict receipt; expired source cannot restore |
 
 IDs/cursors are UUIDs; revisions are safe integers within the 0033 range.
 List defaults to 50, permits 1-50, sorts by document ID, and returns a UUID cursor
@@ -141,7 +151,11 @@ whole response rather than disappearing from the list.
 Document fields are exactly `version:1`, `state:'DRAFT'`,
 `visibility:'PRIVATE'|'PERSONAL'`, valid `YYYY-MM-DD` date, string title (at most
 200 UTF-16 code units), and string body (at most 100000 UTF-16 code units).
-No extra fields or finalization state are accepted.
+Alternatively, final journals use exactly `version:2`, `state:'FINALIZED'`,
+`kind:'JOURNAL'`, and `entry` validated by the shared existing journal schema.
+Unknown fields or silent parser transformations are rejected. Final document IDs
+are derived from owner and journal ID. Updates preserve identity, date, imported
+facts and provenance. This endpoint does not accept plan or decoration documents.
 
 The streaming request bound is 655360 bytes (640 KiB), checked before JSON parse
 regardless of Content-Length. This accommodates maximum-length Korean text and

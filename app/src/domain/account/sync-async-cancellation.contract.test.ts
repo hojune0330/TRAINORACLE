@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest"
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import type { PostSessionEntry } from "../journal-schema"
 import { loadEntriesOwnedBy, saveEntry } from "../journal-store"
 import { SYNC_RECOVERY_STORAGE_KEY } from "../journal-storage-keys"
@@ -7,9 +7,10 @@ import { assignJournalsToAccount, setActiveLocalAccount } from "./local-journal-
 import { loadSyncConsent, saveSyncConsent } from "./sync-local"
 import { recordTombstone } from "./tombstone"
 import { syncNow } from "./sync-run"
+import { previewSync } from "./sync-preview"
 
 type Phase = "schema" | "journal-select" | "tombstone-select" | "journal-upsert" | "tombstone-upsert" | "journal-delete" | "pre-upload-session"
-type Cancellation = "logout" | "account-switch" | "consent-off"
+type Cancellation = "logout" | "account-switch" | "consent-off" | "account-journal-on"
 type Row = { user_id: string; entry_id: string; entry: PostSessionEntry }
 
 function deferred() {
@@ -91,10 +92,11 @@ function post(id: string): PostSessionEntry {
 
 const checkpointKey = accountScopedStorageKeyFor(SYNC_RECOVERY_STORAGE_KEY, "account-a")
 const consent = { enabled: true, shareTrainingNotes: false }
-const cancellations: Cancellation[] = ["logout", "account-switch", "consent-off"]
+const cancellations: Cancellation[] = ["logout", "account-switch", "consent-off", "account-journal-on"]
 
 function cancel(reason: Cancellation) {
-  if (reason === "consent-off") saveSyncConsent({ ...consent, enabled: false }, "account-a")
+  if (reason === "account-journal-on") vi.stubEnv("VITE_FEATURE_ACCOUNT_JOURNAL", "true")
+  else if (reason === "consent-off") saveSyncConsent({ ...consent, enabled: false }, "account-a")
   else {
     sessionUserId = reason === "logout" ? null : "account-b"
     setActiveLocalAccount(sessionUserId)
@@ -102,6 +104,8 @@ function cancel(reason: Cancellation) {
 }
 
 beforeEach(() => {
+  vi.stubEnv("VITE_FEATURE_ACCOUNT_JOURNAL", "false")
+  vi.stubEnv("VITE_KILL_ACCOUNT_JOURNAL", "false")
   window.localStorage.clear()
   window.sessionStorage.clear()
   paused = null
@@ -122,7 +126,29 @@ beforeEach(() => {
   entries = ["remote-live", "remote-deleted"].map(id => ({ user_id: "account-a", entry_id: id, entry: post(id) }))
 })
 
+afterEach(() => vi.unstubAllEnvs())
+
 describe("sync asynchronous cancellation", () => {
+  it("blocks direct old sync and preview before any server activity or storage mutation", async () => {
+    cancel("account-journal-on")
+    const before = { ...window.localStorage }
+    expect(await syncNow("account-a")).toMatchObject({ ok: false, pushed: 0, deleted: 0 })
+    expect(await previewSync("account-a")).toMatchObject({ ok: false, remoteJournalCount: 0 })
+    expect(events).toEqual([])
+    expect({ ...window.localStorage }).toEqual(before)
+  })
+
+  it.each(["schema", "journal-select"] as const)("rejects stale preview after delayed %s", async phase => {
+    paused = phase
+    const running = previewSync("account-a")
+    await entered.promise
+    const before = { ...window.localStorage }
+    cancel("account-journal-on")
+    released.resolve()
+    expect(await running).toMatchObject({ ok: false, remoteJournalCount: 0 })
+    expect(events.at(-1)).toBe(phase)
+    expect({ ...window.localStorage }).toEqual(before)
+  })
   it("completes an authorized positive roundtrip and clears only its recovery checkpoint", async () => {
     const result = await syncNow("account-a")
     expect(result).toMatchObject({ ok: true, pulled: 2, pushed: 2, deleted: 1, total: 2 })

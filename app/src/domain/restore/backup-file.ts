@@ -27,7 +27,7 @@ import {
   hasPrivateMemoText,
   savePrivateMemosWithJournalShells,
 } from "../private-memo-vault"
-import { loadEntries, replaceAllEntries } from "../journal-store"
+import { legacyJournalWritesBlocked, loadEntries, replaceAllEntries } from "../journal-store"
 import {
   DECORATION_STORAGE_KEY_V3,
   parseStoredDecorationState,
@@ -222,6 +222,10 @@ export async function restoreBackupFile(
   mode: RestoreMode = "keep-existing",
   decorationMode: DecorationRestoreMode = "keep-existing",
 ): Promise<RestoreOutcome> {
+  if (legacyJournalWritesBlocked()) return {
+    ...emptyRestoreOutcome(plan, "NOT_INCLUDED", "FAILED", "JOURNAL_SAVE_FAILED"),
+    failed: requestedRestoreCount(plan, mode),
+  }
   if (read.decorationStatus === "included" && read.decorations !== null && decorationMode === "replace") {
     const snapshot = takeLocalStorageSnapshot()
     const saved = saveDecorationState(read.decorations)
@@ -320,6 +324,10 @@ export async function restoreEntries(
   plan: RestorePlan,
   mode: RestoreMode = "keep-existing",
 ): Promise<RestoreOutcome> {
+  if (legacyJournalWritesBlocked()) return {
+    ...emptyRestoreOutcome(plan, "NOT_INCLUDED", "FAILED", "JOURNAL_SAVE_FAILED"),
+    failed: requestedRestoreCount(plan, mode),
+  }
   let keptExisting = 0
   let failed = 0
   let failureReason: RestoreOutcome["failureReason"] = "NONE"

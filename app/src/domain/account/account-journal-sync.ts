@@ -1,12 +1,12 @@
 import type { AccountJournalDraftBuffer } from "./account-journal-draft-buffer"
 import type { AccountJournalRequest, AccountJournalResult } from "./account-journal-api"
 
-export type DraftTransport = (request: AccountJournalRequest) => Promise<AccountJournalResult>
+export type DraftTransport<T = import("./account-journal-draft-buffer").AccountJournalDraft> = (request: AccountJournalRequest<T>) => Promise<AccountJournalResult<T>>
 
 /** Replay the immutable pending snapshot before sending any newer local edit. */
-export async function flushAccountJournalDraft(
-  buffer: AccountJournalDraftBuffer, ownerId: string, documentId: string,
-  send: DraftTransport, isCurrent: () => boolean,
+export async function flushAccountJournalDraft<T>(
+  buffer: AccountJournalDraftBuffer<T>, ownerId: string, documentId: string,
+  send: DraftTransport<T>, isCurrent: () => boolean,
 ): Promise<"SAVED" | "PENDING" | "CONFLICT" | "STALE"> {
   for (let attempt = 0; attempt < 8; attempt += 1) {
     if (!isCurrent()) return "STALE"

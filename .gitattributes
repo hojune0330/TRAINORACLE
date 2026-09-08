@@ -1,1 +1,3 @@
 .omo/evidence/** -whitespace
+# Preserve generated Zod template literals and reproducible bundle bytes.
+supabase/functions/_shared/account-journal-record-validator.mjs text eol=lf whitespace=-blank-at-eol

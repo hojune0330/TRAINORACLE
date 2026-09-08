@@ -1,5 +1,6 @@
 import React from "react"
-import { Check, ChevronRight, FilePenLine, RotateCcw } from "lucide-react"
+import { accountJournalRecordsEnabled, persistAccountJournalRecord } from "../../domain/account/account-journal-record-service"
+import { Check, ChevronRight, Clock3, FilePenLine, RotateCcw, TriangleAlert } from "lucide-react"
 import { compactDate, dowOf, isoToDate } from "../../domain/dates"
 import { derivedProvenance, explicitOrMissing } from "../../domain/field-provenance"
 import {
@@ -17,6 +18,7 @@ import { useOrderedStepMotion } from "../../hooks/useOrderedStepMotion"
 import { painLevelsRequireReview } from "../../safety/memo-safety"
 import { BodyDiagram, PainReviewBanner } from "./BodyDiagram"
 import { TopBar } from "./shared"
+import { usePurposeScopedMemo } from "./PurposeScopedMemoField"
 
 type QuickStep = "activity" | "effort" | "saved"
 type Outcome = NonNullable<PostSessionEntry["activityOutcome"]>
@@ -77,7 +79,7 @@ export function QuickSessionForm({
   plannedSessionLink,
 }: {
   readonly onBack?: () => void
-  readonly onDone?: (entry: PostSessionEntry) => void
+  readonly onDone?: (entry: PostSessionEntry, reviewMessage?: string) => void
   readonly onContinueDetailed?: (entry: PostSessionEntry) => void
   readonly targetDate?: string
   readonly initialEntry?: PostSessionEntry
@@ -96,8 +98,14 @@ export function QuickSessionForm({
   const [painParts, setPainParts] = React.useState<Record<string, number>>(() => ({ ...(initial?.painParts ?? {}) }))
   const [savedEntry, setSavedEntry] = React.useState<PostSessionEntry | null>(initial ?? null)
   const [saveError, setSaveError] = React.useState<string | null>(null)
+  const [saving, setSaving] = React.useState(false)
+  const persistInFlight = React.useRef(false)
+  const accountEnabled = accountJournalRecordsEnabled()
+  const [savedStorage, setSavedStorage] = React.useState<"ACCOUNT" | "PENDING" | "CONFLICT" | null>(null)
+  const [savedMessage, setSavedMessage] = React.useState<string | null>(null)
+  const inheritedMemo = usePurposeScopedMemo(initial?.memo ?? "", initial?.memoPurpose)
   const [taps, setTaps] = React.useState(0)
-  const entryId = React.useRef(initial?.id ?? newEntryId())
+  const [entryId] = React.useState(() => initial?.id ?? newEntryId())
   const stageRef = React.useRef<HTMLDivElement>(null)
   const slotRef = React.useRef<HTMLDivElement>(null)
   const slotHeadingRef = React.useRef<HTMLSpanElement>(null)
@@ -108,7 +116,7 @@ export function QuickSessionForm({
   useActiveContentScroll(performed(outcome) ? outcome : null, slotRef, slotHeadingRef, true)
   useActiveContentScroll(effortAnswered ? `rpe-${rpe}` : null, safetyRef, safetyHeadingRef, true)
 
-  const persist = (next: {
+  const persist = async (next: {
     readonly outcome: Outcome
     readonly slot: Slot | null
     readonly rpe: number
@@ -117,11 +125,17 @@ export function QuickSessionForm({
     readonly painParts: Readonly<Record<string, number>>
     readonly answerTapCount: number
   }) => {
+    if (persistInFlight.current) return
     const base = savedEntry ?? initial
     const didPerform = performed(next.outcome)
     const hasPain = Object.values(next.painParts).some((level) => level > 0)
     if (next.painStatus === "SIGNAL_REPORTED" && !hasPain) {
       setSaveError("불편한 곳을 하나 이상 골라 주세요.")
+      return
+    }
+    const memoPreparation = accountEnabled ? inheritedMemo.prepareForSave() : null
+    if (memoPreparation && !memoPreparation.ready) {
+      setSaveError("메모 용도를 확인할 수 없어요. 상세 일지에서 용도를 선택한 뒤 저장해 주세요.")
       return
     }
 
@@ -141,7 +155,7 @@ export function QuickSessionForm({
       ...previousProvenance
     } = base?.fieldProvenance ?? {}
     const entry: PostSessionEntry = {
-      id: entryId.current,
+      id: entryId,
       kind: "post-session",
       date,
       savedAt: nextJournalSavedAt(base?.savedAt),
@@ -187,24 +201,45 @@ export function QuickSessionForm({
           : {}),
       },
     }
-    const result = base === undefined ? saveEntry(entry) : updateEntry(entry, base.savedAt)
-    if (window.location.search.includes("uitest")) {
-      console.log(`[QUICKLOG] step=saved taps=${next.answerTapCount + 1} answers=${next.answerTapCount} screens=2 ok=${result.ok}`)
-      console.log(`[JSAVE] kind=post-session ok=${result.ok}`)
-    }
-    if (!result.ok) {
-      setSaveError("이 기기에 저장하지 못했어요. 저장 공간과 입력 내용을 확인해 주세요.")
-      return
-    }
-    setOutcome(next.outcome)
-    setSlot(next.slot)
-    setRpe(next.rpe)
-    setEffortAnswered(next.effortAnswered)
-    setPainStatus(next.painStatus)
-    setPainParts({ ...next.painParts })
-    setSavedEntry(entry)
+    persistInFlight.current = true
+    setSaving(true)
     setSaveError(null)
-    setStep("saved")
+    try {
+      const accountResult = accountEnabled ? await persistAccountJournalRecord(entry, base?.savedAt) : null
+      const result = accountEnabled ? accountResult : (base === undefined ? saveEntry(entry) : updateEntry(entry, base.savedAt))
+      if (window.location.search.includes("uitest")) {
+        console.log(`[QUICKLOG] step=saved taps=${next.answerTapCount + 1} answers=${next.answerTapCount} screens=2 ok=${result?.ok === true}`)
+        console.log(`[JSAVE] kind=post-session ok=${result?.ok === true}`)
+      }
+      if (!result?.ok) {
+        setSaveError(accountEnabled ? "계정 저장을 완료하지 못했어요. 입력은 유지했어요. 연결과 로그인 상태를 확인한 뒤 다시 시도해 주세요." : "이 기기에 저장하지 못했어요. 저장 공간과 입력 내용을 확인해 주세요.")
+        return
+      }
+      setOutcome(next.outcome)
+      setSlot(next.slot)
+      setRpe(next.rpe)
+      setEffortAnswered(next.effortAnswered)
+      setPainStatus(next.painStatus)
+      setPainParts({ ...next.painParts })
+      setSavedEntry(accountResult?.ok ? { ...entry, syncState: accountResult.storage === "ACCOUNT" ? "synced" : "local" } : entry)
+      const storage = accountResult?.ok ? accountResult.storage : null
+      setSavedStorage(storage)
+      const isPrivateMemo = entry.memoPurpose === "PRIVATE_SELF_ONLY" && entry.memo.trim() !== ""
+      const storageMessage = storage === null ? null : storage === "ACCOUNT"
+        ? isPrivateMemo ? "비밀 일지를 계정에 저장했어요. 공유·분석에는 사용하지 않아요." : "일지를 계정에 저장했어요."
+        : storage === "CONFLICT"
+          ? "수정 충돌을 확인해 주세요. 이 기기의 내용은 보관했지만 계정 저장은 완료되지 않았어요."
+          : isPrivateMemo ? "비밀 일지를 이 기기에 보관했어요. 계정 전송 대기 중이며 공유·분석에는 사용하지 않아요."
+            : "일지를 이 기기에 보관했어요. 계정 전송 대기 중이에요."
+      setSavedMessage([memoPreparation?.reviewMessage, storageMessage].filter(Boolean).join(" ") || null)
+      setSaveError(null)
+      setStep("saved")
+    } catch {
+      setSaveError("저장을 완료하지 못했어요. 입력은 그대로 남아 있어요. 다시 시도해 주세요.")
+    } finally {
+      persistInFlight.current = false
+      setSaving(false)
+    }
   }
 
   const selectOutcome = (value: Outcome) => {
@@ -286,7 +321,8 @@ export function QuickSessionForm({
   const rpeDetail = RPE_OPTIONS.find((candidate) => candidate.value === rpe)?.detail
 
   return (
-    <div className="quick-log">
+    <div className="quick-log" aria-busy={saving}>
+      <fieldset disabled={saving} style={{ border: 0, margin: 0, padding: 0, minWidth: 0 }}>
       <TopBar onBack={onBack}>빠르게 기록</TopBar>
       <section className="quick-log__paper" aria-label="지금까지 기록한 내용">
         <div className="quick-log__date">{compactDate(date)} · {dowOf(date)}</div>
@@ -298,9 +334,13 @@ export function QuickSessionForm({
           {effortAnswered && performed(outcome) && <button type="button" onClick={() => setStep("effort")}><span>몸의 느낌</span><strong>{rpe > 0 ? `RPE ${rpe}` : "미기록"}</strong></button>}
           {painStatus !== "UNANSWERED" && <button type="button" onClick={() => setStep("effort")}><span>몸 상태</span><strong>{painStatus === "SIGNAL_REPORTED" ? "불편한 곳 있음" : "불편한 곳 없음"}</strong></button>}
         </div>
-        {step === "saved" && <div className="quick-log__stamp" aria-label="저장 완료"><Check aria-hidden="true" /> 저장됨</div>}
+        {step === "saved" && <div className="quick-log__stamp" aria-label={savedStorage === "PENDING" ? "계정 전송 대기" : savedStorage === "CONFLICT" ? "수정 충돌" : "저장 완료"}>
+          {savedStorage === "PENDING" ? <Clock3 aria-hidden="true" /> : savedStorage === "CONFLICT" ? <TriangleAlert aria-hidden="true" /> : <Check aria-hidden="true" />}
+          {savedStorage === "ACCOUNT" ? "계정에 저장됨" : savedStorage === "PENDING" ? "기기 보관 · 전송 대기" : savedStorage === "CONFLICT" ? "기기 보관 · 수정 충돌" : "저장됨"}
+        </div>}
       </section>
 
+      {saving && <p role="status">저장 중이에요.</p>}
       <div
         key={step}
         ref={stageRef}
@@ -360,15 +400,18 @@ export function QuickSessionForm({
           <section className="quick-log__complete" aria-labelledby="quick-saved-title">
             <small>{savedDateLabel(savedEntry.date)} 기록</small>
             <h1 id="quick-saved-title">{savedReceiptLabel(savedEntry.date)}</h1>
+            {savedMessage !== null && <p role="status">{savedMessage}</p>}
+            {painLevelsRequireReview(savedEntry.painParts ?? {}) && <PainReviewBanner />}
             <p>{performed(savedEntry.activityOutcome ?? null)
               ? "거리와 시간은 워치 기록이 들어오면 확인한 뒤 같은 일지에 더할 수 있어요."
               : "쉬거나 건너뛴 내용도 선택한 날짜에 저장했어요."}</p>
-            <button className="quick-log__primary" type="button" onClick={() => onDone?.(savedEntry)}>완료</button>
+            <button className="quick-log__primary" type="button" onClick={() => savedMessage === null ? onDone?.(savedEntry) : onDone?.(savedEntry, savedMessage)}>완료</button>
             <button className="quick-log__secondary" type="button" onClick={() => onContinueDetailed?.(savedEntry)}><FilePenLine aria-hidden="true" /><span>일지 더 쓰기</span></button>
             <button className="quick-log__secondary" type="button" onClick={() => { setTaps(0); setStep("activity") }}><RotateCcw aria-hidden="true" /><span>방금 기록 수정</span></button>
           </section>
         )}
       </div>
+      </fieldset>
     </div>
   )
 }

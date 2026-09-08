@@ -110,6 +110,10 @@ jobs:
         working-directory: app
         run: npm test
 
+      - name: Verify shared account journal record validator
+        working-directory: app
+        run: npm run test:account-record-validator
+
       - name: Typecheck app and browser tests
         working-directory: app
         run: |
@@ -145,6 +149,13 @@ jobs:
       - name: Run app browser scenarios
         working-directory: app
         run: npm run test:e2e
+
+      - name: Verify encrypted account journal buffer and record recovery
+        working-directory: app
+        run: |
+          npm run test:e2e:account-draft-buffer
+          npm run test:e2e:account-draft-panel
+          npm run test:e2e:account-record-service
 
   deploy-pages:
     if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && github.ref == 'refs/heads/main'

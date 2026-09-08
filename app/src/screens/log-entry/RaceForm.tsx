@@ -1,4 +1,5 @@
 import React from "react"
+import { accountJournalRecordsEnabled, persistAccountJournalRecord } from "../../domain/account/account-journal-record-service"
 import { Stamp } from "../../components/JournalPrimitives"
 import { TermHelp } from "../../components/TermHelp"
 import { compactDate, dowOf, nowClock } from "../../domain/dates"
@@ -28,6 +29,11 @@ type RaceStage = "pre" | "post"
 export function RaceForm({ onBack, onDone, targetDate, initialEntry }: EntryFormProps) {
   const initial = initialEntry?.kind === "race" ? initialEntry : undefined
   const isEditing = initial !== undefined
+  const [entryId] = React.useState(() => initial?.id ?? newEntryId())
+  const lastSavedAt = React.useRef(initial?.savedAt)
+  const persistInFlight = React.useRef(false)
+  const [saving, setSaving] = React.useState(false)
+  const accountEnabled = accountJournalRecordsEnabled()
   const entryDate = initial?.date ?? targetDate ?? todayISO()
   const initialPaceSeconds = initial?.goalPace?.secondsPerKm
   const [stage, setStage] = React.useState<RaceStage>(() => initial?.stage ?? "pre")
@@ -47,6 +53,7 @@ export function RaceForm({ onBack, onDone, targetDate, initialEntry }: EntryForm
   useActiveContentScroll(stage, stageRef, undefined, true)
 
   const persist = async () => {
+    if (persistInFlight.current) return
     const hasPaceInput = paceMinutes.trim() !== "" || paceSeconds.trim() !== ""
     const goalPace = parseTargetPaceInput(paceMinutes, paceSeconds)
     if (hasPaceInput && goalPace === null) {
@@ -58,8 +65,8 @@ export function RaceForm({ onBack, onDone, targetDate, initialEntry }: EntryForm
     if (!memoPreparation.ready) return
 
     const entry: JournalEntry = {
-      id: initial?.id ?? newEntryId(), kind: "race", date: entryDate,
-      savedAt: nextJournalSavedAt(initial?.savedAt), syncState: "local",
+      id: entryId, kind: "race", date: entryDate,
+      savedAt: nextJournalSavedAt(lastSavedAt.current), syncState: "local",
       stage, record, rank, result, memo: memo.text,
       fieldProvenance: {
         tension: explicitOrMissing(tension !== null),
@@ -74,17 +81,37 @@ export function RaceForm({ onBack, onDone, targetDate, initialEntry }: EntryForm
       ...(goalPace !== null ? { goalPace } : {}),
     }
     const isPrivateMemo = entry.memoPurpose === "PRIVATE_SELF_ONLY" && entry.memo.trim() !== ""
-    const saveResult = initial === undefined
-      ? isPrivateMemo ? await savePrivateEntry(entry) : saveEntry(entry)
-      : isPrivateMemo ? await updatePrivateEntry(entry, initial.savedAt) : updateEntry(entry, initial.savedAt)
-    if (window.location.search.includes("uitest")) console.log(`[JSAVE] kind=race ok=${saveResult.ok}`)
-    if (!saveResult.ok) { setSaveError(true); return }
-    if (memoPreparation.reviewMessage === null) onDone?.("race", entry)
-    else onDone?.("race", entry, memoPreparation.reviewMessage)
+    persistInFlight.current = true
+    setSaving(true)
+    setSaveError(false)
+    try {
+      const accountResult = accountEnabled ? await persistAccountJournalRecord(entry, lastSavedAt.current) : null
+      const saveResult = accountEnabled ? accountResult : (lastSavedAt.current === undefined
+        ? isPrivateMemo ? await savePrivateEntry(entry) : saveEntry(entry)
+        : isPrivateMemo ? await updatePrivateEntry(entry, lastSavedAt.current) : updateEntry(entry, lastSavedAt.current))
+      if (window.location.search.includes("uitest")) console.log(`[JSAVE] kind=race ok=${saveResult?.ok === true}`)
+      if (!saveResult?.ok) { setSaveError(true); return }
+      lastSavedAt.current = entry.savedAt
+      const saved = accountResult?.ok ? { ...entry, syncState: accountResult.storage === "ACCOUNT" ? "synced" as const : "local" as const } : entry
+      const storageMessage = !accountResult?.ok ? null : accountResult.storage === "ACCOUNT"
+        ? isPrivateMemo ? "비밀 일지를 계정에 저장했어요. 공유·분석에는 사용하지 않아요." : "일지를 계정에 저장했어요."
+        : accountResult.storage === "CONFLICT"
+          ? "수정 충돌을 확인해 주세요. 이 기기의 내용은 보관했지만 계정 저장은 완료되지 않았어요."
+          : isPrivateMemo ? "비밀 일지를 이 기기에 보관했어요. 계정 전송 대기 중이며 공유·분석에는 사용하지 않아요."
+            : "일지를 이 기기에 보관했어요. 계정 전송 대기 중이에요."
+      const message = [memoPreparation.reviewMessage, storageMessage].filter(Boolean).join(" ")
+      onDone?.("race", saved, message || undefined)
+    } catch {
+      setSaveError(true)
+    } finally {
+      persistInFlight.current = false
+      setSaving(false)
+    }
   }
 
   return (
-    <div style={{ paddingBottom: 100 }}>
+    <div style={{ paddingBottom: 100 }} aria-busy={saving}>
+      <fieldset disabled={saving} style={{ border: 0, margin: 0, padding: 0, minWidth: 0 }}>
       <TopBar onBack={onBack}>경기 · 빠른 점검</TopBar>
       <RaceHeader date={entryDate} isToday={entryDate === todayISO()} />
       <StageTabs stage={stage} onChange={setStage} />
@@ -134,7 +161,9 @@ export function RaceForm({ onBack, onDone, targetDate, initialEntry }: EntryForm
           placeholder={stage === "pre" ? "레이스 전에 자신에게..." : "경기를 마치고 남길 말..."}
         />
       </FormSec>
-      <StickyBar onSave={persist} error={saveError} label={isEditing ? "수정 저장" : undefined} />
+      {accountEnabled && saveError && <p role="alert">계정 저장을 완료하지 못했어요. 입력은 그대로 남아 있어요. 연결과 로그인 상태를 확인한 뒤 다시 저장해 주세요.</p>}
+      <StickyBar onSave={persist} error={saveError && !accountEnabled} label={saving ? "저장 중" : isEditing ? "수정 저장" : undefined} />
+      </fieldset>
     </div>
   )
 }

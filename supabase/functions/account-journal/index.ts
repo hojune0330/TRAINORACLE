@@ -1,6 +1,6 @@
 import { createClient } from 'npm:@supabase/supabase-js@2.109.0';
 import { createAccountJournalHandler, createAccountJournalRepository, importJournalKeyring,
-  validateDraftDocument } from '../_shared/account-journal-handler.mjs';
+  validateAccountJournalDocument } from '../_shared/account-journal-handler.mjs';
 
 // DRAFT ONLY. ACCOUNT_JOURNAL_V2 remains deployed-off until separate operational approval.
 // Runtime configuration: SUPABASE_URL, SUPABASE_ANON_KEY,
@@ -10,7 +10,7 @@ import { createAccountJournalHandler, createAccountJournalRepository, importJour
 Deno.serve((request: Request) => createAccountJournalHandler({
   allowedOrigins: (Deno.env.get('TRAINORACLE_JOURNAL_ALLOWED_ORIGINS') ?? '')
     .split(',').map((origin: string) => origin.trim()).filter(Boolean),
-  validateDocument: validateDraftDocument,
+  validateDocument: validateAccountJournalDocument,
   getMaterial: () => importJournalKeyring(Deno.env.get('TRAINORACLE_JOURNAL_KEYRING_JSON')),
   authenticate: async (token: string) => {
     const client = createClient(Deno.env.get('SUPABASE_URL') ?? '', Deno.env.get('SUPABASE_ANON_KEY') ?? '', {

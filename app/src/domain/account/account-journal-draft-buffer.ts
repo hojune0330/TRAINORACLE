@@ -66,26 +66,26 @@ const recordSchema = z.object({
 })
 
 export type AccountJournalDraftRecord = z.infer<typeof recordSchema>
-export type AccountJournalDraftPending = {
-  operationId: string; expectedRevision: number; sequence: number; draft: AccountJournalDraft
+export type AccountJournalDraftPending<T = AccountJournalDraft> = {
+  operationId: string; expectedRevision: number; sequence: number; draft: T
 }
-export type AccountJournalDraftView = {
+export type AccountJournalDraftView<T = AccountJournalDraft> = {
   ownerId: string; documentId: string; serverRevision: number
   localSequence: number; acknowledgedSequence: number
   state: "LOCAL_CHANGES" | "PENDING" | "DRAFT_ACKNOWLEDGED" | "CONFLICT"
-  draft: AccountJournalDraft
-  pending: AccountJournalDraftPending | null
+  draft: T
+  pending: AccountJournalDraftPending<T> | null
   blocked: { kind: "RECEIPT" | "REMOTE"; operationId: string | null; currentRevision: number } | null
-  remoteDraft: AccountJournalDraft | null
+  remoteDraft: T | null
 }
-export interface AccountJournalDraftBuffer {
-  saveDraft(owner: string, doc: string, draft: AccountJournalDraft, expectedLocalSequence?: number): Promise<void>
-  read(owner: string, doc: string): Promise<AccountJournalDraftView | null>
-  list(owner: string): Promise<AccountJournalDraftView[]>
+export interface AccountJournalDraftBuffer<T = AccountJournalDraft> {
+  saveDraft(owner: string, doc: string, draft: T, expectedLocalSequence?: number): Promise<void>
+  read(owner: string, doc: string): Promise<AccountJournalDraftView<T> | null>
+  list(owner: string): Promise<AccountJournalDraftView<T>[]>
   queue(owner: string, doc: string, operationId: string): Promise<void>
   ack(owner: string, doc: string, operationId: string, revision: number): Promise<boolean>
   conflict(owner: string, doc: string, operationId: string, currentRevision: number): Promise<boolean>
-  importRemote(owner: string, doc: string, draft: AccountJournalDraft, serverRevision: number): Promise<"IMPORTED" | "UNCHANGED" | "CONFLICT">
+  importRemote(owner: string, doc: string, draft: T, serverRevision: number): Promise<"IMPORTED" | "UNCHANGED" | "CONFLICT">
   clear(owner: string, doc: string): Promise<boolean>
   logout(owner: string): void
   close(): void
@@ -104,8 +104,8 @@ function parseRecord(value: unknown, ownerId: string, documentId?: string) {
   return result.data
 }
 
-function parseDraft(value: unknown): AccountJournalDraft {
-  const result = accountJournalDraftSchema.safeParse(value)
+function parseDocument<T>(value: unknown, schema: z.ZodType<T>): T {
+  const result = schema.safeParse(value)
   // Do not propagate Zod input values into error logs.
   if (!result.success) throw new Error("Invalid journal draft")
   return result.data
@@ -120,32 +120,38 @@ function deviceKey(value: unknown): CryptoKey {
   return value
 }
 
-function aad(ownerId: string, documentId: string) {
-  return new TextEncoder().encode(JSON.stringify([DB_NAME, 1, ownerId, documentId]))
+function aad(ownerId: string, documentId: string, databaseName: string) {
+  return new TextEncoder().encode(JSON.stringify([databaseName, 1, ownerId, documentId]))
 }
 
-async function encrypt(key: CryptoKey, ownerId: string, documentId: string, draft: AccountJournalDraft): Promise<Cipher> {
+async function encrypt<T>(key: CryptoKey, ownerId: string, documentId: string, draft: T, databaseName: string): Promise<Cipher> {
   const iv = crypto.getRandomValues(new Uint8Array(12))
   const bytes = new TextEncoder().encode(JSON.stringify(draft))
   try {
     const ciphertext = await crypto.subtle.encrypt({ name: "AES-GCM", iv,
-      additionalData: aad(ownerId, documentId) }, key, bytes)
+      additionalData: aad(ownerId, documentId, databaseName) }, key, bytes)
     return cipherSchema.parse({ version: 1, iv: Array.from(iv), ciphertext: Array.from(new Uint8Array(ciphertext)) })
   } finally { bytes.fill(0) }
 }
 
-async function decrypt(key: CryptoKey, ownerId: string, documentId: string, encrypted: Cipher) {
+async function decrypt<T>(key: CryptoKey, ownerId: string, documentId: string, encrypted: Cipher, schema: z.ZodType<T>, databaseName: string) {
   let bytes: Uint8Array | undefined
   try {
     bytes = new Uint8Array(await crypto.subtle.decrypt({ name: "AES-GCM",
-      iv: new Uint8Array(encrypted.iv), additionalData: aad(ownerId, documentId),
+      iv: new Uint8Array(encrypted.iv), additionalData: aad(ownerId, documentId, databaseName),
     }, key, new Uint8Array(encrypted.ciphertext)))
-    return parseDraft(JSON.parse(new TextDecoder("utf-8", { fatal: true }).decode(bytes)))
+    return parseDocument(JSON.parse(new TextDecoder("utf-8", { fatal: true }).decode(bytes)), schema)
   } catch { throw new Error("Cannot decrypt journal draft") }
   finally { bytes?.fill(0) }
 }
 
 export function createAccountJournalDraftBuffer(factory: IDBFactory = globalThis.indexedDB): AccountJournalDraftBuffer {
+  return createAccountDocumentBuffer(accountJournalDraftSchema, DB_NAME, factory)
+}
+
+/** Same durable protocol for separately validated account document families. */
+export function createAccountDocumentBuffer<T>(schema: z.ZodType<T>, databaseName: string,
+  factory: IDBFactory = globalThis.indexedDB): AccountJournalDraftBuffer<T> {
   if (!factory || typeof factory.open !== "function") throw new Error("IndexedDB unavailable")
   if (!globalThis.crypto?.subtle) throw new Error("Web Crypto unavailable")
   const disposedOwners = new Set<string>()
@@ -162,7 +168,7 @@ export function createAccountJournalDraftBuffer(factory: IDBFactory = globalThis
 
   function open() {
     if (!database) database = new Promise<IDBDatabase>((resolve, reject) => {
-      const request = factory.open(DB_NAME, 1)
+      const request = factory.open(databaseName, 1)
       let refused = false
       request.onupgradeneeded = () => {
         request.result.createObjectStore(RECORDS, { keyPath: ["ownerId", "documentId"] })
@@ -263,15 +269,15 @@ export function createAccountJournalDraftBuffer(factory: IDBFactory = globalThis
       localSequence: 1, acknowledgedSequence: 0, operation: null, blocked: null, retiredOperationIds: [] }
   }
 
-  async function view(record: AccountJournalDraftRecord): Promise<AccountJournalDraftView> {
+  async function view(record: AccountJournalDraftRecord): Promise<AccountJournalDraftView<T>> {
     const { ownerId, documentId } = record
     const key = await keyFor(ownerId, false)
-    const draft = await decrypt(key, ownerId, documentId, record.encryptedCurrent)
+    const draft = await decrypt(key, ownerId, documentId, record.encryptedCurrent, schema, databaseName)
     const op = record.operation
     const pending = op ? { operationId: op.operationId, expectedRevision: op.expectedRevision,
-      sequence: op.sequence, draft: await decrypt(key, ownerId, documentId, op.encryptedSnapshot) } : null
+      sequence: op.sequence, draft: await decrypt(key, ownerId, documentId, op.encryptedSnapshot, schema, databaseName) } : null
     const remoteDraft = record.blocked?.encryptedRemote
-      ? await decrypt(key, ownerId, documentId, record.blocked.encryptedRemote) : null
+      ? await decrypt(key, ownerId, documentId, record.blocked.encryptedRemote, schema, databaseName) : null
     scope(ownerId)
     return { ownerId, documentId, serverRevision: record.serverRevision,
       localSequence: record.localSequence, acknowledgedSequence: record.acknowledgedSequence,
@@ -282,11 +288,11 @@ export function createAccountJournalDraftBuffer(factory: IDBFactory = globalThis
   }
 
   return {
-    async saveDraft(owner: string, doc: string, input: AccountJournalDraft, expectedLocalSequence?: number) {
+    async saveDraft(owner: string, doc: string, input: T, expectedLocalSequence?: number) {
       const { ownerId, documentId } = scope(owner, doc)
-      const draft = parseDraft(input)
+      const draft = parseDocument(input, schema)
       if (expectedLocalSequence !== undefined) sequence.parse(expectedLocalSequence)
-      const encrypted = await encrypt(await keyFor(ownerId, true), ownerId, documentId!, draft)
+      const encrypted = await encrypt(await keyFor(ownerId, true), ownerId, documentId!, draft, databaseName)
       await update(ownerId, documentId!, old => {
         if (expectedLocalSequence !== undefined && expectedLocalSequence !== (old?.localSequence ?? 0)) {
           throw new Error("Draft local sequence mismatch")
@@ -350,7 +356,7 @@ export function createAccountJournalDraftBuffer(factory: IDBFactory = globalThis
         const request = tx.objectStore(RECORDS).index("ownerId").getAll(ownerId)
         request.onsuccess = () => guard(() => finish(request.result.map(value => parseRecord(value, ownerId))))
       })
-      const views: AccountJournalDraftView[] = []
+      const views: AccountJournalDraftView<T>[] = []
       for (const record of records) views.push(await view(record))
       scope(ownerId)
       return views
@@ -363,14 +369,14 @@ export function createAccountJournalDraftBuffer(factory: IDBFactory = globalThis
       return view(record)
     },
 
-    async importRemote(owner: string, doc: string, input: AccountJournalDraft, serverRevision: number) {
+    async importRemote(owner: string, doc: string, input: T, serverRevision: number) {
       const { ownerId, documentId } = scope(owner, doc)
       revision.refine(value => value > 0).parse(serverRevision)
-      const draft = parseDraft(input)
+      const draft = parseDocument(input, schema)
       const key = await keyFor(ownerId, true)
-      const encrypted = await encrypt(key, ownerId, documentId!, draft)
+      const encrypted = await encrypt(key, ownerId, documentId!, draft, databaseName)
       const before = await get(ownerId, documentId!)
-      const priorDraft = before ? await decrypt(key, ownerId, documentId!, before.encryptedCurrent) : null
+      const priorDraft = before ? await decrypt(key, ownerId, documentId!, before.encryptedCurrent, schema, databaseName) : null
       return update(ownerId, documentId!, old => {
         // CAS the complete encrypted record: async decryption must not mask a tab's edit/ack.
         if (JSON.stringify(old) !== JSON.stringify(before)) throw new Error("Draft changed; retry remote import")

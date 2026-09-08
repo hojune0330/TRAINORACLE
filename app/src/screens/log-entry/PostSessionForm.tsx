@@ -1,4 +1,5 @@
 import React from "react"
+import { accountJournalRecordsEnabled, persistAccountJournalRecord } from "../../domain/account/account-journal-record-service"
 import { IndexCard } from "../../components/JournalPrimitives"
 import { compactDate, dowOf, nowClock } from "../../domain/dates"
 import { derivedProvenance, explicitOrMissing, isImportedField } from "../../domain/field-provenance"
@@ -60,6 +61,11 @@ function isNonPerformedOutcome(outcome: DetailedOutcome | undefined): boolean {
 export function PostSessionForm({ onBack, onDone, targetDate, initialEntry, plannedSessionLink }: EntryFormProps) {
   const initial = initialEntry?.kind === "post-session" ? initialEntry : undefined
   const isEditing = initial !== undefined
+  const [entryId] = React.useState(() => initial?.id ?? newEntryId())
+  const lastSavedAt = React.useRef(initial?.savedAt)
+  const persistInFlight = React.useRef(false)
+  const [saving, setSaving] = React.useState(false)
+  const accountEnabled = accountJournalRecordsEnabled()
   const entryDate = initial?.date ?? targetDate ?? todayISO()
   const planLink = initial?.plannedSessionLink ?? plannedSessionLink
   const [rpe, setRpe] = React.useState(() => initial?.rpe ?? 0)
@@ -95,6 +101,7 @@ export function PostSessionForm({ onBack, onDone, targetDate, initialEntry, plan
   const touchOrder = useSectionTouchOrder()
 
   const persist = async () => {
+    if (persistInFlight.current) return
     const memoPreparation = memo.prepareForSave()
     if (!memoPreparation.ready) return
     if (recordsPerformance && painCheckStatus === "SIGNAL_REPORTED"
@@ -113,8 +120,8 @@ export function PostSessionForm({ onBack, onDone, targetDate, initialEntry, plan
     const persistedRpe = didNotPerform ? 0 : rpe
     const persistedObjectiveDataState = didNotPerform ? "NONE" as const : initial?.objectiveDataState
     const entry: JournalEntry = {
-      id: initial?.id ?? newEntryId(), kind: "post-session", date: entryDate,
-      savedAt: nextJournalSavedAt(initial?.savedAt), syncState: "local",
+      id: entryId, kind: "post-session", date: entryDate,
+      savedAt: nextJournalSavedAt(lastSavedAt.current), syncState: "local",
       captureDepth: "DETAILED",
       ...(activityOutcome === undefined ? {} : { activityOutcome }),
       ...(didPerform && activitySlot !== undefined ? { activitySlot } : {}),
@@ -168,17 +175,37 @@ export function PostSessionForm({ onBack, onDone, targetDate, initialEntry, plan
       ...(memo.text.trim() !== "" && memo.purpose !== undefined ? { memoPurpose: memo.purpose } : {}),
     }
     const isPrivateMemo = entry.memoPurpose === "PRIVATE_SELF_ONLY" && entry.memo.trim() !== ""
-    const result = initial === undefined
-      ? isPrivateMemo ? await savePrivateEntry(entry) : saveEntry(entry)
-      : isPrivateMemo ? await updatePrivateEntry(entry, initial.savedAt) : updateEntry(entry, initial.savedAt)
-    if (window.location.search.includes("uitest")) console.log(`[JSAVE] kind=post-session ok=${result.ok}`)
-    if (!result.ok) { setSaveError(true); return }
-    if (memoPreparation.reviewMessage === null) onDone?.("post-session", entry)
-    else onDone?.("post-session", entry, memoPreparation.reviewMessage)
+    persistInFlight.current = true
+    setSaving(true)
+    setSaveError(false)
+    try {
+      const accountResult = accountEnabled ? await persistAccountJournalRecord(entry, lastSavedAt.current) : null
+      const result = accountEnabled ? accountResult : (lastSavedAt.current === undefined
+        ? isPrivateMemo ? await savePrivateEntry(entry) : saveEntry(entry)
+        : isPrivateMemo ? await updatePrivateEntry(entry, lastSavedAt.current) : updateEntry(entry, lastSavedAt.current))
+      if (window.location.search.includes("uitest")) console.log(`[JSAVE] kind=post-session ok=${result?.ok === true}`)
+      if (!result?.ok) { setSaveError(true); return }
+      lastSavedAt.current = entry.savedAt
+      const saved = accountResult?.ok ? { ...entry, syncState: accountResult.storage === "ACCOUNT" ? "synced" as const : "local" as const } : entry
+      const storageMessage = !accountResult?.ok ? null : accountResult.storage === "ACCOUNT"
+        ? isPrivateMemo ? "비밀 일지를 계정에 저장했어요. 공유·분석에는 사용하지 않아요." : "일지를 계정에 저장했어요."
+        : accountResult.storage === "CONFLICT"
+          ? "수정 충돌을 확인해 주세요. 이 기기의 내용은 보관했지만 계정 저장은 완료되지 않았어요."
+          : isPrivateMemo ? "비밀 일지를 이 기기에 보관했어요. 계정 전송 대기 중이며 공유·분석에는 사용하지 않아요."
+            : "일지를 이 기기에 보관했어요. 계정 전송 대기 중이에요."
+      const message = [memoPreparation.reviewMessage, storageMessage].filter(Boolean).join(" ")
+      onDone?.("post-session", saved, message || undefined)
+    } catch {
+      setSaveError(true)
+    } finally {
+      persistInFlight.current = false
+      setSaving(false)
+    }
   }
 
   return (
-    <div style={{ paddingBottom: 100 }}>
+    <div style={{ paddingBottom: 100 }} aria-busy={saving}>
+      <fieldset disabled={saving} style={{ border: 0, margin: 0, padding: 0, minWidth: 0 }}>
       <TopBar onBack={onBack}>훈련 후 · 기록</TopBar>
       <div style={{ padding: "8px 20px 0" }}>
         <IndexCard date={compactDate(entryDate)} dow={`${dowOf(entryDate)} · ${nowClock()}`} />
@@ -321,7 +348,9 @@ export function PostSessionForm({ onBack, onDone, targetDate, initialEntry, plan
         />
       </FormSec>
 
-      <StickyBar onSave={persist} error={saveError} label={isEditing ? "수정 저장" : undefined} />
+      {accountEnabled && saveError && <p role="alert">계정 저장을 완료하지 못했어요. 입력은 그대로 남아 있어요. 연결과 로그인 상태를 확인한 뒤 다시 저장해 주세요.</p>}
+      <StickyBar onSave={persist} error={saveError && !accountEnabled} label={saving ? "저장 중" : isEditing ? "수정 저장" : undefined} />
+      </fieldset>
     </div>
   )
 }

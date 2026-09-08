@@ -1,6 +1,7 @@
 import { encryptAccountJournalDocument, decryptAccountJournalDocument } from './account-journal-crypto.mjs';
+import { validateAccountJournalRecord, validateAccountJournalRecordUpdate } from './account-journal-record-validator.mjs';
 
-// Standalone DRAFT storage only: no finalization, statistics, rewards or full sync.
+// Encrypted Draft/FinalRecord storage only: no statistics or reward side effects.
 // 100,000 UTF-16 code units can require 600,000 bytes as JSON \uXXXX escapes.
 // Keep the streaming bound above that plus the 200-unit title and request metadata.
 export const MAX_BODY_BYTES = 655_360;
@@ -8,6 +9,9 @@ const MAX_REVISION = 9_007_199_254_740_990;
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/iu;
 const isUuid = value => typeof value === 'string' && UUID.test(value);
 const revision = value => Number.isSafeInteger(value) && value >= 0 && value <= MAX_REVISION;
+const timestamp = value => typeof value === 'string'
+  && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,6})?(?:Z|[+-]\d{2}:\d{2})$/u.test(value)
+  && Number.isFinite(Date.parse(value));
 const object = value => value !== null && typeof value === 'object' && !Array.isArray(value);
 const keys = (value, required, optional = []) => object(value)
   && required.every(key => Object.hasOwn(value, key))
@@ -29,8 +33,19 @@ export function validateDraftDocument(value) {
   return value.date.slice(0, 4) !== '0000' && Number.isFinite(date.getTime())
     && date.toISOString().slice(0, 10) === value.date;
 }
-const canonical = document => JSON.stringify({ version: document.version, state: document.state,
-  visibility: document.visibility, date: document.date, title: document.title, body: document.body });
+const stable = value => Array.isArray(value) ? value.map(stable) : object(value)
+  ? Object.fromEntries(Object.keys(value).sort().map(key => [key, stable(value[key])])) : value;
+const canonical = document => document.state === 'FINALIZED' ? JSON.stringify(stable(document))
+  : JSON.stringify({ version: document.version, state: document.state,
+    visibility: document.visibility, date: document.date, title: document.title, body: document.body });
+export const validateAccountJournalDocument = value => validateDraftDocument(value) || validateAccountJournalRecord(value);
+
+async function recordId(ownerId, entryId) {
+  const bytes = new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(JSON.stringify(['trainoracle.journal.record.v1', ownerId, entryId]))));
+  bytes[6] = (bytes[6] & 15) | 80; bytes[8] = (bytes[8] & 63) | 128;
+  const h = [...bytes.slice(0, 16)].map(value => value.toString(16).padStart(2, '0')).join('');
+  return `${h.slice(0, 8)}-${h.slice(8, 12)}-${h.slice(12, 16)}-${h.slice(16, 20)}-${h.slice(20)}`;
+}
 
 /** Called only at request runtime. Never reads environment variables itself. */
 export async function importJournalKeyring(serialized) {
@@ -83,16 +98,23 @@ function parseAction(input, validateDocument) {
   const { action } = input;
   let valid = false;
   if (action === 'status') valid = keys(input, ['action']);
-  if (action === 'list') valid = keys(input, ['action'], ['limit', 'cursor'])
+  if (action === 'list') valid = keys(input, ['action'], ['limit', 'cursor', 'collection'])
+    && (!Object.hasOwn(input, 'collection') || input.collection === 'JOURNAL')
     && (!Object.hasOwn(input, 'limit') || (Number.isInteger(input.limit) && input.limit >= 1 && input.limit <= 50))
     && (!Object.hasOwn(input, 'cursor') || isUuid(input.cursor));
   if (action === 'read') valid = keys(input, ['action', 'documentId']) && isUuid(input.documentId);
+  if (action === 'history') valid = keys(input, ['action', 'documentId'], ['collection']) && isUuid(input.documentId)
+    && (!Object.hasOwn(input, 'collection') || input.collection === 'JOURNAL');
+  if (action === 'delete' || action === 'restore') valid = keys(input,
+    ['action', 'documentId', 'operationId', 'expectedRevision', ...(action === 'restore' ? ['sourceRevision'] : [])])
+    && isUuid(input.documentId) && isUuid(input.operationId) && revision(input.expectedRevision)
+    && (action !== 'restore' || (revision(input.sourceRevision) && input.sourceRevision > 0));
   if (action === 'save') valid = keys(input, ['action', 'documentId', 'operationId', 'expectedRevision', 'document'])
     && isUuid(input.documentId) && isUuid(input.operationId) && revision(input.expectedRevision);
   if (!valid) fail(400, 'INVALID_REQUEST');
   if (action === 'save') {
     let accepted = false;
-    try { accepted = validateDraftDocument(input.document) && validateDocument(input.document) === true; } catch { /* Fail closed without validator details. */ }
+    try { accepted = validateAccountJournalDocument(input.document) && validateDocument(input.document) === true; } catch { /* Fail closed without validator details. */ }
     if (!accepted) fail(422, 'INVALID_DOCUMENT');
   }
   return { ...input, ...(input.documentId ? { documentId: input.documentId.toLowerCase() } : {}),
@@ -102,24 +124,36 @@ function parseAction(input, validateDocument) {
 
 function receiptFor(result, input) {
   if (!object(result) || result.documentId !== input.documentId || result.operationId !== input.operationId) fail(503, 'INVALID_STORED_DATA');
-  if (result.kind === 'saved' && keys(result, ['kind', 'documentId', 'operationId', 'revision'])
+  const success = { save: 'saved', delete: 'deleted', restore: 'restored' }[input.action];
+  if (result.kind === success && keys(result, ['kind', 'documentId', 'operationId', 'revision',
+    ...(input.action === 'restore' ? ['sourceRevision'] : [])])
+    && (input.action !== 'restore' || result.sourceRevision === input.sourceRevision)
     && revision(result.revision) && result.revision === input.expectedRevision + 1) return result;
   if (result.kind === 'conflict' && keys(result, ['kind', 'documentId', 'operationId', 'currentRevision'])
-    && revision(result.currentRevision) && result.currentRevision !== input.expectedRevision) return result;
+    && revision(result.currentRevision)) return result;
+  if (input.action === 'restore' && result.kind === 'source_unavailable'
+    && keys(result, ['kind', 'documentId', 'operationId', 'currentRevision', 'sourceRevision'])
+    && revision(result.currentRevision) && result.currentRevision === input.expectedRevision
+    && result.sourceRevision === input.sourceRevision) return result;
   fail(503, 'INVALID_STORED_DATA');
 }
 
 /**
- * DRAFT-only POST gateway. Dependencies:
+ * Draft/FinalRecord POST gateway. Dependencies:
  * authenticate(token) -> {ownerId: UUID, repo} | null (server-verified identity).
  * repo: enabled(ownerId), operation(ownerId, operationId), read(ownerId, documentId),
  * list(ownerId, fetchLimit, cursor), commit({documentId,operationId,expectedRevision,encryptedPayload}).
+ * history(documentId), delete({documentId,operationId,expectedRevision}),
+ * restore({documentId,operationId,expectedRevision,sourceRevision}); RPCs derive owner from JWT.
  * Reads return SQL-shaped rows or null, list returns ordered rows; failures must throw.
  * getMaterial() -> {active: {keyId,key}, get(keyId): {keyId,key}|undefined}; nonextractable AES-256-GCM keys.
- * validateDocument(document) -> boolean, synchronous and non-transforming; DRAFT schema always enforced.
+ * validateDocument(document) -> boolean, synchronous and non-transforming; union schema always enforced.
  * allowedOrigins: exact http(s) origins, no wildcard. No environment access before runtime/auth.
- * Responses: ready | document (flat) | list (documents,nextCursor) | 0033 saved/conflict.
- * Errors: {error: stableEnum}; conflict retains the proposal in 0033 and returns HTTP 409.
+ * Responses: ready | document | deleted | list (documents,nextCursor, optional deletedDocuments)
+ * | history (documentId,versions) | saved/deleted/restored/conflict/source_unavailable receipts.
+ * Conflict/source_unavailable receipts return HTTP 409; successes return 200.
+ * Missing preflight restore source: 409 {error:'SOURCE_UNAVAILABLE'} without mutation.
+ * Purged save proposal: 409 {error:'OPERATION_REPLAY_UNAVAILABLE'} without re-encryption.
  */
 export function createAccountJournalHandler({ authenticate, getMaterial, validateDocument, allowedOrigins = [] }) {
   const origins = new Set(allowedOrigins.filter(origin => {
@@ -151,6 +185,8 @@ export function createAccountJournalHandler({ authenticate, getMaterial, validat
       const ownerId = session.ownerId.toLowerCase();
       const repo = session.repo;
       const input = parseAction(await bodyJson(request), validateDocument);
+      if (input.action === 'save' && input.document.state === 'FINALIZED'
+        && await recordId(ownerId, input.document.entry.id) !== input.documentId) fail(422, 'INVALID_DOCUMENT');
       const checkGate = async () => {
         const enabled = await repo.enabled(ownerId);
         if (enabled === false) fail(403, 'ACCOUNT_JOURNAL_DISABLED');
@@ -172,13 +208,18 @@ export function createAccountJournalHandler({ authenticate, getMaterial, validat
         if (!key) fail(503, 'KEY_UNAVAILABLE');
         try {
           const doc = JSON.parse(await decryptAccountJournalDocument(payload, { ownerId, documentId }, key));
-          if (!validateDraftDocument(doc) || validateDocument(doc) !== true) throw 0;
+          if (!validateAccountJournalDocument(doc) || validateDocument(doc) !== true) throw 0;
+          if (doc.state === 'FINALIZED' && await recordId(ownerId, doc.entry.id) !== documentId) throw 0;
           return JSON.parse(canonical(doc));
         } catch { fail(503, 'INVALID_STORED_DATA'); }
       };
       const entry = async row => {
         if (!object(row) || row.user_id !== ownerId || !isUuid(row.document_id)
           || row.document_id !== row.document_id.toLowerCase() || !revision(row.revision) || row.revision < 1) fail(503, 'INVALID_STORED_DATA');
+        if (row.deleted_at !== null && row.deleted_at !== undefined) {
+          if (!timestamp(row.deleted_at) || row.encrypted_payload !== null) fail(503, 'INVALID_STORED_DATA');
+          return { documentId: row.document_id, revision: row.revision };
+        }
         return { documentId: row.document_id, revision: row.revision,
           document: await decode(row.encrypted_payload, row.document_id) };
       };
@@ -187,7 +228,8 @@ export function createAccountJournalHandler({ authenticate, getMaterial, validat
         await checkGate();
         if (row === null) fail(404, 'NOT_FOUND');
         if (row?.document_id !== input.documentId) fail(503, 'INVALID_STORED_DATA');
-        return respond(200, { kind: 'document', ...await entry(row) });
+        const value = await entry(row);
+        return respond(200, { kind: Object.hasOwn(value, 'document') ? 'document' : 'deleted', ...value });
       }
       if (input.action === 'list') {
         const limit = input.limit ?? 50;
@@ -201,13 +243,47 @@ export function createAccountJournalHandler({ authenticate, getMaterial, validat
           entries.push(await entry(row));
           previous = row.document_id;
         }
-        return respond(200, { kind: 'list', documents: entries.slice(0, limit),
+        const page = entries.slice(0, limit);
+        const deletedDocuments = page.filter(entry => !Object.hasOwn(entry, 'document'));
+        return respond(200, { kind: 'list', documents: page.filter(entry => entry.document && (input.collection === 'JOURNAL'
+          ? entry.document.state === 'FINALIZED' : entry.document.state === 'DRAFT')),
+          ...(deletedDocuments.length ? { deletedDocuments } : {}),
           nextCursor: entries.length > limit ? entries[limit - 1].documentId : null });
+      }
+      const versions = async () => {
+        const rows = await repo.history(input.documentId);
+        await checkGate();
+        if (!Array.isArray(rows)) fail(503, 'INVALID_STORED_DATA');
+        let previous = MAX_REVISION + 1;
+        const values = [];
+        for (const row of rows) {
+          if (!keys(row, ['revision', 'encryptedPayload', 'replacedAt', 'expiresAt', 'reason'])
+            || !revision(row.revision) || row.revision < 1 || row.revision >= previous
+            || !timestamp(row.replacedAt) || !timestamp(row.expiresAt)
+            || Date.parse(row.expiresAt) - Date.parse(row.replacedAt) !== 30 * 24 * 60 * 60 * 1000
+            || !['replaced', 'trash'].includes(row.reason)) fail(503, 'INVALID_STORED_DATA');
+          values.push({ revision: row.revision, document: await decode(row.encryptedPayload, input.documentId),
+            replacedAt: row.replacedAt, expiresAt: row.expiresAt, reason: row.reason });
+          previous = row.revision;
+        }
+        return values;
+      };
+      if (input.action === 'history') {
+        const values = await versions();
+        await checkGate();
+        return respond(200, { kind: 'history', documentId: input.documentId,
+          versions: values.filter(value => input.collection !== 'JOURNAL' || value.document.state === 'FINALIZED') });
       }
       const comparePrior = async prior => {
         if (!object(prior) || prior.user_id !== ownerId || prior.operation_id !== input.operationId
           || !isUuid(prior.document_id) || !revision(prior.expected_revision)) fail(503, 'INVALID_STORED_DATA');
         if (prior.document_id !== input.documentId || prior.expected_revision !== input.expectedRevision) fail(409, 'OPERATION_REUSED');
+        const operationKind = input.action === 'save' ? 'commit' : input.action;
+        if (!['commit', 'delete', 'restore'].includes(prior.operation_kind)) fail(503, 'INVALID_STORED_DATA');
+        if (prior.operation_kind !== operationKind
+          || (input.action === 'restore' && prior.source_revision !== input.sourceRevision)) fail(409, 'OPERATION_REUSED');
+        if (input.action !== 'save') return receiptFor(prior.result, input);
+        if (prior.proposed_encrypted_payload === null) fail(409, 'OPERATION_REPLAY_UNAVAILABLE');
         const document = await decode(prior.proposed_encrypted_payload, prior.document_id);
         if (canonical(document) !== canonical(input.document)) fail(409, 'OPERATION_REUSED');
         return receiptFor(prior.result, input);
@@ -215,7 +291,38 @@ export function createAccountJournalHandler({ authenticate, getMaterial, validat
       const prior = await repo.operation(ownerId, input.operationId);
       let receipt;
       if (prior !== null) receipt = await comparePrior(prior);
+      else if (input.action === 'delete' || input.action === 'restore') {
+        if (input.action === 'restore') {
+          const values = await versions();
+          if (!values.some(value => value.revision === input.sourceRevision)) {
+            // A concurrent operation may have completed while history expired.
+            const winner = await repo.operation(ownerId, input.operationId);
+            if (winner !== null) receipt = await comparePrior(winner);
+            else fail(409, 'SOURCE_UNAVAILABLE');
+          }
+        }
+        if (!receipt) {
+          try {
+            receipt = receiptFor(await repo[input.action]({ documentId: input.documentId,
+              operationId: input.operationId, expectedRevision: input.expectedRevision,
+              ...(input.action === 'restore' ? { sourceRevision: input.sourceRevision } : {}) }), input);
+          } catch (error) {
+            if (error?.code !== '22023') throw error;
+            const winner = await repo.operation(ownerId, input.operationId);
+            if (winner === null) fail(503, 'UNAVAILABLE');
+            receipt = await comparePrior(winner);
+          }
+        }
+      }
       else {
+        const currentRow = await repo.read(ownerId, input.documentId);
+        if (currentRow !== null && currentRow.revision === input.expectedRevision
+          && (currentRow.deleted_at === null || currentRow.deleted_at === undefined)) {
+          const current = await entry(currentRow);
+          if (current.document.state !== input.document.state
+            || (input.document.state === 'FINALIZED'
+              && !validateAccountJournalRecordUpdate(current.document, input.document))) fail(422, 'INVALID_DOCUMENT_UPDATE');
+        }
         const encryptedPayload = await encryptAccountJournalDocument(canonical(input.document),
           { ownerId, documentId: input.documentId }, material.active);
         try { receipt = receiptFor(await repo.commit({ documentId: input.documentId,
@@ -229,7 +336,7 @@ export function createAccountJournalHandler({ authenticate, getMaterial, validat
         }
       }
       await checkGate();
-      return respond(receipt.kind === 'conflict' ? 409 : 200, receipt);
+      return respond(['conflict', 'source_unavailable'].includes(receipt.kind) ? 409 : 200, receipt);
     } catch (error) {
       if (error instanceof GatewayError) return respond(error.status, { error: error.status === 503
         ? 'SERVICE_UNAVAILABLE' : error.status === 403 ? 'ACCESS_DENIED' : error.code });
@@ -262,18 +369,23 @@ export function createAccountJournalRepository(client) {
       return eligible;
     },
     operation: (ownerId, operationId) => result(client.from('account_journal_operations')
-      .select('user_id,operation_id,document_id,expected_revision,proposed_encrypted_payload,result')
+      .select('user_id,operation_id,document_id,expected_revision,operation_kind,source_revision,proposed_encrypted_payload,result')
       .eq('user_id', ownerId).eq('operation_id', operationId).maybeSingle()),
     read: (ownerId, documentId) => result(client.from('account_journal_documents')
-      .select('user_id,document_id,revision,encrypted_payload').eq('user_id', ownerId)
+      .select('user_id,document_id,revision,encrypted_payload,deleted_at').eq('user_id', ownerId)
       .eq('document_id', documentId).maybeSingle()),
     list(ownerId, limit, cursor) {
-      let query = client.from('account_journal_documents').select('user_id,document_id,revision,encrypted_payload')
+      let query = client.from('account_journal_documents').select('user_id,document_id,revision,encrypted_payload,deleted_at')
         .eq('user_id', ownerId).order('document_id', { ascending: true }).limit(limit);
       if (cursor) query = query.gt('document_id', cursor);
       return result(query);
     },
     commit: input => result(client.rpc('commit_account_journal_document', { document_id: input.documentId,
       operation_id: input.operationId, expected_revision: input.expectedRevision, encrypted_payload: input.encryptedPayload })),
+    history: documentId => result(client.rpc('list_account_journal_history', { document_id: documentId })),
+    delete: input => result(client.rpc('delete_account_journal_document', { document_id: input.documentId,
+      operation_id: input.operationId, expected_revision: input.expectedRevision })),
+    restore: input => result(client.rpc('restore_account_journal_document', { document_id: input.documentId,
+      operation_id: input.operationId, expected_revision: input.expectedRevision, source_revision: input.sourceRevision })),
   };
 }

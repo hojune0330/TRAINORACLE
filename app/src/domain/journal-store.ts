@@ -31,8 +31,15 @@ import {
   unboundJournalIds,
 } from "./account/local-journal-ownership"
 import { samePlannedSessionLink } from "./planned-session-link"
+import { readAccountJournalProjection, readAccountJournalPrivateEntry, accountJournalProjectionStatus, isAccountJournalLocalCopyShadowed } from "./account/account-journal-projection"
+import { accountJournalPreviewEnabled } from "./account/account-journal-api"
 
 const privateMemoCache = new Map<string, { readonly recoveryCode: string; readonly memo: string }>()
+
+/** Cutover guard for legacy writers; account-less local journals remain available. */
+export function legacyJournalWritesBlocked(userId: string | null = activeLocalAccount()): boolean {
+  return accountJournalPreviewEnabled() && userId !== null
+}
 
 export type {
   EveningEntry,
@@ -59,7 +66,10 @@ export class PrivateMemoUnlockRequiredError extends Error {
 }
 
 export function loadEntries(): JournalEntry[] {
-  return loadJournalEntriesSnapshot().entries.filter((entry) => isJournalVisible(entry.id))
+  const online = readAccountJournalProjection()
+  const ids = new Set(online.map(entry => entry.id))
+  return [...loadJournalEntriesSnapshot().entries.filter((entry) => isJournalVisible(entry.id)
+    && !ids.has(entry.id) && !isAccountJournalLocalCopyShadowed(entry.id)), ...online]
 }
 
 /** 동기화 전용. 기기 미연결 데이터와 다른 계정 데이터는 포함하지 않는다. */
@@ -90,8 +100,9 @@ export type PlanSafetyJournalRead =
 
 export function loadEntriesForPlanSafety(): PlanSafetyJournalRead {
   const snapshot = loadJournalEntriesSnapshot()
-  return snapshot.readStatus === "complete"
-    ? { status: "complete", entries: snapshot.entries.filter((entry) => isJournalVisible(entry.id)) }
+  const onlineStatus = accountJournalProjectionStatus()
+  return snapshot.readStatus === "complete" && (onlineStatus === "IDLE" || onlineStatus === "READY")
+    ? { status: "complete", entries: loadEntries() }
     : { status: "uncertain" }
 }
 
@@ -120,6 +131,7 @@ export function loadJournalEntriesSnapshot(): JournalEntriesStorageSnapshot {
 }
 
 export function saveEntry(entry: unknown): { readonly ok: boolean; readonly total: number } {
+  if (legacyJournalWritesBlocked()) return { ok: false, total: loadEntries().length }
   const snapshot = loadJournalEntriesSnapshot()
   const all = snapshot.entries
   const parsedEntry = parseJournalEntryForWrite(entry)
@@ -141,6 +153,7 @@ export function saveEntry(entry: unknown): { readonly ok: boolean; readonly tota
 }
 
 export async function savePrivateEntry(entry: unknown): Promise<{ readonly ok: boolean; readonly total: number }> {
+  if (legacyJournalWritesBlocked()) return { ok: false, total: loadEntries().length }
   const snapshot = loadJournalEntriesSnapshot()
   const all = snapshot.entries
   const parsedEntry = parseJournalEntryForWrite(entry)
@@ -181,6 +194,7 @@ export async function updatePrivateEntry(
   entry: unknown,
   expectedSavedAt: string,
 ): Promise<{ readonly ok: boolean; readonly total: number }> {
+  if (legacyJournalWritesBlocked()) return { ok: false, total: loadEntries().length }
   const snapshot = loadJournalEntriesSnapshot()
   const entries = snapshot.entries
   const nextEntry = parseJournalEntryForWrite(entry)
@@ -219,13 +233,15 @@ export async function updatePrivateEntry(
 }
 
 export async function loadEntriesWithPrivateMemos(): Promise<JournalEntry[]> {
-  const entries = loadEntries()
+  const entries = loadEntries().map(entry => readAccountJournalPrivateEntry(entry.id) ?? entry)
   const localStorage = journalStorage()
   const recoveryCode = loadSessionRecoveryCode()
   if (localStorage === null || recoveryCode === null) return entries
 
   const restored: JournalEntry[] = []
   for (const entry of entries) {
+    const online = readAccountJournalPrivateEntry(entry.id)
+    if (online !== null) { restored.push(online); continue }
     const next = await restorePrivateMemo(localStorage, entry, recoveryCode)
     if (next !== entry && hasPrivateMemoText(next)) {
       privateMemoCache.set(entry.id, {
@@ -257,6 +273,7 @@ export function entriesForDate(date: string): JournalEntry[] {
  * 계정 동기화 결과에는 `replaceEntriesOwnedBy`를 사용한다.
  */
 export function replaceAllEntries(entries: readonly unknown[]): { readonly ok: boolean; readonly total: number } {
+  if (legacyJournalWritesBlocked()) return { ok: false, total: loadEntries().length }
   const parsed = parseJournalEntryList(entries)
   const snapshot = loadJournalEntriesSnapshot()
   const localStorage = journalStorage()
@@ -273,6 +290,7 @@ export function replaceEntriesOwnedBy(
   userId: string,
   entries: readonly unknown[],
 ): { readonly ok: boolean; readonly total: number } {
+  if (legacyJournalWritesBlocked(userId)) return { ok: false, total: loadEntriesOwnedBy(userId).length }
   const parsed = parseJournalEntryList(entries)
   const snapshot = loadJournalEntriesSnapshot()
   const preserved = snapshot.entries.filter((entry) => !isJournalOwnedBy(entry.id, userId))
@@ -292,6 +310,7 @@ export async function replaceEntriesOwnedByWithPrivateMemos(
   privateEntries: readonly JournalEntry[],
   recoveryCode: string,
 ): Promise<{ readonly ok: boolean; readonly total: number }> {
+  if (legacyJournalWritesBlocked(userId)) return { ok: false, total: loadEntriesOwnedBy(userId).length }
   const snapshot = loadJournalEntriesSnapshot()
   const preserved = snapshot.entries.filter((entry) => !isJournalOwnedBy(entry.id, userId))
   const preservedIds = new Set(preserved.map((entry) => entry.id))
@@ -341,6 +360,7 @@ export type DeleteEntryResult = {
  * `trashed: false`를 실어 보내 UI가 사실대로 말하게 한다.
  */
 export function deleteEntry(id: string): DeleteEntryResult {
+  if (legacyJournalWritesBlocked()) return { ok: false, total: loadEntries().length, trashed: false }
   const snapshot = loadJournalEntriesSnapshot()
   const all = snapshot.entries
   if (!isJournalVisible(id)) return { ok: false, total: loadEntries().length, trashed: false }
@@ -393,6 +413,7 @@ export type RestoreDeletedResult = {
  * 휴지통에서 꺼내기(takeFromTrash)를 먼저 해서, 저장이 실패하면 되돌려 놓는다.
  */
 export function restoreDeletedEntry(id: string): RestoreDeletedResult {
+  if (legacyJournalWritesBlocked()) return { ok: false, restoredId: null, total: loadEntries().length }
   if (!isJournalVisible(id)) return { ok: false, restoredId: null, total: loadEntries().length }
   const taken = takeFromTrash(id)
   if (taken === null) return { ok: false, restoredId: null, total: loadEntries().length }
@@ -471,11 +492,13 @@ export function exportEntriesJSON(options: JournalExportOptions = {}): string {
 function entriesForOwnerFullBackup(): JournalEntry[] {
   const recoveryCode = loadSessionRecoveryCode()
   const entries = loadEntries()
-  if (recoveryCode === null) {
-    if (entries.some(isPrivateMemoEntry)) throw new PrivateMemoUnlockRequiredError()
-    return entries
-  }
   return entries.map((entry) => {
+    const online = readAccountJournalPrivateEntry(entry.id)
+    if (online !== null) return online
+    if (recoveryCode === null) {
+      if (isPrivateMemoEntry(entry)) throw new PrivateMemoUnlockRequiredError()
+      return entry
+    }
     const cached = privateMemoCache.get(entry.id)
     if (isPrivateMemoEntry(entry) && (cached === undefined || cached.recoveryCode !== recoveryCode)) {
       throw new PrivateMemoUnlockRequiredError()

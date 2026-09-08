@@ -1,4 +1,5 @@
 import React from "react"
+import { runDraftSafeNavigation } from "./domain/unsaved-draft-navigation"
 import type { AppTab } from "./components/AppChrome"
 import { AppShellFrame } from "./components/AppShellFrame"
 import type { ShellToastState } from "./components/AppShellFrame"
@@ -49,6 +50,7 @@ export type AppShellMultiPlanRuntime = Pick<React.ComponentProps<typeof Deferred
 
 export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: AppShellMultiPlanRuntime } = {}) {
   const [accountScopeRevision, setAccountScopeRevision] = React.useState(0)
+  const [, refreshAccountJournals] = React.useReducer((revision: number) => revision + 1, 0)
   const [v, setV] = React.useState(() => {
     if (!accountFeatureEnabled() || typeof window === "undefined") return INITIAL_VIEW_STATE
     return new URLSearchParams(window.location.search).get("account") === "1"
@@ -67,8 +69,10 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
   ) => {
     // The remounted app-flow-stage supplies the non-blocking CSS transition.
     // Native document snapshots block rapid follow-up taps on mobile.
-    pendingScreenMotionRef.current = motion
-    update()
+    runDraftSafeNavigation(() => {
+      pendingScreenMotionRef.current = motion
+      update()
+    })
   }, [])
 
   React.useEffect(() => {
@@ -79,6 +83,8 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
     let mounted = true
     let authEventSeen = false
     const refresh = () => setAccountScopeRevision((value) => value + 1)
+    // Hydration refreshes readers without remounting a volatile account draft.
+    window.addEventListener("trainoracle:account-journals-changed", refreshAccountJournals)
     const unsubscribeScope = onLocalJournalScopeChange(refresh)
     void currentUser().then((user) => {
       if (mounted && !authEventSeen) setActiveLocalAccount(user?.id ?? null)
@@ -89,6 +95,7 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
     })
     return () => {
       mounted = false
+      window.removeEventListener("trainoracle:account-journals-changed", refreshAccountJournals)
       unsubscribeScope()
       unsubscribeAuth()
     }

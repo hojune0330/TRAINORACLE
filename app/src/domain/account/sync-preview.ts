@@ -1,4 +1,4 @@
-import { loadEntriesOwnedBy } from "../journal-store"
+import { legacyJournalWritesBlocked, loadEntriesOwnedBy } from "../journal-store"
 import { claimSyncBinding, loadSyncConsent } from "./sync-local"
 import { hasSupportedSyncSchema, sessionFailureCode } from "./sync-guard"
 import { supabase } from "./supabase-client"
@@ -6,11 +6,17 @@ import type { SyncPreviewOutcome } from "./sync-types"
 
 export async function previewSync(userId: string): Promise<SyncPreviewOutcome> {
   const localCount = loadEntriesOwnedBy(userId).length
+  const blocked = (): SyncPreviewOutcome => ({ ok: false,
+    message: "계정 일지 보관을 사용 중이라 이전 동기화 미리보기는 실행하지 않았어요. 기기 원본은 그대로 보관돼요.",
+    localCount, remoteJournalCount: 0, remotePrivateCount: 0 })
+  if (legacyJournalWritesBlocked(userId)) return blocked()
   const client = await supabase()
+  if (legacyJournalWritesBlocked(userId)) return blocked()
   if (client === null) {
     return { ok: false, message: "계정 기능이 꺼져 있어요.", localCount, remoteJournalCount: 0, remotePrivateCount: 0 }
   }
   const failureCode = await sessionFailureCode(client, userId)
+  if (legacyJournalWritesBlocked(userId)) return blocked()
   if (failureCode !== null) {
     return {
       ok: false,
@@ -34,7 +40,9 @@ export async function previewSync(userId: string): Promise<SyncPreviewOutcome> {
       remotePrivateCount: 0,
     }
   }
-  if (!await hasSupportedSyncSchema(client)) {
+  const supported = await hasSupportedSyncSchema(client)
+  if (legacyJournalWritesBlocked(userId)) return blocked()
+  if (!supported) {
     return {
       ok: false,
       message: "서버 동기화 준비가 아직 끝나지 않았어요. 이 기기의 일지는 그대로예요.",
@@ -45,6 +53,7 @@ export async function previewSync(userId: string): Promise<SyncPreviewOutcome> {
     }
   }
   const journalResult = await client.from("journal_entries").select("entry_id").eq("user_id", userId)
+  if (legacyJournalWritesBlocked(userId)) return blocked()
   if (journalResult.error) {
     return {
       ok: false,
