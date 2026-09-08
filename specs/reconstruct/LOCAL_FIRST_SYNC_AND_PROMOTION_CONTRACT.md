@@ -5,8 +5,8 @@ document_metadata:
   doc_id: trainoracle-local-first-sync-promotion-contract
   spec_id: LOCAL_FIRST_SYNC_AND_PROMOTION_CONTRACT
   title: Local-First Sync And Promotion Contract
-  version: 0.2
-  round: RT2_STRUCTURED_SYNC_BETA_ALIGNMENT
+  version: 0.3
+  round: RT3_ACCOUNT_CANONICAL_OWNER_DECISION
   status: DRAFT_FOR_REVIEW
   owner: COACH_HOJUNE
   created_from:
@@ -20,6 +20,22 @@ document_metadata:
 ```
 
 ---
+
+## 0. Current Decision And Legacy Boundary
+
+The owner approved account-canonical storage development on 2026-09-08.
+[The implementation plan](../../ACCOUNT_CANONICAL_STORAGE_IMPLEMENTATION_PLAN.md)
+and PRODUCT_NORTH_STAR section 3.1 govern the new, separately gated protocol.
+Sections 1-8 below preserve the structured-only legacy implementation contract;
+their manual-sync, local-only text, and savedAt-wins rules must not be copied into
+the new protocol. Existing clients retain those boundaries until verified cutover.
+
+New account storage includes account-recoverable encrypted ordinary/private text,
+with no automatic sharing, no private-text analysis, no raw-text audit or external
+LLM transfer. Account recovery is not end-to-end encryption. Source ownership,
+actual legacy-vault decryption, server acknowledgements, conflict preservation,
+and a 30-day revision/trash policy are required. No live release or issue closure
+is asserted by this decision. The four existing issue rows remain open.
 
 ## 1. Purpose
 
@@ -273,9 +289,9 @@ and policy acceptance before implementation.
 | issue_id | title | status | canonical_blocking | notes |
 |---|---|---|---:|---|
 | OI-LFSP-BACKEND-REALITY-001 | Supabase sync implementation exists behind a release gate | OPEN | YES | Keep open until the intended public environment deploys the structured-only path and operational receipts exist. |
-| OI-LFSP-MEMO-SERVER-POLICY-001 | First beta decided as structured-only; later memo policy remains deferred | OPEN | YES | Raw memo/note, memo purpose, and symptom text remain local-only. A later scope needs a separate owner decision. |
+| OI-LFSP-MEMO-SERVER-POLICY-001 | Account-recoverable encrypted storage approved; legacy remains structured-only | OPEN | YES | Owner decision is recorded in section 0. Target path, user notice and operating evidence are still required. |
 | OI-LFSP-ENCRYPTION-001 | Encrypted private memo release remains deferred | OPEN | YES | Existing experimental crypto code is not first-beta release authority. Recovery UX and operations need a separate gate. |
-| OI-LFSP-RETENTION-DELETE-001 | Retention, export, deletion, and unlink UX not accepted | OPEN | NO | Needed before production account deletion and device/server divergence flows. |
+| OI-LFSP-RETENTION-DELETE-001 | 30-day revision/trash direction accepted; implementation and recovery remain pending | OPEN | NO | Account erasure, conflict drafts and minimal deletion markers remain distinct. |
 
 ---
 
@@ -285,7 +301,7 @@ This draft does not claim:
 
 - Public production sync has been enabled or deployed.
 - Any runtime test has passed.
-- Raw memo server persistence is allowed.
+- Raw memo server persistence outside the newly approved encrypted account path is allowed.
 - Any open issue is closed.
 - Any canonical promotion is granted.
 - Sync state can affect D9, RVE, Safety Gate, or Plan Generator safety disposition.
@@ -298,5 +314,6 @@ This draft does not claim:
 |---|---|---|
 | 0.1 | 2026-07 | Reconstructed local-first sync draft. |
 | 0.2 | 2026-08-27 | Aligned the draft with explicit preview/confirmation, stable-ID merge behavior, account-scoped consent, and the owner-approved structured-only first beta. Open issues remain open. |
+| 0.3 | 2026-09-08 | Added the account-canonical owner decision and clearly retained the old implementation as legacy. Four issues remain OPEN; no runtime release claimed. |
 
 [DRAFT_COMPLETE]
