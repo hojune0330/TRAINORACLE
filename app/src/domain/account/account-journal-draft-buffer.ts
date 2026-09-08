@@ -26,7 +26,11 @@ const cipherSchema = z.object({
   iv: z.array(z.number().int().min(0).max(255)).length(12),
   ciphertext: z.array(z.number().int().min(0).max(255)).min(16).max(1_000_000),
 }).strict()
+import { ACCOUNT_WRITE_REJECTIONS, type AccountJournalWriteRejection } from "./account-write-rejection"
+const accountJournalWriteRejectionSchema = z.enum(ACCOUNT_WRITE_REJECTIONS)
 const operationSchema = z.object({
+  rejection: accountJournalWriteRejectionSchema.optional(),
+  writePurpose: z.literal("MIGRATION").optional(),
   operationId: uuid,
   expectedRevision: revision,
   sequence: sequence.refine(value => value > 0),
@@ -37,8 +41,20 @@ const blockedSchema = z.object({
   operationId: uuid.nullable(),
   currentRevision: revision,
   encryptedRemote: cipherSchema.nullable(),
+  deleted: z.boolean().default(false),
 }).strict()
+const archiveSchema = z.object({
+  version: z.literal(1).default(1),
+  createdAt: z.iso.datetime().nullable().default(null),
+  localServerRevision: revision.nullable().default(null),
+  localSequence: sequence, remoteRevision: revision,
+  encryptedLocal: cipherSchema, encryptedRemote: cipherSchema.nullable(),
+  operation: operationSchema.nullable(), deleted: z.boolean(),
+  choice: z.enum(["LOCAL", "REMOTE", "DELETE", "REVIEW"]),
+}).strict()
+export const MAX_CONFLICT_ARCHIVE_ENTRIES = 128
 const recordSchema = z.object({
+  writePurpose: z.literal("MIGRATION").optional(),
   version: z.literal(1), ownerId: uuid, documentId: uuid,
   serverRevision: revision,
   localSequence: sequence.refine(value => value > 0),
@@ -47,11 +63,14 @@ const recordSchema = z.object({
   operation: operationSchema.nullable(),
   blocked: blockedSchema.nullable(),
   retiredOperationIds: z.array(uuid),
+  conflictArchive: z.array(archiveSchema).default([]),
+  resolvedDeletion: revision.nullable().default(null),
 }).strict().superRefine((record, ctx) => {
   const invalid = () => ctx.addIssue({ code: "custom", message: "Invalid draft lineage" })
   if (record.acknowledgedSequence > record.localSequence) invalid()
   if (record.serverRevision === 0 && record.acknowledgedSequence !== 0) invalid()
   const op = record.operation
+  if (op?.sequence === record.localSequence && op.writePurpose !== record.writePurpose) invalid()
   if (op && (op.sequence > record.localSequence || op.sequence <= record.acknowledgedSequence
     || op.expectedRevision !== record.serverRevision
     || record.retiredOperationIds.includes(op.operationId))) invalid()
@@ -62,14 +81,17 @@ const recordSchema = z.object({
     || record.blocked.currentRevision === op.expectedRevision
     || record.blocked.encryptedRemote !== null)) invalid()
   if (record.blocked?.kind === "REMOTE" && (record.blocked.operationId !== null
-    || record.blocked.encryptedRemote === null)) invalid()
+    || (record.blocked.encryptedRemote === null) !== record.blocked.deleted)) invalid()
 })
 
 export type AccountJournalDraftRecord = z.infer<typeof recordSchema>
 export type AccountJournalDraftPending<T = AccountJournalDraft> = {
+  rejection?: AccountJournalWriteRejection
+  writePurpose?: "MIGRATION"
   operationId: string; expectedRevision: number; sequence: number; draft: T
 }
 export type AccountJournalDraftView<T = AccountJournalDraft> = {
+  writePurpose?: "MIGRATION"
   ownerId: string; documentId: string; serverRevision: number
   localSequence: number; acknowledgedSequence: number
   state: "LOCAL_CHANGES" | "PENDING" | "DRAFT_ACKNOWLEDGED" | "CONFLICT"
@@ -77,9 +99,19 @@ export type AccountJournalDraftView<T = AccountJournalDraft> = {
   pending: AccountJournalDraftPending<T> | null
   blocked: { kind: "RECEIPT" | "REMOTE"; operationId: string | null; currentRevision: number } | null
   remoteDraft: T | null
+  remoteDeleted?: boolean
+  resolvedDeletion?: number | null
+  recoverableVersions?: number
+}
+export type ConflictChoice = "LOCAL" | "REMOTE" | "DELETE"
+export type AccountJournalConflictArchive<T = AccountJournalDraft> = {
+  version: 1; createdAt: string | null; localServerRevision: number | null
+  localSequence: number; remoteRevision: number; deleted: boolean
+  choice: ConflictChoice | "REVIEW"; local: T; remote: T | null
+  pending: AccountJournalDraftPending<T> | null
 }
 export interface AccountJournalDraftBuffer<T = AccountJournalDraft> {
-  saveDraft(owner: string, doc: string, draft: T, expectedLocalSequence?: number): Promise<void>
+  saveDraft(owner: string, doc: string, draft: T, expectedLocalSequence?: number, writePurpose?: "MIGRATION"): Promise<void>
   read(owner: string, doc: string): Promise<AccountJournalDraftView<T> | null>
   list(owner: string): Promise<AccountJournalDraftView<T>[]>
   queue(owner: string, doc: string, operationId: string): Promise<void>
@@ -87,8 +119,16 @@ export interface AccountJournalDraftBuffer<T = AccountJournalDraft> {
   conflict(owner: string, doc: string, operationId: string, currentRevision: number): Promise<boolean>
   importRemote(owner: string, doc: string, draft: T, serverRevision: number): Promise<"IMPORTED" | "UNCHANGED" | "CONFLICT">
   clear(owner: string, doc: string): Promise<boolean>
+  reject?(owner: string, doc: string, operationId: string, reason: AccountJournalWriteRejection): Promise<boolean>
   logout(owner: string): void
   close(): void
+}
+/** Existing autosave/sync mocks may keep implementing the smaller base interface. */
+export interface AccountJournalConflictBuffer<T = AccountJournalDraft> extends AccountJournalDraftBuffer<T> {
+  captureConflict(owner: string, doc: string, remote: T | null, remoteRevision: number, expectedLocalSequence: number, isCurrent?: () => boolean): Promise<void>
+  resolveConflict(owner: string, doc: string, choice: ConflictChoice, remoteRevision: number, expectedLocalSequence: number, isCurrent?: () => boolean): Promise<void>
+  acceptCleanDeletion(owner: string, doc: string, remoteRevision: number, expectedLocalSequence: number): Promise<void>
+  readConflictArchive(owner: string, doc: string, isCurrent?: () => boolean): Promise<AccountJournalConflictArchive<T>[]>
 }
 type Cipher = z.infer<typeof cipherSchema>
 const DB_NAME = "trainoracle-account-journal-drafts-v1"
@@ -145,13 +185,13 @@ async function decrypt<T>(key: CryptoKey, ownerId: string, documentId: string, e
   finally { bytes?.fill(0) }
 }
 
-export function createAccountJournalDraftBuffer(factory: IDBFactory = globalThis.indexedDB): AccountJournalDraftBuffer {
+export function createAccountJournalDraftBuffer(factory: IDBFactory = globalThis.indexedDB): AccountJournalConflictBuffer {
   return createAccountDocumentBuffer(accountJournalDraftSchema, DB_NAME, factory)
 }
 
 /** Same durable protocol for separately validated account document families. */
 export function createAccountDocumentBuffer<T>(schema: z.ZodType<T>, databaseName: string,
-  factory: IDBFactory = globalThis.indexedDB): AccountJournalDraftBuffer<T> {
+  factory: IDBFactory = globalThis.indexedDB): AccountJournalConflictBuffer<T> {
   if (!factory || typeof factory.open !== "function") throw new Error("IndexedDB unavailable")
   if (!globalThis.crypto?.subtle) throw new Error("Web Crypto unavailable")
   const disposedOwners = new Set<string>()
@@ -266,7 +306,8 @@ export function createAccountDocumentBuffer<T>(schema: z.ZodType<T>, databaseNam
   }
   function initial(ownerId: string, documentId: string, encryptedCurrent: Cipher): AccountJournalDraftRecord {
     return { version: 1, ownerId, documentId, encryptedCurrent, serverRevision: 0,
-      localSequence: 1, acknowledgedSequence: 0, operation: null, blocked: null, retiredOperationIds: [] }
+      localSequence: 1, acknowledgedSequence: 0, operation: null, blocked: null, retiredOperationIds: [],
+      conflictArchive: [], resolvedDeletion: null }
   }
 
   async function view(record: AccountJournalDraftRecord): Promise<AccountJournalDraftView<T>> {
@@ -275,30 +316,40 @@ export function createAccountDocumentBuffer<T>(schema: z.ZodType<T>, databaseNam
     const draft = await decrypt(key, ownerId, documentId, record.encryptedCurrent, schema, databaseName)
     const op = record.operation
     const pending = op ? { operationId: op.operationId, expectedRevision: op.expectedRevision,
-      sequence: op.sequence, draft: await decrypt(key, ownerId, documentId, op.encryptedSnapshot, schema, databaseName) } : null
+      ...(op.writePurpose ? { writePurpose: op.writePurpose } : {}),
+      sequence: op.sequence, ...(op.rejection ? { rejection: op.rejection } : {}), draft: await decrypt(key, ownerId, documentId, op.encryptedSnapshot, schema, databaseName) } : null
     const remoteDraft = record.blocked?.encryptedRemote
       ? await decrypt(key, ownerId, documentId, record.blocked.encryptedRemote, schema, databaseName) : null
     scope(ownerId)
     return { ownerId, documentId, serverRevision: record.serverRevision,
+      ...(record.writePurpose ? { writePurpose: record.writePurpose } : {}),
       localSequence: record.localSequence, acknowledgedSequence: record.acknowledgedSequence,
       state: record.blocked ? "CONFLICT" : op ? "PENDING"
         : record.localSequence === record.acknowledgedSequence ? "DRAFT_ACKNOWLEDGED" : "LOCAL_CHANGES",
-      draft, pending, remoteDraft, blocked: record.blocked ? { kind: record.blocked.kind,
+      draft, pending, remoteDraft, remoteDeleted: record.blocked?.deleted ?? false,
+      resolvedDeletion: record.resolvedDeletion, recoverableVersions: record.conflictArchive.length,
+      blocked: record.blocked ? { kind: record.blocked.kind,
         operationId: record.blocked.operationId, currentRevision: record.blocked.currentRevision } : null }
   }
 
   return {
-    async saveDraft(owner: string, doc: string, input: T, expectedLocalSequence?: number) {
+    async saveDraft(owner: string, doc: string, input: T, expectedLocalSequence?: number, writePurpose?: "MIGRATION") {
       const { ownerId, documentId } = scope(owner, doc)
+      z.literal("MIGRATION").optional().parse(writePurpose)
       const draft = parseDocument(input, schema)
       if (expectedLocalSequence !== undefined) sequence.parse(expectedLocalSequence)
       const encrypted = await encrypt(await keyFor(ownerId, true), ownerId, documentId!, draft, databaseName)
       await update(ownerId, documentId!, old => {
+        if (writePurpose && old?.operation && old.operation.writePurpose !== writePurpose) {
+          throw new Error("Pending operation purpose is immutable")
+        }
+        if (old?.resolvedDeletion) throw new Error("Remote deletion requires explicit restore")
         if (expectedLocalSequence !== undefined && expectedLocalSequence !== (old?.localSequence ?? 0)) {
           throw new Error("Draft local sequence mismatch")
         }
         const record = old ? { ...old, localSequence: old.localSequence + 1, encryptedCurrent: encrypted }
           : initial(ownerId, documentId!, encrypted)
+        if (writePurpose) record.writePurpose = writePurpose
         return { record, result: record }
       })
     },
@@ -316,8 +367,20 @@ export function createAccountDocumentBuffer<T>(schema: z.ZodType<T>, databaseNam
         if (record.retiredOperationIds.includes(operationId)) throw new Error("Operation ID already used")
         if (record.localSequence === record.acknowledgedSequence) throw new Error("No local changes")
         const operation = operationSchema.parse({ operationId, expectedRevision: record.serverRevision,
+          ...(record.writePurpose ? { writePurpose: record.writePurpose } : {}),
           sequence: record.localSequence, encryptedSnapshot: record.encryptedCurrent })
         return { record: { ...record, operation }, result: operation }
+      })
+    },
+
+    async reject(owner, doc, id, reason) {
+      const { ownerId, documentId } = scope(owner, doc)
+      const operationId = uuid.parse(id).toLowerCase()
+      accountJournalWriteRejectionSchema.parse(reason)
+      return update(ownerId, documentId!, old => {
+        const record = required(old)
+        if (record.blocked || !record.operation || record.operation.operationId !== operationId) return { record, result: false }
+        return { record: { ...record, operation: { ...record.operation, rejection: reason } }, result: true }
       })
     },
 
@@ -345,7 +408,7 @@ export function createAccountDocumentBuffer<T>(schema: z.ZodType<T>, databaseNam
         if (record.blocked || !record.operation || record.operation.operationId !== operationId
           || currentRevision === record.operation.expectedRevision) return { record, result: false }
         return { record: { ...record, blocked: { kind: "RECEIPT", operationId, currentRevision,
-          encryptedRemote: null } }, result: true }
+          encryptedRemote: null, deleted: false } }, result: true }
       })
     },
 
@@ -387,7 +450,7 @@ export function createAccountDocumentBuffer<T>(schema: z.ZodType<T>, databaseNam
           // Current dirty content cannot be compared against that base's content.
           if (serverRevision === old.serverRevision) return { record: old, result: "UNCHANGED" as const }
           return { record: { ...old, blocked: { kind: "REMOTE", operationId: null,
-            currentRevision: serverRevision, encryptedRemote: encrypted } }, result: "CONFLICT" as const }
+            currentRevision: serverRevision, encryptedRemote: encrypted, deleted: false } }, result: "CONFLICT" as const }
         }
         if (old && serverRevision === old.serverRevision) {
           if (JSON.stringify(priorDraft) !== JSON.stringify(draft)) throw new Error("Remote revision content mismatch")
@@ -395,18 +458,131 @@ export function createAccountDocumentBuffer<T>(schema: z.ZodType<T>, databaseNam
         }
         const localSequence = old ? old.localSequence + 1 : 1
         const record = { ...(old ?? initial(ownerId, documentId!, encrypted)), encryptedCurrent: encrypted,
-          serverRevision, localSequence, acknowledgedSequence: localSequence }
+          serverRevision, localSequence, acknowledgedSequence: localSequence, resolvedDeletion: null }
         return { record, result: "IMPORTED" as const }
       })
     },
 
-    /** Explicit clean-cache eviction only. Never discards dirty/pending/conflicted data or keys. */
+    async captureConflict(owner, doc, input, remoteRevision, expectedLocalSequence, isCurrent = () => true) {
+      const { ownerId, documentId } = scope(owner, doc)
+      revision.refine(value => value > 0).parse(remoteRevision)
+      sequence.parse(expectedLocalSequence)
+      const remote = input === null ? null : parseDocument(input, schema)
+      const before = required(await get(ownerId, documentId!))
+      const sameRevision = before.blocked?.kind === "REMOTE" && before.blocked.currentRevision === remoteRevision
+      if (sameRevision) {
+        const previous = before.blocked!.encryptedRemote
+          ? await decrypt(await keyFor(ownerId, false), ownerId, documentId!, before.blocked!.encryptedRemote, schema, databaseName) : null
+        if (JSON.stringify(previous) !== JSON.stringify(remote)) throw new Error("Remote revision content mismatch")
+      }
+      const encryptedRemote = sameRevision ? before.blocked!.encryptedRemote : remote === null ? null
+        : await encrypt(await keyFor(ownerId, false), ownerId, documentId!, remote, databaseName)
+      await update(ownerId, documentId!, old => {
+        const record = required(old)
+        if (!isCurrent() || JSON.stringify(record) !== JSON.stringify(before)
+          || !record.blocked || record.localSequence !== expectedLocalSequence
+          || remoteRevision < Math.max(record.serverRevision, record.blocked.currentRevision)) {
+          throw new Error("Conflict changed; review again")
+        }
+        if (sameRevision && record.conflictArchive.some(item => item.localSequence === record.localSequence
+          && item.remoteRevision === remoteRevision && JSON.stringify(item.encryptedLocal) === JSON.stringify(record.encryptedCurrent)
+          && JSON.stringify(item.encryptedRemote) === JSON.stringify(encryptedRemote))) return { record, result: undefined }
+        // Keep every reviewed pair, including superseded remote bodies, without expiry.
+        const previous = record.blocked.kind === "REMOTE" && !sameRevision ? [{
+          version: 1 as const, createdAt: new Date().toISOString(), localServerRevision: record.serverRevision,
+          localSequence: record.localSequence, remoteRevision: record.blocked.currentRevision,
+          encryptedLocal: record.encryptedCurrent, encryptedRemote: record.blocked.encryptedRemote,
+          operation: record.operation, deleted: record.blocked.deleted, choice: "REVIEW" as const,
+        }] : []
+        const conflictArchive = [...record.conflictArchive, ...previous, {
+          version: 1 as const, createdAt: new Date().toISOString(), localServerRevision: record.serverRevision,
+          localSequence: record.localSequence, remoteRevision,
+          encryptedLocal: record.encryptedCurrent, encryptedRemote,
+          operation: record.operation, deleted: remote === null, choice: "REVIEW" as const,
+        }]
+        if (conflictArchive.length > MAX_CONFLICT_ARCHIVE_ENTRIES) throw new Error("Conflict archive full; existing versions retained")
+        return { record: { ...record, conflictArchive, blocked: { kind: "REMOTE", operationId: null,
+          currentRevision: remoteRevision, encryptedRemote, deleted: remote === null } }, result: undefined }
+      })
+    },
+
+    async resolveConflict(owner, doc, choice, remoteRevision, expectedLocalSequence, isCurrent = () => true) {
+      const { ownerId, documentId } = scope(owner, doc)
+      z.enum(["LOCAL", "REMOTE", "DELETE"]).parse(choice)
+      revision.parse(remoteRevision); sequence.parse(expectedLocalSequence)
+      await update(ownerId, documentId!, old => {
+        const record = required(old), blocked = record.blocked
+        if (!isCurrent() || !blocked || blocked.kind !== "REMOTE" || record.localSequence !== expectedLocalSequence
+          || blocked.currentRevision !== remoteRevision || (choice === "DELETE") !== blocked.deleted) {
+          throw new Error("Conflict changed; review again")
+        }
+        const localSequence = record.localSequence + 1
+        if (record.conflictArchive.length >= MAX_CONFLICT_ARCHIVE_ENTRIES) throw new Error("Conflict archive full; existing versions retained")
+        return { record: { ...record, conflictArchive: [...record.conflictArchive, {
+          version: 1 as const, createdAt: new Date().toISOString(), localServerRevision: record.serverRevision,
+          localSequence: record.localSequence, remoteRevision,
+          encryptedLocal: record.encryptedCurrent, encryptedRemote: blocked.encryptedRemote,
+          operation: record.operation, deleted: blocked.deleted, choice,
+        }], encryptedCurrent: choice === "REMOTE" ? blocked.encryptedRemote! : record.encryptedCurrent,
+          serverRevision: remoteRevision, localSequence,
+          acknowledgedSequence: choice === "LOCAL" ? record.acknowledgedSequence : localSequence,
+          operation: null, blocked: null, resolvedDeletion: choice === "DELETE" ? remoteRevision : null,
+          retiredOperationIds: record.operation
+            ? [...record.retiredOperationIds, record.operation.operationId] : record.retiredOperationIds,
+        }, result: undefined }
+      })
+    },
+
+    /** Explicit owner-scoped recovery read. createdAt is device archival time, not
+     * server replacedAt or an expiry deadline; unresolved versions are never pruned.
+     */
+    async readConflictArchive(owner, doc, isCurrent = () => true) {
+      const { ownerId, documentId } = scope(owner, doc)
+      if (!isCurrent()) throw new Error("Archive scope changed")
+      const record = await get(ownerId, documentId!)
+      if (!record) return []
+      const key = await keyFor(ownerId, false)
+      const versions: AccountJournalConflictArchive<T>[] = []
+      for (const item of record.conflictArchive) {
+        if (!isCurrent()) throw new Error("Archive scope changed")
+        const op = item.operation
+        versions.push({ version: item.version, createdAt: item.createdAt, localServerRevision: item.localServerRevision,
+          localSequence: item.localSequence, remoteRevision: item.remoteRevision, deleted: item.deleted, choice: item.choice,
+          local: await decrypt(key, ownerId, documentId!, item.encryptedLocal, schema, databaseName),
+          remote: item.encryptedRemote ? await decrypt(key, ownerId, documentId!, item.encryptedRemote, schema, databaseName) : null,
+          pending: op ? { operationId: op.operationId, expectedRevision: op.expectedRevision, sequence: op.sequence,
+            ...(op.writePurpose ? { writePurpose: op.writePurpose } : {}),
+            draft: await decrypt(key, ownerId, documentId!, op.encryptedSnapshot, schema, databaseName) } : null,
+        })
+      }
+      scope(ownerId)
+      if (!isCurrent()) throw new Error("Archive scope changed")
+      return versions
+    },
+
+    async acceptCleanDeletion(owner, doc, remoteRevision, expectedLocalSequence) {
+      const { ownerId, documentId } = scope(owner, doc)
+      revision.refine(value => value > 0).parse(remoteRevision)
+      sequence.parse(expectedLocalSequence)
+      await update(ownerId, documentId!, old => {
+        const record = required(old)
+        if (record.blocked || record.operation || record.localSequence !== expectedLocalSequence
+          || record.acknowledgedSequence !== expectedLocalSequence || remoteRevision <= record.serverRevision) {
+          throw new Error("Deletion changed; review again")
+        }
+        return { record: record.conflictArchive.length
+          ? { ...record, serverRevision: remoteRevision, resolvedDeletion: remoteRevision } : null, result: undefined }
+      })
+    },
+
+    /** Archives are durable recovery data, never evicted as clean cache. */
     async clear(owner: string, doc: string) {
       const { ownerId, documentId } = scope(owner, doc)
       return update(ownerId, documentId!, old => {
         if (old && (old.operation || old.blocked || old.localSequence !== old.acknowledgedSequence)) {
           throw new Error("Cannot clear unsaved draft")
         }
+        if (old?.conflictArchive.length) return { record: old, result: false }
         return { record: null, result: old !== null }
       })
     },

@@ -1,5 +1,7 @@
 import React from "react"
-import { accountJournalRecordsEnabled, persistAccountJournalRecord } from "../../domain/account/account-journal-record-service"
+import { FormInputDraftBoundary, useFormInputDraft, useRecoveredFormInput } from "./useFormInputDraft"
+import { accountJournalRecordsEnabled } from "../../domain/account/account-journal-record-service"
+import { FormFinalizationRecovery, useFormFinalization } from "./useFormFinalization"
 import { Check, ChevronRight, Clock3, FilePenLine, RotateCcw, TriangleAlert } from "lucide-react"
 import { compactDate, dowOf, isoToDate } from "../../domain/dates"
 import { derivedProvenance, explicitOrMissing } from "../../domain/field-provenance"
@@ -70,7 +72,15 @@ function slotFromEntry(entry: PostSessionEntry | undefined): Slot | null {
   return null
 }
 
-export function QuickSessionForm({
+export function QuickSessionForm(props: React.ComponentProps<typeof QuickSessionFormEditor>) {
+  return <FormInputDraftBoundary kind="quick" date={props.initialEntry?.date ?? props.targetDate ?? todayISO()}
+    hasInitialContext={props.initialEntry !== undefined || props.plannedSessionLink !== undefined}
+    identity={JSON.stringify([props.initialEntry?.id, props.initialEntry?.savedAt, props.plannedSessionLink])}>
+    <QuickSessionFormEditor {...props} />
+  </FormInputDraftBoundary>
+}
+
+function QuickSessionFormEditor({
   onBack,
   onDone,
   onContinueDetailed,
@@ -85,17 +95,19 @@ export function QuickSessionForm({
   readonly initialEntry?: PostSessionEntry
   readonly plannedSessionLink?: PlannedSessionLink
 }) {
+  const recovered = useRecoveredFormInput("quick")
+  const input = recovered?.input
   const initial = initialEntry?.kind === "post-session" ? initialEntry : undefined
   const date = initial?.date ?? targetDate ?? todayISO()
   const planLink = initial?.plannedSessionLink ?? plannedSessionLink
   const outcomes = planLink === undefined ? GENERIC_OUTCOMES : PLANNED_OUTCOMES
-  const [step, setStep] = React.useState<QuickStep>("activity")
-  const [outcome, setOutcome] = React.useState<Outcome | null>(initial?.activityOutcome ?? null)
-  const [slot, setSlot] = React.useState<Slot | null>(() => slotFromEntry(initial))
-  const [rpe, setRpe] = React.useState(() => initial?.rpe ?? 0)
-  const [effortAnswered, setEffortAnswered] = React.useState(() => (initial?.rpe ?? 0) > 0)
-  const [painStatus, setPainStatus] = React.useState<PainStatus>(initial?.painCheckStatus ?? "UNANSWERED")
-  const [painParts, setPainParts] = React.useState<Record<string, number>>(() => ({ ...(initial?.painParts ?? {}) }))
+  const [step, setStep] = React.useState<QuickStep>(input?.step ?? "activity")
+  const [outcome, setOutcome] = React.useState<Outcome | null>(() => input ? input.outcome : initial?.activityOutcome ?? null)
+  const [slot, setSlot] = React.useState<Slot | null>(() => input ? input.slot : slotFromEntry(initial))
+  const [rpe, setRpe] = React.useState(() => input?.rpe ?? initial?.rpe ?? 0)
+  const [effortAnswered, setEffortAnswered] = React.useState(() => input?.effortAnswered ?? (initial?.rpe ?? 0) > 0)
+  const [painStatus, setPainStatus] = React.useState<PainStatus>(input?.painStatus ?? initial?.painCheckStatus ?? "UNANSWERED")
+  const [painParts, setPainParts] = React.useState<Record<string, number>>(() => ({ ...(input?.painParts ?? initial?.painParts ?? {}) }))
   const [savedEntry, setSavedEntry] = React.useState<PostSessionEntry | null>(initial ?? null)
   const [saveError, setSaveError] = React.useState<string | null>(null)
   const [saving, setSaving] = React.useState(false)
@@ -105,7 +117,11 @@ export function QuickSessionForm({
   const [savedMessage, setSavedMessage] = React.useState<string | null>(null)
   const inheritedMemo = usePurposeScopedMemo(initial?.memo ?? "", initial?.memoPurpose)
   const [taps, setTaps] = React.useState(0)
-  const [entryId] = React.useState(() => initial?.id ?? newEntryId())
+  const [entryId] = React.useState(() => recovered?.entryId ?? initial?.id ?? newEntryId())
+  const lastSavedAt = React.useRef(recovered?.baseSavedAt ?? initial?.savedAt)
+  const finalization = useFormFinalization(entryId, accountEnabled, lastSavedAt)
+  const draft = useFormInputDraft({ kind: "quick", step: step === "saved" ? "activity" : step,
+    outcome, slot, rpe, effortAnswered, painStatus, painParts }, entryId, step !== "saved", lastSavedAt.current)
   const stageRef = React.useRef<HTMLDivElement>(null)
   const slotRef = React.useRef<HTMLDivElement>(null)
   const slotHeadingRef = React.useRef<HTMLSpanElement>(null)
@@ -125,7 +141,7 @@ export function QuickSessionForm({
     readonly painParts: Readonly<Record<string, number>>
     readonly answerTapCount: number
   }) => {
-    if (persistInFlight.current) return
+    if (persistInFlight.current || !draft.current()) return
     const base = savedEntry ?? initial
     const didPerform = performed(next.outcome)
     const hasPain = Object.values(next.painParts).some((level) => level > 0)
@@ -133,6 +149,8 @@ export function QuickSessionForm({
       setSaveError("불편한 곳을 하나 이상 골라 주세요.")
       return
     }
+    setPainStatus(next.painStatus)
+    setPainParts({ ...next.painParts })
     const memoPreparation = accountEnabled ? inheritedMemo.prepareForSave() : null
     if (memoPreparation && !memoPreparation.ready) {
       setSaveError("메모 용도를 확인할 수 없어요. 상세 일지에서 용도를 선택한 뒤 저장해 주세요.")
@@ -154,11 +172,11 @@ export function QuickSessionForm({
       objectiveComponents: _previousObjectiveComponents,
       ...previousProvenance
     } = base?.fieldProvenance ?? {}
-    const entry: PostSessionEntry = {
+    let entry: PostSessionEntry = {
       id: entryId,
       kind: "post-session",
       date,
-      savedAt: nextJournalSavedAt(base?.savedAt),
+      savedAt: nextJournalSavedAt(lastSavedAt.current),
       syncState: "local",
       captureDepth: "QUICK",
       activityOutcome: next.outcome,
@@ -205,16 +223,27 @@ export function QuickSessionForm({
     setSaving(true)
     setSaveError(null)
     try {
-      const accountResult = accountEnabled ? await persistAccountJournalRecord(entry, base?.savedAt) : null
+      const accountResult = accountEnabled ? await finalization.save(entry, lastSavedAt.current) : null
+      if (accountResult?.ok) entry = accountResult.entry
       const result = accountEnabled ? accountResult : (base === undefined ? saveEntry(entry) : updateEntry(entry, base.savedAt))
       if (window.location.search.includes("uitest")) {
         console.log(`[QUICKLOG] step=saved taps=${next.answerTapCount + 1} answers=${next.answerTapCount} screens=2 ok=${result?.ok === true}`)
         console.log(`[JSAVE] kind=post-session ok=${result?.ok === true}`)
       }
       if (!result?.ok) {
-        setSaveError(accountEnabled ? "계정 저장을 완료하지 못했어요. 입력은 유지했어요. 연결과 로그인 상태를 확인한 뒤 다시 시도해 주세요." : "이 기기에 저장하지 못했어요. 저장 공간과 입력 내용을 확인해 주세요.")
+        setSaveError(accountEnabled ? accountResult?.notice ?? "계정 저장을 완료하지 못했어요. 입력은 유지했어요. 연결과 로그인 상태를 확인한 뒤 다시 시도해 주세요." : "이 기기에 저장하지 못했어요. 저장 공간과 입력 내용을 확인해 주세요.")
         return
       }
+      if (!draft.current()) return
+      if (accountResult?.ok && accountResult.storage !== "ACCOUNT") {
+        setSaveError([memoPreparation?.reviewMessage, accountResult.storage === "CONFLICT"
+          ? "수정 충돌을 확인해 주세요. 기기에는 보관했지만 기록 완료는 아직이에요."
+          : "계정 전송 대기 중이에요. 기기에는 보관했지만 기록 완료는 아직이에요."].filter(Boolean).join(" "))
+        return
+      }
+      if (accountEnabled) await draft.complete()
+      if (!draft.current()) return
+      lastSavedAt.current = entry.savedAt
       setOutcome(next.outcome)
       setSlot(next.slot)
       setRpe(next.rpe)
@@ -323,7 +352,8 @@ export function QuickSessionForm({
   return (
     <div className="quick-log" aria-busy={saving}>
       <fieldset disabled={saving} style={{ border: 0, margin: 0, padding: 0, minWidth: 0 }}>
-      <TopBar onBack={onBack}>빠르게 기록</TopBar>
+      <TopBar onBack={draft.back(onBack)}>빠르게 기록</TopBar>
+      <FormFinalizationRecovery recovery={finalization} onBack={draft.back(onBack)} />
       <section className="quick-log__paper" aria-label="지금까지 기록한 내용">
         <div className="quick-log__date">{compactDate(date)} · {dowOf(date)}</div>
         {planLink !== undefined && <div className="quick-log__plan-source">계획 DAY {planLink.sessionDay} · {planLink.sessionSlot === "AM" ? "오전" : "오후"}</div>}

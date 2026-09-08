@@ -1,4 +1,13 @@
 export function planErrorMessage(errorCode: string): string {
+  if (errorCode.startsWith("ACCOUNT_PLAN_")) {
+    if (errorCode === "ACCOUNT_PLAN_REJECTED") return "서버가 저장 요청을 받아들이지 않았어요. 기기 원본과 저장 요청은 삭제하지 않았으며 계정 저장 완료가 아니에요."
+    if (errorCode === "ACCOUNT_PLAN_CAPACITY") return "계획 보관 공간이 가득 차 계정에 추가하지 못했어요. 기존 원본은 지우지 않았어요."
+    if (errorCode === "ACCOUNT_PLAN_HISTORY_CONFLICT") return "같은 계획의 진행 기록이 달라 가져오기를 중단했어요. 계정 기록과 가져온 파일은 바꾸지 않았어요."
+    if (errorCode === "ACCOUNT_PLAN_PENDING") return "기기에 변경을 보관했지만 계정 저장은 아직 확인되지 않았어요. 현재 계획은 서버 확인 전까지 바꾸지 않아요."
+    if (errorCode === "ACCOUNT_PLAN_CONFLICT") return "다른 기기의 계획과 충돌했어요. 두 수정본을 보존했으니 서버 계획을 확인해 주세요."
+    if (errorCode === "ACCOUNT_PLAN_REVIEW_REQUIRED" || errorCode === "ACCOUNT_PLAN_EVIDENCE_REQUIRED") return "온라인 연결과 현재 몸 상태·계획 근거를 다시 확인해야 해요. 저장된 원본은 그대로예요."
+    return "계정의 현재 계획이 달라졌거나 저장을 확인하지 못했어요. 현재 계획을 다시 확인해 주세요."
+  }
   switch (errorCode) {
     case "INCOMPLETE_FRAME":
       return "현재 주기의 진행 기록이 아직 남아 있어요. 일정에서 완료·휴식·건너뜀을 기록하거나, 표시된 일정이 끝난 뒤 다시 확인해 주세요."

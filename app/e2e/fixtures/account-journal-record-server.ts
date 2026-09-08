@@ -3,26 +3,26 @@ import type { AccountJournalRequest } from "../../src/domain/account/account-jou
 import type { AccountJournalRecord } from "../../src/domain/account/account-journal-record-schema"
 
 const origin = "http://127.0.0.1:4381"
-type Request = AccountJournalRequest<AccountJournalRecord>
-type Stored = { documentId: string; revision: number; document: AccountJournalRecord }
-type Version = { revision: number; document: AccountJournalRecord; replacedAt: string; expiresAt: string; reason: "replaced" | "trash" }
+type Request<T> = AccountJournalRequest<T>
+type Stored<T> = { documentId: string; revision: number; document: T }
+type Version<T> = { revision: number; document: T; replacedAt: string; expiresAt: string; reason: "replaced" | "trash" }
 
 // Mock only authentication/HTTP. The real generic API, schema, sync and native
 // encrypted IndexedDB buffer remain in the browser module graph.
-export function mockRecordServer() {
-  const documents = new Map<string, Stored>()
+export function mockRecordServer<T = AccountJournalRecord>() {
+  const documents = new Map<string, Stored<T>>()
   const tombstones = new Map<string, { documentId: string; revision: number }>()
-  const history = new Map<string, Version[]>()
+  const history = new Map<string, Version<T>[]>()
   const receipts = new Map<string, { request: string; result: unknown }>()
-  const calls: { ownerId: string; request: Request }[] = []
+  const calls: { ownerId: string; request: Request<T> }[] = []
   let failSave = false
-  let loseNextReceipt: Request["action"] | null = null
-  let hold: { action: Request["action"]; release: Promise<void> } | null = null
+  let loseNextReceipt: Request<T>["action"] | null = null
+  let hold: { action: Request<T>["action"]; release: Promise<void> } | null = null
   return {
     documents, tombstones, history, calls,
     offline(value: boolean) { failSave = value },
-    loseReceipt(action: Request["action"] = "save") { loseNextReceipt = action },
-    holdNext(action: Request["action"]) {
+    loseReceipt(action: Request<T>["action"] = "save") { loseNextReceipt = action },
+    holdNext(action: Request<T>["action"]) {
       let release!: () => void
       hold = { action, release: new Promise<void>(resolve => { release = resolve }) }
       return release
@@ -58,7 +58,7 @@ export function mockRecordServer() {
           ` })
         }
         if (url.pathname !== "/__record_api__") return route.continue()
-        const { ownerId, request } = route.request().postDataJSON() as { ownerId: string; request: Request }
+        const { ownerId, request } = route.request().postDataJSON() as { ownerId: string; request: Request<T> }
         calls.push({ ownerId, request })
         const paused = hold?.action === request.action ? hold : null
         if (paused) hold = null

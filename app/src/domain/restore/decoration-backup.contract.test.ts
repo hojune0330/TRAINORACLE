@@ -197,7 +197,7 @@ describe("explicit full backup decoration section", () => {
     expect(loadEntries().map((entry) => entry.id)).toEqual(["restore"])
   })
 
-  it("normalizes unknown decoration ids in a full backup without dropping known items", () => {
+  it("rejects unsupported decoration ids instead of silently dropping backup data", () => {
     const state = createEmptyDecorationState()
     const read = readBackupFile(JSON.stringify({
       app: "TRAINORACLE",
@@ -210,9 +210,8 @@ describe("explicit full backup decoration section", () => {
       },
     }))
 
-    expect(read.decorationStatus).toBe("included")
-    expect(read.decorations?.ownedItemIds).toEqual(state.ownedItemIds)
-    expect(read.decorations?.library.favoriteItemIds).toEqual([])
+    expect(read.decorationStatus).toBe("invalid")
+    expect(read.decorations).toBeNull()
   })
 
   it("skips invalid decoration state while preserving journal restoration", async () => {

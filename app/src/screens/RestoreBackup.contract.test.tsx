@@ -324,7 +324,8 @@ describe("restore backup decorations preview", () => {
 
     await waitFor(() => {
       expect(screen.getByTestId("restore-decoration-invalid").textContent)
-        .toMatch(/꾸미기는 형식이 맞지 않아 제외/u)
+        .toMatch(/지원하지 않는 항목이 있어 복원할 수 없어요/u)
+      expect(screen.getByTestId("restore-decoration-invalid").textContent).toContain("백업 원본은 변경하지 않아요")
     })
     expect(screen.getByRole("button", { name: /1건 되돌리기/u })).toBeTruthy()
   })

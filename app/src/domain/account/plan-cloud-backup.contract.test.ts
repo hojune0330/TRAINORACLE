@@ -78,6 +78,17 @@ beforeEach(() => {
 })
 
 describe("active plan cloud backup", () => {
+  it("blocks every legacy cloud path while account-canonical PLAN storage owns the account", async () => {
+    vi.stubEnv("VITE_FEATURE_ACCOUNT_JOURNAL", "true")
+    vi.stubEnv("VITE_KILL_ACCOUNT_JOURNAL", "false")
+    try {
+      const state = planBetaStateV3Schema.parse(stateFixture())
+      await expect(backupActivePlanToServer(state)).resolves.toEqual({ kind: "unavailable" })
+      await expect(loadLatestPlanFromServer()).resolves.toEqual({ kind: "unavailable" })
+      await archivePlanOnServer(state.activePlan.candidateId)
+      expect(savedRow).toBeNull()
+    } finally { vi.unstubAllEnvs() }
+  })
   it("finds the latest V3 plan when a newer V6 snapshot exists", async () => {
     const state = planBetaStateV3Schema.parse(stateFixture())
     serverRows = [

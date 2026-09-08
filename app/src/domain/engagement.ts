@@ -1,6 +1,8 @@
 import { z } from "zod"
 import { isValidIsoDate } from "./dates"
 import type { JournalEntry } from "./journal-schema"
+import { accountRewardsEnabled, readAccountRewardSummary, hydrateAccountRewards, recordAccountDailyVisit } from "./account/account-reward-service"
+import { activeLocalAccount } from "./account/local-journal-ownership"
 
 const JOURNAL_DAY_POINTS = 4
 const DAILY_VISIT_POINTS = 1
@@ -47,6 +49,7 @@ export type EngagementAwardResult =
   | { readonly kind: "ALREADY_AWARDED"; readonly awardedPoints: 0; readonly summary: EngagementSummary }
   | { readonly kind: "INELIGIBLE"; readonly awardedPoints: 0; readonly summary: EngagementSummary }
   | { readonly kind: "SAVE_FAILED"; readonly awardedPoints: 0; readonly summary: EngagementSummary }
+  | { readonly kind: "PENDING"; readonly awardedPoints: 0; readonly summary: EngagementSummary }
 
 export function engagementSummary(
   journalRefs: readonly EngagementJournalRef[],
@@ -59,10 +62,21 @@ export function engagementSummary(
 }
 
 export function loadEngagementSummary(today: string): EngagementSummary {
+  if (accountRewardsEnabled()) {
+    const remote = readAccountRewardSummary()
+    return remote ? { points: remote.points, journalDays: remote.journalDays, visitDays: remote.visitDays,
+      visitedToday: remote.visitedToday, journalRecordedToday: remote.journalRecordedToday, pointMeaning: POINT_MEANING }
+      : summaryFor(EMPTY_STATE, today)
+  }
   return summaryFor(readState(), today)
 }
 
 export function recordDailyVisit(today: string): EngagementAwardResult {
+  if (accountRewardsEnabled()) {
+    if (activeLocalAccount() === null) return { kind: "SAVE_FAILED", awardedPoints: 0, summary: loadEngagementSummary(today) }
+    void recordAccountDailyVisit()
+    return { kind: "PENDING", awardedPoints: 0, summary: loadEngagementSummary(today) }
+  }
   if (!validAwardDate(today, today)) {
     return { kind: "INELIGIBLE", awardedPoints: 0, summary: loadEngagementSummary(today) }
   }
@@ -70,6 +84,11 @@ export function recordDailyVisit(today: string): EngagementAwardResult {
 }
 
 export function awardJournalEntry(entry: JournalEntry, today: string): EngagementAwardResult {
+  if (accountRewardsEnabled()) {
+    if (activeLocalAccount() === null) return { kind: "SAVE_FAILED", awardedPoints: 0, summary: loadEngagementSummary(today) }
+    void hydrateAccountRewards()
+    return { kind: "PENDING", awardedPoints: 0, summary: loadEngagementSummary(today) }
+  }
   const ref = toEngagementJournalRef(entry)
   if (ref === null || ref.date !== today || !validAwardDate(ref.date, today)) {
     return { kind: "INELIGIBLE", awardedPoints: 0, summary: loadEngagementSummary(today) }
@@ -81,6 +100,10 @@ export function reconcileJournalAwards(
   journalRefs: readonly EngagementJournalRef[],
   today: string,
 ): EngagementSummary {
+  if (accountRewardsEnabled()) {
+    void hydrateAccountRewards()
+    return loadEngagementSummary(today)
+  }
   const current = readState()
   const journalDates = validDistinctDates([
     ...current.journalDates,

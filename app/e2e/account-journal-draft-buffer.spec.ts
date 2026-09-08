@@ -24,6 +24,56 @@ test.beforeEach(async ({ context, page }) => {
   await load(page)
 })
 
+test("MIGRATION purpose survives reload, later edit, conflict archive and actual sync transport", async ({ page }) => {
+  await page.evaluate(async () => {
+    const h = window.accountDraftHarness
+    await h.buffer.saveDraft(h.owner, h.doc, h.draft, 0, "MIGRATION")
+    await h.buffer.queue(h.owner, h.doc, h.op)
+    await h.buffer.saveDraft(h.owner, h.doc, { ...h.draft, body: "LATER_EDIT" })
+  })
+  await page.reload()
+  await load(page)
+  const result = await page.evaluate(async () => {
+    const h = window.accountDraftHarness
+    const reloaded = await h.buffer.read(h.owner, h.doc)
+    const sent: unknown[] = []
+    const transport = h.httpTransport(async request => {
+      sent.push(request)
+      if (request.action !== "save") throw new Error("Unexpected request")
+      return Response.json({ kind: "saved", documentId: request.documentId,
+        operationId: request.operationId, revision: request.expectedRevision + 1 })
+    })
+    const flushed = await h.flush(h.buffer, h.owner, h.doc, transport, () => true)
+    await h.buffer.saveDraft(h.owner, h.doc, { ...h.draft, body: "CONFLICT_LOCAL" })
+    await h.buffer.queue(h.owner, h.doc, h.otherOp)
+    await h.buffer.conflict(h.owner, h.doc, h.otherOp, 3)
+    const before = (await h.buffer.read(h.owner, h.doc))!
+    await h.buffer.captureConflict(h.owner, h.doc, { ...h.draft, body: "REMOTE" }, 3, before.localSequence)
+    await h.buffer.resolveConflict(h.owner, h.doc, "LOCAL", 3, before.localSequence)
+    const archives = await h.buffer.readConflictArchive(h.owner, h.doc)
+    await h.flush(h.buffer, h.owner, h.doc, transport, () => true)
+    return { reloaded, flushed, sent, archives }
+  })
+  expect(result.reloaded).toMatchObject({ writePurpose: "MIGRATION", pending: { writePurpose: "MIGRATION", draft: { body: "SYNTHETIC_BODY_ONLY" } } })
+  expect(result.flushed).toBe("SAVED")
+  expect(result.sent).toHaveLength(3)
+  for (const request of result.sent) expect(request).toMatchObject({ writePurpose: "MIGRATION" })
+  for (const archive of result.archives) expect(archive.pending).toMatchObject({ writePurpose: "MIGRATION" })
+})
+
+test("migration cannot relabel a normal immutable pending operation", async ({ page }) => {
+  const result = await page.evaluate(async () => {
+    const h = window.accountDraftHarness
+    await h.buffer.saveDraft(h.owner, h.doc, h.draft)
+    await h.buffer.queue(h.owner, h.doc, h.op)
+    const before = await h.raw()
+    const error = await h.rejected(() => h.buffer.saveDraft(h.owner, h.doc, h.draft, 1, "MIGRATION"))
+    return { before, after: await h.raw(), error }
+  })
+  expect(result.error).toBe("Pending operation purpose is immutable")
+  expect(result.after).toEqual(result.before)
+})
+
 test("native key + ciphertext survive page reload and tab close; pending body remains fixed", async ({ page, context }) => {
   const initial = await page.evaluate(async () => {
     const h = window.accountDraftHarness

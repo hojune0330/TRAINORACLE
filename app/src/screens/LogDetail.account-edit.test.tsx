@@ -7,7 +7,10 @@ import { putAccountJournalProjection, readAccountJournalPrivateEntry, resetAccou
 import { setActiveLocalAccount } from "../domain/account/local-journal-ownership"
 import { toImportedEntry } from "../domain/import/import-draft"
 
-const mocks = vi.hoisted(() => ({ entries: [] as JournalEntry[], enabled: true, persist: vi.fn() }))
+const mocks = vi.hoisted(() => ({ entries: [] as JournalEntry[], enabled: true, persist: vi.fn(), readFinalization: vi.fn() }))
+vi.mock("./log-entry/form-finalization-reader", () => ({
+  readFormFinalization: (...args: unknown[]) => mocks.readFinalization(...args),
+}))
 vi.mock("../domain/journal-store", async importOriginal => ({
   ...await importOriginal<typeof import("../domain/journal-store")>(),
   entriesForDate: () => mocks.entries,
@@ -34,6 +37,7 @@ beforeEach(() => {
   window.localStorage.clear()
   mocks.entries = []; mocks.enabled = true; mocks.persist.mockReset()
   mocks.persist.mockResolvedValue({ ok: true, storage: "ACCOUNT" })
+  mocks.readFinalization.mockReset().mockResolvedValue(null)
   setActiveLocalAccount(owner); resetAccountJournalProjection(owner)
 })
 afterEach(() => { cleanup(); resetAccountJournalProjection(null); setActiveLocalAccount(null) })
@@ -106,6 +110,20 @@ it.each(["quick-session", "post-session", "evening", "race"] as const)(
     await waitFor(() => expect(mocks.persist).toHaveBeenCalledOnce())
     expect(mocks.persist.mock.calls[0]![0]).toMatchObject({ id: session.id, kind: entry.kind, syncState: "local" })
     expect(mocks.persist.mock.calls[0]![1]).toBe(session.savedAt)
+    expect(mocks.readFinalization).toHaveBeenCalledWith(owner, session.id)
     await act(async () => {})
   },
 )
+
+it("retains the account edit and does not send when durable finalization preflight fails", async () => {
+  mocks.readFinalization.mockRejectedValue(new Error("Synthetic unavailable"))
+  seed(session)
+  const done = vi.fn()
+  render(<LogEntry entryType="post-session" initialEntry={session} onDone={done} />)
+  fireEvent.click(screen.getByRole("button", { name: /^수정 저장/ }))
+  await waitFor(() => expect(screen.getAllByText(/이전 저장 상태를 확인한 뒤/).length).toBeGreaterThan(0))
+  expect(mocks.persist).not.toHaveBeenCalled()
+  expect(done).not.toHaveBeenCalled()
+  expect(screen.getByRole("button", { name: /^수정 저장/ })).toBeInTheDocument()
+  expect(readAccountJournalPrivateEntry(session.id)).toEqual(session)
+})

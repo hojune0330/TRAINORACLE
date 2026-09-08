@@ -44,7 +44,9 @@ before(async () => {
     grant usage on schema auth to anon,authenticated,service_role;
     grant execute on all functions in schema auth to anon,authenticated,service_role;
   `);
-  for (const file of readdirSync(migrations).filter(name => /^\d+_.+\.sql$/.test(name)).sort()) {
+  // Historical direct-cipher contract ends at 0034; 0035 revokes that API and
+  // has its own pgcrypto-backed gateway/cutover suite.
+  for (const file of readdirSync(migrations).filter(name => /^\d+_.+\.sql$/.test(name) && name < '0035').sort()) {
     if (file === '0033_account_journal_revision_foundation.sql') {
       controlsBefore = (await db.query('select * from public.service_feature_controls order by feature_key')).rows;
       const sql = readFileSync(new URL(file, migrations), 'utf8');

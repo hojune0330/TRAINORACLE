@@ -4,13 +4,13 @@ import { loadEntriesOwnedBy, saveEntry } from "../journal-store"
 import { SYNC_RECOVERY_STORAGE_KEY } from "../journal-storage-keys"
 import { accountScopedStorageKeyFor } from "./local-account-scope"
 import { assignJournalsToAccount, setActiveLocalAccount } from "./local-journal-ownership"
-import { loadSyncConsent, saveSyncConsent } from "./sync-local"
+import { loadSyncConsent, onSyncConsentChange, saveSyncConsent, SYNC_CONSENT_STORAGE_KEY } from "./sync-local"
 import { recordTombstone } from "./tombstone"
 import { syncNow } from "./sync-run"
 import { previewSync } from "./sync-preview"
 
-type Phase = "schema" | "journal-select" | "tombstone-select" | "journal-upsert" | "tombstone-upsert" | "journal-delete" | "pre-upload-session"
-type Cancellation = "logout" | "account-switch" | "consent-off" | "account-journal-on"
+type Phase = "client" | "schema" | "journal-select" | "tombstone-select" | "journal-upsert" | "tombstone-upsert" | "journal-delete" | "pre-upload-session"
+type Cancellation = "logout" | "account-switch" | "consent-off" | "account-journal-on" | "owner-ABA" | "consent-ABA"
 type Row = { user_id: string; entry_id: string; entry: PostSessionEntry }
 
 function deferred() {
@@ -68,7 +68,9 @@ function table(name: string) {
 }
 
 vi.mock("./supabase-client", () => ({
-  supabase: async () => ({
+  supabase: async () => {
+    if (paused === "client") await pause("client")
+    return {
     auth: { getSession: async () => {
       const session = sessionUserId === null ? null : { user: { id: sessionUserId } }
       if (paused === "pre-upload-session" && loadEntriesOwnedBy("account-a").some(entry => entry.id === "remote-live")) {
@@ -78,7 +80,8 @@ vi.mock("./supabase-client", () => ({
     } },
     rpc: async () => { await pause("schema"); return { data: 17, error: null } },
     from: (name: string) => table(name),
-  }),
+    }
+  },
 }))
 
 function post(id: string): PostSessionEntry {
@@ -92,10 +95,16 @@ function post(id: string): PostSessionEntry {
 
 const checkpointKey = accountScopedStorageKeyFor(SYNC_RECOVERY_STORAGE_KEY, "account-a")
 const consent = { enabled: true, shareTrainingNotes: false }
-const cancellations: Cancellation[] = ["logout", "account-switch", "consent-off", "account-journal-on"]
+const cancellations: Cancellation[] = ["logout", "account-switch", "consent-off", "account-journal-on", "owner-ABA", "consent-ABA"]
 
 function cancel(reason: Cancellation) {
-  if (reason === "account-journal-on") vi.stubEnv("VITE_FEATURE_ACCOUNT_JOURNAL", "true")
+  if (reason === "owner-ABA") {
+    sessionUserId = "account-b"; setActiveLocalAccount(sessionUserId)
+    sessionUserId = "account-a"; setActiveLocalAccount(sessionUserId)
+  } else if (reason === "consent-ABA") {
+    saveSyncConsent({ ...consent, enabled: false }, "account-a")
+    saveSyncConsent(consent, "account-a")
+  } else if (reason === "account-journal-on") vi.stubEnv("VITE_FEATURE_ACCOUNT_JOURNAL", "true")
   else if (reason === "consent-off") saveSyncConsent({ ...consent, enabled: false }, "account-a")
   else {
     sessionUserId = reason === "logout" ? null : "account-b"
@@ -129,6 +138,80 @@ beforeEach(() => {
 afterEach(() => vi.unstubAllEnvs())
 
 describe("sync asynchronous cancellation", () => {
+  it.each(["owner-ABA", "consent-ABA"] as const)("captures %s before the first await finishes", async reason => {
+    paused = "client"
+    const running = syncNow("account-a")
+    await entered.promise
+    const before = { ...window.localStorage }
+    cancel(reason); released.resolve()
+    expect(await running).toMatchObject({ ok: false, pushed: 0, deleted: 0 })
+    expect(events).toEqual(["client"])
+    expect({ ...window.localStorage }).toEqual(before)
+  })
+
+  it.each(["consent-ABA", "clear"] as const)("keeps cross-tab %s cancellation sticky", async change => {
+    paused = "schema"
+    const running = syncNow("account-a")
+    await entered.promise
+    const key = accountScopedStorageKeyFor(SYNC_CONSENT_STORAGE_KEY, "account-a")
+    const before = { ...window.localStorage }
+    // Both queued events can arrive when storage already holds the final enabled value.
+    window.dispatchEvent(new StorageEvent("storage", { key: change === "clear" ? null : key,
+      storageArea: window.localStorage, oldValue: JSON.stringify(consent), newValue: null }))
+    window.dispatchEvent(new StorageEvent("storage", { key, storageArea: window.localStorage,
+      oldValue: null, newValue: JSON.stringify(consent) }))
+    released.resolve()
+    expect(await running).toMatchObject({ ok: false, pushed: 0 })
+    expect(events.at(-1)).toBe("schema")
+    expect({ ...window.localStorage }).toEqual(before)
+  })
+
+  it("ignores other owners' consent and session-storage changes", async () => {
+    paused = "schema"
+    const running = syncNow("account-a")
+    await entered.promise
+    saveSyncConsent({ ...consent, enabled: false }, "account-b")
+    window.dispatchEvent(new StorageEvent("storage", { storageArea: window.localStorage,
+      key: accountScopedStorageKeyFor(SYNC_CONSENT_STORAGE_KEY, "account-b") }))
+    window.dispatchEvent(new StorageEvent("storage", { storageArea: window.sessionStorage, key: null }))
+    released.resolve()
+    expect(await running).toMatchObject({ ok: true, pushed: 2 })
+  })
+
+  it.each(["success", "cancelled", "early-return", "exception"] as const)("unsubscribes every run listener after %s", async ending => {
+    const add = vi.spyOn(window, "addEventListener"), remove = vi.spyOn(window, "removeEventListener")
+    if (ending === "early-return") cancel("account-journal-on")
+    if (ending === "exception") sessionUserId = "account-a"
+    paused = ending === "early-return" ? null : "client"
+    const running = syncNow("account-a")
+    if (paused) {
+      await entered.promise
+      if (ending === "cancelled") cancel("owner-ABA")
+      if (ending === "exception") vi.spyOn(Storage.prototype, "getItem").mockImplementation(() => { throw Error("synthetic read failure") })
+      released.resolve()
+    }
+    await running.catch(() => undefined)
+    const listeners = add.mock.calls.filter(([name]) => ["storage", "trainoracle:journal-scope-changed", "trainoracle:sync-consent-changed"].includes(name))
+    expect(listeners).toHaveLength(3)
+    for (const [name, listener] of listeners) expect(remove).toHaveBeenCalledWith(name, listener)
+  })
+
+  it("announces successful consent changes synchronously and removes subscriptions", () => {
+    const listener = vi.fn(), unsubscribe = onSyncConsentChange(listener)
+    expect(saveSyncConsent({ ...consent, enabled: false }, "account-a")).toBe(true)
+    expect(listener).toHaveBeenLastCalledWith("account-a")
+    expect(saveSyncConsent(consent, "account-a")).toBe(true)
+    expect(listener).toHaveBeenCalledTimes(2)
+    expect(saveSyncConsent(consent, "account-a")).toBe(true)
+    expect(listener).toHaveBeenCalledTimes(2)
+    const write = vi.spyOn(Storage.prototype, "setItem").mockImplementationOnce(() => { throw Error("synthetic write failure") })
+    expect(saveSyncConsent({ ...consent, enabled: false }, "account-a")).toBe(false)
+    expect(listener).toHaveBeenCalledTimes(2)
+    write.mockRestore(); unsubscribe()
+    saveSyncConsent({ ...consent, enabled: false }, "account-a")
+    expect(listener).toHaveBeenCalledTimes(2)
+  })
+
   it("blocks direct old sync and preview before any server activity or storage mutation", async () => {
     cancel("account-journal-on")
     const before = { ...window.localStorage }

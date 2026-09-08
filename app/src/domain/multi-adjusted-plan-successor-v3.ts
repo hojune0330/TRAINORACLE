@@ -1,4 +1,5 @@
 import { canonicalJsonFingerprint } from "@impl/plan-generator/candidate-identity"
+import { captureAccountPlanWrite } from "./account/account-plan-domain"
 import { hasCanonicalJsonTree } from "./plan-beta-schema"
 import { activePlanBetaStorageKey } from "./plan-beta-store"
 import { accountScopedStorageKey, localAccountScopeIsCurrent, localAccountScopeSnapshot } from "./account/local-account-scope"
@@ -25,9 +26,10 @@ export async function saveSelectedMultiAdjustedSuccessorV3(input: {
     const openingHash = hash(input.request), request = structuredClone(input.request)
     const expected = input.expectedPredecessorFingerprint, account = localAccountScopeSnapshot()
     const activeKey = activePlanBetaStorageKey(), archiveKey = accountScopedStorageKey(MULTI_ADJUSTED_PLAN_ARCHIVE_V3_KEY)
+    const accountWrite = captureAccountPlanWrite(activeKey)
     const locks = input.locks === undefined ? getPlanMutationLockManager() : input.locks
     if (locks === null) return reject("MUTATION_LOCK_UNAVAILABLE")
-    return await locks.request(PLAN_BETA_MUTATION_LOCK_NAME, { mode: "exclusive", ifAvailable: true }, lock => {
+    return await locks.request(PLAN_BETA_MUTATION_LOCK_NAME, { mode: "exclusive", ifAvailable: true }, async lock => {
       if (lock === null) return reject("MUTATION_LOCK_UNAVAILABLE")
       const current = () => input.isCurrentDraft() && localAccountScopeIsCurrent(account)
         && input.expectedPredecessorFingerprint === expected && hasCanonicalJsonTree(input.request) && hash(input.request) === openingHash
@@ -35,7 +37,7 @@ export async function saveSelectedMultiAdjustedSuccessorV3(input: {
       const writes: { key: string; before: string | null; after: string }[] = []
       let beforeActive: string | null | undefined, beforeArchive: string | null | undefined
       try {
-        const storage = window.localStorage
+        const storage = accountWrite?.storage ?? window.localStorage
         beforeActive = storage.getItem(activeKey); beforeArchive = storage.getItem(archiveKey)
         const live = input.readReview(), at = new Date()
         if (!hasCanonicalJsonTree(live)) return reject("INVALID_ADJUSTED_REVIEW")
@@ -62,6 +64,10 @@ export async function saveSelectedMultiAdjustedSuccessorV3(input: {
         }
         const encoded = encodeStoredMultiAdjustedPlanV6(selected.state, [], at.toISOString(), live.retained, at)
         if (encoded.kind !== "encoded") return reject("ADJUSTED_PLAN_STORAGE_VALIDATION_FAILED")
+        if (accountWrite) {
+          const code = await accountWrite.save(encoded.state, live.retained, authorized)
+          return code ? reject(code) : { kind: "saved" as const, state: encoded.state, predecessorFingerprint: expected }
+        }
         const archive = prepareMultiAdjustedOriginalArchiveV3(beforeArchive, previous.state, live.retained, at)
         if (archive.kind !== "prepared") return reject(archive.kind === "full" ? "ARCHIVE_CAPACITY_REACHED" : "INVALID_STORED_ARCHIVE")
         if (!authorized() || storage.getItem(activeKey) !== beforeActive || storage.getItem(archiveKey) !== beforeArchive) return reject("STALE_BASE")

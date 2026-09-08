@@ -1,4 +1,6 @@
 import { canonicalJsonFingerprint } from "@impl/plan-generator/candidate-identity"
+import { accountPlansEnabled } from "./account/account-plan-service"
+import { importAccountPlanHistory, accountPlanExportStorage } from "./account/account-plan-domain"
 import { activePlanBetaStorageKey } from "./plan-beta-store"
 import { accountScopedStorageKey, localAccountScopeSnapshot } from "./account/local-account-scope"
 import { MULTI_ADJUSTED_PLAN_ARCHIVE_V3_KEY, parseMultiAdjustedOriginalArchiveV3 } from "./multi-adjusted-plan-archive-v3"
@@ -27,7 +29,8 @@ export function readMultiAdjustedPlanBackupV3(raw: string, retained = RETAINED_M
 export function exportMultiAdjustedPlanBackupV3(expected: string, retained = RETAINED_MULTI_ADJUSTED_EVIDENCE_V3, at = new Date()) {
   try {
     const account = localAccountScopeSnapshot(), activeKey = activePlanBetaStorageKey(), archiveKey = accountScopedStorageKey(MULTI_ADJUSTED_PLAN_ARCHIVE_V3_KEY)
-    const activeRaw = localStorage.getItem(activeKey), archiveRaw = localStorage.getItem(archiveKey)
+    const storage = accountPlanExportStorage(activeKey, archiveKey, 6)
+    const activeRaw = storage.getItem(activeKey), archiveRaw = storage.getItem(archiveKey)
     const active = readStoredMultiAdjustedPlanV6(activeRaw === null ? null : JSON.parse(activeRaw), retained, at)
     if (active.kind !== "loaded" || active.state.contentFingerprint !== expected) return invalid()
     const content = { app: "TRAINORACLE", format: FORMAT, exportedAt: at.toISOString(), active: active.state,
@@ -35,7 +38,7 @@ export function exportMultiAdjustedPlanBackupV3(expected: string, retained = RET
     const raw = JSON.stringify({ ...content, contentFingerprint: hash(content) }, null, 2)
     const checked = readMultiAdjustedPlanBackupV3(raw, retained, at)
     if (checked.kind !== "read_only" || account !== localAccountScopeSnapshot()
-      || localStorage.getItem(activeKey) !== activeRaw || localStorage.getItem(archiveKey) !== archiveRaw) return invalid()
+      || storage.getItem(activeKey) !== activeRaw || storage.getItem(archiveKey) !== archiveRaw) return invalid()
     return { kind: "exported" as const, raw, archivedCount: checked.entries.length }
   } catch { return invalid() }
 }
@@ -50,11 +53,12 @@ export async function importMultiAdjustedPlanHistoryV3(input: {
   if (!locks) return reject("MUTATION_LOCK_UNAVAILABLE")
   const current = () => account === localAccountScopeSnapshot() && input.raw === raw && input.confirmsOwnFile === true && input.isCurrentRequest()
   try {
-    return await locks.request(PLAN_BETA_MUTATION_LOCK_NAME, { mode: "exclusive", ifAvailable: true }, lock => {
+    return await locks.request(PLAN_BETA_MUTATION_LOCK_NAME, { mode: "exclusive", ifAvailable: true }, async lock => {
       if (!lock || !current()) return reject("STALE_IMPORT")
       const evidence = input.readEvidence?.() ?? RETAINED_MULTI_ADJUSTED_EVIDENCE_V3, at = new Date()
       const incoming = readMultiAdjustedPlanBackupV3(raw, evidence, at)
       if (incoming.kind !== "read_only") return reject("INVALID_PLAN_FILE")
+      if (accountPlansEnabled()) return importAccountPlanHistory([incoming.active, ...incoming.entries.map(e => e.state)], evidence, current)
       const before = localStorage.getItem(key), activeBefore = localStorage.getItem(activeKey)
       const archive = parseMultiAdjustedOriginalArchiveV3(before, evidence, at)
       if (archive.kind !== "loaded") return reject("INVALID_EXISTING_PLAN")

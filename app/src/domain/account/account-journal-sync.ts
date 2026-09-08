@@ -1,4 +1,5 @@
 import type { AccountJournalDraftBuffer } from "./account-journal-draft-buffer"
+import { isAccountJournalWriteRejection, type AccountJournalWriteRejection } from "./account-write-rejection"
 import type { AccountJournalRequest, AccountJournalResult } from "./account-journal-api"
 
 export type DraftTransport<T = import("./account-journal-draft-buffer").AccountJournalDraft> = (request: AccountJournalRequest<T>) => Promise<AccountJournalResult<T>>
@@ -7,7 +8,7 @@ export type DraftTransport<T = import("./account-journal-draft-buffer").AccountJ
 export async function flushAccountJournalDraft<T>(
   buffer: AccountJournalDraftBuffer<T>, ownerId: string, documentId: string,
   send: DraftTransport<T>, isCurrent: () => boolean,
-): Promise<"SAVED" | "PENDING" | "CONFLICT" | "STALE"> {
+): Promise<"SAVED" | "PENDING" | "CONFLICT" | "STALE" | AccountJournalWriteRejection> {
   for (let attempt = 0; attempt < 8; attempt += 1) {
     if (!isCurrent()) return "STALE"
     let view = await buffer.read(ownerId, documentId)
@@ -22,10 +23,16 @@ export async function flushAccountJournalDraft<T>(
     if (!isCurrent()) return "STALE"
     const pending = view?.pending
     if (!pending) return "PENDING"
+    if (pending.rejection) return pending.rejection
     const result = await send({ action: "save", documentId, operationId: pending.operationId,
+      ...(pending.writePurpose ? { writePurpose: pending.writePurpose } : {}),
       expectedRevision: pending.expectedRevision, document: pending.draft })
     if (!isCurrent()) return "STALE"
-    if (!result.ok) return "PENDING"
+    if (!result.ok) {
+      if (!isAccountJournalWriteRejection(result.code)) return "PENDING"
+      if (await buffer.reject?.(ownerId, documentId, pending.operationId, result.code) === false) continue
+      return isCurrent() ? result.code : "STALE"
+    }
     if (result.data.kind === "conflict") {
       if (result.data.documentId !== documentId || result.data.operationId !== pending.operationId) return "PENDING"
       await buffer.conflict(ownerId, documentId, pending.operationId, result.data.currentRevision)

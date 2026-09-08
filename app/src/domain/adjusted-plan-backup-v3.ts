@@ -1,4 +1,6 @@
 import { canonicalJsonFingerprint } from "@impl/plan-generator/candidate-identity"
+import { accountPlansEnabled } from "./account/account-plan-service"
+import { importAccountPlanHistory, accountPlanExportStorage } from "./account/account-plan-domain"
 import { hasCanonicalJsonTree } from "./plan-beta-schema"
 import { activePlanBetaStorageKey } from "./plan-beta-store"
 import { accountScopedStorageKey, localAccountScopeSnapshot } from "./account/local-account-scope"
@@ -28,7 +30,8 @@ export function readAdjustedPlanBackupV3(raw: string, retained = RETAINED_ADJUST
 export function exportAdjustedPlanBackupV3(expected: string, retained = RETAINED_ADJUSTED_PLAN_EVIDENCE_V3, at = new Date()) {
   try {
     const account = localAccountScopeSnapshot(), activeKey = activePlanBetaStorageKey(), archiveKey = accountScopedStorageKey(ADJUSTED_PLAN_ARCHIVE_V3_KEY)
-    const activeRaw = localStorage.getItem(activeKey), archiveRaw = localStorage.getItem(archiveKey)
+    const storage = accountPlanExportStorage(activeKey, archiveKey, 5)
+    const activeRaw = storage.getItem(activeKey), archiveRaw = storage.getItem(archiveKey)
     const active = readStoredAdjustedPlanStateV5(activeRaw === null ? null : JSON.parse(activeRaw), retained, at)
     if (active.kind !== "loaded" || active.state.contentFingerprint !== expected) return invalid()
     const content = { app: "TRAINORACLE", format: FORMAT, exportedAt: at.toISOString(), active: active.state,
@@ -36,7 +39,7 @@ export function exportAdjustedPlanBackupV3(expected: string, retained = RETAINED
     const raw = JSON.stringify({ ...content, contentFingerprint: hash(content) }, null, 2)
     const checked = readAdjustedPlanBackupV3(raw, retained, at)
     if (checked.kind !== "read_only" || account !== localAccountScopeSnapshot()
-      || localStorage.getItem(activeKey) !== activeRaw || localStorage.getItem(archiveKey) !== archiveRaw) return invalid()
+      || storage.getItem(activeKey) !== activeRaw || storage.getItem(archiveKey) !== archiveRaw) return invalid()
     return { kind: "exported" as const, raw, archivedCount: checked.entries.length }
   } catch { return invalid() }
 }
@@ -51,11 +54,12 @@ export async function importAdjustedPlanHistoryV3(input: {
   if (!locks) return reject("MUTATION_LOCK_UNAVAILABLE")
   const current = () => account === localAccountScopeSnapshot() && input.raw === raw && input.confirmsOwnFile === true && input.isCurrentRequest()
   try {
-    return await locks.request(PLAN_BETA_MUTATION_LOCK_NAME, { mode: "exclusive", ifAvailable: true }, lock => {
+    return await locks.request(PLAN_BETA_MUTATION_LOCK_NAME, { mode: "exclusive", ifAvailable: true }, async lock => {
       if (!lock || !current()) return reject("STALE_IMPORT")
       const evidence = input.readEvidence?.() ?? RETAINED_ADJUSTED_PLAN_EVIDENCE_V3, at = new Date()
       const incoming = readAdjustedPlanBackupV3(raw, evidence, at)
       if (incoming.kind !== "read_only") return reject("INVALID_PLAN_FILE")
+      if (accountPlansEnabled()) return importAccountPlanHistory([incoming.active, ...incoming.entries.map(e => e.state)], evidence, current)
       const before = localStorage.getItem(key), activeBefore = localStorage.getItem(activeKey)
       const archive = parseAdjustedOriginalArchiveV3(before, evidence, at)
       if (archive.kind !== "loaded") return reject("INVALID_EXISTING_PLAN")

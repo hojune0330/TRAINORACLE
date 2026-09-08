@@ -139,30 +139,36 @@ export async function signOut(): Promise<AuthResult> {
   return { ok: true, message: "로그아웃되었어요." }
 }
 
-export async function currentUser(): Promise<AccountUser | null> {
-  const client = await supabase()
-  if (client === null) return null
+export async function currentUser(options?: { throwOnFailure?: boolean }): Promise<AccountUser | null> {
   try {
-    const { data } = await client.auth.getSession()
+    const client = await supabase()
+    if (client === null) {
+      if (options?.throwOnFailure) throw new Error("AUTH_UNAVAILABLE")
+      return null
+    }
+    const { data, error } = await client.auth.getSession()
+    if (error) throw new Error("AUTH_UNAVAILABLE")
     const user = data.session?.user
     return user ? toAccountUser(user) : null
   } catch {
+    if (options?.throwOnFailure) throw new Error("AUTH_UNAVAILABLE")
     return null
   }
 }
 
 /** 세션 변화 구독. 반환값은 해제 함수. flag OFF면 no-op 해제 함수. */
-export function onAuthChange(listener: (user: AccountUser | null) => void): () => void {
+export function onAuthChange(listener: (user: AccountUser | null) => void, options?: { ignoreInitialSession?: boolean }): () => void {
   let unsubscribe: (() => void) | null = null
   let cancelled = false
   void supabase().then((client) => {
     if (client === null || cancelled) return
     const { data } = client.auth.onAuthStateChange((_event, session) => {
+      if (cancelled || options?.ignoreInitialSession && _event === "INITIAL_SESSION") return
       listener(session?.user ? toAccountUser(session.user) : null)
     })
     unsubscribe = () => data.subscription.unsubscribe()
     if (cancelled) unsubscribe()
-  })
+  }).catch(() => undefined)
   return () => {
     cancelled = true
     unsubscribe?.()

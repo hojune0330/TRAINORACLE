@@ -1,4 +1,7 @@
 import type { PostSessionEntry } from "./journal-schema"
+import { accountPlanService, accountPlansEnabled, readAccountPlanEntry } from "./account/account-plan-service"
+import { materializeAccountPlan } from "./account/account-plan-document-schema"
+import { readAccountPlanHistorical } from "./account/account-plan-historical"
 import { isJournalVisible } from "./account/local-journal-ownership"
 import { plannedSessionLinkSchema, resolveCurrentPlannedSession } from "./planned-session-link"
 import { readArchivedOriginalPlans, readPlanBetaStateFromStorage } from "./plan-beta-store"
@@ -22,6 +25,32 @@ export function readJournalOriginalPlan(entry: PostSessionEntry,
   if (!parsed.success || entry.date !== parsed.data.plannedDate
       || ((entry.activitySlot === "AM" || entry.activitySlot === "PM") && entry.activitySlot !== parsed.data.sessionSlot)) {
     return { kind: "unavailable" as const }
+  }
+  if (accountPlansEnabled()) {
+    const document = accountPlanService()?.snapshot().confirmedDocument
+    if (!document) return { kind: "unavailable" as const }
+    for (const item of document.data.plans) {
+      const read = readAccountPlanHistorical(materializeAccountPlan(item))
+      if (!read) continue
+      const source = item.planId === document.data.currentPlanId ? "ACTIVE" as const : "ARCHIVED" as const
+      const sourceVerificationPending = readAccountPlanEntry(item, () => [...retained, ...retainedV3, ...retainedMultiV3]).kind !== "read_only"
+      const session = read.kind === "v3" ? resolveCurrentPlannedSession(read.state, parsed.data)
+        : read.kind === "v4" ? resolveCurrentPlannedSession(read.state.selection, parsed.data)
+          : read.kind === "v5" ? resolveCurrentPlannedSession(read.state.selection, parsed.data)
+            : resolveCurrentPlannedSession(read.state.selection, parsed.data)
+      if (!session) continue
+      if (read.kind === "v3") return { kind: "matched" as const, state: read.state,
+        session: resolveCurrentPlannedSession(read.state, parsed.data)!, source, sourceVerificationPending }
+      if (read.kind === "v4") return { kind: "matched_adjusted" as const, state: read.state,
+        session: resolveCurrentPlannedSession(read.state.selection, parsed.data)!, explanation: read.explanation, source, sourceVerificationPending }
+      if (read.kind === "v5") return { kind: "matched_adjusted_v3" as const, state: read.state,
+        session: resolveCurrentPlannedSession(read.state.selection, parsed.data)!, explanation: read.explanation, source, sourceVerificationPending }
+      return { kind: "matched_multi_adjusted_v3" as const, state: read.state,
+        session: resolveCurrentPlannedSession(read.state.selection, parsed.data)!,
+        explanation: read.explanations.find(e => e.address.day === session.day && e.address.slot === session.slot)?.explanation,
+        source, sourceVerificationPending }
+    }
+    return { kind: "missing" as const }
   }
   const active = readPlanBetaStateFromStorage(retained, retainedV3, retainedMultiV3)
   if (active.kind === "multi_adjusted_v3_loaded") {

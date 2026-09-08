@@ -1,4 +1,5 @@
 import React from "react"
+import { ACCOUNT_PLAN_EVENT } from "../../domain/account/account-plan-service"
 import type { PostSessionEntry } from "../../domain/journal-schema"
 import { readJournalOriginalPlan } from "../../domain/journal-original-plan"
 import { onLocalJournalScopeChange } from "../../domain/account/local-journal-ownership"
@@ -23,6 +24,11 @@ export function JournalOriginalPlan({ entry }: { readonly entry: PostSessionEntr
     window.addEventListener("storage", clear)
     return () => { unsubscribe(); window.removeEventListener("storage", clear) }
   }, [])
+  React.useEffect(() => {
+    const refresh = () => { if (details.current?.open) setLookup(readJournalOriginalPlan(entry, undefined, undefined, readMultiEvidence?.())) }
+    window.addEventListener(ACCOUNT_PLAN_EVENT, refresh)
+    return () => window.removeEventListener(ACCOUNT_PLAN_EVENT, refresh)
+  }, [entry, readMultiEvidence])
   if (entry.plannedSessionLink === undefined) return null
   const matched = lookup?.kind === "matched" ? lookup : null
   return <details className="journal-original-plan" ref={details} onToggle={event => {
@@ -31,6 +37,8 @@ export function JournalOriginalPlan({ entry }: { readonly entry: PostSessionEntr
     catch { setLookup({ kind: "unavailable" }) }
   }}>
     <summary>계획한 훈련과 비교하기</summary>
+    {lookup && "sourceVerificationPending" in lookup && lookup.sourceVerificationPending
+      && <p role="status">출처 검증 대기 · 당시 원본만 표시해요. 현재 훈련 실행을 승인하는 근거는 아니에요.</p>}
     {matched !== null ? <>
       <p>{matched.source === "ARCHIVED" ? "그때 보관한 계획의 훈련이에요." : "이 일지와 연결된 현재 계획의 훈련이에요."} 실제 기록과 계획한 내용을 나눠서 확인할 수 있어요.</p>
       <SessionExplanationEntry session={matched.session} returnLabel="일지로 돌아가기" context={{

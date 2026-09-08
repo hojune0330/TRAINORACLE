@@ -26,6 +26,7 @@ import {
   isJournalOwnedBy,
   isJournalVisible,
   journalOwner,
+  onLocalJournalScopeChange,
   reserveJournalOwnership,
   rollbackJournalOwnership,
   unboundJournalIds,
@@ -233,25 +234,38 @@ export async function updatePrivateEntry(
 }
 
 export async function loadEntriesWithPrivateMemos(): Promise<JournalEntry[]> {
-  const entries = loadEntries().map(entry => readAccountJournalPrivateEntry(entry.id) ?? entry)
-  const localStorage = journalStorage()
-  const recoveryCode = loadSessionRecoveryCode()
-  if (localStorage === null || recoveryCode === null) return entries
+  const owner = activeLocalAccount()
+  let revoked = false
+  const unsubscribe = onLocalJournalScopeChange(() => {
+    if (activeLocalAccount() !== owner) revoked = true
+  })
+  const current = () => !revoked && activeLocalAccount() === owner
+  try {
+    const entries = loadEntries().map(entry => readAccountJournalPrivateEntry(entry.id) ?? entry)
+    const localStorage = journalStorage()
+    const recoveryCode = loadSessionRecoveryCode()
+    if (localStorage === null || recoveryCode === null) return current() ? entries : []
 
-  const restored: JournalEntry[] = []
-  for (const entry of entries) {
-    const online = readAccountJournalPrivateEntry(entry.id)
-    if (online !== null) { restored.push(online); continue }
-    const next = await restorePrivateMemo(localStorage, entry, recoveryCode)
-    if (next !== entry && hasPrivateMemoText(next)) {
-      privateMemoCache.set(entry.id, {
-        recoveryCode,
-        memo: next.kind === "evening" ? next.note : next.memo,
-      })
+    const restored: JournalEntry[] = []
+    const cache = new Map<string, { recoveryCode: string; memo: string }>()
+    for (const entry of entries) {
+      if (!current()) return []
+      const online = readAccountJournalPrivateEntry(entry.id)
+      if (online !== null) { restored.push(online); continue }
+      const next = await restorePrivateMemo(localStorage, entry, recoveryCode)
+      if (!current()) return []
+      if (next !== entry && hasPrivateMemoText(next)) {
+        cache.set(entry.id, { recoveryCode, memo: next.kind === "evening" ? next.note : next.memo })
+      }
+      restored.push(next)
     }
-    restored.push(next)
+    if (!current()) return []
+    // A later decryption can revoke the entire read, including earlier cache writes.
+    for (const [id, value] of cache) privateMemoCache.set(id, value)
+    return restored
+  } finally {
+    unsubscribe()
   }
-  return restored
 }
 
 export function loadAnalysisEntries(): AnalysisJournalEntry[] {

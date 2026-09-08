@@ -2,9 +2,11 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile, readdir } from 'node:fs/promises';
 import { createRequire } from 'node:module';
+import { fileURLToPath } from 'node:url';
 import { createAccountJournalHandler, createAccountJournalRepository, importJournalKeyring,
   validateDraftDocument, validateAccountJournalDocument, MAX_BODY_BYTES } from '../functions/_shared/account-journal-handler.mjs';
 import { encryptAccountJournalDocument as encrypt } from '../functions/_shared/account-journal-crypto.mjs';
+import * as accountState from '../functions/_shared/account-state-validator.mjs';
 
 const OWNER = 'a1111111-1111-4111-8111-111111111111';
 const OTHER = 'b2222222-2222-4222-8222-222222222222';
@@ -29,7 +31,7 @@ if (process.env.JOURNAL_HANDLER_MUTATION) {
   const change = mutations[process.env.JOURNAL_HANDLER_MUTATION];
   assert.ok(change && source.includes(change[0]), 'mutation must change an observed guard');
   source = source.replace(...change);
-  for (const file of ['account-journal-crypto.mjs','account-journal-record-validator.mjs'])
+  for (const file of ['account-journal-crypto.mjs','account-journal-record-validator.mjs','account-state-validator.mjs'])
     source = source.replace(`'./${file}'`,JSON.stringify(new URL(file,url).href));
   handlerFactory = (await import(`data:text/javascript;base64,${Buffer.from(source).toString('base64')}`)).createAccountJournalHandler;
 }
@@ -57,7 +59,7 @@ async function fixture(options = {}) {
       operations.set(key(OWNER, input.operationId), { user_id: OWNER, operation_id: input.operationId,
         document_id: input.documentId, expected_revision: input.expectedRevision,
         operation_kind: 'commit', source_revision: null,
-        proposed_encrypted_payload: input.encryptedPayload, result });
+        proposed_encrypted_payload: input.encryptedPayload, result, trusted_metadata: input.metadata });
       if (result.kind === 'saved') docs.set(key(OWNER, input.documentId), { user_id: OWNER,
         document_id: input.documentId, revision: result.revision, encrypted_payload: input.encryptedPayload });
       return result;
@@ -312,7 +314,8 @@ test('repository adapter uses exact authenticated RPC args and owner-bound RLS q
   for (const method of ['select', 'eq', 'order', 'limit', 'gt', 'maybeSingle']) query[method] = (...args) => { calls.push([method, ...args]); return query; };
   const client = { rpc: (...args) => { calls.push(['rpc', ...args]); return query; },
     from: table => { calls.push(['from', table]); return query; } };
-  const repo = createAccountJournalRepository(client);
+  const attest = async (ownerId, action, input) => ({ request_text: JSON.stringify({ ownerId, action, ...input }), signature: 'synthetic', key_id: 'test' });
+  const repo = createAccountJournalRepository(client, { ownerId: OWNER, attest });
   assert.equal(await repo.enabled(OWNER), true);
   assert.deepEqual(calls.splice(0), [
     ['rpc', 'service_feature_enabled', { feature_key_input: 'ACCOUNT' }],
@@ -326,8 +329,8 @@ test('repository adapter uses exact authenticated RPC args and owner-bound RLS q
   assert.ok(calls.some(call => JSON.stringify(call) === JSON.stringify(['limit', 51])));
   calls.length = 0;
   await repo.commit({ documentId: DOC, operationId: OP, expectedRevision: 0, encryptedPayload: { synthetic: true } });
-  assert.deepEqual(calls, [['rpc', 'commit_account_journal_document', { document_id: DOC,
-    operation_id: OP, expected_revision: 0, encrypted_payload: { synthetic: true } }]]);
+  assert.deepEqual(calls, [['rpc', 'mutate_account_journal_attested', await attest(OWNER,'commit', {
+    documentId: DOC, operationId: OP, expectedRevision: 0, encryptedPayload: { synthetic: true } })]]);
   error = { code: '22023', message: draft.body, details: serialized };
   await assert.rejects(repo.operation(OWNER, OP), e => e.code === '22023' && e.message === 'ACCOUNT_JOURNAL_DATABASE_ERROR' && !('details' in e));
   error = { code: 'unknown', message: draft.body };
@@ -375,6 +378,53 @@ const finalized = { version: 2, state: 'FINALIZED', kind: 'JOURNAL', entry: {
   syncState: 'local', system: 'recovery', title: '', distanceKm: '', durationMin: '', avgPace: '',
   rpe: 0, memo: 'Synthetic private record', memoPurpose: 'PRIVATE_SELF_ONLY',
 } };
+let stateFixtures;
+async function decorationFixtures() {
+  if (!stateFixtures) stateFixtures = (async () => {
+    const { build } = createRequire(new URL('../../app/package.json',import.meta.url))('esbuild');
+    const output = await build({ stdin:{ contents:'export { createEmptyDecorationState } from "./src/domain/decoration-schema.ts"; export { DECORATION_CATALOG } from "./src/domain/decoration-catalog.ts";',
+      resolveDir:fileURLToPath(new URL('../../app/',import.meta.url)),loader:'ts' }, bundle:true,write:false,platform:'neutral',format:'esm',minify:true });
+    return import(`data:text/javascript;base64,${Buffer.from(output.outputFiles[0].text).toString('base64')}`);
+  })();
+  return stateFixtures;
+}
+async function fixedStateId(kind,owner=OWNER) {
+  const namespace = kind === 'PLAN' ? 'trainoracle.account.plan.v1' : 'trainoracle.account.decorations.v1';
+  const bytes=new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(JSON.stringify([namespace,owner]))));
+  bytes[6]=(bytes[6]&15)|80;bytes[8]=(bytes[8]&63)|128;
+  const h=Buffer.from(bytes.slice(0,16)).toString('hex');
+  return `${h.slice(0,8)}-${h.slice(8,12)}-${h.slice(12,16)}-${h.slice(16,20)}-${h.slice(20)}`;
+}
+
+test('ACCOUNT_STATE fixed owner identity, stable nonDraft canonical replay, kind guard and collection exclusion',async()=>{
+  const { createEmptyDecorationState }=await decorationFixtures();
+  const decorations={version:3,state:'ACCOUNT_STATE',kind:'DECORATIONS',data:createEmptyDecorationState()};
+  const plan={version:3,state:'ACCOUNT_STATE',kind:'PLAN',data:{schemaVersion:1,currentPlanId:null,plans:[]}};
+  const f=await fixture({dependencies:{validateDocument:validateAccountJournalDocument}});
+  for(const [index,document] of [decorations,plan].entries()) {
+    const documentId=await fixedStateId(document.kind);
+    const operationId=index===0?OP:OP2;
+    await response(await f.request(save({documentId:DOC,operationId,document})),422);
+    await response(await f.request(save({documentId:await fixedStateId(document.kind,OTHER),operationId,document})),422);
+    await response(await f.request(save({documentId,operationId,document})),200);
+    const reordered=Object.fromEntries(Object.entries(document).reverse());
+    await response(await f.request(save({documentId,operationId,document:reordered})),200);
+    assert.deepEqual((await response(await f.request({action:'read',documentId}),200)).document,document);
+    await response(await f.request(save({documentId,operationId:crypto.randomUUID(),expectedRevision:1,document:draft})),422);
+  }
+  assert.deepEqual((await response(await f.request({action:'list'}),200)).documents,[]);
+  assert.deepEqual((await response(await f.request({action:'list',collection:'JOURNAL'}),200)).documents,[]);
+});
+
+test('purchase metadata uses generated catalog prices, not client points or page text',async()=>{
+  const { createEmptyDecorationState, DECORATION_CATALOG }=await decorationFixtures();
+  assert.equal(typeof accountState.accountDecorationPurchaseMetadata,'function');
+  for(const item of DECORATION_CATALOG.filter(item=>!item.starterOwned && item.cost>0)) {
+    const data=structuredClone(createEmptyDecorationState()); data.ownedItemIds.push(item.id);data.spentPoints=item.cost;
+    const metadata=accountState.accountDecorationPurchaseMetadata({version:3,state:'ACCOUNT_STATE',kind:'DECORATIONS',data});
+    assert.deepEqual(metadata,{purchases:[{itemId:item.id,cost:item.cost}],spentPoints:item.cost});
+  }
+});
 async function finalizedId(owner = OWNER) {
   const bytes = new Uint8Array(await crypto.subtle.digest('SHA-256',
     new TextEncoder().encode(JSON.stringify(['trainoracle.journal.record.v1', owner, finalized.entry.id]))));
@@ -485,7 +535,7 @@ test('delete and restore call exact lifecycle methods and return validated succe
     f.repo[action] = async input => { calls.push(input); return result; };
     await response(await f.request(lifecycle(action)), 200, result);
     assert.deepEqual(calls, [{ documentId: DOC, operationId: OP2, expectedRevision: 1,
-      ...(action === 'restore' ? { sourceRevision: 1 } : {}) }]);
+      ...(action === 'restore' ? { sourceRevision: 1, metadata: { kind:'DRAFT',occurrenceId:null,journalDate:null,eligible:false } } : {}) }]);
     assert.equal(f.calls.commit, 0);
   }
 });
@@ -613,20 +663,21 @@ test('new actions enforce authentication/gates before key access and recheck aft
   }
 });
 
-test('repository lifecycle uses exact 0034 RPC argument names and selects tombstone/operation metadata', async () => {
+test('repository lifecycle requires attested writes and selects tombstone/operation metadata', async () => {
   const calls = []; const query = { then(resolve) { return Promise.resolve({ data: [], error: null }).then(resolve); } };
   for (const method of ['select','eq','order','limit','gt','maybeSingle']) query[method] = (...args) => { calls.push([method,...args]); return query; };
+  const attest = async (ownerId, action, input) => ({ request_text: JSON.stringify({ ...input, ownerId, action }), signature: 'synthetic', key_id: 'test' });
   const repo = createAccountJournalRepository({ rpc: (...args) => { calls.push(['rpc',...args]); return query; },
-    from: name => { calls.push(['from',name]); return query; } });
+    from: name => { calls.push(['from',name]); return query; } }, { ownerId: OWNER, attest });
   await repo.history(DOC); await repo.delete(lifecycle('delete')); await repo.restore(lifecycle('restore'));
   assert.deepEqual(calls.splice(0), [
     ['rpc','list_account_journal_history',{ document_id: DOC }],
-    ['rpc','delete_account_journal_document',{ document_id: DOC,operation_id: OP2,expected_revision: 1 }],
-    ['rpc','restore_account_journal_document',{ document_id: DOC,operation_id: OP2,expected_revision: 1,source_revision: 1 }],
+    ['rpc','mutate_account_journal_attested',await attest(OWNER,'delete',lifecycle('delete'))],
+    ['rpc','mutate_account_journal_attested',await attest(OWNER,'restore',lifecycle('restore'))],
   ]);
   await repo.operation(OWNER,OP); await repo.read(OWNER,DOC); await repo.list(OWNER,2,DOC);
   assert.deepEqual(calls.filter(call => call[0] === 'select').map(call => call[1]), [
-    'user_id,operation_id,document_id,expected_revision,operation_kind,source_revision,proposed_encrypted_payload,result',
+    'user_id,operation_id,document_id,expected_revision,operation_kind,source_revision,proposed_encrypted_payload,result,trusted_metadata',
     'user_id,document_id,revision,encrypted_payload,deleted_at', 'user_id,document_id,revision,encrypted_payload,deleted_at',
   ]);
   assert.equal(calls.filter(call => JSON.stringify(call) === JSON.stringify(['eq','user_id',OWNER])).length, 3);

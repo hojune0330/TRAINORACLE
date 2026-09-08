@@ -8,7 +8,8 @@
 //  백업을 권하면서 복원을 안 주는 것은 지키지 못할 약속이다.
 //
 // 원칙:
-//  - 파일은 이 기기에서만 읽는다. 어디로도 업로드하지 않는다.
+//  - 원본 파일은 기기에서 파싱한다. 계정 경로는 account-restore.ts에서 사용자가
+//    확인한 기록만 암호화 계정 보관으로 보내며, 아래 구형 writer는 계정 플래그에서 차단한다.
 //  - **덮어쓰기 없음(기본)**: 기존 일지를 지우지 않고 합친다. 같은 id가 있으면
 //    사용자에게 선택을 남기고, 기본은 "기존 것 유지"다. 백업 복원이 지금
 //    데이터를 날리는 사고를 원천 차단한다.
@@ -34,6 +35,10 @@ import {
   saveDecorationState,
 } from "../decorations"
 import type { DecorationState } from "../decorations"
+import { z } from "zod"
+import { decorationStateSchema, decorationPlacementTransformSchema, V2_SLOT_DEFAULT_TRANSFORMS } from "../decoration-schema"
+import { isDecorationSlot, STARTER_DECORATION_IDS } from "../decoration-catalog"
+import type { DecorationSlot } from "../decoration-catalog"
 
 /** 인식하는 내보내기 형식 — journal-store.exportEntriesJSON이 쓰는 값들 */
 export const SAFE_FORMAT = "trainoracle.journal.v1"
@@ -126,10 +131,45 @@ function readDecorationSection(
 ): { readonly state: DecorationState | null; readonly status: BackupReadResult["decorationStatus"] } {
   if (format !== FULL_FORMAT_V3 && format !== FULL_FORMAT) return { state: null, status: "not-included" }
   if (typeof candidate !== "object" || candidate === null) return { state: null, status: "invalid" }
-  const normalized = parseStoredDecorationState(JSON.stringify(candidate))
+  const normalized = readLosslessDecorationState(candidate)
   return normalized === null
     ? { state: null, status: "invalid" }
     : { state: normalized, status: "included" }
+}
+
+const backupV2PlacementSchema = z.object({
+  date: z.string(),
+  slot: z.custom<DecorationSlot>(value => typeof value === "string" && isDecorationSlot(value)),
+  itemId: z.string(),
+  transform: decorationPlacementTransformSchema.optional(),
+}).strict()
+
+function readLosslessDecorationState(candidate: unknown): DecorationState | null {
+  const source = asRecord(candidate)
+  if (!source) return null
+  if (source.version === 3) {
+    const parsed = decorationStateSchema.safeParse(source)
+    return parsed.success ? parsed.data : null
+  }
+  if (source.version !== 2) return null
+  const normalized = parseStoredDecorationState(JSON.stringify(source))
+  const rows = z.array(backupV2PlacementSchema).safeParse(source.pagePlacements)
+  if (!normalized || !rows.success) return null
+  // V2 slot defaults and layer ordering are supported migrations; dropped data is not.
+  const { pagePlacements: _placements, ...metadata } = source
+  const sourceOwned = source.ownedItemIds
+  if (!Array.isArray(sourceOwned)) return null
+  const ownedItemIds = [...sourceOwned, ...STARTER_DECORATION_IDS.filter(id => !sourceOwned.includes(id))]
+  const preserved = decorationStateSchema.safeParse({ ...metadata, ownedItemIds, version: 3, pages: normalized.pages })
+  if (!preserved.success) return null
+  const canonical = (state: DecorationState) => JSON.stringify({ ...state, ownedItemIds: [...state.ownedItemIds].sort() })
+  if (canonical(preserved.data) !== canonical(normalized)) return null
+  const sourceItems = rows.data.map(row => ({ date: row.date, itemId: row.itemId,
+    transform: row.transform ?? V2_SLOT_DEFAULT_TRANSFORMS[row.slot] }))
+  const migratedItems = normalized.pages.flatMap(page => page.items.map(item => ({ date: page.date,
+    itemId: item.itemId, transform: item.transform })))
+  const fingerprint = (items: typeof sourceItems) => JSON.stringify(items.map(item => JSON.stringify(item)).sort())
+  return fingerprint(sourceItems) === fingerprint(migratedItems) ? preserved.data : null
 }
 
 /**

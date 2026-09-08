@@ -10,12 +10,15 @@ import { accountFeatureEnabled } from "./domain/account/config"
 import { loadEntries, localOnlyCount, todayISO } from "./domain/journal-store"
 import type { JournalEntry } from "./domain/journal-store"
 import { awardJournalEntry, type EngagementAwardResult } from "./domain/engagement"
+import { ACCOUNT_REWARD_EVENT, accountRewardsEnabled, accountRewardStatus, readAccountRewardSummary } from "./domain/account/account-reward-service"
 import { requestJournalDecorationAutoOpen } from "./domain/journal-decoration-intent"
 import { createSavedFactReceipt } from "./domain/save-receipt"
 import { trackProductEvent } from "./domain/account/product-analytics-service"
 import { currentUser, onAuthChange } from "./domain/account/auth"
+import { setAccountAuthState } from "./domain/account/account-auth-state"
 import {
   onLocalJournalScopeChange,
+  activeLocalAccount,
   setActiveLocalAccount,
 } from "./domain/account/local-journal-ownership"
 import {
@@ -40,6 +43,7 @@ const JOURNAL_REWARD_MESSAGE = {
   ALREADY_AWARDED: "오늘의 다른 기록도 함께 모였어요. 이 날짜의 4P는 이미 반영돼 있어요.",
   INELIGIBLE: "기록은 저장됐어요. 포인트는 훈련·회복 항목을 남긴 날에만 쌓여요.",
   SAVE_FAILED: "기록은 저장됐지만 포인트는 이 기기에 반영하지 못했어요.",
+  PENDING: "기록은 보관됐어요. 계정 포인트를 확인하고 있어요.",
 } satisfies Record<EngagementAwardResult["kind"], string>
 
 const TOAST_READABLE_MS = 4000
@@ -58,6 +62,7 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
       : INITIAL_VIEW_STATE
   })
   const [savedToast, setSavedToast] = React.useState<ShellToastState | null>(null)
+  const pendingReward = React.useRef<{ ownerId: string | null; date: string } | null>(null)
   const [athleteRecordsOpen, setAthleteRecordsOpen] = React.useState(false)
   const scrollRegionRef = React.useRef<HTMLElement>(null)
   const [utilityView, setUtilityView] = React.useState<"more" | "guide" | "minji" | "content" | null>(null)
@@ -76,28 +81,59 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
   }, [])
 
   React.useEffect(() => {
+    const refresh = () => {
+      const pending = pendingReward.current
+      if (!pending || !accountRewardsEnabled() || pending.ownerId !== activeLocalAccount()) return
+      const summary = readAccountRewardSummary()
+      if (!summary && accountRewardStatus() !== "FAILED") return
+      const rewardMessage = !summary ? "계정 포인트를 확인하지 못했어요. 나중에 다시 확인해 주세요."
+        : summary.today === pending.date && summary.journalRecordedToday
+          ? "오늘 기록 포인트가 계정에 반영돼 있어요."
+          : "계정 기록을 확인했어요. 현재 추가 적립된 기록 포인트는 없어요."
+      setSavedToast(current => current?.rewardMessage === JOURNAL_REWARD_MESSAGE.PENDING ? { ...current, rewardMessage } : current)
+      pendingReward.current = null
+    }
+    const scope = () => { pendingReward.current = null; setSavedToast(null) }
+    window.addEventListener(ACCOUNT_REWARD_EVENT, refresh)
+    const unsubscribe = onLocalJournalScopeChange(scope)
+    return () => { window.removeEventListener(ACCOUNT_REWARD_EVENT, refresh); unsubscribe() }
+  }, [])
+
+  React.useEffect(() => {
     if (!accountFeatureEnabled()) {
+      setAccountAuthState("FAILED")
       setActiveLocalAccount(null)
       return
     }
     let mounted = true
     let authEventSeen = false
+    setAccountAuthState("RESOLVING")
     const refresh = () => setAccountScopeRevision((value) => value + 1)
     // Hydration refreshes readers without remounting a volatile account draft.
     window.addEventListener("trainoracle:account-journals-changed", refreshAccountJournals)
     const unsubscribeScope = onLocalJournalScopeChange(refresh)
-    void currentUser().then((user) => {
-      if (mounted && !authEventSeen) setActiveLocalAccount(user?.id ?? null)
+    void currentUser({ throwOnFailure: true }).then((user) => {
+      if (mounted && !authEventSeen) {
+        setActiveLocalAccount(user?.id ?? null)
+        setAccountAuthState(user ? "RESOLVING" : "GUEST")
+      }
+    }).catch(() => {
+      if (mounted && !authEventSeen) {
+        setAccountAuthState("FAILED")
+        setActiveLocalAccount(null)
+      }
     })
     const unsubscribeAuth = onAuthChange((user) => {
       authEventSeen = true
       setActiveLocalAccount(user?.id ?? null)
-    })
+      setAccountAuthState(user ? "RESOLVING" : "GUEST")
+    }, { ignoreInitialSession: true })
     return () => {
       mounted = false
       window.removeEventListener("trainoracle:account-journals-changed", refreshAccountJournals)
       unsubscribeScope()
       unsubscribeAuth()
+      setAccountAuthState("RESOLVING")
     }
   }, [])
 
@@ -120,6 +156,7 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
   const goHomeAfterSave = (savedEntry: JournalEntry, reviewMessage?: string, detailDate?: string) => {
     const receipt = createSavedFactReceipt(savedEntry)
     const reward = awardJournalEntry(savedEntry, todayISO())
+    pendingReward.current = reward.kind === "PENDING" ? { ownerId: activeLocalAccount(), date: savedEntry.date } : null
     const rewardMessage = JOURNAL_REWARD_MESSAGE[reward.kind]
     runViewTransition("replace", () => {
       setUtilityView(null)

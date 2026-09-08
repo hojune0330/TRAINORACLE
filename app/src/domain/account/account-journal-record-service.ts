@@ -1,15 +1,17 @@
-import { createAccountDocumentBuffer, type AccountJournalDraftBuffer, type AccountJournalDraftView } from "./account-journal-draft-buffer"
+import { createAccountDocumentBuffer, type AccountJournalConflictBuffer, type AccountJournalDraftView } from "./account-journal-draft-buffer"
 import { accountJournalPreviewEnabled, requestAccountDocument } from "./account-journal-api"
 import type { AccountJournalRequest } from "./account-journal-api"
-import { accountJournalRecordSchema, type AccountJournalRecord } from "./account-journal-record-schema"
+import { accountJournalRecordSchema, validateAccountJournalRecordUpdate, type AccountJournalRecord } from "./account-journal-record-schema"
+import type { ConflictChoice } from "./account-journal-draft-buffer"
 import { activeLocalAccount } from "./local-journal-ownership"
 import { flushAccountJournalDraft } from "./account-journal-sync"
-import { putAccountJournalProjection, removeAccountJournalProjection, resetAccountJournalProjection, setAccountJournalProjectionStatus, suppressAccountJournalLocalCopy } from "./account-journal-projection"
+import { putAccountJournalProjection, confirmAccountJournalProjection, removeAccountJournalProjection, resetAccountJournalProjection, setAccountJournalProjectionStatus, suppressAccountJournalLocalCopy } from "./account-journal-projection"
 import type { JournalEntry } from "../journal-schema"
 import { canEditJournalEntry, keepsImportedObjectiveFacts, preserveJournalProvenance } from "../journal-edit-policy"
 import { samePlannedSessionLink } from "../planned-session-link"
+import { isAccountJournalWriteRejection, type AccountJournalWriteRejection } from "./account-write-rejection"
 
-let buffer: AccountJournalDraftBuffer<AccountJournalRecord> | null = null
+let buffer: AccountJournalConflictBuffer<AccountJournalRecord> | null = null
 let owner: string | null = null
 let generation = 0
 let work: Promise<unknown> = Promise.resolve()
@@ -47,7 +49,8 @@ export function disposeAccountJournalRecords() {
 type Context = NonNullable<ReturnType<typeof context>>
 type View = AccountJournalDraftView<AccountJournalRecord>
 const failedSave = { ok: false as const, storage: "FAILED" as const }
-type SaveResult = typeof failedSave | { ok: true; storage: "ACCOUNT" | "PENDING" | "CONFLICT" }
+type SaveResult = typeof failedSave | { ok: false; storage: "FAILED"; rejection: AccountJournalWriteRejection }
+  | { ok: true; storage: "ACCOUNT" | "PENDING" | "CONFLICT" }
 
 // One queue coordinates hydration and mutations. The same named browser lock
 // covers other tabs; buffer CAS remains the fallback when Web Locks is absent.
@@ -74,14 +77,27 @@ function sameValue(left: unknown, right: unknown): boolean {
 
 function publish(ctx: Context, view: View) {
   if (!ctx.current()) return
+  if (view.resolvedDeletion) {
+    deleted.set(view.documentId, view.resolvedDeletion)
+    removeAccountJournalProjection(ctx.ownerId, view.draft.entry.id)
+    return
+  }
   if (view.blocked) setAccountJournalProjectionStatus(ctx.ownerId, "CONFLICT")
+  else if (view.pending?.rejection) setAccountJournalProjectionStatus(ctx.ownerId, "REJECTED")
+  else if (view.state !== "DRAFT_ACKNOWLEDGED") setAccountJournalProjectionStatus(ctx.ownerId, "PENDING")
   putAccountJournalProjection(ctx.ownerId, { ...view.draft.entry,
-    syncState: view.state === "DRAFT_ACKNOWLEDGED" ? "synced" : "local" })
+    syncState: view.state === "DRAFT_ACKNOWLEDGED" ? "synced" : "local" }, view.state === "DRAFT_ACKNOWLEDGED")
+}
+
+function retainedStatus(views: View[]) {
+  return views.some(view => view.blocked) ? "CONFLICT" : views.some(view => view.pending?.rejection) ? "REJECTED"
+    : views.some(view => view.state !== "DRAFT_ACKNOWLEDGED") ? "PENDING" : "READY"
 }
 
 async function applyTombstone(ctx: Context, documentId: string, revision: number) {
   const cached = await ctx.buffer.read(ctx.ownerId, documentId)
   if (!ctx.current()) return false
+  if (cached?.resolvedDeletion === revision) { publish(ctx, cached); return true }
   if (cached && revision <= cached.serverRevision) throw new Error("Stale remote revision")
   if (revision < (deleted.get(documentId) ?? 0)) throw new Error("Stale remote revision")
   deleted.set(documentId, revision)
@@ -99,6 +115,7 @@ async function applyTombstone(ctx: Context, documentId: string, revision: number
   }
   if (!ctx.current()) return false
   if (cached && cached.state !== "DRAFT_ACKNOWLEDGED") {
+    removeAccountJournalProjection(ctx.ownerId, cached.draft.entry.id)
     // Preserve dirty ciphertext, including drafts not yet queued, as a durable
     // conflict. Never send a save to resurrect a server tombstone.
     if (!cached.blocked) {
@@ -111,10 +128,110 @@ async function applyTombstone(ctx: Context, documentId: string, revision: number
     return false
   }
   if (cached) {
-    await ctx.buffer.clear(ctx.ownerId, documentId)
+    await ctx.buffer.acceptCleanDeletion(ctx.ownerId, documentId, revision, cached.localSequence)
     if (ctx.current()) removeAccountJournalProjection(ctx.ownerId, cached.draft.entry.id)
   }
   return ctx.current()
+}
+
+export type AccountJournalConflictReview = {
+  ownerId: string; documentId: string; localSequence: number; remoteRevision: number
+  local: AccountJournalRecord; remote: AccountJournalRecord | null
+}
+
+/** Reads current authenticated server data; a blocked receipt is never a remote body. */
+async function fetchConflict(ctx: Context, documentId: string) {
+  const result = await requestAccountDocument(ctx.ownerId, { action: "read", documentId }, ctx.current, accountJournalRecordSchema)
+  if (!result.ok || !ctx.current()) return null
+  const data = result.data
+  if ((data.kind !== "document" && data.kind !== "deleted") || data.documentId !== documentId) return null
+  if (data.kind === "document" && (documentId !== await accountJournalDocumentId(ctx.ownerId, data.document.entry.id)
+    || !ctx.current())) return null
+  return { revision: data.revision, document: data.kind === "document" ? data.document : null }
+}
+
+export async function listAccountJournalConflicts() {
+  const ctx = context()
+  if (!ctx) return []
+  return serialize(ctx, async () => {
+    const views = await ctx.buffer.list(ctx.ownerId)
+    return ctx.current() ? views.filter(view => view.blocked).map(view => ({
+      ownerId: ctx.ownerId, documentId: view.documentId, date: view.draft.entry.date,
+    })) : []
+  }, [])
+}
+
+export async function listAccountJournalRecoveryRecords() {
+  const ctx = context()
+  if (!ctx) return []
+  return serialize(ctx, async () => {
+    const views = await ctx.buffer.list(ctx.ownerId)
+    return ctx.current() ? views.filter(view => view.recoverableVersions).map(view => ({
+      ownerId: ctx.ownerId, documentId: view.documentId, date: view.draft.entry.date, count: view.recoverableVersions!,
+    })) : []
+  }, [])
+}
+
+export async function readAccountJournalConflictArchive(ownerId: string, documentId: string) {
+  const ctx = context()
+  if (!ctx || ctx.ownerId !== ownerId) return null
+  return serialize(ctx, async () => {
+    const versions = await ctx.buffer.readConflictArchive(ownerId, documentId, ctx.current)
+    for (const version of versions) {
+      for (const document of [version.local, version.remote, version.pending?.draft]) {
+        if (document && await accountJournalDocumentId(ownerId, document.entry.id) !== documentId) return null
+      }
+    }
+    return ctx.current() ? versions : null
+  }, null)
+}
+
+export async function reviewAccountJournalConflict(documentId: string): Promise<AccountJournalConflictReview | null> {
+  const ctx = context()
+  if (!ctx) return null
+  return serialize<AccountJournalConflictReview | null>(ctx, async () => {
+    const local = await ctx.buffer.read(ctx.ownerId, documentId)
+    if (!local?.blocked || !ctx.current()) return null
+    const remote = await fetchConflict(ctx, documentId)
+    if (!remote || !ctx.current()) return null
+    await ctx.buffer.captureConflict(ctx.ownerId, documentId, remote.document, remote.revision, local.localSequence, ctx.current)
+    if (!ctx.current()) return null
+    return { ownerId: ctx.ownerId, documentId, localSequence: local.localSequence,
+      remoteRevision: remote.revision, local: local.draft, remote: remote.document }
+  }, null)
+}
+
+export async function resolveAccountJournalConflict(review: AccountJournalConflictReview, choice: ConflictChoice): Promise<"ACCOUNT" | "PENDING" | "REVIEW_REQUIRED" | "FAILED"> {
+  const ctx = context()
+  if (!ctx || ctx.ownerId !== review.ownerId) return "FAILED"
+  return serialize<"ACCOUNT" | "PENDING" | "REVIEW_REQUIRED" | "FAILED">(ctx, async () => {
+    const local = await ctx.buffer.read(ctx.ownerId, review.documentId)
+    if (!local?.blocked || local.localSequence !== review.localSequence || !sameValue(local.draft, review.local)) return "REVIEW_REQUIRED"
+    const remote = await fetchConflict(ctx, review.documentId)
+    if (!remote || !ctx.current()) return "FAILED"
+    if (remote.revision !== review.remoteRevision || !sameValue(remote.document, review.remote)) return "REVIEW_REQUIRED"
+    if ((choice === "DELETE") !== (remote.document === null)) return "FAILED"
+    if (choice === "LOCAL" && (!remote.document || !validateAccountJournalRecordUpdate(remote.document, local.draft))) return "FAILED"
+    // Re-capture then resolve with IDB CAS. An intervening tab edit cannot disappear.
+    await ctx.buffer.captureConflict(ctx.ownerId, review.documentId, remote.document, remote.revision, review.localSequence, ctx.current)
+    if (!ctx.current()) return "FAILED"
+    await ctx.buffer.resolveConflict(ctx.ownerId, review.documentId, choice, remote.revision, review.localSequence, ctx.current)
+    if (!ctx.current()) return "FAILED"
+    let state: "ACCOUNT" | "PENDING" | "REVIEW_REQUIRED" | "FAILED" = "ACCOUNT"
+    if (choice === "LOCAL") {
+      deleted.delete(review.documentId)
+      const flushed = await flushAccountJournalDraft(ctx.buffer, ctx.ownerId, review.documentId,
+        request => requestAccountDocument(ctx.ownerId, request, ctx.current, accountJournalRecordSchema), ctx.current)
+      state = isAccountJournalWriteRejection(flushed) ? "FAILED" : flushed === "SAVED" ? "ACCOUNT" : flushed === "CONFLICT" ? "REVIEW_REQUIRED" : "PENDING"
+    }
+    const latest = await ctx.buffer.read(ctx.ownerId, review.documentId)
+    if (!latest || !ctx.current()) return "FAILED"
+    publish(ctx, latest)
+    const retained = await ctx.buffer.list(ctx.ownerId)
+    if (!ctx.current()) return "FAILED"
+    setAccountJournalProjectionStatus(ctx.ownerId, retainedStatus(retained))
+    return state
+  }, "FAILED")
 }
 
 async function reconcileDocument(ctx: Context, documentId: string) {
@@ -131,7 +248,55 @@ async function reconcileDocument(ctx: Context, documentId: string) {
   return { data, clean: imported !== "CONFLICT" && view.state === "DRAFT_ACKNOWLEDGED" }
 }
 
-export async function persistAccountJournalRecord(entry: JournalEntry, expectedSavedAt?: string): Promise<SaveResult> {
+export type AccountJournalWriteBase = {
+  entry: JournalEntry | null
+  revision: number
+  contentFingerprint: string | null
+}
+
+/** Full private content identity; transport acknowledgement alone is not content. */
+export async function accountJournalEntryFingerprint(entry: JournalEntry): Promise<string> {
+  function stable(value: unknown): unknown {
+    if (Array.isArray(value)) return value.map(stable)
+    if (value && typeof value === "object") return Object.fromEntries(Object.entries(value)
+      .filter(([, item]) => item !== undefined).sort(([a], [b]) => a < b ? -1 : a > b ? 1 : 0)
+      .map(([key, item]) => [key, stable(item)]))
+    return value
+  }
+  const { syncState: _syncState, ...content } = entry
+  const bytes = new TextEncoder().encode(JSON.stringify(stable(content)))
+  try {
+    const digest = new Uint8Array(await crypto.subtle.digest("SHA-256", bytes))
+    return `sha256:${[...digest].map(value => value.toString(16).padStart(2, "0")).join("")}`
+  } finally { bytes.fill(0) }
+}
+
+export async function readAccountJournalWriteBase(entryId: string): Promise<AccountJournalWriteBase | null> {
+  let ctx: ReturnType<typeof context>
+  try { ctx = context() } catch { return null }
+  if (!ctx) return null
+  const current = ctx
+  return serialize<AccountJournalWriteBase | null>(current, async () => {
+    const documentId = await accountJournalDocumentId(current.ownerId, entryId)
+    if (!current.current() || lifecycleRequests.has(documentId) || deleted.has(documentId)) return null
+    let view = await current.buffer.read(current.ownerId, documentId)
+    if (!view) {
+      const remote = await requestAccountDocument(current.ownerId, { action: "read", documentId }, current.current, accountJournalRecordSchema)
+      if (!current.current()) return null
+      if (!remote.ok) return remote.code === "NOT_FOUND" ? { entry: null, revision: 0, contentFingerprint: null } : null
+      if (remote.data.kind !== "document" || remote.data.document.entry.id !== entryId) return null
+      await current.buffer.importRemote(current.ownerId, documentId, remote.data.document, remote.data.revision)
+      view = await current.buffer.read(current.ownerId, documentId)
+    }
+    if (!view || view.blocked || view.pending || view.resolvedDeletion || view.state !== "DRAFT_ACKNOWLEDGED") return null
+    const contentFingerprint = await accountJournalEntryFingerprint(view.draft.entry)
+    if (!current.current()) return null
+    return { entry: structuredClone(view.draft.entry), revision: view.serverRevision, contentFingerprint }
+  }, null)
+}
+
+export async function persistAccountJournalRecord(entry: JournalEntry, expectedSavedAt?: string, writePurpose?: "MIGRATION",
+  expectedBase?: Pick<AccountJournalWriteBase, "revision" | "contentFingerprint">): Promise<SaveResult> {
   let ctx: ReturnType<typeof context>
   try { ctx = context() } catch { return failedSave }
   if (!ctx) return failedSave
@@ -145,6 +310,26 @@ export async function persistAccountJournalRecord(entry: JournalEntry, expectedS
       const documentId = await accountJournalDocumentId(current.ownerId, document.entry.id)
       if (!current.current() || lifecycleRequests.has(documentId) || deleted.has(documentId)) return failedSave
       const old = await current.buffer.read(current.ownerId, documentId)
+      if (expectedBase !== undefined) {
+        if (!expectedBase || !Number.isSafeInteger(expectedBase.revision) || expectedBase.revision < 0
+          || (expectedBase.revision === 0 ? expectedBase.contentFingerprint !== null
+            : typeof expectedBase.contentFingerprint !== "string" || !/^sha256:[a-f0-9]{64}$/.test(expectedBase.contentFingerprint))) return failedSave
+        if (old?.blocked || old?.resolvedDeletion) return failedSave
+        const oldFingerprint = old ? await accountJournalEntryFingerprint(old.draft.entry) : null
+        const matchesBase = old ? old.state === "DRAFT_ACKNOWLEDGED" && old.serverRevision === expectedBase.revision
+          && oldFingerprint === expectedBase.contentFingerprint : expectedBase.revision === 0
+        const exactBody = old && oldFingerprint === await accountJournalEntryFingerprint(document.entry)
+        const exactPurpose = old && old.writePurpose === writePurpose
+        if (exactBody && !exactPurpose) return failedSave
+        const retry = old && exactBody && exactPurpose && (old.state === "DRAFT_ACKNOWLEDGED"
+          ? old.serverRevision === expectedBase.revision + 1
+          : old.pending && old.pending.expectedRevision === expectedBase.revision
+            && old.pending.sequence === old.localSequence && old.pending.writePurpose === writePurpose
+            && await accountJournalEntryFingerprint(old.pending.draft.entry) === oldFingerprint)
+        if (!matchesBase && !retry) return failedSave
+        if (!current.current()) return failedSave
+      }
+      if (writePurpose && old?.pending && old.pending.writePurpose !== writePurpose) return failedSave
       if (old && expectedSavedAt !== undefined) {
         const previous = old.draft.entry, next = document.entry
         if (!canEditJournalEntry(previous) || !keepsImportedObjectiveFacts(previous, next)
@@ -161,7 +346,9 @@ export async function persistAccountJournalRecord(entry: JournalEntry, expectedS
           const previousTime = Date.parse(old.draft.entry.savedAt), nextTime = Date.parse(document.entry.savedAt)
           if (!Number.isFinite(nextTime) || (Number.isFinite(previousTime) && nextTime <= previousTime)) return failedSave
         }
-        await current.buffer.saveDraft(current.ownerId, documentId, document, old?.localSequence ?? 0)
+        await current.buffer.saveDraft(current.ownerId, documentId, document, old?.localSequence ?? 0, writePurpose)
+      } else if (writePurpose && old.writePurpose !== writePurpose) {
+        await current.buffer.saveDraft(current.ownerId, documentId, document, old.localSequence, writePurpose)
       }
       durable = true
       if (!current.current()) return failedSave
@@ -172,6 +359,10 @@ export async function persistAccountJournalRecord(entry: JournalEntry, expectedS
       if (!current.current()) return failedSave
       const confirmed = await current.buffer.read(current.ownerId, documentId)
       if (confirmed) publish(current, confirmed)
+      const retained = await current.buffer.list(current.ownerId)
+      if (!current.current()) return failedSave
+      setAccountJournalProjectionStatus(current.ownerId, retainedStatus(retained))
+      if (isAccountJournalWriteRejection(result)) return { ok: false, storage: "FAILED", rejection: result }
       return { ok: true, storage: result === "SAVED" ? "ACCOUNT" : result === "CONFLICT" ? "CONFLICT" : "PENDING" }
     } catch {
       return durable && current.current() ? { ok: true, storage: "PENDING" } : failedSave
@@ -243,12 +434,15 @@ async function hydrate(ctx: Context) {
       if (!before || item.revision >= before.serverRevision) await ctx.buffer.importRemote(ctx.ownerId, item.documentId, item.document, item.revision)
       const view = await ctx.buffer.read(ctx.ownerId, item.documentId)
       if (!ctx.current()) return false
+      if (view && view.state !== "DRAFT_ACKNOWLEDGED" && item.revision >= view.serverRevision) {
+        confirmAccountJournalProjection(ctx.ownerId, { ...item.document.entry, syncState: "synced" })
+      }
       if (view) publish(ctx, view)
       deleted.delete(item.documentId)
     }
     const retained = await ctx.buffer.list(ctx.ownerId)
     if (!ctx.current()) return false
-    setAccountJournalProjectionStatus(ctx.ownerId, retained.some(item => item.blocked) ? "CONFLICT" : "READY")
+    setAccountJournalProjectionStatus(ctx.ownerId, retainedStatus(retained))
     return true
   } catch { if (ctx.current()) setAccountJournalProjectionStatus(ctx.ownerId, "FAILED"); return false }
 }
@@ -362,7 +556,7 @@ export async function migrateOwnedAccountJournals() {
         ? unlocked.find(item => item.id === source.id) ?? source : source), syncState: "local" }
       const raw = entry.kind === "evening" ? entry.note : entry.memo
       if (entry.memoPurpose === "PRIVATE_SELF_ONLY" && raw === "") { result.attention += 1; continue }
-      const saved = await persistAccountJournalRecord(entry)
+      const saved = await persistAccountJournalRecord(entry, undefined, "MIGRATION")
       if (!saved.ok || saved.storage === "CONFLICT") result.attention += 1
       else if (saved.storage === "ACCOUNT") result.saved += 1
       else result.pending += 1

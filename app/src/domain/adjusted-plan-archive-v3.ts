@@ -1,4 +1,7 @@
 import { canonicalJsonFingerprint } from "@impl/plan-generator/candidate-identity"
+import { captureAccountPlanWrite } from "./account/account-plan-domain"
+import { accountPlanService, accountPlansEnabled } from "./account/account-plan-service"
+import { materializeAccountPlan } from "./account/account-plan-document-schema"
 import { hasCanonicalJsonTree } from "./plan-beta-schema"
 import { readStoredAdjustedPlanStateV5, RETAINED_ADJUSTED_PLAN_EVIDENCE_V3 } from "./adjusted-plan-storage-v5"
 import type { StoredAdjustedPlanStateV5 } from "./adjusted-plan-storage-v5"
@@ -32,6 +35,18 @@ export function parseAdjustedOriginalArchiveV3(raw: string | null, retained: rea
   } catch { return invalid() }
 }
 export function readAdjustedOriginalPlansV3(retained = RETAINED_ADJUSTED_PLAN_EVIDENCE_V3, at = new Date()) {
+  if (accountPlansEnabled()) {
+    const document = accountPlanService()?.snapshot().confirmedDocument
+    if (!document) return invalid()
+    const entries: Entry[] = []
+    for (const entry of document.data.plans) {
+      if (!entry.archivedAt || entry.snapshot.state.version !== 5) continue
+      const read = readStoredAdjustedPlanStateV5(materializeAccountPlan(entry).state, retained, at)
+      if (read.kind !== "loaded") return invalid()
+      entries.push({ archivedAt: entry.archivedAt, state: read.state })
+    }
+    return { kind: "loaded" as const, entries }
+  }
   try { return parseAdjustedOriginalArchiveV3(localStorage.getItem(accountScopedStorageKey(ADJUSTED_PLAN_ARCHIVE_V3_KEY)), retained, at) }
   catch { return invalid() }
 }
@@ -53,6 +68,7 @@ export async function retainAdjustedOriginalPlanV3(expected: string, options: {
 } = {}) {
   const scope = localAccountScopeSnapshot(), key = accountScopedStorageKey(ADJUSTED_PLAN_ARCHIVE_V3_KEY), activeKey = activePlanBetaStorageKey()
   const retained = options.retained ?? RETAINED_ADJUSTED_PLAN_EVIDENCE_V3
+  const accountWrite = captureAccountPlanWrite(activeKey)
   const locks = options.locks === undefined ? getPlanMutationLockManager() : options.locks
   const reject = (code: string) => ({ kind: "rejected" as const, code })
   if (locks === null) return reject("MUTATION_LOCK_UNAVAILABLE")
@@ -61,10 +77,11 @@ export async function retainAdjustedOriginalPlanV3(expected: string, options: {
       if (!lock || !localAccountScopeIsCurrent(scope)) return reject("STALE_BASE")
       let before: string | null = null, next: string | null = null
       try {
-        const storage = window.localStorage, activeRaw = storage.getItem(activeKey), at = new Date()
+        const storage = accountWrite?.storage ?? window.localStorage, activeRaw = storage.getItem(activeKey), at = new Date()
         before = storage.getItem(key)
         const read = readStoredAdjustedPlanStateV5(activeRaw === null ? null : JSON.parse(activeRaw), retained, at)
         if (read.kind !== "loaded" || read.state.contentFingerprint !== expected) return reject("STALE_BASE")
+        if (accountWrite) return { kind: "retained" as const }
         const archive = prepareAdjustedOriginalArchiveV3(before, read.state, retained, at)
         if (archive.kind !== "prepared") return reject(archive.kind === "full" ? "ARCHIVE_CAPACITY_REACHED" : "INVALID_STORED_ARCHIVE")
         if (archive.raw === before) return { kind: "retained" as const }

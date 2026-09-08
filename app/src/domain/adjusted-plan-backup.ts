@@ -1,4 +1,5 @@
 import { canonicalJsonFingerprint } from "@impl/plan-generator/candidate-identity"
+import { accountPlanExportStorage } from "./account/account-plan-domain"
 import { activePlanBetaStorageKey } from "./plan-beta-store"
 import { accountScopedStorageKey, localAccountScopeSnapshot } from "./account/local-account-scope"
 import { ADJUSTED_PLAN_ARCHIVE_KEY, parseAdjustedOriginalArchive } from "./adjusted-plan-archive"
@@ -35,8 +36,9 @@ export function exportAdjustedPlanBackup(expectedFingerprint: string,
     const account = localAccountScopeSnapshot()
     const activeKey = activePlanBetaStorageKey()
     const archiveKey = accountScopedStorageKey(ADJUSTED_PLAN_ARCHIVE_KEY)
-    const activeRaw = localStorage.getItem(activeKey)
-    const archiveRaw = localStorage.getItem(archiveKey)
+    const storage = accountPlanExportStorage(activeKey, archiveKey, 4)
+    const activeRaw = storage.getItem(activeKey)
+    const archiveRaw = storage.getItem(archiveKey)
     const active = readStoredAdjustedPlanState(activeRaw === null ? null : JSON.parse(activeRaw), retained, now)
     if (active.kind !== "loaded" || active.state.contentFingerprint !== expectedFingerprint) return invalid()
     const content = { app: "TRAINORACLE", format: FORMAT, exportedAt: now.toISOString(),
@@ -44,7 +46,7 @@ export function exportAdjustedPlanBackup(expectedFingerprint: string,
     const raw = JSON.stringify({ ...content, contentFingerprint: hash(content) }, null, 2)
     const read = readAdjustedPlanBackup(raw, retained, now)
     if (read.kind !== "read_only" || account !== localAccountScopeSnapshot()
-      || localStorage.getItem(activeKey) !== activeRaw || localStorage.getItem(archiveKey) !== archiveRaw) return invalid()
+      || storage.getItem(activeKey) !== activeRaw || storage.getItem(archiveKey) !== archiveRaw) return invalid()
     return { kind: "exported" as const, raw, archivedCount: read.entries.length }
   } catch { return invalid() }
 }

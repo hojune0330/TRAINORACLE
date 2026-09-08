@@ -22,6 +22,13 @@ test("keeps the local-only release valid when every network feature is closed", 
   assert.deepEqual(validateHostedReleaseEnvironment({}), [])
 })
 
+test("account journal cannot be published without account access", () => {
+  assert.deepEqual(validateHostedReleaseEnvironment({ VITE_FEATURE_ACCOUNT_JOURNAL: "true" }), ["ACCOUNT_JOURNAL_REQUIRES_ACCOUNT"])
+  assert.deepEqual(validateHostedReleaseEnvironment({ VITE_FEATURE_ACCOUNT_JOURNAL: "true", VITE_KILL_ACCOUNT_JOURNAL: "true" }), [])
+  assert.deepEqual(validateHostedReleaseEnvironment({ ...connection, ...legalDocuments,
+    VITE_ACCOUNT_PUBLIC_ENABLED: "true", VITE_FEATURE_ACCOUNT_JOURNAL: "true" }), [])
+})
+
 test("requires a public client connection before opening accounts", () => {
   assert.deepEqual(validateHostedReleaseEnvironment({
     VITE_ACCOUNT_PUBLIC_ENABLED: "true",

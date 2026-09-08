@@ -2,6 +2,7 @@ import { z } from "zod"
 import { supabase } from "./supabase-client"
 import { activeLocalAccount } from "./local-journal-ownership"
 import { accountJournalDraftSchema } from "./account-journal-draft-buffer"
+import { isAccountJournalWriteRejection, type AccountJournalWriteRejection } from "./account-write-rejection"
 import type { AccountJournalDraft } from "./account-journal-draft-buffer"
 
 export function accountJournalPreviewEnabled(env: Readonly<Record<string, unknown>> = import.meta.env) {
@@ -44,11 +45,11 @@ export type AccountJournalRequest<T = AccountJournalDraft> =
   | { action: "delete"; documentId: string; operationId: string; expectedRevision: number }
   | { action: "restore"; documentId: string; operationId: string; expectedRevision: number; sourceRevision: number }
   | { action: "save"; documentId: string; operationId: string; expectedRevision: number;
-      document: T }
+      document: T; writePurpose?: "MIGRATION" }
 
 export type AccountJournalResult<T = AccountJournalDraft> =
   | { ok: true; data: AccountJournalResponse<T> }
-  | { ok: false; code: "AUTH_REQUIRED" | "ACCESS_DENIED" | "UNAVAILABLE" | "INVALID_RESPONSE" | "STALE_RESPONSE" | "CONFLICT" }
+  | { ok: false; code: "AUTH_REQUIRED" | "ACCESS_DENIED" | "NOT_FOUND" | "UNAVAILABLE" | "INVALID_RESPONSE" | "STALE_RESPONSE" | "CONFLICT" | AccountJournalWriteRejection }
 
 export async function requestAccountJournal(
   ownerId: string, request: AccountJournalRequest,
@@ -79,8 +80,11 @@ export async function requestAccountDocument<T>(
       if (status === 409 && ["save", "delete", "restore"].includes(request.action)) {
         responseData = await error.context.clone().json()
         if (!current()) return { ok: false, code: "STALE_RESPONSE" }
+        const rejection = (responseData as { error?: unknown })?.error
+        if (isAccountJournalWriteRejection(rejection)) return { ok: false, code: rejection }
         if ((responseData as { kind?: unknown })?.kind !== "conflict") return { ok: false, code: "CONFLICT" }
-      } else return { ok: false, code: status === 401 ? "AUTH_REQUIRED" : status === 403 ? "ACCESS_DENIED" : "UNAVAILABLE" }
+      } else return { ok: false, code: status === 401 ? "AUTH_REQUIRED" : status === 403 ? "ACCESS_DENIED"
+        : status === 404 && request.action === "read" ? "NOT_FOUND" : "UNAVAILABLE" }
     }
     const parsed = responseSchema(schema).safeParse(responseData)
     if (!parsed.success) return { ok: false, code: "INVALID_RESPONSE" }

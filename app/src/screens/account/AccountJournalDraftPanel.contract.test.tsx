@@ -26,6 +26,24 @@ beforeEach(() => {
 })
 afterEach(cleanup)
 
+it("reserves form input envelopes even when their body is malformed, without importing or sending them", async () => {
+  const reserved = { ...document, title: "TRAINORACLE_FORM_INPUT_V1", body: "synthetic-invalid-body" }
+  mocks.items.push({ ...mocks.items[0], documentId: "33333333-3333-4333-8333-333333333333",
+    draft: reserved, state: "LOCAL_CHANGES", acknowledgedSequence: 0 })
+  mocks.request.mockResolvedValue({ ok: true, data: { kind: "list", documents: [
+    { documentId: "44444444-4444-4444-8444-444444444444", revision: 1, document: reserved },
+  ], nextCursor: null } })
+  render(<AccountJournalDraftPanel userId={mocks.owner} />)
+  fireEvent.click(screen.getByRole("checkbox"))
+  fireEvent.click(screen.getByRole("button", { name: "계정 초안 불러오기" }))
+  await waitFor(() => expect(screen.getByRole("status")).toHaveTextContent("계정 초안 목록을 불러왔어요"))
+  expect(screen.getByRole("button", { name: "2026-09-08 · 초안" })).toBeTruthy()
+  expect(screen.queryByText(/TRAINORACLE_FORM_INPUT_V1/)).toBeNull()
+  expect(mocks.items.some(item => item.documentId === "44444444-4444-4444-8444-444444444444")).toBe(false)
+  expect(mocks.request.mock.calls.every(call => call[1].action === "list")).toBe(true)
+  expect(mocks.save).not.toHaveBeenCalled()
+})
+
 it("does not send private data before the explicit storage choice", () => {
   render(<AccountJournalDraftPanel userId={mocks.owner} />)
   expect(mocks.request).not.toHaveBeenCalled()

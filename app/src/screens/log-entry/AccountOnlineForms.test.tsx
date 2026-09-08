@@ -69,6 +69,56 @@ beforeEach(() => {
 afterEach(() => { cleanup(); window.history.replaceState(null, "", "/"); vi.restoreAllMocks() })
 
 describe.each(forms)("%s account-online form", form => {
+  it("replays an ACK-lost pending save with the original snapshot and baseline", async () => {
+    mocks.persist.mockResolvedValueOnce({ ok: true, storage: "PENDING" })
+    const done = mount(form, "PRIVATE_SELF_ONLY")
+    fireEvent.click(saveButton(form)); await settle()
+    const first = structuredClone(mocks.persist.mock.calls[0]!)
+    expect(done).not.toHaveBeenCalled()
+    await new Promise(resolve => setTimeout(resolve, 5))
+    fireEvent.click(saveButton(form))
+    const result = await complete(form, done)
+    expect(mocks.persist.mock.calls[1]).toEqual(first)
+    expect(result.entry.savedAt).toBe(first[0].savedAt)
+  })
+
+  it("holds edited pending input until an explicit replay ACK, then saves a separate correction", async () => {
+    mocks.persist.mockResolvedValueOnce({ ok: true, storage: "PENDING" })
+    const done = mount(form, "PRIVATE_SELF_ONLY")
+    fireEvent.click(saveButton(form)); await settle()
+    const first = structuredClone(mocks.persist.mock.calls[0]!)
+    const saveEdited = () => fireEvent.click(form === "quick"
+      ? screen.getByRole("button", { name: "하려던 운동을 건너뛰었어요" }) : saveButton(form))
+    if (form !== "quick") fireEvent.change(screen.getByRole("textbox", { name: fields[form] }), { target: { value: "synthetic edited pending" } })
+    saveEdited(); await settle()
+    expect(mocks.persist).toHaveBeenCalledTimes(1)
+    expect(done).not.toHaveBeenCalled()
+    fireEvent.click(screen.getByRole("button", { name: "이전 요청 그대로 확인" })); await settle()
+    expect(mocks.persist.mock.calls[1]).toEqual(first)
+    expect(done).not.toHaveBeenCalled()
+    if (form !== "quick") expect(screen.getByRole("textbox", { name: fields[form] })).toHaveValue("synthetic edited pending")
+    saveEdited(); await complete(form, done)
+    expect(mocks.persist.mock.calls[2]![1]).toBe(first[0].savedAt)
+    expect(mocks.persist.mock.calls[2]![0].savedAt > first[0].savedAt).toBe(true)
+    expect(mocks.persist.mock.calls[2]![0]).toMatchObject(form === "quick"
+      ? { activityOutcome: "SKIPPED" } : { [form === "evening" ? "note" : "memo"]: "synthetic edited pending" })
+  })
+
+  it.each(["PLANNED_SESSION_ALREADY_RECORDED", "INSUFFICIENT_POINTS", "OPERATION_REPLAY_UNAVAILABLE"] as const)(
+    "preserves %s and exposes read-only recovery without creating another operation", async rejection => {
+      mocks.persist.mockResolvedValue({ ok: false, storage: "FAILED", rejection })
+      const done = mount(form, "PRIVATE_SELF_ONLY")
+      fireEvent.click(saveButton(form)); await settle()
+      expect(screen.getByRole("region", { name: "최종 저장 요청 확인" })).toHaveTextContent("새 요청을 자동으로 만들거나 다시 전송하지 않습니다")
+      if (form !== "quick") fireEvent.change(screen.getByRole("textbox", { name: fields[form] }), { target: { value: "synthetic rejected edit" } })
+      fireEvent.click(saveButton(form)); await settle()
+      fireEvent.click(screen.getByRole("button", { name: "보관된 거절 상태 확인" })); await settle()
+      expect(mocks.persist).toHaveBeenCalledTimes(1)
+      expect(done).not.toHaveBeenCalled()
+      expect(screen.queryByRole("button", { name: "완료" })).toBeNull()
+      if (form !== "quick") expect(screen.getByRole("textbox", { name: fields[form] })).toHaveValue("synthetic rejected edit")
+    },
+  )
   it.each(["ANALYZABLE_TRAINING_NOTE", "PRIVATE_SELF_ONLY"] as const)(
     "uses only the account writer for %s and labels an ACK accurately", async purpose => {
       const done = mount(form, purpose)
@@ -85,18 +135,15 @@ describe.each(forms)("%s account-online form", form => {
     },
   )
 
-  it.each(["PENDING", "CONFLICT"] as const)("labels %s without a false account ACK, including private records", async storage => {
+  it.each(["PENDING", "CONFLICT"] as const)("retains %s input without completion before account ACK", async storage => {
     mocks.persist.mockResolvedValue({ ok: true, storage })
     const done = mount(form, "PRIVATE_SELF_ONLY")
     fireEvent.click(saveButton(form))
-    const result = await complete(form, done)
-    expect(result.entry.syncState).toBe("local")
-    expect(result.message).toContain(storage === "PENDING" ? "전송 대기" : "수정 충돌")
-    expect(result.message).not.toContain("계정에 저장했어요")
-    if (form === "quick") {
-      expect(screen.getByLabelText(storage === "PENDING" ? "계정 전송 대기" : "수정 충돌")).toBeVisible()
-      expect(screen.queryByText("계정에 저장됨")).toBeNull()
-    }
+    await settle()
+    expect(done).not.toHaveBeenCalled()
+    expect(screen.getByRole("alert")).toHaveTextContent(storage === "PENDING" ? "전송 대기" : "수정 충돌")
+    expect(screen.queryByText("계정에 저장됨")).toBeNull()
+    expect(screen.queryByRole("button", { name: "완료" })).toBeNull()
     for (const writer of oldWriters()) expect(writer).not.toHaveBeenCalled()
   })
 
@@ -106,7 +153,7 @@ describe.each(forms)("%s account-online form", form => {
     const done = mount(form)
     const button = saveButton(form)
     fireEvent.click(button); fireEvent.click(button)
-    expect(mocks.persist).toHaveBeenCalledOnce()
+    await waitFor(() => expect(mocks.persist).toHaveBeenCalledOnce())
     expect(done).not.toHaveBeenCalled()
     expect(button).toBeDisabled()
     const firstId = mocks.persist.mock.calls[0]![0].id
@@ -122,8 +169,15 @@ describe.each(forms)("%s account-online form", form => {
     const done = mount(form)
     fireEvent.click(saveButton(form)); await complete(form, done)
     const first = mocks.persist.mock.calls[0]![0] as JournalEntry
-    if (form === "quick") fireEvent.click(screen.getByRole("button", { name: "방금 기록 수정" }))
-    fireEvent.click(saveButton(form)); await settle()
+    if (form === "quick") {
+      fireEvent.click(screen.getByRole("button", { name: "방금 기록 수정" }))
+      fireEvent.click(screen.getByRole("button", { name: "하려던 운동을 건너뛰었어요" }))
+    } else {
+      fireEvent.change(screen.getByRole("textbox", { name: fields[form] }), { target: { value: "synthetic correction" } })
+      fireEvent.click(screen.getByRole("radio", { name: "나만의 메모" }))
+      fireEvent.click(saveButton(form))
+    }
+    await settle()
     if (form === "quick") fireEvent.click(screen.getByRole("button", { name: "완료" }))
     expect(done).toHaveBeenCalledTimes(2)
     expect(mocks.persist.mock.calls[1]![0].id).toBe(first.id)
@@ -155,6 +209,13 @@ describe.each(forms)("%s account-online form", form => {
     mocks.persist.mockResolvedValue({ ok: true, storage })
     const done = mount(form, "ANALYZABLE_TRAINING_NOTE", memo)
     fireEvent.click(saveButton(form))
+    if (storage === "PENDING") {
+      await settle()
+      expect(done).not.toHaveBeenCalled()
+      expect(screen.getByRole("alert")).toHaveTextContent("전송 대기")
+      expect(screen.getByText(new RegExp(review!))).toBeVisible()
+      return
+    }
     const result = await complete(form, done)
     expect(result.message).toContain(review)
     expect(result.message).toContain(storage === "ACCOUNT" ? "계정에 저장했어요" : "전송 대기")

@@ -15,6 +15,13 @@ function dependencies(data: unknown, error: unknown = null) {
   return { client: vi.fn().mockResolvedValue(client as unknown as SupabaseClient), owner: () => ownerId, invoke, auth: client.auth }
 }
 describe("account draft API", () => {
+  it.each(["PLANNED_SESSION_ALREADY_RECORDED", "INSUFFICIENT_POINTS", "OPERATION_REPLAY_UNAVAILABLE"] as const)(
+    "preserves controlled rejection %s without inventing a revision", async error => {
+      expect(await requestAccountJournal(ownerId, request, () => true,
+        dependencies(null, { context: new Response(JSON.stringify({ error }), { status: 409 }) })))
+        .toEqual({ ok: false, code: error })
+    },
+  )
   it("is hidden unless explicitly enabled and not killed", () => {
     expect(accountJournalPreviewEnabled({})).toBe(false)
     expect(accountJournalPreviewEnabled({ VITE_FEATURE_ACCOUNT_JOURNAL: "true" })).toBe(true)
@@ -54,6 +61,16 @@ describe("account draft API", () => {
     expect(await requestAccountJournal(ownerId, { action: "list" }, () => true,
       dependencies(null, { context: new Response(null, { status: 503 }) })))
       .toEqual({ ok: false, code: "UNAVAILABLE" })
+  })
+  it("uses NOT_FOUND only for a missing individual document, never failed listing or auth", async () => {
+    const missing = () => dependencies(null, { context: new Response(null, { status: 404 }) })
+    expect(await requestAccountJournal(ownerId, { action: "read", documentId }, () => true, missing()))
+      .toEqual({ ok: false, code: "NOT_FOUND" })
+    expect(await requestAccountJournal(ownerId, { action: "list" }, () => true, missing()))
+      .toEqual({ ok: false, code: "UNAVAILABLE" })
+    expect(await requestAccountJournal(ownerId, { action: "read", documentId }, () => true,
+      dependencies(null, { context: new Response(null, { status: 401 }) })))
+      .toEqual({ ok: false, code: "AUTH_REQUIRED" })
   })
   it("preserves a validated HTTP 409 conflict receipt", async () => {
     const receipt = { kind: "conflict", documentId, operationId, currentRevision: 2 }

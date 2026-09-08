@@ -1,4 +1,9 @@
 import React from "react"
+import { ACCOUNT_PLAN_EVENT, accountPlanService } from "../domain/account/account-plan-service"
+import { useAccountPlanRuntime } from "./plan-beta/useAccountPlanRuntime"
+import { AccountPlanStorageControls } from "./plan-beta/AccountPlanStorageControls"
+import { AccountPlanHistoricalView } from "./plan-beta/AccountPlanHistoricalView"
+import { materializeAccountPlan, accountPlanCapacity } from "../domain/account/account-plan-document-schema"
 import { AlertTriangle, RotateCcw } from "lucide-react"
 import type {
   PlanGenerationSuccess,
@@ -106,7 +111,40 @@ const INTAKE_MOTION_ORDER: readonly IntakeStep[] = [
   "race-date",
 ]
 
-export function PlanBeta(props: Omit<React.ComponentProps<typeof LegacyPlanBeta>, "onAdjustedStored"> & {
+export function PlanBeta(props: React.ComponentProps<typeof PlanBetaContent>) {
+  const service = accountPlanService(), { view, retry } = useAccountPlanRuntime(service)
+  const [error, setError] = React.useState<string | null>(null)
+  const [archiveReview, setArchiveReview] = React.useState<{ fingerprint: string; planId: string } | null>(null)
+  const historical = view?.currentPlan?.kind === "evidence_required" ? view.currentPlan.packet : null
+  return <>
+    {view && <AccountPlanStorageControls status={view.status} evidenceRequired={historical !== null}
+      capacity={view.document ? accountPlanCapacity(view.document) : undefined}
+      onRetry={() => { void (view.status === "PENDING" ? retry() : service?.hydrate()) }}
+      onUseServer={() => { if (service && view.fingerprint) void service.useServerCurrent(view.fingerprint).then(result =>
+        setError(result === "ACCOUNT" ? null : "서버 계획을 확인하지 못했어요. 두 수정본은 그대로 보존돼 있어요.")) }} />}
+    {error && <p role="alert">{error}</p>}
+    {view?.currentPlan && view.fingerprint && <button type="button" disabled={view.status !== "READY"} onClick={() =>
+      setArchiveReview({ fingerprint: view.fingerprint!, planId: view.currentPlan!.planId })}>현재 계획 보관</button>}
+    {archiveReview && <section role="alertdialog" aria-label="현재 계획 보관 확인">
+      <p>원본과 진행 기록을 보관하고 계정의 현재 계획을 끝낼까요?</p>
+      <button type="button" onClick={() => setArchiveReview(null)}>취소</button>
+      <button type="button" onClick={async () => {
+        if (!service) return
+        const result = await service.mutate({ kind: "ARCHIVE", planId: archiveReview.planId }, archiveReview.fingerprint)
+        setArchiveReview(null); setError(result === "ACCOUNT" ? null : planErrorMessage(`ACCOUNT_PLAN_${result}`))
+      }}>보관하고 현재 계획 끝내기</button>
+    </section>}
+    {historical ? <AccountPlanHistoricalView packet={historical} /> : <PlanBetaContent {...props} />}
+    {view?.confirmedDocument?.data.plans.some(p => p.archivedAt) && <details><summary>보관한 계획 원본</summary>
+      {view.confirmedDocument.data.plans.filter(p => p.archivedAt).map(p => <details key={p.planId}>
+        <summary>{p.archivedAt!.slice(0, 10)} 보관</summary>
+        <AccountPlanHistoricalView packet={materializeAccountPlan(p)} verificationPending={p.snapshot.evidence !== null} />
+      </details>)}
+    </details>}
+  </>
+}
+
+function PlanBetaContent(props: Omit<React.ComponentProps<typeof LegacyPlanBeta>, "onAdjustedStored"> & {
   readonly readAdjustedEvidence?: React.ComponentProps<typeof AdjustedPlanNextFlow>["readEvidence"]
   readonly readAdjustedEvidenceV3?: () => readonly RetainedAdjustedPlanEvidenceV3[]
   readonly readMultiAdjustedEvidenceV3?: () => readonly RetainedMultiAdjustedEvidenceV3[]
@@ -130,8 +168,10 @@ export function PlanBeta(props: Omit<React.ComponentProps<typeof LegacyPlanBeta>
       setRead(readCurrent())
     }
     const unsubscribe = onLocalJournalScopeChange(refresh)
+    const onAccountPlan = () => setRead(readCurrent())
+    window.addEventListener(ACCOUNT_PLAN_EVENT, onAccountPlan)
     window.addEventListener("storage", onStorage)
-    return () => { unsubscribe(); window.removeEventListener("storage", onStorage) }
+    return () => { unsubscribe(); window.removeEventListener("storage", onStorage); window.removeEventListener(ACCOUNT_PLAN_EVENT, onAccountPlan) }
   }, [readCurrent])
   if (read.kind === "multi_adjusted_v3_loaded" && nextOpen && !importOpen) return <MultiAdjustedPlanNextFlowV3
     key={`${localAccountScopeSnapshot()}:${read.state.contentFingerprint}`}
@@ -176,6 +216,7 @@ export function PlanBeta(props: Omit<React.ComponentProps<typeof LegacyPlanBeta>
     onBack={() => { setNextOpen(false); setRead(readCurrent()) }}
     onSaved={() => { setNextOpen(false); setRead(readCurrent()) }} />
   if (read.kind === "adjusted_loaded") return <AdjustedPlanSchedule
+    readEvidence={readEvidence}
     key={`${localAccountScopeSnapshot()}:${read.state.selection.contentFingerprint}`}
     onStoredChange={() => setRead(readCurrent())}
     onExportPlan={() => exportAdjustedPlanBackup(read.state.contentFingerprint, readEvidence())}
@@ -229,6 +270,11 @@ function LegacyPlanBeta({
   const [stored, setStored] = React.useState<PlanBetaState | null>(
     () => loadPlanBetaState(),
   )
+  React.useEffect(() => {
+    const refresh = () => setStored(loadPlanBetaState())
+    window.addEventListener(ACCOUNT_PLAN_EVENT, refresh)
+    return () => window.removeEventListener(ACCOUNT_PLAN_EVENT, refresh)
+  }, [])
   const [cloudRestorePending, setCloudRestorePending] = React.useState(
     stored === null && planCloudBackupEnabled(),
   )

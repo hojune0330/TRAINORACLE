@@ -7,6 +7,8 @@ import { activeLocalAccount, onLocalJournalScopeChange } from "../../domain/acco
 import { koreaServiceDate } from "../../domain/account/service-date"
 import { secondaryBtn } from "./styles"
 import { registerUnsavedDraftGuard } from "../../domain/unsaved-draft-navigation"
+import { isFormInputDraft } from "../log-entry/form-draft-marker"
+import { isAccountJournalWriteRejection, type AccountJournalWriteRejection } from "../../domain/account/account-write-rejection"
 
 const IDLE_MS = 800
 
@@ -15,6 +17,9 @@ const messages = {
   PENDING: "계정 저장을 확인하지 못했어요. 이 기기에 보관한 초안을 다시 전송해 주세요.",
   CONFLICT: "다른 기기의 수정과 겹쳤어요. 덮어쓰지 않고 이 기기의 내용도 보관했어요.",
   STALE: "계정이 바뀌어 저장을 중단했어요.",
+  PLANNED_SESSION_ALREADY_RECORDED: "연결된 계획 세션이 이미 기록되어 저장이 거절됐어요. 기존 기록을 확인해 주세요. 입력과 이전 요청은 유지하며 새 요청을 만들지 않습니다.",
+  INSUFFICIENT_POINTS: "포인트가 부족해 저장 요청이 거절됐어요. 입력과 이전 요청은 유지하며 새 요청을 만들지 않습니다.",
+  OPERATION_REPLAY_UNAVAILABLE: "이전 저장 요청의 결과를 다시 확인할 수 없어요. 계정 기록을 먼저 확인해 주세요. 입력과 이전 요청은 유지하며 새 요청을 만들지 않습니다.",
 }
 
 export function AccountJournalDraftPanel({ userId }: { readonly userId: string }) {
@@ -42,7 +47,10 @@ function AccountJournalDraftEditor({ userId }: { readonly userId: string }) {
   const pendingWrites = React.useRef(0)
   const editorSequence = React.useRef(0)
   const current = () => alive.current && activeLocalAccount() === userId
-  const send = (request: Parameters<typeof requestAccountJournal>[1]) => requestAccountJournal(userId, request, current)
+  const send = (request: Parameters<typeof requestAccountJournal>[1]) => request.action === "save" && isFormInputDraft(request.document)
+    ? Promise.resolve({ ok: false as const, code: "ACCESS_DENIED" as const })
+    : requestAccountJournal(userId, request, current)
+  const ordinaryDrafts = (values: AccountJournalDraftView[]) => values.filter(item => !isFormInputDraft(item.draft))
 
   React.useEffect(() => {
     alive.current = true
@@ -93,12 +101,15 @@ function AccountJournalDraftEditor({ userId }: { readonly userId: string }) {
         if (current()) setNotice("아직 보관하지 못한 입력이 있어요. 현재 내용을 별도 초안으로 보관한 뒤 불러와 주세요.")
         return
       }
-      const local = await buffer.list(userId)
+      const local = ordinaryDrafts(await buffer.list(userId))
       if (!current()) return
       setItems(local)
+      let rejection: AccountJournalWriteRejection | undefined
       for (const item of local) {
+        if (item.pending?.rejection) rejection = item.pending.rejection
         if (item.state !== "DRAFT_ACKNOWLEDGED" && item.state !== "CONFLICT") {
-          await flushAccountJournalDraft(buffer, userId, item.documentId, send, current)
+          const result = await flushAccountJournalDraft(buffer, userId, item.documentId, send, current)
+          if (isAccountJournalWriteRejection(result)) rejection = result
         }
       }
       let cursor: string | undefined
@@ -108,18 +119,19 @@ function AccountJournalDraftEditor({ userId }: { readonly userId: string }) {
         if (!current()) return
         if (!result.ok || result.data.kind !== "list") throw new Error("Unavailable")
         for (const item of result.data.documents) {
+          if (isFormInputDraft(item.document)) continue
           await buffer.importRemote(userId, item.documentId, item.document, item.revision)
         }
         cursor = result.data.nextCursor ?? undefined
         if (cursor && seen.has(cursor)) throw new Error("Repeated cursor")
         if (cursor) seen.add(cursor)
       } while (cursor)
-      const loaded = await buffer.list(userId)
+      const loaded = ordinaryDrafts(await buffer.list(userId))
       if (current()) {
         setItems(loaded)
         const selectedItem = loaded.find(item => item.documentId === selected)
         if (selectedItem) { editorSequence.current = selectedItem.localSequence; setDraft(selectedItem.draft) }
-        setNotice("계정 초안 목록을 불러왔어요. 열어서 내용을 확인하세요.")
+        setNotice(rejection ? messages[rejection] : "계정 초안 목록을 불러왔어요. 열어서 내용을 확인하세요.")
       }
     } catch {
       if (current()) setNotice("계정 목록을 모두 불러오지 못했어요. 기존 초안은 지우지 않았어요. 다시 불러와 주세요.")
@@ -127,7 +139,7 @@ function AccountJournalDraftEditor({ userId }: { readonly userId: string }) {
   }
 
   function change(next: AccountJournalDraft, id = selected) {
-    if (!id || !current()) return
+    if (!id || !current() || isFormInputDraft(next) || draft && isFormInputDraft(draft)) return
     setDraft(next)
     const version = ++editVersion.current
     lastEdit.current = Date.now()
@@ -136,6 +148,8 @@ function AccountJournalDraftEditor({ userId }: { readonly userId: string }) {
     pendingWrites.current += 1
     writes.current = writes.current.then(async () => {
       if (activeLocalAccount() !== userId) return
+      const stored = await buffer.read(userId, id)
+      if (stored && isFormInputDraft(stored.draft)) throw new Error("Reserved form draft")
       await buffer.saveDraft(userId, id, next, editorSequence.current)
       editorSequence.current += 1
       writeFailed.current = false
@@ -160,7 +174,7 @@ function AccountJournalDraftEditor({ userId }: { readonly userId: string }) {
       if (!current() || writeFailed.current) return
       if (!navigator.onLine) { setNotice("연결 대기 중이에요. 이 기기에 초안을 보관했어요."); return }
       const version = editVersion.current
-      const local = await buffer.list(userId)
+      const local = ordinaryDrafts(await buffer.list(userId))
       if (!current()) return
       setNotice("계정에 초안을 저장하고 있어요.")
       let selectedResult: keyof typeof messages = "PENDING"
@@ -176,7 +190,7 @@ function AccountJournalDraftEditor({ userId }: { readonly userId: string }) {
         }, current)
         if (item.documentId === selected) selectedResult = result
       }
-      const loaded = await buffer.list(userId)
+      const loaded = ordinaryDrafts(await buffer.list(userId))
       if (current()) {
         setItems(loaded)
         const item = loaded.find(item => item.documentId === selected)
@@ -205,10 +219,10 @@ function AccountJournalDraftEditor({ userId }: { readonly userId: string }) {
       await writes.current
       if (writeFailed.current) return
       const item = await buffer.read(userId, id)
-      if (current() && item) {
+      if (current() && item && !isFormInputDraft(item.draft)) {
         setSelected(id); setDraft(item.draft)
         editorSequence.current = item.localSequence
-        setNotice(item.state === "CONFLICT" ? messages.CONFLICT : item.state === "DRAFT_ACKNOWLEDGED" ? messages.SAVED : messages.PENDING)
+        setNotice(item.pending?.rejection ? messages[item.pending.rejection] : item.state === "CONFLICT" ? messages.CONFLICT : item.state === "DRAFT_ACKNOWLEDGED" ? messages.SAVED : messages.PENDING)
       }
     } catch { if (current()) setNotice("초안을 열지 못했어요. 현재 내용은 그대로 유지했어요.") }
     finally { if (current()) { setBusy(false); scheduleSave() } }

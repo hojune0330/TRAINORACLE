@@ -6,7 +6,8 @@ import {
   replaceEntriesOwnedBy,
   replaceEntriesOwnedByWithPrivateMemos,
 } from "../journal-store"
-import { activeLocalAccount, assignJournalsToAccount } from "./local-journal-ownership"
+import { activeLocalAccount, assignJournalsToAccount, onLocalJournalScopeChange } from "./local-journal-ownership"
+import { accountScopedStorageKeyFor } from "./local-account-scope"
 import { pullPrivateJournalEntries, pushPrivateJournalEntries } from "./private-note-remote"
 import {
   clearSyncRecoveryCheckpoint,
@@ -14,7 +15,7 @@ import {
   recoverPendingSync,
 } from "./sync-recovery"
 import { failed, hasSupportedSyncSchema, sessionFailureCode } from "./sync-guard"
-import { claimSyncBinding, loadSyncConsent, mergeEntries, toUploadPayload } from "./sync-local"
+import { claimSyncBinding, loadSyncConsent, mergeEntries, onSyncConsentChange, SYNC_CONSENT_STORAGE_KEY, toUploadPayload } from "./sync-local"
 import { supabase } from "./supabase-client"
 import {
   loadTombstonesOwnedBy,
@@ -38,9 +39,32 @@ function remoteFailure(
 }
 
 export async function syncNow(userId: string): Promise<SyncOutcome> {
+  const scope = { owner: activeLocalAccount(), ownerGeneration: 0, consentGeneration: 0 }
+  const consentKey = accountScopedStorageKeyFor(SYNC_CONSENT_STORAGE_KEY, userId)
+  // Subscribe before any await: returning to the same owner/consent never revives this run.
+  let observedOwner = scope.owner
+  const unsubscribeOwner = onLocalJournalScopeChange(() => {
+    const owner = activeLocalAccount()
+    if (owner !== observedOwner) { scope.ownerGeneration++; observedOwner = owner }
+  })
+  const unsubscribeConsent = onSyncConsentChange(owner => { if (owner === userId) scope.consentGeneration++ })
+  const changedStorage = (event: StorageEvent) => {
+    if (event.storageArea !== null && event.storageArea !== window.localStorage) return
+    if (event.key === null || event.key === consentKey) scope.consentGeneration++
+  }
+  if (typeof window !== "undefined") window.addEventListener("storage", changedStorage)
+  try {
+    return await runSync(userId, scope)
+  } finally {
+    unsubscribeOwner(); unsubscribeConsent()
+    if (typeof window !== "undefined") window.removeEventListener("storage", changedStorage)
+  }
+}
+
+async function runSync(userId: string, scope: { owner: string | null; ownerGeneration: number; consentGeneration: number }): Promise<SyncOutcome> {
   const cutoverMessage = "계정 일지 보관을 사용 중이라 이전 동기화는 실행하지 않았어요. 기기 원본은 그대로 보관돼요."
   if (legacyJournalWritesBlocked(userId)) return failed(cutoverMessage)
-  const localScope = activeLocalAccount()
+  const localScope = scope.owner
   const client = await supabase()
   if (legacyJournalWritesBlocked(userId)) return failed(cutoverMessage)
   if (client === null) return failed("계정 기능이 꺼져 있어요.")
@@ -57,8 +81,8 @@ export async function syncNow(userId: string): Promise<SyncOutcome> {
     if (legacyJournalWritesBlocked(userId)) return { ok: false, message: interruptedMessage, ...completed }
     let code = await sessionFailureCode(client!, userId)
     if (legacyJournalWritesBlocked(userId)) return { ok: false, message: interruptedMessage, ...completed }
-    if (code === null && activeLocalAccount() !== localScope) code = "SESSION_TARGET_MISMATCH"
-    if (code === null && loadSyncConsent(userId).enabled) return null
+    if (code === null && (scope.ownerGeneration !== 0 || activeLocalAccount() !== localScope)) code = "SESSION_TARGET_MISMATCH"
+    if (code === null && scope.consentGeneration === 0 && loadSyncConsent(userId).enabled) return null
     // Cancellation stops the next operation; it cannot undo an acknowledged server write.
     return {
       ok: false,

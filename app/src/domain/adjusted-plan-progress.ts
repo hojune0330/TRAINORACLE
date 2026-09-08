@@ -1,4 +1,5 @@
 import { activePlanBetaStorageKey } from "./plan-beta-store"
+import { captureAccountPlanWrite } from "./account/account-plan-domain"
 import { progressSchema, hasCanonicalJsonTree, type StoredPlanProgress } from "./plan-beta-schema"
 import { localAccountScopeSnapshot, localAccountScopeIsCurrent } from "./account/local-account-scope"
 import { getPlanMutationLockManager, PLAN_BETA_MUTATION_LOCK_NAME, type PlanMutationLockManager } from "./plan-mutation-lock"
@@ -59,6 +60,7 @@ async function saveVersionedProgress<S extends ProgressState>(input: {
   readonly encode: (selection: S["selection"], progress: readonly StoredPlanProgress[], at: Date) => { readonly state: S; readonly raw: string } | null }) {
   const account = localAccountScopeSnapshot()
   const key = activePlanBetaStorageKey()
+  const accountWrite = captureAccountPlanWrite(key)
   if (!hasCanonicalJsonTree(input.progress)) return rejected("INVALID_PROGRESS")
   const parsed = progressSchema.safeParse(input.progress)
   if (!parsed.success
@@ -68,13 +70,13 @@ async function saveVersionedProgress<S extends ProgressState>(input: {
   const locks = input.locks === undefined ? getPlanMutationLockManager() : input.locks
   if (locks === null) return rejected("MUTATION_LOCK_UNAVAILABLE")
   try {
-    return await locks.request(PLAN_BETA_MUTATION_LOCK_NAME, { mode: "exclusive", ifAvailable: true }, lock => {
+    return await locks.request(PLAN_BETA_MUTATION_LOCK_NAME, { mode: "exclusive", ifAvailable: true }, async lock => {
       if (lock === null) return rejected("MUTATION_LOCK_UNAVAILABLE")
       if (!localAccountScopeIsCurrent(account)) return rejected("STALE_BASE")
       let previous: string | null = null
       let encoded: string | null = null
       try {
-        const storage = window.localStorage
+        const storage = accountWrite?.storage ?? window.localStorage
         previous = storage.getItem(key)
         const now = new Date()
         const state = previous === null ? null : codec.read(JSON.parse(previous), now)
@@ -89,6 +91,11 @@ async function saveVersionedProgress<S extends ProgressState>(input: {
           .sort((a, b) => a.sessionDay - b.sessionDay || a.sessionSlot.localeCompare(b.sessionSlot))
         const output = codec.encode(state.selection, next, now)
         if (output === null) return rejected("INVALID_PROGRESS")
+        if (accountWrite) {
+          const evidence = accountWrite.packet?.evidence
+          const code = await accountWrite.save(output.state, evidence ? [evidence] : [])
+          return code ? rejected(code) : { kind: "saved" as const, state: output.state }
+        }
         if (!localAccountScopeIsCurrent(account) || storage.getItem(key) !== previous) return rejected("STALE_BASE")
         encoded = output.raw
         storage.setItem(key, encoded)

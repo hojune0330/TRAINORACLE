@@ -245,3 +245,148 @@ report, not a live deployment claim. Re-run against the final integrated commit.
 Deno/Edge Runtime, live auth/RLS, operational backups, key recovery, retention,
 and production activation remain unverified by this task. The full goal is NOT
 complete.
+
+## 10. Task3 Gateway Cutover And Rewards (0035)
+
+This section supersedes the earlier statements that authenticated callers can
+write ciphertext directly, that the gateway accepts only journal documents, and
+that all rewards are local. Implementation is not activation authority.
+
+### Trust And Keys
+
+0035 revokes authenticated execution of the old commit/delete/restore RPCs.
+`mutate_account_journal_attested(request_text, signature, key_id)` keeps the
+verified user's JWT and uses the same account-wide transaction lock as 0034.
+No service-role SDK client is introduced. Raw journal text is not in metadata.
+The gateway signs the exact UTF-8 request using WebCrypto HMAC-SHA-256; PostgreSQL
+pgcrypto verifies the HMAC before using the authenticated owner's claims. The
+signed request binds domain, owner, document, operation, CAS revision, action,
+source revision, ciphertext, derived metadata and a short expiry. Valid signatures
+are not transferable between owners or to altered ciphertext/metadata.
+
+The new runtime variable is `TRAINORACLE_JOURNAL_ATTESTATION_JSON`, with shape
+`{keyId:"<VERSION>",key:"<BASE64_32_BYTES>"}`. It MUST use a different key from
+the encryption keyring. An authorized secret-management operation must install
+the matching 32-byte secret in `account_journal_gateway_keys`; all API roles,
+including service_role, lack table privileges. No keys are installed by 0035.
+Missing/unmatched/disabled signing material fails closed. Keep overlapping key
+versions only for the reviewed rotation window. Signed `status` verifies the
+actual DB key match without writing a document; a local key import alone is not
+readiness. Provisioning uses prepared parameters, never interpolated SQL:
+
+```sql
+insert into public.account_journal_gateway_keys(key_id, secret, enabled)
+values ($1, decode($2, 'base64'), true);
+```
+
+The provisioner binds a new key ID and the canonical 32-byte base64 secret through
+an approved nonlogging channel. Duplicate key IDs intentionally fail; never
+overwrite bytes under an existing ID. Verify pgcrypto is installed in the
+`extensions` schema before relying on 0035's `extensions.hmac` call. Keep old
+versions only for the reviewed rotation window and retain the encryption keys
+needed for semantic operation replay. Never expose signing requests/signatures,
+key bytes, plaintext, or request bodies in logs. Key provisioning and verification
+on the actual Supabase target remain unperformed.
+
+### Occurrences, Migration And Atomicity
+
+The validated planned-session link supplies `plannedSessionId`. A partial unique
+index on `(user_id, occurrence_id)` covers active records, including an absent
+document race; same-day AM and PM remain distinct occurrences. Delete releases
+the visible reservation without erasing reward days. Restore must reacquire it.
+A duplicate occurrence rolls back ciphertext, history, operation receipt and
+reward changes together. Late save replay cannot reactivate a deleted identity.
+
+The migration preserves preexisting ciphertext/receipts/legacy rows and feature
+values; it cannot decrypt or infer their old occurrence/eligibility metadata.
+New journals are denied while an owner's live pre-0035 documents have no trusted
+identity. Before activation, reconcile each old document through authenticated,
+validated gateway resaves, with current CAS revisions and preserved originals;
+resolve duplicate occurrences without deleting data. Reconciliation is not
+automatic or proof of an operational migration. Preexisting document updates
+cannot retroactively earn points.
+
+Journal saves optionally carry `writePurpose:"MIGRATION"`. Import/backup/device
+transfer paths MUST freeze this in their durable operation. Its gateway-derived
+no-award decision is signed and compared on operation replay; a migrated document
+remains ineligible for new credit even after later ordinary edits. Regular writes
+derive eligibility from the existing `engagement.ts` rule, never client-supplied
+`eligible`, occurrence metadata, points, notes or performance magnitude. A caller's
+choice of save versus migration is an intent, not proof that self-reported facts
+are genuine; reviewed client migration routing is still a release dependency.
+
+Legacy journal and tombstone writes are denied while ACCOUNT_JOURNAL_V2 is ON.
+After a successful new write, the account's cutover marker keeps legacy writes
+closed even if the feature is subsequently disabled. Do not treat OFF as a
+legacy-write rollback. Administrative/account-deletion paths are distinct.
+
+### Reward And Purchase API
+
+- POST `{action:"rewardSummary"}` returns `kind:"rewardSummary"`, `ownerId`,
+  `today`, `points`, `spentPoints`, `availablePoints`, `journalDays`, `visitDays`,
+  `visitedToday`, `journalRecordedToday`, and `legacySpentPoints`. The date is the DB's Asia/Seoul day,
+  never a submitted device date. Points are 4 per eligible journal day plus 1 per
+  explicitly confirmed visit day; available points subtract the purchase ledger.
+- POST `{action:"visit"}` returns `{kind:"visit",awardedPoints:0|1,summary}`.
+  The server chooses owner and date and deduplicates the day atomically. Reads,
+  hydration and app opening never invoke visit.
+- A FINALIZED JOURNAL save records eligibility and the reward-day insertion in
+  the same transaction. Only the server's current day may earn credit. Drafts,
+  migration, historical resaves, delete and restore do not create reward credit.
+- DECORATIONS uses the parent's strict generated ACCOUNT_STATE schema and fixed
+  owner document ID. The generated server catalog helper supplies the entire
+  paid ownership list and catalog costs in signed metadata. In the same CAS
+  transaction, the server inserts only newly purchased IDs, rejects insufficient
+  funds, checks spentPoints against the purchase ledger, and rejects ownership
+  removal. An arbitrary client spentPoints cannot create credit. Purchase replay
+  is idempotent. Normal saved/conflict receipts are unchanged; query summary after
+  successful writes. The handler returns controlled HTTP 409 codes for insufficient
+  funds, occurrence collision and unavailable operation replay, not successful
+  receipts. Clients preserve the encrypted operation and its rejection reason,
+  stop automatic retry, and require explicit recovery. These are not revision
+  conflicts: do not fabricate a remote revision or silently create a fresh
+  operation to bypass an unavailable receipt.
+
+Account-mode engagement does not read/write the unscoped local points ledger,
+including during signed-out gaps. `account-reward-client.ts` validates identity
+and arithmetic; `account-reward-service.ts` clears stale owners and publishes
+`trainoracle:account-rewards-changed`. Home/AppShell wait for server confirmation.
+Client balances are display caches, not purchasing authority.
+
+### Explicit Remaining Gates
+
+Legacy decoration ownership/spending has no verified server purchase history.
+The approved bounded self-import uses `writePurpose:"MIGRATION"` on the first
+DECORATIONS save (expectedRevision 0), frozen in the durable draft and operation.
+The gateway derives `legacyInitialGrant:true` only for that initial save. SQL
+records one immutable owner-scoped `LEGACY_INITIAL_GRANT` with verification
+`UNVERIFIED_LEGACY`, separate from verified purchases. It accepts only accounts
+whose server created_at predates 0035 installation, within 30 days of installation,
+with at most 128 unique catalog-valid paid IDs. Missing creation dates, new accounts,
+expired windows and subsequent grant expansion fail closed. Exact accepted-operation
+retries remain idempotent after the window closes. This window does not activate
+ACCOUNT_JOURNAL_V2; review deployment timing before installing the migration.
+
+Preserve the entire validated decoration document and original scoped device file.
+Imported spending is an immutable legacy offset, not earned credit, verified
+spending or a negative balance: reward summary `legacySpentPoints` reports it
+separately, while availablePoints remains earned minus verified purchases only.
+The document spentPoints must equal legacySpentPoints plus verified spentPoints.
+New paid items require normal atomic payment; legacy IDs cannot be removed or
+expanded by another free import. Never label a legacy item a verified purchase.
+Back up both private account_decoration_legacy_window and
+account_decoration_legacy_grants alongside the other private reward metadata.
+The parent-owned migration adapter must use the buffer's fifth argument MIGRATION,
+and purchase reconciliation must include the legacy offset. Keep the feature off
+until those UI/client flows and deployment gates have passed review.
+Historical decoration restore must not erase later purchases or reduce spending;
+the current server rejects purchase-ledger-inconsistent restoration. PLAN identity
+and immutable update rules must come from the plan worker's generated module.
+
+Run the 0035 PGlite/pgcrypto suite plus the handler and account reward UI suites.
+PGlite executes real PostgreSQL SQL, RLS and HMAC, but serializes one session:
+queued Promise.all tests do NOT establish multi-connection advisory-lock behavior.
+Repeat genuine competing transactions, owner A/B JWT verification, Edge/Deno
+deployment, key custody/recovery, metadata reconciliation, migration routing, and
+all application purchase/restore flows in the separately approved environment.
+No production, operational key, feature flag, commit or push was changed by Task3.

@@ -17,19 +17,30 @@ const initial: PostSessionEntry = { id: "quick-review-fixture", kind: "post-sess
 beforeEach(() => { mocks.enabled = true; vi.clearAllMocks(); window.localStorage.clear() })
 afterEach(cleanup)
 
-it.each(["ACCOUNT", "PENDING", "CONFLICT"] as const)("forwards the real Quick D9 and %s message through LogEntry unchanged", async storage => {
+it.each(["ACCOUNT", "PENDING", "CONFLICT"] as const)("completes Quick only after ACCOUNT acknowledgement, starting with %s", async storage => {
   mocks.persist.mockResolvedValue({ ok: true, storage })
   const onDone = vi.fn()
   render(<LogEntry entryType="quick-session" initialEntry={initial} onDone={onDone} />)
   fireEvent.click(screen.getByRole("button", { name: "오늘은 쉬었어요" }))
+  if (storage !== "ACCOUNT") {
+    const notice = await screen.findByText(storage === "PENDING" ? /계정 전송 대기 중이에요/ : /수정 충돌을 확인해 주세요/)
+    expect(notice.textContent).toContain("기록 완료는 아직이에요")
+    expect(onDone).not.toHaveBeenCalled()
+    expect(screen.queryByRole("button", { name: "완료" })).not.toBeInTheDocument()
+    expect(mocks.persist).toHaveBeenLastCalledWith(expect.objectContaining({
+      id: initial.id, memo: initial.memo, activityOutcome: "RESTED",
+    }), expect.anything())
+    mocks.persist.mockResolvedValue({ ok: true, storage: "ACCOUNT" })
+    fireEvent.click(screen.getByRole("button", { name: "오늘은 쉬었어요" }))
+  }
   const complete = await screen.findByRole("button", { name: "완료" })
   const message = screen.getByRole("status").textContent
   fireEvent.click(complete)
   expect(onDone).toHaveBeenCalledExactlyOnceWith("post-session", expect.objectContaining({
-    id: initial.id, syncState: storage === "ACCOUNT" ? "synced" : "local",
+    id: initial.id, syncState: "synced", memo: initial.memo, activityOutcome: "RESTED",
   }), message)
   expect(message).toContain("자동 확인을 완료하지 못했어요")
-  expect(message).toContain(storage === "ACCOUNT" ? "계정에 저장했어요" : storage === "PENDING" ? "전송 대기" : "수정 충돌")
+  expect(message).toContain("계정에 저장했어요")
 })
 
 it("preserves the two-argument classic callback when Quick has no review message", () => {

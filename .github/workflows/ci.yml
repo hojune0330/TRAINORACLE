@@ -114,6 +114,10 @@ jobs:
         working-directory: app
         run: npm run test:account-record-validator
 
+      - name: Verify shared encrypted account state validator
+        working-directory: app
+        run: npm run test:account-state-validator
+
       - name: Typecheck app and browser tests
         working-directory: app
         run: |
@@ -156,6 +160,10 @@ jobs:
           npm run test:e2e:account-draft-buffer
           npm run test:e2e:account-draft-panel
           npm run test:e2e:account-record-service
+          npm run test:e2e:account-conflict
+          npm run test:e2e:account-decoration
+          npm run test:e2e:account-plan-service
+          npm run test:e2e:form-input-autosave
 
   deploy-pages:
     if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && github.ref == 'refs/heads/main'
@@ -205,6 +213,7 @@ jobs:
           VITE_PHONE_AUTH_ENABLED: ${{ vars.TRAINORACLE_PHONE_AUTH_ENABLED }}
           VITE_PHONE_AUTH_OPERATIONS_APPROVED: ${{ vars.TRAINORACLE_PHONE_AUTH_OPERATIONS_APPROVED }}
           VITE_FEATURE_SYNC: ${{ vars.TRAINORACLE_FEATURE_SYNC }}
+          VITE_FEATURE_ACCOUNT_JOURNAL: ${{ vars.TRAINORACLE_FEATURE_ACCOUNT_JOURNAL }}
           VITE_FEATURE_SHARING: ${{ vars.TRAINORACLE_FEATURE_SHARING }}
           VITE_FEATURE_PLAN_PROPOSALS: ${{ vars.TRAINORACLE_FEATURE_PLAN_PROPOSALS }}
           VITE_FEATURE_PLAN_BACKUP: ${{ vars.TRAINORACLE_FEATURE_PLAN_BACKUP }}
@@ -217,6 +226,7 @@ jobs:
           VITE_KILL_KAKAO_AUTH: ${{ vars.TRAINORACLE_KILL_KAKAO_AUTH }}
           VITE_KILL_PHONE_AUTH: ${{ vars.TRAINORACLE_KILL_PHONE_AUTH }}
           VITE_KILL_SYNC: ${{ vars.TRAINORACLE_KILL_SYNC }}
+          VITE_KILL_ACCOUNT_JOURNAL: ${{ vars.TRAINORACLE_KILL_ACCOUNT_JOURNAL }}
           VITE_KILL_SHARING: ${{ vars.TRAINORACLE_KILL_SHARING }}
           VITE_KILL_PLAN_PROPOSALS: ${{ vars.TRAINORACLE_KILL_PLAN_PROPOSALS }}
           VITE_KILL_PLAN_BACKUP: ${{ vars.TRAINORACLE_KILL_PLAN_BACKUP }}

@@ -1,4 +1,6 @@
 import { canonicalJsonFingerprint } from "@impl/plan-generator/candidate-identity"
+import { accountPlansEnabled } from "./account/account-plan-service"
+import { importAccountPlanHistory } from "./account/account-plan-domain"
 import { readAdjustedPlanBackup } from "./adjusted-plan-backup"
 import { ADJUSTED_PLAN_ARCHIVE_KEY, parseAdjustedOriginalArchive } from "./adjusted-plan-archive"
 import { activePlanBetaStorageKey, readPlanBetaStateFromStorage } from "./plan-beta-store"
@@ -21,12 +23,13 @@ export async function importAdjustedPlanHistory(input: {
   if (!locks) return reject("MUTATION_LOCK_UNAVAILABLE")
   const current = () => account === localAccountScopeSnapshot() && input.raw === raw && input.confirmsOwnFile === true && input.isCurrentRequest()
   try {
-    return await locks.request(PLAN_BETA_MUTATION_LOCK_NAME, { mode: "exclusive", ifAvailable: true }, lock => {
+    return await locks.request(PLAN_BETA_MUTATION_LOCK_NAME, { mode: "exclusive", ifAvailable: true }, async lock => {
       if (!lock || !current()) return reject("STALE_IMPORT")
       const evidence = input.readEvidence?.() ?? RETAINED_ADJUSTED_PLAN_EVIDENCE
       const now = new Date()
       const incoming = readAdjustedPlanBackup(raw, evidence, now)
       if (incoming.kind !== "read_only") return reject("INVALID_PLAN_FILE")
+      if (accountPlansEnabled()) return importAccountPlanHistory([incoming.active, ...incoming.entries.map(e => e.state)], evidence, current)
       const before = localStorage.getItem(key)
       const activeBefore = localStorage.getItem(activeKey)
       const archive = parseAdjustedOriginalArchive(before, evidence, now)

@@ -24,6 +24,12 @@ vi.mock("../../domain/account/account-journal-draft-buffer", () => ({ createAcco
     row.state = "PENDING"
   },
   ack: (...args: unknown[]) => mocks.ack(...args),
+  reject: async (_owner: string, id: string, operationId: string, rejection: NonNullable<AccountJournalDraftView["pending"]>["rejection"]) => {
+    const pending = mocks.rows.get(id)?.pending
+    if (!pending || pending.operationId !== operationId) return false
+    pending.rejection = rejection
+    return true
+  },
   conflict: async () => true, importRemote: async () => {}, logout: () => {}, close: () => {},
 }) }))
 import { AccountJournalDraftPanel } from "./AccountJournalDraftPanel"
@@ -70,6 +76,24 @@ beforeEach(() => {
   mocks.request.mockImplementation(async (_owner: string, request: AccountJournalRequest) => saved(request))
 })
 afterEach(() => { cleanup(); vi.useRealTimers() })
+
+it.each(["PLANNED_SESSION_ALREADY_RECORDED", "INSUFFICIENT_POINTS", "OPERATION_REPLAY_UNAVAILABLE"] as const)(
+  "reports %s honestly and retains the rejected operation through edits and retries", async rejection => {
+    mocks.request.mockResolvedValue({ ok: false, code: rejection })
+    await editor(); type("synthetic rejected input"); await settle(); await tick(800)
+    const retained = structuredClone([...mocks.rows.values()][0]!.pending)
+    expect(retained?.rejection).toBe(rejection)
+    expect(screen.getByRole("status")).toHaveTextContent("새 요청을 만들지 않습니다")
+    expect(screen.getByRole("status")).not.toHaveTextContent("계정에 초안이 저장됐어요")
+    type("synthetic edited input"); await settle()
+    fireEvent.click(screen.getByRole("button", { name: "계정에 저장" })); await settle()
+    window.dispatchEvent(new Event("online")); await tick(800)
+    expect(mocks.request).toHaveBeenCalledTimes(1)
+    expect([...mocks.rows.values()][0]!.pending).toEqual(retained)
+    expect(screen.getByLabelText("내용")).toHaveValue("synthetic edited input")
+    expect(screen.getByRole("status")).toHaveTextContent("새 요청을 만들지 않습니다")
+  },
+)
 
 it("debounces rapid inputs for 800ms, preserves CAS revisions, and does not rewrite on explicit Save", async () => {
   await editor()

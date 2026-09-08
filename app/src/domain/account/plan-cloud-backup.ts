@@ -4,6 +4,7 @@ import { productFeatures } from "../product-features"
 import { activeLocalAccount } from "./local-journal-ownership"
 import { supabase } from "./supabase-client"
 import { accountScopedStorageKey } from "./local-account-scope"
+import { accountJournalPreviewEnabled } from "./account-journal-api"
 
 export const PLAN_CLOUD_ARCHIVE_STORAGE_KEY = "trainoracle.plan-cloud-archive.v1"
 
@@ -21,7 +22,9 @@ export type PlanCloudBackupResult =
   | { readonly kind: "failed" }
 
 export function planCloudBackupEnabled(): boolean {
-  return productFeatures().planBackup && activeLocalAccount() !== null
+  // Account-canonical PLAN documents own pointer/progress/archive together.
+  // Never let the legacy latest-saved query activate a historical snapshot in that mode.
+  return !accountJournalPreviewEnabled() && productFeatures().planBackup && activeLocalAccount() !== null
 }
 
 export async function backupActivePlanToServer(state: unknown): Promise<PlanCloudBackupResult> {
@@ -79,7 +82,7 @@ export async function loadLatestPlanFromServer(): Promise<PlanCloudBackupResult>
 
 export async function archivePlanOnServer(planId: string): Promise<void> {
   rememberArchivedPlan(planId)
-  if (!productFeatures().planBackup) return
+  if (!planCloudBackupEnabled()) return
   const ownerId = activeLocalAccount()
   if (ownerId === null) return
   const client = await supabase()

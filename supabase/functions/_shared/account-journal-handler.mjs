@@ -1,7 +1,8 @@
 import { encryptAccountJournalDocument, decryptAccountJournalDocument } from './account-journal-crypto.mjs';
 import { validateAccountJournalRecord, validateAccountJournalRecordUpdate } from './account-journal-record-validator.mjs';
+import * as accountState from './account-state-validator.mjs';
 
-// Encrypted Draft/FinalRecord storage only: no statistics or reward side effects.
+// Gateway-derived metadata is authenticated together with ciphertext by 0035.
 // 100,000 UTF-16 code units can require 600,000 bytes as JSON \uXXXX escapes.
 // Keep the streaming bound above that plus the 200-unit title and request metadata.
 export const MAX_BODY_BYTES = 655_360;
@@ -35,16 +36,73 @@ export function validateDraftDocument(value) {
 }
 const stable = value => Array.isArray(value) ? value.map(stable) : object(value)
   ? Object.fromEntries(Object.keys(value).sort().map(key => [key, stable(value[key])])) : value;
-const canonical = document => document.state === 'FINALIZED' ? JSON.stringify(stable(document))
+const canonical = document => document.state !== 'DRAFT' ? JSON.stringify(stable(document))
   : JSON.stringify({ version: document.version, state: document.state,
     visibility: document.visibility, date: document.date, title: document.title, body: document.body });
-export const validateAccountJournalDocument = value => validateDraftDocument(value) || validateAccountJournalRecord(value);
+export const validateAccountJournalDocument = value => validateDraftDocument(value) || validateAccountJournalRecord(value)
+  || accountState.validateAccountStateDocument(value);
+
+/** Mirrors toEngagementJournalRef in engagement.ts, not performance or memo scoring. */
+export function accountJournalMetadata(document) {
+  if (document.state !== 'FINALIZED') {
+    const metadata = { kind: document.state === 'DRAFT' ? 'DRAFT' : document.kind,
+      occurrenceId: null, journalDate: null, eligible: false };
+    if (document.kind === 'DECORATIONS') {
+      if (typeof accountState.accountDecorationPurchaseMetadata !== 'function') fail(503, 'UNAVAILABLE');
+      return { ...metadata, ...accountState.accountDecorationPurchaseMetadata(document) };
+    }
+    return metadata;
+  }
+  const e = document.entry;
+  const eligible = e.kind === 'post-session'
+    ? e.activityOutcome !== undefined || e.system === 'rest' || e.title.trim() !== ''
+      || e.distanceKm.trim() !== '' || e.durationMin.trim() !== '' || e.avgPace.trim() !== ''
+      || e.rpe > 0 || e.intensityAssessment !== undefined
+    : e.kind === 'evening' ? e.sleepH > 0 || e.sleepQuality > 0 || e.weightKg.trim() !== ''
+      || e.restingHr.trim() !== '' || Object.values(e.painParts).some(level => level > 0) || e.mood > 0
+      : e.tension !== undefined || e.condition !== undefined || e.mood !== undefined;
+  return { kind: 'JOURNAL', occurrenceId: e.kind === 'post-session' ? e.plannedSessionLink?.plannedSessionId ?? null : null,
+    journalDate: e.date, eligible };
+}
+
+/** Separate runtime-only signing key, never the journal encryption key or user JWT. */
+export async function importJournalAttestor(serialized) {
+  try {
+    const config = JSON.parse(serialized);
+    if (!keys(config, ['keyId', 'key']) || typeof config.keyId !== 'string'
+      || config.keyId.length < 1 || config.keyId.length > 80 || typeof config.key !== 'string'
+      || !/^[A-Za-z0-9+/]{43}=$/u.test(config.key)) throw 0;
+    const bytes = Uint8Array.from(atob(config.key), char => char.charCodeAt(0));
+    if (bytes.length !== 32 || btoa(String.fromCharCode(...bytes)) !== config.key) throw 0;
+    let key;
+    try { key = await crypto.subtle.importKey('raw', bytes, { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']); }
+    finally { bytes.fill(0); }
+    return async (ownerId, action, input) => {
+      const requestText = JSON.stringify({ ...input, domain: 'trainoracle.account-journal.gateway.v1', ownerId, action,
+        expiresAt: Math.floor(Date.now() / 1000) + 90 });
+      const signature = await crypto.subtle.sign('HMAC', key, new TextEncoder().encode(requestText));
+      return { request_text: requestText, signature: [...new Uint8Array(signature)]
+        .map(byte => byte.toString(16).padStart(2, '0')).join(''), key_id: config.keyId };
+    };
+  } catch { fail(503, 'KEY_UNAVAILABLE'); }
+}
 
 async function recordId(ownerId, entryId) {
-  const bytes = new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(JSON.stringify(['trainoracle.journal.record.v1', ownerId, entryId]))));
+  return namespacedId(['trainoracle.journal.record.v1', ownerId, entryId]);
+}
+async function namespacedId(parts) {
+  const bytes = new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(JSON.stringify(parts))));
   bytes[6] = (bytes[6] & 15) | 80; bytes[8] = (bytes[8] & 63) | 128;
   const h = [...bytes.slice(0, 16)].map(value => value.toString(16).padStart(2, '0')).join('');
   return `${h.slice(0, 8)}-${h.slice(8, 12)}-${h.slice(12, 16)}-${h.slice(16, 20)}-${h.slice(20)}`;
+}
+async function stateIdentityValid(ownerId, documentId, document) {
+  if (document.state !== 'ACCOUNT_STATE') return true;
+  if (document.kind === 'DECORATIONS') return documentId === await namespacedId(['trainoracle.account.decorations.v1',ownerId]);
+  if (document.kind === 'PLAN') return documentId === await namespacedId(['trainoracle.account.plan.v1',ownerId]);
+  // Plan worker supplies a bound identity helper with its schema; no guessed IDs.
+  return typeof accountState.accountStateDocumentId === 'function'
+    && documentId === await accountState.accountStateDocumentId(ownerId,document);
 }
 
 /** Called only at request runtime. Never reads environment variables itself. */
@@ -98,6 +156,7 @@ function parseAction(input, validateDocument) {
   const { action } = input;
   let valid = false;
   if (action === 'status') valid = keys(input, ['action']);
+  if (action === 'rewardSummary' || action === 'visit') valid = keys(input, ['action']);
   if (action === 'list') valid = keys(input, ['action'], ['limit', 'cursor', 'collection'])
     && (!Object.hasOwn(input, 'collection') || input.collection === 'JOURNAL')
     && (!Object.hasOwn(input, 'limit') || (Number.isInteger(input.limit) && input.limit >= 1 && input.limit <= 50))
@@ -109,8 +168,10 @@ function parseAction(input, validateDocument) {
     ['action', 'documentId', 'operationId', 'expectedRevision', ...(action === 'restore' ? ['sourceRevision'] : [])])
     && isUuid(input.documentId) && isUuid(input.operationId) && revision(input.expectedRevision)
     && (action !== 'restore' || (revision(input.sourceRevision) && input.sourceRevision > 0));
-  if (action === 'save') valid = keys(input, ['action', 'documentId', 'operationId', 'expectedRevision', 'document'])
-    && isUuid(input.documentId) && isUuid(input.operationId) && revision(input.expectedRevision);
+  if (action === 'save') valid = keys(input, ['action', 'documentId', 'operationId', 'expectedRevision', 'document'], ['writePurpose'])
+    && isUuid(input.documentId) && isUuid(input.operationId) && revision(input.expectedRevision)
+    && (!Object.hasOwn(input,'writePurpose') || input.writePurpose === 'MIGRATION'
+      && (input.document?.state === 'FINALIZED' || input.document?.state === 'ACCOUNT_STATE' && input.document?.kind === 'DECORATIONS'));
   if (!valid) fail(400, 'INVALID_REQUEST');
   if (action === 'save') {
     let accepted = false;
@@ -187,12 +248,29 @@ export function createAccountJournalHandler({ authenticate, getMaterial, validat
       const input = parseAction(await bodyJson(request), validateDocument);
       if (input.action === 'save' && input.document.state === 'FINALIZED'
         && await recordId(ownerId, input.document.entry.id) !== input.documentId) fail(422, 'INVALID_DOCUMENT');
+      if (input.action === 'save' && !await stateIdentityValid(ownerId,input.documentId,input.document)) fail(422,'INVALID_DOCUMENT');
       const checkGate = async () => {
         const enabled = await repo.enabled(ownerId);
         if (enabled === false) fail(403, 'ACCOUNT_JOURNAL_DISABLED');
         if (enabled !== true) fail(503, 'UNAVAILABLE');
       };
       await checkGate();
+      if (input.action === 'rewardSummary' || input.action === 'visit') {
+        const result = await repo[input.action]();
+        await checkGate();
+        const summary = input.action === 'visit' ? result?.summary : result;
+        if (!keys(summary, ['kind','ownerId','today','points','spentPoints','availablePoints','journalDays','visitDays','visitedToday','journalRecordedToday'], ['legacySpentPoints'])
+          || (Object.hasOwn(summary,'legacySpentPoints') && !revision(summary.legacySpentPoints))
+          || summary.kind !== 'rewardSummary' || summary.ownerId !== ownerId
+          || !validateDraftDocument({ ...{ version:1,state:'DRAFT',visibility:'PRIVATE',title:'',body:'' },date:summary.today })
+          || !['points','spentPoints','availablePoints','journalDays','visitDays'].every(key => revision(summary[key]))
+          || summary.points !== summary.journalDays * 4 + summary.visitDays
+          || summary.availablePoints !== summary.points - summary.spentPoints
+          || typeof summary.visitedToday !== 'boolean' || typeof summary.journalRecordedToday !== 'boolean'
+          || (input.action === 'visit' && (!keys(result,['kind','awardedPoints','summary'])
+            || result.kind !== 'visit' || ![0,1].includes(result.awardedPoints)))) fail(503,'INVALID_STORED_DATA');
+        return respond(200,result);
+      }
       let material;
       try {
         material = await getMaterial();
@@ -202,7 +280,14 @@ export function createAccountJournalHandler({ authenticate, getMaterial, validat
           || typeof material.get !== 'function' || material.get(material.active.keyId)?.key !== key) throw 0;
       }
       catch { fail(503, 'KEY_UNAVAILABLE'); }
-      if (input.action === 'status') return respond(200, { kind: 'ready' });
+      if (input.action === 'status') {
+        if (repo.attestationStatus) {
+          const status = await repo.attestationStatus();
+          if (!keys(status,['kind']) || status.kind !== 'ready') fail(503,'UNAVAILABLE');
+          await checkGate();
+        }
+        return respond(200, { kind: 'ready' });
+      }
       const decode = async (payload, documentId) => {
         const key = material.get(payload?.keyId);
         if (!key) fail(503, 'KEY_UNAVAILABLE');
@@ -210,6 +295,7 @@ export function createAccountJournalHandler({ authenticate, getMaterial, validat
           const doc = JSON.parse(await decryptAccountJournalDocument(payload, { ownerId, documentId }, key));
           if (!validateAccountJournalDocument(doc) || validateDocument(doc) !== true) throw 0;
           if (doc.state === 'FINALIZED' && await recordId(ownerId, doc.entry.id) !== documentId) throw 0;
+          if (!await stateIdentityValid(ownerId,documentId,doc)) throw 0;
           return JSON.parse(canonical(doc));
         } catch { fail(503, 'INVALID_STORED_DATA'); }
       };
@@ -283,6 +369,11 @@ export function createAccountJournalHandler({ authenticate, getMaterial, validat
         if (prior.operation_kind !== operationKind
           || (input.action === 'restore' && prior.source_revision !== input.sourceRevision)) fail(409, 'OPERATION_REUSED');
         if (input.action !== 'save') return receiptFor(prior.result, input);
+        if (input.document.state === 'FINALIZED' && (prior.trusted_metadata
+          ? prior.trusted_metadata.awardAllowed !== (input.writePurpose !== 'MIGRATION')
+          : input.writePurpose === 'MIGRATION')) fail(409,'OPERATION_REUSED');
+        if (input.document.kind === 'DECORATIONS'
+          && Boolean(prior.trusted_metadata?.legacyInitialGrant) !== (input.writePurpose === 'MIGRATION' && input.expectedRevision === 0)) fail(409, 'OPERATION_REUSED');
         if (prior.proposed_encrypted_payload === null) fail(409, 'OPERATION_REPLAY_UNAVAILABLE');
         const document = await decode(prior.proposed_encrypted_payload, prior.document_id);
         if (canonical(document) !== canonical(input.document)) fail(409, 'OPERATION_REUSED');
@@ -292,8 +383,18 @@ export function createAccountJournalHandler({ authenticate, getMaterial, validat
       let receipt;
       if (prior !== null) receipt = await comparePrior(prior);
       else if (input.action === 'delete' || input.action === 'restore') {
+        let restoredDocument;
         if (input.action === 'restore') {
           const values = await versions();
+          restoredDocument = values.find(value => value.revision === input.sourceRevision)?.document;
+          if (restoredDocument?.state === 'ACCOUNT_STATE') {
+            const row = await repo.read(ownerId,input.documentId);
+            if (row?.revision === input.expectedRevision) {
+              const current = await entry(row);
+              if (!current.document || typeof accountState.validateAccountStateDocumentUpdate !== 'function'
+                || !accountState.validateAccountStateDocumentUpdate(current.document,restoredDocument)) fail(422,'INVALID_DOCUMENT_UPDATE');
+            }
+          }
           if (!values.some(value => value.revision === input.sourceRevision)) {
             // A concurrent operation may have completed while history expired.
             const winner = await repo.operation(ownerId, input.operationId);
@@ -305,7 +406,8 @@ export function createAccountJournalHandler({ authenticate, getMaterial, validat
           try {
             receipt = receiptFor(await repo[input.action]({ documentId: input.documentId,
               operationId: input.operationId, expectedRevision: input.expectedRevision,
-              ...(input.action === 'restore' ? { sourceRevision: input.sourceRevision } : {}) }), input);
+              ...(input.action === 'restore' ? { sourceRevision: input.sourceRevision,
+                metadata: accountJournalMetadata(restoredDocument) } : {}) }), input);
           } catch (error) {
             if (error?.code !== '22023') throw error;
             const winner = await repo.operation(ownerId, input.operationId);
@@ -320,13 +422,20 @@ export function createAccountJournalHandler({ authenticate, getMaterial, validat
           && (currentRow.deleted_at === null || currentRow.deleted_at === undefined)) {
           const current = await entry(currentRow);
           if (current.document.state !== input.document.state
+            || (input.document.state === 'ACCOUNT_STATE' && (current.document.kind !== input.document.kind
+              || typeof accountState.validateAccountStateDocumentUpdate !== 'function'
+              || !accountState.validateAccountStateDocumentUpdate(current.document,input.document)))
             || (input.document.state === 'FINALIZED'
               && !validateAccountJournalRecordUpdate(current.document, input.document))) fail(422, 'INVALID_DOCUMENT_UPDATE');
         }
         const encryptedPayload = await encryptAccountJournalDocument(canonical(input.document),
           { ownerId, documentId: input.documentId }, material.active);
         try { receipt = receiptFor(await repo.commit({ documentId: input.documentId,
-          operationId: input.operationId, expectedRevision: input.expectedRevision, encryptedPayload }), input); }
+          operationId: input.operationId, expectedRevision: input.expectedRevision, encryptedPayload,
+          metadata: { ...accountJournalMetadata(input.document), ...(input.document.state === 'FINALIZED'
+            ? { awardAllowed: input.writePurpose !== 'MIGRATION' } : {}),
+            ...(input.document.kind === 'DECORATIONS' && input.writePurpose === 'MIGRATION' && input.expectedRevision === 0
+              ? { legacyInitialGrant: true } : {}) } }), input); }
         catch (error) {
           // Concurrent identical plaintext has a different nonce. Compare the winning proposal.
           if (error?.code !== '22023') throw error;
@@ -341,23 +450,32 @@ export function createAccountJournalHandler({ authenticate, getMaterial, validat
       if (error instanceof GatewayError) return respond(error.status, { error: error.status === 503
         ? 'SERVICE_UNAVAILABLE' : error.status === 403 ? 'ACCESS_DENIED' : error.code });
       if (error?.code === '42501') return respond(403, { error: 'ACCESS_DENIED' });
+      if (error?.code === '23505') return respond(409, { error: 'PLANNED_SESSION_ALREADY_RECORDED' });
+      if (error?.code === 'P0001') return respond(409, { error: 'INSUFFICIENT_POINTS' });
       return respond(503, { error: 'SERVICE_UNAVAILABLE' });
     }
   };
 }
 
 /** Official SDK adapter. The supplied client MUST use the verified user's JWT. */
-export function createAccountJournalRepository(client) {
+export function createAccountJournalRepository(client, { ownerId, attest } = {}) {
   const result = async query => {
     const { data, error } = await query;
     if (error) {
       const safe = new Error('ACCOUNT_JOURNAL_DATABASE_ERROR');
-      if (['22023', '42501'].includes(error.code)) safe.code = error.code;
+      if (['22023', '42501', '23505', 'P0001'].includes(error.code)) safe.code = error.code;
       throw safe;
     }
     return data;
   };
+  const mutate = async (action, input) => {
+    if (!isUuid(ownerId) || typeof attest !== 'function') throw new Error('ACCOUNT_JOURNAL_ATTESTATION_REQUIRED');
+    return result(client.rpc('mutate_account_journal_attested', await attest(ownerId.toLowerCase(), action, input)));
+  };
   return {
+    attestationStatus: () => mutate('status', {}),
+    rewardSummary: () => result(client.rpc('account_reward_summary')),
+    visit: () => result(client.rpc('record_account_reward_visit')),
     async enabled(ownerId) {
       for (const feature of ['ACCOUNT', 'ACCOUNT_JOURNAL_V2']) {
         const value = await result(client.rpc('service_feature_enabled', { feature_key_input: feature }));
@@ -369,7 +487,7 @@ export function createAccountJournalRepository(client) {
       return eligible;
     },
     operation: (ownerId, operationId) => result(client.from('account_journal_operations')
-      .select('user_id,operation_id,document_id,expected_revision,operation_kind,source_revision,proposed_encrypted_payload,result')
+      .select('user_id,operation_id,document_id,expected_revision,operation_kind,source_revision,proposed_encrypted_payload,result,trusted_metadata')
       .eq('user_id', ownerId).eq('operation_id', operationId).maybeSingle()),
     read: (ownerId, documentId) => result(client.from('account_journal_documents')
       .select('user_id,document_id,revision,encrypted_payload,deleted_at').eq('user_id', ownerId)
@@ -380,12 +498,9 @@ export function createAccountJournalRepository(client) {
       if (cursor) query = query.gt('document_id', cursor);
       return result(query);
     },
-    commit: input => result(client.rpc('commit_account_journal_document', { document_id: input.documentId,
-      operation_id: input.operationId, expected_revision: input.expectedRevision, encrypted_payload: input.encryptedPayload })),
+    commit: input => mutate('commit', input),
     history: documentId => result(client.rpc('list_account_journal_history', { document_id: documentId })),
-    delete: input => result(client.rpc('delete_account_journal_document', { document_id: input.documentId,
-      operation_id: input.operationId, expected_revision: input.expectedRevision })),
-    restore: input => result(client.rpc('restore_account_journal_document', { document_id: input.documentId,
-      operation_id: input.operationId, expected_revision: input.expectedRevision, source_revision: input.sourceRevision })),
+    delete: input => mutate('delete', input),
+    restore: input => mutate('restore', input),
   };
 }

@@ -1,13 +1,162 @@
 import { expect, test } from "@playwright/test"
 import { loadRecordHarness, mockRecordServer } from "./fixtures/account-journal-record-server"
 import type {} from "./fixtures/account-journal-record-service"
+import type { AccountJournalRecord } from "../src/domain/account/account-journal-record-schema"
 
-let server: ReturnType<typeof mockRecordServer>
+let server: ReturnType<typeof mockRecordServer<AccountJournalRecord>>
 test.beforeEach(async ({ context, page }) => {
   server = mockRecordServer()
   await server.install(context)
   await loadRecordHarness(page)
 })
+
+test("reviewed write base includes full private content and rejects same-savedAt remote change before any draft/save", async ({ page }) => {
+  const reviewed = await page.evaluate(async () => {
+    const h = window.accountRecordHarness
+    await h.persistAccountJournalRecord(h.privateRecord)
+    return (await h.readAccountJournalWriteBase(h.privateRecord.id))!
+  })
+  if (reviewed.entry?.kind !== "post-session") throw new Error("Expected synthetic post-session review")
+  expect(reviewed.entry.memo).toBe("SYNTHETIC_PRIVATE_BODY")
+  expect(reviewed.revision).toBe(1)
+  const [key, remote] = [...server.documents.entries()][0]!
+  if (remote.document.entry.kind !== "post-session") throw new Error("Expected synthetic post-session document")
+  server.documents.set(key, { ...remote, revision: 2, document: { ...remote.document,
+    entry: { ...remote.document.entry, memo: "REMOTE_PRIVATE_SAME_SAVED_AT" } } })
+  await page.evaluate(() => window.accountRecordHarness.hydrateAccountJournalRecords())
+  const savesBefore = server.calls.filter(call => call.request.action === "save").length
+  const result = await page.evaluate(async base => {
+    const h = window.accountRecordHarness
+    const before = await h.rawRecords()
+    const saved = await h.persistAccountJournalRecord({ ...h.privateRecord, memo: "RESTORE_REVIEWED_COPY",
+      savedAt: "2026-09-09T02:00:00.000Z" }, h.privateRecord.savedAt, "MIGRATION", base)
+    return { saved, before, after: await h.rawRecords(), current: await h.readAccountJournalWriteBase(h.privateRecord.id) }
+  }, reviewed)
+  expect(result.saved).toEqual({ ok: false, storage: "FAILED" })
+  expect(result.after).toEqual(result.before)
+  expect(server.calls.filter(call => call.request.action === "save")).toHaveLength(savesBefore)
+  if (result.current?.entry?.kind !== "post-session") throw new Error("Expected synthetic post-session current version")
+  expect(result.current.entry.memo).toBe("REMOTE_PRIVATE_SAME_SAVED_AT")
+})
+
+test("review fingerprint excludes syncState only and checks fingerprint even when revision matches", async ({ page }) => {
+  const result = await page.evaluate(async () => {
+    const h = window.accountRecordHarness
+    await h.persistAccountJournalRecord(h.ordinary)
+    const base = (await h.readAccountJournalWriteBase(h.ordinary.id))!
+    const fingerprints = await Promise.all([h.ordinary, { ...h.ordinary, syncState: "synced" as const },
+      { ...h.ordinary, memo: "OTHER_PRIVATE_MEMO" }, { ...h.ordinary, savedAt: "2026-09-09T01:00:00.000Z" },
+      { ...h.ordinary, fieldProvenance: undefined }].map(h.accountJournalEntryFingerprint))
+    const before = await h.rawRecords()
+    const saved = await h.persistAccountJournalRecord({ ...h.ordinary, memo: "RESTORED",
+      savedAt: "2026-09-09T02:00:00.000Z" }, h.ordinary.savedAt, "MIGRATION", { ...base, contentFingerprint: fingerprints[2]! })
+    return { fingerprints, saved, before, after: await h.rawRecords() }
+  })
+  expect(result.fingerprints[0]).toBe(result.fingerprints[1])
+  expect(new Set(result.fingerprints.slice(1)).size).toBe(4)
+  expect(result.saved).toEqual({ ok: false, storage: "FAILED" })
+  expect(result.after).toEqual(result.before)
+})
+
+test("frozen absence token cannot overwrite a target created after review", async ({ page }) => {
+  const result = await page.evaluate(async () => {
+    const h = window.accountRecordHarness
+    const base = (await h.readAccountJournalWriteBase(h.ordinary.id))!
+    await h.persistAccountJournalRecord(h.ordinary)
+    const before = await h.rawRecords()
+    const changed = await h.persistAccountJournalRecord({ ...h.ordinary, memo: "RESTORE_NEW_COPY",
+      savedAt: "2026-09-09T02:00:00.000Z" }, undefined, "MIGRATION", base)
+    const relabelled = await h.persistAccountJournalRecord(h.ordinary, undefined, "MIGRATION", base)
+    return { base, changed, relabelled, before, after: await h.rawRecords() }
+  })
+  expect(result.base).toEqual({ entry: null, revision: 0, contentFingerprint: null })
+  expect(result.changed).toEqual({ ok: false, storage: "FAILED" })
+  expect(result.relabelled).toEqual({ ok: false, storage: "FAILED" })
+  expect(result.after).toEqual(result.before)
+})
+
+test("same-body MIGRATION retry keeps original base through reload pending and ACK; dirty state is not a new review base", async ({ page }) => {
+  server.loseReceipt()
+  const frozen = await page.evaluate(async () => {
+    const h = window.accountRecordHarness
+    const base = (await h.readAccountJournalWriteBase(h.ordinary.id))!
+    const result = await h.persistAccountJournalRecord(h.ordinary, undefined, "MIGRATION", base)
+    return { base, result, dirtyBase: await h.readAccountJournalWriteBase(h.ordinary.id) }
+  })
+  expect(frozen.result).toEqual({ ok: true, storage: "PENDING" })
+  expect(frozen.dirtyBase).toBeNull()
+  await page.reload(); await loadRecordHarness(page)
+  const result = await page.evaluate(async base => {
+    const h = window.accountRecordHarness
+    const wrongPurpose = await h.persistAccountJournalRecord(h.ordinary, undefined, undefined, base)
+    const retry = await h.persistAccountJournalRecord(h.ordinary, undefined, "MIGRATION", base)
+    const ackRetry = await h.persistAccountJournalRecord(h.ordinary, undefined, "MIGRATION", base)
+    return { wrongPurpose, retry, ackRetry, view: await h.view(h.ordinary.id) }
+  }, frozen.base)
+  expect(result.wrongPurpose).toEqual({ ok: false, storage: "FAILED" })
+  expect(result.retry).toEqual({ ok: true, storage: "ACCOUNT" })
+  expect(result.ackRetry).toEqual({ ok: true, storage: "ACCOUNT" })
+  expect(result.view?.serverRevision).toBe(1)
+  const saves = server.calls.filter(call => call.request.action === "save")
+  expect(saves).toHaveLength(2)
+  expect(saves[1]!.request).toEqual(saves[0]!.request)
+})
+
+test("unacknowledged finalizations stay recoverable but never enter ordinary metrics", async ({ page }) => {
+  server.offline(true)
+  expect(await page.evaluate(async () => {
+    const h = window.accountRecordHarness
+    const saved = await h.persistAccountJournalRecord(h.ordinary)
+    return { saved, ordinary: h.loadEntries(), analysis: h.loadAnalysisEntries(),
+      recovery: h.readAccountJournalPrivateEntry(h.ordinary.id), status: h.accountJournalProjectionStatus() }
+  })).toMatchObject({ saved: { ok: true, storage: "PENDING" }, ordinary: [], analysis: [],
+    recovery: { id: "ordinary", rpe: 6 }, status: "PENDING" })
+  server.offline(false)
+  expect(await page.evaluate(async () => {
+    const h = window.accountRecordHarness
+    await h.hydrateAccountJournalRecords()
+    return { ordinary: h.loadEntries().length, analysis: h.loadAnalysisEntries().length, status: h.accountJournalProjectionStatus() }
+  })).toEqual({ ordinary: 1, analysis: 1, status: "READY" })
+})
+
+test("pending edits keep the acknowledged metrics and hydrate the server base after reload", async ({ page }) => {
+  await page.evaluate(() => { const h = window.accountRecordHarness; return h.persistAccountJournalRecord(h.ordinary) })
+  await page.route("**/__record_api__", route => route.request().postDataJSON().request.action === "save"
+    ? route.fulfill({ status: 503, contentType: "application/json", body: "{}" }) : route.fallback())
+  expect(await page.evaluate(async () => {
+    const h = window.accountRecordHarness
+    return h.persistAccountJournalRecord({ ...h.ordinary, rpe: 9, savedAt: "2026-09-02T02:00:00.000Z" }, h.ordinary.savedAt)
+  })).toEqual({ ok: true, storage: "PENDING" })
+  for (const reload of [false, true]) {
+    if (reload) { await page.reload(); await loadRecordHarness(page); await page.evaluate(() => window.accountRecordHarness.hydrateAccountJournalRecords()) }
+    expect(await page.evaluate(() => {
+      const h = window.accountRecordHarness
+      return { ordinary: h.loadEntries()[0], recovery: h.readAccountJournalPrivateEntry("ordinary"), status: h.accountJournalProjectionStatus() }
+    })).toMatchObject({ ordinary: { rpe: 6, syncState: "synced" }, recovery: { rpe: 9 }, status: "PENDING" })
+  }
+})
+
+for (const rejection of ["PLANNED_SESSION_ALREADY_RECORDED", "INSUFFICIENT_POINTS", "OPERATION_REPLAY_UNAVAILABLE"] as const) {
+  test(`controlled ${rejection} is durable, nonstatistical and not an invented revision conflict`, async ({ page }) => {
+    let saves = 0
+    await page.route("**/__record_api__", route => {
+      if (route.request().postDataJSON().request.action !== "save") return route.fallback()
+      saves++
+      return route.fulfill({ status: 409, contentType: "application/json", body: JSON.stringify({ error: rejection }) })
+    })
+    expect(await page.evaluate(() => { const h = window.accountRecordHarness; return h.persistAccountJournalRecord(h.ordinary) }))
+      .toEqual({ ok: false, storage: "FAILED", rejection })
+    await page.reload(); await loadRecordHarness(page)
+    await page.evaluate(() => window.accountRecordHarness.hydrateAccountJournalRecords())
+    expect(await page.evaluate(async () => {
+      const h = window.accountRecordHarness
+      return { view: await h.view("ordinary"), ordinary: h.loadEntries(), analysis: h.loadAnalysisEntries(), status: h.accountJournalProjectionStatus() }
+    })).toMatchObject({ view: { pending: { rejection }, serverRevision: 0, blocked: null, draft: { entry: { id: "ordinary" } } },
+      ordinary: [], analysis: [], status: "REJECTED" })
+    expect(saves).toBe(1)
+    expect(server.documents.size).toBe(0)
+  })
+}
 
 test("online ordinary/private records survive reload and hydrate on a fresh native-IDB device", async ({ page, browser }) => {
   const created = await page.evaluate(async () => {
@@ -365,7 +514,7 @@ test("after-local-save projection failure reports pending and identical retry fi
   await page.route("**/src/domain/account/account-journal-projection.ts*", async route => {
     const response = await route.fetch()
     const body = await response.text()
-    const marker = 'function putAccountJournalProjection(ownerId, entry) {'
+    const marker = 'function putAccountJournalProjection(ownerId, entry, confirmed = true) {'
     expect(body.split(marker)).toHaveLength(2)
     await route.fulfill({ response, body: body.replace(marker, `${marker}
       if (globalThis.__recordProjectionFailOnce) { globalThis.__recordProjectionFailOnce = false; throw new Error('Synthetic projection failure'); }

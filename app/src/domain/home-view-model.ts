@@ -3,9 +3,10 @@ import type { JournalEntry } from "./journal-schema"
 import type { AnalysisJournalEntry } from "./safe-export"
 import type { VersionedStoredPlanSession } from "./plan-session-schema"
 import type { AdjustedCandidateSession } from "./adjusted-plan-candidate"
+import type { SelectedMultiAdjustedPlanV3 } from "./selected-multi-adjusted-plan-content-v3"
 import { isoShift, isValidIsoDate } from "./dates"
 
-type HomeSession = VersionedStoredPlanSession | AdjustedCandidateSession
+export type HomeSession = VersionedStoredPlanSession | AdjustedCandidateSession | SelectedMultiAdjustedPlanV3["activePlan"]["sessions"][number]
 export type HomePlan = {
   readonly intake: { readonly startDate?: string; readonly eventGroup?: string }
   readonly activePlan: { readonly sessions: readonly HomeSession[] }
