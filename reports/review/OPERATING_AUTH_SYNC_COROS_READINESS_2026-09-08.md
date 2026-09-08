@@ -2,15 +2,19 @@
 
 ## 인증·동기화·COROS 운영 준비 검토 패킷
 
+> 시점 구분: 메타데이터는 후속 결과를 반영한다. §1~8의 코드 미수정·시험 미실행 표기는 최초 읽기 전용 조사 범위에 한정한다. 이후 오너가 승인한 SYNC-I02 코드/합성 시험 수정 및 현재 운영 관측 보완은 §9에 기록한다. 현재 수정·시험 결과는 §9가 우선하며, 최초 관측을 현재 결함 상태로 재사용하지 않는다.
+
 ```yaml
 doc_id: trainoracle-operating-auth-sync-coros-readiness-20260908
-version: "1.0"
+version: "1.1"
 status: READINESS_REVIEW_DRAFT
 baseline_head: 7fb7dc12dfefe013ca60fb0ac98876cf390a56da
-evidence_mode: CURRENT_LOCAL_SOURCE_INSPECTION_ONLY
+evidence_mode: LOCAL_RUNTIME_AND_PARENT_DASHBOARD_RECEIPT
 owner_direction: ALL_EIGHT_RECOMMENDATIONS_APPROVED_IN_CURRENT_TASK
-runtime_tests_executed_this_task: 0
-external_state_verified_this_task: false
+initial_read_only_review_runtime_tests: 0
+followup_agent_runtime_unique_tests: 50
+followup_agent_timezone_runs: 2
+external_state_evidence: PARENT_READ_ONLY_DASHBOARD_RECEIPT
 production_changes: false
 canonical_promotion: false
 ```
@@ -48,7 +52,7 @@ canonical_promotion: false
 
 부모 작업이 이번 검토 중 직접 확인해 전달한 [Supabase 공식 SMTP 안내](https://supabase.com/docs/guides/auth/auth-smtp)에 따르면 기본 SMTP는 프로젝트 팀에 속하지 않은 이메일 주소로 발송을 거부한다. **오너/프로젝트 팀 주소의 링크 수신 PASS는 일반 사용자 이메일 공개 베타 준비 완료의 증거가 아니다.** 이 sidecar는 웹을 재조회하지 않았으며, 링크는 부모가 확인한 공식 자료로 인용한다.
 
-현재 로컬 운영 기록 `reports/operations/AUTH_PROVIDER_CONNECTION_STATUS_2026-08-25.md:25`에는 당시 `custom SMTP 없음`이 명시되어 있고, `:87`에는 SMTP 연결을 후속 관문으로 둔다. 이는 역사적 설정 기록이지 2026-09-08 현재 콘솔 실측이 아니다. 현재 custom SMTP 활성 여부·공급자·발신 도메인 검증·제한·일반 수신자 도달성은 모두 `UNVERIFIED_EXTERNAL`이다. 기본 SMTP가 지금도 사용 중이라고 단정하지 않는다.
+최초 조사에서는 `reports/operations/AUTH_PROVIDER_CONNECTION_STATUS_2026-08-25.md:25`의 당시 `custom SMTP 없음`과 `:87`의 후속 관문만 확인했으며 현재 콘솔은 미검증이었다. 이후 부모의 2026-09-08 읽기 전용 관측으로 **현재 custom SMTP 미설정은 확인되었다**. 근거는 [운영 대시보드 관측 영수증](OPERATING_DASHBOARD_OBSERVATION_2026-09-08.md)의 14행이며, 본 sidecar의 독립 콘솔 접속 결과가 아니다. 일반 비팀 수신자 도달성·SMTP 공급자 설정·발신 도메인 검증은 완료되지 않았다. §9.3에서 현재 후속 관문을 구분한다.
 
 | 검사 | 다음 실행 | 합격 증거 |
 |---|---|---|
@@ -244,5 +248,46 @@ where table_schema = 'public' and table_name = 'saved_training_plans';
 | 승인된 운영 시험 담당 | C-EXT 사실 확인 후 단일 동의 사용자·선택 활동 1건 조회 -> 확인 -> 연결 -> 해제/삭제 | 실제 도구/스키마 버전, 시각, 빌드, 상태/건수, PASS/FAIL/미실행만 담은 비민감 영수증 |
 
 **완료를 주장할 수 있는 범위는 준비 문서 작성과 소스 대조뿐이다.** 최초 읽기 시험의 성공도 분석 활용·자동 동기화·훈련계획 쓰기 완료를 뜻하지 않는다. 부모가 다루는 PR/CI·훈련 패킷·승인 정본에는 이 보고서가 제공하는 구체적 누락 시험과 충돌 목록만 인계한다.
+
+## 9. 후속 승인 범위: SYNC-I02 수정과 검증 영수증
+
+### 9.1 변경과 보장 경계
+
+- 일자: 2026-09-08. 수정 시작 HEAD: `abb1e15a6951d6e18e975a6a2c3a159374bb09d3`. 이 절은 최초 문서 전용 조사 이후 부모가 명시적으로 승인한 코드 수리다.
+- 소유 변경은 `app/src/domain/account/sync-run.ts`, 신규 `app/src/domain/account/sync-async-cancellation.contract.test.ts`, 본 보고서 세 파일뿐이다. 기존 세션 보안 계약 파일과 SYNC-I01 코드, 승인 원장, 훈련 패킷은 수정하지 않았다. DB·외부 네트워크·비밀·운영 변경·commit/push는 실행하지 않았다. 기존 미추적 파일은 보존했다.
+- `sync-run.ts:40`에서 시작 로컬 계정 범위를 캡처한다. `:50`의 취소 검사기는 **await한 세션 확인 이후** 로컬 계정 변경과 대상 계정의 최신 동의를 읽는다. 기존 세션 오류 코드와 결과 형식을 재사용한다. 기존 직접 도메인 호출의 null 로컬 범위는 유지하되 실행 중 범위 변화를 감지한다.
+- 조회 후 병합 직전(`:123`), 로컬 병합 후 업로드 직전(`:166`), 업로드 응답 뒤(`:182`), tombstone 처리 뒤(`:237`), 마지막 삭제 응답 뒤 최종 성공 전(`:262`)에 재검증한다. 취소를 확인하면 후속 단계는 시작하지 않고 `ok:false`로 반환한다.
+- 로컬 병합 완료 수, 응답으로 확인한 업로드/삭제 수와 현재 병합 총수를 취소 결과에 보존한다. 늦은 취소를 0건 또는 '로컬 무변경'으로 설명하지 않는다. 취소 경로는 저장소/계정 데이터/복구 체크포인트를 지우거나 이전 상태로 되돌리지 않는다. 복구 체크포인트는 다음 명시적 재시도를 위해 남긴다.
+- 이미 전송된 요청의 서버 적용 취소·rollback·원자적 전체 중단은 보장하지 않는다. 계정/동의를 await 경계에서 재검증하는 제한된 수리이며, 두 관측 사이 A->B->A 또는 OFF->ON 같은 일시 전환의 이력을 latch하는 새 generation 프로토콜은 추가하지 않았다. 서버의 RLS 격리 및 실제 화면의 계정별 결과 처리는 별도 검증 대상이다.
+
+### 9.2 재현과 실제 로컬 실행
+
+합성 자료와 mock Supabase 전송만 사용하고 실제 journal/소유권/동의/복구 저장 로직을 실행했다. 최초 fixture에서 삭제 표식 소유권이 빠져 생긴 실패는 fixture 오류로 수정했으며 제품 결함 증거에 포함하지 않았다. 수정된 fixture를 **수정 전 sync-run**에 실행한 결과는 20개 중 18 FAIL / 2 PASS였다. 지연 schema·journal-select·tombstone-select 각각에 logout/account-switch/consent-off를 주입한 9개, 지연 journal-upsert·tombstone-upsert·journal-delete 각각에 같은 전환을 주입한 9개가 실패했다. 정상 왕복과 실패 응답 대조군은 통과했다.
+
+최종 신규 26개는 정상 왕복(`sync-async-cancellation.contract.test.ts:126`), 병합 전 취소 9개(`:136`), 부분 처리 후 취소 9개(`:157`), 지연 세션 확인 뒤 재검증 3개(`:178`), 로컬 범위/세션 독립 변경 2개(`:197`), 부분 성공 후 명시적 재시도(`:210`), 실패 업로드를 확정 성공으로 세지 않음(`:226`)이다. A/B 로컬 데이터 보존, 취소 뒤 후속 전송 없음, 정확한 결과 건수와 체크포인트 유지/정상 재시도 해제를 단언한다.
+
+`app` 디렉터리, 이미 설치된 Node/Vitest/TypeScript로 실행한 정확한 명령:
+
+```powershell
+$env:TZ='UTC'; node node_modules/vitest/vitest.mjs run src/domain/account/sync-async-cancellation.contract.test.ts src/domain/account/sync-session-security.contract.test.ts src/domain/account/sync-orchestration.contract.test.ts src/domain/account/sync-schema-recovery-orchestration.contract.test.ts --maxWorkers=1 --reporter=dot
+node node_modules/vitest/vitest.mjs run -c vitest.config.kst.ts src/domain/account/sync-async-cancellation.contract.test.ts src/domain/account/sync-session-security.contract.test.ts src/domain/account/sync-orchestration.contract.test.ts src/domain/account/sync-schema-recovery-orchestration.contract.test.ts --maxWorkers=1 --reporter=dot
+node node_modules/typescript/bin/tsc --noEmit --incremental false
+```
+
+| 실행 | 실제 결과 |
+|---|---|
+| UTC, 2026-09-08 03:56:11 시작 | 4 files / 50 tests PASS, FAIL 0, skip 0, exit 0, Vitest 8.87초 |
+| KST, 2026-09-08 12:57:04 시작 | 4 files / 50 tests PASS, FAIL 0, skip 0, exit 0, Vitest 8.52초 |
+| TypeScript noEmit / incremental false | 진단 출력 없음, exit 0 |
+
+신규 26개와 기존 세션·오케스트레이션·복구 계약 24개 결과다. 실행 출력은 이 작업의 도구 결과로 확인했으며 별도 로그 파일을 생성하지 않았다. 이것은 SYNC-I02의 로컬 합성 회귀 통과이지 실제 DB RLS, 두 기기 브라우저, 외부 메일 또는 COROS 통과가 아니다. 부모는 위 명령을 독립 재실행할 수 있다. 다음 실제 검사는 §5 AB-03/05의 승인된 시험 계정·기기 환경에서 수행하며, 원격 요청이 이미 적용된 경우 부분 성공과 이후 쓰기 중단을 따로 관측한다.
+
+### 9.3 현재 운영 상태와 남은 최우선 관문
+
+부모 작성 [운영 대시보드 관측 영수증](OPERATING_DASHBOARD_OBSERVATION_2026-09-08.md)의 7~9행, 13~15행을 직접 읽어 연결했다. 아래는 **부모의 외부 관측을 인용**한 것이며 이 sidecar가 대시보드에 접속한 것이 아니다. 공식 SMTP/COROS 웹 문서도 §2.1/6.1에 명시한 부모 조회 출처를 유지한다.
+
+1. AUTH-OPS01: 현재 custom SMTP 미설정은 확인됨. 기본 SMTP의 비팀 이메일 제한 때문에 오너 이메일 PASS와 일반 사용자 이메일 공개 준비는 여전히 다르다. EMAIL-OPS-01의 미설정 여부 확인은 충족했으나 공급자·도메인·제한 설정 및 EMAIL-OPS-02/03 실수신은 미완료다. 비용 상한/계약 승인과 별도 설정 후 비팀 시험 수신자 왕복을 실행한다.
+2. DB-V6-01: 실제 migrations 목록 최신 0031, 0032 이력 없음은 확인됨. 수동 DDL 부재는 입증하지 않았다. 프로젝트 이름에 staging이 있어도 main은 PRODUCTION 표시이므로 시험 DB라고 간주하지 않는다. §7.2의 실제 제약/정책/trigger 읽기 검증을 승인된 담당자가 먼저 수행한 뒤 별도 승인된 변경·DB-V6-02~09 시험으로 진행한다. 이력만 보고 0032를 즉시 적용하지 않는다.
+3. SYNC-I02: 이번 범위의 재현·수정·UTC/KST 회귀 완료. 실제 RLS 격리는 미검증이며 취소 검사로 이를 대체하지 않는다. SYNC-I01과 그 독립 검증은 부모 소유다. COROS는 실제 OAuth/조회/확인/철회·삭제 통합 증거가 아직 없고 §6의 최소 읽기 시험 관문을 유지한다.
 
 [DRAFT_COMPLETE]
