@@ -154,6 +154,57 @@ describe("explicit device training data connection", () => {
     expect(window.localStorage.getItem(accountScopedStorageKeyFor(PLAN_BETA_STORAGE_KEY, USER_ID))).toBe(source)
   })
 
+  it("migrates a legacy server document before adding an account-local device plan", async () => {
+    const source = JSON.stringify(stateFixture())
+    window.localStorage.setItem(accountScopedStorageKeyFor(PLAN_BETA_STORAGE_KEY, USER_ID), source)
+    const calls: string[] = []
+    let migrationRequired = true
+    const migrateLegacy = vi.fn(async () => {
+      calls.push("migrate")
+      migrationRequired = false
+      return "ACCOUNT" as const
+    })
+    const mutate = vi.fn(async () => {
+      calls.push("store")
+      return "ACCOUNT" as const
+    })
+    const service = {
+      hydrate: vi.fn(async () => true),
+      loadHistory: vi.fn(async () => true),
+      migrateLegacy,
+      snapshot: vi.fn(() => ({ status: "EMPTY", document: null, confirmedDocument: null,
+        fingerprint: "server-empty", currentPlan: null, migrationRequired })),
+      mutate,
+    } as unknown as AccountPlanService
+
+    const result = await connectDeviceTrainingDataToAccount(USER_ID, TODAY, () => service)
+
+    expect(result).toMatchObject({ plan: "account_local", planStorage: "stored_online" })
+    expect(calls).toEqual(["migrate", "store"])
+    expect(migrateLegacy).toHaveBeenCalledOnce()
+    expect(mutate).toHaveBeenCalledWith(expect.objectContaining({ kind: "SAVE_HISTORY" }), "server-empty")
+    expect(window.localStorage.getItem(accountScopedStorageKeyFor(PLAN_BETA_STORAGE_KEY, USER_ID))).toBe(source)
+  })
+
+  it("preserves the device plan when legacy server migration is not acknowledged", async () => {
+    const source = JSON.stringify(stateFixture())
+    window.localStorage.setItem(accountScopedStorageKeyFor(PLAN_BETA_STORAGE_KEY, USER_ID), source)
+    const service = {
+      hydrate: vi.fn(async () => true),
+      migrateLegacy: vi.fn(async () => "CONFLICT" as const),
+      snapshot: vi.fn(() => ({ status: "READY", document: emptyAccountPlanDocument(),
+        confirmedDocument: emptyAccountPlanDocument(), fingerprint: "server-legacy", currentPlan: null,
+        migrationRequired: true })),
+      mutate: vi.fn(async () => "ACCOUNT" as const),
+    } as unknown as AccountPlanService
+
+    const result = await connectDeviceTrainingDataToAccount(USER_ID, TODAY, () => service)
+
+    expect(result).toMatchObject({ plan: "account_local", planStorage: "conflict" })
+    expect(service.mutate).not.toHaveBeenCalled()
+    expect(window.localStorage.getItem(accountScopedStorageKeyFor(PLAN_BETA_STORAGE_KEY, USER_ID))).toBe(source)
+  })
+
   it("preserves the exact device plan when the server has not acknowledged storage", async () => {
     const source = JSON.stringify(stateFixture())
     window.localStorage.setItem(PLAN_BETA_STORAGE_KEY, source)
