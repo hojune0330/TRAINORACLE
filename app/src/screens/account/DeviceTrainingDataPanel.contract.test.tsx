@@ -5,6 +5,7 @@ import { PLAN_BETA_STORAGE_KEY } from "../../domain/plan-beta-store"
 import { stateFixture } from "../../domain/plan-beta-store.test-fixture"
 import { setActiveLocalAccount } from "../../domain/account/local-journal-ownership"
 import { accountScopedStorageKeyFor } from "../../domain/account/local-account-scope"
+import { connectDeviceTrainingData } from "../../domain/account/device-training-data-connection"
 import { DeviceTrainingDataPanel } from "./DeviceTrainingDataPanel"
 
 const USER_ID = "athlete-a"
@@ -25,16 +26,19 @@ describe("device training data connection panel", () => {
     const user = userEvent.setup()
     const source = JSON.stringify(stateFixture())
     window.localStorage.setItem(PLAN_BETA_STORAGE_KEY, source)
-    render(<DeviceTrainingDataPanel userId={USER_ID} />)
+    render(<DeviceTrainingDataPanel userId={USER_ID} connectData={async (userId) => ({
+      ...connectDeviceTrainingData(userId),
+      planStorage: "stored_online",
+    })} />)
 
-    expect(screen.getByText(/자동으로 계정에 넣지 않았어요/u)).toBeVisible()
+    expect(screen.getByText(/훈련 계획은 먼저 온라인 계정 보관함에 저장하고/u)).toBeVisible()
     await user.click(screen.getByRole("button", { name: "기기 데이터 확인하기" }))
     expect(window.localStorage.getItem(PLAN_BETA_STORAGE_KEY)).toBe(source)
 
-    await user.click(screen.getByRole("button", { name: "이 계정에 연결" }))
+    await user.click(screen.getByRole("button", { name: "온라인 보관 및 연결" }))
     expect(window.localStorage.getItem(PLAN_BETA_STORAGE_KEY)).toBeNull()
     expect(window.localStorage.getItem(accountScopedStorageKeyFor(PLAN_BETA_STORAGE_KEY, USER_ID))).toBe(source)
-    expect(screen.getByRole("status")).toHaveTextContent("기기 훈련 계획을 연결했어요")
+    expect(screen.getByRole("status")).toHaveTextContent("온라인 계정 보관함에 저장했어요")
   })
 
   it("explains a conflict and preserves both plans", async () => {
@@ -46,10 +50,24 @@ describe("device training data connection panel", () => {
     render(<DeviceTrainingDataPanel userId={USER_ID} />)
 
     await user.click(screen.getByRole("button", { name: "기기 데이터 확인하기" }))
-    await user.click(screen.getByRole("button", { name: "이 계정에 연결" }))
+    await user.click(screen.getByRole("button", { name: "온라인 보관 및 연결" }))
 
     expect(screen.getByRole("status")).toHaveTextContent("계정에 계획이 있어 기기 계획은 그대로 두었어요")
     expect(window.localStorage.getItem(PLAN_BETA_STORAGE_KEY)).toBe(devicePlan)
     expect(window.localStorage.getItem(accountScopedStorageKeyFor(PLAN_BETA_STORAGE_KEY, USER_ID))).toBe(accountPlan)
+  })
+
+  it("keeps the original and unlocks the control when the online check throws", async () => {
+    const user = userEvent.setup()
+    const source = JSON.stringify(stateFixture())
+    window.localStorage.setItem(PLAN_BETA_STORAGE_KEY, source)
+    render(<DeviceTrainingDataPanel userId={USER_ID} connectData={async () => { throw new Error("network") }} />)
+
+    await user.click(screen.getByRole("button", { name: "기기 데이터 확인하기" }))
+    await user.click(screen.getByRole("button", { name: "온라인 보관 및 연결" }))
+
+    expect(screen.getByRole("status")).toHaveTextContent("기기의 원본은 그대로 두었어요")
+    expect(window.localStorage.getItem(PLAN_BETA_STORAGE_KEY)).toBe(source)
+    expect(screen.getByRole("button", { name: "기기 데이터 확인하기" })).toBeEnabled()
   })
 })
