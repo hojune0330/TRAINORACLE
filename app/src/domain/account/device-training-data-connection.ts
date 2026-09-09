@@ -420,6 +420,12 @@ export async function connectDeviceTrainingDataToAccount(
   }
 
   const hydrated = await service.hydrate()
+  if (hydrated && "migrateLegacy" in service && service.snapshot().migrationRequired) {
+    const migration = onlineStatus(await service.migrateLegacy())
+    if (migration !== "stored_online") {
+      return { ...connectDeviceTrainingData(userId, today, { movePlan: false }), planStorage: migration }
+    }
+  }
   if (hydrated && "loadHistory" in service && !await service.loadHistory()) {
     return { ...connectDeviceTrainingData(userId, today, { movePlan: false }), planStorage: "failed" }
   }
