@@ -31,6 +31,7 @@ import {
 import {
   copyJournalDecorationToSession,
   readJournalDecorationFromSession,
+  clearJournalDecorationSessionClipboard,
 } from "../../domain/journal-decoration-clipboard"
 import {
   clearJournalDecorationAutoOpen,
@@ -41,6 +42,11 @@ import { todayISO } from "../../domain/journal-store"
 import { withJosa } from "../../domain/korean-josa"
 import { JournalDecorationToolbar } from "./JournalDecorationToolbar"
 import { JournalTextStickerSheet } from "./JournalTextStickerSheet"
+import { accountDecorationsEnabled, accountDecorationStatus, ACCOUNT_DECORATION_EVENT,
+  hydrateAccountDecorations, persistAccountDecorations, purchaseAccountDecoration } from "../../domain/account/account-decoration-service"
+import { ACCOUNT_REWARD_EVENT, hydrateAccountRewards, readAccountRewardSummary } from "../../domain/account/account-reward-service"
+import { activeLocalAccount, onLocalJournalScopeChange } from "../../domain/account/local-journal-ownership"
+import { AccountDecorationConflictPanel } from "../../components/AccountDecorationConflictPanel"
 
 /* 입력 시트 상태: 새로 만들기 또는 기존 인덱스 재편집 (P5 U2/U4). */
 type TextSheetState =
@@ -52,7 +58,16 @@ type DecorationNotice = {
   readonly persistent: boolean
 }
 
-export function JournalDecorationSurface({
+type SurfaceProps = {
+  readonly date: string; readonly hasEntries: boolean; readonly children: React.ReactNode
+  readonly pageTopRef?: React.Ref<HTMLDivElement>
+}
+export function JournalDecorationSurface(props: SurfaceProps) {
+  const owner = React.useSyncExternalStore(onLocalJournalScopeChange, activeLocalAccount, () => null)
+  return <JournalDecorationSurfaceSession key={`${owner ?? "device"}:${props.date}`} {...props} />
+}
+
+function JournalDecorationSurfaceSession({
   date,
   hasEntries,
   children,
@@ -79,12 +94,49 @@ export function JournalDecorationSurface({
   const [clipboardAvailable, setClipboardAvailable] = React.useState(() => readJournalDecorationFromSession() !== null)
   const workspaceRef = React.useRef<HTMLDivElement>(null)
   const focusBeforeOpenRef = React.useRef<HTMLElement | null>(null)
+  const savingRef = React.useRef(false)
+  const [saving, setSaving] = React.useState(false)
+  const [accountStatus, setAccountStatus] = React.useState(accountDecorationStatus)
+  const accountEpoch = React.useRef(0)
+  const storageVersionRef = React.useRef(storageVersion)
+  storageVersionRef.current = storageVersion
+  const editable = !accountDecorationsEnabled() || ["READY", "EMPTY", "PENDING"].includes(accountStatus)
+  React.useEffect(() => {
+    const refresh = () => {
+      setAccountStatus(accountDecorationStatus())
+      if (!savingRef.current && accountDecorationsEnabled()) {
+        if (readDecorationStateSerialized() !== storageVersionRef.current) {
+          setPast([]); setFuture([]); setPreview(null); setPreviewItemId(null); setSelectedIndex(null); setTextSheet(null)
+        }
+        setCanonical(loadDecorationState())
+        setStorageVersion(readDecorationStateSerialized())
+      }
+    }
+    const scopeChanged = () => {
+      accountEpoch.current += 1; savingRef.current = false; setSaving(false)
+      clearJournalDecorationSessionClipboard(); setClipboardAvailable(false); setEarnedPoints(0)
+      setCanonical(loadDecorationState()); setStorageVersion(readDecorationStateSerialized())
+      setPast([]); setFuture([]); setPreview(null); setTextSheet(null); setSelectedIndex(null); setOpen(false)
+    }
+    const unsubscribe = onLocalJournalScopeChange(scopeChanged)
+    window.addEventListener(ACCOUNT_DECORATION_EVENT, refresh)
+    refresh()
+    if (accountDecorationsEnabled() && activeLocalAccount()) void hydrateAccountDecorations()
+    return () => { accountEpoch.current += 1; unsubscribe(); window.removeEventListener(ACCOUNT_DECORATION_EVENT, refresh) }
+  }, [])
   /* 포인트 구매가 편집기 서랍으로 들어왔다 — 드래그 중 매 렌더 재계산을 피해 열 때만 읽는다. */
   const [earnedPoints, setEarnedPoints] = React.useState(() => loadEngagementSummary(todayISO()).points)
   React.useEffect(() => {
-    if (open) setEarnedPoints(loadEngagementSummary(todayISO()).points)
+    const refresh = () => setEarnedPoints(loadEngagementSummary(todayISO()).points)
+    if (open) {
+      refresh()
+      if (accountDecorationsEnabled()) void hydrateAccountRewards()
+    }
+    window.addEventListener(ACCOUNT_REWARD_EVENT, refresh)
+    return () => window.removeEventListener(ACCOUNT_REWARD_EVENT, refresh)
   }, [open])
-  const availablePoints = Math.max(0, earnedPoints - canonical.spentPoints)
+  const availablePoints = accountDecorationsEnabled() ? readAccountRewardSummary()?.availablePoints ?? 0
+    : Math.max(0, earnedPoints - canonical.spentPoints)
   /* 자동-열기 인텐트는 1회용 — 소비 후 지워 새로고침·재진입 시 저절로 열리지 않게 한다. */
   React.useEffect(() => {
     if (pendingJournalDecorationAutoOpenDate() === date) clearJournalDecorationAutoOpen()
@@ -156,14 +208,29 @@ export function JournalDecorationSurface({
     return () => document.removeEventListener("keydown", onKeyDown, true)
   })
 
-  const commit = (next: DecorationState | null, successMessage: string): boolean => {
+  const saveDeviceState = (next: DecorationState) => {
+    try {
+      const result = saveDecorationStateIfCurrent(next, storageVersion)
+      return result.ok ? { ok: true as const, storage: "DEVICE" as const, state: next } : result
+    } catch { return { ok: false as const, code: "WRITE_FAILED" as const } }
+  }
+  const saveAccountState = async (next: DecorationState) => {
+    try { return await persistAccountDecorations(next, storageVersion) }
+    catch { return { ok: false as const, code: "WRITE_FAILED" as const } }
+  }
+  const commit = async (next: DecorationState | null, successMessage: string): Promise<boolean> => {
+    if (savingRef.current || !editable) return false
     if (next === null) {
       setPreview(null)
       setPreviewItemId(null)
       showNotice("꾸미기를 저장하지 못했어요. 일지는 그대로예요.", true)
       return false
     }
-    const saved = saveDecorationStateIfCurrent(next, storageVersion)
+    const epoch = accountEpoch.current
+    savingRef.current = true; setSaving(true)
+    const saved = accountDecorationsEnabled() ? await saveAccountState(next) : saveDeviceState(next)
+    if (epoch !== accountEpoch.current) return false
+    savingRef.current = false; setSaving(false)
     if (!saved.ok) {
       if (saved.code === "STALE_STATE") {
         const latest = loadDecorationState()
@@ -175,20 +242,29 @@ export function JournalDecorationSurface({
     }
     setPast((stack) => [...stack.slice(-19), canonical])
     setFuture([])
-    setCanonical(next)
-    setStorageVersion(JSON.stringify(next))
+    setCanonical(saved.state)
+    setStorageVersion(JSON.stringify(saved.state))
     setPreview(null)
     setPreviewItemId(null)
-    showNotice(successMessage)
+    showNotice(saved.storage === "PENDING" ? "변경 내용은 보관했어요. 연결되면 계정에 저장해요." : successMessage,
+      saved.storage === "PENDING")
     return true
   }
 
   /* Undo/Redo 공통: 대상 상태를 저장하고 스택을 반대쪽으로 옮긴다. 저장 실패 시 스택 보존. */
-  const timeTravel = (direction: "UNDO" | "REDO"): void => {
+  const timeTravel = async (direction: "UNDO" | "REDO"): Promise<void> => {
+    if (savingRef.current || !editable) return
     const source = direction === "UNDO" ? past : future
-    const target = source[source.length - 1]
-    if (target === undefined) return
-    if (!saveDecorationStateIfCurrent(target, storageVersion).ok) {
+    const previous = source[source.length - 1]
+    if (previous === undefined) return
+    // Undo changes the canvas, never ownership or spent points from a later purchase.
+    const target = { ...previous, spentPoints: canonical.spentPoints, ownedItemIds: canonical.ownedItemIds }
+    const epoch = accountEpoch.current
+    savingRef.current = true; setSaving(true)
+    const saved = accountDecorationsEnabled() ? await saveAccountState(target) : saveDeviceState(target)
+    if (epoch !== accountEpoch.current) return
+    savingRef.current = false; setSaving(false)
+    if (!saved.ok) {
       showNotice("꾸미기를 저장하지 못했어요. 일지는 그대로예요.", true)
       return
     }
@@ -199,8 +275,8 @@ export function JournalDecorationSurface({
       setFuture((stack) => stack.slice(0, -1))
       setPast((stack) => [...stack.slice(-19), canonical])
     }
-    setCanonical(target)
-    setStorageVersion(JSON.stringify(target))
+    setCanonical(saved.state)
+    setStorageVersion(JSON.stringify(saved.state))
     setPreview(null)
     setPreviewItemId(null)
     setSelectedIndex(null)
@@ -232,21 +308,35 @@ export function JournalDecorationSurface({
   })
 
   /* v3 자유 배치: 슬롯 점유·교체 확인이 사라졌다 — 탭 = 배열 끝에 추가(최상단). */
-  const apply = (item: DecorationCatalogItem): void => {
+  const apply = async (item: DecorationCatalogItem): Promise<void> => {
     if (isPlacementDecorationId(item.id) && pageItems.length >= MAX_DECORATION_ITEMS_PER_PAGE) {
       showNotice(`한 페이지에 ${MAX_DECORATION_ITEMS_PER_PAGE}개까지 붙일 수 있어요.`, true)
       return
     }
     const next = applyJournalDecoration(canonical, item, date)
-    if (commit(next, `${withJosa(item.name, "을/를")} 저장했어요.`)) {
+    if (await commit(next, `${withJosa(item.name, "을/를")} 저장했어요.`)) {
       if (isPlacementDecorationId(item.id)) setSelectedIndex(pageItems.length)
       setDrawerOpen(false)
     }
   }
 
   /* 포인트 구매(레거시 상점 이식): 구매는 장식 배치가 아니므로 undo 스택에 넣지 않는다. */
-  const purchase = (item: DecorationCatalogItem): void => {
-    const result = purchaseDecoration(earnedPoints, canonical, item.id, storageVersion)
+  const purchase = async (item: DecorationCatalogItem): Promise<void> => {
+    if (savingRef.current || !editable) return
+    const owner = activeLocalAccount(), epoch = accountEpoch.current
+    let result: ReturnType<typeof purchaseDecoration>
+    if (accountDecorationsEnabled()) {
+      if (owned(item.id)) { showNotice("이미 가지고 있어요."); return }
+      savingRef.current = true; setSaving(true)
+      const saved = await purchaseAccountDecoration(item.id, storageVersion).catch(() => null)
+      if (epoch !== accountEpoch.current || owner !== activeLocalAccount()) return
+      savingRef.current = false; setSaving(false)
+      if (!saved?.ok || saved.storage !== "ACCOUNT") {
+        showNotice(saved?.ok ? "구매 내용을 전송 중이에요. 계정 저장을 확인한 뒤 사용할 수 있어요." : "구매를 확인하지 못했어요. 기존 꾸미기는 그대로예요.", true)
+        return
+      }
+      result = { kind: "PURCHASED", state: saved.state, remainingPoints: saved.remainingPoints }
+    } else result = purchaseDecoration(earnedPoints, canonical, item.id, storageVersion)
     if (result.kind === "PURCHASED") {
       setCanonical(result.state)
       setStorageVersion(JSON.stringify(result.state))
@@ -266,6 +356,7 @@ export function JournalDecorationSurface({
   }
 
   const close = (): void => {
+    if (savingRef.current) { showNotice("변경 내용을 저장하고 있어요.", true); return }
     setOpen(false)
     setDrawerOpen(false)
     setPreview(null)
@@ -278,6 +369,7 @@ export function JournalDecorationSurface({
 
   /* 텍스트 스티커 입력 시트 오픈 (P5 U1): 24개 상한은 붙이기 전에 미리 안내한다. */
   const openTextSheetForCreate = (): void => {
+    if (!editable || savingRef.current) return
     if (pageItems.length >= MAX_DECORATION_ITEMS_PER_PAGE) {
       showNotice(`한 페이지에 ${MAX_DECORATION_ITEMS_PER_PAGE}개까지 붙일 수 있어요.`, true)
       return
@@ -288,22 +380,23 @@ export function JournalDecorationSurface({
 
   /* 더블탭·연필 손잡이 양쪽에서 호출 (P5 U4/U5). */
   const openTextSheetForEdit = (index: number): void => {
+    if (!editable || savingRef.current) return
     const target = pageItems[index]
     if (target === undefined || !isTextStickerPageItem(target)) return
     setSelectedIndex(index)
     setTextSheet({ mode: "EDIT", index, text: target.text, inkId: target.inkId })
   }
 
-  const confirmTextSheet = (text: string, inkId: TextInkId): void => {
+  const confirmTextSheet = async (text: string, inkId: TextInkId): Promise<void> => {
     if (textSheet === null) return
     if (textSheet.mode === "CREATE") {
-      if (commit(appendJournalTextSticker(canonical, date, text.trim(), inkId), "글 스티커를 붙였어요. 드래그로 옮겨 보세요.")) {
+      if (await commit(appendJournalTextSticker(canonical, date, text.trim(), inkId), "글 스티커를 붙였어요. 드래그로 옮겨 보세요.")) {
         setSelectedIndex(pageItems.length)
         setTextSheet(null)
       }
       return
     }
-    if (commit(updateJournalTextSticker(canonical, date, textSheet.index, text.trim(), inkId), "글 스티커를 고쳤어요.")) {
+    if (await commit(updateJournalTextSticker(canonical, date, textSheet.index, text.trim(), inkId), "글 스티커를 고쳤어요.")) {
       setTextSheet(null)
     }
   }
@@ -318,33 +411,33 @@ export function JournalDecorationSurface({
   }
 
   /* v3: 전 품목 복제 (계약 §6). 복제본은 최상단에 붙고 바로 선택된다. */
-  const duplicatePlacement = (index: number): void => {
+  const duplicatePlacement = async (index: number): Promise<void> => {
     const next = duplicateJournalDecorationAt(canonical, date, index)
     if (next === null) {
       showNotice(`복제할 자리가 없어요. 한 페이지에 ${MAX_DECORATION_ITEMS_PER_PAGE}개까지예요.`, true)
       return
     }
-    if (commit(next, "복제했어요. 새 장식을 옮겨 보세요.")) {
+    if (await commit(next, "복제했어요. 새 장식을 옮겨 보세요.")) {
       setSelectedIndex(pageItems.length)
     }
   }
 
-  const deletePlacement = (index: number): void => {
+  const deletePlacement = async (index: number): Promise<void> => {
     const placement = pageItems[index]
     const item = placement === undefined ? undefined : DECORATION_CATALOG.find((candidate) => candidate.id === placement.itemId)
     const label = placement !== undefined && isTextStickerPageItem(placement)
       ? "글 스티커"
       : item === undefined ? "꾸미기" : item.name
-    if (commit(removeJournalDecorationAt(canonical, date, index), `${withJosa(label, "을/를")} 지웠어요. 되돌리기로 복구할 수 있어요.`)) {
+    if (await commit(removeJournalDecorationAt(canonical, date, index), `${withJosa(label, "을/를")} 지웠어요. 되돌리기로 복구할 수 있어요.`)) {
       setSelectedIndex(null)
     }
   }
 
-  const moveSelected = (direction: "BACKWARD" | "FORWARD"): void => {
+  const moveSelected = async (direction: "BACKWARD" | "FORWARD"): Promise<void> => {
     if (selectedIndex === null) return
     const target = direction === "BACKWARD" ? selectedIndex - 1 : selectedIndex + 1
     const next = reorderJournalDecoration(canonical, date, selectedIndex, target)
-    if (commit(next, direction === "BACKWARD" ? "장식을 한 칸 뒤로 보냈어요." : "장식을 한 칸 앞으로 가져왔어요.")) {
+    if (await commit(next, direction === "BACKWARD" ? "장식을 한 칸 뒤로 보냈어요." : "장식을 한 칸 앞으로 가져왔어요.")) {
       setSelectedIndex(target)
     }
   }
@@ -358,7 +451,7 @@ export function JournalDecorationSurface({
     showNotice("장식을 복사했어요. 다른 날짜에서도 붙일 수 있어요.")
   }
 
-  const pasteCopied = (): void => {
+  const pasteCopied = async (): Promise<void> => {
     const copied = readJournalDecorationFromSession()
     if (copied === null) {
       setClipboardAvailable(false)
@@ -368,13 +461,23 @@ export function JournalDecorationSurface({
       showNotice(`붙일 자리가 없어요. 한 페이지에 ${MAX_DECORATION_ITEMS_PER_PAGE}개까지예요.`, true)
       return
     }
-    if (commit(appendJournalDecorationItem(canonical, date, copied), "복사한 장식을 붙였어요.")) {
+    if (await commit(appendJournalDecorationItem(canonical, date, copied), "복사한 장식을 붙였어요.")) {
       setSelectedIndex(pageItems.length)
     }
   }
 
   return (
     <div ref={workspaceRef} className={`journal-decoration-workspace${open ? " journal-decoration-workspace--open" : ""}`} role={open ? "dialog" : undefined} aria-label={open ? "이 일지 꾸미기" : undefined} aria-modal={open ? "true" : undefined}>
+      {accountDecorationsEnabled() && <div role="status" className="account-storage-status">
+        {saving ? "꾸미기 저장 중" : accountStatus === "READY" ? "계정 꾸미기" : accountStatus === "EMPTY" ? "계정에 저장된 꾸미기가 없어요." : accountStatus === "PENDING"
+          ? "연결되면 계정에 저장해요" : accountStatus === "CONFLICT" ? "다른 기기의 꾸미기와 달라요. 두 내용을 확인해 주세요."
+            : accountStatus === "FAILED" ? "꾸미기 조회에 실패했어요. 기기의 보관 내용은 지우지 않았어요."
+            : accountStatus === "DELETED" ? "계정에서 삭제된 꾸미기예요. 자동으로 복원하지 않아요."
+            : accountStatus === "AUTH_REQUIRED" ? "계정 꾸미기는 로그인 후 사용할 수 있어요."
+            : "계정의 꾸미기를 불러오고 있어요."}
+        {!saving && accountStatus === "FAILED" && <button type="button" onClick={() => void hydrateAccountDecorations()}>다시 불러오기</button>}
+      </div>}
+      {accountDecorationsEnabled() && activeLocalAccount() && <AccountDecorationConflictPanel />}
       <JournalDecorationToolbar
         hasEntries={hasEntries}
         items={items}
@@ -384,14 +487,15 @@ export function JournalDecorationSurface({
         availablePoints={availablePoints}
         purchasableItemIds={purchasableItemIds}
         pageItemCounts={pageItemCounts}
-        canUndo={past.length > 0}
-        canRedo={future.length > 0}
+        canUndo={editable && !saving && past.length > 0}
+        canRedo={editable && !saving && future.length > 0}
         selectedIndex={selectedIndex}
         placementCount={pageItems.length}
         clipboardAvailable={clipboardAvailable}
         notice={notice?.text ?? ""}
         previewItemId={previewItemId}
         onOpen={() => {
+          if (!editable) { showNotice("계정 꾸미기 상태를 먼저 확인해 주세요.", true); return }
           focusBeforeOpenRef.current = document.activeElement instanceof HTMLElement ? document.activeElement : null
           setOpen(true)
           setDrawerOpen(false)
@@ -412,8 +516,8 @@ export function JournalDecorationSurface({
         onUnavailable={(message) => showNotice(message, true)}
         onApply={apply}
         onPurchase={purchase}
-        onClearAvatar={() => {
-          if (commit(clearJournalAvatarDecoration(canonical), "아바타를 기본 상태로 바꿨어요.")) {
+        onClearAvatar={async () => {
+          if (await commit(clearJournalAvatarDecoration(canonical), "아바타를 기본 상태로 바꿨어요.")) {
             setSelectedIndex(null)
             setDrawerOpen(false)
           }
@@ -439,7 +543,7 @@ export function JournalDecorationSurface({
         date={date}
         state={visible}
         pageTopRef={pageTopRef}
-        editable={open && preview === null}
+        editable={editable && !saving && open && preview === null}
         selectedIndex={selectedIndex}
         onSelectPlacement={(index) => {
           setSelectedIndex(index)

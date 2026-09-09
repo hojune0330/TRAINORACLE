@@ -6,7 +6,7 @@
 //  권하면서 복원을 안 주는 것은 지키지 못할 약속이다.
 //
 // 안전 원칙:
-//  - 파일은 이 기기에서만 읽는다. 어디로도 업로드하지 않는다.
+//  - 원본 파일은 기기에서 읽고, 확인한 기록만 활성 계정의 암호화 보관 경로로 보낸다.
 //  - 기본은 "지금 일지를 지킨다": 겹치는 항목은 건드리지 않는다. 덮어쓰기는
 //    사용자가 명시적으로 골라야 한다.
 //  - 지운 일지는 백업 파일로도 되살아나지 않는다.
@@ -21,6 +21,9 @@ import type {
 } from "../domain/restore/backup-file"
 import { useActiveContentScroll } from "../hooks/useActiveContentScroll"
 import { useOrderedStepMotion } from "../hooks/useOrderedStepMotion"
+import { accountJournalRecordsEnabled } from "../domain/account/account-journal-record-service"
+import { createAccountBackupRestoration, type AccountRestoreOutcome } from "../domain/restore/account-restore"
+import { useImportOwnerScope } from "./import-activities/useImportOwnerScope"
 
 const mono: React.CSSProperties = { fontFamily: "var(--mono)" }
 
@@ -39,23 +42,32 @@ type Stage =
   | { readonly step: "review"; readonly read: BackupReadResult; readonly plan: RestorePlan }
   | { readonly step: "done"; readonly outcome: RestoreOutcome }
   | { readonly step: "failed"; readonly outcome: RestoreOutcome }
+  | { readonly step: "account-result"; readonly outcome: AccountRestoreOutcome }
 
 export function RestoreBackup({ onBack, onOpenHome }: {
   readonly onBack?: () => void
   readonly onOpenHome?: () => void
 }) {
   const [stage, setStage] = React.useState<Stage>({ step: "pick" })
-  const [failure, setFailure] = React.useState<"unreadable" | "empty" | null>(null)
+  const [failure, setFailure] = React.useState<"unreadable" | "empty" | "account-unavailable" | null>(null)
   const [mode, setMode] = React.useState<RestoreMode>("keep-existing")
   const [decorationMode, setDecorationMode] = React.useState<DecorationRestoreMode>("keep-existing")
   const [busy, setBusy] = React.useState(false)
   const busyRef = React.useRef(false)
+  const accountRestore = React.useRef<Awaited<ReturnType<typeof createAccountBackupRestoration>>>(null)
   const stageRef = React.useRef<HTMLDivElement>(null)
   const stageMotion = useOrderedStepMotion(stage.step, ["pick", "review", "done", "failed"])
   useActiveContentScroll(stage.step, stageRef, undefined, true)
+  const captureScope = useImportOwnerScope(() => {
+    accountRestore.current?.dispose(); accountRestore.current = null
+    busyRef.current = false; setBusy(false); setStage({ step: "pick" }); setFailure(null)
+  })
+  React.useEffect(() => () => accountRestore.current?.dispose(), [])
 
   const handleFile = async (file: File) => {
     if (busyRef.current) return
+    const current = captureScope()
+    accountRestore.current?.dispose(); accountRestore.current = null
     busyRef.current = true
     setBusy(true)
     setFailure(null)
@@ -63,13 +75,19 @@ export function RestoreBackup({ onBack, onOpenHome }: {
     try {
       text = await file.text()
     } catch {
+      if (!current()) return
       busyRef.current = false
       setBusy(false)
       setFailure("unreadable")
       return
     }
 
+    if (!current()) return
     const read = readBackupFile(text)
+    const account = accountJournalRecordsEnabled()
+    const restoration = account && read.recognized ? await createAccountBackupRestoration(read) : null
+    if (!current()) { restoration?.dispose(); return }
+    accountRestore.current = restoration
     busyRef.current = false
     setBusy(false)
     if (!read.recognized) {
@@ -77,6 +95,7 @@ export function RestoreBackup({ onBack, onOpenHome }: {
       setStage({ step: "pick" })
       return
     }
+    if (account && !restoration) { setFailure("account-unavailable"); return }
     if (read.entries.length === 0 && read.decorationStatus !== "included") {
       setFailure("empty")
       setStage({ step: "pick" })
@@ -84,14 +103,23 @@ export function RestoreBackup({ onBack, onOpenHome }: {
     }
     setMode("keep-existing")
     setDecorationMode("keep-existing")
-    setStage({ step: "review", read, plan: buildRestorePlan(read.entries) })
+    setStage({ step: "review", read, plan: restoration?.plan ?? buildRestorePlan(read.entries) })
   }
 
   const handleRestore = async () => {
     if (busyRef.current || stage.step !== "review") return
     busyRef.current = true
     setBusy(true)
+    const current = captureScope()
+    if (accountJournalRecordsEnabled()) {
+      const outcome = await accountRestore.current?.confirm(mode, decorationMode)
+      if (!current()) return
+      busyRef.current = false; setBusy(false)
+      if (outcome) setStage({ step: "account-result", outcome })
+      return
+    }
     const outcome = await restoreBackupFile(stage.read, stage.plan, mode, decorationMode)
+    if (!current()) return
     busyRef.current = false
     setBusy(false)
     setStage(outcome.commit === "COMMITTED" ? { step: "done", outcome } : { step: "failed", outcome })
@@ -99,6 +127,7 @@ export function RestoreBackup({ onBack, onOpenHome }: {
 
   const restart = () => {
     if (busyRef.current) return
+    accountRestore.current?.dispose(); accountRestore.current = null
     setStage({ step: "pick" })
     setFailure(null)
   }
@@ -138,6 +167,7 @@ export function RestoreBackup({ onBack, onOpenHome }: {
 
         {stage.step === "review" && (
           <ReviewStage
+            accountDecorationReady={accountRestore.current?.decorationReady ?? false}
             read={stage.read}
             plan={stage.plan}
             mode={mode}
@@ -162,6 +192,32 @@ export function RestoreBackup({ onBack, onOpenHome }: {
         {stage.step === "failed" && (
           <RestoreFailedStage outcome={stage.outcome} onRestart={restart} />
         )}
+        {stage.step === "account-result" && <div data-testid="restore-account-result" role="status">
+          <h2>계정 일지 복원 결과</h2>
+          <p>{stage.outcome.commit === "COMPLETE" ? "선택한 항목 복원 완료" : stage.outcome.commit === "PARTIAL" ? "일부 복원 (PARTIAL)" : stage.outcome.commit === "PENDING" ? "계정 저장 확인 대기" : "복원을 완료하지 못했어요"}</p>
+          <p>계정에 저장됨 {stage.outcome.account}건 · 연결 대기 {stage.outcome.pending}건 · 충돌 확인 {stage.outcome.conflicts}건 · 실패 {stage.outcome.failed}건</p>
+          <p>기존 기록 유지 {stage.outcome.keptExisting}건 · 삭제 표식으로 제외 {stage.outcome.blockedByDeletion}건</p>
+          {stage.outcome.decorationRestore === "ACCOUNT" && <p>꾸미기: 계정에 저장됨</p>}
+          {stage.outcome.decorationRestore === "PENDING" && <p>꾸미기: 연결·서버 확인 대기. 소유권 확인과 계정 저장 완료는 아직 확인되지 않았어요.</p>}
+          {stage.outcome.decorationRestore === "KEPT_EXISTING" && <p>꾸미기: 기존 상태 유지</p>}
+          {stage.outcome.decorationRestore === "CONFLICT" && <p>꾸미기: 충돌 확인. 검토 이후 바뀐 계정 상태를 자동으로 덮어쓰지 않았어요.</p>}
+          {stage.outcome.decorationRestore === "FAILED" && <p>{stage.outcome.decorationFailure === "READ_FAILED"
+            ? "꾸미기: 계정 최신 상태를 조회하지 못해 복원을 확인하지 못했어요."
+            : "꾸미기: 소유권 또는 저장 조건을 확인하지 못해 복원을 확인하지 못했어요. 백업 원본은 계속 보관해 주세요."}</p>}
+          {stage.outcome.decorationRestore === "INVALID_SKIPPED" && <p>꾸미기는 형식이 맞지 않거나 지원하지 않는 항목이 있어 복원하지 않았어요. 기존 꾸미기와 백업 원본은 변경하지 않았어요.</p>}
+          <p>이미 계정에 저장된 기록은 취소하지 않아요. 연결 대기는 저장 완료가 아니며 원본 파일을 보관해 주세요.</p>
+          <button type="button" style={primaryBtn} disabled={busy} onClick={async () => {
+            if (busyRef.current || !accountRestore.current) return
+            const current = captureScope()
+            busyRef.current = true; setBusy(true)
+            const outcome = await accountRestore.current.confirm(mode, decorationMode)
+            if (!current()) return
+            busyRef.current = false; setBusy(false)
+            if (outcome) setStage({ step: "account-result", outcome })
+          }}>저장 상태 다시 확인</button>
+          {onOpenHome && <button type="button" style={secondaryBtn} disabled={busy} onClick={onOpenHome}>일지에서 확인하기</button>}
+          <button type="button" style={secondaryBtn} disabled={busy} onClick={restart}>다른 파일 고르기</button>
+        </div>}
       </div>
     </div>
   )
@@ -169,13 +225,13 @@ export function RestoreBackup({ onBack, onOpenHome }: {
 
 function PickStage({ busy, failure, onFile }: {
   readonly busy: boolean
-  readonly failure: "unreadable" | "empty" | null
+  readonly failure: "unreadable" | "empty" | "account-unavailable" | null
   readonly onFile: (file: File) => void | Promise<void>
 }) {
   return (
     <div style={{ marginTop: 20, display: "flex", flexDirection: "column", gap: 14 }}>
       <p style={{ fontFamily: "var(--sans)", fontSize: 13, lineHeight: 1.65, color: "var(--ink-2)", margin: 0 }}>
-        전에 <b>내려받아 둔 일지 백업 파일(JSON)</b>을 고르면 이 기기의 일지로
+        전에 <b>내려받아 둔 일지 백업 파일(JSON)</b>을 고르면 {accountJournalRecordsEnabled() ? "현재 로그인한 계정의 일지로" : "이 기기의 일지로"}
         되돌려요. 브라우저 데이터를 지웠거나 기기를 바꿨을 때 쓰세요.
       </p>
 
@@ -188,8 +244,9 @@ function PickStage({ busy, failure, onFile }: {
         </div>
         <div style={{ ...mono, fontSize: 10, color: "var(--ink-2)", lineHeight: 1.65, marginTop: 5 }}>
           이미 있는 일지는 <b>그대로 두고</b> 백업에 있는 것만 더해요. 같은 일지가
-          양쪽에 있으면 기본적으로 <b>지금 것을 지켜요</b>. 파일은 이 기기에서만
-          읽고 어디로도 올리지 않아요.
+          양쪽에 있으면 기본적으로 <b>지금 것을 지켜요</b>. {accountJournalRecordsEnabled()
+            ? "원본 파일은 이 기기에서만 읽어요. 복원을 눌러 확인한 기록과 메모만 현재 로그인한 계정의 암호화 보관 경로로 전송해요. 비밀 글은 공유·분석에서 제외해요."
+            : "파일은 이 기기에서만 읽고 어디로도 올리지 않아요."}
         </div>
       </div>
 
@@ -216,7 +273,7 @@ function PickStage({ busy, failure, onFile }: {
       {failure !== null && (
         <div role="alert" data-testid="restore-failure" style={{ border: "1px solid var(--pain-5)", background: "var(--surface)", padding: "10px 13px" }}>
           <div style={{ ...mono, fontSize: 10.5, color: "var(--ink)", lineHeight: 1.6 }}>
-            {failure === "empty"
+            {failure === "account-unavailable" ? "계정 기록을 조회하지 못했어요. 연결과 로그인을 확인한 뒤 다시 시도해 주세요." : failure === "empty"
               ? "백업 파일은 맞는데 되돌릴 일지를 찾지 못했어요. 빈 백업일 수 있어요."
               : "이 파일을 트레인오라클 백업으로 읽지 못했어요. 앱에서 내려받은 .json 파일인지 확인해 주세요."}
             <br />기존 일지는 그대로 있어요.
@@ -227,7 +284,8 @@ function PickStage({ busy, failure, onFile }: {
   )
 }
 
-function ReviewStage({ read, plan, mode, onModeChange, decorationMode, onDecorationModeChange, onRestore, onRestart, busy }: {
+function ReviewStage({ read, plan, mode, onModeChange, decorationMode, onDecorationModeChange, onRestore, onRestart, busy, accountDecorationReady = false }: {
+  readonly accountDecorationReady?: boolean
   readonly read: BackupReadResult
   readonly plan: RestorePlan
   readonly mode: RestoreMode
@@ -267,7 +325,10 @@ function ReviewStage({ read, plan, mode, onModeChange, decorationMode, onDecorat
           style={{ ...mono, fontSize: 10.5, color: "var(--ink-2)", lineHeight: 1.7, border: "1px solid var(--line)", padding: "10px 12px" }}
         >
           <b>꾸미기</b> · 꾸미기 항목 {read.decorationItemCount}개 · 날짜 배치 {read.decorationPlacementCount}개
-          <br />일지와 분리된 꾸미기 구획으로 되돌려요.
+          <br />{accountJournalRecordsEnabled()
+            ? "꾸미기는 교체를 직접 선택한 경우에만 계정에 복원해요. 일지와 따로 저장되므로 일부만 완료될 수 있고, 서버에서 소유권이 확인되지 않으면 복원되지 않을 수 있어요. 백업 원본은 보관해 주세요."
+            : "일지와 분리된 꾸미기 구획으로 되돌려요."}
+          {accountJournalRecordsEnabled() && !accountDecorationReady && <p role="alert">계정 꾸미기를 조회하지 못했어요. 꾸미기 교체는 잠겨 있으며 일지는 따로 복원할 수 있어요.</p>}
         </div>
       )}
 
@@ -277,7 +338,7 @@ function ReviewStage({ read, plan, mode, onModeChange, decorationMode, onDecorat
           data-testid="restore-decoration-invalid"
           style={{ ...mono, fontSize: 10.5, color: "var(--pain-5)", lineHeight: 1.65, border: "1px solid var(--pain-5)", padding: "10px 12px" }}
         >
-          꾸미기는 형식이 맞지 않아 제외해요. 읽힌 일지는 따로 확인한 뒤 되돌릴 수 있어요.
+          꾸미기는 형식이 맞지 않거나 지원하지 않는 항목이 있어 복원할 수 없어요. 백업 원본은 변경하지 않아요. 읽힌 일지는 따로 확인한 뒤 되돌릴 수 있어요.
         </div>
       )}
 
@@ -287,14 +348,17 @@ function ReviewStage({ read, plan, mode, onModeChange, decorationMode, onDecorat
           <ModeChoice
             checked={decorationMode === "keep-existing"}
             onSelect={() => { if (!busy) onDecorationModeChange("keep-existing") }}
-            title="이 기기 꾸미기를 지켜요"
-            detail="권장 · 이 기기에 있는 스티커와 테마는 그대로 둬요."
+            title={accountJournalRecordsEnabled() ? "현재 계정 꾸미기를 지켜요" : "이 기기 꾸미기를 지켜요"}
+            detail={accountJournalRecordsEnabled() ? "권장 · 현재 계정의 꾸미기는 그대로 둬요." : "권장 · 이 기기에 있는 스티커와 테마는 그대로 둬요."}
           />
           <ModeChoice
+            disabled={busy || (accountJournalRecordsEnabled() && !accountDecorationReady)}
             checked={decorationMode === "replace"}
             onSelect={() => { if (!busy) onDecorationModeChange("replace") }}
             title="백업의 꾸미기로 바꿔요"
-            detail="포인트, 가진 꾸미기, 즐겨찾기, 날짜별 배치를 백업 파일 내용으로 바꿔요."
+            detail={accountJournalRecordsEnabled()
+              ? "현재 로그인한 계정의 꾸미기를 백업 내용으로 교체하는 데 동의해요. 소유권과 저장 조건은 서버에서 다시 확인해요."
+              : "포인트, 가진 꾸미기, 즐겨찾기, 날짜별 배치를 백업 파일 내용으로 바꿔요."}
           />
         </div>
       )}
@@ -308,8 +372,9 @@ function ReviewStage({ read, plan, mode, onModeChange, decorationMode, onDecorat
 
       {read.kind === "safe" && (
         <div style={{ ...mono, fontSize: 10, color: "var(--ink-4)", lineHeight: 1.65 }}>
-          이 백업에는 메모 원문이 들어 있지 않아요 — 되돌린 일지의 메모는 비어
-          있어요. 없는 내용을 만들어 채우지 않아요.
+          {accountJournalRecordsEnabled()
+            ? "이 백업에는 메모 원문이 없어요. 새 일지의 메모는 비어 있고, 겹치는 계정 일지의 기존 메모는 유지해요."
+            : "이 백업에는 메모 원문이 들어 있지 않아요 — 되돌린 일지의 메모는 비어 있어요. 없는 내용을 만들어 채우지 않아요."}
         </div>
       )}
 
@@ -327,7 +392,9 @@ function ReviewStage({ read, plan, mode, onModeChange, decorationMode, onDecorat
               checked={mode === "overwrite-conflicts"}
               onSelect={() => { if (!busy) onModeChange("overwrite-conflicts") }}
               title="백업 파일 내용으로 바꿔요"
-              detail="겹치는 일지를 백업에 있는 내용으로 덮어써요 — 지금 내용은 사라져요"
+              detail={accountJournalRecordsEnabled()
+                ? "서버 최신 상태를 다시 확인하고 바꿔요. 검토 후 바뀐 기록은 충돌로 남기며 자동으로 덮어쓰지 않아요."
+                : "겹치는 일지를 백업에 있는 내용으로 덮어써요 — 지금 내용은 사라져요"}
             />
           </div>
         </>
@@ -337,7 +404,7 @@ function ReviewStage({ read, plan, mode, onModeChange, decorationMode, onDecorat
         type="button"
         data-testid="restore-submit"
         style={primaryBtn}
-        disabled={busy || (willRestore === 0 && read.decorationStatus !== "included")}
+        disabled={busy || (willRestore === 0 && (read.decorationStatus !== "included" || (accountJournalRecordsEnabled() && (decorationMode !== "replace" || !accountDecorationReady))))}
         onClick={onRestore}
       >
         {willRestore > 0
@@ -349,7 +416,8 @@ function ReviewStage({ read, plan, mode, onModeChange, decorationMode, onDecorat
   )
 }
 
-function ModeChoice({ checked, onSelect, title, detail }: {
+function ModeChoice({ checked, onSelect, title, detail, disabled = false }: {
+  readonly disabled?: boolean
   readonly checked: boolean
   readonly onSelect: () => void
   readonly title: string
@@ -357,7 +425,7 @@ function ModeChoice({ checked, onSelect, title, detail }: {
 }) {
   return (
     <button
-      type="button" role="radio" aria-checked={checked} onClick={onSelect}
+      type="button" role="radio" aria-checked={checked} onClick={onSelect} disabled={disabled}
       style={{
         textAlign: "left", cursor: "pointer", minHeight: 44, padding: "10px 12px",
         background: checked ? "var(--surface)" : "transparent",

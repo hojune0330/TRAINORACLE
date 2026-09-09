@@ -44,3 +44,11 @@ verify_jwt = false
 
 [functions.coros-workout-push]
 verify_jwt = false
+
+# The handler verifies the bearer with auth.getUser; database feature gates stay off.
+[functions.account-journal]
+verify_jwt = false
+
+# Same explicit auth.getUser verification and owner-scoped RPC gates as account-journal.
+[functions.account-plan-collection]
+verify_jwt = false

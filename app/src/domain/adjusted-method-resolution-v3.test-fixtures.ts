@@ -5,13 +5,15 @@ import type { SequenceWork } from "@impl/prescription/sequence"
 import { prepareSourceAdjustmentOfferV3 } from "./source-adjustment-offer"
 import { projectLegacyPaceSourceV3 } from "./adjusted-method-resolution-v3"
 import { adjustedMethodFixtureWithCandidate } from "./adjusted-method-resolution.test-fixtures"
+import type { AdjustedFixtureGeneration, AdjustedFixtureSchedule } from "./adjusted-method-resolution.test-fixtures"
 import { RUNTIME_CASES } from "./prescription-quality-matrix.test-fixtures"
 
 /** Synthetic transitions only; no operating template/adoption registry writes. */
 export function adjustedMethodV3FixtureWithCandidate(event: typeof RUNTIME_CASES[number] = RUNTIME_CASES[3]!,
   work: SequenceWork = { kind: "distance", distanceM: 200, durationSeconds: null },
-  transform?: (s: PrescriptionSequenceV3) => PrescriptionSequenceV3) {
-  const prior = adjustedMethodFixtureWithCandidate(event), old = prior.resolution
+  transform?: (s: PrescriptionSequenceV3) => PrescriptionSequenceV3, nowMs = 150,
+  schedule: AdjustedFixtureSchedule = {}, generationOverride?: AdjustedFixtureGeneration) {
+  const prior = adjustedMethodFixtureWithCandidate(event, undefined, undefined, nowMs, schedule, generationOverride), old = prior.resolution
   const bridge = projectLegacyPaceSourceV3(old.original)
   if (bridge.kind !== "projected") throw Error(bridge.code)
   const base: PrescriptionSequenceV3 = { kind: "PRESCRIPTION_SEQUENCE", version: 3, id: "TEST-V3", label: null,
@@ -26,12 +28,12 @@ export function adjustedMethodV3FixtureWithCandidate(event: typeof RUNTIME_CASES
   const from = bridge.source.configuration
   const to = configurationReferenceV3({ familyId: from.familyId, configurationId: "TEST-V3", version: "1" }, target)
   const policy = { policyId: "TEST-V3", version: "1", reviewRef: "TEST_NOT_APPROVAL", contextKey: "TEST-CONTEXT",
-    validFromMs: 100, expiresAtMs: 200, allowedEdges: [{ from, to }] }
+    validFromMs: nowMs - 50, expiresAtMs: nowMs + 50, allowedEdges: [{ from, to }] }
   const authority = { catalog: [{ familyId: from.familyId, reviewRef: "TEST_NOT_APPROVAL", configurations: [
     { configurationId: from.configurationId, version: from.version, sequence: bridge.source.sequence },
     { configurationId: to.configurationId, version: to.version, sequence: target },
   ] }], policies: [policy] }
-  const source = { ...old.source, authority, current: from, policy: adjustmentPolicyReference(policy), contextKey: policy.contextKey, nowMs: 150 }
+  const source = { ...old.source, authority, current: from, policy: adjustmentPolicyReference(policy), contextKey: policy.contextKey, nowMs }
   const offer = prepareSourceAdjustmentOfferV3(source)
   if (offer.kind !== "available") throw Error(offer.code)
   const draft = createAdjustmentDraftV3({ authority: offer.authority, current: offer.current, policy: offer.policy,

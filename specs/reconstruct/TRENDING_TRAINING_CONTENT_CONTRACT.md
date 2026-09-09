@@ -5,8 +5,8 @@ document_metadata:
   doc_id: trainoracle-spec-trending-training-content-v1
   spec_id: TRENDING_TRAINING_CONTENT_CONTRACT
   title: TrainOracle Trending Training Content Contract
-  version: "1.1"
-  round: RT2_OPERATIONS_PIPELINE_DRAFT
+  version: "1.2"
+  round: RT3_OWNER_POINT_MERGE_DIRECTION
   status: DRAFT_FOR_REVIEW
   owner: COACH_HOJUNE
   open_issues_total: 4
@@ -69,10 +69,21 @@ pace, recovery and taper cannot be copied into another athlete's plan.
 V1 may store only a set of known content IDs as a device-local bookmark. Unknown IDs
 fail closed. The bookmark contains no athlete data and is not synchronized or published.
 
-The owner has approved a future first-completion reward concept but has deferred how
-content points combine with existing visit and journal points. Therefore V1 awards zero
-content points and does not create a completion ledger. Reaching an article, opening a
-source link, scrolling, refreshing, or saving cannot award points.
+Historical V1 awards zero content points and has no completion ledger. On 2026-09-08
+the owner accepted the point merge direction in
+`reports/review/OWNER_DECISION_AND_OPERATION_READINESS_CHECKPOINT_2026-09-08.md` section 3.5:
+one visible balance, separate earning reasons, unchanged visit/journal awards, and
+1 point for each different article's first completion, capped at 10 content points per day.
+Completion means reaching the last article section, not scientifically verified reading.
+
+This direction resolves the previously deferred merge policy, not the runtime gate.
+Before enabling rewards, the implementation needs a versioned completion-event contract,
+known published content IDs, replay protection across refresh/revision/revisit, durable
+save-failure behavior, existing purchases preserved, and account/device merge tests where
+sync is supported. A correction under the same content ID does not earn another reward.
+Opening a source link, bookmarking, refreshing, or merely entering an article is not
+completion. Existing zero-reward V1 behavior remains until this gate is implemented and
+verified. The issue below stays OPEN for that evidence, not for another merge-policy vote.
 
 ---
 

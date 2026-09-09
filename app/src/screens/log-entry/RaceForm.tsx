@@ -1,4 +1,7 @@
 import React from "react"
+import { FormInputDraftBoundary, useFormInputDraft, useRecoveredFormInput } from "./useFormInputDraft"
+import { accountJournalRecordsEnabled } from "../../domain/account/account-journal-record-service"
+import { FormFinalizationRecovery, useFormFinalization } from "./useFormFinalization"
 import { Stamp } from "../../components/JournalPrimitives"
 import { TermHelp } from "../../components/TermHelp"
 import { compactDate, dowOf, nowClock } from "../../domain/dates"
@@ -18,35 +21,55 @@ import { PurposeScopedMemoField, usePurposeScopedMemo } from "./PurposeScopedMem
 import { RacePostMood, RacePreChecks } from "./RaceSelfChecks"
 import { inputStyle } from "./input-style"
 import { FormSec, TopBar } from "./shared"
-import { StickyBar } from "./StickyBar"
+import { FormInputSaveBar as StickyBar } from "./useFormInputDraft"
 import type { EntryFormProps } from "./shared"
 import { useActiveContentScroll } from "../../hooks/useActiveContentScroll"
 import { useOrderedStepMotion } from "../../hooks/useOrderedStepMotion"
 
 type RaceStage = "pre" | "post"
 
-export function RaceForm({ onBack, onDone, targetDate, initialEntry }: EntryFormProps) {
+export function RaceForm(props: EntryFormProps) {
+  return <FormInputDraftBoundary kind="race" date={props.initialEntry?.date ?? props.targetDate ?? todayISO()}
+    hasInitialContext={props.initialEntry !== undefined}
+    identity={JSON.stringify([props.initialEntry?.id, props.initialEntry?.savedAt])}>
+    <RaceFormEditor {...props} />
+  </FormInputDraftBoundary>
+}
+
+function RaceFormEditor({ onBack, onDone, targetDate, initialEntry }: EntryFormProps) {
+  const recovered = useRecoveredFormInput("race")
+  const input = recovered?.input
   const initial = initialEntry?.kind === "race" ? initialEntry : undefined
   const isEditing = initial !== undefined
+  const [entryId] = React.useState(() => recovered?.entryId ?? initial?.id ?? newEntryId())
+  const lastSavedAt = React.useRef(recovered?.baseSavedAt ?? initial?.savedAt)
+  const persistInFlight = React.useRef(false)
+  const [saving, setSaving] = React.useState(false)
+  const accountEnabled = accountJournalRecordsEnabled()
+  const finalization = useFormFinalization(entryId, accountEnabled, lastSavedAt)
   const entryDate = initial?.date ?? targetDate ?? todayISO()
   const initialPaceSeconds = initial?.goalPace?.secondsPerKm
-  const [stage, setStage] = React.useState<RaceStage>(() => initial?.stage ?? "pre")
-  const [record, setRecord] = React.useState(() => initial?.record ?? "")
-  const [rank, setRank] = React.useState(() => initial?.rank ?? "")
-  const [result, setResult] = React.useState(() => initial?.result ?? "")
-  const [tension, setTension] = React.useState<number | null>(() => initial?.tension ?? null)
-  const [condition, setCondition] = React.useState<number | null>(() => initial?.condition ?? null)
-  const [mood, setMood] = React.useState<number | null>(() => initial?.mood ?? null)
-  const [paceMinutes, setPaceMinutes] = React.useState(() => initialPaceSeconds === undefined ? "" : String(Math.floor(initialPaceSeconds / 60)))
-  const [paceSeconds, setPaceSeconds] = React.useState(() => initialPaceSeconds === undefined ? "" : String(initialPaceSeconds % 60).padStart(2, "0"))
+  const [stage, setStage] = React.useState<RaceStage>(() => input?.stage ?? initial?.stage ?? "pre")
+  const [record, setRecord] = React.useState(() => input?.record ?? initial?.record ?? "")
+  const [rank, setRank] = React.useState(() => input?.rank ?? initial?.rank ?? "")
+  const [result, setResult] = React.useState(() => input?.result ?? initial?.result ?? "")
+  const [tension, setTension] = React.useState<number | null>(() => input ? input.tension : initial?.tension ?? null)
+  const [condition, setCondition] = React.useState<number | null>(() => input ? input.condition : initial?.condition ?? null)
+  const [mood, setMood] = React.useState<number | null>(() => input ? input.mood : initial?.mood ?? null)
+  const [paceMinutes, setPaceMinutes] = React.useState(() => input?.paceMinutes ?? (initialPaceSeconds === undefined ? "" : String(Math.floor(initialPaceSeconds / 60))))
+  const [paceSeconds, setPaceSeconds] = React.useState(() => input?.paceSeconds ?? (initialPaceSeconds === undefined ? "" : String(initialPaceSeconds % 60).padStart(2, "0")))
   const [paceError, setPaceError] = React.useState<string | null>(null)
   const [saveError, setSaveError] = React.useState(false)
-  const memo = usePurposeScopedMemo(initial?.memo ?? "", initial?.memoPurpose)
+  const [accountNotice, setAccountNotice] = React.useState<string | null>(null)
+  const memo = usePurposeScopedMemo(input?.memo ?? initial?.memo ?? "", input ? input.purpose ?? undefined : initial?.memoPurpose)
+  const draft = useFormInputDraft({ kind: "race", stage, record, rank, result, tension, condition,
+    mood, paceMinutes, paceSeconds, memo: memo.text, purpose: memo.purpose ?? null }, entryId, true, lastSavedAt.current)
   const stageRef = React.useRef<HTMLDivElement>(null)
   const stageMotion = useOrderedStepMotion(stage, ["pre", "post"])
   useActiveContentScroll(stage, stageRef, undefined, true)
 
   const persist = async () => {
+    if (persistInFlight.current || !draft.current()) return
     const hasPaceInput = paceMinutes.trim() !== "" || paceSeconds.trim() !== ""
     const goalPace = parseTargetPaceInput(paceMinutes, paceSeconds)
     if (hasPaceInput && goalPace === null) {
@@ -57,9 +80,9 @@ export function RaceForm({ onBack, onDone, targetDate, initialEntry }: EntryForm
     const memoPreparation = memo.prepareForSave()
     if (!memoPreparation.ready) return
 
-    const entry: JournalEntry = {
-      id: initial?.id ?? newEntryId(), kind: "race", date: entryDate,
-      savedAt: nextJournalSavedAt(initial?.savedAt), syncState: "local",
+    let entry: JournalEntry = {
+      id: entryId, kind: "race", date: entryDate,
+      savedAt: nextJournalSavedAt(lastSavedAt.current), syncState: "local",
       stage, record, rank, result, memo: memo.text,
       fieldProvenance: {
         tension: explicitOrMissing(tension !== null),
@@ -74,18 +97,48 @@ export function RaceForm({ onBack, onDone, targetDate, initialEntry }: EntryForm
       ...(goalPace !== null ? { goalPace } : {}),
     }
     const isPrivateMemo = entry.memoPurpose === "PRIVATE_SELF_ONLY" && entry.memo.trim() !== ""
-    const saveResult = initial === undefined
-      ? isPrivateMemo ? await savePrivateEntry(entry) : saveEntry(entry)
-      : isPrivateMemo ? await updatePrivateEntry(entry, initial.savedAt) : updateEntry(entry, initial.savedAt)
-    if (window.location.search.includes("uitest")) console.log(`[JSAVE] kind=race ok=${saveResult.ok}`)
-    if (!saveResult.ok) { setSaveError(true); return }
-    if (memoPreparation.reviewMessage === null) onDone?.("race", entry)
-    else onDone?.("race", entry, memoPreparation.reviewMessage)
+    persistInFlight.current = true
+    setSaving(true)
+    setSaveError(false)
+    setAccountNotice(null)
+    try {
+      const accountResult = accountEnabled ? await finalization.save(entry, lastSavedAt.current) : null
+      if (accountResult?.ok) entry = accountResult.entry
+      const saveResult = accountEnabled ? accountResult : (lastSavedAt.current === undefined
+        ? isPrivateMemo ? await savePrivateEntry(entry) : saveEntry(entry)
+        : isPrivateMemo ? await updatePrivateEntry(entry, lastSavedAt.current) : updateEntry(entry, lastSavedAt.current))
+      if (window.location.search.includes("uitest")) console.log(`[JSAVE] kind=race ok=${saveResult?.ok === true}`)
+      if (!saveResult?.ok) { setAccountNotice(accountResult?.notice ?? null); setSaveError(true); return }
+      if (!draft.current()) return
+      if (accountResult?.ok && accountResult.storage !== "ACCOUNT") {
+        setAccountNotice(accountResult.storage === "CONFLICT" ? "수정 충돌 확인 필요 · 기기 보관됨 · 기록 미완료" : "계정 전송 대기 · 기기 보관됨 · 기록 미완료")
+        setSaveError(true); return
+      }
+      if (accountEnabled) await draft.complete()
+      if (!draft.current()) return
+      lastSavedAt.current = entry.savedAt
+      const saved = accountResult?.ok ? { ...entry, syncState: accountResult.storage === "ACCOUNT" ? "synced" as const : "local" as const } : entry
+      const storageMessage = !accountResult?.ok ? null : accountResult.storage === "ACCOUNT"
+        ? isPrivateMemo ? "비밀 일지를 계정에 저장했어요. 공유·분석에는 사용하지 않아요." : "일지를 계정에 저장했어요."
+        : accountResult.storage === "CONFLICT"
+          ? "수정 충돌을 확인해 주세요. 이 기기의 내용은 보관했지만 계정 저장은 완료되지 않았어요."
+          : isPrivateMemo ? "비밀 일지를 이 기기에 보관했어요. 계정 전송 대기 중이며 공유·분석에는 사용하지 않아요."
+            : "일지를 이 기기에 보관했어요. 계정 전송 대기 중이에요."
+      const message = [memoPreparation.reviewMessage, storageMessage].filter(Boolean).join(" ")
+      onDone?.("race", saved, message || undefined)
+    } catch {
+      setSaveError(true)
+    } finally {
+      persistInFlight.current = false
+      setSaving(false)
+    }
   }
 
   return (
-    <div style={{ paddingBottom: 100 }}>
-      <TopBar onBack={onBack}>경기 · 빠른 점검</TopBar>
+    <div style={{ paddingBottom: 100 }} aria-busy={saving}>
+      <fieldset disabled={saving} style={{ border: 0, margin: 0, padding: 0, minWidth: 0 }}>
+      <TopBar onBack={draft.back(onBack)}>경기 · 빠른 점검</TopBar>
+      <FormFinalizationRecovery recovery={finalization} onBack={draft.back(onBack)} />
       <RaceHeader date={entryDate} isToday={entryDate === todayISO()} />
       <StageTabs stage={stage} onChange={setStage} />
 
@@ -134,7 +187,9 @@ export function RaceForm({ onBack, onDone, targetDate, initialEntry }: EntryForm
           placeholder={stage === "pre" ? "레이스 전에 자신에게..." : "경기를 마치고 남길 말..."}
         />
       </FormSec>
-      <StickyBar onSave={persist} error={saveError} label={isEditing ? "수정 저장" : undefined} />
+      {accountEnabled && saveError && <p role="alert">{accountNotice ?? "계정 저장을 완료하지 못했어요. 입력은 그대로 남아 있어요. 연결과 로그인 상태를 확인한 뒤 다시 저장해 주세요."}</p>}
+      <StickyBar onSave={persist} error={saveError && !accountEnabled} label={saving ? "저장 중" : isEditing ? "수정 저장" : undefined} />
+      </fieldset>
     </div>
   )
 }

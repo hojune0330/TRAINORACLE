@@ -10,9 +10,12 @@ import {
   migrateLegacyDecorationState,
   parseStoredDecorationStateV2,
   parseStoredDecorationStateV3,
+  V2_SLOT_DEFAULT_TRANSFORMS,
 } from "./decoration-schema"
 import type { DecorationState } from "./decoration-schema"
-import { accountScopedStorageKey } from "./account/local-account-scope"
+import { accountScopedStorageKey, accountScopedStorageKeyFor } from "./account/local-account-scope"
+import { activeLocalAccount } from "./account/local-journal-ownership"
+import { accountDecorationsEnabled, readAccountDecorationState } from "./account/account-decoration-service"
 
 export const DECORATION_STORAGE_KEY_V1 = "trainoracle.decorations.v1"
 export const DECORATION_STORAGE_KEY_V2 = "trainoracle.decorations.v2"
@@ -37,6 +40,10 @@ export function activeDecorationStorageKeyV2Backup(): string {
 }
 
 export function readDecorationStateSerialized(): string | null {
+  if (accountDecorationsEnabled()) {
+    const state = readAccountDecorationState()
+    return state === null ? null : JSON.stringify(state)
+  }
   const storage = currentStorage()
   if (storage === null) return null
   const result = readStorage(storage, activeDecorationStorageKeyV3())
@@ -65,7 +72,52 @@ type StorageReadResult =
   | { readonly ok: false }
 
 function currentStorage(): Storage | null {
-  return typeof window === "undefined" ? null : window.localStorage
+  try { return typeof window === "undefined" ? null : window.localStorage } catch { return null }
+}
+
+export type AccountScopedDecorationSource = {
+  ownerId: string; sourceKey: string; raw: string; state: DecorationState | null
+}
+
+/** Read only the explicitly selected account's legacy source, without normalizing
+ * away invalid items or writing another plaintext copy during account cutover.
+ */
+export function readAccountScopedDecorationSource(ownerId: string): AccountScopedDecorationSource | null {
+  if (!ownerId || activeLocalAccount() !== ownerId) throw new Error("Decoration source owner changed")
+  const storage = currentStorage()
+  if (!storage) throw new Error("Decoration source storage unavailable")
+  for (const base of [DECORATION_STORAGE_KEY_V3, DECORATION_STORAGE_KEY_V2, DECORATION_STORAGE_KEY_V1]) {
+    const sourceKey = accountScopedStorageKeyFor(base, ownerId), stored = readStorage(storage, sourceKey)
+    if (!stored.ok) throw new Error("Decoration source unreadable")
+    if (stored.value === null) continue
+    const raw = stored.value
+    let state: DecorationState | null = null
+    try {
+      const value = JSON.parse(raw)
+      if (base === DECORATION_STORAGE_KEY_V3) {
+        const parsed = decorationStateSchema.safeParse(value)
+        state = parsed.success ? parsed.data : null
+      } else {
+        state = base === DECORATION_STORAGE_KEY_V2 ? parseStoredDecorationStateV2(raw) : migrateLegacyDecorationState(raw)
+        const sameIds = (a: readonly string[], b: readonly string[]) => JSON.stringify([...a].sort()) === JSON.stringify([...b].sort())
+        if (state && (!sameIds(value.ownedItemIds, state.ownedItemIds) || value.spentPoints !== state.spentPoints)) state = null
+        if (state && base === DECORATION_STORAGE_KEY_V2) {
+          if (JSON.stringify(value.equipped) !== JSON.stringify(state.equipped)
+            || JSON.stringify(value.library) !== JSON.stringify(state.library)) state = null
+          if (state) {
+            const rows = value.pagePlacements as { date: string; slot: keyof typeof V2_SLOT_DEFAULT_TRANSFORMS; itemId: string; transform?: unknown }[]
+            const items = state.pages.flatMap(page => page.items.map(item => ({ date: page.date, itemId: item.itemId, transform: item.transform })))
+            const source = rows.map(row => ({ date: row.date, itemId: row.itemId, transform: row.transform ?? V2_SLOT_DEFAULT_TRANSFORMS[row.slot] }))
+            const fingerprint = (rows: unknown[]) => JSON.stringify(rows.map(row => JSON.stringify(row)).sort())
+            if (fingerprint(items) !== fingerprint(source)) state = null
+          }
+        }
+      }
+    } catch { state = null }
+    if (activeLocalAccount() !== ownerId) throw new Error("Decoration source owner changed")
+    return { ownerId, sourceKey, raw, state }
+  }
+  return null
 }
 
 function readStorage(storage: Storage, key: string): StorageReadResult {
@@ -85,6 +137,7 @@ export function saveDecorationStateIfCurrent(
   candidate: unknown,
   expectedSerialized: string | null | undefined,
 ): DecorationSaveResult {
+  if (accountDecorationsEnabled()) return { ok: false, code: "STORAGE_UNAVAILABLE" }
   const parsed = decorationStateSchema.safeParse(candidate)
   if (!parsed.success) return { ok: false, code: "INVALID_STATE" }
   const storage = currentStorage()
@@ -136,6 +189,7 @@ function restoreStorageValue(storage: Storage, storageKey: string, previous: str
 
 export function loadDecorationState(): DecorationState {
   const fallback = createEmptyDecorationState()
+  if (accountDecorationsEnabled()) return readAccountDecorationState() ?? fallback
   const storage = currentStorage()
   if (storage === null) return fallback
 

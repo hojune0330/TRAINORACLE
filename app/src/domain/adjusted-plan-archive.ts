@@ -1,4 +1,7 @@
 import { canonicalJsonFingerprint } from "@impl/plan-generator/candidate-identity"
+import { captureAccountPlanWrite } from "./account/account-plan-domain"
+import { accountPlanService, accountPlansEnabled } from "./account/account-plan-service"
+import { materializeAccountPlan } from "./account/account-plan-document-schema"
 import { accountScopedStorageKey, localAccountScopeSnapshot, localAccountScopeIsCurrent } from "./account/local-account-scope"
 import { activePlanBetaStorageKey } from "./plan-beta-store"
 import { hasCanonicalJsonTree } from "./plan-beta-schema"
@@ -35,6 +38,18 @@ export function parseAdjustedOriginalArchive(raw: string | null, retained: reado
 }
 
 export function readAdjustedOriginalPlans(retained = RETAINED_ADJUSTED_PLAN_EVIDENCE, now = new Date()) {
+  if (accountPlansEnabled()) {
+    const view = accountPlanService()?.snapshot(), document = view?.confirmedDocument
+    if (!document || ("historyLoaded" in view && !view.historyLoaded)) return invalid()
+    const entries: Entry[] = []
+    for (const entry of document.data.plans) {
+      if (!entry.archivedAt || entry.snapshot.state.version !== 4) continue
+      const read = readStoredAdjustedPlanState(materializeAccountPlan(entry).state, retained, now)
+      if (read.kind !== "loaded") return invalid()
+      entries.push({ archivedAt: entry.archivedAt, state: read.state })
+    }
+    return { kind: "loaded" as const, entries }
+  }
   try { return parseAdjustedOriginalArchive(window.localStorage.getItem(accountScopedStorageKey(ADJUSTED_PLAN_ARCHIVE_KEY)), retained, now) }
   catch { return invalid() }
 }
@@ -61,6 +76,7 @@ export async function retainAdjustedOriginalPlan(expectedFingerprint: string, op
   const scope = localAccountScopeSnapshot()
   const key = accountScopedStorageKey(ADJUSTED_PLAN_ARCHIVE_KEY)
   const activeKey = activePlanBetaStorageKey()
+  const accountWrite = captureAccountPlanWrite(activeKey)
   const retained = options.retained ?? RETAINED_ADJUSTED_PLAN_EVIDENCE
   const locks = options.locks === undefined ? getPlanMutationLockManager() : options.locks
   const reject = (code: string) => ({ kind: "rejected" as const, code })
@@ -72,13 +88,14 @@ export async function retainAdjustedOriginalPlan(expectedFingerprint: string, op
       let before: string | null = null
       let next: string | null = null
       try {
-        const storage = window.localStorage
+        const storage = accountWrite?.storage ?? window.localStorage
         before = storage.getItem(key)
         const activeRaw = storage.getItem(activeKey)
         const now = new Date()
         const active = readStoredAdjustedPlanState(activeRaw === null ? null : JSON.parse(activeRaw), retained, now)
         if (active.kind !== "loaded") return reject("INVALID_STORED_PLAN")
         if (active.state.contentFingerprint !== expectedFingerprint) return reject("STALE_BASE")
+        if (accountWrite) return { kind: "retained" as const }
         const archive = prepareAdjustedOriginalArchive(before, active.state, retained, now)
         if (archive.kind !== "prepared") return reject("INVALID_STORED_PLAN")
         if (archive.raw === before) return { kind: "retained" as const }

@@ -5,8 +5,9 @@ import type { ActivityParseResult } from "../../domain/import/activity-file"
 import type { ImportDraft, ImportSaveIntent, ImportSaveResult } from "../../domain/import/import-draft"
 import { mono, primaryBtn, secondaryBtn } from "./styles"
 import { TermHelp } from "../../components/TermHelp"
+import { accountJournalRecordsEnabled } from "../../domain/account/account-journal-record-service"
 
-export type ReadFailure = "unreadable" | "empty" | "too-large" | "cancelled" | null
+export type ReadFailure = "unreadable" | "empty" | "too-large" | "cancelled" | "account-unavailable" | null
 
 export function PickStage({ busy, failure, fileInputRef, onFile, onCancel }: {
   readonly busy: boolean
@@ -30,8 +31,10 @@ export function PickStage({ busy, failure, fileInputRef, onFile, onCancel }: {
           파일은 이 기기에서만 읽어요
         </div>
         <div style={{ ...mono, fontSize: 10, color: "var(--ink-2)", lineHeight: 1.65, marginTop: 5 }}>
-          고른 파일은 서버로 올라가지 않아요. 이 화면에서 내용을 읽어 일지 초안만
-          만들고, <b>저장을 누른 것만</b> 이 기기의 일지에 들어가요.
+          {accountJournalRecordsEnabled()
+            ? "원본 파일은 이 기기에서만 읽어요. 저장을 눌러 확인한 기록만 현재 로그인한 계정의 암호화 보관 경로로 전송해요. 비밀 글은 공유·분석에서 제외해요."
+            : <>고른 파일은 서버로 올라가지 않아요. 이 화면에서 내용을 읽어 일지 초안만
+              만들고, <b>저장을 누른 것만</b> 이 기기의 일지에 들어가요.</>}
         </div>
       </div>
 
@@ -67,7 +70,7 @@ export function PickStage({ busy, failure, fileInputRef, onFile, onCancel }: {
       {failure !== null && (
         <div role="alert" data-testid="import-failure" style={{ border: "1px solid var(--pain-5)", background: "var(--surface)", padding: "10px 13px" }}>
           <div style={{ ...mono, fontSize: 10.5, color: "var(--ink)", lineHeight: 1.6 }}>
-            {failure === "empty"
+            {failure === "account-unavailable" ? "계정 기록을 조회하지 못했어요. 연결과 로그인을 확인한 뒤 다시 시도해 주세요." : failure === "empty"
               ? "파일은 읽었지만 일지로 옮길 활동을 찾지 못했어요. 날짜·거리·시간이 비어 있는 파일일 수 있어요."
               : failure === "too-large"
                 ? "파일이 너무 커요. 10MB 이하 파일로 나누어 다시 골라 주세요."
@@ -91,7 +94,8 @@ export function PickStage({ busy, failure, fileInputRef, onFile, onCancel }: {
   )
 }
 
-export function ReviewStage({ drafts, result, selected, intents, onIntent, onToggle, onSave, onRestart }: {
+export function ReviewStage({ drafts, result, selected, intents, onIntent, onToggle, onSave, onRestart, busy = false }: {
+  readonly busy?: boolean
   readonly drafts: readonly ImportDraft[]
   readonly result: ActivityParseResult
   readonly selected: ReadonlySet<number>
@@ -127,6 +131,7 @@ export function ReviewStage({ drafts, result, selected, intents, onIntent, onTog
               <label style={{ display: "flex", alignItems: "center", justifyContent: "center", width: 44, height: 44, cursor: "pointer" }}>
                 <input
                   type="checkbox"
+                  disabled={busy}
                   checked={selected.has(index)}
                   onChange={() => onToggle(index)}
                   aria-label={`${compactDate(activity.date)} ${activity.name} 가져오기`}
@@ -152,6 +157,7 @@ export function ReviewStage({ drafts, result, selected, intents, onIntent, onTog
                   ].filter((part) => part !== null).join(" · ") || "기록 값 없음"}
                 </span>
                 {selected.has(index) && <select
+                  disabled={busy}
                   aria-label={`${activity.name} 저장 방식`}
                   value={intent?.kind === "SAVE_SEPARATE" ? "separate" : intent?.entryId ?? ""}
                   onChange={(event) => {
@@ -179,19 +185,30 @@ export function ReviewStage({ drafts, result, selected, intents, onIntent, onTog
         새 일지로 가져온 활동은 현재 읽기 전용이에요.
         가져온 숫자는 <b>주간 통계·추이·훈련계획에는 들어가지 않아요</b> (직접 확인한 값만 분석에 쓰는 원칙).
       </div>
-      <button type="button" style={primaryBtn} disabled={chosenCount === 0 || missingIntent} onClick={onSave}>
+      <button type="button" style={primaryBtn} disabled={busy || chosenCount === 0 || missingIntent} onClick={onSave}>
         {chosenCount === 0 ? "저장할 활동을 골라 주세요" : missingIntent ? "저장 방식을 골라 주세요" : `고른 ${chosenCount}건 일지에 저장`}
       </button>
-      <button type="button" style={secondaryBtn} onClick={onRestart}>다른 파일 고르기</button>
+      {busy && <p role="status">계정 저장 확인 중</p>}
+      <button type="button" style={secondaryBtn} disabled={busy} onClick={onRestart}>다른 파일 고르기</button>
     </div>
   )
 }
 
-export function SavedStage({ outcome, onOpenLog, onRestart }: {
+export function SavedStage({ outcome, onOpenLog, onRestart, onRetry, busy = false }: {
+  readonly busy?: boolean
+  readonly onRetry?: () => void
   readonly outcome: ImportSaveResult
   readonly onOpenLog?: () => void
   readonly onRestart: () => void
 }) {
+  if (outcome.account !== undefined) return <div data-testid="import-saved" role="status">
+    <h2>계정 가져오기 결과</h2>
+    <p>계정에 저장됨 {outcome.account}건 · 연결 대기 {outcome.pending ?? 0}건 · 충돌 확인 {outcome.conflicts ?? 0}건 · 실패 {outcome.failed}건</p>
+    <p>원본 파일은 그대로 보관해 주세요. 연결 대기는 계정 저장 완료가 아니에요.</p>
+    {onRetry && <button type="button" style={primaryBtn} disabled={busy} onClick={onRetry}>저장 상태 다시 확인</button>}
+    {onOpenLog && <button type="button" style={secondaryBtn} disabled={busy} onClick={onOpenLog}>일지에서 확인하기</button>}
+    <button type="button" style={secondaryBtn} disabled={busy} onClick={onRestart}>파일 더 가져오기</button>
+  </div>
   const completed = outcome.saved + (outcome.merged ?? 0)
   const resultLabel = completed === 0
     ? "가져오기 실패"

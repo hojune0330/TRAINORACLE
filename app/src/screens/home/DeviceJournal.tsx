@@ -11,6 +11,7 @@ import {
 import type { JournalEntry } from "../../domain/journal-store"
 import { hasImportedField } from "../../domain/field-provenance"
 import { journalRpeLabel, quickOutcomeLabel } from "../../domain/quick-journal"
+import { activeLocalAccount, onLocalJournalScopeChange } from "../../domain/account/local-journal-ownership"
 
 type DeviceJournalProps = {
   readonly onOpenDay?: (date: string) => void
@@ -133,6 +134,7 @@ export function SafeJournalExport({ onOpenRestore }: {
   readonly onOpenRestore?: () => void
 } = {}) {
   const [isFullExportDialogOpen, setIsFullExportDialogOpen] = React.useState(false)
+  React.useEffect(() => onLocalJournalScopeChange(() => setIsFullExportDialogOpen(false)), [])
   // F-3 안내: 안전 백업에서 빠지는 일지가 있으면 **내려받기 전에** 알린다.
   // 받은 뒤에 알려주면 이미 "전부 받았다"고 믿은 상태라 늦다.
   const summary = React.useMemo(() => safeExportSummary(), [])
@@ -199,9 +201,16 @@ function downloadSafeJournalExport(): void {
 }
 
 async function downloadJournalExport(mode: "SAFE" | "OWNER_FULL_BACKUP"): Promise<void> {
+  const owner = activeLocalAccount()
+  let revoked = false
+  const unsubscribe = onLocalJournalScopeChange(() => {
+    if (activeLocalAccount() !== owner) revoked = true
+  })
+  const current = () => !revoked && activeLocalAccount() === owner
   try {
     const isFullBackup = mode === "OWNER_FULL_BACKUP"
     if (isFullBackup) await loadEntriesWithPrivateMemos()
+    if (!current()) return
     const blob = new Blob([exportEntriesJSON({ includeRawMemos: isFullBackup })], { type: "application/json" })
     const url = URL.createObjectURL(blob)
     const anchor = document.createElement("a")
@@ -213,6 +222,7 @@ async function downloadJournalExport(mode: "SAFE" | "OWNER_FULL_BACKUP"): Promis
     URL.revokeObjectURL(url)
     if (window.location.search.includes("uitest")) console.log("[JEXPORT] ok=true")
   } catch (error) {
+    if (!current()) return
     if (error instanceof PrivateMemoUnlockRequiredError) {
       window.alert("나만의 메모 복구 코드를 열어야 메모 포함 파일을 만들 수 있어요.")
       return
@@ -220,6 +230,8 @@ async function downloadJournalExport(mode: "SAFE" | "OWNER_FULL_BACKUP"): Promis
     if (!(error instanceof Error)) throw error
     if (window.location.search.includes("uitest")) console.log("[JEXPORT] ok=false")
     window.alert("내보내기에 실패했어요. 잠시 후 다시 시도해 주세요.")
+  } finally {
+    unsubscribe()
   }
 }
 

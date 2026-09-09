@@ -1,4 +1,5 @@
 import React from "react"
+import { accountJournalRecordsEnabled } from "../../domain/account/account-journal-record-service"
 import { MEMO_PURPOSE } from "../../domain/journal-schema"
 import type { MemoPurpose } from "../../domain/journal-schema"
 import { assessPurposeScopedMemo } from "../../safety/memo-safety"
@@ -89,6 +90,7 @@ export function PurposeScopedMemoField({
   readonly placeholder?: string
   readonly rows?: number
 }) {
+  const accountEnabled = accountJournalRecordsEnabled()
   const explanationId = `${fieldId}-purpose-explanation`
   const errorId = `${fieldId}-purpose-error`
   const describedBy = controller.purposeError === null
@@ -124,7 +126,7 @@ export function PurposeScopedMemoField({
         </div>
       </fieldset>
       <div id={explanationId} style={{ fontFamily: "var(--mono)", fontSize: 9.5, color: "var(--ink-3)", lineHeight: 1.55, marginBottom: 8 }}>
-        {purposeExplanation(controller.purpose)}
+        {purposeExplanation(controller.purpose, accountEnabled)}
       </div>
       {controller.purposeError !== null && (
         <div id={errorId} role="alert" style={{ fontFamily: "var(--mono)", fontSize: 10, color: "var(--pain-5)", marginBottom: 8 }}>
@@ -149,14 +151,22 @@ export function PurposeScopedMemoField({
       />
       {controller.reviewMessage !== null && (
         <div role="status" style={{ marginTop: 8, padding: "9px 10px", border: "1px solid var(--warn)", fontSize: 11.5, color: "var(--ink-2)", lineHeight: 1.55 }}>
-          {controller.reviewMessage} 저장은 이 기기에만 됩니다.
+          {controller.reviewMessage} {accountEnabled ? "계정 저장 여부는 저장 결과에서 확인해 주세요." : "저장은 이 기기에만 됩니다."}
         </div>
       )}
     </div>
   )
 }
 
-function purposeExplanation(purpose: MemoPurpose | undefined): string {
+function purposeExplanation(purpose: MemoPurpose | undefined, accountEnabled: boolean): string {
+  if (accountEnabled) {
+    const storage = "저장하면 원문을 암호화해 계정에 보관해요. 복구를 위해 서비스가 복호화할 수 있으며 종단간 암호화(E2EE)는 아니에요. 비밀 메모는 공유·분석에 사용하지 않아요."
+    if (purpose === MEMO_PURPOSE.privateSelfOnly) return storage
+    if (purpose === MEMO_PURPOSE.analyzableTrainingNote) {
+      return `${storage} 저장 전 검토는 이 기기에서만 잠시 진행해요. 원문은 훈련 계획의 근거로 쓰지 않아요.`
+    }
+    return `글을 적는다면 용도를 먼저 선택해 주세요. ${storage}`
+  }
   if (purpose === MEMO_PURPOSE.privateSelfOnly) {
     return "원문은 이 기기에만 남고 분석하지 않아요."
   }

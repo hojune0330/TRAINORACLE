@@ -5,7 +5,6 @@ import { RVE_NON_SENSITIVE_REASON_CODES } from "@impl/rve/signal"
 import type { AthleteRecord } from "./athlete-records"
 import {
   hasCanonicalJsonTree,
-  planAdaptationCandidateSchema,
 } from "./plan-beta-schema"
 import type { PlanBetaState } from "./plan-beta-schema"
 import {
@@ -13,6 +12,8 @@ import {
   type PlanCurrentCheck,
 } from "./plan-beta-flow"
 import { accountScopedStorageKey } from "./account/local-account-scope"
+import { contextSchema } from "./plan-adaptation-context-schema"
+import { accountPlanService, accountPlansEnabled } from "./account/account-plan-service"
 
 export const PLAN_ADAPTATION_CONTEXT_STORAGE_KEY = "trainoracle.plan-adaptation-context.v1"
 export const LOCAL_ADAPTATION_ATHLETE_ID = "local-athlete"
@@ -23,22 +24,6 @@ const supportedEventSchema = z.union([
   z.literal(3000),
   z.literal(5000),
 ])
-const contextSchema = z.object({
-  version: z.literal(1),
-  activeCandidateId: z.string().min(1),
-  candidates: z.tuple([
-    planAdaptationCandidateSchema,
-    planAdaptationCandidateSchema,
-  ]),
-}).strict().superRefine((context, refinement) => {
-  if (!context.candidates.some((candidate) => candidate.candidateId === context.activeCandidateId)) {
-    refinement.addIssue({
-      code: "custom",
-      path: ["activeCandidateId"],
-      message: "Active candidate must reference one candidate in this context.",
-    })
-  }
-})
 
 const passedSafetyGateSchema = z.object({
   kind: z.literal("passed"),
@@ -180,6 +165,11 @@ export function savePlanAdaptationContext(
 }
 
 export function loadPlanAdaptationContext(activeCandidateId: string) {
+  if (accountPlansEnabled()) {
+    const current = accountPlanService()?.snapshot().currentPlan
+    const context = current?.kind === "read_only" && current.packet.evidence === null ? current.packet.context : null
+    return context?.activeCandidateId === activeCandidateId ? context : null
+  }
   if (typeof window === "undefined") return null
   try {
     const raw = window.localStorage.getItem(accountScopedStorageKey(PLAN_ADAPTATION_CONTEXT_STORAGE_KEY))

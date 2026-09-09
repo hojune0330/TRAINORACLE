@@ -42,9 +42,16 @@ import {
   recommendationHistoryFromAdjusted,
 } from "./plan-method-history"
 import { readAdjustedOriginalPlans } from "./adjusted-plan-archive"
+import { accountPlanService, accountPlansEnabled } from "./account/account-plan-service"
+import { captureAccountPlanWrite } from "./account/account-plan-domain"
+import { materializeAccountPlan } from "./account/account-plan-document-schema"
 import { planHistorySnapshotContent } from "./plan-history-snapshot-content"
 import { readStoredAdjustedPlanState, RETAINED_ADJUSTED_PLAN_EVIDENCE } from "./adjusted-plan-storage-schema"
 import type { RetainedAdjustedPlanEvidence } from "./adjusted-plan-selection"
+import { readStoredAdjustedPlanStateV5, RETAINED_ADJUSTED_PLAN_EVIDENCE_V3 } from "./adjusted-plan-storage-v5"
+import type { RetainedAdjustedPlanEvidenceV3 } from "./selected-adjusted-plan-v3"
+import { readStoredMultiAdjustedPlanV6, RETAINED_MULTI_ADJUSTED_EVIDENCE_V3 } from "./adjusted-plan-storage-v6"
+import type { RetainedMultiAdjustedEvidenceV3 } from "./selected-multi-adjusted-plan-v3"
 export type {
   PlanBetaIntake,
   PlanBetaState,
@@ -66,7 +73,7 @@ export function activePlanBetaStorageKey(): string {
 
 function isAdjustedStoredEnvelope(raw: string | null): boolean {
   if (raw === null) return false
-  try { return JSON.parse(raw)?.version === 4 } catch { return false }
+  try { return [4, 5, 6].includes(JSON.parse(raw)?.version) } catch { return false }
 }
 
 export type PlanStorageResult =
@@ -80,6 +87,8 @@ export type PlanStorageResult =
 export type PlanBetaStateReadResult =
   | { readonly kind: "loaded"; readonly state: PlanBetaState }
   | (Omit<Extract<ReturnType<typeof readStoredAdjustedPlanState>, { kind: "loaded" }>, "kind"> & { readonly kind: "adjusted_loaded" })
+  | (Omit<Extract<ReturnType<typeof readStoredAdjustedPlanStateV5>, { kind: "loaded" }>, "kind"> & { readonly kind: "adjusted_v3_loaded" })
+  | (Omit<Extract<ReturnType<typeof readStoredMultiAdjustedPlanV6>, { kind: "loaded" }>, "kind"> & { readonly kind: "multi_adjusted_v3_loaded" })
   | { readonly kind: "missing" }
   | { readonly kind: "invalid" }
   | { readonly kind: "storage_error" }
@@ -89,6 +98,7 @@ export type PlanProgressStorageResult =
   | {
       readonly kind: "rejected"
       readonly code:
+        | `ACCOUNT_PLAN_${string}`
         | "MUTATION_LOCK_UNAVAILABLE"
         | "STALE_BASE"
         | "INVALID_STORED_PLAN"
@@ -114,6 +124,7 @@ export type LockedPlanArchiveResult =
   | {
       readonly kind: "rejected"
       readonly code:
+        | `ACCOUNT_PLAN_${string}`
         | "MUTATION_LOCK_UNAVAILABLE"
         | "STALE_BASE"
         | "INVALID_STORED_PLAN"
@@ -137,13 +148,35 @@ export function loadVersionedPlanBetaState(): PlanBetaState | null {
 
 export function readPlanBetaStateFromStorage(
   retained: readonly RetainedAdjustedPlanEvidence[] = RETAINED_ADJUSTED_PLAN_EVIDENCE,
+  retainedV3: readonly RetainedAdjustedPlanEvidenceV3[] = RETAINED_ADJUSTED_PLAN_EVIDENCE_V3,
+  retainedMultiV3: readonly RetainedMultiAdjustedEvidenceV3[] = RETAINED_MULTI_ADJUSTED_EVIDENCE_V3,
 ): PlanBetaStateReadResult {
-  return readPlanBetaStateForAccount(localAccountScopeSnapshot(), retained)
+  if (accountPlansEnabled()) {
+    const view = accountPlanService()?.snapshot(), selected = view?.currentPlan
+    if (!view || !view.document) return { kind: "storage_error" }
+    if (!selected) return { kind: "missing" }
+    if (selected.kind !== "read_only") return { kind: "invalid" }
+    const state = selected.packet.state
+    if (state.version === 3) return { kind: "loaded", state }
+    if (state.version === 4) {
+      const read = readStoredAdjustedPlanState(state, retained)
+      return read.kind === "loaded" ? { ...read, kind: "adjusted_loaded" } : { kind: "invalid" }
+    }
+    if (state.version === 5) {
+      const read = readStoredAdjustedPlanStateV5(state, retainedV3)
+      return read.kind === "loaded" ? { ...read, kind: "adjusted_v3_loaded" } : { kind: "invalid" }
+    }
+    const read = readStoredMultiAdjustedPlanV6(state, retainedMultiV3)
+    return read.kind === "loaded" ? { ...read, kind: "multi_adjusted_v3_loaded" } : { kind: "invalid" }
+  }
+  return readPlanBetaStateForAccount(localAccountScopeSnapshot(), retained, retainedV3, retainedMultiV3)
 }
 
 export function readPlanBetaStateForAccount(
   accountScope: string | null,
   retained: readonly RetainedAdjustedPlanEvidence[] = RETAINED_ADJUSTED_PLAN_EVIDENCE,
+  retainedV3: readonly RetainedAdjustedPlanEvidenceV3[] = RETAINED_ADJUSTED_PLAN_EVIDENCE_V3,
+  retainedMultiV3: readonly RetainedMultiAdjustedEvidenceV3[] = RETAINED_MULTI_ADJUSTED_EVIDENCE_V3,
 ): PlanBetaStateReadResult {
   if (typeof window === "undefined") return { kind: "storage_error" }
   const storageKey = accountScopedStorageKeyFor(PLAN_BETA_STORAGE_KEY, accountScope)
@@ -157,6 +190,14 @@ export function readPlanBetaStateForAccount(
 
   try {
     const json: unknown = JSON.parse(raw)
+    if (json !== null && typeof json === "object" && "version" in json && json.version === 6) {
+      const adjusted = readStoredMultiAdjustedPlanV6(json, retainedMultiV3)
+      return adjusted.kind === "loaded" ? { ...adjusted, kind: "multi_adjusted_v3_loaded" } : { kind: "invalid" }
+    }
+    if (json !== null && typeof json === "object" && "version" in json && json.version === 5) {
+      const adjusted = readStoredAdjustedPlanStateV5(json, retainedV3)
+      return adjusted.kind === "loaded" ? { ...adjusted, kind: "adjusted_v3_loaded" } : { kind: "invalid" }
+    }
     if (json !== null && typeof json === "object" && "version" in json && json.version === 4) {
       const adjusted = readStoredAdjustedPlanState(json, retained)
       return adjusted.kind === "loaded" ? { ...adjusted, kind: "adjusted_loaded" } : { kind: "invalid" }
@@ -171,6 +212,7 @@ export function readPlanBetaStateForAccount(
 export function savePlanBetaState(
   state: unknown,
 ): PlanStorageResult {
+  if (accountPlansEnabled()) return { ok: false, code: "PLAN_STORAGE_WRITE_FAILED", rollbackComplete: true }
   if (typeof window === "undefined") {
     return { ok: false, code: "PLAN_STORAGE_WRITE_FAILED", rollbackComplete: false }
   }
@@ -212,6 +254,7 @@ export async function savePlanProgressWithLock(
   expectedCandidateId: string,
   progress: StoredPlanProgress,
 ): Promise<PlanProgressStorageResult> {
+  const accountWrite = captureAccountPlanWrite(activePlanBetaStorageKey())
   const accountScope = localAccountScopeSnapshot()
   const locks = getPlanMutationLockManager()
   if (locks === null) return { kind: "rejected", code: "MUTATION_LOCK_UNAVAILABLE" }
@@ -250,6 +293,11 @@ export async function savePlanProgressWithLock(
           return { kind: "rejected", code: "INVALID_PROGRESS" } as const
         }
         const next = updateStoredProgress(current, progress)
+        if (accountWrite) {
+          const context = accountWrite.packet?.evidence === null ? accountWrite.packet.context : undefined
+          const code = await accountWrite.save(next, [], undefined, context)
+          return code ? { kind: "rejected", code } as const : { kind: "saved", state: next } as const
+        }
         const saved = savePlanBetaState(next)
         if (saved.ok) void backupActivePlanToServer(next)
         return saved.ok
@@ -294,6 +342,7 @@ export function updateStoredProgress(
 }
 
 export function archiveAndClearActivePlan(state: PlanBetaState): PlanArchiveResult {
+  if (accountPlansEnabled()) return { ok: false, code: "PLAN_ARCHIVE_WRITE_FAILED", rollbackComplete: true }
   if (typeof window === "undefined") {
     return {
       ok: false,
@@ -357,6 +406,7 @@ export function archiveAndClearActivePlan(state: PlanBetaState): PlanArchiveResu
 export async function archiveAndClearActivePlanWithLock(
   expectedCandidateId: string,
 ): Promise<LockedPlanArchiveResult> {
+  const accountWrite = captureAccountPlanWrite(activePlanBetaStorageKey())
   const accountScope = localAccountScopeSnapshot()
   const locks = getPlanMutationLockManager()
   if (locks === null) return { kind: "rejected", code: "MUTATION_LOCK_UNAVAILABLE" }
@@ -386,6 +436,10 @@ export async function archiveAndClearActivePlanWithLock(
         if (current.version !== 3 || current.activePlan.candidateId !== expectedCandidateId) {
           return { kind: "rejected", code: "STALE_BASE" } as const
         }
+        if (accountWrite) {
+          const code = await accountWrite.archive()
+          return code ? { kind: "rejected", code } as const : { kind: "archived", intake: current.intake } as const
+        }
         const archived = archiveAndClearActivePlan(current)
         return archived.ok
           ? { kind: "archived", intake: archived.intake } as const
@@ -402,6 +456,13 @@ export async function archiveAndClearActivePlanWithLock(
 }
 
 export function loadPreviousIntake(): StoredPlanBetaIntake | null {
+  if (accountPlansEnabled()) {
+    const view = accountPlanService()?.snapshot()
+    if (!view?.confirmedDocument || ("historyLoaded" in view && !view.historyLoaded)) return null
+    const entries = view.confirmedDocument.data.plans
+    const last = entries.filter(p => p.archivedAt !== null).sort((a, b) => b.archivedAt!.localeCompare(a.archivedAt!))[0]
+    return last ? last.snapshot.state.version === 3 ? last.snapshot.state.intake : last.snapshot.state.selection.intake : null
+  }
   if (typeof window === "undefined") return null
   try {
     const raw = window.sessionStorage.getItem(accountScopedStorageKey(PREVIOUS_INTAKE_KEY))
@@ -505,6 +566,15 @@ function loadPlanHistory(): readonly StoredPlanHistory[] {
 }
 
 function readPlanHistory(): readonly StoredPlanHistory[] | null {
+  if (accountPlansEnabled()) {
+    const view = accountPlanService()?.snapshot(), document = view?.confirmedDocument
+    if (!document || ("historyLoaded" in view && !view.historyLoaded)) return null
+    return document.data.plans.flatMap(entry => {
+      const packet = materializeAccountPlan(entry)
+      return entry.archivedAt && packet.state.version === 3
+        ? [planHistorySchema.parse(planHistorySnapshotContent(packet.state, entry.archivedAt, "MANUAL"))] : []
+    })
+  }
   if (typeof window === "undefined") return null
   try {
     const raw = window.localStorage.getItem(accountScopedStorageKey(HISTORY_KEY))

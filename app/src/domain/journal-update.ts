@@ -3,7 +3,7 @@ import { journalStorage, writeJournalEntries } from "./journal-local-storage"
 import { isPrivateMemoEntry, removePrivateMemoWithJournalEntries } from "./private-memo-vault"
 import { parseJournalEntryForWrite } from "./journal-schema"
 import type { JournalEntry } from "./journal-schema"
-import { loadJournalEntriesSnapshot } from "./journal-store"
+import { legacyJournalWritesBlocked, loadJournalEntriesSnapshot } from "./journal-store"
 import { isJournalVisible } from "./account/local-journal-ownership"
 import { samePlannedSessionLink } from "./planned-session-link"
 
@@ -50,6 +50,7 @@ export function updateEntryPreservingMemo(entry: unknown, expectedSavedAt: strin
 function updateEntryWithMemoMode(entry: unknown, expectedSavedAt: string, memoMode: "EDIT" | "PRESERVE"): UpdateEntryResult {
   const snapshot = loadJournalEntriesSnapshot()
   const entries = snapshot.entries
+  if (legacyJournalWritesBlocked()) return { ok: false, total: entries.length }
   const nextEntry = parseJournalEntryForWrite(entry)
   if (nextEntry === null) return { ok: false, total: entries.length }
   if (!isJournalVisible(nextEntry.id)) return { ok: false, total: entries.filter((current) => isJournalVisible(current.id)).length }

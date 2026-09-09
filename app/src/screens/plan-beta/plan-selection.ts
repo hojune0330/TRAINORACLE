@@ -1,4 +1,6 @@
 import { evaluatePlanSafety, selectPlanForActivation } from "../../domain/plan-beta-flow"
+import { captureAccountPlanWrite } from "../../domain/account/account-plan-domain"
+import { contextSchema } from "../../domain/plan-adaptation-context-schema"
 import type { PlanAthleteEvidence } from "../../domain/plan-beta-flow"
 import {
   activePlanBetaStorageKey,
@@ -74,6 +76,7 @@ export async function saveSelectedPlanCandidate(
   }
   const adaptationScope = adaptationScopeForCandidate(canonicalCandidate)
   const accountScope = localAccountScopeSnapshot()
+  const accountWrite = captureAccountPlanWrite(activePlanBetaStorageKey())
   const locks = getPlanMutationLockManager()
   if (locks === null) return { kind: "rejected", code: "MUTATION_LOCK_UNAVAILABLE" }
 
@@ -97,7 +100,7 @@ export async function saveSelectedPlanCandidate(
         }
 
         const previousRead = readPlanBetaStateFromStorage()
-        if (previousRead.kind === "adjusted_loaded") return { kind: "rejected", code: "STALE_BASE" } as const
+        if (!["missing", "loaded", "storage_error", "invalid"].includes(previousRead.kind)) return { kind: "rejected", code: "STALE_BASE" } as const
         if (previousRead.kind === "storage_error") {
           return { kind: "rejected", code: "PLAN_STORAGE_STATE_UNCERTAIN" } as const
         }
@@ -151,6 +154,20 @@ export async function saveSelectedPlanCandidate(
           return { kind: "saved", state: previous } as const
         }
 
+        if (accountWrite) {
+          const freshReview = () => {
+            if (!isCurrentDraft() || !localAccountScopeIsCurrent(accountScope) || requestFingerprint() !== originalRequest
+              || !mainDraftStillMatches(draftSnapshot, generated, intake, selection.startDate)
+              || !planAnchorsStillCurrent(canonicalCandidate, new Date())
+              || evaluatePlanSafety(gate.kind === "passed" ? "NO_KNOWN_RISK" : "REVIEW_REQUIRED").kind !== "passed") return false
+            return selectPlanForActivation(selection.candidateId, generated, gate,
+              { ...intake, startDate: selection.startDate }, athleteEvidence).kind === "selected"
+          }
+          const context = adaptationScope === null ? undefined
+            : contextSchema.parse({ version: 1, activeCandidateId: canonicalCandidate.candidateId, candidates: generated.candidates })
+          const code = await accountWrite.save(state, [], freshReview, context)
+          return code ? { kind: "rejected", code } as const : { kind: "saved", state } as const
+        }
         const saved = savePlanBetaState(state)
         if (!saved.ok) {
           return {

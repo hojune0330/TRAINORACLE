@@ -4,7 +4,7 @@
 doc_id: trainoracle-session-method-selection-and-adjustment
 spec_id: SESSION_METHOD_SELECTION_AND_ADJUSTMENT_CONTRACT
 title: TrainOracle Session Method Selection And Adjustment Contract
-version: "0.33"
+version: "0.72"
 round: RT1_OWNER_APPROVED_IMPLEMENTATION_DIRECTION
 status: ACTIVE_IMPLEMENTATION_CONTRACT
 product_direction: OWNER_APPROVED_IMPLEMENTATION_DIRECTION
@@ -16,6 +16,7 @@ owner: COACH_HOJUNE
 open_issues_total: 4
 canonical_blocking_count: 0
 engineering_implementation_authority: OWNER_APPROVED
+owner_adopted_support_components: ["P-SUPPORT-INTRO-01@0.1"]
 new_exact_dose_activation_authority: false
 template_activation_authority: false
 scientific_approval_granted_by_this_document: false
@@ -1393,5 +1394,520 @@ continuity context. Use candidate schemaVersion 3 and its separate content names
 Keep NOT_ACCEPTED / selectionAuthority NONE / FULL_PLAN_SELECTION_REVALIDATION.
 Legacy candidate parsers must not accept this format by accident. This assembly
 does not write storage or resolve the version-aware plan acceptance gate.
+
+### 21.13 V3 whole-plan review scope
+
+Before final selection, rebuild the V3 candidate and current source transition.
+Bind the reviewed scope to event, experience, population, selection actor, frame,
+continuity shape, MAIN exposure count, and every session's day/slot/role/intent and
+configuration. The changed slot references the unbound source configuration edge;
+do not publish athlete record IDs, personal target seconds, dates or memo in the
+reviewable scope. Exact personal values remain checked by candidate preparation.
+
+Use a separate STRUCTURAL_V3 scope and policy fingerprint namespace. Require one
+independently supplied, current, non-revoked policy with configuration, exposure,
+interaction and safety review references. Reject malformed or duplicate registry
+entries. A V1/V2 review cannot authorize V3. The operating registry starts empty.
+The result remains executionAuthority NONE and does not persist or start training.
+
+### 21.14 V3 explicit selection and historical content
+
+V3 selection uses the same current original-candidate, explicit action, safety,
+record reconfirmation and base-selection validation as the existing adjustment
+path. Refresh source time at selection, require the exact expected V3 candidate
+fingerprint, and apply the independent V3 whole-plan review. First-frame selection
+cannot silently accept a successor; successor use requires its continuity transaction.
+
+Preserve the original candidate, exact source context, adjusted sessions including
+numeric projection, review references and initial periodization in a version-3
+selected-content envelope. This representation remains NOT_SAVED until the owning
+version-aware persistence transaction completes.
+
+Historical reconstruction uses independently retained source authority, explanation
+and whole-plan reviews at the actual acceptance time. Recompute every adjusted
+target and compare the complete reconstructed content, not only its checksum.
+Reject future timestamps, changed targets, extra fields or missing retained evidence.
+Historical read does not fetch current records, authorize execution, or activate an
+imported plan. Storage, active UI and successor consumers remain separate obligations.
+
+### 21.15 V3 persistence envelope and first selection transaction
+
+V3 selected content uses storage envelope version 5, distinct from version 4's
+legacy adjusted selection. Reconstruct selected content against one retained
+evidence match; validate every progress address, duplicate outcomes, exact update
+timestamp and full content fingerprint. Missing observations remain absent.
+
+Write to the existing account-scoped active-plan key under the same plan mutation
+lock. Re-read current authority inside the lock and run explicit selection again.
+Recheck account, draft identity and previous bytes before writing and confirming.
+Do not overwrite any existing plan; identical unprogressed replay is acknowledged
+without a new write. On failed confirmation remove only this transaction's own
+bytes, never another writer's replacement. Legacy mutation paths must recognize
+version 5 as protected adjusted content rather than treat it as an empty plan.
+
+Keep UI entry inactive until version-5 read/progress/journal consumers are wired.
+Engineering tests exercise real storage with synthetic evidence, not an operating
+template approval. Server sync and successor archive transactions remain required.
+
+### 21.16 Version-aware progress mutation
+
+Versions 4 and 5 share one progress transaction and outcome rules, with separate
+content codecs. Validate plain data before parsing, then check account, mutation
+lock, exact active fingerprint and day/AM-PM address. REST cannot become COMPLETED.
+PAIN_CHECKIN cannot be replaced by another outcome through this pathway.
+
+Only explicit outcome state changes. Preserve selected prescription bytes and do
+not derive journal measurements from planned targets. Identical outcomes are
+idempotent. Revalidate stored content before writing, verify ownership after writing,
+and restore only this transaction's bytes on failure. A stale view cannot update
+newer progress. UI and journal routing must consume this version-aware transaction.
+
+### 21.17 V3 stored schedule route
+
+The account-aware reader dispatches envelope version 5 to the retained V3 evidence
+registry and returns adjusted_v3_loaded only after full reconstruction. Missing
+evidence or invalid bytes remain invalid, not a blank intake. PlanBeta renders a
+separate V3 schedule with both daily slots, actual ordered work/recovery nodes,
+stored record-derived target times, and bound explanation. Final recoveryAfter is
+shown once after the node's repetitions, including the last node in a phase.
+
+Progress buttons call the version-aware transaction and preserve selected day on
+refresh. Reopening restores persisted outcomes. Account change removes prior
+athlete values. This read/progress surface does not itself supply catalog approval,
+an editor entry, journal linkage, export or successor controls; these remain required.
+
+### 21.18 V3 active-plan journal linkage
+
+The V3 schedule creates the existing immutable planned-session identity from the
+validated selected plan and exact day/slot. Before opening the journal, re-read
+the account's active plan and require the same stored fingerprint. Pass only the
+date and link, not planned distance/time/RPE as performed measurements. Returning
+from the journal selects the matching planned day.
+
+Journal original lookup accepts a V3 active plan only after retained-evidence
+reconstruction and exact link resolution. Reuse the schedule's prescription view
+so numbers, recovery order and explanation do not drift. Clear displayed data on
+account/storage change. Do not read memo while resolving or displaying the original.
+V3 archived-original lookup, backup and successor preservation remain separate work.
+
+### 21.19 V3 journal original retention
+
+Before opening a linked journal, retain the exact active version-5 plan in the
+account-scoped V3 original archive under the plan mutation lock. Verify the active
+fingerprint, account and both keys before/after writing. Failure leaves the active
+plan unchanged and does not open a journal claiming a preserved original.
+
+Archive entries require full independent reconstruction, unique selection identity
+and valid archive timestamps. Repeated retention is idempotent. Keep the existing
+18-entry bound but reject capacity overflow instead of silently removing an old
+journal's original. Archive expansion/export policy remains follow-up work.
+
+Journal lookup checks this archive after active-plan lookup and matches the exact
+immutable link. Guest and account-scoped archive keys are included in explicit
+device-data erasure without parsing private content. This does not implement the
+successor transaction or backup import/export yet.
+
+### 21.20 V3 personal backup and historical import
+
+The V3 personal backup includes the verified version-5 active plan and V3 original
+archive, using a separate format/fingerprint namespace. Export must recheck account
+and both source bytes; the file includes personal pace evidence and progress but no
+memo. Show the personal-file warning before download.
+
+The shared import UI recognizes V1 and V3 through their independent readers, requires
+explicit own-file confirmation, and dispatches to the matching history importer.
+Revalidate evidence inside the mutation lock. Preserve existing local originals on
+duplicate selection identity and never replace active-plan bytes. Reject over-capacity
+imports without eviction. Verify writes and roll back only this transaction's content.
+Imported originals support journal lookup but grant no execution or selection authority.
+
+## 21.21 V3 후속 주기 준비
+
+V3 저장 계획을 독립 보존 근거로 읽고, 현재 저장 지문·현재 안전 확인·시작일을
+검사한 뒤 표시된 세션의 수행 상태만 다음 주기 문맥으로 전달한다. 기존 형식과
+판정 로직은 공유하되 V3 문맥 지문은 별도 namespace를 사용한다.
+
+표시 기간이 지나도 미기록을 완료로 바꾸지 않는다. 누락 수와 기간 경과 근거를
+분리한다. 통증 확인은 현재 위험 없음 응답으로 해제하지 않는다. 계보는 한 단계만
+전진하며 이 준비 결과는 NONE / NOT_SAVED다. 준비 성공은 추천 증가, 후속 계획
+승인 또는 현재 계획 교체 권한이 아니다. 후속 선택·원본 보관·교체 transaction 및
+화면 연결은 별도 완료 관문으로 유지한다.
+
+### 21.22 V3 후속 선택·원본 보관·일정 전환
+
+후속 생성은 검증된 version-5 이전 계획에서 읽은 수행 문맥을 동일 생성기에 전달한다.
+결과는 adjusted_next_frame_v3_draft이며 선택/저장 완료가 아니다. 종목 변경이나
+계정/이전 지문 변경은 거부한다. 최초 계획 저장 경로로 후속 계획을 저장할 수 없다.
+
+명시적 최종 확인 후 같은 계획 mutation lock 안에서 실제 이전 계획과 근거를 다시
+읽는다. 현재 기록, 안전 상태, 검토 정책, 전체 계획 문맥을 검사하고 이전 지문과
+계보를 새 계획 identity에 포함한다. 과거 읽기는 보존 근거로 재구성하며 현재 활성화
+권한으로 취급하지 않는다. 새 주기 진행 상태는 빈 배열이며 미기록을 완료로 채우지 않는다.
+
+이전 원본을 V3 archive에 먼저 보관하고 active 값을 교체한다. 각 쓰기 전후 계정·
+요청·저장값과 현재 기록·안전·검토 근거의 동일성/유효기간을 재확인한다. 실패 시 이번 작업이 쓴 값만 복구하며 다른 작성자의 값은
+덮어쓰지 않는다. 18개 원본 한도에서는 자동 삭제 없이 중단한다. localStorage의 두
+키 쓰기를 데이터베이스 수준의 원자적 transaction이나 서버 동기화로 설명하지 않는다.
+
+화면은 현재 일정 → 시작일/몸 상태/기준 기록 → 후보 비교 → 정확한 구성과 전체 일정
+확인 → 명시적 저장 → 새 일정으로 이어진다. 돌아가기는 저장하지 않으며, 검토된 구성
+공급자가 없으면 비교까지만 제공하고 저장 가능으로 표시하지 않는다. source registry의
+운영 활성화와 숫자 조정 편집기, 여러 MAIN 독립 선택은 별도 완료 관문이다.
+
+### 21.23 여러 MAIN 변경안의 독립 조립
+
+같은 원본 후보와 시작일에 연결된 여러 변경안을 각각 재검증한 뒤 한 후보로 조립한다.
+각 날짜/AM/PM 주소는 한 번만 나타나야 한다. 원본이 다른 후보, 중복 주소, 잘못된
+스냅샷 또는 하나라도 만료된 근거가 있으면 전체 조립을 거부한다. 입력 배열 순서는
+의미를 바꾸지 않으며 날짜/슬롯 순으로 정규화한다. 변경하지 않은 세션은 그대로 유지한다.
+
+각 구간의 설명·근거·projection은 해당 주소에 따로 연결한다. 한 구간의 설명을 다른
+구간에 공유하지 않는다. 조립 결과는 MULTI_ADJUSTED_PLAN_CANDIDATE / NOT_ACCEPTED /
+NONE이며 단일 변경 후보와 다른 식별 namespace를 사용한다. 개별 조정 승인들의 합을
+전체 계획 승인으로 취급하지 않는다. 전체 노출·배치·상호작용 검토, 명시적 선택, 저장,
+일지/후속 주기 소비는 이 다중 후보 형식을 지원해야 하며 단일 후보 저장기로 우회하지 않는다.
+
+### 21.24 최초 V3 저장의 현재 근거 재검사
+
+최초 저장과 동일 선택의 재요청도 후속 저장과 동일하게 현재 기록·안전·검토 근거를
+재확인한다. 검토 자료의 현재시각 외 내용 동일성, 정책 만료/철회, 현재 기록 존재를
+저장 직전/직후 및 재요청 성공 반환 전에 검사한다. 달라진 조건을 과거의 선택 성공으로
+덮지 않는다. 실패하면 이번에 쓴 값만 제거하고 다른 작성자의 값은 보존한다.
+
+### 21.25 시간/RPE 원본의 상세 구성 연결 설계 경계
+
+RPE_TIME_RANGE는 기록 기반 페이스 처방이 아니므로 PACE_TARGET으로 위장해 입력하지
+않는다. 원본의 시간 범위·RPE를 실제 운동 시간이나 반복 수로 단정하지 않는다.
+검토된 상세 구성은 종목·목적·경험·주기/주소와 원본 내용에 연결하고 원본과 함께
+보존한다. 구성별 회복·준비/정리·설명은 해당 구성의 검토 근거에서 읽으며 다른 MAIN의
+준비/정리나 개인 페이스를 자동 복사하지 않는다.
+
+개인 기록이 없는 구성도 지원할 수 있어야 한다. 이때 기준 기록을 발명하거나 가짜
+anchor를 넣지 않고 명시적인 비기록 기반 경로로 제공한다. 개인 페이스가 필요한 구간은
+별도 검증된 현재 기록을 사용하며 기록 없음과 검증 실패를 구분한다. 이 절은 연결 설계
+기준이며 시간/RPE 상세 변환이나 운영 활성화가 구현됐다는 증거가 아니다.
+
+### 21.26 비기록 기반 V3 조정 근거 경로
+
+UNANCHORED_SOURCE_V3는 anchor 필드를 갖지 않는다. 검토된 원본/목표 구성과 전이 정책,
+문맥 및 해석 revision을 사용하며 recordBasis는 NOT_USED다. 존재하지 않는 선수 기록이나
+0초 기록으로 기존 페이스 경로를 우회하지 않는다. 원본/목표의 준비·본운동·정리 모든
+구간에서 RACE_PACE 또는 지정된 SPRINT_REFERENCE가 있으면 기록 기반 경로를 요구한다.
+운동/회복 수치는 바꾸지 않으며 거리와 시간의 미지정 값을 그대로 보존한다.
+
+개별 구성 선택의 명시적 receipt를 현재 정책으로 다시 확인하고, 기존 V3 설명/구간
+identity 검사를 적용한다. 스냅샷은 원본 후보 계보와 MAIN 주소에 묶이며 설명이나 주소가
+달라지면 재사용을 거부한다. candidate_ready / NONE은 전체 계획 승인/저장 권한이 아니다.
+시간/RPE 원본에 대한 배치 결속, 다중 계획 저장과 운영 활성화는 별도 연결이 필요하다.
+
+### 21.27 시간/RPE MAIN과 비기록 상세 구성의 결속
+
+원본 후보 전체 identity를 검증한 뒤 QUALITY 주소의 RPE_TIME_RANGE만 별도 경로로
+해석한다. 상세 구성의 원본/목표 reference와 전이 정책, 종목, 계획 목적, 해당 세션 목적,
+경험 수준, 원본 RPE/시간 범위를 구조적 binding scope로 만든다. 정확히 하나의 현재
+유효한 독립 공급 binding review가 있어야 후보를 준비한다. 빈 registry, 중복 식별자,
+만료/철회, 다른 경험 수준은 적용하지 않는다. 이 검사는 전체 계획 상호작용 승인이 아니다.
+
+원본 범위는 projection의 originalPrescription으로 보존한다. 새 운동/회복/준비/정리는
+검토된 상세 구성에서 그대로 읽으며 개인 페이스나 거리 환산은 만들지 않는다.
+recordBasis=NOT_USED, segmentTargets=[]를 명시한다. 스냅샷 계보/주소 결속은 유지하고,
+다중 후보의 changedSlots에 binding 버전/지문도 보존한다. 단일 페이스 저장기로 우회하지
+않는다. 원본 RPE와 상세 운동의 부담이 동일하다고 주장하지 않는다.
+
+### 21.28 다중 전체 검토와 명시적 선택
+
+MULTI_STRUCTURAL_V3 검토 범위는 종목·경험·선택권한·목적·후보 종류·출처 모드·프레임·
+이전 주기 형태·MAIN 노출 횟수 및 전체 날짜/슬롯 배치를 포함한다. 바뀌지 않은 세션도
+포함한다. 변경한 각 주소에는 실제 검토된 from/to/정책, RPE binding 또는 페이스 적용
+대상 근거를 포함한다. 입력 순서는 동일한 범위로 정규화한다. 일부 변경만 남기면 다른
+계획 범위이므로 기존 전체 검토를 그대로 쓰지 않는다.
+
+정확히 하나의 유효한 구성/노출/상호작용/안전 검토 정책이 있어야 선택 단계로 넘어간다.
+명시적 선택은 원본 생성 결과, 현재 안전 상태와 기준 기록, 입력 조건, 예상 후보 지문을
+다시 확인한다. SELECTED_MULTI_ADJUSTED_PLAN은 NOT_SAVED이며 모든 주소의 원본 및
+출처 문맥과 설명 연결을 보존한다. 최초 주기 문맥만 이 경로로 선택하며 후속 주기는
+이전 원본을 읽는 별도 transaction으로 연결한다. 선택 성공은 실제 저장·배포 증거가 아니다.
+
+### 21.29 다중 선택의 독립 복원과 version 6 저장
+
+저장 검증에 사용하는 retained 자료는 저장 후 일정·일지·이력 조회에 사용하는
+동일한 독립 공급원의 자료여야 한다. 조립 과정에서 만든 임시 currentEvidence만
+추가해 저장 성공을 만들고 독립 reader에는 없는 상태를 허용하지 않는다.
+독립 자료가 부족하면 쓰기 전에 거부하며, 쓰기 중 변경되면 기존 transaction의
+현재성 확인과 본인 쓰기 복구 규칙을 따른다. 이 요건은 브라우저의 임의 저장
+파일을 새 승인 authority로 신뢰하거나 미검토 자료를 자동 등록하는 허가가 아니다.
+운영 공급자는 재시작 뒤에도 필요한 과거 검토 버전을 공급해야 한다. 현재 유효성
+철회와 과거 읽기용 버전 삭제를 같은 동작으로 처리하지 않는다.
+
+과거 조회는 선택 당시 시간과 별도 보존한 주소별 구성 authority/설명, RPE binding,
+전체 정책으로 재구성한다. 현재 선수 저장소 조회나 현재 활성화 권한을 요구하지 않는다.
+주소별 근거는 정확히 하나여야 하며 전체 재구성 결과가 저장 내용과 같아야 한다.
+변조자가 외부 지문을 다시 계산해도 원본 projection/설명이 다르면 거부한다.
+
+version 6은 다중 선택, 진행 상태, 갱신시각, 내용 지문을 보존한다. 진행 주소의 중복과
+없는 세션 참조를 거부한다. 최초 저장은 계정별 계획 lock 안에서 현재 요청, 안전/기록,
+전체 검토 및 근거 동일성을 쓰기 전후 재확인한다. 동일한 미진행 선택 재요청만 멱등
+성공하며 기존 다른 계획을 덮지 않는다. 실패 시 자기 쓰기만 제거하고 다른 작성자의
+값을 보존한다. 구형 저장/보관 경로는 version 6을 덮어쓰지 않는다.
+
+이 저장 경로의 구현은 전체 소비자 연결과 별개다. 공통 reader·다중 일정 UI·일지·
+백업·서버·후속 주기는 version 6을 독립 지원해야 운영 활성화할 수 있다.
+
+### 21.30 다중 저장의 공통 조회와 진행 기록
+
+공통 계정 저장소 reader는 version 6을 multi_adjusted_v3_loaded로 구분한다.
+주소별 보존 근거를 받지 못했거나 독립 복원에 실패하면 invalid이며 구형 계획으로
+강제 변환하지 않는다. 기존 조회 인자는 유지하고 다중 보존 근거를 별도 인자로 추가한다.
+
+진행 기록은 기존 계획 lock/계정/내용 지문 검사를 공유한다. 변경하는 것은 해당
+날짜·오전/오후의 명시적 진행 상태뿐이며 처방과 설명 원본은 불변이다. 다른 슬롯의
+기록은 보존한다. 통증 확인을 완료·휴식·건너뜀으로 바꾸지 않고 휴식 세션에 운동
+완료를 기록하지 않는다. 과거 검토 근거의 현재 만료가 과거 계획의 조회나 명시적
+결과 기록을 막지는 않는다. 이 경로는 새 훈련 활성화 권한을 부여하지 않는다.
+
+공통 조회 및 진행 writer 지원만으로 일정 UI, 원본 보관, 일지, 백업, 서버, 후속
+주기까지 완료했다고 판단하지 않는다. 이 소비자 연결은 각각 검증한다.
+
+### 21.31 다중 계획 일지 원본 보관
+
+다중 선택 원본은 계정별 multi-adjusted-plan-originals.v3 보관소에 version 6
+상태로 저장한다. 기존 단일 원본을 변환하거나 덮지 않는다. 최대 18개이며 용량이
+차면 거부하고 과거 원본을 자동 삭제하지 않는다. 동일 선택의 진행 상태 갱신은
+기존 항목을 대체하되 선택 당시 처방과 설명은 바뀌지 않는다.
+
+보관은 계획 변경 lock 안에서 계정, 현재 계획 지문, 원본 보관소 값을 쓰기 전후
+대조한다. 실패 시 자기 쓰기만 되돌린다. 일지 연결은 실제 원본 보관 성공 후에
+개방해야 한다. 현재 계획이 없어져도 날짜/슬롯/내용 지문이 일치하는 원본만 찾는다.
+설명은 같은 날짜와 슬롯의 설명으로 선택하며 메모를 읽거나 계획 수치를 실제 일지
+측정값으로 채우지 않는다. 기록 기반 목표가 없는 시간/RPE 처방에는 기록으로
+계산했다는 안내를 표시하지 않는다. 로컬 전체 삭제 대상에 새 보관소도 포함한다.
+
+### 21.32 다중 일정 화면의 결과 기록과 일지 진입
+
+다중 저장 상태는 별도 일정 화면에서 날짜별 오전/오후를 함께 읽는다. 선택한 슬롯의
+설명만 연결하며, 진행 기록 변경 후 저장 상태를 새로 조회한다. 일지 진입은 같은
+현재 계획의 원본 보관 성공 이후에만 실행하며 상위 화면에서도 현재 내용 지문을
+재확인한다. 계정 또는 계획 변경 시 과거 화면의 일지 진입 요청을 전달하지 않는다.
+
+서버 보관/백업/다음 주기 연결이 미구현인 동안 완료된 기능처럼 버튼을 제공하지
+않는다. 이 임시 상태를 전체 계획의 완료나 승인 범위 축소로 간주하지 않는다.
+
+### 21.33 다중 계획 개인 보관 파일
+
+multi-adjusted-plan.personal-backup.v3는 현재 version 6 계획과 별도 다중 원본
+보관함을 담는다. 내보내기 시 독립 복원과 계정/현재 저장값 동일성을 확인한다.
+메모는 포함하지 않으며 개인 기록을 포함할 수 있는 비공개 보관용임을 안내한다.
+
+가져오기는 본인 파일 확인 후 현재 계정의 원본 보관함에만 추가한다. 현재 계획은
+활성화하거나 변경하지 않는다. 이미 있는 선택 원본은 보존하고 18개 초과 시 자동
+삭제하지 않고 거부한다. 계정/요청/현재 계획/보관함의 변경은 쓰기 전후 확인한다.
+다중 파일의 독립 근거가 없으면 구형 형식으로 강제 변환하지 않고 거부한다.
+
+### 21.34 다중 계획의 다음 주기 후보 준비
+
+다중 version 6 원본에도 기존 시작일/보이는 프레임/명시적 결과/기간 경과/통증
+확인 규칙을 동일하게 적용한다. 다중 다음 문맥은 별도 지문 namespace로 결속한다.
+기간이 지났다는 이유로 미기록을 완료로 바꾸지 않는다. 주기 계보는 한 프레임만
+전진시키며 이 문맥이 훈련량이나 강도 증가 권한이 되지 않는다.
+
+실제 현재 계정의 다중 계획을 독립 조회하고 기존 생성기에 결과 집계를 전달한다.
+생성 전후 계정과 이전 계획 지문을 확인하며 종목을 바꾸는 요청은 거부한다.
+결과는 multi_adjusted_next_frame_v3_draft이고 현재 계획을 변경하지 않는다.
+REVIEWED_MULTI_SUCCESSOR_V3_TRANSACTION으로 원본 보관/현재 근거 검토/명시적
+선택/저장을 완료해야 후속 주기 적용으로 인정한다.
+
+### 21.35 다중 후속 선택과 과거 복원
+
+다중 후속 선택은 실제 이전 version 6 원본을 독립 조회하고 주기 준비 규칙을
+재실행한다. 종목과 다음 후보의 이전 결과 집계가 일치해야 한다. 이전 계획 지문,
+선택 지문, 이전 주기 계보를 continuation으로 결속하고 후보 식별자에도 포함한다.
+최초 선택 경로는 후속 후보를 거부하며 후속 선택 경로는 잘못된 이전 지문을 거부한다.
+
+전체 구성 검토와 현재 선수 근거 재검사를 통과한 후에만 NOT_SAVED 후속 선택을
+만든다. 과거 조회는 저장 당시 continuation을 검증해 동일한 계보를 재구성한다.
+이는 저장 권한이 아니며 원본 보관과 현재 계획 교체의 transaction은 별도 수행한다.
+
+### 21.36 다중 후속 원본 보관 및 현재 계획 교체
+
+후속 저장은 현재 계정 계획 lock 안에서 실제 이전 원본을 다시 조회한다. 이전
+지문, 현재 요청, 주소별 구성 근거, 전체 검토, 안전 및 기준 기록을 재확인하고
+이전 원본 보관소를 먼저 쓴 뒤 현재 계획을 교체한다. 각 쓰기 전후에도 같은 검사를
+수행한다. 원본 보관 용량이 차거나 어느 단계가 실패하면 성공으로 반환하지 않는다.
+
+실패 복구는 해당 transaction이 쓴 값과 현재 값이 같은 키에만 적용한다. 다른
+작성자가 바꾼 값은 보존하고 상태 불확실로 보고한다. 기존 계획과 원본 보관소가
+모두 전 상태로 돌아갔을 때만 복구된 저장 실패로 보고한다. 동일 이전 지문을
+재사용한 중복 적용은 STALE_BASE로 거부하며 새로운 주기를 추가 생성하지 않는다.
+
+### 21.37 다중 최종 확인 화면
+
+최종 확인은 변경한 각 MAIN의 날짜/슬롯/방법/설명을 보여주고 전체 일정도 별도로
+열어볼 수 있게 한다. 처음 열린 요청을 보존하며 현재 요청이 달라지거나 화면이
+종료되면 그 요청을 저장하지 않는다. 뒤로 가기는 저장하지 않는다.
+
+명시적 저장 버튼은 최초/후속 저장 경로를 구분하고 현재 검토 자료를 다시 읽는다.
+중복 클릭을 막고 실제 저장 성공 후에만 완료 콜백을 전달한다. 해당 화면 컴포넌트의
+완료와 전체 후보 편집 흐름의 운영 연결은 별도 검증 대상이다.
+
+### 21.38 주소별 편집과 전체 확인 연결
+
+편집 결과는 날짜/슬롯에 연결한 receipt로 처리한다. 같은 원본 후보/시작일/입력
+계열인지 확인하고 현재 검토된 source와 설명으로 스냅샷을 다시 만든다. 편집하지
+않은 다른 주소의 preparation은 그대로 보존한다. 전체 후보를 재조립해 새 지문을
+만들되 저장하지 않는다. 변경안 적용과 전체 계획 저장은 다른 행동이다.
+
+각 MAIN의 편집 결과별 검토 자료를 공급하는 경로를 분리한다. 검토 목록을 화면이
+임의로 만들거나 receipt만 보고 용량/적격성을 승인하지 않는다. 최종 확인에서만
+실제 저장을 요청하며, 반복 편집 시 현재 선택 표시와 운영 선택지 다양성은 별도
+사용성 및 계약 검수에 포함한다.
+
+### 21.39 반복 편집의 선택 복원
+
+편집창을 다시 열면 앞서 선택한 구성 참조를 현재 검토 범위에서 재검증하여 초기
+변경안으로 복원한다. 이를 기준 구성으로 조용히 대체하지 않는다. 검토가 만료되거나
+목록에서 빠진 경우 안내하고 적용을 비활성화한다. 초기 선택이 열린 뒤 바뀌면
+현재 편집을 무효화한다. 재개 후 추가 변경 없이 취소하면 버리기 확인을 반복하지 않는다.
+
+### 21.40 실제 후보에서 다중 편집으로 진입
+
+다중 편집 진입점은 생성 결과, 선수 입력, 사용 근거, 안전 확인 및 시작일을 현재
+후보와 대조한다. 모든 preparation이 같은 선택 후보와 시작일을 가리켜야 하며,
+빈 preparation 또는 공급자 오류는 편집 진입 불가로 처리한다. 진입 가능 여부의
+판정 자체는 계획을 저장하거나 훈련 구성을 승인하지 않는다. 기존 단일 편집과
+공존하되 유효한 다중 편집 진입점이 있으면 이를 우선한다. 실제 운영 공급자 및
+검토 자료 등록과 브라우저 전체 흐름 검증은 별도 완료 조건으로 유지한다.
+
+### 21.41 다중 후속 주기의 화면 경계
+
+현재 일정에서 다음 시작일/현재 몸 상태/사용할 기록을 명시적으로 선택한다. 실제
+저장된 이전 계획을 대조해 후속 후보를 생성하며 비교/편집 중 기존 일정은 유지한다.
+다중 진입 검사를 통과한 후보만 주소별 편집과 전체 확인으로 연결한다. 최종 저장은
+후속 transaction을 사용하고 이전 원본 보관 및 계보 전진을 확인한 뒤 일정으로 돌아간다.
+미기록을 완료로 간주하지 않으며 근거 미제공/불일치/몸 상태 검토 필요 시 저장하지 않는다.
+합성 자료 기반 화면 통합 시험은 운영 구성 승인이나 모바일 브라우저 검수를 대체하지 않는다.
+
+### 21.42 다중 계획 서버 스냅샷 저장 준비
+
+V6 개인 계획을 전송하기 전에 실제 계정별 현재 저장값과 독립 보존 근거로 읽는다.
+인증 세션의 사용자와 로컬 계정이 같아야 하며 인증 대기 후 계정/계획/근거를 다시
+확인한다. 서버 행 식별자는 전체 상태 지문에 연결한 불변 스냅샷으로 두고 기존 행을
+덮어쓰지 않는다. 요청 후 계정/계획이 바뀌면 현재 화면에 저장 성공을 표시하지 않는다.
+이후 검증된 서버 조회와 명시적 복원은 별도 경로이며 저장 응답으로 실행 권한을 주지 않는다.
+서버 스키마 확장은 기존 V3와 소유자별 RLS/기능 권한을 유지한다. 마이그레이션 파일,
+합성 클라이언트 시험, 실제 DB 적용 및 RLS 왕복 시험은 각각 다른 증거로 기록한다.
+
+### 21.43 서버 조회와 원본 보관함 복원
+
+서버 조회는 현재 인증 사용자와 schema_version=6, 미보관 행으로 범위를 제한한다.
+응답의 소유자/행 ID/상태 지문/저장 시각과 독립 근거를 검사하고 계정 변경 뒤의
+응답은 폐기한다. 읽기 결과는 READ_ONLY/NOT_RESTORED이며 저장 부작용을 갖지 않는다.
+본인 계정의 명시적 확인 뒤 원본 보관함으로 복원할 수 있다. 기존 개인 파일 복원의
+잠금/중복/용량/현재 일정 보존 규칙을 재사용한다. 현재 일정 복원이나 새 실행 권한
+부여는 이 원본 복원과 다르며 별도 구현·검증 없이는 완료로 표시하지 않는다.
+
+### 21.44 현재 일정으로의 복구
+
+현재 일정이 없는 기기에서 본인 계정의 명시적 확인으로 V6 상태를 복구할 수 있다.
+읽기 가능한 과거 원본이라는 조건만으로 허용하지 않는다. 현재 안전 확인과 기록,
+모든 조정 구성의 전체 검토 범위/정책을 재검증하고 저장 전후 같은 요청/계정인지
+확인한다. 기존 현재 일정이 있으면 덮어쓰지 않는다. 원래 날짜/계보/진행 결과를
+보존하고 새 계획 생성이나 새 주기 전진으로 처리하지 않는다. 쓰기 실패 시 본인이
+쓴 값만 되돌리고 다른 작성자의 값은 보존한다. 다른 현재 일정과 충돌하는 경우의
+명시적 비교/교체 UI는 별도 구현 범위로 남긴다.
+
+### 21.45 채택 검토본의 구간별 노력 안내 연결
+
+검토용 구성에서도 본운동 노력 제안과 정확한 운동 구간을 연결한다. 짧은 수행
+안내는 구간 target에, 방법별 상세 안내와 한계는 같은 검토본의 설명에 보존한다.
+이 내용과 버전을 검토본 지문에 포함하며 문구 변화로 처방 구조의 다양성을
+부풀리지 않는다. 운동/회복 수치 및 준비/정리 구성은 안내 연결로 변경하지 않는다.
+기존 세션 전체 RPE와 본운동 노력 제안, 개인 측정값은 구분한다. 제안의 연결은
+실행 권한이나 오너 채택이 아니며 OFF에 운동 강도를 발명하지 않는다.
+검토본에는 명시적 구간 필드만 복사하고 부가 메모/증상/식별 필드를 포함하지 않는다.
+
+### 21.46 현재 카탈로그와 과거 근거의 독립 공급
+
+운영 공급자는 현재 후보/시작일/경험과 정확한 전체 검토 정책에 맞는 자료 묶음을
+찾는다. 유효한 묶음이 하나일 때만 연결하고 없거나 여러 개가 일치하면 임의 선택하지
+않는다. 현재 자료와 과거 원본을 읽기 위한 보존 근거는 별도 목록으로 공급한다.
+현재 목록에서 철회해도 과거 버전을 함께 삭제하지 않으며, 과거 읽기 성공으로
+새 적용 권한을 얻지 않는다. 화면에서 편집/저장할 때마다 현재 목록을 다시 확인한다.
+공급자 구현 또는 합성 시험 목록은 실제 운영 카탈로그 채택을 의미하지 않는다.
+
+### 21.47 입문 구성 제안의 검토 지위
+
+입문 사용자용 상세 MAIN 제안도 독립적인 운동 단위/회복/구조 차이를 검사한다.
+경험자용 제안의 적격 범위를 자동 확대하거나 BASE 도입안을 다른 고강도 목적의
+두 번째 방법으로 세지 않는다. 검토 제안 수와 실제 채택 수는 분리한다.
+구간 수행 가능성, 지원 구간 포함 전체 시간, 노력 안내와 주기 배치의 검토 상태를
+설명 지문과 승인 자료에 함께 남긴다. 경험 구분만으로 적합성을 보장하지 않는다.
+정확한 입문 숫자는 별도 채택 패킷을 따르며 본 조항이 수치를 승인하지 않는다.
+
+### 21.48 채택 요청 내용의 고정
+
+정확한 구성/설명/제안 대상은 하나의 검토 묶음과 내용 지문으로 제시한다. 변형은
+원형의 대상 참조를 명시하고 누락/중복 대상 정의를 허용하지 않는다. 구간 회복이나
+대상이 바뀌면 새 내용으로 다시 검토한다. 기존 묶음은 새 소스 변경에 따라 소급
+변경되지 않는다. 묶음은 승인 레코드가 아니며 미완 결정과 제외 범위를 표시한다.
+개인 기록/메모를 이 공개 검토 묶음에 포함하지 않는다. 전체 조합과 개인 페이스
+모델의 승인을 구성 묶음 존재로 대신하지 않는다.
+
+### 21.49 승인용 표현과 원본 검토 상태의 일치
+
+검토 전용 조립기는 본운동뿐 아니라 지원 구성도 미채택/NONE 상태인지 검사한다.
+다른 상태의 자료를 같은 검토안으로 조용히 포함하지 않는다. 중첩 수행 안내의
+미완 항목은 설명 및 전체 승인 체크리스트까지 누락 없이 전달한다.
+경험별 시간 비교는 해당 구성의 명시된 제안 범위 안에서 제공하며 범위를 함께 표시한다.
+회복 거리/시간의 전체 미산출과 지정 단위 부분합을 구분한다. 회복 노력은 실제
+구간 위치/방식에 연결하고 모든 회복에 하나의 RPE를 부여하지 않는다.
+이 표현 보정은 정확한 운동 수치, 대상, 운영 권한의 채택 또는 변경이 아니다.
+
+### 21.50 지원 구성 대안의 명시적 비교
+
+지원 구성의 비교안은 기존 본운동 구성 및 기본 지원과 별도로 식별한다. 연구
+도구의 명시적 선택으로 비교하며 경험 구분만으로 기존 계획을 조용히 바꾸지 않는다.
+지원 대안의 정확한 구간/총시간/대상 참조/미완 검토 항목을 검토 묶음에 포함한다.
+지원 구성 수를 독립적인 본운동 방법 수에 더하지 않는다. 본운동/반복/회복은
+비교 과정에서 보존하고 전체 시간 미산출도 유지한다. 구체적 지원 수치는 채택
+패킷의 별도 오너 판단 대상이며 본 조항이 이를 승인하거나 운영 활성화하지 않는다.
+
+### 21.51 개인 참고 페이스와 정확한 방법의 검토 연결
+
+연구 계산값을 방법에 연결할 때 실제 사용한 기록 값/단위/출처/공식 버전과 정확한
+운동·회복 구조를 함께 보존한다. 계산 성공, 기록 신원 확인, 개인 적용성, 운영 채택은
+서로 다른 상태다. 시간형은 지정 시간 종료를 유지하고 참고 거리 달성을 요구하지 않는다.
+본운동 페이스 공식에서 회복 속도나 회복 길이를 파생하지 않는다. 공식의 지속시간/
+환경/대상 한계와 미검토 조건을 설명 및 검토 묶음에서 누락하지 않는다.
+
+가상 기록을 사용한 공개 예시는 실제 선수 기록과 명시적으로 구분하며 사용한 입력만
+복사한다. 메모·선수 식별값은 포함하지 않는다. 표시 반올림과 원본 숫자를 분리하고
+원본 숫자/구성/설명 변경은 검토 식별값에 반영한다. 별도 개인 참고 예시 묶음은
+기존 전체 구성 묶음의 승인 식별값을 대체하지 않는다. 본 조항은 특정 공식·수치의
+운영 채택이 아니며 새로운 페이스 모델은 기존 오너 최종 승인 절차를 따른다.
+
+### 21.52 예상 시간과 명시적 가능 시간의 분리 (오너 승인)
+
+2026-09-08의 "남은 결정 승인."은 직전에 요청한 시간 정책과 입문 지원 대안에
+한정한다. 처음 안내한 시간 범위는 예상치이며 저장을 막는 상한이 아니다.
+사용자가 날짜·오전/오후별로 직접 입력한 가능 시간만 해당 세션의 상한으로 삼는다.
+미입력은 제한 미지정이지 0분이 아니다. 0/음수/비유한 수/중복 또는 없는 슬롯은
+유효한 상한으로 받지 않는다. 준비·본운동·모든 회복·정리의 정확한 전체 시간을
+비교한다. 미산출 구간이 있으면 제한 안에 들어온다고 보장하거나 저장하지 않는다.
+상한 초과 시 다른 구성을 선택하거나 사용자가 상한을 수정하도록 하며, 자동 감량,
+회복 삭제, 거리의 임의 시간 환산은 하지 않는다. 저장 직전에도 같은 검사를 한다.
+
+상한은 선택한 계획 원본과 내용 지문에 보존한다. 기존 상한 없는 원본은 그대로
+읽는다. 백업·역사 읽기에서 재검증하고 다음 주기에 이전 날짜의 상한을 자동 이월하지
+않는다. 기본 시간 안내 범위만으로 개인의 가용 시간을 추정하지 않는다.
+
+### 21.53 입문 지원 대안의 한정 채택 (오너 승인)
+
+P-SUPPORT-INTRO-01 v0.1: 쉬운 준비 300초(RPE 2~3), 전력질주 아닌 점진 가속
+20초 후 걷기 60초를 2회, 쉬운 정리 300초(RPE 1~2)를 정확한 지원 대안으로
+채택한다. 마지막 걷기도 포함하여 총 760초다. 기존 지원 1760초는 보존한다.
+채택 기록은 과거 OWNER_ADOPTION_PENDING 검토 원본을 수정하지 않고 별도 버전으로
+둔다. 독립 전문가 승인이나 개인에게 충분한 준비라는 보장을 의미하지 않는다.
+본운동/전체 배치가 검토된 입문 범위에서 사용자가 명시적으로 선택해야 한다.
+지원 대안만으로 본운동, 모든 입문 고강도, 전체 조합, 페이스 모델을 활성화하지 않는다.
 
 [DRAFT_COMPLETE]

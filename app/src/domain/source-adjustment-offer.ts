@@ -31,7 +31,11 @@ const referenceKeys = ["familyId", "configurationId", "version", "contentIdentit
 function exactInputShape<S>(input: SourceAdjustmentOfferInput<S>): boolean {
   return exact(input, ["authority", "policy", "current", "contextKey", "resolutionRevision", "anchor", "nowMs"])
     && exact(input.anchor, ["eventDistanceM", "sourceRef", "contentFingerprint"])
-    && exact(input.policy, ["policyId", "version", "contentIdentity"])
+    && hasExactSourceAdjustmentShape(input)
+}
+
+export function hasExactSourceAdjustmentShape<S>(input: Pick<SourceAdjustmentOfferInput<S>, "policy" | "current" | "authority">): boolean {
+  return exact(input.policy, ["policyId", "version", "contentIdentity"])
     && exact(input.current, referenceKeys)
     && exact(input.authority, ["catalog", "policies"])
     && input.authority.policies.every(policy => exact(policy, ["policyId", "version", "reviewRef", "contextKey", "validFromMs", "expiresAtMs", "allowedEdges"])

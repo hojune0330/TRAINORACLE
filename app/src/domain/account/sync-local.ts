@@ -5,10 +5,19 @@ import { tombstonedIds } from "./tombstone"
 import {
   accountScopedStorageKey,
   accountScopedStorageKeyFor,
+  localAccountScopeSnapshot,
 } from "./local-account-scope"
 
 export const SYNC_CONSENT_STORAGE_KEY = "trainoracle.sync.consent.v1"
 const BINDING_KEY = "trainoracle.sync.owner.v1"
+const CONSENT_CHANGED_EVENT = "trainoracle:sync-consent-changed"
+
+export function onSyncConsentChange(listener: (ownerId: string | null) => void): () => void {
+  if (typeof window === "undefined") return () => undefined
+  const changed = (event: Event) => listener((event as CustomEvent<string | null>).detail)
+  window.addEventListener(CONSENT_CHANGED_EVENT, changed)
+  return () => window.removeEventListener(CONSENT_CHANGED_EVENT, changed)
+}
 
 const syncConsentSchema = z.object({
   enabled: z.boolean(),
@@ -50,10 +59,12 @@ export function saveSyncConsent(consent: SyncConsent, accountScope?: string | nu
   const localStorage = storage()
   if (localStorage === null) return false
   try {
-    const key = accountScope === undefined
-      ? accountScopedStorageKey(SYNC_CONSENT_STORAGE_KEY)
-      : accountScopedStorageKeyFor(SYNC_CONSENT_STORAGE_KEY, accountScope)
-    localStorage.setItem(key, JSON.stringify(consent))
+    const owner = accountScope === undefined ? localAccountScopeSnapshot() : accountScope
+    const key = accountScopedStorageKeyFor(SYNC_CONSENT_STORAGE_KEY, owner)
+    const before = localStorage.getItem(key), next = JSON.stringify(consent)
+    localStorage.setItem(key, next)
+    if (localStorage.getItem(key) !== next) return false
+    if (before !== next) window.dispatchEvent(new CustomEvent(CONSENT_CHANGED_EVENT, { detail: owner }))
     return true
   } catch {
     return false

@@ -7,6 +7,8 @@ import { hasCanonicalJsonTree } from "./plan-beta-schema"
 import type { ResolvedAdjustedExplanation } from "./adjusted-method-snapshot"
 import { prepareSourceAdjustmentOfferV3, revalidateSourceAdjustmentApplicationV3 } from "./source-adjustment-offer"
 import type { SourceAdjustmentOfferInput } from "./source-adjustment-offer"
+import { prepareUnanchoredAdjustmentOfferV3, revalidateUnanchoredAdjustmentApplicationV3,
+  type UnanchoredAdjustmentOfferInputV3 } from "./unanchored-adjustment-offer-v3"
 
 export type ReviewedAdjustedExplanationV3 = ResolvedAdjustedExplanation & {
   readonly sequenceContentIdentity: string
@@ -102,6 +104,27 @@ export function revalidateAdjustedMethodSnapshotV3(raw: string, input: {
     const current = revalidateSourceAdjustmentApplicationV3(input.source, read.snapshot.receipt)
     if (current.kind !== "applied") return current
     return { kind: "candidate_ready" as const, executionAuthority: "NONE" as const,
+      requiredNextGate: "FULL_PLAN_SELECTION_REVALIDATION" as const,
+      snapshot: read.snapshot, source: current.source, resolutionContextKey: current.resolutionContextKey }
+  } catch { return unavailable("INVALID_V3_CANDIDATE_CONTEXT") }
+}
+
+export function revalidateUnanchoredAdjustedMethodSnapshotV3(raw: string, input: {
+  readonly source: UnanchoredAdjustmentOfferInputV3
+  readonly scope: Scope
+  readonly explanation: ReviewedAdjustedExplanationV3
+}) {
+  try {
+    if (!hasCanonicalJsonTree(input) || !exact(input, ["source", "scope", "explanation"])) return unavailable("INVALID_V3_CANDIDATE_CONTEXT")
+    const offer = prepareUnanchoredAdjustmentOfferV3(input.source)
+    if (offer.kind !== "available") return offer
+    const read = readAdjustedMethodSnapshotV3(raw, { authority: offer.authority, contextKey: offer.contextKey,
+      nowMs: input.source.nowMs, scope: input.scope, explanation: input.explanation })
+    if (read.kind !== "historical") return read
+    if (!same(read.snapshot.original, offer.current)) return unavailable("V3_ORIGINAL_SOURCE_MISMATCH")
+    const current = revalidateUnanchoredAdjustmentApplicationV3(input.source, read.snapshot.receipt)
+    if (current.kind !== "applied") return current
+    return { kind: "candidate_ready" as const, executionAuthority: "NONE" as const, recordBasis: "NOT_USED" as const,
       requiredNextGate: "FULL_PLAN_SELECTION_REVALIDATION" as const,
       snapshot: read.snapshot, source: current.source, resolutionContextKey: current.resolutionContextKey }
   } catch { return unavailable("INVALID_V3_CANDIDATE_CONTEXT") }

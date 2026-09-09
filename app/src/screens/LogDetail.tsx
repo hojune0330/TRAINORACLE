@@ -1,4 +1,9 @@
 import React from "react"
+import { accountJournalRecordsEnabled, deleteAccountJournalRecord, undoAccountJournalDeletion } from "../domain/account/account-journal-record-service"
+import { readAccountJournalPrivateEntry } from "../domain/account/account-journal-projection"
+import { activeLocalAccount } from "../domain/account/local-journal-ownership"
+import { canEditJournalEntry } from "../domain/journal-edit-policy"
+import { AccountJournalHistory } from "./account/AccountJournalHistory"
 import { IndexCard, MoodStrip, PainDot, SectionLb } from "../components/JournalPrimitives"
 import { JournalConfirmationDialog } from "../components/JournalConfirmationDialog"
 import { TermHelp } from "../components/TermHelp"
@@ -67,17 +72,37 @@ function LogDetailJournal({ date, onBack, onAddEntry, onEditEntry, readerControl
   // 방금 지운 것 — 되돌리기 버튼을 그 자리에서 띄우기 위해 들고 있는다.
   // 휴지통(30일)에 남아 있으므로 이 상태가 사라져도 복구는 가능하다.
   const [justDeleted, setJustDeleted] = React.useState<
-    { readonly id: string; readonly label: string; readonly trashed: boolean } | null
+    { readonly id: string; readonly label: string; readonly trashed: boolean; readonly account?: boolean } | null
   >(null)
   const [pendingDelete, setPendingDelete] = React.useState<
     { readonly id: string; readonly label: string } | null
   >(null)
   const undoRef = React.useRef<HTMLButtonElement>(null)
-  const entries = React.useMemo(() => entriesForDate(date), [date, rev])
-  const remove = (): boolean => {
+  const entries = React.useMemo(() => entriesForDate(date).map(entry => readAccountJournalPrivateEntry(entry.id) ?? entry), [date, rev])
+  const renderedOwner = activeLocalAccount()
+  // ACK is presentation state; only current-account records get a local policy copy.
+  const actionEntries = entries.map(entry => accountJournalRecordsEnabled() && readAccountJournalPrivateEntry(entry.id)
+    ? { ...entry, syncState: "local" as const } : entry)
+  const edit = (candidate: JournalEntry) => {
+    if (renderedOwner !== activeLocalAccount()) return
+    const original = entries.find(entry => entry.id === candidate.id)
+    if (!original) return
+    const accountEntry = accountJournalRecordsEnabled() ? readAccountJournalPrivateEntry(candidate.id) : null
+    if (accountEntry && accountEntry.savedAt !== original.savedAt) return
+    if (!canEditJournalEntry(accountEntry ? { ...accountEntry, syncState: "local" } : original)) return
+    onEditEntry?.(accountEntry ?? original)
+  }
+  React.useEffect(() => {
+    const refresh = () => setRev(value => value + 1)
+    window.addEventListener("trainoracle:account-journals-changed", refresh)
+    return () => window.removeEventListener("trainoracle:account-journals-changed", refresh)
+  }, [])
+  const remove = async (): Promise<boolean> => {
     if (!pendingDelete) return false
     const { id, label } = pendingDelete
-    const r = deleteEntry(id)
+    const account = readAccountJournalPrivateEntry(id) !== null
+    const accountDeleted = account ? await deleteAccountJournalRecord(id) : false
+    const r = account ? { ok: accountDeleted, total: entriesForDate(date).length, trashed: accountDeleted } : deleteEntry(id)
     if (window.location.search.includes("uitest")) {
       console.log(`[JDEL] ok=${r.ok} remain=${r.total} trashed=${r.trashed}`)
     }
@@ -86,15 +111,15 @@ function LogDetailJournal({ date, onBack, onAddEntry, onEditEntry, readerControl
       return false
     }
     setPendingDelete(null)
-    setJustDeleted({ id, label, trashed: r.trashed })
+    setJustDeleted({ id, label, trashed: r.trashed, account })
     setRev(v => v + 1)
     return true
   }
   React.useEffect(() => {
     if (justDeleted?.trashed) undoRef.current?.focus()
   }, [justDeleted])
-  const undoRemove = (id: string) => {
-    const r = restoreDeletedEntry(id)
+  const undoRemove = async (id: string) => {
+    const r = justDeleted?.account ? { ok: await undoAccountJournalDeletion(id) } : restoreDeletedEntry(id)
     if (window.location.search.includes("uitest")) console.log(`[JUNDO] ok=${r.ok}`)
     if (!r.ok) {
       window.alert("되돌리지 못했어요. 휴지통에서 다시 시도해 주세요.")
@@ -116,7 +141,7 @@ function LogDetailJournal({ date, onBack, onAddEntry, onEditEntry, readerControl
       <div style={{ padding: "14px 20px 0" }}>
         <IndexCard date={cardDate(date)} dow={dowOf(date)} season={seasonOf(date)} />
       </div>
-      <JournalDetailActions date={date} entries={entries} onAddEntry={onAddEntry} onEditEntry={onEditEntry} />
+      <JournalDetailActions date={date} entries={actionEntries} onAddEntry={onAddEntry} onEditEntry={onEditEntry ? edit : undefined} />
 
       {justDeleted && (
         <div data-testid="delete-undo" style={{
@@ -195,6 +220,7 @@ function LogDetailJournal({ date, onBack, onAddEntry, onEditEntry, readerControl
               <SavedMemo entry={s} text={s.memo} fontSize={19} />
               <JournalOriginalPlan entry={s} />
               <EntryDeleteRow entryId={s.id} onDelete={() => setPendingDelete({ id: s.id, label: "훈련" })} />
+              <AccountJournalHistory entryId={s.id} />
             </div>
           </div>
         )
@@ -220,6 +246,7 @@ function LogDetailJournal({ date, onBack, onAddEntry, onEditEntry, readerControl
             <RaceSelfCheckSummary entry={r} />
             <SavedMemo entry={r} text={r.memo} fontSize={18} />
             <EntryDeleteRow entryId={r.id} onDelete={() => setPendingDelete({ id: r.id, label: "경기" })} />
+            <AccountJournalHistory entryId={r.id} />
           </div>
         </div>
       ))}
@@ -244,6 +271,7 @@ function LogDetailJournal({ date, onBack, onAddEntry, onEditEntry, readerControl
               </div>
               <div style={{ padding: "0 14px" }}>
                 <EntryDeleteRow entryId={ev.id} onDelete={() => setPendingDelete({ id: ev.id, label: "하루 마무리" })} />
+                <AccountJournalHistory entryId={ev.id} />
               </div>
             </div>
             {needsReview && (

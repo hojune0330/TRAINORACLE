@@ -11,8 +11,9 @@
 import type { ImportedActivity } from "./activity-file"
 import type { FieldProvenanceMap } from "../field-provenance"
 import type { JournalEntry, PostSessionEntry } from "../journal-schema"
-import { loadEntries, newEntryId, saveEntry, updateEntryPreservingMemo } from "../journal-store"
+import { legacyJournalWritesBlocked, loadEntries, newEntryId, saveEntry, updateEntryPreservingMemo } from "../journal-store"
 import { canEditJournalEntry } from "../journal-edit-policy"
+import type { AccountJournalWriteBase } from "../account/account-journal-record-service"
 
 /** 가져오기 파생 입력 토큰 — 일지 필드가 아니라 "파일에서 왔다"는 표시 */
 export const IMPORT_DERIVED_FROM = ["import:activity-file"] as const
@@ -20,6 +21,8 @@ export const IMPORT_DERIVED_FROM = ["import:activity-file"] as const
 export type ImportFormat = "tcx" | "gpx" | "csv" | "json"
 
 export type ImportDraft = {
+  readonly accountWriteBases?: Readonly<Record<string, Pick<AccountJournalWriteBase, "revision" | "contentFingerprint">>>
+  readonly sourceIndex?: number
   readonly activity: ImportedActivity
   /** 같은 날 비슷한 활동의 기존 일지 id — 있으면 UI가 "이미 있는 것 같아요" 표시 */
   readonly duplicateOf: string | null
@@ -33,6 +36,8 @@ export type ImportSaveIntent =
 export type ImportDraftSelection = { readonly draft: ImportDraft; readonly intent: ImportSaveIntent }
 
 export type ImportSaveResult = {
+  readonly account?: number
+  readonly pending?: number
   readonly saved: number
   readonly merged?: number
   readonly conflicts?: number
@@ -82,7 +87,7 @@ export function buildImportDrafts(
   })
 }
 
-function importedProvenance(activity: ImportedActivity, format: ImportFormat): FieldProvenanceMap {
+export function importedProvenance(activity: ImportedActivity, format: ImportFormat): FieldProvenanceMap {
   const ruleId = `import:${format}`
   const derived = (hasValue: boolean) =>
     hasValue
@@ -108,7 +113,7 @@ function hasObjectiveValue(entry: PostSessionEntry): boolean {
     || entry.avgPace.trim() !== ""
 }
 
-function isWaitingCandidate(entry: JournalEntry, date: string): entry is PostSessionEntry {
+export function isWaitingCandidate(entry: JournalEntry, date: string): entry is PostSessionEntry {
   return entry.kind === "post-session"
     && entry.date === date
     && canEditJournalEntry(entry)
@@ -130,6 +135,7 @@ export function confirmImportDrafts(
   selections: readonly ImportDraftSelection[],
   format: ImportFormat,
 ): ImportDraftConfirmationResult {
+  if (legacyJournalWritesBlocked()) return { saved: 0, merged: 0, conflicts: 0, failed: selections.length, total: loadEntries().length }
   let saved = 0
   let merged = 0
   let conflicts = 0
@@ -206,6 +212,7 @@ export function saveImportedActivity(
   activity: ImportedActivity,
   format: ImportFormat,
 ): { readonly ok: boolean; readonly total: number } {
+  if (legacyJournalWritesBlocked()) return { ok: false, total: loadEntries().length }
   return saveEntry(toImportedEntry(activity, format))
 }
 

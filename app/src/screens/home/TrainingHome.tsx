@@ -9,7 +9,8 @@ import type { LogEntryType } from "../log-entry/shared"
 
 /** 홈 "다음 훈련" 카드용 축약 처방 라벨 — "거리·목표 페이스는 지정하지 않음" 같은
  * 저가치 단서는 카드에서 생략한다 (상세는 훈련 계획 화면에서 확인). */
-export function nextTrainingPrescriptionLabel(session: PlanSession | AdjustedCandidateSession): string {
+export function nextTrainingPrescriptionLabel(session: import("../../domain/home-view-model").HomeSession): string {
+  if (session.prescription.kind === "ADJUSTED_METHOD_V3") return "저장한 조정 구성 · 원본 확인"
   if (session.prescription.kind === "ADJUSTED_METHOD") {
     const totals = deriveSequenceTotals(session.prescription.snapshot.projection.sequence)
     return ["선택한 조정 구성",

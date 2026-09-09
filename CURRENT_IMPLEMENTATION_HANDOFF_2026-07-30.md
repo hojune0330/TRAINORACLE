@@ -1,5 +1,11 @@
 # CURRENT_IMPLEMENTATION_HANDOFF_2026-07-30.md
 
+> **2026-09-08 계정 저장 작업 인수 안내:** 현재 작업 브랜치는
+> `codex/account-canonical-storage-foundation`이며 [PR #322](https://github.com/hojune0330/TRAINORACLE/pull/322)에서 통합 중입니다.
+> [7개 작업 실행 기록](./reports/implementation/ACCOUNT_STORAGE_SEVEN_TASK_DELIVERY_2026-09-08.md)을 먼저 확인하세요.
+> 이 안내는 main 병합이나 온라인 저장 공개를 뜻하지 않습니다. 운영 DB 적용·키 보관·실계정 검증과
+> 장기 계획 이력 분할은 기록에 명시된 상태를 따라야 하며, 아래 과거 수치를 현재 수치로 재사용하지 마세요.
+
 > ⚠️ **2026-08-06 사양 갱신 안내 (본문은 당시 기록이므로 고치지 않았다).**
 > 이 문서가 인용한 `DSB-INV-002`(PM은 회복 전용)와 `DSB-INV-003`(같은 날 quality 짝 금지)은
 > `specs/reconstruct/DOUBLE_SESSION_BETA_SAFETY_CONTRACT.md` **v0.2에서 은퇴하고 새 규칙으로

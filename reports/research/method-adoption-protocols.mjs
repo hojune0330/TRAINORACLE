@@ -14,15 +14,29 @@ export const METHOD_ADOPTION_PROTOCOLS = [
   protocol("P-LT-S", "LT", "SHORT_SPLIT", 1, 3, [time(420)], time(60, "JOG"), null),
   protocol("P-RHYTHM-400", "MIX", "ROLL_ON_400", 1, 12, [distance(400)], null, null, distance(100, "ROLL_ON")),
   protocol("P-RHYTHM-300", "MIX", "ROLL_ON_SETS_300", 3, 2, [distance(300)], null, time(120, "EASY_RUN"), distance(100, "ROLL_ON")),
+  protocol("P-RHYTHM-T", "MIX", "TIMED_RHYTHM", 1, 6, [time(120)], null, null, time(60, "EASY_RUN")),
+  protocol("P-RHYTHM-TS", "MIX", "TIMED_RHYTHM_SETS", 3, 3, [time(60)], null, time(180, "EASY_RUN"), time(60, "EASY_RUN")),
   protocol("P-VO2-2", "VO2", "TWO_MINUTE", 1, 6, [time(120)], time(60, "JOG"), null),
   protocol("P-VO2-3", "VO2", "THREE_MINUTE", 1, 5, [time(180)], time(120, "JOG"), null),
   protocol("P-VO2-4", "VO2", "FOUR_MINUTE", 1, 4, [time(240)], time(180, "JOG"), null),
   protocol("P-ATP-A", "ATP-PC", "STANDING_ACCELERATION", 1, 6, [distance(20)], time(120, "WALK_OR_STAND"), null),
   protocol("P-ATP-F", "ATP-PC", "FLYING_SEGMENT", 1, 4, [distance(20, "BUILDUP"), distance(10)], time(240, "WALK_OR_STAND"), null),
+  protocol("P-ATP-T", "ATP-PC", "TIMED_ACCELERATION", 1, 4, [time(6)], time(180, "WALK_OR_STAND"), null),
   protocol("P-GLY-D", "GLY", "UNBROKEN_REPEATS", 1, 6, [distance(200)], time(120, "WALK"), null),
   protocol("P-GLY-S", "GLY", "SET_REPEATS", 2, 3, [distance(200)], time(120, "WALK"), time(300, "WALK_OR_STAND")),
   protocol("P-REC-W", "REC", "WALK", 1, 1, [time(900)], null, null),
   protocol("P-OFF", "OFF", "NO_PLANNED_EXERCISE", 0, 0, [], null, null),
+  // Introduction-scope coaching proposals, not published beginner prescriptions.
+  protocol("P-INTRO-LT-C", "LT", "CONTINUOUS", 1, 1, [time(480)], null, null),
+  protocol("P-INTRO-LT-S", "LT", "SHORT_SPLIT", 1, 2, [time(240)], time(60, "JOG"), null),
+  protocol("P-INTRO-VO2-2", "VO2", "TWO_MINUTE", 1, 3, [time(120)], time(90, "JOG"), null),
+  protocol("P-INTRO-VO2-3", "VO2", "THREE_MINUTE", 1, 2, [time(180)], time(120, "JOG"), null),
+  protocol("P-INTRO-ATP-A", "ATP-PC", "STANDING_ACCELERATION", 1, 4, [distance(20)], time(120, "WALK_OR_STAND"), null),
+  protocol("P-INTRO-ATP-T", "ATP-PC", "TIMED_ACCELERATION", 1, 3, [time(6)], time(180, "WALK_OR_STAND"), null),
+  protocol("P-INTRO-GLY-D", "GLY", "UNBROKEN_REPEATS", 1, 4, [distance(100)], time(120, "WALK"), null),
+  protocol("P-INTRO-GLY-S", "GLY", "SET_REPEATS", 2, 2, [distance(150)], time(90, "WALK"), time(240, "WALK_OR_STAND")),
+  protocol("P-INTRO-MIX-T", "MIX", "TIMED_RHYTHM", 1, 4, [time(60)], null, null, time(60, "EASY_RUN")),
+  protocol("P-INTRO-MIX-S", "MIX", "TIMED_RHYTHM_SETS", 2, 3, [time(30)], null, time(120, "EASY_RUN"), time(60, "EASY_RUN")),
 ]
 
 const roles = new Set(["WORK", "BUILDUP", "WALK", "JOG", "EASY_RUN", "WALK_OR_STAND", "ROLL_ON"])
@@ -97,24 +111,43 @@ export const METHOD_ADOPTION_VARIANTS = [
 ]
 
 export const MAIN_SUPPORT_PROPOSAL = {
-  id: "P-SUPPORT-MAIN-01", version: "0.1", status: "OWNER_ADOPTION_PENDING",
+  id: "P-SUPPORT-MAIN-01", version: "0.2", status: "OWNER_ADOPTION_PENDING",
   executionAuthority: "NONE",
   warmup: [
     { ...time(900, "EASY_RUN"), cue: "RPE 2-3" },
     ...Array.from({ length: 4 }, (_, index) => [
       { ...time(20, "BUILDUP"), cue: "PROGRESSIVE_NOT_ALL_OUT" },
-      { ...time(index === 3 ? 60 : 40, "WALK"), cue: "WALK_OR_JOG" },
+      { ...time(index === 3 ? 60 : 40, "WALK"), cue: "WALK" },
     ]).flat(),
   ],
   cooldown: [{ ...time(600, "EASY_RUN"), cue: "RPE 1-2" }],
 }
 
-export function assembleProposalSession(p) {
+// Explicit comparison alternative; never selected merely because a user is a beginner.
+export const INTRO_MAIN_SUPPORT_PROPOSAL = {
+  id: "P-SUPPORT-INTRO-01", version: "0.1", status: "OWNER_ADOPTION_PENDING", executionAuthority: "NONE",
+  warmup: [
+    { ...time(300, "EASY_RUN"), cue: "RPE 2-3" },
+    ...Array.from({ length: 2 }, () => [
+      { ...time(20, "BUILDUP"), cue: "PROGRESSIVE_NOT_ALL_OUT" },
+      { ...time(60, "WALK"), cue: "WALK" },
+    ]).flat(),
+  ],
+  cooldown: [{ ...time(300, "EASY_RUN"), cue: "RPE 1-2" }],
+}
+
+export function assembleProposalSession(p, supportVariant = "EXISTING") {
+  if (!["EXISTING", "INTRO_COMPARISON"].includes(supportVariant)) throw Error("UNKNOWN_SUPPORT_VARIANT")
+  if (supportVariant === "INTRO_COMPARISON" && !p.id.startsWith("P-INTRO-")) throw Error("INTRO_SUPPORT_SCOPE_REQUIRED")
   const main = expandProposal(p)
   const summary = summarizeProposal(p)
   // Source conditions, population and frame placement remain separate review gates.
   const supported = ["LT", "VO2", "ATP-PC", "GLY", "MIX"].includes(p.family)
-  const support = supported ? structuredClone(MAIN_SUPPORT_PROPOSAL) : null
+  const support = supported ? structuredClone(supportVariant === "INTRO_COMPARISON"
+    ? INTRO_MAIN_SUPPORT_PROPOSAL : MAIN_SUPPORT_PROPOSAL) : null
+  if (support && (support.status !== "OWNER_ADOPTION_PENDING" || support.executionAuthority !== "NONE")) {
+    throw Error("NOT_PENDING_SUPPORT")
+  }
   const warmup = support?.warmup ?? []
   const cooldown = support?.cooldown ?? []
   const supportSeconds = [...warmup, ...cooldown].reduce((sum, s) => sum + s.value, 0)

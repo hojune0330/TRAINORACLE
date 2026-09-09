@@ -22,6 +22,8 @@
 
 ## TrainOracle Master Plan
 
+- **계정 저장·복구 개발:** [`ACCOUNT_CANONICAL_STORAGE_IMPLEMENTATION_PLAN.md`](./ACCOUNT_CANONICAL_STORAGE_IMPLEMENTATION_PLAN.md) — 온라인을 기준으로 보관하고 기기는 미전송 초안을 보호합니다. 개발 상태와 공개 상태는 구분합니다.
+  [7개 작업의 구현·서버 적용·배포 현황](./reports/implementation/ACCOUNT_STORAGE_SEVEN_TASK_DELIVERY_2026-09-08.md)에서 실제 완료 범위와 남은 작업을 확인합니다.
 - **전체 제품 방향:** [`TRAINORACLE_MASTER_PLAN.md`](./TRAINORACLE_MASTER_PLAN.md)
 - **개발 시작 전 준비 상태:** [`TRAINORACLE_IMPLEMENTATION_READINESS.md`](./TRAINORACLE_IMPLEMENTATION_READINESS.md)
 - **UX·UI 시각 기준 (모든 UI 작업에 구속):** [`docs/UX_UI_VISUAL_STANDARD.md`](./docs/UX_UI_VISUAL_STANDARD.md)

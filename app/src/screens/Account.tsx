@@ -19,6 +19,10 @@ import {
 } from "./account/index"
 import { AccountAuthGateway } from "./account/AccountAuthGateway"
 import { BetaAccountSettings } from "./account/BetaAccountSettings"
+import { AccountJournalDraftPanel } from "./account/AccountJournalDraftPanel"
+import { accountJournalPreviewEnabled } from "../domain/account/account-journal-api"
+import { AccountJournalHistory } from "./account/AccountJournalHistory"
+import { AccountJournalMigration } from "./account/AccountJournalMigration"
 import { mono, primaryBtn, secondaryBtn } from "./account/styles"
 
 type SetupState = "checking" | "not-required" | "saving" | "needs-profile" | "ready" | "failed"
@@ -231,6 +235,9 @@ export function Account({ onBack, onOpenImport, onOpenRestore }: {
           <DeviceJournalOwnershipPanel userId={user.id} />
           <DeviceTrainingDataPanel userId={user.id} />
           <AccountSyncPanel userId={user.id} />
+          {accountJournalPreviewEnabled() && <AccountJournalDraftPanel key={user.id} userId={user.id} />}
+          {accountJournalPreviewEnabled() && <AccountJournalHistory key={`history-${user.id}`} />}
+          {accountJournalPreviewEnabled() && <AccountJournalMigration key={`migration-${user.id}`} userId={user.id} />}
 
           <SectionLb>기기 데이터 가져오기</SectionLb>
           <div data-testid="import-teaser" style={{ border: "1px solid var(--line)", borderRadius: 4, padding: "12px 14px" }}>

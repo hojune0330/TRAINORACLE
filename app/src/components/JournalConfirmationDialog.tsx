@@ -6,7 +6,7 @@ type JournalConfirmationDialogProps = {
   readonly confirmLabel: string
   readonly returnFocusTo?: () => HTMLElement | null
   readonly onCancel: () => void
-  readonly onConfirm: () => boolean
+  readonly onConfirm: () => boolean | Promise<boolean>
 }
 
 export function JournalConfirmationDialog({
@@ -22,6 +22,9 @@ export function JournalConfirmationDialog({
   const cancelRef = React.useRef<HTMLButtonElement>(null)
   const confirmRef = React.useRef<HTMLButtonElement>(null)
   const confirmedRef = React.useRef(false)
+  const [busy, setBusy] = React.useState(false)
+  const busyRef = React.useRef(false)
+  const [failed, setFailed] = React.useState(false)
   const onCancelRef = React.useRef(onCancel)
   onCancelRef.current = onCancel
   const capturedReturnFocus = document.activeElement instanceof HTMLElement
@@ -37,7 +40,7 @@ export function JournalConfirmationDialog({
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
         event.preventDefault()
-        onCancelRef.current()
+        if (!busyRef.current) onCancelRef.current()
         return
       }
       if (event.key !== "Tab") return
@@ -76,12 +79,13 @@ export function JournalConfirmationDialog({
       className="journal-confirmation"
       data-testid="journal-delete-dialog"
       onClick={(event) => {
-        if (event.target === event.currentTarget) onCancel()
+        if (event.target === event.currentTarget && !busyRef.current) onCancel()
       }}
     >
       <div className="journal-confirmation__surface">
         <h2 id={titleId} className="journal-confirmation__title">{title}</h2>
         <p id={descriptionId} className="journal-confirmation__description">{description}</p>
+        {failed && <p role="alert">처리하지 못했어요. 연결 상태를 확인한 뒤 다시 시도해 주세요.</p>}
         <div className="journal-confirmation__actions">
           <button
             ref={cancelRef}
@@ -89,6 +93,7 @@ export function JournalConfirmationDialog({
             className="journal-confirmation__button"
             data-testid="journal-delete-cancel"
             onClick={onCancel}
+            disabled={busy}
           >
             취소
           </button>
@@ -97,8 +102,26 @@ export function JournalConfirmationDialog({
             type="button"
             className="journal-confirmation__button journal-confirmation__button--danger"
             data-testid="journal-delete-confirm"
+            disabled={busy}
             onClick={() => {
-              confirmedRef.current = onConfirm()
+              if (busyRef.current) return
+              setFailed(false)
+              busyRef.current = true
+              try {
+                const result = onConfirm()
+                if (typeof result === "boolean") {
+                  confirmedRef.current = result
+                  busyRef.current = false
+                } else {
+                  setBusy(true)
+                  void result.then(ok => { confirmedRef.current = ok })
+                    .catch(() => setFailed(true))
+                    .finally(() => { busyRef.current = false; setBusy(false) })
+                }
+              } catch {
+                busyRef.current = false
+                setFailed(true)
+              }
             }}
           >
             {confirmLabel}

@@ -45,7 +45,7 @@ export function LogEntry({ entryType = "choose", onBack, onDone, onOpenImport, o
       targetDate={targetDate}
       initialEntry={initialEntry?.kind === "post-session" ? initialEntry : undefined}
       plannedSessionLink={plannedSessionLink}
-      onDone={(entry) => onDone?.("post-session", entry)}
+      onDone={(entry, reviewMessage) => handleSaved("post-session", entry, reviewMessage)}
       onContinueDetailed={onContinueDetailed}
     />
   )

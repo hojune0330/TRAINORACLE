@@ -1,4 +1,5 @@
 import { canonicalJsonFingerprint } from "@impl/plan-generator/candidate-identity"
+import { captureAccountPlanWrite } from "./account/account-plan-domain"
 import { hasCanonicalJsonTree } from "./plan-beta-schema"
 import { activePlanBetaStorageKey } from "./plan-beta-store"
 import { localAccountScopeIsCurrent, localAccountScopeSnapshot, accountScopedStorageKey } from "./account/local-account-scope"
@@ -39,9 +40,10 @@ export async function saveSelectedAdjustedPlan(input: {
     const request = structuredClone(input.request)
     const account = localAccountScopeSnapshot()
     const key = activePlanBetaStorageKey()
+    const accountWrite = captureAccountPlanWrite(key)
     const locks = input.locks === undefined ? getPlanMutationLockManager() : input.locks
     if (locks === null) return reject("MUTATION_LOCK_UNAVAILABLE")
-    return await locks.request(PLAN_BETA_MUTATION_LOCK_NAME, { mode: "exclusive", ifAvailable: true }, lock => {
+    return await locks.request(PLAN_BETA_MUTATION_LOCK_NAME, { mode: "exclusive", ifAvailable: true }, async lock => {
       if (lock === null) return reject("MUTATION_LOCK_UNAVAILABLE")
       const current = () => input.isCurrentDraft() && localAccountScopeIsCurrent(account)
         && hasCanonicalJsonTree(input.request) && hash(input.request) === openingHash
@@ -49,7 +51,7 @@ export async function saveSelectedAdjustedPlan(input: {
       let previous: string | null
       let encoded: string | null = null
       try {
-        const storage = window.localStorage
+        const storage = accountWrite?.storage ?? window.localStorage
         previous = storage.getItem(key)
         const live = input.readReview()
         if (!hasCanonicalJsonTree(live)) return reject("INVALID_ADJUSTED_REVIEW")
@@ -66,6 +68,18 @@ export async function saveSelectedAdjustedPlan(input: {
         }
         const output = encodeStoredAdjustedPlanState(selected.state, [], now.toISOString(), live.retained, now)
         if (output.kind !== "encoded") return reject("ADJUSTED_PLAN_STORAGE_VALIDATION_FAILED")
+        if (accountWrite) {
+          const review = () => {
+            if (!current()) return false
+            const fresh = input.readReview()
+            const checked = selectAdjustedPlanForActivation({ ...request, preparation: { ...request.preparation,
+              source: fresh.source, explanation: fresh.explanation } }, fresh.policies, new Date())
+            return hash(fresh.retained) === hash(live.retained) && checked.kind === "selected_adjusted"
+              && sameChoice(checked.state) === sameChoice(selected.state)
+          }
+          const code = await accountWrite.save(output.state, live.retained, review)
+          return code ? reject(code) : { kind: "saved" as const, state: output.state, replayed: false }
+        }
         if (!current() || storage.getItem(key) !== previous) return reject("STALE_BASE")
         encoded = output.raw
         storage.setItem(key, encoded)
@@ -100,10 +114,11 @@ export async function saveSelectedAdjustedSuccessor(input: {
     const expected = input.expectedPredecessorFingerprint
     const account = localAccountScopeSnapshot()
     const activeKey = activePlanBetaStorageKey()
+    const accountWrite = captureAccountPlanWrite(activeKey)
     const archiveKey = accountScopedStorageKey(ADJUSTED_PLAN_ARCHIVE_KEY)
     const locks = input.locks === undefined ? getPlanMutationLockManager() : input.locks
     if (locks === null) return reject("MUTATION_LOCK_UNAVAILABLE")
-    return await locks.request(PLAN_BETA_MUTATION_LOCK_NAME, { mode: "exclusive", ifAvailable: true }, lock => {
+    return await locks.request(PLAN_BETA_MUTATION_LOCK_NAME, { mode: "exclusive", ifAvailable: true }, async lock => {
       if (lock === null) return reject("MUTATION_LOCK_UNAVAILABLE")
       const current = () => input.isCurrentDraft() && localAccountScopeIsCurrent(account)
         && input.expectedPredecessorFingerprint === expected
@@ -113,7 +128,7 @@ export async function saveSelectedAdjustedSuccessor(input: {
       let beforeActive: string | null | undefined
       let beforeArchive: string | null | undefined
       try {
-        const storage = window.localStorage
+        const storage = accountWrite?.storage ?? window.localStorage
         beforeActive = storage.getItem(activeKey)
         beforeArchive = storage.getItem(archiveKey)
         const live = input.readReview()
@@ -127,6 +142,18 @@ export async function saveSelectedAdjustedSuccessor(input: {
         if (selected.kind !== "selected_adjusted") return selected
         const encoded = encodeStoredAdjustedPlanState(selected.state, [], now.toISOString(), live.retained, now)
         if (encoded.kind !== "encoded") return reject("ADJUSTED_PLAN_STORAGE_VALIDATION_FAILED")
+        if (accountWrite) {
+          const review = () => {
+            if (!current()) return false
+            const fresh = input.readReview()
+            const checked = selectAdjustedPlanSuccessor({ ...request, preparation: { ...request.preparation,
+              source: fresh.source, explanation: fresh.explanation } }, predecessor.state, expected, fresh.retained, fresh.policies, new Date())
+            return hash(fresh.retained) === hash(live.retained) && checked.kind === "selected_adjusted"
+              && sameChoice(checked.state) === sameChoice(selected.state)
+          }
+          const code = await accountWrite.save(encoded.state, live.retained, review)
+          return code ? reject(code) : { kind: "saved" as const, state: encoded.state, predecessorFingerprint: expected }
+        }
         const archive = prepareAdjustedOriginalArchive(beforeArchive, predecessor.state, live.retained, now)
         if (archive.kind !== "prepared") return reject("INVALID_STORED_ARCHIVE")
         if (!current() || storage.getItem(activeKey) !== beforeActive || storage.getItem(archiveKey) !== beforeArchive) return reject("STALE_BASE")

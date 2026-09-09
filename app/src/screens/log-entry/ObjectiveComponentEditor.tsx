@@ -1,4 +1,5 @@
 import React from "react"
+import type { ObjectiveEditorDraft } from "./form-input-draft"
 import {
   OBJECTIVE_COMPONENT_KIND,
   objectiveLoadComponentSchema,
@@ -180,12 +181,17 @@ function buildComponent(kind: ComponentKind, fields: DraftFields): ComponentBuil
 export function ObjectiveComponentEditor({
   disabled,
   onAdd,
+  draft,
+  onDraftChange,
 }: {
   readonly disabled: boolean
   readonly onAdd: (component: ObjectiveLoadComponent) => void
+  readonly draft?: ObjectiveEditorDraft
+  readonly onDraftChange?: (draft: ObjectiveEditorDraft) => void
 }) {
-  const [kind, setKind] = React.useState<ComponentKind>(OBJECTIVE_COMPONENT_KIND.intervals)
-  const [fields, setFields] = React.useState<Record<string, string>>({})
+  const [kind, setKind] = React.useState<ComponentKind>(() => draft?.kind ?? OBJECTIVE_COMPONENT_KIND.intervals)
+  const [fields, setFields] = React.useState<Record<string, string>>(() => ({ ...draft?.fields }))
+  React.useLayoutEffect(() => { onDraftChange?.({ kind, fields }) }, [kind, fields, onDraftChange])
   const [invalidKeys, setInvalidKeys] = React.useState<readonly string[] | null>(null)
   const add = () => {
     const result = buildComponent(kind, fields)

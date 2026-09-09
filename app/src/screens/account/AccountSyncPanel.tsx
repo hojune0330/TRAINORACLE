@@ -2,7 +2,7 @@ import React from "react"
 import { SectionLb } from "../../components/JournalPrimitives"
 import { loadSyncConsent, previewSync, saveSyncConsent, syncNow } from "../../domain/account/sync"
 import type { SyncConsent, SyncOutcome, SyncPreviewOutcome } from "../../domain/account/sync"
-import { loadEntriesOwnedBy } from "../../domain/journal-store"
+import { legacyJournalWritesBlocked, loadEntriesOwnedBy } from "../../domain/journal-store"
 import { productFeatures } from "../../domain/product-features"
 import { mono, primaryBtn } from "./styles"
 import { TermHelp } from "../../components/TermHelp"
@@ -31,6 +31,18 @@ export function AccountSyncPanel({
     setMessage(null)
   }, [userId])
 
+  if (legacyJournalWritesBlocked(userId)) {
+    return (
+      <div>
+        <SectionLb>계정 일지 보관</SectionLb>
+        <p role="status" style={{ fontFamily: "var(--sans)", fontSize: "var(--fs-caption)", lineHeight: 1.6,
+          color: "var(--ink-2)", margin: 0, wordBreak: "keep-all" }}>
+          이전 일지 동기화는 사용하지 않아요. 계정 저장 상태는 일지에서 확인할 수 있어요. 기기 원본은 그대로 보관돼요.
+        </p>
+      </div>
+    )
+  }
+
   if (!enabled) {
     return (
       <div>
@@ -43,6 +55,7 @@ export function AccountSyncPanel({
   }
 
   const updateConsent = (next: SyncConsent) => {
+    if (legacyJournalWritesBlocked(userId)) return
     const structuredOnly = { ...next, shareTrainingNotes: false }
     setConsent(structuredOnly)
     setPreview(null)
@@ -50,6 +63,7 @@ export function AccountSyncPanel({
   }
 
   const synchronize = async () => {
+    if (legacyJournalWritesBlocked(userId)) return
     setBusy(true)
     setMessage(null)
     const outcome = await onSync(userId)
@@ -64,6 +78,7 @@ export function AccountSyncPanel({
   }
 
   const preparePreview = async () => {
+    if (legacyJournalWritesBlocked(userId)) return
     setBusy(true)
     setMessage(null)
     const outcome = await onPreview(userId)

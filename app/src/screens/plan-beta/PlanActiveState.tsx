@@ -1,4 +1,5 @@
 import React from "react"
+import { planErrorMessage } from "./plan-feedback"
 import {
   archiveAndClearActivePlanWithLock,
   savePlanProgressWithLock,
@@ -254,5 +255,7 @@ function successorRejectionMessage(code: SuccessorRejectionCode): string {
       return "이미 시작한 다음 계획의 확인 기록이 현재 계획과 맞지 않아요. 계획 내용을 다시 확인해 주세요."
     case "MALFORMED_INPUT":
       return "저장된 다음 계획 정보가 손상되어 시작하지 않았어요. 현재 계획은 그대로예요."
+    default:
+      return planErrorMessage(code)
   }
 }

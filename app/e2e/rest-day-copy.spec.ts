@@ -1,13 +1,17 @@
 import { expect, test } from "@playwright/test"
 
+test.use({ timezoneId: "Asia/Seoul" })
 test("offers a rest-day path without pressuring the athlete to log more", async ({ page }) => {
+  // Exercise the KST/UTC date boundary instead of depending on the runner's wall clock.
+  await page.clock.setFixedTime(new Date("2026-09-08T15:30:00.000Z"))
   await page.addInitScript(() => {
-    const date = new Date().toISOString().slice(0, 10)
+    const now = new Date()
+    const date = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`
     window.localStorage.setItem("trainoracle.journal.v1", JSON.stringify([{
       id: "legacy-rest-copy",
       kind: "post-session",
       date,
-      savedAt: `${date}T00:00:00.000Z`,
+      savedAt: now.toISOString(),
       syncState: "local",
       system: "easy",
       title: "legacy entry",

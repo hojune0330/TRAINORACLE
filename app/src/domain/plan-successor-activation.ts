@@ -1,4 +1,6 @@
 import { z } from "zod"
+import { captureAccountPlanWrite } from "./account/account-plan-domain"
+import { accountPlansEnabled } from "./account/account-plan-service"
 import { createExplanationReceipt } from "./training-explanation-receipt"
 import {
   canonicalJson,
@@ -82,7 +84,7 @@ function currentPlanStorageKeys(accountScope: string | null): PlanStorageKeys {
   return {
     active: accountScopedStorageKeyFor(ACTIVE_KEY, accountScope),
     history: accountScopedStorageKeyFor(HISTORY_KEY, accountScope),
-    pending: accountScopedStorageKeyFor(PENDING_KEY, accountScope),
+    pending: accountScopedStorageKeyFor(accountPlansEnabled() ? `${PENDING_KEY}.account-draft` : PENDING_KEY, accountScope),
     context: accountScopedStorageKeyFor(CONTEXT_KEY, accountScope),
     previousIntake: accountScopedStorageKeyFor(PREVIOUS_INTAKE_KEY, accountScope),
     receipt: accountScopedStorageKeyFor(PLAN_SUCCESSOR_ACTIVATION_RECEIPT_STORAGE_KEY, accountScope),
@@ -139,6 +141,7 @@ export type ActivateAcceptedSuccessorResult =
   | {
       readonly kind: "rejected"
       readonly code:
+        | `ACCOUNT_PLAN_${string}`
         | "MUTATION_LOCK_UNAVAILABLE"
         | "MALFORMED_INPUT"
         | "NO_PENDING_SUCCESSOR"
@@ -190,7 +193,12 @@ async function activateInsideLock(
   if (typeof window === "undefined") return { kind: "rejected", code: "MUTATION_LOCK_UNAVAILABLE" }
 
   const storageKeys = currentPlanStorageKeys(accountScope)
-  const snapshots = snapshotStorage(storageKeys)
+  const accountWrite = captureAccountPlanWrite(storageKeys.active)
+  const snapshots = accountWrite ? {
+    active: accountWrite.storage.getItem(storageKeys.active), history: null, previousIntake: null,
+    context: accountWrite.packet?.evidence === null && accountWrite.packet.context ? JSON.stringify(accountWrite.packet.context) : null,
+    pending: window.localStorage.getItem(storageKeys.pending), receipt: null,
+  } : snapshotStorage(storageKeys)
   if (snapshots === null) return { kind: "failed", code: "ACTIVATION_STORAGE_WRITE_FAILED", rollbackComplete: false }
 
   const active = parseActiveState(snapshots.active)
@@ -274,6 +282,22 @@ async function activateInsideLock(
   }
   if (!localAccountScopeIsCurrent(accountScope)) {
     return { kind: "rejected", code: "STALE_BASE" }
+  }
+  if (accountWrite) {
+    const freshReview = () => {
+      const at = new Date(), checked = evaluateActivePlanAdaptationSafety(active, input.currentCheck, at)
+      const successor = context.candidates.find(c => c.candidateId === nextState.activePlan.candidateId)
+      return localAccountScopeIsCurrent(accountScope) && checked.kind === "evaluated" && !checked.activeHold
+        && window.localStorage.getItem(storageKeys.pending) === snapshots.pending
+        && accountWrite.storage.getItem(storageKeys.active) === snapshots.active
+        && !!successor && currentTemplateAuthorityMatches(active, successor, checked.safetyGate, at.toISOString())
+        && recordSnapshotMatches(pending.pending, active.generatedAt, at.toISOString(), accountScope)
+        && (pending.pending.edgeExpiresAt === null || at.getTime() < Date.parse(pending.pending.edgeExpiresAt))
+    }
+    const code = await accountWrite.save(nextState, [], freshReview, nextContext.data)
+    // Keep the accepted device draft for recovery. It cannot be consumed twice:
+    // the predecessor hash no longer matches the account's current selection.
+    return code ? { kind: "rejected", code } : { kind: "activated", state: nextState }
   }
   const transaction = [
     () => writeVerified(window.localStorage, storageKeys.history, staged.history),

@@ -28,6 +28,8 @@ jobs:
           cache-dependency-path: |
             runtime-evidence/d9-evaluator/package-lock.json
             impl/package-lock.json
+            supabase/tests/local-postgres/package-lock.json
+            app/package-lock.json
 
       - name: Validate reasoning-tier work harness
         run: |
@@ -59,6 +61,18 @@ jobs:
           node specs/test-packages/validate-personalized-prescription-v2-taper-authority.mjs
           node --test specs/test-packages/validate-personalized-prescription-v2-race-placement.test.mjs
           node specs/test-packages/validate-personalized-prescription-v2-race-placement.mjs
+
+      - name: Install shared schema fixture compiler dependencies
+        working-directory: app
+        run: npm ci --ignore-scripts --no-audit --no-fund
+
+      - name: Install isolated PostgreSQL rehearsal dependencies
+        working-directory: supabase/tests/local-postgres
+        run: npm ci --ignore-scripts --no-audit --no-fund
+
+      - name: Rehearse V6 migration and account isolation in memory
+        working-directory: supabase/tests/local-postgres
+        run: npm test
 
       - name: Install D9 evaluator dependencies
         working-directory: runtime-evidence/d9-evaluator
@@ -101,6 +115,14 @@ jobs:
         working-directory: app
         run: npm test
 
+      - name: Verify shared account journal record validator
+        working-directory: app
+        run: npm run test:account-record-validator
+
+      - name: Verify shared encrypted account state validator
+        working-directory: app
+        run: npm run test:account-state-validator
+
       - name: Typecheck app and browser tests
         working-directory: app
         run: |
@@ -136,6 +158,17 @@ jobs:
       - name: Run app browser scenarios
         working-directory: app
         run: npm run test:e2e
+
+      - name: Verify encrypted account journal buffer and record recovery
+        working-directory: app
+        run: |
+          npm run test:e2e:account-draft-buffer
+          npm run test:e2e:account-draft-panel
+          npm run test:e2e:account-record-service
+          npm run test:e2e:account-conflict
+          npm run test:e2e:account-decoration
+          npm run test:e2e:account-plan-service
+          npm run test:e2e:form-input-autosave
 
   deploy-pages:
     if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && github.ref == 'refs/heads/main'
@@ -185,6 +218,7 @@ jobs:
           VITE_PHONE_AUTH_ENABLED: ${{ vars.TRAINORACLE_PHONE_AUTH_ENABLED }}
           VITE_PHONE_AUTH_OPERATIONS_APPROVED: ${{ vars.TRAINORACLE_PHONE_AUTH_OPERATIONS_APPROVED }}
           VITE_FEATURE_SYNC: ${{ vars.TRAINORACLE_FEATURE_SYNC }}
+          VITE_FEATURE_ACCOUNT_JOURNAL: ${{ vars.TRAINORACLE_FEATURE_ACCOUNT_JOURNAL }}
           VITE_FEATURE_SHARING: ${{ vars.TRAINORACLE_FEATURE_SHARING }}
           VITE_FEATURE_PLAN_PROPOSALS: ${{ vars.TRAINORACLE_FEATURE_PLAN_PROPOSALS }}
           VITE_FEATURE_PLAN_BACKUP: ${{ vars.TRAINORACLE_FEATURE_PLAN_BACKUP }}
@@ -197,6 +231,7 @@ jobs:
           VITE_KILL_KAKAO_AUTH: ${{ vars.TRAINORACLE_KILL_KAKAO_AUTH }}
           VITE_KILL_PHONE_AUTH: ${{ vars.TRAINORACLE_KILL_PHONE_AUTH }}
           VITE_KILL_SYNC: ${{ vars.TRAINORACLE_KILL_SYNC }}
+          VITE_KILL_ACCOUNT_JOURNAL: ${{ vars.TRAINORACLE_KILL_ACCOUNT_JOURNAL }}
           VITE_KILL_SHARING: ${{ vars.TRAINORACLE_KILL_SHARING }}
           VITE_KILL_PLAN_PROPOSALS: ${{ vars.TRAINORACLE_KILL_PLAN_PROPOSALS }}
           VITE_KILL_PLAN_BACKUP: ${{ vars.TRAINORACLE_KILL_PLAN_BACKUP }}

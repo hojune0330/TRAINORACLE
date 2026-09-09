@@ -1,4 +1,5 @@
 import React from "react"
+import type { ObjectiveEditorDraft } from "./form-input-draft"
 import { summarizeIntensityAssessment } from "../../domain/intensity-assessment"
 import type { ObjectiveLoadComponent, SessionIntensityAssessment } from "../../domain/intensity-assessment"
 import { IntensitySummaryPanel } from "./IntensitySummaryPanel"
@@ -39,10 +40,14 @@ export function useIntensityAssessment(initial?: SessionIntensityAssessment): In
 
 export function IntensityAssessmentField({
   controller,
+  editorDraft,
+  onEditorDraftChange,
   reportedRpe,
   onSectionTouch,
 }: {
   readonly controller: IntensityAssessmentController
+  readonly editorDraft?: ObjectiveEditorDraft
+  readonly onEditorDraftChange?: (draft: ObjectiveEditorDraft) => void
   readonly reportedRpe: number
   /**
    * 구획을 건드렸다고 화면에 알린다. 이 화면이 아니라 **앞 구획** 을 접는 데
@@ -96,6 +101,8 @@ export function IntensityAssessmentField({
         onTouch={touchOf("objective")}
       >
         <ObjectiveComponentEditor
+          draft={editorDraft}
+          onDraftChange={onEditorDraftChange}
           disabled={controller.objectiveComponents.length >= 6}
           onAdd={controller.addComponent}
         />

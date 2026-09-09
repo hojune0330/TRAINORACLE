@@ -9,6 +9,9 @@ import { mono, secondaryBtn } from "./import-activities/styles"
 import { ActivityFileReadError, MAX_IMPORT_FILE_BYTES, readActivityFileText } from "./import-activities/read-file"
 import { useActiveContentScroll } from "../hooks/useActiveContentScroll"
 import { useOrderedStepMotion } from "../hooks/useOrderedStepMotion"
+import { accountJournalRecordsEnabled } from "../domain/account/account-journal-record-service"
+import { buildAccountImportDrafts, createAccountImportConfirmation } from "../domain/import/account-import"
+import { useImportOwnerScope } from "./import-activities/useImportOwnerScope"
 
 type Stage =
   | { readonly step: "pick" }
@@ -24,18 +27,31 @@ export function ImportActivities({ onBack, onOpenLog }: {
   const [selected, setSelected] = React.useState<ReadonlySet<number>>(new Set())
   const [intents, setIntents] = React.useState<ReadonlyMap<number, ImportSaveIntent>>(new Map())
   const [busy, setBusy] = React.useState(false)
+  const busyRef = React.useRef(false)
+  const confirmation = React.useRef<ReturnType<typeof createAccountImportConfirmation> | null>(null)
   const fileInputRef = React.useRef<HTMLInputElement>(null)
   const readControllerRef = React.useRef<AbortController | null>(null)
   const stageRef = React.useRef<HTMLDivElement>(null)
   const stageMotion = useOrderedStepMotion(stage.step, ["pick", "review", "saved"])
   useActiveContentScroll(stage.step, stageRef, undefined, true)
+  const captureScope = useImportOwnerScope(() => {
+    readControllerRef.current?.abort(); readControllerRef.current = null
+    confirmation.current?.dispose(); confirmation.current = null
+    busyRef.current = false; setBusy(false); setStage({ step: "pick" })
+    setSelected(new Set()); setIntents(new Map()); setFailure(null)
+  })
 
-  React.useEffect(() => () => readControllerRef.current?.abort(), [])
+  React.useEffect(() => () => { readControllerRef.current?.abort(); confirmation.current?.dispose() }, [])
 
   const handleFile = async (file: File) => {
+    if (busyRef.current) return
+    const current = captureScope()
+    busyRef.current = true
+    confirmation.current?.dispose(); confirmation.current = null
     setBusy(true)
     setFailure(null)
     if (file.size > MAX_IMPORT_FILE_BYTES) {
+      busyRef.current = false
       setBusy(false)
       setFailure("too-large")
       return
@@ -48,23 +64,29 @@ export function ImportActivities({ onBack, onOpenLog }: {
     try {
       text = await readActivityFileText(file, controller.signal)
     } catch (error) {
+      if (!current() || readControllerRef.current !== controller) return
       if (readControllerRef.current === controller) readControllerRef.current = null
-      if (!(error instanceof ActivityFileReadError)) throw error
       setBusy(false)
-      setFailure(error.kind)
+      busyRef.current = false
+      setFailure(error instanceof ActivityFileReadError ? error.kind : "unreadable")
       return
     }
-    if (readControllerRef.current === controller) readControllerRef.current = null
+    if (!current() || controller.signal.aborted) return
 
     const result = parseActivityFile(text)
+    const drafts = accountJournalRecordsEnabled()
+      ? await buildAccountImportDrafts(result.activities) : buildImportDrafts(result.activities)
+    if (!current() || controller.signal.aborted) return
+    if (readControllerRef.current === controller) readControllerRef.current = null
+    busyRef.current = false
     setBusy(false)
+    if (drafts === null) { setFailure("account-unavailable"); return }
     if (result.activities.length === 0) {
       setFailure(result.skipped > 0 ? "empty" : "unreadable")
       setStage({ step: "pick" })
       return
     }
 
-    const drafts = buildImportDrafts(result.activities)
     const separate = drafts.flatMap((draft, index) => (
       draft.duplicateOf === null && draft.reconciliationCandidates.length === 0 ? [index] : []
     ))
@@ -77,6 +99,7 @@ export function ImportActivities({ onBack, onOpenLog }: {
     readControllerRef.current?.abort()
     readControllerRef.current = null
     setBusy(false)
+    busyRef.current = false
     setFailure("cancelled")
   }
 
@@ -89,8 +112,8 @@ export function ImportActivities({ onBack, onOpenLog }: {
     })
   }
 
-  const handleSave = () => {
-    if (stage.step !== "review") return
+  const handleSave = async () => {
+    if (busyRef.current || stage.step !== "review") return
     const chosen: ImportDraftSelection[] = []
     for (const [index, draft] of stage.drafts.entries()) {
       if (!selected.has(index)) continue
@@ -101,7 +124,14 @@ export function ImportActivities({ onBack, onOpenLog }: {
     if (chosen.length === 0) return
 
     const format = importFormat(stage.result.format)
-    const outcome = confirmImportDrafts(chosen, format)
+    const current = captureScope()
+    busyRef.current = true; setBusy(true)
+    const account = accountJournalRecordsEnabled()
+    if (account) confirmation.current ??= createAccountImportConfirmation(chosen, format)
+    const outcome = account ? await confirmation.current!.confirm() : confirmImportDrafts(chosen, format)
+    if (!current()) return
+    busyRef.current = false; setBusy(false)
+    if (!outcome) return
     setStage({ step: "saved", outcome })
   }
 
@@ -110,7 +140,7 @@ export function ImportActivities({ onBack, onOpenLog }: {
       <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
         {onBack && (
           <button
-            type="button" onClick={onBack} aria-label="뒤로"
+            type="button" onClick={onBack} disabled={busy} aria-label="뒤로"
             style={{ ...secondaryBtn, width: 44, minWidth: 44, minHeight: 44, fontSize: 18 }}
           >←</button>
         )}
@@ -142,6 +172,7 @@ export function ImportActivities({ onBack, onOpenLog }: {
 
         {stage.step === "review" && (
           <ReviewStage
+            busy={busy}
             drafts={stage.drafts}
             result={stage.result}
             selected={selected}
@@ -160,6 +191,16 @@ export function ImportActivities({ onBack, onOpenLog }: {
 
         {stage.step === "saved" && (
           <SavedStage
+            busy={busy}
+            onRetry={confirmation.current ? async () => {
+              if (busyRef.current) return
+              const current = captureScope()
+              busyRef.current = true; setBusy(true)
+              const outcome = await confirmation.current!.confirm()
+              if (!current()) return
+              busyRef.current = false; setBusy(false)
+              if (outcome) setStage({ step: "saved", outcome })
+            } : undefined}
             outcome={stage.outcome}
             onOpenLog={onOpenLog}
             onRestart={() => { setStage({ step: "pick" }); setSelected(new Set()); setFailure(null) }}

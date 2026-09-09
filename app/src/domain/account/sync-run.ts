@@ -1,11 +1,13 @@
 import type { JournalEntry } from "../journal-schema"
 import { fromStructuredJournalPayload } from "../safe-export"
 import {
+  legacyJournalWritesBlocked,
   loadEntriesOwnedBy,
   replaceEntriesOwnedBy,
   replaceEntriesOwnedByWithPrivateMemos,
 } from "../journal-store"
-import { assignJournalsToAccount } from "./local-journal-ownership"
+import { activeLocalAccount, assignJournalsToAccount, onLocalJournalScopeChange } from "./local-journal-ownership"
+import { accountScopedStorageKeyFor } from "./local-account-scope"
 import { pullPrivateJournalEntries, pushPrivateJournalEntries } from "./private-note-remote"
 import {
   clearSyncRecoveryCheckpoint,
@@ -13,7 +15,7 @@ import {
   recoverPendingSync,
 } from "./sync-recovery"
 import { failed, hasSupportedSyncSchema, sessionFailureCode } from "./sync-guard"
-import { claimSyncBinding, loadSyncConsent, mergeEntries, toUploadPayload } from "./sync-local"
+import { claimSyncBinding, loadSyncConsent, mergeEntries, onSyncConsentChange, SYNC_CONSENT_STORAGE_KEY, toUploadPayload } from "./sync-local"
 import { supabase } from "./supabase-client"
 import {
   loadTombstonesOwnedBy,
@@ -37,14 +39,61 @@ function remoteFailure(
 }
 
 export async function syncNow(userId: string): Promise<SyncOutcome> {
+  const scope = { owner: activeLocalAccount(), ownerGeneration: 0, consentGeneration: 0 }
+  const consentKey = accountScopedStorageKeyFor(SYNC_CONSENT_STORAGE_KEY, userId)
+  // Subscribe before any await: returning to the same owner/consent never revives this run.
+  let observedOwner = scope.owner
+  const unsubscribeOwner = onLocalJournalScopeChange(() => {
+    const owner = activeLocalAccount()
+    if (owner !== observedOwner) { scope.ownerGeneration++; observedOwner = owner }
+  })
+  const unsubscribeConsent = onSyncConsentChange(owner => { if (owner === userId) scope.consentGeneration++ })
+  const changedStorage = (event: StorageEvent) => {
+    if (event.storageArea !== null && event.storageArea !== window.localStorage) return
+    if (event.key === null || event.key === consentKey) scope.consentGeneration++
+  }
+  if (typeof window !== "undefined") window.addEventListener("storage", changedStorage)
+  try {
+    return await runSync(userId, scope)
+  } finally {
+    unsubscribeOwner(); unsubscribeConsent()
+    if (typeof window !== "undefined") window.removeEventListener("storage", changedStorage)
+  }
+}
+
+async function runSync(userId: string, scope: { owner: string | null; ownerGeneration: number; consentGeneration: number }): Promise<SyncOutcome> {
+  const cutoverMessage = "계정 일지 보관을 사용 중이라 이전 동기화는 실행하지 않았어요. 기기 원본은 그대로 보관돼요."
+  if (legacyJournalWritesBlocked(userId)) return failed(cutoverMessage)
+  const localScope = scope.owner
   const client = await supabase()
+  if (legacyJournalWritesBlocked(userId)) return failed(cutoverMessage)
   if (client === null) return failed("계정 기능이 꺼져 있어요.")
   const failureCode = await sessionFailureCode(client, userId)
+  if (legacyJournalWritesBlocked(userId)) return failed(cutoverMessage)
   if (failureCode !== null) {
     return failed("Sync requires the matching signed-in account.", failureCode)
   }
   const storedConsent = loadSyncConsent(userId)
   if (!storedConsent.enabled) return failed("동기화가 꺼져 있어요. 먼저 동기화를 켜 주세요.")
+  const completed = { pulled: 0, pushed: 0, deleted: 0, total: loadEntriesOwnedBy(userId).length }
+  const interruptedMessage = "계정 일지 보관으로 전환되어 이전 동기화를 중단했어요. 이미 반영된 작업과 기기 원본은 보존했어요."
+  async function cancellation(): Promise<SyncOutcome | null> {
+    if (legacyJournalWritesBlocked(userId)) return { ok: false, message: interruptedMessage, ...completed }
+    let code = await sessionFailureCode(client!, userId)
+    if (legacyJournalWritesBlocked(userId)) return { ok: false, message: interruptedMessage, ...completed }
+    if (code === null && (scope.ownerGeneration !== 0 || activeLocalAccount() !== localScope)) code = "SESSION_TARGET_MISMATCH"
+    if (code === null && scope.consentGeneration === 0 && loadSyncConsent(userId).enabled) return null
+    // Cancellation stops the next operation; it cannot undo an acknowledged server write.
+    return {
+      ok: false,
+      message: "계정 또는 동기화 동의가 바뀌어 동기화를 중단했어요. "
+        + "이미 반영된 작업과 기기 기록은 보존했어요. 다시 확인한 뒤 동기화해 주세요.",
+      ...completed,
+      ...(code === null ? {} : { failureCode: code }),
+    }
+  }
+  let cancelled = await cancellation()
+  if (cancelled !== null) return cancelled
   // 첫 공개 동기화는 구조화 일지만 다룬다. 이전 시험 설정에 메모 공유가
   // 남아 있어도 원문이 서버로 올라가지 않도록 실행 경계에서도 다시 닫는다.
   const consent = { ...storedConsent, shareTrainingNotes: false }
@@ -66,9 +115,13 @@ export async function syncNow(userId: string): Promise<SyncOutcome> {
       "SERVER_SCHEMA_OUTDATED",
     )
   }
+  cancelled = await cancellation()
+  if (cancelled !== null) return cancelled
 
   const { data, error } = await client.from(JOURNAL_TABLE).select("entry").eq("user_id", userId)
   if (error) return failed("서버에서 일지를 가져오지 못했어요.")
+  cancelled = await cancellation()
+  if (cancelled !== null) return cancelled
   const remoteReceived = (data ?? [])
     .map((row: { entry: unknown }) => fromStructuredJournalPayload(row.entry))
     .filter((entry: JournalEntry | null): entry is JournalEntry => entry !== null)
@@ -89,6 +142,8 @@ export async function syncNow(userId: string): Promise<SyncOutcome> {
   const recoveryCode = null
   const privatePull = await pullPrivateJournalEntries(client, userId, recoveryCode)
   if (!privatePull.ok) return failed(privatePull.message)
+  cancelled = await cancellation()
+  if (cancelled !== null) return cancelled
 
   const { data: tombstoneRows, error: tombstonePullError } = await client
     .from(TOMBSTONE_TABLE)
@@ -97,6 +152,8 @@ export async function syncNow(userId: string): Promise<SyncOutcome> {
   if (tombstonePullError) {
     return failed("삭제 기록을 서버에서 확인하지 못해 동기화를 멈췄어요. 로컬 일지는 그대로예요.")
   }
+  cancelled = await cancellation()
+  if (cancelled !== null) return cancelled
   const remoteTombstones: Tombstone[] = (tombstoneRows ?? [])
     .filter((row: { entry_id: unknown; deleted_at: unknown }) =>
       typeof row.entry_id === "string" && typeof row.deleted_at === "string")
@@ -138,6 +195,10 @@ export async function syncNow(userId: string): Promise<SyncOutcome> {
   } else if (!replaceEntriesOwnedBy(userId, merged).ok) {
     return failed("병합 결과를 저장하지 못했어요. 로컬 일지는 그대로예요.")
   }
+  completed.pulled = remote.length
+  completed.total = merged.length
+  cancelled = await cancellation()
+  if (cancelled !== null) return cancelled
 
   const rows: { user_id: string; entry_id: string; saved_at: string; entry: Record<string, unknown> }[] = []
   for (const entry of merged) {
@@ -150,6 +211,9 @@ export async function syncNow(userId: string): Promise<SyncOutcome> {
       .from(JOURNAL_TABLE)
       .upsert(rows, { onConflict: "user_id,entry_id" })
     if (pushError) return remoteFailure("서버 백업에 실패했어요. 로컬 일지는 안전해요.", remote.length, 0, merged.length)
+    completed.pushed = rows.length
+    cancelled = await cancellation()
+    if (cancelled !== null) return cancelled
   }
 
   if (memoExcludedEntryIds.length > 0) {
@@ -166,6 +230,8 @@ export async function syncNow(userId: string): Promise<SyncOutcome> {
         merged.length,
       )
     }
+    cancelled = await cancellation()
+    if (cancelled !== null) return cancelled
   }
 
   const privatePush = await pushPrivateJournalEntries(
@@ -179,6 +245,8 @@ export async function syncNow(userId: string): Promise<SyncOutcome> {
   if (!privatePush.ok) {
     return remoteFailure(privatePush.message, remote.length, rows.length, merged.length)
   }
+  cancelled = await cancellation()
+  if (cancelled !== null) return cancelled
 
   if (tombstones.length > 0) {
     const { error: tombstoneError } = await client.from(TOMBSTONE_TABLE).upsert(
@@ -198,6 +266,8 @@ export async function syncNow(userId: string): Promise<SyncOutcome> {
         merged.length,
       )
     }
+    cancelled = await cancellation()
+    if (cancelled !== null) return cancelled
   }
 
   const remoteIds = new Set(remote.map((entry) => entry.id))
@@ -218,8 +288,11 @@ export async function syncNow(userId: string): Promise<SyncOutcome> {
       )
     }
     deleted = toDelete.length
+    completed.deleted = deleted
   }
 
+  cancelled = await cancellation()
+  if (cancelled !== null) return cancelled
   if (!clearSyncRecoveryCheckpoint(userId)) {
     return {
       ok: false,

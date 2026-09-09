@@ -33,10 +33,10 @@ beforeEach(() => {
   window.sessionStorage.clear()
 })
 
-it("erases adjusted originals for guest and every account without parsing private content", () => {
-  const keys = ["trainoracle.adjusted-plan-originals.v1",
-    "trainoracle.adjusted-plan-originals.v1.account.athlete-a",
-    "trainoracle.adjusted-plan-originals.v1.account.athlete-b"]
+it.each([1, 3])("erases adjusted originals v%s for guest and every account without parsing private content", version => {
+  const keys = [`trainoracle.adjusted-plan-originals.v${version}`,
+    `trainoracle.adjusted-plan-originals.v${version}.account.athlete-a`,
+    `trainoracle.adjusted-plan-originals.v${version}.account.athlete-b`]
   for (const key of keys) localStorage.setItem(key, "{unreadable-private-original")
   localStorage.setItem("another-app-data", "keep")
   eraseAllLocalData()

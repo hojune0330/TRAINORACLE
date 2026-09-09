@@ -1,4 +1,5 @@
 import { z } from "zod"
+import { accountPlanService, accountPlansEnabled } from "./account/account-plan-service"
 import {
   canonicalJson,
   canonicalJsonSha256,
@@ -199,7 +200,7 @@ async function acceptNextFrameProposalUnchecked(
   }
   let previous: string | null = null
   let previousCaptured = false
-  const adaptationKey = accountScopedStorageKeyFor(ADAPTATION_KEY, accountScope)
+  const adaptationKey = accountScopedStorageKeyFor(accountPlansEnabled() ? `${ADAPTATION_KEY}.account-draft` : ADAPTATION_KEY, accountScope)
   try {
     previous = window.localStorage.getItem(adaptationKey)
     previousCaptured = true
@@ -226,7 +227,7 @@ export function loadPendingNextFrameSuccessor(): PendingNextFrameSuccessor | nul
 function loadEnvelope(accountScope = localAccountScopeSnapshot()): PlanAdaptationEnvelope | null {
   if (typeof window === "undefined") return null
   try {
-    const raw = window.localStorage.getItem(accountScopedStorageKeyFor(ADAPTATION_KEY, accountScope))
+    const raw = window.localStorage.getItem(accountScopedStorageKeyFor(accountPlansEnabled() ? `${ADAPTATION_KEY}.account-draft` : ADAPTATION_KEY, accountScope))
     if (raw === null) return null
     const json: unknown = JSON.parse(raw)
     const parsed = planAdaptationEnvelopeSchema.safeParse(json)
@@ -238,6 +239,11 @@ function loadEnvelope(accountScope = localAccountScopeSnapshot()): PlanAdaptatio
 }
 
 function loadActiveState(accountScope: string | null): PlanBetaStateV3 | null {
+  if (accountPlansEnabled()) {
+    if (!localAccountScopeIsCurrent(accountScope)) return null
+    const read = accountPlanService()?.snapshot().currentPlan
+    return read?.kind === "read_only" && read.packet.state.version === 3 ? read.packet.state : null
+  }
   try {
     const raw = window.localStorage.getItem(accountScopedStorageKeyFor(ACTIVE_KEY, accountScope))
     if (raw === null) return null
