@@ -26,6 +26,17 @@ function description(summary: DeviceTrainingDataConnectionSummary): string {
   return parts.join(" · ")
 }
 
+function planStorageMessage(status: Exclude<Awaited<ReturnType<typeof connectDeviceTrainingDataToAccount>>["planStorage"], "none" | "stored_online" | "pending">): string {
+  const preserved = "기기의 원본은 그대로 두었어요."
+  if (status === "conflict") return `온라인 보관함의 계획 상태와 달라 자동으로 합치지 않았어요. ${preserved}`
+  if (status === "capacity") return `온라인 계획 보관 공간이 가득 차 저장하지 못했어요. ${preserved}`
+  if (status === "rejected") return `서버가 이 저장 요청을 받아들이지 않았어요. ${preserved}`
+  if (status === "review_required") return `온라인 연결과 계획 상태를 다시 확인해야 해요. ${preserved}`
+  if (status === "invalid") return `이 계획의 저장 형식을 확인해야 해요. ${preserved}`
+  if (status === "unavailable") return `지금은 온라인 계획 보관 기능을 사용할 수 없어요. ${preserved}`
+  return `온라인 저장을 완료하지 못했어요. ${preserved}`
+}
+
 export function DeviceTrainingDataPanel({
   userId,
   connectData = connectDeviceTrainingDataToAccount,
@@ -61,7 +72,8 @@ export function DeviceTrainingDataPanel({
     } else if (result.planStorage === "pending") {
       messages.push("훈련 계획은 온라인 전송을 기다리고 있어요. 기기의 원본은 그대로 두었어요")
     } else if (result.planStorage !== "none") {
-      messages.push("훈련 계획을 온라인에 저장하지 못했어요. 기기의 원본은 그대로 두었어요")
+      console.warn("[ACCOUNT_PLAN_DEVICE_STORAGE]", result.planStorage)
+      messages.push(planStorageMessage(result.planStorage))
     }
     if (result.records === "connected") messages.push(`선수 기록 ${result.connectedRecords}개를 이 기기에서 계정용으로 구분했어요`)
     if (result.decorations === "connected") messages.push("스티커와 꾸미기를 이 기기에서 계정용으로 구분했어요")

@@ -70,4 +70,33 @@ describe("device training data connection panel", () => {
     expect(window.localStorage.getItem(PLAN_BETA_STORAGE_KEY)).toBe(source)
     expect(screen.getByRole("button", { name: "기기 데이터 확인하기" })).toBeEnabled()
   })
+
+  it.each([
+    ["conflict", "자동으로 합치지 않았어요"],
+    ["capacity", "보관 공간이 가득 차"],
+    ["rejected", "저장 요청을 받아들이지 않았어요"],
+    ["review_required", "계획 상태를 다시 확인해야 해요"],
+    ["invalid", "저장 형식을 확인해야 해요"],
+    ["unavailable", "온라인 계획 보관 기능을 사용할 수 없어요"],
+    ["failed", "온라인 저장을 완료하지 못했어요"],
+  ] as const)("shows the exact online plan outcome for %s", async (planStorage, expected) => {
+    const user = userEvent.setup()
+    const source = JSON.stringify(stateFixture())
+    window.localStorage.setItem(PLAN_BETA_STORAGE_KEY, source)
+    render(<DeviceTrainingDataPanel userId={USER_ID} connectData={async () => ({
+      ok: false,
+      plan: "preserved",
+      records: "none",
+      decorations: "none",
+      connectedRecords: 0,
+      rollbackComplete: true,
+      planStorage,
+    })} />)
+
+    await user.click(screen.getByRole("button", { name: "기기 데이터 확인하기" }))
+    await user.click(screen.getByRole("button", { name: "온라인 보관 및 연결" }))
+
+    expect(screen.getByRole("status")).toHaveTextContent(expected)
+    expect(window.localStorage.getItem(PLAN_BETA_STORAGE_KEY)).toBe(source)
+  })
 })
