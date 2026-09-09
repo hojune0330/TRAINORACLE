@@ -18,10 +18,19 @@ import {
   parseStoredDecorationState,
 } from "../decoration-schema"
 import type { DecorationState } from "../decoration-schema"
+import { PLAN_ADAPTATION_CONTEXT_STORAGE_KEY } from "../plan-adaptation-ui-context"
+import { contextSchema } from "../plan-adaptation-context-schema"
 import {
   accountScopedStorageKeyFor,
   localAccountScopeIsCurrent,
 } from "./local-account-scope"
+import { accountPlanService, type AccountPlanResult, type AccountPlanService } from "./account-plan-service"
+import {
+  accountPlanEntry,
+  accountPlanFingerprint,
+  validateAccountPlanPacket,
+  type AccountPlanPacket,
+} from "./account-plan-document-schema"
 
 const PLAN_LOCAL_KEYS = [
   PLAN_BETA_STORAGE_KEY,
@@ -34,6 +43,7 @@ const PLAN_SESSION_KEYS = ["trainoracle.plan-beta.previous-intake.v1"] as const
 
 export type DeviceTrainingDataResourceState =
   | { readonly kind: "available"; readonly count: number }
+  | { readonly kind: "account_local"; readonly count: number }
   | { readonly kind: "none" }
   | { readonly kind: "conflict"; readonly count: number }
   | { readonly kind: "invalid" }
@@ -47,11 +57,27 @@ export type DeviceTrainingDataConnectionSummary = {
 
 export type DeviceTrainingDataConnectionResult = {
   readonly ok: boolean
-  readonly plan: "connected" | "none" | "conflict" | "invalid" | "failed" | "scope_mismatch"
+  readonly plan: "connected" | "account_local" | "preserved" | "none" | "conflict" | "invalid" | "failed" | "scope_mismatch"
   readonly records: "connected" | "none" | "conflict" | "invalid" | "failed" | "scope_mismatch"
   readonly decorations: "connected" | "none" | "conflict" | "invalid" | "failed" | "scope_mismatch"
   readonly connectedRecords: number
   readonly rollbackComplete: boolean
+}
+
+export type DevicePlanOnlineStorageStatus =
+  | "none"
+  | "stored_online"
+  | "pending"
+  | "conflict"
+  | "capacity"
+  | "rejected"
+  | "review_required"
+  | "invalid"
+  | "unavailable"
+  | "failed"
+
+export type DeviceTrainingDataAccountConnectionResult = DeviceTrainingDataConnectionResult & {
+  readonly planStorage: DevicePlanOnlineStorageStatus
 }
 
 type StorageSnapshot = {
@@ -222,9 +248,12 @@ export function inspectDeviceTrainingDataConnection(
   const devicePlan = readPlanBetaStateForAccount(null)
   const deviceRecords = readAthleteRecordsForAccount(null, today)
   const planSourceExists = sourceHasData(plans)
+  const planTargetExists = targetHasData(plans)
   const plan = !planSourceExists
-    ? { kind: "none" } as const
-    : targetHasData(plans)
+    ? planTargetExists
+      ? { kind: "account_local", count: 1 } as const
+      : { kind: "none" } as const
+    : planTargetExists
       ? { kind: "conflict", count: 1 } as const
       : devicePlan.kind === "loaded"
       ? { kind: "available", count: 1 } as const
@@ -255,6 +284,7 @@ export function inspectDeviceTrainingDataConnection(
 export function connectDeviceTrainingData(
   userId: string,
   today: Date = new Date(),
+  options: { readonly movePlan?: boolean } = {},
 ): DeviceTrainingDataConnectionResult {
   const summary = inspectDeviceTrainingDataConnection(userId, today)
   const storage = storages()
@@ -286,20 +316,23 @@ export function connectDeviceTrainingData(
       rollbackComplete: true,
     }
   }
-  const planMove = summary.plan.kind === "available" ? moveBundle(plans) : null
+  const movePlan = options.movePlan !== false
+  const planMove = summary.plan.kind === "available" && movePlan ? moveBundle(plans) : null
   const recordMove = summary.records.kind === "available" ? moveBundle(records) : null
   const deviceDecoration = decorationStateFromSnapshots(decorations, "source")
   const decorationMove = summary.decorations.kind === "available" && deviceDecoration.kind === "loaded"
     ? moveDecorationState(decorations, deviceDecoration.state!)
     : null
-  const planResult = planMove === null ? summary.plan.kind : planMove.ok ? "connected" : "failed"
+  const planResult = summary.plan.kind === "available" && !movePlan
+    ? "preserved"
+    : planMove === null ? summary.plan.kind : planMove.ok ? "connected" : "failed"
   const recordResult = recordMove === null ? summary.records.kind : recordMove.ok ? "connected" : "failed"
   const normalizedPlan = planResult === "available" ? "failed" : planResult
-  const normalizedRecords = recordResult === "available" ? "failed" : recordResult
+  const normalizedRecords = recordResult === "available" || recordResult === "account_local" ? "failed" : recordResult
   const decorationResult = decorationMove === null
     ? summary.decorations.kind
     : decorationMove.ok ? "connected" : "failed"
-  const normalizedDecorations = decorationResult === "available" ? "failed" : decorationResult
+  const normalizedDecorations = decorationResult === "available" || decorationResult === "account_local" ? "failed" : decorationResult
   return {
     ok: normalizedPlan !== "failed"
       && normalizedPlan !== "invalid"
@@ -319,5 +352,96 @@ export function connectDeviceTrainingData(
     rollbackComplete: (planMove?.rollbackComplete ?? true)
       && (recordMove?.rollbackComplete ?? true)
       && (decorationMove?.rollbackComplete ?? true),
+  }
+}
+
+function planPacketFromDevice(
+  userId: string,
+  summary: DeviceTrainingDataConnectionSummary,
+  storage: NonNullable<ReturnType<typeof storages>>,
+): AccountPlanPacket | null {
+  const sourceScope = summary.plan.kind === "available" ? null : userId
+  const read = readPlanBetaStateForAccount(sourceScope)
+  if (read.kind !== "loaded") return null
+
+  const contextKey = accountScopedStorageKeyFor(PLAN_ADAPTATION_CONTEXT_STORAGE_KEY, sourceScope)
+  let context: unknown = null
+  try {
+    const raw = storage.local.getItem(contextKey)
+    if (raw !== null) context = JSON.parse(raw)
+  } catch {
+    context = null
+  }
+  const parsedContext = contextSchema.safeParse(context)
+  const withContext = parsedContext.success
+    ? { state: read.state, evidence: null, context: parsedContext.data }
+    : null
+  if (withContext !== null && validateAccountPlanPacket(withContext)) return withContext
+  const packet = { state: read.state, evidence: null }
+  return validateAccountPlanPacket(packet) ? packet : null
+}
+
+function onlineStatus(result: AccountPlanResult): DevicePlanOnlineStorageStatus {
+  if (result === "ACCOUNT") return "stored_online"
+  if (result === "PENDING") return "pending"
+  if (result === "CONFLICT" || result === "HISTORY_CONFLICT") return "conflict"
+  if (result === "CAPACITY") return "capacity"
+  if (result === "REJECTED") return "rejected"
+  if (result === "REVIEW_REQUIRED") return "review_required"
+  if (result === "INVALID") return "invalid"
+  return "failed"
+}
+
+/**
+ * Stores a validated device plan in the authenticated account before changing
+ * its local ownership. A failed or unacknowledged upload always leaves the
+ * original plan bytes in place.
+ */
+export async function connectDeviceTrainingDataToAccount(
+  userId: string,
+  today: Date = new Date(),
+  serviceFactory: () => AccountPlanService | null = accountPlanService,
+): Promise<DeviceTrainingDataAccountConnectionResult> {
+  const summary = inspectDeviceTrainingDataConnection(userId, today)
+  if (summary.plan.kind !== "available" && summary.plan.kind !== "account_local") {
+    return { ...connectDeviceTrainingData(userId, today), planStorage: "none" }
+  }
+  const storage = storages()
+  if (storage === null || !localAccountScopeIsCurrent(userId)) {
+    return { ...connectDeviceTrainingData(userId, today, { movePlan: false }), planStorage: "unavailable" }
+  }
+  const packet = planPacketFromDevice(userId, summary, storage)
+  if (packet === null) {
+    return { ...connectDeviceTrainingData(userId, today, { movePlan: false }), planStorage: "invalid" }
+  }
+  const service = serviceFactory()
+  if (service === null) {
+    return { ...connectDeviceTrainingData(userId, today, { movePlan: false }), planStorage: "unavailable" }
+  }
+
+  const hydrated = await service.hydrate()
+  if (hydrated && "loadHistory" in service && !await service.loadHistory()) {
+    return { ...connectDeviceTrainingData(userId, today, { movePlan: false }), planStorage: "failed" }
+  }
+  const view = service.snapshot()
+  if (!hydrated || view.fingerprint === null || !["EMPTY", "READY"].includes(view.status)) {
+    const status: DevicePlanOnlineStorageStatus = view.status === "PENDING" ? "pending"
+      : view.status === "CONFLICT" ? "conflict"
+      : view.status === "REJECTED" ? "rejected"
+      : view.status === "INVALID" ? "invalid"
+      : "failed"
+    return { ...connectDeviceTrainingData(userId, today, { movePlan: false }), planStorage: status }
+  }
+
+  const desired = accountPlanEntry(packet)
+  const existing = view.document?.data.plans.find((entry) => entry.planId === desired.planId)
+  const stored = existing === undefined
+    ? onlineStatus(await service.mutate({ kind: "SAVE_HISTORY", packet }, view.fingerprint))
+    : accountPlanFingerprint(existing.progress) === accountPlanFingerprint(desired.progress)
+      ? "stored_online"
+      : "conflict"
+  return {
+    ...connectDeviceTrainingData(userId, today, { movePlan: stored === "stored_online" }),
+    planStorage: stored,
   }
 }

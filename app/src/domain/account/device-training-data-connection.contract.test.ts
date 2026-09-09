@@ -9,8 +9,12 @@ import { DECORATION_STORAGE_KEY_V1, DECORATION_STORAGE_KEY_V2, DECORATION_STORAG
 import { createEmptyDecorationState, parseStoredDecorationState } from "../decoration-schema"
 import {
   connectDeviceTrainingData,
+  connectDeviceTrainingDataToAccount,
   inspectDeviceTrainingDataConnection,
 } from "./device-training-data-connection"
+import type { AccountPlanService } from "./account-plan-service"
+import { accountPlanEntry, emptyAccountPlanDocument } from "./account-plan-document-schema"
+import { accountPlanPacketFixture } from "./account-plan.test-fixtures"
 import { setActiveLocalAccount } from "./local-journal-ownership"
 import { accountScopedStorageKeyFor } from "./local-account-scope"
 
@@ -96,7 +100,7 @@ describe("explicit device training data connection", () => {
     expect(window.localStorage.getItem(accountScopedStorageKeyFor(ATHLETE_RECORDS_STORAGE_KEY, USER_ID))).toBe(recordsValue)
   })
 
-  it("does not call account-only data a conflict when the device has no source data", () => {
+  it("recognizes an account-scoped device plan that still needs online storage", () => {
     window.localStorage.setItem(
       accountScopedStorageKeyFor(PLAN_BETA_STORAGE_KEY, USER_ID),
       JSON.stringify(stateFixture()),
@@ -107,10 +111,86 @@ describe("explicit device training data connection", () => {
     )
 
     expect(inspectDeviceTrainingDataConnection(USER_ID, TODAY)).toEqual({
-      plan: { kind: "none" },
+      plan: { kind: "account_local", count: 1 },
       records: { kind: "none" },
       decorations: { kind: "none" },
     })
+  })
+
+  it("stores a device plan online before moving its original into account-local storage", async () => {
+    const source = JSON.stringify(stateFixture())
+    window.localStorage.setItem(PLAN_BETA_STORAGE_KEY, source)
+    const mutate = vi.fn(async () => "ACCOUNT" as const)
+    const service = {
+      hydrate: vi.fn(async () => true),
+      snapshot: vi.fn(() => ({ status: "EMPTY", document: null, confirmedDocument: null,
+        fingerprint: "server-empty", currentPlan: null })),
+      mutate,
+    } as unknown as AccountPlanService
+
+    const result = await connectDeviceTrainingDataToAccount(USER_ID, TODAY, () => service)
+
+    expect(result.planStorage).toBe("stored_online")
+    expect(mutate).toHaveBeenCalledWith(expect.objectContaining({ kind: "SAVE_HISTORY" }), "server-empty")
+    expect(window.localStorage.getItem(PLAN_BETA_STORAGE_KEY)).toBeNull()
+    expect(window.localStorage.getItem(accountScopedStorageKeyFor(PLAN_BETA_STORAGE_KEY, USER_ID))).toBe(source)
+  })
+
+  it("uploads a plan that an older connection already moved into account-local storage", async () => {
+    const source = JSON.stringify(stateFixture())
+    window.localStorage.setItem(accountScopedStorageKeyFor(PLAN_BETA_STORAGE_KEY, USER_ID), source)
+    const mutate = vi.fn(async () => "ACCOUNT" as const)
+    const service = {
+      hydrate: vi.fn(async () => true),
+      snapshot: vi.fn(() => ({ status: "EMPTY", document: null, confirmedDocument: null,
+        fingerprint: "server-empty", currentPlan: null })),
+      mutate,
+    } as unknown as AccountPlanService
+
+    const result = await connectDeviceTrainingDataToAccount(USER_ID, TODAY, () => service)
+
+    expect(result).toMatchObject({ plan: "account_local", planStorage: "stored_online" })
+    expect(mutate).toHaveBeenCalledOnce()
+    expect(window.localStorage.getItem(accountScopedStorageKeyFor(PLAN_BETA_STORAGE_KEY, USER_ID))).toBe(source)
+  })
+
+  it("preserves the exact device plan when the server has not acknowledged storage", async () => {
+    const source = JSON.stringify(stateFixture())
+    window.localStorage.setItem(PLAN_BETA_STORAGE_KEY, source)
+    const service = {
+      hydrate: vi.fn(async () => true),
+      snapshot: vi.fn(() => ({ status: "EMPTY", document: null, confirmedDocument: null,
+        fingerprint: "server-empty", currentPlan: null })),
+      mutate: vi.fn(async () => "PENDING" as const),
+    } as unknown as AccountPlanService
+
+    const result = await connectDeviceTrainingDataToAccount(USER_ID, TODAY, () => service)
+
+    expect(result.planStorage).toBe("pending")
+    expect(result.plan).toBe("preserved")
+    expect(window.localStorage.getItem(PLAN_BETA_STORAGE_KEY)).toBe(source)
+    expect(window.localStorage.getItem(accountScopedStorageKeyFor(PLAN_BETA_STORAGE_KEY, USER_ID))).toBeNull()
+  })
+
+  it("treats an identical plan already confirmed online as stored without writing it twice", async () => {
+    const packet = accountPlanPacketFixture(3)
+    const state = packet.state
+    const document = emptyAccountPlanDocument()
+    document.data.plans.push({ ...accountPlanEntry(packet), archivedAt: TODAY.toISOString() })
+    window.localStorage.setItem(accountScopedStorageKeyFor(PLAN_BETA_STORAGE_KEY, USER_ID), JSON.stringify(state))
+    const mutate = vi.fn(async () => "INVALID" as const)
+    const service = {
+      hydrate: vi.fn(async () => true),
+      loadHistory: vi.fn(async () => true),
+      snapshot: vi.fn(() => ({ status: "READY", document, confirmedDocument: document,
+        fingerprint: "server-ready", currentPlan: null })),
+      mutate,
+    } as unknown as AccountPlanService
+
+    const result = await connectDeviceTrainingDataToAccount(USER_ID, TODAY, () => service)
+
+    expect(result.planStorage).toBe("stored_online")
+    expect(mutate).not.toHaveBeenCalled()
   })
 
   it("preserves a conflicting device plan while independently connecting device records", () => {
