@@ -43,4 +43,34 @@ describe("recent journal duplicate identifier resilience", () => {
     expect(screen.getByText("Second recent duplicate")).toBeVisible()
     expect(consoleError.mock.calls.flat().join(" ")).not.toContain("Encountered two children with the same key")
   })
+
+  it("labels confirmed online entries separately from device-only entries", () => {
+    const first = {
+      id: "device-only",
+      kind: "post-session" as const,
+      date: "2026-07-20",
+      savedAt: "2026-07-20T09:00:00.000Z",
+      syncState: "local" as const,
+      system: "base",
+      title: "Device only",
+      distanceKm: "",
+      durationMin: "",
+      avgPace: "",
+      rpe: 0,
+      memo: "",
+    }
+    expect(replaceAllEntries([first, {
+      ...first,
+      id: "account-stored",
+      savedAt: "2026-07-20T10:00:00.000Z",
+      syncState: "synced",
+      title: "Account stored",
+    }])).toMatchObject({ ok: true })
+
+    render(<DeviceJournal />)
+
+    expect(screen.getByText("내 일지", { exact: false })).toBeVisible()
+    expect(screen.getByText("이 기기만")).toBeVisible()
+    expect(screen.getByText("계정 보관")).toBeVisible()
+  })
 })

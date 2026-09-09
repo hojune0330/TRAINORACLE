@@ -73,7 +73,7 @@ export function DeviceJournal({ onOpenDay, onOpenArchive }: DeviceJournalProps) 
   return (
     <div style={{ padding: "24px 0 0" }}>
       <SectionLb action="전체 보기" onAction={onOpenArchive}>
-        — 이 기기의 일지 · 최근 {entries.length}건
+        — 내 일지 · 최근 {entries.length}건
       </SectionLb>
       <div style={{ margin: "0 20px", borderTop: "1px solid var(--ink)", borderBottom: "1px solid var(--ink)" }}>
         {entries.map((entry, index) => {
@@ -110,7 +110,7 @@ export function DeviceJournal({ onOpenDay, onOpenArchive }: DeviceJournalProps) 
                   fontFamily: "var(--mono)", fontSize: 8.5, letterSpacing: "0.1em",
                   color: "var(--ink-4)",
                   border: "1px solid var(--hair)", padding: "2px 5px", whiteSpace: "nowrap",
-                }}>이 기기</span>
+                }}>{entry.syncState === "synced" ? "계정 보관" : "이 기기만"}</span>
                 {hasImportedField(entry.fieldProvenance) && (
                   <span data-testid="imported-chip" style={{
                     fontFamily: "var(--mono)", fontSize: 8.5, letterSpacing: "0.1em",
