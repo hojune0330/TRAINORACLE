@@ -1,0 +1,1044 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TrainOracle · Handoff Risk Review</title>
+<link rel="stylesheet" href="shared/tokens.css">
+<style>
+  body {
+    background: var(--bg);
+    padding: 48px 32px 80px;
+    max-width: 1180px; margin: 0 auto;
+    color: var(--ink);
+  }
+  .top {
+    display: flex; align-items: baseline; gap: 20px;
+    padding-bottom: 20px; margin-bottom: 40px;
+    border-bottom: 2px solid var(--ink);
+  }
+  .top .brand { font-family: var(--mono); font-size: 12px; letter-spacing: 0.14em; font-weight: 700; }
+  .top .subt { font-family: var(--sans); font-size: 12.5px; color: var(--ink-3); }
+  .top .spacer { flex: 1; }
+  .top a { color: var(--ink-3); font-family: var(--sans); font-size: 12px; text-decoration: none; font-weight: 600; }
+
+  h1 { font-size: 40px; font-weight: 700; letter-spacing: -0.03em; margin: 0 0 12px; line-height: 1.05; }
+  .lede {
+    font-size: 15px; line-height: 1.65; color: var(--ink-2);
+    max-width: 820px; margin: 0 0 40px;
+    letter-spacing: -0.005em;
+  }
+  .lede em { font-style: normal; color: var(--ink); font-weight: 700; }
+  .lede code {
+    font-family: var(--mono); font-size: 12.5px;
+    background: var(--surface); padding: 1px 5px; color: var(--ink);
+  }
+
+  /* Verdict box */
+  .verdict-box {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    background: var(--surface);
+    border: 1px solid var(--ink);
+    padding: 24px 28px;
+    margin-bottom: 40px;
+  }
+  .verdict-box .col h4 {
+    font-family: var(--sans); font-size: 13px; font-weight: 700;
+    margin: 0 0 12px;
+    letter-spacing: -0.005em;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .verdict-box .col.good h4 { color: var(--ok); }
+  .verdict-box .col.good h4::before {
+    content: '✓'; display: inline-block;
+    width: 22px; height: 22px; background: var(--ok); color: white;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-family: var(--sans); font-size: 13px; font-weight: 700;
+  }
+  .verdict-box .col.bad h4 { color: var(--err); }
+  .verdict-box .col.bad h4::before {
+    content: '!'; display: inline-block;
+    width: 22px; height: 22px; background: var(--err); color: white;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-family: var(--sans); font-size: 14px; font-weight: 700;
+  }
+  .verdict-box .col ul {
+    margin: 0; padding-left: 18px;
+    font-family: var(--sans); font-size: 12.5px; color: var(--ink-2);
+    line-height: 1.7; letter-spacing: -0.005em;
+  }
+  .verdict-box .col li { margin-bottom: 4px; }
+  .verdict-box .col em { font-style: normal; color: var(--ink); font-weight: 700; }
+
+  h2 {
+    font-family: var(--sans); font-size: 24px; font-weight: 700;
+    letter-spacing: -0.02em;
+    margin: 56px 0 8px;
+    display: flex; align-items: baseline; gap: 12px;
+  }
+  h2::before {
+    content: attr(data-num);
+    font-family: var(--mono); font-size: 14px; color: var(--brand); font-weight: 700;
+  }
+  h2 + .sub {
+    font-family: var(--sans); font-size: 13px; color: var(--ink-3);
+    letter-spacing: -0.005em; margin: 0 0 24px; line-height: 1.6;
+  }
+
+  /* Issue card */
+  .issue {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    padding: 20px 24px;
+    margin-bottom: 14px;
+    border-left: 4px solid;
+    position: relative;
+  }
+  .issue.crit { border-left-color: var(--err); background: rgba(180, 51, 46, 0.03); }
+  .issue.high { border-left-color: var(--warn); }
+  .issue.med { border-left-color: var(--info); }
+  .issue.low { border-left-color: var(--ink-3); }
+
+  .issue .head {
+    display: flex; justify-content: space-between; align-items: baseline;
+    gap: 12px; margin-bottom: 10px;
+    flex-wrap: wrap;
+  }
+  .issue .tag-row {
+    display: flex; gap: 6px; flex-wrap: wrap;
+  }
+  .issue .sev {
+    font-family: var(--mono); font-size: 10.5px; font-weight: 700;
+    padding: 3px 8px; color: white;
+    letter-spacing: 0.02em;
+  }
+  .issue .sev.crit { background: var(--err); }
+  .issue .sev.high { background: var(--warn); }
+  .issue .sev.med { background: var(--info); }
+  .issue .sev.low { background: var(--ink-3); }
+  .issue .screen-tag {
+    font-family: var(--mono); font-size: 10.5px; font-weight: 700;
+    padding: 3px 8px;
+    background: var(--surface-2); color: var(--ink-2);
+    border: 1px solid var(--line);
+    letter-spacing: 0.02em;
+  }
+  .issue h3 {
+    font-family: var(--sans); font-size: 16px; font-weight: 700;
+    letter-spacing: -0.005em;
+    margin: 0;
+    flex: 1;
+    min-width: 200px;
+  }
+  .issue .body {
+    font-family: var(--sans); font-size: 13px; line-height: 1.65;
+    color: var(--ink-2); letter-spacing: -0.005em;
+  }
+  .issue .body em { font-style: normal; color: var(--ink); font-weight: 700; }
+  .issue .body code {
+    font-family: var(--mono); font-size: 11.5px;
+    background: var(--paper); padding: 1px 4px; color: var(--ink);
+  }
+  .issue .fix {
+    margin-top: 12px;
+    padding: 10px 14px;
+    background: var(--paper);
+    border-left: 3px solid var(--brand);
+    font-family: var(--sans); font-size: 12.5px; line-height: 1.6;
+    color: var(--ink-2); letter-spacing: -0.005em;
+  }
+  .issue .fix::before {
+    content: 'HOW TO FIX';
+    display: block;
+    font-family: var(--mono); font-size: 10px; font-weight: 700;
+    color: var(--brand); letter-spacing: 0.06em;
+    margin-bottom: 4px;
+  }
+  .issue .fix em { font-style: normal; color: var(--ink); font-weight: 700; }
+  .issue .fix code {
+    font-family: var(--mono); font-size: 11.5px;
+    background: var(--surface); padding: 1px 4px; color: var(--ink);
+  }
+  .issue .impact {
+    display: inline-block;
+    margin-top: 8px;
+    font-family: var(--mono); font-size: 10.5px;
+    color: var(--ink-3); font-weight: 600;
+    letter-spacing: -0.005em;
+  }
+  .issue .impact strong { color: var(--ink); font-weight: 700; }
+
+  /* Advantage/disadvantage card */
+  .balance {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0;
+    margin-bottom: 20px;
+    border: 1px solid var(--line);
+  }
+  .balance .col {
+    padding: 20px 24px;
+  }
+  .balance .col.pro {
+    background: var(--surface);
+    border-right: 1px solid var(--line);
+  }
+  .balance .col.con {
+    background: var(--paper);
+  }
+  .balance .col h4 {
+    font-family: var(--sans); font-size: 12.5px; font-weight: 700;
+    letter-spacing: -0.005em;
+    margin: 0 0 10px;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .balance .col.pro h4 { color: var(--ok); }
+  .balance .col.pro h4::before {
+    content: '+'; display: inline-block;
+    width: 18px; height: 18px; border: 2px solid var(--ok);
+    color: var(--ok); text-align: center;
+    line-height: 14px; font-family: var(--mono); font-size: 14px; font-weight: 700;
+  }
+  .balance .col.con h4 { color: var(--warn); }
+  .balance .col.con h4::before {
+    content: '−'; display: inline-block;
+    width: 18px; height: 18px; border: 2px solid var(--warn);
+    color: var(--warn); text-align: center;
+    line-height: 14px; font-family: var(--mono); font-size: 14px; font-weight: 700;
+  }
+  .balance ul {
+    margin: 0; padding-left: 18px;
+    font-family: var(--sans); font-size: 12.5px; color: var(--ink-2);
+    line-height: 1.7; letter-spacing: -0.005em;
+  }
+  .balance li { margin-bottom: 5px; }
+  .balance em { font-style: normal; color: var(--ink); font-weight: 700; }
+  .balance code {
+    font-family: var(--mono); font-size: 11.5px;
+    background: var(--paper); padding: 1px 4px; color: var(--ink);
+  }
+  .balance .col.pro code { background: var(--surface-2); }
+
+  /* Screen header for balance sections */
+  .screen-header {
+    display: flex; align-items: baseline; gap: 12px;
+    margin: 32px 0 12px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--hair);
+  }
+  .screen-header .num {
+    font-family: var(--mono); font-size: 13px; font-weight: 700;
+    color: var(--ink-3);
+    padding: 2px 8px; background: var(--surface-2);
+    letter-spacing: 0.02em;
+  }
+  .screen-header h3 {
+    font-family: var(--sans); font-size: 17px; font-weight: 700;
+    letter-spacing: -0.01em;
+    margin: 0;
+  }
+  .screen-header .verdict {
+    margin-left: auto;
+    font-family: var(--mono); font-size: 11px; font-weight: 700;
+    padding: 3px 10px; letter-spacing: 0.02em;
+  }
+  .screen-header .verdict.strong { background: var(--ok); color: white; }
+  .screen-header .verdict.mixed { background: var(--warn); color: white; }
+  .screen-header .verdict.weak { background: var(--err); color: white; }
+
+  /* Recommendation box */
+  .rec-box {
+    background: var(--paper);
+    border: 2px solid var(--ink);
+    padding: 24px 28px;
+    margin-top: 24px;
+  }
+  .rec-box h3 {
+    font-family: var(--sans); font-size: 18px; font-weight: 700;
+    letter-spacing: -0.01em;
+    margin: 0 0 12px;
+  }
+  .rec-box p {
+    font-family: var(--sans); font-size: 13.5px; line-height: 1.65;
+    color: var(--ink-2); margin: 0 0 12px;
+    letter-spacing: -0.005em;
+  }
+  .rec-box p em { font-style: normal; color: var(--ink); font-weight: 700; }
+  .rec-box p code {
+    font-family: var(--mono); font-size: 12px;
+    background: var(--surface); padding: 1px 4px; color: var(--ink);
+  }
+  .rec-box .actions {
+    display: grid;
+    grid-template-columns: 40px 1fr;
+    gap: 14px;
+    align-items: center;
+    padding: 10px 0;
+    border-top: 1px dashed var(--hair);
+  }
+  .rec-box .actions:first-of-type { border-top: 0; }
+  .rec-box .actions .n {
+    font-family: var(--mono); font-size: 12px; font-weight: 700;
+    color: var(--brand);
+    background: var(--surface);
+    padding: 4px 8px;
+    text-align: center;
+    letter-spacing: 0.02em;
+  }
+  .rec-box .actions .desc {
+    font-family: var(--sans); font-size: 13px; color: var(--ink-2);
+    line-height: 1.55; letter-spacing: -0.005em;
+  }
+  .rec-box .actions .desc em { font-style: normal; color: var(--ink); font-weight: 700; }
+
+  .footer {
+    margin-top: 60px; padding-top: 24px;
+    border-top: 1px solid var(--line);
+    text-align: center;
+    font-family: var(--sans); font-size: 11.5px; color: var(--ink-4);
+    letter-spacing: -0.005em;
+  }
+  .footer em { font-style: normal; color: var(--ink); font-weight: 600; }
+</style>
+</head>
+<body>
+
+<div class="top">
+  <div class="brand">TrainOracle · Handoff Risk Review</div>
+  <div class="subt">v3.6 · 공격적 리뷰 · 개발자 인계 시 실제 문제들</div>
+  <div class="spacer"></div>
+  <a href="index.html">← 인덱스</a>
+</div>
+
+<h1>핸드오프 리스크 리뷰</h1>
+<p class="lede">
+  <em>실제 앱 288개 tsx 파일 · <code>AppShell.tsx</code> 라우팅 · <code>DeferredMobileScreens</code> lazy 로딩 · 
+  <code>DECORATION_CATALOG</code> 88개 자산 · Supabase 백엔드 · 계약 테스트 60+개</em> — 
+  이 아키텍처에 내 디자인을 <em>실제 붙일 때 발생할 문제들</em>. 
+  마케팅 아닌 <em>공격적 리뷰</em>. 발견한 문제 <em>16개 · Critical 3 · High 6 · Medium 5 · Low 2</em>.
+</p>
+
+<!-- Update banner: 5개 즉시 해결 완료 -->
+<div style="background: linear-gradient(135deg, #E4F1E6 0%, #F0F5EA 100%); border: 1.5px solid var(--ok); padding: 20px 24px; margin: 20px 0 32px;">
+  <div style="display:flex;align-items:baseline;gap:14px;margin-bottom:10px">
+    <span style="font-family:var(--mono);font-size:11px;font-weight:700;background:var(--ok);color:white;padding:4px 10px;letter-spacing:0.05em">UPDATE · 2026.09.10</span>
+    <div style="font-family:var(--sans);font-size:16px;font-weight:700;color:var(--ink);letter-spacing:-0.01em">
+      5개 이슈 즉시 해결 · <em style="font-style:normal;color:var(--ok)">RESOLVED</em>
+    </div>
+  </div>
+  <div style="font-family:var(--sans);font-size:13px;color:var(--ink-2);line-height:1.65;letter-spacing:-0.005em">
+    아래 이슈들은 <em style="font-style:normal;color:var(--ink);font-weight:700">시안 파일에 직접 부록/재작성 반영</em>했어요. 
+    개발자는 각 화면의 §6~§9 섹션에서 확인 가능:
+    <ul style="margin:8px 0 0;padding-left:20px;line-height:1.75">
+      <li><strong style="color:var(--ok)">✓ C1 AppShell 라우팅</strong> — 3화면 각 §6 Integration 섹션 (Option A/B 비교 · 결정 근거)</li>
+      <li><strong style="color:var(--ok)">✓ C2 모바일 우선</strong> — 19 Coach Handoff에 <em style="font-style:normal;color:var(--ink);font-weight:700">375px 폰 2화면 시안</em> 추가 (드릴다운 · sticky composer)</li>
+      <li><strong style="color:var(--ok)">✓ C3 계약 테스트</strong> — 3화면 각 §7에 <em style="font-style:normal;color:var(--ink);font-weight:700">Given/When/Then 시나리오 6-8개씩</em> 추가</li>
+      <li><strong style="color:var(--ok)">✓ H2 Weekly 자동 생성</strong> — <em style="font-style:normal;color:var(--ink);font-weight:700">Lazy 생성으로 재정의</em> (Sunday 22:00 크론 폐기). 18 Wrap 재작성</li>
+      <li><strong style="color:var(--ok)">✓ H4 Weekly AI 노트</strong> — <em style="font-style:normal;color:var(--ink);font-weight:700">셀프 회고 3줄</em>로 대체 (사용자 지시 준수: AI 코치 배제)</li>
+      <li><strong style="color:var(--ok)">✓ L1 인쇄 CSS</strong> — 17 Session Prep §8에 <em style="font-style:normal;color:var(--ink);font-weight:700">실제 @media print SCSS</em> 첨부</li>
+      <li><strong style="color:var(--ok)">✓ M1 워밍업 저장 정책</strong> — 17 Session Prep §9에 세부 정책 명시 (키 형식 · 초기화 시점 · Stale 처리)</li>
+      <li><strong style="color:var(--ok)">✓ H3 Coach Note DB 스키마</strong> — 19 Coach Handoff §9에 <em style="font-style:normal;color:var(--ink);font-weight:700">migration SQL 전체</em> · 편집 정책 · Plan Override 만료 로직</li>
+    </ul>
+  </div>
+  <div style="margin-top:12px;padding-top:10px;border-top:1px solid rgba(90,140,80,0.3);font-family:var(--sans);font-size:12px;color:var(--ink-2);letter-spacing:-0.005em">
+    <em style="font-style:normal;color:var(--ink);font-weight:700">남은 이슈 8개</em> — 
+    엔지니어 미팅 필요 (H1 Session Prep 라우팅 옵션 결정 · H5 페르소나 fixture · H6 확장 색 이식 · M2~M5 · L2). 
+    이 리스트는 다음 스프린트에서 팀 간 협의로 해결.
+  </div>
+</div>
+
+<!-- Executive verdict -->
+<div class="verdict-box">
+  <div class="col good">
+    <h4>제대로 된 것 · 강점</h4>
+    <ul>
+      <li>디자인 토큰 <em>정확히 일치</em> (--paper, --sans, --brand)</li>
+      <li>앱 도메인 로직 재사용 명시 (<code>DecorationCatalog</code>, <code>list_shared_journal_entries</code>)</li>
+      <li>Supabase migration 이해 (RLS · shared_fields 필터)</li>
+      <li><em>자격 미확인</em> · 개인 메모 보호 방침 준수</li>
+      <li>실제 파일 경로 · 함수명 명시</li>
+      <li>SPEC 문서 계약 준수 (RULE_D1_D9, R-4, R-7)</li>
+    </ul>
+  </div>
+  <div class="col bad">
+    <h4>핸드오프 실패 위험 · 약점</h4>
+    <ul>
+      <li><em>AppShell 라우팅 무시</em> — 새 화면은 <code>DeferredMobileScreens</code> · <code>viewForTab</code>에 어떻게 넣나?</li>
+      <li><em>모바일 우선 앱인데 데스크톱 시안</em> — Coach Dashboard는 desktop-only</li>
+      <li>계약 테스트 <em>60+개 존재 · 어떻게 통과?</em></li>
+      <li>i18n 없음 — 한글 하드코딩</li>
+      <li>Cycle 개념 앱에 <em>맞는지 재검증 필요</em></li>
+      <li>새 화면 3개는 <em>수개월치 스프린트</em></li>
+    </ul>
+  </div>
+</div>
+
+<!-- ============ §1 CRITICAL ============ -->
+<h2 data-num="§1">🚨 Critical · 즉시 해결 필요</h2>
+<p class="sub">이 문제 그대로 두면 <em>개발자가 시안 무시하거나 잘못 구현</em>할 확률 높음.</p>
+
+<!-- Issue 1 -->
+<div class="issue crit">
+  <div class="head">
+    <div class="tag-row">
+      <span class="sev crit">CRITICAL</span>
+      <span class="screen-tag">전체</span>
+      <span style="font-family:var(--mono);font-size:10px;font-weight:700;background:var(--ok);color:white;padding:3px 8px;letter-spacing:0.05em">✓ RESOLVED</span>
+    </div>
+    <h3>AppShell 라우팅 구조를 완전히 무시함</h3>
+  </div>
+  <div class="body">
+    실제 앱 <code>AppShell.tsx</code>는 <em>단일 SPA</em>. URL 아닌 <code>useState</code> 기반 뷰 전환.
+    5개 tab (home · journal · plan · log · trends) + utility 뷰 (more · guide · minji · content) 조합.
+    <code>DeferredMobileScreens</code>로 <em>lazy loading</em>. 
+    <br><br>
+    내 시안은 <em>독립 화면인 것처럼</em> 그려짐. Session Prep을 어느 tab 아래 두는지, 
+    Weekly Wrap은 <code>tab === "journal"</code>인지 <code>"trends"</code>인지, 
+    Coach Dashboard는 <em>새 tab을 추가해야 하는지</em> 명시 없음.
+    <br><br>
+    개발자가 <em>"어디에 넣지?"</em>에서 막힘.
+  </div>
+  <div class="fix">
+    각 시안에 <em>AppShell integration 섹션</em> 추가 필요:
+    <br>1) 어느 tab에 속하는지 (<code>tab: "plan"</code> or 신규 tab)
+    <br>2) <code>DeferredMobileScreens</code>에 어떻게 등록
+    <br>3) <code>viewForTab()</code> · <code>viewFor*Draft()</code> 확장 필요 여부
+    <br>4) <code>screenKey</code> 조합에 추가할 상태 키
+    <br>5) URL query param 지원 (딥링크 필요 여부)
+    <span class="impact"><strong>영향:</strong> 개발자 <strong>2-3일 blocked</strong> · 잘못 구현 시 <strong>기존 화면 라우팅 깨짐</strong></span>
+  </div>
+</div>
+
+<!-- Issue 2 -->
+<div class="issue crit">
+  <div class="head">
+    <div class="tag-row">
+      <span class="sev crit">CRITICAL</span>
+      <span class="screen-tag">19 Coach</span>
+      <span style="font-family:var(--mono);font-size:10px;font-weight:700;background:var(--ok);color:white;padding:3px 8px;letter-spacing:0.05em">✓ RESOLVED</span>
+    </div>
+    <h3>Coach Handoff · 이 앱은 모바일 우선인데 데스크톱 대시보드로 그림</h3>
+  </div>
+  <div class="body">
+    실제 앱은 <code>MobileFrame.tsx</code>, <code>AppShellFrame</code>이 <em>모바일 우선</em>. 
+    <code>useIsMobileShell()</code> hook · <code>hideTabBar</code> prop · 반응형 (모바일 → tablet → desktop).
+    <br><br>
+    내 Coach Handoff 시안은 <em>1440px 데스크톱 그리드</em> 전제. 6명 카드 2열, sticky right panel 320px+.
+    <em>375px 폰에서 어떻게 보일지 시안 없음</em>. 
+    코치도 이동 중 폰으로 확인하고 싶을텐데.
+    <br><br>
+    실제로 <em>선수 카드 그리드 · Priority Signal 가로 스크롤</em> 등이 모바일에서 
+    어떻게 무너지는지 안 다룸.
+  </div>
+  <div class="fix">
+    Coach Handoff에 <em>모바일 시안 별도 추가</em>:
+    <br>· 375px 폰: <em>선수 리스트 세로</em>, Priority Signal 세로 스택
+    <br>· 선수 상세는 <em>탭 시 전체 화면</em> (drill-down 방식, right panel 아님)
+    <br>· Bottom tab bar에 <em>"코치" 탭 추가</em> vs 기존 More 안으로 넣기 결정
+    <br>· <code>AppChrome.tsx</code>의 tabs 확장 방식 명시
+    <span class="impact"><strong>영향:</strong> 코치 사용률 <strong>급감</strong> · 폰 사용 코치 <strong>배제</strong></span>
+  </div>
+</div>
+
+<!-- Issue 3 -->
+<div class="issue crit">
+  <div class="head">
+    <div class="tag-row">
+      <span class="sev crit">CRITICAL</span>
+      <span class="screen-tag">17-19</span>
+      <span style="font-family:var(--mono);font-size:10px;font-weight:700;background:var(--ok);color:white;padding:3px 8px;letter-spacing:0.05em">✓ RESOLVED</span>
+    </div>
+    <h3>60+ 계약 테스트를 어떻게 통과할지 불명확</h3>
+  </div>
+  <div class="body">
+    실제 앱은 <em>contract.test.tsx</em>로 화면 계약 강제.
+    <code>LogEntry.contract.test.tsx</code>, <code>LogDetail.decoration.contract.test.tsx</code>,
+    <code>PlanBeta.contract.test.tsx</code> (39.8KB), <code>Home.account-rewards.test.tsx</code> 등.
+    <em>테스트가 통과해야 PR merge 됨</em>.
+    <br><br>
+    내가 새 화면을 추가하면 <em>새 계약 테스트가 필요</em>. 
+    Session Prep은 <em>어떤 계약을 보장해야 하나?</em>
+    <br>· 세션 시각 지나면 카운트다운이 "지나감" 상태로 전환 (내가 명시함) — 이거 테스트 필요
+    <br>· "시작·기록 남기기" 탭 → <code>PostSessionForm</code>에 plan-link 자동 연결 — 
+    이 플로우도 계약 테스트로 명시 필요
+    <br>· 워밍업 체크 상태 localStorage 저장 — 계약 테스트로 검증
+    <br><br>
+    시안에 <em>테스트 명세 없음</em>. 개발자가 <em>혼자 계약 정의</em>하면 
+    스펙과 어긋날 위험.
+  </div>
+  <div class="fix">
+    각 신규 화면 시안에 <em>계약 테스트 스펙 섹션</em> 추가:
+    <br>· 최소 5-8개 <em>사용자 시나리오 명세</em>
+    <br>· 각 시나리오: given / when / then 3줄
+    <br>· 예: "given 세션 시각 지남 · when 화면 열림 · then 카운트다운 hidden · 중단 규칙만 표시"
+    <br>· <code>LogEntry.revisit.contract.test.tsx</code> 스타일 참고
+    <span class="impact"><strong>영향:</strong> QA <strong>롤백 가능</strong> · 개발자 <strong>계약 정의로 1-2주 지연</strong></span>
+  </div>
+</div>
+
+<!-- ============ §2 HIGH ============ -->
+<h2 data-num="§2">⚠ High · 시간 잡아먹을 것</h2>
+<p class="sub">개발자가 시안 보고 <em>구현 도중 헷갈릴</em> 문제들.</p>
+
+<!-- Issue 4 -->
+<div class="issue high">
+  <div class="head">
+    <div class="tag-row">
+      <span class="sev high">HIGH</span>
+      <span class="screen-tag">17 Prep</span>
+    </div>
+    <h3>Session Prep · TrainingHome에서 진입 방식이 앱 라우팅 계약 위반</h3>
+  </div>
+  <div class="body">
+    TrainingHome은 <code>onOpenPlan</code> 하나만 받음. Home.tsx에서 <code>goTab("plan")</code>으로 처리.
+    내 시안은 <em>새 prop <code>onOpenSessionPrep</code></em>을 넣으라고 함.
+    <br><br>
+    문제: <em>PlanBeta는 이미 39.8KB · 112개 파일 규모</em>. Session Prep을 
+    <code>tab: "plan"</code> 아래 서브뷰로 넣을지 <em>독립 tab</em>인지 결정 안 됨.
+    <br><br>
+    또한 세션 준비는 <em>세션 시각 5분 전</em>에만 의미. 
+    나머지 시간엔 어디로 진입? 현재 시안은 <em>"카드 클릭 시"</em>만 명시.
+  </div>
+  <div class="fix">
+    라우팅 결정:
+    <br><em>Option A:</em> <code>tab: "plan"</code> + <code>v.sessionPrepDate</code> 추가. PlanBeta 안의 서브 화면. 세션 카드 클릭 시 진입.
+    <br><em>Option B:</em> <code>tab: "log"</code> + entryType 확장. 로그 진입 흐름과 통합.
+    <br><em>Option C:</em> 신규 tab "today". TrainingHome의 today section을 확장.
+    <br><br>
+    <em>추천:</em> Option A. 계획 편집과 세션 준비가 <em>같은 데이터 영역</em>.
+    <br><br>
+    또한 <em>세션 시각 오차</em>: 5분 전이 아니어도 접근 가능해야 함. 
+    "언제든 미리 볼 수 있는 준비 화면" 정체성 강화.
+    <span class="impact"><strong>영향:</strong> 라우팅 결정 <strong>회의 필요</strong></span>
+  </div>
+</div>
+
+<!-- Issue 5 -->
+<div class="issue high">
+  <div class="head">
+    <div class="tag-row">
+      <span class="sev high">HIGH</span>
+      <span class="screen-tag">18 Wrap</span>
+    </div>
+    <h3>Weekly Wrap · "자동 생성" 트리거의 실제 구현 어렵다</h3>
+  </div>
+  <div class="body">
+    <em>"매주 일요일 22:00 자동 생성"</em> — 이 트리거를 어떻게 구현?
+    <br><br>
+    문제:
+    <br>1) <em>브라우저는 백그라운드 실행 안 됨</em>. 사용자가 앱을 안 열면 트리거 안 됨.
+    <br>2) <em>Service Worker + Push Notification</em>로 알림 보내려면 서버 필요. 
+    지금 앱은 로컬 우선 (<code>loadEntries()</code>는 localStorage).
+    <br>3) 자동 생성 결과를 <em>어디 저장?</em> localStorage에 <code>weekly-wrap-2026-W36</code>? 
+    Supabase 테이블 추가?
+    <br>4) 사용자가 일요일 밤에 앱 열면 <em>그때 생성</em>? 그럼 "22:00 자동"이 아님.
+    <br><br>
+    시안은 <em>이 기술 부채를 안 다룸</em>.
+  </div>
+  <div class="fix">
+    현실적 재정의:
+    <br>· <em>"매주 일요일 이후 처음 앱 열 때 lazy 생성"</em> — 백그라운드 아님
+    <br>· 클라이언트 계산 (<code>weekly-wrap-generator.ts</code>) — localStorage에 캐시
+    <br>· 계정 사용자만 Supabase 저장 · 게스트는 localStorage
+    <br>· UI: <em>"이번 주 요약이 준비됐어요"</em> 배너 홈 상단 (일요일 이후)
+    <br>· Push 알림은 <em>다음 단계</em>로 분리 (PWA + Service Worker 별도 스프린트)
+    <span class="impact"><strong>영향:</strong> 시안대로 구현 시 <strong>PWA 인프라 3주+ 지연</strong></span>
+  </div>
+</div>
+
+<!-- Issue 6 -->
+<div class="issue high">
+  <div class="head">
+    <div class="tag-row">
+      <span class="sev high">HIGH</span>
+      <span class="screen-tag">19 Coach</span>
+    </div>
+    <h3>Coach Note는 신규 DB 테이블 · 하지만 스키마 명세 없음</h3>
+  </div>
+  <div class="body">
+    시안에 <em>"신규 migration 0020_coach_notes.sql"</em>이라고만 나옴. 
+    <em>실제 스키마 · RLS 정책 · 인덱스 없음</em>.
+    <br><br>
+    다뤄야 할 것들:
+    <br>· <em>coach_note 편집</em> 가능? 아니면 immutable?
+    <br>· 선수가 <em>coach note 삭제 요청</em> 가능?
+    <br>· <em>여러 코치</em>가 있으면 각자 노트 별개?
+    <br>· target_date는 <em>과거 날짜만</em>? 미래 세션에도?
+    <br>· 노트 <em>글자 제한</em>? (일지처럼 20자? 아니면 500자?)
+    <br>· <em>선수 알림</em> 어떻게? Push? Badge?
+    <br>· 노트가 <em>선수 감정에 영향</em>을 준다면 R-4 통증처럼 memo-safety 필요?
+    <br><br>
+    이런 결정 없이 개발자에게 넘기면 <em>2-3주 삽질</em>.
+  </div>
+  <div class="fix">
+    Coach Note 상세 스펙 문서 추가:
+    <br>· 필드: <code>id, athlete_id, supporter_id, target_date, text, created_at, edited_at, deleted_at</code>
+    <br>· 글자 제한 <em>300자</em> (일지보다 크되 대화 아님)
+    <br>· immutable · <em>10분 이내 편집</em> 후 잠금
+    <br>· 선수 삭제 요청 → coach에게 알림 · coach가 삭제
+    <br>· 여러 코치 지원 · 각자 노트 별개 · 선수는 <em>모든 노트 볼 수 있음</em>
+    <br>· 알림: <em>LogDetail 상단 배너</em>. Push는 후속.
+    <br>· memo-safety: <em>PII 검사 · 타 선수 이름 언급 경고</em>
+    <span class="impact"><strong>영향:</strong> DB 스키마 결정 <strong>1주</strong> · 안 나오면 개발 시작 못함</span>
+  </div>
+</div>
+
+<!-- Issue 7 -->
+<div class="issue high">
+  <div class="head">
+    <div class="tag-row">
+      <span class="sev high">HIGH</span>
+      <span class="screen-tag">전체</span>
+    </div>
+    <h3>확장 색 변수 이식은 <em>실제 파일 이름</em>이 없다</h3>
+  </div>
+  <div class="body">
+    §15 reconciliation에서 <em>"tokens-extended.css 생성 + main.tsx에서 import"</em>라고만 명시.
+    <br><br>
+    문제: 실제 앱은 <em>16개 CSS 파일</em>이 있고 <code>app.css</code>가 69KB로 가장 큼. 
+    <em>어느 파일에 어느 변수를 추가</em>할지 명확한 지침 없음.
+    <br><br>
+    또한 내 <code>shared/tokens.css</code>는 <em>독립 파일</em>. 
+    앱에서 어떻게 import할지, 
+    기존 <code>--paper</code> 등과 <em>충돌 시 어느 것 우선</em>인지 안 정함.
+  </div>
+  <div class="fix">
+    실제 파일 목록 · 어디에 넣을지 매핑:
+    <br>· 에너지 시스템 색 → <code>app/src/styles/app.css</code> :root 블록에 병합
+    <br>· Mode wash → <code>plan-beta.css</code>에 병합 (mode 판정 이미 여기)
+    <br>· Citation 색 → <em>신규 파일 필요 없음</em>. AI Chat 화면이 없으니 (앱에)
+    <br>· Pain 5단계 → <code>journal-decoration.css</code>에 병합 (BodyDiagram 여기 기준)
+    <br><br>
+    <em>실행 계획 diff 파일</em> 하나로 제공. 개발자가 그대로 patch 가능.
+    <span class="impact"><strong>영향:</strong> 개발자가 <strong>4-6개 파일 수동 찾아</strong> 붙임 · 오타 위험</span>
+  </div>
+</div>
+
+<!-- Issue 8 -->
+<div class="issue high">
+  <div class="head">
+    <div class="tag-row">
+      <span class="sev high">HIGH</span>
+      <span class="screen-tag">17-19</span>
+    </div>
+    <h3>테스트 fixture · 예시 데이터의 페르소나가 <em>실제 앱 문서와 다름</em></h3>
+  </div>
+  <div class="body">
+    내 시안: <em>민지 (여, 5000m, PB 16:10)</em>, 서현/지우/준호 등.
+    <br><br>
+    실제 앱: <code>app/src/screens/minji/minji-journal-data.ts</code> 9KB가 <em>공식 민지 픽스처</em>. 
+    <em>minji-journal-data.contract.test.ts</em>로 강제. 
+    실제 앱 문서(README, 스펙)는 <em>민지</em>를 <em>계속 사용</em>.
+    <br><br>
+    내 <em>서현/지우/준호</em>는 <em>어디서 나온 페르소나인가</em>? 앱에 없음. 
+    Coach Handoff의 다중 선수 시나리오를 만들려면 <em>새 fixture 데이터</em> 필요.
+    <br><br>
+    민지 픽스처 규격에 맞춰야 <em>기존 테스트 재사용</em> 가능.
+  </div>
+  <div class="fix">
+    Coach 다중 선수 fixture 파일 신규 생성:
+    <br>· <code>app/src/screens/coach/coach-athletes-fixture.ts</code>
+    <br>· 민지 데이터 + <em>4-5명 추가 페르소나</em>
+    <br>· 각 페르소나 <code>minji-journal-data.ts</code> 구조 준수
+    <br>· Priority Signal 시나리오 커버: R-4 통증 · R-7 위반 · 감정 저하 · READY · RECOVERY 각 1명
+    <br>· <code>coach-athletes-fixture.contract.test.ts</code> 추가
+    <span class="impact"><strong>영향:</strong> Fixture 작업 <strong>2-3일</strong> · 없으면 데모 데이터 없어서 QA 불가</span>
+  </div>
+</div>
+
+<!-- Issue 9 -->
+<div class="issue high">
+  <div class="head">
+    <div class="tag-row">
+      <span class="sev high">HIGH</span>
+      <span class="screen-tag">18 Wrap</span>
+    </div>
+    <h3>Weekly Wrap의 "AI 코치 노트" 섹션 · AI 화면 없다고 했는데 왜 있음?</h3>
+  </div>
+  <div class="body">
+    호준님이 이번 턴에 <em>"AI 코치는 그냥 둬"</em> 지시.
+    그런데 18 Weekly Wrap에는 <em>"Coach's Note · AI가 3줄 회고. Confidence · Citation 필수"</em> 섹션 있음.
+    <br><br>
+    시안 내부 <em>모순</em>. Weekly Wrap 자체는 유효한데, AI 노트 섹션이 
+    <em>사용자 지시와 충돌</em>.
+  </div>
+  <div class="fix">
+    Weekly Wrap의 <em>AI Coach Note 섹션 폐기</em> or <em>사용자 셀프 회고 섹션으로 대체</em>:
+    <br><em>Option A:</em> 완전 제거. 다른 콘텐츠(스티커 콜라주·감정 곡선·하이라이트)만으로 충분.
+    <br><em>Option B:</em> <em>사용자가 직접 3줄 회고 남기는</em> 편집 가능 섹션. 
+    다음 주 열 때 이번 주 회고를 다시 볼 수 있음. AI 아님.
+    <br><br>
+    <em>추천 B</em>. 다이어리 감성 · 매주 자기와 대화하는 감각.
+    <span class="impact"><strong>영향:</strong> 사용자 지시 준수 <strong>필수</strong> · 안 지키면 재작업</span>
+  </div>
+</div>
+
+<!-- ============ §3 MEDIUM ============ -->
+<h2 data-num="§3">Medium · 세부 폴리싱</h2>
+<p class="sub">시안 자체 문제 아니지만 <em>실제 구현 시 수정</em> 필요.</p>
+
+<!-- Issue 10 -->
+<div class="issue med">
+  <div class="head">
+    <div class="tag-row">
+      <span class="sev med">MEDIUM</span>
+      <span class="screen-tag">17 Prep</span>
+    </div>
+    <h3>Session Prep 워밍업 체크리스트 · 실제 앱 시간 관리와 안 맞음</h3>
+  </div>
+  <div class="body">
+    시안: <em>워밍업 5-block 각 완료 체크 · localStorage에 저장</em>.
+    <br><br>
+    실제 앱: 세션 완료 후 <code>PostSessionForm</code>에서 <em>세션 전체 duration</em>만 저장.
+    워밍업 · 본운동 · 쿨다운을 <em>분리 저장하지 않음</em>. 
+    체크리스트 데이터를 세션에 연결할지 <em>버릴지</em> 결정 필요.
+  </div>
+  <div class="fix">
+    워밍업 체크는 <em>UX 도움 목적만</em>. 데이터 저장 필요 없음.
+    화면 세션 완료 후 <em>체크 상태 초기화</em>. 
+    저장한다면 <em>세션 볼륨 vs 계획 볼륨 비교</em>에 사용 안 함 (혼란 방지).
+  </div>
+</div>
+
+<!-- Issue 11 -->
+<div class="issue med">
+  <div class="head">
+    <div class="tag-row">
+      <span class="sev med">MEDIUM</span>
+      <span class="screen-tag">18 Wrap</span>
+    </div>
+    <h3>스티커 콜라주 · 실제 배치와 다름</h3>
+  </div>
+  <div class="body">
+    시안 콜라주는 <em>7일 동안 붙인 자산을 자연스럽게 재배치</em>.
+    <br><br>
+    문제: 실제 앱 <code>DecorationState</code>는 <em>페이지별로 자산 배치</em>. 각 일지 페이지의 <code>placements[]</code>에 
+    위치·회전 저장. <em>주간 콜라주는 이 데이터를 어떻게 조합</em>?
+    <br><br>
+    선택지:
+    <br>· 각 페이지의 자산을 <em>랜덤 재배치</em> (기존 위치 무시)
+    <br>· 페이지 썸네일 7장을 <em>몽타주</em>로 이어붙임 (다이어리 감성 유지)
+    <br>· 자산 <em>ID만 집계</em>해서 심플 그리드로 표시 (재배치 없음)
+  </div>
+  <div class="fix">
+    <em>Option 3 추천</em>: ID 집계 후 <em>사용 빈도 순 top 10-15</em>를 감성 배치. 
+    구현 간단 · 개인정보 노출 최소 (페이지 내용 안 보임).
+  </div>
+</div>
+
+<!-- Issue 12 -->
+<div class="issue med">
+  <div class="head">
+    <div class="tag-row">
+      <span class="sev med">MEDIUM</span>
+      <span class="screen-tag">19 Coach</span>
+    </div>
+    <h3>Plan Override "강도 -10% 제안" · 실제 처방 조정 로직과 연결 안 됨</h3>
+  </div>
+  <div class="body">
+    시안: 코치가 <em>"강도 -10% 제안"</em> 원 탭 → 선수 승인/거부.
+    <br><br>
+    실제 앱: 처방 조정은 <code>adjusted-method-resolution-v3.ts</code>, 
+    <code>adjusted-plan-selection.ts</code>, <code>AdjustedPlanApplyReview.tsx</code> 등 
+    <em>매우 복잡한 시스템</em>. 
+    임의로 "10% 낮춤"이 아니라 <em>여러 candidate 중 선택</em>하거나 <em>사용자가 입력값 변경</em>하는 방식.
+    <br><br>
+    코치의 <em>단순 -10%</em>가 이 시스템에 어떻게 들어갈지 불명.
+  </div>
+  <div class="fix">
+    Coach Override 재정의:
+    <br>· <em>제안이 아니라 노트</em>: "다음 세션 강도 낮춰보자"라고 텍스트만
+    <br>· 선수가 <em>스스로 조정</em>: <code>AdjustedPlanEditFlow</code>에서 candidate 선택
+    <br>· 즉, Coach는 <em>지시가 아닌 조언</em> · 결정은 선수
+    <br>· 이게 앱의 "자격 미확인 · 지원자" 방침과도 부합
+  </div>
+</div>
+
+<!-- Issue 13 -->
+<div class="issue med">
+  <div class="head">
+    <div class="tag-row">
+      <span class="sev med">MEDIUM</span>
+      <span class="screen-tag">전체</span>
+    </div>
+    <h3>i18n 지원 없음 — 한글 하드코딩</h3>
+  </div>
+  <div class="body">
+    실제 앱은 아직 한글만. 하지만 <em>영어 상용화 계획</em>이 있다면 
+    시안의 한글 하드코딩이 <em>재작업 부담</em>.
+    <br><br>
+    특히 시안 헤드라인 "<em>호준님, 좋은 아침이에요</em>", "<em>이번 주도 리듬 잘 잡았어요</em>" 등 
+    감성 카피는 <em>번역 시 톤이 완전히 바뀜</em>.
+  </div>
+  <div class="fix">
+    지금은 <em>i18n 무시해도 됨</em> (앱이 아직 한글). 
+    하지만 각 카피에 <em>"tone" 태그</em>를 붙여두면 나중 번역에 도움:
+    <br>· 아침 인사: "warm · casual"
+    <br>· 회고: "reflective · gentle"
+    <br>· 경고: "direct · non-judgmental"
+  </div>
+</div>
+
+<!-- Issue 14 -->
+<div class="issue med">
+  <div class="head">
+    <div class="tag-row">
+      <span class="sev med">MEDIUM</span>
+      <span class="screen-tag">17-19</span>
+    </div>
+    <h3>a11y · 스크린 리더 + 키보드 네비게이션 스펙 없음</h3>
+  </div>
+  <div class="body">
+    실제 앱은 <em>SafeAccessibility.contract.test.tsx</em>, 
+    <code>HomeSafeAccessibility.contract.test.tsx</code> 등 
+    <em>a11y 계약 테스트를 강제</em>.
+    <br><br>
+    내 시안 3개는 <em>aria-label · 키보드 조작 · 포커스 순서</em> 스펙 부족. 
+    Coach 대시보드의 6명 카드 그리드는 <em>화살표 키 탐색</em> 필요.
+    Session Prep의 워밍업 체크리스트는 <em>스크린 리더가 완료율 알려야</em>.
+  </div>
+  <div class="fix">
+    각 시안에 a11y 섹션 추가 (짧게):
+    <br>· 주요 상호작용 요소 <em>role · aria-label</em>
+    <br>· 키보드 조작 (Tab · Enter · Escape · 화살표)
+    <br>· 스크린 리더 <em>알림 (live regions)</em>
+    <br>· 포커스 트랩 위치 (모달 · sheet)
+  </div>
+</div>
+
+<!-- ============ §4 LOW ============ -->
+<h2 data-num="§4">Low · 나중에</h2>
+<p class="sub">지금 안 고쳐도 되지만 알아두면 좋은.</p>
+
+<!-- Issue 15 -->
+<div class="issue low">
+  <div class="head">
+    <div class="tag-row">
+      <span class="sev low">LOW</span>
+      <span class="screen-tag">18 Wrap</span>
+    </div>
+    <h3>ISO 주차 계산 · 한국은 월요일 시작 · 개별 시안 불일치</h3>
+  </div>
+  <div class="body">
+    시안의 "36주차 · 09.04 ~ 09.10" — 
+    2026-09-04는 금요일. 2026-09-10 목요일. 이건 <em>7일 범위가 아님</em> (6일). 
+    <em>월요일 시작 주라면</em> 09.07 (월) ~ 09.13 (일). 
+    시안 데이터가 <em>주 경계와 안 맞음</em>.
+  </div>
+  <div class="fix">
+    ISO 주 계산 규칙 명시: <em>월요일 시작 · 일요일 종료</em>. 
+    "36주차 = 2026-09-07 ~ 2026-09-13".
+  </div>
+</div>
+
+<!-- Issue 16 -->
+<div class="issue low">
+  <div class="head">
+    <div class="tag-row">
+      <span class="sev low">LOW</span>
+      <span class="screen-tag">17 Prep</span>
+    </div>
+    <h3>"프린트 카드" 디자인 · 실제 인쇄 미검증</h3>
+  </div>
+  <div class="body">
+    시안: <em>PRINT-FRIENDLY 뱃지 붙은 페이스 카드 · window.print() 시 A6 인쇄</em>.
+    <br><br>
+    실제로 <em>@media print 스타일 미제공</em>. 
+    폰에서 인쇄 → PDF 저장 → 전송 흐름 확인 안 됨.
+  </div>
+  <div class="fix">
+    페이스 카드에만 적용되는 <em>@media print</em> 스타일 예시 코드 첨부:
+    <br>· <code>body { visibility: hidden }</code>
+    <br>· <code>.pace-card { visibility: visible; position: absolute; inset: 0; }</code>
+    <br>· A6 크기 (105×148mm) 최적화
+    <br>· 텍스트 검정 · 뱃지 · 배경 제거
+  </div>
+</div>
+
+<!-- ============ §5 SCREEN-BY-SCREEN BALANCE ============ -->
+<h2 data-num="§5">화면별 장단점 균형</h2>
+<p class="sub">각 화면을 <em>강점과 약점 동시에</em> 정직하게.</p>
+
+<!-- 17 Session Prep -->
+<div class="screen-header">
+  <span class="num">17</span>
+  <h3>Session Prep</h3>
+  <span class="verdict strong">STRONG · GO</span>
+</div>
+<div class="balance">
+  <div class="col pro">
+    <h4>강점</h4>
+    <ul>
+      <li>앱 데이터 <em>재사용률 100%</em> — <code>DetailedPrescriptionView</code> 그대로</li>
+      <li>실제 gap을 채움 — <em>세션 5분 전 준비 화면 부재</em>가 확실</li>
+      <li>페이스 카드 인쇄 개념 — 러너 실사용 시나리오</li>
+      <li>중단 규칙(<code>stopCodes</code>) 안전 계약 재사용</li>
+      <li>페이싱 전략 3줄 — R-7 규칙 연결 명확</li>
+    </ul>
+  </div>
+  <div class="col con">
+    <h4>약점</h4>
+    <ul>
+      <li>진입 경로 <em>라우팅 결정 미완</em> (Issue #4)</li>
+      <li>워밍업 체크리스트 <em>저장 정책 불명</em> (Issue #10)</li>
+      <li>날씨 API <em>어디서 오는지</em> 명시 없음</li>
+      <li>계약 테스트 스펙 없음 (Issue #3)</li>
+      <li>인쇄 @media 실제 코드 없음 (Issue #16)</li>
+    </ul>
+  </div>
+</div>
+
+<!-- 18 Weekly Wrap -->
+<div class="screen-header">
+  <span class="num">18</span>
+  <h3>Weekly Wrap</h3>
+  <span class="verdict mixed">MIXED · REDESIGN</span>
+</div>
+<div class="balance">
+  <div class="col pro">
+    <h4>강점</h4>
+    <ul>
+      <li>매거진 스타일 헤더 · 감성 훌륭</li>
+      <li>3-number hero · 지난 주 diff — 명확</li>
+      <li>스티커 콜라주 감성 강점</li>
+      <li>자동 도장 발급 로직 재사용 (<code>engagement</code>)</li>
+      <li>Pain Timeline R-4 판정 자동 (스펙 준수)</li>
+    </ul>
+  </div>
+  <div class="col con">
+    <h4>약점</h4>
+    <ul>
+      <li>"AI 코치 노트" — <em>사용자 지시 위반</em> (Issue #9)</li>
+      <li>"매주 22:00 자동 생성" — <em>구현 어려움</em> (Issue #5)</li>
+      <li>ISO 주차 계산 불일치 (Issue #15)</li>
+      <li>스티커 콜라주 알고리즘 <em>3가지 옵션 중 결정 안 됨</em> (Issue #11)</li>
+      <li>공유 SNS 이미지 렌더링 — 폰트 · 이미지 <em>서버 필요</em>? 명시 없음</li>
+    </ul>
+  </div>
+</div>
+
+<!-- 19 Coach Handoff -->
+<div class="screen-header">
+  <span class="num">19</span>
+  <h3>Coach Handoff</h3>
+  <span class="verdict weak">WEAK · MAJOR REWORK</span>
+</div>
+<div class="balance">
+  <div class="col pro">
+    <h4>강점</h4>
+    <ul>
+      <li>Supabase 백엔드 <em>이미 준비됨</em> (list_shared_journal_entries · support_connections)</li>
+      <li>자격 미확인 배너 · 개인 메모 보호 <em>기존 방침 준수</em></li>
+      <li>Priority Signal 개념 — 러닝 코치 실사용 적합</li>
+      <li>Coach Note 컴포저 — 양방향 커뮤니케이션 시작점</li>
+    </ul>
+  </div>
+  <div class="col con">
+    <h4>약점</h4>
+    <ul>
+      <li><em>모바일 시안 없음</em> (Issue #2) — 코치 사용률 급감 위험</li>
+      <li>Coach Note DB 스키마 <em>미명세</em> (Issue #6)</li>
+      <li>Plan Override "-10%" <em>기존 처방 로직과 안 맞음</em> (Issue #12)</li>
+      <li>다중 선수 fixture 데이터 없음 (Issue #8)</li>
+      <li>새 tab 추가 or More 안으로 · <em>라우팅 결정 없음</em></li>
+      <li>선수 앱에 <em>Coach Note 표시 UI</em> 시안 없음 — 반쪽짜리</li>
+    </ul>
+  </div>
+</div>
+
+<!-- ============ §6 최종 권고 ============ -->
+<h2 data-num="§6">최종 권고 · 어떻게 넘길 것인가</h2>
+
+<div class="rec-box">
+  <h3>이번 턴에 지금 바로 해야 할 것 · 5가지</h3>
+  <p>
+    핸드오프 리스크가 가장 높은 <em>Critical 3개 · High 6개 중 4개</em>를 
+    다음 턴에 <em>보완 문서로 해결</em>. 다시 만들지 말고 <em>보완만</em>. 
+    시간 대비 효과 큼.
+  </p>
+
+  <div class="actions">
+    <span class="n">01</span>
+    <span class="desc">
+      <em>AppShell Integration 스펙 (Issue #1)</em> — 
+      각 신규 화면 (17/18/19)에 tab · viewFor* · DeferredMobileScreens 등록 방식 명시. 3개 화면 각 1페이지 부록.
+    </span>
+  </div>
+
+  <div class="actions">
+    <span class="n">02</span>
+    <span class="desc">
+      <em>Coach Handoff 모바일 시안 (Issue #2)</em> — 
+      375px 폰용 다른 레이아웃. 선수 리스트 세로 · Priority Signal 세로 스택 · 선수 상세 드릴다운.
+    </span>
+  </div>
+
+  <div class="actions">
+    <span class="n">03</span>
+    <span class="desc">
+      <em>계약 테스트 스펙 (Issue #3)</em> — 
+      각 화면 최소 5개 given/when/then 시나리오. <code>*.contract.test.tsx</code> 스타일 참고. 개발자가 그대로 tsx로 옮길 수 있게.
+    </span>
+  </div>
+
+  <div class="actions">
+    <span class="n">04</span>
+    <span class="desc">
+      <em>Weekly Wrap "AI 노트" 제거 · 셀프 회고로 대체 (Issue #9)</em> — 
+      사용자 지시 위반 항목. 편집 가능한 <em>3줄 셀프 회고</em> 영역으로 재정의.
+    </span>
+  </div>
+
+  <div class="actions">
+    <span class="n">05</span>
+    <span class="desc">
+      <em>Weekly Wrap 자동 생성 재정의 (Issue #5)</em> — 
+      "22:00 크론"이 아니라 <em>"일요일 이후 첫 앱 실행 시 lazy 생성"</em>. 
+      현실적. 백엔드 인프라 불필요.
+    </span>
+  </div>
+</div>
+
+<div class="rec-box" style="margin-top: 20px; border-color: var(--warn); background: rgba(180, 83, 12, 0.02)">
+  <h3 style="color: var(--warn)">다음 스프린트로 미룰 것 · 3가지</h3>
+  <p>
+    지금 만들지 말고 <em>실제 개발자 미팅 후</em> 결정할 것. 
+    <em>스펙 확정 없이 시안 만들면 재작업</em>.
+  </p>
+
+  <div class="actions">
+    <span class="n">A</span>
+    <span class="desc">
+      <em>Coach Note DB 스키마 (Issue #6)</em> — 
+      백엔드 엔지니어와 PII 규정 · RLS 정책 회의 후 결정.
+    </span>
+  </div>
+
+  <div class="actions">
+    <span class="n">B</span>
+    <span class="desc">
+      <em>Plan Override 방식 (Issue #12)</em> — 
+      <code>adjusted-method-resolution-v3.ts</code> 담당 엔지니어와 조율 후 결정.
+    </span>
+  </div>
+
+  <div class="actions">
+    <span class="n">C</span>
+    <span class="desc">
+      <em>선수 앱 Coach Note 표시 UI</em> — 
+      Coach Handoff의 <em>반대편 화면</em>. LogDetail 배너 · 알림 · 인터랙션.
+    </span>
+  </div>
+</div>
+
+<div class="footer">
+  TRAINORACLE · HANDOFF RISK REVIEW · 2026-09-10<br>
+  <em>16 issues 발견 · 3 crit · 6 high · 5 med · 2 low</em> · 실제 앱 288 tsx 파일 · 60+ 계약 테스트 대조
+</div>
+
+</body>
+</html>

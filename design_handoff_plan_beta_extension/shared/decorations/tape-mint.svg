@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 24" width="200" height="24" preserveAspectRatio="none">
+  <defs>
+    <linearGradient id="mtGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#A7F3D0"/>
+      <stop offset="100%" stop-color="#6EE7B7"/>
+    </linearGradient>
+  </defs>
+  <rect width="200" height="24" fill="url(#mtGrad)" opacity="0.85"/>
+  <g fill="#065F46" opacity="0.35">
+    <path d="M 10 12 Q 14 8 18 12 Q 22 16 26 12" fill="none" stroke="#065F46" stroke-width="1"/>
+    <path d="M 40 12 Q 44 8 48 12 Q 52 16 56 12" fill="none" stroke="#065F46" stroke-width="1"/>
+    <path d="M 70 12 Q 74 8 78 12 Q 82 16 86 12" fill="none" stroke="#065F46" stroke-width="1"/>
+    <path d="M 100 12 Q 104 8 108 12 Q 112 16 116 12" fill="none" stroke="#065F46" stroke-width="1"/>
+    <path d="M 130 12 Q 134 8 138 12 Q 142 16 146 12" fill="none" stroke="#065F46" stroke-width="1"/>
+    <path d="M 160 12 Q 164 8 168 12 Q 172 16 176 12" fill="none" stroke="#065F46" stroke-width="1"/>
+  </g>
+</svg>

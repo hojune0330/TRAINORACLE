@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80" width="80" height="80">
+  <defs>
+    <filter id="rough12">
+      <feTurbulence type="fractalNoise" baseFrequency="0.85" numOctaves="2" seed="14"/>
+      <feDisplacementMap in="SourceGraphic" scale="1.4"/>
+    </filter>
+  </defs>
+  <g transform="rotate(4 40 40)" filter="url(#rough12)">
+    <path d="M 10 40 L 18 28 L 26 44 L 34 22 L 42 42 L 50 26 L 58 40 L 68 30" fill="none" stroke="#059669" stroke-width="3" opacity="0.85" stroke-linecap="round"/>
+    <rect x="6" y="14" width="68" height="52" fill="none" stroke="#059669" stroke-width="2" opacity="0.85"/>
+    <text x="40" y="64" text-anchor="middle" font-family="serif" font-size="9" font-weight="900" fill="#059669" opacity="0.9" letter-spacing="1">CONSISTENT</text>
+  </g>
+</svg>

@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <defs>
+    <radialGradient id="swG" cx="50%" cy="45%" r="55%">
+      <stop offset="0%" stop-color="#FEF3C7"/>
+      <stop offset="100%" stop-color="#F1F5F9"/>
+    </radialGradient>
+  </defs>
+  <!-- top button -->
+  <rect x="28" y="6" width="8" height="6" rx="1" fill="#475569" stroke="#0F172A" stroke-width="1.4"/>
+  <line x1="32" y1="3" x2="32" y2="6" stroke="#0F172A" stroke-width="2"/>
+  <!-- side buttons -->
+  <rect x="10" y="24" width="4" height="4" fill="#475569" stroke="#0F172A" stroke-width="1"/>
+  <rect x="50" y="24" width="4" height="4" fill="#475569" stroke="#0F172A" stroke-width="1"/>
+  <!-- watch body -->
+  <circle cx="32" cy="36" r="20" fill="#334155" stroke="#0F172A" stroke-width="2"/>
+  <circle cx="32" cy="36" r="17" fill="url(#swG)" stroke="#0F172A" stroke-width="1.4"/>
+  <!-- markers -->
+  <g stroke="#0F172A" stroke-width="1.2" stroke-linecap="round">
+    <line x1="32" y1="20" x2="32" y2="24"/>
+    <line x1="32" y1="48" x2="32" y2="52"/>
+    <line x1="16" y1="36" x2="20" y2="36"/>
+    <line x1="44" y1="36" x2="48" y2="36"/>
+  </g>
+  <g stroke="#94A3B8" stroke-width="0.8" stroke-linecap="round">
+    <line x1="24" y1="22" x2="25" y2="24"/>
+    <line x1="40" y1="22" x2="39" y2="24"/>
+    <line x1="24" y1="50" x2="25" y2="48"/>
+    <line x1="40" y1="50" x2="39" y2="48"/>
+    <line x1="18" y1="28" x2="20" y2="29"/>
+    <line x1="46" y1="28" x2="44" y2="29"/>
+    <line x1="18" y1="44" x2="20" y2="43"/>
+    <line x1="46" y1="44" x2="44" y2="43"/>
+  </g>
+  <!-- hands -->
+  <line x1="32" y1="36" x2="32" y2="24" stroke="#0F172A" stroke-width="1.8" stroke-linecap="round"/>
+  <line x1="32" y1="36" x2="41" y2="30" stroke="#DC2626" stroke-width="1.6" stroke-linecap="round"/>
+  <circle cx="32" cy="36" r="2.5" fill="#DC2626" stroke="#0F172A" stroke-width="0.6"/>
+  <!-- text -->
+  <text x="32" y="46" text-anchor="middle" font-family="monospace" font-size="3.5" font-weight="700" fill="#64748B">STOP</text>
+</svg>

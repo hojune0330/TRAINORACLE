@@ -1,5 +1,7 @@
 # AGENTS.md — AI 작업자 필수 규칙
 
+Design handoff added 2026-09-10: [design_handoff_plan_beta_extension/README.md](design_handoff_plan_beta_extension/README.md). After reading PRODUCT_NORTH_STAR.md, consult this package and its Handoff Risk Review for related design work. Imported implementation claims and proposals must be checked against current code and approved contracts; uploading this package does not approve or complete implementation.
+
 > **이 파일은 이 저장소에서 일하는 모든 AI 작업자가 작업 시작 전에 읽는다.**
 > 사람 작업자에게도 그대로 적용된다.
 

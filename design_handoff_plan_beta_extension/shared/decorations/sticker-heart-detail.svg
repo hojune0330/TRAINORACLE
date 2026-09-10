@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <defs>
+    <linearGradient id="hbG" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#F87171"/>
+      <stop offset="100%" stop-color="#B91C1C"/>
+    </linearGradient>
+  </defs>
+  <!-- heart body -->
+  <path d="M 32 54 Q 16 42 10 28 Q 6 18 14 12 Q 22 8 32 18 Q 42 8 50 12 Q 58 18 54 28 Q 48 42 32 54 Z"
+        fill="url(#hbG)" stroke="#7F1D1D" stroke-width="1.8" stroke-linejoin="round"/>
+  <!-- highlight -->
+  <path d="M 20 20 Q 18 26 20 30" fill="none" stroke="#FEE2E2" stroke-width="2.4" stroke-linecap="round" opacity="0.6"/>
+  <!-- ECG line -->
+  <path d="M 12 34 L 18 34 L 22 26 L 26 42 L 30 30 L 34 38 L 38 32 L 42 34 L 52 34"
+        fill="none" stroke="#FFFFFF" stroke-width="1.8" stroke-linejoin="miter" stroke-linecap="square"/>
+  <!-- BPM text -->
+  <text x="32" y="48" text-anchor="middle" font-family="monospace" font-size="6" font-weight="700" fill="#FFFFFF">178</text>
+  <text x="32" y="52" text-anchor="middle" font-family="monospace" font-size="3" font-weight="700" fill="#FEE2E2" letter-spacing="0.06em">BPM</text>
+</svg>

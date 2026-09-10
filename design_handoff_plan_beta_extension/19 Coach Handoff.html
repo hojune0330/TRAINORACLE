@@ -1,0 +1,2032 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TrainOracle · Coach Handoff</title>
+<link rel="stylesheet" href="shared/tokens.css">
+<style>
+  body {
+    background: var(--bg);
+    padding: 32px 20px 60px;
+    display: flex; flex-direction: column;
+    align-items: center; gap: 24px;
+  }
+  .toolbar {
+    display: flex; align-items: baseline; gap: 20px;
+    max-width: 1400px; width: 100%; padding-bottom: 14px;
+    border-bottom: 2px solid var(--ink);
+  }
+  .toolbar .brand { font-family: var(--mono); font-size: 12px; letter-spacing: 0.14em; font-weight: 700; }
+  .toolbar .subt { font-family: var(--sans); font-size: 12.5px; color: var(--ink-3); }
+  .toolbar .spacer { flex: 1; }
+  .toolbar a { color: var(--ink-3); font-family: var(--sans); font-size: 12px; text-decoration: none; font-weight: 600; }
+
+  .container {
+    max-width: 1400px;
+    width: 100%;
+    background: var(--bg);
+    border: 1px solid var(--line);
+    padding: 32px 40px 40px;
+  }
+
+  /* ============ HEADER ============ */
+  .page-h {
+    display: flex; align-items: flex-end; justify-content: space-between;
+    gap: 24px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid var(--hair);
+    margin-bottom: 24px;
+  }
+  .page-h .title {
+    font-family: var(--sans); font-size: 28px; font-weight: 700;
+    letter-spacing: -0.025em;
+    margin: 0 0 6px;
+    line-height: 1.15;
+  }
+  .page-h .subtitle {
+    font-family: var(--sans); font-size: 13px; color: var(--ink-3);
+    letter-spacing: -0.005em;
+    display: flex; align-items: baseline; gap: 8px;
+  }
+  .page-h .subtitle em { font-style: normal; color: var(--ink); font-weight: 700; }
+  .page-h .sep { color: var(--line-2); }
+  .page-h .notice {
+    font-family: var(--sans); font-size: 11.5px; color: var(--ink-2);
+    padding: 8px 14px;
+    background: var(--surface-2);
+    border-left: 3px solid var(--warn);
+    max-width: 380px; line-height: 1.55;
+    letter-spacing: -0.005em;
+  }
+  .page-h .notice strong { color: var(--warn); font-weight: 700; }
+  .page-h .actions {
+    display: flex; gap: 8px;
+  }
+  .page-h .actions button {
+    padding: 9px 16px;
+    font-family: var(--sans); font-size: 12.5px; font-weight: 700;
+    cursor: pointer; letter-spacing: -0.005em;
+    display: inline-flex; align-items: center; gap: 6px;
+  }
+  .page-h .actions svg { width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 2; }
+  .page-h .actions .primary { background: var(--ink); color: var(--paper); border: 1px solid var(--ink); }
+  .page-h .actions .secondary {
+    background: var(--surface); color: var(--ink);
+    border: 1px solid var(--line);
+  }
+
+  /* ============ PRIORITY SIGNALS STRIP ============ */
+  .priority {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-left: 4px solid var(--warn);
+    padding: 16px 20px;
+    margin-bottom: 24px;
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 20px;
+    align-items: center;
+  }
+  .priority .h {
+    display: flex; align-items: center; gap: 8px;
+    font-family: var(--sans); font-size: 13.5px; font-weight: 700;
+    color: var(--warn); letter-spacing: -0.005em;
+    white-space: nowrap;
+  }
+  .priority .h svg {
+    width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 2;
+  }
+  .priority .h .count {
+    background: var(--warn); color: white;
+    padding: 2px 8px; border-radius: 999px;
+    font-family: var(--mono); font-size: 11px; font-weight: 700;
+    letter-spacing: 0.02em;
+  }
+  .priority .items {
+    display: flex; gap: 8px; overflow-x: auto;
+    scroll-behavior: smooth;
+  }
+  .priority .items::-webkit-scrollbar { height: 4px; }
+  .priority .item {
+    background: var(--paper);
+    border: 1px solid var(--warn);
+    padding: 8px 12px;
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 10px;
+    min-width: 240px;
+    align-items: center;
+    cursor: pointer;
+    transition: transform 150ms;
+  }
+  .priority .item:hover { transform: translateY(-2px); box-shadow: 0 4px 8px rgba(180,51,46,0.15); }
+  .priority .item .a-avatar {
+    width: 32px; height: 32px; border-radius: 50%;
+    background: var(--e-vo2-strong); color: white;
+    display: flex; align-items: center; justify-content: center;
+    font-family: var(--sans); font-size: 12px; font-weight: 700;
+    letter-spacing: -0.005em;
+  }
+  .priority .item .txt .name {
+    font-family: var(--sans); font-size: 12.5px; font-weight: 700;
+    color: var(--ink); letter-spacing: -0.005em;
+  }
+  .priority .item .txt .sig {
+    font-family: var(--sans); font-size: 11px; color: var(--warn);
+    font-weight: 600; letter-spacing: -0.005em; margin-top: 1px;
+  }
+
+  /* ============ LAYOUT ============ */
+  .layout {
+    display: grid;
+    grid-template-columns: 1.4fr 1fr;
+    gap: 24px;
+  }
+
+  /* ============ ATHLETE GRID ============ */
+  .sec-h {
+    display: flex; align-items: baseline; justify-content: space-between;
+    margin-bottom: 12px;
+  }
+  .sec-h .lb {
+    font-family: var(--sans); font-size: 15px; font-weight: 700;
+    color: var(--ink); letter-spacing: -0.005em;
+  }
+  .sec-h .aside {
+    font-family: var(--sans); font-size: 11.5px; color: var(--ink-3);
+    font-weight: 500;
+  }
+  .sec-h .filter {
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 4px 10px;
+    border: 1px solid var(--line);
+    background: var(--surface);
+    font-family: var(--sans); font-size: 11.5px; font-weight: 600;
+    color: var(--ink-2); letter-spacing: -0.005em;
+    cursor: pointer;
+  }
+  .sec-h .filter svg { width: 12px; height: 12px; stroke: currentColor; fill: none; stroke-width: 2; }
+
+  .athletes {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+    margin-bottom: 32px;
+  }
+  .athlete {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    padding: 16px 18px;
+    cursor: pointer;
+    transition: all 180ms;
+    display: grid;
+    grid-template-columns: 44px 1fr auto;
+    gap: 14px;
+    align-items: center;
+    position: relative;
+  }
+  .athlete:hover {
+    border-color: var(--ink-3);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+  }
+  .athlete.selected {
+    border-color: var(--ink);
+    border-width: 2px;
+    padding: 15px 17px;
+    background: var(--paper);
+  }
+  .athlete.selected::after {
+    content: ''; position: absolute; top: -1px; right: -1px;
+    width: 0; height: 0;
+    border-style: solid;
+    border-width: 0 16px 16px 0;
+    border-color: transparent var(--ink) transparent transparent;
+  }
+  .athlete .avatar {
+    width: 44px; height: 44px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-family: var(--sans); font-size: 15px; font-weight: 700;
+    color: white;
+    letter-spacing: -0.005em;
+  }
+  .athlete .info { min-width: 0; }
+  .athlete .info .name {
+    font-family: var(--sans); font-size: 14.5px; font-weight: 700;
+    color: var(--ink); letter-spacing: -0.005em;
+    display: flex; align-items: center; gap: 6px;
+    margin-bottom: 3px;
+  }
+  .athlete .info .name .mode {
+    font-family: var(--mono); font-size: 9.5px; font-weight: 700;
+    padding: 2px 6px;
+    letter-spacing: 0.02em;
+    color: white;
+  }
+  .athlete .info .name .mode.ready { background: var(--ok); }
+  .athlete .info .name .mode.caution { background: var(--warn); }
+  .athlete .info .name .mode.recovery { background: var(--info); }
+  .athlete .info .meta {
+    font-family: var(--sans); font-size: 11.5px; color: var(--ink-3);
+    font-weight: 500; letter-spacing: -0.005em;
+    line-height: 1.5;
+  }
+  .athlete .info .meta strong { color: var(--ink); font-weight: 700; }
+  .athlete .cycle-bar {
+    display: grid;
+    grid-template-columns: repeat(10, 1fr);
+    gap: 1px;
+    width: 90px;
+    margin-top: 6px;
+  }
+  .athlete .cycle-bar .cell {
+    height: 8px;
+    background: var(--hair);
+  }
+  .athlete .cycle-bar .cell.done { background: var(--e-base-strong); }
+  .athlete .cycle-bar .cell.today {
+    background: var(--e-vo2-strong);
+    outline: 1px solid var(--ink);
+  }
+  .athlete .cycle-bar .cell.missed { background: var(--warn); }
+  .athlete .signal {
+    display: flex; flex-direction: column; align-items: flex-end; gap: 4px;
+  }
+  .athlete .signal .today-tag {
+    font-family: var(--mono); font-size: 10px; font-weight: 700;
+    padding: 3px 7px;
+    letter-spacing: 0.02em; white-space: nowrap;
+  }
+  .athlete .signal .today-tag.done {
+    background: var(--surface-2); color: var(--ok);
+    border: 1px solid var(--ok);
+  }
+  .athlete .signal .today-tag.pending {
+    background: var(--surface-2); color: var(--ink-2);
+    border: 1px solid var(--line-2);
+  }
+  .athlete .signal .today-tag.warn {
+    background: var(--warn); color: white;
+  }
+  .athlete .signal .pain-dot {
+    display: flex; gap: 2px;
+  }
+  .athlete .signal .pain-dot .d {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--hair);
+  }
+  .athlete .signal .pain-dot .d.active { background: var(--pain-2); }
+  .athlete .signal .pain-dot .d.high { background: var(--pain-4); }
+
+  /* Team message quick */
+  .quick-msg {
+    background: var(--paper);
+    border: 1px dashed var(--line-2);
+    padding: 14px 18px;
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    gap: 12px;
+    align-items: center;
+    margin-bottom: 32px;
+    cursor: pointer;
+  }
+  .quick-msg:hover { border-color: var(--ink-3); background: var(--surface); }
+  .quick-msg .icon {
+    width: 32px; height: 32px; border-radius: 50%;
+    background: var(--brand); color: white;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .quick-msg .icon svg { width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 2; }
+  .quick-msg .body-qm {
+    font-family: var(--sans); font-size: 13px; font-weight: 600;
+    color: var(--ink); letter-spacing: -0.005em;
+  }
+  .quick-msg .body-qm small {
+    display: block; font-family: var(--sans); font-size: 11px;
+    color: var(--ink-3); font-weight: 500; margin-top: 2px;
+  }
+  .quick-msg .arrow svg { width: 16px; height: 16px; stroke: var(--ink-3); fill: none; stroke-width: 2; }
+
+  /* ============ ATHLETE DETAIL (right panel) ============ */
+  .detail {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    padding: 20px 22px;
+    position: sticky; top: 20px;
+  }
+  .detail .h {
+    display: flex; align-items: center; gap: 14px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--hair);
+    margin-bottom: 16px;
+  }
+  .detail .h .avatar {
+    width: 52px; height: 52px; border-radius: 50%;
+    background: var(--e-vo2-strong); color: white;
+    display: flex; align-items: center; justify-content: center;
+    font-family: var(--sans); font-size: 17px; font-weight: 700;
+  }
+  .detail .h .info { flex: 1; }
+  .detail .h .info .name {
+    font-family: var(--sans); font-size: 17px; font-weight: 700;
+    color: var(--ink); letter-spacing: -0.005em;
+    margin-bottom: 4px;
+  }
+  .detail .h .info .meta {
+    font-family: var(--sans); font-size: 11.5px; color: var(--ink-3);
+    letter-spacing: -0.005em; line-height: 1.5;
+  }
+  .detail .h .info .meta em {
+    font-style: normal; color: var(--ink); font-weight: 700;
+  }
+
+  /* Sub sections */
+  .detail-sec {
+    margin-bottom: 18px;
+  }
+  .detail-sec .lb {
+    font-family: var(--sans); font-size: 11.5px; font-weight: 700;
+    color: var(--ink-3); letter-spacing: -0.005em;
+    margin-bottom: 8px;
+    display: flex; align-items: baseline; justify-content: space-between;
+  }
+  .detail-sec .lb .link {
+    font-family: var(--sans); font-size: 11px; font-weight: 600;
+    color: var(--brand); text-decoration: none;
+    letter-spacing: -0.005em;
+  }
+
+  /* Recent 7 days */
+  .recent-7 {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 3px;
+  }
+  .recent-7 .day {
+    background: var(--paper);
+    padding: 6px 4px;
+    text-align: center;
+    border: 1px solid var(--hair);
+    aspect-ratio: 1/1.6;
+    display: flex; flex-direction: column; align-items: center; gap: 2px;
+    font-family: var(--sans); font-size: 10.5px;
+    color: var(--ink-3);
+    font-weight: 600;
+    letter-spacing: -0.005em;
+  }
+  .recent-7 .day .num {
+    font-family: var(--mono); font-size: 11.5px; font-weight: 700;
+    color: var(--ink);
+  }
+  .recent-7 .day .sys {
+    margin-top: auto;
+    width: 100%; height: 3px;
+    background: var(--e-base-strong);
+    border-radius: 1px;
+  }
+  .recent-7 .day .sys.lt { background: var(--e-lt-strong); }
+  .recent-7 .day .sys.v2 { background: var(--e-vo2-strong); }
+  .recent-7 .day .sys.rest { background: var(--e-rest-strong); }
+  .recent-7 .day.today { border-color: var(--ink); border-width: 2px; padding: 5px 3px; }
+  .recent-7 .day.today .num { color: var(--ink); }
+
+  /* Notes list */
+  .coach-notes {
+    max-height: 240px; overflow-y: auto;
+  }
+  .cn-item {
+    padding: 8px 10px;
+    background: var(--paper);
+    border-left: 2px solid var(--brand);
+    margin-bottom: 6px;
+  }
+  .cn-item .when {
+    font-family: var(--mono); font-size: 10px; font-weight: 700;
+    color: var(--ink-3); letter-spacing: 0.02em;
+    margin-bottom: 3px;
+  }
+  .cn-item .text {
+    font-family: var(--sans); font-size: 12px; color: var(--ink);
+    letter-spacing: -0.005em; line-height: 1.5;
+  }
+  .cn-item .text em {
+    font-style: normal; color: var(--brand); font-weight: 700;
+  }
+
+  /* Note composer */
+  .composer {
+    background: var(--paper);
+    border: 1px solid var(--line);
+    padding: 10px 12px;
+    margin-top: 8px;
+  }
+  .composer textarea {
+    width: 100%;
+    border: 0;
+    background: none;
+    font-family: var(--sans); font-size: 12.5px;
+    color: var(--ink); resize: none;
+    outline: none;
+    letter-spacing: -0.005em;
+    line-height: 1.6;
+    min-height: 42px;
+  }
+  .composer textarea::placeholder {
+    color: var(--ink-4);
+    font-style: italic;
+  }
+  .composer .toolbar-c {
+    display: flex; justify-content: space-between;
+    padding-top: 8px;
+    border-top: 1px dashed var(--hair);
+    margin-top: 6px;
+  }
+  .composer .target {
+    font-family: var(--sans); font-size: 11px; color: var(--ink-3);
+    font-weight: 500; letter-spacing: -0.005em;
+  }
+  .composer .target em {
+    font-style: normal; color: var(--ink); font-weight: 700;
+  }
+  .composer .send {
+    padding: 5px 12px;
+    background: var(--ink); color: var(--paper);
+    border: 0;
+    font-family: var(--sans); font-size: 11.5px; font-weight: 700;
+    cursor: pointer; letter-spacing: -0.005em;
+  }
+
+  /* Plan override */
+  .override {
+    background: var(--paper);
+    border: 1px dashed var(--warn);
+    padding: 12px 14px;
+  }
+  .override .h {
+    display: flex; align-items: center; gap: 6px;
+    font-family: var(--sans); font-size: 12px; font-weight: 700;
+    color: var(--warn); letter-spacing: -0.005em;
+    margin-bottom: 6px;
+  }
+  .override .desc {
+    font-family: var(--sans); font-size: 11.5px; color: var(--ink-2);
+    letter-spacing: -0.005em; line-height: 1.55;
+  }
+  .override .desc em {
+    font-style: normal; color: var(--ink); font-weight: 700;
+  }
+  .override .desc code {
+    font-family: var(--mono); font-size: 11px;
+    background: var(--surface-2); padding: 1px 4px; color: var(--ink);
+  }
+  .override .action {
+    display: flex; gap: 6px;
+    margin-top: 8px;
+  }
+  .override .action button {
+    padding: 5px 10px;
+    font-family: var(--sans); font-size: 11px; font-weight: 700;
+    cursor: pointer; letter-spacing: -0.005em;
+    border: 0;
+  }
+  .override .action .primary {
+    background: var(--warn); color: white;
+  }
+  .override .action .secondary {
+    background: transparent; color: var(--ink-2);
+    border: 1px solid var(--line);
+  }
+
+  /* Notes section */
+  .notes-section {
+    grid-column: 1 / -1;
+    background: var(--bg);
+    border-top: 2px solid var(--ink);
+    padding: 32px 0 0;
+    margin-top: 32px;
+  }
+  .notes-section h2 {
+    font-family: var(--sans); font-size: 22px; font-weight: 700;
+    letter-spacing: -0.02em;
+    margin: 0 0 8px;
+  }
+  .notes-section h2::before {
+    content: 'DESIGN NOTES';
+    font-family: var(--mono); font-size: 11px;
+    color: var(--brand); font-weight: 700;
+    margin-right: 12px;
+  }
+  .notes-section .lede {
+    font-size: 14px; line-height: 1.65; color: var(--ink-2);
+    letter-spacing: -0.005em;
+    margin: 0 0 24px;
+  }
+  .notes-section .lede em { font-style: normal; color: var(--ink); font-weight: 700; }
+  .notes-section .lede code {
+    font-family: var(--mono); font-size: 11.5px;
+    background: var(--surface-2); padding: 1px 4px; color: var(--ink);
+  }
+  .notes-section h3 {
+    font-family: var(--sans); font-size: 14px; font-weight: 700;
+    color: var(--ink); letter-spacing: -0.005em;
+    margin: 24px 0 10px;
+  }
+  .notes-section h3::before {
+    content: attr(data-tag);
+    font-family: var(--mono); font-size: 11px;
+    color: var(--brand); font-weight: 700;
+    margin-right: 8px;
+  }
+  .notes-section ul {
+    margin: 0; padding-left: 18px;
+    font-size: 12.5px; line-height: 1.75; color: var(--ink-2);
+    letter-spacing: -0.005em;
+  }
+  .notes-section ul li { margin-bottom: 4px; }
+  .notes-section em { font-style: normal; color: var(--ink); font-weight: 700; }
+  .notes-section code {
+    font-family: var(--mono); font-size: 11.5px;
+    background: var(--surface-2); padding: 1px 5px; color: var(--ink);
+  }
+  .integration {
+    background: var(--paper);
+    border: 1px solid var(--paper-edge);
+    padding: 14px 18px;
+    margin: 12px 0 20px;
+    font-family: var(--sans); font-size: 12.5px; line-height: 1.65;
+    color: var(--ink-2); letter-spacing: -0.005em;
+  }
+  .integration strong { color: var(--brand); font-weight: 700; }
+  .integration em { font-style: normal; color: var(--ink); font-weight: 700; }
+  .reuse {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+    margin: 12px 0 20px;
+  }
+  .reuse .r {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-left: 3px solid var(--ok);
+    padding: 12px 16px;
+  }
+  .reuse .r .h {
+    font-family: var(--sans); font-size: 12.5px; font-weight: 700;
+    color: var(--ink); letter-spacing: -0.005em;
+  }
+  .reuse .r .d {
+    font-family: var(--sans); font-size: 11.5px; color: var(--ink-2);
+    margin-top: 4px; letter-spacing: -0.005em; line-height: 1.55;
+  }
+  .reuse .r code {
+    font-family: var(--mono); font-size: 11px;
+    background: var(--paper); padding: 1px 4px; color: var(--ink);
+  }
+
+  /* ============ MOBILE SECTION ============ */
+  .layout-intro {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 20px;
+    padding: 16px 20px 20px;
+    background: var(--surface-2);
+    border: 1px solid var(--hair);
+    margin-bottom: 24px;
+    align-items: center;
+  }
+  .layout-intro .chip-badge {
+    display: inline-block;
+    padding: 3px 8px;
+    background: var(--ink); color: var(--paper);
+    font-family: var(--mono); font-size: 10px; font-weight: 700;
+    letter-spacing: 0.05em;
+    margin-bottom: 8px;
+  }
+  .layout-intro .intro-title {
+    font-family: var(--sans); font-size: 18px; font-weight: 700;
+    color: var(--ink); letter-spacing: -0.015em;
+    margin-bottom: 4px;
+  }
+  .layout-intro .intro-sub {
+    font-family: var(--sans); font-size: 12.5px; color: var(--ink-2);
+    line-height: 1.55; letter-spacing: -0.005em;
+    max-width: 700px;
+  }
+  .layout-intro .intro-sub em { font-style: normal; color: var(--ink); font-weight: 700; }
+  .layout-intro .jumpers {
+    display: flex; flex-direction: column; gap: 6px;
+  }
+  .layout-intro .jumpers a {
+    font-family: var(--sans); font-size: 12px; font-weight: 700;
+    color: var(--ink-2); text-decoration: none;
+    padding: 6px 14px;
+    background: var(--paper);
+    border: 1px solid var(--line);
+    text-align: center;
+    letter-spacing: -0.005em;
+  }
+  .layout-intro .jumpers a:hover { border-color: var(--ink); }
+
+  .mobile-section {
+    margin-bottom: 40px;
+    padding: 24px;
+    background: var(--bg);
+    border: 1px solid var(--line);
+  }
+  .mobile-h {
+    margin-bottom: 24px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--hair);
+  }
+  .mobile-h-label {
+    font-family: var(--mono); font-size: 11px; font-weight: 700;
+    color: var(--brand); letter-spacing: 0.06em;
+    margin-bottom: 4px;
+  }
+  .mobile-h-sub {
+    font-family: var(--sans); font-size: 13px; color: var(--ink-2);
+    letter-spacing: -0.005em;
+  }
+  .mobile-frames {
+    display: flex; gap: 40px; justify-content: center;
+    flex-wrap: wrap;
+  }
+  .phone-frame {
+    display: flex; flex-direction: column; align-items: center; gap: 12px;
+  }
+  .phone-shell {
+    width: 375px; height: 812px;
+    background: #12100C;
+    border-radius: 40px;
+    padding: 12px;
+    box-shadow: 0 30px 60px -20px rgba(20, 18, 12, 0.5);
+    display: flex; flex-direction: column;
+    overflow: hidden;
+  }
+  .phone-shell > * { border-radius: 0; }
+  .phone-shell {
+    position: relative;
+  }
+  .phone-shell::before {
+    content: ''; position: absolute;
+    inset: 12px;
+    background: var(--paper);
+    border-radius: 30px;
+    z-index: 0;
+  }
+  .phone-shell > * { position: relative; z-index: 1; }
+  .phone-shell > *:first-of-type { border-top-left-radius: 30px; border-top-right-radius: 30px; }
+  .phone-shell > *:last-of-type { border-bottom-left-radius: 30px; border-bottom-right-radius: 30px; }
+  .phone-caption {
+    font-family: var(--mono); font-size: 11px; font-weight: 600;
+    color: var(--ink-3); letter-spacing: 0.05em;
+  }
+  .phone-statusbar {
+    height: 32px; padding: 6px 24px 0;
+    display: flex; align-items: center; justify-content: space-between;
+    font-family: var(--mono); font-size: 12px; font-weight: 600;
+    flex: none;
+    color: var(--ink);
+  }
+  .mob-topbar {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 8px 12px 12px;
+    border-bottom: 1px solid var(--hair);
+    flex: none;
+  }
+  .mob-back {
+    background: none; border: 0; padding: 6px 4px;
+    color: var(--ink-2); cursor: pointer;
+    display: flex; align-items: center; gap: 4px;
+    font-family: var(--sans); font-size: 13px; font-weight: 600;
+  }
+  .mob-back svg { width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; }
+  .mob-topbar-title {
+    font-family: var(--sans); font-size: 13.5px; font-weight: 700;
+    color: var(--ink); letter-spacing: -0.005em;
+  }
+  .mob-more {
+    background: none; border: 0; padding: 6px;
+    color: var(--ink-2); cursor: pointer;
+  }
+  .mob-more svg { width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 2; }
+
+  .mob-scroll {
+    flex: 1; overflow-y: auto;
+    padding: 0 0 8px;
+  }
+  .mob-scroll::-webkit-scrollbar { width: 4px; }
+
+  .mob-notice {
+    margin: 12px 14px 8px;
+    padding: 8px 12px;
+    background: var(--surface-2);
+    border-left: 3px solid var(--warn);
+    font-family: var(--sans); font-size: 11px;
+    color: var(--ink-2); letter-spacing: -0.005em;
+    line-height: 1.5;
+  }
+  .mob-notice strong { color: var(--warn); font-weight: 700; }
+
+  .mob-summary {
+    margin: 12px 14px 4px;
+    padding: 10px 14px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 14px;
+    align-items: center;
+  }
+  .mob-summary .s-num {
+    font-family: var(--mono); font-size: 36px; font-weight: 700;
+    color: var(--ink); line-height: 1;
+    letter-spacing: -0.02em;
+  }
+  .mob-summary .s-l {
+    font-family: var(--sans); font-size: 11.5px; font-weight: 600;
+    color: var(--ink-3); letter-spacing: -0.005em;
+    margin-bottom: 2px;
+  }
+  .mob-summary .s-r {
+    font-family: var(--sans); font-size: 11.5px; color: var(--ink-2);
+    letter-spacing: -0.005em;
+  }
+  .mob-summary .s-r em { font-style: normal; color: var(--ink); font-weight: 700; }
+
+  .mob-sec-h {
+    display: flex; align-items: baseline; justify-content: space-between;
+    padding: 16px 14px 8px;
+  }
+  .mob-lb {
+    font-family: var(--sans); font-size: 12.5px; font-weight: 700;
+    color: var(--ink); letter-spacing: -0.005em;
+  }
+  .mob-count {
+    font-family: var(--mono); font-size: 11px; font-weight: 700;
+    color: var(--warn);
+    background: var(--surface-2);
+    padding: 2px 8px;
+  }
+  .mob-filter {
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 3px 8px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    font-family: var(--sans); font-size: 11px; font-weight: 600;
+    color: var(--ink-2); cursor: pointer;
+    letter-spacing: -0.005em;
+  }
+  .mob-filter svg { width: 11px; height: 11px; stroke: currentColor; fill: none; stroke-width: 2; }
+  .mob-link {
+    font-family: var(--sans); font-size: 11px; font-weight: 600;
+    color: var(--brand); text-decoration: none;
+    letter-spacing: -0.005em;
+  }
+
+  .mob-signal {
+    margin: 4px 14px;
+    padding: 10px 12px;
+    background: var(--paper);
+    border: 1px solid var(--warn);
+    display: grid;
+    grid-template-columns: 32px 1fr 16px;
+    gap: 10px;
+    align-items: center;
+    cursor: pointer;
+  }
+  .mob-a-avatar {
+    width: 32px; height: 32px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-family: var(--sans); font-size: 12px; font-weight: 700;
+    color: white; letter-spacing: -0.005em;
+  }
+  .mob-a-name {
+    font-family: var(--sans); font-size: 12.5px; font-weight: 700;
+    color: var(--ink); letter-spacing: -0.005em;
+  }
+  .mob-a-sig {
+    font-family: var(--sans); font-size: 11px;
+    color: var(--warn); font-weight: 600;
+    margin-top: 1px; letter-spacing: -0.005em;
+  }
+  .mob-a-sig em { font-style: normal; color: var(--ink); font-weight: 700; }
+  .mob-a-arrow { width: 14px; height: 14px; stroke: var(--ink-3); fill: none; stroke-width: 2; }
+
+  .mob-athlete {
+    margin: 4px 14px;
+    padding: 12px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    display: grid;
+    grid-template-columns: 40px 1fr auto;
+    gap: 10px;
+    align-items: center;
+    cursor: pointer;
+  }
+  .mob-athlete.faded {
+    opacity: 0.7;
+  }
+  .mob-athlete .mob-a-avatar {
+    width: 40px; height: 40px;
+    font-size: 13px;
+  }
+  .mob-a-row1 {
+    display: flex; align-items: center; gap: 6px;
+    margin-bottom: 3px;
+  }
+  .mob-mode {
+    font-family: var(--mono); font-size: 9px; font-weight: 700;
+    padding: 2px 5px;
+    letter-spacing: 0.02em;
+    color: white;
+  }
+  .mob-mode.ready { background: var(--ok); }
+  .mob-mode.caution { background: var(--warn); }
+  .mob-mode.recovery { background: var(--info); }
+  .mob-a-meta {
+    font-family: var(--sans); font-size: 10.5px;
+    color: var(--ink-3); letter-spacing: -0.005em;
+    line-height: 1.4;
+  }
+  .mob-a-meta em { font-style: normal; color: var(--ink); font-weight: 700; }
+  .mob-cycle-bar {
+    display: grid;
+    grid-template-columns: repeat(10, 1fr);
+    gap: 1px;
+    margin-top: 5px;
+  }
+  .mcb {
+    height: 5px;
+    background: var(--hair);
+  }
+  .mcb.done { background: var(--e-base-strong); }
+  .mcb.today { background: var(--e-vo2-strong); outline: 1px solid var(--ink); }
+  .mcb.missed { background: var(--warn); }
+  .mob-a-status {
+    font-family: var(--mono); font-size: 9px; font-weight: 700;
+    padding: 3px 6px;
+    letter-spacing: 0.02em;
+    white-space: nowrap;
+  }
+  .mob-a-status.done {
+    background: var(--surface-2);
+    color: var(--ok);
+    border: 1px solid var(--ok);
+  }
+  .mob-a-status.pending {
+    background: var(--surface-2);
+    color: var(--ink-3);
+    border: 1px solid var(--line-2);
+  }
+  .mob-a-status.warn {
+    background: var(--warn); color: white;
+  }
+
+  /* Screen B: Athlete detail */
+  .mob-hero {
+    margin: 14px;
+    padding: 12px 14px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    display: flex; align-items: center; gap: 12px;
+  }
+  .mob-hero-name {
+    font-family: var(--sans); font-size: 16px; font-weight: 700;
+    color: var(--ink); letter-spacing: -0.01em;
+    margin-bottom: 4px;
+  }
+  .mob-hero-meta {
+    font-family: var(--sans); font-size: 11px;
+    color: var(--ink-3); letter-spacing: -0.005em;
+    line-height: 1.45;
+  }
+  .mob-hero-meta em { font-style: normal; color: var(--ink); font-weight: 700; }
+
+  .mob-cycle-summary {
+    margin: 0 14px;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 4px;
+    background: var(--paper);
+    border: 1px solid var(--line);
+  }
+  .mcs-item {
+    padding: 10px 8px;
+    border-right: 1px solid var(--hair);
+    text-align: center;
+  }
+  .mcs-item:last-child { border-right: 0; }
+  .mcs-l {
+    font-family: var(--sans); font-size: 10px; font-weight: 600;
+    color: var(--ink-3); letter-spacing: -0.005em;
+    margin-bottom: 3px;
+  }
+  .mcs-v {
+    font-family: var(--mono); font-size: 12.5px; font-weight: 700;
+    color: var(--ink); letter-spacing: -0.005em;
+  }
+
+  .mob-priority {
+    margin: 14px;
+    padding: 12px 14px;
+    background: var(--paper);
+    border: 1px dashed var(--warn);
+  }
+  .mob-priority-h {
+    display: flex; align-items: center; gap: 6px;
+    font-family: var(--sans); font-size: 12px; font-weight: 700;
+    color: var(--warn); letter-spacing: -0.005em;
+    margin-bottom: 6px;
+  }
+  .mob-priority-desc {
+    font-family: var(--sans); font-size: 11.5px;
+    color: var(--ink-2); line-height: 1.55;
+    letter-spacing: -0.005em;
+  }
+  .mob-priority-desc em { font-style: normal; color: var(--ink); font-weight: 700; }
+  .mob-priority-actions {
+    display: flex; gap: 6px;
+    margin-top: 10px;
+  }
+  .mob-action {
+    flex: 1;
+    padding: 7px 8px;
+    font-family: var(--sans); font-size: 11px; font-weight: 700;
+    cursor: pointer; letter-spacing: -0.005em;
+    border: 0;
+  }
+  .mob-action.primary {
+    background: var(--warn); color: white;
+  }
+  .mob-action.secondary {
+    background: transparent; color: var(--ink-2);
+    border: 1px solid var(--line);
+    flex: 0 0 auto;
+  }
+
+  .mob-week-strip {
+    margin: 0 14px;
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 3px;
+  }
+  .mws-day {
+    background: var(--paper);
+    border: 1px solid var(--hair);
+    padding: 6px 3px 4px;
+    text-align: center;
+    display: flex; flex-direction: column; align-items: center; gap: 2px;
+  }
+  .mws-day .d {
+    font-family: var(--sans); font-size: 9px; font-weight: 600;
+    color: var(--ink-3); letter-spacing: -0.005em;
+  }
+  .mws-day .n {
+    font-family: var(--mono); font-size: 12px; font-weight: 700;
+    color: var(--ink);
+  }
+  .mws-day .sys {
+    width: 100%; height: 3px;
+    margin-top: auto;
+    background: var(--e-base-strong);
+  }
+  .mws-day .sys.lt { background: var(--e-lt-strong); }
+  .mws-day .sys.v2 { background: var(--e-vo2-strong); }
+  .mws-day .sys.rest { background: var(--e-rest-strong); }
+  .mws-day.today { border-color: var(--ink); border-width: 2px; padding: 5px 2px 3px; }
+
+  .mob-note {
+    margin: 4px 14px;
+    padding: 8px 12px;
+    background: var(--paper);
+    border-left: 2px solid var(--brand);
+  }
+  .mob-note-when {
+    font-family: var(--mono); font-size: 9.5px; font-weight: 700;
+    color: var(--ink-3); letter-spacing: 0.02em;
+    margin-bottom: 3px;
+  }
+  .mob-note-text {
+    font-family: var(--sans); font-size: 11.5px;
+    color: var(--ink); line-height: 1.5;
+    letter-spacing: -0.005em;
+  }
+
+  .mob-composer {
+    flex: none;
+    padding: 10px 12px 12px;
+    border-top: 1px solid var(--line);
+    background: var(--paper);
+    display: flex; gap: 6px;
+  }
+  .mob-composer input {
+    flex: 1;
+    padding: 8px 10px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    font-family: var(--sans); font-size: 12px;
+    color: var(--ink); outline: none;
+    letter-spacing: -0.005em;
+  }
+  .mob-composer input:focus { border-color: var(--ink); }
+  .mob-composer input::placeholder {
+    color: var(--ink-4);
+    font-style: italic;
+  }
+  .mob-send {
+    padding: 8px 12px;
+    background: var(--ink); color: var(--paper);
+    border: 0;
+    font-family: var(--sans); font-size: 11.5px; font-weight: 700;
+    cursor: pointer; letter-spacing: -0.005em;
+  }
+
+  .mob-tab-bar {
+    flex: none;
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    border-top: 1px solid var(--line);
+    background: var(--paper);
+    padding: 8px 0 12px;
+  }
+  .mob-tab-bar button {
+    background: none;
+    border: 0;
+    font-family: var(--sans); font-size: 11px; font-weight: 600;
+    color: var(--ink-3); cursor: pointer;
+    padding: 4px 0;
+    letter-spacing: -0.005em;
+  }
+  .mob-tab-bar .on { color: var(--ink); font-weight: 700; }
+  .mob-tab-bar .on::before {
+    content: ''; display: block;
+    width: 20px; height: 2px;
+    background: var(--ink);
+    margin: 0 auto 4px;
+  }
+
+  .desktop-divider {
+    padding: 20px 24px;
+    background: var(--surface-2);
+    border: 1px solid var(--hair);
+    margin-bottom: 24px;
+  }
+  .dd-label {
+    font-family: var(--mono); font-size: 11px; font-weight: 700;
+    color: var(--brand); letter-spacing: 0.06em;
+    margin-bottom: 4px;
+  }
+  .dd-sub {
+    font-family: var(--sans); font-size: 13px; color: var(--ink-2);
+    letter-spacing: -0.005em;
+  }
+</style>
+</head>
+<body>
+
+<div class="toolbar">
+  <div class="brand">TrainOracle · Coach Handoff</div>
+  <div class="subt">v3.5 · CoachSupportPanel 확장 · 다중 선수 대시보드 · Priority Signal</div>
+  <div class="spacer"></div>
+  <a href="index.html">← 인덱스</a>
+</div>
+
+<div class="container">
+
+  <!-- Layout toggle intro -->
+  <div class="layout-intro">
+    <div>
+      <div class="chip-badge">RESPONSIVE · 375 → 1440</div>
+      <div class="intro-title">데스크톱 · 모바일 두 레이아웃</div>
+      <div class="intro-sub">
+        Handoff Risk §Critical #2 반영 — <em>375px 폰 시안 추가</em>.
+        코치도 이동 중 폰으로 확인 가능. Bottom tab bar에 <em>"코치" 탭 추가</em> or More 서브뷰 결정 필요.
+      </div>
+    </div>
+    <div class="jumpers">
+      <a href="#desktop-view">데스크톱 →</a>
+      <a href="#mobile-view">모바일 →</a>
+    </div>
+  </div>
+
+  <!-- Mobile Layout -->
+  <div id="mobile-view" class="mobile-section">
+    <div class="mobile-h">
+      <div class="mobile-h-label">375px · 폰 시안</div>
+      <div class="mobile-h-sub">모바일 우선. 세로 리스트 + 드릴다운 · Priority Signal 스택.</div>
+    </div>
+    <div class="mobile-frames">
+      <!-- Screen A: Dashboard list -->
+      <div class="phone-frame">
+        <div class="phone-shell">
+          <div class="phone-statusbar">
+            <span>9:41</span>
+            <span style="font-family:var(--mono);font-size:10.5px;letter-spacing:0.06em">코치</span>
+            <span style="font-family:var(--mono);font-size:11px">100%</span>
+          </div>
+
+          <div class="mob-topbar">
+            <button class="mob-back" aria-label="More로 돌아가기">
+              <svg viewBox="0 0 24 24"><path d="M15 6 L9 12 L15 18"/></svg>
+              더보기
+            </button>
+            <div class="mob-topbar-title">코치 대시보드</div>
+            <button class="mob-more" aria-label="선수 초대">
+              <svg viewBox="0 0 24 24"><path d="M12 5 V19 M5 12 H19"/></svg>
+            </button>
+          </div>
+
+          <div class="mob-scroll">
+            <div class="mob-notice">
+              <strong>자격 미확인</strong> · 개인 메모는 안 보여요
+            </div>
+
+            <div class="mob-summary">
+              <div class="s-num">6</div>
+              <div class="s-desc">
+                <div class="s-l">지도 선수</div>
+                <div class="s-r"><em>3명</em> 완료 · <em>2명</em> 신호</div>
+              </div>
+            </div>
+
+            <div class="mob-sec-h">
+              <span class="mob-lb">
+                <svg viewBox="0 0 24 24" style="width:14px;height:14px;stroke:var(--warn);fill:none;stroke-width:2;vertical-align:middle;margin-right:4px"><path d="M12 4 L20 20 H4 Z"/><path d="M12 10 V14 M12 17 V17.5"/></svg>
+                즉각 확인
+              </span>
+              <span class="mob-count">2건</span>
+            </div>
+
+            <!-- Priority signals stacked -->
+            <div class="mob-signal">
+              <div class="mob-a-avatar" style="background: var(--e-gly-strong)">MJ</div>
+              <div class="mob-a-body">
+                <div class="mob-a-name">민지 · <span style="color:var(--warn)">CAUTION</span></div>
+                <div class="mob-a-sig">왼 종아리 통증 <em>3일 연속</em> · R-4 WATCH</div>
+              </div>
+              <svg class="mob-a-arrow" viewBox="0 0 24 24"><path d="M9 6 L15 12 L9 18"/></svg>
+            </div>
+
+            <div class="mob-signal">
+              <div class="mob-a-avatar" style="background: var(--warn)">SH</div>
+              <div class="mob-a-body">
+                <div class="mob-a-name">서현 · <span style="color:var(--warn)">CAUTION</span></div>
+                <div class="mob-a-sig">어제 MAIN <em>목표 +8초</em> · R-7 위반</div>
+              </div>
+              <svg class="mob-a-arrow" viewBox="0 0 24 24"><path d="M9 6 L15 12 L9 18"/></svg>
+            </div>
+
+            <div class="mob-sec-h" style="margin-top: 16px">
+              <span class="mob-lb">지도 선수 6명</span>
+              <button class="mob-filter">
+                Mode 필터
+                <svg viewBox="0 0 24 24"><path d="M6 9 L12 15 L18 9"/></svg>
+              </button>
+            </div>
+
+            <!-- Athletes list (vertical) -->
+            <div class="mob-athlete">
+              <div class="mob-a-avatar" style="background: var(--e-vo2-strong)">MJ</div>
+              <div class="mob-a-body">
+                <div class="mob-a-row1">
+                  <span class="mob-a-name">민지</span>
+                  <span class="mob-mode caution">CAUTION</span>
+                </div>
+                <div class="mob-a-meta">5000m · 16:10 PB · Cycle 7 · <em>D-5</em></div>
+                <div class="mob-cycle-bar">
+                  <div class="mcb done"></div>
+                  <div class="mcb done"></div>
+                  <div class="mcb done"></div>
+                  <div class="mcb done"></div>
+                  <div class="mcb today"></div>
+                  <div class="mcb"></div>
+                  <div class="mcb"></div>
+                  <div class="mcb"></div>
+                  <div class="mcb"></div>
+                  <div class="mcb"></div>
+                </div>
+              </div>
+              <div class="mob-a-signal">
+                <span class="mob-a-status pending">대기</span>
+              </div>
+            </div>
+
+            <div class="mob-athlete">
+              <div class="mob-a-avatar" style="background: var(--warn)">SH</div>
+              <div class="mob-a-body">
+                <div class="mob-a-row1">
+                  <span class="mob-a-name">서현</span>
+                  <span class="mob-mode caution">CAUTION</span>
+                </div>
+                <div class="mob-a-meta">1500m · 4:34 PB · Cycle 6 · <em>D-8</em></div>
+                <div class="mob-cycle-bar">
+                  <div class="mcb done"></div>
+                  <div class="mcb done"></div>
+                  <div class="mcb done"></div>
+                  <div class="mcb done"></div>
+                  <div class="mcb done"></div>
+                  <div class="mcb missed"></div>
+                  <div class="mcb done"></div>
+                  <div class="mcb today"></div>
+                  <div class="mcb"></div>
+                  <div class="mcb"></div>
+                </div>
+              </div>
+              <div class="mob-a-signal">
+                <span class="mob-a-status warn">위반</span>
+              </div>
+            </div>
+
+            <div class="mob-athlete">
+              <div class="mob-a-avatar" style="background: var(--info)">JW</div>
+              <div class="mob-a-body">
+                <div class="mob-a-row1">
+                  <span class="mob-a-name">지우</span>
+                  <span class="mob-mode recovery">RECOVERY</span>
+                </div>
+                <div class="mob-a-meta">800m · 1:58 PB · Cycle 5 · <em>.5</em></div>
+                <div class="mob-cycle-bar">
+                  <div class="mcb done"></div>
+                  <div class="mcb done"></div>
+                  <div class="mcb done"></div>
+                  <div class="mcb done"></div>
+                  <div class="mcb done"></div>
+                  <div class="mcb done"></div>
+                  <div class="mcb done"></div>
+                  <div class="mcb done"></div>
+                  <div class="mcb done"></div>
+                  <div class="mcb today"></div>
+                </div>
+              </div>
+              <div class="mob-a-signal">
+                <span class="mob-a-status done">완료</span>
+              </div>
+            </div>
+
+            <div class="mob-athlete">
+              <div class="mob-a-avatar" style="background: var(--e-base-strong)">JH</div>
+              <div class="mob-a-body">
+                <div class="mob-a-row1">
+                  <span class="mob-a-name">준호</span>
+                  <span class="mob-mode ready">READY</span>
+                </div>
+                <div class="mob-a-meta">10K · 34:18 PB · Cycle 8 · <em>D-3</em></div>
+                <div class="mob-cycle-bar">
+                  <div class="mcb done"></div>
+                  <div class="mcb done"></div>
+                  <div class="mcb today"></div>
+                  <div class="mcb"></div>
+                  <div class="mcb"></div>
+                  <div class="mcb"></div>
+                  <div class="mcb"></div>
+                  <div class="mcb"></div>
+                  <div class="mcb"></div>
+                  <div class="mcb"></div>
+                </div>
+              </div>
+              <div class="mob-a-signal">
+                <span class="mob-a-status done">완료</span>
+              </div>
+            </div>
+
+            <div class="mob-athlete faded">
+              <div class="mob-a-avatar" style="background: var(--e-lt-strong)">YR</div>
+              <div class="mob-a-body">
+                <div class="mob-a-row1">
+                  <span class="mob-a-name">유리</span>
+                  <span class="mob-mode ready">READY</span>
+                </div>
+                <div class="mob-a-meta">3000m · 9:42 PB · Cycle 4</div>
+              </div>
+            </div>
+
+            <div class="mob-athlete faded">
+              <div class="mob-a-avatar" style="background: var(--e-gly-strong)">DH</div>
+              <div class="mob-a-body">
+                <div class="mob-a-row1">
+                  <span class="mob-a-name">도현</span>
+                  <span class="mob-mode ready">READY</span>
+                </div>
+                <div class="mob-a-meta">5000m · 15:32 PB · Cycle 9</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="mob-tab-bar">
+            <button>홈</button>
+            <button>일지</button>
+            <button>계획</button>
+            <button>분석</button>
+            <button class="on">코치</button>
+          </div>
+        </div>
+        <div class="phone-caption">A · 대시보드 리스트</div>
+      </div>
+
+      <!-- Screen B: Athlete detail (drill-down) -->
+      <div class="phone-frame">
+        <div class="phone-shell">
+          <div class="phone-statusbar">
+            <span>9:41</span>
+            <span style="font-family:var(--mono);font-size:10.5px;letter-spacing:0.06em">민지</span>
+            <span style="font-family:var(--mono);font-size:11px">100%</span>
+          </div>
+
+          <div class="mob-topbar">
+            <button class="mob-back" aria-label="선수 목록으로">
+              <svg viewBox="0 0 24 24"><path d="M15 6 L9 12 L15 18"/></svg>
+              선수
+            </button>
+            <div class="mob-topbar-title">선수 상세</div>
+            <button class="mob-more" aria-label="더보기">
+              <svg viewBox="0 0 24 24"><circle cx="12" cy="6" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="18" r="1.5"/></svg>
+            </button>
+          </div>
+
+          <div class="mob-scroll">
+            <div class="mob-hero">
+              <div class="mob-a-avatar" style="background:var(--e-vo2-strong);width:52px;height:52px;font-size:16px">MJ</div>
+              <div>
+                <div class="mob-hero-name">민지 <span class="mob-mode caution" style="vertical-align:middle">CAUTION</span></div>
+                <div class="mob-hero-meta">여 · 20세 · 5000m 주종목<br><em>16:10.44</em> PB (2025.05.18)</div>
+              </div>
+            </div>
+
+            <div class="mob-cycle-summary">
+              <div class="mcs-item">
+                <div class="mcs-l">Cycle</div>
+                <div class="mcs-v">7 · D-5</div>
+              </div>
+              <div class="mcs-item">
+                <div class="mcs-l">오늘</div>
+                <div class="mcs-v">V2 · MAIN</div>
+              </div>
+              <div class="mcs-item">
+                <div class="mcs-l">Race</div>
+                <div class="mcs-v">D−38</div>
+              </div>
+            </div>
+
+            <div class="mob-priority">
+              <div class="mob-priority-h">
+                <svg viewBox="0 0 20 20" style="width:14px;height:14px;stroke:var(--warn);fill:none;stroke-width:2"><path d="M10 3 L17 17 H3 Z"/></svg>
+                R-4 WATCH · 왼 종아리
+              </div>
+              <div class="mob-priority-desc">
+                <em>3일 연속 통증 1/5</em> 입력. 오늘 이후 1/5+ 지속이면 CAUTION 자동 전환.
+              </div>
+              <div class="mob-priority-actions">
+                <button class="mob-action primary">강도 조정 조언 남기기</button>
+                <button class="mob-action secondary">지켜보기</button>
+              </div>
+            </div>
+
+            <div class="mob-sec-h">
+              <span class="mob-lb">지난 7일</span>
+              <a class="mob-link" href="#">전체 →</a>
+            </div>
+
+            <div class="mob-week-strip">
+              <div class="mws-day"><span class="d">목</span><span class="n">04</span><span class="sys rest"></span></div>
+              <div class="mws-day"><span class="d">금</span><span class="n">05</span><span class="sys base"></span></div>
+              <div class="mws-day"><span class="d">토</span><span class="n">06</span><span class="sys base"></span></div>
+              <div class="mws-day"><span class="d">일</span><span class="n">07</span><span class="sys lt"></span></div>
+              <div class="mws-day"><span class="d">월</span><span class="n">08</span><span class="sys base"></span></div>
+              <div class="mws-day"><span class="d">화</span><span class="n">09</span><span class="sys base"></span></div>
+              <div class="mws-day today"><span class="d">목</span><span class="n">10</span><span class="sys v2"></span></div>
+            </div>
+
+            <div class="mob-sec-h">
+              <span class="mob-lb">코치 노트 · 3건</span>
+            </div>
+
+            <div class="mob-note">
+              <div class="mob-note-when">2 시간 전</div>
+              <div class="mob-note-text">오늘 원업 5분 늘리고 2회차 반복까지 감각 체크 후 결정하자.</div>
+            </div>
+            <div class="mob-note">
+              <div class="mob-note-when">어제</div>
+              <div class="mob-note-text">이지 페이스 개선 확인. 회복 잘 되고 있음. 컨디션 유지하되 강도 자제.</div>
+            </div>
+          </div>
+
+          <!-- Sticky composer -->
+          <div class="mob-composer">
+            <input type="text" placeholder="새 코치 노트… (민지가 앱 열 때 표시)">
+            <button class="mob-send">보내기</button>
+          </div>
+        </div>
+        <div class="phone-caption">B · 선수 상세 (드릴다운)</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Desktop divider -->
+  <div id="desktop-view" class="desktop-divider">
+    <div class="dd-label">1440px · 데스크톱 시안 (기존)</div>
+    <div class="dd-sub">코치가 사무실 · 카페에서 여러 선수 동시 관리할 때</div>
+  </div>
+
+  <!-- Page header -->
+  <div class="page-h">
+    <div>
+      <div style="font-family:var(--sans);font-size:11px;letter-spacing:0.02em;color:var(--ink-3);font-weight:600">COACH DASHBOARD · 2026 · 09 · 10 THU</div>
+      <h1 class="title">호준님, 선수 <span style="color:var(--brand)">6명</span>의 오늘 상태예요</h1>
+      <div class="subtitle">
+        <span>연결 시즌 · 2026 종료까지 <em>127일</em></span>
+        <span class="sep">·</span>
+        <span><em>3명</em> 오늘 세션 완료</span>
+        <span class="sep">·</span>
+        <span><em>2명</em> 개입 필요 신호</span>
+      </div>
+    </div>
+    <div class="notice">
+      <strong>자격 미확인 연결</strong> — TrainOracle은 코치 자격을 확인하지 않아요.
+      선수가 공유 승인한 <em>훈련 기록·통증·감정</em> 5개 필드만 볼 수 있어요.
+      <em>개인 메모는 보이지 않아요</em>.
+    </div>
+    <div class="actions">
+      <button class="secondary">
+        <svg viewBox="0 0 24 24"><path d="M12 5 V19 M5 12 H19"/></svg>
+        선수 초대
+      </button>
+      <button class="primary">
+        <svg viewBox="0 0 24 24"><path d="M3 5 L21 5 L21 19 L3 19 Z M3 5 L12 13 L21 5"/></svg>
+        팀 메시지
+      </button>
+    </div>
+  </div>
+
+  <!-- Priority signals -->
+  <div class="priority">
+    <div class="h">
+      <svg viewBox="0 0 24 24"><path d="M12 4 L20 20 H4 Z"/><path d="M12 10 V14 M12 17 V17.5"/></svg>
+      즉각 확인
+      <span class="count">2</span>
+    </div>
+    <div class="items">
+      <div class="item">
+        <div class="a-avatar" style="background: var(--e-gly-strong)">MJ</div>
+        <div class="txt">
+          <div class="name">민지</div>
+          <div class="sig">왼 종아리 통증 3일 연속 · <em style="color:var(--ink);font-style:normal;font-weight:700">R-4 WATCH</em></div>
+        </div>
+      </div>
+      <div class="item">
+        <div class="a-avatar" style="background: var(--warn)">SH</div>
+        <div class="txt">
+          <div class="name">서현</div>
+          <div class="sig">어제 MAIN 실패 · 목표 대비 +8초 · <em style="color:var(--ink);font-style:normal;font-weight:700">R-7 위반</em></div>
+        </div>
+      </div>
+      <div class="item">
+        <div class="a-avatar" style="background: var(--info)">JW</div>
+        <div class="txt">
+          <div class="name">지우</div>
+          <div class="sig">감정 <em style="color:var(--ink);font-style:normal;font-weight:700">2/5</em> 3일 · 컨디션 저조</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="layout">
+
+    <!-- Athletes grid + team message -->
+    <div>
+      <div class="sec-h">
+        <span class="lb">지도 선수</span>
+        <span class="aside">6명 · 모두 활성</span>
+        <button class="filter">
+          Mode 필터
+          <svg viewBox="0 0 24 24"><path d="M6 9 L12 15 L18 9"/></svg>
+        </button>
+      </div>
+
+      <div class="athletes">
+        <!-- Athlete: 민지 (selected) -->
+        <div class="athlete selected">
+          <div class="avatar" style="background:var(--e-vo2-strong)">MJ</div>
+          <div class="info">
+            <div class="name">
+              민지
+              <span class="mode caution">CAUTION</span>
+            </div>
+            <div class="meta">
+              여 · 5000m · <strong>16:10</strong> PB · <strong>Cycle 7 · D-5</strong>
+            </div>
+            <div class="cycle-bar">
+              <div class="cell done"></div>
+              <div class="cell done"></div>
+              <div class="cell done"></div>
+              <div class="cell done"></div>
+              <div class="cell today"></div>
+              <div class="cell"></div>
+              <div class="cell"></div>
+              <div class="cell"></div>
+              <div class="cell"></div>
+              <div class="cell"></div>
+            </div>
+          </div>
+          <div class="signal">
+            <span class="today-tag pending">오늘 대기</span>
+            <div class="pain-dot">
+              <span class="d active"></span>
+              <span class="d"></span>
+              <span class="d"></span>
+              <span class="d"></span>
+              <span class="d"></span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 서현 -->
+        <div class="athlete">
+          <div class="avatar" style="background:var(--warn)">SH</div>
+          <div class="info">
+            <div class="name">
+              서현
+              <span class="mode caution">CAUTION</span>
+            </div>
+            <div class="meta">
+              여 · 1500m · <strong>4:34</strong> PB · <strong>Cycle 6 · D-8</strong>
+            </div>
+            <div class="cycle-bar">
+              <div class="cell done"></div>
+              <div class="cell done"></div>
+              <div class="cell done"></div>
+              <div class="cell done"></div>
+              <div class="cell done"></div>
+              <div class="cell missed"></div>
+              <div class="cell done"></div>
+              <div class="cell today"></div>
+              <div class="cell"></div>
+              <div class="cell"></div>
+            </div>
+          </div>
+          <div class="signal">
+            <span class="today-tag warn">MAIN 실패</span>
+          </div>
+        </div>
+
+        <!-- 지우 -->
+        <div class="athlete">
+          <div class="avatar" style="background:var(--info)">JW</div>
+          <div class="info">
+            <div class="name">
+              지우
+              <span class="mode recovery">RECOVERY</span>
+            </div>
+            <div class="meta">
+              남 · 800m · <strong>1:58</strong> PB · <strong>Cycle 5 · .5</strong>
+            </div>
+            <div class="cycle-bar">
+              <div class="cell done"></div>
+              <div class="cell done"></div>
+              <div class="cell done"></div>
+              <div class="cell done"></div>
+              <div class="cell done"></div>
+              <div class="cell done"></div>
+              <div class="cell done"></div>
+              <div class="cell done"></div>
+              <div class="cell done"></div>
+              <div class="cell today"></div>
+            </div>
+          </div>
+          <div class="signal">
+            <span class="today-tag done">✓ 완료</span>
+            <div class="pain-dot">
+              <span class="d"></span>
+              <span class="d"></span>
+              <span class="d"></span>
+              <span class="d"></span>
+              <span class="d"></span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 준호 -->
+        <div class="athlete">
+          <div class="avatar" style="background:var(--e-base-strong)">JH</div>
+          <div class="info">
+            <div class="name">
+              준호
+              <span class="mode ready">READY</span>
+            </div>
+            <div class="meta">
+              남 · 10K · <strong>34:18</strong> PB · <strong>Cycle 8 · D-3</strong>
+            </div>
+            <div class="cycle-bar">
+              <div class="cell done"></div>
+              <div class="cell done"></div>
+              <div class="cell today"></div>
+              <div class="cell"></div>
+              <div class="cell"></div>
+              <div class="cell"></div>
+              <div class="cell"></div>
+              <div class="cell"></div>
+              <div class="cell"></div>
+              <div class="cell"></div>
+            </div>
+          </div>
+          <div class="signal">
+            <span class="today-tag done">✓ 완료</span>
+          </div>
+        </div>
+
+        <!-- 유리 -->
+        <div class="athlete">
+          <div class="avatar" style="background:var(--e-lt-strong)">YR</div>
+          <div class="info">
+            <div class="name">
+              유리
+              <span class="mode ready">READY</span>
+            </div>
+            <div class="meta">
+              여 · 3000m · <strong>9:42</strong> PB · <strong>Cycle 4 · D-2</strong>
+            </div>
+            <div class="cycle-bar">
+              <div class="cell done"></div>
+              <div class="cell today"></div>
+              <div class="cell"></div>
+              <div class="cell"></div>
+              <div class="cell"></div>
+              <div class="cell"></div>
+              <div class="cell"></div>
+              <div class="cell"></div>
+              <div class="cell"></div>
+              <div class="cell"></div>
+            </div>
+          </div>
+          <div class="signal">
+            <span class="today-tag pending">오늘 대기</span>
+          </div>
+        </div>
+
+        <!-- 도현 -->
+        <div class="athlete">
+          <div class="avatar" style="background:var(--e-gly-strong)">DH</div>
+          <div class="info">
+            <div class="name">
+              도현
+              <span class="mode ready">READY</span>
+            </div>
+            <div class="meta">
+              남 · 5000m · <strong>15:32</strong> PB · <strong>Cycle 9 · D-1</strong>
+            </div>
+            <div class="cycle-bar">
+              <div class="cell today"></div>
+              <div class="cell"></div>
+              <div class="cell"></div>
+              <div class="cell"></div>
+              <div class="cell"></div>
+              <div class="cell"></div>
+              <div class="cell"></div>
+              <div class="cell"></div>
+              <div class="cell"></div>
+              <div class="cell"></div>
+            </div>
+          </div>
+          <div class="signal">
+            <span class="today-tag done">✓ 완료</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quick team message -->
+      <div class="sec-h">
+        <span class="lb">팀 커뮤니케이션</span>
+      </div>
+      <div class="quick-msg">
+        <div class="icon">
+          <svg viewBox="0 0 24 24"><path d="M4 6 H20 V17 H14 L10 21 V17 H4 Z"/></svg>
+        </div>
+        <div class="body-qm">
+          팀 메시지 보내기
+          <small>6명 모두에게 · 훈련 안내 · 대회 공지</small>
+        </div>
+        <div class="arrow">
+          <svg viewBox="0 0 24 24"><path d="M9 6 L15 12 L9 18"/></svg>
+        </div>
+      </div>
+    </div>
+
+    <!-- Athlete detail (right panel) -->
+    <div>
+      <div class="sec-h">
+        <span class="lb">선수 상세</span>
+        <span class="aside">민지 · 선택됨</span>
+      </div>
+
+      <div class="detail">
+        <div class="h">
+          <div class="avatar">MJ</div>
+          <div class="info">
+            <div class="name">민지</div>
+            <div class="meta">
+              여 · 20세 · <em>5000m 주종목</em> · <em>16:10.44</em> PB (2025.05.18)<br>
+              Cycle 7 · D-5 · MAIN 오늘 예정 · Race D−38
+            </div>
+          </div>
+        </div>
+
+        <!-- 7 days -->
+        <div class="detail-sec">
+          <div class="lb">
+            지난 7일
+            <a class="link" href="#">전체 일지 →</a>
+          </div>
+          <div class="recent-7">
+            <div class="day">
+              목
+              <div class="num">04</div>
+              <div class="sys rest"></div>
+            </div>
+            <div class="day">
+              금
+              <div class="num">05</div>
+              <div class="sys"></div>
+            </div>
+            <div class="day">
+              토
+              <div class="num">06</div>
+              <div class="sys"></div>
+            </div>
+            <div class="day">
+              일
+              <div class="num">07</div>
+              <div class="sys lt"></div>
+            </div>
+            <div class="day">
+              월
+              <div class="num">08</div>
+              <div class="sys"></div>
+            </div>
+            <div class="day">
+              화
+              <div class="num">09</div>
+              <div class="sys"></div>
+            </div>
+            <div class="day today">
+              목
+              <div class="num">10</div>
+              <div class="sys v2"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Signal detail -->
+        <div class="detail-sec">
+          <div class="lb">현재 신호</div>
+          <div class="override">
+            <div class="h">
+              <svg viewBox="0 0 20 20" style="width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2"><path d="M10 3 L17 17 H3 Z"/></svg>
+              R-4 WATCH · 왼 종아리
+            </div>
+            <div class="desc">
+              <em>3일 연속 통증 1/5</em> 입력. 오늘 이후 <em>1/5+ 지속</em>이면 CAUTION 자동 전환. 
+              사이클 남은 <em>5개 세션</em> 중 오늘 MAIN 예정. <code>강도 하향</code> 제안 가능.
+            </div>
+            <div class="action">
+              <button class="primary">강도 -10% 제안</button>
+              <button class="secondary">지켜보기</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Coach notes -->
+        <div class="detail-sec">
+          <div class="lb">코치 노트 · 3개</div>
+          <div class="coach-notes">
+            <div class="cn-item">
+              <div class="when">2 시간 전</div>
+              <div class="text">
+                <em>오늘 원업 5분 늘리고</em> 2회차 반복까지 감각 체크 후 결정하자.
+              </div>
+            </div>
+            <div class="cn-item">
+              <div class="when">어제</div>
+              <div class="text">
+                이지 페이스 개선 확인. <em>회복 잘 되고 있음</em>. 컨디션 유지하되 강도 자제.
+              </div>
+            </div>
+            <div class="cn-item">
+              <div class="when">3일 전</div>
+              <div class="text">
+                Race D-42 · <em>taper 전 마지막 강도 주간</em>. R-9 준수 확인.
+              </div>
+            </div>
+          </div>
+          <div class="composer">
+            <textarea placeholder="새 코치 노트... (민지가 다음에 앱을 열 때 이 노트를 봅니다)"></textarea>
+            <div class="toolbar-c">
+              <div class="target">
+                → <em>민지</em> · 오늘 세션 카드에 표시
+              </div>
+              <button class="send">보내기</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Design Notes section -->
+  <div class="notes-section">
+    <h2>Coach Handoff · 실사용 가이드</h2>
+    <p class="lede">
+      실제 앱 조사 — <code>CoachSupportPanel.tsx</code> 3.5KB는 <em>초대 코드 발급·수락만</em>. 
+      코치가 실제로 여러 선수를 관리하는 <em>대시보드가 없음</em>. 
+      백엔드는 <code>support_invitations</code> 테이블 + <code>list_shared_journal_entries()</code> RPC 완비. 
+      <em>프론트엔드만 만들면 됨</em>.
+    </p>
+
+    <h3 data-tag="§1">진입 경로 · 양방향</h3>
+    <div class="integration">
+      <em>선수 관점:</em> Account 화면 → 코치 초대 → 코드 발급 (기존 <code>CoachSupportPanel</code> 그대로)<br>
+      <em>코치 관점:</em> Account 화면 → 코치 모드 진입 → <strong>이 대시보드</strong> (<em>신규</em>)<br><br>
+      <strong>코치 모드 활성화 조건:</strong> <code>support_connections</code> 테이블에서 자신이 supporter로 <em>1명 이상</em> 연결된 경우.
+      기존 계정 시스템으로 자동 감지.
+    </div>
+
+    <h3 data-tag="§2">앱 백엔드 · 이미 준비됨</h3>
+    <div class="reuse">
+      <div class="r">
+        <div class="h">list_shared_journal_entries() RPC</div>
+        <div class="d">코치가 볼 수 있는 선수 일지 조회. <em>shared_fields</em> 필터링 (TRAINING_RECORD, TRAINING_NOTE, PAIN, MOOD, BODY_STATE). 개인 메모 자동 제외. <code>supabase/migrations/0013_shared_journal_projection.sql</code></div>
+      </div>
+      <div class="r">
+        <div class="h">support_connections 테이블</div>
+        <div class="d"><em>athlete_id · supporter_id · shared_fields · season_ends_on · revoked_at</em>. 시즌 자동 만료 · 폐지 가능.</div>
+      </div>
+      <div class="r">
+        <div class="h">R-4 · R-7 판정 엔진</div>
+        <div class="d"><code>impl/src/plan-generator/</code> 규칙 엔진 재사용. 각 선수 최근 데이터에 판정 실행 → Priority Signal 생성.</div>
+      </div>
+      <div class="r">
+        <div class="h">Coach Note 저장소</div>
+        <div class="d">신규 필요. <code>coach_notes</code> 테이블 (athlete_id · supporter_id · target_date · text · created_at). 선수 앱 <code>LogDetail</code>에 표시.</div>
+      </div>
+    </div>
+
+    <h3 data-tag="§3">핵심 개선점</h3>
+    <ul>
+      <li><em>자격 미확인 배너</em> — 페이지 헤더에 <b>항상 표시</b>. TrainOracle이 코치 자격 검증 안 함을 명시. 개인 메모는 안 보임.</li>
+      <li><em>Priority Signal Strip</em> — 즉각 개입 필요 신호 상단 가로 스크롤. R-4 통증 / R-7 위반 / 감정 저하 3종.</li>
+      <li><em>Athlete Grid</em> — 카드 1장에 <em>Mode 배지 · PB · Cycle 진행 바 · 오늘 신호 · 통증 5도트</em>. 한눈에 6명 상태.</li>
+      <li><em>Cycle 진행 바</em> — 10칸. 완료/오늘/미완료/미래 상태. 미완료가 있으면 <b>주황</b>.</li>
+      <li><em>선수 상세</em> — sticky right panel. 지난 7일 세션 (에너지 색 stripe) · 현재 신호 상세 · 코치 노트 이력 · 새 노트 컴포저.</li>
+      <li><em>Plan Override</em> — 코치가 <em>강도 -10% 제안</em> 원 탭. 선수 앱에서 승인/거부 필요. 강제 아님.</li>
+      <li><em>Coach Note Composer</em> — 특정 날짜에 노트 남김. 선수가 앱에서 그날 <code>LogDetail</code> 볼 때 표시.</li>
+      <li><em>팀 메시지</em> — 전체 선수에게 브로드캐스트. 대회 공지 · 훈련 안내.</li>
+    </ul>
+
+    <h3 data-tag="§4">파일 위치 제안</h3>
+    <div class="integration">
+      <strong>새 파일 4개:</strong><br>
+      <ul style="margin:8px 0;padding-left:20px;">
+        <li><code>app/src/screens/coach/CoachDashboard.tsx</code> — 메인 화면</li>
+        <li><code>app/src/screens/coach/AthleteCard.tsx</code> — 선수 카드</li>
+        <li><code>app/src/screens/coach/AthleteDetailPanel.tsx</code> — 선수 상세</li>
+        <li><code>app/src/domain/coach-notes.ts</code> — 노트 CRUD + Supabase 연동</li>
+      </ul>
+      <strong>수정 파일 2개:</strong>
+      <ul style="margin:8px 0;padding-left:20px;">
+        <li><code>Account.tsx</code> — 코치 모드 진입 링크 추가</li>
+        <li><code>AppShell.tsx</code> — 라우팅 추가 <code>/coach</code></li>
+      </ul>
+      <strong>새 Supabase migration:</strong>
+      <ul style="margin:8px 0;padding-left:20px;">
+        <li><code>0020_coach_notes.sql</code> — 코치 노트 테이블 · RLS 정책</li>
+      </ul>
+    </div>
+
+    <h3 data-tag="§5">인터랙션 계약</h3>
+    <ul>
+      <li>Priority Signal 클릭 → 해당 선수 카드 자동 선택 + 우측 상세 열림</li>
+      <li>선수 카드 클릭 → 우측 상세 업데이트 (URL 변경 · 뒤로가기 지원)</li>
+      <li>Coach Note 등록 → 즉시 서버 저장 + optimistic UI. 선수 <em>다음 앱 실행 시 표시</em>.</li>
+      <li>Plan Override 원 탭 → 선수에게 알림 · 승인 대기 상태. 선수 승인 시 실제 계획 반영.</li>
+      <li>선수 앱에서 코치 노트가 표시되는 위치: <em>LogDetail 상단 배너</em> · 회색 계열 · "코치 노트" 라벨</li>
+      <li>선수가 코치 연결을 해제하면 (revoked_at 설정) 코치 대시보드에서 그 선수 카드 <em>즉시 제거</em></li>
+    </ul>
+
+    <h3 data-tag="§6">권한 · 보안</h3>
+    <ul>
+      <li><em>본인 메모 절대 안 보임</em> — <code>memoPurpose !== 'ANALYZABLE_TRAINING_NOTE'</code>는 RPC에서 필터링</li>
+      <li>시즌 종료일 지나면 자동으로 접근 차단 (<code>season_ends_on >= current_date</code>)</li>
+      <li>선수가 언제든 <em>연결 해제</em> 가능. <code>revoked_at</code> 설정 시 즉시 RLS 차단.</li>
+      <li>코치 노트는 <em>선수에게만 표시</em>. 코치 본인은 남긴 이력으로만 확인.</li>
+      <li>코치가 여러 명 있어도 서로 다른 코치의 노트는 못 봄.</li>
+    </ul>
+
+    <h3 data-tag="§7">AppShell 통합 · 라우팅</h3>
+    <div class="integration">
+      실제 앱은 <code>useState</code> 기반 SPA — 5탭 (홈·일지·계획·분석·더보기).
+      코치 대시보드는 <em>Bottom tab bar에 6번째 탭 추가하지 않음</em>. 
+      Bottom tab이 6개 되면 iOS Human Interface Guideline 위반 + 홈/일지 등 <em>선수용 기능</em>과 <em>코치용 기능</em>이 섞임.
+      <br><br>
+      <strong>Option A · 권장 · 더보기 서브뷰</strong>: 기존 <code>tab='account'</code> ("더보기" 탭) 내부에 <em>"코치 모드" 항목</em> 추가.
+      클릭 시 <code>viewForAccount: {mode:'coach-dashboard'}</code>.
+      <br>이 방식은 코치가 <em>먼저 자신의 계정 컨텍스트로 들어간 뒤</em> 코치 대시보드로 진입 → <em>선수 앱과 코치 앱의 개념적 분리</em> 유지.
+      <br><br>
+      <strong>Option B · 대체 · 프로필 스위처</strong>: 계정에 코치 모드 활성화되면 홈 상단에 <em>"선수 앱 ↔ 코치 앱" 토글</em>. 
+      전체 앱 컨텍스트를 <code>appMode: 'athlete'|'coach'</code>로 스위칭. Coach 모드에서는 5탭이 <em>대시보드·선수·메시지·분석·더보기</em>로 바뀜.
+      <br><em>단점:</em> 구현 복잡 · 초기 릴리즈 부담. B는 Phase 2로.
+      <br><br>
+      <strong>결정</strong>: A. Phase 1 완성 이후 사용량 데이터로 B 판단.
+      <br><br>
+      <strong>선수 앱 반대편 UI</strong>: 코치 노트가 남으면 선수 앱 <code>LogDetail</code> 상단에 <em>회색 배너</em> 자동 표시. 
+      "코치가 오늘 노트를 남겼어요" · 배너 접기 가능. Plan Override 승인 요청은 <code>LogDetail</code> 상단에 <em>주황 배너</em>로 별도. 승인/거부/보류 3버튼.
+    </div>
+
+    <h3 data-tag="§8">계약 테스트 스펙 · 8개</h3>
+    <div class="integration" style="border-color: var(--info)">
+      <em>파일:</em> <code>app/src/screens/coach/__tests__/CoachDashboard.contract.test.tsx</code>
+      <br><br>
+      <strong>T-01 · 코치 모드 자격 감지</strong><br>
+      GIVEN <code>support_connections</code>에 <code>{supporter_id: currentUser.id}</code> 1개 이상 존재<br>
+      WHEN Account 화면 마운트<br>
+      THEN <code>[data-testid="coach-mode-link"]</code> 표시. 0개면 미표시.
+      <br><br>
+      <strong>T-02 · 자격 미확인 배너 상시 표시</strong><br>
+      GIVEN CoachDashboard 마운트<br>
+      WHEN 렌더<br>
+      THEN <code>[data-testid="unverified-notice"]</code>가 페이지 헤더에 <em>항상</em> 표시
+      <br><br>
+      <strong>T-03 · Priority Signal 생성</strong><br>
+      GIVEN 선수 A의 왼 종아리 3일 연속 통증 1/5+<br>
+      WHEN <code>generatePrioritySignals(athletes)</code> 호출<br>
+      THEN 신호 배열에 <code>{athleteId:A.id, rule:'R-4-WATCH', bodyPart:'왼 종아리'}</code> 포함
+      <br><br>
+      <strong>T-04 · 개인 메모 필터링</strong><br>
+      GIVEN 선수 A의 entries에 <code>memoPurpose:'PRIVATE'</code> 1건 · <code>ANALYZABLE_TRAINING_NOTE'</code> 1건<br>
+      WHEN <code>list_shared_journal_entries(A.id)</code> RPC 호출<br>
+      THEN PRIVATE는 결과에서 <em>제외</em>. ANALYZABLE만 반환.
+      <br><br>
+      <strong>T-05 · Coach Note 저장</strong><br>
+      GIVEN 컴포저에 <code>"수고했어"</code> 입력 · 대상 선수 = 민지 · target_date = 오늘<br>
+      WHEN "보내기" 클릭<br>
+      THEN <code>coach_notes</code> 테이블에 row insert · <code>[data-testid="note-list"]</code>에 optimistic 반영
+      <br><br>
+      <strong>T-06 · 선수 앱 노트 표시</strong><br>
+      GIVEN <code>coach_notes: {athlete_id:me, target_date:today}</code> 존재<br>
+      WHEN 선수 앱 <code>LogDetail</code> 오늘 날짜 마운트<br>
+      THEN <code>[data-testid="coach-note-banner"]</code>에 텍스트 표시
+      <br><br>
+      <strong>T-07 · Plan Override 승인 흐름</strong><br>
+      GIVEN 코치가 강도 -10% 제안 (<code>plan_override_requests</code> row insert)<br>
+      WHEN 선수 앱 <code>LogDetail</code>에서 승인 버튼 클릭<br>
+      THEN <code>plan_override_requests.status='approved'</code> · 실제 <code>prescription.targetRepSeconds</code>가 220으로 조정
+      <br><br>
+      <strong>T-08 · 연결 해제 즉시 반영</strong><br>
+      GIVEN 선수 A가 연결 해제 (<code>support_connections.revoked_at = now()</code>)<br>
+      WHEN 코치 대시보드 <em>다음 refresh</em><br>
+      THEN 선수 A 카드가 그리드에서 <em>제거</em>. RLS 정책이 revoked 필터.
+    </div>
+
+    <h3 data-tag="§9">DB 스키마 · coach_notes · plan_override_requests</h3>
+    <div class="integration">
+      <em>파일:</em> <code>supabase/migrations/0020_coach_notes.sql</code> · <code>0021_plan_override.sql</code>
+      <br><br>
+      <pre style="font-family:var(--mono);font-size:11px;color:var(--ink);line-height:1.55;background:var(--surface);padding:12px;margin:8px 0;overflow-x:auto">CREATE TABLE coach_notes (
+  id           UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  athlete_id   UUID NOT NULL REFERENCES auth.users(id),
+  supporter_id UUID NOT NULL REFERENCES auth.users(id),
+  target_date  DATE NOT NULL,
+  text         TEXT NOT NULL CHECK (char_length(text) &lt;= 500),
+  created_at   TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at   TIMESTAMPTZ,
+  deleted_at   TIMESTAMPTZ,  -- soft delete
+  seen_at      TIMESTAMPTZ,  -- 선수가 읽은 시각
+  CONSTRAINT valid_connection
+    FOREIGN KEY (athlete_id, supporter_id)
+    REFERENCES support_connections (athlete_id, supporter_id)
+);
+
+-- RLS: 코치는 자신이 쓴 것만 · 선수는 자기 앞 노트만 (deleted_at IS NULL)
+-- 코치가 삭제 요청 시 soft delete · 선수는 즉시 안 보임
+
+CREATE TABLE plan_override_requests (
+  id             UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  session_id     UUID NOT NULL,
+  athlete_id     UUID NOT NULL,
+  supporter_id   UUID NOT NULL,
+  proposed_delta JSONB NOT NULL,  -- {"targetRepSeconds": -20} 등
+  status         TEXT NOT NULL DEFAULT 'pending'
+                 CHECK (status IN ('pending','approved','rejected','expired')),
+  created_at     TIMESTAMPTZ NOT NULL DEFAULT now(),
+  responded_at   TIMESTAMPTZ,
+  expires_at     TIMESTAMPTZ NOT NULL  -- 세션 시각 + 30분
+);</pre>
+      <em>편집 정책</em>: 코치는 자신이 남긴 노트를 <em>30분 이내</em>에만 편집/삭제 가능. 이후는 삭제 요청만 (soft delete). 
+      선수는 <em>본 이후 전에</em>만 노트가 사라짐 (seen_at 확인).
+      <br><br>
+      <em>Plan Override 만료</em>: 세션 시각 + 30분 지나면 자동 expired. 크론 아닌 <em>read time에 확인</em>.
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

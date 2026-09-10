@@ -1,5 +1,7 @@
 # TRAINORACLE — SPEC And Design Handoff
 
+Design package added 2026-09-10: [design_handoff_plan_beta_extension/README.md](design_handoff_plan_beta_extension/README.md). Read the included Handoff Risk Review before planning implementation. This imported reference does not override PRODUCT_NORTH_STAR.md or establish that the proposed features are implemented.
+
 > # ⚠️ 먼저 읽으십시오 — [`PRODUCT_NORTH_STAR.md`](./PRODUCT_NORTH_STAR.md)
 >
 > **이 저장소에서 작업하는 모든 사람과 모든 AI 작업자는 위 문서를 가장 먼저

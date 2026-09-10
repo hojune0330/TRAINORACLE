@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <defs>
+    <linearGradient id="shoeG" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#F97316"/>
+      <stop offset="100%" stop-color="#C2410C"/>
+    </linearGradient>
+  </defs>
+  <!-- sole -->
+  <path d="M 6 46 L 8 42 Q 10 38 16 38 L 46 34 Q 54 32 58 40 L 58 44 Q 58 48 54 48 L 10 48 Q 6 48 6 46 Z"
+        fill="#FEF3C7" stroke="#7C2D12" stroke-width="1.4" stroke-linejoin="round"/>
+  <!-- upper body -->
+  <path d="M 10 40 Q 10 30 20 28 L 34 24 Q 42 22 46 28 L 50 34 Q 50 38 46 38 L 16 40 Z"
+        fill="url(#shoeG)" stroke="#7C2D12" stroke-width="1.6" stroke-linejoin="round"/>
+  <!-- laces -->
+  <path d="M 24 28 L 26 34 M 30 26 L 32 33 M 36 25 L 38 32 M 42 24 L 44 30" 
+        stroke="#FEF3C7" stroke-width="1.4" stroke-linecap="round"/>
+  <!-- brand stripe -->
+  <path d="M 12 38 Q 20 36 32 34" fill="none" stroke="#FEF3C7" stroke-width="2" stroke-linecap="round"/>
+  <!-- heel -->
+  <path d="M 10 40 Q 8 42 8 46" fill="none" stroke="#7C2D12" stroke-width="1"/>
+  <!-- sole treads -->
+  <g stroke="#7C2D12" stroke-width="0.8" opacity="0.6">
+    <line x1="14" y1="46" x2="14" y2="48"/>
+    <line x1="20" y1="46" x2="20" y2="48"/>
+    <line x1="26" y1="46" x2="26" y2="48"/>
+    <line x1="32" y1="46" x2="32" y2="48"/>
+    <line x1="38" y1="46" x2="38" y2="48"/>
+    <line x1="44" y1="46" x2="44" y2="48"/>
+    <line x1="50" y1="46" x2="50" y2="48"/>
+  </g>
+</svg>

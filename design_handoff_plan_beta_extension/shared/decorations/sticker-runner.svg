@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <defs>
+    <linearGradient id="rShirt" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#0EA5E9"/>
+      <stop offset="100%" stop-color="#0369A1"/>
+    </linearGradient>
+    <linearGradient id="rShort" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#1E293B"/>
+      <stop offset="100%" stop-color="#0F172A"/>
+    </linearGradient>
+  </defs>
+  <!-- head -->
+  <circle cx="36" cy="12" r="6" fill="#FBBF24" stroke="#78350F" stroke-width="1.4"/>
+  <!-- torso (leaning forward) -->
+  <path d="M 32 18 Q 30 26 24 28 L 34 36 Q 42 34 44 26 L 42 20 Z" fill="url(#rShirt)" stroke="#0C4A6E" stroke-width="1.4" stroke-linejoin="round"/>
+  <!-- back arm -->
+  <path d="M 42 20 Q 50 22 52 30" fill="none" stroke="#FBBF24" stroke-width="4" stroke-linecap="round"/>
+  <line x1="52" y1="30" x2="50" y2="34" stroke="#78350F" stroke-width="0.8"/>
+  <!-- front arm bent -->
+  <path d="M 32 22 Q 26 28 30 34 L 24 30" fill="none" stroke="#FBBF24" stroke-width="4" stroke-linecap="round"/>
+  <!-- shorts -->
+  <path d="M 26 34 L 40 34 L 38 42 L 30 42 Z" fill="url(#rShort)" stroke="#0F172A" stroke-width="1.4" stroke-linejoin="round"/>
+  <!-- back leg extended -->
+  <path d="M 38 42 Q 44 48 42 56" fill="none" stroke="#FBBF24" stroke-width="4" stroke-linecap="round"/>
+  <!-- front leg bent up -->
+  <path d="M 30 42 Q 20 44 18 52" fill="none" stroke="#FBBF24" stroke-width="4" stroke-linecap="round"/>
+  <!-- shoes -->
+  <ellipse cx="18" cy="54" rx="4" ry="2" fill="#DC2626" stroke="#7F1D1D" stroke-width="1"/>
+  <ellipse cx="44" cy="57" rx="4" ry="2" fill="#DC2626" stroke="#7F1D1D" stroke-width="1"/>
+  <!-- motion lines -->
+  <path d="M 8 22 L 14 24 M 6 30 L 12 30 M 8 38 L 14 36" stroke="#94A3B8" stroke-width="1.2" stroke-linecap="round" opacity="0.7"/>
+</svg>
