@@ -69,8 +69,22 @@ it("stores V2 only as collection history and never promotes it to the current pl
   const packet = accountPlanPacketFixture(2)
   expect(await service.mutate({ kind: "SAVE_HISTORY", packet }, service.snapshot().fingerprint!)).toBe("ACCOUNT")
   expect(service.snapshot().currentPlan).toBeNull()
+  expect(service.snapshot().document?.data.plans[0]?.archivedAt).not.toBeNull()
+  expect(await service.loadHistory()).toBe(true)
+  expect(service.snapshot().confirmedDocument?.data.plans[0]?.archivedAt).not.toBeNull()
   expect(await service.mutate({ kind: "SELECT", packet, confirmsSelection: true, freshReview: () => true },
     service.snapshot().fingerprint!)).toBe("REVIEW_REQUIRED")
+  expect(server.index()?.currentPlanId).toBeNull()
+})
+
+it("repairs a previously stored non-current V2 entry into visible history", async () => {
+  const packet = accountPlanPacketFixture(2), document = emptyAccountPlanDocument()
+  document.data.plans.push(accountPlanEntry(packet))
+  const { service, server } = setup(collectionServer(document))
+  expect(await service.hydrate()).toBe(true)
+  expect(service.snapshot().document?.data.plans[0]?.archivedAt == null).toBe(true)
+  expect(await service.mutate({ kind: "SAVE_HISTORY", packet }, service.snapshot().fingerprint!)).toBe("ACCOUNT")
+  expect(service.snapshot().document?.data.plans[0]?.archivedAt).toEqual(expect.any(String))
   expect(server.index()?.currentPlanId).toBeNull()
 })
 
