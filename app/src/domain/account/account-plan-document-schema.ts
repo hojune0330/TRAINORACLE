@@ -1,6 +1,13 @@
 import { z } from "zod"
 import { canonicalJsonFingerprint } from "@impl/plan-generator/candidate-identity"
-import { hasCanonicalJsonTree, planBetaStateV3Schema, progressSchema, type PlanBetaStateV3 } from "../plan-beta-schema"
+import {
+  hasCanonicalJsonTree,
+  planBetaStateV2Schema,
+  planBetaStateV3Schema,
+  progressSchema,
+  type PlanBetaStateV2,
+  type PlanBetaStateV3,
+} from "../plan-beta-schema"
 import { readStoredAdjustedPlanState, type StoredAdjustedPlanState } from "../adjusted-plan-storage-schema"
 import { readStoredAdjustedPlanStateV5, type StoredAdjustedPlanStateV5 } from "../adjusted-plan-storage-v5-schema"
 import { readStoredMultiAdjustedPlanV6, type StoredMultiAdjustedPlanStateV6 } from "../adjusted-plan-storage-v6-schema"
@@ -10,6 +17,7 @@ import type { RetainedMultiAdjustedEvidenceV3 } from "../selected-multi-adjusted
 import { contextSchema, type PlanAdaptationContext } from "../plan-adaptation-context-schema"
 
 export type AccountPlanPacket =
+  | { state: PlanBetaStateV2; evidence: null; context?: never }
   | { state: PlanBetaStateV3; evidence: null; context?: PlanAdaptationContext }
   | { state: StoredAdjustedPlanState; evidence: RetainedAdjustedPlanEvidence }
   | { state: StoredAdjustedPlanStateV5; evidence: RetainedAdjustedPlanEvidenceV3 }
@@ -25,6 +33,10 @@ export function validateAccountPlanPacket(value: unknown): value is AccountPlanP
   try {
     if (!hasCanonicalJsonTree(value) || !(exact(value, ["state", "evidence"]) || exact(value, ["state", "evidence", "context"]))) return false
     const packet = value as AccountPlanPacket, state = packet.state
+    if (state.version === 2) {
+      return packet.evidence === null && packet.context === undefined
+        && planBetaStateV2Schema.safeParse(state).success
+    }
     if (state.version === 3) {
       if (packet.evidence !== null || !planBetaStateV3Schema.safeParse(state).success) return false
       if (packet.context !== undefined) {
@@ -68,7 +80,9 @@ export type AccountPlanEntry = z.infer<typeof entrySchema>
 /** Recombine progress without modifying the immutable selection or its original provenance. */
 export function materializeAccountPlan(entry: AccountPlanEntry): AccountPlanPacket {
   const state = entry.snapshot.state
-  if (state.version === 3) return { ...entry.snapshot, state: { ...state, progress: [...entry.progress] }, evidence: null }
+  if (state.version === 2 || state.version === 3) {
+    return { ...entry.snapshot, state: { ...state, progress: [...entry.progress] }, evidence: null } as AccountPlanPacket
+  }
   const content = { version: state.version, selection: state.selection, progress: [...entry.progress], updatedAt: entry.updatedAt }
   return { state: { ...content, contentFingerprint: canonicalJsonFingerprint(`trainoracle.adjusted-plan-storage.v${state.version}`, content) },
     evidence: entry.snapshot.evidence } as AccountPlanPacket
@@ -76,7 +90,9 @@ export function materializeAccountPlan(entry: AccountPlanEntry): AccountPlanPack
 
 export function accountPlanEntry(packet: AccountPlanPacket, at = new Date().toISOString()): AccountPlanEntry {
   if (!validateAccountPlanPacket(packet)) throw new Error("Invalid plan packet")
-  const generatedAt = packet.state.version === 3 ? packet.state.generatedAt : packet.state.selection.generatedAt
+  const generatedAt = packet.state.version === 2 || packet.state.version === 3
+    ? packet.state.generatedAt
+    : packet.state.selection.generatedAt
   const seed = { snapshot: packet, progress: [], updatedAt: generatedAt } as unknown as AccountPlanEntry
   const snapshot = materializeAccountPlan(seed)
   return entrySchema.parse({ planId: accountPlanFingerprint(snapshot), snapshot,
@@ -92,11 +108,16 @@ export const accountPlanDocumentSchema = z.object({
   for (const entry of document.data.plans) {
     if (ids.has(entry.planId) || accountPlanFingerprint(entry.snapshot) !== entry.planId || entry.snapshot.state.progress.length !== 0) invalid()
     ids.add(entry.planId)
-    const generated = entry.snapshot.state.version === 3 ? entry.snapshot.state.generatedAt : entry.snapshot.state.selection.generatedAt
+    const generated = entry.snapshot.state.version === 2 || entry.snapshot.state.version === 3
+      ? entry.snapshot.state.generatedAt
+      : entry.snapshot.state.selection.generatedAt
     if (entry.updatedAt < generated || (entry.archivedAt !== null && entry.archivedAt < entry.updatedAt)
       || !validateAccountPlanPacket(materializeAccountPlan(entry))) invalid()
   }
-  if (document.data.currentPlanId !== null && document.data.plans.filter(p => p.planId === document.data.currentPlanId && p.archivedAt === null).length !== 1) invalid()
+  if (document.data.currentPlanId !== null) {
+    const current = document.data.plans.filter(p => p.planId === document.data.currentPlanId && p.archivedAt === null)
+    if (current.length !== 1 || current[0]!.snapshot.state.version === 2) invalid()
+  }
 })
 export type AccountPlanDocument = z.infer<typeof accountPlanDocumentSchema>
 export const ACCOUNT_PLAN_MAX_BYTES = 500_000

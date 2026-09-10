@@ -34,12 +34,12 @@ export function readJournalOriginalPlan(entry: PostSessionEntry,
       if (!read) continue
       const source = item.planId === document.data.currentPlanId ? "ACTIVE" as const : "ARCHIVED" as const
       const sourceVerificationPending = readAccountPlanEntry(item, () => [...retained, ...retainedV3, ...retainedMultiV3]).kind !== "read_only"
-      const session = read.kind === "v3" ? resolveCurrentPlannedSession(read.state, parsed.data)
+      const session = read.kind === "v2" || read.kind === "v3" ? resolveCurrentPlannedSession(read.state, parsed.data)
         : read.kind === "v4" ? resolveCurrentPlannedSession(read.state.selection, parsed.data)
           : read.kind === "v5" ? resolveCurrentPlannedSession(read.state.selection, parsed.data)
             : resolveCurrentPlannedSession(read.state.selection, parsed.data)
       if (!session) continue
-      if (read.kind === "v3") return { kind: "matched" as const, state: read.state,
+      if (read.kind === "v2" || read.kind === "v3") return { kind: "matched" as const, state: read.state,
         session: resolveCurrentPlannedSession(read.state, parsed.data)!, source, sourceVerificationPending }
       if (read.kind === "v4") return { kind: "matched_adjusted" as const, state: read.state,
         session: resolveCurrentPlannedSession(read.state.selection, parsed.data)!, explanation: read.explanation, source, sourceVerificationPending }

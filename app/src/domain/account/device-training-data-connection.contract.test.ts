@@ -57,6 +57,14 @@ function seedDevicePlanBundle() {
   return values
 }
 
+function legacyDevicePlanState() {
+  const current = stateFixture()
+  if (current.version !== 3) throw new TypeError("Expected current v3 fixture")
+  const { eventDistanceM: _distance, selectedDetailedTemplateRef: _intakeTemplate, ...intake } = current.intake
+  const { pairId: _pairId, selectedDetailedTemplateRef: _activeTemplate, ...activePlan } = current.activePlan
+  return { ...current, version: 1 as const, intake, activePlan }
+}
+
 beforeEach(() => {
   window.localStorage.clear()
   window.sessionStorage.clear()
@@ -151,6 +159,27 @@ describe("explicit device training data connection", () => {
 
     expect(result).toMatchObject({ plan: "account_local", planStorage: "stored_online" })
     expect(mutate).toHaveBeenCalledOnce()
+    expect(window.localStorage.getItem(accountScopedStorageKeyFor(PLAN_BETA_STORAGE_KEY, USER_ID))).toBe(source)
+  })
+
+  it("normalizes a legacy device plan into read-only online history while preserving its exact local bytes", async () => {
+    const source = JSON.stringify(legacyDevicePlanState())
+    window.localStorage.setItem(accountScopedStorageKeyFor(PLAN_BETA_STORAGE_KEY, USER_ID), source)
+    const mutate = vi.fn(async () => "ACCOUNT" as const)
+    const service = {
+      hydrate: vi.fn(async () => true),
+      snapshot: vi.fn(() => ({ status: "EMPTY", document: null, confirmedDocument: null,
+        fingerprint: "server-empty", currentPlan: null })),
+      mutate,
+    } as unknown as AccountPlanService
+
+    const result = await connectDeviceTrainingDataToAccount(USER_ID, TODAY, () => service)
+
+    expect(result).toMatchObject({ plan: "account_local", planStorage: "stored_online" })
+    expect(mutate).toHaveBeenCalledWith(expect.objectContaining({
+      kind: "SAVE_HISTORY",
+      packet: expect.objectContaining({ state: expect.objectContaining({ version: 2 }), evidence: null }),
+    }), "server-empty")
     expect(window.localStorage.getItem(accountScopedStorageKeyFor(PLAN_BETA_STORAGE_KEY, USER_ID))).toBe(source)
   })
 

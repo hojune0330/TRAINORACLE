@@ -9,12 +9,13 @@ import { setActiveLocalAccount } from "./local-journal-ownership"
 beforeEach(() => { localStorage.clear(); sessionStorage.clear(); setActiveLocalAccount(null); vi.useFakeTimers(); vi.setSystemTime(TODAY) })
 afterEach(() => { vi.restoreAllMocks(); vi.useRealTimers() })
 
-it.each([3, 4, 5, 6] as const)("V%s restores the exact historical body and progress without local originals or execution authority", version => {
+it.each([2, 3, 4, 5, 6] as const)("V%s restores the exact historical body and progress without local originals or execution authority", version => {
   const packet = accountPlanPacketFixture(version), entry = accountPlanEntry(packet)
-  const state = packet.state.version === 3 ? packet.state : packet.state.selection
+  const state = packet.state.version === 2 || packet.state.version === 3 ? packet.state : packet.state.selection
   entry.progress = [{ sessionDay: state.activePlan.sessions[0]!.day, sessionSlot: state.activePlan.sessions[0]!.slot, state: "COMPLETED" }]
   const document = emptyAccountPlanDocument()
-  document.data.plans.push(entry); document.data.currentPlanId = entry.planId
+  document.data.plans.push(entry)
+  if (version !== 2) document.data.currentPlanId = entry.planId
   expect(validateAccountPlanDocument(document)).toBe(true)
   localStorage.clear()
   const write = vi.spyOn(Storage.prototype, "setItem")
@@ -23,6 +24,15 @@ it.each([3, 4, 5, 6] as const)("V%s restores the exact historical body and progr
   expect(validateAccountPlanPacket(materializeAccountPlan(entry))).toBe(true)
   expect(write).not.toHaveBeenCalled()
   expect(entry.snapshot.state.progress).toEqual([])
+})
+
+it("keeps V2 historical-only and rejects it as the current account plan", () => {
+  const packet = accountPlanPacketFixture(2), entry = accountPlanEntry(packet)
+  const document = emptyAccountPlanDocument()
+  document.data.plans.push(entry)
+  expect(validateAccountPlanDocument(document)).toBe(true)
+  document.data.currentPlanId = entry.planId
+  expect(validateAccountPlanDocument(document)).toBe(false)
 })
 
 it.each([4, 5, 6] as const)("V%s transported evidence cannot manufacture independently retained authority", version => {

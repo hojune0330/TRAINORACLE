@@ -92,7 +92,9 @@ export function Home({
     ? { ...planRead.state.selection, progress: planRead.state.progress } : null
   const accountCurrent = accountPlansEnabled() ? accountPlanService()?.snapshot().currentPlan : null
   const original = accountCurrent?.kind === "evidence_required" ? accountCurrent.packet.state : null
-  const homePlan = original ? original.version === 3 ? original : { ...original.selection, progress: original.progress }
+  const homePlan = original ? original.version === 2 || original.version === 3
+    ? original
+    : { ...original.selection, progress: original.progress }
     : adjustedPlan ?? planState
   const observations = React.useMemo(
     () => projectStructuredJournalObservations(entries),

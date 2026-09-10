@@ -1,4 +1,4 @@
-import { planBetaStateV3Schema } from "../plan-beta-schema"
+import { planBetaStateV2Schema, planBetaStateV3Schema } from "../plan-beta-schema"
 import { stateFixture } from "../plan-beta-store.test-fixture"
 import { adjustedPlanSelectionFixture } from "../adjusted-plan-selection.test-fixtures"
 import { adjustedPlanSelectionV3Fixture } from "../adjusted-plan-selection-v3.test-fixtures"
@@ -12,7 +12,12 @@ import { encodeStoredMultiAdjustedPlanV6 } from "../adjusted-plan-storage-v6-sch
 import { TODAY } from "../prescription-quality-matrix.test-fixtures"
 import type { AccountPlanPacket } from "./account-plan-document-schema"
 
-export function accountPlanPacketFixture(version: 3 | 4 | 5 | 6, at = TODAY): AccountPlanPacket {
+export function accountPlanPacketFixture(version: 2 | 3 | 4 | 5 | 6, at = TODAY): AccountPlanPacket {
+  if (version === 2) {
+    const current = planBetaStateV3Schema.parse(stateFixture())
+    const { pairId: _pairId, selectedDetailedTemplateRef: _template, ...activePlan } = current.activePlan
+    return { state: planBetaStateV2Schema.parse({ ...current, version: 2, activePlan, generatedAt: at.toISOString() }), evidence: null }
+  }
   if (version === 3) return { state: planBetaStateV3Schema.parse({ ...stateFixture(), generatedAt: at.toISOString() }), evidence: null }
   if (version === 4) {
     const f = adjustedPlanSelectionFixture({}, undefined, at)

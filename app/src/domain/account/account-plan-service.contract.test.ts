@@ -144,6 +144,18 @@ it("never promotes historical save, stale safety or offline selection to current
   expect(remote.revision()).toBe(1)
 })
 
+it("stores V2 only as history and never promotes it to the current plan", async () => {
+  const remote = server(), local = memoryBuffer()
+  const service = createAccountPlanService({ ownerId: owner, isCurrent: () => true, buffer: local.buffer, send: remote.send })
+  await service.hydrate()
+  const packet = accountPlanPacketFixture(2)
+  expect(await service.mutate({ kind: "SAVE_HISTORY", packet }, service.snapshot().fingerprint!)).toBe("ACCOUNT")
+  expect(service.snapshot().currentPlan).toBeNull()
+  expect(await service.mutate({ kind: "SELECT", packet, confirmsSelection: true, freshReview: () => true },
+    service.snapshot().fingerprint!)).toBe("REVIEW_REQUIRED")
+  expect(remote.document()?.data.currentPlanId).toBeNull()
+})
+
 it("does not retry an unsent pointer change without a new review", async () => {
   const remote = server(), local = memoryBuffer()
   let fail = true

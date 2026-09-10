@@ -461,7 +461,9 @@ export function loadPreviousIntake(): StoredPlanBetaIntake | null {
     if (!view?.confirmedDocument || ("historyLoaded" in view && !view.historyLoaded)) return null
     const entries = view.confirmedDocument.data.plans
     const last = entries.filter(p => p.archivedAt !== null).sort((a, b) => b.archivedAt!.localeCompare(a.archivedAt!))[0]
-    return last ? last.snapshot.state.version === 3 ? last.snapshot.state.intake : last.snapshot.state.selection.intake : null
+    return last ? last.snapshot.state.version === 2 || last.snapshot.state.version === 3
+      ? last.snapshot.state.intake
+      : last.snapshot.state.selection.intake : null
   }
   if (typeof window === "undefined") return null
   try {

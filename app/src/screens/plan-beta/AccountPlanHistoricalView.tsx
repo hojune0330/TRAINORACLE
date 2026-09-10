@@ -10,7 +10,7 @@ export function AccountPlanHistoricalView({ packet, verificationPending = true }
 }) {
   const read = readAccountPlanHistorical(packet)
   if (!read) return <p role="alert">보관한 계획의 형식을 확인하지 못했어요.</p>
-  const plan = read.kind === "v3" ? read.state : read.state.selection
+  const plan = read.kind === "v2" || read.kind === "v3" ? read.state : read.state.selection
   const start = plan.intake.startDate ?? plan.generatedAt.slice(0, 10)
   return <section aria-label="계정 계획 원본">
     <h1>보관한 훈련 일정</h1>

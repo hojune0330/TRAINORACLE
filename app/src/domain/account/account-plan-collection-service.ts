@@ -407,6 +407,7 @@ export function createAccountPlanCollectionService(input: AccountPlanCollectionS
         entry.archivedAt = at
         if (next.data.currentPlanId === entry.planId) next.data.currentPlanId = null
       } else {
+        if (captured.packet.state.version === 2 && captured.kind !== "SAVE_HISTORY") return "REVIEW_REQUIRED"
         const entry = accountPlanEntry(captured.packet, at), previous = next.data.plans.find(p => p.planId === entry.planId)
         if (previous?.archivedAt) return "INVALID"
         if (captured.kind === "PROGRESS") {

@@ -10,6 +10,7 @@ import type { RetainedMultiAdjustedEvidenceV3 } from "../selected-multi-adjusted
 export function readAccountPlanHistorical(packet: AccountPlanPacket) {
   if (!validateAccountPlanPacket(packet)) return null
   const state = packet.state
+  if (state.version === 2) return { kind: "v2" as const, state, executionAuthority: "NONE" as const }
   if (state.version === 3) return { kind: "v3" as const, state, executionAuthority: "NONE" as const }
   if (state.version === 4) {
     const read = readStoredAdjustedPlanState(state, [packet.evidence as RetainedAdjustedPlanEvidence])
