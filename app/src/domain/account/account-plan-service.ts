@@ -154,6 +154,7 @@ export function createAccountPlanService(input: {
         if (next.data.currentPlanId === entry.planId) next.data.currentPlanId = null
       } else {
         if (!validateAccountPlanPacket(captured.packet)) return "INVALID"
+        if (captured.packet.state.version === 2 && captured.kind !== "SAVE_HISTORY") return "REVIEW_REQUIRED"
         const entry = accountPlanEntry(captured.packet, at)
         const previous = next.data.plans.find(p => p.planId === entry.planId)
         if (previous?.archivedAt) return "INVALID"

@@ -24,7 +24,7 @@ function fixture(version: 3 | 4 | 5 | 6 = 3, count = 2): AccountPlanDocument {
     localStorage.clear()
     const entry = accountPlanEntry(accountPlanPacketFixture(version, new Date(TODAY.getTime() + i * 1000)))
     const state = entry.snapshot.state
-    const session = (state.version === 3 ? state.activePlan : state.selection.activePlan).sessions[0]!
+    const session = (state.version === 2 || state.version === 3 ? state.activePlan : state.selection.activePlan).sessions[0]!
     entry.progress = [{ sessionDay: session.day, sessionSlot: session.slot, state: "COMPLETED" }]
     if (i < count - 1) entry.archivedAt = new Date().toISOString()
     document.data.plans.push(entry)

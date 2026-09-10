@@ -63,6 +63,17 @@ it("an index without a current pointer never scans archived parts on hydrate", a
   expect(service.snapshot().confirmedDocument?.data.plans).toEqual([])
 })
 
+it("stores V2 only as collection history and never promotes it to the current plan", async () => {
+  const { service, server } = setup()
+  expect(await service.hydrate()).toBe(true)
+  const packet = accountPlanPacketFixture(2)
+  expect(await service.mutate({ kind: "SAVE_HISTORY", packet }, service.snapshot().fingerprint!)).toBe("ACCOUNT")
+  expect(service.snapshot().currentPlan).toBeNull()
+  expect(await service.mutate({ kind: "SELECT", packet, confirmsSelection: true, freshReview: () => true },
+    service.snapshot().fingerprint!)).toBe("REVIEW_REQUIRED")
+  expect(server.index()?.currentPlanId).toBeNull()
+})
+
 it("deduplicates history requests, yields per entry and keeps READY/current visible throughout", async () => {
   const doc = fixture(), states: ReturnType<ReturnType<typeof createAccountPlanCollectionService>["snapshot"]>[] = []
   const { service, server } = setup(collectionServer(doc), { changed: () => { states.push(service.snapshot()) } })

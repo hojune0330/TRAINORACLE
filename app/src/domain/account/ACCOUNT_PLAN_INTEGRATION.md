@@ -49,6 +49,11 @@ once an authenticated collection exists.
 - An old owner-scoped local outbox blocks silent cutover. Its pending/conflict bytes must
   be reconciled or explicitly preserved before collection writes. Another device's prior
   cutover must not reopen the retired monolithic server writer.
+- Legacy V1 device plans are parsed through the existing semantic V1-to-V2 normalization
+  and may be saved as V2 account history. V2 packets have no execution authority, cannot
+  carry adaptation context, and cannot become `currentPlanId`; `SELECT` and `PROGRESS`
+  reject them with `REVIEW_REQUIRED`. The exact original device bytes remain in the
+  account-scoped browser copy after the server receipt.
 
 See `reports/implementation/ACCOUNT_PLAN_COLLECTION_INTEGRATION_2026-09-08.md` for exact
 executed tests, review findings and the remaining operational boundary. The sections
@@ -61,7 +66,7 @@ their single-document capacity is not the new collection's aggregate limit.
 - Envelope: `{ version: 3, state: "ACCOUNT_STATE", kind: "PLAN", data: { schemaVersion: 1, currentPlanId, plans } }`.
 - Fixed owner document ID: `await accountPlanDocumentId(ownerId)` uses SHA-256 of JSON `["trainoracle.account.plan.v1", ownerId]`, with the same UUID bit/format convention as account decoration documents.
 - The authenticated owner, document ID, expected server revision, and operation UUID remain the gateway's authority. The body carries no caller-selected owner.
-- Every accepted body passes the full existing V3/V4/V5/V6 readers. Maximum body is 500,000 UTF-8 bytes, maximum 100 retained plan entries; reaching a limit rejects the write, never evicts originals.
+- Every accepted body passes the full existing V2/V3/V4/V5/V6 readers. V2 is historical-only and cannot be the current pointer. Maximum body is 500,000 UTF-8 bytes, maximum 100 retained plan entries; reaching a limit rejects the write, never evicts originals.
 - Update validation preserves all previous immutable snapshots and archived entries. Current pointer, progress, and archive change in one server CAS revision.
 - Build/check with the parent-owned `node scripts/build-account-state-validator.mjs [--check]`. The portable test proves no Supabase, live journal/plan store, or plan-beta-flow dependency is reachable.
 
@@ -82,7 +87,7 @@ Commands (all use the same encrypted buffer and requestAccountDocument/flush pat
 - `PROGRESS`: `{ kind: "PROGRESS", packet }`. Packet is the versioned result of the existing successful progress store. Its immutable selection identity must equal the server-confirmed current plan. Never infers execution or performed distance from progress.
 - `ARCHIVE`: `{ kind: "ARCHIVE", planId }`. Retains snapshot/progress and clears the pointer in the same CAS. Current-plan archive requires online state.
 
-`AccountPlanPacket` is `{ state, evidence }`: V3 uses null evidence; V4/V5/V6 carry one exact historical evidence packet. Construct from existing validators' output, not inferred or reconstructed personal inputs. `accountPlanEntry(packet)` derives the immutable identity and separates progress.
+`AccountPlanPacket` is `{ state, evidence }`: historical-only V2 and V3 use null evidence; V4/V5/V6 carry one exact historical evidence packet. V2 cannot carry adaptation context or become the current plan. Construct from existing validators' output, not inferred or reconstructed personal inputs. `accountPlanEntry(packet)` derives the immutable identity and separates progress.
 
 For custom independently retained source registries, create `createAccountPlanService({ ownerId, isCurrent, readTrusted })`. `readTrusted` must return independently accepted exact content, NOT the downloaded packet's evidence. The operating retained registries remain empty where they were empty before this task. Packet validation verifies internal consistency, NOT external acceptance. No whitelist entries or review receipts were fabricated.
 

@@ -219,7 +219,7 @@ it("mismatched read-back never publishes a collection and never repairs by overw
 it("progress-only updates reuse immutable snapshots and do not require a new plan selection", async () => {
   const before = document(), next = structuredClone(before), server = repository(splitAccountPlanCollection(before))
   const entry = next.data.plans[0]!, packet = entry.snapshot.state
-  const session = (packet.version === 3 ? packet.activePlan : packet.selection.activePlan).sessions[0]!
+  const session = (packet.version === 2 || packet.version === 3 ? packet.activePlan : packet.selection.activePlan).sessions[0]!
   entry.progress = [{ sessionDay: session.day, sessionSlot: session.slot, state: "COMPLETED" }]
   expect((await run(prepared(next, before), server.port, { freshSelectionReview: () => false })).kind).toBe("committed")
   expect(server.port.stage).toHaveBeenCalledTimes(1)
