@@ -54,9 +54,9 @@
   box-shadow: none;
 }
 
-.journal-month-calendar__legend-dots i[data-kind="training"] { background: #f28c53; }
-.journal-month-calendar__legend-dots i[data-kind="daily"] { background: #75b8dc; }
-.journal-month-calendar__legend-dots i[data-kind="race"] { background: #f2cc4d; }
+.journal-month-calendar__legend-dots i[data-kind="training"] { background: var(--mood-4); }
+.journal-month-calendar__legend-dots i[data-kind="daily"] { background: var(--mood-1); }
+.journal-month-calendar__legend-dots i[data-kind="race"] { background: var(--mood-3); }
 
 .journal-month-calendar__weekdays,
 .journal-month-calendar__grid {
@@ -78,8 +78,8 @@
   text-align: center;
 }
 
-.journal-month-calendar__weekdays span:first-child { color: #e07171; }
-.journal-month-calendar__weekdays span:last-child { color: #5c82bb; }
+.journal-month-calendar__weekdays span:first-child { color: var(--warn); }
+.journal-month-calendar__weekdays span:last-child { color: var(--ink-blue); }
 
 .journal-month-calendar__grid {
   border-top: 1px solid var(--line);
@@ -144,9 +144,9 @@
   box-shadow: none;
 }
 
-.journal-month-calendar__marks i[data-kind="training"] { background: #f28c53; }
-.journal-month-calendar__marks i[data-kind="daily"] { background: #75b8dc; }
-.journal-month-calendar__marks i[data-kind="race"] { background: #f2cc4d; }
+.journal-month-calendar__marks i[data-kind="training"] { background: var(--mood-4); }
+.journal-month-calendar__marks i[data-kind="daily"] { background: var(--mood-1); }
+.journal-month-calendar__marks i[data-kind="race"] { background: var(--mood-3); }
 
 .journal-month-calendar__count {
   position: absolute;

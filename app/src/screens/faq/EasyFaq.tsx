@@ -105,7 +105,7 @@ export function EasyFaq() {
         data-testid="beta-price-notice"
         style={{
           border: "1px solid var(--line)",
-          borderRadius: 8,
+          borderRadius: "var(--r-md)",
           fontFamily: "var(--sans)",
           fontSize: 13,
           lineHeight: 1.7,

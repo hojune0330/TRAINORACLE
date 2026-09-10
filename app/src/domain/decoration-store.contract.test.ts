@@ -5,9 +5,13 @@ import {
   DECORATION_STORAGE_KEY_V2,
   DECORATION_STORAGE_KEY_V2_BACKUP,
   DECORATION_STORAGE_KEY_V3,
+  OPEN_CUTE_V1,
   PAID_DECORATION_IDS,
   V2_SLOT_DEFAULT_TRANSFORMS,
+  claimRewardDecorations,
+  decorationStateSchema,
   loadDecorationState,
+  purchaseCollectionBundle,
   purchaseDecoration,
   rememberDecorationUse,
   saveDecorationState,
@@ -342,5 +346,65 @@ describe("decoration V3 verified writes", () => {
     expect(result.state).toEqual(current)
     expect(window.localStorage.getItem(DECORATION_STORAGE_KEY_V1)).toBe(legacyBefore)
     expect(window.localStorage.getItem(DECORATION_STORAGE_KEY_V3)).toBe(v3Before)
+  })
+})
+
+/*
+ * 컬렉션 획득 경로(번들·보상). 2026-09-04에 번들 구매가 "개별 합계 > spentPoints"로
+ * 스키마에 걸려 ZodError를 던지던 회귀를 잡기 위해 추가했다 — 하한 계산은 번들 할인을 인정해야 한다.
+ */
+describe("collection acquisition paths", () => {
+  const TODAY = "2026-09-04"
+  const cuteIds = OPEN_CUTE_V1.items.map((item) => item.id)
+
+  it("buys the whole collection at the bundle price and keeps the stored state schema-valid", () => {
+    const state = loadDecorationState()
+    const result = purchaseCollectionBundle(200, state, OPEN_CUTE_V1.id, TODAY)
+
+    expect(result.kind).toBe("PURCHASED")
+    if (result.kind !== "PURCHASED") return
+    expect(result.cost).toBe(80)
+    expect(result.itemIds).toHaveLength(28)
+    expect(result.state.spentPoints).toBe(80)
+    expect(decorationStateSchema.safeParse(result.state).success).toBe(true)
+    expect(decorationStateSchema.safeParse(JSON.parse(window.localStorage.getItem(DECORATION_STORAGE_KEY_V3) ?? "null")).success).toBe(true)
+    expect(purchaseCollectionBundle(200, result.state, OPEN_CUTE_V1.id, TODAY).kind).toBe("ALREADY_OWNED")
+  })
+
+  it("charges the cheaper of bundle price and the remaining individual total", () => {
+    let state = loadDecorationState()
+    for (const itemId of cuteIds.slice(0, 26)) {
+      const single = purchaseDecoration(200, state, itemId)
+      expect(single.kind).toBe("PURCHASED")
+      if (single.kind === "PURCHASED") state = single.state
+    }
+    expect(state.spentPoints).toBe(26 * 4)
+
+    const result = purchaseCollectionBundle(200, state, OPEN_CUTE_V1.id, TODAY)
+    expect(result.kind).toBe("PURCHASED")
+    if (result.kind !== "PURCHASED") return
+    expect(result.cost).toBe(8)
+    expect(result.itemIds).toHaveLength(2)
+    expect(result.state.spentPoints).toBe(26 * 4 + 8)
+  })
+
+  it("refuses a bundle the user cannot afford without touching storage", () => {
+    const state = loadDecorationState()
+    const before = window.localStorage.getItem(DECORATION_STORAGE_KEY_V3)
+    const result = purchaseCollectionBundle(10, state, OPEN_CUTE_V1.id, TODAY)
+
+    expect(result).toMatchObject({ kind: "INSUFFICIENT_POINTS", cost: 80, remainingPoints: 10 })
+    expect(window.localStorage.getItem(DECORATION_STORAGE_KEY_V3)).toBe(before)
+  })
+
+  it("returns UNKNOWN_COLLECTION for an id that is not registered", () => {
+    expect(purchaseCollectionBundle(200, loadDecorationState(), "NOPE", TODAY).kind).toBe("UNKNOWN_COLLECTION")
+  })
+
+  it("claims nothing when no reward rule is satisfied and never changes spentPoints", () => {
+    const state = loadDecorationState()
+    const result = claimRewardDecorations(state, { journalDays: 0, visitDays: 0 }, TODAY)
+    expect(result.kind).toBe("NOTHING_TO_CLAIM")
+    expect(result.state.spentPoints).toBe(0)
   })
 })

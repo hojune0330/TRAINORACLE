@@ -43,7 +43,7 @@
   min-height: var(--app-touch-min);
   padding: 0 var(--space-3);
   border: var(--bw-line) solid var(--ink);
-  border-radius: 6px;
+  border-radius: var(--r-md);
   background: var(--ink);
   color: var(--bg);
   cursor: pointer;
@@ -53,6 +53,24 @@
   gap: var(--space-1);
   font-size: var(--fs-body-sm);
   touch-action: manipulation;
+}
+
+.decoration-shop__preview {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 0 var(--space-3) var(--space-2);
+}
+.decoration-shop__preview img {
+  width: 36px;
+  height: 36px;
+  object-fit: contain;
+  padding: 4px;
+  border: var(--bw-line) solid var(--paper-edge);
+  border-radius: var(--r-md);
+  background: var(--paper);
+  user-select: none;
+  -webkit-user-drag: none;
 }
 
 .decoration-shop > p { margin: 0; padding: 0 var(--space-3) var(--space-3); color: var(--ink-3); font-size: var(--fs-body-sm); line-height: 1.45; }

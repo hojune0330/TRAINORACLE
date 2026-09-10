@@ -33,7 +33,7 @@ describe("decoration persona hardening", () => {
     expect(points).toHaveLength(24)
     expect(new Set(points).size).toBe(24)
     expect(points.slice(0, 8)).toEqual([
-      "18:18", "82:18", "18:82", "82:82", "50:18", "18:50", "82:50", "50:82",
+      "18:28", "82:28", "18:82", "82:82", "50:28", "18:50", "82:50", "50:82",
     ])
   })
 
@@ -73,7 +73,7 @@ describe("decoration persona hardening", () => {
     const pasted = appendJournalDecorationItem(createEmptyDecorationState(), "2026-09-01", source)
     expect(journalDecorationItems(pasted ?? createEmptyDecorationState(), "2026-09-01")[0]).toMatchObject({
       itemId: "EMOJI_MEDAL",
-      transform: { xPercent: 18, yPercent: 18, scale: 1.45, rotationDeg: 20 },
+      transform: { xPercent: 18, yPercent: 28, scale: 1.45, rotationDeg: 20 },
     })
   })
 

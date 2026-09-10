@@ -73,6 +73,13 @@ enforcement: 이 문서를 벗어난 산출물은 검수에서 반려한다
    스티커와 역할이 겹쳐 카탈로그가 무너진다. 일러스트는 항상
    "문구점 인쇄물" 질감이어야 한다.
 
+> **적용 범위.** 위 세 금지는 **기본 재료**(TrainOracle 자체 제작, `decoration-catalog.ts`의
+> `baseMaterial` 행)에 적용된다. `decoration-collections.ts`의 **컬렉션**(귀여운 스티커·시즌·
+> 굿즈·라이선스 캐릭터)은 각자 `artDirection`을 갖는 의도된 예외이며, 컬렉션 화면 안에서만
+> 노출되어 기본 카탈로그와 섞이지 않는다. 컬렉션 자산의 출처·라이선스는 레지스트리에서
+> `public/legal/open-source.html`과 `public/collections/<id>/assets.json`으로 자동 생성된다
+> (`node app/scripts/generate-collection-docs.mjs`).
+
 ---
 
 ## 2. 색·재질 어휘 (자산 생성 시 그대로 쓸 값)

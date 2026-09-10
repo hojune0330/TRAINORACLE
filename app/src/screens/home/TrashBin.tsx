@@ -100,7 +100,7 @@ export function TrashBin({ onChanged }: { readonly onChanged?: () => void } = {}
   return (
     <div data-testid="trash-bin" style={{ padding: "28px 0 0" }}>
       <SectionLb>— 휴지통 · {items.length}건</SectionLb>
-      <div style={{ margin: "0 20px", fontFamily: "var(--mono)", fontSize: 9.5, color: "var(--ink-4)", lineHeight: 1.6 }}>
+      <div style={{ margin: "0 20px", fontFamily: "var(--mono)", fontSize: "var(--fs-mono-xs)", color: "var(--ink-4)", lineHeight: 1.6 }}>
         지운 일지는 {TRASH_RETENTION_DAYS}일 동안 여기 남아요. 되돌리면 내용은 그대로 돌아와요.
       </div>
       <div style={{ margin: "10px 20px 0", borderTop: "1px solid var(--ink)" }}>
@@ -114,14 +114,14 @@ export function TrashBin({ onChanged }: { readonly onChanged?: () => void } = {}
               style={{ padding: "12px 0", borderBottom: "1px dashed var(--hair)" }}
             >
               <div style={{ display: "flex", alignItems: "baseline", gap: 8, flexWrap: "wrap" }}>
-                <span style={{ fontFamily: "var(--mono)", fontSize: 10, color: "var(--ink-3)", letterSpacing: "0.1em" }}>
+                <span style={{ fontFamily: "var(--mono)", fontSize: "var(--fs-mono-xs)", color: "var(--ink-3)", letterSpacing: "0.1em" }}>
                   {compactDate(item.entry.date)}
                 </span>
-                <span style={{ fontFamily: "var(--mono)", fontSize: 9.5, color: "var(--ink-4)", letterSpacing: "0.08em" }}>
+                <span style={{ fontFamily: "var(--mono)", fontSize: "var(--fs-mono-xs)", color: "var(--ink-4)", letterSpacing: "0.08em" }}>
                   {KIND_LABEL[item.entry.kind]}
                 </span>
                 <span data-testid="trash-days-left" style={{
-                  fontFamily: "var(--mono)", fontSize: 8.5, letterSpacing: "0.1em", color: "var(--ink-4)",
+                  fontFamily: "var(--mono)", fontSize: "var(--fs-mono-xs)", letterSpacing: "0.1em", color: "var(--ink-4)",
                   border: "1px solid var(--hair)", padding: "2px 5px", whiteSpace: "nowrap",
                 }}>
                   {daysLeft > 0 ? `${daysLeft}일 남음` : "오늘까지"}
@@ -134,7 +134,7 @@ export function TrashBin({ onChanged }: { readonly onChanged?: () => void } = {}
 
               {isConfirming ? (
                 <div style={{ marginTop: 8 }}>
-                  <div style={{ fontFamily: "var(--mono)", fontSize: 9.5, color: "var(--ink-2)", lineHeight: 1.6 }}>
+                  <div style={{ fontFamily: "var(--mono)", fontSize: "var(--fs-mono-xs)", color: "var(--ink-2)", lineHeight: 1.6 }}>
                     완전히 지우면 되돌릴 수 없어요.
                   </div>
                   <div style={{ display: "flex", gap: 8, marginTop: 6 }}>
@@ -146,7 +146,7 @@ export function TrashBin({ onChanged }: { readonly onChanged?: () => void } = {}
                       style={{
                         minHeight: 44, padding: "0 12px",
                         border: "1px solid var(--ink)", background: "var(--ink)", color: "var(--bg)",
-                        fontFamily: "var(--mono)", fontSize: 10.5, fontWeight: 600, cursor: "pointer",
+                        fontFamily: "var(--mono)", fontSize: "var(--fs-mono-sm)", fontWeight: 600, cursor: "pointer",
                       }}
                     >완전히 지우기</button>
                     <button
@@ -156,7 +156,7 @@ export function TrashBin({ onChanged }: { readonly onChanged?: () => void } = {}
                       style={{
                         minHeight: 44, padding: "0 12px",
                         border: "1px solid var(--ink)", background: "transparent", color: "var(--ink)",
-                        fontFamily: "var(--mono)", fontSize: 10.5, cursor: "pointer",
+                        fontFamily: "var(--mono)", fontSize: "var(--fs-mono-sm)", cursor: "pointer",
                       }}
                     >취소</button>
                   </div>
@@ -170,7 +170,7 @@ export function TrashBin({ onChanged }: { readonly onChanged?: () => void } = {}
                     style={{
                       background: "transparent", border: 0, cursor: "pointer", padding: "4px 0",
                       minHeight: 44,
-                      fontFamily: "var(--mono)", fontSize: 10, color: "var(--ink-2)",
+                      fontFamily: "var(--mono)", fontSize: "var(--fs-mono-xs)", color: "var(--ink-2)",
                       letterSpacing: "0.08em", textDecoration: "underline", textUnderlineOffset: 3,
                     }}
                   >되돌리기</button>
@@ -182,7 +182,7 @@ export function TrashBin({ onChanged }: { readonly onChanged?: () => void } = {}
                     style={{
                       background: "transparent", border: 0, cursor: "pointer", padding: "4px 0",
                       minHeight: 44,
-                      fontFamily: "var(--mono)", fontSize: 10, color: "var(--ink-4)",
+                      fontFamily: "var(--mono)", fontSize: "var(--fs-mono-xs)", color: "var(--ink-4)",
                       letterSpacing: "0.08em", textDecoration: "underline", textUnderlineOffset: 3,
                     }}
                   >완전히 지우기</button>
