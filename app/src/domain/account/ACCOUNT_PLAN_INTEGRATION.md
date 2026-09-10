@@ -83,7 +83,7 @@ their single-document capacity is not the new collection's aggregate limit.
 Commands (all use the same encrypted buffer and requestAccountDocument/flush path):
 
 - `SELECT`: `{ kind: "SELECT", packet, confirmsSelection: true, freshReview }`. Call ONLY after explicit selection under the existing plan gate. `freshReview` must recompute current safety/selection/record/source review, not return a saved flag. Requires online state; archives the former current entry atomically when selecting a successor. Cannot select an archived entry.
-- `SAVE_HISTORY`: `{ kind: "SAVE_HISTORY", packet }`. Explicit backup/import only. Never changes the current pointer. Do not silently assign anonymous device originals to an account.
+- `SAVE_HISTORY`: `{ kind: "SAVE_HISTORY", packet }`. Explicit backup/import only. A newly stored entry is marked archived immediately and never changes the current pointer, so it remains visible in account history without becoming executable. Do not silently assign anonymous device originals to an account.
 - `PROGRESS`: `{ kind: "PROGRESS", packet }`. Packet is the versioned result of the existing successful progress store. Its immutable selection identity must equal the server-confirmed current plan. Never infers execution or performed distance from progress.
 - `ARCHIVE`: `{ kind: "ARCHIVE", planId }`. Retains snapshot/progress and clears the pointer in the same CAS. Current-plan archive requires online state.
 

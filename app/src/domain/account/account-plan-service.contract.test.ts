@@ -151,6 +151,7 @@ it("stores V2 only as history and never promotes it to the current plan", async 
   const packet = accountPlanPacketFixture(2)
   expect(await service.mutate({ kind: "SAVE_HISTORY", packet }, service.snapshot().fingerprint!)).toBe("ACCOUNT")
   expect(service.snapshot().currentPlan).toBeNull()
+  expect(service.snapshot().document?.data.plans[0]?.archivedAt).not.toBeNull()
   expect(await service.mutate({ kind: "SELECT", packet, confirmsSelection: true, freshReview: () => true },
     service.snapshot().fingerprint!)).toBe("REVIEW_REQUIRED")
   expect(remote.document()?.data.currentPlanId).toBeNull()

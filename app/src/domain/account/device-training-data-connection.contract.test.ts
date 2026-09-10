@@ -162,6 +162,31 @@ describe("explicit device training data connection", () => {
     expect(window.localStorage.getItem(accountScopedStorageKeyFor(PLAN_BETA_STORAGE_KEY, USER_ID))).toBe(source)
   })
 
+  it("repairs an acknowledged non-current plan that is missing its history marker", async () => {
+    const state = stateFixture()
+    if (state.version !== 3) throw new TypeError("Expected current v3 fixture")
+    const source = JSON.stringify(state)
+    window.localStorage.setItem(accountScopedStorageKeyFor(PLAN_BETA_STORAGE_KEY, USER_ID), source)
+    const packet = { state, evidence: null } as const
+    const entry = accountPlanEntry(packet)
+    const document = emptyAccountPlanDocument()
+    document.data.plans.push(entry)
+    const mutate = vi.fn(async () => "ACCOUNT" as const)
+    const service = {
+      hydrate: vi.fn(async () => true),
+      loadHistory: vi.fn(async () => true),
+      snapshot: vi.fn(() => ({ status: "READY", document, confirmedDocument: document,
+        fingerprint: "server-history", currentPlan: null, migrationRequired: false })),
+      mutate,
+    } as unknown as AccountPlanService
+
+    const result = await connectDeviceTrainingDataToAccount(USER_ID, TODAY, () => service)
+
+    expect(result).toMatchObject({ plan: "account_local", planStorage: "stored_online" })
+    expect(mutate).toHaveBeenCalledWith(expect.objectContaining({ kind: "SAVE_HISTORY" }), "server-history")
+    expect(window.localStorage.getItem(accountScopedStorageKeyFor(PLAN_BETA_STORAGE_KEY, USER_ID))).toBe(source)
+  })
+
   it("normalizes a legacy device plan into read-only online history while preserving its exact local bytes", async () => {
     const source = JSON.stringify(legacyDevicePlanState())
     window.localStorage.setItem(accountScopedStorageKeyFor(PLAN_BETA_STORAGE_KEY, USER_ID), source)

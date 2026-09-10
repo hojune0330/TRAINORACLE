@@ -408,14 +408,18 @@ export function createAccountPlanCollectionService(input: AccountPlanCollectionS
         if (next.data.currentPlanId === entry.planId) next.data.currentPlanId = null
       } else {
         if (captured.packet.state.version === 2 && captured.kind !== "SAVE_HISTORY") return "REVIEW_REQUIRED"
-        const entry = accountPlanEntry(captured.packet, at), previous = next.data.plans.find(p => p.planId === entry.planId)
+        const entry = accountPlanEntry(captured.packet, at)
+        if (captured.kind === "SAVE_HISTORY" && entry.archivedAt === null) entry.archivedAt = at
+        const previous = next.data.plans.find(p => p.planId === entry.planId)
         if (previous?.archivedAt) return "INVALID"
+        if (captured.kind === "SAVE_HISTORY" && previous && next.data.currentPlanId === entry.planId) return "INVALID"
         if (captured.kind === "PROGRESS") {
           if (!previous || next.data.currentPlanId !== entry.planId) return "STALE"
           previous.progress = entry.progress; previous.updatedAt = at
         } else {
           if (previous && accountPlanFingerprint(previous.progress) !== accountPlanFingerprint(entry.progress)) return "STALE"
-          if (!previous) next.data.plans.push(entry)
+          if (captured.kind === "SAVE_HISTORY" && previous) previous.archivedAt = at
+          else if (!previous) next.data.plans.push(entry)
           if (captured.kind === "SELECT") {
             if (captured.confirmsSelection !== true || !online() || !captured.freshReview()
               || readAccountPlanEntry(entry, input.readTrusted).kind !== "read_only") return "REVIEW_REQUIRED"

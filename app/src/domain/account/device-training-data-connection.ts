@@ -441,7 +441,9 @@ export async function connectDeviceTrainingDataToAccount(
 
   const desired = accountPlanEntry(packet)
   const existing = view.document?.data.plans.find((entry) => entry.planId === desired.planId)
-  const stored = existing === undefined
+  const needsHistoryRepair = existing !== undefined && existing.archivedAt === null
+    && view.document?.data.currentPlanId !== existing.planId
+  const stored = existing === undefined || needsHistoryRepair
     ? onlineStatus(await service.mutate({ kind: "SAVE_HISTORY", packet }, view.fingerprint))
     : accountPlanFingerprint(existing.progress) === accountPlanFingerprint(desired.progress)
       ? "stored_online"
