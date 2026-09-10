@@ -279,6 +279,32 @@ it("two-device conflict retains both manifests and all parts when the user choos
   expect(b.service.snapshot().historyLoaded).toBe(false)
 })
 
+it("a clean second device restores the exact online current plan and history without local carryover", async () => {
+  const server = collectionServer(), first = setup(server)
+  await first.service.hydrate()
+  const historyPacket = accountPlanPacketFixture(2)
+  const currentPacket = accountPlanPacketFixture(3, new Date(TODAY.getTime() + 1000))
+  expect(await first.service.mutate({ kind: "SAVE_HISTORY", packet: historyPacket },
+    first.service.snapshot().fingerprint!)).toBe("ACCOUNT")
+  expect(await first.service.mutate(select(currentPacket), first.service.snapshot().fingerprint!)).toBe("ACCOUNT")
+  expect(await first.service.loadHistory()).toBe(true)
+  const expected = structuredClone(first.service.snapshot().confirmedDocument)
+  const expectedCurrent = first.service.snapshot().currentPlan?.planId
+  first.service.close()
+
+  const cleanStores = collectionMemoryBuffers()
+  expect(cleanStores.manifests.rows.size).toBe(0)
+  expect(cleanStores.parts.rows.size).toBe(0)
+  expect(cleanStores.legacy.rows.size).toBe(0)
+  const second = setup(server, {}, cleanStores).service
+  expect(await second.hydrate()).toBe(true)
+  expect(second.snapshot().currentPlan?.planId).toBe(expectedCurrent)
+  expect(second.snapshot().historyLoaded).toBe(false)
+  expect(second.snapshot().confirmedDocument?.data.plans).toHaveLength(1)
+  expect(await second.loadHistory()).toBe(true)
+  expect(second.snapshot().confirmedDocument).toEqual(expected)
+})
+
 it("captures caller input before queued awaits and refuses stale rendered fingerprints", async () => {
   const { service } = setup()
   await service.hydrate()
