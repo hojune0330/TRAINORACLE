@@ -6,6 +6,7 @@ import path from 'node:path'
 const app = fileURLToPath(new URL('../', import.meta.url))
 const root = path.dirname(app.replace(/[\\/]$/, ''))
 const output = path.join(root, 'supabase/functions/_shared/account-plan-collection-validator.mjs')
+const normalizeLineEndings = value => value.replace(/\r\n/gu, '\n')
 export async function buildAccountPlanCollectionValidator() {
   return build({ absWorkingDir: root,
     stdin: { contents: 'export * from "./src/domain/account/account-plan-collection-schema.ts"',
@@ -19,7 +20,7 @@ export async function buildAccountPlanCollectionValidator() {
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   const result = await buildAccountPlanCollectionValidator(), generated = result.outputFiles[0].text
   if (process.argv.includes('--check')) {
-    if (await readFile(output, 'utf8') !== generated) throw Error('Account plan collection validator is stale.')
+    if (normalizeLineEndings(await readFile(output, 'utf8')) !== normalizeLineEndings(generated)) throw Error('Account plan collection validator is stale.')
   } else await writeFile(output, generated)
   console.log(JSON.stringify({ check: process.argv.includes('--check'), bytes: Buffer.byteLength(generated) }))
 }

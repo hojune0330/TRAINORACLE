@@ -11,6 +11,7 @@ import {
 import { DECORATION_COLLECTIONS, LICENSES, OPEN_CUTE_V1, type DecorationLicense } from "./decoration-collections"
 
 const publicDir = join(process.cwd(), "public")
+const normalizeLineEndings = (content: string): string => content.replace(/\r\n/gu, "\n")
 
 describe("decoration collection docs (registry → legal notice + asset ledger)", () => {
   it("registry passes structural validation", () => {
@@ -20,7 +21,7 @@ describe("decoration collection docs (registry → legal notice + asset ledger)"
   it("generated files in public/ are in sync with the registry (run: node scripts/generate-collection-docs.mjs)", () => {
     for (const document of renderCollectionDocuments(DECORATION_COLLECTIONS)) {
       const onDisk = readFileSync(join(publicDir, document.path), "utf8")
-      expect(onDisk, `public/${document.path} 가 레지스트리와 다릅니다`).toBe(document.content)
+      expect(normalizeLineEndings(onDisk), `public/${document.path} 가 레지스트리와 다릅니다`).toBe(normalizeLineEndings(document.content))
     }
   })
 

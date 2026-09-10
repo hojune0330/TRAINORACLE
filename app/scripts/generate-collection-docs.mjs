@@ -22,6 +22,10 @@ const appRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..")
 const publicDir = join(appRoot, "public")
 const checkOnly = process.argv.includes("--check")
 
+function normalizeLineEndings(content) {
+  return content.replace(/\r\n/gu, "\n")
+}
+
 async function loadDocsModule() {
   const outDir = await mkdtemp(join(tmpdir(), "trainoracle-collection-docs-"))
   const outfile = join(outDir, "decoration-collection-docs.mjs")
@@ -73,7 +77,7 @@ try {
     for (const document of documents) {
       const target = join(publicDir, document.path)
       const current = await readFile(target, "utf8").catch(() => null)
-      if (current === document.content) {
+      if (current !== null && normalizeLineEndings(current) === normalizeLineEndings(document.content)) {
         console.log(`[collection-docs] 최신: public/${document.path}`)
         continue
       }
