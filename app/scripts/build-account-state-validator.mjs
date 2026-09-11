@@ -6,6 +6,7 @@ import path from 'node:path'
 const app = fileURLToPath(new URL('../', import.meta.url))
 const root = path.dirname(app.replace(/[\\/]$/, ''))
 const output = path.join(root, 'supabase/functions/_shared/account-state-validator.mjs')
+const normalizeLineEndings = value => value.replace(/\r\n/gu, '\n')
 
 export async function buildAccountStateValidator() {
   return build({
@@ -21,7 +22,7 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
   const result = await buildAccountStateValidator()
   const generated = result.outputFiles[0].text
   if (process.argv.includes('--check')) {
-    if (await readFile(output, 'utf8') !== generated) throw new Error('Account state validator is stale.')
+    if (normalizeLineEndings(await readFile(output, 'utf8')) !== normalizeLineEndings(generated)) throw new Error('Account state validator is stale.')
   } else await writeFile(output, generated)
   console.log(JSON.stringify({ check: process.argv.includes('--check'), bytes: Buffer.byteLength(generated) }))
 }

@@ -6,6 +6,7 @@ import path from 'node:path'
 const app = fileURLToPath(new URL('../', import.meta.url))
 const root = path.dirname(app.replace(/[\\/]$/, ''))
 const output = path.join(root, 'supabase/functions/_shared/account-journal-record-validator.mjs')
+const normalizeLineEndings = value => value.replace(/\r\n/gu, '\n')
 
 export async function buildAccountJournalRecordValidator() {
   return build({
@@ -36,7 +37,7 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
   const result = await buildAccountJournalRecordValidator()
   const generated = result.outputFiles[0].text
   if (process.argv.includes('--check')) {
-    if (await readFile(output, 'utf8') !== generated) throw new Error('Account journal validator is stale; regenerate it.')
+    if (normalizeLineEndings(await readFile(output, 'utf8')) !== normalizeLineEndings(generated)) throw new Error('Account journal validator is stale; regenerate it.')
   } else {
     await writeFile(output, generated)
   }

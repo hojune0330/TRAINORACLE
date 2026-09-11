@@ -76,7 +76,7 @@ export function EraseLocalData({ onOpenRestore }: {
             onClick={handleErase}
             style={{
               minHeight: 44,
-              borderRadius: 10,
+              borderRadius: "var(--r-md)",
               cursor: "pointer",
               border: "1px solid var(--ink)",
               background: "var(--ink)",

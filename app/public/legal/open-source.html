@@ -1,4 +1,5 @@
 <!doctype html>
+<!-- 자동 생성 파일: app/scripts/generate-collection-docs.mjs 가 src/domain/decoration-collections.ts 에서 만든다. 손으로 고치지 말 것. -->
 <html lang="ko">
 <head>
   <meta charset="UTF-8" />
@@ -22,32 +23,49 @@
   <main class="legal-document">
     <header>
       <h1>스티커·오픈소스 출처</h1>
-      <p class="legal-summary">TrainOracle의 귀여운 스티커 컬렉션에 사용한 공개 자산과 라이선스를 안내합니다.</p>
-      <p class="legal-date">확인일: 2026년 9월 1일 · 컬렉션: OPEN_CUTE_V1</p>
+      <p class="legal-summary">TrainOracle 꾸미기 컬렉션에 사용한 공개 자산과 라이선스를 컬렉션별로 안내합니다. 기본 재료(도장·테이프·라벨 등)는 TrainOracle이 직접 그렸습니다.</p>
+      <p class="legal-date">최근 확인일: 2026년 9월 1일 · 컬렉션: OPEN_CUTE_V1</p>
+      <ul>
+        <li><a href="#OPEN_CUTE_V1">귀여운 스티커</a> — 28종</li>
+      </ul>
     </header>
 
-    <h2>Microsoft Fluent Emoji Flat</h2>
-    <p>귀여운 스티커 24종은 Microsoft Fluent Emoji의 Flat 그림을 256×256 WebP로 변환해 사용합니다.</p>
-    <ul>
-      <li>원본: <a href="https://github.com/microsoft/fluentui-emoji" target="_blank" rel="noreferrer">microsoft/fluentui-emoji</a></li>
-      <li>고정 원본 커밋: <code>1ffb34c752ecf5d402f04cfb4b392c77f57c54bc</code></li>
-      <li>라이선스: MIT</li>
-      <li><a href="../licenses/fluentui-emoji-MIT.txt">라이선스 전문 보기</a></li>
-    </ul>
-
-    <h2>Open Peeps</h2>
-    <p>낙서 친구 4종은 Pablo Stanley의 Open Peeps 디자인을 DiceBear Open Peeps 9.4.2로 조합한 뒤 256×256 WebP로 변환해 사용합니다.</p>
-    <ul>
-      <li>원작: <a href="https://www.openpeeps.com/" target="_blank" rel="noreferrer">Open Peeps</a> by Pablo Stanley</li>
-      <li>원작 라이선스: CC0 1.0</li>
-      <li>조합 코드: <a href="https://www.npmjs.com/package/@dicebear/open-peeps/v/9.4.2" target="_blank" rel="noreferrer">@dicebear/open-peeps 9.4.2</a></li>
-      <li>패키지 고정 커밋: <code>73e2dd6cfb471a36871851cf0707b5f2f6b48c32</code></li>
-      <li><a href="../licenses/dicebear-open-peeps-LICENSE.txt">라이선스 전문 보기</a></li>
-    </ul>
+    <section id="OPEN_CUTE_V1" aria-labelledby="OPEN_CUTE_V1-title">
+      <h2 id="OPEN_CUTE_V1-title">귀여운 스티커 <small>(OPEN_CUTE_V1)</small></h2>
+      <p>Microsoft Fluent Emoji Flat과 Open Peeps의 오픈 라이선스 그림을 사용했어요.</p>
+      <ul>
+        <li>아트 디렉션: 이모지풍 플랫 일러스트 — 기본 재료의 문구용품 톤과 대비되는 밝고 동글동글한 컬렉션(의도된 예외).</li>
+        <li>구성: 28종 · 256×256 WebP (투명 배경)</li>
+        <li>획득: 개별 4P · 컬렉션 일괄 80P</li>
+        <li>상태: 제공 중</li>
+        <li>라이선스 확인일: 2026년 9월 1일</li>
+        <li>자산 장부: <a href="../collections/open-cute-v1/assets.json">assets.json</a> (원본 파일명·가공·SHA-256)</li>
+      </ul>
+      <h3>Microsoft Fluent Emoji</h3>
+      <ul>
+        <li>사용 수: 24종</li>
+        <li>라이선스: MIT</li>
+        <li>원본: <a href="https://github.com/microsoft/fluentui-emoji" target="_blank" rel="noreferrer">https://github.com/microsoft/fluentui-emoji</a></li>
+        <li>고정 리비전: <code>1ffb34c752ecf5d402f04cfb4b392c77f57c54bc</code></li>
+        <li>가공: 공식 Flat SVG를 투명 256×256 WebP로 렌더</li>
+        <li>출처 표기: 필요 (이 페이지로 이행)</li>
+        <li><a href="../licenses/fluentui-emoji-MIT.txt">라이선스 전문 보기</a></li>
+      </ul>
+      <h3>Open Peeps by Pablo Stanley (DiceBear 패키지)</h3>
+      <ul>
+        <li>사용 수: 4종</li>
+        <li>라이선스: CC0 1.0 (디자인) · MIT (패키지 코드)</li>
+        <li>원본: <a href="https://www.openpeeps.com/" target="_blank" rel="noreferrer">https://www.openpeeps.com/</a></li>
+        <li>고정 리비전: <code>@dicebear/open-peeps@9.4.2 (73e2dd6cfb471a36871851cf0707b5f2f6b48c32)</code></li>
+        <li>가공: Open Peeps 파츠를 결정적으로 조합해 투명 256×256 WebP로 렌더</li>
+        <li>출처 표기: 불필요 (자발적 표기)</li>
+        <li><a href="../licenses/dicebear-open-peeps-LICENSE.txt">라이선스 전문 보기</a></li>
+      </ul>
+    </section>
 
     <h2>가공과 서비스 제공</h2>
     <p>모든 그림은 앱에 함께 저장되어 외부 그림 서버로 사용 기록을 보내지 않습니다. TrainOracle의 포인트는 현금이나 재산상 가치가 없는 베타 포인트이며, 스티커의 원본 저작권이나 상표권을 판매하는 것이 아니라 앱 안에서 쓸 수 있는 이용 상태를 제공합니다.</p>
-    <p>각 파일의 원본 이름, 가공 방식과 SHA-256은 배포 파일의 <a href="../decorations/open-license-assets.json">자산 장부</a>에 기록합니다.</p>
+    <p>시즌이 끝나거나 라이선스가 만료된 컬렉션은 신규 제공만 멈추고, 이미 받아 일지에 붙인 그림은 계속 표시됩니다.</p>
 
     <footer class="legal-footer">
       <p>문의: <a href="mailto:hojune0330@gmail.com">hojune0330@gmail.com</a></p>

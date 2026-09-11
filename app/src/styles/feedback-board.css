@@ -55,7 +55,7 @@
   width: 100%;
   min-height: 52px;
   border: 1px solid var(--ink);
-  border-radius: 8px;
+  border-radius: var(--r-md);
   background: var(--ink);
   color: var(--bg);
   display: flex;
@@ -107,7 +107,7 @@
   width: 100%;
   box-sizing: border-box;
   border: 1px solid var(--line);
-  border-radius: 6px;
+  border-radius: var(--r-md);
   background: var(--surface);
   color: var(--ink);
   padding: 12px;

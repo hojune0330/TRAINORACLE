@@ -1,3 +1,4 @@
+import { PenLine, Plus } from "lucide-react"
 import type { JournalEntry } from "../domain/journal-store"
 import { canEditJournalEntry } from "../domain/journal-edit-policy"
 
@@ -63,40 +64,27 @@ export function JournalDetailActions({
   const editableEntries = entries.filter((entry) => canEditJournalEntry(entry) && !hasDuplicateId(entries, entry.id))
   if (onAddEntry === undefined && (onEditEntry === undefined || editableEntries.length === 0)) return null
 
+  // 시각 위계: 날짜 카드(IndexCard)가 이 페이지의 유일한 굵은 틀이다. 행동 버튼은
+  // 문구점 라벨 스티커처럼 가볍게 — 얇은 선(--line), 아이콘 + 본문 활자, 한 줄에 나란히.
   return (
-    <div style={{ padding: "12px 20px 0", display: "grid", gap: 8 }}>
+    <div className="journal-detail-actions">
       {onAddEntry !== undefined && (
         <button
           type="button"
+          className="journal-detail-actions__button journal-detail-actions__button--add"
           data-testid="journal-add-entry"
           onClick={() => onAddEntry(date)}
-          style={buttonStyle("transparent", "var(--ink)")}
-        >이 날짜에 일지 더 쓰기</button>
+        ><Plus aria-hidden="true" size={15} />이 날짜에 일지 더 쓰기</button>
       )}
       {onEditEntry !== undefined && editableEntries.map((entry) => (
         <button
           key={entry.id}
           type="button"
+          className="journal-detail-actions__button"
           data-testid={`journal-edit-${entry.id}`}
           onClick={() => onEditEntry(entry)}
-          style={buttonStyle("var(--surface)", "var(--ink-2)")}
-        >{editLabel(entry, editableEntries)}</button>
+        ><PenLine aria-hidden="true" size={15} />{editLabel(entry, editableEntries)}</button>
       ))}
     </div>
   )
-}
-
-function buttonStyle(background: string, color: string) {
-  return {
-    minHeight: 44,
-    padding: "10px 12px",
-    border: "1px solid var(--ink)",
-    background,
-    color,
-    fontFamily: "var(--mono)",
-    fontSize: 10.5,
-    cursor: "pointer",
-    textAlign: "left" as const,
-    overflowWrap: "anywhere" as const,
-  }
 }

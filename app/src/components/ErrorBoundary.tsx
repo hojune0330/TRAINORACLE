@@ -121,7 +121,7 @@ export class ErrorBoundary extends React.Component<Props, State> {
           data-testid="error-download-backup"
           onClick={downloadRawBackup}
           style={{
-            minHeight: 48, borderRadius: 10, cursor: "pointer",
+            minHeight: 48, borderRadius: "var(--r-md)", cursor: "pointer",
             border: "1px solid var(--ink, #23201B)",
             background: "var(--ink, #23201B)", color: "var(--paper, #E4E2DA)",
             fontFamily: "var(--sans, system-ui)", fontSize: 15, fontWeight: 600,
@@ -135,7 +135,7 @@ export class ErrorBoundary extends React.Component<Props, State> {
           data-testid="error-retry"
           onClick={this.handleRetry}
           style={{
-            minHeight: 48, borderRadius: 10, cursor: "pointer",
+            minHeight: 48, borderRadius: "var(--r-md)", cursor: "pointer",
             border: "1px solid var(--line, #C9C5B8)", background: "transparent",
             color: "var(--ink, #23201B)",
             fontFamily: "var(--sans, system-ui)", fontSize: 15,
