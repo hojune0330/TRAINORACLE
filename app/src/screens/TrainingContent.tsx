@@ -122,7 +122,7 @@ export function TrainingContent({ onBack }: { readonly onBack: () => void }) {
         {TRAINING_CONTENT_CATALOG.map((article, index) => (
           <button type="button" key={article.id} onClick={() => setSelected(article.id)}>
             <span className="training-content-list__number">0{index + 1}</span>
-            <span>
+            <span className="training-content-list__copy">
               <small>{article.category} · {SOURCE_STATE_LABEL[article.sourceState]}</small>
               <strong>{article.title}</strong>
               <em>{article.summary}</em>

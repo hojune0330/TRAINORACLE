@@ -82,51 +82,22 @@ export function JournalArchive({
       : "지난 일지"
 
   return (
-    <div data-testid="journal-archive" style={{ minHeight: "100%", paddingBottom: 96 }}>
-      <header style={{
-        padding: "16px 20px 14px",
-        borderBottom: "1px solid var(--ink)",
-        display: "grid",
-        gridTemplateColumns: "44px minmax(0, 1fr)",
-        gap: 10,
-        alignItems: "center",
-      }}>
+    <div className="journal-archive" data-testid="journal-archive">
+      <header className="journal-archive__header">
         <button
           type="button"
           onClick={goBack}
           aria-label={selectedWeek !== null ? "월간 목록으로" : selectedMonth !== null ? "월 목록으로" : "홈으로"}
           title="뒤로"
-          style={{
-            width: 44,
-            height: 44,
-            border: "1px solid var(--line)",
-            borderRadius: "var(--r-md)",
-            display: "grid",
-            placeItems: "center",
-            background: "transparent",
-            color: "var(--ink)",
-            cursor: "pointer",
-          }}
+          className="journal-archive__back"
         >
           <ArrowLeft aria-hidden="true" size={18} />
         </button>
-        <div style={{ minWidth: 0 }}>
-          <div style={{
-            fontFamily: "var(--mono)",
-            fontSize: "var(--fs-mono-xs)",
-            color: "var(--ink-3)",
-            letterSpacing: "0.14em",
-          }}>
+        <div className="journal-archive__heading">
+          <div className="journal-archive__eyebrow">
             JOURNAL ARCHIVE
           </div>
-          <h1 style={{
-            margin: "3px 0 0",
-            fontFamily: "var(--sans)",
-            fontSize: "var(--fs-app-section-title)",
-            lineHeight: 1.25,
-            fontWeight: 600,
-            overflowWrap: "anywhere",
-          }}>
+          <h1>
             {heading}
           </h1>
         </div>

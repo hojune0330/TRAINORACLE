@@ -13,25 +13,25 @@ export function PrescriptionStructure({ sequence }: { readonly sequence: Prescri
   const recoveryDistances = sequence.version === 2 ? deriveSequenceRecoveryDistanceTotals(sequence) : null
   return (
     <div className="prescription-structure">
-      {([ ["준비", sequence.warmup], ["본운동", sequence.main], ["정리", sequence.cooldown] ] as const).map(([label, nodes]) => (
-        nodes.length === 0 ? null : <div key={label}><h4>{label}</h4><SequenceNodes nodes={nodes} />
+      {([ ["prepare", "준비", sequence.warmup], ["main", "본운동", sequence.main], ["cooldown", "정리", sequence.cooldown] ] as const).map(([section, label, nodes]) => (
+        nodes.length === 0 ? null : <div className="prescription-structure__section" data-section={section} key={label}><h4>{label}</h4><SequenceNodes nodes={nodes} />
           {label === "본운동" && sequence.version === 2 && sequence.terminalRecovery && sequence.terminalRecovery.mode !== "NOT_APPLICABLE" &&
-            <p>마지막 본운동 뒤: <Recovery recovery={sequence.terminalRecovery} /></p>}
+            <p className="prescription-structure__terminal">마지막 본운동 뒤: <Recovery recovery={sequence.terminalRecovery} /></p>}
         </div>
       ))}
-      <p className="session-explanation__note">
+      <p className="session-explanation__note prescription-structure__totals">
         본운동 거리: {totals.qualityDistanceM === null ? "거리 미지정" : `${totals.qualityDistanceM}m`}
         {" · "}본운동에 연결된 회복: {totals.plannedRecoverySeconds === null ? "시간 미지정" : secondsText(totals.plannedRecoverySeconds)}
         {recoveryDistances?.plannedRecoveryDistanceM != null && recoveryDistances.plannedRecoveryDistanceM > 0 && ` · 회복 거리 ${recoveryDistances.plannedRecoveryDistanceM}m`}
       </p>
-      {totals.mainSessionTotalExcludingWarmupCooldown === null && <p className="session-explanation__note">거리와 시간을 임의로 환산하지 않아 전체 수행시간은 확정하지 않아요. 준비·정리는 본운동 합계에 더하지 않았어요.</p>}
+      {totals.mainSessionTotalExcludingWarmupCooldown === null && <p className="session-explanation__note prescription-structure__boundary">거리와 시간을 임의로 환산하지 않아 전체 수행시간은 확정하지 않아요. 준비·정리는 본운동 합계에 더하지 않았어요.</p>}
     </div>
   )
 }
 
 function SequenceNodes({ nodes }: { readonly nodes: readonly PrescriptionSequenceNode[] }) {
   return <ol className="prescription-structure__nodes">{nodes.map((node, index) => (
-    <li key={node.id}>
+    <li className="prescription-structure__node" data-node-kind={node.kind} key={node.id}>
       {node.kind === "group" ? <><strong>{node.label ?? "세트"} · {node.repeatCount}회</strong><SequenceNodes nodes={node.children} /></> : (
         <><strong>{node.label ?? "운동 구간"} · {node.repeatCount}회</strong><span>
           {node.work.kind === "distance" ? node.work.distanceM === null ? "거리 미지정" : `${node.work.distanceM}m`

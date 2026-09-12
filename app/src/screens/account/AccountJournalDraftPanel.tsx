@@ -22,6 +22,18 @@ const messages = {
   OPERATION_REPLAY_UNAVAILABLE: "이전 저장 요청의 결과를 다시 확인할 수 없어요. 계정 기록을 먼저 확인해 주세요. 입력과 이전 요청은 유지하며 새 요청을 만들지 않습니다.",
 }
 
+type DraftNoticeTone = "info" | "pending" | "success" | "warning" | "error" | "conflict"
+
+const messageTones: Record<keyof typeof messages, DraftNoticeTone> = {
+  SAVED: "success",
+  PENDING: "warning",
+  CONFLICT: "conflict",
+  STALE: "error",
+  PLANNED_SESSION_ALREADY_RECORDED: "error",
+  INSUFFICIENT_POINTS: "error",
+  OPERATION_REPLAY_UNAVAILABLE: "error",
+}
+
 export function AccountJournalDraftPanel({ userId }: { readonly userId: string }) {
   return <AccountJournalDraftEditor key={userId} userId={userId} />
 }
@@ -33,6 +45,7 @@ function AccountJournalDraftEditor({ userId }: { readonly userId: string }) {
   const [selected, setSelected] = React.useState<string | null>(null)
   const [draft, setDraft] = React.useState<AccountJournalDraft | null>(null)
   const [notice, setNotice] = React.useState("계정 초안은 기존 훈련 일지와 별도로 보관돼요.")
+  const [noticeTone, setNoticeTone] = React.useState<DraftNoticeTone>("info")
   const [busy, setBusy] = React.useState(false)
   const [sending, setSending] = React.useState(false)
   const transportActive = React.useRef(false)
@@ -51,12 +64,16 @@ function AccountJournalDraftEditor({ userId }: { readonly userId: string }) {
     ? Promise.resolve({ ok: false as const, code: "ACCESS_DENIED" as const })
     : requestAccountJournal(userId, request, current)
   const ordinaryDrafts = (values: AccountJournalDraftView[]) => values.filter(item => !isFormInputDraft(item.draft))
+  const showNotice = (message: string, tone: DraftNoticeTone) => {
+    setNotice(message)
+    setNoticeTone(tone)
+  }
 
   React.useEffect(() => {
     alive.current = true
     const unregisterGuard = registerUnsavedDraftGuard({
       isUnsafe: () => current() && (pendingWrites.current > 0 || writeFailed.current),
-      onBlocked: () => setNotice("아직 이 기기에 보관하지 못한 입력이 있어요. 화면을 유지했어요. 저장을 다시 시도하거나 현재 내용을 별도 초안으로 보관해 주세요."),
+      onBlocked: () => showNotice("아직 이 기기에 보관하지 못한 입력이 있어요. 화면을 유지했어요. 저장을 다시 시도하거나 현재 내용을 별도 초안으로 보관해 주세요.", "error"),
     })
     const online = () => { void latestSave.current() }
     window.addEventListener("online", online)
@@ -98,7 +115,7 @@ function AccountJournalDraftEditor({ userId }: { readonly userId: string }) {
     try {
       await writes.current
       if (writeFailed.current) {
-        if (current()) setNotice("아직 보관하지 못한 입력이 있어요. 현재 내용을 별도 초안으로 보관한 뒤 불러와 주세요.")
+        if (current()) showNotice("아직 보관하지 못한 입력이 있어요. 현재 내용을 별도 초안으로 보관한 뒤 불러와 주세요.", "error")
         return
       }
       const local = ordinaryDrafts(await buffer.list(userId))
@@ -131,10 +148,10 @@ function AccountJournalDraftEditor({ userId }: { readonly userId: string }) {
         setItems(loaded)
         const selectedItem = loaded.find(item => item.documentId === selected)
         if (selectedItem) { editorSequence.current = selectedItem.localSequence; setDraft(selectedItem.draft) }
-        setNotice(rejection ? messages[rejection] : "계정 초안 목록을 불러왔어요. 열어서 내용을 확인하세요.")
+        showNotice(rejection ? messages[rejection] : "계정 초안 목록을 불러왔어요. 열어서 내용을 확인하세요.", rejection ? "error" : "info")
       }
     } catch {
-      if (current()) setNotice("계정 목록을 모두 불러오지 못했어요. 기존 초안은 지우지 않았어요. 다시 불러와 주세요.")
+      if (current()) showNotice("계정 목록을 모두 불러오지 못했어요. 기존 초안은 지우지 않았어요. 다시 불러와 주세요.", "error")
     } finally { transportActive.current = false; if (current()) setBusy(false) }
   }
 
@@ -144,7 +161,7 @@ function AccountJournalDraftEditor({ userId }: { readonly userId: string }) {
     const version = ++editVersion.current
     lastEdit.current = Date.now()
     scheduleSave()
-    setNotice("이 기기에 초안을 보관하고 있어요. 계정 저장은 아직 완료되지 않았어요.")
+    showNotice("이 기기에 초안을 보관하고 있어요. 계정 저장은 아직 완료되지 않았어요.", "pending")
     pendingWrites.current += 1
     writes.current = writes.current.then(async () => {
       if (activeLocalAccount() !== userId) return
@@ -153,10 +170,10 @@ function AccountJournalDraftEditor({ userId }: { readonly userId: string }) {
       await buffer.saveDraft(userId, id, next, editorSequence.current)
       editorSequence.current += 1
       writeFailed.current = false
-      if (current() && version === editVersion.current) setNotice("이 기기에 초안을 보관했어요. 계정 저장을 기다리고 있어요.")
+      if (current() && version === editVersion.current) showNotice("이 기기에 초안을 보관했어요. 계정 저장을 기다리고 있어요.", "warning")
     }).catch(() => {
       writeFailed.current = true
-      if (current()) setNotice("이 기기에 저장하지 못했거나 다른 창에서 수정됐어요. 화면을 닫지 말고 내용을 별도 초안으로 보관해 주세요.")
+      if (current()) showNotice("이 기기에 저장하지 못했거나 다른 창에서 수정됐어요. 화면을 닫지 말고 내용을 별도 초안으로 보관해 주세요.", "error")
     }).finally(() => { pendingWrites.current -= 1 })
   }
 
@@ -172,11 +189,11 @@ function AccountJournalDraftEditor({ userId }: { readonly userId: string }) {
       if (explicit && writeFailed.current && selected && draft) change(draft)
       await writes.current
       if (!current() || writeFailed.current) return
-      if (!navigator.onLine) { setNotice("연결 대기 중이에요. 이 기기에 초안을 보관했어요."); return }
+      if (!navigator.onLine) { showNotice("연결 대기 중이에요. 이 기기에 초안을 보관했어요.", "warning"); return }
       const version = editVersion.current
       const local = ordinaryDrafts(await buffer.list(userId))
       if (!current()) return
-      setNotice("계정에 초안을 저장하고 있어요.")
+      showNotice("계정에 초안을 저장하고 있어요.", "pending")
       let selectedResult: keyof typeof messages = "PENDING"
       let firstRequest = true
       for (const item of local) {
@@ -198,10 +215,11 @@ function AccountJournalDraftEditor({ userId }: { readonly userId: string }) {
           const saved = selectedResult === "SAVED" && item?.state === "DRAFT_ACKNOWLEDGED"
             && item.localSequence === editorSequence.current && item.acknowledgedSequence === editorSequence.current
             && item.serverRevision > 0
-          setNotice(saved ? messages.SAVED : selectedResult === "SAVED" ? messages.PENDING : messages[selectedResult])
+          const noticeKey = saved ? "SAVED" : selectedResult === "SAVED" ? "PENDING" : selectedResult
+          showNotice(messages[noticeKey], messageTones[noticeKey])
         }
       }
-    } catch { if (current()) setNotice("저장을 완료하지 못했어요. 작성 내용을 유지하고 다시 시도해 주세요.") }
+    } catch { if (current()) showNotice("저장을 완료하지 못했어요. 작성 내용을 유지하고 다시 시도해 주세요.", "error") }
     finally {
       transportActive.current = false
       if (current()) {
@@ -222,9 +240,10 @@ function AccountJournalDraftEditor({ userId }: { readonly userId: string }) {
       if (current() && item && !isFormInputDraft(item.draft)) {
         setSelected(id); setDraft(item.draft)
         editorSequence.current = item.localSequence
-        setNotice(item.pending?.rejection ? messages[item.pending.rejection] : item.state === "CONFLICT" ? messages.CONFLICT : item.state === "DRAFT_ACKNOWLEDGED" ? messages.SAVED : messages.PENDING)
+        const noticeKey = item.pending?.rejection ?? (item.state === "CONFLICT" ? "CONFLICT" : item.state === "DRAFT_ACKNOWLEDGED" ? "SAVED" : "PENDING")
+        showNotice(messages[noticeKey], messageTones[noticeKey])
       }
-    } catch { if (current()) setNotice("초안을 열지 못했어요. 현재 내용은 그대로 유지했어요.") }
+    } catch { if (current()) showNotice("초안을 열지 못했어요. 현재 내용은 그대로 유지했어요.", "error") }
     finally { if (current()) { setBusy(false); scheduleSave() } }
   }
 
@@ -244,28 +263,28 @@ function AccountJournalDraftEditor({ userId }: { readonly userId: string }) {
     setBusy(false)
   }
 
-  return <section aria-label="계정 초안" style={{ borderTop: "1px solid var(--line)", paddingTop: 16 }}>
-    <h2 style={{ fontSize: 18, margin: "0 0 8px" }}>계정 초안 · 시험 기능</h2>
-    <p>암호화해 계정에 보관하고 다시 로그인해 열 수 있어요. 서비스는 복구를 위해 내용을 복호화할 수 있어요. 비밀 초안은 공유·분석에 사용하지 않아요.</p>
-    <label style={{ display: "flex", gap: 8, alignItems: "center", minHeight: 44 }}>
+  return <section className="account-panel account-journal-draft" aria-label="계정 초안" aria-busy={busy || sending}>
+    <h2>계정 초안 · 시험 기능</h2>
+    <p className="account-panel__body">암호화해 계정에 보관하고 다시 로그인해 열 수 있어요. 서비스는 복구를 위해 내용을 복호화할 수 있어요. 비밀 초안은 공유·분석에 사용하지 않아요.</p>
+    <label className="account-panel__check">
       <input type="checkbox" checked={consent} disabled={busy || sending} onChange={event => setConsent(event.target.checked)} />
       이 방식으로 초안을 계정에 보관할게요
     </label>
     {consent && <>
-      <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+      <div className="account-panel__actions">
         <button type="button" style={secondaryBtn} disabled={busy || sending} onClick={() => void refresh()}><RefreshCw size={16} aria-hidden="true" /> 계정 초안 불러오기</button>
         <button type="button" style={secondaryBtn} disabled={busy || sending} onClick={() => void create()}><Plus size={16} aria-hidden="true" /> 새 초안</button>
       </div>
-      <ul>{items.map(item => <li key={item.documentId}><button type="button" disabled={busy || sending} style={{ ...secondaryBtn, minHeight: 44, overflowWrap: "anywhere" }} onClick={() => void open(item.documentId)}>{item.draft.date} · {item.draft.title || "제목 없는 초안"}{item.state === "CONFLICT" ? " · 수정 충돌" : ""}</button></li>)}</ul>
-      {draft && <div style={{ display: "grid", gap: 12 }}>
-        <label>날짜<input style={{ display: "block", minHeight: 44, maxWidth: "100%" }} type="date" value={draft.date} disabled={busy} onChange={event => change({ ...draft, date: event.target.value })} /></label>
-        <label>제목<input style={{ display: "block", minHeight: 44, width: "100%", boxSizing: "border-box" }} maxLength={200} value={draft.title} disabled={busy} onChange={event => change({ ...draft, title: event.target.value })} /></label>
-        <label>내용<textarea aria-label="내용" style={{ display: "block", width: "100%", minHeight: 180, boxSizing: "border-box", font: "inherit" }} maxLength={100000} value={draft.body} disabled={busy} onChange={event => change({ ...draft, body: event.target.value })} /></label>
-        <label>초안 종류<select style={{ display: "block", minHeight: 44 }} value={draft.visibility} disabled={busy} onChange={event => change({ ...draft, visibility: event.target.value === "PRIVATE" ? "PRIVATE" : "PERSONAL" })}><option value="PRIVATE">비밀 초안</option><option value="PERSONAL">일반 초안 (현재는 나만 열람)</option></select></label>
+      <ul className="account-panel__list">{items.map(item => <li key={item.documentId}><button type="button" disabled={busy || sending} style={secondaryBtn} onClick={() => void open(item.documentId)}>{item.draft.date} · {item.draft.title || "제목 없는 초안"}{item.state === "CONFLICT" ? " · 수정 충돌" : ""}</button></li>)}</ul>
+      {draft && <div className="account-panel__editor">
+        <label className="account-panel__field account-panel__label">날짜<input className="account-panel__control" type="date" value={draft.date} disabled={busy} onChange={event => change({ ...draft, date: event.target.value })} /></label>
+        <label className="account-panel__field account-panel__label">제목<input className="account-panel__control" maxLength={200} value={draft.title} disabled={busy} onChange={event => change({ ...draft, title: event.target.value })} /></label>
+        <label className="account-panel__field account-panel__label">내용<textarea className="account-panel__control" aria-label="내용" maxLength={100000} value={draft.body} disabled={busy} onChange={event => change({ ...draft, body: event.target.value })} /></label>
+        <label className="account-panel__field account-panel__label">초안 종류<select className="account-panel__control" value={draft.visibility} disabled={busy} onChange={event => change({ ...draft, visibility: event.target.value === "PRIVATE" ? "PRIVATE" : "PERSONAL" })}><option value="PRIVATE">비밀 초안</option><option value="PERSONAL">일반 초안 (현재는 나만 열람)</option></select></label>
         <button type="button" style={secondaryBtn} disabled={busy || sending} onClick={() => void save(true)}><Save size={16} aria-hidden="true" /> 계정에 저장</button>
         <button type="button" style={secondaryBtn} disabled={busy || sending} onClick={() => void create(true)}>현재 내용을 별도 초안으로 보관</button>
       </div>}
     </>}
-    <p role="status" aria-live="polite">{notice}</p>
+    <p className="account-panel__status" data-state={noticeTone} role="status" aria-live="polite">{notice}</p>
   </section>
 }

@@ -27,6 +27,7 @@ export function PrivateMemoVault({
   const [existingCode, setExistingCode] = React.useState("")
   const [createdCode, setCreatedCode] = React.useState<string | null>(null)
   const [notice, setNotice] = React.useState<string | null>(null)
+  const [noticeTone, setNoticeTone] = React.useState<"success" | "error">("success")
   const [isRotating, setIsRotating] = React.useState(false)
 
   const create = async () => {
@@ -41,6 +42,7 @@ export function PrivateMemoVault({
     setNotice(saved
       ? "이 브라우저 세션에서 나만의 메모를 암호화해 동기화할 수 있어요."
       : "이 브라우저에 복구 코드를 준비하지 못했어요.")
+    setNoticeTone(saved ? "success" : "error")
     setIsRotating(false)
   }
 
@@ -48,6 +50,7 @@ export function PrivateMemoVault({
     const normalized = existingCode.trim().toUpperCase()
     if (!isValidRecoveryCode(normalized)) {
       setNotice("복구 코드 형식을 확인해 주세요.")
+      setNoticeTone("error")
       return
     }
     const unlocked = onSaveCode(normalized)
@@ -55,35 +58,41 @@ export function PrivateMemoVault({
     setNotice(unlocked
       ? "이 브라우저 세션에서 나만의 메모를 열 수 있어요."
       : "이 브라우저에 복구 코드를 준비하지 못했어요.")
+    setNoticeTone(unlocked ? "success" : "error")
   }
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+    <div className="account-panel" aria-busy={isRotating}>
       <SectionLb>나만의 메모 암호화</SectionLb>
-      <p style={{ fontFamily: "var(--sans)", fontSize: 12, lineHeight: 1.65, color: "var(--ink-2)", margin: 0 }}>
+      <p className="account-panel__body">
         나만의 메모는 기기에서 암호화하고 서버에는 암호문만 저장해요. 복구 코드를 잃으면 <b>서비스 운영자도 대신 복구할 수 없어요.</b>
       </p>
       <button type="button" style={primaryBtn} onClick={create} disabled={isRotating}>새 복구 코드 만들기</button>
       {createdCode !== null && (
-        <output data-testid="recovery-code" style={{ fontFamily: "var(--mono)", fontSize: 13, lineHeight: 1.7, overflowWrap: "anywhere", padding: 10, border: "1px dashed var(--line)" }}>
+        <output className="account-panel__code" data-testid="recovery-code">
           {createdCode}
         </output>
       )}
-      <label htmlFor="private-recovery-code" style={{ fontFamily: "var(--mono)", fontSize: 11, color: "var(--ink-3)" }}>
+      <label className="account-panel__label" htmlFor="private-recovery-code">
         기존 복구 코드
       </label>
       <input
+        className="account-panel__control--code"
         id="private-recovery-code"
         value={existingCode}
         onChange={(event) => setExistingCode(event.target.value)}
         autoComplete="off"
         spellCheck={false}
-        style={inputStyle}
+        style={{ ...inputStyle, fontFamily: "var(--mono)" }}
       />
       <button type="button" style={secondaryBtn} disabled={existingCode.trim() === ""} onClick={unlock}>
         이 세션에서 메모 열기
       </button>
-      {notice !== null && <p role="status" style={{ fontFamily: "var(--mono)", fontSize: 11, color: "var(--ink-2)", margin: 0 }}>{notice}</p>}
+      {notice !== null && (
+        <p className="account-panel__status" data-state={noticeTone} role="status" aria-live="polite">
+          {notice}
+        </p>
+      )}
     </div>
   )
 }

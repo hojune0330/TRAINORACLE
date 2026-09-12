@@ -2,7 +2,7 @@
 
 ```yaml
 doc_id: trainoracle-docs-ux-ui-visual-standard
-version: "1.0"
+version: "1.1"
 status: BINDING_FOR_ALL_UI_WORK
 owner: COACH_HOJUNE
 issued_by: FABLE_INDEPENDENT_REVIEWER
@@ -19,6 +19,24 @@ enforcement: app/src/styles/visual-system.contract.test.ts + PR 검수
 ---
 
 ## 0. 한 문장 정체성
+
+### 2026-09-12 현행 적용 범위
+
+오너 승인 [디자인 시스템 개선 계획](../reports/plans/TRAINORACLE_DESIGN_SYSTEM_IMPROVEMENT_PLAN_2026-09-12.md)에 따라 기존 문구·이용 흐름·도메인 동작을 유지하고 미감·컴포넌트 표현을 개선한다. 아래 원문은 보존하되 충돌 항목은 다음 적용 범위를 따른다.
+
+| 항목 | 현행 적용 기준 |
+|---|---|
+| 폰트·토큰 | 앱은 self-hosted Pretendard와 루트 토큰. 오래된 kit의 Inter/JetBrains를 재도입하지 않음 |
+| compact 아이콘 | 현재 compact chrome의 13px 등 작은 그림은 허용하되 실제 44px 터치 영역과 접근 가능한 이름 유지. 본문까지 일괄 축소하지 않음 |
+| 이모지 3슬롯 | 아래 §6의 3슬롯·고정 크기 설명은 이전 레거시 표현. 현행은 [v3 계약](../reports/review/DECORATION_SCHEMA_V3_MIGRATION_CONTRACT_2026-08-31.md)과 [꾸미기 인수 문서](handoff/decoration-collections.md)의 자유 배치·페이지 24개 상한 및 현재 채택된 계정 보관 경로를 유지 |
+| 모션 | §7은 일반 UI 전환 기준. 현행 편집기의 회전·제스처·스냅·undo, 승인된 짧은 상호작용은 일률 금지하지 않음. 모션 감소 설정과 기능 동등성은 필수 |
+| 컬렉션 | 기본 종이/잉크와 선택형 귀여운 컬렉션의 역할을 구분. 공개 라이선스 이미지까지 유니코드 전용 규칙으로 오인해 제거하지 않으며, 개별 출처·라이선스·획득 정책은 인수 문서를 따름 |
+| 설명·포인트 | 영문 전용·AI 신뢰도 % 의무·게임화 전면 금지 같은 이전 kit 규칙으로 현재 기능을 변경하지 않음. 현행 용어·근거·꾸미기 계약 우선 |
+| 검사 범위 | CSS 소스 검사 통과는 렌더링·inline 스타일·실제 클릭·접근성 검수 완료가 아님. 검사 범위와 실제 화면 증거를 따로 기록 |
+
+이 개정은 디자인 적용 범위 정리이며 훈련·안전·저장 스펙의 승격이나 신규 처방 승인이 아니다. 테스트는 규칙을 검증하는 수단이지 상위 제품 결정의 대체 권한이 아니다. §9의 테스트 우선 문구는 이미 승인된 동일 규칙의 구현 확인 범위로만 읽으며, 충돌하면 상위 문서와 채택 기록을 대조한다.
+
+### 정체성 원문
 
 **"Scientific Minimalism — Tufte × Linear, 위에 얹힌 종이 다이어리."**
 

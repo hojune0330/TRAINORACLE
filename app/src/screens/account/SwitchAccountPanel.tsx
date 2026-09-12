@@ -3,7 +3,7 @@ import { SectionLb } from "../../components/JournalPrimitives"
 import { currentSyncOwner, loadSyncConsent, releaseSyncOwner, saveSyncConsent } from "../../domain/account/sync"
 import type { ReleaseOwnerResult } from "../../domain/account/sync"
 import { loadEntries } from "../../domain/journal-store"
-import { mono, secondaryBtn } from "./styles"
+import { secondaryBtn } from "./styles"
 
 /**
  * "다른 계정으로 바꾸기" — 일지를 지키면서 기기의 계정 잠금을 푼다 (Q4).
@@ -57,20 +57,22 @@ export function SwitchAccountPanel({
   }
 
   return (
-    <div data-testid="switch-account-panel" style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+    <div className="account-panel" data-testid="switch-account-panel">
       <SectionLb>다른 계정으로 바꾸기</SectionLb>
 
       {result !== null ? (
         <p
+          className="account-panel__status"
+          data-state={result.ok ? "success" : "error"}
           role="status"
+          aria-live="polite"
           data-testid="switch-account-result"
-          style={{ ...mono, fontSize: 12, lineHeight: 1.7, color: "var(--ink-2)", margin: 0 }}
         >
           {result.message}
         </p>
       ) : confirming ? (
         <>
-          <p style={{ fontFamily: "var(--sans)", fontSize: 12.5, lineHeight: 1.6, color: "var(--ink-2)", margin: 0 }}>
+          <p className="account-panel__body">
             이 기기의 계정 연결만 끊어요. <b>현재 볼 수 있는 일지 {loadEntries().length}개는 그대로 남아요.</b>
             {" "}동기화는 꺼지고 로그아웃돼요. 다른 계정으로 로그인해서 다시 켤 수 있어요.
           </p>
@@ -84,11 +86,11 @@ export function SwitchAccountPanel({
               먼저 백업 내려받기
             </button>
           )}
-          <div style={{ display: "flex", gap: 8 }}>
+          <div className="account-panel__actions account-panel__actions--split">
             <button
               type="button"
               data-testid="switch-account-confirm"
-              style={{ ...secondaryBtn, flex: 1 }}
+              style={secondaryBtn}
               onClick={() => void release()}
             >
               연결 끊기
@@ -96,7 +98,7 @@ export function SwitchAccountPanel({
             <button
               type="button"
               data-testid="switch-account-cancel"
-              style={{ ...secondaryBtn, flex: 1 }}
+              style={secondaryBtn}
               onClick={() => setConfirming(false)}
             >
               그만두기
@@ -105,7 +107,7 @@ export function SwitchAccountPanel({
         </>
       ) : (
         <>
-          <p style={{ fontFamily: "var(--sans)", fontSize: 12.5, lineHeight: 1.6, color: "var(--ink-2)", margin: 0 }}>
+          <p className="account-panel__body">
             이 기기는 계정 하나와 연결되어 있어요. 다른 계정으로 동기화하려면 연결을 끊어야 해요.
             <br />
             <b>일지를 지우지 않고</b> 연결만 끊을 수 있어요.

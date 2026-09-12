@@ -1,0 +1,724 @@
+{
+  "home320Initial": {
+    "shell": {
+      "viewport": {
+        "width": 320,
+        "height": 568
+      },
+      "scroll": {
+        "top": 0,
+        "right": 319,
+        "bottom": 523,
+        "left": 1,
+        "width": 318,
+        "height": 523,
+        "scrollTop": 0,
+        "scrollHeight": 986,
+        "clientHeight": 523,
+        "maxScroll": 463
+      },
+      "nav": {
+        "top": 523,
+        "right": 319,
+        "bottom": 568,
+        "left": 1,
+        "width": 318,
+        "height": 45
+      },
+      "documentHorizontalOverflow": false
+    },
+    "journalHeading": {
+      "tag": "STRONG",
+      "className": "",
+      "top": 513.875,
+      "bottom": 535.5625,
+      "left": 23,
+      "right": 261,
+      "width": 238,
+      "height": 21.6875
+    }
+  },
+  "home320JournalRevealed": {
+    "shell": {
+      "viewport": {
+        "width": 320,
+        "height": 568
+      },
+      "scroll": {
+        "top": 0,
+        "right": 319,
+        "bottom": 523,
+        "left": 1,
+        "width": 318,
+        "height": 523,
+        "scrollTop": 13,
+        "scrollHeight": 986,
+        "clientHeight": 523,
+        "maxScroll": 463
+      },
+      "nav": {
+        "top": 523,
+        "right": 319,
+        "bottom": 568,
+        "left": 1,
+        "width": 318,
+        "height": 45
+      },
+      "documentHorizontalOverflow": false
+    },
+    "journalHeading": {
+      "tag": "STRONG",
+      "className": "",
+      "top": 500.875,
+      "bottom": 522.5625,
+      "left": 23,
+      "right": 261,
+      "width": 238,
+      "height": 21.6875
+    }
+  },
+  "home320TrainingButton": {
+    "rect": {
+      "top": 262.15625,
+      "bottom": 314.15625,
+      "left": 21,
+      "right": 299,
+      "width": 278,
+      "height": 52
+    },
+    "withinScrollViewport": true,
+    "aboveNav": true,
+    "centerHit": true,
+    "hitTag": "SPAN",
+    "hitClass": ""
+  },
+  "home320Bottom": {
+    "viewport": {
+      "width": 320,
+      "height": 568
+    },
+    "scroll": {
+      "top": 0,
+      "right": 319,
+      "bottom": 523,
+      "left": 1,
+      "width": 318,
+      "height": 523,
+      "scrollTop": 463,
+      "scrollHeight": 986,
+      "clientHeight": 523,
+      "maxScroll": 463
+    },
+    "nav": {
+      "top": 523,
+      "right": 319,
+      "bottom": 568,
+      "left": 1,
+      "width": 318,
+      "height": 45
+    },
+    "documentHorizontalOverflow": false
+  },
+  "home375Initial": {
+    "shell": {
+      "viewport": {
+        "width": 375,
+        "height": 667
+      },
+      "scroll": {
+        "top": 0,
+        "right": 374,
+        "bottom": 622,
+        "left": 1,
+        "width": 373,
+        "height": 622,
+        "scrollTop": 0,
+        "scrollHeight": 976,
+        "clientHeight": 622,
+        "maxScroll": 354
+      },
+      "nav": {
+        "top": 622,
+        "right": 374,
+        "bottom": 667,
+        "left": 1,
+        "width": 373,
+        "height": 45
+      },
+      "documentHorizontalOverflow": false
+    },
+    "journalHeading": {
+      "tag": "STRONG",
+      "className": "",
+      "top": 524.515625,
+      "bottom": 546.203125,
+      "left": 23,
+      "right": 316,
+      "width": 293,
+      "height": 21.6875
+    }
+  },
+  "home375TrainingButton": {
+    "rect": {
+      "top": 285.796875,
+      "bottom": 337.796875,
+      "left": 21,
+      "right": 354,
+      "width": 333,
+      "height": 52
+    },
+    "withinScrollViewport": true,
+    "aboveNav": true,
+    "centerHit": true,
+    "hitTag": "SPAN",
+    "hitClass": ""
+  },
+  "editor375SelectedInitial": {
+    "workspace": {
+      "top": 0,
+      "right": 375,
+      "bottom": 667,
+      "left": 0,
+      "width": 375,
+      "height": 667,
+      "scrollTop": 0,
+      "scrollHeight": 900,
+      "clientHeight": 667,
+      "maxScroll": 233
+    },
+    "topbar": {
+      "top": 0,
+      "right": 375,
+      "bottom": 61,
+      "left": 0,
+      "width": 375,
+      "height": 61
+    },
+    "tray": {
+      "top": 551,
+      "right": 367,
+      "bottom": 605,
+      "left": 8,
+      "width": 359,
+      "height": 54
+    },
+    "body": {
+      "top": 207.5,
+      "right": 375,
+      "bottom": 842.078125,
+      "left": 0,
+      "width": 375,
+      "height": 634.578125
+    },
+    "metric": {
+      "top": 458.15625,
+      "right": 350,
+      "bottom": 593.21875,
+      "left": 25,
+      "width": 325,
+      "height": 135.0625,
+      "className": "journal-entry-metrics"
+    },
+    "metricTrayOverlapArea": 13721.09375,
+    "metricUnobstructed": false,
+    "trayButtons": [
+      {
+        "name": "뒤로",
+        "disabled": true,
+        "width": 54,
+        "height": 46,
+        "centerHit": true,
+        "hitTag": "BUTTON"
+      },
+      {
+        "name": "앞으로",
+        "disabled": true,
+        "width": 61.9375,
+        "height": 46,
+        "centerHit": true,
+        "hitTag": "SPAN"
+      },
+      {
+        "name": "복사",
+        "disabled": false,
+        "width": 54,
+        "height": 46,
+        "centerHit": true,
+        "hitTag": "BUTTON"
+      }
+    ],
+    "editorChromeButtons": [
+      {
+        "name": "꾸미기 편집기 닫기",
+        "width": 44,
+        "height": 44,
+        "centerHit": true
+      },
+      {
+        "name": "꾸미기 되돌리기",
+        "width": 44,
+        "height": 44,
+        "centerHit": true
+      },
+      {
+        "name": "꾸미기 완료",
+        "width": 44,
+        "height": 44,
+        "centerHit": true
+      },
+      {
+        "name": "모든 꾸미기 도구",
+        "width": 56.84375,
+        "height": 52,
+        "centerHit": true
+      },
+      {
+        "name": "꾸미기 재료 도구",
+        "width": 56.828125,
+        "height": 52,
+        "centerHit": true
+      },
+      {
+        "name": "이모지 스티커 도구",
+        "width": 56.84375,
+        "height": 52,
+        "centerHit": true
+      },
+      {
+        "name": "글 스티커 도구",
+        "width": 56.828125,
+        "height": 52,
+        "centerHit": true
+      },
+      {
+        "name": "페이지 테마 도구",
+        "width": 56.828125,
+        "height": 52,
+        "centerHit": true
+      },
+      {
+        "name": "글자색 도구",
+        "width": 56.828125,
+        "height": 52,
+        "centerHit": true
+      }
+    ],
+    "metricControls": [
+      {
+        "name": "운동 자각도 RPE 설명 보기",
+        "width": 44,
+        "height": 44,
+        "top": 525.1875,
+        "bottom": 569.1875,
+        "centerHit": false,
+        "hitTag": "SECTION",
+        "hitClass": "decorated-journal-page",
+        "hitText": "2026 · 09 · 12SAT2026 autumn이 날짜에 일지 더 쓰기훈련 기록 수정— TRAINING ",
+        "coveredByTray": true
+      }
+    ],
+    "contentBlocks": [
+      {
+        "tag": "DIV",
+        "className": "decorated-journal-page__content journal-reader-page journal-page-scroll-target",
+        "top": 207.5,
+        "bottom": 842.078125,
+        "text": "2026 · 09 · 12SAT2026 autumn이 날짜에 일지 더 쓰기훈련 기록 수정— TRAINING SESSION11:01LOG빠른 기록"
+      }
+    ],
+    "documentHorizontalOverflow": false
+  },
+  "editor375SelectedRevealed": {
+    "workspace": {
+      "top": 0,
+      "right": 375,
+      "bottom": 667,
+      "left": 0,
+      "width": 375,
+      "height": 667,
+      "scrollTop": 50,
+      "scrollHeight": 900,
+      "clientHeight": 667,
+      "maxScroll": 233
+    },
+    "topbar": {
+      "top": 0,
+      "right": 375,
+      "bottom": 61,
+      "left": 0,
+      "width": 375,
+      "height": 61
+    },
+    "tray": {
+      "top": 551,
+      "right": 367,
+      "bottom": 605,
+      "left": 8,
+      "width": 359,
+      "height": 54
+    },
+    "body": {
+      "top": 157.5,
+      "right": 375,
+      "bottom": 792.078125,
+      "left": 0,
+      "width": 375,
+      "height": 634.578125
+    },
+    "metric": {
+      "top": 408.15625,
+      "right": 350,
+      "bottom": 543.21875,
+      "left": 25,
+      "width": 325,
+      "height": 135.0625,
+      "className": "journal-entry-metrics"
+    },
+    "metricTrayOverlapArea": 0,
+    "metricUnobstructed": true,
+    "trayButtons": [
+      {
+        "name": "뒤로",
+        "disabled": true,
+        "width": 54,
+        "height": 46,
+        "centerHit": true,
+        "hitTag": "BUTTON"
+      },
+      {
+        "name": "앞으로",
+        "disabled": true,
+        "width": 61.9375,
+        "height": 46,
+        "centerHit": true,
+        "hitTag": "SPAN"
+      },
+      {
+        "name": "복사",
+        "disabled": false,
+        "width": 54,
+        "height": 46,
+        "centerHit": true,
+        "hitTag": "BUTTON"
+      }
+    ],
+    "editorChromeButtons": [
+      {
+        "name": "꾸미기 편집기 닫기",
+        "width": 44,
+        "height": 44,
+        "centerHit": true
+      },
+      {
+        "name": "꾸미기 되돌리기",
+        "width": 44,
+        "height": 44,
+        "centerHit": true
+      },
+      {
+        "name": "꾸미기 완료",
+        "width": 44,
+        "height": 44,
+        "centerHit": true
+      },
+      {
+        "name": "모든 꾸미기 도구",
+        "width": 56.84375,
+        "height": 52,
+        "centerHit": true
+      },
+      {
+        "name": "꾸미기 재료 도구",
+        "width": 56.828125,
+        "height": 52,
+        "centerHit": true
+      },
+      {
+        "name": "이모지 스티커 도구",
+        "width": 56.84375,
+        "height": 52,
+        "centerHit": true
+      },
+      {
+        "name": "글 스티커 도구",
+        "width": 56.828125,
+        "height": 52,
+        "centerHit": true
+      },
+      {
+        "name": "페이지 테마 도구",
+        "width": 56.828125,
+        "height": 52,
+        "centerHit": true
+      },
+      {
+        "name": "글자색 도구",
+        "width": 56.828125,
+        "height": 52,
+        "centerHit": true
+      }
+    ],
+    "metricControls": [
+      {
+        "name": "운동 자각도 RPE 설명 보기",
+        "width": 44,
+        "height": 44,
+        "top": 475.1875,
+        "bottom": 519.1875,
+        "centerHit": false,
+        "hitTag": "SECTION",
+        "hitClass": "decorated-journal-page",
+        "hitText": "2026 · 09 · 12SAT2026 autumn이 날짜에 일지 더 쓰기훈련 기록 수정— TRAINING ",
+        "coveredByTray": false
+      }
+    ],
+    "contentBlocks": [
+      {
+        "tag": "DIV",
+        "className": "decorated-journal-page__content journal-reader-page journal-page-scroll-target",
+        "top": 157.5,
+        "bottom": 792.078125,
+        "text": "2026 · 09 · 12SAT2026 autumn이 날짜에 일지 더 쓰기훈련 기록 수정— TRAINING SESSION11:01LOG빠른 기록"
+      }
+    ],
+    "documentHorizontalOverflow": false
+  },
+  "editor375Bottom": {
+    "workspace": {
+      "top": 0,
+      "right": 375,
+      "bottom": 667,
+      "left": 0,
+      "width": 375,
+      "height": 667,
+      "scrollTop": 233,
+      "scrollHeight": 900,
+      "clientHeight": 667,
+      "maxScroll": 233
+    },
+    "topbar": {
+      "top": 0,
+      "right": 375,
+      "bottom": 61,
+      "left": 0,
+      "width": 375,
+      "height": 61
+    },
+    "tray": {
+      "top": 551,
+      "right": 367,
+      "bottom": 605,
+      "left": 8,
+      "width": 359,
+      "height": 54
+    },
+    "body": {
+      "top": -25.5,
+      "right": 375,
+      "bottom": 609.078125,
+      "left": 0,
+      "width": 375,
+      "height": 634.578125
+    },
+    "metric": {
+      "top": 225.15625,
+      "right": 350,
+      "bottom": 360.21875,
+      "left": 25,
+      "width": 325,
+      "height": 135.0625,
+      "className": "journal-entry-metrics"
+    },
+    "metricTrayOverlapArea": 0,
+    "metricUnobstructed": true,
+    "trayButtons": [
+      {
+        "name": "뒤로",
+        "disabled": true,
+        "width": 54,
+        "height": 46,
+        "centerHit": true,
+        "hitTag": "BUTTON"
+      },
+      {
+        "name": "앞으로",
+        "disabled": true,
+        "width": 61.9375,
+        "height": 46,
+        "centerHit": true,
+        "hitTag": "SPAN"
+      },
+      {
+        "name": "복사",
+        "disabled": false,
+        "width": 54,
+        "height": 46,
+        "centerHit": true,
+        "hitTag": "BUTTON"
+      }
+    ],
+    "editorChromeButtons": [
+      {
+        "name": "꾸미기 편집기 닫기",
+        "width": 44,
+        "height": 44,
+        "centerHit": true
+      },
+      {
+        "name": "꾸미기 되돌리기",
+        "width": 44,
+        "height": 44,
+        "centerHit": true
+      },
+      {
+        "name": "꾸미기 완료",
+        "width": 44,
+        "height": 44,
+        "centerHit": true
+      },
+      {
+        "name": "모든 꾸미기 도구",
+        "width": 56.84375,
+        "height": 52,
+        "centerHit": true
+      },
+      {
+        "name": "꾸미기 재료 도구",
+        "width": 56.828125,
+        "height": 52,
+        "centerHit": true
+      },
+      {
+        "name": "이모지 스티커 도구",
+        "width": 56.84375,
+        "height": 52,
+        "centerHit": true
+      },
+      {
+        "name": "글 스티커 도구",
+        "width": 56.828125,
+        "height": 52,
+        "centerHit": true
+      },
+      {
+        "name": "페이지 테마 도구",
+        "width": 56.828125,
+        "height": 52,
+        "centerHit": true
+      },
+      {
+        "name": "글자색 도구",
+        "width": 56.828125,
+        "height": 52,
+        "centerHit": true
+      }
+    ],
+    "metricControls": [
+      {
+        "name": "운동 자각도 RPE 설명 보기",
+        "width": 44,
+        "height": 44,
+        "top": 292.1875,
+        "bottom": 336.1875,
+        "centerHit": false,
+        "hitTag": "SECTION",
+        "hitClass": "decorated-journal-page",
+        "hitText": "2026 · 09 · 12SAT2026 autumn이 날짜에 일지 더 쓰기훈련 기록 수정— TRAINING ",
+        "coveredByTray": false
+      }
+    ],
+    "contentBlocks": [
+      {
+        "tag": "DIV",
+        "className": "decorated-journal-page__content journal-reader-page journal-page-scroll-target",
+        "top": -25.5,
+        "bottom": 609.078125,
+        "text": "2026 · 09 · 12SAT2026 autumn이 날짜에 일지 더 쓰기훈련 기록 수정— TRAINING SESSION11:01LOG빠른 기록"
+      }
+    ],
+    "documentHorizontalOverflow": false
+  },
+  "analysis320Uniform200": {
+    "button": {
+      "top": 12,
+      "right": 81,
+      "bottom": 56,
+      "left": 17,
+      "width": 64,
+      "height": 44
+    },
+    "label": {
+      "top": 16.953125,
+      "right": 77,
+      "bottom": 51.046875,
+      "left": 38.96875,
+      "width": 38.03125,
+      "height": 34.09375
+    },
+    "heading": {
+      "top": 16.953125,
+      "right": 239,
+      "bottom": 51.046875,
+      "left": 81,
+      "width": 158,
+      "height": 34.09375
+    },
+    "labelLineCount": 1,
+    "labelLineRects": [
+      {
+        "top": 20.953125,
+        "right": 77,
+        "bottom": 46.953125,
+        "left": 38.96875,
+        "width": 38.03125,
+        "height": 26
+      }
+    ],
+    "minTouchTarget": true,
+    "buttonHeadingOverlap": 0,
+    "headingCenterDelta": 0,
+    "documentHorizontalOverflow": false
+  },
+  "analysis375Uniform200": {
+    "button": {
+      "top": 12,
+      "right": 81,
+      "bottom": 56,
+      "left": 17,
+      "width": 64,
+      "height": 44
+    },
+    "label": {
+      "top": 16.953125,
+      "right": 77,
+      "bottom": 51.046875,
+      "left": 38.96875,
+      "width": 38.03125,
+      "height": 34.09375
+    },
+    "heading": {
+      "top": 16.953125,
+      "right": 294,
+      "bottom": 51.046875,
+      "left": 81,
+      "width": 213,
+      "height": 34.09375
+    },
+    "labelLineCount": 1,
+    "labelLineRects": [
+      {
+        "top": 20.953125,
+        "right": 77,
+        "bottom": 46.953125,
+        "left": 38.96875,
+        "width": 38.03125,
+        "height": 26
+      }
+    ],
+    "minTouchTarget": true,
+    "buttonHeadingOverlap": 0,
+    "headingCenterDelta": 0,
+    "documentHorizontalOverflow": false
+  },
+  "errors": []
+}

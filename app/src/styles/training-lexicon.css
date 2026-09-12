@@ -1,96 +1,112 @@
 .training-lexicon {
   min-height: 100%;
-  padding: 0 20px 48px;
+  padding: 0 var(--space-5) var(--space-12);
   color: var(--ink);
   background: var(--bg);
   font-family: var(--sans);
 }
 
 .training-lexicon__header,
-.training-lexicon__index,
-.training-term {
+.training-lexicon__index {
   width: min(100%, 760px);
   margin-inline: auto;
 }
 
-.training-lexicon__header { padding: 24px 0 20px; border-bottom: 1px solid var(--ink); }
+.training-term {
+  width: min(100%, 680px);
+  margin-inline: auto;
+}
+
+.training-lexicon__header {
+  padding: var(--space-6) 0 var(--space-5);
+  border-bottom: var(--bw-line) solid var(--ink);
+}
 .training-lexicon__back,
 .training-term__index-back {
-  min-height: 44px;
-  margin: -8px 0 12px;
+  min-height: var(--app-touch-min);
+  margin: calc(var(--space-2) * -1) 0 var(--space-3);
   padding: 0;
   display: inline-flex;
   align-items: center;
-  gap: 7px;
+  gap: var(--space-2);
   border: 0;
   background: transparent;
   color: var(--ink-2);
-  font: 500 13px/1 var(--sans);
+  font: 600 var(--fs-body-sm)/1.4 var(--sans);
   cursor: pointer;
 }
-.training-lexicon__eyebrow { display: inline-flex; align-items: center; gap: 7px; color: var(--accent); font: 700 11px/1.2 var(--mono); }
-.training-lexicon__header h1 { margin: 9px 0 8px; font-size: 30px; line-height: 1.2; letter-spacing: 0; }
-.training-lexicon__header p { max-width: 620px; margin: 0; color: var(--ink-2); font-size: 14px; line-height: 1.65; word-break: keep-all; }
+.training-lexicon__eyebrow { display: inline-flex; align-items: center; gap: var(--space-2); color: var(--brand); font: 700 var(--fs-caption)/1.3 var(--mono); }
+.training-lexicon__header h1 { margin: var(--space-2) 0; font-size: var(--fs-app-title); line-height: 1.3; letter-spacing: 0; }
+.training-lexicon__header p { max-width: 64ch; margin: 0; color: var(--ink-2); font-size: var(--fs-body); line-height: 1.6; word-break: keep-all; }
 
-.training-lexicon__tools { padding: 20px 0; display: grid; grid-template-columns: minmax(0, 1fr) 210px; gap: 12px; border-bottom: 1px solid var(--hair); }
-.training-lexicon__tools label { display: grid; gap: 7px; color: var(--ink-3); font: 700 10px/1.2 var(--mono); }
-.training-lexicon__search-field { min-height: 46px; padding: 0 12px; display: flex; align-items: center; gap: 9px; border: 1px solid var(--ink); background: var(--surface); }
+.training-lexicon__tools { padding: var(--space-5) 0; display: grid; grid-template-columns: minmax(0, 1fr) 208px; gap: var(--space-3); border-bottom: var(--bw-line) solid var(--hair); }
+.training-lexicon__tools label { min-width: 0; display: grid; gap: var(--space-2); color: var(--ink-3); font: 700 var(--fs-caption)/1.3 var(--mono); }
+.training-lexicon__search-field { min-height: 48px; padding: 0 var(--space-3); display: flex; align-items: center; gap: var(--space-2); border: var(--bw-line) solid var(--ink); background: var(--surface); }
 .training-lexicon__search-field input,
-.training-lexicon__tools select { width: 100%; min-height: 46px; border: 1px solid var(--ink); border-radius: 0; background: var(--surface); color: var(--ink); font: 400 14px/1.4 var(--sans); }
-.training-lexicon__search-field input { min-height: 42px; padding: 0; border: 0; outline: 0; }
-.training-lexicon__tools select { padding: 0 12px; }
+.training-lexicon__tools select { width: 100%; min-height: 48px; border: var(--bw-line) solid var(--ink); border-radius: var(--r-0); background: var(--surface); color: var(--ink); font: 400 var(--fs-body-lg)/1.4 var(--sans); }
+.training-lexicon__search-field input { min-width: 0; min-height: var(--app-touch-min); padding: 0; border: 0; outline: 0; }
+.training-lexicon__tools select { padding: 0 var(--space-3); }
 
-.training-lexicon__frequent { padding: 22px 0; border-bottom: 1px solid var(--hair); }
+.training-lexicon__frequent { padding: var(--space-6) 0; border-bottom: var(--bw-line) solid var(--hair); }
 .training-lexicon__frequent h2,
-.training-lexicon__group h2 { margin: 0 0 12px; font-size: 14px; line-height: 1.4; letter-spacing: 0; }
+.training-lexicon__group h2 { margin: 0 0 var(--space-3); font-size: var(--fs-body); line-height: 1.4; letter-spacing: 0; }
 .training-lexicon__frequent > div,
-.training-term__related > div { display: flex; flex-wrap: wrap; gap: 8px; }
+.training-term__related > div { display: flex; flex-wrap: wrap; gap: var(--space-2); }
 .training-lexicon__frequent button,
-.training-term__related button { min-height: 44px; padding: 8px 11px; border: 1px solid var(--line); border-radius: var(--r-md); background: var(--surface); color: var(--ink); font: 600 13px/1.25 var(--sans); cursor: pointer; }
+.training-term__related button { min-height: var(--app-touch-min); padding: var(--space-2) var(--space-3); border: var(--bw-line) solid var(--line); border-radius: var(--r-md); background: var(--surface); color: var(--ink); font: 600 var(--fs-body-sm)/1.35 var(--sans); cursor: pointer; }
 .training-lexicon__frequent small,
-.training-term__related small { margin-left: 6px; color: var(--ink-3); font: 700 10px/1 var(--mono); }
+.training-term__related small { margin-left: var(--space-2); color: var(--ink-3); font: 700 var(--fs-mono-xs)/1.2 var(--mono); }
 
-.training-lexicon__group { padding: 22px 0 4px; }
-.training-lexicon__group ul { margin: 0; padding: 0; list-style: none; border-top: 1px solid var(--line); }
-.training-lexicon__group li { border-bottom: 1px solid var(--line); }
-.training-lexicon__group li button { width: 100%; min-height: 68px; padding: 14px 0; display: grid; grid-template-columns: minmax(140px, .38fr) minmax(0, 1fr); gap: 18px; align-items: start; border: 0; background: transparent; color: var(--ink); text-align: left; cursor: pointer; }
-.training-lexicon__group li span { display: flex; align-items: baseline; flex-wrap: wrap; gap: 7px; }
-.training-lexicon__group li strong { font-size: 14px; line-height: 1.4; }
-.training-lexicon__group li small { color: var(--accent); font: 700 10px/1.3 var(--mono); }
-.training-lexicon__group li p { margin: 0; color: var(--ink-2); font-size: 13px; line-height: 1.55; word-break: keep-all; }
-.training-lexicon__empty { margin: 30px 0; color: var(--ink-2); line-height: 1.6; }
+.training-lexicon__group { padding: var(--space-6) 0 var(--space-1); }
+.training-lexicon__group ul { margin: 0; padding: 0; list-style: none; border-top: var(--bw-line) solid var(--line); }
+.training-lexicon__group li { border-bottom: var(--bw-line) solid var(--line); }
+.training-lexicon__group li button { width: 100%; min-height: 72px; padding: var(--space-4) 0; display: grid; grid-template-columns: minmax(144px, .38fr) minmax(0, 1fr); gap: var(--space-5); align-items: start; border: 0; background: transparent; color: var(--ink); text-align: left; cursor: pointer; }
+.training-lexicon__group li span { min-width: 0; display: flex; align-items: baseline; flex-wrap: wrap; gap: var(--space-2); }
+.training-lexicon__group li strong { font-size: var(--fs-body); line-height: 1.45; word-break: keep-all; }
+.training-lexicon__group li small { color: var(--brand); font: 700 var(--fs-mono-xs)/1.3 var(--mono); }
+.training-lexicon__group li p { min-width: 0; margin: 0; color: var(--ink-2); font-size: var(--fs-body-sm); line-height: 1.6; word-break: keep-all; }
+.training-lexicon__empty { margin: var(--space-8) 0; color: var(--ink-2); font-size: var(--fs-body); line-height: 1.6; word-break: keep-all; }
 
-.training-term { padding-top: 18px; }
-.training-term > header { padding: 2px 0 20px; border-bottom: 1px solid var(--ink); }
-.training-term > header > span { color: var(--accent); font: 700 11px/1.3 var(--mono); }
-.training-term h2 { margin: 9px 0 10px; font-size: 28px; line-height: 1.25; letter-spacing: 0; }
-.training-term h2 small { margin-left: 9px; color: var(--ink-3); font: 700 13px/1 var(--mono); }
-.training-term > header p { max-width: 640px; margin: 0; color: var(--ink-2); font-size: 15px; line-height: 1.7; word-break: keep-all; }
-.training-term__mode { margin: 18px 0 8px; display: grid; grid-template-columns: 1fr 1fr; border: 1px solid var(--ink); }
-.training-term__mode button { min-height: 44px; border: 0; background: var(--surface); color: var(--ink-2); font: 600 13px/1 var(--sans); cursor: pointer; }
-.training-term__mode button + button { border-left: 1px solid var(--ink); }
+.training-term { padding-top: var(--space-5); }
+.training-term > header { padding: var(--space-1) 0 var(--space-5); border-bottom: var(--bw-line) solid var(--ink); }
+.training-term > header > span { color: var(--brand); font: 700 var(--fs-caption)/1.3 var(--mono); }
+.training-term h2 { margin: var(--space-2) 0; font-size: var(--fs-app-title); line-height: 1.3; letter-spacing: 0; word-break: keep-all; }
+.training-term h2 small { margin-left: var(--space-2); color: var(--ink-3); font: 700 var(--fs-body-sm)/1.2 var(--mono); }
+.training-term > header p { max-width: 64ch; margin: 0; color: var(--ink-2); font-size: var(--fs-body); line-height: 1.65; word-break: keep-all; }
+.training-term__mode { margin: var(--space-5) 0 var(--space-2); display: grid; grid-template-columns: 1fr 1fr; border: var(--bw-line) solid var(--ink); }
+.training-term__mode button { min-height: var(--app-touch-min); border: 0; background: var(--surface); color: var(--ink-2); font: 600 var(--fs-body-sm)/1.3 var(--sans); cursor: pointer; }
+.training-term__mode button + button { border-left: var(--bw-line) solid var(--ink); }
 .training-term__mode button[aria-pressed="true"] { background: var(--ink); color: var(--bg); }
-.training-term__sections { border-top: 1px solid var(--hair); }
-.training-term__section { padding: 18px 0; border-bottom: 1px solid var(--hair); }
+.training-term__sections { border-top: var(--bw-line) solid var(--hair); }
+.training-term__section { padding: var(--space-5) 0; border-bottom: var(--bw-line) solid var(--hair); }
 .training-term__section h3,
-.training-term__related h3 { margin: 0 0 8px; color: var(--ink-3); font: 700 11px/1.3 var(--mono); }
+.training-term__related h3 { margin: 0 0 var(--space-2); color: var(--ink-3); font: 700 var(--fs-caption)/1.3 var(--mono); }
 .training-term__section p,
-.training-term__section li { margin: 0; color: var(--ink); font-size: 14px; line-height: 1.7; word-break: keep-all; }
-.training-term__section[data-caution="true"] { padding-inline: 12px; border: 1px solid var(--warn); }
-.training-term__section ul { margin: 0; padding-left: 20px; }
-.training-term__sources { display: grid; gap: 8px; padding-left: 0 !important; list-style: none; }
-.training-term__sources a { min-height: 44px; display: inline-flex; align-items: center; gap: 7px; color: var(--accent); }
-.training-term__section > small { display: block; margin-top: 10px; color: var(--ink-3); font-size: 11px; line-height: 1.55; }
-.training-term__related { padding: 22px 0; }
+.training-term__section li { max-width: 68ch; margin: 0; color: var(--ink); font-size: var(--fs-body); line-height: 1.65; word-break: keep-all; }
+.training-term__section[data-caution="true"] { padding-inline: var(--space-3); border: var(--bw-line) solid var(--warn); }
+.training-term__section ul { margin: 0; padding-left: var(--space-5); }
+.training-term__sources { display: grid; gap: var(--space-2); padding-left: 0 !important; list-style: none; }
+.training-term__sources a { min-height: var(--app-touch-min); display: inline-flex; align-items: center; gap: var(--space-2); color: var(--brand); line-height: 1.45; overflow-wrap: anywhere; }
+.training-term__section > small { display: block; max-width: 68ch; margin-top: var(--space-3); color: var(--ink-3); font-size: var(--fs-caption); line-height: 1.55; word-break: keep-all; }
+.training-term__related { padding: var(--space-6) 0; }
 
-.term-help__more { min-height: 38px; margin-top: 9px; display: inline-flex; align-items: center; color: var(--accent); font: 700 11px/1.2 var(--sans); text-decoration: underline; text-underline-offset: 3px; }
+.term-help__more { min-height: var(--app-touch-min); margin-top: var(--space-2); display: inline-flex; align-items: center; color: var(--brand); font: 700 var(--fs-caption)/1.3 var(--sans); text-decoration: underline; text-underline-offset: 3px; }
+
+.training-lexicon__back:focus-visible,
+.training-term__index-back:focus-visible,
+.training-lexicon__frequent button:focus-visible,
+.training-lexicon__group li button:focus-visible,
+.training-term__mode button:focus-visible,
+.training-term__related button:focus-visible,
+.training-term__sources a:focus-visible {
+  outline: 2px solid var(--brand);
+  outline-offset: 2px;
+}
 
 @media (max-width: 560px) {
   .training-lexicon { padding-inline: 16px; }
-  .training-lexicon__header h1 { font-size: 26px; }
   .training-lexicon__tools { grid-template-columns: 1fr; }
-  .training-lexicon__group li button { grid-template-columns: 1fr; gap: 5px; }
-  .training-term h2 { font-size: 25px; }
+  .training-lexicon__group li button { grid-template-columns: 1fr; gap: var(--space-1); }
 }
 
 @media (max-width: 340px), (min-resolution: 2dppx) and (max-width: 360px) {

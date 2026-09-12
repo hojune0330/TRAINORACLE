@@ -6,6 +6,13 @@ import { TermHelp } from "./TermHelp"
 afterEach(cleanup)
 
 describe("plan help copy", () => {
+  it("preserves the help touch target inside a shrinking flex row", () => {
+    render(<div style={{ display: "flex", width: 100 }}><TermHelp term="training-notation" /></div>)
+    const button = screen.getByRole("button", { name: "훈련표 읽는 법 설명 보기" })
+    expect(button).toHaveStyle({ minWidth: "44px", flexShrink: "0" })
+    expect(button.parentElement).toHaveStyle({ flexShrink: "0" })
+  })
+
   it("keeps inline help short and links to the complete explanation", async () => {
     const user = userEvent.setup()
     render(<TermHelp term="two-a-day" />)

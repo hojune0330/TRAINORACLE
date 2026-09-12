@@ -303,7 +303,7 @@ test("storage status UI compares real versions, requires a choice, fits mobile a
   }
   await page.getByRole("radio", { name: "계정의 최신 내용 사용" }).check()
   await page.getByRole("button", { name: "선택한 내용 반영" }).click()
-  await expect(page.getByRole("status")).toContainText("선택을 반영했어요")
+  await expect(page.locator(".account-conflict").getByRole("status")).toContainText("선택을 반영했어요")
   await page.reload(); await loadRecordHarness(page)
   await page.evaluate(() => window.accountRecordHarness.hydrateAccountJournalRecords())
   await mountConflictUI(page)

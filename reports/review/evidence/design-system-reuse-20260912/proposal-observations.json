@@ -1,0 +1,119 @@
+{
+  "rows": [
+    {
+      "file": "17 Session Prep.html",
+      "title": "TrainOracle · Session Prep",
+      "images": [],
+      "externalFontsBlocked": true
+    },
+    {
+      "file": "18 Weekly Wrap.html",
+      "title": "TrainOracle · Weekly Wrap",
+      "images": [
+        {
+          "src": "shared/decorations/tape-mint.svg",
+          "loaded": true
+        },
+        {
+          "src": "shared/decorations/tape-blush.svg",
+          "loaded": true
+        },
+        {
+          "src": "shared/decorations/tape-kraft.svg",
+          "loaded": true
+        },
+        {
+          "src": "shared/decorations/sticker-sun.svg",
+          "loaded": true
+        },
+        {
+          "src": "shared/decorations/sticker-shoe-detail.svg",
+          "loaded": true
+        },
+        {
+          "src": "shared/decorations/sticker-heart-detail.svg",
+          "loaded": true
+        },
+        {
+          "src": "shared/decorations/sticker-water-bottle.svg",
+          "loaded": true
+        },
+        {
+          "src": "shared/decorations/sticker-stopwatch-detail.svg",
+          "loaded": true
+        },
+        {
+          "src": "shared/decorations/stamp-vo2.svg",
+          "loaded": true
+        },
+        {
+          "src": "shared/decorations/stamp-done.svg",
+          "loaded": true
+        },
+        {
+          "src": "shared/decorations/stamp-tempo.svg",
+          "loaded": true
+        },
+        {
+          "src": "shared/decorations/stamp-early.svg",
+          "loaded": true
+        },
+        {
+          "src": "shared/decorations/sticker-moon-detail.svg",
+          "loaded": true
+        },
+        {
+          "src": "shared/decorations/sticker-runner.svg",
+          "loaded": true
+        },
+        {
+          "src": "shared/decorations/stamp-consistency.svg",
+          "loaded": true
+        },
+        {
+          "src": "shared/decorations/stamp-vo2.svg",
+          "loaded": true
+        },
+        {
+          "src": "shared/decorations/stamp-early.svg",
+          "loaded": true
+        },
+        {
+          "src": "shared/decorations/stamp-focus.svg",
+          "loaded": true
+        }
+      ],
+      "externalFontsBlocked": true
+    },
+    {
+      "file": "19 Coach Handoff.html",
+      "title": "TrainOracle · Coach Handoff",
+      "images": [],
+      "externalFontsBlocked": true
+    },
+    {
+      "file": "20 Handoff Risk Review.html",
+      "title": "TrainOracle · Handoff Risk Review",
+      "images": [],
+      "externalFontsBlocked": true
+    }
+  ],
+  "assets": [
+    "stamp-consistency.svg",
+    "stamp-done.svg",
+    "stamp-early.svg",
+    "stamp-focus.svg",
+    "stamp-tempo.svg",
+    "stamp-vo2.svg",
+    "sticker-heart-detail.svg",
+    "sticker-moon-detail.svg",
+    "sticker-runner.svg",
+    "sticker-shoe-detail.svg",
+    "sticker-stopwatch-detail.svg",
+    "sticker-sun.svg",
+    "sticker-water-bottle.svg",
+    "tape-blush.svg",
+    "tape-kraft.svg",
+    "tape-mint.svg"
+  ]
+}

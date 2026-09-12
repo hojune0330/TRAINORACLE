@@ -29,6 +29,7 @@ export function PublicProfileSettings({ userId }: { readonly userId: string }) {
   const [shareUrl, setShareUrl] = React.useState<string | null>(null)
   const [busy, setBusy] = React.useState(false)
   const [notice, setNotice] = React.useState<string | null>(null)
+  const [noticeTone, setNoticeTone] = React.useState<"success" | "warning" | "error">("success")
   const [records] = React.useState(() => loadAthleteRecords())
   const [friendOracleEnabled, setFriendOracleEnabled] = React.useState(false)
   const [shareRecord, setShareRecord] = React.useState(false)
@@ -69,6 +70,7 @@ export function PublicProfileSettings({ userId }: { readonly userId: string }) {
     setBusy(true)
     const result = await savePublicProfile(userId, { handle, displayName, profileTag, isPublic })
     setNotice(result.message)
+    setNoticeTone(result.ok ? "success" : "error")
     setShareUrl(result.ok ? result.url ?? null : null)
     if (result.ok) setSavedHandle(handle.trim().toLowerCase())
     if (result.ok && !isPublic) {
@@ -77,6 +79,7 @@ export function PublicProfileSettings({ userId }: { readonly userId: string }) {
         setFriendOracleEnabled(false)
       } else {
         setNotice("프로필은 비공개로 바뀌었지만 친구 비교 공개 기록을 지우지 못했어요. 다시 저장해 주세요.")
+        setNoticeTone("error")
       }
     }
     setBusy(false)
@@ -88,6 +91,7 @@ export function PublicProfileSettings({ userId }: { readonly userId: string }) {
       const result = await saveOwnOracleComparisonSnapshot(userId, null)
       setBusy(false)
       setNotice(result.message)
+      setNoticeTone(result.ok ? "success" : "error")
       return
     }
     const snapshot = buildOracleComparisonSnapshot({
@@ -103,12 +107,14 @@ export function PublicProfileSettings({ userId }: { readonly userId: string }) {
     })
     if (snapshot === null) {
       setNotice("친구와 비교할 항목을 하나 이상 골라 주세요.")
+      setNoticeTone("error")
       return
     }
     setBusy(true)
     const result = await saveOwnOracleComparisonSnapshot(userId, snapshot)
     setBusy(false)
     setNotice(result.message)
+    setNoticeTone(result.ok ? "success" : "error")
   }
 
   const sharePlan = async () => {
@@ -117,6 +123,7 @@ export function PublicProfileSettings({ userId }: { readonly userId: string }) {
     const result = await publishActivePlanCard(userId, activePlan)
     setBusy(false)
     setNotice(result.message)
+    setNoticeTone(result.ok ? "success" : "error")
     if (result.ok && result.url !== undefined) setShareUrl(result.url)
   }
 
@@ -125,8 +132,10 @@ export function PublicProfileSettings({ userId }: { readonly userId: string }) {
     try {
       await navigator.clipboard.writeText(publicProfileUrl(savedHandle))
       setNotice("프로필 주소를 복사했어요.")
+      setNoticeTone("success")
     } catch {
       setNotice(publicProfileUrl(savedHandle))
+      setNoticeTone("warning")
     }
   }
 
@@ -140,24 +149,27 @@ export function PublicProfileSettings({ userId }: { readonly userId: string }) {
           url: shareUrl,
         })
         setNotice("공유 화면을 열었어요.")
+        setNoticeTone("success")
         return
       }
       await navigator.clipboard.writeText(shareUrl)
       setNotice("친구에게 보낼 주소를 복사했어요.")
+      setNoticeTone("success")
     } catch {
       setNotice("공유를 취소했어요. 공개 설정은 그대로예요.")
+      setNoticeTone("warning")
     }
   }
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+    <div className="account-panel" aria-busy={busy}>
       <SectionLb>친구에게 보여줄 내 프로필</SectionLb>
-      <p style={{ fontFamily: "var(--sans)", fontSize: 12, lineHeight: 1.65, color: "var(--ink-2)", margin: 0 }}>
+      <p className="account-panel__body">
         공개를 켜야 다른 사람이 볼 수 있어요. 일지, 메모, 통증, 상세 훈련 처방은 공개하지 않고 이름·소개와 내가 공유한 계획 요약만 보여줘요.
       </p>
-      <label htmlFor="public-profile-handle" style={labelStyle}>프로필 주소</label>
-      <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-        <span style={{ fontFamily: "var(--mono)", fontSize: 11, color: "var(--ink-3)" }}>@</span>
+      <label className="account-panel__label" htmlFor="public-profile-handle">프로필 주소</label>
+      <div className="account-panel__input-row">
+        <span className="account-panel__prefix">@</span>
         <input
           id="public-profile-handle"
           value={handle}
@@ -167,15 +179,15 @@ export function PublicProfileSettings({ userId }: { readonly userId: string }) {
           style={{ ...inputStyle, flex: 1 }}
         />
       </div>
-      <label htmlFor="public-profile-name" style={labelStyle}>보여줄 이름</label>
+      <label className="account-panel__label" htmlFor="public-profile-name">보여줄 이름</label>
       <input id="public-profile-name" value={displayName} onChange={event => setDisplayName(event.target.value)} maxLength={40} style={inputStyle} />
-      <label htmlFor="public-profile-tag" style={labelStyle}>프로필 소개</label>
+      <label className="account-panel__label" htmlFor="public-profile-tag">프로필 소개</label>
       <select id="public-profile-tag" value={profileTag} onChange={event => setProfileTag(event.target.value as PublicProfileTag)} style={inputStyle}>
         {Object.entries(PUBLIC_PROFILE_TAG_LABELS).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
       </select>
-      <label style={{ display: "flex", alignItems: "flex-start", gap: 9, fontFamily: "var(--sans)", fontSize: 13, lineHeight: 1.55 }}>
+      <label className="account-panel__check">
         <input type="checkbox" checked={isPublic} onChange={event => setIsPublic(event.target.checked)} />
-        <span><b>다른 사람이 내 프로필을 볼 수 있게 하기</b><br /><span style={{ color: "var(--ink-3)", fontSize: 11.5 }}>끄면 기존 주소도 바로 비공개가 됩니다.</span></span>
+        <span><b>다른 사람이 내 프로필을 볼 수 있게 하기</b><br /><span className="account-panel__check-help">끄면 기존 주소도 바로 비공개가 됩니다.</span></span>
       </label>
       <button type="button" style={primaryBtn} disabled={busy || handle.length < 3 || displayName.trim() === ""} onClick={() => void save()}>
         <Check aria-hidden="true" size={16} /> 프로필 저장
@@ -183,18 +195,18 @@ export function PublicProfileSettings({ userId }: { readonly userId: string }) {
       <button type="button" style={secondaryBtn} disabled={busy || !isPublic || loadPlanBetaState() === null} onClick={() => void sharePlan()}>
         <Share2 aria-hidden="true" size={16} /> 현재 훈련 계획 요약 공유
       </button>
-      <div style={{ borderTop: "1px solid var(--line)", paddingTop: 14, display: "flex", flexDirection: "column", gap: 9 }}>
+      <div className="account-panel__subsection">
         <SectionLb>친구와 기록 비교</SectionLb>
-        <p style={{ fontFamily: "var(--sans)", fontSize: 12, lineHeight: 1.65, color: "var(--ink-2)", margin: 0 }}>
+        <p className="account-panel__body">
           공개 프로필과 별도로 켜야 해요. 고른 기록·최근 8주 거리·에너지 시스템 횟수만 보여주며 일지 원문, 비밀 메모, 통증, 수면은 보내지 않아요.
         </p>
-        <label style={checkLabelStyle}>
+        <label className="account-panel__check">
           <input type="checkbox" checked={friendOracleEnabled} disabled={!isPublic} onChange={event => setFriendOracleEnabled(event.target.checked)} />
-          <span><b>친구가 내 기록과 비교할 수 있게 하기</b><br /><span style={checkHelpStyle}>프로필 공개를 먼저 켜야 사용할 수 있어요.</span></span>
+          <span><b>친구가 내 기록과 비교할 수 있게 하기</b><br /><span className="account-panel__check-help">프로필 공개를 먼저 켜야 사용할 수 있어요.</span></span>
         </label>
         {friendOracleEnabled && isPublic && (
           <>
-            <label style={checkLabelStyle}>
+            <label className="account-panel__check">
               <input type="checkbox" checked={shareRecord} onChange={event => setShareRecord(event.target.checked)} />
               <span>내가 고른 경기 기록 1개</span>
             </label>
@@ -206,11 +218,11 @@ export function PublicProfileSettings({ userId }: { readonly userId: string }) {
                 ))}
               </select>
             )}
-            <label style={checkLabelStyle}>
+            <label className="account-panel__check">
               <input type="checkbox" checked={shareDistance} onChange={event => setShareDistance(event.target.checked)} />
               <span>최근 8주 거리 합계</span>
             </label>
-            <label style={checkLabelStyle}>
+            <label className="account-panel__check">
               <input type="checkbox" checked={shareEnergy} onChange={event => setShareEnergy(event.target.checked)} />
               <span>최근 8주 에너지 시스템별 기록 횟수</span>
             </label>
@@ -230,27 +242,11 @@ export function PublicProfileSettings({ userId }: { readonly userId: string }) {
           <Copy aria-hidden="true" size={16} /> 프로필 주소 복사
         </button>
       )}
-      {notice !== null && <p role="status" style={{ fontFamily: "var(--sans)", fontSize: 12, lineHeight: 1.6, margin: 0 }}>{notice}</p>}
+      {notice !== null && (
+        <p className="account-panel__status" data-state={noticeTone} role="status" aria-live="polite">
+          {notice}
+        </p>
+      )}
     </div>
   )
-}
-
-const labelStyle: React.CSSProperties = {
-  fontFamily: "var(--mono)",
-  fontSize: 11,
-  color: "var(--ink-3)",
-}
-
-const checkLabelStyle: React.CSSProperties = {
-  display: "flex",
-  alignItems: "flex-start",
-  gap: 9,
-  fontFamily: "var(--sans)",
-  fontSize: 13,
-  lineHeight: 1.55,
-}
-
-const checkHelpStyle: React.CSSProperties = {
-  color: "var(--ink-3)",
-  fontSize: 11.5,
 }

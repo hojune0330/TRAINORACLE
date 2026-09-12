@@ -64,7 +64,7 @@ test("keeps decoration and oracle motion brief, directional, and optional", asyn
 
   await page.getByRole("button", { name: "이모지 스티커 도구" }).click()
   const drawerContentAnimation = await page
-    .locator('.journal-decoration-toolbar[data-open="true"] > header')
+    .locator('.journal-decoration-toolbar[data-open="true"] > .journal-decoration-toolbar__drawer-header')
     .evaluate((element) => getComputedStyle(element).animationName)
   expect(drawerContentAnimation).toBe(
     testInfo.project.name === "reduced-motion" ? "none" : "decoration-tools-content-enter",

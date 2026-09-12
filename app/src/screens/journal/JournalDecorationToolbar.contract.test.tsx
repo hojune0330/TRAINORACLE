@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from "@testing-library/react"
+import { fireEvent, render, screen, within } from "@testing-library/react"
 import { describe, expect, it, vi } from "vitest"
 
 import { DECORATION_CATALOG } from "../../domain/decoration-catalog"
@@ -61,5 +61,18 @@ describe("JournalDecorationToolbar account purchase boundary", () => {
     renderToolbar(true)
     fireEvent.click(screen.getByRole("button", { name: /귀여운 스티커 28종 보기/u }))
     expect(screen.getByRole("button", { name: /한 번에 받기/u })).toBeInTheDocument()
+  })
+})
+
+describe("JournalDecorationToolbar material presentation", () => {
+  it("marks existing collection artwork for optical sizing without changing item identity", () => {
+    const { container } = renderToolbar(false)
+    fireEvent.click(screen.getByRole("button", { name: /귀여운 스티커 28종 보기/u }))
+
+    const collectionPreviews = container.querySelectorAll(
+      '.journal-decoration-toolbar__material-preview[data-collection="true"]',
+    )
+    expect(collectionPreviews).toHaveLength(collectionItems.length)
+    expect(within(container).getByRole("button", { name: /콧노래 친구 4P로 받기/u })).toBeInTheDocument()
   })
 })

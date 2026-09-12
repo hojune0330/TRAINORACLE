@@ -109,17 +109,3 @@
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
-
-.account-plan-runtime .plan-training-flow__legend {
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 14rem), 1fr));
-}
-
-.account-plan-runtime .plan-training-flow__legend .plan-flow-code-help {
-  min-width: 0;
-  max-width: 100%;
-  flex: 0 1 auto;
-}
-
-.account-plan-runtime .plan-training-flow__legend .plan-flow-code-help__trigger {
-  margin: 0;
-}

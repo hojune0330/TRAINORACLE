@@ -51,6 +51,7 @@ import { accountDecorationsEnabled, accountDecorationStatus, ACCOUNT_DECORATION_
 import { ACCOUNT_REWARD_EVENT, hydrateAccountRewards, readAccountRewardSummary } from "../../domain/account/account-reward-service"
 import { activeLocalAccount, onLocalJournalScopeChange } from "../../domain/account/local-journal-ownership"
 import { AccountDecorationConflictPanel } from "../../components/AccountDecorationConflictPanel"
+import { ShellToastHost } from "../../components/ShellToastHost"
 
 /* 입력 시트 상태: 새로 만들기 또는 기존 인덱스 재편집 (P5 U2/U4). */
 type TextSheetState =
@@ -217,7 +218,7 @@ function JournalDecorationSurfaceSession({
     if (root === null) return
     const focusable = Array.from(root.querySelectorAll<HTMLElement>(
       'button:not([disabled]), input:not([disabled]), [href], [tabindex]:not([tabindex="-1"])',
-    )).filter((element) => element.closest("[inert]") === null && element.getAttribute("aria-hidden") !== "true")
+    )).filter((element) => element.closest('[inert], [aria-hidden="true"]') === null)
     const first = focusable.at(0)
     const last = focusable.at(-1)
     if (first === undefined || last === undefined) return
@@ -598,6 +599,7 @@ function JournalDecorationSurfaceSession({
         onPaste={pasteCopied}
         onOpenTextSticker={hasEntries ? openTextSheetForCreate : undefined}
       />
+      <ShellToastHost active={open} />
       {textSheet !== null && (
         <JournalTextStickerSheet
           mode={textSheet.mode}

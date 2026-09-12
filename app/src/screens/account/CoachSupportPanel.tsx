@@ -24,6 +24,7 @@ export function CoachSupportPanel({
   const [receivedCode, setReceivedCode] = React.useState("")
   const [createdCode, setCreatedCode] = React.useState<string | null>(null)
   const [notice, setNotice] = React.useState<string | null>(null)
+  const [noticeTone, setNoticeTone] = React.useState<"success" | "error">("success")
   const [busy, setBusy] = React.useState(false)
 
   const create = async () => {
@@ -32,6 +33,7 @@ export function CoachSupportPanel({
     setBusy(false)
     setCreatedCode(result.code ?? null)
     setNotice(result.message)
+    setNoticeTone(result.ok ? "success" : "error")
   }
 
   const accept = async () => {
@@ -39,15 +41,16 @@ export function CoachSupportPanel({
     const result = await onAcceptInvitation(receivedCode)
     setBusy(false)
     setNotice(result.message)
+    setNoticeTone(result.ok ? "success" : "error")
   }
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+    <div className="account-panel" aria-busy={busy}>
       <SectionLb>코치·지원자 연결</SectionLb>
-      <p style={{ fontFamily: "var(--sans)", fontSize: 12, lineHeight: 1.6, color: "var(--ink-2)", margin: 0 }}>
+      <p className="account-panel__body">
         사용자가 초대한 사람과 기록을 나눌 수 있어요. TrainOracle이 자격을 확인한 사람이 아니므로 항상 <b>자격 미확인</b>으로 표시해요. 나만의 메모는 공유하지 않아요.
       </p>
-      <label htmlFor="support-season-end" style={{ fontFamily: "var(--mono)", fontSize: 11, color: "var(--ink-3)" }}>
+      <label className="account-panel__label" htmlFor="support-season-end">
         시즌 종료일
       </label>
       <input
@@ -62,11 +65,11 @@ export function CoachSupportPanel({
         코치·지원자 초대 코드 만들기
       </button>
       {createdCode !== null && (
-        <output style={{ fontFamily: "var(--mono)", fontSize: 18, textAlign: "center", padding: 10, border: "1px dashed var(--line)" }}>
+        <output className="account-panel__code">
           {createdCode}
         </output>
       )}
-      <label htmlFor="support-invite-code" style={{ fontFamily: "var(--mono)", fontSize: 11, color: "var(--ink-3)" }}>
+      <label className="account-panel__label" htmlFor="support-invite-code">
         받은 초대 코드
       </label>
       <input
@@ -74,12 +77,16 @@ export function CoachSupportPanel({
         value={receivedCode}
         onChange={(event) => setReceivedCode(event.target.value)}
         placeholder="ABCD-EFGH-IJKL"
-        style={inputStyle}
+        style={{ ...inputStyle, fontFamily: "var(--mono)" }}
       />
       <button type="button" style={secondaryBtn} disabled={busy || receivedCode.trim() === ""} onClick={() => void accept()}>
         초대 코드로 연결
       </button>
-      {notice !== null && <p role="status" style={{ fontFamily: "var(--mono)", fontSize: 11, color: "var(--ink-2)", margin: 0 }}>{notice}</p>}
+      {notice !== null && (
+        <p className="account-panel__status" data-state={noticeTone} role="status" aria-live="polite">
+          {notice}
+        </p>
+      )}
     </div>
   )
 }

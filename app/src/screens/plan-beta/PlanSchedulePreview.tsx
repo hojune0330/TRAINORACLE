@@ -283,6 +283,7 @@ function PlanSessionPreview({
     <section
       className="plan-day-card__session"
       data-flow-kind={flow.kind}
+      data-session-slot={session.slot}
       role="group"
       aria-label={`${calendarDateLabel(date)} ${sessionSlotLabel(session.slot)} 세션${returnedFromJournal ? " · 일지에서 돌아온 세션" : ""}`}
       data-returned-session={returnedFromJournal ? "true" : undefined}

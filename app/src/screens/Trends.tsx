@@ -176,13 +176,13 @@ function TrendsHeader({ onBack }: { readonly onBack?: (() => void) | undefined }
         minHeight: 44,
         display: "inline-flex",
         alignItems: "center",
-        gap: 4,
+        gap: 3,
         fontFamily: "var(--mono)",
         fontSize: 11,
         color: "var(--ink-2)",
       }}>
         <ArrowLeft aria-hidden="true" size={16} />
-        <span>뒤로</span>
+        <span style={{ whiteSpace: "nowrap" }}>뒤로</span>
       </button>
       <h1 style={{
         minWidth: 0,

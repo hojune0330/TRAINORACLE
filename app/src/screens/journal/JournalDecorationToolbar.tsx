@@ -231,7 +231,12 @@ function MaterialTile({
         onActivate()
       }}
     >
-      <span className="journal-decoration-toolbar__material-preview" data-category={item.category} aria-hidden="true">
+      <span
+        className="journal-decoration-toolbar__material-preview"
+        data-category={item.category}
+        data-collection={item.collection === undefined ? undefined : "true"}
+        aria-hidden="true"
+      >
         {item.category === "INK"
           ? <span className="journal-decoration-toolbar__ink-swatch" />
           : <img src={`${import.meta.env.BASE_URL}${item.assetPath}`} alt="" draggable="false" loading="lazy" />}
@@ -639,37 +644,41 @@ export function JournalDecorationToolbar(props: JournalDecorationToolbarProps) {
         aria-hidden={props.drawerOpen ? undefined : "true"}
         data-decoration-interaction="true"
       >
-        <div className="journal-decoration-toolbar__grabber" aria-hidden="true" />
-        <header>
-          <div>
-            <strong>재료 서랍</strong>
-            {/* 포인트를 제목 줄에 붙여 서랍 헤더를 두 줄로 줄인다 — 타일 그리드 노출 면적 확보. */}
-            <small className="journal-decoration-toolbar__points">베타 포인트 · 사용 가능 {props.availablePoints}P</small>
-            <span>{props.hasEntries ? "재료를 눌러 바로 붙여 보세요." : "기록을 남기기 전에는 테마만 미리 볼 수 있어요."}</span>
+        <div className="journal-decoration-toolbar__drawer-header">
+          <div className="journal-decoration-toolbar__grabber" aria-hidden="true" />
+          <header>
+            <div>
+              <strong>재료 서랍</strong>
+              {/* 포인트를 제목 줄에 붙여 서랍 헤더를 두 줄로 줄인다 — 타일 그리드 노출 면적 확보. */}
+              <small className="journal-decoration-toolbar__points">베타 포인트 · 사용 가능 <b>{props.availablePoints}P</b></small>
+              <span>{props.hasEntries ? "재료를 눌러 바로 붙여 보세요." : "기록을 남기기 전에는 테마만 미리 볼 수 있어요."}</span>
+            </div>
+            <button type="button" className="journal-decoration-toolbar__icon" onClick={props.onDrawerClose} aria-label="재료 서랍 숨기기"><ChevronDown aria-hidden="true" size={19} /></button>
+          </header>
+        </div>
+
+        {openCollection === undefined && (
+          <div className="journal-decoration-toolbar__filters" role="group" aria-label="꾸미기 재료 종류">
+            {DRAWER_FILTERS.map((filter) => (
+              <button
+                key={filter.id}
+                type="button"
+                aria-pressed={toolFilter === filter.id}
+                onClick={() => {
+                  setToolFilter(filter.id)
+                  setPendingPurchaseId(null)
+                }}
+              >
+                {filter.label}
+              </button>
+            ))}
           </div>
-          <button type="button" className="journal-decoration-toolbar__icon" onClick={props.onDrawerClose} aria-label="재료 서랍 숨기기"><ChevronDown aria-hidden="true" size={19} /></button>
-        </header>
+        )}
 
         {openCollection !== undefined
           ? renderCollection(openCollection.collection, openCollection.items)
           : (
               <>
-                <div className="journal-decoration-toolbar__filters" role="group" aria-label="꾸미기 재료 종류">
-                  {DRAWER_FILTERS.map((filter) => (
-                    <button
-                      key={filter.id}
-                      type="button"
-                      aria-pressed={toolFilter === filter.id}
-                      onClick={() => {
-                        setToolFilter(filter.id)
-                        setPendingPurchaseId(null)
-                      }}
-                    >
-                      {filter.label}
-                    </button>
-                  ))}
-                </div>
-
                 {toolFilter !== "EMOJI_STICKER" && (
                   <div className="journal-decoration-toolbar__items">
                     {MATERIAL_CATEGORY_ORDER.flatMap((category) => [

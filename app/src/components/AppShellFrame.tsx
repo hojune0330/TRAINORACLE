@@ -2,6 +2,7 @@ import React from "react"
 import { SavedToast, TabBar } from "./AppChrome"
 import type { AppTab, ToastPhase } from "./AppChrome"
 import type { SavedFactReceipt } from "../domain/save-receipt"
+import { ShellToastHostProvider, ShellToastOutlet } from "./ShellToastHost"
 
 export type ShellToastState = {
   readonly count: number
@@ -33,28 +34,32 @@ export function AppShellFrame({
   readonly hideTabBar?: boolean
 }) {
   return (
-    <div className="app-shell" style={{
-      height: "100dvh", minHeight: 0, background: "var(--bg)",
-      display: "flex", flexDirection: "column",
-      maxWidth: "var(--app-shell-max-width)", margin: "0 auto",
-    }}>
-      <main ref={scrollRegionRef} className="app-scroll-region">
-        {children}
-      </main>
-      {savedToast !== null && (
-        <SavedToast
-          count={savedToast.count}
-          phase={savedToast.phase}
-          receipt={savedToast.receipt}
-          reviewMessage={savedToast.reviewMessage}
-          rewardMessage={savedToast.rewardMessage}
-          onDismiss={onDismissToast}
-          onOpenTrends={onOpenTrends}
-          onOpenBackup={onOpenBackup}
-        />
-      )}
-      {!hideTabBar && <TabBar tab={tab} onTab={onTab} />}
-    </div>
+    <ShellToastHostProvider>
+      <div className="app-shell" style={{
+        height: "100dvh", minHeight: 0, background: "var(--bg)",
+        display: "flex", flexDirection: "column",
+        maxWidth: "var(--app-shell-max-width)", margin: "0 auto",
+      }}>
+        <main ref={scrollRegionRef} className="app-scroll-region">
+          {children}
+        </main>
+        {savedToast !== null && (
+          <ShellToastOutlet>
+            <SavedToast
+              count={savedToast.count}
+              phase={savedToast.phase}
+              receipt={savedToast.receipt}
+              reviewMessage={savedToast.reviewMessage}
+              rewardMessage={savedToast.rewardMessage}
+              onDismiss={onDismissToast}
+              onOpenTrends={onOpenTrends}
+              onOpenBackup={onOpenBackup}
+            />
+          </ShellToastOutlet>
+        )}
+        {!hideTabBar && <TabBar tab={tab} onTab={onTab} />}
+      </div>
+    </ShellToastHostProvider>
   )
 }
 

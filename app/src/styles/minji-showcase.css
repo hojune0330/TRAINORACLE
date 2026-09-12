@@ -16,7 +16,8 @@
   gap: 4px;
   color: var(--ink-3);
   font-family: var(--mono);
-  font-size: 9px;
+  font-size: var(--fs-mono-xs);
+  line-height: 1.35;
 }
 
 .minji-index__signals > span {
@@ -46,6 +47,10 @@
   font-family: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif;
   font-size: 24px;
   line-height: 1;
+}
+
+.minji-index__stack button {
+  grid-template-columns: 54px minmax(0, 1fr) 34px 22px;
 }
 
 .minji-showcase-preview > .decorated-journal-page {
@@ -160,7 +165,7 @@
   background: rgba(255, 255, 255, 0.74);
   color: var(--ink-3);
   font-family: var(--sans);
-  font-size: 10px;
+  font-size: var(--fs-body-sm);
   line-height: 1.4;
 }
 
@@ -184,8 +189,8 @@
   letter-spacing: 0;
 }
 
-.minji-page__decorations h2 { color: var(--ink); font-size: 13px; }
-.minji-page__decorations p { margin-top: 4px; color: var(--ink-3); font-size: 11px; }
+.minji-page__decorations h2 { color: var(--ink); font-size: var(--fs-body); }
+.minji-page__decorations p { margin-top: 4px; color: var(--ink-3); font-size: var(--fs-body-sm); }
 .minji-page__decorations > div { margin-top: 9px; display: flex; flex-wrap: wrap; gap: 5px; }
 
 .minji-page__decorations > div > span {
@@ -194,7 +199,7 @@
   background: var(--surface-2);
   color: var(--ink-2);
   font-family: var(--sans);
-  font-size: 10px;
+  font-size: var(--fs-body-sm);
 }
 
 .minji-page__write {
@@ -215,6 +220,7 @@
   .minji-showcase-preview { height: 178px; }
   .minji-showcase-preview > .decorated-journal-page { width: 82%; height: 136px; }
   .minji-showcase-preview .decorated-journal-page__content { min-height: 70px; padding-inline-start: 10px; }
+  .minji-index__stack button { grid-template-columns: 42px minmax(0, 1fr) 32px 18px; gap: var(--space-2); }
   .minji-page__body { padding-inline: 14px; }
   .minji-page__write { width: calc(100% - 24px); margin-inline: 12px; }
 }

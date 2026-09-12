@@ -4,6 +4,8 @@ import { AccountJournalStorageStatus } from "../../src/components/AccountJournal
 import "../../../colors_and_type.css"
 import "../../../colors_and_type_journal.css"
 import "../../src/styles/app.css"
+import "../../src/styles/account-auth.css"
+import "./app-font.css"
 
 export function mount() {
   const container = document.body.appendChild(document.createElement("main"))
