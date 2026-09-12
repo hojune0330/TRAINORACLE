@@ -141,4 +141,12 @@ describe("shared visual system", () => {
     expect(contentCss).toMatch(/\.training-content-reward-note\s*\{[\s\S]*?font-size:\s*var\(--fs-caption\)/u)
     expect(lexiconCss).toMatch(/\.term-help__more\s*\{[^}]*min-height:\s*var\(--app-touch-min\)/u)
   })
+
+  it("keeps the analysis back label on one line without widening its symmetric header tracks", () => {
+    const trends = readFileSync("src/screens/Trends.tsx", "utf8")
+
+    expect(trends).toContain('gridTemplateColumns: "64px minmax(0, 1fr) 64px"')
+    expect(trends).toContain('gap: 3')
+    expect(trends).toContain('<span style={{ whiteSpace: "nowrap" }}>뒤로</span>')
+  })
 })
